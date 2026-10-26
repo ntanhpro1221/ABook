@@ -27,7 +27,8 @@ fun StudioScreen(
     var problem by remember { mutableStateOf("") }
     val pair = devices?.pair?.collectAsState()?.value
     LaunchedEffect(devices) { devices?.loadStudio() }
-    Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(top = top, start = Dim.margin, end = Dim.margin).testTag("studio_screen")) {
+    val scroll = rememberScrollState()
+    Column(modifier.fillMaxSize().fadeEdges(scroll).verticalScroll(scroll).padding(top = top, start = Dim.margin, end = Dim.margin).testTag("studio_screen")) {
         ScreenHeader("Studio")
         Reveal(pair?.studio?.isNotEmpty() == true) {
             Column {

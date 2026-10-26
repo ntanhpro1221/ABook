@@ -59,6 +59,8 @@ import vn.abook.player.ui.data.ListenBook
 import vn.abook.player.ui.devices.CreepProgress
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.components.fadeEdges
+import androidx.compose.foundation.lazy.rememberLazyListState
 
 /*
  * Xuất sách (MP3 hay M4B), một màn cho cả ba kiểu xuất. Màn có ba trang trượt ngang theo việc đang làm: CHỌN (dạng file, nơi lưu, nhạc) -> LÀM (tiến độ, Dừng)
@@ -105,7 +107,8 @@ fun ExportScreen(book: ListenBook, exports: ExportState, onBack: () -> Unit, for
 private fun OptionsPage(book: ListenBook, ui: ExportUi, exports: ExportState) {
     val mp3 = !book.textOnly && ui.format == ExportFormat.Mp3
     val kind = ui.format.kind(book.textOnly)
-    LazyColumn(Modifier.fillMaxSize().testTag("export_options"), contentPadding = PaddingValues(bottom = Dim.s16)) {
+    val list = rememberLazyListState()
+    LazyColumn(Modifier.fillMaxSize().fadeEdges(list).testTag("export_options"), state = list, contentPadding = PaddingValues(bottom = Dim.s16)) {
         item("head", "head") { BookHead(book) }
         if (book.textOnly) {
             item("about", "about") { Column(Modifier.fillMaxWidth().padding(bottom = Dim.s8)) {

@@ -30,6 +30,8 @@ import vn.abook.player.ui.components.SwitchRow
 import vn.abook.player.ui.components.TextAction
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.components.fadeEdges
+import androidx.compose.foundation.lazy.rememberLazyListState
 
 /*
  * Chia sẻ thư viện. Công tắc bật / tắt; khi bật: địa chỉ để gõ vào máy kia, mã ghép 6 số (hay "Tạo mã ghép"), Bluetooth nếu có tin, rồi danh sách máy đã ghép
@@ -51,7 +53,8 @@ fun ShareScreen(devices: DevicesState, sheets: SheetHost, onBack: () -> Unit) {
     share.code?.let { lastCode[0] = it }
     val problem = ui.problem.ifEmpty { share.error }.ifEmpty { if (share.blocked && share.code == null) "Mã đã huỷ vì nhập sai nhiều lần." else "" }
     BookForm("Chia sẻ thư viện", onBack, "share_screen") {
-        if (ui.loaded) LazyColumn(Modifier.fillMaxSize().testTag("share_list"), contentPadding = PaddingValues(bottom = Dim.s16)) {
+        val list = rememberLazyListState()
+        if (ui.loaded) LazyColumn(Modifier.fillMaxSize().fadeEdges(list).testTag("share_list"), state = list, contentPadding = PaddingValues(bottom = Dim.s16)) {
             item("switch", "switch") {
                 Column(Modifier.padding(top = Dim.s8)) {
                     SwitchRow("Cho máy khác nghe", share.running, devices::setSharing, "share_switch")
