@@ -8,6 +8,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import vn.abook.player.ui.voice.MineImports
+import vn.abook.player.ui.voice.MusicImportResult
+import vn.abook.player.ui.voice.VoiceFailure
+import vn.abook.player.ui.voice.VoiceText
 
 /** Việc nhạc nền với lõi - tách khỏi màn để thử bằng nguồn giả. Nguồn thật: [MusicRepo]. Lỗi cho người nghe: [MusicFailure]. */
 interface MusicSource {
@@ -23,19 +27,14 @@ interface MusicSource {
     suspend fun pin(id: String, key: String, link: String?): BookMusic
     /** Các bài trong Nhạc của tôi đổi được cho đoạn `key` (trừ bài đang dùng). */
     suspend fun alternatives(id: String, key: String): List<MineTrack>
-    /** Thêm file vào Nhạc của tôi (hộp chọn file của hệ thống). */
-    suspend fun importMine(uris: List<String>, progress: (done: Int, total: Int) -> Unit): MusicImported
 }
-
-/** Kết quả một lượt thêm nhạc: câu báo, file lỗi (một dòng mỗi file), và kho có bài để chọn cho cuốn này không. */
-@Immutable
-data class MusicImported(val summary: String, val problems: List<String>, val usable: Boolean)
 
 class MusicFailure(message: String) : Exception(message)
 
 /**
  * Nhạc nền của cuốn đang mở trong bảng (trình phát hay trang sách): `book` null = chưa đọc xong. `busy`: đang lưu một lựa chọn. `problem`: lỗi của lần bấm vừa rồi,
- * `notice`: câu báo của lượt thêm nhạc.
+ * `notice`: câu báo của lượt thêm nhạc. `importing`: có lượt thêm nhạc đang chạy - của cuốn nào hay của màn Nhạc
+ * của tôi cũng vậy (một kho, một lượt mỗi lúc: [MineImports]).
  */
 @Immutable
 data class BookMusicUi(
@@ -58,11 +57,12 @@ data class BookMusicUi(
 
 /**
  * Trạng thái sống của nhạc nền một cuốn: một holder cho cả app (bảng của trình phát và của trang sách cùng đọc ở đây). Menu danh sách phát giữ [menuTtlMs]
- * (danh mục ít đổi, hỏi lại cần mạng); nhạc của cuốn đọc lại mỗi lần mở bảng.
+ * (danh mục ít đổi, hỏi lại cần mạng); nhạc của cuốn đọc lại mỗi lần mở bảng. Thêm nhạc đi qua `imports`, chung với Cài đặt > Nhạc của tôi.
  */
 @Stable
 class MusicState(
     private val source: MusicSource,
+    private val imports: MineImports,
     private val scope: CoroutineScope,
     private val menuTtlMs: Long = 10 * 60_000L,
     private val now: () -> Long = System::currentTimeMillis,
@@ -71,10 +71,20 @@ class MusicState(
     val ui: StateFlow<BookMusicUi> = flow
     private var menuAt = 0L
 
+    init {
+        imports.listen(object : MineImports.Listener {
+            override fun changed(turn: MineImports.Turn?) {
+                flow.update { it.copy(importing = turn != null, done = turn?.done ?: 0, total = turn?.total ?: 0) }
+            }
+
+            override fun finished(owner: String, result: Result<MusicImportResult>) = imported(owner, result)
+        })
+    }
+
     /** Mở bảng của cuốn `bookId`: cuốn khác thì bắt đầu lại (giữ menu), cùng cuốn thì đọc lại mà vẫn vẽ cái đang có. */
     fun open(bookId: String) {
         if (bookId.isEmpty()) return
-        if (flow.value.bookId != bookId) flow.value = BookMusicUi(bookId = bookId, menu = flow.value.menu)
+        if (flow.value.bookId != bookId) flow.value = BookMusicUi(bookId = bookId, menu = flow.value.menu, importing = flow.value.importing, done = flow.value.done, total = flow.value.total)
         else flow.update { it.copy(problem = "", notice = if (it.importing) it.notice else "", swapKey = "", mine = null, swapFailed = false) }
         readBook(bookId)
         readMenu(force = false)
@@ -124,19 +134,24 @@ class MusicState(
     /** Thêm nhạc từ bảng: tiến độ ngay ở hàng "Thêm nhạc của bạn"; có bài trong kho thì chọn "Nhạc của tôi" cho cuốn này (sách mang theo đúng các bài đang có). */
     fun importMine(uris: List<String>) {
         val id = flow.value.bookId
-        if (uris.isEmpty() || id.isEmpty() || flow.value.importing) return
-        flow.update { it.copy(importing = true, done = 0, total = uris.size, notice = "", problem = "") }
-        scope.launch {
-            val result = attempt { source.importMine(uris) { done, total -> flow.update { it.copy(done = done, total = total) } } }
-            result.onSuccess { done ->
-                flow.update { it.copy(importing = false, notice = done.summary, problem = done.problems.joinToString("\n")) }
-                readMenu(force = true)
-                if (flow.value.bookId != id) return@onSuccess
-                if (flow.value.swapKey.isNotEmpty()) readMine(flow.value.swapKey)
-                else if (done.usable && flow.value.book?.kind == MusicKind.Playlist) choose(MusicText.MINE)
-            }
-            result.onFailure { error -> flow.update { it.copy(importing = false, problem = message(error, "Chưa thêm được nhạc")) } }
+        if (uris.isEmpty() || id.isEmpty() || imports.turn != null) return
+        flow.update { it.copy(notice = "", problem = "") }
+        imports.start(id, uris)
+    }
+
+    /**
+     * Một lượt thêm nhạc xong (bấm ở đâu cũng vậy): kho đổi nên menu và "Đổi bài" đang mở đọc lại. Câu báo và lựa chọn "Nhạc của tôi" chỉ cho cuốn đã bấm,
+     * khi bảng còn mở cuốn ấy.
+     */
+    private fun imported(owner: String, result: Result<MusicImportResult>) {
+        val here = owner == flow.value.bookId
+        result.onSuccess { done ->
+            if (here) flow.update { it.copy(notice = VoiceText.imported(done), problem = done.failed.joinToString("\n")) }
+            readMenu(force = true)
+            if (flow.value.swapKey.isNotEmpty()) readMine(flow.value.swapKey)
+            else if (here && done.added + done.existing > 0 && flow.value.book?.kind == MusicKind.Playlist) choose(MusicText.MINE)
         }
+        result.onFailure { error -> if (here) flow.update { it.copy(problem = message(error, "Chưa thêm được nhạc")) } }
     }
 
     private fun readBook(id: String) {
@@ -180,5 +195,6 @@ class MusicState(
         Result.failure(error)
     }
 
-    private fun message(error: Throwable, fallback: String): String = (error as? MusicFailure)?.message?.takeIf { it.isNotBlank() } ?: fallback
+    private fun message(error: Throwable, fallback: String): String =
+        (error as? MusicFailure ?: error as? VoiceFailure)?.message?.takeIf { it.isNotBlank() } ?: fallback
 }
