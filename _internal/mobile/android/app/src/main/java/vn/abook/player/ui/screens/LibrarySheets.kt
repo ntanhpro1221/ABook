@@ -51,15 +51,3 @@ fun SeriesSheet(tile: ShelfTile.Series, covers: CoverLoader, onOpen: (ListenBook
         }
     }
 }
-
-/** Bảng "Thêm sách" (giữ chỗ ở P1a; các cách thêm sách vào ở bước sau). */
-@Composable
-fun AddBookSheet(dismiss: () -> Unit) {
-    Column(Modifier.fillMaxWidth().testTag("add_book_sheet")) {
-        BasicText("Thêm sách", style = Abook.type.sectionTitle)
-        Spacer(Modifier.height(Dim.s4))
-        BasicText("Các cách thêm sách sắp có.", style = Abook.type.bodySmall)
-        Spacer(Modifier.height(Dim.s24))
-        PrimaryButton("Xong", dismiss, Modifier.fillMaxWidth())
-    }
-}

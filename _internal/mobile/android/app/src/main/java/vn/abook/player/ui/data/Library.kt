@@ -72,10 +72,6 @@ class LibraryRepo(private val context: Context) : BookSource {
 
     override suspend fun setChapterDone(id: String, chapterId: Int, done: Boolean) = write { BookActions.setChapterDone(context, id, chapterId, done) }
 
-    override suspend fun rename(id: String, title: String): String? = edit { BookActions.rename(context, id, title) }
-
-    override suspend fun setAuthor(id: String, author: String): String? = edit { BookActions.setAuthor(context, id, author) }
-
     override suspend fun delete(id: String): String? = edit {
         BookActions.delete(context, id) { Dispatchers.IO.asExecutor().execute(it) }
         null
