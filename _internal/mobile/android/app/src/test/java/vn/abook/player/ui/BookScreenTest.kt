@@ -119,7 +119,10 @@ class BookScreenTest {
         rule.waitForIdle()
     }
 
-    private fun shot(name: String) = rule.onRoot().captureRoboImage("src/test/snapshots/$name.png")
+    private fun shot(name: String) {
+        rule.assertIconLedTextColumns()
+        rule.onRoot().captureRoboImage("src/test/snapshots/$name.png")
+    }
 
     private fun detail(state: JSONObject? = null, complete: Boolean = true) = BookDetail.of(manifest(complete = complete), state, { null }, canShare = true)
 

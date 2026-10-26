@@ -52,7 +52,10 @@ class BookFormsTest {
     private fun show(dark: Boolean = false, content: @Composable () -> Unit) {
         rule.setContent { AbookTheme(dark) { Box(Modifier.fillMaxSize().background(Abook.colors.bg)) { content() } } }
     }
-    private fun shot(name: String) = rule.onRoot().captureRoboImage("src/test/snapshots/$name.png")
+    private fun shot(name: String) {
+        rule.assertIconLedTextColumns()
+        rule.onRoot().captureRoboImage("src/test/snapshots/$name.png")
+    }
     private fun add(state: ImportState, dark: Boolean, name: String?) {
         show(dark) { AddBookScreen(state, {}, {}, {}, {}, {}, {}) }
         if (name != null) shot(name)

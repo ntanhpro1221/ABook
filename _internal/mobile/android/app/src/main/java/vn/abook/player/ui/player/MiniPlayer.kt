@@ -16,6 +16,10 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -136,10 +140,16 @@ fun MorphingMiniPlayer(
 @Composable
 fun MiniPlayerSlot(visible: Boolean, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     val reveal = remember { Animatable(if (visible) 1f else 0f) }
-    LaunchedEffect(visible) { reveal.animateTo(if (visible) 1f else 0f, if (visible) Motion.Expand else Motion.Collapse) }
+    var composed by remember { mutableStateOf(visible) }
+    LaunchedEffect(visible) {
+        if (visible) composed = true
+        reveal.animateTo(if (visible) 1f else 0f, if (visible) Motion.Expand else Motion.Collapse)
+        if (!visible) composed = false
+    }
+    if (!composed) return
     // Khi cửa sổ Đang nghe mở, thanh nhỏ rời cây (nó nở thành cửa sổ) và đo ra 0: giữ chỗ cũ để nội dung bên dưới không nhảy theo.
     val kept = remember { intArrayOf(0) }
-    Layout(content = content, modifier = modifier) { measurables, constraints ->
+    Layout(content = content, modifier = modifier.clipToBounds()) { measurables, constraints ->
         val placeables = measurables.map { it.measure(constraints.copy(minHeight = 0)) }
         val measured = placeables.maxOfOrNull { it.height } ?: 0
         if (measured > 0) kept[0] = measured
