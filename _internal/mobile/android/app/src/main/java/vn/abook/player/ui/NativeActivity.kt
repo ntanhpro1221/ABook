@@ -1,6 +1,13 @@
 package vn.abook.player.ui
 
+import android.Manifest
 import android.content.ActivityNotFoundException
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import vn.abook.player.StudioActivity
+import vn.abook.player.ui.devices.DeviceLinks
 import android.content.ComponentCallbacks2
 import android.content.Intent
 import android.net.Uri
@@ -69,6 +76,7 @@ class NativeActivity : ComponentActivity() {
         val readAlong = if (demo) DemoReadAlongSource else AndroidReadAlongSource(this)
         val prefs = app.uiPrefs
         val settings = app.settings
+        if (!demo) app.deviceLinks = deviceLinks
         // Màn chờ giữ tới khi Thư viện có nội dung VÀ đã biết giao diện sáng / tối của bạn: khung đầu đã là lưới bìa đúng màu, không phải màn trống hay
         // màn đổi màu ngay sau khi hiện. Hai lần đọc chạy song song ở luồng nền.
         splash.setKeepOnScreenCondition { library.state.value is LibraryState.Loading || !settings.loaded.value }
@@ -102,7 +110,7 @@ class NativeActivity : ComponentActivity() {
                     val shell = remember {
                         ShellState(scope) { sort -> lifecycleScope.launch(Dispatchers.IO) { prefs.setSort(sort) } }
                     }
-                    val env = remember { SettingsEnv(settings, reveal, links) }
+                    val env = remember { SettingsEnv(settings, reveal, links, if (demo) null else app.devices) }
                     LaunchedEffect(Unit) { shell.library.restoreSort(withContext(Dispatchers.IO) { prefs.sort() }) }
                     val state by library.state.collectAsStateWithLifecycle()
                     AppShell(
@@ -114,6 +122,40 @@ class NativeActivity : ComponentActivity() {
             }
         }
     }
+
+    private var nearbyResult: ((Boolean) -> Unit)? = null
+    private val nearby = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        nearbyResult?.invoke(granted)
+        nearbyResult = null
+    }
+    private var notificationsThen: (() -> Unit)? = null
+    private val notifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+        // Từ chối thông báo thì chia sẻ vẫn chạy (chỉ không có thông báo "Tắt chia sẻ").
+        notificationsThen?.invoke()
+        notificationsThen = null
+    }
+
+    /** Cửa ra hệ điều hành của ba màn Thiết bị: Studio của máy tính, trang thông tin ứng dụng, quyền "Thiết bị ở gần" và thông báo. */
+    private val deviceLinks = DeviceLinks(
+        openStudio = { computer, path -> open(Intent(this, StudioActivity::class.java).putExtra("computer", computer).putExtra("path", path)) },
+        openAppSettings = { open(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))) },
+        askNearby = { result ->
+            if (Build.VERSION.SDK_INT < 31) {
+                result(true)
+            } else {
+                nearbyResult = result
+                nearby.launch(Manifest.permission.BLUETOOTH_CONNECT)
+            }
+        },
+        askNotifications = { then ->
+            if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                notificationsThen = then
+                notifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                then()
+            }
+        },
+    )
 
     /** Cửa ra hệ điều hành của Cài đặt: trang thông báo của ABook, bảng chia sẻ nhật ký, trang mã nguồn. */
     private val links = SettingsLinks(
@@ -153,6 +195,8 @@ class NativeActivity : ComponentActivity() {
         reportFullyDrawn()
         contentReady = true
         if (started) player.attach()
+        // Lượt tải còn giữ, chia sẻ đã bật từ lần trước, sách nghe thẳng của máy đã ghép: sau khung đầu, không nằm trong đường mở nguội.
+        if (!demo) app.devices.apply { restore(); syncStreamed() }
     }
 
     override fun onStart() {

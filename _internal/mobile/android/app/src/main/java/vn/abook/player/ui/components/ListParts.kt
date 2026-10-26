@@ -6,6 +6,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -248,30 +249,43 @@ fun ListItem(
     chevron: Boolean = false,
     below: (@Composable ColumnScope.() -> Unit)? = null,
 ) {
-    Row(
+    Column(
         modifier.fillMaxWidth()
             .then(if (onClick != null) Modifier.pressable(onClick = onClick) else Modifier)
             .then(if (tag != null) Modifier.testTag(tag) else Modifier),
-        verticalAlignment = Alignment.Top,
     ) {
-        if (leading != null) {
-            Box(Modifier.width(leadingWidth).onFirstLine()) { Box(Modifier.testTag("row_leading")) { leading() } }
-            Spacer(Modifier.width(leadingGap))
-        }
-        Column(Modifier.weight(1f).heightIn(min = 56.dp).padding(vertical = RowPad)) {
-            BasicText(title, style = titleStyle.copy(color = titleColor), modifier = Modifier.testTag("row_title"))
-            if (hint != null) {
-                Spacer(Modifier.height(2.dp))
-                BasicText(hint, style = hintStyle.copy(color = hintColor), modifier = Modifier.testTag("row_hint"))
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+            if (leading != null) {
+                Box(Modifier.width(leadingWidth).onFirstLine()) { Box(Modifier.testTag("row_leading")) { leading() } }
+                Spacer(Modifier.width(leadingGap))
             }
-            below?.invoke(this)
-        }
-        if (trailing != null || chevron) {
-            Spacer(Modifier.width(Dim.s12))
-            Box(Modifier.onFirstLine(), contentAlignment = Alignment.CenterEnd) {
-                Box(Modifier.testTag("row_trailing")) { if (trailing != null) trailing() else ChevronIcon(Abook.colors.text3) }
+            Column(Modifier.weight(1f).heightIn(min = if (below != null) 0.dp else 56.dp).padding(top = RowPad, bottom = if (below != null) 0.dp else RowPad)) {
+                BasicText(title, style = titleStyle.copy(color = titleColor), modifier = Modifier.testTag("row_title"))
+                if (hint != null) {
+                    Spacer(Modifier.height(2.dp))
+                    BasicText(hint, style = hintStyle.copy(color = hintColor), modifier = Modifier.testTag("row_hint"))
+                }
+            }
+            if (trailing != null || chevron) {
+                Spacer(Modifier.width(Dim.s12))
+                Box(Modifier.onFirstLine(), contentAlignment = Alignment.CenterEnd) {
+                    Box(Modifier.testTag("row_trailing")) { if (trailing != null) trailing() else ChevronIcon(Abook.colors.text3) }
+                }
             }
         }
+        // Phần dưới (thanh tiến độ) chạy từ cột chữ tới mép phải của hàng, qua cả cột hành động: cùng bề ngang với đường kẻ dưới hàng.
+        if (below != null) Column(Modifier.fillMaxWidth().testTag("row_below").padding(start = if (leading != null) leadingWidth + leadingGap else 0.dp, bottom = RowPad)) { below() }
+    }
+}
+
+/** Thanh tiến độ mảnh dưới một hàng: mốc, không phải phần trăm byte đoán. Giá trị đổi chỉ được đọc trong pha vẽ. */
+@Composable
+fun StageProgress(progress: () -> Float) {
+    val track = Abook.colors.line
+    val ink = Abook.colors.accent
+    Canvas(Modifier.fillMaxWidth().padding(top = Dim.s8).height(3.dp)) {
+        drawRect(track)
+        drawRect(ink, size = size.copy(width = size.width * progress().coerceIn(0f, 1f)))
     }
 }
 

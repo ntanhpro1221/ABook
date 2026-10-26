@@ -4,7 +4,6 @@ import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -28,6 +27,7 @@ import vn.abook.player.ui.components.PrimaryButton
 import vn.abook.player.ui.components.QuoteSample
 import vn.abook.player.ui.components.RowLine
 import vn.abook.player.ui.components.SectionTitle
+import vn.abook.player.ui.components.StageProgress
 import vn.abook.player.ui.components.Switch
 import vn.abook.player.ui.components.SwitchRow
 import vn.abook.player.ui.components.TextAction
@@ -128,17 +128,6 @@ private fun ImportRow(
         chevron = open != null,
         below = if (item.stage == ImportStage.Reading || item.stage == ImportStage.Adding) ({ StageProgress(progress(item.id)) }) else null,
     )
-}
-
-/** Mốc, không phải phần trăm byte đoán. Giá trị đổi chỉ được đọc trong pha vẽ. */
-@Composable
-private fun StageProgress(progress: () -> Float) {
-    val track = Abook.colors.line
-    val ink = Abook.colors.accent
-    Canvas(Modifier.fillMaxWidth().padding(top = Dim.s8).height(3.dp)) {
-        drawRect(track)
-        drawRect(ink, size = size.copy(width = size.width * progress().coerceIn(0f, 1f)))
-    }
 }
 
 @Composable
