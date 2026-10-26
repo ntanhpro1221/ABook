@@ -1,5 +1,26 @@
 # desktop_qt D0 - progress (updated after every step)
 
+## D2 — Cài đặt, Thêm sách, Sửa sách (cloud, branch dev/cloud-qtd2 from b840c2e1 Codex WIP), 26-10-2026
+
+- Linux build: Qt 6.10.2 from conda-forge (download.qt.io is blocked by the cloud proxy, so not aqt / not 6.10.3). CMake builds the app target
+  (Media Foundation, QWindowKit) only on WIN32; every QtTest / QtQuickTest exe builds and runs on Linux offscreen. Windows-only code unchanged
+  and NOT compiled here (main.cpp sample MfAudioOut, audioout_mf, windowchrome) - build.bat on the owner's machine still needed.
+- Shared primitives matching shared/ui.tsx + SettingsNav: SettingRow, SettingsItem, SectionBlock (= SettingsBlock, persisted fold via
+  Platform "fold.settings.<key>"), ChoiceRow (sliding underline), DisclosureRow, MoreInfo, Collapse, Select (popup list, check first),
+  Button (ghost/danger, sm/md/lg, wrap, busy + onActivated), Modal (= Dialog: title/description/✕, scroll fades, footer, keepOpen hook for
+  inner steps), FormField (= input, wraps). DESIGN 5.1 + gen_theme: hover, control-line, danger-soft, scrim tokens.
+- Screens: SettingsScreen shell (two columns, baseline-aligned group title, compact list/group pages with Back) + one file per group
+  (Voice*, Listen/Sleep/Look/Advanced*, MyMusic*, Devices*/PhoneSync*/OtherComputers*, Studio settings/BookTemplates/SharedReadings/
+  NewBookDefaults), AddBook + Import*, EditBook* + CoverSearch + BookMusicSettings, BookPage "Thêm" menu. Player night schedule fixed to
+  the web semantics (+5 PlayerTests).
+- Tests: DesktopApi 8, Player 31, ReadAlong 14, Music 37, SkipGlyph 6, Sidebar 117, Width 210 (tst_d2 + tst_d2_settings/voice/devices/
+  studio/addbook/editbook + tst_d2_shots) = 423 pass. Screenshots: build/d2shots/*.png (light + dark, 1440 and narrow), written by the
+  Width suite. ui_parity_qt maps Cài đặt / Thêm sách / Sửa sách; render 6 s (memoised key_loose).
+- Open: "Mở Studio" of a paired computer and rename-chapter from the chapter row "…" have no Qt trigger/page yet; music cues of the playing
+  book reload only next chapter after "Tự chọn nhạc nền"; letterShortcuts / touchSounds / readingSurface are saved but not used by Qt yet;
+  update-checked event from the shell has no Qt channel (polls /api/app); web toast actions ("Hoàn tác", "Mở thư mục") not in Api.notice;
+  offscreen software renderer paints Shape icons outside a clipping Flickable (not checked on D3D).
+
 ## qtwide2 — lead review, 26-10-2026
 
 - Book composition is centred and capped at 1360 px (summary + 32 px gap + chapters). Cover shares the title's left edge from expanded. ChapterRow keeps title/chapter on the left and duration at the right inset with tabular figures; current/hover fill and progress retain full row geometry.
