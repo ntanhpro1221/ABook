@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.147] - 2026-10-26
+
 ### Điện thoại
 
 - Mở bảng tốc độ, hẹn giờ hay thêm tuỳ chọn trên màn Đang nghe không còn làm bìa co lại và cả màn nhảy lên; bảng chỉ trượt lên phủ trên.
