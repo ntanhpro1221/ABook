@@ -1,3 +1,4 @@
+#include "bench.h"
 #include "audioout_mf.h"
 
 #include <QDir>
@@ -63,6 +64,16 @@ private:
     Impl *m_impl;
 };
 
+namespace {
+/// Mốc cho tools/measure.py (ABOOK_BENCH): mỗi engine một mã, để đặt cú khựng khung cạnh lúc engine nào tạo / mở nguồn / phát / huỷ.
+/// TIMEUPDATE và PROGRESS bỏ (vài lần mỗi giây, chỉ làm nhiễu).
+void benchMark(const void *engine, const char *what) {
+    static const bool on = qEnvironmentVariableIsSet("ABOOK_BENCH");
+    if (on)
+        Bench::mark(QStringLiteral("mf:%1:%2").arg(quintptr(engine) & 0xffffff, 0, 16).arg(QLatin1String(what)));
+}
+} // namespace
+
 MfAudioOut::MfAudioOut(QObject *parent) : AudioOut(parent), d(new Impl) {
     d->owner = this;
 }
@@ -70,6 +81,7 @@ MfAudioOut::MfAudioOut(QObject *parent) : AudioOut(parent), d(new Impl) {
 bool MfAudioOut::ensureEngine() {
     if (d->engine)
         return true;
+    benchMark(this, "create");
     if (!m_started) {
         MFStartup(MF_VERSION, MFSTARTUP_LITE);
         m_started = true;
@@ -92,6 +104,7 @@ bool MfAudioOut::ensureEngine() {
 }
 
 MfAudioOut::~MfAudioOut() {
+    benchMark(this, "destroy");
     {
         std::lock_guard<std::mutex> guard(d->lock);
         d->owner = nullptr;
@@ -132,6 +145,7 @@ void MfAudioOut::openSource() {
         return;
     }
     m_sourceOpen = true;
+    benchMark(this, "source");
     const QString text = m_url.isLocalFile() ? QDir::toNativeSeparators(m_url.toLocalFile()) : m_url.toString(QUrl::FullyEncoded);
     BSTR source = SysAllocStringLen(reinterpret_cast<const OLECHAR *>(text.utf16()), static_cast<UINT>(text.size()));
     d->engine->SetSource(source);
@@ -142,6 +156,7 @@ void MfAudioOut::openSource() {
 }
 
 void MfAudioOut::play() {
+    benchMark(this, "play");
     m_wantPlay = true;
     if (m_url.isEmpty())
         return;
@@ -168,6 +183,7 @@ void MfAudioOut::pause() {
 }
 
 void MfAudioOut::stop() {
+    benchMark(this, "stop");
     ++m_serial;
     m_loaded = false;
     m_wantPlay = false;
@@ -188,6 +204,7 @@ void MfAudioOut::stop() {
 }
 
 void MfAudioOut::seek(double seconds) {
+    benchMark(this, "seek");
     m_target = qMax(0.0, seconds);
     if (!m_loaded || !d->engine)
         return; // chưa mở nguồn / chưa nạp xong: onEvent(LOADEDMETADATA) tua tới m_target
@@ -223,6 +240,8 @@ void MfAudioOut::onEvent(unsigned long event, quint64 p1, unsigned long p2) {
     static const bool trace = qEnvironmentVariableIntValue("ABOOK_AUDIO_TRACE") != 0;
     if (trace)
         fprintf(stderr, "mf event %lu p1=%llu p2=%lu pos=%.3f\n", event, (unsigned long long)p1, p2, d->engine ? d->engine->GetCurrentTime() : -1.0);
+    if (event != MF_MEDIA_ENGINE_EVENT_TIMEUPDATE && event != MF_MEDIA_ENGINE_EVENT_PROGRESS)
+        benchMark(this, QByteArray::number(qulonglong(event)).constData());
     switch (event) {
     case MF_MEDIA_ENGINE_EVENT_LOADEDMETADATA:
     case MF_MEDIA_ENGINE_EVENT_DURATIONCHANGE: {
