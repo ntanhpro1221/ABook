@@ -5,7 +5,7 @@ import { createContext, useContext, useMemo, type ButtonHTMLAttributes, type Rea
 /** Nút điều khiển không giữ focus sau cú bấm chuột: Space sau đó vẫn là phát/tạm dừng, không lặp lại nút vừa bấm. */
 export const keepFocus = { onMouseDown: (event: { preventDefault: () => void }) => event.preventDefault() };
 
-export const MENU_ROW = "flex min-h-10 w-full items-center gap-3 rounded-lg px-2 text-left text-sm text-fg hover:bg-hover disabled:opacity-40 disabled:hover:bg-transparent max-sm:min-h-[48px]";
+export const MENU_ROW = "flex min-h-10 w-full items-center gap-3 rounded-control px-2 text-left text-sm text-fg hover:bg-hover disabled:opacity-40 disabled:hover:bg-transparent max-sm:min-h-[48px]";
 
 /** Chỗ mở của hộp con bật từ MỘT DÒNG của menu "…" trên máy tính: sát cạnh trái menu cha, mép đáy (menu cha mở lên) hay mép đỉnh (menu cha mở xuống)
  *  thẳng mép menu cha - trước đây hộp con mở lên trên nút, chồng lên menu cha với mép trái lệch 1175 / 1153 / 1126 / 1181 (soát 25-10 C8). Nút mở là CẢ DÒNG
