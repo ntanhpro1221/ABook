@@ -31,7 +31,7 @@ Window {
     Component { id: libraryScreen; LibraryScreen { onOpenBook: (book) => stack.push(bookPage, { book: book }); onAddRequested: paths => addBook.begin(paths) } }
     Component { id: studioScreen; StudioScreen {} }
     Component { id: settingsScreen; SettingsScreen {} }
-    Component { id: bookPage; BookPage { onEditRequested: data => editBook.begin(data) } }
+    Component { id: bookPage; BookPage { onEditRequested: data => editBook.begin(data); onSaveRequested: data => saveBookAs.quick(data); onSaveAsRequested: data => saveBookAs.begin(data) } }
 
     Item {
         id: shell
@@ -149,6 +149,8 @@ Window {
     }
     AddBook { id: addBook; onOpenBook: id => win.openBookId(id) }
     EditBook { id: editBook }
+    EditBookRename { id: renameChapter }      // mở từ nút “…” ở dòng chương: renameChapter.begin(book, chapter)
+    EditBookSaveAs { id: saveBookAs }
     Connections {
         target: Backend
         function onStateChanged() { if (Backend.state === Backend.Ready) { Api.bind(DesktopApi, Theme); Api.load() } }
