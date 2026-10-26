@@ -12,9 +12,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onParent
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
 import org.junit.Assert.assertEquals
@@ -82,6 +84,21 @@ class TabHostTest {
         // Thư viện đã trượt ra ngoài màn nhưng vẫn ở trong cây (giữ trạng thái), không bị bỏ đi.
         assertEquals(1, composed[Tab.Library])
         assertTrue(tabs.isVisited(Tab.Library))
+    }
+
+    @Test
+    fun `only the selected tab is exposed to accessibility, every visited tab stays placed`() {
+        rule.mainClock.autoAdvance = false
+        show(precompose = true)
+        rule.mainClock.advanceTimeBy(1500)
+        rule.mainClock.autoAdvance = true
+        rule.waitForIdle()
+        // Tab nằm ngoài màn vẫn được đặt (có trong cây, không đổi dàn trang khi trượt) nhưng trợ năng chỉ thấy tab đang chọn.
+        fun hidden(tab: Tab) = rule.onNodeWithTag("content_${tab.name}").onParent().fetchSemanticsNode().config.contains(SemanticsProperties.HideFromAccessibility)
+        assertEquals(listOf(false, true, true), Tab.entries.map { hidden(it) })
+        rule.onNodeWithTag(Tab.Studio.tag).performClick()
+        rule.waitForIdle()
+        assertEquals(listOf(true, false, true), Tab.entries.map { hidden(it) })
     }
 
     @Test

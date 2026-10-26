@@ -27,8 +27,7 @@ class BookEditor(val id: String, private val source: EditSource, private val sco
             try {
                 val latest = source.load(id)
                 val draft = EditLogic.rebase(previous, flow.value.draft, latest)
-                flow.value = flow.value.copy(saved = latest, draft = draft, loading = false,
-                    note = if (EditLogic.diff(latest, draft).empty) "Đã lưu" else flow.value.note)
+                flow.value = flow.value.copy(saved = latest, draft = draft, loading = false)
             } catch (error: Exception) {
                 if (error is CancellationException) throw error
                 flow.value = flow.value.copy(loading = false, problem = error.message ?: "Bạn hãy thử lại.")
@@ -38,7 +37,7 @@ class BookEditor(val id: String, private val source: EditSource, private val sco
 
     fun change(update: (EditDraft) -> EditDraft) {
         val draft = flow.value.draft ?: return
-        flow.value = flow.value.copy(draft = update(draft), note = "Đang chờ lưu", problem = "")
+        flow.value = flow.value.copy(draft = update(draft), problem = "")
         typing?.cancel()
         typing = scope.launch { delay(450); scope.launch { flush() } }
     }
@@ -50,20 +49,20 @@ class BookEditor(val id: String, private val source: EditSource, private val sco
         val saved = before.saved ?: return@withLock false
         val draft = before.draft ?: return@withLock false
         val diff = EditLogic.diff(saved, draft)
-        if (diff.empty) { flow.value = flow.value.copy(note = "Đã lưu"); return@withLock true }
+        if (diff.empty) return@withLock true
         val invalid = EditLogic.validate(diff)
-        if (invalid != null) { flow.value = flow.value.copy(problem = invalid, note = "Chưa lưu"); return@withLock false }
+        if (invalid != null) { flow.value = flow.value.copy(problem = invalid); return@withLock false }
         flow.value = flow.value.copy(saving = true)
         try {
             val result = source.save(id, diff)
             // A later keystroke must not be replaced by the result of this earlier write.
             val latest = flow.value.draft
             flow.value = flow.value.copy(saved = result, draft = if (latest == draft) EditLogic.draft(result) else latest,
-                saving = false, note = "Đã lưu", problem = "")
+                saving = false, problem = "")
             true
         } catch (error: Exception) {
             if (error is CancellationException) throw error
-            flow.value = flow.value.copy(saving = false, problem = error.message ?: "Bạn hãy thử lưu lại.", note = "Chưa lưu")
+            flow.value = flow.value.copy(saving = false, problem = error.message ?: "Bạn hãy thử lưu lại.")
             false
         }
     }
@@ -77,16 +76,15 @@ class BookEditor(val id: String, private val source: EditSource, private val sco
 
     fun send() {
         if (flow.value.sending) return
-        flow.value = flow.value.copy(sending = true, problem = "")
+        flow.value = flow.value.copy(sending = true, sendProblem = "")
         scope.launch {
             if (!flush()) { flow.value = flow.value.copy(sending = false); return@launch }
             try {
                 val result = source.send(id)
-                flow.value = flow.value.copy(saved = result, draft = EditLogic.rebase(flow.value.saved, flow.value.draft, result),
-                    note = if (result.pending == 0) "Đã gửi phần sửa" else "Còn ${result.pending} thay đổi chờ gửi")
+                flow.value = flow.value.copy(saved = result, draft = EditLogic.rebase(flow.value.saved, flow.value.draft, result))
             } catch (error: Exception) {
                 if (error is CancellationException) throw error
-                flow.value = flow.value.copy(problem = "${error.message.orEmpty()} Phần sửa vẫn được giữ trên máy bạn.")
+                flow.value = flow.value.copy(sendProblem = "${error.message.orEmpty()} Phần sửa vẫn được giữ trên máy bạn.")
             } finally { flow.value = flow.value.copy(sending = false) }
         }
     }
@@ -97,7 +95,7 @@ class BookEditor(val id: String, private val source: EditSource, private val sco
         return try {
             val saved = block()
             val latest = flow.value.draft
-            flow.value = EditState(saved, if (latest == before) EditLogic.draft(saved) else latest, loading = false, note = "Đã lưu")
+            flow.value = EditState(saved, if (latest == before) EditLogic.draft(saved) else latest, loading = false)
             true
         } catch (error: Exception) {
             if (error is CancellationException) throw error

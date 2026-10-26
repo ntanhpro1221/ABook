@@ -45,6 +45,9 @@ object Motion {
     /** Nút phát <-> dừng: biến hình nét vẽ, không mờ chéo (120 ms). */
     val GlyphMorph: FiniteAnimationSpec<Float> = tween(MotionMs.FAST, easing = Standard)
 
+    /** Đổi sáng / tối: vòng lan từ chỗ chạm phủ cả màn (300 ms, chuẩn) - hình học, không mờ chéo. */
+    val ThemeReveal: FiniteAnimationSpec<Float> = tween(MotionMs.SLOW, easing = Standard)
+
     /** Nhấn thu 0,97 trong 90 ms, thả về trong 120 ms (§5.2). */
     const val PRESS_SCALE = 0.97f
     val PressDown: FiniteAnimationSpec<Float> = tween(MotionMs.FAST_OUT, easing = Standard)

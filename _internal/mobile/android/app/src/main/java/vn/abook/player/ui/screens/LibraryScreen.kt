@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -47,37 +46,30 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import vn.abook.player.ui.components.BookCover
-import vn.abook.player.ui.components.PlayPauseGlyph
 import vn.abook.player.ui.components.RemoteIcon
 import vn.abook.player.ui.components.ScreenHeader
 import vn.abook.player.ui.components.SheetHost
 import vn.abook.player.ui.components.pressable
 import vn.abook.player.ui.data.CoverLoader
-import vn.abook.player.ui.data.Fmt
 import vn.abook.player.ui.data.Library
 import vn.abook.player.ui.data.LibraryState
 import vn.abook.player.ui.data.ListenBook
 import vn.abook.player.ui.data.ListenLogic
-import vn.abook.player.ui.data.PlayerState
 import vn.abook.player.ui.data.ShelfTile
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import kotlin.math.roundToInt
 
-/** Việc mà Thư viện nhờ nơi khác làm (mở trang sách, phát, mở trình phát, thêm sách) - tách khỏi màn để thử và để dựng ảnh chụp. */
+/** Việc mà Thư viện nhờ nơi khác làm (mở trang sách, phát ngay, thêm sách) - tách khỏi màn để thử và để dựng ảnh chụp. */
 @Stable
 class LibraryActions(
     val openBook: (ListenBook) -> Unit,
-    val togglePlay: (String) -> Unit,
     val playNow: (String) -> Unit,
-    val openNowPlaying: () -> Unit,
     val addBook: () -> Unit,
 )
 
@@ -85,15 +77,15 @@ class LibraryActions(
 internal fun libraryColumns(widthDp: Int): Int = (widthDp / 120).coerceAtLeast(2)
 
 /**
- * Thư viện (DESIGN.md §7): đầu màn + "Thêm sách", hàng "Đang nghe" lớn, bộ lọc / xếp / tìm, lưới bìa luôn mở (bộ nhiều tập gom một bìa, chạm mở bảng các tập,
- * giữ bìa là phát). Mọi mục lưới có `key` + `contentType`; chuyển động chạy theo khung (vạch, trượt lưới, ô tìm) chỉ đọc trong pha vẽ / dàn trang.
+ * Thư viện (DESIGN.md §7): đầu màn + "Thêm sách", bộ lọc / xếp / tìm, lưới bìa luôn mở (bộ nhiều tập gom một bìa, chạm mở bảng các tập,
+ * giữ bìa là phát). KHÔNG có hàng "Đang nghe": cuốn đang nghe chỉ hiện và chỉ điều khiển ở thanh phát nhỏ (một cửa duy nhất).
+ * Mọi mục lưới có `key` + `contentType`; chuyển động chạy theo khung (vạch, trượt lưới, ô tìm) chỉ đọc trong pha vẽ / dàn trang.
  */
 @Composable
 fun LibraryScreen(
     state: LibraryState,
     ui: LibraryUiState,
     grid: LazyGridState,
-    player: PlayerState,
     covers: CoverLoader,
     sheets: SheetHost,
     actions: LibraryActions,
@@ -123,7 +115,7 @@ fun LibraryScreen(
                 BasicText("Thêm sách để bắt đầu nghe.", style = Abook.type.bodySmall)
             }
         } else {
-            LibraryGrid(books, ui, grid, player, covers, sheets, actions, top) { coords[1] = it }
+            LibraryGrid(books, ui, grid, covers, sheets, actions, top) { coords[1] = it }
         }
         SortMenu(ui, anchor, backEnabled)
     }
@@ -134,16 +126,13 @@ private fun LibraryGrid(
     books: List<ListenBook>,
     ui: LibraryUiState,
     grid: LazyGridState,
-    player: PlayerState,
     covers: CoverLoader,
     sheets: SheetHost,
     actions: LibraryActions,
     top: Dp,
     onSortCoordinates: (LayoutCoordinates) -> Unit,
 ) {
-    val view = remember(books, ui.shown, ui.query, ui.sort, player.bookId) {
-        Library.view(books, ui.shown, ui.query, ui.sort, player.bookId.ifEmpty { null })
-    }
+    val view = remember(books, ui.shown, ui.query, ui.sort) { Library.view(books, ui.shown, ui.query, ui.sort) }
     val widthDp = LocalConfiguration.current.screenWidthDp
     val columns = libraryColumns(widthDp)
     val cell = ((widthDp - 2f * Dim.margin.value - (columns - 1) * Dim.s12.value) / columns).dp
@@ -156,16 +145,12 @@ private fun LibraryGrid(
         horizontalArrangement = Arrangement.spacedBy(Dim.s12),
         verticalArrangement = Arrangement.spacedBy(Dim.s16),
     ) {
+        // Đầu trang + hàng lọc là MỘT ô: khoảng cách lưới (16) không cộng thêm vào lề dưới của đầu trang thành một khoảng trống lớn trên hàng lọc.
         item(key = "header", span = { GridItemSpan(maxLineSpan) }, contentType = "header") {
-            ScreenHeader("Thư viện", subtitle = "${books.size} cuốn", trailing = { AddBookButton(actions.addBook) })
-        }
-        view.listening?.let { book ->
-            item(key = "continue", span = { GridItemSpan(maxLineSpan) }, contentType = "continue") {
-                ContinueRow(book, player, covers, actions, Modifier.padding(bottom = Dim.s8))
+            Column {
+                ScreenHeader("Thư viện", subtitle = "${books.size} cuốn", trailing = { AddBookButton(actions.addBook) })
+                FilterBar(ui, onSortCoordinates)
             }
-        }
-        item(key = "filters", span = { GridItemSpan(maxLineSpan) }, contentType = "filters") {
-            FilterBar(ui, onSortCoordinates)
         }
         if (view.tiles.isEmpty()) {
             item(key = "none", span = { GridItemSpan(maxLineSpan) }, contentType = "none") { NoMatch() }
@@ -183,54 +168,6 @@ private fun NoMatch() {
         BasicText("Không có sách nào", style = Abook.type.sectionTitle)
         Spacer(Modifier.height(Dim.s4))
         BasicText("Thử bộ lọc hay từ khoá khác.", style = Abook.type.bodySmall)
-    }
-}
-
-/**
- * "Đang nghe": hàng lớn không khung - bìa, tên, chỗ nghe tiếp, vạch tiến độ, nút phát tròn. Chạm hàng là nghe tiếp (đang phát rồi thì mở trình phát); nút tròn phát / dừng.
- */
-@Composable
-private fun ContinueRow(book: ListenBook, player: PlayerState, covers: CoverLoader, actions: LibraryActions, modifier: Modifier) {
-    val colors = Abook.colors
-    val current = player.bookId == book.id
-    val playing = current && player.playing
-    val resume = book.resume
-    val where = when {
-        current && player.chapterTitle.isNotEmpty() -> player.chapterTitle
-        resume != null -> Fmt.resumeWhere(resume.chapterTitle, resume.at)
-        else -> ListenLogic.progressText(book)
-    }
-    val fraction = book.progress.fraction
-    Row(
-        modifier.fillMaxWidth().pressable { if (playing) actions.openNowPlaying() else actions.playNow(book.id) }.testTag("continue_row"),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        BookCover(book.cover, book.title, book.part, covers, 80.dp, Modifier.width(80.dp))
-        Spacer(Modifier.width(Dim.s16))
-        Column(Modifier.weight(1f)) {
-            BasicText("Đang nghe", style = Abook.type.caption.copy(color = colors.accentText, fontWeight = FontWeight.Medium))
-            BasicText(book.title, style = Abook.type.sectionTitle)
-            BasicText(where, style = Abook.type.bodySmall)
-            Spacer(Modifier.height(Dim.s8))
-            Box(
-                Modifier.fillMaxWidth().height(3.dp).clip(RoundedCornerShape(2.dp)).drawBehind {
-                    drawRect(colors.line)
-                    drawRect(colors.accent, Offset.Zero, Size(size.width * fraction, size.height))
-                },
-            )
-            if (book.remote != null) {
-                Spacer(Modifier.height(Dim.s4))
-                BasicText(ListenLogic.remotePlace(book), style = Abook.type.caption)
-            }
-        }
-        Spacer(Modifier.width(Dim.s12))
-        Box(
-            Modifier.size(56.dp).pressable { actions.togglePlay(book.id) }.clip(CircleShape).background(colors.accent)
-                .semantics { contentDescription = if (playing) "Tạm dừng" else "Phát" }.testTag("continue_play"),
-            contentAlignment = Alignment.Center,
-        ) {
-            PlayPauseGlyph(playing, colors.accentInk, 28.dp)
-        }
     }
 }
 

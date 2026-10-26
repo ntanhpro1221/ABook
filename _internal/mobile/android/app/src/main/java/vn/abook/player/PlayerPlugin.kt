@@ -184,12 +184,7 @@ class PlayerPlugin : Plugin() {
         call.getString("readAloudDefault")?.let { ReadAloud.chooseDefault(it) }
         // Nhà cung cấp giọng trực tuyến người nghe đã đồng ý gửi chữ tới: lõi tự sang chương chữ chỉ khi giọng đang chọn đã được đồng ý.
         call.getArray("readAloudOnlineOk")?.let { list -> ReadAloud.allowOnline((0 until list.length()).map { list.optString(it) }) }
-        call.getBoolean("autoMusic")?.let {
-            // Sách chữ đang nghe mà chưa chọn nhạc: bật / tắt "Tự chọn nhạc nền" đổi nhạc theo cảnh ngay, không đợi mở lại sách.
-            if (it != Playlists.autoEnabled) MusicBed.invalidate(Playback.bookId)
-            Playlists.autoEnabled = it
-            MusicBed.rememberAuto(it)
-        }
+        call.getBoolean("autoMusic")?.let(MusicBed::chooseAuto)
         // Tuỳ chọn thử nghiệm (mặc định tắt): nhạc lặp qua MỘT trình phát nối chính xác từng mẫu (MusicBed.musicSeamP3); chỉ ảnh hưởng bài mở sau đó.
         call.getBoolean("musicSeamP3")?.let { MusicBed.rememberSeamP3(it) }
     }

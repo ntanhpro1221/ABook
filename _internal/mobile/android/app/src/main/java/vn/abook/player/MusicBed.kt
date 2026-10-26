@@ -338,6 +338,19 @@ object MusicBed {
         }
     }
 
+    /**
+     * Bật / tắt "Tự chọn nhạc nền" (Cài đặt của cả hai giao diện): sách chữ đang nghe mà chưa chọn nhạc thì đổi nhạc theo cảnh ngay, không đợi mở lại sách;
+     * nhớ qua lần khởi động tiến trình.
+     */
+    fun chooseAuto(value: Boolean) {
+        if (value != Playlists.autoEnabled) invalidate(Playback.bookId)
+        Playlists.autoEnabled = value
+        rememberAuto(value)
+    }
+
+    /** Lựa chọn "Tự chọn nhạc nền" đã nhớ (mặc định bật) - đọc thẳng kho, không cần [init]. */
+    fun rememberedAuto(appContext: Context): Boolean = prefs(appContext).getBoolean(AUTO_KEY, true)
+
     /** Nhớ lựa chọn "Tự chọn nhạc nền" ([Playlists.autoEnabled]) qua lần khởi động tiến trình. */
     fun rememberAuto(value: Boolean) {
         val appContext = context ?: return

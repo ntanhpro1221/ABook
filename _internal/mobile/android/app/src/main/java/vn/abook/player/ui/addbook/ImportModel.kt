@@ -47,6 +47,11 @@ data class ImportState(
 
 /** File order is preserved: native imports never navigate away automatically for a package. */
 object ImportLogic {
+    private val spaces = Regex("\\s+")
+
+    /** Tên đang gõ khác tên gốc (khoảng trắng thừa không tính). */
+    fun renamed(current: String, original: String) = current.trim().replace(spaces, " ") != original.trim().replace(spaces, " ")
+
     fun settle(items: List<ImportItem>, id: Long, stage: ImportStage, problem: String = "", bookId: String? = null) =
         items.map { if (it.id == id) it.copy(stage = stage, problem = problem, bookId = bookId) else it }
 

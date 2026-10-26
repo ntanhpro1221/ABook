@@ -81,6 +81,34 @@ class EditLogicTest {
         scope.cancel()
     }
 
+    @Test fun onlyChangedFieldsAreSaved() = runBlocking {
+        val source = FakeEditSource(saved)
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        val editor = BookEditor("b", source, scope)
+        // Khoảng trắng đổi chứ chữ không đổi: không ghi gì.
+        editor.change { it.copy(author = "  Nguyễn  Nhật Ánh ", title = " Tên sách") }
+        assertTrue(editor.flush())
+        assertEquals(emptyList<EditDiff>(), source.saves)
+        // Chỉ tên đổi: chỉ tên được ghi, tác giả và chương không có mặt trong lần ghi.
+        editor.change { it.copy(title = "Tên mới") }
+        assertTrue(editor.flush())
+        assertEquals(listOf(EditDiff(title = "Tên mới")), source.saves)
+        scope.cancel()
+    }
+
+    @Test fun cropGestureKeepsTheWindowCenterAndStaysInsideTheImage() {
+        val start = CropChoice(1f, 0f, 0f)
+        val before = CropLogic.rect(3000, 500, start)
+        val zoomed = CropLogic.transform(3000, 500, start, 0f, 0f, 2f)
+        val after = CropLogic.rect(3000, 500, zoomed)
+        assertEquals(2f, zoomed.zoom, 0f)
+        assertEquals(before.left + before.width / 2f, after.left + after.width / 2f, 2f)
+        val dragged = CropLogic.transform(3000, 500, zoomed, 100000f, -100000f, 1f)
+        val far = CropLogic.rect(3000, 500, dragged)
+        assertTrue(far.left + far.width <= 3000 && far.top >= 0)
+        assertEquals(1f, CropLogic.transform(800, 1200, start, 5f, 5f, 0.1f).zoom, 0f)
+    }
+
     @Test fun failedSaveKeepsDraftAndRetrySendsExactDiff() = runBlocking {
         val source = FakeEditSource(saved)
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
@@ -98,9 +126,11 @@ class EditLogicTest {
 
 internal class FakeEditSource(var snapshot: EditSnapshot) : EditSource {
     var fail = false
+    val saves = mutableListOf<EditDiff>()
     override suspend fun load(id: String) = snapshot
     override suspend fun save(id: String, diff: EditDiff): EditSnapshot {
         if (fail) error("Không ghi được file")
+        saves += diff
         snapshot = snapshot.copy(title = diff.title ?: snapshot.title, author = diff.author ?: snapshot.author,
             chapters = snapshot.chapters.map { old -> diff.chapters.firstOrNull { it.id == old.id } ?: old })
         return snapshot

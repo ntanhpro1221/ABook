@@ -28,11 +28,17 @@ class EditBookRepo(private val context: Context, private val library: LibraryRep
         val book = Store.manifest(id) ?: Store.streamManifest(id)?.let { Store.streamed(id, it) }
             ?: error("Không tìm thấy sách. Bạn hãy quay lại Thư viện.")
         val array = book.optJSONArray("chapters")
+        val dir = Store.bookDir(id)
+        // Tên trong file gốc (trước lớp sửa) để hiện "Về tên gốc": cuốn nghe thẳng chưa tải có stream.json cạnh lớp sửa, không có thì để trống.
+        val originals = BookEdits.rawBookOrNull(dir)?.optJSONArray("chapters")?.let { raw ->
+            (0 until raw.length()).mapNotNull { raw.optJSONObject(it) }.associate { row ->
+                row.optLong("id") to listOf(row.optString("title"), row.optString("subtitle")).filter { it.isNotEmpty() && it != "null" }.joinToString(": ")
+            }
+        }.orEmpty()
         val chapters = (0 until (array?.length() ?: 0)).mapNotNull { index ->
             val row = array?.optJSONObject(index) ?: return@mapNotNull null
-            EditChapter(row.optLong("id"), row.optString("title"), row.optString("subtitle"))
+            EditChapter(row.optLong("id"), row.optString("title"), row.optString("subtitle"), originals[row.optLong("id")].orEmpty())
         }
-        val dir = Store.bookDir(id)
         val edits = BookEdits.load(dir)
         val pending = EditsSync.pending(dir, edits)
         val sync = EditsSync.view(dir, pending)

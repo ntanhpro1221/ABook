@@ -10,6 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import vn.abook.player.ui.data.ListenBook
+import vn.abook.player.ui.data.SettingsGroup
 import vn.abook.player.ui.motion.Motion
 import vn.abook.player.ui.motion.ScreenGeometry
 
@@ -18,6 +19,7 @@ import vn.abook.player.ui.motion.ScreenGeometry
 sealed interface Destination {
     data object AddBook : Destination
     data class ImportReview(val itemId: Long) : Destination
+    data class ImportChapter(val itemId: Long, val index: Int) : Destination
     data class EditBook(val book: ListenBook) : Destination
     data class EditChapter(val book: ListenBook, val chapterId: Long) : Destination
     data class CropCover(val book: ListenBook, val uri: String) : Destination
@@ -27,6 +29,10 @@ sealed interface Destination {
     /** Trình phát đầy đủ - giữ chỗ cho tới khi màn thật vào (thanh phát nhỏ gọi onOpenNowPlaying để tới đây). */
     @Immutable
     data object NowPlaying : Destination
+
+    /** Một nhóm Cài đặt (cấp hai, cũng là cấp cuối: Cài đặt -> nhóm -> mục). */
+    @Immutable
+    data class Settings(val group: SettingsGroup) : Destination
 }
 
 /** Một mục của ngăn xếp: `key` ổn định để Compose giữ trạng thái màn khi nó đổi chỗ (trên cùng -> bên dưới). */
