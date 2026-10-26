@@ -39,6 +39,7 @@ import vn.abook.player.ui.devices.DevicesPage
 import vn.abook.player.ui.devices.DevicesState
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.voice.VoicePage
+import vn.abook.player.ui.music.MusicState
 import vn.abook.player.ui.voice.VoiceState
 import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.theme.ThemeReveal
@@ -55,6 +56,8 @@ class SettingsLinks(
 class SettingsEnv(
     val repo: SettingsRepo, val reveal: ThemeReveal, val links: SettingsLinks = SettingsLinks(), val devices: DevicesState? = null,
     val voice: VoiceState? = null,
+    /** Nhạc nền của từng cuốn (trang sách, trình phát); null = bản thử. */
+    val music: MusicState? = null,
 )
 
 /**
