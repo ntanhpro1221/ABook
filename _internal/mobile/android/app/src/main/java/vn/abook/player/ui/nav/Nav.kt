@@ -26,6 +26,9 @@ sealed interface Destination {
     data class EditBook(val book: ListenBook) : Destination
     data class EditChapter(val book: ListenBook, val chapterId: Long) : Destination
     data class CropCover(val book: ListenBook, val uri: String) : Destination
+
+    /** "Tìm ảnh bìa" của Sửa sách (đi từ bảng ảnh bìa, Back về lại Sửa sách). */
+    data class CoverSearch(val book: ListenBook) : Destination
     @Immutable
     data class Book(val book: ListenBook) : Destination
 

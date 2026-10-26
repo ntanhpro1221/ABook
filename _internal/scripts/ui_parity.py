@@ -1181,7 +1181,8 @@ def pair_diff(web: Scan, native: Scan, spec: dict) -> dict:
     n = label_items(sorted(set(native.items), key=lambda i: (i.file, i.line, i.text)), NATIVE_ROOT, nf, bool(spec.get("sentences")))
     # `web_also`: file web chỉ để làm ĐỐI CHIẾU cho chữ native (nhãn chung nằm ở file khác); chữ của chúng không bị đòi phải có ở native.
     w_all = dict(w)
-    for key, found in label_items(sorted(set(web.items), key=lambda i: (i.file, i.line, i.text)), WEB_ROOT, match_files(spec.get("web_also", []), web_names)).items():
+    for key, found in label_items(sorted(set(web.items), key=lambda i: (i.file, i.line, i.text)), WEB_ROOT, match_files(spec.get("web_also", []), web_names),
+                                  bool(spec.get("sentences"))).items():
         w_all.setdefault(key, found)
     only = spec.get("only")  # "web": chỉ đòi nhãn web phải có ở native (không đòi chiều ngược lại)
 

@@ -90,6 +90,62 @@ class ImportLogicTest {
         scope.cancel()
     }
 
+    @Test fun unfinishedCountsOnlyBooksNotYetInTheLibrary() {
+        val items = ImportStage.entries.mapIndexed { index, stage -> ImportItem(index.toLong(), "f$index", stage = stage) }
+        // Chờ, đang đọc, đang xem: chưa vào Thư viện. Đang thêm / đã thêm / đã có / bỏ qua / lỗi: không tính.
+        assertEquals(3, ImportLogic.unfinished(items))
+        assertEquals(0, ImportLogic.unfinished(emptyList()))
+        assertEquals("Còn 3 cuốn chưa thêm vào thư viện. Đóng bây giờ thì các cuốn ấy sẽ không được thêm.", ImportLogic.leaveQuestion(3))
+    }
+
+    @Test fun addingNeedsAChapterUnlessItOnlyOpensTheBookAlreadyThere() {
+        val none = ImportLogic.defaults(preview).copy(picked = emptySet())
+        assertFalse(ImportLogic.canAdd(preview, none))
+        assertTrue(ImportLogic.canAdd(preview, ImportLogic.defaults(preview)))
+        assertEquals(setOf(1, 2, 3), ImportLogic.all(preview))
+        val existing = preview.copy(existingId = "x")
+        assertTrue(ImportLogic.canAdd(existing, none))
+        assertFalse(ImportLogic.canAdd(existing, none.copy(separate = true)))
+    }
+
+    @Test fun droppingTheRestDiscardsTheStagedBookAndEmptiesTheQueue() = runBlocking {
+        val source = FakeImportSource(preview)
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        val queue = ImportQueue(source, scope)
+        queue.enqueue(listOf("one", "two", "three"))
+        assertEquals(1L, queue.state.value.currentId)
+        assertEquals(3, ImportLogic.unfinished(queue.state.value.items))
+        assertTrue(queue.dropRest())
+        assertEquals(ImportState(), queue.state.value)
+        assertEquals(listOf("ref1"), source.discarded)
+        // Hàng đã bỏ không đọc tiếp cuốn nào; chọn file mới thì hàng chạy lại từ đầu.
+        assertEquals(listOf("one"), source.read)
+        queue.enqueue(listOf("four"))
+        assertEquals(listOf("one", "four"), source.read)
+        scope.cancel()
+    }
+
+    @Test fun droppingTheRestWaitsWhileABookIsBeingWritten() = runBlocking {
+        val gate = CompletableDeferred<Unit>()
+        val fake = FakeImportSource(preview)
+        val source = object : ImportSource by fake {
+            override suspend fun add(ref: String, preview: ImportPreview, choices: ImportChoices): Pair<String, Boolean> {
+                gate.await()
+                return fake.add(ref, preview, choices)
+            }
+        }
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        val queue = ImportQueue(source, scope)
+        queue.enqueue(listOf("one", "two", "three"))
+        queue.add()
+        assertEquals(ImportStage.Adding, queue.state.value.items[0].stage)
+        assertFalse(queue.dropRest())
+        assertEquals(3, queue.state.value.items.size)
+        gate.complete(Unit)
+        assertEquals(ImportStage.Added, queue.state.value.items[0].stage)
+        scope.cancel()
+    }
+
     @Test fun latePreviewCannotOverwriteActiveItemBecauseQueueWaitsForDecision() = runBlocking {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         val result = CompletableDeferred<PreparedImport>()
@@ -124,5 +180,6 @@ internal class FakeImportSource(private val preview: ImportPreview) : ImportSour
         addedChoices = choices
         return "book" to false
     }
-    override suspend fun discard(ref: String) = Unit
+    val discarded = mutableListOf<String>()
+    override suspend fun discard(ref: String) { discarded += ref }
 }
