@@ -278,6 +278,13 @@ class NativeActivity : ComponentActivity() {
         if (level >= ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN) app.covers.trim()
     }
 
+    override fun onDestroy() {
+        // Application sống lâu hơn Activity (phát nền sau khi bạn bấm Back): gỡ cầu nối của Activity này, không giữ cả cây Compose đã huỷ.
+        if (app.deviceLinks === deviceLinks) app.deviceLinks = DeviceLinks()
+        if (app.exportLinks === exportLinks) app.exportLinks = ExportLinks()
+        super.onDestroy()
+    }
+
     companion object {
         /** Extra của Intent: số sách giả thay Thư viện thật (đo đạc, chỉ bản -PnativeUi). */
         const val DEMO_BOOKS = "abook.demo.books"
