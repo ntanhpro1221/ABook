@@ -21,8 +21,8 @@ KOTLIN_OUT = ROOT / "mobile/android/app/src/main/java/vn/abook/player/ui/compone
 ICONS = sorted({
     "arrow-down-wide-narrow", "arrow-left", "audio-lines", "bluetooth", "book-open-text", "check", "chevron-down", "chevron-right", "chevron-up",
     "circle-dashed", "clapperboard", "download", "eighth-note", "ellipsis", "file", "file-down", "folder-open", "headphones", "image-plus", "key-round", "laptop",
-    "library", "list-ordered", "minus", "monitor-smartphone", "moon", "moon-star", "palette", "panel-left-close", "panel-left-open", "pause",
-    "pencil", "play", "plus", "refresh-cw", "rotate-ccw", "search", "settings", "share-2", "skip-back", "skip-forward", "smartphone", "square",
+    "library", "list-ordered", "minus", "monitor-smartphone", "moon", "moon-star", "palette", "panel-left-close", "panel-left-open", "pause", "pin",
+    "pencil", "play", "plus", "refresh-cw", "rotate-ccw", "search", "settings", "share-2", "shuffle", "skip-back", "skip-forward", "smartphone", "square",
     "trash-2", "upload", "wrench", "x",
 })
 

@@ -2,6 +2,7 @@ package vn.abook.player.ui.music
 
 import androidx.compose.runtime.Immutable
 import org.json.JSONObject
+import vn.abook.player.ui.data.Fmt
 
 /*
  * Nhạc nền của một cuốn, cho giao diện native. Cùng hình JSON với lõi (GET /music của LocalStudio, `/api/music/playlists`, `musicCredit` của Playback.state)
@@ -32,6 +33,40 @@ data class BookMusic(
     val playlistAuto: Boolean = false,
     val autoOff: Boolean = false,
     val error: String = "",
+    /** Các đoạn nhạc người làm sách gắn (chỉ sách nói có nhạc gắn sẵn), theo thứ tự nghe. */
+    val cues: List<MusicCue> = emptyList(),
+)
+
+/**
+ * Một đoạn nhạc gắn sẵn: `key` = "chương:mili giây bắt đầu" (BookEdits.cueKey). `title` / `creator` là của bài đang ở đoạn ấy (bài của bạn nếu đã đổi).
+ * `silenced`: người nghe cho đoạn này im. `pinned`: đã đổi sang một bài trong Nhạc của tôi.
+ */
+@Immutable
+data class MusicCue(
+    val key: String,
+    val chapterId: Long,
+    val chapter: String,
+    val start: Double,
+    val end: Double,
+    val title: String = "",
+    val creator: String = "",
+    val silenced: Boolean = false,
+    val pinned: Boolean = false,
+) {
+    /** Đoạn đang kêu ở chỗ nghe này (mốc cuối thuộc đoạn sau). */
+    fun holds(chapterId: Long, seconds: Double): Boolean = this.chapterId == chapterId && seconds >= start && seconds < end
+}
+
+/** Một bài trong Nhạc của tôi có thể thay vào một đoạn ("Đổi bài"): `vocalsLikely` = máy nghe thấy có vẻ có lời, `fits` = hợp không khí đoạn này. */
+@Immutable
+data class MineTrack(
+    val link: String,
+    val title: String,
+    val creator: String,
+    val duration: Double,
+    val analysed: Boolean,
+    val vocalsLikely: Boolean = false,
+    val fits: Boolean = false,
 )
 
 /** Ghi công bài nhạc đang kêu (CC BY đòi nêu tên ở nơi nhạc phát): chỉ khoá nào lõi có. */
@@ -85,7 +120,26 @@ object MusicJson {
         playlistAuto = json.optBoolean("playlistAuto"),
         autoOff = json.optBoolean("autoOff"),
         error = text(json, "error"),
+        cues = json.optJSONArray("cues")?.let { rows ->
+            (0 until rows.length()).mapNotNull { rows.optJSONObject(it) }.map { row ->
+                MusicCue(
+                    text(row, "key"), row.optLong("chapterId"), text(row, "chapter"), row.optDouble("start", 0.0), row.optDouble("end", 0.0),
+                    text(row, "title"), text(row, "creator"), row.optBoolean("silenced"), row.optBoolean("pinned"),
+                )
+            }.filter { it.key.isNotEmpty() }
+        }.orEmpty(),
     )
+
+    /** Lời đáp "Đổi bài" (`mine` của alternatives): bài đã phân tích trước, rồi theo tên. */
+    fun mine(json: JSONObject): List<MineTrack> {
+        val rows = json.optJSONArray("mine") ?: return emptyList()
+        return (0 until rows.length()).mapNotNull { rows.optJSONObject(it) }.map { row ->
+            MineTrack(
+                text(row, "link"), text(row, "title"), text(row, "creator"), row.optDouble("duration", 0.0), row.optBoolean("analysed"),
+                row.optBoolean("vocalsLikely"), row.optBoolean("fits"),
+            )
+        }.filter { it.link.isNotEmpty() }
+    }
 
     fun credit(json: JSONObject?): MusicCredit? {
         json ?: return null
@@ -100,15 +154,25 @@ object MusicJson {
 object MusicLevels {
     const val DEFAULT_DB = -20.0
 
-    /** Nhãn ô ngắn (lưới ba cột như tốc độ); "Vừa" là mặc định của máy. */
-    val levels: List<Pair<Double, String>> = listOf(-14.0 to "To", -17.0 to "Hơi to", -20.0 to "Vừa", -24.0 to "Nhỏ", -28.0 to "Rất nhỏ")
+    /** Cùng chữ với web (shared/musicLevels.ts MUSIC_LEVELS, đã kèm lời levelText): -28 là mức nhạc khó che lời đọc nhất (MIX_QA mục 7.1). */
+    val levels: List<Pair<Double, String>> = listOf(
+        -14.0 to "To", -17.0 to "Hơi to", -20.0 to "Vừa (mặc định)", -24.0 to "Nhỏ", -28.0 to "Rất nhỏ (dễ nghe lời nhất)",
+    )
 
-    /** -28 là mức nhạc khó che lời đọc nhất (MIX_QA mục 7.1). */
-    const val CLEAREST_NOTE = "Rất nhỏ: dễ nghe lời nhất."
+    /** Tên ô chọn mức của web: "Mức nhạc dưới giọng đọc". */
+    const val TITLE = "Mức nhạc dưới giọng đọc"
 
-    /** Các ô: mức có sẵn, thêm mức của sách (sách đóng gói ở -18 dB) nếu không trùng mức nào - xếp từ to tới nhỏ. */
+    /** Các mức: có sẵn, thêm mức của sách (sách đóng gói ở -18 dB, "-18 dB (của sách)" như levelOptions) nếu không trùng mức nào - xếp từ to tới nhỏ. */
     fun options(current: Double): List<Pair<Double, String>> =
-        if (levels.any { it.first == current }) levels else (levels + (current to "Của sách")).sortedByDescending { it.first }
+        if (levels.any { it.first == current }) levels
+        else (levels + (current to "${decibels(current)} dB (của sách)")).sortedByDescending { it.first }
+
+    /** Như `String(current).replace(".", ",")` của web: -18 -> "-18", -18.5 -> "-18,5". */
+    private fun decibels(value: Double): String =
+        if (value == Math.rint(value)) value.toLong().toString() else value.toString().replace('.', ',')
+
+    /** Chữ của mức đang chọn. */
+    fun label(current: Double): String = options(current).firstOrNull { it.first == current }?.second.orEmpty()
 }
 
 /** Chữ của nhạc nền trên điện thoại (cùng luật với playlistBed.ts, nhãn ngắn). */
@@ -121,7 +185,8 @@ object MusicText {
     const val OFF_LABEL = "Tắt"
     const val SCENE_LABEL = "Theo cảnh"
     const val MINE_LABEL = "Nhạc của tôi"
-    const val ADD_LABEL = "Thêm nhạc"
+    /** playlistBed.ts ADD_MUSIC_LABEL. */
+    const val ADD_LABEL = "Thêm nhạc của bạn"
     const val PACKAGED_NOTE = "Nhạc do người làm sách chọn. Đổi ở đây chỉ trên máy này."
     const val AUTO_OFF_NOTE = "\"Tự chọn nhạc nền\" đang tắt trong Cài đặt."
     const val BROKEN_PACKAGED = "Bài nhạc chương này không phát được."
@@ -166,12 +231,12 @@ object MusicText {
     /** Các dòng: Để máy chọn, Tắt, Theo cảnh (máy dựng được), các danh sách của danh mục, Nhạc của tôi (trống thì không chọn được). */
     fun options(menu: MusicMenu?, book: BookMusic?): List<MusicOption> = buildList {
         val auto = if (book?.playlistAuto == true) nameOf(menu, book.playlist.orEmpty()) else ""
-        add(MusicOption(null, AUTO_LABEL, if (book?.autoOff == true) "đang tắt" else auto))
+        add(MusicOption(null, AUTO_LABEL, if (book?.autoOff == true) "đang tắt trong Cài đặt" else auto))
         add(MusicOption(OFF, OFF_LABEL))
         if (menu?.scene == true) add(MusicOption(SCENE, SCENE_LABEL, description = "Máy tự dựng, đổi theo từng cảnh của truyện."))
         for (item in menu?.playlists.orEmpty()) add(MusicOption(item.id, item.name, length(item.minutes), item.description))
         val mine = menu?.mine ?: 0
-        add(MusicOption(MINE, MINE_LABEL, if (mine > 0) "$mine bài" else "chưa có bài", disabled = mine == 0))
+        add(MusicOption(MINE, MINE_LABEL, if (mine > 0) "$mine bài" else "chưa có bài nào", disabled = mine == 0))
     }
 
     /** Lời dưới danh sách: chỉ khi có điều cần biết (lỗi, bài hỏng, tự chọn đang tắt) - không nhắc suông. */
@@ -209,6 +274,45 @@ object MusicText {
         if (CC_CODE.matches(lower)) return "CC ${lower.uppercase()}"
         return raw
     }
+
+    // ---- từng đoạn nhạc gắn sẵn --------------------------------------------------------------------------------------------------
+
+    // Cùng chữ với Sửa sách > Nhạc nền của web (listen/EditBook.tsx MusicSection, MyMusic.tsx SwapTrack).
+    const val PACKAGED_SWITCH = "Nhạc nền"
+    const val ON = "Bật"
+    const val SILENCE_LABEL = "Im lặng"
+    const val UNSILENCE_LABEL = "Có nhạc"
+    const val SWAP_LABEL = "Đổi bài"
+    const val ORIGINAL_LABEL = "Về bài gốc"
+    const val CHOOSE_LABEL = "Chọn"
+    const val NO_MINE = "Chưa có bài nào khác trong Nhạc của tôi."
+    const val SWAP_FAILED = "Bạn hãy kiểm tra kết nối rồi tìm lại bài nhạc."
+    const val LOAD_FAILED = "Bạn hãy thử tải lại nhạc nền của cuốn này."
+    const val NONE = "Người làm sách không gắn nhạc nền cho cuốn này."
+
+    /** "Nhạc nền: Bật" - nhãn công tắc nói trạng thái (web: chữ trên nút đổi theo trạng thái thì không biết là hiện tại hay việc sẽ làm). */
+    fun switchLabel(enabled: Boolean): String = "$PACKAGED_SWITCH: ${if (enabled) ON else OFF_LABEL}"
+
+    /** Tên bài của một đoạn (không tên thì "Nhạc nền"). */
+    fun cueTitle(cue: MusicCue): String = cue.title.trim().ifEmpty { "Nhạc nền" }
+
+    /** Dòng phụ của một đoạn, như web: chương · khoảng giờ · tác giả · "bài của bạn" khi đã đổi (im lặng thì tên bài gạch ngang). */
+    fun cueLine(cue: MusicCue): String = listOf(
+        cue.chapter.trim(), "${Fmt.clock(cue.start)} – ${Fmt.clock(cue.end)}", cue.creator.trim(), if (cue.pinned) "bài của bạn" else "",
+    ).filter { it.isNotEmpty() }.joinToString(" · ")
+
+    /** Dòng phụ của một bài để đổi (SwapTrack): nghệ sĩ · độ dài. */
+    fun mineLine(track: MineTrack): String =
+        listOf(track.creator.trim(), if (track.duration > 0) Fmt.clock(track.duration) else "").filter { it.isNotEmpty() }.joinToString(" · ")
+
+    /**
+     * Dòng chú thích dưới một bài (studio/musicLocal.ts `mineNote`; điện thoại không có công tắc tự chọn nên `auto` luôn là mặc định):
+     * có vẻ có lời, hợp không khí đoạn này, hay chưa phân tích. Không có gì đáng nói thì "".
+     */
+    fun mineNote(track: MineTrack): String = listOf(
+        if (track.analysed && track.vocalsLikely) "Có vẻ có lời - máy không tự chọn bài này" else "",
+        if (track.analysed) (if (track.fits) "Hợp không khí đoạn này" else "") else "Chưa phân tích - máy chưa tự chọn, bạn vẫn ghim được",
+    ).filter { it.isNotEmpty() }.joinToString(" · ")
 
     /** Giấy phép đòi ghi công (khác cc0; nhạc bạn tự thêm không có giấy phép) thì kèm [MODIFIED_NOTE]. */
     fun needsModifiedNote(license: String): Boolean = license.trim().lowercase().let { it.isNotEmpty() && it != "cc0" }
