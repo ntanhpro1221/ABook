@@ -52,6 +52,11 @@
           "side": "web",
           "match": "^(nhạc của cuốn này\\..*)$",
           "reason": "computer only: the book is a Studio project on this computer, so music changes go to Studio (no Studio projects on the phone)"
+        },
+        {
+          "side": "web",
+          "label": "Shift F10: sửa cách đọc.",
+          "reason": "computer only: keyboard hint read by screen readers (the phone opens the same sheet with a long press)"
         }
       ],
       "missing": [

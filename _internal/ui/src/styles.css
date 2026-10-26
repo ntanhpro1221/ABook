@@ -295,6 +295,14 @@ textarea[class~="border-line"]:not(:focus):not(:focus-visible) {
   border-color: var(--control-line);
 }
 
+/* Ô nhập tắt vòng chung (outline-none) và báo tiêu điểm bằng viền --focus (focus:border-focus): một mình viền 1 px đổi màu quá mảnh để
+   người đi bằng phím thấy mình đang ở ô nào. Thêm 1 px bóng cùng màu - vạch tiêu điểm dày 2 px như vòng chung (>= 3:1, `npm run contrast`).
+   Ô trong suốt nằm trong khung (khung mang focus-within:border-focus) thì khung nhận vạch, không phải ô. */
+:is(input, textarea, select)[class~="outline-none"]:not([class~="bg-transparent"], [type="checkbox"], [type="radio"], [type="range"]):focus-visible,
+[class~="focus-within:border-focus"]:focus-within {
+  box-shadow: 0 0 0 1px var(--focus);
+}
+
 /* Ô chọn: mũi tên gốc của trình duyệt (tam giác đen đặc, mỗi máy một kiểu) đổi thành chevron 14 px nét 2 như nút gập; danh sách xổ
    vẫn là của hệ thống. Ngoài lớp như trên để lề phải thắng px-* của từng ô. */
 select[class~="border-line"] {

@@ -22,8 +22,8 @@ function matches(element: Element, target: string | RegExp): boolean {
 
 function visible(element: Element): boolean {
   if (element.closest("[inert], [aria-hidden=true]")) return false;
-  // happy-dom (test) không bố cục - mọi hộp 0x0: coi như thấy.
-  if (navigator.userAgent.includes("HappyDOM")) return true;
+  // happy-dom / jsdom (test) không bố cục - mọi hộp 0x0: coi như thấy.
+  if (/HappyDOM|jsdom/.test(navigator.userAgent)) return true;
   const rect = element.getBoundingClientRect();
   return rect.width > 0 || rect.height > 0;
 }

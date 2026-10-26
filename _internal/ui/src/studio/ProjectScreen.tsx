@@ -315,7 +315,7 @@ export function ProductionPanel({ book }: { book: BookSummary }) {
           </span>
         </p>
       )}
-      <Fold storageKey={`project.${book.id}.steps`} title="Các bước" summary={stepSummary} heading="h3">
+      <Fold storageKey={`project.${book.id}.steps`} title="Các bước" summary={stepSummary}>
       <div className="flex flex-col gap-6 sm:flex-row sm:gap-8">
         <Step
           index={1}
@@ -1178,7 +1178,7 @@ function ActivityView({ book }: { book: BookSummary }) {
         <div className="mt-4 space-y-6">
           {groups.map((group) => (
             <section key={group.day}>
-              <h4 className="label-section mb-2 text-fg-2">{group.day}</h4>
+              <h2 className="label-section mb-2 text-fg-2">{group.day}</h2>
               {/* Hàng lùi sang trái 8 đơn vị (rồi đệm lại) để chấm nằm TRONG hộp hàng: hàng mới mở ra (cắt chiều cao) không cắt mất chấm. */}
               <LogRows as="ol" items={group.items} className="relative space-y-1 border-l border-line pl-5" rowClassName="-ml-8">
                 {(item) => (
@@ -1251,8 +1251,11 @@ export function ProjectTabBar({ tab, onTab, precast, counts }: {
       ))}
       <DropdownMenu.Root>
         <DropdownMenu.Trigger asChild>
+          {/* Nằm trong hàng tab (tablist chỉ được chứa tab): nút cũng là một tab - "đang chọn" khi tab đang mở nằm trong "Thêm". */}
           <button
             type="button"
+            role="tab"
+            aria-selected={inMore}
             data-active={inMore || undefined}
             className="touch-row relative -mb-px inline-flex h-11 shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 border-transparent text-sm font-medium text-fg-2 transition-colors hover:text-fg data-[active]:border-accent data-[active]:text-fg data-[state=open]:text-fg"
           >

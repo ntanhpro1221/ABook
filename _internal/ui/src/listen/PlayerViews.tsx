@@ -42,7 +42,7 @@ import { reveal } from "@/shared/scrollMemory";
 import { cn } from "@/shared/cn";
 import { APP_TITLE } from "@/shared/title";
 import { useMediaQuery } from "@/shared/media";
-import { MUSIC_MODIFIED_NOTE, formatClock, licenseLabel, musicCreditText, musicNeedsModifiedNote, spokenClock } from "@/shared/format";
+import { MUSIC_MODIFIED_NOTE, formatClock, licenseLabel, musicCreditText, musicNeedsModifiedNote } from "@/shared/format";
 import { SelectionMark, announce, busyClick, heardBarProps, IconButton, menuArrowKeys, Sheet, Tooltip, useFocusFollows, Vu } from "@/shared/ui";
 import { Switch } from "@/desktop/PhoneSync";
 import { LEVEL_NOTES, levelOptions } from "@/shared/musicLevels";
@@ -181,7 +181,8 @@ function SeekBar({ large = false }: { large?: boolean }) {
         </Slider.Track>
         <Slider.Thumb
           aria-label="Vị trí trong chương"
-          aria-valuetext={`${spokenClock(clamped)} trên ${spokenClock(duration)}`}
+          // Đọc đúng như chữ trên thanh: "12:30 / 45:00" (vị trí / độ dài chương).
+          aria-valuetext={`${formatClock(clamped)} / ${formatClock(duration)}`}
           className={cn(
             "block rounded-full shadow transition-opacity focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
             large ? "size-4 bg-accent opacity-100" : "size-3 bg-fg opacity-0 group-hover:opacity-100 focus-visible:opacity-100",

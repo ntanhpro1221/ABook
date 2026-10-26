@@ -182,9 +182,9 @@ function EntryView({ entry }: { entry: Entry }) {
   if (entry.kind === "book") return <ProjectRow book={entry.book} />;
   return (
     <section aria-label={entry.name}>
-      <h3 className="px-3 pb-0.5 pt-3 text-xs font-medium text-fg-2">
+      <h2 className="px-3 pb-0.5 pt-3 text-xs font-medium text-fg-2">
         {entry.name} <span className="font-normal">· {entry.books.length} {entry.unit}</span>
-      </h3>
+      </h2>
       {entry.books.map((book) => (
         <ProjectRow key={book.id} book={book} />
       ))}

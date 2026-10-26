@@ -126,11 +126,15 @@ it("tab dự án: tối đa 5 tab hiện, phần còn lại mở được trong 
     </Tabs>
   );
   await render(view("chapters"));
-  const tabs = [...host.querySelectorAll('[role="tab"]')].map(text);
+  // Nút "Thêm" cũng là một tab của hàng (tablist chỉ chứa tab - axe aria-required-children) nhưng mở menu: không tính vào số tab hiện.
+  const tabs = [...host.querySelectorAll('[role="tab"]:not([aria-haspopup])')].map(text);
   expect(tabs.length).toBeLessThanOrEqual(5);
   expect(tabs).toHaveLength(MAIN_TABS.length);
   expect(tabs.map((label) => label.replace(/[\d,\s]*(mục)?$/, ""))).toEqual(["Chương", "Việc cần duyệt", "Cần nghe lại", "Nhân vật", "Nhạc nền"]);
   const more = [...host.querySelectorAll("button")].find((button) => text(button).startsWith("Thêm"))!;
+  expect(more.getAttribute("role")).toBe("tab");
+  expect(more.getAttribute("aria-haspopup")).toBe("menu");
+  expect(more.getAttribute("aria-selected")).toBe("false");
   expect(text(more)).toContain("4"); // số của "Duyệt trước khi thu" không mất khi tab nằm trong "Thêm"
   await openMenu(more);
   expect(menuItems().map((label) => label.replace(/\d+$/, ""))).toEqual(["Duyệt trước khi thu", "Kịch bản", "Nhật ký"]);
@@ -141,6 +145,7 @@ it("tab dự án: tối đa 5 tab hiện, phần còn lại mở được trong 
   await render(view("script"));
   const active = [...host.querySelectorAll("button[data-active]")];
   expect(active.map(text)).toEqual(["Kịch bản"]);
+  expect(active[0].getAttribute("aria-selected")).toBe("true");
 });
 
 it("tạo sách nói từ danh sách Studio: ≤ 3 lần bấm tới khi chạy (L10)", async () => {
