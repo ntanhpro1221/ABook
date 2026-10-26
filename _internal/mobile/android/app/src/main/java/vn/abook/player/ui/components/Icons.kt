@@ -351,3 +351,43 @@ fun ImageIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) {
         drawPath(hills, color, style = stroke)
     }
 }
+
+/** Máy tính xách tay: màn hình và đế. */
+@Composable
+fun LaptopIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 22.dp) {
+    val stroke = rememberStroke()
+    Canvas(modifier.icon(size)) {
+        val s = this.size.width
+        drawRoundRect(color, Offset(s * 0.16f, s * 0.2f), Size(s * 0.68f, s * 0.46f), CornerRadius(s * 0.05f), style = stroke)
+        drawLine(color, Offset(s * 0.06f, s * 0.8f), Offset(s * 0.94f, s * 0.8f), stroke.width, StrokeCap.Round)
+    }
+}
+
+/** Điện thoại: thân đứng và chấm ở đáy. */
+@Composable
+fun PhoneIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 22.dp) {
+    val stroke = rememberStroke()
+    Canvas(modifier.icon(size)) {
+        val s = this.size.width
+        drawRoundRect(color, Offset(s * 0.28f, s * 0.1f), Size(s * 0.44f, s * 0.8f), CornerRadius(s * 0.08f), style = stroke)
+        drawCircle(color, s * 0.03f, Offset(s * 0.5f, s * 0.78f))
+    }
+}
+
+/** Bluetooth: nét chữ B gãy. */
+@Composable
+fun BluetoothIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 22.dp) {
+    val stroke = rememberStroke()
+    Canvas(modifier.icon(size)) {
+        val s = this.size.width
+        val path = Path().apply {
+            moveTo(s * 0.28f, s * 0.3f)
+            lineTo(s * 0.72f, s * 0.7f)
+            lineTo(s * 0.5f, s * 0.9f)
+            lineTo(s * 0.5f, s * 0.1f)
+            lineTo(s * 0.72f, s * 0.3f)
+            lineTo(s * 0.28f, s * 0.7f)
+        }
+        drawPath(path, color, style = stroke)
+    }
+}

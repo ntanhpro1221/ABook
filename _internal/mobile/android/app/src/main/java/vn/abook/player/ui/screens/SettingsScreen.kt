@@ -35,6 +35,8 @@ import vn.abook.player.ui.data.SettingsGroup
 import vn.abook.player.ui.data.SettingsRepo
 import vn.abook.player.ui.data.SettingsSummary
 import vn.abook.player.ui.data.VoiceList
+import vn.abook.player.ui.devices.DevicesPage
+import vn.abook.player.ui.devices.DevicesState
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.theme.ThemeReveal
@@ -48,7 +50,7 @@ class SettingsLinks(
 
 /** Mọi thứ màn Cài đặt cần, gom một chỗ để khung chỉ chuyển một tham số: kho, vòng lan đổi giao diện, cửa ra hệ điều hành. */
 @Stable
-class SettingsEnv(val repo: SettingsRepo, val reveal: ThemeReveal, val links: SettingsLinks = SettingsLinks())
+class SettingsEnv(val repo: SettingsRepo, val reveal: ThemeReveal, val links: SettingsLinks = SettingsLinks(), val devices: DevicesState? = null)
 
 /**
  * Tab Cài đặt (cấp một): danh sách phẳng sáu nhóm - biểu tượng + tên + một dòng giá trị hiện tại (DESIGN.md §7 "Cài đặt"); chạm một nhóm thì màn con của nó
@@ -106,13 +108,16 @@ private fun GroupIcon(group: SettingsGroup, color: Color) = when (group) {
 
 /** Màn con của một nhóm (cấp hai, cấp cuối). Bảng trượt (chọn giờ, nhật ký, thành phần) mở qua [sheets] - lớp nổi, không phải cấp thứ ba. */
 @Composable
-fun SettingsGroupScreen(group: SettingsGroup, env: SettingsEnv, sheets: SheetHost, onBack: () -> Unit, modifier: Modifier = Modifier) {
+fun SettingsGroupScreen(
+    group: SettingsGroup, env: SettingsEnv, sheets: SheetHost, onBack: () -> Unit, modifier: Modifier = Modifier,
+    openDevices: (DevicesPage) -> Unit = {},
+) {
     when (group) {
         SettingsGroup.Voice -> VoiceSettings(env.repo, onBack, modifier)
         SettingsGroup.Listen -> ListenSettings(env, onBack, modifier)
         SettingsGroup.Sleep -> SleepSettings(env.repo, sheets, onBack, modifier)
         SettingsGroup.Look -> LookSettings(env, onBack, modifier)
-        SettingsGroup.Devices -> DevicesSettings(onBack, modifier)
+        SettingsGroup.Devices -> DevicesSettings(env.devices, sheets, openDevices, onBack, modifier)
         SettingsGroup.Advanced -> AdvancedSettings(env, sheets, onBack, modifier)
     }
 }

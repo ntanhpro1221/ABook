@@ -7,6 +7,12 @@ import vn.abook.player.ui.components.SwitchRow
 import vn.abook.player.ui.components.ChoiceSetting
 import vn.abook.player.ui.components.ActionRow
 import vn.abook.player.ui.components.Reveal
+import vn.abook.player.ui.components.DisclosureRow
+import vn.abook.player.ui.devices.DevicesPage
+import vn.abook.player.ui.devices.DevicesState
+import vn.abook.player.ui.devices.RenameSheet
+import vn.abook.player.ui.devices.Summary
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -242,18 +248,27 @@ fun LookSettings(env: SettingsEnv, onBack: () -> Unit, modifier: Modifier = Modi
 }
 
 /**
- * Thiết bị: ghép máy tính, chia sẻ thư viện, dung lượng - lõi có (Peers, ShareService, Store) nhưng màn native của chúng là bước "Thiết bị / ghép máy" riêng
- * (NATIVE_PHONE_UI.md §6, P2); tới lúc đó nói thẳng "Sắp có".
+ * Thiết bị: ba màn riêng (Nối máy tính, Chia sẻ thư viện, Dung lượng - [vn.abook.player.ui.devices]) mỗi cái một hàng có mũi tên và một dòng giá trị hiện tại,
+ * rồi tên của máy này (máy kia thấy điện thoại bằng tên ấy; chạm mở bảng đổi tên). `devices` null (ảnh chụp không có lõi): hàng vẫn dựng, chưa có dòng giá trị.
  */
 @Composable
-fun DevicesSettings(onBack: () -> Unit, modifier: Modifier = Modifier) {
+fun DevicesSettings(devices: DevicesState?, sheets: SheetHost, open: (DevicesPage) -> Unit, onBack: () -> Unit, modifier: Modifier = Modifier) {
+    val summary by (devices?.summary ?: NoSummary).collectAsState()
+    LaunchedEffect(devices) { devices?.loadSummary() }
     SettingsPage(SettingsGroup.Devices.label, onBack, SettingsGroup.Devices.screenTag, modifier) {
         ListSection(first = true) {
-            SoonRow("Nối máy tính", "Nghe sách của máy tính, dùng Studio từ xa.", tag = "devices_pair")
+            DisclosureRow("Nối máy tính", { open(DevicesPage.Pair) }, "devices_pair", summary = summary.pair)
             RowLine()
-            SoonRow("Chia sẻ thư viện", "Máy khác trong nhà nghe sách của máy này.", tag = "devices_share")
+            DisclosureRow("Chia sẻ thư viện", { open(DevicesPage.Share) }, "devices_share", summary = summary.sharing)
             RowLine()
-            SoonRow("Dung lượng", "Sách nào chiếm bao nhiêu chỗ trên máy.", tag = "devices_storage")
+            DisclosureRow("Dung lượng", { open(DevicesPage.Storage) }, "devices_storage", summary = summary.storageLine)
+            RowLine()
+            DisclosureRow(
+                "Tên máy này", { if (devices != null) sheets.show { dismiss -> RenameSheet(summary.deviceName, devices, dismiss) } }, "devices_name",
+                summary = summary.deviceName,
+            )
         }
     }
 }
+
+private val NoSummary = kotlinx.coroutines.flow.MutableStateFlow(Summary())
