@@ -147,7 +147,9 @@ fun NowPlayingScreen(
                 alpha = dim.value
                 scaleX = 0.98f + dim.value * 0.02f; scaleY = scaleX
             }) {
-                PlayerSeekBar(state.durationMs, model.position, model::seek, Modifier.playerReveal(windowProgress))
+                PlayerSeekBar(state.durationMs, model.position, model::seek, Modifier.playerReveal(windowProgress)) {
+                    ReturnChip(state.returnAvailable, state.returnSerial, model::returnToPreviousPlace)
+                }
                 Row(Modifier.fillMaxWidth().height(88.dp).testTag("transport"),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly) {
                     GlyphButton("Chương trước", "|‹", model::previous, Modifier.playerReveal(windowProgress))
@@ -190,7 +192,7 @@ private fun SleepAction(sleep: PlayerSleep, position: PlayerPosition, onClick: (
 }
 
 @Composable
-fun PlayerSeekBar(durationMs: Long, position: PlayerPosition, onSeek: (Long) -> Unit, modifier: Modifier = Modifier) {
+fun PlayerSeekBar(durationMs: Long, position: PlayerPosition, onSeek: (Long) -> Unit, modifier: Modifier = Modifier, center: @Composable () -> Unit = {}) {
     val colors = Abook.colors
     val dragging = remember { mutableStateOf(false) }
     val dragged = remember { mutableLongStateOf(0L) }
@@ -230,9 +232,11 @@ fun PlayerSeekBar(durationMs: Long, position: PlayerPosition, onSeek: (Long) -> 
             drawCircle(colors.accent, 5.dp.toPx(), Offset(size.width * fraction, y))
         }
         // Isolated second-resolution labels. The frame clock never recomposes the transport or chapter.
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            RollingLabel(PlayerLabels.time(seconds * 1000), style = Abook.type.caption)
-            RollingLabel("−" + PlayerLabels.time(durationMs - seconds * 1000), style = Abook.type.caption)
+        // Hàng giờ cao cố định: chip ở giữa hiện / ẩn không bao giờ đẩy hàng nút phát.
+        Box(Modifier.fillMaxWidth().height(32.dp)) {
+            RollingLabel(PlayerLabels.time(seconds * 1000), Modifier.align(Alignment.TopStart), style = Abook.type.caption)
+            Box(Modifier.align(Alignment.TopCenter)) { center() }
+            RollingLabel("−" + PlayerLabels.time(durationMs - seconds * 1000), Modifier.align(Alignment.TopEnd), style = Abook.type.caption)
         }
     }
 }
@@ -273,6 +277,31 @@ fun PlayerModeSwitch(mode: State<Float>, onSelect: (Boolean) -> Unit, modifier: 
         val placeables = measurables.map { it.measure(Constraints.fixed(segment, constraints.maxHeight)) }
         layout(segment * 2, constraints.maxHeight) {
             placeables.forEachIndexed { i, p -> p.place(segment * i, 0) }
+        }
+    }
+}
+
+/**
+ * "Về chỗ cũ": ngay sau khi bạn tua / nhảy, nằm đúng chỗ vừa thao tác (giữa hàng giờ dưới thanh tua) trong 10 giây - không phải một hàng tắt sẵn
+ * trong menu "…". Vào / ra bằng trượt dọc qua khe cắt.
+ */
+@Composable
+private fun ReturnChip(available: Boolean, serial: Int, onReturn: () -> Unit) {
+    var shown by remember { mutableStateOf(false) }
+    LaunchedEffect(available, serial) {
+        shown = available
+        if (available) { kotlinx.coroutines.delay(10_000); shown = false }
+    }
+    Box(Modifier.clipToBounds()) {
+        androidx.compose.animation.AnimatedVisibility(shown,
+            enter = androidx.compose.animation.slideInVertically(tween(MotionMs.MEDIUM)) { it },
+            exit = androidx.compose.animation.slideOutVertically(tween(MotionMs.MEDIUM_OUT)) { it }) {
+            BasicText("Về chỗ cũ", Modifier
+                .background(Abook.colors.accentSoft, androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
+                .pressable { shown = false; onReturn() }
+                .testTag("return_place")
+                .padding(horizontal = 14.dp, vertical = 6.dp),
+                style = Abook.type.caption.copy(color = Abook.colors.accentText, fontWeight = FontWeight.Medium))
         }
     }
 }

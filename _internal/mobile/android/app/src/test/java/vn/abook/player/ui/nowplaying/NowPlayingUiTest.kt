@@ -137,6 +137,42 @@ class NowPlayingUiTest {
         rule.onNodeWithTag("mode_listen").assertIsSelected()
     }
 
+    @Test fun moreSheetHoldsOnlyWhatThePhoneLacks() {
+        show(sheet = PlayerSheet.More)
+        shot("more_light")
+        // Âm lượng thiết bị là việc của phím cứng; hàng "Sắp có" tắt sẵn không phải lựa chọn; "Về chỗ cũ" nằm cạnh thanh tua.
+        listOf("Âm lượng", "Sắp có", "Chỗ vừa nghe").forEach {
+            assertTrue("còn hàng \"$it\"", rule.onAllNodesWithText(it, substring = true).fetchSemanticsNodes().isEmpty())
+        }
+        rule.onNodeWithText("Nhạc nền").performClick()
+        assertTrue(model.state.value.musicEnabled)
+        rule.onNodeWithTag("player_sheet_more").assertIsDisplayed()
+    }
+    @Test fun sheetHandleReallyDragsAndCloses() {
+        show(sheet = PlayerSheet.Speed)
+        assertTrue("không còn nút đóng trùng Back", rule.onAllNodesWithContentDescription("Đóng bảng").fetchSemanticsNodes().size <= 1)
+        rule.onNodeWithTag("player_sheet_grip").performTouchInput { swipeDown(startY = centerY, endY = centerY + 40f, durationMillis = 300) }
+        rule.onNodeWithTag("player_sheet_speed").assertIsDisplayed()
+        rule.onNodeWithTag("player_sheet_grip").performTouchInput { swipeDown(startY = centerY, endY = centerY + 900f, durationMillis = 200) }
+        rule.waitForIdle()
+        rule.onNodeWithTag("player_sheet_speed").assertDoesNotExist()
+        rule.onNodeWithTag("now_playing").assertIsDisplayed()
+    }
+    @Test fun returnChipAppearsAfterSeekAndNeverMovesTransport() {
+        show()
+        val before = bounds("transport")
+        rule.onNodeWithTag("return_place").assertDoesNotExist()
+        rule.runOnUiThread { model.skip(15) }
+        rule.waitForIdle()
+        rule.onNodeWithTag("return_place").assertIsDisplayed()
+        shot("return_chip_light")
+        assertBounds(before, bounds("transport"), 0.1f)
+        rule.onNodeWithTag("return_place").performClick()
+        assertTrue("return" in model.actions)
+        rule.onNodeWithTag("return_place").assertDoesNotExist()
+        assertBounds(before, bounds("transport"), 0.1f)
+    }
+
     @Test fun readingModeKeepsTransportAtExactlyTheSameCoordinates() {
         show()
         val before = bounds("transport")

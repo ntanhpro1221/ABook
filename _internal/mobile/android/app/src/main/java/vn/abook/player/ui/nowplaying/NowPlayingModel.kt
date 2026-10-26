@@ -49,9 +49,9 @@ data class NowPlayingState(
     val readAlongAvailable: Boolean = false,
     val error: String = "",
     val musicEnabled: Boolean = false,
-    val volume: Int = 0,
-    val maxVolume: Int = 15,
     val returnAvailable: Boolean = false,
+    /** Tăng mỗi lần tua / nhảy: chip "Về chỗ cũ" hiện lại và đếm lại từ đầu. */
+    val returnSerial: Int = 0,
     val voices: List<PlayerVoice> = emptyList(),
     val voiceId: String = "",
 )
@@ -78,7 +78,6 @@ interface NowPlayingModel {
     fun setRate(rate: Double)
     fun setSleep(kind: SleepKind, minutes: Int = 0)
     fun setMusic(enabled: Boolean)
-    fun setVolume(value: Int)
     fun setVoice(id: String)
     suspend fun loadVoices()
     fun setReadAlongActive(active: Boolean)

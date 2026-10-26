@@ -32,7 +32,11 @@ class FakeNowPlayingModel(initial: NowPlayingState = demoState(), initialText: R
     fun setPosition(ms: Long) { positionMs.longValue = ms }
     override fun toggle() { actions += "toggle"; metadata.value = state.value.copy(playing = !state.value.playing) }
     override fun skip(seconds: Int) { actions += "skip:$seconds"; seek(positionMs.longValue + seconds * 1000) }
-    override fun seek(milliseconds: Long) { actions += "seek:$milliseconds"; setPosition(milliseconds.coerceIn(0, state.value.durationMs)) }
+    override fun seek(milliseconds: Long) {
+        actions += "seek:$milliseconds"
+        metadata.value = state.value.copy(returnAvailable = true, returnSerial = state.value.returnSerial + 1)
+        setPosition(milliseconds.coerceIn(0, state.value.durationMs))
+    }
     override fun jump(chapterId: Int) {
         actions += "jump:$chapterId"
         val chapter = state.value.chapters.firstOrNull { it.id == chapterId } ?: return
@@ -47,11 +51,10 @@ class FakeNowPlayingModel(initial: NowPlayingState = demoState(), initialText: R
         metadata.value = state.value.copy(sleep = PlayerSleep(kind, minutes * 60_000L, realtime.longValue, state.value.playing, minutes))
     }
     override fun setMusic(enabled: Boolean) { metadata.value = state.value.copy(musicEnabled = enabled) }
-    override fun setVolume(value: Int) { metadata.value = state.value.copy(volume = value.coerceIn(0, state.value.maxVolume)) }
     override fun setVoice(id: String) { metadata.value = state.value.copy(voiceId = id) }
     override suspend fun loadVoices() { actions += "loadVoices" }
     override fun setReadAlongActive(active: Boolean) {}
-    override fun returnToPreviousPlace() { actions += "return" }
+    override fun returnToPreviousPlace() { actions += "return"; metadata.value = state.value.copy(returnAvailable = false) }
     override suspend fun loadReadAlong() { actions += "loadText" }
 
     companion object {
