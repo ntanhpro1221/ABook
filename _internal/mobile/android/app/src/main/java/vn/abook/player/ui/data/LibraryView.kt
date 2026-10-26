@@ -45,15 +45,13 @@ sealed interface ShelfTile {
 /** Kết quả đã lọc + xếp + gom bộ: cái màn Thư viện vẽ. */
 @Immutable
 class LibraryView(
-    /** Cuốn của hàng "Đang nghe", hay null. */
-    val listening: ListenBook?,
     val tiles: List<ShelfTile>,
     /** Số cuốn khớp bộ lọc + ô tìm, và số cuốn cả thư viện. */
     val shown: Int,
     val total: Int,
 ) {
     companion object {
-        val Empty = LibraryView(null, emptyList(), 0, 0)
+        val Empty = LibraryView(emptyList(), 0, 0)
     }
 }
 
@@ -139,16 +137,15 @@ object Library {
     }
 
     /**
-     * Cái màn vẽ: sách chỉ có chữ hay nghe được vào lưới; lọc theo bộ lọc + ô tìm (không dấu), xếp, gom bộ. Hàng "Đang nghe" theo cuốn đang
-     * ở trình phát (`playingId`), không theo bộ lọc / ô tìm.
+     * Cái màn vẽ: sách chỉ có chữ hay nghe được vào lưới; lọc theo bộ lọc + ô tìm (không dấu), xếp, gom bộ.
      */
-    fun view(books: List<ListenBook>, filter: LibraryFilter, query: String, sort: LibrarySort, playingId: String?): LibraryView {
+    fun view(books: List<ListenBook>, filter: LibraryFilter, query: String, sort: LibrarySort): LibraryView {
         val folded = ListenLogic.fold(query.trim())
         val twins = ListenLogic.twinIds(books)
         val shown = sort(
             books.filter { (filter == LibraryFilter.All || stateOf(it) == filter) && ListenLogic.matches(it, folded) },
             sort,
         )
-        return LibraryView(ListenLogic.listeningBook(books, playingId), tiles(shown, twins), shown.size, books.size)
+        return LibraryView(tiles(shown, twins), shown.size, books.size)
     }
 }

@@ -3,7 +3,10 @@ package vn.abook.player.ui
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.test.assertContentDescriptionEquals
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -27,11 +30,16 @@ import vn.abook.player.ui.data.CoverLoader
 import vn.abook.player.ui.data.FakePlaybackCore
 import vn.abook.player.ui.data.LibraryState
 import vn.abook.player.ui.data.ListenBook
+import vn.abook.player.ui.data.LoadRequest
+import vn.abook.player.ui.data.FakeSettingsCore
 import vn.abook.player.ui.data.PlayerRepo
+import vn.abook.player.ui.data.SettingsRepo
 import vn.abook.player.ui.data.playerSnapshot
 import vn.abook.player.ui.shell.AppShell
 import vn.abook.player.ui.shell.ShellState
+import vn.abook.player.ui.screens.SettingsEnv
 import vn.abook.player.ui.theme.AbookTheme
+import vn.abook.player.ui.theme.ThemeReveal
 
 /**
  * Khung native chạy trên JVM (Robolectric): ảnh chụp sáng / tối bằng Roborazzi (ghi: -Proborazzi.test.record=true; so: verifyRoborazziDebug) và
@@ -47,6 +55,8 @@ class ShellScreenshotTest {
     private val books = List(12) { ListenBook("b$it", "Tên sách số ${it + 1} khá dài để xuống dòng", "Tác giả ${it + 1}") }
     private lateinit var shell: ShellState
     private lateinit var scope: CoroutineScope
+    private val settingsCore = FakeSettingsCore()
+    private val settings = SettingsRepo(settingsCore, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined)
 
     private fun repo(playing: Boolean? = null): PlayerRepo {
         val core = FakePlaybackCore(playerSnapshot(chapter = if (playing == null) null else 1, playing = playing == true))
@@ -58,7 +68,7 @@ class ShellScreenshotTest {
             AbookTheme(dark) {
                 scope = rememberCoroutineScope()
                 shell = remember { ShellState(scope) }
-                AppShell(shell, library, player, CoverLoader(1 shl 20))
+                AppShell(shell, library, player, CoverLoader(1 shl 20), SettingsEnv(settings, ThemeReveal(scope)))
             }
         }
     }
@@ -100,19 +110,50 @@ class ShellScreenshotTest {
     fun settingsTabDark() {
         show(dark = true)
         rule.onNodeWithTag("tab_settings").performClick()
-        rule.onNodeWithText("Cài đặt sắp có.").assertIsDisplayed()
+        rule.onNodeWithTag("settings_screen").assertIsDisplayed()
         shot("shell_settings_dark")
+    }
+
+    @Test
+    fun settingsGroupSlidesInAndBackReturnsToTheList() {
+        show()
+        rule.onNodeWithTag("tab_settings").performClick()
+        rule.onNodeWithTag("settings_look").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("settings_look_screen").assertIsDisplayed()
+        assertEquals(1, shell.nav.stack.size)
+        shot("shell_settings_look_light")
+        rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+        rule.waitForIdle()
+        rule.onNodeWithTag("settings_look_screen").assertDoesNotExist()
+        rule.onNodeWithTag("settings_screen").assertIsDisplayed()
+    }
+
+    @Test
+    fun settingsGroupPushHalfwayIsOnTheRightHalf() {
+        show()
+        rule.onNodeWithTag("tab_settings").performClick()
+        rule.waitForIdle()
+        rule.mainClock.autoAdvance = false
+        rule.onNodeWithTag("settings_sleep").performClick()
+        rule.mainClock.advanceTimeBy(150)
+        val left = rule.onNodeWithTag("settings_sleep_screen").getUnclippedBoundsInRoot().left
+        assert(left > 0.dp && left < 360.dp) { "màn nhóm giữa chừng phải nằm giữa hai mép, left=$left" }
+        rule.mainClock.autoAdvance = true
     }
 
     @Test
     fun bookScreenLightAndBack() {
         show()
         rule.onAllNodesWithTag("book_cell")[0].performClick()
-        rule.onNodeWithText("Trang sách sắp có.").assertIsDisplayed()
+        rule.onNodeWithTag("book_title").assertIsDisplayed()
+        // Khung thử không có nguồn sách (BookSource.None): trang nói rõ chưa có chương, không có nút phát giả. Nút phát có ở BookScreenTest.
+        rule.onNodeWithText("Sách chưa có chương nào nghe được trên máy này.").assertIsDisplayed()
+        rule.onNodeWithText("Chương").assertDoesNotExist()
         shot("shell_book_light")
         rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
         rule.waitForIdle()
-        rule.onNodeWithText("Trang sách sắp có.").assertDoesNotExist()
+        rule.onNodeWithTag("book_screen").assertDoesNotExist()
         rule.onNodeWithTag("library_grid").assertIsDisplayed()
     }
 
@@ -183,5 +224,35 @@ class ShellScreenshotTest {
         rule.waitForIdle()
         rule.onNodeWithTag("mini_play").performClick()
         assertEquals(listOf("toggle"), core.calls)
+    }
+
+    // ---- một cửa "Đang nghe" ----
+
+    @Test
+    fun aFreshLaunchShowsTheLastBookPausedInTheMiniBarAndPlayStartsThatBookAtItsSpot() {
+        // App vừa mở, lõi phát trống, người dùng đã nghe cuốn b3 tới chương 7, 12:04.
+        val core = FakePlaybackCore(playerSnapshot(book = "", chapter = null), simulate = true)
+        val last = LoadRequest("b3", books[3].title, "", emptyList(), 7, 724.0, 1.0)
+        val repo = PlayerRepo(core, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, { null }, { null }, { last }).also { it.attach() }
+        show(player = repo)
+        rule.waitForIdle()
+        rule.onNodeWithTag("mini_player").assertIsDisplayed()
+        rule.onNodeWithTag("mini_play").assertContentDescriptionEquals("Phát")
+        rule.onNodeWithText("Chương 7").assertIsDisplayed()
+        // Một cửa: trên màn chỉ có MỘT nút phát / dừng, dù cuốn đang nghe cũng nằm trong lưới; thư viện không có hàng "Đang nghe".
+        rule.onAllNodes(hasContentDescription("Phát") or hasContentDescription("Tạm dừng"), useUnmergedTree = true).assertCountEquals(1)
+        rule.onNodeWithTag("continue_row").assertDoesNotExist()
+        shot("shell_mini_restored_light")
+        assertEquals("chưa phát gì", emptyList<String>(), core.calls)
+        rule.onNodeWithTag("mini_play").performClick()
+        rule.waitForIdle()
+        assertEquals(listOf("toggle"), core.calls)
+        assertEquals("phát đúng cuốn đã nạp, không nạp lại", listOf("b3"), core.loads.map { it.id })
+        assertEquals(7, core.loads.single().startChapterId)
+        assertEquals(724.0, core.loads.single().startSeconds, 0.0)
+        assertEquals(true, repo.state.value.playing)
+        assertEquals("b3", repo.state.value.bookId)
+        assertEquals(724_000L, repo.clock.positionMs.value)
+        rule.onNodeWithTag("mini_play").assertContentDescriptionEquals("Tạm dừng")
     }
 }

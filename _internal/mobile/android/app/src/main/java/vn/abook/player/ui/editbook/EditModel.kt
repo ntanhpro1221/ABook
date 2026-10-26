@@ -4,8 +4,11 @@ import androidx.compose.runtime.Immutable
 import vn.abook.player.ui.data.CoverRef
 
 @Immutable
-data class EditChapter(val id: Long, val title: String, val subtitle: String = "") {
+data class EditChapter(val id: Long, val title: String, val subtitle: String = "", val original: String = "") {
     val shown: String get() = listOf(title, subtitle).filter { it.isNotEmpty() }.joinToString(": ")
+
+    /** Tên đang hiện khác tên trong file gốc (cuốn nghe thẳng chưa tải không có bản gốc: không bao giờ "đã đổi"). */
+    val renamed: Boolean get() = original.isNotEmpty() && EditLogic.tidy(original) != EditLogic.tidy(shown)
 }
 
 @Immutable
@@ -26,7 +29,7 @@ data class EditDiff(val title: String? = null, val author: String? = null, val c
 @Immutable
 data class EditState(
     val saved: EditSnapshot? = null, val draft: EditDraft? = null, val loading: Boolean = true,
-    val saving: Boolean = false, val sending: Boolean = false, val problem: String = "", val note: String = "",
+    val saving: Boolean = false, val sending: Boolean = false, val problem: String = "", val sendProblem: String = "",
 )
 
 object EditLogic {
@@ -63,6 +66,25 @@ data class CropChoice(val zoom: Float = 1f, val x: Float = 0f, val y: Float = 0f
 data class CropRect(val left: Int, val top: Int, val width: Int, val height: Int)
 
 object CropLogic {
+    /**
+     * Một cử chỉ (kéo `panX`/`panY` tính bằng điểm ảnh của ảnh, chụm `zoomBy`) lên khung cắt: khung đổi cỡ quanh tâm của chính nó, rồi dời, và không bao giờ
+     * rời ảnh. Trả lựa chọn mới ([rect] dựng lại đúng khung ấy).
+     */
+    fun transform(width: Int, height: Int, choice: CropChoice, panX: Float, panY: Float, zoomBy: Float): CropChoice {
+        val before = rect(width, height, choice)
+        val zoom = (choice.zoom * zoomBy).coerceIn(1f, 4f)
+        val size = rect(width, height, choice.copy(zoom = zoom))
+        fun fraction(center: Float, length: Int, whole: Int): Float {
+            val slack = whole - length
+            return if (slack <= 0) 0f else ((center - length / 2f) / slack).coerceIn(0f, 1f) * 2f - 1f
+        }
+        return CropChoice(
+            zoom,
+            fraction(before.left + before.width / 2f + panX, size.width, width),
+            fraction(before.top + before.height / 2f + panY, size.height, height),
+        )
+    }
+
     fun rect(width: Int, height: Int, choice: CropChoice): CropRect {
         require(width > 0 && height > 0)
         val zoom = choice.zoom.coerceIn(1f, 4f)

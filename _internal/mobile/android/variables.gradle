@@ -17,6 +17,8 @@ ext {
     composeBomVersion = '2026.06.01'
     lifecycleComposeVersion = '2.10.0'
     profileInstallerVersion = '1.4.1'
+    composeRuntimeTracingVersion = '1.11.4'
+    tracingPerfettoVersion = '1.0.1'
     macrobenchmarkVersion = '1.5.0'
     uiAutomatorVersion = '2.4.0'
     robolectricVersion = '4.17'

@@ -18,7 +18,6 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
@@ -34,6 +33,7 @@ import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.Constraints
@@ -43,6 +43,7 @@ import kotlinx.coroutines.CancellationException
 import vn.abook.player.ui.components.SheetHost
 import vn.abook.player.ui.components.SheetLayer
 import vn.abook.player.ui.components.pressable
+import vn.abook.player.ui.data.BookSource
 import vn.abook.player.ui.data.CoverLoader
 import vn.abook.player.ui.data.LibrarySort
 import vn.abook.player.ui.data.LibraryState
@@ -57,23 +58,25 @@ import vn.abook.player.ui.player.MiniPlayer
 import vn.abook.player.ui.player.MiniPlayerSlot
 import vn.abook.player.ui.addbook.AddBookRoute
 import vn.abook.player.ui.addbook.ImportQueue
+import vn.abook.player.ui.addbook.ImportChapterRoute
 import vn.abook.player.ui.addbook.ImportReviewRoute
 import vn.abook.player.ui.editbook.EditBooks
 import vn.abook.player.ui.editbook.EditBookRoute
 import vn.abook.player.ui.editbook.EditChapterRoute
 import vn.abook.player.ui.editbook.CoverCropRoute
 import vn.abook.player.ui.screens.BookScreen
+import vn.abook.player.ui.screens.BookScreenActions
 import vn.abook.player.ui.screens.LibraryActions
 import vn.abook.player.ui.screens.LibraryScreen
 import vn.abook.player.ui.screens.LibraryUiState
 import vn.abook.player.ui.screens.NowPlayingPlaceholder
+import vn.abook.player.ui.screens.SettingsEnv
+import vn.abook.player.ui.screens.SettingsGroupScreen
 import vn.abook.player.ui.screens.SettingsScreen
 import vn.abook.player.ui.screens.StudioScreen
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import kotlin.math.abs
-import kotlin.math.ceil
-import kotlin.math.floor
 import kotlin.math.max
 
 /** Mọi trạng thái sống của khung (ngăn xếp, tab, vị trí cuộn từng tab) ở MỘT chỗ - tab rời khỏi cây vẫn giữ chỗ cuộn. */
@@ -89,11 +92,23 @@ class ShellState(scope: CoroutineScope, onSortChanged: (LibrarySort) -> Unit = {
 /**
  * Khung app: ngăn xếp màn con (trượt phải / Back dự đoán) trên ba tab (trượt ngang), thanh phát nhỏ trên thanh tab ở mọi màn gốc, bảng trượt trên tất cả.
  * Gốc = [RootTabs]. `onFirstContent` gọi một lần khi Thư viện đã có nội dung (reportFullyDrawn); ngay sau đó các tab chưa hiện được dựng trước lúc rảnh.
+ * `books`: kho của trang sách (đọc chương, đánh dấu, sửa, xoá) - mặc định không có (ảnh chụp chỉ cần phần đầu trang).
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun AppShell(shell: ShellState, library: LibraryState, player: PlayerRepo, covers: CoverLoader, onFirstContent: () -> Unit = {},
-    imports: ImportQueue? = null, editors: EditBooks? = null, demo: Boolean = false, autoPick: Boolean = false) {
+fun AppShell(
+    shell: ShellState,
+    library: LibraryState,
+    player: PlayerRepo,
+    covers: CoverLoader,
+    settings: SettingsEnv,
+    onFirstContent: () -> Unit = {},
+    books: BookSource = BookSource.None,
+    imports: ImportQueue? = null,
+    editors: EditBooks? = null,
+    demo: Boolean = false,
+    autoPick: Boolean = false,
+) {
     val nav = shell.nav
     val playerState by player.state.collectAsState()
     PredictiveBackHandler(enabled = nav.canPop) { events ->
@@ -114,31 +129,42 @@ fun AppShell(shell: ShellState, library: LibraryState, player: PlayerRepo, cover
     val actions = remember(shell, player) {
         LibraryActions(
             openBook = { book -> shell.nav.push(Destination.Book(book)) },
-            togglePlay = player::togglePlay,
             playNow = player::playNow,
-            openNowPlaying = { openNowPlaying(shell.nav) },
             addBook = { shell.nav.push(Destination.AddBook) },
+        )
+    }
+    val openPlayer = remember(shell) { { openNowPlaying(shell.nav) } }
+    val bookActions = remember(shell, player) {
+        BookScreenActions(
+            back = shell.nav::pop,
+            playBook = player::togglePlay,
+            toggle = player::toggle,
+            playChapter = player::playChapter,
+            deleted = shell.nav::pop,
+            edit = { shell.nav.push(Destination.EditBook(it)) },
         )
     }
     Box(Modifier.fillMaxSize().background(Abook.colors.bg).semantics { testTagsAsResourceId = true }) {
         ScreenStack(
             nav = nav,
-            root = { RootTabs(shell, library, playerState, player, covers, actions) },
+            root = { RootTabs(shell, library, playerState, player, covers, actions, openPlayer, settings) },
             screen = { destination ->
                 when (destination) {
                     is Destination.Book -> BookScreen(
-                        (library as? LibraryState.Ready)?.books?.firstOrNull { it.id == destination.book.id } ?: destination.book,
-                        covers, onBack = nav::pop, onEdit = { nav.push(Destination.EditBook(destination.book)) })
+                        destination.book, library, playerState, player.clock, covers, books, shell.sheets, bookActions,
+                    )
                     Destination.AddBook -> if (imports != null) AddBookRoute(imports, nav::pop,
                         { nav.push(Destination.ImportReview(it)) }, { id ->
                             (library as? LibraryState.Ready)?.books?.firstOrNull { it.id == id }?.let { nav.push(Destination.Book(it)) }
                         }, autoPick, active = nav.stack.top?.destination == Destination.AddBook && !nav.progress.isRunning)
-                    is Destination.ImportReview -> if (imports != null) ImportReviewRoute(imports, destination.itemId, nav::pop)
-                    is Destination.EditBook -> if (editors != null) EditBookRoute(editors.session(destination.book, demo), covers, nav::pop,
+                    is Destination.ImportReview -> if (imports != null) ImportReviewRoute(imports, destination.itemId, nav::pop) { nav.push(Destination.ImportChapter(destination.itemId, it)) }
+                    is Destination.ImportChapter -> if (imports != null) ImportChapterRoute(imports, destination.index, nav::pop)
+                    is Destination.EditBook -> if (editors != null) EditBookRoute(editors.session(destination.book, demo), covers, shell.sheets, nav::pop,
                         { nav.push(Destination.CropCover(destination.book, it)) }, { nav.push(Destination.EditChapter(destination.book, it)) })
                     is Destination.EditChapter -> if (editors != null) EditChapterRoute(editors.session(destination.book, demo), destination.chapterId, nav::pop)
                     is Destination.CropCover -> if (editors != null) CoverCropRoute(editors.session(destination.book, demo), destination.uri, nav::pop)
                     Destination.NowPlaying -> NowPlayingPlaceholder(playerState, covers, onBack = nav::pop)
+                    is Destination.Settings -> SettingsGroupScreen(destination.group, settings, shell.sheets, onBack = nav::pop)
                 }
             },
         )
@@ -202,6 +228,8 @@ private fun RootTabs(
     repo: PlayerRepo,
     covers: CoverLoader,
     actions: LibraryActions,
+    openNowPlaying: () -> Unit,
+    settings: SettingsEnv,
 ) {
     val tabs = shell.tabs
     // Thanh phát nhỏ giữ bài cuối cùng khi thu về (không nháy nội dung rỗng giữa lúc thu lại).
@@ -214,15 +242,19 @@ private fun RootTabs(
         TabHost(tabs, Modifier.weight(1f)) { tab ->
             when (tab) {
                 Tab.Library -> LibraryScreen(
-                    library, shell.library, shell.libraryGrid, player, covers, shell.sheets, actions, backEnabled = backToLibrary,
+                    library, shell.library, shell.libraryGrid, covers, shell.sheets, actions, backEnabled = backToLibrary,
                 )
                 Tab.Studio -> StudioScreen()
-                Tab.Settings -> SettingsScreen()
+                Tab.Settings -> SettingsScreen(
+                    settings,
+                    onOpen = { group -> shell.nav.push(Destination.Settings(group)) },
+                    shown = { tabs.selected == Tab.Settings.ordinal },
+                )
             }
         }
         if (last[0].hasTrack) {
             MiniPlayerSlot(visible = player.hasTrack) {
-                MiniPlayer(last[0], position, covers, onToggle = repo::toggle, onOpenNowPlaying = actions.openNowPlaying)
+                MiniPlayer(last[0], position, covers, onToggle = repo::toggle, onOpenNowPlaying = openNowPlaying)
             }
         }
         TabBar(tabs)
@@ -231,19 +263,22 @@ private fun RootTabs(
 
 /**
  * Nội dung tab trượt ngang theo chỉ số: tab i ở `(i - position)` bề rộng. Tab đã từng hiện ở lại trong cây mãi (đổi tab không dựng lại, trạng thái cuộn
- * ở ShellState); dàn trang chỉ đo và đặt các tab đang lộ ra (low..high), còn vị trí trượt đọc trong khối lớp (pha vẽ).
+ * ở ShellState) và LUÔN được đặt (tab ngoài màn nằm ngoài vùng cắt, HWUI bỏ qua không vẽ): vị trí trượt chỉ đọc trong khối lớp (pha vẽ), nên đổi tab không
+ * làm đổi dàn trang gì. Trước đây tab chỉ được đặt khi lộ ra - mỗi lần Thư viện "đặt lại" là một lượt dàn trang + vẽ lại cả cây của nó (trace trên OPPO:
+ * measureAndLayout 2 ms + draw 3 ms đã AOT, 10-15 + 8-10 ms khi chưa AOT). Tab ngoài màn ẩn khỏi trợ năng (chỉ tab đang chọn được đọc).
  */
 @Composable
 fun TabHost(tabs: TabState, modifier: Modifier = Modifier, content: @Composable (Tab) -> Unit) {
     val mask = tabs.visitedMask
-    val last = Tab.entries.size - 1
-    val low by remember(tabs) { derivedStateOf { floor(tabs.position.value).toInt().coerceIn(0, last) } }
-    val high by remember(tabs) { derivedStateOf { ceil(tabs.position.value).toInt().coerceIn(0, last) } }
     Layout(
         content = {
             for (tab in Tab.entries) {
                 if (mask and (1 shl tab.ordinal) != 0) {
-                    key(tab) { Box(Modifier.layoutId(tab.ordinal).fillMaxSize()) { content(tab) } }
+                    key(tab) {
+                        Box(
+                            Modifier.layoutId(tab.ordinal).fillMaxSize().semantics { if (tabs.selected != tab.ordinal) hideFromAccessibility() },
+                        ) { content(tab) }
+                    }
                 }
             }
         },
@@ -252,15 +287,12 @@ fun TabHost(tabs: TabState, modifier: Modifier = Modifier, content: @Composable 
         val width = constraints.maxWidth
         val height = constraints.maxHeight
         val fixed = Constraints.fixed(width, height)
-        val from = low
-        val to = high
-        // Đo MỌI tab đã dựng (cỡ cố định nên lần sau lấy lại kết quả cũ, gần như miễn phí) để khung đầu của một lần đổi tab không phải đo cả màn;
-        // chỉ ĐẶT tab đang lộ - tab không được đặt thì không vẽ.
+        // Đo và đặt MỌI tab đã dựng (cỡ cố định nên lần sau lấy lại kết quả cũ, gần như miễn phí).
         val placeables = measurables.map { it.measure(fixed) }
         layout(width, height) {
             for (i in measurables.indices) {
                 val index = measurables[i].layoutId as Int
-                if (index in from..to) placeables[i].placeWithLayer(0, 0) { translationX = (index - tabs.position.value) * width }
+                placeables[i].placeWithLayer(0, 0) { translationX = (index - tabs.position.value) * width }
             }
         }
     }

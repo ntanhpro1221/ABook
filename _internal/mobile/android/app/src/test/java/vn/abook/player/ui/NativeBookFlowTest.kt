@@ -7,6 +7,7 @@ import android.graphics.Paint
 import android.net.Uri
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.*
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import com.github.takahirom.roborazzi.captureRoboImage
@@ -22,9 +23,11 @@ import vn.abook.player.ui.addbook.*
 import vn.abook.player.ui.data.*
 import vn.abook.player.ui.editbook.*
 import vn.abook.player.ui.nav.Destination
+import vn.abook.player.ui.screens.SettingsEnv
 import vn.abook.player.ui.shell.AppShell
 import vn.abook.player.ui.shell.ShellState
 import vn.abook.player.ui.theme.AbookTheme
+import vn.abook.player.ui.theme.ThemeReveal
 import java.io.File
 
 @RunWith(RobolectricTestRunner::class)
@@ -46,7 +49,7 @@ class NativeBookFlowTest {
                     override suspend fun add(ref: String, preview: ImportPreview, choices: ImportChoices) = "b" to false
                 } }
                 queue = remember { ImportQueue(source, scope) }
-                AppShell(shell, LibraryState.Ready(listOf(book)), player, CoverLoader(), imports = queue, autoPick = true)
+                AppShell(shell, LibraryState.Ready(listOf(book)), player, CoverLoader(), settings(scope), imports = queue, autoPick = true)
             }
         }
         rule.runOnIdle { queue.enqueue(listOf("Truyện.epub")) }
@@ -68,7 +71,7 @@ class NativeBookFlowTest {
                 val player = remember { PlayerRepo(FakePlaybackCore(playerSnapshot(chapter = null)), scope, Dispatchers.Unconfined, { null }, { null }) }
                 val imports = remember { ImportQueue(FakeImportSource(ImportPreview("Sách", chapters = emptyList())), scope) }
                 val editors = remember { EditBooks(FakeEditSource(snapshot), scope) }
-                AppShell(shell, LibraryState.Ready(listOf(book)), player, CoverLoader(), imports = imports, editors = editors)
+                AppShell(shell, LibraryState.Ready(listOf(book)), player, CoverLoader(), settings(scope), imports = imports, editors = editors)
             }
         }
         rule.onNodeWithTag("add_book").performClick()
@@ -76,7 +79,9 @@ class NativeBookFlowTest {
         back()
         rule.onNodeWithTag("library_grid").assertIsDisplayed()
         rule.onNodeWithTag("book_cell").performClick()
-        rule.onNodeWithTag("edit_book").performClick()
+        rule.onNodeWithTag("book_more").performClick()
+        rule.onNodeWithTag("menu_edit").performClick()
+        rule.onNodeWithTag("edit_book_screen").assertIsDisplayed()
         rule.onNodeWithTag("edit_book_list").performScrollToNode(hasTestTag("edit_chapter_1"))
         rule.onNodeWithTag("edit_chapter_1").performClick()
         rule.onNodeWithTag("chapter_title").performTextReplacement("Khách qua sông")
@@ -91,30 +96,32 @@ class NativeBookFlowTest {
         rule.onNodeWithTag("library_grid").assertIsDisplayed()
     }
 
-    @Test fun chapterLight() = chapter(false, "edit_chapter_light")
-    @Test fun chapterDark() = chapter(true, "edit_chapter_dark")
-    private fun chapter(dark: Boolean, name: String) {
-        rule.setContent { AbookTheme(dark) {
-            val scope = rememberCoroutineScope()
-            val editor = remember { BookEditor("b", FakeEditSource(snapshot), scope) }
-            EditChapterRoute(editor, 1) {}
-        } }
-        rule.onNodeWithTag("chapter_title").assertIsDisplayed()
-        shot(name)
-    }
-
-    @Test fun footnotesLight() = footnotes(false, "add_footnotes_light")
-    @Test fun footnotesDark() = footnotes(true, "add_footnotes_dark")
-    private fun footnotes(dark: Boolean, name: String) {
-        val preview = ImportPreview("Chuyến phà cuối ngày", chapters = listOf(ImportChapter(1, "Chương 1")),
-            footnoteCount = 12, footnoteMarks = 12, footnoteExample = "hàng cây²\nLời chú về cây bên sông.")
-        var state by mutableStateOf(ImportState(preview = preview, choices = ImportLogic.defaults(preview)))
-        rule.setContent { AbookTheme(dark) { ImportReviewScreen(state, {}, {}, { state = state.copy(choices = it(state.choices)) }, {}, {}) } }
-        rule.onNodeWithText("Bỏ số gọi").performClick()
-        assertTrue(state.choices.hideMarks)
-        rule.onNodeWithText("Bỏ số gọi").performClick()
-        assertFalse(state.choices.hideMarks)
-        shot(name)
+    @Test fun reviewChapterNameIsASubScreenAndBackKeepsTheName() {
+        lateinit var queue: ImportQueue
+        lateinit var shell: ShellState
+        rule.setContent {
+            AbookTheme {
+                val scope = rememberCoroutineScope()
+                shell = remember { ShellState(scope) }
+                val player = remember { PlayerRepo(FakePlaybackCore(playerSnapshot(chapter = null)), scope, Dispatchers.Unconfined, { null }, { null }) }
+                queue = remember { ImportQueue(FakeImportSource(ImportPreview(book.title, chapters = listOf(ImportChapter(1, "Chương 1"), ImportChapter(2, "Chương 2")))), scope) }
+                AppShell(shell, LibraryState.Ready(listOf(book)), player, CoverLoader(), settings(scope), imports = queue, autoPick = true)
+            }
+        }
+        rule.runOnIdle { queue.enqueue(listOf("Truyện.epub")) }
+        rule.onNodeWithTag("add_book").performClick()
+        rule.onNodeWithTag("import_review_screen").assertIsDisplayed()
+        rule.onNodeWithTag("import_review").performScrollToNode(hasTestTag("import_chapter_2_name"))
+        rule.onNodeWithTag("import_chapter_2_name").performClick()
+        rule.onNodeWithTag("import_chapter_screen").assertIsDisplayed()
+        rule.runOnIdle { assertEquals(3, shell.nav.stack.size) }
+        rule.onNodeWithTag("chapter_title").performTextReplacement("Khách qua sông")
+        back()
+        rule.onNodeWithTag("import_review_screen").assertIsDisplayed()
+        rule.runOnIdle { assertEquals(2, shell.nav.stack.size) }
+        rule.onNodeWithTag("import_review").performScrollToNode(hasTestTag("import_chapter_2_name"))
+        rule.onNodeWithText("Khách qua sông").assertIsDisplayed()
+        rule.runOnIdle { assertEquals("Khách qua sông", queue.state.value.choices.names[2]) }
     }
 
     @Test fun cropLight() = crop(false, "edit_crop_light")
@@ -139,7 +146,13 @@ class NativeBookFlowTest {
         } }
         rule.waitUntil(10_000) { rule.onAllNodesWithTag("cover_crop_canvas").fetchSemanticsNodes().isNotEmpty() }
         rule.onNodeWithTag("cover_crop_canvas").assertIsDisplayed()
-        rule.onNodeWithText("Phóng to").performClick()
+        // Không còn nút phóng / thu trên màn; trợ năng vẫn phóng được qua thao tác tuỳ chỉnh của vùng ảnh.
+        rule.onAllNodesWithText("Phóng to").assertCountEquals(0)
+        rule.onAllNodesWithText("Thu nhỏ").assertCountEquals(0)
+        rule.onAllNodesWithText("Bạn kéo và chụm", substring = true).assertCountEquals(0)
+        val actions = rule.onNodeWithTag("cover_crop_canvas").fetchSemanticsNode().config[SemanticsActions.CustomActions]
+        assertEquals(listOf("Phóng to", "Thu nhỏ"), actions.map { it.label })
+        rule.runOnUiThread { assertTrue(actions.first { it.label == "Phóng to" }.action()) }
         rule.onNodeWithText("Đặt lại").performClick()
         shot(name)
         runBlocking {
@@ -151,6 +164,9 @@ class NativeBookFlowTest {
             assertEquals(1.5f, cropped.height.toFloat() / cropped.width, 0.02f)
         }
     }
+
+    private fun settings(scope: CoroutineScope) =
+        SettingsEnv(SettingsRepo(FakeSettingsCore(), CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined), ThemeReveal(scope))
 
     private fun shot(name: String) {
         rule.mainClock.advanceTimeBy(64)

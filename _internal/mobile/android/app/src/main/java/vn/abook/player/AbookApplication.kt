@@ -6,10 +6,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import vn.abook.player.ui.data.AndroidPlaybackCore
+import vn.abook.player.ui.data.AndroidSettingsCore
 import vn.abook.player.ui.data.CoverLoader
 import vn.abook.player.ui.data.LibraryRepo
 import vn.abook.player.ui.data.PlayPlan
 import vn.abook.player.ui.data.PlayerRepo
+import vn.abook.player.ui.data.SettingsRepo
 import vn.abook.player.ui.data.UiPrefs
 
 /**
@@ -30,6 +32,9 @@ class AbookApplication : Application() {
     val library by lazy { LibraryRepo(this) }
     val covers by lazy { CoverLoader() }
     val uiPrefs by lazy { UiPrefs(this) }
+
+    /** Cài đặt của giao diện native: cùng kho với bản WebView ([AndroidSettingsCore]). */
+    val settings by lazy { SettingsRepo(AndroidSettingsCore(this), uiScope, Dispatchers.IO) }
     private val uiScope by lazy { CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate) }
 
     /** Trình phát của giao diện native: chỉ lắng nghe lõi phát khi Activity hiện ([PlayerRepo.attach]). */
@@ -38,6 +43,8 @@ class AbookApplication : Application() {
             AndroidPlaybackCore(this), uiScope, Dispatchers.IO,
             coverOf = LibraryRepo.Companion::coverOf,
             planOf = { id -> Store.init(this); PlayPlan.fromStore(id) },
+            lastPlan = { Store.init(this); PlayPlan.fromLast() },
+            planAt = { id, chapter, seconds -> Store.init(this); PlayPlan.fromStoreAt(id, chapter, seconds) },
         )
     }
 
