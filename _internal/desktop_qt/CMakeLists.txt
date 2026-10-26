@@ -145,13 +145,11 @@ qt_add_qml_module(ABookDesk
         qml/SettingsSleep.qml
         qml/SettingsLook.qml
         qml/SettingsAdvanced.qml
-<<<<<<< HEAD
         qml/StudioRows.qml
         qml/StudioSettings.qml
         qml/BookTemplates.qml
         qml/SharedReadingsSettings.qml
         qml/NewBookDefaults.qml
-=======
         qml/DevicesFold.qml
         qml/DevicesToggle.qml
         qml/DevicesRows.qml
@@ -167,7 +165,6 @@ qt_add_qml_module(ABookDesk
         qml/OtherComputersRow.qml
         qml/OtherComputersBluetooth.qml
         qml/DevicesLogic.js
->>>>>>> worktree-agent-ae771d37499a25abf
         qml/Scrollbar.qml
         qml/ScrollEdges.qml
         qml/SmoothWheel.qml
