@@ -1,5 +1,5 @@
-import { Clapperboard, Clock, Download, Library, Pause, Settings } from "lucide-react";
-import { useEffect, useLayoutEffect, useRef, type ReactNode } from "react";
+import { Clapperboard, Clock, Download, Library, PanelLeftClose, PanelLeftOpen, Pause, Settings } from "lucide-react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { useRestoreLastListening } from "@/listen/LibraryScreen";
 import { useNowPlaying } from "@/listen/player";
@@ -14,11 +14,13 @@ import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { APP_TITLE } from "@/shared/title";
 import { formatPercent } from "@/shared/format";
-import { ContentSkeleton, InlineError, OfflineStrip, Progress, Vu } from "@/shared/ui";
+import { ContentSkeleton, IconButton, InlineError, OfflineStrip, Progress, Vu } from "@/shared/ui";
 import { useAppInfo, useLibrary } from "@/studio/data";
 import { usePrecastInvites } from "@/studio/PrecastReview";
 import { PeerBar } from "./PeerBar";
 import { HandOffButton, RemoteBars, ThisPlayerReporter } from "./RemotePhone";
+import { TitleBar } from "./TitleBar";
+import { windowChrome } from "./windowChrome";
 
 // Cùng ba điểm đến với điện thoại; dự án đang làm nằm ngay dưới Studio.
 
@@ -56,10 +58,11 @@ function NavItem({ to, icon: Icon, ink, match, children }: { to: string; icon: t
       data-sidebar-top
       onClick={() => setExpanded(false)}
       aria-current={active ? "page" : undefined}
+      aria-label={typeof children === "string" ? children : undefined}
       className={cn(NAV, active ? NAV_ACTIVE : NAV_IDLE)}
     >
       <Icon className="glyph" style={{ marginLeft: `calc(-1 * ${shift})`, marginRight: shift }} />
-      {children}
+      <span data-sidebar-label>{children}</span>
     </Link>
   );
 }
@@ -159,10 +162,10 @@ const TITLES: [RegExp, string][] = [
   [/^\/settings/, "Cài đặt"],
 ];
 
-export function DesktopSidebar({ listenOnly = false }: { listenOnly?: boolean }) {
+export function DesktopSidebar({ listenOnly = false, collapsed = false }: { listenOnly?: boolean; collapsed?: boolean }) {
   return (
-    <aside className="hidden w-[236px] shrink-0 flex-col border-r border-line bg-sunken px-3 pb-4 pt-5 md:flex">
-      <Brand />
+    <aside className="desktop-sidebar hidden w-[236px] shrink-0 flex-col border-r border-line bg-sunken px-3 pb-4 pt-5 md:flex" data-collapsed={collapsed}>
+      <div data-sidebar-brand><Brand /></div>
       <nav aria-label="Điều hướng chính" className="mt-8 space-y-2">
         <NavItem to="/" icon={Library} ink={3} match={(path) => path === "/" || path.startsWith("/book/")}>
           Thư viện
@@ -171,11 +174,11 @@ export function DesktopSidebar({ listenOnly = false }: { listenOnly?: boolean })
           <NavItem to="/studio" icon={Clapperboard} ink={1.03} match={(path) => path.startsWith("/studio")}>
             Studio
           </NavItem>
-          <Producing />
+          <div data-sidebar-extra><Producing /></div>
         </MotionPresence>
       </nav>
       <div className="mt-auto pt-8">
-        <UpdateNotice />
+        <div data-sidebar-extra><UpdateNotice /></div>
         <NavItem to="/settings" icon={Settings} ink={2.04} match={(path) => path.startsWith("/settings")}>
           Cài đặt
         </NavItem>
@@ -185,6 +188,25 @@ export function DesktopSidebar({ listenOnly = false }: { listenOnly?: boolean })
 }
 
 export function Shell({ children }: { children: ReactNode }) {
+  const chrome = windowChrome();
+  const [collapsed, setCollapsed] = useState(() => {
+    try { return localStorage.getItem("abook-sidebar-collapsed") === "1"; } catch { return false; }
+  });
+  const toggleSidebar = () => setCollapsed(value => !value);
+  useEffect(() => {
+    if (!chrome) return;
+    try { localStorage.setItem("abook-sidebar-collapsed", collapsed ? "1" : "0"); } catch { /* Storage may be disabled. */ }
+  }, [chrome, collapsed]);
+  useEffect(() => {
+    if (!chrome) return;
+    const shortcut = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === "b" && !(event.target instanceof Element && event.target.closest("input,textarea,[contenteditable='true']"))) {
+        event.preventDefault(); setCollapsed(value => !value);
+      }
+    };
+    window.addEventListener("keydown", shortcut);
+    return () => window.removeEventListener("keydown", shortcut);
+  }, [chrome]);
   const { pathname } = useLocation();
   const { expanded, setExpanded } = useNowPlaying();
   // Studio từ xa: thanh "Đang phát trên điện thoại" là việc của chính máy tính, cổng từ xa không mở đường ấy.
@@ -218,7 +240,8 @@ export function Shell({ children }: { children: ReactNode }) {
   }, [pathname]);
 
   return (
-    <div ref={shell} className="flex h-full">
+    <div ref={shell} className={cn("flex h-full", chrome && "desktop-chrome-shell")}>
+      <TitleBar toggle={<IconButton size="sm" label={collapsed ? "Mở rộng  (Ctrl+B)" : "Thu gọn  (Ctrl+B)"} icon={collapsed ? PanelLeftOpen : PanelLeftClose} onClick={toggleSidebar} />} />
       {/* Người dùng bàn phím: Tab đầu tiên tới đây, bỏ qua thanh bên để vào thẳng nội dung. Màn "Đang nghe" mở thì nội dung bên dưới bị khoá (inert) - không hiện. */}
       {!expanded && (
         <button
@@ -230,8 +253,8 @@ export function Shell({ children }: { children: ReactNode }) {
         </button>
       )}
       <ShortcutsHost remote={remote} />
-      <DesktopSidebar listenOnly={listenOnly} />
-      <div className="relative flex min-w-0 flex-1 flex-col">
+      <DesktopSidebar listenOnly={listenOnly} collapsed={Boolean(chrome && collapsed)} />
+      <div className="desktop-content relative flex min-w-0 flex-1 flex-col">
         <OfflineStrip />
         <PeerBar />
         <main ref={main} tabIndex={-1} className="page-motion min-h-0 flex-1 overflow-y-auto outline-none" inert={expanded}>
