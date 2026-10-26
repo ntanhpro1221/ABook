@@ -145,6 +145,11 @@ qt_add_qml_module(ABookDesk
         qml/SettingsSleep.qml
         qml/SettingsLook.qml
         qml/SettingsAdvanced.qml
+        qml/StudioRows.qml
+        qml/StudioSettings.qml
+        qml/BookTemplates.qml
+        qml/SharedReadingsSettings.qml
+        qml/NewBookDefaults.qml
         qml/Scrollbar.qml
         qml/ScrollEdges.qml
         qml/SmoothWheel.qml
