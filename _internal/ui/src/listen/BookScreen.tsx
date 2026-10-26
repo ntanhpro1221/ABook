@@ -25,7 +25,7 @@ import { useClip } from "./clip";
 import { FindInBook } from "./FindInBook";
 import { canEditBook, EditBlockedItem, EditBookDialog, refreshAfterEdit, RenameChapterDialog, SaveAsDialog, StudioOnlyItem, useSaveBook, useShareBook } from "./EditBook";
 import { bookStatusText, remoteUnfinishedLine, usePlayListenBook, useResumeTarget } from "./LibraryScreen";
-import { canPlay, chapterHeard, chaptersByPart, type CastMember, type ListenBook, type ListenChapter, voiceName } from "./model";
+import { canPlay, chapterHeard, chapterResumeAt, chaptersByPart, type CastMember, type ListenBook, type ListenChapter, voiceName } from "./model";
 import { chapterSubline, displayTitle, keepTogether, partialBookLine, primaryListenLabel, textBookLine } from "./labels";
 import { usePlayer } from "./player";
 import { usePreparedChapters } from "./PlayerViews";
@@ -67,7 +67,8 @@ export function ChapterRow({
   const onPlay = () => {
     if (!canPlay(chapter)) return;
     if (current) player.toggle();
-    else void playBook(book, chapter.id, heard > 0 && heard < 1 ? (book.state.chapters[String(chapter.id)]?.heard ?? 0) : 0);
+    // Cùng luật với "Nghe tiếp" (model.chapterResumeAt): còn vài giây cuối thì nghe lại từ đầu chương, không phát giây cuối rồi nhảy sang chương kế.
+    else void playBook(book, chapter.id, chapterResumeAt(book.state, chapter));
   };
   const name = chapter.subtitle || chapter.title;
   return (
@@ -808,13 +809,7 @@ export interface EditingOptions {
   remote?: string;
 }
 
-export function BookScreen({
-  extraActions,
-  dangerActions,
-  studioLink,
-  notice,
-  editing = {},
-}: {
+type BookScreenProps = {
   extraActions?: (book: ListenBook) => ReactNode;
   dangerActions?: (book: ListenBook) => ReactNode;
   /** Máy tính: lối sang Studio ngay trên dòng trạng thái của sách đang làm. */
@@ -822,7 +817,16 @@ export function BookScreen({
   /** Dòng tình trạng riêng của nền tảng dưới tên sách (máy tính: tải sách của máy khác về máy). */
   notice?: (book: ListenBook) => ReactNode;
   editing?: false | EditingOptions;
-}) {
+};
+
+/** Mỗi cuốn một trang riêng: app chuyển thẳng từ /book/A sang /book/B (thông báo "Mở cuốn đó", chọn hồ sơ khác) thì hộp đang mở của A (đổi tên chương,
+ *  tìm, sửa sách) không mang sang B - đổi tên chương của A từng gửi lên B theo số chương. */
+export function BookScreen(props: BookScreenProps) {
+  const { id } = useParams();
+  return <BookPage key={id} {...props} />;
+}
+
+function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {} }: BookScreenProps) {
   const { id } = useParams();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();

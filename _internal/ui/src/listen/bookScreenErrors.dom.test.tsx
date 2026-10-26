@@ -97,3 +97,39 @@ it("sách thật sự không còn (404): nói không tìm thấy, kể cả khi 
   await book();
   expect(host.textContent).toContain("Không tìm thấy sách này");
 });
+
+it("nút phát một chương đã nghe gần hết (còn dưới 15 giây): phát từ đầu chương như 'Nghe tiếp', không phát 5 giây cuối rồi nhảy chương", async () => {
+  player({ track: null });
+  state.book = listenBook({ state: { chapters: { "2": { heard: 595, done: false } } } } as Partial<ListenBook>);
+  await book();
+  const play = host.querySelector<HTMLButtonElement>('button[aria-label="Nghe Chương 2"]')!;
+  await act(async () => { play.click(); });
+  expect(state.player.play).toHaveBeenCalledTimes(1);
+  expect((state.player.play as ReturnType<typeof vi.fn>).mock.calls[0].slice(2, 4)).toEqual([2, 0]);
+});
+
+it("nút phát một chương đang nghe dở: phát từ chỗ đã nghe", async () => {
+  player({ track: null });
+  state.book = listenBook({ state: { chapters: { "2": { heard: 120, done: false } } } } as Partial<ListenBook>);
+  await book();
+  await act(async () => { host.querySelector<HTMLButtonElement>('button[aria-label="Nghe Chương 2"]')!.click(); });
+  expect((state.player.play as ReturnType<typeof vi.fn>).mock.calls[0].slice(2, 4)).toEqual([2, 120]);
+});
+
+it("đang mở hộp của cuốn A mà app chuyển sang trang cuốn B (thông báo 'Mở cuốn đó'): hộp của A không mang sang B", async () => {
+  const { useNavigate } = await import("react-router");
+  let go: (to: string) => void = () => undefined;
+  function Navigator() {
+    go = useNavigate();
+    return null;
+  }
+  player({ track: null });
+  state.book = listenBook();
+  await render(<><Navigator /><Routes><Route path="/book/:id" element={<BookScreen />} /></Routes></>, "/book/a");
+  const find = [...host.querySelectorAll<HTMLButtonElement>("[data-book-secondary] button")].find((button) => button.textContent === "Tìm")!;
+  await act(async () => { find.click(); });
+  expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+  state.book = listenBook({ id: "b", title: "Sách B" });
+  await act(async () => { go("/book/b"); });
+  expect(document.querySelector('[role="dialog"][data-state="open"]')).toBeNull();
+});
