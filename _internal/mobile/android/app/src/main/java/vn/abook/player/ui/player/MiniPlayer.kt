@@ -36,12 +36,11 @@ import vn.abook.player.ui.components.pressable
 import vn.abook.player.ui.data.CoverLoader
 import vn.abook.player.ui.data.PlayerState
 import vn.abook.player.ui.motion.Motion
+import vn.abook.player.ui.nowplaying.NowPlayingPart
+import vn.abook.player.ui.nowplaying.NowPlayingSource
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import kotlin.math.roundToInt
-
-/** Bốn phần của thanh phát nhỏ mà trình phát đầy đủ có thể "bay" tới (shared element). */
-enum class MiniPart { Cover, ChapterText, BookText, PlayButton }
 
 /** Chiều cao TỐI THIỂU của thanh phát nhỏ (token khoảng cách 64); tên dài thì thanh cao thêm theo số dòng, không cắt chữ. */
 val MiniPlayerHeight: Dp = 64.dp
@@ -52,8 +51,10 @@ val MiniPlayerHeight: Dp = 64.dp
  * - `state`: bất biến, đổi khi có gì đổi thật (không đổi mỗi nhịp).
  * - `positionMs`: vị trí chạy theo nhịp, CHỈ đọc trong pha vẽ của vạch tiến độ (truyền `{ clock.positionMs.value }`) nên mỗi nhịp không dựng lại gì.
  * - `onToggle`: nút phát / dừng; `onOpenNowPlaying`: chạm vào phần còn lại của thanh.
- * - `sharedModifier(part)`: móc cho chuyển phần tử chung. Trình phát đầy đủ trả về Modifier (vd. `Modifier.sharedElement(...)`) cho từng [MiniPart]; mặc định không thêm gì.
- *   Hàm là @Composable để dùng được `rememberSharedContentState`. Modifier đặt NGOÀI CÙNG của mỗi phần (bìa 36 dp, hai dòng chữ, nút phát 44 dp).
+ * - `modifier`: đặt NGOÀI CÙNG của thanh - cửa sổ Đang nghe đưa vào khung chung (`sharedBounds`) để thanh nở thành cả màn.
+ * - `sharedModifier(part)`: móc cho chuyển phần tử chung. Cửa sổ Đang nghe trả về Modifier (`Modifier.sharedElement(...)`) cho từng [NowPlayingPart]
+ *   (Cover, Chapter, Book, Play); mặc định không thêm gì. Hàm là @Composable để dùng được `rememberSharedContentState`. Modifier đặt NGOÀI CÙNG của mỗi phần
+ *   (bìa 36 dp, hai dòng chữ, nút phát 44 dp).
  *
  * Nút phát <-> dừng biến hình nét vẽ ([PlayPauseGlyph]), không mờ chéo.
  */
@@ -65,7 +66,7 @@ fun MiniPlayer(
     onToggle: () -> Unit,
     onOpenNowPlaying: () -> Unit,
     modifier: Modifier = Modifier,
-    sharedModifier: @Composable (MiniPart) -> Modifier = { Modifier },
+    sharedModifier: @Composable (NowPlayingPart) -> Modifier = { Modifier },
 ) {
     val colors = Abook.colors
     val durationMs = state.durationMs
@@ -91,22 +92,40 @@ fun MiniPlayer(
             Modifier.weight(1f).heightIn(min = MiniPlayerHeight).pressable { onOpenNowPlaying() }.padding(start = Dim.s12, top = Dim.s4, bottom = Dim.s4).testTag("mini_open"),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            BookCover(state.cover, state.bookTitle, null, covers, 36.dp, sharedModifier(MiniPart.Cover).width(36.dp), small = true)
+            BookCover(state.cover, state.bookTitle, null, covers, 36.dp, sharedModifier(NowPlayingPart.Cover).width(36.dp), small = true)
             Spacer(Modifier.width(Dim.s12))
             Column(Modifier.weight(1f)) {
-                BasicText(title, sharedModifier(MiniPart.ChapterText), Abook.type.label)
-                BasicText(state.bookTitle, sharedModifier(MiniPart.BookText), Abook.type.caption)
+                BasicText(title, sharedModifier(NowPlayingPart.Chapter), Abook.type.label)
+                BasicText(state.bookTitle, sharedModifier(NowPlayingPart.Book), Abook.type.caption)
             }
         }
         Box(Modifier.padding(horizontal = Dim.s12)) {
             Box(
-                sharedModifier(MiniPart.PlayButton).size(Dim.touch).pressable { onToggle() }.clip(CircleShape).background(colors.accent)
+                sharedModifier(NowPlayingPart.Play).size(Dim.touch).pressable { onToggle() }.clip(CircleShape).background(colors.accent)
                     .semantics { contentDescription = if (state.playing) "Tạm dừng" else "Phát" }.testTag("mini_play"),
                 contentAlignment = Alignment.Center,
             ) {
                 PlayPauseGlyph(state.playing, colors.accentInk, 22.dp)
             }
         }
+    }
+}
+
+/**
+ * Thanh phát nhỏ THẬT làm nguồn của chuyển động nở thành cửa sổ Đang nghe: cùng [MiniPlayer], gói vào khung chung và bốn phần bay riêng của cửa sổ
+ * ([NowPlayingSource]). Không có lớp cửa sổ ở trên (xem trước, ảnh chụp riêng thanh) thì nó là [MiniPlayer] thường.
+ */
+@Composable
+fun MorphingMiniPlayer(
+    state: PlayerState,
+    positionMs: () -> Long,
+    covers: CoverLoader,
+    onToggle: () -> Unit,
+    onOpenNowPlaying: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    NowPlayingSource { bounds, part ->
+        MiniPlayer(state, positionMs, covers, onToggle, onOpenNowPlaying, modifier.then(bounds), part)
     }
 }
 
@@ -118,9 +137,13 @@ fun MiniPlayer(
 fun MiniPlayerSlot(visible: Boolean, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     val reveal = remember { Animatable(if (visible) 1f else 0f) }
     LaunchedEffect(visible) { reveal.animateTo(if (visible) 1f else 0f, if (visible) Motion.Expand else Motion.Collapse) }
+    // Khi cửa sổ Đang nghe mở, thanh nhỏ rời cây (nó nở thành cửa sổ) và đo ra 0: giữ chỗ cũ để nội dung bên dưới không nhảy theo.
+    val kept = remember { intArrayOf(0) }
     Layout(content = content, modifier = modifier) { measurables, constraints ->
         val placeables = measurables.map { it.measure(constraints.copy(minHeight = 0)) }
-        val full = placeables.maxOfOrNull { it.height } ?: 0
+        val measured = placeables.maxOfOrNull { it.height } ?: 0
+        if (measured > 0) kept[0] = measured
+        val full = if (visible) kept[0] else measured
         val width = placeables.maxOfOrNull { it.width } ?: constraints.minWidth
         val height = (full * reveal.value).roundToInt()
         layout(width, height) { placeables.forEach { it.place(0, 0) } }

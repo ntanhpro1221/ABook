@@ -103,7 +103,7 @@ fun BookMenuSheet(book: ListenBook, detail: BookDetail?, source: BookSource, act
         modifier = Modifier.fillMaxWidth().testTag("book_menu"),
     ) { shown ->
         when (shown) {
-            MenuPage.Actions -> MenuActions(book, detail, source, dismiss, onEdit = { page = MenuPage.Edit }, onDelete = { page = MenuPage.Delete })
+            MenuPage.Actions -> MenuActions(book, detail, source, actions, dismiss, onEdit = { page = MenuPage.Edit }, onDelete = { page = MenuPage.Delete })
             MenuPage.Edit -> EditBookPage(book, source, dismiss)
             MenuPage.Delete -> DeletePage(book, source, actions, dismiss, onKeep = { page = MenuPage.Actions })
         }
@@ -115,6 +115,7 @@ private fun MenuActions(
     book: ListenBook,
     detail: BookDetail?,
     source: BookSource,
+    actions: BookScreenActions,
     dismiss: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
@@ -152,7 +153,11 @@ private fun MenuActions(
                 }
             }) { ink -> ShareIcon(ink) }
         }
-        MenuRow("Đọc theo", tag = "menu_read", soon = true) { ink -> BookOpenIcon(ink) }
+        // Có chữ để đọc theo (chương audio có kịch bản, hay sách chỉ có chữ) thì bấm được; sách chưa có chương nào nghe được thì mờ đi, không hứa gì.
+        MenuRow("Đọc theo", tag = "menu_read", unavailable = !book.canReadAlong, onClick = {
+            dismiss()
+            actions.readAlong(book.id)
+        }) { ink -> BookOpenIcon(ink) }
         MenuRow("Xuất MP3 hay M4B", tag = "menu_export", soon = true) { ink -> ExportIcon(ink) }
         Box(Modifier.fillMaxWidth().padding(vertical = Dim.s8).height(1.dp).background(colors.line))
         MenuRow("Xoá khỏi máy", tag = "menu_delete", danger = true, onClick = onDelete) { ink -> TrashIcon(ink) }
@@ -165,33 +170,35 @@ private fun MenuActions(
 
 /**
  * Một dòng menu (DESIGN.md §6 "Dòng menu"): trọn bề ngang bảng, biểu tượng đầu dòng, nhãn xuống dòng khi dài (không cắt). `soon`: việc chưa làm ở giao diện native -
- * nhạt đi, nhãn "Sắp có" ở mép phải, không bấm được.
+ * nhạt đi, nhãn "Sắp có" ở mép phải, không bấm được. `unavailable`: việc có rồi nhưng cuốn này không làm được - cũng nhạt đi, không bấm được, KHÔNG có nhãn "Sắp có".
  */
 @Composable
 private fun MenuRow(
     label: String,
     tag: String,
     soon: Boolean = false,
+    unavailable: Boolean = false,
     danger: Boolean = false,
     onClick: () -> Unit = {},
     icon: @Composable (Color) -> Unit,
 ) {
     val colors = Abook.colors
+    val inert = soon || unavailable
     val ink = when {
-        soon -> colors.fg3
+        inert -> colors.fg3
         danger -> colors.danger
         else -> colors.text
     }
     Row(
         Modifier.fillMaxWidth().heightIn(min = Dim.s48)
-            .then(if (soon) Modifier.semantics { disabled() } else Modifier.pressable(onClick = onClick))
+            .then(if (inert) Modifier.semantics { disabled() } else Modifier.pressable(onClick = onClick))
             .padding(vertical = Dim.s12)
             .testTag(tag),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(Modifier.size(Dim.s24), contentAlignment = Alignment.CenterStart) { icon(ink) }
         Spacer(Modifier.width(Dim.s12))
-        BasicText(label, style = Abook.type.body.copy(color = if (soon) colors.text2 else ink), modifier = Modifier.weight(1f))
+        BasicText(label, style = Abook.type.body.copy(color = if (inert) colors.text2 else ink), modifier = Modifier.weight(1f))
         if (soon) {
             Spacer(Modifier.width(Dim.s12))
             BasicText("Sắp có", style = Abook.type.caption)

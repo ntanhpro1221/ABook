@@ -6,7 +6,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasTestTag
@@ -77,6 +79,7 @@ class BookScreenTest {
         toggle = { toggles++ },
         playChapter = { book, chapter, seconds -> played += "chapter $book $chapter $seconds" },
         deleted = { deleted++ },
+        readAlong = { played += "read $it" },
     )
 
     private fun chapter(id: Int, duration: Double = 1500.0) = JSONObject().put("id", id).put("fullTitle", "Chương $id: Một cái tên chương khá dài để xuống dòng")
@@ -263,6 +266,30 @@ class BookScreenTest {
         rule.onNodeWithTag("menu_share").assertIsDisplayed()
         rule.onNodeWithTag("menu_read").assertIsDisplayed()
         shot("book_menu_light")
+    }
+
+    @Test
+    fun readAlongInTheMenuClosesTheSheetAndAsksForTheBook() {
+        show(detail(listening()))
+        rule.onNodeWithTag("book_more").performClick()
+        rule.waitForIdle()
+        rule.onNode(hasText("Sắp có") and hasAnyAncestor(hasTestTag("menu_read"))).assertDoesNotExist()
+        rule.onNodeWithTag("menu_read").performClick()
+        rule.waitForIdle()
+        assertEquals(listOf("read b1"), played)
+        rule.onNodeWithTag("book_menu").assertDoesNotExist()
+    }
+
+    @Test
+    fun readAlongIsOffWithoutAnyTextToFollowAndSaysNothingAboutSoon() {
+        show(BookDetail.of(manifest(chapters = 0), null, { null }))
+        rule.onNodeWithTag("book_more").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("menu_read").assertIsDisplayed()
+        rule.onNodeWithTag("menu_read").performClick()
+        assertTrue(played.isEmpty())
+        // "Sắp có" còn lại đúng một chỗ: Xuất MP3 / M4B, việc native chưa làm.
+        rule.onAllNodesWithText("Sắp có").assertCountEquals(1)
     }
 
     @Test

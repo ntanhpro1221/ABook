@@ -6,13 +6,22 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableLongStateOf
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONObject
 import vn.abook.player.Playback
+
+/** Một chương trong hàng chương của trình phát (Đang nghe: danh sách chương, chương chữ cho Đọc theo). `textPath` rỗng: chương audio. */
+@Immutable
+data class PlayerChapter(val id: Int, val title: String, val durationMs: Long, val textPath: String = "")
 
 /** Hẹn giờ ngủ đã đặt (chỉ phần đổi chậm; thời gian còn lại chạy theo giây nằm ở [PlayerClock.sleepRemainingMs]). */
 @Immutable
@@ -25,8 +34,9 @@ data class SleepSetting(val mode: String = "off", val minutes: Int = 0, val coun
 }
 
 /**
- * Trạng thái trình phát mà màn vẽ: bất biến, CHỈ đổi khi có gì đổi thật (cuốn, chương, phát/dừng, tốc độ, hẹn giờ, lỗi) - không có vị trí:
- * vị trí chạy hai lần mỗi giây nằm riêng ở [PlayerClock] để chỉ thanh tua và đồng hồ đọc nó.
+ * Trạng thái trình phát mà MỌI màn vẽ (thanh nhỏ, trang sách, Đang nghe): bất biến, CHỈ đổi khi có gì đổi thật (cuốn, chương, phát/dừng, tốc độ, hẹn giờ, lỗi,
+ * nhạc nền, giọng) - không có vị trí: vị trí chạy hai lần mỗi giây nằm riêng ở [PlayerClock] để chỉ thanh tua và đồng hồ đọc nó.
+ * `chapters`: hàng chương của cuốn đang nạp (dựng lại chỉ khi lõi đổi hàng), `musicEnabled`: nhạc nền tự chọn, `voiceId`: giọng đọc máy đang dùng.
  */
 @Immutable
 data class PlayerState(
@@ -38,9 +48,12 @@ data class PlayerState(
     val playing: Boolean = false,
     val buffering: Boolean = false,
     val durationMs: Long = 0L,
-    val rate: Float = 1f,
+    val rate: Double = 1.0,
     val sleep: SleepSetting = SleepSetting.Off,
     val error: String = "",
+    val chapters: List<PlayerChapter> = emptyList(),
+    val musicEnabled: Boolean = false,
+    val voiceId: String = "",
 ) {
     /** Có cuốn trong trình phát (thanh nhỏ hiện). */
     val hasTrack: Boolean get() = bookId.isNotEmpty() && chapterId != null
@@ -48,8 +61,14 @@ data class PlayerState(
     companion object {
         val Empty = PlayerState()
 
-        /** Từ sự kiện của lõi phát ([Playback.state]); `cover` do nơi gọi giữ/tra theo mã sách. */
-        fun from(json: JSONObject, cover: CoverRef?): PlayerState {
+        /** Từ sự kiện của lõi phát ([Playback.state]); `cover` do nơi gọi giữ/tra theo mã sách, `chapters` / `musicEnabled` / `voiceId` đọc từ lõi (không nằm trong sự kiện). */
+        fun from(
+            json: JSONObject,
+            cover: CoverRef?,
+            chapters: List<PlayerChapter> = emptyList(),
+            musicEnabled: Boolean = false,
+            voiceId: String = "",
+        ): PlayerState {
             val sleep = json.optJSONObject("sleep")
             return PlayerState(
                 bookId = json.optString("bookId"),
@@ -60,11 +79,14 @@ data class PlayerState(
                 playing = json.optBoolean("playing"),
                 buffering = json.optBoolean("buffering"),
                 durationMs = Math.round(json.optDouble("duration", 0.0) * 1000),
-                rate = json.optDouble("rate", 1.0).toFloat(),
+                rate = json.optDouble("rate", 1.0),
                 sleep = if (sleep == null) SleepSetting.Off else SleepSetting(
                     sleep.optString("mode", "off"), sleep.optInt("minutes"), sleep.optBoolean("counting"),
                 ),
-                error = json.optString("error"),
+                error = json.optString("error").ifBlank { json.optString("saveError") },
+                chapters = chapters,
+                musicEnabled = musicEnabled,
+                voiceId = voiceId,
             )
         }
     }
@@ -86,6 +108,11 @@ class PlayerClock {
         position.longValue = positionMs
         sleepRemaining.longValue = sleepRemainingMs
     }
+
+    /** Chỉ vị trí (nhịp theo khung của Đang nghe khi nó mở - [PlayerRepo.sampleClock]); hẹn giờ còn lại vẫn theo nhịp của lõi. */
+    internal fun setPosition(positionMs: Long) {
+        position.longValue = positionMs
+    }
 }
 
 /** Một lần nạp cuốn vào trình phát: đúng tham số của [Playback.load]. `autoplay` false: nạp sẵn ở trạng thái dừng (khôi phục cuốn nghe dở lúc mở app). */
@@ -98,6 +125,8 @@ data class LoadRequest(
     val startSeconds: Double,
     val rate: Double,
     val autoplay: Boolean = true,
+    /** Nạp để KHÔI PHỤC lúc mở app: lõi đã có cuốn (widget, tai nghe, người nghe bấm phát cuốn khác) thì bỏ, không đè. Nạp vì người nghe chọn thì false. */
+    val restore: Boolean = false,
 )
 
 /** Phần lõi phát mà [PlayerRepo] cần - tách ra để thử bằng lõi giả (lõi thật: [AndroidPlaybackCore]). Mọi lệnh có thể gọi từ luồng bất kỳ. */
@@ -117,6 +146,23 @@ interface PlaybackCore {
     fun setRate(rate: Double)
     fun jumpTo(chapterId: Int, seconds: Double)
     fun load(request: LoadRequest)
+
+    /** Vị trí chính xác trong chương (ms), không qua nhịp: Đang nghe đọc nó mỗi khung khi mở. Gọi ở luồng chính. */
+    fun positionMs(): Long
+
+    /** Hàng chương của cuốn đang nạp ([Playback.chapters]); cùng một đối tượng chừng nào lõi chưa đổi hàng. */
+    fun chapters(): List<Playback.Chapter>
+
+    /** Hẹn giờ ngủ: `mode` = "off" | "minutes" | "chapter". */
+    fun setSleep(mode: String, minutes: Int)
+
+    /** Nhạc nền tự chọn ([MusicBed.chooseAuto]). */
+    fun autoMusic(): Boolean
+    fun setAutoMusic(enabled: Boolean)
+
+    /** Giọng đọc máy của cuốn đang nạp. */
+    fun voiceId(): String
+    fun setVoice(voiceId: String)
 }
 
 /**
@@ -141,6 +187,15 @@ class PlayerRepo(
     private val flow = MutableStateFlow(PlayerState.Empty)
     val state: StateFlow<PlayerState> get() = flow
     val clock = PlayerClock()
+
+    /**
+     * Tên mỗi sự kiện KHÔNG phải nhịp của lõi ("state", "chapter", "record", "sleep"...), kể cả khi nó không đổi gì ở [state] (đọc to đẩy thêm chữ / thời lượng mới
+     * cũng bằng sự kiện "state"): Đọc theo nghe nó để nạp lại chữ. Cùng MỘT người nghe lõi - không ai khác gọi [PlaybackCore.addListener].
+     */
+    val events: SharedFlow<String> get() = changes
+    private val changes = MutableSharedFlow<String>(extraBufferCapacity = 8, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private var queue: List<Playback.Chapter>? = null
+    private var queueChapters: List<PlayerChapter> = emptyList()
     private val listener: (JSONObject) -> Unit = ::onEvent
 
     @Volatile
@@ -162,7 +217,7 @@ class PlayerRepo(
     private fun restoreLast() {
         scope.launch {
             val request = withContext(io) { lastPlan() } ?: return@launch
-            if (attached && !flow.value.hasTrack) core.load(request.copy(autoplay = false))
+            if (attached && !flow.value.hasTrack) core.load(request.copy(autoplay = false, restore = true))
         }
     }
 
@@ -180,6 +235,7 @@ class PlayerRepo(
             return
         }
         apply(json)
+        changes.tryEmit(json.optString("kind"))
     }
 
     private fun setClock(json: JSONObject) {
@@ -192,7 +248,12 @@ class PlayerRepo(
         val id = json.optString("bookId")
         val previous = flow.value
         val keep = if (id == previous.bookId) previous.cover else null
-        val next = PlayerState.from(json, keep)
+        val chapters = core.chapters()
+        if (chapters !== queue) {
+            queue = chapters
+            queueChapters = chapters.map { PlayerChapter(it.id, it.title, Math.round(it.duration * 1000), it.text) }
+        }
+        val next = PlayerState.from(json, keep, queueChapters, core.autoMusic(), core.voiceId())
         flow.value = next
         if (id.isNotEmpty() && id != previous.bookId) {
             scope.launch(io) {
@@ -213,6 +274,25 @@ class PlayerRepo(
     fun previous() = core.previous()
     fun setRate(rate: Double) = core.setRate(rate)
     fun jumpTo(chapterId: Int, seconds: Double) = core.jumpTo(chapterId, seconds)
+    fun setSleep(mode: String, minutes: Int = 0) = core.setSleep(mode, minutes)
+
+    /** Nhạc nền tự chọn: lõi không bắn sự kiện khi đổi, nên trạng thái đổi ngay tại đây. */
+    fun setAutoMusic(enabled: Boolean) {
+        core.setAutoMusic(enabled)
+        flow.update { it.copy(musicEnabled = enabled) }
+    }
+
+    /** Đổi giọng đọc máy (cũng không có sự kiện riêng). */
+    fun setVoice(voiceId: String) {
+        core.setVoice(voiceId)
+        flow.update { it.copy(voiceId = voiceId) }
+    }
+
+    /** Vị trí chính xác lúc này (không qua nhịp) - chỗ để "Về chỗ cũ" nhớ. Gọi ở luồng chính. */
+    fun positionMs(): Long = core.positionMs()
+
+    /** Đặt đồng hồ theo vị trí chính xác của lõi: Đang nghe gọi mỗi khung khi nó mở và đang phát (thanh tua, chữ đọc theo chạy mượt hơn nhịp nửa giây). Luồng chính. */
+    fun sampleClock() = clock.setPosition(core.positionMs().coerceAtLeast(0))
 
     /** Nút chính của trang sách: cuốn đang ở trình phát thì phát/dừng, không thì nạp ở chỗ nghe tiếp và phát. */
     fun togglePlay(bookId: String) {
@@ -242,6 +322,17 @@ class PlayerRepo(
             val request = withContext(io) { planAt(bookId, chapterId, seconds) } ?: return@launch
             core.load(request)
         }
+    }
+
+    /**
+     * "Đọc theo" từ trang sách: đưa cuốn vào trình phát Ở TRẠNG THÁI DỪNG tại chỗ nghe tiếp (cuốn đang ở đó rồi thì để yên). Trả về khi cuốn đã vào
+     * (hay sau 3 giây nếu lõi không nhận) - true: cuốn ấy đang là cuốn của trình phát. Khác khôi phục lúc mở app: người nghe chủ động chọn nên có thể thay cuốn đang có.
+     */
+    suspend fun prepare(bookId: String): Boolean {
+        if (flow.value.bookId == bookId && flow.value.hasTrack) return true
+        val request = withContext(io) { planOf(bookId) } ?: return false
+        core.load(request.copy(autoplay = false))
+        return withTimeoutOrNull(3_000) { flow.first { it.bookId == bookId && it.hasTrack } } != null
     }
 
     private fun playBook(bookId: String) {

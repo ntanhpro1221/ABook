@@ -14,15 +14,11 @@ import vn.abook.player.ui.data.SettingsGroup
 import vn.abook.player.ui.motion.Motion
 import vn.abook.player.ui.motion.ScreenGeometry
 
-/** Màn con xếp trên ba tab (trang sách và Đang phát còn là giữ chỗ; P1b/P2 làm thật). */
+/** Màn con xếp trên ba tab. Đang nghe không phải màn con: nó là cửa sổ nở ra từ thanh phát nhỏ ([vn.abook.player.ui.nowplaying.NowPlayingLayer]), có Back riêng. */
 @Immutable
 sealed interface Destination {
     @Immutable
     data class Book(val book: ListenBook) : Destination
-
-    /** Trình phát đầy đủ - giữ chỗ cho tới khi màn thật vào (thanh phát nhỏ gọi onOpenNowPlaying để tới đây). */
-    @Immutable
-    data object NowPlaying : Destination
 
     /** Một nhóm Cài đặt (cấp hai, cũng là cấp cuối: Cài đặt -> nhóm -> mục). */
     @Immutable
