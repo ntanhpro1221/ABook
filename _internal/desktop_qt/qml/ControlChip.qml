@@ -36,7 +36,7 @@ Interactive {
                 anchors.centerIn: parent
                 width: 20
                 height: 2
-                radius: 1
+                radius: height / 2
                 rotation: 45
                 color: glyph.color
                 opacity: root.struck ? 1 : 0

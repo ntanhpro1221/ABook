@@ -24,7 +24,7 @@ Interactive {
     Rectangle {
         width: 20
         height: 20
-        radius: 10
+        radius: height / 2
         y: 2
         x: root.checked ? root.width - width - 2 : 2
         color: Theme.switchThumb

@@ -83,7 +83,7 @@ Interactive {
         anchors.bottomMargin: 4
         width: (parent.width - x - Theme.s12) * Math.min(1, root.progress)
         height: 2
-        radius: 1
+        radius: height / 2
         color: Theme.accent
     }
 }
