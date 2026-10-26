@@ -332,6 +332,7 @@ private:
     int m_extendMinutes = 10;
     QVariantMap m_schedule;
     QString m_scheduleOffFor;
+    bool m_scheduleChecked = false;
     QString scheduleWindow() const;
     qint64 m_sleepMarkAt = 0;
     double m_sleepMarkSeconds = 0;

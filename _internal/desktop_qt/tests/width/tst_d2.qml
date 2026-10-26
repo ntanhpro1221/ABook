@@ -48,7 +48,7 @@ Item {
             for (const group of ["listen","sleep","look","devices","advanced"]) {
                 page.active = group; wait(30)
                 const labels = allText(page)
-                const expected = {listen: ["Tự lùi","Tự chọn nhạc nền","Nhạc của tôi"], sleep: ["Tự tắt","Lịch đêm","Mỗi lần nghe thêm","Nhỏ dần"], look: ["Màu","Nền đọc","Âm thanh chạm","Phím tắt chữ"], devices: ["Máy này","Kết nối Wi-Fi","Máy tính khác"], advanced: ["Bộ nhớ","Chẩn đoán","Giới thiệu","Gửi nhật ký"]}[group]
+                const expected = {listen: ["Tự lùi","Tự chọn nhạc nền","Nhạc của tôi"], sleep: ["Tự tắt","Lịch đêm","Mỗi lần nghe thêm","Nhỏ dần"], look: ["Màu","Nền đọc","Âm thanh chạm","Phím tắt chữ","Phím tắt"], devices: ["Máy này","Kết nối Wi-Fi","Máy tính khác"], advanced: ["Thư viện","Bộ nhớ","Chẩn đoán","Giới thiệu","Gửi nhật ký","Thành phần sử dụng"]}[group]
                 for (const label of expected) verify(labels.includes(label), group + " missing " + label)
             }
         }
@@ -65,7 +65,7 @@ Item {
             DesktopApi.responses = {"/api/preferences": {status: 500,data: {error: "fixture failure"}}}
             choice.picked("light")
             compare(Theme.mode,"dark")
-            compare(Api.notice,"fixture failure")
+            compare(Api.notice,"Chưa lưu được cài đặt\nfixture failure")
         }
         function test_settingsBackCompact() {
             const page = make(settingsFactory,{width: 700})
