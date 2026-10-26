@@ -26,6 +26,24 @@ object PlayPlan {
         )
     }
 
+    /** Nạp cuốn bắt đầu ở chương `chapterId`, giây `seconds` (chạm một chương ở trang sách); null khi chương ấy không nghe được. */
+    fun at(manifest: JSONObject, state: JSONObject?, chapterId: Int, seconds: Double): LoadRequest? {
+        val chapters = LibraryTree.chapters(manifest)
+        if (chapters.none { it.id == chapterId }) return null
+        return LoadRequest(
+            id = manifest.getString("id"),
+            title = manifest.optString("title"),
+            narrator = manifest.optString("narrator").takeIf { it != "null" }.orEmpty(),
+            chapters = chapters,
+            startChapterId = chapterId,
+            startSeconds = seconds.coerceAtLeast(0.0),
+            rate = BookJson.state(state).rate ?: 1.0,
+        )
+    }
+
     /** Đọc Store (đĩa - luồng nền): cuốn đã tải hay cuốn nghe thẳng đã cất gói. */
     fun fromStore(id: String): LoadRequest? = Store.playableManifest(id)?.let { of(it, Store.state(id)) }
+
+    fun fromStoreAt(id: String, chapterId: Int, seconds: Double): LoadRequest? =
+        Store.playableManifest(id)?.let { at(it, Store.state(id), chapterId, seconds) }
 }

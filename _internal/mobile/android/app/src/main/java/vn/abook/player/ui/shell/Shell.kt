@@ -43,6 +43,7 @@ import kotlinx.coroutines.CancellationException
 import vn.abook.player.ui.components.SheetHost
 import vn.abook.player.ui.components.SheetLayer
 import vn.abook.player.ui.components.pressable
+import vn.abook.player.ui.data.BookSource
 import vn.abook.player.ui.data.CoverLoader
 import vn.abook.player.ui.data.LibrarySort
 import vn.abook.player.ui.data.LibraryState
@@ -57,6 +58,7 @@ import vn.abook.player.ui.player.MiniPlayer
 import vn.abook.player.ui.player.MiniPlayerSlot
 import vn.abook.player.ui.screens.AddBookSheet
 import vn.abook.player.ui.screens.BookScreen
+import vn.abook.player.ui.screens.BookScreenActions
 import vn.abook.player.ui.screens.LibraryActions
 import vn.abook.player.ui.screens.LibraryScreen
 import vn.abook.player.ui.screens.LibraryUiState
@@ -83,10 +85,18 @@ class ShellState(scope: CoroutineScope, onSortChanged: (LibrarySort) -> Unit = {
 /**
  * Khung app: ngăn xếp màn con (trượt phải / Back dự đoán) trên ba tab (trượt ngang), thanh phát nhỏ trên thanh tab ở mọi màn gốc, bảng trượt trên tất cả.
  * Gốc = [RootTabs]. `onFirstContent` gọi một lần khi Thư viện đã có nội dung (reportFullyDrawn); ngay sau đó các tab chưa hiện được dựng trước lúc rảnh.
+ * `books`: kho của trang sách (đọc chương, đánh dấu, sửa, xoá) - mặc định không có (ảnh chụp chỉ cần phần đầu trang).
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun AppShell(shell: ShellState, library: LibraryState, player: PlayerRepo, covers: CoverLoader, onFirstContent: () -> Unit = {}) {
+fun AppShell(
+    shell: ShellState,
+    library: LibraryState,
+    player: PlayerRepo,
+    covers: CoverLoader,
+    onFirstContent: () -> Unit = {},
+    books: BookSource = BookSource.None,
+) {
     val nav = shell.nav
     val playerState by player.state.collectAsState()
     PredictiveBackHandler(enabled = nav.canPop) { events ->
@@ -113,13 +123,24 @@ fun AppShell(shell: ShellState, library: LibraryState, player: PlayerRepo, cover
             addBook = { shell.sheets.show { dismiss -> AddBookSheet(dismiss) } },
         )
     }
+    val bookActions = remember(shell, player) {
+        BookScreenActions(
+            back = shell.nav::pop,
+            playBook = player::togglePlay,
+            toggle = player::toggle,
+            playChapter = player::playChapter,
+            deleted = shell.nav::pop,
+        )
+    }
     Box(Modifier.fillMaxSize().background(Abook.colors.bg).semantics { testTagsAsResourceId = true }) {
         ScreenStack(
             nav = nav,
             root = { RootTabs(shell, library, playerState, player, covers, actions) },
             screen = { destination ->
                 when (destination) {
-                    is Destination.Book -> BookScreen(destination.book, covers, onBack = nav::pop)
+                    is Destination.Book -> BookScreen(
+                        destination.book, library, playerState, player.clock, covers, books, shell.sheets, bookActions,
+                    )
                     Destination.NowPlaying -> NowPlayingPlaceholder(playerState, covers, onBack = nav::pop)
                 }
             },

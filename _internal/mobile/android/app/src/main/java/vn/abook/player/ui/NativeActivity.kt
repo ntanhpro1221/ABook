@@ -70,7 +70,7 @@ class NativeActivity : ComponentActivity() {
                 }
                 LaunchedEffect(Unit) { shell.library.restoreSort(withContext(Dispatchers.IO) { prefs.sort() }) }
                 val state by library.state.collectAsStateWithLifecycle()
-                AppShell(shell, state, player, covers, onFirstContent = ::onFirstContent)
+                AppShell(shell, state, player, covers, onFirstContent = ::onFirstContent, books = library)
             }
         }
     }
