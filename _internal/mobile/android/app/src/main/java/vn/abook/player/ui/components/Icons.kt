@@ -107,3 +107,10 @@ fun LucideIcon(data: String, color: Color, modifier: Modifier = Modifier, size: 
 @Composable fun LaptopIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.LAPTOP, color, modifier, size)
 @Composable fun PhoneIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.SMARTPHONE, color, modifier, size)
 @Composable fun BluetoothIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.BLUETOOTH, color, modifier, size)
+
+/* Giọng đọc - đúng bộ của VoiceSettings.tsx: Download (tải giọng), Upload (thêm nhạc), KeyRound (khoá trực tuyến), Square (dừng nghe thử). */
+
+@Composable fun DownloadIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.DOWNLOAD, color, modifier, size)
+@Composable fun UploadIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.UPLOAD, color, modifier, size)
+@Composable fun KeyIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.KEY_ROUND, color, modifier, size)
+@Composable fun StopIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.SQUARE, color, modifier, size)
