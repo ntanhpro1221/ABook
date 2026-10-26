@@ -17,6 +17,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
+import kotlinx.coroutines.launch
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.*
@@ -26,7 +31,7 @@ import vn.abook.player.ui.components.pressable
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.MotionMs
 
-enum class PlayerSheet { Speed, Sleep, Chapters, More, Volume, Voice, Music }
+enum class PlayerSheet { Speed, Sleep, Chapters, More, Voice }
 
 /** Sheets translate over a fixed player. There is no scale or translation on the underlying screen. */
 @Composable
@@ -37,6 +42,11 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
         if (window.sheetOpen && window.sheet == PlayerSheet.Voice) model.loadVoices()
     }
     BackHandler(enabled = window.sheetOpen) { window.closeSheet() }
+    // Vạch kéo là thật: tấm theo ngón tay xuống, thả quá 1/4 chiều cao hay vuốt nhanh thì đóng, không thì về chỗ.
+    val drag = remember { androidx.compose.animation.core.Animatable(0f) }
+    val scope = rememberCoroutineScope()
+    var sheetHeight by remember { mutableIntStateOf(1) }
+    LaunchedEffect(window.sheetOpen) { if (window.sheetOpen) drag.snapTo(0f) }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         if (transition.currentState || transition.targetState) {
             Box(Modifier.fillMaxSize().drawBehind { drawRect(Color.Black.copy(alpha = 0.24f)) }
@@ -48,15 +58,37 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
             modifier = Modifier.align(Alignment.BottomCenter),
         ) {
             Column(Modifier.fillMaxWidth().heightIn(max = maxHeight * 0.82f)
+                .onSizeChanged { sheetHeight = it.height.coerceAtLeast(1) }
+                .graphicsLayer { translationY = drag.value }
                 .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)).background(Abook.colors.panel)
                 .navigationBarsPadding().padding(horizontal = 20.dp).padding(top = 12.dp, bottom = 20.dp)
                 .testTag("player_sheet_${window.sheet.name.lowercase()}").semantics { paneTitle = sheetTitle(window.sheet) }) {
-                Box(Modifier.align(Alignment.CenterHorizontally).width(32.dp).height(4.dp)
-                    .background(Abook.colors.line, RoundedCornerShape(2.dp)))
-                Row(Modifier.fillMaxWidth().height(64.dp), verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween) {
-                    RollingLabel(sheetTitle(window.sheet), style = Abook.type.sectionTitle)
-                    GlyphButton("Đóng bảng", "⌄", window::closeSheet)
+                // Đầu tấm (vạch + tên) là chỗ kéo; danh sách bên dưới vẫn cuộn bình thường. Đóng bằng kéo, chạm nền tối hay Back - không nút đóng riêng.
+                Column(Modifier.fillMaxWidth().testTag("player_sheet_grip").pointerInput(Unit) {
+                    val tracker = androidx.compose.ui.input.pointer.util.VelocityTracker()
+                    detectVerticalDragGestures(
+                        onDragStart = { tracker.resetTracking() },
+                        onVerticalDrag = { change, amount ->
+                            tracker.addPosition(change.uptimeMillis, change.position)
+                            scope.launch { drag.snapTo((drag.value + amount).coerceAtLeast(0f)) }
+                        },
+                        onDragEnd = {
+                            val fling = tracker.calculateVelocity().y
+                            scope.launch {
+                                if (drag.value > sheetHeight / 4f || fling > 1200f) {
+                                    drag.animateTo(sheetHeight.toFloat(), tween(MotionMs.MEDIUM_OUT))
+                                    window.closeSheet()
+                                } else drag.animateTo(0f, tween(MotionMs.MEDIUM))
+                            }
+                        },
+                        onDragCancel = { scope.launch { drag.animateTo(0f, tween(MotionMs.MEDIUM)) } },
+                    )
+                }) {
+                    Box(Modifier.align(Alignment.CenterHorizontally).width(32.dp).height(4.dp)
+                        .background(Abook.colors.line, RoundedCornerShape(2.dp)))
+                    Row(Modifier.fillMaxWidth().height(64.dp), verticalAlignment = Alignment.CenterVertically) {
+                        RollingLabel(sheetTitle(window.sheet), style = Abook.type.sectionTitle)
+                    }
                 }
                 when (window.sheet) {
                     PlayerSheet.Speed -> {
@@ -96,27 +128,11 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                         }
                     }
                     PlayerSheet.More -> {
-                        SheetRow("Nhạc nền", if (state.musicEnabled) "Tự chọn" else "Tắt") { window.openSheet(PlayerSheet.Music) }
+                        // Nhạc nền chỉ có một lựa chọn bật/tắt: đổi ngay tại hàng, không mở thêm một tấm chỉ chứa đúng một công tắc.
+                        SheetRow("Nhạc nền", if (state.musicEnabled) "Bật" else "Tắt", role = Role.Switch) { model.setMusic(!state.musicEnabled) }
                         SheetRow("Giọng", if (state.chapters.firstOrNull { it.id == state.chapterId }?.textPath.isNullOrEmpty()) "Giọng thu sẵn" else "Chọn giọng") {
                             window.openSheet(PlayerSheet.Voice)
                         }
-                        SheetRow("Âm lượng", "${state.volume}/${state.maxVolume}") { window.openSheet(PlayerSheet.Volume) }
-                        SheetRow("Chỗ vừa nghe", if (state.returnAvailable) "Quay lại" else "Chưa tua", enabled = state.returnAvailable) {
-                            model.returnToPreviousPlace(); window.closeSheet()
-                        }
-                        SheetRow("Thiết bị phát", "Sắp có", enabled = false) {}
-                    }
-                    PlayerSheet.Volume -> {
-                        BasicText("Âm lượng thiết bị", style = Abook.type.bodySmall)
-                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly) {
-                            GlyphButton("Giảm âm lượng", "−", { model.setVolume(state.volume - 1) })
-                            RollingLabel("${state.volume} / ${state.maxVolume}", style = Abook.type.sectionTitle)
-                            GlyphButton("Tăng âm lượng", "+", { model.setVolume(state.volume + 1) })
-                        }
-                    }
-                    PlayerSheet.Music -> {
-                        SheetRow("Nhạc tự chọn", if (state.musicEnabled) "Bật" else "Tắt") { model.setMusic(!state.musicEnabled) }
-                        SheetRow("Danh sách nhạc", "Sắp có", enabled = false) {}
                     }
                     PlayerSheet.Voice -> {
                         if (state.voices.isEmpty()) BasicText("Chưa có giọng cài sẵn. Bạn chọn giọng trong Cài đặt.", style = Abook.type.bodySmall)
@@ -136,7 +152,7 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
 
 private fun sheetTitle(sheet: PlayerSheet) = when (sheet) {
     PlayerSheet.Speed -> "Tốc độ đọc"; PlayerSheet.Sleep -> "Hẹn giờ ngủ"; PlayerSheet.Chapters -> "Chương"
-    PlayerSheet.More -> "Tuỳ chọn"; PlayerSheet.Volume -> "Âm lượng"; PlayerSheet.Voice -> "Giọng đọc"; PlayerSheet.Music -> "Nhạc nền"
+    PlayerSheet.More -> "Tuỳ chọn"; PlayerSheet.Voice -> "Giọng đọc"
 }
 
 @Composable
@@ -148,8 +164,8 @@ private fun ChoiceCell(label: String, chosen: Boolean, modifier: Modifier, onCli
 }
 
 @Composable
-private fun SheetRow(label: String, value: String, enabled: Boolean = true, onClick: () -> Unit) {
-    Row(Modifier.fillMaxWidth().heightIn(min = 56.dp).then(if (enabled) Modifier.pressable(onClick = onClick) else Modifier)
+private fun SheetRow(label: String, value: String, enabled: Boolean = true, role: Role = Role.Button, onClick: () -> Unit) {
+    Row(Modifier.fillMaxWidth().heightIn(min = 56.dp).then(if (enabled) Modifier.pressable(role = role, onClick = onClick) else Modifier)
         .semantics { if (!enabled) disabled() }.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
         BasicText(label, Modifier.weight(1f), style = Abook.type.body)
         Spacer(Modifier.width(12.dp))
