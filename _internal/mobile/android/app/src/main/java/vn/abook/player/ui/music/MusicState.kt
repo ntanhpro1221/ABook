@@ -121,7 +121,7 @@ class MusicState(
         }
     }
 
-    /** Thêm nhạc từ bảng: tiến độ ngay ở hàng "Thêm nhạc"; có bài trong kho thì chọn "Nhạc của tôi" cho cuốn này (sách mang theo đúng các bài đang có). */
+    /** Thêm nhạc từ bảng: tiến độ ngay ở hàng "Thêm nhạc của bạn"; có bài trong kho thì chọn "Nhạc của tôi" cho cuốn này (sách mang theo đúng các bài đang có). */
     fun importMine(uris: List<String>) {
         val id = flow.value.bookId
         if (uris.isEmpty() || id.isEmpty() || flow.value.importing) return

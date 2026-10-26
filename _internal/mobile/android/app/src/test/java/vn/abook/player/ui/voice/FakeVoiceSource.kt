@@ -185,6 +185,6 @@ object Fixtures {
         id == "azure", hasKey, if (hasKey) "••••WXYZ" else "", region, valid, if (valid) 4 else 0,
     )
 
-    fun track(name: String, bytes: Long = 4_200_000, creator: String = "Bạn", duration: Double = 187.0) =
-        MusicTrack("local:" + name.hashCode().toUInt().toString(16), name, creator, duration, bytes, true)
+    fun track(name: String, bytes: Long = 4_200_000, creator: String = "Bạn", duration: Double = 187.0, analysed: Boolean = true) =
+        MusicTrack("local:" + name.hashCode().toUInt().toString(16), name, creator, duration, bytes, analysed)
 }

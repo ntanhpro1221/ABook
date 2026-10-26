@@ -378,7 +378,7 @@ describe("lựa chọn nhạc nền", () => {
 describe("tắt tự chọn nhạc nền trong Cài đặt", () => {
   it("cuốn chưa chọn nhạc nói đúng là chưa có nhạc, và dòng 'Để máy chọn' nói lý do", () => {
     const view = { autoOff: true };
-    expect(playlistLabel(view, undefined)).toBe("Chưa có nhạc (tắt trong Cài đặt)");
+    expect(playlistLabel(view, undefined)).toBe("Chưa có nhạc");
     expect(playlistPlaying(view)).toBe(false);
     expect(chosenId(view)).toBeNull();
     expect(playlistOptions(undefined, false, view)[0]).toMatchObject({ id: null, hint: "đang tắt trong Cài đặt" });
