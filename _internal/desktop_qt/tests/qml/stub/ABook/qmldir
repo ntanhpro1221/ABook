@@ -3,9 +3,42 @@ singleton Theme 1.0 ../../../../qml/Theme.qml
 singleton Nav 1.0 ../../../../qml/Nav.qml
 singleton Platform 1.0 Platform.qml
 singleton Backend 1.0 Backend.qml
+singleton Bench 1.0 Bench.qml
 Interactive 1.0 ../../../../qml/Interactive.qml
 Icon 1.0 ../../../../qml/Icon.qml
 IconButton 1.0 ../../../../qml/IconButton.qml
 NavItem 1.0 ../../../../qml/NavItem.qml
 ConnectionChip 1.0 ../../../../qml/ConnectionChip.qml
 Sidebar 1.0 ../../../../qml/Sidebar.qml
+Button 1.0 ../../../../qml/Button.qml
+ScreenHeader 1.0 ../../../../qml/ScreenHeader.qml
+BookCell 1.0 ../../../../qml/BookCell.qml
+CoverView 1.0 ../../../../qml/CoverView.qml
+GeneratedCover 1.0 ../../../../qml/GeneratedCover.qml
+BookPage 1.0 ../../../../qml/BookPage.qml
+LibraryScreen 1.0 ../../../../qml/LibraryScreen.qml
+NowPlaying 1.0 ../../../../qml/NowPlaying.qml
+SettingsScreen 1.0 ../../../../qml/SettingsScreen.qml
+StudioScreen 1.0 ../../../../qml/StudioScreen.qml
+ScrollEdges 1.0 ../../../../qml/ScrollEdges.qml
+Scrollbar 1.0 ../../../../qml/Scrollbar.qml
+SmoothWheel 1.0 ../../../../qml/SmoothWheel.qml
+ChapterRow 1.0 ../../../../qml/ChapterRow.qml
+ChapterList 1.0 ../../../../qml/ChapterList.qml
+PageSwitch 1.0 ../../../../qml/PageSwitch.qml
+SeekBar 1.0 ../../../../qml/SeekBar.qml
+ClockUser 1.0 ../../../../qml/ClockUser.qml
+SkipButton 1.0 ../../../../qml/SkipButton.qml
+SkipGlyph 1.0 ../../../../qml/SkipGlyph.qml
+PlayButton 1.0 ../../../../qml/PlayButton.qml
+ControlChip 1.0 ../../../../qml/ControlChip.qml
+MusicCredit 1.0 ../../../../qml/MusicCredit.qml
+SpeedPopover 1.0 ../../../../qml/SpeedPopover.qml
+SleepPopover 1.0 ../../../../qml/SleepPopover.qml
+ChaptersPopover 1.0 ../../../../qml/ChaptersPopover.qml
+MusicPopover 1.0 ../../../../qml/MusicPopover.qml
+Popover 1.0 ../../../../qml/Popover.qml
+ChoiceChip 1.0 ../../../../qml/ChoiceChip.qml
+Switch 1.0 ../../../../qml/Switch.qml
+MenuRow 1.0 ../../../../qml/MenuRow.qml
+ReadAlongView 1.0 ../../../../qml/ReadAlongView.qml

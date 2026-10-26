@@ -109,6 +109,7 @@ qt_add_qml_module(ABookDesk
         qml/StudioScreen.qml
         qml/SettingsScreen.qml
         qml/Scrollbar.qml
+        qml/ScrollEdges.qml
         qml/SmoothWheel.qml
         qml/ChapterList.qml
         qml/ChapterRow.qml
@@ -186,6 +187,17 @@ if(MSVC)
     target_compile_options(SidebarTests PRIVATE /W3 /utf-8)
 endif()
 enable_testing()
+qt_add_executable(WidthTests tests/test_width.cpp tests/fakes.h src/bookdetail.cpp src/bookdetail.h
+    src/readalong.cpp src/readalong.h src/music.cpp src/music.h ${ABOOK_PLAYER_SOURCES} ${ABOOK_MUSIC_SOURCES})
+target_include_directories(WidthTests PRIVATE src tests)
+target_compile_definitions(WidthTests PRIVATE QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/width"
+    WIDTH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(WidthTests PRIVATE Qt6::QuickTest Qt6::Quick Qt6::Network)
+set_target_properties(WidthTests PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/width_tests")
+if(MSVC)
+    target_compile_options(WidthTests PRIVATE /W3 /utf-8)
+endif()
+add_test(NAME WidthTests COMMAND WidthTests)
 add_test(NAME PlayerTests COMMAND PlayerTests)
 add_test(NAME ReadAlongTests COMMAND ReadAlongTests)
 add_test(NAME MusicTests COMMAND MusicTests)

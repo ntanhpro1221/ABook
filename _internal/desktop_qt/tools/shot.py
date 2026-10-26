@@ -2,7 +2,7 @@
 ảnh lấy bằng PrintWindow nên chụp được cả khi cửa sổ bị che).
 
   python -X utf8 shot.py <exe> <thư mục ảnh> [--env K=V ...] [--size W,H] step step ...
-step:  wait=S | shot=tên | hover=X,Y (đặt con trỏ THẬT vào điểm đó rồi trả về chỗ cũ ở bước unhover; Qt bỏ WM_MOUSEMOVE giả nên rê chuột chỉ thử được cách này) | unhover | key=esc / enter / down / f5 (PostMessage) | rkey=ctrl+3 / alt+left (phím THẬT, kéo cửa sổ lên trước) | click=X,Y | rclick=X,Y | back | move=X,Y | scroll=X,Y,delta | resize=W,H
+step:  wait=S | shot=tên | hover=X,Y (đặt con trỏ THẬT vào điểm đó rồi trả về chỗ cũ ở bước unhover; Qt bỏ WM_MOUSEMOVE giả nên rê chuột chỉ thử được cách này) | unhover | key=esc / enter / down / f5 (PostMessage) | rkey=ctrl+3 / alt+left (phím THẬT, kéo cửa sổ lên trước) | click=X,Y | rclick=X,Y | back | move=X,Y | scroll=X,Y,delta | resize=W,H | client=W,H (exact screenshot size, includes invisible native frame in outer size)
 Toạ độ là điểm ảnh của vùng client (đúng như ảnh chụp). Ví dụ:
   shot.py dist/ABookDesk.exe out --env ABOOK_PREFERENCES=fx/prefs.json wait=4 shot=library rkey=ctrl+3 wait=1 shot=settings
 """
@@ -211,6 +211,21 @@ def main() -> int:
             elif name == "resize":
                 w, hh = (int(v) for v in val.split(","))
                 u.SetWindowPos(h, 0, 0, 0, w, hh, 0x0002 | 0x0004 | 0x0010)  # NOMOVE | NOZORDER | NOACTIVATE
+            elif name == "client":
+                w, hh = (int(v) for v in val.split(","))
+                client, outer = wt.RECT(), wt.RECT()
+                u.GetClientRect(h, ctypes.byref(client))
+                u.GetWindowRect(h, ctypes.byref(outer))
+                u.SetWindowPos(h, 0, 0, 0, w + outer.right - outer.left - client.right,
+                               hh + outer.bottom - outer.top - client.bottom, 0x0002 | 0x0004 | 0x0010 | 0x0400)
+                # SWP_NOSENDCHANGING: the default WM_WINDOWPOSCHANGING clamps the
+                # max track size to the physical monitor, even for PrintWindow.
+                # WM_SIZE still reaches Qt, so an off-screen 2560 px client lays
+                # out at 2560 rather than producing a mislabeled 1924 px image.
+                time.sleep(0.05)
+                u.GetClientRect(h, ctypes.byref(client))
+                if (client.right, client.bottom) != (w, hh):
+                    raise RuntimeError(f"client requested {w}x{hh}, got {client.right}x{client.bottom}")
             else:
                 print("bước lạ:", s)
     finally:

@@ -201,6 +201,14 @@ def render() -> str:
     a("    // Windows > Trợ năng > Hiệu ứng động tắt: bỏ trượt / bay, giữ mờ <= 120 ms (DESIGN.md 5.2). Main.qml gán từ Platform.")
     a("    property bool reduceMotion: false")
     a("")
+    a("    // ---- Khổ cửa sổ: CONTENT width, after the sidebar ----")
+    a("    // Temporary single block until DESIGN.md has Khổ cửa sổ; move values to its parser then.")
+    a("    readonly property int widthMedium: 600")
+    a("    readonly property int widthExpanded: 840")
+    a("    readonly property int widthLarge: 1200")
+    a("    readonly property int widthExtraLarge: 1600")
+    a("    function widthClass(w) { return w < widthMedium ? 0 : w < widthExpanded ? 1 : w < widthLarge ? 2 : w < widthExtraLarge ? 3 : 4 }")
+    a("")
     a("    // ---- màu (DESIGN.md 5.1) ----")
     for dm, qn in COLOR_NAMES.items():
         light, dark = col[dm]
