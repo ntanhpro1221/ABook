@@ -3,4 +3,5 @@ import QtQuick
 QtObject {
     readonly property bool enabled: false
     function noteOnce(event) {}
+    function attach(window) {}
 }

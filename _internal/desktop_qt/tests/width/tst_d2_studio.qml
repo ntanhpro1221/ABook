@@ -314,8 +314,11 @@ Item {
             compare(last().body.name, "Nhanh gọn")
             compare(Api.notice, "Đã xoá mẫu “Nhanh gọn”")
             tryVerify(function() { return all(page, "renameTemplate").length === 2 })
-            const undo = one(page, "undoDelete")
-            undo.clicked()
+            // "Hoàn tác" là nút của lời báo (toast của web), sống 10 giây
+            compare(Api.noticeAction.label, "Hoàn tác")
+            compare(Api.noticeDuration, 10000)
+            Api.runNoticeAction()
+            compare(Api.notice, "")
             compare(last().body.op, "restore")
             compare(last().body.index, 1)
             compare(last().body.template.name, "Nhanh gọn")

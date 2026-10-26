@@ -13,6 +13,7 @@
 #include <QObject>
 #include <QProcess>
 #include <QUrl>
+#include <QVariantMap>
 #include <QJSEngine>
 #include <QQmlEngine>
 #include <QtQml/qqmlregistration.h>
@@ -75,6 +76,10 @@ signals:
     void libraryLoadedChanged();
     /// Thư viện vừa tải xong (JSON thô): bộ phát tìm cuốn nghe dở gần nhất trong đó.
     void libraryFetched(const QJsonArray &books);
+    /// Sự kiện host chuyển tới giao diện ({"event", "detail"}; vỏ Tauri phát thành sự kiện cửa sổ cùng tên): "abook-update" = vừa có bản mới.
+    void hostEvent(const QString &name, const QVariant &detail);
+    /// Kết quả "Kiểm tra bản mới" ("abook-update-checked" của vỏ Tauri): {state: "found" | "latest" | "failed", message?}.
+    void updateChecked(const QVariantMap &detail);
 
 private:
     struct Launch {

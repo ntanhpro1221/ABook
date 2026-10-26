@@ -1,5 +1,6 @@
 import QtQuick
 import ABook
+import "EditBookLogic.js" as Logic
 
 // One width rule on the content area. Geometry interpolates without reparenting,
 // so the cover, chapter scroll position and delegates survive a class change.
@@ -8,6 +9,7 @@ Item {
     signal editRequested(var data)
     signal saveRequested(var data)
     signal saveAsRequested(var data)
+    signal renameRequested(var data, var chapter)       // "Đổi tên chương…" ở menu "…" của dòng chương: hộp EditBookRename của Main.qml
     property var book: ({})
     readonly property bool expanded: width >= Theme.widthExpanded
     property real split: expanded ? 1 : 0
@@ -29,7 +31,7 @@ Item {
     readonly property real stackedHeight: Math.max(compactCoverH, info.height) + Theme.s24
 
     BookDetail {
-        id: detail
+        id: bookDetail          // không đặt tên `detail`: trong hàng chương, `detail` là thuộc tính chữ của ChapterRow
         bookId: root.book.bookId || ""
     }
     ScreenHeader {
@@ -83,6 +85,66 @@ Item {
             onEditRequested: { more.close(); root.editRequested(root.fullBook) }
             onSaveRequested: { more.close(); root.saveRequested(root.fullBook) }
             onSaveAsRequested: { more.close(); root.saveAsRequested(root.fullBook) }
+        }
+    }
+    // Menu "…" của một dòng chương (DropdownMenu trong ChapterRow của listen/BookScreen.tsx). "Đọc chương này" chưa có: bản Qt chưa có màn đọc.
+    property var menuChapter: null          // {chapterId, title, subtitle, fullTitle, playable, done}
+    readonly property bool canRename: Logic.canEditLayer(fullBook.capabilities)
+    function openChapterMenu(anchor, row) {
+        menuChapter = row
+        chapterMenu.anchorItem = anchor
+        chapterMenu.show()
+    }
+    // Đã nghe xong / Chưa nghe: ghi vào hồ sơ nghe đang hiện (shownRecord), rồi nạp lại trang và thư viện
+    function setChapterDone(chapterId, done) {
+        const id = root.book.bookId
+        const records = root.fullBook.records || []
+        const active = records.filter(r => r.active)[0]
+        const body = active ? {done: done, record: active.id} : {done: done}
+        Api.call("POST", "/api/listen/books/" + id + "/chapters/" + chapterId + "/done", body, function(data, error) {
+            if (error) { if (/^Hồ sơ nghe này/.test(error)) root.loadFull(); return }
+            bookDetail.reload()
+            if (Api.transport) Api.transport.refreshLibrary()
+        })
+    }
+    Popover {
+        id: chapterMenu
+        objectName: "chapterMenu"
+        panelWidth: 220
+        pad: 6
+        Column {
+            width: parent.width
+            readonly property var c: root.menuChapter || ({})
+            // Cao đúng tổng các hàng đang hiện: bảng nổi đo chỗ (mở lên hay xuống) ngay lúc mở, khi `visible` của hàng còn đọc ra false
+            height: Theme.buttonHeight * ((c.playable ? 2 : 0) + (root.canRename ? 1 : 0))
+            MenuRow {
+                objectName: "chapterFromStart"
+                visible: Boolean(parent.c.playable)
+                width: parent.width
+                icon: "play"
+                text: "Nghe từ đầu chương"
+                onClicked: { chapterMenu.close(); Player.open(root.book.bookId, parent.c.chapterId, 0, true) }
+            }
+            MenuRow {
+                objectName: "chapterDone"
+                visible: Boolean(parent.c.playable)
+                width: parent.width
+                icon: parent.c.done ? "circle-dashed" : "check-check"
+                text: parent.c.done ? "Chưa nghe" : "Đã nghe xong"
+                onClicked: { chapterMenu.close(); root.setChapterDone(parent.c.chapterId, !parent.c.done) }
+            }
+            MenuRow {
+                objectName: "chapterRename"
+                visible: root.canRename
+                width: parent.width
+                icon: "text-cursor-input"
+                text: "Đổi tên chương…"
+                onClicked: {
+                    chapterMenu.close()
+                    const c = parent.c
+                    root.renameRequested(root.fullBook, {id: c.chapterId, title: c.title, subtitle: c.subtitle, fullTitle: c.fullTitle})
+                }
+            }
         }
     }
     Item {
@@ -167,13 +229,13 @@ Item {
                 }
                 Item { width: 1; height: Theme.s8 * root.summaryT }
                 Flow {
-                    visible: detail.canListen
+                    visible: bookDetail.canListen
                     width: parent.width
                     spacing: Theme.s8
                     Button {
-                        text: detail.primaryText
-                        icon: detail.primaryIcon
-                        onClicked: detail.activate()
+                        text: bookDetail.primaryText
+                        icon: bookDetail.primaryIcon
+                        onClicked: bookDetail.activate()
                     }
                     Button {
                         kind: "text"
@@ -183,23 +245,23 @@ Item {
                     }
                 }
                 Text {
-                    visible: detail.primaryCaption !== ""
+                    visible: bookDetail.primaryCaption !== ""
                     width: parent.width
-                    text: detail.primaryCaption
+                    text: bookDetail.primaryCaption
                     wrapMode: Text.Wrap
                     color: Theme.text2
                     font.pixelSize: Theme.sizeBodySmall
                 }
                 Text {
-                    visible: detail.message !== ""
+                    visible: bookDetail.message !== ""
                     width: parent.width
-                    text: detail.message
+                    text: bookDetail.message
                     color: Theme.text2
                     wrapMode: Text.Wrap
                     font.pixelSize: Theme.sizeBodySmall
                 }
                 Text {
-                    visible: detail.status === "failed"
+                    visible: bookDetail.status === "failed"
                     width: parent.width
                     text: "Chưa lấy được danh sách chương."
                     color: Theme.danger
@@ -217,7 +279,7 @@ Item {
             height: Math.max(0, stage.height - y)
             Text {
                 id: chaptersTitle
-                visible: detail.chapters.count > 0
+                visible: bookDetail.chapters.count > 0
                 width: parent.width
                 text: "Chương"
                 wrapMode: Text.Wrap
@@ -232,7 +294,7 @@ Item {
                 width: parent.width
                 height: Math.max(0, parent.height - y)
                 clip: true
-                model: detail.chapters
+                model: bookDetail.chapters
                 boundsBehavior: Flickable.StopAtBounds
                 bottomMargin: Theme.s16
                 delegate: ChapterRow {
@@ -248,7 +310,12 @@ Item {
                     done: model.done
                     current: model.current
                     progress: model.progress
-                    onClicked: if (model.playable) detail.playChapter(model.chapterId)
+                    fullTitle: model.fullTitle
+                    hasMenu: model.playable || root.canRename
+                    menuOpen: chapterMenu.open && root.menuChapter !== null && root.menuChapter.chapterId === model.chapterId
+                    onClicked: if (model.playable && !row.onMenuButton) bookDetail.playChapter(model.chapterId)
+                    onMenuRequested: anchor => root.openChapterMenu(anchor, {chapterId: model.chapterId, title: model.title, subtitle: model.subtitle,
+                        fullTitle: model.fullTitle, playable: model.playable, done: model.done})
                 }
                 SmoothWheel { flick: list }
                 Scrollbar { target: list }

@@ -5,6 +5,8 @@ import ABook
 // theo từng dòng chữ (hình chữ nhật lấy từ QTextLayout của chính TextEdit; chỉ đoạn có câu đổi mới vẽ lại), chữ đang đọc tô đậm hơn khi sách có mốc chữ,
 // câu đã nghe nhạt đi. Đang theo: câu sắp khuất thì cuộn nó lên khoảng một phần ba từ trên. Người tự cuộn là thôi theo và hiện "Tới câu đang nghe";
 // thôi cuộn 1,5 giây mà câu đang đọc nằm trong khung thì theo lại. Bấm một câu (hay một chữ) là nghe từ đó.
+// Mặt đọc (Cài đặt › Giao diện › "Nền đọc", Theme.read; .reading-surface của web): nền, chữ, chữ phụ, màu nhấn và lớp tô câu / chữ của vùng này
+// theo MẶT ĐỌC chứ không theo giao diện của app; đổi mặt thì nền và chữ mờ chéo theo motionSlow.
 Item {
     id: root
     property bool following: true
@@ -14,6 +16,10 @@ Item {
     readonly property real leading: Math.max(1.2, Number(Platform.setting("readingLeading", String(Theme.lineHeightReading))))
     readonly property bool showChip: !following && ReadAlong.currentSegment >= 0 && placement !== "inside"
     readonly property real textMax: 640
+    readonly property var surface: Theme.read
+    property color surfaceBg: surface.bg
+    Behavior on surfaceBg { ColorAnimation { duration: Theme.reduceMotion ? Math.min(Theme.motionFast, 120) : Theme.motionSlow; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard } }
+    Rectangle { objectName: "readingSurface"; anchors.fill: parent; color: root.surfaceBg }
 
     // ---- đi theo giọng ----
     function manual() {
@@ -114,6 +120,7 @@ Item {
     Connections {
         target: Theme
         function onDarkChanged() { root.shadeAll() }
+        function onReadChanged() { root.shadeAll() }
     }
     signal shadeAll()
 
@@ -168,7 +175,7 @@ Item {
                 hoverRects = hoverSeg >= 0 && hoverSeg !== ReadAlong.currentSegment ? ReadAlong.sentenceRects(edit.textDocument, index, hoverSeg) : []
             }
             function shade() {
-                ReadAlong.shade(edit.textDocument, index, Theme.text2, Theme.text)
+                ReadAlong.shade(edit.textDocument, index, root.surface.fg2, root.surface.fg)
             }
             onHoverSegChanged: refreshHover()
 
@@ -178,7 +185,7 @@ Item {
                 x: Math.round((del.width - del.textW) / 2)
                 width: del.textW
                 text: del.speaker
-                color: Theme.text2
+                color: root.surface.fg2
                 font.pixelSize: Theme.sizeCaption
                 font.weight: Theme.weightMedium
             }
@@ -195,7 +202,7 @@ Item {
                         readonly property var r: del.hoverRects[index]
                         x: r.x - 3; y: r.y; width: r.width + 6; height: r.height
                         radius: Theme.radiusControl
-                        color: Theme.text
+                        color: root.surface.fg
                         opacity: 0.05
                     }
                 }
@@ -206,7 +213,7 @@ Item {
                         readonly property var r: del.sentRects[index]
                         x: r.x - 3; y: r.y; width: r.width + 6; height: r.height
                         radius: Theme.radiusControl
-                        color: Theme.accentSoft
+                        color: Qt.alpha(root.surface.accent, root.surface.along)
                     }
                 }
                 Repeater {
@@ -216,7 +223,7 @@ Item {
                         readonly property var r: del.wordRects[index]
                         x: r.x - 2; y: r.y + 1; width: r.width + 4; height: r.height - 2
                         radius: Theme.radiusControl
-                        color: Qt.alpha(Theme.accent, 0.38)
+                        color: Qt.alpha(root.surface.accent, root.surface.word)
                     }
                 }
                 TextEdit {
@@ -228,7 +235,7 @@ Item {
                     selectByMouse: false
                     activeFocusOnPress: false
                     wrapMode: TextEdit.Wrap
-                    color: Theme.text
+                    color: root.surface.fg
                     font.pixelSize: del.px
                     font.weight: del.heading ? Theme.weightBold : Theme.weightRegular
                     horizontalAlignment: del.scene ? TextEdit.AlignHCenter : TextEdit.AlignLeft
@@ -288,8 +295,8 @@ Item {
         width: parent.width
         height: 24
         gradient: Gradient {
-            GradientStop { position: 0; color: Theme.bg }
-            GradientStop { position: 1; color: Qt.rgba(Theme.bg.r, Theme.bg.g, Theme.bg.b, 0) }
+            GradientStop { position: 0; color: root.surfaceBg }
+            GradientStop { position: 1; color: Qt.rgba(root.surfaceBg.r, root.surfaceBg.g, root.surfaceBg.b, 0) }
         }
     }
     Rectangle {
@@ -297,8 +304,8 @@ Item {
         width: parent.width
         height: 48
         gradient: Gradient {
-            GradientStop { position: 0; color: Qt.rgba(Theme.bg.r, Theme.bg.g, Theme.bg.b, 0) }
-            GradientStop { position: 1; color: Theme.bg }
+            GradientStop { position: 0; color: Qt.rgba(root.surfaceBg.r, root.surfaceBg.g, root.surfaceBg.b, 0) }
+            GradientStop { position: 1; color: root.surfaceBg }
         }
     }
 
@@ -309,7 +316,7 @@ Item {
         wrapMode: Text.Wrap
         visible: ReadAlong.status === "loading" || ReadAlong.status === "failed"
         text: ReadAlong.status === "loading" ? "Đang mở văn bản chương…" : "Chưa mở được văn bản chương này."
-        color: Theme.text3
+        color: root.surface.fg2
         font.pixelSize: Theme.sizeBodySmall
     }
 

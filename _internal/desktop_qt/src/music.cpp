@@ -215,6 +215,21 @@ void Music::change(const QJsonObject &body) {
     });
 }
 
+void Music::reload(const QString &bookId) {
+    if (m_bookId.isEmpty() || (bookId != QLatin1String("*") && bookId != m_bookId))
+        return;
+    const int asked = m_viewGeneration; // không tăng: lần đổi đang gửi (busy) vẫn nhận lời đáp của nó
+    m_net->request("GET", musicPath(), {}, [this, asked](int status, const QJsonObject &body) {
+        if (asked == m_viewGeneration && status == 200)
+            applyView(body);
+    }, false);
+    if (!m_cuesFor.isEmpty()) {
+        m_retry.stop();
+        ++m_generation;
+        askCues(0, 0);
+    }
+}
+
 void Music::sync() {
     const QString key = chapterKey();
     if (key.isEmpty() || key != m_cuesFor)

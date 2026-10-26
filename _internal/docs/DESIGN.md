@@ -101,6 +101,8 @@ Bộ hiện có (xám lạnh #f4f5f7 + hổ phách) chỉnh lại có chủ đí
 | `--accent-soft` nhấn nhạt | #f7ead5 | rgb(233 169 69 / .14) | câu đang đọc, hàng đang phát |
 | `--success` / `--danger` | #2a7554 / #b23b33 | #5cc596 / #ef7b70 | chỉ cho trạng thái, kèm chữ/icon |
 | `--warning` vàng đất | #905b10 | #e8b64c | chữ cảnh báo nhỏ (bài nhạc không phát được...), ≥ 4,5:1 cả trên `--bg-sunken` |
+| `--warning-soft` vàng nhạt | #fcf1dc | rgb(232 182 76 / 0.13) | nền dải cảnh báo (máy kia không trả lời, chỉ được nghe) |
+| `--info-soft` nền báo tin | #ece9e3 | rgb(236 232 225 / 0.08) | nền dải báo tin ("Đang mở Studio của ...") |
 | `--focus` vòng tiêu điểm | #a0600c | #e9a945 | vòng tiêu điểm, rãnh công tắc đang bật (≥ 3:1 với mọi nền) |
 | `--switch-off` rãnh công tắc tắt | #857e72 | #75706a | rãnh công tắc đang tắt (≥ 3:1 trên nền) |
 | `--switch-thumb` núm công tắc | #ffffff | #1b1204 | núm công tắc trên cả hai rãnh |

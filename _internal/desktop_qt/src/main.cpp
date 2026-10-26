@@ -3,6 +3,7 @@
 #include "bench.h"
 #include "audioout_mf.h"
 #include "coverprovider.h"
+#include "feedback.h"
 #include "hostnet.h"
 #include "music.h"
 #include "platform.h"
@@ -43,6 +44,12 @@ int main(int argc, char *argv[]) {
     // Nhạc nền: mỗi phần tử nhạc một bộ phát Media Foundation riêng (mở lười), theo giọng của Player.
     Music music(&player, &hostNet, [] { return new MfAudioOut(nullptr); }, nullptr);
     Music::setInstance(&music);
+    // Tiếng chạm (Cài đặt › Giao diện › "Âm thanh chạm"): một bộ phát Media Foundation riêng, mở lười ở tiếng đầu tiên. Sách đang phát thì im,
+    // trừ nốt báo hẹn giờ ngủ sắp tắt.
+    Feedback feedback([] { return new MfAudioOut(nullptr); }, nullptr);
+    Feedback::setInstance(&feedback);
+    QObject::connect(&player, &Player::playingChanged, &feedback, [&player, &feedback] { feedback.setBookPlaying(player.playing()); });
+    QObject::connect(&player, &Player::sleepWarning, &feedback, [&feedback] { feedback.play(QStringLiteral("sleepWarn")); });
     ReadAlong readAlong(&player, &hostNet, nullptr);
     ReadAlong::setInstance(&readAlong);
     QObject::connect(&app, &QGuiApplication::aboutToQuit, &player, [&player] { player.shutdown(); });

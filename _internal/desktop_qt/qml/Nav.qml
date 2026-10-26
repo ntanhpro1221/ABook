@@ -7,6 +7,13 @@ QtObject {
     property var stack: null          // ScreenStack, gán trong Main.qml
     property var layers: []           // lớp nổi đang mở, mới nhất ở cuối; mỗi lớp có close()
 
+    // Studio của máy tính đã ghép đang mở ở màn Studio ("Mở Studio" ở Cài đặt › Thiết bị › Máy tính khác): mã máy (12 hex), "" = Studio của máy này
+    property string studioPeer: ""
+    function openPeerStudio(peer) {
+        studioPeer = peer
+        if (stack) stack.show(1)
+    }
+
     function openLayer(layer) { layers = layers.concat([layer]) }
     function closedLayer(layer) { layers = layers.filter(l => l !== layer) }
 

@@ -135,3 +135,9 @@ EditBookSaveAs 1.0 ../../../../qml/EditBookSaveAs.qml
 EditBookItems 1.0 ../../../../qml/EditBookItems.qml
 singleton Api 1.0 ../../../../qml/Api.qml
 singleton DesktopApi 1.0 DesktopApi.qml
+Toast 1.0 ../../../../qml/Toast.qml
+EmptyState 1.0 ../../../../qml/EmptyState.qml
+PeerBar 1.0 ../../../../qml/PeerBar.qml
+PlayerKeys 1.0 ../../../../qml/PlayerKeys.qml
+ShortcutsDialog 1.0 ../../../../qml/ShortcutsDialog.qml
+WindowChrome 1.0 WindowChrome.qml

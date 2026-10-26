@@ -29,7 +29,14 @@ Modal {
             root.saving = false
             if (error) Api.notice = Logic.toastText("Chưa lưu được file sách", error)
             // Không có thay đổi nào vẫn lưu được, nhưng file giống hệt bản gốc: nói điều đó thành cảnh báo cùng dòng.
-            else Api.notice = Logic.toastText("Đã lưu file sách", result.edits ? "" : "Chưa có thay đổi nào - file giống bản gốc.")
+            else {
+                // "Mở thư mục": mở thư mục chứa file vừa lưu (máy chủ mở bằng trình quản lý file của máy)
+                const folder = result.folder
+                Api.toast(Logic.toastText("Đã lưu file sách", result.edits ? "" : "Chưa có thay đổi nào - file giống bản gốc."), {
+                    duration: 8000,
+                    action: folder ? {label: "Mở thư mục", run: function() { Api.quiet("POST", "/api/reveal-export", {folder: folder}) }} : null
+                })
+            }
             if (done) done()      // như web: hộp đóng sau khi lưu, thành công hay không
         })
     }

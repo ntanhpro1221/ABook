@@ -237,7 +237,8 @@ Modal {
     // Hàng xong: không file nào lỗi thì đóng hộp (một cuốn mới duy nhất thì mở trang sách); có file lỗi thì giữ hộp để đọc lý do.
     function finish(items) {
         const summary = Queue.summarize(items)
-        if (summary.failed > 0) return
+        if (summary.failed > 0) { Feedback.play("reject"); return }
+        if (summary.added) Feedback.play("confirm")
         const added = items.filter(item => item.state === "added")
         clear()
         dismiss()
@@ -303,7 +304,7 @@ Modal {
         const mine = generation
         addCurrent(separate, function(added, error) {
             if (mine !== root.generation) return
-            if (error) { root.busy = ""; Api.notice = Queue.said("Chưa thêm được sách", error); return }
+            if (error) { root.busy = ""; Feedback.play("reject"); Api.notice = Queue.said("Chưa thêm được sách", error); return }
             if (root.queue && root.currentId >= 0) {
                 // Trong hàng: cuốn này xong, sang cuốn kế (thông báo gộp ở cuối hàng).
                 const done = Queue.settle(root.queue, root.currentId, added.how === "existing" ? {state: "existing", note: "Đã có trong thư viện", bookId: added.id} : {state: "added", bookId: added.id})
@@ -311,6 +312,7 @@ Modal {
                 root.goNext(done)
                 return
             }
+            if (added.how !== "existing") Feedback.play("confirm")
             Api.notice = added.how === "existing" ? "Cuốn này đã có trong thư viện" : "Đã thêm sách vào thư viện"
             root.clear()
             root.dismiss()

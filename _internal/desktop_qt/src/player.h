@@ -89,6 +89,7 @@ class Player : public QObject {
     Q_PROPERTY(bool playing READ playing NOTIFY playingChanged)
     Q_PROPERTY(bool buffering READ buffering NOTIFY bufferingChanged)
     Q_PROPERTY(double rate READ rate NOTIFY rateChanged)
+    Q_PROPERTY(double volume READ volume NOTIFY volumeChanged)       // 0..1 của giọng (phím M tắt / bật tiếng)
     Q_PROPERTY(QString sleepKind READ sleepKind NOTIFY sleepChanged)    // "off" | "minutes" | "chapter"
     Q_PROPERTY(int sleepMinutes READ sleepMinutes NOTIFY sleepChanged)
     Q_PROPERTY(int lastSleepMinutes READ lastSleepMinutes NOTIFY sleepChanged)
@@ -130,6 +131,7 @@ public:
     bool playing() const { return m_playing; }
     bool buffering() const { return m_buffering; }
     double rate() const { return m_rate; }
+    double volume() const { return m_volume; }
     QString sleepKind() const;
     int sleepMinutes() const { return m_sleep.minutes; }
     int lastSleepMinutes() const { return m_lastSleepMinutes; }
@@ -168,6 +170,9 @@ public:
     Q_INVOKABLE void restart();
     Q_INVOKABLE void setRate(double rate);
     Q_INVOKABLE void stepRate(int direction);
+    Q_INVOKABLE void setVolume(double volume);
+    /// Phím M (player.tsx): đang có tiếng thì nhớ mức rồi tắt; đang tắt thì về mức đã nhớ (chưa nhớ gì: 0,9).
+    Q_INVOKABLE void toggleMute();
     Q_INVOKABLE void setSleep(const QString &kind, int minutes = 0);
     Q_INVOKABLE void extendSleep(int minutes = 0);
     Q_INVOKABLE void configure(const QVariantMap &preferences);
@@ -217,6 +222,9 @@ signals:
     void playingChanged();
     void bufferingChanged();
     void rateChanged();
+    void volumeChanged();
+    /// Hẹn giờ theo phút còn 30 giây (DESIGN 5.3): báo một lần; thêm giờ quá mốc thì báo lại được.
+    void sleepWarning();
     void sleepChanged();
     void fadingChanged();
     void errorChanged();
@@ -317,6 +325,7 @@ private:
     double m_rate = PlayerLogic::kDefaultRate;
     double m_defaultRate = PlayerLogic::kDefaultRate;
     double m_volume = 0.9;
+    double m_muted = 0; // mức trước lần tắt tiếng gần nhất
     bool m_fading = false;
     QString m_error;
     QString m_notice;

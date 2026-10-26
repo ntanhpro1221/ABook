@@ -81,7 +81,7 @@ SCREENS: list[tuple[str, tuple[str, ...], tuple[tuple[str, tuple[str, ...] | Non
                  "Listen*.qml", "Sleep*.qml", "Look*.qml", "Advanced*.qml", "MyMusic*", "NativeFolders.qml", "ThirdPartyText.qml",
                  "Devices*", "PhoneSync*.qml", "PhoneDiagnostics.qml", "OtherComputers*.qml", "StudioSettings.qml", "StudioRows.qml",
                  "BookTemplates.qml", "SharedReadingsSettings.qml", "NewBookDefaults.qml", "SettingRow.qml", "SettingChoices.qml",
-                 "SectionBlock.qml", "DisclosureRow.qml", "MoreInfo.qml", "ChoiceRow.qml", "Select.qml"),
+                 "SectionBlock.qml", "DisclosureRow.qml", "MoreInfo.qml", "ChoiceRow.qml", "Select.qml", "ShortcutsDialog.qml", "PlayerKeys.qml"),
      (("desktop/SettingsScreen.tsx", None), ("shared/SettingsNav.tsx", None), ("shared/DisclosureRow.tsx", None),
       ("shared/settingsSummary.ts", None), ("desktop/SleepSchedule.tsx", None), ("listen/VoiceSettings.tsx", None),
       ("listen/VieneuModuleCard.tsx", None), ("listen/VoiceSpeedSetting.tsx", None), ("listen/MyMusic.tsx", None),
@@ -93,14 +93,16 @@ SCREENS: list[tuple[str, tuple[str, ...], tuple[tuple[str, tuple[str, ...] | Non
      (("listen/AddBook.tsx", None), ("listen/importQueue.ts", None), ("listen/textImport.ts", None))),
     ("Sửa sách", ("EditBook*", "CoverSearch.qml", "BookMusicSettings.qml"),
      (("listen/EditBook.tsx", None), ("shared/CoverSearch.tsx", None))),
-    ("Thanh bên", ("Sidebar.qml", "NavItem.qml", "ConnectionChip.qml", "ConnectionPopover.qml", "StudioScreen.qml"),
+    ("Thanh bên", ("Sidebar.qml", "NavItem.qml", "ConnectionChip.qml", "ConnectionPopover.qml"),
      (("desktop/Shell.tsx", ("Brand", "NavItem", "TabItem", "Producing", "UpdateNotice", "DesktopSidebar")),)),
+    ("Studio máy khác", ("StudioScreen.qml", "PeerBar.qml", "EmptyState.qml"),
+     (("desktop/PeerBar.tsx", None), ("shared/peerStudio.ts", None), ("desktop/App.tsx", ("PeerTrouble", "StudioClosed")))),
     ("Thanh tiêu đề", ("Main.qml", "TitleBar.qml", "CaptionButton.qml", "CaptionGlyph.qml"),
      (("desktop/Shell.tsx", ("TITLES", "Shell")), ("shared/title.ts", None))),
     ("Chung", ("Button.qml", "IconButton.qml", "MenuRow.qml", "ScreenHeader.qml", "ScreenStack.qml", "Interactive.qml", "Icon.qml",
                "Scrollbar.qml", "SmoothWheel.qml", "Nav.qml", "ClockUser.qml", "Modal.qml", "Api.qml", "Collapse.qml",
-               "FormField.qml", "FormLabel.qml", "HintText.qml", "SettingsItem.qml", "Switch.qml", "ScrollEdges.qml"),
-     (("shared/ScreenHeader.tsx", None), ("shared/ui.tsx", None))),
+               "FormField.qml", "FormLabel.qml", "HintText.qml", "SettingsItem.qml", "Switch.qml", "ScrollEdges.qml", "Toast.qml"),
+     (("shared/ScreenHeader.tsx", None), ("shared/ui.tsx", None), ("desktop/App.tsx", ("App",)))),
 ]
 
 # Thuộc tính QML mang chữ cho người dùng.

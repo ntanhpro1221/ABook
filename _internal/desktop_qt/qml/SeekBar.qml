@@ -74,9 +74,19 @@ Item {
         preventStealing: true
         cursorShape: Qt.PointingHandCursor
         function fractionAt(x) { return Math.max(0, Math.min(1, x / width)) }
+        // Kéo qua một mốc (mỗi 15 giây, hay chạm đầu / cuối chương): tiếng "tích" (crossedSeekMark của shared/feedback.ts). Chỉ khi đang kéo.
+        function crossedMark(from, to) {
+            if (from === to) return false
+            const edge = value => value <= 0 || (root.total > 0 && value >= root.total)
+            if (edge(to)) return !edge(from)
+            return Math.floor(from / 15) !== Math.floor(to / 15)
+        }
         onPositionChanged: (mouse) => {
             root.hoverFraction = fractionAt(mouse.x)
-            if (pressed) root.dragFraction = root.hoverFraction
+            if (pressed) {
+                if (crossedMark(Math.round(root.dragFraction * root.total), Math.round(root.hoverFraction * root.total))) Feedback.play("tick")
+                root.dragFraction = root.hoverFraction
+            }
         }
         onPressed: (mouse) => {
             root.dragFraction = fractionAt(mouse.x)

@@ -42,7 +42,7 @@ Item {
             lineHeight: 1.3
             Behavior on color { ColorAnimation { duration: Theme.motionFast } }
         }
-        TapHandler { enabled: toggle.enabled; onTapped: root.toggled(!root.checked) }
+        TapHandler { enabled: toggle.enabled; onTapped: { Feedback.play("toggle"); root.toggled(!root.checked) } }
         HoverHandler { cursorShape: Qt.PointingHandCursor }
     }
     Switch {

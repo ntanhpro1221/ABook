@@ -1,5 +1,60 @@
 # desktop_qt D0 - progress (updated after every step)
 
+## D3 — chỗ hở của D2 (cloud, branch dev/cloud-qtd3 from origin/dev/desk-qt 775209ea), 26-10-2026
+
+Same Linux setup as D2: Qt 6.10.2 from conda-forge (installed here with py-rattler into /opt/qt6env - micro.mamba.pm is blocked, conda.anaconda.org
+is not), Ninja + conda g++, every test exe offscreen. App target (WIN32 only: main.cpp, backend.cpp, MF, QWindowKit) still NOT compiled here.
+1. "Mở Studio" of a paired computer: OtherComputersRow button -> Nav.openPeerStudio(id) (Nav.studioPeer + Studio tab). StudioScreen asks
+   GET /api/peers/<id>/studio/api/app (webui/peer_studio.py bridge) and shows: PeerBar.qml (desktop/PeerBar.tsx: laptop icon, "Đang mở Studio
+   của <máy>", "Về máy này"; info-soft / warning-soft background, opens/closes by height), StudioClosed (listen-only: "Chỉ nghe - bật quyền sửa
+   ở <máy>: Cài đặt > Thiết bị", "Về Thư viện") or PeerTrouble (server sentence; 503 unreachable -> "Studio tự mở khi máy ấy trả lời lại." and
+   re-ask every 5 s up to 30 min, watchUntilBack). Words from shared/peerStudio.ts (qml/PeerStudio.js). EmptyState.qml = shared/ui.tsx
+   EmptyState. Body swaps fade+8 px (ScriptAction reads the newest view - two changes in one tick land on the last one).
+   The Qt Studio itself is still the D3 placeholder, so the peer Studio body is the same "Studio chưa mở trong bản này.".
+2. Chapter row "…" (ChapterRow of listen/BookScreen.tsx): IconButton ellipsis, shown on row hover / focus / while its menu is open, place
+   reserved. Menu (Popover, height computed so it never covers its button): "Nghe từ đầu chương" (play), "Đã nghe xong" / "Chưa nghe"
+   (check-check / circle-dashed; POST .../chapters/<n>/done with the shown record, then reload page + library), "Đổi tên chương…"
+   (text-cursor-input, only when canEditLayer) -> BookPage.renameRequested -> Main's EditBookRename.begin(book, chapter). Lucide
+   check-check + text-cursor-input added to gen_lucide_icons.py (QML output only; the Kotlin output was restored, not written).
+   Found + fixed on the way: BookPage's BookDetail had id `detail`, which inside the ChapterRow delegate resolved to ChapterRow's own
+   `detail` string - clicking a chapter row on the book page never played it (TypeError). Renamed to bookDetail; test added.
+3. "Tự chọn nhạc nền": after a saved change SettingsListen calls Music.reload("*") (+ library refresh): Music re-asks the view and the cues of
+   the chapter playing now without clearing the bed first (MUSIC_CHANGED_EVENT/bedVersion of player.tsx). Book id other than the playing one: no-op.
+4. letterShortcuts: PlayerKeys.qml (Main.qml key handler) = player.tsx keys + ShortcutsHost: Space, ←/→ 15 s, Shift+←/→ chapter, M mute
+   (Player.volume / setVolume / toggleMute, remembers the level, else 0.9), [ ] speed, ? opens ShortcutsDialog.qml ("Phím tắt" + the same
+   LookShortcuts list, tail sentence of the dialog variant). Letter keys off -> M, [ ], ? ignored; Space/arrows/Esc still work.
+   touchSounds: src/feedback.{h,cpp} singleton Feedback = shared/feedback.ts (same note table, brass timbre harmonics, 4 ms attack +
+   exponential decay, 5 ms lead) synthesised to WAV once per kind and played on its own AudioOut (MfAudioOut in main.cpp). Silent while the book
+   plays except sleepWarn; Player emits sleepWarning 30 s before a minutes timer ends. Call sites as the web: Switch (+ DevicesToggle label),
+   speed choice (toggle), seek-bar drag across a 15 s mark (tick), Add Book confirm / reject. Main binds Feedback.sounds to the preference.
+   readingSurface: gen_theme reads ui/src/styles.css :root[data-surface=paper|ivory|night] -> Theme.readingSurfaces / Theme.read; Main binds
+   Theme.readingSurface. ReadAlongView paints the surface background (crossfade motionSlow; reduced motion <= 120 ms), text, heard text,
+   speaker, sentence (along %) and word (word %) highlights and the edge fades from the surface, not from the app theme.
+5. Shell channel: src/hostmessage.h parses the host's stdout lines; Backend emits hostEvent(name, detail) and updateChecked(detail).
+   AdvancedUpdate listens to Backend.updateChecked / hostEvent("abook-update-failed") - the 3 s /api/app polling is gone. Main re-reads
+   /api/app on "abook-update". The Qt shell has no signed-package updater yet, so {"check_update"} answers at once with
+   {state: "failed", message: "Bản chạy từ mã nguồn không tự cập nhật"} (the server's own sentence) instead of a 45 s silence.
+6. Toasts with actions: Api.toast(text, {duration, action: {label, run}}), Api.noticeAction / noticeDuration / runNoticeAction(); a plain
+   `Api.notice = ...` stays a plain toast. Toast.qml (sonner look of desktop/App.tsx Toaster): panel card top-right 16 px under the title
+   strip, title + description (text-2), accent action button on the right, ✕ "Đóng thông báo" at the corner, 4 s default, hover pauses,
+   opens by 16 px slide + 0.96 -> 1 scale (reduced motion: fade only), text wraps anywhere - never cut. BookTemplates delete -> "Hoàn tác"
+   10 s (the in-page undo button is gone, like the web); "Lưu thành…" -> "Mở thư mục" 8 s (POST /api/reveal-export {folder}).
+- DESIGN.md 5.1 + gen_theme: --warning-soft, --info-soft (values = styles.css; palette.test.ts token list extended, 94 pass).
+- Tests: DesktopApi 12 (+host lines, feedback table / WAV / rules), Player 33 (+sleep warning, mute), Music 38 (+reload), ReadAlong 14,
+  SkipGlyph 6, Sidebar 117, Width 260 (= 210 + tst_d3 43: all six items incl. geometry-in-motion checks, + tst_d3_main 7: the real
+  Main.qml with a WindowChrome stub - "?" dialog, letter keys off, M, preferences, host update event, toast placement; QtTest counts
+  include init/cleanupTestCase) = 480 pass, 0 fail. Changed old tests: tst_d2_settings update check (polling -> channel), tst_width
+  studioCentred (full-bleed PeerBar), tst_d2_studio undo (toast action). Web: tsc clean, vitest 2463 pass / 55 skipped / 0 fail.
+  Parity: pytest test_ui_parity + test_native_tokens + test_ui_parity_qt 14 pass.
+  Shots (looked at): build/d2shots/d3_{peer_open,peer_listen_only,chapter_menu,shortcuts,toast_action,toast_undo}_{light,dark}.png,
+  d3_reading_{paper,ivory,night}_light.png.
+- ui_parity_qt: new screen "Studio máy khác" (StudioScreen, PeerBar, EmptyState ~ PeerBar.tsx, peerStudio.ts, App.tsx PeerTrouble /
+  StudioClosed); Toast in "Chung" (+ App.tsx App); ShortcutsDialog / PlayerKeys in "Cài đặt". docs/UI_PARITY_QT.md regenerated.
+- Open: "Đọc chương này" of the chapter menu is not in Qt (no reader screen yet); the peer Studio has no Studio body (Qt Studio is still the
+  placeholder) and "Về Thư viện" there also leaves the peer (Qt Library always shows this computer); the shell has no updater (see 5);
+  only one toast at a time (sonner shows 2); touch sound latency on MF (engine created on first sound) not measured on Windows.
+  Windows-only files changed without a compile here: src/main.cpp, src/backend.cpp/.h - build.bat on the owner's machine needed.
+
 ## D2 — Cài đặt, Thêm sách, Sửa sách (cloud, branch dev/cloud-qtd2 from b840c2e1 Codex WIP), 26-10-2026
 
 - Linux build: Qt 6.10.2 from conda-forge (download.qt.io is blocked by the cloud proxy, so not aqt / not 6.10.3). CMake builds the app target
@@ -20,6 +75,7 @@
   book reload only next chapter after "Tự chọn nhạc nền"; letterShortcuts / touchSounds / readingSurface are saved but not used by Qt yet;
   update-checked event from the shell has no Qt channel (polls /api/app); web toast actions ("Hoàn tác", "Mở thư mục") not in Api.notice;
   offscreen software renderer paints Shape icons outside a clipping Flickable (not checked on D3D).
+  -> D3 (below/above) closes all of these except the Shape/D3D note.
 
 ## RAM — 26/27-10-2026, dev/desk-qt-ram (Music lane, from 7a195ca9)
 

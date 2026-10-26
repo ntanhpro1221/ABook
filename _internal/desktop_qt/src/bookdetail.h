@@ -44,7 +44,7 @@ public:
     Q_INVOKABLE void playChapter(int chapterId);
 
     /// Nạp lại từ máy chủ (sau khi bộ phát lưu chỗ nghe mới).
-    void reload();
+    Q_INVOKABLE void reload();
 
 signals:
     void bookIdChanged();

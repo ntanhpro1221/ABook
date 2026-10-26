@@ -766,6 +766,28 @@ private slots:
         QCOMPARE(rig.music->bed()->activeLink(), QString());
     }
 
+    void reloadAsksTheSameChapterAgainWithoutDroppingTheSong() {
+        BookRig rig;
+        rig.player->open(QStringLiteral("a"), -1, -1, true);
+        QCOMPARE(rig.music->bed()->activeLink(), QStringLiteral("https://x/1"));
+        const int views = rig.net.callsTo(QStringLiteral("/api/books/a/music"), "GET").size();
+        const int cues = rig.net.callsTo(QStringLiteral("/api/books/a/music/chapters/1"), "GET").size();
+        rig.music->reload(QStringLiteral("khác"));          // cuốn khác: không đụng cuốn đang nghe
+        QCOMPARE(rig.net.callsTo(QStringLiteral("/api/books/a/music/chapters/1"), "GET").size(), cues);
+        // "Tự chọn nhạc nền" vừa tắt: máy chủ trả mốc rỗng cho chương này - bài tắt NGAY ở chương đang nghe, không đợi chương sau
+        rig.net.answers.insert(QStringLiteral("GET /api/books/a/music/chapters/1"), {{QStringLiteral("cues"), QJsonArray()}, {QStringLiteral("levelDb"), -18}});
+        rig.music->reload(QStringLiteral("*"));
+        QCOMPARE(rig.net.callsTo(QStringLiteral("/api/books/a/music"), "GET").size(), views + 1);
+        QCOMPARE(rig.net.callsTo(QStringLiteral("/api/books/a/music/chapters/1"), "GET").size(), cues + 1);
+        QCOMPARE(rig.player->chapterId(), 1);
+        QCOMPARE(rig.music->bed()->activeLink(), QString());
+        rig.music->reload(QStringLiteral("a"));             // mã đúng cuốn đang nghe cũng nạp lại
+        QCOMPARE(rig.net.callsTo(QStringLiteral("/api/books/a/music/chapters/1"), "GET").size(), cues + 2);
+        rig.player->close();
+        rig.music->reload(QStringLiteral("*"));             // không có sách: không hỏi gì
+        QCOMPARE(rig.net.callsTo(QStringLiteral("/api/books/a/music/chapters/1"), "GET").size(), cues + 2);
+    }
+
     void failedChangeSaysSo() {
         BookRig rig;
         rig.player->open(QStringLiteral("a"), -1, -1, true);

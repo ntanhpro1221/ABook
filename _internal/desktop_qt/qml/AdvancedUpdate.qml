@@ -51,16 +51,11 @@ Item {
         })
     }
     Timer { id: silent; interval: root.waitMs; onTriggered: root.heard(null) }
-    // Vỏ Qt chưa có sự kiện "đã kiểm xong": hỏi lại /api/app, thấy `update` là bản mới đã có
-    Timer {
-        interval: 3000
-        running: root.checking
-        repeat: true
-        onTriggered: Api.call("GET", "/api/app", null, function(data, error) {
-            if (error || !data.update) return
-            Api.info = data
-            root.heard({state: "found"})
-        })
+    // Kênh của vỏ (Backend đọc dòng JSON của host, như vỏ Tauri phát sự kiện cửa sổ): kết quả kiểm, tải hỏng
+    Connections {
+        target: Backend
+        function onUpdateChecked(detail) { root.heard(detail) }
+        function onHostEvent(name, detail) { if (name === "abook-update-failed") root.failed() }
     }
 
     Column {

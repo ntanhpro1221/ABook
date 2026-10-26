@@ -833,6 +833,24 @@ void Player::stepRate(int direction) {
     setRate(nearestSpeed(m_rate, direction));
 }
 
+void Player::setVolume(double volume) {
+    volume = std::clamp(volume, 0.0, 1.0);
+    if (volume == m_volume)
+        return;
+    m_volume = volume;
+    m_out->setVolume(outputVolume());
+    emit volumeChanged();
+}
+
+void Player::toggleMute() {
+    if (m_volume > 0) {
+        m_muted = m_volume;
+        setVolume(0);
+    } else {
+        setVolume(m_muted > 0 ? m_muted : 0.9);
+    }
+}
+
 // ---- hẹn giờ ----
 
 void Player::resetSleepMark() {
@@ -909,9 +927,10 @@ void Player::tickSleep(qint64 now) {
         return;
     }
     if (m_sleep.kind == Sleep::Minutes) {
-        if (left <= kSafetyWarnMs && !m_sleepWarned)
-            m_sleepWarned = true; // nốt trầm báo trước 30 giây là của lớp phát tiếng chạm (D2); ở đây chỉ nhớ đã báo
-        else if (left > kSafetyWarnMs)
+        if (left <= kSafetyWarnMs && !m_sleepWarned) {
+            m_sleepWarned = true;
+            emit sleepWarning(); // 30 giây trước khi tắt: nốt trầm của lớp tiếng chạm (Feedback), tiếng duy nhất kêu cả khi đang phát
+        } else if (left > kSafetyWarnMs)
             m_sleepWarned = false;
     }
     const double fadeMs = m_fadeSeconds * 1000.0;
