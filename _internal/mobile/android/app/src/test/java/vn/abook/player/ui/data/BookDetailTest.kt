@@ -54,7 +54,10 @@ class BookDetailTest {
         val spot = ResumeSpot(4, "Chương 4", 120.0)
         assertEquals("Tạm dừng", BookPage.primaryLabel(playingHere = true, finished = false, resume = spot, heardSeconds = 10.0))
         assertEquals("Nghe lại từ đầu", BookPage.primaryLabel(false, finished = true, resume = spot, heardSeconds = 10.0))
-        assertEquals("Nghe tiếp · Chương 4", BookPage.primaryLabel(false, false, spot, 10.0))
+        assertEquals("Nghe tiếp", BookPage.primaryLabel(false, false, spot, 10.0))
+        assertEquals("Chương 4", BookPage.primaryDetail(false, false, spot, 10.0))
+        assertEquals(null, BookPage.primaryDetail(true, false, spot, 10.0))
+        assertEquals(null, BookPage.primaryDetail(false, false, ResumeSpot(1, "Chương 1", 0.0), 0.0))
         assertEquals("Nghe", BookPage.primaryLabel(false, false, ResumeSpot(1, "Chương 1", 0.0), 0.0))
         assertEquals("Nghe tiếp", BookPage.primaryLabel(false, false, null, 30.0))
     }

@@ -63,6 +63,8 @@ import vn.abook.player.ui.screens.LibraryActions
 import vn.abook.player.ui.screens.LibraryScreen
 import vn.abook.player.ui.screens.LibraryUiState
 import vn.abook.player.ui.screens.NowPlayingPlaceholder
+import vn.abook.player.ui.screens.SettingsEnv
+import vn.abook.player.ui.screens.SettingsGroupScreen
 import vn.abook.player.ui.screens.SettingsScreen
 import vn.abook.player.ui.screens.StudioScreen
 import vn.abook.player.ui.theme.Abook
@@ -92,6 +94,7 @@ fun AppShell(
     library: LibraryState,
     player: PlayerRepo,
     covers: CoverLoader,
+    settings: SettingsEnv,
     onFirstContent: () -> Unit = {},
     books: BookSource = BookSource.None,
 ) {
@@ -133,13 +136,14 @@ fun AppShell(
     Box(Modifier.fillMaxSize().background(Abook.colors.bg).semantics { testTagsAsResourceId = true }) {
         ScreenStack(
             nav = nav,
-            root = { RootTabs(shell, library, playerState, player, covers, actions) },
+            root = { RootTabs(shell, library, playerState, player, covers, actions, settings) },
             screen = { destination ->
                 when (destination) {
                     is Destination.Book -> BookScreen(
                         destination.book, library, playerState, player.clock, covers, books, shell.sheets, bookActions,
                     )
                     Destination.NowPlaying -> NowPlayingPlaceholder(playerState, covers, onBack = nav::pop)
+                    is Destination.Settings -> SettingsGroupScreen(destination.group, settings, shell.sheets, onBack = nav::pop)
                 }
             },
         )
@@ -203,6 +207,7 @@ private fun RootTabs(
     repo: PlayerRepo,
     covers: CoverLoader,
     actions: LibraryActions,
+    settings: SettingsEnv,
 ) {
     val tabs = shell.tabs
     // Thanh phát nhỏ giữ bài cuối cùng khi thu về (không nháy nội dung rỗng giữa lúc thu lại).
@@ -218,7 +223,11 @@ private fun RootTabs(
                     library, shell.library, shell.libraryGrid, player, covers, shell.sheets, actions, backEnabled = backToLibrary,
                 )
                 Tab.Studio -> StudioScreen()
-                Tab.Settings -> SettingsScreen()
+                Tab.Settings -> SettingsScreen(
+                    settings,
+                    onOpen = { group -> shell.nav.push(Destination.Settings(group)) },
+                    shown = { tabs.selected == Tab.Settings.ordinal },
+                )
             }
         }
         if (last[0].hasTrack) {
