@@ -17,6 +17,8 @@ public:
 
     /// Địa chỉ file audio của chương (đã kèm mã phiên): MF mở thẳng, có Range.
     virtual QUrl audioUrl(const QString &bookId, int chapterId) const = 0;
+    /// Địa chỉ phát của một đường dẫn máy chủ trả (src của mốc nhạc, "/api/..."): kèm mã phiên như `mediaUrl` của bản web.
+    virtual QUrl mediaUrl(const QString &path) const { return QUrl(path); }
     /// `path` bắt đầu bằng "/api/...". Không có thân thì `body` rỗng và `hasBody` false.
     virtual void request(const QByteArray &method, const QString &path, const QJsonObject &body, Done done, bool hasBody = true) = 0;
 };

@@ -134,3 +134,10 @@ Per-cue silence/swap is NOT in the web player (only Sửa sách), so not in the 
   switch, gainDb x volume, step ramp/seek jump, broken song retry, seek in loop, crossfade loop with prepared voice, short loop,
   standby released, tail + early sibling, silent until sounding, warm next once). build.bat runs MusicTests.
   Gotcha: moc skips a file with C++ digit separators (1'000) or a raw string R"(..)" -> empty .moc, link error on metaObject.
+- m3 (26-10): src/music.{h,cpp} = QML singleton Music (main.cpp: one MfAudioOut per bed voice). Book change -> GET /api/books/<id>/music
+  (packaged view or Studio plan/overrides like musicEditView); chapter change -> bed cleared at 0 then GET .../music/chapters/<n> (pending
+  polled 80 x 1.5 s, unavailable/failed retried 15/30/60/120/300 s); 250 ms sync tick while playing (seek = jump > 3 s), bed volume =
+  Player::outputVolume() (volume x sleep fade); NextChapterWarm (in musicbed.h) warms the next chapter's first song; setEnabled/setLevel
+  PUT then re-ask cues, failure -> Player notice "Chưa chỉnh được nhạc nền". src/musictext.h = levels/licence/credit words from the web.
+  PlayerNet::mediaUrl (HostNet adds ?t=token). FakeNet gained `answers`/`statuses`. MusicTests 37 pass (text, NextChapterWarm, Music
+  with a real Player: credit, chapter switch, warm, switch off, failed change, project view).

@@ -202,6 +202,10 @@ public:
     void setFadeSeconds(int seconds) { m_fadeSeconds = seconds; }
     QString lastFailure() const { return m_lastFailure; }
     bool wantsPlay() const { return m_wantsPlay; }
+    /// Âm lượng đang ra loa của giọng (kể cả lúc hẹn giờ nhỏ dần): nhạc nền nhân theo (player.tsx: volume * sleepGain).
+    double outputVolume() const { return m_volume * (m_fading ? m_gain : 1.0); }
+    /// Lời nhắn ngắn ở thanh phát (nhạc nền: "Chưa chỉnh được nhạc nền").
+    void showNotice(const QString &notice) { setNotice(notice); }
     /// Theo dõi phím / chuột của cả app: bằng chứng "còn thức" cho lưới an toàn ngủ quên, và "lắc máy" nghe thêm lúc đang nhỏ dần.
     void watchInput();
 

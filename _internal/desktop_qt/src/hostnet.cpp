@@ -18,6 +18,14 @@ QUrl HostNet::audioUrl(const QString &bookId, int chapterId) const {
                     .arg(QString::fromLatin1(endpoint.token)));
 }
 
+QUrl HostNet::mediaUrl(const QString &path) const {
+    const Backend::Endpoint endpoint = Backend::endpoint();
+    return QUrl(QStringLiteral("http://127.0.0.1:%1%2%3t=%4")
+                    .arg(endpoint.port)
+                    .arg(path, path.contains(QLatin1Char('?')) ? QStringLiteral("&") : QStringLiteral("?"),
+                         QString::fromLatin1(QUrl::toPercentEncoding(QString::fromLatin1(endpoint.token)))));
+}
+
 void HostNet::request(const QByteArray &method, const QString &path, const QJsonObject &body, Done done, bool hasBody) {
     const Backend::Endpoint endpoint = Backend::endpoint();
     if (!endpoint.port) {

@@ -113,6 +113,8 @@ public:
 
     QHash<QString, QJsonObject> books;   // mã -> JSON của GET /api/listen/books/<id>
     QHash<QString, QJsonObject> scripts; // đường dẫn đầy đủ -> JSON của GET /api/books/<id>/chapters/<n>/script
+    QHash<QString, QJsonObject> answers; // "GET /api/..." -> lời đáp (trước mọi đường khác)
+    QHash<QString, int> statuses;        // "PUT /api/..." -> mã HTTP của lời đáp ấy (mặc định 200)
     int progressStatus = 200;
     double doneTail = 15;                // như DONE_TAIL_SECONDS của máy chủ (đủ cho phép thử)
     bool offline = false;
@@ -121,6 +123,12 @@ public:
 
 private:
     void reply(const QByteArray &method, const QString &path, const QJsonObject &body, const Done &done) {
+        const QString key = QString::fromLatin1(method) + QLatin1Char(' ') + path;
+        const auto answer = answers.constFind(key);
+        if (answer != answers.constEnd()) {
+            done(statuses.value(key, 200), *answer);
+            return;
+        }
         if (method == "GET" && path.startsWith(QStringLiteral("/api/listen/books/"))) {
             const auto found = books.constFind(path.mid(int(QStringLiteral("/api/listen/books/").size())));
             if (found == books.constEnd())

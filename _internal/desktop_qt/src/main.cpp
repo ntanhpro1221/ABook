@@ -3,6 +3,7 @@
 #include "audioout_mf.h"
 #include "coverprovider.h"
 #include "hostnet.h"
+#include "music.h"
 #include "platform.h"
 #include "player.h"
 #include "readalong.h"
@@ -36,6 +37,9 @@ int main(int argc, char *argv[]) {
     Player player(&audio, &hostNet, outbox, nullptr);
     Player::setInstance(&player);
     player.watchInput();
+    // Nhạc nền: mỗi phần tử nhạc một bộ phát Media Foundation riêng (mở lười), theo giọng của Player.
+    Music music(&player, &hostNet, [] { return new MfAudioOut(nullptr); }, nullptr);
+    Music::setInstance(&music);
     ReadAlong readAlong(&player, &hostNet, nullptr);
     ReadAlong::setInstance(&readAlong);
     QObject::connect(&app, &QGuiApplication::aboutToQuit, &player, [&player] { player.shutdown(); });

@@ -10,6 +10,7 @@ class HostNet final : public PlayerNet {
 public:
     explicit HostNet(QNetworkAccessManager *network, QObject *parent = nullptr);
     QUrl audioUrl(const QString &bookId, int chapterId) const override;
+    QUrl mediaUrl(const QString &path) const override;
     void request(const QByteArray &method, const QString &path, const QJsonObject &body, Done done, bool hasBody = true) override;
 
 private:
