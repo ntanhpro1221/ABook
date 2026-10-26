@@ -6,7 +6,7 @@ import ABook
 Interactive {
     id: root
     property string text: ""
-    property string glyph: ""
+    property string icon: ""
 
     implicitHeight: Theme.buttonHeight
 
@@ -23,7 +23,7 @@ Interactive {
         anchors.leftMargin: Theme.s8
         spacing: Theme.s12
         Icon {
-            glyph: root.glyph
+            name: root.icon
             size: 16
             color: Theme.text2
             anchors.verticalCenter: parent.verticalCenter

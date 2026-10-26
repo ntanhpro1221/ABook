@@ -22,7 +22,7 @@ Interactive {
     Row {
         anchors.verticalCenter: parent.verticalCenter
         anchors.left: parent.left
-        anchors.leftMargin: Theme.s12
+        anchors.leftMargin: 11          // tâm biểu tượng ở 28 = nửa dải thu gọn 56 (mục lệch lề 8)
         spacing: Theme.s12
         Item {
             width: 18
@@ -44,11 +44,17 @@ Interactive {
                 }
             }
         }
-        Text {
-            anchors.verticalCenter: parent.verticalCenter
-            text: root.failed ? "Gặp lỗi" : (root.starting ? "Đang mở…" : "Sẵn sàng")
-            color: Theme.text2
-            font.pixelSize: Theme.sizeBodySmall
+        // Khung cắt theo bề rộng: dải thu gọn của thanh bên chỉ lộ chấm, mở rộng thì chữ hé ra dần
+        Item {
+            width: Math.max(0, root.width - 11 - 18 - Theme.s12)
+            height: parent.height
+            clip: true
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: root.failed ? "Gặp lỗi" : (root.starting ? "Đang mở…" : "Sẵn sàng")
+                color: Theme.text2
+                font.pixelSize: Theme.sizeBodySmall
+            }
         }
     }
 }

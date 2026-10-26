@@ -2,7 +2,7 @@
 ảnh lấy bằng PrintWindow nên chụp được cả khi cửa sổ bị che).
 
   python -X utf8 shot.py <exe> <thư mục ảnh> [--env K=V ...] [--size W,H] step step ...
-step:  wait=S | shot=tên | key=esc / enter / down / f5 (PostMessage) | rkey=ctrl+3 / alt+left (phím THẬT, kéo cửa sổ lên trước) | click=X,Y | rclick=X,Y | back | move=X,Y | scroll=X,Y,delta | resize=W,H
+step:  wait=S | shot=tên | hover=X,Y (đặt con trỏ THẬT vào điểm đó rồi trả về chỗ cũ ở bước unhover; Qt bỏ WM_MOUSEMOVE giả nên rê chuột chỉ thử được cách này) | unhover | key=esc / enter / down / f5 (PostMessage) | rkey=ctrl+3 / alt+left (phím THẬT, kéo cửa sổ lên trước) | click=X,Y | rclick=X,Y | back | move=X,Y | scroll=X,Y,delta | resize=W,H
 Toạ độ là điểm ảnh của vùng client (đúng như ảnh chụp). Ví dụ:
   shot.py dist/ABookDesk.exe out --env ABOOK_PREFERENCES=fx/prefs.json wait=4 shot=library rkey=ctrl+3 wait=1 shot=settings
 """
@@ -40,7 +40,7 @@ def find_window(pid: int):
         if q.value == pid and u.IsWindowVisible(h):
             r = wt.RECT()
             u.GetClientRect(h, ctypes.byref(r))
-            if r.right > 400:
+            if r.right > 400 and r.bottom > 300:   # cửa sổ vừa tạo có thể còn cao 0: chờ tới khi có khung thật
                 found.append(h)
         return True
 
@@ -130,6 +130,7 @@ def main() -> int:
         return 1
     # Qt Quick ngừng vẽ khi cửa sổ bị che kín (khung chụp sẽ cũ): đặt trên cùng, không lấy tiêu điểm
     u.SetWindowPos(h, ctypes.c_void_p(-1), 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0010)   # HWND_TOPMOST phải là c_void_p
+    saved_cursor = None
     try:
         for s in steps:
             name, _, val = s.partition("=")
@@ -137,6 +138,9 @@ def main() -> int:
                 time.sleep(float(val))
             elif name == "shot":
                 path = outdir / f"{val}.png"
+                if p.poll() is not None:
+                    print("app đã thoát (mã", p.returncode, ") trước bước", s)
+                    return 1
                 grab(h).save(path)
                 print("đã chụp", path)
             elif name == "key":
@@ -159,17 +163,59 @@ def main() -> int:
                     u.PostMessageW(h, d, 1, lparam(x, y))
                     time.sleep(0.06)
                     u.PostMessageW(h, up, 0, lparam(x, y))
+            elif name == "hover":
+                x, y = (int(v) for v in val.split(","))
+                if saved_cursor is None:
+                    saved_cursor = wt.POINT()
+                    u.GetCursorPos(ctypes.byref(saved_cursor))
+                pt = wt.POINT(x, y)
+                u.ClientToScreen(h, ctypes.byref(pt))
+                u.SetCursorPos(pt.x, pt.y)
+                u.PostMessageW(h, WM_MOUSEMOVE, 0, lparam(x, y))
+            elif name == "unhover":
+                if saved_cursor is not None:
+                    u.SetCursorPos(saved_cursor.x, saved_cursor.y)
+                    saved_cursor = None
             elif name == "scroll":
                 x, y, delta = (int(v) for v in val.split(","))
                 pt = wt.POINT(x, y)
                 u.ClientToScreen(h, ctypes.byref(pt))   # WM_MOUSEWHEEL mang toạ độ màn hình
                 u.PostMessageW(h, WM_MOUSEWHEEL, ((delta & 0xFFFF) << 16), lparam(pt.x, pt.y))
+            elif name == "nchit":     # kết quả WM_NCHITTEST tại điểm client X,Y (kiểm khung cửa sổ tự vẽ: kéo, nút, viền đổi cỡ)
+                x, y = (int(v) for v in val.split(","))
+                pt = wt.POINT(x, y)
+                u.ClientToScreen(h, ctypes.byref(pt))
+                r = u.SendMessageW(h, 0x84, 0, lparam(pt.x, pt.y))
+                names = {1: "HTCLIENT", 2: "HTCAPTION", 8: "HTMINBUTTON", 9: "HTMAXBUTTON", 20: "HTCLOSE", 10: "HTLEFT", 11: "HTRIGHT", 12: "HTTOP",
+                         13: "HTTOPLEFT", 14: "HTTOPRIGHT", 15: "HTBOTTOM", 16: "HTBOTTOMLEFT", 17: "HTBOTTOMRIGHT", 0: "HTNOWHERE", -1: "HTERROR"}
+                print(f"nchit {x},{y} -> {names.get(r, r)}")
+            elif name == "screen":    # chụp CẢ màn hình quanh cửa sổ (viền, bóng, bo góc - PrintWindow chỉ lấy phần client); chỉ dùng chốc lát
+                from PIL import ImageGrab
+                w = wt.RECT()
+                u.GetWindowRect(h, ctypes.byref(w))
+                ImageGrab.grab(bbox=(w.left - 40, w.top - 40, w.right + 40, w.bottom + 40), all_screens=True).save(outdir / f"{val}.png")
+                print("đã chụp màn hình", outdir / f"{val}.png")
+            elif name == "ncdbl":     # nhấp đúp vào vùng kéo (HTCAPTION) tại X,Y: Windows phải phóng to / khôi phục
+                x, y = (int(v) for v in val.split(","))
+                pt = wt.POINT(x, y)
+                u.ClientToScreen(h, ctypes.byref(pt))
+                u.SendMessageW(h, 0xA3, 2, lparam(pt.x, pt.y))     # WM_NCLBUTTONDBLCLK, HTCAPTION
+            elif name == "sc":        # lệnh hệ thống: max | restore | min (như bấm nút thật)
+                u.PostMessageW(h, 0x112, {"max": 0xF030, "restore": 0xF120, "min": 0xF020}[val], 0)
+            elif name == "size":
+                r = wt.RECT()
+                u.GetClientRect(h, ctypes.byref(r))
+                w = wt.RECT()
+                u.GetWindowRect(h, ctypes.byref(w))
+                print(f"client {r.right}x{r.bottom} cửa sổ {w.right - w.left}x{w.bottom - w.top} tại {w.left},{w.top}")
             elif name == "resize":
                 w, hh = (int(v) for v in val.split(","))
                 u.SetWindowPos(h, 0, 0, 0, w, hh, 0x0002 | 0x0004 | 0x0010)  # NOMOVE | NOZORDER | NOACTIVATE
             else:
                 print("bước lạ:", s)
     finally:
+        if saved_cursor is not None:
+            u.SetCursorPos(saved_cursor.x, saved_cursor.y)
         u.PostMessageW(h, 0x10, 0, 0)  # WM_CLOSE: thoát êm để app dừng host Python
         try:
             p.wait(8)

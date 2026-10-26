@@ -13,7 +13,6 @@ class Platform : public QObject {
     QML_SINGLETON
     Q_PROPERTY(bool reduceMotion READ reduceMotion NOTIFY reduceMotionChanged)
     Q_PROPERTY(bool keyboardNav READ keyboardNav NOTIFY keyboardNavChanged)
-    Q_PROPERTY(QString iconFamily READ iconFamily CONSTANT)
 
 public:
     explicit Platform(QObject *parent);
@@ -21,8 +20,6 @@ public:
 
     bool reduceMotion() const { return m_reduceMotion; }
     bool keyboardNav() const { return m_keyboardNav; }
-    /// Segoe Fluent Icons (Windows 11) hoặc Segoe MDL2 Assets (Windows 10): cùng mã ký tự, có sẵn trong hệ điều hành.
-    QString iconFamily() const { return m_iconFamily; }
 
     /// Đọc lại cài đặt hệ thống (gọi khi cửa sổ được kích hoạt lại).
     Q_INVOKABLE void refresh();
@@ -40,5 +37,4 @@ protected:
 private:
     bool m_reduceMotion = false;
     bool m_keyboardNav = false;
-    QString m_iconFamily;
 };

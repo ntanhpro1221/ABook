@@ -1,11 +1,12 @@
 import QtQuick
 import ABook
 
-// Cửa sổ chính: thanh bên trái + ngăn xếp màn bên phải. Khung cửa sổ là khung hệ điều hành (kéo, thu phóng, Snap Layouts như mọi app Windows).
+// Cửa sổ chính: dải tiêu đề tự vẽ ở trên, thanh bên trái + ngăn xếp màn bên phải. Không còn khung hệ thống; WindowChrome (QWindowKit) giữ hành vi gốc
+// của Windows (kéo, thu phóng, Aero Snap, Snap Layouts, bóng, bo góc).
 // Back: Esc, Alt+Left, nút Back của chuột - đóng lớp nổi trên cùng trước, rồi lùi một màn; không bao giờ thoát app.
 Window {
     id: win
-    visible: true
+    visible: false          // hiện sau khi WindowChrome gắn xong (Component.onCompleted)
     title: "ABook"
     width: 1280
     height: 800
@@ -13,7 +14,14 @@ Window {
     minimumHeight: 600
     color: Theme.bg
 
+    WindowChrome { id: chrome }
+
     Binding { target: Theme; property: "reduceMotion"; value: Platform.reduceMotion }
+    readonly property var nowPlaying: nowLoader.item          // Đang nghe (null cho tới lần mở đầu tiên)
+    function openNowPlaying() {
+        nowLoader.alive = true                               // dựng ngay (đồng bộ) rồi mở
+        if (nowPlaying) nowPlaying.show()
+    }
 
     Component { id: libraryScreen; LibraryScreen { onOpenBook: (book) => stack.push(bookPage, { book: book }) } }
     Component { id: studioScreen; StudioScreen {} }
@@ -23,22 +31,85 @@ Window {
     Item {
         id: shell
         anchors.fill: parent
+        focus: true
 
         Sidebar {
             id: sidebar
+            z: 20          // mở tạm đè lên khung nội dung (kể cả Đang nghe)
             anchors.left: parent.left
             anchors.top: parent.top
             anchors.bottom: parent.bottom
             currentSection: stack.current
             onSectionRequested: (index) => stack.show(index)
         }
-        ScreenStack {
-            id: stack
+        // Khung nội dung: màn hiện tại, thanh phát ở đáy, Đang nghe phủ lên trên cả hai
+        Item {
+            id: content
             anchors.left: sidebar.right
             anchors.right: parent.right
-            anchors.top: parent.top
+            anchors.top: titleBar.bottom
             anchors.bottom: parent.bottom
-            roots: [libraryScreen, studioScreen, settingsScreen]
+
+            ScreenStack {
+                id: stack
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.bottom: playerBar.top
+                roots: [libraryScreen, studioScreen, settingsScreen]
+            }
+            PlayerBar {
+                id: playerBar
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                thumbShown: !nowPlaying || nowPlaying.p <= 0
+                contentOpacity: nowPlaying ? 1 - Math.min(1, nowPlaying.g * 3) : 1
+                contentShift: nowPlaying ? -nowPlaying.g * 12 : 0
+                onOpenRequested: win.openNowPlaying()
+            }
+            // Đang nghe chỉ được dựng ở lần mở đầu tiên (thanh phát có sách nhưng chưa ai mở: không trả RAM / khung đầu của cả màn này).
+            // Đã dựng thì giữ ít lâu sau khi đóng (mở lại liền không giật), rồi bỏ; cửa sổ thu nhỏ hay sách đóng thì bỏ ngay (RAM khi nghe nền).
+            Loader {
+                id: nowLoader
+                anchors.fill: parent
+                property bool alive: false
+                active: alive
+                sourceComponent: NowPlaying { bar: playerBar }
+                Timer {
+                    id: dropTimer
+                    interval: 8000
+                    onTriggered: if (nowLoader.item && nowLoader.item.p <= 0) nowLoader.alive = false
+                }
+                Connections {
+                    target: nowLoader.item
+                    function onPChanged() {
+                        if (nowLoader.item.p > 0) dropTimer.stop()
+                        else if (!Player.loaded) nowLoader.alive = false
+                        else dropTimer.restart()
+                    }
+                }
+                Connections {
+                    target: win
+                    function onVisibilityChanged() { if (win.visibility === Window.Minimized && nowLoader.item && nowLoader.item.p <= 0) nowLoader.alive = false }
+                }
+            }
+            PlayerNotice {
+                id: notice
+                z: 60
+                anchors.horizontalCenter: parent.horizontalCenter
+                y: nowPlaying && nowPlaying.open ? 64 : playerBar.y - height - Theme.s16
+            }
+        }
+
+        TitleBar {
+            id: titleBar
+            z: 50          // trên cả thanh bên mở tạm; trong suốt, chỉ ba nút cửa sổ có hình
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            window: win
+            chrome: chrome
         }
 
         // ---- phím tắt ----
@@ -47,6 +118,15 @@ Window {
         Shortcut { sequences: ["Ctrl+1"]; onActivated: stack.show(0) }
         Shortcut { sequences: ["Ctrl+2"]; onActivated: stack.show(1) }
         Shortcut { sequences: ["Ctrl+3"]; onActivated: stack.show(2) }
+        Shortcut { sequences: ["Ctrl+Left"]; enabled: Player.loaded; onActivated: Player.previous() }
+        Shortcut { sequences: ["Ctrl+Right"]; enabled: Player.loaded; onActivated: Player.next() }
+        // Trình phát: Space, Left, Right khi không có ô nào đang nhận phím đó (danh sách Thư viện giữ mũi tên của nó)
+        Keys.onPressed: (event) => {
+            if (!Player.loaded || (event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier))) return
+            if (event.key === Qt.Key_Space && !event.isAutoRepeat) { Player.toggle(); event.accepted = true }
+            else if (event.key === Qt.Key_Left) { Player.skip(-15); event.accepted = true }
+            else if (event.key === Qt.Key_Right) { Player.skip(15); event.accepted = true }
+        }
         // Nút Back (nút bên) của chuột
         TapHandler {
             acceptedButtons: Qt.BackButton
@@ -54,6 +134,8 @@ Window {
             onTapped: Nav.back()
         }
     }
+    // Bar bị ẩn / ô giữ tiêu điểm biến mất thì phím về lại shell
+    onActiveFocusItemChanged: if (!activeFocusItem) shell.forceActiveFocus()
 
     // ---- lớp phủ: bảng nổi và chú thích, vẽ trên cùng, không bị khung cuộn cắt ----
     ConnectionPopover {
@@ -113,12 +195,16 @@ Window {
     }
 
     Component.onCompleted: {
+        if (!chrome.attach(win, titleBar, titleBar.minimizeButton, titleBar.maximizeButton, titleBar.closeButton))
+            console.warn("WindowChrome: không gắn được khung cửa sổ")
+        chrome.keepClickable(sidebar.toggleButton)       // nút thu / mở thanh bên nằm trong dải kéo được
         Theme.mode = Platform.setting("themeMode", "auto")
         Nav.stack = stack
         if (!Bench.enabled) restoreGeometry()
         stack.show(0)
         Bench.attach(win)
+        win.visible = true
     }
 
-    BenchScenario { stack: stack }
+    BenchScenario { stack: stack; win: win; nowPlaying: win.nowPlaying }
 }

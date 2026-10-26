@@ -7,6 +7,7 @@
 #include "librarymodel.h"
 
 #include <QElapsedTimer>
+#include <QJsonArray>
 #include <QJsonValue>
 #include <QNetworkAccessManager>
 #include <QObject>
@@ -72,6 +73,8 @@ public:
 signals:
     void stateChanged();
     void libraryLoadedChanged();
+    /// Thư viện vừa tải xong (JSON thô): bộ phát tìm cuốn nghe dở gần nhất trong đó.
+    void libraryFetched(const QJsonArray &books);
 
 private:
     struct Launch {

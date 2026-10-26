@@ -4,7 +4,7 @@ import ABook
 // Nút phụ: icon trơn, vùng bấm 40x40 trên máy tính, chú thích khi rê chuột (DESIGN.md mục 6b).
 Interactive {
     id: root
-    property string glyph: ""
+    property string icon: ""
     property int iconSize: 20
     implicitWidth: Theme.buttonHeight
     implicitHeight: Theme.buttonHeight
@@ -17,7 +17,7 @@ Interactive {
     }
     Icon {
         anchors.centerIn: parent
-        glyph: root.glyph
+        name: root.icon
         size: root.iconSize
         color: Theme.text
     }

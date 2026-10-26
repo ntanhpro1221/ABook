@@ -12,6 +12,7 @@ Item {
 
     readonly property real range: target.contentHeight - target.height + target.topMargin + target.bottomMargin
     readonly property bool scrollable: range > 1
+    readonly property bool dragging: drag.active
     property bool active: target.moving || target.flicking || hover.hovered || drag.active || recent.running
     visible: scrollable && opacity > 0
     opacity: active ? 1 : 0
