@@ -8,10 +8,8 @@ import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import org.json.JSONObject
-import vn.abook.player.MusicBed
 import vn.abook.player.Playback
 import vn.abook.player.PlaybackService
-import vn.abook.player.Playlists
 import vn.abook.player.SleepTimer
 import vn.abook.player.readaloud.ReadAloud
 
@@ -42,6 +40,7 @@ class AndroidPlaybackCore(context: Context) : PlaybackCore {
     override fun snapshot(): JSONObject = Playback.state()
     override fun play() = withService { Playback.play() }
     override fun pause() = withService { Playback.pause() }
+    override fun close() = Playback.onMain { Playback.closeBook() }
     override fun toggle() = withService { Playback.toggle() }
     override fun skip(deltaSeconds: Double) = withService { Playback.skip(deltaSeconds) }
     override fun seekTo(seconds: Double) = withService { Playback.seekTo(seconds) }
@@ -59,8 +58,6 @@ class AndroidPlaybackCore(context: Context) : PlaybackCore {
         }
     }
 
-    override fun autoMusic(): Boolean = Playlists.autoEnabled
-    override fun setAutoMusic(enabled: Boolean) = withService { MusicBed.chooseAuto(enabled) }
     override fun voiceId(): String = ReadAloud.voiceId
     override fun setVoice(voiceId: String) = withService { ReadAloud.chooseFor(Playback.bookId, voiceId, Playback.recordId) }
     override fun load(request: LoadRequest) = withService {

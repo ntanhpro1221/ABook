@@ -18,6 +18,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONObject
 import vn.abook.player.Playback
+import vn.abook.player.ui.music.PlayerMusic
 
 /** Một chương trong hàng chương của trình phát (Đang nghe: danh sách chương, chương chữ cho Đọc theo). `textPath` rỗng: chương audio. */
 @Immutable
@@ -36,7 +37,7 @@ data class SleepSetting(val mode: String = "off", val minutes: Int = 0, val coun
 /**
  * Trạng thái trình phát mà MỌI màn vẽ (thanh nhỏ, trang sách, Đang nghe): bất biến, CHỈ đổi khi có gì đổi thật (cuốn, chương, phát/dừng, tốc độ, hẹn giờ, lỗi,
  * nhạc nền, giọng) - không có vị trí: vị trí chạy hai lần mỗi giây nằm riêng ở [PlayerClock] để chỉ thanh tua và đồng hồ đọc nó.
- * `chapters`: hàng chương của cuốn đang nạp (dựng lại chỉ khi lõi đổi hàng), `musicEnabled`: nhạc nền tự chọn, `voiceId`: giọng đọc máy đang dùng.
+ * `chapters`: hàng chương của cuốn đang nạp (dựng lại chỉ khi lõi đổi hàng), `music`: nhạc nền đang kêu (ghi công, bài hỏng, mất mạng), `voiceId`: giọng đọc máy đang dùng.
  */
 @Immutable
 data class PlayerState(
@@ -52,7 +53,7 @@ data class PlayerState(
     val sleep: SleepSetting = SleepSetting.Off,
     val error: String = "",
     val chapters: List<PlayerChapter> = emptyList(),
-    val musicEnabled: Boolean = false,
+    val music: PlayerMusic = PlayerMusic.None,
     val voiceId: String = "",
 ) {
     /** Có cuốn trong trình phát (thanh nhỏ hiện). */
@@ -61,12 +62,11 @@ data class PlayerState(
     companion object {
         val Empty = PlayerState()
 
-        /** Từ sự kiện của lõi phát ([Playback.state]); `cover` do nơi gọi giữ/tra theo mã sách, `chapters` / `musicEnabled` / `voiceId` đọc từ lõi (không nằm trong sự kiện). */
+        /** Từ sự kiện của lõi phát ([Playback.state]); `cover` do nơi gọi giữ/tra theo mã sách, `chapters` / `voiceId` đọc từ lõi (không nằm trong sự kiện). */
         fun from(
             json: JSONObject,
             cover: CoverRef?,
             chapters: List<PlayerChapter> = emptyList(),
-            musicEnabled: Boolean = false,
             voiceId: String = "",
         ): PlayerState {
             val sleep = json.optJSONObject("sleep")
@@ -85,7 +85,7 @@ data class PlayerState(
                 ),
                 error = json.optString("error").ifBlank { json.optString("saveError") },
                 chapters = chapters,
-                musicEnabled = musicEnabled,
+                music = PlayerMusic.from(json),
                 voiceId = voiceId,
             )
         }
@@ -138,6 +138,7 @@ interface PlaybackCore {
     fun snapshot(): JSONObject
     fun play()
     fun pause()
+    fun close()
     fun toggle()
     fun skip(deltaSeconds: Double)
     fun seekTo(seconds: Double)
@@ -155,10 +156,6 @@ interface PlaybackCore {
 
     /** Hẹn giờ ngủ: `mode` = "off" | "minutes" | "chapter". */
     fun setSleep(mode: String, minutes: Int)
-
-    /** Nhạc nền tự chọn ([MusicBed.chooseAuto]). */
-    fun autoMusic(): Boolean
-    fun setAutoMusic(enabled: Boolean)
 
     /** Giọng đọc máy của cuốn đang nạp. */
     fun voiceId(): String
@@ -215,9 +212,10 @@ class PlayerRepo(
      * Cùng việc bản WebView làm khi mở lại app (Playback.load autoplay=false). Có gì khác vào lõi trong lúc đọc đĩa thì bỏ (không bao giờ đè cuốn đang có).
      */
     private fun restoreLast() {
+        val generation = loadGeneration
         scope.launch {
             val request = withContext(io) { lastPlan() } ?: return@launch
-            if (attached && !flow.value.hasTrack) core.load(request.copy(autoplay = false, restore = true))
+            if (attached && generation == loadGeneration && !flow.value.hasTrack) core.load(request.copy(autoplay = false, restore = true))
         }
     }
 
@@ -253,7 +251,7 @@ class PlayerRepo(
             queue = chapters
             queueChapters = chapters.map { PlayerChapter(it.id, it.title, Math.round(it.duration * 1000), it.text) }
         }
-        val next = PlayerState.from(json, keep, queueChapters, core.autoMusic(), core.voiceId())
+        val next = PlayerState.from(json, keep, queueChapters, core.voiceId())
         flow.value = next
         if (id.isNotEmpty() && id != previous.bookId) {
             scope.launch(io) {
@@ -265,6 +263,25 @@ class PlayerRepo(
 
     // ---- lệnh (chuyển thẳng xuống lõi) ----------------------------------------------------------------------
 
+    private var loadGeneration = 0
+
+    /** Invalidate in-flight plans as well as the visible player. Undo restores the row, never restarts audio. */
+    fun bookRemoved(id: String) {
+        loadGeneration++
+        if (flow.value.bookId != id) return
+        core.close()
+        queue = null
+        queueChapters = emptyList()
+        flow.value = PlayerState.Empty
+        clock.set(0, 0)
+        changes.tryEmit("closed")
+    }
+
+    fun reconcile(books: List<ListenBook>) {
+        val id = flow.value.bookId
+        if (id.isNotEmpty() && books.none { it.id == id }) bookRemoved(id)
+    }
+
     fun play() = core.play()
     fun pause() = core.pause()
     fun toggle() = core.toggle()
@@ -275,12 +292,6 @@ class PlayerRepo(
     fun setRate(rate: Double) = core.setRate(rate)
     fun jumpTo(chapterId: Int, seconds: Double) = core.jumpTo(chapterId, seconds)
     fun setSleep(mode: String, minutes: Int = 0) = core.setSleep(mode, minutes)
-
-    /** Nhạc nền tự chọn: lõi không bắn sự kiện khi đổi, nên trạng thái đổi ngay tại đây. */
-    fun setAutoMusic(enabled: Boolean) {
-        core.setAutoMusic(enabled)
-        flow.update { it.copy(musicEnabled = enabled) }
-    }
 
     /** Đổi giọng đọc máy (cũng không có sự kiện riêng). */
     fun setVoice(voiceId: String) {
@@ -318,9 +329,10 @@ class PlayerRepo(
             core.jumpTo(chapterId, seconds)
             return
         }
+        val generation = loadGeneration
         scope.launch {
             val request = withContext(io) { planAt(bookId, chapterId, seconds) } ?: return@launch
-            core.load(request)
+            if (generation == loadGeneration) core.load(request)
         }
     }
 
@@ -330,15 +342,18 @@ class PlayerRepo(
      */
     suspend fun prepare(bookId: String): Boolean {
         if (flow.value.bookId == bookId && flow.value.hasTrack) return true
+        val generation = loadGeneration
         val request = withContext(io) { planOf(bookId) } ?: return false
+        if (generation != loadGeneration) return false
         core.load(request.copy(autoplay = false))
         return withTimeoutOrNull(3_000) { flow.first { it.bookId == bookId && it.hasTrack } } != null
     }
 
     private fun playBook(bookId: String) {
+        val generation = loadGeneration
         scope.launch {
             val request = withContext(io) { planOf(bookId) } ?: return@launch
-            core.load(request)
+            if (generation == loadGeneration) core.load(request)
         }
     }
 }

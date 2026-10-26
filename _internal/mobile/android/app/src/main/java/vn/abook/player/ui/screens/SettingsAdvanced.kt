@@ -4,6 +4,8 @@ import vn.abook.player.ui.components.ListSection
 import vn.abook.player.ui.components.RowLine
 import vn.abook.player.ui.components.ListRow
 import vn.abook.player.ui.components.TextAction
+import vn.abook.player.ui.components.IconAction
+import vn.abook.player.ui.components.RefreshIcon
 import vn.abook.player.ui.components.ActionRow
 import vn.abook.player.ui.components.ListItem
 import vn.abook.player.ui.components.Caption
@@ -128,7 +130,7 @@ private fun LogSheet(repo: SettingsRepo) {
     Column(Modifier.fillMaxWidth().testTag("log_sheet")) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             BasicText("Nhật ký của ABook", style = Abook.type.sectionTitle, modifier = Modifier.weight(1f))
-            TextAction("Làm mới", { round++ }, "logs_refresh")
+            IconAction("Làm mới nhật ký", { round++ }, "logs_refresh") { RefreshIcon(Abook.colors.text2) }
         }
         Caption(AdvancedCopy.LOG_NOTE, Modifier.padding(bottom = Dim.s8))
         val shown = lines

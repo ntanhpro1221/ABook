@@ -140,7 +140,9 @@ class NowPlayingUiTest {
         shot("reading_mid")
         // Giữa chuyển cảnh, chữ chương luôn nằm dưới mép bìa và khối tên đang thu lại - không đè lên nhau.
         val cover = rule.onNodeWithTag("player_cover").getUnclippedBoundsInRoot()
-        val book = rule.onNodeWithText(FakeNowPlayingModel.demoState().bookTitle, useUnmergedTree = true).getUnclippedBoundsInRoot()
+        // Tên sách dưới bìa (không phải chữ trang trí trên bìa tự vẽ).
+        val book = rule.onAllNodesWithText(FakeNowPlayingModel.demoState().bookTitle, useUnmergedTree = true)
+            .filterToOne(!hasTestTag("cover_title")).getUnclippedBoundsInRoot()
         val text = rule.onNodeWithTag("read_along_text").getUnclippedBoundsInRoot()
         assertTrue("chữ đè tên: $book / $text", text.top >= book.bottom - 0.5.dp)
         assertTrue("chữ đè bìa: $cover / $text", text.top >= cover.top)
@@ -165,8 +167,8 @@ class NowPlayingUiTest {
         listOf("Âm lượng", "Sắp có", "Chỗ vừa nghe").forEach {
             assertTrue("còn hàng \"$it\"", rule.onAllNodesWithText(it, substring = true).fetchSemanticsNodes().isEmpty())
         }
-        rule.onNodeWithText("Nhạc nền").performClick()
-        assertTrue(model.state.value.musicEnabled)
+        // Không có nguồn nhạc (bản thử) thì không có hàng "Nhạc nền"; hàng thật và tấm của nó: MusicScreenTest.
+        assertTrue(rule.onAllNodesWithText("Nhạc nền").fetchSemanticsNodes().isEmpty())
         rule.onNodeWithTag("player_sheet_more").assertIsDisplayed()
     }
     @Test fun sheetHandleReallyDragsAndCloses() {
@@ -270,6 +272,23 @@ class NowPlayingUiTest {
         rule.onNodeWithTag("mini_player").assertIsDisplayed()
         rule.onNodeWithTag("now_playing").assertDoesNotExist()
     }
+    @Test fun scrollingAwayShowsAFollowPillInsideTheTextAndTappingItFollowsAgain() {
+        show(reading = true)
+        rule.onNodeWithTag("follow_sentence").assertDoesNotExist()
+        rule.onNodeWithTag("read_along_text").performTouchInput {
+            swipe(Offset(width * 0.5f, height * 0.7f), Offset(width * 0.5f, height * 0.3f), 300)
+        }
+        rule.waitForIdle()
+        rule.onNodeWithTag("follow_sentence").assertIsDisplayed()
+        val pill = bounds("follow_sentence")
+        val text = bounds("read_along_text")
+        assertTrue("pill ở trong vùng chữ: $pill / $text", pill.top >= text.top && pill.bottom <= text.bottom)
+        shot("reading_follow_light")
+        rule.onNodeWithTag("follow_sentence").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("follow_sentence").assertDoesNotExist()
+    }
+
     @Test fun readerHeaderCanBeDraggedDownWithoutTakingTheTextScrollGesture() {
         show(reading = true)
         rule.onNodeWithTag("now_playing").performTouchInput {

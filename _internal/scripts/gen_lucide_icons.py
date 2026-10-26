@@ -19,11 +19,11 @@ KOTLIN_OUT = ROOT / "mobile/android/app/src/main/java/vn/abook/player/ui/compone
 
 # Tên file lucide (kebab-case) - giữ thứ tự chữ cái để bản sinh ổn định.
 ICONS = sorted({
-    "arrow-down-wide-narrow", "arrow-left", "audio-lines", "battery-charging", "bluetooth", "book-audio", "book-open-text", "check", "chevron-down", "chevron-right", "chevron-up",
-    "circle-dashed", "clapperboard", "download", "ellipsis", "file", "file-down", "folder-down", "folder-open", "headphones", "image-plus", "key-round", "laptop",
-    "library", "list-ordered", "minus", "monitor-smartphone", "moon", "moon-star", "palette", "panel-left-close", "panel-left-open", "pause",
+    "arrow-down-wide-narrow", "arrow-left", "audio-lines", "battery-charging", "bluetooth", "book-audio", "book-open-text", "cast", "check", "chevron-down", "chevron-right", "chevron-up",
+    "circle-dashed", "clapperboard", "download", "eighth-note", "ellipsis", "file", "file-down", "folder-down", "folder-open", "headphones", "image-plus", "key-round", "laptop",
+    "library", "list-ordered", "minus", "monitor-smartphone", "monitor-speaker", "moon", "moon-star", "palette", "panel-left-close", "panel-left-open", "pause",
     "pencil", "play", "plus", "refresh-cw", "rotate-ccw", "search", "settings", "share-2", "skip-back", "skip-forward", "smartphone", "square",
-    "trash-2", "upload", "wrench", "x",
+    "speaker", "trash-2", "tv", "upload", "wrench", "x",
 })
 
 NODE = re.compile(r'\[\s*"(\w+)",\s*\{([^}]*)\}\s*\]')

@@ -98,6 +98,23 @@ class NativeActivity : ComponentActivity() {
                 }
             }
         }
+        if (!demo) lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                vn.abook.player.StudioAlerts.checkSoon(this@NativeActivity)
+                launch {
+                    while (true) {
+                        app.companion.refresh()
+                        delay(if (app.companion.state.value.players.any { it.playing }) 2_000 else 8_000)
+                    }
+                }
+                launch {
+                    while (true) {
+                        app.devices.syncStreamed()
+                        delay(8_000)
+                    }
+                }
+            }
+        }
         setContent {
             val scope = rememberCoroutineScope()
             val reveal = remember { ThemeReveal(scope) }
@@ -115,13 +132,13 @@ class NativeActivity : ComponentActivity() {
                     val shell = remember {
                         ShellState(scope) { sort -> lifecycleScope.launch(Dispatchers.IO) { prefs.setSort(sort) } }
                     }
-                    val env = remember { SettingsEnv(settings, reveal, links, if (demo) null else app.devices, if (demo) null else app.voice) }
+                    val env = remember { SettingsEnv(settings, reveal, links, if (demo) null else app.devices, if (demo) null else app.voice, if (demo) null else app.music) }
                     LaunchedEffect(Unit) { shell.library.restoreSort(withContext(Dispatchers.IO) { prefs.sort() }) }
                     val state by library.state.collectAsStateWithLifecycle()
                     AppShell(
-                        shell, state, player, covers, env, onFirstContent = ::onFirstContent, books = library,
-                        nowPlaying = rememberRepoNowPlaying(player, readAlong),
-                        imports = app.imports, editors = app.editors, exports = if (demo) null else app.exports, demo = demo, autoPick = !demo,
+                        shell, state, player, covers, env, onFirstContent = ::onFirstContent, books = library, deletions = library.deletions, companion = if (demo) null else app.companion,
+                        nowPlaying = rememberRepoNowPlaying(player, readAlong, env.music),
+                        imports = app.imports, editors = app.editors, exports = if (demo) null else app.exports, demo = demo, askNotifications = deviceLinks.askNotifications, autoPick = !demo,
                     )
                 }
             }

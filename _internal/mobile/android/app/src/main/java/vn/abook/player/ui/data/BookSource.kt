@@ -17,7 +17,7 @@ interface BookSource {
 
     suspend fun setChapterDone(id: String, chapterId: Int, done: Boolean)
 
-    /** Xoá khỏi máy: null = đã xoá, khác null = câu lỗi. */
+    /** Xoá khỏi máy: null = đã nhận (native chờ hết cửa sổ Hoàn tác mới xoá đĩa), khác null = câu lỗi. */
     suspend fun delete(id: String): String?
 
     /** Đóng file sách và dựng bảng chia sẻ; null khi không đóng được (đã ghi nhật ký). */
