@@ -1,21 +1,24 @@
-import { useEffect, useState, type CSSProperties, type RefObject } from "react";
+import { useCallback, useEffect, useState, type CSSProperties, type RefObject } from "react";
+
+/** Bề cao mép mờ của mọi vùng cuộn - cùng số với điện thoại native (`ScrollFadeEdge` ở mobile/android/.../ui/components/ScrollFade.kt). */
+export const SCROLL_FADE = 24;
 
 /** Mép mờ báo "còn nữa, cuộn được" cho danh sách cuộn dọc (DESIGN 4.5: không gì cụt cứng): mép trên mờ khi đã cuộn xuống, mép dưới mờ khi
  *  còn hàng dưới. Cùng cách hàng tab cuộn ngang (ui.tsx TabsList) - mặt nạ trên chính khung cuộn, nên đặt khung viền ở lớp ngoài (viền trong
  *  khung bị mặt nạ làm mờ theo). Trả `style` cho khung cuộn; `undefined` khi không có gì để cuộn. */
-export function scrollFadeMask(edges: { top: boolean; bottom: boolean }, size = 36): string | undefined {
+export function scrollFadeMask(edges: { top: boolean; bottom: boolean }, size = SCROLL_FADE): string | undefined {
   if (!edges.top && !edges.bottom) return undefined;
   return `linear-gradient(to bottom, ${edges.top ? `transparent, black ${size}px` : "black"}, ${edges.bottom ? `black calc(100% - ${size}px), transparent` : "black"})`;
 }
 
-export function useScrollFade(ref: RefObject<HTMLElement | null>, size = 36): CSSProperties | undefined {
+export function useScrollFade(ref: RefObject<HTMLElement | null>, size = SCROLL_FADE): CSSProperties | undefined {
   const [element, setElement] = useState<HTMLElement | null>(null);
   useEffect(() => setElement(ref.current), [ref]);
   return useScrollFadeOn(element, size);
 }
 
 /** Như `useScrollFade` cho khung chỉ có sau khi mở (thân hộp thoại / bảng đáy trong Portal): nhận chính phần tử qua ref gọi lại (`ref={setBody}`). */
-export function useScrollFadeOn(element: HTMLElement | null, size = 36): CSSProperties | undefined {
+export function useScrollFadeOn(element: HTMLElement | null, size = SCROLL_FADE): CSSProperties | undefined {
   const [edges, setEdges] = useState({ top: false, bottom: false });
   useEffect(() => {
     if (!element) {
@@ -44,10 +47,21 @@ export function useScrollFadeOn(element: HTMLElement | null, size = 36): CSSProp
   return mask ? { maskImage: mask, WebkitMaskImage: mask } : undefined;
 }
 
+/** Khung cuộn lồng trong bảng / hộp / trang (máy dò scrollFadeRules.test.ts): `const fade = useFadeScroller(); <ul ref={fade.ref} style={fade.style}>`.
+ *  Phần tử đã có ref riêng thì đưa ref ấy vào `also`: một ref gọi lại giữ cả hai. */
+export function useFadeScroller<T extends HTMLElement = HTMLElement>(also?: RefObject<T | null>) {
+  const [element, setElement] = useState<T | null>(null);
+  const ref = useCallback((node: T | null) => {
+    if (also) also.current = node;
+    setElement(node);
+  }, [also]);
+  return { ref, style: useScrollFadeOn(element) };
+}
+
 /** Như `useScrollFade` cho hàng cuộn NGANG (hàng lọc Thư viện, `FilterRow`): mục cuối không bao giờ bị cắt cứng ở mép khi chữ hệ thống to
  *  (soát 25-10: "Xong" cụt ở cỡ chữ 115 %) - mép nào còn mục bị che thì mờ dần, như hàng tab. Nghe cả cỡ từng mục: chữ to ra không đổi cỡ khung.
  *  Nhận chính phần tử qua ref gọi lại (`ref={setRow}`): hàng có thể chỉ hiện sau khi tải xong. */
-export function useRowFade(element: HTMLElement | null, size = 24): CSSProperties | undefined {
+export function useRowFade(element: HTMLElement | null, size = SCROLL_FADE): CSSProperties | undefined {
   const [edges, setEdges] = useState({ left: false, right: false });
   useEffect(() => {
     if (!element) return;

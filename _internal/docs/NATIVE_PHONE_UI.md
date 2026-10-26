@@ -78,6 +78,7 @@ Chủ sách 26-10: "trong các loại chuyển cảnh, loại fade là tôi ghé
 - Ảnh chụp mọi màn x mọi trạng thái x sáng / tối bằng Roborazzi (Robolectric, chạy JVM, không cần máy) - thay gallery của bản web.
 - Máy dò hình học trên cây semantics trong test: căn giữa theo trục chéo (CROSS CENTER), vùng chạm ≥ 44 dp, chữ không bị cắt "…" ở nhãn
   lựa chọn, một nút chính mỗi màn, nhãn 1-4 chữ.
+- Mép cuộn: mọi `LazyColumn` / `LazyVerticalGrid` / `verticalScroll` mờ mép bằng `Modifier.fadeEdges(state)` (DESIGN.md §6 "Mọi vùng cuộn dọc"); `ScrollFadeRulesTest` quét mã nguồn, thiếu là trượt.
 - Kịch bản bấm thật: test Compose UI (`createAndroidComposeRule`) cho mọi luồng ở DESIGN.md §2, đếm số chạm.
 
 ## 6. Giai đoạn

@@ -21,6 +21,7 @@ import { NameInLine, useNamesInLine } from "./NameReadings";
 import { UNDO_MS, optimistic, undoAction, undoSteps, usePendingNote } from "./decisions";
 import { seenDelivery, seenFor, theirDelivery, verdictWord, warnElsewhere, type SeenDelivery } from "./elsewhere";
 import { findRanges, splitByRanges, wrapIndex } from "./scriptFind";
+import { useFadeScroller } from "@/shared/scrollFade";
 
 // Tab "Kịch bản" (webui/casting_review.py, docs/STUDIO_REVIEW.md mục 3): đọc cả chương như kịch bản - câu nào của ai - và
 // đổi người nói của bất kỳ câu thoại hay nội tâm nào. Hộp "Việc cần duyệt" chỉ đưa ra chỗ máy nghi; ở đây người nghe duyệt
@@ -814,6 +815,7 @@ export function SpeakerMenu({
   phone?: boolean;
   embedded?: boolean;
 }) {
+  const scrollFade = useFadeScroller<HTMLDivElement>();
   const [query, setQuery] = useState("");
   const everyone = [...script.cast, ...script.others];
   const suggested = line.hint?.suggest ? everyone.find((person) => person.value === line.hint?.suggest) : undefined;
@@ -855,7 +857,7 @@ export function SpeakerMenu({
           className="min-w-0 flex-1 bg-transparent text-sm text-fg outline-none placeholder:text-fg-3"
         />
       </label>
-      <div className={cn("mt-1.5 overflow-y-auto", embedded ? "max-h-56" : phone ? "max-h-[60dvh]" : "max-h-[min(60vh,360px)]")}>
+      <div ref={scrollFade.ref} style={scrollFade.style} className={cn("mt-1.5 overflow-y-auto", embedded ? "max-h-56" : phone ? "max-h-[60dvh]" : "max-h-[min(60vh,360px)]")}>
         {query.trim() ? (
           found.length ? (
             found.map((person) => item(person))
