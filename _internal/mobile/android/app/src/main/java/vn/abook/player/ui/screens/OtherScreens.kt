@@ -29,12 +29,6 @@ fun StudioScreen(modifier: Modifier = Modifier) {
     PlaceholderTab("Studio", "Studio từ xa sắp có.", modifier.fillMaxSize().padding(top = top))
 }
 
-@Composable
-fun SettingsScreen(modifier: Modifier = Modifier) {
-    val top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    PlaceholderTab("Cài đặt", "Cài đặt sắp có.", modifier.fillMaxSize().padding(top = top))
-}
-
 /** Trình phát đầy đủ (giữ chỗ cho tới khi màn thật vào): thanh phát nhỏ mở tới đây. */
 @Composable
 fun NowPlayingPlaceholder(player: PlayerState, covers: CoverLoader, onBack: () -> Unit, modifier: Modifier = Modifier) {

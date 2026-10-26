@@ -8,7 +8,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
@@ -137,9 +140,43 @@ class BookScreenTest {
     @Test
     fun listeningLight() {
         show(detail(listening()))
-        rule.onNodeWithText("Nghe tiếp · Chương 3: Một cái tên chương khá dài để xuống dòng").assertIsDisplayed()
+        rule.onNodeWithText("Nghe tiếp").assertIsDisplayed()
+        rule.onNode(hasText("Chương 3: Một cái tên chương khá dài để xuống dòng") and hasAnyAncestor(hasTestTag("book_primary")), useUnmergedTree = true)
+            .assertIsDisplayed()
         rule.onNodeWithTag("chapter_3").assertIsSelected()
         shot("book_listening_light")
+    }
+
+    @Test
+    fun openingNeverScrollsPastThePrimaryAndOffersAJumpToTheCurrentChapter() {
+        val deep = JSONObject().put("last", JSONObject().put("chapterId", 11).put("seconds", 600.0).put("at", 1_760_000_000.0))
+        show(detail(deep))
+        rule.onNodeWithTag("book_primary").assertIsDisplayed()
+        rule.onNodeWithTag("book_jump_current").assertIsDisplayed().performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("chapter_11").assertIsDisplayed()
+    }
+
+    /** Một luật căn cho cả hàng: biểu tượng trạng thái và nút "…" cùng tâm với dòng đầu của tên, kể cả khi tên xuống dòng. */
+    @Test
+    fun chapterRowIconsShareTheFirstLineCenter() {
+        show(detail(listening()))
+        val status = rule.onAllNodesWithTag("chapter_status", useUnmergedTree = true)
+        val more = rule.onAllNodesWithTag("chapter_more", useUnmergedTree = true)
+        for (i in 0 until 3) {
+            val a = status[i].getUnclippedBoundsInRoot()
+            val b = more[i].getUnclippedBoundsInRoot()
+            val ca = (a.top + a.bottom) / 2
+            val cb = (b.top + b.bottom) / 2
+            assert((ca - cb).value in -0.5f..0.5f) { "hàng $i: tâm trạng thái $ca, tâm nút … $cb" }
+        }
+    }
+
+    @Test
+    fun noJumpWhenTheCurrentChapterIsAlreadyOnScreen() {
+        show(detail(listening()))
+        rule.onNodeWithTag("book_primary").assertIsDisplayed()
+        rule.onNodeWithTag("book_jump_current").assertDoesNotExist()
     }
 
     @Test

@@ -104,9 +104,13 @@ class ClipCacheTest {
     @Test
     fun theCapFollowsFreeSpace() {
         assertEquals("chưa có thư mục: sàn", ClipCache.CAP_BYTES, ClipCache.capFor(File(dir, "chua-co")))
+        // Chỗ trống của đĩa đổi giữa hai lần đọc khi việc khác đang ghi: kẹp giữa lần đọc trước và sau.
+        fun expected() = (dir.usableSpace * ClipCache.FREE_SHARE).toLong().coerceIn(ClipCache.CAP_BYTES, ClipCache.MAX_CAP_BYTES)
+        val before = expected()
         val cap = ClipCache.capFor(dir)
+        val after = expected()
         assertTrue(cap in ClipCache.CAP_BYTES..ClipCache.MAX_CAP_BYTES)
-        assertEquals((dir.usableSpace * ClipCache.FREE_SHARE).toLong().coerceIn(ClipCache.CAP_BYTES, ClipCache.MAX_CAP_BYTES), cap)
+        assertTrue("$cap ngoài [$before, $after]", cap in minOf(before, after)..maxOf(before, after))
     }
 
     @Test

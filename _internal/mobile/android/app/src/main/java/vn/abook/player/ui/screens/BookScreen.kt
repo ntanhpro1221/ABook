@@ -1,6 +1,7 @@
 package vn.abook.player.ui.screens
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
@@ -34,14 +35,16 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -50,12 +53,12 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.disabled
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import vn.abook.player.ui.components.BackButton
 import vn.abook.player.ui.components.BookCover
 import vn.abook.player.ui.components.CheckIcon
@@ -143,7 +146,12 @@ fun BookScreen(
     val list = rememberLazyListState()
     val current = BookPage.currentChapter(shown, player)
     val chapters = detail?.chapters
-    RevealCurrent(list, chapters, current)
+    val scope = rememberCoroutineScope()
+    val currentItem = chapters?.indexOfFirst { it.id == current }?.takeIf { it >= 0 }?.plus(HEAD_ITEMS)
+    // Chương đang nghe nằm khuất BÊN DƯỚI: đầu mục "Chương" có lối tới nó. Trang không tự cuộn - đầu trang + nút "Nghe tiếp" (đã ghi tên chương) luôn là thứ thấy đầu tiên.
+    val below by remember(currentItem) {
+        derivedStateOf { currentItem != null && (list.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: Int.MAX_VALUE) < currentItem }
+    }
     Column(modifier.fillMaxSize().testTag("book_screen")) {
         Box(Modifier.padding(top = top, start = Dim.margin, end = Dim.margin).fillMaxWidth().height(Dim.s48)) {
             BackButton(actions.back, Modifier.testTag("book_back"))
@@ -158,7 +166,9 @@ fun BookScreen(
                 BookButtons(shown, detail, player, sheets, source, actions)
             }
             item(key = "chapters_title", contentType = "section") {
-                ChaptersTitle(chapters?.size ?: shown.chaptersTotal, Modifier.padding(top = Dim.sectionGap, bottom = Dim.s8))
+                ChaptersTitle(chapters?.size ?: shown.chaptersTotal, below, Modifier.padding(top = Dim.sectionGap, bottom = Dim.s8)) {
+                    currentItem?.let { scope.launch { list.animateScrollToItem((it - 1).coerceAtLeast(0)) } }
+                }
             }
             when {
                 chapters == null && !ui.loaded -> items(SKELETON_ROWS, key = { "skeleton_$it" }, contentType = { "skeleton" }) { SkeletonRow() }
@@ -190,25 +200,6 @@ fun BookScreen(
 }
 
 private const val SKELETON_ROWS = 6
-
-/** Lần đầu có danh sách: chương đang nghe nằm khuất dưới thì cuộn tới (để hai hàng phía trên làm ngữ cảnh) - sách 3000 chương không mở ở đầu. */
-@Composable
-private fun RevealCurrent(list: LazyListState, chapters: List<ChapterLine>?, current: Int?) {
-    val revealed = remember { booleanArrayOf(false) }
-    LaunchedEffect(chapters != null) {
-        if (chapters == null || revealed[0]) return@LaunchedEffect
-        revealed[0] = true
-        val index = chapters.indexOfFirst { it.id == current }
-        if (index < 0) return@LaunchedEffect
-        val item = index + HEAD_ITEMS
-        // Chờ danh sách dàn xong các hàng thật (thay cho hàng chờ).
-        snapshotFlow { list.layoutInfo.totalItemsCount }.first { it >= chapters.size + HEAD_ITEMS }
-        val last = list.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: return@LaunchedEffect
-        // Hàng thấy trọn thì để yên (mở trang không nhảy khi chương đang nghe đã ở trên màn).
-        if (item < last) return@LaunchedEffect
-        list.scrollToItem((item - 2).coerceAtLeast(0))
-    }
-}
 
 /** Số mục đứng trước chương đầu trong danh sách: đầu trang, hàng nút, tiêu đề "Chương". */
 private const val HEAD_ITEMS = 3
@@ -287,6 +278,7 @@ private fun BookButtons(
             )
             else -> ListenButton(
                 label = BookPage.primaryLabel(playingHere, finished, resume, book.progress.heardSeconds),
+                detail = BookPage.primaryDetail(playingHere, finished, resume, book.progress.heardSeconds),
                 playing = playingHere,
                 restart = finished,
                 onClick = {
@@ -322,32 +314,40 @@ private fun BookButtons(
 }
 
 /**
- * Nút chính hổ phách, rộng cả hàng, cao tối thiểu 48: biểu tượng phát / dừng biến hình nét vẽ, nhãn đổi thì trượt (chữ cũ lên, chữ mới từ dưới lên).
- * Tên chương dài thì nhãn xuống dòng và nút cao thêm - không cắt.
+ * Nút chính hổ phách, rộng cả hàng, cao tối thiểu 48. Dòng nhãn = biểu tượng phát / dừng (biến hình nét vẽ) + một động từ ngắn, luôn một dòng;
+ * dòng phụ (chương sẽ phát) nằm riêng bên dưới, chữ nhỏ, tên dài thì xuống dòng - không cắt, và không bao giờ đẩy biểu tượng lệch khỏi nhãn của nó.
+ * Nhãn / dòng phụ đổi thì trượt (chữ cũ lên, chữ mới từ dưới lên).
  */
 @Composable
-private fun ListenButton(label: String, playing: Boolean, restart: Boolean, onClick: () -> Unit) {
+private fun ListenButton(label: String, detail: String?, playing: Boolean, restart: Boolean, onClick: () -> Unit) {
     val colors = Abook.colors
-    Row(
+    Box(
         Modifier.fillMaxWidth().heightIn(min = Dim.s48).pressable(onClick = onClick).clip(RoundedCornerShape(Dim.radiusControl))
             .background(colors.accent).padding(horizontal = Dim.s16, vertical = Dim.s12).testTag("book_primary"),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center,
+        contentAlignment = Alignment.Center,
     ) {
-        Box(Modifier.size(Dim.s24), contentAlignment = Alignment.Center) {
-            if (restart) RestartIcon(colors.accentInk, size = 20.dp) else PlayPauseGlyph(playing, colors.accentInk, 22.dp)
-        }
-        Spacer(Modifier.width(Dim.s8))
         AnimatedContent(
-            targetState = label,
+            targetState = label to detail,
             transitionSpec = {
                 (slideInVertically(tween(MotionMs.MEDIUM, easing = Motion.Decelerate)) { it } togetherWith
                     slideOutVertically(tween(MotionMs.MEDIUM_OUT, easing = Motion.Accelerate)) { -it })
                     .using(SizeTransform(clip = true))
             },
+            contentAlignment = Alignment.Center,
             label = "primary",
-        ) { text ->
-            BasicText(text, style = Abook.type.bodyStrong.copy(color = colors.accentInk, textAlign = TextAlign.Center))
+        ) { (text, sub) ->
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.size(Dim.s24), contentAlignment = Alignment.Center) {
+                        if (restart) RestartIcon(colors.accentInk, size = 20.dp) else PlayPauseGlyph(playing, colors.accentInk, 22.dp)
+                    }
+                    Spacer(Modifier.width(Dim.s8))
+                    BasicText(text, style = Abook.type.bodyStrong.copy(color = colors.accentInk))
+                }
+                if (sub != null) {
+                    BasicText(sub, style = Abook.type.caption.copy(color = colors.accentInk, textAlign = TextAlign.Center))
+                }
+            }
         }
     }
 }
@@ -384,11 +384,22 @@ private val EdgeInset = (Dim.touch - 22.dp) / 2
 private val FirstLine = 24.dp
 
 @Composable
-private fun ChaptersTitle(count: Int, modifier: Modifier) {
-    Row(modifier.fillMaxWidth()) {
+private fun ChaptersTitle(count: Int, jump: Boolean, modifier: Modifier, onJump: () -> Unit) {
+    Row(modifier.fillMaxWidth().heightIn(min = Dim.touch), verticalAlignment = Alignment.CenterVertically) {
         BasicText("Chương", style = Abook.type.sectionTitle, modifier = Modifier.alignByBaseline())
         Spacer(Modifier.width(Dim.s8))
-        BasicText("$count", style = Abook.type.caption.copy(color = Abook.colors.text2), modifier = Modifier.alignByBaseline())
+        BasicText("$count", style = Abook.type.caption.copy(color = Abook.colors.text2), modifier = Modifier.alignByBaseline().weight(1f))
+        // Lối tới chương đang nghe trượt lên từ dưới (cùng hướng với chỗ nó dẫn tới), không mờ dần.
+        AnimatedVisibility(
+            visible = jump,
+            modifier = Modifier.clipToBounds(),
+            enter = slideInVertically(tween(MotionMs.MEDIUM, easing = Motion.Decelerate)) { it },
+            exit = slideOutVertically(tween(MotionMs.MEDIUM, easing = Motion.Decelerate)) { it },
+        ) {
+            Box(Modifier.heightIn(min = Dim.touch).pressable(onClick = onJump).testTag("book_jump_current"), contentAlignment = Alignment.CenterEnd) {
+                BasicText("Tới chỗ đang nghe", style = Abook.type.label.copy(color = Abook.colors.accentText))
+            }
+        }
     }
 }
 
@@ -412,7 +423,8 @@ private fun ChapterRow(
         chapter.done || !chapter.playable -> colors.text2
         else -> colors.text
     }
-    Row(Modifier.fillMaxWidth().heightIn(min = 64.dp).testTag("chapter_row"), verticalAlignment = Alignment.CenterVertically) {
+    // Cả hai biểu tượng của hàng (trạng thái bên trái, "…" bên phải) bám DÒNG ĐẦU của tên - một luật căn cho cả hàng, tên dài xuống dòng cũng không lệch nhau.
+    Row(Modifier.fillMaxWidth().heightIn(min = 64.dp).testTag("chapter_row"), verticalAlignment = Alignment.Top) {
         Row(
             Modifier.weight(1f).heightIn(min = 64.dp)
                 .then(if (chapter.playable) Modifier.pressable(onClick = onPlay) else Modifier.semantics { disabled() })
@@ -422,7 +434,7 @@ private fun ChapterRow(
             verticalAlignment = Alignment.Top,
         ) {
             // Biểu tượng đứng giữa DÒNG ĐẦU của tên (cao đúng một dòng chữ 16/24): tên dài xuống dòng thì biểu tượng vẫn thẳng dòng đầu.
-            Box(Modifier.size(Dim.s24, FirstLine), contentAlignment = Alignment.CenterStart) {
+            Box(Modifier.size(Dim.s24, FirstLine).testTag("chapter_status"), contentAlignment = Alignment.CenterStart) {
                 when {
                     current -> PlayPauseGlyph(playing, colors.accentText, 20.dp)
                     chapter.done -> CheckIcon(colors.success)
@@ -455,7 +467,9 @@ private fun ChapterRow(
             }
         }
         Box(
-            Modifier.size(Dim.touch, 64.dp).pressable(onClick = onMore).semantics { contentDescription = "Tuỳ chọn ${chapter.title}" }
+            // Ô chạm 44 có tâm đúng tâm dòng đầu (lề trên 12 + nửa dòng 24).
+            Modifier.padding(top = Dim.s12 + FirstLine / 2 - Dim.touch / 2).size(Dim.touch)
+                .pressable(onClick = onMore).semantics { contentDescription = "Tuỳ chọn ${chapter.title}" }
                 .testTag("chapter_more"),
             contentAlignment = Alignment.CenterEnd,
         ) {

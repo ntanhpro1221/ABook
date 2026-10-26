@@ -1324,32 +1324,20 @@ class LibraryPlugin : Plugin() {
     @PluginMethod
     fun shareDiagnostics(call: PluginCall) {
         remotes.execute {
-            var file: File? = null
-            try {
-                val report = Diagnostics.collect(context, Diagnostics.DEFAULT_LINES)
-                val target = File(File(BookShare.dir(context.cacheDir), java.lang.Long.toHexString(System.nanoTime())), Diagnostics.bundleName(System.currentTimeMillis()))
-                file = target
-                target.parentFile?.mkdirs()
-                target.writeBytes(Diagnostics.bundle(report))
-                val uri = androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", target)
-                val send = Intent(Intent.ACTION_SEND).setType("application/zip")
-                    .putExtra(Intent.EXTRA_STREAM, uri)
-                    .putExtra(Intent.EXTRA_TITLE, target.name)
-                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                send.clipData = android.content.ClipData.newUri(context.contentResolver, target.name, uri)
-                val chooser = Intent.createChooser(send, "Gửi nhật ký của ABook").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                activity.runOnUiThread {
-                    try {
-                        activity.startActivity(chooser)
-                        AppLog.i("Diagnostics", "mở bảng chia sẻ nhật ký (${target.length()} byte)")
-                        call.resolve(JSObject().put("shared", true).put("name", target.name))
-                    } catch (error: Exception) {
-                        fail(call, error, "không mở được bảng chia sẻ")
-                    }
-                }
+            val (chooser, target) = try {
+                Diagnostics.shareIntent(context)
             } catch (error: Exception) {
-                file?.parentFile?.deleteRecursively()
                 fail(call, error, "không gom được nhật ký để gửi")
+                return@execute
+            }
+            activity.runOnUiThread {
+                try {
+                    activity.startActivity(chooser)
+                    AppLog.i("Diagnostics", "mở bảng chia sẻ nhật ký (${target.length()} byte)")
+                    call.resolve(JSObject().put("shared", true).put("name", target.name))
+                } catch (error: Exception) {
+                    fail(call, error, "không mở được bảng chia sẻ")
+                }
             }
         }
     }

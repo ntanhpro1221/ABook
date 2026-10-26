@@ -27,11 +27,15 @@ import vn.abook.player.ui.data.CoverLoader
 import vn.abook.player.ui.data.FakePlaybackCore
 import vn.abook.player.ui.data.LibraryState
 import vn.abook.player.ui.data.ListenBook
+import vn.abook.player.ui.data.FakeSettingsCore
 import vn.abook.player.ui.data.PlayerRepo
+import vn.abook.player.ui.data.SettingsRepo
 import vn.abook.player.ui.data.playerSnapshot
 import vn.abook.player.ui.shell.AppShell
 import vn.abook.player.ui.shell.ShellState
+import vn.abook.player.ui.screens.SettingsEnv
 import vn.abook.player.ui.theme.AbookTheme
+import vn.abook.player.ui.theme.ThemeReveal
 
 /**
  * Khung native chạy trên JVM (Robolectric): ảnh chụp sáng / tối bằng Roborazzi (ghi: -Proborazzi.test.record=true; so: verifyRoborazziDebug) và
@@ -47,6 +51,8 @@ class ShellScreenshotTest {
     private val books = List(12) { ListenBook("b$it", "Tên sách số ${it + 1} khá dài để xuống dòng", "Tác giả ${it + 1}") }
     private lateinit var shell: ShellState
     private lateinit var scope: CoroutineScope
+    private val settingsCore = FakeSettingsCore()
+    private val settings = SettingsRepo(settingsCore, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined)
 
     private fun repo(playing: Boolean? = null): PlayerRepo {
         val core = FakePlaybackCore(playerSnapshot(chapter = if (playing == null) null else 1, playing = playing == true))
@@ -58,7 +64,7 @@ class ShellScreenshotTest {
             AbookTheme(dark) {
                 scope = rememberCoroutineScope()
                 shell = remember { ShellState(scope) }
-                AppShell(shell, library, player, CoverLoader(1 shl 20))
+                AppShell(shell, library, player, CoverLoader(1 shl 20), SettingsEnv(settings, ThemeReveal(scope)))
             }
         }
     }
@@ -100,8 +106,36 @@ class ShellScreenshotTest {
     fun settingsTabDark() {
         show(dark = true)
         rule.onNodeWithTag("tab_settings").performClick()
-        rule.onNodeWithText("Cài đặt sắp có.").assertIsDisplayed()
+        rule.onNodeWithTag("settings_screen").assertIsDisplayed()
         shot("shell_settings_dark")
+    }
+
+    @Test
+    fun settingsGroupSlidesInAndBackReturnsToTheList() {
+        show()
+        rule.onNodeWithTag("tab_settings").performClick()
+        rule.onNodeWithTag("settings_look").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("settings_look_screen").assertIsDisplayed()
+        assertEquals(1, shell.nav.stack.size)
+        shot("shell_settings_look_light")
+        rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+        rule.waitForIdle()
+        rule.onNodeWithTag("settings_look_screen").assertDoesNotExist()
+        rule.onNodeWithTag("settings_screen").assertIsDisplayed()
+    }
+
+    @Test
+    fun settingsGroupPushHalfwayIsOnTheRightHalf() {
+        show()
+        rule.onNodeWithTag("tab_settings").performClick()
+        rule.waitForIdle()
+        rule.mainClock.autoAdvance = false
+        rule.onNodeWithTag("settings_sleep").performClick()
+        rule.mainClock.advanceTimeBy(150)
+        val left = rule.onNodeWithTag("settings_sleep_screen").getUnclippedBoundsInRoot().left
+        assert(left > 0.dp && left < 360.dp) { "màn nhóm giữa chừng phải nằm giữa hai mép, left=$left" }
+        rule.mainClock.autoAdvance = true
     }
 
     @Test
@@ -109,7 +143,8 @@ class ShellScreenshotTest {
         show()
         rule.onAllNodesWithTag("book_cell")[0].performClick()
         rule.onNodeWithTag("book_title").assertIsDisplayed()
-        rule.onNodeWithTag("book_primary").assertIsDisplayed()
+        // Khung thử không có nguồn sách (BookSource.None): trang nói rõ chưa có chương, không có nút phát giả. Nút phát có ở BookScreenTest.
+        rule.onNodeWithText("Sách chưa có chương nào.").assertIsDisplayed()
         shot("shell_book_light")
         rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
         rule.waitForIdle()
