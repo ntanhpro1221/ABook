@@ -246,8 +246,10 @@ class ExportState(
                     return@launch
                 }
                 val kind = now.format.kind(book.textOnly)
-                val running = flow(book.id).value.phase as? ExportPhase.Running
-                if (running?.run != started.run) {
+                // Tin của lượt có thể tới trước lời đáp này: đã chạy (Running) hay đã xong / dừng / lỗi thì giữ đúng điều tin ấy nói. Idle: bạn vừa
+                // vào lại màn ([open] bỏ bước hỏi chỗ lưu) trong lúc lõi đang nhận việc.
+                val phase = flow(book.id).value.phase
+                if ((phase is ExportPhase.Starting || phase is ExportPhase.Idle) && started.run !in ended) {
                     progressFlow(book.id).value = ExportText.starting(kind, started.chapters ?: book.chaptersAvailable.takeIf { it > 0 } ?: book.chaptersTotal)
                     edit(book.id) { it.copy(phase = ExportPhase.Running(kind, started.run, folder = started.folder), problem = "") }
                 }
