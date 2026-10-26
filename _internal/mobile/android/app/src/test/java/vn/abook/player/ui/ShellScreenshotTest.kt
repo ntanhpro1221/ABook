@@ -14,6 +14,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
 import com.github.takahirom.roborazzi.captureRoboImage
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -22,9 +23,12 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
-import vn.abook.player.ui.data.BookRow
 import vn.abook.player.ui.data.CoverLoader
+import vn.abook.player.ui.data.FakePlaybackCore
 import vn.abook.player.ui.data.LibraryState
+import vn.abook.player.ui.data.ListenBook
+import vn.abook.player.ui.data.PlayerRepo
+import vn.abook.player.ui.data.playerSnapshot
 import vn.abook.player.ui.shell.AppShell
 import vn.abook.player.ui.shell.ShellState
 import vn.abook.player.ui.theme.AbookTheme
@@ -40,16 +44,21 @@ class ShellScreenshotTest {
     @get:Rule
     val rule = createAndroidComposeRule<ComponentActivity>()
 
-    private val books = List(12) { BookRow("b$it", "Tên sách số ${it + 1} khá dài để xuống dòng", "Tác giả ${it + 1}", null, 0L) }
+    private val books = List(12) { ListenBook("b$it", "Tên sách số ${it + 1} khá dài để xuống dòng", "Tác giả ${it + 1}") }
     private lateinit var shell: ShellState
     private lateinit var scope: CoroutineScope
 
-    private fun show(dark: Boolean = false, library: LibraryState = LibraryState.Ready(books)) {
+    private fun repo(playing: Boolean? = null): PlayerRepo {
+        val core = FakePlaybackCore(playerSnapshot(chapter = if (playing == null) null else 1, playing = playing == true))
+        return PlayerRepo(core, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, { null }, { null }).also { it.attach() }
+    }
+
+    private fun show(dark: Boolean = false, library: LibraryState = LibraryState.Ready(books), player: PlayerRepo = repo()) {
         rule.setContent {
             AbookTheme(dark) {
                 scope = rememberCoroutineScope()
                 shell = remember { ShellState(scope) }
-                AppShell(shell, library, CoverLoader(1 shl 20))
+                AppShell(shell, library, player, CoverLoader(1 shl 20))
             }
         }
     }
@@ -61,6 +70,7 @@ class ShellScreenshotTest {
         show()
         rule.onNodeWithTag("library_grid").assertIsDisplayed()
         rule.onNodeWithText("12 cuốn").assertIsDisplayed()
+        rule.onNodeWithTag("mini_player").assertDoesNotExist()
         shot("shell_library_light")
     }
 
@@ -132,5 +142,46 @@ class ShellScreenshotTest {
         rule.waitForIdle()
         assertEquals(0f, rule.onNodeWithTag("book_screen").getUnclippedBoundsInRoot().left.value, 0.5f)
     }
-}
 
+    // ---- thanh phát nhỏ trong khung ----
+
+    @Test
+    fun miniPlayerSitsAboveTheTabBarOnEveryRootScreen() {
+        show(player = repo(playing = true))
+        rule.waitForIdle()
+        rule.onNodeWithTag("mini_player").assertIsDisplayed()
+        val mini = rule.onNodeWithTag("mini_player").getUnclippedBoundsInRoot()
+        val tabBar = rule.onNodeWithTag("tab_library").getUnclippedBoundsInRoot()
+        assert(mini.bottom <= tabBar.top + 1.dp) { "thanh phát phải nằm trên thanh tab: mini=$mini tab=$tabBar" }
+        shot("shell_mini_library_light")
+        rule.onNodeWithTag("tab_studio").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("mini_player").assertIsDisplayed()
+        rule.onNodeWithTag("tab_settings").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("mini_player").assertIsDisplayed()
+    }
+
+    @Test
+    fun tappingTheMiniPlayerOpensTheFullPlayerOnce() {
+        show(player = repo(playing = false))
+        rule.waitForIdle()
+        rule.onNodeWithTag("mini_open").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("now_playing_screen").assertIsDisplayed()
+        assertEquals(1, shell.nav.stack.size)
+        rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+        rule.waitForIdle()
+        rule.onNodeWithTag("now_playing_screen").assertDoesNotExist()
+    }
+
+    @Test
+    fun theMiniPlayerButtonTogglesPlayback() {
+        val core = FakePlaybackCore(playerSnapshot(playing = false))
+        val repo = PlayerRepo(core, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, { null }, { null }).also { it.attach() }
+        show(player = repo)
+        rule.waitForIdle()
+        rule.onNodeWithTag("mini_play").performClick()
+        assertEquals(listOf("toggle"), core.calls)
+    }
+}

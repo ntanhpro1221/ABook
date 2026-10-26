@@ -5,7 +5,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import vn.abook.player.ui.data.BookRow
+import vn.abook.player.ui.data.ListenBook
 import vn.abook.player.ui.data.CoverSampling
 import vn.abook.player.ui.motion.Motion
 import vn.abook.player.ui.motion.ScreenGeometry
@@ -16,7 +16,7 @@ import vn.abook.player.ui.screens.libraryColumns
 import vn.abook.player.ui.theme.MotionMs
 
 class NavTest {
-    private fun book(id: String) = Destination.Book(BookRow(id, "Sách $id", "", null, 0L))
+    private fun book(id: String) = Destination.Book(ListenBook(id, "Sách $id"))
 
     @Test
     fun `pop undoes push`() {

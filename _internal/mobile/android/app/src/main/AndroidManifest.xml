@@ -14,6 +14,9 @@
         android:theme="@style/AppTheme"
         android:networkSecurityConfig="@xml/network_security_config">
 
+        <!-- Cho phép đo hiệu năng bản release bằng shell (perfetto, simpleperf, Macrobenchmark) mà không cần bản debuggable. -->
+        <profileable android:shell="true" />
+
         <activity
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density|fontScale"
             android:name=".MainActivity"
