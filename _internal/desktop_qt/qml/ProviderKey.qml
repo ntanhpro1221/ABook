@@ -7,7 +7,7 @@ SectionBlock {
     property bool busy: false
     property string result: ""
     title: info.name || ""
-    fold: true
+    fold: "wip"
     expanded: Boolean(info.hasKey)
     signal changed()
     function act(action) {
@@ -27,7 +27,7 @@ SectionBlock {
     }
     FormLabel { width: parent.width; text: (root.info.limits?.free || "") + (root.info.limits?.timings === "exact" ? ". Tô đúng từng chữ đang đọc." : ". Tô từng chữ đang đọc theo ước lượng."); color: Theme.text2 }
     SectionBlock {
-        width: parent.width; title: "Nhận khoá"; fold: true
+        width: parent.width; title: "Nhận khoá"; fold: "wip"
         FormLabel { width: parent.width; color: Theme.text2; text: ({azure: "Azure: tạo Speech (F0 miễn phí) › Keys and Endpoint. Chép Key 1 và Location/Region (ví dụ southeastasia).", google: "Google Cloud: bật Cloud Text-to-Speech API. Vào APIs & Services › Credentials › Create credentials › API key.", fpt: "Trên console.fpt.ai: đăng nhập, mở mục “Text to Speech” (Chuyển văn bản thành giọng nói), chép “API key” (khoá API).", viettel: "Trên viettelai.vn: đăng nhập, mở Tài khoản › Token, chép token."})[root.info.id] || "" }
     }
     C.TextField {

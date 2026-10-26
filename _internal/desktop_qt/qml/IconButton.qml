@@ -6,6 +6,8 @@ Interactive {
     id: root
     property string icon: ""
     property int iconSize: 20
+    property color ink: Theme.text           // nút ✕ của hộp thoại: mực ba, rê chuột thì mực thường
+    property color hoverInk: ink
     implicitWidth: Theme.buttonHeight
     implicitHeight: Theme.buttonHeight
     Rectangle {
@@ -19,6 +21,6 @@ Interactive {
         anchors.centerIn: parent
         name: root.icon
         size: root.iconSize
-        color: Theme.text
+        color: root.hovered ? root.hoverInk : root.ink
     }
 }

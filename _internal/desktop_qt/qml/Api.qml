@@ -8,6 +8,7 @@ QtObject {
     property bool loaded: false
     property bool saving: false
     property string notice: ""
+    property string voiceName: ""          // tên giọng đọc mặc định (dòng tóm tắt "Giọng đọc"), do SettingsVoice điền
     property var transport: null
     property var themeObject: null
     function bind(bridge, theme) { transport = bridge; themeObject = theme }
@@ -37,7 +38,7 @@ QtObject {
         call("PUT", "/api/preferences", changes, function(data, error) {
             saving = false
             if (!error) {
-                preferences = data
+                preferences = Object.assign({}, preferences, data)
                 if (themeObject) themeObject.mode = data.theme === "system" ? "auto" : (data.theme || "auto")
             }
             if (done) done(data, error)

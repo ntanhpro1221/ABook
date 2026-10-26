@@ -3,6 +3,6 @@ import ABook
 Text {
     color: Theme.text
     font.pixelSize: Theme.sizeBodySmall
-    wrapMode: Text.Wrap
+    wrapMode: Text.WrapAtWordBoundaryOrAnywhere
     textFormat: Text.PlainText
 }

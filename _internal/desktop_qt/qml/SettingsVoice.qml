@@ -45,7 +45,7 @@ Column {
             readonly property var listed: root.voices.filter(v => v.provider === modelData.provider)
             width: parent.width
             title: modelData.title
-            fold: true
+            fold: "wip"
             expanded: modelData.provider === "edge"
             visible: listed.length > 0 || modelData.provider === "device"
             FormLabel { width: parent.width; text: group.modelData.detail; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
@@ -68,19 +68,19 @@ Column {
         }
     }
     SectionBlock {
-        width: parent.width; title: "Bộ giọng"; fold: true
+        width: parent.width; title: "Bộ giọng"; fold: "wip"
         VoiceModule { width: parent.width; module: "vieneu"; title: "Giọng VieNeu"; onChanged: root.load() }
         VoiceModule { width: parent.width; module: "supertonic"; title: "Giọng Supertonic"; onChanged: root.load() }
     }
     SectionBlock {
-        width: parent.width; title: "Hiệu năng"; fold: true
+        width: parent.width; title: "Hiệu năng"; fold: "wip"
         SettingChoices { width: parent.width; label: "Tốc độ đọc"; value: root.speed.choice || "auto"; options: [{value: "auto", label: "Tự động"}, {value: "quality", label: "Chất lượng cao nhất"}, {value: "fast", label: "Nhanh hơn"}]; onPicked: value => Api.call("POST", "/api/readaloud/voice-speed", {choice: value}, function(data, error) { if (!error) root.speed = data }) }
         FormLabel { width: parent.width; text: (root.speed.choice === "quality" ? "Luôn đọc bản hay nhất; máy chậm có thể phải chờ." : root.speed.choice === "fast" ? "Nhanh hơn, tiếng kém hơn chút - hợp máy yếu." : "Máy kịp thì đọc bản hay nhất.") + " Chỉ áp cho giọng Supertonic; sách xuất ra luôn dùng bản hay nhất."; color: Theme.text2 }
     }
     SectionBlock {
-        width: parent.width; title: "Khoá trực tuyến"; fold: true; visible: root.providers.length > 0
+        width: parent.width; title: "Khoá trực tuyến"; fold: "wip"; visible: root.providers.length > 0
         FormLabel { width: parent.width; text: "Chữ của sách gửi tới dịch vụ ấy; có thể bị tính tiền."; color: Theme.text2 }
-        SectionBlock { width: parent.width; title: "Tìm hiểu thêm"; fold: true; FormLabel { width: parent.width; text: "Khoá chỉ lưu trên máy. Dịch vụ có thể tính phí; lỗi khoá thì tạm dùng Edge hoặc giọng máy."; color: Theme.text2 } }
+        SectionBlock { width: parent.width; title: "Tìm hiểu thêm"; fold: "wip"; FormLabel { width: parent.width; text: "Khoá chỉ lưu trên máy. Dịch vụ có thể tính phí; lỗi khoá thì tạm dùng Edge hoặc giọng máy."; color: Theme.text2 } }
         Repeater { model: root.providers; ProviderKey { required property var modelData; width: parent.width; info: modelData; onChanged: root.load() } }
     }
 }

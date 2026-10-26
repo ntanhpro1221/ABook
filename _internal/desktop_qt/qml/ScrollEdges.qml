@@ -5,14 +5,15 @@ import ABook
 Item {
     id: root
     required property Flickable target
+    property color color: Theme.bg      // nền dưới khung cuộn (hộp thoại: Theme.panel)
     Rectangle {
         objectName: "scrollFadeTop"
         width: parent.width
         height: Theme.s16
         visible: !root.target.atYBeginning
         gradient: Gradient {
-            GradientStop { position: 0; color: Theme.bg }
-            GradientStop { position: 1; color: Qt.alpha(Theme.bg, 0) }
+            GradientStop { position: 0; color: root.color }
+            GradientStop { position: 1; color: Qt.alpha(root.color, 0) }
         }
     }
     Rectangle {
@@ -22,8 +23,8 @@ Item {
         height: Theme.s16
         visible: !root.target.atYEnd
         gradient: Gradient {
-            GradientStop { position: 0; color: Qt.alpha(Theme.bg, 0) }
-            GradientStop { position: 1; color: Theme.bg }
+            GradientStop { position: 0; color: Qt.alpha(root.color, 0) }
+            GradientStop { position: 1; color: root.color }
         }
     }
 }

@@ -11,6 +11,7 @@ Item {
     // Tên nút ← nói về đâu, như bản web (BookScreen: "Về Thư viện")
     property string backLabel: "Quay lại"
     default property alias trailing: trailingRow.data
+    readonly property real titleBaseline: titleText.y + titleText.baselineOffset    // tiêu đề cột khác canh theo chân chữ này (Cài đặt hai cột)
 
     implicitHeight: Theme.s32 + titleText.height + (subtitle !== "" ? 24 : 0)
 

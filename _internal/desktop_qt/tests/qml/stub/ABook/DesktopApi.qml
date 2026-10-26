@@ -9,7 +9,9 @@ QtObject {
     function reset() { requests = []; responses = {}; pending = []; delayed = false }
     function request(method, path, body, done) {
         requests = requests.concat([{method: method, path: path, body: body}])
-        const response = responses[path] || {status: 200, data: path === "/api/preferences" ? (method === "PUT" ? body : {theme: "system"}) : path === "/api/app" ? {version: "fixture"} : /voices$|online$/.test(path) ? [] : {}}
+        // Đáp giả: "PUT /api/x" (theo cách gọi) trước, rồi "/api/x"; đáp là hàm thì gọi với (body, method).
+        let response = responses[method + " " + path] || responses[path] || {status: 200, data: path === "/api/preferences" ? (method === "PUT" ? body : {theme: "system"}) : path === "/api/app" ? {version: "fixture"} : /voices$|online$/.test(path) ? [] : {}}
+        if (typeof response === "function") response = response(body, method)
         if (delayed) pending = pending.concat([function() { done(response.status, response.data) }])
         else done(response.status, response.data)
         return requests.length
