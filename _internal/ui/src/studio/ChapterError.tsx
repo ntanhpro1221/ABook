@@ -12,7 +12,7 @@ export function ChapterError({ raw, studio = false }: { raw: string; studio?: bo
       </Popover.Trigger>
       <Popover.Portal>
       {/* Sự kiện React nổi qua portal lên hàng chương (nhấp đúp = phát): nhấp đúp chọn chữ lỗi ở đây không được phát chương. */}
-      <Popover.Content aria-label="Lỗi chương" align="start" sideOffset={4} collisionPadding={12} onDoubleClick={(event) => event.stopPropagation()} className="z-50 w-[min(32rem,calc(100vw-3rem))] rounded-lg border border-line bg-panel p-3 text-xs text-fg shadow-float">
+      <Popover.Content aria-label="Lỗi chương" align="start" sideOffset={4} collisionPadding={12} onDoubleClick={(event) => event.stopPropagation()} className="z-50 w-[min(32rem,calc(100vw-3rem))] rounded-control border border-line bg-panel p-3 text-xs text-fg shadow-float">
         <p className="text-fg-2">{shown.hint}</p>
         {shown.detail && <p className="mt-2 max-h-40 select-text overflow-auto break-words font-mono text-[0.6875rem] text-fg-2">{shown.detail}</p>}
       </Popover.Content>

@@ -106,6 +106,9 @@ class ListenBook(
 ) : SeriesItem {
     override val isText: Boolean get() = textOnly
 
+    /** Có chữ để đọc theo: sách chỉ có chữ, hoặc ít nhất một chương nghe được (chương audio mang kịch bản đi cùng). */
+    val canReadAlong: Boolean get() = textOnly || chaptersAvailable > 0
+
     /** Chuỗi tìm kiếm đã bỏ dấu (tên, tác giả, giọng kể) - tính một lần, gõ từng chữ chỉ còn `contains`. */
     val haystack: String by lazy(LazyThreadSafetyMode.PUBLICATION) { ListenLogic.fold("$title $author $narrator") }
 

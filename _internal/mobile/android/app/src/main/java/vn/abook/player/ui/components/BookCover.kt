@@ -2,9 +2,14 @@ package vn.abook.player.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
@@ -74,12 +79,21 @@ fun BookCover(
         Box(modifier.aspectRatio(2f / 3f).clip(shape).background(sunken).drawBehind { image.value?.let { drawCover(it) } })
         return
     }
+    GeneratedCover(title, part, width, modifier.aspectRatio(2f / 3f).clip(shape), small)
+}
+
+/**
+ * Bìa tự vẽ của sách không có ảnh (như shared/cover.ts) trong ô do nơi gọi đặt hình: bìa 2:3 ở Thư viện, ô vuông ở Đang nghe - cùng một
+ * sách luôn cùng một bìa ở mọi chỗ. `width` chọn cỡ chữ.
+ */
+@Composable
+fun GeneratedCover(title: String, part: Int?, width: Dp, modifier: Modifier = Modifier, small: Boolean = false) {
     val style = remember(title) { CoverArt.style(title) }
     val from = Color(style.from)
     val to = Color(style.to)
     val ink = Color(style.ink)
     Box(
-        modifier.aspectRatio(2f / 3f).clip(shape).drawBehind {
+        modifier.drawBehind {
             drawRect(Brush.linearGradient(listOf(from, to), start = Offset.Zero, end = Offset(size.width * 0.42f, size.height)))
             val center = Offset(if (style.arcsFromRight) size.width else 0f, size.height)
             for ((index, radius) in ARCS.withIndex()) {
@@ -112,21 +126,23 @@ private fun PlaceholderText(title: String, part: Int?, ink: Color, width: Dp) {
     val titleSize = with(density) { (width.value * 0.115f).dp.toSp() }
     val subSize = with(density) { (width.value * 0.075f).dp.toSp() }
     val pad = (width.value * 0.08f).dp
-    Box(Modifier.fillMaxSize().padding(pad)) {
+    // Tên chiếm phần trên, nhãn tập nằm riêng ở đáy: tên không bao giờ chạy xuống dưới nhãn hay quá mép bìa.
+    Column(Modifier.fillMaxSize().padding(pad)) {
         BasicText(
             main,
             style = TextStyle(fontFamily = BeVietnamPro, fontWeight = FontWeight.Bold, fontSize = titleSize, lineHeight = 1.18.em, color = Color.White),
-            // Tên dài thì thu cỡ chữ cho vừa bìa chứ không cắt (luật: không bao giờ cắt chữ của người dùng).
-            autoSize = TextAutoSize.StepBased(minFontSize = 5.sp, maxFontSize = titleSize, stepSize = 0.5.sp),
-            modifier = Modifier.align(Alignment.TopStart),
+            // Tên dài thì thu cỡ chữ cho vừa phần còn lại của bìa chứ không cắt (luật: không bao giờ cắt chữ của người dùng).
+            autoSize = TextAutoSize.StepBased(minFontSize = 2.sp, maxFontSize = titleSize, stepSize = 0.25.sp),
+            modifier = Modifier.weight(1f).fillMaxWidth().testTag("cover_title"),
         )
         if (sub.isNotEmpty()) {
+            Spacer(Modifier.height(pad / 2))
             BasicText(
                 sub.uppercase(),
                 style = TextStyle(fontFamily = BeVietnamPro, fontWeight = FontWeight.Medium, fontSize = subSize, color = ink),
                 softWrap = false,
-                autoSize = TextAutoSize.StepBased(minFontSize = 4.sp, maxFontSize = subSize, stepSize = 0.5.sp),
-                modifier = Modifier.align(Alignment.BottomStart).background(Color.Black.copy(alpha = 0.28f)).padding(horizontal = 4.dp, vertical = 2.dp),
+                autoSize = TextAutoSize.StepBased(minFontSize = 2.sp, maxFontSize = subSize, stepSize = 0.25.sp),
+                modifier = Modifier.background(Color.Black.copy(alpha = 0.28f)).padding(horizontal = 4.dp, vertical = 2.dp).testTag("cover_part"),
             )
         }
     }

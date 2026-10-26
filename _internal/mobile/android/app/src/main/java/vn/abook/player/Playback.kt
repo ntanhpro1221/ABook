@@ -519,6 +519,29 @@ object Playback {
         Bedtime.interaction("pause")
     }
 
+    /** Native dismissal after a book leaves the library. Clear the actual Media3 queue and all read-aloud work. Main thread. */
+    fun closeBook() {
+        pause()
+        saveNow()
+        closeSession()
+        SleepTimer.cancel()
+        main.removeCallbacks(reconnect)
+        reconnectDelayMs = 0L
+        ReadAloud.stop()
+        bookId = ""
+        recordId = ""
+        bookTitle = ""
+        narrator = ""
+        chapters = emptyList()
+        pending = null
+        savedPlace = null
+        lastError = ""
+        player?.stop()
+        player?.clearMediaItems()
+        MusicBed.sync("", null, 0.0, false, stopNow = true)
+        emit("closed")
+    }
+
     fun toggle() = if (player?.isPlaying == true || (ReadAloud.isWaiting && ReadAloud.wantsPlay())) pause() else play()
 
     /** Tua tới `ms` trong chương: chương đọc to tua theo đồng hồ ảo (đúng chỗ trong đoạn), chương audio tua ExoPlayer. */

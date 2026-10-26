@@ -155,7 +155,7 @@ export function TemplateBar({ draft, onPick, narratorAuto = false }: {
               onKeyDown={(event) => {
                 if (event.key === "Escape") close();
               }}
-              className="h-9 min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 text-sm outline-none placeholder:text-fg-3 focus:border-focus sm:max-w-xs"
+              className="h-9 min-w-0 flex-1 rounded-control border border-line bg-bg px-3 text-sm outline-none placeholder:text-fg-3 focus:border-focus sm:max-w-xs"
             />
             {confirming ? (
               <>

@@ -62,7 +62,7 @@ function BrokenRow({ book, local }: { book: BookSummary; local: boolean }) {
   });
   return (
     <div className={cn("grid items-center gap-x-4 px-3 py-3 text-sm", COLUMNS)}>
-      <span aria-hidden className="size-10 rounded-lg bg-hover" />
+      <span aria-hidden className="size-10 rounded-control bg-hover" />
       <div className="min-w-0 md:col-span-2 xl:col-span-3">
         <div className="truncate font-medium">{book.title}</div>
         <div className={cn("truncate text-xs", busy ? "text-warning" : "text-danger")}>
@@ -126,7 +126,7 @@ function ProjectRowBody({ book }: { book: BookSummary }) {
       <button
         type="button"
         onClick={() => navigate(`/studio/${book.id}`)}
-        className={cn("grid w-full items-center gap-x-4 gap-y-1 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-hover", COLUMNS)}
+        className={cn("grid w-full items-center gap-x-4 gap-y-1 rounded-control px-3 py-2.5 text-left transition-colors hover:bg-hover", COLUMNS)}
       >
         <BookCover title={book.title} part={book.series?.part} size="sm" image={book.cover} className="row-span-3 size-10 self-start md:row-span-1 md:self-center" />
         <div className="min-w-0">
@@ -211,7 +211,7 @@ function TableHead() {
 function RowSkeleton() {
   return (
     <div className={cn("grid items-center gap-x-4 px-3 py-2.5", COLUMNS)}>
-      <Skeleton className="size-10 rounded-lg" />
+      <Skeleton className="size-10 rounded-control" />
       <div>
         <div className="flex h-6 items-center"><Skeleton className="h-4 w-1/2" /></div>
         <div className="flex h-[1.21875rem] items-center"><Skeleton className="h-3 w-1/3" /></div>
@@ -231,13 +231,13 @@ function StudioMenu({ onOpenExisting }: { onOpenExisting: () => void }) {
         <button
           type="button"
           aria-label="Tuỳ chọn Studio"
-          className="touch-box inline-flex size-9 shrink-0 items-center justify-center rounded-lg text-fg-2 transition-colors hover:bg-hover hover:text-fg data-[state=open]:bg-hover"
+          className="touch-box inline-flex size-9 shrink-0 items-center justify-center rounded-control text-fg-2 transition-colors hover:bg-hover hover:text-fg data-[state=open]:bg-hover"
         >
           <MoreHorizontal className="glyph ink-end" />
         </button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content collisionPadding={12} align="end" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-52 overflow-y-auto overscroll-contain rounded-xl border border-line bg-panel p-1.5 shadow-float">
+        <DropdownMenu.Content collisionPadding={12} align="end" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-52 overflow-y-auto overscroll-contain rounded-cover border border-line bg-panel p-1.5 shadow-float">
           <MenuItem icon={FolderOpen} onSelect={onOpenExisting}>Mở dự án có sẵn…</MenuItem>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
