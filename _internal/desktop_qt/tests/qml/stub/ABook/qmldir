@@ -61,5 +61,16 @@ AddBook 1.0 ../../../../qml/AddBook.qml
 EditBook 1.0 ../../../../qml/EditBook.qml
 CoverSearch 1.0 ../../../../qml/CoverSearch.qml
 BookMusicSettings 1.0 ../../../../qml/BookMusicSettings.qml
+Collapse 1.0 ../../../../qml/Collapse.qml
+DisclosureRow 1.0 ../../../../qml/DisclosureRow.qml
+SettingsItem 1.0 ../../../../qml/SettingsItem.qml
+ChoiceRow 1.0 ../../../../qml/ChoiceRow.qml
+Select 1.0 ../../../../qml/Select.qml
+MoreInfo 1.0 ../../../../qml/MoreInfo.qml
+HintText 1.0 ../../../../qml/HintText.qml
+SettingsListen 1.0 ../../../../qml/SettingsListen.qml
+SettingsSleep 1.0 ../../../../qml/SettingsSleep.qml
+SettingsLook 1.0 ../../../../qml/SettingsLook.qml
+SettingsAdvanced 1.0 ../../../../qml/SettingsAdvanced.qml
 singleton Api 1.0 ../../../../qml/Api.qml
 singleton DesktopApi 1.0 DesktopApi.qml

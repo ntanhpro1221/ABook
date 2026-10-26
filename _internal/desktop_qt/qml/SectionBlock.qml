@@ -1,30 +1,41 @@
 import QtQuick
 import ABook
+
+// Khối phẳng của một nhóm Cài đặt (SettingsBlock của shared/SettingsNav.tsx): cách 32 với thứ phía trên, tiêu đề mục 18/500 trong hàng cao 56,
+// các mục có vạch chia giữa nhau (SettingsItem / SettingRow tự vẽ). `fold` (khoá nhớ): khối ít dùng gập sau tiêu đề bấm được (DisclosureRow
+// kiểu mục), mở rồi thì lần sau vẫn mở (Platform.setting "fold.settings.<khoá>", như localStorage abook.fold.* của web).
 Column {
     id: root
     property string title: ""
-    property bool fold: false
-    property bool expanded: !fold
-    default property alias rows: body.data
-    spacing: 8
-    topPadding: 24
-    Interactive {
-        visible: root.title !== ""
+    property string fold: ""
+    property bool expanded: fold === "" || Platform.setting("fold.settings." + fold, "0") === "1"
+    default property alias rows: body.content
+    topPadding: Theme.s32
+    Text {
+        visible: root.title !== "" && root.fold === ""
         width: parent.width
-        height: Math.max(32, heading.implicitHeight + 8)
-        activeFocusOnTab: root.fold
-        enabled: root.fold
-        Accessible.name: root.title
-        onClicked: root.expanded = !root.expanded
-        FormLabel { id: heading; width: parent.width - 28; anchors.verticalCenter: parent.verticalCenter; text: root.title; font.weight: Theme.weightMedium; font.pixelSize: Theme.sizeSection }
-        Icon { visible: root.fold; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; name: "chevron-down"; rotation: root.expanded ? 180 : 0; color: Theme.text2; size: 18; Behavior on rotation { NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast } } }
+        height: Math.max(56, implicitHeight)
+        verticalAlignment: Text.AlignVCenter
+        text: root.title
+        color: Theme.text
+        wrapMode: Text.Wrap
+        font.pixelSize: Theme.sizeSection
+        font.weight: Theme.weightMedium
     }
-    Item {
+    DisclosureRow {
+        visible: root.title !== "" && root.fold !== ""
         width: parent.width
-        height: body.implicitHeight * reveal
-        property real reveal: root.expanded ? 1 : 0
-        clip: true
-        Behavior on reveal { NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard } }
-        Column { id: body; width: parent.width; visible: parent.reveal > 0; enabled: root.expanded; y: -8 * (1 - parent.reveal); opacity: parent.reveal }
+        section: true
+        title: root.title
+        expanded: root.expanded
+        onClicked: {
+            root.expanded = !root.expanded
+            Platform.setSetting("fold.settings." + root.fold, root.expanded ? "1" : "0")
+        }
+    }
+    Collapse {
+        id: body
+        width: parent.width
+        open: root.expanded
     }
 }

@@ -19,7 +19,7 @@ Modal {
     description: searching ? "Bạn chọn ảnh từ các nguồn sách hoặc trên máy." : "Đổi có hiệu lực ngay và chỉ trên máy này - audio và chữ của người làm sách giữ nguyên."
     function begin(data) {
         generation++; book = data; bookTitle = savedTitle = data.title || ""; author = savedAuthor = data.author || ""
-        searching = false; busy = false; revert = false; problem = ""; notice = ""; subpage = false; show()
+        searching = false; busy = false; revert = false; problem = ""; notice = ""; show()
         titleField.forceActiveFocus(Qt.TabFocusReason)
     }
     function mutate(method, suffix, body, message, field) {
@@ -38,10 +38,11 @@ Modal {
         })
     }
     function search() { searching = true; coverSearch.begin(book.id || book.bookId, book.title || "") }
-    onClosing: {
-        if (searching) { coverSearch.cancel(); searching = false; subpage = true; return }
-        if (revert) { revert = false; subpage = true; return }
-        subpage = false; generation++
+    keepOpen: function() {
+        if (searching) { coverSearch.cancel(); searching = false; return true }
+        if (revert) { revert = false; return true }
+        generation++
+        return false
     }
     onOpenChanged: if (!open) { generation++; coverSearch.cancel(); images.close() }
     Column {
@@ -74,7 +75,7 @@ Modal {
             }
         }
         SectionBlock {
-            width: parent.width; title: "Nhạc nền"; fold: true; visible: root.book.stage !== "text"
+            width: parent.width; title: "Nhạc nền"; fold: "wip"; visible: root.book.stage !== "text"
             FormLabel { width: parent.width; visible: root.workshop; text: "Cuốn này có xưởng - nhạc nền chỉnh đầy đủ (chọn bài, im lặng từng đoạn) ở Studio."; color: Theme.text2 }
             BookMusicSettings { width: parent.width; visible: !root.workshop; bookId: root.book.id || root.book.bookId || "" }
         }

@@ -6,6 +6,7 @@
 #include <QFontDatabase>
 #include <QQmlEngine>
 #include <QQuickImageProvider>
+#include <QDir>
 #include <QTemporaryDir>
 #include <QtQuickTest/quicktest.h>
 
@@ -60,6 +61,7 @@ int main(int argc, char **argv) {
     qputenv("QT_QPA_PLATFORM", "offscreen");
     qputenv("QML_IMPORT_PATH", WIDTH_SOURCE_DIR "/tests/qml/stub");
     qputenv("QT_QPA_FONTDIR", WIDTH_SOURCE_DIR "/fonts");
+    QDir().mkpath(QStringLiteral(WIDTH_SOURCE_DIR "/build/d2shots"));     // ảnh của tst_d2_*.qml
     WidthSetup setup;
     return quick_test_main_with_setup(argc, argv, "width", QUICK_TEST_SOURCE_DIR, &setup);
 }

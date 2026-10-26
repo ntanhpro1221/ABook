@@ -134,6 +134,17 @@ qt_add_qml_module(ABookDesk
         qml/EditBook.qml
         qml/CoverSearch.qml
         qml/BookMusicSettings.qml
+        qml/Collapse.qml
+        qml/DisclosureRow.qml
+        qml/SettingsItem.qml
+        qml/ChoiceRow.qml
+        qml/Select.qml
+        qml/MoreInfo.qml
+        qml/HintText.qml
+        qml/SettingsListen.qml
+        qml/SettingsSleep.qml
+        qml/SettingsLook.qml
+        qml/SettingsAdvanced.qml
         qml/Scrollbar.qml
         qml/ScrollEdges.qml
         qml/SmoothWheel.qml

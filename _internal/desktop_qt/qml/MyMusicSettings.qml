@@ -4,7 +4,7 @@ import ABook
 SectionBlock {
     id: root
     title: "Nhạc của tôi"
-    fold: true
+    fold: "wip"
     property var view: ({tracks: []})
     property bool busy: false
     property string removing: ""
@@ -21,10 +21,10 @@ SectionBlock {
     Timer { interval: 1000; running: root.visible && Boolean(root.view.module?.state === "downloading" || root.view.module?.analysing); repeat: true; onTriggered: root.load() }
     Button { text: root.busy ? "Đang thêm " + root.done + "/" + root.total : "Thêm nhạc của bạn"; icon: "upload"; kind: "text"; enabled: !root.busy; onClicked: files.open() }
     FormLabel { width: parent.width; text: "Thêm nhạc làm nền; bài đã chọn đi cùng file sách."; color: Theme.text2 }
-    SectionBlock { width: parent.width; title: "Nhạc riêng"; fold: true; FormLabel { width: parent.width; text: "Nhạc được chép vào kho máy này; dùng Đổi bài để chọn cho từng đoạn. Hỗ trợ mp3, m4a, ogg, opus, flac, wav. Bài đã chọn đi cùng .abook / .abookproj, vẫn nghe được trên máy khác, không ai khác tải được. Tên bài và nghệ sĩ lấy từ file; ABook không xác nhận giấy phép."; color: Theme.text2 } }
+    SectionBlock { width: parent.width; title: "Nhạc riêng"; fold: "wip"; FormLabel { width: parent.width; text: "Nhạc được chép vào kho máy này; dùng Đổi bài để chọn cho từng đoạn. Hỗ trợ mp3, m4a, ogg, opus, flac, wav. Bài đã chọn đi cùng .abook / .abookproj, vẫn nghe được trên máy khác, không ai khác tải được. Tên bài và nghệ sĩ lấy từ file; ABook không xác nhận giấy phép."; color: Theme.text2 } }
     FormLabel { width: parent.width; text: "Chưa có bài nào"; visible: !(root.view.tracks || []).length; color: Theme.text2 }
     SectionBlock {
-        width: parent.width; title: "Phân tích nhạc"; fold: true; visible: Boolean(root.view.module)
+        width: parent.width; title: "Phân tích nhạc"; fold: "wip"; visible: Boolean(root.view.module)
         FormLabel { width: parent.width; text: root.view.module?.error || "Tải một lần, phân tích trên máy rồi dùng không cần mạng. Chưa tải vẫn nhập, nghe và ghim nhạc bằng tay."; color: Theme.text2 }
         Button { text: root.view.module?.state === "downloading" ? "Huỷ" : "Tải"; kind: "text"; enabled: !root.busy; onClicked: root.act(root.view.module?.state === "downloading" ? "/api/music/local/module/cancel" : "/api/music/local/module", {}) }
         SettingRow { width: parent.width; visible: root.view.module?.precise?.state !== "unavailable"; label: "Đo cảm xúc nhạc chính xác hơn"; Switch { label: "Đo cảm xúc nhạc chính xác hơn"; checked: Boolean(root.view.module?.precise?.enabled); onToggled: value => root.act("/api/music/local/precise", {enabled: value}) } }
