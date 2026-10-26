@@ -55,7 +55,7 @@ export function OnlineVoicePrompt() {
                       answer(item.id, true);
                     }}
                     className={cn(
-                      "flex min-h-[48px] min-w-0 flex-1 items-center justify-between gap-2 rounded-lg px-3 text-left text-sm hover:bg-hover",
+                      "flex min-h-[48px] min-w-0 flex-1 items-center justify-between gap-2 rounded-control px-3 text-left text-sm hover:bg-hover",
                       item.id === voice.id && "font-semibold",
                     )}
                   >
@@ -90,7 +90,7 @@ export function OnlineVoicePrompt() {
               window.location.hash = "#/settings/voice";
               revealVoiceSettings("vieneu-module");
             }}
-            className="mt-1 flex min-h-[48px] flex-col items-start justify-center rounded-lg border-t border-line px-3 py-2 text-left text-sm text-accent-text hover:bg-hover"
+            className="mt-1 flex min-h-[48px] flex-col items-start justify-center rounded-control border-t border-line px-3 py-2 text-left text-sm text-accent-text hover:bg-hover"
           >
             <span>Tải giọng chạy trên máy…</span>
             <span className="text-xs font-normal text-fg-2">VieNeu, Supertonic - đọc được cả khi không có mạng</span>

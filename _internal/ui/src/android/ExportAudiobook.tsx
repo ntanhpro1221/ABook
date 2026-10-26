@@ -278,7 +278,7 @@ export function ExportAudiobookMenuItem({ book }: { book: ListenBook }) {
     <DropdownMenu.Item
       disabled={!book.chaptersTotal}
       onSelect={() => window.dispatchEvent(new CustomEvent<ListenBook>(OPEN_AUDIOBOOK_EVENT, { detail: book }))}
-      className="flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[disabled]:opacity-40 data-[highlighted]:bg-hover"
+      className="flex h-9 cursor-default items-center gap-2 rounded-control px-2 text-sm outline-none data-[disabled]:opacity-40 data-[highlighted]:bg-hover"
     >
       <Headphones className="size-4" /> Xuất sách nói (M4B)…
     </DropdownMenu.Item>
