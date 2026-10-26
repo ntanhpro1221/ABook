@@ -89,11 +89,12 @@ Item {
             title.text = "Tên người dùng " .repeat(30)
             verify(title.height > 40)
             dialog.names = {2:"Tên chương đã sửa"}
+            const typed = title.text.trim()
             dialog.add(false)
             const call = DesktopApi.requests.find(r => r.path === "/api/listen/import")
             verify(call !== undefined)
             compare(call.body.sourceFingerprint,"fixture-fingerprint")
-            compare(call.body.title,title.text.trim())
+            compare(call.body.title,typed)
             compare(call.body.chapters[0].index,2)
             compare(call.body.chapters[0].title,"Tên chương đã sửa")
             verify(!dialog.open)
@@ -109,11 +110,16 @@ Item {
             verify(!dialog.open)
         }
         function test_bookFileUsesOpenEndpoint() {
-            DesktopApi.responses = {"/api/books/open": {status:200,data:{id:"existing"}}}
+            DesktopApi.responses = {"/api/listen/open-book-file": {status:200,data:{id:"existing",how:"existing"}}}
             const dialog = make(importFactory)
+            const opened = []
+            dialog.openBook.connect(id => opened.push(id))
             dialog.begin(["D:/fixture/book.abook"])
-            verify(DesktopApi.requests.some(r => r.path === "/api/books/open" && r.body.path.endsWith(".abook")))
+            verify(DesktopApi.requests.some(r => r.path === "/api/listen/open-book-file" && r.body.path.endsWith(".abook")))
             verify(!DesktopApi.requests.some(r => r.path === "/api/listen/import/preview"))
+            compare(opened.join(), "existing")
+            compare(Api.notice, "Sách đã có")
+            verify(!dialog.open)
         }
         function test_editIndependentDraftsAndBack() {
             DesktopApi.responses = {"/api/listen/books/edit": {status:200,data:{id:"edit",stage:"text",title:"Tên mới",author:"Tác giả cũ"}}}
