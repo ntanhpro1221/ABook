@@ -1,9 +1,8 @@
 import { MoreInfo, SettingsBlock } from "@/shared/SettingsNav";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { Fold } from "@/shared/Collapse";
-import * as SwitchPrimitive from "@radix-ui/react-switch";
-import { feedback } from "@/shared/feedback";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Switch } from "./Switch";
 import { ShieldAlert, Smartphone } from "lucide-react";
 import { useId, useEffect, useRef, useState } from "react";
 import { toast } from "@/shared/toast";
@@ -132,49 +131,6 @@ function useSecondsLeft(until: number | undefined): number {
     return () => window.clearInterval(timer);
   }, [until]);
   return until ? Math.max(0, Math.ceil(until - now)) : 0;
-}
-
-export function Switch({
-  id,
-  checked,
-  onCheckedChange,
-  disabled,
-  ariaDisabled,
-  label,
-  labelledBy,
-  describedBy,
-}: {
-  id?: string;
-  checked: boolean;
-  onCheckedChange: (checked: boolean) => void;
-  disabled?: boolean;
-  ariaDisabled?: boolean;
-  /** Tên cho trình đọc màn hình khi không có <label htmlFor> trỏ tới công tắc (soát UX 29-09: "Lịch đêm" chỉ đọc "switch"). */
-  label?: string;
-  /** <label> bọc cả tên lẫn đoạn mô tả dài: tên là phần tử mang mã này, đoạn mô tả đọc riêng (`describedBy`) - không thì tên đọc lên dài
-   *  300+ chữ (soát a31). */
-  labelledBy?: string;
-  describedBy?: string;
-}) {
-  return (
-    <SwitchPrimitive.Root
-      id={id}
-      aria-label={label}
-      aria-labelledby={labelledBy}
-      aria-describedby={describedBy}
-      checked={checked}
-      onCheckedChange={(value) => {
-        if (ariaDisabled) return;
-        feedback("toggle");
-        onCheckedChange(value);
-      }}
-      disabled={disabled}
-      aria-disabled={ariaDisabled || undefined}
-      className="ui-switch touch-hit focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-50 aria-disabled:opacity-50"
-    >
-      <SwitchPrimitive.Thumb className="motion-switch-thumb" />
-    </SwitchPrimitive.Root>
-  );
 }
 
 function PairingPanel(props: Parameters<typeof PairingContent>[0]) {
