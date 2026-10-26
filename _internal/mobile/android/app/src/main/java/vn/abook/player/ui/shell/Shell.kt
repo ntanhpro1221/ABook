@@ -194,7 +194,7 @@ fun AppShell(
                     screen = { destination ->
                         when (destination) {
                             is Destination.Book -> BookScreen(
-                                destination.book, library, playerState, player.clock, covers, books, shell.sheets, bookActions,
+                                destination.book, library, playerState, player.clock, covers, books, shell.sheets, bookActions, music = settings.music,
                             )
                             Destination.AddBook -> if (imports != null) AddBookRoute(imports, nav::pop,
                                 { nav.push(Destination.ImportReview(it)) }, { id ->

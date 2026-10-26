@@ -27,21 +27,36 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import vn.abook.player.ui.components.Reveal
+import vn.abook.player.ui.components.SheetPages
 import vn.abook.player.ui.components.pressable
+import vn.abook.player.ui.music.MusicKind
+import vn.abook.player.ui.music.MusicPanel
+import vn.abook.player.ui.music.MusicText
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.MotionMs
 
-enum class PlayerSheet { Speed, Sleep, Chapters, More, Voice }
+enum class PlayerSheet { Speed, Sleep, Chapters, More, Voice, Music }
 
 /** Sheets translate over a fixed player. There is no scale or translation on the underlying screen. */
 @Composable
 fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlayingWindowState) {
     val transition = updateTransition(window.sheetOpen, label = "player-sheet")
     val accent = Abook.colors.accent
-    LaunchedEffect(window.sheet, window.sheetOpen) {
+    val music = model.music
+    // Tấm mở từ "Tuỳ chọn" (Giọng, Nhạc nền): Back về lại Tuỳ chọn, như một trang sâu hơn; tấm mở thẳng thì Back đóng.
+    var parent by remember { mutableStateOf<PlayerSheet?>(null) }
+    LaunchedEffect(window.sheetOpen) { if (!window.sheetOpen) parent = null }
+    LaunchedEffect(window.sheet, window.sheetOpen, state.bookId) {
         if (window.sheetOpen && window.sheet == PlayerSheet.Voice) model.loadVoices()
+        // Hàng "Nhạc nền" cần biết cuốn này có nhạc kiểu gì trước khi hiện giá trị.
+        if (window.sheetOpen && window.sheet == PlayerSheet.More) music?.open(state.bookId)
     }
-    BackHandler(enabled = window.sheetOpen) { window.closeSheet() }
+    fun deeper(sheet: PlayerSheet) { parent = window.sheet; window.openSheet(sheet) }
+    BackHandler(enabled = window.sheetOpen) {
+        val back = parent
+        if (back != null && back != window.sheet) { parent = null; window.openSheet(back) } else window.closeSheet()
+    }
     // Vạch kéo là thật: tấm theo ngón tay xuống, thả quá 1/4 chiều cao hay vuốt nhanh thì đóng, không thì về chỗ.
     val drag = remember { androidx.compose.animation.core.Animatable(0f) }
     val scope = rememberCoroutineScope()
@@ -90,7 +105,7 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                         RollingLabel(sheetTitle(window.sheet), style = Abook.type.sectionTitle)
                     }
                 }
-                when (window.sheet) {
+                SheetPages(window.sheet, { it.ordinal }, "player_sheet_pages") { shown -> Column(Modifier.fillMaxWidth()) { when (shown) {
                     PlayerSheet.Speed -> {
                         for (row in PlayerLabels.rates.chunked(3)) Row(Modifier.fillMaxWidth()) {
                             for (rate in row) ChoiceCell(PlayerLabels.rate(rate), rate == state.rate, Modifier.weight(1f)) {
@@ -132,12 +147,19 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                             window.closeSheet()
                             window.otherPlayers?.invoke()
                         }
-                        // Nhạc nền chỉ có một lựa chọn bật/tắt: đổi ngay tại hàng, không mở thêm một tấm chỉ chứa đúng một công tắc.
-                        SheetRow("Nhạc nền", if (state.musicEnabled) "Bật" else "Tắt", role = Role.Switch) { model.setMusic(!state.musicEnabled) }
+                        // Nhạc nền của CUỐN NÀY (danh sách, to nhỏ, ghi công) cần cả một tấm; công tắc chung "Tự chọn nhạc nền" ở Cài đặt.
+                        if (music != null) {
+                            val ui by music.ui.collectAsState()
+                            val book = ui.book.takeIf { ui.bookId == state.bookId }
+                            Reveal((book != null && book.kind != MusicKind.None) || (ui.failed && ui.bookId == state.bookId)) {
+                                SheetRow("Nhạc nền", MusicText.value(book, ui.menu)) { deeper(PlayerSheet.Music) }
+                            }
+                        }
                         SheetRow("Giọng", if (state.chapters.firstOrNull { it.id == state.chapterId }?.textPath.isNullOrEmpty()) "Giọng thu sẵn" else "Chọn giọng") {
-                            window.openSheet(PlayerSheet.Voice)
+                            deeper(PlayerSheet.Voice)
                         }
                     }
+                    PlayerSheet.Music -> if (music != null) MusicPanel(music, state.bookId, state.music)
                     PlayerSheet.Voice -> {
                         if (state.voices.isEmpty()) BasicText("Chưa có giọng cài sẵn. Bạn chọn giọng trong Cài đặt.", style = Abook.type.bodySmall)
                         else LazyColumn {
@@ -148,7 +170,7 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                             }
                         }
                     }
-                }
+                } } }
             }
         }
     }
@@ -156,7 +178,7 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
 
 private fun sheetTitle(sheet: PlayerSheet) = when (sheet) {
     PlayerSheet.Speed -> "Tốc độ đọc"; PlayerSheet.Sleep -> "Hẹn giờ ngủ"; PlayerSheet.Chapters -> "Chương"
-    PlayerSheet.More -> "Tuỳ chọn"; PlayerSheet.Voice -> "Giọng đọc"
+    PlayerSheet.More -> "Tuỳ chọn"; PlayerSheet.Voice -> "Giọng đọc"; PlayerSheet.Music -> "Nhạc nền"
 }
 
 @Composable

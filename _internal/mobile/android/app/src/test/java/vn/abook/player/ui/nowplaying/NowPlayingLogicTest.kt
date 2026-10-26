@@ -11,7 +11,7 @@ import vn.abook.player.ui.data.PlayerState
 class NowPlayingLogicTest {
     private val chapter = PlayerChapter(7, "Chương bảy", 65_000)
     private fun mapped(raw: String) =
-        nowPlayingState(PlayerState.from(JSONObject(raw), CoverRef("/cover.jpg", 9), listOf(chapter), true, "voice:a"), emptyList(), false, 0)
+        nowPlayingState(PlayerState.from(JSONObject(raw), CoverRef("/cover.jpg", 9), listOf(chapter), "voice:a"), emptyList(), false, 0)
 
     @Test fun metadataMapsNativePlaybackContract() {
         val state = mapped("""{"bookId":"b","bookTitle":"Sách","chapterId":7,"chapterTitle":"Chương bảy","playing":true,"duration":65.5,"rate":1.25,"sleep":{"mode":"minutes","remaining":891,"minutes":15,"counting":true}}""")
@@ -19,7 +19,7 @@ class NowPlayingLogicTest {
         assertEquals(7, state.chapterId); assertEquals(65_500L, state.durationMs)
         assertEquals(1.25, state.rate, 0.0); assertTrue(state.playing)
         assertEquals(listOf(chapter), state.chapters); assertEquals(CoverRef("/cover.jpg", 9), state.cover)
-        assertTrue(state.readAlongAvailable); assertTrue(state.musicEnabled); assertEquals("voice:a", state.voiceId)
+        assertTrue(state.readAlongAvailable); assertEquals("voice:a", state.voiceId)
         assertEquals(PlayerSleep(SleepKind.Minutes, 15, true), state.sleep)
     }
     @Test fun decimalRateSurvivesTheMappingSoTheSheetMarksTheChosenCell() {

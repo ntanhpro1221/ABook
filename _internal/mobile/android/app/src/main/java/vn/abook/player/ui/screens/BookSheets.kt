@@ -22,6 +22,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -55,7 +56,9 @@ import vn.abook.player.ui.components.MenuRow
 import vn.abook.player.ui.components.CheckIcon
 import vn.abook.player.ui.components.DashedCircleIcon
 import vn.abook.player.ui.components.ExportIcon
+import vn.abook.player.ui.components.MusicIcon
 import vn.abook.player.ui.components.PencilIcon
+import vn.abook.player.ui.components.Reveal
 import vn.abook.player.ui.components.PlayPauseGlyph
 import vn.abook.player.ui.components.PrimaryButton
 import vn.abook.player.ui.components.SearchIcon
@@ -71,24 +74,41 @@ import vn.abook.player.ui.data.FindProgress
 import vn.abook.player.ui.data.FoldedChapter
 import vn.abook.player.ui.data.Fmt
 import vn.abook.player.ui.data.ListenBook
+import vn.abook.player.ui.music.MusicKind
+import vn.abook.player.ui.music.MusicPanel
+import vn.abook.player.ui.music.MusicState
+import vn.abook.player.ui.music.MusicText
+import vn.abook.player.ui.music.PlayerMusic
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import java.util.concurrent.ConcurrentHashMap
 
-/** Các trang của bảng "Thêm": danh sách việc, xác nhận xoá. Đi sâu = trượt sang trái, Back = trượt ngược lại. */
-private enum class MenuPage { Actions, Delete }
+/** Các trang của bảng "Thêm": danh sách việc, nhạc nền của cuốn, xác nhận xoá. Đi sâu = trượt sang trái, Back = trượt ngược lại. */
+private enum class MenuPage { Actions, Music, Delete }
 
 /**
  * Bảng "Thêm" của trang sách (thay menu "…" của bản React): đã nghe xong / chưa, sửa thông tin, chia sẻ file sách, xoá khỏi máy (có bước xác nhận NGAY trong bảng);
  * việc lõi native chưa làm được ở giao diện này đứng thành hàng "Sắp có" rõ ràng, không bấm được. `detail` null (trang chưa đọc xong): chỉ những việc không cần nó.
  */
 @Composable
-fun BookMenuSheet(book: ListenBook, detail: BookDetail?, source: BookSource, actions: BookScreenActions, dismiss: () -> Unit) {
+fun BookMenuSheet(
+    book: ListenBook, detail: BookDetail?, source: BookSource, actions: BookScreenActions, dismiss: () -> Unit,
+    music: MusicState? = null, playerMusic: PlayerMusic? = null,
+) {
     var page by remember { mutableStateOf(MenuPage.Actions) }
     BackHandler(enabled = page != MenuPage.Actions) { page = MenuPage.Actions }
     SheetPages(page, { it.ordinal }, "book_menu") { shown ->
         when (shown) {
-            MenuPage.Actions -> MenuActions(book, detail, source, actions, dismiss, onEdit = { dismiss(); actions.edit(book) }, onDelete = { page = MenuPage.Delete })
+            MenuPage.Actions -> MenuActions(
+                book, detail, source, actions, dismiss, music, onEdit = { dismiss(); actions.edit(book) },
+                onMusic = { page = MenuPage.Music }, onDelete = { page = MenuPage.Delete },
+            )
+            MenuPage.Music -> if (music != null) Column(Modifier.fillMaxWidth()) {
+                BasicText("Nhạc nền", style = Abook.type.sectionTitle)
+                BasicText(book.title, style = Abook.type.bodySmall)
+                Spacer(Modifier.height(Dim.s8))
+                MusicPanel(music, book.id, playerMusic)
+            }
             MenuPage.Delete -> DeletePage(book, source, actions, dismiss, onKeep = { page = MenuPage.Actions })
         }
     }
@@ -101,11 +121,15 @@ private fun MenuActions(
     source: BookSource,
     actions: BookScreenActions,
     dismiss: () -> Unit,
+    music: MusicState?,
     onEdit: () -> Unit,
+    onMusic: () -> Unit,
     onDelete: () -> Unit,
 ) {
     val colors = Abook.colors
     val scope = rememberCoroutineScope()
+    // Hàng "Nhạc nền" nói ngay cuốn này đang nghe gì: sách chỉ có chữ chọn danh sách phát, sách nói theo nhạc người làm sách gắn; không có nhạc thì không có hàng.
+    if (music != null) LaunchedEffect(book.id) { music.open(book.id) }
     val context = LocalContext.current
     var sharing by remember { mutableStateOf(false) }
     var problem by remember { mutableStateOf("") }
@@ -142,6 +166,14 @@ private fun MenuActions(
             dismiss()
             actions.readAlong(book.id)
         }) { ink -> BookOpenIcon(ink) }
+        if (music != null) {
+            val ui by music.ui.collectAsState()
+            val mine = ui.book.takeIf { ui.bookId == book.id }
+            // Hiện khi đã biết cuốn có nhạc (trượt vào cùng giá trị, không hiện hàng trống rồi điền sau); đọc hỏng thì vẫn hiện để vào trang thử lại.
+            Reveal((mine != null && mine.kind != MusicKind.None) || (ui.failed && ui.bookId == book.id)) {
+                MenuRow("Nhạc nền", tag = "menu_music", onClick = onMusic, value = MusicText.value(mine, ui.menu)) { ink -> MusicIcon(ink) }
+            }
+        }
         MenuRow("Xuất MP3 hay M4B", tag = "menu_export", soon = true) { ink -> ExportIcon(ink) }
         Box(Modifier.fillMaxWidth().padding(vertical = Dim.s8).height(1.dp).background(colors.line))
         MenuRow("Xoá khỏi máy", tag = "menu_delete", danger = true, onClick = onDelete) { ink -> TrashIcon(ink) }

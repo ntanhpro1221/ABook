@@ -341,6 +341,8 @@ fun MenuRow(
     danger: Boolean = false,
     onClick: () -> Unit = {},
     supporting: String? = null,
+    /** Giá trị hiện tại bên phải (vd "Nhạc nền" ... "Theo cảnh"); dài thì xuống dòng, không cắt. */
+    value: String? = null,
     icon: @Composable (Color) -> Unit,
 ) {
     val colors = Abook.colors
@@ -361,12 +363,17 @@ fun MenuRow(
             Box(Modifier.testTag("row_leading")) { icon(ink) }
         }
         Spacer(Modifier.width(Dim.s12))
-        Column(Modifier.weight(1f)) {
+        Column(Modifier.weight(1f).then(if (value != null) Modifier.alignByBaseline() else Modifier)) {
             BasicText(label, style = Abook.type.body.copy(color = if (inert) colors.text2 else ink), modifier = Modifier.testTag("row_title"))
             if (supporting != null) {
                 Spacer(Modifier.height(2.dp))
                 Caption(supporting)
             }
+        }
+        if (value != null) {
+            Spacer(Modifier.width(Dim.s12))
+            // Cùng cỡ chữ phụ với giá trị ở hàng của tấm trình phát; chung đường chân chữ với tên, dài thì xuống dòng.
+            BasicText(value, Modifier.widthIn(max = 160.dp).alignByBaseline().testTag("${tag}_value"), Abook.type.bodySmall.copy(color = colors.text2))
         }
         if (soon) {
             Spacer(Modifier.width(Dim.s12))

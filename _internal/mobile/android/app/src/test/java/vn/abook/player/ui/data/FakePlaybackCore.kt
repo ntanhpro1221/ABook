@@ -15,7 +15,6 @@ class FakePlaybackCore(var snapshot: JSONObject, private val simulate: Boolean =
     /** Hàng chương lõi đang giữ (đổi đối tượng khi test muốn "lõi đổi hàng"), vị trí chính xác (null = theo ảnh chụp, như lõi thật), nhạc nền, giọng. */
     var chapterList: List<Playback.Chapter> = emptyList()
     var position: Long? = null
-    var music = false
     var voiceChosen = ""
 
     override fun addListener(listener: (JSONObject) -> Unit) { listeners += listener }
@@ -56,8 +55,6 @@ class FakePlaybackCore(var snapshot: JSONObject, private val simulate: Boolean =
     override fun positionMs() = position ?: Math.round(snapshot.optDouble("position", 0.0) * 1000)
     override fun chapters() = chapterList
     override fun setSleep(mode: String, minutes: Int) { calls += "sleep $mode $minutes" }
-    override fun autoMusic() = music
-    override fun setAutoMusic(enabled: Boolean) { calls += "music $enabled"; music = enabled }
     override fun voiceId() = voiceChosen
     override fun setVoice(voiceId: String) { calls += "voice $voiceId"; voiceChosen = voiceId }
 
