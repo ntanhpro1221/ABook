@@ -72,5 +72,15 @@ SettingsListen 1.0 ../../../../qml/SettingsListen.qml
 SettingsSleep 1.0 ../../../../qml/SettingsSleep.qml
 SettingsLook 1.0 ../../../../qml/SettingsLook.qml
 SettingsAdvanced 1.0 ../../../../qml/SettingsAdvanced.qml
+ImportBox 1.0 ../../../../qml/ImportBox.qml
+ImportCheck 1.0 ../../../../qml/ImportCheck.qml
+ImportSkeleton 1.0 ../../../../qml/ImportSkeleton.qml
+ImportError 1.0 ../../../../qml/ImportError.qml
+ImportFold 1.0 ../../../../qml/ImportFold.qml
+ImportQueueList 1.0 ../../../../qml/ImportQueueList.qml
+ImportChapters 1.0 ../../../../qml/ImportChapters.qml
+ImportSlot 1.0 ../../../../qml/ImportSlot.qml
+ImportActions 1.0 ../../../../qml/ImportActions.qml
+ImportDrop 1.0 ../../../../qml/ImportDrop.qml
 singleton Api 1.0 ../../../../qml/Api.qml
 singleton DesktopApi 1.0 DesktopApi.qml
