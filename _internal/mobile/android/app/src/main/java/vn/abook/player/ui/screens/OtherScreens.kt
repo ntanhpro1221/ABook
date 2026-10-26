@@ -40,7 +40,7 @@ fun StudioScreen(
         Reveal(pair?.studio.isNullOrEmpty()) {
             Column {
                 BasicText("Studio trên máy tính", style = Abook.type.sectionTitle)
-                BasicText("Nối máy tính để làm sách nói và xem tiến độ.", style = Abook.type.bodySmall)
+                RowHint("Nối máy tính để làm sách nói và xem tiến độ.")
                 TextAction("Nối máy tính", connect, "studio_connect")
             }
         }
