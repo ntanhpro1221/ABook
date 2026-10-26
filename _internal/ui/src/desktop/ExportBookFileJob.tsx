@@ -261,6 +261,9 @@ export function ExportJobHost({ kind }: { kind: ExportKind }) {
     },
     [client, remote, info, kind, copy, cancel],
   );
+  // Nhịp hỏi sống lâu hơn một lần vẽ: luôn dùng `show` mới nhất (app biết máy này là Studio từ xa sau khi việc đã bắt đầu theo).
+  const showLatest = useRef(show);
+  showLatest.current = show;
 
   const track = useCallback(
     (id: string, chapters: number) => {
@@ -280,7 +283,7 @@ export function ExportJobHost({ kind }: { kind: ExportKind }) {
           asking = false;
         }
         if (!timers.current.has(id)) return; // đã thôi theo (xong ở lần hỏi khác, host gỡ)
-        if (!show(id, job, chapters, false)) {
+        if (!showLatest.current(id, job, chapters, false)) {
           window.clearInterval(timers.current.get(id));
           timers.current.delete(id);
           if (job.id) announced.add(job.id);
@@ -289,7 +292,7 @@ export function ExportJobHost({ kind }: { kind: ExportKind }) {
       timers.current.set(id, window.setInterval(() => void tick(), POLL_MS));
       void tick();
     },
-    [show, kind],
+    [kind],
   );
 
   // Menu chọn xong thì bắt đầu: máy chủ trả ngay một mã, rồi host hỏi trạng thái.
@@ -318,7 +321,8 @@ export function ExportJobHost({ kind }: { kind: ExportKind }) {
 
   // Mở (hay tải lại) trang sách: việc còn chạy thì theo tiếp, vừa xong thì nhắc lại nơi file nằm.
   useEffect(() => {
-    if (!pageId || listenOnly) return;
+    // Chờ app biết máy này là máy nào (Studio từ xa: thông báo xong không có "Mở thư mục"; chỉ nghe: không hỏi việc xuất - 403).
+    if (!pageId || !info || listenOnly) return;
     let alive = true;
     api<ExportJob>(jobUrl(kind, pageId))
       .then((job) => {
@@ -333,7 +337,7 @@ export function ExportJobHost({ kind }: { kind: ExportKind }) {
     return () => {
       alive = false;
     };
-  }, [pageId, track, show, kind, listenOnly]);
+  }, [pageId, track, show, kind, listenOnly, info]);
 
   // Mở (hay tải lại) app ở trang không phải trang sách: máy chủ vẫn đang xuất thì hiện lại thông báo tiến độ (có % và Huỷ) như lúc bắt đầu.
   useEffect(() => {
