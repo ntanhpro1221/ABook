@@ -299,7 +299,7 @@ class VoiceState(
         }
     }
 
-    /** Nhập các file bạn vừa chọn. Tiến độ (xong / tổng) hiện ngay trong hàng "Thêm nhạc"; xong thì một câu báo và file lỗi ở dòng riêng. */
+    /** Nhập các file bạn vừa chọn. Tiến độ (xong / tổng) hiện ngay trong hàng "Thêm nhạc của bạn"; xong thì một câu báo và file lỗi ở dòng riêng. */
     fun importMusic(uris: List<String>) {
         if (uris.isEmpty() || musicFlow.value.importing) return
         importFlow.value = 0f
@@ -315,7 +315,7 @@ class VoiceState(
                 musicFlow.update { it.copy(importing = false, loaded = true, tracks = done.tracks, summary = VoiceText.imported(done), problems = done.failed) }
             }
             result.onFailure { error ->
-                musicFlow.update { it.copy(importing = false, problems = listOf(message(error, "Chưa nhập được nhạc"))) }
+                musicFlow.update { it.copy(importing = false, problems = listOf(message(error, "Chưa thêm được nhạc"))) }
             }
         }
     }

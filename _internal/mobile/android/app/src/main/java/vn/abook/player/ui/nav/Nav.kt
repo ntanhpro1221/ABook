@@ -11,6 +11,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import vn.abook.player.ui.data.ListenBook
 import vn.abook.player.ui.devices.DevicesPage
+import vn.abook.player.ui.export.ExportFormat
 import vn.abook.player.ui.voice.VoicePage
 import vn.abook.player.ui.data.SettingsGroup
 import vn.abook.player.ui.motion.Motion
@@ -27,6 +28,10 @@ sealed interface Destination {
     data class CropCover(val book: ListenBook, val uri: String) : Destination
     @Immutable
     data class Book(val book: ListenBook) : Destination
+
+    /** Xuất sách thành MP3 hay M4B (đi từ menu "Thêm" của trang sách, Back về lại trang sách). */
+    @Immutable
+    data class Export(val book: ListenBook, val format: ExportFormat? = null) : Destination
 
     /** Một nhóm Cài đặt (cấp hai, cũng là cấp cuối: Cài đặt -> nhóm -> mục). */
     @Immutable

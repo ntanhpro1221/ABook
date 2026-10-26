@@ -381,7 +381,7 @@ export function autoPlaylistName(view: PlaylistView | undefined, menu: PlaylistM
 /** Chữ trên nút / thông báo của lựa chọn hiện tại: "Máy chọn: <tên>" khi máy đang chọn, "Tắt", tên danh sách, hay "Nhạc của tôi". */
 export function playlistLabel(view: PlaylistView | undefined, menu: PlaylistMenu | undefined): string {
   if (view?.playlistAuto) return ["Máy chọn", autoPlaylistName(view, menu)].filter(Boolean).join(": ");
-  if (!view?.playlist) return view?.autoOff ? "Chưa có nhạc (tắt trong Cài đặt)" : "Máy chọn";
+  if (!view?.playlist) return view?.autoOff ? "Chưa có nhạc" : "Máy chọn";
   if (view.playlist === OFF_PLAYLIST) return OFF_LABEL;
   if (view.playlist === MINE_PLAYLIST) return "Nhạc của tôi";
   // Danh mục chưa tải (mất mạng lần đầu): không nói mã trần ("fantasy_adventure") cho người nghe.

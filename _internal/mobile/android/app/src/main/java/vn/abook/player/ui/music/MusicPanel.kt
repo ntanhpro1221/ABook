@@ -433,7 +433,7 @@ fun MusicCreditBlock(credit: MusicCredit?) {
             Box(Modifier.fillMaxWidth().height(1.dp).background(Abook.colors.line))
             ListItem(
                 "Đang phát", Modifier, { open = !open }, "music_credit_toggle",
-                hint = MusicText.creditLine(shown), hintStyle = Abook.type.bodySmall,
+                hint = MusicText.creditLine(shown),
                 trailing = { ChevronIcon(Abook.colors.text3, turn = { turn }) },
             )
             Reveal(open) {

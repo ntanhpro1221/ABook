@@ -59,6 +59,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import vn.abook.player.ui.components.BackButton
 import vn.abook.player.ui.components.BookCover
@@ -67,6 +69,7 @@ import vn.abook.player.ui.components.DashedCircleIcon
 import vn.abook.player.ui.components.MoreIcon
 import vn.abook.player.ui.components.PlayPauseGlyph
 import vn.abook.player.ui.components.RestartIcon
+import vn.abook.player.ui.components.RowHint
 import vn.abook.player.ui.components.SearchIcon
 import vn.abook.player.ui.components.SheetHost
 import vn.abook.player.ui.components.pressable
@@ -78,6 +81,7 @@ import vn.abook.player.ui.data.CoverArt
 import vn.abook.player.ui.data.CoverLoader
 import vn.abook.player.ui.data.LibraryState
 import vn.abook.player.ui.data.ListenBook
+import vn.abook.player.ui.export.ExportFormat
 import vn.abook.player.ui.music.MusicState
 import vn.abook.player.ui.data.PlayerClock
 import vn.abook.player.ui.data.PlayerState
@@ -102,7 +106,14 @@ class BookScreenActions(
     val readAlong: (bookId: String) -> Unit = {},
     /** "Sửa thông tin" ở bảng Thêm: mở màn Sửa sách (nơi DUY NHẤT sửa tên, tác giả, bìa, chương). */
     val edit: (ListenBook) -> Unit,
+    /** "Xuất MP3" / "Xuất M4B" / "Xuất sách nói" ở bảng Thêm: mở màn Xuất của cuốn, sẵn dạng file đã chọn (null: sách chỉ có chữ). */
+    val export: (ListenBook, ExportFormat?) -> Unit = { _, _ -> },
+    /** Dòng phụ của hàng xuất trong bảng Thêm ("Đang xuất · 27%"); null = không có gì để nói. */
+    val exportHint: (bookId: String) -> StateFlow<String?> = { NoExportHint },
 )
+
+/** Không có việc xuất nào để nói (ảnh chụp, bản thử không dựng màn Xuất). */
+val NoExportHint: StateFlow<String?> = MutableStateFlow(null)
 
 /**
  * Trạng thái của MỘT trang sách: trang đọc từ kho ([BookSource.detail]) ở luồng nền, đọc lại mỗi khi Thư viện đổi (dừng phát, đánh dấu, sửa tên).
@@ -453,7 +464,7 @@ private fun ChapterRow(
             Spacer(Modifier.width(Dim.s12))
             Column(Modifier.weight(1f)) {
                 BasicText(chapter.title, style = Abook.type.body.copy(color = title, fontWeight = if (current) FontWeight.Medium else FontWeight.Normal))
-                BasicText(BookPage.chapterLine(chapter), style = Abook.type.bodySmall)
+                RowHint(BookPage.chapterLine(chapter))
                 val partly = chapter.heard > 0f && chapter.heard < 1f
                 if (livePosition != null || partly) {
                     Spacer(Modifier.height(6.dp))

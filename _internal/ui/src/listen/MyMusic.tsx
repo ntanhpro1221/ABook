@@ -116,7 +116,7 @@ export function MyMusicSection() {
         setProgress({ done, total });
         if (latest) refresh(latest);
       });
-      if (error) toast.error("Đang nhập nhạc thì dừng", { description: error.message });
+      if (error) toast.error("Đang thêm nhạc thì dừng", { description: error.message });
       if (!result) return;
       refresh(result);
       const summary = importSummary(result);
@@ -139,19 +139,19 @@ export function MyMusicSection() {
   const tracks = data?.tracks ?? [];
   const rows = useListPresence(tracks, (track) => track.link);
   return (
-    <MotionRegion><Fold storageKey="my-music.library" title="Nhạc của tôi" summary={`${tracks.length} bài`} bodyClassName="space-y-2">
+    <MotionRegion><Fold storageKey="my-music.library" title="Nhạc của tôi" summary={tracks.length ? `${tracks.length} bài` : "Chưa có bài nào"} bodyClassName="space-y-2">
       <div className="flex flex-wrap items-center justify-between gap-3">
         {canImport && (
           <Button size="sm" variant="ghost" icon={Upload} className={WRAP_LABEL} loading={Boolean(progress)} onClick={() => void importFiles()}>
-            {progress ? `Đang nhập ${progress.done}/${progress.total}…` : "Nhập nhạc của tôi…"}
+            {progress ? `Đang thêm ${progress.done}/${progress.total}` : "Thêm nhạc của bạn"}
           </Button>
         )}
       </div>
       {!!tracks.length && <MusicModuleNotice view={data} queryKey={MY_MUSIC_KEY} />}
       <p className="text-xs text-fg-2 text-pretty">{MY_MUSIC_INTRO}</p>
       <MoreInfo label="Nhạc riêng">{MY_MUSIC_HELP}</MoreInfo>
-      {!canImport && <p className="text-xs text-fg-2">Nhập và xoá nhạc làm trên máy tính chủ sách.</p>}
-      <MotionRegion motionKey={isLoading ? "loading" : error && !data ? "error" : tracks.length ? "ready" : "empty"}>{isLoading ? <ContentSkeleton count={2} label="Đang tải nhạc riêng" /> : error && !data ? <InlineError message="Bạn hãy thử tải lại nhạc của bạn." onRetry={() => void refetch()} /> : canImport && !tracks.length ? <EmptyState icon={EighthNote} title="Thêm nhạc của bạn" className="py-6" action={<Button icon={Upload} onClick={() => void importFiles()} loading={Boolean(progress)}>Nhập nhạc</Button>} /> : null}</MotionRegion>
+      {!canImport && <p className="text-xs text-fg-2">Thêm và xoá nhạc làm trên máy tính chủ sách.</p>}
+      <MotionRegion motionKey={isLoading ? "loading" : error && !data ? "error" : tracks.length ? "ready" : "empty"}>{isLoading ? <ContentSkeleton count={2} label="Đang tải nhạc riêng" /> : error && !data ? <InlineError message="Bạn hãy thử tải lại nhạc của bạn." onRetry={() => void refetch()} /> : canImport && !tracks.length ? <EmptyState icon={EighthNote} title="Chưa có bài nào" className="py-6" action={<Button icon={Upload} onClick={() => void importFiles()} loading={Boolean(progress)}>Thêm nhạc của bạn</Button>} /> : null}</MotionRegion>
       {!!rows.length && (
         <ul className="divide-y divide-line">
           {rows.map(({ item: track, key, state, ref }) => (
@@ -172,8 +172,8 @@ export function MyMusicSection() {
               {canImport &&
                 (removing === track.link ? (
                   <span ref={removeBox} className="flex shrink-0 gap-1">
-                    <Button size="sm" variant="ghost" icon={Trash2} aria-label={`Xoá khỏi kho: ${track.title}`} loading={remove.isPending} onClick={() => remove.mutate(track.link)}>
-                      Xoá khỏi kho
+                    <Button size="sm" variant="ghost" icon={Trash2} aria-label={`Xoá bài: ${track.title}`} loading={remove.isPending} onClick={() => remove.mutate(track.link)}>
+                      Xoá bài
                     </Button>
                     <Button size="sm" variant="ghost" aria-label={`Giữ lại: ${track.title}`} disabled={remove.isPending} onClick={() => setRemoving(null)}>
                       Giữ lại

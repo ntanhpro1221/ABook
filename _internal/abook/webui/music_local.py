@@ -324,7 +324,7 @@ class LocalMusic:
         if not source.is_file():
             raise MusicImportError(f"“{source.name}”: không thấy file này.")
         if extension not in music_plan.TRACK_EXTENSIONS:
-            raise MusicImportError(f"“{source.name}”: chưa nhập được định dạng này - dùng {', '.join('.' + e for e in music_plan.TRACK_EXTENSIONS)}.")
+            raise MusicImportError(f"“{source.name}”: chưa thêm được định dạng này - dùng {', '.join('.' + e for e in music_plan.TRACK_EXTENSIONS)}.")
         if source.stat().st_size > MAX_TRACK_BYTES:
             raise MusicImportError(f"“{source.name}”: file quá lớn để làm nhạc nền (tối đa 1 GB).")
         digest = _sha1(source)

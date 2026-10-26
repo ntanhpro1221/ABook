@@ -31,11 +31,12 @@ import vn.abook.player.ui.components.Reveal
 import vn.abook.player.ui.components.RowLine
 import vn.abook.player.ui.components.SheetHost
 import vn.abook.player.ui.devices.DownloadBar
+import vn.abook.player.ui.music.MusicText
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 
 /**
- * Nhạc của tôi: nhạc riêng của bạn, dùng làm nhạc nền cho mọi cuốn. "Thêm nhạc" mở hộp chọn file của hệ thống; tiến độ (xong / tổng) chạy ngay hàng ấy. Mỗi bài một hàng
+ * Nhạc của tôi: nhạc riêng của bạn, dùng làm nhạc nền cho mọi cuốn. "Thêm nhạc của bạn" mở hộp chọn file của hệ thống; tiến độ (xong / tổng) chạy ngay hàng ấy. Mỗi bài một hàng
  * (nghệ sĩ · độ dài, cỡ file); chạm một bài mở bảng "Xoá bài". Cùng kho với bản WebView ([vn.abook.player.MusicStore]).
  */
 @Composable
@@ -54,13 +55,14 @@ fun MyMusicScreen(voice: VoiceState, sheets: SheetHost, onBack: () -> Unit, modi
         item(key = "add", contentType = "add") {
             Column(Modifier.fillMaxWidth().padding(top = Dim.s16)) {
                 ListItem(
-                    if (ui.importing) "Đang thêm ${ui.done}/${ui.total}" else "Thêm nhạc", Modifier,
+                    if (ui.importing) "Đang thêm ${ui.done}/${ui.total}" else MusicText.ADD_LABEL, Modifier,
                     if (ui.importing) null else ({ picker.launch(MusicImport.MIME_TYPES) }), "music_add",
                     titleColor = if (ui.importing) colors.text else colors.accentText,
                     leading = { UploadIcon(if (ui.importing) colors.text2 else colors.accentText) },
                     below = if (ui.importing) ({ DownloadBar(voice.importProgress) }) else null,
                 )
                 RowLine()
+                Caption(MusicText.MY_MUSIC_INTRO, Modifier.padding(top = Dim.s8).testTag("music_intro"))
             }
         }
         item(key = "feedback", contentType = "feedback") {
@@ -69,7 +71,7 @@ fun MyMusicScreen(voice: VoiceState, sheets: SheetHost, onBack: () -> Unit, modi
                 for ((index, problem) in ui.problems.withIndex()) {
                     BasicText(problem, style = Abook.type.bodySmall.copy(color = colors.danger), modifier = Modifier.padding(top = Dim.s8).testTag("music_problem_$index"))
                 }
-                InlineProblem(if (ui.failed && !ui.loaded) "Chưa đọc được kho nhạc" else "", voice::loadMusic, "music_load_problem")
+                InlineProblem(if (ui.failed && !ui.loaded) "Bạn hãy thử tải lại nhạc của bạn." else "", voice::loadMusic, "music_load_problem")
             }
         }
         items(ui.tracks, key = { it.link }, contentType = { "track" }) { track ->

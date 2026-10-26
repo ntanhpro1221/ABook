@@ -13,6 +13,8 @@ import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -37,6 +39,7 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import vn.abook.player.ui.components.SheetHost
 import vn.abook.player.ui.components.SheetLayer
+import vn.abook.player.ui.music.MusicText
 import vn.abook.player.ui.data.FakeSettingsCore
 import vn.abook.player.ui.data.SettingsGroup
 import vn.abook.player.ui.data.SettingsRepo
@@ -529,11 +532,13 @@ class VoiceScreenTest {
         source.tracks = listOf(
             Fixtures.track("Buổi sáng yên tĩnh", creator = "Kevin MacLeod", duration = 187.0),
             Fixtures.track("Một bản nhạc có tên rất dài để xem hàng xuống dòng mà không bị cắt chữ ở đâu cả", bytes = 12_400_000, creator = "", duration = 3725.0),
-            Fixtures.track("track03.mp3", bytes = 900_000, creator = "Bạn", duration = 0.0),
+            Fixtures.track("track03.mp3", bytes = 900_000, creator = "Bạn", duration = 0.0, analysed = false),
         )
         showMusic(dark)
         rule.onNodeWithText("Buổi sáng yên tĩnh").assertIsDisplayed()
         rule.onNodeWithText("Kevin MacLeod · 3:07").assertIsDisplayed()
+        rule.onNodeWithTag("music_intro").assertIsDisplayed()
+        rule.onAllNodesWithText(MusicText.UNANALYSED).assertCountEquals(1)
         shot("music_files_${theme(dark)}")
     }
 
