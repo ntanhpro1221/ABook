@@ -72,5 +72,15 @@ SettingsListen 1.0 ../../../../qml/SettingsListen.qml
 SettingsSleep 1.0 ../../../../qml/SettingsSleep.qml
 SettingsLook 1.0 ../../../../qml/SettingsLook.qml
 SettingsAdvanced 1.0 ../../../../qml/SettingsAdvanced.qml
+EditBookActions 1.0 ../../../../qml/EditBookActions.qml
+EditBookSection 1.0 ../../../../qml/EditBookSection.qml
+EditBookSkeleton 1.0 ../../../../qml/EditBookSkeleton.qml
+EditBookError 1.0 ../../../../qml/EditBookError.qml
+EditBookSwap 1.0 ../../../../qml/EditBookSwap.qml
+EditBookMyMusic 1.0 ../../../../qml/EditBookMyMusic.qml
+EditBookReadings 1.0 ../../../../qml/EditBookReadings.qml
+EditBookRename 1.0 ../../../../qml/EditBookRename.qml
+EditBookSaveAs 1.0 ../../../../qml/EditBookSaveAs.qml
+EditBookItems 1.0 ../../../../qml/EditBookItems.qml
 singleton Api 1.0 ../../../../qml/Api.qml
 singleton DesktopApi 1.0 DesktopApi.qml

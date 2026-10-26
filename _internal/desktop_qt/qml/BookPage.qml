@@ -6,6 +6,8 @@ import ABook
 Item {
     id: root
     signal editRequested(var data)
+    signal saveRequested(var data)
+    signal saveAsRequested(var data)
     property var book: ({})
     readonly property bool expanded: width >= Theme.widthExpanded
     property real split: expanded ? 1 : 0
@@ -39,18 +41,48 @@ Item {
         backLabel: "Về Thư viện"
         title: ""
         implicitHeight: Theme.s32 + Theme.headerRow
+        // Menu "Thêm": các mục sửa sách (hiện khi cuốn có gì để sửa / giải thích vì sao chưa sửa được)
         Button {
-            text: "Sửa sách"; icon: "pencil"; kind: "text"
-            onClicked: Api.call("GET", "/api/listen/books/" + root.book.bookId, null, function(data, error) { if (!error) root.editRequested(data) })
+            id: moreButton
+            objectName: "bookMore"
+            visible: items.hasItems
+            text: "Thêm"; icon: "ellipsis"; kind: "text"
+            Accessible.name: "Thêm việc với sách"
+            onClicked: more.toggle()
         }
     }
+    // Cuốn đầy đủ (quyền sửa, số thay đổi...): nạp lúc mở trang và sau mỗi lần sửa
+    property var fullBook: ({})
+    function loadFull() {
+        const id = root.book.bookId
+        if (!id) return
+        Api.call("GET", "/api/listen/books/" + id, null, function(data, error) { if (!error && id === root.book.bookId) root.fullBook = data })
+    }
+    onBookChanged: if (root.book.bookId && root.book.bookId !== fullBook.id) loadFull()
     Connections {
         target: Api
         function onEdited(bookId) {
             if (bookId !== root.book.bookId) return
             Api.call("GET", "/api/listen/books/" + bookId, null, function(data, error) {
-                if (!error) root.book = Object.assign({}, root.book, data, {bookId: data.id, coverKey: data.cover ? data.id + "/" + (data.cover.version || 0) : ""})
+                if (!error) {
+                    root.fullBook = data
+                    root.book = Object.assign({}, root.book, data, {bookId: data.id, coverKey: data.cover ? data.id + "/" + (data.cover.version || 0) : ""})
+                }
             })
+        }
+    }
+    Popover {
+        id: more
+        anchorItem: moreButton
+        panelWidth: 280
+        pad: Theme.s8
+        EditBookItems {
+            id: items
+            width: parent.width
+            book: root.fullBook
+            onEditRequested: { more.close(); root.editRequested(root.fullBook) }
+            onSaveRequested: { more.close(); root.saveRequested(root.fullBook) }
+            onSaveAsRequested: { more.close(); root.saveAsRequested(root.fullBook) }
         }
     }
     Item {
