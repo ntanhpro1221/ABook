@@ -13,5 +13,5 @@ export function bluetoothStep(state: BluetoothPermission): "go" | "explain" | "s
 export const BLUETOOTH_REASON =
   "Cho phép “Thiết bị ở gần” để tìm máy đã ghép.";
 
-export const BLUETOOTH_DENIED =
-  "Quyền “Thiết bị ở gần” của ABook đang tắt. Mở Cài đặt → Quyền → Thiết bị ở gần → Cho phép, rồi quay lại bấm Kết nối qua Bluetooth.";
+/** Đã từ chối hẳn: cùng lời hàng "Cần quyền Thiết bị ở gần" + "Mở cài đặt" bên native (PairScreen.kt). */
+export const BLUETOOTH_DENIED = "Cần quyền Thiết bị ở gần";

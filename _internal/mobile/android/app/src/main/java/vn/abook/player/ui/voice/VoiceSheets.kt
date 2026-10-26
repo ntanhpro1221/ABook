@@ -131,7 +131,7 @@ fun MeteredSheet(text: String, onGo: () -> Unit, dismiss: () -> Unit) {
  */
 @Composable
 fun ConsentPage(voiceName: String, provider: String, working: Boolean, onAllow: () -> Unit, onNo: () -> Unit) {
-    ConfirmPage("Gửi chữ ra ngoài?", "consent_confirm", listOf(VoiceText.consent(voiceName, provider)), "") {
+    ConfirmPage("Giọng đọc trực tuyến", "consent_confirm", listOf(VoiceText.consent(voiceName, provider)), "") {
         PrimaryButton(if (working) "Đang lưu" else "Đồng ý", { if (!working) onAllow() }, Modifier.fillMaxWidth().testTag("consent_yes"), enabled = !working)
         Spacer(Modifier.height(Dim.s8))
         QuietButton("Không", onNo, "consent_no")
@@ -212,7 +212,7 @@ fun KeySheet(initial: KeyProvider, voice: VoiceState, dismiss: () -> Unit) {
                     Spacer(Modifier.height(Dim.s16))
                     BookField(
                         null, key, { key = it; problem = ""; verdict = "" }, "key_field", work == KeyWork.None, "Khoá ${provider.name}",
-                        placeholder = if (provider.hasKey) "${provider.masked} · dán khoá mới để đổi" else "Dán khoá của bạn",
+                        placeholder = if (provider.hasKey) "Đã lưu ${provider.masked} - dán khoá mới để thay" else "Dán khoá của bạn",
                         masked = !revealed,
                         trailing = { TextAction(if (revealed) "Ẩn" else "Hiện", { revealed = !revealed }, "key_reveal") },
                     )

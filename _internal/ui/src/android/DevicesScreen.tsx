@@ -196,7 +196,7 @@ export function PairPanel() {
             </div>
           ) : (
             <p className="py-3 text-sm text-fg-2">
-              {discover.isPending ? "Đang tìm trong mạng Wi-Fi" : "Chưa thấy máy tính nào. Kiểm tra máy tính đã bật kết nối, hoặc nhập địa chỉ."}
+              {discover.isPending ? "Đang tìm máy" : "Chưa thấy máy nào"}
             </p>
           )}
         </div>
@@ -215,7 +215,7 @@ export function PairPanel() {
                   </Button>
                 ) : (
                   <Button size="sm" variant="primary" onClick={() => void EbookLibrary.openAppSettings().catch((error: Error) => toast.error(error.message))}>
-                    Mở Cài đặt
+                    Mở cài đặt
                   </Button>
                 )}
                 <Button size="sm" variant="ghost" onClick={() => setBtAsk(null)}>
@@ -249,7 +249,7 @@ export function PairPanel() {
             </div>
           ) : (
             <p className="py-3 text-sm text-fg-2">
-              Chưa có máy tính ghép Bluetooth. Ghép ở Cài đặt Android › Bluetooth rồi thử lại.
+              Chưa có máy nào ghép Bluetooth. Ghép ở Cài đặt Android › Bluetooth rồi thử lại.
             </p>
           )}
         </div>
@@ -287,6 +287,9 @@ export function PairPanel() {
   );
 }
 
+/** Nút huỷ một lượt tải, cùng chữ với native (RemoteBookRow, RemoteBookSheet). */
+const CANCEL_DOWNLOAD = "Huỷ tải";
+
 export function RemoteRow({ book, progress, onDownload, compact = false }: { book: RemoteBook; progress?: DownloadEvent; onDownload: () => void; compact?: boolean }) {
   const newChapters = book.downloaded ? book.chaptersAvailable - book.localChapters : 0;
   const newCover = book.downloaded && (book.cover?.version ?? 0) !== (book.localCoverVersion ?? 0);
@@ -323,7 +326,7 @@ export function RemoteRow({ book, progress, onDownload, compact = false }: { boo
       </div>}
       {downloading && compact ? (
         // Dưới bìa: tiến độ đã hiện trên bìa (DownloadCover, cả bìa bộ) - hàng chỉ còn việc huỷ, cùng chỗ và kiểu với nút Tải.
-        <Button size="sm" variant="ghost" icon={X} className="edge-start-action" onClick={cancel} aria-label={`Huỷ tải ${book.title}`}>Huỷ</Button>
+        <Button size="sm" variant="ghost" icon={X} className="edge-start-action" onClick={cancel} aria-label={`Huỷ tải ${book.title}`}>{CANCEL_DOWNLOAD}</Button>
       ) : downloading ? (
         <div className="flex shrink-0 items-center gap-1">
           <span data-remote-progress className="tabular w-10 text-right text-xs font-semibold text-accent-text" aria-hidden>
@@ -408,6 +411,19 @@ export function needsNearbyPermission(status?: string): boolean {
   return Boolean(status && status.includes("Thiết bị ở gần"));
 }
 
+/** Giờ hết hạn của mã ghép, như "14:12" (DeviceText.clock bên native) - một mốc đứng yên, không đồng hồ đếm ngược. */
+function expiryClock(epochSeconds: number): string {
+  const at = new Date(epochSeconds * 1000);
+  return `${String(at.getHours()).padStart(2, "0")}:${String(at.getMinutes()).padStart(2, "0")}`;
+}
+
+/** Dòng Bluetooth của chia sẻ, cùng lời ShareUi.bluetoothLine bên native: đang chạy thì số máy đang nối (không máy nào thì không có dòng), không thì lý do. */
+export function bluetoothLine(bluetooth?: { status: string; connections: number }): string | null {
+  if (!bluetooth?.status) return null;
+  if (bluetooth.status !== "running") return bluetooth.status;
+  return bluetooth.connections > 0 ? `Bluetooth: ${bluetooth.connections} máy đang nối` : null;
+}
+
 function pinChanged(error: unknown): error is Error {
   return error instanceof Error && (error as Error & { code?: string }).code === "PIN_CHANGED";
 }
@@ -423,7 +439,7 @@ function PeersPanel() {
   const [address, setAddress] = useState("");
   const [code, setCode] = useState("");
   const [bonded, setBonded] = useState<{ address: string; name: string; kind: string }[] | null>(null);
-  // Khung "Ghép thiết bị" mở ngay trong trang: Back của điện thoại gập nó lại trước khi rời trang.
+  // Khung "Thêm thiết bị" mở ngay trong trang: Back của điện thoại gập nó lại trước khi rời trang.
   useBackLayer(open, () => setOpen(false));
   const discover = useMutation({
     mutationFn: () => EbookLibrary.discover({ timeoutMs: 2500 }),
@@ -490,7 +506,7 @@ function PeersPanel() {
           Thiết bị khác
         </SectionHeading>
         <Button size="sm" variant="ghost" icon={Link2} className="settings-edge-action" onClick={() => { setOpen((value) => !value); if (!open) discover.mutate(); }}>
-          Ghép thiết bị
+          Thêm thiết bị
         </Button>
       </div>
       <p className="mt-1 text-xs leading-snug text-fg-2">
@@ -517,16 +533,16 @@ function PeersPanel() {
                   <SelectionMark selected={address === `bt:${device.address}`} />
                   <span className="flex-1">
                     <span className="block font-medium">{device.name}</span>
-                    <span className="block text-xs text-fg-2">Qua Bluetooth · {device.kind === "phone" ? "điện thoại" : "máy tính"}</span>
+                    <span className="block text-xs text-fg-2">Qua Bluetooth</span>
                   </span>
                 </button>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-fg-2">Chưa có máy nào ghép Bluetooth với điện thoại này (Cài đặt Android → Bluetooth).</p>
+            <p className="text-sm text-fg-2">Chưa có máy nào ghép Bluetooth. Ghép ở Cài đặt Android › Bluetooth rồi thử lại.</p>
           )}
           {discover.isPending ? (
-            <p className="text-sm text-fg-2">Đang tìm trong mạng Wi-Fi</p>
+            <p className="text-sm text-fg-2">Đang tìm máy</p>
           ) : found?.length ? (
             <div className="space-y-2">
               {found.map((item) => (
@@ -547,7 +563,7 @@ function PeersPanel() {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-fg-2">Không thấy thiết bị nào - nhập địa chỉ đang hiện trên máy kia.</p>
+            <p className="text-sm text-fg-2">Chưa thấy máy nào</p>
           )}
           <input
             value={address}
@@ -661,7 +677,7 @@ export function SharePanel({ bare = false }: { bare?: boolean }) {
           checked={enabled}
           disabled={run.isPending || status.isLoading}
           onCheckedChange={(value) => (value ? void turnOn() : run.mutate(() => EbookLibrary.setShare({ enabled: false })))}
-          aria-label="Chia sẻ thư viện"
+          aria-label="Cho máy khác nghe"
           className="ui-switch ui-switch-large"
         >
           <Switch.Thumb className="motion-switch-thumb" />
@@ -690,25 +706,26 @@ export function SharePanel({ bare = false }: { bare?: boolean }) {
         </div>
       )}
       {data?.error && <p className="mt-3 text-xs text-danger">{data.error}</p>}
-      {enabled && data?.bluetooth?.status && (
+      {/* Dòng Bluetooth chỉ khi nó mang tin (ShareUi.bluetoothLine bên native): số máy đang nối, hay lý do không bật được. */}
+      {enabled && bluetoothLine(data?.bluetooth) && !needsNearbyPermission(data?.bluetooth?.status) && (
         <p className="mt-2 flex items-center gap-1.5 text-xs text-fg-2">
           <Bluetooth className="size-3.5 shrink-0" />
-          {data.bluetooth.status === "running"
-            ? `Cả qua Bluetooth cho máy đã ghép${data.bluetooth.connections ? ` - ${data.bluetooth.connections} đang kết nối` : ""}`
-            : data.bluetooth.status}
+          {bluetoothLine(data?.bluetooth)}
         </p>
       )}
       {/* Thiếu quyền "Thiết bị ở gần" thì chỉ nói là chưa đủ; nút mở thẳng trang quyền của ABook (Quyền › Thiết bị ở gần). */}
       {enabled && needsNearbyPermission(data?.bluetooth?.status) && (
-        <Button
-          variant="ghost"
-          size="sm"
-          icon={Bluetooth}
-          className="mt-1 h-auto min-h-8 justify-start whitespace-normal py-1.5 text-left"
-          onClick={() => void EbookLibrary.openAppSettings().catch((error: Error) => toast.error(error.message))}
-        >
-          Mở cài đặt để cho phép
-        </Button>
+        <div className="mt-2 flex items-center justify-between gap-3">
+          <p className="text-sm text-danger">Cần quyền Thiết bị ở gần</p>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="settings-edge-action"
+            onClick={() => void EbookLibrary.openAppSettings().catch((error: Error) => toast.error(error.message))}
+          >
+            Mở cài đặt
+          </Button>
+        </div>
       )}
       {/* Như các khung xuất: ẩn hẳn khi ABook đã được cho chạy nền, đọc lại mỗi lần bạn quay về từ Cài đặt. */}
       {enabled && (
@@ -729,7 +746,7 @@ export function SharePanel({ bare = false }: { bare?: boolean }) {
             <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 pl-5">
               <dt className="text-fg-2">Địa chỉ</dt>
               <dd className="tabular break-all">
-                {data.addresses.length ? data.addresses.map((address) => `${address}:${data.port}`).join(", ") : "chưa vào mạng Wi-Fi nào"}
+                {data.addresses.length ? data.addresses.map((address) => `${address}:${data.port}`).join(", ") : "Chưa vào mạng Wi-Fi nào"}
               </dd>
               {data.fingerprint && (
                 <>
@@ -744,7 +761,7 @@ export function SharePanel({ bare = false }: { bare?: boolean }) {
               <div className="text-xs text-fg-2">Nhập mã này trên máy kia</div>
               <div className="tabular mt-1 text-3xl font-bold tracking-[0.3em]">{pairing.code}</div>
               <div className="tabular mt-1 text-xs text-fg-2">
-                còn {Math.floor(left / 60)}:{String(left % 60).padStart(2, "0")}
+                {`Dùng được đến ${expiryClock(pairing.expiresAt)}`}
               </div>
               <div className="mt-1 text-xs text-fg-2">Máy kia chưa tự thấy điện thoại? Địa chỉ nằm ở mục Chi tiết phía trên.</div>
               <button type="button" onClick={() => run.mutate(() => EbookLibrary.shareCancelPairing())} className="mt-2 text-sm text-fg-2 underline underline-offset-4">
@@ -872,7 +889,7 @@ export function StoragePanel({ storage, names, bare = false }: { storage: { byte
     <section className={bare ? "" : "mt-8"} aria-label="Dung lượng">
       {!bare && (
         <p className="text-center text-xs text-fg-3">
-          Sách trên máy: {formatSize(storage.bytes)} · còn trống {formatSize(storage.free)}
+          {`Sách ${formatSize(storage.bytes)} · còn trống ${formatSize(storage.free)}`}
         </p>
       )}
       {/* Khung (cả lề trên) khép lại sau khi hàng cuối khép xong / mở trước hàng đầu - không gắn / gỡ cứng. */}

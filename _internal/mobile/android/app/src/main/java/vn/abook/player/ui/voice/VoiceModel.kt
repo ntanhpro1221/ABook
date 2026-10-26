@@ -13,10 +13,10 @@ import java.util.Locale
 /** Màn con của nhóm Giọng đọc (cấp hai, cũng là cấp cuối: Cài đặt -> Giọng đọc -> màn này). Bảng trượt là lớp nổi, không phải cấp ba. */
 enum class VoicePage { Keys, Music }
 
-/** Hai mô-đun giọng chạy trên máy, tải khi bạn bấm. */
-enum class ModuleKind(val key: String, val title: String) {
-    Vieneu("vieneu", "Giọng VieNeu"),
-    Supertonic("supertonic", "Giọng Supertonic"),
+/** Hai mô-đun giọng chạy trên máy, tải khi bạn bấm. `invite`: lời mời dưới tên khi chưa tải - cùng lời thẻ giọng bên web (vieneuModule.ts `invite`). */
+enum class ModuleKind(val key: String, val title: String, val invite: String) {
+    Vieneu("vieneu", "Giọng VieNeu", "Giọng hay, đọc ngay trên máy, không cần mạng. Chữ của sách không rời máy."),
+    Supertonic("supertonic", "Giọng Supertonic", "Mười giọng nam nữ, nhẹ máy, không cần mạng. Chữ của sách không rời máy."),
 }
 
 enum class ModuleState { Missing, Downloading, Ready, Outdated, Error, Unsupported }
@@ -254,6 +254,8 @@ object VoiceText {
         if (status.reason.isNotEmpty()) "Máy này chưa dùng được: ${status.reason}." else "Máy này chưa dùng được."
 
     private const val CANCELLED = "Đã huỷ - lần tải sau làm tiếp từ chỗ dừng."
+    /** Nhãn của lựa chọn nên tải - cùng chữ với nhãn "Khuyên dùng" của thẻ giọng bên web (VieneuModuleCard.tsx). */
+    private const val RECOMMENDED = "Khuyên dùng"
 
     /**
      * Mỗi lựa chọn của mô-đun một hàng. `pending`: các lựa chọn bạn vừa bấm tải (mô-đun tải theo cả gói, nhưng thanh tiến độ và nút "Huỷ" nằm ở hàng bạn bấm; không rõ thì
@@ -271,7 +273,7 @@ object VoiceText {
         val title = choiceTitle(choice)
         if (status.state == ModuleState.Unsupported && !choice.installed) return ModuleRow(choice.id, title, unsupported(status), true, ModuleAction.None, false)
         if (choice.installed) return installed(status, choice, title)
-        val lead = if (choice.recommended) "Khuyên dùng · " else ""
+        val lead = if (choice.recommended) "$RECOMMENDED · " else ""
         return when {
             status.state == ModuleState.Downloading && mine ->
                 ModuleRow(choice.id, title, "Đang tải ${size(status.total)} · ${status.percent}%", false, ModuleAction.Cancel, true)
@@ -333,10 +335,13 @@ object VoiceText {
     // ---- khoá ---------------------------------------------------------------------------------------------------------------------
 
     /** Dòng phụ của một nhà cung cấp: chưa có khoá thì hạn mức miễn phí; có rồi thì khoá che + kết quả lần kiểm tra. */
-    fun keyHint(provider: KeyProvider): String = when {
-        !provider.hasKey -> provider.free
-        provider.valid -> "${provider.masked} · Dùng được · ${provider.voices} giọng"
-        else -> "${provider.masked} · Chưa dùng được"
+    fun keyHint(provider: KeyProvider): String = keyStatus(provider)?.let { "${provider.masked} · $it" } ?: provider.free
+
+    /** Kết quả lần kiểm tra khoá - cùng chữ với nhãn trạng thái của thẻ khoá bên web (VoiceSettings.tsx KeyCard); chưa có khoá thì null. */
+    fun keyStatus(provider: KeyProvider): String? = when {
+        !provider.hasKey -> null
+        provider.valid -> "Dùng được · ${provider.voices} giọng"
+        else -> "Chưa dùng được"
     }
 
     /** Dòng tóm tắt của hàng "Khoá giọng trực tuyến": tên các nhà cung cấp đã có khoá, hay "Chưa có khoá". */

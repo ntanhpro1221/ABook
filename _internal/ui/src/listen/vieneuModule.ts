@@ -282,10 +282,10 @@ export function suggestionText(suggestion: VieneuSuggestion): { message: string;
 export function vieneuLabel(status: VieneuStatus, copy: ModuleCopy = VIENEU_COPY): string {
   const mid = lowerFirst(copy.name);
   if (status.state === "error") return status.error;
-  if (status.state === "downloading") return status.retrying ? `${RETRYING_NOTE} (${mid}, ${vieneuPercent(status)}%)` : `Đang tải ${mid} (${formatSize(status.total)}) ${vieneuPercent(status)}%`;
+  if (status.state === "downloading") return status.retrying ? `${RETRYING_NOTE} (${mid}, ${vieneuPercent(status)}%)` : `Đang tải ${formatSize(status.total)} · ${vieneuPercent(status)}%`;
   // Chưa có số đo nào = giọng vừa tải; đã có = bật / tắt bản tăng tốc hay “Thử lại tốc độ” (không tải gì cả).
   if (status.benchmarking) return Object.keys(status.benchmark).length === 0 ? "Đang thử giọng vừa tải trên máy này (vài giây)" : "Đang đo lại tốc độ trên máy này (vài giây)";
-  if (status.state === "unsupported") return status.reason ? `Máy này chưa dùng được ${mid}: ${status.reason}.` : `Máy này chưa dùng được ${mid}.`;
+  if (status.state === "unsupported") return status.reason ? `Máy này chưa dùng được: ${status.reason}.` : "Máy này chưa dùng được.";
   if (status.restart) return `${copy.name} đã cập nhật - mở lại ABook để dùng bản mới.`;
   const cancelled = status.cancelled ? `${CANCELLED_NOTE} ` : "";
   if (status.state === "outdated") return `${cancelled}${copy.name} có bản mới - ${formatSize(status.outdatedBytes)}. Bản đang dùng vẫn đọc bình thường.`;

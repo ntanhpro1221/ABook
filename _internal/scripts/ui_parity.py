@@ -1181,8 +1181,14 @@ def pair_diff(web: Scan, native: Scan, spec: dict) -> dict:
     n = label_items(sorted(set(native.items), key=lambda i: (i.file, i.line, i.text)), NATIVE_ROOT, nf, bool(spec.get("sentences")))
     # `web_also`: file web chỉ để làm ĐỐI CHIẾU cho chữ native (nhãn chung nằm ở file khác); chữ của chúng không bị đòi phải có ở native.
     w_all = dict(w)
-    for key, found in label_items(sorted(set(web.items), key=lambda i: (i.file, i.line, i.text)), WEB_ROOT, match_files(spec.get("web_also", []), web_names)).items():
+    for key, found in label_items(sorted(set(web.items), key=lambda i: (i.file, i.line, i.text)), WEB_ROOT, match_files(spec.get("web_also", []), web_names),
+                                  bool(spec.get("sentences"))).items():
         w_all.setdefault(key, found)
+    # `native_also`: như `web_also`, chiều ngược lại - file native chỉ làm ĐỐI CHIẾU cho chữ web (vd tấm Nhạc nền nằm ở music/, mở từ trình phát).
+    n_all = dict(n)
+    for key, found in label_items(sorted(set(native.items), key=lambda i: (i.file, i.line, i.text)), NATIVE_ROOT,
+                                  match_files(spec.get("native_also", []), native_names), bool(spec.get("sentences"))).items():
+        n_all.setdefault(key, found)
     only = spec.get("only")  # "web": chỉ đòi nhãn web phải có ở native (không đòi chiều ngược lại)
 
     def listed(side: str, key: str, item: Item, entries: list[dict]) -> dict | None:
@@ -1204,7 +1210,7 @@ def pair_diff(web: Scan, native: Scan, spec: dict) -> dict:
     deferred = spec.get("deferred", [])
     result = {"id": spec["id"], "web_files": wf, "native_files": nf, "web_labels": len(w), "native_labels": len(n), "web_only": [], "native_only": [],
               "allowed": [], "missing": [], "deferred": []}
-    for side, mine, other in (("web", w, n), ("native", n, w_all)):
+    for side, mine, other in (("web", w, n_all), ("native", n, w_all)):
         if only and side != only:
             continue
         for key in sorted(mine):
@@ -1308,15 +1314,17 @@ def copy_violations(web: Scan, native: Scan) -> tuple[list[str], list[str]]:
 
 def section_e(web: Scan, native: Scan) -> list[str]:
     out = ["## e. Cặp màn web <-> native (luật cứng, scripts/ui_parity_pairs.json)", "",
-           "Trong một cặp, mỗi nhãn ngắn phải có ở cả hai phía (khoá lỏng) trừ khi nằm trong `allow` (có lý do) hay `missing` (tính năng native chưa có thật - "
-           "Lead xếp lịch). Cột lệch phải bằng 0 thì `--check` mới qua.", "",
+           "Trong một cặp, mỗi nhãn ngắn phải có ở cả hai phía (khoá lỏng) trừ khi nằm trong `allow` (nền tảng bắt buộc khác, có lý do) hay `missing` (tính "
+           "năng / phần màn chỉ có ở một phía - Lead xếp lịch). Cột lệch phải bằng 0 thì `--check` mới qua.", "",
            "| cặp | nhãn web | nhãn native | lệch web | lệch native | cho phép | thiếu thật |", "|---|---|---|---|---|---|---|"]
     diffs = [pair_diff(web, native, spec) for spec in pair_specs()]
     for d in diffs:
         out.append(f"| {d['id']} | {d['web_labels']} | {d['native_labels']} | {len(d['web_only'])} | {len(d['native_only'])} | {len(d['allowed'])} | {len(d['missing'])} |")
     for d in diffs:
-        if d["missing"]:
-            out += ["", f"Thiếu thật ở native - `{d['id']}`: " + "; ".join(esc(i.text, 40) for _, i in d["missing"][:40])]
+        for side, other in (("web", "native"), ("native", "web")):
+            lacking = [i for s, i in d["missing"] if s == side]
+            if lacking:
+                out += ["", f"Thiếu thật ở {other} - `{d['id']}`: " + "; ".join(esc(i.text, 40) for i in lacking[:40])]
     out.append("")
     return out
 

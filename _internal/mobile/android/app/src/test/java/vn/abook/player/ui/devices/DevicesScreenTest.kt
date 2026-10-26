@@ -610,7 +610,7 @@ class DevicesScreenTest {
         group()
         rule.onNodeWithText("Đã nối Máy bàn").assertIsDisplayed()
         rule.onNodeWithText("Đang bật · 1 máy").assertIsDisplayed()
-        rule.onNodeWithText("300 MB · còn trống 10 GB").assertIsDisplayed()
+        rule.onNodeWithText("Sách 300 MB · còn trống 10 GB").assertIsDisplayed()
         rule.onNodeWithText("Điện thoại của tôi").assertIsDisplayed()
         shot("settings_devices_filled_light")
     }
@@ -668,7 +668,7 @@ class DevicesScreenTest {
         }
     }
 
-    /** Thanh tiến độ của hàng chạy từ cột chữ tới mép phải của hàng (bằng đường kẻ), qua cả cột hành động; "Huỷ" vẫn ở dòng đầu. */
+    /** Thanh tiến độ của hàng chạy từ cột chữ tới mép phải của hàng (bằng đường kẻ), qua cả cột hành động; "Huỷ tải" vẫn ở dòng đầu. */
     @Test
     fun aProgressBarRunsToTheRightEdgeOfItsRow() {
         pairedScene()
