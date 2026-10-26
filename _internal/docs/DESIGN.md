@@ -104,6 +104,10 @@ Bộ hiện có (xám lạnh #f4f5f7 + hổ phách) chỉnh lại có chủ đí
 | `--focus` vòng tiêu điểm | #a0600c | #e9a945 | vòng tiêu điểm, rãnh công tắc đang bật (≥ 3:1 với mọi nền) |
 | `--switch-off` rãnh công tắc tắt | #857e72 | #75706a | rãnh công tắc đang tắt (≥ 3:1 trên nền) |
 | `--switch-thumb` núm công tắc | #ffffff | #1b1204 | núm công tắc trên cả hai rãnh |
+| `--hover` nền rê chuột | #efece6 | #252320 | nền hàng / nút chữ khi rê chuột, mục đang mở của danh sách điều hướng |
+| `--control-line` viền điều khiển | #857e72 | #75706a | viền ô nhập / ô chọn chưa có tiêu điểm (≥ 3:1 trên nền) |
+| `--danger-soft` đỏ nhạt | #fbe4e4 | rgb(239 123 112 / .13) | nền nút nguy hiểm (Xoá, Gỡ) |
+| `--scrim` lớp mờ | rgb(20 17 13 / .45) | rgb(6 5 4 / .62) | nền mờ sau hộp thoại |
 
 - Mặt đọc theo có 3 nền riêng, chọn trong Giao diện > "Nền đọc": Giấy #fbfaf7 / mực #1b1a17; Ngà #f3ead8 / #3b2f1e; Đêm #121110 / #d9d3c8
   (mặc định "Tự động" = Giấy khi sáng, Đêm khi tối). Trong vùng đọc, chữ phụ và chữ nhấn theo mặt đọc (`.reading-surface`).

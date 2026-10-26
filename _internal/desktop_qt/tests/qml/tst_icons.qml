@@ -126,7 +126,7 @@ Item {
                 const sheet = createTemporaryObject(sheetFactory, host, { dark: dark, list: host.names })
                 waitForRendering(sheet)
                 const img = grabImage(sheet)
-                const path = Qt.resolvedUrl("../../build/icon_sheet_" + (dark ? "dark" : "light") + ".png").toString().replace("file:///", "")
+                const path = Qt.resolvedUrl("../../build/icon_sheet_" + (dark ? "dark" : "light") + ".png").toString().replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, "")   // D:/... trên Windows, /home/... trên Linux
                 img.save(path)      // trả về void; có file hay không do người xem
             }
         }

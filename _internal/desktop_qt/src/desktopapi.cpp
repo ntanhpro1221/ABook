@@ -5,7 +5,9 @@
 #include <QFile>
 #include <QImageReader>
 #include <QJsonDocument>
+#include <QJsonArray>
 #include <QJsonObject>
+#include <QJsonValue>
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QQmlEngine>
@@ -51,7 +53,9 @@ int DesktopApi::request(const QString &method, const QString &path, const QJSVal
         reply->deleteLater();
         if (!active || !engine || !done.isCallable()) return;
         QJSValue callback = done;
-        callback.call({QJSValue(status), engine->toScriptValue(document.toVariant())});
+        // Qua QJsonValue (không qua QVariant): mảng về thành mảng JS thật, thân rỗng thành null.
+        const QJsonValue data = document.isArray() ? QJsonValue(document.array()) : document.isObject() ? QJsonValue(document.object()) : QJsonValue();
+        callback.call({QJSValue(status), engine->toScriptValue(data)});
     });
     return id;
 }
