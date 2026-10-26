@@ -1,5 +1,12 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.ui.components.ListSection
+import vn.abook.player.ui.components.RowLine
+import vn.abook.player.ui.components.ListRow
+import vn.abook.player.ui.components.TextAction
+import vn.abook.player.ui.components.ActionRow
+import vn.abook.player.ui.components.ListItem
+import vn.abook.player.ui.components.Caption
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -37,12 +44,11 @@ import vn.abook.player.ui.theme.Dim
 
 /** Lời của Chẩn đoán và Bộ nhớ: cùng chữ với bản WebView (android/Diagnostics.tsx, listen/ReadAloudStorage.tsx, listen/prepareAhead.ts). */
 private object AdvancedCopy {
-    const val LOG = "Việc app làm gần đây, để tìm lỗi. Xem lại trước khi gửi."
-    const val LOG_MORE = "Có tên sách; che khoá, mã ghép, IP và đường dẫn nhận ra được. Máy ghép đọc được khi bật “Chia sẻ thư viện”."
-    const val SEND = "Bạn chọn gửi cho ai; app không tự gửi."
+    const val LOG = "Việc app làm gần đây"
+    const val LOG_NOTE = "Có tên sách; khoá, mã ghép, IP và đường dẫn đã được che."
+    const val SEND = "Bạn chọn gửi cho ai"
     const val CLEAR = "Gồm cả các lần văng đã ghi."
     const val CLEARED = "Đã xoá nhật ký."
-    const val CACHE_MORE = "Nghe lại đoạn đã đọc xong thì không phải chờ máy đọc lại; dọn đi thì lấy lại chỗ trống."
     const val SOURCE = "Giấy phép MIT - github.com/ntanhpro1221/ABook"
 
     fun cache(bytes: Long?): String = when {
@@ -63,31 +69,39 @@ fun AdvancedSettings(env: SettingsEnv, sheets: SheetHost, onBack: () -> Unit, mo
     var cleared by remember { mutableStateOf(false) }
     LaunchedEffect(repo) { repo.loadCache() }
     SettingsPage(SettingsGroup.Advanced.label, onBack, SettingsGroup.Advanced.screenTag, modifier) {
-        SettingsBlock("Bộ nhớ", first = true) {
+        ListSection("Bộ nhớ", first = true) {
             val bytes = cache
-            SettingsRow("Bản đọc đã làm", hint = AdvancedCopy.cache(bytes)) {
+            ListRow("Bản đọc đã làm", hint = AdvancedCopy.cache(bytes)) {
                 if (bytes != null && bytes > 0) {
                     TextAction("Dọn", { sheets.show { dismiss -> ClearSheet(bytes, onClear = { repo.clearCache(); dismiss() }, dismiss) } }, "cache_clear")
                 }
             }
-            MoreInfo(AdvancedCopy.CACHE_MORE, "cache_more")
         }
-        SettingsBlock("Chẩn đoán") {
-            ActionRow("Nhật ký", "Xem", { sheets.show { LogSheet(repo) } }, "logs_view", AdvancedCopy.LOG)
-            MoreInfo(AdvancedCopy.LOG_MORE, "logs_more")
+        ListSection("Chẩn đoán") {
+            NavRow("Nhật ký", { sheets.show { LogSheet(repo) } }, "logs_view", AdvancedCopy.LOG)
             RowLine()
             ActionRow("Gửi nhật ký", "Gửi", env.links.shareLogs, "logs_send", AdvancedCopy.SEND)
             RowLine()
-            ActionRow("Xoá nhật ký", "Xoá", { repo.clearLogs(); cleared = true }, "logs_clear", if (cleared) AdvancedCopy.CLEARED else AdvancedCopy.CLEAR)
+            // Việc phá huỷ là hàng thường tên màu nguy hiểm (cả hàng là chỗ chạm): mỗi phần chỉ có một chữ hổ phách.
+            ListItem(
+                "Xoá nhật ký", onClick = { repo.clearLogs(); cleared = true }, tag = "logs_clear", titleStyle = Abook.type.bodyStrong, titleColor = Abook.colors.danger,
+                hint = if (cleared) AdvancedCopy.CLEARED else AdvancedCopy.CLEAR,
+            )
         }
-        SettingsBlock("Giới thiệu") {
-            SettingsRow("Phiên bản") { BasicText(repo.version, style = Abook.type.bodySmall, modifier = Modifier.testTag("app_version")) }
+        ListSection("Giới thiệu") {
+            ListRow("Phiên bản") { BasicText(repo.version, style = Abook.type.bodySmall, modifier = Modifier.testTag("app_version")) }
             RowLine()
-            ActionRow("Mã nguồn mở", "Mở", env.links.openSource, "source_open", AdvancedCopy.SOURCE)
+            NavRow("Mã nguồn mở", env.links.openSource, "source_open", AdvancedCopy.SOURCE)
             RowLine()
-            DisclosureRow("Thành phần sử dụng", { sheets.show { ThirdPartySheet(repo) } }, "third_party")
+            NavRow("Thành phần sử dụng", { sheets.show { ThirdPartySheet(repo) } }, "third_party")
         }
     }
+}
+
+/** Hàng mở một bảng hay trang ngoài: mũi tên cuối hàng, chữ cùng cỡ với các hàng khác của màn này (tên đậm, mô tả nhỏ). */
+@Composable
+private fun NavRow(title: String, onClick: () -> Unit, tag: String, hint: String? = null) {
+    ListItem(title, onClick = onClick, tag = tag, hint = hint, titleStyle = Abook.type.bodyStrong, chevron = true)
 }
 
 /** Hỏi lại trước khi dọn (như hộp hỏi của bản WebView): MỘT nút chính "Dọn", "Thôi" là nút chữ. */
@@ -116,6 +130,7 @@ private fun LogSheet(repo: SettingsRepo) {
             BasicText("Nhật ký của ABook", style = Abook.type.sectionTitle, modifier = Modifier.weight(1f))
             TextAction("Làm mới", { round++ }, "logs_refresh")
         }
+        Caption(AdvancedCopy.LOG_NOTE, Modifier.padding(bottom = Dim.s8))
         val shown = lines
         when {
             shown == null -> BasicText("Đang đọc nhật ký.", style = Abook.type.bodySmall, modifier = Modifier.padding(vertical = Dim.s16))

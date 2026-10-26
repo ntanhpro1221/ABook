@@ -98,6 +98,8 @@ class BookScreenActions(
     val deleted: () -> Unit,
     /** Menu "Đọc theo": đưa cuốn vào trình phát (dừng, chỗ nghe tiếp) rồi mở Đang nghe thẳng ở chế độ đọc. */
     val readAlong: (bookId: String) -> Unit = {},
+    /** "Sửa thông tin" ở bảng Thêm: mở màn Sửa sách (nơi DUY NHẤT sửa tên, tác giả, bìa, chương). */
+    val edit: (ListenBook) -> Unit,
 )
 
 /**

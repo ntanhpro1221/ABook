@@ -57,7 +57,14 @@ import vn.abook.player.ui.nav.Tab
 import vn.abook.player.ui.nav.TabState
 import vn.abook.player.ui.player.MorphingMiniPlayer
 import vn.abook.player.ui.player.MiniPlayerSlot
-import vn.abook.player.ui.screens.AddBookSheet
+import vn.abook.player.ui.addbook.AddBookRoute
+import vn.abook.player.ui.addbook.ImportQueue
+import vn.abook.player.ui.addbook.ImportChapterRoute
+import vn.abook.player.ui.addbook.ImportReviewRoute
+import vn.abook.player.ui.editbook.EditBooks
+import vn.abook.player.ui.editbook.EditBookRoute
+import vn.abook.player.ui.editbook.EditChapterRoute
+import vn.abook.player.ui.editbook.CoverCropRoute
 import vn.abook.player.ui.screens.BookScreen
 import vn.abook.player.ui.screens.BookScreenActions
 import vn.abook.player.ui.screens.LibraryActions
@@ -106,6 +113,10 @@ fun AppShell(
     books: BookSource = BookSource.None,
     nowPlaying: NowPlayingModel = rememberRepoNowPlaying(player),
     sampleClock: Boolean = true,
+    imports: ImportQueue? = null,
+    editors: EditBooks? = null,
+    demo: Boolean = false,
+    autoPick: Boolean = false,
 ) {
     val nav = shell.nav
     val playerState by player.state.collectAsState()
@@ -128,7 +139,7 @@ fun AppShell(
         LibraryActions(
             openBook = { book -> shell.nav.push(Destination.Book(book)) },
             playNow = player::playNow,
-            addBook = { shell.sheets.show { dismiss -> AddBookSheet(dismiss) } },
+            addBook = { shell.nav.push(Destination.AddBook) },
         )
     }
     val window = shell.window
@@ -140,8 +151,8 @@ fun AppShell(
             toggle = player::toggle,
             playChapter = player::playChapter,
             deleted = shell.nav::pop,
-            // "Đọc theo": cuốn chưa ở trình phát thì nạp dừng ở chỗ nghe tiếp trước, rồi cửa sổ Đang nghe mở thẳng ở chế độ đọc.
             readAlong = { book -> shell.scope.launch { if (player.prepare(book)) window.openReading() } },
+            edit = { shell.nav.push(Destination.EditBook(it)) },
         )
     }
     Box(Modifier.fillMaxSize().background(Abook.colors.bg).semantics { testTagsAsResourceId = true }) {
@@ -156,6 +167,16 @@ fun AppShell(
                             is Destination.Book -> BookScreen(
                                 destination.book, library, playerState, player.clock, covers, books, shell.sheets, bookActions,
                             )
+                            Destination.AddBook -> if (imports != null) AddBookRoute(imports, nav::pop,
+                                { nav.push(Destination.ImportReview(it)) }, { id ->
+                                    (library as? LibraryState.Ready)?.books?.firstOrNull { it.id == id }?.let { nav.push(Destination.Book(it)) }
+                                }, autoPick, active = nav.stack.top?.destination == Destination.AddBook && !nav.progress.isRunning)
+                            is Destination.ImportReview -> if (imports != null) ImportReviewRoute(imports, destination.itemId, nav::pop) { nav.push(Destination.ImportChapter(destination.itemId, it)) }
+                            is Destination.ImportChapter -> if (imports != null) ImportChapterRoute(imports, destination.index, nav::pop)
+                            is Destination.EditBook -> if (editors != null) EditBookRoute(editors.session(destination.book, demo), covers, shell.sheets, nav::pop,
+                                { nav.push(Destination.CropCover(destination.book, it)) }, { nav.push(Destination.EditChapter(destination.book, it)) })
+                            is Destination.EditChapter -> if (editors != null) EditChapterRoute(editors.session(destination.book, demo), destination.chapterId, nav::pop)
+                            is Destination.CropCover -> if (editors != null) CoverCropRoute(editors.session(destination.book, demo), destination.uri, nav::pop)
                             is Destination.Settings -> SettingsGroupScreen(destination.group, settings, shell.sheets, onBack = nav::pop)
                         }
                     },

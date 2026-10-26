@@ -9,10 +9,12 @@ android {
     namespace = "vn.abook.benchmark"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
+        buildConfigField "String", "TARGET_PACKAGE", '"' + (project.findProperty('benchAppId') ?: 'com.ngdtuanh.abook') + '"'
         minSdkVersion 28
         targetSdkVersion rootProject.ext.targetSdkVersion
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
+    buildFeatures { buildConfig true }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_21
         targetCompatibility JavaVersion.VERSION_21
@@ -35,4 +37,3 @@ dependencies {
     implementation "androidx.test.uiautomator:uiautomator:$uiAutomatorVersion"
     implementation "androidx.benchmark:benchmark-macro-junit4:$macrobenchmarkVersion"
 }
-

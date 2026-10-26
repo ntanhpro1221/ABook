@@ -194,19 +194,11 @@ object TextImports {
         ref: String, pages: List<List<String>>? = null, title: String = "", author: String = "", splitChapters: Boolean = false,
         footnotes: BookImport.FootnoteChoice? = null,
     ): JSONObject {
+        val book = prepare(ref, pages, title, author, splitChapters, footnotes)
         val source = staged(ref)
-        val book = if (source.isFile && source.extension.lowercase() == "pdf") {
-            BookImport.fromPdfPages(source.nameWithoutExtension, pages ?: throw BookImport.Failed("Chưa lấy được chữ của PDF này - thử lại."), title, author)
-        } else {
-            BookImport.importFile(source, splitChapters, keepShort = true, footnotes = footnotes, originalNames = originalNames(source))
-        }
-        kept[ref] = book
-        // Đúng bộ chữ này đã có trong thư viện (với các chương mặc định): hỏi ngay ở bước xem trước ("Mở cuốn đó" / "Thêm bản riêng") - như máy
-        // tính (`server.preview_text_book`, `textbook.find_existing`).
+        // JSON is only the adapter for the existing web client. Native callers use prepare directly.
         val defaults = BookImport.defaultPicks(book)
         val existing = if (defaults.isEmpty()) null else Store.findByChapters(TextBook.prints(BookImport.selectChapters(book, defaults)))
-        // Cũng đúng FILE này đã được thêm (chọn chương khác, tách hay không tách): nói ngay, đừng để thành cuốn trùng tên không ai báo
-        // (`server.preview_text_book`, `textbook.find_same_source`).
         val same = Store.findBySource(sourceDigest(source))
         return TextBook.preview(book).put("existing", existing?.let { id ->
             JSONObject().put("id", id).put("title", Store.manifest(id)?.optString("title").orEmpty())
@@ -215,6 +207,23 @@ object TextImports {
             JSONObject().put("id", id).put("title", shown?.optString("title").orEmpty()).put("chapters", shown?.optInt("chaptersTotal") ?: 0)
         } ?: JSONObject.NULL)
     }
+
+    /** Typed entry for native UI; callers own the I/O dispatcher. No serialization of chapter text. */
+    fun prepare(
+        ref: String, pages: List<List<String>>? = null, title: String = "", author: String = "", splitChapters: Boolean = false,
+        footnotes: BookImport.FootnoteChoice? = null,
+    ): BookImport.Book {
+        val source = staged(ref)
+        val book = if (source.isFile && source.extension.lowercase() == "pdf") {
+            BookImport.fromPdfPages(source.nameWithoutExtension, pages ?: throw BookImport.Failed("Chưa lấy được chữ của PDF này - thử lại."), title, author)
+        } else {
+            BookImport.importFile(source, splitChapters, keepShort = true, footnotes = footnotes, originalNames = originalNames(source))
+        }
+        kept[ref] = book
+        return book
+    }
+
+    fun sameSource(ref: String): String? = Store.findBySource(sourceDigest(staged(ref)))
 
     /** Mã băm của thứ người dùng chọn để thêm sách: nội dung file, hay (thư mục TXT) tên + nội dung từng file theo thứ tự tên (`textbook.source_digest`). */
     private fun sourceDigest(source: File): String {
@@ -242,6 +251,13 @@ object TextImports {
      * ([picksOf]); không có thì các chương mặc định.
      */
     fun create(ref: String, title: String, cacheDir: File, separate: Boolean = false, picks: List<Pair<Int, String>>? = null): JSONObject {
+        val result = createBook(ref, title, cacheDir, separate, picks)
+        return JSONObject().put("id", result.id).put("how", result.how).put("chapters", result.chapters)
+    }
+
+    data class Created(val id: String, val how: String, val chapters: Int)
+
+    fun createBook(ref: String, title: String, cacheDir: File, separate: Boolean = false, picks: List<Pair<Int, String>>? = null): Created {
         val candidates = kept[ref] ?: throw BookImport.Failed("Lần chọn này đã hết hạn - chọn lại file.")
         val book = BookImport.selectChapters(candidates, picks ?: BookImport.defaultPicks(candidates))
         if (BookEdits.cleanText(title, 160, normalize = false).isNotEmpty()) book.title = title
@@ -252,7 +268,7 @@ object TextImports {
             val imported = BookFileImport.importFile(packed, separate = separate)
             if (imported.id !in before) Store.rememberSource(imported.id, sourceDigest(staged(ref)))
             discard(ref)
-            return JSONObject().put("id", imported.id).put("how", if (imported.id in before) "existing" else "new").put("chapters", book.chapters.size)
+            return Created(imported.id, if (imported.id in before) "existing" else "new", book.chapters.size)
         } finally {
             packed.delete()
         }

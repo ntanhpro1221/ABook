@@ -291,3 +291,63 @@ fun SlidersIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 22.dp) {
         }
     }
 }
+
+/** File: tờ giấy gập góc, hai dòng chữ. */
+@Composable
+fun FileIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) {
+    val stroke = rememberStroke()
+    Canvas(modifier.icon(size)) {
+        val s = this.size.width
+        val page = Path().apply {
+            moveTo(s * 0.24f, s * 0.12f)
+            lineTo(s * 0.58f, s * 0.12f)
+            lineTo(s * 0.8f, s * 0.34f)
+            lineTo(s * 0.8f, s * 0.88f)
+            lineTo(s * 0.24f, s * 0.88f)
+            close()
+        }
+        drawPath(page, color, style = stroke)
+        drawLine(color, Offset(s * 0.58f, s * 0.12f), Offset(s * 0.58f, s * 0.34f), stroke.width, StrokeCap.Round)
+        drawLine(color, Offset(s * 0.58f, s * 0.34f), Offset(s * 0.8f, s * 0.34f), stroke.width, StrokeCap.Round)
+        drawLine(color, Offset(s * 0.38f, s * 0.58f), Offset(s * 0.66f, s * 0.58f), stroke.width, StrokeCap.Round)
+        drawLine(color, Offset(s * 0.38f, s * 0.74f), Offset(s * 0.58f, s * 0.74f), stroke.width, StrokeCap.Round)
+    }
+}
+
+/** Thư mục: nắp nhỏ bên trái, thân chữ nhật. */
+@Composable
+fun FolderIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) {
+    val stroke = rememberStroke()
+    Canvas(modifier.icon(size)) {
+        val s = this.size.width
+        val body = Path().apply {
+            moveTo(s * 0.1f, s * 0.82f)
+            lineTo(s * 0.1f, s * 0.2f)
+            lineTo(s * 0.4f, s * 0.2f)
+            lineTo(s * 0.5f, s * 0.32f)
+            lineTo(s * 0.9f, s * 0.32f)
+            lineTo(s * 0.9f, s * 0.82f)
+            close()
+        }
+        drawPath(body, color, style = stroke)
+    }
+}
+
+/** Ảnh: khung, mặt trời và hai đỉnh núi. */
+@Composable
+fun ImageIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) {
+    val stroke = rememberStroke()
+    Canvas(modifier.icon(size)) {
+        val s = this.size.width
+        drawRoundRect(color, Offset(s * 0.12f, s * 0.16f), Size(s * 0.76f, s * 0.68f), CornerRadius(s * 0.08f), style = stroke)
+        drawCircle(color, s * 0.07f, Offset(s * 0.34f, s * 0.38f))
+        val hills = Path().apply {
+            moveTo(s * 0.14f, s * 0.78f)
+            lineTo(s * 0.4f, s * 0.54f)
+            lineTo(s * 0.58f, s * 0.7f)
+            lineTo(s * 0.68f, s * 0.6f)
+            lineTo(s * 0.86f, s * 0.76f)
+        }
+        drawPath(hills, color, style = stroke)
+    }
+}
