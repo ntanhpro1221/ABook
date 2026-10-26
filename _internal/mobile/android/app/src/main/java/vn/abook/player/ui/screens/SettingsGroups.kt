@@ -64,13 +64,18 @@ private val FadeOptions = AppSettings.FADE_SECONDS.map { Option(it, "${it}s") }
 
 /** Lời của các hàng: cùng chữ với bản WebView (android/SettingsScreen.tsx, listen/playlistBed.ts, shared/feedback.ts, android/notifications.ts). */
 private object GroupCopy {
-    const val NOTIFY = "Đang tắt"
+    const val NOTIFY = "Đang tắt: không báo khi sách xong. Nút tạm dừng vẫn chạy."
     const val REWIND = "Nghỉ quá 30 giây thì lùi 5 giây (quá 10 phút: 10 giây)."
     const val HEADSET = "Bật: nút Trước/Sau lùi/tới 15 giây. Tắt: chuyển chương."
     const val AUTO_MUSIC = "Sách chỉ có chữ: nhạc nhẹ đổi theo cảnh."
     const val SAFETY = "Không chạm máy chừng này thì nhỏ dần rồi dừng."
     const val FLIP = "Lật lên trong 10 phút là nghe tiếp."
-    const val SOUNDS = "Im khi đang nghe."
+    const val SOUNDS = "Tiếng khẽ khi bạn chọn. Im khi đang nghe."
+    const val SCHEDULE = "Nghe trong khung giờ này thì tự hẹn giờ."
+    const val SHAKE = "Đang hẹn giờ, lắc nhẹ hai lần để thêm giờ."
+    const val SHAKE_ACTION = "Đặt lại: hẹn giờ quay về từ đầu."
+    const val SURFACE = "Nền của chữ khi đọc theo."
+    const val HAPTICS = "Rung nhẹ khi bạn chọn hay giữ."
     const val AUTO_PIP = "Rời app khi có sách mở thì sách thu vào cửa sổ mini."
 }
 
@@ -98,7 +103,7 @@ fun ListenSettings(env: SettingsEnv, openVoice: (VoicePage) -> Unit, onBack: () 
             }
             SwitchRow("Tự lùi", settings.autoRewind, { on -> repo.change { it.copy(autoRewind = on) } }, "auto_rewind", GroupCopy.REWIND)
             RowLine()
-            SwitchRow("Nút tai nghe", settings.headsetSkips, { on -> repo.change { it.copy(headsetSkips = on) } }, "headset_skips", GroupCopy.HEADSET)
+            SwitchRow("Nút tai nghe lùi/tới", settings.headsetSkips, { on -> repo.change { it.copy(headsetSkips = on) } }, "headset_skips", GroupCopy.HEADSET)
             if (env.pip?.available == true) {
                 RowLine()
                 SwitchRow("Tự mở cửa sổ mini", settings.autoPip, { on -> repo.change { it.copy(autoPip = on) } }, "auto_pip", GroupCopy.AUTO_PIP)
@@ -137,7 +142,7 @@ fun SleepSettings(repo: SettingsRepo, sheets: SheetHost, onBack: () -> Unit, mod
             RowLine()
             SwitchRow(
                 "Lịch đêm", settings.schedule != null,
-                { on -> repo.change { it.copy(schedule = if (on) SleepSchedule.Default else null) } }, "sleep_schedule",
+                { on -> repo.change { it.copy(schedule = if (on) SleepSchedule.Default else null) } }, "sleep_schedule", GroupCopy.SCHEDULE,
             )
             Reveal(settings.schedule != null) {
                 Column(Modifier.fillMaxWidth().testTag("schedule_editor")) {
@@ -159,13 +164,13 @@ fun SleepSettings(repo: SettingsRepo, sheets: SheetHost, onBack: () -> Unit, mod
             }
         }
         ListSection("Cử chỉ") {
-            SwitchRow("Lắc để nghe thêm", settings.shakeToExtend, { on -> repo.change { it.copy(shakeToExtend = on) } }, "shake")
+            SwitchRow("Lắc để nghe thêm", settings.shakeToExtend, { on -> repo.change { it.copy(shakeToExtend = on) } }, "shake", GroupCopy.SHAKE)
             Reveal(settings.shakeToExtend) {
                 Column {
                     RowLine()
                     ChoiceSetting(
                         "Khi lắc", ShakeAction.entries, settings.shakeAction,
-                        { action, _ -> repo.change { it.copy(shakeAction = action) } }, "shake_action",
+                        { action, _ -> repo.change { it.copy(shakeAction = action) } }, "shake_action", GroupCopy.SHAKE_ACTION,
                     )
                     RowLine()
                     ChoiceSetting(
@@ -248,12 +253,12 @@ fun LookSettings(env: SettingsEnv, onBack: () -> Unit, modifier: Modifier = Modi
             RowLine()
             ChoiceSetting(
                 "Nền đọc", ReadingSurface.entries, settings.readingSurface,
-                { surface, _ -> repo.change { it.copy(readingSurface = surface) } }, "reading_surface",
+                { surface, _ -> repo.change { it.copy(readingSurface = surface) } }, "reading_surface", GroupCopy.SURFACE,
             )
             RowLine()
             SwitchRow("Âm thanh chạm", settings.touchSounds, { on -> repo.change { it.copy(touchSounds = on) } }, "touch_sounds", GroupCopy.SOUNDS)
             RowLine()
-            SwitchRow("Rung", settings.haptics, { on -> repo.change { it.copy(haptics = on) } }, "haptics")
+            SwitchRow("Rung", settings.haptics, { on -> repo.change { it.copy(haptics = on) } }, "haptics", GroupCopy.HAPTICS)
         }
     }
 }

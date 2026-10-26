@@ -88,8 +88,12 @@ fun LucideIcon(data: String, color: Color, modifier: Modifier = Modifier, size: 
 @Composable fun ShareIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.SHARE_2, color, modifier, size)
 @Composable fun TrashIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.TRASH_2, color, modifier, size)
 
-/** "Đọc theo" (web: BookOpenText). */
-@Composable fun BookOpenIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.BOOK_OPEN_TEXT, color, modifier, size)
+/** "Đọc theo" (web: Text = text-align-start). */
+@Composable fun ReadAlongIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.TEXT_ALIGN_START, color, modifier, size)
+
+/** "Bỏ ghép" / "Ghép lại" (web: Unplug / Link2). */
+@Composable fun UnplugIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.UNPLUG, color, modifier, size)
+@Composable fun LinkIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.LINK_2, color, modifier, size)
 
 /** "Xuất" (web: FileDown ở menu sách). */
 @Composable fun ExportIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.FILE_DOWN, color, modifier, size)

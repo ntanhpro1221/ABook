@@ -4,7 +4,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import kotlinx.coroutines.flow.Flow
 
-/** Lỗi đã dịch cho người nghe: câu nói được, chữ gốc cho phần chi tiết, và hai loại cần xử lý riêng (máy kia đã thôi ghép / chứng chỉ đã đổi). */
+/** Lỗi đã dịch cho người nghe: câu nói được, chữ gốc cho phần chi tiết, và hai loại cần xử lý riêng (máy kia đã bỏ ghép / chứng chỉ đã đổi). */
 class DeviceFailure(message: String, val technical: String? = null, val unpaired: Boolean = false, val changed: Boolean = false) : Exception(message)
 
 /** Thư viện của máy tính chính: tên máy và các cuốn. */

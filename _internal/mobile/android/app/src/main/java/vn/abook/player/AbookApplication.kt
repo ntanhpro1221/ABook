@@ -76,17 +76,21 @@ class AbookApplication : Application() {
     }
 
     /**
-     * Giọng đọc làm thêm (giọng tải về máy, khóa giọng trực tuyến, nghe thử, Nhạc của tôi): một holder cho cả tiến trình nên lượt tải giọng đang chạy không mất trạng thái khi
-     * Activity dựng lại. Giọng vừa tải / gỡ, khóa vừa dùng được thì danh sách giọng của Cài đặt đọc lại.
+     * Giọng đọc làm thêm (giọng tải về máy, khoá giọng trực tuyến, nghe thử, Nhạc của tôi): một holder cho cả tiến trình nên lượt tải giọng đang chạy không mất trạng thái khi
+     * Activity dựng lại. Giọng vừa tải / gỡ, khoá vừa dùng được thì danh sách giọng của Cài đặt đọc lại.
      */
     val voice by lazy {
         vn.abook.player.ui.voice.VoiceState(
-            vn.abook.player.ui.voice.VoiceRepo(this), uiScope, vn.abook.player.ui.voice.AndroidSamplePlayer(this), voicesChanged = { settings.loadVoices() },
+            voiceRepo, uiScope, vn.abook.player.ui.voice.AndroidSamplePlayer(this), voicesChanged = { settings.loadVoices() }, imports = myMusicImports,
         )
     }
+    private val voiceRepo by lazy { vn.abook.player.ui.voice.VoiceRepo(this) }
 
-    /** Nhạc nền của từng cuốn (bảng ở trình phát và ở trang sách): thêm nhạc đi chung kho với Nhạc của tôi. */
-    val music by lazy { vn.abook.player.ui.music.MusicState(vn.abook.player.ui.music.MusicRepo(this, vn.abook.player.ui.voice.VoiceRepo(this)), uiScope) }
+    /** Thêm nhạc vào Nhạc của tôi: MỘT lượt mỗi lúc cho cả app, Cài đặt > Nhạc của tôi và bảng Nhạc nền cùng thấy, cùng đọc lại kho khi xong. */
+    private val myMusicImports by lazy { vn.abook.player.ui.voice.MineImports(voiceRepo, uiScope) }
+
+    /** Nhạc nền của từng cuốn (bảng ở trình phát và ở trang sách): thêm nhạc đi chung kho và chung lượt với Nhạc của tôi. */
+    val music by lazy { vn.abook.player.ui.music.MusicState(vn.abook.player.ui.music.MusicRepo(this), myMusicImports, uiScope) }
 
     /** Trình phát của giao diện native: chỉ lắng nghe lõi phát khi Activity hiện ([PlayerRepo.attach]). */
     val player by lazy {

@@ -629,7 +629,7 @@ export function AddBookDialog({
             {importer.choose && (
               <>
                 <Button variant="primary" icon={busy === "reading" ? Loader2 : FileText} disabled={busy !== null} onClick={() => void choose("file")}>
-                  {busy === "reading" ? "Đang đọc…" : "Chọn file sách"}
+                  {busy === "reading" ? "Đang đọc" : "Chọn file sách"}
                 </Button>
                 <Button icon={Folder} disabled={busy !== null} onClick={() => void choose("folder")}>
                   Chọn thư mục TXT

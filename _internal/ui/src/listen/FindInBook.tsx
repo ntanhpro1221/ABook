@@ -39,9 +39,9 @@ const count = (value: number) => value.toLocaleString("vi-VN");
 export function findStatus(query: string, progress: BookSearch | null, shown: number): string {
   if (!query.trim()) return `Gõ chữ hay câu cần tìm - không cần gõ dấu, hoa hay thường đều được.`;
   if (!foldedQuery(query)) return `Gõ ít nhất ${MIN_QUERY} ký tự.`;
-  if (!progress) return "Đang tìm…";
+  if (!progress) return "Đang tìm";
   const failed = progress.failed > 0 ? ` ${count(progress.failed)} chương chưa đọc được nên chưa tìm trong đó.` : "";
-  if (!progress.done) return `Đang tìm… đã xem ${count(progress.scanned)}/${count(progress.chapters)} chương, thấy ${count(progress.total)} chỗ.`;
+  if (!progress.done) return `Đang tìm - đã xem ${count(progress.scanned)}/${count(progress.chapters)} chương, thấy ${count(progress.total)} chỗ.`;
   if (progress.total === 0) return `Không thấy “${query.trim()}” trong sách.${failed}`;
   const more = progress.total > shown ? ` Đang hiện ${count(shown)} kết quả đầu, còn ${count(progress.total - shown)} kết quả - gõ thêm chữ để thu hẹp.` : "";
   return `${count(progress.total)} kết quả.${more}${failed}`;
@@ -123,7 +123,7 @@ export function FindInBook({ book, open, onOpenChange }: { book: ListenBook; ope
             }
           }}
           aria-label="Chữ hay câu cần tìm"
-          placeholder="Chữ hay câu cần tìm…"
+          placeholder="Chữ hay câu cần tìm"
           autoComplete="off"
           enterKeyHint="search"
           className="touch-box h-11 w-full rounded-control border border-line bg-bg pl-9 pr-3 text-base outline-none focus:border-focus"

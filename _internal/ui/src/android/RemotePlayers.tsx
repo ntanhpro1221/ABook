@@ -285,7 +285,7 @@ export function PhoneHandOffButton() {
   const handOff = async (target: RemotePlayer) => {
     const seconds = readClock().time;
     // Loa / TV mất vài giây (máy tính đưa chương, TV tải rồi mới tua tới đúng chỗ): có dòng "Đang mở…" tới lúc ấy.
-    const waiting = target.via === "cast" ? toast.loading(`Đang mở trên ${target.name}…`) : undefined;
+    const waiting = target.via === "cast" ? toast.loading(`Đang mở trên ${target.name}`) : undefined;
     if (target.via === "cast") void noteCastHasNoMusic(client, track.bookId);
     try {
       await EbookLibrary.remoteCommand({
@@ -334,7 +334,7 @@ export function PhoneHandOffButton() {
           {!targets.length && (
             <>
               <div role="status" className="px-2 py-1.5 text-sm text-fg-2">
-                {searching ? "Đang tìm loa / TV trong mạng…" : "Không thấy loa / TV nào trong mạng"}
+                {searching ? "Đang tìm loa / TV trong mạng" : "Không thấy loa / TV nào trong mạng"}
               </div>
               <DropdownMenu.Item
                 disabled={searching}

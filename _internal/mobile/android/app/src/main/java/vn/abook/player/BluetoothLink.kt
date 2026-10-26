@@ -84,7 +84,7 @@ object BluetoothLink {
 
     fun lastError(address: String): String = synchronized(this) { gateways[address]?.lastError.orEmpty() }
 
-    /** Thôi ghép máy `address` (hay "bt:<address>"): đóng cổng cục bộ và kết nối RFCOMM của nó. */
+    /** Bỏ ghép máy `address` (hay "bt:<address>"): đóng cổng cục bộ và kết nối RFCOMM của nó. */
     fun forget(address: String) {
         val gateway = synchronized(this) { gateways.remove(address.removePrefix("bt:")) }
         gateway?.close()
@@ -150,7 +150,7 @@ private class Gateway(private val context: Context, private val address: String)
     @Synchronized
     @SuppressLint("MissingPermission")
     private fun link(): BtMux {
-        if (closed) throw IOException("Đã thôi ghép máy này")
+        if (closed) throw IOException("Đã bỏ ghép máy này")
         mux?.takeIf { it.alive }?.let { return it }
         val now = System.currentTimeMillis()
         if (now - failedAt < RETRY_MILLIS) throw IOException(lastError.ifBlank { "Không kết nối được qua Bluetooth" })

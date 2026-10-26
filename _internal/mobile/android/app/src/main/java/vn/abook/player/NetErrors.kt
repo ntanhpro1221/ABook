@@ -18,7 +18,7 @@ import javax.net.ssl.SSLException
  * tiết kỹ thuật ([technical]) - giao diện gập lại dưới lời báo (ErrorDetails).
  */
 object NetErrors {
-    /** Mã lỗi Capacitor khi máy kia trả 401: nó đã thôi ghép máy này (sync.py "Thiết bị chưa ghép nối") - không phải tắt máy hay khác mạng. */
+    /** Mã lỗi Capacitor khi máy kia trả 401: nó đã bỏ ghép máy này (sync.py "Thiết bị chưa ghép nối") - không phải tắt máy hay khác mạng. */
     const val UNPAIRED = "UNPAIRED"
 
     enum class Kind { UNREACHABLE, DROPPED, SECURITY, TIMEOUT }
@@ -26,7 +26,7 @@ object NetErrors {
     /** Máy kia trả lời bằng lỗi HTTP `code` (>= 400) kèm lời của nó. */
     class Refused(val code: Int, message: String) : IllegalStateException(message)
 
-    /** `error` hay một nguyên nhân của nó có phải 401 của máy kia (đã thôi ghép máy này) - lời gọi của app hay audio nghe thẳng (Media3). */
+    /** `error` hay một nguyên nhân của nó có phải 401 của máy kia (đã bỏ ghép máy này) - lời gọi của app hay audio nghe thẳng (Media3). */
     @OptIn(UnstableApi::class)
     fun unpaired(error: Throwable): Boolean = generateSequence(error) { it.cause }.any {
         (it is Refused && it.code == 401) || (it is HttpDataSource.InvalidResponseCodeException && it.responseCode == 401)

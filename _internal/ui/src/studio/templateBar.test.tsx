@@ -38,7 +38,7 @@ describe("thanh mẫu thiết lập ở trình tạo sách", () => {
     state.remote = true;
     const { TemplateBar } = await import("./TemplateBar");
     const html = renderToString(<TemplateBar draft={draft} onPick={() => undefined} />);
-    expect(html).toContain("Lưu thành mẫu…");
+    expect(html).toContain("Lưu thành mẫu");
     expect(html).toContain("Lưu các lựa chọn dưới đây thành mẫu");
   });
 
@@ -46,7 +46,7 @@ describe("thanh mẫu thiết lập ở trình tạo sách", () => {
     state.templates = [ln];
     const { TemplateBar } = await import("./TemplateBar");
     const html = renderToString(<TemplateBar draft={draft} onPick={() => undefined} />);
-    expect(html).toContain("Lưu thành mẫu…");
+    expect(html).toContain("Lưu thành mẫu");
     expect(html).toContain("Light novel");
     expect(html).toContain("Mặc định");
   });
