@@ -108,11 +108,12 @@ class ShellScreenshotTest {
     fun bookScreenLightAndBack() {
         show()
         rule.onAllNodesWithTag("book_cell")[0].performClick()
-        rule.onNodeWithText("Trang sách sắp có.").assertIsDisplayed()
+        rule.onNodeWithTag("book_title").assertIsDisplayed()
+        rule.onNodeWithTag("book_primary").assertIsDisplayed()
         shot("shell_book_light")
         rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
         rule.waitForIdle()
-        rule.onNodeWithText("Trang sách sắp có.").assertDoesNotExist()
+        rule.onNodeWithTag("book_screen").assertDoesNotExist()
         rule.onNodeWithTag("library_grid").assertIsDisplayed()
     }
 

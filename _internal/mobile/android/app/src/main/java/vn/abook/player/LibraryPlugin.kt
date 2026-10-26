@@ -1091,10 +1091,8 @@ class LibraryPlugin : Plugin() {
         }
         val (status, reply) = LocalStudio.handle(method, path, body)
         if (status == 200 && method.uppercase() != "GET") {
-            Regex("/api/books/([A-Za-z0-9_-]+)").find(path)?.groupValues?.get(1)?.let { id ->
-                MusicBed.invalidate(id)
-                EditsSync.schedule(context, id) // cuốn tải từ máy tính: phần sửa gửi về máy tính sau vài giây
-            }
+            // Nhạc đọc lại lớp sửa; cuốn tải từ máy tính: phần sửa gửi về máy tính sau vài giây.
+            Regex("/api/books/([A-Za-z0-9_-]+)").find(path)?.groupValues?.get(1)?.let { id -> BookActions.edited(context, id) }
         }
         val answer = JSObject().put("status", status)
         call.resolve(if (reply is JSONObject) answer.put("body", JSObject.fromJSONObject(reply)) else answer.put("body", JSONObject.NULL))
@@ -1286,34 +1284,20 @@ class LibraryPlugin : Plugin() {
             return call.reject("Sách này lấy từ máy tính khác - muốn gửi file sách thì gửi từ máy ấy")
         }
         val project = call.getString("as") == "abookproj"
-        val title = Store.manifest(id)?.optString("title").orEmpty()
         io.execute {
-            val file = BookShare.target(context.cacheDir, title, project)
-            try {
-                file.parentFile?.mkdirs()
-                val snapshot = ExportHistory.snapshot(Store.bookDir(id))
-                file.outputStream().use { BookDocumentWriter.write(Store.bookDir(id), it, project) }
-                ExportHistory.remember(Store.bookDir(id), if (project) "abookproj" else "abook", file.name, snapshot)
-                val uri = androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
-                val mime = BookShare.mimeType(project)
-                val send = Intent(Intent.ACTION_SEND).setType(mime)
-                    .putExtra(Intent.EXTRA_STREAM, uri)
-                    .putExtra(Intent.EXTRA_TITLE, file.name)
-                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                send.clipData = android.content.ClipData.newUri(context.contentResolver, file.name, uri)
-                val chooser = Intent.createChooser(send, "Chia sẻ “${title.ifBlank { file.nameWithoutExtension }}”")
-                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                activity.runOnUiThread {
-                    try {
-                        activity.startActivity(chooser)
-                        call.resolve(JSObject().put("shared", true).put("name", file.name))
-                    } catch (error: Exception) {
-                        fail(call, error, "không mở được bảng chia sẻ")
-                    }
-                }
+            val shared = try {
+                BookActions.share(context, id, project)
             } catch (error: Exception) {
-                file.parentFile?.deleteRecursively()
                 fail(call, error, "không đóng được file sách để chia sẻ")
+                return@execute
+            }
+            activity.runOnUiThread {
+                try {
+                    activity.startActivity(shared.chooser)
+                    call.resolve(JSObject().put("shared", true).put("name", shared.name))
+                } catch (error: Exception) {
+                    fail(call, error, "không mở được bảng chia sẻ")
+                }
             }
         }
     }
@@ -1717,12 +1701,7 @@ class LibraryPlugin : Plugin() {
     }
 
     /** Một file văn bản của gói như người nghe thấy (lớp sửa phủ lên); sách nghe thẳng chưa có file thì lấy từ máy tính. null khi không có. */
-    private fun bookText(id: String, path: String): String? {
-        val file = Store.file(id, path)
-        val fromPeer = !Store.streamManifest(id)?.optString("source").isNullOrEmpty()
-        if (!file.isFile && Store.rawManifest(id) == null && (fromPeer || SyncLink.paired(context))) Streaming.fetchSmall(context, id, path)
-        return Store.readText(id, path)
-    }
+    private fun bookText(id: String, path: String): String? = BookActions.text(context, id, path)
 
     /**
      * Mốc nhạc nền THEO CẢNH của một chương sách chỉ có chữ (đường N0, [DeviceScenes]): `{cues: [{start, end, link, key, sibling?, tail?, steps?, firstSegment?}], scene,
@@ -1746,19 +1725,8 @@ class LibraryPlugin : Plugin() {
 
     @PluginMethod
     fun deleteBook(call: PluginCall) = background(call) {
-        // Thiếu mã thì từ chối (Store.deletableBookDir) - trước đây `?: ""` biến thành xoá CẢ thư mục sách.
-        // Cuốn đang có lượt tải chạy thì không dời thư mục dưới chân nó (Cài đặt › Thiết bị tắt nút Xoá; đây là lớp chặn cuối, soát a97 V6).
-        require(!BookDownloads.isActive(context, call.getString("id").orEmpty())) { "Đang tải cuốn này - huỷ tải rồi mới xoá được." }
-        // Cuốn nằm chờ UNDO_SECONDS giây (TrashPending) rồi mới xoá hẳn; `undo` là mã để "Hoàn tác" (không có khi xoá thẳng).
-        val undo = Store.holdBook(call.getString("id").orEmpty())
-        // Chương tạm của "Xuất sách nói" bỏ dở đi theo sách khi sách bị xoá hẳn (ListenExports.sweep - cuốn đang xuất không bị đụng).
-        if (undo != null) {
-            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(
-                { io.execute { runCatching { Store.sweepTrash() }; runCatching { ListenExports.sweep(context) } } }, (TrashPending.UNDO_SECONDS + 1) * 1000L,
-            )
-        } else {
-            io.execute { runCatching { ListenExports.sweep(context) } }
-        }
+        // Cuốn nằm chờ rồi mới xoá hẳn; `undo` là mã để "Hoàn tác" (không có khi xoá thẳng) - BookActions.delete.
+        val undo = BookActions.delete(context, call.getString("id").orEmpty()) { io.execute(it) }
         call.resolve(JSObject().put("undo", undo ?: JSONObject.NULL))
     }
 
