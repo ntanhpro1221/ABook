@@ -16,7 +16,7 @@ import { canEditLayer, editBlockedNote, studioNeed, syncsToComputer } from "@/sh
 import { holderName } from "@/shared/editsSync";
 import { formatClock } from "@/shared/format";
 import { levelOptions, levelText } from "@/shared/musicLevels";
-import { Switch } from "@/desktop/PhoneSync";
+import { Switch } from "@/desktop/Switch";
 import { DialogActions, Select, Button, Dialog, ChoiceRow, ContentSkeleton, InlineError } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { MUSIC_CHANGED_EVENT } from "./musicBed";

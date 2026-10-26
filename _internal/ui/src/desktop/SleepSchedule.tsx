@@ -5,7 +5,7 @@ import { SettingsRow } from "@/shared/SettingsNav";
 import { Select, TimeSelect } from "@/shared/ui";
 import { usePreferences } from "@/studio/data";
 import type { Preferences } from "@/studio/api";
-import { Switch } from "./PhoneSync";
+import { Switch } from "./Switch";
 
 type Schedule = Preferences["sleepSchedule"];
 const DEFAULT_SCHEDULE = { from: "22:00", to: "06:00", minutes: 30 };

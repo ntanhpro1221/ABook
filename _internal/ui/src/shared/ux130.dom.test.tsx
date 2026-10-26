@@ -4,7 +4,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import { cwd } from "node:process";
-import { Switch } from "@/desktop/PhoneSync";
+import { Switch } from "@/desktop/Switch";
 import { Toaster } from "sonner";
 import { toast } from "@/shared/toast";
 import { installBackOrder } from "./backOrder";

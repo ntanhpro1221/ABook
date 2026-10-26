@@ -46,7 +46,8 @@ export async function mountApp(platform: "phone" | "desktop", container: HTMLEle
       </StrictMode>,
     );
   } else {
-    const { App } = await import("@/desktop/App");
+    const { App, preloadScreens } = await import("@/desktop/App");
+    await preloadScreens();
     root.render(
       <StrictMode>
         <QueryClientProvider client={client}>

@@ -27,7 +27,7 @@ import {
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
 import { toast, toastDone } from "@/shared/toast";
-import { Switch } from "@/desktop/PhoneSync";
+import { Switch } from "@/desktop/Switch";
 import { useClip } from "@/listen/clip";
 import { useSource } from "@/listen/source";
 import { cn } from "@/shared/cn";
@@ -212,9 +212,6 @@ function cleanPath(value: string): string {
 }
 
 // ---- Nguồn -----------------------------------------------------------------------------------------------------
-
-/** Mở trình tạo sách từ nút "Dự án mới" / "Tạo sách nói": trang mở luôn hộp chọn file (SourceStep). */
-export const PICK_SOURCE = { state: { pick: true } };
 
 export function SourceStep({
   scan,

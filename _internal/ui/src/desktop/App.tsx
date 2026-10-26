@@ -39,16 +39,28 @@ import { watchUntilBack } from "@/listen/peerBack";
 import { api, ApiError, currentPeer, type AppInfo } from "@/studio/api";
 import { pickFolder, useAppInfo, useLibrary, usePreferences } from "@/studio/data";
 import { LibraryMoveRecovery } from "./LibraryMoveRecovery";
-import { NewProjectScreen, PICK_SOURCE } from "@/studio/NewProjectScreen";
-import { ProjectScreen } from "@/studio/ProjectScreen";
-import { ProjectsScreen } from "@/studio/ProjectsScreen";
+import { PICK_SOURCE } from "@/studio/pickSource";
+import { lazyComponent, preloadWhenIdle } from "@/shared/lazyScreen";
 import { desktopTextImport, httpSource } from "./httpSource";
 import { AudiobookDialogHost } from "./AudiobookDialog";
 import { AudiobookMenuItem, BookFileMenuItem, ExportJobHost, M4bMenuItem, Mp3MenuItem } from "./ExportBookFileJob";
 import { RemoteDownloadMenuItem, RemoteDownloadStatus } from "./RemoteDownload";
-import { SettingsScreen } from "./SettingsScreen";
 import { OpenedInbox } from "./openedInbox";
 import { Shell } from "./Shell";
+
+// Studio và Cài đặt (cả Thiết bị, Giọng đọc) ở chunk riêng: mở app chỉ tải Thư viện / trang sách / trình phát; các màn này nạp sẵn lúc rảnh
+// ngay sau đó (App), nên bấm sang vẫn tức thì (docs/PERF_WEB.md).
+const PAGE_LOADING = <ContentSkeleton count={4} className="page-x mx-auto max-w-[1180px] pt-[32px]" />;
+const ProjectsScreen = lazyComponent(() => import("@/studio/ProjectsScreen").then((module) => module.ProjectsScreen), PAGE_LOADING);
+const NewProjectScreen = lazyComponent(() => import("@/studio/NewProjectScreen").then((module) => module.NewProjectScreen), PAGE_LOADING);
+const ProjectScreen = lazyComponent(() => import("@/studio/ProjectScreen").then((module) => module.ProjectScreen), PAGE_LOADING);
+const SettingsScreen = lazyComponent(() => import("./SettingsScreen").then((module) => module.SettingsScreen), PAGE_LOADING);
+const LAZY_SCREENS = [ProjectsScreen, NewProjectScreen, ProjectScreen, SettingsScreen];
+
+/** Nạp ngay mọi màn tải lười (phòng trưng bày: mở thẳng một màn Studio / Cài đặt rồi chụp - không chụp giữa lúc chunk đang về). */
+export function preloadScreens(): Promise<unknown> {
+  return Promise.all(LAZY_SCREENS.map((screen) => screen.preload()));
+}
 
 function useTheme(theme: string | undefined) {
   // Lần đầu đặt thẳng; đổi sau đó (người dùng chọn, Windows tự chuyển sáng/tối) thì cả cửa sổ mờ chéo sang giao diện mới.
@@ -548,6 +560,9 @@ export function App() {
     });
   }, [info?.remote, preferences?.readAloudVoice]);
   useTheme(preferences?.theme ?? info?.theme);
+  // App đã vẽ màn đầu: nạp sẵn chunk của các màn ít dùng khi rảnh.
+  const ready = Boolean(info);
+  useEffect(() => (ready ? preloadWhenIdle(LAZY_SCREENS) : undefined), [ready]);
   // Cài đặt › Phím tắt: bộ bắt phím của trình phát, Việc cần duyệt, Cần nghe lại đọc cờ này lúc có phím.
   useEffect(() => setLetterShortcuts(preferences?.letterShortcuts !== false), [preferences?.letterShortcuts]);
   // Cài đặt › Giao diện: tiếng chạm (máy tính không rung) và nền vùng đọc theo.

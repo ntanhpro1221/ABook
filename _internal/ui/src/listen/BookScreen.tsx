@@ -5,7 +5,7 @@ import { AnimatedRows, LoadingCrossfade, MotionPresence } from "@/shared/MotionP
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRightLeft, AudioLines, BookOpen, BookOpenText, Check, CheckCheck, ChevronDown, CircleDashed, CloudDownload, FileDown, GitMerge, History, Hourglass, Laptop, Loader2, MoreHorizontal, Pause, Pencil, Play, Plus, RotateCcw, Save, Search, Share2, SlidersHorizontal, TextCursorInput, Trash2, UserRound } from "lucide-react";
-import { useId, Fragment, useEffect, useMemo, useRef, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
+import { memo, useId, Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type ButtonHTMLAttributes, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "@/shared/toast";
 import { BookCover } from "@/shared/BookCover";
@@ -43,6 +43,33 @@ import { DotJoin } from "@/shared/DotJoin";
 
 const MENU_ITEM = "flex h-9 cursor-default items-center gap-2 rounded-control px-2 text-sm outline-none data-[highlighted]:bg-hover";
 
+/** Việc của một hàng chương. Một đối tượng cố định cho cả danh sách (useChapterActions): hàng nhớ (memo) không vẽ lại chỉ vì hàm mới. */
+export interface ChapterActions {
+  /** Nghe chương từ giây `at`; chương đang nạp trong trình phát thì phát / tạm dừng. */
+  play: (chapter: ListenChapter, at: number) => void;
+  toggle: () => void;
+  read: (chapter: ListenChapter) => void;
+  done: (chapterId: number, done: boolean) => void;
+  rename: (chapter: ListenChapter) => void;
+}
+
+/** Hành động của hàng chương cho cuốn `book`: luôn cùng một đối tượng, gọi tới bản mới nhất của trình phát / cuốn / hàm truyền vào. */
+function useChapterActions(book: ListenBook, onDone: (chapterId: number, done: boolean) => void, onRename?: (chapter: ListenChapter) => void): ChapterActions {
+  const player = usePlayer();
+  const playBook = usePlayListenBook();
+  const navigate = useNavigate();
+  const live = useRef({ book, player, playBook, navigate, onDone, onRename });
+  live.current = { book, player, playBook, navigate, onDone, onRename };
+  return useMemo<ChapterActions>(() => ({
+    play: (chapter, at) => void live.current.playBook(live.current.book, chapter.id, at),
+    toggle: () => live.current.player.toggle(),
+    read: (chapter) => live.current.navigate(`/book/${live.current.book.id}/read/${chapter.id}`),
+    done: (chapterId, done) => live.current.onDone(chapterId, done),
+    rename: (chapter) => live.current.onRename?.(chapter),
+  }), []);
+}
+
+/** Một hàng chương với dữ liệu lấy thẳng từ cuốn và trình phát (dùng riêng lẻ). Danh sách dùng ChapterLine: mỗi hàng chỉ nhận phần của nó. */
 export function ChapterRow({
   book,
   chapter,
@@ -59,15 +86,53 @@ export function ChapterRow({
   onRename?: (chapter: ListenChapter) => void;
 }) {
   const player = usePlayer();
-  const playBook = usePlayListenBook();
-  const navigate = useNavigate();
+  const actions = useChapterActions(book, onDone, onRename);
   const current = player.track?.bookId === book.id && player.track.chapterId === chapter.id;
-  const heard = chapterHeard(book.state, chapter);
+  return (
+    <ChapterLine
+      chapter={chapter}
+      heard={chapterHeard(book.state, chapter)}
+      heardSeconds={book.state.chapters[String(chapter.id)]?.heard ?? 0}
+      current={current}
+      playing={current && player.playing}
+      producing={book.producing}
+      prepared={prepared}
+      renamable={Boolean(onRename)}
+      actions={actions}
+    />
+  );
+}
+
+/** Hàng chương nhớ (memo): trình phát đổi trạng thái, cuốn được hỏi lại (tiến độ mới), danh sách cuộn - chỉ hàng có giá trị đổi vẽ lại
+ *  (trang sách 2500 chương từng vẽ lại cả 80 hàng đang dựng mỗi lần phát / dừng - docs/PERF_WEB.md). */
+const ChapterLine = memo(function ChapterLine({
+  chapter,
+  heard,
+  heardSeconds,
+  current,
+  playing,
+  producing,
+  prepared,
+  renamable,
+  actions,
+}: {
+  chapter: ListenChapter;
+  /** Phần đã nghe (0..1; 1 = đã nghe xong). */
+  heard: number;
+  /** Giây đã nghe (nghe tiếp từ đây khi chương nghe dở). */
+  heardSeconds: number;
+  current: boolean;
+  playing: boolean;
+  producing: boolean;
+  prepared: boolean;
+  renamable: boolean;
+  actions: ChapterActions;
+}) {
   const done = heard >= 1;
   const onPlay = () => {
     if (!canPlay(chapter)) return;
-    if (current) player.toggle();
-    else void playBook(book, chapter.id, heard > 0 && heard < 1 ? (book.state.chapters[String(chapter.id)]?.heard ?? 0) : 0);
+    if (current) actions.toggle();
+    else actions.play(chapter, heard > 0 && heard < 1 ? heardSeconds : 0);
   };
   const name = chapter.subtitle || chapter.title;
   return (
@@ -85,10 +150,10 @@ export function ChapterRow({
         type="button"
         onClick={onPlay}
         disabled={!canPlay(chapter)}
-        aria-label={current && player.playing ? `Tạm dừng ${chapter.fullTitle}` : `Nghe ${chapter.fullTitle}`}
+        aria-label={playing ? `Tạm dừng ${chapter.fullTitle}` : `Nghe ${chapter.fullTitle}`}
         className="touch-hit touch-box -ml-[8.75px] grid size-9 shrink-0 place-items-center rounded-full text-fg-2 max-sm:ml-0 max-sm:!min-w-0 max-sm:!justify-start sm:pointer-coarse:-ml-[17px] hover:bg-panel hover:text-fg disabled:text-fg-3 disabled:hover:bg-transparent"
       >
-        {current && player.playing ? (
+        {playing ? (
           <Vu className="h-3 text-accent" />
         ) : done ? (
           <Check className="size-4 text-success" strokeWidth={3} aria-label="Đã nghe" />
@@ -102,7 +167,7 @@ export function ChapterRow({
           nút "…" hiện khi rê chuột mới có "Đọc chương này"). */}
       <button
         type="button"
-        onClick={canPlay(chapter) ? onPlay : () => navigate(`/book/${book.id}/read/${chapter.id}`)}
+        onClick={canPlay(chapter) ? onPlay : () => actions.read(chapter)}
         aria-label={canPlay(chapter) ? undefined : `Đọc ${chapter.fullTitle} (chưa có audio)`}
         // Nghe được thì nút tên làm đúng việc của nút phát bên trái: bàn phím dừng ở nút phát (đã có tên đầy đủ), chuột vẫn bấm cả dòng.
         tabIndex={canPlay(chapter) ? -1 : undefined}
@@ -113,7 +178,7 @@ export function ChapterRow({
         </div>
         {/* min-h 1rem (= một dòng text-xs): dòng phụ luôn giữ chỗ - chương có audio rồi hàng không cao thêm, và mọi hàng cùng nhịp. */}
         <div className="tabular min-h-[1rem] truncate text-xs text-fg-2">
-          {chapterSubline(chapter, book.producing)}
+          {chapterSubline(chapter, producing)}
           {prepared && (
             <span className="ml-1.5 inline-flex items-center gap-0.5 rounded-control bg-accent-soft px-1 align-[1px] text-[0.6875rem] font-medium text-accent-text">
               <CloudDownload className="size-3" aria-hidden />
@@ -128,44 +193,83 @@ export function ChapterRow({
         )}
       </button>
       <div className="-mr-[7px] size-8 shrink-0 max-sm:mr-0 max-sm:size-[48px]">
-        {(
-          <DropdownMenu.Root>
-            <DropdownMenu.Trigger asChild>
-              <button
-                type="button"
-                aria-label={`Thêm tuỳ chọn cho ${chapter.fullTitle}`}
-                className="grid size-8 place-items-center rounded-control text-fg-2 opacity-0 transition-[opacity,color,background-color] duration-motion-fast hover:bg-panel hover:text-fg group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100 max-md:opacity-100 max-sm:size-[48px] max-sm:justify-items-end"
-              >
-                <MoreHorizontal className="ink-end size-4" />
-              </button>
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Portal>
-              <DropdownMenu.Content collisionPadding={12} align="end" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-52 rounded-cover border border-line bg-panel p-1.5 shadow-float">
-                {canPlay(chapter) && (
-                  <DropdownMenu.Item onSelect={() => void playBook(book, chapter.id, 0)} className={MENU_ITEM}>
-                    <Play className="size-4" /> Nghe từ đầu chương
-                  </DropdownMenu.Item>
-                )}
-                <DropdownMenu.Item onSelect={() => navigate(`/book/${book.id}/read/${chapter.id}`)} className={MENU_ITEM}>
-                  <BookOpen className="size-4" /> Đọc chương này
-                </DropdownMenu.Item>
-                {canPlay(chapter) && (
-                  <DropdownMenu.Item onSelect={() => onDone(chapter.id, !done)} className={MENU_ITEM}>
-                    {done ? <CircleDashed className="size-4" /> : <CheckCheck className="size-4" />}
-                    {done ? "Chưa nghe" : "Đã nghe xong"}
-                  </DropdownMenu.Item>
-                )}
-                {onRename && (
-                  <DropdownMenu.Item onSelect={() => onRename(chapter)} className={MENU_ITEM}>
-                    <TextCursorInput className="size-4" /> Đổi tên chương
-                  </DropdownMenu.Item>
-                )}
-              </DropdownMenu.Content>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Root>
-        )}
+        <ChapterMenu chapter={chapter} done={done} renamable={renamable} actions={actions} />
       </div>
     </MotionRegion>
+  );
+});
+
+/** Nút "…" của hàng chương và menu của nó. Menu Radix (~20 component mỗi hàng) chỉ dựng khi cần: trước đó là một nút trơn cùng hình, cùng
+ *  thuộc tính (aria-haspopup, data-state) - rê chuột tới hay Tab vào thì dựng menu thật ngay (tiêu điểm giữ ở nút), bấm thẳng (màn cảm ứng)
+ *  thì dựng và mở luôn. Danh sách 2500 chương: dựng / cuộn một khối 40 hàng bớt hơn nửa số component (docs/PERF_WEB.md). */
+function ChapterMenu({ chapter, done, renamable, actions }: { chapter: ListenChapter; done: boolean; renamable: boolean; actions: ChapterActions }) {
+  const [armed, setArmed] = useState(false);
+  const [open, setOpen] = useState(false);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const refocus = useRef(false);
+  // Tiêu điểm vừa vào nút trơn: nút thật thay chỗ nó, đưa tiêu điểm sang (Enter / Space / ↓ của Radix chạy như mọi menu khác).
+  useLayoutEffect(() => {
+    if (!armed || !refocus.current) return;
+    refocus.current = false;
+    trigger.current?.focus();
+  }, [armed]);
+  const button = (extra: ButtonHTMLAttributes<HTMLButtonElement>) => (
+    <button
+      ref={trigger}
+      type="button"
+      aria-label={`Thêm tuỳ chọn cho ${chapter.fullTitle}`}
+      aria-haspopup="menu"
+      aria-expanded={open}
+      data-state={open ? "open" : "closed"}
+      className="grid size-8 place-items-center rounded-control text-fg-2 opacity-0 transition-[opacity,color,background-color] duration-motion-fast hover:bg-panel hover:text-fg group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100 max-md:opacity-100 max-sm:size-[48px] max-sm:justify-items-end"
+      {...extra}
+    >
+      <MoreHorizontal className="ink-end size-4" />
+    </button>
+  );
+  if (!armed) {
+    return button({
+      onPointerEnter: () => setArmed(true),
+      onFocus: () => {
+        refocus.current = true;
+        setArmed(true);
+      },
+      // Như nút mở của Radix: chuột trái (không Ctrl) mở ngay lúc nhấn, không lấy tiêu điểm.
+      onPointerDown: (event) => {
+        if (event.button !== 0 || event.ctrlKey) return;
+        event.preventDefault();
+        setOpen(true);
+        setArmed(true);
+      },
+    });
+  }
+  return (
+    <DropdownMenu.Root open={open} onOpenChange={setOpen}>
+      <DropdownMenu.Trigger asChild>{button({})}</DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content collisionPadding={12} align="end" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-52 rounded-cover border border-line bg-panel p-1.5 shadow-float">
+          {canPlay(chapter) && (
+            <DropdownMenu.Item onSelect={() => actions.play(chapter, 0)} className={MENU_ITEM}>
+              <Play className="size-4" /> Nghe từ đầu chương
+            </DropdownMenu.Item>
+          )}
+          <DropdownMenu.Item onSelect={() => actions.read(chapter)} className={MENU_ITEM}>
+            <BookOpen className="size-4" /> Đọc chương này
+          </DropdownMenu.Item>
+          {canPlay(chapter) && (
+            <DropdownMenu.Item onSelect={() => actions.done(chapter.id, !done)} className={MENU_ITEM}>
+              {done ? <CircleDashed className="size-4" /> : <CheckCheck className="size-4" />}
+              {done ? "Chưa nghe" : "Đã nghe xong"}
+            </DropdownMenu.Item>
+          )}
+          {renamable && (
+            <DropdownMenu.Item onSelect={() => actions.rename(chapter)} className={MENU_ITEM}>
+              <TextCursorInput className="size-4" /> Đổi tên chương
+            </DropdownMenu.Item>
+          )}
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
   );
 }
 
@@ -175,28 +279,32 @@ export function ChapterGroups({ book, currentChapter, onDone, onRename, prepared
 }) {
   const chapters = book.chapters ?? [];
   const groups = chaptersByPart(chapters, book.parts);
+  const actions = useChapterActions(book, onDone, onRename);
+  const list = { book, actions, renamable: Boolean(onRename), prepared, currentChapter };
   // Sách không chia phần: một danh sách phẳng ngay dưới tab - không gấp trong một khối "Danh sách chương" lặp lại tên tab.
   if (groups.length === 1 && !groups[0].heading) {
-    return <div className="mt-2"><ChapterGroupList book={book} chapters={groups[0].chapters} memory={`book.${book.id}.0`} currentChapter={currentChapter} onDone={onDone} onRename={onRename} prepared={prepared} /></div>;
+    return <div className="mt-2"><ChapterGroupList {...list} chapters={groups[0].chapters} memory={`book.${book.id}.0`} /></div>;
   }
   return <>{groups.map((group, index) => (
             <Fold key={group.heading ?? index} storageKey={`book.${book.id}.chapters.${index}`} title={group.heading || "Danh sách chương"} summary={`${group.chapters.length} chương${group.chapters.some(chapter => chapter.id === currentChapter) ? " · Đang nghe" : ""}`} defaultOpen={group.chapters.length <= 4 || group.chapters.some(chapter => chapter.id === currentChapter)} onOpened={(element) => {
               const row = element.querySelector(`[data-chapter="${CSS.escape(String(currentChapter))}"]`);
               if (row && !row.closest("[inert]")) reveal(scrollParent(row), row);
             }} heading="h3" className="mt-3">
-              <ChapterGroupList book={book} chapters={group.chapters} heading={group.heading} memory={`book.${book.id}.${index}`} currentChapter={currentChapter} onDone={onDone} onRename={onRename} prepared={prepared} />
+              <ChapterGroupList {...list} chapters={group.chapters} heading={group.heading} memory={`book.${book.id}.${index}`} />
             </Fold>
           ))}</>;
 }
 
 /** Sách vài nghìn chương: chỉ dựng các chương gần màn hình (shared/Windowed); chương đang nghe luôn có sẵn. Chương mới về (sách đang
  *  thu) hay bị gỡ: hàng mở ra / khép lại tại chỗ (useListPresence, như kệ sách của thư viện), không nhảy cả danh sách. */
-function ChapterGroupList({ book, chapters, heading, memory, currentChapter, onDone, onRename, prepared }: {
+function ChapterGroupList({ book, chapters, heading, memory, currentChapter, actions, renamable, prepared }: {
   book: ListenBook; chapters: ListenChapter[]; heading?: string | null; memory: string; currentChapter?: number;
-  onDone: (chapterId: number, done: boolean) => void; onRename?: (chapter: ListenChapter) => void; prepared?: Set<number>;
+  actions: ChapterActions; renamable: boolean; prepared?: Set<number>;
 }) {
+  const player = usePlayer();
   const rows = useListPresence(chapters, (chapter) => String(chapter.id));
   const positions = useMemo(() => new Map(chapters.map((chapter, index) => [chapter.id, index + 1])), [chapters]);
+  const playingChapter = player.track?.bookId === book.id ? player.track.chapterId : undefined;
   return (
     <div role="list" aria-label={heading ?? "Danh sách chương"}>
       <Windowed
@@ -206,12 +314,16 @@ function ChapterGroupList({ book, chapters, heading, memory, currentChapter, onD
         keep={rows.findIndex((row) => row.item.id === currentChapter)}
         row={({ key, item: chapter, state, ref }) => (
           <div key={key} ref={ref} role="listitem" aria-posinset={positions.get(chapter.id)} aria-setsize={chapters.length} data-chapter={chapter.id} className="motion-row" data-state={state} inert={state === "exit"}>
-            <ChapterRow
-              book={book}
+            <ChapterLine
               chapter={chapter}
-              onDone={(chapterId, done) => onDone(chapterId, done)}
-              onRename={onRename}
-              prepared={chapter.state === "text" && prepared?.has(chapter.id)}
+              heard={chapterHeard(book.state, chapter)}
+              heardSeconds={book.state.chapters[String(chapter.id)]?.heard ?? 0}
+              current={chapter.id === playingChapter}
+              playing={chapter.id === playingChapter && player.playing}
+              producing={book.producing}
+              prepared={chapter.state === "text" && Boolean(prepared?.has(chapter.id))}
+              renamable={renamable}
+              actions={actions}
             />
           </div>
         )}
@@ -1031,8 +1143,10 @@ export function BookScreen({
             <RecordPicker book={book} dialog={recordDialog} setDialog={setRecordDialog} />
           </div>
         </div>
-        {/* Máy tính: cột rộng đúng bằng nút chính (ít nhất 16rem cho 4 nút phụ) - hàng nút phụ trải đúng bề ngang nút chính, hai đầu thẳng nhau. */}
-        <div className="col-span-2 mt-6 flex max-w-md flex-col gap-3 sm:col-span-1 sm:col-start-2 sm:mt-5 sm:w-fit sm:min-w-[16rem]">
+        {/* Máy tính: cột rộng đúng bằng nút chính (ít nhất 16rem cho 4 nút phụ) - hàng nút phụ trải đúng bề ngang nút chính, hai đầu thẳng nhau.
+            Cột nút là vùng chuyển cảnh riêng: phát / dừng đổi nhãn nút chính thì chỉ cột này so dấu, không phải cả trang (vùng cả trang từng
+            chụp lại hơn nghìn nút DOM mỗi lần bấm phát trên sách 2500 chương rồi bỏ đi - docs/PERF_WEB.md). */}
+        <MotionRegion as="div" className="col-span-2 mt-6 flex max-w-md flex-col gap-3 sm:col-span-1 sm:col-start-2 sm:mt-5 sm:w-fit sm:min-w-[16rem]">
           {caughtUp ? (
             <p className="text-sm text-fg-2">Đã nghe hết phần đã có. Chương mới sẽ hiện ở đây khi làm xong.</p>
           ) : (
@@ -1122,7 +1236,7 @@ export function BookScreen({
             </ActionMenu>}
           </div>
           {chapters.length > 0 && <FindInBook book={book} open={finding} onOpenChange={setFinding} />}
-        </div>
+        </MotionRegion>
       </header>
       <Tabs value={tab} onValueChange={(value) => setParams({ tab: value }, { replace: true })} className="mt-8">
         <TabsList label="Mục của sách">

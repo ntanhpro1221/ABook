@@ -506,8 +506,18 @@ export function twinBookIds(books: readonly Pick<ListenBook, "id" | "title">[]):
 }
 
 /** Ô "Tìm sách": khớp tên, tác giả hoặc giọng kể, không phân biệt hoa thường và dấu ("nguyen" tìm ra "Nguyễn"). `folded` đã qua foldVietnamese. */
+/** Chữ tìm (đã gấp dấu) của từng cuốn, nhớ theo đối tượng cuốn: gõ một phím trong thư viện 3000 cuốn không gấp dấu lại 3000 lần
+ *  (docs/PERF_WEB.md). Cuốn đổi tên là một đối tượng mới (dữ liệu truy vấn không sửa tại chỗ). */
+const searchKeys = new WeakMap<object, string>();
+
 export function bookMatchesQuery(book: Pick<ListenBook, "title" | "author" | "narrator">, folded: string): boolean {
-  return !folded || foldVietnamese(`${book.title} ${book.author ?? ""} ${book.narrator}`).includes(folded);
+  if (!folded) return true;
+  let key = searchKeys.get(book);
+  if (key === undefined) {
+    key = foldVietnamese(`${book.title} ${book.author ?? ""} ${book.narrator}`);
+    searchKeys.set(book, key);
+  }
+  return key.includes(folded);
 }
 
 /** Một lời báo "<máy> đã đổi … từ X sang Y" (webui/package_share.py `notices`). */

@@ -16,7 +16,7 @@ import { APP_TITLE } from "@/shared/title";
 import { formatPercent } from "@/shared/format";
 import { ContentSkeleton, IconButton, InlineError, OfflineStrip, Progress, Vu } from "@/shared/ui";
 import { useAppInfo, useLibrary } from "@/studio/data";
-import { usePrecastInvites } from "@/studio/PrecastReview";
+import { usePrecastInvites } from "@/studio/precastInvites";
 import { PeerBar } from "./PeerBar";
 import { HandOffButton, RemoteBars, ThisPlayerReporter } from "./RemotePhone";
 import { TitleBar } from "./TitleBar";
