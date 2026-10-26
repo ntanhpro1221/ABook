@@ -45,6 +45,8 @@ import vn.abook.player.ui.components.TextAction
 import vn.abook.player.ui.components.pressable
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.components.fadeEdges
+import androidx.compose.foundation.lazy.rememberLazyListState
 
 /*
  * Nối máy tính. Đã nối: danh sách thiết bị (mỗi hàng một dòng trạng thái, chạm mở bảng việc), rồi sách của từng máy với nút Tải / cập nhật / Huỷ ngay hàng.
@@ -72,7 +74,8 @@ fun PairScreen(devices: DevicesState, sheets: SheetHost, onBack: () -> Unit) {
         }) else null,
         trailing = if (ui.paired) ({ RefreshButton(ui.refreshing, devices::refresh) }) else null,
     ) {
-        if (ui.loaded) LazyColumn(Modifier.fillMaxSize().testTag("pair_list"), contentPadding = PaddingValues(bottom = Dim.s16)) {
+        val list = rememberLazyListState()
+        if (ui.loaded) LazyColumn(Modifier.fillMaxSize().fadeEdges(list).testTag("pair_list"), state = list, contentPadding = PaddingValues(bottom = Dim.s16)) {
             devicesList(ui, devices, sheets)
             booksLists(ui, devices)
             if (ui.showForm) pairForm(ui, devices) else item("add_device", "action") {

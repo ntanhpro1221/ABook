@@ -28,6 +28,8 @@ import vn.abook.player.ui.components.SheetHost
 import vn.abook.player.ui.data.Fmt
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.components.fadeEdges
+import androidx.compose.foundation.lazy.rememberLazyListState
 
 /*
  * Dung lượng. Đầu màn: tổng đã dùng và chỗ còn trống; rồi từng thứ chiếm chỗ, lớn nhất trước. Chạm một hàng để xoá khỏi máy - cùng bước xác nhận với "Xoá khỏi máy"
@@ -41,7 +43,8 @@ fun StorageScreen(devices: DevicesState, sheets: SheetHost, onBack: () -> Unit) 
     val entries = rememberPresence(ui.storage.entries) { it.id }
     LaunchedEffect(devices) { devices.openStorage() }
     BookForm("Dung lượng", onBack, "storage_screen") {
-        if (ui.loaded) LazyColumn(Modifier.fillMaxSize().testTag("storage_list"), contentPadding = PaddingValues(bottom = Dim.s16)) {
+        val list = rememberLazyListState()
+        if (ui.loaded) LazyColumn(Modifier.fillMaxSize().fadeEdges(list).testTag("storage_list"), state = list, contentPadding = PaddingValues(bottom = Dim.s16)) {
             item("total", "total") {
                 Column(Modifier.fillMaxWidth().padding(top = Dim.s16, bottom = Dim.s8).testTag("storage_total")) {
                     BasicText(Fmt.size(ui.storage.bytes), style = Abook.type.screenTitle)

@@ -40,6 +40,7 @@ import vn.abook.player.ui.components.TrashIcon
 import vn.abook.player.ui.devices.CreepProgress
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.components.fadeEdges
 
 /*
  * Các bảng trượt của Giọng đọc làm thêm: việc của một giọng đã có trên máy (kèm bước xoá), tải bằng dữ liệu di động, đồng ý gửi chữ, một khóa giọng trực tuyến
@@ -201,10 +202,11 @@ fun KeySheet(initial: KeyProvider, voice: VoiceState, dismiss: () -> Unit) {
         }
     }
 
+    val form = rememberScrollState()
     Column(Modifier.fillMaxWidth().imePadding()) {
         SheetPages(page, { it.ordinal }, "key_sheet") { shown ->
             when (shown) {
-                KeyPage.Form -> Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
+                KeyPage.Form -> Column(Modifier.fillMaxWidth().fadeEdges(form).verticalScroll(form)) {
                     BasicText(provider.name, style = Abook.type.sectionTitle)
                     Caption(VoiceText.keyHelp(provider.id), Modifier.padding(top = Dim.s4).testTag("key_help"))
                     Spacer(Modifier.height(Dim.s16))

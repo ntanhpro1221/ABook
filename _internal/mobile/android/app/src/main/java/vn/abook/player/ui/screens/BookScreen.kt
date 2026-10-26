@@ -89,6 +89,7 @@ import vn.abook.player.ui.motion.Motion
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.theme.MotionMs
+import vn.abook.player.ui.components.fadeEdges
 
 /** Việc mà trang sách nhờ nơi khác làm (về, phát, nhảy chương, sau khi xoá) - tách khỏi màn để thử và để dựng ảnh chụp. */
 @Stable
@@ -176,7 +177,7 @@ fun BookScreen(
         }
         LazyColumn(
             state = list,
-            modifier = Modifier.fillMaxSize().testTag("book_list"),
+            modifier = Modifier.fillMaxSize().fadeEdges(list).testTag("book_list"),
             contentPadding = PaddingValues(start = Dim.margin, end = Dim.margin, top = Dim.s12, bottom = bottom + Dim.s32),
         ) {
             item(key = "head", contentType = "head") { BookHead(shown, covers) }

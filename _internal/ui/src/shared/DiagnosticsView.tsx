@@ -1,9 +1,12 @@
+import { useLayoutEffect, useRef } from "react";
 import { emptyLogNote, failureDetails, logLines, summaryRows, workProgressRows, type DiagnosticsReport } from "./diagnostics";
 import { MoreInfo } from "./SettingsNav";
+import { useFadeScroller } from "./scrollFade";
 
 /** Bản chẩn đoán của điện thoại cho người đọc: tóm tắt từng mục rồi nhật ký cuộn được (dòng mới nhất ở cuối, cuộn sẵn xuống đó). Dùng chung hộp
  *  "Chẩn đoán" của máy tính và màn Cài đặt → Chẩn đoán của điện thoại. */
 export function DiagnosticsView({ report }: { report: DiagnosticsReport }) {
+  const scrollFade = useFadeScroller<HTMLPreElement>();
   const rows = [...summaryRows(report), ...workProgressRows(report)];
   const app = logLines(report, "log");
   const cat = logLines(report, "logcat");
@@ -21,7 +24,7 @@ export function DiagnosticsView({ report }: { report: DiagnosticsReport }) {
         </dl>
       )}
       {errors.length > 0 && <MoreInfo label="Chi tiết kỹ thuật">
-        <pre className="max-h-72 select-text overflow-auto whitespace-pre-wrap [overflow-wrap:anywhere]">{errors.map(row => `${row.label}: ${row.value}`).join("\n")}</pre>
+        <pre ref={scrollFade.ref} style={scrollFade.style} className="max-h-72 select-text overflow-auto whitespace-pre-wrap [overflow-wrap:anywhere]">{errors.map(row => `${row.label}: ${row.value}`).join("\n")}</pre>
       </MoreInfo>}
       <LogBox title={`Nhật ký của ABook (${app.length} dòng)`} lines={app} empty={emptyLogNote(report, "log")} open />
       {(cat.length > 0 || report.logcat !== undefined) && <LogBox title={`Nhật ký hệ thống của app (${cat.length} dòng)`} lines={cat} empty={emptyLogNote(report, "logcat")} />}
@@ -31,15 +34,19 @@ export function DiagnosticsView({ report }: { report: DiagnosticsReport }) {
 }
 
 function LogBox({ title, lines, empty, open }: { title: string; lines: string[]; empty: string; open?: boolean }) {
+  const pre = useRef<HTMLPreElement | null>(null);
+  const scrollFade = useFadeScroller(pre);
+  // Cuộn sẵn xuống cuối mỗi lần đọc lại: dòng mới nhất là dòng cần xem trước.
+  useLayoutEffect(() => {
+    if (pre.current) pre.current.scrollTop = pre.current.scrollHeight;
+  }, [lines]);
   return (
     <details open={open} className="">
       <summary className="cursor-pointer py-2 text-sm font-medium">{title}</summary>
       {lines.length ? (
-        // Cuộn sẵn xuống cuối: dòng mới nhất là dòng cần xem trước.
         <pre
-          ref={(node) => {
-            if (node) node.scrollTop = node.scrollHeight;
-          }}
+          ref={scrollFade.ref}
+          style={scrollFade.style}
           tabIndex={0}
           aria-label={title}
           className="max-h-72 select-text overflow-auto border-t border-line py-2 text-[0.6875rem] leading-snug text-fg-2"

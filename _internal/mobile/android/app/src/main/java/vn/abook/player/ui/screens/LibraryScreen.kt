@@ -74,6 +74,7 @@ import vn.abook.player.ui.data.ShelfTile
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import kotlin.math.roundToInt
+import vn.abook.player.ui.components.fadeEdges
 
 /** Việc mà Thư viện nhờ nơi khác làm (mở trang sách, phát ngay, thêm sách) - tách khỏi màn để thử và để dựng ảnh chụp. */
 @Stable
@@ -142,7 +143,7 @@ private fun LibraryGrid(
     LazyVerticalGrid(
         columns = GridCells.Fixed(columns),
         state = grid,
-        modifier = Modifier.fillMaxSize().testTag("library_grid"),
+        modifier = Modifier.fillMaxSize().testTag("library_grid").fadeEdges(grid),
         contentPadding = PaddingValues(start = Dim.margin, end = Dim.margin, top = top, bottom = Dim.s24),
         horizontalArrangement = Arrangement.spacedBy(Dim.s12),
         verticalArrangement = Arrangement.spacedBy(Dim.s16),

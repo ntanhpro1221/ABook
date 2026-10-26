@@ -9,6 +9,7 @@ import { useNowPlaying } from "./player";
 import { useSource } from "./source";
 import { useVoiceSample } from "./VoiceSettings";
 import { revealVoiceSettings } from "./voiceSettingsLink";
+import { useFadeScroller } from "@/shared/scrollFade";
 
 /** Hộp hỏi trước lần đầu đọc bằng giọng trực tuyến (onlineConsent.ts). Gắn một lần trong PlayerProvider - máy tính và điện thoại như nhau. */
 export function OnlineVoicePrompt() {
@@ -21,6 +22,7 @@ export function OnlineVoicePrompt() {
   useEffect(() => setChoosing(false), [request]);
   // "Chọn giọng khác": nút vừa bấm biến mất cùng phần đồng ý - tiêu điểm vào giọng đang dùng trong danh sách, không về khung hộp (soát a67).
   const list = useRef<HTMLDivElement | null>(null);
+  const scrollFade = useFadeScroller<HTMLDivElement>(list);
   const chooseButton = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (choosing) list.current?.querySelector<HTMLElement>("[aria-current]")?.focus();
@@ -40,7 +42,7 @@ export function OnlineVoicePrompt() {
       width="max-w-md"
     ><MotionRegion>
       {choosing ? (
-        <div ref={list} className="flex max-h-[50vh] flex-col gap-0.5 overflow-y-auto">
+        <div ref={scrollFade.ref} style={scrollFade.style} className="flex max-h-[50vh] flex-col gap-0.5 overflow-y-auto">
           {voices.map((item) => {
             const playing = sample.playing === item.id;
             return (

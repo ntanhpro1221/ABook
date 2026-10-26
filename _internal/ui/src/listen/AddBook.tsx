@@ -33,6 +33,7 @@ import { FootnoteChoices } from "./FootnoteChoices";
 import { groupSuggestions, setSkipLine, SuggestionChoices } from "./ReadingSuggestions";
 import { useSource } from "./source";
 import { technicalOf } from "@/studio/api";
+import { useFadeScroller } from "@/shared/scrollFade";
 import {
   chapterPicks,
   defaultPicked,
@@ -102,6 +103,7 @@ export function AddBookDialog({
    *  đọc file / xem trước. Nhiều file thì thành hàng xem trước. */
   initial?: ImportChoice | PickedItem[] | null;
 }) {
+  const scrollFade = useFadeScroller<HTMLDivElement>();
   const source = useSource();
   const importer = source.textImport;
   const client = useQueryClient();
@@ -774,7 +776,7 @@ export function AddBookDialog({
           {groups.length > 0 && (
             <Fold storageKey="add-book.suggestions" title="Gợi ý phần đọc" summary={`${groups.length} nhóm`} className="mt-3" bodyClassName="px-3 pb-3">
               <p className="mt-0.5 text-xs text-fg-2">Dòng bỏ chỉ bị bỏ qua khi đọc; chữ của sách giữ nguyên.</p>
-              <div className="mt-2 max-h-40 overflow-y-auto">
+              <div ref={scrollFade.ref} style={scrollFade.style} className="mt-2 max-h-40 overflow-y-auto">
                 <SuggestionChoices
                   groups={groups}
                   isOn={(group) => skipped.has(group.line)}
@@ -819,10 +821,11 @@ const STATE_TEXT: Record<Exclude<QueueItem["state"], "waiting">, string> = {
 
 /** Danh sách các file đã chọn kèm tình trạng từng cái: cuốn đang xem, cuốn đã thêm / bỏ, cuốn không đọc được (kèm lý do). */
 export function QueueList({ items, currentId, working = "", tall }: { items: QueueItem[]; currentId: number | null; working?: string; tall?: boolean }) {
+  const scrollFade = useFadeScroller<HTMLUListElement>();
   const rows = useListPresence(items, (item) => String(item.id));
   const focus = queueFocus(items, currentId, working);
   return (
-    <ul aria-label="Các file đã chọn" className={cn("mt-3 space-y-1.5 overflow-y-auto py-2.5 text-xs", tall ? "max-h-72" : "max-h-36")}>
+    <ul ref={scrollFade.ref} style={scrollFade.style} aria-label="Các file đã chọn" className={cn("mt-3 space-y-1.5 overflow-y-auto py-2.5 text-xs", tall ? "max-h-72" : "max-h-36")}>
       {rows.map(({ item, key, state, ref }) => {
         const current = item.state === "waiting" && item.id === focus.id;
         let mark: ReactNode = <span className="block size-3 rounded-full border border-line-strong" />;
