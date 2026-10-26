@@ -49,7 +49,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import vn.abook.player.ui.components.BookOpenIcon
+import vn.abook.player.ui.components.ReadAlongIcon
 import vn.abook.player.ui.components.DeleteBookPage
 import vn.abook.player.ui.components.SheetPages
 import vn.abook.player.ui.components.MenuRow
@@ -147,7 +147,7 @@ private fun MenuActions(
         }
         MenuRow("Sửa thông tin", tag = "menu_edit", onClick = onEdit) { ink -> PencilIcon(ink) }
         if (detail?.canShare == true) {
-            MenuRow(if (sharing) "Đang đóng file sách" else "Chia sẻ file sách", tag = "menu_share", onClick = {
+            MenuRow(if (sharing) "Đang đóng file sách" else "Chia sẻ", tag = "menu_share", onClick = {
                 if (sharing) return@MenuRow
                 sharing = true
                 scope.launch {
@@ -165,7 +165,7 @@ private fun MenuActions(
         MenuRow("Đọc theo", tag = "menu_read", unavailable = !book.canReadAlong, onClick = {
             dismiss()
             actions.readAlong(book.id)
-        }) { ink -> BookOpenIcon(ink) }
+        }) { ink -> ReadAlongIcon(ink) }
         if (music != null) {
             val ui by music.ui.collectAsState()
             val mine = ui.book.takeIf { ui.bookId == book.id }
@@ -176,7 +176,7 @@ private fun MenuActions(
         }
         MenuRow("Xuất MP3 hay M4B", tag = "menu_export", soon = true) { ink -> ExportIcon(ink) }
         Box(Modifier.fillMaxWidth().padding(vertical = Dim.s8).height(1.dp).background(colors.line))
-        MenuRow("Xoá khỏi máy", tag = "menu_delete", danger = true, onClick = onDelete) { ink -> TrashIcon(ink) }
+        MenuRow("Xoá khỏi điện thoại", tag = "menu_delete", danger = true, onClick = onDelete) { ink -> TrashIcon(ink) }
         if (problem.isNotEmpty()) {
             Spacer(Modifier.height(Dim.s4))
             BasicText(problem, style = Abook.type.bodySmall.copy(color = colors.danger))

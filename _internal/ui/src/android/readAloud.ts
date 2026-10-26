@@ -70,7 +70,7 @@ export function watchReadAloud(
   notify: (message: string) => unknown = (message) => toast(message, { duration: 8000 }),
 ): () => void {
   const handle = api.addListener("readAloudScript", (event) => void refreshScript(client, api, event.bookId, event.chapterId));
-  // Lõi vừa đọc tạm một đoạn bằng giọng kế (khóa bị từ chối, hết hạn mức, mất mạng): nói cho người nghe, lõi đã lo chỉ nói một lần.
+  // Lõi vừa đọc tạm một đoạn bằng giọng kế (khoá bị từ chối, hết hạn mức, mất mạng): nói cho người nghe, lõi đã lo chỉ nói một lần.
   const notice = api.addListener("readAloudNotice", (event) => void notify(event.message));
   // Tiến độ "Làm trước" (việc nền, kể cả khi màn này không mở menu): menu Giọng đọc và dấu ở danh sách chương thấy ngay.
   const prepare = api.addListener("readAloudPrepare", (status) => void client.setQueryData(PREPARE_STATUS_KEY, status));

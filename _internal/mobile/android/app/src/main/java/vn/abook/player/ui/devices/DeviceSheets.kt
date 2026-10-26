@@ -22,13 +22,13 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import vn.abook.player.ui.addbook.BookField
-import vn.abook.player.ui.components.CloseIcon
+import vn.abook.player.ui.components.UnplugIcon
 import vn.abook.player.ui.components.ConfirmPage
 import vn.abook.player.ui.components.DangerButton
 import vn.abook.player.ui.components.DeleteBookPage
 import vn.abook.player.ui.components.LaptopIcon
 import vn.abook.player.ui.components.MenuRow
-import vn.abook.player.ui.components.PlusIcon
+import vn.abook.player.ui.components.LinkIcon
 import vn.abook.player.ui.components.PrimaryButton
 import vn.abook.player.ui.components.QuietButton
 import vn.abook.player.ui.components.RefreshIcon
@@ -37,13 +37,13 @@ import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 
 /*
- * Các bảng trượt của ba màn Thiết bị: việc của một thiết bị đã nối (kèm bước bỏ ghép), đổi tên máy này, thôi ghép một máy đang nghe, xoá một thứ khỏi máy.
+ * Các bảng trượt của ba màn Thiết bị: việc của một thiết bị đã nối (kèm bước bỏ ghép), đổi tên máy này, bỏ ghép một máy đang nghe, xoá một thứ khỏi máy.
  * Mọi bước xác nhận dựng bằng [ConfirmPage] / [DeleteBookPage] - cùng một chỗ với menu "Xoá khỏi máy" của trang sách.
  */
 
 private enum class DevicePage { Actions, Forget }
 
-/** Bảng của một thiết bị đã nối: Studio (máy tính), làm mới, ghép lại (khi nó đã thôi ghép), bỏ ghép (có bước xác nhận ngay trong bảng). */
+/** Bảng của một thiết bị đã nối: Studio (máy tính), làm mới, ghép lại (khi nó đã bỏ ghép), bỏ ghép (có bước xác nhận ngay trong bảng). */
 @Composable
 fun DeviceSheet(initial: Paired, state: DevicesState, dismiss: () -> Unit) {
     var page by remember { mutableStateOf(DevicePage.Actions) }
@@ -86,10 +86,10 @@ private fun DeviceActions(device: Paired, studio: StudioComputer?, state: Device
         }
         MenuRow("Làm mới", "device_refresh", onClick = { state.refresh(); dismiss() }) { ink -> RefreshIcon(ink) }
         if (device.reach is Reach.Unpaired || device.reach is Reach.Changed) {
-            MenuRow("Ghép lại", "device_repair", onClick = { state.repair(device); dismiss() }) { ink -> PlusIcon(ink) }
+            MenuRow("Ghép lại", "device_repair", onClick = { state.repair(device); dismiss() }) { ink -> LinkIcon(ink) }
         }
         Box(Modifier.fillMaxWidth().padding(vertical = Dim.s8).height(1.dp).background(colors.line))
-        MenuRow("Bỏ ghép", "device_forget", danger = true, onClick = onForget) { ink -> CloseIcon(ink) }
+        MenuRow("Bỏ ghép", "device_forget", danger = true, onClick = onForget) { ink -> UnplugIcon(ink) }
         if (problem.isNotEmpty()) {
             Spacer(Modifier.height(Dim.s4))
             BasicText(problem, style = Abook.type.bodySmall.copy(color = colors.danger), modifier = Modifier.testTag("device_problem"))
@@ -127,7 +127,7 @@ private fun ForgetPage(device: Paired, state: DevicesState, dismiss: () -> Unit,
     }
     ConfirmPage(
         copy?.title ?: "Bỏ ghép ${device.name}?", "forget_confirm",
-        copy?.lines ?: listOf("Sách đã tải vẫn ở lại máy này."), problem,
+        copy?.lines ?: listOf("Sách đã tải vẫn nghe được. Muốn tải thêm thì ghép lại bằng mã mới."), problem,
     ) {
         if (copy?.send != null) {
             PrimaryButton(copy.send, { run(ForgetChoice.Send) }, Modifier.fillMaxWidth().testTag("forget_send"), enabled = !working)
@@ -147,9 +147,9 @@ fun RenameSheet(current: String, state: DevicesState, dismiss: () -> Unit) {
     var working by remember { mutableStateOf(false) }
     var problem by remember { mutableStateOf("") }
     Column(Modifier.fillMaxWidth().testTag("rename_sheet")) {
-        BasicText("Tên máy này", style = Abook.type.sectionTitle)
+        BasicText("Đổi tên điện thoại này", style = Abook.type.sectionTitle)
         Spacer(Modifier.height(Dim.s16))
-        BookField(null, name, { name = it; problem = "" }, "rename_field", !working, "Tên máy này")
+        BookField(null, name, { name = it; problem = "" }, "rename_field", !working, "Tên điện thoại")
         if (problem.isNotEmpty()) {
             Spacer(Modifier.height(Dim.s8))
             BasicText(problem, style = Abook.type.bodySmall.copy(color = Abook.colors.danger), modifier = Modifier.testTag("rename_problem"))
@@ -168,11 +168,11 @@ fun RenameSheet(current: String, state: DevicesState, dismiss: () -> Unit) {
     }
 }
 
-/** Thôi ghép một máy đang nghe thư viện này: máy ấy mất quyền nghe ngay. */
+/** Bỏ ghép một máy đang nghe thư viện này: máy ấy mất quyền nghe ngay. */
 @Composable
 fun RevokeSheet(sharer: Sharer, state: DevicesState, dismiss: () -> Unit) {
-    ConfirmPage("Thôi ghép ${sharer.name}?", "revoke_confirm", listOf("${sharer.name} sẽ không nghe được thư viện này nữa."), "") {
-        DangerButton("Thôi ghép", { state.revoke(sharer.id); dismiss() }, "revoke_yes")
+    ConfirmPage("Bỏ ghép ${sharer.name}?", "revoke_confirm", listOf("Máy ấy không nghe được thư viện này nữa; sách đã tải vẫn còn."), "") {
+        DangerButton("Bỏ ghép", { state.revoke(sharer.id); dismiss() }, "revoke_yes")
         Spacer(Modifier.height(Dim.s8))
         QuietButton("Giữ lại", dismiss, "revoke_keep")
     }

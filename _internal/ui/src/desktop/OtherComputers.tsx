@@ -108,7 +108,7 @@ export function OtherComputers() {
     mutationFn: (id: string) => api<ComputersView>(`/api/computers/${id}/stop-waiting`, { method: "POST" }),
     onSuccess: done,
   });
-  // Thôi ghép xoá thư mục đệm của máy ấy (phần đã tải, phần sửa chưa gửi): có gì để mất thì hỏi trước, nói rõ mất gì và giữ gì (shared/unpair.ts).
+  // Bỏ ghép xoá thư mục đệm của máy ấy (phần đã tải, phần sửa chưa gửi): có gì để mất thì hỏi trước, nói rõ mất gì và giữ gì (shared/unpair.ts).
   const unpair = useUnpair<Computer>({
     self: "máy tính",
     name: (computer) => computer.name,
@@ -160,7 +160,7 @@ export function OtherComputers() {
           {data.broken}
         </p>
       </MotionPresence>
-      {/* Ghép / thôi ghép: hàng mở / khép tại chỗ như PhoneSync; đổi trong hàng (đang chờ, lỗi) thì hàng tự mờ qua. data-motion-live: cả
+      {/* Ghép / bỏ ghép: hàng mở / khép tại chỗ như PhoneSync; đổi trong hàng (đang chờ, lỗi) thì hàng tự mờ qua. data-motion-live: cả
           khối không mờ lại theo từng hàng. */}
       <MotionPresence open={data.computers.length > 0}>
         <div data-motion-live="">
@@ -229,9 +229,9 @@ export function OtherComputers() {
               <Button size="sm" variant="ghost" icon={RefreshCw} disabled={refresh.isPending} onClick={() => refresh.mutate()} className="sm:hidden" aria-label="Hỏi lại thư viện">
                 Hỏi lại
               </Button>
-              <IconButton label={`Thôi ghép ${computer.name}`} icon={Unplug} size="sm" onClick={() => void unpair.start(computer)} className="max-sm:hidden" />
-              <Button size="sm" variant="ghost" icon={Unplug} onClick={() => void unpair.start(computer)} className="text-danger sm:hidden max-sm:order-first max-sm:mr-auto" aria-label={`Thôi ghép ${computer.name}`}>
-                Thôi ghép
+              <IconButton label={`Bỏ ghép ${computer.name}`} icon={Unplug} size="sm" onClick={() => void unpair.start(computer)} className="max-sm:hidden" />
+              <Button size="sm" variant="ghost" icon={Unplug} onClick={() => void unpair.start(computer)} className="text-danger sm:hidden max-sm:order-first max-sm:mr-auto" aria-label={`Bỏ ghép ${computer.name}`}>
+                Bỏ ghép
               </Button>
               </div>
               </Fold>
@@ -355,7 +355,7 @@ export function BluetoothFallback({
   const current = bluetoothAddress(computer);
   return (
     <DropdownMenu.Root>
-      <Tooltip label="Dự phòng qua Bluetooth…">
+      <Tooltip label="Dự phòng qua Bluetooth">
         <DropdownMenu.Trigger
           aria-label={`Dự phòng qua Bluetooth cho ${computer.name}`}
           disabled={busy}

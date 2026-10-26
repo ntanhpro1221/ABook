@@ -32,7 +32,7 @@ import { DevicesScreen } from "./DevicesScreen";
 // Cài đặt của điện thoại (chủ app 23-10: "như lạc vào ma trận"): trang gốc là danh sách 6 nhóm, mỗi nhóm một màn con /settings/<nhóm>
 // (shared/SettingsNav.tsx). Cùng cây nhóm với máy tính; Thiết bị ở đây, Studio là tab riêng.
 
-/** Giọng đọc của "Nghe ngay" trên điện thoại: lõi native đọc (plugin ReadAloud); khóa lưu mã hoá bằng Android Keystore (OnlineKeys.kt). */
+/** Giọng đọc của "Nghe ngay" trên điện thoại: lõi native đọc (plugin ReadAloud); khoá lưu mã hoá bằng Android Keystore (OnlineKeys.kt). */
 const phoneVoices: VoiceSettingsApi = {
   voices: async () => (await ReadAloud.voices()).voices,
   sample: (voice, text) => androidSource.readAloudSample!(voice, text),
@@ -127,7 +127,7 @@ function ListenGroup({ settings, change }: { settings: PlayerSettings; change: C
         <SettingsRow label="Tự lùi" hint="Nghỉ quá 30 giây thì lùi 5 giây (quá 10 phút: 10 giây).">
           <Toggle label="Tự lùi" checked={settings.autoRewind !== false} onChange={(value) => change({ autoRewind: value })} />
         </SettingsRow>
-        <SettingsRow label="Nút tai nghe lùi/tới" hint="Tắt thì nút Trước/Sau chuyển chương.">
+        <SettingsRow label="Nút tai nghe lùi/tới" hint="Bật: nút Trước/Sau lùi/tới 15 giây. Tắt: chuyển chương.">
           <Toggle label="Nút tai nghe lùi/tới" checked={settings.headsetSkips !== false} onChange={(value) => change({ headsetSkips: value })} />
         </SettingsRow>
       </SettingsBlock>

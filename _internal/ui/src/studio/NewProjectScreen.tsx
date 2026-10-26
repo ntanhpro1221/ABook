@@ -436,7 +436,7 @@ export function SourceStep({
           </div>
           <p className="mt-4 font-medium">
             {scanning
-              ? "Đang đọc các chương…"
+              ? "Đang đọc các chương"
               : browser
                 ? folderPick
                   ? "Chọn hay kéo thả vào đây các chương của truyện"
@@ -476,7 +476,7 @@ export function SourceStep({
                 <LiveText shown={progressLabel(uploading)} spoken={spokenProgress("Đang gửi các chương", uploading.totalBytes ? uploading.bytes / uploading.totalBytes : null)} />
               </p>
               <Button className="mt-2" size="sm" variant="ghost" disabled={stopping} onClick={cancelUpload}>
-                {stopping ? "Đang dừng…" : "Huỷ gửi"}
+                {stopping ? "Đang dừng" : "Huỷ gửi"}
               </Button>
             </div>
           )}
@@ -659,7 +659,7 @@ export function SourceStep({
               )}
               {browser && uploading && (
                 <Button size="sm" variant="ghost" disabled={stopping} onClick={cancelUpload}>
-                  {stopping ? "Đang dừng…" : "Huỷ gửi"}
+                  {stopping ? "Đang dừng" : "Huỷ gửi"}
                 </Button>
               )}
               <Button size="sm" variant="ghost" onClick={() => onPaths([])}>

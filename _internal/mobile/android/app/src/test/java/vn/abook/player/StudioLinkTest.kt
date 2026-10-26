@@ -21,7 +21,7 @@ class StudioLinkTest {
         assertEquals(emptyList<StudioLink.Computer>(), StudioLink.computers(false, "", JSONObject()))
         assertTrue(StudioLink.known("b2", false, peers))
         assertFalse("điện thoại khác không có Studio", StudioLink.known("a1", true, peers))
-        assertFalse("máy tính chính đã thôi ghép", StudioLink.known(StudioLink.MAIN, false, peers))
+        assertFalse("máy tính chính đã bỏ ghép", StudioLink.known(StudioLink.MAIN, false, peers))
     }
 
     @Test

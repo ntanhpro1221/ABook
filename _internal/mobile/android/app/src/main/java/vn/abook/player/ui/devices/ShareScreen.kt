@@ -33,7 +33,7 @@ import vn.abook.player.ui.theme.Dim
 
 /*
  * Chia sẻ thư viện. Công tắc bật / tắt; khi bật: địa chỉ để gõ vào máy kia, mã ghép 6 số (hay "Tạo mã ghép"), Bluetooth nếu có tin, rồi danh sách máy đã ghép
- * để nghe thư viện này - chạm một máy để thôi ghép. Mã hiện giờ hết hạn (không đếm từng giây): màn không dựng lại mỗi nhịp đồng hồ.
+ * để nghe thư viện này - chạm một máy để bỏ ghép. Mã hiện giờ hết hạn (không đếm từng giây): màn không dựng lại mỗi nhịp đồng hồ.
  */
 
 @Composable
@@ -64,7 +64,7 @@ fun ShareScreen(devices: DevicesState, sheets: SheetHost, onBack: () -> Unit) {
                                 lastCode[0]?.let { code -> CodeRow(code, devices::cancelCode) }
                             }
                             Reveal(share.code == null) {
-                                TextAction("Tạo mã ghép", devices::newCode, "share_new_code", Modifier.fillMaxWidth(), align = Alignment.CenterStart)
+                                TextAction("Ghép máy mới", devices::newCode, "share_new_code", Modifier.fillMaxWidth(), align = Alignment.CenterStart)
                             }
                         }
                     }
@@ -82,7 +82,7 @@ fun ShareScreen(devices: DevicesState, sheets: SheetHost, onBack: () -> Unit) {
                 if (!share.backgroundAllowed) item("background", "background") {
                     DisclosureRow(
                         "Cho ABook chạy nền", devices::openAppSettings, "share_background",
-                        summary = "Tắt màn hình có thể làm máy dừng chia sẻ",
+                        summary = "Khi tắt màn hình, máy có thể tạm dừng chia sẻ - máy tính sẽ phải chờ lâu hơn.",
                     )
                 }
             }

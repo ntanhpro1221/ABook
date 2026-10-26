@@ -8,7 +8,7 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * Thôi ghép hai phía, ghép lại không sinh dòng trùng - như máy tính (webui/sync.py, soát a27 lỗi 5): máy kia báo `POST /sync/v1/unpair` thì
+ * Bỏ ghép hai phía, ghép lại không sinh dòng trùng - như máy tính (webui/sync.py, soát a27 lỗi 5): máy kia báo `POST /sync/v1/unpair` thì
  * điện thoại thu hồi mã của nó; cùng máy (cùng mã máy `id` gửi lúc ghép) ghép lại thì thay dòng cũ.
  */
 class LibraryServerUnpairTest {

@@ -391,7 +391,7 @@ function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item:
         {/* Thẻ chỉ hỏi tên máy kém chắc; mọi tên khác (kể cả tên đã chọn) sửa ở tab Nhân vật, mục "Cách đọc tên". */}
         {onOpenNames && (
           <Button size="sm" variant="ghost" type="button" className="text-fg-2 hover:text-fg" onClick={() => onOpenNames(item.surface ?? "")}>
-            Mọi cách đọc tên…
+            Mọi cách đọc tên
           </Button>
         )}
       </form>
@@ -581,13 +581,13 @@ function SpeakerFix({
         {/* Thẻ "một người hai tên" hỏi hai tên có phải một người - chọn người thứ ba lạc chủ đề (soát UX 29-09). */}
         {item.kind !== "alias" && (
           <Button size="sm" variant="ghost" icon={UserPlus} aria-expanded={creating} className="text-fg-2 hover:text-fg" onClick={() => setCreating((value) => !value)}>
-            Người khác…
+            Người khác
           </Button>
         )}
         {/* Thẻ chỉ gợi vài người; tab Kịch bản tìm được mọi nhân vật trong sách - mở đúng câu này ở đó (soát UX 29-09). */}
         {onOpenScript && item.lines?.length === 1 && item.examples?.[0] && (
           <Button size="sm" variant="ghost" icon={Search} className="text-fg-2 hover:text-fg" onClick={() => onOpenScript(item.examples![0].chapterId, item.lines![0].stableId)}>
-            Tìm người khác…
+            Tìm người khác
           </Button>
         )}
         {/* Thẻ nhóm chỉ in vài câu làm ví dụ ("Hai người chung một tên" có thể 16 câu): đọc đủ ngữ cảnh ở tab Kịch bản trước khi
@@ -696,7 +696,7 @@ function NarratorFix({ bookId, item }: { bookId: string; item: WorkItem }) {
           {buttons.keep}
         </DecisionButton>
         <Button size="sm" variant="ghost" icon={UserPlus} aria-expanded={choosing} className="text-fg-2 hover:text-fg" onClick={() => setChoosing((value) => !value)}>
-          Người kể khác…
+          Người kể khác
         </Button>
       </div>
       <Collapse open={choosing}>
@@ -947,7 +947,7 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
         <div className="flex flex-wrap items-end gap-2">
           {item.pickVoice && onPickVoice && (
             <Button size="sm" variant="ghost" className="mt-3" onClick={() => onPickVoice(item.pickVoice!)}>
-              Chọn giọng khác…
+              Chọn giọng khác
             </Button>
           )}
           <VoiceFix bookId={bookId} item={item} />
@@ -997,7 +997,7 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
           </Button>
           {all && next && (
             <Button size="sm" variant="ghost" disabled={loadingMore} onClick={loadMore}>
-              {loadingMore ? "Đang tải…" : moreText(loaded.length, total, formatNumber)}
+              {loadingMore ? "Đang tải" : moreText(loaded.length, total, formatNumber)}
             </Button>
           )}
         </div>
@@ -1071,7 +1071,7 @@ function BulkKeep({ bookId, kind, items }: { bookId: string; kind: WorkKind; ite
   return (
     <>
       <Button size="sm" variant="ghost" icon={Check} className="mt-3" onClick={() => setConfirm(true)}>
-        Giữ {keepable.length} thẻ…
+        Giữ {keepable.length} thẻ
       </Button>
       <Dialog footer={<DialogActions>
           <Button variant="ghost" onClick={() => setConfirm(false)}>
