@@ -36,6 +36,7 @@ class GapSurfacesTest {
         // Drain the sheet and lazy-row geometry before recording the final surface.
         rule.mainClock.advanceTimeBy(400)
         rule.waitForIdle()
+        rule.assertIconLedTextColumns()
         rule.onRoot().captureRoboImage("src/test/snapshots/gap1_$name.png")
     }
     private val core = FakeCompanionCore()
@@ -76,6 +77,7 @@ class GapSurfacesTest {
         }
         rule.onNodeWithText("Máy tính phòng khách").assertIsDisplayed()
         rule.onNodeWithText("Chương 1 · Ngày trở về").assertIsDisplayed()
+        assertRemoteTransport("main")
         rule.onNodeWithTag("remote_toggle_main").performClick()
         rule.waitForIdle()
         assertEquals("toggle", core.commands.last().second.getString("action"))
@@ -118,6 +120,8 @@ class GapSurfacesTest {
         }
         rule.onNodeWithTag("remote_sleep_main").performClick()
         rule.onNodeWithText("30 phút").assertIsDisplayed()
+        rule.onNodeWithTag("remote_main", useUnmergedTree = true).assertIconLedTextColumn()
+        assertRemoteTransport("main")
         // It is a scrollable list, not a compressed grid: scroll the final option into view.
         rule.onNodeWithTag("remote_players_list").performScrollToNode(hasTestTag("remote_sleep_chapter"))
         val left = rule.onNodeWithTag("remote_sleep_main").getUnclippedBoundsInRoot().left
@@ -130,6 +134,21 @@ class GapSurfacesTest {
         rule.waitForIdle()
         rule.onNodeWithText("30 phút").assertDoesNotExist()
         rule.onNodeWithTag("remote_players_sheet").assertIsDisplayed()
+    }
+
+    private fun assertRemoteTransport(device: String) {
+        val row = rule.onNodeWithTag("remote_transport_$device").getUnclippedBoundsInRoot()
+        val title = rule.onNode(hasTestTag("row_title") and hasAnyAncestor(hasTestTag("remote_$device")), useUnmergedTree = true).getUnclippedBoundsInRoot()
+        val back = rule.onNodeWithTag("remote_back_$device").getUnclippedBoundsInRoot()
+        val play = rule.onNodeWithTag("remote_toggle_$device").getUnclippedBoundsInRoot()
+        val forward = rule.onNodeWithTag("remote_forward_$device").getUnclippedBoundsInRoot()
+        assertEquals(title.left, row.left)
+        assertEquals(rule.onNodeWithTag("remote_$device", useUnmergedTree = true).getUnclippedBoundsInRoot().right, row.right)
+        assertEquals(((row.left + row.right) / 2).value, ((play.left + play.right) / 2).value, 0.5f)
+        assertEquals(((row.left + row.right) / 2).value, ((back.left + forward.right) / 2).value, 0.5f)
+        assertTrue(back.left >= row.left && forward.right <= row.right)
+        assertEquals((back.top + back.bottom) / 2, (play.top + play.bottom) / 2)
+        assertEquals((play.top + play.bottom) / 2, (forward.top + forward.bottom) / 2)
     }
 
     @Test fun remoteLibraryLight() = remoteBook(false)

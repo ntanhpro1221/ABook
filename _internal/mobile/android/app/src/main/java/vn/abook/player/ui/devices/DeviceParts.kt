@@ -94,7 +94,7 @@ fun RemoteBookRow(
 
 /** Thanh tiến độ tải: giá trị chỉ đọc trong pha vẽ, nên mỗi nhịp tải không dựng lại hàng. */
 @Composable
-private fun DownloadBar(flow: StateFlow<Float>) {
+fun DownloadBar(flow: StateFlow<Float>) {
     val value = flow.collectAsState()
     StageProgress { value.value }
 }

@@ -36,6 +36,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import vn.abook.player.ui.components.SheetHost
+import vn.abook.player.ui.assertIconLedTextColumns
 import vn.abook.player.ui.components.SheetLayer
 import vn.abook.player.ui.data.FakeSettingsCore
 import vn.abook.player.ui.data.SettingsGroup
@@ -104,7 +105,10 @@ class DevicesScreenTest {
         rule.waitForIdle()
     }
 
-    private fun shot(name: String) = rule.onRoot().captureRoboImage("src/test/snapshots/$name.png")
+    private fun shot(name: String) {
+        rule.assertIconLedTextColumns()
+        rule.onRoot().captureRoboImage("src/test/snapshots/$name.png")
+    }
 
     private fun theme(dark: Boolean) = if (dark) "dark" else "light"
 
@@ -418,14 +422,20 @@ class DevicesScreenTest {
     }
 
     @Test
-    fun aListenOnlyComputerExplainsItselfInsteadOfOpeningStudio() {
+    fun aListenOnlyComputerExplainsItselfInsteadOfOpeningStudio() = listenOnly(false)
+
+    @Test fun listenOnlyDeviceDark() = listenOnly(true)
+
+    private fun listenOnly(dark: Boolean) {
         pairedScene()
         source.studio = listOf(StudioComputer(MAIN_KEY, "Máy bàn", listenOnly = true))
-        show(DevicesPage.Pair)
+        show(DevicesPage.Pair, dark)
         tap("device_main")
-        rule.onNodeWithTag("device_listen_only").assertIsDisplayed()
+        rule.onNodeWithText(DeviceText.listenOnly("Máy bàn"), useUnmergedTree = true).assertIsDisplayed()
+        rule.assertIconLedTextColumns()
         tap("device_studio")
         assertEquals(null, studio)
+        shot("gap1c_device_listen_only_${theme(dark)}")
     }
 
     @Test

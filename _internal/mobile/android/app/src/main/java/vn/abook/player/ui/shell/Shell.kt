@@ -65,6 +65,9 @@ import vn.abook.player.ui.devices.DevicesPage
 import vn.abook.player.ui.devices.PairScreen
 import vn.abook.player.ui.devices.ShareScreen
 import vn.abook.player.ui.devices.StorageScreen
+import vn.abook.player.ui.voice.KeysScreen
+import vn.abook.player.ui.voice.MyMusicScreen
+import vn.abook.player.ui.voice.VoicePage
 import vn.abook.player.ui.editbook.EditBooks
 import vn.abook.player.ui.editbook.EditBookRoute
 import vn.abook.player.ui.editbook.EditChapterRoute
@@ -205,12 +208,19 @@ fun AppShell(
                             is Destination.CropCover -> if (editors != null) CoverCropRoute(editors.session(destination.book, demo), destination.uri, nav::pop)
                             is Destination.Settings -> SettingsGroupScreen(
                                 destination.group, settings, shell.sheets, onBack = nav::pop, openDevices = { nav.push(Destination.Devices(it)) },
+                                openVoice = { nav.push(Destination.Voice(it)) },
                             )
                             is Destination.Devices -> settings.devices?.let { devices ->
                                 when (destination.page) {
                                     DevicesPage.Pair -> PairScreen(devices, shell.sheets, nav::pop)
                                     DevicesPage.Share -> ShareScreen(devices, shell.sheets, nav::pop)
                                     DevicesPage.Storage -> StorageScreen(devices, shell.sheets, nav::pop)
+                                }
+                            }
+                            is Destination.Voice -> settings.voice?.let { voice ->
+                                when (destination.page) {
+                                    VoicePage.Keys -> KeysScreen(voice, shell.sheets, nav::pop)
+                                    VoicePage.Music -> MyMusicScreen(voice, shell.sheets, nav::pop)
                                 }
                             }
                         }

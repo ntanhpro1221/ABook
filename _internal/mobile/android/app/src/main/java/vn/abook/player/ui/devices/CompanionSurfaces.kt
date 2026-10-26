@@ -13,7 +13,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.shape.CircleShape
 import vn.abook.player.ui.nowplaying.PlayerGlyph
 import androidx.compose.ui.unit.dp
@@ -61,56 +60,55 @@ fun OtherPlayersSheet(repo: CompanionRepo, local: PlayerRepo, dismiss: () -> Uni
                     enter = expandVertically(tween(MotionMs.MEDIUM, easing = Motion.Decelerate)) + slideInVertically(tween(MotionMs.MEDIUM)) { it / 4 },
                     exit = shrinkVertically(tween(MotionMs.MEDIUM_OUT, easing = Motion.Accelerate)) + slideOutVertically(tween(MotionMs.MEDIUM_OUT)) { it / 4 }) {
                 val remote = row.item
-                Column(Modifier.fillMaxWidth().padding(top = Dim.s16).testTag("remote_${remote.device}")) {
-                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-                        val lineHeight = with(LocalDensity.current) { Abook.type.bodyStrong.lineHeight.toDp() }
-                        Box(Modifier.width(Dim.s24).height(lineHeight).testTag("remote_kind_${remote.device}"), contentAlignment = Alignment.Center) {
-                            OtherPlayerIcon(remote)
-                        }
-                        Spacer(Modifier.width(Dim.s8))
-                        BasicText(remote.name, style = Abook.type.bodyStrong, modifier = Modifier.weight(1f).testTag("remote_name_${remote.device}"))
-                    }
-                    Caption(if (remote.book.isEmpty()) "Chưa phát sách" else if (remote.playing) "Đang phát" else "Đang dừng")
-                    Reveal(remote.book.isNotEmpty() && remote.chapter != null) {
-                        Column {
-                            BasicText(remote.title, style = Abook.type.bodySmall)
-                            Caption("${Fmt.clock(remote.positionAfter(0.0))} · ${Fmt.clock(remote.duration)}")
-                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Dim.s8, Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically) {
-                                IconAction("Lùi 15 giây trên ${remote.name}", { if (!ui.busy) scope.launch { repo.send(remote, "skip", -15.0) } }, "remote_back_${remote.device}") { PlayerGlyph("↶15") }
-                                IconAction(if (remote.playing) "Tạm dừng trên ${remote.name}" else "Phát tiếp trên ${remote.name}",
-                                    { if (!ui.busy) scope.launch { repo.send(remote, "toggle") } }, "remote_toggle_${remote.device}") {
-                                    Box(Modifier.size(40.dp).background(Abook.colors.text, CircleShape), contentAlignment = Alignment.Center) {
-                                        PlayPauseGlyph(remote.playing, Abook.colors.bg, 20.dp)
-                                    }
-                                }
-                                IconAction("Tới 15 giây trên ${remote.name}", { if (!ui.busy) scope.launch { repo.send(remote, "skip", 15.0) } }, "remote_forward_${remote.device}") { PlayerGlyph("15↷") }
-                            }
-                            Reveal(remote.known) {
-                                TextAction("Nghe ở đây", { if (!ui.busy) scope.launch { if (repo.listenHere(remote, local::playChapter)) dismiss() } }, "remote_here_${remote.device}", align = Alignment.CenterStart)
-                            }
-                            Reveal(remote.cast) {
+                Column(Modifier.fillMaxWidth()) {
+                    ListItem(
+                        remote.name, tag = "remote_${remote.device}", titleStyle = Abook.type.bodyStrong,
+                        hint = if (remote.book.isEmpty()) "Chưa phát sách" else if (remote.playing) "Đang phát" else "Đang dừng",
+                        leading = { OtherPlayerIcon(remote) },
+                        below = {
+                            Reveal(remote.book.isNotEmpty() && remote.chapter != null) {
                                 Column {
-                                    TextAction("Hẹn giờ", { sleepFor = if (sleepFor == remote.device) null else remote.device }, "remote_sleep_${remote.device}", align = Alignment.CenterStart)
-                                    Reveal(sleepFor == remote.device) {
-                                        Column {
-                                            for (minutes in listOf(15, 30, 45, 60)) {
-                                                TextAction("$minutes phút", {
-                                                    if (!ui.busy) scope.launch { repo.send(remote, "sleep", minutes = minutes); sleepFor = null }
-                                                }, "remote_sleep_${remote.device}_$minutes", Modifier.fillMaxWidth(), Alignment.CenterStart)
+                                    BasicText(remote.title, style = Abook.type.bodySmall)
+                                    Caption("${Fmt.clock(remote.positionAfter(0.0))} · ${Fmt.clock(remote.duration)}")
+                                    // All playback controls belong to this device's text column, including their shared centre.
+                                    Row(Modifier.fillMaxWidth().testTag("remote_transport_${remote.device}"), horizontalArrangement = Arrangement.spacedBy(Dim.s8, Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically) {
+                                        IconAction("Lùi 15 giây trên ${remote.name}", { if (!ui.busy) scope.launch { repo.send(remote, "skip", -15.0) } }, "remote_back_${remote.device}") { PlayerGlyph("↶15") }
+                                        IconAction(if (remote.playing) "Tạm dừng trên ${remote.name}" else "Phát tiếp trên ${remote.name}",
+                                            { if (!ui.busy) scope.launch { repo.send(remote, "toggle") } }, "remote_toggle_${remote.device}") {
+                                            Box(Modifier.size(40.dp).background(Abook.colors.text, CircleShape), contentAlignment = Alignment.Center) {
+                                                PlayPauseGlyph(remote.playing, Abook.colors.bg, 20.dp)
                                             }
-                                            TextAction("Tắt hẹn giờ", { if (!ui.busy) scope.launch { repo.send(remote, "sleep", minutes = 0); sleepFor = null } }, "remote_sleep_off", Modifier.fillMaxWidth(), Alignment.CenterStart)
-                                            TextAction("Hết chương", { if (!ui.busy) scope.launch { repo.send(remote, "sleep", mode = "chapter"); sleepFor = null } }, "remote_sleep_chapter", Modifier.fillMaxWidth(), Alignment.CenterStart)
+                                        }
+                                        IconAction("Tới 15 giây trên ${remote.name}", { if (!ui.busy) scope.launch { repo.send(remote, "skip", 15.0) } }, "remote_forward_${remote.device}") { PlayerGlyph("15↷") }
+                                    }
+                                    Reveal(remote.known) {
+                                        TextAction("Nghe ở đây", { if (!ui.busy) scope.launch { if (repo.listenHere(remote, local::playChapter)) dismiss() } }, "remote_here_${remote.device}", align = Alignment.CenterStart)
+                                    }
+                                    Reveal(remote.cast) {
+                                        Column {
+                                            TextAction("Hẹn giờ", { sleepFor = if (sleepFor == remote.device) null else remote.device }, "remote_sleep_${remote.device}", align = Alignment.CenterStart)
+                                            Reveal(sleepFor == remote.device) {
+                                                Column {
+                                                    for (minutes in listOf(15, 30, 45, 60)) {
+                                                        TextAction("$minutes phút", {
+                                                            if (!ui.busy) scope.launch { repo.send(remote, "sleep", minutes = minutes); sleepFor = null }
+                                                        }, "remote_sleep_${remote.device}_$minutes", Modifier.fillMaxWidth(), Alignment.CenterStart)
+                                                    }
+                                                    TextAction("Tắt hẹn giờ", { if (!ui.busy) scope.launch { repo.send(remote, "sleep", minutes = 0); sleepFor = null } }, "remote_sleep_off", Modifier.fillMaxWidth(), Alignment.CenterStart)
+                                                    TextAction("Hết chương", { if (!ui.busy) scope.launch { repo.send(remote, "sleep", mode = "chapter"); sleepFor = null } }, "remote_sleep_chapter", Modifier.fillMaxWidth(), Alignment.CenterStart)
+                                                }
+                                            }
                                         }
                                     }
                                 }
                             }
-                        }
-                    }
-                    val owner = Regex("^p([0-9a-f]{8})_").find(here.bookId)?.groupValues?.get(1) ?: "main"
-                    Reveal(here.hasTrack && (remote.cast || remote.device == owner)) {
-                        TextAction("Phát ở đây", { if (!ui.busy) scope.launch { repo.handOff(remote, here, local.positionMs() / 1000.0, local::pause) } }, "remote_load_${remote.device}", align = Alignment.CenterStart)
-                    }
-                    RowLine()
+                            val owner = Regex("^p([0-9a-f]{8})_").find(here.bookId)?.groupValues?.get(1) ?: "main"
+                            Reveal(here.hasTrack && (remote.cast || remote.device == owner)) {
+                                TextAction("Phát ở đây", { if (!ui.busy) scope.launch { repo.handOff(remote, here, local.positionMs() / 1000.0, local::pause) } }, "remote_load_${remote.device}", align = Alignment.CenterStart)
+                            }
+                        },
+                    )
+                    RowLine(start = Dim.s24 + Dim.s12)
                 }
                 }
             }
