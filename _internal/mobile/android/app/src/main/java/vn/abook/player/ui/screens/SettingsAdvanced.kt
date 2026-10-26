@@ -43,6 +43,8 @@ import vn.abook.player.ui.data.ThirdParty
 import vn.abook.player.ui.data.ThirdPartySection
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.components.fadeEdges
+import androidx.compose.foundation.lazy.rememberLazyListState
 
 /** Lời của Chẩn đoán và Bộ nhớ: cùng chữ với bản WebView (android/Diagnostics.tsx, listen/ReadAloudStorage.tsx, listen/prepareAhead.ts). */
 private object AdvancedCopy {
@@ -134,11 +136,12 @@ private fun LogSheet(repo: SettingsRepo) {
         }
         Caption(AdvancedCopy.LOG_NOTE, Modifier.padding(bottom = Dim.s8))
         val shown = lines
+        // Mỗi lần đọc một danh sách mới, mở sẵn ở dòng cuối (mới nhất) - không cuộn sau khi đã vẽ.
+        val list = remember(shown) { LazyListState(shown?.lastIndex?.coerceAtLeast(0) ?: 0) }
         when {
             shown == null -> BasicText("Đang đọc nhật ký.", style = Abook.type.bodySmall, modifier = Modifier.padding(vertical = Dim.s16))
             shown.isEmpty() -> BasicText("Nhật ký đang trống.", style = Abook.type.bodySmall, modifier = Modifier.padding(vertical = Dim.s16))
-            // Mỗi lần đọc một danh sách mới, mở sẵn ở dòng cuối (mới nhất) - không cuộn sau khi đã vẽ.
-            else -> LazyColumn(Modifier.fillMaxWidth().heightIn(max = 440.dp), state = remember(shown) { LazyListState(shown.size - 1) }) {
+            else -> LazyColumn(Modifier.fillMaxWidth().heightIn(max = 440.dp).fadeEdges(list), state = list) {
                 itemsIndexed(shown, key = { index, _ -> index }, contentType = { _, _ -> "line" }) { _, line ->
                     BasicText(line, style = Abook.type.caption.copy(color = Abook.colors.text2), modifier = Modifier.padding(vertical = 2.dp))
                 }
@@ -155,10 +158,11 @@ private fun ThirdPartySheet(repo: SettingsRepo) {
     Column(Modifier.fillMaxWidth().testTag("third_party_sheet")) {
         BasicText("Thành phần sử dụng", style = Abook.type.sectionTitle)
         val shown = sections
+        val list = rememberLazyListState()
         when {
             shown == null -> BasicText("Đang mở danh sách", style = Abook.type.bodySmall, modifier = Modifier.padding(vertical = Dim.s16))
             shown.isEmpty() -> BasicText("Chưa mở được danh sách.", style = Abook.type.bodySmall, modifier = Modifier.padding(vertical = Dim.s16))
-            else -> LazyColumn(Modifier.fillMaxWidth().heightIn(max = 460.dp)) {
+            else -> LazyColumn(Modifier.fillMaxWidth().heightIn(max = 460.dp).fadeEdges(list), state = list) {
                 for ((index, section) in shown.withIndex()) {
                     if (section.title.isNotEmpty()) {
                         item(key = "title:$index", contentType = "title") {

@@ -21,6 +21,7 @@ import { refreshAfterEdit } from "./EditBook";
 import type { Cast, CastMember, ListenBook, Script, ScriptSegment } from "./model";
 import { useReadAloudTry } from "./readings";
 import { useCast } from "./source";
+import { useFadeScroller } from "@/shared/scrollFade";
 
 // Sửa MỘT CÂU từ trang đọc, trên cuốn không có xưởng (file .abook trên máy tính hay điện thoại - docs/EDITING.md, P2a). Cùng
 // những việc tab Kịch bản của Studio làm cho cuốn có xưởng - ai nói câu này, loại câu / cảm xúc / chữ đem đọc, cách đọc một tên,
@@ -293,6 +294,7 @@ export function LineWishDialog({
   }, [segmentIndex, heldWord]);
   // Bước con (Ai nói / Cách đọc / Sửa một từ) mở từ menu câu: Back của điện thoại về menu câu trước, chưa đóng cả hộp.
   const body = useRef<HTMLDivElement | null>(null);
+  const scrollFade = useFadeScroller<HTMLDivElement>(body);
   useBackLayer(view !== "menu" && !heldWord, () => {
     setPickedWord(null);
     goView("menu");
@@ -431,7 +433,7 @@ export function LineWishDialog({
   return (
     <Dialog open={segment !== undefined} onOpenChange={(open) => !open && close()} width="max-w-md" title={title}>
       {line && (
-        <div ref={body} className="max-h-[68dvh] space-y-3 overflow-y-auto overscroll-contain pr-0.5">
+        <div ref={scrollFade.ref} style={scrollFade.style} className="max-h-[68dvh] space-y-3 overflow-y-auto overscroll-contain pr-0.5">
           <LineQuote line={line} />
           {!identified && (
             <p className="py-2 text-sm text-fg-2">

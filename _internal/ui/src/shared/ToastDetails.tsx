@@ -4,6 +4,7 @@ import { useBackLayer } from "./backStack";
 import { MotionRegion } from "./MotionRegion";
 import { MotionPresence } from "./MotionPresence";
 import { Button } from "./ui";
+import { useFadeScroller } from "./scrollFade";
 
 type Content = ReactNode | (() => ReactNode);
 const shown = (value: Content) => typeof value === "function" ? value() : value;
@@ -12,6 +13,7 @@ const shown = (value: Content) => typeof value === "function" ? value() : value;
 export function ToastDetails({ title, description, action, toastId }: { title: Content; description?: Content; action?: ReactNode; toastId?: string | number }) {
   const [open, setOpen] = useState(false);
   const content = useRef<HTMLDivElement>(null);
+  const scrollFade = useFadeScroller<HTMLDivElement>();
   const host = useRef<HTMLSpanElement>(null), trigger = useRef<HTMLButtonElement>(null);
   const [above, setAbove] = useState(false);
   const duration = useRef<number | undefined>(undefined);
@@ -36,12 +38,15 @@ export function ToastDetails({ title, description, action, toastId }: { title: C
     <button ref={trigger} type="button" data-button aria-expanded={open} onClick={() => changeOpen(!open)} className="toast-details-action">Chi tiết</button>
     {/* Neo vào chính toast: không chịu hai hệ toạ độ do transform của Sonner, không tạo lớp dialog thứ hai. */}
     <MotionPresence open={open} className={`absolute right-0 z-50 w-[min(320px,calc(100vw-32px))] ${above ? "bottom-[calc(100%+12px)]" : "top-[calc(100%+12px)]"}`}>
-    <div ref={content} role="region" aria-label="Chi tiết thông báo" className="max-h-[60dvh] overflow-y-auto rounded-cover bg-panel p-[16px] text-sm text-fg shadow-float">
-      <MotionRegion className="space-y-3 text-pretty">
-        <p className="font-medium">{shown(title)}</p>
-        {description && <div className="break-words text-fg-2">{shown(description)}</div>}
-        {action}
-      </MotionRegion>
+    {/* Khung (bo, bóng) ở lớp ngoài, phần cuộn mờ mép ở lớp trong: mặt nạ trên chính khung sẽ xoá cả bóng. */}
+    <div ref={content} role="region" aria-label="Chi tiết thông báo" className="flex max-h-[60dvh] flex-col rounded-cover bg-panel p-[16px] text-sm text-fg shadow-float">
+      <div ref={scrollFade.ref} style={scrollFade.style} className="min-h-0 overflow-y-auto">
+        <MotionRegion className="space-y-3 text-pretty">
+          <p className="font-medium">{shown(title)}</p>
+          {description && <div className="break-words text-fg-2">{shown(description)}</div>}
+          {action}
+        </MotionRegion>
+      </div>
     </div></MotionPresence>
   </span>;
 }

@@ -83,6 +83,7 @@ import vn.abook.player.ui.motion.Motion
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.theme.MotionMs
+import vn.abook.player.ui.components.fadeEdges
 
 /**
  * Nhạc nền của một cuốn - MỘT bảng cho "…" của Đang nghe và bảng "Thêm" của trang sách (cùng lựa chọn, lưu vào lớp sửa nên đi theo sách).
@@ -117,7 +118,8 @@ fun MusicPanel(music: MusicState, bookId: String, player: PlayerMusic?, modifier
 @Composable
 private fun MainPage(music: MusicState, ui: BookMusicUi, player: PlayerMusic?, onAdd: () -> Unit, onCue: (String) -> Unit) {
     val book = ui.book
-    Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).testTag("music_panel")) {
+    val scroll = rememberScrollState()
+    Column(Modifier.fillMaxWidth().fadeEdges(scroll).verticalScroll(scroll).testTag("music_panel")) {
         val stage = when {
             book != null -> book.kind
             ui.failed -> null
@@ -194,7 +196,8 @@ private fun CuePage(music: MusicState, ui: BookMusicUi, cue: MusicCue, onAdd: ()
     val colors = Abook.colors
     val enabled = !ui.busy
     val open = ui.swapKey == cue.key
-    Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).testTag("music_cue_page")) {
+    val scroll = rememberScrollState()
+    Column(Modifier.fillMaxWidth().fadeEdges(scroll).verticalScroll(scroll).testTag("music_cue_page")) {
         BasicText(
             MusicText.cueTitle(cue),
             style = Abook.type.sectionTitle.copy(
@@ -433,7 +436,7 @@ fun MusicCreditBlock(credit: MusicCredit?) {
             Box(Modifier.fillMaxWidth().height(1.dp).background(Abook.colors.line))
             ListItem(
                 "Đang phát", Modifier, { open = !open }, "music_credit_toggle",
-                hint = MusicText.creditLine(shown), hintStyle = Abook.type.bodySmall,
+                hint = MusicText.creditLine(shown),
                 trailing = { ChevronIcon(Abook.colors.text3, turn = { turn }) },
             )
             Reveal(open) {
