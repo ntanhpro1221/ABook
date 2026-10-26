@@ -200,6 +200,17 @@ qt_add_qml_module(ABookDesk
         qml/AdvancedDiagnostics.qml
         qml/AdvancedAbout.qml
         qml/MyMusicText.js
+        qml/EditBookLogic.js
+        qml/EditBookActions.qml
+        qml/EditBookSection.qml
+        qml/EditBookSkeleton.qml
+        qml/EditBookError.qml
+        qml/EditBookSwap.qml
+        qml/EditBookMyMusic.qml
+        qml/EditBookReadings.qml
+        qml/EditBookRename.qml
+        qml/EditBookSaveAs.qml
+        qml/EditBookItems.qml
         qml/Scrollbar.qml
         qml/ScrollEdges.qml
         qml/SmoothWheel.qml
