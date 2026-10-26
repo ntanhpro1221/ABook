@@ -87,7 +87,7 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
   return (
     <div className="w-24 shrink-0 sm:w-44">
       <div
-        className={cn("relative rounded-lg transition-shadow duration-motion-fast", dragging && "ring-2 ring-accent ring-offset-2 ring-offset-bg")}
+        className={cn("relative rounded-control transition-shadow duration-motion-fast", dragging && "ring-2 ring-accent ring-offset-2 ring-offset-bg")}
         onDragOver={(event) => {
           if (!Array.from(event.dataTransfer.items).some((item) => item.type.startsWith("image/"))) return;
           event.preventDefault();
@@ -103,7 +103,7 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
         }}
       >
         <BookCover title={book.title} part={book.series?.part} size={narrow ? "sm" : "lg"} image={book.cover} className="w-24 sm:w-44" />
-          <div aria-hidden={!busy} className={cn("pointer-events-none absolute inset-0 grid place-items-center rounded-lg bg-cover-overlay text-cover-ink transition-opacity duration-motion-fast", busy ? "opacity-100" : "opacity-0")}>
+          <div aria-hidden={!busy} className={cn("pointer-events-none absolute inset-0 grid place-items-center rounded-control bg-cover-overlay text-cover-ink transition-opacity duration-motion-fast", busy ? "opacity-100" : "opacity-0")}>
             <Skeleton className="h-full w-full" />
           </div>
       </div>
@@ -114,7 +114,7 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
           disabled={busy}
           onClick={() => input.current?.click()}
           aria-label={book.cover ? "Đổi ảnh bìa" : "Đặt ảnh bìa"}
-          className="touch-box inline-flex h-8 items-center gap-1.5 rounded-lg px-2 text-[0.8125rem] font-medium text-fg-2 hover:bg-hover hover:text-fg disabled:opacity-50 max-sm:!justify-start max-sm:px-0"
+          className="touch-box inline-flex h-8 items-center gap-1.5 rounded-control px-2 text-[0.8125rem] font-medium text-fg-2 hover:bg-hover hover:text-fg disabled:opacity-50 max-sm:!justify-start max-sm:px-0"
         >
           <ImagePlus className="ink-start size-4" /> {/* Hai chữ, không xuống dòng: nút đứng dưới bìa 154 px cạnh hai nút biểu tượng ("Đổi ảnh bìa" gãy dòng đè lên dòng gợi ý, soát 24-10). */}
           <span className="whitespace-nowrap max-sm:hidden">{book.cover ? "Đổi bìa" : "Đặt bìa"}</span>
@@ -125,7 +125,7 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
           onClick={() => setSearching(true)}
           aria-label="Tìm ảnh bìa trên mạng"
           title="Tìm ảnh bìa trên mạng"
-          className="touch-box grid size-8 place-items-center rounded-lg text-fg-2 hover:bg-hover hover:text-fg disabled:opacity-50"
+          className="touch-box grid size-8 place-items-center rounded-control text-fg-2 hover:bg-hover hover:text-fg disabled:opacity-50"
         >
           <Globe className="size-4" />
         </button>
@@ -136,7 +136,7 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
             onClick={() => remove.mutate()}
             aria-label="Bỏ ảnh bìa, dùng lại bìa vẽ từ tên sách"
             title="Bỏ ảnh bìa"
-            className="touch-box grid size-8 place-items-center rounded-lg text-fg-2 hover:bg-hover hover:text-fg disabled:opacity-50"
+            className="touch-box grid size-8 place-items-center rounded-control text-fg-2 hover:bg-hover hover:text-fg disabled:opacity-50"
           >
             <Trash2 className="size-4" />
           </button>

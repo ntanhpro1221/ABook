@@ -236,7 +236,7 @@ function DownloadMenuItem({ book }: { book: ListenBook }) {
         toast("Đang tải về máy", { duration: 3000 });
         void EbookLibrary.download({ bookId: book.id }).catch((error: Error) => toast.error("Không tải được", { description: error.message }));
       }}
-      className="flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[highlighted]:bg-hover"
+      className="flex h-9 cursor-default items-center gap-2 rounded-control px-2 text-sm outline-none data-[highlighted]:bg-hover"
     >
       <Download className="size-4" /> Tải về máy
     </DropdownMenu.Item>
@@ -250,7 +250,7 @@ function RemoveFromPhoneMenuItem({ book }: { book: ListenBook }) {
   return (
     <DropdownMenu.Item
       onSelect={() => window.dispatchEvent(new CustomEvent<RemovableFromPhone>("abook-remove-from-phone", { detail: { id: book.id, title: book.title } }))}
-      className="flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm text-danger outline-none data-[highlighted]:bg-hover"
+      className="flex h-9 cursor-default items-center gap-2 rounded-control px-2 text-sm text-danger outline-none data-[highlighted]:bg-hover"
     >
       <Smartphone className="size-4" />
       <span className="flex min-w-0 flex-1 items-baseline justify-between gap-3">
@@ -415,10 +415,10 @@ export function AndroidApp() {
         toastOptions={{
           closeButtonAriaLabel: "Đóng thông báo",
           classNames: {
-            toast: "!bg-panel !border !border-line !text-fg !rounded-xl",
+            toast: "!bg-panel !border !border-line !text-fg !rounded-cover",
             description: "!text-fg-2",
-            actionButton: "!bg-accent !text-accent-ink !font-semibold !rounded-lg",
-            cancelButton: "!bg-hover !text-fg !rounded-lg",
+            actionButton: "!bg-accent !text-accent-ink !font-semibold !rounded-control",
+            cancelButton: "!bg-hover !text-fg !rounded-control",
           },
         }}
       />

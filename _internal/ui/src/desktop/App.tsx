@@ -132,7 +132,7 @@ function StudioMenuItem({ id }: { id: string }) {
   return (
     <DropdownMenu.Item
       onSelect={() => navigate(`/studio/${id}`)}
-      className="flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[highlighted]:bg-hover"
+      className="flex h-9 cursor-default items-center gap-2 rounded-control px-2 text-sm outline-none data-[highlighted]:bg-hover"
     >
       <Clapperboard className="size-4" /> Mở trong Studio
     </DropdownMenu.Item>
@@ -145,7 +145,7 @@ function RemoveImportedMenuItem({ book }: { book: ListenBook }) {
   return (
     <DropdownMenu.Item
       onSelect={() => window.dispatchEvent(new CustomEvent<ListenBook>("abook-remove-imported", { detail: book }))}
-      className="flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm text-danger outline-none data-[highlighted]:bg-hover"
+      className="flex h-9 cursor-default items-center gap-2 rounded-control px-2 text-sm text-danger outline-none data-[highlighted]:bg-hover"
     >
       <Trash2 className="size-4" /> Xoá khỏi thư viện…
     </DropdownMenu.Item>
@@ -697,12 +697,12 @@ export function App() {
         toastOptions={{
           closeButtonAriaLabel: "Đóng thông báo",
           classNames: {
-            toast: "!bg-panel !border !border-line !text-fg !shadow-float !rounded-xl",
+            toast: "!bg-panel !border !border-line !text-fg !shadow-float !rounded-cover",
             description: "!text-fg-2",
             // Nút trong thông báo ("Hoàn tác", "Ở lại đây") theo màu của app - mặc định của sonner là chữ tối trên nền
             // tối ở giao diện tối (soát UX 29-09).
-            actionButton: "!bg-accent !text-accent-ink !font-semibold !rounded-lg",
-            cancelButton: "!bg-hover !text-fg !rounded-lg",
+            actionButton: "!bg-accent !text-accent-ink !font-semibold !rounded-control",
+            cancelButton: "!bg-hover !text-fg !rounded-control",
             closeButton: "!text-fg-2",
           },
         }}

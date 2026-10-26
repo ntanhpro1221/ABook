@@ -28,7 +28,7 @@ export interface SentenceEditing {
 
 // Thanh nổi dưới câu đang chọn: điện thoại chỉ còn biểu tượng cho nút phụ (nhãn vẫn cho trình đọc màn hình) để cả thanh nằm MỘT hàng, không che chữ đang đọc.
 const BAR_LABEL = "max-sm:sr-only";
-const BAR_BUTTON = "inline-flex min-h-[48px] min-w-[48px] items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-accent-text hover:bg-hover disabled:opacity-60";
+const BAR_BUTTON = "inline-flex min-h-[48px] min-w-[48px] items-center justify-center gap-2 rounded-control px-3 py-2.5 text-sm font-medium text-accent-text hover:bg-hover disabled:opacity-60";
 
 /** Câu đang chọn và mọi việc làm được với nó. Đổi chương (hay cuốn) thì bỏ câu / chữ đang chọn - câu số 3 của chương trước không phải câu số 3
  *  của chương này (soát a70). `onListen`: nghe từ một câu (nút "Nghe từ câu này"). */
@@ -125,7 +125,7 @@ export function useSentenceMenu({
   const bar: ReactNode =
     selected !== null && script ? (
       <div ref={barBox} className="flex flex-col items-center gap-2">
-        <div className="pointer-events-auto flex flex-wrap items-center justify-center gap-2 rounded-xl bg-panel p-1 shadow-float ring-1 ring-line">
+        <div className="pointer-events-auto flex flex-wrap items-center justify-center gap-2 rounded-cover bg-panel p-1 shadow-float ring-1 ring-line">
           {canListen && (
             <button
               type="button"
@@ -175,7 +175,7 @@ export function useSentenceMenu({
           </button>
         </div>
         {lineEdit?.mode === "blocked" && (
-          <p className="pointer-events-auto max-w-sm rounded-xl bg-panel px-3 py-1.5 text-center text-xs text-fg-2 shadow-float ring-1 ring-line">
+          <p className="pointer-events-auto max-w-sm rounded-cover bg-panel px-3 py-1.5 text-center text-xs text-fg-2 shadow-float ring-1 ring-line">
             Sửa câu này: {lineEdit.note}
           </p>
         )}

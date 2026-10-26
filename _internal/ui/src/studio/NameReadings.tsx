@@ -137,7 +137,7 @@ export function NameReadings({ bookId, focus = false, name = "" }: { bookId: str
           aria-label="Tìm tên"
           autoComplete="off"
           spellCheck={false}
-          className="h-9 w-full rounded-lg border border-line bg-panel pl-8 pr-8 text-sm outline-none focus-visible:border-focus [&::-webkit-search-cancel-button]:hidden"
+          className="h-9 w-full rounded-control border border-line bg-panel pl-8 pr-8 text-sm outline-none focus-visible:border-focus [&::-webkit-search-cancel-button]:hidden"
         />
         {/* Luôn dựng, chỉ mờ vào / ra tại chỗ (.motion-hold): gõ chữ đầu / xoá hết không làm cả mục mờ lại. */}
         <button
@@ -147,7 +147,7 @@ export function NameReadings({ bookId, focus = false, name = "" }: { bookId: str
           aria-hidden={!query || undefined}
           tabIndex={query ? undefined : -1}
           data-state={query ? "open" : "closed"}
-          className="motion-hold absolute right-1.5 top-1/2 grid size-6 -translate-y-1/2 place-items-center rounded-md text-fg-3 hover:text-fg"
+          className="motion-hold absolute right-1.5 top-1/2 grid size-6 -translate-y-1/2 place-items-center rounded-control text-fg-3 hover:text-fg"
         >
           <X className="size-3.5" />
         </button>
@@ -206,7 +206,7 @@ function AddAnyWord({ bookId, open, onOpenChange }: { bookId: string; open: bool
             onOpenChange(false);
           }}
           aria-label="Đóng"
-          className="grid size-6 place-items-center rounded-md text-fg-3 hover:text-fg"
+          className="grid size-6 place-items-center rounded-control text-fg-3 hover:text-fg"
         >
           <X className="size-3.5" />
         </button>
@@ -219,7 +219,7 @@ function AddAnyWord({ bookId, open, onOpenChange }: { bookId: string; open: bool
         placeholder="vd TP.HCM"
         spellCheck={false}
         autoComplete="off"
-        className="mt-1.5 h-9 w-full rounded-lg border border-line bg-bg px-2.5 text-sm outline-none focus-visible:border-focus"
+        className="mt-1.5 h-9 w-full rounded-control border border-line bg-bg px-2.5 text-sm outline-none focus-visible:border-focus"
       />
       <p className="mt-1.5 text-xs text-fg-2">
         Nhập một từ liền để đổi cách đọc cả cuốn, giữ chữ gốc.
@@ -505,7 +505,7 @@ export function EditReading({ bookId, item, onDone, fresh, waiting, aloud, reach
         spellCheck={false}
         autoComplete="off"
         className={cn(
-          "h-8 min-w-0 flex-1 rounded-lg border bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-focus sm:w-44 sm:flex-none",
+          "h-8 min-w-0 flex-1 rounded-control border bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-focus sm:w-44 sm:flex-none",
           problem ? "border-danger" : "border-line",
         )}
       />
