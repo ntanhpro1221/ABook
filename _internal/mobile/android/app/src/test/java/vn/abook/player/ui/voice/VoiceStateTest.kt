@@ -20,7 +20,10 @@ class VoiceStateTest {
     private var changed = 0
     private val viet = ModuleKind.Vieneu
 
-    private fun state(pollMs: Long = 3_600_000) = VoiceState(source, CoroutineScope(Dispatchers.Unconfined), player, { changed++ }, pollMs)
+    private val scope = CoroutineScope(Dispatchers.Unconfined)
+    private val imports = MineImports(source, scope)
+
+    private fun state(pollMs: Long = 3_600_000) = VoiceState(source, scope, player, { changed++ }, pollMs, imports)
 
     private fun eventually(what: String, condition: () -> Boolean) {
         val until = System.currentTimeMillis() + 5_000

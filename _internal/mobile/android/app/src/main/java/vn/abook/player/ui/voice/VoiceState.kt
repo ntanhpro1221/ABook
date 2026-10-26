@@ -53,6 +53,7 @@ data class VoiceSummary(val keys: String? = null, val music: String? = null)
 /**
  * Trạng thái sống của Giọng đọc làm thêm. Màn chỉ vẽ các luồng ở đây và gọi hàm ở đây; mọi việc với lõi đi qua [VoiceSource]. Tiến độ tải là một luồng riêng
  * ([progress]) để thanh tiến độ đọc nó trong pha vẽ, không dựng lại hàng mỗi nhịp. `voicesChanged`: danh sách giọng cần đọc lại (giọng vừa tải / gỡ, khoá vừa dùng được).
+ * `imports`: lượt thêm nhạc dùng chung với bảng Nhạc nền ([MineImports]).
  */
 @Stable
 class VoiceState(
@@ -61,6 +62,7 @@ class VoiceState(
     private val player: SamplePlayer,
     private val voicesChanged: () -> Unit = {},
     private val pollMs: Long = 700,
+    private val imports: MineImports,
 ) {
     private val moduleFlow = MutableStateFlow(ModuleKind.entries.associateWith { ModuleUi() })
     private val progresses = ModuleKind.entries.associateWith { MutableStateFlow(0f) }
@@ -90,6 +92,27 @@ class VoiceState(
             music = if (music.loaded) VoiceText.musicSummary(music.tracks.size) else null,
         )
     }.stateIn(scope, SharingStarted.Eagerly, VoiceSummary())
+
+    init {
+        imports.listen(object : MineImports.Listener {
+            override fun changed(turn: MineImports.Turn?) {
+                importFlow.value = if (turn != null && turn.total > 0) turn.done.toFloat() / turn.total else 0f
+                musicFlow.update { it.copy(importing = turn != null, done = turn?.done ?: 0, total = turn?.total ?: 0) }
+            }
+
+            // Lượt nào xong (kể cả lượt bấm ở bảng Nhạc nền) thì danh sách đọc lại; câu báo chỉ cho lượt bấm ở đây.
+            override fun finished(owner: String, result: Result<MusicImportResult>) {
+                val mine = owner == MineImports.MY_MUSIC
+                result.onSuccess { done ->
+                    musicFlow.update {
+                        if (mine) it.copy(loaded = true, tracks = done.tracks, summary = VoiceText.imported(done), problems = done.failed)
+                        else it.copy(loaded = true, tracks = done.tracks)
+                    }
+                }
+                result.onFailure { error -> if (mine) musicFlow.update { it.copy(problems = listOf(message(error, "Chưa thêm được nhạc"))) } }
+            }
+        })
+    }
 
     private suspend fun <T> attempt(block: suspend () -> T): Result<T> = try {
         Result.success(block())
@@ -301,23 +324,9 @@ class VoiceState(
 
     /** Nhập các file bạn vừa chọn. Tiến độ (xong / tổng) hiện ngay trong hàng "Thêm nhạc của bạn"; xong thì một câu báo và file lỗi ở dòng riêng. */
     fun importMusic(uris: List<String>) {
-        if (uris.isEmpty() || musicFlow.value.importing) return
-        importFlow.value = 0f
-        musicFlow.update { it.copy(importing = true, done = 0, total = uris.size, summary = "", problems = emptyList()) }
-        scope.launch {
-            val result = attempt {
-                source.importMusic(uris) { done, total ->
-                    importFlow.value = done.toFloat() / total
-                    musicFlow.update { it.copy(done = done, total = total) }
-                }
-            }
-            result.onSuccess { done ->
-                musicFlow.update { it.copy(importing = false, loaded = true, tracks = done.tracks, summary = VoiceText.imported(done), problems = done.failed) }
-            }
-            result.onFailure { error ->
-                musicFlow.update { it.copy(importing = false, problems = listOf(message(error, "Chưa thêm được nhạc"))) }
-            }
-        }
+        if (uris.isEmpty() || imports.turn != null) return
+        musicFlow.update { it.copy(summary = "", problems = emptyList()) }
+        imports.start(MineImports.MY_MUSIC, uris)
     }
 
     /** Xoá một bài khỏi kho. Null = xong, khác null = câu lỗi. */
