@@ -110,5 +110,18 @@ VoiceDetails 1.0 ../../../../qml/VoiceDetails.qml
 VoiceRow 1.0 ../../../../qml/VoiceRow.qml
 VoiceModules 1.0 ../../../../qml/VoiceModules.qml
 VoiceSpeed 1.0 ../../../../qml/VoiceSpeed.qml
+ListenSave 1.0 ../../../../qml/ListenSave.qml
+SleepWindow 1.0 ../../../../qml/SleepWindow.qml
+LookKbd 1.0 ../../../../qml/LookKbd.qml
+LookShortcuts 1.0 ../../../../qml/LookShortcuts.qml
+MyMusicBar 1.0 ../../../../qml/MyMusicBar.qml
+MyMusicDetails 1.0 ../../../../qml/MyMusicDetails.qml
+MyMusicModule 1.0 ../../../../qml/MyMusicModule.qml
+MyMusicTrack 1.0 ../../../../qml/MyMusicTrack.qml
+MyMusicState 1.0 ../../../../qml/MyMusicState.qml
+AdvancedUpdate 1.0 ../../../../qml/AdvancedUpdate.qml
+AdvancedStorage 1.0 ../../../../qml/AdvancedStorage.qml
+AdvancedDiagnostics 1.0 ../../../../qml/AdvancedDiagnostics.qml
+AdvancedAbout 1.0 ../../../../qml/AdvancedAbout.qml
 singleton Api 1.0 ../../../../qml/Api.qml
 singleton DesktopApi 1.0 DesktopApi.qml
