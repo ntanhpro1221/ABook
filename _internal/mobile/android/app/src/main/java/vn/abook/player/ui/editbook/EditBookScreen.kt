@@ -35,6 +35,8 @@ import vn.abook.player.ui.components.pressable
 import vn.abook.player.ui.data.CoverLoader
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.components.fadeEdges
+import androidx.compose.foundation.lazy.rememberLazyListState
 
 /** Bìa là chính nút đổi bìa: chạm bìa mở bảng "Chọn ảnh" / "Bỏ ảnh bìa". `sheets` là bảng trượt của cả app. */
 @Composable
@@ -81,7 +83,8 @@ fun EditBookScreen(
     BookForm("Sửa sách", onBack, "edit_book_screen") {
         val book = state.saved
         val draft = state.draft
-        LazyColumn(Modifier.fillMaxSize().testTag("edit_book_list"), contentPadding = PaddingValues(bottom = Dim.s32)) {
+        val list = rememberLazyListState()
+        LazyColumn(Modifier.fillMaxSize().fadeEdges(list).testTag("edit_book_list"), state = list, contentPadding = PaddingValues(bottom = Dim.s32)) {
             if (state.loading) item("loading", "state") { Caption("Đang đọc sách", Modifier.padding(top = Dim.s16)) }
             if (book == null || draft == null) {
                 if (!state.loading) item("failed", "state") { InlineProblem(state.problem, retry, "edit_problem", Modifier.padding(top = Dim.s16)) }

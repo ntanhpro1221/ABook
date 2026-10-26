@@ -26,6 +26,7 @@ import vn.abook.player.ui.data.ListenLogic
 import vn.abook.player.ui.data.ShelfTile
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.components.fadeEdges
 
 /** Bảng của một bộ nhiều tập: tên bộ + số tập, rồi từng tập (bìa nhỏ nhãn số tập, tên, trạng thái). Chạm một tập: đóng bảng và mở trang sách. */
 @Composable
@@ -34,7 +35,8 @@ fun SeriesSheet(tile: ShelfTile.Series, covers: CoverLoader, onOpen: (ListenBook
         BasicText(tile.label, style = Abook.type.sectionTitle)
         RowHint("${tile.books.size} ${tile.unit}")
         Spacer(Modifier.height(Dim.s12))
-        Column(Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState())) {
+        val scroll = rememberScrollState()
+        Column(Modifier.heightIn(max = 420.dp).fadeEdges(scroll).verticalScroll(scroll)) {
             for (book in tile.books) {
                 Row(
                     Modifier.fillMaxWidth().pressable { dismiss(); onOpen(book) }.padding(vertical = Dim.s8).testTag("series_row"),

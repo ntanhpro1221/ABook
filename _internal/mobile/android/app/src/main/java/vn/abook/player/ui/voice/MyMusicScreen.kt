@@ -34,6 +34,8 @@ import vn.abook.player.ui.devices.DownloadBar
 import vn.abook.player.ui.music.MusicText
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.components.fadeEdges
+import androidx.compose.foundation.lazy.rememberLazyListState
 
 /**
  * Nhạc của tôi: nhạc riêng của bạn, dùng làm nhạc nền cho mọi cuốn. "Thêm nhạc của bạn" mở hộp chọn file của hệ thống; tiến độ (xong / tổng) chạy ngay hàng ấy. Mỗi bài một hàng
@@ -47,8 +49,10 @@ fun MyMusicScreen(voice: VoiceState, sheets: SheetHost, onBack: () -> Unit, modi
     val top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     val colors = Abook.colors
+    val list = rememberLazyListState()
     LazyColumn(
-        modifier.fillMaxSize().testTag("music_screen"),
+        modifier.fillMaxSize().testTag("music_screen").fadeEdges(list),
+        state = list,
         contentPadding = PaddingValues(top = top, start = Dim.margin, end = Dim.margin, bottom = bottom + Dim.s48),
     ) {
         item(key = "header", contentType = "header") { PageHeader("Nhạc của tôi", onBack) }

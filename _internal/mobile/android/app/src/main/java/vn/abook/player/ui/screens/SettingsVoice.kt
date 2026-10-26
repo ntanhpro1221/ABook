@@ -79,6 +79,8 @@ import vn.abook.player.ui.voice.VoicePage
 import vn.abook.player.ui.voice.VoiceState
 import vn.abook.player.ui.voice.VoiceSummary
 import vn.abook.player.ui.voice.VoiceText
+import vn.abook.player.ui.components.fadeEdges
+import androidx.compose.foundation.lazy.rememberLazyListState
 
 /** Máy chưa có giọng tiếng Việt của hệ điều hành (như `deviceHint` của bản WebView). */
 private const val DEVICE_HINT = "Điện thoại chưa có giọng tiếng Việt. Cài ở Cài đặt điện thoại › Chuyển văn bản thành giọng nói."
@@ -122,8 +124,10 @@ fun VoiceSettings(env: SettingsEnv, sheets: SheetHost, openVoice: (VoicePage) ->
 
     val top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val scroll = rememberLazyListState()
     LazyColumn(
-        modifier.fillMaxSize().testTag(SettingsGroup.Voice.screenTag),
+        modifier.fillMaxSize().testTag(SettingsGroup.Voice.screenTag).fadeEdges(scroll),
+        state = scroll,
         contentPadding = PaddingValues(top = top, start = Dim.margin, end = Dim.margin, bottom = bottom + Dim.s48),
     ) {
         item(key = "header", contentType = "header") { PageHeader(SettingsGroup.Voice.label, onBack) }

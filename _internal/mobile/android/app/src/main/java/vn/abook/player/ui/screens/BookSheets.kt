@@ -86,6 +86,8 @@ import vn.abook.player.ui.music.PlayerMusic
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import java.util.concurrent.ConcurrentHashMap
+import vn.abook.player.ui.components.fadeEdges
+import androidx.compose.foundation.lazy.rememberLazyListState
 
 /** Các trang của bảng "Thêm": danh sách việc, nhạc nền của cuốn, xác nhận xoá. Đi sâu = trượt sang trái, Back = trượt ngược lại. */
 private enum class MenuPage { Actions, Music, Delete }
@@ -322,7 +324,8 @@ fun FindInBookSheet(detail: BookDetail, source: BookSource, onPick: (FindHit) ->
         val hits = progress?.hits.orEmpty()
         if (hits.isNotEmpty()) {
             Spacer(Modifier.height(Dim.s8))
-            LazyColumn(Modifier.fillMaxWidth().heightIn(max = 360.dp).testTag("find_results")) {
+            val list = rememberLazyListState()
+            LazyColumn(Modifier.fillMaxWidth().heightIn(max = 360.dp).fadeEdges(list).testTag("find_results"), state = list) {
                 items(hits, key = { "${it.chapterId}:${it.index}" }, contentType = { "hit" }) { hit ->
                     FindRow(hit, titles[hit.chapterId].orEmpty(), onPick)
                 }

@@ -10,6 +10,7 @@ import { foldedQuery, MIN_QUERY } from "./findText";
 import type { ListenBook } from "./model";
 import { usePlayer } from "./player";
 import { chapterScriptQuery, chapterTexts, useSource } from "./source";
+import { useFadeScroller } from "@/shared/scrollFade";
 
 // "Tìm trong sách": gõ một chữ / một câu, bấm một kết quả là mở màn đọc đúng câu ấy (`?at=` - ReaderScreen); đang nghe cuốn này thì nghe tiếp từ câu đó.
 // Máy tính và điện thoại dùng chung; chữ lấy qua nguồn dữ liệu (bookSearch.ts), nên sách nói, sách chỉ-chữ và sách nghe thẳng từ máy khác đều tìm được.
@@ -55,6 +56,7 @@ export function FindInBook({ book, open, onOpenChange }: { book: ListenBook; ope
   const [progress, setProgress] = useState<BookSearch | null>(null);
   const cache = useRef(new Map<number, FoldedChapter>());
   const results = useRef<HTMLUListElement | null>(null);
+  const scrollFade = useFadeScroller<HTMLUListElement>(results);
   const search = useRef<HTMLInputElement | null>(null);
   const bookId = book.id;
   const chapterList = book.chapters ?? [];
@@ -132,7 +134,7 @@ export function FindInBook({ book, open, onOpenChange }: { book: ListenBook; ope
       </p>
       {hits.length > 0 && (
         <div data-list-edges="book-search"><ul
-          ref={results}
+          ref={scrollFade.ref} style={scrollFade.style}
           onKeyDown={(event) => {
             const step = event.key === "ArrowDown" ? 1 : event.key === "ArrowUp" ? -1 : 0;
             if (!step) return;

@@ -38,6 +38,7 @@ import { OtherComputers } from "./OtherComputers";
 import { OwnDiagnostics } from "./OwnDiagnostics";
 import { PhoneSync, Switch, type SyncView } from "./PhoneSync";
 import { checkLine, UPDATE_CHECKED_EVENT, UPDATE_CHECK_WAIT_MS, type CheckLine, type UpdateChecked } from "./updateCheck";
+import { useFadeScroller } from "@/shared/scrollFade";
 
 // Cài đặt của máy tính (chủ app 23-10: "như lạc vào ma trận"): cùng cây nhóm với điện thoại (shared/SettingsNav.tsx). Cửa sổ rộng: danh sách nhóm
 // bên trái, nội dung bên phải; hẹp (trình duyệt điện thoại điều khiển từ xa): trang gốc là danh sách, mỗi nhóm một màn con như điện thoại.
@@ -190,12 +191,13 @@ function UpdateCheck({ current }: { current: string }) {
 
 /** Danh sách thành phần bên thứ ba (docs/THIRD_PARTY.md, gói lúc build) trong một hộp - trang Cài đặt không dài thêm. */
 function ThirdPartyButton() {
+  const scrollFade = useFadeScroller<HTMLDivElement>();
   const [open, setOpen] = useState(false);
   return (
     <>
       <DisclosureRow title="Thành phần sử dụng" onClick={() => setOpen(true)} />
       <Dialog open={open} onOpenChange={setOpen} title="Thành phần sử dụng" width="max-w-[560px]">
-        <div className="mt-3 max-h-[65vh] select-text overflow-y-auto pr-1">{open && <ThirdPartyList />}</div>
+        <div ref={scrollFade.ref} style={scrollFade.style} className="mt-3 max-h-[65vh] select-text overflow-y-auto pr-1">{open && <ThirdPartyList />}</div>
       </Dialog>
     </>
   );

@@ -24,6 +24,7 @@ import { MyMusicSection, SwapTrack } from "./MyMusic";
 import { seriesOf, type ListenBook, type ListenChapter } from "./model";
 import { useSource } from "./source";
 import { BookReadingsSection } from "./WordReadings";
+import { useFadeScroller } from "@/shared/scrollFade";
 
 // Sửa sách "áp ngay" ngay trên trang nghe (docs/EDITING.md): tên sách, tác giả, bìa, tên nhân vật, tên chương, nhạc nền. Cùng một bộ
 // màn hình cho máy tính và điện thoại - lệnh đi tới `/api/books/<mã>/...`; máy tính là server Python, điện thoại là lõi native
@@ -165,6 +166,7 @@ export function useBookMusic(bookId: string, onChanged?: () => void) {
 /** Nhạc nền của cuốn nhập từ file: người làm sách đã gắn sẵn - người nghe bật/tắt, chỉnh mức, cho im lặng từng đoạn, và đổi một đoạn
  *  sang bài trong "Nhạc của tôi" (bài ấy đi cùng file sách khi lưu). */
 export function MusicSection({ book }: { book: ListenBook }) {
+  const scrollFade = useFadeScroller<HTMLUListElement>();
   const [swapping, , setSwapping] = useMotionState<string | null>(null); // MotionRegion giữ chuyển động cục bộ khi đóng "Đổi bài".
   const swapBox = useRef<HTMLDivElement>(null);
   const swapButton = useRef<HTMLButtonElement>(null);
@@ -202,7 +204,7 @@ export function MusicSection({ book }: { book: ListenBook }) {
           </Select>
         </label>
       </div>
-      <ul className={cn("max-h-72 divide-y divide-line overflow-y-auto", !data.enabled && "opacity-50")}>
+      <ul ref={scrollFade.ref} style={scrollFade.style} className={cn("max-h-72 divide-y divide-line overflow-y-auto", !data.enabled && "opacity-50")}>
         {data.cues.map((cue) => (
           <li key={cue.key}>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
@@ -296,6 +298,7 @@ export function EditBookDialog({
   /** Studio từ xa: tên máy tính đang giữ sách - sửa áp lên sách ở đó. */
   computer?: string;
 }) {
+  const scrollFade = useFadeScroller<HTMLDivElement>();
   const client = useQueryClient();
   const [title, setTitle] = useState(book.title);
   const [author, setAuthor] = useState(book.author ?? "");
@@ -388,7 +391,7 @@ export function EditBookDialog({
         />
       </div>
     ) : (
-      <div className="focus-scroll max-h-[68vh] space-y-4 overflow-y-auto pr-1">
+      <div ref={scrollFade.ref} style={scrollFade.style} className="focus-scroll max-h-[68vh] space-y-4 overflow-y-auto pr-1">
         <Section title="Tên sách">
           <form
             className="flex gap-2"

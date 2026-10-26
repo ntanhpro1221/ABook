@@ -56,9 +56,9 @@ describe("scrollFadeMask", () => {
     expect(scrollFadeMask({ top: false, bottom: false })).toBeUndefined();
   });
 
-  it("còn hàng dưới: chỉ mờ mép dưới; đã cuộn xuống: mờ mép trên; giữa danh sách: cả hai", () => {
-    expect(scrollFadeMask({ top: false, bottom: true })).toBe("linear-gradient(to bottom, black, black calc(100% - 36px), transparent)");
-    expect(scrollFadeMask({ top: true, bottom: false })).toBe("linear-gradient(to bottom, transparent, black 36px, black)");
-    expect(scrollFadeMask({ top: true, bottom: true }, 24)).toBe("linear-gradient(to bottom, transparent, black 24px, black calc(100% - 24px), transparent)");
+  it("còn hàng dưới: chỉ mờ mép dưới; đã cuộn xuống: mờ mép trên; giữa danh sách: cả hai - 24px như điện thoại native", () => {
+    expect(scrollFadeMask({ top: false, bottom: true })).toBe("linear-gradient(to bottom, black, black calc(100% - 24px), transparent)");
+    expect(scrollFadeMask({ top: true, bottom: false })).toBe("linear-gradient(to bottom, transparent, black 24px, black)");
+    expect(scrollFadeMask({ top: true, bottom: true }, 36)).toBe("linear-gradient(to bottom, transparent, black 36px, black calc(100% - 36px), transparent)");
   });
 });
