@@ -62,16 +62,19 @@ class BookEditor(val id: String, private val source: EditSource, private val sco
             true
         } catch (error: Exception) {
             if (error is CancellationException) throw error
-            flow.value = flow.value.copy(saving = false, problem = error.message ?: "Bạn hãy thử lưu lại.")
+            flow.value = flow.value.copy(saving = false, problem = failure(EditLogic.failure(diff), error))
             false
         }
     }
 
-    fun setCover(image: ByteArray?, onDone: () -> Unit = {}): Job =
-        scope.launch { if (flush()) writes.withLock { if (attempt { source.cover(id, image) }) onDone() } }
+    fun setCover(image: ByteArray?, onDone: () -> Unit = {}): Job = scope.launch {
+        if (flush()) writes.withLock {
+            if (attempt(if (image == null) "Chưa bỏ được ảnh bìa." else "Chưa đặt được ảnh bìa.") { source.cover(id, image) }) onDone()
+        }
+    }
 
     fun revertChapter(chapterId: Long) {
-        scope.launch { if (flush()) writes.withLock { attempt { source.revertChapter(id, chapterId) } } }
+        scope.launch { if (flush()) writes.withLock { attempt("Chưa đổi được tên chương.") { source.revertChapter(id, chapterId) } } }
     }
 
     fun send() {
@@ -84,12 +87,15 @@ class BookEditor(val id: String, private val source: EditSource, private val sco
                 flow.value = flow.value.copy(saved = result, draft = EditLogic.rebase(flow.value.saved, flow.value.draft, result))
             } catch (error: Exception) {
                 if (error is CancellationException) throw error
-                flow.value = flow.value.copy(sendProblem = "${error.message.orEmpty()} Phần sửa vẫn được giữ trên máy bạn.")
+                val holder = flow.value.saved?.holder ?: "máy tính"
+                flow.value = flow.value.copy(sendProblem = listOf("Chưa gửi được về $holder.", error.message.orEmpty(), "Phần sửa vẫn nằm trên máy này.")
+                    .filter { it.isNotBlank() }.joinToString(" "))
             } finally { flow.value = flow.value.copy(sending = false) }
         }
     }
 
-    private suspend fun attempt(block: suspend () -> EditSnapshot): Boolean {
+    /** `what`: câu đầu của lời lỗi (việc chưa làm được); null = nạp sách, chỉ lý do. */
+    private suspend fun attempt(what: String? = null, block: suspend () -> EditSnapshot): Boolean {
         val before = flow.value.draft
         flow.value = flow.value.copy(saving = true, problem = "")
         return try {
@@ -99,8 +105,11 @@ class BookEditor(val id: String, private val source: EditSource, private val sco
             true
         } catch (error: Exception) {
             if (error is CancellationException) throw error
-            flow.value = flow.value.copy(loading = false, saving = false, problem = error.message ?: "Bạn hãy thử lại.")
+            flow.value = flow.value.copy(loading = false, saving = false, problem = if (what == null) error.message ?: "Bạn hãy thử lại." else failure(what, error))
             false
         }
     }
+
+    /** Lời lỗi: việc chưa làm được (cùng chữ với lời báo của web) + lý do của lõi. */
+    private fun failure(what: String, error: Exception) = listOf(what, error.message ?: "Bạn hãy thử lại.").joinToString(" ")
 }
