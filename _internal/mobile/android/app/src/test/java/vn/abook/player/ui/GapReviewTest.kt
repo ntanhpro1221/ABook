@@ -122,11 +122,12 @@ class GapReviewTest {
             }
         }
         rule.waitForIdle()
-        val icon = rule.onNodeWithTag("remote_kind_d0").getUnclippedBoundsInRoot()
-        val title = rule.onNodeWithTag("remote_name_d0").getUnclippedBoundsInRoot()
-        assertEquals("Kind icon follows the first line, even for a wrapping device name", title.top, icon.top)
+        val icon = rule.onNode(hasTestTag("row_leading") and hasAnyAncestor(hasTestTag("remote_d0")), useUnmergedTree = true).getUnclippedBoundsInRoot()
+        val title = rule.onNode(hasTestTag("row_title") and hasAnyAncestor(hasTestTag("remote_d0")), useUnmergedTree = true).getUnclippedBoundsInRoot()
+        assertEquals("Kind icon follows the first line, even for a wrapping device name", title.top.value + 12f, ((icon.top + icon.bottom) / 2).value, 0.5f)
         assertTrue(title.bottom - title.top > icon.bottom - icon.top)
-        for (i in 0..5) rule.onNodeWithTag("remote_kind_d$i").assertIsDisplayed()
+        for (i in 0..5) rule.onNode(hasTestTag("row_leading") and hasAnyAncestor(hasTestTag("remote_d$i")), useUnmergedTree = true).assertIsDisplayed()
+        rule.assertIconLedTextColumns()
         rule.onRoot().captureRoboImage("src/test/snapshots/gap1b_device_kinds_${if (dark) "dark" else "light"}.png")
     }
 }

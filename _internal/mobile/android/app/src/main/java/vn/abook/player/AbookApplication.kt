@@ -57,6 +57,16 @@ class AbookApplication : Application() {
         )
     }
 
+    /**
+     * Giọng đọc làm thêm (giọng tải về máy, khóa giọng trực tuyến, nghe thử, Nhạc của tôi): một holder cho cả tiến trình nên lượt tải giọng đang chạy không mất trạng thái khi
+     * Activity dựng lại. Giọng vừa tải / gỡ, khóa vừa dùng được thì danh sách giọng của Cài đặt đọc lại.
+     */
+    val voice by lazy {
+        vn.abook.player.ui.voice.VoiceState(
+            vn.abook.player.ui.voice.VoiceRepo(this), uiScope, vn.abook.player.ui.voice.AndroidSamplePlayer(this), voicesChanged = { settings.loadVoices() },
+        )
+    }
+
     /** Trình phát của giao diện native: chỉ lắng nghe lõi phát khi Activity hiện ([PlayerRepo.attach]). */
     val player by lazy {
         PlayerRepo(

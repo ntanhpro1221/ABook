@@ -140,7 +140,9 @@ class NowPlayingUiTest {
         shot("reading_mid")
         // Giữa chuyển cảnh, chữ chương luôn nằm dưới mép bìa và khối tên đang thu lại - không đè lên nhau.
         val cover = rule.onNodeWithTag("player_cover").getUnclippedBoundsInRoot()
-        val book = rule.onNodeWithText(FakeNowPlayingModel.demoState().bookTitle, useUnmergedTree = true).getUnclippedBoundsInRoot()
+        // Tên sách dưới bìa (không phải chữ trang trí trên bìa tự vẽ).
+        val book = rule.onAllNodesWithText(FakeNowPlayingModel.demoState().bookTitle, useUnmergedTree = true)
+            .filterToOne(!hasTestTag("cover_title")).getUnclippedBoundsInRoot()
         val text = rule.onNodeWithTag("read_along_text").getUnclippedBoundsInRoot()
         assertTrue("chữ đè tên: $book / $text", text.top >= book.bottom - 0.5.dp)
         assertTrue("chữ đè bìa: $cover / $text", text.top >= cover.top)

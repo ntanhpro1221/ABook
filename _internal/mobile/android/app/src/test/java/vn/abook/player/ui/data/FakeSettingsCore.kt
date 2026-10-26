@@ -17,11 +17,14 @@ class FakeSettingsCore(var stored: JSONObject = JSONObject()) : SettingsCore {
         saved += changes
     }
 
-    override fun voices() = listOf(
+    /** Giọng tải về máy đã cài (test thêm vào để thấy danh sách giọng đọc lại). */
+    var installed = emptyList<VoiceOption>()
+
+    override fun voices() = installed + listOf(
         VoiceOption("edge:vi-VN-HoaiMyNeural", "Hoài My (Edge)", "edge", true),
         VoiceOption("edge:vi-VN-NamMinhNeural", "Nam Minh (Edge)", "edge", false),
         VoiceOption("supertonic:F1", "Supertonic F1 - giọng nữ trầm ấm đọc truyện dài", "supertonic", false),
-        VoiceOption("device:vi-vn-x-gft-local", "Tiếng Việt (vi-vn-x-gft-local)", "device", false),
+        VoiceOption("device:vi-vn-x-gft-local", "Tiếng Việt", "device", false),
     )
 
     override fun defaultVoice() = default
