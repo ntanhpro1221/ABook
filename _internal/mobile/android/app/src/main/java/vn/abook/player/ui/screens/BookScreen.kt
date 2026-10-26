@@ -343,7 +343,7 @@ private fun ListenButton(label: String, detail: String?, playing: Boolean, resta
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.size(Dim.s24), contentAlignment = Alignment.Center) {
-                        if (restart) RestartIcon(colors.accentInk, size = 20.dp) else PlayPauseGlyph(playing, colors.accentInk, 22.dp)
+                        if (restart) RestartIcon(colors.accentInk) else PlayPauseGlyph(playing, colors.accentInk, 22.dp)
                     }
                     Spacer(Modifier.width(Dim.s8))
                     BasicText(text, style = Abook.type.bodyStrong.copy(color = colors.accentInk))
@@ -477,7 +477,7 @@ private fun ChapterRow(
                 .testTag("chapter_more"),
             contentAlignment = Alignment.CenterEnd,
         ) {
-            MoreIcon(colors.text2, size = 20.dp)
+            MoreIcon(colors.text2)
         }
     }
 }

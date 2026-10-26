@@ -1,5 +1,7 @@
 package vn.abook.player.ui.components
 
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
@@ -148,19 +150,19 @@ fun <T : Choice> ChoiceRow(
     }
 }
 
-/** Mũi tên ">" cuối hàng mở một màn con; `turn` (0..1, đọc khi vẽ) xoay nó xuống khi hàng mở khối tại chỗ. */
+/**
+ * Mũi tên ">" cuối hàng mở một màn con (lucide ChevronRight như bản web, nét lưới 20 dp); `turn` (0..1, đọc khi vẽ) xoay nó xuống khi hàng mở khối tại
+ * chỗ. Ô 16 dp, mũi nhọn chạm mép phải ô: mực thẳng mép cột như nút chữ cuối hàng.
+ */
 @Composable
 fun ChevronIcon(color: androidx.compose.ui.graphics.Color, modifier: Modifier = Modifier, turn: () -> Float = { 0f }) {
     Canvas(modifier.size(16.dp)) {
-        val w = 2.dp.toPx()
-        val s = size.width
-        val angle = Math.toRadians(90.0 * turn()).toFloat()
-        val cos = kotlin.math.cos(angle)
-        val sin = kotlin.math.sin(angle)
-        // Hai nét quanh tâm, xoay `angle` (không cấp phát Path trong pha vẽ). Tâm lệch phải: mũi nhọn chạm mép phải ô, mực thẳng mép cột như nút chữ cuối hàng.
-        val cx = s * 0.66f
-        fun point(x: Float, y: Float) = Offset(cx + (x * cos - y * sin) * s, s / 2 + (x * sin + y * cos) * s)
-        drawLine(color, point(-0.14f, -0.30f), point(0.16f, 0f), w, androidx.compose.ui.graphics.StrokeCap.Round)
-        drawLine(color, point(0.16f, 0f), point(-0.14f, 0.30f), w, androidx.compose.ui.graphics.StrokeCap.Round)
+        val unit = 20.dp.toPx() / 24f
+        // Mực của ChevronRight: x 8..16, y 5..19 trên lưới 24 (kể cả nửa nét).
+        translate(size.width - 16f * unit, size.height / 2 - 12f * unit) {
+            rotate(90f * turn(), pivot = androidx.compose.ui.geometry.Offset(12f * unit, 12f * unit)) {
+                drawLucide(LucidePaths.CHEVRON_RIGHT, color, unit)
+            }
+        }
     }
 }

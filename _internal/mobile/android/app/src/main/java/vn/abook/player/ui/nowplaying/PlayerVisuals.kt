@@ -52,6 +52,8 @@ import kotlinx.coroutines.withContext
 import vn.abook.player.ui.components.pressable
 import vn.abook.player.ui.data.CoverLoader
 import vn.abook.player.ui.data.CoverRef
+import vn.abook.player.ui.components.LucideIcon
+import vn.abook.player.ui.components.LucidePaths
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.BeVietnamPro
 import vn.abook.player.ui.theme.MotionMs
@@ -189,48 +191,29 @@ fun PlayerAction(label: String, glyph: String, onClick: () -> Unit, modifier: Mo
     }
 }
 
-/** Fixed vector geometry; no font fallback glyphs, per-frame Path/Stroke allocation or icon crossfades. */
+/**
+ * Biểu tượng của trình phát: hình lucide giống bản web (PlayerViews.tsx: ChevronDown, MoreHorizontal, SkipBack/SkipForward, Moon, ListOrdered,
+ * Plus/Minus) trong ô 24 giữa nút 28; riêng lùi / tới 15 giây là hình riêng của web (drawSkip). Đường dịch một lần, không cấp phát khi vẽ.
+ */
 @Composable
 fun PlayerGlyph(glyph: String) {
     val color = Abook.colors.text
     val path = remember { Path() }
-    val width = with(LocalDensity.current) { 1.8.dp.toPx() }
-    val stroke = remember(width) { Stroke(width, cap = StrokeCap.Round, join = StrokeJoin.Round) }
     val skipNumber = if (glyph == "↶15" || glyph == "15↷") rememberSkipNumber(color) else null
+    val data = when (glyph) {
+        "⌄" -> LucidePaths.CHEVRON_DOWN
+        "⋯" -> LucidePaths.ELLIPSIS
+        "|‹" -> LucidePaths.SKIP_BACK
+        "›|" -> LucidePaths.SKIP_FORWARD
+        "◷" -> LucidePaths.MOON
+        "☷" -> LucidePaths.LIST_ORDERED
+        "+" -> LucidePaths.PLUS
+        "−" -> LucidePaths.MINUS
+        else -> null
+    }
     Box(Modifier.size(28.dp), contentAlignment = Alignment.Center) {
-        Canvas(Modifier.fillMaxSize()) {
-            val w = size.width; val h = size.height
-            path.reset()
-            when (glyph) {
-                "⌄" -> {
-                    path.moveTo(w * 0.25f, h * 0.38f); path.lineTo(w * 0.5f, h * 0.63f); path.lineTo(w * 0.75f, h * 0.38f)
-                    drawPath(path, color, style = stroke)
-                }
-                "⋯" -> { for (i in 0..2) drawCircle(color, width, Offset(w * (0.25f + i * 0.25f), h / 2)) }
-                "|‹", "›|" -> withTransform({ if (glyph == "›|") scale(-1f, 1f) }) {
-                    path.moveTo(w * 0.7f, h * 0.25f); path.lineTo(w * 0.35f, h * 0.5f); path.lineTo(w * 0.7f, h * 0.75f); path.close()
-                    drawPath(path, color)
-                    drawLine(color, Offset(w * 0.25f, h * 0.25f), Offset(w * 0.25f, h * 0.75f), width, StrokeCap.Round)
-                }
-                "↶15", "15↷" -> drawSkip(glyph == "15↷", color, path, skipNumber)
-                "◷" -> {
-                    drawCircle(color, w * 0.34f, style = stroke)
-                    path.moveTo(w * 0.5f, h * 0.28f); path.lineTo(w * 0.5f, h * 0.5f); path.lineTo(w * 0.66f, h * 0.56f)
-                    drawPath(path, color, style = stroke)
-                }
-                "☷" -> {
-                    for (i in 0..2) {
-                        val y = h * (0.27f + i * 0.23f)
-                        drawCircle(color, width * 0.65f, Offset(w * 0.2f, y))
-                        drawLine(color, Offset(w * 0.38f, y), Offset(w * 0.8f, y), width, StrokeCap.Round)
-                    }
-                }
-                "+", "−" -> {
-                    drawLine(color, Offset(w * 0.22f, h / 2), Offset(w * 0.78f, h / 2), width, StrokeCap.Round)
-                    if (glyph == "+") drawLine(color, Offset(w / 2, h * 0.22f), Offset(w / 2, h * 0.78f), width, StrokeCap.Round)
-                }
-            }
-        }
+        if (data != null) LucideIcon(data, color, size = 24.dp)
+        else Canvas(Modifier.fillMaxSize()) { drawSkip(glyph == "15↷", color, path, skipNumber) }
     }
 }
 

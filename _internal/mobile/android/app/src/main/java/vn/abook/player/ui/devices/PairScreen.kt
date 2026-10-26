@@ -33,7 +33,7 @@ import vn.abook.player.ui.components.ChoiceSetting
 import vn.abook.player.ui.components.InlineProblem
 import vn.abook.player.ui.components.ListItem
 import vn.abook.player.ui.components.PrimaryButton
-import vn.abook.player.ui.components.RestartIcon
+import vn.abook.player.ui.components.RefreshIcon
 import vn.abook.player.ui.components.Reveal
 import vn.abook.player.ui.components.RowLine
 import vn.abook.player.ui.components.SectionTitle
@@ -86,7 +86,7 @@ private fun RefreshButton(refreshing: Boolean, onClick: () -> Unit) {
     Box(
         Modifier.size(Dim.s48).pressable(Role.Button, onClick = { if (!refreshing) onClick() }).testTag("pair_refresh"),
         contentAlignment = Alignment.Center,
-    ) { RestartIcon(if (refreshing) colors.text3 else colors.text2) }
+    ) { RefreshIcon(if (refreshing) colors.text3 else colors.text2) }
 }
 
 private fun LazyListScope.devicesList(ui: PairUi, devices: DevicesState, sheets: SheetHost) {

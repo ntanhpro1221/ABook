@@ -23,13 +23,15 @@ object PlayPauseGeometry {
     const val GRID = 24f
     const val POINTS = 16
 
+    // Đường tâm nét; vẽ thêm nét 2 đơn vị góc tròn nên mực = đúng lucide Play / Pause của bản web: tam giác x 5..21, hai thanh 5..10 và 14..19
+    // (khe 4), cao 3..21. Bản cũ hai thanh chỉ cách nhau ~0,6 đơn vị - nhìn như một khối.
     private val play = floatArrayOf(
-        8f, 5f, 13f, 8.5f, 13f, 15.5f, 8f, 19f,
-        13f, 8.5f, 19f, 12f, 19f, 12f, 13f, 15.5f,
+        6f, 4f, 13f, 8f, 13f, 16f, 6f, 20f,
+        13f, 8f, 20f, 12f, 20f, 12f, 13f, 16f,
     )
     private val pause = floatArrayOf(
-        7f, 5f, 11f, 5f, 11f, 19f, 7f, 19f,
-        13f, 5f, 17f, 5f, 17f, 19f, 13f, 19f,
+        6f, 4f, 9f, 4f, 9f, 20f, 6f, 20f,
+        15f, 4f, 18f, 4f, 18f, 20f, 15f, 20f,
     )
 
     /** Ghi 16 số (x, y của 8 đỉnh: tứ giác trái rồi tứ giác phải) ở tiến trình `t` (0..1) vào `out`. */
@@ -50,7 +52,7 @@ fun PlayPauseGlyph(playing: Boolean, color: Color, size: Dp, modifier: Modifier 
     Canvas(modifier.size(size)) {
         val unit = this.size.width / PlayPauseGeometry.GRID
         PlayPauseGeometry.points(morph.value, points)
-        val round = Stroke(width = 1.4f * unit, join = StrokeJoin.Round)
+        val round = Stroke(width = 2f * unit, join = StrokeJoin.Round)
         for (shape in 0..1) {
             val at = shape * 8
             path.reset()
