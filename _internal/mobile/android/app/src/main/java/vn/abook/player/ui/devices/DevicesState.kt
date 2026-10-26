@@ -251,6 +251,12 @@ class DevicesState(
 
     fun openAppSettings() = links.openAppSettings()
 
+    /** "Tải ABook Windows": trang tải ABook cho máy tính, mở bằng trình duyệt của máy. */
+    fun openDesktopRelease() = links.openRelease(DeviceText.DESKTOP_RELEASES)
+
+    /** "Chép địa chỉ" của trang tải ABook máy tính (để mở trên máy tính): true khi đã chép. */
+    fun copyDesktopRelease(): Boolean = links.copyText(DeviceText.DESKTOP_RELEASES)
+
     /** Đổi cách nối: Wi-Fi (tự tìm), Bluetooth (máy đã ghép), hay gõ địa chỉ. */
     fun setMethod(method: PairMethod) {
         when (method) {
