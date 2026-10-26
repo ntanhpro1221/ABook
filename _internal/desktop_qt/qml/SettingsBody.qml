@@ -6,6 +6,7 @@ import ABook
 Item {
     id: root
     property string group: ""
+    signal studioRequested()        // nhóm Studio: "Xem tiến độ cài", "Sửa / Cập nhật Studio" -> màn Studio
     property string previous: group
     property real phase: 1
     readonly property Item page: loader.item
@@ -33,6 +34,6 @@ Item {
     Component { id: sleep; SettingsSleep {} }
     Component { id: look; SettingsLook {} }
     Component { id: devices; SettingsDevices {} }
-    Component { id: studio; SettingsStudio {} }
+    Component { id: studio; SettingsStudio { onStudioRequested: root.studioRequested() } }
     Component { id: advanced; SettingsAdvanced {} }
 }
