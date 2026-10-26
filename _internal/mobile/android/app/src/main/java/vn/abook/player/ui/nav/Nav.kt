@@ -16,6 +16,11 @@ import vn.abook.player.ui.motion.ScreenGeometry
 /** Màn con xếp trên ba tab (trang sách và Đang phát còn là giữ chỗ; P1b/P2 làm thật). */
 @Immutable
 sealed interface Destination {
+    data object AddBook : Destination
+    data class ImportReview(val itemId: Long) : Destination
+    data class EditBook(val book: ListenBook) : Destination
+    data class EditChapter(val book: ListenBook, val chapterId: Long) : Destination
+    data class CropCover(val book: ListenBook, val uri: String) : Destination
     @Immutable
     data class Book(val book: ListenBook) : Destination
 
