@@ -142,16 +142,6 @@ export function formatDate(epochSeconds: number): string {
   return date.toLocaleDateString("vi-VN", { day: "numeric", month: "numeric", year: "numeric" });
 }
 
-/** Đồng hồ đọc thành lời cho trình đọc màn hình: "5 phút 57 giây". */
-export function spokenClock(seconds: number): string {
-  const whole = Math.max(0, Math.floor(Number.isFinite(seconds) ? seconds : 0));
-  const hours = Math.floor(whole / 3600);
-  const minutes = Math.floor((whole % 3600) / 60);
-  const secs = whole % 60;
-  const parts = [hours ? `${hours} giờ` : "", minutes ? `${minutes} phút` : "", `${secs} giây`].filter(Boolean);
-  return parts.join(" ");
-}
-
 /** Mốc thời gian nói kiểu người: "hôm nay 14:02", "tối qua 23:41", "hôm qua 09:15", "3 ngày trước". */
 export function formatWhen(epochSeconds: number | null | undefined): string {
   if (!epochSeconds) return "";

@@ -234,7 +234,7 @@ function Example({ bookId, example, picked, onPick }: { bookId: string; example:
         <span className="mt-0.5 size-[32px] shrink-0" aria-hidden />
       )}
       <div className="min-w-0">
-        {example.before && <p className="line-clamp-2 text-fg-3" aria-label="Câu liền trước">{example.before}</p>}
+        {example.before && <p className="line-clamp-2 text-fg-3"><span className="sr-only">Câu liền trước: </span>{example.before}</p>}
         {/* Nhãn đứng NGAY TRÊN câu được hỏi (không phải trên câu trước mờ - dễ đọc nhầm là nhãn của câu ấy); vạch bên trái đánh dấu đúng câu đang hỏi
             khi có câu trước/sau làm ngữ cảnh. */}
         <div className={cn((example.before || example.after) && "border-l-2 border-accent pl-2")}>
@@ -259,7 +259,7 @@ function Example({ bookId, example, picked, onPick }: { bookId: string; example:
               : example.text}
           </p>
         </div>
-        {example.after && <p className="line-clamp-2 text-fg-3" aria-label="Câu liền sau">{example.after}</p>}
+        {example.after && <p className="line-clamp-2 text-fg-3"><span className="sr-only">Câu liền sau: </span>{example.after}</p>}
       </div>
     </li>
   );
@@ -912,6 +912,8 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
       id={exiting ? undefined : `work-${item.key}`}
       data-work-key={exiting ? undefined : item.key}
       tabIndex={-1}
+      // Thẻ đứng riêng (div) cần vai trò thì tên của nó mới được đọc; trong danh sách thì là listitem.
+      role={Tag === "div" ? "group" : undefined}
       aria-labelledby={exiting ? undefined : `work-${item.key}-title`}
       aria-current={active ? "true" : undefined}
       // Việc đang duyệt nổi ở tên; không thêm mặt thẻ cho từng hàng.
@@ -957,7 +959,7 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
       ) : item.lines && item.choices ? (
         <SpeakerFix bookId={bookId} item={item} onOpenScript={openScript} scope={scope} onScope={setScope} picked={picked} />
       ) : (
-        <div className="mt-3 flex flex-wrap gap-1.5" aria-label="Lựa chọn">
+        <div role="group" className="mt-3 flex flex-wrap gap-1.5" aria-label="Lựa chọn">
           {item.options.map((option) => (
             <span key={option} className="rounded-control border border-line px-2.5 py-1 text-xs text-fg-2">
               {option}

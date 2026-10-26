@@ -16,7 +16,7 @@ import { cn } from "@/shared/cn";
 import type { CoverImage } from "@/shared/cover";
 import { formatClock } from "@/shared/format";
 import { ShortName } from "@/shared/ShortName";
-import { IconButton, Tooltip } from "@/shared/ui";
+import { announce, IconButton, Tooltip } from "@/shared/ui";
 import { api } from "@/studio/api";
 
 // Điều khiển điện thoại đang phát từ máy tính (PLAYER_RESEARCH #12, kiểu Spotify Connect trong mạng nhà).
@@ -375,6 +375,11 @@ export function HandOffButton({ className }: { className?: string }) {
         candidate.via === "cast" ||
         (candidate.via === "peer" ? candidate.device === owner : candidate.stream || candidate.books.includes(track.bookId)))
     : [];
+  // Lời "Đang tìm / Chưa thấy thiết bị" trong menu đổi khi đang mở: nói qua vùng aria-live chung - menu chỉ được chứa mục, không chứa vùng trạng thái.
+  const nothing = Boolean(track && data) && !targets.length;
+  useEffect(() => {
+    if (menuOpen && nothing) announce(searching ? "Đang tìm thiết bị" : "Chưa thấy thiết bị");
+  }, [menuOpen, nothing, searching]);
   if (!track || !data) return <MotionRegion as="span" />;
   // Tìm lại loa / TV ngay, không đợi nhịp 30 giây của máy chủ (cast.scan); hỏi lại danh sách sau khi lượt tìm (~2 giây) xong.
   const rescan = () => {
@@ -452,10 +457,11 @@ export function HandOffButton({ className }: { className?: string }) {
           {/* Không có máy nào: nói rõ thay vì để nút biến mất (TV tắt, khác mạng - người dùng không biết đang tìm hay đã hết). */}
           {!targets.length && (
             <>
-              <div role="status" className="px-2 py-1.5 text-sm text-fg-2">
+              {/* Trong menu chỉ được có mục / nhóm / vạch: lời báo là khối trơn (không role="status", không <p>); trình đọc màn hình nghe qua announce ở trên. */}
+              <div className="px-2 py-1.5 text-sm text-fg-2">
                 {searching ? "Đang tìm thiết bị" : "Chưa thấy thiết bị"}
               </div>
-              <p className="px-2 pb-1 text-xs text-fg-3">Bật máy kia và nối cùng Wi-Fi để phát.</p>
+              <div className="px-2 pb-1 text-xs text-fg-3">Bật máy kia và nối cùng Wi-Fi để phát.</div>
               <DropdownMenu.Item
                 disabled={searching}
                 onSelect={(event) => {
