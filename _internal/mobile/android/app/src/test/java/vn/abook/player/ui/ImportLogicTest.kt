@@ -45,6 +45,14 @@ class ImportLogicTest {
         assertTrue(ImportLogic.retain(changed, preview, choice).names.isEmpty())
     }
 
+    /** Cùng chữ với `splitHint` / `where` của web (listen/textImport.ts, listen/ReadingSuggestions.tsx). */
+    @Test fun splitHintAndSuggestionPlaceUseTheWebWords() {
+        assertEquals("Theo 3 dòng “Chương N” trong file (thêm phần Mở đầu - 4 chương).", ImportLogic.splitHint(preview.copy(splitOffer = 4, splitHeadings = 3)))
+        assertEquals("Theo 3 dòng “Chương N” trong file.", ImportLogic.splitHint(preview.copy(splitOffer = 3, splitHeadings = 3)))
+        assertEquals("chương 3", ImportLogic.where(listOf(3)))
+        assertEquals("2 chương", ImportLogic.where(listOf(2, 4)))
+    }
+
     @Test fun settlingDoesNotMutateOrReorderIncludingPackages() {
         val items = listOf(ImportItem(1, "a.abook"), ImportItem(2, "b.epub"), ImportItem(3, "c.txt"))
         val next = ImportLogic.settle(items, 2, ImportStage.Error, "Hỏng")

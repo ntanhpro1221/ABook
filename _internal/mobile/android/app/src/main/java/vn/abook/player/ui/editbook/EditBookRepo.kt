@@ -48,7 +48,11 @@ class EditBookRepo(private val context: Context, private val library: LibraryRep
             SyncLink.holderName(context, id).ifEmpty { "máy tính" }, pending,
             last?.optString("error").orEmpty().ifEmpty {
                 val waiting = last?.optInt("waiting") ?: 0
-                if (waiting > 0) "$waiting thay đổi chờ duyệt trên máy tính." else ""
+                when {
+                    last?.optString("state") == EditsSync.FAILED -> "Chưa gửi được - sẽ thử lại."
+                    waiting > 0 -> "$waiting thay đổi chờ duyệt trên máy tính."
+                    else -> ""
+                }
             })
     }
 

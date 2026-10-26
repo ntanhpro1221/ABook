@@ -1842,6 +1842,7 @@
         "listen/SendEdits.tsx",
         "listen/importQueue.ts",
         "listen/textImport.ts",
+        "listen/FootnoteChoices.tsx",
         "android/imports.ts",
         "android/importPdf.ts",
         "shared/BookCover.tsx",
@@ -1852,7 +1853,8 @@
       ],
       "native": [
         "addbook/*.kt",
-        "editbook/*.kt"
+        "editbook/*.kt",
+        "!editbook/EditBooks.kt"
       ],
       "sentences": true,
       "missing": [
@@ -2050,9 +2052,134 @@
           "side": "web",
           "match": "^đường\\ dẫn\\ file\\ hay\\ thư\\ mục$",
           "reason": "native chưa có: chọn hết / bỏ chọn hết chương, hỏi khi đóng giữa hàng đợi, thêm bản mới khi đã có"
+        },
+        {
+          "side": "web",
+          "match": "^(bạn\\ đã\\ thêm\\ file\\ này\\ thành\\ “\\{\\}”\\ \\(\\{\\}\\ chương\\)|đã\\ thêm\\ từ\\ file\\ này\\ rồi)$",
+          "reason": "native chưa phân biệt cùng file đã thêm với chương khác (sameSource) - gộp chung vào \"Cuốn này đã có trong thư viện\""
+        },
+        {
+          "side": "web",
+          "match": "^(đã\\ thêm\\ \\{\\}\\ sách|không\\ thêm\\ cuốn\\ nào|file\\ này\\ chưa\\ có\\ chương\\ nào\\ để\\ thêm|file\\ này\\ chưa\\ có\\ tên\\ sách\\ \\-\\ thêm\\ riêng\\ để\\ đặt\\ tên)$",
+          "reason": "native chưa có câu tổng kết sau hàng nhiều file và chưa có \"Thêm phần còn lại\" (thêm theo mặc định)"
+        },
+        {
+          "side": "web",
+          "match": "^(đã\\ thêm\\ sách\\ vào\\ thư\\ viện|đã\\ thêm\\ “\\{\\}”|mở\\ sách|không\\ mở\\ được\\ file|không\\ mở\\ được\\ file\\ sách|file\\ không\\ có\\ sách\\ nào|file\\ này\\ không\\ có\\ chữ\\ để\\ đọc)$",
+          "reason": "native chưa nhận file app khác gửi tới (\"Mở bằng\" từ Zalo, Drive...) và chưa có toast xác nhận sau khi thêm"
+        },
+        {
+          "side": "web",
+          "match": "^(file\\ này\\ có\\ bản\\ thu\\ khác|chỉnh\\ sửa\\ và\\ chỗ\\ nghe\\ của\\ bạn\\ vẫn\\ được\\ giữ|thay\\ bằng\\ file\\ này|chưa\\ thay\\ được\\ sách)$",
+          "reason": "native chưa hỏi thay sách đang có bằng file cũ hơn / khác bản thu (BookFileImport how = older / conflict)"
+        },
+        {
+          "side": "web",
+          "match": "^tên\\ trong\\ file\\ là\\ “\\{\\}”,\\ khác\\ tên\\ đang\\ dùng$",
+          "reason": "native chưa báo tên trong file khác tên đang dùng khi mở lại cùng một sách"
+        },
+        {
+          "side": "web",
+          "match": "^(đặt\\ lại\\ bản\\ của\\ máy\\ này|đã\\ hiểu|chưa\\ làm\\ được)$",
+          "reason": "native chưa có lời báo máy đã ghép đổi phần bạn đã đặt (EditsNoticesBanner) và chưa có nút bỏ lời báo đã gửi"
+        },
+        {
+          "side": "web",
+          "match": "^(đã\\ gửi\\ về\\ \\{\\}|đã\\ gửi\\ về\\ \\{\\}\\ \\{\\}|còn\\ \\{\\}\\ thay\\ đổi\\ chưa\\ gửi\\ được\\ \\-\\ sẽ\\ thử\\ lại\\ khi\\ tới\\ được\\ \\{\\}|tự\\ gửi\\ khi\\ \\{\\}\\ trả\\ lời\\ lại;\\ bấm\\ “gửi\\ về\\ \\{\\}”\\ để\\ gửi\\ ngay)$",
+          "reason": "native chưa báo đã gửi (toast và dòng \"Đã gửi về … lúc …\") và chưa gộp với lời báo tải dở"
+        },
+        {
+          "side": "web",
+          "match": "^(giọng\\ và\\ lời\\ đọc|làm\\ ở\\ studio\\ trên\\ máy\\ tính|sửa\\ ở\\ máy\\ gốc)$",
+          "reason": "native chưa có mục mờ giải thích trong menu sách (giọng / lời đọc làm ở Studio, sách của máy khác sửa ở máy gốc)"
+        },
+        {
+          "side": "web",
+          "match": "^đổi\\ có\\ hiệu\\ lực\\ ngay\\ trên\\ máy\\ tính\\ \\{\\}\\ \\-\\ audio\\ và\\ chữ\\ của\\ người\\ làm\\ sách\\ giữ\\ nguyên$",
+          "reason": "native chưa sửa sách của máy tính qua Studio từ xa"
         }
       ],
       "allow": [
+        {
+          "side": "web",
+          "match": "^(lưu|lưu\\ tên|lưu\\ tác\\ giả|đã\\ đổi\\ tên\\ sách|đã\\ đổi\\ tác\\ giả|đã\\ bỏ\\ tên\\ tác\\ giả|đã\\ đặt\\ ảnh\\ bìa|đã\\ đổi\\ tên\\ chương:\\ \\{\\})$",
+          "reason": "máy tính lưu từng ô bằng nút (Enter) rồi báo đã lưu; điện thoại lưu khi đang gõ, không nút, không chữ \"Đã lưu\" (EditBookScreen.kt, BookFormsTest editSavesSilently)"
+        },
+        {
+          "side": "web",
+          "match": "^(xong|chọn\\ lại)$",
+          "reason": "hộp thoại của máy tính cần nút đóng / chọn lại ngay trong hộp; điện thoại là màn riêng: Back đóng, \"Chọn file sách\" luôn ở đáy hàng đợi"
+        },
+        {
+          "side": "web",
+          "match": "^mở$",
+          "reason": "máy tính: nút của ô dán đường dẫn file / thư mục (điện thoại không có đường dẫn để dán)"
+        },
+        {
+          "side": "web",
+          "match": "^chưa\\ hỗ\\ trợ\\ \\{\\}\\.\\ bạn\\ hãy\\ chọn\\ epub,\\ docx,\\ pdf\\ có\\ chữ,\\ txt\\ hoặc\\ file\\ \\.abook$",
+          "reason": "máy tính: kiểm đuôi của file kéo thả / đường dẫn dán trước khi đọc; điện thoại đưa mọi file chọn được cho lõi, lõi tự báo (TextImports.kt, ngoài ui/)"
+        },
+        {
+          "side": "web",
+          "match": "^không\\ mở\\ được\\ bộ\\ chọn\\ file$",
+          "reason": "web trên Android: lỗi gọi bộ chọn qua plugin Capacitor; native gọi thẳng bộ chọn của hệ thống, không có bước lỗi này"
+        },
+        {
+          "side": "web",
+          "match": "^(không\\ mở\\ được\\ file\\ sách\\ này|ở\\ đây\\ chưa\\ mở\\ được\\ file\\ sách\\ \\.abook\\ \\-\\ dùng\\ nút\\ “mở\\ file\\ sách”)$",
+          "reason": "web: file .abook đi đường mở riêng của vỏ (onBookFile), vỏ không có đường ấy thì báo; native mở .abook ngay trong hàng đợi Thêm sách (ImportRepo.prepare)"
+        },
+        {
+          "side": "web",
+          "match": "^đã\\ gộp\\ \\{\\}\\ sửa\\ từ\\ file$",
+          "reason": "chỉ máy tính: gộp phần sửa trong xưởng của file .abookproj vào dự án Studio (điện thoại không có Studio)"
+        },
+        {
+          "side": "web",
+          "match": "^sửa\\ thông\\ tin$",
+          "reason": "mục menu \"…\" của trang sách; native có đúng chữ này ở screens/BookSheets.kt (cặp library-book), không thuộc file của màn Thêm / Sửa"
+        },
+        {
+          "side": "web",
+          "match": "^phần\\ \\{\\}$",
+          "reason": "chữ trên bìa vẽ của tập 2 trở đi; native vẽ cùng chữ trong CoverArt.kt (lõi, ngoài ui/ nên máy so không quét)"
+        },
+        {
+          "side": "web",
+          "match": "^chữ\\ bìa\\ trên\\ hoạ\\ tiết\\ sóng$",
+          "reason": "thuộc tính data-overlay cho máy dò ảnh gallery_inspect (khối aria-hidden), không phải chữ hiện ra"
+        },
+        {
+          "side": "web",
+          "match": "^chưa\\ đọc\\ được$",
+          "reason": "native có cùng chữ ở ImportStage.Error (addbook/ImportModel.kt); máy quét bỏ qua đối số của lời gọi tên *Error"
+        },
+        {
+          "side": "native",
+          "match": "^(bạn\\ hãy\\ nhập\\ tên\\ sách|bạn\\ hãy\\ nhập\\ tên\\ chương|tên\\ quá\\ dài\\.\\ bạn\\ hãy\\ dùng\\ tối\\ đa\\ \\{\\}\\ ký\\ tự)$",
+          "reason": "điện thoại lưu khi đang gõ nên kiểm ô và báo tại chỗ; máy tính khoá nút Lưu khi ô trống và chặn gõ quá 160 ký tự (maxLength)"
+        },
+        {
+          "side": "native",
+          "match": "^bạn\\ hãy\\ thử\\ lại$",
+          "reason": "điện thoại: câu thay khi lỗi của lõi không có chữ; máy tính luôn có lời của máy chủ trong toast"
+        },
+        {
+          "side": "native",
+          "match": "^(máy\\ này\\ chưa\\ lấy\\ chữ\\ pdf\\ trực\\ tiếp\\ được\\.\\ bạn\\ hãy\\ chọn\\ epub,\\ docx\\ hoặc\\ txt|pdf\\ quá\\ nhiều\\ trang\\.\\ bạn\\ hãy\\ chia\\ file\\ rồi\\ thử\\ lại|pdf\\ có\\ quá\\ nhiều\\ chữ\\.\\ bạn\\ hãy\\ chia\\ file\\ rồi\\ thử\\ lại)$",
+          "reason": "điện thoại đọc chữ PDF bằng PdfRenderer của Android (cần API 35, giới hạn trang / chữ trên máy); máy tính đọc PDF bằng lõi Python"
+        },
+        {
+          "side": "native",
+          "match": "^(cắt\\ ảnh\\ bìa|dùng\\ ảnh|đặt\\ lại|đang\\ đọc\\ ảnh|đang\\ lưu|phóng\\ to|thu\\ nhỏ|bạn\\ hãy\\ chọn\\ lại\\ ảnh\\ bìa)$",
+          "reason": "điện thoại: màn cắt ảnh chụp thành bìa 2:3 bằng kéo / chụm (\"Phóng to\" / \"Thu nhỏ\" là thao tác TalkBack thay cho chụm); máy tính đặt ảnh đã chọn trực tiếp"
+        },
+        {
+          "side": "native",
+          "match": "^tên\\ gốc:\\ \\{\\}$",
+          "reason": "native đọc tên gốc của chương từ file sách (lớp sửa); API chương của web (ListenChapter) chưa mang tên gốc nên web chỉ có nút \"Về tên gốc\""
+        },
         {
           "side": "web",
           "match": "^bạn\\ hãy\\ thử\\ tải\\ lại\\ nhạc\\ nền\\ của\\ cuốn\\ này$",
@@ -2062,16 +2189,6 @@
           "side": "web",
           "match": "^bật$",
           "reason": "nhạc nền trong màn sửa sách: thuộc nhóm Nhạc (phiên Music làm)"
-        },
-        {
-          "side": "web",
-          "match": "^bỏ\\ qua$",
-          "reason": "nhãn trạng thái / nút của web đặt trong từng hàng; native đã dùng cùng chữ ở ImportStage hoặc nút của màn"
-        },
-        {
-          "side": "web",
-          "match": "^chưa\\ bỏ\\ được\\ ảnh\\ bìa$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi dưới ô / trạng thái hàng đợi"
         },
         {
           "side": "web",
@@ -2090,63 +2207,8 @@
         },
         {
           "side": "web",
-          "match": "^chưa\\ gửi\\ được\\ \\-\\ sẽ\\ thử\\ lại$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi dưới ô / trạng thái hàng đợi"
-        },
-        {
-          "side": "web",
-          "match": "^chưa\\ gửi\\ được\\ về\\ \\{\\}$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi dưới ô / trạng thái hàng đợi"
-        },
-        {
-          "side": "web",
-          "match": "^chưa\\ làm\\ được$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi dưới ô / trạng thái hàng đợi"
-        },
-        {
-          "side": "web",
           "match": "^chưa\\ lưu\\ được\\ file\\ sách$",
           "reason": "lưu / xuất file sách trong màn sửa sách: thuộc nhóm Xuất (đang gộp)"
-        },
-        {
-          "side": "web",
-          "match": "^chưa\\ thay\\ được\\ sách$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi dưới ô / trạng thái hàng đợi"
-        },
-        {
-          "side": "web",
-          "match": "^chưa\\ thêm\\ được\\ sách$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi dưới ô / trạng thái hàng đợi"
-        },
-        {
-          "side": "web",
-          "match": "^chưa\\ đặt\\ được\\ ảnh\\ bìa$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi dưới ô / trạng thái hàng đợi"
-        },
-        {
-          "side": "web",
-          "match": "^chưa\\ đọc\\ lại\\ được\\ file$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi dưới ô / trạng thái hàng đợi"
-        },
-        {
-          "side": "web",
-          "match": "^chưa\\ đọc\\ được$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi dưới ô / trạng thái hàng đợi"
-        },
-        {
-          "side": "web",
-          "match": "^chưa\\ đổi\\ được\\ tác\\ giả$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi dưới ô / trạng thái hàng đợi"
-        },
-        {
-          "side": "web",
-          "match": "^chưa\\ đổi\\ được\\ tên\\ chương$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi dưới ô / trạng thái hàng đợi"
-        },
-        {
-          "side": "web",
-          "match": "^chưa\\ đổi\\ được\\ tên\\ sách$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi dưới ô / trạng thái hàng đợi"
         },
         {
           "side": "web",
@@ -2155,18 +2217,8 @@
         },
         {
           "side": "web",
-          "match": "^chọn\\ lại$",
-          "reason": "nhãn trạng thái / nút của web đặt trong từng hàng; native đã dùng cùng chữ ở ImportStage hoặc nút của màn"
-        },
-        {
-          "side": "web",
           "match": "^chọn\\ thư\\ mục$",
           "reason": "lưu / xuất file sách trong màn sửa sách: thuộc nhóm Xuất (đang gộp)"
-        },
-        {
-          "side": "web",
-          "match": "^chữ\\ bìa\\ trên\\ hoạ\\ tiết\\ sóng$",
-          "reason": "mô tả hình bìa cho trình đọc màn hình của web; native vẽ bìa bằng Compose không có mô tả riêng này"
         },
         {
           "side": "web",
@@ -2190,53 +2242,13 @@
         },
         {
           "side": "web",
-          "match": "^file\\ không\\ có\\ sách\\ nào$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi dưới ô / trạng thái hàng đợi"
-        },
-        {
-          "side": "web",
-          "match": "^file\\ này\\ không\\ có\\ chữ\\ để\\ đọc$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi dưới ô / trạng thái hàng đợi"
-        },
-        {
-          "side": "web",
           "match": "^im\\ lặng$",
           "reason": "nhạc nền trong màn sửa sách: thuộc nhóm Nhạc (phiên Music làm)"
         },
         {
           "side": "web",
-          "match": "^không\\ mở\\ được\\ bộ\\ chọn\\ file$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi dưới ô / trạng thái hàng đợi"
-        },
-        {
-          "side": "web",
-          "match": "^không\\ mở\\ được\\ file$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi dưới ô / trạng thái hàng đợi"
-        },
-        {
-          "side": "web",
-          "match": "^không\\ mở\\ được\\ file\\ sách$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi dưới ô / trạng thái hàng đợi"
-        },
-        {
-          "side": "web",
-          "match": "^không\\ mở\\ được\\ file\\ sách\\ này$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi dưới ô / trạng thái hàng đợi"
-        },
-        {
-          "side": "web",
-          "match": "^không\\ thêm\\ cuốn\\ nào$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi dưới ô / trạng thái hàng đợi"
-        },
-        {
-          "side": "web",
           "match": "^loại\\ file$",
           "reason": "lưu / xuất file sách trong màn sửa sách: thuộc nhóm Xuất (đang gộp)"
-        },
-        {
-          "side": "web",
-          "match": "^lưu$",
-          "reason": "nhãn trạng thái / nút của web đặt trong từng hàng; native đã dùng cùng chữ ở ImportStage hoặc nút của màn"
         },
         {
           "side": "web",
@@ -2250,23 +2262,8 @@
         },
         {
           "side": "web",
-          "match": "^lưu\\ tác\\ giả$",
-          "reason": "nhãn trạng thái / nút của web đặt trong từng hàng; native đã dùng cùng chữ ở ImportStage hoặc nút của màn"
-        },
-        {
-          "side": "web",
-          "match": "^lưu\\ tên$",
-          "reason": "nhãn trạng thái / nút của web đặt trong từng hàng; native đã dùng cùng chữ ở ImportStage hoặc nút của màn"
-        },
-        {
-          "side": "web",
           "match": "^mặc\\ định:\\ thư\\ mục\\ đã\\ xuất$",
           "reason": "lưu / xuất file sách trong màn sửa sách: thuộc nhóm Xuất (đang gộp)"
-        },
-        {
-          "side": "web",
-          "match": "^mở$",
-          "reason": "nhãn trạng thái / nút của web đặt trong từng hàng; native đã dùng cùng chữ ở ImportStage hoặc nút của màn"
         },
         {
           "side": "web",
@@ -2295,11 +2292,6 @@
         },
         {
           "side": "web",
-          "match": "^phần\\ \\{\\}$",
-          "reason": "mô tả hình bìa cho trình đọc màn hình của web; native vẽ bìa bằng Compose không có mô tả riêng này"
-        },
-        {
-          "side": "web",
           "match": "^sách\\ nghe\\ \\(\\.abook\\)$",
           "reason": "lưu / xuất file sách trong màn sửa sách: thuộc nhóm Xuất (đang gộp)"
         },
@@ -2315,33 +2307,8 @@
         },
         {
           "side": "web",
-          "match": "^xong$",
-          "reason": "nhãn trạng thái / nút của web đặt trong từng hàng; native đã dùng cùng chữ ở ImportStage hoặc nút của màn"
-        },
-        {
-          "side": "web",
-          "match": "^đang\\ thêm\\ \\{\\}$",
-          "reason": "nhãn trạng thái / nút của web đặt trong từng hàng; native đã dùng cùng chữ ở ImportStage hoặc nút của màn"
-        },
-        {
-          "side": "web",
           "match": "^đang\\ tải\\ nhạc\\ nền$",
           "reason": "nhạc nền trong màn sửa sách: thuộc nhóm Nhạc (phiên Music làm)"
-        },
-        {
-          "side": "web",
-          "match": "^đang\\ đọc\\ file\\ sách$",
-          "reason": "nhãn trạng thái / nút của web đặt trong từng hàng; native đã dùng cùng chữ ở ImportStage hoặc nút của màn"
-        },
-        {
-          "side": "web",
-          "match": "^đang\\ đọc\\ file\\ tiếp$",
-          "reason": "nhãn trạng thái / nút của web đặt trong từng hàng; native đã dùng cùng chữ ở ImportStage hoặc nút của màn"
-        },
-        {
-          "side": "web",
-          "match": "^đã\\ bỏ\\ tên\\ tác\\ giả$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi dưới ô / trạng thái hàng đợi"
         },
         {
           "side": "web",
@@ -2350,541 +2317,19 @@
         },
         {
           "side": "web",
-          "match": "^đã\\ gộp\\ \\{\\}\\ sửa\\ từ\\ file$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi dưới ô / trạng thái hàng đợi"
-        },
-        {
-          "side": "web",
-          "match": "^đã\\ gửi\\ về\\ \\{\\}$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi dưới ô / trạng thái hàng đợi"
-        },
-        {
-          "side": "web",
-          "match": "^đã\\ gửi\\ về\\ \\{\\}\\ \\{\\}$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi dưới ô / trạng thái hàng đợi"
-        },
-        {
-          "side": "web",
-          "match": "^đã\\ hiểu$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi dưới ô / trạng thái hàng đợi"
-        },
-        {
-          "side": "web",
           "match": "^đã\\ lưu\\ file\\ sách$",
           "reason": "lưu / xuất file sách trong màn sửa sách: thuộc nhóm Xuất (đang gộp)"
         },
         {
           "side": "web",
-          "match": "^đã\\ mở$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi dưới ô / trạng thái hàng đợi"
-        },
-        {
-          "side": "web",
-          "match": "^đã\\ thêm\\ sách\\ vào\\ thư\\ viện$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi dưới ô / trạng thái hàng đợi"
-        },
-        {
-          "side": "web",
-          "match": "^đã\\ thêm\\ từ\\ file\\ này\\ rồi$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi dưới ô / trạng thái hàng đợi"
-        },
-        {
-          "side": "web",
-          "match": "^đã\\ thêm\\ \\{\\}\\ sách$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi dưới ô / trạng thái hàng đợi"
-        },
-        {
-          "side": "web",
-          "match": "^đã\\ thêm\\ “\\{\\}”$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi dưới ô / trạng thái hàng đợi"
-        },
-        {
-          "side": "web",
-          "match": "^đã\\ đặt\\ ảnh\\ bìa$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi dưới ô / trạng thái hàng đợi"
-        },
-        {
-          "side": "web",
-          "match": "^đã\\ đổi\\ tác\\ giả$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi dưới ô / trạng thái hàng đợi"
-        },
-        {
-          "side": "web",
-          "match": "^đã\\ đổi\\ tên\\ chương:\\ \\{\\}$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi dưới ô / trạng thái hàng đợi"
-        },
-        {
-          "side": "web",
-          "match": "^đã\\ đổi\\ tên\\ sách$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi dưới ô / trạng thái hàng đợi"
-        },
-        {
-          "side": "web",
           "match": "^đổi\\ bài$",
           "reason": "nhạc nền trong màn sửa sách: thuộc nhóm Nhạc (phiên Music làm)"
-        },
-        {
-          "side": "native",
-          "match": "^bạn\\ hãy\\ chọn\\ lại\\ file$",
-          "reason": "lời lỗi của native nói cách xử lý ('Bạn hãy…'); web báo bằng toast ngắn"
-        },
-        {
-          "side": "native",
-          "match": "^bạn\\ hãy\\ chọn\\ lại\\ ảnh$",
-          "reason": "màn cắt ảnh bìa chỉ có ở native (web đặt ảnh bìa trực tiếp)"
-        },
-        {
-          "side": "native",
-          "match": "^bạn\\ hãy\\ nhập\\ tên\\ chương$",
-          "reason": "lời lỗi của native nói cách xử lý ('Bạn hãy…'); web báo bằng toast ngắn"
-        },
-        {
-          "side": "native",
-          "match": "^bạn\\ hãy\\ nhập\\ tên\\ sách$",
-          "reason": "lời lỗi của native nói cách xử lý ('Bạn hãy…'); web báo bằng toast ngắn"
-        },
-        {
-          "side": "native",
-          "match": "^bạn\\ hãy\\ thử\\ lưu\\ lại$",
-          "reason": "lời lỗi của native nói cách xử lý ('Bạn hãy…'); web báo bằng toast ngắn"
-        },
-        {
-          "side": "native",
-          "match": "^bạn\\ hãy\\ thử\\ lại$",
-          "reason": "lời lỗi của native nói cách xử lý ('Bạn hãy…'); web báo bằng toast ngắn"
-        },
-        {
-          "side": "native",
-          "match": "^cắt\\ ảnh\\ bìa$",
-          "reason": "màn cắt ảnh bìa chỉ có ở native (web đặt ảnh bìa trực tiếp)"
-        },
-        {
-          "side": "native",
-          "match": "^dùng\\ ảnh$",
-          "reason": "màn cắt ảnh bìa chỉ có ở native (web đặt ảnh bìa trực tiếp)"
-        },
-        {
-          "side": "native",
-          "match": "^không\\ đọc\\ được\\ ảnh\\.\\ bạn\\ hãy\\ chọn\\ jpeg,\\ png\\ hoặc\\ webp$",
-          "reason": "màn cắt ảnh bìa chỉ có ở native (web đặt ảnh bìa trực tiếp)"
-        },
-        {
-          "side": "native",
-          "match": "^máy\\ này\\ chưa\\ lấy\\ chữ\\ pdf\\ trực\\ tiếp\\ được\\.\\ bạn\\ hãy\\ chọn\\ epub,\\ docx\\ hoặc\\ txt$",
-          "reason": "lời lỗi của native nói cách xử lý ('Bạn hãy…'); web báo bằng toast ngắn"
-        },
-        {
-          "side": "native",
-          "match": "^pdf\\ có\\ quá\\ nhiều\\ chữ\\.\\ bạn\\ hãy\\ chia\\ file\\ rồi\\ thử\\ lại$",
-          "reason": "lời lỗi của native nói cách xử lý ('Bạn hãy…'); web báo bằng toast ngắn"
-        },
-        {
-          "side": "native",
-          "match": "^pdf\\ quá\\ nhiều\\ trang\\.\\ bạn\\ hãy\\ chia\\ file\\ rồi\\ thử\\ lại$",
-          "reason": "lời lỗi của native nói cách xử lý ('Bạn hãy…'); web báo bằng toast ngắn"
-        },
-        {
-          "side": "native",
-          "match": "^phóng\\ to$",
-          "reason": "màn cắt ảnh bìa chỉ có ở native (web đặt ảnh bìa trực tiếp)"
-        },
-        {
-          "side": "native",
-          "match": "^thu\\ nhỏ$",
-          "reason": "màn cắt ảnh bìa chỉ có ở native (web đặt ảnh bìa trực tiếp)"
-        },
-        {
-          "side": "native",
-          "match": "^tên\\ quá\\ dài\\.\\ bạn\\ hãy\\ dùng\\ tối\\ đa\\ \\{\\}\\ ký\\ tự$",
-          "reason": "lời lỗi của native nói cách xử lý ('Bạn hãy…'); web báo bằng toast ngắn"
-        },
-        {
-          "side": "native",
-          "match": "^tên\\ sách\\ quá\\ dài\\.\\ bạn\\ hãy\\ đặt\\ tên\\ ngắn\\ hơn$",
-          "reason": "lời lỗi của native nói cách xử lý ('Bạn hãy…'); web báo bằng toast ngắn"
-        },
-        {
-          "side": "native",
-          "match": "^đang\\ lưu$",
-          "reason": "màn cắt ảnh bìa chỉ có ở native (web đặt ảnh bìa trực tiếp)"
-        },
-        {
-          "side": "native",
-          "match": "^đang\\ đọc\\ ảnh$",
-          "reason": "màn cắt ảnh bìa chỉ có ở native (web đặt ảnh bìa trực tiếp)"
-        },
-        {
-          "side": "native",
-          "match": "^đặt\\ lại$",
-          "reason": "màn cắt ảnh bìa chỉ có ở native (web đặt ảnh bìa trực tiếp)"
         }
       ],
-      "deferred": [
-        {
-          "side": "web",
-          "match": "^bạn\\ đã\\ thêm\\ file\\ này\\ thành\\ “\\{\\}”\\ \\(\\{\\}\\ chương\\)$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^chưa\\ hỗ\\ trợ\\ \\{\\}\\.\\ chọn\\ epub,\\ docx,\\ pdf\\ có\\ chữ,\\ txt\\ hoặc\\ \\.abook$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^chỉ\\ đổi\\ cái\\ tên\\ hiện\\ trên\\ màn\\ hình\\ \\-\\ audio\\ không\\ đổi$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^chỉnh\\ sửa\\ và\\ chỗ\\ nghe\\ của\\ bạn\\ vẫn\\ được\\ giữ$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^cuốn\\ này\\ đã\\ có\\ trong\\ thư\\ viện:\\ “\\{\\}”$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^các\\ file\\ đã\\ chọn$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^còn\\ \\{\\}\\ thay\\ đổi\\ chưa\\ gửi\\ được\\ \\-\\ sẽ\\ thử\\ lại\\ khi\\ tới\\ được\\ \\{\\}$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^cả\\ truyện\\ đang\\ là\\ một\\ chương\\.\\ tích\\ để\\ tách\\ theo\\ các\\ dòng\\ ấy;\\ chữ\\ giữ\\ nguyên$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^dòng\\ bỏ\\ chỉ\\ bị\\ bỏ\\ qua\\ khi\\ đọc;\\ chữ\\ của\\ sách\\ giữ\\ nguyên$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^epub,\\ docx,\\ pdf\\ có\\ chữ,\\ txt,\\ thư\\ mục\\ txt\\ hay\\ file\\ \\.abook\\.\\ chọn\\ được\\ nhiều\\ file$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^file\\ này\\ chưa\\ có\\ chương\\ nào\\ để\\ thêm$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^file\\ này\\ chưa\\ có\\ tên\\ sách\\ \\-\\ thêm\\ riêng\\ để\\ đặt\\ tên$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^file\\ này\\ có\\ bản\\ thu\\ khác$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^giọng\\ và\\ lời\\ đọc$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^gửi\\ về$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^gửi\\ về\\ \\{\\}$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^gửi\\ về\\ \\{\\}\\ \\(\\{\\}\\ thay\\ đổi\\)$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^không\\ rõ\\ tác\\ giả$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^không\\ đọc\\ được\\ file\\ ảnh$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^làm\\ ở\\ studio\\ trên\\ máy\\ tính$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^mỗi\\ dòng\\ “chương\\ n”\\ mở\\ một\\ chương\\ mới;\\ chữ\\ của\\ truyện\\ giữ\\ nguyên$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^mở\\ sách$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^pdf\\ phải\\ có\\ chữ\\ \\-\\ pdf\\ chụp\\ từ\\ máy\\ quét\\ thì\\ abook\\ chưa\\ đọc\\ được$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^sách\\ \\{\\}/\\{\\}$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^số\\ chương\\ hay\\ nhãn$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^sửa\\ thông\\ tin$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^sửa\\ ở\\ máy\\ gốc$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^thay\\ bằng\\ file\\ này$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^thêm\\ vào\\ thư\\ viện$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^tách\\ theo\\ \\{\\}\\ dòng\\ “chương\\ n”$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^tên\\ chương\\ \\(có\\ thể\\ để\\ trống\\)$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^tên\\ hiển\\ thị\\ trong\\ thư\\ viện$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^tên\\ trong\\ file\\ là\\ “\\{\\}”,\\ khác\\ tên\\ đang\\ dùng$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^tự\\ gửi\\ khi\\ tới\\ được\\ \\{\\};\\ bấm\\ “gửi\\ về\\ \\{\\}”\\ để\\ gửi\\ ngay$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^tự\\ gửi\\ khi\\ \\{\\}\\ trả\\ lời\\ lại;\\ bấm\\ “gửi\\ về\\ \\{\\}”\\ để\\ gửi\\ ngay$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^xem\\ lại\\ chương\\ trước\\ khi\\ thêm\\.\\ chữ\\ của\\ truyện\\ giữ\\ nguyên$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^đặt\\ lại\\ bản\\ của\\ máy\\ này$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^để\\ trống\\ nếu\\ không\\ rõ\\ tác\\ giả\\.\\ hiện\\ ở\\ thư\\ viện,\\ trang\\ sách\\ và\\ trong\\ file\\ sách\\ nói\\ xuất\\ ra$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^định\\ dạng$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^đổi\\ có\\ hiệu\\ lực\\ ngay\\ trên\\ máy\\ này\\ và\\ được\\ gửi\\ về\\ \\{\\}\\ khi\\ kết\\ nối\\ \\-\\ audio\\ và\\ chữ\\ của\\ người\\ làm\\ sách\\ giữ\\ nguyên$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^đổi\\ có\\ hiệu\\ lực\\ ngay\\ trên\\ máy\\ tính\\ \\{\\}\\ \\-\\ audio\\ và\\ chữ\\ của\\ người\\ làm\\ sách\\ giữ\\ nguyên$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^đổi\\ có\\ hiệu\\ lực\\ ngay\\ và\\ chỉ\\ trên\\ máy\\ này\\ \\-\\ audio\\ và\\ chữ\\ của\\ người\\ làm\\ sách\\ giữ\\ nguyên$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^đổi\\ tên\\ chương$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^ở\\ đây\\ chưa\\ mở\\ được\\ file\\ sách\\ \\.abook\\ \\-\\ dùng\\ nút\\ “mở\\ file\\ sách”$",
-          "reason": "màn Thêm / Sửa sách: web và native diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "native",
-          "match": "^bỏ$",
-          "reason": "màn Thêm / Sửa sách: native và web diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "native",
-          "match": "^bỏ\\ lời\\ chú$",
-          "reason": "màn Thêm / Sửa sách: native và web diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "native",
-          "match": "^bỏ\\ số\\ gọi$",
-          "reason": "màn Thêm / Sửa sách: native và web diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "native",
-          "match": "^bỏ\\ đọc\\ dòng$",
-          "reason": "màn Thêm / Sửa sách: native và web diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "native",
-          "match": "^chương$",
-          "reason": "màn Thêm / Sửa sách: native và web diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "native",
-          "match": "^chương\\ \\{\\}$",
-          "reason": "màn Thêm / Sửa sách: native và web diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "native",
-          "match": "^chọn\\ sách\\ từ\\ máy\\ bạn$",
-          "reason": "màn Thêm / Sửa sách: native và web diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "native",
-          "match": "^cuối\\ chương$",
-          "reason": "màn Thêm / Sửa sách: native và web diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "native",
-          "match": "^dùng\\ sách\\ có$",
-          "reason": "màn Thêm / Sửa sách: native và web diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "native",
-          "match": "^epub,\\ docx,\\ txt,\\ pdf\\ hoặc\\ file\\ abook$",
-          "reason": "màn Thêm / Sửa sách: native và web diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "native",
-          "match": "^file\\ này\\ đã\\ có\\ trong\\ thư\\ viện$",
-          "reason": "màn Thêm / Sửa sách: native và web diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "native",
-          "match": "^file\\ đã\\ chọn$",
-          "reason": "màn Thêm / Sửa sách: native và web diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "native",
-          "match": "^giữ$",
-          "reason": "màn Thêm / Sửa sách: native và web diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "native",
-          "match": "^giữ\\ nguyên$",
-          "reason": "màn Thêm / Sửa sách: native và web diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "native",
-          "match": "^gốc:\\ \\{\\}$",
-          "reason": "màn Thêm / Sửa sách: native và web diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "native",
-          "match": "^gửi$",
-          "reason": "màn Thêm / Sửa sách: native và web diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "native",
-          "match": "^gửi\\ phần\\ sửa$",
-          "reason": "màn Thêm / Sửa sách: native và web diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "native",
-          "match": "^lời\\ chú$",
-          "reason": "màn Thêm / Sửa sách: native và web diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "native",
-          "match": "^nhãn$",
-          "reason": "màn Thêm / Sửa sách: native và web diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "native",
-          "match": "^sách$",
-          "reason": "màn Thêm / Sửa sách: native và web diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "native",
-          "match": "^theo\\ \\{\\}\\ dòng\\ tiêu\\ đề\\ trong\\ file$",
-          "reason": "màn Thêm / Sửa sách: native và web diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "native",
-          "match": "^thử\\ lại$",
-          "reason": "màn Thêm / Sửa sách: native và web diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "native",
-          "match": "^tách\\ chương$",
-          "reason": "màn Thêm / Sửa sách: native và web diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "native",
-          "match": "^tên$",
-          "reason": "màn Thêm / Sửa sách: native và web diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "native",
-          "match": "^tên\\ gốc:\\ \\{\\}$",
-          "reason": "màn Thêm / Sửa sách: native và web diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "native",
-          "match": "^xem\\ trước$",
-          "reason": "màn Thêm / Sửa sách: native và web diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "native",
-          "match": "^đang\\ xử\\ lý$",
-          "reason": "màn Thêm / Sửa sách: native và web diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "native",
-          "match": "^đang\\ đọc\\ sách$",
-          "reason": "màn Thêm / Sửa sách: native và web diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "native",
-          "match": "^đã\\ bỏ\\ qua$",
-          "reason": "màn Thêm / Sửa sách: native và web diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
-        }
+      "deferred": [],
+      "web_also": [
+        "listen/ReadingSuggestions.tsx",
+        "shared/ui.tsx"
       ]
     }
   ]

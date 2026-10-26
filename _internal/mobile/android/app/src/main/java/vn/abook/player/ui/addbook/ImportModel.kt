@@ -5,7 +5,7 @@ import androidx.compose.runtime.Immutable
 @Immutable
 enum class ImportStage(val label: String) {
     Waiting("Chờ"), Reading("Đang đọc"), Review("Đang xem"), Adding("Đang thêm"),
-    Added("Đã thêm"), Existing("Đã có trong thư viện"), Skipped("Đã bỏ qua"), Error("Chưa nhập được"),
+    Added("Đã thêm"), Existing("Đã có trong thư viện"), Skipped("Đã bỏ qua"), Error("Chưa đọc được"),
 }
 
 @Immutable
@@ -29,6 +29,8 @@ data class ImportPreview(
     val suggestions: List<Suggestion> = emptyList(), val notes: List<String> = emptyList(),
     val footnoteCount: Int = 0, val footnoteMarks: Int = 0, val footnoteExample: String = "",
     val splitOffer: Int = 0, val splitHeadings: Int = 0, val existingId: String? = null,
+    /** Tên cuốn đã có trong thư viện (`existingId`), để nói cuốn nào. Trống khi không đọc được tên. */
+    val existingTitle: String = "",
 )
 
 @Immutable
@@ -56,6 +58,15 @@ object ImportLogic {
         items.map { if (it.id == id) it.copy(stage = stage, problem = problem, bookId = bookId) else it }
 
     fun next(items: List<ImportItem>) = items.firstOrNull { it.stage == ImportStage.Waiting }
+
+    /** Chỗ của một gợi ý bỏ đọc dòng: "chương 3" hay "12 chương" (cùng chữ với `where` của web, listen/ReadingSuggestions.tsx). */
+    fun where(chapters: List<Int>): String = if (chapters.size == 1) "chương ${chapters[0]}" else "${chapters.size} chương"
+
+    /** Dòng phụ của "Tách chương" (cùng chữ với `splitHint` của web, listen/textImport.ts): có phần Mở đầu thì nói thêm số chương. */
+    fun splitHint(preview: ImportPreview): String {
+        val extra = if (preview.splitOffer > preview.splitHeadings) " (thêm phần Mở đầu - ${preview.splitOffer} chương)" else ""
+        return "Theo ${preview.splitHeadings} dòng “Chương N” trong file$extra."
+    }
 
     fun groups(items: List<Suggestion>): List<SuggestionGroup> = items.groupBy { it.line }.map { (line, rows) ->
         SuggestionGroup(line, rows.map { it.chapter }, rows.all { it.skipped })

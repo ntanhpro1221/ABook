@@ -75,10 +75,11 @@ class BookFormsTest {
     @Test fun emptyAddLight() = add(ImportState(), false, "add_empty_light")
     @Test fun emptyAddDark() = add(ImportState(), true, "add_empty_dark")
 
-    @Test fun emptyAddIsOneLineOneCaptionAndTwoActions() {
+    @Test fun emptyAddIsOneCaptionAndTwoActions() {
         add(ImportState(), false, "add_empty_light")
-        rule.onNodeWithText("Chọn sách từ máy bạn").assertIsDisplayed()
-        rule.onNodeWithText("EPUB, DOCX, TXT, PDF hoặc file ABook.").assertIsDisplayed()
+        // Cùng chữ với lời đầu hộp Thêm sách của web (listen/AddBook.tsx); không câu thứ hai.
+        rule.onNodeWithText("EPUB, DOCX, PDF có chữ, TXT hoặc file .abook. Chọn được nhiều file.").assertIsDisplayed()
+        rule.onAllNodesWithText("Chọn sách từ máy bạn").assertCountEquals(0)
         rule.onNodeWithText("Chọn file sách").assertIsDisplayed()
         rule.onNodeWithText("Chọn thư mục TXT").assertIsDisplayed()
         // Không còn tiêu đề giả của một biểu mẫu, không còn câu hướng dẫn.
@@ -160,6 +161,23 @@ class BookFormsTest {
         val meta = rule.onNodeWithTag("import_meta").getUnclippedBoundsInRoot()
         val next = rule.onNodeWithText("Gợi ý phần đọc").getUnclippedBoundsInRoot()
         assertTrue("khoảng ${next.top - meta.bottom}", (next.top - meta.bottom).value >= 16f)
+    }
+
+    @Test fun aBookAlreadyInTheLibrarySaysWhichOneAndSkipIsThePrimaryAction() {
+        val known = preview.copy(existingId = "old", existingTitle = "Chuyến phà cuối ngày")
+        var skipped = 0
+        show { ImportReviewScreen(ImportState(currentId = 1, preview = known, choices = ImportLogic.defaults(known)), {}, {}, {}, {}, { skipped++ }) }
+        rule.onNodeWithText("Cuốn này đã có trong thư viện: “Chuyến phà cuối ngày”.").assertIsDisplayed()
+        // Nút chính là "Bỏ cuốn này" (như hàng nhiều file của web), không lặp ở cuối danh sách.
+        rule.onAllNodesWithText("Bỏ cuốn này").assertCountEquals(1)
+        rule.onAllNodesWithTag("skip_book").assertCountEquals(0)
+    }
+
+    @Test fun reviewTitleCountsTheBooksWhenSeveralFilesWerePicked() {
+        val items = listOf(ImportItem(1, "a", "Một.epub", stage = ImportStage.Review), ImportItem(2, "b", "Hai.epub"))
+        show { ImportReviewScreen(ImportState(items = items, currentId = 1, preview = preview, choices = ImportLogic.defaults(preview)), {}, {}, {}, {}, {}) }
+        rule.onNodeWithText("Sách 1/2 · Xem trước").assertIsDisplayed()
+        rule.onNodeWithText("Thêm vào thư viện").assertIsDisplayed()
     }
 
     @Test fun chapterRowsHaveASwitchAndOpenTheNameScreenFromTheTitle() {
@@ -279,8 +297,10 @@ class BookFormsTest {
         rule.onAllNodesWithText("Bạn sửa là tự lưu", substring = true).assertCountEquals(0)
         rule.onAllNodesWithTag("edit_problem").assertCountEquals(0)
         rule.onAllNodesWithText("Chọn ảnh bìa").assertCountEquals(0)
-        rule.onNodeWithText("Gửi phần sửa").assertIsDisplayed()
-        rule.onNodeWithText("2 thay đổi · về máy tính").assertIsDisplayed()
+        // Cùng chữ với dòng tình trạng "Gửi về máy tính" của web (SendEdits.tsx, shared/editsSync.ts).
+        rule.onNodeWithText("2 thay đổi đang chờ gửi về máy tính").assertIsDisplayed()
+        rule.onNodeWithText("Tự gửi khi tới được máy tính; bấm “Gửi về máy tính” để gửi ngay.").assertIsDisplayed()
+        rule.onNodeWithText("Gửi về máy tính").assertIsDisplayed()
     }
 
     @Test fun editShowsAFailureInlineWithRetry() {
@@ -288,7 +308,7 @@ class BookFormsTest {
         var sent = 0
         val book = edit
         show {
-            EditBookScreen(EditState(book, EditLogic.draft(book), loading = false, problem = "Không ghi được file.", sendProblem = "Chưa gửi được. Phần sửa vẫn được giữ trên máy bạn."),
+            EditBookScreen(EditState(book, EditLogic.draft(book), loading = false, problem = "Không ghi được file.", sendProblem = "Chưa gửi được về máy tính. Phần sửa vẫn nằm trên máy này."),
                 CoverLoader(), {}, {}, {}, {}, { sent++ }, { retried++ })
         }
         rule.onNodeWithText("Không ghi được file.").assertIsDisplayed()
@@ -303,10 +323,10 @@ class BookFormsTest {
     @Test fun retryStaysOnTheFirstLineOfAWrappedProblem() {
         val book = edit
         show {
-            EditBookScreen(EditState(book, EditLogic.draft(book), loading = false, sendProblem = "Chưa gửi được. Phần sửa vẫn được giữ trên máy bạn."),
+            EditBookScreen(EditState(book, EditLogic.draft(book), loading = false, sendProblem = "Chưa gửi được về máy tính. Phần sửa vẫn nằm trên máy này."),
                 CoverLoader(), {}, {}, {}, {}, {}, {})
         }
-        val text = rule.onNodeWithText("Chưa gửi được. Phần sửa vẫn được giữ trên máy bạn.").getUnclippedBoundsInRoot()
+        val text = rule.onNodeWithText("Chưa gửi được về máy tính. Phần sửa vẫn nằm trên máy này.").getUnclippedBoundsInRoot()
         val retry = rule.onNodeWithTag("send_problem-retry").getUnclippedBoundsInRoot()
         assertTrue("câu lỗi phải xuống dòng", (text.bottom - text.top).value > 30f)
         val first = text.top + 10.5.dp
@@ -316,14 +336,14 @@ class BookFormsTest {
     @Test fun pendingRowOnlyExistsWhenThereIsSomethingToSend() {
         val clean = edit.copy(pending = 0)
         show { EditBookScreen(EditState(clean, EditLogic.draft(clean), loading = false), CoverLoader(), {}, {}, {}, {}, {}, {}) }
-        rule.onAllNodesWithText("Gửi phần sửa").assertCountEquals(0)
+        rule.onAllNodesWithTag("send_edits").assertCountEquals(0)
     }
 
     @Test fun chapterRowsShowTheOriginalNameOnlyWhenRenamed() {
         edit(false, "edit_book_light")
         rule.onNodeWithTag("edit_book_list").performScrollToNode(hasTestTag("edit_chapter_3"))
-        rule.onNodeWithText("Gốc: Chương 2").assertIsDisplayed()
-        rule.onAllNodesWithText("Gốc:", substring = true).assertCountEquals(1)
+        rule.onNodeWithText("Tên gốc: Chương 2").assertIsDisplayed()
+        rule.onAllNodesWithText("Tên gốc:", substring = true).assertCountEquals(1)
     }
 
     @Test fun editRowsShareTheFirstLineCenterOnBothSides() {

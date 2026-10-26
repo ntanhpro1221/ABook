@@ -102,7 +102,7 @@ fun CoverCropRoute(editor: BookEditor, uri: String, onBack: () -> Unit) {
     LaunchedEffect(uri, attempt) {
         problem = ""
         try { bitmap = CoverCrop.load(context, Uri.parse(uri), width) }
-        catch (error: Exception) { problem = error.message ?: "Bạn hãy chọn lại ảnh." }
+        catch (error: Exception) { problem = error.message ?: "Bạn hãy chọn lại ảnh bìa." }
     }
     val image = bitmap?.asImageBitmap()
     BookForm("Cắt ảnh bìa", onBack, "cover_crop_screen", footer = {
