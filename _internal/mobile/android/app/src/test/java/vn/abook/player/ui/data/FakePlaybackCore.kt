@@ -20,6 +20,12 @@ class FakePlaybackCore(var snapshot: JSONObject, private val simulate: Boolean =
     override fun addListener(listener: (JSONObject) -> Unit) { listeners += listener }
     override fun removeListener(listener: (JSONObject) -> Unit) { listeners -= listener }
     override fun snapshot() = snapshot
+    override fun close() {
+        calls += "close"
+        snapshot = JSONObject().put("bookId", "").put("chapterId", JSONObject.NULL)
+        chapterList = emptyList()
+        emit(snapshot)
+    }
     override fun play() { calls += "play"; setPlaying(true) }
     override fun pause() { calls += "pause"; setPlaying(false) }
     override fun toggle() { calls += "toggle"; setPlaying(!snapshot.optBoolean("playing")) }

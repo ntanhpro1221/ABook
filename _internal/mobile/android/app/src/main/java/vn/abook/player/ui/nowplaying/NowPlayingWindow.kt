@@ -52,6 +52,7 @@ import vn.abook.player.ui.theme.MotionMs
 /** Both back and swipe seek the same Compose transition used to open the container. */
 @Stable
 class NowPlayingWindowState(private val scope: CoroutineScope) {
+    var otherPlayers: (() -> Unit)? = null
     val transition = SeekableTransitionState(false)
     var reading by mutableStateOf(false)
     var sheet by mutableStateOf(PlayerSheet.Speed)

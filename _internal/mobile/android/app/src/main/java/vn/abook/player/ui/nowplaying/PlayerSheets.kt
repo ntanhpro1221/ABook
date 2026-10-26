@@ -143,6 +143,10 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                         }
                     }
                     PlayerSheet.More -> {
+                        if (window.otherPlayers != null) SheetRow("Thiết bị phát", "Chọn") {
+                            window.closeSheet()
+                            window.otherPlayers?.invoke()
+                        }
                         // Nhạc nền của CUỐN NÀY (danh sách, to nhỏ, ghi công) cần cả một tấm; công tắc chung "Tự chọn nhạc nền" ở Cài đặt.
                         if (music != null) {
                             val ui by music.ui.collectAsState()

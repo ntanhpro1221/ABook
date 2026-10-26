@@ -93,6 +93,23 @@ class NativeActivity : ComponentActivity() {
                 }
             }
         }
+        if (!demo) lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                vn.abook.player.StudioAlerts.checkSoon(this@NativeActivity)
+                launch {
+                    while (true) {
+                        app.companion.refresh()
+                        delay(if (app.companion.state.value.players.any { it.playing }) 2_000 else 8_000)
+                    }
+                }
+                launch {
+                    while (true) {
+                        app.devices.syncStreamed()
+                        delay(8_000)
+                    }
+                }
+            }
+        }
         setContent {
             val scope = rememberCoroutineScope()
             val reveal = remember { ThemeReveal(scope) }
@@ -114,9 +131,9 @@ class NativeActivity : ComponentActivity() {
                     LaunchedEffect(Unit) { shell.library.restoreSort(withContext(Dispatchers.IO) { prefs.sort() }) }
                     val state by library.state.collectAsStateWithLifecycle()
                     AppShell(
-                        shell, state, player, covers, env, onFirstContent = ::onFirstContent, books = library,
+                        shell, state, player, covers, env, onFirstContent = ::onFirstContent, books = library, deletions = library.deletions, companion = if (demo) null else app.companion,
                         nowPlaying = rememberRepoNowPlaying(player, readAlong, env.music),
-                        imports = app.imports, editors = app.editors, demo = demo, autoPick = !demo,
+                        imports = app.imports, editors = app.editors, demo = demo, askNotifications = deviceLinks.askNotifications, autoPick = !demo,
                     )
                 }
             }

@@ -37,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
@@ -213,7 +214,8 @@ fun Reveal(visible: Boolean, content: @Composable () -> Unit) {
 }
 
 /** Dòng chữ đầu của tên một hàng (16/24): biểu tượng hai bên hàng đứng giữa dòng này. */
-val FirstLine = 24.dp
+val FirstLine: Dp
+    @Composable get() = with(LocalDensity.current) { Abook.type.body.lineHeight.toDp() }
 
 private val RowPad = Dim.s16
 
@@ -221,10 +223,14 @@ private val RowPad = Dim.s16
  * Đặt nội dung sao cho TÂM của nó trùng tâm dòng chữ đầu của hàng (đệm trên [RowPad] + nửa dòng). Một luật cho cả hai bên hàng: tên dài xuống dòng cũng không
  * lệch nhau; nội dung cao hơn dòng (ô chạm 48) thì mở ra hai phía từ tâm ấy.
  */
-fun Modifier.onFirstLine(): Modifier = layout { measurable, constraints ->
-    val placeable = measurable.measure(constraints.copy(minHeight = 0, maxHeight = Constraints.Infinity))
-    val y = (RowPad.roundToPx() + FirstLine.roundToPx() / 2 - placeable.height / 2).coerceAtLeast(0)
-    layout(placeable.width, y + placeable.height) { placeable.place(0, y) }
+@Composable
+fun Modifier.onFirstLine(): Modifier {
+    val firstLine = FirstLine
+    return layout { measurable, constraints ->
+        val placeable = measurable.measure(constraints.copy(minHeight = 0, maxHeight = Constraints.Infinity))
+        val y = (RowPad.roundToPx() + firstLine.roundToPx() / 2 - placeable.height / 2).coerceAtLeast(0)
+        layout(placeable.width, y + placeable.height) { placeable.place(0, y) }
+    }
 }
 
 /**
@@ -334,6 +340,7 @@ fun MenuRow(
     unavailable: Boolean = false,
     danger: Boolean = false,
     onClick: () -> Unit = {},
+    supporting: String? = null,
     /** Giá trị hiện tại bên phải (vd "Nhạc nền" ... "Theo cảnh"); dài thì xuống dòng, không cắt. */
     value: String? = null,
     icon: @Composable (Color) -> Unit,
@@ -352,12 +359,17 @@ fun MenuRow(
             .testTag(tag),
         verticalAlignment = Alignment.Top,
     ) {
-        Box(Modifier.size(Dim.s24, FirstLine).testTag("${tag}_icon"), contentAlignment = Alignment.CenterStart) { icon(ink) }
+        Box(Modifier.size(Dim.s24, FirstLine).testTag("${tag}_icon"), contentAlignment = Alignment.CenterStart) {
+            Box(Modifier.testTag("row_leading")) { icon(ink) }
+        }
         Spacer(Modifier.width(Dim.s12))
-        BasicText(
-            label, style = Abook.type.body.copy(color = if (inert) colors.text2 else ink),
-            modifier = Modifier.weight(1f).then(if (value != null) Modifier.alignByBaseline() else Modifier),
-        )
+        Column(Modifier.weight(1f).then(if (value != null) Modifier.alignByBaseline() else Modifier)) {
+            BasicText(label, style = Abook.type.body.copy(color = if (inert) colors.text2 else ink), modifier = Modifier.testTag("row_title"))
+            if (supporting != null) {
+                Spacer(Modifier.height(2.dp))
+                Caption(supporting)
+            }
+        }
         if (value != null) {
             Spacer(Modifier.width(Dim.s12))
             // Cùng cỡ chữ phụ với giá trị ở hàng của tấm trình phát; chung đường chân chữ với tên, dài thì xuống dòng.
