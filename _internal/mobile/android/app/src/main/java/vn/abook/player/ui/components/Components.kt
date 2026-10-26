@@ -2,12 +2,18 @@ package vn.abook.player.ui.components
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -34,8 +40,9 @@ import vn.abook.player.ui.theme.Dim
  * Chạm: thu 0,97 khi nhấn (90 ms), về 1 khi thả (120 ms), không chấm gợn đọng lại (DESIGN.md §5.2). Hệ số thu đọc trong pha vẽ
  * (graphicsLayer) nên mỗi khung của hoạt ảnh không dựng lại gì.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun Modifier.pressable(role: Role = Role.Button, onClick: () -> Unit): Modifier {
+fun Modifier.pressable(role: Role = Role.Button, onLongClick: (() -> Unit)? = null, onClick: () -> Unit): Modifier {
     val source = remember { MutableInteractionSource() }
     val pressed by source.collectIsPressedAsState()
     val scale by animateFloatAsState(
@@ -43,16 +50,21 @@ fun Modifier.pressable(role: Role = Role.Button, onClick: () -> Unit): Modifier 
         animationSpec = if (pressed) Motion.PressDown else Motion.PressUp,
         label = "press",
     )
-    return graphicsLayer { scaleX = scale; scaleY = scale }
-        .clickable(interactionSource = source, indication = null, role = role, onClick = onClick)
+    val base = graphicsLayer { scaleX = scale; scaleY = scale }
+    return if (onLongClick == null) {
+        base.clickable(interactionSource = source, indication = null, role = role, onClick = onClick)
+    } else {
+        base.combinedClickable(interactionSource = source, indication = null, role = role, onLongClick = onLongClick, onClick = onClick)
+    }
 }
 
 /** Đầu màn gốc: tiêu đề 24 + dòng phụ ngay dưới (DESIGN.md §6 "Đầu màn"). */
 @Composable
-fun ScreenHeader(title: String, modifier: Modifier = Modifier, subtitle: String? = null) {
+fun ScreenHeader(title: String, modifier: Modifier = Modifier, subtitle: String? = null, trailing: (@Composable () -> Unit)? = null) {
     Column(modifier.padding(top = Dim.s12, bottom = Dim.s16)) {
-        Box(Modifier.height(Dim.s48), contentAlignment = Alignment.CenterStart) {
+        Box(Modifier.fillMaxWidth().height(Dim.s48), contentAlignment = Alignment.CenterStart) {
             BasicText(title, style = Abook.type.screenTitle)
+            if (trailing != null) Box(Modifier.align(Alignment.CenterEnd)) { trailing() }
         }
         if (subtitle != null) BasicText(subtitle, style = Abook.type.bodySmall)
     }
@@ -87,5 +99,17 @@ fun PlaceholderTab(title: String, line: String, modifier: Modifier = Modifier) {
         ScreenHeader(title)
         BasicText(line, style = Abook.type.body.copy(color = Abook.colors.text2))
         Spacer(Modifier.height(Dim.s16))
+    }
+}
+
+/** Nút chính: nền hổ phách, cao 48, chữ ≤ 3 từ (DESIGN.md §6 "Nút (a)"). */
+@Composable
+fun PrimaryButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Box(
+        modifier.height(Dim.s48).pressable(onClick = onClick).clip(RoundedCornerShape(Dim.radiusControl)).background(Abook.colors.accent)
+            .padding(horizontal = Dim.s24),
+        contentAlignment = Alignment.Center,
+    ) {
+        BasicText(label, style = Abook.type.bodyStrong.copy(color = Abook.colors.accentInk))
     }
 }

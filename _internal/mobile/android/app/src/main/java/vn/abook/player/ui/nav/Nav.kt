@@ -9,15 +9,19 @@ import androidx.compose.runtime.setValue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import vn.abook.player.ui.data.BookRow
+import vn.abook.player.ui.data.ListenBook
 import vn.abook.player.ui.motion.Motion
 import vn.abook.player.ui.motion.ScreenGeometry
 
-/** Màn con xếp trên ba tab (P0: chỉ trang sách giữ chỗ; P1+ thêm dần). */
+/** Màn con xếp trên ba tab (trang sách và Đang phát còn là giữ chỗ; P1b/P2 làm thật). */
 @Immutable
 sealed interface Destination {
     @Immutable
-    data class Book(val book: BookRow) : Destination
+    data class Book(val book: ListenBook) : Destination
+
+    /** Trình phát đầy đủ - giữ chỗ cho tới khi màn thật vào (thanh phát nhỏ gọi onOpenNowPlaying để tới đây). */
+    @Immutable
+    data object NowPlaying : Destination
 }
 
 /** Một mục của ngăn xếp: `key` ổn định để Compose giữ trạng thái màn khi nó đổi chỗ (trên cùng -> bên dưới). */
