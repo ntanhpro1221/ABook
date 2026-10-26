@@ -174,6 +174,21 @@ Bản thử và số liệu thô: `D:/Novels/native_desk_proto` (`results/tables
 
 **Chọn: Qt Quick (QML + C++), Qt ≥ 6.10.3, backend mặc định (D3D11, vòng render luồng riêng, flip model).** Không đặt QSG_RHI_BACKEND, không dùng vòng basic. Liên kết động các DLL Qt (LGPL) và ghi vào THIRD_PARTY. Đo khung luôn ghi cửa sổ trên cùng và bỏ lượt bị che.
 
+**Lõi âm thanh (D1, 26-10):** hai ứng viên sau cùng giao diện `AudioOut`, đo bằng `_internal/desktop_qt/tools/audiobench` (sách thật 192 kbps mono 48 kHz, tiến trình riêng không cửa sổ, GPU đang bận):
+
+| | Media Foundation `IMFMediaEngine` | Qt Multimedia 6.10 `QMediaPlayer` (FFmpeg) |
+|---|---|---|
+| Thêm vào bản phân phối | 0 MB (thành phần Windows; chỉ liên kết mfplat/mf) | khoảng +22 MB (Qt6Multimedia + FFmpeg DLL + plugin) |
+| RAM riêng khi phát | 9,6-10,6 MB | 26,9-28,5 MB |
+| CPU, phát 1,0x / 1,5x / 2x / 3x (TB 3 lượt, 20 s) | 0,8 / 1,7 / 1,6 / 1,4 % một nhân | 4,0 / 5,7 / 9,3 / 6,8 % (1 lượt, 6 s) |
+| Tốc độ thật so với đặt (1,5x) | 1,5015 | 1,4934 |
+| Tua: sự kiện xong / nghe ra âm | 0-3 ms / khoảng 60 ms (đo được 2/6 lần, còn lại vòng bắt tiếng không thấy đỉnh) | 0 ms / 64-100 ms (6/6) |
+| Đổi chương (hết chương 1 -> tiếng chương 2) | 99 ms | 125 ms |
+| Cao độ ở 1,5x / 2x / 3x (F0 trung vị, 1x = 90,06 Hz) | 90,06 / 89,55 / 90,23 Hz (lệch < 0,6 %) | 91,17 / 91,08 / 93,93 Hz (lệch tới 4,3 % ở 3x) |
+| Định dạng | MP3, AAC, WAV phát và đổi tốc độ được; Opus/FLAC đo thấy không đổi tốc độ được (ghi cho D1b) | gần như mọi thứ |
+
+Chọn **Media Foundation**: nhẹ hơn mọi mặt (bằng 0 MB phân phối, RAM một phần ba, CPU một phần ba đến một phần sáu), giữ cao độ chuẩn hơn, đổi chương nhanh hơn. Sách thật chỉ có MP3 nên khoảng trống định dạng không vướng; nếu D1b cần Opus/FLAC đổi tốc độ thì thêm `QMediaPlayer` làm lõi thứ hai sau cùng giao diện `AudioOut`, không đổi `Player`. Backend `qt-windows` của Qt trả vị trí âm: loại. Cao độ bắt bằng vòng loopback ở -66 dBFS (không nghe được ra loa).
+
 ### 7.2 Kiến trúc app Windows
 
 - Giao diện: QML cho bố cục và chuyển động, C++ cho mô hình dữ liệu (`QAbstractListModel` cho thư viện / chương / đoạn), ảnh bìa giải mã ngoài luồng chính đúng cỡ hiển thị. Đọc theo vẽ bằng `QQuickPaintedItem` hoặc node scene graph riêng trên `QTextLayout` của từng đoạn, chỉ vẽ lại vùng câu / từ đổi.
