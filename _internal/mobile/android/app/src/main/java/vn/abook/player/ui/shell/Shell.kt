@@ -69,11 +69,15 @@ import vn.abook.player.ui.voice.KeysScreen
 import vn.abook.player.ui.voice.MyMusicScreen
 import vn.abook.player.ui.voice.VoicePage
 import vn.abook.player.ui.editbook.EditBooks
+import vn.abook.player.ui.export.ExportFormat
+import vn.abook.player.ui.export.ExportScreen
+import vn.abook.player.ui.export.ExportState
 import vn.abook.player.ui.editbook.EditBookRoute
 import vn.abook.player.ui.editbook.EditChapterRoute
 import vn.abook.player.ui.editbook.CoverCropRoute
 import vn.abook.player.ui.screens.BookScreen
 import vn.abook.player.ui.screens.BookScreenActions
+import vn.abook.player.ui.screens.NoExportHint
 import vn.abook.player.ui.screens.LibraryActions
 import vn.abook.player.ui.screens.LibraryScreen
 import vn.abook.player.ui.screens.LibraryUiState
@@ -122,6 +126,7 @@ fun AppShell(
     sampleClock: Boolean = true,
     imports: ImportQueue? = null,
     editors: EditBooks? = null,
+    exports: ExportState? = null,
     demo: Boolean = false,
     autoPick: Boolean = false,
     deletions: vn.abook.player.ui.data.UndoDelete? = null,
@@ -171,7 +176,7 @@ fun AppShell(
         { shell.sheets.show { dismiss -> vn.abook.player.ui.devices.OtherPlayersSheet(repo, player, dismiss) } }
     }
     val openPlayer = remember(window) { window::open }
-    val bookActions = remember(shell, player) {
+    val bookActions = remember(shell, player, exports) {
         BookScreenActions(
             back = shell.nav::pop,
             playBook = player::togglePlay,
@@ -180,6 +185,8 @@ fun AppShell(
             deleted = shell.nav::pop,
             readAlong = { book -> shell.scope.launch { if (player.prepare(book)) window.openReading() } },
             edit = { shell.nav.push(Destination.EditBook(it)) },
+            export = { book, format -> shell.nav.push(Destination.Export(book, format)) },
+            exportHint = { id -> exports?.hint(id) ?: NoExportHint },
         )
     }
     Box(Modifier.fillMaxSize().background(Abook.colors.bg).semantics { testTagsAsResourceId = true }) {
@@ -196,6 +203,7 @@ fun AppShell(
                             is Destination.Book -> BookScreen(
                                 destination.book, library, playerState, player.clock, covers, books, shell.sheets, bookActions, music = settings.music,
                             )
+                            is Destination.Export -> if (exports != null) ExportScreen(destination.book, exports, nav::pop, destination.format)
                             Destination.AddBook -> if (imports != null) AddBookRoute(imports, nav::pop,
                                 { nav.push(Destination.ImportReview(it)) }, { id ->
                                     (library as? LibraryState.Ready)?.books?.firstOrNull { it.id == id }?.let { nav.push(Destination.Book(it)) }

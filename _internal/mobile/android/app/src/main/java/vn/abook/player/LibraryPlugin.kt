@@ -1058,7 +1058,11 @@ class LibraryPlugin : Plugin() {
     @PluginMethod
     fun exportMp3(call: PluginCall) {
         val id = call.getString("bookId") ?: return call.reject("thiếu bookId")
-        if (Store.manifest(id) == null) return call.reject("Sách này chưa tải về điện thoại")
+        try {
+            ExportStart.requireBook(id)
+        } catch (error: Mp3Export.Refused) {
+            return call.reject(error.message)
+        }
         val tree = if (call.getBoolean("pick", false) == true) null else Mp3Exports.remembered(context)
         if (tree == null) startActivityForResult(call, Mp3Exports.pickIntent(context), "pickedExportFolder") else startMp3Export(call, tree)
     }
@@ -1080,14 +1084,9 @@ class LibraryPlugin : Plugin() {
         val id = call.getString("bookId") ?: throw IllegalArgumentException("thiếu bookId")
         val drawn = drawnCover(call.getString("cover"))
         val selected = call.getArray("chapterIds")?.let { array -> (0 until array.length()).map { array.getInt(it) } }
-        val plan = Mp3Export.plan(id, drawn, selected) // sách không có gì để xuất: từ chối ngay, không bắt đầu việc nền
-        val treeName = Mp3Exports.treeName(context, tree) ?: throw Mp3Export.Refused("Không mở được thư mục đã chọn - chọn lại nơi lưu")
-        val coverFile = drawn?.let { bytes ->
-            File(context.cacheDir, "mp3-export").apply { mkdirs() }.let { File(it, "${java.util.UUID.randomUUID()}.png") }.also { it.writeBytes(bytes) }
-        }
-        val run = Mp3Exports.start(context, id, tree, coverFile, selected, call.getBoolean("music", false) == true)
-        call.resolve(JSObject().put("started", true).put("run", run).put("folder", "$treeName/${Mp3Export.folderName(plan.title)}")
-            .put("chapters", plan.chapters.size))
+        // Sách không có gì để xuất: từ chối ngay, không bắt đầu việc nền.
+        val started = ExportStart.mp3(context, id, tree, drawn, selected, call.getBoolean("music", false) == true)
+        call.resolve(JSObject().put("started", true).put("run", started.run).put("folder", started.folder).put("chapters", started.chapters))
     }
 
     // ---- "Xuất M4B cho app sách nói" (M4bExport, M4bExportWorker) ---------------------------------------------------
@@ -1101,13 +1100,12 @@ class LibraryPlugin : Plugin() {
     @PluginMethod
     fun exportM4b(call: PluginCall) {
         val id = call.getString("bookId") ?: return call.reject("thiếu bookId")
-        if (Store.manifest(id) == null) return call.reject("Sách này chưa tải về điện thoại")
-        val plan = try {
-            Mp3Export.plan(id)
+        val title = try {
+            ExportStart.m4bTitle(id)
         } catch (error: Mp3Export.Refused) {
             return call.reject(error.message)
         }
-        startActivityForResult(call, M4bExports.createIntent(plan.title), "pickedM4bFile")
+        startActivityForResult(call, M4bExports.createIntent(title), "pickedM4bFile")
     }
 
     /**
@@ -1141,24 +1139,16 @@ class LibraryPlugin : Plugin() {
         background(call) {
             try {
                 val id = call.getString("bookId") ?: throw IllegalArgumentException("thiếu bookId")
-                val drawn = drawnCover(call.getString("cover"))
-                val plan = Mp3Export.plan(id, drawn)
-                M4bExports.remember(context, file)
-                val coverFile = drawn?.let { bytes ->
-                    File(context.cacheDir, "m4b-export").apply { mkdirs() }.let { File(it, "${java.util.UUID.randomUUID()}.png") }.also { it.writeBytes(bytes) }
-                }
-                val run = M4bExports.start(context, id, file, coverFile, call.getBoolean("music", false) == true)
-                call.resolve(JSObject().put("started", true).put("run", run).put("name", M4bExport.fileName(plan.title)).put("chapters", plan.chapters.size))
+                val started = ExportStart.m4b(context, id, file, drawnCover(call.getString("cover")), call.getBoolean("music", false) == true)
+                call.resolve(JSObject().put("started", true).put("run", started.run).put("name", started.name).put("chapters", started.chapters))
             } catch (error: Exception) {
-                M4bExports.discard(context, file) // chưa bắt đầu việc nền: file rỗng vừa tạo không để lại
+                M4bExports.discard(context, file) // chưa bắt đầu việc nền (hay thiếu bookId): file rỗng vừa tạo không để lại
                 throw error
             }
         }
     }
 
     // ---- "Xuất sách nói" của sách Nghe ngay (ListenExport, ListenExportWorker) ------------------------------------------
-
-    private fun readingOf(id: String, voice: String) = ListenExport.Reading(voice, ReadAloud.originNow(id), ReadAloud.readingsOf(id))
 
     /**
      * Cho hộp "Xuất sách nói": số chương, số chữ, giờ nghe (từ clip đã có + phần chưa có ước theo tốc độ đo), ước thời gian máy làm (giọng đã đo tốc độ), phần đã có sẵn
@@ -1170,17 +1160,7 @@ class LibraryPlugin : Plugin() {
         val id = call.getString("bookId") ?: return call.reject("thiếu bookId")
         val voice = call.getString("voice") ?: return call.reject("thiếu voice")
         val wanted = call.getBoolean("music")
-        background(call) {
-            val chapters = ListenExport.chapters(id)
-            val speed = runCatching { ReadAloud.speeds().secondsPerChar(voice) }.getOrNull()
-            val (available, enabled) = BookMusic.exportState(id)
-            val (music, extra) = if (available && (wanted ?: enabled)) ExportMusic.listenPlan(context, id, chapters) else emptyMap<Int, MusicExport.ChapterMusic>() to 0L
-            val reading = readingOf(id, voice)
-            val cache = ReadAloud.cache()
-            val plan = ListenExport.plan(chapters, reading, ListenExport.workFolder(ListenExports.workRoot(context), id), speed,
-                music = { MusicExport.audible(music, it) }, cachedMs = { text -> cache.durationMs(VoiceSpeed.quality(voice), text, reading.origin, reading.readings) }, extra = extra)
-            call.resolve(JSObject.fromJSONObject(plan.toJson().put("music", JSONObject().put("available", available).put("enabled", enabled))))
-        }
+        background(call) { call.resolve(JSObject.fromJSONObject(ExportStart.audiobookPlan(context, id, voice, wanted))) }
     }
 
     /**
@@ -1193,9 +1173,7 @@ class LibraryPlugin : Plugin() {
         val id = call.getString("bookId") ?: return call.reject("thiếu bookId")
         if (call.getString("voice").isNullOrEmpty()) return call.reject("thiếu voice")
         background(call) {
-            val book = Store.manifest(id) ?: throw Mp3Export.Refused("Sách này chưa tải về điện thoại")
-            if (ListenExport.chapters(id).isEmpty()) throw Mp3Export.Refused("Sách chưa có chương nào có chữ để đọc")
-            val title = book.optString("title").ifEmpty { id }
+            val title = ExportStart.audiobookTitle(id)
             activity.runOnUiThread { startActivityForResult(call, M4bExports.createIntent(title), "pickedAudiobookFile") }
         }
     }
@@ -1209,14 +1187,8 @@ class LibraryPlugin : Plugin() {
             try {
                 val id = call.getString("bookId") ?: throw IllegalArgumentException("thiếu bookId")
                 val voice = call.getString("voice") ?: throw IllegalArgumentException("thiếu voice")
-                val title = Store.manifest(id)?.optString("title").orEmpty().ifEmpty { id }
-                val drawn = drawnCover(call.getString("cover"))
-                M4bExports.remember(context, file)
-                val coverFile = drawn?.let { bytes ->
-                    File(context.cacheDir, "audiobook-export").apply { mkdirs() }.let { File(it, "${java.util.UUID.randomUUID()}.png") }.also { it.writeBytes(bytes) }
-                }
-                val run = ListenExports.start(context, id, voice, file, coverFile, call.getBoolean("music", false) == true)
-                call.resolve(JSObject().put("started", true).put("run", run).put("name", M4bExport.fileName(title)))
+                val started = ExportStart.audiobook(context, id, voice, file, drawnCover(call.getString("cover")), call.getBoolean("music", false) == true)
+                call.resolve(JSObject().put("started", true).put("run", started.run).put("name", started.name))
             } catch (error: Exception) {
                 M4bExports.discard(context, file) // chưa bắt đầu việc nền: file rỗng vừa tạo không để lại
                 throw error
@@ -1247,8 +1219,7 @@ class LibraryPlugin : Plugin() {
     @PluginMethod
     fun openFile(call: PluginCall) {
         val uri = call.getString("uri")?.let(Uri::parse) ?: return call.reject("thiếu uri")
-        val allowed = uri.scheme == "content" && uri.authority != "${context.packageName}.fileprovider"
-        call.resolve(JSObject().put("opened", allowed && ListenExports.open(context, uri)))
+        call.resolve(JSObject().put("opened", ExportStart.openFile(context, uri)))
     }
 
     /**
@@ -1258,12 +1229,7 @@ class LibraryPlugin : Plugin() {
     @PluginMethod
     fun openFolder(call: PluginCall) {
         val uri = call.getString("uri")?.let(Uri::parse) ?: return call.reject("thiếu uri")
-        val allowed = uri.scheme == "content" && context.contentResolver.persistedUriPermissions.any { uri.toString().startsWith(it.uri.toString()) }
-        if (!allowed) return call.resolve(JSObject().put("opened", false))
-        val intent = Intent(Intent.ACTION_VIEW)
-            .setDataAndType(uri, android.provider.DocumentsContract.Document.MIME_TYPE_DIR)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        call.resolve(JSObject().put("opened", runCatching { context.startActivity(intent) }.isSuccess))
+        call.resolve(JSObject().put("opened", ExportStart.openFolder(context, uri)))
     }
 
     /** Bìa tự vẽ gửi từ giao diện, cùng luật với máy tính (export._cover_file): chỉ data URL PNG, tối đa 4 MB. */

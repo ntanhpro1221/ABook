@@ -59,6 +59,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import vn.abook.player.ui.components.RowHint
 import vn.abook.player.ui.components.BookCover
 import vn.abook.player.ui.components.RemoteIcon
 import vn.abook.player.ui.components.ScreenHeader
@@ -157,7 +158,7 @@ private fun LibraryGrid(
             item(key = "none", span = { GridItemSpan(maxLineSpan) }, contentType = "none") {
                 if (books.isEmpty()) Column {
                     BasicText("Chưa có sách", style = Abook.type.sectionTitle)
-                    BasicText("Thêm sách để bắt đầu nghe.", style = Abook.type.bodySmall)
+                    RowHint("Thêm sách để bắt đầu nghe.")
                 } else NoMatch()
             }
         } else {

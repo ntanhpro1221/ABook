@@ -158,6 +158,7 @@ class MusicScreenTest {
         rule.waitForIdle()
         rule.onNodeWithTag("music_option_night_rain").performClick()
         rule.waitForIdle()
+        rule.onNodeWithTag("music_panel").performScrollToNode(hasTestTag("music_level_-24"))
         rule.onNodeWithTag("music_level_-24").performClick()
         rule.waitForIdle()
         assertEquals(listOf("choose $demo night_rain", "level $demo -24.0"), source.calls)
