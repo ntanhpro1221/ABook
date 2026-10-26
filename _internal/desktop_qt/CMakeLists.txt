@@ -8,6 +8,17 @@ project(ABookDesk VERSION ${ABOOK_VERSION} LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Hằng số trộn nhạc nền: MỘT file cho máy chủ, web, Android và app này (abook/webui/assets/music_mix.json) -> ABOOK_MIX_* (src/musiclogic.h).
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/../abook/webui/assets/music_mix.json" ABOOK_MIX_JSON)
+foreach(pair fadeSeconds:FADE_SECONDS siblingFadeSeconds:SIBLING_FADE_SECONDS stepRampSeconds:STEP_RAMP_SECONDS
+        loopCrossfadeSeconds:LOOP_CROSSFADE_SECONDS loopMinPeriodSeconds:LOOP_MIN_PERIOD_SECONDS)
+    string(REPLACE ":" ";" pair "${pair}")
+    list(GET pair 0 key)
+    list(GET pair 1 name)
+    string(JSON value GET "${ABOOK_MIX_JSON}" ${key})
+    add_compile_definitions(ABOOK_MIX_${name}=${value})
+endforeach()
+
 # Qt >= 6.10.3, liên kết ĐỘNG (LGPL): DLL Qt nằm cạnh file chạy do windeployqt chép, người dùng thay được.
 find_package(Qt6 6.10 REQUIRED COMPONENTS Quick Network Test QuickTest CorePrivate GuiPrivate QuickPrivate)   # *Private: QWindowKit cần
 qt_standard_project_setup(REQUIRES 6.10)
@@ -30,6 +41,12 @@ set(ABOOK_PLAYER_SOURCES
     src/playernet.h
     src/progressoutbox.cpp
     src/progressoutbox.h
+)
+# Nhạc nền (chép lớp MusicBed của bản web): app và bộ thử MusicTests cùng biên dịch.
+set(ABOOK_MUSIC_SOURCES
+    src/musicbed.cpp
+    src/musicbed.h
+    src/musiclogic.h
 )
 
 qt_add_executable(ABookDesk WIN32
@@ -56,6 +73,7 @@ qt_add_executable(ABookDesk WIN32
     src/windowchrome.cpp
     src/windowchrome.h
     ${ABOOK_PLAYER_SOURCES}
+    ${ABOOK_MUSIC_SOURCES}
 )
 target_include_directories(ABookDesk PRIVATE src)
 qt_add_qml_module(ABookDesk
@@ -136,6 +154,15 @@ target_link_libraries(ReadAlongTests PRIVATE Qt6::Test Qt6::Quick Qt6::Network)
 if(MSVC)
     target_compile_options(ReadAlongTests PRIVATE /W3 /utf-8)
 endif()
+# Nhạc nền: phép tính thuần trên fixture chung với máy chủ / web / Android + MusicBed với AudioOut giả
+qt_add_executable(MusicTests tests/test_music.cpp tests/fakes.h src/audioout.cpp src/audioout.h src/playernet.h ${ABOOK_MUSIC_SOURCES})
+target_include_directories(MusicTests PRIVATE src tests)
+target_compile_definitions(MusicTests PRIVATE QT_NO_CAST_FROM_ASCII MUSIC_FIXTURES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../tests/fixtures"
+    MUSIC_MIX_JSON="${CMAKE_CURRENT_SOURCE_DIR}/../abook/webui/assets/music_mix.json")
+target_link_libraries(MusicTests PRIVATE Qt6::Test Qt6::Network)
+if(MSVC)
+    target_compile_options(MusicTests PRIVATE /W3 /utf-8)
+endif()
 # Biểu tượng tua 15 giây đo bằng điểm ảnh (bộ vẽ phần mềm, nền offscreen)
 qt_add_executable(SkipGlyphTests tests/test_skipglyph.cpp)
 target_compile_definitions(SkipGlyphTests PRIVATE SKIPGLYPH_QML_DIR="${CMAKE_CURRENT_SOURCE_DIR}/qml" SKIPGLYPH_FONT_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fonts")
@@ -155,5 +182,6 @@ endif()
 enable_testing()
 add_test(NAME PlayerTests COMMAND PlayerTests)
 add_test(NAME ReadAlongTests COMMAND ReadAlongTests)
+add_test(NAME MusicTests COMMAND MusicTests)
 add_test(NAME SkipGlyphTests COMMAND SkipGlyphTests)
 add_test(NAME SidebarTests COMMAND SidebarTests)
