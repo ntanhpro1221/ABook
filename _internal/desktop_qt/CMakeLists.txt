@@ -23,8 +23,11 @@ endforeach()
 find_package(Qt6 6.10 REQUIRED COMPONENTS Quick Network Test QuickTest CorePrivate GuiPrivate QuickPrivate)   # *Private: QWindowKit cần
 qt_standard_project_setup(REQUIRES 6.10)
 
+# App chỉ dựng trên Windows (Media Foundation, QWindowKit); máy khác (Linux CI, cloud) dựng và chạy mọi bộ thử.
+if(WIN32)
 # Khung cửa sổ tự vẽ (Apache-2.0, liên kết TĨNH, không thêm DLL): tools/build_qwindowkit.bat dựng vào QWK_ROOT/inst.
 find_package(QWindowKit CONFIG REQUIRED)
+endif()
 
 # Theme.qml do tools/gen_theme.py sinh từ DESIGN.md; Nav.qml là singleton điều hướng.
 set_source_files_properties(qml/Theme.qml qml/Nav.qml qml/Api.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
@@ -50,6 +53,7 @@ set(ABOOK_MUSIC_SOURCES
     src/musictext.h
 )
 
+if(WIN32)
 qt_add_executable(ABookDesk WIN32
     src/desktopapi.cpp
     src/desktopapi.h
@@ -166,6 +170,7 @@ target_link_libraries(ABookDesk PRIVATE Qt6::Quick Qt6::Network QWindowKit::Quic
 qt_add_resources(ABookDesk legal PREFIX "/legal" BASE "../docs" FILES "../docs/THIRD_PARTY.md")
 if(MSVC)
     target_compile_options(ABookDesk PRIVATE /W3 /utf-8)
+endif()
 endif()
 
 # ---- bộ thử QtTest: bộ phát với AudioOut / PlayerNet giả, không cần thiết bị âm thanh hay host ----

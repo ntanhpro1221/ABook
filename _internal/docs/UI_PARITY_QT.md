@@ -7,7 +7,7 @@ icon `LucidePaths.js` sinh bởi `scripts/gen_lucide_icons.py --qml`. Bảng dư
 
 <!-- ui_parity_qt:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity_qt.py - không sửa tay, chạy lại script) -->
 
-Quét: web máy tính 1150 chữ (918 khác nhau), 165 cặp nhãn-icon; Qt 95 chữ (84 khác nhau), 23 cặp nhãn-icon (icon dùng ở 29 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
+Quét: web máy tính 1150 chữ (918 khác nhau), 165 cặp nhãn-icon; Qt 527 chữ (410 khác nhau), 45 cặp nhãn-icon (icon dùng ở 61 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
 
 ## a. Cùng việc, khác chữ
 
@@ -16,7 +16,7 @@ Nhãn ngắn Qt không có nguyên văn (khoá lỏng) ở web máy tính mà gi
 | màn | Qt | web | giống | nơi |
 |---|---|---|---|---|
 | Đang nghe | Dừng khi hết chương này | Sẽ dừng khi hết chương này. | 1.00 | `qt/SleepPopover.qml:16` ~ `listen/PlayerViews.tsx:2085` |
-| Đang nghe | Giọng | Giọng đọc | 0.71 | `qt/NowPlaying.qml:209` ~ `listen/PlayerViews.tsx:733` |
+| Đang nghe | Giọng | Thêm giọng… | 0.67 | `qt/NowPlaying.qml:209` ~ `listen/PlayerViews.tsx:808` |
 | Đang nghe | Chưa có chương sau để nghe | Các chương sau chưa có audio. | 0.59 | `qt/NowPlaying.qml:284` ~ `listen/labels.ts:145` |
 
 ## b. Cùng nhãn khác icon, cùng icon khác nhãn
@@ -27,14 +27,15 @@ Nhãn ngắn Qt không có nguyên văn (khoá lỏng) ở web máy tính mà gi
 |---|---|---|---|
 | Quay lại | chevron-left | arrow-left | `qt/ScreenHeader.qml:12` ~ `listen/LineWishes.tsx:255` (+2) |
 
-**Cùng icon, khác nhãn** (2 cặp Qt; web cùng màn dùng cùng icon với nhãn khác):
+**Cùng icon, khác nhãn** (3 cặp Qt; web cùng màn dùng cùng icon với nhãn khác):
 
 | màn | icon | Qt | web cùng màn | nơi |
 |---|---|---|---|---|
+| Trang sách | pencil | Sửa sách | Sửa thông tin | `qt/BookPage.qml:43` |
 | Đang nghe | moon | Hẹn giờ | {} trên {} | `qt/NowPlaying.qml:310` |
 | Đang nghe | moon | Hết chương | {} trên {} | `qt/NowPlaying.qml:310` |
 
-Số cặp: web máy tính 145, Qt 21. Nhãn Qt có icon (20): `Chưa có chương sau để nghe`, `Chương`, `Chương sau`, `Chương trước`, `Cài đặt`, `Hẹn giờ`, `Hết chương`, `Khởi động lại`, `Mở rộng`, `Mở thư mục nhật ký`, `Nhạc nền`, `Phát`, `Quay lại`, `Studio`, `Thu gọn`, `Thu nhỏ`, `Thư viện`, `Tạm dừng`, `Tới câu đang nghe`, `Về Thư viện`.
+Số cặp: web máy tính 145, Qt 43. Nhãn Qt có icon (41): `Bỏ ảnh bìa`, `Chưa có chương sau để nghe`, `Chương`, `Chương sau`, `Chương trước`, `Chọn ảnh bìa…`, `Cài đặt`, `Cập nhật ABook`, `Dừng`, `Hẹn giờ`, `Hết chương`, `Hỏi lại`, `Khởi động lại`, `Kiểm tra`, `Kiểm tra bản mới`, `Mặc định`, `Mở rộng`, `Mở thư mục nhật ký`, `Nhạc nền`, `Phát`, `Quay lại`, `Studio`, `Sửa sách`, `Thu gọn`, `Thu nhỏ`, `Thêm nhạc của bạn`, `Thêm sách`, `Thư viện`, `Thử giọng`, `Tìm`, `Tạm dừng`, `Tới câu đang nghe`, `Về Cài đặt`, `Về Thư viện`, `Xoá`, `Xoá bài`, `Xóa khóa`, `Xác nhận gỡ`, `Đang thêm`, `Đóng`, `Đổi ảnh bìa…`.
 
 ## c. Nhãn chỉ có một bên, theo màn
 
@@ -42,8 +43,8 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 
 ### Thư viện
 
-- chỉ Qt (3): Chưa mở được ABook (`qt/LibraryScreen.qml:177`); Chưa tải được thư viện (`qt/LibraryScreen.qml:177`); Thử lại* (`qt/LibraryScreen.qml:194`)
-- chỉ web (29): Chưa có sách (`100`); Tạo sách nói (`111`); Thêm truyện hoặc tạo sách nói. (`124`); Mở file sách (`436`); Chưa nghe (`31`); Nghe dở (`31`); Tất cả (`31`); Xong (`31`); Mở {} (`160`); Nghe ngay {} (`163`); Nghe {} (`163`); Tạm dừng {} (`163`); Đọc {} (`163`); Thêm {} (`203`); Đang nghe (`227`); ...
+- chỉ Qt (4): Thả để thêm sách* (`qt/LibraryScreen.qml:56`); Chưa mở được ABook (`qt/LibraryScreen.qml:195`); Chưa tải được thư viện (`qt/LibraryScreen.qml:195`); Thử lại* (`qt/LibraryScreen.qml:212`)
+- chỉ web (28): Chưa có sách (`100`); Tạo sách nói (`111`); Thêm truyện hoặc tạo sách nói. (`124`); Mở file sách (`436`); Chưa nghe (`31`); Nghe dở (`31`); Tất cả (`31`); Xong (`31`); Mở {} (`160`); Nghe ngay {} (`163`); Nghe {} (`163`); Tạm dừng {} (`163`); Đọc {} (`163`); Đang nghe (`227`); Chờ chương mới (`246`); ...
 
 ### Thanh phát
 
@@ -53,7 +54,7 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 ### Đang nghe
 
 - chỉ Qt (7): Bìa (`qt/NowPlaying.qml:175`); Giọng (`qt/NowPlaying.qml:209`); Thử lại* (`qt/NowPlaying.qml:243`); Chưa có chương sau để nghe (`qt/NowPlaying.qml:284`); Danh sách chương* (`qt/NowPlaying.qml:324`); Nhạc nền* (`qt/NowPlaying.qml:335`); Dừng khi hết chương này (`qt/SleepPopover.qml:16`)
-- chỉ web (54): Tạm dừng {} (`84`); Đọc {} (chưa có audio) (`103`); Đã làm sẵn (`119`); Tuỳ chọn {} (`134`); Nghe từ đầu chương (`146`); Đọc chương này (`150`); Chưa nghe (`155`); Đổi tên chương… (`160`); Shift+← (`260`); Lùi {} giây (`261`); Tới {} giây (`286`); Phím (`478`); Giọng đọc (`713`); Dừng (`790`); Thử (`790`); ...
+- chỉ web (51): Tạm dừng {} (`84`); Đọc {} (chưa có audio) (`103`); Đã làm sẵn (`119`); Tuỳ chọn {} (`134`); Nghe từ đầu chương (`146`); Đọc chương này (`150`); Chưa nghe (`155`); Đổi tên chương… (`160`); Shift+← (`260`); Lùi {} giây (`261`); Tới {} giây (`286`); Phím (`478`); Thử (`790`); Thêm giọng… (`808`); Bật lại (`1004`); ...
 
 ### Đọc theo
 
@@ -62,13 +63,13 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 
 ### Trang sách
 
-- chỉ Qt (1): Chưa lấy được danh sách chương. (`qt/BookPage.qml:158`)
-- chỉ web (85): Nghe {} (`84`); Tạm dừng {} (`84`); Đọc {} (chưa có audio) (`103`); Đã làm sẵn (`119`); Tuỳ chọn {} (`134`); Nghe từ đầu chương (`146`); Đọc chương này (`150`); Chưa nghe (`155`); Đổi tên chương… (`160`); Dừng (`227`); Dừng nghe thử (`228`); Chưa có giọng (`312`); Chờ áp dụng (`317`); Đang chờ máy làm sách (`317`); Bỏ gộp {} vào {} (`327`); ...
+- chỉ Qt (2): Sửa sách* (`qt/BookPage.qml:43`); Chưa lấy được danh sách chương. (`qt/BookPage.qml:172`)
+- chỉ web (81): Nghe {} (`84`); Tạm dừng {} (`84`); Đọc {} (chưa có audio) (`103`); Đã làm sẵn (`119`); Tuỳ chọn {} (`134`); Nghe từ đầu chương (`146`); Đọc chương này (`150`); Chưa nghe (`155`); Đổi tên chương… (`160`); Dừng nghe thử (`228`); Chưa có giọng (`312`); Chờ áp dụng (`317`); Đang chờ máy làm sách (`317`); Bỏ gộp {} vào {} (`327`); Bỏ gộp (`332`); ...
 
 ### Cài đặt
 
-- chỉ Qt (3): Nhật ký (`qt/SettingsScreen.qml:128`); Mở thư mục* (`qt/SettingsScreen.qml:142`); Phiên bản (`qt/SettingsScreen.qml:152`)
-- chỉ web (45): Giọng kể (`78`); Máy đề xuất (`85`); Chất lượng (`94`); Cập nhật ABook (`145`); Đang tải bản mới… (`145`); ABook {} (`180`); Bản mới (`180`); Kiểm tra bản mới (`185`); Đang kiểm tra… (`185`); Thành phần sử dụng (`196`); Tự lùi (`229`); Không (`275`); 1 giờ (`276`); 2 giờ (`277`); 3 giờ (`278`); ...
+- chỉ Qt (4): Chưa cài (`qt/SettingsScreen.qml:33`); Không tự lùi (`qt/SettingsScreen.qml:33`); Phiên bản (`qt/SettingsScreen.qml:33`); Đã cài (`qt/SettingsScreen.qml:33`)
+- chỉ web (9): ABook {} (`180`); Bản mới (`180`); 5 phút (`289`); 10 phút (`290`); 15 phút (`291`); Mẫu thiết lập (`383`); Có ABook {} (`532`); Nghe (`20`); Nhóm cài đặt (`52`)
 
 ### Thanh bên
 
@@ -83,9 +84,9 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 ### Chung
 
 - chỉ Qt (1): Quay lại* (`qt/ScreenHeader.qml:12`)
-- chỉ web (3): Xem các tab trước (`514`); Xem các tab sau (`519`); Đóng (`699`)
+- chỉ web (2): Xem các tab trước (`514`); Xem các tab sau (`519`)
 
-File QML chưa xếp màn (thêm vào SCREENS): `desktop_qt/qml/MusicCredit.qml`, `desktop_qt/qml/MusicPopover.qml`.
+File QML chưa xếp màn (thêm vào SCREENS): `desktop_qt/qml/AddBook.qml`, `desktop_qt/qml/Api.qml`, `desktop_qt/qml/BookMusicSettings.qml`, `desktop_qt/qml/CoverSearch.qml`, `desktop_qt/qml/EditBook.qml`, `desktop_qt/qml/Modal.qml`, `desktop_qt/qml/MusicCredit.qml`, `desktop_qt/qml/MusicPopover.qml`, `desktop_qt/qml/MyMusicSettings.qml`, `desktop_qt/qml/NativeFolders.qml`, `desktop_qt/qml/ProviderKey.qml`, `desktop_qt/qml/SettingsBody.qml`, `desktop_qt/qml/SettingsDevices.qml`, `desktop_qt/qml/SettingsStudio.qml`, `desktop_qt/qml/SettingsVoice.qml`, `desktop_qt/qml/VoiceModule.qml`.
 
 ## d. Bo góc QML không theo token
 
@@ -97,15 +98,28 @@ Hợp lệ: `Theme.radiusControl / radiusCover / radiusSheet` (DESIGN.md 5.5, `d
 
 ## e. Dấu thanh kiểu mới và dấu ba chấm cuối nhãn
 
-**Dấu thanh kiểu mới (`òa óa úy`)** trong chữ Qt (0); web và native đa số viết kiểu cũ (`oà oá uý`, UI_PARITY.md d2):
+**Dấu thanh kiểu mới (`òa óa úy`)** trong chữ Qt (6); web và native đa số viết kiểu cũ (`oà oá uý`, UI_PARITY.md d2):
 
-- (không có)
+- - dán khóa mới để thay (`qt/ProviderKey.qml:40`)
+- Dán khóa của bạn (`qt/ProviderKey.qml:40`) - web: `Dán khóa của bạn`
+- Khóa (`qt/ProviderKey.qml:36`) - web: `Khóa`
+- Khóa chưa dùng được. (`qt/ProviderKey.qml:13`)
+- Xóa khóa (`qt/ProviderKey.qml:48`) - web: `Xóa khóa`
+- dùng khóa của bạn (`qt/SettingsVoice.qml:11`)
 
-**Nhãn kết thúc bằng `…` / `...`** (3): DESIGN.md chỉ cho `…` ở chữ đang chờ ("Đang mở…"), không cho nhãn nút.
+**Nhãn kết thúc bằng `…` / `...`** (11): DESIGN.md chỉ cho `…` ở chữ đang chờ ("Đang mở…"), không cho nhãn nút.
 
+- Bỏ mọi thay đổi… (`qt/EditBook.qml:88`) - web: `Bỏ mọi thay đổi…`
+- Chọn ảnh bìa… (`qt/EditBook.qml:70`) - web: `Chọn ảnh bìa…`
+- Tìm bìa… (`qt/EditBook.qml:71`) - web: `Tìm bìa…`
+- Đang kiểm tra… (`qt/SettingsBody.qml:98`) - web: `Đang kiểm tra…`
 - Đang mở văn bản chương… (`qt/ReadAlongView.qml:311`) - web: `Đang mở văn bản chương…`
 - Đang mở… (`qt/ConnectionChip.qml:54`) - web: `Đang mở…`
+- Đang tải bản mới… (`qt/SettingsBody.qml:98`) - web: `Đang tải bản mới…`
 - Đang tải âm thanh… (`qt/PlayerBar.qml:87`) - web: `Đang tải âm thanh…`
+- Đang đo… (`qt/VoiceModule.qml:37`) - web: (không có)
+- Đang đọc… (`qt/AddBook.qml:143`) - web: `Đang đọc…`
+- Đổi ảnh bìa… (`qt/EditBook.qml:70`) - web: `Đổi ảnh bìa…`
 
 ## f. Phím tắt trong chú thích
 

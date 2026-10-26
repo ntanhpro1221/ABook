@@ -37,6 +37,10 @@ QtObject {
     readonly property color focus: dark ? "#e9a945" : "#a0600c"
     readonly property color switchOff: dark ? "#75706a" : "#857e72"
     readonly property color switchThumb: dark ? "#1b1204" : "#ffffff"
+    readonly property color hover: dark ? "#252320" : "#efece6"
+    readonly property color controlLine: dark ? "#75706a" : "#857e72"
+    readonly property color dangerSoft: dark ? "#21ef7b70" : "#fbe4e4"
+    readonly property color scrim: dark ? "#9e060504" : "#7314110d"
 
     // ---- khoảng cách, bo góc, kích thước (5.5, 6) ----
     readonly property int s4: 4

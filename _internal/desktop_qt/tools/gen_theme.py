@@ -29,6 +29,7 @@ COLOR_NAMES = {
     "text-3": "text3", "fg-3": "faint", "accent": "accent", "accent-ink": "accentInk", "accent-text": "accentText",
     "accent-soft": "accentSoft", "success": "success", "danger": "danger", "warning": "warning", "focus": "focus",
     "switch-off": "switchOff", "switch-thumb": "switchThumb",
+    "hover": "hover", "control-line": "controlLine", "danger-soft": "dangerSoft", "scrim": "scrim",
 }
 # Cụm mô tả cỡ chữ trong DESIGN.md 5.5 -> tên thuộc tính.
 TYPE_NAMES = {
