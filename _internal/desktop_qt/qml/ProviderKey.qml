@@ -1,51 +1,194 @@
 import QtQuick
 import QtQuick.Controls.Basic as C
 import ABook
-SectionBlock {
+import "VoiceLogic.js" as VoiceLogic
+
+// Khung khoá riêng của một nhà cung cấp giọng (KeyCard của listen/VoiceSettings.tsx): đầu DisclosureRow (tên + "Dùng được · N giọng" / "Chưa dùng được"),
+// gập sẵn (đã có khoá thì mở sẵn); thân: giới hạn miễn phí + cách tô chữ, "Nhận khoá", ô khoá (ẩn chữ) + vùng (Azure) + Lưu / Kiểm tra / Xoá khoá,
+// dòng kết quả. "Lưu" chỉ cất khoá trên máy; "Kiểm tra" mới gọi dịch vụ (và lưu khoá đang gõ trước khi kiểm). Lỗi hiện tại chỗ, không toast.
+Item {
     id: root
     property var info: ({limits: {}})
-    property bool busy: false
+    property string busy: ""            // "" | "check" | "save" | "remove"
+    property bool resultOk: false
     property string result: ""
-    title: info.name || ""
-    fold: "wip"
-    expanded: Boolean(info.hasKey)
+    property string lastResult: ""      // giữ chữ lúc Collapse khép lại
+    property bool open: Boolean(info.hasKey)
+    readonly property string savedRegion: info.region || ""
+    readonly property bool hasRegion: Boolean(info.limits && info.limits.region)
+    readonly property bool regionChanged: hasRegion && regionField.text.trim() !== savedRegion
+    readonly property string status: info.valid ? "Dùng được · " + info.voices + " giọng" : info.hasKey ? "Chưa dùng được" : ""
     signal changed()
-    function act(action) {
-        busy = true
-        const path = "/api/readaloud/online/" + info.id
-        function finish(data, error) {
-            root.busy = false
-            if (error) { root.result = error; return }
-            secret.text = ""
-            root.result = action === "check" ? (data.ok ? "Dùng được · " + (data.voices ?? data.provider.voices) + " giọng tiếng Việt" : (data.message || "Khóa chưa dùng được.")) : action === "save" ? "Đã lưu khoá. Bấm “Kiểm tra” để thử." : ""
-            root.changed()
+    objectName: "providerKey." + (info.id || "")
+    implicitHeight: col.height + 24
+    height: implicitHeight
+    onSavedRegionChanged: regionField.text = savedRegion
+    onResultChanged: if (result !== "") lastResult = result
+
+    function path() { return "/api/readaloud/online/" + info.id }
+    function fail(error) { resultOk = false; result = error }
+    function finish() { busy = ""; changed() }
+    function save() {
+        busy = "save"; result = ""
+        if (!secret.text.trim() && !info.hasKey) { fail("Dán khoá trước đã."); finish(); return }
+        Api.quiet("PUT", path(), {key: secret.text.trim(), region: regionField.text.trim()}, function(data, error) {
+            if (error) fail(error)
+            else { secret.text = ""; resultOk = true; result = "Đã lưu khoá. Bấm “Kiểm tra” để thử." }
+            finish()
+        })
+    }
+    function check() {
+        busy = "check"; result = ""
+        function ask() {
+            Api.quiet("POST", path() + "/check", {}, function(checked, error) {
+                if (error) fail(error)
+                else {
+                    secret.text = ""
+                    resultOk = checked.ok === true
+                    result = checked.ok ? "Dùng được · " + (checked.voices !== undefined && checked.voices !== null ? checked.voices : checked.provider.voices) + " giọng tiếng Việt"
+                                        : (checked.message || "Khoá chưa dùng được.")
+                }
+                finish()
+            })
         }
-        function check() { Api.call("POST", path + "/check", {}, finish) }
-        if (action === "remove") Api.call("DELETE", path, null, finish)
-        else if (action === "check" && !secret.text.trim() && region.text === (info.region || "")) check()
-        else Api.call("PUT", path, {key: secret.text.trim(), region: region.text.trim()}, function(data, error) { if (action === "check" && !error) check(); else finish(data, error) })
+        if (secret.text.trim() || (hasRegion && regionField.text.trim() !== savedRegion)) {
+            if (!secret.text.trim() && !info.hasKey) { fail("Dán khoá trước đã."); finish(); return }
+            Api.quiet("PUT", path(), {key: secret.text.trim() || "", region: regionField.text.trim()}, function(data, error) {
+                if (error) { fail(error); finish() }
+                else ask()
+            })
+        } else ask()
     }
-    FormLabel { width: parent.width; text: (root.info.limits?.free || "") + (root.info.limits?.timings === "exact" ? ". Tô đúng từng chữ đang đọc." : ". Tô từng chữ đang đọc theo ước lượng."); color: Theme.text2 }
-    SectionBlock {
-        width: parent.width; title: "Nhận khoá"; fold: "wip"
-        FormLabel { width: parent.width; color: Theme.text2; text: ({azure: "Azure: tạo Speech (F0 miễn phí) › Keys and Endpoint. Chép Key 1 và Location/Region (ví dụ southeastasia).", google: "Google Cloud: bật Cloud Text-to-Speech API. Vào APIs & Services › Credentials › Create credentials › API key.", fpt: "Trên console.fpt.ai: đăng nhập, mở mục “Text to Speech” (Chuyển văn bản thành giọng nói), chép “API key” (khoá API).", viettel: "Trên viettelai.vn: đăng nhập, mở Tài khoản › Token, chép token."})[root.info.id] || "" }
+    function remove() {
+        busy = "remove"
+        Api.quiet("DELETE", path(), null, function(data, error) {
+            if (error) fail(error)
+            else { result = ""; secret.text = "" }
+            finish()
+        })
     }
-    C.TextField {
-        id: secret
-        width: parent.width; height: 40
-        Accessible.name: "Khóa " + root.title
-        echoMode: TextInput.Password
-        color: Theme.text; placeholderTextColor: Theme.text3
+
+    // Ô nhập của khung này: cao 36, bo điều khiển, viền --line, nền --panel, chữ 14 (input h-9 của web)
+    component Box: C.TextField {
+        property bool flexGrow: false
+        property real flexBasis: 0
+        implicitHeight: 36
+        leftPadding: 12
+        rightPadding: 12
+        topPadding: 0
+        bottomPadding: 0
+        verticalAlignment: TextInput.AlignVCenter
+        color: Theme.text
+        placeholderTextColor: Theme.text3
+        selectionColor: Theme.accent
+        selectedTextColor: Theme.accentInk
+        font.family: Theme.family
         font.pixelSize: Theme.sizeBodySmall
-        placeholderText: root.info.hasKey ? "Đã lưu " + root.info.masked + " - dán khóa mới để thay" : "Dán khóa của bạn"
-        background: Rectangle { color: Theme.bg; radius: Theme.radiusControl; border.width: secret.activeFocus ? 2 : 1; border.color: secret.activeFocus ? Theme.focus : Theme.line }
+        selectByMouse: true
+        activeFocusOnTab: true
+        opacity: enabled ? 1 : 0.5
+        background: Rectangle {
+            color: Theme.panel
+            radius: Theme.radiusControl
+            border.width: 1
+            border.color: parent.activeFocus ? Theme.focus : Theme.line
+            Behavior on border.color { ColorAnimation { duration: Theme.motionFast } }
+        }
     }
-    FormField { id: region; width: parent.width; label: "Vùng " + root.title; visible: Boolean(root.info.limits?.region); placeholderText: "Vùng, ví dụ southeastasia"; text: root.info.region || "" }
-    Flow {
-        width: parent.width; spacing: 8
-        Button { text: "Lưu"; kind: "text"; enabled: !root.busy && (secret.text.trim() !== "" || region.text !== (root.info.region || "")); onClicked: root.act("save") }
-        Button { text: "Kiểm tra"; icon: "key-round"; enabled: !root.busy && (root.info.hasKey || secret.text.trim() !== ""); onClicked: root.act("check") }
-        Button { text: "Xóa khóa"; icon: "trash-2"; kind: "text"; visible: Boolean(root.info.hasKey); enabled: !root.busy; onClicked: root.act("remove") }
+
+    Column {
+        id: col
+        y: 12
+        width: root.width
+        DisclosureRow {
+            width: parent.width
+            title: root.info.name || ""
+            summary: root.status
+            expanded: root.open
+            onClicked: root.open = !root.open
+        }
+        Collapse {
+            width: parent.width
+            open: root.open
+            Text {
+                width: parent.width
+                topPadding: 4
+                text: (root.info.limits.free || "") + ". " + (root.info.limits.timings === "exact" ? "Tô đúng từng chữ đang đọc." : "Tô từng chữ đang đọc theo ước lượng.")
+                color: Theme.text2
+                wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                font.pixelSize: 13
+            }
+            MoreInfo {
+                width: parent.width
+                label: "Nhận khoá"
+                HintText { width: parent.width; text: VoiceLogic.KEY_HELP[root.info.id] || "" }
+            }
+            Item { width: parent.width; height: 10 }
+            VoiceFlex {
+                width: parent.width
+                Box {
+                    id: secret
+                    objectName: "keyInput"
+                    flexGrow: true
+                    flexBasis: 224
+                    echoMode: TextInput.Password
+                    passwordMaskDelay: 0
+                    inputMethodHints: Qt.ImhSensitiveData | Qt.ImhNoPredictiveText
+                    enabled: root.busy === ""
+                    Accessible.name: "Khoá " + (root.info.name || "")
+                    placeholderText: root.info.hasKey ? "Đã lưu " + root.info.masked + " - dán khoá mới để thay" : "Dán khoá của bạn"
+                }
+                Box {
+                    id: regionField
+                    objectName: "regionInput"
+                    visible: root.hasRegion
+                    implicitWidth: 192
+                    enabled: root.busy === ""
+                    Accessible.name: "Vùng " + (root.info.name || "")
+                    placeholderText: "Vùng, ví dụ southeastasia"
+                    text: root.savedRegion
+                }
+                Button {
+                    objectName: "keySave"
+                    text: "Lưu"
+                    kind: "text"
+                    busy: root.busy === "save"
+                    enabled: root.busy === "" && (secret.text.trim() !== "" || root.regionChanged)
+                    onActivated: root.save()
+                }
+                Button {
+                    objectName: "keyCheck"
+                    text: "Kiểm tra"
+                    icon: "key-round"
+                    busy: root.busy === "check"
+                    enabled: root.busy === "" && (Boolean(root.info.hasKey) || secret.text.trim() !== "")
+                    onActivated: root.check()
+                }
+                Button {
+                    objectName: "keyRemove"
+                    visible: Boolean(root.info.hasKey)
+                    text: "Xoá khoá"
+                    icon: "trash-2"
+                    kind: "text"
+                    busy: root.busy === "remove"
+                    enabled: root.busy === ""
+                    onActivated: root.remove()
+                }
+            }
+            Collapse {
+                width: parent.width
+                open: root.result !== ""
+                Text {
+                    objectName: "keyResult"
+                    width: parent.width
+                    topPadding: 8
+                    text: root.lastResult
+                    color: root.resultOk ? Theme.success : Theme.danger
+                    wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                    font.pixelSize: 13
+                    Accessible.role: Accessible.StaticText
+                }
+            }
+        }
     }
-    FormLabel { width: parent.width; text: root.result; visible: text !== ""; color: Theme.text2 }
 }

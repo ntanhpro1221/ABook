@@ -145,6 +145,16 @@ qt_add_qml_module(ABookDesk
         qml/SettingsSleep.qml
         qml/SettingsLook.qml
         qml/SettingsAdvanced.qml
+        qml/VoiceLogic.js
+        qml/VoiceFold.qml
+        qml/VoiceCheck.qml
+        qml/VoiceFlex.qml
+        qml/VoiceBlock.qml
+        qml/VoiceNote.qml
+        qml/VoiceDetails.qml
+        qml/VoiceRow.qml
+        qml/VoiceModules.qml
+        qml/VoiceSpeed.qml
         qml/Scrollbar.qml
         qml/ScrollEdges.qml
         qml/SmoothWheel.qml
