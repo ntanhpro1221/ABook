@@ -18,5 +18,15 @@ Test profile (never the owner's library): ABOOK_PREFERENCES=<file> with libraryR
 - step5: tools/measure.py written; 8/8 valid runs: cold first frame 384 ms median (worst 455), idle private RAM 51.2 MB median (worst 53.4), scroll frame p99 6.2 ms (worst 6.3), max 8.6 ms, 180 Hz. Results JSON: D:/Novels/native_desk_proto/results/deskqt_measure.json.
 - step6: dist trimmed 74 -> 42 MB (no dxc, no qmltooling/generic plugins, no vc_redist installer; app-local VC145 CRT DLLs copied); .gitignore for build/dist; build.bat clean uses node fs.rmSync.
 
+## D0.1 (after commit 55c16b53)
+- text cut removed everywhere: BookCell / BookPage / ScreenHeader wrap, GeneratedCover uses fontSizeMode Fit (min 9 px), source chip wraps; no elide, maximumLineCount or Text clip left.
+- library grid = ListView virtualised by ROW (delegate = one row of N BookCell, height = tallest cell + gap); keyboard nav (arrows, PgUp/PgDn, Home/End, Enter, F5) reimplemented on current index; LibraryModel gained `revision` and book() returns `subtitle`.
+- tools/check_text_cut.py (fails the build on elide != ElideNone, maximumLineCount, truncate, clip: true on Text; `// text-cut-ok: reason` escape); build.bat runs it after gen_theme --check. Verified it flags all 9 old violations.
+- status popover: no repeated title, details + two MenuRow actions (Khoi dong lai, Mo thu muc nhat ky), no accent text.
+- failed message: "Khong tim thay phan chay nen cua ABook:" + path.
+- make_fixture.py --long (very long titles + one unbreakable word): D:/Novels/native_desk_proto/deskqt_fixture_long.
+- measure (8 runs, 200-book fixture): cold 373 ms median (worst 444), idle 50.9 MB median (one outlier 62.7, the known intermittent high mode), p99 6.0 ms (worst 6.3), max 7.6 ms. Before (D0): 384 / 51.2 (worst 53.4) / 6.2.
+- shots dark + light: library, popover, book, failed (+popover), narrow in D:/Novels/native_desk_proto/shots/deskqt/ (d_* dark, w_* light, l_* long titles).
+
 ## Next
-- final report (lead): files, numbers, controls list, gaps (empty-state has no action button yet; cover CPU copies keep RAM after a long scroll: peak 74 MB, idle 51 MB).
+- D1 per lead.

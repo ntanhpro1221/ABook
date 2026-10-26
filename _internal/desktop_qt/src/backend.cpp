@@ -111,13 +111,11 @@ bool Backend::resolveLaunch(Launch *out, QString *error) const {
         out->bundled = true;
     }
     if (!QFileInfo(out->python).isFile()) {
-        qWarning().noquote() << "thiếu Python của host:" << QDir::toNativeSeparators(out->python);
-        *error = QStringLiteral("ABook thiếu một phần để chạy. Bạn cài lại ABook rồi thử lại.");
+        *error = QStringLiteral("Không tìm thấy phần chạy nền của ABook:\n%1").arg(QDir::toNativeSeparators(out->python));
         return false;
     }
     if (out->folder.isEmpty() || !QFileInfo::exists(QDir(out->folder).filePath(QStringLiteral("abook/webui/host.py")))) {
-        qWarning().noquote() << "thiếu mã host:" << QDir::toNativeSeparators(out->folder);
-        *error = QStringLiteral("ABook thiếu một phần để chạy. Bạn cài lại ABook rồi thử lại.");
+        *error = QStringLiteral("Không tìm thấy phần chạy nền của ABook:\n%1").arg(QDir::toNativeSeparators(out->folder));
         return false;
     }
     return true;

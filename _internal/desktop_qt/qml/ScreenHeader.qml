@@ -10,7 +10,7 @@ Item {
     property bool showBack: false
     default property alias trailing: trailingRow.data
 
-    implicitHeight: Theme.s32 + Theme.headerRow + (subtitle !== "" ? 24 : 0)
+    implicitHeight: Theme.s32 + titleText.height + (subtitle !== "" ? 24 : 0)
 
     IconButton {
         id: back
@@ -25,19 +25,19 @@ Item {
         id: titleText
         x: root.showBack ? back.width - 10 + Theme.s8 : 0
         y: Theme.s32
-        height: Theme.headerRow
+        height: Math.max(Theme.headerRow, implicitHeight)     // tên dài xuống dòng, không cắt
         verticalAlignment: Text.AlignVCenter
         width: parent.width - x - trailingRow.width - Theme.s16
         text: root.title
         color: Theme.text
-        elide: Text.ElideRight
+        wrapMode: Text.Wrap
         font.pixelSize: Theme.sizeTitleDesktop
         font.weight: Theme.weightBold
     }
     Text {
         visible: root.subtitle !== ""
         x: titleText.x
-        y: Theme.s32 + Theme.headerRow + 2
+        y: Theme.s32 + titleText.height + 2
         text: root.subtitle
         color: Theme.text2
         font.pixelSize: Theme.sizeBodySmall
