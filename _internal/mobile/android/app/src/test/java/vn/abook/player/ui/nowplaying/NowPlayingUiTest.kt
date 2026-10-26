@@ -272,6 +272,23 @@ class NowPlayingUiTest {
         rule.onNodeWithTag("mini_player").assertIsDisplayed()
         rule.onNodeWithTag("now_playing").assertDoesNotExist()
     }
+    @Test fun scrollingAwayShowsAFollowPillInsideTheTextAndTappingItFollowsAgain() {
+        show(reading = true)
+        rule.onNodeWithTag("follow_sentence").assertDoesNotExist()
+        rule.onNodeWithTag("read_along_text").performTouchInput {
+            swipe(Offset(width * 0.5f, height * 0.7f), Offset(width * 0.5f, height * 0.3f), 300)
+        }
+        rule.waitForIdle()
+        rule.onNodeWithTag("follow_sentence").assertIsDisplayed()
+        val pill = bounds("follow_sentence")
+        val text = bounds("read_along_text")
+        assertTrue("pill ở trong vùng chữ: $pill / $text", pill.top >= text.top && pill.bottom <= text.bottom)
+        shot("reading_follow_light")
+        rule.onNodeWithTag("follow_sentence").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("follow_sentence").assertDoesNotExist()
+    }
+
     @Test fun readerHeaderCanBeDraggedDownWithoutTakingTheTextScrollGesture() {
         show(reading = true)
         rule.onNodeWithTag("now_playing").performTouchInput {
