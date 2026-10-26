@@ -153,6 +153,13 @@ dependencies {
     implementation "androidx.activity:activity-compose:$androidxActivityVersion"
     implementation "androidx.lifecycle:lifecycle-runtime-compose:$lifecycleComposeVersion"
     implementation "androidx.profileinstaller:profileinstaller:$profileInstallerVersion"
+    // Soát chuyển cảnh bằng Perfetto (NATIVE_PERF_PROGRESS.md): -PcomposeTrace đưa tên từng composable vào trace (bật bằng broadcast, xem tracing-perfetto).
+    // Chỉ khi có cờ; bản thường và bản benchmark mặc định không mang thư viện này.
+    if (project.hasProperty("composeTrace")) {
+        implementation "androidx.compose.runtime:runtime-tracing:$composeRuntimeTracingVersion"
+        implementation "androidx.tracing:tracing-perfetto:$tracingPerfettoVersion"
+        implementation "androidx.tracing:tracing-perfetto-binary:$tracingPerfettoVersion"
+    }
     baselineProfile project(":baselineprofile")
     testImplementation platform("androidx.compose:compose-bom:$composeBomVersion")
     testImplementation "androidx.compose.ui:ui-test-junit4"
