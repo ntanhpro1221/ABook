@@ -52,6 +52,7 @@ set(ABOOK_MUSIC_SOURCES
 
 qt_add_executable(ABookDesk WIN32
     src/main.cpp
+    src/abookdesk.manifest
     src/audioout_mf.cpp
     src/audioout_mf.h
     src/bookdetail.cpp
