@@ -6,6 +6,7 @@ import vn.abook.player.ui.components.ListRow
 import vn.abook.player.ui.components.ListItem
 import vn.abook.player.ui.components.ChoiceSetting
 import vn.abook.player.ui.components.DisclosureRow
+import vn.abook.player.ui.components.RowHint
 import vn.abook.player.ui.components.RowLine
 import vn.abook.player.ui.components.SectionTitle
 import vn.abook.player.ui.components.SheetHost
@@ -146,7 +147,7 @@ fun VoiceSettings(env: SettingsEnv, sheets: SheetHost, openVoice: (VoicePage) ->
                         val detail = if (group.detail.isEmpty()) "${group.voices.size} giọng" else "${group.detail} · ${group.voices.size} giọng"
                         Column(Modifier.fillMaxWidth().padding(top = Dim.s24, bottom = Dim.s4)) {
                             BasicText(group.title, style = Abook.type.sectionTitle)
-                            BasicText(detail, style = Abook.type.caption.copy(color = Abook.colors.text2))
+                            RowHint(detail)
                         }
                     }
                     items(group.voices, key = { "voice:${it.id}" }, contentType = { "voice" }) { option ->
@@ -164,7 +165,7 @@ fun VoiceSettings(env: SettingsEnv, sheets: SheetHost, openVoice: (VoicePage) ->
                     item(key = "device_hint", contentType = "hint") {
                         Column(Modifier.fillMaxWidth().padding(top = Dim.s24)) {
                             BasicText("Giọng của máy", style = Abook.type.sectionTitle)
-                            BasicText(DEVICE_HINT, style = Abook.type.caption.copy(color = Abook.colors.text2))
+                            RowHint(DEVICE_HINT)
                         }
                     }
                 }

@@ -27,6 +27,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import vn.abook.player.ui.components.RowHint
 import vn.abook.player.ui.components.pressable
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.MotionMs
@@ -119,7 +120,7 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                             Column(Modifier.fillMaxWidth().pressable { model.jump(chapter.id); window.closeSheet() }
                                 .semantics { selected = current }.padding(vertical = 12.dp)) {
                                 BasicText(chapter.title, style = Abook.type.body.copy(color = if (current) Abook.colors.accentText else Abook.colors.text))
-                                BasicText(if (current) "Đang nghe" else PlayerLabels.time(chapter.durationMs), style = Abook.type.caption)
+                                RowHint(if (current) "Đang nghe" else PlayerLabels.time(chapter.durationMs))
                                 if (current) Box(Modifier.fillMaxWidth().height(2.dp).drawBehind {
                                     val fraction = if (state.durationMs > 0) model.position.milliseconds.value.toFloat() / state.durationMs else 0f
                                     drawRect(accent, size = androidx.compose.ui.geometry.Size(size.width * fraction.coerceIn(0f, 1f), size.height))

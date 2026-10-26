@@ -13,6 +13,9 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -96,7 +99,7 @@ fun PlaceholderTab(title: String, line: String, modifier: Modifier = Modifier) {
 
 /** Nút chính: nền hổ phách, cao 48, chữ ≤ 3 từ (DESIGN.md §6 "Nút (a)"). `enabled` = false: nhạt hơn và không bấm được (việc đang chạy). */
 @Composable
-fun PrimaryButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
+fun PrimaryButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, icon: (@Composable (Color) -> Unit)? = null) {
     val accent = Abook.colors.accent
     Box(
         modifier.height(Dim.s48)
@@ -105,6 +108,12 @@ fun PrimaryButton(label: String, onClick: () -> Unit, modifier: Modifier = Modif
             .padding(horizontal = Dim.s24),
         contentAlignment = Alignment.Center,
     ) {
-        BasicText(label, style = Abook.type.bodyStrong.copy(color = Abook.colors.accentInk))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (icon != null) {
+                icon(Abook.colors.accentInk)
+                Spacer(Modifier.width(Dim.s8))
+            }
+            BasicText(label, style = Abook.type.bodyStrong.copy(color = Abook.colors.accentInk))
+        }
     }
 }

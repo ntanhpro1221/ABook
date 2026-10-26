@@ -10,6 +10,7 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasAnyAncestor
@@ -80,6 +81,7 @@ class BookScreenTest {
         deleted = { deleted++ },
         readAlong = { played += "read $it" },
         edit = { edited += it.id },
+        export = { book, format -> played += "export ${book.id} $format" },
     )
 
     private fun chapter(id: Int, duration: Double = 1500.0) = JSONObject().put("id", id).put("fullTitle", "Chương $id: Một cái tên chương khá dài để xuống dòng")
@@ -288,8 +290,49 @@ class BookScreenTest {
         rule.onNodeWithTag("menu_read").assertIsDisplayed()
         rule.onNodeWithTag("menu_read").performClick()
         assertTrue(played.isEmpty())
-        // "Sắp có" còn lại đúng một chỗ: Xuất MP3 / M4B, việc native chưa làm.
-        rule.onAllNodesWithText("Sắp có").assertCountEquals(1)
+        // Không còn hàng nào ghi "Sắp có": Xuất MP3 / M4B đã là việc thật.
+        rule.onAllNodesWithText("Sắp có").assertCountEquals(0)
+    }
+
+    @Test
+    @Config(sdk = [35], qualifiers = "w360dp-h780dp-xxhdpi", fontScale = 1.3f)
+    fun chapterRowsKeepEveryWordAtLargeFontScale() {
+        show(detail(listening()))
+        assertTrue(rule.assertNoTextOverflow() > 4)
+    }
+
+    @Test
+    fun exportInTheMenuClosesTheSheetAndOpensTheExportScreen() {
+        show(detail(listening()))
+        rule.onNodeWithTag("book_more").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("menu_export_mp3").assertIsDisplayed()
+        rule.onNodeWithTag("menu_export_mp3").performClick()
+        rule.waitForIdle()
+        assertEquals(listOf("export b1 Mp3"), played)
+        rule.onNodeWithTag("book_menu").assertDoesNotExist()
+    }
+
+    @Test
+    fun theMenuHasTheWebsTwoExportRowsWithTheWebsWords() {
+        show(detail(listening()))
+        rule.onNodeWithTag("book_more").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("menu_export_mp3").assertTextContains("Xuất MP3")
+        rule.onNodeWithTag("menu_export_m4b").assertTextContains("Xuất M4B")
+        rule.onNodeWithTag("menu_export_m4b").performClick()
+        rule.waitForIdle()
+        assertEquals(listOf("export b1 M4b"), played)
+    }
+
+    @Test
+    fun exportIsOffForABookWithNothingToExport() {
+        show(BookDetail.of(manifest(chapters = 0), null, { null }))
+        rule.onNodeWithTag("book_more").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("menu_export_mp3").performClick()
+        rule.onNodeWithTag("menu_export_m4b").performClick()
+        assertTrue(played.isEmpty())
     }
 
     @Test

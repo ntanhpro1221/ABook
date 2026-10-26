@@ -160,6 +160,11 @@ object Mp3Exports {
         return request.id.toString()
     }
 
+    /** Dừng lượt xuất MP3 của cuốn `bookId` (nút "Dừng" của màn Xuất native; thông báo của hệ thống có nút riêng). Các chương đã ghi giữ nguyên. */
+    fun cancel(context: Context, bookId: String) {
+        ExportCancellation.cancel(context, "mp3-export:$bookId")
+    }
+
     internal fun emit(event: JSONObject) {
         live.emit(event)
         runCatching { events?.invoke(event) }

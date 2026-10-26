@@ -89,6 +89,11 @@ fun LucideIcon(data: String, color: Color, modifier: Modifier = Modifier, size: 
 /** "Xuất" (web: FileDown ở menu sách). */
 @Composable fun ExportIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.FILE_DOWN, color, modifier, size)
 
+/* Màn Xuất: đúng icon của web - FolderDown (MP3), BookAudio (M4B), Headphones (sách nói), BatteryCharging (cho chạy nền). */
+@Composable fun FolderDownIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.FOLDER_DOWN, color, modifier, size)
+@Composable fun BookAudioIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.BOOK_AUDIO, color, modifier, size)
+@Composable fun BatteryChargingIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.BATTERY_CHARGING, color, modifier, size)
+
 /* Sáu nhóm Cài đặt - đúng bộ của SettingsNav.tsx: AudioLines, Headphones, MoonStar, Palette, MonitorSmartphone, Wrench. */
 
 @Composable fun VoiceIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.AUDIO_LINES, color, modifier, size)
