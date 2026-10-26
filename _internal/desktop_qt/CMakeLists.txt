@@ -145,6 +145,21 @@ qt_add_qml_module(ABookDesk
         qml/SettingsSleep.qml
         qml/SettingsLook.qml
         qml/SettingsAdvanced.qml
+        qml/DevicesFold.qml
+        qml/DevicesToggle.qml
+        qml/DevicesRows.qml
+        qml/DevicesError.qml
+        qml/DevicesSkeleton.qml
+        qml/DevicesUnpair.qml
+        qml/DevicesLogBox.qml
+        qml/PhoneSync.qml
+        qml/PhoneSyncPairing.qml
+        qml/PhoneSyncDevice.qml
+        qml/PhoneDiagnostics.qml
+        qml/OtherComputers.qml
+        qml/OtherComputersRow.qml
+        qml/OtherComputersBluetooth.qml
+        qml/DevicesLogic.js
         qml/Scrollbar.qml
         qml/ScrollEdges.qml
         qml/SmoothWheel.qml
