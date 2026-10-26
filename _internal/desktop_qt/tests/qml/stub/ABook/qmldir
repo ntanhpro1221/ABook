@@ -101,5 +101,14 @@ ImportChapters 1.0 ../../../../qml/ImportChapters.qml
 ImportSlot 1.0 ../../../../qml/ImportSlot.qml
 ImportActions 1.0 ../../../../qml/ImportActions.qml
 ImportDrop 1.0 ../../../../qml/ImportDrop.qml
+VoiceFold 1.0 ../../../../qml/VoiceFold.qml
+VoiceCheck 1.0 ../../../../qml/VoiceCheck.qml
+VoiceFlex 1.0 ../../../../qml/VoiceFlex.qml
+VoiceBlock 1.0 ../../../../qml/VoiceBlock.qml
+VoiceNote 1.0 ../../../../qml/VoiceNote.qml
+VoiceDetails 1.0 ../../../../qml/VoiceDetails.qml
+VoiceRow 1.0 ../../../../qml/VoiceRow.qml
+VoiceModules 1.0 ../../../../qml/VoiceModules.qml
+VoiceSpeed 1.0 ../../../../qml/VoiceSpeed.qml
 singleton Api 1.0 ../../../../qml/Api.qml
 singleton DesktopApi 1.0 DesktopApi.qml
