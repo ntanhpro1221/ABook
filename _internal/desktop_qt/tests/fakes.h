@@ -44,6 +44,8 @@ public:
     }
     void setRate(double value) override { rate = value; }
     void setVolume(double value) override { volume = value; }
+    void preload() override { ++preloads; }
+    void setLoop(bool value) override { loop = value; }
     double position() const override { return pos; }
     double duration() const override { return dur; }
     bool playing() const override { return isPlaying; }
@@ -63,7 +65,9 @@ public:
     double rate = 1;
     double volume = 1;
     bool isPlaying = false;
+    bool loop = false;
     int loads = 0;
+    int preloads = 0;
     QStringList log;
 };
 

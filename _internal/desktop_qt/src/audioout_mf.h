@@ -22,6 +22,8 @@ public:
     void seek(double seconds) override;
     void setRate(double rate) override;
     void setVolume(double volume) override;
+    void preload() override;
+    void setLoop(bool loop) override;
     double position() const override;
     double duration() const override;
     bool playing() const override { return m_playing; }
@@ -44,6 +46,7 @@ private:
     double m_target = 0;        // đích tua / chỗ bắt đầu khi chưa nạp xong
     double m_rate = 1;
     double m_volume = 1;
+    bool m_loop = false;
     double m_duration = 0;
     quint64 m_serial = 0;       // mỗi lần load() +1: sự kiện của nguồn cũ bị bỏ
 };
