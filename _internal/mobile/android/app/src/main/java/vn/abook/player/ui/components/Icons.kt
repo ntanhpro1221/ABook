@@ -127,6 +127,10 @@ fun LucideIcon(data: String, color: Color, modifier: Modifier = Modifier, size: 
 @Composable fun LaptopIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.LAPTOP, color, modifier, size)
 @Composable fun PhoneIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.SMARTPHONE, color, modifier, size)
 @Composable fun BluetoothIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.BLUETOOTH, color, modifier, size)
+/** "Chép địa chỉ" (web: Copy ở Thiết bị › Cài trên máy tính), "Tìm bìa" (web: Globe ở Sửa sách), dấu "?" của lời giải thích gập (web: CircleHelp của MoreInfo). */
+@Composable fun CopyIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.COPY, color, modifier, size)
+@Composable fun GlobeIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.GLOBE, color, modifier, size)
+@Composable fun HelpIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.CIRCLE_HELP, color, modifier, size)
 
 /* Giọng đọc - đúng bộ của VoiceSettings.tsx: Download (tải giọng), Upload (thêm nhạc), KeyRound (khoá trực tuyến), Play / Square (nghe thử / dừng). */
 

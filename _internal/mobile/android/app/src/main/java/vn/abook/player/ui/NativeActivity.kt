@@ -177,6 +177,11 @@ class NativeActivity : ComponentActivity() {
                 then()
             }
         },
+        copyText = { text ->
+            val clipboard = getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+            clipboard != null && runCatching { clipboard.setPrimaryClip(ClipData.newPlainText("ABook", text)) }.isSuccess
+        },
+        openRelease = { url -> if (url.startsWith(SOURCE_URL)) open(Intent(Intent.ACTION_VIEW, Uri.parse(url))) },
     )
 
     private var pickFolderResult: ((String?) -> Unit)? = null

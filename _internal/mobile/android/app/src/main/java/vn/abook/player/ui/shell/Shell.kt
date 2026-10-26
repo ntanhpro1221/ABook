@@ -58,6 +58,7 @@ import vn.abook.player.ui.nav.TabState
 import vn.abook.player.ui.player.MorphingMiniPlayer
 import vn.abook.player.ui.player.MiniPlayerSlot
 import vn.abook.player.ui.addbook.AddBookRoute
+import vn.abook.player.ui.editbook.CoverSearchRoute
 import vn.abook.player.ui.addbook.ImportQueue
 import vn.abook.player.ui.addbook.ImportChapterRoute
 import vn.abook.player.ui.addbook.ImportReviewRoute
@@ -211,7 +212,10 @@ fun AppShell(
                             is Destination.ImportReview -> if (imports != null) ImportReviewRoute(imports, destination.itemId, nav::pop) { nav.push(Destination.ImportChapter(destination.itemId, it)) }
                             is Destination.ImportChapter -> if (imports != null) ImportChapterRoute(imports, destination.index, nav::pop)
                             is Destination.EditBook -> if (editors != null) EditBookRoute(editors.session(destination.book, demo), covers, shell.sheets, nav::pop,
-                                { nav.push(Destination.CropCover(destination.book, it)) }, { nav.push(Destination.EditChapter(destination.book, it)) })
+                                { nav.push(Destination.CropCover(destination.book, it)) }, { nav.push(Destination.EditChapter(destination.book, it)) },
+                                findCover = { nav.push(Destination.CoverSearch(destination.book)) })
+                            is Destination.CoverSearch -> if (editors != null) CoverSearchRoute(editors.session(destination.book, demo), destination.book.title, nav::pop,
+                                { nav.push(Destination.CropCover(destination.book, it)) }, active = nav.stack.top?.destination == destination && !nav.progress.isRunning)
                             is Destination.EditChapter -> if (editors != null) EditChapterRoute(editors.session(destination.book, demo), destination.chapterId, nav::pop)
                             is Destination.CropCover -> if (editors != null) CoverCropRoute(editors.session(destination.book, demo), destination.uri, nav::pop)
                             is Destination.Settings -> SettingsGroupScreen(
