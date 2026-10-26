@@ -29,7 +29,8 @@ class AbookApplication : Application() {
         editors
     }
     // Giao diện native (vn.abook.player.ui): dựng tay, lười - tiến trình chỉ chạy việc nền / bản WebView không tốn gì.
-    val library by lazy { LibraryRepo(this) }
+    val library by lazy { LibraryRepo(this, uiScope) { id -> player.bookRemoved(id) } }
+    val companion by lazy { vn.abook.player.ui.devices.CompanionRepo(vn.abook.player.ui.devices.AndroidCompanionCore(this)) }
     val covers by lazy { CoverLoader() }
     val uiPrefs by lazy { UiPrefs(this) }
 
@@ -83,6 +84,9 @@ class AbookApplication : Application() {
             vn.abook.player.ui.voice.VoiceRepo(this), uiScope, vn.abook.player.ui.voice.AndroidSamplePlayer(this), voicesChanged = { settings.loadVoices() },
         )
     }
+
+    /** Nhạc nền của từng cuốn (bảng ở trình phát và ở trang sách): thêm nhạc đi chung kho với Nhạc của tôi. */
+    val music by lazy { vn.abook.player.ui.music.MusicState(vn.abook.player.ui.music.MusicRepo(this, vn.abook.player.ui.voice.VoiceRepo(this)), uiScope) }
 
     /** Trình phát của giao diện native: chỉ lắng nghe lõi phát khi Activity hiện ([PlayerRepo.attach]). */
     val player by lazy {

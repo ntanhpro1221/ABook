@@ -18,7 +18,6 @@ class DemoPlaybackCore : PlaybackCore {
     private var anchorAt = SystemClock.elapsedRealtime()
     private var sleepMode = "off"
     private var sleepMinutes = 0
-    private var music = false
     private var voice = ""
 
     private fun now(): Long {
@@ -58,6 +57,7 @@ class DemoPlaybackCore : PlaybackCore {
 
     override fun play() = setPlaying(true)
     override fun pause() = setPlaying(false)
+    override fun close() = pause()
     override fun toggle() = if (playing) pause() else play()
     override fun skip(deltaSeconds: Double) = move(now() + (deltaSeconds * 1000).toLong())
     override fun seekTo(seconds: Double) = move((seconds * 1000).toLong())
@@ -69,8 +69,6 @@ class DemoPlaybackCore : PlaybackCore {
     override fun positionMs(): Long = now()
     override fun chapters(): List<Playback.Chapter> = queue
     override fun setSleep(mode: String, minutes: Int) { sleepMode = mode; sleepMinutes = minutes; emit("sleep") }
-    override fun autoMusic(): Boolean = music
-    override fun setAutoMusic(enabled: Boolean) { music = enabled }
     override fun voiceId(): String = voice
     override fun setVoice(voiceId: String) { voice = voiceId }
 

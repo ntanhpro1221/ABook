@@ -1,6 +1,15 @@
 package vn.abook.player.ui.screens
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.core.tween
+import vn.abook.player.ui.motion.Motion
+import vn.abook.player.ui.motion.rememberPresence
+import vn.abook.player.ui.theme.MotionMs
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -50,6 +59,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import vn.abook.player.ui.components.RowHint
 import vn.abook.player.ui.components.BookCover
 import vn.abook.player.ui.components.RemoteIcon
 import vn.abook.player.ui.components.ScreenHeader
@@ -107,16 +117,7 @@ fun LibraryScreen(
     // Back đóng ô tìm trước - chỉ khi màn này đang là màn trên cùng (không bị trang sách phủ, không ở tab khác).
     BackHandler(enabled = backEnabled && ui.searchOpen) { ui.closeSearch() }
     Box(modifier.fillMaxSize().onGloballyPositioned { coords[0] = it }) {
-        if (books.isEmpty()) {
-            Column(Modifier.fillMaxSize().padding(top = top, start = Dim.margin, end = Dim.margin)) {
-                ScreenHeader("Thư viện", trailing = { AddBookButton(actions.addBook) })
-                BasicText("Chưa có sách", style = Abook.type.sectionTitle)
-                Spacer(Modifier.height(Dim.s4))
-                BasicText("Thêm sách để bắt đầu nghe.", style = Abook.type.bodySmall)
-            }
-        } else {
-            LibraryGrid(books, ui, grid, covers, sheets, actions, top) { coords[1] = it }
-        }
+        LibraryGrid(books, ui, grid, covers, sheets, actions, top) { coords[1] = it }
         SortMenu(ui, anchor, backEnabled)
     }
 }
@@ -133,6 +134,7 @@ private fun LibraryGrid(
     onSortCoordinates: (LayoutCoordinates) -> Unit,
 ) {
     val view = remember(books, ui.shown, ui.query, ui.sort) { Library.view(books, ui.shown, ui.query, ui.sort) }
+    val tiles = rememberPresence(view.tiles) { it.key }
     val widthDp = LocalConfiguration.current.screenWidthDp
     val columns = libraryColumns(widthDp)
     val cell = ((widthDp - 2f * Dim.margin.value - (columns - 1) * Dim.s12.value) / columns).dp
@@ -148,15 +150,24 @@ private fun LibraryGrid(
         // Đầu trang + hàng lọc là MỘT ô: khoảng cách lưới (16) không cộng thêm vào lề dưới của đầu trang thành một khoảng trống lớn trên hàng lọc.
         item(key = "header", span = { GridItemSpan(maxLineSpan) }, contentType = "header") {
             Column {
-                ScreenHeader("Thư viện", subtitle = "${books.size} cuốn", trailing = { AddBookButton(actions.addBook) })
-                FilterBar(ui, onSortCoordinates)
+                ScreenHeader("Thư viện", subtitle = if (books.isEmpty()) null else "${books.size} cuốn", trailing = { AddBookButton(actions.addBook) })
+                vn.abook.player.ui.components.Reveal(books.isNotEmpty()) { FilterBar(ui, onSortCoordinates) }
             }
         }
-        if (view.tiles.isEmpty()) {
-            item(key = "none", span = { GridItemSpan(maxLineSpan) }, contentType = "none") { NoMatch() }
+        if (tiles.isEmpty()) {
+            item(key = "none", span = { GridItemSpan(maxLineSpan) }, contentType = "none") {
+                if (books.isEmpty()) Column {
+                    BasicText("Chưa có sách", style = Abook.type.sectionTitle)
+                    RowHint("Thêm sách để bắt đầu nghe.")
+                } else NoMatch()
+            }
         } else {
-            items(view.tiles, key = { it.key }, contentType = { if (it is ShelfTile.Series) "series" else "single" }) { tile ->
-                BookTile(tile, ui, covers, cell, gridWidthPx, sheets, actions)
+            items(tiles, key = { it.item.key }, contentType = { if (it.item is ShelfTile.Series) "series" else "single" }) { tile ->
+                AnimatedVisibility(tile.visible, modifier = Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null),
+                    enter = expandVertically(tween(MotionMs.MEDIUM, easing = Motion.Decelerate)) + slideInVertically(tween(MotionMs.MEDIUM)) { it / 4 },
+                    exit = shrinkVertically(tween(MotionMs.MEDIUM_OUT, easing = Motion.Accelerate)) + slideOutVertically(tween(MotionMs.MEDIUM_OUT)) { it / 4 }) {
+                    BookTile(tile.item, ui, covers, cell, gridWidthPx, sheets, actions)
+                }
             }
         }
     }
@@ -226,6 +237,9 @@ private fun BookTile(
         }
         Spacer(Modifier.height(Dim.s8))
         BasicText(title, style = Abook.type.label)
+        vn.abook.player.ui.components.Reveal(series?.hasRemote ?: (lead.remote != null)) {
+            BasicText("Trên máy tính", style = Abook.type.caption)
+        }
         val sub = when {
             single != null && single.twin -> ListenLogic.progressText(lead)
             else -> lead.author

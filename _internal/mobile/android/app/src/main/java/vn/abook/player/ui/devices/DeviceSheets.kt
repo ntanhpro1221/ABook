@@ -22,7 +22,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import vn.abook.player.ui.addbook.BookField
-import vn.abook.player.ui.components.Caption
 import vn.abook.player.ui.components.CloseIcon
 import vn.abook.player.ui.components.ConfirmPage
 import vn.abook.player.ui.components.DangerButton
@@ -73,7 +72,8 @@ private fun DeviceActions(device: Paired, studio: StudioComputer?, state: Device
         BasicText(device.name, style = Abook.type.sectionTitle)
         Spacer(Modifier.height(Dim.s8))
         if (studio != null) {
-            MenuRow(if (opening) "Đang mở Studio" else "Mở Studio", "device_studio", unavailable = studio.listenOnly, onClick = {
+            MenuRow(if (opening) "Đang mở Studio" else "Mở Studio", "device_studio", unavailable = studio.listenOnly,
+                hint = if (studio.listenOnly) DeviceText.listenOnly(device.name) else null, onClick = {
                 if (opening) return@MenuRow
                 opening = true
                 scope.launch {
@@ -83,7 +83,6 @@ private fun DeviceActions(device: Paired, studio: StudioComputer?, state: Device
                     if (error == null) dismiss()
                 }
             }) { ink -> LaptopIcon(ink) }
-            if (studio.listenOnly) Caption(DeviceText.listenOnly(device.name), Modifier.padding(bottom = Dim.s4).testTag("device_listen_only"))
         }
         MenuRow("Làm mới", "device_refresh", onClick = { state.refresh(); dismiss() }) { ink -> RefreshIcon(ink) }
         if (device.reach is Reach.Unpaired || device.reach is Reach.Changed) {

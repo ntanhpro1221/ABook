@@ -105,7 +105,10 @@ class SettingsScreenTest {
         rule.waitForIdle()
     }
 
-    private fun shot(name: String) = rule.onRoot().captureRoboImage("src/test/snapshots/$name.png")
+    private fun shot(name: String) {
+        rule.assertIconLedTextColumns()
+        rule.onRoot().captureRoboImage("src/test/snapshots/$name.png")
+    }
 
     // ---- trang gốc ----
 

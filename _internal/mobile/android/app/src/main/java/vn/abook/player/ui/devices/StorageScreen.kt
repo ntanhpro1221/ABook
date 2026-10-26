@@ -1,5 +1,11 @@
 package vn.abook.player.ui.devices
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
+import vn.abook.player.ui.motion.Motion
+import vn.abook.player.ui.motion.rememberPresence
+import vn.abook.player.ui.theme.MotionMs
+
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -32,6 +38,7 @@ import vn.abook.player.ui.theme.Dim
 fun StorageScreen(devices: DevicesState, sheets: SheetHost, onBack: () -> Unit) {
     val ui by devices.storage.collectAsState()
     val pair by devices.pair.collectAsState()
+    val entries = rememberPresence(ui.storage.entries) { it.id }
     LaunchedEffect(devices) { devices.openStorage() }
     BookForm("Dung lượng", onBack, "storage_screen") {
         if (ui.loaded) LazyColumn(Modifier.fillMaxSize().testTag("storage_list"), contentPadding = PaddingValues(bottom = Dim.s16)) {
@@ -41,13 +48,18 @@ fun StorageScreen(devices: DevicesState, sheets: SheetHost, onBack: () -> Unit) 
                     Caption("Còn trống ${Fmt.size(ui.storage.free)}")
                 }
             }
-            if (ui.storage.entries.isEmpty()) item("empty", "status") {
+            if (entries.isEmpty()) item("empty", "status") {
                 ListItem("Chưa có gì trên máy", Modifier.testTag("storage_empty"))
             }
-            items(ui.storage.entries, key = { "stored_${it.id}" }, contentType = { "stored" }) { item ->
+            items(entries, key = { "stored_${it.item.id}" }, contentType = { "stored" }) { entry ->
+                AnimatedVisibility(entry.visible, Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null),
+                    enter = expandVertically(tween(MotionMs.MEDIUM, easing = Motion.Decelerate)) + slideInVertically(tween(MotionMs.MEDIUM)) { it / 4 },
+                    exit = shrinkVertically(tween(MotionMs.MEDIUM_OUT, easing = Motion.Accelerate)) + slideOutVertically(tween(MotionMs.MEDIUM_OUT)) { it / 4 }) {
+                val item = entry.item
                 Column(Modifier.fillMaxWidth()) {
                     StoredRow(item, busy = item.id in pair.downloading, onDelete = { sheets.show { dismiss -> StoredSheet(item, devices, dismiss) } })
                     RowLine()
+                }
                 }
             }
         }

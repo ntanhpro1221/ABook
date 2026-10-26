@@ -7,6 +7,8 @@ import kotlinx.coroutines.flow.StateFlow
 import vn.abook.player.ui.data.CoverRef
 import vn.abook.player.ui.data.PlayerChapter
 import vn.abook.player.ui.data.PlayerState
+import vn.abook.player.ui.music.MusicState
+import vn.abook.player.ui.music.PlayerMusic
 import java.math.BigDecimal
 import kotlin.math.ceil
 
@@ -36,7 +38,8 @@ data class NowPlayingState(
     val chapters: List<PlayerChapter> = emptyList(),
     val readAlongAvailable: Boolean = false,
     val error: String = "",
-    val musicEnabled: Boolean = false,
+    /** Nhạc đang kêu: ghi công, bài hỏng, mất mạng (lựa chọn của cuốn nằm ở [NowPlayingModel.music]). */
+    val music: PlayerMusic = PlayerMusic.None,
     val returnAvailable: Boolean = false,
     /** Tăng mỗi lần tua / nhảy: chip "Về chỗ cũ" hiện lại và đếm lại từ đầu. */
     val returnSerial: Int = 0,
@@ -60,6 +63,8 @@ interface NowPlayingModel {
     val state: StateFlow<NowPlayingState>
     val position: PlayerPosition
     val readAlong: StateFlow<ReadAlongState>
+    /** Nhạc nền của cuốn đang phát (chọn danh sách, mức to nhỏ); null = không có (bản thử) thì tấm Tuỳ chọn không có hàng Nhạc nền. */
+    val music: MusicState? get() = null
     fun toggle()
     fun skip(seconds: Int)
     fun seek(milliseconds: Long)
@@ -68,7 +73,6 @@ interface NowPlayingModel {
     fun previous()
     fun setRate(rate: Double)
     fun setSleep(kind: SleepKind, minutes: Int = 0)
-    fun setMusic(enabled: Boolean)
     fun setVoice(id: String)
     suspend fun loadVoices()
     fun setReadAlongActive(active: Boolean)
@@ -111,6 +115,6 @@ fun nowPlayingState(player: PlayerState, voices: List<PlayerVoice>, returnAvaila
             player.sleep.minutes, player.sleep.counting,
         ),
         chapters = player.chapters, readAlongAvailable = player.hasTrack, error = player.error,
-        musicEnabled = player.musicEnabled, returnAvailable = returnAvailable, returnSerial = returnSerial,
+        music = player.music, returnAvailable = returnAvailable, returnSerial = returnSerial,
         voices = voices, voiceId = player.voiceId,
     )
