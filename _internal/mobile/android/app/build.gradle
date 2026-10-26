@@ -1,5 +1,13 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
+apply plugin: 'org.jetbrains.kotlin.plugin.compose'
+apply plugin: 'androidx.baselineprofile'
+apply plugin: 'io.github.takahirom.roborazzi'
+
+// Giao diện native (docs/NATIVE_PHONE_UI.md): -PnativeUi làm NativeActivity (Compose) thành màn mở app; không cờ thì app đúng như trước (MainActivity,
+// WebView). Công tắc nằm ở MỘT chỗ: manifest chồng src/nativeUi/AndroidManifest.xml, chỉ được gắn khi có cờ (mọi build type, kể cả benchmark
+// / nonMinified do plugin baseline profile thêm) - manifest chính không đổi, nên bản không cờ không có NativeActivity trong manifest.
+def nativeUi = project.hasProperty("nativeUi")
 
 // Khoá ký bản phát hành (docs/RELEASING.md): nằm NGOÀI repo - %USERPROFILE%\.abook-keys\android-release.properties (storeFile,
 // storePassword, keyAlias, keyPassword; ABOOK_ANDROID_SIGNING trỏ chỗ khác) - không bao giờ commit. Mọi bản cập nhật APK
@@ -25,6 +33,8 @@ android {
         versionCode 148
         versionName "0.4.146"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        // Chỉ để mã native biết mình đang ở bản thử (-PnativeUi): chế độ sách giả cho đo đạc (abook.demo.books) không bao giờ bật ở bản thường.
+        buildConfigField "boolean", "NATIVE_UI", "${nativeUi}"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
              // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
@@ -36,6 +46,19 @@ android {
     // tài nguyên mặc định luôn được giữ.
     androidResources {
         localeFilters += ["vi"]
+    }
+    buildFeatures {
+        compose true
+        buildConfig true
+    }
+    if (nativeUi) {
+        buildTypes.configureEach { type ->
+            sourceSets.maybeCreate(type.name).manifest.srcFile("src/nativeUi/AndroidManifest.xml")
+        }
+    }
+    testOptions {
+        // Robolectric (ảnh chụp màn bằng Roborazzi) cần tài nguyên gộp của app.
+        unitTests.includeAndroidResources = true
     }
     // Loa giả DLNA (FakeRenderer) dùng chung cho bài thử JVM (DlnaTest) và bài thử trên máy Android (DlnaOnDeviceTest).
     sourceSets {
@@ -80,6 +103,25 @@ kotlin {
     jvmToolchain(21)
 }
 
+composeCompiler {
+    // Soát độ ổn định: gradlew -PcomposeReports ... -> app/build/compose_reports (docs/NATIVE_PHONE_UI.md §3).
+    if (project.hasProperty("composeReports")) {
+        reportsDestination = layout.buildDirectory.dir("compose_reports")
+        metricsDestination = layout.buildDirectory.dir("compose_reports")
+    }
+}
+
+roborazzi {
+    // Ảnh chuẩn của màn native nằm trong repo: record = -Proborazzi.test.record=true, verify = tác vụ verifyRoborazziDebug.
+    outputDir.set(layout.projectDirectory.dir("src/test/snapshots"))
+}
+
+baselineProfile {
+    // Profile sinh bằng :baselineprofile trên máy (generateBaselineProfile), cất ở src/main/generated/baselineProfiles và gộp vào bản release.
+    automaticGenerationDuringBuild = false
+    dexLayoutOptimization = true
+}
+
 repositories {
     flatDir{
         dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
@@ -103,12 +145,47 @@ dependencies {
     // Kiểm chữ ký Ed25519 (Signatures.kt - danh mục nhạc, cấu hình từ xa): minSdk 24 chưa có Ed25519 trong java.security. Tink: APK release +1,0 MB
     // (eddsa 0.3.0 chỉ +24 KB); luật đã duyệt: Tink khi tăng không quá 3 MB.
     implementation "com.google.crypto.tink:tink-android:1.24.0"
+    // Giao diện native (docs/NATIVE_PHONE_UI.md §2): chỉ ui + foundation + animation - KHÔNG material; thành phần tự vẽ. Không DI, không thư viện ảnh, không navigation-compose.
+    implementation platform("androidx.compose:compose-bom:$composeBomVersion")
+    implementation "androidx.compose.ui:ui"
+    implementation "androidx.compose.foundation:foundation"
+    implementation "androidx.compose.animation:animation"
+    implementation "androidx.activity:activity-compose:$androidxActivityVersion"
+    implementation "androidx.lifecycle:lifecycle-runtime-compose:$lifecycleComposeVersion"
+    implementation "androidx.profileinstaller:profileinstaller:$profileInstallerVersion"
+    baselineProfile project(":baselineprofile")
+    testImplementation platform("androidx.compose:compose-bom:$composeBomVersion")
+    testImplementation "androidx.compose.ui:ui-test-junit4"
+    testImplementation "org.robolectric:robolectric:$robolectricVersion"
+    testImplementation "io.github.takahirom.roborazzi:roborazzi:$roborazziVersion"
+    testImplementation "io.github.takahirom.roborazzi:roborazzi-compose:$roborazziVersion"
+    debugImplementation platform("androidx.compose:compose-bom:$composeBomVersion")
+    debugImplementation "androidx.compose.ui:ui-test-manifest"
     testImplementation "junit:junit:$junitVersion"
     // org.json thật cho test JVM (android.jar chỉ có vỏ rỗng): StoreRekeyTest đọc/ghi records.json, book.json.
     testImplementation "org.json:json:20240303"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
     implementation project(':capacitor-cordova-android-plugins')
+}
+
+// Robolectric tự tải android-all bằng HTTP riêng (hỏng khi DNS / tường lửa chập chờn): để Gradle tải, Robolectric đọc offline từ thư mục này.
+// 15-robolectric-13954326-i7 là jar SDK 35 mà Robolectric 4.17 dùng (đổi Robolectric thì đổi theo; test báo tên jar thiếu).
+configurations {
+    robolectricJars
+}
+dependencies {
+    robolectricJars "org.robolectric:android-all-instrumented:15-robolectric-13954326-i7"
+}
+def robolectricDir = layout.buildDirectory.dir("robolectric-jars")
+tasks.register("prepareRobolectricJars", Copy) {
+    from configurations.robolectricJars
+    into robolectricDir
+}
+tasks.withType(Test).configureEach {
+    dependsOn "prepareRobolectricJars"
+    systemProperty "robolectric.offline", "true"
+    systemProperty "robolectric.dependency.dir", robolectricDir.get().asFile.path
 }
 
 apply from: 'capacitor.build.gradle'

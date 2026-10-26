@@ -1,6 +1,8 @@
 package vn.abook.player
 
 import android.app.Application
+import vn.abook.player.ui.data.CoverLoader
+import vn.abook.player.ui.data.LibraryRepo
 
 /**
  * Điểm vào của tiến trình (a114): dựng nhật ký bền ([AppLog]) và bắt văng ([CrashLog]) TRƯỚC mọi Activity / Service / Worker, kể cả khi tiến trình
@@ -8,6 +10,10 @@ import android.app.Application
  * các lần tiến trình mới sinh ra.
  */
 class AbookApplication : Application() {
+    // Giao diện native (vn.abook.player.ui): dựng tay, lười - tiến trình chỉ chạy việc nền / bản WebView không tốn gì.
+    val library by lazy { LibraryRepo(this) }
+    val covers by lazy { CoverLoader() }
+
     override fun onCreate() {
         super.onCreate()
         AppLog.init(this)
