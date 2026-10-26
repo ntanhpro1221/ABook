@@ -281,7 +281,7 @@ private fun VoiceSkeleton() {
         for (width in SkeletonWidths) {
             Row(Modifier.fillMaxWidth().height(Dim.s48), verticalAlignment = Alignment.CenterVertically) {
                 Spacer(Modifier.size(Dim.s24))
-                Box(Modifier.fillMaxWidth(width).height(14.dp).clip(RoundedCornerShape(4.dp)).background(Abook.colors.bgSunken))
+                Box(Modifier.fillMaxWidth(width).height(14.dp).clip(RoundedCornerShape(Dim.radiusControl)).background(Abook.colors.bgSunken))
             }
         }
     }

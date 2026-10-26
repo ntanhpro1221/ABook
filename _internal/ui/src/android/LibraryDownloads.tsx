@@ -16,7 +16,7 @@ function DownloadCover({ books }: { books: ListenBook[] }) {
   const book = books.find(book => progress[book.id] && !progress[book.id].finished && !progress[book.id].cancelled && !progress[book.id].error);
   const event = book && progress[book.id];
   const fraction = event ? event.total ? (event.done ?? 0) / event.total : (event.files ?? 0) / Math.max(1, event.filesTotal ?? 1) : 0;
-  return <MotionPresence open={Boolean(event)}>{event && <div className="pointer-events-none absolute bottom-2 left-2 right-[60px] rounded-lg bg-panel p-2 text-xs text-fg">
+  return <MotionPresence open={Boolean(event)}>{event && <div className="pointer-events-none absolute bottom-2 left-2 right-[60px] rounded-control bg-panel p-2 text-xs text-fg">
     <span className="block truncate">Tải · {Math.round(fraction * 100)}%</span>
     <Progress size="xs" running value={fraction} label={`Đang tải ${book!.title}`} className="mt-1" />
   </div>}</MotionPresence>;

@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -110,7 +111,7 @@ fun SheetLayer(host: SheetHost) {
                     ),
                 contentAlignment = Alignment.Center,
             ) {
-                Box(Modifier.width(36.dp).height(4.dp).clip(RoundedCornerShape(2.dp)).background(colors.line))
+                Box(Modifier.width(36.dp).height(4.dp).clip(CircleShape).background(colors.line))
             }
             Box(Modifier.navigationBarsPadding().padding(horizontal = Dim.margin).padding(bottom = Dim.s16)) {
                 sheet.content { host.dismiss() }

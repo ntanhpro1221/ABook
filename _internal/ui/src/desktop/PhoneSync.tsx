@@ -484,7 +484,7 @@ export function PhoneSync() {
             value={renaming?.draft ?? ""}
             onChange={(event) => setRenaming((current) => current && { ...current, draft: event.target.value.slice(0, 80) })}
             aria-label="Tên thiết bị"
-            className="h-10 w-full rounded-lg border border-line bg-panel px-3 text-sm outline-none focus:border-focus"
+            className="h-10 w-full rounded-control border border-line bg-panel px-3 text-sm outline-none focus:border-focus"
           />
 
         </form>
