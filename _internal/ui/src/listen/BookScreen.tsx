@@ -109,11 +109,11 @@ export function ChapterRow({
         tabIndex={canPlay(chapter) ? -1 : undefined}
         className="touch-hit min-w-0 flex-1 text-left"
       >
-        <div className={cn("truncate text-sm font-medium", current && "text-accent-text", (done || !canPlay(chapter)) && !current && "text-fg-2")}>
+        <div className={cn("break-words text-sm font-medium", current && "text-accent-text", (done || !canPlay(chapter)) && !current && "text-fg-2")}>
           {name}
         </div>
         {/* min-h 1rem (= một dòng text-xs): dòng phụ luôn giữ chỗ - chương có audio rồi hàng không cao thêm, và mọi hàng cùng nhịp. */}
-        <div className="tabular min-h-[1rem] truncate text-xs text-fg-2">
+        <div className="tabular min-h-[1rem] break-words text-xs text-fg-2">
           {chapterSubline(chapter, book.producing)}
           {prepared && (
             <span className="ml-1.5 inline-flex items-center gap-0.5 rounded-control bg-accent-soft px-1 align-[1px] text-[0.6875rem] font-medium text-accent-text">
@@ -556,7 +556,7 @@ export function HistoryTab({ book }: { book: ListenBook }) {
                     {clockOf(item.startedAt) === clockOf(item.endedAt) ? clockOf(item.startedAt) : `${clockOf(item.startedAt)}-${clockOf(item.endedAt)}`} ·{" "}
                     {formatLength(item.listened)}
                   </div>
-                  <div className="tabular truncate text-xs text-fg-2">
+                  <div className="tabular break-words text-xs text-fg-2">
                     {titleOf(item.from.chapterId)} {formatClock(item.from.seconds)} → {titleOf(item.to.chapterId)} {formatClock(item.to.seconds)}
                   </div>
                 </div>
@@ -676,11 +676,11 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
         <DropdownMenu.Trigger asChild>
           <button
             type="button"
-            className="mt-3 inline-flex h-8 max-w-full items-center gap-1.5 rounded-full border-line px-3 text-xs text-fg-2 hover:bg-hover hover:text-fg"
+            className="mt-3 inline-flex min-h-8 max-w-full items-center gap-1.5 rounded-full border-line px-3 py-1 text-left text-xs text-fg-2 hover:bg-hover hover:text-fg"
           >
             <UserRound className="size-3.5 shrink-0" />
             <span className="shrink-0">Hồ sơ nghe:</span>
-            <span className="truncate font-medium text-fg">{active.name}</span>
+            <span className="min-w-0 break-words font-medium text-fg">{active.name}</span>
             <ChevronDown className="size-3.5 shrink-0" />
           </button>
         </DropdownMenu.Trigger>

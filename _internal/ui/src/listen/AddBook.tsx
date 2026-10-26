@@ -838,7 +838,7 @@ export function QueueList({ items, currentId, working = "", tall }: { items: Que
           <li key={key} ref={ref} aria-current={current ? "true" : undefined} className="motion-row" data-state={state} inert={state === "exit"}><div className="flex items-start gap-2">
             <MotionRegion as="span" className="mt-0.5 grid size-3.5 shrink-0 place-items-center">{mark}</MotionRegion>
             <span className="min-w-0 flex-1">
-              <span className={cn("block truncate", current ? "font-semibold text-fg" : "text-fg-2")}>{item.name}</span>
+              <span className={cn("block break-words", current ? "font-semibold text-fg" : "text-fg-2")}>{item.name}</span>
               <MotionRegion as="span" motionKey={said} className={cn("block text-pretty", item.state === "error" ? "text-danger" : "text-fg-3")}>{said}</MotionRegion>
             </span>
           </div></li>

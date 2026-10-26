@@ -42,15 +42,17 @@ function useRemoteDownload(book: ListenBook) {
     mutationFn: () => api<RemoteDownload>(`/api/listen/books/${book.id}/download`, { method: "DELETE" }),
     onSuccess: (status) => client.setQueryData(key, status),
   });
-  // Tải xong (hay hỏng) khi người dùng đang ở trang sách: báo một lần.
+  // Tải xong (hay hỏng) khi người dùng đang ở trang sách: báo một lần. Dòng tình trạng và mục menu đang mở cùng theo một lần tải (mỗi chỗ một hook):
+  // chung một mã thông báo nên lần báo thứ hai thay đúng thông báo ấy, không chồng hai cái giống hệt.
   const previous = useRef(query.data?.state);
   useEffect(() => {
     const now = query.data?.state;
+    const id = `remote-download-${book.id}`;
     if (previous.current === "running" && now === "done") {
-      toast.success(`Đã tải “${book.title}” về máy`);
+      toast.success(`Đã tải “${book.title}” về máy`, { id });
     } else if (previous.current === "running" && now === "failed") {
       const kept = (query.data?.bytesDone ?? 0) > 0 ? " Phần đã tải vẫn giữ trên máy này." : "";
-      toast.error("Chưa tải xong về máy", { description: `${endSentence(query.data?.error || `${computerOf(book) || "Máy kia"} không trả lời`)}${kept}` });
+      toast.error("Chưa tải xong về máy", { id, description: `${endSentence(query.data?.error || `${computerOf(book) || "Máy kia"} không trả lời`)}${kept}` });
     }
     previous.current = now;
   }, [query.data?.state, query.data?.error, book]);
