@@ -18,7 +18,7 @@ class CompanionRepoTest {
         val repo = CompanionRepo(flaky) { 1_000 }
         offline = true
         repo.refresh()
-        assertEquals("Chưa nối được, bạn thử lại", repo.state.value.problem)
+        assertEquals("Chưa nối được máy kia.", repo.state.value.problem)
         offline = false
         repo.refresh()
         assertEquals("", repo.state.value.problem)

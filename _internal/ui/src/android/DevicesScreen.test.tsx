@@ -33,7 +33,7 @@ it("phần tải dở (không có gói sách) và gói chỉ nghe thẳng đều
   const storage = { bytes: 700_000_000, free: 1_000_000_000, books: [{ id: "partial", bytes: 600_000_000 }, { id: "streamonly", bytes: 100_000_000, title: "Chỉ nghe thẳng" }] };
   hooks.books = [{ id: "streamonly", title: "Chỉ nghe thẳng", remote: true }];
   const html = renderToStaticMarkup(<StoragePanel storage={storage} names={new Map([["partial", "Sách đang tải"]])} />);
-  expect(html).toContain("Sách trên máy:");
+  expect(html).toMatch(/Sách [^<·]+ · còn trống [^<]+/);
   expect(html).toContain("Sách đang tải");
   expect(html).toContain("Xoá phần đã tải của Sách đang tải");
   expect(html).toContain("Xoá phần đã tải của Chỉ nghe thẳng");

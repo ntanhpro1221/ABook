@@ -64,7 +64,7 @@ class FakeDevicesSource : DevicesSource {
         link = Link(paired = false, deviceName = link.deviceName, lastAddress = link.host)
     }
 
-    override suspend fun remote(): RemoteLibrary = remoteError?.let { throw it } ?: remote ?: throw DeviceFailure("Chưa nối được máy tính")
+    override suspend fun remote(): RemoteLibrary = remoteError?.let { throw it } ?: remote ?: throw DeviceFailure("Chưa nối được máy kia.")
     override suspend fun peers() = peers
     override suspend fun peerAddress(key: String) = peerAddresses[key]
     override suspend fun unsent(key: String) = unsent

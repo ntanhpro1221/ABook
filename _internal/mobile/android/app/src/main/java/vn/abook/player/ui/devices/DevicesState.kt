@@ -118,7 +118,7 @@ class DevicesState(
         Result.failure(error)
     }
 
-    private fun message(error: Throwable?) = error?.message?.takeIf { it.isNotBlank() } ?: "Bạn hãy thử lại."
+    private fun message(error: Throwable?) = error?.message?.takeIf { it.isNotBlank() } ?: "Chưa làm được"
 
     // ---- trang nhóm ----------------------------------------------------------------------------------------------------
 

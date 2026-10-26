@@ -38,7 +38,7 @@ export function watchDownloads(client: QueryClient): () => void {
       void client.invalidateQueries({ queryKey: ["storage"] });
     }
     if (event.error) toast.error("Tải bị gián đoạn", { description: errorDescription(event.error, event.technical) });
-    if (event.cancelled) toast("Đã huỷ tải - lần sau tải tiếp từ chỗ dở");
+    if (event.cancelled) toast("Đã huỷ - lần tải sau làm tiếp từ chỗ dừng.");
   });
   return () => void handle.then((listener) => listener.remove());
 }

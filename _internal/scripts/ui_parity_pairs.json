@@ -1,5 +1,5 @@
 {
-  "_doc": "Cặp màn web <-> native (ui_parity.py --check). `web`/`native`: file (glob, tương đối ui/src/ và mobile/.../ui/; `!` loại). `allow`: nhãn chỉ một phía vì LÝ DO THẬT (máy tính/điện thoại khác nhau), ghi lý do. `missing`: tính năng native CHƯA có (Lead xếp lịch). `deferred`: nhóm màn chưa làm ở giai đoạn này. Mỗi mục: side + (label | match regex trên khoá lỏng | file glob) + reason.",
+  "_doc": "Cặp màn web <-> native (ui_parity.py --check). `web`/`native`: file (glob, tương đối ui/src/ và mobile/.../ui/; `!` loại). `web_also`/`native_also`: file chỉ để ĐỐI CHIẾU chữ của phía kia (nhãn chung nằm ở file khác), chữ của chúng không bị đòi. `allow`: nhãn chỉ một phía vì nền tảng BẮT BUỘC khác (bàn phím / chuột, tên cho trình đọc màn hình, dữ liệu, câu nằm ở lõi ngoài ui/), ghi lý do. `missing`: tính năng hay phần màn chỉ có ở MỘT phía (side = phía có nhãn; Lead xếp lịch). `deferred`: nhóm màn chưa làm ở giai đoạn này. Mỗi mục: side + (label | match regex trên khoá lỏng | file glob) + reason. Chữ khác nhau cho cùng một việc thì sửa cả hai phía theo docs/UI_PARITY.md 'Từ điển chữ chung', không ghi vào đây.",
   "pairs": [
     {
       "id": "now-playing",
@@ -16,7 +16,7 @@
         {
           "side": "web",
           "match": "^(bảng|esc|phím|phím tắt|shift\\+[←→])$",
-          "reason": "computer only: keyboard shortcuts"
+          "reason": "computer only: keyboard shortcuts, and the tab list name of the desktop side panel (the phone player has no side panel)"
         },
         {
           "side": "web",
@@ -25,48 +25,18 @@
         },
         {
           "side": "web",
-          "label": "Kéo xuống còn giọng khác",
-          "reason": "computer only: scroll hint of the voice popover"
-        },
-        {
-          "side": "web",
           "label": "Đóng trình phát",
-          "reason": "computer only: the bar has a close button, the phone mini player stays"
+          "reason": "computer only: the desktop bar has a close button; the phone mini player always stays (DESIGN §6)"
         },
         {
           "side": "web",
-          "match": "^(dừng khi|tắt sau|đặt lại|dừng phát sau)$",
-          "reason": "web only: section headings in the sleep popover (the native sheet shows the clock under its title)"
-        },
-        {
-          "side": "web",
-          "label": "Điều khiển phụ",
-          "reason": "web only: group name for screen readers (Compose groups by layout)"
-        },
-        {
-          "side": "native",
-          "match": "^(chọn|chọn giọng|giọng thu sẵn|đang chọn)$",
-          "reason": "phone only: value text on the right of a sheet row (web shows a tick / the voice name)"
-        },
-        {
-          "side": "native",
-          "label": "Tuỳ chọn",
-          "reason": "phone only: title of the More sheet (web More is a popover without a title)"
-        },
-        {
-          "side": "native",
-          "label": "Về chế độ nghe",
-          "reason": "phone only: tapping the small cover leaves read-along mode"
-        },
-        {
-          "side": "native",
-          "label": "Đóng bảng",
-          "reason": "phone only: scrim behind a bottom sheet (web uses popovers)"
+          "match": "^(điều khiển phụ|danh sách nhạc nền)$",
+          "reason": "web only: accessible group name (role=group needs one; Compose has no spoken group name)"
         },
         {
           "side": "web",
           "match": "^(giọng đọc: \\{\\}|tốc độ đọc: \\{\\}|đã chọn giọng \\{\\}|đã chọn tốc độ đọc \\{\\}|hẹn giờ ngủ trên \\{\\}|nghe từ .*|đã nghe)$",
-          "reason": "web only: screen-reader name or announcement (TalkBack reads the Compose semantics)"
+          "reason": "web only: screen-reader name or live announcement of a control whose visible label is the same on both sides (TalkBack reads the Compose label + value)"
         },
         {
           "side": "web",
@@ -74,9 +44,14 @@
           "reason": "computer only: keyboard help"
         },
         {
-          "side": "native",
-          "match": "^(chưa có giọng cài sẵn\\..*|chưa tải được chữ\\..*|chương chưa có chữ\\..*)$",
-          "reason": "phone only: error line in the player sheet (web shows its own load error)"
+          "side": "web",
+          "label": "Đang chuẩn bị nhạc nền",
+          "reason": "computer only: hover tooltip of the music button"
+        },
+        {
+          "side": "web",
+          "match": "^(nhạc của cuốn này\\..*)$",
+          "reason": "computer only: the book is a Studio project on this computer, so music changes go to Studio (no Studio projects on the phone)"
         }
       ],
       "missing": [
@@ -134,25 +109,54 @@
           "side": "web",
           "match": "^(chương này chưa có audio hoàn chỉnh.*|hết giờ thì \\{\\} tạm dừng.*|sáng hôm sau, thẻ “tối qua”.*|đang làm trước cho một cuốn.*)$",
           "reason": "player notices, sleep sheet hint, morning recap and read-ahead text"
-        }
-      ],
-      "deferred": [
-        {
-          "side": "web",
-          "match": "^(mức nhạc dưới giọng đọc|danh sách nhạc nền|đang chuẩn bị nhạc nền|đang tải các danh sách nhạc|trang của bài nhạc|giấy phép|bật)$",
-          "reason": "Music group: the Music session owns it"
         },
         {
           "side": "web",
-          "match": "^(bài nhạc chương này không phát được|có bài nhạc chưa phát được.*|nhạc của cuốn này\\..*|nhạc do người làm sách chọn\\..*)$",
-          "reason": "Music group: the Music session owns it"
+          "label": "Kéo xuống còn giọng khác",
+          "reason": "native voice sheet only fades its bottom edge (ScrollFade), no 'more voices' pill"
+        },
+        {
+          "side": "web",
+          "match": "^(dừng khi|tắt sau|đặt lại|dừng phát sau)$",
+          "reason": "native sleep sheet shows the clock without the headings 'Tắt sau / Dừng khi' and 'Đặt lại / Dừng phát sau'"
+        },
+        {
+          "side": "web",
+          "label": "Đang tải các danh sách nhạc",
+          "reason": "native music sheet shows a skeleton while the playlists load (DESIGN §2), web still writes a line"
+        },
+        {
+          "side": "native",
+          "label": "Đang chọn",
+          "reason": "native has no SelectionMark tick yet (DESIGN §6): the chosen sheet row writes 'Đang chọn' on the right"
+        },
+        {
+          "side": "native",
+          "match": "^(chọn giọng|giọng thu sẵn)$",
+          "reason": "web shows the voice name in the Voice row and hides the row on recorded chapters; native writes a placeholder value"
+        },
+        {
+          "side": "native",
+          "label": "Về chế độ nghe",
+          "reason": "web has no shortcut: tapping the small cover in read-along goes back to listening"
+        },
+        {
+          "side": "native",
+          "match": "^(chưa có giọng cài sẵn\\..*|chưa tải được chữ\\..*|chương chưa có chữ\\..*)$",
+          "reason": "web hides the voice menu when no voice is installed and shows no read-along load error"
         }
       ],
+      "deferred": [],
       "web_also": [
         "listen/labels.ts",
-        "listen/sleep.ts"
+        "listen/sleep.ts",
+        "android/RemotePlayers.tsx",
+        "shared/ui.tsx"
       ],
-      "sentences": true
+      "sentences": true,
+      "native_also": [
+        "music/*.kt"
+      ]
     },
     {
       "id": "shared-labels",
@@ -246,64 +250,24 @@
       ],
       "allow": [
         {
-          "side": "native",
-          "match": "^(bật|tắt|sắp có|thử lại)$",
-          "reason": "phone only: generic list-part words (web draws them from shared/ui.tsx)"
-        },
-        {
-          "side": "native",
-          "match": "^(chưa làm được, bạn thử lại|chưa xoá được, bạn thử lại)$",
-          "reason": "phone only: error line under the row (web shows a toast with the system message)"
-        },
-        {
-          "side": "native",
-          "match": "^(chương \\{\\}|còn|đang xoá|đã xoá khỏi điện thoại|chương này chưa có audio|tới chỗ đang nghe|đang đóng file sách)$",
-          "reason": "phone only: fallback or busy wording built in Kotlin (same words as the web line, concatenated instead of templated)"
-        },
-        {
-          "side": "native",
-          "match": "^trên máy tính$",
-          "reason": "phone only: label for a book held by the computer (web: remoteName in androidSource.ts)"
-        },
-        {
-          "side": "web",
-          "match": "^(chưa có sách nào)$",
-          "reason": "computer only: empty-library title of the desktop (phone: \"Chưa có sách trên máy\")"
-        },
-        {
           "side": "web",
           "match": "^(điều hướng|danh sách chương|mục của sách|việc với sách|lọc sách|mở bộ \\{\\}|mở \\{\\}|nghe ngay \\{\\}|đọc \\{\\}|thêm \\{\\}|nghe \\{\\}|tạm dừng \\{\\}|nghe \\{\\} nói|xếp theo: \\{\\}|nghe xong|thông báo|đóng thông báo|đang mở thư viện|gõ không dấu cũng được|nghe giọng \\{\\}|đổi giọng \\{\\}|nghe tiếp \\{\\}|sách)$",
-          "reason": "web only: screen-reader name, tooltip or tab title (Compose gives the same controls their own semantics)"
+          "reason": "web only: screen-reader name, hover tooltip or tab-list name of a control both sides have (the web control is icon-only or repeats per card; Compose reads the visible label)"
         },
         {
           "side": "web",
-          "match": "^(còn \\{\\}|đã nghe \\{\\}|đang nghe|không phát được)$",
-          "reason": "web only: pieces of the progress line the phone writes as one template (same words)"
-        },
-        {
-          "side": "web",
-          "match": "^(chưa xoá được|chưa hoàn tác được|đã khôi phục “\\{\\}”|chưa mang theo chỗ nghe)$",
-          "reason": "web only: toast text (phone shows the undo bar and its error line)"
+          "match": "^(đã nghe \\{\\})$",
+          "reason": "same visible line on both sides ('Đã nghe X · còn Y chưa nghe'): web joins the two parts with DotJoin, native writes one template"
         },
         {
           "side": "web",
           "match": "^(máy chủ không trả chương nào|không tìm thấy sách này)$",
-          "reason": "web only: error from the web server that the phone does not talk to"
-        },
-        {
-          "side": "web",
-          "match": "^(sách nghe được sẽ hiện ở đây)$",
-          "reason": "computer only: empty-library text of the desktop"
-        },
-        {
-          "side": "native",
-          "match": "^(chưa đóng được file sách để chia sẻ|sách chưa có chương nào nghe được trên máy này)$",
-          "reason": "phone only: share error and empty chapter list"
+          "reason": "web only: error of the web book loader (desktop server / bundle reader); native screens only open books already in the library"
         },
         {
           "side": "native",
           "match": "^(phần đã tải của “\\{\\}” sẽ bị xoá.*)$",
-          "reason": "two phrasings of the same dialog: web adds the size to reclaim and the undo seconds - unify later"
+          "reason": "same dialog, different data: web knows the size to reclaim but not the holder's name, native knows the holder - one sentence once both sides have both"
         }
       ],
       "missing": [
@@ -356,41 +320,78 @@
           "side": "web",
           "match": "^(chưa đủ chương; mở file sách mới hơn.*|đang thu; chương mới tự hiện khi xong|dàn nhân vật hiện ra.*|hồ sơ mới nghe từ đầu.*|mỗi hồ sơ giữ chỗ nghe.*|mỗi lượt nghe lưu lại.*|sách có thể đã bị chuyển.*|thư viện chưa có cuốn nào khác)$",
           "reason": "book page: producing note, cast, profiles, history, book-not-found page"
-        }
-      ],
-      "deferred": [
-        {
-          "side": "native",
-          "match": "^(nhạc nền)$",
-          "reason": "Music group: the Music session owns it"
         },
         {
           "side": "native",
-          "match": "^xuất mp.* hay m.*b$",
-          "reason": "Export group: being merged elsewhere"
+          "match": "^(sắp có)$",
+          "reason": "native placeholder for features the native UI does not have yet; goes away with them"
         },
         {
           "side": "native",
-          "match": "^(thêm sách)$",
-          "reason": "Add book group (6)"
+          "match": "^(chương này chưa có audio)$",
+          "reason": "web has no per-chapter sheet: its chapter row reads 'Đọc {} (chưa có audio)'"
+        },
+        {
+          "side": "native",
+          "match": "^(chương \\{\\})$",
+          "reason": "web has no fallback chapter name (native names an untitled chapter 'Chương N')"
+        },
+        {
+          "side": "native",
+          "match": "^(tới chỗ đang nghe)$",
+          "reason": "web chapter list has no 'jump to the chapter being heard' link"
+        },
+        {
+          "side": "native",
+          "match": "^(đang xoá|đang đóng file sách)$",
+          "reason": "web shows a spinner in the button / closes the menu, no busy word"
+        },
+        {
+          "side": "native",
+          "match": "^(đã xoá khỏi điện thoại)$",
+          "reason": "web toast always has the title; native undo bar falls back when the title is unknown"
+        },
+        {
+          "side": "native",
+          "match": "^(sách chưa có chương nào nghe được trên máy này)$",
+          "reason": "web book page offers 'Đọc' when nothing is playable; native writes a line"
         },
         {
           "side": "web",
-          "match": "^(tải về máy|đang tải về máy|không tải được|chiếm \\{\\})$",
-          "reason": "Devices group (4): remote books and their download sheet"
+          "match": "^(đang nghe|không phát được)$",
+          "reason": "native has no 'Đang nghe' row in Thư viện (LibraryScreen.kt) and no listening / error state on the book page's progress line"
         },
         {
-          "side": "native",
-          "match": "^xuất (mp.*|m.*b|sách nói \\(m.*b\\))$",
-          "reason": "Export group: wording pass for export comes after the export merge (group 8)"
+          "side": "web",
+          "match": "^(chưa hoàn tác được|đã khôi phục “\\{\\}”|chưa mang theo chỗ nghe)$",
+          "reason": "native undo bar has no restore toast or undo-failure line"
+        },
+        {
+          "side": "web",
+          "match": "^(đang tải về máy)$",
+          "reason": "native remote-book sheet shows 'Đang tải N%' in place; web menu closes, so it toasts the start"
+        },
+        {
+          "side": "web",
+          "match": "^(chưa tải được)$",
+          "reason": "native writes the core's failure sentence under the button, without a title"
         }
       ],
+      "deferred": [],
       "web_also": [
         "listen/labels.ts",
         "listen/sleep.ts",
-        "listen/PlayerViews.tsx"
+        "listen/PlayerViews.tsx",
+        "listen/EditBook.tsx",
+        "listen/AddBook.tsx",
+        "android/ExportMp3.tsx",
+        "android/ExportM4b.tsx",
+        "android/ExportAudiobook.tsx"
       ],
-      "sentences": true
+      "sentences": true,
+      "native_also": [
+        "screens/RemoteBookSheet.kt"
+      ]
     },
     {
       "id": "settings",
@@ -423,27 +424,17 @@
         {
           "side": "web",
           "match": "^(chưa lưu được thay đổi\\. .*|chưa lưu được thay đổi.*)$",
-          "reason": "web only: the WebView storage failed (the phone core saves natively)"
+          "reason": "web only: the WebView's own storage failed (the native core saves settings itself, no such failure)"
         },
         {
           "side": "web",
-          "match": "^(nhóm cài đặt|về cài đặt|studio)$",
-          "reason": "web only: screen-reader name of the list, desktop back link, Studio group (not on the phone)"
+          "match": "^(nhóm cài đặt|về cài đặt)$",
+          "reason": "web only: screen-reader name of the group list and of the back button (web names the destination; native PageHeader says 'Quay lại' everywhere)"
         },
         {
           "side": "web",
-          "match": "^(số phút hẹn|độ nhạy lắc|\\{\\} giờ|mở|xem)$",
-          "reason": "web only: screen-reader name, fragment of a templated option, or button where the phone row itself opens"
-        },
-        {
-          "side": "native",
-          "match": "^(hẹn|không tự lùi|sắp có)$",
-          "reason": "phone only: stacked label of the schedule length, summary fragment, generic list word"
-        },
-        {
-          "side": "native",
-          "match": "^(đang đo\\.?|đang đọc nhật ký\\.?|nhật ký đang trống\\.?|đang mở danh sách|chưa mở được danh sách\\.?)$",
-          "reason": "phone only: loading / empty line of a sheet (web shows a skeleton; the third-party list text is in shared/ThirdPartyList.tsx, which the scanner cannot read because of a regex literal with quotes)"
+          "match": "^(studio)$",
+          "reason": "computer only: Studio settings group (no Studio on the phone)"
         }
       ],
       "missing": [
@@ -471,30 +462,35 @@
           "side": "web",
           "match": "^(chưa lưu bản đọc nào|làm trước bị dừng|làm trước để nghe khi không có mạng.*|máy đọc chậm\\? làm trước để nghe liền mạch|vừa chỗ trống cho \\{\\} chương|xoá \\{\\} bản đọc của cuốn này\\? .*|đang làm trước.*|đã dừng làm trước.*|đã làm trước.*|đã sẵn sàng .*)$",
           "reason": "reading the next chapters ahead of time"
-        }
-      ],
-      "deferred": [
-        {
-          "side": "native",
-          "match": "^(chia sẻ thư viện|dung lượng|nối máy tính|tên máy này)$",
-          "reason": "Devices group (4)"
-        },
-        {
-          "side": "native",
-          "match": "^(nhạc của tôi|tự chọn nhạc nền|sách chỉ có chữ: nhạc nhẹ đổi theo cảnh\\.?)$",
-          "reason": "Music group: the Music session owns it"
         },
         {
           "side": "web",
-          "match": "^(điện thoại chưa có giọng tiếng việt\\. .*)$",
-          "reason": "Voice settings group (5)"
+          "match": "^(mở|xem)$",
+          "reason": "native opens Nhật ký / Mã nguồn mở as whole-row links (NavRow) without a button word"
+        },
+        {
+          "side": "native",
+          "match": "^(sắp có)$",
+          "reason": "native placeholder for features the native UI does not have yet; goes away with them"
+        },
+        {
+          "side": "native",
+          "match": "^(đang đo\\.?|đang đọc nhật ký\\.?)$",
+          "reason": "web shows a skeleton (DESIGN §2: đang tải = khung xám) where native writes a loading line"
         }
       ],
+      "deferred": [],
       "web_also": [
         "listen/labels.ts",
-        "listen/sleep.ts"
+        "listen/sleep.ts",
+        "android/DevicesScreen.tsx",
+        "listen/playlistBed.ts",
+        "shared/diagnostics.ts"
       ],
-      "sentences": true
+      "sentences": true,
+      "native_also": [
+        "screens/SettingsVoice.kt"
+      ]
     },
     {
       "id": "devices",
@@ -521,483 +517,8 @@
       "allow": [
         {
           "side": "web",
-          "match": "^bật\\ lại\\ trong\\ cài\\ đặt\\ của\\ máy\\ >\\ ứng\\ dụng\\ >\\ abook\\ >\\ thông\\ báo$",
-          "reason": "hộp giải thích quyền của web; native dùng hộp quyền hệ thống rồi một hàng 'Cần quyền Thiết bị ở gần' + 'Mở cài đặt'"
-        },
-        {
-          "side": "web",
-          "match": "^chi\\ tiết$",
-          "reason": "bố cục khác: web một trang dài có khối gập 'Chi tiết'; native tách màn Ghép / Chia sẻ, mỗi ý một hàng riêng ngắn hơn"
-        },
-        {
-          "side": "web",
-          "match": "^cho\\ phép$",
-          "reason": "hộp giải thích quyền của web; native dùng hộp quyền hệ thống rồi một hàng 'Cần quyền Thiết bị ở gần' + 'Mở cài đặt'"
-        },
-        {
-          "side": "web",
-          "match": "^cho\\ phép\\ “thiết\\ bị\\ ở\\ gần”\\ để\\ tìm\\ máy\\ đã\\ ghép$",
-          "reason": "hộp giải thích quyền của web; native dùng hộp quyền hệ thống rồi một hàng 'Cần quyền Thiết bị ở gần' + 'Mở cài đặt'"
-        },
-        {
-          "side": "web",
-          "match": "^chưa\\ có\\ máy\\ nào\\ ghép\\ bluetooth\\ với\\ điện\\ thoại\\ này\\ \\(cài\\ đặt\\ android\\ →\\ bluetooth\\)$",
-          "reason": "web liệt kê máy đã ghép Bluetooth trong khung Ghép thiết bị; native chọn cách nối ở một hàng 'Cách nối' và dựng danh sách từ DevicesState"
-        },
-        {
-          "side": "web",
-          "match": "^chưa\\ có\\ máy\\ tính\\ ghép\\ bluetooth\\.\\ ghép\\ ở\\ cài\\ đặt\\ android\\ ›\\ bluetooth\\ rồi\\ thử\\ lại$",
-          "reason": "web liệt kê máy đã ghép Bluetooth trong khung Ghép thiết bị; native chọn cách nối ở một hàng 'Cách nối' và dựng danh sách từ DevicesState"
-        },
-        {
-          "side": "web",
-          "match": "^chưa\\ ghép\\ được$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi / bảng đóng lại, không có toast"
-        },
-        {
-          "side": "web",
-          "match": "^chưa\\ huỷ\\ được$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi / bảng đóng lại, không có toast"
-        },
-        {
-          "side": "web",
-          "match": "^chưa\\ đổi\\ được$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi / bảng đóng lại, không có toast"
-        },
-        {
-          "side": "web",
-          "match": "^chưa\\ đổi\\ được\\ tên$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi / bảng đóng lại, không có toast"
-        },
-        {
-          "side": "web",
-          "match": "^chỉ\\ tìm\\ máy\\ đã\\ ghép\\ bluetooth\\ để\\ nhận\\ sách;\\ abook\\ không\\ dò\\ hay\\ kết\\ nối\\ thiết\\ bị\\ khác$",
-          "reason": "hộp giải thích quyền của web; native dùng hộp quyền hệ thống rồi một hàng 'Cần quyền Thiết bị ở gần' + 'Mở cài đặt'"
-        },
-        {
-          "side": "web",
-          "match": "^chọn$",
-          "reason": "thanh 'đang phát trên máy khác' là bố cục của web; native điều khiển từ trình phát (nút 'Thiết bị phát' + bảng 'Phát ở đây')"
-        },
-        {
-          "side": "web",
-          "match": "^dùng\\ bluetooth$",
-          "reason": "web liệt kê máy đã ghép Bluetooth trong khung Ghép thiết bị; native chọn cách nối ở một hàng 'Cách nối' và dựng danh sách từ DevicesState"
-        },
-        {
-          "side": "web",
-          "match": "^ghép$",
-          "reason": "bố cục khác: web một trang dài có khối gập 'Chi tiết'; native tách màn Ghép / Chia sẻ, mỗi ý một hàng riêng ngắn hơn"
-        },
-        {
-          "side": "web",
-          "match": "^ghép\\ bluetooth$",
-          "reason": "web liệt kê máy đã ghép Bluetooth trong khung Ghép thiết bị; native chọn cách nối ở một hàng 'Cách nối' và dựng danh sách từ DevicesState"
-        },
-        {
-          "side": "web",
-          "match": "^ghép\\ thiết\\ bị$",
-          "reason": "bố cục khác: web một trang dài có khối gập 'Chi tiết'; native tách màn Ghép / Chia sẻ, mỗi ý một hàng riêng ngắn hơn"
-        },
-        {
-          "side": "web",
-          "match": "^google\\ cast$",
-          "reason": "thanh 'đang phát trên máy khác' là bố cục của web; native điều khiển từ trình phát (nút 'Thiết bị phát' + bảng 'Phát ở đây')"
-        },
-        {
-          "side": "web",
-          "match": "^máy\\ kia\\ chưa\\ tự\\ thấy\\ điện\\ thoại\\?\\ địa\\ chỉ\\ nằm\\ ở\\ mục\\ chi\\ tiết\\ phía\\ trên$",
-          "reason": "bố cục khác: web một trang dài có khối gập 'Chi tiết'; native tách màn Ghép / Chia sẻ, mỗi ý một hàng riêng ngắn hơn"
-        },
-        {
-          "side": "web",
-          "match": "^máy\\ tính\\ và\\ các\\ máy\\ đã\\ ghép\\ thấy\\ điện\\ thoại\\ bằng\\ tên\\ này$",
-          "reason": "bố cục khác: web một trang dài có khối gập 'Chi tiết'; native tách màn Ghép / Chia sẻ, mỗi ý một hàng riêng ngắn hơn"
-        },
-        {
-          "side": "web",
-          "match": "^máy\\ tính\\ đã\\ ghép\\ bluetooth$",
-          "reason": "web liệt kê máy đã ghép Bluetooth trong khung Ghép thiết bị; native chọn cách nối ở một hàng 'Cách nối' và dựng danh sách từ DevicesState"
-        },
-        {
-          "side": "web",
-          "match": "^máy\\ đã\\ ghép\\ nghe\\ được\\ sách\\ bạn\\ thêm\\ từ\\ file,\\ không\\ cần\\ chép\\ sang$",
-          "reason": "bố cục khác: web một trang dài có khối gập 'Chi tiết'; native tách màn Ghép / Chia sẻ, mỗi ý một hàng riêng ngắn hơn"
-        },
-        {
-          "side": "web",
-          "match": "^mở\\ cài\\ đặt\\ để\\ cho\\ phép$",
-          "reason": "hộp giải thích quyền của web; native dùng hộp quyền hệ thống rồi một hàng 'Cần quyền Thiết bị ở gần' + 'Mở cài đặt'"
-        },
-        {
-          "side": "web",
-          "match": "^nhập\\ mã\\ này\\ trên\\ máy\\ kia$",
-          "reason": "bố cục khác: web một trang dài có khối gập 'Chi tiết'; native tách màn Ghép / Chia sẻ, mỗi ý một hàng riêng ngắn hơn"
-        },
-        {
-          "side": "web",
-          "match": "^nhập\\ sai\\ mã\\ quá\\ \\{\\}\\ lần\\ \\-\\ mã\\ đã\\ bị\\ huỷ\\.\\ bấm\\ “ghép\\ máy\\ mới”\\ để\\ có\\ mã\\ khác$",
-          "reason": "bố cục khác: web một trang dài có khối gập 'Chi tiết'; native tách màn Ghép / Chia sẻ, mỗi ý một hàng riêng ngắn hơn"
-        },
-        {
-          "side": "web",
-          "match": "^phát\\ trên$",
-          "reason": "thanh 'đang phát trên máy khác' là bố cục của web; native điều khiển từ trình phát (nút 'Thiết bị phát' + bảng 'Phát ở đây')"
-        },
-        {
-          "side": "web",
-          "match": "^phát\\ trên\\ thiết\\ bị\\ khác$",
-          "reason": "thanh 'đang phát trên máy khác' là bố cục của web; native điều khiển từ trình phát (nút 'Thiết bị phát' + bảng 'Phát ở đây')"
-        },
-        {
-          "side": "web",
-          "match": "^phát\\ trên\\ \\{\\}$",
-          "reason": "thanh 'đang phát trên máy khác' là bố cục của web; native điều khiển từ trình phát (nút 'Thiết bị phát' + bảng 'Phát ở đây')"
-        },
-        {
-          "side": "web",
-          "match": "^qua\\ bluetooth\\ ·$",
-          "reason": "web liệt kê máy đã ghép Bluetooth trong khung Ghép thiết bị; native chọn cách nối ở một hàng 'Cách nối' và dựng danh sách từ DevicesState"
-        },
-        {
-          "side": "web",
-          "match": "^quyền\\ bluetooth$",
-          "reason": "hộp giải thích quyền của web; native dùng hộp quyền hệ thống rồi một hàng 'Cần quyền Thiết bị ở gần' + 'Mở cài đặt'"
-        },
-        {
-          "side": "web",
-          "match": "^quyền\\ “thiết\\ bị\\ ở\\ gần”\\ của\\ abook\\ đang\\ tắt\\.\\ mở\\ cài\\ đặt\\ →\\ quyền\\ →\\ thiết\\ bị\\ ở\\ gần\\ →\\ cho\\ phép,\\ rồi\\ quay\\ lại\\ bấm\\ kết\\ nối\\ qua\\ bluetooth$",
-          "reason": "hộp giải thích quyền của web; native dùng hộp quyền hệ thống rồi một hàng 'Cần quyền Thiết bị ở gần' + 'Mở cài đặt'"
-        },
-        {
-          "side": "web",
-          "match": "^sách\\ máy\\ kia\\ hiện\\ trong\\ thư\\ viện$",
-          "reason": "bố cục khác: web một trang dài có khối gập 'Chi tiết'; native tách màn Ghép / Chia sẻ, mỗi ý một hàng riêng ngắn hơn"
-        },
-        {
-          "side": "web",
-          "match": "^thiết\\ bị\\ khác$",
-          "reason": "bố cục khác: web một trang dài có khối gập 'Chi tiết'; native tách màn Ghép / Chia sẻ, mỗi ý một hàng riêng ngắn hơn"
-        },
-        {
-          "side": "web",
-          "match": "^thiết\\ bị\\ ở\\ gần$",
-          "reason": "web liệt kê máy đã ghép Bluetooth trong khung Ghép thiết bị; native chọn cách nối ở một hàng 'Cách nối' và dựng danh sách từ DevicesState"
-        },
-        {
-          "side": "web",
-          "match": "^tiếp\\ tục$",
-          "reason": "hộp giải thích quyền của web; native dùng hộp quyền hệ thống rồi một hàng 'Cần quyền Thiết bị ở gần' + 'Mở cài đặt'"
-        },
-        {
-          "side": "web",
-          "match": "^tên$",
-          "reason": "bố cục khác: web một trang dài có khối gập 'Chi tiết'; native tách màn Ghép / Chia sẻ, mỗi ý một hàng riêng ngắn hơn"
-        },
-        {
-          "side": "web",
-          "match": "^vân\\ tay$",
-          "reason": "web liệt kê máy đã ghép Bluetooth trong khung Ghép thiết bị; native chọn cách nối ở một hàng 'Cách nối' và dựng danh sách từ DevicesState"
-        },
-        {
-          "side": "web",
-          "match": "^đang\\ dừng\\ trên$",
-          "reason": "thanh 'đang phát trên máy khác' là bố cục của web; native điều khiển từ trình phát (nút 'Thiết bị phát' + bảng 'Phát ở đây')"
-        },
-        {
-          "side": "web",
-          "match": "^đang\\ mở\\ trên\\ \\{\\}$",
-          "reason": "thanh 'đang phát trên máy khác' là bố cục của web; native điều khiển từ trình phát (nút 'Thiết bị phát' + bảng 'Phát ở đây')"
-        },
-        {
-          "side": "web",
-          "match": "^đang\\ phát\\ trên$",
-          "reason": "thanh 'đang phát trên máy khác' là bố cục của web; native điều khiển từ trình phát (nút 'Thiết bị phát' + bảng 'Phát ở đây')"
-        },
-        {
-          "side": "web",
-          "match": "^đang\\ phát\\ trên\\ \\{\\}$",
-          "reason": "thanh 'đang phát trên máy khác' là bố cục của web; native điều khiển từ trình phát (nút 'Thiết bị phát' + bảng 'Phát ở đây')"
-        },
-        {
-          "side": "web",
-          "match": "^điện\\ thoại\\ này$",
-          "reason": "tiêu đề khối gập / nút của hộp đổi tên ở web; native dùng bảng 'Đổi tên điện thoại này' với nút Lưu"
-        },
-        {
-          "side": "web",
-          "match": "^đã\\ bỏ\\ ghép\\ \\{\\}$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi / bảng đóng lại, không có toast"
-        },
-        {
-          "side": "web",
-          "match": "^đã\\ ghép\\ \\{\\}$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi / bảng đóng lại, không có toast"
-        },
-        {
-          "side": "web",
-          "match": "^đã\\ kết\\ nối\\ với\\ \\{\\}$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi / bảng đóng lại, không có toast"
-        },
-        {
-          "side": "web",
-          "match": "^đã\\ đổi\\ tên\\ thành\\ “\\{\\}”$",
-          "reason": "thông báo thoáng (toast) của web; native báo bằng dòng lỗi / bảng đóng lại, không có toast"
-        },
-        {
-          "side": "web",
-          "match": "^để\\ nguyên$",
-          "reason": "tiêu đề khối gập / nút của hộp đổi tên ở web; native dùng bảng 'Đổi tên điện thoại này' với nút Lưu"
-        },
-        {
-          "side": "web",
-          "match": "^để\\ sau$",
-          "reason": "hộp giải thích quyền của web; native dùng hộp quyền hệ thống rồi một hàng 'Cần quyền Thiết bị ở gần' + 'Mở cài đặt'"
-        },
-        {
-          "side": "web",
-          "match": "^đổi\\ tên$",
-          "reason": "tiêu đề khối gập / nút của hộp đổi tên ở web; native dùng bảng 'Đổi tên điện thoại này' với nút Lưu"
-        },
-        {
-          "side": "web",
-          "match": "^ẩn$",
-          "reason": "thanh 'đang phát trên máy khác' là bố cục của web; native điều khiển từ trình phát (nút 'Thiết bị phát' + bảng 'Phát ở đây')"
-        },
-        {
-          "side": "native",
-          "match": "^bluetooth$",
-          "reason": "màn Thêm thiết bị của native (chọn cách nối, danh sách máy tìm thấy) khác bố cục khối 'Ghép thiết bị' của web"
-        },
-        {
-          "side": "native",
-          "match": "^bluetooth:\\ \\{\\}\\ máy\\ đang\\ nối$",
-          "reason": "màn Thêm thiết bị của native (chọn cách nối, danh sách máy tìm thấy) khác bố cục khối 'Ghép thiết bị' của web"
-        },
-        {
-          "side": "native",
-          "match": "^bạn\\ hãy\\ thử\\ lại$",
-          "reason": "dòng trạng thái / lỗi riêng của native (nút đổi chữ khi đang làm); web dùng vòng quay + toast"
-        },
-        {
-          "side": "native",
-          "match": "^cho\\ máy\\ khác\\ nghe$",
-          "reason": "màn Chia sẻ của native hiện từng hàng ngắn; web gộp trong khối 'Điện thoại này' với câu dài hơn"
-        },
-        {
-          "side": "native",
-          "match": "^chưa\\ làm\\ được,\\ bạn\\ thử\\ lại$",
-          "reason": "dòng trạng thái / lỗi riêng của native (nút đổi chữ khi đang làm); web dùng vòng quay + toast"
-        },
-        {
-          "side": "native",
-          "match": "^chưa\\ mở\\ được\\ studio$",
-          "reason": "dòng trạng thái / lỗi riêng của native (nút đổi chữ khi đang làm); web dùng vòng quay + toast"
-        },
-        {
-          "side": "native",
-          "match": "^chưa\\ nối$",
-          "reason": "dòng trạng thái / lỗi riêng của native (nút đổi chữ khi đang làm); web dùng vòng quay + toast"
-        },
-        {
-          "side": "native",
-          "match": "^chưa\\ nối\\ được\\ máy\\ tính$",
-          "reason": "dòng trạng thái / lỗi riêng của native (nút đổi chữ khi đang làm); web dùng vòng quay + toast"
-        },
-        {
-          "side": "native",
-          "match": "^chưa\\ nối\\ được,\\ bạn\\ thử\\ lại$",
-          "reason": "dòng trạng thái / lỗi riêng của native (nút đổi chữ khi đang làm); web dùng vòng quay + toast"
-        },
-        {
-          "side": "native",
-          "match": "^chưa\\ phát\\ sách$",
-          "reason": "dòng trạng thái / lỗi riêng của native (nút đổi chữ khi đang làm); web dùng vòng quay + toast"
-        },
-        {
-          "side": "native",
-          "match": "^chưa\\ thấy$",
-          "reason": "màn Chia sẻ của native hiện từng hàng ngắn; web gộp trong khối 'Điện thoại này' với câu dài hơn"
-        },
-        {
-          "side": "native",
-          "match": "^chưa\\ thấy\\ máy\\ khác\\.\\ bạn\\ kiểm\\ tra\\ kết\\ nối$",
-          "reason": "màn Thêm thiết bị của native (chọn cách nối, danh sách máy tìm thấy) khác bố cục khối 'Ghép thiết bị' của web"
-        },
-        {
-          "side": "native",
-          "match": "^chưa\\ thấy\\ máy\\ nào$",
-          "reason": "màn Thêm thiết bị của native (chọn cách nối, danh sách máy tìm thấy) khác bố cục khối 'Ghép thiết bị' của web"
-        },
-        {
-          "side": "native",
-          "match": "^chưa\\ vào\\ mạng\\ wi\\-fi\\ nào$",
-          "reason": "màn Thêm thiết bị của native (chọn cách nối, danh sách máy tìm thấy) khác bố cục khối 'Ghép thiết bị' của web"
-        },
-        {
-          "side": "native",
-          "match": "^chọn\\ nơi\\ phát$",
-          "reason": "bảng 'Thiết bị phát' của native; web mở danh sách từ nút trong menu '…' của trình phát"
-        },
-        {
-          "side": "native",
-          "match": "^cách\\ nối$",
-          "reason": "màn Thêm thiết bị của native (chọn cách nối, danh sách máy tìm thấy) khác bố cục khối 'Ghép thiết bị' của web"
-        },
-        {
-          "side": "native",
-          "match": "^cần\\ quyền\\ thiết\\ bị\\ ở\\ gần$",
-          "reason": "màn Thêm thiết bị của native (chọn cách nối, danh sách máy tìm thấy) khác bố cục khối 'Ghép thiết bị' của web"
-        },
-        {
-          "side": "native",
-          "match": "^dùng\\ được\\ đến\\ \\{\\}$",
-          "reason": "màn Chia sẻ của native hiện từng hàng ngắn; web gộp trong khối 'Điện thoại này' với câu dài hơn"
-        },
-        {
-          "side": "native",
-          "match": "^huỷ$",
-          "reason": "chữ 'Huỷ' chung (nút hộp thoại); ở web nằm trong shared/ui, không thuộc file Thiết bị"
-        },
-        {
-          "side": "native",
-          "match": "^hẹn\\ giờ$",
-          "reason": "bảng 'Thiết bị phát' của native; web mở danh sách từ nút trong menu '…' của trình phát"
-        },
-        {
-          "side": "native",
-          "match": "^máy\\ tính$",
-          "reason": "màn Thêm thiết bị của native (chọn cách nối, danh sách máy tìm thấy) khác bố cục khối 'Ghép thiết bị' của web"
-        },
-        {
-          "side": "native",
-          "match": "^máy\\ tính\\ \\{\\}\\ chỉ\\ cho\\ nghe\\ \\-\\ trên\\ máy\\ tính\\ ấy,\\ bật\\ cài\\ đặt\\ ›\\ thiết\\ bị\\ ›\\ “điều\\ khiển\\ từ\\ xa”$",
-          "reason": "màn Thêm thiết bị của native (chọn cách nối, danh sách máy tìm thấy) khác bố cục khối 'Ghép thiết bị' của web"
-        },
-        {
-          "side": "native",
-          "match": "^máy\\ đã\\ ghép$",
-          "reason": "màn Chia sẻ của native hiện từng hàng ngắn; web gộp trong khối 'Điện thoại này' với câu dài hơn"
-        },
-        {
-          "side": "native",
-          "match": "^máy\\ đã\\ nối$",
-          "reason": "màn Thêm thiết bị của native (chọn cách nối, danh sách máy tìm thấy) khác bố cục khối 'Ghép thiết bị' của web"
-        },
-        {
-          "side": "native",
-          "match": "^mã\\ đã\\ huỷ\\ vì\\ nhập\\ sai\\ nhiều\\ lần$",
-          "reason": "màn Chia sẻ của native hiện từng hàng ngắn; web gộp trong khối 'Điện thoại này' với câu dài hơn"
-        },
-        {
-          "side": "native",
-          "match": "^phát\\ ở\\ đây$",
-          "reason": "bảng 'Thiết bị phát' của native; web mở danh sách từ nút trong menu '…' của trình phát"
-        },
-        {
-          "side": "native",
-          "match": "^sách\\ trên\\ \\{\\}$",
-          "reason": "màn Thêm thiết bị của native (chọn cách nối, danh sách máy tìm thấy) khác bố cục khối 'Ghép thiết bị' của web"
-        },
-        {
-          "side": "native",
-          "match": "^thiết\\ bị\\ phát$",
-          "reason": "bảng 'Thiết bị phát' của native; web mở danh sách từ nút trong menu '…' của trình phát"
-        },
-        {
-          "side": "native",
-          "match": "^thêm\\ thiết\\ bị$",
-          "reason": "màn Thêm thiết bị của native (chọn cách nối, danh sách máy tìm thấy) khác bố cục khối 'Ghép thiết bị' của web"
-        },
-        {
-          "side": "native",
-          "match": "^thấy\\ \\{\\}$",
-          "reason": "màn Chia sẻ của native hiện từng hàng ngắn; web gộp trong khối 'Điện thoại này' với câu dài hơn"
-        },
-        {
-          "side": "native",
-          "match": "^tìm\\ lại\\ thiết\\ bị\\ phát$",
-          "reason": "bảng 'Thiết bị phát' của native; web mở danh sách từ nút trong menu '…' của trình phát"
-        },
-        {
-          "side": "native",
-          "match": "^tắt\\ hẹn\\ giờ$",
-          "reason": "bảng 'Thiết bị phát' của native; web mở danh sách từ nút trong menu '…' của trình phát"
-        },
-        {
-          "side": "native",
-          "match": "^wi\\-fi$",
-          "reason": "màn Thêm thiết bị của native (chọn cách nối, danh sách máy tìm thấy) khác bố cục khối 'Ghép thiết bị' của web"
-        },
-        {
-          "side": "native",
-          "match": "^đang\\ bật$",
-          "reason": "dòng trạng thái / lỗi riêng của native (nút đổi chữ khi đang làm); web dùng vòng quay + toast"
-        },
-        {
-          "side": "native",
-          "match": "^đang\\ bật\\ ·\\ \\{\\}\\ máy$",
-          "reason": "dòng trạng thái / lỗi riêng của native (nút đổi chữ khi đang làm); web dùng vòng quay + toast"
-        },
-        {
-          "side": "native",
-          "match": "^đang\\ bỏ\\ ghép$",
-          "reason": "dòng trạng thái / lỗi riêng của native (nút đổi chữ khi đang làm); web dùng vòng quay + toast"
-        },
-        {
-          "side": "native",
-          "match": "^đang\\ dừng$",
-          "reason": "dòng trạng thái / lỗi riêng của native (nút đổi chữ khi đang làm); web dùng vòng quay + toast"
-        },
-        {
-          "side": "native",
-          "match": "^đang\\ gửi\\ lệnh$",
-          "reason": "dòng trạng thái / lỗi riêng của native (nút đổi chữ khi đang làm); web dùng vòng quay + toast"
-        },
-        {
-          "side": "native",
-          "match": "^đang\\ kiểm\\ tra$",
-          "reason": "dòng trạng thái / lỗi riêng của native (nút đổi chữ khi đang làm); web dùng vòng quay + toast"
-        },
-        {
-          "side": "native",
-          "match": "^đang\\ lưu$",
-          "reason": "dòng trạng thái / lỗi riêng của native (nút đổi chữ khi đang làm); web dùng vòng quay + toast"
-        },
-        {
-          "side": "native",
-          "match": "^đang\\ mở\\ studio$",
-          "reason": "dòng trạng thái / lỗi riêng của native (nút đổi chữ khi đang làm); web dùng vòng quay + toast"
-        },
-        {
-          "side": "native",
-          "match": "^đang\\ nối\\ \\{\\}$",
-          "reason": "màn Thêm thiết bị của native (chọn cách nối, danh sách máy tìm thấy) khác bố cục khối 'Ghép thiết bị' của web"
-        },
-        {
-          "side": "native",
-          "match": "^đang\\ phát$",
-          "reason": "dòng trạng thái / lỗi riêng của native (nút đổi chữ khi đang làm); web dùng vòng quay + toast"
-        },
-        {
-          "side": "native",
-          "match": "^đang\\ tìm\\ máy$",
-          "reason": "màn Thêm thiết bị của native (chọn cách nối, danh sách máy tìm thấy) khác bố cục khối 'Ghép thiết bị' của web"
-        },
-        {
-          "side": "native",
-          "match": "^đang\\ tắt$",
-          "reason": "dòng trạng thái / lỗi riêng của native (nút đổi chữ khi đang làm); web dùng vòng quay + toast"
-        },
-        {
-          "side": "native",
-          "match": "^đã\\ nối\\ \\{\\}$",
-          "reason": "dòng trạng thái / lỗi riêng của native (nút đổi chữ khi đang làm); web dùng vòng quay + toast"
-        },
-        {
-          "side": "native",
-          "match": "^địa\\ chỉ\\ máy\\ tính$",
-          "reason": "màn Thêm thiết bị của native (chọn cách nối, danh sách máy tìm thấy) khác bố cục khối 'Ghép thiết bị' của web"
+          "match": "^(huỷ tải \\{\\}|đang tải \\{\\}|xoá phần đã tải của \\{\\}|xoá \\{\\} khỏi điện thoại)$",
+          "reason": "web only: screen-reader name that carries the book title (the visible button says 'Huỷ tải' / shows the bar; TalkBack reads the row title with it)"
         }
       ],
       "missing": [
@@ -1050,169 +571,115 @@
           "side": "web",
           "match": "^đã\\ chép\\ địa\\ chỉ$",
           "reason": "native chưa có nút chép địa chỉ của điện thoại"
+        },
+        {
+          "side": "web",
+          "match": "^(cho phép|cho phép “thiết bị ở gần” để tìm máy đã ghép|chỉ tìm máy đã ghép bluetooth để nhận sách;.*|quyền bluetooth|để sau|tiếp tục)$",
+          "reason": "native has no explainer before Android's permission prompt (it shows the system prompt, then 'Cần quyền Thiết bị ở gần')"
+        },
+        {
+          "side": "web",
+          "match": "^bật lại trong cài đặt của máy > .*$",
+          "reason": "native shows 'Mở cài đặt' under 'Android đang chặn thông báo của ABook.' instead of a toast with the path"
+        },
+        {
+          "side": "web",
+          "match": "^(dùng bluetooth|máy tính đã ghép bluetooth|nhập địa chỉ|tự tìm máy tính|máy tính tìm thấy|ghép bluetooth|ghép|thiết bị khác|sách máy kia hiện trong thư viện|thiết bị ở gần|vân tay)$",
+          "reason": "native Nối máy tính chooses Wi-Fi / Bluetooth / Địa chỉ under 'Cách nối'; web has links and its own headings for the same steps"
+        },
+        {
+          "side": "web",
+          "match": "^(chi tiết|tên|máy kia chưa tự thấy điện thoại\\?.*)$",
+          "reason": "native share page has no 'Chi tiết' fold (name, address, fingerprint) nor the hint under the code"
+        },
+        {
+          "side": "web",
+          "match": "^(chưa ghép được|chưa huỷ được|chưa đổi được|chưa đổi được tên|đã bỏ ghép \\{\\}|đã ghép \\{\\}|đã kết nối với \\{\\}|đã đổi tên thành “\\{\\}”)$",
+          "reason": "native closes the sheet / writes the error in place; no success or failure toast"
+        },
+        {
+          "side": "web",
+          "match": "^(chọn|google cast|phát trên|phát trên thiết bị khác|phát trên \\{\\}|đang dừng trên|đang mở trên \\{\\}|đang phát trên|đang phát trên \\{\\}|ẩn)$",
+          "reason": "web 'đang phát trên máy khác' bar and 'Phát trên' menu; native controls other players from the 'Thiết bị phát' sheet (CompanionSurfaces.kt)"
+        },
+        {
+          "side": "web",
+          "match": "^(điện thoại này|để nguyên|đổi tên)$",
+          "reason": "native rename sheet: the device row opens it (no 'Đổi tên' button), no 'Để nguyên', no 'Điện thoại này' fold"
+        },
+        {
+          "side": "web",
+          "match": "^(chưa ghép với máy tính nào|mở studio của máy nào|bật điều khiển từ xa trên máy tính)$",
+          "reason": "native opens Studio from each computer's row; no chooser and no 'none paired' toast"
+        },
+        {
+          "side": "web",
+          "match": "^(studio máy tính|tạo sách nói rồi nghe ở đây)$",
+          "reason": "native has no install block ('Cài trên máy tính')"
+        },
+        {
+          "side": "web",
+          "match": "^(tải bị gián đoạn)$",
+          "reason": "native writes the core's failure under the button (no toast title)"
+        },
+        {
+          "side": "native",
+          "match": "^(bluetooth|wi-fi|cách nối|địa chỉ máy tính|máy tính|máy đã nối|sách trên \\{\\}|đang nối \\{\\})$",
+          "reason": "web Nối máy tính has no 'Cách nối' choice (Wi-Fi / Bluetooth / Địa chỉ), no 'Máy đã nối' list with each computer's books, no in-row progress"
+        },
+        {
+          "side": "native",
+          "match": "^(máy đã ghép|chưa thấy|thấy \\{\\}|dùng được đến \\{\\})$",
+          "reason": "web share block: one switch and a fold; native lists sharers ('Máy đã ghép', last seen) and the Bluetooth count"
+        },
+        {
+          "side": "native",
+          "match": "^(chọn nơi phát|phát ở đây|tìm lại thiết bị phát|chưa phát sách|đang dừng|đang phát|đang gửi lệnh|chưa thấy máy khác\\. bạn kiểm tra kết nối)$",
+          "reason": "web 'Phát trên' menu has no device-by-device remote control sheet"
+        },
+        {
+          "side": "native",
+          "match": "^(đang bỏ ghép|đang lưu|đang mở studio|đang kiểm tra)$",
+          "reason": "web shows a spinner in the button, no busy word"
+        },
+        {
+          "side": "native",
+          "match": "^(chưa nối|đã nối \\{\\}|đang bật|đang bật · \\{\\} máy|đang tắt)$",
+          "reason": "web Thiết bị shows no per-row summary (connected / sharing state) on the settings list"
+        },
+        {
+          "side": "native",
+          "match": "^(chưa mở được studio)$",
+          "reason": "web shows the core's message as is (no fallback sentence)"
+        },
+        {
+          "side": "native",
+          "match": "^(còn trống \\{\\}|chưa có gì trên máy)$",
+          "reason": "web storage block is one summary line; native's Dung lượng page shows the total large with 'Còn trống' under it and an empty line"
+        },
+        {
+          "side": "native",
+          "match": "^(huỷ)$",
+          "reason": "web toggles the add-device form with the same 'Thêm thiết bị' button, no 'Huỷ'"
+        },
+        {
+          "side": "web",
+          "match": "^(các máy tính đã ghép đều chỉ cho nghe.*|máy tính \\{\\} và \\{\\} đều chỉ cho nghe.*)$",
+          "reason": "native writes the listen-only line per computer row; no line naming two or more computers"
         }
       ],
-      "deferred": [
-        {
-          "side": "web",
-          "match": "^bật\\ điều\\ khiển\\ từ\\ xa\\ trên\\ máy\\ tính$",
-          "reason": "chữ trang Studio từ điện thoại khác nhau (native: OtherScreens 'Nối máy tính để làm sách nói và xem tiến độ.'); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^chưa\\ ghép\\ với\\ máy\\ tính\\ nào$",
-          "reason": "chữ trang Studio từ điện thoại khác nhau (native: OtherScreens 'Nối máy tính để làm sách nói và xem tiến độ.'); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^chưa\\ nối\\ được\\ máy\\ kia$",
-          "reason": "chữ khác cho tải / dung lượng (native: 'Đang tải {}%', 'Đã dừng tải', 'Còn trống {}'); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^chưa\\ thấy\\ máy\\ tính\\ nào\\.\\ kiểm\\ tra\\ máy\\ tính\\ đã\\ bật\\ kết\\ nối,\\ hoặc\\ nhập\\ địa\\ chỉ$",
-          "reason": "chữ khác cho cùng việc tìm máy (native: 'Đang tìm máy' / 'Chưa thấy máy nào'); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^huỷ\\ tải\\ \\{\\}$",
-          "reason": "chữ khác cho tải / dung lượng (native: 'Đang tải {}%', 'Đã dừng tải', 'Còn trống {}'); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^không\\ thấy\\ thiết\\ bị\\ nào\\ \\-\\ nhập\\ địa\\ chỉ\\ đang\\ hiện\\ trên\\ máy\\ kia$",
-          "reason": "chữ khác cho cùng việc tìm máy (native: 'Đang tìm máy' / 'Chưa thấy máy nào'); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^máy\\ tính\\ tìm\\ thấy$",
-          "reason": "chữ khác cho cùng việc tìm máy (native: 'Đang tìm máy' / 'Chưa thấy máy nào'); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^mở\\ studio\\ của\\ máy\\ nào$",
-          "reason": "chữ trang Studio từ điện thoại khác nhau (native: OtherScreens 'Nối máy tính để làm sách nói và xem tiến độ.'); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^nhập\\ địa\\ chỉ$",
-          "reason": "chữ khác cho cùng việc tìm máy (native: 'Đang tìm máy' / 'Chưa thấy máy nào'); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^nối\\ máy\\ tính\\ của\\ bạn\\ để\\ tạo\\ sách\\ nói$",
-          "reason": "chữ trang Studio từ điện thoại khác nhau (native: OtherScreens 'Nối máy tính để làm sách nói và xem tiến độ.'); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^studio\\ máy\\ tính$",
-          "reason": "chữ trang Studio từ điện thoại khác nhau (native: OtherScreens 'Nối máy tính để làm sách nói và xem tiến độ.'); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^sách\\ trên\\ máy$",
-          "reason": "chữ khác cho tải / dung lượng (native: 'Đang tải {}%', 'Đã dừng tải', 'Còn trống {}'); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^sách\\ \\{\\}\\ ·\\ còn\\ trống\\ \\{\\}$",
-          "reason": "chữ khác cho tải / dung lượng (native: 'Đang tải {}%', 'Đã dừng tải', 'Còn trống {}'); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^tạo\\ sách\\ nói\\ rồi\\ nghe\\ ở\\ đây$",
-          "reason": "chữ trang Studio từ điện thoại khác nhau (native: OtherScreens 'Nối máy tính để làm sách nói và xem tiến độ.'); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^tạo\\ sách\\ nói\\ từ\\ xa$",
-          "reason": "chữ trang Studio từ điện thoại khác nhau (native: OtherScreens 'Nối máy tính để làm sách nói và xem tiến độ.'); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^tải\\ bị\\ gián\\ đoạn$",
-          "reason": "chữ khác cho tải / dung lượng (native: 'Đang tải {}%', 'Đã dừng tải', 'Còn trống {}'); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^tải\\ ·$",
-          "reason": "chữ khác cho tải / dung lượng (native: 'Đang tải {}%', 'Đã dừng tải', 'Còn trống {}'); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^tự\\ tìm\\ máy\\ tính$",
-          "reason": "chữ khác cho cùng việc tìm máy (native: 'Đang tìm máy' / 'Chưa thấy máy nào'); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^xoá\\ phần\\ đã\\ tải\\ của\\ \\{\\}$",
-          "reason": "chữ khác cho tải / dung lượng (native: 'Đang tải {}%', 'Đã dừng tải', 'Còn trống {}'); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^xoá\\ \\{\\}\\ khỏi\\ điện\\ thoại$",
-          "reason": "chữ khác cho tải / dung lượng (native: 'Đang tải {}%', 'Đã dừng tải', 'Còn trống {}'); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^đang\\ tìm\\ trong\\ mạng\\ wi\\-fi$",
-          "reason": "chữ khác cho cùng việc tìm máy (native: 'Đang tìm máy' / 'Chưa thấy máy nào'); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^đang\\ tải\\ \\{\\}$",
-          "reason": "chữ khác cho tải / dung lượng (native: 'Đang tải {}%', 'Đã dừng tải', 'Còn trống {}'); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "native",
-          "match": "^chưa\\ có\\ gì\\ trên\\ máy$",
-          "reason": "chữ khác cho tải / dung lượng (web: 'Huỷ tải {}', 'Tải bị gián đoạn', 'Sách {} · còn trống {}'); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "native",
-          "match": "^còn\\ trống\\ \\{\\}$",
-          "reason": "chữ khác cho tải / dung lượng (web: 'Huỷ tải {}', 'Tải bị gián đoạn', 'Sách {} · còn trống {}'); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "native",
-          "match": "^huỷ\\ tải$",
-          "reason": "chữ khác cho tải / dung lượng (web: 'Huỷ tải {}', 'Tải bị gián đoạn', 'Sách {} · còn trống {}'); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "native",
-          "match": "^nối\\ máy\\ tính\\ để\\ làm\\ sách\\ nói\\ và\\ xem\\ tiến\\ độ$",
-          "reason": "chữ trang Studio từ điện thoại khác nhau; cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "native",
-          "match": "^trên\\ \\{\\}$",
-          "reason": "chữ khác cho tải / dung lượng (web: 'Huỷ tải {}', 'Tải bị gián đoạn', 'Sách {} · còn trống {}'); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "native",
-          "match": "^tải\\ về\\ máy$",
-          "reason": "chữ khác cho tải / dung lượng (web: 'Huỷ tải {}', 'Tải bị gián đoạn', 'Sách {} · còn trống {}'); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "native",
-          "match": "^đang\\ tải\\ \\{\\}%$",
-          "reason": "chữ khác cho tải / dung lượng (web: 'Huỷ tải {}', 'Tải bị gián đoạn', 'Sách {} · còn trống {}'); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "native",
-          "match": "^đã\\ dừng\\ tải$",
-          "reason": "chữ khác cho tải / dung lượng (web: 'Huỷ tải {}', 'Tải bị gián đoạn', 'Sách {} · còn trống {}'); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "native",
-          "match": "^đã\\ tải\\ về\\ máy$",
-          "reason": "chữ khác cho tải / dung lượng (web: 'Huỷ tải {}', 'Tải bị gián đoạn', 'Sách {} · còn trống {}'); cần chọn một câu cho cả hai"
-        }
-      ],
+      "deferred": [],
       "web_also": [
         "listen/labels.ts",
         "listen/sleep.ts",
-        "shared/connectionRoute.ts"
+        "shared/connectionRoute.ts",
+        "listen/PlayerViews.tsx",
+        "listen/LibraryScreen.tsx",
+        "android/App.tsx",
+        "shared/ui.tsx"
+      ],
+      "native_also": [
+        "nowplaying/PlayerSheets.kt"
       ]
     },
     {
@@ -1239,7 +706,10 @@
         "data/SettingsRepo.kt"
       ],
       "web_also": [
-        "listen/labels.ts"
+        "listen/labels.ts",
+        "listen/MyMusic.tsx",
+        "studio/musicLocal.ts",
+        "android/SettingsScreen.tsx"
       ],
       "sentences": true,
       "missing": [
@@ -1317,521 +787,98 @@
           "side": "web",
           "match": "^đã\\ lưu\\ khoá\\.\\ bấm\\ “kiểm\\ tra”\\ để\\ thử$",
           "reason": "native chưa có: nút nhận khoá ở trang nhà cung cấp / lời báo sau khi lưu khoá / giải thích mức tô chữ"
-        }
-      ],
-      "deferred": [
-        {
-          "side": "web",
-          "match": "^bộ\\ giọng$",
-          "reason": "mô tả thẻ giọng tải về: native dùng VoiceText.choiceTitle + detail của lõi, chữ khác; cần chọn một câu cho cả hai"
         },
         {
           "side": "web",
-          "match": "^giọng\\ hay,\\ đọc\\ ngay\\ trên\\ máy,\\ không\\ cần\\ mạng\\.\\ chữ\\ của\\ sách\\ không\\ rời\\ máy$",
-          "reason": "mô tả thẻ giọng tải về: native dùng VoiceText.choiceTitle + detail của lõi, chữ khác; cần chọn một câu cho cả hai"
+          "match": "^(chưa tải được giọng vieneu|chọn giọng khác|chọn giọng đọc|dừng|giọng đọc trực tuyến|nghe|nghe thử|tải giọng chạy trên máy|xem trong cài đặt|đang tải giọng vieneu|giọng của máy đọc ngay trên máy này, không gửi chữ đi đâu)$",
+          "reason": "native player has no offline / online-voice prompt nor the VieNeu download block (OnlineVoicePrompt, VieneuDownload)"
         },
         {
           "side": "web",
-          "match": "^máy\\ này\\ chưa\\ có\\ giọng\\ đọc$",
-          "reason": "native nói rõ hơn cách cài giọng tiếng Việt của điện thoại ('Điện thoại chưa có giọng tiếng Việt. Cài ở Cài đặt điện thoại › Chuyển văn bản thành giọng nói.'); web dùng chung với máy tính nên nói 'máy này'"
+          "match": "^(giọng edge gửi chữ của sách tới máy chủ microsoft để đọc|giọng \\{\\} gửi chữ của sách tới \\{\\} bằng khoá của bạn - .*)$",
+          "reason": "native voice settings: no per-provider notice under the online groups (it asks once, in the 'Giọng đọc trực tuyến' sheet)"
         },
         {
           "side": "web",
-          "match": "^mười\\ giọng\\ nam\\ nữ,\\ nhẹ\\ máy,\\ không\\ cần\\ mạng\\.\\ chữ\\ của\\ sách\\ không\\ rời\\ máy$",
-          "reason": "mô tả thẻ giọng tải về: native dùng VoiceText.choiceTitle + detail của lõi, chữ khác; cần chọn một câu cho cả hai"
+          "match": "^(chưa huỷ được việc tải \\{\\}|đã chuyển sang giọng trực tuyến|đã chuyển sang giọng vieneu nano|đã có|đã có sẵn|đang tải \\{\\})$",
+          "reason": "native has no cancel-failure toast, no 'switched to …' toast and no checkbox list sizes ('Đã có', 'Đã có sẵn') on the voice card"
         },
         {
           "side": "web",
-          "match": "^nên\\ dùng\\ \\{\\};\\ chỉ\\ cần\\ tải\\ một\\ bộ\\ giọng$",
-          "reason": "mô tả thẻ giọng tải về: native dùng VoiceText.choiceTitle + detail của lõi, chữ khác; cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^tải,\\ đo\\ và\\ quản\\ lý$",
-          "reason": "mô tả thẻ giọng tải về: native dùng VoiceText.choiceTitle + detail của lõi, chữ khác; cần chọn một câu cho cả hai"
+          "match": "^(nam|nữ|mặc định)$",
+          "reason": "native voice list shows no gender tag and no 'Mặc định' tag (the tick marks the chosen voice)"
         },
         {
           "side": "native",
-          "match": "^điện\\ thoại\\ chưa\\ có\\ giọng\\ tiếng\\ việt\\.\\ cài\\ ở\\ cài\\ đặt\\ điện\\ thoại\\ ›\\ chuyển\\ văn\\ bản\\ thành\\ giọng\\ nói$",
-          "reason": "xem web 'Máy này chưa có giọng đọc.' - native nói rõ hơn"
+          "match": "^(đang gỡ|đang kiểm tra|đang lưu|đang lấy giọng|đang xoá|đang đo tốc độ)$",
+          "reason": "web shows a spinner in the button, no busy word"
         },
         {
           "side": "native",
-          "match": "^chưa thêm được nhạc$",
-          "reason": "Music group: the Music session owns it (one music import path, dev/native-musicfix)"
+          "match": "^(hiện|ẩn|khoá \\{\\} sẽ bị xoá khỏi máy này.*)$",
+          "reason": "web key card has no show / hide toggle and no confirm step for deleting a key"
+        },
+        {
+          "side": "native",
+          "match": "^(dữ liệu di động|vẫn tải|chờ wi-fi)$",
+          "reason": "web only notes mobile data under the card; native asks before downloading"
+        },
+        {
+          "side": "native",
+          "match": "^(đồng ý|không)$",
+          "reason": "web asks for consent in the player ('Nghe' / 'Chọn giọng khác'); native asks in settings"
+        },
+        {
+          "side": "native",
+          "match": "^(chưa đổi được giọng|chưa đọc được các khoá|chưa tải được giọng)$",
+          "reason": "web toasts or writes inline without these titles (save / load failures of the voice list, voice change, key list)"
+        },
+        {
+          "side": "native",
+          "match": "^(đã có trên máy|có bản mới · \\{\\}|supertonic nhanh hơn)$",
+          "reason": "web card says where to pick the voice / names the version in one sentence; native rows only show the state"
+        },
+        {
+          "side": "native",
+          "match": "^(xoá bài|xoá bài này)$",
+          "reason": "web deletes a track at once with an undo-less toast; native confirms first"
+        },
+        {
+          "side": "native",
+          "match": "^(phần đã tải dở sẽ bị xoá khỏi máy này)$",
+          "reason": "web Remove dialog for a half-downloaded voice: native confirms 'Phần đã tải dở…' first"
+        },
+        {
+          "side": "web",
+          "match": "^(bộ giọng|tải, đo và quản lý|nên dùng \\{\\}; chỉ cần tải một bộ giọng)$",
+          "reason": "native lists the two voice modules under their own titles: no 'Bộ giọng' fold with its activity summary, no 'which one to download' advice"
         }
       ],
+      "deferred": [],
       "allow": [
         {
           "side": "web",
-          "match": "^chưa\\ dùng\\ được$",
-          "reason": "nhãn khác bố cục: web đặt trong thẻ giọng / chip; native là hàng và hướng dẫn riêng (đã khớp các câu cùng việc)"
+          "match": "^(giọng \\{\\} đang không dùng được|giọng đang chọn đang không dùng được|giọng đọc của máy|khoá \\{\\} không dùng được - tạm đọc bằng .*|khoá \\{\\} đã hết hạn mức - tạm đọc bằng \\{\\}|không có giọng nào đọc được - .*|không có mạng - giọng|không có mạng - giọng đang chọn cần mạng|không dùng được giọng trực tuyến - tạm đọc bằng .*|không dùng được giọng \\{\\} lúc này - tạm đọc bằng \\{\\})$",
+          "reason": "same sentence on both sides, but the native one lives in the read-aloud core (readaloud/ClipReader.kt, LibraryTree.kt), outside the scanned ui/ folder; web also fills in the voice name"
         },
         {
           "side": "web",
-          "match": "^chưa\\ huỷ\\ được\\ việc\\ tải\\ \\{\\}$",
-          "reason": "nhãn khác bố cục: web đặt trong thẻ giọng / chip; native là hàng và hướng dẫn riêng (đã khớp các câu cùng việc)"
+          "match": "^(microsoft|mỹ duyên|ngọc linh|phạm tuyên|thanh bình|ái hân|đức trí)$",
+          "reason": "voice and company names are data (native gets them from the core's voice list), not interface words"
         },
         {
           "side": "web",
-          "match": "^chưa\\ tải\\ được\\ giọng\\ vieneu$",
-          "reason": "khối báo mất mạng của trình phát (OnlineVoicePrompt / VieneuDownload) là bố cục web; native hỏi bằng bảng 'Gửi chữ ra ngoài?' và tiến độ ở Cài đặt"
-        },
-        {
-          "side": "web",
-          "match": "^chọn\\ giọng\\ khác$",
-          "reason": "khối báo mất mạng của trình phát (OnlineVoicePrompt / VieneuDownload) là bố cục web; native hỏi bằng bảng 'Gửi chữ ra ngoài?' và tiến độ ở Cài đặt"
-        },
-        {
-          "side": "web",
-          "match": "^chọn\\ giọng\\ đọc$",
-          "reason": "khối báo mất mạng của trình phát (OnlineVoicePrompt / VieneuDownload) là bố cục web; native hỏi bằng bảng 'Gửi chữ ra ngoài?' và tiến độ ở Cài đặt"
-        },
-        {
-          "side": "web",
-          "match": "^chữ\\ của\\ sách\\ gửi\\ tới\\ dịch\\ vụ\\ ấy;\\ có\\ thể\\ bị\\ tính\\ tiền$",
-          "reason": "câu báo giọng / mạng / khoá nằm ở lõi native (readaloud/ClipReader.kt, OnlineVoices.kt - ngoài ui/, máy dò chưa quét) - đã dùng đúng chữ của web"
-        },
-        {
-          "side": "web",
-          "match": "^dùng\\ được\\ ·\\ \\{\\}\\ giọng$",
-          "reason": "nhãn khác bố cục: web đặt trong thẻ giọng / chip; native là hàng và hướng dẫn riêng (đã khớp các câu cùng việc)"
-        },
-        {
-          "side": "web",
-          "match": "^dừng$",
-          "reason": "khối báo mất mạng của trình phát (OnlineVoicePrompt / VieneuDownload) là bố cục web; native hỏi bằng bảng 'Gửi chữ ra ngoài?' và tiến độ ở Cài đặt"
-        },
-        {
-          "side": "web",
-          "match": "^giọng\\ của\\ máy\\ đọc\\ ngay\\ trên\\ máy\\ này,\\ không\\ gửi\\ chữ\\ đi\\ đâu$",
-          "reason": "câu báo giọng / mạng / khoá nằm ở lõi native (readaloud/ClipReader.kt, OnlineVoices.kt - ngoài ui/, máy dò chưa quét) - đã dùng đúng chữ của web"
-        },
-        {
-          "side": "web",
-          "match": "^giọng\\ edge\\ gửi\\ chữ\\ của\\ sách\\ tới\\ máy\\ chủ\\ microsoft\\ để\\ đọc$",
-          "reason": "câu báo giọng / mạng / khoá nằm ở lõi native (readaloud/ClipReader.kt, OnlineVoices.kt - ngoài ui/, máy dò chưa quét) - đã dùng đúng chữ của web"
-        },
-        {
-          "side": "web",
-          "match": "^giọng\\ \\{\\}\\ gửi\\ chữ\\ của\\ sách\\ tới\\ \\{\\}\\ bằng\\ khoá\\ của\\ bạn\\ \\-\\ có\\ thể\\ bị\\ tính\\ tiền\\ vào\\ tài\\ khoản\\ của\\ bạn$",
-          "reason": "câu báo giọng / mạng / khoá nằm ở lõi native (readaloud/ClipReader.kt, OnlineVoices.kt - ngoài ui/, máy dò chưa quét) - đã dùng đúng chữ của web"
-        },
-        {
-          "side": "web",
-          "match": "^giọng\\ \\{\\}\\ đang\\ không\\ dùng\\ được$",
-          "reason": "câu báo giọng / mạng / khoá nằm ở lõi native (readaloud/ClipReader.kt, OnlineVoices.kt - ngoài ui/, máy dò chưa quét) - đã dùng đúng chữ của web"
-        },
-        {
-          "side": "web",
-          "match": "^giọng\\ đang\\ chọn\\ đang\\ không\\ dùng\\ được$",
-          "reason": "câu báo giọng / mạng / khoá nằm ở lõi native (readaloud/ClipReader.kt, OnlineVoices.kt - ngoài ui/, máy dò chưa quét) - đã dùng đúng chữ của web"
-        },
-        {
-          "side": "web",
-          "match": "^giọng\\ đọc\\ của\\ máy$",
-          "reason": "câu báo giọng / mạng / khoá nằm ở lõi native (readaloud/ClipReader.kt, OnlineVoices.kt - ngoài ui/, máy dò chưa quét) - đã dùng đúng chữ của web"
-        },
-        {
-          "side": "web",
-          "match": "^giọng\\ đọc\\ trực\\ tuyến$",
-          "reason": "khối báo mất mạng của trình phát (OnlineVoicePrompt / VieneuDownload) là bố cục web; native hỏi bằng bảng 'Gửi chữ ra ngoài?' và tiến độ ở Cài đặt"
-        },
-        {
-          "side": "web",
-          "match": "^gỡ$",
-          "reason": "nhãn khác bố cục: web đặt trong thẻ giọng / chip; native là hàng và hướng dẫn riêng (đã khớp các câu cùng việc)"
-        },
-        {
-          "side": "web",
-          "match": "^khoá$",
-          "reason": "nhãn khác bố cục: web đặt trong thẻ giọng / chip; native là hàng và hướng dẫn riêng (đã khớp các câu cùng việc)"
-        },
-        {
-          "side": "web",
-          "match": "^khoá\\ \\{\\}\\ không\\ dùng\\ được\\ \\-\\ tạm\\ đọc\\ bằng\\ \\{\\}\\.\\ kiểm\\ tra\\ lại\\ khoá\\ trong\\ cài\\ đặt$",
-          "reason": "câu báo giọng / mạng / khoá nằm ở lõi native (readaloud/ClipReader.kt, OnlineVoices.kt - ngoài ui/, máy dò chưa quét) - đã dùng đúng chữ của web"
-        },
-        {
-          "side": "web",
-          "match": "^khoá\\ \\{\\}\\ đã\\ hết\\ hạn\\ mức\\ \\-\\ tạm\\ đọc\\ bằng\\ \\{\\}$",
-          "reason": "câu báo giọng / mạng / khoá nằm ở lõi native (readaloud/ClipReader.kt, OnlineVoices.kt - ngoài ui/, máy dò chưa quét) - đã dùng đúng chữ của web"
-        },
-        {
-          "side": "web",
-          "match": "^khuyên\\ dùng$",
-          "reason": "nhãn khác bố cục: web đặt trong thẻ giọng / chip; native là hàng và hướng dẫn riêng (đã khớp các câu cùng việc)"
-        },
-        {
-          "side": "web",
-          "match": "^không\\ có\\ giọng\\ nào\\ đọc\\ được\\ đoạn\\ này$",
-          "reason": "câu báo giọng / mạng / khoá nằm ở lõi native (readaloud/ClipReader.kt, OnlineVoices.kt - ngoài ui/, máy dò chưa quét) - đã dùng đúng chữ của web"
-        },
-        {
-          "side": "web",
-          "match": "^không\\ có\\ mạng\\ \\-\\ giọng$",
-          "reason": "câu báo giọng / mạng / khoá nằm ở lõi native (readaloud/ClipReader.kt, OnlineVoices.kt - ngoài ui/, máy dò chưa quét) - đã dùng đúng chữ của web"
-        },
-        {
-          "side": "web",
-          "match": "^không\\ có\\ mạng\\ \\-\\ giọng\\ đang\\ chọn\\ cần\\ mạng$",
-          "reason": "câu báo giọng / mạng / khoá nằm ở lõi native (readaloud/ClipReader.kt, OnlineVoices.kt - ngoài ui/, máy dò chưa quét) - đã dùng đúng chữ của web"
-        },
-        {
-          "side": "web",
-          "match": "^không\\ dùng\\ được\\ giọng\\ trực\\ tuyến\\ \\-\\ tạm\\ đọc\\ bằng\\ giọng\\ của\\ máy$",
-          "reason": "câu báo giọng / mạng / khoá nằm ở lõi native (readaloud/ClipReader.kt, OnlineVoices.kt - ngoài ui/, máy dò chưa quét) - đã dùng đúng chữ của web"
-        },
-        {
-          "side": "web",
-          "match": "^không\\ dùng\\ được\\ giọng\\ trực\\ tuyến\\ \\-\\ tạm\\ đọc\\ bằng\\ \\{\\}$",
-          "reason": "câu báo giọng / mạng / khoá nằm ở lõi native (readaloud/ClipReader.kt, OnlineVoices.kt - ngoài ui/, máy dò chưa quét) - đã dùng đúng chữ của web"
-        },
-        {
-          "side": "web",
-          "match": "^không\\ dùng\\ được\\ giọng\\ \\{\\}\\ lúc\\ này\\ \\-\\ tạm\\ đọc\\ bằng\\ \\{\\}$",
-          "reason": "câu báo giọng / mạng / khoá nằm ở lõi native (readaloud/ClipReader.kt, OnlineVoices.kt - ngoài ui/, máy dò chưa quét) - đã dùng đúng chữ của web"
-        },
-        {
-          "side": "web",
-          "match": "^không\\ làm\\ được\\ lúc\\ này$",
-          "reason": "nhãn khác bố cục: web đặt trong thẻ giọng / chip; native là hàng và hướng dẫn riêng (đã khớp các câu cùng việc)"
-        },
-        {
-          "side": "web",
-          "match": "^microsoft$",
-          "reason": "tên nhà cung cấp / giọng là dữ liệu: native lấy từ lõi (VoiceText, SettingsRepo), không phải chuỗi của màn"
-        },
-        {
-          "side": "web",
-          "match": "^máy\\ này\\ chưa\\ dùng\\ được\\ \\{\\}$",
-          "reason": "câu báo giọng / mạng / khoá nằm ở lõi native (readaloud/ClipReader.kt, OnlineVoices.kt - ngoài ui/, máy dò chưa quét) - đã dùng đúng chữ của web"
-        },
-        {
-          "side": "web",
-          "match": "^máy\\ này\\ chưa\\ dùng\\ được\\ \\{\\}:\\ \\{\\}$",
-          "reason": "câu báo giọng / mạng / khoá nằm ở lõi native (readaloud/ClipReader.kt, OnlineVoices.kt - ngoài ui/, máy dò chưa quét) - đã dùng đúng chữ của web"
-        },
-        {
-          "side": "web",
-          "match": "^mặc\\ định$",
-          "reason": "nhãn khác bố cục: web đặt trong thẻ giọng / chip; native là hàng và hướng dẫn riêng (đã khớp các câu cùng việc)"
-        },
-        {
-          "side": "web",
-          "match": "^mỹ\\ duyên$",
-          "reason": "tên nhà cung cấp / giọng là dữ liệu: native lấy từ lõi (VoiceText, SettingsRepo), không phải chuỗi của màn"
-        },
-        {
-          "side": "web",
-          "match": "^nam$",
-          "reason": "tên nhà cung cấp / giọng là dữ liệu: native lấy từ lõi (VoiceText, SettingsRepo), không phải chuỗi của màn"
-        },
-        {
-          "side": "web",
-          "match": "^nghe$",
-          "reason": "khối báo mất mạng của trình phát (OnlineVoicePrompt / VieneuDownload) là bố cục web; native hỏi bằng bảng 'Gửi chữ ra ngoài?' và tiến độ ở Cài đặt"
-        },
-        {
-          "side": "web",
-          "match": "^nghe\\ thử$",
-          "reason": "khối báo mất mạng của trình phát (OnlineVoicePrompt / VieneuDownload) là bố cục web; native hỏi bằng bảng 'Gửi chữ ra ngoài?' và tiến độ ở Cài đặt"
-        },
-        {
-          "side": "web",
-          "match": "^ngọc\\ linh$",
-          "reason": "tên nhà cung cấp / giọng là dữ liệu: native lấy từ lõi (VoiceText, SettingsRepo), không phải chuỗi của màn"
-        },
-        {
-          "side": "web",
-          "match": "^nữ$",
-          "reason": "tên nhà cung cấp / giọng là dữ liệu: native lấy từ lõi (VoiceText, SettingsRepo), không phải chuỗi của màn"
-        },
-        {
-          "side": "web",
-          "match": "^phạm\\ tuyên$",
-          "reason": "tên nhà cung cấp / giọng là dữ liệu: native lấy từ lõi (VoiceText, SettingsRepo), không phải chuỗi của màn"
-        },
-        {
-          "side": "web",
-          "match": "^thanh\\ bình$",
-          "reason": "tên nhà cung cấp / giọng là dữ liệu: native lấy từ lõi (VoiceText, SettingsRepo), không phải chuỗi của màn"
-        },
-        {
-          "side": "web",
-          "match": "^thử\\ giọng$",
-          "reason": "nhãn khác bố cục: web đặt trong thẻ giọng / chip; native là hàng và hướng dẫn riêng (đã khớp các câu cùng việc)"
-        },
-        {
-          "side": "web",
-          "match": "^tải\\ giọng\\ chạy\\ trên\\ máy$",
-          "reason": "khối báo mất mạng của trình phát (OnlineVoicePrompt / VieneuDownload) là bố cục web; native hỏi bằng bảng 'Gửi chữ ra ngoài?' và tiến độ ở Cài đặt"
-        },
-        {
-          "side": "web",
-          "match": "^xem\\ trong\\ cài\\ đặt$",
-          "reason": "khối báo mất mạng của trình phát (OnlineVoicePrompt / VieneuDownload) là bố cục web; native hỏi bằng bảng 'Gửi chữ ra ngoài?' và tiến độ ở Cài đặt"
-        },
-        {
-          "side": "web",
-          "match": "^ái\\ hân$",
-          "reason": "tên nhà cung cấp / giọng là dữ liệu: native lấy từ lõi (VoiceText, SettingsRepo), không phải chuỗi của màn"
-        },
-        {
-          "side": "web",
-          "match": "^đang\\ dùng$",
-          "reason": "nhãn khác bố cục: web đặt trong thẻ giọng / chip; native là hàng và hướng dẫn riêng (đã khớp các câu cùng việc)"
-        },
-        {
-          "side": "web",
-          "match": "^đang\\ tải\\ giọng\\ vieneu$",
-          "reason": "khối báo mất mạng của trình phát (OnlineVoicePrompt / VieneuDownload) là bố cục web; native hỏi bằng bảng 'Gửi chữ ra ngoài?' và tiến độ ở Cài đặt"
-        },
-        {
-          "side": "web",
-          "match": "^đang\\ tải\\ giọng\\ đọc$",
-          "reason": "nhãn khác bố cục: web đặt trong thẻ giọng / chip; native là hàng và hướng dẫn riêng (đã khớp các câu cùng việc)"
-        },
-        {
-          "side": "web",
-          "match": "^đang\\ tải\\ \\{\\}$",
-          "reason": "nhãn khác bố cục: web đặt trong thẻ giọng / chip; native là hàng và hướng dẫn riêng (đã khớp các câu cùng việc)"
-        },
-        {
-          "side": "web",
-          "match": "^đang\\ tải\\ \\{\\}\\ \\(\\{\\}\\)\\ \\{\\}%$",
-          "reason": "nhãn khác bố cục: web đặt trong thẻ giọng / chip; native là hàng và hướng dẫn riêng (đã khớp các câu cùng việc)"
-        },
-        {
-          "side": "web",
-          "match": "^đã\\ chuyển\\ sang\\ giọng\\ trực\\ tuyến$",
-          "reason": "nhãn khác bố cục: web đặt trong thẻ giọng / chip; native là hàng và hướng dẫn riêng (đã khớp các câu cùng việc)"
-        },
-        {
-          "side": "web",
-          "match": "^đã\\ chuyển\\ sang\\ giọng\\ vieneu\\ nano$",
-          "reason": "nhãn khác bố cục: web đặt trong thẻ giọng / chip; native là hàng và hướng dẫn riêng (đã khớp các câu cùng việc)"
-        },
-        {
-          "side": "web",
-          "match": "^đã\\ có$",
-          "reason": "nhãn khác bố cục: web đặt trong thẻ giọng / chip; native là hàng và hướng dẫn riêng (đã khớp các câu cùng việc)"
-        },
-        {
-          "side": "web",
-          "match": "^đã\\ có\\ sẵn$",
-          "reason": "nhãn khác bố cục: web đặt trong thẻ giọng / chip; native là hàng và hướng dẫn riêng (đã khớp các câu cùng việc)"
-        },
-        {
-          "side": "web",
-          "match": "^đức\\ trí$",
-          "reason": "tên nhà cung cấp / giọng là dữ liệu: native lấy từ lõi (VoiceText, SettingsRepo), không phải chuỗi của màn"
-        },
-        {
-          "side": "native",
-          "match": "^chưa\\ có\\ bài\\ nào$",
-          "reason": "Nhạc của tôi: thuộc nhóm Nhạc (phiên Music làm)"
-        },
-        {
-          "side": "native",
-          "match": "^chưa\\ có\\ khoá$",
-          "reason": "bảng / dòng trạng thái và lỗi riêng của native (web báo bằng toast và vòng quay)"
-        },
-        {
-          "side": "native",
-          "match": "^chưa\\ kiểm\\ tra\\ được\\ khoá$",
-          "reason": "bảng / dòng trạng thái và lỗi riêng của native (web báo bằng toast và vòng quay)"
-        },
-        {
-          "side": "native",
-          "match": "^chưa\\ lưu\\ được\\ khoá$",
-          "reason": "bảng / dòng trạng thái và lỗi riêng của native (web báo bằng toast và vòng quay)"
-        },
-        {
-          "side": "native",
-          "match": "^chưa\\ nhập\\ được\\ nhạc$",
-          "reason": "Nhạc của tôi: thuộc nhóm Nhạc (phiên Music làm)"
-        },
-        {
-          "side": "native",
-          "match": "^chưa\\ tải\\ được\\ giọng$",
-          "reason": "bảng / dòng trạng thái và lỗi riêng của native (web báo bằng toast và vòng quay)"
-        },
-        {
-          "side": "native",
-          "match": "^chưa\\ xoá\\ được\\ bài\\ này$",
-          "reason": "Nhạc của tôi: thuộc nhóm Nhạc (phiên Music làm)"
-        },
-        {
-          "side": "native",
-          "match": "^chưa\\ xoá\\ được\\ khoá$",
-          "reason": "bảng / dòng trạng thái và lỗi riêng của native (web báo bằng toast và vòng quay)"
-        },
-        {
-          "side": "native",
-          "match": "^chưa\\ đọc\\ được\\ các\\ khoá$",
-          "reason": "bảng / dòng trạng thái và lỗi riêng của native (web báo bằng toast và vòng quay)"
-        },
-        {
-          "side": "native",
-          "match": "^chưa\\ đổi\\ được\\ giọng$",
-          "reason": "bảng / dòng trạng thái và lỗi riêng của native (web báo bằng toast và vòng quay)"
-        },
-        {
-          "side": "native",
-          "match": "^chờ\\ wi\\-fi$",
-          "reason": "hộp hỏi khi dùng dữ liệu di động / gửi chữ ra ngoài: chỉ có ở native (web hỏi bằng khối báo của trình phát)"
-        },
-        {
-          "side": "native",
-          "match": "^có\\ bản\\ mới\\ ·\\ \\{\\}$",
-          "reason": "chữ ghép từ nhiều phần trong một hàng (web tách thành nhiều phần tử)"
-        },
-        {
-          "side": "native",
-          "match": "^dữ\\ liệu\\ di\\ động$",
-          "reason": "hộp hỏi khi dùng dữ liệu di động / gửi chữ ra ngoài: chỉ có ở native (web hỏi bằng khối báo của trình phát)"
-        },
-        {
-          "side": "native",
-          "match": "^gửi\\ chữ\\ ra\\ ngoài$",
-          "reason": "hộp hỏi khi dùng dữ liệu di động / gửi chữ ra ngoài: chỉ có ở native (web hỏi bằng khối báo của trình phát)"
-        },
-        {
-          "side": "native",
-          "match": "^hiện$",
-          "reason": "bảng / dòng trạng thái và lỗi riêng của native (web báo bằng toast và vòng quay)"
-        },
-        {
-          "side": "native",
-          "match": "^khoá\\ \\{\\}$",
-          "reason": "bảng / dòng trạng thái và lỗi riêng của native (web báo bằng toast và vòng quay)"
-        },
-        {
-          "side": "native",
-          "match": "^khoá\\ \\{\\}\\ sẽ\\ bị\\ xoá\\ khỏi\\ máy\\ này\\ và\\ các\\ giọng\\ của\\ nó\\ không\\ còn\\ trong\\ danh\\ sách$",
-          "reason": "bảng / dòng trạng thái và lỗi riêng của native (web báo bằng toast và vòng quay)"
-        },
-        {
-          "side": "native",
-          "match": "^khuyên\\ dùng\\ ·$",
-          "reason": "chữ ghép từ nhiều phần trong một hàng (web tách thành nhiều phần tử)"
-        },
-        {
-          "side": "native",
-          "match": "^không$",
-          "reason": "bảng / dòng trạng thái và lỗi riêng của native (web báo bằng toast và vòng quay)"
-        },
-        {
-          "side": "native",
-          "match": "^máy\\ này\\ chưa\\ dùng\\ được$",
-          "reason": "hộp hỏi khi dùng dữ liệu di động / gửi chữ ra ngoài: chỉ có ở native (web hỏi bằng khối báo của trình phát)"
-        },
-        {
-          "side": "native",
-          "match": "^máy\\ này\\ chưa\\ dùng\\ được:\\ \\{\\}$",
-          "reason": "hộp hỏi khi dùng dữ liệu di động / gửi chữ ra ngoài: chỉ có ở native (web hỏi bằng khối báo của trình phát)"
-        },
-        {
-          "side": "native",
-          "match": "^nghe\\ thử\\ \\{\\}$",
-          "reason": "chữ ghép từ nhiều phần trong một hàng (web tách thành nhiều phần tử)"
-        },
-        {
-          "side": "native",
-          "match": "^phần\\ đã\\ tải\\ dở\\ sẽ\\ bị\\ xoá\\ khỏi\\ máy\\ này$",
-          "reason": "hộp hỏi khi dùng dữ liệu di động / gửi chữ ra ngoài: chỉ có ở native (web hỏi bằng khối báo của trình phát)"
-        },
-        {
-          "side": "native",
-          "match": "^supertonic\\ nhanh\\ hơn$",
-          "reason": "chữ ghép từ nhiều phần trong một hàng (web tách thành nhiều phần tử)"
-        },
-        {
-          "side": "native",
-          "match": "^vẫn\\ tải$",
-          "reason": "hộp hỏi khi dùng dữ liệu di động / gửi chữ ra ngoài: chỉ có ở native (web hỏi bằng khối báo của trình phát)"
-        },
-        {
-          "side": "native",
-          "match": "^xoá\\ bài$",
-          "reason": "Nhạc của tôi: thuộc nhóm Nhạc (phiên Music làm)"
-        },
-        {
-          "side": "native",
-          "match": "^xoá\\ bài\\ này$",
-          "reason": "Nhạc của tôi: thuộc nhóm Nhạc (phiên Music làm)"
-        },
-        {
-          "side": "native",
-          "match": "^đang\\ dùng:\\ \\{\\}$",
-          "reason": "chữ ghép từ nhiều phần trong một hàng (web tách thành nhiều phần tử)"
-        },
-        {
-          "side": "native",
-          "match": "^đang\\ gỡ$",
-          "reason": "bảng / dòng trạng thái và lỗi riêng của native (web báo bằng toast và vòng quay)"
-        },
-        {
-          "side": "native",
-          "match": "^đang\\ kiểm\\ tra$",
-          "reason": "bảng / dòng trạng thái và lỗi riêng của native (web báo bằng toast và vòng quay)"
-        },
-        {
-          "side": "native",
-          "match": "^đang\\ lưu$",
-          "reason": "bảng / dòng trạng thái và lỗi riêng của native (web báo bằng toast và vòng quay)"
-        },
-        {
-          "side": "native",
-          "match": "^đang\\ lấy\\ giọng$",
-          "reason": "bảng / dòng trạng thái và lỗi riêng của native (web báo bằng toast và vòng quay)"
-        },
-        {
-          "side": "native",
-          "match": "^đang\\ tải\\ \\{\\}\\ ·\\ \\{\\}%$",
-          "reason": "chữ ghép từ nhiều phần trong một hàng (web tách thành nhiều phần tử)"
-        },
-        {
-          "side": "native",
-          "match": "^đang\\ xoá$",
-          "reason": "bảng / dòng trạng thái và lỗi riêng của native (web báo bằng toast và vòng quay)"
-        },
-        {
-          "side": "native",
-          "match": "^đang\\ đo\\ tốc\\ độ$",
-          "reason": "chữ ghép từ nhiều phần trong một hàng (web tách thành nhiều phần tử)"
-        },
-        {
-          "side": "native",
-          "match": "^đã\\ có\\ trên\\ máy$",
-          "reason": "chữ ghép từ nhiều phần trong một hàng (web tách thành nhiều phần tử)"
-        },
-        {
-          "side": "native",
-          "match": "^đã\\ huỷ\\ \\-\\ lần\\ tải\\ sau\\ làm\\ tiếp\\ từ\\ chỗ\\ dừng$",
-          "reason": "hộp hỏi khi dùng dữ liệu di động / gửi chữ ra ngoài: chỉ có ở native (web hỏi bằng khối báo của trình phát)"
-        },
-        {
-          "side": "native",
-          "match": "^đã\\ thêm:\\ \\{\\}$",
-          "reason": "Nhạc của tôi: thuộc nhóm Nhạc (phiên Music làm)"
-        },
-        {
-          "side": "native",
-          "match": "^đồng\\ ý$",
-          "reason": "bảng / dòng trạng thái và lỗi riêng của native (web báo bằng toast và vòng quay)"
-        },
-        {
-          "side": "native",
-          "match": "^ẩn$",
-          "reason": "bảng / dòng trạng thái và lỗi riêng của native (web báo bằng toast và vòng quay)"
+          "match": "^(đang tải giọng đọc|dừng nghe thử \\{\\})$",
+          "reason": "web only: screen-reader name of a control whose visible word is the same on both sides (skeleton, stop button)"
         },
         {
           "side": "native",
           "match": "^ghi chú cho người bảo trì$",
-          "reason": "tên mục của docs/THIRD_PARTY.md dùng để lọc (không hiện cho người nghe); web cũng chỉ giữ trong shared/thirdParty.ts"
+          "reason": "maintainer section name of docs/THIRD_PARTY.md used as a filter (never shown); web filters the same heading"
         }
+      ],
+      "native_also": [
+        "nowplaying/PlayerSheets.kt"
       ]
     },
     {

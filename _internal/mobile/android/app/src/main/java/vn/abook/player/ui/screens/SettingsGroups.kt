@@ -275,7 +275,7 @@ fun DevicesSettings(devices: DevicesState?, sheets: SheetHost, open: (DevicesPag
             DisclosureRow("Dung lượng", { open(DevicesPage.Storage) }, "devices_storage", summary = summary.storageLine)
             RowLine()
             DisclosureRow(
-                "Tên máy này", { if (devices != null) sheets.show { dismiss -> RenameSheet(summary.deviceName, devices, dismiss) } }, "devices_name",
+                "Tên điện thoại", { if (devices != null) sheets.show { dismiss -> RenameSheet(summary.deviceName, devices, dismiss) } }, "devices_name",
                 summary = summary.deviceName,
             )
         }
