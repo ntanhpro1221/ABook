@@ -123,7 +123,8 @@ Token có sẵn (`shared/motion.ts` = `--motion-*` trong `styles.css`): nhanh 12
 - **Đổi nội dung tại chỗ = mờ qua** (ảnh cũ mờ hết rồi cái mới mới hiện, không hai lớp chữ chồng nhau); đổi cỡ thì tween chiều
   cao cùng lúc (MotionRegion, Collapse).
 - **Phần tử chung giữa hai màn** (shared element): thanh phát thu nhỏ nở thành trình phát đầy đủ (khung + bìa bay từ ô nhỏ ra
-  ô lớn); bìa ở Thư viện bay vào vị trí bìa ở trang sách. View Transitions khi WebView có, không thì mờ qua.
+  ô lớn; `listen/nowPlayingMorph.ts`, Web Animations trên chính phần tử, không chụp ảnh tài liệu); bìa ở Thư viện bay vào vị trí bìa ở trang sách.
+- **Căn giữa trục chéo**: thành phần dùng chung (bìa, icon) không tự mang `self-*`; hàng quyết định căn (máy dò CROSS CENTER).
 - **Danh sách**: thêm/xoá hàng mở/khép tại chỗ (useListPresence), hàng khác trượt theo, không nhảy.
 - **Phản hồi chạm**: nhấn = thu 0,97 + tối nền 6 % trong 90 ms, thả = về trong 120 ms; nút phát đổi icon phát/dừng bằng mờ
   chéo tại chỗ. Không nảy, không vượt đích - sang trọng là dứt khoát (mọi `cubic-bezier` giữ tung độ trong [0, 1]).
@@ -204,6 +205,7 @@ giống app hệ thống; không tự chế chuỗi rung dài.
 - **Danh sách cuộn trong khung** (chương khi thêm sách): mép dưới mờ dần khi còn hàng chưa thấy, mép trên mờ khi đã cuộn (`useScrollFade`); hàng không bao giờ cụt cứng ở mép khung.
 - **Bảng trượt / hộp thoại**: điện thoại = bảng trượt từ đáy có tay nắm; máy tính = hộp giữa màn rộng ≤ 560. Nút chính ở
   đáy, luôn thấy (đáy dính khi nội dung cuộn).
+  Lớp phủ nằm LÊN trên: màn bên dưới đứng yên, không co hay chừa chỗ theo bảng (máy kiểm: gallery/overlayStill.phone.dom.test.tsx).
 - **Thanh phát thu nhỏ**: điện thoại = bìa · tên chương / tên sách · phát. Máy tính = trái bìa+tên; giữa lùi 15 · phát ·
   tới 15 + thanh tiến độ; phải tốc độ · âm lượng · "…" (hẹn giờ, phát trên thiết bị khác, nhạc nền, giọng...).
 - **Toast**: một dòng + tối đa một hành động, tự tắt, Back đóng.

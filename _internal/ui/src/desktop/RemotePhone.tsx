@@ -3,7 +3,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Cast, Laptop, Loader2, MonitorSmartphone, MonitorSpeaker, Pause, Play, RefreshCw, Smartphone, Speaker, Tv, X } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { toast } from "@/shared/toast";
+import { toast, toastOffset } from "@/shared/toast";
 import { noteCastHasNoMusic } from "@/listen/castMusic";
 import { useClockReader } from "@/listen/clock";
 import { usePlayer } from "@/listen/player";
@@ -163,12 +163,10 @@ function useFailedCommands(view: RemoteView | undefined) {
 /** Thông báo nổi (góc dưới phải) đứng trên thanh phát; có thanh điện thoại thì phải đứng cao thêm từng ấy. */
 function useToastsAbove(bars: number) {
   useLayoutEffect(() => {
-    const root = document.documentElement;
-    if (bars) root.style.setProperty("--toast-bottom", `${96 + 57 * bars}px`);
-    else root.style.removeProperty("--toast-bottom");
-    return () => {
-      root.style.removeProperty("--toast-bottom");
-    };
+    if (!bars) return;
+    const offset = toastOffset("bottom");
+    offset.set(`${96 + 57 * bars}px`);
+    return () => offset.dispose();
   }, [bars]);
 }
 
