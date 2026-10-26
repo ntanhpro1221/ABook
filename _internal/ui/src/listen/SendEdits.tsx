@@ -18,7 +18,7 @@ import { useSource } from "./source";
 // Cuốn tải từ máy tính (điện thoại): sửa xong thì phần sửa gửi về máy tính - tự động khi tới được máy tính, hoặc bấm "Gửi về máy
 // tính" (docs/EDITING.md, P2b). Chữ nói tình trạng ở shared/editsSync.ts.
 
-const MENU_ITEM = "flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[highlighted]:bg-hover";
+const MENU_ITEM = "flex h-9 cursor-default items-center gap-2 rounded-control px-2 text-sm outline-none data-[highlighted]:bg-hover";
 
 /** Gửi ngay phần sửa của cuốn về máy tính. `available`: nguồn này có đường gửi (chỉ điện thoại). */
 export function useSendEdits(book: ListenBook) {
@@ -154,7 +154,7 @@ export function EditsSyncBanner({ book }: { book: ListenBook }) {
     <MotionRegion as="div"
       role="status"
       className={cn(
-        "mt-2 max-w-md rounded-xl px-3 py-2 text-xs max-sm:mx-auto max-sm:text-left",
+        "mt-2 max-w-md rounded-cover px-3 py-2 text-xs max-sm:mx-auto max-sm:text-left",
         note.tone === "error" ? "bg-danger-soft text-danger" : "bg-info-soft text-info",
       )}
     >

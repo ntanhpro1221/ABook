@@ -1,0 +1,8 @@
+/* SINH TỰ ĐỘNG bởi scripts/gen_native_tokens.py từ docs/DESIGN.md §5.5 (bo góc). KHÔNG sửa tay: sửa DESIGN.md rồi chạy lại script
+   (tests/test_native_tokens.py bắt lệch). Cùng một nguồn với Tokens.kt của app điện thoại. */
+@theme static {
+  --radius-*: initial;
+  --radius-control: 8px;
+  --radius-cover: 12px;
+  --radius-sheet: 20px;
+}

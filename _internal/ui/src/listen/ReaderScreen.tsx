@@ -354,7 +354,7 @@ export function ReaderScreen(edit: SentenceEditing) {
   const name = chapter.subtitle || chapter.title;
   // Điện thoại: thanh trải đúng lề trang 20 px như chữ phía trên, các nút dàn đều (trước đây hộp co theo nút, thụt 34 px - soát 140 V13).
   const bar = (
-    <div role="toolbar" aria-label="Điều khiển đọc" data-reader-controls className="pointer-events-auto mx-auto flex max-w-[calc(100vw-16px)] items-center gap-1 rounded-2xl bg-panel px-2 py-1.5 shadow-float max-sm:w-[calc(100vw-40px)] max-sm:justify-between">
+    <div role="toolbar" aria-label="Điều khiển đọc" data-reader-controls className="pointer-events-auto mx-auto flex max-w-[calc(100vw-16px)] items-center gap-1 rounded-cover bg-panel px-2 py-1.5 shadow-float max-sm:w-[calc(100vw-40px)] max-sm:justify-between">
       <IconButton label="Chương trước" icon={SkipBack} disabled={index <= 0} onClick={() => go(-1)} className={TOUCH} />
       <IconButton label="Tìm trong sách" icon={Search} onClick={() => setFinding(true)} className={TOUCH} />
       {/* Một nhãn cố định: nút luôn nghe từ chỗ đang thấy trên màn (hay nghe tiếp câu đang nghe dở nếu nó còn trên màn). */}
@@ -367,12 +367,12 @@ export function ReaderScreen(edit: SentenceEditing) {
       )}
       <Popover.Root>
         <Popover.Trigger asChild>
-          <button type="button" aria-label="Cỡ chữ và giãn dòng" className={cn("grid size-9 shrink-0 place-items-center rounded-lg text-fg-2 hover:bg-hover hover:text-fg", TOUCH)}>
+          <button type="button" aria-label="Cỡ chữ và giãn dòng" className={cn("grid size-9 shrink-0 place-items-center rounded-control text-fg-2 hover:bg-hover hover:text-fg", TOUCH)}>
             <Type className="glyph" />
           </button>
         </Popover.Trigger>
         <Popover.Portal>
-          <Popover.Content side="top" align="end" sideOffset={8} collisionPadding={12} className="z-50 w-[288px] max-w-[calc(100vw-24px)] rounded-xl border border-line bg-panel p-3 shadow-float">
+          <Popover.Content side="top" align="end" sideOffset={8} collisionPadding={12} className="z-50 w-[288px] max-w-[calc(100vw-24px)] rounded-cover border border-line bg-panel p-3 shadow-float">
             <div className="text-xs font-medium text-fg-2">Cỡ chữ</div>
             <div role="group" aria-label="Cỡ chữ" className="relative mt-1.5 grid grid-cols-5 gap-1">
               <SlidingIndicator variant="line" />

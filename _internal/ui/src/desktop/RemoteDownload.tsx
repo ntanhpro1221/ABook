@@ -15,7 +15,7 @@ import { downloadFraction, downloadMenuLabel, downloadNote, type RemoteDownload 
 // "Tải về máy" cho sách "Trên máy khác" trên máy tính - như mục "Tải về máy" của điện thoại (android/App.tsx DownloadMenuItem):
 // tải nền cả cuốn, xem tiến độ ngay dưới tên sách, dừng / tải tiếp được; xong thì nghe được cả khi máy kia tắt.
 
-const MENU_ITEM = "flex h-auto cursor-default items-start gap-2 rounded-lg px-2 py-1.5 text-sm outline-none data-[disabled]:opacity-60 data-[highlighted]:bg-hover";
+const MENU_ITEM = "flex h-auto cursor-default items-start gap-2 rounded-control px-2 py-1.5 text-sm outline-none data-[disabled]:opacity-60 data-[highlighted]:bg-hover";
 
 function computerOf(book: ListenBook): string {
   return book.remote && typeof book.remote === "object" ? book.remote.computer : "";
@@ -83,7 +83,7 @@ export function RemoteDownloadStatus({ book }: { book: ListenBook }) {
     <MotionRegion as="div"
       role="status"
       className={cn(
-        "mt-2 max-w-md rounded-xl px-3 py-2 text-xs max-sm:mx-auto max-sm:text-left",
+        "mt-2 max-w-md rounded-cover px-3 py-2 text-xs max-sm:mx-auto max-sm:text-left",
         note.tone === "error" ? "bg-danger-soft text-danger" : "bg-info-soft text-info",
       )}
     >

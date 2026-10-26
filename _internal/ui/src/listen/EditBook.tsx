@@ -30,7 +30,7 @@ import { BookReadingsSection } from "./WordReadings";
 // (android/localStudio.ts) trả cùng JSON. Cuốn có xưởng (dự án) ghi vào các file riêng của dự án, cuốn nhập từ file ghi vào
 // lớp sửa cạnh sách - người dùng không phải biết khác biệt ấy.
 
-const MENU_ITEM = "flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[highlighted]:bg-hover";
+const MENU_ITEM = "flex h-9 cursor-default items-center gap-2 rounded-control px-2 text-sm outline-none data-[highlighted]:bg-hover";
 
 /** Làm mới mọi chỗ hiện thứ vừa sửa: thư viện, trang sách, dàn nhân vật, chữ đọc theo, và trình phát nạp lại mốc nhạc. */
 export function refreshAfterEdit(client: QueryClient, bookId: string): void {
@@ -403,7 +403,7 @@ export function EditBookDialog({
               maxLength={160}
               aria-label="Tên sách"
               onChange={(event) => setTitle(event.target.value)}
-              className="touch-box h-[40px] min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 text-sm outline-none focus:border-focus"
+              className="touch-box h-[40px] min-w-0 flex-1 rounded-control border border-line bg-bg px-3 text-sm outline-none focus:border-focus"
             />
             <Button type="submit" variant="primary" className="touch-box h-10 min-h-10 max-sm:min-h-[48px] pointer-coarse:min-h-[48px]" loading={rename.isPending} disabled={!title.trim() || title.trim() === book.title}>
               Lưu tên
@@ -426,7 +426,7 @@ export function EditBookDialog({
                 aria-label="Tác giả"
                 placeholder="Không rõ tác giả"
                 onChange={(event) => setAuthor(event.target.value)}
-                className="touch-box h-[40px] min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 text-sm outline-none focus:border-focus"
+                className="touch-box h-[40px] min-w-0 flex-1 rounded-control border border-line bg-bg px-3 text-sm outline-none focus:border-focus"
               />
               <Button type="submit" variant="primary" className="touch-box h-10 min-h-10 max-sm:min-h-[48px] pointer-coarse:min-h-[48px]" loading={changeAuthor.isPending} disabled={!authorSaveable(author, book.author)}>
                 Lưu tác giả
@@ -576,7 +576,7 @@ export function RenameChapterDialog({ book, chapter, onClose }: { book: ListenBo
             value={label}
             maxLength={160}
             onChange={(event) => setLabel(event.target.value)}
-            className="mt-1 h-9 w-full rounded-lg border border-line bg-bg px-2.5 text-sm outline-none focus-visible:border-focus"
+            className="mt-1 h-9 w-full rounded-control border border-line bg-bg px-2.5 text-sm outline-none focus-visible:border-focus"
           />
         </label>
         {!single && (
@@ -586,7 +586,7 @@ export function RenameChapterDialog({ book, chapter, onClose }: { book: ListenBo
               value={name}
               maxLength={160}
               onChange={(event) => setName(event.target.value)}
-              className="mt-1 h-9 w-full rounded-lg border border-line bg-bg px-2.5 text-sm outline-none focus-visible:border-focus"
+              className="mt-1 h-9 w-full rounded-control border border-line bg-bg px-2.5 text-sm outline-none focus-visible:border-focus"
             />
           </label>
         )}

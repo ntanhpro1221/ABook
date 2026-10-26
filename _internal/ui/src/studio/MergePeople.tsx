@@ -94,7 +94,7 @@ export function MergeDialog({
           autoFocus
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Tìm người trong truyện…"
-          className="h-9 w-full rounded-lg border border-line bg-bg pl-8 pr-2.5 text-sm outline-none focus-visible:border-focus"
+          className="h-9 w-full rounded-control border border-line bg-bg pl-8 pr-2.5 text-sm outline-none focus-visible:border-focus"
         />
       </label>
       <MotionRegion motionKey={[others.map(other => other.name), !others.length && query]}>

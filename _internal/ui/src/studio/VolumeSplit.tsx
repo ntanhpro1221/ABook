@@ -48,7 +48,7 @@ function NumberBox({ value, label, onCommit }: { value: number; label: string; o
         }
       }}
       className={cn(
-        "h-8 w-16 rounded-lg border bg-bg px-2 text-center text-sm tabular-nums outline-none focus:border-focus",
+        "h-8 w-16 rounded-control border bg-bg px-2 text-center text-sm tabular-nums outline-none focus:border-focus",
         bad ? "border-danger" : "border-line",
       )}
     />
@@ -177,7 +177,7 @@ export function VolumeSplit({
                 aria-label={`Bỏ chỗ cắt trước ${title}`}
                 title="Gộp vào phần trước"
                 onClick={() => commit(removeStart(starts, index))}
-                className="grid size-8 place-items-center rounded-md text-fg-2 hover:bg-hover hover:text-danger"
+                className="grid size-8 place-items-center rounded-control text-fg-2 hover:bg-hover hover:text-danger"
               >
                 <Trash2 className="size-4" />
               </button>
@@ -222,7 +222,7 @@ function AddCut({ starts, total, onAdd }: { starts: number[]; total: number; onA
           }
         }}
         className={cn(
-          "h-8 w-28 rounded-lg border bg-bg px-2 text-center text-sm tabular-nums outline-none placeholder:text-fg-3 focus:border-focus",
+          "h-8 w-28 rounded-control border bg-bg px-2 text-center text-sm tabular-nums outline-none placeholder:text-fg-3 focus:border-focus",
           bad ? "border-danger" : "border-line",
         )}
       />
