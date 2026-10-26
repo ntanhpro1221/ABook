@@ -1795,7 +1795,7 @@ export function ChapterPanel() {
               ) : <span aria-hidden />}
             </MotionRegion>
             <span className="min-w-0 flex-1">
-              <span className={cn("block truncate text-sm font-medium transition-colors duration-motion-fast", current && "text-accent-text", !canPlay(chapter) && "text-fg-2")}>
+              <span className={cn("block break-words text-sm font-medium transition-colors duration-motion-fast", current && "text-accent-text", !canPlay(chapter) && "text-fg-2")}>
                 {chapter.subtitle || chapter.title}
               </span>
               {/* Dòng phụ đổi khi chương thu xong ("Đang thu âm…" -> độ dài) hay đổi giọng: mờ chéo, không thay chữ cứng. */}
@@ -1906,7 +1906,7 @@ function AfterTheEnd({ skipId }: { skipId?: string }) {
                 >
                   <BookCover title={book.title} part={book.series?.part} size="xs" image={book.cover} className="size-10" />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-semibold text-fg">{book.title}</span>
+                    <span className="block break-words text-sm font-semibold text-fg">{book.title}</span>
                     <span className="tabular block truncate text-xs text-fg-2">{otherBookLine(book)}</span>
                   </span>
                   <Play className="size-4 shrink-0 text-accent-text" fill="currentColor" strokeWidth={0} />
@@ -2053,10 +2053,10 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
         </div>
       )}
       <div className="mt-6 w-full min-w-0">
-        <h2 className="truncate text-xl font-bold leading-snug" title={track.chapterTitle}>
-          <MotionRegion as="span" motionKey={[track.bookId, track.chapterId, track.chapterTitle]} className="block truncate">{track.chapterTitle}</MotionRegion>
+        <h2 className="break-words text-xl font-bold leading-snug">
+          <MotionRegion as="span" motionKey={[track.bookId, track.chapterId, track.chapterTitle]} className="block">{track.chapterTitle}</MotionRegion>
         </h2>
-        <p className="mt-0.5 truncate text-sm text-fg-2">
+        <p className="mt-0.5 break-words text-sm text-fg-2">
           <TrackSubtitle />
         </p>
         <MusicCreditLine />

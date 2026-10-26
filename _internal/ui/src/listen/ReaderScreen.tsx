@@ -414,11 +414,11 @@ export function ReaderScreen(edit: SentenceEditing) {
   return (
     <div className="motion-reveal flex h-full flex-col">
       {/* Thanh đầu chỉ có nút về + tên chương, nền đặc, đứng NGOÀI khung cuộn: không bao giờ đè lên chữ. Mọi điều khiển khác ở thanh dưới. */}
-      <header ref={header} data-reader-header className="sticky top-0 z-10 flex h-14 shrink-0 items-center border-b border-line bg-bg page-x">
+      <header ref={header} data-reader-header className="sticky top-0 z-10 flex min-h-14 shrink-0 items-center border-b border-line bg-bg py-1 page-x">
         {/* Cùng nút ← với mọi màn con (ScreenHeader): nét mũi tên đứng trên lề màn như mép chữ bên dưới, tên chương sát sau. */}
         <BackButton label="Về trang sách" onClick={() => navigate(`/book/${id}`)} />
-        <h2 className="min-w-0 flex-1 truncate text-base font-semibold" title={chapter.subtitle ? `${chapter.title} · ${name}` : name}>
-          <MotionRegion as="span" motionKey={chapterId} className="block truncate">{name}</MotionRegion>
+        <h2 className="min-w-0 flex-1 break-words text-base font-semibold" title={chapter.subtitle ? `${chapter.title} · ${name}` : name}>
+          <MotionRegion as="span" motionKey={chapterId} className="block">{name}</MotionRegion>
         </h2>
       </header>
 
