@@ -1,0 +1,35 @@
+// Sinh baseline profile + startup profile cho khung giao diện native (docs/NATIVE_PHONE_UI.md §3).
+// Chạy: gradlew -PnativeUi :app:generateBaselineProfile (cần MỘT máy/máy ảo đang nối; đặt ANDROID_SERIAL cho đúng máy). Profile ra ở app/src/main/generated/baselineProfiles.
+apply plugin: 'com.android.test'
+apply plugin: 'kotlin-android'
+apply plugin: 'androidx.baselineprofile'
+
+android {
+    namespace = "vn.abook.baselineprofile"
+    compileSdk = rootProject.ext.compileSdkVersion
+    defaultConfig {
+        minSdkVersion 28 // Perfetto của Macrobenchmark; máy ảo / máy thật thử đều Android 9+
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
+    }
+    targetProjectPath = ":app"
+}
+
+kotlin {
+    jvmToolchain(21)
+}
+
+baselineProfile {
+    useConnectedDevices = true
+}
+
+dependencies {
+    implementation "androidx.test.ext:junit:$androidxJunitVersion"
+    implementation "androidx.test.uiautomator:uiautomator:$uiAutomatorVersion"
+    implementation "androidx.benchmark:benchmark-macro-junit4:$macrobenchmarkVersion"
+}
+
