@@ -954,7 +954,8 @@ export function EmptyState({
       <div className="mb-4 grid size-14 place-items-center rounded-cover bg-accent-soft text-accent-text">
         <Icon className="size-7" strokeWidth={1.75} />
       </div>
-      <h3 className="text-base font-semibold">{title}</h3>
+      {/* h2: lời mời đứng ngay dưới tiêu đề màn (h1), không nhảy cấp (axe heading-order). */}
+      <h2 className="text-base font-semibold">{title}</h2>
       {children && <p className="mt-1.5 max-w-md text-sm leading-relaxed text-fg-2">{children}</p>}
       {action && <div className="mt-5">{action}</div>}
     </MotionRegion>
