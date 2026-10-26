@@ -8,7 +8,7 @@ Interactive {
     property int iconSize: 28
     implicitWidth: Theme.buttonHeight
     implicitHeight: Theme.buttonHeight
-    tip: forward ? "Tới 15 giây  (→)" : "Lùi 15 giây  (←)"
+    tip: forward ? "Tới 15 giây (→)" : "Lùi 15 giây (←)"
     onClicked: Player.skip(forward ? 15 : -15)
     enabled: Player.loaded
     opacity: enabled ? 1 : 0.4

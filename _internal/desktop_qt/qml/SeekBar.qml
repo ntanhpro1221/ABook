@@ -40,7 +40,7 @@ Item {
         opacity: root.active ? 1 : 0
         width: 14
         height: 14
-        radius: 7
+        radius: width / 2
         color: Theme.accent
         x: root.width * root.fraction - width / 2
         anchors.verticalCenter: parent.verticalCenter
@@ -53,7 +53,7 @@ Item {
         visible: opacity > 0
         width: bubbleText.implicitWidth + 16
         height: bubbleText.implicitHeight + 8
-        radius: 6
+        radius: Theme.radiusControl
         color: Theme.dark ? Theme.text : "#2a2723"
         readonly property real at: root.dragging ? root.dragFraction : root.hoverFraction
         x: Math.max(0, Math.min(root.width - width, root.width * at - width / 2))

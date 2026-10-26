@@ -46,6 +46,7 @@ ICONS = sorted({
     "laptop",
     "library",
     "list-ordered",
+    "locate",
     "minus",
     "monitor-smartphone",
     "monitor-speaker",

@@ -53,7 +53,7 @@ Interactive {
             y: parent.height - 11
             width: parent.width - 16
             height: 3
-            radius: 1.5
+            radius: height / 2
             color: "#66000000"
             Rectangle {
                 width: parent.width * root.progress
@@ -68,7 +68,7 @@ Interactive {
             y: 8
             width: Math.min(parent.width - 16, sourceLabel.implicitWidth + 16)
             height: sourceLabel.implicitHeight + 8
-            radius: height > 24 ? 8 : height / 2
+            radius: Theme.radiusControl
             color: "#a6000000"
             Text {
                 id: sourceLabel

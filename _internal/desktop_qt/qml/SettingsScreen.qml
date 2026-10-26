@@ -54,7 +54,7 @@ Item {
                 width: parent.width
                 height: Theme.s24 + choices.height
                 Text {
-                    text: "Màu nền"
+                    text: "Màu"
                     color: Theme.text
                     font.pixelSize: Theme.sizeBody
                 }
@@ -88,7 +88,7 @@ Item {
                                 anchors.bottom: parent.bottom
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 height: 2
-                                radius: 1
+                                radius: 0
                                 color: Theme.accent
                                 width: parent.chosen ? parent.width : 0
                                 Behavior on width {
