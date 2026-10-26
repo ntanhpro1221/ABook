@@ -5,6 +5,9 @@ package vn.abook.player.ui.nowplaying
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.*
@@ -26,6 +29,10 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import vn.abook.player.ui.data.CoverLoader
+import vn.abook.player.ui.data.PlayerState
+import vn.abook.player.ui.player.MiniPlayerSlot
+import vn.abook.player.ui.player.MorphingMiniPlayer
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.AbookTheme
 
@@ -53,8 +60,22 @@ class NowPlayingUiTest {
                     if (expanded) window.open()
                     if (sheet != null) window.openSheet(sheet)
                 }
-                NowPlayingHost(model, window, sampleClock = false) {
-                    Box(Modifier.fillMaxSize().background(Abook.colors.bg)) { BasicText("Thư viện", style = Abook.type.screenTitle) }
+                // The real mini player (not a stand-in) over a tab-bar-sized strip, as in the shell: it is the morph source.
+                NowPlayingLayer(model, window, sampleClock = false) {
+                    Column(Modifier.fillMaxSize().background(Abook.colors.bg)) {
+                        Box(Modifier.weight(1f).fillMaxWidth()) { BasicText("Thư viện", style = Abook.type.screenTitle) }
+                        val now by model.state.collectAsState()
+                        MiniPlayerSlot(visible = true) {
+                            MorphingMiniPlayer(
+                                PlayerState(
+                                    bookId = now.bookId, bookTitle = now.bookTitle, chapterId = now.chapterId, chapterTitle = now.chapterTitle,
+                                    playing = now.playing, durationMs = now.durationMs,
+                                ),
+                                { model.position.milliseconds.value }, CoverLoader(), model::toggle, window::open,
+                            )
+                        }
+                        Box(Modifier.fillMaxWidth().height(56.dp).background(Abook.colors.panel))
+                    }
                 }
             }
         }
@@ -198,14 +219,15 @@ class NowPlayingUiTest {
         show(expanded = false)
         val mini = bounds("mini_player")
         rule.mainClock.autoAdvance = false
-        rule.onNodeWithTag("mini_player").performClick()
+        rule.onNodeWithTag("mini_open").performClick()
         rule.mainClock.advanceTimeByFrame()
         val start = bounds("now_playing")
         shot("opening_start")
         assertBounds(mini, start, 4f)
         rule.mainClock.advanceTimeBy(1000)
         val full = bounds("now_playing")
-        assertTrue(full.width > mini.width); assertTrue(full.height > mini.height)
+        // Thanh phát thật rộng đúng bề ngang màn (như thanh tab): chỉ chiều cao lớn lên; cửa sổ đầy là cả màn hình.
+        assertTrue("mini=$mini start=$start full=$full", full.width >= mini.width && full.height > mini.height)
         rule.runOnUiThread { scope.launch { window.dragClose(0.5f) } }
         rule.mainClock.advanceTimeByFrame()
         val half = bounds("now_playing")

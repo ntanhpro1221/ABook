@@ -11,7 +11,10 @@ import androidx.test.uiautomator.Until
 import org.junit.Rule
 import org.junit.Test
 
-/** Built offline here; execute only when the owner releases the OPPO for measurements. */
+/**
+ * Built offline here; execute only when the owner releases the OPPO for measurements. Opens the REAL mini player (`mini_open`) of the demo book, which runs
+ * through the real PlayerRepo -> window path over a fake core; the window is the app-root overlay, not a screen.
+ */
 class NowPlayingBenchmark {
     @get:Rule val rule = MacrobenchmarkRule()
     private val target get() = InstrumentationRegistry.getArguments().getString("targetPackage") ?: "com.ngdtuanh.abook.dev"
@@ -26,7 +29,7 @@ class NowPlayingBenchmark {
         startupMode = StartupMode.WARM, compilationMode = CompilationMode.Partial(),
         setupBlock = { launchPlayer() },
     ) {
-        device.findObject(By.res("mini_player")).click()
+        device.findObject(By.res("mini_open")).click()
         check(device.wait(Until.hasObject(By.res("collapse_player")), 2000))
         device.waitForIdle()
         device.findObject(By.res("collapse_player")).click()
@@ -38,7 +41,7 @@ class NowPlayingBenchmark {
         startupMode = StartupMode.WARM, compilationMode = CompilationMode.Partial(),
         setupBlock = {
             launchPlayer()
-            device.findObject(By.res("mini_player")).click()
+            device.findObject(By.res("mini_open")).click()
             check(device.wait(Until.hasObject(By.res("collapse_player")), 2000))
             device.waitForIdle()
         },

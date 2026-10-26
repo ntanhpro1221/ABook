@@ -26,6 +26,28 @@ object Motion {
     fun popOut(fromProgress: Float): FiniteAnimationSpec<Float> =
         tween((MotionMs.SLOW_OUT * fromProgress).toInt().coerceAtLeast(MotionMs.FAST_OUT), easing = Accelerate)
 
+    /** Nội dung lưới ra (90 ms, tăng tốc) rồi vào (220 ms, giảm tốc) cùng chiều với bộ lọc - chỉ dịch ngang, không mờ. */
+    val SlideOut: FiniteAnimationSpec<Float> = tween(MotionMs.FAST_OUT, easing = Accelerate)
+    val SlideIn: FiniteAnimationSpec<Float> = tween(MotionMs.MEDIUM, easing = Decelerate)
+
+    /** Ô tìm nở ra / thu lại, thanh phát nhỏ hiện lên: vừa (220 ms vào, 150 ms ra). */
+    val Expand: FiniteAnimationSpec<Float> = tween(MotionMs.MEDIUM, easing = Standard)
+    val Collapse: FiniteAnimationSpec<Float> = tween(MotionMs.MEDIUM_OUT, easing = Standard)
+
+    /** Bảng trượt từ đáy: vào 300 ms giảm tốc, ra 200 ms tăng tốc. */
+    val SheetIn: FiniteAnimationSpec<Float> = tween(MotionMs.SLOW, easing = Decelerate)
+    val SheetOut: FiniteAnimationSpec<Float> = tween(MotionMs.SLOW_OUT, easing = Accelerate)
+
+    /** Menu nhỏ bật ra / đóng lại: nhanh (120 ms / 90 ms). */
+    val MenuIn: FiniteAnimationSpec<Float> = tween(MotionMs.FAST, easing = Decelerate)
+    val MenuOut: FiniteAnimationSpec<Float> = tween(MotionMs.FAST_OUT, easing = Accelerate)
+
+    /** Nút phát <-> dừng: biến hình nét vẽ, không mờ chéo (120 ms). */
+    val GlyphMorph: FiniteAnimationSpec<Float> = tween(MotionMs.FAST, easing = Standard)
+
+    /** Đổi sáng / tối: vòng lan từ chỗ chạm phủ cả màn (300 ms, chuẩn) - hình học, không mờ chéo. */
+    val ThemeReveal: FiniteAnimationSpec<Float> = tween(MotionMs.SLOW, easing = Standard)
+
     /** Nhấn thu 0,97 trong 90 ms, thả về trong 120 ms (§5.2). */
     const val PRESS_SCALE = 0.97f
     val PressDown: FiniteAnimationSpec<Float> = tween(MotionMs.FAST_OUT, easing = Standard)

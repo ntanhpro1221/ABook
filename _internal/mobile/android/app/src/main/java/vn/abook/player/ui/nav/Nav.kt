@@ -9,15 +9,20 @@ import androidx.compose.runtime.setValue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import vn.abook.player.ui.data.BookRow
+import vn.abook.player.ui.data.ListenBook
+import vn.abook.player.ui.data.SettingsGroup
 import vn.abook.player.ui.motion.Motion
 import vn.abook.player.ui.motion.ScreenGeometry
 
-/** Màn con xếp trên ba tab (P0: chỉ trang sách giữ chỗ; P1+ thêm dần). */
+/** Màn con xếp trên ba tab. Đang nghe không phải màn con: nó là cửa sổ nở ra từ thanh phát nhỏ ([vn.abook.player.ui.nowplaying.NowPlayingLayer]), có Back riêng. */
 @Immutable
 sealed interface Destination {
     @Immutable
-    data class Book(val book: BookRow) : Destination
+    data class Book(val book: ListenBook) : Destination
+
+    /** Một nhóm Cài đặt (cấp hai, cũng là cấp cuối: Cài đặt -> nhóm -> mục). */
+    @Immutable
+    data class Settings(val group: SettingsGroup) : Destination
 }
 
 /** Một mục của ngăn xếp: `key` ổn định để Compose giữ trạng thái màn khi nó đổi chỗ (trên cùng -> bên dưới). */
