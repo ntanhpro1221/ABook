@@ -209,7 +209,7 @@ Column {
                                 clock: root.now
                                 overlay: root.overlay
                                 onDiagnose: target => diagnostics.openFor(target)
-                                onOpenStudio: id => root.openStudio(id)
+                                onOpenStudio: id => { root.openStudio(id); Nav.openPeerStudio(id) }
                                 onRefresh: root.refresh()
                                 onStopWaiting: id => root.stopWaiting(id)
                                 onUnpair: target => root.startUnpair(target)

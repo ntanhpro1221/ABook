@@ -9,6 +9,26 @@ QtObject {
     property bool loaded: false
     property bool saving: false
     property string notice: ""
+    // Nút của lời báo ("Hoàn tác", "Mở thư mục"; action của toast bên web): {label, run} hay null. Gán `notice` thẳng là lời báo trơn, không nút.
+    property var noticeAction: null
+    property int noticeDuration: 0         // ms; 0 = mặc định của Toast (như sonner)
+    property bool toasting: false
+    onNoticeChanged: if (!toasting) { noticeAction = null; noticeDuration = 0 }
+    // Lời báo kèm tuỳ chọn (toast(text, {duration, action: {label, onClick}}) của web): `options.action` = {label, run}. Cùng lời lần nữa vẫn hiện lại.
+    function toast(text, options) {
+        toasting = true
+        if (notice === text) notice = ""
+        noticeAction = options && options.action ? options.action : null
+        noticeDuration = options && options.duration ? options.duration : 0
+        notice = text
+        toasting = false
+    }
+    // Bấm nút của lời báo: lời báo khép lại rồi mới làm việc (việc ấy có thể báo lời mới)
+    function runNoticeAction() {
+        const action = noticeAction
+        notice = ""
+        if (action && action.run) action.run()
+    }
     property string voiceName: ""          // tên giọng đọc mặc định (dòng tóm tắt "Giọng đọc", useDefaultVoiceName của web)
     property string defaultVoice: ""       // mã giọng mặc định ("" = chưa chọn): localStorage "abook-readaloud-voice" của web + tuỳ chọn readAloudVoice (App.tsx)
     property var voiceList: []             // danh sách giọng lần hỏi gần nhất (GET /api/readaloud/voices)

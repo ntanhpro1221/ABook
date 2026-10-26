@@ -156,6 +156,45 @@ private slots:
         QVERIFY(!rig.net.callsTo(QStringLiteral("/progress")).isEmpty());
     }
 
+    void sleepWarnsOnceThirtySecondsBefore() {
+        Rig rig;
+        rig.player->setFadeSeconds(10);
+        rig.player->open(QStringLiteral("a"), -1, -1, true);
+        rig.player->setSleep(QStringLiteral("minutes"), 1);
+        QSignalSpy warned(rig.player.get(), &Player::sleepWarning);
+        rig.run(25);
+        QCOMPARE(warned.size(), 0);
+        rig.run(10); // còn ~25 giây
+        QCOMPARE(warned.size(), 1);
+        rig.run(5);
+        QCOMPARE(warned.size(), 1); // một lần
+        rig.player->extendSleep(1); // thêm giờ quá mốc (còn ~80 giây): báo lại được
+        rig.run(1);
+        QCOMPARE(warned.size(), 1);
+        rig.run(55);
+        QCOMPARE(warned.size(), 2);
+    }
+
+    void muteKeyRemembersVolume() {
+        Rig rig;
+        rig.player->open(QStringLiteral("a"), -1, -1, true);
+        QSignalSpy changed(rig.player.get(), &Player::volumeChanged);
+        QCOMPARE(rig.player->volume(), 0.9);
+        rig.player->toggleMute();
+        QCOMPARE(rig.player->volume(), 0.0);
+        QCOMPARE(rig.out.volume, 0.0);
+        rig.player->toggleMute();
+        QCOMPARE(rig.player->volume(), 0.9);
+        QCOMPARE(rig.out.volume, 0.9);
+        rig.player->setVolume(0.4);
+        rig.player->toggleMute();
+        rig.player->toggleMute();
+        QCOMPARE(rig.player->volume(), 0.4);
+        QCOMPARE(changed.size(), 5);
+        rig.player->setVolume(3); // giữ trong 0..1
+        QCOMPARE(rig.player->volume(), 1.0);
+    }
+
     void sleepCountsOnlyWhilePlaying() {
         Rig rig;
         rig.player->open(QStringLiteral("a"), -1, -1, true);

@@ -1,11 +1,15 @@
 import QtQuick
 import ABook
 
-// Danh sách phím tắt của máy tính trong Cài đặt › Giao diện › Phím tắt (ShortcutList `inSettings` của listen/Shortcuts.tsx). Phím một chữ cái tắt
-// được: hậu tố "(đang tắt)", gạch ngang qua phím, và câu cuối mở ra tại chỗ (không trỏ về chính trang này).
+// Danh sách phím tắt của máy tính (ShortcutList của listen/Shortcuts.tsx): trong Cài đặt › Giao diện › Phím tắt (`inSettings`) và trong hộp
+// "Phím tắt" mở bằng phím "?". Phím một chữ cái tắt được: hậu tố "(đang tắt)", gạch ngang qua phím; câu cuối trong Cài đặt chỉ mở ra khi phím
+// chữ đang tắt (không trỏ về chính trang này), trong hộp thì luôn có và nói bật / tắt ở đâu.
 Column {
     id: root
     property bool letters: true
+    property bool inSettings: true
+    readonly property string tailText: letters ? "Tắt phím một chữ cái ở Cài đặt › Giao diện."
+        : "Phím một chữ cái đang tắt" + (inSettings ? "" : " (bật ở Cài đặt › Giao diện)") + ". Space, mũi tên, Esc vẫn chạy."
     // phím theo thứ tự, việc, có là phím một chữ cái không; "+" là chữ nối giữa các phím
     readonly property var rows: [
         {keys: ["Space"], label: "Phát / tạm dừng", letter: false},
@@ -65,7 +69,7 @@ Column {
     }
     Collapse {
         width: parent.width
-        open: !root.letters
+        open: !(root.inSettings && root.letters)
         Item {
             width: parent.width
             height: tail.implicitHeight + 12
@@ -73,7 +77,8 @@ Column {
                 id: tail
                 y: 12
                 width: Math.min(parent.width, 448)
-                text: "Phím một chữ cái đang tắt. Space, mũi tên, Esc vẫn chạy."
+                objectName: "shortcutsTail"
+                text: root.tailText
                 color: Theme.text2
                 wrapMode: Text.Wrap
                 font.pixelSize: 13

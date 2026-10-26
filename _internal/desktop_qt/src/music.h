@@ -66,6 +66,9 @@ public:
 
     Q_INVOKABLE void setEnabled(bool enabled);
     Q_INVOKABLE void setLevel(double levelDb);
+    /// Nhạc của một cuốn (mã sách) hay cài đặt chung mọi cuốn ("*", "Tự chọn nhạc nền") vừa đổi: cuốn đang nghe hỏi lại nhạc và mốc của chương
+    /// đang phát NGAY, không đợi chương sau (MUSIC_CHANGED_EVENT của player.tsx). Bài đang kêu không bị bỏ trước khi mốc mới về.
+    Q_INVOKABLE void reload(const QString &bookId);
 
     MusicBed *bed() { return &m_bed; }
 

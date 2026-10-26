@@ -17,7 +17,7 @@ Interactive {
     ringRadius: height / 2
     opacity: enabled ? 1 : 0.5
     Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
-    onClicked: if (enabled) root.toggled(!root.checked)
+    onClicked: if (enabled) { Feedback.play("toggle"); root.toggled(!root.checked) }     // tiếng chạm (Switch của desktop/PhoneSync.tsx)
 
     Rectangle {
         anchors.fill: parent

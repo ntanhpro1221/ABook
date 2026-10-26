@@ -72,6 +72,9 @@ qt_add_executable(ABookDesk WIN32
     src/bench.h
     src/coverprovider.cpp
     src/coverprovider.h
+    src/feedback.cpp
+    src/feedback.h
+    src/hostmessage.h
     src/hostnet.cpp
     src/hostnet.h
     src/librarymodel.cpp
@@ -236,6 +239,12 @@ qt_add_qml_module(ABookDesk
         qml/Switch.qml
         qml/MusicPopover.qml
         qml/MusicCredit.qml
+        qml/Toast.qml
+        qml/EmptyState.qml
+        qml/PeerBar.qml
+        qml/PeerStudio.js
+        qml/PlayerKeys.qml
+        qml/ShortcutsDialog.qml
         qml/BenchScenario.qml
     RESOURCES
         fonts/BeVietnamPro-Regular.ttf
@@ -293,7 +302,9 @@ if(MSVC)
     target_compile_options(SidebarTests PRIVATE /W3 /utf-8)
 endif()
 enable_testing()
-qt_add_executable(DesktopApiTests tests/test_desktopapi.cpp src/desktopapi.cpp src/desktopapi.h src/audioout.cpp src/audioout.h)
+qt_add_executable(DesktopApiTests tests/test_desktopapi.cpp tests/fakes.h src/desktopapi.cpp src/desktopapi.h src/audioout.cpp src/audioout.h
+    src/feedback.cpp src/feedback.h src/hostmessage.h src/playernet.h)
+target_include_directories(DesktopApiTests PRIVATE tests)
 target_include_directories(DesktopApiTests PRIVATE src)
 target_link_libraries(DesktopApiTests PRIVATE Qt6::Test Qt6::Quick Qt6::Network)
 if(MSVC)
@@ -301,7 +312,7 @@ if(MSVC)
 endif()
 add_test(NAME DesktopApiTests COMMAND DesktopApiTests)
 qt_add_executable(WidthTests tests/test_width.cpp tests/fakes.h src/bookdetail.cpp src/bookdetail.h
-    src/readalong.cpp src/readalong.h src/music.cpp src/music.h ${ABOOK_PLAYER_SOURCES} ${ABOOK_MUSIC_SOURCES})
+    src/readalong.cpp src/readalong.h src/music.cpp src/music.h src/feedback.cpp src/feedback.h ${ABOOK_PLAYER_SOURCES} ${ABOOK_MUSIC_SOURCES})
 target_include_directories(WidthTests PRIVATE src tests)
 target_compile_definitions(WidthTests PRIVATE QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/width"
     WIDTH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")

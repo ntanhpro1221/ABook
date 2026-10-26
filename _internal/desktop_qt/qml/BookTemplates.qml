@@ -15,7 +15,6 @@ Column {
     property bool renamingNow: false
     property string typed: ""
     property string problem: ""
-    property var undo: null             // {template, index} của lần xoá vừa rồi, 10 giây
     property bool busy: false
     objectName: "bookTemplates"
     bottomPadding: 16
@@ -105,18 +104,9 @@ Column {
         const index = templateIndex(template.name)
         run({op: "delete", name: template.name}, function(ok) {
             if (!ok) return
-            Api.notice = "Đã xoá mẫu “" + template.name + "”"
-            undo = {template: template, index: index}
-            undoTimer.restart()
+            Api.toast("Đã xoá mẫu “" + template.name + "”", {duration: 10000, action: {label: "Hoàn tác", run: function() { root.run({op: "restore", template: template, index: index}) }}})
         })
     }
-    function restoreTemplate() {
-        const last = undo
-        undo = null
-        undoTimer.stop()
-        if (last) run({op: "restore", template: last.template, index: last.index})
-    }
-    Timer { id: undoTimer; interval: 10000; onTriggered: root.undo = null }
 
     Text { width: parent.width; text: "Mẫu sách mới"; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
     Text {
@@ -230,16 +220,6 @@ Column {
                     }
                 }
             }
-        }
-    }
-    // Hoàn tác việc xoá vừa rồi (nút của lời báo "Đã xoá mẫu …" bên web)
-    Collapse {
-        width: parent.width
-        open: root.undo !== null
-        Item {
-            width: parent.width
-            height: undoButton.height + 4
-            Button { id: undoButton; objectName: "undoDelete"; y: 4; text: "Hoàn tác"; kind: "ghost"; size: "sm"; onClicked: root.restoreTemplate() }
         }
     }
 }

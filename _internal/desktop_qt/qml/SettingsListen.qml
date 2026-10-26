@@ -26,7 +26,10 @@ Column {
                 label: "Tự chọn nhạc nền"
                 checked: root.prefs.autoMusic !== false
                 onToggled: value => store.update({autoMusic: value}, function(data, error) {
-                    if (!error) Api.notice = value ? "Đã bật tự chọn nhạc nền" : "Đã tắt tự chọn nhạc nền"
+                    if (error) return
+                    if (Api.transport) Api.transport.refreshLibrary()
+                    Music.reload("*")           // cuốn đang nghe đổi nhạc ngay, không đợi chương sau
+                    Api.notice = value ? "Đã bật tự chọn nhạc nền" : "Đã tắt tự chọn nhạc nền"
                 })
             }
         }

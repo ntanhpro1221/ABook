@@ -1,5 +1,11 @@
 #include "desktopapi.h"
 #include "backend.h"
+#include "fakes.h"
+#include "feedback.h"
+#include "hostmessage.h"
+#include <QFile>
+#include <QtEndian>
+#include <cmath>
 #include <QtTest>
 #include <QQmlComponent>
 #include <QQmlEngine>
@@ -82,6 +88,93 @@ private slots:
         const auto payload = received.mid(received.indexOf("\r\n\r\n") + 4);
         if (json != QStringLiteral("null")) QCOMPARE(QJsonDocument::fromJson(payload),QJsonDocument::fromJson(json.toUtf8()));
         else QVERIFY(payload.isEmpty());
+    }
+    // ---- kênh của vỏ: dòng JSON host gửi lên (D3) ----
+    void hostMessages() {
+        using HostMessage::Kind;
+        const auto ready = HostMessage::parse("{\"ready\": \"http://127.0.0.1:47123/?t=abc\"}");
+        QCOMPARE(ready.kind, Kind::Ready);
+        QCOMPARE(ready.address, QStringLiteral("http://127.0.0.1:47123/?t=abc"));
+        const auto update = HostMessage::parse("{\"event\": \"abook-update\", \"detail\": {\"version\": \"0.4.148\", \"notes\": \"Sửa lỗi\"}}");
+        QCOMPARE(update.kind, Kind::Event);
+        QCOMPARE(update.event, QStringLiteral("abook-update"));
+        QCOMPARE(update.detail.toMap().value(QStringLiteral("version")).toString(), QStringLiteral("0.4.148"));
+        const auto gone = HostMessage::parse("{\"event\": \"abook-update\", \"detail\": null}");
+        QCOMPARE(gone.kind, Kind::Event);
+        QVERIFY(gone.detail.isNull());
+        QCOMPARE(HostMessage::parse("{\"check_update\": true}").kind, Kind::CheckUpdate);
+        QCOMPARE(HostMessage::parse("{\"install_update\": true}").kind, Kind::InstallUpdate);
+        QCOMPARE(HostMessage::parse("{\"dialog\": 3}").kind, Kind::None);
+        QCOMPARE(HostMessage::parse("không phải JSON").kind, Kind::None);
+        // Vỏ Qt chưa có bộ cập nhật: nút có lời ngay, đúng câu máy chủ dùng cho bản không tự cập nhật
+        const QVariantMap checked = HostMessage::updateCheckedWithoutUpdater();
+        QCOMPARE(checked.value(QStringLiteral("state")).toString(), QStringLiteral("failed"));
+        QCOMPARE(checked.value(QStringLiteral("message")).toString(), QStringLiteral("Bản chạy từ mã nguồn không tự cập nhật"));
+    }
+
+    // ---- tiếng chạm (shared/feedback.ts, DESIGN 5.3) ----
+    void feedbackNotesMatchTheWebTable() {
+        QCOMPARE(Feedback::notes(QStringLiteral("toggle")).size(), 1);
+        QCOMPARE(Feedback::notes(QStringLiteral("toggle"))[0].pitch, 1568.0);
+        QCOMPARE(Feedback::notes(QStringLiteral("tick"))[0].level, -32.0);
+        QCOMPARE(Feedback::notes(QStringLiteral("confirm")).size(), 2);
+        QCOMPARE(Feedback::notes(QStringLiteral("done")).size(), 3);
+        QCOMPARE(Feedback::notes(QStringLiteral("sleepWarn"))[0].pitch, 220.0);
+        for (const char *silent : {"tap", "playPause", "reject", "longPress", "khác"})
+            QVERIFY(Feedback::notes(QString::fromLatin1(silent)).isEmpty());
+    }
+    void feedbackWavIsShortQuietPcm() {
+        const QByteArray wav = Feedback::wav(Feedback::notes(QStringLiteral("toggle")));
+        QVERIFY(wav.startsWith("RIFF"));
+        QCOMPARE(wav.mid(8, 8), QByteArray("WAVEfmt "));
+        QCOMPARE(qFromLittleEndian<quint32>(wav.constData() + 24), 44100u);
+        QCOMPARE(qFromLittleEndian<quint16>(wav.constData() + 34), quint16(16));
+        const int samples = int(qFromLittleEndian<quint32>(wav.constData() + 40) / 2);
+        QVERIFY(samples <= 44100 * 0.1);                  // 5 ms lặng + 60 ms nốt + 20 ms đuôi
+        int peak = 0, firstLoud = -1;
+        for (int i = 0; i < samples; ++i) {
+            const int v = std::abs(int(qFromLittleEndian<qint16>(wav.constData() + 44 + 2 * i)));
+            peak = std::max(peak, v);
+            if (firstLoud < 0 && v > 100) firstLoud = i;
+        }
+        const double expected = std::pow(10.0, -30.0 / 20.0) * 32767;   // -30 dB
+        QVERIFY2(peak > expected * 0.85 && peak <= expected * 1.02, qPrintable(QString::number(peak)));
+        QVERIFY(firstLoud >= int(44100 * 0.005));          // 5 ms đầu lặng
+        // Ba nốt của "done" dài hơn một nốt "tick"
+        QVERIFY(Feedback::wav(Feedback::notes(QStringLiteral("done"))).size() > Feedback::wav(Feedback::notes(QStringLiteral("tick"))).size());
+    }
+    void feedbackPlaysOnlyWhenAllowed() {
+        FakeOut *out = nullptr;
+        int made = 0;
+        Feedback feedback([&] { ++made; return out = new FakeOut; }, nullptr);
+        feedback.play(QStringLiteral("tap"));                // nút thường: im, chưa mở bộ phát nào
+        QCOMPARE(made, 0);
+        feedback.play(QStringLiteral("toggle"));
+        QCOMPARE(made, 1);
+        QVERIFY(out->isPlaying);
+        QCOMPARE(out->volume, 1.0);
+        QVERIFY(out->url.isLocalFile());
+        QFile file(out->url.toLocalFile());
+        QVERIFY(file.open(QIODevice::ReadOnly));
+        QVERIFY(file.read(4) == "RIFF");
+        QCOMPARE(feedback.played(), 1);
+        QCOMPARE(feedback.lastKind(), QStringLiteral("toggle"));
+        // Sách đang phát: tiếng chạm im, trừ nốt báo hẹn giờ ngủ
+        feedback.setBookPlaying(true);
+        feedback.play(QStringLiteral("confirm"));
+        QCOMPARE(feedback.played(), 1);
+        feedback.play(QStringLiteral("sleepWarn"));
+        QCOMPARE(feedback.played(), 2);
+        QCOMPARE(out->loads, 2);
+        // "Âm thanh chạm" tắt: im hết, kể cả hẹn giờ
+        feedback.setBookPlaying(false);
+        QSignalSpy changed(&feedback, &Feedback::soundsChanged);
+        feedback.setSounds(false);
+        QCOMPARE(changed.size(), 1);
+        feedback.play(QStringLiteral("toggle"));
+        feedback.play(QStringLiteral("sleepWarn"));
+        QCOMPARE(feedback.played(), 2);
+        QCOMPARE(made, 1);                                    // một bộ phát dùng lại cho mọi tiếng
     }
     void abortDoesNotDeliverLateReply() {
         clear(); hold = true;

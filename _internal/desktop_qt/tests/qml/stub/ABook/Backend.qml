@@ -8,6 +8,10 @@ QtObject {
     property bool libraryLoaded: true
     property string version: "0.4.32"
     property string logPath: ""
+    // Kênh của vỏ (Backend C++ đọc dòng JSON của host): bộ thử phát tay
+    signal hostEvent(string name, var detail)
+    signal updateChecked(var detail)
+    function refreshLibrary() {}
     property QtObject library: QtObject {
         property int count: 200
         property int revision: 0
