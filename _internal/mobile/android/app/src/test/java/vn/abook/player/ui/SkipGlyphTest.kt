@@ -2,6 +2,7 @@ package vn.abook.player.ui
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
 import android.graphics.Color
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
@@ -12,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.test.core.app.ApplicationProvider
 import com.github.takahirom.roborazzi.captureRoboImage
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -20,6 +22,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import vn.abook.player.R
 import vn.abook.player.ui.nowplaying.PlayerGlyph
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.AbookTheme
@@ -55,6 +58,23 @@ class SkipGlyphTest {
                 rule.onNodeWithTag(tag).captureRoboImage(file)
                 checkGap(BitmapFactory.decodeFile(File(file).absolutePath), "$tag ${if (dark) "tối" else "sáng"}")
             }
+        }
+    }
+
+    /** Widget màn hình chính vẽ cùng hình (vector sinh từ cùng hình học + nét số của Be Vietnam Pro), cùng phép đo. */
+    @Test
+    fun theHomeWidgetButtonsUseTheSameShape() {
+        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+        for ((name, id) in listOf("back" to R.drawable.ic_widget_back, "fwd" to R.drawable.ic_widget_forward)) {
+            val drawable = context.getDrawable(id)!!
+            // Ô 28 như nút trong app (hình 24 ở giữa), x3 như xxhdpi, nền tối của widget.
+            val bitmap = Bitmap.createBitmap(84, 84, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(bitmap)
+            canvas.drawColor(Color.rgb(20, 18, 16))
+            drawable.setBounds(6, 6, 78, 78)
+            drawable.draw(canvas)
+            File("src/test/snapshots/skip_widget_$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+            checkGap(bitmap, "widget $name")
         }
     }
 
