@@ -10,6 +10,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.*
@@ -34,6 +35,7 @@ import vn.abook.player.ui.music.MusicKind
 import vn.abook.player.ui.music.MusicPanel
 import vn.abook.player.ui.music.MusicText
 import vn.abook.player.ui.theme.Abook
+import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.theme.MotionMs
 
 enum class PlayerSheet { Speed, Sleep, Chapters, More, Voice, Music }
@@ -75,7 +77,7 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
             Column(Modifier.fillMaxWidth().heightIn(max = maxHeight * 0.82f)
                 .onSizeChanged { sheetHeight = it.height.coerceAtLeast(1) }
                 .graphicsLayer { translationY = drag.value }
-                .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)).background(Abook.colors.panel)
+                .clip(RoundedCornerShape(topStart = Dim.radiusSheet, topEnd = Dim.radiusSheet)).background(Abook.colors.panel)
                 .navigationBarsPadding().padding(horizontal = 20.dp).padding(top = 12.dp, bottom = 20.dp)
                 .testTag("player_sheet_${window.sheet.name.lowercase()}").semantics { paneTitle = sheetTitle(window.sheet) }) {
                 // Đầu tấm (vạch + tên) là chỗ kéo; danh sách bên dưới vẫn cuộn bình thường. Đóng bằng kéo, chạm nền tối hay Back - không nút đóng riêng.
@@ -100,7 +102,7 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                     )
                 }) {
                     Box(Modifier.align(Alignment.CenterHorizontally).width(32.dp).height(4.dp)
-                        .background(Abook.colors.line, RoundedCornerShape(2.dp)))
+                        .background(Abook.colors.line, CircleShape))
                     Row(Modifier.fillMaxWidth().height(64.dp), verticalAlignment = Alignment.CenterVertically) {
                         RollingLabel(sheetTitle(window.sheet), style = Abook.type.sectionTitle)
                     }

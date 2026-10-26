@@ -47,6 +47,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.theme.MotionMs
 
 /** Both back and swipe seek the same Compose transition used to open the container. */
@@ -91,7 +92,7 @@ class NowPlayingWindowState(private val scope: CoroutineScope) {
 private class ContainerShape(private val progress: State<Float>) : Shape {
     override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
         val p = progress.value
-        val radius = with(density) { 16.dp.toPx() } * 4f * p * (1f - p)
+        val radius = with(density) { Dim.radiusSheet.toPx() } * 4f * p * (1f - p)
         return Outline.Rounded(RoundRect(0f, 0f, size.width, size.height, CornerRadius(radius)))
     }
 }

@@ -249,7 +249,7 @@ function Example({ bookId, example, picked, onPick }: { bookId: string; example:
             {example.names?.length
               ? markNames(example.text, example.names).map((part, index) =>
                   part.mark ? (
-                    <mark key={index} className="rounded bg-accent-soft px-0.5 font-semibold text-accent-text">
+                    <mark key={index} className="rounded-control bg-accent-soft px-0.5 font-semibold text-accent-text">
                       {part.text}
                     </mark>
                   ) : (
@@ -374,7 +374,7 @@ function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item:
           aria-invalid={problem ? true : undefined}
           aria-describedby={problem ? `${inputId}-problem` : undefined}
           className={cn(
-            "h-8 w-40 rounded-lg border bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-focus focus-visible:ring-2 focus-visible:ring-focus",
+            "h-8 w-40 rounded-control border bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-focus focus-visible:ring-2 focus-visible:ring-focus",
             problem ? "border-danger" : "border-line",
           )}
         />
@@ -617,7 +617,7 @@ function SpeakerFix({
             placeholder={sample ? `Tên người nói (vd ${sample})` : "Tên người nói"}
             aria-label="Tên người nói mới"
             maxLength={80}
-            className="h-8 min-w-0 flex-1 rounded-lg border border-line bg-panel px-2.5 text-sm outline-none focus-visible:border-focus focus-visible:ring-2 focus-visible:ring-focus"
+            className="h-8 min-w-0 flex-1 rounded-control border border-line bg-panel px-2.5 text-sm outline-none focus-visible:border-focus focus-visible:ring-2 focus-visible:ring-focus"
           />
           <span className="text-xs text-fg-2">Giới (bấm để lưu):</span>
           {(
@@ -713,7 +713,7 @@ function NarratorFix({ bookId, item }: { bookId: string; item: WorkItem }) {
             placeholder="Tên người kể"
             aria-label="Tên người kể của đoạn"
             maxLength={80}
-            className="h-8 min-w-0 flex-1 rounded-lg border border-line bg-panel px-2.5 text-sm outline-none focus-visible:border-focus focus-visible:ring-2 focus-visible:ring-focus"
+            className="h-8 min-w-0 flex-1 rounded-control border border-line bg-panel px-2.5 text-sm outline-none focus-visible:border-focus focus-visible:ring-2 focus-visible:ring-focus"
           />
           <Button size="sm" variant="primary" disabled={!typed || save.isPending} onClick={() => save.mutate({ action: "choose", narrator: typed })}>
             Đặt người kể
@@ -959,7 +959,7 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
       ) : (
         <div className="mt-3 flex flex-wrap gap-1.5" aria-label="Lựa chọn">
           {item.options.map((option) => (
-            <span key={option} className="rounded-lg border border-line px-2.5 py-1 text-xs text-fg-2">
+            <span key={option} className="rounded-control border border-line px-2.5 py-1 text-xs text-fg-2">
               {option}
             </span>
           ))}

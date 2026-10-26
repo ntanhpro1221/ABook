@@ -45,7 +45,7 @@ it("V4 bảng trượt: bỏ padding px-N thì bỏ cả margin âm -ml-N / -mx-
   expect(pair?.[1]).toContain("margin-inline: 0");
   // Nút chân bảng Giọng đọc ("Làm trước…") đúng là cặp đó.
   const view = readFileSync(`${root}/listen/PlayerViews.tsx`, "utf8");
-  expect(view).toMatch(/data-focus-next className="touch-hit -ml-2 rounded-lg px-2/);
+  expect(view).toMatch(/data-focus-next className="touch-hit -ml-2 rounded-control px-2/);
 });
 
 it("V4 loại lỗi: luật nào trong bảng trượt bỏ padding-inline của px-N thì cũng có luật bỏ margin âm cùng cỡ", () => {

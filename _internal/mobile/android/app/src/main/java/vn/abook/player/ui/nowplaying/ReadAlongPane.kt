@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.flow.distinctUntilChanged
 import vn.abook.player.ui.components.pressable
 import vn.abook.player.ui.theme.Abook
+import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.theme.MotionMs
 
 /** Geometry computed once per paragraph layout, never allocated in draw. */
@@ -108,7 +109,7 @@ fun ReadAlongPane(
                 Box(Modifier.heightIn(min = 48.dp).pressable { following = true; onTap() }.testTag("follow_sentence"),
                     contentAlignment = Alignment.Center) {
                     BasicText("Theo câu đang nghe", Modifier
-                        .background(Abook.colors.accentSoft, RoundedCornerShape(16.dp))
+                        .background(Abook.colors.accentSoft, RoundedCornerShape(Dim.radiusCover))
                         .padding(horizontal = 14.dp, vertical = 6.dp),
                         style = Abook.type.caption.copy(color = Abook.colors.accentText, fontWeight = FontWeight.Medium))
                 }

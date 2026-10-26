@@ -148,7 +148,7 @@ function SpokenEditor({
         onKeyDown={(event) => {
           if (event.key === "Escape") onDone(null);
         }}
-        className="mt-1 h-9 w-full rounded-lg border border-line bg-bg px-2.5 text-[0.9375rem] outline-none focus-visible:border-focus"
+        className="mt-1 h-9 w-full rounded-control border border-line bg-bg px-2.5 text-[0.9375rem] outline-none focus-visible:border-focus"
       />
       <p className="mt-1 text-xs text-fg-3">Viết cách đọc thành tiếng; để trống để dùng chữ gốc.</p>
       <div className="mt-2 flex flex-wrap gap-1.5">
@@ -196,7 +196,7 @@ function Row({
   return (
     <Tag
       data-review-row={item.stableId}
-      className={cn("grid grid-cols-[40px_minmax(0,1fr)] items-start gap-x-3 gap-y-1 rounded-lg px-3 py-3 transition-[opacity,background-color] duration-motion-fast sm:grid-cols-[40px_minmax(0,1fr)_auto]", handled(item) && !editing ? "opacity-70" : "hover:bg-hover")}
+      className={cn("grid grid-cols-[40px_minmax(0,1fr)] items-start gap-x-3 gap-y-1 rounded-control px-3 py-3 transition-[opacity,background-color] duration-motion-fast sm:grid-cols-[40px_minmax(0,1fr)_auto]", handled(item) && !editing ? "opacity-70" : "hover:bg-hover")}
     >
       {source ? (
         <button
@@ -509,7 +509,7 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
         </AnimatedRows>
         </MotionRegion>
       {!items.length && (
-        <div data-review-row={EMPTY} tabIndex={-1} className="rounded-xl outline-none">
+        <div data-review-row={EMPTY} tabIndex={-1} className="rounded-cover outline-none">
           <EmptyState icon={ShieldCheck} title={filter === "todo" ? (unrecorded ? "Chưa có bản thu" : "Đã xem hết") : "Chưa đánh dấu câu nào"} className="mt-4">
             {filter === "todo"
               ? unrecorded

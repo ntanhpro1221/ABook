@@ -457,7 +457,7 @@ const Paragraph = memo(function Paragraph({
       // scroll-mt: câu được cuộn tới không nằm khuất dưới thanh đầu dính (soát UX 29-09).
       // Nền / màu / gạch chân của câu luôn có (trong suốt khi không dùng) và chuyển tiếp (styles.css [data-sentence]): sang câu kế, câu đã
       // nghe nhạt đi, chọn / bỏ chọn câu đều mờ dần, không bật tắt cứng.
-      "scroll-mt-20 rounded-[4px] outline-none [box-decoration-break:clone] focus-visible:ring-2 focus-visible:ring-focus underline decoration-transparent decoration-2 underline-offset-[0.22em]",
+      "scroll-mt-20 rounded-control outline-none [box-decoration-break:clone] focus-visible:ring-2 focus-visible:ring-focus underline decoration-transparent decoration-2 underline-offset-[0.22em]",
       tappable && "cursor-pointer",
       segment.kind === "thought" && "italic",
       index === playing && "read-along-active",

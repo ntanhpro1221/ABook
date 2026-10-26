@@ -30,6 +30,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
@@ -238,7 +239,7 @@ private fun BookHead(book: ListenBook, covers: CoverLoader) {
             val fraction = book.progress.fraction
             val fill = if (book.progress.finished) colors.success else colors.accent
             Box(
-                Modifier.fillMaxWidth().height(3.dp).clip(RoundedCornerShape(2.dp)).semantics { contentDescription = "Đã nghe" }.drawBehind {
+                Modifier.fillMaxWidth().height(3.dp).clip(CircleShape).semantics { contentDescription = "Đã nghe" }.drawBehind {
                     drawRect(colors.line)
                     drawRect(fill, Offset.Zero, Size(size.width * fraction, size.height))
                 },
@@ -460,7 +461,7 @@ private fun ChapterRow(
                     val track = colors.line
                     val stored = chapter.heard
                     Box(
-                        Modifier.width(96.dp).height(3.dp).clip(RoundedCornerShape(2.dp)).drawBehind {
+                        Modifier.width(96.dp).height(3.dp).clip(CircleShape).drawBehind {
                             val fraction = if (livePosition != null && durationMs > 0) {
                                 (livePosition.positionMs.value.toFloat() / durationMs).coerceIn(0f, 1f)
                             } else {
@@ -493,9 +494,9 @@ private fun SkeletonRow() {
         Box(Modifier.size(Dim.s24))
         Spacer(Modifier.width(Dim.s12))
         Column(Modifier.weight(1f)) {
-            Box(Modifier.fillMaxWidth(0.6f).height(14.dp).clip(RoundedCornerShape(4.dp)).background(sunken))
+            Box(Modifier.fillMaxWidth(0.6f).height(14.dp).clip(RoundedCornerShape(Dim.radiusControl)).background(sunken))
             Spacer(Modifier.height(Dim.s8))
-            Box(Modifier.fillMaxWidth(0.3f).height(10.dp).clip(RoundedCornerShape(4.dp)).background(sunken))
+            Box(Modifier.fillMaxWidth(0.3f).height(10.dp).clip(RoundedCornerShape(Dim.radiusControl)).background(sunken))
         }
     }
 }

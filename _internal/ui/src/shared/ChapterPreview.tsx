@@ -123,7 +123,7 @@ export function ChapterPreview({ chapters, className, titleFirst = false, choice
                       event.currentTarget.blur();
                     }
                   }}
-                  className="h-8 w-full rounded-lg border border-accent bg-bg px-2 text-sm font-medium outline-none"
+                  className="h-8 w-full rounded-control border border-accent bg-bg px-2 text-sm font-medium outline-none"
                 />
               ) : choice ? (
                 <button
@@ -132,7 +132,7 @@ export function ChapterPreview({ chapters, className, titleFirst = false, choice
                   disabled={choice.disabled}
                   onClick={() => setEditing(index)}
                   title="Bấm để đổi tên chương"
-                  className="touch-hit group block w-full rounded text-left text-sm font-medium hover:text-accent-text focus-visible:outline-2 focus-visible:outline-focus"
+                  className="touch-hit group block w-full rounded-control text-left text-sm font-medium hover:text-accent-text focus-visible:outline-2 focus-visible:outline-focus"
                 >
                   {/* Bút nằm ngay sau chữ cuối, kể cả khi tên xuống dòng (đặt cạnh khối chữ thì tên hai dòng đẩy bút ra tận mép phải). */}
                   <span className="line-clamp-2 break-words">

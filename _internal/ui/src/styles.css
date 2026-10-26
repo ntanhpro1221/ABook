@@ -1,4 +1,6 @@
 @import "tailwindcss";
+/* Bo góc: ba vai của DESIGN.md 5.5 (rounded-control / rounded-cover / rounded-sheet), sinh từ docs/DESIGN.md như Tokens.kt của app điện thoại; thang mặc định của Tailwind đã bị xoá. */
+@import "./shared/tokens.generated.css";
 @import "@fontsource/be-vietnam-pro/400.css";
 @import "@fontsource/be-vietnam-pro/500.css";
 @import "@fontsource/be-vietnam-pro/600.css";
@@ -501,7 +503,7 @@ select[class~="border-line"] {
   transform: none;
   border: 0;
   background: transparent;
-  border-radius: 0.375rem;
+  border-radius: var(--radius-control);
 }
 [data-sonner-toaster] [data-sonner-toast][data-styled="true"] [data-close-button]:hover {
   background: var(--hover);
@@ -736,7 +738,7 @@ select[class~="border-line"] {
    Mọi chữ của câu đang nghe đều là span sẵn; chữ tới lượt thêm .is-lit, nền đến và đi đều mờ dần. */
 .read-along-word {
   background-color: transparent;
-  border-radius: 3px;
+  border-radius: var(--radius-control);
   transition: background-color var(--motion-fast-out) linear;
 }
 .read-along-word.is-lit {
@@ -1100,7 +1102,7 @@ select[class~="border-line"] {
 .player-sheet .sheet-body [class~="p-1"] { margin-inline: -12px; padding-inline: 12px; }
 /* Dòng lựa chọn của bảng trượt (giọng, nhạc): chữ đứng đúng mép nội dung 20 px như mọi dòng khác, còn nền chọn / nền rê tràn ra 12 px mỗi
    bên để chữ không dính sát mép nền. Giọng: nền chọn phủ cả dòng (gồm nút "Thử"), không dừng giữa hàng. */
-.player-sheet .sheet-body [data-sheet-choice] { margin-inline: -12px; padding-inline: 12px; gap: 12px; border-radius: 12px; }
+.player-sheet .sheet-body [data-sheet-choice] { margin-inline: -12px; padding-inline: 12px; gap: 12px; border-radius: var(--radius-cover); }
 .player-sheet .sheet-body [data-sheet-choice] > svg { width: 20px; height: 20px; }
 /* Dấu ✓ và + đầu dòng lựa chọn: mực bắt đầu 3/24 và 4/24 trong ô icon - kéo ra chừng ấy cho mực thẳng chữ ghi chú của bảng (ô 14 px; bảng
    trượt điện thoại 20 px). */
@@ -1542,7 +1544,7 @@ details[data-motion-fallback="1"][data-motion="closing"] > :not(summary) { anima
   flex-shrink: 0;
   width: var(--switch-width);
   height: var(--switch-height);
-  border-radius: 999px;
+  border-radius: calc(infinity * 1px);
   background: var(--switch-off);
   transition: background-color var(--motion-fast), opacity var(--motion-fast);
 }
@@ -1558,7 +1560,7 @@ details[data-motion-fallback="1"][data-motion="closing"] > :not(summary) { anima
   left: 0;
   width: var(--switch-knob);
   height: var(--switch-knob);
-  border-radius: 999px;
+  border-radius: calc(infinity * 1px);
   background: var(--switch-thumb);
   transform: translateX(var(--switch-inset));
   transition: transform var(--motion-fast) var(--ease-standard);
@@ -1657,7 +1659,7 @@ button[data-variant] { min-height: 2.5rem; height: auto; }
 .disclosure-chevron { transition: rotate var(--motion-fast) var(--ease-standard); }
 @media (prefers-reduced-motion: reduce) { .disclosure-chevron { rotate: none; transition-property: opacity; } }
 
-.device-input { min-height: 3rem; border: 0; border-radius: .5rem; background: var(--bg-sunken); color: var(--text); }
+.device-input { min-height: 3rem; border: 0; border-radius: var(--radius-control); background: var(--bg-sunken); color: var(--text); }
 .device-input:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 /* Mục con vẫn cuộn trong cùng bảng; dành nửa màn cho các nút phát đang nghe. */
 .player-sheet:has([data-player-inline]) { max-height: 50dvh; }
