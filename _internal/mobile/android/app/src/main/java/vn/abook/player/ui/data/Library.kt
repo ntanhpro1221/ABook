@@ -112,14 +112,14 @@ class LibraryRepo(private val context: Context, scope: kotlinx.coroutines.Corout
         refresh()
     }
 
-    /** Một lần sửa: câu lỗi của lõi (hay của ngoại lệ) cho người nghe; lưu xong thì đọc lại Thư viện. */
+    /** Xoá hẳn một cuốn (hết hạn hoàn tác): câu lỗi của lõi cho người nghe, không có thì "Chưa xoá được" như web; xong thì đọc lại Thư viện. */
     private suspend fun edit(block: () -> String?): String? {
         val problem = withContext(Dispatchers.IO) {
             try {
                 block()
             } catch (error: Exception) {
                 AppLog.w("Library", "Không sửa được sách: ${error.javaClass.simpleName}")
-                error.message?.takeIf { it.isNotBlank() } ?: "Chưa làm được, bạn thử lại"
+                error.message?.takeIf { it.isNotBlank() } ?: "Chưa xoá được"
             }
         }
         if (problem == null) refresh()

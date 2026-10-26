@@ -134,7 +134,7 @@ export function MyMusicSection() {
       setRemoving(null);
       toast("Đã xoá khỏi Nhạc của tôi");
     },
-    onError: (error: Error) => toast.error("Không xoá được bài này", { description: error.message }),
+    onError: (error: Error) => toast.error("Chưa xoá được bài này", { description: error.message }),
   });
   const tracks = data?.tracks ?? [];
   const rows = useListPresence(tracks, (track) => track.link);

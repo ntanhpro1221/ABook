@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import vn.abook.player.ui.addbook.BookField
 import vn.abook.player.ui.components.UnplugIcon
+import vn.abook.player.ui.components.Caption
 import vn.abook.player.ui.components.ConfirmPage
 import vn.abook.player.ui.components.DangerButton
 import vn.abook.player.ui.components.DeleteBookPage
@@ -139,7 +140,7 @@ private fun ForgetPage(device: Paired, state: DevicesState, dismiss: () -> Unit,
     }
 }
 
-/** Bảng đổi tên máy này: một ô, "Lưu" ở dưới; lỗi hiện ngay dưới ô. */
+/** Bảng đổi tên máy này: tên bảng, câu nói tên dùng vào đâu (cùng lời hộp đổi tên của web), một ô, "Lưu" ở dưới; lỗi hiện ngay dưới ô. */
 @Composable
 fun RenameSheet(current: String, state: DevicesState, dismiss: () -> Unit) {
     val scope = rememberCoroutineScope()
@@ -148,6 +149,8 @@ fun RenameSheet(current: String, state: DevicesState, dismiss: () -> Unit) {
     var problem by remember { mutableStateOf("") }
     Column(Modifier.fillMaxWidth().testTag("rename_sheet")) {
         BasicText("Đổi tên điện thoại này", style = Abook.type.sectionTitle)
+        Spacer(Modifier.height(Dim.s8))
+        Caption("Máy tính và các máy đã ghép thấy điện thoại bằng tên này.")
         Spacer(Modifier.height(Dim.s16))
         BookField(null, name, { name = it; problem = "" }, "rename_field", !working, "Tên điện thoại")
         if (problem.isNotEmpty()) {

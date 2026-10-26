@@ -44,7 +44,7 @@ class UndoDelete(
             jobs.remove(id)
             actions.value = actions.value - id
             if (actions.value.isEmpty()) visible.value = false
-            val error = try { erase(id) } catch (_: Exception) { "Chưa xoá được, bạn thử lại" }
+            val error = try { erase(id) } catch (_: Exception) { "Chưa xoá được" }
             flow.value = flow.value - id
             errors.value = error.orEmpty()
             changed()
