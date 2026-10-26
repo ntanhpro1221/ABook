@@ -47,6 +47,7 @@ set(ABOOK_MUSIC_SOURCES
     src/musicbed.cpp
     src/musicbed.h
     src/musiclogic.h
+    src/musictext.h
 )
 
 qt_add_executable(ABookDesk WIN32
@@ -68,6 +69,8 @@ qt_add_executable(ABookDesk WIN32
     src/hostnet.h
     src/librarymodel.cpp
     src/librarymodel.h
+    src/music.cpp
+    src/music.h
     src/platform.cpp
     src/platform.h
     src/windowchrome.cpp
@@ -154,12 +157,12 @@ target_link_libraries(ReadAlongTests PRIVATE Qt6::Test Qt6::Quick Qt6::Network)
 if(MSVC)
     target_compile_options(ReadAlongTests PRIVATE /W3 /utf-8)
 endif()
-# Nhạc nền: phép tính thuần trên fixture chung với máy chủ / web / Android + MusicBed với AudioOut giả
-qt_add_executable(MusicTests tests/test_music.cpp tests/fakes.h src/audioout.cpp src/audioout.h src/playernet.h ${ABOOK_MUSIC_SOURCES})
+# Nhạc nền: phép tính thuần trên fixture chung với máy chủ / web / Android + MusicBed và Music (với Player) trên đồ giả
+qt_add_executable(MusicTests tests/test_music.cpp tests/fakes.h src/music.cpp src/music.h ${ABOOK_PLAYER_SOURCES} ${ABOOK_MUSIC_SOURCES})
 target_include_directories(MusicTests PRIVATE src tests)
 target_compile_definitions(MusicTests PRIVATE QT_NO_CAST_FROM_ASCII MUSIC_FIXTURES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../tests/fixtures"
     MUSIC_MIX_JSON="${CMAKE_CURRENT_SOURCE_DIR}/../abook/webui/assets/music_mix.json")
-target_link_libraries(MusicTests PRIVATE Qt6::Test Qt6::Network)
+target_link_libraries(MusicTests PRIVATE Qt6::Test Qt6::Qml Qt6::Network)
 if(MSVC)
     target_compile_options(MusicTests PRIVATE /W3 /utf-8)
 endif()
