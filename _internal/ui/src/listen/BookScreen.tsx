@@ -34,7 +34,7 @@ import { PlaylistSubmenu } from "./PlaylistChoice";
 import { ProjectFileItems, ProjectViewsDialog, TextBookItems } from "./ProjectFileItems";
 import { BookSuggestions } from "./ReadingSuggestions";
 import { WishesDialog } from "./WishesDialog";
-import { useCast, useListenBook, useListenLibrary, useListenMutations, useSource, useWarmVoice } from "./source";
+import { isMissing, useCast, useListenBook, useListenLibrary, useListenMutations, useSource, useWarmVoice } from "./source";
 import { latestReading } from "./readingPosition";
 import { moreMenuHasItems } from "./bookMenu";
 import { withFeedback } from "@/shared/feedback";
@@ -882,7 +882,9 @@ export function BookScreen({
   );
   const content = () => {
 
-  if (error || !book) {
+  // Chỉ 404 mới là sách không còn: một lần hỏi lại hụt (máy chủ khởi động lại, mạng chớp) giữ nguyên trang đã có - không thì cả trang biến thành
+  // "Không tìm thấy" và hộp thoại đang sửa dở mất theo.
+  if (!book || isMissing(error)) {
     return (
       <EmptyState icon={BookOpenText} title="Không tìm thấy sách này" className="mt-20" action={<Button onClick={() => navigate("/")}>Về thư viện</Button>}>
         Sách có thể đã bị chuyển sang thư mục khác hoặc bị xoá khỏi thư viện.

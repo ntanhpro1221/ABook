@@ -14,6 +14,7 @@ import { MotionPresence } from "./MotionPresence";
 import { SlidingIndicator } from "./SlidingIndicator";
 import { useBackLayer } from "./backStack";
 import { useMediaQuery } from "./media";
+import { clampFraction, percentOf } from "./format";
 import { useRowFade, useScrollFadeOn } from "./scrollFade";
 
 type IconType = ComponentType<{ className?: string; strokeWidth?: number }>;
@@ -256,14 +257,14 @@ export function Progress({
   indeterminate?: boolean;
 }) {
   const height = { xs: "h-1", sm: "h-1.5", md: "h-2", lg: "h-2.5" }[size];
-  const clamped = Math.max(0, Math.min(1, value));
+  const clamped = clampFraction(value);
   return (
     <div
       role="progressbar"
       aria-label={label}
       aria-valuemin={0}
       aria-valuemax={100}
-      aria-valuenow={indeterminate ? undefined : Math.round(clamped * 100)}
+      aria-valuenow={indeterminate ? undefined : percentOf(clamped)}
       aria-valuetext={indeterminate ? undefined : valueText}
       className={cn("relative w-full overflow-hidden rounded-full bg-line", height, className)}
     >
@@ -324,7 +325,7 @@ export function useFocusClearOfToasts() {
 }
 
 export function heardBarProps(fraction: number) {
-  const percent = Math.round(Math.max(0, Math.min(1, fraction)) * 100);
+  const percent = percentOf(fraction);
   return {
     role: "progressbar",
     "aria-label": "Đã nghe",

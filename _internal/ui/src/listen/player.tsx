@@ -405,7 +405,9 @@ export function PlayerProvider({
       if ((spot.savedAt ?? 0) < refs.current.lastSaved) return;
       refs.current.lastSaved = spot.savedAt ?? Date.now();
       refs.current.stamp = refs.current.lastSaved;
-      refs.current.savedSpot = { chapterId: spot.chapterId, seconds: spot.seconds };
+      // Lời lưu của chương vừa rời (gửi lúc đổi chương) về sau khi đã sang chương mới: không phải chỗ của chương đang nghe - ghi vào thì
+      // chương mới tưởng đã lưu và chỗ đầu chương ấy không bao giờ được lưu (lần mở sau quay về chương cũ).
+      if (spot.chapterId === current.chapterId) refs.current.savedSpot = { chapterId: spot.chapterId, seconds: spot.seconds };
     },
   ), [ensurePlayback, source]);
 

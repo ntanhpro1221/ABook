@@ -85,10 +85,14 @@ function progressText(book: ListenBook, speaks: boolean): string {
   return `Còn ${formatLengthUp(left / (book.state.rate ?? 1))}`;
 }
 
+/** Lần bấm nghe gần nhất (chung cả app): lời đáp sách về muộn của lần bấm trước không được phát đè cuốn vừa chọn. */
+let latestPlay = 0;
+
 export function usePlayListenBook() {
   const source = useSource();
   const player = usePlayer();
   return async (book: ListenBook, chapterId?: number, at?: number, extra?: { word?: WordTarget; rate?: number }) => {
+    const request = ++latestPlay;
     // Cuốn đang ở trình phát: tiếp tục đúng chỗ đang phát, không nạp lại (nạp lại là lùi về điểm lưu gần nhất). player.resume hỏi lại chỗ nghe
     // trước: thiết bị khác nghe xa hơn thì tới chỗ ấy (soát a27 lỗi 2).
     if (chapterId === undefined && player.track?.bookId === book.id) {
@@ -96,6 +100,8 @@ export function usePlayListenBook() {
       return;
     }
     const full = book.chapters ? book : await source.book(book.id);
+    // Bấm A rồi B, máy chủ trả B trước A sau: A về muộn thì thôi.
+    if (request !== latestPlay) return;
     const chapters = full.chapters ?? [];
     if (chapterId !== undefined) {
       player.play(full, chapters, chapterId, at ?? 0, extra);

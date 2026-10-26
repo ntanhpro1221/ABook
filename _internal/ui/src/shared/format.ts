@@ -27,8 +27,18 @@ export function endSentence(text: string): string {
   return clean && !/[.!?…]$/.test(clean) ? `${clean}.` : clean;
 }
 
+/** Phân số 0..1 (NaN - tổng 0, chưa biết - là 0). */
+export function clampFraction(fraction: number): number {
+  return Number.isFinite(fraction) ? Math.max(0, Math.min(1, fraction)) : fraction === Infinity ? 1 : 0;
+}
+
+/** Số phần trăm nguyên của thanh tiến độ (aria-valuenow): làm tròn XUỐNG như chữ `formatPercent` - chưa xong thì không bao giờ 100. */
+export function percentOf(fraction: number): number {
+  return Math.floor(clampFraction(fraction) * 100);
+}
+
 export function formatPercent(fraction: number): string {
-  const value = Math.max(0, Math.min(1, fraction)) * 100;
+  const value = clampFraction(fraction) * 100;
   if (value > 0 && value < 1) return "<1%";
   if (value < 100 && value > 99) return "99%";
   return `${Math.floor(value)}%`;
