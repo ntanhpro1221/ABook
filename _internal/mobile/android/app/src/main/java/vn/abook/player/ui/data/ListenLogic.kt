@@ -15,7 +15,7 @@ interface SeriesItem {
 }
 
 /**
- * Logic thuần của phần Nghe (model.ts + progress.ts): bỏ dấu, tìm, bộ sách, tiến độ, chỗ nghe tiếp, cuốn "Đang nghe".
+ * Logic thuần của phần Nghe (model.ts + progress.ts): bỏ dấu, tìm, bộ sách, tiến độ, chỗ nghe tiếp.
  * Không Android - thử trên JVM (ListenModelTest, bê ca test của model.test.ts / progress.test.ts).
  */
 object ListenLogic {
@@ -198,6 +198,14 @@ object ListenLogic {
     fun knownDuration(state: ListenState, chapter: ChapterInfo): Double =
         if (chapter.duration > 0) chapter.duration else (state.chapters[chapter.id]?.duration ?: 0.0)
 
+    /** Phần đã nghe của một chương, 0..1 (model.ts `chapterHeard`): đã đánh dấu xong = 1; độ dài chưa biết thì 0. */
+    fun chapterHeard(state: ListenState, chapter: ChapterInfo): Float {
+        val record = state.chapters[chapter.id] ?: return 0f
+        if (record.done) return 1f
+        val length = knownDuration(state, chapter)
+        return if (length > 0) minOf(1.0, record.heard / length).toFloat() else 0f
+    }
+
     /** Giây nghe tiếp trong một chương khi vào nó không qua chỗ nghe cuối: chỗ xa nhất đã nghe nếu chương chưa xong và chưa gần hết. */
     private fun chapterResumeAt(state: ListenState, chapter: ChapterInfo): Double {
         val record = state.chapters[chapter.id]
@@ -229,15 +237,6 @@ object ListenLogic {
         }
         val unheard = playable.firstOrNull { state.chapters[it.id]?.done != true }
         return if (unheard != null) spot(unheard, chapterResumeAt(state, unheard)) else spot(playable[0], 0.0)
-    }
-
-    /**
-     * Cuốn của thẻ "Đang nghe": cuốn đang nằm trong trình phát (chưa chắc thư viện đã biết chỗ nghe của nó), không thì cuốn chưa xong nghe
-     * gần nhất.
-     */
-    fun listeningBook(books: List<ListenBook>, playingBookId: String?): ListenBook? {
-        if (playingBookId != null) books.firstOrNull { it.id == playingBookId && !it.progress.finished }?.let { return it }
-        return books.filter { it.state.last != null && !it.progress.finished }.maxByOrNull { it.state.last!!.at }
     }
 
     // ---- dòng trạng thái ---------------------------------------------------------------------------------

@@ -101,9 +101,12 @@ class DeviceTts(private val context: Context, private val voiceName: String) : V
             val tts = DeviceEngine.open(context)
             val list = DeviceEngine.vietnamese(tts)
             list.mapIndexed { index, voice ->
-                VoiceInfo("device:${voice.name}", voice.name, "device", voice.isNetworkConnectionRequired, index == 0)
+                VoiceInfo("device:${voice.name}", label(index, list.size), "device", voice.isNetworkConnectionRequired, index == 0)
             }
         }.getOrDefault(emptyList())
+
+        /** Tên người dùng thấy: tên giọng Android là mã ("vi-vn-x-gft-local"), không nói gì với người nghe - đánh số theo thứ tự máy trả về. */
+        fun label(index: Int, count: Int): String = if (count == 1) "Tiếng Việt" else "Tiếng Việt ${index + 1}"
 
         /** Giọng mặc định của máy (id), hoặc null nếu không có giọng tiếng Việt. */
         fun defaultId(context: Context): String? = voices(context).firstOrNull()?.id

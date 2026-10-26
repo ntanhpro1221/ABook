@@ -25,12 +25,12 @@ import { HandOffButton, RemoteBars, ThisPlayerReporter } from "./RemotePhone";
 function Brand() {
   return (
     <div className="flex items-center gap-2.5 px-2">
-      <div className="grid size-9 place-items-center rounded-xl bg-accent text-accent-ink shadow-card">
+      <div className="grid size-9 place-items-center rounded-cover bg-accent text-accent-ink shadow-card">
         <span className="flex h-4 items-end gap-[3px]">
-          <span className="h-2 w-[3px] rounded-sm bg-current" />
-          <span className="h-4 w-[3px] rounded-sm bg-current" />
-          <span className="h-3 w-[3px] rounded-sm bg-current" />
-          <span className="h-[10px] w-[3px] rounded-sm bg-current" />
+          <span className="h-2 w-[3px] rounded-full bg-current" />
+          <span className="h-4 w-[3px] rounded-full bg-current" />
+          <span className="h-3 w-[3px] rounded-full bg-current" />
+          <span className="h-[10px] w-[3px] rounded-full bg-current" />
         </span>
       </div>
       <div className="text-[0.9375rem] font-bold tracking-tight">ABook</div>
@@ -38,7 +38,7 @@ function Brand() {
   );
 }
 
-const NAV = "sidebar-link flex h-10 items-center gap-3 rounded-lg px-2 text-sm";
+const NAV = "sidebar-link flex h-10 items-center gap-3 rounded-control px-2 text-sm";
 // Mục đang mở: nền trung tính nhạt + chữ đậm thường (DESIGN 6 "Điều hướng"). Không dấu tích - dấu tích là của lựa chọn trong danh sách chọn.
 const NAV_ACTIVE = "bg-hover font-semibold text-fg";
 const NAV_IDLE = "font-medium text-fg-2 hover:bg-hover hover:text-fg";
@@ -103,9 +103,9 @@ export function Producing() {
           type="button"
           onClick={() => { setExpanded(false); navigate(`/studio/${book.id}`); }}
           aria-current={pathname === `/studio/${book.id}` ? "page" : undefined}
-          className={cn("sidebar-link flex w-full items-center gap-2.5 rounded-lg p-2 text-left hover:bg-hover", pathname === `/studio/${book.id}` ? "bg-hover text-fg" : "text-fg-2")}
+          className={cn("sidebar-link flex w-full items-center gap-2.5 rounded-control p-2 text-left hover:bg-hover", pathname === `/studio/${book.id}` ? "bg-hover text-fg" : "text-fg-2")}
         >
-          <BookCover title={book.title} part={book.series?.part} size="xs" image={book.cover} className="size-8 rounded-md" />
+          <BookCover title={book.title} part={book.series?.part} size="xs" image={book.cover} className="size-8 rounded-control" />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 truncate text-xs font-medium">
               <MotionRegion as="span" className="flex size-3 shrink-0 items-center justify-center">{book.queuePosition != null ? <Clock className="size-3" aria-label={`Đang chờ ${book.queuePosition}`} /> : book.paused || book.stopping ? (
@@ -224,7 +224,7 @@ export function Shell({ children }: { children: ReactNode }) {
         <button
           type="button"
           onClick={() => main.current?.focus()}
-          className="fixed left-[calc(env(safe-area-inset-left)+0.75rem)] top-[calc(env(safe-area-inset-top)+0.75rem)] z-[60] -translate-y-[200%] rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-accent-ink shadow-float focus:translate-y-0"
+          className="fixed left-[calc(env(safe-area-inset-left)+0.75rem)] top-[calc(env(safe-area-inset-top)+0.75rem)] z-[60] -translate-y-[200%] rounded-control bg-accent px-4 py-2 text-sm font-semibold text-accent-ink shadow-float focus:translate-y-0"
         >
           Tới nội dung
         </button>

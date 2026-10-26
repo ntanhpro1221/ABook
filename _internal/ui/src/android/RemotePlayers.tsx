@@ -188,7 +188,7 @@ function RemotePlayerBar({ remote, receivedAt, onDismiss }: { remote: RemotePlay
         )}
         {remote.known && (
           <button type="button" onClick={() => void listenHere()} disabled={moving}
-            className="h-9 shrink-0 rounded-lg px-2 text-xs font-medium text-fg active:bg-hover disabled:opacity-50">
+            className="h-9 shrink-0 rounded-control px-2 text-xs font-medium text-fg active:bg-hover disabled:opacity-50">
             <MotionRegion as="span" className="inline-grid place-items-center">{moving ? <Loader2 className="size-4 animate-spin" /> : "Nghe ở đây"}</MotionRegion>
           </button>
         )}
@@ -322,13 +322,13 @@ export function PhoneHandOffButton() {
       ) : (
       <DropdownMenu.Trigger
         aria-label="Phát trên thiết bị khác"
-        className="touch-box inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-fg-2 active:bg-hover data-[state=open]:bg-hover data-[state=open]:text-fg"
+        className="touch-box inline-flex size-8 shrink-0 items-center justify-center rounded-control text-fg-2 active:bg-hover data-[state=open]:bg-hover data-[state=open]:text-fg"
       >
         <Cast className="glyph" strokeWidth={2} />
       </DropdownMenu.Trigger>
       )}
       <DropdownMenu.Portal>
-        <DropdownMenu.Content side="top" align="end" sideOffset={8} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 max-w-[calc(100vw-24px)] rounded-xl border border-line bg-panel p-1.5 shadow-float"><MotionRegion>
+        <DropdownMenu.Content side="top" align="end" sideOffset={8} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 max-w-[calc(100vw-24px)] rounded-cover border border-line bg-panel p-1.5 shadow-float"><MotionRegion>
           <DropdownMenu.Label className="px-2 pb-1 pt-0.5 text-xs font-medium text-fg-3">Phát trên</DropdownMenu.Label>
           {/* Không có máy nào: nói rõ thay vì để nút biến mất (TV tắt, khác mạng Wi-Fi). */}
           {!targets.length && (
@@ -342,7 +342,7 @@ export function PhoneHandOffButton() {
                   event.preventDefault();
                   rescan();
                 }}
-                className="flex h-11 cursor-default items-center gap-2 rounded-lg px-2 text-sm text-accent-text outline-none data-[disabled]:text-fg-3 data-[highlighted]:bg-hover"
+                className="flex h-11 cursor-default items-center gap-2 rounded-control px-2 text-sm text-accent-text outline-none data-[disabled]:text-fg-3 data-[highlighted]:bg-hover"
               >
                 <MotionRegion as="span" className="inline-grid shrink-0 place-items-center">{searching ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}</MotionRegion>
                 Tìm lại
@@ -353,7 +353,7 @@ export function PhoneHandOffButton() {
             <DropdownMenu.Item
               key={target.device}
               onSelect={() => void handOff(target)}
-              className="flex h-11 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[highlighted]:bg-hover"
+              className="flex h-11 cursor-default items-center gap-2 rounded-control px-2 text-sm outline-none data-[highlighted]:bg-hover"
             >
               <KindIcon kind={target.kind} className="size-4 shrink-0 text-fg-2" />
               <span className="min-w-0 flex-1 truncate">{target.name}</span>

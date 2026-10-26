@@ -8,7 +8,7 @@ import { MotionRegion } from "@/shared/MotionRegion";
 type IconType = ComponentType<{ className?: string; strokeWidth?: number }>;
 
 export const ACTION_BUTTON =
-  "inline-flex min-h-[3.5rem] min-w-16 shrink-0 select-none flex-col items-center justify-center gap-1 rounded-lg px-2 py-1.5 transition-[transform,color,background-color,opacity] duration-motion-fast hover:bg-hover hover:text-fg active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40";
+  "inline-flex min-h-[3.5rem] min-w-16 shrink-0 select-none flex-col items-center justify-center gap-1 rounded-control px-2 py-1.5 transition-[transform,color,background-color,opacity] duration-motion-fast hover:bg-hover hover:text-fg active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40";
 /** Ô biểu tượng: cao cố định để chữ thay biểu tượng ("1,15×") không làm nhãn dưới nhảy. */
 export const ACTION_GLYPH = "inline-grid h-6 min-w-6 place-items-center text-[0.9375rem] font-semibold leading-none";
 export const ACTION_LABEL = "tabular text-xs font-medium leading-none";
