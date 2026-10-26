@@ -38,8 +38,6 @@ Item {
             text: root.book.title || ""
             color: Theme.text
             wrapMode: Text.Wrap
-            maximumLineCount: 4
-            elide: Text.ElideRight
             lineHeight: 1.15
             font.pixelSize: Theme.sizeTitleDesktop
             font.weight: Theme.weightBold

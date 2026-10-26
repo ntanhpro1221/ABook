@@ -90,6 +90,8 @@ void LibraryModel::setBooks(const QJsonArray &array) {
     }
     if (before != int(m_books.size()))
         emit countChanged();
+    ++m_revision;
+    emit revisionChanged();
     if (!m_error.isEmpty()) {
         m_error.clear();
         emit errorChanged();
@@ -107,7 +109,7 @@ QVariantMap LibraryModel::book(int row) const {
     if (row < 0 || row >= int(m_books.size()))
         return {};
     const Book &b = m_books[size_t(row)];
-    return {{QStringLiteral("bookId"), b.id}, {QStringLiteral("title"), b.title}, {QStringLiteral("author"), b.author},
+    return {{QStringLiteral("bookId"), b.id}, {QStringLiteral("title"), b.title}, {QStringLiteral("author"), b.author}, {QStringLiteral("subtitle"), b.subtitle},
             {QStringLiteral("narrator"), b.narrator}, {QStringLiteral("detail"), b.detail}, {QStringLiteral("coverKey"), b.coverKey},
             {QStringLiteral("progress"), b.progress}, {QStringLiteral("source"), b.source},
             {QStringLiteral("chapters"), b.chaptersTotal}, {QStringLiteral("lastChapter"), b.lastChapter},

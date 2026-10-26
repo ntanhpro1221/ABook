@@ -3,7 +3,7 @@
 Không đụng thư viện của người dùng: dữ liệu nằm trọn trong <out>, host chạy với ABOOK_PREFERENCES riêng.
 Chữ truyện là văn bản giả (lặp một đoạn vô nghĩa), không lấy từ truyện nào.
 
-  python -X utf8 make_fixture.py <out> [--books 200] [--covers 0.8]
+  python -X utf8 make_fixture.py <out> [--books 200] [--covers 0.8] [--long]
 Sau đó chạy app với:  ABOOK_PREFERENCES=<out>/prefs.json
 """
 from __future__ import annotations
@@ -29,7 +29,11 @@ WORDS = "gió mưa núi sông trăng nắng thuyền bến đèn phố chợ mù
 SERIES = ["Bộ Mây Núi", "Chuyện Bến Sông", "Nhật Ký Phố Cổ", "Hạc Và Kiếm"]
 
 
-def title_for(i: int, rng: random.Random) -> str:
+def title_for(i: int, rng: random.Random, long_titles: bool = False) -> str:
+    if long_titles and i % 5 == 0:     # tên dài: kiểm xuống dòng đủ ở lưới, bìa vẽ, tiêu đề trang
+        return " ".join(rng.choice(WORDS) for _ in range(rng.choice([14, 22, 34]))).capitalize() + f" {i:03d}"
+    if long_titles and i % 11 == 0:    # một chữ dài không có chỗ ngắt
+        return "Vôcùngdàiliềnmạchkhôngchỗngắtchữnàocả" * 2 + f"{i:03d}"
     if i % 7 == 0:
         return f"{SERIES[i % len(SERIES)]} · Tập {i // 7 + 1}"
     n = rng.choice([2, 3, 3, 4, 5, 7])
@@ -96,6 +100,7 @@ def main() -> int:
     ap.add_argument("out")
     ap.add_argument("--books", type=int, default=200)
     ap.add_argument("--covers", type=float, default=0.8)
+    ap.add_argument("--long", action="store_true", help="xen tên rất dài vào thư viện thử")
     args = ap.parse_args()
     out = Path(args.out).resolve()
     (out / "library").mkdir(parents=True, exist_ok=True)
@@ -106,7 +111,7 @@ def main() -> int:
     host = Host(prefs)
     try:
         for i in range(1, args.books + 1):
-            title = title_for(i, rng)
+            title = title_for(i, rng, args.long)
             src = out / "src" / f"{i:03d}.txt"
             para = " ".join(rng.choice(WORDS) for _ in range(40)) + "."
             src.write_bytes(("\n\n".join([para] * 6) + "\n").encode("utf-8"))  # LF

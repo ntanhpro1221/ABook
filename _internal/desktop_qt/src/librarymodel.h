@@ -13,6 +13,8 @@ class LibraryModel : public QAbstractListModel {
     QML_UNCREATABLE("Có sẵn trong Backend.library")
     Q_PROPERTY(int count READ rowCount NOTIFY countChanged)
     Q_PROPERTY(QString error READ error NOTIFY errorChanged)
+    /// Tăng mỗi lần danh sách được nạp lại: ô sách đọc theo hàng (book(row)) gắn vào đây để cập nhật.
+    Q_PROPERTY(int revision READ revision NOTIFY revisionChanged)
 
 public:
     enum Role {
@@ -33,6 +35,7 @@ public:
     void setBooks(const QJsonArray &books);
     void setError(const QString &message);
     QString error() const { return m_error; }
+    int revision() const { return m_revision; }
 
     /// Mọi trường cho trang sách (QML đọc một lần khi mở).
     Q_INVOKABLE QVariantMap book(int row) const;
@@ -40,6 +43,7 @@ public:
 signals:
     void countChanged();
     void errorChanged();
+    void revisionChanged();
 
 private:
     struct Book {
@@ -52,4 +56,5 @@ private:
     static QString durationText(double seconds);
     std::vector<Book> m_books;
     QString m_error;
+    int m_revision = 0;
 };

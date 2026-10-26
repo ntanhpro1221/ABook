@@ -7,12 +7,12 @@ Item {
     id: root
     visible: false
     property var stack: null
-    readonly property var grid: {
+    readonly property var list: {
         const s = stack && stack._stacks ? stack._stacks[0] : null
-        return s && s.length && s[0].content ? s[0].content.grid : null
+        return s && s.length && s[0].content ? s[0].content.list : null
     }
-    readonly property real maxY: grid ? grid.originY + grid.contentHeight - grid.height + grid.bottomMargin : 0
-    readonly property real minY: grid ? grid.originY - grid.topMargin : 0
+    readonly property real maxY: list ? list.originY + list.contentHeight - list.height + list.bottomMargin : 0
+    readonly property real minY: list ? list.originY - list.topMargin : 0
 
     // Thư viện về rồi chờ bìa giải mã xong trước khi đo nghỉ
     Timer {
@@ -24,9 +24,9 @@ Item {
     // 12 000 px trong 4 s = 3000 px/s: nhanh hơn một cú vuốt mạnh bằng bánh xe, để bắt cả lúc bìa dồn về
     SequentialAnimation {
         id: scroll
-        NumberAnimation { target: root.grid; property: "contentY"; from: root.minY; to: root.maxY; duration: 4000 }
-        NumberAnimation { target: root.grid; property: "contentY"; to: root.minY; duration: 4000 }
-        NumberAnimation { target: root.grid; property: "contentY"; to: root.maxY; duration: 4000 }
+        NumberAnimation { target: root.list; property: "contentY"; from: root.minY; to: root.maxY; duration: 4000 }
+        NumberAnimation { target: root.list; property: "contentY"; to: root.minY; duration: 4000 }
+        NumberAnimation { target: root.list; property: "contentY"; to: root.maxY; duration: 4000 }
         onFinished: { Bench.note("scroll_end"); tail.start() }
     }
     Timer { id: tail; interval: 3000; onTriggered: { Bench.note("done"); Bench.finish() } }

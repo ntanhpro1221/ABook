@@ -44,6 +44,7 @@ qt_add_qml_module(ABookDesk
         qml/Sidebar.qml
         qml/ConnectionChip.qml
         qml/ConnectionPopover.qml
+        qml/MenuRow.qml
         qml/ScreenStack.qml
         qml/ScreenHeader.qml
         qml/LibraryScreen.qml

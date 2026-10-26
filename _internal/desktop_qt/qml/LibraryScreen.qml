@@ -12,12 +12,17 @@ FocusScope {
     readonly property int cols: Math.max(2, Math.ceil((avail + gap) / (Theme.coverMax + gap)))
     readonly property real coverW: Math.floor((avail - (cols - 1) * gap) / cols)
     readonly property real cellW: coverW + gap
-    readonly property real cellH: Math.round(coverW * Theme.coverRatio) + 71 + gap
     readonly property bool failed: Backend.state === Backend.Failed
     readonly property bool loading: !failed && !Backend.libraryLoaded
     readonly property int count: Backend.library.count
     readonly property bool libraryError: Backend.library.error !== ""
-    property alias grid: grid
+    property int current: 0              // ô đang giữ tiêu điểm bàn phím (chỉ số trong danh sách)
+    property alias list: list
+
+    function select(index) {
+        current = Math.max(0, Math.min(count - 1, index))
+        list.positionViewAtIndex(Math.floor(current / cols), ListView.Contain)
+    }
 
     ScreenHeader {
         id: header
@@ -27,8 +32,9 @@ FocusScope {
         subtitle: root.loading || root.failed || root.count === 0 ? "" : root.count + " cuốn"
     }
 
-    GridView {
-        id: grid
+    // Lưới ảo hoá theo HÀNG: mỗi delegate là một hàng N ô, cao bằng ô cao nhất của hàng (tên dài xuống dòng đủ, không cắt).
+    ListView {
+        id: list
         anchors.top: header.bottom
         anchors.topMargin: Theme.s16
         anchors.bottom: parent.bottom
@@ -37,67 +43,78 @@ FocusScope {
         visible: !root.loading && !root.failed && root.count > 0
         focus: true
         clip: true
-        model: Backend.library
-        cellWidth: root.cellW
-        cellHeight: root.cellH
-        leftMargin: Theme.margin
-        rightMargin: Theme.margin - root.gap
+        model: root.count > 0 ? Math.ceil(root.count / root.cols) : 0
         bottomMargin: Theme.s32
-        cacheBuffer: root.cellH            // một hàng mỗi phía: bìa đã giải mã chiếm RAM (cỡ ô x 4 byte), hàng thứ hai chỉ làm RAM nghỉ phình
+        cacheBuffer: 400
         boundsBehavior: Flickable.StopAtBounds
-        keyNavigationEnabled: true
-        highlightFollowsCurrentItem: false
+        keyNavigationEnabled: false
         reuseItems: true
-        currentIndex: 0
 
         delegate: Item {
-            id: cell
+            id: rowItem
             required property int index
-            required property string title
-            required property string subtitle
-            required property string coverKey
-            required property real progress
-            required property string source
-            width: root.cellW
-            height: root.cellH
-            BookCell {
-                title: cell.title
-                subtitle: cell.subtitle
-                coverKey: cell.coverKey
-                progress: cell.progress
-                source: cell.source
-                coverWidth: root.coverW
-                externalFocus: cell.GridView.isCurrentItem && grid.activeFocus
-                onClicked: {
-                    grid.currentIndex = cell.index
-                    grid.forceActiveFocus(Qt.MouseFocusReason)
-                    root.openBook(Backend.library.book(cell.index))
+            readonly property int first: index * root.cols
+            width: ListView.view.width
+            height: cells.childrenRect.height + root.gap
+            Item {
+                id: cells
+                x: Theme.margin
+                width: parent.width - 2 * Theme.margin
+                Repeater {
+                    model: Math.max(0, Math.min(root.cols, root.count - rowItem.first))
+                    BookCell {
+                        id: cell
+                        required property int index
+                        readonly property int at: rowItem.first + index
+                        readonly property var info: { Backend.library.revision; return Backend.library.book(at) }
+                        x: index * root.cellW
+                        coverWidth: root.coverW
+                        title: info.title || ""
+                        subtitle: info.subtitle || ""
+                        coverKey: info.coverKey || ""
+                        progress: info.progress || 0
+                        source: info.source || ""
+                        externalFocus: at === root.current && list.activeFocus
+                        onClicked: {
+                            root.current = at
+                            list.forceActiveFocus(Qt.MouseFocusReason)
+                            root.openBook(info)
+                        }
+                    }
                 }
             }
         }
-        Keys.onReturnPressed: root.openBook(Backend.library.book(currentIndex))
-        Keys.onEnterPressed: root.openBook(Backend.library.book(currentIndex))
+        Keys.onReturnPressed: root.openBook(Backend.library.book(root.current))
+        Keys.onEnterPressed: root.openBook(Backend.library.book(root.current))
         Keys.onPressed: (event) => {
-            if (event.key === Qt.Key_F5 || (event.key === Qt.Key_R && (event.modifiers & Qt.ControlModifier))) {
-                Backend.refreshLibrary()
-                event.accepted = true
-            } else if (event.key === Qt.Key_PageDown || event.key === Qt.Key_PageUp) {
-                const rows = Math.max(1, Math.floor(height / root.cellH) - 1)
-                const delta = rows * root.cols * (event.key === Qt.Key_PageDown ? 1 : -1)
-                currentIndex = Math.max(0, Math.min(count - 1, currentIndex + delta))
-                event.accepted = true
-            } else if (event.key === Qt.Key_Home || event.key === Qt.Key_End) {
-                currentIndex = event.key === Qt.Key_Home ? 0 : count - 1
-                event.accepted = true
+            const rows = Math.max(1, Math.floor(height / (Theme.coverMax * Theme.coverRatio)) - 1)
+            let handled = true
+            switch (event.key) {
+            case Qt.Key_Left: root.select(root.current - 1); break
+            case Qt.Key_Right: root.select(root.current + 1); break
+            case Qt.Key_Up: root.select(root.current - root.cols); break
+            case Qt.Key_Down: root.select(root.current + root.cols); break
+            case Qt.Key_PageUp: root.select(root.current - rows * root.cols); break
+            case Qt.Key_PageDown: root.select(root.current + rows * root.cols); break
+            case Qt.Key_Home: root.select(0); break
+            case Qt.Key_End: root.select(root.count - 1); break
+            case Qt.Key_F5: Backend.refreshLibrary(); break
+            case Qt.Key_R:
+                if (event.modifiers & Qt.ControlModifier) Backend.refreshLibrary()
+                else handled = false
+                break
+            default: handled = false
             }
+            event.accepted = handled
         }
-        SmoothWheel { flick: grid }
-        Scrollbar { target: grid }
+        SmoothWheel { flick: list }
+        Scrollbar { target: list }
     }
 
     // Đang tải: khung xám đúng hình nội dung, nhịp mờ 0,6 <-> 1 chu kỳ 1,6 s (DESIGN.md 2). Không vòng xoay.
     Item {
         id: skeleton
+        readonly property real skeletonCellH: Math.round(root.coverW * Theme.coverRatio) + 71 + root.gap
         anchors.top: header.bottom
         anchors.topMargin: Theme.s16
         anchors.bottom: parent.bottom
@@ -112,13 +129,13 @@ FocusScope {
             OpacityAnimator { target: skeleton; from: 0.6; to: 1; duration: 800; easing.type: Easing.InOutSine }
         }
         Repeater {
-            model: Math.max(0, root.cols * Math.ceil(skeleton.height / root.cellH))
+            model: Math.max(0, root.cols * Math.ceil(skeleton.height / skeleton.skeletonCellH))
             Item {
                 required property int index
                 x: Theme.margin + (index % root.cols) * root.cellW
-                y: Math.floor(index / root.cols) * root.cellH
+                y: Math.floor(index / root.cols) * skeleton.skeletonCellH
                 width: root.coverW
-                height: root.cellH
+                height: skeleton.skeletonCellH
                 Rectangle { width: parent.width; height: Math.round(root.coverW * Theme.coverRatio); radius: Theme.radiusCover; color: Theme.sunken }
                 Rectangle { y: Math.round(root.coverW * Theme.coverRatio) + 14; width: parent.width * 0.85; height: 12; radius: 4; color: Theme.sunken }
                 Rectangle { y: Math.round(root.coverW * Theme.coverRatio) + 34; width: parent.width * 0.5; height: 10; radius: 4; color: Theme.sunken }
@@ -156,6 +173,6 @@ FocusScope {
         }
     }
 
-    Component.onCompleted: grid.forceActiveFocus()
-    onVisibleChanged: if (visible) grid.forceActiveFocus()
+    Component.onCompleted: list.forceActiveFocus()
+    onVisibleChanged: if (visible) list.forceActiveFocus()
 }
