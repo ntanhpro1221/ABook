@@ -102,9 +102,15 @@ private fun RowLabel(label: String, hint: String?, modifier: Modifier = Modifier
         BasicText(label, style = Abook.type.bodyStrong)
         if (hint != null) {
             Spacer(Modifier.height(2.dp))
-            BasicText(hint, style = Abook.type.caption.copy(color = Abook.colors.text2))
+            RowHint(hint)
         }
     }
+}
+
+/** Dòng mô tả dưới tên một hàng (DESIGN.md §6: 14, `--fg-2` = bodySmall): MỘT kiểu cho mọi hàng và mọi dòng phụ dưới một tên - hàng nào cũng gọi hàm này, không tự chọn cỡ chữ; chỉ màu đổi được (lỗi). */
+@Composable
+fun RowHint(text: String, modifier: Modifier = Modifier, color: Color = Abook.colors.text2) {
+    BasicText(text, style = Abook.type.bodySmall.copy(color = color), modifier = modifier)
 }
 
 /** Hàng có tên bên trái, điều khiển / giá trị bên phải (canh giữa hàng). Cao tối thiểu 56. */
@@ -188,7 +194,7 @@ fun DisclosureRow(
     hintColor: Color = Abook.colors.text2,
 ) {
     ListItem(
-        title, modifier, onClick, tag, hint = summary?.takeIf { it.isNotEmpty() }, hintStyle = Abook.type.bodySmall, hintColor = hintColor,
+        title, modifier, onClick, tag, hint = summary?.takeIf { it.isNotEmpty() }, hintColor = hintColor,
         leading = icon, leadingWidth = IconSlot, leadingGap = IconGap, chevron = true, titleStyle = Abook.type.bodyStrong,
     )
 }
@@ -228,7 +234,7 @@ fun Modifier.onFirstLine(): Modifier = layout { measurable, constraints ->
 }
 
 /**
- * Hàng danh sách (DESIGN.md §6 "Hàng danh sách"): [leading] (biểu tượng) · tên (16, xuống dòng không cắt) + mô tả (12) · [trailing] hay mũi tên. Cả hai bên thẳng dòng
+ * Hàng danh sách (DESIGN.md §6 "Hàng danh sách"): [leading] (biểu tượng) · tên (16, xuống dòng không cắt) + mô tả (14, [RowHint]) · [trailing] hay mũi tên. Cả hai bên thẳng dòng
  * đầu của tên ([onFirstLine]); có `onClick` thì CẢ hàng là chỗ chạm. Hàng cao ít nhất 56, đệm trên dưới 16.
  */
 @Composable
@@ -239,7 +245,6 @@ fun ListItem(
     tag: String? = null,
     hint: String? = null,
     hintColor: Color = Abook.colors.text2,
-    hintStyle: TextStyle = Abook.type.caption,
     titleColor: Color = Abook.colors.text,
     titleStyle: TextStyle = Abook.type.body,
     leading: (@Composable () -> Unit)? = null,
@@ -264,7 +269,7 @@ fun ListItem(
                 BasicText(title, style = titleStyle.copy(color = titleColor), modifier = Modifier.testTag("row_title"))
                 if (hint != null) {
                     Spacer(Modifier.height(2.dp))
-                    BasicText(hint, style = hintStyle.copy(color = hintColor), modifier = Modifier.testTag("row_hint"))
+                    RowHint(hint, Modifier.testTag("row_hint"), hintColor)
                 }
             }
             if (trailing != null || chevron) {
@@ -324,7 +329,7 @@ fun QuoteSample(text: String, modifier: Modifier = Modifier) {
 /**
  * Một dòng menu (DESIGN.md §6 "Dòng menu"): trọn bề ngang bảng, biểu tượng đầu dòng, nhãn xuống dòng khi dài (không cắt); biểu tượng và nhãn "Sắp có"
  * cùng tâm với dòng chữ đầu. `soon`: việc chưa làm ở giao diện native - nhạt đi, nhãn "Sắp có" ở mép phải, không bấm được. `unavailable`: việc có rồi
- * nhưng cuốn này không làm được - cũng nhạt đi, không bấm được, KHÔNG có nhãn "Sắp có".
+ * nhưng cuốn này không làm được - cũng nhạt đi, không bấm được, KHÔNG có nhãn "Sắp có". `hint`: một dòng nhỏ dưới nhãn nói việc đang diễn ra ("Đang xuất · 27%").
  */
 @Composable
 fun MenuRow(
@@ -333,6 +338,7 @@ fun MenuRow(
     soon: Boolean = false,
     unavailable: Boolean = false,
     danger: Boolean = false,
+    hint: String? = null,
     onClick: () -> Unit = {},
     icon: @Composable (Color) -> Unit,
 ) {
@@ -352,7 +358,10 @@ fun MenuRow(
     ) {
         Box(Modifier.size(Dim.s24, FirstLine).testTag("${tag}_icon"), contentAlignment = Alignment.CenterStart) { icon(ink) }
         Spacer(Modifier.width(Dim.s12))
-        BasicText(label, style = Abook.type.body.copy(color = if (inert) colors.text2 else ink), modifier = Modifier.weight(1f))
+        Column(Modifier.weight(1f)) {
+            BasicText(label, style = Abook.type.body.copy(color = if (inert) colors.text2 else ink))
+            if (hint != null) RowHint(hint, Modifier.padding(top = 2.dp).testTag("${tag}_hint"), colors.text2)
+        }
         if (soon) {
             Spacer(Modifier.width(Dim.s12))
             Box(Modifier.height(FirstLine), contentAlignment = Alignment.CenterStart) { BasicText("Sắp có", style = Abook.type.caption) }

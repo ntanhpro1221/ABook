@@ -18,6 +18,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import vn.abook.player.ui.components.BookCover
 import vn.abook.player.ui.components.PrimaryButton
+import vn.abook.player.ui.components.RowHint
 import vn.abook.player.ui.components.pressable
 import vn.abook.player.ui.data.CoverLoader
 import vn.abook.player.ui.data.ListenBook
@@ -31,7 +32,7 @@ import vn.abook.player.ui.theme.Dim
 fun SeriesSheet(tile: ShelfTile.Series, covers: CoverLoader, onOpen: (ListenBook) -> Unit, dismiss: () -> Unit) {
     Column(Modifier.fillMaxWidth().testTag("series_sheet")) {
         BasicText(tile.label, style = Abook.type.sectionTitle)
-        BasicText("${tile.books.size} ${tile.unit}", style = Abook.type.bodySmall)
+        RowHint("${tile.books.size} ${tile.unit}")
         Spacer(Modifier.height(Dim.s12))
         Column(Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState())) {
             for (book in tile.books) {
@@ -44,7 +45,7 @@ fun SeriesSheet(tile: ShelfTile.Series, covers: CoverLoader, onOpen: (ListenBook
                     Column(Modifier.weight(1f)) {
                         BasicText(book.title, style = Abook.type.body)
                         val status = ListenLogic.progressText(book)
-                        BasicText(if (book.remote != null) "$status · ${ListenLogic.remotePlace(book)}" else status, style = Abook.type.bodySmall)
+                        RowHint(if (book.remote != null) "$status · ${ListenLogic.remotePlace(book)}" else status)
                     }
                 }
             }
