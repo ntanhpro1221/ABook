@@ -18,6 +18,8 @@ Ghép theo màn (bảng MÀN dưới): mỗi màn là vài file QML và vài fil
 """
 from __future__ import annotations
 
+import fnmatch
+import functools
 import importlib.util
 import re
 import sys
@@ -41,6 +43,8 @@ def _base():
 
 
 up = _base()
+# key_loose là hàm thuần, mục a gọi nó cho mỗi cặp (Qt x web): nhớ kết quả, không thì hơn 147 file QML mất vài phút.
+up.key_loose = functools.lru_cache(maxsize=None)(up.key_loose)
 Item, Pair, Scan = up.Item, up.Pair, up.Scan
 
 WEB = up.WEB
@@ -73,14 +77,29 @@ SCREENS: list[tuple[str, tuple[str, ...], tuple[tuple[str, tuple[str, ...] | Non
      (("listen/ReadAlongText.tsx", None), ("listen/PlayerViews.tsx", ("ReadAlong",)))),
     ("Trang sách", ("BookPage.qml",),
      (("listen/BookScreen.tsx", None), ("listen/labels.ts", None))),
-    ("Cài đặt", ("SettingsScreen.qml",),
-     (("desktop/SettingsScreen.tsx", None), ("shared/SettingsNav.tsx", None))),
+    ("Cài đặt", ("SettingsScreen.qml", "SettingsBody.qml", "Settings*.qml", "Voice*.qml", "VoiceLogic.js", "ProviderKey.qml",
+                 "Listen*.qml", "Sleep*.qml", "Look*.qml", "Advanced*.qml", "MyMusic*", "NativeFolders.qml", "ThirdPartyText.qml",
+                 "Devices*", "PhoneSync*.qml", "PhoneDiagnostics.qml", "OtherComputers*.qml", "StudioSettings.qml", "StudioRows.qml",
+                 "BookTemplates.qml", "SharedReadingsSettings.qml", "NewBookDefaults.qml", "SettingRow.qml", "SettingChoices.qml",
+                 "SectionBlock.qml", "DisclosureRow.qml", "MoreInfo.qml", "ChoiceRow.qml", "Select.qml"),
+     (("desktop/SettingsScreen.tsx", None), ("shared/SettingsNav.tsx", None), ("shared/DisclosureRow.tsx", None),
+      ("shared/settingsSummary.ts", None), ("desktop/SleepSchedule.tsx", None), ("listen/VoiceSettings.tsx", None),
+      ("listen/VieneuModuleCard.tsx", None), ("listen/VoiceSpeedSetting.tsx", None), ("listen/MyMusic.tsx", None),
+      ("listen/Shortcuts.tsx", None), ("listen/ReadAloudStorage.tsx", None), ("desktop/OwnDiagnostics.tsx", None),
+      ("desktop/updateCheck.ts", None), ("shared/ThirdPartyList.tsx", None), ("desktop/PhoneSync.tsx", None),
+      ("desktop/OtherComputers.tsx", None), ("desktop/BookTemplates.tsx", None), ("studio/StudioSetup.tsx", None),
+      ("studio/sharedReadings.tsx", None))),
+    ("Thêm sách", ("AddBook.qml", "Import*"),
+     (("listen/AddBook.tsx", None), ("listen/importQueue.ts", None), ("listen/textImport.ts", None))),
+    ("Sửa sách", ("EditBook*", "CoverSearch.qml", "BookMusicSettings.qml"),
+     (("listen/EditBook.tsx", None), ("shared/CoverSearch.tsx", None))),
     ("Thanh bên", ("Sidebar.qml", "NavItem.qml", "ConnectionChip.qml", "ConnectionPopover.qml", "StudioScreen.qml"),
      (("desktop/Shell.tsx", ("Brand", "NavItem", "TabItem", "Producing", "UpdateNotice", "DesktopSidebar")),)),
     ("Thanh tiêu đề", ("Main.qml", "TitleBar.qml", "CaptionButton.qml", "CaptionGlyph.qml"),
      (("desktop/Shell.tsx", ("TITLES", "Shell")), ("shared/title.ts", None))),
     ("Chung", ("Button.qml", "IconButton.qml", "MenuRow.qml", "ScreenHeader.qml", "ScreenStack.qml", "Interactive.qml", "Icon.qml",
-               "Scrollbar.qml", "SmoothWheel.qml", "Nav.qml", "ClockUser.qml"),
+               "Scrollbar.qml", "SmoothWheel.qml", "Nav.qml", "ClockUser.qml", "Modal.qml", "Api.qml", "Collapse.qml",
+               "FormField.qml", "FormLabel.qml", "HintText.qml", "SettingsItem.qml", "Switch.qml", "ScrollEdges.qml"),
      (("shared/ScreenHeader.tsx", None), ("shared/ui.tsx", None))),
 ]
 
@@ -326,6 +345,7 @@ RADIUS_OK = re.compile(
     r"|(?:width|height|size|implicitWidth|implicitHeight)\s*/\s*2"  # tròn
     r"|(?:parent|root|\w+)\.(?:radius|ringRadius)"        # lấy lại bo của khung chứa
     r"|(?:Theme\.radius(?:Control|Cover|Sheet)|(?:root|parent)\.(?:radius|ringRadius))\s*\+\s*(?:\d+|root\.ringMargin)"  # vòng đồng tâm ngoài
+    r"|[\w.]+\s*===?\s*\"\w+\"\s*\?\s*Theme\.radius(?:Control|Cover|Sheet)\s*:\s*Theme\.radius(?:Control|Cover|Sheet)"  # chọn giữa hai token
     r")$")
 
 
@@ -447,8 +467,9 @@ def web_scan() -> Scan:
     scan = Scan()
     mapped = {f"ui/src/{file}" for _, _, sources in SCREENS for file, _ in sources}
     back_icons = list(dict.fromkeys(up.lucide_imports((WEB / "shared" / "ScreenHeader.tsx").read_bytes().decode("utf-8")).values()))
-    for d in WEB_DIRS:
-        for path in sorted((WEB / d).rglob("*")):
+    extra = sorted({WEB / file for _, _, sources in SCREENS for file, _ in sources if file.split("/")[0] not in WEB_DIRS})
+    for d in WEB_DIRS + ("",):
+        for path in (sorted((WEB / d).rglob("*")) if d else extra):
             if path.suffix not in (".ts", ".tsx") or ".test." in path.name or path.name.endswith(".d.ts"):
                 continue
             up.web_scan_file(path, scan)
@@ -520,8 +541,11 @@ def web_in_screen(item, screen: str) -> bool:
 
 def qt_screen(file: str) -> str:
     name = Path(file).name
-    for screen, files, _ in SCREENS:
+    for screen, files, _ in SCREENS:   # tên trùng khớp trước, rồi mẫu (Settings*.qml): file QML của một màn đặt tên theo tiền tố
         if name in files:
+            return screen
+    for screen, files, _ in SCREENS:
+        if any(fnmatch.fnmatchcase(name, f) for f in files if "*" in f):
             return screen
     return "Khác"
 

@@ -24,7 +24,7 @@ Interactive {
         anchors.centerIn: parent
         width: 16
         height: 16
-        radius: Theme.s4
+        radius: 0       // bo góc chỉ theo token (8 / 12 / 20): ô 16 px bo 8 thành hình tròn như nút radio, nên để vuông
         color: root.checked ? Theme.accent : "transparent"
         border.width: root.checked ? 0 : 1
         border.color: Theme.controlLine
