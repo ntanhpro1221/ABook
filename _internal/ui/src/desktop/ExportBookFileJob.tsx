@@ -265,13 +265,21 @@ export function ExportJobHost({ kind }: { kind: ExportKind }) {
   const track = useCallback(
     (id: string, chapters: number) => {
       if (timers.current.has(id)) return;
+      // Máy chủ trả chậm hơn nhịp hỏi: không hỏi chồng. Hai lần hỏi chồng nhau thì câu "đang chạy" về sau câu "xong" dựng lại thông báo
+      // tiến độ (có Huỷ, không tự tắt) mà không còn nhịp nào hỏi tiếp để sửa.
+      let asking = false;
       const tick = async () => {
+        if (asking) return;
+        asking = true;
         let job: ExportJob;
         try {
           job = await api<ExportJob>(jobUrl(kind, id));
         } catch {
           return; // một lần hỏi hụt (mạng chớp) không phải là việc hỏng - hỏi lại ở nhịp sau
+        } finally {
+          asking = false;
         }
+        if (!timers.current.has(id)) return; // đã thôi theo (xong ở lần hỏi khác, host gỡ)
         if (!show(id, job, chapters, false)) {
           window.clearInterval(timers.current.get(id));
           timers.current.delete(id);
@@ -341,7 +349,10 @@ export function ExportJobHost({ kind }: { kind: ExportKind }) {
 
   useEffect(() => {
     const open = timers.current;
-    return () => open.forEach((timer) => window.clearInterval(timer));
+    return () => {
+      open.forEach((timer) => window.clearInterval(timer));
+      open.clear();
+    };
   }, []);
   return null;
 }

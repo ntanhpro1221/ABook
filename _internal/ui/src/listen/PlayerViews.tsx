@@ -59,7 +59,7 @@ import { genderLabel, groupedVoices, groupLabel, voiceSections } from "./voiceGr
 import { revealVoiceSettings } from "./voiceSettingsLink";
 import { VieneuDownload } from "./VieneuDownload";
 import { chooseVoice, chosenVoice, isNoOfflineVoice, isVoiceStuck, localVoiceFor, noOfflineMessage, onlineNotice, resolveVoice, unusableVoiceMessage, voiceCaption } from "./readAloudVoice";
-import { bookProgressText, caughtUpDetail, nextChapterLabel, SHORTCUTS, withShortcut, otherBookLine, PREPARING_VOICE, PREPARING_VOICE_AFTER_MS, chapterSubline, toggleLabel } from "./labels";
+import { bookHeardBase, bookProgressText, caughtUpDetail, nextChapterLabel, SHORTCUTS, withShortcut, otherBookLine, PREPARING_VOICE, PREPARING_VOICE_AFTER_MS, chapterSubline, toggleLabel } from "./labels";
 import { useAfter } from "@/shared/useAfter";
 import { useBackLayer } from "@/shared/backStack";
 import { MOTION, usePresence, useListPresence, withViewTransition } from "@/shared/motion";
@@ -1833,20 +1833,9 @@ function initialPanel(): Panel {
 function BookProgressLine({ className }: { className?: string }) {
   const { queue, track, rate, atEnd } = usePlayer();
   const tens = useClock((time) => Math.floor(time / 10));
-  const { before, total } = useMemo(() => {
-    let heardBefore = 0;
-    let sum = 0;
-    let reached = false;
-    for (const chapter of queue) {
-      if (!chapter.available) continue;
-      if (chapter.id === track?.chapterId) reached = true;
-      else if (!reached) heardBefore += chapter.duration;
-      sum += chapter.duration;
-    }
-    return { before: heardBefore, total: sum };
-  }, [queue, track?.chapterId]);
+  const { before, total, inside } = useMemo(() => bookHeardBase(queue, track?.chapterId), [queue, track?.chapterId]);
   const shown = Boolean(track) && total > 0;
-  const heard = Math.min(total, before + tens * 10);
+  const heard = Math.min(total, before + (inside ? tens * 10 : 0));
   // Sách chưa thu xong: "Cả cuốn 99%" đọc như sắp hết truyện (soát UX 29-09) - đó là phần đã có.
   const whole = queue.every((chapter) => chapter.available);
   const finished = atEnd === "finished";

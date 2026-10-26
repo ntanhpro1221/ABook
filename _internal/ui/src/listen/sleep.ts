@@ -71,15 +71,17 @@ export function sleepButtonLabel(mode: SleepMode, now: number): string {
   if (mode.kind === "chapter") return "Hết chương";
   const left = sleepLeftMs(mode, now);
   if (left === null) return "";
-  return left < 60_000 ? `${Math.max(1, Math.ceil(left / 1000))} giây` : `${Math.ceil(left / 60_000)} phút`;
+  // Theo số giây làm tròn lên (như đồng hồ trong bảng): còn 59,5 giây là "1 phút", không phải "60 giây".
+  const seconds = Math.ceil(left / 1000);
+  return seconds < 60 ? `${Math.max(1, seconds)} giây` : `${Math.ceil(left / 60_000)} phút`;
 }
 
 export function sleepSpoken(mode: SleepMode, now: number): string {
   if (mode.kind === "chapter") return "Hẹn giờ ngủ: dừng khi hết chương này";
   const left = sleepLeftMs(mode, now);
   if (left === null) return "Hẹn giờ ngủ";
-  const minutes = Math.ceil(left / 60_000);
-  return left < 60_000 ? `Hẹn giờ ngủ: còn ${Math.ceil(left / 1000)} giây` : `Hẹn giờ ngủ: còn ${minutes} phút`;
+  const seconds = Math.ceil(left / 1000);
+  return seconds < 60 ? `Hẹn giờ ngủ: còn ${seconds} giây` : `Hẹn giờ ngủ: còn ${Math.ceil(left / 60_000)} phút`;
 }
 
 /**

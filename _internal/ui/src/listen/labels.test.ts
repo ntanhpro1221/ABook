@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bookProgressText, chapterSubline, caughtUpDetail, caughtUpLine, chapterOpenProblem, retryChapterText, keepTogether, nextChapterLabel, otherBookLine, partialBookLine, PREPARING_VOICE, PREPARING_VOICE_AFTER_MS, primaryListenLabel, readerHint, resumeWhere, tapVerb, textBookLine, toggleLabel, unquoted } from "./labels";
+import { bookHeardBase, bookProgressText, chapterSubline, caughtUpDetail, caughtUpLine, chapterOpenProblem, retryChapterText, keepTogether, nextChapterLabel, otherBookLine, partialBookLine, PREPARING_VOICE, PREPARING_VOICE_AFTER_MS, primaryListenLabel, readerHint, resumeWhere, tapVerb, textBookLine, toggleLabel, unquoted } from "./labels";
 
 const fresh = { playingHere: false, finished: false, point: { title: "Chương 1", at: 0 }, heard: 0, textOnly: false };
 
@@ -37,6 +37,21 @@ describe("dòng tiến độ ở màn Đang nghe", () => {
 
   it("hết sách: nói đã hết, không để một con số như 98%", () => {
     expect(bookProgressText({ ...base, whole: true, heard: 3234, finished: true })).toBe("Đã nghe hết cả cuốn");
+  });
+});
+
+describe("phần đã nghe của cả cuốn", () => {
+  const queue = [
+    { id: 1, available: true, duration: 600 },
+    { id: 2, available: false, duration: 0 }, // chương chỉ có chữ, giọng máy đọc
+    { id: 3, available: true, duration: 600 },
+  ];
+  it("đang nghe chương chỉ có chữ ở giữa sách: chỉ tính các chương TRƯỚC nó, không phải 100%", () => {
+    expect(bookHeardBase(queue, 2)).toEqual({ before: 600, total: 1200, inside: false });
+  });
+  it("chương có audio: các chương trước nó", () => {
+    expect(bookHeardBase(queue, 1)).toEqual({ before: 0, total: 1200, inside: true });
+    expect(bookHeardBase(queue, 3)).toEqual({ before: 600, total: 1200, inside: true });
   });
 });
 
