@@ -6,6 +6,7 @@
 #include <QEventLoop>
 #include <QJsonObject>
 #include <QPointer>
+#include <QRegularExpression>
 #include <QUuid>
 
 #include <algorithm>
@@ -252,6 +253,7 @@ void Player::setPlaying(bool playing) {
     if (m_playing == playing)
         return;
     m_playing = playing;
+    m_scheduleChecked = false; // phụ thuộc `playing` của useEffect lịch đêm: bắt đầu nghe lại thì xét lại
     changed();
     emit playingChanged();
     m_clock.restart();
@@ -325,7 +327,17 @@ void Player::configure(const QVariantMap &p) {
     m_safetyHours = std::clamp(p.value(QStringLiteral("safetyStopHours"), 2).toInt(), 0, 3);
     m_fadeSeconds = std::clamp(p.value(QStringLiteral("sleepFadeSeconds"), 30).toInt(), 10, 60);
     m_extendMinutes = std::clamp(p.value(QStringLiteral("sleepExtendMinutes"), 10).toInt(), 5, 15);
-    m_schedule = p.value(QStringLiteral("sleepSchedule")).toMap();
+    // Lịch sai cấu trúc coi như chưa có lịch (cleanSleepSchedule của listen/sleep.ts): "HH:mm" hai đầu, số phút trong các mức giao diện đưa ra.
+    const QVariantMap given = p.value(QStringLiteral("sleepSchedule")).toMap();
+    static const QRegularExpression clock(QStringLiteral("^([01]\\d|2[0-3]):[0-5]\\d$"));
+    const int minutes = given.value(QStringLiteral("minutes")).toInt();
+    const bool fits = clock.match(given.value(QStringLiteral("from")).toString()).hasMatch()
+        && clock.match(given.value(QStringLiteral("to")).toString()).hasMatch()
+        && (minutes == 15 || minutes == 30 || minutes == 45 || minutes == 60);
+    const QVariantMap schedule = fits ? given : QVariantMap();
+    if (schedule != m_schedule)
+        m_scheduleChecked = false; // đổi lịch = chạy lại kiểm tra như phụ thuộc [options.schedule] của useEffect bản web
+    m_schedule = schedule;
 }
 QString Player::scheduleWindow() const {
     const QTime from = QTime::fromString(m_schedule.value(QStringLiteral("from")).toString(), QStringLiteral("HH:mm"));
@@ -335,8 +347,9 @@ QString Player::scheduleWindow() const {
     if (!from.isValid() || !to.isValid() || from == to) return {};
     const bool overnight = from > to;
     if (!(overnight ? current >= from || current < to : current >= from && current < to)) return {};
+    // Khoá của đêm ấy = ngày bắt đầu khung (start.toDateString() của bản web): đổi giờ lịch giữa đêm không bật lại hẹn giờ đã tắt.
     const QDate start = overnight && current < to ? now.date().addDays(-1) : now.date();
-    return start.toString(Qt::ISODate) + from.toString(QStringLiteral("HH:mm")) + to.toString(QStringLiteral("HH:mm"));
+    return start.toString(Qt::ISODate);
 }
 
 // ---- nạp sách ----
@@ -828,6 +841,7 @@ void Player::resetSleepMark() {
 }
 
 void Player::applySleepState(Sleep::Kind kind, int minutes, double leftMs) {
+    m_scheduleChecked = false; // phụ thuộc `sleep.kind` của useEffect lịch đêm
     m_sleep.kind = kind;
     m_sleep.minutes = minutes;
     m_sleep.leftMs = leftMs;
@@ -1152,16 +1166,22 @@ void Player::tick() {
         m_lastFlush = now;
         m_outbox->flush();
     }
+    // Lịch đêm chỉ xét lúc BẮT ĐẦU nghe (đang phát + hẹn giờ tắt): useEffect [schedule, playing, sleep.kind] của bản web, không xét lại mỗi nhịp -
+    // đang nghe qua giờ bắt đầu khung thì không tự hẹn giữa chừng.
+    const bool listening = m_loaded && m_playing && m_sleep.kind == Sleep::Off;
+    if (!listening)
+        m_scheduleChecked = false;
     if (!m_loaded) {
         updateTicker();
         return;
     }
     if (!m_playing)
         return;
-    const QString night = scheduleWindow();
-    if (m_sleep.kind == Sleep::Off && !night.isEmpty() && night != m_scheduleOffFor) {
-        const int minutes = m_schedule.value(QStringLiteral("minutes")).toInt();
-        if (minutes == 15 || minutes == 30 || minutes == 45 || minutes == 60) {
+    if (listening && !m_scheduleChecked) {
+        m_scheduleChecked = true;
+        const QString night = scheduleWindow();
+        if (!night.isEmpty() && night != m_scheduleOffFor) {
+            const int minutes = m_schedule.value(QStringLiteral("minutes")).toInt();
             setSleep(QStringLiteral("minutes"), minutes);
             setNotice(QStringLiteral("Lịch đêm %1-%2: đã tự hẹn giờ %3 phút")
                 .arg(m_schedule.value(QStringLiteral("from")).toString(), m_schedule.value(QStringLiteral("to")).toString()).arg(minutes));
@@ -1172,8 +1192,9 @@ void Player::tick() {
         tickSleep(now);
     } else if (m_safetyHours > 0 && now - m_lastActivity >= qint64(m_safetyHours) * 3'600'000) {
         // Lưới an toàn: phát liên tục quá lâu mà không ai chạm máy (ngủ quên, quên hẹn giờ) thì tự hẹn 1 phút - nhỏ dần rồi dừng như hẹn giờ thường.
+        const int lastMinutes = m_lastSleepMinutes; // lưới an toàn không đổi "lần hẹn gần nhất" của nút hẹn giờ (bản web không gọi setLastSleepMinutes)
         setSleep(QStringLiteral("minutes"), 1);
-        m_lastSleepMinutes = 30;
+        m_lastSleepMinutes = lastMinutes;
         setNotice(QStringLiteral("Không thấy ai chạm máy suốt %1 giờ - sẽ tắt sau 1 phút").arg(m_safetyHours), QStringLiteral("Vẫn đang nghe"), QStringLiteral("stay"));
     }
 }
