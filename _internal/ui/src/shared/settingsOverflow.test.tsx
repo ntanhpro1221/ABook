@@ -87,7 +87,7 @@ describe("Cài đặt trên điện thoại: không tràn ngang", () => {
 });
 
 describe("Nhạc của tôi (cả hai máy)", () => {
-  it("nút Nhập nhạc của tôi… xuống dòng", () => {
-    expectWraps(opening(render(<MyMusicSection />), "button", "Nhập nhạc của tôi…"));
+  it("nút Thêm nhạc của bạn xuống dòng", () => {
+    expectWraps(opening(render(<MyMusicSection />), "button", "Thêm nhạc của bạn"));
   });
 });

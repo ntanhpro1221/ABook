@@ -33,6 +33,14 @@ class ExportLive(val kind: String) {
         notes[bookId] = JSONObject(fields.toString()).put("run", run)
     }
 
+    /** Người nghe thêm (giao diện native không có plugin): cùng tin với `events` của từng kiểu xuất, mỗi người nghe tự gỡ bằng hàm trả về. */
+    private val listeners = java.util.concurrent.CopyOnWriteArrayList<(JSONObject) -> Unit>()
+
+    fun listen(listener: (JSONObject) -> Unit): () -> Unit {
+        listeners.add(listener)
+        return { listeners.remove(listener) }
+    }
+
     fun emit(event: JSONObject) {
         val book = event.optString("bookId")
         val run = event.optString("run")
@@ -44,6 +52,8 @@ class ExportLive(val kind: String) {
         } else if (notes[book]?.optString("run").let { it == null || it == run }) {
             last[book] = event
         }
+        // Người nghe thấy tin SAU khi bảng trạng thái đã đổi: hỏi lại [ExportJobs.running] trong lúc xử lý tin thì thấy đúng.
+        for (listener in listeners) runCatching { listener(event) }
     }
 
     /** Các cuốn đang có lượt chạy. */
