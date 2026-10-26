@@ -127,6 +127,7 @@ interface PlaybackCore {
  * `coverOf`: bìa của một cuốn (đọc đĩa - chạy ở `io`); `planOf`: chỗ nghe tiếp + hàng chương của một cuốn (đọc Store - chạy ở `io`);
  * `lastPlan`: như `planOf` cho cuốn nghe gần nhất (null: chưa nghe cuốn nào) - cuốn ấy được nạp sẵn ở trạng thái dừng khi mở app, để thanh phát nhỏ
  * là MỘT cửa "Đang nghe" duy nhất (không có hàng "Đang nghe" thứ hai ở Thư viện).
+ * `planAt`: như `planOf` nhưng bắt đầu ở một chương + giây cho trước (trang sách: chạm một chương, "Từ đầu", kết quả tìm).
  */
 class PlayerRepo(
     private val core: PlaybackCore,
@@ -135,6 +136,7 @@ class PlayerRepo(
     private val coverOf: (String) -> CoverRef?,
     private val planOf: (String) -> LoadRequest?,
     private val lastPlan: () -> LoadRequest? = { null },
+    private val planAt: (String, Int, Double) -> LoadRequest? = { _, _, _ -> null },
 ) {
     private val flow = MutableStateFlow(PlayerState.Empty)
     val state: StateFlow<PlayerState> get() = flow
@@ -212,6 +214,11 @@ class PlayerRepo(
     fun setRate(rate: Double) = core.setRate(rate)
     fun jumpTo(chapterId: Int, seconds: Double) = core.jumpTo(chapterId, seconds)
 
+    /** Nút chính của trang sách: cuốn đang ở trình phát thì phát/dừng, không thì nạp ở chỗ nghe tiếp và phát. */
+    fun togglePlay(bookId: String) {
+        if (flow.value.bookId == bookId) core.toggle() else playBook(bookId)
+    }
+
     /** Chạm giữ bìa: phát cuốn ngay. Đang ở trình phát thì phát tiếp (đã phát rồi thì để yên), không thì nạp ở chỗ nghe tiếp. */
     fun playNow(bookId: String) {
         val current = flow.value
@@ -219,6 +226,21 @@ class PlayerRepo(
             if (!current.playing) core.play()
         } else {
             playBook(bookId)
+        }
+    }
+
+    /**
+     * Phát một chương từ giây `seconds` (trang sách). Cuốn đang ở trình phát thì nhảy tới đó như mọi cú nhảy khác (trình phát nhớ chỗ cũ); không thì nạp cuốn
+     * bắt đầu ở đó và phát.
+     */
+    fun playChapter(bookId: String, chapterId: Int, seconds: Double) {
+        if (flow.value.bookId == bookId) {
+            core.jumpTo(chapterId, seconds)
+            return
+        }
+        scope.launch {
+            val request = withContext(io) { planAt(bookId, chapterId, seconds) } ?: return@launch
+            core.load(request)
         }
     }
 

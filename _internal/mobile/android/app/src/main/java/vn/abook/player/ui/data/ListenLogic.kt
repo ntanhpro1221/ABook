@@ -198,6 +198,14 @@ object ListenLogic {
     fun knownDuration(state: ListenState, chapter: ChapterInfo): Double =
         if (chapter.duration > 0) chapter.duration else (state.chapters[chapter.id]?.duration ?: 0.0)
 
+    /** Phần đã nghe của một chương, 0..1 (model.ts `chapterHeard`): đã đánh dấu xong = 1; độ dài chưa biết thì 0. */
+    fun chapterHeard(state: ListenState, chapter: ChapterInfo): Float {
+        val record = state.chapters[chapter.id] ?: return 0f
+        if (record.done) return 1f
+        val length = knownDuration(state, chapter)
+        return if (length > 0) minOf(1.0, record.heard / length).toFloat() else 0f
+    }
+
     /** Giây nghe tiếp trong một chương khi vào nó không qua chỗ nghe cuối: chỗ xa nhất đã nghe nếu chương chưa xong và chưa gần hết. */
     private fun chapterResumeAt(state: ListenState, chapter: ChapterInfo): Double {
         val record = state.chapters[chapter.id]
