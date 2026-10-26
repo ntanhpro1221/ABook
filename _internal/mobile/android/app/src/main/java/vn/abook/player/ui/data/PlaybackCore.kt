@@ -10,6 +10,8 @@ import com.google.common.util.concurrent.MoreExecutors
 import org.json.JSONObject
 import vn.abook.player.Playback
 import vn.abook.player.PlaybackService
+import vn.abook.player.SleepTimer
+import vn.abook.player.readaloud.ReadAloud
 
 /**
  * Lõi phát thật cho giao diện native: chuyển lệnh xuống [Playback] (mọi lệnh ExoPlayer chạy ở luồng chính) sau khi bảo đảm dịch vụ phát đã chạy -
@@ -38,6 +40,7 @@ class AndroidPlaybackCore(context: Context) : PlaybackCore {
     override fun snapshot(): JSONObject = Playback.state()
     override fun play() = withService { Playback.play() }
     override fun pause() = withService { Playback.pause() }
+    override fun close() = Playback.onMain { Playback.closeBook() }
     override fun toggle() = withService { Playback.toggle() }
     override fun skip(deltaSeconds: Double) = withService { Playback.skip(deltaSeconds) }
     override fun seekTo(seconds: Double) = withService { Playback.seekTo(seconds) }
@@ -45,7 +48,22 @@ class AndroidPlaybackCore(context: Context) : PlaybackCore {
     override fun previous() = withService { Playback.previous() }
     override fun setRate(rate: Double) = withService { Playback.setRate(rate) }
     override fun jumpTo(chapterId: Int, seconds: Double) = withService { Playback.jumpTo(chapterId, seconds) }
+    override fun positionMs(): Long = Playback.positionMs
+    override fun chapters(): List<Playback.Chapter> = Playback.chapters
+    override fun setSleep(mode: String, minutes: Int) = withService {
+        when (mode) {
+            "minutes" -> SleepTimer.setMinutes(minutes)
+            "chapter" -> SleepTimer.setEndOfChapter()
+            else -> SleepTimer.cancel()
+        }
+    }
+
+    override fun voiceId(): String = ReadAloud.voiceId
+    override fun setVoice(voiceId: String) = withService { ReadAloud.chooseFor(Playback.bookId, voiceId, Playback.recordId) }
     override fun load(request: LoadRequest) = withService {
-        with(request) { Playback.load(id, title, narrator, chapters, startChapterId, startSeconds, rate) }
+        // Nạp để khôi phục lúc mở app: dịch vụ vừa bật xong mà đã có cuốn (widget, tai nghe, người nghe bấm phát cuốn khác) thì không đè.
+        if (!request.restore || Playback.bookId.isEmpty()) {
+            with(request) { Playback.load(id, title, narrator, chapters, startChapterId, startSeconds, rate, autoplay) }
+        }
     }
 }

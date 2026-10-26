@@ -328,8 +328,26 @@ object LocalStudio {
         return JSONObject().put("skip", BookEdits.setSkipLine(dir, ids.map { (it as Number).toLong() }, line, body.opt("skip") != false))
     }
 
+    /** GET /music của giao diện native (ui/music): cùng lời đáp với đường của WebView, không qua chuỗi đường dẫn. */
+    fun bookMusic(id: String): JSONObject = synchronized(lock) {
+        val dir = editable(id)
+        withAutoPlaylist(dir, BookEdits.musicView(BookEdits.rawBook(dir), BookEdits.load(dir)))
+    }
+
+    /** PUT /music của giao diện native; lỗi sửa ném [BookEdits.EditsError] (câu cho người nghe). */
+    fun setBookMusic(id: String, body: JSONObject): JSONObject = synchronized(lock) { music(editable(id), body) }
+
+    /** "Đổi bài" của một đoạn nhạc gắn sẵn (giao diện native): như GET /music/scenes/<khoá>/alternatives - các bài trong "Nhạc của tôi" trừ bài đang ở đoạn ấy. */
+    fun musicAlternatives(id: String, key: String): JSONObject = synchronized(lock) {
+        try {
+            alternatives(editable(id), key) as JSONObject
+        } catch (error: Api) {
+            throw BookEdits.EditsError(error.message ?: "Không thấy đoạn nhạc này trong sách.")
+        }
+    }
+
     /** PUT /music {enabled?, levelDb?, silence?, pins?, playlist?}: sách đã đóng gói chỉ chỉnh được năm thứ ấy (playlist: mã, "mine", "off" = tắt, null = để máy chọn). */
-    private fun music(dir: java.io.File, body: JSONObject): Any? {
+    private fun music(dir: java.io.File, body: JSONObject): JSONObject {
         if (body.keys().asSequence().any { it !in EDITS_ONLY_KEYS }) {
             throw BookEdits.EditsError("Sách đóng gói chỉ đổi được bật/tắt, mức nhạc, đoạn im, bài và danh sách nhạc.")
         }

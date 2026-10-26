@@ -222,30 +222,6 @@ class ListenLogicTest {
         assertEquals(0.25f, ListenLogic.textBookProgress(ListenState(chapters = mapOf(1 to ChapterRecord(900.0, false, 400.0))), text4).fraction, 1e-6f)
     }
 
-    // ---- listeningBook ----
-
-    private val shelf = listOf(
-        book("a", last = Last(1, 5.0, 100.0)), book("b", last = Last(1, 5.0, 300.0)), book("c"), book("d", last = Last(1, 5.0, 900.0), finished = true),
-    )
-
-    @Test
-    fun `listening book is the most recently heard unfinished one`() {
-        assertEquals("b", ListenLogic.listeningBook(shelf, null)?.id)
-        assertNull(ListenLogic.listeningBook(listOf(book("c")), null))
-    }
-
-    @Test
-    fun `listening book follows the book in the player before the library knows its spot`() {
-        assertEquals("c", ListenLogic.listeningBook(shelf, "c")?.id)
-        assertEquals("a", ListenLogic.listeningBook(shelf, "a")?.id)
-    }
-
-    @Test
-    fun `a playing book that is finished or not on the shelf is ignored`() {
-        assertEquals("b", ListenLogic.listeningBook(shelf, "d")?.id)
-        assertEquals("b", ListenLogic.listeningBook(shelf, "zzz")?.id)
-    }
-
     // ---- tìm / sách cùng tên ----
 
     @Test

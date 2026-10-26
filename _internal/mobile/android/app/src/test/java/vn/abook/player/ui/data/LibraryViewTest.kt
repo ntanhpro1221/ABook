@@ -1,7 +1,6 @@
 package vn.abook.player.ui.data
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -99,26 +98,19 @@ class LibraryViewTest {
 
     @Test
     fun `filter keeps only that state and the count is of the whole shelf`() {
-        val view = Library.view(shelf, LibraryFilter.Listening, "", LibrarySort.Recent, null)
+        val view = Library.view(shelf, LibraryFilter.Listening, "", LibrarySort.Recent)
         assertEquals(listOf("book:mid"), view.tiles.map { it.key })
         assertEquals(1, view.shown)
         assertEquals(3, view.total)
-        assertEquals(3, Library.view(shelf, LibraryFilter.All, "", LibrarySort.Recent, null).tiles.size)
-        assertEquals("book:done", Library.view(shelf, LibraryFilter.Finished, "", LibrarySort.Recent, null).tiles.single().key)
+        assertEquals(3, Library.view(shelf, LibraryFilter.All, "", LibrarySort.Recent).tiles.size)
+        assertEquals("book:done", Library.view(shelf, LibraryFilter.Finished, "", LibrarySort.Recent).tiles.single().key)
     }
 
     @Test
-    fun `search works without marks and the listening row ignores filter and search`() {
-        val view = Library.view(shelf, LibraryFilter.New, "TAT DEN", LibrarySort.Recent, null)
+    fun `search works without marks`() {
+        val view = Library.view(shelf, LibraryFilter.New, "TAT DEN", LibrarySort.Recent)
         assertEquals(listOf("book:new"), view.tiles.map { it.key })
-        assertEquals("mid", view.listening?.id)
-        assertNull(Library.view(shelf.take(1), LibraryFilter.All, "", LibrarySort.Recent, null).listening)
-        assertTrue(Library.view(shelf, LibraryFilter.All, "không có", LibrarySort.Recent, null).tiles.isEmpty())
-    }
-
-    @Test
-    fun `the playing book leads the listening row`() {
-        assertEquals("new", Library.view(shelf, LibraryFilter.All, "", LibrarySort.Recent, "new").listening?.id)
+        assertTrue(Library.view(shelf, LibraryFilter.All, "không có", LibrarySort.Recent).tiles.isEmpty())
     }
 
     @Test
@@ -129,12 +121,12 @@ class LibraryViewTest {
         assertEquals(a.map { it.id }, b.map { it.id })
         assertEquals(a.map { it.title }, b.map { it.title })
         assertEquals(30, a.map { it.id }.toSet().size)
-        val view = Library.view(a, LibraryFilter.All, "", LibrarySort.Recent, null)
+        val view = Library.view(a, LibraryFilter.All, "", LibrarySort.Recent)
         assertTrue("có bộ nhiều tập", view.tiles.any { it is ShelfTile.Series })
         assertTrue("có sách chỉ-chữ", a.any { it.textOnly })
         assertTrue("có sách trên máy khác", a.any { it.remote != null })
         assertTrue("có cuốn đã xong", a.any { it.progress.finished })
-        assertTrue("có cuốn nghe dở", view.listening != null)
+        assertTrue("có cuốn nghe dở", a.any { Library.stateOf(it) == LibraryFilter.Listening })
         assertTrue(DemoLibrary.books(0).isEmpty())
     }
 }

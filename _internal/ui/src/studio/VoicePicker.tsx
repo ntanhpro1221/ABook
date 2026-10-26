@@ -263,7 +263,7 @@ export function VoicePicker({
       {isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 5 }, (_, index) => (
-            <Skeleton key={index} className="h-12 rounded-xl" />
+            <Skeleton key={index} className="h-12 rounded-cover" />
           ))}
         </div>
       ) : error || !data ? (
@@ -322,7 +322,7 @@ export function VoicePicker({
                 ) : null}
                 <ul className="space-y-1">
             {group.voices.map((voice) => (
-              <li key={voice.key} className={cn("flex items-center gap-3 rounded-xl px-2 py-2", voice.current ? "text-accent-text" : "hover:bg-hover")}>
+              <li key={voice.key} className={cn("flex items-center gap-3 rounded-cover px-2 py-2", voice.current ? "text-accent-text" : "hover:bg-hover")}>
                 <PreviewButton voice={voice} />
                 {data.tryLine &&
                   tryVoice.button({ character: data.character.value, preset: voice.key }, voice.name, {

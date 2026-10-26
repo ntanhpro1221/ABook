@@ -36,7 +36,7 @@ export function ActionMenu({ trigger, children, title }: { trigger: ReactNode; c
   useBackLayer(phone && step !== null, () => go(null), hostRef);
   const escape = (event: KeyboardEvent) => { if (phone && step !== null) { event.preventDefault(); go(null); } };
   const content = <DropdownMenu.Content aria-label={title} align="end" sideOffset={6} collisionPadding={12}
-    className="book-action-menu z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-56 max-w-[min(22rem,calc(100vw-24px))] overflow-y-auto overscroll-contain rounded-[20px] bg-panel p-3 shadow-float"
+    className="book-action-menu z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-56 max-w-[min(22rem,calc(100vw-24px))] overflow-y-auto overscroll-contain rounded-sheet bg-panel p-3 shadow-float"
     onEscapeKeyDown={escape}
     onPointerDownCapture={() => { keyboard.current = false; }}
     onKeyDownCapture={() => { keyboard.current = true; }}
@@ -88,7 +88,7 @@ function DesktopSubmenu({ trigger, itemClassName, children }: { trigger: ReactNo
       <DropdownMenu.SubTrigger ref={ref} className={itemClassName}>{trigger}</DropdownMenu.SubTrigger>
       <DropdownMenu.Portal>
         {/* Bỏ giới hạn theo dòng neo: menu con cần chạm mép bảng cha, kể cả khi dòng neo ở cuối bảng. */}
-        <DropdownMenu.SubContent {...offsets} align={align} sticky="always" data-submenu-trigger={ref.current?.id} collisionPadding={12} className="z-50 max-h-[70vh] w-72 overflow-y-auto rounded-xl border border-line bg-panel p-1.5 shadow-float">
+        <DropdownMenu.SubContent {...offsets} align={align} sticky="always" data-submenu-trigger={ref.current?.id} collisionPadding={12} className="z-50 max-h-[70vh] w-72 overflow-y-auto rounded-cover border border-line bg-panel p-1.5 shadow-float">
           {children}
         </DropdownMenu.SubContent>
       </DropdownMenu.Portal>

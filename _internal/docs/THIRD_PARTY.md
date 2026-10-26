@@ -79,7 +79,8 @@ băm trong `webui/studio_setup.py`):
 - Kotlin và Guava (Apache-2.0).
 - Giao diện native (Jetpack Compose, `docs/NATIVE_PHONE_UI.md`): AndroidX Compose ui / foundation / animation, activity-compose, lifecycle-runtime-compose,
   profileinstaller (Apache-2.0). Font Be Vietnam Pro 400 / 500 / 700 (SIL Open Font License 1.1, The Be Vietnam Pro Project Authors,
-  [Google Fonts](https://fonts.google.com/specimen/Be+Vietnam+Pro)) chép vào `res/font`. Chỉ để dựng / thử, không vào APK: Macrobenchmark và
+  [Google Fonts](https://fonts.google.com/specimen/Be+Vietnam+Pro)) chép vào `res/font`. Nét biểu tượng Lucide (ISC, Lucide Icons and Contributors) sinh
+  vào `ui/components/LucidePaths.kt` từ gói lucide-react của bản web (`scripts/gen_lucide_icons.py`). Chỉ để dựng / thử, không vào APK: Macrobenchmark và
   Baseline Profile plugin (Apache-2.0), Robolectric (MIT), Roborazzi (Apache-2.0), UI Automator (Apache-2.0).
 - Tink Android 1.24.0 (Google, Apache-2.0): kiểm chữ ký Ed25519 của danh mục nhạc và cấu hình từ xa (`Signatures.kt`).
   Artifact `com.google.crypto.tink:tink-android:1.24.0`; phiên bản, giấy phép và nguồn đối chiếu từ POM đi kèm JAR dùng khi dựng app.

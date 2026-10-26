@@ -296,7 +296,7 @@ describe("lựa chọn nhạc nền", () => {
     expect(options[2]).toMatchObject({ label: "Kỳ ảo êm đềm", hint: "dài 9 giờ", description: "Cho truyện chậm." });
     expect(options[3].hint).toBe("dài 40 phút");
     expect(options[4]).toMatchObject({ label: "Nhạc của tôi", disabled: true });
-    // Máy không nhập được nhạc: chỉ đường sang máy tính; máy nhập được: mục "Thêm nhạc của bạn…" ngay dưới đã là đường đi.
+    // Máy không nhập được nhạc: chỉ đường sang máy tính; máy nhập được: mục "Thêm nhạc của bạn" ngay dưới đã là đường đi.
     expect(options[4].description).toContain("trên máy tính");
     expect(options[4].description).not.toContain("Sửa sách");
     expect(playlistOptions({ playlists: [], mine: 0, error: "" }, true)[2].description).toBeUndefined();
@@ -309,7 +309,7 @@ describe("lựa chọn nhạc nền", () => {
     expect(playlistOptions(base).map((option) => option.id)).toEqual([null, OFF_PLAYLIST, "calm", MINE_PLAYLIST]);
     const without = playlistOptions({ ...base, scene: {} });
     expect(without.map((option) => option.id)).toEqual([null, OFF_PLAYLIST, SCENE_PLAYLIST, "calm", MINE_PLAYLIST]);
-    expect(without[2]).toMatchObject({ label: "Theo cảnh (máy tự dựng)" });
+    expect(without[2]).toMatchObject({ label: "Theo cảnh", description: "Máy tự dựng, đổi theo từng cảnh của truyện." });
     expect(without[2].description).not.toContain("Phân tích nhạc");
     // mặc định: máy chọn theo cảnh; chọn rõ thì dòng ấy được đánh dấu
     const auto = { playlist: SCENE_PLAYLIST, playlistAuto: true };

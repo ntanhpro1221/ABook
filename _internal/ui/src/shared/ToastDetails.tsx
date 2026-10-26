@@ -36,7 +36,7 @@ export function ToastDetails({ title, description, action, toastId }: { title: C
     <button ref={trigger} type="button" data-button aria-expanded={open} onClick={() => changeOpen(!open)} className="toast-details-action">Chi tiết</button>
     {/* Neo vào chính toast: không chịu hai hệ toạ độ do transform của Sonner, không tạo lớp dialog thứ hai. */}
     <MotionPresence open={open} className={`absolute right-0 z-50 w-[min(320px,calc(100vw-32px))] ${above ? "bottom-[calc(100%+12px)]" : "top-[calc(100%+12px)]"}`}>
-    <div ref={content} role="region" aria-label="Chi tiết thông báo" className="max-h-[60dvh] overflow-y-auto rounded-xl bg-panel p-[16px] text-sm text-fg shadow-float">
+    <div ref={content} role="region" aria-label="Chi tiết thông báo" className="max-h-[60dvh] overflow-y-auto rounded-cover bg-panel p-[16px] text-sm text-fg shadow-float">
       <MotionRegion className="space-y-3 text-pretty">
         <p className="font-medium">{shown(title)}</p>
         {description && <div className="break-words text-fg-2">{shown(description)}</div>}

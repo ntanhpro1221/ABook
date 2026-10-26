@@ -20,7 +20,7 @@ type IconType = ComponentType<{ className?: string; strokeWidth?: number }>;
 
 /** Ô chọn trải hết cột như ô nhập; chỉ hàng giờ/phút đặt `inline` để các mảnh của một giá trị đứng cạnh nhau. */
 export function Select({ className, inline, ...props }: SelectHTMLAttributes<HTMLSelectElement> & { ref?: Ref<HTMLSelectElement>; inline?: boolean }) {
-  return <select {...props} data-select-layout={inline ? "inline" : "column"} className={cn("shared-select max-w-full min-w-0 rounded-lg border border-line bg-panel px-2.5 text-sm font-normal text-fg outline-none focus-visible:border-focus disabled:opacity-50 aria-disabled:opacity-50", inline ? "w-auto" : "w-full", className)} />;
+  return <select {...props} data-select-layout={inline ? "inline" : "column"} className={cn("shared-select max-w-full min-w-0 rounded-control border border-line bg-panel px-2.5 text-sm font-normal text-fg outline-none focus-visible:border-focus disabled:opacity-50 aria-disabled:opacity-50", inline ? "w-auto" : "w-full", className)} />;
 }
 
 /** Dấu chọn giữ nguyên chỗ khi đổi mục; chỉ độ mờ đổi, không làm hàng nhảy ngang. Luôn đứng ĐẦU dòng của danh sách chọn (DESIGN 6; luật
@@ -41,9 +41,9 @@ const VARIANTS: Record<Variant, string> = {
 };
 
 const SIZES: Record<Size, string> = {
-  sm: "h-10 min-h-10 px-3 text-[0.8125rem] gap-1.5 rounded-lg",
-  md: "h-10 min-h-10 px-3.5 text-sm gap-2 rounded-lg",
-  lg: "h-10 min-h-10 px-5 text-[0.9375rem] gap-2 rounded-xl",
+  sm: "h-10 min-h-10 px-3 text-[0.8125rem] gap-1.5 rounded-control",
+  md: "h-10 min-h-10 px-3.5 text-sm gap-2 rounded-control",
+  lg: "h-10 min-h-10 px-5 text-[0.9375rem] gap-2 rounded-cover",
 };
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -165,7 +165,7 @@ export function IconButton({
         type="button"
         aria-label={label}
         className={cn(
-          "press inline-flex shrink-0 items-center justify-center rounded-lg transition-[color,background-color,outline-color,scale,opacity] duration-motion-fast disabled:pointer-events-none disabled:opacity-40",
+          "press inline-flex shrink-0 items-center justify-center rounded-control transition-[color,background-color,outline-color,scale,opacity] duration-motion-fast disabled:pointer-events-none disabled:opacity-40",
           tone === "ghost" ? "text-fg-2 hover:bg-hover hover:text-fg" : "bg-panel-2 text-fg hover:bg-hover",
           box,
           reach,
@@ -211,7 +211,7 @@ export function Tooltip({ label, children, side = "top" }: { label: ReactNode; c
           style={open ? undefined : CLOSING}
           side={side}
           sideOffset={6}
-          className="motion-tooltip z-50 max-w-72 rounded-md bg-fg px-2.5 py-1.5 text-xs font-medium text-bg shadow-float"
+          className="motion-tooltip z-50 max-w-72 rounded-control bg-fg px-2.5 py-1.5 text-xs font-medium text-bg shadow-float"
         >
           {/* Nhãn đổi lúc chú giải đang mở ("Nghe" -> "Dừng"): chữ mờ qua, không thay cứng. */}
           <MotionRegion as="span" className="block">{label}</MotionRegion>
@@ -369,10 +369,10 @@ export function LiveText({ shown, spoken }: { shown: ReactNode; spoken: string }
 export function Vu({ className }: { className?: string }) {
   return (
     <span className={cn("vu inline-flex h-3 items-end gap-[2px]", className)} aria-hidden>
-      <span className="h-full w-[3px] rounded-sm bg-current" />
-      <span className="h-full w-[3px] rounded-sm bg-current" />
-      <span className="h-full w-[3px] rounded-sm bg-current" />
-      <span className="h-full w-[3px] rounded-sm bg-current" />
+      <span className="h-full w-[3px] rounded-full bg-current" />
+      <span className="h-full w-[3px] rounded-full bg-current" />
+      <span className="h-full w-[3px] rounded-full bg-current" />
+      <span className="h-full w-[3px] rounded-full bg-current" />
     </span>
   );
 }
@@ -572,7 +572,7 @@ const CLOSING = { pointerEvents: "none" } as const;
 /** Nút ✕ của hộp thoại / tấm trượt: biểu tượng 20 px nhưng vùng bấm 44 x 44 px (máy tính), 48 x 48 (cảm ứng); lề âm giữ chỗ chiếm trong bố cục như
  *  cũ (soát a67: chỉ 24 x 24 px). */
 const CLOSE_BUTTON =
-  "-m-[0.75rem] inline-flex size-[2.75rem] shrink-0 items-center justify-center rounded-lg text-fg-3 hover:bg-hover hover:text-fg pointer-coarse:-m-[0.875rem] pointer-coarse:size-[3rem]";
+  "-m-[0.75rem] inline-flex size-[2.75rem] shrink-0 items-center justify-center rounded-control text-fg-3 hover:bg-hover hover:text-fg pointer-coarse:-m-[0.875rem] pointer-coarse:size-[3rem]";
 
 /** Phần tử "đã mở hộp" từ chỗ con trỏ đang đứng: mục của một menu (Radix DropdownMenu) mất ngay khi menu đóng, nên đó là nút mở menu (menu mang
  *  `aria-labelledby` = mã nút ấy; menu con thì lần lên tiếp). Phần tử thường thì chính nó. */
@@ -662,7 +662,7 @@ export function Dialog({
           inert={!open}
           style={open ? undefined : CLOSING}
           className={cn(
-            "motion-dialog fixed left-[calc(50%+(env(safe-area-inset-left)-env(safe-area-inset-right))/2)] top-[calc(50%+(env(safe-area-inset-top)-env(safe-area-inset-bottom))/2)] z-50 w-[calc(100%-2rem-env(safe-area-inset-left)-env(safe-area-inset-right))] -translate-x-1/2 -translate-y-1/2 flex max-h-[min(90dvh,calc(100dvh-2rem-env(safe-area-inset-top)-env(safe-area-inset-bottom)))] flex-col rounded-[20px] border border-line bg-panel p-[24px] shadow-float focus:outline-none",
+            "motion-dialog fixed left-[calc(50%+(env(safe-area-inset-left)-env(safe-area-inset-right))/2)] top-[calc(50%+(env(safe-area-inset-top)-env(safe-area-inset-bottom))/2)] z-50 w-[calc(100%-2rem-env(safe-area-inset-left)-env(safe-area-inset-right))] -translate-x-1/2 -translate-y-1/2 flex max-h-[min(90dvh,calc(100dvh-2rem-env(safe-area-inset-top)-env(safe-area-inset-bottom)))] flex-col rounded-sheet border border-line bg-panel p-[24px] shadow-float focus:outline-none",
             width,
           )}
           onInteractOutside={keepOpenForToasts}
@@ -833,7 +833,7 @@ export function Sheet({
           // Đóng (Esc, nút Đóng, chạm nền): Radix tự trả tiêu điểm về nút mở (Trigger) - trước đây chặn việc ấy nên tiêu điểm rơi về BODY (soát a31 K1).
           onEscapeKeyDown={onEscapeKeyDown}
           onInteractOutside={keepOpenForToasts}
-          className={cn("motion-sheet sheet-surface fixed inset-x-0 bottom-0 z-50 flex max-h-[min(85dvh,calc(100dvh-env(safe-area-inset-top)-0.5rem))] min-w-0 flex-col rounded-t-[20px] bg-panel pl-[max(env(safe-area-inset-left),20px)] pr-[max(env(safe-area-inset-right),20px)] pb-[max(env(safe-area-inset-bottom),20px)] shadow-float focus:outline-none", className)}
+          className={cn("motion-sheet sheet-surface fixed inset-x-0 bottom-0 z-50 flex max-h-[min(85dvh,calc(100dvh-env(safe-area-inset-top)-0.5rem))] min-w-0 flex-col rounded-t-sheet bg-panel pl-[max(env(safe-area-inset-left),20px)] pr-[max(env(safe-area-inset-right),20px)] pb-[max(env(safe-area-inset-bottom),20px)] shadow-float focus:outline-none", className)}
         >
           <div data-sheet-grip className="shrink-0 touch-none pb-3 pt-3"
             onPointerDown={(event) => {
@@ -849,7 +849,7 @@ export function Sheet({
             }}
             onPointerCancel={() => { start.current = null; setDrag(0); }}>
           <DialogPrimitive.Close asChild>
-            <button type="button" aria-label="Đóng" data-sheet-handle onClick={(event) => { if (dragged.current) { event.preventDefault(); dragged.current = false; } }} className="mx-auto mb-2 flex size-[48px] items-center justify-center rounded-lg">
+            <button type="button" aria-label="Đóng" data-sheet-handle onClick={(event) => { if (dragged.current) { event.preventDefault(); dragged.current = false; } }} className="mx-auto mb-2 flex size-[48px] items-center justify-center rounded-control">
               <span className="h-[4px] w-[40px] rounded-full bg-line-strong" aria-hidden />
             </button>
           </DialogPrimitive.Close>
@@ -874,7 +874,7 @@ export function Sheet({
 // ---- Khác -------------------------------------------------------------------------------------------------
 
 export function Skeleton({ className }: { className?: string }) {
-  return <div aria-hidden="true" className={cn("motion-skeleton rounded-md bg-line", className)} />;
+  return <div aria-hidden="true" className={cn("motion-skeleton rounded-control bg-line", className)} />;
 }
 
 /** Khung chờ theo hình nội dung: dòng danh sách, thẻ duyệt, hay lưới bìa. */
@@ -887,7 +887,7 @@ export function ContentSkeleton({ shape = "rows", count = 3, label = "Đang tả
   return <MotionRegion role="status" aria-label={label} className={cn("motion-reveal", shape === "covers" ? "grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-4" : "space-y-4", className)}>
     <span className="sr-only">{label}</span>
     {Array.from({ length: count }, (_, index) => <div key={index} aria-hidden="true" className={cn(shape === "rows" && "flex items-center gap-3", shape === "cards" && "space-y-3 py-3")}>
-      {shape === "covers" ? <Skeleton className="aspect-[2/3] rounded-xl" /> : shape === "rows" ? <Skeleton className="size-10 shrink-0" /> : <Skeleton className="h-4 w-1/3" />}
+      {shape === "covers" ? <Skeleton className="aspect-[2/3] rounded-cover" /> : shape === "rows" ? <Skeleton className="size-10 shrink-0" /> : <Skeleton className="h-4 w-1/3" />}
       <div className={cn("min-w-0 flex-1 space-y-2", shape === "covers" && "mt-3")}>
         <Skeleton className="h-3 w-3/4" />
         <Skeleton className={cn("h-3 w-1/2", shape === "cards" && "w-full")} />
@@ -951,7 +951,7 @@ export function EmptyState({
   // gọi bọc MotionPresence (motionLint.test.ts).
   return (
     <MotionRegion className={cn("motion-reveal flex flex-col items-center px-6 py-14 text-center", className)}>
-      <div className="mb-4 grid size-14 place-items-center rounded-2xl bg-accent-soft text-accent-text">
+      <div className="mb-4 grid size-14 place-items-center rounded-cover bg-accent-soft text-accent-text">
         <Icon className="size-7" strokeWidth={1.75} />
       </div>
       <h3 className="text-base font-semibold">{title}</h3>
@@ -973,7 +973,7 @@ export function LoadError({ what, onRetry, className, open }: { what: string; er
 
 export function Kbd({ children }: { children: ReactNode }) {
   return (
-    <kbd className="inline-flex h-5 min-w-5 items-center justify-center rounded border border-line-strong bg-panel-2 px-[6px] font-sans text-[0.6875rem] font-medium text-fg-2">
+    <kbd className="inline-flex h-5 min-w-5 items-center justify-center rounded-control border border-line-strong bg-panel-2 px-[6px] font-sans text-[0.6875rem] font-medium text-fg-2">
       {children}
     </kbd>
   );

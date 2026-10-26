@@ -408,7 +408,7 @@ export function SourceStep({
       {!files.length ? (
         <div
           className={cn(
-            "mt-6 rounded-2xl border-2 border-dashed bg-panel px-8 py-10 text-center transition-colors max-sm:px-4",
+            "mt-6 rounded-cover border-2 border-dashed bg-panel px-8 py-10 text-center transition-colors max-sm:px-4",
             dragging ? "border-accent bg-accent-soft" : "border-line-strong",
           )}
           // Kéo thả file hay cả thư mục truyện vào khung (trình duyệt; cửa sổ app có hộp chọn của Windows).
@@ -431,7 +431,7 @@ export function SourceStep({
             );
           }}
         >
-          <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-accent-soft text-accent-text">
+          <div className="mx-auto grid size-14 place-items-center rounded-cover bg-accent-soft text-accent-text">
             <MotionRegion as="span" className="inline-grid place-items-center">{scanning || uploading ? <Loader2 className="size-7 animate-spin" /> : <FolderInput className="size-7" strokeWidth={1.75} />}</MotionRegion>
           </div>
           <p className="mt-4 font-medium">
@@ -519,7 +519,7 @@ export function SourceStep({
                   aria-describedby={problem ? "source-problem" : undefined}
                   placeholder={info?.dialogs ? "…hoặc dán đường dẫn" : "Dán đường dẫn thư mục hay file"}
                   className={cn(
-                    "h-10 min-w-0 flex-1 rounded-lg border bg-bg px-3 text-sm outline-none placeholder:text-fg-3 focus:border-focus",
+                    "h-10 min-w-0 flex-1 rounded-control border bg-bg px-3 text-sm outline-none placeholder:text-fg-3 focus:border-focus",
                     problem ? "border-danger" : "border-line",
                   )}
                 />
@@ -580,7 +580,7 @@ export function SourceStep({
               aria-invalid={!title.trim()}
               aria-describedby={!title.trim() ? "title-problem" : undefined}
               className={cn(
-                "mt-1.5 h-11 w-full rounded-xl border bg-panel px-3.5 text-[0.9375rem] font-medium outline-none focus:border-focus",
+                "mt-1.5 h-11 w-full rounded-cover border bg-panel px-3.5 text-[0.9375rem] font-medium outline-none focus:border-focus",
                 title.trim() ? "border-line" : "border-danger",
               )}
               placeholder="Tên hiển thị trong thư viện"
@@ -724,7 +724,7 @@ export function SourceStep({
                       aria-label={`Bỏ chương ${file.name}`}
                       title="Bỏ chương này"
                       onClick={() => onRemove(file.path)}
-                      className="touch-hit grid size-8 place-items-center rounded-md text-fg-2 opacity-0 transition-[opacity,color,background-color] duration-motion-fast hover:bg-hover hover:text-danger group-hover:opacity-100 focus-visible:opacity-100 max-md:opacity-100"
+                      className="touch-hit grid size-8 place-items-center rounded-control text-fg-2 opacity-0 transition-[opacity,color,background-color] duration-motion-fast hover:bg-hover hover:text-danger group-hover:opacity-100 focus-visible:opacity-100 max-md:opacity-100"
                     >
                       <Trash2 className="size-4" />
                     </button>
@@ -1009,14 +1009,14 @@ export function VoiceCard({
         tabIndex={focusable ? 0 : -1}
         data-voice={voice.name}
         onClick={onSelect}
-        className="min-w-0 flex-1 text-left outline-none after:absolute after:inset-0 after:rounded-xl focus-visible:after:outline-2 focus-visible:after:outline-offset-2 focus-visible:after:outline-focus"
+        className="min-w-0 flex-1 text-left outline-none after:absolute after:inset-0 after:rounded-cover focus-visible:after:outline-2 focus-visible:after:outline-offset-2 focus-visible:after:outline-focus"
       >
         <span className="block font-semibold leading-snug">{voice.name}</span>
         <span className="mt-0.5 block text-xs text-fg-2">
           {voice.gender} · Miền {voice.region} · {voice.style}
         </span>
         {voice.recommended && (
-          <span className="mt-1.5 inline-block rounded-md bg-accent-soft px-1.5 py-px text-[0.6875rem] font-semibold uppercase tracking-wide text-accent-text">
+          <span className="mt-1.5 inline-block rounded-control bg-accent-soft px-1.5 py-px text-[0.6875rem] font-semibold uppercase tracking-wide text-accent-text">
             Đề xuất
           </span>
         )}
@@ -1135,7 +1135,7 @@ function FirstPersonQuestion({ paths, seedFrom, value, onChange, gender, onGende
               aria-pressed={value === name}
               onClick={() => onChange(value === name ? "" : name)}
               className={cn(
-                "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors duration-motion-medium",
+                "rounded-control px-3 py-1.5 text-sm font-medium transition-colors duration-motion-medium",
                 value === name ? "text-accent-text underline underline-offset-4" : "text-fg-2 hover:bg-hover",
               )}
             >
@@ -1151,7 +1151,7 @@ function FirstPersonQuestion({ paths, seedFrom, value, onChange, gender, onGende
           value={value}
           onChange={(event) => onChange(event.target.value)}
           placeholder="Tên nhân vật xưng “tôi” (để trống nếu kể ngôi thứ ba)"
-          className="mt-1.5 h-11 w-full rounded-xl border border-line bg-panel px-3.5 text-[0.9375rem] font-medium text-fg outline-none focus:border-focus focus-visible:ring-2 focus-visible:ring-focus"
+          className="mt-1.5 h-11 w-full rounded-cover border border-line bg-panel px-3.5 text-[0.9375rem] font-medium text-fg outline-none focus:border-focus focus-visible:ring-2 focus-visible:ring-focus"
         />
       </label>
       {value.trim() && (

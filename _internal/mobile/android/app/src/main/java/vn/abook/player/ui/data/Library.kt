@@ -1,12 +1,14 @@
 package vn.abook.player.ui.data
 
 import android.content.Context
+import android.content.Intent
 import androidx.compose.runtime.Immutable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
 import vn.abook.player.AppLog
+import vn.abook.player.BookActions
 import vn.abook.player.Store
 import vn.abook.player.SyncLink
 import java.io.File
@@ -24,10 +26,22 @@ sealed interface LibraryState {
 /**
  * Kho dữ liệu Thư viện cho giao diện native: đọc thẳng lõi ([Store]) - cùng nguồn với `LibraryPlugin.localBooks` (sách đã tải) và với gói sách
  * nghe thẳng đã cất (`stream.json`, cùng dữ liệu `streamableBooks` trả cho WebView) - không qua plugin. Cuốn nghe thẳng mang [RemoteRef]
- * (dấu "Trên máy tính"). Việc HỎI máy tính / thiết bị ghép xem có sách mới nằm trong `LibraryPlugin.streamableBooks` (thân phương thức plugin) và dời
- * vào lõi ở bước Thiết bị (P2); tới lúc đó danh sách nghe thẳng là những gì đã cất.
+ * (dấu "Trên máy tính"). DevicesRepo chuyển danh sách có thẩm quyền từ RemoteBooks.streamable vào [acceptRemote]; gói đã cất chỉ dùng trước lượt hỏi đầu.
  */
-class LibraryRepo(private val context: Context) {
+class LibraryRepo(private val context: Context, scope: kotlinx.coroutines.CoroutineScope, removed: (String) -> Unit = {}) : BookSource {
+    // null until the first authoritative network catalogue; downloaded books always stay local.
+    @Volatile private var remoteIds: Set<String>? = null
+    val deletions: UndoDelete = UndoDelete(scope, erase = { id ->
+        edit { BookActions.deleteAfterUndo(context, id); null }
+    }, changed = { refresh() }, removed = removed)
+
+    suspend fun acceptRemote(rows: org.json.JSONArray) {
+        remoteIds = (0 until rows.length()).map { rows.getJSONObject(it).getString("id") }.toSet()
+        refresh()
+    }
+
+    fun isHidden(id: String) = deletions.contains(id)
+
     private val flow = MutableStateFlow<LibraryState>(LibraryState.Loading)
     val state: StateFlow<LibraryState> get() = flow
 
@@ -35,12 +49,78 @@ class LibraryRepo(private val context: Context) {
     suspend fun refresh() = withContext(Dispatchers.IO) {
         flow.value = LibraryState.Ready(
             try {
-                readAll(context)
+                readAll(context).filter { !isHidden(it.id) && (it.remote == null || remoteIds?.contains(it.id) != false) }
             } catch (error: Exception) {
                 AppLog.w("Library", "Không đọc được thư viện: ${error.javaClass.simpleName}")
                 emptyList()
             },
         )
+    }
+
+    // ---- trang sách (BookSource): đọc / ghi qua lõi, ghi xong thì đọc lại Thư viện ----------------------------------------
+
+    override suspend fun detail(id: String): BookDetail? = withContext(Dispatchers.IO) {
+        try {
+            Store.init(context)
+            val downloaded = Store.rawManifest(id) != null
+            val manifest = (if (downloaded) Store.manifest(id) else Store.streamManifest(id)?.let { Store.streamed(id, it) }) ?: return@withContext null
+            val remote = if (downloaded) null else RemoteRef(SyncLink.holderName(context, id))
+            BookDetail.of(manifest, Store.state(id), { coverOf(it) }, remote, BookActions.canShare(id))
+        } catch (error: Exception) {
+            AppLog.w("Library", "Không đọc được trang sách: ${error.javaClass.simpleName}")
+            null
+        }
+    }
+
+    override suspend fun passages(id: String, chapter: ChapterLine): List<Passage>? = withContext(Dispatchers.IO) {
+        val path = if (chapter.textOnly) chapter.textPath else "scripts/${chapter.id}.json"
+        if (path.isEmpty()) return@withContext null
+        val raw = runCatching { BookActions.text(context, id, path) }.getOrNull() ?: return@withContext null
+        if (chapter.textOnly) BookSearch.textPassages(raw) else BookSearch.scriptPassages(raw)
+    }
+
+    override suspend fun setFinished(id: String, finished: Boolean) = write { BookActions.setFinished(context, id, finished) }
+
+    override suspend fun setChapterDone(id: String, chapterId: Int, done: Boolean) = write { BookActions.setChapterDone(context, id, chapterId, done) }
+
+    override suspend fun delete(id: String): String? {
+        if (vn.abook.player.BookDownloads.isActive(context, id)) return "Đang tải cuốn này, bạn huỷ tải trước"
+        deletions.remove(id)
+        return null
+    }
+
+    override suspend fun share(id: String): Intent? = withContext(Dispatchers.IO) {
+        try {
+            BookActions.share(context, id, project = false).chooser
+        } catch (error: Exception) {
+            AppLog.w("Library", "Không đóng được file sách để chia sẻ: ${error.javaClass.simpleName}")
+            null
+        }
+    }
+
+    private suspend fun write(block: () -> Unit) {
+        withContext(Dispatchers.IO) {
+            try {
+                block()
+            } catch (error: Exception) {
+                AppLog.w("Library", "Không ghi được trạng thái nghe: ${error.javaClass.simpleName}")
+            }
+        }
+        refresh()
+    }
+
+    /** Một lần sửa: câu lỗi của lõi (hay của ngoại lệ) cho người nghe; lưu xong thì đọc lại Thư viện. */
+    private suspend fun edit(block: () -> String?): String? {
+        val problem = withContext(Dispatchers.IO) {
+            try {
+                block()
+            } catch (error: Exception) {
+                AppLog.w("Library", "Không sửa được sách: ${error.javaClass.simpleName}")
+                error.message?.takeIf { it.isNotBlank() } ?: "Chưa làm được, bạn thử lại"
+            }
+        }
+        if (problem == null) refresh()
+        return problem
     }
 
     /** Sách giả cho đo đạc (chỉ bản -PnativeUi, `abook.demo.books`): không chạm kho thật. */

@@ -57,6 +57,18 @@ class VoiceChoices(private val file: File) {
         save()
     }
 
+    /** Các nhà cung cấp đã được đồng ý (giao diện native đọc lại để biết hỏi hay không). */
+    fun allowedProviders(): List<String> = data.optJSONArray("onlineOk")?.let { list -> (0 until list.length()).map { list.optString(it) } }.orEmpty()
+
+    /** Người nghe bấm đổi giọng (giọng VieNeu không kịp nghe): mọi cuốn đang chọn giọng có mã bắt đầu bằng `fromPrefix`, và giọng chung, chuyển sang `voice` - như `switchVoices` của giao diện. */
+    fun replaceVoices(fromPrefix: String, voice: String) {
+        data.optJSONObject("books")?.let { books ->
+            for (key in books.keys().asSequence().toList()) if (books.optString(key).startsWith(fromPrefix)) books.put(key, voice)
+        }
+        data.put("global", voice)
+        save()
+    }
+
     /**
      * Gốc Nhật / Hàn của cuốn để đọc tên theo luật phiên âm ([Names]): người dùng ghi đè ("ja" / "ko" / "none") thì theo đó, không thì lần máy đoán đã lưu, chưa có thì đoán từ
      * `texts` (các chương đầu) và lưu ở `"origins": {"<mã cuốn>": {"guess", "rule", "override"}}`. Trả "" khi không có gốc.

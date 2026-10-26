@@ -41,11 +41,6 @@ private const val SHARE_KEY = ShareService.SHARE_KEY
 private const val PICK_SOURCE_LIMIT = 40
 private const val HEAD_BYTES = 512 // đầu file đủ để thấy mục `mimetype` của gói (BookFileImport.looksLikeBookFile)
 
-/** Số file tối đa trong một lượt nhập "Nhạc của tôi" (server.MY_MUSIC_IMPORT_LIMIT). */
-private const val MY_MUSIC_IMPORT_LIMIT = 500
-private const val STREAM_PARALLEL = 4 // số gói sách nghe thẳng lấy cùng lúc (streamableBooks)
-private const val STREAM_BUDGET_MS = 12_000L // hết chừng này thì cuốn còn lại dùng gói đã cất, lượt hỏi sau lấy tiếp
-
 /**
  * Thư viện trên điện thoại + đồng bộ với máy tính qua Wi-Fi (abook/webui/sync.py).
  *
@@ -370,7 +365,7 @@ class LibraryPlugin : Plugin() {
     @PluginMethod
     fun pickMusic(call: PluginCall) {
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*")
-            .putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true).putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("audio/*", "application/ogg"))
+            .putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true).putExtra(Intent.EXTRA_MIME_TYPES, MusicImport.MIME_TYPES)
         startActivityForResult(call, intent, "pickedMusic")
     }
 
@@ -387,112 +382,38 @@ class LibraryPlugin : Plugin() {
         }
         musicImports.execute {
             try {
-                call.resolve(importMusic(uris.take(MY_MUSIC_IMPORT_LIMIT)))
+                call.resolve(importMusic(uris.take(MusicImport.LIMIT)))
             } catch (error: Exception) {
                 fail(call, error, "không nhập được nhạc")
             }
         }
     }
 
-    /** Nhập từng bản (một bản hỏng không làm hỏng cả lượt), báo tiến độ "musicImport" {done, total}; trả đúng JSON của `my_music_import`. */
-    private fun importMusic(uris: List<Uri>): JSObject {
-        val store = LocalStudio.musicStore ?: throw IllegalStateException("Kho nhạc chưa sẵn sàng")
-        val added = ArrayList<JSONObject>()
-        val existing = ArrayList<JSONObject>()
-        val failed = ArrayList<String>()
-        for ((index, uri) in uris.withIndex()) {
-            val name = runCatching {
-                context.contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
-                    if (cursor.moveToFirst()) cursor.getString(0) else null
-                }
-            }.getOrNull() ?: uri.lastPathSegment ?: "nhạc"
-            try {
-                val (track, duplicate) = store.importStream(name) { context.contentResolver.openInputStream(uri) }
-                (if (duplicate) existing else added).add(track)
-            } catch (error: MusicStore.ImportError) {
-                failed.add(error.message.orEmpty())
-            } catch (error: Exception) {
-                failed.add("“$name”: không nhập được (${error.message ?: error.javaClass.simpleName}).")
-            }
-            notifyListeners("musicImport", JSObject().put("done", index + 1).put("total", uris.size))
-        }
-        if (added.isNotEmpty()) Playback.onMain { MusicBed.refreshMine() }
-        return JSObject.fromJSONObject(LocalStudio.importAnswer(added, existing, failed)).put("picked", true)
-    }
+    /** Nhập từng bản vào kho ([MusicImport]), báo tiến độ "musicImport" {done, total}; trả đúng JSON của `my_music_import`. */
+    private fun importMusic(uris: List<Uri>): JSObject =
+        JSObject.fromJSONObject(MusicImport.run(context, uris) { done, total ->
+            notifyListeners("musicImport", JSObject().put("done", done).put("total", total))
+        }).put("picked", true)
 
     // ---- ghép nối --------------------------------------------------------------------------------------------
-
-    private fun base(): String = SyncLink.base(context)
-
-    private fun request(method: String, path: String, body: JSONObject? = null, auth: Boolean = true, root: String = base()): String =
-        SyncLink.request(context, method, path, body, auth, root)
 
     /** Tìm máy tính đang bật đồng bộ trong cùng mạng Wi-Fi (UDP broadcast). */
     @PluginMethod
     fun discover(call: PluginCall) = background(call) {
-        val found = JSArray()
-        val hints = DiscoveryHints { hint -> PeerRouting.discovered(context, hint.host, hint.port, hint.claimed) }
-        val own = LibraryServer.addresses().toSet() + "127.0.0.1"
-        DatagramSocket().use { socket ->
-            socket.broadcast = true
-            socket.soTimeout = 400
-            val probe = "ABOOK_DISCOVER".toByteArray()
-            val deadline = System.currentTimeMillis() + (call.getInt("timeoutMs") ?: 2500)
-            var sent = 0
-            while (System.currentTimeMillis() < deadline) {
-                if (sent < 3) {
-                    runCatching { socket.send(DatagramPacket(probe, probe.size, InetAddress.getByName("255.255.255.255"), 47631)) }
-                    sent += 1
-                }
-                val buffer = ByteArray(4096)
-                val packet = DatagramPacket(buffer, buffer.size)
-                try {
-                    socket.receive(packet)
-                    val reply = JSONObject(String(packet.data, 0, packet.length))
-                    val host = packet.address.hostAddress ?: continue
-                    // Chính điện thoại này (đang cho máy khác nghe thư viện - LibraryServer) cũng trả lời: bỏ.
-                    if (host in own && reply.optInt("port") == LibraryServer.PORT) continue
-                    val address = PeerAddresses.discoveryEndpoint(host, reply.opt("port")) ?: continue
-                    val port = PeerAddresses.split(address).second
-                    if (reply.optString("app") == "abook" && hints.add(host, port, reply.optString("fingerprint"))) {
-                        found.put(JSObject().put("host", host).put("port", port).put("name", reply.optString("name"))
-                            .put("kind", reply.optString("kind", "computer")))
-                    }
-                } catch (_: SocketTimeoutException) {
-                } catch (_: org.json.JSONException) {
-                    // A malformed UDP responder must not discard the remaining discoveries.
-                }
-            }
-        }
-        hints.finish()
-        call.resolve(JSObject().put("computers", found))
+        call.resolve(JSObject().put("computers", Devices.discover(context, call.getInt("timeoutMs") ?: 2500)))
     }
 
     @PluginMethod
     fun pair(call: PluginCall) = background(call) {
         val host = call.getString("host") ?: throw IllegalArgumentException("thiếu địa chỉ máy tính")
-        val port = call.getInt("port") ?: 47630
-        SyncLink.refuseSelf(host, port)
-        val device = call.getString("device") ?: DeviceName.of(context)
-        val body = JSONObject().put("code", call.getString("code") ?: "").put("device", device)
-        val (reply, fingerprint) = SyncLink.pair(context, "https://${PeerAddresses.endpoint(host, port)}", body)
-        SyncLink.saveRoutes(prefs.edit().putString("host", host).putInt("port", port).putString("token", reply.getString("token"))
-            .putString("fingerprint", fingerprint).putString("name", reply.optString("name")), reply, host, port, fingerprint,
-            PeerRouting.main(context).takeIf { it.optString("fingerprint").equals(fingerprint, true) }).commit()
-        // Ô địa chỉ nhớ máy đã ghép lần trước (soát a68 lỗi 20): ngoài "sync" vì thôi ghép xoá sạch "sync" - ghép lại là lúc cần nó nhất.
-        context.getSharedPreferences("abook_self", Context.MODE_PRIVATE).edit().putString("lastAddress", "$host:$port").apply()
-        Remote.ensure()
-        call.resolve(JSObject().put("name", reply.optString("name")))
+        val name = Devices.pair(context, host, call.getInt("port") ?: 47630, call.getString("code") ?: "", call.getString("device"))
+        call.resolve(JSObject().put("name", name))
     }
 
     /** Đổi tên điện thoại này ở máy khác (soát a68 lỗi 16); rỗng = tên mặc định. Báo ngay máy tính chính và các máy đã ghép (máy tắt thì lần ghép sau). */
     @PluginMethod
     fun setDeviceName(call: PluginCall) = background(call) {
-        val name = DeviceName.set(context, call.getString("name") ?: "")
-        val body = JSONObject().put("name", name)
-        if (SyncLink.paired(context)) runCatching { SyncLink.request(context, "POST", "/sync/v1/name", body, readTimeoutMs = 5000, connectTimeoutMs = 2000) }
-        for (key in Peers.all(context).keys()) runCatching { Peers.request(context, key, "POST", "/sync/v1/name", body, readTimeoutMs = 5000, connectTimeoutMs = 2000) }
-        call.resolve(JSObject().put("name", name))
+        call.resolve(JSObject().put("name", Devices.setDeviceName(context, call.getString("name") ?: "")))
     }
 
     // ---- qua Bluetooth (BluetoothLink, BtMux) -------------------------------------------------------------------------
@@ -517,9 +438,8 @@ class LibraryPlugin : Plugin() {
 
     @PermissionCallback
     private fun bluetoothDevicesAfterPermission(call: PluginCall) = background(call) {
-        if (!BluetoothLink.permitted(context)) throw IllegalStateException("Cần cho ABook dùng \"Thiết bị ở gần\" để kết nối qua Bluetooth")
+        val devices = Devices.bluetoothDevices(context)
         val out = JSArray()
-        val devices = BluetoothLink.devices(context)
         for (index in 0 until devices.length()) out.put(JSObject.fromJSONObject(devices.getJSONObject(index)))
         call.resolve(JSObject().put("devices", out))
     }
@@ -528,55 +448,19 @@ class LibraryPlugin : Plugin() {
     @PluginMethod
     fun pairBluetooth(call: PluginCall) = background(call) {
         val address = call.getString("address") ?: throw IllegalArgumentException("thiếu máy")
-        val device = call.getString("device") ?: DeviceName.of(context)
-        val body = JSONObject().put("code", call.getString("code") ?: "").put("device", device)
-        val root = BluetoothLink.base(context, address)
-        val (reply, fingerprint) = try {
-            SyncLink.pair(context, root, body)
-        } catch (error: Exception) {
-            val reason = BluetoothLink.lastError(address)
-            throw IllegalStateException(reason.ifBlank { error.message ?: "không kết nối được qua Bluetooth" })
-        }
-        SyncLink.saveRoutes(prefs.edit().putString("host", "bt:$address").putInt("port", 0).putString("token", reply.getString("token"))
-            .putString("fingerprint", fingerprint).putString("name", reply.optString("name")), reply, "bt:$address", 0, fingerprint,
-            PeerRouting.main(context).takeIf { it.optString("fingerprint").equals(fingerprint, true) }).commit()
-        Remote.ensure()
-        call.resolve(JSObject().put("name", reply.optString("name")))
+        call.resolve(JSObject().put("name", Devices.pairBluetooth(context, address, call.getString("code") ?: "", call.getString("device"))))
     }
 
     // ---- cho máy khác nghe thư viện này (mạng trạm bước 2 - LibraryServer) ------------------------------------------
 
-    private fun shareView(): JSObject {
-        LibraryServer.init(context)
-        // Màn hình hỏi trạng thái sau khi người dùng vừa cho quyền "Thiết bị ở gần" hay vừa bật Bluetooth: thử nghe lại.
-        if (LibraryServer.running()) BluetoothShare.retry()
-        val devices = JSArray()
-        val list = LibraryServer.devices()
-        for (index in 0 until list.length()) devices.put(JSObject.fromJSONObject(list.getJSONObject(index)))
-        val pairing = LibraryServer.pairingCode()
-        return JSObject().put("running", LibraryServer.running()).put("name", LibraryServer.name())
-            .put("port", LibraryServer.PORT).put("addresses", JSArray(LibraryServer.addresses()))
-            .put("pairing", if (pairing != null) JSObject.fromJSONObject(pairing) else JSONObject.NULL)
-            .put("blocked", LibraryServer.blocked).put("devices", devices).put("error", LibraryServer.lastError)
-            .put("fingerprint", if (LibraryServer.fingerprint.isEmpty()) "" else Pin.display(LibraryServer.fingerprint))
-            .put("bluetooth", JSObject().put("status", BluetoothShare.status).put("connections", BluetoothShare.connections()))
-            .also { backgroundView(it) }
-    }
-
-    /**
-     * Hãng máy (chọn lời chỉ đường cho chạy nền: OPPO, Xiaomi, Samsung...) và ABook đã được miễn tối ưu pin chưa. Máy hãng cho app "ngủ"
-     * khi ở nền; bật "Cho phép hoạt động dưới nền" thì ABook vào danh sách miễn và cờ này thành true. Chỉ đọc - app không tự xin miễn.
-     */
-    private fun backgroundView(into: JSObject = JSObject()): JSObject =
-        into.put("manufacturer", Build.MANUFACTURER.orEmpty())
-            .put("backgroundAllowed", context.getSystemService(PowerManager::class.java)?.isIgnoringBatteryOptimizations(context.packageName) ?: false)
+    private fun shareView(): JSObject = JSObject.fromJSONObject(Devices.shareView(context))
 
     @PluginMethod
     fun shareStatus(call: PluginCall) = background(call) { call.resolve(shareView()) }
 
     /** Màn xuất hỏi riêng (không dựng cả trạng thái chia sẻ): có nhắc người dùng cho ABook chạy nền hay không. */
     @PluginMethod
-    fun backgroundStatus(call: PluginCall) = call.resolve(backgroundView())
+    fun backgroundStatus(call: PluginCall) = call.resolve(JSObject.fromJSONObject(Devices.backgroundView(context)))
 
     /**
      * Trang thông tin ứng dụng của ABook trong Cài đặt Android - nơi người dùng cho ABook chạy nền (máy hãng cho app "ngủ" khi
@@ -639,48 +523,26 @@ class LibraryPlugin : Plugin() {
     private fun setShareAfterPermission(call: PluginCall) = setShareNow(call)
 
     private fun setShareNow(call: PluginCall) = background(call) {
-        if (call.getBoolean("enabled") ?: false) ShareService.turnOn(context) else ShareService.turnOff(context)
-        call.resolve(shareView())
+        call.resolve(JSObject.fromJSONObject(Devices.setShare(context, call.getBoolean("enabled") ?: false)))
     }
 
     @PluginMethod
-    fun sharePair(call: PluginCall) = background(call) {
-        if (!LibraryServer.running()) ShareService.enable(context)
-        LibraryServer.startPairing()
-        call.resolve(shareView())
-    }
+    fun sharePair(call: PluginCall) = background(call) { call.resolve(JSObject.fromJSONObject(Devices.sharePair(context))) }
 
     @PluginMethod
-    fun shareCancelPairing(call: PluginCall) = background(call) {
-        LibraryServer.cancelPairing()
-        call.resolve(shareView())
-    }
+    fun shareCancelPairing(call: PluginCall) = background(call) { call.resolve(JSObject.fromJSONObject(Devices.shareCancelPairing(context))) }
 
     @PluginMethod
-    fun shareRevoke(call: PluginCall) = background(call) {
-        LibraryServer.revoke(call.getString("id") ?: "")
-        call.resolve(shareView())
-    }
+    fun shareRevoke(call: PluginCall) = background(call) { call.resolve(JSObject.fromJSONObject(Devices.shareRevoke(context, call.getString("id") ?: ""))) }
 
     @PluginMethod
-    fun connection(call: PluginCall) {
-        val paired = !prefs.getString("token", "").isNullOrBlank()
-        call.resolve(
-            JSObject().put("paired", paired).put("host", prefs.getString("host", "")).put("port", prefs.getInt("port", 47630))
-                .put("name", prefs.getString("name", "")).put("fingerprint", prefs.getString("fingerprint", "") ?: "")
-                .put("connectedVia", prefs.getString("connectedVia", ""))
-                .put("lastAddress", context.getSharedPreferences("abook_self", Context.MODE_PRIVATE).getString("lastAddress", "") ?: "")
-                .put("deviceName", DeviceName.of(context)),
-        )
-    }
+    fun connection(call: PluginCall) = call.resolve(JSObject.fromJSONObject(Devices.connection(context)))
 
     @PluginMethod
     fun unpair(call: PluginCall) {
         // Máy tính chính thu hồi mã của điện thoại này (soát a27 lỗi 5): báo trước khi quên địa chỉ - máy tính tắt thì chỉ chờ vài giây.
         Thread({
-            runCatching { SyncLink.tellUnpaired(context, SyncLink.base(context), SyncLink.token(context)) }
-            prefs.getString("host", null)?.takeIf { it.startsWith("bt:") }?.let { BluetoothLink.forget(it) }
-            prefs.edit().clear().apply()
+            Devices.unpair(context)
             call.resolve()
         }, "sync-unpair").start()
     }
@@ -709,41 +571,19 @@ class LibraryPlugin : Plugin() {
         studioAlerts(call)
     }
 
-    /** Máy tính mở Studio được (StudioLink.computers): máy tính chính rồi các máy tính ghép thêm - nút "Mở Studio" hỏi chọn khi có hơn một. */
+    /** Máy tính mở Studio được (Devices.studioComputers): máy tính chính rồi các máy tính ghép thêm - nút "Mở Studio" hỏi chọn khi có hơn một. */
     @PluginMethod
     fun studioComputers(call: PluginCall) = background(call) {
         val out = JSArray()
-        // `book` (mã cuốn trên điện thoại này): máy tính GIỮ cuốn ấy - "Mở Studio" ở trang sách đi thẳng tới máy ấy (openStudio), nên chip phải xét quyền của
-        // chính máy ấy chứ không của cả danh sách (`holdsBook`).
-        val holder = call.getString("book")?.let { StudioLink.bookTarget(it)?.first }
-        for (computer in StudioLink.computers(context)) {
-            // Máy tính chỉ cho điện thoại này nghe: nút "Mở Studio" nói thẳng thay vì mở một trang Studio đóng (`listenOnly`). Không hỏi được = coi như mở được.
-            val listenOnly = StudioLink.link(context, computer.key)?.let { link ->
-                runCatching {
-                    StudioLink.listenOnly(SyncLink.request(context, "GET", "/api/app", auth = false, root = link.base, token = link.token,
-                        readTimeoutMs = 3000, connectTimeoutMs = 2000))
-                }.getOrDefault(false)
-            } ?: false
-            out.put(JSObject().put("key", computer.key).put("name", computer.name).put("listenOnly", listenOnly).apply { if (computer.key == holder) put("holdsBook", true) })
-        }
+        val computers = Devices.studioComputers(context, call.getString("book"))
+        for (index in 0 until computers.length()) out.put(JSObject.fromJSONObject(computers.getJSONObject(index)))
         call.resolve(JSObject().put("computers", out))
     }
 
-    /**
-     * Studio từ xa (StudioActivity.kt): trang Studio của một máy tính đã ghép, mang sẵn mã thiết bị. `book`: mã cuốn trên điện thoại này -
-     * mở thẳng cuốn ấy trong Studio của máy tính giữ nó (StudioLink.bookTarget); không thì `computer` (mã máy, "" = máy tính chính) ở
-     * danh sách dự án. Chỉ mã máy và đường trang đi qua Intent, không bao giờ mã thiết bị.
-     */
+    /** Studio từ xa (StudioActivity.kt): trang Studio của một máy tính đã ghép, mang sẵn mã thiết bị - máy và đường trang do [Devices.studioTarget]. */
     @PluginMethod
     fun openStudio(call: PluginCall) = background(call) {
-        val book = call.getString("book")
-        val (computer, path) = if (book != null) {
-            val (key, remote) = StudioLink.bookTarget(book) ?: throw IllegalStateException("Cuốn này không làm trên máy tính nào đã ghép")
-            key to StudioLink.bookPath(remote)
-        } else {
-            (call.getString("computer") ?: StudioLink.MAIN) to StudioLink.bookPath(null)
-        }
-        if (!StudioLink.known(computer, SyncLink.paired(context), Peers.all(context))) throw IllegalStateException("Chưa ghép với máy tính nào")
+        val (computer, path) = Devices.studioTarget(context, call.getString("book"), call.getString("computer"))
         activity.startActivity(Intent(activity, StudioActivity::class.java).putExtra("computer", computer).putExtra("path", path))
         call.resolve()
     }
@@ -767,32 +607,9 @@ class LibraryPlugin : Plugin() {
 
     @PluginMethod
     fun remoteLibrary(call: PluginCall) = background(call) {
-        val reply = JSONObject(request("GET", "/sync/v1/library"))
-        val books = reply.getJSONArray("books")
-        matchImported()
-        for (index in 0 until books.length()) {
-            val book = books.getJSONObject(index)
-            runCatching { refreshMetadata(book.getString("id"), book) }
-            val local = Store.rawManifest(book.getString("id"))
-            book.put("downloaded", local != null)
-            book.put("localChapters", local?.optInt("chaptersAvailable") ?: 0)
-            book.put("localCoverVersion", local?.optJSONObject("cover")?.optLong("version") ?: 0L)
-            book.put("localWordsVersion", local?.optString("wordsVersion") ?: "")
-            book.put("localAudioVersion", local?.optString("audioVersion") ?: "")
-            book.put("localMetaVersion", local?.optString("metaVersion") ?: "")
-            // Cỡ khi tải về, hiện trước khi bấm Tải (soát a68 lỗi 7): máy tính gửi kèm (`bytes`); máy tính đời trước thì lấy từ gói sách đã cất
-            // cho nghe thẳng nếu còn đúng - không hỏi máy tính từng cuốn (thư viện vài chục cuốn thành vài chục lượt mạng).
-            if (local == null && !book.has("bytes")) {
-                Store.streamManifest(book.getString("id"))?.takeIf { it.optInt("chaptersAvailable") == book.optInt("chaptersAvailable") }
-                    ?.let { book.put("bytes", DownloadSpace.bookBytes(it)) }
-            }
-        }
-        call.resolve(JSObject().put("name", reply.optString("name")).put("books", books))
-        EditsSync.scheduleAllPending(context) // tới được máy tính: gửi nốt phần sửa còn tồn
-        StateSync.flushPending(context) // chỗ nghe ghi trong lúc mất kết nối (soát a68 lỗi 9)
+        call.resolve(JSObject.fromJSONObject(RemoteBooks.library(context)))
+        RemoteBooks.reached(context)
     }
-
-    private fun matchImported() = BookDownloads.matchImported(context)
 
     // ---- tải sách --------------------------------------------------------------------------------------------
 
@@ -807,26 +624,6 @@ class LibraryPlugin : Plugin() {
         val source = call.getString("source")?.takeIf { it.isNotEmpty() }
         BookDownloads.start(context, id, source, call.getString("remoteId"))
         call.resolve(JSObject().put("bookId", id))
-    }
-
-    /**
-     * Phần mô tả của cuốn ĐÃ TẢI đổi ở máy giữ sách (tên, tác giả, người đọc, liên kết bộ, tên chương - `metaVersion`): lấy gói mới và sửa book.json tại
-     * chỗ, giữ nguyên audio và lớp sửa của máy này (StreamRefresh.withMetadata). Không mạng / máy kia lỗi thì thôi, lần sau thử lại. Cuốn đang tải
-     * thì để lượt tải ghi book.json mới (soát a97 V1).
-     */
-    private fun refreshMetadata(id: String, entry: JSONObject, source: String? = null, remoteId: String? = null) {
-        if (BookDownloads.isActive(context, id)) return
-        val local = Store.rawManifest(id) ?: return
-        if (!StreamRefresh.metadataStale(local, entry)) return
-        val remote = remoteId ?: id
-        val fresh = JSONObject(
-            if (source != null) Peers.request(context, source, "GET", "/sync/v1/books/$remote/manifest")
-            else SyncLink.request(context, "GET", "/sync/v1/books/$id/manifest"),
-        )
-        PeerPaths.checkManifest(fresh)
-        if (fresh.optString("id") != remote) return
-        if (source != null) Peers.localizeSeries(fresh, source)
-        Store.rewriteManifest(id) { StreamRefresh.withMetadata(it, fresh) }
     }
 
     /** Nút Huỷ khi đang tải một cuốn (soát a68 lỗi 7): dừng thật ở khối kế; phần đã về giữ lại để lần Tải sau tải tiếp. */
@@ -846,26 +643,7 @@ class LibraryPlugin : Plugin() {
         }
         val manifest = Streaming.fetchManifest(context, id, peer, remote)
         if (manifest.optJSONObject("cover") != null) Streaming.fetchSmall(context, id, "cover.jpg")
-        fetchHolderEdits(id)
-    }
-
-    /**
-     * The readings, skipped lines and pending speakers the holder set ([BookEdits.HOLDER_FILE], webui/package_share.py `shared_edits`):
-     * fetched again when the library entry's `listenerEdits` stamp changes, dropped when the holder has none (review a70: edits made on the
-     * computer never reached the phone).
-     */
-    private fun syncHolderEdits(id: String, entry: JSONObject) {
-        val stamp = entry.optString("listenerEdits")
-        val file = File(Store.bookDir(id), BookEdits.HOLDER_FILE)
-        if (stamp.isEmpty()) {
-            if (file.isFile && file.delete()) ReadAloud.readingsChanged(id)
-            return
-        }
-        if (BookEdits.holderEdits(Store.bookDir(id))?.optString("stamp") != stamp) fetchHolderEdits(id)
-    }
-
-    private fun fetchHolderEdits(id: String) {
-        if (Streaming.fetchSmall(context, id, BookEdits.HOLDER_FILE) != null) ReadAloud.readingsChanged(id)
+        RemoteBooks.fetchHolderEdits(context, id)
     }
 
     // ---- sách trên máy ---------------------------------------------------------------------------------------
@@ -884,94 +662,13 @@ class LibraryPlugin : Plugin() {
         call.resolve(JSObject().put("books", books).put("notices", Store.dataNotices()))
     }
 
-    /**
-     * Sách trên máy tính CHƯA tải mà nghe thẳng được (Streaming). Gói sách chỉ lấy lại khi máy tính có thêm chương, đổi
-     * tên hay đổi bìa, còn lại dùng bản đã cất. Máy tính không trả lời thì không liệt kê sách của nó: những cuốn ấy không nằm trên
-     * điện thoại, hiện ra mà bấm không nghe được thì chỉ làm người nghe bối rối - TRỪ cuốn đang nằm trong trình phát (`offline`): máy tắt hay
-     * mất mạng không phải thôi ghép, trình phát không được tưởng cuốn đã rời Thư viện mà đóng giữa câu (soát a68 lỗi 3). Chỉ khi máy kia trả 401
-     * (đã thôi ghép điện thoại này) cuốn mới thật sự rời đi.
-     */
+    /** Sách nghe thẳng của máy tính chính và thiết bị ghép ([RemoteBooks.streamable]); hỏi mạng nên có hàng riêng, không chặn hàng `io`. */
     @PluginMethod
     fun streamableBooks(call: PluginCall) = streaming(call) {
         val books = JSArray()
-        var computerAnswered = true
-        // Thiết bị ghép khác trả lời độc lập với máy tính: hỏi cùng lúc, không nối đuôi (mỗi bên đã có hạn chờ riêng).
-        val peersAsk = FutureTask { Peers.libraries(context) }
-        Thread(peersAsk, "abook-peer-libraries").apply { isDaemon = true }.start()
-        val reply = if (SyncLink.paired(context)) {
-            try {
-                JSONObject(SyncLink.request(context, "GET", "/sync/v1/library", readTimeoutMs = 10_000, connectTimeoutMs = 1500))
-            } catch (error: Exception) {
-                computerAnswered = NetErrors.unpaired(error) // 401: máy tính trả lời - nó đã thôi ghép; không giữ cuốn nào của nó
-                null
-            }
-        } else null
-        val remote = reply?.optJSONArray("books") ?: JSONArray()
-        if (reply != null) {
-            matchImported()
-            StateSync.flushPending(context) // chỗ nghe ghi trong lúc mất kết nối về máy tính ngay khi nối lại (soát a68 lỗi 9)
-        }
-        val peers = try {
-            peersAsk.get()
-        } catch (error: ExecutionException) {
-            throw error.cause as? Exception ?: error
-        }
-        // Mọi cuốn của máy tính rồi của từng thiết bị ghép xếp thành MỘT danh sách việc: gói sách lấy song song có giới hạn, chung một trần
-        // thời gian (STREAM_BUDGET_MS). Hết trần thì cuốn còn lại dùng gói đã cất, lượt hỏi sau lấy tiếp.
-        class Job(val entry: JSONObject, val source: String?, val sourceName: String?)
-        val jobs = ArrayList<Job>()
-        for (index in 0 until remote.length()) jobs.add(Job(remote.getJSONObject(index), null, null))
-        val peerLists = (0 until peers.length()).map { peers.getJSONObject(it) }
-        for (peer in peerLists) {
-            val list = peer.optJSONArray("books") ?: continue
-            for (item in 0 until list.length()) jobs.add(Job(list.getJSONObject(item), peer.getString("key"), peer.optString("name")))
-        }
-        val rows = Bounded.map(jobs, STREAM_PARALLEL, STREAM_BUDGET_MS) { job, expired ->
-            streamedRow(job.entry, job.source, job.sourceName) { !expired() }
-        }
-        var next = 0
-        if (reply == null && !computerAnswered) keepPlaying(books) { it.optString("source").isEmpty() }
-        repeat(remote.length()) { rows[next++]?.let(books::put) }
-        // Thiết bị ghép (điện thoại khác, máy tính khác): cùng cách, gói ghi nguồn - thiết bị không trả lời thì bỏ qua (trừ cuốn đang phát, như trên).
-        for (peer in peerLists) {
-            if (peer.has("error") && !peer.optBoolean("unpaired")) keepPlaying(books) { it.optString("source") == peer.optString("key") }
-            repeat(peer.optJSONArray("books")?.length() ?: 0) { rows[next++]?.let(books::put) }
-        }
+        val rows = RemoteBooks.streamable(context)
+        for (index in 0 until rows.length()) books.put(JSObject.fromJSONObject(rows.getJSONObject(index)))
         call.resolve(JSObject().put("books", books))
-    }
-
-    /**
-     * Dòng của một cuốn nghe thẳng trong thư viện, hay null khi không có gì để hiện: cuốn đã tải về thì chỉ làm mới mô tả / phần sửa của nó; cuốn chưa
-     * tải mà chưa có gói sách (cũng không lấy được) thì bỏ. `source` / `sourceName`: thiết bị ghép giữ cuốn (null = máy tính chính). `network` sai (hết
-     * trần thời gian của lượt) thì không hỏi mạng: dùng gói đã cất.
-     */
-    private fun streamedRow(entry: JSONObject, source: String?, sourceName: String?, network: () -> Boolean): JSObject? {
-        val id = entry.getString("id")
-        val remoteId = if (source != null) entry.getString("remoteId") else null
-        if (Store.rawManifest(id) != null) {
-            if (network()) runCatching { refreshMetadata(id, entry, source, remoteId) }
-            if (network()) runCatching { syncHolderEdits(id, entry) }
-            return null
-        }
-        val cached = Store.streamManifest(id)
-        val stale = StreamRefresh.stale(cached, entry)
-        val manifest = (if (stale && network()) runCatching { Streaming.fetchManifest(context, id, source, remoteId) }.getOrNull() else null) ?: cached ?: return null
-        if (manifest.optJSONObject("cover") != null && (stale || !Store.file(id, "cover.jpg").isFile) && network()) {
-            runCatching { Streaming.fetchSmall(context, id, "cover.jpg") }
-        }
-        if (network()) runCatching { syncHolderEdits(id, entry) }
-        val row = JSObject.fromJSONObject(Store.streamed(id, manifest)).put("state", JSObject.fromJSONObject(Store.state(id))).put("streamed", true)
-        if (sourceName != null) row.put("sourceName", sourceName)
-        return row
-    }
-
-    /** Cuốn nghe thẳng đang nằm trong trình phát mà máy giữ nó không trả lời: vẫn ở danh sách (gói đã cất), đánh dấu `offline`. */
-    private fun keepPlaying(books: JSArray, ownedBy: (JSONObject) -> Boolean) {
-        val id = Playback.bookId.takeIf { it.isNotEmpty() } ?: return
-        if (Store.rawManifest(id) != null) return
-        val manifest = Store.streamManifest(id)?.takeIf(ownedBy) ?: return
-        books.put(JSObject.fromJSONObject(Store.streamed(id, manifest)).put("state", JSObject.fromJSONObject(Store.state(id))).put("streamed", true)
-            .put("offline", true))
     }
 
     // ---- thiết bị ghép khác (Peers: điện thoại khác, máy tính khác - mạng trạm bước 2) -----------------------------
@@ -1091,10 +788,8 @@ class LibraryPlugin : Plugin() {
         }
         val (status, reply) = LocalStudio.handle(method, path, body)
         if (status == 200 && method.uppercase() != "GET") {
-            Regex("/api/books/([A-Za-z0-9_-]+)").find(path)?.groupValues?.get(1)?.let { id ->
-                MusicBed.invalidate(id)
-                EditsSync.schedule(context, id) // cuốn tải từ máy tính: phần sửa gửi về máy tính sau vài giây
-            }
+            // Nhạc đọc lại lớp sửa; cuốn tải từ máy tính: phần sửa gửi về máy tính sau vài giây.
+            Regex("/api/books/([A-Za-z0-9_-]+)").find(path)?.groupValues?.get(1)?.let { id -> BookActions.edited(context, id) }
         }
         val answer = JSObject().put("status", status)
         call.resolve(if (reply is JSONObject) answer.put("body", JSObject.fromJSONObject(reply)) else answer.put("body", JSONObject.NULL))
@@ -1286,34 +981,20 @@ class LibraryPlugin : Plugin() {
             return call.reject("Sách này lấy từ máy tính khác - muốn gửi file sách thì gửi từ máy ấy")
         }
         val project = call.getString("as") == "abookproj"
-        val title = Store.manifest(id)?.optString("title").orEmpty()
         io.execute {
-            val file = BookShare.target(context.cacheDir, title, project)
-            try {
-                file.parentFile?.mkdirs()
-                val snapshot = ExportHistory.snapshot(Store.bookDir(id))
-                file.outputStream().use { BookDocumentWriter.write(Store.bookDir(id), it, project) }
-                ExportHistory.remember(Store.bookDir(id), if (project) "abookproj" else "abook", file.name, snapshot)
-                val uri = androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
-                val mime = BookShare.mimeType(project)
-                val send = Intent(Intent.ACTION_SEND).setType(mime)
-                    .putExtra(Intent.EXTRA_STREAM, uri)
-                    .putExtra(Intent.EXTRA_TITLE, file.name)
-                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                send.clipData = android.content.ClipData.newUri(context.contentResolver, file.name, uri)
-                val chooser = Intent.createChooser(send, "Chia sẻ “${title.ifBlank { file.nameWithoutExtension }}”")
-                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                activity.runOnUiThread {
-                    try {
-                        activity.startActivity(chooser)
-                        call.resolve(JSObject().put("shared", true).put("name", file.name))
-                    } catch (error: Exception) {
-                        fail(call, error, "không mở được bảng chia sẻ")
-                    }
-                }
+            val shared = try {
+                BookActions.share(context, id, project)
             } catch (error: Exception) {
-                file.parentFile?.deleteRecursively()
                 fail(call, error, "không đóng được file sách để chia sẻ")
+                return@execute
+            }
+            activity.runOnUiThread {
+                try {
+                    activity.startActivity(shared.chooser)
+                    call.resolve(JSObject().put("shared", true).put("name", shared.name))
+                } catch (error: Exception) {
+                    fail(call, error, "không mở được bảng chia sẻ")
+                }
             }
         }
     }
@@ -1340,32 +1021,20 @@ class LibraryPlugin : Plugin() {
     @PluginMethod
     fun shareDiagnostics(call: PluginCall) {
         remotes.execute {
-            var file: File? = null
-            try {
-                val report = Diagnostics.collect(context, Diagnostics.DEFAULT_LINES)
-                val target = File(File(BookShare.dir(context.cacheDir), java.lang.Long.toHexString(System.nanoTime())), Diagnostics.bundleName(System.currentTimeMillis()))
-                file = target
-                target.parentFile?.mkdirs()
-                target.writeBytes(Diagnostics.bundle(report))
-                val uri = androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", target)
-                val send = Intent(Intent.ACTION_SEND).setType("application/zip")
-                    .putExtra(Intent.EXTRA_STREAM, uri)
-                    .putExtra(Intent.EXTRA_TITLE, target.name)
-                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                send.clipData = android.content.ClipData.newUri(context.contentResolver, target.name, uri)
-                val chooser = Intent.createChooser(send, "Gửi nhật ký của ABook").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                activity.runOnUiThread {
-                    try {
-                        activity.startActivity(chooser)
-                        AppLog.i("Diagnostics", "mở bảng chia sẻ nhật ký (${target.length()} byte)")
-                        call.resolve(JSObject().put("shared", true).put("name", target.name))
-                    } catch (error: Exception) {
-                        fail(call, error, "không mở được bảng chia sẻ")
-                    }
-                }
+            val (chooser, target) = try {
+                Diagnostics.shareIntent(context)
             } catch (error: Exception) {
-                file?.parentFile?.deleteRecursively()
                 fail(call, error, "không gom được nhật ký để gửi")
+                return@execute
+            }
+            activity.runOnUiThread {
+                try {
+                    activity.startActivity(chooser)
+                    AppLog.i("Diagnostics", "mở bảng chia sẻ nhật ký (${target.length()} byte)")
+                    call.resolve(JSObject().put("shared", true).put("name", target.name))
+                } catch (error: Exception) {
+                    fail(call, error, "không mở được bảng chia sẻ")
+                }
             }
         }
     }
@@ -1717,12 +1386,7 @@ class LibraryPlugin : Plugin() {
     }
 
     /** Một file văn bản của gói như người nghe thấy (lớp sửa phủ lên); sách nghe thẳng chưa có file thì lấy từ máy tính. null khi không có. */
-    private fun bookText(id: String, path: String): String? {
-        val file = Store.file(id, path)
-        val fromPeer = !Store.streamManifest(id)?.optString("source").isNullOrEmpty()
-        if (!file.isFile && Store.rawManifest(id) == null && (fromPeer || SyncLink.paired(context))) Streaming.fetchSmall(context, id, path)
-        return Store.readText(id, path)
-    }
+    private fun bookText(id: String, path: String): String? = BookActions.text(context, id, path)
 
     /**
      * Mốc nhạc nền THEO CẢNH của một chương sách chỉ có chữ (đường N0, [DeviceScenes]): `{cues: [{start, end, link, key, sibling?, tail?, steps?, firstSegment?}], scene,
@@ -1746,19 +1410,8 @@ class LibraryPlugin : Plugin() {
 
     @PluginMethod
     fun deleteBook(call: PluginCall) = background(call) {
-        // Thiếu mã thì từ chối (Store.deletableBookDir) - trước đây `?: ""` biến thành xoá CẢ thư mục sách.
-        // Cuốn đang có lượt tải chạy thì không dời thư mục dưới chân nó (Cài đặt › Thiết bị tắt nút Xoá; đây là lớp chặn cuối, soát a97 V6).
-        require(!BookDownloads.isActive(context, call.getString("id").orEmpty())) { "Đang tải cuốn này - huỷ tải rồi mới xoá được." }
-        // Cuốn nằm chờ UNDO_SECONDS giây (TrashPending) rồi mới xoá hẳn; `undo` là mã để "Hoàn tác" (không có khi xoá thẳng).
-        val undo = Store.holdBook(call.getString("id").orEmpty())
-        // Chương tạm của "Xuất sách nói" bỏ dở đi theo sách khi sách bị xoá hẳn (ListenExports.sweep - cuốn đang xuất không bị đụng).
-        if (undo != null) {
-            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(
-                { io.execute { runCatching { Store.sweepTrash() }; runCatching { ListenExports.sweep(context) } } }, (TrashPending.UNDO_SECONDS + 1) * 1000L,
-            )
-        } else {
-            io.execute { runCatching { ListenExports.sweep(context) } }
-        }
+        // Cuốn nằm chờ rồi mới xoá hẳn; `undo` là mã để "Hoàn tác" (không có khi xoá thẳng) - BookActions.delete.
+        val undo = BookActions.delete(context, call.getString("id").orEmpty()) { io.execute(it) }
         call.resolve(JSObject().put("undo", undo ?: JSONObject.NULL))
     }
 
@@ -1769,16 +1422,7 @@ class LibraryPlugin : Plugin() {
     }
 
     @PluginMethod
-    fun storage(call: PluginCall) = background(call) {
-        val sizes = Store.bookSizes()
-        val books = JSArray()
-        // `title`: tên trong gói sách của thư mục (đã tải hay nghe thẳng) - thư mục tải dở chưa có gói nào thì không có, giao diện lấy tên từ danh sách máy tính.
-        for ((id, bytes) in sizes) {
-            val title = (Store.rawManifest(id) ?: Store.streamManifest(id))?.optString("title").orEmpty()
-            books.put(JSObject().put("id", id).put("bytes", bytes).apply { if (title.isNotEmpty()) put("title", title) })
-        }
-        call.resolve(JSObject().put("bytes", sizes.values.sum()).put("free", Store.root.usableSpace).put("books", books))
-    }
+    fun storage(call: PluginCall) = background(call) { call.resolve(JSObject.fromJSONObject(Devices.storage())) }
 
     // ---- trạng thái nghe -------------------------------------------------------------------------------------
 

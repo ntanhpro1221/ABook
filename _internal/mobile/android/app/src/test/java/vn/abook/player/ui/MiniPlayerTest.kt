@@ -32,7 +32,7 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import vn.abook.player.ui.data.CoverLoader
 import vn.abook.player.ui.data.PlayerState
-import vn.abook.player.ui.player.MiniPart
+import vn.abook.player.ui.nowplaying.NowPlayingPart
 import vn.abook.player.ui.player.MiniPlayer
 import vn.abook.player.ui.player.MiniPlayerHeight
 import vn.abook.player.ui.theme.Abook
@@ -52,10 +52,10 @@ class MiniPlayerTest {
     )
     private var toggled = 0
     private var opened = 0
-    private val requested = HashSet<MiniPart>()
+    private val requested = HashSet<NowPlayingPart>()
     private var position = 150_000L
 
-    private fun show(player: PlayerState, dark: Boolean = false, shared: @Composable (MiniPart) -> Modifier = { Modifier }) {
+    private fun show(player: PlayerState, dark: Boolean = false, shared: @Composable (NowPlayingPart) -> Modifier = { Modifier }) {
         rule.setContent {
             AbookTheme(dark) {
                 Column(Modifier.fillMaxSize().background(Abook.colors.bg)) {
@@ -138,7 +138,9 @@ class MiniPlayerTest {
     @Test
     fun everyPartAsksTheSharedElementHook() {
         show(state, shared = { part -> requested += part; Modifier.testTag("shared_${part.name}") })
-        for (part in MiniPart.entries) rule.onNodeWithTag("shared_${part.name}", useUnmergedTree = true).assertExists()
-        assertTrue(requested.containsAll(MiniPart.entries))
+        // Khung chung (Container) do cửa sổ đặt lên cả thanh; bốn phần còn lại là việc của thanh.
+        val parts = NowPlayingPart.entries - NowPlayingPart.Container
+        for (part in parts) rule.onNodeWithTag("shared_${part.name}", useUnmergedTree = true).assertExists()
+        assertTrue(requested.containsAll(parts))
     }
 }

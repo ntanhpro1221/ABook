@@ -41,7 +41,7 @@ import { withFeedback } from "@/shared/feedback";
 import { ActionButton } from "./ActionButton";
 import { DotJoin } from "@/shared/DotJoin";
 
-const MENU_ITEM = "flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[highlighted]:bg-hover";
+const MENU_ITEM = "flex h-9 cursor-default items-center gap-2 rounded-control px-2 text-sm outline-none data-[highlighted]:bg-hover";
 
 export function ChapterRow({
   book,
@@ -77,7 +77,7 @@ export function ChapterRow({
       // quanh biểu tượng 14 px (nút phát size-9 = 31,5 px, màn chạm 48 px; nút "…" size-8 = 28 px). Điện thoại hết chỗ cho lề âm (nút 48 px sẽ
       // lòi khỏi màn): biểu tượng dồn về mép ngoài của nút. Nền rê chuột tràn ra lề.
       className={cn(
-        "group -mx-2 flex items-center gap-3 rounded-lg px-2 py-2.5 transition-colors duration-motion-fast sm:-mx-3 sm:px-3",
+        "group -mx-2 flex items-center gap-3 rounded-control px-2 py-2.5 transition-colors duration-motion-fast sm:-mx-3 sm:px-3",
         canPlay(chapter) && "hover:bg-hover",
       )}
     >
@@ -115,7 +115,7 @@ export function ChapterRow({
         <div className="tabular min-h-[1rem] truncate text-xs text-fg-2">
           {chapterSubline(chapter, book.producing)}
           {prepared && (
-            <span className="ml-1.5 inline-flex items-center gap-0.5 rounded bg-accent-soft px-1 align-[1px] text-[0.6875rem] font-medium text-accent-text">
+            <span className="ml-1.5 inline-flex items-center gap-0.5 rounded-control bg-accent-soft px-1 align-[1px] text-[0.6875rem] font-medium text-accent-text">
               <CloudDownload className="size-3" aria-hidden />
               Đã làm sẵn
             </span>
@@ -134,13 +134,13 @@ export function ChapterRow({
               <button
                 type="button"
                 aria-label={`Tuỳ chọn ${chapter.fullTitle}`}
-                className="grid size-8 place-items-center rounded-md text-fg-2 opacity-0 transition-[opacity,color,background-color] duration-motion-fast hover:bg-panel hover:text-fg group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100 max-md:opacity-100 max-sm:size-[48px] max-sm:justify-items-end"
+                className="grid size-8 place-items-center rounded-control text-fg-2 opacity-0 transition-[opacity,color,background-color] duration-motion-fast hover:bg-panel hover:text-fg group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100 max-md:opacity-100 max-sm:size-[48px] max-sm:justify-items-end"
               >
                 <MoreHorizontal className="ink-end size-4" />
               </button>
             </DropdownMenu.Trigger>
             <DropdownMenu.Portal>
-              <DropdownMenu.Content collisionPadding={12} align="end" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-52 rounded-xl border border-line bg-panel p-1.5 shadow-float">
+              <DropdownMenu.Content collisionPadding={12} align="end" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-52 rounded-cover border border-line bg-panel p-1.5 shadow-float">
                 {canPlay(chapter) && (
                   <DropdownMenu.Item onSelect={() => void playBook(book, chapter.id, 0)} className={MENU_ITEM}>
                     <Play className="size-4" /> Nghe từ đầu chương
@@ -326,7 +326,7 @@ export function PersonRow({
             {onUnmerge && typeof person.mergedAt === "number" && (
               <button
                 type="button"
-                className="ml-2 rounded-md font-medium underline underline-offset-2 hover:text-fg"
+                className="ml-2 rounded-control font-medium underline underline-offset-2 hover:text-fg"
                 aria-label={`Bỏ gộp ${name} vào ${cleanName(person.mergedInto)}`}
                 onClick={() => onUnmerge(person)}
               >
@@ -352,13 +352,13 @@ export function PersonRow({
               <button
                 type="button"
                 aria-label={`Thêm tuỳ chọn cho ${name}`}
-                className="grid size-8 place-items-center rounded-md text-fg-2 hover:bg-hover hover:text-fg data-[state=open]:bg-hover"
+                className="grid size-8 place-items-center rounded-control text-fg-2 hover:bg-hover hover:text-fg data-[state=open]:bg-hover"
               >
                 <MoreHorizontal className="size-4" />
               </button>
             </DropdownMenu.Trigger>
             <DropdownMenu.Portal>
-              <DropdownMenu.Content collisionPadding={12} align="end" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-48 rounded-xl border border-line bg-panel p-1.5 shadow-float">
+              <DropdownMenu.Content collisionPadding={12} align="end" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-48 rounded-cover border border-line bg-panel p-1.5 shadow-float">
                 {canMerge && (
                   <DropdownMenu.Item onSelect={() => onMerge?.(person)} className={MENU_ITEM}>
                     <GitMerge className="size-4" /> Gộp vào người khác…
@@ -420,7 +420,7 @@ export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onUnmer
   const { data: cast, isLoading } = useCast(bookId);
   const [later, setLater] = useState(false);
   const carriedPeople = onPickVoice ? (cast?.carried ?? []) : [];
-  if (isLoading) return <MotionRegion as="div" className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{Array.from({ length: 6 }, (_, index) => <Skeleton key={index} className="h-[84px] rounded-xl" />)}</MotionRegion>;
+  if (isLoading) return <MotionRegion as="div" className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{Array.from({ length: 6 }, (_, index) => <Skeleton key={index} className="h-[84px] rounded-cover" />)}</MotionRegion>;
   if (!cast || (!cast.characters.length && !cast.extras.length && !carriedPeople.length)) {
     return (
       <MotionRegion><EmptyState icon={AudioLines} title="Chưa có dàn nhân vật" className="mt-2">
@@ -684,7 +684,7 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
           </button>
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal>
-          <DropdownMenu.Content align="start" sideOffset={6} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain w-72 rounded-xl border border-line bg-panel p-1.5 shadow-float">
+          <DropdownMenu.Content align="start" sideOffset={6} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain w-72 rounded-cover border border-line bg-panel p-1.5 shadow-float">
             <p className="px-2 pb-1.5 pt-1 text-xs text-fg-2">
               Mỗi hồ sơ giữ chỗ nghe, lịch sử riêng.
             </p>
@@ -787,7 +787,7 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
               placeholder="Tên hồ sơ"
               value={dialog?.name ?? ""}
               onChange={(event) => setDialog((current) => (current ? { ...current, name: event.target.value } : current))}
-              className="touch-box h-10 rounded-lg border border-line bg-panel px-3 text-sm outline-none focus:border-focus"
+              className="touch-box h-10 rounded-control border border-line bg-panel px-3 text-sm outline-none focus:border-focus"
             />
           )}
 
@@ -877,7 +877,7 @@ export function BookScreen({
       <div className="page-x mx-auto max-w-[1180px]">
         {/* Cùng đầu màn với trang đã tải: nút ← bấm được ngay, bìa không nhảy khi dữ liệu về. */}
         <ScreenHeader back={{ label: "Về Thư viện", onClick: () => navigate("/") }} />
-        <div className="mt-5 flex gap-6"><Skeleton className="size-36 rounded-lg" /><div className="flex-1 space-y-3 pt-3"><Skeleton className="h-7 w-2/3" /><Skeleton className="h-4 w-1/3" /></div></div>
+        <div className="mt-5 flex gap-6"><Skeleton className="size-36 rounded-control" /><div className="flex-1 space-y-3 pt-3"><Skeleton className="h-7 w-2/3" /><Skeleton className="h-4 w-1/3" /></div></div>
       </div>
   );
   const content = () => {

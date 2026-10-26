@@ -68,14 +68,14 @@ it("công tắc 'Nhân vật tự kể' là hàng cài đặt, công tắc bên 
   const row = host.querySelector(".settings-row")!;
   expect(row.querySelector(".settings-row-control [role=switch]")).not.toBeNull();
   expect(row.querySelector(".settings-row-label")?.textContent).toContain("Nhân vật tự kể");
-  expect(host.querySelector(".rounded-xl.border")).toBeNull();
+  expect(host.querySelector(".rounded-cover.border")).toBeNull();
 });
 
 it("công tắc 'Duyệt trước khi thu' cũng là hàng cài đặt, lời giải thích theo trạng thái", async () => {
   await draw(<PrecastWaitSwitch book={book({ phase: "analysis", precast: { wait: true } as BookSummary["precast"] })} />);
   expect(host.querySelector(".settings-row-control [role=switch]")?.getAttribute("aria-checked")).toBe("true");
   expect(host.querySelector(".settings-row-label")?.textContent).toContain("Dừng sau phân tích");
-  expect(host.querySelector(".rounded-xl.border")).toBeNull();
+  expect(host.querySelector(".rounded-cover.border")).toBeNull();
 });
 
 it("tiến độ đầu trang: thanh mảnh + phần trăm khi sách đang chạy; sách xong thì khép", async () => {

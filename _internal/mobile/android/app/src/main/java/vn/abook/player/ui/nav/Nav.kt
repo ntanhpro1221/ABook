@@ -10,18 +10,35 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import vn.abook.player.ui.data.ListenBook
+import vn.abook.player.ui.devices.DevicesPage
+import vn.abook.player.ui.voice.VoicePage
+import vn.abook.player.ui.data.SettingsGroup
 import vn.abook.player.ui.motion.Motion
 import vn.abook.player.ui.motion.ScreenGeometry
 
-/** Màn con xếp trên ba tab (trang sách và Đang phát còn là giữ chỗ; P1b/P2 làm thật). */
+/** Màn con xếp trên ba tab. Đang nghe không phải màn con: nó là cửa sổ nở ra từ thanh phát nhỏ ([vn.abook.player.ui.nowplaying.NowPlayingLayer]), có Back riêng. */
 @Immutable
 sealed interface Destination {
+    data object AddBook : Destination
+    data class ImportReview(val itemId: Long) : Destination
+    data class ImportChapter(val itemId: Long, val index: Int) : Destination
+    data class EditBook(val book: ListenBook) : Destination
+    data class EditChapter(val book: ListenBook, val chapterId: Long) : Destination
+    data class CropCover(val book: ListenBook, val uri: String) : Destination
     @Immutable
     data class Book(val book: ListenBook) : Destination
 
-    /** Trình phát đầy đủ - giữ chỗ cho tới khi màn thật vào (thanh phát nhỏ gọi onOpenNowPlaying để tới đây). */
+    /** Một nhóm Cài đặt (cấp hai, cũng là cấp cuối: Cài đặt -> nhóm -> mục). */
     @Immutable
-    data object NowPlaying : Destination
+    data class Settings(val group: SettingsGroup) : Destination
+
+    /** Một màn của nhóm Thiết bị (Nối máy tính, Chia sẻ thư viện, Dung lượng): đi từ trang nhóm Thiết bị, Back về lại trang ấy. */
+    @Immutable
+    data class Devices(val page: DevicesPage) : Destination
+
+    /** Một màn của nhóm Giọng đọc (Khóa giọng trực tuyến) hay Nghe (Nhạc của tôi): đi từ trang nhóm, Back về lại trang ấy. */
+    @Immutable
+    data class Voice(val page: VoicePage) : Destination
 }
 
 /** Một mục của ngăn xếp: `key` ổn định để Compose giữ trạng thái màn khi nó đổi chỗ (trên cùng -> bên dưới). */

@@ -229,7 +229,7 @@ export function ExportMp3MenuItem({ book }: { book: ListenBook }) {
       // Chưa có chương nào nghe được thì không có gì để xuất (như máy tính).
       disabled={!book.chaptersAvailable}
       onSelect={() => void chooseMp3(book)}
-      className="flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[disabled]:opacity-40 data-[highlighted]:bg-hover"
+      className="flex h-9 cursor-default items-center gap-2 rounded-control px-2 text-sm outline-none data-[disabled]:opacity-40 data-[highlighted]:bg-hover"
     >
       <FolderDown className="size-4" /> Xuất MP3
     </DropdownMenu.Item>

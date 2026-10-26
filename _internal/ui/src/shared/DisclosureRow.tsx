@@ -20,7 +20,7 @@ export function DisclosureRow({ title, summary, icon, expanded, controls, onClic
   // Mục đang mở của danh sách nhóm là điều hướng (DESIGN 6 "Điều hướng"): nền trung tính nhạt + chữ đậm màu thường, như thanh bên.
   // Nền (rê chuột, đang mở) vẽ ở lớp ::before tràn 12 px ra hai bên: chữ và icon không dính mép nền mà bố cục hàng không đổi - lùi lề
   // âm trên chính hàng kéo chữ theo ở hàng có className riêng (máy dò FILL INSET, Studio 25-10).
-  const rowClass = cn("disclosure-row relative isolate flex min-h-[3.5rem] w-full items-center gap-3.5 text-left before:absolute before:inset-y-0 before:-inset-x-3 before:-z-10 before:rounded-lg before:transition-colors hover:before:bg-hover", section ? "py-0" : "py-1.5", current && "text-fg before:bg-hover", className);
+  const rowClass = cn("disclosure-row relative isolate flex min-h-[3.5rem] w-full items-center gap-3.5 text-left before:absolute before:inset-y-0 before:-inset-x-3 before:-z-10 before:rounded-control before:transition-colors hover:before:bg-hover", section ? "py-0" : "py-1.5", current && "text-fg before:bg-hover", className);
   return to !== undefined ? <Link to={to} replace={replace} state={state} aria-current={current ? "page" : undefined} className={rowClass}>{body}</Link>
     : <button {...rest} ref={ref} data-section-heading={section ? "" : undefined} type="button" aria-expanded={expanded} aria-controls={controls} onClick={onClick} className={rowClass}>{body}</button>;
 }

@@ -55,9 +55,9 @@ export function galleryCases(platform: Platform): void {
         const text = container.textContent ?? "";
         // C10: nhóm trong hộp đã có mặt nổi, không dựng thêm khung.
         const nestedCards = [...document.querySelectorAll<HTMLElement>('.border')].filter(el =>
-          /\brounded-(lg|xl|2xl)\b/.test(el.className) && !el.matches('button,a,input,select,textarea,[role="menu"],[role="tooltip"]')
+          /\brounded-(control|cover)\b/.test(el.className) && !el.matches('button,a,input,select,textarea,[role="menu"],[role="tooltip"]')
           && !el.classList.contains('h-9') && !el.classList.contains('h-10') && !el.querySelector('input:not([type="checkbox"]):not([type="radio"])')
-          && el.parentElement?.closest('[role="dialog"],.border.rounded-xl,.border.rounded-2xl'));
+          && el.parentElement?.closest('[role="dialog"],.border.rounded-cover'));
         expect(nestedCards.map(el => el.outerHTML.slice(0, 200))).toEqual([]);
         if (entry.id.includes('/library-')) {
           const hero = container.querySelector('[aria-label="Đang nghe"]');
@@ -135,7 +135,7 @@ export function galleryCases(platform: Platform): void {
         }
         // D12: tab Nhạc nền là các hàng cài đặt (không thẻ viền), Nhật ký không tab lồng.
         if (entry.id === "desktop/studio-music") {
-          expect(container.querySelector("section.rounded-xl, section.rounded-2xl")).toBeNull();
+          expect(container.querySelector("section.rounded-cover")).toBeNull();
           expect(container.querySelector(".settings-row [role=switch]")).not.toBeNull();
         }
         if (entry.id === "desktop/studio-activity") expect(container.querySelector('[role="radiogroup"][aria-label="Kiểu nhật ký"]')).toBeNull();

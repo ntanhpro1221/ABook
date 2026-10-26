@@ -104,7 +104,7 @@ function ReadingForm({ bookId, surface, current, aloud, onDone }: {
         aria-label={`Cách đọc cho ${surface}`}
         spellCheck={false}
         autoComplete="off"
-        className="h-10 w-full rounded-lg border border-line bg-bg px-3 text-sm outline-none focus:border-focus"
+        className="h-10 w-full rounded-control border border-line bg-bg px-3 text-sm outline-none focus:border-focus"
       />
       <div className="flex flex-wrap items-center gap-2">
         <TryButton aloud={aloud} surface={surface} spoken={value} />

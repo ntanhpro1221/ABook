@@ -196,4 +196,25 @@ object OnlineVoices {
     }
 
     fun describe(context: Context): JSONArray = JSONArray().apply { providers(context).forEach { put(it.describe()) } }
+
+    /** "Lưu" khoá (chỉ cất trên máy, không gửi gì ra mạng); `key` rỗng = giữ khoá đã lưu, chỉ đổi vùng. Trả mô tả đã che của nhà cung cấp. */
+    fun saveKey(context: Context, provider: String, key: String, region: String): JSONObject {
+        val clean = region.trim().lowercase()
+        if (provider == "azure" && !AzureTts.validRegion(clean)) throw IllegalArgumentException("Vùng Azure chưa đúng (ví dụ: southeastasia)")
+        val keyed = provider(context, provider)
+        keyed.keys.put(provider, key, if (provider == "azure") clean else "")
+        return keyed.describe()
+    }
+
+    fun removeKey(context: Context, provider: String): JSONObject {
+        val keyed = provider(context, provider)
+        keyed.keys.remove(provider)
+        return keyed.describe()
+    }
+
+    /** "Kiểm tra": lấy danh sách giọng rồi đọc thử một câu thật ngắn; kèm mô tả mới của nhà cung cấp. */
+    fun checkKey(context: Context, provider: String): JSONObject {
+        val keyed = provider(context, provider)
+        return keyed.check(java.io.File(context.cacheDir, "readaloud-check.mp3")).put("provider", keyed.describe())
+    }
 }

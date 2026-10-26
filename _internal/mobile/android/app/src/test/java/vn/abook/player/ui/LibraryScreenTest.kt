@@ -8,7 +8,9 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -37,7 +39,6 @@ import vn.abook.player.ui.data.LibraryState
 import vn.abook.player.ui.data.Last
 import vn.abook.player.ui.data.ListenBook
 import vn.abook.player.ui.data.ListenState
-import vn.abook.player.ui.data.PlayerState
 import vn.abook.player.ui.screens.LibraryActions
 import vn.abook.player.ui.screens.LibraryScreen
 import vn.abook.player.ui.screens.LibraryUiState
@@ -53,28 +54,24 @@ class LibraryScreenTest {
     val rule = createAndroidComposeRule<ComponentActivity>()
 
     private val opened = ArrayList<String>()
-    private val toggled = ArrayList<String>()
     private val played = ArrayList<String>()
-    private var nowPlayingOpened = 0
     private var addOpened = 0
     private lateinit var ui: LibraryUiState
     private val sheets = SheetHost()
     private val actions = LibraryActions(
         openBook = { opened += it.id },
-        togglePlay = { toggled += it },
         playNow = { played += it },
-        openNowPlaying = { nowPlayingOpened++ },
         addBook = { addOpened++ },
     )
 
-    private fun show(books: List<ListenBook>, dark: Boolean = false, player: PlayerState = PlayerState.Empty, sort: LibrarySort = LibrarySort.Recent) {
+    private fun show(books: List<ListenBook>, dark: Boolean = false, sort: LibrarySort = LibrarySort.Recent) {
         rule.setContent {
             AbookTheme(dark) {
                 val scope = rememberCoroutineScope()
                 ui = remember { LibraryUiState(scope, sort) }
                 val grid = remember { LazyGridState() }
                 Box(Modifier.fillMaxSize().background(Abook.colors.bg)) {
-                    LibraryScreen(LibraryState.Ready(books), ui, grid, player, CoverLoader(1 shl 20), sheets, actions)
+                    LibraryScreen(LibraryState.Ready(books), ui, grid, CoverLoader(1 shl 20), sheets, actions)
                     SheetLayer(sheets)
                 }
             }
@@ -110,7 +107,6 @@ class LibraryScreenTest {
     @Test
     fun oneBookWithoutListeningLight() {
         show(listOf(fresh))
-        rule.onNodeWithTag("continue_row").assertDoesNotExist()
         rule.onNodeWithText("1 cuốn").assertIsDisplayed()
         shot("library_one_light")
     }
@@ -124,15 +120,25 @@ class LibraryScreenTest {
     @Test
     fun oneBookListeningLight() {
         show(listOf(listening))
-        rule.onNodeWithTag("continue_row").assertIsDisplayed()
-        rule.onNodeWithText("Chương 4: Bài học đầu tiên · 12:04").assertIsDisplayed()
+        rule.onNodeWithText("1 cuốn").assertIsDisplayed()
+        rule.onAllNodesWithTag("book_cell").assertCountEquals(1)
         shot("library_listening_light")
+    }
+
+    @Test
+    fun theLibraryHasNoPlayControlForTheBookBeingHeard() {
+        // Cuốn đang nghe chỉ có MỘT nút phát - ở thanh phát nhỏ của khung. Thư viện một mình không có hàng "Đang nghe" và không có nút phát / dừng nào.
+        show(listOf(listening, fresh))
+        rule.onNodeWithTag("continue_row").assertDoesNotExist()
+        rule.onNodeWithTag("continue_play").assertDoesNotExist()
+        rule.onAllNodes(hasContentDescription("Phát") or hasContentDescription("Tạm dừng"), useUnmergedTree = true).assertCountEquals(0)
+        rule.onNodeWithText("Đang nghe").assertDoesNotExist()
+        rule.onAllNodesWithTag("book_cell").assertCountEquals(2)
     }
 
     @Test
     fun thirtyBooksLight() {
         show(DemoLibrary.books(30))
-        rule.onNodeWithTag("continue_row").assertIsDisplayed()
         rule.onNodeWithTag("library_grid").assertIsDisplayed()
         shot("library_30_light")
     }
@@ -143,12 +149,6 @@ class LibraryScreenTest {
         shot("library_30_dark")
     }
 
-    @Test
-    fun playingContinueRowDark() {
-        show(listOf(listening, fresh), dark = true, player = PlayerState(bookId = "l1", bookTitle = listening.title, chapterId = 4, chapterTitle = "Chương 4: Bài học đầu tiên", playing = true))
-        shot("library_listening_playing_dark")
-    }
-
     // ---- bấm thật ----
 
     @Test
@@ -157,24 +157,6 @@ class LibraryScreenTest {
         rule.onNodeWithText("30 cuốn").assertIsDisplayed()
         rule.onNodeWithTag("add_book").performClick()
         assertEquals(1, addOpened)
-    }
-
-    @Test
-    fun tappingTheContinueRowResumesAndTheRoundButtonToggles() {
-        show(listOf(listening, fresh))
-        rule.onNodeWithTag("continue_play").performClick()
-        assertEquals(listOf("l1"), toggled)
-        rule.onNodeWithTag("continue_row").performClick()
-        assertEquals(listOf("l1"), played)
-        assertEquals(0, nowPlayingOpened)
-    }
-
-    @Test
-    fun tappingTheContinueRowOfThePlayingBookOpensTheFullPlayer() {
-        show(listOf(listening), player = PlayerState(bookId = "l1", bookTitle = listening.title, chapterId = 4, chapterTitle = "Chương 4", playing = true))
-        rule.onNodeWithTag("continue_row").performClick()
-        assertEquals(1, nowPlayingOpened)
-        assertTrue(played.isEmpty())
     }
 
     @Test
