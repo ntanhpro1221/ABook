@@ -123,7 +123,8 @@ interface PlaybackCore {
  * ([Playback.addListener]); lệnh chuyển thẳng xuống lõi. Chỉ lắng nghe khi giao diện đang hiện ([attach] / [detach] theo vòng đời Activity) -
  * lúc ẩn (phát nền) không có gì chạy ở đây.
  *
- * `coverOf`: bìa của một cuốn (đọc đĩa - chạy ở `io`); `planOf`: chỗ nghe tiếp + hàng chương của một cuốn (đọc Store - chạy ở `io`).
+ * `coverOf`: bìa của một cuốn (đọc đĩa - chạy ở `io`); `planOf`: chỗ nghe tiếp + hàng chương của một cuốn (đọc Store - chạy ở `io`);
+ * `planAt`: như `planOf` nhưng bắt đầu ở một chương + giây cho trước (trang sách: chạm một chương, "Từ đầu", kết quả tìm).
  */
 class PlayerRepo(
     private val core: PlaybackCore,
@@ -131,6 +132,7 @@ class PlayerRepo(
     private val io: CoroutineDispatcher,
     private val coverOf: (String) -> CoverRef?,
     private val planOf: (String) -> LoadRequest?,
+    private val planAt: (String, Int, Double) -> LoadRequest? = { _, _, _ -> null },
 ) {
     private val flow = MutableStateFlow(PlayerState.Empty)
     val state: StateFlow<PlayerState> get() = flow
@@ -208,6 +210,21 @@ class PlayerRepo(
             if (!current.playing) core.play()
         } else {
             playBook(bookId)
+        }
+    }
+
+    /**
+     * Phát một chương từ giây `seconds` (trang sách). Cuốn đang ở trình phát thì nhảy tới đó như mọi cú nhảy khác (trình phát nhớ chỗ cũ); không thì nạp cuốn
+     * bắt đầu ở đó và phát.
+     */
+    fun playChapter(bookId: String, chapterId: Int, seconds: Double) {
+        if (flow.value.bookId == bookId) {
+            core.jumpTo(chapterId, seconds)
+            return
+        }
+        scope.launch {
+            val request = withContext(io) { planAt(bookId, chapterId, seconds) } ?: return@launch
+            core.load(request)
         }
     }
 
