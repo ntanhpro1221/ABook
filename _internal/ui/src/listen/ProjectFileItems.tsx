@@ -9,7 +9,7 @@ import { cn } from "@/shared/cn";
 import { DialogActions, Button, Dialog, ChoiceRow, ContentSkeleton, InlineError } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { useStudioMissing } from "@/studio/data";
-import { isOpenWork } from "@/studio/WorkInbox";
+import { isOpenWork } from "@/studio/precast";
 import type { ListenBook } from "./model";
 import { useSource } from "./source";
 import { useFadeScroller } from "@/shared/scrollFade";
