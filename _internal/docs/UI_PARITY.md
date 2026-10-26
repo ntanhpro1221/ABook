@@ -276,12 +276,13 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 
 ## d. Chữ hoa, dấu câu, `…` và `...`, dấu thanh, số
 
-**d1. Cùng nhãn (theo khoá lỏng) nhưng khác nguyên văn giữa hai phía** (19):
+**d1. Cùng nhãn (theo khoá lỏng) nhưng khác nguyên văn giữa hai phía** (20):
 
 | web | native | khác ở | nơi |
 |---|---|---|---|
 | chưa vào mạng Wi-Fi nào | Chưa vào mạng Wi-Fi nào | chữ hoa | `android/DevicesScreen.tsx:732` ~ `native/devices/DevicesModel.kt:222` |
 | chờ Wi-Fi | Chờ Wi-Fi | chữ hoa | `listen/prepareAhead.ts:152` ~ `native/voice/VoiceSheets.kt:124` |
+| Chữ của cả cuốn được gửi tới {} để đọc, bằn… | Chữ của cả cuốn được gửi tới {} để đọc, bằn… | dấu thanh / ký tự | `desktop/listenExport.ts:85` ~ `native/export/ExportModel.kt:195` |
 | cuối chương | Cuối chương | chữ hoa | `studio/credits.ts:80` ~ `native/addbook/AddBookScreen.kt:146` |
 | Giấy phép: | Giấy phép | dấu câu cuối | `listen/PlayerViews.tsx:1301` ~ `native/music/MusicPanel.kt:447` (+1) |
 | hẹn | Hẹn | chữ hoa | `android/SettingsScreen.tsx:188` (+1) ~ `native/screens/SettingsGroups.kt:154` |
@@ -310,7 +311,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 | kết thúc bằng `!` | 0 / 5860 | 0 / 822 |
 | kết thúc bằng `:` | 55 / 5860 | 0 / 822 |
 | dấu thanh kiểu cũ `oà oá uý` | 466 / 5860 | 84 / 822 |
-| dấu thanh kiểu mới `òa óa úy` | 1 / 5860 | 1 / 822 |
+| dấu thanh kiểu mới `òa óa úy` | 1 / 5860 | 0 / 822 |
 | số thập phân dấu phẩy `1,5` | 1 / 5860 | 0 / 822 |
 | số thập phân dấu chấm `1.5` | 0 / 5860 | 0 / 822 |
 | nhân bằng `×` | 0 / 5860 | 0 / 822 |
@@ -330,7 +331,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 **d3b. Chữ dùng dấu thanh kiểu mới (`òa óa úy`) - kiểu thiểu số** (DESIGN.md chưa chọn kiểu nào); 12 đầu mỗi phía:
 
 - web: Chữ của cả cuốn được gửi tới {} để đọc, bằng khóa của bạn -… (`desktop/listenExport.ts:85`)
-- native: Chữ của cả cuốn được gửi tới {} để đọc, bằng khóa của bạn -… (`native/export/ExportModel.kt:195`)
+- native: (không có)
 
 **d4. web: cùng nhãn nhưng viết khác nhau trong chính phía này** (64); 15 đầu:
 
@@ -364,10 +365,10 @@ Trong một cặp, mỗi nhãn ngắn phải có ở cả hai phía (khoá lỏn
 |---|---|---|---|---|---|---|
 | now-playing | 100 | 41 | 0 | 0 | 34 | 38 |
 | shared-labels | 30 | 565 | 0 | 0 | 7 | 13 |
-| library-book | 196 | 83 | 0 | 3 | 49 | 103 |
+| library-book | 196 | 83 | 0 | 0 | 49 | 103 |
 | settings | 125 | 96 | 0 | 0 | 17 | 34 |
 | devices | 137 | 119 | 0 | 0 | 96 | 10 |
-| voice | 130 | 98 | 0 | 1 | 93 | 15 |
+| voice | 130 | 98 | 0 | 0 | 93 | 15 |
 | add-edit-book | 180 | 71 | 0 | 0 | 93 | 39 |
 
 Thiếu thật ở native - `now-playing`: Bật lại; Chưa làm trước được; Chưa xoá được bản đọc; Chương này chưa có audio hoàn chỉnh - đ…; Chỉ khi đang sạc; Chọn giọng khác; Dừng; Dừng làm trước; Giữ lại; Gợi ý đọc; Hẹn giờ đã tắt tiếng lúc; Hết giờ thì {} tạm dừng, chỗ đang nghe …; Làm trước chương sau; Làm trước {} chương tới; Nghe cuốn khác; Nghe kiểm; Nghe lại từ đầu; Nghe tiếp; Nghe tiếp từ đó; Nghe tiếp {}; Nghe {}; Sáng hôm sau, thẻ “Tối qua” giúp tìm lạ…; Sắp tắt ·; Sẽ dừng khi hết chương này.; Thêm giọng; Thử; Tiếng nhỏ dần; Tải giọng VieNeu; Về thư viện; Xoá; Xoá bản đọc; Đang làm trước cho một cuốn hay giọng k…; Đã nghe chương này; Đã nghe hết cuốn này.; Đã nghe hết phần đã có; Đã nghe hết sách.; Đóng lời báo; Đọc bằng

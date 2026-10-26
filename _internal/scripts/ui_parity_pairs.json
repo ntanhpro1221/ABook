@@ -378,6 +378,11 @@
           "side": "web",
           "match": "^(tải về máy|đang tải về máy|không tải được|chiếm \\{\\})$",
           "reason": "Devices group (4): remote books and their download sheet"
+        },
+        {
+          "side": "native",
+          "match": "^xuất (mp.*|m.*b|sách nói \\(m.*b\\))$",
+          "reason": "Export group: wording pass for export comes after the export merge (group 8)"
         }
       ],
       "web_also": [
@@ -1349,6 +1354,11 @@
           "side": "native",
           "match": "^điện\\ thoại\\ chưa\\ có\\ giọng\\ tiếng\\ việt\\.\\ cài\\ ở\\ cài\\ đặt\\ điện\\ thoại\\ ›\\ chuyển\\ văn\\ bản\\ thành\\ giọng\\ nói$",
           "reason": "xem web 'Máy này chưa có giọng đọc.' - native nói rõ hơn"
+        },
+        {
+          "side": "native",
+          "match": "^chưa thêm được nhạc$",
+          "reason": "Music group: the Music session owns it (one music import path, dev/native-musicfix)"
         }
       ],
       "allow": [
