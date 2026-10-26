@@ -1,7 +1,6 @@
 package vn.abook.player.ui.nowplaying
 
 import android.content.Context
-import android.media.AudioManager
 import android.os.SystemClock
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableLongStateOf
@@ -29,7 +28,6 @@ class PlaybackNowPlayingModel(private val context: Context, private val scope: C
     override val state = metadata.asStateFlow()
     private val text = MutableStateFlow(ReadAlongState())
     override val readAlong = text.asStateFlow()
-    private val audio = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     private var attached = false
     private var coverJob: Job? = null
     private var textJob: Job? = null
@@ -96,14 +94,13 @@ class PlaybackNowPlayingModel(private val context: Context, private val scope: C
         metadata.value = mapped.copy(
             sleep = if (event.optString("kind") == "sleep" || old.bookId != book) mapped.sleep else old.sleep,
             musicEnabled = Playlists.autoEnabled,
-            volume = audio.getStreamVolume(AudioManager.STREAM_MUSIC), maxVolume = audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC),
-            returnAvailable = returnPlace != null, voices = old.voices, voiceId = ReadAloud.voiceId,
+            returnAvailable = returnPlace != null, returnSerial = old.returnSerial, voices = old.voices, voiceId = ReadAloud.voiceId,
         )
     }
 
     private fun rememberPlace() {
         Playback.currentChapter?.let { returnPlace = it.id to Playback.positionMs }
-        metadata.value = metadata.value.copy(returnAvailable = returnPlace != null)
+        metadata.value = metadata.value.copy(returnAvailable = returnPlace != null, returnSerial = metadata.value.returnSerial + 1)
     }
     override fun toggle() { Playback.toggle() }
     override fun skip(seconds: Int) { rememberPlace(); Playback.skip(seconds.toDouble()) }
@@ -125,10 +122,6 @@ class PlaybackNowPlayingModel(private val context: Context, private val scope: C
         Playlists.autoEnabled = enabled
         MusicBed.rememberAuto(enabled)
         metadata.value = metadata.value.copy(musicEnabled = enabled)
-    }
-    override fun setVolume(value: Int) {
-        audio.setStreamVolume(AudioManager.STREAM_MUSIC, value.coerceIn(0, state.value.maxVolume), 0)
-        metadata.value = metadata.value.copy(volume = audio.getStreamVolume(AudioManager.STREAM_MUSIC))
     }
     override fun setVoice(id: String) {
         if (id !in state.value.voices.map { it.id }) return
