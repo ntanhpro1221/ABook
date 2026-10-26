@@ -14,7 +14,7 @@ Bộ đọc là heuristic trên mã nguồn (không chạy app): chữ nằm tro
 
 <!-- ui_parity:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity.py - không sửa tay, chạy lại script) -->
 
-Quét: web 2264 chữ (1748 khác nhau), 345 cặp nhãn-icon; native 811 chữ (627 khác nhau), 41 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
+Quét: web 2269 chữ (1751 khác nhau), 345 cặp nhãn-icon; native 811 chữ (627 khác nhau), 41 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
 
 ## a. Cùng việc, khác chữ
 
@@ -47,7 +47,7 @@ Cặp nhãn ngắn (<= 6 chữ) mà phía kia KHÔNG có nguyên văn nhưng có
 | Đã thêm: {} | Thêm {} | 1.00 | `native/voice/VoiceModel.kt:371` ~ `listen/LibraryScreen.tsx:203` |
 | Đã xuất | Xuất | 1.00 | `native/export/ExportScreen.kt:172` ~ `studio/ExportBook.tsx:560` (+1) |
 | Đã xuất sách nói | Xuất sách nói… | 1.00 | `native/export/ExportModel.kt:314` ~ `desktop/ExportBookFileJob.tsx:140` |
-| Đồng ý | Đóng | 1.00 | `native/voice/VoiceSheets.kt:134` ~ `shared/ui.tsx:699` (+2) |
+| Đồng ý | Đóng | 1.00 | `native/voice/VoiceSheets.kt:134` ~ `desktop/TitleBar.tsx:37` (+3) |
 | Đang đo. | Đang đọc… | 0.93 | `native/screens/SettingsAdvanced.kt:57` ~ `listen/AddBook.tsx:630` (+1) |
 | Đang đo. | Đang đổi | 0.93 | `native/screens/SettingsAdvanced.kt:57` ~ `studio/MusicTab.tsx:230` |
 | Tìm lại thiết bị | Hỏi lại thư viện | 0.93 · icon | `native/devices/PairScreen.kt:209` (+1) ~ `desktop/OtherComputers.tsx:228` (+1) |
@@ -99,7 +99,7 @@ Số cặp: web 295, native 41; icon lucide dùng: web 96, native 24.
 
 Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể cả chữ giống chữ ở mục a. Để phân biệt tính năng thiếu với chữ trôi: một màn native có nhiều nhãn chỉ-native mà web cùng màn không có thường là tính năng mới; vài nhãn lẻ thường là chữ trôi (mục a).
 
-### c1. Chỉ có ở native (261 nhãn)
+### c1. Chỉ có ở native (260 nhãn)
 
 - `native/NativeActivity.kt` (2): Settings (`234`); Diagnostics (`245`)
 - `native/addbook/AddBookScreen.kt` (11): Thư mục TXT (`87`); Chọn sách từ máy bạn (`91`); Cuối chương (`143`); Xem trước (`160`); Đang xử lý (`164`); Dùng sách có (`165`); Thêm bản riêng (`182`); Tách chương (`185`); Bỏ đọc dòng (`194`); Bỏ số gọi (`211`); Lời chú (`215`)
@@ -133,7 +133,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `native/devices/ShareScreen.kt` (4): Cho máy khác nghe (`57`); Tạo mã ghép (`67`); Cần quyền Thiết bị ở gần (`78`); Cho ABook chạy nền (`84`)
 - `native/devices/StorageScreen.kt` (3): Dung lượng (`43`); Còn trống {} (`48`); Chưa có gì trên máy (`52`)
 - `native/editbook/BookEditor.kt` (2): Bạn hãy thử lại. (`33`); Bạn hãy thử lưu lại. (`65`)
-- `native/editbook/CoverCrop.kt` (6): Bạn hãy chọn lại ảnh. (`105`); Cắt ảnh bìa (`108`); Dùng ảnh (`110`); Đang lưu (`110`); Đang đọc ảnh (`125`); Phóng to (`149`)
+- `native/editbook/CoverCrop.kt` (5): Bạn hãy chọn lại ảnh. (`105`); Cắt ảnh bìa (`108`); Dùng ảnh (`110`); Đang lưu (`110`); Đang đọc ảnh (`125`)
 - `native/editbook/EditBookScreen.kt` (5): Chọn ảnh (`67`); Đang đọc sách (`85`); Gửi phần sửa (`104`); Gốc: {} (`116`); Nhãn (`153`)
 - `native/editbook/EditModel.kt` (2): Bạn hãy nhập tên sách. (`54`); Bạn hãy nhập tên chương. (`55`)
 - `native/export/ExportModel.kt` (28): Chương {}/{} (`238`); Đang ghép file âm thanh (`240`); Đang xuất sách (`243`); Đang trộn nhạc chương {}/{} (`246`); Đang trộn nhạc nền (`248`); Đang chờ mạng (`254`); Tạm nhường cho chương đang nghe (`259`); Đang xuất {} chương (`261`); Đang chuẩn bị (`271`); Chương 1/{} · 0% (`282`); Đang làm sách nói (`282`); Đang làm file M4B (`288`); Vào {} (`310`); Đã xuất {} chương (`310`); Đã xuất M4B (`314`); Đã xuất sách nói (`314`); File dở đã xoá (`323`); Đã dừng xuất (`329`); Đã dừng xuất M4B (`330`); Đã dừng xuất sách nói (`331`); Không xuất được (`336`); Không xuất được M4B (`337`); Không xuất được sách nói (`338`); Còn mới (`370`); Sách nói (`379`); ... +3
@@ -226,7 +226,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 
 | thư mục | nhãn |
 |---|---|
-| desktop/ | 138 |
+| desktop/ | 141 |
 | studio/ | 448 |
 
 ## d. Chữ hoa, dấu câu, `…` và `...`, dấu thanh, số
@@ -254,23 +254,23 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 
 | kiểu | web | native |
 |---|---|---|
-| dấu ba chấm ASCII `...` | 1 / 2264 | 0 / 811 |
-| dấu ba chấm `…` | 83 / 2264 | 0 / 811 |
-| kết thúc bằng dấu chấm `.` | 418 / 2264 | 130 / 811 |
-| kết thúc bằng `!` | 0 / 2264 | 0 / 811 |
-| kết thúc bằng `:` | 43 / 2264 | 0 / 811 |
-| dấu thanh kiểu cũ `oà oá uý` | 154 / 2264 | 59 / 811 |
-| dấu thanh kiểu mới `òa óa úy` | 4 / 2264 | 23 / 811 |
-| số thập phân dấu phẩy `1,5` | 1 / 2264 | 0 / 811 |
-| số thập phân dấu chấm `1.5` | 0 / 2264 | 0 / 811 |
-| nhân bằng `×` | 0 / 2264 | 0 / 811 |
-| nhân bằng `x` sau số | 0 / 2264 | 0 / 811 |
-| ngăn cách `·` | 53 / 2264 | 27 / 811 |
-| ngăn cách ` - ` | 74 / 2264 | 29 / 811 |
-| gạch dài `—`/`–` | 4 / 2264 | 1 / 811 |
-| giờ `1:30` hay `1 giờ 30` | 2 / 2264 | 1 / 811 |
-| dấu `%` dính số | 0 / 2264 | 1 / 811 |
-| dấu `%` cách số | 0 / 2264 | 0 / 811 |
+| dấu ba chấm ASCII `...` | 1 / 2269 | 0 / 811 |
+| dấu ba chấm `…` | 83 / 2269 | 0 / 811 |
+| kết thúc bằng dấu chấm `.` | 418 / 2269 | 130 / 811 |
+| kết thúc bằng `!` | 0 / 2269 | 0 / 811 |
+| kết thúc bằng `:` | 43 / 2269 | 0 / 811 |
+| dấu thanh kiểu cũ `oà oá uý` | 154 / 2269 | 59 / 811 |
+| dấu thanh kiểu mới `òa óa úy` | 4 / 2269 | 23 / 811 |
+| số thập phân dấu phẩy `1,5` | 1 / 2269 | 0 / 811 |
+| số thập phân dấu chấm `1.5` | 0 / 2269 | 0 / 811 |
+| nhân bằng `×` | 0 / 2269 | 0 / 811 |
+| nhân bằng `x` sau số | 0 / 2269 | 0 / 811 |
+| ngăn cách `·` | 53 / 2269 | 27 / 811 |
+| ngăn cách ` - ` | 74 / 2269 | 29 / 811 |
+| gạch dài `—`/`–` | 4 / 2269 | 1 / 811 |
+| giờ `1:30` hay `1 giờ 30` | 2 / 2269 | 1 / 811 |
+| dấu `%` dính số | 0 / 2269 | 1 / 811 |
+| dấu `%` cách số | 0 / 2269 | 0 / 811 |
 
 **d3. Nhãn ngắn bắt đầu bằng chữ thường** (web 151, native 0); 15 đầu mỗi phía:
 
