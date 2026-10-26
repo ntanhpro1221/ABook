@@ -91,6 +91,9 @@ Chủ sách 26-10: "trong các loại chuyển cảnh, loại fade là tôi ghé
 
 Trong thời gian P0-P3, bản WebView chỉ nhận sửa lỗi.
 
+Hàng "Sắp có" (SoonRow, MenuRow soon) chỉ là giàn giáo trong lúc làm: chúng đánh dấu việc native chưa làm. Điều kiện của P4 là không còn hàng nào như thế; máy dò sẽ chặn bản phát hành nếu còn.
+Mỗi màn native được thiết kế lại cho cách tương tác của điện thoại, không bê điều khiển của bản web sang. Chủ sách 26-10, về nút "Đọc theo" cũ: "đâu phải cứ lấy nút cũ rồi gán vào linh tinh là xong?". Đặc tả mỗi màn phải kê từng điều khiển được giữ lại, đặt ở đâu và vì sao.
+
 ## 7. Máy tính
 
 Chủ sách 26-10: "không chỉ bản android mà còn bản window nữa". App Windows cũng bỏ Tauri + WebView2: giao diện native gọi backend
