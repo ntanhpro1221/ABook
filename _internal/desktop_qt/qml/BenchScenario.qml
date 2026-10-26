@@ -60,8 +60,8 @@ Item {
         running: Bench.enabled && root.playerScenario && Backend.libraryLoaded
         interval: 1000
         onTriggered: {
-            win.width = 1500                // cột chữ chạy theo giọng chỉ có ở bố cục rộng (khung nội dung >= 1100)
-            win.height = 860
+            win.width = 1920                // đo cùng khổ rộng trước / sau thay đổi bố cục
+            win.height = 1080
             if (!Player.loaded && Bench.book) Player.open(Bench.book, -1, -1, false)
             waitLoaded.start()
         }

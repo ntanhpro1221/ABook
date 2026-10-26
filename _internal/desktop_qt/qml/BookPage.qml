@@ -1,18 +1,34 @@
 import QtQuick
 import ABook
 
-// Trang sách (màn con của Thư viện): bìa lớn bên trái, thông tin + nút nghe bên phải, dưới là danh sách chương (mỗi hàng nghe chương ấy).
-// Nút chính nói đúng chỗ nghe tiếp: "Nghe" cuốn mới, "Nghe tiếp" + tên chương, "Tạm dừng" khi đang phát cuốn này. Sách chưa có audio nói thẳng còn thiếu gì.
-// Hàng phụ (Đọc, Tìm, Từ đầu, Thêm) thuộc các bước sau.
+// One width rule on the content area. Geometry interpolates without reparenting,
+// so the cover, chapter scroll position and delegates survive a class change.
 Item {
     id: root
     property var book: ({})
+    readonly property bool expanded: width >= Theme.widthExpanded
+    property real split: expanded ? 1 : 0
+    // First make room horizontally, then lift the chapter list beside the summary.
+    // The reverse follows the same route, keeping text clear of the moving cover.
+    readonly property real summaryT: Math.min(1, split * 2)
+    readonly property real chapterT: Math.max(0, split * 2 - 1)
+    Behavior on split {
+        NumberAnimation {
+            duration: Theme.reduceMotion ? 0 : Theme.motionMedium
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Theme.easeStandard
+        }
+    }
+    readonly property real leftWidth: Math.min(380, 320 + Math.max(0, width - Theme.widthExpanded) * 0.06)
+    readonly property real compositionWidth: Math.min(width - 2 * Theme.margin, 1360)
+    readonly property real compactCoverH: Math.min(150, height * 0.25)
+    readonly property real wideCoverH: Math.max(0, Math.min(height * 0.4, stage.height - info.height - Theme.s16))
+    readonly property real stackedHeight: Math.max(compactCoverH, info.height) + Theme.s24
 
     BookDetail {
         id: detail
         bookId: root.book.bookId || ""
     }
-
     ScreenHeader {
         id: header
         x: Theme.margin
@@ -21,48 +37,44 @@ Item {
         title: ""
         implicitHeight: Theme.s32 + Theme.headerRow
     }
+    Item {
+        id: stage
+        x: (parent.width - width) / 2
+        y: header.height + Theme.s16
+        width: parent.width - 2 * Theme.margin + (root.compositionWidth - (parent.width - 2 * Theme.margin)) * root.split
+        height: parent.height - y - Theme.s16
 
-    ListView {
-        id: list
-        anchors.top: header.bottom
-        anchors.bottom: parent.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        clip: true
-        model: detail.chapters
-        boundsBehavior: Flickable.StopAtBounds
-        bottomMargin: Theme.s32
-        readonly property real rowW: Math.min(width - 2 * Theme.margin, 760)
-
-        header: Item {
-            width: list.width
-            height: Math.max(cover.y + cover.height, info.y + info.height) + Theme.s32 + chaptersTitle.height + Theme.s8
-
+        Item {
+            id: summary
+            objectName: "bookSummary"
+            width: stage.width + (root.leftWidth - stage.width) * root.summaryT
+            height: Math.max(cover.height, info.y + info.height)
             CoverView {
                 id: cover
-                x: Theme.margin
-                y: Theme.s16
-                width: 280
-                height: Math.round(width * Theme.coverRatio)
+                objectName: "bookCover"
+                height: root.compactCoverH + (root.wideCoverH - root.compactCoverH) * root.summaryT
+                width: height / Theme.coverRatio
+                x: 0
                 coverKey: root.book.coverKey || ""
                 title: root.book.title || ""
                 radius: Theme.radiusCover
             }
-
             Column {
                 id: info
-                x: cover.x + cover.width + Theme.s48
-                y: cover.y
-                width: Math.min(list.width - x - Theme.margin, 560)
-                spacing: Theme.s8
+                objectName: "bookInfo"
+                x: (cover.width + Theme.s24) * (1 - Math.max(0, (root.summaryT - 0.2) / 0.8))
+                y: (cover.height + Theme.s16) * Math.min(1, root.summaryT / 0.2)
+                width: summary.width - x
+                spacing: Theme.s4 + (Theme.s8 - Theme.s4) * root.summaryT
 
                 Text {
+                    objectName: "bookTitle"
                     width: parent.width
                     text: root.book.title || ""
                     color: Theme.text
                     wrapMode: Text.Wrap
                     lineHeight: 1.15
-                    font.pixelSize: Theme.sizeTitleDesktop
+                    font.pixelSize: Theme.sizeSection + (Theme.sizeTitlePhone - Theme.sizeSection) * root.summaryT
                     font.weight: Theme.weightBold
                 }
                 Text {
@@ -81,7 +93,7 @@ Item {
                     wrapMode: Text.Wrap
                     font.pixelSize: Theme.sizeBodySmall
                 }
-                Item { width: 1; height: Theme.s8 }
+                Item { width: 1; height: Theme.s8 * root.summaryT }
                 Rectangle {          // tiến độ mảnh
                     visible: root.book.progress > 0.005
                     width: parent.width
@@ -105,23 +117,30 @@ Item {
                     wrapMode: Text.Wrap
                     font.pixelSize: Theme.sizeBodySmall
                 }
-                Item { width: 1; height: Theme.s8 }
-                Row {
+                Item { width: 1; height: Theme.s8 * root.summaryT }
+                Flow {
                     visible: detail.canListen
-                    spacing: Theme.s16
+                    width: parent.width
+                    spacing: Theme.s8
                     Button {
-                        id: primary
                         text: detail.primaryText
                         icon: detail.primaryIcon
                         onClicked: detail.activate()
                     }
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        visible: detail.primaryCaption !== ""
-                        text: detail.primaryCaption
-                        color: Theme.text2
-                        font.pixelSize: Theme.sizeBodySmall
+                    Button {
+                        kind: "text"
+                        icon: "list-ordered"
+                        text: "Chương"
+                        onClicked: { list.positionViewAtBeginning(); list.forceActiveFocus() }
                     }
+                }
+                Text {
+                    visible: detail.primaryCaption !== ""
+                    width: parent.width
+                    text: detail.primaryCaption
+                    wrapMode: Text.Wrap
+                    color: Theme.text2
+                    font.pixelSize: Theme.sizeBodySmall
                 }
                 Text {
                     visible: detail.message !== ""
@@ -140,40 +159,56 @@ Item {
                     font.pixelSize: Theme.sizeBodySmall
                 }
             }
-
+        }
+        Item {
+            id: chapterRegion
+            objectName: "bookChapterRegion"
+            x: (root.leftWidth + Theme.s32) * root.summaryT
+            y: Math.max(root.stackedHeight, summary.height + Theme.s24) * (1 - root.chapterT)
+            width: stage.width - x
+            height: Math.max(0, stage.height - y)
             Text {
                 id: chaptersTitle
                 visible: detail.chapters.count > 0
-                x: Theme.margin
-                y: Math.max(cover.y + cover.height, info.y + info.height) + Theme.s32
+                width: parent.width
                 text: "Chương"
+                wrapMode: Text.Wrap
                 color: Theme.text
                 font.pixelSize: Theme.sizeSection
                 font.weight: Theme.weightMedium
             }
-        }
-
-        delegate: Item {
-            id: row
-            required property var model
-            width: list.width
-            height: chapter.height
-            ChapterRow {
-                id: chapter
-                x: Theme.margin
-                width: list.rowW
-                title: row.model.title
-                subtitle: row.model.subtitle
-                length: row.model.length
-                status: row.model.status
-                playable: row.model.playable
-                done: row.model.done
-                current: row.model.current
-                progress: row.model.progress
-                onClicked: if (row.model.playable) detail.playChapter(row.model.chapterId)
+            ListView {
+                id: list
+                objectName: "bookChapters"
+                y: chaptersTitle.height + Theme.s8
+                width: parent.width
+                height: Math.max(0, parent.height - y)
+                clip: true
+                model: detail.chapters
+                boundsBehavior: Flickable.StopAtBounds
+                bottomMargin: Theme.s16
+                delegate: ChapterRow {
+                    id: row
+                    required property var model
+                    objectName: "bookChapterRow"
+                    width: list.width
+                    title: model.title
+                    subtitle: model.subtitle
+                    length: model.length
+                    status: model.status
+                    playable: model.playable
+                    done: model.done
+                    current: model.current
+                    progress: model.progress
+                    onClicked: if (model.playable) detail.playChapter(model.chapterId)
+                }
+                SmoothWheel { flick: list }
+                Scrollbar { target: list }
+            }
+            ScrollEdges {
+                x: list.x; y: list.y; width: list.width; height: list.height
+                target: list
             }
         }
-        SmoothWheel { flick: list }
-        Scrollbar { target: list }
     }
 }

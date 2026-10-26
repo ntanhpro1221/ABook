@@ -1,7 +1,7 @@
 import QtQuick
 import ABook
 
-// Cài đặt (D0: hai nhóm đủ để thử). Máy tính: danh sách nhóm phẳng, hai cột (DESIGN.md mục 7) - làm đủ ở D2.
+// Settings groups change columns using content width; text always wraps.
 Item {
     id: root
 
@@ -11,21 +11,37 @@ Item {
         { key: "dark", label: "Tối" }
     ]
 
+    readonly property bool expanded: width >= Theme.widthExpanded
+    property real split: expanded ? 1 : 0
+    Behavior on split {
+        NumberAnimation {
+            duration: Theme.reduceMotion ? 0 : Theme.motionMedium
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Theme.easeStandard
+        }
+    }
+    readonly property real bodyWidth: Math.min(width - 2 * Theme.margin, 800 + 400 * split)
+    readonly property real groupWidth: (bodyWidth - Theme.s32 * split) / (1 + split)
+
     ScreenHeader {
         id: header
-        x: Theme.margin
-        width: parent.width - 2 * Theme.margin
+        x: (parent.width - root.bodyWidth) / 2
+        width: root.bodyWidth
         title: "Cài đặt"
     }
-
-    Column {
-        x: Theme.margin
+    Flickable {
+        id: scroll
+        x: header.x
         y: header.height + Theme.s16
-        width: Math.min(parent.width - 2 * Theme.margin, 640)
-        spacing: Theme.s32
-
+        width: root.bodyWidth
+        height: parent.height - y
+        contentHeight: Math.max(appearance.height, advanced.y + advanced.height) + Theme.s32
+        clip: true
+        boundsBehavior: Flickable.StopAtBounds
         Column {
-            width: parent.width
+            id: appearance
+            objectName: "settingsAppearance"
+            width: root.groupWidth
             Text {
                 text: "GIAO DIỆN"
                 color: Theme.text3
@@ -36,16 +52,16 @@ Item {
             }
             Item {
                 width: parent.width
-                height: 56
+                height: Theme.s24 + choices.height
                 Text {
-                    anchors.verticalCenter: parent.verticalCenter
                     text: "Màu nền"
                     color: Theme.text
                     font.pixelSize: Theme.sizeBody
                 }
-                Row {
-                    anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
+                Flow {
+                    id: choices
+                    y: Theme.s24
+                    width: parent.width
                     spacing: Theme.s24
                     Repeater {
                         model: root.modes
@@ -90,8 +106,13 @@ Item {
         }
 
         Column {
-            width: parent.width
+            id: advanced
+            objectName: "settingsAdvanced"
+            width: root.groupWidth
+            x: (root.groupWidth + Theme.s32) * root.split
+            y: (appearance.height + Theme.s32) * (1 - root.split)
             Text {
+                width: parent.width
                 text: "NÂNG CAO"
                 color: Theme.text3
                 font.pixelSize: Theme.sizeCaption
@@ -99,49 +120,47 @@ Item {
                 font.letterSpacing: 0.72
                 bottomPadding: Theme.s8
             }
-            Item {
+            Column {
                 width: parent.width
-                height: 64
-                Column {
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 2
-                    Text {
-                        text: "Nhật ký"
-                        color: Theme.text
-                        font.pixelSize: Theme.sizeBody
-                    }
-                    Text {
-                        text: "Ghi lại những gì ABook gặp khi chạy, để gửi khi cần."
-                        color: Theme.text3
-                        font.pixelSize: Theme.sizeCaption
-                    }
+                spacing: Theme.s8
+                Text {
+                    width: parent.width
+                    text: "Nhật ký"
+                    color: Theme.text
+                    font.pixelSize: Theme.sizeBody
+                    wrapMode: Text.Wrap
+                }
+                Text {
+                    width: parent.width
+                    text: "Ghi lại những gì ABook gặp khi chạy, để gửi khi cần."
+                    color: Theme.text3
+                    font.pixelSize: Theme.sizeCaption
+                    wrapMode: Text.Wrap
                 }
                 Button {
-                    anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
                     kind: "text"
                     text: "Mở thư mục"
                     onClicked: Platform.revealFile(Backend.logPath)
                 }
             }
             Rectangle { width: parent.width; height: 1; color: Theme.line }
-            Item {
+            Flow {
                 width: parent.width
-                height: 56
+                spacing: Theme.s24
+                topPadding: Theme.s16
                 Text {
-                    anchors.verticalCenter: parent.verticalCenter
                     text: "Phiên bản"
                     color: Theme.text
                     font.pixelSize: Theme.sizeBody
                 }
                 Text {
-                    anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
                     text: Backend.version
                     color: Theme.text2
                     font.pixelSize: Theme.sizeBodySmall
                 }
             }
         }
+        SmoothWheel { flick: scroll }
     }
+    Scrollbar { target: scroll }
 }

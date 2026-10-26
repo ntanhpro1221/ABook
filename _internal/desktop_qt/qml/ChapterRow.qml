@@ -1,7 +1,8 @@
 import QtQuick
 import ABook
 
-// Một hàng chương: tên chương (hay tên riêng nếu có), dòng phụ độ dài / "Chưa có audio", dấu đã nghe xong, vạch tiến độ chương dở dang, chương đang phát tô màu nhấn.
+// Một hàng chương: tên và số chương ở trái, thời lượng ở cuối hàng,
+// dấu đã nghe xong, vạch tiến độ chương dở dang, chương đang phát tô màu nhấn.
 // Dùng ở trang sách, ngăn Chương và cột phải của Đang nghe khi chưa có chữ chạy theo. Bấm hàng không nghe được thì không làm gì.
 Interactive {
     id: root
@@ -14,11 +15,12 @@ Interactive {
     property bool current: false
     property real progress: 0
     readonly property string headline: subtitle !== "" ? subtitle : title
-    readonly property string detail: [subtitle !== "" ? title : "", status !== "" ? status : length].filter(s => s !== "").join(" · ")
-    implicitHeight: Math.max(56, textColumn.implicitHeight + 2 * Theme.s12)
+    readonly property string detail: [subtitle !== "" ? title : "", status].filter(s => s !== "").join(" · ")
+    implicitHeight: Math.max(56, Math.max(textColumn.implicitHeight, duration.implicitHeight) + 2 * Theme.s12)
     opacity: playable ? 1 : 0.55
 
     Rectangle {
+        objectName: "chapterFill"
         anchors.fill: parent
         radius: Theme.radiusControl
         color: root.current ? Theme.accentSoft : Theme.text
@@ -42,7 +44,7 @@ Interactive {
         id: textColumn
         x: mark.x + mark.width + Theme.s12
         anchors.verticalCenter: parent.verticalCenter
-        width: parent.width - x - Theme.s12
+        width: parent.width - x - Theme.s12 - (duration.visible ? duration.width + Theme.s16 : 0)
         spacing: 2
         Text {
             width: parent.width
@@ -61,7 +63,20 @@ Interactive {
             font.pixelSize: Theme.sizeCaption
         }
     }
+    Text {
+        id: duration
+        objectName: "chapterDuration"
+        visible: root.status === "" && root.length !== ""
+        x: parent.width - width - Theme.s12
+        anchors.verticalCenter: parent.verticalCenter
+        text: root.length
+        color: Theme.text3
+        horizontalAlignment: Text.AlignRight
+        font.pixelSize: Theme.sizeCaption
+        font.features: { "tnum": 1 }
+    }
     Rectangle {
+        objectName: "chapterProgress"
         visible: root.progress > 0.01 && !root.done
         x: Theme.s12 + 20 + Theme.s12
         anchors.bottom: parent.bottom

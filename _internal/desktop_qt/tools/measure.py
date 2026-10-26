@@ -322,7 +322,7 @@ def player_main(a, exe: Path, fixture: Path, env: dict) -> int:
             print(f"lượt {attempt + 1}: lỗi - {r.get('why')}")
             dropped += 1
             continue
-        if r["covered"] or r["low_refresh"]:
+        if r["covered"] or (r["low_refresh"] and not a.allow_low_refresh):
             print(f"lượt {attempt + 1}: {'cửa sổ bị che ' + str(r['bad_sample']) if r['covered'] else 'tần số quét tụt'} -> bỏ")
             dropped += 1
             continue
@@ -359,6 +359,8 @@ def main() -> int:
     ap.add_argument("--runs", type=int, default=5)
     ap.add_argument("--attempts", type=int, default=12)
     ap.add_argument("--topmost", action="store_true")
+    ap.add_argument("--allow-low-refresh", action="store_true",
+                    help="keep RAM samples on a 60 Hz display; frame results remain labelled low_refresh")
     ap.add_argument("--scenario", choices=["library", "player"], default="library",
                     help="library: cuộn lưới; player: thanh phát + Đang nghe (thư viện thử phải có audio_books.json)")
     ap.add_argument("--out", default="")
@@ -388,7 +390,7 @@ def main() -> int:
             print(f"lượt {attempt + 1}: cửa sổ bị che -> bỏ")
             dropped += 1
             continue
-        if r["low_refresh"]:
+        if r["low_refresh"] and not a.allow_low_refresh:
             print(f"lượt {attempt + 1}: tần số quét tụt về ~60 Hz (khung p50 {r['frame_p50']:.1f} ms) -> bỏ")
             dropped += 1
             continue

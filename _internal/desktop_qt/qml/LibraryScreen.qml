@@ -7,10 +7,17 @@ FocusScope {
     id: root
     signal openBook(var book)
 
-    readonly property real avail: width - 2 * Theme.margin
+    readonly property real avail: Math.max(0, width - 2 * Theme.margin)
     readonly property int gap: Theme.s24
-    readonly property int cols: Math.max(2, Math.ceil((avail + gap) / (Theme.coverMax + gap)))
-    readonly property real coverW: Math.floor((avail - (cols - 1) * gap) / cols)
+    readonly property int cols: Math.max(1, Math.min(Math.floor((avail + gap) / (Theme.coverMin + gap)), Math.ceil((avail + gap) / (Theme.coverMax + gap))))
+    property real coverW: Math.min(Theme.coverMax, (avail - (cols - 1) * gap) / cols)
+    Behavior on coverW {
+        NumberAnimation {
+            duration: Theme.reduceMotion ? 0 : Theme.motionMedium
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Theme.easeStandard
+        }
+    }
     readonly property real cellW: coverW + gap
     readonly property bool failed: Backend.state === Backend.Failed
     readonly property bool loading: !failed && !Backend.libraryLoaded
@@ -58,16 +65,32 @@ FocusScope {
             height: cells.childrenRect.height + root.gap
             Item {
                 id: cells
-                x: Theme.margin
-                width: parent.width - 2 * Theme.margin
+                readonly property int count: Math.max(0, Math.min(root.cols, root.count - rowItem.first))
+                objectName: "libraryGridRow"
+                width: count * root.cellW - root.gap
+                x: (parent.width - width) / 2
+                Behavior on x {
+                    NumberAnimation {
+                        duration: Theme.reduceMotion ? 0 : Theme.motionMedium
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: Theme.easeStandard
+                    }
+                }
                 Repeater {
-                    model: Math.max(0, Math.min(root.cols, root.count - rowItem.first))
+                    model: cells.count
                     BookCell {
                         id: cell
                         required property int index
                         readonly property int at: rowItem.first + index
                         readonly property var info: { Backend.library.revision; return Backend.library.book(at) }
                         x: index * root.cellW
+                        Behavior on x {
+                            NumberAnimation {
+                                duration: Theme.reduceMotion ? 0 : Theme.motionMedium
+                                easing.type: Easing.BezierSpline
+                                easing.bezierCurve: Theme.easeStandard
+                            }
+                        }
                         coverWidth: root.coverW
                         title: info.title || ""
                         subtitle: info.subtitle || ""
@@ -132,7 +155,7 @@ FocusScope {
             model: Math.max(0, root.cols * Math.ceil(skeleton.height / skeleton.skeletonCellH))
             Item {
                 required property int index
-                x: Theme.margin + (index % root.cols) * root.cellW
+                x: (root.width - (root.cols * root.cellW - root.gap)) / 2 + (index % root.cols) * root.cellW
                 y: Math.floor(index / root.cols) * skeleton.skeletonCellH
                 width: root.coverW
                 height: skeleton.skeletonCellH

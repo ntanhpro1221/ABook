@@ -1,5 +1,21 @@
 # desktop_qt D0 - progress (updated after every step)
 
+## qtwide2 — lead review, 26-10-2026
+
+- Book composition is centred and capped at 1360 px (summary + 32 px gap + chapters). Cover shares the title's left edge from expanded. ChapterRow keeps title/chapter on the left and duration at the right inset with tabular figures; current/hover fill and progress retain full row geometry.
+- Replaced the box-only empty-band check with recursive Text.paintedWidth extents of complete visible rows, including text alignment. Negative control using the previous BookPage/ChapterRow fails at 1920 (64.70% empty) and 2560 (74.01%); current QML passes at 10.43% / 21.31%. Saved old QML and logs in build/qtwide/{old_BookPage.qml,old_ChapterRow.qml,old_ink_control.txt,new_width_test.txt}. Alignment tolerance <=1 px, composition cap/centring at 2560, duration tnum and actual hover/current pixels tested in light/dark.
+- The newly captured intermediate resize frame exposed cover/text/list overlap. Routed the same 220 ms geometry transition in two stages; tested separation in both directions and reduced motion. Final build exit 0; CTest 6/6; Width 38, total 238 (=26+14+37+6+117+38). Theme/text-cut/diff checks pass.
+- Re-shot and opened 44 PNGs: Book/Library 1024×700, 1440×900, 1920×1080, 2560×1440; Now Playing/Settings through 1920; current+hover, rail, scroll, resize and Studio, light/dark. Opened 14 new 2× edge crops. shot.py now bypasses monitor max-track clamping for client= and checks actual size; all PNG dimensions validated. Reproduce: venv Python tools/qtwide_review.py shots2 (or audit2 for dimensions/crops only). Evidence: build/qtwide/{shots2,zooms2,shots2_dimensions.json,build2.log,ctest2.log}. Now Playing composition kept as approved by lead.
+- Auxiliary idle sample: 59.22 MB median of 3 runs (55.72–68.52 MB); earlier qtwide median was 58.85 MB. Isolated fixture/profile only, all windows opened here closed; no commit or protected-source/dependency changes.
+
+## qtwide — 26-10-2026, dev/desk-qt-wide
+
+- Content width thresholds live in the generated Theme: 600 / 840 / 1200 / 1600. DESIGN on this base has no "Khổ cửa sổ" section; generator marks the temporary block for moving into the DESIGN parser.
+- Book: fixed 320–380 px summary and independent full-width chapter list from expanded; capped 2:3 cover; compact summary preserves at least four chapter rows even with the player bar. Conditional top/bottom fades. Now Playing splits at large. Library centres full/partial rows and keeps covers 160–200 px through 2560. Settings has two columns from expanded; Studio is centred at max 800 px. Geometry uses 220 ms Theme motion, disabled by reduced motion.
+- WidthTests uses real screen QML and Player/BookDetail/ReadAlong, fake HTTP/audio. 31 pass; existing suites 26 + 14 + 37 + 6 + 117 pass (231 total). CTest 6/6, text-cut and generated-theme checks pass.
+- Isolated fixture and LOCALAPPDATA under build/qtwide; 36 light/dark captures at exact 1024×700 / 1440×900 / 1920×1080, including rail, scroll and resize frames, all reviewed at full size and with 2× edge crops. Book idle private RAM, 1920×1080 client, three runs each: 55.73 → 58.85 MB (+3.12). Tools: qtwide_review.py, shot.py client=W,H. Results in build/qtwide; no owner's settings/library touched, no commit.
+
+
 Worktree D:/Novels/ABook_deskqt, branch dev/desk-qt (from 860fe60f). No commits by the agent.
 Build: `cmd /c D:\Novels\ABook_deskqt\_internal\desktop_qt\build.bat` (log to a file; output dist\ABookDesk.exe).
 Run needs env ABOOK_HOST_PYTHON=D:/Novels/ABook/_internal/runtime/.venv/Scripts/pythonw.exe (the worktree has no runtime/) and ABOOK_HOST_APP=D:/Novels/ABook_deskqt/_internal.

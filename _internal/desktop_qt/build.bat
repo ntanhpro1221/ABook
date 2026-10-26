@@ -54,9 +54,13 @@ if errorlevel 1 exit /b 1
 rem Sidebar collapse / expand / hover overlay (QtQuickTest with a stubbed Platform)
 "%HERE%build\sidebar_tests\SidebarTests.exe"
 if errorlevel 1 exit /b 1
+rem Width classes: actual Book/Library/NowPlaying/Settings QML with fake HTTP/audio
+"%HERE%build\width_tests\WidthTests.exe"
+if errorlevel 1 exit /b 1
 
 if not exist "%HERE%dist" mkdir "%HERE%dist"
 copy /y "%HERE%build\ABookDesk.exe" "%HERE%dist\ABookDesk.exe" >nul
+if errorlevel 1 exit /b 1
 rem Dynamic Qt DLLs (LGPL): windeployqt copies DLLs + plugins next to the exe
 rem Trim: D3D11 backend only (no dxc / d3d compiler / software GL), no debugger plugins, no touch plugin, no 18 MB vc_redist installer
 windeployqt --release --qmldir "%HERE%qml" --no-translations --no-system-d3d-compiler --no-system-dxc-compiler --no-opengl-sw --no-compiler-runtime --skip-plugin-types qmltooling,generic "%HERE%dist\ABookDesk.exe"
