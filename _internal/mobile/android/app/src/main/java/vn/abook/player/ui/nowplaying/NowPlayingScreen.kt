@@ -10,6 +10,7 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -34,6 +35,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import vn.abook.player.ui.components.pressable
 import vn.abook.player.ui.theme.Abook
+import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.theme.MotionMs
 
 @Composable
@@ -251,7 +253,7 @@ fun PlayerModeSwitch(mode: State<Float>, onSelect: (Boolean) -> Unit, modifier: 
     val style = Abook.type.label.copy(textAlign = androidx.compose.ui.text.style.TextAlign.Center)
     Layout(modifier = modifier.height(36.dp).testTag("player_mode")
         .drawBehind {
-            val corner = 18.dp.toPx()
+            val corner = size.height / 2
             val inset = 3.dp.toPx()
             val segment = size.width / 2
             drawRoundRect(colors.bgSunken, cornerRadius = androidx.compose.ui.geometry.CornerRadius(corner))
@@ -297,7 +299,7 @@ private fun ReturnChip(available: Boolean, serial: Int, onReturn: () -> Unit) {
             enter = androidx.compose.animation.slideInVertically(tween(MotionMs.MEDIUM)) { it },
             exit = androidx.compose.animation.slideOutVertically(tween(MotionMs.MEDIUM_OUT)) { it }) {
             BasicText("Về chỗ cũ", Modifier
-                .background(Abook.colors.accentSoft, androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
+                .background(Abook.colors.accentSoft, RoundedCornerShape(Dim.radiusCover))
                 .pressable { shown = false; onReturn() }
                 .testTag("return_place")
                 .padding(horizontal = 14.dp, vertical = 6.dp),

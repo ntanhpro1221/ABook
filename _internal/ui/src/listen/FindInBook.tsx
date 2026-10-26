@@ -26,7 +26,7 @@ function Excerpt({ snippet }: { snippet: Snippet }) {
   return (
     <>
       {snippet.before}
-      {snippet.match && <mark className="rounded bg-accent-soft px-0.5 font-semibold text-accent-text">{snippet.match}</mark>}
+      {snippet.match && <mark className="rounded-control bg-accent-soft px-0.5 font-semibold text-accent-text">{snippet.match}</mark>}
       {snippet.after}
     </>
   );
@@ -124,7 +124,7 @@ export function FindInBook({ book, open, onOpenChange }: { book: ListenBook; ope
           placeholder="Chữ hay câu cần tìm…"
           autoComplete="off"
           enterKeyHint="search"
-          className="touch-box h-11 w-full rounded-lg border border-line bg-bg pl-9 pr-3 text-base outline-none focus:border-focus"
+          className="touch-box h-11 w-full rounded-control border border-line bg-bg pl-9 pr-3 text-base outline-none focus:border-focus"
         />
       </div>
       <p role="status" className="mt-2 text-xs text-fg-2">
@@ -146,7 +146,7 @@ export function FindInBook({ book, open, onOpenChange }: { book: ListenBook; ope
         >
           {hits.map((hit) => (
             <li key={`${hit.chapterId}:${hit.sentence}`}>
-              <button type="button" onClick={() => pick(hit)} className="block w-full rounded-lg px-1.5 py-2.5 text-left hover:bg-hover">
+              <button type="button" onClick={() => pick(hit)} className="block w-full rounded-control px-1.5 py-2.5 text-left hover:bg-hover">
                 <span className="block truncate text-xs font-medium text-fg-2">{labels.get(hit.chapterId)}</span>
                 <span className="mt-0.5 block text-sm leading-relaxed">
                   <Excerpt snippet={hit.snippet} />

@@ -58,6 +58,7 @@ import vn.abook.player.ui.components.LucidePaths
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.BeVietnamPro
 import vn.abook.player.ui.components.GeneratedCover
+import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.theme.MotionMs
 
 private val LocalPlayerCovers = staticCompositionLocalOf { CoverLoader() }
@@ -75,7 +76,7 @@ fun PlayerCover(ref: CoverRef?, title: String, modifier: Modifier = Modifier, de
     // Decode at the final display-slot bound, never at intermediate shared-element sizes.
     val displaySize = decodeSize ?: minOf((LocalConfiguration.current.screenWidthDp - 40).dp, 320.dp)
     val requestPx = with(density) { displaySize.roundToPx().coerceAtLeast(1) }
-    BoxWithConstraints(modifier.clip(RoundedCornerShape(12.dp)).background(Abook.colors.bgSunken), contentAlignment = Alignment.Center) {
+    BoxWithConstraints(modifier.clip(RoundedCornerShape(Dim.radiusCover)).background(Abook.colors.bgSunken), contentAlignment = Alignment.Center) {
         if (ref == null) {
             // Tên đã có ngay dưới bìa: chữ trên bìa tự vẽ chỉ để nhìn, trình đọc màn hình không đọc hai lần.
             GeneratedCover(title, null, maxWidth, Modifier.fillMaxSize().clearAndSetSemantics {})

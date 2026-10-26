@@ -17,7 +17,7 @@ import { useSource } from "./source";
 // các màn Studio để điện thoại / máy chưa cài Studio cho người ta xem mà không mở sổ dự án.
 
 const MENU_ITEM =
-  "flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[disabled]:opacity-40 data-[highlighted]:bg-hover";
+  "flex h-9 cursor-default items-center gap-2 rounded-control px-2 text-sm outline-none data-[disabled]:opacity-40 data-[highlighted]:bg-hover";
 
 /** Chữ nói rõ cái giá của “Dựng xưởng” - người nghe nhận ra cái họ mất, không phải cách nó chạy. */
 export const WORKSHOP_COST =

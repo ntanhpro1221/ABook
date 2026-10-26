@@ -117,7 +117,7 @@ interface MineAlternative {
   auto?: "on" | "off";
 }
 
-const MENU_ITEM = "flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[highlighted]:bg-hover";
+const MENU_ITEM = "flex h-9 cursor-default items-center gap-2 rounded-control px-2 text-sm outline-none data-[highlighted]:bg-hover";
 
 /** "Chọn lại nhạc" (và đổi thể loại) dựng lại nhạc cả cuốn - sách 43 chương mất cỡ nửa phút: nói ra để các nút mờ không có vẻ như bị treo. */
 const REBUILDING = "Đang chọn lại nhạc, cỡ nửa phút.";
@@ -487,7 +487,7 @@ function SceneMenu({
         <IconButton label="Thêm tuỳ chọn cho đoạn này" icon={MoreHorizontal} size="sm" disabled={disabled} className="data-[state=open]:bg-hover" />
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content align="end" sideOffset={4} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 rounded-xl border border-line bg-panel p-1.5 shadow-float">
+        <DropdownMenu.Content align="end" sideOffset={4} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 rounded-cover border border-line bg-panel p-1.5 shadow-float">
           <DropdownMenu.Item onSelect={onSilence} className={MENU_ITEM}>
             <VolumeX className="size-4" /> {scene.silenced ? "Bật nhạc đoạn này" : "Tắt nhạc đoạn này"}
           </DropdownMenu.Item>
@@ -725,7 +725,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
                       {moodOf(scene, taxonomy.emotions)}
                       {(scene.moodSource === "llm" || scene.moodSource === "chapter" || scene.moodSource === "student") && (
                         <span
-                          className="ml-1.5 rounded bg-sunken px-1 py-0.5 text-xs text-fg-2"
+                          className="ml-1.5 rounded-control bg-sunken px-1 py-0.5 text-xs text-fg-2"
                           title={
                             scene.moodSource === "student"
                               ? "AI đã đoán đoạn này vui hơn hay buồn hơn, căng hơn hay dịu hơn so với mức của cả chương"
@@ -747,7 +747,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
                           {track?.title ?? "Bài nhạc"}
                           {track?.creator && <span className="text-fg-2"> · {track.creator}</span>}
                           {track?.source === "local" && (
-                            <span className="ml-1.5 rounded bg-sunken px-1.5 py-0.5 text-xs text-fg-2">Nhạc của tôi</span>
+                            <span className="ml-1.5 rounded-control bg-sunken px-1.5 py-0.5 text-xs text-fg-2">Nhạc của tôi</span>
                           )}
                           {scene.pinned && <Pin className="ml-1.5 inline size-3.5 text-fg-2" aria-label="Đã ghim" />}
                           {scene.pinUnavailable && (

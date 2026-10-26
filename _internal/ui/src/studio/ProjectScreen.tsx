@@ -474,7 +474,7 @@ function StopDialog({ book, open, onOpenChange }: { book: BookSummary; open: boo
   );
 }
 
-const MENU_ITEM = "flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[highlighted]:bg-hover";
+const MENU_ITEM = "flex h-9 cursor-default items-center gap-2 rounded-control px-2 text-sm outline-none data-[highlighted]:bg-hover";
 
 // Đổi tên chỉ đổi tên HIỆN (store.TITLE_FILE): thư mục dự án và sổ của dây chuyền giữ nguyên, nên làm được cả lúc chạy.
 function RenameDialog({ book, open, onOpenChange }: { book: BookSummary; open: boolean; onOpenChange: (open: boolean) => void }) {
@@ -526,7 +526,7 @@ function RenameDialog({ book, open, onOpenChange }: { book: BookSummary; open: b
           maxLength={160}
           data-autofocus
           autoComplete="off"
-          className="mt-1.5 h-10 w-full rounded-lg border border-line bg-panel px-3 text-sm text-fg outline-none focus-visible:border-focus"
+          className="mt-1.5 h-10 w-full rounded-control border border-line bg-panel px-3 text-sm text-fg outline-none focus-visible:border-focus"
         />
 
       </form>
@@ -627,7 +627,7 @@ export function ProjectMenu({ book, rename = true, className, children }: { book
             type="button"
             aria-label={`Tuỳ chọn dự án ${book.title}`}
             className={cn(
-              "touch-box inline-flex size-9 shrink-0 items-center justify-center rounded-lg text-fg-2 transition-colors hover:bg-hover hover:text-fg data-[state=open]:bg-hover",
+              "touch-box inline-flex size-9 shrink-0 items-center justify-center rounded-control text-fg-2 transition-colors hover:bg-hover hover:text-fg data-[state=open]:bg-hover",
               className,
             )}
           >
@@ -635,7 +635,7 @@ export function ProjectMenu({ book, rename = true, className, children }: { book
           </button>
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal>
-          <DropdownMenu.Content collisionPadding={12} align="end" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-52 rounded-xl border border-line bg-panel p-1.5 shadow-float">
+          <DropdownMenu.Content collisionPadding={12} align="end" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-52 rounded-cover border border-line bg-panel p-1.5 shadow-float">
             {children && (
               <>
                 {children}
@@ -916,13 +916,13 @@ function ChapterMenu({ book, chapter, onPlay }: { book: BookSummary; chapter: Ch
           <button
             type="button"
             aria-label={`Tuỳ chọn ${chapter.displayTitle}`}
-            className="touch-box inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-fg-2 opacity-0 transition-[opacity,color,background-color] duration-motion-fast transition-colors hover:bg-panel hover:text-fg focus-visible:opacity-100 group-hover:opacity-100 data-[state=open]:bg-panel data-[state=open]:opacity-100 max-md:opacity-100"
+            className="touch-box inline-flex size-8 shrink-0 items-center justify-center rounded-control text-fg-2 opacity-0 transition-[opacity,color,background-color] duration-motion-fast transition-colors hover:bg-panel hover:text-fg focus-visible:opacity-100 group-hover:opacity-100 data-[state=open]:bg-panel data-[state=open]:opacity-100 max-md:opacity-100"
           >
             <MoreHorizontal className="glyph ink-end" />
           </button>
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal>
-          <DropdownMenu.Content collisionPadding={12} align="end" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 rounded-xl border border-line bg-panel p-1.5 shadow-float">
+          <DropdownMenu.Content collisionPadding={12} align="end" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 rounded-cover border border-line bg-panel p-1.5 shadow-float">
             {chapter.playable && (
               <DropdownMenu.Item onSelect={onPlay} className={MENU_ITEM}>
                 <Play className="size-4" /> Nghe chương
@@ -993,7 +993,7 @@ function ChapterRow({ book, chapter, rowIndex }: { book: BookSummary; chapter: C
       aria-rowindex={rowIndex}
       onDoubleClick={onPlay}
       className={cn(
-        "group grid h-14 grid-cols-[40px_minmax(0,1fr)_auto_32px] lg:grid-cols-[48px_minmax(0,1fr)_150px_110px_96px_32px] items-baseline gap-3 rounded-lg px-2 text-sm",
+        "group grid h-14 grid-cols-[40px_minmax(0,1fr)_auto_32px] lg:grid-cols-[48px_minmax(0,1fr)_150px_110px_96px_32px] items-baseline gap-3 rounded-control px-2 text-sm",
         current ? "text-accent-text" : "hover:bg-hover",
       )}
     >
@@ -1142,7 +1142,7 @@ function ActivityView({ book }: { book: BookSummary }) {
           type="button"
           aria-pressed={mode === "technical"}
           onClick={() => setMode(mode === "technical" ? "story" : "technical")}
-          className="touch-row -mr-2 inline-flex items-center rounded-lg px-2 text-xs font-medium text-accent-text hover:underline"
+          className="touch-row -mr-2 inline-flex items-center rounded-control px-2 text-xs font-medium text-accent-text hover:underline"
         >
           {mode === "technical" ? "Ẩn chi tiết kỹ thuật" : "Chi tiết kỹ thuật"}
         </button>
@@ -1261,7 +1261,7 @@ export function ProjectTabBar({ tab, onTab, precast, counts }: {
           </button>
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal>
-          <DropdownMenu.Content collisionPadding={12} align="start" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-52 overflow-y-auto overscroll-contain rounded-xl border border-line bg-panel p-1.5 shadow-float">
+          <DropdownMenu.Content collisionPadding={12} align="start" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-52 overflow-y-auto overscroll-contain rounded-cover border border-line bg-panel p-1.5 shadow-float">
             {more.map((key) => (
               <DropdownMenu.Item key={key} onSelect={() => onTab(key)} className={MENU_ITEM}>
                 <span className="grid size-4 place-items-center" aria-hidden>{key === tab && <Check className="size-4 text-accent-text" />}</span>
@@ -1332,7 +1332,7 @@ export function ProjectScreen() {
         {/* Cùng đầu màn với trang đã tải: nút ← bấm được ngay, bìa không nhảy khi dữ liệu về. */}
         <ScreenHeader back={{ label: "Về Studio", onClick: () => navigate("/studio") }} />
         <div className="mt-5 flex gap-7">
-          <Skeleton className="size-44 rounded-lg" />
+          <Skeleton className="size-44 rounded-control" />
           <div className="flex-1 space-y-3 pt-4">
             <Skeleton className="h-8 w-2/3" />
             <Skeleton className="h-4 w-1/3" />
