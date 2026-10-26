@@ -7,6 +7,9 @@ FocusScope {
     id: root
     signal openBook(var book)
     signal addRequested(var paths)
+    signal openFileRequested()
+    signal studioRequested()
+    property bool fileOpening: false
 
     readonly property real avail: Math.max(0, width - 2 * Theme.margin)
     readonly property int gap: Theme.s24
@@ -38,23 +41,24 @@ FocusScope {
         width: parent.width - 2 * Theme.margin
         title: "Thư viện"
         subtitle: root.loading || root.failed || root.count === 0 ? "" : root.count + " cuốn"
-        Button { text: "Thêm sách"; icon: "plus"; onClicked: root.addRequested([]) }
+        Button { text: "Thêm sách"; icon: "plus"; kind: "ghost"; onClicked: root.addRequested([]) }
     }
 
+    // Kéo file vào thư viện (DropToAdd.tsx): thả một hay nhiều file thì mở "Thêm sách" ở đúng hàng xem trước; đang có hộp khác mở thì nhắc đóng hộp rồi thả lại
     DropArea {
+        id: dropArea
         anchors.fill: parent
+        z: 5
         onEntered: drag => { drag.accepted = drag.hasUrls }
         onDropped: drop => {
             if (!drop.hasUrls) return
             const paths = drop.urls.map(url => DesktopApi.localPath(url)).filter(path => path !== "")
-            if (paths.length) { drop.acceptProposedAction(); root.addRequested(paths) }
+            if (!paths.length) return
+            drop.acceptProposedAction()
+            if (Nav.layers.length > 0) Api.notice = "Đóng hộp đang mở rồi thả lại file nhé"
+            else root.addRequested(paths)
         }
-        Rectangle {
-            anchors.fill: parent; anchors.margins: 16
-            visible: parent.containsDrag
-            color: Theme.accentSoft; border.color: Theme.accent; border.width: 2; radius: Theme.radiusCover
-            FormLabel { anchors.centerIn: parent; text: "Thả để thêm sách"; font.pixelSize: Theme.sizeTitlePhone }
-        }
+        ImportDrop { anchors.fill: parent; shown: dropArea.containsDrag && Nav.layers.length === 0 }
     }
 
     // Lưới ảo hoá theo HÀNG: mỗi delegate là một hàng N ô, cao bằng ô cao nhất của hàng (tên dài xuống dòng đủ, không cắt).
@@ -190,9 +194,17 @@ FocusScope {
         anchors.verticalCenterOffset: 40
         spacing: Theme.s16
         visible: root.failed || root.libraryError || (!root.loading && root.count === 0)
+        // Thư viện trống (EmptyLibrary của desktop/App.tsx): ô icon tai nghe, một câu + một nút chính "Thêm sách"; các lối khác cùng kiểu chữ-có-icon ở hàng dưới
+        Rectangle {
+            anchors.horizontalCenter: parent.horizontalCenter
+            visible: !root.failed && !root.libraryError
+            width: 56; height: 56; radius: Theme.radiusCover
+            color: Theme.accentSoft
+            Icon { anchors.centerIn: parent; name: "headphones"; size: 28; color: Theme.accentText }
+        }
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: root.failed ? "Chưa mở được ABook" : (root.libraryError ? "Chưa tải được thư viện" : "Chưa có sách nào")
+            text: root.failed ? "Chưa mở được ABook" : (root.libraryError ? "Chưa tải được thư viện" : "Chưa có sách")
             color: Theme.text
             font.pixelSize: Theme.sizeSection
             font.weight: Theme.weightMedium
@@ -202,7 +214,7 @@ FocusScope {
             width: Math.min(root.width - 2 * Theme.margin, 460)
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.Wrap
-            text: root.failed ? Backend.message : (root.libraryError ? Backend.library.error : "Sách nghe được sẽ hiện ở đây.")
+            text: root.failed ? Backend.message : (root.libraryError ? Backend.library.error : "Thêm truyện hoặc tạo sách nói.")
             color: Theme.text2
             font.pixelSize: Theme.sizeBodySmall
         }
@@ -211,6 +223,22 @@ FocusScope {
             visible: root.failed || root.libraryError
             text: "Thử lại"
             onClicked: root.failed ? Backend.restart() : Backend.refreshLibrary()
+        }
+        Button {
+            objectName: "emptyAdd"
+            anchors.horizontalCenter: parent.horizontalCenter
+            visible: !root.failed && !root.libraryError
+            text: "Thêm sách"
+            icon: "plus"
+            size: "lg"
+            onClicked: root.addRequested([])
+        }
+        Row {
+            anchors.horizontalCenter: parent.horizontalCenter
+            visible: !root.failed && !root.libraryError
+            spacing: 4
+            Button { objectName: "emptyStudio"; text: "Tạo sách nói"; icon: "clapperboard"; kind: "ghost"; onClicked: root.studioRequested() }
+            Button { objectName: "emptyOpenFile"; text: root.fileOpening ? "Đang mở…" : "Mở file sách"; icon: "file-audio"; kind: "ghost"; enabled: !root.fileOpening; onClicked: root.openFileRequested() }
         }
     }
 

@@ -28,7 +28,7 @@ Window {
         })
     }
 
-    Component { id: libraryScreen; LibraryScreen { onOpenBook: (book) => stack.push(bookPage, { book: book }); onAddRequested: paths => addBook.begin(paths) } }
+    Component { id: libraryScreen; LibraryScreen { fileOpening: addBook.opening; onOpenBook: (book) => stack.push(bookPage, { book: book }); onAddRequested: paths => addBook.begin(paths); onOpenFileRequested: addBook.openFile(); onStudioRequested: stack.show(1) } }
     Component { id: studioScreen; StudioScreen {} }
     Component { id: settingsScreen; SettingsScreen {} }
     Component { id: bookPage; BookPage { onEditRequested: data => editBook.begin(data) } }
@@ -147,7 +147,7 @@ Window {
         id: popover
         anchorItem: sidebar.chip
     }
-    AddBook { id: addBook; onOpenBook: id => win.openBookId(id) }
+    AddBook { id: addBook; onOpenBook: id => win.openBookId(id); onOpenStudio: id => stack.show(1) }
     EditBook { id: editBook }
     Connections {
         target: Backend
