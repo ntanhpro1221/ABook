@@ -44,7 +44,7 @@ Máy kiểm trong mã nguồn giao diện (web `ui/src`, native `.../ui/`, bỏ 
 
 <!-- ui_parity:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity.py - không sửa tay, chạy lại script) -->
 
-Quét: web 5860 chữ (3289 khác nhau), 380 cặp nhãn-icon; native 822 chữ (644 khác nhau), 41 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
+Quét: web 5860 chữ (3289 khác nhau), 380 cặp nhãn-icon; native 821 chữ (644 khác nhau), 41 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
 
 ## a. Cùng việc, khác chữ
 
@@ -80,7 +80,7 @@ Cặp nhãn ngắn (<= 6 chữ) mà phía kia KHÔNG có nguyên văn nhưng có
 | Chương này chưa có audio. | Chương sau chưa có audio | 0.92 | `native/screens/BookSheets.kt:246` ~ `listen/labels.ts:80` (+1) |
 | Cắt ảnh bìa | Đặt ảnh bìa | 0.91 | `native/editbook/CoverCrop.kt:108` ~ `studio/CoverEditor.tsx:112` (+1) |
 | Đang bỏ ghép | Đã bỏ ghép {} | 0.91 | `native/devices/DeviceSheets.kt:136` ~ `android/DevicesScreen.tsx:931` (+2) |
-| Chưa thêm được nhạc | Chưa thêm được sách | 0.90 | `native/music/MusicRepo.kt:74` (+3) ~ `listen/AddBook.tsx:479` |
+| Chưa thêm được nhạc | Chưa thêm được sách | 0.90 | `native/music/MusicState.kt:154` (+2) ~ `listen/AddBook.tsx:479` |
 | Đang đóng | Đang dùng: | 0.89 | `native/music/MusicPanel.kt:245` ~ `listen/VoiceSettings.tsx:277` (+2) |
 | Chưa nối được máy tính | Chưa nối được máy kia. | 0.88 | `native/devices/DevicesRepo.kt:80` ~ `android/LibraryDownloads.tsx:57` |
 | Thêm thiết bị | Tên thiết bị | 0.88 | `native/devices/PairScreen.kt:133` (+1) ~ `desktop/PhoneSync.tsx:482` (+1) |
@@ -155,8 +155,8 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `native/export/ExportState.kt` (1): Bạn hãy thử lại. (`102`)
 - `native/music/MusicModel.kt` (1): Rất nhỏ (dễ nghe lời nhất) (`159`)
 - `native/music/MusicPanel.kt` (2): Đang đóng (`245`); Trang của bài (`451`)
-- `native/music/MusicRepo.kt` (2): Chưa tìm được bài để đổi (`68`); Chưa thêm được nhạc (`74`)
-- `native/music/MusicState.kt` (1): Chưa thêm được nhạc (`138`)
+- `native/music/MusicRepo.kt` (1): Chưa tìm được bài để đổi (`65`)
+- `native/music/MusicState.kt` (1): Chưa thêm được nhạc (`154`)
 - `native/nowplaying/FakeNowPlayingModel.kt` (5): Chương 1 · Một buổi sớm (`70`); Những ngày gió hát (`70`); Chương {} · {} (`72`); Giọng thử A (`92`); Giọng thử B (`92`)
 - `native/nowplaying/NowPlayingScreen.kt` (1): Về chế độ nghe (`97`)
 - `native/nowplaying/PlayerSheets.kt` (3): Đóng bảng (`73`); Chọn giọng (`166`); Giọng thu sẵn (`166`)
@@ -172,7 +172,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `native/voice/VoiceModel.kt` (8): Supertonic nhanh hơn (`219`); Máy này chưa dùng được. (`254`); Máy này chưa dùng được: {}. (`254`); Khuyên dùng · (`274`); Đang tải {} · {}% (`277`); Có bản mới · {} (`291`); Đã có trên máy (`294`); Chưa có khoá (`344`)
 - `native/voice/VoiceRepo.kt` (4): Chưa lưu được khoá (`90`); Chưa xoá được khoá (`94`); Chưa kiểm tra được khoá (`98`); Chưa thêm được nhạc (`116`)
 - `native/voice/VoiceSheets.kt` (9): Đang đo tốc độ (`84`); Đang xoá (`103`); Dữ liệu di động (`121`); Vẫn tải (`122`); Gửi chữ ra ngoài? (`134`); Đang lưu (`135`); Đồng ý (`135`); Khoá {} (`214`); Xoá bài này? (`299`)
-- `native/voice/VoiceState.kt` (5): Chưa lưu được khoá (`229`); Chưa kiểm tra được khoá (`244`); Chưa xoá được khoá (`254`); Chưa thêm được nhạc (`318`); Chưa xoá được bài này (`327`)
+- `native/voice/VoiceState.kt` (5): Chưa thêm được nhạc (`112`); Chưa lưu được khoá (`252`); Chưa kiểm tra được khoá (`267`); Chưa xoá được khoá (`277`); Chưa xoá được bài này (`336`)
 
 ### c2. Chỉ có ở web phía điện thoại - listen/, android/, shared/ (588 nhãn)
 
@@ -305,23 +305,23 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 
 | kiểu | web | native |
 |---|---|---|
-| dấu ba chấm ASCII `...` | 8 / 5860 | 0 / 822 |
-| dấu ba chấm `…` | 42 / 5860 | 0 / 822 |
-| kết thúc bằng dấu chấm `.` | 1003 / 5860 | 150 / 822 |
-| kết thúc bằng `!` | 0 / 5860 | 0 / 822 |
-| kết thúc bằng `:` | 55 / 5860 | 0 / 822 |
-| dấu thanh kiểu cũ `oà oá uý` | 466 / 5860 | 84 / 822 |
-| dấu thanh kiểu mới `òa óa úy` | 1 / 5860 | 0 / 822 |
-| số thập phân dấu phẩy `1,5` | 1 / 5860 | 0 / 822 |
-| số thập phân dấu chấm `1.5` | 0 / 5860 | 0 / 822 |
-| nhân bằng `×` | 0 / 5860 | 0 / 822 |
-| nhân bằng `x` sau số | 0 / 5860 | 0 / 822 |
-| ngăn cách `·` | 132 / 5860 | 26 / 822 |
-| ngăn cách ` - ` | 296 / 5860 | 34 / 822 |
-| gạch dài `—`/`–` | 10 / 5860 | 1 / 822 |
-| giờ `1:30` hay `1 giờ 30` | 4 / 5860 | 2 / 822 |
-| dấu `%` dính số | 0 / 5860 | 1 / 822 |
-| dấu `%` cách số | 0 / 5860 | 0 / 822 |
+| dấu ba chấm ASCII `...` | 8 / 5860 | 0 / 821 |
+| dấu ba chấm `…` | 42 / 5860 | 0 / 821 |
+| kết thúc bằng dấu chấm `.` | 1003 / 5860 | 150 / 821 |
+| kết thúc bằng `!` | 0 / 5860 | 0 / 821 |
+| kết thúc bằng `:` | 55 / 5860 | 0 / 821 |
+| dấu thanh kiểu cũ `oà oá uý` | 466 / 5860 | 84 / 821 |
+| dấu thanh kiểu mới `òa óa úy` | 1 / 5860 | 0 / 821 |
+| số thập phân dấu phẩy `1,5` | 1 / 5860 | 0 / 821 |
+| số thập phân dấu chấm `1.5` | 0 / 5860 | 0 / 821 |
+| nhân bằng `×` | 0 / 5860 | 0 / 821 |
+| nhân bằng `x` sau số | 0 / 5860 | 0 / 821 |
+| ngăn cách `·` | 132 / 5860 | 26 / 821 |
+| ngăn cách ` - ` | 296 / 5860 | 34 / 821 |
+| gạch dài `—`/`–` | 10 / 5860 | 1 / 821 |
+| giờ `1:30` hay `1 giờ 30` | 4 / 5860 | 2 / 821 |
+| dấu `%` dính số | 0 / 5860 | 1 / 821 |
+| dấu `%` cách số | 0 / 5860 | 0 / 821 |
 
 **d3. Nhãn ngắn bắt đầu bằng chữ thường** (web 159, native 0); 15 đầu mỗi phía:
 
@@ -353,7 +353,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 
 **d4. native: cùng nhãn nhưng viết khác nhau trong chính phía này** (4); 15 đầu:
 
-- `Chưa nghe thử được giọng này` | `Chưa nghe thử được giọng này.` (`native/voice/VoiceRepo.kt:106`, `native/voice/VoiceState.kt:274` (+1))
+- `Chưa nghe thử được giọng này` | `Chưa nghe thử được giọng này.` (`native/voice/VoiceRepo.kt:106`, `native/voice/VoiceState.kt:297` (+1))
 - `Xoá khoá` | `Xoá khoá?` (`native/voice/VoiceSheets.kt:251`, `native/voice/VoiceSheets.kt:275` (+1))
 - `Xoá phần đã tải` | `Xoá phần đã tải?` (`native/components/Confirm.kt:95`, `native/voice/VoiceSheets.kt:100` (+2))
 - `ĐANG NGHE` | `Đang nghe` (`native/nowplaying/NowPlayingScreen.kt:68`, `native/nowplaying/PlayerSheets.kt:144`)
