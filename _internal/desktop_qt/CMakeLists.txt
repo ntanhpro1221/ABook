@@ -128,6 +128,9 @@ qt_add_qml_module(ABookDesk
         qml/SkipGlyph.qml
         qml/SleepPopover.qml
         qml/SpeedPopover.qml
+        qml/Switch.qml
+        qml/MusicPopover.qml
+        qml/MusicCredit.qml
         qml/BenchScenario.qml
     RESOURCES
         fonts/BeVietnamPro-Regular.ttf

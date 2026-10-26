@@ -100,6 +100,10 @@ Bộ hiện có (xám lạnh #f4f5f7 + hổ phách) chỉnh lại có chủ đí
 | `--accent-text` chữ nhấn | #8a5309 | #f0b961 | chữ màu nhấn trên nền |
 | `--accent-soft` nhấn nhạt | #f7ead5 | rgb(233 169 69 / .14) | câu đang đọc, hàng đang phát |
 | `--success` / `--danger` | #2a7554 / #b23b33 | #5cc596 / #ef7b70 | chỉ cho trạng thái, kèm chữ/icon |
+| `--warning` vàng đất | #905b10 | #e8b64c | chữ cảnh báo nhỏ (bài nhạc không phát được...), ≥ 4,5:1 cả trên `--bg-sunken` |
+| `--focus` vòng tiêu điểm | #a0600c | #e9a945 | vòng tiêu điểm, rãnh công tắc đang bật (≥ 3:1 với mọi nền) |
+| `--switch-off` rãnh công tắc tắt | #857e72 | #75706a | rãnh công tắc đang tắt (≥ 3:1 trên nền) |
+| `--switch-thumb` núm công tắc | #ffffff | #1b1204 | núm công tắc trên cả hai rãnh |
 
 - Mặt đọc theo có 3 nền riêng, chọn trong Giao diện > "Nền đọc": Giấy #fbfaf7 / mực #1b1a17; Ngà #f3ead8 / #3b2f1e; Đêm #121110 / #d9d3c8
   (mặc định "Tự động" = Giấy khi sáng, Đêm khi tối). Trong vùng đọc, chữ phụ và chữ nhấn theo mặt đọc (`.reading-surface`).
