@@ -25,9 +25,9 @@ import org.json.JSONObject
  */
 class PlayerWidget : AppWidgetProvider() {
     companion object {
-        private const val ACTION_TOGGLE = "vn.abook.widget.TOGGLE"
-        private const val ACTION_BACK = "vn.abook.widget.BACK"
-        private const val ACTION_FORWARD = "vn.abook.widget.FORWARD"
+        const val ACTION_TOGGLE = "vn.abook.widget.TOGGLE"
+        const val ACTION_BACK = "vn.abook.widget.BACK"
+        const val ACTION_FORWARD = "vn.abook.widget.FORWARD"
         private const val ACTION_SLEEP = "vn.abook.widget.SLEEP"
         private var lastRefreshMs = 0L
 
@@ -41,7 +41,8 @@ class PlayerWidget : AppWidgetProvider() {
             if (ids.isNotEmpty()) render(context, manager, ids)
         }
 
-        private fun intent(context: Context, action: String, code: Int): PendingIntent =
+        /** Lệnh của nút: phát sóng tới chính widget này. Cửa sổ nhỏ PiP (ui/pip) dùng cùng đường, nên bấm nút ở đâu cũng đi qua [onReceive]. */
+        fun controlIntent(context: Context, action: String, code: Int): PendingIntent =
             PendingIntent.getBroadcast(
                 context, code, Intent(context, PlayerWidget::class.java).setAction(action),
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
@@ -103,7 +104,7 @@ class PlayerWidget : AppWidgetProvider() {
             views.setImageViewBitmap(R.id.widget_cover, BitmapFactory.decodeByteArray(cover, 0, cover.size))
             views.setTextViewText(R.id.widget_chapter, view.chapter.ifBlank { view.book })
             views.setImageViewResource(R.id.widget_toggle, if (view.playing) R.drawable.ic_widget_pause else R.drawable.ic_widget_play)
-            views.setOnClickPendingIntent(R.id.widget_toggle, intent(context, ACTION_TOGGLE, 1))
+            views.setOnClickPendingIntent(R.id.widget_toggle, controlIntent(context, ACTION_TOGGLE, 1))
             val open = PendingIntent.getActivity(
                 context, 0, Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
                 PendingIntent.FLAG_IMMUTABLE,
@@ -112,9 +113,9 @@ class PlayerWidget : AppWidgetProvider() {
             if (layout == R.layout.widget_player || layout == R.layout.widget_player_medium) {
                 views.setTextViewText(R.id.widget_book, view.book)
                 views.setProgressBar(R.id.widget_progress, 1000, (view.progress * 1000).toInt().coerceIn(0, 1000), false)
-                views.setOnClickPendingIntent(R.id.widget_back, intent(context, ACTION_BACK, 2))
-                views.setOnClickPendingIntent(R.id.widget_forward, intent(context, ACTION_FORWARD, 3))
-                views.setOnClickPendingIntent(R.id.widget_sleep, intent(context, ACTION_SLEEP, 4))
+                views.setOnClickPendingIntent(R.id.widget_back, controlIntent(context, ACTION_BACK, 2))
+                views.setOnClickPendingIntent(R.id.widget_forward, controlIntent(context, ACTION_FORWARD, 3))
+                views.setOnClickPendingIntent(R.id.widget_sleep, controlIntent(context, ACTION_SLEEP, 4))
                 views.setImageViewResource(R.id.widget_sleep_icon, if (view.sleepOn) R.drawable.ic_widget_moon_on else R.drawable.ic_widget_moon)
                 views.setTextViewText(R.id.widget_sleep_text, view.sleep)
                 views.setOnClickPendingIntent(R.id.widget_book, open)
@@ -172,8 +173,8 @@ class PlayerWidget : AppWidgetProvider() {
                 } else {
                     when (action) {
                         ACTION_TOGGLE -> Playback.toggle()
-                        ACTION_BACK -> Playback.skip(-15.0)
-                        ACTION_FORWARD -> Playback.skip(15.0)
+                        ACTION_BACK -> Playback.skip(-Playback.SKIP_SECONDS.toDouble())
+                        ACTION_FORWARD -> Playback.skip(Playback.SKIP_SECONDS.toDouble())
                         ACTION_SLEEP -> if (SleepTimer.mode == SleepTimer.Mode.OFF) SleepTimer.setMinutes(30) else SleepTimer.cancel()
                     }
                 }

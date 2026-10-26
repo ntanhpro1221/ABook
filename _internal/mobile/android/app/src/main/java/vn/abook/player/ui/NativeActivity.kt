@@ -33,6 +33,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.map
@@ -51,6 +52,9 @@ import vn.abook.player.ui.nowplaying.rememberRepoNowPlaying
 import vn.abook.player.ui.screens.SettingsEnv
 import vn.abook.player.ui.screens.SettingsLinks
 import vn.abook.player.ui.shell.AppShell
+import vn.abook.player.ui.pip.PipControl
+import vn.abook.player.ui.pip.PipParams
+import vn.abook.player.ui.pip.PipSupport
 import vn.abook.player.ui.shell.ShellState
 import vn.abook.player.ui.theme.AbookTheme
 import vn.abook.player.ui.theme.ThemeReveal
@@ -66,6 +70,10 @@ class NativeActivity : ComponentActivity() {
     private var contentReady = false
     private var demo = false
     private lateinit var player: PlayerRepo
+    private lateinit var pip: PipControl
+
+    /** Android 8-11: chính app vừa mở một Activity khác (chọn file, Studio, bảng chia sẻ, hộp xin quyền) - [onUserLeaveHint] cũng nổ ở đó nhưng không phải bạn rời app. */
+    private var openedByApp = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splash = installSplashScreen()
@@ -80,6 +88,23 @@ class NativeActivity : ComponentActivity() {
         val readAlong = if (demo) DemoReadAlongSource else AndroidReadAlongSource(this)
         val prefs = app.uiPrefs
         val settings = app.settings
+        pip = PipControl(PipSupport.available(this)) { enterPip() }
+        if (pip.available) {
+            addOnPictureInPictureModeChangedListener { info -> pip.active = info.isInPictureInPictureMode }
+            // Params của PiP luôn khớp trạng thái phát: nút Phát / Tạm dừng đổi theo, và tự vào PiP chỉ khi có sách mở + công tắc bật (Android 12+ hệ thống tự vào, nên phải đặt trước khi bạn rời app).
+            lifecycleScope.launch {
+                combine(
+                    player.state.map { it.hasTrack to it.playing }.distinctUntilChanged(), settings.state.map { it.autoPip }.distinctUntilChanged(),
+                ) { track, on -> PipParams.plan(playing = track.second, hasBook = track.first, switchOn = on) }
+                    .distinctUntilChanged().collect { plan ->
+                        try {
+                            setPictureInPictureParams(PipParams.build(this@NativeActivity, plan))
+                        } catch (error: IllegalStateException) {
+                            AppLog.w("Pip", "không đặt được thông số cửa sổ nhỏ: ${error.javaClass.simpleName}")
+                        }
+                    }
+            }
+        }
         if (!demo) app.deviceLinks = deviceLinks
         if (!demo) app.exportLinks = exportLinks
         // Màn chờ giữ tới khi Thư viện có nội dung VÀ đã biết giao diện sáng / tối của bạn: khung đầu đã là lưới bìa đúng màu, không phải màn trống hay
@@ -132,13 +157,14 @@ class NativeActivity : ComponentActivity() {
                     val shell = remember {
                         ShellState(scope) { sort -> lifecycleScope.launch(Dispatchers.IO) { prefs.setSort(sort) } }
                     }
-                    val env = remember { SettingsEnv(settings, reveal, links, if (demo) null else app.devices, if (demo) null else app.voice, if (demo) null else app.music) }
+                    val env = remember { SettingsEnv(settings, reveal, links, if (demo) null else app.devices, if (demo) null else app.voice, if (demo) null else app.music, pip) }
                     LaunchedEffect(Unit) { shell.library.restoreSort(withContext(Dispatchers.IO) { prefs.sort() }) }
                     val state by library.state.collectAsStateWithLifecycle()
                     AppShell(
                         shell, state, player, covers, env, onFirstContent = ::onFirstContent, books = library, deletions = library.deletions, companion = if (demo) null else app.companion,
                         nowPlaying = rememberRepoNowPlaying(player, readAlong, env.music),
                         imports = app.imports, editors = app.editors, exports = if (demo) null else app.exports, demo = demo, askNotifications = deviceLinks.askNotifications, autoPick = !demo,
+                        pip = pip,
                     )
                 }
             }
@@ -166,12 +192,14 @@ class NativeActivity : ComponentActivity() {
                 result(true)
             } else {
                 nearbyResult = result
+                openedByApp = true
                 nearby.launch(Manifest.permission.BLUETOOTH_CONNECT)
             }
         },
         askNotifications = { then ->
             if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                 notificationsThen = then
+                openedByApp = true
                 notifications.launch(Manifest.permission.POST_NOTIFICATIONS)
             } else {
                 then()
@@ -260,9 +288,35 @@ class NativeActivity : ComponentActivity() {
         if (!demo) app.devices.apply { restore(); syncStreamed() }
     }
 
+    /** Vào cửa sổ nhỏ (PiP) ngay: nút "Cửa sổ mini" của Đang nghe, và [onUserLeaveHint] trên Android 8-11. */
+    private fun enterPip() {
+        if (!pip.available) return
+        try {
+            enterPictureInPictureMode(PipParams.build(this, currentPipPlan()))
+        } catch (error: IllegalStateException) {
+            AppLog.w("Pip", "không vào được cửa sổ nhỏ: ${error.javaClass.simpleName}")
+        }
+    }
+
+    private fun currentPipPlan() = player.state.value.let { PipParams.plan(it.playing, it.hasTrack, app.settings.state.value.autoPip) }
+
+    // Android 12+ tự vào PiP nhờ setAutoEnterEnabled (PipParams); 8-11 thì gọi tay ở đây khi bạn rời app (Home / vuốt).
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S && pip.available && !openedByApp && !isInPictureInPictureMode && currentPipPlan().autoEnter) enterPip()
+    }
+
+    @Suppress("DEPRECATION")
+    override fun startActivityForResult(intent: Intent, requestCode: Int, options: Bundle?) {
+        openedByApp = true
+        super.startActivityForResult(intent, requestCode, options)
+    }
+
     override fun onStart() {
         super.onStart()
         started = true
+        openedByApp = false
+        pip.active = pip.available && isInPictureInPictureMode
         if (contentReady) player.attach()
     }
 

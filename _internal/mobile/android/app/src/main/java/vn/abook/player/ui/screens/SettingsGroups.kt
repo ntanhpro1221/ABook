@@ -71,6 +71,7 @@ private object GroupCopy {
     const val SAFETY = "Không chạm máy chừng này thì nhỏ dần rồi dừng."
     const val FLIP = "Lật lên trong 10 phút là nghe tiếp."
     const val SOUNDS = "Im khi đang nghe."
+    const val AUTO_PIP = "Rời app khi có sách mở thì sách thu vào cửa sổ mini."
 }
 
 /** Nghe: thông báo (chỉ khi đang tắt), tự lùi, nút tai nghe; khối Nhạc nền. */
@@ -98,6 +99,10 @@ fun ListenSettings(env: SettingsEnv, openVoice: (VoicePage) -> Unit, onBack: () 
             SwitchRow("Tự lùi", settings.autoRewind, { on -> repo.change { it.copy(autoRewind = on) } }, "auto_rewind", GroupCopy.REWIND)
             RowLine()
             SwitchRow("Nút tai nghe", settings.headsetSkips, { on -> repo.change { it.copy(headsetSkips = on) } }, "headset_skips", GroupCopy.HEADSET)
+            if (env.pip?.available == true) {
+                RowLine()
+                SwitchRow("Tự mở cửa sổ mini", settings.autoPip, { on -> repo.change { it.copy(autoPip = on) } }, "auto_pip", GroupCopy.AUTO_PIP)
+            }
         }
         ListSection("Nhạc nền") {
             SwitchRow("Tự chọn nhạc nền", settings.autoMusic, { on -> repo.change { it.copy(autoMusic = on) } }, "auto_music", GroupCopy.AUTO_MUSIC)

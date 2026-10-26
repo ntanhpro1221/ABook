@@ -57,6 +57,9 @@ internal fun refreshedChapters(old: List<Playback.Chapter>, fresh: List<Playback
 }
 
 object Playback {
+    /** Bước nút "Lùi / Tới ... giây" (trình phát, widget, cửa sổ nhỏ PiP): một chỗ để mọi nút nói cùng một số. */
+    const val SKIP_SECONDS = 15
+
     /** Thêm chương vừa có audio; mục đang nghe giữ nguyên nguồn và vị trí. */
     @androidx.annotation.OptIn(UnstableApi::class)
     fun refreshQueue(id: String, fresh: List<Chapter>) {

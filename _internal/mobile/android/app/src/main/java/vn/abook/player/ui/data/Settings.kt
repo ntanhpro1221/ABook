@@ -74,6 +74,8 @@ data class AppSettings(
     val autoRewind: Boolean = true,
     val headsetSkips: Boolean = true,
     val autoMusic: Boolean = true,
+    /** "Tự mở cửa sổ mini": rời app lúc có sách mở thì nghe tiếp trong cửa sổ nhỏ (PiP). Chỉ điện thoại native. */
+    val autoPip: Boolean = true,
     val safetyStopHours: Int = 2,
     val schedule: SleepSchedule? = null,
     val shakeToExtend: Boolean = true,
@@ -123,6 +125,7 @@ data class AppSettings(
             autoRewind = flag(json, "autoRewind", Default.autoRewind),
             headsetSkips = flag(json, "headsetSkips", Default.headsetSkips),
             autoMusic = flag(json, "autoMusic", Default.autoMusic),
+            autoPip = flag(json, "autoPip", Default.autoPip),
             safetyStopHours = pick(json, "safetyStopHours", SAFETY_HOURS, Default.safetyStopHours),
             schedule = schedule(json.opt("schedule")),
             shakeToExtend = flag(json, "shakeToExtend", Default.shakeToExtend),
@@ -148,6 +151,7 @@ data class AppSettings(
         if (autoRewind != before.autoRewind) out.put("autoRewind", autoRewind)
         if (headsetSkips != before.headsetSkips) out.put("headsetSkips", headsetSkips)
         if (autoMusic != before.autoMusic) out.put("autoMusic", autoMusic)
+        if (autoPip != before.autoPip) out.put("autoPip", autoPip)
         if (safetyStopHours != before.safetyStopHours) out.put("safetyStopHours", safetyStopHours)
         if (schedule != before.schedule) {
             out.put("schedule", schedule?.let { JSONObject().put("from", it.from).put("to", it.to).put("minutes", it.minutes) } ?: JSONObject.NULL)

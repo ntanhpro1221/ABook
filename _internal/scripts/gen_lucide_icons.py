@@ -56,6 +56,7 @@ ICONS = sorted({
     "panel-left-open",
     "pause",
     "pencil",
+    "picture-in-picture-2",
     "pin",
     "play",
     "plus",
