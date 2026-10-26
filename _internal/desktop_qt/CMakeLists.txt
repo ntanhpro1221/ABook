@@ -165,6 +165,17 @@ qt_add_qml_module(ABookDesk
         qml/OtherComputersRow.qml
         qml/OtherComputersBluetooth.qml
         qml/DevicesLogic.js
+        qml/ImportQueue.js
+        qml/ImportBox.qml
+        qml/ImportCheck.qml
+        qml/ImportSkeleton.qml
+        qml/ImportError.qml
+        qml/ImportFold.qml
+        qml/ImportQueueList.qml
+        qml/ImportChapters.qml
+        qml/ImportSlot.qml
+        qml/ImportActions.qml
+        qml/ImportDrop.qml
         qml/Scrollbar.qml
         qml/ScrollEdges.qml
         qml/SmoothWheel.qml
