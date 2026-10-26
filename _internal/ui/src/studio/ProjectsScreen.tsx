@@ -238,7 +238,7 @@ function StudioMenu({ onOpenExisting }: { onOpenExisting: () => void }) {
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content collisionPadding={12} align="end" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-52 overflow-y-auto overscroll-contain rounded-xl border border-line bg-panel p-1.5 shadow-float">
-          <MenuItem icon={FolderOpen} onSelect={onOpenExisting}>Mở dự án có sẵn…</MenuItem>
+          <MenuItem icon={FolderOpen} onSelect={onOpenExisting}>Mở dự án…</MenuItem>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>

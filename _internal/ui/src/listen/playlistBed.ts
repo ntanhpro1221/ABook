@@ -17,7 +17,7 @@ export const OFF_PLAYLIST = "off";
 /** `music.playlist` = "scene": nhạc đổi theo cảnh, máy tự dựng từ chữ, không cần model (máy tính: music_nnscene.py + sceneCues.ts; điện thoại: lõi native, SceneDevice.kt +
  *  SceneAnchor.kt). Là mặc định khi chưa chọn gì. Máy không báo `scene` trong menu của nó thì dòng này không hiện. */
 export const SCENE_PLAYLIST = "scene";
-export const SCENE_LABEL = "Theo cảnh (máy tự dựng)";
+export const SCENE_LABEL = "Theo cảnh";
 /** Bài không biết độ dài: khoảng mặc định trên đồng hồ (bài ngắn hơn thì lặp liền như mọi bài nhạc nền). */
 export const FALLBACK_SECONDS = 180;
 /** Bằng thời gian chuyển mờ của MusicBed: bài sau vào lúc bài trước bắt đầu mờ, bài trước tắt hẳn đúng lúc nó hết. */
@@ -54,7 +54,7 @@ export interface PlaylistView {
   playlistAuto?: boolean;
   /** Cuốn chưa chọn nhạc và người dùng đã tắt "tự chọn nhạc nền" trong Cài đặt: chưa có nhạc cho cuốn này. */
   autoOff?: boolean;
-  /** Mức nhạc dưới giọng đọc (dB) người nghe đã chọn cho cuốn, hay mặc định của máy khi chưa chọn. */
+  /** Mức nhạc nền (dB) người nghe đã chọn cho cuốn, hay mặc định của máy khi chưa chọn. */
   levelDb?: number;
   /** Có bài của danh sách đang bị giữ lại vì mất mạng (lõi native điện thoại; máy tính nói ở tab Nhạc của Studio): lời báo cho người nghe. */
   error?: string;

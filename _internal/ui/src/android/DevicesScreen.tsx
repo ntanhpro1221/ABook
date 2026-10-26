@@ -707,14 +707,13 @@ export function SharePanel({ bare = false }: { bare?: boolean }) {
           className="mt-1 h-auto min-h-8 justify-start whitespace-normal py-1.5 text-left"
           onClick={() => void EbookLibrary.openAppSettings().catch((error: Error) => toast.error(error.message))}
         >
-          Mở cài đặt để cho phép
+          Mở cài đặt
         </Button>
       )}
       {/* Như các khung xuất: ẩn hẳn khi ABook đã được cho chạy nền, đọc lại mỗi lần bạn quay về từ Cài đặt. */}
       {enabled && (
         <BackgroundNote
           note="Khi tắt màn hình, máy có thể tạm dừng chia sẻ - máy tính sẽ phải chờ lâu hơn."
-          action="Để máy tính khỏi phải chờ: cho ABook chạy nền"
         />
       )}
       {enabled && data && (

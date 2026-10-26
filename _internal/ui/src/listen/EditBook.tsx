@@ -188,7 +188,7 @@ export function MusicSection({ book }: { book: ListenBook }) {
           </label>
         </div>
         <label className="text-sm">
-          <span className="block text-fg-2">Mức nhạc dưới giọng đọc</span>
+          <span className="block text-fg-2">Mức nhạc nền</span>
           <Select
             value={String(data.levelDb)}
             onChange={(event) => change.mutate({ levelDb: Number(event.target.value) })}

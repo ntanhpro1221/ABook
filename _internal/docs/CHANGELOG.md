@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Giao diện
+
+- Nhãn nút, mục menu và lựa chọn gọn còn tối đa bốn chữ (như "Bỏ qua gợi ý", "Mở cài đặt", "Xuất lại M4B"); máy kiểm tự chặn nhãn dài quay lại.
+
 ## [0.4.146] - 2026-10-26
 
 ### Điện thoại
