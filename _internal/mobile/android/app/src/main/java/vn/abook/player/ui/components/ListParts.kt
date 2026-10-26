@@ -248,10 +248,11 @@ fun ListItem(
     trailing: (@Composable () -> Unit)? = null,
     chevron: Boolean = false,
     below: (@Composable ColumnScope.() -> Unit)? = null,
+    role: Role = Role.Button,
 ) {
     Column(
         modifier.fillMaxWidth()
-            .then(if (onClick != null) Modifier.pressable(onClick = onClick) else Modifier)
+            .then(if (onClick != null) Modifier.pressable(role, onClick = onClick) else Modifier)
             .then(if (tag != null) Modifier.testTag(tag) else Modifier),
     ) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
