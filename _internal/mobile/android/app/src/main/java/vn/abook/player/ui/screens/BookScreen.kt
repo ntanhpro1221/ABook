@@ -96,6 +96,8 @@ class BookScreenActions(
     val playChapter: (bookId: String, chapterId: Int, seconds: Double) -> Unit,
     /** Cuốn vừa bị xoá khỏi máy: rời trang sách. */
     val deleted: () -> Unit,
+    /** Menu "Đọc theo": đưa cuốn vào trình phát (dừng, chỗ nghe tiếp) rồi mở Đang nghe thẳng ở chế độ đọc. */
+    val readAlong: (bookId: String) -> Unit = {},
 )
 
 /**

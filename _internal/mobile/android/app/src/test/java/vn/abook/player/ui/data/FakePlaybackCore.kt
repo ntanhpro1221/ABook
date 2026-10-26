@@ -1,6 +1,7 @@
 package vn.abook.player.ui.data
 
 import org.json.JSONObject
+import vn.abook.player.Playback
 
 /**
  * Lõi phát giả cho test: ghi lại lệnh, giữ danh sách người nghe để test bắn sự kiện vào. `simulate` true: lõi tự theo lệnh như lõi thật - nạp cuốn thì
@@ -10,6 +11,12 @@ class FakePlaybackCore(var snapshot: JSONObject, private val simulate: Boolean =
     val listeners = ArrayList<(JSONObject) -> Unit>()
     val calls = ArrayList<String>()
     val loads = ArrayList<LoadRequest>()
+
+    /** Hàng chương lõi đang giữ (đổi đối tượng khi test muốn "lõi đổi hàng"), vị trí chính xác (null = theo ảnh chụp, như lõi thật), nhạc nền, giọng. */
+    var chapterList: List<Playback.Chapter> = emptyList()
+    var position: Long? = null
+    var music = false
+    var voiceChosen = ""
 
     override fun addListener(listener: (JSONObject) -> Unit) { listeners += listener }
     override fun removeListener(listener: (JSONObject) -> Unit) { listeners -= listener }
@@ -26,6 +33,7 @@ class FakePlaybackCore(var snapshot: JSONObject, private val simulate: Boolean =
     override fun load(request: LoadRequest) {
         loads += request
         if (!simulate) return
+        chapterList = request.chapters
         snapshot = playerSnapshot(
             book = request.id, chapter = request.startChapterId, playing = request.autoplay, position = request.startSeconds, duration = request.startSeconds + 600.0,
             kind = "load", bookTitle = request.title, chapterTitle = "Chương ${request.startChapterId}",
@@ -38,6 +46,14 @@ class FakePlaybackCore(var snapshot: JSONObject, private val simulate: Boolean =
         snapshot = JSONObject(snapshot.toString()).put("playing", playing).put("kind", "state")
         emit(snapshot)
     }
+
+    override fun positionMs() = position ?: Math.round(snapshot.optDouble("position", 0.0) * 1000)
+    override fun chapters() = chapterList
+    override fun setSleep(mode: String, minutes: Int) { calls += "sleep $mode $minutes" }
+    override fun autoMusic() = music
+    override fun setAutoMusic(enabled: Boolean) { calls += "music $enabled"; music = enabled }
+    override fun voiceId() = voiceChosen
+    override fun setVoice(voiceId: String) { calls += "voice $voiceId"; voiceChosen = voiceId }
 
     fun emit(json: JSONObject) = listeners.toList().forEach { it(json) }
 }

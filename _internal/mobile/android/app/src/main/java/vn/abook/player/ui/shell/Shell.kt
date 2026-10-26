@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
 import vn.abook.player.ui.components.SheetHost
 import vn.abook.player.ui.components.SheetLayer
 import vn.abook.player.ui.components.pressable
@@ -54,7 +55,7 @@ import vn.abook.player.ui.nav.Destination
 import vn.abook.player.ui.nav.NavState
 import vn.abook.player.ui.nav.Tab
 import vn.abook.player.ui.nav.TabState
-import vn.abook.player.ui.player.MiniPlayer
+import vn.abook.player.ui.player.MorphingMiniPlayer
 import vn.abook.player.ui.player.MiniPlayerSlot
 import vn.abook.player.ui.screens.AddBookSheet
 import vn.abook.player.ui.screens.BookScreen
@@ -62,20 +63,25 @@ import vn.abook.player.ui.screens.BookScreenActions
 import vn.abook.player.ui.screens.LibraryActions
 import vn.abook.player.ui.screens.LibraryScreen
 import vn.abook.player.ui.screens.LibraryUiState
-import vn.abook.player.ui.screens.NowPlayingPlaceholder
 import vn.abook.player.ui.screens.SettingsEnv
 import vn.abook.player.ui.screens.SettingsGroupScreen
 import vn.abook.player.ui.screens.SettingsScreen
 import vn.abook.player.ui.screens.StudioScreen
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.nowplaying.NowPlayingLayer
+import vn.abook.player.ui.nowplaying.NowPlayingModel
+import vn.abook.player.ui.nowplaying.NowPlayingWindowState
+import vn.abook.player.ui.nowplaying.PlayerCoverProvider
+import vn.abook.player.ui.nowplaying.rememberRepoNowPlaying
 import kotlin.math.abs
 import kotlin.math.max
 
 /** Mọi trạng thái sống của khung (ngăn xếp, tab, vị trí cuộn từng tab) ở MỘT chỗ - tab rời khỏi cây vẫn giữ chỗ cuộn. */
 @Stable
-class ShellState(scope: CoroutineScope, onSortChanged: (LibrarySort) -> Unit = {}) {
+class ShellState(val scope: CoroutineScope, onSortChanged: (LibrarySort) -> Unit = {}) {
     val nav = NavState(scope)
+    val window = NowPlayingWindowState(scope)
     val tabs = TabState(scope)
     val libraryGrid = LazyGridState()
     val library = LibraryUiState(scope, onSortChanged = onSortChanged)
@@ -86,6 +92,7 @@ class ShellState(scope: CoroutineScope, onSortChanged: (LibrarySort) -> Unit = {
  * Khung app: ngăn xếp màn con (trượt phải / Back dự đoán) trên ba tab (trượt ngang), thanh phát nhỏ trên thanh tab ở mọi màn gốc, bảng trượt trên tất cả.
  * Gốc = [RootTabs]. `onFirstContent` gọi một lần khi Thư viện đã có nội dung (reportFullyDrawn); ngay sau đó các tab chưa hiện được dựng trước lúc rảnh.
  * `books`: kho của trang sách (đọc chương, đánh dấu, sửa, xoá) - mặc định không có (ảnh chụp chỉ cần phần đầu trang).
+ * `sampleClock`: false = the window does not sample the core clock per frame (Robolectric never idles with a frame loop running).
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -97,6 +104,8 @@ fun AppShell(
     settings: SettingsEnv,
     onFirstContent: () -> Unit = {},
     books: BookSource = BookSource.None,
+    nowPlaying: NowPlayingModel = rememberRepoNowPlaying(player),
+    sampleClock: Boolean = true,
 ) {
     val nav = shell.nav
     val playerState by player.state.collectAsState()
@@ -122,7 +131,8 @@ fun AppShell(
             addBook = { shell.sheets.show { dismiss -> AddBookSheet(dismiss) } },
         )
     }
-    val openPlayer = remember(shell) { { openNowPlaying(shell.nav) } }
+    val window = shell.window
+    val openPlayer = remember(window) { window::open }
     val bookActions = remember(shell, player) {
         BookScreenActions(
             back = shell.nav::pop,
@@ -130,29 +140,30 @@ fun AppShell(
             toggle = player::toggle,
             playChapter = player::playChapter,
             deleted = shell.nav::pop,
+            // "Đọc theo": cuốn chưa ở trình phát thì nạp dừng ở chỗ nghe tiếp trước, rồi cửa sổ Đang nghe mở thẳng ở chế độ đọc.
+            readAlong = { book -> shell.scope.launch { if (player.prepare(book)) window.openReading() } },
         )
     }
     Box(Modifier.fillMaxSize().background(Abook.colors.bg).semantics { testTagsAsResourceId = true }) {
-        ScreenStack(
-            nav = nav,
-            root = { RootTabs(shell, library, playerState, player, covers, actions, openPlayer, settings) },
-            screen = { destination ->
-                when (destination) {
-                    is Destination.Book -> BookScreen(
-                        destination.book, library, playerState, player.clock, covers, books, shell.sheets, bookActions,
-                    )
-                    Destination.NowPlaying -> NowPlayingPlaceholder(playerState, covers, onBack = nav::pop)
-                    is Destination.Settings -> SettingsGroupScreen(destination.group, settings, shell.sheets, onBack = nav::pop)
-                }
-            },
-        )
-        SheetLayer(shell.sheets)
+        // Cửa sổ Đang nghe nằm TRÊN cả ngăn xếp màn lẫn thanh tab; thanh phát nhỏ thật ở gốc là nguồn của chuyển động nở ra (NowPlayingSource).
+        PlayerCoverProvider(covers) {
+            NowPlayingLayer(nowPlaying, window, sampleClock) {
+                ScreenStack(
+                    nav = nav,
+                    root = { RootTabs(shell, library, playerState, player, covers, actions, openPlayer, settings) },
+                    screen = { destination ->
+                        when (destination) {
+                            is Destination.Book -> BookScreen(
+                                destination.book, library, playerState, player.clock, covers, books, shell.sheets, bookActions,
+                            )
+                            is Destination.Settings -> SettingsGroupScreen(destination.group, settings, shell.sheets, onBack = nav::pop)
+                        }
+                    },
+                )
+                SheetLayer(shell.sheets)
+            }
+        }
     }
-}
-
-/** Mở trình phát đầy đủ từ thanh nhỏ; đã ở đó rồi thì thôi. */
-private fun openNowPlaying(nav: NavState) {
-    if (nav.stack.top?.destination != Destination.NowPlaying) nav.push(Destination.NowPlaying)
 }
 
 private enum class Layer { Alone, Below, Top }
@@ -232,7 +243,7 @@ private fun RootTabs(
         }
         if (last[0].hasTrack) {
             MiniPlayerSlot(visible = player.hasTrack) {
-                MiniPlayer(last[0], position, covers, onToggle = repo::toggle, onOpenNowPlaying = openNowPlaying)
+                MorphingMiniPlayer(last[0], position, covers, onToggle = repo::toggle, onOpenNowPlaying = openNowPlaying)
             }
         }
         TabBar(tabs)

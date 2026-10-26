@@ -31,7 +31,12 @@ import vn.abook.player.AbookApplication
 import vn.abook.player.AppLog
 import vn.abook.player.BuildConfig
 import vn.abook.player.Diagnostics
+import vn.abook.player.ui.data.DemoPlaybackCore
 import vn.abook.player.ui.data.LibraryState
+import vn.abook.player.ui.data.PlayerRepo
+import vn.abook.player.ui.nowplaying.AndroidReadAlongSource
+import vn.abook.player.ui.nowplaying.DemoReadAlongSource
+import vn.abook.player.ui.nowplaying.rememberRepoNowPlaying
 import vn.abook.player.ui.screens.SettingsEnv
 import vn.abook.player.ui.screens.SettingsLinks
 import vn.abook.player.ui.shell.AppShell
@@ -49,6 +54,7 @@ class NativeActivity : ComponentActivity() {
     private var started = false
     private var contentReady = false
     private var demo = false
+    private lateinit var player: PlayerRepo
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splash = installSplashScreen()
@@ -56,15 +62,17 @@ class NativeActivity : ComponentActivity() {
         enableEdgeToEdge()
         val library = app.library
         val covers = app.covers
-        val player = app.player
+        val demoBooks = if (BuildConfig.NATIVE_UI) intent.getIntExtra(DEMO_BOOKS, 0) else 0
+        demo = demoBooks > 0
+        // Chế độ đo: cùng đường thật (PlayerRepo -> cửa sổ Đang nghe) nhưng nguồn là một cuốn giả, không chạm lõi phát thật.
+        player = if (demo) PlayerRepo(DemoPlaybackCore(), lifecycleScope, Dispatchers.IO, { null }, { null }) else app.player
+        val readAlong = if (demo) DemoReadAlongSource else AndroidReadAlongSource(this)
         val prefs = app.uiPrefs
         val settings = app.settings
         // Màn chờ giữ tới khi Thư viện có nội dung VÀ đã biết giao diện sáng / tối của bạn: khung đầu đã là lưới bìa đúng màu, không phải màn trống hay
         // màn đổi màu ngay sau khi hiện. Hai lần đọc chạy song song ở luồng nền.
         splash.setKeepOnScreenCondition { library.state.value is LibraryState.Loading || !settings.loaded.value }
         lifecycleScope.launch { settings.load() }
-        val demoBooks = if (BuildConfig.NATIVE_UI) intent.getIntExtra(DEMO_BOOKS, 0) else 0
-        demo = demoBooks > 0
         if (demo) library.showDemo(demoBooks) else lifecycleScope.launch { library.refresh() }
         // Dừng phát thì chỗ nghe đã ghi: đọc lại để "Đang nghe" và vạch tiến độ theo kịp.
         lifecycleScope.launch {
@@ -97,7 +105,10 @@ class NativeActivity : ComponentActivity() {
                     val env = remember { SettingsEnv(settings, reveal, links) }
                     LaunchedEffect(Unit) { shell.library.restoreSort(withContext(Dispatchers.IO) { prefs.sort() }) }
                     val state by library.state.collectAsStateWithLifecycle()
-                    AppShell(shell, state, player, covers, env, onFirstContent = ::onFirstContent, books = library)
+                    AppShell(
+                        shell, state, player, covers, env, onFirstContent = ::onFirstContent, books = library,
+                        nowPlaying = rememberRepoNowPlaying(player, readAlong),
+                    )
                 }
             }
         }
@@ -140,19 +151,19 @@ class NativeActivity : ComponentActivity() {
     private fun onFirstContent() {
         reportFullyDrawn()
         contentReady = true
-        if (started) app.player.attach()
+        if (started) player.attach()
     }
 
     override fun onStart() {
         super.onStart()
         started = true
-        if (contentReady) app.player.attach()
+        if (contentReady) player.attach()
     }
 
     override fun onStop() {
         super.onStop()
         started = false
-        app.player.detach()
+        player.detach()
     }
 
     override fun onTrimMemory(level: Int) {

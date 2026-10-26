@@ -8,8 +8,12 @@ import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import org.json.JSONObject
+import vn.abook.player.MusicBed
 import vn.abook.player.Playback
 import vn.abook.player.PlaybackService
+import vn.abook.player.Playlists
+import vn.abook.player.SleepTimer
+import vn.abook.player.readaloud.ReadAloud
 
 /**
  * Lõi phát thật cho giao diện native: chuyển lệnh xuống [Playback] (mọi lệnh ExoPlayer chạy ở luồng chính) sau khi bảo đảm dịch vụ phát đã chạy -
@@ -45,9 +49,23 @@ class AndroidPlaybackCore(context: Context) : PlaybackCore {
     override fun previous() = withService { Playback.previous() }
     override fun setRate(rate: Double) = withService { Playback.setRate(rate) }
     override fun jumpTo(chapterId: Int, seconds: Double) = withService { Playback.jumpTo(chapterId, seconds) }
+    override fun positionMs(): Long = Playback.positionMs
+    override fun chapters(): List<Playback.Chapter> = Playback.chapters
+    override fun setSleep(mode: String, minutes: Int) = withService {
+        when (mode) {
+            "minutes" -> SleepTimer.setMinutes(minutes)
+            "chapter" -> SleepTimer.setEndOfChapter()
+            else -> SleepTimer.cancel()
+        }
+    }
+
+    override fun autoMusic(): Boolean = Playlists.autoEnabled
+    override fun setAutoMusic(enabled: Boolean) = withService { MusicBed.chooseAuto(enabled) }
+    override fun voiceId(): String = ReadAloud.voiceId
+    override fun setVoice(voiceId: String) = withService { ReadAloud.chooseFor(Playback.bookId, voiceId, Playback.recordId) }
     override fun load(request: LoadRequest) = withService {
-        // Nạp dừng chỉ để khôi phục lúc mở app: dịch vụ vừa bật xong mà đã có cuốn (widget, tai nghe, người nghe bấm phát cuốn khác) thì không đè.
-        if (request.autoplay || Playback.bookId.isEmpty()) {
+        // Nạp để khôi phục lúc mở app: dịch vụ vừa bật xong mà đã có cuốn (widget, tai nghe, người nghe bấm phát cuốn khác) thì không đè.
+        if (!request.restore || Playback.bookId.isEmpty()) {
             with(request) { Playback.load(id, title, narrator, chapters, startChapterId, startSeconds, rate, autoplay) }
         }
     }
