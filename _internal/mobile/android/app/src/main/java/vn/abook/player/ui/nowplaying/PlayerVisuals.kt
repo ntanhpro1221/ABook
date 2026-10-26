@@ -24,6 +24,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.unit.Density
+import vn.abook.player.Playback
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -182,13 +185,16 @@ fun PlayMorph(
     }
 }
 
+/** Biểu tượng của "Cửa sổ mini" (lucide picture-in-picture-2) trong [PlayerGlyph]. */
+const val MINI_WINDOW_GLYPH = "⧉"
+
 @Composable
 fun PlayerAction(label: String, glyph: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Column(modifier.widthIn(min = 48.dp).pressable(onClick = onClick).padding(vertical = 8.dp)
         .semantics { contentDescription = label }, horizontalAlignment = Alignment.CenterHorizontally) {
         // Ô trên cùng một chiều cao (= ô icon 28 dp) dù là icon hay chữ ("1×", "12:30"): nhãn dưới của cả hàng nằm trên cùng một đường.
         Box(Modifier.height(28.dp), contentAlignment = Alignment.Center) {
-            if (glyph == "◷" || glyph == "☷") PlayerGlyph(glyph)
+            if (glyph == "◷" || glyph == "☷" || glyph == MINI_WINDOW_GLYPH) PlayerGlyph(glyph)
             else RollingLabel(glyph, style = Abook.type.sectionTitle)
         }
         Spacer(Modifier.height(4.dp))
@@ -212,6 +218,7 @@ fun PlayerGlyph(glyph: String) {
         "›|" -> LucidePaths.SKIP_FORWARD
         "◷" -> LucidePaths.MOON
         "☷" -> LucidePaths.LIST_ORDERED
+        "⧉" -> LucidePaths.PICTURE_IN_PICTURE_2
         "+" -> LucidePaths.PLUS
         "−" -> LucidePaths.MINUS
         else -> null
@@ -230,15 +237,18 @@ fun PlayerGlyph(glyph: String) {
 private fun rememberSkipNumber(color: Color): TextLayoutResult {
     val measurer = rememberTextMeasurer(cacheSize = 1)
     val density = LocalDensity.current
-    return remember(color, density) {
-        val style = with(density) {
-            TextStyle(
-                fontFamily = BeVietnamPro, fontWeight = FontWeight.SemiBold, fontSize = SKIP_NUMBER_SIZE.dp.toSp(),
-                letterSpacing = (-0.2).dp.toSp(), fontFeatureSettings = "tnum", color = color,
-            )
-        }
-        measurer.measure("15", style)
+    return remember(color, density) { skipNumberLayout(measurer, density, color) }
+}
+
+/** Số của nút lùi / tới đã đo; cửa sổ nhỏ PiP (ui/pip) vẽ nút hệ thống ra ảnh bằng chính số này, nên đo ở hàm dùng chung chứ không ở composable. */
+internal fun skipNumberLayout(measurer: TextMeasurer, density: Density, color: Color): TextLayoutResult {
+    val style = with(density) {
+        TextStyle(
+            fontFamily = BeVietnamPro, fontWeight = FontWeight.SemiBold, fontSize = SKIP_NUMBER_SIZE.dp.toSp(),
+            letterSpacing = (-0.2).dp.toSp(), fontFeatureSettings = "tnum", color = color,
+        )
     }
+    return measurer.measure(Playback.SKIP_SECONDS.toString(), style)
 }
 
 /**
@@ -246,7 +256,7 @@ private fun rememberSkipNumber(color: Color): TextLayoutResult {
  * đầu cung, số 15 to ở dưới. Chủ sách 24-10 và 26-10: vòng gần kín với số nhét bên trong "xấu xí" - số không bao giờ chạm nét; khe đo bằng điểm ảnh
  * trong SkipGlyphTest. Ô 24 đặt giữa ô 28 của nút.
  */
-private fun DrawScope.drawSkip(forward: Boolean, color: Color, path: Path, number: TextLayoutResult?) {
+internal fun DrawScope.drawSkip(forward: Boolean, color: Color, path: Path, number: TextLayoutResult?) {
     val u = 24.dp.toPx() / 24f
     withTransform({
         translate((size.width - 24f * u) / 2f, (size.height - 24f * u) / 2f)

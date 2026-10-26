@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import vn.abook.player.Playback
 import vn.abook.player.ui.components.pressable
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
@@ -155,16 +156,17 @@ fun NowPlayingScreen(
                 Row(Modifier.fillMaxWidth().height(88.dp).testTag("transport"),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly) {
                     GlyphButton("Chương trước", "|‹", model::previous, Modifier.playerReveal(windowProgress))
-                    GlyphButton("Lùi 15 giây", "↶15", { model.skip(-15) }, Modifier.playerReveal(windowProgress))
+                    GlyphButton("Lùi 15 giây", "↶15", { model.skip(-Playback.SKIP_SECONDS) }, Modifier.playerReveal(windowProgress))
                     PlayMorph(state.playing, model::toggle, parts.element(NowPlayingPart.Play))
-                    GlyphButton("Tới 15 giây", "15↷", { model.skip(15) }, Modifier.playerReveal(windowProgress))
+                    GlyphButton("Tới 15 giây", "15↷", { model.skip(Playback.SKIP_SECONDS) }, Modifier.playerReveal(windowProgress))
                     GlyphButton("Chương sau", "›|", model::next, Modifier.playerReveal(windowProgress))
                 }
-                // Ba ô bằng nhau: tâm ở 1/6, 1/2, 5/6 bề ngang dù nhãn dài ngắn khác nhau.
+                // Các ô bằng nhau (ba, hoặc bốn khi máy có PiP): tâm ở giữa mỗi phần bề ngang dù nhãn dài ngắn khác nhau.
                 Row(Modifier.fillMaxWidth().playerReveal(windowProgress)) {
                     PlayerAction("Tốc độ", PlayerLabels.rate(state.rate), { window.openSheet(PlayerSheet.Speed) }, Modifier.weight(1f).testTag("player_speed"))
                     SleepAction(state.sleep, model.position, { window.openSheet(PlayerSheet.Sleep) }, Modifier.weight(1f))
                     PlayerAction("Chương", "☷", { window.openSheet(PlayerSheet.Chapters) }, Modifier.weight(1f).testTag("player_chapters"))
+                    window.miniWindow?.let { enter -> PlayerAction("Cửa sổ mini", MINI_WINDOW_GLYPH, enter, Modifier.weight(1f).testTag("player_mini")) }
                 }
             }
             if (state.error.isNotBlank()) BasicText(state.error, Modifier.playerReveal(windowProgress), style = Abook.type.caption)

@@ -16,6 +16,8 @@ object ListenPrefs {
         "headsetSkips", "autoRewind", "safetyStopHours", "schedule", "theme",
         // Tiếng chạm, rung, nền đọc: WebView áp; native chỉ nhớ để trả lại khi localStorage của WebView mất (như theme).
         "touchSounds", "haptics", "readingSurface",
+        // Chỉ giao diện native của điện thoại: tự vào cửa sổ nhỏ (PiP) khi rời app lúc có sách mở. WebView không có PiP, bảng chung ranges.json không liệt kê.
+        "autoPip",
         // Dấu giờ (ms) lần đổi cuối của giao diện: lúc mở app giao diện so với dấu này để biết bản nào mới hơn (soát a100 T3).
         "settingsStamp",
     )
@@ -34,7 +36,7 @@ object ListenPrefs {
     private val THEMES = listOf("system", "light", "dark")
     private val READING_SURFACES = listOf("auto", "paper", "ivory", "night")
     private val CLOCK = Regex("""([01]\d|2[0-3]):[0-5]\d""")
-    private val SWITCHES = mapOf("shakeToExtend" to true, "flipToPause" to false, "headsetSkips" to true, "autoRewind" to true, "touchSounds" to true, "haptics" to true)
+    private val SWITCHES = mapOf("shakeToExtend" to true, "flipToPause" to false, "headsetSkips" to true, "autoRewind" to true, "touchSounds" to true, "haptics" to true, "autoPip" to true)
 
     private fun choiceOr(json: JSONObject, key: String, allowed: List<Int>, default: Int): Int {
         val value = json.opt(key) as? Number ?: return default

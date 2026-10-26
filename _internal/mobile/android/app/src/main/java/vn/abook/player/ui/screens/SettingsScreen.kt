@@ -59,6 +59,8 @@ class SettingsEnv(
     val voice: VoiceState? = null,
     /** Nhạc nền của từng cuốn (trang sách, trình phát); null = bản thử. */
     val music: MusicState? = null,
+    /** Cửa sổ nhỏ (PiP); null hay không có PiP thì Cài đặt không có công tắc "Tự mở cửa sổ mini". */
+    val pip: vn.abook.player.ui.pip.PipControl? = null,
 )
 
 /**
