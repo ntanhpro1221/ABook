@@ -3,7 +3,10 @@ package vn.abook.player.ui
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.test.assertContentDescriptionEquals
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -27,6 +30,7 @@ import vn.abook.player.ui.data.CoverLoader
 import vn.abook.player.ui.data.FakePlaybackCore
 import vn.abook.player.ui.data.LibraryState
 import vn.abook.player.ui.data.ListenBook
+import vn.abook.player.ui.data.LoadRequest
 import vn.abook.player.ui.data.PlayerRepo
 import vn.abook.player.ui.data.playerSnapshot
 import vn.abook.player.ui.shell.AppShell
@@ -183,5 +187,35 @@ class ShellScreenshotTest {
         rule.waitForIdle()
         rule.onNodeWithTag("mini_play").performClick()
         assertEquals(listOf("toggle"), core.calls)
+    }
+
+    // ---- một cửa "Đang nghe" ----
+
+    @Test
+    fun aFreshLaunchShowsTheLastBookPausedInTheMiniBarAndPlayStartsThatBookAtItsSpot() {
+        // App vừa mở, lõi phát trống, người dùng đã nghe cuốn b3 tới chương 7, 12:04.
+        val core = FakePlaybackCore(playerSnapshot(book = "", chapter = null), simulate = true)
+        val last = LoadRequest("b3", books[3].title, "", emptyList(), 7, 724.0, 1.0)
+        val repo = PlayerRepo(core, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, { null }, { null }, { last }).also { it.attach() }
+        show(player = repo)
+        rule.waitForIdle()
+        rule.onNodeWithTag("mini_player").assertIsDisplayed()
+        rule.onNodeWithTag("mini_play").assertContentDescriptionEquals("Phát")
+        rule.onNodeWithText("Chương 7").assertIsDisplayed()
+        // Một cửa: trên màn chỉ có MỘT nút phát / dừng, dù cuốn đang nghe cũng nằm trong lưới; thư viện không có hàng "Đang nghe".
+        rule.onAllNodes(hasContentDescription("Phát") or hasContentDescription("Tạm dừng"), useUnmergedTree = true).assertCountEquals(1)
+        rule.onNodeWithTag("continue_row").assertDoesNotExist()
+        shot("shell_mini_restored_light")
+        assertEquals("chưa phát gì", emptyList<String>(), core.calls)
+        rule.onNodeWithTag("mini_play").performClick()
+        rule.waitForIdle()
+        assertEquals(listOf("toggle"), core.calls)
+        assertEquals("phát đúng cuốn đã nạp, không nạp lại", listOf("b3"), core.loads.map { it.id })
+        assertEquals(7, core.loads.single().startChapterId)
+        assertEquals(724.0, core.loads.single().startSeconds, 0.0)
+        assertEquals(true, repo.state.value.playing)
+        assertEquals("b3", repo.state.value.bookId)
+        assertEquals(724_000L, repo.clock.positionMs.value)
+        rule.onNodeWithTag("mini_play").assertContentDescriptionEquals("Tạm dừng")
     }
 }
