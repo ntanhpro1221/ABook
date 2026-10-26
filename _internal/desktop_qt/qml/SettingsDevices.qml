@@ -29,7 +29,7 @@ Column {
         SettingRow { width: parent.width; label: "Kết nối Wi-Fi"; hint: root.sync.enabled ? "Máy cùng mạng thấy máy này là “" + root.sync.name + "”." : root.sync.wanted ? root.sync.error || "Chưa mở được cổng đồng bộ." : "Đang tắt - máy khác không thấy máy này."; Switch { label: "Kết nối Wi-Fi"; checked: Boolean(root.sync.wanted); enabled: !root.busy; onToggled: value => root.change("POST", "/api/sync", {enabled: value}, false) } }
         SectionBlock {
             id: pair
-            width: parent.width; visible: Boolean(root.sync.enabled); title: "Ghép thiết bị"; fold: true; expanded: Boolean(root.sync.pairing)
+            width: parent.width; visible: Boolean(root.sync.enabled); title: "Ghép thiết bị"; fold: "wip"; expanded: Boolean(root.sync.pairing)
             FormLabel { width: parent.width; visible: Boolean(root.sync.pairing); text: "Mã ghép thiết bị"; font.weight: Theme.weightMedium }
             FormLabel { width: parent.width; visible: Boolean(root.sync.pairing); text: "Trên máy kia: Cài đặt › Thiết bị → chọn " + (root.sync.name || "") + " → nhập mã."; color: Theme.text2 }
             FormLabel { width: parent.width; visible: Boolean(root.sync.pairing); text: root.sync.pairing?.code || ""; font.pixelSize: 34; font.letterSpacing: 5; color: Theme.accentText }
@@ -40,7 +40,7 @@ Column {
             Button { kind: "text"; text: root.sync.pairing ? "Huỷ mã này" : root.sync.pairingBlocked ? "Tạo mã mới" : "Ghép thiết bị mới"; enabled: !root.busy; onClicked: root.change(root.sync.pairing ? "DELETE" : "POST", "/api/sync/pairing", null, false) }
         }
         SectionBlock {
-            width: parent.width; visible: Boolean(root.sync.enabled); title: "Quyền điều khiển"; fold: true
+            width: parent.width; visible: Boolean(root.sync.enabled); title: "Quyền điều khiển"; fold: "wip"
             SettingRow { width: parent.width; label: "Điều khiển từ xa"; hint: "Tắt: thiết bị đã ghép chỉ tải và nghe sách."; Switch { label: "Điều khiển từ xa"; checked: Boolean(root.sync.remoteStudio); enabled: !root.busy; onToggled: value => { if (value) root.confirmStudio = true; else root.change("POST", "/api/sync/studio", {enabled: false}, false) } } }
             Column { width: parent.width; visible: root.confirmStudio; spacing: 8
                 FormLabel { width: parent.width; text: "Bật Studio từ xa?" }
@@ -52,7 +52,7 @@ Column {
             }
         }
         SectionBlock {
-            width: parent.width; visible: Boolean(root.sync.enabled); title: "Kết nối"; fold: true
+            width: parent.width; visible: Boolean(root.sync.enabled); title: "Kết nối"; fold: "wip"
             FormLabel { width: parent.width; text: (root.sync.addresses || []).map(a => a + ":" + root.sync.port).join(" hoặc "); color: Theme.text2 }
             FormLabel { width: parent.width; text: root.sync.bluetooth?.running ? "Bluetooth: điện thoại đã ghép nối được cả khi khác Wi-Fi." : root.sync.bluetooth?.error || ""; color: Theme.text2; visible: text !== "" }
             FormLabel { width: parent.width; text: "Ngoài nhà: nghe sách đã tải, hoặc nối mạng riêng ảo để nghe thẳng."; color: Theme.text2 }
@@ -65,7 +65,7 @@ Column {
             model: root.sync.devices || []
             SectionBlock {
                 required property var modelData
-                width: parent.width; title: modelData.name; fold: true
+                width: parent.width; title: modelData.name; fold: "wip"
                 FormField { id: nameField; width: parent.width; label: "Tên thiết bị"; text: modelData.name }
                 Button { text: "Lưu tên"; kind: "text"; enabled: !root.busy && nameField.text.trim() !== "" && nameField.text !== modelData.name; onClicked: root.change("POST", "/api/sync/devices/" + modelData.id + "/name", {name: nameField.text}, false) }
                 SettingRow { width: parent.width; label: "Điều khiển từ xa"; visible: Boolean(root.sync.remoteStudio); Switch { label: "Điều khiển từ xa"; checked: Boolean(modelData.studio); enabled: !root.busy; onToggled: value => root.change("POST", "/api/sync/devices/" + modelData.id + "/studio", {enabled: value}, false) } }
@@ -83,7 +83,7 @@ Column {
             model: root.computers
             SectionBlock {
                 required property var modelData
-                width: parent.width; title: modelData.name; fold: true
+                width: parent.width; title: modelData.name; fold: "wip"
                 FormLabel { width: parent.width; text: modelData.error || modelData.host + ":" + modelData.port; color: modelData.error ? Theme.danger : Theme.text2 }
                 FormLabel { width: parent.width; text: "Vân tay " + (modelData.fingerprint || ""); visible: Boolean(modelData.fingerprint); color: Theme.text3 }
                 Button { text: "Hỏi lại"; kind: "text"; icon: "refresh-cw"; enabled: !root.busy; onClicked: root.change("POST", "/api/computers/refresh", null, true) }
@@ -97,7 +97,7 @@ Column {
             }
         }
         SectionBlock {
-            width: parent.width; title: "Ghép máy"; fold: true
+            width: parent.width; title: "Ghép máy"; fold: "wip"
             Button { text: "Tìm máy trong mạng"; icon: "radar"; kind: "text"; onClicked: Api.call("GET", "/api/computers/discover", null, function(data, error) { if (!error) root.found = data.found || [] }) }
             Repeater { model: root.found; SettingRow { required property var modelData; width: parent.width; label: modelData.name; hint: modelData.host + ":" + modelData.port; Button { text: modelData.paired ? "Đã ghép" : "Chọn"; kind: "text"; enabled: !modelData.paired; onClicked: address.text = modelData.host + ":" + modelData.port } } }
             FormLabel { text: "Địa chỉ máy kia" }

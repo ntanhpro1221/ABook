@@ -117,11 +117,12 @@ Modal {
             else root.next()
         })
     }
-    onClosing: {
-        if (busy === "adding") { subpage = true; return }
-        if (leave) { leave = false; subpage = true; return }
-        if (queue.filter(q => q.state === "waiting").length > 1) { leave = true; subpage = true; return }
-        generation++; subpage = false
+    keepOpen: function() {
+        if (busy === "adding") return true
+        if (leave) { leave = false; return true }
+        if (queue.filter(q => q.state === "waiting").length > 1) { leave = true; return true }
+        generation++
+        return false
     }
     onOpenChanged: if (!open) { generation++; files.close(); folder.close() }
     Column {
@@ -169,9 +170,9 @@ Modal {
             }
         }
         FormLabel { width: parent.width; visible: root.picked.length === 0; text: "Chưa chọn chương nào - tích ít nhất một chương để thêm vào thư viện."; color: Theme.danger }
-        SectionBlock { width: parent.width; title: "Định dạng"; fold: true; visible: (root.preview?.notes || []).length > 0; FormLabel { width: parent.width; text: "Máy đã đổi định dạng - chữ của truyện giữ nguyên" } Repeater { model: root.preview?.notes || []; FormLabel { required property string modelData; width: parent.width; text: modelData; color: Theme.text2 } } }
+        SectionBlock { width: parent.width; title: "Định dạng"; fold: "wip"; visible: (root.preview?.notes || []).length > 0; FormLabel { width: parent.width; text: "Máy đã đổi định dạng - chữ của truyện giữ nguyên" } Repeater { model: root.preview?.notes || []; FormLabel { required property string modelData; width: parent.width; text: modelData; color: Theme.text2 } } }
         SectionBlock {
-            width: parent.width; title: "Chú thích"; fold: true; visible: Boolean(root.preview?.footnotes)
+            width: parent.width; title: "Chú thích"; fold: "wip"; visible: Boolean(root.preview?.footnotes)
             FormLabel { width: parent.width; text: "Tìm thấy " + (root.preview?.footnotes?.found || 0) + " chú thích trong sách - ABook không tự bỏ hay sửa chữ của truyện" }
             SettingRow { width: parent.width; label: "Không đọc số chú thích"; hint: "Bỏ các con số như ² hay [3] khỏi phần đọc; lời chú không đổi."; visible: (root.preview?.footnotes?.marks || 0) > 0; Switch { label: "Không đọc số chú thích"; checked: root.footnotes.hideMarks; enabled: !root.busy; onToggled: value => { root.footnotes = {hideMarks: value, notes: root.footnotes.notes}; root.read(true, true) } } }
             SettingRow { width: parent.width; label: "Đọc lời chú ở cuối chương"; hint: "Mỗi lời chú nằm ở cuối chương có số gọi nó, kể cả khi trong sách nó nằm ở chương riêng."; Switch { label: "Đọc lời chú ở cuối chương"; checked: root.footnotes.notes === "end"; enabled: !root.busy; onToggled: value => { root.footnotes = {hideMarks: root.footnotes.hideMarks, notes: value ? "end" : ""}; root.read(true, true) } } }
@@ -179,7 +180,7 @@ Modal {
             FormLabel { width: parent.width; text: "Không tích gì thì sách giữ nguyên như trong file."; color: Theme.text2 }
         }
         SectionBlock {
-            width: parent.width; title: "Gợi ý phần đọc"; fold: true; visible: root.suggestions.length > 0
+            width: parent.width; title: "Gợi ý phần đọc"; fold: "wip"; visible: root.suggestions.length > 0
             FormLabel { width: parent.width; text: "Dòng bỏ chỉ bị bỏ qua khi đọc; chữ của sách giữ nguyên."; color: Theme.text2 }
             Repeater { model: root.suggestions; SettingRow { required property var modelData; width: parent.width; label: modelData.line; hint: "Bỏ dòng này khỏi phần đọc"; Switch { label: "Bỏ dòng này khỏi phần đọc"; checked: root.skipped.includes(modelData.line); onToggled: value => root.skipped = value ? root.skipped.concat([modelData.line]) : root.skipped.filter(l => l !== modelData.line) } } }
         }

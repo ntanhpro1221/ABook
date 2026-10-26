@@ -21,7 +21,7 @@ Column {
     }
     FormLabel { width: parent.width; visible: !root.status.installed; text: "Tuỳ chọn ở trang này dùng khi đã cài Studio."; color: Theme.text2 }
     SectionBlock {
-        width: parent.width; title: "Sách mới"; fold: true
+        width: parent.width; title: "Sách mới"; fold: "wip"
         SettingChoices { width: parent.width; label: "Giọng kể"; value: Api.preferences.newBookNarrator || ""; options: [{value: "", label: "Máy đề xuất"}].concat(root.voices.map(v => ({value: v.name, label: v.name + " · " + v.gender + ", miền " + v.region}))); onPicked: value => Api.update({newBookNarrator: value}) }
         SettingChoices { width: parent.width; label: "Chất lượng"; value: Api.preferences.newBookProfile || "high_quality"; options: [{value: "high_quality", label: "Chất lượng cao"}, {value: "balanced", label: "Cân bằng"}]; onPicked: value => Api.update({newBookProfile: value}) }
         FormLabel { width: parent.width; text: "Mẫu sách mới"; font.weight: Theme.weightMedium }
@@ -30,7 +30,7 @@ Column {
         Repeater { model: Api.preferences.bookTemplates || []; SettingRow { required property var modelData; width: parent.width; label: modelData.name; Button { text: "Xoá"; kind: "text"; onClicked: Api.call("POST", "/api/book-templates", {op: "delete", name: modelData.name}, function(data, error) { if (!error) Api.preferences = data }) } } }
     }
     SectionBlock {
-        width: parent.width; title: "Cách đọc chung"; fold: true
+        width: parent.width; title: "Cách đọc chung"; fold: "wip"
         FormLabel { width: parent.width; text: "Sửa cách đọc một tên một lần, sách mới tự dùng."; color: Theme.text2 }
         Repeater { model: root.readings; SettingRow { required property var modelData; width: parent.width; label: modelData.surface + " → “" + modelData.spokenForm + "”"; Button { text: "Bỏ"; kind: "text"; onClicked: Api.call("POST", "/api/readings", {surface: modelData.surface, remove: true}, function(data, error) { if (!error) root.load() }) } } }
         FormField { id: surface; width: parent.width; label: "Tên trong sách"; placeholderText: "Tên trong sách" }
