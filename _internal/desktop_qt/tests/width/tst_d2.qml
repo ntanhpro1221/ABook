@@ -126,15 +126,17 @@ Item {
             const dialog = make(editFactory)
             dialog.begin({id:"edit",stage:"text",title:"Tên cũ",author:"Tác giả cũ",capabilities:{editLayer:true}})
             const title = findChild(dialog,"editTitle"), author = findChild(dialog,"editAuthor")
-            author.text = "Bản nháp tác giả " .repeat(15)
+            author.text = "Bản nháp tác giả " .repeat(9)
             title.text = "Tên mới " .repeat(40)
-            dialog.mutate("PUT","/title",{title:title.text},"Đã đổi tên sách","title")
-            compare(author.text,"Bản nháp tác giả " .repeat(15))
-            const call = DesktopApi.requests.find(r => r.path === "/api/books/edit/title")
-            compare(call.body.title,title.text)
+            const typed = title.text
             verify(title.height > 40)
+            dialog.saveTitle()
+            compare(author.text,"Bản nháp tác giả " .repeat(9))
+            const call = DesktopApi.requests.find(r => r.path === "/api/books/edit/title")
+            compare(call.body.title,typed)
             dialog.search()
             verify(dialog.searching)
+            compare(Nav.layers.length,2)
             Nav.back()
             verify(!dialog.searching && dialog.open)
             Nav.back()
@@ -142,7 +144,7 @@ Item {
         }
         function test_coverQueryAndChoice() {
             const item = make(coverFactory,{width:500})
-            DesktopApi.responses = {"/api/books/cover/cover/search?q=A%20B":{status:200,data:{results:[{title:"A B",provider:"itunes",url:"https://fixture/cover",thumb:""}],failed:[]}}}
+            DesktopApi.responses = {"GET /api/books/cover/cover/search?q=A%20B":{status:200,data:{results:[{title:"A B",provider:"itunes",url:"https://fixture/cover",thumb:""}],failed:[]}}}
             item.begin("cover","A B")
             compare(item.results.length,1)
             item.choose(item.results[0])
