@@ -175,9 +175,9 @@ private fun SheetRow(label: String, value: String, enabled: Boolean = true, role
 
 @Composable
 private fun SleepClock(sleep: PlayerSleep, position: PlayerPosition) {
-    var label by remember(sleep) { mutableStateOf(PlayerLabels.sleep(sleep, position.realtimeMs.value, clock = true)) }
-    LaunchedEffect(sleep, position) { snapshotFlow { position.realtimeMs.value / 1000 }.collect {
-        label = PlayerLabels.sleep(sleep, it * 1000, clock = true)
+    var label by remember(sleep) { mutableStateOf(PlayerLabels.sleep(sleep, position.sleepRemainingMs.value, clock = true)) }
+    LaunchedEffect(sleep, position) { snapshotFlow { position.sleepRemainingMs.value }.collect {
+        label = PlayerLabels.sleep(sleep, it, clock = true)
     } }
     RollingLabel(label, Modifier.padding(bottom = 12.dp), Abook.type.screenTitle)
     if (sleep.kind == SleepKind.Minutes && !sleep.counting)

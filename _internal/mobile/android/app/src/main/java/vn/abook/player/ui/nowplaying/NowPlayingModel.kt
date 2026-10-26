@@ -4,35 +4,23 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
 import kotlinx.coroutines.flow.StateFlow
-import org.json.JSONObject
+import vn.abook.player.ui.data.CoverRef
+import vn.abook.player.ui.data.PlayerChapter
+import vn.abook.player.ui.data.PlayerState
 import java.math.BigDecimal
 import kotlin.math.ceil
 
-/** Public shared keys: the real library mini bar can use these without depending on its implementation. */
+/** Public shared keys: the real library mini bar uses these without depending on the window's implementation. */
 enum class NowPlayingPart { Container, Cover, Chapter, Book, Play }
-
-@Immutable
-data class PlayerChapter(val id: Int, val title: String, val durationMs: Long, val textPath: String = "")
-
-@Immutable
-data class CoverRef(val path: String, val stamp: Long)
 
 @Immutable
 data class PlayerVoice(val id: String, val name: String)
 
 enum class SleepKind { Off, Minutes, Chapter }
 
-/** A snapshot anchored to monotonic time; position ticks never change the screen state. */
+/** The timer as set (mode, minutes, whether it counts now). The time left runs on [PlayerPosition.sleepRemainingMs], never here. */
 @Immutable
-data class PlayerSleep(
-    val kind: SleepKind = SleepKind.Off,
-    val remainingMs: Long = 0,
-    val sampledAtMs: Long = 0,
-    val counting: Boolean = false,
-    val minutes: Int = 0,
-) {
-    fun leftMs(now: Long): Long = (remainingMs - if (counting) (now - sampledAtMs).coerceAtLeast(0) else 0).coerceAtLeast(0)
-}
+data class PlayerSleep(val kind: SleepKind = SleepKind.Off, val minutes: Int = 0, val counting: Boolean = false)
 
 @Immutable
 data class NowPlayingState(
@@ -56,11 +44,14 @@ data class NowPlayingState(
     val voiceId: String = "",
 )
 
-/** Cheap clock, separate from immutable metadata. Read position only in draw/layout or snapshotFlow. */
+/**
+ * The window's view of the one clock ([vn.abook.player.ui.data.PlayerClock]). Read the values only in draw / layout lambdas or `snapshotFlow`.
+ * [sample] refreshes the position from the core; the window calls it once per frame while it is open and playing.
+ */
 @Stable
 interface PlayerPosition {
     val milliseconds: State<Long>
-    val realtimeMs: State<Long>
+    val sleepRemainingMs: State<Long>
     fun sample()
 }
 
@@ -94,11 +85,12 @@ object PlayerLabels {
         val seconds = milliseconds.coerceAtLeast(0) / 1000
         return "${seconds / 60}:${(seconds % 60).toString().padStart(2, '0')}"
     }
-    fun sleep(sleep: PlayerSleep, now: Long, clock: Boolean = false): String = when (sleep.kind) {
+    /** `leftMs`: the time left on the timer (the clock's `sleepRemainingMs`). `clock`: the sheet's big readout instead of the button label. */
+    fun sleep(sleep: PlayerSleep, leftMs: Long, clock: Boolean = false): String = when (sleep.kind) {
         SleepKind.Off -> if (clock) "Tắt" else "Hẹn giờ"
         SleepKind.Chapter -> "Hết chương"
         SleepKind.Minutes -> {
-            val left = sleep.leftMs(now)
+            val left = leftMs.coerceAtLeast(0)
             if (clock) time(ceil(left / 1000.0).toLong() * 1000)
             else if (left < 60_000) "${ceil(left / 1000.0).toInt().coerceAtLeast(1)} giây"
             else "${ceil(left / 60_000.0).toInt()} phút"
@@ -106,20 +98,19 @@ object PlayerLabels {
     }
 }
 
-/** Same native JSON contract as PlayerPlugin.getState, with no clock fields in screen metadata. */
-fun mapPlaybackState(
-    json: JSONObject, chapters: List<PlayerChapter>, cover: CoverRef?, now: Long,
-): NowPlayingState {
-    val timer = json.optJSONObject("sleep") ?: JSONObject()
-    val kind = when (timer.optString("mode")) { "minutes" -> SleepKind.Minutes; "chapter" -> SleepKind.Chapter; else -> SleepKind.Off }
-    val chapterId = if (json.isNull("chapterId")) null else json.optInt("chapterId")
-    return NowPlayingState(
-        bookId = json.optString("bookId"), bookTitle = json.optString("bookTitle"),
-        chapterId = chapterId, chapterTitle = json.optString("chapterTitle"), cover = cover,
-        playing = json.optBoolean("playing"), durationMs = (json.optDouble("duration", 0.0) * 1000).toLong().coerceAtLeast(0),
-        rate = json.optDouble("rate", 1.0), chapters = chapters,
-        sleep = PlayerSleep(kind, (timer.optDouble("remaining", 0.0) * 1000).toLong(), now, timer.optBoolean("counting"), timer.optInt("minutes")),
-        readAlongAvailable = chapterId != null,
-        error = json.optString("error").ifBlank { json.optString("saveError") },
+/**
+ * The repo's immutable snapshot -> what the window draws. Pure and run once per snapshot (never per clock tick); `voices` and the "return to place" chip are the
+ * window's own extras. Rate comes through as is: the core reports the decimal the listener picked, so the sheet's choice compares equal.
+ */
+fun nowPlayingState(player: PlayerState, voices: List<PlayerVoice>, returnAvailable: Boolean, returnSerial: Int): NowPlayingState =
+    NowPlayingState(
+        bookId = player.bookId, bookTitle = player.bookTitle, chapterId = player.chapterId, chapterTitle = player.chapterTitle,
+        cover = player.cover, playing = player.playing, durationMs = player.durationMs.coerceAtLeast(0), rate = player.rate,
+        sleep = PlayerSleep(
+            when (player.sleep.mode) { "minutes" -> SleepKind.Minutes; "chapter" -> SleepKind.Chapter; else -> SleepKind.Off },
+            player.sleep.minutes, player.sleep.counting,
+        ),
+        chapters = player.chapters, readAlongAvailable = player.hasTrack, error = player.error,
+        musicEnabled = player.musicEnabled, returnAvailable = returnAvailable, returnSerial = returnSerial,
+        voices = voices, voiceId = player.voiceId,
     )
-}

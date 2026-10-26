@@ -10,19 +10,16 @@ import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.SeekableTransitionState
+import androidx.compose.animation.core.Transition
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.rememberTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
@@ -45,9 +42,11 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import vn.abook.player.ui.components.pressable
-import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.MotionMs
 
 /** Both back and swipe seek the same Compose transition used to open the container. */
@@ -66,6 +65,12 @@ class NowPlayingWindowState(private val scope: CoroutineScope) {
         motion?.cancel()
         motion = scope.launch { transition.animateTo(true, tween(MotionMs.SLOW)) }
     }
+
+    /** "Đọc theo" từ trang sách: mở thẳng ở chế độ đọc. */
+    fun openReading() {
+        reading = true
+        open()
+    }
     fun close() {
         sheetOpen = false
         motion?.cancel()
@@ -82,79 +87,120 @@ class NowPlayingWindowState(private val scope: CoroutineScope) {
     fun closeSheet() { sheetOpen = false }
 }
 
-/** Overlay clipping follows the very same progress as the shared container, in both directions. */
+/** Overlay clipping follows the very same progress as the shared container, in both directions: square at both ends (the bar and the screen), rounded in flight. */
 private class ContainerShape(private val progress: State<Float>) : Shape {
     override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
-        val radius = with(density) { 12.dp.toPx() } * (1f - progress.value)
+        val p = progress.value
+        val radius = with(density) { 16.dp.toPx() } * 4f * p * (1f - p)
         return Outline.Rounded(RoundRect(0f, 0f, size.width, size.height, CornerRadius(radius)))
     }
 }
 
-/** Stand-in mini bar + full window. The real mini bar reuses NowPlayingPart keys and [SharedPlayerParts]. */
+/** What the real mini player (in the root tabs) needs to turn into the window: the window state, its transition, the shared scope. */
+@Stable
+class NowPlayingLink(
+    val window: NowPlayingWindowState,
+    val transition: Transition<Boolean>,
+    val progress: State<Float>,
+    val shared: SharedTransitionScope,
+    internal val shape: Shape,
+)
+
+val LocalNowPlaying = staticCompositionLocalOf<NowPlayingLink?> { null }
+
+/**
+ * The window layer at the root of the app: one [SharedTransitionLayout] holds the app (`content`, with the real mini player somewhere in it) and, above it,
+ * the full window - composed only while it is expanding or expanded. Descendants reach the transition through [LocalNowPlaying] ([NowPlayingSource]).
+ * Its Back handler is registered after everything `content` composes first, so while the window is expanded Back closes the window and never pops a screen.
+ */
 @Composable
-fun NowPlayingHost(
+fun NowPlayingLayer(
     model: NowPlayingModel,
     window: NowPlayingWindowState = rememberNowPlayingWindowState(),
     sampleClock: Boolean = true,
     content: @Composable () -> Unit,
 ) {
-    val state by model.state.collectAsState()
     val transition = rememberTransition(window.transition, label = "now-playing-window")
     val progress = transition.animateFloat(transitionSpec = { tween(MotionMs.SLOW, easing = LinearEasing) }, label = "window-geometry") { if (it) 1f else 0f }
     val shape = remember(progress) { ContainerShape(progress) }
-    PredictiveBackHandler(enabled = window.expanded && !window.sheetOpen) { events ->
-        try {
-            events.collect { window.dragClose(it.progress) }
-            window.settleClose(commit = true)
-        } catch (cancelled: CancellationException) {
-            window.settleClose(commit = false)
-            throw cancelled
+    // Only visible lifecycle frames sample the core clock. Nothing in this layer reads its changing values.
+    LaunchedEffect(model, window, sampleClock) {
+        val playing = model.state.map { it.playing }.distinctUntilChanged()
+        val open = snapshotFlow { window.expanded }.distinctUntilChanged()
+        combine(playing, open) { isPlaying, isOpen -> isPlaying && isOpen }.collectLatest { running ->
+            model.position.sample()
+            if (running && sampleClock) while (true) withFrameNanos { model.position.sample() }
         }
     }
-    // Only visible lifecycle frames sample the core clock. Nothing in this host reads its changing values.
-    LaunchedEffect(model, state.playing, window.expanded) {
-        model.position.sample()
-        if (state.playing && window.expanded && sampleClock) while (true) withFrameNanos { model.position.sample() }
-    }
     SharedTransitionLayout(Modifier.fillMaxSize()) {
-      Box(Modifier.fillMaxSize()) {
-        content()
-        if (state.bookId.isNotEmpty()) {
-            transition.AnimatedVisibility(
-                visible = { !it }, enter = EnterTransition.None, exit = ExitTransition.None,
-                modifier = Modifier.align(Alignment.BottomCenter).padding(horizontal = 20.dp)
-                    .navigationBarsPadding().padding(bottom = 64.dp),
-            ) {
-                val parts = SharedPlayerParts(this@SharedTransitionLayout, this)
-                MiniPlayerStandIn(state, model, parts,
-                    Modifier.sharedBounds(
-                        rememberSharedContentState(NowPlayingPart.Container), this,
-                        enter = EnterTransition.None, exit = ExitTransition.None,
-                        boundsTransform = { _, _ -> tween(MotionMs.SLOW, easing = LinearEasing) },
-                        resizeMode = SharedTransitionScope.ResizeMode.scaleToBounds(ContentScale.FillBounds, Alignment.TopStart),
-                        clipInOverlayDuringTransition = OverlayClip(shape),
-                    ).clip(RoundedCornerShape(12.dp)), window::open, progress)
-            }
-            transition.AnimatedVisibility(
-                visible = { it }, enter = EnterTransition.None, exit = ExitTransition.None,
-                modifier = Modifier.align(Alignment.TopStart),
-            ) {
-                val parts = SharedPlayerParts(this@SharedTransitionLayout, this)
-                Box(
-                    Modifier.testTag("now_playing_bounds").sharedBounds(
-                        rememberSharedContentState(NowPlayingPart.Container), this,
-                        enter = EnterTransition.None, exit = ExitTransition.None,
-                        boundsTransform = { _, _ -> tween(MotionMs.SLOW, easing = LinearEasing) },
-                        resizeMode = SharedTransitionScope.ResizeMode.scaleToBounds(ContentScale.FillBounds, Alignment.TopStart),
-                        placeholderSize = SharedTransitionScope.PlaceholderSize.AnimatedSize,
-                        clipInOverlayDuringTransition = OverlayClip(shape),
-                    ).fillMaxSize().dismissPlayerOnDrag(window, !window.reading && !window.sheetOpen),
+        val link = remember(window, transition, progress, shape, this) { NowPlayingLink(window, transition, progress, this, shape) }
+        CompositionLocalProvider(LocalNowPlaying provides link) {
+            Box(Modifier.fillMaxSize()) {
+                content()
+                // After `content` on purpose: the last handler registered is asked first, so Back closes the open window before anything the screens set up.
+                // A sheet that opens later (shell sheets, the window's own) registers after this and still wins - "Back with a sheet open closes only the sheet".
+                PredictiveBackHandler(enabled = window.expanded && !window.sheetOpen) { events ->
+                    try {
+                        events.collect { window.dragClose(it.progress) }
+                        window.settleClose(commit = true)
+                    } catch (cancelled: CancellationException) {
+                        window.settleClose(commit = false)
+                        throw cancelled
+                    }
+                }
+                transition.AnimatedVisibility(
+                    visible = { it }, enter = EnterTransition.None, exit = ExitTransition.None,
+                    modifier = Modifier.align(Alignment.TopStart),
                 ) {
-                    NowPlayingScreen(state, model, window, parts, progress, Modifier.fillMaxSize().testTag("now_playing"))
+                    val parts = remember(this@SharedTransitionLayout, this) { SharedPlayerParts(this@SharedTransitionLayout, this) }
+                    val state by model.state.collectAsState()
+                    Box(
+                        Modifier.testTag("now_playing_bounds").sharedBounds(
+                            rememberSharedContentState(NowPlayingPart.Container), this,
+                            enter = EnterTransition.None, exit = ExitTransition.None,
+                            boundsTransform = { _, _ -> tween(MotionMs.SLOW, easing = LinearEasing) },
+                            resizeMode = SharedTransitionScope.ResizeMode.scaleToBounds(ContentScale.FillBounds, Alignment.TopStart),
+                            placeholderSize = SharedTransitionScope.PlaceholderSize.AnimatedSize,
+                            clipInOverlayDuringTransition = OverlayClip(shape),
+                        ).fillMaxSize()
+                            // The window owns every touch inside it: nothing reaches the screens underneath, in reading mode too.
+                            .pointerInput(Unit) {}
+                            .dismissPlayerOnDrag(window, !window.reading && !window.sheetOpen),
+                    ) {
+                        NowPlayingScreen(state, model, window, parts, progress, Modifier.fillMaxSize().testTag("now_playing"))
+                    }
                 }
             }
         }
-      }
+    }
+}
+
+/**
+ * The real mini player's side of the morph: wraps it in the window transition's `AnimatedVisibility(!expanded)` and hands over the container's shared bounds
+ * (`modifier`, to put on the bar) and the Cover / Chapter / Book / Play parts (`part(NowPlayingPart.Cover)`...). Without a window layer (previews, tests) it is a plain bar.
+ */
+@Composable
+fun NowPlayingSource(content: @Composable (modifier: Modifier, part: @Composable (NowPlayingPart) -> Modifier) -> Unit) {
+    val link = LocalNowPlaying.current
+    if (link == null) {
+        content(Modifier) { Modifier }
+        return
+    }
+    with(link.shared) {
+        link.transition.AnimatedVisibility(visible = { !it }, enter = EnterTransition.None, exit = ExitTransition.None) {
+            val parts = remember(link.shared, this) { SharedPlayerParts(link.shared, this) }
+            val part = remember(parts) { @Composable { which: NowPlayingPart -> parts.element(which) } }
+            content(
+                Modifier.sharedBounds(
+                    rememberSharedContentState(NowPlayingPart.Container), this,
+                    enter = EnterTransition.None, exit = ExitTransition.None,
+                    boundsTransform = { _, _ -> tween(MotionMs.SLOW, easing = LinearEasing) },
+                    resizeMode = SharedTransitionScope.ResizeMode.scaleToBounds(ContentScale.FillBounds, Alignment.TopStart),
+                    clipInOverlayDuringTransition = OverlayClip(link.shape),
+                ),
+                part,
+            )
+        }
     }
 }
 
@@ -215,22 +261,5 @@ fun Modifier.dismissPlayerOnDrag(window: NowPlayingWindowState, enabled: Boolean
                 onDragCancel = { scope.launch { window.settleClose(false) } },
             )
         }
-    }
-}
-
-@Composable
-private fun MiniPlayerStandIn(
-    state: NowPlayingState, model: NowPlayingModel, parts: SharedPlayerParts,
-    modifier: Modifier, onOpen: () -> Unit, progress: State<Float>,
-) {
-    Row(modifier.fillMaxWidth().background(Abook.colors.panel).pressable(onClick = onOpen)
-        .padding(8.dp).testTag("mini_player"), verticalAlignment = Alignment.CenterVertically) {
-        PlayerCover(state.cover, state.bookTitle, parts.element(NowPlayingPart.Cover, Modifier.size(44.dp)), decodeSize = 44.dp)
-        Spacer(Modifier.width(12.dp))
-        Column(Modifier.weight(1f)) {
-            RollingLabel(state.chapterTitle, parts.element(NowPlayingPart.Chapter), Abook.type.label)
-            RollingLabel(state.bookTitle, parts.element(NowPlayingPart.Book), Abook.type.caption)
-        }
-        PlayMorph(state.playing, model::toggle, progress, parts.element(NowPlayingPart.Play), large = false)
     }
 }

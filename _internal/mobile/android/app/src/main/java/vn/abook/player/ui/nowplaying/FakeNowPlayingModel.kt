@@ -3,6 +3,7 @@ package vn.abook.player.ui.nowplaying
 import android.os.SystemClock
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableLongStateOf
+import vn.abook.player.ui.data.PlayerChapter
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -16,16 +17,18 @@ class FakeNowPlayingModel(initial: NowPlayingState = demoState(), initialText: R
     private var lastFrame = 0L
     val actions = mutableListOf<String>()
     private val positionMs = mutableLongStateOf(12_000)
-    private val realtime = mutableLongStateOf(0L)
+    private val sleepLeft = mutableLongStateOf(0L)
     override val position = object : PlayerPosition {
         override val milliseconds = positionMs
-        override val realtimeMs = realtime
+        override val sleepRemainingMs = sleepLeft
         override fun sample() {
             val now = SystemClock.elapsedRealtime()
-            if (lastFrame != 0L && state.value.playing) milliseconds.longValue =
-                (milliseconds.longValue + ((now - lastFrame) * state.value.rate).toLong()).coerceAtMost(state.value.durationMs)
+            if (lastFrame != 0L && state.value.playing) {
+                val passed = now - lastFrame
+                positionMs.longValue = (positionMs.longValue + (passed * state.value.rate).toLong()).coerceAtMost(state.value.durationMs)
+                if (state.value.sleep.kind == SleepKind.Minutes) sleepLeft.longValue = (sleepLeft.longValue - passed).coerceAtLeast(0)
+            }
             lastFrame = now
-            realtimeMs.longValue = now
         }
     }
     fun update(state: NowPlayingState) { metadata.value = state }
@@ -48,7 +51,8 @@ class FakeNowPlayingModel(initial: NowPlayingState = demoState(), initialText: R
     override fun setRate(rate: Double) { actions += "rate:$rate"; metadata.value = state.value.copy(rate = rate) }
     override fun setSleep(kind: SleepKind, minutes: Int) {
         actions += "sleep:$kind:$minutes"
-        metadata.value = state.value.copy(sleep = PlayerSleep(kind, minutes * 60_000L, realtime.longValue, state.value.playing, minutes))
+        sleepLeft.longValue = minutes * 60_000L
+        metadata.value = state.value.copy(sleep = PlayerSleep(kind, minutes, state.value.playing))
     }
     override fun setMusic(enabled: Boolean) { metadata.value = state.value.copy(musicEnabled = enabled) }
     override fun setVoice(id: String) { metadata.value = state.value.copy(voiceId = id) }
@@ -76,4 +80,10 @@ class FakeNowPlayingModel(initial: NowPlayingState = demoState(), initialText: R
             })
         }
     }
+}
+
+/** Demo text for the measuring intent (`abook.demo.books`): the same eighty paragraphs as the fake model, through the real model's text path. */
+object DemoReadAlongSource : ReadAlongSource {
+    override suspend fun paragraphs(bookId: String, chapter: vn.abook.player.ui.data.PlayerChapter): List<ReadParagraph> = FakeNowPlayingModel.demoText().paragraphs
+    override suspend fun voices(): List<PlayerVoice> = listOf(PlayerVoice("demo:a", "Giọng thử A"), PlayerVoice("demo:b", "Giọng thử B"))
 }

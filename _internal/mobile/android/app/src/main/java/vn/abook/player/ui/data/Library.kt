@@ -1,45 +1,44 @@
 package vn.abook.player.ui.data
 
 import android.content.Context
+import android.content.Intent
 import androidx.compose.runtime.Immutable
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
 import vn.abook.player.AppLog
+import vn.abook.player.BookActions
 import vn.abook.player.Store
-
-/** Một cuốn trong lưới Thư viện - đúng phần màn vẽ (id, tên, tác giả, bìa), bất biến. */
-@Immutable
-data class BookRow(val id: String, val title: String, val author: String, val coverPath: String?, val coverStamp: Long)
+import vn.abook.player.SyncLink
+import java.io.File
 
 @Immutable
 sealed interface LibraryState {
     @Immutable
     data object Loading : LibraryState
 
+    /** `books` đã xếp "Nghe gần đây", chỉ gồm cuốn có chương nghe được (cuốn đang làm dở chưa có chương là việc của Studio). */
     @Immutable
-    class Ready(val books: List<BookRow>) : LibraryState
+    class Ready(val books: List<ListenBook>) : LibraryState
 }
 
 /**
- * Kho dữ liệu Thư viện cho giao diện native: đọc thẳng lõi ([Store]) như `LibraryPlugin.localBooks` - cùng `Store.books()` -, không qua plugin.
- * Chỉ là phần P0 (danh sách + bìa); trạng thái nghe, sách nghe thẳng, tải về... vào ở P1.
+ * Kho dữ liệu Thư viện cho giao diện native: đọc thẳng lõi ([Store]) - cùng nguồn với `LibraryPlugin.localBooks` (sách đã tải) và với gói sách
+ * nghe thẳng đã cất (`stream.json`, cùng dữ liệu `streamableBooks` trả cho WebView) - không qua plugin. Cuốn nghe thẳng mang [RemoteRef]
+ * (dấu "Trên máy tính"). Việc HỎI máy tính / thiết bị ghép xem có sách mới nằm trong `LibraryPlugin.streamableBooks` (thân phương thức plugin) và dời
+ * vào lõi ở bước Thiết bị (P2); tới lúc đó danh sách nghe thẳng là những gì đã cất.
  */
-class LibraryRepo(private val context: Context) {
+class LibraryRepo(private val context: Context) : BookSource {
     private val flow = MutableStateFlow<LibraryState>(LibraryState.Loading)
     val state: StateFlow<LibraryState> get() = flow
 
-    /** Đọc lại danh sách sách trên máy (luồng nền). Lỗi đọc = danh sách rỗng, đã ghi nhật ký - không treo màn chờ. */
+    /** Đọc lại danh sách (luồng nền). Lỗi đọc = danh sách rỗng, đã ghi nhật ký - không treo màn chờ. */
     suspend fun refresh() = withContext(Dispatchers.IO) {
         flow.value = LibraryState.Ready(
             try {
-                Store.init(context)
-                Store.books().map { manifest ->
-                    val id = manifest.getString("id")
-                    val cover = Store.coverFile(id)?.takeIf { it.isFile }
-                    BookRow(id, manifest.optString("title"), manifest.optString("creator"), cover?.path, cover?.lastModified() ?: 0L)
-                }
+                readAll(context)
             } catch (error: Exception) {
                 AppLog.w("Library", "Không đọc được thư viện: ${error.javaClass.simpleName}")
                 emptyList()
@@ -47,10 +46,105 @@ class LibraryRepo(private val context: Context) {
         )
     }
 
+    // ---- trang sách (BookSource): đọc / ghi qua lõi, ghi xong thì đọc lại Thư viện ----------------------------------------
+
+    override suspend fun detail(id: String): BookDetail? = withContext(Dispatchers.IO) {
+        try {
+            Store.init(context)
+            val downloaded = Store.rawManifest(id) != null
+            val manifest = (if (downloaded) Store.manifest(id) else Store.streamManifest(id)?.let { Store.streamed(id, it) }) ?: return@withContext null
+            val remote = if (downloaded) null else RemoteRef(SyncLink.holderName(context, id))
+            BookDetail.of(manifest, Store.state(id), { coverOf(it) }, remote, BookActions.canShare(id))
+        } catch (error: Exception) {
+            AppLog.w("Library", "Không đọc được trang sách: ${error.javaClass.simpleName}")
+            null
+        }
+    }
+
+    override suspend fun passages(id: String, chapter: ChapterLine): List<Passage>? = withContext(Dispatchers.IO) {
+        val path = if (chapter.textOnly) chapter.textPath else "scripts/${chapter.id}.json"
+        if (path.isEmpty()) return@withContext null
+        val raw = runCatching { BookActions.text(context, id, path) }.getOrNull() ?: return@withContext null
+        if (chapter.textOnly) BookSearch.textPassages(raw) else BookSearch.scriptPassages(raw)
+    }
+
+    override suspend fun setFinished(id: String, finished: Boolean) = write { BookActions.setFinished(context, id, finished) }
+
+    override suspend fun setChapterDone(id: String, chapterId: Int, done: Boolean) = write { BookActions.setChapterDone(context, id, chapterId, done) }
+
+    override suspend fun rename(id: String, title: String): String? = edit { BookActions.rename(context, id, title) }
+
+    override suspend fun setAuthor(id: String, author: String): String? = edit { BookActions.setAuthor(context, id, author) }
+
+    override suspend fun delete(id: String): String? = edit {
+        BookActions.delete(context, id) { Dispatchers.IO.asExecutor().execute(it) }
+        null
+    }
+
+    override suspend fun share(id: String): Intent? = withContext(Dispatchers.IO) {
+        try {
+            BookActions.share(context, id, project = false).chooser
+        } catch (error: Exception) {
+            AppLog.w("Library", "Không đóng được file sách để chia sẻ: ${error.javaClass.simpleName}")
+            null
+        }
+    }
+
+    private suspend fun write(block: () -> Unit) {
+        withContext(Dispatchers.IO) {
+            try {
+                block()
+            } catch (error: Exception) {
+                AppLog.w("Library", "Không ghi được trạng thái nghe: ${error.javaClass.simpleName}")
+            }
+        }
+        refresh()
+    }
+
+    /** Một lần sửa: câu lỗi của lõi (hay của ngoại lệ) cho người nghe; lưu xong thì đọc lại Thư viện. */
+    private suspend fun edit(block: () -> String?): String? {
+        val problem = withContext(Dispatchers.IO) {
+            try {
+                block()
+            } catch (error: Exception) {
+                AppLog.w("Library", "Không sửa được sách: ${error.javaClass.simpleName}")
+                error.message?.takeIf { it.isNotBlank() } ?: "Chưa làm được, bạn thử lại"
+            }
+        }
+        if (problem == null) refresh()
+        return problem
+    }
+
     /** Sách giả cho đo đạc (chỉ bản -PnativeUi, `abook.demo.books`): không chạm kho thật. */
     fun showDemo(count: Int) {
-        flow.value = LibraryState.Ready(List(count) { index ->
-            BookRow("demo-$index", "Cuốn thử số ${index + 1}", "Tác giả ${index % 17 + 1}", null, 0L)
-        })
+        flow.value = LibraryState.Ready(DemoLibrary.books(count))
+    }
+
+    companion object {
+        fun readAll(context: Context): List<ListenBook> {
+            Store.init(context)
+            val holderNames = HashMap<String, String>()
+            val books = ArrayList<ListenBook>()
+            for (id in Store.bookIds()) {
+                try {
+                    val downloaded = Store.rawManifest(id) != null
+                    val manifest = (if (downloaded) Store.manifest(id) else Store.streamManifest(id)?.let { Store.streamed(id, it) }) ?: continue
+                    val remote = if (downloaded) null else {
+                        val source = manifest.optString("source")
+                        RemoteRef(holderNames.getOrPut(source) { SyncLink.holderName(context, id) })
+                    }
+                    val added = if (downloaded) File(Store.bookDir(id), "book.json").lastModified() / 1000.0 else null
+                    val book = BookJson.book(manifest, Store.state(id), ::coverOf, remote, added)
+                    if (book.chaptersAvailable > 0 || book.textOnly) books += book
+                } catch (error: Exception) {
+                    AppLog.w("Library", "Bỏ qua một cuốn không đọc được: ${error.javaClass.simpleName}")
+                }
+            }
+            return Library.recentFirst(books)
+        }
+
+        /** Bìa người nghe thấy (bìa họ đặt, hay của sách); mất file thì không có bìa. */
+        fun coverOf(id: String): CoverRef? =
+            Store.coverFile(id)?.takeIf { it.isFile }?.let { CoverRef(it.path, it.lastModified()) }
     }
 }

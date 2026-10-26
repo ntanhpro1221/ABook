@@ -46,6 +46,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import vn.abook.player.ui.components.pressable
 import vn.abook.player.ui.data.CoverLoader
+import vn.abook.player.ui.data.CoverRef
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.MotionMs
 
@@ -133,7 +134,7 @@ fun RollingLabel(text: String, modifier: Modifier = Modifier, style: TextStyle =
 /** Two four-point contours interpolate triangle -> pause bars. Path objects are reused in draw. */
 @Composable
 fun PlayMorph(
-    playing: Boolean, onClick: () -> Unit, windowProgress: State<Float>,
+    playing: Boolean, onClick: () -> Unit,
     modifier: Modifier = Modifier, large: Boolean = true,
 ) {
     val colors = Abook.colors
@@ -147,7 +148,7 @@ fun PlayMorph(
         onClick()
     }
         .semantics { contentDescription = if (playing) "Tạm dừng" else "Phát" }
-        .drawBehind { drawCircle(lerp(colors.panel, colors.accent, windowProgress.value)) }, contentAlignment = Alignment.Center) {
+        .drawBehind { drawCircle(colors.accent) }, contentAlignment = Alignment.Center) {
         Canvas(Modifier.size(if (large) 32.dp else 24.dp)) {
             val p = morph.value
             val w = size.width; val h = size.height
@@ -162,7 +163,7 @@ fun PlayMorph(
             right.lineTo(w * mix(0.88f, 0.78f), h * mix(0.5f, 0.16f))
             right.lineTo(w * mix(0.88f, 0.78f), h * mix(0.5f, 0.84f))
             right.lineTo(w * mix(0.5f, 0.57f), h * mix(0.72f, 0.84f)); right.close()
-            val ink = lerp(colors.text, colors.accentInk, windowProgress.value)
+            val ink = colors.accentInk
             drawPath(left, ink); drawPath(right, ink)
         }
     }

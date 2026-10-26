@@ -4,10 +4,14 @@ import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.*
 import org.junit.Test
+import vn.abook.player.ui.data.CoverRef
+import vn.abook.player.ui.data.PlayerChapter
+import vn.abook.player.ui.data.PlayerState
 
 class NowPlayingLogicTest {
     private val chapter = PlayerChapter(7, "Chương bảy", 65_000)
-    private fun mapped(raw: String) = mapPlaybackState(JSONObject(raw), listOf(chapter), CoverRef("/cover.jpg", 9), 1000)
+    private fun mapped(raw: String) =
+        nowPlayingState(PlayerState.from(JSONObject(raw), CoverRef("/cover.jpg", 9), listOf(chapter), true, "voice:a"), emptyList(), false, 0)
 
     @Test fun metadataMapsNativePlaybackContract() {
         val state = mapped("""{"bookId":"b","bookTitle":"Sách","chapterId":7,"chapterTitle":"Chương bảy","playing":true,"duration":65.5,"rate":1.25,"sleep":{"mode":"minutes","remaining":891,"minutes":15,"counting":true}}""")
@@ -15,7 +19,12 @@ class NowPlayingLogicTest {
         assertEquals(7, state.chapterId); assertEquals(65_500L, state.durationMs)
         assertEquals(1.25, state.rate, 0.0); assertTrue(state.playing)
         assertEquals(listOf(chapter), state.chapters); assertEquals(CoverRef("/cover.jpg", 9), state.cover)
-        assertTrue(state.readAlongAvailable); assertEquals(851_000, state.sleep.leftMs(41_000))
+        assertTrue(state.readAlongAvailable); assertTrue(state.musicEnabled); assertEquals("voice:a", state.voiceId)
+        assertEquals(PlayerSleep(SleepKind.Minutes, 15, true), state.sleep)
+    }
+    @Test fun decimalRateSurvivesTheMappingSoTheSheetMarksTheChosenCell() {
+        assertEquals(1.1, mapped("""{"bookId":"b","chapterId":7,"rate":1.1}""").rate, 0.0)
+        assertTrue(PlayerLabels.rates.contains(mapped("""{"bookId":"b","chapterId":7,"rate":0.9}""").rate))
     }
     @Test fun absentChapterDoesNotOfferReadAlong() {
         val state = mapped("""{"chapterId":null}""")
@@ -31,6 +40,11 @@ class NowPlayingLogicTest {
         assertEquals("Mất mạng", mapped("""{"error":"Mất mạng","saveError":"Hết chỗ"}""").error)
         assertEquals("Hết chỗ", mapped("""{"saveError":"Hết chỗ"}""").error)
     }
+    @Test fun returnChipFollowsTheRepoBookNotAStaleOne() {
+        val player = PlayerState(bookId = "b", chapterId = 7)
+        assertTrue(nowPlayingState(player, emptyList(), true, 3).returnAvailable)
+        assertEquals(3, nowPlayingState(player, emptyList(), true, 3).returnSerial)
+    }
     @Test fun vietnameseRatesMatchWebLabels() {
         assertEquals("1×", PlayerLabels.rate(1.0))
         assertEquals("1,25×", PlayerLabels.rate(1.25))
@@ -42,25 +56,24 @@ class NowPlayingLogicTest {
         assertEquals("1:05", PlayerLabels.time(65_999))
         assertEquals("61:01", PlayerLabels.time(3_661_000))
     }
-    // Matching listen/sleep.test.ts button cases; same monotonic anchor instead of Date.now.
+    // Matching listen/sleep.test.ts button cases; the time left now comes straight from the one clock.
     @Test fun sleepButtonHasUnitsAndRoundsUp() {
-        val sleep = PlayerSleep(SleepKind.Minutes, 891_000, 1_000_000, true, 15)
-        assertEquals("15 phút", PlayerLabels.sleep(sleep, 1_000_000))
-        assertEquals("15 phút", PlayerLabels.sleep(sleep, 1_040_000))
-        assertEquals("13 phút", PlayerLabels.sleep(sleep, 1_120_000))
-        assertEquals("41 giây", PlayerLabels.sleep(sleep, 1_850_000))
-        assertEquals("0:41", PlayerLabels.sleep(sleep, 1_850_000, clock = true))
+        val sleep = PlayerSleep(SleepKind.Minutes, 15, true)
+        assertEquals("15 phút", PlayerLabels.sleep(sleep, 891_000))
+        assertEquals("15 phút", PlayerLabels.sleep(sleep, 851_000))
+        assertEquals("13 phút", PlayerLabels.sleep(sleep, 771_000))
+        assertEquals("41 giây", PlayerLabels.sleep(sleep, 41_000))
+        assertEquals("0:41", PlayerLabels.sleep(sleep, 41_000, clock = true))
         assertEquals("Hết chương", PlayerLabels.sleep(PlayerSleep(SleepKind.Chapter), 0))
         assertEquals("Hẹn giờ", PlayerLabels.sleep(PlayerSleep(), 0))
     }
-    @Test fun pausedSleepDoesNotCountAndNeverGoesNegative() {
-        assertEquals("10:00", PlayerLabels.sleep(PlayerSleep(SleepKind.Minutes, 600_000, 1000, false), 1_000_000, true))
-        assertEquals(0L, PlayerSleep(SleepKind.Minutes, 100, 0, true).leftMs(1000))
-        assertEquals(100L, PlayerSleep(SleepKind.Minutes, 100, 1000, true).leftMs(0))
+    @Test fun pausedSleepShowsWhatIsLeftAndNeverGoesNegative() {
+        assertEquals("10:00", PlayerLabels.sleep(PlayerSleep(SleepKind.Minutes, 10, false), 600_000, true))
+        assertEquals("0:00", PlayerLabels.sleep(PlayerSleep(SleepKind.Minutes, 10, true), -50, true))
     }
     @Test fun sleepSubsecondUsesCeiling() {
-        assertEquals("0:01", PlayerLabels.sleep(PlayerSleep(SleepKind.Minutes, 1), 0, true))
-        assertEquals("1 giây", PlayerLabels.sleep(PlayerSleep(SleepKind.Minutes, 0), 0))
+        assertEquals("0:01", PlayerLabels.sleep(PlayerSleep(SleepKind.Minutes), 1, true))
+        assertEquals("1 giây", PlayerLabels.sleep(PlayerSleep(SleepKind.Minutes), 0))
     }
 
     private val sentenceText = "Trời vừa hửng sáng, sương mù."
