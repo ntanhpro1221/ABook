@@ -16,7 +16,7 @@ export function OnlineVoicePrompt() {
   const request = useSyncExternalStore(subscribeConsent, pendingConsent);
   const [choosing, setChoosing] = useState(false);
   const { setExpanded } = useNowPlaying();
-  // Nghe thử từng giọng trước khi chọn - cùng câu mẫu và cùng đường với nút "Thử giọng" của Cài đặt (soát a64).
+  // Nghe thử từng giọng trước khi chọn - cùng câu mẫu và cùng đường với nút "Nghe thử" của Cài đặt (soát a64).
   const source = useSource();
   const sample = useVoiceSample((voice, text) => (source.readAloudSample ? source.readAloudSample(voice, text) : Promise.reject(new Error("Chưa nghe thử được giọng này."))));
   useEffect(() => setChoosing(false), [request]);

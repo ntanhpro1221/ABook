@@ -255,7 +255,7 @@ export function importSummary(result: Pick<ImportResult, "added" | "existing" | 
   if (added.length) parts.push(`${added.length} bài mới`);
   if (existing.length) parts.push(`${existing.length} bài đã có từ trước`);
   if (!added.length && !existing.length) {
-    return { kind: "error", title: failed.length > 1 ? "Không thêm được file nào" : "Không thêm được file này", description: failed.join("\n") };
+    return { kind: "error", title: "Chưa thêm được nhạc", description: failed.join("\n") };
   }
   const title = `Đã thêm: ${parts.join(", ")}`;
   const unanalysed = added.filter((track) => !track.analysed).length;

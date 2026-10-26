@@ -70,6 +70,7 @@ import vn.abook.player.ui.voice.MeteredSheet
 import vn.abook.player.ui.voice.ModuleAction
 import vn.abook.player.ui.voice.ModuleChoiceRow
 import vn.abook.player.ui.voice.ModuleKind
+import vn.abook.player.ui.voice.ModuleState
 import vn.abook.player.ui.voice.ModuleSheet
 import vn.abook.player.ui.voice.ModuleSuggestion
 import vn.abook.player.ui.voice.ModuleUi
@@ -206,7 +207,12 @@ fun VoiceSettings(env: SettingsEnv, sheets: SheetHost, openVoice: (VoicePage) ->
  */
 private fun LazyListScope.moduleItems(kind: ModuleKind, ui: ModuleUi, voice: VoiceState, sheets: SheetHost) {
     val status = ui.shown ?: return
-    item(key = "module_title:${kind.key}", contentType = "title") { SectionTitle(kind.title) }
+    item(key = "module_title:${kind.key}", contentType = "title") {
+        Column(Modifier.fillMaxWidth()) {
+            SectionTitle(kind.title)
+            Reveal(status.state == ModuleState.Missing) { Caption(kind.invite) }
+        }
+    }
     val rows = VoiceText.rows(status, ui.pending)
     items(rows, key = { "module:${kind.key}:${it.id}" }, contentType = { "module" }) { row ->
         val choice = status.choice(row.id)

@@ -44,7 +44,7 @@ class ClipReader(
             return when {
                 local(failed) -> "Giọng ${if (provider(failed) == "supertonic") "Supertonic" else "VieNeu"} chưa đọc được lúc này - tạm đọc bằng $instead."
                 keyed == null -> "Không dùng được giọng trực tuyến - tạm đọc bằng $instead."
-                problem.reason == "auth" -> "Khoá $keyed lỗi; tạm dùng $instead — bạn kiểm tra khoá trong Cài đặt."
+                problem.reason == "auth" -> "Khoá $keyed không dùng được - tạm đọc bằng $instead. Kiểm tra lại khoá trong Cài đặt."
                 problem.reason == "quota" -> "Khoá $keyed đã hết hạn mức - tạm đọc bằng $instead."
                 else -> "Không dùng được giọng $keyed lúc này - tạm đọc bằng $instead."
             }
@@ -129,7 +129,7 @@ class ClipReader(
                 problem = error
             }
         }
-        throw offlineHelp(first ?: problem) ?: first ?: problem ?: VoiceException("Không có giọng nào đọc được - kiểm tra mạng hoặc cài giọng tiếng Việt cho máy")
+        throw offlineHelp(first ?: problem) ?: first ?: problem ?: VoiceException("Không có giọng nào đọc được - kiểm tra mạng hoặc cài giọng tiếng Việt cho máy.")
     }
 
     /** Đúng giọng này, không rơi sang giọng khác ("Thử giọng" trong Cài đặt: người nghe muốn nghe chính giọng ấy, hỏng thì phải thấy lỗi). Bản xuất đưa

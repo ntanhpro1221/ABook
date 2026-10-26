@@ -46,7 +46,7 @@ import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.AbookTheme
 
 /**
- * Nhạc nền ở hai chỗ của giao diện native: tấm "Nhạc nền" của trình phát (từ "Tuỳ chọn", Back về lại Tuỳ chọn) và trang "Nhạc nền" trong bảng "Thêm" của trang sách.
+ * Nhạc nền ở hai chỗ của giao diện native: tấm "Nhạc nền" của trình phát (từ "Thêm tuỳ chọn", Back về lại tấm ấy) và trang "Nhạc nền" trong bảng "Thêm" của trang sách.
  * Ảnh sáng + tối của từng chỗ.
  */
 @RunWith(RobolectricTestRunner::class)

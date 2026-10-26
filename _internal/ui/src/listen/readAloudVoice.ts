@@ -187,7 +187,7 @@ export function chooseDefaultVoice(voice: string): void {
   if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(DEFAULT_VOICE_EVENT));
 }
 
-/** Câu đọc thử ("Thử giọng" trong Cài đặt): ngắn, có dấu câu để nghe cả chỗ ngắt. */
+/** Câu đọc thử ("Nghe thử" trong Cài đặt): ngắn, có dấu câu để nghe cả chỗ ngắt. */
 export const SAMPLE_TEXT = "Xin chào, tôi sẽ đọc sách cho bạn nghe. Bạn thấy giọng này thế nào?";
 
 /** Giọng VieNeu kể chuyện TRUNG TÍNH của từng bản (mô-đun tải riêng), theo thứ tự ưu tiên - giọng cho người nghe chưa chọn gì. Không bao giờ lấy
@@ -404,6 +404,6 @@ export function speechFetcher(source: ListenSource, bookId: string, notify: (mes
         failed = { voice: candidate, reason: why };
       }
     }
-    throw new Error("Không có giọng nào đọc được đoạn này.");
+    throw new Error("Không có giọng nào đọc được - kiểm tra mạng hoặc cài giọng tiếng Việt cho máy."); // cùng lời ClipReader.kt
   };
 }

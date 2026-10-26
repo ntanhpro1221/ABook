@@ -33,12 +33,13 @@ fun StudioScreen(
         Reveal(pair?.studio?.isNotEmpty() == true) {
             Column {
                 for (computer in pair?.studio?.values.orEmpty()) {
-                    DisclosureRow(computer.name, { scope.launch { problem = devices?.openStudio(computer.key).orEmpty() } }, "studio_${computer.key}", summary = "Studio trên máy tính")
+                    DisclosureRow(computer.name, { scope.launch { problem = devices?.openStudio(computer.key).orEmpty() } }, "studio_${computer.key}", summary = "Tạo sách nói từ xa")
                 }
             }
         }
         Reveal(pair?.studio.isNullOrEmpty()) {
             Column {
+                BasicText("Studio trên máy tính", style = Abook.type.sectionTitle)
                 BasicText("Nối máy tính để làm sách nói và xem tiến độ.", style = Abook.type.bodySmall)
                 TextAction("Nối máy tính", connect, "studio_connect")
             }

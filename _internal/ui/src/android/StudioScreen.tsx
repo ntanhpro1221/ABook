@@ -22,7 +22,7 @@ export function StudioScreen() {
         {failed ? <LoadError what="Studio" error={query.error} onRetry={() => void query.refetch()} className="mt-8" /> : !computers.length ? <EmptyState
           icon={Clapperboard} title="Studio trên máy tính" className="mt-12"
           action={<Button variant="primary" onClick={() => navigate("/settings/devices")}>Nối máy tính</Button>}>
-          Nối máy tính của bạn để tạo sách nói.
+          Nối máy tính để làm sách nói và xem tiến độ.
         </EmptyState> : <>
           <ul className="mt-8 divide-y divide-line">{rows.map(({ key, item, state, ref }) => <li key={key} ref={ref} className="motion-row" data-state={state} inert={state === "exit"}>
             <div className="flex items-center gap-3 py-4">

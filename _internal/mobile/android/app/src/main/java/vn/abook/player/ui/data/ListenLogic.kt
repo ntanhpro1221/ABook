@@ -255,7 +255,7 @@ object ListenLogic {
         if (heard <= 0) return Fmt.length(book.duration)
         val left = maxOf(0.0, book.duration - heard)
         // Ở tốc độ của cuốn, làm tròn lên - như số giờ còn lại ở thanh phát.
-        return "Còn " + Fmt.lengthUp(left / (book.state.rate ?: 1.0))
+        return "Còn ${Fmt.lengthUp(left / (book.state.rate ?: 1.0))}"
     }
 
     /** Tên máy giữ cuốn nghe thẳng, viết như "Trên máy tính". */

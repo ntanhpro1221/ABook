@@ -272,7 +272,7 @@ export function VieneuModuleCard({
                 </span>
                 {choice.removable && backend.remove && canPick && (
                   <Button size="sm" variant="ghost" className="settings-edge-action -my-1 shrink-0" loading={busy} onClick={(event) => { event.preventDefault(); if (choice.installed) ask(choice.id, choice.label); else void remove(choice.id); }}>
-                    {choice.installed ? "Gỡ" : "Xoá phần đã tải"}
+                    {choice.installed ? "Gỡ giọng" : "Xoá phần đã tải"}
                   </Button>
                 )}
               </label>

@@ -77,7 +77,7 @@ describe("máy tính chỉ cho điện thoại nghe", () => {
   it("máy chỉ cho nghe không nằm trong lựa chọn; còn mỗi máy ấy thì nói vì sao", () => {
     expect(studioChoice([listenOnlyHome, office])).toEqual({ open: office });
     expect(studioChoice([listenOnlyHome])).toEqual({
-      none: "Máy tính NGDtuanh-Lecoo chỉ cho nghe - trên máy tính ấy, bật Cài đặt › Thiết bị › “Điều khiển từ xa”",
+      none: "Máy tính NGDtuanh-Lecoo chỉ cho nghe - trên máy tính ấy, bật Cài đặt › Thiết bị › “Điều khiển từ xa”.",
     });
   });
 
@@ -114,7 +114,7 @@ describe("máy tính chỉ cho điện thoại nghe", () => {
   it("nhiều máy cùng chỉ cho nghe: lý do nêu tên cả hai, hơn hai máy thì nói chung", () => {
     const second = { ...office, listenOnly: true };
     expect(studioChoice([listenOnlyHome, second])).toEqual({
-      none: "Máy tính NGDtuanh-Lecoo và Máy văn phòng đều chỉ cho nghe - trên từng máy, bật Cài đặt › Thiết bị › “Điều khiển từ xa”",
+      none: "Máy tính NGDtuanh-Lecoo và Máy văn phòng đều chỉ cho nghe - trên từng máy, bật Cài đặt › Thiết bị › “Điều khiển từ xa”.",
     });
     const third = { key: "c3", name: "Máy ba", listenOnly: true };
     const html = renderToString(<OpenStudioButton computers={[listenOnlyHome, second, third]} />);

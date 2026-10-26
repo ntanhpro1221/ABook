@@ -241,8 +241,8 @@ data class Stored(val id: String, val title: String, val bytes: Long, val partia
 
 @Immutable
 data class Storage(val bytes: Long = 0, val free: Long = 0, val entries: List<Stored> = emptyList()) {
-    /** Một dòng cho phần đầu danh sách: "1,2 GB · còn trống 20 GB". */
-    val line: String get() = "${Fmt.size(bytes)} · còn trống ${Fmt.size(free)}"
+    /** Một dòng cho phần đầu danh sách: "Sách 1,2 GB · còn trống 20 GB" (cùng lời web). */
+    val line: String get() = "Sách ${Fmt.size(bytes)} · còn trống ${Fmt.size(free)}"
 }
 
 // ---- bỏ ghép ----------------------------------------------------------------------------------------------------------

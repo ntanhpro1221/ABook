@@ -310,7 +310,7 @@ class ClipReaderTest {
         assertEquals("device:vi", clip.voice)
         assertEquals(listOf(1, 1, 1), listOf(keyed.calls, edge.calls, device.calls))
         assertEquals(listOf(
-            "Khoá FPT.AI lỗi; tạm dùng giọng Edge — bạn kiểm tra khoá trong Cài đặt.",
+            "Khoá FPT.AI không dùng được - tạm đọc bằng giọng Edge. Kiểm tra lại khoá trong Cài đặt.",
             "Không dùng được giọng trực tuyến - tạm đọc bằng giọng của máy.",
         ), notices)
     }

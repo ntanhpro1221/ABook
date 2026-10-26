@@ -192,7 +192,9 @@ private fun LazyListScope.bluetoothRows(ui: PairUi, devices: DevicesState) {
         }
         is Bluetooth.Devices -> {
             val list = ui.bluetoothChoices
-            if (list.isNotEmpty()) foundRows(list, ui, devices) else item("none", "status") { NoneRow("Chưa thấy máy nào", devices::findBluetooth) }
+            if (list.isNotEmpty()) foundRows(list, ui, devices) else item("none", "status") {
+                NoneRow("Chưa có máy nào ghép Bluetooth. Ghép ở Cài đặt Android › Bluetooth rồi thử lại.", devices::findBluetooth)
+            }
         }
     }
 }

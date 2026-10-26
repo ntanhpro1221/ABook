@@ -234,7 +234,7 @@ function DownloadMenuItem({ book }: { book: ListenBook }) {
     <DropdownMenu.Item
       onSelect={() => {
         toast("Đang tải về máy", { duration: 3000 });
-        void EbookLibrary.download({ bookId: book.id }).catch((error: Error) => toast.error("Không tải được", { description: error.message }));
+        void EbookLibrary.download({ bookId: book.id }).catch((error: Error) => toast.error("Chưa tải được", { description: error.message }));
       }}
       className="flex h-9 cursor-default items-center gap-2 rounded-control px-2 text-sm outline-none data-[highlighted]:bg-hover"
     >

@@ -516,8 +516,8 @@ export function LibraryScreen({
         <LoadError what="thư viện" error={libraryQuery.error} onRetry={() => void libraryQuery.refetch()} className="mt-12" />
       ) : !libraryRows.length ? (
         upcoming.length ? null : empty ?? (
-          <EmptyState icon={Headphones} title="Chưa có sách nào" className="mt-12">
-            Sách nghe được sẽ hiện ở đây.
+          <EmptyState icon={Headphones} title="Chưa có sách trên máy" className="mt-12">
+            Thêm sách của bạn để bắt đầu nghe.
           </EmptyState>
         )
       ) : (

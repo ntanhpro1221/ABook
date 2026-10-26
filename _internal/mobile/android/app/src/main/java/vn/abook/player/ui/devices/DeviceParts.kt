@@ -2,6 +2,8 @@ package vn.abook.player.ui.devices
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -16,6 +18,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.flow.StateFlow
 import vn.abook.player.ui.components.BluetoothIcon
+import vn.abook.player.ui.components.Caption
 import vn.abook.player.ui.components.CheckIcon
 import vn.abook.player.ui.components.DevicesIcon
 import vn.abook.player.ui.components.LaptopIcon
@@ -26,6 +29,7 @@ import vn.abook.player.ui.components.TextAction
 import vn.abook.player.ui.data.Fmt
 import vn.abook.player.ui.motion.Motion
 import vn.abook.player.ui.theme.Abook
+import vn.abook.player.ui.theme.Dim
 
 /*
  * Các loại hàng của ba màn Thiết bị. Mọi hàng là một [ListItem]: biểu tượng đầu hàng và phần cuối hàng cùng thẳng dòng đầu của tên (luật của cả danh sách).
@@ -82,7 +86,7 @@ fun RemoteBookRow(
         hintColor = if (failure != null) colors.danger else colors.text2,
         trailing = {
             when {
-                downloading -> TextAction("Huỷ", onCancel, "cancel_${book.id}")
+                downloading -> TextAction("Huỷ tải", onCancel, "cancel_${book.id}")
                 failure != null -> TextAction("Thử lại", onDownload, "download_${book.id}")
                 book.upToDate -> BasicText("Đã tải", style = Abook.type.caption.copy(color = colors.success))
                 else -> TextAction(book.action, onDownload, "download_${book.id}")
@@ -117,15 +121,18 @@ fun SharerRow(sharer: Sharer, onOpen: () -> Unit) {
     )
 }
 
-/** Mã ghép đang hiện cho máy kia nhập: mã lớn, hạn dùng, "Huỷ mã" ở cuối dòng đầu. */
+/** Mã ghép đang hiện cho máy kia nhập: lời dặn, mã lớn, hạn dùng, "Huỷ mã" ở cuối dòng mã. */
 @Composable
 fun CodeRow(code: Code, onCancel: () -> Unit) {
-    ListItem(
-        code.digits.chunked(3).joinToString(" "), Modifier, null, "share_code",
-        hint = "Dùng được đến ${DeviceText.clock(code.expiresAt)}",
-        titleStyle = Abook.type.sectionTitle.copy(lineHeight = 24.sp, letterSpacing = 2.sp),
-        trailing = { TextAction("Huỷ mã", onCancel, "share_cancel_code") },
-    )
+    Column {
+        Caption("Nhập mã này trên máy kia", Modifier.padding(top = Dim.s8))
+        ListItem(
+            code.digits.chunked(3).joinToString(" "), Modifier, null, "share_code",
+            hint = "Dùng được đến ${DeviceText.clock(code.expiresAt)}",
+            titleStyle = Abook.type.sectionTitle.copy(lineHeight = 24.sp, letterSpacing = 2.sp),
+            trailing = { TextAction("Huỷ mã", onCancel, "share_cancel_code") },
+        )
+    }
 }
 
 /** Một thứ đang chiếm chỗ: cỡ ở cuối dòng đầu; chạm cả hàng mở bảng có "Xoá khỏi máy" (có bước xác nhận). Đang tải thì không xoá được. */
