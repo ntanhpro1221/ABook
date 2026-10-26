@@ -42,3 +42,24 @@ ChoiceChip 1.0 ../../../../qml/ChoiceChip.qml
 Switch 1.0 ../../../../qml/Switch.qml
 MenuRow 1.0 ../../../../qml/MenuRow.qml
 ReadAlongView 1.0 ../../../../qml/ReadAlongView.qml
+FormLabel 1.0 ../../../../qml/FormLabel.qml
+FormField 1.0 ../../../../qml/FormField.qml
+SettingRow 1.0 ../../../../qml/SettingRow.qml
+SettingChoices 1.0 ../../../../qml/SettingChoices.qml
+SectionBlock 1.0 ../../../../qml/SectionBlock.qml
+Modal 1.0 ../../../../qml/Modal.qml
+SettingsBody 1.0 ../../../../qml/SettingsBody.qml
+SettingsVoice 1.0 ../../../../qml/SettingsVoice.qml
+VoiceModule 1.0 ../../../../qml/VoiceModule.qml
+ProviderKey 1.0 ../../../../qml/ProviderKey.qml
+SettingsDevices 1.0 ../../../../qml/SettingsDevices.qml
+SettingsStudio 1.0 ../../../../qml/SettingsStudio.qml
+MyMusicSettings 1.0 ../../../../qml/MyMusicSettings.qml
+NativeFolders 1.0 ../../../../qml/NativeFolders.qml
+ThirdPartyText 1.0 ../../../../qml/ThirdPartyText.qml
+AddBook 1.0 ../../../../qml/AddBook.qml
+EditBook 1.0 ../../../../qml/EditBook.qml
+CoverSearch 1.0 ../../../../qml/CoverSearch.qml
+BookMusicSettings 1.0 ../../../../qml/BookMusicSettings.qml
+singleton Api 1.0 ../../../../qml/Api.qml
+singleton DesktopApi 1.0 DesktopApi.qml

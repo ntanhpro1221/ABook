@@ -22,11 +22,16 @@ Window {
         nowLoader.alive = true                               // dựng ngay (đồng bộ) rồi mở
         if (nowPlaying) nowPlaying.show()
     }
+    function openBookId(id) {
+        Api.call("GET", "/api/listen/books/" + id, null, function(data, error) {
+            if (!error) { stack.show(0); stack.push(bookPage, {book: Object.assign({}, data, {bookId: data.id, coverKey: data.cover ? data.id + "/" + (data.cover.version || 0) : ""})}) }
+        })
+    }
 
-    Component { id: libraryScreen; LibraryScreen { onOpenBook: (book) => stack.push(bookPage, { book: book }) } }
+    Component { id: libraryScreen; LibraryScreen { onOpenBook: (book) => stack.push(bookPage, { book: book }); onAddRequested: paths => addBook.begin(paths) } }
     Component { id: studioScreen; StudioScreen {} }
     Component { id: settingsScreen; SettingsScreen {} }
-    Component { id: bookPage; BookPage {} }
+    Component { id: bookPage; BookPage { onEditRequested: data => editBook.begin(data) } }
 
     Item {
         id: shell
@@ -141,6 +146,25 @@ Window {
     ConnectionPopover {
         id: popover
         anchorItem: sidebar.chip
+    }
+    AddBook { id: addBook; onOpenBook: id => win.openBookId(id) }
+    EditBook { id: editBook }
+    Connections {
+        target: Backend
+        function onStateChanged() { if (Backend.state === Backend.Ready) { Api.bind(DesktopApi, Theme); Api.load() } }
+    }
+    Connections { target: Api; function onPreferencesChanged() { Player.configure(Api.preferences) } }
+    Rectangle {
+        z: 90
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 32
+        width: Math.min(parent.width - 80, apiNotice.implicitWidth + 32)
+        height: apiNotice.height + 24
+        visible: Api.notice !== ""
+        color: Theme.panel; radius: Theme.radiusControl; border.color: Theme.line
+        FormLabel { id: apiNotice; x: 16; y: 12; width: parent.width - 32; text: Api.notice }
+        Timer { running: Api.notice !== ""; interval: 6000; onTriggered: Api.notice = "" }
     }
     Connections {
         target: sidebar.chip

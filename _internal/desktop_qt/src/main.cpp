@@ -1,4 +1,5 @@
 #include "backend.h"
+#include "desktopapi.h"
 #include "bench.h"
 #include "audioout_mf.h"
 #include "coverprovider.h"
@@ -31,6 +32,8 @@ int main(int argc, char *argv[]) {
     Platform platform(nullptr);
     // Bộ phát: Media Foundation (mở lười, tới lệnh phát đầu tiên) + đường HTTP tới host. Phải tắt TRƯỚC host để lưu nốt chỗ nghe.
     MfAudioOut audio(nullptr);
+    MfAudioOut sampleAudio(nullptr);
+    DesktopApi::setPreviewOut(&sampleAudio);
     HostNet hostNet(backend.network(), nullptr);
     const QString outbox = QDir(qEnvironmentVariable("LOCALAPPDATA")).filePath(QStringLiteral("ABook/pending-progress.json"));
     QDir().mkpath(QFileInfo(outbox).absolutePath());
