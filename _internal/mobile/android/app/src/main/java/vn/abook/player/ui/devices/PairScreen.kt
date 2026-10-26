@@ -34,6 +34,9 @@ import vn.abook.player.ui.components.InlineProblem
 import vn.abook.player.ui.components.ListItem
 import vn.abook.player.ui.components.PrimaryButton
 import vn.abook.player.ui.components.RefreshIcon
+import vn.abook.player.ui.components.IconAction
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import vn.abook.player.ui.components.Reveal
 import vn.abook.player.ui.components.RowLine
 import vn.abook.player.ui.components.SectionTitle
@@ -84,7 +87,7 @@ fun PairScreen(devices: DevicesState, sheets: SheetHost, onBack: () -> Unit) {
 private fun RefreshButton(refreshing: Boolean, onClick: () -> Unit) {
     val colors = Abook.colors
     Box(
-        Modifier.size(Dim.s48).pressable(Role.Button, onClick = { if (!refreshing) onClick() }).testTag("pair_refresh"),
+        Modifier.size(Dim.s48).pressable(Role.Button, onClick = { if (!refreshing) onClick() }).testTag("pair_refresh").semantics { contentDescription = "Tìm lại thiết bị" },
         contentAlignment = Alignment.Center,
     ) { RefreshIcon(if (refreshing) colors.text3 else colors.text2) }
 }
@@ -203,5 +206,5 @@ private fun LazyListScope.foundRows(list: List<Found>, ui: PairUi, devices: Devi
 /** Không thấy máy nào: một dòng nói thẳng và "Tìm lại" ở cuối dòng đầu. */
 @Composable
 private fun NoneRow(title: String, onRetry: () -> Unit) {
-    ListItem(title, Modifier.testTag("pair_none"), trailing = { TextAction("Tìm lại", onRetry, "pair_rescan") })
+    ListItem(title, Modifier.testTag("pair_none"), trailing = { IconAction("Tìm lại thiết bị", onRetry, "pair_rescan") { RefreshIcon(Abook.colors.text2) } })
 }

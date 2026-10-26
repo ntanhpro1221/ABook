@@ -22,7 +22,7 @@ ICONS = sorted({
     "arrow-down-wide-narrow", "arrow-left", "audio-lines", "bluetooth", "book-open-text", "check", "chevron-down", "chevron-right", "circle-dashed",
     "ellipsis", "file", "file-down", "folder-open", "headphones", "image-plus", "laptop", "list-ordered", "minus", "monitor-smartphone",
     "moon", "moon-star", "palette", "pause", "pencil", "play", "plus", "refresh-cw", "rotate-ccw", "search", "share-2", "skip-back", "skip-forward",
-    "smartphone", "trash-2", "wrench", "x",
+    "smartphone", "speaker", "tv", "monitor-speaker", "cast", "trash-2", "wrench", "x",
 })
 
 NODE = re.compile(r'\[\s*"(\w+)",\s*\{([^}]*)\}\s*\]')
