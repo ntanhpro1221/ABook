@@ -8,6 +8,8 @@ Item {
     property string title: ""
     property string subtitle: ""
     property bool showBack: false
+    // Tên nút ← nói về đâu, như bản web (BookScreen: "Về Thư viện")
+    property string backLabel: "Quay lại"
     default property alias trailing: trailingRow.data
 
     implicitHeight: Theme.s32 + titleText.height + (subtitle !== "" ? 24 : 0)
@@ -18,7 +20,7 @@ Item {
         icon: "arrow-left"
         x: -10                      // nét mũi tên (lùi 10 trong vùng bấm 40) thẳng mép nội dung
         y: Theme.s32
-        tip: "Quay lại  (Esc)"
+        tip: root.backLabel + " (Esc)"
         onClicked: Nav.back()
     }
     Text {

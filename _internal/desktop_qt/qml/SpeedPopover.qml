@@ -1,7 +1,7 @@
 import QtQuick
 import ABook
 
-// Tốc độ nghe: lưới ô, ô đang chọn nhạt màu nhấn. Tốc độ nhớ riêng cho từng cuốn (như bản web).
+// Tốc độ đọc: lưới ô, ô đang chọn nhạt màu nhấn. Tốc độ nhớ riêng cho từng cuốn (như bản web).
 Popover {
     id: root
     panelWidth: 296
@@ -13,7 +13,8 @@ Popover {
         spacing: Theme.s12
         Text {
             width: parent.width
-            text: "Tốc độ nghe"
+            text: "Tốc độ đọc · nhớ riêng cho cuốn này"
+            wrapMode: Text.Wrap
             color: Theme.text2
             font.pixelSize: Theme.sizeCaption
             font.weight: Theme.weightMedium
@@ -31,13 +32,6 @@ Popover {
                     onClicked: Player.setRate(modelData)
                 }
             }
-        }
-        Text {
-            width: parent.width
-            text: "Cuốn này nhớ tốc độ riêng của nó."
-            color: Theme.text3
-            wrapMode: Text.Wrap
-            font.pixelSize: Theme.sizeCaption
         }
     }
 }

@@ -81,7 +81,7 @@ Item {
             height: Theme.hit
             icon: root.expanded ? "panel-left-close" : "panel-left-open"
             iconSize: 18
-            tip: root.expanded ? "Thu gọn  (Ctrl+B)" : "Mở rộng  (Ctrl+B)"
+            tip: root.expanded ? "Thu gọn (Ctrl+B)" : "Mở rộng (Ctrl+B)"
             onClicked: root.toggle()
         }
 

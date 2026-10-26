@@ -3,7 +3,7 @@ import ABook
 
 // Văn bản chương chạy theo giọng (bản web: ReadAlongText.tsx + follow.ts). Danh sách đoạn ảo hoá: chỉ đoạn đang thấy mới có TextEdit. Câu đang nghe được tô nền
 // theo từng dòng chữ (hình chữ nhật lấy từ QTextLayout của chính TextEdit; chỉ đoạn có câu đổi mới vẽ lại), chữ đang đọc tô đậm hơn khi sách có mốc chữ,
-// câu đã nghe nhạt đi. Đang theo: câu sắp khuất thì cuộn nó lên khoảng một phần ba từ trên. Người tự cuộn là thôi theo và hiện "Về chỗ đang đọc";
+// câu đã nghe nhạt đi. Đang theo: câu sắp khuất thì cuộn nó lên khoảng một phần ba từ trên. Người tự cuộn là thôi theo và hiện "Tới câu đang nghe";
 // thôi cuộn 1,5 giây mà câu đang đọc nằm trong khung thì theo lại. Bấm một câu (hay một chữ) là nghe từ đó.
 Item {
     id: root
@@ -194,7 +194,7 @@ Item {
                         required property int index
                         readonly property var r: del.hoverRects[index]
                         x: r.x - 3; y: r.y; width: r.width + 6; height: r.height
-                        radius: 4
+                        radius: Theme.radiusControl
                         color: Theme.text
                         opacity: 0.05
                     }
@@ -205,7 +205,7 @@ Item {
                         required property int index
                         readonly property var r: del.sentRects[index]
                         x: r.x - 3; y: r.y; width: r.width + 6; height: r.height
-                        radius: 4
+                        radius: Theme.radiusControl
                         color: Theme.accentSoft
                     }
                 }
@@ -215,7 +215,7 @@ Item {
                         required property int index
                         readonly property var r: del.wordRects[index]
                         x: r.x - 2; y: r.y + 1; width: r.width + 4; height: r.height - 2
-                        radius: 4
+                        radius: Theme.radiusControl
                         color: Qt.alpha(Theme.accent, 0.38)
                     }
                 }
@@ -313,7 +313,7 @@ Item {
         font.pixelSize: Theme.sizeBodySmall
     }
 
-    // "Về chỗ đang đọc": trượt lên từ đáy khung khi người đã cuộn đi chỗ khác
+    // "Tới câu đang nghe" (JumpToPlaying của web: icon locate, viên tròn): trượt lên từ đáy khung khi người đã cuộn đi chỗ khác
     Rectangle {
         id: chip
         readonly property bool shown: root.showChip
@@ -321,7 +321,7 @@ Item {
         y: parent.height - height - Theme.s24 + (shown ? 0 : 16)
         width: chipRow.implicitWidth + 2 * Theme.s16
         height: 40
-        radius: 20
+        radius: height / 2
         color: Theme.dark ? Theme.text : "#2a2723"
         opacity: shown ? 1 : 0
         visible: opacity > 0
@@ -338,13 +338,13 @@ Item {
             anchors.centerIn: parent
             spacing: Theme.s8
             Icon {
-                name: root.placement === "above" ? "chevron-up" : "chevron-down"
-                size: 14
+                name: "locate"
+                size: 16
                 color: Theme.dark ? Theme.bg : "#f5f3ef"
                 anchors.verticalCenter: parent.verticalCenter
             }
             Text {
-                text: "Về chỗ đang đọc"
+                text: "Tới câu đang nghe"
                 color: Theme.dark ? Theme.bg : "#f5f3ef"
                 font.pixelSize: Theme.sizeBodySmall
                 font.weight: Theme.weightMedium

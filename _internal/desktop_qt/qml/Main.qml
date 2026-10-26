@@ -156,7 +156,7 @@ Window {
         Behavior on opacity { NumberAnimation { duration: Nav.tipShown ? Theme.motionFast : Theme.motionFastOut } }
         height: tipLabel.implicitHeight + 12
         width: tipLabel.implicitWidth + 20
-        radius: 6
+        radius: Theme.radiusControl
         color: Theme.dark ? Theme.text : "#2a2723"
         x: Math.max(8, Math.min(win.width - width - 8, a.x + a.width / 2 - width / 2))
         y: a.y + a.height + 8 + height > win.height ? a.y - height - 8 : a.y + a.height + 8
