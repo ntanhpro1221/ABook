@@ -22,7 +22,7 @@ import { genderLabel, groupLabel, VOICE_GROUPS, voiceSections } from "./voiceGro
 import { spokenVoiceName } from "./onlineConsent";
 
 // Cài đặt › Giọng đọc (máy tính và điện thoại dùng chung): giọng mặc định của "Nghe ngay", nghe thử từng giọng, gợi ý giọng nam / nữ, câu nói
-// rõ chữ của sách đi đâu với từng nhóm giọng trực tuyến, và phần gập "Khoá riêng" (nhập khóa, Kiểm tra, Xóa) ở cuối. Mỗi nền tảng
+// rõ chữ của sách đi đâu với từng nhóm giọng trực tuyến, và phần gập "Khoá riêng" (nhập khoá, Kiểm tra, Xoá) ở cuối. Mỗi nền tảng
 // đưa vào một `VoiceSettingsApi` (máy tính: máy chủ cục bộ abook/readaloud; điện thoại: plugin ReadAloud). Bộ nhớ bản đọc nằm ở Cài đặt › Nâng cao.
 
 /** Một nhà cung cấp giọng dùng khoá riêng như máy chủ / lõi điện thoại mô tả (abook/readaloud/byok.py `describe`, OnlineVoices.kt). */
@@ -31,7 +31,7 @@ export interface OnlineProviderInfo {
   name: string;
   limits: { max_chars: number; free: string; timings: "exact" | "estimated"; region: boolean };
   hasKey: boolean;
-  /** "••••abcd": đủ để nhận ra khóa nào, không bao giờ là khóa thật. */
+  /** "••••abcd": đủ để nhận ra khoá nào, không bao giờ là khoá thật. */
   masked: string;
   region: string;
   valid: boolean;
@@ -56,7 +56,7 @@ export interface VoiceSettingsApi {
   checkKey(provider: string): Promise<KeyCheck>;
 }
 
-/** Lấy khóa ở đâu - nói theo những gì người dùng thấy trên trang của nhà cung cấp. */
+/** Lấy khoá ở đâu - nói theo những gì người dùng thấy trên trang của nhà cung cấp. */
 const KEY_HELP: Record<string, string> = {
   azure: "Azure: tạo Speech (F0 miễn phí) › Keys and Endpoint. Chép Key 1 và Location/Region (ví dụ southeastasia).",
   google: "Google Cloud: bật Cloud Text-to-Speech API. Vào APIs & Services › Credentials › Create credentials › API key.",
@@ -119,16 +119,16 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
   const [region, setRegion] = useState(info.region);
   const [busy, setBusy] = useState<"" | "check" | "save" | "remove">("");
   const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null);
-  // Gập sẵn (soát UX 05-10: bốn khung dài chiếm hơn nửa Cài đặt trên điện thoại); đã có khóa thì mở sẵn để thấy trạng thái.
+  // Gập sẵn (soát UX 05-10: bốn khung dài chiếm hơn nửa Cài đặt trên điện thoại); đã có khoá thì mở sẵn để thấy trạng thái.
   const [open, setOpen] = useState(info.hasKey);
   useEffect(() => setRegion(info.region), [info.region]);
   const regionChanged = Boolean(info.limits.region) && region.trim() !== info.region;
-  // "Lưu" chỉ cất khóa trên máy này, không gửi gì ra mạng; "Kiểm tra" mới gọi dịch vụ (và cũng lưu khóa đang gõ trước khi kiểm).
+  // "Lưu" chỉ cất khoá trên máy này, không gửi gì ra mạng; "Kiểm tra" mới gọi dịch vụ (và cũng lưu khoá đang gõ trước khi kiểm).
   const save = async () => {
     setBusy("save");
     setResult(null);
     try {
-      if (!key.trim() && !info.hasKey) throw new Error("Dán khóa trước đã.");
+      if (!key.trim() && !info.hasKey) throw new Error("Dán khoá trước đã.");
       await api.saveKey(info.id, key.trim(), region.trim());
       setKey("");
       setResult({ ok: true, text: "Đã lưu khoá. Bấm “Kiểm tra” để thử." });
@@ -144,14 +144,14 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
     setResult(null);
     try {
       if (key.trim() || (info.limits.region && region.trim() !== info.region)) {
-        if (!key.trim() && !info.hasKey) throw new Error("Dán khóa trước đã.");
+        if (!key.trim() && !info.hasKey) throw new Error("Dán khoá trước đã.");
         await api.saveKey(info.id, key.trim() || "", region.trim());
       }
       const checked = await api.checkKey(info.id);
       setKey("");
       setResult(checked.ok
         ? { ok: true, text: `Dùng được · ${checked.voices ?? checked.provider.voices} giọng tiếng Việt` }
-        : { ok: false, text: checked.message || "Khóa chưa dùng được." });
+        : { ok: false, text: checked.message || "Khoá chưa dùng được." });
     } catch (error) {
       setResult({ ok: false, text: errorText(error) });
     } finally {
@@ -183,14 +183,14 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
       <MoreInfo label="Nhận khoá" className="mt-1">{KEY_HELP[info.id]}</MoreInfo>
       <div className="mt-2.5 flex flex-wrap items-center gap-2">
         <label className="min-w-0 flex-1 basis-56">
-          <span className="sr-only">Khóa {info.name}</span>
+          <span className="sr-only">Khoá {info.name}</span>
           <input
             type="password"
             autoComplete="off"
             spellCheck={false}
             value={key}
             onChange={(event) => setKey(event.target.value)}
-            placeholder={info.hasKey ? `Đã lưu ${info.masked} - dán khóa mới để thay` : "Dán khóa của bạn"}
+            placeholder={info.hasKey ? `Đã lưu ${info.masked} - dán khoá mới để thay` : "Dán khoá của bạn"}
             className="h-9 w-full rounded-control border border-line bg-panel px-3 text-sm"
           />
         </label>
@@ -214,7 +214,7 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
         </Button>
         {info.hasKey && (
           <Button size="md" variant="ghost" icon={Trash2} loading={busy === "remove"} disabled={Boolean(busy)} onClick={() => void remove()}>
-            Xóa khóa
+            Xoá khoá
           </Button>
         )}
       </div>
@@ -261,7 +261,7 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
   }, [api]);
   useEffect(() => void load(), [load]);
   const keysChanged = () => {
-    // Danh sách giọng của trình phát (readAloudVoice.voicesOf, useReadAloudVoices) hỏi lại: giọng của khóa vừa kiểm tra hiện / ẩn ngay.
+    // Danh sách giọng của trình phát (readAloudVoice.voicesOf, useReadAloudVoices) hỏi lại: giọng của khoá vừa kiểm tra hiện / ẩn ngay.
     window.dispatchEvent(new CustomEvent(ONLINE_KEYS_CHANGED_EVENT));
     void client.invalidateQueries({ queryKey: ["readaloud", "voices"] });
     void load();

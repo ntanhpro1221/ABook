@@ -101,7 +101,7 @@ fun ReadAlongPane(
                 exit = slideOutVertically(tween(MotionMs.MEDIUM_OUT)) { it }) {
                 Box(Modifier.heightIn(min = 48.dp).pressable { following = true; onTap() }.testTag("follow_sentence"),
                     contentAlignment = Alignment.Center) {
-                    BasicText("Theo câu đang nghe", Modifier
+                    BasicText("Tới câu đang nghe", Modifier
                         .background(Abook.colors.accentSoft, RoundedCornerShape(Dim.radiusCover))
                         .padding(horizontal = 14.dp, vertical = 6.dp),
                         style = Abook.type.caption.copy(color = Abook.colors.accentText, fontWeight = FontWeight.Medium))

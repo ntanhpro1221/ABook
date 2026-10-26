@@ -29,7 +29,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 WEB = ROOT / "ui" / "src"
-KT = ROOT / "mobile" / "android" / "app" / "src" / "main" / "java" / "vn" / "abook" / "player" / "ui"
+KT_CORE = ROOT / "mobile" / "android" / "app" / "src" / "main" / "java" / "vn" / "abook" / "player"
+KT = KT_CORE / "ui"
 DOC = ROOT / "docs" / "UI_PARITY.md"
 BEGIN = "<!-- ui_parity:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity.py - không sửa tay, chạy lại script) -->"
 END = "<!-- ui_parity:end -->"
@@ -44,10 +45,10 @@ TEXT_ATTRS = {"label", "title", "aria-label", "ariaLabel", "placeholder", "alt",
 KT_NAMED = {"contentDescription", "label", "title", "hint", "text", "placeholder", "description", "subtitle", "caption", "action", "value",
             "summary", "message", "unit"}
 KT_SKIP_CALLEE = {"testTag", "Regex", "Log", "File", "Uri", "println", "error", "require", "check", "checkNotNull", "requireNotNull",
-                  "listOf", "setOf", "mapOf", "arrayOf", "put", "putExtra", "getString", "optString", "getJSONObject", "getJSONArray", "has",
+                  "setOf", "mapOf", "arrayOf", "put", "putExtra", "getString", "optString", "getJSONObject", "getJSONArray", "has",
                   "Intent", "IntentFilter", "toRegex", "startsWith", "endsWith", "contains", "split", "replace", "trim", "removePrefix",
                   "removeSuffix", "equals", "format", "assert", "Pair", "to", "storageKey", "route", "key", "id", "tag", "name", "optBoolean",
-                  "optInt", "optLong", "optDouble", "getBoolean", "getInt", "getLong", "getDouble", "getString", "joinToString", "indexOf"}
+                  "optInt", "optLong", "optDouble", "getBoolean", "getInt", "getLong", "getDouble", "getString", "joinToString", "indexOf", "w", "e", "d", "i"}
 KT_SKIP_NAMED = {"tag", "key", "route", "id", "storageKey", "testTag", "name", "action_id", "channel", "mime", "type", "scheme"}
 
 VI_LETTERS = "àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ"
@@ -230,15 +231,10 @@ def _lucide_dir() -> Path:
 _ICON_CACHE: dict[str, str] = {}
 
 
-def lucide_name(ident: str) -> str:
-    """`MoreHorizontal` / `Trash2` / `EllipsisIcon` -> tên file lucide thật (theo alias), vd `ellipsis`, `trash-2`."""
-    if ident in _ICON_CACHE:
-        return _ICON_CACHE[ident]
-    base = ident[:-4] if ident.endswith("Icon") and len(ident) > 4 else ident
-    kebab = re.sub(r"(?<=[a-z])(?=[A-Z0-9])|(?<=[A-Z])(?=[A-Z][a-z])|(?<=[0-9])(?=[A-Za-z])", "-", base).lower()
-    name = kebab
+def alias_target(name: str) -> str:
+    """Tên lucide -> tên gốc theo chuỗi alias (`trash-2` -> `trash`, `more-horizontal` -> `ellipsis`): hai tên một hình thì tính là một icon."""
     icons = _lucide_dir()
-    for _ in range(4):  # theo chuỗi alias: more-horizontal -> ellipsis
+    for _ in range(4):
         path = icons / f"{name}.mjs"
         if not path.is_file():
             break
@@ -246,6 +242,16 @@ def lucide_name(ident: str) -> str:
         if not m:
             break
         name = m.group(1)
+    return name
+
+
+def lucide_name(ident: str) -> str:
+    """`MoreHorizontal` / `Trash2` / `EllipsisIcon` -> tên file lucide thật (theo alias), vd `ellipsis`, `trash-2`."""
+    if ident in _ICON_CACHE:
+        return _ICON_CACHE[ident]
+    base = ident[:-4] if ident.endswith("Icon") and len(ident) > 4 else ident
+    kebab = re.sub(r"(?<=[a-z])(?=[A-Z0-9])|(?<=[A-Z])(?=[A-Z][a-z])|(?<=[0-9])(?=[A-Za-z])", "-", base).lower()
+    name = alias_target(kebab)
     _ICON_CACHE[ident] = name
     return name
 
@@ -275,6 +281,16 @@ def parse_tag(src: str, i: int) -> tuple[Element | None, int, bool]:
     tag = m.group(1)
     j = i + m.end()
     attrs: dict[str, str] = {}
+    nested: list[tuple[int, int]] = []  # giá trị thuộc tính có JSX (`footer={<Actions>...</Actions>}`): chữ trong đó cũng là chữ giao diện
+
+    def built(end: int, closed: bool) -> tuple[Element, int, bool]:
+        el = Element(tag, line_of(src, i), attrs)
+        for start, stop in nested:
+            holder = Element("", el.line, {})
+            scan_container(src, start, stop, holder)
+            el.children += [c for c in holder.children if c[0] == "el"]
+        return el, end, closed
+
     n = len(src)
     while j < n:
         while j < n and src[j].isspace():
@@ -283,9 +299,9 @@ def parse_tag(src: str, i: int) -> tuple[Element | None, int, bool]:
             return None, i, False
         c = src[j]
         if c == "/" and src.startswith("/>", j):
-            return Element(tag, line_of(src, i), attrs), j + 2, True
+            return built(j + 2, True)
         if c == ">":
-            return Element(tag, line_of(src, i), attrs), j + 1, False
+            return built(j + 1, False)
         if c == "/" and src[j + 1:j + 2] in ("/", "*"):
             j = skip_comment(src, j)
             continue
@@ -308,6 +324,8 @@ def parse_tag(src: str, i: int) -> tuple[Element | None, int, bool]:
         if src[j:j + 1] == "{":
             end = skip_balanced(src, j, "{", "}")
             attrs[name] = src[j + 1:end - 1]
+            if re.search(r"<[A-Za-z>]", attrs[name]):
+                nested.append((j + 1, end - 1))
             j = end
         elif src[j:j + 1] in ("\"", "'"):
             end = skip_string(src, j)
@@ -439,15 +457,41 @@ def element_label(el: Element) -> list[str]:
     return []
 
 
+def value_literals(src: str, i: int) -> list[tuple[int, str]]:
+    """Các chuỗi trong MỘT giá trị bắt đầu ở `i` (tới dấu `,` / `;` / ngoặc đóng ở mức 0): `ok ? "a" : "b"`."""
+    out: list[tuple[int, str]] = []
+    depth = 0
+    n = len(src)
+    while i < n:
+        c = src[i]
+        if c in "\"'`":
+            j = skip_string(src, i)
+            out.append((i, literal_text(src[i:j])))
+            i = j
+            continue
+        if c in "([{":
+            depth += 1
+        elif c in ")]}":
+            if depth == 0:
+                break
+            depth -= 1
+        elif c in ",;" and depth == 0:
+            break
+        i += 1
+    return out
+
+
+PROP_LITERAL = re.compile(r"(?<![\w-])(label|title|description|caption|text|placeholder|hint|message|empty|heading|subtitle|note|all|listening|new|finished)\s*:")
+
+
 def web_scan_file(path: Path, scan: Scan) -> None:
     src = path.read_bytes().decode("utf-8")
     file = rel(path)
     if path.suffix == ".ts":
-        for m in re.finditer(r"\b(label|title|text|hint|description|heading|subtitle|placeholder|caption|summary|message)\s*:\s*([\"'`])", src):
-            end = skip_string(src, m.start(2))
-            text = literal_text(src[m.start(2):end])
-            if looks_ui(text):
-                scan.items.append(Item("web", file, line_of(src, m.start(2)), text, f"prop:{m.group(1)}"))
+        # File logic: mọi chuỗi có dạng chữ giao diện (hoa đầu / có dấu tiếng Việt), kể cả chuỗi trả về từ hàm nhãn.
+        for pos, text in literals_in(strip_ts_comments(src)):
+            if looks_ui(text, strict=True):
+                scan.items.append(Item("web", file, line_of(src, pos), text, "ts"))
         return
     icons = lucide_imports(src)
 
@@ -504,6 +548,17 @@ def web_scan_file(path: Path, scan: Scan) -> None:
 
     for root in jsx_elements(src):
         visit(root)
+    # Chữ nằm trong hằng / bảng ngoài JSX (`{ value: "new", label: "Chưa nghe" }`): chỉ lấy khoá mang nghĩa nhãn, đọc từng chuỗi từ đúng chỗ khoá
+    # (không đi dọc cả file - chữ JSX có dấu nháy lẻ làm lệch).
+    plain = strip_ts_comments(src)
+    # Chuỗi chữ trả về từ hàm / gán biến trong .tsx (`return "Đang tìm"`, `const title = ok ? "A" : "B"`) cũng là chữ giao diện, như bên .ts.
+    for pos, text in literals_in(plain):
+        if looks_ui(text, strict=True) and len(text) <= 300 and "=>" not in text and (" " in text.strip() or re.search(r"[À-ỹ]", text)) and not re.match(r"^[A-Z]\d", text):
+            scan.items.append(Item("web", file, line_of(plain, pos), text, "tsx-literal"))
+    for m in PROP_LITERAL.finditer(plain):
+        for start, text in value_literals(plain, m.end()):
+            if looks_ui(text, strict=True):
+                scan.items.append(Item("web", file, line_of(plain, start), text, f"prop:{m.group(1)}"))
 
 
 def web_scan() -> Scan:
@@ -552,14 +607,14 @@ def icon_wrappers() -> dict[str, str]:
     text = (KT / "components" / "Icons.kt").read_bytes().decode("utf-8")
     out: dict[str, str] = {}
     for m in re.finditer(r"fun (\w+Icon)\([^)]*\)\s*=\s*(?:\n\s*)?LucideIcon\(LucidePaths\.(\w+)", text):
-        out[m.group(1)] = m.group(2).lower().replace("_", "-")
+        out[m.group(1)] = alias_target(m.group(2).lower().replace("_", "-"))
     return out
 
 
 def glyph_icons() -> dict[str, str]:
     """PlayerGlyph("⋯") -> `ellipsis`: bảng `"⋯" -> LucidePaths.ELLIPSIS` trong nowplaying/PlayerVisuals.kt."""
     text = (KT / "nowplaying" / "PlayerVisuals.kt").read_bytes().decode("utf-8")
-    return {m.group(1): m.group(2).lower().replace("_", "-") for m in re.finditer(r'"([^"\w]+)"\s*->\s*LucidePaths\.(\w+)', text)}
+    return {m.group(1): alias_target(m.group(2).lower().replace("_", "-")) for m in re.finditer(r'"([^"\w]+)"\s*->\s*LucidePaths\.(\w+)', text)}
 
 
 ICON_CALL = re.compile(r"\b(\w+Icon|LucideIcon|PlayerGlyph)\(")
@@ -635,7 +690,7 @@ def icon_name(segment: str, m: re.Match, glyphs: dict[str, str], wrappers: dict[
     name = m.group(1)
     if name == "LucideIcon":
         lm = re.match(r"\w+\(\s*LucidePaths\.(\w+)", segment[m.start():m.start() + 80])
-        return lm.group(1).lower().replace("_", "-") if lm else "native:LucideIcon"
+        return alias_target(lm.group(1).lower().replace("_", "-")) if lm else "native:LucideIcon"
     if name == "PlayerGlyph":
         gm = re.match(r"\w+\(\s*\"([^\"]*)\"", segment[m.start():m.start() + 40])
         return glyphs.get(gm.group(1), "native:PlayerGlyph") if gm else "native:PlayerGlyph"
@@ -801,6 +856,8 @@ def key_loose(text: str) -> str:
         s = s.replace(new, old)
     s = s.replace("...", "…").replace("×", "x").replace("−", "-").replace("–", "-")
     s = re.sub(r"\s*·\s*", " · ", s)
+    s = re.sub(r"\d+(?:[.,]\d+)?", "{}", s)  # "Lùi 15 giây" (native) = "Lùi ${n} giây" (web)
+    s = s.replace("{}{}", "{}")
     s = re.sub(r"[\s…:.!?;,]+$", "", s)
     return re.sub(r"\s+", " ", s).strip()
 
@@ -844,6 +901,7 @@ def render_report(web: Scan, native: Scan) -> str:
     out += section_b(w_pairs, n_pairs, web.icon_sites, native.icon_sites)
     out += section_c(w_items, n_items, w_by, n_by)
     out += section_d(w_items, n_items, w_by, n_by)
+    out += section_e(web, native)
     out += ["", END, ""]
     return "\n".join(out)
 
@@ -1069,19 +1127,256 @@ def diff_kind(a: str, b: str) -> str:
 # ---------------------------------------------------------------------------------------------------------------------------------------
 
 
-HEAD = """# Lệch chữ và icon giữa các nền tảng giao diện
+# ---------------------------------------------------------------------------------------------------------------------------------------
+# Giai đoạn 2: luật cứng. Cặp màn web <-> native (ui_parity_pairs.json), bảng việc -> icon (docs/UI_PARITY.md), luật chữ (dấu thanh, dấu ba chấm).
+
+PAIRS = ROOT / "scripts" / "ui_parity_pairs.json"
+ICON_TABLE_BEGIN = "<!-- ui_parity:icons -->"
+ICON_TABLE_END = "<!-- ui_parity:icons:end -->"
+# Chữ giả / mẫu của thư viện mẫu và dữ liệu thử không phải chữ giao diện (có trích sách thật): không quét luật chữ.
+COPY_SKIP_WEB = ("gallery/",)
+# Chuỗi của lõi native KHÔNG phải chữ giao diện (so khớp chữ trong truyện, mã giọng): đổi dấu thanh sẽ làm hỏng việc khớp.
+COPY_TONE_DATA = ("BookImport.kt:2241", "readaloud/VoiceGain.kt", "vieneu/VieneuUnits.kt")
+COPY_SKIP_NATIVE = ("nowplaying/FakeNowPlayingModel.kt", "data/DemoLibrary.kt", "data/DemoPlayback.kt")
+NEW_TONE = re.compile(r"[òóỏõọ][ae]|[ùúủũụ]y|[ÒÓỎÕỌ][AEae]|[ÙÚỦŨỤ][Yy]")
+WEB_ROOT = "ui/src/"
+NATIVE_ROOT = "mobile/android/app/src/main/java/vn/abook/player/ui/"
+
+
+def pair_specs() -> list[dict]:
+    import json
+    return json.loads(PAIRS.read_bytes().decode("utf-8"))["pairs"]
+
+
+def match_files(patterns: list[str], names: list[str]) -> list[str]:
+    """`names` (đường dẫn tương đối) khớp mẫu glob; mẫu bắt đầu bằng `!` loại bớt."""
+    from fnmatch import fnmatch
+    chosen = [n for n in names if any(fnmatch(n, p) for p in patterns if not p.startswith("!"))]
+    return [n for n in chosen if not any(fnmatch(n, p[1:]) for p in patterns if p.startswith("!"))]
+
+
+def sentence(text: str) -> bool:
+    """Câu dài (lời gợi ý dưới một dòng cài đặt, câu báo): hoa đầu, kết thúc bằng dấu câu, nhiều hơn một chữ."""
+    t = text.strip()
+    return bool(t[:1]) and t[0].isupper() and len(t.split()) > 1 and t[-1] in ".?!" and t.count("(") == t.count(")")
+
+
+def label_items(items: list[Item], root: str, files: list[str], sentences: bool = False) -> dict[str, list[Item]]:
+    """Nhãn (khoá lỏng) -> chữ, chỉ trong các file đã chọn và chỉ nhãn ngắn viết như nhãn (cặp có `sentences`: cả câu dài)."""
+    out: dict[str, list[Item]] = defaultdict(list)
+    for item in items:
+        name = item.file[len(root):] if item.file.startswith(root) else item.file
+        if name in files and (short(item.text) or (sentences and sentence(item.text))):
+            out[key_loose(item.text)].append(item)
+    return out
+
+
+def pair_diff(web: Scan, native: Scan, spec: dict) -> dict:
+    """Nhãn chỉ có ở một phía của một cặp màn, đã trừ danh sách cho phép (`allow`) và danh sách thiếu thật (`missing`)."""
+    web_names = sorted({i.file[len(WEB_ROOT):] for i in web.items})
+    native_names = sorted({i.file[len(NATIVE_ROOT):] for i in native.items})
+    wf = match_files(spec["web"], web_names)
+    nf = match_files(spec["native"], native_names)
+    w = label_items(sorted(set(web.items), key=lambda i: (i.file, i.line, i.text)), WEB_ROOT, wf, bool(spec.get("sentences")))
+    n = label_items(sorted(set(native.items), key=lambda i: (i.file, i.line, i.text)), NATIVE_ROOT, nf, bool(spec.get("sentences")))
+    # `web_also`: file web chỉ để làm ĐỐI CHIẾU cho chữ native (nhãn chung nằm ở file khác); chữ của chúng không bị đòi phải có ở native.
+    w_all = dict(w)
+    for key, found in label_items(sorted(set(web.items), key=lambda i: (i.file, i.line, i.text)), WEB_ROOT, match_files(spec.get("web_also", []), web_names)).items():
+        w_all.setdefault(key, found)
+    only = spec.get("only")  # "web": chỉ đòi nhãn web phải có ở native (không đòi chiều ngược lại)
+
+    def listed(side: str, key: str, item: Item, entries: list[dict]) -> dict | None:
+        from fnmatch import fnmatch
+        root = WEB_ROOT if side == "web" else NATIVE_ROOT
+        name = item.file[len(root):]
+        for e in entries:
+            if e["side"] != side:
+                continue
+            if "file" in e and fnmatch(name, e["file"]):
+                return e
+            if "label" in e and key_loose(e["label"]) == key:
+                return e
+            if "match" in e and re.search(e["match"], key):
+                return e
+        return None
+
+    allow, missing = spec.get("allow", []), spec.get("missing", [])
+    deferred = spec.get("deferred", [])
+    result = {"id": spec["id"], "web_files": wf, "native_files": nf, "web_labels": len(w), "native_labels": len(n), "web_only": [], "native_only": [],
+              "allowed": [], "missing": [], "deferred": []}
+    for side, mine, other in (("web", w, n), ("native", n, w_all)):
+        if only and side != only:
+            continue
+        for key in sorted(mine):
+            if key in other:
+                continue
+            if listed(side, key, mine[key][0], allow):
+                result["allowed"].append((side, mine[key][0]))
+            elif listed(side, key, mine[key][0], missing):
+                result["missing"].append((side, mine[key][0]))
+            elif listed(side, key, mine[key][0], deferred):
+                result["deferred"].append((side, mine[key][0]))
+            else:
+                result[f"{side}_only"].append(mine[key][0])
+    return result
+
+
+def icon_table() -> list[tuple[str, str]]:
+    """Bảng việc -> icon viết tay trong docs/UI_PARITY.md: [(mẫu nhãn theo khoá lỏng, icon lucide)]. Hàng: `| Nhãn, Nhãn* | `icon` | ... |` (`*` = bất kỳ)."""
+    text = DOC.read_bytes().decode("utf-8") if DOC.is_file() else ""
+    if ICON_TABLE_BEGIN not in text or ICON_TABLE_END not in text:
+        return []
+    block = text[text.index(ICON_TABLE_BEGIN):text.index(ICON_TABLE_END)]
+    out: list[tuple[str, str]] = []
+    for line in block.splitlines():
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) >= 2 and cells[1].startswith("`") and cells[1].endswith("`"):
+            out += [("*".join(key_loose(part) for part in label.strip().split("*")), cells[1].strip("`")) for label in cells[0].split(",")]
+    return out
+
+
+def icon_violations(web: Scan, native: Scan) -> list[str]:
+    from fnmatch import fnmatchcase
+    table = icon_table()
+    bad = []
+    for p in sorted(set(web.pairs) | set(native.pairs), key=lambda p: (p.side, p.file, p.line)):
+        key = key_loose(p.label)
+        for pattern, want in table:
+            if fnmatchcase(key, pattern) and p.icon != alias_target(want):
+                bad.append(f"{p.file}:{p.line} \"{p.label}\" dùng {p.icon}, bảng việc -> icon ghi {want}")
+                break
+    return bad
+
+
+def strip_ts_comments(src: str) -> str:
+    """Bỏ chú thích // và /* */ của TS (giữ số dòng), không đụng chuỗi."""
+    out = list(src)
+    i = 0
+    n = len(src)
+    while i < n:
+        c = src[i]
+        if c in "\"'`":
+            i = skip_string(src, i)
+            continue
+        if c == "/" and src[i + 1:i + 2] in ("/", "*"):
+            end = skip_comment(src, i)
+            for k in range(i, end):
+                if out[k] != "\n":
+                    out[k] = " "
+            i = end
+            continue
+        i += 1
+    return "".join(out)
+
+
+# Chữ tận cùng `…` / `...` ngay sau một chữ cái hay số (và trước dấu đóng chuỗi / thẻ / hết dòng JSX), hay `${...}…` trong chuỗi mẫu có chữ: trạng thái,
+# nhãn, nút, gợi ý ô nhập đều không kèm dấu ba chấm. `…` đứng một mình (nút "Thêm tuỳ chọn") và `…` ở đầu chữ không dính.
+ELLIPSIS_END = re.compile(r"(?<=[^\W_])(?:…|\.\.\.)(?=[\"'`<]|\s*$)|`(?:[^`$\n]|\$\{[^}\n]*\})*[^\W\d_][ ]?(?:\$\{[^}\n]*\})?…`")
+# Hàm cắt bớt chữ dài bằng `…` (không phải chữ giao diện) và một dấu cắt ở vân tay.
+# Nhóm Xuất đang được gộp ở nhánh khác: file của nó chưa quét luật chữ (Lead đã dặn bỏ qua). Gộp xong thì sửa rồi xoá dòng này.
+COPY_PENDING_EXPORT = ("android/ExportAudiobook.tsx", "android/ExportM4b.tsx", "android/ExportMp3.tsx", "desktop/AudiobookDialog.tsx", "desktop/ExportBookFileJob.tsx",
+                       "desktop/bookFileExport.ts", "desktop/listenExport.ts", "studio/ExportBook.tsx", "studio/projectPacking.ts")
+# Nhóm Nhạc do phiên Music đang sửa: cùng lý do.
+COPY_PENDING_MUSIC = ("listen/MyMusic.tsx", "studio/MusicTab.tsx", "studio/musicLocal.ts")
+COPY_ELLIPSIS_OK = ("shared/format.ts", "listen/findText.ts", "desktop/bookFileExport.ts:262", "desktop/OtherComputers.tsx:197", "android/SettingsScreen.tsx:347")
+
+
+def copy_violations(web: Scan, native: Scan) -> tuple[list[str], list[str]]:
+    """Luật chữ giao diện: (vi phạm cứng, nhắc nhẹ). Cứng: dấu thanh kiểu mới, chữ tận cùng `…` / `...`. Nhẹ: nhãn tận cùng `:`."""
+    hard: list[str] = []
+    soft: list[str] = []
+    # Native: cả giao diện (ui/) lẫn lõi (vn/abook/player/*.kt ngoài ui/) - lõi cũng sinh lời người nghe đọc (lỗi, thông báo, tên mặc định).
+    for base, skip, exts, strip, web_side in ((WEB, COPY_SKIP_WEB, (".ts", ".tsx"), strip_ts_comments, True), (KT, COPY_SKIP_NATIVE, (".kt",), blank_comments, False),
+                                              (KT_CORE, COPY_SKIP_NATIVE + ("ui/",), (".kt",), blank_comments, False)):
+        for path in sorted(base.rglob("*")):
+            name = path.relative_to(base).as_posix()
+            if path.suffix not in exts or ".test." in path.name or name.endswith(".d.ts") or name.startswith(skip) or name.startswith("theme/") or name in COPY_PENDING_EXPORT or name in COPY_PENDING_MUSIC:
+                continue
+            src = strip(path.read_bytes().decode("utf-8"))
+            for lineno, line in enumerate(src.split(chr(10)), 1):
+                if NEW_TONE.search(line) and not any(name == ok or f"{name}:{lineno}" == ok for ok in COPY_TONE_DATA):
+                    hard.append(f"{rel(path)}:{lineno} dấu thanh kiểu mới: {line.strip()[:90]}")
+                if web_side and ELLIPSIS_END.search(line) and not any(name == ok or f"{name}:{lineno}" == ok for ok in COPY_ELLIPSIS_OK):
+                    hard.append(f"{rel(path)}:{lineno} chữ tận cùng dấu ba chấm: {line.strip()[:90]}")
+    for items in (web.items, native.items):
+        for i in sorted(set(items), key=lambda i: (i.file, i.line, i.text)):
+            t = i.text.strip()
+            if t.endswith(":") and short(t):
+                soft.append(f"{i.file}:{i.line} nhãn tận cùng dấu hai chấm: {t[:80]}")
+    return hard, soft
+
+
+def section_e(web: Scan, native: Scan) -> list[str]:
+    out = ["## e. Cặp màn web <-> native (luật cứng, scripts/ui_parity_pairs.json)", "",
+           "Trong một cặp, mỗi nhãn ngắn phải có ở cả hai phía (khoá lỏng) trừ khi nằm trong `allow` (có lý do) hay `missing` (tính năng native chưa có thật - "
+           "Lead xếp lịch). Cột lệch phải bằng 0 thì `--check` mới qua.", "",
+           "| cặp | nhãn web | nhãn native | lệch web | lệch native | cho phép | thiếu thật |", "|---|---|---|---|---|---|---|"]
+    diffs = [pair_diff(web, native, spec) for spec in pair_specs()]
+    for d in diffs:
+        out.append(f"| {d['id']} | {d['web_labels']} | {d['native_labels']} | {len(d['web_only'])} | {len(d['native_only'])} | {len(d['allowed'])} | {len(d['missing'])} |")
+    for d in diffs:
+        if d["missing"]:
+            out += ["", f"Thiếu thật ở native - `{d['id']}`: " + "; ".join(esc(i.text, 40) for _, i in d["missing"][:40])]
+    out.append("")
+    return out
+
+
+def hard_checks(web: Scan, native: Scan) -> list[str]:
+    """Mọi lỗi của luật cứng (rỗng = qua)."""
+    problems: list[str] = []
+    for spec in pair_specs():
+        d = pair_diff(web, native, spec)
+        problems += [f"[{d['id']}] chỉ có ở web: \"{i.text}\" ({i.file.replace(WEB_ROOT, '')}:{i.line})" for i in d["web_only"]]
+        problems += [f"[{d['id']}] chỉ có ở native: \"{i.text}\" ({i.file.replace(NATIVE_ROOT, 'native/')}:{i.line})" for i in d["native_only"]]
+    problems += [f"[icon] {v}" for v in icon_violations(web, native)]
+    hard, _ = copy_violations(web, native)
+    problems += [f"[chữ] {v}" for v in hard]
+    return problems
+
+
+HEAD = """# Chữ, icon và bo góc giống nhau giữa các nền tảng giao diện
 
 Chủ sách 26-10: "giao diện giữa các nền tảng phải làm đồng nhất ở mọi chỗ có thể nhé, từng cái chữ, từng cái icon, từng cái bo góc".
-Ba thứ, ba nguồn chung:
+Ba thứ, ba nguồn chung, đều có luật máy (`python -X utf8 scripts/ui_parity.py --check`, chạy trong `tests/test_ui_parity.py`):
 
 - **Bo góc**: `docs/DESIGN.md` 5.5 -> `scripts/gen_native_tokens.py` -> `Tokens.kt` (native) + `ui/src/shared/tokens.generated.css` (web:
   `rounded-control` / `rounded-cover` / `rounded-sheet`). Luật máy: `ui/src/shared/radiusRules.test.ts`, `RadiusRulesTest.kt`.
-- **Icon**: lucide. `scripts/gen_lucide_icons.py` sinh nét cho native và Qt từ đúng gói web dùng; luật `IconRulesTest.kt`.
-- **Chữ**: chưa có nguồn chung. Giai đoạn này chỉ ĐO lệch (bảng dưới); chọn dạng chuẩn là việc của Lead, chưa đổi chữ nào.
+- **Icon**: lucide. `scripts/gen_lucide_icons.py` (MỘT danh sách `ICONS`) sinh nét cho native và Qt từ đúng gói web dùng; luật `IconRulesTest.kt`.
+  Một việc = một icon trên mọi nền tảng: bảng "Việc -> icon" dưới đây là luật, `--check` báo nhãn nào dùng icon khác bảng (bên nào cũng vậy).
+- **Chữ**: cặp màn `scripts/ui_parity_pairs.json` (nhãn có ở một phía mà phía kia không có thì `--check` đỏ, trừ mục `allow` có lý do),
+  luật chữ bên dưới, và bảng đo lệch tự sinh ở cuối file.
 
-Bảng dưới do `scripts/ui_parity.py` sinh (`python -X utf8 scripts/ui_parity.py`; `--check` báo lệch, `tests/test_ui_parity.py` chạy `--check`).
-Bộ đọc là heuristic trên mã nguồn (không chạy app): chữ nằm trong biểu thức phức tạp hay ghép chuỗi có thể sót; icon của hàng dựng bằng hàm bọc
-(vd `GroupIcon(group)`) chưa quy về lucide thì ghi `native:Tên`. Sai lệch được báo cáo chứ KHÔNG làm hỏng test trong giai đoạn này.
+## Việc -> icon
+
+Tên icon theo lucide (hai tên một hình, vd `trash` = `trash-2`, tính là một). `*` khớp mọi chữ. Hàng nào thêm vào đây thì mọi chỗ dùng nhãn ấy,
+web lẫn native, phải dùng đúng icon này.
+
+<!-- ui_parity:icons -->
+| Việc (nhãn) | Icon | Ghi chú |
+|---|---|---|
+| Bỏ ghép, Bỏ ghép* | `unplug` | gỡ một thiết bị đã ghép |
+| Ghép lại | `link-2` | ghép lại thiết bị đã bỏ |
+| Xoá, Xoá khoá, Xoá hồ sơ*, Xoá khỏi*, Xoá bản đọc, Bỏ ảnh bìa | `trash-2` | xoá / gỡ hẳn một thứ |
+| Xoá ô tìm | `x` | xoá chữ trong ô, không xoá dữ liệu |
+| Đọc theo | `text-align-start` | chữ chạy theo giọng |
+| Thêm tuỳ chọn* | `ellipsis` | nút "..." của một hàng / màn; nhãn nghe được là "Thêm tuỳ chọn", không bao giờ "Thêm" trơn (đó là dấu cộng) |
+| Thêm sách | `plus` | |
+| Làm mới | `refresh-cw` | |
+| Nhạc nền | `eighth-note` | |
+| Sửa thông tin | `pencil` | |
+| Tìm | `search` | |
+| Từ đầu | `rotate-ccw` | |
+<!-- ui_parity:icons:end -->
+
+## Luật chữ
+
+Máy kiểm trong mã nguồn giao diện (web `ui/src`, native `.../ui/`, bỏ thư viện mẫu và chữ giả); chỗ trích sách thật không bị sửa.
+
+1. **Dấu thanh kiểu cũ**: hoà, khoá, xoá, loá, thuý, tuỳ (không hòa, khóa, xóa, tùy...). "quý" giữ nguyên. Máy báo `òa/óa/ỏa/õa/ọa`, `òe/óe/...`, `ùy/úy/...`.
+2. **Không `…` hay `...` ở cuối nhãn, trạng thái, nút, gợi ý ô nhập**: "Đang gửi", "Chia sẻ", "Lưu thành". `…` chỉ còn là hình nút "Thêm tuỳ chọn".
+3. **Không `:` cuối nhãn** khi giá trị nằm ở thành phần riêng; `:` chỉ nằm giữa câu chạy. Máy chỉ nhắc (nhẹ), chưa đỏ.
+4. **Viết hoa đầu nhãn** đứng riêng ("Đang phát"); mảnh dán sau tên bằng " · " cũng viết hoa; tên màn giữa câu giữ hoa ("Mở Cài đặt").
+5. **Cùng việc, cùng chữ**: chữ web là chuẩn, trừ khi chữ native rõ ràng hơn theo DESIGN (nhãn 1-4 chữ, giản dị, gọi "bạn") thì đổi cả web.
 
 """
 
@@ -1096,13 +1391,21 @@ def render_doc(current: str | None) -> str:
 
 
 def main(argv: list[str]) -> int:
+    if "--diff" in argv:  # in lệch cặp màn / icon / chữ, không ghi gì; `--diff ID` chỉ một cặp
+        web, native = web_scan(), native_scan()
+        only = [a for a in argv if a != "--diff"]
+        for line in hard_checks(web, native):
+            if not only or line.startswith(f"[{only[0]}]") or line.startswith(("[icon]", "[chữ]")):
+                print(line)
+        return 0
     current = DOC.read_bytes().decode("utf-8") if DOC.is_file() else None
     text = render_doc(current)
     if "--check" in argv:
-        if current != text:
-            print(f"{DOC} không còn khớp mã nguồn - chạy scripts/ui_parity.py", file=sys.stderr)
-            return 1
-        return 0
+        problems = [] if current == text else [f"{DOC} không còn khớp mã nguồn - chạy scripts/ui_parity.py"]
+        problems += hard_checks(web_scan(), native_scan())
+        for line in problems:
+            print(line, file=sys.stderr)
+        return 1 if problems else 0
     DOC.parent.mkdir(parents=True, exist_ok=True)
     DOC.write_bytes(text.encode("utf-8"))  # LF
     print(f"đã ghi {DOC}")

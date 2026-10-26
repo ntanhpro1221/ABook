@@ -34,7 +34,7 @@ async function droppedItems(files: Promise<(Picked & { file: File })[]>): Promis
     ...plan.tooBig.map((name) => ({ name, error: `File lớn hơn ${DROP_LIMIT_MB} MB - kéo vào trình duyệt chỉ gửi được file tới ${DROP_LIMIT_MB} MB. Mở bằng app ABook để thêm file lớn.` })),
   ];
   if (!plan.groups.length) return items;
-  const sending = toast.loading("Đang gửi file lên máy tính…");
+  const sending = toast.loading("Đang gửi file lên máy tính");
   try {
     const result = await sendPlan(plan, () => undefined);
     if (result.error) throw result.error;

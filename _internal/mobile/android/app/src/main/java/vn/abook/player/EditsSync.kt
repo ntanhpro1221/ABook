@@ -295,7 +295,7 @@ object EditsSync {
         return Peers.all(context).optJSONObject(peer)?.optString("name").orEmpty()
     }
 
-    /** Có đường tới máy giữ sách `id` không (chưa ghép / thôi ghép thì không gửi, không hẹn). */
+    /** Có đường tới máy giữ sách `id` không (chưa ghép / bỏ ghép thì không gửi, không hẹn). */
     private fun reachable(context: Context, id: String): Boolean {
         val (peer, _) = Store.editDestination(id) ?: return false
         return if (peer == null) SyncLink.paired(context) else Peers.link(context, peer) != null

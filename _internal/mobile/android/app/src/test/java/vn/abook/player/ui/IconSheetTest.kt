@@ -53,7 +53,7 @@ class IconSheetTest {
         "Sort" to { c -> SortIcon(c) }, "Check" to { c -> CheckIcon(c) }, "Remote" to { c -> RemoteIcon(c) },
         "More" to { c -> MoreIcon(c) }, "Restart" to { c -> RestartIcon(c) }, "DashedCircle" to { c -> DashedCircleIcon(c) },
         "Pencil" to { c -> PencilIcon(c) }, "Share" to { c -> ShareIcon(c) }, "Trash" to { c -> TrashIcon(c) },
-        "BookOpen" to { c -> BookOpenIcon(c) }, "Export" to { c -> ExportIcon(c) }, "Voice" to { c -> VoiceIcon(c) },
+        "ReadAlong" to { c -> ReadAlongIcon(c) }, "Export" to { c -> ExportIcon(c) }, "Voice" to { c -> VoiceIcon(c) },
         "Headphones" to { c -> HeadphonesIcon(c) }, "Moon" to { c -> MoonIcon(c) }, "Theme" to { c -> ThemeIcon(c) },
         "Devices" to { c -> DevicesIcon(c) }, "Wrench" to { c -> WrenchIcon(c) }, "File" to { c -> FileIcon(c) },
         "Folder" to { c -> FolderIcon(c) }, "Image" to { c -> ImageIcon(c) }, "Laptop" to { c -> LaptopIcon(c) },

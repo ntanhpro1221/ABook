@@ -254,7 +254,7 @@ function RemoveFromPhoneMenuItem({ book }: { book: ListenBook }) {
     >
       <Smartphone className="size-4" />
       <span className="flex min-w-0 flex-1 items-baseline justify-between gap-3">
-        <span data-menu-label>Xoá khỏi điện thoại…</span>
+        <span data-menu-label>Xoá khỏi điện thoại</span>
         {/* Cỡ về sau khi menu đã mở: dòng phụ hiện dần tại chỗ, không bật ra. */}
         <MotionRegion as="span" motionKey={bytes !== undefined} className="shrink-0 text-xs text-fg-2">{bytes !== undefined ? `Chiếm ${formatSize(bytes)}` : null}</MotionRegion>
       </span>
@@ -302,7 +302,7 @@ function RemoveFromPhoneHost() {
   return (
     <Dialog footer={<DialogActions>
         <Button variant="ghost" onClick={() => setBook(null)}>
-          Để sau
+          Giữ lại
         </Button>
         <Button variant="danger" icon={Trash2} loading={busy} onClick={() => void remove()}>
           {book?.partial ? "Xoá phần đã tải" : "Xoá khỏi điện thoại"}

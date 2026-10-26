@@ -56,7 +56,7 @@ sealed interface Reach {
     /** Không nối được: `message` là câu cho người nghe (đã có tên máy), `technical` là chữ gốc của lỗi cho phần chi tiết. */
     data class Offline(val message: String, val technical: String? = null) : Reach
 
-    /** Máy kia đã thôi ghép điện thoại này - không phải tắt máy hay khác mạng. */
+    /** Máy kia đã bỏ ghép điện thoại này - không phải tắt máy hay khác mạng. */
     data object Unpaired : Reach
 
     /** Chứng chỉ của máy kia đã đổi: `message` là câu bảo ghép lại. */
@@ -84,7 +84,7 @@ data class Paired(
             Reach.Checking -> if (via.isEmpty()) "Đang kiểm tra" else DeviceText.route(via)
             Reach.Ok -> if (!main && books > 0) "$books cuốn nghe được · ${DeviceText.route(via)}" else DeviceText.route(via)
             is Reach.Offline -> DeviceText.OFFLINE
-            Reach.Unpaired -> "$name đã thôi ghép với điện thoại này"
+            Reach.Unpaired -> "$name đã bỏ ghép với điện thoại này"
             is Reach.Changed -> reach.message
         }
 }

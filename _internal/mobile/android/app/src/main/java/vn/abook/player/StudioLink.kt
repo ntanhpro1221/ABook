@@ -110,7 +110,7 @@ object StudioLink {
         }
     }
 
-    /** Gốc https và mã thiết bị của máy tính `key` lúc này (máy tính chính: theo đường đang thông), hay null khi đã thôi ghép. */
+    /** Gốc https và mã thiết bị của máy tính `key` lúc này (máy tính chính: theo đường đang thông), hay null khi đã bỏ ghép. */
     fun link(context: Context, key: String): Peers.Link? =
         if (key == MAIN) Peers.Link(SyncLink.base(context), SyncLink.token(context)).takeIf { SyncLink.paired(context) }
         else Peers.link(context, key)?.takeIf { known(key, SyncLink.paired(context), Peers.all(context)) }

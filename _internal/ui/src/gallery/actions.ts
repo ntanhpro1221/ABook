@@ -50,6 +50,17 @@ function press(element: HTMLElement): void {
   element.click();
 }
 
+/** Như `click` nhưng lấy phần tử ĐẦU trong cây (không phải cuối): nút "Thêm tuỳ chọn" của trang sách đứng trước nút cùng tên của thanh phát. */
+export async function clickFirst(target: string | RegExp): Promise<HTMLElement> {
+  const element = await waitFor(
+    () => [...document.querySelectorAll<HTMLElement>(CLICKABLE)].find((candidate) => matches(candidate, target) && visible(candidate)) ?? null,
+    `nút “${String(target)}”`,
+  );
+  press(element);
+  await settle();
+  return element;
+}
+
 /** Chờ phần tử hiện rồi bấm. */
 export async function click(target: string | RegExp, within?: ParentNode): Promise<HTMLElement> {
   const element = await waitFor(() => find(target, within), `nút “${String(target)}”`);

@@ -118,7 +118,7 @@ export function TemplateBar({ draft, onPick, narratorAuto = false }: {
               setSaving(true);
             }}
           >
-            Lưu thành mẫu…
+            Lưu thành mẫu
           </Button>
         )}
       </div>

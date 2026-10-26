@@ -182,7 +182,7 @@ export function ApplyChangesDialog({
       }
     ><MotionRegion>
       {!data ? (
-        <p className="text-sm text-fg-2">Đang xem các thay đổi…</p>
+        <p className="text-sm text-fg-2">Đang xem các thay đổi</p>
       ) : (
         <>
           <PendingList

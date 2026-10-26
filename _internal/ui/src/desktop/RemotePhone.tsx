@@ -391,7 +391,7 @@ export function HandOffButton({ className }: { className?: string }) {
     const seconds = readPosition().time;
     const wasPlaying = player.playing;
     player.pause();
-    const waiting = target.via === "cast" ? toast.loading(`Đang mở trên ${target.name}…`) : undefined;
+    const waiting = target.via === "cast" ? toast.loading(`Đang mở trên ${target.name}`) : undefined;
     if (target.via === "cast") void noteCastHasNoMusic(client, track.bookId);
     command.mutate(
       // `record`: loa / TV ghi chỗ nghe vào đúng hồ sơ đang nghe ở đây, dù sau đó ai đổi hồ sơ của cuốn.
@@ -453,7 +453,7 @@ export function HandOffButton({ className }: { className?: string }) {
           {!targets.length && (
             <>
               <div role="status" className="px-2 py-1.5 text-sm text-fg-2">
-                {searching ? "Đang tìm thiết bị…" : "Chưa thấy thiết bị"}
+                {searching ? "Đang tìm thiết bị" : "Chưa thấy thiết bị"}
               </div>
               <p className="px-2 pb-1 text-xs text-fg-3">Bật máy kia và nối cùng Wi-Fi để phát.</p>
               <DropdownMenu.Item

@@ -147,7 +147,7 @@ function RemoveImportedMenuItem({ book }: { book: ListenBook }) {
       onSelect={() => window.dispatchEvent(new CustomEvent<ListenBook>("abook-remove-imported", { detail: book }))}
       className="flex h-9 cursor-default items-center gap-2 rounded-control px-2 text-sm text-danger outline-none data-[highlighted]:bg-hover"
     >
-      <Trash2 className="size-4" /> Xoá khỏi thư viện…
+      <Trash2 className="size-4" /> Xoá khỏi thư viện
     </DropdownMenu.Item>
   );
 }
@@ -433,7 +433,7 @@ function OpenBookFileButton({ variant = "ghost" }: { variant?: "ghost" }) {
   };
   return (
     <Button variant={variant} icon={FileAudio} className="touch-row" disabled={busy} onClick={() => void run()}>
-      {busy ? "Đang mở…" : "Mở file sách"}
+      {busy ? "Đang mở" : "Mở file sách"}
     </Button>
   );
 }

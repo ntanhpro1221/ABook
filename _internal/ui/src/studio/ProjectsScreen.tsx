@@ -78,7 +78,7 @@ function BrokenRow({ book, local }: { book: BookSummary; local: boolean }) {
           </>
         ) : local ? (
           <ProjectMenu book={book} rename={false}>
-            {book.backup && <MenuItem icon={History} onSelect={() => setAsking(true)}>Khôi phục bản sao…</MenuItem>}
+            {book.backup && <MenuItem icon={History} onSelect={() => setAsking(true)}>Khôi phục bản sao</MenuItem>}
             <MenuItem icon={FolderOpen} onSelect={() => reveal.mutate(book.id)}>Mở thư mục</MenuItem>
           </ProjectMenu>
         ) : (
@@ -238,7 +238,7 @@ function StudioMenu({ onOpenExisting }: { onOpenExisting: () => void }) {
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content collisionPadding={12} align="end" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-52 overflow-y-auto overscroll-contain rounded-cover border border-line bg-panel p-1.5 shadow-float">
-          <MenuItem icon={FolderOpen} onSelect={onOpenExisting}>Mở dự án có sẵn…</MenuItem>
+          <MenuItem icon={FolderOpen} onSelect={onOpenExisting}>Mở dự án có sẵn</MenuItem>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>

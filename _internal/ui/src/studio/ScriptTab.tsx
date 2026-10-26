@@ -850,7 +850,7 @@ export function SpeakerMenu({
           onKeyDown={(event) => {
             if (event.key === "Enter" && found[0]) onPick(found[0]);
           }}
-          placeholder="Tìm người khác trong truyện…"
+          placeholder="Tìm người khác trong truyện"
           aria-label="Tìm người nói"
           spellCheck={false}
           autoComplete="off"
@@ -1738,7 +1738,7 @@ export function ScriptTab({ bookId }: { bookId: string }) {
                 setFind({ text: "", at: 0 });
               }
             }}
-            placeholder="Tìm chữ trong chương…"
+            placeholder="Tìm chữ trong chương"
             aria-label="Tìm chữ trong chương này"
             autoComplete="off"
             spellCheck={false}

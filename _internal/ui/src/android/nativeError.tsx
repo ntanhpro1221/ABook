@@ -1,7 +1,7 @@
 import { toast } from "@/shared/toast";
 import { ErrorDetails } from "@/shared/ErrorDetails";
 
-/** Mã lỗi Capacitor khi máy kia trả 401 - nó đã thôi ghép điện thoại này (NetErrors.UNPAIRED), không phải tắt máy hay khác mạng. */
+/** Mã lỗi Capacitor khi máy kia trả 401 - nó đã bỏ ghép điện thoại này (NetErrors.UNPAIRED), không phải tắt máy hay khác mạng. */
 export const UNPAIRED = "UNPAIRED";
 
 /** Lỗi từ lõi native (LibraryPlugin.fail): `message` đã là câu cho người nghe theo loại lỗi mạng; chữ gốc của Java nằm ở `data.technical`

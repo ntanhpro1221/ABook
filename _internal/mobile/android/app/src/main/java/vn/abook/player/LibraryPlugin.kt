@@ -120,7 +120,7 @@ class LibraryPlugin : Plugin() {
 
     /**
      * Từ chối lời gọi; chứng chỉ máy kia đổi thì kèm mã [Pin.CODE] để giao diện hiện câu "ghép lại" thay vì "không kết nối được". Máy kia trả 401: mã
-     * [NetErrors.UNPAIRED] (nó đã thôi ghép máy này). Lỗi mạng: câu tiếng Việt theo loại, mã là tên loại, chữ gốc trong `data.technical` (soát a68 lỗi 4, 5).
+     * [NetErrors.UNPAIRED] (nó đã bỏ ghép máy này). Lỗi mạng: câu tiếng Việt theo loại, mã là tên loại, chữ gốc trong `data.technical` (soát a68 lỗi 4, 5).
      */
     private fun fail(call: PluginCall, error: Exception, fallback: String = error.javaClass.simpleName) {
         val (message, technical) = describe(error, fallback)
@@ -698,8 +698,8 @@ class LibraryPlugin : Plugin() {
         call.resolve(JSObject.fromJSONObject(Peers.pairBluetooth(context, address, call.getString("code") ?: "")))
     }
 
-    /** Sửa chưa gửi của các cuốn nghe thẳng của một thiết bị ghép - thứ thôi ghép sẽ xoá (hộp xác nhận hỏi trước): từng cuốn, tổng, và
-     *  `sendable` = thiết bị là máy tính nên "gửi trước" có nghĩa (điện thoại khác không nhận sửa); `cache` = cái thôi ghép sẽ quên
+    /** Sửa chưa gửi của các cuốn nghe thẳng của một thiết bị ghép - thứ bỏ ghép sẽ xoá (hộp xác nhận hỏi trước): từng cuốn, tổng, và
+     *  `sendable` = thiết bị là máy tính nên "gửi trước" có nghĩa (điện thoại khác không nhận sửa); `cache` = cái bỏ ghép sẽ quên
      *  (số cuốn nghe thẳng, byte của chúng, số cuốn đang có chỗ nghe - chỗ nghe giữ lại, [Peers.forget]). */
     @PluginMethod
     fun peerUnsent(call: PluginCall) = background(call) {
@@ -712,7 +712,7 @@ class LibraryPlugin : Plugin() {
             .put("cache", JSObject().put("books", cache.books).put("bytes", cache.bytes).put("places", cache.places)))
     }
 
-    /** Thôi ghép. Còn sửa chưa gửi thì từ chối, trừ khi `send` (gửi hết về máy ấy rồi mới gỡ; hỏng giữa chừng thì không gỡ) hay `discard` (người dùng chọn bỏ). */
+    /** Bỏ ghép. Còn sửa chưa gửi thì từ chối, trừ khi `send` (gửi hết về máy ấy rồi mới gỡ; hỏng giữa chừng thì không gỡ) hay `discard` (người dùng chọn bỏ). */
     @PluginMethod
     fun peerForget(call: PluginCall) = background(call) {
         val key = call.getString("key") ?: ""

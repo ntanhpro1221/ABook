@@ -113,8 +113,8 @@ describe("watchReadAloud", () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect((client.getQueryData(textScriptKey(BOOK, 1)) as Script | undefined)?.timed).toBe(true);
     // Lõi đọc tạm một đoạn bằng giọng kế: câu của lõi hiện lên cho người nghe.
-    (handlers.get("readAloudNotice") as (event: { message: string }) => void)({ message: "Khóa FPT.AI đã hết hạn mức - tạm đọc bằng giọng Hoài My (Edge)." });
-    expect(notify).toHaveBeenCalledWith("Khóa FPT.AI đã hết hạn mức - tạm đọc bằng giọng Hoài My (Edge).");
+    (handlers.get("readAloudNotice") as (event: { message: string }) => void)({ message: "Khoá FPT.AI đã hết hạn mức - tạm đọc bằng giọng Hoài My (Edge)." });
+    expect(notify).toHaveBeenCalledWith("Khoá FPT.AI đã hết hạn mức - tạm đọc bằng giọng Hoài My (Edge).");
     // Tiến độ "Làm trước" do việc nền đẩy lên: vào đúng khoá menu Giọng đọc và danh sách chương đọc.
     const status: PrepareStatus = { state: "running", bookId: BOOK, voice: "edge:a", chapters: [] };
     (handlers.get("readAloudPrepare") as (event: PrepareStatus) => void)(status);

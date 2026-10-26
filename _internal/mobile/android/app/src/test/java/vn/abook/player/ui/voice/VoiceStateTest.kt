@@ -11,8 +11,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Việc của Giọng đọc làm thêm với nguồn giả: tải / huỷ / gỡ giọng trên máy (kể cả tiến độ chỉ đi tới và danh sách giọng đọc lại khi xong), đồng ý gửi chữ, khóa (lưu trước khi
- * kiểm, khóa chỉ đi xuống nguồn), nghe thử (mẫu về muộn bị bỏ), Nhạc của tôi. Phạm vi chạy ngay (Unconfined): sau mỗi lời gọi trạng thái đã xong; chỉ việc bị giữ bằng cổng mới dang dở.
+ * Việc của Giọng đọc làm thêm với nguồn giả: tải / huỷ / gỡ giọng trên máy (kể cả tiến độ chỉ đi tới và danh sách giọng đọc lại khi xong), đồng ý gửi chữ, khoá (lưu trước khi
+ * kiểm, khoá chỉ đi xuống nguồn), nghe thử (mẫu về muộn bị bỏ), Nhạc của tôi. Phạm vi chạy ngay (Unconfined): sau mỗi lời gọi trạng thái đã xong; chỉ việc bị giữ bằng cổng mới dang dở.
  */
 class VoiceStateTest {
     private val source = FakeVoiceSource()
@@ -20,7 +20,10 @@ class VoiceStateTest {
     private var changed = 0
     private val viet = ModuleKind.Vieneu
 
-    private fun state(pollMs: Long = 3_600_000) = VoiceState(source, CoroutineScope(Dispatchers.Unconfined), player, { changed++ }, pollMs)
+    private val scope = CoroutineScope(Dispatchers.Unconfined)
+    private val imports = MineImports(source, scope)
+
+    private fun state(pollMs: Long = 3_600_000) = VoiceState(source, scope, player, { changed++ }, pollMs, imports)
 
     private fun eventually(what: String, condition: () -> Boolean) {
         val until = System.currentTimeMillis() + 5_000
@@ -151,14 +154,14 @@ class VoiceStateTest {
         assertEquals(setOf("azure"), source.allowed)
     }
 
-    // ---- khóa ----
+    // ---- khoá ----
 
     @Test
     fun `a key is saved trimmed and only the masked tail comes back`() {
         val voice = state()
         voice.openVoice()
         val azure = voice.keys.value.providers.first { it.id == "azure" }
-        assertEquals("Dán khóa trước đã.", runBlocking { voice.saveKey(azure, "  ", "") })
+        assertEquals("Dán khoá trước đã.", runBlocking { voice.saveKey(azure, "  ", "") })
         assertNull(runBlocking { voice.saveKey(azure, "  secret-0001-WXYZ ", " southeastasia ") })
         assertEquals(Triple("azure", "secret-0001-WXYZ", "southeastasia"), source.savedKeys.single())
         val after = voice.keys.value.providers.first { it.id == "azure" }
@@ -192,25 +195,25 @@ class VoiceStateTest {
     @Test
     fun `checking a saved key does not save again and a refusal is shown as is`() {
         source.keys = source.keys.map { if (it.id == "fpt") it.copy(hasKey = true, masked = "••••1234") else it }.toMutableList()
-        source.checkResult = { KeyResult(false, "Khóa FPT.AI bị từ chối (401).") }
+        source.checkResult = { KeyResult(false, "Khoá FPT.AI bị từ chối (401).") }
         val voice = state()
         voice.openVoice()
         val fpt = voice.keys.value.providers.first { it.id == "fpt" }
         val result = runBlocking { voice.checkKey(fpt, "", "") }
         assertFalse(result.ok)
-        assertEquals("Khóa FPT.AI bị từ chối (401).", result.text)
+        assertEquals("Khoá FPT.AI bị từ chối (401).", result.text)
         assertTrue(source.savedKeys.isEmpty())
     }
 
     @Test
     fun `a key that cannot be saved stops the check`() {
-        source.saveError = VoiceFailure("Chưa lưu được khóa")
+        source.saveError = VoiceFailure("Chưa lưu được khoá")
         val voice = state()
         voice.openVoice()
         val google = voice.keys.value.providers.first { it.id == "google" }
         val result = runBlocking { voice.checkKey(google, "k", "") }
         assertFalse(result.ok)
-        assertEquals("Chưa lưu được khóa", result.text)
+        assertEquals("Chưa lưu được khoá", result.text)
         assertTrue(source.checked.isEmpty())
     }
 
@@ -224,7 +227,7 @@ class VoiceStateTest {
         assertEquals(listOf("viettel"), source.removedKeys)
         assertFalse(voice.keys.value.providers.first { it.id == "viettel" }.hasKey)
         assertEquals(1, changed)
-        assertEquals("Chưa có khóa", voice.summary.value.keys)
+        assertEquals("Chưa có khoá", voice.summary.value.keys)
     }
 
     @Test

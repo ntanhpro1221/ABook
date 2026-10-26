@@ -72,7 +72,7 @@ fun SampleButton(active: Boolean, description: String, tag: String, onClick: () 
     }
 }
 
-/** Một nhà cung cấp giọng dùng khóa: tên, khóa che + kết quả lần kiểm tra (đỏ khi khóa chưa dùng được), chạm mở bảng của nó. */
+/** Một nhà cung cấp giọng dùng khoá: tên, khoá che + kết quả lần kiểm tra (đỏ khi khoá chưa dùng được), chạm mở bảng của nó. */
 @Composable
 fun KeyRow(provider: KeyProvider, onOpen: (() -> Unit)?) {
     val colors = Abook.colors

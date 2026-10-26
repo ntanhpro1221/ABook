@@ -79,8 +79,8 @@ class BookFormsTest {
         add(ImportState(), false, "add_empty_light")
         rule.onNodeWithText("Chọn sách từ máy bạn").assertIsDisplayed()
         rule.onNodeWithText("EPUB, DOCX, TXT, PDF hoặc file ABook.").assertIsDisplayed()
-        rule.onNodeWithText("Chọn file").assertIsDisplayed()
-        rule.onNodeWithText("Thư mục TXT").assertIsDisplayed()
+        rule.onNodeWithText("Chọn file sách").assertIsDisplayed()
+        rule.onNodeWithText("Chọn thư mục TXT").assertIsDisplayed()
         // Không còn tiêu đề giả của một biểu mẫu, không còn câu hướng dẫn.
         rule.onAllNodesWithText("Sách của bạn").assertCountEquals(0)
         rule.onAllNodesWithText("Hàng đợi nhập").assertCountEquals(0)
@@ -156,9 +156,9 @@ class BookFormsTest {
         rule.onAllNodesWithText("✓").assertCountEquals(0)
         rule.onNodeWithTag("import_meta").assertTextEquals("Nguyễn Nhật Ánh · 2 / 3 chương")
         rule.onAllNodesWithText("Bỏ đọc dòng").assertCountEquals(2)
-        // Không hai khối dính nhau: dòng thông tin và tiêu đề "Gợi ý đọc" cách ≥ 16.
+        // Không hai khối dính nhau: dòng thông tin và tiêu đề "Gợi ý phần đọc" cách ≥ 16.
         val meta = rule.onNodeWithTag("import_meta").getUnclippedBoundsInRoot()
-        val next = rule.onNodeWithText("Gợi ý đọc").getUnclippedBoundsInRoot()
+        val next = rule.onNodeWithText("Gợi ý phần đọc").getUnclippedBoundsInRoot()
         assertTrue("khoảng ${next.top - meta.bottom}", (next.top - meta.bottom).value >= 16f)
     }
 

@@ -15,8 +15,8 @@ import vn.abook.player.ui.screens.SettingsPage
 import vn.abook.player.ui.theme.Dim
 
 /**
- * Khóa giọng trực tuyến: mỗi nhà cung cấp (Azure, Google Cloud, FPT.AI, Viettel AI) một hàng - tên, khóa che và kết quả lần kiểm tra; chạm mở bảng nhập / kiểm tra / xoá khóa.
- * Khóa lưu và đọc đúng như bản WebView ([vn.abook.player.readaloud.OnlineVoices]); màn không bao giờ thấy khóa thật. Chưa đọc xong thì các hàng đã có tên, chưa chạm được.
+ * Khoá giọng trực tuyến: mỗi nhà cung cấp (Azure, Google Cloud, FPT.AI, Viettel AI) một hàng - tên, khoá che và kết quả lần kiểm tra; chạm mở bảng nhập / kiểm tra / xoá khoá.
+ * Khoá lưu và đọc đúng như bản WebView ([vn.abook.player.readaloud.OnlineVoices]); màn không bao giờ thấy khoá thật. Chưa đọc xong thì các hàng đã có tên, chưa chạm được.
  */
 @Composable
 fun KeysScreen(voice: VoiceState, sheets: SheetHost, onBack: () -> Unit, modifier: Modifier = Modifier) {
@@ -25,15 +25,15 @@ fun KeysScreen(voice: VoiceState, sheets: SheetHost, onBack: () -> Unit, modifie
         voice.loadKeys()
         voice.loadConsents()
     }
-    SettingsPage("Khóa giọng trực tuyến", onBack, "keys_screen", modifier) {
+    SettingsPage("Khoá trực tuyến", onBack, "keys_screen", modifier) {
         ListSection(first = true) {
             val rows = if (ui.loaded) ui.providers else VoiceText.KEYED.map { (id, name) -> KeyProvider(id, name, "", false, false, "", "", false, 0) }
             for ((index, provider) in rows.withIndex()) {
                 if (index > 0) RowLine()
                 KeyRow(provider, if (ui.loaded) ({ sheets.show { dismiss -> KeySheet(provider, voice, dismiss) } }) else null)
             }
-            InlineProblem(if (ui.failed && !ui.loaded) "Chưa đọc được các khóa" else "", voice::loadKeys, "keys_problem")
-            Caption("Khóa chỉ lưu trên máy này.", Modifier.padding(top = Dim.s12))
+            InlineProblem(if (ui.failed && !ui.loaded) "Chưa đọc được các khoá" else "", voice::loadKeys, "keys_problem")
+            Caption("Khoá chỉ lưu trên máy. Dịch vụ có thể tính phí; lỗi khoá thì tạm dùng Edge hoặc giọng máy.", Modifier.padding(top = Dim.s12))
         }
     }
 }

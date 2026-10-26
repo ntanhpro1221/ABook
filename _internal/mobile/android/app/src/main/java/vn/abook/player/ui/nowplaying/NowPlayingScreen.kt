@@ -67,7 +67,7 @@ fun NowPlayingScreen(
                 // Đọc theo là một chế độ của chính cửa sổ này, nên công tắc chế độ nằm ở thanh trên của cửa sổ - không phải một nút hành động ở đáy.
                 if (state.readAlongAvailable) PlayerModeSwitch(mode, setReading)
                 else BasicText("ĐANG NGHE", style = Abook.type.caption)
-                GlyphButton("Tuỳ chọn", "⋯", { window.openSheet(PlayerSheet.More) }, Modifier.testTag("player_more"))
+                GlyphButton("Thêm tuỳ chọn", "⋯", { window.openSheet(PlayerSheet.More) }, Modifier.testTag("player_more"))
             }
             // Both modes occupy this same fixed weight. Transport is outside it and never changes coordinates.
             // Nghe: bìa lớn ở trên, tên chương + tên sách ở dưới. Đọc theo: chính bìa ấy thu về ô 48 dp, chính hai dòng tên trượt lên
@@ -207,7 +207,7 @@ fun PlayerSeekBar(durationMs: Long, position: PlayerPosition, onSeek: (Long) -> 
     Column(modifier.fillMaxWidth()) {
         Canvas(Modifier.fillMaxWidth().height(44.dp).testTag("player_seek")
             .semantics {
-                contentDescription = "Vị trí nghe"
+                contentDescription = "Vị trí trong chương"
                 progressBarRangeInfo = ProgressBarRangeInfo((seconds * 1000).toFloat(), 0f..durationMs.coerceAtLeast(1).toFloat())
                 setProgress { value -> onSeek(value.toLong().coerceIn(0, durationMs)); true }
             }
@@ -300,7 +300,7 @@ private fun ReturnChip(available: Boolean, serial: Int, onReturn: () -> Unit) {
         androidx.compose.animation.AnimatedVisibility(shown,
             enter = androidx.compose.animation.slideInVertically(tween(MotionMs.MEDIUM)) { it },
             exit = androidx.compose.animation.slideOutVertically(tween(MotionMs.MEDIUM_OUT)) { it }) {
-            BasicText("Về chỗ cũ", Modifier
+            BasicText("Về chỗ vừa nghe", Modifier
                 .background(Abook.colors.accentSoft, RoundedCornerShape(Dim.radiusCover))
                 .pressable { shown = false; onReturn() }
                 .testTag("return_place")

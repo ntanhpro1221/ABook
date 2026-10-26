@@ -18,7 +18,7 @@ import vn.abook.player.vieneu.VoiceModule
 
 /**
  * Nguồn thật của Giọng đọc: gọi thẳng các lõi - cùng những hàm mà `ReadAloudPlugin` / `LibraryPlugin` chuyển tiếp cho bản WebView ([VoiceModule], [OnlineVoices],
- * [ReadAloud], [vn.abook.player.MusicStore]), không qua cầu Capacitor. Khóa chỉ đi xuống [OnlineVoices.saveKey], không ghi log, không trả lại.
+ * [ReadAloud], [vn.abook.player.MusicStore]), không qua cầu Capacitor. Khoá chỉ đi xuống [OnlineVoices.saveKey], không ghi log, không trả lại.
  */
 class VoiceRepo(context: Context) : VoiceSource {
     private val app = context.applicationContext
@@ -87,15 +87,15 @@ class VoiceRepo(context: Context) : VoiceSource {
     }
 
     override suspend fun saveKey(provider: String, key: String, region: String): KeyProvider = io {
-        guard("Chưa lưu được khóa") { KeyJson.provider(OnlineVoices.saveKey(app, provider, key, region)) }
+        guard("Chưa lưu được khoá") { KeyJson.provider(OnlineVoices.saveKey(app, provider, key, region)) }
     }
 
     override suspend fun removeKey(provider: String): KeyProvider = io {
-        guard("Chưa xoá được khóa") { KeyJson.provider(OnlineVoices.removeKey(app, provider)) }
+        guard("Chưa xoá được khoá") { KeyJson.provider(OnlineVoices.removeKey(app, provider)) }
     }
 
     override suspend fun checkKey(provider: String): KeyResult = io {
-        guard("Chưa kiểm tra được khóa") { KeyJson.check(OnlineVoices.checkKey(app, provider)) }
+        guard("Chưa kiểm tra được khoá") { KeyJson.check(OnlineVoices.checkKey(app, provider)) }
     }
 
     override suspend fun consents(): Set<String> = io { ReadAloud.onlineConsents().toSet() }

@@ -69,7 +69,7 @@ class ExportModelTest {
     fun `an online voice names where the whole book goes`() {
         assertEquals("", ExportText.wholeBookNotice(ExportVoice("x", "Giọng", "device", online = false)))
         assertTrue(Regex("cả cuốn.*Microsoft").containsMatchIn(ExportText.wholeBookNotice(ExportVoice("x", "Giọng", "edge", online = true))))
-        assertTrue(Regex("Azure Speech.*khóa của bạn").containsMatchIn(ExportText.wholeBookNotice(ExportVoice("x", "Giọng", "azure", online = true))))
+        assertTrue(Regex("Azure Speech.*khoá của bạn").containsMatchIn(ExportText.wholeBookNotice(ExportVoice("x", "Giọng", "azure", online = true))))
         assertTrue(ExportText.wholeBookNotice(ExportVoice("x", "Giọng", "khac", online = true)).contains("dịch vụ ngoài"))
     }
 

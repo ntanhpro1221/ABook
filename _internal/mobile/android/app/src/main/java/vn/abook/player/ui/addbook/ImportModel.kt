@@ -4,8 +4,8 @@ import androidx.compose.runtime.Immutable
 
 @Immutable
 enum class ImportStage(val label: String) {
-    Waiting("Đang chờ"), Reading("Đang đọc file"), Review("Chờ bạn xem"), Adding("Đang thêm sách"),
-    Added("Đã thêm"), Existing("Đã có sách"), Skipped("Đã bỏ qua"), Error("Chưa nhập được"),
+    Waiting("Chờ"), Reading("Đang đọc"), Review("Đang xem"), Adding("Đang thêm"),
+    Added("Đã thêm"), Existing("Đã có trong thư viện"), Skipped("Đã bỏ qua"), Error("Chưa nhập được"),
 }
 
 @Immutable

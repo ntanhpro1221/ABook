@@ -219,7 +219,7 @@ fun SearchBox(ui: LibraryUiState, modifier: Modifier = Modifier) {
                 keyboardActions = KeyboardActions(onSearch = { keyboard?.hide() }),
                 decorationBox = { inner ->
                     Box(contentAlignment = Alignment.CenterStart) {
-                        if (ui.query.isEmpty()) BasicText("Tìm sách", style = Abook.type.body.copy(color = colors.text3))
+                        if (ui.query.isEmpty()) BasicText("Tên sách, tác giả, giọng", style = Abook.type.body.copy(color = colors.text3))
                         inner()
                     }
                 },

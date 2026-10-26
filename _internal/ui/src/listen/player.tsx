@@ -1283,15 +1283,15 @@ export function PlayerProvider({
     setCanGoBack(false);
   }, [applySleep, bed, client, endFade, engine, native, night, position, save]);
 
-  // Thôi ghép máy kia khi đang nạp một cuốn của nó: cuốn rời Thư viện thì trình phát đóng và nói vì sao (soát a27 lỗi 11). Chỉ đọc danh sách
-  // Thư viện đã có trong bộ đệm (Thư viện, hộp thôi ghép làm mới nó) - không hỏi thêm.
+  // Bỏ ghép máy kia khi đang nạp một cuốn của nó: cuốn rời Thư viện thì trình phát đóng và nói vì sao (soát a27 lỗi 11). Chỉ đọc danh sách
+  // Thư viện đã có trong bộ đệm (Thư viện, hộp bỏ ghép làm mới nó) - không hỏi thêm.
   const library = useQuery<ListenBook[]>({ queryKey: ["listen", "library"], enabled: false });
   useEffect(() => {
     const book = refs.current.book;
     if (!track || !book || track.bookId !== book.id || !leftWithPeer(book, library.data)) return;
     const computer = typeof book.remote === "object" && book.remote ? book.remote.computer : "";
     close();
-    toast.info(`“${book.title}” đã rời Thư viện vì đã thôi ghép ${computer || "máy kia"}`);
+    toast.info(`“${book.title}” đã rời Thư viện vì đã bỏ ghép ${computer || "máy kia"}`);
   }, [close, library.data, track]);
 
   const positionStamp = useCallback(() => refs.current.stamp, []);

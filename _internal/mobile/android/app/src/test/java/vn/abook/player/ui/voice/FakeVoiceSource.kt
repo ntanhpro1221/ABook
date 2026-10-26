@@ -3,8 +3,8 @@ package vn.abook.player.ui.voice
 import kotlinx.coroutines.CompletableDeferred
 
 /**
- * Nguồn Giọng đọc giả: mô-đun, khóa, đồng ý và kho nhạc trong bộ nhớ; ghi lại mọi việc màn đã bảo lõi làm để test so lời gọi. Khóa chỉ ở dạng che (như lõi thật), và nguồn
- * này nhớ khóa đã nhận để test kiểm khóa có đi xuống lõi hay không. Việc dài có thể bị giữ bằng một cổng.
+ * Nguồn Giọng đọc giả: mô-đun, khoá, đồng ý và kho nhạc trong bộ nhớ; ghi lại mọi việc màn đã bảo lõi làm để test so lời gọi. Khoá chỉ ở dạng che (như lõi thật), và nguồn
+ * này nhớ khoá đã nhận để test kiểm khoá có đi xuống lõi hay không. Việc dài có thể bị giữ bằng một cổng.
  */
 class FakeVoiceSource : VoiceSource {
     val modules = ModuleKind.entries.associateWith { Fixtures.missing(it) }.toMutableMap()
@@ -35,6 +35,7 @@ class FakeVoiceSource : VoiceSource {
     val imported = ArrayList<List<String>>()
     var importResult: ((List<String>) -> MusicImportResult)? = null
     var importGate: CompletableDeferred<Unit>? = null
+    var importError: VoiceFailure? = null
     val removedTracks = ArrayList<String>()
     var trackRemoveError: VoiceFailure? = null
 
@@ -116,6 +117,7 @@ class FakeVoiceSource : VoiceSource {
         imported += uris
         for (index in uris.indices) progress(index + 1, uris.size)
         importGate?.await()
+        importError?.let { throw it }
         val result = importResult?.invoke(uris) ?: MusicImportResult(tracks + uris.map { Fixtures.track(it) }, uris.size, 0, emptyList())
         tracks = result.tracks
         return result

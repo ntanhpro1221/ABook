@@ -85,8 +85,8 @@ fun AddBookScreen(
     progress: @Composable (Long) -> (() -> Float) = { { 0.35f } },
 ) {
     BookForm("Thêm sách", onBack, "add_book_screen", footer = {
-        PrimaryButton("Chọn file", pickFiles, Modifier.fillMaxWidth().testTag("pick_books"))
-        TextAction("Thư mục TXT", pickFolder, "pick_folder", Modifier.fillMaxWidth(), align = Alignment.Center)
+        PrimaryButton("Chọn file sách", pickFiles, Modifier.fillMaxWidth().testTag("pick_books"))
+        TextAction("Chọn thư mục TXT", pickFolder, "pick_folder", Modifier.fillMaxWidth(), align = Alignment.Center)
     }) {
         if (state.items.isEmpty()) {
             Column(Modifier.fillMaxWidth().padding(top = Dim.s16).testTag("add_empty")) {
@@ -192,7 +192,7 @@ fun ImportReviewScreen(
             }
             val groups = ImportLogic.groups(ImportLogic.forPicked(preview, choice))
             if (groups.isNotEmpty()) {
-                item("suggestion_heading", "heading") { SectionTitle("Gợi ý đọc") }
+                item("suggestion_heading", "heading") { SectionTitle("Gợi ý phần đọc") }
                 items(groups, key = { "suggestion_${it.line}" }, contentType = { "suggestion" }) { group ->
                     Column {
                         SwitchRow("Bỏ đọc dòng", group.line in choice.skipped,

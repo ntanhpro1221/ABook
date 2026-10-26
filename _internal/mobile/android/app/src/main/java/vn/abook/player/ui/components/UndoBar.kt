@@ -18,12 +18,13 @@ fun UndoBar(deletions: UndoDelete, backEnabled: Boolean = true, aboveNavigation:
     val ids by deletions.undoable.collectAsState()
     val showing by deletions.showing.collectAsState()
     val problem by deletions.problem.collectAsState()
+    val title by deletions.lastTitle.collectAsState()
     var count by remember { mutableIntStateOf(1) }
     if (ids.isNotEmpty()) count = ids.size
     BackHandler(enabled = backEnabled && (showing || problem.isNotEmpty())) { deletions.dismiss() }
     Reveal(showing || problem.isNotEmpty()) {
         Row(Modifier.fillMaxWidth().background(Abook.colors.panel).then(if (aboveNavigation) Modifier else Modifier.navigationBarsPadding()).heightIn(min = Dim.s48).padding(horizontal = Dim.margin).testTag("undo_bar"), verticalAlignment = Alignment.CenterVertically) {
-            BasicText(if (problem.isNotEmpty()) problem else if (count == 1) "Đã bỏ sách" else "Đã bỏ $count cuốn", style = Abook.type.bodySmall, modifier = Modifier.weight(1f).padding(vertical = Dim.s12))
+            BasicText(if (problem.isNotEmpty()) problem else if (count > 1) "Đã bỏ $count cuốn" else if (title.isEmpty()) "Đã xoá khỏi điện thoại" else "Đã xoá “$title” khỏi điện thoại", style = Abook.type.bodySmall, modifier = Modifier.weight(1f).padding(vertical = Dim.s12))
             if (showing && ids.isNotEmpty()) {
                 Spacer(Modifier.width(Dim.s16))
                 TextAction("Hoàn tác", deletions::undo, "undo_delete")

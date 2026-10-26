@@ -98,9 +98,9 @@ it("trang sách: đúng một nút chính - 'Nghe' khi chưa nghe, 'Nghe tiếp 
   await book();
   expect(primaries()).toHaveLength(1);
   expect(primaries()[0].textContent).toBe("Nghe tiếp · Chương 3");
-  // Hàng phụ cùng một kiểu: Đọc · Tìm · Từ đầu · Thêm - không nút nào khác là nút chính.
+  // Hàng phụ cùng một kiểu: Đọc · Tìm · Từ đầu · ⋯ (không nhãn) - không nút nào khác là nút chính.
   const secondary = host.querySelector("[data-book-secondary]")!;
-  expect([...secondary.querySelectorAll("button")].map((button) => button.textContent)).toEqual(["Đọc", "Tìm", "Từ đầu", "Thêm"]);
+  expect([...secondary.querySelectorAll("button")].map((button) => button.textContent)).toEqual(["Đọc", "Tìm", "Từ đầu", ""]);
 });
 
 it("trình phát: đúng 5 nút chính + 4 nút phụ có nhãn; việc khác nằm trong '…'", async () => {

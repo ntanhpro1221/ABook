@@ -90,7 +90,7 @@ const STATES: [string, Partial<BookSummary>, string][] = [
   ["đang chạy", {}, "Tạm dừng"],
   ["tạm dừng", { paused: "listener" }, "Tiếp tục"],
   ["giữ chờ duyệt", { paused: "listener", precast: { held: true } as BookSummary["precast"] }, "Thu âm"],
-  ["đang dừng", { stopping: true }, "Đang dừng…"],
+  ["đang dừng", { stopping: true }, "Đang dừng"],
   ["dừng giữa lúc thu", { ...stopped, phase: "synthesis", chapters: { total: 10, completed: 3, failed: 0, working: 0 } }, "Tiếp tục"],
   ["phân tích bị ngắt", { ...stopped, analysisInterrupted: true }, "Phân tích lại"],
   ["xong", { ...stopped, phase: "done", chapters: { total: 10, completed: 10, failed: 0, working: 0 } }, "Nghe trong Thư viện"],
@@ -113,9 +113,9 @@ it("đang chạy: Dừng, Xuất, Mở thư mục nằm trong \"…\", không ph
   await render(<Actions book={book({ chapters: { total: 10, completed: 2, failed: 0, working: 0 }, pendingChanges: 2 })} />);
   const buttons = [...host.querySelectorAll("button")].map(text);
   expect(buttons).not.toContain("Dừng");
-  expect(buttons).not.toContain("Xuất…");
+  expect(buttons).not.toContain("Xuất");
   await openMenu(host.querySelector('[aria-label="Tuỳ chọn dự án Sách thử"]')!);
-  expect(menuItems()).toEqual(expect.arrayContaining(["Nghe trong Thư viện", "Dừng…", "2 thay đổi chờ áp", "Xuất…", "Mở thư mục", "Đổi tên…", "Xoá dự án…"]));
+  expect(menuItems()).toEqual(expect.arrayContaining(["Nghe trong Thư viện", "Dừng", "2 thay đổi chờ áp", "Xuất", "Mở thư mục", "Đổi tên", "Xoá dự án"]));
 });
 
 it("tab dự án: tối đa 5 tab hiện, phần còn lại mở được trong \"Thêm\"", async () => {

@@ -204,7 +204,7 @@ object Voices {
     private val KEYED = listOf("azure" to "Azure Speech", "google" to "Google Cloud", "fpt" to "FPT.AI", "viettel" to "Viettel AI")
     private val GROUPS: List<Triple<String, String, String>> =
         listOf(Triple("edge", "Edge", "trực tuyến, miễn phí")) +
-            KEYED.map { (provider, name) -> Triple(provider, name, "dùng khóa của bạn") } +
+            KEYED.map { (provider, name) -> Triple(provider, name, "dùng khoá của bạn") } +
             listOf(
                 Triple("vieneu", "VieNeu", "trên máy này, không cần mạng"),
                 Triple("supertonic", "Supertonic", "trên máy này, không cần mạng"),

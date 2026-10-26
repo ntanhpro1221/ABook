@@ -25,7 +25,7 @@ describe("createGate", () => {
     const gate = createGate({ ...ready, reading: true });
     expect(gate.disabled).toBe(true);
     expect(gate.reading).toBe(true);
-    expect(gate.label).toBe("Đang đọc nguồn…");
+    expect(gate.label).toBe("Đang đọc nguồn");
   });
   it("đọc xong, có tên sách: bấm được", () => {
     expect(createGate(ready).disabled).toBe(false);

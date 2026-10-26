@@ -81,7 +81,7 @@ object Devices {
         SyncLink.saveRoutes(prefs.edit().putString("host", host).putInt("port", port).putString("token", reply.getString("token"))
             .putString("fingerprint", fingerprint).putString("name", reply.optString("name")), reply, host, port, fingerprint,
             PeerRouting.main(context).takeIf { it.optString("fingerprint").equals(fingerprint, true) }).commit()
-        // Ô địa chỉ nhớ máy đã ghép lần trước (soát a68 lỗi 20): ngoài "sync" vì thôi ghép xoá sạch "sync" - ghép lại là lúc cần nó nhất.
+        // Ô địa chỉ nhớ máy đã ghép lần trước (soát a68 lỗi 20): ngoài "sync" vì bỏ ghép xoá sạch "sync" - ghép lại là lúc cần nó nhất.
         context.getSharedPreferences("abook_self", Context.MODE_PRIVATE).edit().putString("lastAddress", "$host:$port").apply()
         Remote.ensure()
         return reply.optString("name")

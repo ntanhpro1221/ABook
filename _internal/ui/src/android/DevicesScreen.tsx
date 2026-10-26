@@ -142,7 +142,7 @@ export function PairPanel() {
     discover.mutate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  // Địa chỉ máy tính đã ghép lần trước (soát a68 lỗi 20): ghép lại sau khi máy tính thôi ghép không phải gõ lại - mở sẵn ô địa chỉ có nó.
+  // Địa chỉ máy tính đã ghép lần trước (soát a68 lỗi 20): ghép lại sau khi máy tính bỏ ghép không phải gõ lại - mở sẵn ô địa chỉ có nó.
   const lastAddress = connection.data?.lastAddress ?? "";
   const filled = useRef(false);
   useEffect(() => {
@@ -196,7 +196,7 @@ export function PairPanel() {
             </div>
           ) : (
             <p className="py-3 text-sm text-fg-2">
-              {discover.isPending ? "Đang tìm trong mạng Wi-Fi…" : "Chưa thấy máy tính nào. Kiểm tra máy tính đã bật kết nối, hoặc nhập địa chỉ."}
+              {discover.isPending ? "Đang tìm trong mạng Wi-Fi" : "Chưa thấy máy tính nào. Kiểm tra máy tính đã bật kết nối, hoặc nhập địa chỉ."}
             </p>
           )}
         </div>
@@ -264,7 +264,7 @@ export function PairPanel() {
           value={address}
           onChange={(event) => setAddress(event.target.value)}
           inputMode="url"
-          placeholder="Ví dụ 192.168.1.20:47630"
+          placeholder="Địa chỉ, ví dụ 192.168.1.20:47630"
           className="device-input w-full px-3 text-base"
         />
       )}
@@ -457,7 +457,7 @@ function PeersPanel() {
     },
     onError: (error: Error) => toastNativeError("Chưa ghép được", error),
   });
-  // Thiết bị đã thôi ghép điện thoại này: mở hộp ghép với sẵn địa chỉ của nó, chỉ còn nhập mã mới.
+  // Thiết bị đã bỏ ghép điện thoại này: mở hộp ghép với sẵn địa chỉ của nó, chỉ còn nhập mã mới.
   const repair = async (peer: { key: string; host: string }) => {
     const known = await EbookLibrary.peers().then(({ peers: list }) => list.find((item) => item.key === peer.key), () => undefined);
     setAddress(known && !known.host.startsWith("bt:") ? `${known.host}:${known.port}` : known?.host ?? peer.host);
@@ -465,7 +465,7 @@ function PeersPanel() {
     setOpen(true);
   };
   const peers = libraries.data?.peers ?? [];
-  // Thôi ghép xoá các cuốn nghe thẳng của thiết bị, kể cả phần sửa chưa gửi: còn sửa thì hỏi trước (shared/unpair.ts).
+  // Bỏ ghép xoá các cuốn nghe thẳng của thiết bị, kể cả phần sửa chưa gửi: còn sửa thì hỏi trước (shared/unpair.ts).
   const unpair = useUnpair<(typeof peers)[number]>({
     self: "điện thoại",
     name: (peer) => peer.name,
@@ -526,7 +526,7 @@ function PeersPanel() {
             <p className="text-sm text-fg-2">Chưa có máy nào ghép Bluetooth với điện thoại này (Cài đặt Android → Bluetooth).</p>
           )}
           {discover.isPending ? (
-            <p className="text-sm text-fg-2">Đang tìm trong mạng Wi-Fi…</p>
+            <p className="text-sm text-fg-2">Đang tìm trong mạng Wi-Fi</p>
           ) : found?.length ? (
             <div className="space-y-2">
               {found.map((item) => (
@@ -553,7 +553,7 @@ function PeersPanel() {
             value={address}
             onChange={(event) => setAddress(event.target.value)}
             inputMode="url"
-            placeholder="Địa chỉ, ví dụ 192.168.1.25:47630"
+            placeholder="Địa chỉ, ví dụ 192.168.1.20:47630"
             className="device-input w-full px-3 text-base"
           />
           <input
@@ -576,7 +576,7 @@ function PeersPanel() {
               <div className="truncate font-semibold">{peer.name}</div>
               <div className={cn("text-xs", peer.error || peer.unpaired ? "text-danger" : "text-fg-2")}>
                 {peer.unpaired
-                  ? `${peer.name} đã thôi ghép với điện thoại này`
+                  ? `${peer.name} đã bỏ ghép với điện thoại này`
                   : peer.pinChanged
                     ? peer.error
                     : peer.error
@@ -592,7 +592,7 @@ function PeersPanel() {
               <Fingerprint value={peer.fingerprint} />
             </div>
             <button type="button" onClick={() => void unpair.start(peer)} className="text-xs font-medium text-danger">
-              Thôi ghép
+              Bỏ ghép
             </button>
           </div>
 
@@ -632,7 +632,7 @@ export function SharePanel({ bare = false }: { bare?: boolean }) {
     if (permitted) run.mutate(() => EbookLibrary.setShare({ enabled: true }));
     else setExplain(true);
   };
-  // Thôi ghép một máy đang nghe thư viện của điện thoại này: hỏi trước như bên máy tính (máy ấy mất quyền nghe cho tới khi ghép lại).
+  // Bỏ ghép một máy đang nghe thư viện của điện thoại này: hỏi trước như bên máy tính (máy ấy mất quyền nghe cho tới khi ghép lại).
   const [removing, setRemoving] = useState<{ id: string; name: string } | null>(null);
   const [now, setNow] = useState(() => Date.now() / 1000);
   const pairing = status.data?.pairing ?? null;
@@ -714,7 +714,7 @@ export function SharePanel({ bare = false }: { bare?: boolean }) {
       {enabled && (
         <BackgroundNote
           note="Khi tắt màn hình, máy có thể tạm dừng chia sẻ - máy tính sẽ phải chờ lâu hơn."
-          action="Để máy tính khỏi phải chờ: cho ABook chạy nền"
+          action="Cho ABook chạy nền"
         />
       )}
       {enabled && data && (
@@ -764,7 +764,7 @@ export function SharePanel({ bare = false }: { bare?: boolean }) {
                   <Laptop className="size-4 shrink-0 text-fg-2" />
                   <span className="min-w-0 flex-1 truncate text-sm">{device.name}</span>
                   <button type="button" onClick={() => setRemoving(device)} className="text-xs font-medium text-danger">
-                    Thôi ghép
+                    Bỏ ghép
                   </button>
                 </li>
               ))}
@@ -774,7 +774,7 @@ export function SharePanel({ bare = false }: { bare?: boolean }) {
       )}
       <Dialog footer={<DialogActions>
           <Button variant="ghost" onClick={() => setRemoving(null)}>
-            Để nguyên
+            Giữ lại
           </Button>
           <Button
             variant="danger"
@@ -783,12 +783,12 @@ export function SharePanel({ bare = false }: { bare?: boolean }) {
               setRemoving(null);
             }}
           >
-            Thôi ghép
+            Bỏ ghép
           </Button>
         </DialogActions>}
         open={removing !== null}
         onOpenChange={(open) => !open && setRemoving(null)}
-        title={`Thôi ghép ${removing?.name ?? "máy này"}?`}
+        title={`Bỏ ghép ${removing?.name ?? "máy này"}?`}
         description="Máy ấy không nghe được thư viện này nữa; sách đã tải vẫn còn."
       >
 
@@ -869,7 +869,7 @@ export function StoragePanel({ storage, names, bare = false }: { storage: { byte
   // Xoá một cuốn: hàng khép lại tại chỗ (shared/motion.ts useListPresence).
   const rows = useListPresence(entries, (entry) => entry.id);
   return (
-    <section className={bare ? "" : "mt-8"} aria-label="Dung lượng sách trên máy">
+    <section className={bare ? "" : "mt-8"} aria-label="Dung lượng">
       {!bare && (
         <p className="text-center text-xs text-fg-3">
           Sách trên máy: {formatSize(storage.bytes)} · còn trống {formatSize(storage.free)}
@@ -885,7 +885,7 @@ export function StoragePanel({ storage, names, bare = false }: { storage: { byte
               <div className="flex items-center gap-3 py-2.5">
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm">{title}</div>
-                  {kind === "partial" && <MotionRegion motionKey={busy} className="text-xs text-fg-3">{busy ? "Đang tải" : "Phần đã tải, chưa thành sách trên máy"}</MotionRegion>}
+                  {kind === "partial" && <MotionRegion motionKey={busy} className="text-xs text-fg-3">{busy ? "Đang tải" : "Phần đã tải, chưa thành sách"}</MotionRegion>}
                 </div>
                 <div className="shrink-0 text-xs text-fg-2">{formatSize(bytes)}</div>
                 <button
@@ -928,9 +928,9 @@ export function DevicesScreen() {
   const unpair = async (announce: boolean) => {
     await EbookLibrary.unpair();
     void client.invalidateQueries({ queryKey: ["connection"] });
-    if (announce) toast.success(`Đã bỏ ghép với ${computerName}`);
+    if (announce) toast.success(`Đã bỏ ghép ${computerName}`);
   };
-  // Máy tính trả 401: nó đã thôi ghép điện thoại này - không phải tắt máy hay khác Wi-Fi (soát a68 lỗi 5). "Ghép lại" quên mã cũ rồi mở hộp
+  // Máy tính trả 401: nó đã bỏ ghép điện thoại này - không phải tắt máy hay khác Wi-Fi (soát a68 lỗi 5). "Ghép lại" quên mã cũ rồi mở hộp
   // ghép với sẵn địa chỉ máy tính (PairPanel).
   const unpairedHere = remote.isError && isUnpaired(remote.error);
   const failure = remote.isError ? nativeError(remote.error) : null;
@@ -955,7 +955,7 @@ export function DevicesScreen() {
                 </div>
                 <div className={cn("text-xs", remote.isError ? "text-danger" : "text-fg-2")}>
                   {unpairedHere
-                    ? `Máy tính ${computerName} đã thôi ghép với điện thoại này`
+                    ? `Máy tính ${computerName} đã bỏ ghép với điện thoại này`
                     : remote.isError
                       ? pinChanged(remote.error)
                         ? remote.error.message
@@ -990,7 +990,7 @@ export function DevicesScreen() {
             </button>
             <Dialog footer={<DialogActions>
                 <Button variant="ghost" onClick={() => setConfirmUnpair(false)}>
-                  Để nguyên
+                  Giữ lại
                 </Button>
                 <Button
                   variant="danger"
@@ -1004,7 +1004,7 @@ export function DevicesScreen() {
               </DialogActions>}
               open={confirmUnpair}
               onOpenChange={setConfirmUnpair}
-              title={`Bỏ ghép với ${computerName}?`}
+              title={`Bỏ ghép ${computerName}?`}
               description="Sách đã tải vẫn nghe được. Muốn tải thêm thì ghép lại bằng mã mới."
             >
 
@@ -1027,7 +1027,7 @@ export function DevicesScreen() {
       {storage.data && (
         <Fold
           storageKey="devices.storage"
-          title="Dung lượng trên máy"
+          title="Dung lượng"
           summary={`Sách ${formatSize(storage.data.bytes)} · còn trống ${formatSize(storage.data.free)}`}
           icon={<HardDrive className="size-5" />}
           className="mt-3 rounded-none border-0 bg-transparent"

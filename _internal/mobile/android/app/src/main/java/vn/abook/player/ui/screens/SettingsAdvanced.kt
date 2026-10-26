@@ -48,9 +48,9 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 
 /** Lời của Chẩn đoán và Bộ nhớ: cùng chữ với bản WebView (android/Diagnostics.tsx, listen/ReadAloudStorage.tsx, listen/prepareAhead.ts). */
 private object AdvancedCopy {
-    const val LOG = "Việc app làm gần đây"
-    const val LOG_NOTE = "Có tên sách; khoá, mã ghép, IP và đường dẫn đã được che."
-    const val SEND = "Bạn chọn gửi cho ai"
+    const val LOG = "Việc app làm gần đây, để tìm lỗi. Xem lại trước khi gửi."
+    const val LOG_NOTE = "Có tên sách; che khoá, mã ghép, IP và đường dẫn nhận ra được. Máy ghép đọc được khi bật “Chia sẻ thư viện”."
+    const val SEND = "Bạn chọn gửi cho ai; app không tự gửi."
     const val CLEAR = "Gồm cả các lần văng đã ghi."
     const val CLEARED = "Đã xoá nhật ký."
     const val SOURCE = "Giấy phép MIT - github.com/ntanhpro1221/ABook"
@@ -77,7 +77,7 @@ fun AdvancedSettings(env: SettingsEnv, sheets: SheetHost, onBack: () -> Unit, mo
             val bytes = cache
             ListRow("Bản đọc đã làm", hint = AdvancedCopy.cache(bytes)) {
                 if (bytes != null && bytes > 0) {
-                    TextAction("Dọn", { sheets.show { dismiss -> ClearSheet(bytes, onClear = { repo.clearCache(); dismiss() }, dismiss) } }, "cache_clear")
+                    TextAction("Dọn bản đọc", { sheets.show { dismiss -> ClearSheet(bytes, onClear = { repo.clearCache(); dismiss() }, dismiss) } }, "cache_clear")
                 }
             }
         }
@@ -118,7 +118,7 @@ private fun ClearSheet(bytes: Long, onClear: () -> Unit, dismiss: () -> Unit) {
         Spacer(Modifier.height(Dim.s24))
         PrimaryButton("Dọn", onClear, Modifier.fillMaxWidth().testTag("clear_confirm"))
         Box(Modifier.fillMaxWidth().heightIn(min = Dim.s48).pressable(onClick = dismiss).testTag("clear_cancel"), contentAlignment = Alignment.Center) {
-            BasicText("Thôi", style = Abook.type.label.copy(color = Abook.colors.accentText))
+            BasicText("Giữ lại", style = Abook.type.label.copy(color = Abook.colors.accentText))
         }
     }
 }
@@ -132,7 +132,7 @@ private fun LogSheet(repo: SettingsRepo) {
     Column(Modifier.fillMaxWidth().testTag("log_sheet")) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             BasicText("Nhật ký của ABook", style = Abook.type.sectionTitle, modifier = Modifier.weight(1f))
-            IconAction("Làm mới nhật ký", { round++ }, "logs_refresh") { RefreshIcon(Abook.colors.text2) }
+            IconAction("Làm mới", { round++ }, "logs_refresh") { RefreshIcon(Abook.colors.text2) }
         }
         Caption(AdvancedCopy.LOG_NOTE, Modifier.padding(bottom = Dim.s8))
         val shown = lines
@@ -160,8 +160,8 @@ private fun ThirdPartySheet(repo: SettingsRepo) {
         val shown = sections
         val list = rememberLazyListState()
         when {
-            shown == null -> BasicText("Đang mở danh sách.", style = Abook.type.bodySmall, modifier = Modifier.padding(vertical = Dim.s16))
-            shown.isEmpty() -> BasicText("Bản này chưa gói danh sách.", style = Abook.type.bodySmall, modifier = Modifier.padding(vertical = Dim.s16))
+            shown == null -> BasicText("Đang mở danh sách", style = Abook.type.bodySmall, modifier = Modifier.padding(vertical = Dim.s16))
+            shown.isEmpty() -> BasicText("Chưa mở được danh sách.", style = Abook.type.bodySmall, modifier = Modifier.padding(vertical = Dim.s16))
             else -> LazyColumn(Modifier.fillMaxWidth().heightIn(max = 460.dp).fadeEdges(list), state = list) {
                 for ((index, section) in shown.withIndex()) {
                     if (section.title.isNotEmpty()) {

@@ -25,6 +25,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import vn.abook.player.ui.voice.FakeVoiceSource
+import vn.abook.player.ui.voice.MineImports
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -73,7 +75,7 @@ class MusicScreenTest {
         mine += MineTrack("local:b", "Ru con", "Hà Anh", 151.0, analysed = true, vocalsLikely = true)
         mine += MineTrack("local:c", "Sóng", "", 95.0, analysed = false)
     }
-    private val music = MusicState(source, CoroutineScope(Dispatchers.Unconfined))
+    private val music = CoroutineScope(Dispatchers.Unconfined).let { MusicState(source, MineImports(FakeVoiceSource(), it), it) }
     private val credit = MusicCredit(
         "Rainy Night", "Kevin MacLeod", "\"Rainy Night\" Kevin MacLeod (incompetech.com)", "https://incompetech.com/music/", "by",
         "https://creativecommons.org/licenses/by/4.0/",
@@ -174,7 +176,7 @@ class MusicScreenTest {
         source.books.remove(demo)
         showPlayer(playerMusic = PlayerMusic.None)
         rule.onNodeWithTag("player_sheet_more").assertIsDisplayed()
-        rule.onNodeWithText("Giọng").assertIsDisplayed()
+        rule.onNodeWithText("Giọng đọc").assertIsDisplayed()
         assertTrue(rule.onAllNodesWithText("Nhạc nền").fetchSemanticsNodes().isEmpty())
     }
 

@@ -88,7 +88,7 @@ class LibraryRepo(private val context: Context, scope: kotlinx.coroutines.Corout
 
     override suspend fun delete(id: String): String? {
         if (vn.abook.player.BookDownloads.isActive(context, id)) return "Đang tải cuốn này, bạn huỷ tải trước"
-        deletions.remove(id)
+        deletions.remove(id, (flow.value as? LibraryState.Ready)?.books?.firstOrNull { it.id == id }?.title.orEmpty())
         return null
     }
 

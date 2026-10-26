@@ -71,7 +71,7 @@ export const KEYED_PROVIDERS: Record<string, string> = { azure: "Azure Speech", 
 /** Câu nói rõ chữ của sách đi đâu khi chọn giọng này (giọng dùng khoá: kèm việc có thể bị tính tiền vào tài khoản của người dùng). */
 export function onlineNotice(voice: Pick<ReadAloudVoice, "provider" | "online">): string {
   const keyed = KEYED_PROVIDERS[voice.provider];
-  if (keyed) return `Giọng ${keyed} gửi chữ của sách tới ${keyed} bằng khóa của bạn - có thể bị tính tiền vào tài khoản của bạn.`;
+  if (keyed) return `Giọng ${keyed} gửi chữ của sách tới ${keyed} bằng khoá của bạn - có thể bị tính tiền vào tài khoản của bạn.`;
   return voice.online ? ONLINE_NOTICE : "";
 }
 
@@ -334,8 +334,8 @@ function fallbackNotice(failed: ReadAloudVoice, reason: string, next: ReadAloudV
   const keyed = KEYED_PROVIDERS[failed.provider];
   const instead = next.online ? `giọng ${next.name}` : "giọng của máy";
   if (!keyed) return next.online ? `Không dùng được giọng trực tuyến - tạm đọc bằng ${instead}.` : FALLBACK_NOTICE;
-  if (reason === "auth") return `Khóa ${keyed} không dùng được - tạm đọc bằng ${instead}. Kiểm tra lại khóa trong Cài đặt.`;
-  if (reason === "quota") return `Khóa ${keyed} đã hết hạn mức - tạm đọc bằng ${instead}.`;
+  if (reason === "auth") return `Khoá ${keyed} không dùng được - tạm đọc bằng ${instead}. Kiểm tra lại khoá trong Cài đặt.`;
+  if (reason === "quota") return `Khoá ${keyed} đã hết hạn mức - tạm đọc bằng ${instead}.`;
   return `Không dùng được giọng ${keyed} lúc này - tạm đọc bằng ${instead}.`;
 }
 

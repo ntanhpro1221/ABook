@@ -100,6 +100,6 @@ class PairingWordsTest {
 
     @Test
     fun theCertificateWordsOfferTheWayOut() {
-        assertTrue("Thôi ghép" in Pin.CHANGED && "ghép lại" in Pin.CHANGED)
+        assertTrue("Bỏ ghép" in Pin.CHANGED && "ghép lại" in Pin.CHANGED)
     }
 }
