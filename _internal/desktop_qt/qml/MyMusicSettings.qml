@@ -1,43 +1,196 @@
 import QtQuick
 import QtQuick.Dialogs
 import ABook
-SectionBlock {
+import "MyMusicText.js" as Music
+
+// "Nhạc của tôi" trong Cài đặt › Nghe › Nhạc nền (MyMusicSection của listen/MyMusic.tsx, docs/MUSIC_IMPORT.md): nhạc bạn tự có làm nhạc nền. Khối gập
+// (Fold "my-music.library", mặc định gập, nhớ lần sau): nút nhập, thẻ Phân tích nhạc, lời giới thiệu, "Nhạc riêng", rồi danh sách bài. Nhập từng file
+// một để thấy tiến độ; xoá hai bước (Back về bước trước). Cùng JSON với máy tính / điện thoại: GET /api/music/local, POST .../import, DELETE .../<mã>.
+Column {
     id: root
-    title: "Nhạc của tôi"
-    fold: "wip"
-    property var view: ({tracks: []})
-    property bool busy: false
-    property string removing: ""
-    property int done: 0
-    property int total: 0
-    function load() { Api.call("GET", "/api/music/local", null, function(data, error) { if (!error) root.view = data }) }
-    function act(path, body, method) { busy = true; Api.call(method || "POST", path, body, function(data, error) { root.busy = false; if (!error) { root.view = data; root.removing = "" } }) }
-    function importNext(paths, at) {
-        if (at >= paths.length) { busy = false; return }
-        done = at; total = paths.length
-        Api.call("POST", "/api/music/local/import", {paths: [DesktopApi.localPath(paths[at])]}, function(data, error) { if (error) { root.busy = false; return } root.view = data; root.done = at + 1; root.importNext(paths, at + 1) })
+    objectName: "myMusic"
+    property var view: null                 // LocalMusicView của lần trả lời gần nhất
+    property bool loadFailed: false
+    property var progress: null             // {done, total} khi đang nhập
+    property string removing: ""            // link bài đang hỏi lại xoá
+    property bool removingNow: false
+    property string picking: ""             // link bài đang đổi công tắc tự chọn
+    property bool canImport: true           // máy tính có hộp chọn file của hệ điều hành
+    property bool open: Platform.setting("fold.my-music.library", "0") === "1"
+    property var results: []
+    property var chosen: []
+    property bool firstBatch: true
+    readonly property var tracks: view ? (view.tracks || []) : []
+    readonly property string phase: view === null ? (loadFailed ? "error" : "loading") : (canImport && !tracks.length ? "empty" : "ready")
+
+    function load() {
+        Api.call("GET", "/api/music/local", null, function(data, error) {
+            if (error) { if (!root.view) root.loadFailed = true; return }
+            root.loadFailed = false
+            root.refresh(data)
+        })
     }
-    onVisibleChanged: if (visible) load()
-    Timer { interval: 1000; running: root.visible && Boolean(root.view.module?.state === "downloading" || root.view.module?.analysing); repeat: true; onTriggered: root.load() }
-    Button { text: root.busy ? "Đang thêm " + root.done + "/" + root.total : "Thêm nhạc của bạn"; icon: "upload"; kind: "text"; enabled: !root.busy; onClicked: files.open() }
-    FormLabel { width: parent.width; text: "Thêm nhạc làm nền; bài đã chọn đi cùng file sách."; color: Theme.text2 }
-    SectionBlock { width: parent.width; title: "Nhạc riêng"; fold: "wip"; FormLabel { width: parent.width; text: "Nhạc được chép vào kho máy này; dùng Đổi bài để chọn cho từng đoạn. Hỗ trợ mp3, m4a, ogg, opus, flac, wav. Bài đã chọn đi cùng .abook / .abookproj, vẫn nghe được trên máy khác, không ai khác tải được. Tên bài và nghệ sĩ lấy từ file; ABook không xác nhận giấy phép."; color: Theme.text2 } }
-    FormLabel { width: parent.width; text: "Chưa có bài nào"; visible: !(root.view.tracks || []).length; color: Theme.text2 }
-    SectionBlock {
-        width: parent.width; title: "Phân tích nhạc"; fold: "wip"; visible: Boolean(root.view.module)
-        FormLabel { width: parent.width; text: root.view.module?.error || "Tải một lần, phân tích trên máy rồi dùng không cần mạng. Chưa tải vẫn nhập, nghe và ghim nhạc bằng tay."; color: Theme.text2 }
-        Button { text: root.view.module?.state === "downloading" ? "Huỷ" : "Tải"; kind: "text"; enabled: !root.busy; onClicked: root.act(root.view.module?.state === "downloading" ? "/api/music/local/module/cancel" : "/api/music/local/module", {}) }
-        SettingRow { width: parent.width; visible: root.view.module?.precise?.state !== "unavailable"; label: "Đo cảm xúc nhạc chính xác hơn"; Switch { label: "Đo cảm xúc nhạc chính xác hơn"; checked: Boolean(root.view.module?.precise?.enabled); onToggled: value => root.act("/api/music/local/precise", {enabled: value}) } }
+    // Lời đáp mới của máy chủ: danh sách bài và mô-đun đổi theo (refresh của bản web)
+    function refresh(next) {
+        view = next
+        syncRows()
     }
-    Repeater {
-        model: root.view.tracks || []
-        Column {
-            required property var modelData
-            width: parent.width
-            SettingRow { width: parent.width; label: modelData.title + (modelData.creator ? " · " + modelData.creator : ""); hint: modelData.auto === "off" ? "Máy không tự chọn bài này" : modelData.vocalsLikely ? "Có vẻ có lời" : modelData.analysed ? "" : "Chưa phân tích"; Button { text: root.removing === modelData.link ? "Xoá bài" : "Xoá"; kind: "text"; icon: "trash-2"; enabled: !root.busy; onClicked: { if (root.removing === modelData.link) root.act("/api/music/local/" + modelData.link.replace(/^local:/, ""), null, "DELETE"); else root.removing = modelData.link } } }
-            Button { text: "Giữ lại"; kind: "text"; visible: root.removing === modelData.link; onClicked: root.removing = "" }
-            Button { text: modelData.auto === "off" ? "Cho tự chọn" : "Không tự chọn"; kind: "text"; enabled: !root.busy; onClicked: root.act("/api/music/local/" + modelData.link.replace(/^local:/, "") + "/auto", {auto: modelData.auto === "off" ? "on" : "off"}) }
+    function syncRows() {
+        const wanted = (view && view.tracks) || []
+        const keep = {}
+        for (const track of wanted) keep[track.link] = track
+        for (let i = rows.count - 1; i >= 0; --i) {
+            const link = rows.get(i).key
+            if (keep[link]) { rows.setProperty(i, "json", JSON.stringify(keep[link])); rows.setProperty(i, "leaving", false); delete keep[link] }
+            else rows.setProperty(i, "leaving", true)
+        }
+        for (const track of wanted) if (keep[track.link]) rows.append({key: track.link, json: JSON.stringify(track), leaving: false, instant: firstBatch})
+        firstBatch = false
+        if (rows.count && wanted.length < rows.count) purge.restart()
+    }
+    function toast(title, description) { Api.notice = Music.toast(title, description) }
+
+    // ---- nhập ----
+    function importFiles(paths) {
+        if (!paths.length || progress) return
+        chosen = paths
+        results = []
+        progress = {done: 0, total: paths.length}
+        importNext(0)
+    }
+    function importNext(at) {
+        Api.call("POST", "/api/music/local/import", {paths: [chosen[at]]}, function(data, error) {
+            if (error) { root.finishImport(error); return }
+            root.results = root.results.concat([data])
+            root.refresh(data)
+            root.progress = {done: at + 1, total: root.chosen.length}
+            if (at + 1 < root.chosen.length) root.importNext(at + 1)
+            else root.finishImport("")
+        })
+    }
+    function finishImport(error) {
+        progress = null
+        const merged = results.length ? Music.mergeImports(results) : null
+        let words = error ? Music.toast("Đang thêm nhạc thì dừng", error) : ""
+        if (merged) {
+            refresh(merged)
+            const summary = Music.importSummary(merged)
+            words += (words ? "\n\n" : "") + Music.toast(summary.title, summary.description)
+        }
+        if (words) Api.notice = words
+    }
+
+    // ---- xoá ----
+    function removeTrack(link) {
+        removingNow = true
+        Api.call("DELETE", "/api/music/local/" + link.slice(Music.LOCAL_PREFIX.length), null, function(data, error) {
+            root.removingNow = false
+            if (error) { root.toast("Không xoá được bài này", error); return }
+            root.refresh(data)
+            root.removing = ""
+            Api.notice = "Đã xoá khỏi Nhạc của tôi"
+        })
+    }
+    // ---- công tắc tự chọn của một bài (AutoPickNote) ----
+    function pickAuto(track, next) {
+        const digest = Music.localDigest(track.link)
+        if (!digest || picking) return
+        picking = track.link
+        Api.call("POST", "/api/music/local/" + digest + "/auto", {auto: next}, function(data, error) {
+            root.picking = ""
+            if (error) { root.toast("Không đổi được", error); return }
+            root.refresh(data)
+        })
+    }
+
+    // Back đóng bước hỏi lại xoá trước (useBackLayer của bản web)
+    property QtObject backLayer: QtObject { function close() { root.removing = "" } }
+    onRemovingChanged: {
+        Nav.closedLayer(backLayer)
+        if (removing !== "") Nav.openLayer(backLayer)
+    }
+    Component.onCompleted: load()
+    Component.onDestruction: Nav.closedLayer(backLayer)
+
+    ListModel { id: rows }
+    Timer { id: purge; interval: 400; onTriggered: { for (let i = rows.count - 1; i >= 0; --i) if (rows.get(i).leaving) rows.remove(i) } }
+    FileDialog {
+        id: files
+        title: "Chọn nhạc của bạn"
+        fileMode: FileDialog.OpenFiles
+        nameFilters: ["Nhạc (*.mp3 *.m4a *.ogg *.opus *.flac *.wav)"]
+        onAccepted: root.importFiles(selectedFiles.map(url => DesktopApi.localPath(url)))
+    }
+
+    DisclosureRow {
+        width: parent.width
+        section: true
+        title: "Nhạc của tôi"
+        summary: root.tracks.length ? root.tracks.length + " bài" : "Chưa có bài nào"
+        expanded: root.open
+        onClicked: {
+            root.open = !root.open
+            Platform.setSetting("fold.my-music.library", root.open ? "1" : "0")
         }
     }
-    FileDialog { id: files; title: "Chọn nhạc của bạn"; fileMode: FileDialog.OpenFiles; nameFilters: ["Nhạc (*.mp3 *.m4a *.ogg *.opus *.flac *.wav)"]; onAccepted: { root.busy = true; root.importNext(selectedFiles, 0) } }
+    Collapse {
+        width: parent.width
+        open: root.open
+        spacing: 8
+        Flow {
+            width: parent.width
+            visible: root.canImport
+            Button {
+                text: root.progress ? "Đang thêm " + root.progress.done + "/" + root.progress.total : "Thêm nhạc của bạn"
+                icon: "upload"; kind: "ghost"; size: "sm"; wrap: true
+                width: Math.min(implicitWidth, parent.width)
+                busy: Boolean(root.progress)
+                onActivated: files.open()
+            }
+        }
+        Collapse {
+            width: parent.width
+            open: root.tracks.length > 0
+            MyMusicModule { width: parent.width; view: root.view; onUpdated: next => root.refresh(next) }
+        }
+        HintText { width: parent.width; text: Music.MY_MUSIC_INTRO }
+        MoreInfo { width: parent.width; label: "Nhạc riêng"; HintText { width: parent.width; text: Music.MY_MUSIC_HELP } }
+        Collapse {
+            width: parent.width
+            open: !root.canImport
+            HintText { width: parent.width; text: "Thêm và xoá nhạc làm trên máy tính chủ sách." }
+        }
+        MyMusicState {
+            width: parent.width
+            state: root.phase
+            adding: Boolean(root.progress)
+            onRetry: { root.loadFailed = false; root.load() }
+            onAdd: files.open()
+        }
+        Column {
+            id: list
+            width: parent.width
+            Repeater {
+                model: rows
+                MyMusicTrack {
+                    id: entry
+                    objectName: "track:" + model.key
+                    width: list.width
+                    track: JSON.parse(model.json)
+                    first: model.index === 0
+                    leaving: model.leaving
+                    canImport: root.canImport
+                    confirming: root.removing === model.key
+                    removing: root.removingNow && root.removing === model.key
+                    picking: root.picking === model.key
+                    entered: model.instant
+                    onAskRemove: root.removing = model.key
+                    onKeep: root.removing = ""
+                    onRemove: root.removeTrack(model.key)
+                    onPick: next => root.pickAuto(track, next)
+                }
+            }
+        }
+        Item { width: 1; height: 0 }    // pb-2 của thân Fold: khoảng cách 8 còn lại sau danh sách
+    }
 }
