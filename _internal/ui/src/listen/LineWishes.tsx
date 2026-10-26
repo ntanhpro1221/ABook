@@ -427,7 +427,7 @@ export function LineWishDialog({
     ...waitingItems(wish),
     ...names.map((name) => ({ key: `name:${name.key}`, text: `Cách đọc “${name.surface}”: “${name.spokenForm}”`, section: "pronunciations", requestedAt: name.requestedAt, name })),
   ];
-  const title = view === "speaker" ? (line?.kind === "thought" ? "Ai nghĩ câu này?" : "Ai nói câu này?") : view === "delivery" ? "Cách đọc câu này" : view === "word" ? "Đọc từ này là…" : "Sửa câu này";
+  const title = view === "speaker" ? (line?.kind === "thought" ? "Ai nghĩ câu này?" : "Ai nói câu này?") : view === "delivery" ? "Cách đọc câu này" : view === "word" ? "Đọc từ này là" : "Sửa câu này";
   return (
     <Dialog open={segment !== undefined} onOpenChange={(open) => !open && close()} width="max-w-md" title={title}>
       {line && (

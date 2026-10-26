@@ -388,13 +388,13 @@ class ListenExportTest {
     fun aRealFailureStopsWithWordsKeepsTheChaptersDoneAndNamesTheChapter() {
         val chapters = listOf(chapter(1, "Một."), chapter(2, "Hai."))
         val voice = Voice()
-        voice.failure = { text, _ -> if (text == "Hai.") VoiceException("Khóa không dùng được.", reason = "auth") else null }
+        voice.failure = { text, _ -> if (text == "Hai.") VoiceException("Khoá không dùng được.", reason = "auth") else null }
         try {
             run(chapters, voice).build()
             fail("phải dừng")
         } catch (refused: Mp3Export.Refused) {
             assertTrue(refused.message!!.contains("“Chương 2”"))
-            assertTrue(refused.message!!.contains("Khóa không dùng được."))
+            assertTrue(refused.message!!.contains("Khoá không dùng được."))
             assertTrue(refused.message!!.contains("xuất lại để tiếp tục"))
         }
         assertNotNull(ListenExport.ready(work, chapters[0], reading))

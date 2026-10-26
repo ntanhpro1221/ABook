@@ -87,7 +87,7 @@ fun PairScreen(devices: DevicesState, sheets: SheetHost, onBack: () -> Unit) {
 private fun RefreshButton(refreshing: Boolean, onClick: () -> Unit) {
     val colors = Abook.colors
     Box(
-        Modifier.size(Dim.s48).pressable(Role.Button, onClick = { if (!refreshing) onClick() }).testTag("pair_refresh").semantics { contentDescription = "Tìm lại thiết bị" },
+        Modifier.size(Dim.s48).pressable(Role.Button, onClick = { if (!refreshing) onClick() }).testTag("pair_refresh").semantics { contentDescription = "Tìm lại" },
         contentAlignment = Alignment.Center,
     ) { RefreshIcon(if (refreshing) colors.text3 else colors.text2) }
 }
@@ -128,7 +128,7 @@ private fun LazyListScope.pairForm(ui: PairUi, devices: DevicesState) {
     if (ui.paired) item("form_title", "title") {
         Row(Modifier.fillMaxWidth().padding(top = Dim.sectionGap).heightIn(min = Dim.s48), verticalAlignment = Alignment.CenterVertically) {
             BasicText("Thêm thiết bị", style = Abook.type.sectionTitle, modifier = Modifier.weight(1f))
-            TextAction("Thôi", { devices.setAdding(false) }, "pair_cancel")
+            TextAction("Huỷ", { devices.setAdding(false) }, "pair_cancel")
         }
     }
     item("method", "method") {
@@ -139,14 +139,14 @@ private fun LazyListScope.pairForm(ui: PairUi, devices: DevicesState) {
         PairMethod.Bluetooth -> bluetoothRows(ui, devices)
         PairMethod.Address -> item("address", "address") {
             Column(Modifier.padding(top = Dim.s12)) {
-                BookField(null, form.address, devices::setAddress, "pair_address", description = "Địa chỉ máy tính", placeholder = "Địa chỉ, ví dụ 192.168.1.20", keyboard = KeyboardType.Uri)
+                BookField(null, form.address, devices::setAddress, "pair_address", description = "Địa chỉ máy tính", placeholder = "Địa chỉ, ví dụ 192.168.1.20:47630", keyboard = KeyboardType.Uri)
             }
         }
     }
     item("code", "code") {
         Reveal(form.target != null) {
             Column(Modifier.padding(top = Dim.s16)) {
-                BookField("Mã ghép", form.code, devices::setCode, "pair_code", description = "Mã ghép", placeholder = "6 số trên máy tính", keyboard = KeyboardType.Number)
+                BookField("Mã ghép nối", form.code, devices::setCode, "pair_code", description = "Mã ghép nối", placeholder = "Mã 6 số", keyboard = KeyboardType.Number)
             }
         }
     }
@@ -206,5 +206,5 @@ private fun LazyListScope.foundRows(list: List<Found>, ui: PairUi, devices: Devi
 /** Không thấy máy nào: một dòng nói thẳng và "Tìm lại" ở cuối dòng đầu. */
 @Composable
 private fun NoneRow(title: String, onRetry: () -> Unit) {
-    ListItem(title, Modifier.testTag("pair_none"), trailing = { IconAction("Tìm lại thiết bị", onRetry, "pair_rescan") { RefreshIcon(Abook.colors.text2) } })
+    ListItem(title, Modifier.testTag("pair_none"), trailing = { IconAction("Tìm lại", onRetry, "pair_rescan") { RefreshIcon(Abook.colors.text2) } })
 }

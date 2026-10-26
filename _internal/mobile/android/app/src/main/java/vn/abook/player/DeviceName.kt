@@ -7,7 +7,7 @@ import android.provider.Settings
 /**
  * Tên của điện thoại này ở máy khác (máy tính đã ghép, thư viện chia sẻ - LibraryServer): người dùng đặt được (Cài đặt › Thiết bị → "Tên điện thoại này");
  * chưa đặt thì một tên dễ đọc - tên máy người dùng đặt trong Cài đặt Android, không thì "Điện thoại <hãng> <đời>" (soát a68 lỗi 16: trước đây
- * là Build.MANUFACTURER + MODEL thô, "Google sdk_gphone64_x86_64"). Lưu ngoài SharedPreferences "sync": thôi ghép máy tính chính xoá sạch nó.
+ * là Build.MANUFACTURER + MODEL thô, "Google sdk_gphone64_x86_64"). Lưu ngoài SharedPreferences "sync": bỏ ghép máy tính chính xoá sạch nó.
  */
 object DeviceName {
     private const val PREFS = "abook_self"

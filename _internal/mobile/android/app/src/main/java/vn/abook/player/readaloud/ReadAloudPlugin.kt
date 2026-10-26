@@ -172,7 +172,7 @@ class ReadAloudPlugin : Plugin() {
         try {
             call.resolve(JSObject.fromJSONObject(OnlineVoices.saveKey(context, provider, call.getString("key", "")!!, call.getString("region", "")!!)))
         } catch (error: IllegalArgumentException) {
-            call.reject(error.message ?: "Thiếu khóa")
+            call.reject(error.message ?: "Thiếu khoá")
         }
     }
 

@@ -93,7 +93,7 @@ class LibraryScreenTest {
     @Test
     fun emptyLight() {
         show(emptyList())
-        rule.onNodeWithText("Chưa có sách").assertIsDisplayed()
+        rule.onNodeWithText("Chưa có sách trên máy").assertIsDisplayed()
         rule.onNodeWithTag("add_book").assertIsDisplayed()
         shot("library_empty_light")
     }

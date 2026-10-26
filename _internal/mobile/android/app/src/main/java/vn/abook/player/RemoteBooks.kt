@@ -95,8 +95,8 @@ object RemoteBooks {
      * Sách trên máy tính CHƯA tải mà nghe thẳng được (Streaming). Gói sách chỉ lấy lại khi máy tính có thêm chương, đổi
      * tên hay đổi bìa, còn lại dùng bản đã cất. Máy tính không trả lời thì không liệt kê sách của nó: những cuốn ấy không nằm trên
      * điện thoại, hiện ra mà bấm không nghe được thì chỉ làm người nghe bối rối - TRỪ cuốn đang nằm trong trình phát (`offline`): máy tắt hay
-     * mất mạng không phải thôi ghép, trình phát không được tưởng cuốn đã rời Thư viện mà đóng giữa câu (soát a68 lỗi 3). Chỉ khi máy kia trả 401
-     * (đã thôi ghép điện thoại này) cuốn mới thật sự rời đi.
+     * mất mạng không phải bỏ ghép, trình phát không được tưởng cuốn đã rời Thư viện mà đóng giữa câu (soát a68 lỗi 3). Chỉ khi máy kia trả 401
+     * (đã bỏ ghép điện thoại này) cuốn mới thật sự rời đi.
      */
     fun streamable(context: Context): JSONArray {
         val books = JSONArray()
@@ -108,7 +108,7 @@ object RemoteBooks {
             try {
                 JSONObject(SyncLink.request(context, "GET", "/sync/v1/library", readTimeoutMs = 10_000, connectTimeoutMs = 1500))
             } catch (error: Exception) {
-                computerAnswered = NetErrors.unpaired(error) // 401: máy tính trả lời - nó đã thôi ghép; không giữ cuốn nào của nó
+                computerAnswered = NetErrors.unpaired(error) // 401: máy tính trả lời - nó đã bỏ ghép; không giữ cuốn nào của nó
                 null
             }
         } else null

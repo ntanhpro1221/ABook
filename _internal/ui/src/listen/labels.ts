@@ -6,7 +6,7 @@ import type { ListenChapter } from "./model";
 // nghe nhận ra (chương, giờ, giọng nào đang đọc), không theo trạng thái bên trong (clip đã đọc sẵn chưa, kịch bản đã có mốc chưa).
 
 /** Đang chờ giọng máy đọc xong đoạn đầu (thanh phát nhỏ, màn "Đang nghe", nhãn nút phát). */
-export const PREPARING_VOICE = "Đang chuẩn bị giọng đọc…";
+export const PREPARING_VOICE = "Đang chuẩn bị giọng đọc";
 /** Chờ giọng ngắn hơn mức này thì không nói gì (chỉ vòng quay ở nút phát). */
 export const PREPARING_VOICE_AFTER_MS = 1500;
 
@@ -62,7 +62,7 @@ export function primaryListenLabel(state: {
 
 /** Nhãn đọc màn hình của nút phát: đang chờ thì nói đang chờ gì - không nói "Tạm dừng" khi chưa có tiếng nào. */
 export function toggleLabel(playing: boolean, buffering: boolean, speaking: boolean): string {
-  if (playing && buffering) return speaking ? PREPARING_VOICE : "Đang tải âm thanh…";
+  if (playing && buffering) return speaking ? PREPARING_VOICE : "Đang tải âm thanh";
   return playing ? "Tạm dừng" : "Phát";
 }
 
@@ -87,7 +87,7 @@ export function textBookLine(speaks: boolean): string {
 }
 
 export function chapterStatusLabel(producing: boolean): string {
-  return producing ? "Đang thu âm…" : "Chưa có audio";
+  return producing ? "Đang thu âm" : "Chưa có audio";
 }
 
 /** Dòng phụ của một chương trong danh sách: "Chương 3 · 26 phút". Chương chỉ có chữ không có gì riêng để nói (giọng đọc là của cả cuốn và đã ở đầu

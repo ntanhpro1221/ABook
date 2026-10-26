@@ -577,7 +577,7 @@ function MusicMenuFor({ bookId, look }: { bookId: string; look: MenuLook }) {
   return (
     <MenuShell
       label="Nhạc nền"
-      tooltip={waiting ? "Đang chuẩn bị nhạc nền…" : playing ? `Nhạc nền: ${shortPlaylistLabel(label)} - bấm để chọn nhạc khác` : "Nhạc nền - bấm để chọn nhạc"}
+      tooltip={waiting ? "Đang chuẩn bị nhạc nền" : playing ? `Nhạc nền: ${shortPlaylistLabel(label)} - bấm để chọn nhạc khác` : "Nhạc nền - bấm để chọn nhạc"}
       active={playing || waiting}
       look={look}
       caption="Nhạc nền"
@@ -615,7 +615,7 @@ function MusicMenuFor({ bookId, look }: { bookId: string; look: MenuLook }) {
             </button>
           </Popover.Close>
         )}
-        {loading && <p className="px-2 py-1.5 text-xs text-fg-2">Đang tải các danh sách nhạc…</p>}
+        {loading && <p className="px-2 py-1.5 text-xs text-fg-2">Đang tải các danh sách nhạc</p>}
       </div>
       {/* Chỉ khi cuốn đang có nhạc: tắt nhạc thì chỉnh mức chẳng nghe thấy gì. */}
       {playing && <LevelButtons level={levelDb} disabled={levelBusy} onChange={setLevel} />}
@@ -806,7 +806,7 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
         data-sheet-choice
         className="flex min-h-9 w-full items-center rounded-control px-2 text-left text-sm text-accent-text hover:bg-hover max-sm:min-h-[48px]"
       >
-        Thêm giọng…
+        Thêm giọng
       </button>
       {current?.online && <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{onlineNotice(current)}</p>}
       {current && canPrepare(current, Boolean(source.readAloudPrepareOnline)) && (
@@ -1018,7 +1018,7 @@ export function SleepMenu({ look = "chip" }: { look?: MenuLook }) {
 }
 
 /**
- * Hẹn giờ tắt cho loa / TV đang phát (thanh "Đang phát trên…" của máy tính và điện thoại): cùng nút, cùng lựa chọn với hẹn
+ * Hẹn giờ ngủ cho loa / TV đang phát (thanh "Đang phát trên…" của máy tính và điện thoại): cùng nút, cùng lựa chọn với hẹn
  * giờ của trình phát ở đây, nhưng máy giữ phiên phát mới là bên đếm - nút chỉ đọc lại và gửi lệnh.
  */
 export function RemoteSleepMenu({ sleep, name, onSet }: { sleep: SleepMode; name: string; onSet: (request: SleepRequest) => void }) {
@@ -1070,18 +1070,18 @@ function SleepPicker({
   const onSet = withFeedback("toggle", handlers.onSet);
   const active = sleep.kind !== "off";
   const left = sleepLeftMs(sleep, now);
-  const spoken = active ? sleepSpoken(sleep, now) : "Hẹn giờ tắt";
+  const spoken = active ? sleepSpoken(sleep, now) : "Hẹn giờ ngủ";
   return (
     <MenuShell
       label={name ? `${spoken} trên ${name}` : spoken}
-      dialogLabel={name ? `Hẹn giờ tắt trên ${name}` : "Hẹn giờ tắt"}
+      dialogLabel={name ? `Hẹn giờ ngủ trên ${name}` : "Hẹn giờ ngủ"}
       active={active}
       width="w-[300px]"
       focusSelector="[data-current-choice]"
       look={look}
       icon={Moon}
       // Nút có nhãn: đang hẹn thì nhãn dưới là thời gian còn lại ("12 phút"), mờ chéo khi đổi.
-      caption={look === "row" ? "Hẹn giờ tắt" : active ? sleepButtonLabel(sleep, now) : "Hẹn giờ"}
+      caption={look === "row" ? "Hẹn giờ ngủ" : active ? sleepButtonLabel(sleep, now) : "Hẹn giờ"}
       triggerKey={look === "row" ? active && sleepButtonLabel(sleep, now) : undefined}
       trigger={look === "row" ? (active ? sleepButtonLabel(sleep, now) : "Tắt") :
         <>
@@ -1708,7 +1708,7 @@ function ReadAlong({ edit }: { edit?: SentenceEditing }) {
     if (upcoming) void client.prefetchQuery(chapterScriptQuery(source, track.bookId, upcoming));
   }, [client, nearEnd, queue, source, track]);
 
-  if (isLoading) return <MotionRegion as="div" className="animate-[fade-in_0.2s_0.3s_both] p-10 text-fg-2">Đang mở văn bản chương…</MotionRegion>;
+  if (isLoading) return <MotionRegion as="div" className="animate-[fade-in_0.2s_0.3s_both] p-10 text-fg-2">Đang tải chữ</MotionRegion>;
   if (!script) return <MotionRegion />;
   return (
     <MotionRegion as="div" className="relative h-full">

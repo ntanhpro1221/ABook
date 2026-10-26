@@ -19,7 +19,7 @@ object SyncLink {
     fun prefs(context: Context): SharedPreferences = context.getSharedPreferences("sync", Context.MODE_PRIVATE)
 
     /** Mã cố định của chính điện thoại này (16 chữ hex), gửi lúc ghép - như remote_books.py `Computers.own_id` của máy tính. Không nằm trong
-     *  `prefs` (thôi ghép máy tính chính xoá sạch nó). */
+     *  `prefs` (bỏ ghép máy tính chính xoá sạch nó). */
     @Synchronized
     fun selfId(context: Context): String {
         val store = context.getSharedPreferences("abook_self", Context.MODE_PRIVATE)
@@ -29,7 +29,7 @@ object SyncLink {
         return fresh
     }
 
-    /** Báo máy kia thu hồi mã của máy này ở đó (`POST /sync/v1/unpair`, sync.py) - lúc thôi ghép; máy kia tắt thì thôi (chỉ thử một lần). */
+    /** Báo máy kia thu hồi mã của máy này ở đó (`POST /sync/v1/unpair`, sync.py) - lúc bỏ ghép; máy kia tắt thì thôi (chỉ thử một lần). */
     fun tellUnpaired(context: Context, root: String, token: String) {
         if (token.isBlank()) return
         runCatching { request(context, "POST", "/sync/v1/unpair", JSONObject(), false, root, 3000, 1500, token) }
@@ -69,7 +69,7 @@ object SyncLink {
         val manifest = Store.playableManifest(bookId)
         val source = manifest?.optString("source").orEmpty()
         if (source.isNotEmpty()) {
-            val link = Peers.link(context, source) ?: throw IllegalStateException("Thiết bị giữ cuốn này đã thôi ghép")
+            val link = Peers.link(context, source) ?: throw IllegalStateException("Thiết bị giữ cuốn này đã bỏ ghép")
             return link to manifest!!.optString("remoteId", bookId)
         }
         return Peers.Link(base(context), token(context)) to bookId
@@ -255,7 +255,7 @@ object SyncLink {
             if (firstUse != null && connection is HttpsURLConnection) firstUse[0] = Pin.peerFingerprint(connection)
             if (code >= 400) {
                 val message = runCatching { JSONObject(text).optString("error") }.getOrNull()
-                // Mang mã HTTP (NetErrors.Refused): 401 = máy kia đã thôi ghép máy này, giao diện nói đúng thế thay vì "không kết nối được".
+                // Mang mã HTTP (NetErrors.Refused): 401 = máy kia đã bỏ ghép máy này, giao diện nói đúng thế thay vì "không kết nối được".
                 throw NetErrors.Refused(code, message?.ifBlank { null } ?: "Máy tính trả lỗi $code")
             }
             if (firstUse == null && connection is HttpsURLConnection) {

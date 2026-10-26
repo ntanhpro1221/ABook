@@ -276,7 +276,7 @@ function progressNote(book: BookSummary): string {
   const live = book.running || book.starting;
   // Giữ chờ duyệt (precast.held) cũng là `paused` nhưng là đợi người nghe, không phải ai bấm Tạm dừng (soát UX a23: "47% tổng"
   // đứng yên không nói vì sao). Tạm dừng thường (pin, người bấm) đã nói ở trạng thái đầu trang - không nói lại ở đây (soát 24-10 T19).
-  return book.stopping ? "đang dừng" : book.paused ? (book.precast?.held ? "chờ bạn duyệt rồi bấm Thu âm" : "") : etaOf(book) ?? (live ? "đang ước tính thời gian…" : "");
+  return book.stopping ? "đang dừng" : book.paused ? (book.precast?.held ? "chờ bạn duyệt rồi bấm Thu âm" : "") : etaOf(book) ?? (live ? "đang ước tính thời gian" : "");
 }
 
 /** Tiến độ cả sách ở đầu trang dự án: thanh mảnh + phần trăm, kèm còn bao lâu (soát 25-10: trước là chữ "45% tổng" không có thanh, cách hàng tab một
@@ -642,7 +642,7 @@ export function ProjectMenu({ book, rename = true, className, children }: { book
                 <DropdownMenu.Separator className="my-1 h-px bg-line" />
               </>
             )}
-            {rename && <MenuItem icon={TextCursorInput} onSelect={() => setDialog("rename")}>Đổi tên…</MenuItem>}
+            {rename && <MenuItem icon={TextCursorInput} onSelect={() => setDialog("rename")}>Đổi tên</MenuItem>}
             {/* Truyện dài làm nhiều đợt: phần mới giữ giọng, cách đọc tên, ghim của phần này (continuation.py). Dự án chưa
                 phân tích câu nào thì không có gì để mang theo - mờ kèm lý do thay vì dẫn tới một phần mới trống (soát UX 29-09). */}
             {/* Dự án hỏng (`broken`) không có `segments` và không có gì để mang theo: chỉ còn xoá. */}
@@ -652,7 +652,7 @@ export function ProjectMenu({ book, rename = true, className, children }: { book
                 onSelect={() => navigate(`/studio/new?continue=${book.id}`)}
                 className={cn(MENU_ITEM, "data-[disabled]:opacity-50")}
               >
-                <BookPlus className="size-4" /> Làm tiếp cuốn này…
+                <BookPlus className="size-4" /> Làm tiếp cuốn này
                 {!analyzed && <span className="ml-auto pl-3 text-xs text-fg-3">chạy phần này trước</span>}
               </DropdownMenu.Item>
             )}
@@ -662,7 +662,7 @@ export function ProjectMenu({ book, rename = true, className, children }: { book
                 <OnComputerOnly verb="Xoá dự án" />
               </div>
             ) : (
-              <MenuItem icon={Trash2} danger onSelect={() => setDialog("delete")}>Xoá dự án…</MenuItem>
+              <MenuItem icon={Trash2} danger onSelect={() => setDialog("delete")}>Xoá dự án</MenuItem>
             )}
           </DropdownMenu.Content>
         </DropdownMenu.Portal>
@@ -742,7 +742,7 @@ export function Actions({ book }: { book: BookSummary }) {
   const primary: Record<PrimaryKind, { label: string; icon?: typeof Wand2; loading?: boolean; run?: () => void }> = {
     starting: { label: "Đang khởi động", loading: true },
     // Đã bấm Dừng: sách còn chạy tới chỗ dừng sạch kế - tạm dừng / dừng thêm lần nữa không còn nghĩa (soát a88 V1).
-    stopping: { label: "Đang dừng…", loading: true },
+    stopping: { label: "Đang dừng", loading: true },
     // Giữ chờ duyệt: "Tiếp tục" và "Thu âm" là MỘT việc - tên là "Thu âm" (soát UX a8 05-10, mục 12).
     unpause: { label: book.precast?.held ? "Thu âm" : "Tiếp tục", icon: book.precast?.held ? Mic2 : Play, loading: pause.isPending, run: unpause },
     // Tạm dừng giữ tiến trình sống, làm tiếp đúng chỗ - an toàn cả giữa lúc phân tích; "Dừng" (kết thúc lượt chạy) ở "…".
@@ -770,9 +770,9 @@ export function Actions({ book }: { book: BookSummary }) {
           <MenuItem icon={Headphones} onSelect={() => navigate(`/book/${book.id}`)}>Nghe trong Thư viện</MenuItem>
         )}
         {asksBeforeResume(book) && !live && !book.starting && !book.queuePosition && (
-          <MenuItem icon={Play} onSelect={() => setConfirmResume(true)}>Vẫn tiếp tục…</MenuItem>
+          <MenuItem icon={Play} onSelect={() => setConfirmResume(true)}>Vẫn tiếp tục</MenuItem>
         )}
-        {live && !book.stopping && <MenuItem icon={Square} onSelect={() => setConfirmStop(true)}>Dừng…</MenuItem>}
+        {live && !book.stopping && <MenuItem icon={Square} onSelect={() => setConfirmStop(true)}>Dừng</MenuItem>}
         {/* Thay đổi chờ áp khi máy đang chạy: xem được, và bỏ được khi đã tạm dừng tới checkpoint (soát a83 B5). */}
         {live && book.pendingChanges ? (
           <MenuItem icon={RefreshCw} onSelect={() => setConfirmApply(true)}>{book.pendingChanges} thay đổi chờ áp</MenuItem>
@@ -782,7 +782,7 @@ export function Actions({ book }: { book: BookSummary }) {
         {book.phase === "idle" && !live && !book.queuePosition && (
           <MenuItem icon={SlidersHorizontal} onSelect={() => navigate(`/studio/new?redo=${book.id}`)}>Sửa thiết lập</MenuItem>
         )}
-        {book.chapters.completed > 0 && <MenuItem icon={FolderDown} onSelect={() => setExporting(true)}>Xuất…</MenuItem>}
+        {book.chapters.completed > 0 && <MenuItem icon={FolderDown} onSelect={() => setExporting(true)}>Xuất</MenuItem>}
         {next > 0 && <MenuItem icon={BookPlus} onSelect={() => navigate(`/studio/new?continue=${book.id}`)}>Thêm {next} chương</MenuItem>}
         {/* Mở thư mục chỉ có trên máy tính. */}
         {!remote && <MenuItem icon={FolderOpen} onSelect={() => reveal.mutate(book.id)}>Mở thư mục</MenuItem>}
@@ -938,7 +938,7 @@ function ChapterMenu({ book, chapter, onPlay }: { book: BookSummary; chapter: Ch
               <>
                 <DropdownMenu.Separator className="my-1 h-px bg-line" />
                 <DropdownMenu.Item onSelect={() => setConfirm(true)} className={MENU_ITEM}>
-                  <RefreshCw className="size-4" /> Thu lại cả chương…
+                  <RefreshCw className="size-4" /> Thu lại cả chương
                 </DropdownMenu.Item>
               </>
             )}
@@ -1396,7 +1396,7 @@ export function ProjectScreen() {
         <div role="status" className="mt-4 flex flex-wrap items-center gap-2 py-3 text-sm">
           <CircleAlert className="size-4 shrink-0 text-warning" />
           <span className="min-w-0 flex-1 text-pretty">
-            {isOffline(error) ? "Mất kết nối tới ABook, đang thử lại…" : `Chưa tải lại được sách: ${failureText(error)} Đang thử lại…`}
+            {isOffline(error) ? "Mất kết nối tới ABook, đang thử lại" : `Chưa tải lại được sách: ${failureText(error)} Đang thử lại`}
           </span>
           <Button size="sm" variant="ghost" loading={isFetching} onClick={() => void refetch()}>
             Thử lại

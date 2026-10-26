@@ -150,7 +150,7 @@ export function WordReadingDialog({ bookId, word, sentence, wordIndex, onClose }
       open={word !== null && (Boolean(surface) || chips > 0)}
       onOpenChange={(open) => !open && onClose()}
       width="max-w-md"
-      title="Đọc từ này là…"
+      title="Đọc từ này là"
       description={
         surface ? (
           <>

@@ -22,14 +22,18 @@ class UndoDelete(
     val undoable = actions.asStateFlow()
     private val errors = MutableStateFlow("")
     val problem = errors.asStateFlow()
+    private val lastName = MutableStateFlow("")
+    /** Tên cuốn vừa bỏ (cho dòng "Đã xoá “X” khỏi điện thoại"); rỗng khi chưa biết tên. */
+    val lastTitle = lastName.asStateFlow()
     private val visible = MutableStateFlow(false)
     val showing = visible.asStateFlow()
 
     fun contains(id: String) = id in flow.value
 
-    suspend fun remove(id: String) {
+    suspend fun remove(id: String, title: String = "") {
         if (contains(id)) return
         errors.value = ""
+        lastName.value = title
         flow.value = flow.value + id
         actions.value = actions.value + id
         visible.value = true

@@ -86,10 +86,10 @@ export function OldSavesList({ files }: { files: OldSave[] }) {
           </div>
           <div className="ml-auto flex gap-2">
             <Button size="sm" variant="ghost" icon={Download} onClick={() => void exportOldSave(file)}>
-              Lưu ra…
+              Lưu ra
             </Button>
             <Button size="sm" variant="ghost" icon={Trash2} onClick={() => setAsking(file)}>
-              Xoá…
+              Xoá
             </Button>
           </div>
         </div>

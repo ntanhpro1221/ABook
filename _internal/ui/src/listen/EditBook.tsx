@@ -441,10 +441,10 @@ export function EditBookDialog({
             {/* Nút chữ xếp chồng canh trái chung một mép (icon thẳng hàng); kéo giãn thì chữ canh giữa từng nút, lệch nhau (soát 25-10). */}
             <div className="flex min-w-0 max-w-full flex-col items-start gap-1">
               <Button variant="ghost" className="justify-start text-left" icon={ImagePlus} disabled={busy} onClick={() => file.current?.click()}>
-                {book.cover ? "Đổi ảnh bìa…" : "Chọn ảnh bìa…"}
+                {book.cover ? "Đổi ảnh bìa" : "Chọn ảnh bìa"}
               </Button>
               <Button ref={searchOpener} variant="ghost" className="justify-start text-left" icon={Globe} disabled={busy} onClick={() => setSearching(true)}>
-                Tìm bìa…
+                Tìm bìa
               </Button>
               {book.cover && (
                 <Button variant="ghost" className="justify-start text-left" icon={Trash2} disabled={busy} onClick={() => removeCover.mutate()}>
@@ -495,7 +495,7 @@ export function EditBookDialog({
               </div>
             ) : (
               <Button ref={revertButton} variant="ghost" className="-ml-3.5" onClick={() => setConfirmRevert(true)}>
-                Bỏ mọi thay đổi…
+                Bỏ mọi thay đổi
               </Button>
             )}
           </Section>
@@ -678,7 +678,7 @@ export function SaveAsDialog({
       open={open}
       onOpenChange={onOpenChange}
       width="max-w-md"
-      title="Lưu thành…"
+      title="Lưu thành"
       description="Lưu cuốn này kèm những thay đổi của bạn thành một file mới. File gốc không bị đụng tới."
     >
       <ChoiceRow<SaveKind>
@@ -705,7 +705,7 @@ export function SaveAsDialog({
       {pickFolder && (
         <div className="mt-3 flex items-center gap-2 text-sm">
           <Button variant="ghost" size="sm" onClick={() => void pickFolder().then((picked) => picked && setFolder(picked))}>
-            Chọn thư mục…
+            Chọn thư mục
           </Button>
           <MotionRegion as="span" motionKey={folder ?? ""} className="min-w-0 truncate text-fg-2">{folder ?? "Mặc định: thư mục Đã xuất"}</MotionRegion>
         </div>

@@ -75,15 +75,15 @@ export function sleepButtonLabel(mode: SleepMode, now: number): string {
 }
 
 export function sleepSpoken(mode: SleepMode, now: number): string {
-  if (mode.kind === "chapter") return "Hẹn giờ tắt: dừng khi hết chương này";
+  if (mode.kind === "chapter") return "Hẹn giờ ngủ: dừng khi hết chương này";
   const left = sleepLeftMs(mode, now);
-  if (left === null) return "Hẹn giờ tắt";
+  if (left === null) return "Hẹn giờ ngủ";
   const minutes = Math.ceil(left / 60_000);
-  return left < 60_000 ? `Hẹn giờ tắt: còn ${Math.ceil(left / 1000)} giây` : `Hẹn giờ tắt: còn ${minutes} phút`;
+  return left < 60_000 ? `Hẹn giờ ngủ: còn ${Math.ceil(left / 1000)} giây` : `Hẹn giờ ngủ: còn ${minutes} phút`;
 }
 
 /**
- * Hẹn giờ tắt của loa / TV: máy giữ phiên phát đếm (webui/cast.py, DlnaPlayers.kt - chỉ nó biết thiết bị đang phát hay
+ * Hẹn giờ ngủ của loa / TV: máy giữ phiên phát đếm (webui/cast.py, DlnaPlayers.kt - chỉ nó biết thiết bị đang phát hay
  * dừng), cùng luật với hẹn giờ ở đây: chỉ trôi khi đang phát. `left`: giây còn lại lúc máy ấy trả lời.
  */
 export type RemoteSleep = { kind: "minutes"; minutes: number; left: number; counting: boolean } | { kind: "chapter" };

@@ -246,7 +246,7 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-1 text-xs text-fg-2">
                       <span>Cùng tên với người khác trong sách - một người?</span>
                       <Button size="sm" variant="ghost" onClick={() => open.onMerge(person)}>
-                        Gộp vào…
+                        Gộp vào
                       </Button>
                     </div>
                   )}
