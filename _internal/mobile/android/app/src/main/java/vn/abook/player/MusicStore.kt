@@ -174,7 +174,7 @@ class MusicStore(
         val name = displayName.substringAfterLast('/').substringAfterLast('\\').ifEmpty { "nhạc" }
         val extension = name.substringAfterLast('.', "").lowercase()
         if (extension !in EXTENSIONS) {
-            throw ImportError("“$name”: chưa nhập được định dạng này - dùng ${EXTENSIONS.joinToString(", ") { ".$it" }}.")
+            throw ImportError("“$name”: chưa thêm được định dạng này - dùng ${EXTENSIONS.joinToString(", ") { ".$it" }}.")
         }
         val folder = File(root, "files").apply { mkdirs() }
         folder.listFiles { entry -> entry.name.startsWith(TEMPORARY) }?.forEach { it.delete() } // dư của lần nhập bị ngắt

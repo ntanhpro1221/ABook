@@ -97,7 +97,7 @@ export function usePlaylistChoice(bookId: string, enabled = true) {
     try {
       // Trình đọc màn hình chỉ đọc mốc 25 %, không đọc lại sau mỗi bài (soát a31 A6).
       const { result, error } = await importMusic(
-        (done, total) => void toast.loading(<LiveText shown={`Đang thêm nhạc ${done}/${total}…`} spoken={spokenProgress("Đang thêm nhạc", done / total)} />, { id: ADD_TOAST }),
+        (done, total) => void toast.loading(<LiveText shown={`Đang thêm nhạc ${done}/${total}`} spoken={spokenProgress("Đang thêm nhạc", done / total)} />, { id: ADD_TOAST }),
       );
       if (result) {
         client.setQueryData(MY_MUSIC_KEY, result);
@@ -162,16 +162,10 @@ export function PlaylistOptionLabel({ option, chosen }: { option: PlaylistOption
   );
 }
 
-/** Chữ nhỏ dưới các lựa chọn: điều người nghe cần biết (mất mạng lần đầu thì lý do - chỉ nói khi đúng là đang xảy ra, không nhắc suông). `scene`: nhạc đang đổi
- *  theo cảnh, không chạy một mạch qua các chương. */
-export function playlistNote(error: string, scene = false): string {
-  if (error) return error;
-  return scene ? "Nhạc nằm dưới giọng đọc và đổi theo từng cảnh của truyện." : "Nhạc nằm dưới giọng đọc và nghe tiếp qua các chương.";
-}
 
 /** Mục "Nhạc nền" trong menu của sách chỉ có chữ: menu con với các lựa chọn (điện thoại: một bước trong Sheet, xem ActionMenu.tsx). */
 export function PlaylistSubmenu({ bookId }: { bookId: string }) {
-  const { options, chosen, label, scene, error, loading, loadFailed, retry, choose, canImport, addMusic } = usePlaylistChoice(bookId);
+  const { options, chosen, label, error, loading, loadFailed, retry, choose, canImport, addMusic } = usePlaylistChoice(bookId);
   return (
     <ActionSubmenu
       id="music"
@@ -204,7 +198,8 @@ export function PlaylistSubmenu({ bookId }: { bookId: string }) {
         </DropdownMenu.Item>
       )}
       <MotionRegion motionKey={[loading, loadFailed]}>{loading ? <ContentSkeleton count={2} label="Đang tải danh sách" className="p-2" /> : loadFailed ? <InlineError message="Bạn hãy thử tải lại danh sách nhạc." onRetry={retry} /> : null}</MotionRegion>
-      <MotionRegion as="p" data-menu-note className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{playlistNote(error, scene)}</MotionRegion>
+      {/* Chữ nhỏ chỉ khi có điều cần biết (mất mạng lần đầu thì lý do) - như bản điện thoại, không nhắc suông. */}
+      <MotionRegion motionKey={error}>{error ? <p data-menu-note className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{error}</p> : null}</MotionRegion>
     </ActionSubmenu>
   );
 }
