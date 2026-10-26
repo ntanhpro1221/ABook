@@ -107,6 +107,26 @@ class ImportQueue(private val source: ImportSource, private val scope: Coroutine
     /** Lời lỗi: việc chưa làm được (cùng chữ với lời báo của web) + lý do của lõi. */
     private fun failure(what: String, error: Exception) = listOf(what, error.message ?: "Bạn hãy thử lại.").joinToString(" ")
 
+    /**
+     * "Bỏ phần còn lại" khi đóng Thêm sách giữa hàng (web AddBook `reset`): cuốn đang đọc dừng, bản tạm của cuốn đang xem bị bỏ, cả hàng về trống. Cuốn đã thêm vẫn ở
+     * Thư viện. Đang thêm một cuốn thì không bỏ (ghi dở một cuốn còn tệ hơn), trả false.
+     */
+    fun dropRest(): Boolean {
+        if (flow.value.items.any { it.stage == ImportStage.Adding }) return false
+        worker?.cancel()
+        worker = null
+        val staged = ref
+        ref = null
+        flow.value = ImportState()
+        progress.clear()
+        reviewed.clear()
+        opened.clear()
+        if (staged != null) scope.launch {
+            try { source.discard(staged) } catch (error: Exception) { if (error is CancellationException) throw error }
+        }
+        return true
+    }
+
     private fun finish(id: Long, stage: ImportStage, bookId: String? = null) {
         progress.getOrPut(id) { MutableStateFlow(0f) }.value = 1f
         ref = null

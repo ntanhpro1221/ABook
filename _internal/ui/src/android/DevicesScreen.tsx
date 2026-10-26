@@ -164,7 +164,7 @@ export function PairPanel() {
             <p className="text-sm text-fg-2">Cùng Wi-Fi, mở Thiết bị trên máy tính.</p>
           </div>
         </div>
-        <MoreInfo label="Cách lấy mã">Trong Cài đặt › Thiết bị của máy tính, bật “{SYNC_SWITCH_LABEL}” rồi chọn ghép thiết bị để lấy mã 6 số.</MoreInfo>
+        <MoreInfo label="Cách lấy mã">{`Trong Cài đặt › Thiết bị của máy tính, bật “${SYNC_SWITCH_LABEL}” rồi chọn ghép thiết bị để lấy mã 6 số.`}</MoreInfo>
       </div>
 
       {!manual && (

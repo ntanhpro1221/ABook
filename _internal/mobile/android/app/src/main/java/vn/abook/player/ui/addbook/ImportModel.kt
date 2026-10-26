@@ -68,6 +68,20 @@ object ImportLogic {
         return "Theo ${preview.splitHeadings} dòng “Chương N” trong file$extra."
     }
 
+    /** Số cuốn còn trong hàng mà chưa vào Thư viện (chờ, đang đọc, đang xem): đóng Thêm sách lúc còn hơn một cuốn như vậy thì hỏi trước (web AddBook `unfinished`). */
+    fun unfinished(items: List<ImportItem>) = items.count { it.stage == ImportStage.Waiting || it.stage == ImportStage.Reading || it.stage == ImportStage.Review }
+
+    /** Lời hỏi khi đóng Thêm sách giữa hàng (cùng câu với web). */
+    fun leaveQuestion(count: Int) = "Còn $count cuốn chưa thêm vào thư viện. Đóng bây giờ thì các cuốn ấy sẽ không được thêm."
+
+    /** "Chọn hết": mọi chương của bản xem trước. */
+    fun all(preview: ImportPreview) = preview.chapters.map { it.index }.toSet()
+
+    /** Không tích chương nào thì không thêm được sách - trừ khi việc là mở cuốn đã có ("Dùng sách có"), không cần chương nào. */
+    fun canAdd(preview: ImportPreview, choice: ImportChoices) = choice.picked.isNotEmpty() || (preview.existingId != null && !choice.separate)
+
+    const val NOTHING_PICKED = "Chưa chọn chương nào - tích ít nhất một chương để thêm vào thư viện."
+
     fun groups(items: List<Suggestion>): List<SuggestionGroup> = items.groupBy { it.line }.map { (line, rows) ->
         SuggestionGroup(line, rows.map { it.chapter }, rows.all { it.skipped })
     }

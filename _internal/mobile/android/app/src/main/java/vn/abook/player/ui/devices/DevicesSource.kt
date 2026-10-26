@@ -92,4 +92,8 @@ class DeviceLinks(
     val askNearby: (result: (Boolean) -> Unit) -> Unit = { it(true) },
     /** Xin quyền thông báo trước khi bật chia sẻ (Android 13+); từ chối thì vẫn chạy tiếp. */
     val askNotifications: (then: () -> Unit) -> Unit = { it() },
+    /** Chép chữ vào bộ nhớ tạm của máy; false khi máy không chép được. */
+    val copyText: (text: String) -> Boolean = { false },
+    /** Mở một trang của ABook trên GitHub bằng trình duyệt của máy (chỉ đường của ABook - như LibraryPlugin.openRelease). */
+    val openRelease: (url: String) -> Unit = {},
 )
