@@ -1,0 +1,38 @@
+// Macrobenchmark của giao diện native (docs/NATIVE_PHONE_UI.md §1): mở nguội / ấm, đổi tab, cuộn lưới - FrameTimingMetric.
+// Đo bản -PnativeUi: gradlew -PnativeUi :benchmark:connectedBenchmarkAndroidTest (đặt ANDROID_SERIAL cho đúng máy; máy ảo cần
+// -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.suppressErrors=EMULATOR và số đo chỉ để chạy thử, ngân sách đo trên OPPO).
+apply plugin: 'com.android.test'
+apply plugin: 'kotlin-android'
+apply plugin: 'androidx.baselineprofile'
+
+android {
+    namespace = "vn.abook.benchmark"
+    compileSdk = rootProject.ext.compileSdkVersion
+    defaultConfig {
+        minSdkVersion 28
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
+    }
+    targetProjectPath = ":app"
+    experimentalProperties["android.experimental.self-instrumenting"] = true
+}
+
+kotlin {
+    jvmToolchain(21)
+}
+
+// Module này đo, không sinh profile.
+baselineProfile {
+    useConnectedDevices = true
+}
+
+dependencies {
+    implementation "androidx.test.ext:junit:$androidxJunitVersion"
+    implementation "androidx.test.uiautomator:uiautomator:$uiAutomatorVersion"
+    implementation "androidx.benchmark:benchmark-macro-junit4:$macrobenchmarkVersion"
+}
+
