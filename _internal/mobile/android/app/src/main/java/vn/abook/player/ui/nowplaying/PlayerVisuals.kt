@@ -46,6 +46,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.Dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -56,6 +57,7 @@ import vn.abook.player.ui.components.LucideIcon
 import vn.abook.player.ui.components.LucidePaths
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.BeVietnamPro
+import vn.abook.player.ui.components.GeneratedCover
 import vn.abook.player.ui.theme.MotionMs
 
 private val LocalPlayerCovers = staticCompositionLocalOf { CoverLoader() }
@@ -65,7 +67,7 @@ fun PlayerCoverProvider(covers: CoverLoader, content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalPlayerCovers provides covers, content = content)
 }
 
-/** Cover always decoded at requested display size on IO; cache is the app's existing byte-bounded loader. */
+/** Cover always decoded at requested display size on IO; cache is the app's existing byte-bounded loader. No image: the same generated cover as the Library. */
 @Composable
 fun PlayerCover(ref: CoverRef?, title: String, modifier: Modifier = Modifier, decodeSize: Dp? = null) {
     val covers = LocalPlayerCovers.current
@@ -74,16 +76,18 @@ fun PlayerCover(ref: CoverRef?, title: String, modifier: Modifier = Modifier, de
     val displaySize = decodeSize ?: minOf((LocalConfiguration.current.screenWidthDp - 40).dp, 320.dp)
     val requestPx = with(density) { displaySize.roundToPx().coerceAtLeast(1) }
     BoxWithConstraints(modifier.clip(RoundedCornerShape(12.dp)).background(Abook.colors.bgSunken), contentAlignment = Alignment.Center) {
+        if (ref == null) {
+            // Tên đã có ngay dưới bìa: chữ trên bìa tự vẽ chỉ để nhìn, trình đọc màn hình không đọc hai lần.
+            GeneratedCover(title, null, maxWidth, Modifier.fillMaxSize().clearAndSetSemantics {})
+            return@BoxWithConstraints
+        }
         val width = requestPx
         val height = requestPx
         val cacheKey = ref?.let { covers.key(it.path, it.stamp, width) }
         val bitmap by produceState<ImageBitmap?>(cacheKey?.let(covers::peek), cacheKey) {
             value = if (ref != null && cacheKey != null) covers.load(cacheKey, ref.path, width, height) else null
         }
-        if (bitmap != null) Image(bitmap!!, title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-        else BasicText(title.take(1).uppercase(), style = Abook.type.screenTitle.copy(
-            fontSize = (maxWidth.value / 3f).sp, lineHeight = (maxWidth.value / 2f).sp,
-        ))
+        bitmap?.let { Image(it, title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop) }
     }
 }
 
