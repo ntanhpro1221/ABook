@@ -93,6 +93,8 @@ Trong thời gian P0-P3, bản WebView chỉ nhận sửa lỗi.
 
 Hàng "Sắp có" (SoonRow, MenuRow soon) chỉ là giàn giáo trong lúc làm: chúng đánh dấu việc native chưa làm. Điều kiện của P4 là không còn hàng nào như thế; máy dò sẽ chặn bản phát hành nếu còn.
 Mỗi màn native được thiết kế lại cho cách tương tác của điện thoại, không bê điều khiển của bản web sang. Chủ sách 26-10, về nút "Đọc theo" cũ: "đâu phải cứ lấy nút cũ rồi gán vào linh tinh là xong?". Đặc tả mỗi màn phải kê từng điều khiển được giữ lại, đặt ở đâu và vì sao.
+Một hàng chỉ có một luật căn dọc. Hàng có chữ nhiều dòng thì biểu tượng hai đầu (trạng thái, "…", công tắc) cùng bám tâm dòng chữ đầu; hàng một dòng thì cùng căn giữa. Chủ sách 26-10 bắt lỗi tam giác bám dòng đầu còn "…" căn giữa hàng: "đây là thiết kế của bạn hay bạn quên?". Mỗi kiểu hàng mới có biểu tượng hai đầu phải kèm một test đo tâm (mẫu: `chapterRowIconsShareTheFirstLineCenter`).
+Nhãn nút là động từ ngắn trên một dòng. Thông tin đi kèm (tên chương, số chờ gửi) nằm ở dòng phụ chữ nhỏ, không ghép vào nhãn.
 
 ## 7. Máy tính
 
