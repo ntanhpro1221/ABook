@@ -34,7 +34,7 @@ export interface ChapterChoice {
 }
 
 /** `titleFirst`: tên chương làm dòng chính, dòng đầu của chương ở dòng phụ khi khác ("Thêm sách từ file…": tên ấy là tên sẽ lưu).
- *  `choice`: mỗi hàng có ô chọn và tên bấm để sửa. Tên dài xuống dòng (tối đa 2 dòng), không cắt một dòng như trước. Ô chọn, số và
+ *  `choice`: mỗi hàng có ô chọn và tên bấm để sửa. Tên dài xuống dòng hết chữ, không cắt (chữ của người dùng). Ô chọn, số và
  *  số chữ đứng ngang dòng tên (canh đầu hàng, chữ nhỏ hạ 2 px cho chung chân chữ với tên), không trôi giữa khối khi hàng có dòng phụ. */
 export function ChapterPreview({ chapters, className, titleFirst = false, choice }: {
   chapters: PreviewChapter[];
@@ -137,15 +137,15 @@ export function ChapterPreview({ chapters, className, titleFirst = false, choice
                   className="touch-hit group block w-full rounded-control text-left text-sm font-medium hover:text-accent-text focus-visible:outline-2 focus-visible:outline-focus"
                 >
                   {/* Bút nằm ngay sau chữ cuối, kể cả khi tên xuống dòng (đặt cạnh khối chữ thì tên hai dòng đẩy bút ra tận mép phải). */}
-                  <span className="line-clamp-2 break-words">
+                  <span className="break-words">
                     {title}
                     <Pencil className="ml-1.5 inline size-3 align-[-0.0625rem] text-fg-3 group-hover:text-accent-text" aria-hidden />
                   </span>
                 </button>
               ) : (
-                <div className="line-clamp-2 break-words text-sm font-medium">{title}</div>
+                <div className="break-words text-sm font-medium">{title}</div>
               )}
-              {sub && <div className="line-clamp-1 break-words text-xs text-fg-2">{sub}</div>}
+              {sub && <div className="break-words text-xs text-fg-2">{sub}</div>}
               {chapter.matter ? (
                 <div className="text-xs text-fg-3">{chapter.matter} - có vẻ không phải truyện, tích nếu muốn nghe</div>
               ) : (
