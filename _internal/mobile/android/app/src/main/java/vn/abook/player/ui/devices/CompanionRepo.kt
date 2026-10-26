@@ -79,7 +79,7 @@ class CompanionRepo(private val core: CompanionCore, private val now: () -> Long
                     val ack = acks.getJSONObject(i)
                     val id = ack.optString("id")
                     if (id.isNotBlank() && seen.add(id) && !ack.optBoolean("ok"))
-                        problem = "${row.optString("name")}: ${ack.optString("message").ifBlank { "Chưa làm được lệnh" }}"
+                        problem = "${row.optString("name")}: ${ack.optString("message").ifBlank { "không làm được lệnh này" }}"
                 }
                 OtherPlayer.from(row)
             }
@@ -108,6 +108,8 @@ class CompanionRepo(private val core: CompanionCore, private val now: () -> Long
                 "pause" -> fresh.copy(playing = false)
                 "play" -> fresh.copy(playing = true)
                 "skip" -> fresh.copy(position = (at + (seconds ?: 0.0)).coerceIn(0.0, old.duration.takeIf { it > 0 } ?: Double.MAX_VALUE))
+                // Hẹn giờ ngủ hiện ngay dưới tay bạn, trước khi máy kia trả lời (như remoteSleepAfter của bản WebView).
+                "sleep" -> fresh.copy(sleep = if (mode == "chapter") "chapter" else if ((minutes ?: 0) > 0) "minutes" else "off")
                 else -> fresh
             }
         })

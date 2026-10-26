@@ -124,7 +124,7 @@ class FakeDevicesSource : DevicesSource {
 
     override suspend fun storage() = storage
 
-    override suspend fun delete(id: String): String? {
+    override suspend fun delete(id: String, title: String, partial: Boolean): String? {
         deleted += id
         if (deleteError == null) storage = storage.copy(entries = storage.entries.filterNot { it.id == id })
         return deleteError
