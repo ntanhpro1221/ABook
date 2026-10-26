@@ -35,6 +35,7 @@ class FakeVoiceSource : VoiceSource {
     val imported = ArrayList<List<String>>()
     var importResult: ((List<String>) -> MusicImportResult)? = null
     var importGate: CompletableDeferred<Unit>? = null
+    var importError: VoiceFailure? = null
     val removedTracks = ArrayList<String>()
     var trackRemoveError: VoiceFailure? = null
 
@@ -116,6 +117,7 @@ class FakeVoiceSource : VoiceSource {
         imported += uris
         for (index in uris.indices) progress(index + 1, uris.size)
         importGate?.await()
+        importError?.let { throw it }
         val result = importResult?.invoke(uris) ?: MusicImportResult(tracks + uris.map { Fixtures.track(it) }, uris.size, 0, emptyList())
         tracks = result.tracks
         return result

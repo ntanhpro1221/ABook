@@ -10,16 +10,13 @@ import vn.abook.player.DeviceMusic
 import vn.abook.player.LocalStudio
 import vn.abook.player.Playlists
 import vn.abook.player.Store
-import vn.abook.player.ui.voice.VoiceFailure
-import vn.abook.player.ui.voice.VoiceSource
-import vn.abook.player.ui.voice.VoiceText
 
 /**
  * Nhạc nền với lõi: màn nhạc của cuốn và lần sửa đi qua [LocalStudio.bookMusic] / [LocalStudio.setBookMusic] (cùng lời đáp với WebView), menu danh sách phát qua
- * [LocalStudio.playlistsView] (cần mạng lần đầu: luồng nền), thêm nhạc qua [VoiceSource.importMusic] (một kho với Nhạc của tôi). Sửa xong: nhạc đang phát đọc lại lớp
+ * [LocalStudio.playlistsView] (cần mạng lần đầu: luồng nền); thêm nhạc không qua đây mà qua [vn.abook.player.ui.voice.MineImports] (một kho, một lượt với Nhạc của tôi). Sửa xong: nhạc đang phát đọc lại lớp
  * sửa, cuốn tải từ máy tính gửi phần sửa về ([BookActions.edited]).
  */
-class MusicRepo(context: Context, private val voice: VoiceSource) : MusicSource {
+class MusicRepo(context: Context) : MusicSource {
     private val app = context.applicationContext
 
     private suspend fun <T> io(fallback: String, block: () -> T): T = withContext(Dispatchers.IO) {
@@ -66,13 +63,4 @@ class MusicRepo(context: Context, private val voice: VoiceSource) : MusicSource 
 
     override suspend fun alternatives(id: String, key: String): List<MineTrack> =
         io("Chưa tìm được bài để đổi") { MusicJson.mine(LocalStudio.musicAlternatives(id, key)) }
-
-    override suspend fun importMine(uris: List<String>, progress: (done: Int, total: Int) -> Unit): MusicImported {
-        val result = try {
-            voice.importMusic(uris, progress)
-        } catch (error: VoiceFailure) {
-            throw MusicFailure(error.message ?: "Chưa thêm được nhạc")
-        }
-        return MusicImported(VoiceText.imported(result), result.failed, result.added + result.existing > 0)
-    }
 }
