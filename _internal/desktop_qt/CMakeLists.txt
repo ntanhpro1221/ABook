@@ -9,24 +9,53 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Qt >= 6.10.3, liên kết ĐỘNG (LGPL): DLL Qt nằm cạnh file chạy do windeployqt chép, người dùng thay được.
-find_package(Qt6 6.10 REQUIRED COMPONENTS Quick Network)
+find_package(Qt6 6.10 REQUIRED COMPONENTS Quick Network Test QuickTest CorePrivate GuiPrivate QuickPrivate)   # *Private: QWindowKit cần
 qt_standard_project_setup(REQUIRES 6.10)
+
+# Khung cửa sổ tự vẽ (Apache-2.0, liên kết TĨNH, không thêm DLL): tools/build_qwindowkit.bat dựng vào QWK_ROOT/inst.
+find_package(QWindowKit CONFIG REQUIRED)
 
 # Theme.qml do tools/gen_theme.py sinh từ DESIGN.md; Nav.qml là singleton điều hướng.
 set_source_files_properties(qml/Theme.qml qml/Nav.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 
+# Lõi bộ phát (không đụng Qt Quick): app và bộ thử QtTest cùng biên dịch đúng các file này.
+set(ABOOK_PLAYER_SOURCES
+    src/audioout.cpp
+    src/audioout.h
+    src/chaptersmodel.cpp
+    src/chaptersmodel.h
+    src/player.cpp
+    src/player.h
+    src/playerlogic.h
+    src/playernet.h
+    src/progressoutbox.cpp
+    src/progressoutbox.h
+)
+
 qt_add_executable(ABookDesk WIN32
     src/main.cpp
+    src/audioout_mf.cpp
+    src/audioout_mf.h
+    src/bookdetail.cpp
+    src/bookdetail.h
+    src/readalong.cpp
+    src/readalong.h
+    src/scriptlogic.h
     src/backend.cpp
     src/backend.h
     src/bench.cpp
     src/bench.h
     src/coverprovider.cpp
     src/coverprovider.h
+    src/hostnet.cpp
+    src/hostnet.h
     src/librarymodel.cpp
     src/librarymodel.h
     src/platform.cpp
     src/platform.h
+    src/windowchrome.cpp
+    src/windowchrome.h
+    ${ABOOK_PLAYER_SOURCES}
 )
 target_include_directories(ABookDesk PRIVATE src)
 qt_add_qml_module(ABookDesk
@@ -37,10 +66,14 @@ qt_add_qml_module(ABookDesk
         qml/Nav.qml
         qml/Main.qml
         qml/Icon.qml
+        qml/LucidePaths.js
         qml/Interactive.qml
         qml/Button.qml
         qml/IconButton.qml
         qml/NavItem.qml
+        qml/TitleBar.qml
+        qml/CaptionButton.qml
+        qml/CaptionGlyph.qml
         qml/Sidebar.qml
         qml/ConnectionChip.qml
         qml/ConnectionPopover.qml
@@ -56,6 +89,24 @@ qt_add_qml_module(ABookDesk
         qml/SettingsScreen.qml
         qml/Scrollbar.qml
         qml/SmoothWheel.qml
+        qml/ChapterList.qml
+        qml/ChapterRow.qml
+        qml/ChaptersPopover.qml
+        qml/ChoiceChip.qml
+        qml/ClockUser.qml
+        qml/ControlChip.qml
+        qml/NowPlaying.qml
+        qml/PageSwitch.qml
+        qml/PlayButton.qml
+        qml/PlayerBar.qml
+        qml/PlayerNotice.qml
+        qml/Popover.qml
+        qml/ReadAlongView.qml
+        qml/SeekBar.qml
+        qml/SkipButton.qml
+        qml/SkipGlyph.qml
+        qml/SleepPopover.qml
+        qml/SpeedPopover.qml
         qml/BenchScenario.qml
     RESOURCES
         fonts/BeVietnamPro-Regular.ttf
@@ -63,7 +114,46 @@ qt_add_qml_module(ABookDesk
         fonts/BeVietnamPro-Bold.ttf
 )
 target_compile_definitions(ABookDesk PRIVATE ABOOK_VERSION="${ABOOK_VERSION}" QT_NO_CAST_FROM_ASCII)
-target_link_libraries(ABookDesk PRIVATE Qt6::Quick Qt6::Network)
+# Âm thanh: Media Foundation của Windows (đo ở docs/NATIVE_PHONE_UI.md 7.1), không thêm DLL nào vào bản phân phối.
+target_link_libraries(ABookDesk PRIVATE Qt6::Quick Qt6::Network QWindowKit::Quick mfplat mf mfuuid ole32 ksuser propsys)
 if(MSVC)
     target_compile_options(ABookDesk PRIVATE /W3 /utf-8)
 endif()
+
+# ---- bộ thử QtTest: bộ phát với AudioOut / PlayerNet giả, không cần thiết bị âm thanh hay host ----
+qt_add_executable(PlayerTests tests/test_player.cpp tests/fakes.h ${ABOOK_PLAYER_SOURCES})
+target_include_directories(PlayerTests PRIVATE src tests)
+target_compile_definitions(PlayerTests PRIVATE QT_NO_CAST_FROM_ASCII)
+target_link_libraries(PlayerTests PRIVATE Qt6::Test Qt6::Qml Qt6::Network)
+if(MSVC)
+    target_compile_options(PlayerTests PRIVATE /W3 /utf-8)
+endif()
+# "Đọc theo" + trang sách: cần Qt Quick (QQuickTextDocument) nên là bộ thử riêng, vẫn không cần thiết bị âm thanh hay host
+qt_add_executable(ReadAlongTests tests/test_readalong.cpp tests/fakes.h src/readalong.cpp src/readalong.h src/scriptlogic.h src/bookdetail.cpp src/bookdetail.h ${ABOOK_PLAYER_SOURCES})
+target_include_directories(ReadAlongTests PRIVATE src tests)
+target_compile_definitions(ReadAlongTests PRIVATE QT_NO_CAST_FROM_ASCII)
+target_link_libraries(ReadAlongTests PRIVATE Qt6::Test Qt6::Quick Qt6::Network)
+if(MSVC)
+    target_compile_options(ReadAlongTests PRIVATE /W3 /utf-8)
+endif()
+# Biểu tượng tua 15 giây đo bằng điểm ảnh (bộ vẽ phần mềm, nền offscreen)
+qt_add_executable(SkipGlyphTests tests/test_skipglyph.cpp)
+target_compile_definitions(SkipGlyphTests PRIVATE SKIPGLYPH_QML_DIR="${CMAKE_CURRENT_SOURCE_DIR}/qml" SKIPGLYPH_FONT_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fonts")
+target_link_libraries(SkipGlyphTests PRIVATE Qt6::Test Qt6::Quick)
+if(MSVC)
+    target_compile_options(SkipGlyphTests PRIVATE /W3 /utf-8)
+endif()
+# Thanh bên thu gọn / mở rộng: QtQuickTest với Theme + Nav thật, Platform / Backend giả
+qt_add_executable(SidebarTests tests/test_sidebar.cpp)
+target_compile_definitions(SidebarTests PRIVATE QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/qml")
+target_link_libraries(SidebarTests PRIVATE Qt6::QuickTest Qt6::Quick)
+# Ở thư mục riêng: cạnh app thì Qt tìm thấy module ABook thật (trỏ vào qrc của app) trước bản dựng giả
+set_target_properties(SidebarTests PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/sidebar_tests")
+if(MSVC)
+    target_compile_options(SidebarTests PRIVATE /W3 /utf-8)
+endif()
+enable_testing()
+add_test(NAME PlayerTests COMMAND PlayerTests)
+add_test(NAME ReadAlongTests COMMAND ReadAlongTests)
+add_test(NAME SkipGlyphTests COMMAND SkipGlyphTests)
+add_test(NAME SidebarTests COMMAND SidebarTests)

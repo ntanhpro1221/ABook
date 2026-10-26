@@ -14,6 +14,7 @@
 
 #ifdef Q_OS_WIN
 #include <windows.h>
+#include <cstdio>
 #endif
 
 namespace {
@@ -49,10 +50,38 @@ double processStartEpochMs() {
 }
 }  // namespace
 
+#ifdef Q_OS_WIN
+namespace {
+// Chế độ đo: app chết thì ghi ngăn xếp (module + địa chỉ tương đối) cạnh file đo để biết chết ở đâu (bản Release không có ký hiệu).
+LONG WINAPI crashTrace(EXCEPTION_POINTERS *info) {
+    const QByteArray path = (outPath() + QStringLiteral(".crash")).toLocal8Bit();
+    FILE *file = fopen(path.constData(), "w");
+    if (!file)
+        return EXCEPTION_CONTINUE_SEARCH;
+    fprintf(file, "exception %08lx\n", info->ExceptionRecord->ExceptionCode);
+    void *frames[48];
+    const USHORT n = CaptureStackBackTrace(0, 48, frames, nullptr);
+    for (USHORT i = 0; i < n; ++i) {
+        HMODULE module = nullptr;
+        char name[MAX_PATH] = "?";
+        if (GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, static_cast<LPCSTR>(frames[i]), &module))
+            GetModuleFileNameA(module, name, MAX_PATH);
+        fprintf(file, "%2u %s +0x%llx\n", unsigned(i), name, (unsigned long long)(static_cast<char *>(frames[i]) - reinterpret_cast<char *>(module)));
+    }
+    fclose(file);
+    return EXCEPTION_CONTINUE_SEARCH;
+}
+}  // namespace
+#endif
+
 Bench::Bench(QObject *parent) : QObject(parent) {
     g_bench = this;
-    if (enabled())
+    if (enabled()) {
         g_frames.resize(kMaxFrames);
+#ifdef Q_OS_WIN
+        SetUnhandledExceptionFilter(crashTrace);
+#endif
+    }
 }
 
 Bench *Bench::create(QQmlEngine *, QJSEngine *) {
@@ -62,6 +91,25 @@ Bench *Bench::create(QQmlEngine *, QJSEngine *) {
 
 bool Bench::enabled() const {
     return !outPath().isEmpty();
+}
+
+QString Bench::scenario() const {
+    const QString s = qEnvironmentVariable("ABOOK_BENCH_SCENARIO");
+    return s.isEmpty() ? QStringLiteral("library") : s;
+}
+
+QString Bench::book() const {
+    return qEnvironmentVariable("ABOOK_BENCH_BOOK");
+}
+
+void Bench::noteCounters(const QString &tag, QObject *player, QObject *readAlong) {
+    if (!enabled() || !player || !readAlong)
+        return;
+    const auto clock = player->property("clock").value<QObject *>();
+    const auto num = [](const QVariant &v) { return QString::number(v.toULongLong()); };
+    mark(QStringLiteral("count:%1:%2:%3:%4:%5")
+             .arg(tag, clock ? num(clock->property("ticks")) : QStringLiteral("0"), num(player->property("snapshotChanges")),
+                  num(readAlong->property("evaluations")), num(readAlong->property("changes"))));
 }
 
 void Bench::mark(const QString &name) {

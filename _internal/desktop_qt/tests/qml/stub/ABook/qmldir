@@ -1,0 +1,11 @@
+module ABook
+singleton Theme 1.0 ../../../../qml/Theme.qml
+singleton Nav 1.0 ../../../../qml/Nav.qml
+singleton Platform 1.0 Platform.qml
+singleton Backend 1.0 Backend.qml
+Interactive 1.0 ../../../../qml/Interactive.qml
+Icon 1.0 ../../../../qml/Icon.qml
+IconButton 1.0 ../../../../qml/IconButton.qml
+NavItem 1.0 ../../../../qml/NavItem.qml
+ConnectionChip 1.0 ../../../../qml/ConnectionChip.qml
+Sidebar 1.0 ../../../../qml/Sidebar.qml

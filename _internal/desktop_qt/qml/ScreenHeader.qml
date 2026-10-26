@@ -15,7 +15,7 @@ Item {
     IconButton {
         id: back
         visible: root.showBack
-        glyph: ""
+        icon: "arrow-left"
         x: -10                      // nét mũi tên (lùi 10 trong vùng bấm 40) thẳng mép nội dung
         y: Theme.s32
         tip: "Quay lại  (Esc)"

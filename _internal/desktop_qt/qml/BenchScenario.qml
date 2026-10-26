@@ -1,12 +1,20 @@
 import QtQuick
 import ABook
 
-// Kịch bản đo tự chạy khi ABOOK_BENCH được đặt (tools/measure.py): chờ thư viện về -> nghỉ (đo RAM nghỉ) -> cuộn lưới từ đầu tới cuối
-// rồi ngược lại hai lượt -> nghỉ -> ghi file và thoát. Mỗi mốc đi vào Bench (idle_begin, scroll_begin, scroll_end, done).
+// Kịch bản đo tự chạy khi ABOOK_BENCH được đặt (tools/measure.py).
+//   "library" (mặc định): chờ thư viện về -> nghỉ (đo RAM nghỉ) -> cuộn lưới từ đầu tới cuối rồi ngược lại hai lượt -> nghỉ -> ghi file và thoát.
+//     Mốc: idle_begin, scroll_begin, scroll_end, done.
+//   "player": nạp một cuốn có tiếng ở trạng thái dừng (RAM nghỉ khi có sách) -> mở / đóng Đang nghe 5 lần (khung lúc biến hình) -> mở Đang nghe,
+//     phát (tắt tiếng), chữ chạy theo giọng 10 s (khung + bộ đếm) -> đóng, thu nhỏ cửa sổ, vẫn phát 10 s (RAM + CPU) -> ghi file và thoát.
+//     Mốc: idle_begin, idle_end, morph_begin/morph_end, unmorph_begin/unmorph_end, follow_begin/follow_end, min_begin/min_end, count:<tag>:..., done.
 Item {
     id: root
-    visible: false
+    width: 0
+    height: 0
     property var stack: null
+    property var win: null
+    property var nowPlaying: null
+    readonly property bool playerScenario: Bench.scenario === "player"
     readonly property var list: {
         const s = stack && stack._stacks ? stack._stacks[0] : null
         return s && s.length && s[0].content ? s[0].content.list : null
@@ -14,9 +22,10 @@ Item {
     readonly property real maxY: list ? list.originY + list.contentHeight - list.height + list.bottomMargin : 0
     readonly property real minY: list ? list.originY - list.topMargin : 0
 
+    // ---- library ----
     // Thư viện về rồi chờ bìa giải mã xong trước khi đo nghỉ
     Timer {
-        running: Bench.enabled && Backend.libraryLoaded
+        running: Bench.enabled && !root.playerScenario && Backend.libraryLoaded
         interval: 3000
         onTriggered: { Bench.note("idle_begin"); idle.start() }
     }
@@ -30,6 +39,66 @@ Item {
         onFinished: { Bench.note("scroll_end"); tail.start() }
     }
     Timer { id: tail; interval: 3000; onTriggered: { Bench.note("done"); Bench.finish() } }
+
+    // ---- player ----
+    property int step: 0
+    property int morphRound: 0
+    property bool beat: false
+    // Nhịp tim: một điểm ảnh cùng màu nền nhúc nhích mỗi khung, để cảnh luôn vẽ lại ở tần số quét và khoảng cách giữa hai khung lộ ra mọi khung nặng
+    // (không có nó, lúc phát chỉ có vài khung mỗi giây và p99 của khoảng cách khung vô nghĩa).
+    Rectangle {
+        visible: root.beat
+        z: 1000
+        width: 1
+        height: 1
+        y: 0
+        color: Theme.bg
+        NumberAnimation on x { running: root.beat; from: 2; to: 6; duration: 300; loops: Animation.Infinite }
+    }
+    Timer {
+        id: starter
+        running: Bench.enabled && root.playerScenario && Backend.libraryLoaded
+        interval: 1000
+        onTriggered: {
+            win.width = 1500                // cột chữ chạy theo giọng chỉ có ở bố cục rộng (khung nội dung >= 1100)
+            win.height = 860
+            if (!Player.loaded && Bench.book) Player.open(Bench.book, -1, -1, false)
+            waitLoaded.start()
+        }
+    }
+    Timer {
+        id: waitLoaded
+        interval: 200
+        repeat: true
+        onTriggered: if (Player.loaded) { stop(); root.step = 0; root.advance(3000) }
+    }
+    Timer { id: stepper; onTriggered: root.run() }
+    function advance(ms) { stepper.interval = ms; stepper.start() }
+    function counters(tag) { Bench.noteCounters(tag, Player, ReadAlong) }
+    function run() {
+        if (Bench.enabled) console.log("bench step", root.step)
+        switch (root.step++) {
+        case 0: Bench.note("idle_begin"); advance(3500); break
+        case 1: Bench.note("idle_end"); advance(200); break
+        case 2: Bench.note("morph_begin"); win.openNowPlaying(); advance(900); break
+        case 3: Bench.note("morph_end"); advance(300); break
+        case 4: Bench.note("unmorph_begin"); nowPlaying.close(); advance(900); break
+        case 5:
+            Bench.note("unmorph_end")
+            if (++morphRound < 5) { root.step = 2; advance(300) } else advance(200)
+            break
+        case 6: win.openNowPlaying(); advance(1200); break
+        case 7: Player.resume(); advance(1500); break
+        case 8: root.beat = true; advance(200); break
+        case 9: counters("follow_begin"); Bench.note("follow_begin"); advance(10000); break
+        case 10: Bench.note("follow_end"); counters("follow_end"); root.beat = false; advance(300); break
+        case 11: nowPlaying.close(); advance(1500); break
+        case 12: counters("min_begin"); Bench.note("min_begin"); win.showMinimized(); advance(10000); break
+        case 13: Bench.note("min_end"); counters("min_end"); advance(300); break
+        default: Player.pause(); Bench.note("done"); Bench.finish()
+        }
+    }
+
     // Backend không lên: ghi lại những gì có rồi thoát, để script đo báo lỗi thay vì treo
-    Timer { running: Bench.enabled; interval: 40000; onTriggered: { Bench.note("timeout"); Bench.finish() } }
+    Timer { running: Bench.enabled; interval: root.playerScenario ? 90000 : 40000; onTriggered: { Bench.note("timeout"); Bench.finish() } }
 }

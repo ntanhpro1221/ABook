@@ -6,7 +6,6 @@
 #include <QDir>
 #include <QEvent>
 #include <QFileInfo>
-#include <QFontDatabase>
 #include <QKeyEvent>
 #include <QSettings>
 #include <QUrl>
@@ -36,8 +35,6 @@ bool systemReducesMotion() {
 
 Platform::Platform(QObject *parent) : QObject(parent), m_reduceMotion(systemReducesMotion()) {
     g_platform = this;
-    m_iconFamily = QFontDatabase::families().contains(QStringLiteral("Segoe Fluent Icons")) ? QStringLiteral("Segoe Fluent Icons")
-                                                                                         : QStringLiteral("Segoe MDL2 Assets");
     qApp->installEventFilter(this);
 }
 

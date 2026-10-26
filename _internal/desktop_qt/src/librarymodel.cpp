@@ -1,5 +1,7 @@
 #include "librarymodel.h"
 
+#include "playerlogic.h"
+
 #include <QJsonObject>
 #include <cmath>
 
@@ -62,9 +64,7 @@ void LibraryModel::setBooks(const QJsonArray &array) {
         const QJsonValue remote = o.value(QStringLiteral("remote"));
         if (remote.isObject())
             b.source = remote.toObject().value(QStringLiteral("computer")).toString();
-        const QJsonObject cover = o.value(QStringLiteral("cover")).toObject();
-        if (!cover.isEmpty())
-            b.coverKey = b.id + QLatin1Char('/') + QString::number(cover.value(QStringLiteral("version")).toInt());
+        b.coverKey = PlayerLogic::coverKeyOf(b.id, o.value(QStringLiteral("cover")).toObject());
         QStringList detail;
         if (b.producing)
             detail << QStringLiteral("Đang làm · %1/%2 chương").arg(b.chaptersAvailable).arg(b.chaptersTotal);

@@ -8,6 +8,7 @@ WheelHandler {
     required property Flickable flick
     property real step: 110
     property real target: 0
+    signal scrolled()   // người vừa lăn bánh xe (khung chữ dùng để thôi "đi theo giọng")
     acceptedDevices: PointerDevice.Mouse
     blocking: true
 
@@ -17,6 +18,7 @@ WheelHandler {
         return Math.max(top, Math.min(Math.max(top, bottom), y))
     }
     onWheel: (event) => {
+        scrolled()
         const base = glide.running ? target : flick.contentY
         target = clampY(base - event.angleDelta.y / 120 * step)
         if (Theme.reduceMotion) {

@@ -6,9 +6,10 @@ import ABook
 Interactive {
     id: root
     property string text: ""
-    property string glyph: ""
+    property string icon: ""
     property bool current: false
     property string shortcut: ""
+    readonly property real iconInset: 11     // tâm biểu tượng ở 28 = nửa dải thu gọn 56 (mục lệch lề 8)
 
     implicitHeight: Theme.buttonHeight
     tip: shortcut ? text + "  (" + shortcut + ")" : ""
@@ -20,23 +21,25 @@ Interactive {
         opacity: root.current ? 0 : (root.pressed ? 0.10 : (root.hovered ? 0.05 : 0))
         Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
     }
-    Row {
+    Icon {
+        x: root.iconInset
         anchors.verticalCenter: parent.verticalCenter
-        anchors.left: parent.left
-        anchors.leftMargin: Theme.s12
-        spacing: Theme.s12
-        Icon {
-            glyph: root.glyph
-            size: 18
-            color: root.current ? Theme.text : Theme.text2
-            anchors.verticalCenter: parent.verticalCenter
-        }
+        name: root.icon
+        size: 18
+        color: root.current ? Theme.text : Theme.text2
+    }
+    // Nhãn nằm trong khung cắt theo bề rộng mục: dải thu gọn không lộ nửa chữ, khi mở rộng chữ hé ra dần (không bị rút gọn "…")
+    Item {
+        x: root.iconInset + 18 + Theme.s12
+        width: Math.max(0, root.width - x)
+        height: parent.height
+        clip: true
         Text {
+            anchors.verticalCenter: parent.verticalCenter
             text: root.text
             color: root.current ? Theme.text : Theme.text2
             font.pixelSize: Theme.sizeBodySmall
             font.weight: root.current ? Theme.weightMedium : Theme.weightRegular
-            anchors.verticalCenter: parent.verticalCenter
         }
     }
 }
