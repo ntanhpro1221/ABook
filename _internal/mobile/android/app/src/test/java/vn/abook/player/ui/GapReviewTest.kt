@@ -48,7 +48,7 @@ class GapReviewTest {
                 val shell = remember { ShellState(scope) }
                 val player = remember { PlayerRepo(playback, scope, Dispatchers.Unconfined, { null }, { null }) }
                 LaunchedEffect(Unit) { player.attach() }
-                deletes = remember { UndoDelete(scope, { if (failure) "Chưa xoá được" else null }, {
+                deletes = remember { UndoDelete(scope, { "t-$it" }, { if (failure) throw IllegalStateException("Chỗ cũ đã có sách cùng mã nên chưa hoàn tác được.") }, {
                     library = LibraryState.Ready(all.filterNot { deletes.contains(it.id) })
                 }, player::bookRemoved) }
                 val settings = remember { SettingsEnv(SettingsRepo(FakeSettingsCore(), scope, Dispatchers.Unconfined), ThemeReveal(scope)) }
@@ -60,7 +60,7 @@ class GapReviewTest {
         val tabsBefore = rule.onNodeWithTag("tab_library").getUnclippedBoundsInRoot()
         val contentBefore = rule.onNodeWithTag("library_grid").getUnclippedBoundsInRoot()
         rule.mainClock.autoAdvance = false
-        rule.runOnUiThread { scope.launch { deletes.remove("b2") } }
+        rule.runOnUiThread { scope.launch { deletes.remove("b2", "Tắt đèn") } }
         rule.mainClock.advanceTimeByFrame()
         rule.mainClock.advanceTimeBy(64)
         val middle = rule.onNodeWithTag("library_grid").getUnclippedBoundsInRoot()
@@ -69,10 +69,11 @@ class GapReviewTest {
         val after = rule.onNodeWithTag("library_grid").getUnclippedBoundsInRoot()
         assertTrue("Content makes room with motion", middle.bottom < contentBefore.bottom && middle.bottom > after.bottom)
         if (failure) {
-            rule.mainClock.advanceTimeBy(28_000)
+            // Hoàn tác không trả được (chỗ cũ bị chiếm): thanh nói lý do, cuốn vẫn nằm chờ nên vẫn mời Hoàn tác.
+            rule.onNodeWithTag("undo_delete").performClick()
             rule.waitForIdle()
-            rule.onNodeWithText("Chưa xoá được").assertIsDisplayed()
-            rule.onNodeWithTag("undo_delete").assertDoesNotExist()
+            rule.onNodeWithText("Chưa hoàn tác được - Chỗ cũ đã có sách cùng mã nên chưa hoàn tác được.").assertIsDisplayed()
+            rule.onNodeWithTag("undo_delete").assertIsDisplayed()
         }
         rule.onNodeWithTag("undo_bar").assertIsDisplayed()
         rule.onNodeWithTag("mini_player").assertIsDisplayed()
@@ -86,11 +87,14 @@ class GapReviewTest {
         assertEquals(miniBefore, mini)
         assertEquals(tabsBefore, tabs)
         rule.onRoot().captureRoboImage("src/test/snapshots/gap1b_shell_${if (failure) "error" else "undo"}_${if (dark) "dark" else "light"}.png")
-        if (failure) {
-            rule.runOnUiThread { rule.activity.onBackPressedDispatcher.onBackPressed() }
-        } else {
+        if (!failure) {
+            // Hoàn tác xong thì thanh nói "Đã khôi phục" (như thông báo của bản WebView) và hết nút Hoàn tác.
             rule.onNodeWithTag("undo_delete").performClick()
+            rule.waitForIdle()
+            rule.onNodeWithText("Đã khôi phục “Tắt đèn”").assertIsDisplayed()
+            rule.onNodeWithTag("undo_delete").assertDoesNotExist()
         }
+        rule.runOnUiThread { rule.activity.onBackPressedDispatcher.onBackPressed() }
         rule.waitForIdle()
         rule.onNodeWithTag("undo_bar").assertDoesNotExist()
         rule.onNodeWithTag("mini_player").assertIsDisplayed()

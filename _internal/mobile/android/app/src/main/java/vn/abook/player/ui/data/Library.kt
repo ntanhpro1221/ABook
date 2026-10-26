@@ -6,6 +6,7 @@ import androidx.compose.runtime.Immutable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import vn.abook.player.AppLog
 import vn.abook.player.BookActions
@@ -31,9 +32,19 @@ sealed interface LibraryState {
 class LibraryRepo(private val context: Context, scope: kotlinx.coroutines.CoroutineScope, removed: (String) -> Unit = {}) : BookSource {
     // null until the first authoritative network catalogue; downloaded books always stay local.
     @Volatile private var remoteIds: Set<String>? = null
-    val deletions: UndoDelete = UndoDelete(scope, erase = { id ->
-        edit { BookActions.deleteAfterUndo(context, id); null }
-    }, changed = { refresh() }, removed = removed)
+    // "Xoá khỏi điện thoại" như bản WebView ([BookActions.delete] / [Store.undoBook]): cuốn dời vào chỗ chờ ngay, "Hoàn tác" đưa về.
+    val deletions: UndoDelete = UndoDelete(
+        scope,
+        hold = { id -> withContext(Dispatchers.IO) { Store.init(context); BookActions.delete(context, id) { job -> scope.launch(Dispatchers.IO) { job.run() } } } },
+        restore = { token -> withContext(Dispatchers.IO) { Store.init(context); Store.undoBook(token) } },
+        changed = { refresh() },
+        removed = removed,
+    )
+
+    init {
+        // Cuốn còn nằm chờ Hoàn tác từ lần chạy trước: nút ấy đã mất cùng tiến trình, xoá hẳn (như LibraryPlugin lúc nạp).
+        scope.launch(Dispatchers.IO) { runCatching { Store.init(context); Store.sweepTrash(everything = true) } }
+    }
 
     suspend fun acceptRemote(rows: org.json.JSONArray) {
         remoteIds = (0 until rows.length()).map { rows.getJSONObject(it).getString("id") }.toSet()
@@ -86,10 +97,15 @@ class LibraryRepo(private val context: Context, scope: kotlinx.coroutines.Corout
 
     override suspend fun setChapterDone(id: String, chapterId: Int, done: Boolean) = write { BookActions.setChapterDone(context, id, chapterId, done) }
 
-    override suspend fun delete(id: String): String? {
-        if (vn.abook.player.BookDownloads.isActive(context, id)) return "Đang tải cuốn này, bạn huỷ tải trước"
-        deletions.remove(id, (flow.value as? LibraryState.Ready)?.books?.firstOrNull { it.id == id }?.title.orEmpty())
-        return null
+    override suspend fun delete(id: String): String? = removeFromPhone(id)
+
+    /**
+     * Xoá khỏi điện thoại (cuốn đang tải thì lõi từ chối, câu của lõi). `title` rỗng thì lấy tên ở Thư viện; `partial`: phần đã tải dở của sách ở máy khác.
+     * Null = đã nhận (cuốn nằm chờ Hoàn tác), khác null = câu lỗi.
+     */
+    suspend fun removeFromPhone(id: String, title: String = "", partial: Boolean = false): String? {
+        val name = title.ifEmpty { (flow.value as? LibraryState.Ready)?.books?.firstOrNull { it.id == id }?.title.orEmpty() }
+        return deletions.remove(id, name, partial)
     }
 
     override suspend fun share(id: String): Intent? = withContext(Dispatchers.IO) {

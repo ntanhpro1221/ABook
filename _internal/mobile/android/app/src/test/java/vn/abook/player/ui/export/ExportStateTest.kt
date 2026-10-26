@@ -273,6 +273,42 @@ class ExportStateTest {
         assertEquals("run-1", (exports.phase() as ExportPhase.Running).run)
     }
 
+    @Test
+    fun `a text only book says its chapters from the plan, not from a count it does not have`() {
+        // Sách chỉ có chữ: chưa chương nào có audio nên chaptersAvailable / chaptersTotal có thể là 0; số chương đọc là của bản ước.
+        val bare = ListenBook("t2", "Sách chữ", textOnly = true)
+        val exports = state()
+        exports.open(bare)
+        exports.start(bare)
+        assertEquals("Chương 1/12 · 0%", exports.progress("t2").value.text)
+    }
+
+    @Test
+    fun `asking for a hint starts nothing that lives on`() {
+        val job = kotlinx.coroutines.Job()
+        val exports = ExportState(source, CoroutineScope(job + Dispatchers.Unconfined))
+        val before = job.children.count()
+        repeat(20) { exports.hint("b$it") }
+        assertEquals("mỗi cuốn từng mở menu không giữ thêm việc nào chạy mãi", before, job.children.count())
+    }
+
+    @Test
+    fun `the hint follows the phase and the progress of a book nobody is watching`() {
+        source.folder = "Music"
+        val exports = state()
+        exports.open(book)
+        val hint = exports.hint("b1")
+        assertNull(hint.value)
+        exports.start(book)
+        assertEquals("Đang xuất", hint.value)
+        source.events.tryEmit(event { copy(done = 6, total = 12) })
+        assertEquals("Đang xuất · 50%", hint.value)
+        source.events.tryEmit(event { copy(finished = true, files = 12, chaptersTotal = 12) })
+        assertEquals("Đã xuất xong", hint.value)
+        exports.leave("b1")
+        assertNull(hint.value)
+    }
+
     // ---- tiến độ, kết quả ----
 
     @Test

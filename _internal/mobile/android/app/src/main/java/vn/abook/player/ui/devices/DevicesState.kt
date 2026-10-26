@@ -456,8 +456,8 @@ class DevicesState(
     }
 
     /** Xoá khỏi máy (cùng lõi và lời xác nhận với menu "Xoá khỏi máy" ở trang sách). Null = đã xoá, khác null = câu lỗi. */
-    suspend fun delete(id: String): String? {
-        val result = attempt { source.delete(id) }
+    suspend fun delete(id: String, title: String = "", partial: Boolean = false): String? {
+        val result = attempt { source.delete(id, title, partial) }
         val error = result.exceptionOrNull()?.let { message(it) } ?: result.getOrNull()
         if (error == null) {
             storageFlow.update { ui -> ui.copy(storage = ui.storage.copy(entries = ui.storage.entries.filterNot { it.id == id })) }

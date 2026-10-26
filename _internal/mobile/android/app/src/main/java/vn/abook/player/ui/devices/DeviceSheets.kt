@@ -185,6 +185,6 @@ fun RevokeSheet(sharer: Sharer, state: DevicesState, dismiss: () -> Unit) {
 @Composable
 fun StoredSheet(item: Stored, state: DevicesState, dismiss: () -> Unit) {
     Column(Modifier.fillMaxWidth().testTag("stored_sheet")) {
-        DeleteBookPage(item.title, if (item.partial) item.holder.ifEmpty { "máy kia" } else null, { state.delete(item.id) }, dismiss, dismiss)
+        DeleteBookPage(item.title, if (item.partial) item.holder.ifEmpty { "máy kia" } else null, { state.delete(item.id, item.title, item.partial) }, dismiss, dismiss)
     }
 }

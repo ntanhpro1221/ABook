@@ -2,9 +2,7 @@ package vn.abook.player.ui.devices
 
 import android.content.Context
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import vn.abook.player.BookDownloads
@@ -20,6 +18,7 @@ import vn.abook.player.ShareService
 import vn.abook.player.Store
 import vn.abook.player.SyncLink
 import vn.abook.player.ui.data.BookSource
+import vn.abook.player.ui.data.listenerFlow
 
 /**
  * Nguồn thật của ba màn Thiết bị: gọi thẳng các lõi ([Devices], [RemoteBooks], [Peers], [BookDownloads], [ShareService], [Store]) - cùng những hàm mà
@@ -126,10 +125,7 @@ class DevicesRepo(private val context: Context, private val library: vn.abook.pl
 
     override suspend fun cancelDownload(id: String) = io { BookDownloads.cancel(context, id) }
 
-    override fun downloadEvents(): Flow<DownloadEvent> = callbackFlow {
-        val off = BookDownloads.listen { event -> trySend(download(event)) }
-        awaitClose { off() }
-    }
+    override fun downloadEvents(): Flow<DownloadEvent> = listenerFlow { send -> BookDownloads.listen { event -> send(download(event)) } }
 
     private fun download(event: JSONObject): DownloadEvent {
         val total = event.optLong("total")
@@ -157,16 +153,13 @@ class DevicesRepo(private val context: Context, private val library: vn.abook.pl
 
     override suspend fun revoke(id: String): Share = io { DevicesJson.share(Devices.shareRevoke(context, id)) }
 
-    override fun shareChanges(): Flow<Unit> = callbackFlow {
-        val off = ShareService.watch { trySend(Unit) }
-        awaitClose { off() }
-    }
+    override fun shareChanges(): Flow<Unit> = listenerFlow { send -> ShareService.watch { send(Unit) } }
 
     override suspend fun setDeviceName(name: String): String = io { Devices.setDeviceName(context, name) }
 
     override suspend fun storage(): Storage = io { DevicesJson.storage(Devices.storage(), { Store.rawManifest(it) != null }, { SyncLink.holderName(context, it) }).let { storage -> storage.copy(entries = storage.entries.filterNot { library.isHidden(it.id) }) } }
 
-    override suspend fun delete(id: String): String? = library.delete(id)
+    override suspend fun delete(id: String, title: String, partial: Boolean): String? = library.removeFromPhone(id, title, partial)
 
     override suspend fun restore() = io {
         runCatching { BookDownloads.restore(context) }
