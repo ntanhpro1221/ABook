@@ -166,3 +166,9 @@ Per-cue silence/swap is NOT in the web player (only Sửa sách), so not in the 
   engine create 5-18 ms, set source 0.5-3 ms, stop/destroy 1-5 ms, sync < 5 ms; a 300 ms GUI gap had no music call within 10 s; the
   500 ms stall did not reproduce (max 77 ms). Cause still OPEN (not on the GUI thread from music code; next: frame-swap timeline vs
   render thread / audio device start of the second engine).
+- m6 (dev/desk-qt-stall 133fdf72): bench marks every MfAudioOut create/source/play/seek/stop/destroy + engine event and each
+  afterAnimating tick; measure.py prints the worst follow gap with the marks before it. On the Parsec virtual display (60 Hz)
+  12 music runs: follow max 18-34 ms, no stall (the 529 ms ones were on the laptop panel at high refresh). PARKED by lead until the
+  machine is back on the laptop panel; then run `D:/Novels/ABook/_internal/runtime/.venv/Scripts/python.exe -X utf8
+  D:/Novels/native_desk_proto/stallrun.py 12 <out.json>` (player scenario on deskqt_fixture_music, prints the worst gap regardless
+  of cover / refresh drops).
