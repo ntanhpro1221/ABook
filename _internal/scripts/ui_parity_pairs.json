@@ -690,6 +690,7 @@
         "listen/labels.ts",
         "listen/sleep.ts",
         "shared/connectionRoute.ts",
+        "shared/syncSwitch.ts",
         "listen/PlayerViews.tsx",
         "listen/LibraryScreen.tsx",
         "android/App.tsx",
@@ -1161,6 +1162,21 @@
           "side": "web",
           "match": "^đổi\\ có\\ hiệu\\ lực\\ ngay\\ trên\\ máy\\ tính\\ \\{\\}\\ \\-\\ audio\\ và\\ chữ\\ của\\ người\\ làm\\ sách\\ giữ\\ nguyên$",
           "reason": "native chưa sửa sách của máy tính qua Studio từ xa"
+        },
+        {
+          "side": "web",
+          "match": "^google\\ books$",
+          "reason": "tên nguồn trong failedSourcesNote (shared/CoverSearch.tsx) - web không gọi hàm này; lưới kết quả cả hai bên hiện tên nguồn do lõi trả ('Google Books', 'Open Library')"
+        },
+        {
+          "side": "web",
+          "match": "^open\\ library$",
+          "reason": "tên nguồn trong failedSourcesNote (shared/CoverSearch.tsx) - web không gọi hàm này; lưới kết quả cả hai bên hiện tên nguồn do lõi trả ('Google Books', 'Open Library')"
+        },
+        {
+          "side": "web",
+          "match": "^chưa\\ nối\\ được\\ \\{\\}\\.\\ thử\\ lại\\ hoặc\\ chọn\\ ảnh\\ trên\\ máy$",
+          "reason": "câu của failedSourcesNote (shared/CoverSearch.tsx) - web không gọi hàm này ở đâu (bảng tìm bìa của web báo 'Bạn hãy kiểm tra kết nối rồi tìm lại các nguồn bìa.'); native dùng đúng câu ấy. Lead quyết: xoá hàm thừa ở web hay dùng nó cả hai bên"
         }
       ],
       "allow": [
@@ -1388,12 +1404,28 @@
           "side": "web",
           "match": "^đổi\\ bài$",
           "reason": "nhạc nền trong màn sửa sách: thuộc nhóm Nhạc (phiên Music làm)"
+        },
+        {
+          "side": "web",
+          "match": "^bấm\\ “…”\\ ở\\ dòng\\ chương\\ để\\ đổi\\ tên\\ chương$",
+          "reason": "lời chỉ đường của hộp Sửa sách web (đổi tên chương / người qua nút “…” ở trang sách); native đổi tên chương ngay trong danh sách Chương của màn Sửa sách nên không cần câu này"
+        },
+        {
+          "side": "web",
+          "match": "^bấm\\ “…”\\ ở\\ dòng\\ chương\\ để\\ đổi\\ tên\\ chương,\\ “…”\\ ở\\ tab\\ nhân\\ vật\\ để\\ đổi\\ tên\\ người$",
+          "reason": "lời chỉ đường của hộp Sửa sách web (đổi tên chương / người qua nút “…” ở trang sách); native đổi tên chương ngay trong danh sách Chương của màn Sửa sách nên không cần câu này"
+        },
+        {
+          "side": "web",
+          "match": "^tên\\ riêng$",
+          "reason": "lời chỉ đường của hộp Sửa sách web (đổi tên chương / người qua nút “…” ở trang sách); native đổi tên chương ngay trong danh sách Chương của màn Sửa sách nên không cần câu này"
         }
       ],
       "deferred": [],
       "web_also": [
         "listen/ReadingSuggestions.tsx",
-        "shared/ui.tsx"
+        "shared/ui.tsx",
+        "listen/WordReadings.tsx"
       ]
     }
   ]
