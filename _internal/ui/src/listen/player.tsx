@@ -1756,7 +1756,11 @@ export function PlayerProvider({
       keyboardNavigation = false;
     };
     const onTab = (event: KeyboardEvent) => {
-      if (event.key === "Tab" || event.key.startsWith("Arrow")) keyboardNavigation = true;
+      // Mũi tên chỉ dời tiêu điểm trong một nhóm (tab, ô chọn, menu, thanh trượt); trên nút thường hay trang thì nó là tua của trình phát - không tính là
+      // đi bằng bàn phím, không thì Space ngay sau đó "bấm" lại nút vừa bấm chuột (mở lại chương) thay vì phát / tạm dừng.
+      const target = event.target instanceof HTMLElement ? event.target : null;
+      const arrowInGroup = event.key.startsWith("Arrow") && Boolean(target?.closest('[role="slider"],[role="tab"],[role="radio"],[role="option"],[role="menuitem"],[role="menu"],[role="listbox"],[role="radiogroup"],[role="tablist"]'));
+      if (event.key === "Tab" || arrowInGroup) keyboardNavigation = true;
     };
     window.addEventListener("pointerdown", onPointer, true);
     window.addEventListener("keydown", onTab, true);
@@ -1771,6 +1775,12 @@ export function PlayerProvider({
       const keyboardFocused = target !== document.body && keyboardNavigation;
       // Phím một chữ cái (M, [ ]) tắt ở Cài đặt › Phím tắt (WCAG 2.1.4); Space và mũi tên vẫn chạy.
       if (event.key.length === 1 && event.key !== " " && !letterShortcutsOn()) return;
+      // Giữ phím: bàn phím tự lặp keydown. Chỉ tua (←/→ trơn) được lặp - giữ để tua xa; phát / tạm dừng, đổi chương, tắt tiếng, tốc độ thì không
+      // (giữ Space từng bật tắt liên hồi, giữ Shift+→ nhảy qua mấy chương). Space lặp vẫn chặn mặc định để trang không cuộn.
+      if (event.repeat && !(event.key.startsWith("Arrow") && !event.shiftKey)) {
+        if (event.key === " " && !keyboardFocused) event.preventDefault();
+        return;
+      }
       switch (event.key) {
         case " ": {
           // Thanh trượt không dùng Space vào việc gì: Space trên thanh tua vẫn là phát/tạm dừng.

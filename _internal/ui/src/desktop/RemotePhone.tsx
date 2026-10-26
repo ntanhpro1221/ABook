@@ -484,6 +484,33 @@ export function HandOffButton({ className }: { className?: string }) {
   );
 }
 
+/** Làm các lệnh host giao, mỗi mã một lần (`handled`: mã -> lúc nhận, quên sau 60 giây); trả true khi có lệnh mới.
+ *  Lần hỏi dài và lần báo ngay có thể cùng mang một lô lệnh về: đánh dấu cả lô TRƯỚC khi làm lệnh đầu ("load" chờ máy chủ) và làm từng lô
+ *  nối đuôi nhau - không thì "phát / dừng" của lô sau chạy hai lần và chạy trước lệnh mở sách. */
+export function commandRunner<C extends { id: string }>(
+  handled: Map<string, number>,
+  apply: (command: C) => Promise<string | null>,
+  ack: (ack: Ack) => void,
+) {
+  let queue: Promise<unknown> = Promise.resolve();
+  return (commands: C[]): Promise<boolean> => {
+    const now = Date.now();
+    for (const [id, at] of handled) if (now - at > 60_000) handled.delete(id);
+    const fresh = commands.filter((command) => !handled.has(command.id));
+    for (const command of fresh) handled.set(command.id, now);
+    const done = queue.then(async () => {
+      for (const command of fresh) {
+        // Lệnh văng lỗi vẫn có kết quả gửi về (máy kia không chờ mãi), lệnh sau vẫn chạy.
+        const problem = await apply(command).catch(() => "Chưa làm được, bạn thử lại");
+        ack({ id: command.id, ok: problem === null, message: problem ?? "" });
+      }
+      return fresh.length > 0;
+    });
+    queue = done;
+    return done;
+  };
+}
+
 /**
  * Trình phát của CHÍNH máy tính này cho máy đã ghép (mạng trạm bước 4): báo trạng thái lên host - host giữ cho
  * GET /sync/v1/player - và nhận lệnh bằng "hỏi dài" 25 giây, đúng cách điện thoại báo máy tính (Remote.kt). Kết quả lệnh
@@ -574,16 +601,9 @@ export function ThisPlayerReporter() {
           return "Máy tính chưa hiểu lệnh này - cập nhật ABook trên máy tính";
       }
     };
+    const run = commandRunner<RemoteCommand & { id: string }>(handled.current, apply, (ack) => acks.current.push({ at: Date.now(), ack }));
     const handle = async (commands: (RemoteCommand & { id: string })[]) => {
-      const now = Date.now();
-      for (const [id, at] of handled.current) if (now - at > 60_000) handled.current.delete(id);
-      const fresh = commands.filter((command) => !handled.current.has(command.id));
-      for (const command of fresh) {
-        handled.current.set(command.id, Date.now());
-        const problem = await apply(command);
-        acks.current.push({ at: Date.now(), ack: { id: command.id, ok: problem === null, message: problem ?? "" } });
-      }
-      if (fresh.length) window.setTimeout(() => void report(0).catch(() => undefined), 400);
+      if (await run(commands)) window.setTimeout(() => void report(0).catch(() => undefined), 400);
     };
     const pause = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
     void (async () => {
