@@ -1,7 +1,7 @@
 import QtQuick
 import ABook
 
-// Hẹn giờ ngủ: tắt sau N phút (giờ chỉ chạy khi có tiếng thật, dừng thì đứng) hay hết chương này. Đang hẹn: còn bao lâu, thêm 10 phút, tắt hẹn giờ.
+// Hẹn giờ tắt: tắt sau N phút (giờ chỉ chạy khi có tiếng thật, dừng thì đứng) hay hết chương này. Đang hẹn: tắt sau bao lâu, +10 phút, tắt hẹn giờ. Chữ như bản web (SleepPicker).
 Popover {
     id: root
     panelWidth: 296
@@ -13,8 +13,8 @@ Popover {
         spacing: Theme.s12
         Text {
             width: parent.width
-            text: Player.sleepKind === "minutes" ? "Còn " + Player.clockText(Player.clock.sleepLeft)
-                : (Player.sleepKind === "chapter" ? "Dừng khi hết chương này" : "Hẹn giờ ngủ")
+            text: Player.sleepKind === "minutes" ? "Tắt sau " + Player.clockText(Player.clock.sleepLeft)
+                : (Player.sleepKind === "chapter" ? "Dừng khi hết chương này" : "Dừng phát sau")
             color: Player.sleepKind === "off" ? Theme.text2 : Theme.accentText
             wrapMode: Text.Wrap
             font.pixelSize: Player.sleepKind === "off" ? Theme.sizeCaption : Theme.sizeBodySmall
@@ -23,7 +23,7 @@ Popover {
         Text {
             visible: Player.sleepStoppedText !== "" && Player.sleepKind === "off"
             width: parent.width
-            text: "Đã dừng lúc " + Player.sleepStoppedText
+            text: "Hẹn giờ đã tắt tiếng lúc " + Player.sleepStoppedText + "."
             color: Theme.text3
             wrapMode: Text.Wrap
             font.pixelSize: Theme.sizeCaption
@@ -53,7 +53,7 @@ Popover {
             spacing: Theme.s8
             Button {
                 kind: "text"
-                text: "Thêm 10 phút"
+                text: "+10 phút"
                 visible: Player.sleepKind === "minutes"
                 onClicked: Player.extendSleep()
             }

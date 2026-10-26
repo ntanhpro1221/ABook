@@ -53,7 +53,7 @@ Rectangle {
         anchors.margins: Math.max(8, root.width * 0.08)
         width: tag.implicitWidth + 12
         height: tag.implicitHeight + 6
-        radius: 3
+        radius: Theme.radiusControl
         color: "#47000000"
         Text {
             id: tag

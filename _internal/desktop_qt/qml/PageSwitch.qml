@@ -1,7 +1,7 @@
 import QtQuick
 import ABook
 
-// Công tắc hai lựa chọn ("Bìa" / "Chữ"): nền chìm, khối sáng trượt sang lựa chọn mới.
+// Công tắc hai lựa chọn ("Bìa" / "Đọc theo"): nền chìm, khối sáng trượt sang lựa chọn mới.
 Item {
     id: root
     property var labels: ["", ""]
@@ -21,7 +21,7 @@ Item {
         y: 2
         width: root.cell
         height: root.height - 4
-        radius: Theme.radiusControl - 2
+        radius: Theme.radiusControl
         color: Theme.panel
         Behavior on x {
             NumberAnimation {
