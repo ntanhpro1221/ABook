@@ -50,8 +50,8 @@ it.each(["listen", "studio"])("V3 xoá nhạc %s: Back huỷ riêng câu hỏi v
   ]);
   if (where === "listen") await click("Nhạc của tôi1 bài");
   await click("Xoá");
-  expect(button("Xoá khỏi kho")).toBeDefined();
+  expect(button("Xoá bài")).toBeDefined();
   await act(() => { expect(dismissTopLayer()).toBe(true); });
-  expect(button("Xoá khỏi kho")).toBeUndefined();
+  expect(button("Xoá bài")).toBeUndefined();
   expect(document.activeElement).toBe(button("Xoá"));
 });

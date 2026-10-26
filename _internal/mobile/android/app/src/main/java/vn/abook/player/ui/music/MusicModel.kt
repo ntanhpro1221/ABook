@@ -187,6 +187,10 @@ object MusicText {
     const val MINE_LABEL = "Nhạc của tôi"
     /** playlistBed.ts ADD_MUSIC_LABEL. */
     const val ADD_LABEL = "Thêm nhạc của bạn"
+    /** musicLocal.ts MY_MUSIC_INTRO: một câu cho mọi nơi nói về Nhạc của tôi. */
+    const val MY_MUSIC_INTRO = "Thêm nhạc làm nền; bài đã chọn đi cùng file sách."
+    /** musicLocal.ts `analysisLabel` của bài chưa phân tích (điện thoại không tự chọn nên không nói bài đã phân tích). */
+    const val UNANALYSED = "Chưa phân tích - máy chưa tự chọn, bạn vẫn ghim được"
     const val PACKAGED_NOTE = "Nhạc do người làm sách chọn. Đổi ở đây chỉ trên máy này."
     const val AUTO_OFF_NOTE = "\"Tự chọn nhạc nền\" đang tắt trong Cài đặt."
     const val BROKEN_PACKAGED = "Bài nhạc chương này không phát được."
@@ -215,16 +219,16 @@ object MusicText {
         else -> false
     }
 
-    /** Giá trị ngắn bên phải hàng "Nhạc nền": tên thứ đang chạy, "Tắt", hay "Bật" với nhạc gắn sẵn. Rỗng khi chưa đọc xong (không nói "Tắt" rồi đổi). */
+    /** Giá trị ngắn bên phải hàng "Nhạc nền" (playlistBed.ts `playlistLabel` + `shortPlaylistLabel`): tên thứ đang chạy, "Tắt", hay "Bật" với nhạc gắn sẵn. Rỗng khi chưa đọc xong (không nói "Tắt" rồi đổi). */
     fun value(book: BookMusic?, menu: MusicMenu?): String = when (book?.kind) {
         null, MusicKind.None -> ""
         MusicKind.Packaged -> if (book.enabled) "Bật" else OFF_LABEL
         MusicKind.Playlist -> when {
             book.playlistAuto -> nameOf(menu, book.playlist.orEmpty()).ifEmpty { "Máy chọn" }
-            book.playlist == null -> if (book.autoOff) OFF_LABEL else "Máy chọn"
+            book.playlist == null -> if (book.autoOff) "Chưa có nhạc" else "Máy chọn"
             book.playlist == OFF -> OFF_LABEL
             book.playlist == MINE -> MINE_LABEL
-            else -> nameOf(menu, book.playlist).ifEmpty { "Đã chọn" }
+            else -> nameOf(menu, book.playlist).ifEmpty { "Danh sách đã chọn" }
         }
     }
 
@@ -311,7 +315,7 @@ object MusicText {
      */
     fun mineNote(track: MineTrack): String = listOf(
         if (track.analysed && track.vocalsLikely) "Có vẻ có lời - máy không tự chọn bài này" else "",
-        if (track.analysed) (if (track.fits) "Hợp không khí đoạn này" else "") else "Chưa phân tích - máy chưa tự chọn, bạn vẫn ghim được",
+        if (track.analysed) (if (track.fits) "Hợp không khí đoạn này" else "") else UNANALYSED,
     ).filter { it.isNotEmpty() }.joinToString(" · ")
 
     /** Giấy phép đòi ghi công (khác cc0; nhạc bạn tự thêm không có giấy phép) thì kèm [MODIFIED_NOTE]. */

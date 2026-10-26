@@ -32,7 +32,7 @@ object MusicImport {
             } catch (error: MusicStore.ImportError) {
                 failed.add(error.message.orEmpty())
             } catch (error: Exception) {
-                failed.add("“$name”: không nhập được (${error.message ?: error.javaClass.simpleName}).")
+                failed.add("“$name”: không thêm được (${error.message ?: error.javaClass.simpleName}).")
             }
             progress(index + 1, uris.size)
         }

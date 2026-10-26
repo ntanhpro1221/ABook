@@ -65,7 +65,7 @@ import { useBackLayer } from "@/shared/backStack";
 import { MOTION, usePresence, useListPresence, withViewTransition } from "@/shared/motion";
 import { useRetryWhenOnline } from "./onlineRetry";
 import { askOnlineConsent, onlineConsentGiven, pickVoiceWithConsent, spokenVoiceName } from "./onlineConsent";
-import { PlaylistOptionLabel, playlistNote, usePlaylistChoice } from "./PlaylistChoice";
+import { PlaylistOptionLabel, usePlaylistChoice } from "./PlaylistChoice";
 import { ADD_MUSIC_LABEL, shortPlaylistLabel } from "./playlistBed";
 import { openExternal } from "@/shared/openExternal";
 import { ACTION_BUTTON, ACTION_GLYPH, ACTION_LABEL, ActionButton, actionTone } from "./ActionButton";
@@ -620,7 +620,7 @@ function MusicMenuFor({ bookId, look }: { bookId: string; look: MenuLook }) {
       {/* Chỉ khi cuốn đang có nhạc: tắt nhạc thì chỉnh mức chẳng nghe thấy gì. */}
       {playing && <LevelButtons level={levelDb} disabled={levelBusy} onChange={setLevel} />}
       {playing && scene && musicBroken && <p className="px-2 pb-1 text-xs text-warning">Có bài nhạc chưa phát được, máy sẽ thử lại sau.</p>}
-      <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{playlistNote(error || musicOffline, scene)}</p>
+      {(error || musicOffline) && <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{error || musicOffline}</p>}
     </MotionRegion></MenuShell>
   );
 }

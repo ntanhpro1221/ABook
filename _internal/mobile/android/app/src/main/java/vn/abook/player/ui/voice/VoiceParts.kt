@@ -18,12 +18,14 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import kotlinx.coroutines.flow.StateFlow
+import vn.abook.player.ui.components.Caption
 import vn.abook.player.ui.components.ListItem
 import vn.abook.player.ui.components.PlayIcon
 import vn.abook.player.ui.components.StopIcon
 import vn.abook.player.ui.components.TextAction
 import vn.abook.player.ui.components.pressable
 import vn.abook.player.ui.devices.DownloadBar
+import vn.abook.player.ui.music.MusicText
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.theme.MotionMs
@@ -80,12 +82,13 @@ fun KeyRow(provider: KeyProvider, onOpen: (() -> Unit)?) {
     )
 }
 
-/** Một bài trong Nhạc của tôi: nghệ sĩ · độ dài dưới tên, cỡ file ở cuối dòng đầu; chạm mở bảng có "Xoá bài". */
+/** Một bài trong Nhạc của tôi: nghệ sĩ · độ dài dưới tên, cỡ file ở cuối dòng đầu, bài chưa phân tích thì nói như web; chạm mở bảng có "Xoá bài". */
 @Composable
 fun TrackRow(track: MusicTrack, onOpen: () -> Unit) {
     ListItem(
         track.title, Modifier, onOpen, trackTag(track), hint = VoiceText.trackLine(track).ifEmpty { null },
         trailing = { BasicText(VoiceText.size(track.bytes), style = Abook.type.bodySmall.copy(color = Abook.colors.text2)) },
+        below = if (track.analysed) null else ({ Caption(MusicText.UNANALYSED) }),
     )
 }
 
