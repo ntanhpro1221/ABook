@@ -64,7 +64,9 @@ class IconSheetTest {
         "P next" to { _ -> PlayerGlyph("›|") }, "P back15" to { _ -> PlayerGlyph("↶15") }, "P fwd15" to { _ -> PlayerGlyph("15↷") },
         "P sleep" to { _ -> PlayerGlyph("◷") }, "P chapters" to { _ -> PlayerGlyph("☷") }, "P plus" to { _ -> PlayerGlyph("+") },
         "P minus" to { _ -> PlayerGlyph("−") }, "Play" to { c -> PlayPauseGlyph(false, c, 24.dp) }, "Pause" to { c -> PlayPauseGlyph(true, c, 24.dp) },
-        "Back" to { _ -> BackButton({}) },
+        "Back" to { _ -> BackButton({}) }, "Refresh" to { c -> RefreshIcon(c) },
+        "Speaker" to { c -> SpeakerIcon(c) }, "TV" to { c -> TvIcon(c) },
+        "Media" to { c -> MonitorSpeakerIcon(c) }, "Cast" to { c -> CastIcon(c) },
     )
 
     /** Hình lệch tâm có chủ ý: tam giác phát (tâm quang học), mũi tên ">" dồn phải và "←" dồn trái - mũi nhọn chạm mép ô theo luật mép cột. */
