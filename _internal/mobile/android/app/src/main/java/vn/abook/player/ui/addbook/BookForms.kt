@@ -7,6 +7,8 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -52,6 +54,8 @@ fun BookForm(
 fun BookField(
     label: String?, value: String, onChange: (String) -> Unit, tag: String, enabled: Boolean = true, description: String = label.orEmpty(),
     placeholder: String? = null, keyboard: KeyboardType = KeyboardType.Text,
+    /** Chấm thay chữ (khóa, mật khẩu); `trailing` là việc ở cuối ô ("Hiện" / "Ẩn"). */
+    masked: Boolean = false, trailing: (@Composable () -> Unit)? = null,
 ) {
     Column(Modifier.fillMaxWidth()) {
         if (label != null) {
@@ -61,13 +65,25 @@ fun BookField(
         BasicTextField(
             value, onChange, enabled = enabled, textStyle = Abook.type.body,
             cursorBrush = SolidColor(Abook.colors.accentText),
-            keyboardOptions = KeyboardOptions(keyboardType = keyboard),
+            keyboardOptions = if (masked) KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false) else KeyboardOptions(keyboardType = keyboard),
+            visualTransformation = if (masked) PasswordVisualTransformation() else VisualTransformation.None,
             modifier = Modifier.fillMaxWidth().heightIn(min = Dim.s48).clip(RoundedCornerShape(Dim.radiusControl))
-                .background(Abook.colors.bgSunken).padding(Dim.s12).semantics { contentDescription = description }.testTag(tag),
+                .background(Abook.colors.bgSunken)
+                .then(if (trailing != null) Modifier.padding(start = Dim.s12) else Modifier.padding(Dim.s12)).semantics { contentDescription = description }.testTag(tag),
             decorationBox = { inner ->
-                Box {
-                    if (value.isEmpty() && placeholder != null) BasicText(placeholder, style = Abook.type.body.copy(color = Abook.colors.text3))
-                    inner()
+                val text: @Composable (Modifier) -> Unit = { box ->
+                    Box(box) {
+                        if (value.isEmpty() && placeholder != null) BasicText(placeholder, style = Abook.type.body.copy(color = Abook.colors.text3))
+                        inner()
+                    }
+                }
+                if (trailing == null) {
+                    text(Modifier)
+                } else {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        text(Modifier.weight(1f).padding(vertical = Dim.s12))
+                        Box(Modifier.padding(end = Dim.s12)) { trailing() }
+                    }
                 }
             },
         )

@@ -10,6 +10,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Điện thoại
 
 - Nút lùi / tới 15 giây trên widget màn hình chính cùng hình với trình phát: cung nông, số 15 nằm dưới, không chạm nét.
+- Giọng có sẵn của điện thoại hiện tên "Tiếng Việt" (máy có nhiều giọng thì đánh số), không còn mã như "vi-vn-x-gft-local".
 
 ## [0.4.146] - 2026-10-26
 

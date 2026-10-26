@@ -53,6 +53,8 @@ import vn.abook.player.ui.data.SleepSchedule
 import vn.abook.player.ui.data.ThemeMode
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.voice.VoicePage
+import vn.abook.player.ui.voice.VoiceSummary
 
 private val SafetyOptions = AppSettings.SAFETY_HOURS.map { Option(it, if (it == 0) "Không" else "$it giờ") }
 private val ScheduleOptions = SleepSchedule.MINUTES.map { Option(it, "$it phút") }
@@ -72,9 +74,12 @@ private object GroupCopy {
 
 /** Nghe: thông báo (chỉ khi đang tắt), tự lùi, nút tai nghe; khối Nhạc nền. */
 @Composable
-fun ListenSettings(env: SettingsEnv, onBack: () -> Unit, modifier: Modifier = Modifier) {
+fun ListenSettings(env: SettingsEnv, openVoice: (VoicePage) -> Unit, onBack: () -> Unit, modifier: Modifier = Modifier) {
     val repo = env.repo
     val settings by repo.state.collectAsState()
+    val voice = env.voice
+    val summary by (voice?.summary ?: NoVoiceSummary).collectAsState()
+    LaunchedEffect(voice) { voice?.loadMusic() }
     val allowed by repo.notificationsAllowed.collectAsState()
     // Mở màn và mỗi lần quay lại từ Cài đặt Android: hỏi lại quyền - cho phép xong thì dòng khép lại tại chỗ.
     LifecycleResumeEffect(repo) {
@@ -96,7 +101,7 @@ fun ListenSettings(env: SettingsEnv, onBack: () -> Unit, modifier: Modifier = Mo
         ListSection("Nhạc nền") {
             SwitchRow("Tự chọn nhạc nền", settings.autoMusic, { on -> repo.change { it.copy(autoMusic = on) } }, "auto_music", GroupCopy.AUTO_MUSIC)
             RowLine()
-            SoonRow("Nhạc của tôi", "Nhạc riêng của bạn cho mọi cuốn.", tag = "my_music")
+            DisclosureRow("Nhạc của tôi", { if (voice != null) openVoice(VoicePage.Music) }, "my_music", summary = summary.music)
         }
     }
 }
@@ -272,3 +277,4 @@ fun DevicesSettings(devices: DevicesState?, sheets: SheetHost, open: (DevicesPag
 }
 
 private val NoSummary = kotlinx.coroutines.flow.MutableStateFlow(Summary())
+private val NoVoiceSummary = kotlinx.coroutines.flow.MutableStateFlow(VoiceSummary())
