@@ -1,12 +1,6 @@
 package vn.abook.player.ui.screens
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.SizeTransform
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -55,6 +49,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import vn.abook.player.ui.components.BookOpenIcon
+import vn.abook.player.ui.components.DeleteBookPage
+import vn.abook.player.ui.components.SheetPages
 import vn.abook.player.ui.components.MenuRow
 import vn.abook.player.ui.components.CheckIcon
 import vn.abook.player.ui.components.DashedCircleIcon
@@ -75,10 +71,8 @@ import vn.abook.player.ui.data.FindProgress
 import vn.abook.player.ui.data.FoldedChapter
 import vn.abook.player.ui.data.Fmt
 import vn.abook.player.ui.data.ListenBook
-import vn.abook.player.ui.motion.Motion
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
-import vn.abook.player.ui.theme.MotionMs
 import java.util.concurrent.ConcurrentHashMap
 
 /** Các trang của bảng "Thêm": danh sách việc, xác nhận xoá. Đi sâu = trượt sang trái, Back = trượt ngược lại. */
@@ -92,17 +86,7 @@ private enum class MenuPage { Actions, Delete }
 fun BookMenuSheet(book: ListenBook, detail: BookDetail?, source: BookSource, actions: BookScreenActions, dismiss: () -> Unit) {
     var page by remember { mutableStateOf(MenuPage.Actions) }
     BackHandler(enabled = page != MenuPage.Actions) { page = MenuPage.Actions }
-    AnimatedContent(
-        targetState = page,
-        transitionSpec = {
-            val forward = targetState.ordinal > initialState.ordinal
-            (slideInHorizontally(tween(MotionMs.MEDIUM, easing = Motion.Decelerate)) { if (forward) it else -it } togetherWith
-                slideOutHorizontally(tween(MotionMs.MEDIUM_OUT, easing = Motion.Accelerate)) { if (forward) -it else it })
-                .using(SizeTransform(clip = true))
-        },
-        label = "book_menu",
-        modifier = Modifier.fillMaxWidth().testTag("book_menu"),
-    ) { shown ->
+    SheetPages(page, { it.ordinal }, "book_menu") { shown ->
         when (shown) {
             MenuPage.Actions -> MenuActions(book, detail, source, actions, dismiss, onEdit = { dismiss(); actions.edit(book) }, onDelete = { page = MenuPage.Delete })
             MenuPage.Delete -> DeletePage(book, source, actions, dismiss, onKeep = { page = MenuPage.Actions })
@@ -168,57 +152,10 @@ private fun MenuActions(
     }
 }
 
-/** Bước xác nhận xoá, ngay trong bảng: nói rõ cái gì mất; nút đỏ "Xoá khỏi máy", nút chữ "Giữ lại" (hay Back) về danh sách việc. */
+/** Bước xác nhận xoá, ngay trong bảng ([DeleteBookPage] - cũng là bước xác nhận của danh sách Dung lượng). */
 @Composable
 private fun DeletePage(book: ListenBook, source: BookSource, actions: BookScreenActions, dismiss: () -> Unit, onKeep: () -> Unit) {
-    val colors = Abook.colors
-    val scope = rememberCoroutineScope()
-    var working by remember { mutableStateOf(false) }
-    var problem by remember { mutableStateOf("") }
-    Column(Modifier.fillMaxWidth().testTag("delete_confirm")) {
-        BasicText("Xoá khỏi máy?", style = Abook.type.sectionTitle)
-        Spacer(Modifier.height(Dim.s8))
-        BasicText(
-            if (book.remote != null) {
-                "Phần đã tải của “${book.title}” sẽ bị xoá khỏi máy này. Sách vẫn còn trên ${book.remote.deviceName}."
-            } else {
-                "“${book.title}” sẽ bị xoá khỏi máy này. Muốn nghe lại, bạn cần thêm lại file sách."
-            },
-            style = Abook.type.body.copy(color = colors.text2),
-        )
-        if (problem.isNotEmpty()) {
-            Spacer(Modifier.height(Dim.s8))
-            BasicText(problem, style = Abook.type.bodySmall.copy(color = colors.danger))
-        }
-        Spacer(Modifier.height(Dim.s24))
-        // Nút chính của bước này là màu nguy hiểm (không phải hổ phách): việc không nhấn nhầm được. Chữ trên nền đỏ theo nền của giao diện để đủ tương phản cả hai chế độ.
-        val ink = if (colors.dark) colors.bg else colors.panel
-        Box(
-            Modifier.fillMaxWidth().heightIn(min = Dim.s48)
-                .pressable {
-                    if (working) return@pressable
-                    working = true
-                    scope.launch {
-                        val error = source.delete(book.id)
-                        working = false
-                        problem = error.orEmpty()
-                        if (error == null) {
-                            dismiss()
-                            actions.deleted()
-                        }
-                    }
-                }
-                .clip(RoundedCornerShape(Dim.radiusControl)).background(colors.danger).padding(horizontal = Dim.s24, vertical = Dim.s12)
-                .testTag("delete_yes"),
-            contentAlignment = Alignment.Center,
-        ) {
-            BasicText(if (working) "Đang xoá" else "Xoá khỏi máy", style = Abook.type.bodyStrong.copy(color = ink))
-        }
-        Spacer(Modifier.height(Dim.s8))
-        Box(Modifier.fillMaxWidth().height(Dim.s48).pressable(onClick = onKeep).testTag("delete_keep"), contentAlignment = Alignment.Center) {
-            BasicText("Giữ lại", style = Abook.type.bodyStrong.copy(color = colors.accentText))
-        }
-    }
+    DeleteBookPage(book.title, book.remote?.deviceName, { source.delete(book.id) }, { dismiss(); actions.deleted() }, onKeep)
 }
 
 /** Bảng của một chương ("…" cuối hàng): nghe từ đầu chương, đánh dấu đã nghe xong / chưa nghe. */

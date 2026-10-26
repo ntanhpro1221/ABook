@@ -10,6 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import vn.abook.player.ui.data.ListenBook
+import vn.abook.player.ui.devices.DevicesPage
 import vn.abook.player.ui.data.SettingsGroup
 import vn.abook.player.ui.motion.Motion
 import vn.abook.player.ui.motion.ScreenGeometry
@@ -29,6 +30,10 @@ sealed interface Destination {
     /** Một nhóm Cài đặt (cấp hai, cũng là cấp cuối: Cài đặt -> nhóm -> mục). */
     @Immutable
     data class Settings(val group: SettingsGroup) : Destination
+
+    /** Một màn của nhóm Thiết bị (Nối máy tính, Chia sẻ thư viện, Dung lượng): đi từ trang nhóm Thiết bị, Back về lại trang ấy. */
+    @Immutable
+    data class Devices(val page: DevicesPage) : Destination
 }
 
 /** Một mục của ngăn xếp: `key` ổn định để Compose giữ trạng thái màn khi nó đổi chỗ (trên cùng -> bên dưới). */

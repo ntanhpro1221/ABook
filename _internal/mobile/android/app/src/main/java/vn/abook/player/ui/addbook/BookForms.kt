@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,7 +49,10 @@ fun BookForm(
  * `description` cho trợ năng).
  */
 @Composable
-fun BookField(label: String?, value: String, onChange: (String) -> Unit, tag: String, enabled: Boolean = true, description: String = label.orEmpty()) {
+fun BookField(
+    label: String?, value: String, onChange: (String) -> Unit, tag: String, enabled: Boolean = true, description: String = label.orEmpty(),
+    placeholder: String? = null, keyboard: KeyboardType = KeyboardType.Text,
+) {
     Column(Modifier.fillMaxWidth()) {
         if (label != null) {
             BasicText(label, style = Abook.type.bodySmall)
@@ -56,8 +61,15 @@ fun BookField(label: String?, value: String, onChange: (String) -> Unit, tag: St
         BasicTextField(
             value, onChange, enabled = enabled, textStyle = Abook.type.body,
             cursorBrush = SolidColor(Abook.colors.accentText),
+            keyboardOptions = KeyboardOptions(keyboardType = keyboard),
             modifier = Modifier.fillMaxWidth().heightIn(min = Dim.s48).clip(RoundedCornerShape(Dim.radiusControl))
                 .background(Abook.colors.bgSunken).padding(Dim.s12).semantics { contentDescription = description }.testTag(tag),
+            decorationBox = { inner ->
+                Box {
+                    if (value.isEmpty() && placeholder != null) BasicText(placeholder, style = Abook.type.body.copy(color = Abook.colors.text3))
+                    inner()
+                }
+            },
         )
     }
 }
