@@ -254,13 +254,11 @@ class PlayerRepoTest {
     fun `the snapshot carries the queue the music and the voice and rebuilds the queue only when the core changes it`() {
         val core = FakePlaybackCore(snap())
         core.chapterList = listOf(chapter(1, 90.0), chapter(2))
-        core.music = true
         core.voiceChosen = "edge:x"
         val repo = repo(core)
         repo.attach()
         val first = repo.state.value
         assertEquals(listOf(PlayerChapter(1, "Chương 1", 90_000), PlayerChapter(2, "Chương 2", 60_000)), first.chapters)
-        assertTrue(first.musicEnabled)
         assertEquals("edge:x", first.voiceId)
         core.emit(snap(playing = true))
         assertSame("cùng hàng chương của lõi thì dùng lại, không dựng mới", first.chapters, repo.state.value.chapters)
@@ -274,11 +272,9 @@ class PlayerRepoTest {
         val core = FakePlaybackCore(snap())
         val repo = repo(core)
         repo.attach()
-        repo.setAutoMusic(true)
         repo.setVoice("v1")
         repo.setSleep("minutes", 15)
-        assertEquals(listOf("music true", "voice v1", "sleep minutes 15"), core.calls)
-        assertTrue(repo.state.value.musicEnabled)
+        assertEquals(listOf("voice v1", "sleep minutes 15"), core.calls)
         assertEquals("v1", repo.state.value.voiceId)
     }
 
