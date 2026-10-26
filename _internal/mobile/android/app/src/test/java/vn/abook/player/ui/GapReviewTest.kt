@@ -48,7 +48,7 @@ class GapReviewTest {
                 val shell = remember { ShellState(scope) }
                 val player = remember { PlayerRepo(playback, scope, Dispatchers.Unconfined, { null }, { null }) }
                 LaunchedEffect(Unit) { player.attach() }
-                deletes = remember { UndoDelete(scope, { if (failure) "Chưa xoá được, bạn thử lại" else null }, {
+                deletes = remember { UndoDelete(scope, { if (failure) "Chưa xoá được" else null }, {
                     library = LibraryState.Ready(all.filterNot { deletes.contains(it.id) })
                 }, player::bookRemoved) }
                 val settings = remember { SettingsEnv(SettingsRepo(FakeSettingsCore(), scope, Dispatchers.Unconfined), ThemeReveal(scope)) }
@@ -71,7 +71,7 @@ class GapReviewTest {
         if (failure) {
             rule.mainClock.advanceTimeBy(28_000)
             rule.waitForIdle()
-            rule.onNodeWithText("Chưa xoá được, bạn thử lại").assertIsDisplayed()
+            rule.onNodeWithText("Chưa xoá được").assertIsDisplayed()
             rule.onNodeWithTag("undo_delete").assertDoesNotExist()
         }
         rule.onNodeWithTag("undo_bar").assertIsDisplayed()

@@ -90,7 +90,7 @@ class CompanionRepo(private val core: CompanionCore, private val now: () -> Long
     }
 
     private companion object {
-        const val OFFLINE = "Chưa nối được, bạn thử lại"
+        const val OFFLINE = "Chưa nối được máy kia."
     }
 
     suspend fun setNotices(enabled: Boolean) = attempt { flow.value = flow.value.copy(notices = core.setNotices(enabled)) }
@@ -143,7 +143,7 @@ class CompanionRepo(private val core: CompanionCore, private val now: () -> Long
         flow.value = flow.value.copy(busy = true, problem = "")
         return try { block(); true }
         catch (cancelled: CancellationException) { throw cancelled }
-        catch (_: Exception) { flow.value = flow.value.copy(problem = "Chưa làm được, bạn thử lại"); false }
+        catch (_: Exception) { flow.value = flow.value.copy(problem = "Chưa làm được"); false }
         finally { flow.value = flow.value.copy(busy = false) }
     }
 }

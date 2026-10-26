@@ -140,7 +140,7 @@ private fun LogSheet(repo: SettingsRepo) {
         val list = remember(shown) { LazyListState(shown?.lastIndex?.coerceAtLeast(0) ?: 0) }
         when {
             shown == null -> BasicText("Đang đọc nhật ký.", style = Abook.type.bodySmall, modifier = Modifier.padding(vertical = Dim.s16))
-            shown.isEmpty() -> BasicText("Nhật ký đang trống.", style = Abook.type.bodySmall, modifier = Modifier.padding(vertical = Dim.s16))
+            shown.isEmpty() -> BasicText("Chưa có dòng nào.", style = Abook.type.bodySmall, modifier = Modifier.padding(vertical = Dim.s16))
             else -> LazyColumn(Modifier.fillMaxWidth().heightIn(max = 440.dp).fadeEdges(list), state = list) {
                 itemsIndexed(shown, key = { index, _ -> index }, contentType = { _, _ -> "line" }) { _, line ->
                     BasicText(line, style = Abook.type.caption.copy(color = Abook.colors.text2), modifier = Modifier.padding(vertical = 2.dp))

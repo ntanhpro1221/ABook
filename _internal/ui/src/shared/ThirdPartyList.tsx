@@ -6,7 +6,8 @@ import { loadThirdParty, parseThirdParty, type ThirdPartySection } from "./third
 function Inline({ text }: { text: string }) {
   return (
     <>
-      {text.split(/(\*\*[^*]+\*\*|`[^`]+`)/).map((part, index) =>
+      {/* \x60 = dấu huyền: bộ so chữ (scripts/ui_parity.py) đọc dấu huyền trần trong biểu thức chính quy thành đầu chuỗi mẫu. */}
+      {text.split(/(\*\*[^*]+\*\*|\x60[^\x60]+\x60)/).map((part, index) =>
         part.startsWith("**") && part.endsWith("**") && part.length > 4 ? (
           <strong key={index} className="font-semibold text-fg">{part.slice(2, -2)}</strong>
         ) : part.startsWith("`") && part.endsWith("`") && part.length > 2 ? (
@@ -38,6 +39,10 @@ export function ThirdPartySections({ sections }: { sections: ThirdPartySection[]
   );
 }
 
+// Cùng lời với tấm "Thành phần sử dụng" bên native (SettingsAdvanced.kt).
+const LOADING = "Đang mở danh sách";
+const FAILED = "Chưa mở được danh sách.";
+
 /** Danh sách thành phần bên thứ ba, tải khi mở (hộp ở máy tính, tấm trượt ở điện thoại). */
 export function ThirdPartyList() {
   const [sections, setSections] = useState<ThirdPartySection[] | null>(null);
@@ -53,7 +58,7 @@ export function ThirdPartyList() {
   // "Đang mở danh sách" -> danh sách / lỗi: mờ qua theo pha trong hộp đang mở, không đổi cứng.
   return (
     <MotionRegion motionKey={sections === null ? "loading" : sections.length ? "list" : "error"}>
-      {sections === null ? <p className="py-4 text-sm text-fg-2">Đang mở danh sách</p> : !sections.length ? <p className="py-4 text-sm text-fg-2">Chưa mở được danh sách.</p> : <ThirdPartySections sections={sections} />}
+      {sections === null ? <p className="py-4 text-sm text-fg-2">{LOADING}</p> : !sections.length ? <p className="py-4 text-sm text-fg-2">{FAILED}</p> : <ThirdPartySections sections={sections} />}
     </MotionRegion>
   );
 }

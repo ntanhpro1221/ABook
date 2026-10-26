@@ -8,7 +8,7 @@ import { useParams } from "react-router";
 import { Select, Button, ChoiceRow, Sheet, TimeSelect } from "@/shared/ui";
 import { GroupHeader, isSettingsGroup, MoreInfo, SettingsBlock, SettingsList, SettingsRow, settingsPath, type GroupRow, type SettingsGroupId } from "@/shared/SettingsNav";
 import { ScreenHeader } from "@/shared/ScreenHeader";
-import { sleepSummary, themeSummary } from "@/shared/settingsSummary";
+import { listenSummary, sleepSummary, themeSummary } from "@/shared/settingsSummary";
 import { ThirdPartyList } from "@/shared/ThirdPartyList";
 import { MyMusicSection } from "@/listen/MyMusic";
 import { AUTO_MUSIC_HINT, AUTO_MUSIC_LABEL } from "@/listen/playlistBed";
@@ -155,9 +155,7 @@ function SleepGroup({ settings, change }: { settings: PlayerSettings; change: Ch
             onChange={(value) => change({ safetyStopHours: Number(value) })}
             options={[
               { value: "0", label: "Không" },
-              { value: "1", label: "1 giờ" },
-              { value: "2", label: "2 giờ" },
-              { value: "3", label: "3 giờ" },
+              ...[1, 2, 3].map((hours) => ({ value: String(hours), label: `${hours} giờ` })),
             ]}
           />
         </SettingsRow>
@@ -188,7 +186,7 @@ function SleepGroup({ settings, change }: { settings: PlayerSettings; change: Ch
             <span className="text-fg-2">hẹn</span>
             <Select
               inline
-              aria-label="Số phút hẹn"
+              aria-label="Hẹn"
               value={settings.sleepSchedule.minutes}
               onChange={(event) => change({ sleepSchedule: { ...settings.sleepSchedule!, minutes: Number(event.target.value) } })}
 
@@ -223,7 +221,7 @@ function SleepGroup({ settings, change }: { settings: PlayerSettings; change: Ch
             </SettingsRow>
             <SettingsRow label="Độ nhạy">
               <ChoiceRow
-                label="Độ nhạy lắc"
+                label="Độ nhạy"
                 value={settings.shakeSensitivity ?? "normal"}
                 onChange={(value) => change({ shakeSensitivity: value })}
                 options={[
@@ -429,7 +427,7 @@ export function SettingsScreen() {
   }
   const rows: GroupRow[] = [
     { id: "voice", summary: voiceName },
-    { id: "listen", summary: `${settings.autoRewind !== false ? "Tự lùi" : "Không tự lùi"} · ${settings.autoMusic !== false ? "nhạc tự chọn" : "không nhạc nền"}` },
+    { id: "listen", summary: listenSummary(settings.autoRewind !== false, settings.autoMusic !== false) },
     { id: "sleep", summary: sleepSummary(settings.sleepSchedule, settings.safetyStopHours) },
     { id: "look", summary: themeSummary(settings.theme, "Tự động") },
     { id: "devices", summary: "Nối máy · chia sẻ · dung lượng" },

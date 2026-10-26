@@ -661,7 +661,7 @@ export interface ReadAloudPlugin {
   addListener(event: "readAloudScript", handler: (event: { bookId: string; chapterId: number }) => void): Promise<PluginListenerHandle>;
   /** Một đoạn vừa được đọc tạm bằng giọng kế (khoá bị từ chối / hết hạn mức / mất mạng): câu nói một lần cho người nghe. */
   addListener(event: "readAloudNotice", handler: (event: { message: string }) => void): Promise<PluginListenerHandle>;
-  /** "Thử giọng" (Cài đặt): đọc `text` bằng giọng này, trả đường dẫn file trên máy (phát qua `Capacitor.convertFileSrc`). */
+  /** "Nghe thử" (Cài đặt): đọc `text` bằng giọng này, trả đường dẫn file trên máy (phát qua `Capacitor.convertFileSrc`). */
   /** `bookId`: cách đọc riêng của cuốn ấy; `readings`: cách đọc đem nghe thử (chưa lưu - thắng của cuốn). */
   sample(options: { voice: string; text: string; bookId?: string; readings?: Record<string, string> }): Promise<{ path: string }>;
   /** Giọng dùng khoá của người dùng (OnlineVoices.kt): mô tả từng nhà cung cấp - khoá chỉ ở dạng che. */

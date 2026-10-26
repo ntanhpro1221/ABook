@@ -159,7 +159,7 @@ private fun MenuActions(
                 scope.launch {
                     val chooser = source.share(book.id)
                     sharing = false
-                    problem = if (chooser == null) "Chưa đóng được file sách để chia sẻ." else ""
+                    problem = if (chooser == null) "Chưa chia sẻ được sách" else ""
                     if (chooser != null) {
                         dismiss()
                         context.startActivity(chooser)

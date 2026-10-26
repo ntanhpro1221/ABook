@@ -75,7 +75,7 @@ describe("import summary", () => {
     });
     const none = importSummary({ added: [], existing: [], failed: ["a", "b"] });
     expect(none.kind).toBe("error");
-    expect(none.title).toBe("Không thêm được file nào");
+    expect(none.title).toBe("Chưa thêm được nhạc");
     expect(none.description).toBe("a\nb");
   });
 

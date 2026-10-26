@@ -12,16 +12,14 @@ import { EbookLibrary, type StudioComputer } from "./plugins";
 // và chip ở trang sách (desktop/App.tsx PeerStudioChipLink). Trang là của chính máy tính ấy; điện thoại chỉ chọn máy và trang.
 
 /** Lời nói thẳng khi máy tính chỉ cho điện thoại nghe - cùng ý với trang "Chỉ nghe" của chính Studio (shared/peerStudio.ts listenOnlyLine), nhưng nói
- *  trước khi bấm, từ phía điện thoại. Nhiều máy cùng chỉ cho nghe: nêu tên cả hai; hơn hai máy thì nói chung "các máy tính đã ghép". */
+ *  trước khi bấm, từ phía điện thoại. Nhiều máy cùng chỉ cho nghe: nêu tên cả hai; hơn hai máy thì nói chung "các máy tính đã ghép". Đường tới công tắc
+ *  viết thẳng trong câu, đúng tên mục và công tắc hiện có (desktop/PhoneSync.tsx - soát a68 lỗi 12), cùng câu DeviceText bên native. */
 export function studioListenOnlyLine(names: string | string[]): string {
   const list = typeof names === "string" ? [names] : names;
-  if (list.length > 2) return `Các máy tính đã ghép đều chỉ cho nghe - trên từng máy, bật ${STUDIO_SWITCH_PATH}`;
-  if (list.length === 2) return `Máy tính ${list[0]} và ${list[1]} đều chỉ cho nghe - trên từng máy, bật ${STUDIO_SWITCH_PATH}`;
-  return `Máy tính ${list[0] ?? ""} chỉ cho nghe - trên máy tính ấy, bật ${STUDIO_SWITCH_PATH}`;
+  if (list.length > 2) return `Các máy tính đã ghép đều chỉ cho nghe - trên từng máy, bật Cài đặt › Thiết bị › “Điều khiển từ xa”.`;
+  if (list.length === 2) return `Máy tính ${list[0]} và ${list[1]} đều chỉ cho nghe - trên từng máy, bật Cài đặt › Thiết bị › “Điều khiển từ xa”.`;
+  return `Máy tính ${list[0] ?? ""} chỉ cho nghe - trên máy tính ấy, bật Cài đặt › Thiết bị › “Điều khiển từ xa”.`;
 }
-
-/** Đường tới công tắc trên máy tính, đúng tên mục và tên công tắc hiện có (desktop/PhoneSync.tsx - soát a68 lỗi 12: "Cài đặt > Thiết bị" không có). */
-const STUDIO_SWITCH_PATH = "Cài đặt › Thiết bị › “Điều khiển từ xa”";
 
 /** Máy tính còn mở Studio được (không phải máy chỉ cho nghe). */
 function openable(computers: StudioComputer[]): StudioComputer[] {
