@@ -32,7 +32,7 @@ import vn.abook.player.ui.components.MenuRow
 import vn.abook.player.ui.components.PlusIcon
 import vn.abook.player.ui.components.PrimaryButton
 import vn.abook.player.ui.components.QuietButton
-import vn.abook.player.ui.components.RestartIcon
+import vn.abook.player.ui.components.RefreshIcon
 import vn.abook.player.ui.components.SheetPages
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
@@ -82,15 +82,15 @@ private fun DeviceActions(device: Paired, studio: StudioComputer?, state: Device
                     problem = error.orEmpty()
                     if (error == null) dismiss()
                 }
-            }) { ink -> LaptopIcon(ink, size = Dim.s24) }
+            }) { ink -> LaptopIcon(ink) }
             if (studio.listenOnly) Caption(DeviceText.listenOnly(device.name), Modifier.padding(bottom = Dim.s4).testTag("device_listen_only"))
         }
-        MenuRow("Làm mới", "device_refresh", onClick = { state.refresh(); dismiss() }) { ink -> RestartIcon(ink, size = Dim.s24) }
+        MenuRow("Làm mới", "device_refresh", onClick = { state.refresh(); dismiss() }) { ink -> RefreshIcon(ink) }
         if (device.reach is Reach.Unpaired || device.reach is Reach.Changed) {
-            MenuRow("Ghép lại", "device_repair", onClick = { state.repair(device); dismiss() }) { ink -> PlusIcon(ink, size = Dim.s24) }
+            MenuRow("Ghép lại", "device_repair", onClick = { state.repair(device); dismiss() }) { ink -> PlusIcon(ink) }
         }
         Box(Modifier.fillMaxWidth().padding(vertical = Dim.s8).height(1.dp).background(colors.line))
-        MenuRow("Bỏ ghép", "device_forget", danger = true, onClick = onForget) { ink -> CloseIcon(ink, size = Dim.s24) }
+        MenuRow("Bỏ ghép", "device_forget", danger = true, onClick = onForget) { ink -> CloseIcon(ink) }
         if (problem.isNotEmpty()) {
             Spacer(Modifier.height(Dim.s4))
             BasicText(problem, style = Abook.type.bodySmall.copy(color = colors.danger), modifier = Modifier.testTag("device_problem"))
