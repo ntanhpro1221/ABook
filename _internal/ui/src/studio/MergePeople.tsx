@@ -10,6 +10,7 @@ import { formatNumber } from "@/shared/format";
 import { DialogActions, SelectionMark, Button, Dialog } from "@/shared/ui";
 import { api } from "./api";
 import { nameKey, sameNames } from "./workText";
+import { useFadeScroller } from "@/shared/scrollFade";
 
 // Tab Nhân vật: "Gộp vào…" (soát UX a6 01-10: máy tách một người thành hai - tên đầy đủ và tên gọi, có chức danh và không -
 // mà Studio chỉ sửa được từng câu). Máy chủ chuyển mọi câu nói của người này sang người kia và ghi bí danh để phần sau
@@ -35,6 +36,7 @@ export function MergeDialog({
   /** Làm mới thêm các màn của trang nghe (số thay đổi chưa lưu). */
   onSaved?: () => void;
 }) {
+  const scrollFade = useFadeScroller<HTMLUListElement>();
   const client = useQueryClient();
   const [query, setQuery] = useState("");
   const [into, setInto] = useState<CastMember | null>(null);
@@ -98,7 +100,7 @@ export function MergeDialog({
         />
       </label>
       <MotionRegion motionKey={[others.map(other => other.name), !others.length && query]}>
-      <ul className="mt-2 max-h-64 overflow-y-auto" role="listbox" aria-label="Gộp vào ai">
+      <ul ref={scrollFade.ref} style={scrollFade.style} className="mt-2 max-h-64 overflow-y-auto" role="listbox" aria-label="Gộp vào ai">
         {others.length ? (
           others.map((other) => (
             <li key={other.name}>
