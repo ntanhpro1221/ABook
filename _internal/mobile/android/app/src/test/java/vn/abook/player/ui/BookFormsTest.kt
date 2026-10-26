@@ -536,6 +536,9 @@ class BookFormsTest {
         rule.onNodeWithContentDescription("Bỏ cách đọc Haruto").performClick()
         rule.waitForIdle()
         assertEquals("Haruto" to "", source.readingCalls.last())
+        // Hàng cuối trượt ra hết rồi mới tới dòng "Chưa có từ nào." (không đổi cứng).
+        rule.mainClock.advanceTimeBy(1000)
+        rule.waitForIdle()
         rule.onNodeWithText("Chưa có từ nào.").assertExists()
     }
 
