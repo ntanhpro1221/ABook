@@ -57,6 +57,13 @@ object EditLogic {
         if (fields.any { it.codePointCount(0, it.length) > 160 }) return "Tên quá dài. Bạn hãy dùng tối đa 160 ký tự."
         return null
     }
+
+    /** Câu đầu của lời lỗi khi lưu hỏng, theo thứ đang lưu (cùng chữ với lời báo của web, listen/EditBook.tsx). */
+    fun failure(diff: EditDiff): String = when {
+        diff.title != null -> "Chưa đổi được tên sách."
+        diff.author != null -> "Chưa đổi được tác giả."
+        else -> "Chưa đổi được tên chương."
+    }
 }
 
 @Immutable

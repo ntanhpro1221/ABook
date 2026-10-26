@@ -13,7 +13,6 @@ import { DisclosureRow } from "@/shared/DisclosureRow";
 import { SectionHeading } from "@/shared/SectionHeading";
 import { COVER_SEARCH_NOTE, COVER_SEARCH_TITLE, CoverSearchPanel } from "@/shared/CoverSearch";
 import { canEditLayer, editBlockedNote, studioNeed, syncsToComputer } from "@/shared/capabilities";
-import { holderName } from "@/shared/editsSync";
 import { formatClock } from "@/shared/format";
 import { levelOptions, levelText } from "@/shared/musicLevels";
 import { Switch } from "@/desktop/PhoneSync";
@@ -71,7 +70,7 @@ async function imageToDataUrl(file: Blob): Promise<string> {
     new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(String(reader.result));
-      reader.onerror = () => reject(reader.error ?? new Error("Không đọc được file ảnh"));
+      reader.onerror = () => reject(reader.error ?? new Error("Không đọc được ảnh. Bạn hãy chọn JPEG, PNG hoặc WebP."));
       reader.readAsDataURL(file);
     });
   try {
@@ -365,14 +364,14 @@ export function EditBookDialog({
       onOpenChange={onOpenChange}
       width="max-w-[560px]"
       title={searching ? COVER_SEARCH_TITLE : "Sửa sách"}
+      // Không lời dẫn chung đầu hộp (điện thoại cũng không có): phần sửa chờ gửi tự nói ở dòng tình trạng dưới tên sách (SendEdits.tsx). Riêng
+      // Studio từ xa nói rõ là đang sửa sách trên máy tính.
       description={
         searching
           ? COVER_SEARCH_NOTE
           : computer
           ? `Đổi có hiệu lực ngay trên máy tính ${computer} - audio và chữ của người làm sách giữ nguyên.`
-          : syncsToComputer(book.capabilities)
-            ? `Đổi có hiệu lực ngay trên máy này và được gửi về ${holderName(book.remote)} khi kết nối - audio và chữ của người làm sách giữ nguyên.`
-            : "Đổi có hiệu lực ngay và chỉ trên máy này - audio và chữ của người làm sách giữ nguyên."
+          : undefined
       }
     >{/* Tìm bìa là MỘT BƯỚC của hộp này (trượt sang, có "Quay lại", Back cũng về), không phải hộp thứ hai đè lên (audit140 V9). */}
     <MotionRegion motionKey={searching}>{searching ? (
@@ -415,7 +414,7 @@ export function EditBookDialog({
         </Section>
         {/* Chỉ sách chữ (nhập từ file): sách Studio không có chỗ áp tác giả, sửa ở máy khác rồi gửi về là mất (fold_edits bỏ qua). */}
         {book.stage === "text" && !workshop && (
-          <Section title="Tác giả" hint="Để trống nếu không rõ tác giả. Hiện ở thư viện, trang sách và trong file sách nói xuất ra.">
+          <Section title="Tác giả">
             <form
               className="flex gap-2"
               onSubmit={(event) => {
@@ -562,8 +561,7 @@ export function RenameChapterDialog({ book, chapter, onClose }: { book: ListenBo
       open={chapter !== null}
       onOpenChange={(open) => !open && onClose()}
       width="max-w-md"
-      title="Đổi tên chương"
-      description="Chỉ đổi cái tên hiện trên màn hình - audio không đổi."
+      title="Tên chương"
     >
       <form id={dialogForm1}
         className="space-y-3"
@@ -573,7 +571,7 @@ export function RenameChapterDialog({ book, chapter, onClose }: { book: ListenBo
         }}
       >
         <label className="block text-sm">
-          <span className="text-fg-2">{single ? "Tên chương" : "Số chương hay nhãn"}</span>
+          <span className="text-fg-2">{single ? "Tên chương" : "Nhãn"}</span>
           <input
             data-autofocus
             value={label}
@@ -584,7 +582,7 @@ export function RenameChapterDialog({ book, chapter, onClose }: { book: ListenBo
         </label>
         {!single && (
           <label className="block text-sm">
-            <span className="text-fg-2">Tên chương (có thể để trống)</span>
+            <span className="text-fg-2">Tên</span>
             <input
               value={name}
               maxLength={160}

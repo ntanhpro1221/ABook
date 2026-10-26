@@ -12,6 +12,7 @@ import { toast } from "@/shared/toast";
 import { ChapterPreview } from "@/shared/ChapterPreview";
 import { cn } from "@/shared/cn";
 import { ErrorDetails } from "@/shared/ErrorDetails";
+import { SectionHeading } from "@/shared/SectionHeading";
 import { formatNumber } from "@/shared/format";
 import { DialogActions, Button, ContentSkeleton, Dialog, InlineError } from "@/shared/ui";
 import {
@@ -46,7 +47,7 @@ import {
   readPreview,
   renameChapter,
   sameRows,
-  splitLabel,
+  splitHint,
   type ChapterNames,
   type AddedBook,
   type FootnoteChoice,
@@ -135,10 +136,10 @@ export function AddBookDialog({
   };
   // Gợi ý dòng ghi công người nghe chọn bỏ khỏi phần đọc (theo dòng); mặc định không bỏ dòng nào.
   const [skipped, setSkipped] = useState<ReadonlySet<string>>(new Set());
-  // File TXT cả truyện: "Tách theo N dòng “Chương N”" - tích sẵn khi máy chắc (`splitIsSure`: từ 3 dòng), không thì chỉ đề xuất; bỏ tích được,
+  // File TXT cả truyện: "Tách chương" theo N dòng “Chương N” - tích sẵn khi máy chắc (`splitIsSure`: từ 3 dòng), không thì chỉ đề xuất; bỏ tích được,
   // file của người dùng không bị sửa.
   const [split, setSplit] = useState(false);
-  // Chú thích trong sách (EPUB / DOCX): đề xuất "Không đọc số", "Đọc lời chú ở cuối chương" / "Bỏ lời chú" - mặc định không tích gì, sách giữ nguyên như file.
+  // Chú thích trong sách (EPUB / DOCX): đề xuất "Bỏ số gọi" và "Lời chú" (Giữ nguyên / Cuối chương / Bỏ lời chú) - mặc định giữ nguyên như file.
   const [footnotes, setFootnotes] = useState<FootnoteChoice>(NO_FOOTNOTES);
   // Chương nào vào sách (số thứ tự hàng của bước xem trước) và tên người dùng đã đổi. Mặc định như máy đề xuất: mọi chương trừ mục rất ngắn.
   const [picked, setPicked] = useState<ReadonlySet<number>>(new Set());
@@ -292,7 +293,7 @@ export function AddBookDialog({
       try {
         const opening = onBookFile(item.choice.ref, session);
         const ok = await (session ? session.wait(opening) : opening);
-        next = ok === false ? settle(next, item.id, { state: "error", note: "Không mở được file sách này." }) : settle(next, item.id, { state: "opened", note: "Đã mở" });
+        next = ok === false ? settle(next, item.id, { state: "error", note: "Không mở được file sách này." }) : settle(next, item.id, { state: "opened", note: "Đã thêm" });
       } catch (error) {
         if (error instanceof ReadCancelled) throw error;
         next = settle(next, item.id, { state: "error", note: (error as Error).message });
@@ -470,7 +471,8 @@ export function AddBookDialog({
         return;
       }
       if (added.how !== "existing") feedback("confirm");
-      toast.success(added.how === "existing" ? "Cuốn này đã có trong thư viện" : "Đã thêm sách vào thư viện");
+      if (added.how === "existing") toast.success("Cuốn này đã có trong thư viện");
+      else toast.success("Đã thêm sách vào thư viện");
       clear(); // bản tạm đã dùng xong (native tự dọn)
       onOpenChange(false);
       navigate(`/book/${added.id}`);
@@ -516,7 +518,7 @@ export function AddBookDialog({
     if (choice) void importer.discard?.(choice).catch(() => undefined);
     const rest = known
       ? settle(items, currentId, { state: "existing", note: existing ? "Đã có trong thư viện" : "Đã thêm từ file này rồi", bookId: known.id })
-      : settle(items, currentId, { state: "skipped", note: "Bỏ qua" });
+      : settle(items, currentId, { state: "skipped", note: "Đã bỏ qua" });
     setQueue(rest);
     void goNext(rest);
   };
@@ -574,13 +576,13 @@ export function AddBookDialog({
       open={open}
       onOpenChange={close}
       width="max-w-[560px]"
-      title={preview && label ? `${label} · Thêm sách` : "Thêm sách"}
+      title={preview ? (label ? `${label} · Xem trước` : "Xem trước") : "Thêm sách"}
       description={
         queue && !preview
           ? summaryText(summarize(queue))
           : preview
-          ? "Xem lại chương trước khi thêm. Chữ của truyện giữ nguyên."
-          : "EPUB, DOCX, PDF có chữ, TXT, thư mục TXT hay file .abook. Chọn được nhiều file."
+          ? undefined
+          : "EPUB, DOCX, PDF có chữ, TXT hoặc file .abook. Chọn được nhiều file."
       }
     ><MotionRegion fadeThrough>
       {confirmLeave && (
@@ -618,7 +620,7 @@ export function AddBookDialog({
       {queue && !preview ? (
         <div>
           {busy === "reading" && (
-            <ContentSkeleton count={1} label="Đang đọc file tiếp" />
+            <ContentSkeleton count={1} label="Đang đọc" />
           )}
           <QueueList items={queue} currentId={currentId} working={working} tall />
 
@@ -667,14 +669,13 @@ export function AddBookDialog({
               File sách (EPUB, Word, PDF, TXT) hay thư mục TXT, ví dụ D:\Truyện\Tên truyện.epub
             </p>
           )}
-          {busy === "reading" && <ContentSkeleton shape="cards" count={2} label="Đang đọc file sách" className="mt-4" />}
+          {busy === "reading" && <ContentSkeleton shape="cards" count={2} label="Đang đọc" className="mt-4" />}
           {problem && (
             <div className="mt-3">
               <InlineError message={problem} onRetry={() => { if (lastRead.current) void read(lastRead.current); else void choose(lastKind.current); }} />
               {technical && <ErrorDetails technical={technical} />}
             </div>
           )}
-          <p className="mt-4 text-xs text-fg-3">PDF phải có chữ - PDF chụp từ máy quét thì ABook chưa đọc được.</p>
         </div>
       ) : (
         <div>
@@ -691,7 +692,8 @@ export function AddBookDialog({
             />
           </label>
           {preview.author && <p className="mt-1.5 text-sm text-fg-2">Tác giả: {preview.author}</p>}
-          <div className="tabular mt-4 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-sm text-fg-2">
+          <SectionHeading as="h3" className="mt-2">Chương</SectionHeading>
+          <div className="tabular flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-sm text-fg-2">
             <span>
               <span className="font-semibold text-fg">
                 {totals.chapters}
@@ -725,14 +727,8 @@ export function AddBookDialog({
                 className="mt-0.5 size-4 shrink-0 accent-[var(--accent)]"
               />
               <span className="min-w-0">
-                <span className="block font-medium">
-                  {splitLabel(preview)}
-                </span>
-                <span className="block text-xs text-fg-2">
-                  {split
-                    ? "Mỗi dòng “Chương N” mở một chương mới; chữ của truyện giữ nguyên."
-                    : "Cả truyện đang là một chương. Tích để tách theo các dòng ấy; chữ giữ nguyên."}
-                </span>
+                <span className="block font-medium">Tách chương</span>
+                <span className="block text-xs text-fg-2">{splitHint(preview)}</span>
               </span>
             </label>
           ) : null}
@@ -775,7 +771,6 @@ export function AddBookDialog({
           {preview.footnotes && <Fold storageKey="add-book.footnotes" title="Chú thích" className="mt-3" bodyClassName="px-3 pb-3"><FootnoteChoices offer={preview.footnotes} value={footnotes} disabled={busy !== null} onChange={(next) => void changeFootnotes(next)} /></Fold>}
           {groups.length > 0 && (
             <Fold storageKey="add-book.suggestions" title="Gợi ý phần đọc" summary={`${groups.length} nhóm`} className="mt-3" bodyClassName="px-3 pb-3">
-              <p className="mt-0.5 text-xs text-fg-2">Dòng bỏ chỉ bị bỏ qua khi đọc; chữ của sách giữ nguyên.</p>
               <div ref={scrollFade.ref} style={scrollFade.style} className="mt-2 max-h-40 overflow-y-auto">
                 <SuggestionChoices
                   groups={groups}
@@ -801,7 +796,7 @@ export function AddBookDialog({
             </p>
           )}
           {busy === "adding" && working && queue && (
-            <ContentSkeleton className="mt-3" count={1} label={`Đang thêm ${working}`} />
+            <ContentSkeleton className="mt-3" count={1} label="Đang thêm" />
           )}
 
 
@@ -814,8 +809,8 @@ export function AddBookDialog({
 const STATE_TEXT: Record<Exclude<QueueItem["state"], "waiting">, string> = {
   added: "Đã thêm",
   existing: "Đã có trong thư viện",
-  skipped: "Bỏ qua",
-  opened: "Đã mở",
+  skipped: "Đã bỏ qua",
+  opened: "Đã thêm",
   error: "Chưa đọc được",
 };
 
@@ -825,7 +820,7 @@ export function QueueList({ items, currentId, working = "", tall }: { items: Que
   const rows = useListPresence(items, (item) => String(item.id));
   const focus = queueFocus(items, currentId, working);
   return (
-    <ul ref={scrollFade.ref} style={scrollFade.style} aria-label="Các file đã chọn" className={cn("mt-3 space-y-1.5 overflow-y-auto py-2.5 text-xs", tall ? "max-h-72" : "max-h-36")}>
+    <ul ref={scrollFade.ref} style={scrollFade.style} aria-label="File đã chọn" className={cn("mt-3 space-y-1.5 overflow-y-auto py-2.5 text-xs", tall ? "max-h-72" : "max-h-36")}>
       {rows.map(({ item, key, state, ref }) => {
         const current = item.state === "waiting" && item.id === focus.id;
         let mark: ReactNode = <span className="block size-3 rounded-full border border-line-strong" />;

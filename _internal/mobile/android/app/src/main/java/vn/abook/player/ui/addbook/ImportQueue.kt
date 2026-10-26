@@ -57,7 +57,7 @@ class ImportQueue(private val source: ImportSource, private val scope: Coroutine
                 flow.value = flow.value.copy(preview = preview, choices = ImportLogic.retain(preview, old, choices))
             } catch (error: Exception) {
                 if (error is CancellationException) throw error
-                flow.value = flow.value.copy(problem = error.message.orEmpty())
+                flow.value = flow.value.copy(problem = failure("Chưa đọc lại được file.", error))
             } finally { flow.value = flow.value.copy(busy = false) }
         }
     }
@@ -79,7 +79,7 @@ class ImportQueue(private val source: ImportSource, private val scope: Coroutine
                 finish(id, if (existing) ImportStage.Existing else ImportStage.Added, bookId)
             } catch (error: Exception) {
                 if (error is CancellationException) throw error
-                flow.value = flow.value.copy(busy = false, problem = error.message ?: "Bạn hãy thử lại.",
+                flow.value = flow.value.copy(busy = false, problem = failure("Chưa thêm được sách.", error),
                     items = ImportLogic.settle(flow.value.items, id, ImportStage.Review))
                 return@launch
             }
@@ -103,6 +103,9 @@ class ImportQueue(private val source: ImportSource, private val scope: Coroutine
         flow.value = flow.value.copy(items = ImportLogic.settle(flow.value.items, id, ImportStage.Waiting))
         advance()
     }
+
+    /** Lời lỗi: việc chưa làm được (cùng chữ với lời báo của web) + lý do của lõi. */
+    private fun failure(what: String, error: Exception) = listOf(what, error.message ?: "Bạn hãy thử lại.").joinToString(" ")
 
     private fun finish(id: Long, stage: ImportStage, bookId: String? = null) {
         progress.getOrPut(id) { MutableStateFlow(0f) }.value = 1f
@@ -135,7 +138,7 @@ class ImportQueue(private val source: ImportSource, private val scope: Coroutine
                 } catch (error: Exception) {
                     if (error is CancellationException) throw error
                     flow.value = flow.value.copy(currentId = null, busy = false,
-                        items = ImportLogic.settle(flow.value.items, item.id, ImportStage.Error, error.message ?: "Bạn hãy chọn lại file."))
+                        items = ImportLogic.settle(flow.value.items, item.id, ImportStage.Error, error.message.orEmpty()))
                 }
             }
         }
