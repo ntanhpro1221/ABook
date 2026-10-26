@@ -6,6 +6,7 @@ import ABook
 FocusScope {
     id: root
     signal openBook(var book)
+    signal addRequested(var paths)
 
     readonly property real avail: Math.max(0, width - 2 * Theme.margin)
     readonly property int gap: Theme.s24
@@ -37,6 +38,23 @@ FocusScope {
         width: parent.width - 2 * Theme.margin
         title: "Thư viện"
         subtitle: root.loading || root.failed || root.count === 0 ? "" : root.count + " cuốn"
+        Button { text: "Thêm sách"; icon: "plus"; onClicked: root.addRequested([]) }
+    }
+
+    DropArea {
+        anchors.fill: parent
+        onEntered: drag => { drag.accepted = drag.hasUrls }
+        onDropped: drop => {
+            if (!drop.hasUrls) return
+            const paths = drop.urls.map(url => DesktopApi.localPath(url)).filter(path => path !== "")
+            if (paths.length) { drop.acceptProposedAction(); root.addRequested(paths) }
+        }
+        Rectangle {
+            anchors.fill: parent; anchors.margins: 16
+            visible: parent.containsDrag
+            color: Theme.accentSoft; border.color: Theme.accent; border.width: 2; radius: Theme.radiusCover
+            FormLabel { anchors.centerIn: parent; text: "Thả để thêm sách"; font.pixelSize: Theme.sizeTitlePhone }
+        }
     }
 
     // Lưới ảo hoá theo HÀNG: mỗi delegate là một hàng N ô, cao bằng ô cao nhất của hàng (tên dài xuống dòng đủ, không cắt).

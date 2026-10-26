@@ -41,6 +41,8 @@ cmake --build "%HERE%build"
 if errorlevel 1 exit /b 1
 
 rem Player unit tests (QtTest with fake audio/network): red stops the build before packaging
+"%HERE%build\DesktopApiTests.exe" -o "%HERE%build\desktopapi-test.txt",txt
+if errorlevel 1 exit /b 1
 "%HERE%build\PlayerTests.exe"
 if errorlevel 1 exit /b 1
 "%HERE%build\ReadAlongTests.exe"

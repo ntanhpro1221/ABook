@@ -170,6 +170,7 @@ public:
     Q_INVOKABLE void stepRate(int direction);
     Q_INVOKABLE void setSleep(const QString &kind, int minutes = 0);
     Q_INVOKABLE void extendSleep(int minutes = 0);
+    Q_INVOKABLE void configure(const QVariantMap &preferences);
     Q_INVOKABLE void retry();
     Q_INVOKABLE void dismissError();
     Q_INVOKABLE void dismissNotice();
@@ -327,6 +328,11 @@ private:
     qint64 m_sleepStoppedAt = 0;
     int m_fadeSeconds = PlayerLogic::kDefaultFadeSeconds;
     int m_safetyHours = 2;
+    bool m_autoRewind = true;
+    int m_extendMinutes = 10;
+    QVariantMap m_schedule;
+    QString m_scheduleOffFor;
+    QString scheduleWindow() const;
     qint64 m_sleepMarkAt = 0;
     double m_sleepMarkSeconds = 0;
     bool m_sleepWarned = false;

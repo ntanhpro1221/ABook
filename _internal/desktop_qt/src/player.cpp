@@ -317,7 +317,26 @@ void Player::updateTicker() {
 }
 
 int Player::rewindBy(qint64 pausedMs) const {
-    return rewindAfter(pausedMs);
+    return m_autoRewind ? rewindAfter(pausedMs) : 0;
+}
+
+void Player::configure(const QVariantMap &p) {
+    m_autoRewind = p.value(QStringLiteral("autoRewind"), true).toBool();
+    m_safetyHours = std::clamp(p.value(QStringLiteral("safetyStopHours"), 2).toInt(), 0, 3);
+    m_fadeSeconds = std::clamp(p.value(QStringLiteral("sleepFadeSeconds"), 30).toInt(), 10, 60);
+    m_extendMinutes = std::clamp(p.value(QStringLiteral("sleepExtendMinutes"), 10).toInt(), 5, 15);
+    m_schedule = p.value(QStringLiteral("sleepSchedule")).toMap();
+}
+QString Player::scheduleWindow() const {
+    const QTime from = QTime::fromString(m_schedule.value(QStringLiteral("from")).toString(), QStringLiteral("HH:mm"));
+    const QTime to = QTime::fromString(m_schedule.value(QStringLiteral("to")).toString(), QStringLiteral("HH:mm"));
+    const QDateTime now = QDateTime::fromMSecsSinceEpoch(m_now());
+    const QTime current = now.time();
+    if (!from.isValid() || !to.isValid() || from == to) return {};
+    const bool overnight = from > to;
+    if (!(overnight ? current >= from || current < to : current >= from && current < to)) return {};
+    const QDate start = overnight && current < to ? now.date().addDays(-1) : now.date();
+    return start.toString(Qt::ISODate) + from.toString(QStringLiteral("HH:mm")) + to.toString(QStringLiteral("HH:mm"));
 }
 
 // ---- nạp sách ----
@@ -830,13 +849,14 @@ void Player::setSleep(const QString &kind, int minutes) {
         m_sleepStoppedAt = 0;
         applySleepState(Sleep::Chapter, 0, 0);
     } else {
+        m_scheduleOffFor = scheduleWindow();
         applySleepState(Sleep::Off, 0, 0);
     }
 }
 
 void Player::extendSleep(int minutes) {
     if (minutes <= 0)
-        minutes = kDefaultExtendMinutes;
+        minutes = m_extendMinutes;
     if (m_sleep.kind == Sleep::Off)
         return;
     endFade();
@@ -1138,6 +1158,15 @@ void Player::tick() {
     }
     if (!m_playing)
         return;
+    const QString night = scheduleWindow();
+    if (m_sleep.kind == Sleep::Off && !night.isEmpty() && night != m_scheduleOffFor) {
+        const int minutes = m_schedule.value(QStringLiteral("minutes")).toInt();
+        if (minutes == 15 || minutes == 30 || minutes == 45 || minutes == 60) {
+            setSleep(QStringLiteral("minutes"), minutes);
+            setNotice(QStringLiteral("Lịch đêm %1-%2: đã tự hẹn giờ %3 phút")
+                .arg(m_schedule.value(QStringLiteral("from")).toString(), m_schedule.value(QStringLiteral("to")).toString()).arg(minutes));
+        }
+    }
     save();
     if (m_sleep.kind != Sleep::Off) {
         tickSleep(now);

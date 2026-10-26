@@ -5,6 +5,7 @@ import ABook
 // so the cover, chapter scroll position and delegates survive a class change.
 Item {
     id: root
+    signal editRequested(var data)
     property var book: ({})
     readonly property bool expanded: width >= Theme.widthExpanded
     property real split: expanded ? 1 : 0
@@ -38,6 +39,19 @@ Item {
         backLabel: "Về Thư viện"
         title: ""
         implicitHeight: Theme.s32 + Theme.headerRow
+        Button {
+            text: "Sửa sách"; icon: "pencil"; kind: "text"
+            onClicked: Api.call("GET", "/api/listen/books/" + root.book.bookId, null, function(data, error) { if (!error) root.editRequested(data) })
+        }
+    }
+    Connections {
+        target: Api
+        function onEdited(bookId) {
+            if (bookId !== root.book.bookId) return
+            Api.call("GET", "/api/listen/books/" + bookId, null, function(data, error) {
+                if (!error) root.book = Object.assign({}, root.book, data, {bookId: data.id, coverKey: data.cover ? data.id + "/" + (data.cover.version || 0) : ""})
+            })
+        }
     }
     Item {
         id: stage

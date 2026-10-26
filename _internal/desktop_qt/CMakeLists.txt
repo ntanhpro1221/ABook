@@ -27,7 +27,7 @@ qt_standard_project_setup(REQUIRES 6.10)
 find_package(QWindowKit CONFIG REQUIRED)
 
 # Theme.qml do tools/gen_theme.py sinh từ DESIGN.md; Nav.qml là singleton điều hướng.
-set_source_files_properties(qml/Theme.qml qml/Nav.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+set_source_files_properties(qml/Theme.qml qml/Nav.qml qml/Api.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 
 # Lõi bộ phát (không đụng Qt Quick): app và bộ thử QtTest cùng biên dịch đúng các file này.
 set(ABOOK_PLAYER_SOURCES
@@ -51,6 +51,8 @@ set(ABOOK_MUSIC_SOURCES
 )
 
 qt_add_executable(ABookDesk WIN32
+    src/desktopapi.cpp
+    src/desktopapi.h
     src/main.cpp
     src/audioout_mf.cpp
     src/audioout_mf.h
@@ -108,6 +110,26 @@ qt_add_qml_module(ABookDesk
         qml/BookPage.qml
         qml/StudioScreen.qml
         qml/SettingsScreen.qml
+        qml/Api.qml
+        qml/FormLabel.qml
+        qml/FormField.qml
+        qml/SettingRow.qml
+        qml/SettingChoices.qml
+        qml/SectionBlock.qml
+        qml/Modal.qml
+        qml/SettingsBody.qml
+        qml/SettingsVoice.qml
+        qml/VoiceModule.qml
+        qml/ProviderKey.qml
+        qml/SettingsDevices.qml
+        qml/SettingsStudio.qml
+        qml/MyMusicSettings.qml
+        qml/NativeFolders.qml
+        qml/ThirdPartyText.qml
+        qml/AddBook.qml
+        qml/EditBook.qml
+        qml/CoverSearch.qml
+        qml/BookMusicSettings.qml
         qml/Scrollbar.qml
         qml/ScrollEdges.qml
         qml/SmoothWheel.qml
@@ -141,6 +163,7 @@ qt_add_qml_module(ABookDesk
 target_compile_definitions(ABookDesk PRIVATE ABOOK_VERSION="${ABOOK_VERSION}" QT_NO_CAST_FROM_ASCII)
 # Âm thanh: Media Foundation của Windows (đo ở docs/NATIVE_PHONE_UI.md 7.1), không thêm DLL nào vào bản phân phối.
 target_link_libraries(ABookDesk PRIVATE Qt6::Quick Qt6::Network QWindowKit::Quick mfplat mf mfuuid ole32 ksuser propsys)
+qt_add_resources(ABookDesk legal PREFIX "/legal" BASE "../docs" FILES "../docs/THIRD_PARTY.md")
 if(MSVC)
     target_compile_options(ABookDesk PRIVATE /W3 /utf-8)
 endif()
@@ -187,6 +210,13 @@ if(MSVC)
     target_compile_options(SidebarTests PRIVATE /W3 /utf-8)
 endif()
 enable_testing()
+qt_add_executable(DesktopApiTests tests/test_desktopapi.cpp src/desktopapi.cpp src/desktopapi.h src/audioout.cpp src/audioout.h)
+target_include_directories(DesktopApiTests PRIVATE src)
+target_link_libraries(DesktopApiTests PRIVATE Qt6::Test Qt6::Quick Qt6::Network)
+if(MSVC)
+    target_compile_options(DesktopApiTests PRIVATE /W3 /utf-8)
+endif()
+add_test(NAME DesktopApiTests COMMAND DesktopApiTests)
 qt_add_executable(WidthTests tests/test_width.cpp tests/fakes.h src/bookdetail.cpp src/bookdetail.h
     src/readalong.cpp src/readalong.h src/music.cpp src/music.h ${ABOOK_PLAYER_SOURCES} ${ABOOK_MUSIC_SOURCES})
 target_include_directories(WidthTests PRIVATE src tests)

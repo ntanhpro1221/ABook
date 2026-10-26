@@ -6,6 +6,10 @@ import ABook
 Interactive {
     id: root
     property bool checked: false
+    property string label: ""
+    Accessible.name: label
+    Accessible.role: Accessible.CheckBox
+    Accessible.checked: checked
     signal toggled(bool checked)
 
     implicitWidth: 44
