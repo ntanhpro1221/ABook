@@ -1717,12 +1717,7 @@ class LibraryPlugin : Plugin() {
     }
 
     /** Một file văn bản của gói như người nghe thấy (lớp sửa phủ lên); sách nghe thẳng chưa có file thì lấy từ máy tính. null khi không có. */
-    private fun bookText(id: String, path: String): String? {
-        val file = Store.file(id, path)
-        val fromPeer = !Store.streamManifest(id)?.optString("source").isNullOrEmpty()
-        if (!file.isFile && Store.rawManifest(id) == null && (fromPeer || SyncLink.paired(context))) Streaming.fetchSmall(context, id, path)
-        return Store.readText(id, path)
-    }
+    private fun bookText(id: String, path: String): String? = ChapterText.read(context, id, path)
 
     /**
      * Mốc nhạc nền THEO CẢNH của một chương sách chỉ có chữ (đường N0, [DeviceScenes]): `{cues: [{start, end, link, key, sibling?, tail?, steps?, firstSegment?}], scene,

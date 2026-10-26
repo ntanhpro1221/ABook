@@ -50,6 +50,9 @@ import vn.abook.player.ui.screens.SettingsScreen
 import vn.abook.player.ui.screens.StudioScreen
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.nowplaying.NowPlayingHost
+import vn.abook.player.ui.nowplaying.NowPlayingModel
+import vn.abook.player.ui.nowplaying.PlayerCoverProvider
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.floor
@@ -69,7 +72,7 @@ class ShellState(scope: CoroutineScope) {
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun AppShell(shell: ShellState, library: LibraryState, covers: CoverLoader, onFirstContent: () -> Unit = {}) {
+fun AppShell(shell: ShellState, library: LibraryState, covers: CoverLoader, onFirstContent: () -> Unit = {}, nowPlaying: NowPlayingModel? = null) {
     val nav = shell.nav
     PredictiveBackHandler(enabled = nav.canPop) { events ->
         try {
@@ -82,7 +85,7 @@ fun AppShell(shell: ShellState, library: LibraryState, covers: CoverLoader, onFi
     }
     if (library is LibraryState.Ready) LaunchedEffect(Unit) { onFirstContent() }
     Box(Modifier.fillMaxSize().background(Abook.colors.bg).semantics { testTagsAsResourceId = true }) {
-        ScreenStack(
+        val screens: @Composable () -> Unit = { ScreenStack(
             nav = nav,
             root = { RootTabs(shell, library, covers) },
             screen = { destination ->
@@ -90,7 +93,9 @@ fun AppShell(shell: ShellState, library: LibraryState, covers: CoverLoader, onFi
                     is Destination.Book -> BookScreen(destination.book, covers, onBack = nav::pop)
                 }
             },
-        )
+        ) }
+        if (nowPlaying != null) PlayerCoverProvider(covers) { NowPlayingHost(nowPlaying, content = screens) }
+        else screens()
     }
 }
 
