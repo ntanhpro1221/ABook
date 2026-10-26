@@ -15,7 +15,7 @@ import { COVER_SEARCH_NOTE, COVER_SEARCH_TITLE, CoverSearchPanel } from "@/share
 import { canEditLayer, editBlockedNote, studioNeed, syncsToComputer } from "@/shared/capabilities";
 import { formatClock } from "@/shared/format";
 import { levelOptions, levelText } from "@/shared/musicLevels";
-import { Switch } from "@/desktop/PhoneSync";
+import { Switch } from "@/desktop/Switch";
 import { DialogActions, Select, Button, Dialog, ChoiceRow, ContentSkeleton, InlineError } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { MUSIC_CHANGED_EVENT } from "./musicBed";

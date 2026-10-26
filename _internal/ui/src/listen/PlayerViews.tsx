@@ -44,14 +44,14 @@ import { APP_TITLE } from "@/shared/title";
 import { useMediaQuery } from "@/shared/media";
 import { MUSIC_MODIFIED_NOTE, formatClock, licenseLabel, musicCreditText, musicNeedsModifiedNote } from "@/shared/format";
 import { SelectionMark, announce, busyClick, heardBarProps, IconButton, menuArrowKeys, Sheet, Tooltip, useFocusFollows, Vu } from "@/shared/ui";
-import { Switch } from "@/desktop/PhoneSync";
+import { Switch } from "@/desktop/Switch";
 import { LEVEL_NOTES, levelOptions } from "@/shared/musicLevels";
 import { useClock, useClockReader, useDuration, usePlaybackSecond } from "./clock";
 import { usePlayListenBook, useNextVolume } from "./LibraryScreen";
 import { COARSE, EXTEND_GESTURE } from "./extendGesture";
 import { openShortcuts } from "./Shortcuts";
 import { useBookMusic } from "./EditBook";
-import { canPlay, continuingPart, newerElsewhere, otherBooksToHear, partToContinue, seriesOf, type Script } from "./model";
+import { canPlay, continuingPart, newerElsewhere, otherBooksToHear, partToContinue, seriesOf, type ListenChapter, type Script } from "./model";
 import { SKIP_SECONDS, SPEEDS, useNowPlaying, usePlayer, type PlayerValue } from "./player";
 import { SLEEP_CHOICES, sleepButtonLabel, sleepExtended, sleepLabel, sleepLeftMs, sleepSpoken, type SleepMode, type SleepRequest } from "./sleep";
 import { useVoiceSample } from "./VoiceSettings";
@@ -1766,51 +1766,63 @@ export function ChapterPanel() {
     const current = scroller?.querySelector<HTMLElement>("[data-current=true]");
     if (scroller && current) reveal(scroller, current);
   }, []);
+  // Hàng nhận một hàm cố định (gọi tới jumpTo mới nhất): hàng nhớ không vẽ lại chỉ vì hàm mới.
+  const jump = useStable(jumpTo);
   // Chương mới thu xong / gỡ khỏi hàng nghe: hàng mở ra hay khép lại tại chỗ (useListPresence), không nhảy cả danh sách.
   const rows = useListPresence(queue, (chapter) => String(chapter.id));
   return (
     <div data-list-edges="player-chapters" ref={scrollFade.ref} style={scrollFade.style} className="h-full overflow-y-auto px-3 py-4 sm:px-6">
       <Windowed items={rows} estimate={60} keep={rows.findIndex((row) => row.item.id === track?.chapterId)} row={({ key, item: chapter, state, ref }) => {
         const current = chapter.id === track?.chapterId;
-        const done = book?.state.chapters[String(chapter.id)]?.done;
         return (
           <div key={key} ref={ref} className="motion-row" data-state={state} inert={state === "exit"}>
-          <button
-            type="button"
-            data-current={current}
-            disabled={!canPlay(chapter)}
-            aria-current={current ? "true" : undefined}
-            onClick={() => jumpTo(chapter.id)}
-            // Hàng đang phát: chữ màu nhấn, không tô nền cả hàng (docs/DESIGN.md mục 6).
-            className={cn(
-              "flex w-full items-center gap-3 rounded-control px-3 py-2.5 text-left transition-colors duration-motion-fast",
-              canPlay(chapter) && "hover:bg-hover",
-            )}
-          >
-            {/* Cột dấu kéo ra 3,5 px: mực ✓ (3/24 trong ô 14 px, giữa cột 17,5 px) đứng đúng mép chữ của bảng. */}
-            <MotionRegion as="span" className="-ml-[3.5px] inline-grid h-4 w-5 shrink-0 place-items-center">
-              {current && playing ? (
-                <Vu className="h-3 text-accent" />
-              ) : done ? (
-                <Check className="size-4 text-success" aria-label="Đã nghe" />
-              ) : <span aria-hidden />}
-            </MotionRegion>
-            <span className="min-w-0 flex-1">
-              <span className={cn("block break-words text-sm font-medium transition-colors duration-motion-fast", current && "text-accent-text", !canPlay(chapter) && "text-fg-2")}>
-                {chapter.subtitle || chapter.title}
-              </span>
-              {/* Dòng phụ đổi khi chương thu xong ("Đang thu âm…" -> độ dài) hay đổi giọng: mờ chéo, không thay chữ cứng. */}
-              <MotionRegion as="span" className="tabular block truncate text-xs text-fg-2">
-                {chapterSubline(chapter, Boolean(book?.producing))}
-              </MotionRegion>
-            </span>
-          </button>
+            <PanelChapterRow chapter={chapter} current={current} playing={current && playing} done={Boolean(book?.state.chapters[String(chapter.id)]?.done)}
+              producing={Boolean(book?.producing)} onJump={jump} />
           </div>
         );
       }} />
     </div>
   );
 }
+
+/** Một hàng của bảng Chương. Nhớ (memo): phát / dừng, sang chương, cuốn được hỏi lại chỉ vẽ lại hàng có giá trị đổi - không cả danh sách
+ *  (docs/PERF_WEB.md). */
+const PanelChapterRow = memo(function PanelChapterRow({ chapter, current, playing, done, producing, onJump }: {
+  chapter: ListenChapter; current: boolean; playing: boolean; done: boolean; producing: boolean; onJump: (chapterId: number) => void;
+}) {
+  return (
+    <button
+      type="button"
+      data-current={current}
+      disabled={!canPlay(chapter)}
+      aria-current={current ? "true" : undefined}
+      onClick={() => onJump(chapter.id)}
+      // Hàng đang phát: chữ màu nhấn, không tô nền cả hàng (docs/DESIGN.md mục 6).
+      className={cn(
+        "flex w-full items-center gap-3 rounded-control px-3 py-2.5 text-left transition-colors duration-motion-fast",
+        canPlay(chapter) && "hover:bg-hover",
+      )}
+    >
+      {/* Cột dấu kéo ra 3,5 px: mực ✓ (3/24 trong ô 14 px, giữa cột 17,5 px) đứng đúng mép chữ của bảng. */}
+      <MotionRegion as="span" className="-ml-[3.5px] inline-grid h-4 w-5 shrink-0 place-items-center">
+        {playing ? (
+          <Vu className="h-3 text-accent" />
+        ) : done ? (
+          <Check className="size-4 text-success" aria-label="Đã nghe" />
+        ) : <span aria-hidden />}
+      </MotionRegion>
+      <span className="min-w-0 flex-1">
+        <span className={cn("block break-words text-sm font-medium transition-colors duration-motion-fast", current && "text-accent-text", !canPlay(chapter) && "text-fg-2")}>
+          {chapter.subtitle || chapter.title}
+        </span>
+        {/* Dòng phụ đổi khi chương thu xong ("Đang thu âm…" -> độ dài) hay đổi giọng: mờ chéo, không thay chữ cứng. */}
+        <MotionRegion as="span" className="tabular block truncate text-xs text-fg-2">
+          {chapterSubline(chapter, producing)}
+        </MotionRegion>
+      </span>
+    </button>
+  );
+});
 
 type Panel = "text" | "chapters";
 /** `ink`: mực icon bắt đầu bao nhiêu phần 24 trong ô icon - tab kéo icon ra chừng ấy để mực đứng đúng mép chữ của bảng bên dưới. */

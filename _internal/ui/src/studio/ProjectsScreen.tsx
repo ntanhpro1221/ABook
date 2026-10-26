@@ -20,7 +20,7 @@ import { pickFolder, projectStatus, useAppInfo, useLibrary, useOpenBook, useReve
 import { MenuItem, ProjectMenu } from "./ProjectScreen";
 import { StudioSetupCard } from "./StudioSetup";
 import { groupParts, splitLive, type Entry } from "./projectGroups";
-import { PICK_SOURCE } from "./NewProjectScreen";
+import { PICK_SOURCE } from "./pickSource";
 
 // Studio: nơi làm sách. Danh sách là bảng công việc gọn - tên · trạng thái · tiến độ · cập nhật (DESIGN.md mục 7) - chứ không
 // phải kệ sách (kệ sách là của phía Nghe). Bảng phẳng: vạch mảnh giữa các hàng, không khung; việc hiếm của một hàng ở "…".
