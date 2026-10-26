@@ -650,7 +650,8 @@ export function Dialog({
   const fade = useScrollFadeOn(body);
   // Ô mang `data-escape-local` (vd ô đổi tên chương) tự xử lý phím Esc để huỷ việc đang gõ; Esc ở đó không đóng cả hộp.
   const escapeLocal = (event: KeyboardEvent) => {
-    if ((event.target as HTMLElement | null)?.closest?.("[data-escape-local]")) event.preventDefault();
+    // Esc của bộ gõ đang soạn chữ (IME) chỉ huỷ chữ đang soạn: không đóng hộp, mất cả phần đã gõ.
+    if (event.isComposing || (event.target as HTMLElement | null)?.closest?.("[data-escape-local]")) event.preventDefault();
   };
   if (phone) return <Sheet open={open} onOpenChange={onOpenChange} title={title} description={description} footer={footer} onEscapeKeyDown={escapeLocal}>{children}</Sheet>;
   return (

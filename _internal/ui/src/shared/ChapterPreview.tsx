@@ -112,6 +112,8 @@ export function ChapterPreview({ chapters, className, titleFirst = false, choice
                   onFocus={(event) => event.target.select()}
                   onBlur={(event) => finish(event.target.value)}
                   onKeyDown={(event) => {
+                    // Esc / Enter của bộ gõ đang soạn chữ (IME) là huỷ / chốt chữ đang soạn, không phải huỷ / lưu tên.
+                    if (event.nativeEvent.isComposing || event.keyCode === 229) return;
                     if (event.key === "Enter") {
                       // Không để Enter đi tiếp: tiêu điểm đã về nút tên chương trước khi phím xong - nó sẽ "bấm" nút ấy, mở ô sửa lại.
                       event.preventDefault();
