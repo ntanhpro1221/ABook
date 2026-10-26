@@ -79,12 +79,21 @@ fun BookCover(
         Box(modifier.aspectRatio(2f / 3f).clip(shape).background(sunken).drawBehind { image.value?.let { drawCover(it) } })
         return
     }
+    GeneratedCover(title, part, width, modifier.aspectRatio(2f / 3f).clip(shape), small)
+}
+
+/**
+ * Bìa tự vẽ của sách không có ảnh (như shared/cover.ts) trong ô do nơi gọi đặt hình: bìa 2:3 ở Thư viện, ô vuông ở Đang nghe - cùng một
+ * sách luôn cùng một bìa ở mọi chỗ. `width` chọn cỡ chữ.
+ */
+@Composable
+fun GeneratedCover(title: String, part: Int?, width: Dp, modifier: Modifier = Modifier, small: Boolean = false) {
     val style = remember(title) { CoverArt.style(title) }
     val from = Color(style.from)
     val to = Color(style.to)
     val ink = Color(style.ink)
     Box(
-        modifier.aspectRatio(2f / 3f).clip(shape).drawBehind {
+        modifier.drawBehind {
             drawRect(Brush.linearGradient(listOf(from, to), start = Offset.Zero, end = Offset(size.width * 0.42f, size.height)))
             val center = Offset(if (style.arcsFromRight) size.width else 0f, size.height)
             for ((index, radius) in ARCS.withIndex()) {

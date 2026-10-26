@@ -97,6 +97,22 @@ Mỗi màn native được thiết kế lại cho cách tương tác của đi�
 Một hàng chỉ có một luật căn dọc. Hàng có chữ nhiều dòng thì biểu tượng hai đầu (trạng thái, "…", công tắc) cùng bám tâm dòng chữ đầu; hàng một dòng thì cùng căn giữa. Chủ sách 26-10 bắt lỗi tam giác bám dòng đầu còn "…" căn giữa hàng: "đây là thiết kế của bạn hay bạn quên?". Mỗi kiểu hàng mới có biểu tượng hai đầu phải kèm một test đo tâm (mẫu: `chapterRowIconsShareTheFirstLineCenter`).
 Nhãn nút là động từ ngắn trên một dòng. Thông tin đi kèm (tên chương, số chờ gửi) nằm ở dòng phụ chữ nhỏ, không ghép vào nhãn.
 
+### 6.1 Nhạc nền (P3, 26-10)
+
+Nhạc nền là lựa chọn của TỪNG CUỐN, có một chỗ chung cho cả hai nơi (`ui/music/MusicPanel`). Công tắc cũ ở "Tuỳ chọn" của trình phát đổi cái công tắc chung "Tự chọn nhạc nền". Nó mang tên "Nhạc nền" nhưng không đổi nhạc của cuốn đang nghe nên đã bỏ.
+
+| Điều khiển | Ở đâu | Vì sao |
+|---|---|---|
+| Hàng "Nhạc nền" + giá trị ("Theo cảnh", "Đêm mưa", "Tắt", "Bật") | "Tuỳ chọn" của trình phát; bảng "Thêm" của trang sách (biểu tượng nốt nhạc) | đổi nhạc lúc đang nghe là chỗ hay dùng nhất; trang sách cho đổi trước khi nghe. Cuốn không có nhạc thì không có hàng (không hàng chết) |
+| Danh sách chọn: Để máy chọn (kèm thứ máy đang chọn) / Tắt / Theo cảnh / các danh sách (tả + "dài 8 giờ") / Nhạc của tôi ("3 bài", trống thì mờ) | tấm "Nhạc nền" (sách chỉ có chữ) | một chạm là xong, dấu chọn trượt theo; không hộp chọn thả xuống như bản web |
+| "Thêm nhạc" | cuối danh sách | thêm xong thì chọn luôn "Nhạc của tôi" cho cuốn này; kho chung với Cài đặt > Nhạc của tôi |
+| "Phát nhạc nền" (công tắc) | tấm "Nhạc nền" (sách nói có nhạc người làm sách gắn) | nhạc gắn sẵn chỉ có bật / tắt trên máy này |
+| "Mức nhạc": lưới 3 cột To / Hơi to / Vừa / Nhỏ / Rất nhỏ (+ "Của sách") | dưới lựa chọn, chỉ khi nhạc đang chạy | cùng kiểu lưới với tốc độ; bỏ thanh trượt dB của bản web (người nghe không nghĩ bằng dB) |
+| "Đang phát" + tên bài · tác giả, chạm mở ghi công / giấy phép / "Đã chỉnh sửa" / trang của bài | cuối tấm, khi có bài đang kêu | CC BY đòi ghi công ở nơi nhạc phát; khép sẵn để không chiếm chỗ, mở thì tự cuộn cho thấy |
+| Lời dưới bảng (mất mạng, bài hỏng, "Tự chọn nhạc nền" đang tắt) | dưới lựa chọn | chỉ khi có điều cần biết |
+
+Back từ tấm "Nhạc nền" (và "Giọng đọc") về "Tuỳ chọn", không đóng cả bảng. Chưa làm: im lặng / đổi bài từng đoạn của nhạc gắn sẵn (bản web: Sửa sách > Nhạc nền).
+
 ## 7. Máy tính
 
 Chủ sách 26-10: "không chỉ bản android mà còn bản window nữa". App Windows cũng bỏ Tauri + WebView2: giao diện native gọi backend
