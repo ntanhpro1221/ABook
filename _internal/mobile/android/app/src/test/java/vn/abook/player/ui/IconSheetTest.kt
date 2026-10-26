@@ -58,7 +58,7 @@ class IconSheetTest {
         "Devices" to { c -> DevicesIcon(c) }, "Wrench" to { c -> WrenchIcon(c) }, "File" to { c -> FileIcon(c) },
         "Folder" to { c -> FolderIcon(c) }, "Image" to { c -> ImageIcon(c) }, "Laptop" to { c -> LaptopIcon(c) },
         "Phone" to { c -> PhoneIcon(c) }, "Bluetooth" to { c -> BluetoothIcon(c) }, "Chevron" to { c -> ChevronIcon(c) },
-        "Download" to { c -> DownloadIcon(c) }, "Upload" to { c -> UploadIcon(c) }, "Key" to { c -> KeyIcon(c) }, "Stop" to { c -> StopIcon(c) },
+        "Download" to { c -> DownloadIcon(c) }, "Upload" to { c -> UploadIcon(c) }, "Key" to { c -> KeyIcon(c) }, "PlayS" to { c -> PlayIcon(c) }, "Stop" to { c -> StopIcon(c) },
         "ChevronOpen" to { c -> ChevronIcon(c, turn = { 1f }) },
         "P ⌄" to { _ -> PlayerGlyph("⌄") }, "P ⋯" to { _ -> PlayerGlyph("⋯") }, "P prev" to { _ -> PlayerGlyph("|‹") },
         "P next" to { _ -> PlayerGlyph("›|") }, "P back15" to { _ -> PlayerGlyph("↶15") }, "P fwd15" to { _ -> PlayerGlyph("15↷") },

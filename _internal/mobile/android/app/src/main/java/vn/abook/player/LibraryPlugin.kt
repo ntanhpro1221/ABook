@@ -41,9 +41,6 @@ private const val SHARE_KEY = ShareService.SHARE_KEY
 private const val PICK_SOURCE_LIMIT = 40
 private const val HEAD_BYTES = 512 // đầu file đủ để thấy mục `mimetype` của gói (BookFileImport.looksLikeBookFile)
 
-/** Số file tối đa trong một lượt nhập "Nhạc của tôi" (server.MY_MUSIC_IMPORT_LIMIT). */
-private const val MY_MUSIC_IMPORT_LIMIT = 500
-
 /**
  * Thư viện trên điện thoại + đồng bộ với máy tính qua Wi-Fi (abook/webui/sync.py).
  *
@@ -368,7 +365,7 @@ class LibraryPlugin : Plugin() {
     @PluginMethod
     fun pickMusic(call: PluginCall) {
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*")
-            .putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true).putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("audio/*", "application/ogg"))
+            .putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true).putExtra(Intent.EXTRA_MIME_TYPES, MusicImport.MIME_TYPES)
         startActivityForResult(call, intent, "pickedMusic")
     }
 
@@ -385,38 +382,18 @@ class LibraryPlugin : Plugin() {
         }
         musicImports.execute {
             try {
-                call.resolve(importMusic(uris.take(MY_MUSIC_IMPORT_LIMIT)))
+                call.resolve(importMusic(uris.take(MusicImport.LIMIT)))
             } catch (error: Exception) {
                 fail(call, error, "không nhập được nhạc")
             }
         }
     }
 
-    /** Nhập từng bản (một bản hỏng không làm hỏng cả lượt), báo tiến độ "musicImport" {done, total}; trả đúng JSON của `my_music_import`. */
-    private fun importMusic(uris: List<Uri>): JSObject {
-        val store = LocalStudio.musicStore ?: throw IllegalStateException("Kho nhạc chưa sẵn sàng")
-        val added = ArrayList<JSONObject>()
-        val existing = ArrayList<JSONObject>()
-        val failed = ArrayList<String>()
-        for ((index, uri) in uris.withIndex()) {
-            val name = runCatching {
-                context.contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
-                    if (cursor.moveToFirst()) cursor.getString(0) else null
-                }
-            }.getOrNull() ?: uri.lastPathSegment ?: "nhạc"
-            try {
-                val (track, duplicate) = store.importStream(name) { context.contentResolver.openInputStream(uri) }
-                (if (duplicate) existing else added).add(track)
-            } catch (error: MusicStore.ImportError) {
-                failed.add(error.message.orEmpty())
-            } catch (error: Exception) {
-                failed.add("“$name”: không nhập được (${error.message ?: error.javaClass.simpleName}).")
-            }
-            notifyListeners("musicImport", JSObject().put("done", index + 1).put("total", uris.size))
-        }
-        if (added.isNotEmpty()) Playback.onMain { MusicBed.refreshMine() }
-        return JSObject.fromJSONObject(LocalStudio.importAnswer(added, existing, failed)).put("picked", true)
-    }
+    /** Nhập từng bản vào kho ([MusicImport]), báo tiến độ "musicImport" {done, total}; trả đúng JSON của `my_music_import`. */
+    private fun importMusic(uris: List<Uri>): JSObject =
+        JSObject.fromJSONObject(MusicImport.run(context, uris) { done, total ->
+            notifyListeners("musicImport", JSObject().put("done", done).put("total", total))
+        }).put("picked", true)
 
     // ---- ghép nối --------------------------------------------------------------------------------------------
 

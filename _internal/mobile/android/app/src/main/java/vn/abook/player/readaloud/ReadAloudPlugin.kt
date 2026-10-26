@@ -169,12 +169,8 @@ class ReadAloudPlugin : Plugin() {
     @PluginMethod
     fun setOnlineKey(call: PluginCall) {
         val provider = call.getString("provider") ?: return call.reject("thiếu provider")
-        val region = call.getString("region", "")!!.trim().lowercase()
-        if (provider == "azure" && !AzureTts.validRegion(region)) return call.reject("Vùng Azure chưa đúng (ví dụ: southeastasia)")
         try {
-            val keyed = OnlineVoices.provider(context, provider)
-            keyed.keys.put(provider, call.getString("key", "")!!, if (provider == "azure") region else "")
-            call.resolve(JSObject.fromJSONObject(keyed.describe()))
+            call.resolve(JSObject.fromJSONObject(OnlineVoices.saveKey(context, provider, call.getString("key", "")!!, call.getString("region", "")!!)))
         } catch (error: IllegalArgumentException) {
             call.reject(error.message ?: "Thiếu khóa")
         }
@@ -184,9 +180,7 @@ class ReadAloudPlugin : Plugin() {
     fun removeOnlineKey(call: PluginCall) {
         val provider = call.getString("provider") ?: return call.reject("thiếu provider")
         try {
-            val keyed = OnlineVoices.provider(context, provider)
-            keyed.keys.remove(provider)
-            call.resolve(JSObject.fromJSONObject(keyed.describe()))
+            call.resolve(JSObject.fromJSONObject(OnlineVoices.removeKey(context, provider)))
         } catch (error: IllegalArgumentException) {
             call.reject(error.message ?: "Nhà cung cấp lạ")
         }
@@ -196,9 +190,7 @@ class ReadAloudPlugin : Plugin() {
     fun checkOnlineKey(call: PluginCall) {
         val provider = call.getString("provider") ?: return call.reject("thiếu provider")
         try {
-            val keyed = OnlineVoices.provider(context, provider)
-            val result = keyed.check(java.io.File(context.cacheDir, "readaloud-check.mp3"))
-            call.resolve(JSObject.fromJSONObject(result.put("provider", keyed.describe())))
+            call.resolve(JSObject.fromJSONObject(OnlineVoices.checkKey(context, provider)))
         } catch (error: IllegalArgumentException) {
             call.reject(error.message ?: "Nhà cung cấp lạ")
         }
