@@ -93,16 +93,20 @@ class BookDetail(
  */
 object BookPage {
     /**
-     * Nhãn nút chính (labels.ts `primaryListenLabel`): đang phát cuốn này = "Tạm dừng"; nghe hết = "Nghe lại từ đầu"; có chỗ nghe dở = "Nghe tiếp · <chương>"
-     * (giờ phút đã ở dòng tiến độ ngay trên); chưa nghe = "Nghe".
+     * Nhãn nút chính - một động từ ngắn: đang phát cuốn này = "Tạm dừng"; nghe hết = "Nghe lại từ đầu"; đã nghe = "Nghe tiếp"; chưa nghe = "Nghe".
+     * Tên chương KHÔNG ghép vào nhãn (tên dài làm nhãn chảy ba dòng): nó là dòng phụ riêng của nút ([primaryDetail]).
      */
     fun primaryLabel(playingHere: Boolean, finished: Boolean, resume: ResumeSpot?, heardSeconds: Double): String = when {
         playingHere -> "Tạm dừng"
         finished -> "Nghe lại từ đầu"
-        resume != null && (resume.at > 0 || heardSeconds > 0) -> "Nghe tiếp · ${resume.chapterTitle}"
+        resume != null && (resume.at > 0 || heardSeconds > 0) -> "Nghe tiếp"
         heardSeconds > 0 -> "Nghe tiếp"
         else -> "Nghe"
     }
+
+    /** Dòng phụ dưới nhãn nút chính: chương mà "Nghe tiếp" sẽ phát (giờ phút đã ở dòng tiến độ ngay trên); null khi nhãn tự đủ nghĩa. */
+    fun primaryDetail(playingHere: Boolean, finished: Boolean, resume: ResumeSpot?, heardSeconds: Double): String? =
+        if (!playingHere && !finished && resume != null && (resume.at > 0 || heardSeconds > 0)) resume.chapterTitle else null
 
     /** Dòng dưới tên sách: tác giả · giọng · số chương · thời lượng (thiếu phần nào thì bỏ phần ấy). */
     fun metaLine(book: ListenBook): String {
