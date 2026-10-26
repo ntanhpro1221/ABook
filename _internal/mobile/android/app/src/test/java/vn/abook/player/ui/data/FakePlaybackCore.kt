@@ -2,8 +2,11 @@ package vn.abook.player.ui.data
 
 import org.json.JSONObject
 
-/** Lõi phát giả cho test: ghi lại lệnh, giữ danh sách người nghe để test bắn sự kiện vào. */
-class FakePlaybackCore(var snapshot: JSONObject) : PlaybackCore {
+/**
+ * Lõi phát giả cho test: ghi lại lệnh, giữ danh sách người nghe để test bắn sự kiện vào. `simulate` true: lõi tự theo lệnh như lõi thật - nạp cuốn thì
+ * đặt cuốn / chỗ / phát-dừng theo [LoadRequest] rồi bắn sự kiện "load", phát / dừng / đổi qua lại cũng bắn sự kiện - để thử một chuỗi thao tác từ đầu tới cuối.
+ */
+class FakePlaybackCore(var snapshot: JSONObject, private val simulate: Boolean = false) : PlaybackCore {
     val listeners = ArrayList<(JSONObject) -> Unit>()
     val calls = ArrayList<String>()
     val loads = ArrayList<LoadRequest>()
@@ -11,16 +14,30 @@ class FakePlaybackCore(var snapshot: JSONObject) : PlaybackCore {
     override fun addListener(listener: (JSONObject) -> Unit) { listeners += listener }
     override fun removeListener(listener: (JSONObject) -> Unit) { listeners -= listener }
     override fun snapshot() = snapshot
-    override fun play() { calls += "play" }
-    override fun pause() { calls += "pause" }
-    override fun toggle() { calls += "toggle" }
+    override fun play() { calls += "play"; setPlaying(true) }
+    override fun pause() { calls += "pause"; setPlaying(false) }
+    override fun toggle() { calls += "toggle"; setPlaying(!snapshot.optBoolean("playing")) }
     override fun skip(deltaSeconds: Double) { calls += "skip $deltaSeconds" }
     override fun seekTo(seconds: Double) { calls += "seek $seconds" }
     override fun next() { calls += "next" }
     override fun previous() { calls += "previous" }
     override fun setRate(rate: Double) { calls += "rate $rate" }
     override fun jumpTo(chapterId: Int, seconds: Double) { calls += "jump $chapterId $seconds" }
-    override fun load(request: LoadRequest) { loads += request }
+    override fun load(request: LoadRequest) {
+        loads += request
+        if (!simulate) return
+        snapshot = playerSnapshot(
+            book = request.id, chapter = request.startChapterId, playing = request.autoplay, position = request.startSeconds, duration = request.startSeconds + 600.0,
+            kind = "load", bookTitle = request.title, chapterTitle = "Chương ${request.startChapterId}",
+        )
+        emit(snapshot)
+    }
+
+    private fun setPlaying(playing: Boolean) {
+        if (!simulate || snapshot.optString("bookId").isEmpty()) return
+        snapshot = JSONObject(snapshot.toString()).put("playing", playing).put("kind", "state")
+        emit(snapshot)
+    }
 
     fun emit(json: JSONObject) = listeners.toList().forEach { it(json) }
 }

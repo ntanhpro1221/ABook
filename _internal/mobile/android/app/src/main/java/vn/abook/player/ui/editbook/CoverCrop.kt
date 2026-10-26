@@ -9,11 +9,23 @@ import android.net.Uri
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.ClipOp
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.semantics
+import kotlin.math.roundToInt
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -24,9 +36,10 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import vn.abook.player.ui.addbook.BookAction
 import vn.abook.player.ui.addbook.BookForm
-import vn.abook.player.ui.addbook.BookProblem
+import vn.abook.player.ui.components.Caption
+import vn.abook.player.ui.components.InlineProblem
+import vn.abook.player.ui.components.TextAction
 import vn.abook.player.ui.components.PrimaryButton
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
@@ -71,6 +84,10 @@ object CoverCrop {
     }
 }
 
+/**
+ * Cắt ảnh bìa: cả ảnh hiện trong màn, khung 2:3 sẽ thành bìa nằm trên ảnh, phần bị cắt đi được phủ tối. Kéo dời khung, chụm đổi cỡ khung - không có nút phóng / thu
+ * (trợ năng có hai thao tác "Phóng to" / "Thu nhỏ" trên chính vùng ảnh). "Đặt lại" ở đầu màn, "Dùng ảnh" ghim ở đáy.
+ */
 @Composable
 fun CoverCropRoute(editor: BookEditor, uri: String, onBack: () -> Unit) {
     val context = LocalContext.current
@@ -87,45 +104,62 @@ fun CoverCropRoute(editor: BookEditor, uri: String, onBack: () -> Unit) {
         try { bitmap = CoverCrop.load(context, Uri.parse(uri), width) }
         catch (error: Exception) { problem = error.message ?: "Bạn hãy chọn lại ảnh." }
     }
+    val image = bitmap?.asImageBitmap()
     BookForm("Cắt ảnh bìa", onBack, "cover_crop_screen", footer = {
-        BookProblem(problem.ifEmpty { state.problem })
-        if (bitmap != null && !committing) PrimaryButton("Dùng ảnh", {
+        InlineProblem(problem.ifEmpty { state.problem }, if (bitmap == null) ({ attempt++ }) else null, "crop_problem")
+        PrimaryButton(if (committing) "Đang lưu" else "Dùng ảnh", {
+            val shown = bitmap ?: return@PrimaryButton
             committing = true
             scope.launch {
                 try {
-                    val bytes = CoverCrop.jpeg(requireNotNull(bitmap), choice)
+                    val bytes = CoverCrop.jpeg(shown, choice)
                     editor.setCover(bytes) { onBack() }.join()
                 } catch (error: Exception) { problem = error.message.orEmpty() }
                 finally { committing = false }
             }
-        }, Modifier.fillMaxWidth().testTag("use_cover"))
+        }, Modifier.fillMaxWidth().testTag("use_cover"), enabled = image != null && !committing)
+    }, trailing = {
+        if (image != null) TextAction("Đặt lại", { choice = CropChoice() }, "crop_reset")
     }) {
-        val image = bitmap?.asImageBitmap()
         if (image == null) {
-            BasicText(if (problem.isEmpty()) "Đang đọc ảnh" else "Chưa đọc được ảnh", style = Abook.type.bodySmall)
-            if (problem.isNotEmpty()) BookAction("Thử lại", { attempt++ })
-        } else {
-            BasicText("Bạn kéo và chụm để chọn khung bìa.", style = Abook.type.bodySmall)
-            BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
-                val cropWidth = minOf(maxWidth, maxHeight * 2 / 3)
-                Canvas(Modifier.align(Alignment.Center).width(cropWidth).aspectRatio(2f / 3f).testTag("cover_crop_canvas")
-                    .pointerInput(image) {
-                        detectTransformGestures { _, pan, zoom, _ ->
-                            choice = choice.copy(zoom = (choice.zoom * zoom).coerceIn(1f, 4f),
-                                x = (choice.x - pan.x / size.width * 2f).coerceIn(-1f, 1f),
-                                y = (choice.y - pan.y / size.height * 2f).coerceIn(-1f, 1f))
-                        }
-                    }) {
-                    val rect = CropLogic.rect(image.width, image.height, choice)
-                    drawImage(image, srcOffset = IntOffset(rect.left, rect.top), srcSize = IntSize(rect.width, rect.height),
-                        dstSize = IntSize(size.width.toInt(), size.height.toInt()))
+            if (problem.isEmpty()) Caption("Đang đọc ảnh", Modifier.padding(top = Dim.s16))
+        } else CropArea(image, choice) { choice = it }
+    }
+}
+
+/** Vùng ảnh: ảnh vừa khung màn, khung cắt (viền hổ phách) trên ảnh, phần ngoài khung phủ tối. */
+@Composable
+private fun CropArea(image: ImageBitmap, choice: CropChoice, onChoice: (CropChoice) -> Unit) {
+    val colors = Abook.colors
+    val scrim = if (colors.dark) Color.Black.copy(alpha = 0.6f) else Color(0xFF1A1814).copy(alpha = 0.55f)
+    val current by rememberUpdatedState(choice)
+    BoxWithConstraints(Modifier.fillMaxSize().padding(vertical = Dim.s16)) {
+        val scale = minOf(constraints.maxWidth.toFloat() / image.width, constraints.maxHeight.toFloat() / image.height)
+        val shownWidth = with(LocalDensity.current) { (image.width * scale).toDp() }
+        val shownHeight = with(LocalDensity.current) { (image.height * scale).toDp() }
+        Canvas(
+            Modifier.align(Alignment.Center).size(shownWidth, shownHeight).testTag("cover_crop_canvas")
+                .pointerInput(image) {
+                    detectTransformGestures { _, pan, zoom, _ ->
+                        onChoice(CropLogic.transform(image.width, image.height, current, pan.x / scale, pan.y / scale, zoom))
+                    }
                 }
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(Dim.s24)) {
-                BookAction("Thu nhỏ", { choice = choice.copy(zoom = (choice.zoom / 1.25f).coerceAtLeast(1f)) })
-                BookAction("Phóng to", { choice = choice.copy(zoom = (choice.zoom * 1.25f).coerceAtMost(4f)) })
-                BookAction("Đặt lại", { choice = CropChoice() })
-            }
+                .semantics {
+                    customActions = listOf(
+                        CustomAccessibilityAction("Phóng to") { onChoice(CropLogic.transform(image.width, image.height, current, 0f, 0f, ZoomStep)); true },
+                        CustomAccessibilityAction("Thu nhỏ") { onChoice(CropLogic.transform(image.width, image.height, current, 0f, 0f, 1f / ZoomStep)); true },
+                    )
+                },
+        ) {
+            drawImage(image, dstSize = IntSize(size.width.roundToInt(), size.height.roundToInt()))
+            val rect = CropLogic.rect(image.width, image.height, choice)
+            val topLeft = Offset(rect.left * scale, rect.top * scale)
+            val window = Size(rect.width * scale, rect.height * scale)
+            clipPath(Path().apply { addRect(Rect(topLeft, window)) }, ClipOp.Difference) { drawRect(scrim) }
+            drawRect(colors.accent, topLeft, window, style = Stroke(2.dp.toPx()))
         }
     }
 }
+
+/** Mỗi lần "Phóng to" / "Thu nhỏ" của trợ năng đổi cỡ khung chừng này. */
+private const val ZoomStep = 1.25f

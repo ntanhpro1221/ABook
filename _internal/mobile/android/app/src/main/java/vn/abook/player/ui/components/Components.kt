@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import vn.abook.player.ui.motion.Motion
@@ -102,11 +103,14 @@ fun PlaceholderTab(title: String, line: String, modifier: Modifier = Modifier) {
     }
 }
 
-/** Nút chính: nền hổ phách, cao 48, chữ ≤ 3 từ (DESIGN.md §6 "Nút (a)"). */
+/** Nút chính: nền hổ phách, cao 48, chữ ≤ 3 từ (DESIGN.md §6 "Nút (a)"). `enabled` = false: nhạt hơn và không bấm được (việc đang chạy). */
 @Composable
-fun PrimaryButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun PrimaryButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
+    val accent = Abook.colors.accent
     Box(
-        modifier.height(Dim.s48).pressable(onClick = onClick).clip(RoundedCornerShape(Dim.radiusControl)).background(Abook.colors.accent)
+        modifier.height(Dim.s48)
+            .then(if (enabled) Modifier.pressable(onClick = onClick) else Modifier.semantics { disabled() })
+            .clip(RoundedCornerShape(Dim.radiusControl)).background(if (enabled) accent else accent.copy(alpha = 0.45f))
             .padding(horizontal = Dim.s24),
         contentAlignment = Alignment.Center,
     ) {
