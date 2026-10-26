@@ -92,6 +92,10 @@ fun LucideIcon(data: String, color: Color, modifier: Modifier = Modifier, size: 
 /** "Nhạc nền" (web: EighthNote ở trình phát và menu sách). */
 @Composable fun MusicIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.EIGHTH_NOTE, color, modifier, size)
 
+/** "Đổi bài" và "Chọn" của một đoạn nhạc gắn sẵn (web: Shuffle / Pin ở Sửa sách > Nhạc nền). */
+@Composable fun ShuffleIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.SHUFFLE, color, modifier, size)
+@Composable fun PinIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.PIN, color, modifier, size)
+
 /* Sáu nhóm Cài đặt - đúng bộ của SettingsNav.tsx: AudioLines, Headphones, MoonStar, Palette, MonitorSmartphone, Wrench. */
 
 @Composable fun VoiceIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.AUDIO_LINES, color, modifier, size)

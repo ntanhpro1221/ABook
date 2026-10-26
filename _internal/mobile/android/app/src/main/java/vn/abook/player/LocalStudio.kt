@@ -337,6 +337,15 @@ object LocalStudio {
     /** PUT /music của giao diện native; lỗi sửa ném [BookEdits.EditsError] (câu cho người nghe). */
     fun setBookMusic(id: String, body: JSONObject): JSONObject = synchronized(lock) { music(editable(id), body) }
 
+    /** "Đổi bài" của một đoạn nhạc gắn sẵn (giao diện native): như GET /music/scenes/<khoá>/alternatives - các bài trong "Nhạc của tôi" trừ bài đang ở đoạn ấy. */
+    fun musicAlternatives(id: String, key: String): JSONObject = synchronized(lock) {
+        try {
+            alternatives(editable(id), key) as JSONObject
+        } catch (error: Api) {
+            throw BookEdits.EditsError(error.message ?: "Không thấy đoạn nhạc này trong sách.")
+        }
+    }
+
     /** PUT /music {enabled?, levelDb?, silence?, pins?, playlist?}: sách đã đóng gói chỉ chỉnh được năm thứ ấy (playlist: mã, "mine", "off" = tắt, null = để máy chọn). */
     private fun music(dir: java.io.File, body: JSONObject): JSONObject {
         if (body.keys().asSequence().any { it !in EDITS_ONLY_KEYS }) {

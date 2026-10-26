@@ -105,13 +105,30 @@ Nhạc nền là lựa chọn của TỪNG CUỐN, có một chỗ chung cho c�
 |---|---|---|
 | Hàng "Nhạc nền" + giá trị ("Theo cảnh", "Đêm mưa", "Tắt", "Bật") | "Tuỳ chọn" của trình phát; bảng "Thêm" của trang sách (biểu tượng nốt nhạc) | đổi nhạc lúc đang nghe là chỗ hay dùng nhất; trang sách cho đổi trước khi nghe. Cuốn không có nhạc thì không có hàng (không hàng chết) |
 | Danh sách chọn: Để máy chọn (kèm thứ máy đang chọn) / Tắt / Theo cảnh / các danh sách (tả + "dài 8 giờ") / Nhạc của tôi ("3 bài", trống thì mờ) | tấm "Nhạc nền" (sách chỉ có chữ) | một chạm là xong, dấu chọn trượt theo; không hộp chọn thả xuống như bản web |
-| "Thêm nhạc" | cuối danh sách | thêm xong thì chọn luôn "Nhạc của tôi" cho cuốn này; kho chung với Cài đặt > Nhạc của tôi |
-| "Phát nhạc nền" (công tắc) | tấm "Nhạc nền" (sách nói có nhạc người làm sách gắn) | nhạc gắn sẵn chỉ có bật / tắt trên máy này |
-| "Mức nhạc": lưới 3 cột To / Hơi to / Vừa / Nhỏ / Rất nhỏ (+ "Của sách") | dưới lựa chọn, chỉ khi nhạc đang chạy | cùng kiểu lưới với tốc độ; bỏ thanh trượt dB của bản web (người nghe không nghĩ bằng dB) |
+| "Thêm nhạc của bạn" (dấu +) | cuối danh sách | thêm xong thì chọn luôn "Nhạc của tôi" cho cuốn này; kho chung với Cài đặt > Nhạc của tôi |
+| "Nhạc nền: Bật" / "Nhạc nền: Tắt" (công tắc) | tấm "Nhạc nền" (sách nói có nhạc người làm sách gắn) | chữ của web: nhãn nói trạng thái, không phải việc sẽ làm |
+| "Mức nhạc dưới giọng đọc": một hàng vạch to dần từ nhỏ tới to, vạch tới mức đang chọn tô hổ phách; chữ của mức ngay dưới tên ("Vừa (mặc định)", "Rất nhỏ (dễ nghe lời nhất)", "-18 dB (của sách)") | dưới lựa chọn / công tắc, chỉ khi nhạc đang chạy | chữ y hệt ô chọn của web. Lưới 3 cột để lại ô trống cuối (3+2, Lead 26-10); năm hay sáu chữ một hàng không vừa 360dp ở cỡ chữ 1.3, nên hàng là vạch (hình âm lượng, ai cũng đọc được) và chữ nằm một chỗ. Vạch đầu / cuối thẳng mép chữ, cả ô cao 64 là chỗ chạm |
+| Danh sách đoạn nhạc: tên bài (im lặng thì mờ + gạch ngang), dưới là chương · giờ · tác giả · "bài của bạn" | dưới "Đang phát", sách có nhạc gắn sẵn | như danh sách của Sửa sách > Nhạc nền trên web; tắt nhạc thì cả danh sách nhạt đi (mực, không alpha) |
+| Trang một đoạn: tên + chương · giờ, ba nút chữ "Về bài gốc" (khi đã đổi) · "Đổi bài" (icon Shuffle) · "Im lặng" / "Có nhạc" | chạm một đoạn, trượt ngang; Back khép "Đổi bài" trước rồi về trang chính | ba nút của web đúng chữ, đúng thứ tự, đúng icon; trang riêng vì một hàng điện thoại không đủ chỗ cho tên + ba nút |
+| "Đổi bài": các bài trong Nhạc của tôi (tên, nghệ sĩ · độ dài, chú thích "Có vẻ có lời…"/"Chưa phân tích…"), mỗi bài "Chọn" có ghim; trống thì "Chưa có bài nào khác trong Nhạc của tôi." + "Thêm nhạc của bạn" | dưới ba nút, mở / khép tại chỗ | SwapTrack của web; chọn bài cho đoạn đang im thì đoạn ấy có nhạc lại, chọn xong thì khép như web |
 | "Đang phát" + tên bài · tác giả, chạm mở ghi công / giấy phép / "Đã chỉnh sửa" / trang của bài | cuối tấm, khi có bài đang kêu | CC BY đòi ghi công ở nơi nhạc phát; khép sẵn để không chiếm chỗ, mở thì tự cuộn cho thấy |
 | Lời dưới bảng (mất mạng, bài hỏng, "Tự chọn nhạc nền" đang tắt) | dưới lựa chọn | chỉ khi có điều cần biết |
 
-Back từ tấm "Nhạc nền" (và "Giọng đọc") về "Tuỳ chọn", không đóng cả bảng. Chưa làm: im lặng / đổi bài từng đoạn của nhạc gắn sẵn (bản web: Sửa sách > Nhạc nền).
+Back từ tấm "Nhạc nền" (và "Giọng đọc") về "Tuỳ chọn", không đóng cả bảng. Im lặng / đổi bài từng đoạn đi qua cùng lõi với WebView
+(`LocalStudio.setBookMusic` với `silence` / `pins`, `LocalStudio.musicAlternatives`).
+
+Chữ chung với web (luật chủ sách 26-10 "đồng nhất từng cái chữ, từng cái icon, từng cái bo góc"). Chỗ hai bên từng khác và bản đã chọn cho cả hai:
+
+| Chỗ | Web cũ | Điện thoại cũ | Chọn | Vì sao |
+|---|---|---|---|---|
+| Lựa chọn theo cảnh | "Theo cảnh (máy tự dựng)" / "Nhạc đổi theo từng cảnh của truyện." | "Theo cảnh" / "Máy tự dựng, đổi theo từng cảnh của truyện." | bản điện thoại (sửa web) | nhãn ≤ 4 chữ, ý "máy tự dựng" vẫn ở dòng tả |
+| Thêm nhạc trong menu | "Thêm nhạc của bạn…" | "Thêm nhạc" | "Thêm nhạc của bạn" (sửa cả hai) | chữ web, bỏ "…" vì máy dò chữ bị cắt của native cấm "…" trong mã |
+| Để máy chọn khi tắt / Nhạc của tôi trống | "đang tắt trong Cài đặt" / "chưa có bài nào" | "đang tắt" / "chưa có bài" | bản web | nói rõ chỗ để bật lại |
+| Công tắc nhạc gắn sẵn, lỗi tải, sách không có nhạc | "Nhạc nền: Bật", "Bạn hãy thử tải lại nhạc nền của cuốn này.", "Người làm sách không gắn nhạc nền cho cuốn này." | "Phát nhạc nền", "Chưa đọc được nhạc nền", "Cuốn này không có nhạc nền." | bản web | |
+| Mức nhạc | ô chọn "Mức nhạc dưới giọng đọc", "Vừa (mặc định)"… | lưới "Mức nhạc", "Vừa"… + lời "Rất nhỏ: dễ nghe lời nhất." | chữ web; hình vạch của điện thoại | |
+| Đổi bài trống | "… - nhập nhạc của bạn ở mục “Nhạc của tôi” bên dưới." | (chưa có) | "Chưa có bài nào khác trong Nhạc của tôi." (sửa web) | điện thoại không có mục bên dưới mà có hàng "Thêm nhạc của bạn" ngay đó; web vẫn có mục Nhạc của tôi ngay dưới |
+
+Còn khác, chưa sửa trong lượt này (nằm ngoài tấm Nhạc nền): Cài đặt > Nhạc của tôi của điện thoại ghi "Thêm nhạc", web "Nhập nhạc của tôi…" / "Nhập nhạc".
 
 ## 7. Máy tính
 
