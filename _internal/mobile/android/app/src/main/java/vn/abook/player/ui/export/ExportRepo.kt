@@ -3,9 +3,7 @@ package vn.abook.player.ui.export
 import android.content.Context
 import android.net.Uri
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.withContext
 import vn.abook.player.BookMusic
 import vn.abook.player.Devices
@@ -20,6 +18,7 @@ import vn.abook.player.Playback
 import vn.abook.player.Store
 import vn.abook.player.readaloud.ReadAloud
 import vn.abook.player.ui.data.ListenBook
+import vn.abook.player.ui.data.listenerFlow
 import vn.abook.player.ui.voice.VoiceText
 
 /**
@@ -107,11 +106,11 @@ class ExportRepo(private val context: Context) : ExportSource {
 
     override suspend fun openFolder(uri: String): Boolean = io { ExportStart.openFolder(context, Uri.parse(uri)) }
 
-    override fun events(): Flow<ExportEvent> = callbackFlow {
+    override fun events(): Flow<ExportEvent> = listenerFlow { send ->
         val stops = listOf(ExportKind.Mp3 to Mp3Exports.live, ExportKind.M4b to M4bExports.live, ExportKind.Audiobook to ListenExports.live).map { (kind, live) ->
-            live.listen { json -> ExportJson.event(json, kind)?.let { trySend(it) } }
+            live.listen { json -> ExportJson.event(json, kind)?.let(send) }
         }
-        awaitClose { stops.forEach { it() } }
+        ({ stops.forEach { it() } })
     }
 
     override suspend fun running(): List<ExportEvent> = io { ExportJobs.running(context).mapNotNull { ExportJson.event(it) } }
