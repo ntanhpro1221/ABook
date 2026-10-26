@@ -1,5 +1,19 @@
 # Test report
 
+## 26-10-2026 — qtwide2: sửa theo lead review
+
+- Trang Sách: cụm hai cột tối đa 1360 px, căn giữa; bìa thẳng mép tiêu đề; thời lượng cuối hàng dùng tnum. Nền hover/chương hiện tại và thanh tiến độ giữ hết chiều rộng hàng. Sửa đường chuyển động để bìa/chữ/chương không đi xuyên nhau.
+- Phép kiểm đo Text.paintedWidth thay khung hàng: QML cũ thất bại với dải trống 64,70% / 74,01% (1920 / 2560); bản mới 10,43% / 21,31%. Có kiểm mép bìa–tiêu đề ≤1 px, cap/căn giữa, pixel cuối hàng sáng/tối, chuyển động hai chiều.
+- Build exit 0, CTest 6/6; 238 ca đạt (Width tăng 31 → 38; các bộ còn lại 26+14+37+6+117). Theme --check, check_text_cut.py và git diff --check đạt.
+- Đã mở 44 ảnh sáng/tối và 14 crop mép 2×; Sách/Thư viện có 2560×1440 thật, các màn còn lại 1024/1440/1920. Công cụ chụp phát hiện sai kích thước thay vì âm thầm gắn nhãn 2560 cho cửa sổ bị Windows ép nhỏ. Bằng chứng: desktop_qt/build/qtwide/{shots2,zooms2,shots2_dimensions.json,old_ink_control.txt,new_width_test.txt,build2.log,ctest2.log}. Không commit; mọi cửa sổ mở ở lượt này đã đóng.
+
+## 26-10-2026 — qtwide: bố cục Qt theo chiều rộng nội dung
+
+- Sách/Cài đặt đổi hai cột từ 840 px nội dung; Đang nghe có đọc theo bên phải từ 1200 px; Thư viện căn giữa, bìa 160–200 px; Studio giữa màn, tối đa 800 px. Chuyển hình học 220 ms theo Theme, tôn trọng giảm chuyển động.
+- CTest 6/6 bộ đạt; QtTest/QuickTest: Player 26, ReadAlong 14, Music 37, SkipGlyph 6, Sidebar/icons 117, Width 31 — tổng 231 đạt, 0 lỗi. Width kiểm hình học thật của QML ở 1024×700, 1440×900, 1920×1080, rail và compact, lưới tới 2560; kiểm ≥4 hàng chương, bìa ≤45%, lề/cột, đọc theo, mép mờ và chuyển động. check_text_cut.py và gen_theme.py --check đạt.
+- Đã mở 36 PNG sáng/tối, gồm 4 màn × 3 khổ, thu thanh bên, cuộn và khung resize; soát mép ở 2×. Fixture audio sao chép riêng, thêm hàng chương tổng hợp chỉ cho ảnh; không sửa thư viện/profile thật. Bằng chứng: desktop_qt/build/qtwide/{shots,zooms,ctest.txt,WidthTests.txt}.
+- RAM riêng lúc nghỉ trên trang Sách, client 1920×1080, scale 1, ba lượt/bản: 55,73 → 58,85 MB (+3,12 MB), dùng bộ lấy mẫu tools/measure.py. Không thay title bar/backend/dependency, không commit. Chi tiết ở desktop_qt/PROGRESS.md và scratchpad codex/qtwide/report.md.
+
 Ngày cập nhật: 2026-10-26
 
 Đợt gap1b, worktree `D:/Novels/ABook_ngap`, nhánh `dev/native-gaps`: sửa transport từ xa sang glyph ±15 dùng chung và phát/dừng biến hình; thêm icon loại thiết bị và làm mới đồng bộ ở bảng thiết bị phát, tìm máy trống, nhật ký. Timer cast dùng danh sách cùng mép trái, có ảnh 360/411dp và cỡ chữ 1,3. Một UndoBar nằm trên thiết bị phát/thanh phát nhỏ/tab, mở chiều cao có chuyển động; kiểm cả lỗi xoá trong Shell thật, sáng/tối. Lệnh đầy đủ có ghi ảnh: **2251 test, 2244 passed, 7 skipped, 0 failure/error**, **271 XML**, không có dòng `^e: `; IconRulesTest/IconSheetTest/MotionScanTest/TextCutScanTest đều qua. Đã mở 21 PNG thay đổi và crop phóng to hàng icon; APK native **21.573.885 → 21.590.269 byte** (+16 KiB). Bằng chứng và báo cáo ở scratchpad `codex/gap1b/report.md`. Không commit/push, không adb; không sửa Voice, lõi Python, dependency hay Capacitor settings.

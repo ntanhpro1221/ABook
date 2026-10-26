@@ -10,6 +10,14 @@ QtObject {
     // Windows > Trợ năng > Hiệu ứng động tắt: bỏ trượt / bay, giữ mờ <= 120 ms (DESIGN.md 5.2). Main.qml gán từ Platform.
     property bool reduceMotion: false
 
+    // ---- Khổ cửa sổ: CONTENT width, after the sidebar ----
+    // Temporary single block until DESIGN.md has Khổ cửa sổ; move values to its parser then.
+    readonly property int widthMedium: 600
+    readonly property int widthExpanded: 840
+    readonly property int widthLarge: 1200
+    readonly property int widthExtraLarge: 1600
+    function widthClass(w) { return w < widthMedium ? 0 : w < widthExpanded ? 1 : w < widthLarge ? 2 : w < widthExtraLarge ? 3 : 4 }
+
     // ---- màu (DESIGN.md 5.1) ----
     readonly property color bg: dark ? "#121110" : "#f5f3ef"
     readonly property color panel: dark ? "#1b1a18" : "#ffffff"

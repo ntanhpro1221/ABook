@@ -3,7 +3,7 @@ import ABook
 
 // Đang nghe: phủ kín khung nội dung (thanh bên vẫn ở đó). Mở bằng cách biến thanh phát: bìa nhỏ lớn dần thành bìa lớn theo đường thẳng, phần còn lại trượt lên;
 // đóng là đúng gương (Esc, Alt+Left, nút Back của chuột đều đóng). Chỉ một tiến độ p chạy 0..1, mọi thứ là hàm của p - không có mờ thuần.
-//   Rộng (khung >= 1100 px): cột trái = bìa, tên, thanh tua, nút phát, rồi Tốc độ / Hẹn giờ / Chương / Nhạc nền; cột phải = văn bản chạy theo giọng
+//   Khổ large trở lên: cột trái = bìa, tên, thanh tua, nút phát, rồi Tốc độ / Hẹn giờ / Chương / Nhạc nền; cột phải = văn bản chạy theo giọng
 //   (sách chưa có mốc thì danh sách chương). Hẹp: một cột, công tắc "Bìa / Chữ" trượt theo thứ tự.
 Item {
     id: root
@@ -16,12 +16,21 @@ Item {
     property real thumbW: 44
     property real barTop: 0
 
-    readonly property bool wide: width >= 1100
+    readonly property bool wide: width >= Theme.widthLarge
+    property real wideT: wide ? 1 : 0
+    Behavior on wideT {
+        NumberAnimation {
+            duration: Theme.reduceMotion ? 0 : Theme.motionMedium
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Theme.easeStandard
+        }
+    }
+    function blend(narrow, broad) { return narrow + (broad - narrow) * wideT }
     // "Giảm hiệu ứng" của Windows: không bay / trượt, chỉ mờ <= 120 ms
     readonly property real g: Theme.reduceMotion ? (open ? 1 : 0) : p
     readonly property real fade: Math.max(0, Math.min(1, (g - 0.2) / 0.8))
     readonly property bool windowShown: Window.window !== null && Window.visibility !== Window.Minimized && Window.visibility !== Window.Hidden
-    readonly property bool textWanted: open && windowShown && (wide || page === 1)
+    readonly property bool textWanted: open && windowShown && (wideT > 0 || page === 1)
     readonly property bool showText: ReadAlong.status === "idle" || ReadAlong.status === "loading" || ReadAlong.timed
     visible: p > 0
     opacity: Theme.reduceMotion ? p : 1
@@ -79,28 +88,28 @@ Item {
     // ---- số đo bố cục ----
     readonly property real gap: 48
     readonly property real topH: 72
-    readonly property real colW: wide ? Math.min(440, Math.floor((width - 2 * Theme.margin - gap) * 0.42)) : Math.min(width - 2 * Theme.margin, 520)
-    readonly property real colX: wide ? Theme.margin : Math.round((width - colW) / 2)
+    readonly property real colW: blend(Math.min(width - 2 * Theme.margin, 520), Math.min(440, Math.floor((width - 2 * Theme.margin - gap) * 0.42)))
+    readonly property real colX: blend((width - colW) / 2, Theme.margin)
     readonly property real titlesH: titles.implicitHeight
     readonly property real controlsH: controls.implicitHeight
-    readonly property real coverAvail: wide ? height - topH - 24 - titlesH - 16 - controlsH - 24 - 24
-                                            : height - 24 - controlsH - 16 - topH - titlesH - 16
+    readonly property real coverAvail: blend(height - 24 - controlsH - 16 - topH - titlesH - 16,
+                                             height - topH - 24 - titlesH - 16 - controlsH - 24 - 24)
     readonly property real coverW: Math.max(120, Math.min(colW, Math.floor(coverAvail / Theme.coverRatio)))
     readonly property real coverH: Math.round(coverW * Theme.coverRatio)
-    readonly property real blockH: coverH + 16 + titlesH + (wide ? 24 + controlsH : 0)
-    readonly property real regionBottom: wide ? height - 24 : height - 24 - controlsH - 16
+    readonly property real blockH: coverH + 16 + titlesH + (24 + controlsH) * wideT
+    readonly property real regionBottom: blend(height - 24 - controlsH - 16, height - 24)
     readonly property real blockY: topH + Math.max(0, (regionBottom - topH - blockH) / 2)
     readonly property real coverX: colX + (colW - coverW) / 2
     readonly property real coverY: blockY
     readonly property real titlesY: coverY + coverH + 16
-    readonly property real controlsY: wide ? titlesY + titlesH + 24 : height - 24 - controlsH
+    readonly property real controlsY: blend(height - 24 - controlsH, titlesY + titlesH + 24)
     readonly property real shift: 64
-    readonly property real coverPageX: wide ? 0 : -pageT * shift
-    readonly property real coverPageOpacity: wide ? 1 : 1 - pageT
-    readonly property real textX: wide ? colX + colW + gap : Math.round((width - Math.min(width - 2 * Theme.margin, 720)) / 2)
-    readonly property real textW: wide ? width - Theme.margin - textX : Math.min(width - 2 * Theme.margin, 720)
-    readonly property real textTop: wide ? topH - 24 : topH
-    readonly property real textBottom: wide ? height : height - 24 - controlsH - 16
+    readonly property real coverPageX: -pageT * shift * (1 - wideT)
+    readonly property real coverPageOpacity: blend(1 - pageT, 1)
+    readonly property real textX: blend((width - Math.min(width - 2 * Theme.margin, 720)) / 2, colX + colW + gap)
+    readonly property real textW: blend(Math.min(width - 2 * Theme.margin, 720), width - Theme.margin - textX)
+    readonly property real textTop: blend(topH, topH - 24)
+    readonly property real textBottom: blend(height - 24 - controlsH - 16, height)
 
     // ---- khung vẽ: mép trên đi từ mép trên thanh phát lên tới đỉnh ----
     Item {
@@ -151,14 +160,16 @@ Item {
 
                 // ---- hàng trên ----
                 IconButton {
-                    x: (root.wide ? Theme.margin : root.colX) - 10
+                    x: root.blend(root.colX, Theme.margin) - 10
                     y: Theme.s16
                     icon: "chevron-down"
                     tip: "Thu nhỏ  (Esc)"
                     onClicked: root.close()
                 }
                 PageSwitch {
-                    visible: !root.wide
+                    visible: opacity > 0
+                    opacity: 1 - root.wideT
+                    enabled: !root.wide
                     x: Math.round((root.width - width) / 2)
                     y: Theme.s16 + 2
                     labels: ["Bìa", ReadAlong.status === "ready" && !ReadAlong.timed ? "Chương" : "Chữ"]
@@ -327,15 +338,17 @@ Item {
                 // ---- văn bản chạy theo giọng / danh sách chương ----
                 Item {
                     id: textRegion
-                    x: root.textX + (root.wide ? 0 : (1 - root.pageT) * root.shift)
+                    objectName: "nowReadAlongRegion"
+                    x: root.textX + (1 - root.pageT) * root.shift * (1 - root.wideT)
                     y: root.textTop
                     width: root.textW
                     height: Math.max(0, root.textBottom - root.textTop)
-                    opacity: root.wide ? 1 : root.pageT
-                    visible: root.wide || root.pageT > 0.01
+                    opacity: root.blend(root.pageT, 1)
+                    visible: opacity > 0.01
                     enabled: root.wide || root.page === 1
 
                     ReadAlongView {
+                        objectName: "nowReadAlong"
                         anchors.fill: parent
                         visible: root.showText
                     }
