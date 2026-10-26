@@ -57,7 +57,7 @@ export function itemFromPath(path: string): PickedItem {
   const name = clean.split(/[\\/]/).filter(Boolean).pop() ?? clean;
   const last = name.includes(".") ? name.slice(name.lastIndexOf(".")) : "";
   if (last && !BOOK_TYPES.test(name)) {
-    return { name, error: `Chưa hỗ trợ ${last.toLowerCase()}. Chọn EPUB, DOCX, PDF có chữ, TXT hoặc .abook.` };
+    return { name, error: `Chưa hỗ trợ ${last.toLowerCase()}. Bạn hãy chọn EPUB, DOCX, PDF có chữ, TXT hoặc file .abook.` };
   }
   return { name, choice: { ref: clean, name } };
 }
@@ -70,7 +70,7 @@ export function buildQueue(picked: readonly PickedItem[]): QueueItem[] {
   let number = 0;
   return entries.map(({ item }, id) => {
     if ("error" in item) return { id, name: item.name, state: "error", note: item.error };
-    if ("opened" in item) return { id, name: item.name, state: "opened", note: "Đã mở" };
+    if ("opened" in item) return { id, name: item.name, state: "opened", note: "Đã thêm" };
     number += 1;
     return { id, name: item.name, choice: item.choice, state: "waiting", number };
   });

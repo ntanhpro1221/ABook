@@ -74,7 +74,7 @@ export function footnotesToSend(choice: FootnoteChoice): FootnoteChoice | undefi
 export function footnoteSummary(offer: FootnoteOffer): { title: string; example: string | null } {
   const first = offer.examples[0];
   return {
-    title: `Tìm thấy ${formatNumber(offer.found)} chú thích trong sách`,
+    title: `${formatNumber(offer.found)} chú thích trong file`,
     example: first ? `Ví dụ: “${first.mark}” có lời chú “${first.note}”` : null,
   };
 }
@@ -173,12 +173,13 @@ export async function readPreview(importer: Pick<TextImport, "preview">, choice:
 /** Tên chương người dùng đã đổi, theo số thứ tự hàng; hàng không có trong đây giữ tên của file. */
 export type ChapterNames = Readonly<Record<number, string>>;
 
-/** Nhãn ô "Tách" của file TXT cả truyện: đếm các dòng "Chương N" người nghe thấy trong file, nói riêng phần "Mở đầu" thêm vào. */
-export function splitLabel(preview: Pick<ImportPreview, "splitOffer" | "splitHeadings">): string {
+/** Dòng phụ của ô "Tách chương" (file TXT cả truyện): đếm các dòng "Chương N" người nghe thấy trong file, nói riêng phần "Mở đầu" thêm vào.
+ *  Cùng chữ với `ImportLogic.splitHint` của điện thoại. */
+export function splitHint(preview: Pick<ImportPreview, "splitOffer" | "splitHeadings">): string {
   const offer = preview.splitOffer ?? 0;
   const headings = preview.splitHeadings ?? offer;
-  const base = `Tách theo ${formatNumber(headings)} dòng “Chương N”`;
-  return offer > headings ? `${base} (thêm phần Mở đầu - ${formatNumber(offer)} chương)` : base;
+  const extra = offer > headings ? ` (thêm phần Mở đầu - ${formatNumber(offer)} chương)` : "";
+  return `Theo ${formatNumber(headings)} dòng “Chương N” trong file${extra}.`;
 }
 
 /** Từ chừng này dòng "Chương N" trong MỘT file TXT thì máy chắc đó là cả truyện: ô tách tích sẵn (soát UX a8 02-10 - truyện tải trên mạng
