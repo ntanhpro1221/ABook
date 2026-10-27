@@ -57,6 +57,26 @@ Ninja + conda g++, every test exe offscreen). App target (WIN32 only) still NOT 
    tst_d4_main 2 (real Main: listen-only Studio -> "Về Thư viện" -> peer library under the bar -> "Về máy này"; book page -> "Đọc chương này"
    -> reader -> Esc). Changed old tests: tst_d3 peer tests use the app-level bar (host PeerBar like Main), "Về Thư viện" keeps the peer;
    tst_width studioCentred (bar no longer inside the Studio screen). Shot: d4_peer_library_{light,dark}.png.
+4. Peer Studio body = start of the web desktop Studio (studio/ProjectsScreen.tsx), READ-ONLY. When the peer lets this device edit, StudioScreen
+   asks GET /api/peers/<id>/studio/api/library (useLibrary) and shows ProjectsList.qml: header "Studio" + "N dự án" (empty -> a blank line),
+   table head Dự án · Trạng thái · Tiến độ · Cập nhật (label-section), columns of COLUMNS md 40 | 1fr | 190 | 170 | 36 and, window >= 1280
+   (xl of the viewport), 40 | 1fr | 230 | 190 | 100 with the Cập nhật column; table up to 1180 wide, the whole page scrolls (header too).
+   Row: 40 px cover (generated cover gets a `small` mode = BookCover size "sm": coverLabel centred, 17 px bold ink; photo through the peer
+   cover key), title (wraps, never cut), sub-line "Giọng kể X" · quality only when not "Cân bằng"; StatusPill (h24, rounded-full, 12 px
+   medium, tone colours accent / success / danger / warning / muted, 6 px dot or the 4-bar Vu when live), hidden for done projects that are
+   not queued; progress cell: done -> "a/b chương" + warning " · N thay đổi chờ áp · N chương mất audio"; else 6 px bar (accent + sheen when
+   running, fg-3 otherwise) + percent (w36, tabular) + "phân tích còn 3 giờ 2 phút" style ETA (etaOf short) or "a/b chương";
+   Cập nhật: "vừa xong" while running, else formatRelative. Parts of one book grouped under "<tên> · N phần" (seriesIndex/groupParts), groups
+   with a running book first (splitLive). 5 skeleton rows under the head while loading, "Chưa tải được danh sách dự án; bạn hãy kiểm tra kết
+   nối rồi thử lại." + "Thử lại", EmptyState "Chưa có dự án", MissingLibrary (remote branch: "Chọn lại thư mục thư viện ở máy tính <máy>").
+   Refetch every 5 s while a book runs or starts, else 15 s (the web polls 2 s live; 5 s here because every poll crosses the bridge), and on
+   Nav.peerRevision; a 503 unreachable sets Nav.peerSilent. qml/ProjectsLogic.js = phaseTone/queueLabel/projectStatus (data.ts),
+   formatLength/formatEta/etaOf/formatPercent/formatRelative (format.ts), seriesOf/seriesIndex (listen/model.ts), groupParts/splitLive.
+   New token --success-soft (#dff3ea / rgb(92 197 150 / 0.13), DESIGN.md + gen_theme.py + palette.test.ts) for the "Hoàn tất" pill; lucide
+   folder-x added (QML output only).
+   Tests: tst_d4 +6 (logic vs web strings, table rows / pills / bars / groups / columns, narrow window drops Cập nhật + long title wraps,
+   loading -> error -> retry -> empty -> missing, 5 s / 15 s refetch, shot). Shot: d4_peer_projects_{light,dark}.png.
+   ui_parity_qt: "Studio máy khác" also reads ProjectsScreen.tsx, data.ts, format.ts, MissingLibrary.tsx, OnComputerOnly.tsx.
 - Open (D4): in the peer library a book cannot be opened yet (book page + listening through the bridge): cells are view-only and Enter does
   nothing; "Thêm sách" is hidden there; Settings stays this computer's (the web routes it through the bridge too).
 - Open (D4): toasts have no type icons (success / error / warning of sonner), no swipe to dismiss, a paused timer restarts from the full
@@ -64,6 +84,13 @@ Ninja + conda g++, every test exe offscreen). App target (WIN32 only) still NOT 
 - Open (D4): reader has no "Tìm trong sách" (FindInBook), no sentence selection bar (Chép / Sửa câu này / cách đọc), no keyboard walk over
   sentences, no read-aloud voice for text-only chapters (Qt plays recorded audio only, so the hint says "Máy này chưa có giọng đọc."), no
   "?at=" open-at-sentence (only FindInBook uses it).
+- Open (D4, peer Studio): rows are read-only - no click to the project page (ProjectScreen not ported), no row "…" menu (ProjectMenu:
+  rename / delete / Mở thư mục), no hover background; no "Dự án mới" button (header and empty state) and no Studio "…" menu ("Mở dự án có
+  sẵn…"); broken projects (BrokenRow: "Không đọc được" / "Chưa mở được", Thử lại, OnComputerOnly) and RowBoundary are not ported - a
+  broken entry renders as a normal row; StudioSetupCard (install / update Studio card) not shown; the narrow (< md) layout is not ported
+  (window minimum 960 is always md); row enter / leave uses StudioRows (height open/close) without the MotionRegion fade of a changed cell;
+  DotJoin wraps only between parts on the web, Qt wraps the joined line anywhere.
+- Open (D4): this computer's own Studio is still the placeholder "Studio chưa mở trong bản này." (needs a local /api/library).
 
 ## D3 — chỗ hở của D2 (cloud, branch dev/cloud-qtd3 from origin/dev/desk-qt 775209ea), 26-10-2026
 

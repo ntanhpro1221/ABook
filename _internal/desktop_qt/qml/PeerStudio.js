@@ -18,6 +18,9 @@ function peerBarLine(name, silent, listenOnly) {
     return listenOnly ? listenOnlyLine(name) : "Đang mở Studio của " + name
 }
 
+/** Việc chỉ làm được ngay trên máy tính (OnComputerOnly): "Chọn lại thư mục thư viện ở máy tính Máy bàn". */
+function onComputerLine(verb, name) { return name && name !== "máy tính" ? verb + " ở máy tính " + name : verb + " ở máy tính" }
+
 /** Máy kia im thì hỏi lại mỗi chừng này, bỏ cuộc sau chừng kia (listen/peerBack.ts watchUntilBack). */
 var WATCH_EVERY_MS = 5000
 var WATCH_GIVE_UP_MS = 30 * 60000

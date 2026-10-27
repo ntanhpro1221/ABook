@@ -54,6 +54,7 @@ ICONS = sorted({
     "folder",
     "folder-down",
     "folder-open",
+    "folder-x",
     "globe",
     "headphones",
     "image-plus",
