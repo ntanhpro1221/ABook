@@ -74,7 +74,7 @@ Item {
             x: 10
             anchors.verticalCenter: parent.verticalCenter
             spacing: 6
-            Rectangle { visible: !pill.live; width: 6; height: 6; radius: 3; color: pill.ink; anchors.verticalCenter: parent.verticalCenter }
+            Rectangle { visible: !pill.live; width: 6; height: 6; radius: width / 2; color: pill.ink; anchors.verticalCenter: parent.verticalCenter }
             Vu { visible: pill.live; color: pill.ink; anchors.verticalCenter: parent.verticalCenter }
             Text { text: pill.label; color: pill.ink; font.pixelSize: Theme.sizeCaption; font.weight: Theme.weightMedium }
         }
@@ -104,7 +104,7 @@ Item {
                 width: 3
                 height: vu.height * vu.scaleAt(modelData)
                 y: vu.height - height
-                radius: 1.5
+                radius: width / 2
                 color: vu.color
             }
         }
@@ -116,7 +116,7 @@ Item {
         property bool running: false
         objectName: "projectBar"
         height: 6
-        radius: 3
+        radius: height / 2
         color: Theme.line
         clip: true
         Rectangle {
@@ -124,7 +124,7 @@ Item {
             objectName: "projectBarFill"
             width: bar.width * Math.max(0, Math.min(1, bar.value))
             height: parent.height
-            radius: 3
+            radius: height / 2
             color: bar.running ? Theme.accent : Theme.text3
             clip: true
             Behavior on width { NumberAnimation { duration: Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard } }
@@ -330,8 +330,8 @@ Item {
                         Item { width: parent.width; height: 24; Skel { width: parent.width / 2; height: 16; anchors.verticalCenter: parent.verticalCenter } }
                         Item { width: parent.width; height: 19.5; Skel { width: parent.width / 3; height: 12; anchors.verticalCenter: parent.verticalCenter } }
                     }
-                    Skel { x: root.statusX; y: (parent.height - 24) / 2; width: 112; height: 24; radius: 12 }
-                    Skel { x: root.progressX; y: (parent.height - 6) / 2; width: root.columns[2]; height: 6; radius: 3 }
+                    Skel { x: root.statusX; y: (parent.height - 24) / 2; width: 112; height: 24; radius: height / 2 }
+                    Skel { x: root.progressX; y: (parent.height - 6) / 2; width: root.columns[2]; height: 6; radius: height / 2 }
                     Skel { visible: root.wide; x: root.updatedX + root.columns[3] - 64; y: (parent.height - 12) / 2; width: 64; height: 12 }
                 }
             }

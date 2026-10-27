@@ -250,7 +250,12 @@ Item {
         function test_studioCentred() {
             const page = make(studioFactory, sizes()[2])
             // Thanh "Đang mở Studio của …" của máy đã ghép là của cả app (Main, D4), không còn trong màn Studio
-            for (let c of page.children) {
+            // Cả màn cuộn trong một Flickable (D4): đầu màn và thân căn giữa trong nó
+            const flick = page.children.filter(c => c.objectName === "studioPage")[0]
+            verify(flick !== undefined)
+            const parts = flick.contentItem.children.filter(c => c.visible && c.width > 0)
+            verify(parts.length >= 2)
+            for (let c of parts) {
                 verify(c.width <= 880)
                 fuzzyCompare(c.x, (page.width - c.width) / 2, 0.5)
             }
