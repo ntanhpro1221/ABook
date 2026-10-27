@@ -16,6 +16,8 @@ Item {
     height: 860
     Rectangle { anchors.fill: parent; color: Theme.bg }
     Component { id: studioFactory; StudioScreen {} }
+    // D4: thanh "Đang mở Studio của <máy>" là của cả app (Main đặt nó trên ngăn xếp màn); ở đây đặt như Main, màn Studio nằm dưới nó
+    PeerBar { id: hostBar; z: 5; width: host.width }
     Component { id: devicesFactory; SettingsDevices {} }
     Component { id: bookFactory; BookPage {} }
     Component { id: renameFactory; EditBookRename {} }
@@ -97,7 +99,7 @@ Item {
         // ================= 1. "Mở Studio" của máy tính đã ghép =================
         function peerApp(over) { return {status: 200, data: Object.assign({version: "0.4.147", peer: {id: peerId, name: "Máy bàn phòng làm việc"}}, over || {})} }
         function makeStudio() {
-            const page = createTemporaryObject(studioFactory, host, {width: 1100, height: 760})
+            const page = createTemporaryObject(studioFactory, host, {width: 1100, height: 760, y: Qt.binding(function() { return hostBar.height })})
             verify(page !== null)
             return page
         }
@@ -121,24 +123,24 @@ Item {
             reply(appPath, peerApp())
             const page = makeStudio()
             compare(page.view, "own")
-            verify(!shown(one(page, "peerBar")))
+            tryVerify(function() { return !shown(hostBar) })
             Nav.openPeerStudio(peerId)
             compare(calls("GET", "/api/peers/" + peerId + "/studio/api/app").length, 1)
             compare(page.view, "open")
-            tryVerify(function() { return shown(one(page, "peerBar")) })
-            compare(one(page, "peerLine").text, "Đang mở Studio của Máy bàn phòng làm việc")
-            compare(one(page, "peerHome").text, "Về máy này")
+            tryVerify(function() { return shown(hostBar) })
+            compare(one(hostBar, "peerLine").text, "Đang mở Studio của Máy bàn phòng làm việc")
+            compare(one(hostBar, "peerHome").text, "Về máy này")
             verify(hasText(page, "Studio chưa mở trong bản này."))
-            one(page, "peerHome").clicked()
+            one(hostBar, "peerHome").clicked()
             compare(Nav.studioPeer, "")
             compare(page.view, "own")
-            tryVerify(function() { return !shown(one(page, "peerBar")) })
+            tryVerify(function() { return !shown(hostBar) })
         }
         function test_peerBarOpensAndClosesByHeight() {
             Theme.reduceMotion = false
             reply(appPath, peerApp())
             const page = makeStudio()
-            const bar = one(page, "peerBar")
+            const bar = hostBar
             Nav.studioPeer = peerId
             const full = 16 + 32 + 1
             let mid = false
@@ -158,8 +160,11 @@ Item {
             compare(one(one(page, "studioClosed"), "emptyTitle").text, "Chỉ nghe - bật quyền sửa ở Máy bàn phòng làm việc: Cài đặt > Thiết bị")
             verify(hasText(page, "Sách của máy ấy vẫn nghe được ở Thư viện."))
             compare(one(page, "studioClosedLibrary").text, "Về Thư viện")
+            // chỉ nghe: thanh trên cùng vẫn hiện, nền cảnh báo, nói bật quyền ở đâu (PeerBar của web)
+            tryVerify(function() { return shown(hostBar) })
+            compare(one(hostBar, "peerLine").text, "Chỉ nghe - bật quyền sửa ở Máy bàn phòng làm việc: Cài đặt > Thiết bị")
             one(page, "studioClosedLibrary").clicked()
-            compare(Nav.studioPeer, "")
+            compare(Nav.studioPeer, peerId)           // D4: Thư viện của máy đang xem, vẫn trong máy ấy (tst_d4 + tst_d4_main)
         }
         function test_peerSilentRetriesUntilBack() {
             reply(appPath, {status: 503, data: {error: "Máy bàn phòng làm việc không trả lời", unreachable: true}})
@@ -214,11 +219,11 @@ Item {
                 reply(appPath, peerApp())
                 let page = makeStudio()
                 Nav.studioPeer = peerId
-                shot("peer_open", page)
+                shot("peer_open", host)
                 Nav.studioPeer = ""
                 reply(appPath, peerApp({listenOnly: true}))
                 Nav.studioPeer = peerId
-                shot("peer_listen_only", page)
+                shot("peer_listen_only", host)
                 Nav.studioPeer = ""
                 page.destroy()
             })

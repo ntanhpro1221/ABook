@@ -60,7 +60,7 @@ QML_SKIP = {"BenchScenario.qml"}
 
 # Màn: (tên, file QML, nguồn web). Nguồn web = (file, tên hàm / hằng cấp trên cùng) - None là cả file.
 SCREENS: list[tuple[str, tuple[str, ...], tuple[tuple[str, tuple[str, ...] | None], ...]]] = [
-    ("Thư viện", ("LibraryScreen.qml", "BookCell.qml", "GeneratedCover.qml", "CoverView.qml"),
+    ("Thư viện", ("LibraryScreen.qml", "LibraryBooks.js", "BookCell.qml", "GeneratedCover.qml", "CoverView.qml"),
      (("listen/LibraryScreen.tsx", None), ("desktop/App.tsx", ("EmptyLibrary", "LibraryRoute", "OpenBookFileButton")),
       ("shared/BookCover.tsx", None))),
     ("Thanh phát", ("PlayerBar.qml", "PlayButton.qml", "SkipButton.qml", "SkipGlyph.qml", "SeekBar.qml", "PlayerNotice.qml"),

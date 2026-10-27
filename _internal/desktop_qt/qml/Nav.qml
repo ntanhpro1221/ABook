@@ -13,6 +13,25 @@ QtObject {
         studioPeer = peer
         if (stack) stack.show(1)
     }
+    // Đang xem máy kia thì CẢ app là của máy ấy (trang `?peer=` của web): Studio, Thư viện, thanh "Đang mở Studio của <máy>" ở trên cùng.
+    // /api/app của máy ấy (peer.name, listenOnly) khi đã vào được, null khi chưa (StudioScreen hỏi và đặt).
+    property var peerInfo: null
+    // Một lời gọi qua cầu nối vừa gặp máy kia im (503 unreachable, PEER_SILENT_EVENT của web): câu của máy chủ; "" khi máy ấy đang trả lời
+    property string peerSilent: ""
+    // Máy kia trả lời lại sau khi im: các màn của máy ấy nạp lại (invalidateQueries của usePeerSilent)
+    property int peerRevision: 0
+    onStudioPeerChanged: { peerSilent = ""; if (!studioPeer) peerInfo = null }
+    // "Về máy này" (homePage của web): thôi xem máy kia, về Thư viện của máy này
+    function goHome() {
+        studioPeer = ""
+        showLibrary()
+    }
+    // "Về Thư viện" (navigate("/")): Thư viện của máy đang xem, ở gốc
+    function showLibrary() {
+        if (!stack) return
+        stack.show(0)
+        stack.popToRoot()
+    }
 
     // Mép trên của vùng thông báo (px, toạ độ cửa sổ); 0 = chỗ thường dưới thanh tiêu đề. Màn đọc đặt nó dưới thanh đầu của mình (--toast-top của web).
     property real toastTop: 0

@@ -43,6 +43,22 @@ Ninja + conda g++, every test exe offscreen). App target (WIN32 only) still NOT 
    corner ✕); old tests changed: tst_d3 toast tests (single toast `t` -> cards, description -> "Chi tiết"), tst_d3_main toast placement,
    test resets `Api.notice = ""` -> `Api.toasts = []` (a reset must clear the whole stack). All Width files pass (288).
    Shots: d4_toast_{stack,expanded,details}_{light,dark}.png. ui_parity_qt: "Chung" also reads shared/ToastDetails.tsx.
+3. Peer context like the web's `?peer=` page: while Nav.studioPeer is set the whole app is that computer's. PeerBar moved from StudioScreen
+   to Main, above the screen stack on every screen (Shell.tsx), bound to Nav: shown once the peer answered (also when listen-only: warning
+   background + "Chỉ nghe - bật quyền sửa ở <máy>: Cài đặt > Thiết bị"), silent line "<câu> - tự nối lại khi máy ấy trả lời" while a bridged
+   call met 503 unreachable (Nav.peerSilent). StudioScreen still asks /api/app and publishes Nav.peerInfo; while Nav.peerSilent is set it
+   re-asks every 5 s and on answer clears it and bumps Nav.peerRevision (screens reload, usePeerSilent). "Về Thư viện" (StudioClosed) =
+   Nav.showLibrary(): Library tab at its root, STILL on the peer -> LibraryScreen shows that computer's library through the bridge
+   (GET /api/peers/<id>/studio/api/listen/library, qml/LibraryBooks.js = LibraryModel::setBooks in JS; covers "peer~<id>~<book>/<v>" ->
+   src/coverprovider.cpp fetches /api/peers/<id>/studio/media/books/<book>/cover - Windows-only file, syntax-checked here with g++
+   -fsyntax-only against the conda Qt headers, NOT built). "Về máy này" (PeerBar, PeerTrouble) = Nav.goHome(): leave the peer, own
+   Library at its root (homePage of the web; D3 stayed on the Studio tab).
+   Tests: tst_d4 +5 (LibraryBooks mapping, peer library + back to own, silent bar + reconnect + reload, listen-only bar + home, shot),
+   tst_d4_main 2 (real Main: listen-only Studio -> "Về Thư viện" -> peer library under the bar -> "Về máy này"; book page -> "Đọc chương này"
+   -> reader -> Esc). Changed old tests: tst_d3 peer tests use the app-level bar (host PeerBar like Main), "Về Thư viện" keeps the peer;
+   tst_width studioCentred (bar no longer inside the Studio screen). Shot: d4_peer_library_{light,dark}.png.
+- Open (D4): in the peer library a book cannot be opened yet (book page + listening through the bridge): cells are view-only and Enter does
+  nothing; "Thêm sách" is hidden there; Settings stays this computer's (the web routes it through the bridge too).
 - Open (D4): toasts have no type icons (success / error / warning of sonner), no swipe to dismiss, a paused timer restarts from the full
   duration (sonner resumes the rest), no Alt+T focus shortcut.
 - Open (D4): reader has no "Tìm trong sách" (FindInBook), no sentence selection bar (Chép / Sửa câu này / cách đọc), no keyboard walk over

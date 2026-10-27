@@ -4,14 +4,20 @@ import "PeerStudio.js" as Peer
 
 // Thanh trên cùng khi đang mở Studio của máy tính đã ghép (desktop/PeerBar.tsx): máy nào, máy ấy có trả lời không, và đường về máy này. Nền tràn
 // cả bề ngang (báo tin; máy im hay chỉ được nghe thì nền cảnh báo, màu nền đổi êm), nội dung thẳng lề trang bên dưới. Mở / khép theo chiều cao.
+// Một thanh cho cả app (Main, trên ngăn xếp màn - Shell.tsx đặt PeerBar trên mọi trang): đọc Nav.studioPeer / peerInfo / peerSilent; hiện khi đã
+// vào được máy kia (cả khi chỉ được nghe). "Về máy này" về Thư viện của máy này (Nav.goHome).
 Collapse {
     id: root
-    property string name: ""
-    property string silent: ""
-    property bool listenOnly: false
-    property real contentX: Theme.margin
-    property real contentWidth: width - 2 * Theme.margin
+    objectName: "peerBar"
+    open: Nav.studioPeer !== "" && Boolean(Nav.peerInfo && Nav.peerInfo.peer)
+    property string name: Nav.peerInfo && Nav.peerInfo.peer ? Nav.peerInfo.peer.name : ""
+    property string silent: Nav.studioPeer !== "" ? Nav.peerSilent : ""
+    property bool listenOnly: Boolean(Nav.peerInfo && Nav.peerInfo.listenOnly)
+    // Nội dung thẳng lề trang bên dưới (page-x, khung 1180 căn giữa), nền tràn cả bề ngang
+    property real contentWidth: Math.min(width - 2 * Theme.margin, 1180)
+    property real contentX: (width - contentWidth) / 2
     signal home()
+    onHome: Nav.goHome()
     Item {
         width: root.width
         height: Math.max(row.height, 32) + 16 + 1

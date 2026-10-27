@@ -1,10 +1,12 @@
 import QtQuick
 import QtTest
 import ABook
+import "../../qml/LibraryBooks.js" as Books
 
 // D4: mỗi mục một nhóm phép thử (hành vi + chuyển động) và ảnh sáng / tối ghi ra build/d2shots/d4_*.png:
 //   1. màn đọc "Đọc chương này" (menu "…" của dòng chương, bấm dòng chương chưa có audio): ReaderScreen + ChapterText + ReadAlongView
 //   2. lời báo chồng như sonner (visibleToasts 2): Api.toasts + Toast.qml, "Chi tiết" (ToastDetails)
+//   3. đang xem máy tính đã ghép: Thư viện của máy ấy (LibraryScreen + LibraryBooks.js), thanh PeerBar của cả app, máy ấy im thì tự nối lại
 // Player / ReadAlong / ChapterText là bản C++ thật trên âm thanh + mạng giả (tests/test_width.cpp, cuốn "reader"); HTTP của QML qua DesktopApi giả.
 Item {
     id: host
@@ -15,6 +17,9 @@ Item {
     Component { id: readerFactory; ReaderScreen {} }
     Component { id: readFactory; ReadAlongView {} }
     Component { id: toastFactory; Toast {} }
+    Component { id: libraryFactory; LibraryScreen {} }
+    Component { id: studioFactory; StudioScreen {} }
+    PeerBar { id: hostBar; z: 5; width: host.width }
     SignalSpy { id: spy }
 
     TestCase {
@@ -518,6 +523,92 @@ Item {
                 mouseMove(host, 10, host.height - 10)
                 Api.toasts = []
                 toaster.destroy()
+                wait(0)
+            })
+        }
+
+        // ================= 3. Thư viện của máy đang xem =================
+        readonly property string peerId: "c0ffee000002"
+        function peerPath(path) { return "GET /api/peers/" + peerId + "/studio" + path }
+        function peerLibrary() {
+            return {status: 200, data: [
+                {id: "p1", title: "Truyện ở máy bàn", author: "Nam Cao", duration: 3900, cover: {version: 3}, progress: {fraction: 0.4}},
+                {id: "p2", title: "Sách đang làm", producing: true, chaptersAvailable: 3, chaptersTotal: 10, progress: {finished: true}}]}
+        }
+        function peerApp(over) { return {status: 200, data: Object.assign({version: "0.4.147", peer: {id: peerId, name: "Máy bàn phòng làm việc"}}, over || {})} }
+        function test_libraryBooksReadLikeTheModel() {
+            const list = Books.books([{id: "a", title: "A", author: "Tác giả", duration: 3900, cover: {version: 2}},
+                                      {id: "b", title: "B", producing: true, chaptersAvailable: 3, chaptersTotal: 10},
+                                      {title: "không mã"}, {id: "c", title: "C", duration: 7200, progress: {finished: true}}], peerId)
+            compare(list.length, 3)
+            compare(list[0].subtitle, "Tác giả")
+            compare(list[0].detail, "1 giờ 5 phút")
+            compare(list[0].coverKey, "peer~" + peerId + "~a/2")
+            compare(list[1].subtitle, "Đang làm · 3/10 chương")
+            compare(list[1].coverKey, "")
+            compare(list[2].subtitle, "2 giờ")
+            compare(list[2].progress, 1)
+        }
+        function test_peerLibraryShowsThatMachinesBooks() {
+            reply(peerPath("/api/listen/library"), peerLibrary())
+            const page = createTemporaryObject(libraryFactory, host, {width: 1100, height: 760})
+            compare(page.count, 200)                                    // thư viện của máy này (Backend giả)
+            Nav.studioPeer = peerId
+            tryCompare(page, "count", 2)
+            compare(calls("GET", "/api/peers/" + peerId + "/studio/api/listen/library").length, 1)
+            tryVerify(function() { return all(page, "libraryGridRow").length > 0 })
+            const cells = all(page, "libraryGridRow")[0].children.filter(c => c.coverWidth !== undefined)
+            compare(cells.length, 2)
+            compare(cells[0].title, "Truyện ở máy bàn")
+            compare(cells[0].subtitle, "Nam Cao")
+            compare(cells[0].coverKey, "peer~" + peerId + "~p1/3")
+            compare(cells[1].subtitle, "Đang làm · 3/10 chương")
+            verify(!cells[0].enabled)                                   // trang sách qua cầu nối chưa có: ô chỉ để xem
+            verify(!hasText(page, "Thêm sách"))                         // thêm sách vào máy kia chưa có
+            compare(page.children.filter(c => c.subtitle !== undefined && c.title === "Thư viện")[0].subtitle, "2 cuốn")
+            Nav.studioPeer = ""
+            tryCompare(page, "count", 200)
+            verify(hasText(page, "Thêm sách"))
+        }
+        function test_peerSilentShowsOnTheBarAndReconnects() {
+            reply(peerPath("/api/app"), peerApp())
+            reply(peerPath("/api/listen/library"), {status: 503, data: {error: "Máy bàn phòng làm việc không trả lời", unreachable: true}})
+            const studio = createTemporaryObject(studioFactory, host, {width: 600, height: 400, visible: false})
+            const page = createTemporaryObject(libraryFactory, host, {width: 1100, height: 760, y: Qt.binding(function() { return hostBar.height })})
+            Nav.studioPeer = peerId
+            tryCompare(Nav, "peerSilent", "Máy bàn phòng làm việc không trả lời")
+            tryVerify(function() { return shown(hostBar) })
+            compare(one(hostBar, "peerLine").text, "Máy bàn phòng làm việc không trả lời - tự nối lại khi máy ấy trả lời")
+            verify(page.libraryError)
+            // máy ấy trả lời lại: /api/app hỏi lại sau 5 giây, rồi Thư viện tự nạp lại, không ai bấm gì
+            reply(peerPath("/api/listen/library"), peerLibrary())
+            tryCompare(Nav, "peerSilent", "", 7000)
+            tryCompare(page, "count", 2)
+            compare(one(hostBar, "peerLine").text, "Đang mở Studio của Máy bàn phòng làm việc")
+        }
+        function test_peerBarHomeGoesToThisMachine() {
+            reply(peerPath("/api/app"), peerApp({listenOnly: true}))
+            reply(peerPath("/api/listen/library"), peerLibrary())
+            const studio = createTemporaryObject(studioFactory, host, {width: 600, height: 400, visible: false})
+            Nav.studioPeer = peerId
+            tryVerify(function() { return shown(hostBar) })
+            compare(one(hostBar, "peerLine").text, "Chỉ nghe - bật quyền sửa ở Máy bàn phòng làm việc: Cài đặt > Thiết bị")
+            one(hostBar, "peerHome").clicked()
+            compare(Nav.studioPeer, "")
+            tryVerify(function() { return !shown(hostBar) })
+        }
+        function test_shotsPeerLibrary() {
+            both(function() {
+                reply(peerPath("/api/app"), peerApp())
+                reply(peerPath("/api/listen/library"), peerLibrary())
+                const studio = createTemporaryObject(studioFactory, host, {width: 600, height: 400, visible: false})
+                const page = createTemporaryObject(libraryFactory, host, {width: host.width, height: host.height - 60, y: Qt.binding(function() { return hostBar.height })})
+                Nav.studioPeer = peerId
+                tryCompare(page, "count", 2)
+                tryVerify(function() { return shown(hostBar) && hostBar.height > 40 })
+                shot("peer_library", host)
+                Nav.studioPeer = ""
+                page.destroy(); studio.destroy()
                 wait(0)
             })
         }
