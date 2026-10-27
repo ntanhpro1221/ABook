@@ -2,6 +2,7 @@
 
 #include "mixcore.h"
 #include "mp3source.h"
+#include "mfsource.h"
 
 #include <QCryptographicHash>
 #include <QDir>
@@ -33,6 +34,17 @@ using Clock = std::chrono::steady_clock;
 namespace {
 constexpr qint64 HEADER = 24;
 constexpr qint64 CACHE_LIMIT = 300 * 1024 * 1024;
+enum class Format { Unknown, Mp3, Mf };
+Format formatOf(const QByteArray &data) {
+    // URL của host không có đuôi tệp; container phải được nhận trước khi dò sync MP3.
+    if ((data.size() >= 12 && data.startsWith("RIFF") && data.mid(8, 4) == "WAVE") ||
+        data.startsWith("fLaC") || data.startsWith("OggS") || (data.size() >= 8 && data.mid(4, 4) == "ftyp"))
+        return Format::Mf;
+    if (data.startsWith("ID3")) return Format::Mp3;
+    for (qsizetype i = 0; i + 1 < std::min<qsizetype>(data.size(), 64); ++i)
+        if (quint8(data[i]) == 0xff && (quint8(data[i + 1]) & 0xe0) == 0xe0) return Format::Mp3;
+    return Format::Unknown;
+}
 QByteArray header(int rate, quint64 frames) {
     QByteArray h(HEADER, '\0');
     std::copy_n("ABPCM001", 8, h.data());
@@ -365,9 +377,13 @@ void MusicMixer::serviceReader() {
             }
             if (!frames) {
                 file->close();
-                Mp3Source source(outRate);
+                const Format format = formatOf(bytes);
+                Mp3Source mp3(outRate);
+                MfSource mf(outRate);
                 QSaveFile cache(path);
-                if (!source.open(bytes)) error = QStringLiteral("Không đọc được tệp nhạc mp3.");
+                if (format == Format::Unknown) error = QStringLiteral("Không nhận ra định dạng tệp nhạc (MP3, WAV, FLAC, M4A, Ogg/Opus).");
+                else if (format == Format::Mp3 && !mp3.open(bytes)) error = QStringLiteral("Không đọc được tệp nhạc mp3.");
+                else if (format == Format::Mf && !mf.open(bytes)) error = mf.error();
                 else if (!cache.open(QIODevice::WriteOnly) || cache.write(header(outRate, 0)) != HEADER) error = cache.errorString();
                 else {
                     ++d->decodes;
@@ -375,7 +391,8 @@ void MusicMixer::serviceReader() {
                     for (;;) {
                         { Guard guard(s->mutex); if (s->generation != generation) break; }
                         block.clear();
-                        const size_t n = source.read(block, 8192);
+                        const size_t n = format == Format::Mp3 ? mp3.read(block, 8192) : mf.read(block, 8192);
+                        if (format == Format::Mf && !mf.error().isEmpty()) { error = mf.error(); break; }
                         if (!n) break;
                         QByteArray pcm(qsizetype(n * 4), Qt::Uninitialized);
                         for (size_t i = 0; i < n * 2; ++i) {
