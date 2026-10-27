@@ -1,5 +1,36 @@
 # desktop_qt D0 - progress (updated after every step)
 
+## D4 — màn đọc, toast chồng, Studio máy khác (cloud, branch dev/cloud-qtd4 from origin/dev/cloud-qtd3 4bfaab9c), 27-10-2026
+
+Same Linux setup as D2/D3 (Qt 6.10.2 conda-forge into /opt/qt6env via py-rattler 0.28 - `solve(sources=..., virtual_packages=detect())`,
+Ninja + conda g++, every test exe offscreen). App target (WIN32 only) still NOT compiled here. Each step is its own commit.
+1. "Đọc chương này" = ReaderScreen.qml (listen/ReaderScreen.tsx). Chapter row "…" menu: "Đọc chương này" (book-open) second, as the web; every
+   row has the menu; clicking a row without audio opens the reader. BookPage.readRequested -> Main pushes ReaderScreen (Back / Esc pops = mirror
+   slide). Header: ← "Về trang sách" + chapter name (wraps). Text = the SAME ReadAlongView as "Đọc theo" (new `source` property: ReadAlong or a
+   ChapterText), so reading surface (paper/ivory/night), font size, sentence/word highlight, tap-a-word-to-listen and follow-the-voice are shared.
+   src/chaptertext.{h,cpp}: ChapterText (QML_ELEMENT) loads any chapter (GET .../script, or .../chapters/<n>/text for text-only chapters ->
+   src/textscript.h = textScript.ts splitParagraphs/withoutLines/scene breaks), lights the playing sentence only while that chapter is in the
+   player, listens via Player.jumpTo / Player.open. Reading position (readingPosition.ts + readingAnchor.ts): first visible sentence, local copy
+   under "abook-reading-<book>#<record>" at once, POST .../reading 2 s after the last scroll (rev counter/node/epoch, FNV-1a anchor, quote),
+   retry every 5 s, failure toast "Chưa lưu được chỗ đọc vào hồ sơ" + description; reopening goes to the playing sentence, else the saved place.
+   Hint (readerHint), "Chương tiếp theo" card, floating bar (Chương trước · Nghe từ đây · Cỡ chữ và giãn dòng · Chương sau) that slides away
+   when the reader scrolls and comes back on a tap; "Cỡ chữ" 16-24 / "Giãn dòng" 1,5-1,9 (ReaderChoices.qml, sliding underline) write
+   Api.reader = localStorage "abook-reader" of the web, and ReadAlongView reads it (the unused Platform "readingSize/readingLeading" keys are gone).
+   Voice moves to the next chapter while the reader shows the playing one: the reader follows (chapterToFollow). Chapter swap slides 8 px + fade.
+   Toasts sit under the reader header (Nav.toastTop = --toast-top of the web). Lucide arrow-right, type added (QML output only).
+   Found + fixed on the way: in Qt 6 a TapHandler under an open popover / dialog / floating bar still gets the tap (MouseArea on top does not
+   stop pointer handlers). Clicking a row of the chapter "…" menu also played the chapter row beneath it (D3 bug). Interactive and the
+   ReadAlongView text now ignore a tap that began while a `coversWindow` layer (Popover, ConnectionPopover, Modal) they are not inside is open
+   (Nav.coveredFor), and the text ignores taps on its `overlays` (reader bar, size panel, the "Tới câu đang nghe" chip).
+   tst_d3_main: window hidden + destroyed + 100 ms wait in cleanupTestCase (a full WidthTests run crashed in the next file on an animation of
+   the destroyed window).
+   Tests: ReadAlongTests 18 (+4: textScript and anchors vs numbers printed by the web code, ChapterText load / follow / text-only / 503 / 404),
+   tst_d4 reader 20. Shots: build/d2shots/d4_reader{,_type,_text_only}_{light,dark}.png, d4_reader_{paper,ivory,night}_light.png.
+   ui_parity_qt: new screen "Màn đọc" (ReaderScreen/ReaderChoices/ReaderLogic ~ ReaderScreen.tsx, labels.ts readerHint/chapterOpenProblem).
+- Open (D4): reader has no "Tìm trong sách" (FindInBook), no sentence selection bar (Chép / Sửa câu này / cách đọc), no keyboard walk over
+  sentences, no read-aloud voice for text-only chapters (Qt plays recorded audio only, so the hint says "Máy này chưa có giọng đọc."), no
+  "?at=" open-at-sentence (only FindInBook uses it).
+
 ## D3 — chỗ hở của D2 (cloud, branch dev/cloud-qtd3 from origin/dev/desk-qt 775209ea), 26-10-2026
 
 Same Linux setup as D2: Qt 6.10.2 from conda-forge (installed here with py-rattler into /opt/qt6env - micro.mamba.pm is blocked, conda.anaconda.org

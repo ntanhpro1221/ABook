@@ -293,7 +293,7 @@ Item {
                 const a = more.mapToItem(menu, 0, 0)
                 verify(panel.y + panel.height <= a.y + 0.5 || panel.y >= a.y + more.height - 0.5,
                        "menu trên / dưới nút “…”, không đè lên nó (" + panel.y + "," + panel.height + " vs " + a.y + ")")
-                compare(panel.height, 3 * Theme.buttonHeight + 2 * menu.pad)
+                compare(panel.height, 4 * Theme.buttonHeight + 2 * menu.pad)     // + "Đọc chương này" (D4)
                 menu.close()
                 tryCompare(menu, "shown", 0)
             }

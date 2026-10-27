@@ -21,6 +21,7 @@ KOTLIN_OUT = ROOT / "mobile/android/app/src/main/java/vn/abook/player/ui/compone
 ICONS = sorted({
     "arrow-down-wide-narrow",
     "arrow-left",
+    "arrow-right",
     "audio-lines",
     "battery-charging",
     "bluetooth",
@@ -96,6 +97,7 @@ ICONS = sorted({
     "trash-2",
     "triangle-alert",
     "tv",
+    "type",
     "unplug",
     "upload",
     "wifi-off",

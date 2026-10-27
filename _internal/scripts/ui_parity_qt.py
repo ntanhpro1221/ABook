@@ -75,6 +75,8 @@ SCREENS: list[tuple[str, tuple[str, ...], tuple[tuple[str, tuple[str, ...] | Non
       ("listen/BookScreen.tsx", ("ChapterRow",)), ("listen/labels.ts", None), ("listen/sleep.ts", None))),
     ("Đọc theo", ("ReadAlongView.qml",),
      (("listen/ReadAlongText.tsx", None), ("listen/PlayerViews.tsx", ("ReadAlong",)))),
+    ("Màn đọc", ("ReaderScreen.qml", "ReaderChoices.qml", "ReaderLogic.js"),
+     (("listen/ReaderScreen.tsx", None), ("listen/labels.ts", ("readerHint", "chapterOpenProblem")), ("listen/ReadAlongText.tsx", ("JumpToPlaying",)))),
     ("Trang sách", ("BookPage.qml",),
      (("listen/BookScreen.tsx", None), ("listen/labels.ts", None))),
     ("Cài đặt", ("SettingsScreen.qml", "SettingsBody.qml", "Settings*.qml", "Voice*.qml", "VoiceLogic.js", "ProviderKey.qml",

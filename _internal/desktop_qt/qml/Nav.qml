@@ -14,7 +14,21 @@ QtObject {
         if (stack) stack.show(1)
     }
 
+    // Mép trên của vùng thông báo (px, toạ độ cửa sổ); 0 = chỗ thường dưới thanh tiêu đề. Màn đọc đặt nó dưới thanh đầu của mình (--toast-top của web).
+    property real toastTop: 0
+
     function openLayer(layer) { layers = layers.concat([layer]) }
+    // Cú bấm bắt đầu khi một lớp phủ cả cửa sổ (bảng nổi, hộp thoại: `coversWindow`) đang mở mà `item` không nằm trong lớp ấy: cú bấm ấy là để đóng
+    // lớp / bấm trong lớp, không phải bấm vào `item` bên dưới. Qt 6 đưa cú bấm tới mọi TapHandler dưới điểm, kể cả handler nằm dưới lớp.
+    function coveredFor(item) {
+        for (const layer of layers) {
+            if (!layer || !layer.coversWindow) continue
+            let inside = false
+            for (let node = item; node; node = node.parent) if (node === layer) { inside = true; break }
+            if (!inside) return true
+        }
+        return false
+    }
     function closedLayer(layer) { layers = layers.filter(l => l !== layer) }
 
     function back() {

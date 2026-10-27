@@ -15,6 +15,16 @@
 #include <QVariantList>
 #include <QtQml/qqmlregistration.h>
 
+class QTextDocument;
+
+/// Hình học chữ dùng chung cho ReadAlong và ChapterText (màn đọc).
+namespace ReadAlongLayout {
+/// Một hình chữ nhật cho mỗi dòng chữ mà đoạn [start, end) của tài liệu đi qua (toạ độ tài liệu = toạ độ TextEdit).
+QVariantList rangeRects(QTextDocument *doc, int start, int end);
+/// Chữ [0, heardEnd) màu "đã nghe", phần còn lại màu thường.
+void shadeRange(QTextDocument *doc, int heardEnd, const QColor &heard, const QColor &normal);
+} // namespace ReadAlongLayout
+
 /// Các đoạn của chương: một dòng một đoạn (ListView ảo hoá, chỉ dựng đoạn đang thấy).
 class ScriptModel : public QAbstractListModel {
     Q_OBJECT

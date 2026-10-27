@@ -1,8 +1,10 @@
 // Bộ thử "Đọc theo" và phần nghe của trang sách: kịch bản -> đoạn / câu / chữ, câu và chữ đang đọc ở một giây (chỉ phát tín hiệu khi đổi),
 // luật cuộn theo, nhãn nút chính của trang sách.
 #include "bookdetail.h"
+#include "chaptertext.h"
 #include "fakes.h"
 #include "readalong.h"
+#include "textscript.h"
 
 #include <QSignalSpy>
 #include <QTemporaryDir>
@@ -210,6 +212,112 @@ private slots:
         rig.out.pos = 60;
         QVERIFY(rig.read->listenFrom(1, 20));                   // nhảy xa: có lời nhắn và "Quay lại"
         QCOMPARE(rig.player->notice(), QStringLiteral("Nghe từ “sáu bảy.”"));
+    }
+
+    // ---- màn đọc "Đọc chương này": chữ của chương chỉ có chữ, mốc chỗ đọc, ChapterText (số mẫu lấy từ bản web: vitest in ra) ----
+    void textScriptMatchesTheWeb() {
+        const QJsonArray a = TextScript::textScript(1, QStringLiteral("Chương 1"),
+            QStringLiteral("Chương 1\n\nDòng một bị bẻ\ngiữa câu.\n\n* * *\n\nĐoạn [note123] cuối.\n")).value(QStringLiteral("segments")).toArray();
+        QCOMPARE(a.size(), 4);
+        QCOMPARE(a[0].toObject().value(QStringLiteral("kind")).toString(), QStringLiteral("heading"));
+        QCOMPARE(a[1].toObject().value(QStringLiteral("text")).toString(), QStringLiteral("Dòng một bị bẻ giữa câu."));
+        QVERIFY(a[2].toObject().value(QStringLiteral("sceneBreak")).toBool());
+        QCOMPARE(a[3].toObject().value(QStringLiteral("text")).toString(), QStringLiteral("Đoạn cuối."));
+        QVERIFY(a[3].toObject().value(QStringLiteral("start")).isNull());
+        // không dòng trống: mỗi dòng một đoạn; dòng người nghe bỏ (skip) ở đầu chương không còn; "◆" là dòng ngăn cảnh
+        const QJsonArray b = TextScript::textScript(2, QStringLiteral("X"), QStringLiteral("Nguồn: web\nCâu một.\nCâu hai.\n◆\nCâu ba."),
+            {QStringLiteral("Nguồn: web")}).value(QStringLiteral("segments")).toArray();
+        QCOMPARE(b.size(), 4);
+        QCOMPARE(b[0].toObject().value(QStringLiteral("text")).toString(), QStringLiteral("Câu một."));
+        QCOMPARE(b[0].toObject().value(QStringLiteral("kind")).toString(), QStringLiteral("narration"));
+        QVERIFY(b[2].toObject().value(QStringLiteral("sceneBreak")).toBool());
+        QVERIFY(TextScript::isSceneBreakLine(QStringLiteral("-"), true));
+        QVERIFY(!TextScript::isSceneBreakLine(QStringLiteral("-"), false));
+        QVERIFY(!TextScript::isSceneBreakLine(QStringLiteral("...")));
+    }
+
+    void readingAnchorMatchesTheWeb() {
+        QCOMPARE(TextScript::fingerprint({QStringLiteral("Một câu."), QStringLiteral("Câu hai — dài hơn.")}), QStringLiteral("fnv1a64:63b46276f06be2d2"));
+        QCOMPARE(TextScript::fingerprint({QStringLiteral("Đoạn")}), QStringLiteral("fnv1a64:4c6947f5a77b6032"));
+        const QStringList texts{QStringLiteral("A b"), QStringLiteral("Xin chào bạn"), QStringLiteral("c")};
+        const QVariantMap anchor = TextScript::makeAnchor(texts, 1, 2, TextScript::fingerprint(texts));
+        QCOMPARE(anchor.value(QStringLiteral("charOffset")).toInt(), 9);
+        QCOMPARE(anchor.value(QStringLiteral("textHash")).toString(), QStringLiteral("fnv1a64:6d56226d3d66dcf7"));
+        QCOMPARE(anchor.value(QStringLiteral("paragraphHash")).toString(), QStringLiteral("fnv1a64:ba88d4ff098b8733"));
+        // câu trích: đoạn gần chỉ số cũ nhất; mốc lệch băm chương: tìm đoạn đúng băm đoạn
+        const QStringList p{QStringLiteral("a"), QStringLiteral("Xin chào bạn"), QStringLiteral("c"), QStringLiteral("Xin chào bạn")};
+        const QString hash = TextScript::fingerprint(p);
+        QCOMPARE(TextScript::readingIndex(p, {{QStringLiteral("index"), 3}, {QStringLiteral("quote"), QStringLiteral("Xin chào")}}, hash), 3);
+        const QVariantMap moved{{QStringLiteral("segment"), 7}, {QStringLiteral("charOffset"), 0}, {QStringLiteral("textHash"), QStringLiteral("fnv1a64:0000000000000000")},
+            {QStringLiteral("paragraphHash"), TextScript::fingerprint({QStringLiteral("c")})}};
+        QCOMPARE(TextScript::readingIndex(p, {{QStringLiteral("index"), 0}, {QStringLiteral("anchor"), moved}}, hash), 2);
+        QCOMPARE(TextScript::readingIndex(p, {{QStringLiteral("index"), 99}}, hash), 3);
+    }
+
+    void chapterTextLoadsAnyChapterAndFollowsOnlyWhenPlayingThere() {
+        Rig rig;
+        ChapterText text(rig.player.get(), &rig.net);
+        QSignalSpy status(&text, &ChapterText::statusChanged);
+        text.setBookId(QStringLiteral("a"));
+        text.setChapterId(1);
+        QTRY_COMPARE(text.status(), QStringLiteral("ready"));
+        QVERIFY(text.timed());
+        QCOMPARE(text.segmentCount(), 6);
+        QCOMPARE(text.paragraphs()->rowCount(), 5);
+        QVERIFY(!text.listeningHere());
+        QCOMPARE(text.currentSegment(), -1);                    // không nghe chương này: không câu nào sáng
+        QCOMPARE(text.paragraphOf(2), 1);
+        QCOMPARE(text.firstOf(1), 1);
+        QCOMPARE(text.quoteOf(1), QStringLiteral("Một hai ba bốn."));
+        QCOMPARE(text.anchorOf(1).value(QStringLiteral("segment")).toInt(), 1);
+        // bấm chữ khi cuốn chưa ở trình phát: nạp cuốn, đúng chương, đúng mốc chữ; màn đọc theo
+        QSignalSpy listened(&text, &ChapterText::listened);
+        text.setActive(true);
+        QVERIFY(text.listenFrom(1, 20));
+        QCOMPARE(listened.size(), 1);
+        QTRY_VERIFY(rig.player->loaded());
+        QCOMPARE(rig.player->chapterId(), 1);
+        QVERIFY(text.listeningHere());
+        rig.out.pos = 7.0;
+        text.update();
+        QCOMPARE(text.currentSegment(), 2);
+        QCOMPARE(text.currentPara(), 1);
+        QSignalSpy segments(&text, &ChapterText::currentSegmentChanged);
+        for (int i = 0; i < 4; ++i) text.update();
+        QCOMPARE(segments.size(), 0);                           // cùng câu: không tín hiệu
+        // trình phát sang chương khác: chương đang đọc không còn sáng
+        rig.player->jumpTo(2, 0);
+        QVERIFY(!text.listeningHere());
+        QCOMPARE(text.currentSegment(), -1);
+    }
+
+    void chapterTextTextOnlyAndFailures() {
+        Rig rig;
+        rig.net.answers.insert(QStringLiteral("GET /api/listen/books/a/chapters/3/text"),
+            QJsonObject{{QStringLiteral("text"), QStringLiteral("Chương ba\n\nMột.\n\nHai.")}});
+        ChapterText text(rig.player.get(), &rig.net);
+        text.setBookId(QStringLiteral("a"));
+        text.setTitle(QStringLiteral("Chương ba"));
+        text.setTextOnly(true);
+        text.setChapterId(3);
+        QTRY_COMPARE(text.status(), QStringLiteral("ready"));
+        QVERIFY(!text.timed());                                 // chữ không mốc: dàn được, không nghe được
+        QCOMPARE(text.segmentCount(), 3);
+        QVERIFY(!text.canListenAt(1));
+        QVERIFY(!text.listenSegment(1));
+        QVERIFY(!rig.player->loaded());
+        // máy giữ sách không trả lời: lời của máy chủ đi lên màn
+        rig.net.statuses.insert(QStringLiteral("GET /api/listen/books/a/chapters/4/text"), 503);
+        rig.net.answers.insert(QStringLiteral("GET /api/listen/books/a/chapters/4/text"), QJsonObject{{QStringLiteral("message"), QStringLiteral("Máy kia chưa trả lời.")}});
+        text.setChapterId(4);
+        QTRY_COMPARE(text.status(), QStringLiteral("failed"));
+        QCOMPARE(text.errorStatus(), 503);
+        QCOMPARE(text.errorMessage(), QStringLiteral("Máy kia chưa trả lời."));
+        // chương có audio không có kịch bản: 404
+        text.setTextOnly(false);
+        text.setChapterId(9);
+        QTRY_COMPARE(text.errorStatus(), 404);
+        QCOMPARE(text.status(), QStringLiteral("failed"));
     }
 
     void bookDetailSaysWhereToContinue() {

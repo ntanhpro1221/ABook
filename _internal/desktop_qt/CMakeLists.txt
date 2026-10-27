@@ -63,6 +63,9 @@ qt_add_executable(ABookDesk WIN32
     src/audioout_mf.h
     src/bookdetail.cpp
     src/bookdetail.h
+    src/chaptertext.cpp
+    src/chaptertext.h
+    src/textscript.h
     src/readalong.cpp
     src/readalong.h
     src/scriptlogic.h
@@ -245,6 +248,9 @@ qt_add_qml_module(ABookDesk
         qml/PeerStudio.js
         qml/PlayerKeys.qml
         qml/ShortcutsDialog.qml
+        qml/ReaderScreen.qml
+        qml/ReaderChoices.qml
+        qml/ReaderLogic.js
         qml/BenchScenario.qml
     RESOURCES
         fonts/BeVietnamPro-Regular.ttf
@@ -269,7 +275,8 @@ if(MSVC)
     target_compile_options(PlayerTests PRIVATE /W3 /utf-8)
 endif()
 # "Đọc theo" + trang sách: cần Qt Quick (QQuickTextDocument) nên là bộ thử riêng, vẫn không cần thiết bị âm thanh hay host
-qt_add_executable(ReadAlongTests tests/test_readalong.cpp tests/fakes.h src/readalong.cpp src/readalong.h src/scriptlogic.h src/bookdetail.cpp src/bookdetail.h ${ABOOK_PLAYER_SOURCES})
+qt_add_executable(ReadAlongTests tests/test_readalong.cpp tests/fakes.h src/readalong.cpp src/readalong.h src/scriptlogic.h src/bookdetail.cpp src/bookdetail.h
+    src/chaptertext.cpp src/chaptertext.h src/textscript.h ${ABOOK_PLAYER_SOURCES})
 target_include_directories(ReadAlongTests PRIVATE src tests)
 target_compile_definitions(ReadAlongTests PRIVATE QT_NO_CAST_FROM_ASCII)
 target_link_libraries(ReadAlongTests PRIVATE Qt6::Test Qt6::Quick Qt6::Network)
@@ -312,7 +319,8 @@ if(MSVC)
 endif()
 add_test(NAME DesktopApiTests COMMAND DesktopApiTests)
 qt_add_executable(WidthTests tests/test_width.cpp tests/fakes.h src/bookdetail.cpp src/bookdetail.h
-    src/readalong.cpp src/readalong.h src/music.cpp src/music.h src/feedback.cpp src/feedback.h ${ABOOK_PLAYER_SOURCES} ${ABOOK_MUSIC_SOURCES})
+    src/readalong.cpp src/readalong.h src/chaptertext.cpp src/chaptertext.h src/textscript.h src/music.cpp src/music.h src/feedback.cpp src/feedback.h
+    ${ABOOK_PLAYER_SOURCES} ${ABOOK_MUSIC_SOURCES})
 target_include_directories(WidthTests PRIVATE src tests)
 target_compile_definitions(WidthTests PRIVATE QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/width"
     WIDTH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")

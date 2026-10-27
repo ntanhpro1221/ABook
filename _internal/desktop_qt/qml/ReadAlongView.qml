@@ -7,15 +7,44 @@ import ABook
 // thôi cuộn 1,5 giây mà câu đang đọc nằm trong khung thì theo lại. Bấm một câu (hay một chữ) là nghe từ đó.
 // Mặt đọc (Cài đặt › Giao diện › "Nền đọc", Theme.read; .reading-surface của web): nền, chữ, chữ phụ, màu nhấn và lớp tô câu / chữ của vùng này
 // theo MẶT ĐỌC chứ không theo giao diện của app; đổi mặt thì nền và chữ mờ chéo theo motionSlow.
+// `source`: ReadAlong (chương đang phát, màn Đang nghe) hay một ChapterText (màn đọc "Đọc chương này") - cùng giao diện. Cỡ chữ / giãn dòng là của màn
+// đọc (Api.reader, "Cỡ chữ và giãn dòng" ở thanh dưới màn đọc): đổi ở đó là chữ ở đây đổi theo.
 Item {
     id: root
+    property QtObject source: ReadAlong
+    // Màn đọc dàn cả chương chưa có mốc (chương chỉ có chữ, chưa thu); Đang nghe chỉ hiện chữ có mốc
+    property bool untimed: false
+    // Đầu / cuối danh sách (lời nhắc, thẻ "Chương tiếp theo" của màn đọc), cuộn cùng chữ
+    property Component header: null
+    property Component footer: null
+    property real headingScale: 1.4
+    property real topPad: 24
+    property real bottomPad: 96
+    // Khoảng từ đáy khung tới đáy viên "Tới câu đang nghe" (màn đọc: trên thanh nổi)
+    property real chipBottom: Theme.s24
+    readonly property alias view: list
+    readonly property real textW: Math.min(width - 40, textMax)
+    // Lớp nằm trên chữ (thanh nổi, bảng nổi): TapHandler của chữ vẫn thấy cú bấm trên chúng (Qt 6 đưa cú bấm tới mọi handler dưới điểm), nên chữ tự bỏ qua
+    property var overlays: []
+    function covered(scene) {
+        for (const item of overlays.concat([chip])) {
+            if (!item || !item.visible || item.opacity === 0) continue
+            const local = item.mapFromItem(null, scene.x, scene.y)
+            if (item.contains(local)) return true
+        }
+        return false
+    }
+    signal userScrolled()       // người tự cuộn (lăn, kéo, thanh cuộn)
+    signal pageTapped()         // bấm vào chữ
+    signal scrolled()           // khung cuộn đổi chỗ (người hay app)
     property bool following: true
     property string placement: "inside"
     property bool firstPlacement: true
-    readonly property real fontPx: Math.max(14, Number(Platform.setting("readingSize", String(Theme.sizeReading))))
-    readonly property real leading: Math.max(1.2, Number(Platform.setting("readingLeading", String(Theme.lineHeightReading))))
-    readonly property bool showChip: !following && ReadAlong.currentSegment >= 0 && placement !== "inside"
-    readonly property real textMax: 640
+    readonly property real fontPx: Math.max(14, Number(Api.reader.size || Theme.sizeReading))
+    readonly property real leading: Math.max(1.2, Number(Api.reader.leading || Theme.lineHeightReading))
+    Component.onCompleted: Api.loadReader()
+    readonly property bool showChip: !following && root.source.currentSegment >= 0 && placement !== "inside"
+    property real textMax: 640
     readonly property var surface: Theme.read
     property color surfaceBg: surface.bg
     Behavior on surfaceBg { ColorAnimation { duration: Theme.reduceMotion ? Math.min(Theme.motionFast, 120) : Theme.motionSlow; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard } }
@@ -23,12 +52,13 @@ Item {
 
     // ---- đi theo giọng ----
     function manual() {
+        root.userScrolled()
         following = false
         followAnim.stop()
         settle.restart()
     }
-    function minY() { return -list.topMargin }
-    function maxY() { return Math.max(minY(), list.contentHeight - list.height + list.bottomMargin) }
+    function minY() { return list.originY - list.topMargin }
+    function maxY() { return Math.max(minY(), list.originY + list.contentHeight - list.height + list.bottomMargin) }
     function scrollTo(y, animate) {
         const target = Math.max(minY(), Math.min(maxY(), y))
         followAnim.stop()
@@ -41,7 +71,7 @@ Item {
         followAnim.start()
     }
     function currentBox() {
-        const item = list.itemAtIndex(ReadAlong.currentPara)
+        const item = list.itemAtIndex(root.source.currentPara)
         if (!item || item.sentRects.length === 0) return null
         const first = item.sentRects[0]
         const last = item.sentRects[item.sentRects.length - 1]
@@ -49,28 +79,28 @@ Item {
         return { top: base + first.y, bottom: base + last.y + last.height }
     }
     function refreshPlacement() {
-        if (ReadAlong.currentSegment < 0) {
+        if (root.source.currentSegment < 0) {
             placement = "inside"
             return
         }
         const box = currentBox()
         if (box) {
-            placement = ReadAlong.placement(box.top, box.bottom, 0, list.height)
+            placement = root.source.placement(box.top, box.bottom, 0, list.height)
             return
         }
         const middle = list.indexAt(list.width / 2, list.contentY + list.height / 2)
-        placement = middle >= 0 && ReadAlong.currentPara < middle ? "above" : "below"
+        placement = middle >= 0 && root.source.currentPara < middle ? "above" : "below"
     }
     function follow(animate) {
-        if (ReadAlong.currentSegment < 0 || ReadAlong.currentPara < 0) return
+        if (root.source.currentSegment < 0 || root.source.currentPara < 0) return
         const box = currentBox()
         if (!box) {
             // Đoạn chưa dựng (nhảy xa, mới mở): đưa nó vào rồi đợi nó báo hình chữ nhật của câu (currentRectsChanged)
-            list.positionViewAtIndex(ReadAlong.currentPara, ListView.Beginning)
+            list.positionViewAtIndex(root.source.currentPara, ListView.Beginning)
             return
         }
-        if (firstPlacement || ReadAlong.needsFollow(box.top, box.bottom, 0, list.height))
-            scrollTo(ReadAlong.followTop(box.top, 0, list.height, list.contentY), animate && !firstPlacement)
+        if (firstPlacement || root.source.needsFollow(box.top, box.bottom, 0, list.height))
+            scrollTo(root.source.followTop(box.top, 0, list.height, list.contentY), animate && !firstPlacement)
         firstPlacement = false
         placement = "inside"
     }
@@ -85,6 +115,35 @@ Item {
         if (following) follow(true)
         else refreshPlacement()
     }
+    // Câu đầu tiên còn thấy trong khung (follow.firstVisibleIndex): chỗ đọc của màn đọc
+    function firstVisibleSegment() {
+        const y = list.contentY + 4
+        const index = list.indexAt(list.width / 2, y)
+        if (index < 0) {
+            // trên đoạn đầu (lời nhắc, lề trên) hay dưới đoạn cuối (thẻ "Chương tiếp theo")
+            const first = list.itemAtIndex(0)
+            return !first || y < first.y ? 0 : root.source.firstOf(Math.max(0, list.count - 1))
+        }
+        const item = list.itemAtIndex(index)
+        return item ? item.segmentAtY(y - item.y) : root.source.firstOf(index)
+    }
+    // Đưa câu `segment` lên đầu khung (mở màn đọc ở chỗ đọc dở); câu đầu chương: về đầu trang (lời nhắc đứng trước câu ấy)
+    function showSegment(segment) {
+        followAnim.stop()
+        if (segment <= 0) { list.positionViewAtBeginning(); list.contentY = minY(); return }
+        const paragraph = root.source.paragraphOf(segment)
+        if (paragraph < 0) return
+        list.positionViewAtIndex(paragraph, ListView.Beginning)
+        Qt.callLater(function() {
+            const item = list.itemAtIndex(paragraph)
+            if (item) list.contentY = Math.max(minY(), Math.min(maxY(), item.y + item.lineTopOf(segment)))
+        })
+    }
+    // Câu đang nghe nằm trong khung
+    function playingInView() {
+        const box = currentBox()
+        return box !== null && root.source.placement(box.top, box.bottom, 0, list.height) === "inside"
+    }
     function goBackToReading() {
         following = true
         follow(true)
@@ -92,7 +151,7 @@ Item {
 
     Timer {
         id: settle
-        interval: ReadAlong.settleMs()
+        interval: root.source.settleMs()
         onTriggered: {
             refreshPlacement()
             if (!root.following && root.placement === "inside") root.following = true
@@ -107,11 +166,11 @@ Item {
         easing.bezierCurve: Theme.easeDecelerate
     }
     Connections {
-        target: ReadAlong
+        target: root.source
         function onCurrentSegmentChanged() { Qt.callLater(root.afterSegment) }
         function onListened() { root.following = true; root.firstPlacement = false }
         function onStatusChanged() {
-            if (ReadAlong.status === "ready") {
+            if (root.source.status === "ready") {
                 root.following = true
                 root.firstPlacement = true
             }
@@ -127,14 +186,17 @@ Item {
     ListView {
         id: list
         anchors.fill: parent
-        model: ReadAlong.timed ? ReadAlong.paragraphs : null
+        model: root.source.timed || (root.untimed && root.source.status === "ready") ? root.source.paragraphs : null
         clip: true
         cacheBuffer: 900
-        topMargin: 24
-        bottomMargin: 96
+        topMargin: root.topPad
+        bottomMargin: root.bottomPad
+        header: root.header
+        footer: root.footer
         boundsBehavior: Flickable.StopAtBounds
         onMovementStarted: root.manual()
         onContentYChanged: {
+            root.scrolled()
             if (!root.following) {
                 settle.restart()
                 root.refreshPlacement()
@@ -150,7 +212,7 @@ Item {
             readonly property real textW: Math.min(list.width - 40, root.textMax)
             readonly property bool heading: kind === "heading"
             readonly property bool scene: kind === "scene"
-            readonly property real px: heading ? Math.round(root.fontPx * 1.4) : root.fontPx
+            readonly property real px: heading ? Math.round(root.fontPx * root.headingScale) : root.fontPx
             readonly property real lineH: Math.round(px * (heading ? 1.25 : root.leading))
             readonly property real bodyY: speakerLabel.visible ? speakerLabel.height + 2 : 0
             property var sentRects: []
@@ -161,9 +223,9 @@ Item {
             height: bodyY + edit.height + (heading ? Theme.s12 : Theme.s24)
 
             function refresh() {
-                if (ReadAlong.currentPara === index) {
-                    sentRects = ReadAlong.sentenceRects(edit.textDocument, index, ReadAlong.currentSegment)
-                    wordRects = ReadAlong.wordRects(edit.textDocument, index, ReadAlong.currentSegment, ReadAlong.currentWord)
+                if (root.source.currentPara === index) {
+                    sentRects = root.source.sentenceRects(edit.textDocument, index, root.source.currentSegment)
+                    wordRects = root.source.wordRects(edit.textDocument, index, root.source.currentSegment, root.source.currentWord)
                     root.currentRectsChanged()
                 } else if (sentRects.length > 0 || wordRects.length > 0) {
                     sentRects = []
@@ -172,10 +234,20 @@ Item {
                 refreshHover()
             }
             function refreshHover() {
-                hoverRects = hoverSeg >= 0 && hoverSeg !== ReadAlong.currentSegment ? ReadAlong.sentenceRects(edit.textDocument, index, hoverSeg) : []
+                hoverRects = hoverSeg >= 0 && hoverSeg !== root.source.currentSegment ? root.source.sentenceRects(edit.textDocument, index, hoverSeg) : []
+            }
+            // Câu có dòng chữ ở toạ độ `y` của dòng (ngay dưới mép trên khung), và đỉnh dòng đầu của một câu
+            function segmentAtY(y) {
+                const local = y - bodyY
+                if (local <= 0) return root.source.firstOf(index)
+                return root.source.segmentAt(index, edit.positionAt(0, Math.min(local, edit.height - 1)))
+            }
+            function lineTopOf(segment) {
+                const rects = root.source.sentenceRects(edit.textDocument, index, segment)
+                return rects.length ? bodyY + rects[0].y : 0
             }
             function shade() {
-                ReadAlong.shade(edit.textDocument, index, root.surface.fg2, root.surface.fg)
+                root.source.shade(edit.textDocument, index, root.surface.fg2, root.surface.fg)
             }
             onHoverSegChanged: refreshHover()
 
@@ -243,22 +315,22 @@ Item {
                     onContentHeightChanged: del.refresh()
                     onWidthChanged: del.refresh()
                     Component.onCompleted: {
-                        ReadAlong.setLineHeight(textDocument, del.lineH)
+                        root.source.setLineHeight(textDocument, del.lineH)
                         del.shade()
                         del.refresh()
                     }
                 }
             }
             Connections {
-                target: ReadAlong
+                target: root.source
                 function onCurrentSegmentChanged() {
-                    if (ReadAlong.currentPara === del.index) del.shade()
+                    if (root.source.currentPara === del.index) del.shade()
                     del.refresh()
                 }
                 function onCurrentParaChanged() { del.shade(); del.refresh() }
                 function onCurrentWordChanged() {
-                    if (ReadAlong.currentPara === del.index)
-                        del.wordRects = ReadAlong.wordRects(edit.textDocument, del.index, ReadAlong.currentSegment, ReadAlong.currentWord)
+                    if (root.source.currentPara === del.index)
+                        del.wordRects = root.source.wordRects(edit.textDocument, del.index, root.source.currentSegment, root.source.currentWord)
                 }
             }
             Connections {
@@ -273,15 +345,20 @@ Item {
                         del.hoverSeg = -1
                         return
                     }
-                    del.hoverSeg = ReadAlong.segmentAt(del.index, edit.positionAt(point.position.x - body.x, y))
+                    del.hoverSeg = root.source.segmentAt(del.index, edit.positionAt(point.position.x - body.x, y))
                 }
                 onHoveredChanged: if (!hovered) del.hoverSeg = -1
             }
             TapHandler {
+                property bool covered: false
+                onPressedChanged: if (pressed) covered = Nav.coveredFor(del)
                 onTapped: (eventPoint) => {
+                    if (covered) return
+                    if (root.covered(del.mapToItem(null, eventPoint.position.x, eventPoint.position.y))) return
+                    root.pageTapped()
                     const y = eventPoint.position.y - body.y
                     if (y < 0 || y > edit.height) return
-                    ReadAlong.listenFrom(del.index, edit.positionAt(eventPoint.position.x - body.x, y))
+                    root.source.listenFrom(del.index, edit.positionAt(eventPoint.position.x - body.x, y))
                 }
             }
         }
@@ -314,8 +391,8 @@ Item {
         width: Math.min(parent.width - 2 * Theme.s24, 360)
         horizontalAlignment: Text.AlignHCenter
         wrapMode: Text.Wrap
-        visible: ReadAlong.status === "loading" || ReadAlong.status === "failed"
-        text: ReadAlong.status === "loading" ? "Đang mở văn bản chương…" : "Chưa mở được văn bản chương này."
+        visible: !root.untimed && (root.source.status === "loading" || root.source.status === "failed")
+        text: root.source.status === "loading" ? "Đang mở văn bản chương…" : "Chưa mở được văn bản chương này."
         color: root.surface.fg2
         font.pixelSize: Theme.sizeBodySmall
     }
@@ -325,7 +402,7 @@ Item {
         id: chip
         readonly property bool shown: root.showChip
         anchors.horizontalCenter: parent.horizontalCenter
-        y: parent.height - height - Theme.s24 + (shown ? 0 : 16)
+        y: parent.height - height - root.chipBottom + (shown ? 0 : 16)
         width: chipRow.implicitWidth + 2 * Theme.s16
         height: 40
         radius: height / 2

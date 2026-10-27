@@ -35,7 +35,10 @@ TestCase {
     }
     function cleanupTestCase() {
         Nav.layers = []
+        // Cửa sổ ẩn rồi mới huỷ, và đợi huỷ xong: hoạt cảnh còn chạy của cửa sổ không được chạm vật đã huỷ khi tệp thử kế bắt đầu
+        win.visible = false
         win.destroy()
+        wait(100)
         Nav.stack = null
         Theme.reduceMotion = false
         Theme.readingSurface = "auto"

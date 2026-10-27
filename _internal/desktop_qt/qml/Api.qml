@@ -29,6 +29,21 @@ QtObject {
         notice = ""
         if (action && action.run) action.run()
     }
+    // Cỡ chữ / giãn dòng của chữ đọc và "đã nghe từ một câu" (ReaderPrefs của ReaderScreen.tsx, localStorage "abook-reader"): đổi ở màn đọc là
+    // "Đọc theo" của Đang nghe đổi theo. Chỉ giữ cái người đã chọn; chưa chọn thì nơi dùng lấy Theme.sizeReading / Theme.lineHeightReading.
+    property var reader: ({})
+    property bool readerLoaded: false
+    function loadReader() {
+        if (readerLoaded) return
+        readerLoaded = true
+        try { const saved = JSON.parse(store("abook-reader") || "{}"); if (saved && typeof saved === "object") reader = saved }
+        catch (error) { /* không đọc được thì như chưa chọn */ }
+    }
+    function setReader(changes) {
+        loadReader()
+        reader = Object.assign({}, reader, changes)
+        store("abook-reader", JSON.stringify(reader))
+    }
     property string voiceName: ""          // tên giọng đọc mặc định (dòng tóm tắt "Giọng đọc", useDefaultVoiceName của web)
     property string defaultVoice: ""       // mã giọng mặc định ("" = chưa chọn): localStorage "abook-readaloud-voice" của web + tuỳ chọn readAloudVoice (App.tsx)
     property var voiceList: []             // danh sách giọng lần hỏi gần nhất (GET /api/readaloud/voices)

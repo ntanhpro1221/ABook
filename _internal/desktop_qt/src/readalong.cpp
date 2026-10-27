@@ -15,9 +15,10 @@ ReadAlong *g_instance = nullptr;
 constexpr int kTickMs = 60;
 constexpr int kDropMs = 8000;
 constexpr double kPrefetchSeconds = 30;
+} // namespace
 
 /// Một hình chữ nhật cho mỗi dòng chữ mà đoạn [start, end) của tài liệu đi qua (toạ độ tài liệu = toạ độ TextEdit).
-QVariantList rangeRects(QTextDocument *doc, int start, int end) {
+QVariantList ReadAlongLayout::rangeRects(QTextDocument *doc, int start, int end) {
     QVariantList out;
     if (!doc || start >= end)
         return out;
@@ -43,7 +44,26 @@ QVariantList rangeRects(QTextDocument *doc, int start, int end) {
     }
     return out;
 }
-} // namespace
+
+void ReadAlongLayout::shadeRange(QTextDocument *doc, int heardEnd, const QColor &heard, const QColor &normal) {
+    if (!doc)
+        return;
+    const int length = doc->characterCount() - 1;
+    heardEnd = qBound(0, heardEnd, length);
+    QTextCursor cursor(doc);
+    cursor.beginEditBlock();
+    cursor.setPosition(0);
+    cursor.setPosition(heardEnd, QTextCursor::KeepAnchor);
+    QTextCharFormat dim;
+    dim.setForeground(heard);
+    cursor.mergeCharFormat(dim);
+    cursor.setPosition(heardEnd);
+    cursor.setPosition(length, QTextCursor::KeepAnchor);
+    QTextCharFormat plain;
+    plain.setForeground(normal);
+    cursor.mergeCharFormat(plain);
+    cursor.endEditBlock();
+}
 
 // ------------------------------------------------------------------------------------------------------------------ ScriptModel
 
@@ -264,7 +284,7 @@ QVariantList ReadAlong::sentenceRects(QQuickTextDocument *document, int paragrap
     const Segment &item = script.segments[segment];
     if (item.paragraph != paragraph)
         return {};
-    return rangeRects(document->textDocument(), item.textStart, item.textEnd);
+    return ReadAlongLayout::rangeRects(document->textDocument(), item.textStart, item.textEnd);
 }
 
 QVariantList ReadAlong::wordRects(QQuickTextDocument *document, int paragraph, int segment, int word) const {
@@ -274,7 +294,7 @@ QVariantList ReadAlong::wordRects(QQuickTextDocument *document, int paragraph, i
     const Segment &item = script.segments[segment];
     if (item.paragraph != paragraph || word < 0 || word >= item.wordChars.size() || item.words.isEmpty())
         return {};
-    return rangeRects(document->textDocument(), item.wordChars[word].first, item.wordChars[word].second);
+    return ReadAlongLayout::rangeRects(document->textDocument(), item.wordChars[word].first, item.wordChars[word].second);
 }
 
 int ReadAlong::segmentAt(int paragraph, int position) const {
@@ -307,28 +327,14 @@ void ReadAlong::shade(QQuickTextDocument *document, int paragraph, const QColor 
         return;
     const Script &script = m_model.script();
     QTextDocument *doc = document->textDocument();
-    const int length = doc->characterCount() - 1;
     int heardEnd = 0;
     if (m_segment >= 0 && paragraph >= 0 && paragraph < script.paragraphs.size()) {
         if (paragraph < m_para)
-            heardEnd = length;
+            heardEnd = doc->characterCount() - 1;
         else if (paragraph == m_para)
             heardEnd = script.segments[m_segment].textStart;
     }
-    heardEnd = qMin(heardEnd, length);
-    QTextCursor cursor(doc);
-    cursor.beginEditBlock();
-    cursor.setPosition(0);
-    cursor.setPosition(heardEnd, QTextCursor::KeepAnchor);
-    QTextCharFormat dim;
-    dim.setForeground(heard);
-    cursor.mergeCharFormat(dim);
-    cursor.setPosition(heardEnd);
-    cursor.setPosition(length, QTextCursor::KeepAnchor);
-    QTextCharFormat plain;
-    plain.setForeground(normal);
-    cursor.mergeCharFormat(plain);
-    cursor.endEditBlock();
+    ReadAlongLayout::shadeRange(doc, heardEnd, heard, normal);
 }
 
 bool ReadAlong::listenFrom(int paragraph, int position) {
