@@ -102,6 +102,7 @@ Item {
             target.Window.window.update()
             waitForRendering(target)
             wait(300)
+            qtGlyphAudit.scan()
             const img = grabImage(target)
             const path = Qt.resolvedUrl("../../build/d2shots/" + name + "_" + (Theme.dark ? "dark" : "light") + ".png").toString()
                 .replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, "")
@@ -159,7 +160,7 @@ Item {
             verify(code.visible)
             verify(texts(code).join("").indexOf("483") >= 0)
             verify(shown(page, "Mã ghép thiết bị"))
-            verify(shown(page, "Trên máy kia: Cài đặt › Thiết bị → chọn NGDtuanh-PC → nhập mã."))
+            verify(shown(page, "Trên máy kia: Cài đặt › Thiết bị › chọn NGDtuanh-PC › nhập mã."))
             verify(shown(page, "Đang hiện mã ghép"))
             verify(shown(page, "Hết hạn sau 5:00") || shown(page, "Hết hạn sau 4:59"))
             verify(shown(page, "Vân tay: AB12CD34EF56AB12CD34EF56AB12CD34EF56AB12CD34EF56AB12CD34EF56AB12"))
@@ -310,7 +311,7 @@ Item {
             verify(shown(page, "Ghép máy"))
             verify(shown(page, "Nghe sách của máy tính khác"))
             const address = byName(page, "addressField"), code = byName(page, "codeField"), connect = byName(page, "connectComputer")
-            verify(shown(page, "Máy kia: Cài đặt → Thiết bị → bật “Kết nối Wi-Fi” để lấy mã; ghép một chiều để nghe thư viện của máy ấy."))
+            verify(shown(page, "Máy kia: Cài đặt › Thiết bị › bật “Kết nối Wi-Fi” để lấy mã; ghép một chiều để nghe thư viện của máy ấy."))
             compare(connect.enabled, false)
             address.text = "192.168.1.77"
             code.text = "12a3-45678"

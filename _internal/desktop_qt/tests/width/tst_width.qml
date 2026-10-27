@@ -63,21 +63,20 @@ Item {
             tryCompare(list, "count", 32)
             let right = 0
             let rows = 0
-            let worstEmpty = 0
             for (let row of list.contentItem.children) {
                 if (row.objectName !== "bookChapterRow" || row.y < list.contentY
                     || row.y + row.height > list.contentY + list.height) continue
                 const rowRight = textInkRight(row, page)
                 right = Math.max(right, rowRight)
-                worstEmpty = Math.max(worstEmpty, (page.width - rowRight) / page.width)
                 rows++
             }
             verify(rows >= 4)
-            const empty = (page.width - right) / page.width
-            console.log("ROW_INK window=" + data.w + " content=" + page.width
-                        + " right=" + right.toFixed(2) + " empty=" + (empty * 100).toFixed(2) + "%")
-            verify(empty <= 0.35, "empty band after painted row text: " + (empty * 100).toFixed(2) + "% > 35%")
-            verify(worstEmpty <= 0.35, "every visible row must reach the ink threshold")
+            // DESIGN.md caps the complete row, including its duration/action.
+            // Measuring an empty fraction of the window would reward stretched rows.
+            verify(list.width <= Theme.listMeasure + 0.5, "chapter column exceeds readable measure")
+            const left = list.mapToItem(page, 0, 0).x
+            verify(right > left && right <= left + Theme.listMeasure + 0.5)
+            console.log("ROW_MEASURE window=" + data.w + " row=" + list.width.toFixed(2))
         }
         function test_trackRow_data() {
             return [{tag: "compact-dark", w: 300, mode: "dark"},
@@ -145,7 +144,8 @@ Item {
                 fuzzyCompare(cover.mapToItem(page, 0, 0).x, title.mapToItem(page, 0, 0).x, 1,
                              "cover and title must share their left edge")
             } else {
-                fuzzyCompare(b.x + region.width, page.width - Theme.margin, 0.5)
+                fuzzyCompare(b.x, Theme.margin, 0.5)
+                fuzzyCompare(region.width, Math.min(page.width - 2 * Theme.margin, Theme.listMeasure), 0.5)
             }
             const top = findChild(page, "scrollFadeTop")
             const bottom = findChild(page, "scrollFadeBottom")

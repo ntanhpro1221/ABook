@@ -7,7 +7,7 @@ Column {
     id: root
     PhoneSync { id: phone; width: parent.width }
     SectionBlock {
-        width: parent.width
+        width: Math.min(parent.width, Theme.listMeasure)
         title: "Máy tính khác"
         SettingsItem {
             width: parent.width

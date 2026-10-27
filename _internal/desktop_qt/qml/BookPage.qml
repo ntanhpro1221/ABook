@@ -25,7 +25,7 @@ Item {
         }
     }
     readonly property real leftWidth: Math.min(380, 320 + Math.max(0, width - Theme.widthExpanded) * 0.06)
-    readonly property real compositionWidth: Math.min(width - 2 * Theme.margin, 1360)
+    readonly property real compositionWidth: Math.min(width - 2 * Theme.margin, 1360, leftWidth + Theme.s32 + Theme.listMeasure)
     readonly property real compactCoverH: Math.min(150, height * 0.25)
     readonly property real wideCoverH: Math.max(0, Math.min(height * 0.4, stage.height - info.height - Theme.s16))
     readonly property real stackedHeight: Math.max(compactCoverH, info.height) + Theme.s24
@@ -275,7 +275,7 @@ Item {
             objectName: "bookChapterRegion"
             x: (root.leftWidth + Theme.s32) * root.summaryT
             y: Math.max(root.stackedHeight, summary.height + Theme.s24) * (1 - root.chapterT)
-            width: stage.width - x
+            width: Math.min(stage.width - x, Theme.listMeasure)
             height: Math.max(0, stage.height - y)
             Text {
                 id: chaptersTitle

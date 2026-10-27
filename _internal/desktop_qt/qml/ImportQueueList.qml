@@ -18,7 +18,8 @@ Item {
     Flickable {
         id: view
         y: 10
-        width: root.width
+        objectName: "importQueueViewport"
+        width: Math.min(root.width, Theme.listMeasure)
         height: Math.min(root.tall ? 288 : 144, column.height)
         contentWidth: width
         contentHeight: column.height

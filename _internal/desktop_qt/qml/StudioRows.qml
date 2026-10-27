@@ -6,6 +6,7 @@ import ABook
 // trong lúc hàng đang khép). Hàng có sẵn lúc đầu hiện thẳng, không tween; hàng mới đến sau thì mở ra từ chiều cao 0.
 Column {
     id: root
+    objectName: "studioRows"
     property var items: []
     property string keyField: "name"
     property Component delegate: null
@@ -42,12 +43,13 @@ Column {
         model: rows
         Collapse {
             id: cell
+            objectName: "measuredStudioRow"
             required property int index
             required property string key
             required property bool gone
             required property bool appear
             property bool entered: !appear
-            width: root.width
+            width: Math.min(root.width, Theme.listMeasure)
             open: entered && !gone
             onSettledChanged: if (settled && gone) Qt.callLater(function() { root.drop(cell.key) })  // mỗi hàng một hàm: callLater gộp các lần gọi cùng hàm
             Component.onCompleted: if (appear) Qt.callLater(function() { cell.entered = true })

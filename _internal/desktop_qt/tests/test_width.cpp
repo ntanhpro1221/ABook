@@ -5,6 +5,7 @@
 #include "music.h"
 #include "mediacontrols.h"
 #include "readalong.h"
+#include "glyphaudit.h"
 #include <QFontDatabase>
 #include <QQmlEngine>
 #include <QQmlContext>
@@ -71,10 +72,13 @@ class WidthSetup : public QObject {
     std::unique_ptr<MediaControls> media;
 public slots:
     void qmlEngineAvailable(QQmlEngine *engine) {
+        engine->rootContext()->setContextProperty(QStringLiteral("qtGlyphAudit"), audit.get());
+        engine->rootContext()->setContextProperty(QStringLiteral("qtGlyphProbe"), qEnvironmentVariableIsSet("ABOOK_GLYPH_PROBE"));
         engine->rootContext()->setContextProperty(QStringLiteral("qtWideShotDir"), qEnvironmentVariable("ABOOK_WIDE_SHOTS"));
         engine->addImageProvider(QStringLiteral("cover"), new WidthCovers);
     }
     void applicationAvailable() {
+        audit = std::make_unique<GlyphAudit>();
         for (const auto &weight : {"Regular", "Medium", "Bold"})
             QFontDatabase::addApplicationFont(QStringLiteral(WIDTH_SOURCE_DIR "/fonts/BeVietnamPro-%1.ttf").arg(QString::fromLatin1(weight)));
         QGuiApplication::setFont(QFont(QStringLiteral("Be Vietnam Pro")));
@@ -107,6 +111,8 @@ public slots:
         qmlRegisterSingletonInstance("ABook", 1, 0, "WidthNet", netView.get());
         player->open(QStringLiteral("width"), 1, 0, false);
     }
+public:
+    std::unique_ptr<GlyphAudit> audit;
 };
 
 int main(int argc, char **argv) {
@@ -115,7 +121,10 @@ int main(int argc, char **argv) {
     qputenv("QT_QPA_FONTDIR", WIDTH_SOURCE_DIR "/fonts");
     QDir().mkpath(QStringLiteral(WIDTH_SOURCE_DIR "/build/d2shots"));     // ảnh của tst_d2_*.qml
     WidthSetup setup;
-    return quick_test_main_with_setup(argc, argv, "width", QUICK_TEST_SOURCE_DIR, &setup);
+    const int result = quick_test_main_with_setup(argc, argv, "width", QUICK_TEST_SOURCE_DIR, &setup);
+    const auto file = qEnvironmentVariable("ABOOK_GLYPH_AUDIT", QStringLiteral(WIDTH_SOURCE_DIR "/build/glyph-audit.json"));
+    const bool glyphs = setup.audit && setup.audit->finish(file);
+    return result ? result : glyphs ? 0 : 1;
 }
 
 #include "test_width.moc"

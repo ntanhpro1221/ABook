@@ -114,7 +114,7 @@ Item {
     SectionBlock {
         id: thisDevice
         objectName: "thisDeviceColumn"
-        width: parent.width + ((parent.width - Theme.s32) / 2 - parent.width) * Math.min(1, root.wideT * 2)
+        width: Math.min(Theme.listMeasure, parent.width + ((parent.width - Theme.s32) / 2 - parent.width) * Math.min(1, root.wideT * 2))
         title: "Máy này"
         SettingsItem {
             width: parent.width
@@ -270,7 +270,7 @@ Item {
         objectName: "pairedDeviceColumn"
         x: (thisDevice.width + Theme.s32) * Math.min(1, root.wideT * 2)
         y: thisDevice.height * (1 - Math.max(0, root.wideT * 2 - 1))
-        width: parent.width - x
+        width: Math.min(Theme.listMeasure, parent.width - x)
         open: Boolean(root.sync && root.sync.enabled)
         SectionBlock {
             width: parent.width

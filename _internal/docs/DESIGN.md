@@ -198,6 +198,10 @@ từ expanded dùng hai cột, tối đa 1160 px, mỗi cột chữ tối đa kh
 Hẹp trở lại một cột; giữ bản nháp, mục đang chọn và vị trí cuộn khi đổi khổ.
 Studio chưa có bảng dự án trong Qt: trạng thái hiện có dùng biểu tượng cạnh
 lời nhắc ở expanded, xếp dọc khi hẹp, lời nhắc tối đa 640 px.
+Danh sách chữ không có các cột dữ liệu riêng (chương, thiết bị, hàng chờ nhập,
+mẫu sách, cách đọc chung, giọng đọc) giữ cả hàng rộng tối đa 640 px, kể cả hành động và
+thời lượng; căn theo đầu cột nội dung. Lưới bìa tiếp tục tăng số cột. Bảng dự
+án Studio khi có đủ dữ liệu dùng các cột tên · trạng thái · tiến độ · cập nhật.
 Cửa sổ mini mở ở 360 px; có thể kéo rộng: từ medium đặt nút phát cạnh tên,
 giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lại.
 Đổi khổ dùng motionMedium/easeStandard; giảm chuyển động bỏ tween hình học.
