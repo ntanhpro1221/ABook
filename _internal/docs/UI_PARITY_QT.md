@@ -7,11 +7,11 @@ icon `LucidePaths.js` sinh bởi `scripts/gen_lucide_icons.py --qml`. Bảng dư
 
 <!-- ui_parity_qt:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity_qt.py - không sửa tay, chạy lại script) -->
 
-Quét: web máy tính 1310 chữ (1036 khác nhau), 186 cặp nhãn-icon; Qt 923 chữ (687 khác nhau), 113 cặp nhãn-icon (icon dùng ở 155 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
+Quét: web máy tính 1316 chữ (1041 khác nhau), 186 cặp nhãn-icon; Qt 923 chữ (687 khác nhau), 113 cặp nhãn-icon (icon dùng ở 155 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
 
 ## a. Cùng việc, khác chữ
 
-Nhãn ngắn Qt không có nguyên văn (khoá lỏng) ở web máy tính mà giống một nhãn web CÙNG MÀN chưa có ở Qt. 17 cặp; mỗi nhãn Qt lấy một nhãn web giống nhất. Giống không có nghĩa là cùng việc: người sửa xem mã hai bên trước khi đổi.
+Nhãn ngắn Qt không có nguyên văn (khoá lỏng) ở web máy tính mà giống một nhãn web CÙNG MÀN chưa có ở Qt. 18 cặp; mỗi nhãn Qt lấy một nhãn web giống nhất. Giống không có nghĩa là cùng việc: người sửa xem mã hai bên trước khi đổi.
 
 | màn | Qt | web | giống | nơi |
 |---|---|---|---|---|
@@ -27,6 +27,7 @@ Nhãn ngắn Qt không có nguyên văn (khoá lỏng) ở web máy tính mà gi
 | Cài đặt | Tự tắt sau | Tự tắt sau {} giờ | 0.83 | `qt/SettingsScreen.qml:48` ~ `shared/settingsSummary.ts:5` |
 | Cài đặt | Đã chọn Bluetooth dự phòng | Dự phòng qua Bluetooth cho {} | 0.69 | `qt/OtherComputers.qml:84` ~ `desktop/OtherComputers.tsx:359` |
 | Cài đặt | Không cài được Studio | Chưa cài Studio | 0.67 | `qt/StudioSettings.qml:50` ~ `studio/StudioSetup.tsx:129` |
+| Thư viện | Phần | Phần {} | 1.00 | `qt/GeneratedCover.qml:23` ~ `shared/cover.ts:45` |
 | Trang sách | Thêm việc với sách | Việc với sách | 0.84 | `qt/BookPage.qml:53` ~ `listen/BookScreen.tsx:1059` |
 | Đang nghe | Dừng khi hết chương này | Sẽ dừng khi hết chương này. | 1.00 | `qt/SleepPopover.qml:16` ~ `listen/PlayerViews.tsx:2085` |
 | Đang nghe | Tuỳ chọn | Tuỳ chọn {} | 1.00 | `qt/ChapterRow.qml:100` ~ `listen/BookScreen.tsx:134` |
@@ -80,7 +81,7 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 ### Thư viện
 
 - chỉ Qt (5): Phần (`qt/GeneratedCover.qml:23`); Máy kia không trả lời* (`qt/LibraryScreen.qml:35`); Chưa mở được ABook (`qt/LibraryScreen.qml:243`); Chưa tải được thư viện (`qt/LibraryScreen.qml:243`); Thử lại* (`qt/LibraryScreen.qml:261`)
-- chỉ web (22): Nghe dở (`31`); Tất cả (`31`); Nghe ngay {} (`163`); Nghe {} (`163`); Tạm dừng {} (`163`); Đọc {} (`163`); Đang nghe (`227`); Chờ chương mới (`246`); Nghe tiếp {}{} (`248`); Sách (`334`); Mở bộ {} (`376`); Có sách trên máy khác (`384`); Chưa có sách nào (`519`); Lọc sách (`532`); Nghe xong (`534`); ...
+- chỉ web (23): Nghe dở (`31`); Tất cả (`31`); Nghe ngay {} (`163`); Nghe {} (`163`); Tạm dừng {} (`163`); Đọc {} (`163`); Đang nghe (`227`); Chờ chương mới (`246`); Nghe tiếp {}{} (`248`); Sách (`334`); Mở bộ {} (`376`); Có sách trên máy khác (`384`); Chưa có sách nào (`519`); Lọc sách (`532`); Nghe xong (`534`); ...
 
 ### Thanh phát
 
@@ -146,16 +147,11 @@ File QML chưa xếp màn (thêm vào SCREENS): `desktop_qt/qml/MusicCredit.qml`
 
 ## d. Bo góc QML không theo token
 
-Hợp lệ: `Theme.radiusControl / radiusCover / radiusSheet` (DESIGN.md 5.5, `desktop_qt/tools/gen_theme.py`), `0`, tròn (`width / 2`, `height / 2`), lấy lại bo khung chứa (`parent.radius`), vòng đồng tâm ngoài (`Theme.radiusCover + 8` của bóng, vòng tiêu điểm). Còn lại (6):
+Hợp lệ: `Theme.radiusControl / radiusCover / radiusSheet` (DESIGN.md 5.5, `desktop_qt/tools/gen_theme.py`), `0`, tròn (`width / 2`, `height / 2`), lấy lại bo khung chứa (`parent.radius`), vòng đồng tâm ngoài (`Theme.radiusCover + 8` của bóng, vòng tiêu điểm). Còn lại (0):
 
 | nơi | radius |
 |---|---|
-| `qt/ProjectsList.qml:77` | `3` |
-| `qt/ProjectsList.qml:107` | `1.5` |
-| `qt/ProjectsList.qml:119` | `3` |
-| `qt/ProjectsList.qml:127` | `3` |
-| `qt/ProjectsList.qml:333` | `12` |
-| `qt/ProjectsList.qml:334` | `3` |
+| (không có) | |
 
 ## e. Dấu thanh kiểu mới và dấu ba chấm cuối nhãn
 

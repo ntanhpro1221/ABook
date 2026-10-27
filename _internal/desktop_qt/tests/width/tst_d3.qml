@@ -130,7 +130,9 @@ Item {
             tryVerify(function() { return shown(hostBar) })
             compare(one(hostBar, "peerLine").text, "Đang mở Studio của Máy bàn phòng làm việc")
             compare(one(hostBar, "peerHome").text, "Về máy này")
-            verify(hasText(page, "Studio chưa mở trong bản này."))
+            // máy ấy cho sửa: bảng dự án của nó (D4), không phải chỗ giữ của Studio máy này
+            tryVerify(function() { return shown(one(page, "projectsTable")) })
+            verify(!hasText(page, "Studio chưa mở trong bản này."))
             one(hostBar, "peerHome").clicked()
             compare(Nav.studioPeer, "")
             compare(page.view, "own")
