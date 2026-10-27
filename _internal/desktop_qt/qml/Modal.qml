@@ -8,6 +8,7 @@ import ABook
 // tự mở lớp riêng của nó nên Back đóng trang con trước rồi mới tới hộp. Đóng thì trả tiêu điểm về chỗ đã mở hộp.
 FocusScope {
     id: root
+    readonly property bool coversWindow: true       // lớp phủ cả cửa sổ: bấm ra ngoài là đóng, không chạm nút bên dưới (Nav.coveredFor)
     anchors.fill: parent
     z: 70
     property bool open: false

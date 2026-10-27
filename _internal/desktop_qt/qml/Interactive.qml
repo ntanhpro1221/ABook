@@ -34,14 +34,17 @@ Item {
             else { tipTimer.stop(); Nav.hideTip(root) }
         }
     }
+    // Bấm bắt đầu dưới một bảng nổi / hộp thoại đang mở (Nav.coveredFor): không phải bấm vào nút này
+    property bool _covered: false
     TapHandler {
         id: tap
-        onTapped: { root.forceActiveFocus(Qt.MouseFocusReason); root.clicked() }
-        onPressedChanged: if (pressed) Nav.hideTip(root)
+        onTapped: { if (root._covered) return; root.forceActiveFocus(Qt.MouseFocusReason); root.clicked() }
+        onPressedChanged: if (pressed) { Nav.hideTip(root); root._covered = Nav.coveredFor(root) }
     }
     TapHandler {
         acceptedButtons: Qt.RightButton
-        onTapped: { root.forceActiveFocus(Qt.MouseFocusReason); root.rightClicked() }
+        onPressedChanged: if (pressed) root._covered = Nav.coveredFor(root)
+        onTapped: { if (root._covered) return; root.forceActiveFocus(Qt.MouseFocusReason); root.rightClicked() }
     }
     Timer { id: tipTimer; interval: 600; onTriggered: Nav.showTip(root, root.tip) }
 

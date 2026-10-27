@@ -5,6 +5,7 @@ import ABook
 // (ra nhanh hơn vào, DESIGN.md 5.2). Là một lớp của ngăn xếp Back: Esc, Alt+Left, nút Back của chuột hay bấm ra ngoài đều đóng.
 Item {
     id: root
+    readonly property bool coversWindow: true       // lớp phủ cả cửa sổ: bấm ra ngoài là đóng, không chạm nút bên dưới (Nav.coveredFor)
     anchors.fill: parent
     property bool open: false
     property Item anchorItem: null

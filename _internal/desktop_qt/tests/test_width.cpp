@@ -1,5 +1,6 @@
 // Actual QML screens + actual player/book/read-along, fake HTTP/audio only.
 #include "bookdetail.h"
+#include "chaptertext.h"
 #include "fakes.h"
 #include "feedback.h"
 #include "music.h"
@@ -58,6 +59,27 @@ public slots:
                 {QStringLiteral("start"), i * 2.0}, {QStringLiteral("end"), i * 2.0 + 2}});
         net.scripts.insert(QStringLiteral("/api/books/width/chapters/1/script"),
             QJsonObject{{QStringLiteral("timed"), true}, {QStringLiteral("segments"), segments}});
+        // Màn đọc (tst_d4): cuốn "reader" - chương 1 có kịch bản, chương 2 chưa có kịch bản (404), chương 3 chỉ có chữ, chương 4 máy giữ sách im (503)
+        QJsonObject reader = makeBook(QStringLiteral("reader"), 4);
+        QJsonArray readerChapters = reader.value(QStringLiteral("chapters")).toArray();
+        QJsonObject textChapter = readerChapters[2].toObject();
+        textChapter.insert(QStringLiteral("available"), false);
+        textChapter.insert(QStringLiteral("state"), QStringLiteral("text"));
+        readerChapters[2] = textChapter;
+        reader.insert(QStringLiteral("chapters"), readerChapters);
+        net.books.insert(QStringLiteral("reader"), reader);
+        QJsonArray readerSegments;
+        for (int i = 0; i < 40; ++i)
+            readerSegments.append(QJsonObject{{QStringLiteral("paragraph"), i},
+                {QStringLiteral("text"), i == 0 ? QStringLiteral("Chương 1") : QStringLiteral("Đoạn %1: buổi sáng ấy, chúng tôi đi qua con đường nhỏ bên bờ sông, gió thổi qua những hàng tre.").arg(i)},
+                {QStringLiteral("kind"), i == 0 ? QStringLiteral("heading") : QStringLiteral("narration")},
+                {QStringLiteral("start"), i * 2.0}, {QStringLiteral("end"), i * 2.0 + 2}});
+        net.scripts.insert(QStringLiteral("/api/books/reader/chapters/1/script"),
+            QJsonObject{{QStringLiteral("timed"), true}, {QStringLiteral("segments"), readerSegments}});
+        net.answers.insert(QStringLiteral("GET /api/listen/books/reader/chapters/3/text"),
+            QJsonObject{{QStringLiteral("text"), QStringLiteral("Chương 3\n\nĐoạn một của chương chỉ có chữ.\n\nĐoạn hai.")}});
+        net.answers.insert(QStringLiteral("GET /api/books/reader/chapters/4/script"), QJsonObject{{QStringLiteral("message"), QStringLiteral("Máy giữ sách chưa trả lời")}});
+        net.statuses.insert(QStringLiteral("GET /api/books/reader/chapters/4/script"), 503);
         player = std::make_unique<Player>(&audio, &net, dir.filePath(QStringLiteral("outbox.json")), nullptr);
         Player::setInstance(player.get());
         read = std::make_unique<ReadAlong>(player.get(), &net);
@@ -66,6 +88,7 @@ public slots:
         Feedback::setInstance(feedback.get());
         QObject::connect(player.get(), &Player::playingChanged, feedback.get(), [this] { feedback->setBookPlaying(player->playing()); });
         qmlRegisterType<BookDetail>("ABook", 1, 0, "BookDetail");
+        qmlRegisterType<ChapterText>("ABook", 1, 0, "ChapterText");
         qmlRegisterSingletonInstance("ABook", 1, 0, "Player", player.get());
         qmlRegisterSingletonInstance("ABook", 1, 0, "ReadAlong", read.get());
         qmlRegisterSingletonInstance("ABook", 1, 0, "Music", music.get());

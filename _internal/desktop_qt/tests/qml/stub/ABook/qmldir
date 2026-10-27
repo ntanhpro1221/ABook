@@ -141,3 +141,5 @@ PeerBar 1.0 ../../../../qml/PeerBar.qml
 PlayerKeys 1.0 ../../../../qml/PlayerKeys.qml
 ShortcutsDialog 1.0 ../../../../qml/ShortcutsDialog.qml
 WindowChrome 1.0 WindowChrome.qml
+ReaderScreen 1.0 ../../../../qml/ReaderScreen.qml
+ReaderChoices 1.0 ../../../../qml/ReaderChoices.qml

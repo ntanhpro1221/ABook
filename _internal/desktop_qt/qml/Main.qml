@@ -31,7 +31,9 @@ Window {
     Component { id: libraryScreen; LibraryScreen { fileOpening: addBook.opening; onOpenBook: (book) => stack.push(bookPage, { book: book }); onAddRequested: paths => addBook.begin(paths); onOpenFileRequested: addBook.openFile(); onStudioRequested: stack.show(1) } }
     Component { id: studioScreen; StudioScreen {} }
     Component { id: settingsScreen; SettingsScreen { onStudioRequested: stack.show(1) } }
-    Component { id: bookPage; BookPage { onEditRequested: data => editBook.begin(data); onSaveRequested: data => saveBookAs.quick(data); onSaveAsRequested: data => saveBookAs.begin(data); onRenameRequested: (data, chapter) => renameChapter.begin(data, chapter) } }
+    Component { id: bookPage; BookPage { onEditRequested: data => editBook.begin(data); onSaveRequested: data => saveBookAs.quick(data); onSaveAsRequested: data => saveBookAs.begin(data); onRenameRequested: (data, chapter) => renameChapter.begin(data, chapter)
+        onReadRequested: (data, chapterId) => stack.push(readerScreen, {book: data, chapterId: chapterId}) } }
+    Component { id: readerScreen; ReaderScreen {} }
 
     Item {
         id: shell
@@ -171,7 +173,7 @@ Window {
         z: 90
         anchors.right: parent.right
         anchors.rightMargin: 16
-        y: titleBar.height + 16
+        y: Nav.toastTop > 0 ? Nav.toastTop : titleBar.height + 16
     }
     Connections {
         target: sidebar.chip
