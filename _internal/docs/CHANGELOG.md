@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- App máy tính hiện trong khung điều khiển nhạc của Windows (tên chương, bìa, phát/dừng, chương trước/sau, tua).
+
 ### Điện thoại
 
 - Nút lùi / tới 15 giây trên widget màn hình chính cùng hình với trình phát: cung nông, số 15 nằm dưới, không chạm nét.
