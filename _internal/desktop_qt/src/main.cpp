@@ -19,6 +19,11 @@
 #include <QTimer>
 
 int main(int argc, char *argv[]) {
+    // Luồng vblank của Qt (QDxgiVSyncService: WaitForVBlank theo tần số quét, 180 lần/s ở màn 180 Hz) thức cả khi cửa sổ thu nhỏ hay
+    // đứng yên: ~0,2 % một nhân lúc phát nền, nghỉ 0,3 -> 0,1 %. Tắt thì Qt hẹn khung bằng đồng hồ; nhịp khung lúc chữ chạy không đổi
+    // (PROGRESS.md mục CPU). Đặt sẵn trong môi trường thì giữ giá trị đó (đo so sánh: =0).
+    if (!qEnvironmentVariableIsSet("QT_D3D_NO_VBLANK_THREAD"))
+        qputenv("QT_D3D_NO_VBLANK_THREAD", "1");
     QGuiApplication app(argc, argv);
     QGuiApplication::setApplicationName(QStringLiteral("ABook"));
     QGuiApplication::setOrganizationName(QStringLiteral("ABook"));

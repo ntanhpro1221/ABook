@@ -34,6 +34,7 @@ private:
     void onEvent(unsigned long event, quint64 p1, unsigned long p2);
     bool ensureEngine();
     void openSource();
+    void retire();
 
     std::unique_ptr<Impl> d;
     bool m_playing = false;

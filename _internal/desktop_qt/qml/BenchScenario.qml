@@ -5,7 +5,7 @@ import ABook
 //   "library" (mặc định): chờ thư viện về -> nghỉ (đo RAM nghỉ) -> cuộn lưới từ đầu tới cuối rồi ngược lại hai lượt -> nghỉ -> ghi file và thoát.
 //     Mốc: idle_begin, scroll_begin, scroll_end, done.
 //   "player": nạp một cuốn có tiếng ở trạng thái dừng (RAM nghỉ khi có sách) -> mở / đóng Đang nghe 5 lần (khung lúc biến hình) -> mở Đang nghe,
-//     phát (tắt tiếng), chữ chạy theo giọng 10 s (khung + bộ đếm) -> đóng, thu nhỏ cửa sổ, vẫn phát 10 s (RAM + CPU) -> mở lại cửa sổ 1,5 s -> ghi file và thoát.
+//     phát (tắt tiếng), chữ chạy theo giọng 10 s (khung + bộ đếm) -> đóng, thu nhỏ cửa sổ, vẫn phát 20 s (RAM + CPU; CPU ổn định tính từ giây 5) -> mở lại cửa sổ 1,5 s -> ghi file và thoát.
 //     Mốc: idle_begin, idle_end, morph_begin/morph_end, unmorph_begin/unmorph_end, follow_begin/follow_end, min_begin/min_end, restore_begin/restore_end, count:<tag>:..., done.
 Item {
     id: root
@@ -93,7 +93,7 @@ Item {
         case 9: counters("follow_begin"); Bench.note("follow_begin"); advance(10000); break
         case 10: Bench.note("follow_end"); counters("follow_end"); root.beat = false; advance(300); break
         case 11: nowPlaying.close(); advance(1500); break
-        case 12: counters("min_begin"); Bench.note("min_begin"); win.showMinimized(); advance(10000); break
+        case 12: counters("min_begin"); Bench.note("min_begin"); win.showMinimized(); advance(20000); break
         case 13: Bench.note("min_end"); counters("min_end"); advance(300); break
         // Mở lại sau khi thu nhỏ (bộ nhớ đã trả về hệ điều hành lúc thu nhỏ phải nạp lại): khung đầu và khung chậm nhất trong 1,5 s.
         case 14: Bench.note("restore_begin"); win.showNormal(); win.raise(); win.requestActivate(); advance(1500); break

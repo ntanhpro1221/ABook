@@ -43,13 +43,23 @@ def private_mb(h) -> float:
     return sum(1 for i in range(1, cnt + 1) if not (buf[i] & 0x100)) * 4096 / 1048576
 
 
+def tsc_mhz() -> float:
+    """Tần số TSC (bất biến) ~ xung danh định của CPU, đọc từ registry."""
+    import winreg
+    with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"HARDWARE\DESCRIPTION\System\CentralProcessor\0") as key:
+        return float(winreg.QueryValueEx(key, "~MHz")[0])
+
+
+_TSC_MHZ = tsc_mhz()
+
+
 def cpu_ms(h) -> float:
-    """CPU (nhân + người dùng) tiến trình đã dùng, mili giây."""
-    c, e, k, u = wt.FILETIME(), wt.FILETIME(), wt.FILETIME(), wt.FILETIME()
-    if not k32.GetProcessTimes(h, ctypes.byref(c), ctypes.byref(e), ctypes.byref(k), ctypes.byref(u)):
+    """CPU tiến trình đã dùng, mili giây: chu kỳ (QueryProcessCycleTime, đếm theo TSC) chia tần số TSC.
+    GetProcessTimes chỉ nhảy theo nhịp 15,6 ms nên sai cả chục phần trăm khi tiến trình gần như ngủ."""
+    cycles = ctypes.c_uint64()
+    if not k32.QueryProcessCycleTime(h, ctypes.byref(cycles)):
         return float("nan")
-    ticks = lambda f: (f.dwHighDateTime << 32) | f.dwLowDateTime
-    return (ticks(k) + ticks(u)) / 10000.0
+    return cycles.value / (_TSC_MHZ * 1000.0)
 
 
 def pct(v: list[float], q: float) -> float:
@@ -142,11 +152,25 @@ def launch(exe: Path, env_extra: dict, topmost: bool) -> dict:
     states: list[tuple[float, dict]] = []
     stop = threading.Event()
 
+    host: list[tuple[float, float]] = []      # (epoch ms, CPU ms của mọi tiến trình con - host Python)
+    kids: dict[int, int] = {}
+
+    def host_cpu_ms() -> float:
+        try:
+            import psutil
+            for c in psutil.Process(p.pid).children(recursive=True):
+                if c.pid not in kids:
+                    kids[c.pid] = k32.OpenProcess(0x0410, False, c.pid)
+        except Exception:
+            pass
+        return sum(cpu_ms(k) for k in kids.values() if k)       # tiến trình con đã thoát vẫn đọc được qua handle giữ lại
+
     def sampler():
         placed = False
         while not stop.is_set():
             try:
                 samples.append((time.time() * 1000, private_mb(h), cpu_ms(h)))
+                host.append((time.time() * 1000, host_cpu_ms()))
             except Exception:
                 pass
             if topmost and not placed:
@@ -175,7 +199,7 @@ def launch(exe: Path, env_extra: dict, topmost: bool) -> dict:
     if not out.exists():
         return {"ok": False, "why": "app không ghi file đo"}
     d = json.loads(out.read_bytes())
-    return {"ok": True, "d": d, "samples": samples, "states": states, "host_mb": host_mb}
+    return {"ok": True, "d": d, "samples": samples, "states": states, "host_mb": host_mb, "host_cpu": host}
 
 
 def one_run(exe: Path, env_extra: dict, topmost: bool) -> dict:
@@ -271,6 +295,7 @@ def player_run(exe: Path, env_extra: dict, topmost: bool) -> dict:
     follow = [(ev["follow_begin"], ev["follow_end"])]
     iv_m, iv_u, iv_f = gaps(frames, morph), gaps(frames, unmorph), gaps(frames, follow)
     idle = [m for t, m, _c in samples if ev["idle_begin"] + 1500 <= t <= ev["idle_end"]]
+    idle_cpu = [(t, c) for t, _m, c in samples if ev["idle_begin"] + 1500 <= t <= ev["idle_end"]]
     follow_ram = [m for t, m, _c in samples if follow[0][0] <= t <= follow[0][1]]
     mins = [(t, m, c) for t, m, c in samples if ev["min_begin"] + 1500 <= t <= ev["min_end"]]
     settled = [m for t, m, _c in mins if t >= ev["min_end"] - 3000]       # 3 s cuối: sau khi app trả working set lúc thu nhỏ (2 s)
@@ -279,6 +304,12 @@ def player_run(exe: Path, env_extra: dict, topmost: bool) -> dict:
         rf = [f for f in frames if ev["restore_begin"] <= f <= ev["restore_end"]]
         restore = (rf[0] - ev["restore_begin"] if rf else float("nan"), max((b - a for a, b in zip(rf, rf[1:])), default=float("nan")))
     cpu_pct = float("nan")
+    rate = lambda pts: (pts[-1][1] - pts[0][1]) / (pts[-1][0] - pts[0][0]) * 100.0 if len(pts) >= 2 and pts[-1][0] > pts[0][0] else float("nan")   # % của MỘT nhân
+    host_min = [(t, c) for t, c in got["host_cpu"] if ev["min_begin"] + 1500 <= t <= ev["min_end"]]
+    host_idle = [(t, c) for t, c in got["host_cpu"] if ev["idle_begin"] + 1500 <= t <= ev["idle_end"]]
+    # trạng thái ổn định khi thu nhỏ: bỏ 5 s đầu (trả working set ở giây 2 + lỗi trang kéo về sau đó là chi phí một lần)
+    steady = [(t, c) for t, _m, c in samples if ev["min_begin"] + 5000 <= t <= ev["min_end"]]
+    host_steady = [(t, c) for t, c in got["host_cpu"] if ev["min_begin"] + 5000 <= t <= ev["min_end"]]
     if len(mins) >= 2 and mins[-1][0] > mins[0][0]:
         cpu_pct = (mins[-1][2] - mins[0][2]) / (mins[-1][0] - mins[0][0]) * 100.0      # % của MỘT nhân
     # che / thu nhỏ ngoài ý muốn trong các khoảng đo khung (khoảng thu nhỏ là chủ ý)
@@ -300,6 +331,11 @@ def player_run(exe: Path, env_extra: dict, topmost: bool) -> dict:
         "restore_first_ms": restore[0] if restore else float("nan"),
         "restore_max_gap_ms": restore[1] if restore else float("nan"),
         "cpu_min_playing_pct_of_core": cpu_pct,
+        "cpu_min_steady_pct_of_core": rate(steady),
+        "host_cpu_min_steady_pct_of_core": rate(host_steady),
+        "cpu_idle_loaded_pct_of_core": rate(idle_cpu),
+        "host_cpu_min_playing_pct_of_core": rate(host_min),
+        "host_cpu_idle_loaded_pct_of_core": rate(host_idle),
         "morph_frames": len(iv_m), "morph_p50": pct(iv_m, .5), "morph_p99": pct(iv_m, .99), "morph_max": max(iv_m) if iv_m else float("nan"),
         "unmorph_frames": len(iv_u), "unmorph_p99": pct(iv_u, .99), "unmorph_max": max(iv_u) if iv_u else float("nan"),
         "follow_frames": len(iv_f), "follow_p50": pct(iv_f, .5), "follow_p99": pct(iv_f, .99), "follow_max": max(iv_f) if iv_f else float("nan"),
@@ -338,7 +374,7 @@ def player_main(a, exe: Path, fixture: Path, env: dict) -> int:
         print(f"lượt {attempt + 1}: nghỉ có sách {r['private_idle_loaded_mb']:.1f} MB | biến hình p99 {r['morph_p99']:.1f} max {r['morph_max']:.1f} ms ({r['morph_frames']} khung; "
               f"đóng p99 {r['unmorph_p99']:.1f}) | chữ chạy p50 {r['follow_p50']:.1f} p99 {r['follow_p99']:.1f} max {r['follow_max']:.1f} ms "
               f"({r['follow_frames']} khung, >12ms {r['follow_over_12']}) RAM {r['private_follow_mb']:.1f} | thu nhỏ phát: RAM {r['private_min_playing_mb']:.1f} -> {r['private_min_settled_mb']:.1f} MB "
-              f"CPU {r['cpu_min_playing_pct_of_core']:.2f} % | đếm lúc chữ chạy (nhịp, ảnh chụp, tính, đổi) {r['follow_counters_delta']} trong {r['follow_secs']:.0f} s; "
+              f"CPU {r['cpu_min_playing_pct_of_core']:.2f} % (ổn định {r['cpu_min_steady_pct_of_core']:.2f} %; nghỉ hiện {r['cpu_idle_loaded_pct_of_core']:.2f} %) | đếm lúc chữ chạy (nhịp, ảnh chụp, tính, đổi) {r['follow_counters_delta']} trong {r['follow_secs']:.0f} s; "
               f"thu nhỏ {r['min_counters_delta']} | mở lại: khung đầu {r['restore_first_ms']:.0f} ms, khoảng lớn nhất {r['restore_max_gap_ms']:.1f} ms")
         time.sleep(1.0)
     res = {"scenario": "player", "hz": refresh_hz(), "runs": good, "dropped": dropped}
@@ -351,6 +387,7 @@ def player_main(a, exe: Path, fixture: Path, env: dict) -> int:
             "private_min_playing_mb_worst": worst("private_min_playing_mb"), "private_min_settled_mb_worst": worst("private_min_settled_mb"),
             "restore_first_ms_worst": worst("restore_first_ms"), "restore_max_gap_ms_worst": worst("restore_max_gap_ms"),
             "cpu_min_playing_pct_worst": worst("cpu_min_playing_pct_of_core"),
+            "cpu_min_steady_pct_median": med("cpu_min_steady_pct_of_core"), "cpu_idle_loaded_pct_median": med("cpu_idle_loaded_pct_of_core"),
             "morph_p99_ms_median": med("morph_p99"), "morph_p99_ms_worst": worst("morph_p99"), "unmorph_p99_ms_worst": worst("unmorph_p99"),
             "follow_p99_ms_median": med("follow_p99"), "follow_p99_ms_worst": worst("follow_p99"), "follow_max_ms_worst": worst("follow_max"),
         }
