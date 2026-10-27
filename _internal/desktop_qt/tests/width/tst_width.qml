@@ -21,7 +21,9 @@ Item {
         function sizes() {
             return [
                 {tag: "1024x700", w: 1024, h: 700, sidebar: 232},
+                {tag: "1366x900", w: 1366, h: 900, sidebar: 232},
                 {tag: "1440x900", w: 1440, h: 900, sidebar: 232},
+                {tag: "1630x900", w: 1630, h: 900, sidebar: 232},
                 {tag: "1920x1080", w: 1920, h: 1080, sidebar: 232},
                 {tag: "rail1024", w: 1024, h: 700, sidebar: 56},
                 {tag: "rail1920", w: 1920, h: 1080, sidebar: 56},

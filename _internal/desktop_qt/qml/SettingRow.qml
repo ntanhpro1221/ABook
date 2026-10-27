@@ -29,7 +29,7 @@ Item {
     Rectangle { width: parent.width; height: 1; color: Theme.line; visible: !root.firstShown }
     Column {
         id: words
-        width: root.width - (root.controlWidth > 0 ? root.controlWidth + Theme.s16 : 0)
+        width: Math.min(640, root.width - (root.controlWidth > 0 ? root.controlWidth + Theme.s16 : 0))
         anchors.verticalCenter: parent.verticalCenter
         spacing: 2
         Text { width: parent.width; text: root.label; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: 15; font.weight: Theme.weightMedium }

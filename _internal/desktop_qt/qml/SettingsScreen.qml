@@ -6,10 +6,12 @@ import ABook
 // như đổi tab (không chồng Back). Hẹp: trang gốc là danh sách, mỗi nhóm một màn con có nút ← "Về Cài đặt" (Back về danh sách). Cả trang cuộn.
 FocusScope {
     id: root
-    readonly property bool expanded: width >= Theme.widthExpanded
+    readonly property bool expanded: Theme.widthClass(width) >= 2
+    property bool layoutExpanded: expanded
+    property real layoutPhase: 1
     property string active: ""
     signal studioRequested()
-    readonly property real bodyWidth: Math.min(width - 2 * Theme.margin, expanded ? 1180 : 760)
+    readonly property real bodyWidth: Math.min(width - 2 * Theme.margin, layoutExpanded ? 1180 : 760)
     readonly property var groups: {
         // desktopGroups(info, touchOnly=false) của bản web, máy này (không điều khiển từ xa)
         const info = Api.info || {}
@@ -27,7 +29,7 @@ FocusScope {
         {key: "studio", label: "Studio", icon: "clapperboard"},
         {key: "advanced", label: "Nâng cao", icon: "wrench"}
     ]
-    readonly property string shown: groups.some(g => g.key === active) ? active : (expanded && groups.length ? groups[0].key : "")
+    readonly property string shown: groups.some(g => g.key === active) ? active : (layoutExpanded && groups.length ? groups[0].key : "")
     readonly property string groupTitle: (all.find(g => g.key === shown) || {}).label || ""
     property var sync: null
     property QtObject backLayer: QtObject { function close() { root.active = "" } }
@@ -36,7 +38,16 @@ FocusScope {
         if (active && !expanded) Nav.openLayer(backLayer)
     }
     onActiveChanged: { syncLayer(); page.contentY = 0 }
-    onExpandedChanged: syncLayer()
+    onExpandedChanged: {
+        if (Theme.reduceMotion) { layoutSwap.stop(); layoutExpanded = expanded; layoutPhase = 1; syncLayer() }
+        else layoutSwap.restart()
+    }
+    SequentialAnimation {
+        id: layoutSwap
+        NumberAnimation { target: root; property: "layoutPhase"; to: 0; duration: Theme.motionFastOut }
+        ScriptAction { script: { root.layoutExpanded = root.expanded; root.syncLayer() } }
+        NumberAnimation { target: root; property: "layoutPhase"; to: 1; duration: Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeDecelerate }
+    }
     Component.onDestruction: Nav.closedLayer(backLayer)
     Component.onCompleted: {
         Api.bind(DesktopApi, Theme)
@@ -73,21 +84,22 @@ FocusScope {
 
         Item {
             id: frame
+            opacity: root.layoutPhase
             x: (root.width - root.bodyWidth) / 2
             width: root.bodyWidth
             height: Math.max(navigation.visible ? navigation.y + navigation.height : 0, content.visible ? content.y + content.height : 0)
 
             ScreenHeader {
                 id: header
-                width: root.expanded ? 260 : parent.width
-                title: !root.expanded && root.shown ? root.groupTitle : "Cài đặt"
+                width: root.layoutExpanded ? 260 : parent.width
+                title: !root.layoutExpanded && root.shown ? root.groupTitle : "Cài đặt"
                 backLabel: "Về Cài đặt"
-                showBack: !root.expanded && root.shown !== ""
+                showBack: !root.layoutExpanded && root.shown !== ""
             }
             // Tên nhóm ở đầu cột phải: 24 đậm, chân chữ thẳng chân chữ của "Cài đặt" (32) bên trái.
             Text {
                 id: groupHeading
-                visible: root.expanded
+                visible: root.layoutExpanded
                 x: 260 + Theme.s32
                 width: parent.width - x
                 y: header.titleBaseline - baselineOffset
@@ -100,7 +112,7 @@ FocusScope {
             // Ghi chú trên danh sách (chỉ hẹp): đã có bản mới -> một hàng dẫn tới Nâng cao.
             DisclosureRow {
                 id: updateNotice
-                visible: !root.expanded && !root.shown && Boolean(Api.info && Api.info.update)
+                visible: !root.layoutExpanded && !root.shown && Boolean(Api.info && Api.info.update)
                 y: header.height + 16
                 width: parent.width
                 title: Api.info && Api.info.update ? "Có ABook " + Api.info.update.version : ""
@@ -111,8 +123,8 @@ FocusScope {
                 id: navigation
                 objectName: "settingsGroups"
                 y: header.height + (updateNotice.visible ? updateNotice.height + 16 : 0) + 20
-                width: root.expanded ? 260 : parent.width
-                visible: root.expanded || !root.shown
+                width: root.layoutExpanded ? 260 : parent.width
+                visible: root.layoutExpanded || !root.shown
                 Accessible.name: "Nhóm cài đặt"
                 Repeater {
                     model: root.groups
@@ -128,7 +140,7 @@ FocusScope {
                             title: modelData.label
                             summary: root.summary(modelData.key)
                             icon: modelData.icon
-                            current: root.expanded && root.shown === modelData.key
+                            current: root.layoutExpanded && root.shown === modelData.key
                             onClicked: root.active = modelData.key
                         }
                     }
@@ -137,7 +149,7 @@ FocusScope {
             Item {
                 id: content
                 objectName: "settingsContent"
-                x: root.expanded ? 260 + Theme.s32 : 0
+                x: root.layoutExpanded ? 260 + Theme.s32 : 0
                 y: header.height
                 width: parent.width - x
                 height: body.height

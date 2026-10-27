@@ -1,7 +1,7 @@
 import QtQuick
 import ABook
 
-// Hộp thoại giữa màn (Dialog của shared/ui.tsx; DESIGN 6: máy tính = hộp giữa màn rộng <= 560): nền --panel, viền --line, bo 20, đệm 24,
+// Hộp thoại giữa màn (DESIGN 6: thường <= 560; Thêm / Sửa sách theo khổ ở 5.5): nền --panel, viền --line, bo 20, đệm 24,
 // bóng lớp nổi. Đầu hộp: tên 18 đậm + mô tả 14 mực phụ, nút ✕ ("Đóng") ở góc. Thân cuộn trong hộp khi cao hơn cửa sổ (mép còn nội dung thì
 // mờ dần), chân hộp (`footer`) tách khỏi thân bằng vạch, luôn thấy. Mở: nổi lên 10 px + phóng từ 96 % trong motionMedium (decelerate), nền
 // mờ --scrim; đóng ngược lại trong motionMediumOut. Giảm chuyển động: chỉ mờ. Là một lớp của ngăn xếp Back; trang con trong hộp (tìm bìa...)
@@ -14,6 +14,9 @@ FocusScope {
     property string title: ""
     property string description: ""
     property real panelWidth: 512           // max-w-lg; hộp rộng hơn đặt 560
+    Behavior on panelWidth {
+        NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard }
+    }
     property bool dismissable: true         // false: bấm ra ngoài không đóng (đang chạy việc không huỷ được)
     property var opener: null
     property real shown: open ? 1 : 0
@@ -65,6 +68,7 @@ FocusScope {
 
     Item {
         id: panel
+        objectName: "modalPanel"
         width: Math.min(root.panelWidth, root.width - 32)
         height: Math.min(Math.max(root.height * 0.9, 0), Math.max(0, root.height - 32), heading.height + 16 + body.implicitHeight + footerArea.height + 48)
         x: (root.width - width) / 2
@@ -82,7 +86,7 @@ FocusScope {
             id: heading
             x: 24
             y: 24
-            width: panel.width - 48 - 44 - 16 + 17     // chừa nút ✕ (mực ✕ thẳng mép nội dung bên phải)
+            width: Math.min(640, panel.width - 48 - 44 - 16 + 17)     // chừa nút ✕ (mực ✕ thẳng mép nội dung bên phải)
             spacing: 4
             Text { width: parent.width; text: root.title; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeSection; font.weight: Theme.weightBold }
             Text { width: parent.width; text: root.description; visible: text !== ""; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
