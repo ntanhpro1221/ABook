@@ -47,11 +47,10 @@ class ImportRepo(private val context: Context) : ImportSource {
         val shown = name(document(item)) ?: item.name
         val mime = context.contentResolver.getType(document(item))
         val incoming = TextImports.incomingName(mime, shown)
-        val packageFile = !item.folder && (TextImports.isAppBookFile(mime, shown) || (incoming == null &&
-            context.contentResolver.openInputStream(uri)?.use { input ->
-                val head = ByteArray(512)
-                BookFileImport.looksLikeBookFile(head.copyOf(maxOf(0, input.read(head))))
-            } == true))
+        val head = { context.contentResolver.openInputStream(uri)?.use { input -> ByteArray(512).let { buffer -> buffer.copyOf(maxOf(0, input.read(buffer))) } } }
+        // File chia sẻ qua kiểu chung (octet-stream, zip) mà không phải thứ app nhận: cùng lời từ chối với màn WebView (LibraryPlugin.openFrom).
+        if (!item.folder) TextImports.refuseShared(mime, shown, head)?.let { throw BookImport.Failed(it) }
+        val packageFile = !item.folder && (TextImports.isAppBookFile(mime, shown) || (incoming == null && BookFileImport.looksLikeBookFile(head() ?: ByteArray(0))))
         if (packageFile) {
             val result = BookFileImport.import(context, uri)
             return@withContext PreparedImport(null, shown, bookId = result.id, existing = result.how in setOf("existing", "older", "conflict"))
