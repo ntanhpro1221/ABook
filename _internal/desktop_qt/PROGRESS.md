@@ -32,6 +32,37 @@ Open:
   - AMD Radeon 610M (QT_D3D_ADAPTER_INDEX=1): idle 62.9 (57-78), follow 76.9, minimised settled 8.7.
   - On the laptop panel, Windows may run the app on the AMD iGPU. Re-measure there when the panel is back.
 
+## CPU — 26/27-10-2026, dev/desk-qt-cpu (Music lane, from 875f71b2)
+
+Goal (Lead): < 1 % of one core while minimised and playing; nothing awake but the audio path. CPU = QueryProcessCycleTime / TSC MHz (GetProcessTimes moves in 15.6 ms steps and is useless near idle). Power and display are given with each number: 26-10 evening on battery, Parsec 60 Hz; 27-10 on AC, laptop panel (NVIDIA 2560x1600 180 Hz, AMD 610M driving a 1920x1080 60 Hz screen). Results in D:/Novels/native_desk_proto/results/cpu_*.json.
+
+Changes:
+- MfAudioOut::retire(): a source change or stop hands the old engine to a detached thread (Pause, Shutdown, MFShutdown there). Before, SetSource/Shutdown of an engine holding an HTTP source blocked the UI thread 0.3 s to ~6 s, found by an in-process sampling profiler on the main thread: MusicBed::fadeTick -> release -> stop, and Player::onEnded -> load -> openSource. The minimised phase stretched from 8 s to 11-14 s; after the fix 4/4 runs at 8.0 s, chapter 3 -> 4 keeps playing. Likely also behind the 500 ms stall still to re-check on the panel.
+- MF events that onEvent ignores (TIMEUPDATE, PROGRESS, ...) are dropped on the MF thread: UI-thread wakes from MF while minimised 157 / 10 s -> 0. Total CPU unchanged (battery A/B 1.6 vs 1.6 %, cpu_ab_batt1).
+- QT_D3D_NO_VBLANK_THREAD=1 set in main() unless the environment sets it. Qt's QDxgiVSyncService thread waits on every vblank (180/s on the panel) for as long as the D3D device lives, minimised or not; releaseResources with non-persistent graphics does not stop it. cpu_vblank_ac1 (AC, panel, 3 rounds): idle loaded 0.3 -> 0.1 %, minimised 2.0 -> 1.9 %, follow p99 7.2 -> 7.0 ms.
+- measure.py: cycle-based CPU, idle-loaded CPU, host Python CPU, cpu_min_steady (from 5 s after minimise; the working-set trim at 2 s and the soft faults after it are one-off). Player scenario minimised phase 10 -> 20 s.
+
+Where the minimised CPU goes (AC, panel, steady window, per-thread cycles + context switches, bench instrumentation in native_desk_proto/cpu_probe_full.diff):
+| | process | MF thread pool | vblank thread | main thread | NVIDIA driver thread |
+|---|---|---|---|---|---|
+| no music | 1.0 % | 0.55 % (~120 wakes/s) | 0.22 % (180/s) | 0.13 % | 0.06 % |
+| music (no loop crossfade in window) | 1.5 % | 1.08 % (~200/s) | 0.25 % | 0.15 % | 0.06 % |
+- A loop crossfade in the window (fixture music is a 40 s WAV) opens a new engine and steps volume 20 times a second: 2.7 % for that window. Real tracks are 2-4 min, so this is rarer.
+- Host Python 0.1 %.
+
+Floor: IMFMediaEngine alone in a minimal C++ program (native_desk_proto/mffloor/mffloor2.cpp, STA thread with a message pump, volume 0, AC):
+| source | CPU |
+|---|---|
+| voice mp3 (fixture) | 0.36-0.42 % |
+| real music mp3 (Incompetech, 3.4 MB) | 0.61-0.72 % |
+| voice + music mp3, two engines | 0.96-1.06 % |
+| fixture WAV, file / over HTTP | 0.24 / 0.45 % |
+=> With one IMFMediaEngine per source the < 1 % budget cannot be met while music plays (two engines are ~1 % on their own). Without music: ~0.8 % expected with the vblank change. Proposed to Lead: keep MF for the voice; music through one WASAPI stream with a ~1 s buffer, IMFSourceReader decoding in large chunks and the crossfade/volume mix done in code.
+
+Open:
+- Combined A/B (base 875f71b2 vs this branch, 4 interleaved rounds, steady + idle) on AC on the panel: not run yet. Each run brings the window on top of the owner's screen; waiting for Lead.
+- On the panel, the window renders no frame in the 1.5 s after restore from minimise. This happens on 875f71b2 as well (Parsec: first frame 17-60 ms). DWM may be showing the last frame; still to check by eye.
+
 ## qtwide2 — lead review, 26-10-2026
 
 - Book composition is centred and capped at 1360 px (summary + 32 px gap + chapters). Cover shares the title's left edge from expanded. ChapterRow keeps title/chapter on the left and duration at the right inset with tabular figures; current/hover fill and progress retain full row geometry.
