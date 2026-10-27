@@ -39,7 +39,7 @@ class DevicesStateTest {
         openAppSettings = { settingsOpened++ },
         askNearby = { result -> asked++; result(source.nearby) },
         askNotifications = { then -> notificationsAsked++; then() },
-    )) = DevicesState(source, CoroutineScope(Dispatchers.Unconfined), links, changed = { changed++ }, pollMs = 3_600_000)
+    )) = DevicesState(source, CoroutineScope(Dispatchers.Unconfined), links, changed = { changed++ }, now = { 1_700_000_000_000L })
 
     // ---- ghép ----
 

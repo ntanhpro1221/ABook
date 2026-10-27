@@ -89,6 +89,16 @@ object LibraryServer {
     }
     private val random = SecureRandom()
     private var pairing: Pair<String, Long>? = null
+    private val pairingWatchers = java.util.concurrent.CopyOnWriteArrayList<() -> Unit>()
+
+    fun watchPairing(watcher: () -> Unit): () -> Unit {
+        pairingWatchers.add(watcher)
+        return { pairingWatchers.remove(watcher) }
+    }
+
+    private fun pairingChanged() {
+        for (watcher in pairingWatchers) runCatching { watcher() }
+    }
     private var failures = 0
     var blocked = false
         private set
@@ -201,6 +211,7 @@ object LibraryServer {
             waiting.clear()
             authenticatedSources.clear()
         }
+        pairingChanged()
     }
 
     // ---- ghép nối -------------------------------------------------------------------------------------------------
@@ -212,6 +223,7 @@ object LibraryServer {
         failures = 0
         blocked = false
         return JSONObject().put("code", code).put("expiresAt", pairing!!.second / 1000.0)
+            .also { pairingChanged() }
     }
 
     @Synchronized
@@ -226,6 +238,7 @@ object LibraryServer {
         pairing = null
         failures = 0
         blocked = false
+        pairingChanged()
     }
 
     /** Lời báo mã sai, như máy tính (webui/sync.py `Devices.wrong_code_message`): còn mấy lần thử, hay phải tạo mã mới. */
@@ -252,6 +265,7 @@ object LibraryServer {
             if (failures >= PAIRING_ATTEMPTS) {
                 pairing = null
                 blocked = true
+                pairingChanged()
             }
             return null
         }
@@ -268,6 +282,7 @@ object LibraryServer {
             .apply { if (same.isNotEmpty()) put("ident", same) })
         Store.writeAtomic(devicesFile, data.toString())
         pairing = null // chỉ tiêu thụ mã sau khi ghi danh sách thành công
+        pairingChanged()
         AppLog.i("Share", "đã ghép với máy ${device.trim().take(40)}")
         return token
     }
@@ -290,6 +305,7 @@ object LibraryServer {
         val devices = data.getJSONObject("devices")
         devices.keys().asSequence().toList().filter { it.take(12) == shortId }.forEach(devices::remove)
         Store.writeAtomic(devicesFile, data.toString())
+        pairingChanged()
     }
 
     @Synchronized

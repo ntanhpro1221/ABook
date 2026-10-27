@@ -67,7 +67,7 @@ class VoiceScreenTest {
     private val player = FakeSamplePlayer()
     private val core = FakeSettingsCore()
     private val repo = SettingsRepo(core, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined).also { runBlocking { it.load() } }
-    private val voice = CoroutineScope(Dispatchers.Unconfined).let { VoiceState(source, it, player, { repo.loadVoices() }, 3_600_000, MineImports(source, it)) }
+    private val voice = CoroutineScope(Dispatchers.Unconfined).let { VoiceState(source, it, player, { repo.loadVoices() }, MineImports(source, it)) }
     private var opened: VoicePage? = null
     private val viet = ModuleKind.Vieneu
     private val sieu = ModuleKind.Supertonic

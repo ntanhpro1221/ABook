@@ -70,7 +70,7 @@ interface DevicesSource {
     suspend fun cancelCode(): Share
     suspend fun revoke(id: String): Share
 
-    /** Công tắc chia sẻ đổi từ ngoài màn (nút "Tắt chia sẻ" trên thông báo). */
+    /** Sharing switch or pairing changes, including a new device consuming the code. */
     fun shareChanges(): Flow<Unit>
     suspend fun setDeviceName(name: String): String
     suspend fun storage(): Storage

@@ -59,7 +59,7 @@ class NativeDevicesFlowTest {
                 val scope = rememberCoroutineScope()
                 shell = remember { ShellState(scope) }
                 val player = remember { PlayerRepo(FakePlaybackCore(playerSnapshot(chapter = null)), scope, Dispatchers.Unconfined, { null }, { null }) }
-                val devices = remember { DevicesState(source, CoroutineScope(Dispatchers.Unconfined), DeviceLinks(), pollMs = 3_600_000) }
+                val devices = remember { DevicesState(source, CoroutineScope(Dispatchers.Unconfined), DeviceLinks(), now = { 1_700_000_000_000L }) }
                 val env = remember { SettingsEnv(SettingsRepo(FakeSettingsCore(), CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined), ThemeReveal(scope), devices = devices) }
                 AppShell(shell, LibraryState.Ready(listOf(ListenBook("b", "Sách"))), player, CoverLoader(), env, sampleClock = false)
             }

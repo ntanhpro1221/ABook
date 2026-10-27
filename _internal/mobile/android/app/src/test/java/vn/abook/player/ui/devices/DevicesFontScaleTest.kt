@@ -39,7 +39,7 @@ class DevicesFontScaleTest {
     )
 
     private fun show(page: DevicesPage): Int {
-        val devices = DevicesState(source, CoroutineScope(Dispatchers.Unconfined), DeviceLinks(), pollMs = 3_600_000)
+        val devices = DevicesState(source, CoroutineScope(Dispatchers.Unconfined), DeviceLinks(), now = { 1_700_000_000_000L })
         rule.setContent {
             AbookTheme(false) {
                 Box(Modifier.fillMaxSize().background(Abook.colors.bg)) {

@@ -74,6 +74,18 @@ abstract class VoiceModule(
 
     protected val pinned = PinnedFiles(dir, "", STAMP)
     private val lock = Any()
+    private val watchers = java.util.concurrent.CopyOnWriteArrayList<() -> Unit>()
+
+    /** Observers read status on their own dispatcher. */
+    fun watch(watcher: () -> Unit): () -> Unit {
+        watchers.add(watcher)
+        watcher()
+        return { watchers.remove(watcher) }
+    }
+
+    private fun notifyChanged() {
+        for (watcher in watchers) runCatching { watcher() }
+    }
     @Volatile
     private var downloading = false
     private var benchmarking = false
@@ -234,6 +246,7 @@ abstract class VoiceModule(
                 priority = Thread.MIN_PRIORITY
                 start()
             }
+            notifyChanged()
         }
     }
 
@@ -249,15 +262,22 @@ abstract class VoiceModule(
             val progress = object : PinnedFiles.Progress {
                 // PinnedFiles reports the bytes of the file on disk, a resumed `.part` included from its first call: count only what this download adds
                 private var had = -1L
+                private var lastPercent = -1L
 
                 override fun current(bytes: Long) = synchronized(lock) {
                     if (had < 0) had = bytes
                     current = maxOf(0L, bytes - had) // below: the server ignored Range and the file starts over
+                    val percent = if (total > 0) (finished + current) * 100 / total else 0L
+                    if (percent != lastPercent) {
+                        lastPercent = percent
+                        notifyChanged()
+                    }
                 }
                 override fun done(part: Part) = synchronized(lock) {
                     finished += part.wireSize - maxOf(had, 0L)
                     had = -1L
                     current = 0
+                    notifyChanged()
                 }
                 override fun cancelled() = cancelRequested
             }
@@ -273,6 +293,7 @@ abstract class VoiceModule(
                 error = ""
                 benchmarking = true
             }
+            notifyChanged()
             val installedTiers = have(states())
             measure(tiers.filter { tier -> tier in installedTiers && needs(tier).any { it in needed } })
         } catch (_: PinnedFiles.Cancelled) {
@@ -291,6 +312,7 @@ abstract class VoiceModule(
             runtime.done(key) // from here this module's own files on disk say what it needs
             modelMarks.clear() // files replaced (also by a download stopped half way: the stamp is written per file)
             synchronized(lock) { downloading = false }
+            notifyChanged()
         }
     }
 
@@ -314,6 +336,7 @@ abstract class VoiceModule(
             Store.writeAtomic(benchFile, results.toString())
         } finally {
             synchronized(lock) { benchmarking = false }
+            notifyChanged()
         }
     }
 
@@ -329,6 +352,7 @@ abstract class VoiceModule(
                 priority = Thread.MIN_PRIORITY
                 start()
             }
+            notifyChanged()
         }
     }
 
@@ -356,6 +380,7 @@ abstract class VoiceModule(
             modelMarks.clear()
             error = ""
         }
+        notifyChanged()
     }
 
     /** Wait for the download / measurement thread (tests). */

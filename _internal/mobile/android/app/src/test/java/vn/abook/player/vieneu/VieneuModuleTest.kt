@@ -41,6 +41,23 @@ import java.util.zip.ZipOutputStream
  */
 class VieneuModuleTest {
     @Test
+    fun statusObserverReceivesDownloadCompletionAndCanUnsubscribe() {
+        val module = module()
+        val states = CopyOnWriteArrayList<String>()
+        val stop = module.watch { states += module.status().getString("state") }
+        assertEquals(1, states.size)
+        module.start(listOf("nano"))
+        module.join()
+        assertTrue(states.toString(), states.contains("downloading"))
+        assertEquals(module.status().getString("state"), states.last())
+        assertFalse(module.status().optBoolean("downloading"))
+        stop()
+        val after = states.size
+        module.remove("nano")
+        assertEquals(after, states.size)
+    }
+
+    @Test
     fun incompleteVoiceCanBeRemovedWithoutTouchingAnotherRuntimeUser() {
         val module = module()
         val partial = File(root, "${VieneuModule.FOLDER}/turbo/turbo.bin.part")

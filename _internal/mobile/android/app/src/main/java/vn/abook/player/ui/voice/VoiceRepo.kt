@@ -3,6 +3,8 @@ package vn.abook.player.ui.voice
 import android.content.Context
 import android.net.Uri
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.withContext
 import vn.abook.player.DeviceMusic
 import vn.abook.player.LocalStudio
@@ -49,6 +51,10 @@ class VoiceRepo(context: Context) : VoiceSource {
     }
 
     override suspend fun module(kind: ModuleKind): ModuleStatus = io { status(kind) }
+
+    override fun moduleChanges(kind: ModuleKind) = vn.abook.player.ui.data.listenerFlow<Unit> { send ->
+        core(kind).watch { send(Unit) }
+    }.conflate().flowOn(Dispatchers.IO)
 
     override suspend fun start(kind: ModuleKind, choices: List<String>?): ModuleStatus = io {
         guard("Chưa tải được ${kind.title.replaceFirstChar { it.lowercase() }}") {

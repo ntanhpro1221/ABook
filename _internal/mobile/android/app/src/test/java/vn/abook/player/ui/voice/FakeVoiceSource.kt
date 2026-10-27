@@ -7,12 +7,19 @@ import kotlinx.coroutines.CompletableDeferred
  * này nhớ khoá đã nhận để test kiểm khoá có đi xuống lõi hay không. Việc dài có thể bị giữ bằng một cổng.
  */
 class FakeVoiceSource : VoiceSource {
+    private val moduleEvents = ModuleKind.entries.associateWith { kotlinx.coroutines.flow.MutableSharedFlow<Unit>(extraBufferCapacity = 8) }
+    override fun moduleChanges(kind: ModuleKind) = moduleEvents.getValue(kind)
+    fun emitModule(kind: ModuleKind, status: ModuleStatus) {
+        modules[kind] = status
+        moduleEvents.getValue(kind).tryEmit(Unit)
+    }
     val modules = ModuleKind.entries.associateWith { Fixtures.missing(it) }.toMutableMap()
     val started = ArrayList<Pair<ModuleKind, List<String>?>>()
     val cancels = ArrayList<ModuleKind>()
     val measures = ArrayList<ModuleKind>()
     val removed = ArrayList<Pair<ModuleKind, String>>()
     var startError: VoiceFailure? = null
+    var startGate: CompletableDeferred<Unit>? = null
     var removeError: VoiceFailure? = null
     val switched = ArrayList<Triple<String, String, String>>()
     var switchError: VoiceFailure? = null
@@ -46,7 +53,9 @@ class FakeVoiceSource : VoiceSource {
         started += kind to choices
         // Như lõi thật: lệnh tải xong trả về trạng thái "đang tải" (trừ khi test đã đặt sẵn một trạng thái đang tải).
         if (modules.getValue(kind).state != ModuleState.Downloading) modules[kind] = Fixtures.downloading(kind, 0)
-        return modules.getValue(kind)
+        val reply = modules.getValue(kind)
+        startGate?.await()
+        return reply
     }
 
     override suspend fun cancel(kind: ModuleKind): ModuleStatus {

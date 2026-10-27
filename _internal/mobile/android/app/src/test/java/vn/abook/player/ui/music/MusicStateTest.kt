@@ -188,7 +188,7 @@ class MineImportsTest {
     private val scope = CoroutineScope(Dispatchers.Unconfined)
     private val imports = MineImports(store, scope)
     private val music = MusicState(source, imports, scope)
-    private val voice = vn.abook.player.ui.voice.VoiceState(store, scope, vn.abook.player.ui.voice.FakeSamplePlayer(), {}, 3_600_000, imports)
+    private val voice = vn.abook.player.ui.voice.VoiceState(store, scope, vn.abook.player.ui.voice.FakeSamplePlayer(), {}, imports)
 
     @Test
     fun `adding from the book panel refreshes my music and blocks a second turn there`() {
