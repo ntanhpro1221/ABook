@@ -84,9 +84,10 @@ Column {
         model: root.list
         Column {
             id: entry
+            objectName: "readingRow"
             required property var modelData
             required property int index
-            width: root.width
+            width: Math.min(root.width, Theme.listMeasure)
             Rectangle { visible: entry.index > 0; width: parent.width; height: 1; color: Theme.line }
             Item { width: 1; height: 8 }
             Item {

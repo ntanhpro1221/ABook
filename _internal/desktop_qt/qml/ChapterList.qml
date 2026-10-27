@@ -9,7 +9,7 @@ ListView {
     boundsBehavior: Flickable.StopAtBounds
     delegate: ChapterRow {
         required property var model
-        width: ListView.view.width
+        width: Math.min(ListView.view.width, Theme.listMeasure)
         title: model.title
         subtitle: model.subtitle
         length: model.length

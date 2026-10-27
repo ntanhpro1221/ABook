@@ -60,7 +60,8 @@ Item {
 
     Flickable {
         id: view
-        width: root.width
+        objectName: "importChapterViewport"
+        width: Math.min(root.width, Theme.listMeasure)
         height: Math.min(320, column.height)
         contentWidth: width
         contentHeight: column.height

@@ -243,6 +243,10 @@ def render() -> str:
     a("    readonly property int widthLarge: 1200")
     a("    readonly property int widthExtraLarge: 1600")
     a("    function widthClass(w) { return w < widthMedium ? 0 : w < widthExpanded ? 1 : w < widthLarge ? 2 : w < widthExtraLarge ? 3 : 4 }")
+    measure = re.search(r"giữ cả hàng rộng tối đa (\d+) px", design)
+    if not measure:
+        raise Missing("khổ hàng danh sách")
+    a(f"    readonly property int listMeasure: {measure.group(1)}")
     a("")
     a("    // ---- màu (DESIGN.md 5.1) ----")
     for dm, qn in COLOR_NAMES.items():

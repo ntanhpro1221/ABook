@@ -169,7 +169,8 @@ Column {
         }
         Column {
             id: list
-            width: parent.width
+            objectName: "musicTrackList"
+            width: Math.min(parent.width, Theme.listMeasure)
             Repeater {
                 model: rows
                 MyMusicTrack {

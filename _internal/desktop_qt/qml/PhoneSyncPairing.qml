@@ -44,7 +44,7 @@ Column {
                     Text {
                         id: instruction
                         width: parent.width
-                        text: "Trên máy kia: Cài đặt › Thiết bị → chọn " + (root.sync.name || "") + " → nhập mã."
+                        text: "Trên máy kia: Cài đặt › Thiết bị › chọn " + (root.sync.name || "") + " › nhập mã."
                         color: Theme.text2
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                         font.pixelSize: 13

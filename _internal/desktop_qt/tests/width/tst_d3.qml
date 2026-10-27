@@ -62,6 +62,7 @@ Item {
             const target = item || host
             waitForRendering(target)
             wait(300)
+            qtGlyphAudit.scan()
             const img = grabImage(target)
             const path = Qt.resolvedUrl("../../build/d2shots/d3_" + name + "_" + (Theme.dark ? "dark" : "light") + ".png").toString()
                 .replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, "")

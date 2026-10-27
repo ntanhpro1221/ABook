@@ -2,9 +2,9 @@
 from pathlib import Path
 import json
 import os
-import subprocess
 import sys
 from hidden_suite import wait_for_machine
+from guarded_process import run_guarded
 
 root = Path(__file__).resolve().parents[1]
 folder = root / "build/hidden-evidence"
@@ -21,7 +21,7 @@ bat = folder / "build-execution.bat"
 bat.write_bytes(source.replace("\n", "\r\n").encode("utf-8"))
 env = dict(os.environ, QT_QPA_PLATFORM="offscreen")
 with (folder / f"build-{label}.log").open("wb") as log:
-    result = subprocess.run(["cmd.exe", "/d", "/c", str(bat)], env=env, stdout=log, stderr=subprocess.STDOUT,
-                            creationflags=subprocess.CREATE_NO_WINDOW)
-print("BUILD exit", result.returncode, flush=True)
-raise SystemExit(result.returncode)
+    result = run_guarded(["cmd.exe", "/d", "/c", str(bat)], cwd=root, env=env, log=log)
+(folder / f"build-{label}-audit.json").write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8", newline="\n")
+print("BUILD", result, flush=True)
+raise SystemExit(result["exit_code"])
