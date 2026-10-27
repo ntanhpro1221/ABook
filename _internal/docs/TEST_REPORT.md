@@ -7,6 +7,17 @@
 - Full build/test/packaging flow exit 0, all tests offscreen: **514 passed**, 0 failed/skipped (DesktopApi 8, Player 31, ReadAlong 14, Music 37, Mix 73, MusicWindowActivity 3, SkipGlyph 6, Sidebar 117, Width/mini 225). Voice click tests wait for a rendered frame after repositioning the page.
 - Locked implementation hash unchanged: `c91761232204fedd1052a507682d1eacf53c20275e1b81389a819b4b39de9886`; code-derived list has 41 entries. Source files remain LF; cmd.exe executes a CRLF build-script copy. Shared-machine waits, raw traces, exact executable hashes and rejected experiment are documented in [the task report](../../report.md).
 
+## 27-10-2026 — mixer là đường nhạc duy nhất, sáu định dạng
+
+- Nhạc luôn dùng MixVoice; bỏ cờ A/B và factory MF cho nhạc. MfAudioOut giữ cho giọng, bỏ preload/loop không còn caller. Nhận MP3/WAV/FLAC/M4A/Ogg/Opus bằng magic, không phụ thuộc đuôi URL.
+- MfSource giải mã luồng nhớ trên reader thành float32 ở tần số gốc, giữ số kênh trước khi nhân đôi mono/lấy hai kênh đầu; dùng Resampler chung và cache PCM cũ. COM MTA/MF sống theo luồng reader. Cắt khung mồi/đệm AAC theo timestamp và độ dài trình bày.
+- `build.bat` exit 0; kết quả văn bản riêng kiểm đủ **314** ca, **0 FAIL!**, 0 lỗi/bỏ qua: Player 26, ReadAlong 14, Music 37, Mix 73, MusicWindowActivity 3, SkipGlyph 6, Sidebar 117, Width 38. MusicTests không sửa; mọi bộ thử chạy offscreen với foreground guard. MixTests dùng FakeDevice, kiểm ba tần số ra, thời lượng/mức RMS, mono/đa kênh, cache/header/tái dùng và lỗi đúng một lần.
+- Sáu clip mới dài hai giây, sinh cục bộ từ MP3 tổng hợp sẵn có, mỗi file dưới 200 KB; README cạnh fixture ghi lệnh sinh. MP3/WAV/FLAC/M4A đọc được. MF từ chối Ogg/Opus với `0xc00d36c4` cả qua URL và luồng nhớ có MIME/tên nguồn dù Web Media Extensions 2.1.51.0 đã cài; kiểm thông báo lỗi tiếng Việt rõ ràng, không cache dở/phát im lặng như thành công.
+- Không sửa QML, `_internal/abook/`, THIRD_PARTY hay dòng changelog nhạc nền ít CPU khi thu nhỏ; không có migration/fallback. Hash policy đọc từ code vẫn `c91761232204fedd1052a507682d1eacf53c20275e1b81389a819b4b39de9886` (danh sách hiện có 41 mục).
+- MP3 bốn vòng cùng desktop Windows riêng chưa được chuyển lên màn hình như mốc trước: trung vị CPU thu nhỏ ổn định **0,827%** so với **0,822%**, RAM riêng ổn định **18,66 MB** so với **18,58 MB**, trong nhiễu. Có đủ ready/playing, không failed/foreground event; AC được kiểm trước và lấy mẫu xuyên suốt. Lượt desktop hiện tại 0,915% cũng được giữ nguyên trong bằng chứng, không dùng để khẳng định CPU không đổi.
+- Probe cloak trước show giữ được qua focus/minimise/restore; hai lượt player có **2542/2583 frameSwapped**, morph p99 **16,760/17,199 ms**, khung restore đầu **15,020/18,956 ms**, 0 foreground/mất cloak. Qt có vẽ khi cảnh chuyển động dù cloak; đây là thời gian frameSwapped, không phải độ trễ hiển thị nhìn thấy. Không thay cấu hình màn hình; danh sách monitor chỉ đọc nằm trong báo cáo.
+- Bằng chứng build/test, phép đo MP3 bốn vòng và probe cloak: `D:/Novels/native_desk_proto/musicmix_step1b_task/report.md`.
+
 ## 27-10-2026 — musicmix: sửa theo Lead review, chưa commit
 
 - `deskqt_fixture_music` đã khôi phục `book.json` đúng từng byte từ `music_mix_task/fixture_before`; MP3 và lượt A/B dùng fixture riêng `deskqt_fixture_mp3`.
