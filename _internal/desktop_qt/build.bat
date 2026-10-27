@@ -5,6 +5,8 @@ rem   build.bat clean     remove build\ and dist\ (node fs.rmSync; the repo rule
 rem Override with env vars: QWK_ROOT (QWindowKit, built by tools\build_qwindowkit.bat when missing), QT_ROOT (Qt >= 6.10.3 msvc2022_64), CMAKE_BIN, NINJA_BIN, VCVARS, ABOOK_PYTHON.
 setlocal
 set HERE=%~dp0
+rem Owner 27-10: test windows never appear on the screen
+set QT_QPA_PLATFORM=offscreen
 if not defined QT_ROOT set QT_ROOT=D:\Novels\native_desk_proto\qt611\6.10.3\msvc2022_64
 if not defined CMAKE_BIN set CMAKE_BIN=D:\Novels\native_desk_proto\qt\Tools\CMake_64\bin
 if not defined NINJA_BIN set NINJA_BIN=D:\Novels\native_desk_proto\qt\Tools\Ninja
