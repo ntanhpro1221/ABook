@@ -17,6 +17,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -32,6 +33,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -43,6 +45,7 @@ import vn.abook.player.AbookApplication
 import vn.abook.player.AppLog
 import vn.abook.player.BuildConfig
 import vn.abook.player.Diagnostics
+import vn.abook.player.IncomingFile
 import vn.abook.player.ui.data.DemoPlaybackCore
 import vn.abook.player.ui.data.LibraryState
 import vn.abook.player.ui.data.PlayerRepo
@@ -75,6 +78,9 @@ class NativeActivity : ComponentActivity() {
     /** Android 8-11: chính app vừa mở một Activity khác (chọn file, Studio, bảng chia sẻ, hộp xin quyền) - [onUserLeaveHint] cũng nổ ở đó nhưng không phải bạn rời app. */
     private var openedByApp = false
 
+    /** File app khác gửi tới ("Mở bằng", chia sẻ) chờ khung vẽ xong để vào hàng nhập sách ([ShellState.receive]); mở nguội thì khung chưa có, nên cần chỗ đợi. */
+    private val incoming = Channel<List<String>>(Channel.UNLIMITED)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         val splash = installSplashScreen()
         super.onCreate(savedInstanceState)
@@ -83,6 +89,7 @@ class NativeActivity : ComponentActivity() {
         val covers = app.covers
         val demoBooks = if (BuildConfig.NATIVE_UI) intent.getIntExtra(DEMO_BOOKS, 0) else 0
         demo = demoBooks > 0
+        if (savedInstanceState == null) receive(intent)
         // Chế độ đo: cùng đường thật (PlayerRepo -> cửa sổ Đang nghe) nhưng nguồn là một cuốn giả, không chạm lõi phát thật.
         player = if (demo) PlayerRepo(DemoPlaybackCore(), lifecycleScope, Dispatchers.IO, { null }, { null }) else app.player
         val readAlong = if (demo) DemoReadAlongSource else AndroidReadAlongSource(this)
@@ -158,6 +165,7 @@ class NativeActivity : ComponentActivity() {
                         ShellState(scope) { sort -> lifecycleScope.launch(Dispatchers.IO) { prefs.setSort(sort) } }
                     }
                     val env = remember { SettingsEnv(settings, reveal, links, if (demo) null else app.devices, if (demo) null else app.voice, if (demo) null else app.music, pip) }
+                    LaunchedEffect(shell) { for (files in incoming) shell.receive(app.imports, files) }
                     LaunchedEffect(Unit) { shell.library.restoreSort(withContext(Dispatchers.IO) { prefs.sort() }) }
                     val state by library.state.collectAsStateWithLifecycle()
                     AppShell(
@@ -169,6 +177,24 @@ class NativeActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        receive(intent)
+    }
+
+    /** "Mở bằng ABook" / chia sẻ một file tới app (cùng cách lấy địa chỉ với MainActivity): vào hàng nhập sách như file chọn từ "Thêm sách". */
+    private fun receive(intent: Intent?) {
+        if (demo || intent == null) return
+        val uri = IncomingFile.uri(intent)
+        if (uri == null) {
+            if (IncomingFile.textOnly(intent)) Toast.makeText(this, IncomingFile.TEXT_ONLY, Toast.LENGTH_LONG).show()
+            return
+        }
+        runCatching { contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+        incoming.trySend(listOf(uri.toString()))
     }
 
     // Nơi đang đợi câu trả lời của các hộp hệ thống nằm ở Application ([PendingAnswers]): Activity bị huỷ lúc hộp còn mở thì Activity mới vẫn giao được.

@@ -2,7 +2,6 @@ package vn.abook.player
 
 import android.content.Intent
 import android.content.res.Configuration
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
@@ -65,22 +64,10 @@ class MainActivity : BridgeActivity() {
     /** "Mở bằng ABook" / chia sẻ một file tới app: file sách nhập vào thư viện, EPUB / DOCX / PDF / TXT mở bước xem trước của
      *  "Thêm sách từ file…" (LibraryPlugin.openFrom). */
     private fun open(intent: Intent?) {
-        val uri: Uri? = when (intent?.action) {
-            Intent.ACTION_VIEW -> intent.data
-            Intent.ACTION_SEND -> if (Build.VERSION.SDK_INT >= 33) {
-                intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
-            } else {
-                @Suppress("DEPRECATION")
-                intent.getParcelableExtra(Intent.EXTRA_STREAM)
-            }
-            else -> null
-        }
+        val uri = IncomingFile.uri(intent)
         if (uri == null) {
             // Chia sẻ chữ trần (vd một đường link) cũng tới đây vì app nhận SEND text/plain cho file .txt: nói rõ thay vì im lặng.
-            if (intent?.action == Intent.ACTION_SEND && intent.getStringExtra(Intent.EXTRA_TEXT) != null) {
-                Toast.makeText(this, "Bạn gửi file EPUB, Word, PDF hoặc TXT; chưa nhận đoạn chữ chia sẻ.",
-                    Toast.LENGTH_LONG).show()
-            }
+            if (IncomingFile.textOnly(intent)) Toast.makeText(this, IncomingFile.TEXT_ONLY, Toast.LENGTH_LONG).show()
             return
         }
         val plugin = bridge?.getPlugin("EbookLibrary")?.instance as? LibraryPlugin ?: return
