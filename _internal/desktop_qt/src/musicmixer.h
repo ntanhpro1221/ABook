@@ -6,6 +6,8 @@
 #include <functional>
 #include <memory>
 
+struct tWAVEFORMATEX;
+
 class MixDevice {
 public:
     virtual ~MixDevice() = default;
@@ -18,6 +20,8 @@ public:
     virtual bool write(const float *stereo, size_t frames) = 0;
     // Chỉ luồng trộn gọi: thông báo Windows chỉ đánh dấu, không dựng COM ngay trong callback.
     virtual bool refresh() { return true; }
+    // Nonempty only for a terminal device error; transient endpoint loss may retry.
+    virtual QString error() const { return {}; }
     virtual quint64 revision() const { return 0; }
 };
 
@@ -33,7 +37,9 @@ public:
     size_t bufferFrames() const override;
     bool write(const float *stereo, size_t frames) override;
     bool refresh() override;
+    QString error() const override;
     quint64 revision() const override;
+    static bool supportsFormat(const tWAVEFORMATEX &format);
 private:
     struct Impl;
     std::unique_ptr<Impl> d;

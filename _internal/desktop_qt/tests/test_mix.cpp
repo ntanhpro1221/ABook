@@ -3,6 +3,7 @@
 #include "mixcore.h"
 #include "mp3source.h"
 #include "musicmixer.h"
+#include "musicbed.h"
 
 #include <QFile>
 #include <QTemporaryDir>
@@ -15,6 +16,12 @@
 #include <random>
 #include <vector>
 
+#define NOMINMAX
+#include <windows.h>
+#include <mmreg.h>
+#include <ks.h>
+#include <ksmedia.h>
+
 using namespace MixCore;
 
 namespace {
@@ -25,6 +32,16 @@ public:
     size_t queued = 0;
     quint64 epoch = 0;
     bool running = false;
+    WAVEFORMATEXTENSIBLE format{};
+    FakeDevice() {
+        format.Format.wFormatTag = WAVE_FORMAT_IEEE_FLOAT;
+        format.Format.wBitsPerSample = 32;
+        format.Format.nChannels = 2;
+    }
+    bool refresh() override { return WasapiDevice::supportsFormat(format.Format); }
+    QString error() const override {
+        return WasapiDevice::supportsFormat(format.Format) ? QString() : QStringLiteral("Unsupported music device format");
+    }
     std::vector<float> output;
     int rate() const override { return hz; }
     quint64 revision() const override { return epoch; }
@@ -89,6 +106,75 @@ double rms(const std::vector<float> &x, int channels, int channel, size_t from, 
 class MixTests : public QObject {
     Q_OBJECT
 private slots:
+    void wasapiFormats_data() {
+        QTest::addColumn<int>("tag"); QTest::addColumn<int>("bits"); QTest::addColumn<int>("channels");
+        QTest::addColumn<int>("extra"); QTest::addColumn<bool>("floatSubtype"); QTest::addColumn<bool>("accepted");
+        QTest::newRow("float32-stereo") << int(WAVE_FORMAT_IEEE_FLOAT) << 32 << 2 << 0 << true << true;
+        QTest::newRow("float32-surround") << int(WAVE_FORMAT_EXTENSIBLE) << 32 << 6 << 22 << true << true;
+        QTest::newRow("pcm16") << int(WAVE_FORMAT_PCM) << 16 << 2 << 0 << false << false;
+        QTest::newRow("pcm32-extensible") << int(WAVE_FORMAT_EXTENSIBLE) << 32 << 2 << 22 << false << false;
+        QTest::newRow("float64") << int(WAVE_FORMAT_IEEE_FLOAT) << 64 << 2 << 0 << true << false;
+        QTest::newRow("mono") << int(WAVE_FORMAT_IEEE_FLOAT) << 32 << 1 << 0 << true << false;
+        QTest::newRow("short-extensible") << int(WAVE_FORMAT_EXTENSIBLE) << 32 << 2 << 0 << true << false;
+    }
+
+    void wasapiFormats() {
+        QFETCH(int, tag); QFETCH(int, bits); QFETCH(int, channels); QFETCH(int, extra);
+        QFETCH(bool, floatSubtype); QFETCH(bool, accepted);
+        WAVEFORMATEXTENSIBLE format{};
+        format.Format.wFormatTag = WORD(tag); format.Format.wBitsPerSample = WORD(bits);
+        format.Format.nChannels = WORD(channels); format.Format.cbSize = WORD(extra);
+        format.SubFormat = floatSubtype ? KSDATAFORMAT_SUBTYPE_IEEE_FLOAT : KSDATAFORMAT_SUBTYPE_PCM;
+        QCOMPARE(WasapiDevice::supportsFormat(format.Format), accepted);
+    }
+
+    void unsupportedDeviceNotifiesVoices_data() {
+        QTest::addColumn<bool>("loaded");
+        QTest::newRow("initial-mono") << false;
+        QTest::newRow("playing-switch-to-pcm16") << true;
+    }
+
+    void unsupportedDeviceNotifiesVoices() {
+        QFETCH(bool, loaded);
+        MixerRig rig; MixVoice a(&rig.mixer), b(&rig.mixer);
+        a.load(track(), 0); b.load(track(), 0);
+        if (loaded) {
+            QVERIFY(rig.ready(a)); QVERIFY(rig.ready(b));
+            a.play(); b.play(); rig.serve(4800); QVERIFY(a.playing()); QVERIFY(b.playing());
+            rig.device->format.Format.wFormatTag = WAVE_FORMAT_PCM;
+            rig.device->format.Format.wBitsPerSample = 16;
+        } else rig.device->format.Format.nChannels = 1;
+        QSignalSpy failedA(&a, &AudioOut::failed), failedB(&b, &AudioOut::failed);
+        rig.mixer.service(4800); QCoreApplication::processEvents();
+        QCOMPARE(failedA.size(), 1); QCOMPARE(failedB.size(), 1);
+        QVERIFY(!failedA.first().first().toString().isEmpty());
+        QVERIFY(!a.playing()); QVERIFY(!b.playing()); QVERIFY(!rig.device->running);
+        const auto samples = rig.device->output.size();
+        rig.mixer.serviceReader(); rig.mixer.service(4800); QCoreApplication::processEvents();
+        QCOMPARE(failedA.size(), 1); QCOMPARE(failedB.size(), 1);
+        QCOMPARE(rig.device->output.size(), samples);
+
+        // A later valid endpoint/load may play again.
+        rig.device->format.Format.wFormatTag = WAVE_FORMAT_IEEE_FLOAT;
+        rig.device->format.Format.wBitsPerSample = 32; rig.device->format.Format.nChannels = 2;
+        a.load(track(), 0); QVERIFY(rig.ready(a)); a.play(); rig.serve(4800); QVERIFY(a.playing());
+    }
+
+    void unsupportedDeviceMakesMusicBedSilent() {
+        MixerRig rig;
+        rig.device->format.Format.nChannels = 1;
+        MusicBed bed([&rig]() -> AudioOut * { return new MixVoice(&rig.mixer); }, [](const QString &) { return track(); });
+        QSignalSpy results(&bed, &MusicBed::loadResult);
+        MusicLogic::MusicCue cue;
+        cue.link = QStringLiteral("test-song"); cue.key = cue.src = cue.link; cue.start = 0; cue.end = 120;
+        bed.setCues({cue}, -20); bed.sync(10, true);
+        rig.mixer.service(4800);
+        QTRY_VERIFY(bed.failing());
+        QVERIFY(bed.activeLink().isEmpty()); QCOMPARE(bed.voices(), 0);
+        QCOMPARE(results.size(), 1); QCOMPARE(results.first().at(1).toBool(), false);
+        bed.sync(11, true); QCOMPARE(bed.voices(), 0);
+    }
+
     void mixerCrossfadeRandomBlocks() {
         MixerRig rig;
         const auto render = [&rig](int mode) {
