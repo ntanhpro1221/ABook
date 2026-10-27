@@ -33,7 +33,7 @@ struct MfAudioOut::Impl {
 
 namespace {
 // Chỉ những sự kiện onEvent dùng mới đánh thức luồng giao diện: TIMEUPDATE / PROGRESS tới vài lần mỗi giây mỗi engine
-// (giọng + 2-3 engine nhạc nền) - 157 lần đánh thức / 10 s lúc thu nhỏ đang phát còn 0 (PROGRESS.md mục CPU).
+// không cần đánh thức giao diện nếu thời gian phát vẫn do đồng hồ của Player theo dõi.
 bool wakesUi(DWORD event) {
     static const bool trace = qEnvironmentVariableIntValue("ABOOK_AUDIO_TRACE") != 0;
     switch (event) {
@@ -127,7 +127,7 @@ MfAudioOut::~MfAudioOut() {
 
 void MfAudioOut::retire() {
     // Tháo đường ống của nguồn cũ (Pause / SetSource / Shutdown) chờ luồng mạng đóng - đo được 0,3 tới vài giây đứng luồng giao diện
-    // lúc sang chương hay lúc nhạc nền nhả bài (PROGRESS.md mục CPU). Engine cũ được tháo ở luồng riêng; lần phát kế dựng engine mới.
+    // lúc sang chương (PROGRESS.md mục CPU). Engine cũ được tháo ở luồng riêng; lần phát kế dựng engine mới.
     if (!d->engine)
         return;
     {
@@ -179,7 +179,6 @@ void MfAudioOut::openSource() {
     SysFreeString(source);
     d->engine->SetPlaybackRate(m_rate);
     d->engine->SetVolume(effectiveVolume(m_volume));
-    d->engine->SetLoop(m_loop);
 }
 
 void MfAudioOut::play() {
@@ -189,17 +188,6 @@ void MfAudioOut::play() {
     openSource();
     if (m_loaded && d->engine)
         d->engine->Play();
-}
-
-void MfAudioOut::preload() {
-    if (!m_url.isEmpty())
-        openSource();
-}
-
-void MfAudioOut::setLoop(bool loop) {
-    m_loop = loop;
-    if (d->engine)
-        d->engine->SetLoop(loop);
 }
 
 void MfAudioOut::pause() {
