@@ -20,9 +20,11 @@ public:
     // Gọi một lần, TRƯỚC khi cửa sổ hiện.
     Q_INVOKABLE bool attach(QQuickWindow *window, QQuickItem *titleBar, QQuickItem *minimize, QQuickItem *maximize, QQuickItem *close);
     Q_INVOKABLE void keepClickable(QQuickItem *item);
+    Q_INVOKABLE void setMini(bool mini);
     // Con trỏ thật còn nằm trên mục này không (Qt không còn nhận tin rê chuột khi Windows mở Snap Layouts trên nút phóng to).
     Q_INVOKABLE bool cursorInside(QQuickItem *item) const;
 
 private:
     QWK::QuickWindowAgent *m_agent = nullptr;
+    QQuickItem *m_titleBar = nullptr;
 };

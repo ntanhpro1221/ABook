@@ -101,6 +101,12 @@ Item {
             SkipButton { forward: false; anchors.verticalCenter: parent.verticalCenter }
             PlayButton { size: 44; anchors.verticalCenter: parent.verticalCenter }
             SkipButton { forward: true; anchors.verticalCenter: parent.verticalCenter }
+            IconButton {
+                icon: "picture-in-picture-2"; tip: "Cửa sổ mini"
+                enabled: Player.loaded
+                anchors.verticalCenter: parent.verticalCenter
+                onClicked: Nav.windowMode.enter()
+            }
         }
     }
 
