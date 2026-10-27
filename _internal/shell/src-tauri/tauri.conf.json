@@ -22,7 +22,7 @@
         "minWidth": 1024,
         "minHeight": 680,
         "backgroundColor": "#f5f3ef",
-        "additionalBrowserArgs": "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --autoplay-policy=no-user-gesture-required"
+        "additionalBrowserArgs": "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --enable-features=HardwareMediaKeyHandling --autoplay-policy=no-user-gesture-required"
       }
     ],
     "security": {
