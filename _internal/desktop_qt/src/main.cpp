@@ -14,15 +14,19 @@
 #include <QDirIterator>
 #include <QFontDatabase>
 #include <QGuiApplication>
+#include <QIcon>
 #include <QQmlApplicationEngine>
 #include <QQmlEngine>
 #include <QQuickWindow>
 #include <QTimer>
 
 int main(int argc, char *argv[]) {
+    QQuickWindow::setDefaultAlphaBuffer(true);
     QGuiApplication app(argc, argv);
     QGuiApplication::setApplicationName(QStringLiteral("ABook"));
     QGuiApplication::setOrganizationName(QStringLiteral("ABook"));
+    app.setQuitOnLastWindowClosed(false);
+    app.setWindowIcon(QIcon(QStringLiteral(":/app/icon-192.png")));
     Bench::mark(QStringLiteral("main"));
 
     // Backend Python chạy NGAY, song song với việc dựng giao diện (Python mất vài trăm ms để nạp).

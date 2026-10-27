@@ -14,7 +14,8 @@ Item {
     property var stack: null
     property var win: null
     property var nowPlaying: null
-    readonly property bool playerScenario: Bench.scenario === "player"
+    readonly property bool miniScenario: Bench.scenario === "mini"
+    readonly property bool playerScenario: Bench.scenario === "player" || miniScenario
     readonly property var list: {
         const s = stack && stack._stacks ? stack._stacks[0] : null
         return s && s.length && s[0].content ? s[0].content.list : null
@@ -76,6 +77,7 @@ Item {
     function advance(ms) { stepper.interval = ms; stepper.start() }
     function counters(tag) { Bench.noteCounters(tag, Player, ReadAlong) }
     function run() {
+        if (miniScenario) { runMini(); return }
         if (Bench.enabled) console.log("bench step", root.step)
         switch (root.step++) {
         case 0: Bench.note("idle_begin"); advance(3500); break
@@ -102,6 +104,22 @@ Item {
         }
     }
 
+    // Đo cùng bộ phát Media Foundation thật nhưng cửa sổ offscreen; chương 4 dài hơn khoảng ẩn hai phút.
+    function runMini() {
+        switch (root.step++) {
+        case 0: Player.jumpTo(4, 0); Player.resume(); advance(1500); break
+        case 1: Bench.notePlayback("full"); Nav.windowMode.enter(); advance(1500); break
+        case 2: Bench.notePlayback("mini"); Bench.note("mini_begin"); advance(10000); break
+        case 3:
+            Bench.note("mini_end"); Bench.notePlayback("hide_begin")
+            Bench.note("hide_begin"); Nav.windowMode.hideToTray(); advance(120000); break
+        case 4:
+            Bench.note("hide_end"); Bench.notePlayback("hide_end")
+            Nav.windowMode.reveal(); Nav.windowMode.expand(); advance(1500); break
+        default: Bench.notePlayback("expanded"); Player.pause(); Bench.note("done"); Bench.finish()
+        }
+    }
+
     // Backend không lên: ghi lại những gì có rồi thoát, để script đo báo lỗi thay vì treo
-    Timer { running: Bench.enabled; interval: root.playerScenario ? 90000 : 40000; onTriggered: { Bench.note("timeout"); Bench.finish() } }
+    Timer { running: Bench.enabled; interval: root.miniScenario ? 170000 : root.playerScenario ? 90000 : 40000; onTriggered: { Bench.note("timeout"); Bench.finish() } }
 }

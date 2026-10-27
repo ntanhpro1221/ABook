@@ -38,6 +38,10 @@ def private_mb(h) -> float:
         buf = (ctypes.c_size_t * n)()
         if psapi.QueryWorkingSet(h, buf, ctypes.sizeof(buf)):
             break
+        # Tiến trình vừa thoát: lỗi handle không phải thiếu bộ đệm, không nhân đôi RAM vô hạn.
+        error = ctypes.get_last_error()
+        if error != 24 or n >= 1 << 23:  # ERROR_BAD_LENGTH
+            raise OSError(error, "QueryWorkingSet")
         n *= 2
     cnt = buf[0]
     return sum(1 for i in range(1, cnt + 1) if not (buf[i] & 0x100)) * 4096 / 1048576
@@ -127,7 +131,7 @@ def host_tree_private_mb(parent_pid: int) -> float:
     return total
 
 
-def launch(exe: Path, env_extra: dict, topmost: bool) -> dict:
+def launch(exe: Path, env_extra: dict, topmost: bool, timeout_seconds: float = 120) -> dict:
     """Chạy app một lượt, lấy mẫu RAM riêng + CPU mỗi 250 ms và trạng thái cửa sổ; trả về mọi thứ thô cho phần phân tích."""
     out = Path(tempfile.gettempdir()) / f"abookdesk_bench_{os.getpid()}.json"
     if out.exists():
@@ -136,7 +140,26 @@ def launch(exe: Path, env_extra: dict, topmost: bool) -> dict:
     env.update(env_extra)
     env["ABOOK_BENCH"] = str(out)
     wall0 = time.time()
-    p = subprocess.Popen([str(exe)], env=env, cwd=str(exe.parent))
+    env["QT_FORCE_STDERR_LOGGING"] = "1"
+    env["QT_ASSUME_STDERR_HAS_CONSOLE"] = "1"
+    desktop = None
+    startup = subprocess.STARTUPINFO()
+    if env.get("QT_QPA_PLATFORM") == "offscreen" or env.get("ABOOK_BENCH_HIDDEN_DESKTOP") == "1":
+        # Lớp chắn thứ hai: cả hộp lỗi trước lúc Qt nạp cũng không thể lên desktop của chủ sách.
+        u32.CreateDesktopW.restype = wt.HANDLE
+        u32.CreateDesktopW.argtypes = [wt.LPCWSTR, wt.LPCWSTR, ctypes.c_void_p, wt.DWORD, wt.DWORD, ctypes.c_void_p]
+        u32.CloseDesktop.argtypes = [wt.HANDLE]
+        desktop_name = f"ABookBench-{os.getpid()}"
+        desktop = u32.CreateDesktopW(desktop_name, None, None, 0, 0x10000000, None)
+        if not desktop:
+            raise ctypes.WinError()
+        startup.lpDesktop = "winsta0\\" + desktop_name
+    app_log = out.with_suffix(".app.log").open("wb")
+    command = [str(exe)]
+    if env.get("ABOOK_BENCH_HIDDEN_DESKTOP") == "1":
+        command += ["-qwindowgeometry", "1920x1080-20000-20000"]
+    p = subprocess.Popen(command, env=env, cwd=str(exe.parent), stdout=app_log, stderr=subprocess.STDOUT,
+                         creationflags=subprocess.CREATE_NO_WINDOW, startupinfo=startup)
     h = k32.OpenProcess(0x0410, False, p.pid)
     samples: list[tuple[float, float, float]] = []   # (epoch ms, MB riêng, CPU ms của tiến trình)
     states: list[tuple[float, dict]] = []
@@ -160,7 +183,7 @@ def launch(exe: Path, env_extra: dict, topmost: bool) -> dict:
     th = threading.Thread(target=sampler, daemon=True)
     th.start()
     host_mb = float("nan")
-    deadline = time.time() + 120
+    deadline = time.time() + timeout_seconds
     while not out.exists() and time.time() < deadline and p.poll() is None:
         time.sleep(0.2)
         if time.time() - wall0 > 8 and host_mb != host_mb:       # một lần lúc app đã nghỉ
@@ -171,11 +194,22 @@ def launch(exe: Path, env_extra: dict, topmost: bool) -> dict:
     try:
         p.wait(8)
     except subprocess.TimeoutExpired:
+        # Chỉ thu hồi cây do lượt đo này tạo, không để host riêng sống sót sau app bị kẹt.
+        import psutil
+        for child in reversed(psutil.Process(p.pid).children(recursive=True)):
+            try:
+                child.kill()
+            except psutil.NoSuchProcess:
+                pass
         p.kill()
+        p.wait(5)
+    app_log.close()
+    if desktop:
+        u32.CloseDesktop(desktop)
     if not out.exists():
         return {"ok": False, "why": "app không ghi file đo"}
     d = json.loads(out.read_bytes())
-    return {"ok": True, "d": d, "samples": samples, "states": states, "host_mb": host_mb}
+    return {"ok": True, "d": d, "samples": samples, "states": states, "host_mb": host_mb, "app_log": str(out.with_suffix(".app.log"))}
 
 
 def one_run(exe: Path, env_extra: dict, topmost: bool) -> dict:

@@ -19,6 +19,9 @@ KOTLIN_OUT = ROOT / "mobile/android/app/src/main/java/vn/abook/player/ui/compone
 
 # Tên file lucide (kebab-case), mỗi tên một dòng theo thứ tự chữ cái: bản sinh ổn định, hai nhánh thêm icon khác nhau gộp không xung đột.
 ICONS = sorted({
+    "maximize-2",
+    "picture-in-picture-2",
+    "pin-off",
     "arrow-down-wide-narrow",
     "arrow-left",
     "audio-lines",
@@ -178,7 +181,10 @@ def const(name: str) -> str:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--qml", type=Path, help="thư mục qml của app máy tính (ghi LucidePaths.js)")
+    ap.add_argument("--qml-only", action="store_true", help="chỉ ghi Qt, không thay file của điện thoại (cần --qml)")
     args = ap.parse_args()
+    if args.qml_only and not args.qml:
+        ap.error("--qml-only cần --qml")
     data = {}
     versions = set()
     for name in ICONS:
@@ -200,8 +206,9 @@ def main() -> None:
     ]
     lines += [f'    const val {const(n)} = "{d}"' for n, d in data.items()]
     lines += ["}", ""]
-    KOTLIN_OUT.write_text("\n".join(lines), encoding="utf-8", newline="\n")
-    print(f"{len(data)} icon -> {KOTLIN_OUT.relative_to(ROOT)}")
+    if not args.qml_only:
+        KOTLIN_OUT.write_text("\n".join(lines), encoding="utf-8", newline="\n")
+        print(f"{len(data)} icon -> {KOTLIN_OUT.relative_to(ROOT)}")
     if args.qml:
         js = [".pragma library", "", f"// SINH TỰ ĐỘNG bởi scripts/gen_lucide_icons.py từ lucide-react v{version} (ISC) - không sửa tay.", ""]
         js += [f'var {const(n)} = "{d}";' for n, d in data.items()]

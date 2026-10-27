@@ -93,6 +93,10 @@ qt_add_qml_module(ABookDesk
         qml/Theme.qml
         qml/Nav.qml
         qml/Main.qml
+        qml/WindowMode.qml
+        qml/DesktopTray.qml
+        qml/TrayMenuModel.qml
+        qml/MiniPlayer.qml
         qml/Icon.qml
         qml/LucidePaths.js
         qml/Interactive.qml
@@ -246,6 +250,7 @@ target_compile_definitions(ABookDesk PRIVATE ABOOK_VERSION="${ABOOK_VERSION}" QT
 # Âm thanh: Media Foundation của Windows (đo ở docs/NATIVE_PHONE_UI.md 7.1), không thêm DLL nào vào bản phân phối.
 target_link_libraries(ABookDesk PRIVATE Qt6::Quick Qt6::Network QWindowKit::Quick mfplat mf mfuuid ole32 ksuser propsys)
 qt_add_resources(ABookDesk legal PREFIX "/legal" BASE "../docs" FILES "../docs/THIRD_PARTY.md")
+qt_add_resources(ABookDesk appicon PREFIX "/app" BASE "../ui/public" FILES "../ui/public/icon-192.png")
 if(MSVC)
     target_compile_options(ABookDesk PRIVATE /W3 /utf-8)
 endif()

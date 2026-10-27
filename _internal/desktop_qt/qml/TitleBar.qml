@@ -25,7 +25,7 @@ Item {
             id: minimize
             height: parent.height
             active: root.windowActive
-            onClicked: root.window.showMinimized()
+            onClicked: Nav.windowMode.minimize()
             CaptionGlyph { kind: "minimize"; color: minimize.ink }
         }
         CaptionButton {
