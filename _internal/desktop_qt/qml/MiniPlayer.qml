@@ -7,7 +7,13 @@ Rectangle {
     property var windowMode: null
     property string bookTitle: Player.bookTitle
     property string chapterTitle: Player.chapterTitle
-    readonly property real naturalHeight: Math.max(112, details.implicitHeight + 48)
+    readonly property bool expanded: Theme.widthClass(width) >= 1
+    property real wideT: expanded ? 1 : 0
+    Behavior on wideT {
+        NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard }
+    }
+    readonly property real naturalHeight: Math.max(112, details.y + details.implicitHeight + 12,
+                                                playback.y + playback.height + 12)
     implicitWidth: 360
     implicitHeight: naturalHeight
     color: Theme.panel
@@ -52,9 +58,10 @@ Rectangle {
     }
     Column {
         id: details
+        objectName: "miniDetails"
         x: cover.x + cover.width + 12
         y: 36
-        width: root.width - x - 12
+        width: Math.min(640, root.width - x - 12 - (playback.width + Theme.s24) * Math.min(1, root.wideT * 2))
         spacing: 4
         Text {
             objectName: "miniBookTitle"
@@ -66,12 +73,16 @@ Rectangle {
             width: parent.width; text: root.chapterTitle; wrapMode: Text.Wrap
             color: Theme.text2; font.pixelSize: Theme.sizeCaption
         }
-        Row {
-            spacing: Theme.s8
-            SkipButton { objectName: "miniBack"; forward: false; tip: `Lùi ${Player.skipSeconds} giây` }
-            PlayButton { objectName: "miniPlay"; size: 40; tip: Player.playing ? "Tạm dừng" : "Phát" }
-            SkipButton { objectName: "miniForward"; forward: true; tip: `Tới ${Player.skipSeconds} giây` }
-        }
+    }
+    Row {
+        id: playback
+        objectName: "miniPlayback"
+        x: details.x + (details.width + Theme.s24) * Math.min(1, root.wideT * 2)
+        y: details.y + (details.height + Theme.s4) * (1 - Math.max(0, root.wideT * 2 - 1))
+        spacing: Theme.s8
+        SkipButton { objectName: "miniBack"; forward: false; tip: `Lùi ${Player.skipSeconds} giây` }
+        PlayButton { objectName: "miniPlay"; size: 40; tip: Player.playing ? "Tạm dừng" : "Phát" }
+        SkipButton { objectName: "miniForward"; forward: true; tip: `Tới ${Player.skipSeconds} giây` }
     }
     SeekBar {
         objectName: "miniSeek"

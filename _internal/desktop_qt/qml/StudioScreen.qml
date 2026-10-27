@@ -8,6 +8,11 @@ import "PeerStudio.js" as Peer
 // chưa vào được thì nói vì sao (PeerTrouble), máy ấy im thì tự hỏi lại mỗi 5 giây và tự mở khi nó trả lời.
 Item {
     id: root
+    readonly property bool expanded: Theme.widthClass(width) >= 2
+    property real wideT: expanded ? 1 : 0
+    Behavior on wideT {
+        NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard }
+    }
     readonly property real bodyWidth: Math.min(width - 2 * Theme.margin, 800)
     readonly property string peer: Nav.studioPeer
     property var peerInfo: null         // /api/app của máy kia (có peer.name, listenOnly)
@@ -84,17 +89,32 @@ Item {
         height: parent.height - y
         opacity: root.phase
         transform: Translate { y: Theme.reduceMotion ? 0 : 8 * (1 - root.phase) }
-        Text {
-            objectName: "studioPlaceholder"
+        Item {
+            objectName: "studioStatus"
             visible: root.shownView === "own" || root.shownView === "open"
             anchors.centerIn: parent
             anchors.verticalCenterOffset: 40 - body.y / 2
-            width: root.bodyWidth
-            horizontalAlignment: Text.AlignHCenter
-            wrapMode: Text.Wrap
-            text: "Studio chưa mở trong bản này."
-            color: Theme.text2
-            font.pixelSize: Theme.sizeBodySmall
+            width: Math.min(parent.width, statusLabel.implicitWidth + 80)
+            height: Math.max(48, statusLabel.y + statusLabel.height)
+            Icon {
+                id: statusIcon
+                name: "clapperboard"; size: 48; color: Theme.text3
+                x: (parent.width - width) / 2 * (1 - Math.min(1, root.wideT * 2))
+            }
+            Text {
+                id: statusLabel
+                objectName: "studioPlaceholder"
+                x: 80 * Math.min(1, root.wideT * 2)
+                y: 72 * (1 - Math.max(0, root.wideT * 2 - 1))
+                width: Math.min(640, parent.width - x)
+                height: Math.max(48, implicitHeight)
+                verticalAlignment: Text.AlignVCenter
+                horizontalAlignment: root.expanded ? Text.AlignLeft : Text.AlignHCenter
+                wrapMode: Text.Wrap
+                text: "Studio chưa mở trong bản này."
+                color: Theme.text2
+                font.pixelSize: Theme.sizeBodySmall
+            }
         }
         // Thiết bị này chỉ được nghe ở máy kia (StudioClosed): nói bật quyền ở đâu
         EmptyState {

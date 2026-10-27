@@ -12,6 +12,8 @@ Item {
     property string fold: ""
     property bool shown: true
     property bool first: false
+    // A section moving to the top of a new column loses its separator smoothly.
+    property real separator: first ? 0 : 1
     property bool expanded: fold === "" || Platform.setting("fold." + fold, "0") === "1"
     default property alias rows: body.data
     implicitHeight: wrap.height
@@ -20,9 +22,9 @@ Item {
         id: wrap
         width: parent.width
         open: root.shown
-        Item { width: 1; height: root.first ? 0 : 16 }
-        Rectangle { visible: !root.first; width: parent.width; height: root.first ? 0 : 1; color: Theme.line }
-        Item { width: 1; height: root.first ? 0 : (root.fold !== "" ? 8 : 16) }
+        Item { width: 1; height: 16 * root.separator }
+        Rectangle { visible: root.separator > 0; width: parent.width; height: root.separator; opacity: root.separator; color: Theme.line }
+        Item { width: 1; height: (root.fold !== "" ? 8 : 16) * root.separator }
         Item {
             visible: root.fold === ""
             width: parent.width

@@ -38,7 +38,7 @@ Interactive {
     Column {
         id: words
         x: lead.visible ? lead.width + 14 : 0
-        width: root.width - x - 14 - 16
+        width: Math.min(640, root.width - x - 14 - 16)
         anchors.verticalCenter: parent.verticalCenter
         Text {
             width: parent.width
