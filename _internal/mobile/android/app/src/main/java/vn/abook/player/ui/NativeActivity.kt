@@ -124,21 +124,17 @@ class NativeActivity : ComponentActivity() {
             }
         }
         if (!demo) lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
+            vn.abook.player.ui.data.refreshWhenStarted(lifecycle, vn.abook.player.ui.data.networkChanges(this@NativeActivity)) {
                 vn.abook.player.StudioAlerts.checkSoon(this@NativeActivity)
-                launch {
-                    while (true) {
-                        app.companion.refresh()
-                        delay(if (app.companion.state.value.players.any { it.playing }) 2_000 else 8_000)
-                    }
-                }
-                launch {
-                    while (true) {
-                        app.devices.syncStreamed()
-                        delay(8_000)
-                    }
-                }
+                app.devices.syncStreamed()
+                app.companion.refresh()
             }
+        }
+        if (!demo) lifecycleScope.launch {
+            vn.abook.player.ui.data.refreshRemoteWhileStarted(
+                lifecycle, app.companion.state.map { state -> state.players.any { it.playing } },
+                refresh = { app.companion.refresh() }, syncStreamed = { app.devices.syncStreamed() },
+            )
         }
         setContent {
             val scope = rememberCoroutineScope()
@@ -309,15 +305,15 @@ class NativeActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         started = true
+        if (contentReady) player.attach()
         openedByApp = false
         pip.active = pip.available && isInPictureInPictureMode
-        if (contentReady) player.attach()
     }
 
     override fun onStop() {
-        super.onStop()
         started = false
         player.detach()
+        super.onStop()
     }
 
     override fun onTrimMemory(level: Int) {

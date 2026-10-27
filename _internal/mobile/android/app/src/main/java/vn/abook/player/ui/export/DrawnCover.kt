@@ -29,12 +29,12 @@ object DrawnCover {
         val width = (size * 0.78f).toInt()
         var layout: StaticLayout
         var scale = 0.10f
-        while (true) {
+        do {
             ink.textSize = size * scale
             layout = StaticLayout.Builder.obtain(text, 0, text.length, ink, width).setAlignment(Layout.Alignment.ALIGN_CENTER).build()
             if (layout.height <= size * 0.7f || scale <= 0.03f) break
             scale -= 0.005f
-        }
+        } while (scale >= 0.025f)
         canvas.save()
         canvas.translate((size - width) / 2f, (size - layout.height) / 2f)
         layout.draw(canvas)

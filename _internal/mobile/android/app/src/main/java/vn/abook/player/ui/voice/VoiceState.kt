@@ -4,8 +4,6 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -13,6 +11,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /** Một mô-đun giọng trên máy đang vẽ gì: trạng thái lõi (null = chưa hỏi xong), các lựa chọn bạn vừa bấm tải, và lỗi của lần bấm (không phải lỗi tải của lõi). */
 @Immutable
@@ -61,7 +61,6 @@ class VoiceState(
     private val scope: CoroutineScope,
     private val player: SamplePlayer,
     private val voicesChanged: () -> Unit = {},
-    private val pollMs: Long = 700,
     private val imports: MineImports,
 ) {
     private val moduleFlow = MutableStateFlow(ModuleKind.entries.associateWith { ModuleUi() })
@@ -71,7 +70,7 @@ class VoiceState(
     private val sampleFlow = MutableStateFlow(SampleUi())
     private val musicFlow = MutableStateFlow(MusicUi())
     private val importFlow = MutableStateFlow(0f)
-    private val watchers = HashMap<ModuleKind, Job>()
+    private val moduleLocks = ModuleKind.entries.associateWith { Mutex() }
     private var turn = 0
 
     val modules: StateFlow<Map<ModuleKind, ModuleUi>> = moduleFlow
@@ -94,6 +93,9 @@ class VoiceState(
     }.stateIn(scope, SharingStarted.Eagerly, VoiceSummary())
 
     init {
+        for (kind in ModuleKind.entries) scope.launch {
+            source.moduleChanges(kind).collect { refresh(kind) }
+        }
         imports.listen(object : MineImports.Listener {
             override fun changed(turn: MineImports.Turn?) {
                 importFlow.value = if (turn != null && turn.total > 0) turn.done.toFloat() / turn.total else 0f
@@ -141,8 +143,12 @@ class VoiceState(
     // ---- giọng tải về máy -------------------------------------------------------------------------------------------------
 
     private suspend fun refresh(kind: ModuleKind) {
-        attempt { source.module(kind) }.onSuccess { apply(kind, it) }
+        updateModule(kind) { source.module(kind) }
     }
+
+    /** A completion event must not be overwritten by an older command response arriving later. */
+    private suspend fun updateModule(kind: ModuleKind, read: suspend () -> ModuleStatus): Result<ModuleStatus> =
+        moduleLocks.getValue(kind).withLock { attempt(read).onSuccess { apply(kind, it) } }
 
     private fun setModule(kind: ModuleKind, update: (ModuleUi) -> ModuleUi) = moduleFlow.update { it + (kind to update(it.getValue(kind))) }
 
@@ -155,23 +161,9 @@ class VoiceState(
         val status = if (incoming.state == ModuleState.Downloading) incoming.copy(percent = maxOf(incoming.percent, before?.percent ?: 0)) else incoming
         progresses.getValue(kind).value = if (status.state == ModuleState.Downloading) status.percent / 100f else 0f
         setModule(kind) { it.copy(status = status, pending = if (status.state == ModuleState.Downloading || status.state == ModuleState.Error) it.pending else emptyList(), problem = "") }
-        if (status.working) watch(kind)
         if (before?.working == true && !status.working) {
             voicesChanged()
             for (other in ModuleKind.entries.filter { it != kind }) scope.launch { refresh(other) }
-        }
-    }
-
-    /** Hỏi lại mỗi nhịp khi mô-đun đang tải hay đang đo; xong thì thôi. Lỗi hỏi (hiếm) cũng thôi - lần mở màn sau hỏi lại. */
-    private fun watch(kind: ModuleKind) {
-        if (watchers[kind]?.isActive == true) return
-        watchers[kind] = scope.launch {
-            while (true) {
-                delay(pollMs)
-                val next = attempt { source.module(kind) }.getOrNull() ?: break
-                apply(kind, next)
-                if (!next.working) break
-            }
         }
     }
 
@@ -179,8 +171,7 @@ class VoiceState(
     fun download(kind: ModuleKind, ids: List<String>?) {
         setModule(kind) { it.copy(pending = ids.orEmpty(), problem = "") }
         scope.launch {
-            val result = attempt { source.start(kind, ids) }
-            result.onSuccess { apply(kind, it) }
+            val result = updateModule(kind) { source.start(kind, ids) }
             result.onFailure { error -> setModule(kind) { it.copy(problem = message(error, "Chưa tải được ${kind.title}")) } }
         }
     }
@@ -189,18 +180,17 @@ class VoiceState(
     fun retry(kind: ModuleKind) = download(kind, moduleFlow.value.getValue(kind).pending.ifEmpty { null })
 
     fun cancel(kind: ModuleKind) {
-        scope.launch { attempt { source.cancel(kind) }.onSuccess { apply(kind, it) } }
+        scope.launch { updateModule(kind) { source.cancel(kind) } }
     }
 
     fun measure(kind: ModuleKind) {
-        scope.launch { attempt { source.measure(kind) }.onSuccess { apply(kind, it) } }
+        scope.launch { updateModule(kind) { source.measure(kind) } }
     }
 
     /** Gỡ một lựa chọn khỏi máy. Null = xong, khác null = câu lỗi. */
     suspend fun remove(kind: ModuleKind, choice: String): String? {
-        val result = attempt { source.remove(kind, choice) }
-        result.onSuccess { status ->
-            apply(kind, status)
+        val result = updateModule(kind) { source.remove(kind, choice) }
+        result.onSuccess {
             voicesChanged()
             for (other in ModuleKind.entries.filter { it != kind }) refresh(other)
         }

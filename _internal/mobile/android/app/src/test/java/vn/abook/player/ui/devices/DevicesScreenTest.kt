@@ -86,7 +86,7 @@ class DevicesScreenTest {
             openStudio = { computer, path -> studio = computer to path }, openAppSettings = { settingsOpened++ },
             copyText = { text -> copiedTexts += text; copyWorks }, openRelease = { url -> releases += url },
         ),
-        pollMs = 3_600_000,
+        now = { 1_700_000_000_000L },
     )
 
     private fun show(page: DevicesPage, dark: Boolean = false) {
@@ -421,7 +421,7 @@ class DevicesScreenTest {
     @Test
     fun aRefusedBluetoothPermissionPointsToSettings() {
         source.nearby = false
-        devices = DevicesState(source, CoroutineScope(Dispatchers.Unconfined), DeviceLinks(askNearby = { it(false) }, openAppSettings = { settingsOpened++ }), pollMs = 3_600_000)
+        devices = DevicesState(source, CoroutineScope(Dispatchers.Unconfined), DeviceLinks(askNearby = { it(false) }, openAppSettings = { settingsOpened++ }), now = { 1_700_000_000_000L })
         rule.setContent {
             AbookTheme(false) { Box(Modifier.fillMaxSize().background(Abook.colors.bg)) { PairScreen(devices, sheets) {}; SheetLayer(sheets) } }
         }

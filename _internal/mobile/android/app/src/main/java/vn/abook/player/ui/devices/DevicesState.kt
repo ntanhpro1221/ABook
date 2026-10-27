@@ -14,8 +14,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.ConcurrentHashMap
 
 /** Màn "Nối máy tính": mọi thứ màn cần vẽ. Đổi hiếm (không đổi theo từng nhịp tải) - tiến độ từng cuốn ở [DevicesState.progress]. */
@@ -82,14 +83,15 @@ class DevicesState(
     private val scope: CoroutineScope,
     private val links: DeviceLinks = DeviceLinks(),
     private val changed: suspend () -> Unit = {},
-    private val pollMs: Long = 2000,
+    private val now: () -> Long = System::currentTimeMillis,
 ) {
     private val pairFlow = MutableStateFlow(PairUi())
     private val shareFlow = MutableStateFlow(ShareUi())
     private val storageFlow = MutableStateFlow(StorageUi())
+    private val shareLock = Mutex()
     private val progresses = ConcurrentHashMap<String, MutableStateFlow<Float>>()
     private var reloadJob: Job? = null
-    private var pollJob: Job? = null
+    private var codeExpiry: Job? = null
     private var streaming = false
     private var prefilled = false
 
@@ -401,24 +403,25 @@ class DevicesState(
     }
 
     private suspend fun loadShare() {
-        attempt { source.share() }.onSuccess(::setShare)
+        updateShare { source.share() }
     }
+
+    private suspend fun updateShare(read: suspend () -> Share): Result<Share> =
+        shareLock.withLock { attempt(read).onSuccess(::setShare) }
 
     private fun setShare(share: Share) {
         shareFlow.update { it.copy(loaded = true, share = share, busy = false) }
-        pollCode(share)
+        expireCode(share)
     }
 
-    /** Đang hiện mã ghép: hỏi lại mỗi vài giây để thấy máy mới vào danh sách hay mã hết hạn. */
-    private fun pollCode(share: Share) {
-        pollJob?.cancel()
-        if (share.code == null) return
-        pollJob = scope.launch {
-            while (isActive) {
-                delay(pollMs)
-                val next = attempt { source.share() }.getOrNull() ?: continue
-                shareFlow.update { it.copy(share = next) }
-                if (next.code == null) break
+    /** Pairing changes arrive from the server; expiry is one deadline. */
+    private fun expireCode(share: Share) {
+        codeExpiry?.cancel()
+        val code = share.code ?: return
+        codeExpiry = scope.launch {
+            delay((code.expiresAt * 1000).toLong().minus(now()).coerceAtLeast(0))
+            shareFlow.update { ui ->
+                if (ui.share.code == code) ui.copy(share = ui.share.copy(code = null)) else ui
             }
         }
     }
@@ -439,8 +442,7 @@ class DevicesState(
     private fun change(block: suspend () -> Share) {
         shareFlow.update { it.copy(busy = true, problem = "") }
         scope.launch {
-            attempt { block() }
-                .onSuccess(::setShare)
+            updateShare(block)
                 .onFailure { error -> shareFlow.update { it.copy(busy = false, problem = message(error)) } }
         }
     }

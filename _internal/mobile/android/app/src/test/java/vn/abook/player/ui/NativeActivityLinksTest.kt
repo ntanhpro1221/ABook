@@ -24,6 +24,58 @@ import vn.abook.player.AbookApplication
 @Config(sdk = [35])
 class NativeActivityLinksTest {
     @Test
+    fun `paused but STARTED PiP activity keeps player attached and core clock ticking`() {
+        val context = ApplicationProvider.getApplicationContext<AbookApplication>()
+        val intent = Intent(context, NativeActivity::class.java).putExtra(NativeActivity.DEMO_BOOKS, 1)
+        val controller = Robolectric.buildActivity(NativeActivity::class.java, intent).create()
+        val core = vn.abook.player.ui.data.FakePlaybackCore(org.json.JSONObject())
+        val repo = vn.abook.player.ui.data.PlayerRepo(
+            core, kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Unconfined), kotlinx.coroutines.Dispatchers.Unconfined, { null }, { null },
+        )
+        NativeActivity::class.java.getDeclaredField("player").apply { isAccessible = true }.set(controller.get(), repo)
+        NativeActivity::class.java.getDeclaredField("contentReady").apply { isAccessible = true }.setBoolean(controller.get(), true)
+        controller.start()
+        assertEquals(1, core.listeners.size)
+        controller.resume()
+        assertEquals(1, core.listeners.size)
+        controller.pause()
+        assertEquals(androidx.lifecycle.Lifecycle.State.STARTED, controller.get().lifecycle.currentState)
+        assertEquals(1, core.listeners.size)
+        core.emit(vn.abook.player.ui.data.playerSnapshot(position = 23.5, kind = "tick"))
+        assertEquals(23_500L, repo.clock.positionMs.value)
+        controller.stop()
+        assertEquals(0, core.listeners.size)
+        core.emit(vn.abook.player.ui.data.playerSnapshot(position = 25.0, kind = "tick"))
+        assertEquals(23_500L, repo.clock.positionMs.value)
+        controller.restart().start()
+        assertEquals(1, core.listeners.size)
+        controller.resume()
+        assertEquals(1, core.listeners.size)
+        controller.pause().stop().destroy()
+        assertEquals(0, core.listeners.size)
+    }
+
+    @Test
+    fun `first content delivered while paused in PiP still attaches the player`() {
+        val context = ApplicationProvider.getApplicationContext<AbookApplication>()
+        val intent = Intent(context, NativeActivity::class.java).putExtra(NativeActivity.DEMO_BOOKS, 1)
+        val controller = Robolectric.buildActivity(NativeActivity::class.java, intent).create()
+        val core = vn.abook.player.ui.data.FakePlaybackCore(org.json.JSONObject())
+        val repo = vn.abook.player.ui.data.PlayerRepo(
+            core, kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Unconfined), kotlinx.coroutines.Dispatchers.Unconfined, { null }, { null },
+        )
+        NativeActivity::class.java.getDeclaredField("player").apply { isAccessible = true }.set(controller.get(), repo)
+        controller.start().resume().pause()
+        assertEquals(0, core.listeners.size)
+        NativeActivity::class.java.getDeclaredMethod("onFirstContent").apply { isAccessible = true }.invoke(controller.get())
+        assertEquals(1, core.listeners.size)
+        core.emit(vn.abook.player.ui.data.playerSnapshot(position = 30.0, kind = "tick"))
+        assertEquals(30_000L, repo.clock.positionMs.value)
+        controller.stop().destroy()
+        assertEquals(0, core.listeners.size)
+    }
+
+    @Test
     fun `a destroyed activity is not kept by the application`() {
         val app = ApplicationProvider.getApplicationContext<AbookApplication>()
         val exportsBefore = app.exportLinks

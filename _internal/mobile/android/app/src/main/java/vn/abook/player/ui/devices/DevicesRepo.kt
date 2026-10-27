@@ -153,7 +153,12 @@ class DevicesRepo(private val context: Context, private val library: vn.abook.pl
 
     override suspend fun revoke(id: String): Share = io { DevicesJson.share(Devices.shareRevoke(context, id)) }
 
-    override fun shareChanges(): Flow<Unit> = listenerFlow { send -> ShareService.watch { send(Unit) } }
+    override fun shareChanges(): Flow<Unit> = listenerFlow { send ->
+        val stopShare = ShareService.watch { send(Unit) }
+        val stopPairing = vn.abook.player.LibraryServer.watchPairing { send(Unit) }
+        val stop: () -> Unit = { stopShare(); stopPairing() }
+        stop
+    }
 
     override suspend fun setDeviceName(name: String): String = io { Devices.setDeviceName(context, name) }
 

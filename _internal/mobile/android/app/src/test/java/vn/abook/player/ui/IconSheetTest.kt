@@ -24,6 +24,8 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.unit.dp
 import com.github.takahirom.roborazzi.captureRoboImage
+import com.github.takahirom.roborazzi.RoborazziOptions
+import com.github.takahirom.roborazzi.RoborazziTaskType
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -45,6 +47,7 @@ import kotlin.math.abs
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = [35], qualifiers = "w411dp-h1400dp-xxhdpi")
+@OptIn(com.github.takahirom.roborazzi.ExperimentalRoborazziApi::class)
 class IconSheetTest {
     @get:Rule val rule = createAndroidComposeRule<ComponentActivity>()
 
@@ -110,7 +113,8 @@ class IconSheetTest {
             solo.value = name
             rule.waitForIdle()
             val file = "build/icon_probe/${name.replace(' ', '_')}.png"
-            rule.onNodeWithTag("solo").captureRoboImage(file)
+            // Measurement needs these temporary pixels even when golden recording is disabled.
+            rule.onNodeWithTag("solo").captureRoboImage(file, roborazziOptions = RoborazziOptions(taskType = RoborazziTaskType.Record))
             problems += measure(BitmapFactory.decodeFile(File(file).absolutePath), name)
         }
         assertTrue(problems.joinToString("\n"), problems.isEmpty())

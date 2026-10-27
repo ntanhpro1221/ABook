@@ -23,17 +23,23 @@ class VoiceStateTest {
     private val scope = CoroutineScope(Dispatchers.Unconfined)
     private val imports = MineImports(source, scope)
 
-    private fun state(pollMs: Long = 3_600_000) = VoiceState(source, scope, player, { changed++ }, pollMs, imports)
-
-    private fun eventually(what: String, condition: () -> Boolean) {
-        val until = System.currentTimeMillis() + 5_000
-        while (!condition()) {
-            if (System.currentTimeMillis() > until) throw AssertionError("không xảy ra: $what")
-            Thread.sleep(5)
-        }
-    }
+    private fun state() = VoiceState(source, scope, player, { changed++ }, imports)
 
     // ---- giọng tải về máy ----
+
+    @Test
+    fun `completion arriving before a delayed start reply still leaves the module ready`() {
+        val voice = state()
+        voice.openVoice()
+        val gate = CompletableDeferred<Unit>()
+        source.startGate = gate
+        voice.download(viet, listOf("nano"))
+        source.emitModule(viet, Fixtures.ready(viet))
+        gate.complete(Unit)
+        assertEquals(ModuleState.Ready, voice.modules.value.getValue(viet).status?.state)
+        assertEquals(1, changed)
+        assertTrue(voice.modules.value.getValue(viet).pending.isEmpty())
+    }
 
     @Test
     fun `opening the page reads both modules, the keys and the consents`() {
@@ -75,23 +81,22 @@ class VoiceStateTest {
 
     @Test
     fun `progress only moves forward, and finishing refreshes the voice list and the other module`() {
-        val voice = state(pollMs = 10)
+        val voice = state()
         voice.openVoice()
         source.modules[viet] = Fixtures.downloading(viet, 30)
         voice.download(viet, listOf("turbo"))
-        eventually("30%") { voice.progress(viet).value == 0.3f }
-        source.modules[viet] = Fixtures.downloading(viet, 20)
-        Thread.sleep(60)
+        assertEquals(0.3f, voice.progress(viet).value, 0.0f)
+        source.emitModule(viet, Fixtures.downloading(viet, 20))
         assertEquals("tiến độ không lùi", 0.3f, voice.progress(viet).value, 0.0f)
-        source.modules[viet] = Fixtures.downloading(viet, 80)
-        eventually("80%") { voice.progress(viet).value == 0.8f }
+        source.emitModule(viet, Fixtures.downloading(viet, 80))
+        assertEquals(0.8f, voice.progress(viet).value, 0.0f)
         assertEquals(0, changed)
         source.modules[ModuleKind.Supertonic] = Fixtures.ready(ModuleKind.Supertonic)
-        source.modules[viet] = Fixtures.ready(viet)
-        eventually("xong") { voice.modules.value.getValue(viet).status?.state == ModuleState.Ready }
-        eventually("danh sách giọng đọc lại") { changed == 1 }
+        source.emitModule(viet, Fixtures.ready(viet))
+        assertEquals(ModuleState.Ready, voice.modules.value.getValue(viet).status?.state)
+        assertEquals(1, changed)
         assertEquals(0f, voice.progress(viet).value, 0.0f)
-        eventually("mô-đun kia hỏi lại") { voice.modules.value.getValue(ModuleKind.Supertonic).status?.state == ModuleState.Ready }
+        assertEquals(ModuleState.Ready, voice.modules.value.getValue(ModuleKind.Supertonic).status?.state)
         assertTrue(voice.modules.value.getValue(viet).pending.isEmpty())
     }
 

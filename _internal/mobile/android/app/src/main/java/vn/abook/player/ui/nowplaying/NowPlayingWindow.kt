@@ -42,10 +42,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import kotlinx.coroutines.launch
 import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.theme.MotionMs
@@ -129,13 +126,9 @@ fun NowPlayingLayer(
     val progress = transition.animateFloat(transitionSpec = { tween(MotionMs.SLOW, easing = LinearEasing) }, label = "window-geometry") { if (it) 1f else 0f }
     val shape = remember(progress) { ContainerShape(progress) }
     // Only visible lifecycle frames sample the core clock. Nothing in this layer reads its changing values.
-    LaunchedEffect(model, window, sampleClock) {
-        val playing = model.state.map { it.playing }.distinctUntilChanged()
-        val open = snapshotFlow { window.expanded }.distinctUntilChanged()
-        combine(playing, open) { isPlaying, isOpen -> isPlaying && isOpen }.collectLatest { running ->
-            model.position.sample()
-            if (running && sampleClock) while (true) withFrameNanos { model.position.sample() }
-        }
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    LaunchedEffect(model, window, sampleClock, lifecycle) {
+        if (sampleClock) samplePlayerClock(lifecycle, model, snapshotFlow { window.expanded })
     }
     SharedTransitionLayout(Modifier.fillMaxSize()) {
         val link = remember(window, transition, progress, shape, this) { NowPlayingLink(window, transition, progress, this, shape) }

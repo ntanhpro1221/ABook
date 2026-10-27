@@ -5,6 +5,8 @@ package vn.abook.player.ui.voice
  * luồng nền; lỗi ném [VoiceFailure] (hay [IllegalStateException]) với câu đã sẵn cho người nghe. Không hàm nào trả hay ghi khoá thật: khoá đi xuống lõi một chiều.
  */
 interface VoiceSource {
+    /** Local download/benchmark changes, including completion and failure. */
+    fun moduleChanges(kind: ModuleKind): kotlinx.coroutines.flow.Flow<Unit>
     // ---- giọng tải về máy (VoiceModule: cùng lời gọi với ReadAloudPlugin.vieneu* / supertonic*) ----
 
     suspend fun module(kind: ModuleKind): ModuleStatus

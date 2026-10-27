@@ -37,6 +37,7 @@ class FakeDevicesSource : DevicesSource {
     var targetError: DeviceFailure? = null
 
     var share = Share()
+    var codeGate: CompletableDeferred<Unit>? = null
     var shareError: DeviceFailure? = null
     val shareEvents = MutableSharedFlow<Unit>(extraBufferCapacity = 8)
     var deviceName = ""
@@ -92,7 +93,8 @@ class FakeDevicesSource : DevicesSource {
     override suspend fun studio() = studio
     override suspend fun studioTarget(key: String): Pair<String, String> = targetError?.let { throw it } ?: target
 
-    override suspend fun share(): Share = share
+    var shareReads = 0
+    override suspend fun share(): Share { shareReads++; return share }
 
     override suspend fun setShare(on: Boolean): Share {
         shareError?.let { throw it }
@@ -102,7 +104,9 @@ class FakeDevicesSource : DevicesSource {
 
     override suspend fun startCode(): Share {
         share = share.copy(running = true, code = Code("482915", 1_700_000_000.0 + 600))
-        return share
+        val reply = share
+        codeGate?.await()
+        return reply
     }
 
     override suspend fun cancelCode(): Share {

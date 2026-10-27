@@ -43,6 +43,7 @@ fun OtherPlayersEntry(repo: CompanionRepo, sheets: SheetHost, player: PlayerRepo
 
 @Composable
 fun OtherPlayersSheet(repo: CompanionRepo, local: PlayerRepo, dismiss: () -> Unit) {
+    LaunchedEffect(repo) { repo.refresh() }
     val ui by repo.state.collectAsState()
     val here by local.state.collectAsState()
     val scope = rememberCoroutineScope()
