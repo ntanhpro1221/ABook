@@ -4,6 +4,7 @@ import ABook
 
 // D4: mỗi mục một nhóm phép thử (hành vi + chuyển động) và ảnh sáng / tối ghi ra build/d2shots/d4_*.png:
 //   1. màn đọc "Đọc chương này" (menu "…" của dòng chương, bấm dòng chương chưa có audio): ReaderScreen + ChapterText + ReadAlongView
+//   2. lời báo chồng như sonner (visibleToasts 2): Api.toasts + Toast.qml, "Chi tiết" (ToastDetails)
 // Player / ReadAlong / ChapterText là bản C++ thật trên âm thanh + mạng giả (tests/test_width.cpp, cuốn "reader"); HTTP của QML qua DesktopApi giả.
 Item {
     id: host
@@ -13,6 +14,7 @@ Item {
     Component { id: bookFactory; BookPage {} }
     Component { id: readerFactory; ReaderScreen {} }
     Component { id: readFactory; ReadAlongView {} }
+    Component { id: toastFactory; Toast {} }
     SignalSpy { id: spy }
 
     TestCase {
@@ -56,8 +58,9 @@ Item {
             Api.info = {version: "0.4.147"}
             Api.loaded = true
             Api.saving = false
-            Api.notice = ""
+            Api.toasts = []
             Api.reader = ({})
+            Api.toasts = []
             Api.readerLoaded = false
             Nav.layers = []
             Nav.studioPeer = ""
@@ -68,7 +71,7 @@ Item {
         }
         function cleanup() {
             Theme.mode = "auto"; Theme.reduceMotion = false; Theme.readingSurface = "auto"
-            Nav.layers = []; Nav.studioPeer = ""; Api.notice = ""
+            Nav.layers = []; Nav.studioPeer = ""; Api.toasts = []
             DesktopApi.delayed = false
             if (Player.playing) Player.pause()
         }
@@ -355,6 +358,171 @@ Item {
             wait(0)
             compare(Nav.toastTop, 0)
         }
+        // ================= 2. lời báo chồng như sonner =================
+        function makeToaster() {
+            Api.toasts = []
+            const toaster = createTemporaryObject(toastFactory, host, {x: host.width - 356 - 16, y: 16})
+            verify(toaster !== null)
+            return toaster
+        }
+        function cards(toaster) { return all(toaster, "toastCard") }
+        function cardOf(toaster, title) { return cards(toaster).filter(c => c.shownEntry && c.shownEntry.title === title)[0] }
+        function settled(toaster) { return cards(toaster).every(c => Math.abs(c.y - c.targetY) < 0.5 && Math.abs(c.opacity - c.targetOpacity) < 0.01) }
+        function test_twoToastsStackThirdHides() {
+            const toaster = makeToaster()
+            Api.toast("Lời thứ nhất", {duration: 60000})
+            Api.toast("Lời thứ hai", {duration: 60000})
+            tryVerify(function() { return settled(toaster) })
+            const front = cardOf(toaster, "Lời thứ hai"), back = cardOf(toaster, "Lời thứ nhất")
+            compare(front.order, 0)
+            compare(front.y, 0)
+            compare(front.scale, 1)
+            // thẻ sau nấp dưới: thấp hơn 14 px, nhỏ đi 5 %, cao bằng thẻ trước, chữ ẩn
+            compare(back.order, 1)
+            compare(back.y, 14)
+            verify(Math.abs(back.scale - 0.95) < 0.001)
+            compare(back.height, front.height)
+            tryVerify(function() { return !shown(one(back, "toastTitle")) })
+            compare(toaster.height, front.height + 14)
+            Api.toast("Lời thứ ba", {duration: 60000})
+            tryVerify(function() { return settled(toaster) })
+            compare(cardOf(toaster, "Lời thứ nhất").opacity, 0)      // quá 2 thẻ: thẻ cũ nhất ẩn, chưa mất
+            compare(Api.toasts.length, 3)
+            compare(Api.notice, "Lời thứ ba")
+            // khép thẻ trước: thẻ cũ nhất hiện lại ở chỗ thứ hai
+            Api.dismiss(Api.toasts[0].id)
+            tryVerify(function() { return settled(toaster) && cards(toaster).length === 2 })
+            compare(cardOf(toaster, "Lời thứ nhất").opacity, 1)
+            compare(cardOf(toaster, "Lời thứ nhất").y, 14)
+            compare(Api.notice, "Lời thứ hai")
+        }
+        function test_hoverExpandsAndPauses() {
+            const toaster = makeToaster()
+            Api.toast("Lời thứ nhất", {duration: 400})
+            Api.toast("Lời thứ hai", {duration: 400})
+            tryVerify(function() { return settled(toaster) })
+            mouseMove(toaster, toaster.width / 2, 10)
+            verify(toaster.expanded)
+            const front = cardOf(toaster, "Lời thứ hai"), back = cardOf(toaster, "Lời thứ nhất")
+            tryVerify(function() { return settled(toaster) })
+            compare(back.y, front.height + 14)                         // xoè: xếp dọc, cách 14
+            compare(back.scale, 1)
+            verify(shown(one(back, "toastTitle")))
+            wait(700)
+            compare(Api.toasts.length, 2, "rê chuột vào: mọi thẻ dừng đếm")
+            mouseMove(host, 10, host.height - 10)
+            tryCompare(Api, "notice", "", 3000)
+        }
+        function test_newToastSlidesInOthersSlideDown() {
+            Theme.reduceMotion = false
+            const toaster = makeToaster()
+            Api.toast("Lời thứ nhất", {duration: 60000})
+            tryVerify(function() { return settled(toaster) })
+            const first = cardOf(toaster, "Lời thứ nhất")
+            Api.toast("Lời thứ hai", {duration: 60000})
+            const second = cardOf(toaster, "Lời thứ hai")
+            let enter = false, push = false
+            tryVerify(function() {
+                if (second.y < -1) enter = true
+                if (first.y > 0.5 && first.y < 13.5) push = true
+                return settled(toaster)
+            }, 2000)
+            verify(enter, "thẻ mới trượt xuống từ trên")
+            verify(push, "thẻ cũ trôi xuống chỗ thứ hai, không nhảy")
+            // khép thẻ trước: nó trượt lên mất, thẻ sau trôi lên chỗ trước
+            Api.dismiss(Api.toasts[0].id)
+            let out = false, forward = false
+            tryVerify(function() {
+                if (second.y < -1) out = true
+                if (first.y > 0.5 && first.y < 13.5) forward = true
+                return cards(toaster).length === 1 && settled(toaster)
+            }, 2000)
+            verify(out && forward)
+        }
+        function test_reducedMotionOnlyFades() {
+            Theme.reduceMotion = true
+            const toaster = makeToaster()
+            Api.toast("Lời thứ nhất", {duration: 60000})
+            const card = cardOf(toaster, "Lời thứ nhất")
+            let moved = false, faded = false
+            tryVerify(function() { if (card.y !== 0) moved = true; if (card.opacity > 0 && card.opacity < 1) faded = true; return card.opacity === 1 }, 2000)
+            verify(!moved && faded)
+        }
+        function test_sameIdReplacesInPlace() {
+            const toaster = makeToaster()
+            Api.toast("Chưa lưu được chỗ đọc vào hồ sơ\nLỗi một", {id: "reading-save", duration: 60000})
+            Api.toast("Lời khác", {duration: 60000})
+            Api.toast("Chưa lưu được chỗ đọc vào hồ sơ\nLỗi hai", {id: "reading-save", duration: 60000})
+            compare(Api.toasts.length, 2)
+            compare(Api.toasts[1].description, "Lỗi hai")
+            tryVerify(function() { return settled(toaster) })
+            compare(cards(toaster).length, 2)
+        }
+        function test_detailsOpensClosesAndHoldsTheToast() {
+            Theme.reduceMotion = false
+            const toaster = makeToaster()
+            let ran = 0
+            Api.toast("Chưa chỉnh được nhạc nền\nMáy chủ trả lời lỗi 500.", {duration: 400, action: {label: "Thử lại", run: function() { ran++ }}})
+            tryVerify(function() { return settled(toaster) })
+            const card = cards(toaster)[0]
+            const button = one(card, "toastAction")
+            compare(button.Accessible.name, "Chi tiết")
+            mouseClick(button)
+            const panel = one(toaster, "toastDetails")
+            let mid = false
+            tryVerify(function() { if (panel.shown > 0.05 && panel.shown < 0.95) mid = true; return panel.shown === 1 }, 2000)
+            verify(mid, "bảng chi tiết mở bằng trượt + hiện dần")
+            compare(panel.Accessible.name, "Chi tiết thông báo")
+            verify(hasText(panel, "Máy chủ trả lời lỗi 500.") && hasText(panel, "Thử lại"))
+            verify(panel.y >= card.y + card.height + 12 - 0.5)
+            wait(700)
+            compare(Api.toasts.length, 1, "đang đọc chi tiết: thẻ không tự khép")
+            Nav.back()                                                  // Back đóng bảng trước
+            tryCompare(panel, "shown", 0)
+            compare(Api.toasts.length, 1)
+            mouseClick(button)
+            tryCompare(panel, "shown", 1)
+            toaster.pressedAt(Qt.point(5, 5))                          // bấm chỗ khác trong cửa sổ
+            tryCompare(panel, "shown", 0)
+            mouseClick(button)
+            tryCompare(panel, "shown", 1)
+            mouseClick(one(toaster, "toastDetailsAction"))
+            compare(ran, 1)
+            compare(Api.toasts.length, 0)
+        }
+        function test_closeButtonSitsInTheCorner() {
+            const toaster = makeToaster()
+            Api.toast("Đã thêm sách vào thư viện", {duration: 60000})
+            tryVerify(function() { return settled(toaster) })
+            const card = cards(toaster)[0], close = one(card, "toastClose")
+            compare(close.x + close.width, card.width - 12)            // styles.css: ✕ trong góc phải, cách 12
+            compare(close.y, 16)
+            compare(close.Accessible.name, "Đóng thông báo")
+            mouseClick(close)
+            compare(Api.toasts.length, 0)
+        }
+        function test_shotsToastStack() {
+            both(function() {
+                const toaster = makeToaster()
+                Api.toast("Đã lưu file sách", {duration: 60000, action: {label: "Mở thư mục", run: function() {}}})
+                Api.toast("Chưa lưu được chỗ đọc vào hồ sơ\nBạn vẫn có bản lưu trên máy này. Ổ đĩa đầy.", {duration: 60000})
+                tryVerify(function() { return settled(toaster) })
+                shot("toast_stack", host)
+                mouseMove(toaster, toaster.width / 2, 10)
+                tryVerify(function() { return toaster.expanded && settled(toaster) })
+                shot("toast_expanded", host)
+                mouseClick(one(cards(toaster).filter(c => c.order === 0)[0], "toastAction"))
+                tryCompare(one(toaster, "toastDetails"), "shown", 1)
+                shot("toast_details", host)
+                toaster.closeDetails()
+                mouseMove(host, 10, host.height - 10)
+                Api.toasts = []
+                toaster.destroy()
+                wait(0)
+            })
+        }
+
+        // ================= 1. (tiếp) màn đọc =================
         function test_shotsReader() {
             both(function() {
                 const page = makeReader(1)

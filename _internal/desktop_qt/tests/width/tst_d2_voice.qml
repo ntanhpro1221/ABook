@@ -97,7 +97,7 @@ Item {
             Api.info = {version: "0.4.40"}
             Api.loaded = true
             Api.saving = false
-            Api.notice = ""
+            Api.toasts = []
             Api.defaultVoice = ""
             Api.voiceList = []
             Api.voiceName = ""

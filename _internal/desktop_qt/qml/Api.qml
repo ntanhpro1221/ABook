@@ -8,27 +8,56 @@ QtObject {
     property var info: ({})
     property bool loaded: false
     property bool saving: false
+    // ---- lời báo (sonner của desktop/App.tsx: tối đa 2 thẻ chồng nhau, mới nhất ở trước) ----
+    // `toasts`: các thẻ còn sống, mới nhất đầu tiên: {id, text, title, description, action: {label, run} | null, duration (ms, 0 = mặc định 4 giây),
+    // version (đổi mỗi lần thẻ được báo lại cùng id: đếm lại từ đầu)}. Thẻ khép rồi rời danh sách ngay; Toast.qml giữ hình của nó cho tới hết hoạt cảnh ra.
+    property var toasts: []
+    property int toastSerial: 0
+    // `notice` = chữ của thẻ mới nhất ("" = không có thẻ). Gán `notice = "chữ"` là báo một thẻ trơn (không nút); gán `notice = ""` là khép thẻ mới
+    // nhất - chỗ gọi vừa tự hiện lỗi tại chỗ thì gỡ thẻ Api.call vừa báo.
     property string notice: ""
-    // Nút của lời báo ("Hoàn tác", "Mở thư mục"; action của toast bên web): {label, run} hay null. Gán `notice` thẳng là lời báo trơn, không nút.
-    property var noticeAction: null
-    property int noticeDuration: 0         // ms; 0 = mặc định của Toast (như sonner)
-    property bool toasting: false
-    onNoticeChanged: if (!toasting) { noticeAction = null; noticeDuration = 0 }
-    // Lời báo kèm tuỳ chọn (toast(text, {duration, action: {label, onClick}}) của web): `options.action` = {label, run}. Cùng lời lần nữa vẫn hiện lại.
-    function toast(text, options) {
-        toasting = true
-        if (notice === text) notice = ""
-        noticeAction = options && options.action ? options.action : null
-        noticeDuration = options && options.duration ? options.duration : 0
-        notice = text
-        toasting = false
+    readonly property var noticeAction: toasts.length ? toasts[0].action : null      // {label, run} của thẻ mới nhất hay null
+    readonly property int noticeDuration: toasts.length ? toasts[0].duration : 0
+    property bool syncingNotice: false
+    onNoticeChanged: {
+        if (syncingNotice) return
+        if (notice === "") { if (toasts.length) dismiss(toasts[0].id) }
+        else push(notice, {})
     }
-    // Bấm nút của lời báo: lời báo khép lại rồi mới làm việc (việc ấy có thể báo lời mới)
-    function runNoticeAction() {
-        const action = noticeAction
-        notice = ""
-        if (action && action.run) action.run()
+    onToastsChanged: syncNotice()
+    function syncNotice() {
+        syncingNotice = true
+        notice = toasts.length ? toasts[0].text : ""
+        syncingNotice = false
     }
+    function push(text, options) {
+        const lines = String(text).split("\n")
+        const id = options && options.id !== undefined ? String(options.id) : "abook-toast-" + (++toastSerial)
+        const entry = {id: id, text: String(text), title: lines[0], description: lines.slice(1).join("\n"),
+            action: options && options.action ? options.action : null, duration: options && options.duration ? options.duration : 0, version: ++toastSerial}
+        // Cùng id (toast(..., {id}) của web): thay thẻ đang có tại chỗ, không thêm thẻ thứ hai
+        const at = toasts.findIndex(t => t.id === id)
+        if (at >= 0) { const list = toasts.slice(); list[at] = entry; toasts = list }
+        else toasts = [entry].concat(toasts)
+        syncNotice()
+        return id
+    }
+    // Lời báo kèm tuỳ chọn (toast(text, {id, duration, action}) của web): `options.action` = {label, run}. Dòng đầu là tiêu đề; phần sau dòng đầu
+    // là chi tiết, mở bằng nút "Chi tiết" (ToastDetails của web). Cùng lời lần nữa (không id) là một thẻ mới.
+    function toast(text, options) { return push(text, options || {}) }
+    function dismiss(id) {
+        const list = toasts.filter(t => t.id !== id)
+        if (list.length === toasts.length) return
+        toasts = list
+        syncNotice()
+    }
+    // Bấm nút của một thẻ: thẻ khép lại rồi mới làm việc (việc ấy có thể báo lời mới)
+    function runToastAction(id) {
+        const entry = toasts.find(t => t.id === id)
+        dismiss(id)
+        if (entry && entry.action && entry.action.run) entry.action.run()
+    }
+    function runNoticeAction() { if (toasts.length) runToastAction(toasts[0].id) }
     // Cỡ chữ / giãn dòng của chữ đọc và "đã nghe từ một câu" (ReaderPrefs của ReaderScreen.tsx, localStorage "abook-reader"): đổi ở màn đọc là
     // "Đọc theo" của Đang nghe đổi theo. Chỉ giữ cái người đã chọn; chưa chọn thì nơi dùng lấy Theme.sizeReading / Theme.lineHeightReading.
     property var reader: ({})
