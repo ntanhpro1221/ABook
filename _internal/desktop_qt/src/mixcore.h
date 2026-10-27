@@ -127,6 +127,9 @@ public:
     }
 
     bool passthrough() const { return m_up == m_down; }
+    int taps() const { return m_taps; }
+    /// Số khung ra ứng với `frames` khung vào (làm tròn lên).
+    unsigned long long outFramesFor(unsigned long long frames) const { return (frames * m_up + m_down - 1) / m_down; }
 
     /// Bỏ trạng thái (tua): khung vào kế tiếp là đầu nguồn mới.
     void reset() {
