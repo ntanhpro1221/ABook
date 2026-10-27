@@ -15,6 +15,7 @@ Item {
     property var win: null
     property var nowPlaying: null
     readonly property bool playerScenario: Bench.scenario === "player"
+    readonly property bool focusProbe: Bench.scenario === "focus_probe"
     readonly property var list: {
         const s = stack && stack._stacks ? stack._stacks[0] : null
         return s && s.length && s[0].content ? s[0].content.list : null
@@ -25,7 +26,7 @@ Item {
     // ---- library ----
     // Thư viện về rồi chờ bìa giải mã xong trước khi đo nghỉ
     Timer {
-        running: Bench.enabled && !root.playerScenario && Backend.libraryLoaded
+        running: Bench.enabled && !root.playerScenario && !root.focusProbe && Backend.libraryLoaded
         interval: 3000
         onTriggered: { Bench.note("idle_begin"); idle.start() }
     }
@@ -96,9 +97,24 @@ Item {
         case 12: counters("min_begin"); Bench.note("min_begin"); win.showMinimized(); advance(20000); break
         case 13: Bench.note("min_end"); counters("min_end"); advance(300); break
         // Mở lại sau khi thu nhỏ (bộ nhớ đã trả về hệ điều hành lúc thu nhỏ phải nạp lại): khung đầu và khung chậm nhất trong 1,5 s.
-        case 14: Bench.note("restore_begin"); win.showNormal(); win.raise(); win.requestActivate(); advance(1500); break
+        // Qt/Windows restore khi còn visible dùng SW_SHOWNORMAL, bỏ qua cả hai cờ no-activate.
+        // Ẩn trước để showNormal đi qua đường show có kiểm cờ, không lấy focus của chủ máy.
+        case 14: Bench.note("restore_begin"); win.hide(); win.showNormal(); advance(1500); break
         case 15: Bench.note("restore_end"); advance(300); break
         default: Player.pause(); Bench.note("done"); Bench.finish()
+        }
+    }
+
+    // Thử riêng đường thu nhỏ/khôi phục trước khi đo dài; không cần tải sách hay phát tiếng.
+    Timer {
+        running: Bench.enabled && root.focusProbe
+        interval: 200
+        repeat: true
+        property int step: 0
+        onTriggered: {
+            if (++step === 1) win.showMinimized()
+            else if (step === 2) { win.hide(); win.showNormal() }
+            else { stop(); Bench.note("done"); Bench.finish() }
         }
     }
 
