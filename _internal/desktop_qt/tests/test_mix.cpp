@@ -2,8 +2,13 @@
 // trên fixture mp3 chung, không cần thiết bị âm thanh.
 #include "mixcore.h"
 #include "mp3source.h"
+#include "musicmixer.h"
 
 #include <QFile>
+#include <QTemporaryDir>
+#include <QProcess>
+#include <QProcessEnvironment>
+#include <QtEndian>
 #include <QtTest>
 
 #include <cmath>
@@ -13,6 +18,47 @@
 using namespace MixCore;
 
 namespace {
+
+class FakeDevice final : public MixDevice {
+public:
+    int hz = 48000, starts = 0, stops = 0, resets = 0;
+    size_t queued = 0;
+    quint64 epoch = 0;
+    bool running = false;
+    std::vector<float> output;
+    int rate() const override { return hz; }
+    quint64 revision() const override { return epoch; }
+    bool start() override { ++starts; running = true; return true; }
+    void stop() override { ++stops; running = false; }
+    void reset() override { ++resets; queued = 0; }
+    size_t padding() override { return queued; }
+    size_t bufferFrames() const override { return size_t(hz); }
+    bool write(const float *in, size_t frames) override {
+        output.insert(output.end(), in, in + frames * 2); queued += frames; return true;
+    }
+    void consume(size_t frames) { queued -= std::min(queued, frames); }
+};
+
+QUrl track() { return QUrl::fromLocalFile(QStringLiteral(MIX_FIXTURES_DIR "/music_student/stereo_44k.mp3")); }
+
+struct MixerRig {
+    QTemporaryDir dir;
+    FakeDevice *device = new FakeDevice;
+    MusicMixer mixer{std::unique_ptr<MixDevice>(device), dir.path()};
+    bool ready(MixVoice &voice) {
+        for (int i = 0; i < 200 && !voice.duration(); ++i) {
+            QCoreApplication::processEvents(); mixer.serviceReader();
+            if (!voice.duration()) QTest::qWait(1);
+        }
+        QCoreApplication::processEvents();
+        return voice.duration() > 0;
+    }
+    void serve(size_t frames, bool refill = true) {
+        device->consume(device->queued); mixer.service(0);
+        if (refill) mixer.serviceReader();
+        mixer.service(frames); QCoreApplication::processEvents();
+    }
+};
 
 const double PI = 3.14159265358979323846;
 
@@ -43,6 +89,246 @@ double rms(const std::vector<float> &x, int channels, int channel, size_t from, 
 class MixTests : public QObject {
     Q_OBJECT
 private slots:
+    void mixerCrossfadeRandomBlocks() {
+        MixerRig rig;
+        const auto render = [&rig](int mode) {
+            MixVoice a(&rig.mixer), b(&rig.mixer);
+            a.setVolume(mode == 2 ? 0 : 1); b.setVolume(0);
+            a.load(track(), 0); b.load(track(), 0);
+            if (!rig.ready(a) || !rig.ready(b)) return std::vector<float>{};
+            a.play(); b.play(); rig.serve(2400);
+            rig.device->output.clear();
+            a.setVolume(0); b.setVolume(mode == 1 ? 0 : 1);
+            std::mt19937 rng(43);
+            size_t left = 2400;
+            while (left) { const size_t n = std::min(left, size_t(rng() % 173 + 1)); rig.serve(n); left -= n; }
+            const auto result = rig.device->output;
+            a.stop(); b.stop(); rig.mixer.service(0);
+            return result;
+        };
+        const auto sum = render(0), down = render(1), up = render(2);
+        QCOMPARE(sum.size(), size_t(4800)); QCOMPARE(down.size(), sum.size()); QCOMPARE(up.size(), sum.size());
+        QFile cache(rig.mixer.cachePath(track())); QVERIFY(cache.open(QIODevice::ReadOnly));
+        QVERIFY(cache.seek(24 + 2400 * 4)); const auto pcm = cache.read(2400 * 4);
+        for (size_t i = 0; i < 2400; ++i) {
+            const float gain = float(i + 1) / 2400;
+            for (size_t c = 0; c < 2; ++c) {
+                const float sample = qFromLittleEndian<qint16>(pcm.constData() + (i * 2 + c) * 2) / 32768.0f;
+                QVERIFY(std::abs(down[i * 2 + c] - sample * (1 - gain)) < 1e-6);
+                QVERIFY(std::abs(up[i * 2 + c] - sample * gain) < 1e-6);
+                QVERIFY(std::abs(sum[i * 2 + c] - sample) < 1e-6);
+                if (std::abs(sample) > 0.01f)
+                    QVERIFY(std::abs((down[i * 2 + c] + up[i * 2 + c]) / sample - 1) < 1e-6);
+            }
+        }
+    }
+
+    void mixerLoopSeamIsExact() {
+        MixerRig rig;
+        MixVoice voice(&rig.mixer);
+        voice.setLoop(true); voice.setVolume(1); voice.load(track(), 0);
+        QVERIFY(rig.ready(voice));
+        QSignalSpy ended(&voice, &AudioOut::ended);
+        const size_t length = size_t(MusicMixer::cacheFrames(rig.mixer.cachePath(track()), rig.mixer.rate()));
+        voice.play();
+        for (size_t at = 0; at < length + 4096;) {
+            const size_t n = std::min<size_t>(997, length + 4096 - at); rig.serve(n); at += n;
+        }
+        const auto &out = rig.device->output;
+        QFile f(rig.mixer.cachePath(track())); QVERIFY(f.open(QIODevice::ReadOnly)); f.seek(24);
+        const QByteArray pcm = f.readAll();
+        float largest = 0;
+        for (size_t i = 1; i < length; ++i)
+            for (size_t c = 0; c < 2; ++c)
+                largest = std::max(largest, std::abs(out[i * 2 + c] - out[(i - 1) * 2 + c]));
+        for (size_t i = 0; i < 4096 * 2; ++i)
+            QCOMPARE(out[length * 2 + i], qFromLittleEndian<qint16>(pcm.constData() + i * 2) / 32768.0f);
+        for (size_t c = 0; c < 2; ++c) QVERIFY2(std::abs(out[length * 2 + c] - out[(length - 1) * 2 + c]) <= largest,
+            qPrintable(QStringLiteral("seam=%1, largest=%2, first=%3, last=%4").arg(std::abs(out[length * 2 + c] - out[(length - 1) * 2 + c])).arg(largest).arg(out[c]).arg(out[(length - 1) * 2 + c])));
+        QCOMPARE(ended.size(), 0);
+    }
+
+    void mixerUnderrunWritesOnlySilenceAndReportsTransitions() {
+        MixerRig rig;
+        MixVoice voice(&rig.mixer); voice.setLoop(true); voice.setVolume(1); voice.load(track(), 0);
+        QVERIFY(rig.ready(voice)); voice.play();
+        QSignalSpy buffering(&voice, &AudioOut::buffering);
+        // Không phục vụ reader: dùng hết đúng vòng đệm hai giây rồi để thiếu hai khối.
+        for (int i = 0; i < 4; ++i) rig.serve(24000, false);
+        rig.device->output.clear(); rig.serve(1024, false); rig.serve(701, false);
+        QCOMPARE(buffering.size(), 1); QCOMPARE(buffering[0][0].toBool(), true);
+        QVERIFY(std::all_of(rig.device->output.begin(), rig.device->output.end(), [](float x) { return x == 0; }));
+        rig.serve(1000); rig.serve(500);
+        QCOMPARE(buffering.size(), 2); QCOMPARE(buffering[1][0].toBool(), false);
+    }
+
+    void mixVoiceLoadPlayPositionSeekPauseEndStop() {
+        MixerRig rig;
+        MixVoice voice(&rig.mixer);
+        QSignalSpy duration(&voice, &AudioOut::durationChanged), playing(&voice, &AudioOut::playingChanged);
+        QSignalSpy seeked(&voice, &AudioOut::seeked), ended(&voice, &AudioOut::ended), failed(&voice, &AudioOut::failed);
+        voice.load(track(), 0); voice.play();
+        QVERIFY(rig.ready(voice)); QCOMPARE(duration.size(), 1); QVERIFY(std::abs(voice.duration() - 12) < 0.03);
+        QCOMPARE(playing.size(), 0); rig.serve(4800); QCOMPARE(playing.size(), 1); QVERIFY(playing[0][0].toBool());
+        QCOMPARE(voice.position(), 0.0);
+        rig.device->consume(2400); rig.mixer.service(0); QCOMPARE(voice.position(), 0.05);
+        rig.device->consume(2400); rig.mixer.service(0); QCOMPARE(voice.position(), 0.1);
+        voice.seek(5); QCOMPARE(voice.position(), 5.0); QCOMPARE(seeked.size(), 0);
+        rig.mixer.service(0); rig.mixer.serviceReader(); QCoreApplication::processEvents();
+        QCOMPARE(seeked.size(), 1); QCOMPARE(voice.position(), 5.0);
+        rig.serve(4800); rig.device->consume(2400); rig.mixer.service(0);
+        QCOMPARE(voice.position(), 5.05);
+        voice.pause(); const int resets = rig.device->resets; rig.mixer.service(0); QCoreApplication::processEvents();
+        QVERIFY(!rig.device->running); QVERIFY(rig.device->resets > resets);
+        QCOMPARE(playing.size(), 2); QCOMPARE(playing[1][0].toBool(), false); QCOMPARE(voice.position(), 5.05);
+        voice.play(); rig.mixer.serviceReader(); rig.serve(480); QCOMPARE(voice.position(), 5.05);
+        voice.seek(voice.duration() - 0.01); rig.mixer.service(0); rig.mixer.serviceReader();
+        rig.serve(1024); QCOMPARE(ended.size(), 0); // đuôi còn nằm trong thiết bị
+        rig.device->consume(rig.device->queued); rig.mixer.service(0); QCoreApplication::processEvents();
+        QCOMPARE(ended.size(), 1); QVERIFY(!voice.playing()); QCOMPARE(failed.size(), 0);
+        duration.clear(); playing.clear(); seeked.clear(); ended.clear();
+        voice.load(track(), 0); voice.play(); rig.mixer.serviceReader(); voice.stop();
+        rig.mixer.serviceReader(); rig.mixer.service(512); QCoreApplication::processEvents();
+        QCOMPARE(duration.size() + playing.size() + seeked.size() + ended.size() + failed.size(), 0);
+    }
+
+    void mixerCacheReusedAndHasExactFrameCount() {
+        MixerRig rig;
+        MixVoice first(&rig.mixer); first.load(track(), 0); first.preload(); QVERIFY(rig.ready(first));
+        QCOMPARE(rig.mixer.decodeCount(), quint64(1));
+        Mp3Source source(rig.mixer.rate()); QVERIFY(source.open(fixtureBytes(QStringLiteral("music_student/stereo_44k.mp3"))));
+        std::vector<float> all; while (source.read(all, 8192)) {}
+        QCOMPARE(MusicMixer::cacheFrames(rig.mixer.cachePath(track()), rig.mixer.rate()), quint64(all.size() / 2));
+        first.stop(); MixVoice second(&rig.mixer); second.load(track(), 2); QVERIFY(rig.ready(second));
+        QCOMPARE(rig.mixer.decodeCount(), quint64(1)); QCOMPARE(second.position(), 2.0); QVERIFY(!second.playing());
+    }
+
+    void mixerCacheSurvivesAnotherMixerAndRejectsTruncation() {
+        QTemporaryDir dir;
+        { MusicMixer mixer(std::make_unique<FakeDevice>(), dir.path()); MixVoice voice(&mixer); voice.load(track(), 0);
+          for (int i = 0; i < 100 && !voice.duration(); ++i) { mixer.serviceReader(); QTest::qWait(1); }
+          QVERIFY(voice.duration()); }
+        MusicMixer mixer(std::make_unique<FakeDevice>(), dir.path()); MixVoice voice(&mixer); voice.load(track(), 0);
+        mixer.serviceReader(); QCoreApplication::processEvents(); QVERIFY(voice.duration()); QCOMPARE(mixer.decodeCount(), quint64(0));
+        voice.stop(); QFile cache(mixer.cachePath(track())); QVERIFY(cache.open(QIODevice::WriteOnly)); QVERIFY(cache.resize(30)); cache.close();
+        voice.load(track(), 0);
+        for (int i = 0; i < 100 && !voice.duration(); ++i) { mixer.serviceReader(); QTest::qWait(1); }
+        QVERIFY(voice.duration()); QCOMPARE(mixer.decodeCount(), quint64(1));
+    }
+
+    void mixVoiceErrorsAreQueuedAndCancelledByStop() {
+        MixerRig rig; MixVoice voice(&rig.mixer); QSignalSpy failed(&voice, &AudioOut::failed);
+        voice.load(QUrl::fromLocalFile(rig.dir.filePath(QStringLiteral("missing.mp3"))), 0);
+        for (int i = 0; i < 100 && failed.isEmpty(); ++i) { rig.mixer.serviceReader(); QTest::qWait(1); }
+        QCOMPARE(failed.size(), 1);
+        QFile junk(rig.dir.filePath(QStringLiteral("bad.mp3"))); QVERIFY(junk.open(QIODevice::WriteOnly)); junk.write(QByteArray(1000, 'x')); junk.close();
+        voice.load(QUrl::fromLocalFile(junk.fileName()), 0);
+        for (int i = 0; i < 100 && failed.size() < 2; ++i) { rig.mixer.serviceReader(); QTest::qWait(1); }
+        QCOMPARE(failed.size(), 2);
+        voice.load(track(), 0); voice.stop(); rig.mixer.serviceReader(); QTest::qWait(1); QCOMPARE(failed.size(), 2);
+    }
+
+    void mixerRebuildsAtSameAndDifferentRates() {
+        MixerRig rig; MixVoice voice(&rig.mixer); voice.setLoop(true); voice.load(track(), 0); QVERIFY(rig.ready(voice)); voice.play();
+        rig.serve(4800); rig.device->consume(2400); rig.mixer.service(0); QCOMPARE(voice.position(), 0.05);
+        ++rig.device->epoch; rig.device->queued = 0; rig.mixer.service(0); rig.mixer.serviceReader(); QCOMPARE(voice.position(), 0.05);
+        rig.serve(4800); rig.device->consume(2400); rig.mixer.service(0); QCOMPARE(voice.position(), 0.1);
+        rig.device->hz = 44100; ++rig.device->epoch; rig.device->queued = 0; rig.mixer.service(0); QVERIFY(rig.ready(voice));
+        for (int i = 0; i < 100 && rig.mixer.decodeCount() < 2; ++i) { rig.mixer.serviceReader(); QTest::qWait(1); }
+        QCOMPARE(rig.mixer.rate(), 44100); QCOMPARE(voice.position(), 0.1); QCOMPARE(rig.mixer.decodeCount(), quint64(2));
+    }
+
+    void mixerThreadSleepsWhileIdleAndSwitchesLead() {
+        struct CounterDevice final : MixDevice {
+            std::atomic<int> polls{0}, lastWrite{0};
+            std::atomic<bool> running{false};
+            int rate() const override { return 48000; }
+            bool start() override { running = true; return true; }
+            void stop() override { running = false; }
+            void reset() override {}
+            size_t padding() override { ++polls; return 0; }
+            size_t bufferFrames() const override { return 48000; }
+            bool write(const float *, size_t n) override { lastWrite = int(n); return true; }
+        };
+        QTemporaryDir dir; auto *device = new CounterDevice;
+        MusicMixer mixer(std::unique_ptr<MixDevice>(device), dir.path(), true);
+        QTest::qWait(300); QCOMPARE(device->polls.load(), 0);
+        MixVoice voice(&mixer); voice.load(track(), 0); QTRY_VERIFY_WITH_TIMEOUT(voice.duration() > 0, 3000);
+        mixer.setRelaxed(true); voice.play(); QTRY_VERIFY(device->running.load()); QCOMPARE(device->lastWrite.load(), 28800);
+        mixer.setRelaxed(false); QTRY_COMPARE(device->lastWrite.load(), 9600);
+        voice.pause(); QTRY_VERIFY(!device->running.load());
+        QTest::qWait(100); const int polls = device->polls; QTest::qWait(600); QCOMPARE(device->polls.load(), polls);
+    }
+
+    void mixerRateChangesWhileReaderOpensCache() {
+        struct RateDevice final : MixDevice {
+            std::atomic<int> hz{48000};
+            std::atomic<quint64> epoch{0};
+            int rate() const override { return hz; }
+            quint64 revision() const override { return epoch; }
+            bool start() override { return true; }
+            void stop() override {}
+            void reset() override {}
+            size_t padding() override { return 0; }
+            size_t bufferFrames() const override { return 48000; }
+            bool write(const float *, size_t) override { return true; }
+        };
+        QTemporaryDir dir; auto *device = new RateDevice;
+        MusicMixer mixer(std::unique_ptr<MixDevice>(device), dir.path(), true);
+        MixVoice voice(&mixer); QSignalSpy ready(&voice, &AudioOut::durationChanged), failed(&voice, &AudioOut::failed);
+        voice.load(track(), 0); voice.play();
+        for (int i = 0; i < 10; ++i) {
+            device->hz = i % 2 ? 48000 : 44100; ++device->epoch;
+            mixer.setRelaxed(i % 2 == 0); QTest::qWait(5);
+        }
+        ready.clear(); device->hz = 44100; ++device->epoch; mixer.setRelaxed(true);
+        QTRY_COMPARE(mixer.rate(), 44100); QTRY_VERIFY(!ready.isEmpty()); QTRY_VERIFY(voice.playing());
+        QCOMPARE(failed.size(), 0);
+        for (const auto &file : QDir(dir.path()).entryInfoList({QStringLiteral("*.pcm")}, QDir::Files)) {
+            const int hz = file.fileName().endsWith(QStringLiteral("44100.pcm")) ? 44100 : 48000;
+            QVERIFY(MusicMixer::cacheFrames(file.absoluteFilePath(), hz) > 0);
+        }
+    }
+
+    void mixerLoopCanEndAfterSeveralWraps() {
+        MixerRig rig; MixVoice voice(&rig.mixer); voice.setLoop(true); voice.load(track(), 0); QVERIFY(rig.ready(voice)); voice.play();
+        QSignalSpy ended(&voice, &AudioOut::ended);
+        const size_t length = MusicMixer::cacheFrames(rig.mixer.cachePath(track()), rig.mixer.rate());
+        for (size_t at = 0; at < length + 4800;) {
+            const size_t n = std::min<size_t>(12000, length + 4800 - at); rig.serve(n); at += n;
+        }
+        voice.setLoop(false);
+        rig.device->consume(rig.device->queued); rig.mixer.service(0); QCOMPARE(voice.position(), 0.1);
+        for (size_t at = 4800; at < length;) { const size_t n = std::min<size_t>(12000, length - at); rig.serve(n); at += n; }
+        QCOMPARE(ended.size(), 0);
+        rig.device->consume(rig.device->queued); rig.mixer.service(0); QCoreApplication::processEvents();
+        QCOMPARE(ended.size(), 1); QVERIFY(!voice.playing());
+    }
+
+    void mixerTrimsCacheByOldestMtimeAtStartup() {
+        QTemporaryDir dir;
+        const auto create = [&dir](const QString &name, int age) {
+            QFile file(dir.filePath(name));
+            if (!file.open(QIODevice::WriteOnly) || !file.resize(160 * 1024 * 1024)) return false;
+            return file.setFileTime(QDateTime::currentDateTimeUtc().addSecs(-age), QFileDevice::FileModificationTime);
+        };
+        QVERIFY(create(QStringLiteral("old.pcm"), 100)); QVERIFY(create(QStringLiteral("new.pcm"), 10));
+        MusicMixer mixer(std::make_unique<FakeDevice>(), dir.path());
+        QVERIFY(!QFile::exists(dir.filePath(QStringLiteral("old.pcm")))); QVERIFY(QFile::exists(dir.filePath(QStringLiteral("new.pcm"))));
+    }
+
+    void muteOutput() {
+        if (qEnvironmentVariableIntValue("ABOOK_MUTE") != 1) {
+            QProcess child; auto env = QProcessEnvironment::systemEnvironment(); env.insert(QStringLiteral("ABOOK_MUTE"), QStringLiteral("1"));
+            env.insert(QStringLiteral("QT_QPA_PLATFORM"), QStringLiteral("offscreen")); child.setProcessEnvironment(env);
+            child.start(QCoreApplication::applicationFilePath(), {QStringLiteral("muteOutput")});
+            QVERIFY(child.waitForFinished(30000)); const auto output = child.readAllStandardOutput();
+            QVERIFY2(!output.contains("FAIL!"), output.constData()); QCOMPARE(child.exitCode(), 0); return;
+        }
+        MixerRig rig; MixVoice voice(&rig.mixer); voice.setVolume(1); voice.load(track(), 0); QVERIFY(rig.ready(voice)); voice.play();
+        rig.serve(4800); voice.setVolume(0.75); rig.serve(4800);
+        QVERIFY(std::all_of(rig.device->output.begin(), rig.device->output.end(), [](float x) { return x == 0; }));
+    }
     void ringWrapsAndReportsPartial() {
         Ring ring(8);
         QCOMPARE(ring.capacity(), size_t(8));
