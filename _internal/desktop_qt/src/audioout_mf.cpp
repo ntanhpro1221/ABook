@@ -1,4 +1,5 @@
 #include "audioout_mf.h"
+#include "mftrace.h"
 
 #include <QDir>
 #include <QMetaObject>
@@ -8,6 +9,7 @@
 #include <cmath>
 #include <cstdio>
 #include <mutex>
+#include <thread>
 
 #include <windows.h>
 #include <audiosessiontypes.h>
@@ -17,18 +19,43 @@
 
 using Microsoft::WRL::ComPtr;
 
-// Sự kiện của engine đến trên luồng của Media Foundation; chuyển về luồng giao diện bằng hàng đợi. Chủ sở hữu có thể chết trước khi sự kiện
-// cuối tới, nên giữ con trỏ sau một khoá, huỷ trong destructor.
-struct MfAudioOut::Impl {
-    ComPtr<IMFMediaEngine> engine;
-    ComPtr<IMFMediaEngineEx> engineEx;
+// Sự kiện của engine đến trên luồng của Media Foundation; chuyển về luồng giao diện bằng hàng đợi. Mỗi engine một Link: engine bị cho nghỉ
+// (retire) hay chủ chết thì Link cắt chủ, sự kiện muộn của engine ấy bị bỏ.
+struct MfLink {
     std::mutex lock;
     MfAudioOut *owner = nullptr;
 };
 
+struct MfAudioOut::Impl {
+    ComPtr<IMFMediaEngine> engine;
+    ComPtr<IMFMediaEngineEx> engineEx;
+    std::shared_ptr<MfLink> link;
+};
+
+namespace {
+// Chỉ những sự kiện onEvent dùng mới đánh thức luồng giao diện: TIMEUPDATE / PROGRESS tới vài lần mỗi giây mỗi engine
+// không cần đánh thức giao diện nếu thời gian phát vẫn do đồng hồ của Player theo dõi.
+bool wakesUi(DWORD event) {
+    static const bool trace = qEnvironmentVariableIntValue("ABOOK_AUDIO_TRACE") != 0;
+    switch (event) {
+    case MF_MEDIA_ENGINE_EVENT_LOADEDMETADATA:
+    case MF_MEDIA_ENGINE_EVENT_DURATIONCHANGE:
+    case MF_MEDIA_ENGINE_EVENT_PLAYING:
+    case MF_MEDIA_ENGINE_EVENT_PAUSE:
+    case MF_MEDIA_ENGINE_EVENT_WAITING:
+    case MF_MEDIA_ENGINE_EVENT_SEEKED:
+    case MF_MEDIA_ENGINE_EVENT_ENDED:
+    case MF_MEDIA_ENGINE_EVENT_ERROR:
+        return true;
+    default:
+        return trace;
+    }
+}
+}  // namespace
+
 class MfAudioOut::Notify final : public IMFMediaEngineNotify {
 public:
-    explicit Notify(Impl *impl) : m_impl(impl) {}
+    explicit Notify(std::shared_ptr<MfLink> link) : m_link(std::move(link)) {}
     STDMETHODIMP QueryInterface(REFIID riid, void **out) override {
         if (riid == __uuidof(IMFMediaEngineNotify) || riid == __uuidof(IUnknown)) {
             *out = static_cast<IMFMediaEngineNotify *>(this);
@@ -46,8 +73,10 @@ public:
         return left;
     }
     STDMETHODIMP EventNotify(DWORD event, DWORD_PTR param1, DWORD param2) override {
-        std::lock_guard<std::mutex> guard(m_impl->lock);
-        MfAudioOut *owner = m_impl->owner;
+        if (!wakesUi(event))
+            return S_OK;
+        std::lock_guard<std::mutex> guard(m_link->lock);
+        MfAudioOut *owner = m_link->owner;
         if (!owner)
             return S_OK;
         const quint64 serial = owner->m_serial;
@@ -60,12 +89,10 @@ public:
 
 private:
     std::atomic<ULONG> m_refs{1};
-    Impl *m_impl;
+    std::shared_ptr<MfLink> m_link;
 };
 
-MfAudioOut::MfAudioOut(QObject *parent) : AudioOut(parent), d(new Impl) {
-    d->owner = this;
-}
+MfAudioOut::MfAudioOut(QObject *parent) : AudioOut(parent), d(new Impl) {}
 
 bool MfAudioOut::ensureEngine() {
     if (d->engine)
@@ -80,8 +107,10 @@ bool MfAudioOut::ensureEngine() {
     ComPtr<IMFAttributes> attributes;
     if (FAILED(MFCreateAttributes(&attributes, 2)))
         return false;
+    d->link = std::make_shared<MfLink>();
+    d->link->owner = this;
     ComPtr<Notify> notify;
-    notify.Attach(new Notify(d.get()));
+    notify.Attach(new Notify(d->link));
     attributes->SetUnknown(MF_MEDIA_ENGINE_CALLBACK, notify.Get());
     attributes->SetUINT32(MF_MEDIA_ENGINE_AUDIO_CATEGORY, AudioCategory_Media);
     if (FAILED(factory->CreateInstance(MF_MEDIA_ENGINE_AUDIOONLY, attributes.Get(), &d->engine)))
@@ -92,31 +121,52 @@ bool MfAudioOut::ensureEngine() {
 }
 
 MfAudioOut::~MfAudioOut() {
-    {
-        std::lock_guard<std::mutex> guard(d->lock);
-        d->owner = nullptr;
-    }
-    if (d->engine) {
-        d->engine->Pause();
-        d->engine->Shutdown();
-    }
-    d->engine.Reset();
-    d->engineEx.Reset();
+    retire();
     if (m_started)
         MFShutdown();
 }
 
-void MfAudioOut::load(const QUrl &url, double startSeconds) {
-    ++m_serial;
-    m_loaded = false;
+void MfAudioOut::retire() {
+    if (mfTraceEnabled())
+        mfTraceState(this, "retire", position());
+    // Tháo đường ống của nguồn cũ (Pause / SetSource / Shutdown) chờ luồng mạng đóng - đo được 0,3 tới vài giây đứng luồng giao diện
+    // lúc sang chương (PROGRESS.md mục CPU). Engine cũ được tháo ở luồng riêng; lần phát kế dựng engine mới.
+    if (!d->engine)
+        return;
+    {
+        std::lock_guard<std::mutex> guard(d->link->lock);
+        d->link->owner = nullptr;
+    }
+    d->link.reset();
+    MFStartup(MF_VERSION, MFSTARTUP_LITE); // phần của luồng tháo, trả ở cuối luồng
+    std::thread([engine = std::move(d->engine), engineEx = std::move(d->engineEx),
+                 traceOut = static_cast<const void *>(this)]() mutable {
+        mfTraceState(traceOut, "retire_thread_begin");
+        CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+        mfTraceState(traceOut, "retire_worker_begin");
+        engine->Pause();
+        engine->Shutdown();
+        engineEx.Reset();
+        engine.Reset();
+        MFShutdown();
+        CoUninitialize();
+        mfTraceState(traceOut, "retire_worker_done");
+    }).detach();
     m_sourceOpen = false;
+}
+
+void MfAudioOut::load(const QUrl &url, double startSeconds) {
+    if (mfTraceEnabled())
+        mfTraceState(this, "load", position());
+    ++m_serial;
+    if (m_sourceOpen)
+        retire(); // engine đã có nguồn: đổi nguồn trên nó sẽ chờ tháo nguồn cũ ngay trên luồng này
+    m_loaded = false;
     m_seeking = false;
     m_wantPlay = false;
     m_target = startSeconds;
     m_duration = 0;
     m_url = url;
-    if (d->engine)
-        d->engine->Pause();
     if (m_playing) {
         m_playing = false;
         emit playingChanged(false);
@@ -125,6 +175,8 @@ void MfAudioOut::load(const QUrl &url, double startSeconds) {
 }
 
 void MfAudioOut::openSource() {
+    if (mfTraceEnabled())
+        mfTraceState(this, "openSource", position());
     if (m_sourceOpen)
         return;
     if (!ensureEngine()) {
@@ -138,10 +190,11 @@ void MfAudioOut::openSource() {
     SysFreeString(source);
     d->engine->SetPlaybackRate(m_rate);
     d->engine->SetVolume(effectiveVolume(m_volume));
-    d->engine->SetLoop(m_loop);
 }
 
 void MfAudioOut::play() {
+    if (mfTraceEnabled())
+        mfTraceState(this, "play", position());
     m_wantPlay = true;
     if (m_url.isEmpty())
         return;
@@ -150,36 +203,23 @@ void MfAudioOut::play() {
         d->engine->Play();
 }
 
-void MfAudioOut::preload() {
-    if (!m_url.isEmpty())
-        openSource();
-}
-
-void MfAudioOut::setLoop(bool loop) {
-    m_loop = loop;
-    if (d->engine)
-        d->engine->SetLoop(loop);
-}
-
 void MfAudioOut::pause() {
+    if (mfTraceEnabled())
+        mfTraceState(this, "pause", position());
     m_wantPlay = false;
     if (d->engine)
         d->engine->Pause();
 }
 
 void MfAudioOut::stop() {
+    if (mfTraceEnabled())
+        mfTraceState(this, "stop", position());
     ++m_serial;
     m_loaded = false;
     m_wantPlay = false;
     m_seeking = false;
     m_duration = 0;
-    if (d->engine) {
-        d->engine->Pause();
-        BSTR empty = SysAllocString(L"");
-        d->engine->SetSource(empty);
-        SysFreeString(empty);
-    }
-    m_sourceOpen = false;
+    retire();
     m_url.clear();
     if (m_playing) {
         m_playing = false;
@@ -188,6 +228,8 @@ void MfAudioOut::stop() {
 }
 
 void MfAudioOut::seek(double seconds) {
+    if (mfTraceEnabled())
+        mfTraceState(this, "seek", position());
     m_target = qMax(0.0, seconds);
     if (!m_loaded || !d->engine)
         return; // chưa mở nguồn / chưa nạp xong: onEvent(LOADEDMETADATA) tua tới m_target
@@ -196,6 +238,8 @@ void MfAudioOut::seek(double seconds) {
 }
 
 void MfAudioOut::setRate(double rate) {
+    if (mfTraceEnabled())
+        mfTraceState(this, "setRate", position());
     m_rate = rate;
     if (d->engine) {
         d->engine->SetDefaultPlaybackRate(rate);
@@ -222,7 +266,7 @@ double MfAudioOut::duration() const {
 void MfAudioOut::onEvent(unsigned long event, quint64 p1, unsigned long p2) {
     static const bool trace = qEnvironmentVariableIntValue("ABOOK_AUDIO_TRACE") != 0;
     if (trace)
-        fprintf(stderr, "mf event %lu p1=%llu p2=%lu pos=%.3f\n", event, (unsigned long long)p1, p2, d->engine ? d->engine->GetCurrentTime() : -1.0);
+        fprintf(stderr, "mf t_ms=%lld out=%p event=%lu p1=%llu p2=%lu pos=%.3f\n", mfTraceMs(), static_cast<void *>(this), event, (unsigned long long)p1, p2, d->engine ? d->engine->GetCurrentTime() : -1.0);
     switch (event) {
     case MF_MEDIA_ENGINE_EVENT_LOADEDMETADATA:
     case MF_MEDIA_ENGINE_EVENT_DURATIONCHANGE: {

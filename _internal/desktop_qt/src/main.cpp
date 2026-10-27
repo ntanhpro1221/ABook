@@ -5,6 +5,8 @@
 #include "coverprovider.h"
 #include "hostnet.h"
 #include "music.h"
+#include "musicmixer.h"
+#include "musicwindowactivity.h"
 #include "platform.h"
 #include "player.h"
 #include "readalong.h"
@@ -18,11 +20,51 @@
 #include <QQmlApplicationEngine>
 #include <QQmlEngine>
 #include <QQuickWindow>
+#include <QEvent>
+#include <QStandardPaths>
 #include <QTimer>
+#include <cstdio>
+#include <cstdlib>
+
+// Đặt trước lần show đầu, kể cả cửa sổ phụ: phép đo không được chen vào màn hình của chủ máy.
+class BenchWindowGuard final : public QObject {
+public:
+    bool eventFilter(QObject *object, QEvent *event) override {
+        if (event->type() == QEvent::PlatformSurface || event->type() == QEvent::Show) {
+            if (auto *window = qobject_cast<QWindow *>(object)) {
+                window->setProperty("_q_showWithoutActivating", true);
+                window->setFlag(Qt::WindowDoesNotAcceptFocus, true);
+                window->setPosition(-10000, -10000);
+                if (event->type() == QEvent::Show)
+                    Bench::mark(QStringLiteral("bench_show:%1:%2:focus=%3:noactivate=%4").arg(window->x()).arg(window->y())
+                        .arg(window->flags().testFlag(Qt::WindowDoesNotAcceptFocus)).arg(window->property("_q_showWithoutActivating").toBool()));
+            }
+        }
+        return false;
+    }
+};
 
 int main(int argc, char *argv[]) {
     QQuickWindow::setDefaultAlphaBuffer(true);
+    const bool benchMode = qEnvironmentVariableIsSet("ABOOK_BENCH");
+    if (benchMode) {
+        // Qt mở MessageBox khi thiếu plugin NGAY trong QGuiApplication, trước cả bộ gác cửa sổ.
+        // Thoát ở thông báo nạp plugin đầu tiên, ghi lỗi cho launcher thay vì hiện hộp lỗi của Qt.
+        qInstallMessageHandler([](QtMsgType type, const QMessageLogContext &context, const QString &message) {
+            const QByteArray text = qFormatLogMessage(type, context, message).toUtf8();
+            std::fwrite(text.constData(), 1, size_t(text.size()), stderr); std::fputc('\n', stderr); std::fflush(stderr);
+            if (type == QtFatalMsg || (QByteArray(context.category) == "qt.qpa.plugin" && message.startsWith(QStringLiteral("Could not "))))
+                std::_Exit(4);
+        });
+    }
+    // Luồng vblank của Qt (QDxgiVSyncService: WaitForVBlank theo tần số quét, 180 lần/s ở màn 180 Hz) thức cả khi cửa sổ thu nhỏ hay
+    // đứng yên: ~0,2 % một nhân lúc phát nền, nghỉ 0,3 -> 0,1 %. Tắt thì Qt hẹn khung bằng đồng hồ; nhịp khung lúc chữ chạy không đổi
+    // (PROGRESS.md mục CPU). Đặt sẵn trong môi trường thì giữ giá trị đó (đo so sánh: =0).
+    if (!qEnvironmentVariableIsSet("QT_D3D_NO_VBLANK_THREAD"))
+        qputenv("QT_D3D_NO_VBLANK_THREAD", "1");
     QGuiApplication app(argc, argv);
+    BenchWindowGuard benchWindowGuard;
+    if (benchMode) app.installEventFilter(&benchWindowGuard);
     QGuiApplication::setApplicationName(QStringLiteral("ABook"));
     QGuiApplication::setOrganizationName(QStringLiteral("ABook"));
     app.setQuitOnLastWindowClosed(false);
@@ -44,8 +86,21 @@ int main(int argc, char *argv[]) {
     Player player(&audio, &hostNet, outbox, nullptr);
     Player::setInstance(&player);
     player.watchInput();
-    // Nhạc nền: mỗi phần tử nhạc một bộ phát Media Foundation riêng (mở lười), theo giọng của Player.
-    Music music(&player, &hostNet, [] { return new MfAudioOut(nullptr); }, nullptr);
+    // Music shares one WASAPI device; MF remains the narration player.
+    auto mixer = std::make_unique<MusicMixer>(QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QStringLiteral("/music_pcm"));
+    Music music(&player, &hostNet, [&mixer, benchMode]() -> AudioOut * {
+        auto *voice = new MixVoice(mixer.get());
+        if (benchMode) {
+            QObject::connect(voice, &AudioOut::durationChanged, voice, [&mixer](double seconds) {
+                Bench::mark(QStringLiteral("mix_ready:%1:%2:decodes=%3").arg(mixer->rate()).arg(seconds).arg(mixer->decodeCount()));
+            });
+            QObject::connect(voice, &AudioOut::playingChanged, voice, [](bool playing) {
+                Bench::mark(playing ? QStringLiteral("mix_playing") : QStringLiteral("mix_paused"));
+            });
+            QObject::connect(voice, &AudioOut::failed, voice, [](const QString &) { Bench::mark(QStringLiteral("mix_failed")); });
+        }
+        return voice;
+    }, nullptr);
     Music::setInstance(&music);
     ReadAlong readAlong(&player, &hostNet, nullptr);
     ReadAlong::setInstance(&readAlong);
@@ -74,9 +129,14 @@ int main(int argc, char *argv[]) {
     QGuiApplication::setFont(base);
 
     QQmlApplicationEngine engine;
+    MusicWindowActivity musicWindowActivity([&mixer](bool relaxed) { mixer->setRelaxed(relaxed); });
+    if (benchMode)
+        engine.setInitialProperties({{QStringLiteral("x"), -10000}, {QStringLiteral("y"), -10000},
+            {QStringLiteral("flags"), int(Qt::Window | Qt::WindowDoesNotAcceptFocus)}});
     engine.addImageProvider(QStringLiteral("cover"), new CoverProvider);
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed, &app, [] { QCoreApplication::exit(3); }, Qt::QueuedConnection);
     engine.loadFromModule("ABook", "Main");
+    musicWindowActivity.update();
     Bench::mark(QStringLiteral("qml_loaded"));
     return app.exec();
 }

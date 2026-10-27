@@ -7,6 +7,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Máy tính
+
+- App máy tính: nhạc nền tốn ít CPU hơn khi thu nhỏ.
+- App máy tính: giọng đọc giữ đúng nhịp khi nghe trong khay và nhạc nền lặp lại.
+
 ### Điện thoại
 
 - Nút lùi / tới 15 giây trên widget màn hình chính cùng hình với trình phát: cung nông, số 15 nằm dưới, không chạm nét.
