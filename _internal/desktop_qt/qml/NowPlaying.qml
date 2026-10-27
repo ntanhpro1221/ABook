@@ -160,6 +160,13 @@ Item {
 
                 // ---- hàng trên ----
                 IconButton {
+                    anchors.right: parent.right; anchors.rightMargin: Theme.margin
+                    y: Theme.s16
+                    icon: "picture-in-picture-2"; tip: "Cửa sổ mini"
+                    enabled: Player.loaded
+                    onClicked: Nav.windowMode.enter()
+                }
+                IconButton {
                     x: root.blend(root.colX, Theme.margin) - 10
                     y: Theme.s16
                     icon: "chevron-down"

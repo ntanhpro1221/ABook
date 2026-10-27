@@ -529,6 +529,7 @@ Item {
         // ---- ảnh ----
         function shot(name, item) {
             const target = item || host
+            target.Window.window.update()   // Cảnh tĩnh offscreen cần yêu cầu khung mới trước khi chờ.
             waitForRendering(target)
             wait(400)
             const img = grabImage(target)

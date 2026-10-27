@@ -99,6 +99,7 @@ Item {
         function request(method, path) { return DesktopApi.requests.filter(r => r.method === method && r.path === path) }
         function shot(name, item) {
             const target = item || host
+            target.Window.window.update()
             waitForRendering(target)
             wait(300)
             const img = grabImage(target)
