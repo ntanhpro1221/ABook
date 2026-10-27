@@ -83,7 +83,7 @@ def main():
     if args.background:
         env["ABOOK_BENCH_SCENARIO"] = "mini"
         env["ABOOK_AUDIO_TRACE"] = "1"
-        got = measure.launch(root / "dist/ABookDesk.exe", env, False, timeout_seconds=190)
+        got = measure.launch(root / "dist/ABookDesk.exe", env, True, timeout_seconds=190)
         if not got.get("ok"):
             raise RuntimeError(got)
         (root / "build/mini-background.json").write_text(json.dumps(got, indent=2), encoding="utf-8")
@@ -107,7 +107,7 @@ def main():
     for i in range(args.rounds):
         for name, exe in [("base", root / "build/mini-base/ABookDesk.exe"), ("mini", root / "dist/ABookDesk.exe")]:
             reset(fixture)
-            got = measure.player_run(exe, env, False)
+            got = measure.player_run(exe, env, True)
             got["exe_sha256"] = hashlib.sha256(exe.read_bytes()).hexdigest()
             rows[name].append(got)
             print(i + 1, name, {k: round(got[k], 2) for k in ("private_idle_loaded_mb", "private_follow_mb", "private_min_playing_mb", "private_min_settled_mb", "cold_first_frame_ms") if k in got}, flush=True)
