@@ -2,6 +2,7 @@
 // trên fixture mp3 chung, không cần thiết bị âm thanh.
 #include "mixcore.h"
 #include "mp3source.h"
+#include "mfsource.h"
 #include "musicmixer.h"
 #include "musicbed.h"
 
@@ -106,6 +107,168 @@ double rms(const std::vector<float> &x, int channels, int channel, size_t from, 
 class MixTests : public QObject {
     Q_OBJECT
 private slots:
+    void musicFormats_data() {
+        QTest::addColumn<QString>("name"); QTest::addColumn<int>("rate");
+        QTest::addColumn<int>("channels"); QTest::addColumn<int>("outRate");
+        const char *files[] = {"stereo_44k.wav", "stereo_44k.flac", "stereo_44k.m4a", "mono_22k.wav", "stereo_44k.ogg", "stereo_48k.opus"};
+        for (const auto *file : files) for (int outRate : {44100, 48000, 32000}) {
+            const QString name = QString::fromLatin1(file);
+            const QByteArray row = name.toUtf8() + '-' + QByteArray::number(outRate);
+            QTest::newRow(row.constData()) << name << (name.startsWith(QLatin1String("mono")) ? 22050 : name.endsWith(QLatin1String("opus")) ? 48000 : 44100)
+                << (name.startsWith(QLatin1String("mono")) ? 1 : 2) << outRate;
+        }
+    }
+
+    void musicFormats() {
+        QFETCH(QString, name); QFETCH(int, rate); QFETCH(int, channels); QFETCH(int, outRate);
+        const QByteArray bytes = fixtureBytes(QStringLiteral("music_student/") + name);
+        MfSource source(outRate), chunks(outRate);
+        const bool opened = source.open(bytes);
+        const bool optional = name.endsWith(QLatin1String("ogg")) || name.endsWith(QLatin1String("opus"));
+        if (!opened) {
+            QVERIFY2(optional, qPrintable(source.error()));
+            QVERIFY(source.error().contains(QStringLiteral("Windows không giải mã")));
+            QVERIFY(source.error().contains(QStringLiteral("Web Media Extensions")));
+            qInfo().noquote() << name << source.error();
+        }
+        std::vector<float> pcm;
+        if (opened) {
+            QCOMPARE(source.sourceRate(), rate); QCOMPARE(source.sourceChannels(), channels);
+            while (source.read(pcm, 4096)) {}
+            QVERIFY2(source.error().isEmpty(), qPrintable(source.error())); QVERIFY(source.atEnd());
+            const size_t expected = size_t(outRate * 2);
+            // Một khung ra mỗi 10 ms nguồn: clip hai giây cho phép sai tối đa 200 khung.
+            QVERIFY2(std::abs(double(pcm.size() / 2) - double(expected)) <= 200,
+                qPrintable(QStringLiteral("frames=%1 expected=%2 duration=%3").arg(pcm.size() / 2).arg(expected).arg(source.duration())));
+            QVERIFY(std::abs(double(pcm.size() / 2) - source.duration() * outRate) <= 1);
+            QVERIFY2(chunks.open(bytes), qPrintable(chunks.error()));
+            std::vector<float> other;
+            for (size_t n = 1; chunks.read(other, n); n = n * 7 % 1500 + 1) {}
+            QVERIFY(other == pcm); QVERIFY(chunks.atEnd());
+            Mp3Source mp3(outRate); QVERIFY(mp3.open(fixtureBytes(QStringLiteral("music_student/stereo_44k.mp3"))));
+            std::vector<float> reference; mp3.read(reference, expected);
+            if (channels == 1) {
+                for (size_t i = 0; i < reference.size(); i += 2)
+                    reference[i] = reference[i + 1] = (reference[i] + reference[i + 1]) / 2;
+                for (size_t i = 0; i < pcm.size(); i += 2) QCOMPARE(pcm[i], pcm[i + 1]);
+            }
+            for (int c = 0; c < 2; ++c) {
+                const size_t to = std::min(reference.size(), pcm.size()) / 2 - 100;
+                const double db = 20 * std::log10(rms(pcm, 2, c, 100, to) / rms(reference, 2, c, 100, to));
+                QVERIFY2(std::isfinite(db) && std::abs(db) < (name.endsWith(QLatin1String("m4a")) ? 2 : 1), qPrintable(QString::number(db)));
+            }
+            qInfo().noquote() << name << "decoded" << source.sourceRate() << source.sourceChannels() << "frames" << pcm.size() / 2;
+        }
+
+        MixerRig rig; rig.device->hz = outRate; rig.mixer.service(0);
+        // Cố ý đặt đuôi sai: host đổi URL không được đổi bộ giải mã.
+        QFile input(rig.dir.filePath(QStringLiteral("misleading.mp3")));
+        QVERIFY(input.open(QIODevice::WriteOnly)); QCOMPARE(input.write(bytes), qint64(bytes.size())); input.close();
+        const QUrl url = QUrl::fromLocalFile(input.fileName());
+        MixVoice voice(&rig.mixer); QSignalSpy failed(&voice, &AudioOut::failed);
+        voice.load(url, 0); rig.ready(voice);
+        if (!opened) {
+            QCOMPARE(failed.size(), 1); QVERIFY(failed.first().first().toString().contains(QStringLiteral("Web Media Extensions")));
+            QCOMPARE(voice.duration(), 0.0); QVERIFY(!QFile::exists(rig.mixer.cachePath(url)));
+            rig.mixer.serviceReader(); rig.mixer.service(512); QCoreApplication::processEvents(); QCOMPARE(failed.size(), 1);
+            return;
+        }
+        QCOMPARE(failed.size(), 0); QCOMPARE(rig.mixer.decodeCount(), quint64(1));
+        QFile cache(rig.mixer.cachePath(url)); QVERIFY(cache.open(QIODevice::ReadOnly));
+        const QByteArray contents = cache.readAll(); const auto frames = quint64(pcm.size() / 2);
+        QCOMPARE(contents.first(8), QByteArray("ABPCM001", 8));
+        QCOMPARE(qFromLittleEndian<quint32>(contents.constData() + 8), quint32(outRate));
+        QCOMPARE(qFromLittleEndian<quint32>(contents.constData() + 12), quint32(2));
+        QCOMPARE(qFromLittleEndian<quint64>(contents.constData() + 16), frames);
+        QCOMPARE(contents.size(), qsizetype(24 + frames * 4));
+        QCOMPARE(MusicMixer::cacheFrames(cache.fileName(), outRate), frames);
+        for (size_t i = 0; i < pcm.size(); ++i)
+            QCOMPARE(qFromLittleEndian<qint16>(contents.constData() + 24 + i * 2),
+                qint16(std::clamp(std::lround(pcm[i] * 32768.0f), -32768L, 32767L)));
+        cache.close();
+        voice.stop(); voice.load(url, 0.5); QVERIFY(rig.ready(voice));
+        QCOMPARE(rig.mixer.decodeCount(), quint64(1)); QCOMPARE(voice.position(), 0.5);
+        voice.setVolume(1); voice.play(); rig.serve(size_t(outRate / 10)); QVERIFY(voice.playing());
+        QVERIFY(rms(rig.device->output, 2, 0, size_t(outRate / 20), size_t(outRate / 10)) > 0.001);
+        voice.stop(); voice.load(track(), 0); QVERIFY(rig.ready(voice));
+        QFile mp3Cache(rig.mixer.cachePath(track())); QVERIFY(mp3Cache.open(QIODevice::ReadOnly));
+        QCOMPARE(mp3Cache.read(16), contents.first(16));
+    }
+
+    void mfReaderThreadStartsAndStops() {
+        for (int i = 0; i < 2; ++i) {
+            QTemporaryDir dir;
+            MusicMixer mixer(std::make_unique<FakeDevice>(), dir.path(), true);
+            MixVoice voice(&mixer); QSignalSpy failed(&voice, &AudioOut::failed);
+            voice.load(QUrl::fromLocalFile(QStringLiteral(MIX_FIXTURES_DIR "/music_student/stereo_44k.wav")), 0);
+            QTRY_VERIFY_WITH_TIMEOUT(voice.duration() > 0, 3000);
+            QCOMPARE(failed.size(), 0); QCOMPARE(mixer.decodeCount(), quint64(1));
+        }
+    }
+
+    void mfSurroundKeepsFirstTwoChannels() {
+        QByteArray wav(44, '\0');
+        std::copy_n("RIFF", 4, wav.data()); qToLittleEndian<quint32>(36 + 1000 * 3 * 4, wav.data() + 4);
+        std::copy_n("WAVEfmt ", 8, wav.data() + 8); qToLittleEndian<quint32>(16, wav.data() + 16);
+        qToLittleEndian<quint16>(3, wav.data() + 20); qToLittleEndian<quint16>(3, wav.data() + 22);
+        qToLittleEndian<quint32>(48000, wav.data() + 24); qToLittleEndian<quint32>(48000 * 12, wav.data() + 28);
+        qToLittleEndian<quint16>(12, wav.data() + 32); qToLittleEndian<quint16>(32, wav.data() + 34);
+        std::copy_n("data", 4, wav.data() + 36); qToLittleEndian<quint32>(1000 * 12, wav.data() + 40);
+        const float channels[] = {0.125f, -0.25f, 0.75f};
+        for (int i = 0; i < 1000; ++i) wav.append(reinterpret_cast<const char *>(channels), sizeof(channels));
+        MfSource source(48000); QVERIFY2(source.open(wav), qPrintable(source.error())); QCOMPARE(source.sourceChannels(), 3);
+        std::vector<float> pcm; while (source.read(pcm, 71)) {}
+        QVERIFY2(source.error().isEmpty(), qPrintable(source.error())); QCOMPARE(pcm.size(), size_t(2000));
+        for (size_t i = 0; i < pcm.size(); i += 2) { QCOMPARE(pcm[i], channels[0]); QCOMPARE(pcm[i + 1], channels[1]); }
+    }
+
+    void musicMagicRejectsBadInputOnce_data() {
+        QTest::addColumn<QByteArray>("bytes");
+        QTest::newRow("empty") << QByteArray();
+        QTest::newRow("unknown") << QByteArray(1000, 'x');
+        QTest::newRow("garbage-ID3") << QByteArray("ID3bad");
+        QTest::newRow("garbage-sync") << (QByteArray::fromHex("ffe0") + QByteArray(1000, '\0'));
+        QTest::newRow("garbage-WAV") << QByteArray("RIFFxxxxWAVEbad");
+        QTest::newRow("garbage-FLAC") << QByteArray("fLaCbad");
+        QTest::newRow("garbage-M4A") << QByteArray("xxxxftypbad");
+        QTest::newRow("garbage-Ogg") << QByteArray("OggSbad");
+    }
+
+    void musicMagicRejectsBadInputOnce() {
+        QFETCH(QByteArray, bytes);
+        MixerRig rig; MixVoice voice(&rig.mixer); QSignalSpy failed(&voice, &AudioOut::failed);
+        QFile input(rig.dir.filePath(QStringLiteral("no-extension")));
+        QVERIFY(input.open(QIODevice::WriteOnly)); input.write(bytes); input.close();
+        const QUrl url = QUrl::fromLocalFile(input.fileName());
+        voice.load(url, 0); voice.play();
+        for (int i = 0; i < 200 && failed.isEmpty(); ++i) { rig.mixer.serviceReader(); QTest::qWait(1); }
+        QCOMPARE(failed.size(), 1); QVERIFY(!failed.first().first().toString().isEmpty());
+        QVERIFY(!voice.duration()); QVERIFY(!voice.playing()); QVERIFY(!QFile::exists(rig.mixer.cachePath(url)));
+        for (int i = 0; i < 3; ++i) { rig.mixer.serviceReader(); rig.mixer.service(512); QCoreApplication::processEvents(); }
+        QCOMPARE(failed.size(), 1); QVERIFY(rig.device->output.empty());
+    }
+
+    void mp3MagicIgnoresExtension_data() {
+        QTest::addColumn<bool>("stripTag");
+        QTest::newRow("ID3") << false; QTest::newRow("frame-sync") << true;
+    }
+
+    void mp3MagicIgnoresExtension() {
+        QFETCH(bool, stripTag);
+        QByteArray bytes = fixtureBytes(QStringLiteral("music_student/stereo_44k.mp3"));
+        if (stripTag && bytes.startsWith("ID3")) {
+            const int size = ((quint8(bytes[6]) & 127) << 21) | ((quint8(bytes[7]) & 127) << 14) |
+                ((quint8(bytes[8]) & 127) << 7) | (quint8(bytes[9]) & 127);
+            bytes.remove(0, size + 10);
+        }
+        MixerRig rig; QFile input(rig.dir.filePath(QStringLiteral("actually-mp3.wav")));
+        QVERIFY(input.open(QIODevice::WriteOnly)); input.write(bytes); input.close();
+        MixVoice voice(&rig.mixer); voice.load(QUrl::fromLocalFile(input.fileName()), 0); QVERIFY(rig.ready(voice));
+        Mp3Source source(48000); QVERIFY(source.open(bytes));
+        std::vector<float> pcm; while (source.read(pcm, 8192)) {}
+        QCOMPARE(MusicMixer::cacheFrames(rig.mixer.cachePath(QUrl::fromLocalFile(input.fileName())), 48000), quint64(pcm.size() / 2));
+    }
+
     void wasapiFormats_data() {
         QTest::addColumn<int>("tag"); QTest::addColumn<int>("bits"); QTest::addColumn<int>("channels");
         QTest::addColumn<int>("extra"); QTest::addColumn<bool>("floatSubtype"); QTest::addColumn<bool>("accepted");

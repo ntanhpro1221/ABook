@@ -26,6 +26,8 @@ HERE = Path(__file__).resolve().parent.parent
 k32 = ctypes.WinDLL("kernel32", use_last_error=True)
 psapi = ctypes.WinDLL("psapi", use_last_error=True)
 u32 = ctypes.windll.user32
+dwm = ctypes.WinDLL("dwmapi")
+dwm.DwmGetWindowAttribute.argtypes = [wt.HWND, wt.DWORD, ctypes.c_void_p, wt.DWORD]
 u32.GetForegroundWindow.restype = wt.HWND
 u32.GetWindowThreadProcessId.argtypes = [wt.HWND, ctypes.POINTER(wt.DWORD)]
 k32.OpenProcess.restype = wt.HANDLE
@@ -112,6 +114,25 @@ def winstate(pid: int) -> dict:
     return out
 
 
+def cloak_states(pid: int) -> list[dict]:
+    result = []
+    @ctypes.WINFUNCTYPE(wt.BOOL, wt.HWND, wt.LPARAM)
+    def inspect(hwnd, _param):
+        owner = wt.DWORD()
+        u32.GetWindowThreadProcessId(hwnd, ctypes.byref(owner))
+        if owner.value == pid:
+            cloak = wt.DWORD()
+            hr = dwm.DwmGetWindowAttribute(hwnd, 14, ctypes.byref(cloak), ctypes.sizeof(cloak))
+            rect = wt.RECT()
+            u32.GetWindowRect(hwnd, ctypes.byref(rect))
+            result.append({"hwnd": int(hwnd), "visible": bool(u32.IsWindowVisible(hwnd)),
+                           "cloaked": cloak.value if hr == 0 else None,
+                           "rect": [rect.left, rect.top, rect.right, rect.bottom]})
+        return True
+    u32.EnumWindows(inspect, 0)
+    return result
+
+
 def refresh_hz() -> int:
     class DM(ctypes.Structure):
         _fields_ = [("name", ctypes.c_wchar * 32), ("spec", wt.WORD), ("drv", wt.WORD), ("size", wt.WORD), ("drvx", wt.WORD), ("fields", wt.DWORD),
@@ -183,6 +204,9 @@ def launch(exe: Path, env_extra: dict, offscreen: bool = True) -> dict:
     host: list[tuple[float, float]] = []      # (epoch ms, CPU ms của mọi tiến trình con - host Python)
     kids: dict[int, int] = {}
     foreground = []
+    cloak_errors = []
+    cloaked_windows = set()
+    require_cloak = env.get("ABOOK_BENCH_CLOAK") == "1"
     guard_ready = threading.Event()
     guard_error = []
 
@@ -193,6 +217,7 @@ def launch(exe: Path, env_extra: dict, offscreen: bool = True) -> dict:
             u32.GetWindowThreadProcessId(hwnd, ctypes.byref(q))
             if q.value == p.pid:
                 foreground.append(time.time() * 1000)
+                p.kill()
         @callback_type
         def changed(_hook, _event, hwnd, _obj, _child, _tid, _when):
             inspect(hwnd)
@@ -248,7 +273,16 @@ def launch(exe: Path, env_extra: dict, offscreen: bool = True) -> dict:
                 host.append((time.time() * 1000, host_cpu_ms()))
             except Exception:
                 pass
-            states.append((time.time() * 1000, winstate(p.pid)))
+            state = winstate(p.pid)
+            if require_cloak:
+                state["windows"] = cloak_states(p.pid)
+                for window in state["windows"]:
+                    if window["visible"] or window["cloaked"]:
+                        cloaked_windows.add(window["hwnd"])
+                    if window["hwnd"] in cloaked_windows and not window["cloaked"]:
+                        cloak_errors.append(window)
+                        p.kill()  # Cloak mất: kết thúc ngay, không chờ vòng lấy mẫu sau.
+            states.append((time.time() * 1000, state))
             stop.wait(0.25)
 
     th = threading.Thread(target=sampler, daemon=True)
@@ -285,14 +319,17 @@ def launch(exe: Path, env_extra: dict, offscreen: bool = True) -> dict:
         folder = Path(audit)
         folder.mkdir(parents=True, exist_ok=True)
         (folder / f"{int(wall0 * 1000)}_{p.pid}.json").write_text(json.dumps({
-            "music_mix": env.get("ABOOK_MUSIC_MIX"), "foreground_events": foreground, "offscreen": True,
+            "foreground_events": foreground, "offscreen": True,
+            "require_cloak": require_cloak, "cloak_errors": cloak_errors,
             "states": states, "samples": samples, "host_cpu": host, "child_pids": list(kids),
             "bench": json.loads(out.read_bytes()) if out.exists() else {}, "app_log": out.with_suffix(".app.log").read_text(encoding="utf-8", errors="replace"),
         }, indent=1), encoding="utf-8")
     if foreground or any(s.get("fg_is_us") for _t, s in states):
         return {"ok": False, "why": "OWNER RULE: app đã thành foreground", "foreground_events": foreground}
+    if require_cloak and (cloak_errors or not cloaked_windows):
+        return {"ok": False, "why": "OWNER RULE: DWM cloak mất hoặc không có mẫu xác nhận", "cloak_errors": cloak_errors}
     escaped = [s for _t, s in states if s.get("rect") and not s.get("iconic") and (s["rect"][2] >= 0 or s["rect"][3] >= 0)]
-    if escaped:
+    if escaped and not require_cloak:
         return {"ok": False, "why": "OWNER RULE: cửa sổ đã rời vị trí ngoài màn hình", "escaped": escaped}
     if not out.exists():
         return {"ok": False, "why": "app không ghi file đo"}

@@ -19,20 +19,45 @@
 #include <QQmlEngine>
 #include <QQuickWindow>
 #include <QEvent>
+#include <QPlatformSurfaceEvent>
+#include <QScopedValueRollback>
 #include <QStandardPaths>
 #include <QTimer>
 #include <cstdio>
 #include <cstdlib>
 
+#define NOMINMAX
+#include <windows.h>
+#include <dwmapi.h>
+
 // Đặt trước lần show đầu, kể cả cửa sổ phụ: phép đo không được chen vào màn hình của chủ máy.
 class BenchWindowGuard final : public QObject {
+    bool m_handling = false;
+    const bool m_cloak = qEnvironmentVariableIntValue("ABOOK_BENCH_CLOAK") == 1;
 public:
     bool eventFilter(QObject *object, QEvent *event) override {
-        if (event->type() == QEvent::PlatformSurface || event->type() == QEvent::Show) {
+        if (m_handling) return false;
+        const bool created = event->type() == QEvent::PlatformSurface &&
+            static_cast<QPlatformSurfaceEvent *>(event)->surfaceEventType() == QPlatformSurfaceEvent::SurfaceCreated;
+        if (created || event->type() == QEvent::Show) {
             if (auto *window = qobject_cast<QWindow *>(object)) {
+                if (!window->isTopLevel()) return false;
+                QScopedValueRollback<bool> handling(m_handling, true);
                 window->setProperty("_q_showWithoutActivating", true);
                 window->setFlag(Qt::WindowDoesNotAcceptFocus, true);
-                window->setPosition(-10000, -10000);
+                if (m_cloak) {
+                    const HWND hwnd = reinterpret_cast<HWND>(window->winId());
+                    const BOOL cloak = TRUE;
+                    DWORD state = 0;
+                    // Chỉ đưa vào vùng màn hình sau khi cloak đã được xác nhận, trước show.
+                    if (FAILED(DwmSetWindowAttribute(hwnd, DWMWA_CLOAK, &cloak, sizeof(cloak))) ||
+                        FAILED(DwmGetWindowAttribute(hwnd, DWMWA_CLOAKED, &state, sizeof(state))) || !state) {
+                        std::fputs("OWNER RULE: khong xac nhan duoc DWM cloak truoc show\n", stderr);
+                        std::_Exit(5);
+                    }
+                    window->setPosition(100, 100);
+                    Bench::mark(QStringLiteral("bench_cloaked:%1:%2").arg(quintptr(hwnd)).arg(state));
+                } else window->setPosition(-10000, -10000);
                 if (event->type() == QEvent::Show)
                     Bench::mark(QStringLiteral("bench_show:%1:%2:focus=%3:noactivate=%4").arg(window->x()).arg(window->y())
                         .arg(window->flags().testFlag(Qt::WindowDoesNotAcceptFocus)).arg(window->property("_q_showWithoutActivating").toBool()));
@@ -79,12 +104,9 @@ int main(int argc, char *argv[]) {
     Player player(&audio, &hostNet, outbox, nullptr);
     Player::setInstance(&player);
     player.watchInput();
-    // Cờ chỉ để đo A/B; nhạc dùng một thiết bị chung, giọng vẫn giữ engine riêng.
-    std::unique_ptr<MusicMixer> mixer;
-    if (qEnvironmentVariableIntValue("ABOOK_MUSIC_MIX") == 1)
-        mixer = std::make_unique<MusicMixer>(QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QStringLiteral("/music_pcm"));
+    // Mọi nhạc dùng chung mixer; MF chỉ còn phát giọng và giải mã lúc dựng cache.
+    auto mixer = std::make_unique<MusicMixer>(QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QStringLiteral("/music_pcm"));
     Music music(&player, &hostNet, [&mixer, benchMode]() -> AudioOut * {
-        if (!mixer) return new MfAudioOut(nullptr);
         auto *voice = new MixVoice(mixer.get());
         if (benchMode) {
             QObject::connect(voice, &AudioOut::durationChanged, voice, [&mixer](double seconds) {
@@ -125,16 +147,14 @@ int main(int argc, char *argv[]) {
     QGuiApplication::setFont(base);
 
     QQmlApplicationEngine engine;
-    std::unique_ptr<MusicWindowActivity> musicWindowActivity;
-    if (mixer)
-        musicWindowActivity = std::make_unique<MusicWindowActivity>([&mixer](bool relaxed) { mixer->setRelaxed(relaxed); });
+    MusicWindowActivity musicWindowActivity([&mixer](bool relaxed) { mixer->setRelaxed(relaxed); });
     if (benchMode)
         engine.setInitialProperties({{QStringLiteral("x"), -10000}, {QStringLiteral("y"), -10000},
             {QStringLiteral("flags"), int(Qt::Window | Qt::WindowDoesNotAcceptFocus)}});
     engine.addImageProvider(QStringLiteral("cover"), new CoverProvider);
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed, &app, [] { QCoreApplication::exit(3); }, Qt::QueuedConnection);
     engine.loadFromModule("ABook", "Main");
-    if (musicWindowActivity) musicWindowActivity->update();
+    musicWindowActivity.update();
     Bench::mark(QStringLiteral("qml_loaded"));
     return app.exec();
 }

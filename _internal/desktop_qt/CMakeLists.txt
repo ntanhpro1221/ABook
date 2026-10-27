@@ -49,7 +49,7 @@ set(ABOOK_MUSIC_SOURCES
     src/musiclogic.h
     src/musictext.h
 )
-set(ABOOK_MIXER_SOURCES src/musicmixer.cpp src/musicmixer.h src/mixcore.h src/mp3source.cpp src/mp3source.h)
+set(ABOOK_MIXER_SOURCES src/musicmixer.cpp src/musicmixer.h src/mixcore.h src/mp3source.cpp src/mp3source.h src/mfsource.cpp src/mfsource.h)
 
 qt_add_executable(ABookDesk WIN32
     src/main.cpp
@@ -144,7 +144,7 @@ qt_add_qml_module(ABookDesk
 )
 target_compile_definitions(ABookDesk PRIVATE ABOOK_VERSION="${ABOOK_VERSION}" QT_NO_CAST_FROM_ASCII)
 # Âm thanh: Media Foundation của Windows (đo ở docs/NATIVE_PHONE_UI.md 7.1), không thêm DLL nào vào bản phân phối.
-target_link_libraries(ABookDesk PRIVATE Qt6::Quick Qt6::Network QWindowKit::Quick mfplat mf mfuuid ole32 ksuser propsys)
+target_link_libraries(ABookDesk PRIVATE Qt6::Quick Qt6::Network QWindowKit::Quick mfplat mf mfuuid mfreadwrite shlwapi ole32 ksuser propsys dwmapi)
 if(MSVC)
     target_compile_options(ABookDesk PRIVATE /W3 /utf-8)
 endif()
@@ -178,7 +178,7 @@ endif()
 qt_add_executable(MixTests tests/test_mix.cpp src/audioout.cpp src/audioout.h ${ABOOK_MIXER_SOURCES} ${ABOOK_MUSIC_SOURCES})
 target_include_directories(MixTests PRIVATE src third_party)
 target_compile_definitions(MixTests PRIVATE QT_NO_CAST_FROM_ASCII MIX_FIXTURES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../tests/fixtures")
-target_link_libraries(MixTests PRIVATE Qt6::Test Qt6::Network ole32 ksuser)
+target_link_libraries(MixTests PRIVATE Qt6::Test Qt6::Network mfplat mf mfuuid mfreadwrite shlwapi ole32 ksuser propsys)
 if(MSVC)
     target_compile_options(MixTests PRIVATE /W3 /utf-8)
 endif()
