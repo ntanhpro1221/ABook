@@ -1,8 +1,11 @@
 import QtQuick
 import ABook
+import "LibraryBooks.js" as Books
+import "PeerStudio.js" as Peer
 
 // Thư viện: lưới bìa luôn mở (DESIGN.md mục 7). Số cột tự giãn để bìa rộng 160-200 px theo cửa sổ; bàn phím di chuyển giữa các ô,
 // Enter mở trang sách, F5 tải lại. Lưới chỉ dựng ô đang thấy; bìa giải mã ngoài luồng giao diện đúng cỡ hiển thị.
+// Đang xem máy tính đã ghép (Nav.studioPeer, "Về Thư viện" từ Studio của máy ấy): thư viện của MÁY ẤY qua cầu nối, như trang `?peer=` của web.
 FocusScope {
     id: root
     signal openBook(var book)
@@ -23,10 +26,40 @@ FocusScope {
         }
     }
     readonly property real cellW: coverW + gap
-    readonly property bool failed: Backend.state === Backend.Failed
-    readonly property bool loading: !failed && !Backend.libraryLoaded
-    readonly property int count: Backend.library.count
-    readonly property bool libraryError: Backend.library.error !== ""
+    // ---- thư viện của máy đang xem (máy kia) ----
+    readonly property string peer: Nav.studioPeer
+    property var peerBooks: []
+    property bool peerLoading: false
+    property string peerError: ""
+    property int peerAsked: 0
+    function loadPeer() {
+        const mine = ++peerAsked
+        const peer = root.peer
+        if (!peer || !Api.transport) return
+        if (!peerBooks.length) peerLoading = true
+        Api.transport.request("GET", Peer.throughPeer("/api/listen/library", peer), null, function(status, data) {
+            if (mine !== root.peerAsked || peer !== root.peer) return
+            peerLoading = false
+            if (status >= 200 && status < 300) {
+                peerBooks = Books.books(data, peer)
+                peerError = ""
+                return
+            }
+            peerError = data && (data.message || data.error) || "Chưa lấy được thư viện. Bạn thử lại."
+            // máy ấy im: thanh trên cùng báo và tự nối lại (PEER_SILENT_EVENT)
+            if (data && data.unreachable) Nav.peerSilent = data.error || data.message || "Máy kia không trả lời"
+        })
+    }
+    onPeerChanged: { peerBooks = []; peerError = ""; current = 0; if (peer) loadPeer(); else { peerAsked++; peerLoading = false } }
+    Connections { target: Nav; function onPeerRevisionChanged() { if (root.peer) root.loadPeer() } }
+    function refresh() { if (peer) loadPeer(); else Backend.refreshLibrary() }
+    function bookAt(index) { return peer ? (peerBooks[index] || ({})) : Backend.library.book(index) }
+
+    readonly property bool failed: !peer && Backend.state === Backend.Failed
+    readonly property bool loading: peer ? peerLoading : !failed && !Backend.libraryLoaded
+    readonly property int count: peer ? peerBooks.length : Backend.library.count
+    readonly property bool libraryError: peer ? peerError !== "" : Backend.library.error !== ""
+    readonly property string libraryErrorText: peer ? peerError : Backend.library.error
     property int current: 0              // ô đang giữ tiêu điểm bàn phím (chỉ số trong danh sách)
     property alias list: list
 
@@ -41,7 +74,8 @@ FocusScope {
         width: parent.width - 2 * Theme.margin
         title: "Thư viện"
         subtitle: root.loading || root.failed || root.count === 0 ? "" : root.count + " cuốn"
-        Button { text: "Thêm sách"; icon: "plus"; kind: "ghost"; onClicked: root.addRequested([]) }
+        // Thêm sách vào máy đang xem chưa có ở bản này: nút chỉ ở thư viện của máy này
+        Button { visible: !root.peer; text: "Thêm sách"; icon: "plus"; kind: "ghost"; onClicked: root.addRequested([]) }
     }
 
     // Kéo file vào thư viện (DropToAdd.tsx): thả một hay nhiều file thì mở "Thêm sách" ở đúng hàng xem trước; đang có hộp khác mở thì nhắc đóng hộp rồi thả lại
@@ -104,7 +138,7 @@ FocusScope {
                         id: cell
                         required property int index
                         readonly property int at: rowItem.first + index
-                        readonly property var info: { Backend.library.revision; return Backend.library.book(at) }
+                        readonly property var info: { Backend.library.revision; root.peerBooks; return root.bookAt(at) }
                         x: index * root.cellW
                         Behavior on x {
                             NumberAnimation {
@@ -120,6 +154,8 @@ FocusScope {
                         progress: info.progress || 0
                         source: info.source || ""
                         externalFocus: at === root.current && list.activeFocus
+                        // Sách của máy đang xem: trang sách / nghe qua cầu nối chưa có ở bản này (PROGRESS.md D4 Open) - ô chỉ để xem
+                        enabled: !root.peer
                         onClicked: {
                             root.current = at
                             list.forceActiveFocus(Qt.MouseFocusReason)
@@ -129,8 +165,8 @@ FocusScope {
                 }
             }
         }
-        Keys.onReturnPressed: root.openBook(Backend.library.book(root.current))
-        Keys.onEnterPressed: root.openBook(Backend.library.book(root.current))
+        Keys.onReturnPressed: if (!root.peer) root.openBook(Backend.library.book(root.current))
+        Keys.onEnterPressed: if (!root.peer) root.openBook(Backend.library.book(root.current))
         Keys.onPressed: (event) => {
             const rows = Math.max(1, Math.floor(height / (Theme.coverMax * Theme.coverRatio)) - 1)
             let handled = true
@@ -143,9 +179,9 @@ FocusScope {
             case Qt.Key_PageDown: root.select(root.current + rows * root.cols); break
             case Qt.Key_Home: root.select(0); break
             case Qt.Key_End: root.select(root.count - 1); break
-            case Qt.Key_F5: Backend.refreshLibrary(); break
+            case Qt.Key_F5: root.refresh(); break
             case Qt.Key_R:
-                if (event.modifiers & Qt.ControlModifier) Backend.refreshLibrary()
+                if (event.modifiers & Qt.ControlModifier) root.refresh()
                 else handled = false
                 break
             default: handled = false
@@ -214,7 +250,8 @@ FocusScope {
             width: Math.min(root.width - 2 * Theme.margin, 460)
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.Wrap
-            text: root.failed ? Backend.message : (root.libraryError ? Backend.library.error : "Thêm truyện hoặc tạo sách nói.")
+            text: root.failed ? Backend.message : (root.libraryError ? root.libraryErrorText : root.peer ? "" : "Thêm truyện hoặc tạo sách nói.")
+            visible: text !== ""
             color: Theme.text2
             font.pixelSize: Theme.sizeBodySmall
         }
@@ -222,12 +259,12 @@ FocusScope {
             anchors.horizontalCenter: parent.horizontalCenter
             visible: root.failed || root.libraryError
             text: "Thử lại"
-            onClicked: root.failed ? Backend.restart() : Backend.refreshLibrary()
+            onClicked: root.failed ? Backend.restart() : root.refresh()
         }
         Button {
             objectName: "emptyAdd"
             anchors.horizontalCenter: parent.horizontalCenter
-            visible: !root.failed && !root.libraryError
+            visible: !root.failed && !root.libraryError && !root.peer
             text: "Thêm sách"
             icon: "plus"
             size: "lg"
@@ -235,13 +272,13 @@ FocusScope {
         }
         Row {
             anchors.horizontalCenter: parent.horizontalCenter
-            visible: !root.failed && !root.libraryError
+            visible: !root.failed && !root.libraryError && !root.peer
             spacing: 4
             Button { objectName: "emptyStudio"; text: "Tạo sách nói"; icon: "clapperboard"; kind: "ghost"; onClicked: root.studioRequested() }
             Button { objectName: "emptyOpenFile"; text: root.fileOpening ? "Đang mở…" : "Mở file sách"; icon: "file-audio"; kind: "ghost"; enabled: !root.fileOpening; onClicked: root.openFileRequested() }
         }
     }
 
-    Component.onCompleted: list.forceActiveFocus()
+    Component.onCompleted: { list.forceActiveFocus(); if (peer) loadPeer() }
     onVisibleChanged: if (visible) list.forceActiveFocus()
 }

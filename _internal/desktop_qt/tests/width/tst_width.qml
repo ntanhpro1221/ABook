@@ -249,9 +249,8 @@ Item {
         }
         function test_studioCentred() {
             const page = make(studioFactory, sizes()[2])
+            // Thanh "Đang mở Studio của …" của máy đã ghép là của cả app (Main, D4), không còn trong màn Studio
             for (let c of page.children) {
-                // Thanh "Đang mở Studio của …" (máy đã ghép) tràn cả bề ngang như PeerBar của web; nội dung của nó thẳng khối giữa
-                if (c.objectName === "peerBar") { fuzzyCompare(c.contentX, (page.width - c.contentWidth) / 2, 0.5); verify(c.contentWidth <= 880); continue }
                 verify(c.width <= 880)
                 fuzzyCompare(c.x, (page.width - c.width) / 2, 0.5)
             }

@@ -57,11 +57,19 @@ Window {
             anchors.top: titleBar.bottom
             anchors.bottom: parent.bottom
 
+            // Đang xem máy tính đã ghép: "Đang mở Studio của <máy>" + "Về máy này" trên mọi màn (Shell.tsx), mở / khép theo chiều cao, đẩy màn xuống
+            PeerBar {
+                id: peerBar
+                z: 5
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+            }
             ScreenStack {
                 id: stack
                 anchors.left: parent.left
                 anchors.right: parent.right
-                anchors.top: parent.top
+                anchors.top: peerBar.bottom
                 anchors.bottom: playerBar.top
                 roots: [libraryScreen, studioScreen, settingsScreen]
             }

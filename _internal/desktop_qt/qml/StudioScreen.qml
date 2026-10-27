@@ -4,8 +4,9 @@ import "PeerStudio.js" as Peer
 
 // Studio: chỗ giữ cho D3 (bảng dự án gọn: tên · trạng thái · tiến độ · cập nhật, DESIGN.md mục 7).
 // Studio của máy tính đã ghép (Nav.studioPeer, "Mở Studio" ở Máy tính khác; desktop/App.tsx + PeerBar.tsx): hỏi /api/app của máy ấy qua cầu nối
-// (webui/peer_studio.py) - vào được thì thanh "Đang mở Studio của <máy>" + "Về máy này"; máy ấy chỉ cho nghe thì nói bật quyền ở đâu (StudioClosed);
-// chưa vào được thì nói vì sao (PeerTrouble), máy ấy im thì tự hỏi lại mỗi 5 giây và tự mở khi nó trả lời.
+// (webui/peer_studio.py) và đặt Nav.peerInfo - vào được thì thanh "Đang mở Studio của <máy>" + "Về máy này" (PeerBar của Main, trên mọi màn);
+// máy ấy chỉ cho nghe thì nói bật quyền ở đâu (StudioClosed, "Về Thư viện" = Thư viện của máy ấy); chưa vào được thì nói vì sao (PeerTrouble),
+// máy ấy im thì tự hỏi lại mỗi 5 giây và tự mở khi nó trả lời.
 Item {
     id: root
     readonly property real bodyWidth: Math.min(width - 2 * Theme.margin, 800)
@@ -34,7 +35,7 @@ Item {
             root.silent = Boolean(data && data.unreachable)
         })
     }
-    function home() { Nav.studioPeer = "" }
+    function home() { Nav.goHome() }
     onPeerChanged: {
         peerInfo = null; trouble = ""; silent = false; watchedMs = 0
         if (peer) ask(); else asked++
@@ -48,21 +49,27 @@ Item {
         onTriggered: { root.watchedMs += interval; root.ask() }
     }
 
-    PeerBar {
-        id: bar
-        objectName: "peerBar"
-        width: root.width
-        open: root.view === "open"
-        name: root.peerInfo && root.peerInfo.peer ? root.peerInfo.peer.name : ""
-        listenOnly: Boolean(root.peerInfo && root.peerInfo.listenOnly)
-        contentX: (root.width - root.bodyWidth) / 2
-        contentWidth: root.bodyWidth
-        onHome: root.home()
+    // Cho cả app biết đang xem máy nào (thanh trên cùng, Thư viện của máy ấy)
+    Binding { target: Nav; property: "peerInfo"; value: root.peerInfo; when: root.peer !== "" }
+    // Một lời gọi qua cầu nối gặp máy kia im (Nav.peerSilent): hỏi lại /api/app mỗi 5 giây; máy ấy trả lời thì các màn của máy ấy nạp lại (usePeerSilent)
+    Timer {
+        interval: Peer.WATCH_EVERY_MS
+        repeat: true
+        running: root.peer !== "" && Nav.peerSilent !== ""
+        onTriggered: {
+            const peer = root.peer
+            if (!Api.transport) return
+            Api.transport.request("GET", Peer.throughPeer("/api/app", peer), null, function(status, data) {
+                if (peer !== root.peer || status < 200 || status >= 300) return
+                root.peerInfo = data
+                Nav.peerSilent = ""
+                Nav.peerRevision++
+            })
+        }
     }
     ScreenHeader {
         id: header
         x: (parent.width - root.bodyWidth) / 2
-        y: bar.height
         width: root.bodyWidth
         title: "Studio"
     }
@@ -105,7 +112,8 @@ Item {
             icon: "clapperboard"
             title: Peer.listenOnlyLine(Peer.listenOnlyOwner(root.peerInfo))
             text: "Sách của máy ấy vẫn nghe được ở Thư viện."
-            Button { objectName: "studioClosedLibrary"; text: "Về Thư viện"; onClicked: { root.home(); if (Nav.stack) Nav.stack.show(0) } }
+            // Thư viện của máy đang xem (navigate("/") của web, vẫn trong trang của máy ấy) - không phải của máy này
+            Button { objectName: "studioClosedLibrary"; text: "Về Thư viện"; onClicked: Nav.showLibrary() }
         }
         // Chưa vào được Studio của máy kia (PeerTrouble): lời máy chủ; máy ấy im thì tự mở lại khi nó trả lời
         EmptyState {

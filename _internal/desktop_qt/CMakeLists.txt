@@ -251,6 +251,7 @@ qt_add_qml_module(ABookDesk
         qml/ReaderScreen.qml
         qml/ReaderChoices.qml
         qml/ReaderLogic.js
+        qml/LibraryBooks.js
         qml/BenchScenario.qml
     RESOURCES
         fonts/BeVietnamPro-Regular.ttf

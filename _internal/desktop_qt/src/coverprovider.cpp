@@ -11,6 +11,7 @@
 #include <QNetworkRequest>
 #include <QPainter>
 #include <QPainterPath>
+#include <QRegularExpression>
 #include <QPointer>
 #include <QQuickImageResponse>
 #include <QQuickTextureFactory>
@@ -74,7 +75,13 @@ private:
         }
         // Mỗi luồng giải mã giữ một QNetworkAccessManager riêng (chờ trong vòng lặp cục bộ) - luồng giao diện không dính mạng bìa.
         thread_local QNetworkAccessManager nam;
-        QNetworkRequest request(QUrl(QStringLiteral("http://127.0.0.1:%1/media/books/%2/cover?v=%3").arg(endpoint.port).arg(book, version)));
+        // Bìa sách của máy tính đang xem (Thư viện của máy kia, qml/LibraryBooks.js): "peer~<máy>~<mã>" đi qua cầu nối của máy chủ máy này
+        static const QRegularExpression peerKey(QStringLiteral("^peer~([0-9a-f]{12})~(.+)$"));
+        const QRegularExpressionMatch peer = peerKey.match(book);
+        const QString path = peer.hasMatch()
+            ? QStringLiteral("/api/peers/%1/studio/media/books/%2/cover?v=%3").arg(peer.captured(1), peer.captured(2), version)
+            : QStringLiteral("/media/books/%1/cover?v=%2").arg(book, version);
+        QNetworkRequest request(QUrl(QStringLiteral("http://127.0.0.1:%1%2").arg(endpoint.port).arg(path)));
         request.setRawHeader("X-Ebook-Token", endpoint.token);
         request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::AlwaysNetwork);
         request.setTransferTimeout(20000);

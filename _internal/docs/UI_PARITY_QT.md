@@ -7,7 +7,7 @@ icon `LucidePaths.js` sinh bởi `scripts/gen_lucide_icons.py --qml`. Bảng dư
 
 <!-- ui_parity_qt:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity_qt.py - không sửa tay, chạy lại script) -->
 
-Quét: web máy tính 1237 chữ (984 khác nhau), 178 cặp nhãn-icon; Qt 897 chữ (667 khác nhau), 110 cặp nhãn-icon (icon dùng ở 152 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
+Quét: web máy tính 1237 chữ (984 khác nhau), 178 cặp nhãn-icon; Qt 899 chữ (668 khác nhau), 110 cặp nhãn-icon (icon dùng ở 152 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
 
 ## a. Cùng việc, khác chữ
 
@@ -79,7 +79,7 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 
 ### Thư viện
 
-- chỉ Qt (3): Chưa mở được ABook (`qt/LibraryScreen.qml:207`); Chưa tải được thư viện (`qt/LibraryScreen.qml:207`); Thử lại* (`qt/LibraryScreen.qml:224`)
+- chỉ Qt (4): Máy kia không trả lời* (`qt/LibraryScreen.qml:35`); Chưa mở được ABook (`qt/LibraryScreen.qml:243`); Chưa tải được thư viện (`qt/LibraryScreen.qml:243`); Thử lại* (`qt/LibraryScreen.qml:261`)
 - chỉ web (22): Nghe dở (`31`); Tất cả (`31`); Nghe ngay {} (`163`); Nghe {} (`163`); Tạm dừng {} (`163`); Đọc {} (`163`); Đang nghe (`227`); Chờ chương mới (`246`); Nghe tiếp {}{} (`248`); Sách (`334`); Mở bộ {} (`376`); Có sách trên máy khác (`384`); Chưa có sách nào (`519`); Lọc sách (`532`); Nghe xong (`534`); ...
 
 ### Thanh phát
@@ -129,12 +129,12 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 
 ### Studio máy khác
 
-- chỉ Qt (2): Studio* (`qt/StudioScreen.qml:67`); Studio chưa mở trong bản này. (`qt/StudioScreen.qml:95`)
+- chỉ Qt (2): Studio* (`qt/StudioScreen.qml:74`); Studio chưa mở trong bản này. (`qt/StudioScreen.qml:102`)
 - chỉ web (1): Đang mở Studio của {} (`52`)
 
 ### Thanh tiêu đề
 
-- chỉ Qt (2): ABook* (`qt/Main.qml:10`); Chưa tải được bản mới (`qt/Main.qml:166`)
+- chỉ Qt (2): ABook* (`qt/Main.qml:10`); Chưa tải được bản mới (`qt/Main.qml:174`)
 - chỉ web (2): Tới nội dung (`228`); Điều hướng (`248`)
 
 ### Chung
@@ -172,7 +172,7 @@ Hợp lệ: `Theme.radiusControl / radiusCover / radiusSheet` (DESIGN.md 5.5, `d
 - Đang kiểm tra… (`qt/AdvancedUpdate.qml:116`) - web: `Đang kiểm tra…`
 - Đang mở văn bản chương… (`qt/ReadAlongView.qml:395`) - web: `Đang mở văn bản chương…`
 - Đang mở… (`qt/ConnectionChip.qml:54`) - web: `Đang mở…`
-- Đang mở… (`qt/LibraryScreen.qml:241`) - web: `Đang mở…`
+- Đang mở… (`qt/LibraryScreen.qml:278`) - web: `Đang mở…`
 - Đang tải bản mới… (`qt/AdvancedUpdate.qml:94`) - web: `Đang tải bản mới…`
 - Đang tải âm thanh… (`qt/PlayerBar.qml:87`) - web: `Đang tải âm thanh…`
 - Đang xem cuốn nào còn dùng giọng này… (`qt/VoiceModule.qml:398`) - web: `Đang xem cuốn nào còn dùng giọng này…`
