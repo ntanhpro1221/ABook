@@ -20,7 +20,9 @@ phần ấy.
 - PySide6 / Qt (LGPLv3) - cửa sổ app máy tính.
 - Bản máy tính viết bằng Qt Quick (`desktop_qt/`): Qt 6 (LGPLv3, liên kết động, DLL nằm cạnh file chạy); [QWindowKit](https://github.com/stdware/qwindowkit) 1.5.0
   (Apache-2.0, (c) Stdware Collections và wangwenx190; liên kết tĩnh, không thêm DLL) - dải tiêu đề tự vẽ mà vẫn giữ hành vi gốc của Windows
-  (kéo, Aero Snap, Snap Layouts); biểu tượng lucide (ISC) vẽ bằng Qt Quick Shapes; font Be Vietnam Pro (SIL OFL 1.1).
+  (kéo, Aero Snap, Snap Layouts); biểu tượng lucide (ISC) vẽ bằng Qt Quick Shapes; font Be Vietnam Pro (SIL OFL 1.1);
+  [minimp3](https://github.com/lieff/minimp3) (CC0 1.0, commit afb604c0, `desktop_qt/third_party/minimp3/` kèm LICENSE) - giải mã mp3 cho
+  đường âm thanh WASAPI (rẻ hơn Media Foundation ~4 lần).
 - FFmpeg / imageio-ffmpeg (LGPL hoặc GPL tuỳ bản build). Bản app chỉ-nghe KHÔNG mang ffmpeg trong bộ cài: mô-đun "Phân tích nhạc" và việc "Xuất sách nói" (MP3 / M4B)
   đều do người dùng bấm mới tải (`webui/music_module.py`, hộp xuất sách nói), cùng lấy riêng `bin/ffmpeg.exe` trong ZIP [GyanD/codexffmpeg 8.1.2 essentials](https://github.com/GyanD/codexffmpeg/releases/tag/8.1.2)
   bằng HTTP Range (~36 MB thay vì cả ZIP 110 MB; Windows x64 tĩnh, GPL-3.0-or-later).

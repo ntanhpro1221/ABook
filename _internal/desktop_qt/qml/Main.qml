@@ -8,13 +8,36 @@ Window {
     id: win
     visible: false          // hiện sau khi WindowChrome gắn xong (Component.onCompleted)
     title: "ABook"
+    x: Bench.hiddenDesktop ? -10000 : 0
+    y: Bench.hiddenDesktop ? -10000 : 0
     width: 1280
     height: 800
     minimumWidth: 960
     minimumHeight: 600
-    color: Theme.bg
+    color: windowMode.mini ? "transparent" : Theme.bg
 
     WindowChrome { id: chrome }
+    WindowMode {
+        id: windowMode
+        window: win
+        miniHeight: miniPlayer.naturalHeight
+        onExpanded: win.openNowPlaying()
+        onExitRequested: Qt.quit()
+        onNotifyTray: if (win.tray) win.tray.showMessage("ABook", "ABook vẫn chạy ở khay")
+        onMiniChanged: chrome.setMini(mini)
+    }
+    readonly property var tray: trayLoader.item
+    Loader {
+        id: trayLoader
+        active: !Bench.hiddenDesktop
+        sourceComponent: DesktopTray { windowMode: windowMode }
+    }
+    MiniPlayer {
+        id: miniPlayer
+        width: 360; height: win.height
+        visible: windowMode.mini
+        windowMode: windowMode
+    }
 
     Binding { target: Theme; property: "reduceMotion"; value: Platform.reduceMotion }
     readonly property var nowPlaying: nowLoader.item          // Đang nghe (null cho tới lần mở đầu tiên)
@@ -36,6 +59,7 @@ Window {
     Item {
         id: shell
         anchors.fill: parent
+        visible: !windowMode.mini
         focus: true
 
         Sidebar {
@@ -118,7 +142,6 @@ Window {
         }
 
         // ---- phím tắt ----
-        Shortcut { sequences: ["Escape"]; onActivated: Nav.back() }
         Shortcut { sequences: [StandardKey.Back]; onActivated: Nav.back() }          // Alt+Left
         Shortcut { sequences: ["Ctrl+1"]; onActivated: stack.show(0) }
         Shortcut { sequences: ["Ctrl+2"]; onActivated: stack.show(1) }
@@ -134,6 +157,11 @@ Window {
             onTapped: Nav.back()
         }
     }
+    Shortcut { sequences: ["Ctrl+Shift+M"]; enabled: Player.loaded; onActivated: windowMode.mini ? windowMode.expand() : windowMode.enter() }
+    Shortcut { sequences: ["Escape"]; onActivated: windowMode.mini ? windowMode.expand() : Nav.back() }
+    Shortcut { sequences: ["Space"]; enabled: windowMode.mini && Player.loaded; onActivated: Player.toggle() }
+    Shortcut { sequences: ["Left"]; enabled: windowMode.mini && Player.loaded; onActivated: Player.skip(-Player.skipSeconds) }
+    Shortcut { sequences: ["Right"]; enabled: windowMode.mini && Player.loaded; onActivated: Player.skip(Player.skipSeconds) }
     // Bar bị ẩn / ô giữ tiêu điểm biến mất thì phím về lại shell
     onActiveFocusItemChanged: if (!activeFocusItem) shell.forceActiveFocus()
 
@@ -169,6 +197,7 @@ Window {
     // Lời báo của app (Toaster của web): góc trên bên phải, cách dải tiêu đề và mép phải 16 px; trên cả hộp thoại
     Toast {
         z: 90
+        visible: !windowMode.mini && t > 0
         anchors.right: parent.right
         anchors.rightMargin: 16
         y: titleBar.height + 16
@@ -211,15 +240,7 @@ Window {
         x = saved[0]; y = saved[1]; width = Math.max(minimumWidth, saved[2]); height = Math.max(minimumHeight, saved[3])
         if (saved[4] === 1) visibility = Window.Maximized
     }
-    onClosing: {
-        if (Bench.enabled) return
-        const maximized = visibility === Window.Maximized
-        // Cỡ khi thu nhỏ lại (restore) không lấy được lúc đang phóng to: lưu cỡ hiện có, lần sau mở phóng to
-        if (!maximized)
-            Platform.setSetting("window", [x, y, width, height, 0].join(","))
-        else
-            Platform.setSetting("window", Platform.setting("window", "").split(",").slice(0, 4).concat(["1"]).join(","))
-    }
+    onClosing: close => windowMode.closeRequested(close, tray && tray.available && !Bench.enabled)
     Connections {
         target: Qt.application
         function onStateChanged() { if (Qt.application.state === Qt.ApplicationActive) Platform.refresh() }
@@ -231,9 +252,11 @@ Window {
         chrome.keepClickable(sidebar.toggleButton)       // nút thu / mở thanh bên nằm trong dải kéo được
         Theme.mode = Platform.setting("themeMode", "auto")
         Nav.stack = stack
+        Nav.windowMode = windowMode
         if (!Bench.enabled) restoreGeometry()
         stack.show(0)
         Bench.attach(win)
+        Bench.note("tray_available:" + (tray ? tray.available : false))
         win.visible = true
     }
 

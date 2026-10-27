@@ -21,55 +21,90 @@ if /i "%1"=="clean" (
 
 call "%VCVARS%" >nul
 if errorlevel 1 exit /b 1
+if not errorlevel 0 exit /b 1
 set PATH=%CMAKE_BIN%;%NINJA_BIN%;%QT_ROOT%\bin;%PATH%
 
 rem Own title bar: QWindowKit (Apache-2.0, static). Built once into %QWK_ROOT%\inst
 if not exist "%QWK_ROOT%\inst\lib\cmake\QWindowKit\QWindowKitConfig.cmake" (
   call "%HERE%tools\build_qwindowkit.bat"
   if errorlevel 1 exit /b 1
+if not errorlevel 0 exit /b 1
 )
 
 rem Design tokens: Theme.qml must match DESIGN.md (regenerate with tools\gen_theme.py)
 "%ABOOK_PYTHON%" -X utf8 "%HERE%tools\gen_theme.py" --check
 if errorlevel 1 exit /b 1
+if not errorlevel 0 exit /b 1
 
 rem Owner rule: never cut the user's text (no elide / maximumLineCount / clip on Text)
 "%ABOOK_PYTHON%" -X utf8 "%HERE%tools\check_text_cut.py"
 if errorlevel 1 exit /b 1
+if not errorlevel 0 exit /b 1
 
 cmake -S "%HERE%." -B "%HERE%build" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="%QT_ROOT%;%QWK_ROOT%\inst" -DCMAKE_MAKE_PROGRAM="%NINJA_BIN%\ninja.exe"
 if errorlevel 1 exit /b 1
+if not errorlevel 0 exit /b 1
 cmake --build "%HERE%build"
 if errorlevel 1 exit /b 1
+if not errorlevel 0 exit /b 1
 
 rem Player unit tests (QtTest with fake audio/network): red stops the build before packaging
-"%HERE%build\DesktopApiTests.exe" -o "%HERE%build\desktopapi-test.txt",txt
+call :test "%HERE%build\MediaControlsTests.exe" "%HERE%build\mediacontrols-test.txt"
 if errorlevel 1 exit /b 1
-"%HERE%build\PlayerTests.exe"
+call :test "%HERE%build\DesktopApiTests.exe" "%HERE%build\desktopapi-test.txt"
 if errorlevel 1 exit /b 1
-"%HERE%build\ReadAlongTests.exe"
+call :test "%HERE%build\PlayerTests.exe" "%HERE%build\player-test.txt"
 if errorlevel 1 exit /b 1
+call :test "%HERE%build\ReadAlongTests.exe" "%HERE%build\readalong-test.txt"
+if errorlevel 1 exit /b 1
+if not errorlevel 0 exit /b 1
 rem Background music: shared fixtures with the server / web / Android + MusicBed on fake audio
-"%HERE%build\MusicTests.exe"
+call :test "%HERE%build\MusicTests.exe" "%HERE%build\music-test.txt"
 if errorlevel 1 exit /b 1
+if not errorlevel 0 exit /b 1
+rem WASAPI mixing core: ring, volume ramp, resampler on numbers
+call :test "%HERE%build\MixTests.exe" "%HERE%build\mix-test.txt"
+if errorlevel 1 exit /b 1
+if not errorlevel 0 exit /b 1
+rem Music scheduling observes main, mini and any later application windows.
+call :test "%HERE%build\MusicWindowActivityTests.exe" "%HERE%build\musicwindowactivity-test.txt"
+if errorlevel 1 exit /b 1
+if not errorlevel 0 exit /b 1
 rem Skip-15 icon pixel check (gap between stroke and digits, ink inside the box)
-"%HERE%build\SkipGlyphTests.exe"
+call :test "%HERE%build\SkipGlyphTests.exe" "%HERE%build\skipglyph-test.txt"
 if errorlevel 1 exit /b 1
+if not errorlevel 0 exit /b 1
 rem Sidebar collapse / expand / hover overlay (QtQuickTest with a stubbed Platform)
-"%HERE%build\sidebar_tests\SidebarTests.exe"
+call :test "%HERE%build\sidebar_tests\SidebarTests.exe" "%HERE%build\sidebar-test.txt"
 if errorlevel 1 exit /b 1
+if not errorlevel 0 exit /b 1
 rem Width classes: actual Book/Library/NowPlaying/Settings QML with fake HTTP/audio
-"%HERE%build\width_tests\WidthTests.exe"
+call :test "%HERE%build\width_tests\WidthTests.exe" "%HERE%build\width-test.txt"
 if errorlevel 1 exit /b 1
+if not errorlevel 0 exit /b 1
 
 if not exist "%HERE%dist" mkdir "%HERE%dist"
 copy /y "%HERE%build\ABookDesk.exe" "%HERE%dist\ABookDesk.exe" >nul
 if errorlevel 1 exit /b 1
+if not errorlevel 0 exit /b 1
 rem Dynamic Qt DLLs (LGPL): windeployqt copies DLLs + plugins next to the exe
 rem Trim: D3D11 backend only (no dxc / d3d compiler / software GL), no debugger plugins, no touch plugin, no 18 MB vc_redist installer
 windeployqt --release --qmldir "%HERE%qml" --no-translations --no-system-d3d-compiler --no-system-dxc-compiler --no-opengl-sw --no-compiler-runtime --skip-plugin-types qmltooling,generic "%HERE%dist\ABookDesk.exe"
 if errorlevel 1 exit /b 1
+if not errorlevel 0 exit /b 1
 rem App-local VC runtime (about 1 MB of DLLs instead of the installer), so a PC without the redistributable still starts
 copy /y "%VCToolsRedistDir%x64\Microsoft.VC145.CRT\*.dll" "%HERE%dist\" >nul
 if errorlevel 1 exit /b 1
+if not errorlevel 0 exit /b 1
 echo OK: %HERE%dist\ABookDesk.exe
+exit /b 0
+
+rem Keep every QtTest result: GUI stderr alone can be empty even when tests fail.
+:test
+"%~1" -o "%~2",txt
+set TEST_EXIT=%errorlevel%
+type "%~2"
+if not "%TEST_EXIT%"=="0" exit /b 1
+findstr /c:"FAIL!" "%~2" >nul
+if not errorlevel 1 exit /b 1
+exit /b 0

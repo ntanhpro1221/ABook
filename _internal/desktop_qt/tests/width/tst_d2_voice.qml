@@ -147,6 +147,9 @@ Item {
                 const y = item.mapToItem(host, 0, 0).y
                 if (y + item.height > host.height - 60) current.y = -(y - 300)
             }
+            // Hit testing must see the new page position after scrolling it into view.
+            host.Window.window.update()
+            waitForRendering(host)
             mouseClick(item, item.width / 2, item.height / 2)
         }
         function lacksOverflow(page) {
@@ -555,6 +558,7 @@ Item {
         // ---- ảnh ----
         function shot(name, item) {
             const target = item || host
+            target.Window.window.update()
             waitForRendering(target)
             wait(400)
             const img = grabImage(target)

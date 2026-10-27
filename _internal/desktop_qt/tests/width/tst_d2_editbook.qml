@@ -498,6 +498,7 @@ Item {
         // ---------- ảnh ----------
         function shot(name, item) {
             const target = item || host
+            target.Window.window.update()
             waitForRendering(target)
             wait(450)
             const img = grabImage(target)

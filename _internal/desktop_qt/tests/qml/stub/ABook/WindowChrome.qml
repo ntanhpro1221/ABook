@@ -4,4 +4,5 @@ import QtQuick
 QtObject {
     function attach(window, titleBar, minimize, maximize, close) { return true }
     function keepClickable(item) {}
+    function setMini(mini) {}
 }

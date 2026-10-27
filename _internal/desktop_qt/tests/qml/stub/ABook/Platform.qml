@@ -9,4 +9,5 @@ QtObject {
     function setting(key, fallback) { return store[key] !== undefined ? store[key] : fallback }
     function setSetting(key, value) { store[key] = value; writes++ }
     function reset() { store = ({}); writes = 0 }
+    function workArea(window, position) { return Qt.rect(0, 0, 1920, 1080) }
 }

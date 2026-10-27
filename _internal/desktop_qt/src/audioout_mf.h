@@ -1,4 +1,4 @@
-// Bộ phát bằng Windows Media Foundation (IMFMediaEngine, chế độ chỉ-âm-thanh): có sẵn trong Windows, không thêm DLL nào vào bộ cài,
+// Phát giọng bằng Windows Media Foundation (IMFMediaEngine, chế độ chỉ-âm-thanh): có sẵn trong Windows, không thêm DLL nào vào bộ cài,
 // đổi tốc độ giữ cao độ do chính Windows làm.
 // Lười: bộ máy chỉ dựng và nguồn chỉ mở khi có lệnh phát đầu tiên - mở app với cuốn nghe dở đang dừng không tốn gì (RAM, thời gian khởi động).
 #pragma once
@@ -22,8 +22,6 @@ public:
     void seek(double seconds) override;
     void setRate(double rate) override;
     void setVolume(double volume) override;
-    void preload() override;
-    void setLoop(bool loop) override;
     double position() const override;
     double duration() const override;
     bool playing() const override { return m_playing; }
@@ -34,6 +32,7 @@ private:
     void onEvent(unsigned long event, quint64 p1, unsigned long p2);
     bool ensureEngine();
     void openSource();
+    void retire();
 
     std::unique_ptr<Impl> d;
     bool m_playing = false;
@@ -46,7 +45,6 @@ private:
     double m_target = 0;        // đích tua / chỗ bắt đầu khi chưa nạp xong
     double m_rate = 1;
     double m_volume = 1;
-    bool m_loop = false;
     double m_duration = 0;
     quint64 m_serial = 0;       // mỗi lần load() +1: sự kiện của nguồn cũ bị bỏ
 };

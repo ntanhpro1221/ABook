@@ -1,11 +1,10 @@
 """Đo app Qt: khởi động nguội, RAM riêng khi nghỉ, nhịp khung khi cuộn lưới thư viện - cùng cách đo với measure_ra.py của đợt thử.
 
-  python -X utf8 measure.py [--exe dist/ABookDesk.exe] [--fixture D:/Novels/native_desk_proto/deskqt_fixture] [--runs 5] [--attempts 12] [--topmost] [--scenario library|player]
+  measure.py [--exe dist/ABookDesk.exe] [--fixture D:/Novels/native_desk_proto/deskqt_fixture] [--runs 5] [--attempts 12] [--scenario library|player]
 
 Mỗi lượt: chạy app với ABOOK_BENCH (app tự ghi mốc + từng khung frameSwapped bằng đồng hồ steady của chính nó, rồi thoát), trong lúc đó
 launcher lấy mẫu RAM riêng của tiến trình giao diện (QueryWorkingSet: trang trong working set không có bit Shared) mỗi 250 ms, và nhìn
-cửa sổ: lượt nào cửa sổ bị che / thu nhỏ ở giữa lúc đo thì BỎ (Qt Quick ngừng vẽ khi bị che nên số đo vô nghĩa), đo lại cho đủ số lượt.
---topmost: đặt cửa sổ luôn trên cùng (không lấy tiêu điểm) để lượt không bị che bởi cửa sổ khác của máy.
+cửa sổ nằm ở (-10000,-10000), không nhận tiêu điểm. Có kiểm cả sự kiện foreground lẫn GetForegroundWindow: app chiếm tiêu điểm thì lượt đo HỎNG.
 Kết quả: JSON ghi vào <fixture>/../results (hoặc --out) + bảng tóm tắt in ra. Thư viện thử là bản dựng riêng, không phải thư viện của người dùng.
 """
 from __future__ import annotations
@@ -21,12 +20,17 @@ import sys
 import tempfile
 import threading
 import time
+import uuid
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent.parent
 k32 = ctypes.WinDLL("kernel32", use_last_error=True)
 psapi = ctypes.WinDLL("psapi", use_last_error=True)
 u32 = ctypes.windll.user32
+dwm = ctypes.WinDLL("dwmapi")
+dwm.DwmGetWindowAttribute.argtypes = [wt.HWND, wt.DWORD, ctypes.c_void_p, wt.DWORD]
+u32.GetForegroundWindow.restype = wt.HWND
+u32.GetWindowThreadProcessId.argtypes = [wt.HWND, ctypes.POINTER(wt.DWORD)]
 k32.OpenProcess.restype = wt.HANDLE
 k32.OpenProcess.argtypes = [wt.DWORD, wt.BOOL, wt.DWORD]
 
@@ -34,22 +38,38 @@ k32.OpenProcess.argtypes = [wt.DWORD, wt.BOOL, wt.DWORD]
 def private_mb(h) -> float:
     """RAM riêng = trang trong working set không chia sẻ (cùng cách đo với measure.py của đợt thử)."""
     n = 1 << 17
-    while True:
+    while n <= 1 << 23:
         buf = (ctypes.c_size_t * n)()
         if psapi.QueryWorkingSet(h, buf, ctypes.sizeof(buf)):
             break
+        # Tiến trình vừa thoát: lỗi handle không phải thiếu bộ đệm, không nhân đôi RAM vô hạn.
+        error = ctypes.get_last_error()
+        if error != 24 or n >= 1 << 23:  # ERROR_BAD_LENGTH
+            raise OSError(error, "QueryWorkingSet")
         n *= 2
+    else:
+        raise RuntimeError("Working set lớn hơn giới hạn bộ đo")
     cnt = buf[0]
     return sum(1 for i in range(1, cnt + 1) if not (buf[i] & 0x100)) * 4096 / 1048576
 
 
+def tsc_mhz() -> float:
+    """Tần số TSC (bất biến) ~ xung danh định của CPU, đọc từ registry."""
+    import winreg
+    with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"HARDWARE\DESCRIPTION\System\CentralProcessor\0") as key:
+        return float(winreg.QueryValueEx(key, "~MHz")[0])
+
+
+_TSC_MHZ = tsc_mhz()
+
+
 def cpu_ms(h) -> float:
-    """CPU (nhân + người dùng) tiến trình đã dùng, mili giây."""
-    c, e, k, u = wt.FILETIME(), wt.FILETIME(), wt.FILETIME(), wt.FILETIME()
-    if not k32.GetProcessTimes(h, ctypes.byref(c), ctypes.byref(e), ctypes.byref(k), ctypes.byref(u)):
+    """CPU tiến trình đã dùng, mili giây: chu kỳ (QueryProcessCycleTime, đếm theo TSC) chia tần số TSC.
+    GetProcessTimes chỉ nhảy theo nhịp 15,6 ms nên sai cả chục phần trăm khi tiến trình gần như ngủ."""
+    cycles = ctypes.c_uint64()
+    if not k32.QueryProcessCycleTime(h, ctypes.byref(cycles)):
         return float("nan")
-    ticks = lambda f: (f.dwHighDateTime << 32) | f.dwLowDateTime
-    return (ticks(k) + ticks(u)) / 10000.0
+    return cycles.value / (_TSC_MHZ * 1000.0)
 
 
 def pct(v: list[float], q: float) -> float:
@@ -86,6 +106,7 @@ def winstate(pid: int) -> dict:
     if h:
         r = wt.RECT()
         u32.GetWindowRect(h, ctypes.byref(r))
+        out["rect"] = [r.left, r.top, r.right, r.bottom]
         top = u32.WindowFromPoint(wt.POINT((r.left + r.right) // 2, (r.top + r.bottom) // 2))
         out["top_at_center"] = bool(top) and u32.GetAncestor(top, 2) == h
         out["iconic"] = bool(u32.IsIconic(h))
@@ -94,6 +115,25 @@ def winstate(pid: int) -> dict:
     u32.GetWindowThreadProcessId(fg, ctypes.byref(q))
     out["fg_is_us"] = q.value == pid
     return out
+
+
+def cloak_states(pid: int) -> list[dict]:
+    result = []
+    @ctypes.WINFUNCTYPE(wt.BOOL, wt.HWND, wt.LPARAM)
+    def inspect(hwnd, _param):
+        owner = wt.DWORD()
+        u32.GetWindowThreadProcessId(hwnd, ctypes.byref(owner))
+        if owner.value == pid:
+            cloak = wt.DWORD()
+            hr = dwm.DwmGetWindowAttribute(hwnd, 14, ctypes.byref(cloak), ctypes.sizeof(cloak))
+            rect = wt.RECT()
+            u32.GetWindowRect(hwnd, ctypes.byref(rect))
+            result.append({"hwnd": int(hwnd), "visible": bool(u32.IsWindowVisible(hwnd)),
+                           "cloaked": cloak.value if hr == 0 else None,
+                           "rect": [rect.left, rect.top, rect.right, rect.bottom]})
+        return True
+    u32.EnumWindows(inspect, 0)
+    return result
 
 
 def refresh_hz() -> int:
@@ -127,59 +167,247 @@ def host_tree_private_mb(parent_pid: int) -> float:
     return total
 
 
-def launch(exe: Path, env_extra: dict, topmost: bool) -> dict:
+def launch(exe: Path, env_extra: dict, offscreen: bool = True, timeout_seconds: float = 120) -> dict:
     """Chạy app một lượt, lấy mẫu RAM riêng + CPU mỗi 250 ms và trạng thái cửa sổ; trả về mọi thứ thô cho phần phân tích."""
-    out = Path(tempfile.gettempdir()) / f"abookdesk_bench_{os.getpid()}.json"
-    if out.exists():
-        out.unlink()
+    import psutil
+    # Máy dùng chung: chờ job khác, tuyệt đối không dừng tiến trình của họ.
+    ancestors = {os.getpid(), *(parent.pid for parent in psutil.Process().parents())}
+    waited = False
+    quiet_since = None
+    while True:
+        others = []
+        for process in psutil.process_iter(["pid", "name", "cmdline"]):
+            if process.pid in ancestors:
+                continue
+            try:
+                name = (process.info["name"] or "").lower()
+                command = " ".join(process.info["cmdline"] or []).replace("\\", "/").lower()
+                measuring = name.startswith("python") and any(f"/{script}.py" in command for script in ("measure", "ramrun", "hidden_suite", "private_worker"))
+                foreign = str(HERE).replace("\\", "/").lower() not in command
+                if name == "abookdesk.exe" or (measuring and foreign and process.pid != os.getpid()):
+                    others.append(process.pid)
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                pass
+        if not others:
+            if quiet_since is None: quiet_since = time.monotonic()
+            if time.monotonic() - quiet_since >= 3: break
+            time.sleep(1)
+            continue
+        quiet_since = None
+        waited = True
+        print(f"Máy dùng chung: chờ PID {others}", flush=True)
+        time.sleep(5)
+    if waited:
+        audit = os.environ.get("ABOOK_BENCH_AUDIT_DIR")
+        if audit:
+            Path(audit).mkdir(parents=True, exist_ok=True)
+            with (Path(audit) / "waits.log").open("a", encoding="utf-8") as log:
+                log.write(f"{time.time()}: waited for foreign measurement before launch\n")
+    class PowerStatus(ctypes.Structure):
+        _fields_ = [("ac", wt.BYTE), ("flag", wt.BYTE), ("percent", wt.BYTE), ("reserved", wt.BYTE),
+                    ("life", wt.DWORD), ("full", wt.DWORD)]
+    power = PowerStatus()
+    if not k32.GetSystemPowerStatus(ctypes.byref(power)) or power.ac != 1:
+        return {"ok": False, "why": "Chỉ đo khi máy cắm điện"}
+    out = Path(tempfile.gettempdir()) / f"abookdesk_bench_{os.getpid()}_{uuid.uuid4().hex}.json"
+    if not offscreen:
+        raise ValueError("Chỉ cho phép đo ngoài màn hình")
     env = dict(os.environ)
     env.update(env_extra)
     env["ABOOK_BENCH"] = str(out)
+    env["QT_FORCE_STDERR_LOGGING"] = "1"
+    platform = env.get("QT_QPA_PLATFORM", "windows").split(":")[0]
+    candidates = [exe.parent / "platforms"]
+    if env.get("QT_QPA_PLATFORM_PLUGIN_PATH"):
+        candidates.insert(0, Path(env["QT_QPA_PLATFORM_PLUGIN_PATH"]))
+    candidates += [Path(p) / "platforms" for p in env.get("QT_PLUGIN_PATH", "").split(os.pathsep) if p]
+    plugins = next((p for p in candidates if (p / f"q{platform}.dll").is_file()), None)
+    if plugins is None:
+        return {"ok": False, "why": f"Không có plugin {platform}; từ chối chạy để tránh hộp lỗi Qt"}
+    env["QT_QPA_PLATFORM_PLUGIN_PATH"] = str(plugins.resolve())
     wall0 = time.time()
-    p = subprocess.Popen([str(exe)], env=env, cwd=str(exe.parent))
+    env["QT_FORCE_STDERR_LOGGING"] = "1"
+    env["QT_ASSUME_STDERR_HAS_CONSOLE"] = "1"
+    desktop = None
+    startup = subprocess.STARTUPINFO()
+    if env.get("QT_QPA_PLATFORM") == "offscreen" or env.get("ABOOK_BENCH_HIDDEN_DESKTOP") == "1":
+        # Lớp chắn thứ hai: cả hộp lỗi trước lúc Qt nạp cũng không thể lên desktop của chủ sách.
+        u32.CreateDesktopW.restype = wt.HANDLE
+        u32.CreateDesktopW.argtypes = [wt.LPCWSTR, wt.LPCWSTR, ctypes.c_void_p, wt.DWORD, wt.DWORD, ctypes.c_void_p]
+        u32.CloseDesktop.argtypes = [wt.HANDLE]
+        desktop_name = f"ABookBench-{os.getpid()}"
+        desktop = u32.CreateDesktopW(desktop_name, None, None, 0, 0x10000000, None)
+        if not desktop:
+            raise ctypes.WinError()
+        startup.lpDesktop = "winsta0\\" + desktop_name
+    app_log = out.with_suffix(".app.log").open("wb")
+    command = [str(exe)]
+    if env.get("ABOOK_BENCH_HIDDEN_DESKTOP") == "1":
+        command += ["-qwindowgeometry", "1920x1080-20000-20000"]
+    startup.dwFlags = subprocess.STARTF_USESHOWWINDOW
+    startup.wShowWindow = 4  # SW_SHOWNOACTIVATE
+    previous_error_mode = k32.SetErrorMode(0x0001 | 0x0002 | 0x8000)
+    try:
+        p = subprocess.Popen(command, env=env, cwd=str(exe.parent), stdout=app_log, stderr=subprocess.STDOUT,
+                             creationflags=0x00000004 | subprocess.CREATE_NO_WINDOW, startupinfo=startup)
+    finally:
+        k32.SetErrorMode(previous_error_mode)
     h = k32.OpenProcess(0x0410, False, p.pid)
     samples: list[tuple[float, float, float]] = []   # (epoch ms, MB riêng, CPU ms của tiến trình)
     states: list[tuple[float, dict]] = []
     stop = threading.Event()
 
+    host: list[tuple[float, float]] = []      # (epoch ms, CPU ms của mọi tiến trình con - host Python)
+    kids: dict[int, int] = {}
+    foreground = []
+    cloak_errors = []
+    cloaked_windows = set()
+    require_cloak = env.get("ABOOK_BENCH_CLOAK") == "1"
+    guard_ready = threading.Event()
+    guard_error = []
+
+    def focus_guard():
+        callback_type = ctypes.WINFUNCTYPE(None, wt.HANDLE, wt.DWORD, wt.HWND, wt.LONG, wt.LONG, wt.DWORD, wt.DWORD)
+        def inspect(hwnd):
+            q = wt.DWORD()
+            u32.GetWindowThreadProcessId(hwnd, ctypes.byref(q))
+            if q.value == p.pid:
+                foreground.append(time.time() * 1000)
+                p.kill()
+        @callback_type
+        def changed(_hook, _event, hwnd, _obj, _child, _tid, _when):
+            inspect(hwnd)
+        u32.SetWinEventHook.restype = wt.HANDLE
+        u32.SetWinEventHook.argtypes = [wt.DWORD, wt.DWORD, wt.HMODULE, callback_type, wt.DWORD, wt.DWORD, wt.DWORD]
+        hook = u32.SetWinEventHook(3, 3, None, changed, 0, 0, 0)
+        if not hook:
+            guard_error.append("Không cài được bộ gác foreground")
+        guard_ready.set()
+        message = wt.MSG()
+        while not stop.is_set():
+            while u32.PeekMessageW(ctypes.byref(message), None, 0, 0, 1):
+                u32.TranslateMessage(ctypes.byref(message))
+                u32.DispatchMessageW(ctypes.byref(message))
+            inspect(u32.GetForegroundWindow())
+            stop.wait(0.01)
+        if hook:
+            u32.UnhookWinEvent.argtypes = [wt.HANDLE]
+            u32.UnhookWinEvent(hook)
+
+    guard_thread = threading.Thread(target=focus_guard, daemon=True)
+    guard_thread.start()
+    guard_ready.wait(5)
+    if not guard_ready.is_set() or guard_error:
+        p.kill()
+        stop.set()
+        guard_thread.join(2)
+        return {"ok": False, "why": str(guard_error or "Bộ gác foreground không lên")}
+    # Popen đóng handle luồng chính; NtResumeProcess chỉ dùng cho tiến trình vừa tạo của phép đo.
+    ntdll = ctypes.WinDLL("ntdll")
+    ntdll.NtResumeProcess.argtypes = [wt.HANDLE]
+    ntdll.NtResumeProcess.restype = wt.LONG
+    if ntdll.NtResumeProcess(wt.HANDLE(int(p._handle))) != 0:
+        p.kill()
+        stop.set()
+        guard_thread.join(2)
+        return {"ok": False, "why": "Không khởi động được app dưới bộ gác foreground"}
+
+    def host_cpu_ms() -> float:
+        try:
+            import psutil
+            for c in psutil.Process(p.pid).children(recursive=True):
+                if c.pid not in kids:
+                    kids[c.pid] = k32.OpenProcess(0x0410, False, c.pid)
+        except Exception:
+            pass
+        return sum(cpu_ms(k) for k in kids.values() if k)       # tiến trình con đã thoát vẫn đọc được qua handle giữ lại
+
     def sampler():
-        placed = False
         while not stop.is_set():
             try:
                 samples.append((time.time() * 1000, private_mb(h), cpu_ms(h)))
+                host.append((time.time() * 1000, host_cpu_ms()))
             except Exception:
                 pass
-            if topmost and not placed:
-                w = window_of(p.pid)
-                if w:
-                    u32.SetWindowPos(w, ctypes.c_void_p(-1), 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0010)   # HWND_TOPMOST: c_void_p, int trần bị cắt 32 bit
-                    placed = True
-            states.append((time.time() * 1000, winstate(p.pid)))
+            state = winstate(p.pid)
+            if require_cloak:
+                state["windows"] = cloak_states(p.pid)
+                for window in state["windows"]:
+                    if window["visible"] or window["cloaked"]:
+                        cloaked_windows.add(window["hwnd"])
+                    if window["hwnd"] in cloaked_windows and not window["cloaked"]:
+                        cloak_errors.append(window)
+                        p.kill()  # Cloak mất: kết thúc ngay, không chờ vòng lấy mẫu sau.
+            states.append((time.time() * 1000, state))
             stop.wait(0.25)
 
     th = threading.Thread(target=sampler, daemon=True)
     th.start()
     host_mb = float("nan")
-    deadline = time.time() + 120
-    while not out.exists() and time.time() < deadline and p.poll() is None:
+    deadline = time.time() + timeout_seconds
+    while not out.exists() and time.time() < deadline and p.poll() is None and not foreground:
         time.sleep(0.2)
         if time.time() - wall0 > 8 and host_mb != host_mb:       # một lần lúc app đã nghỉ
             host_mb = host_tree_private_mb(p.pid)
     time.sleep(0.4)
-    stop.set()
-    th.join(2)
+    if foreground:
+        import psutil
+        try:
+            for child in reversed(psutil.Process(p.pid).children(recursive=True)):
+                child.kill()
+        except psutil.NoSuchProcess:
+            pass
+        p.kill()
+    forced_termination = False
     try:
         p.wait(8)
     except subprocess.TimeoutExpired:
+        forced_termination = True
+        # Chỉ thu hồi cây do lượt đo này tạo, không để host riêng sống sót sau app bị kẹt.
+        import psutil
+        for child in reversed(psutil.Process(p.pid).children(recursive=True)):
+            try:
+                child.kill()
+            except psutil.NoSuchProcess:
+                pass
         p.kill()
+        p.wait(5)
+    stop.set()
+    th.join(2)
+    guard_thread.join(2)
+    app_log.close()
+    if desktop:
+        u32.CloseDesktop(desktop)
+    for handle in [h, *kids.values()]:
+        if handle:
+            k32.CloseHandle(handle)
+    audit = os.environ.get("ABOOK_BENCH_AUDIT_DIR")
+    if audit:
+        folder = Path(audit)
+        folder.mkdir(parents=True, exist_ok=True)
+        (folder / f"{int(wall0 * 1000)}_{p.pid}.json").write_text(json.dumps({
+            "smtc": env.get("ABOOK_SMTC", "1"), "ac_at_launch": int(power.ac),
+            "foreground_events": foreground, "offscreen": True,
+            "require_cloak": require_cloak, "cloak_errors": cloak_errors,
+            "states": states, "samples": samples, "host_cpu": host, "child_pids": list(kids),
+            "bench": json.loads(out.read_bytes()) if out.exists() else {}, "app_log": out.with_suffix(".app.log").read_text(encoding="utf-8", errors="replace"),
+        }, indent=1), encoding="utf-8")
+    if foreground or any(s.get("fg_is_us") for _t, s in states):
+        return {"ok": False, "why": "OWNER RULE: app đã thành foreground", "foreground_events": foreground}
+    if require_cloak and (cloak_errors or not cloaked_windows):
+        return {"ok": False, "why": "OWNER RULE: DWM cloak mất hoặc không có mẫu xác nhận", "cloak_errors": cloak_errors}
+    escaped = [s for _t, s in states if s.get("rect") and not s.get("iconic") and (s["rect"][2] >= 0 or s["rect"][3] >= 0)]
+    if escaped and not require_cloak:
+        return {"ok": False, "why": "OWNER RULE: cửa sổ đã rời vị trí ngoài màn hình", "escaped": escaped}
     if not out.exists():
         return {"ok": False, "why": "app không ghi file đo"}
     d = json.loads(out.read_bytes())
-    return {"ok": True, "d": d, "samples": samples, "states": states, "host_mb": host_mb}
+    return {"ok": True, "d": d, "samples": samples, "states": states, "host_mb": host_mb, "host_cpu": host, "foreground_events": 0, "offscreen": True, "app_log": str(out.with_suffix(".app.log")),
+            "exit_code": p.returncode, "forced_termination": forced_termination}
 
 
-def one_run(exe: Path, env_extra: dict, topmost: bool) -> dict:
-    got = launch(exe, env_extra, topmost)
+def one_run(exe: Path, env_extra: dict, offscreen: bool = True) -> dict:
+    got = launch(exe, env_extra, offscreen)
     if not got["ok"]:
         return got
     d, samples, states, host_mb = got["d"], got["samples"], got["states"], got["host_mb"]
@@ -198,7 +426,7 @@ def one_run(exe: Path, env_extra: dict, topmost: bool) -> dict:
     idle = [m for t, m, _c in samples if ev["idle_begin"] + 1500 <= t <= ev["scroll_begin"]]
     after = [m for t, m, _c in samples if t >= ev["scroll_end"]]
     # che / thu nhỏ trong lúc đo (từ khung đầu đến hết cuộn) -> bỏ lượt
-    bad = [s for t, s in states if ev["first_frame"] <= t <= s1 and (not s.get("window") or s.get("iconic") or not s.get("top_at_center"))]
+    bad = [s for t, s in states if ev["first_frame"] <= t <= s1 and s.get("iconic")]
     fg_lost = sum(1 for t, s in states if ev["first_frame"] <= t <= s1 and not s.get("fg_is_us"))
     r = {
         "ok": True,
@@ -245,9 +473,9 @@ def gaps(frames: list[float], spans: list[tuple[float, float]]) -> list[float]:
     return iv
 
 
-def player_run(exe: Path, env_extra: dict, topmost: bool) -> dict:
+def player_run(exe: Path, env_extra: dict, offscreen: bool = True) -> dict:
     """Kịch bản "player" (BenchScenario.qml): RAM nghỉ khi có sách, khung lúc biến hình, khung khi chữ chạy theo giọng, RAM + CPU khi thu nhỏ vẫn phát."""
-    got = launch(exe, env_extra, topmost)
+    got = launch(exe, env_extra, offscreen)
     if not got["ok"]:
         return got
     d, samples, states = got["d"], got["samples"], got["states"]
@@ -261,7 +489,7 @@ def player_run(exe: Path, env_extra: dict, topmost: bool) -> dict:
             counts[tag] = [int(v) for v in vals]
         else:
             ev.setdefault(n, t)
-    need = ["first_frame", "idle_begin", "idle_end", "follow_begin", "follow_end", "min_begin", "min_end", "done"]
+    need = ["idle_begin", "idle_end", "follow_begin", "follow_end", "min_begin", "min_end", "done"]
     if any(k not in ev for k in need):
         return {"ok": False, "why": "thiếu mốc " + ",".join(k for k in need if k not in ev), "events": sorted(ev)}
     frames = [f + off for f in d["frames"]]
@@ -271,6 +499,7 @@ def player_run(exe: Path, env_extra: dict, topmost: bool) -> dict:
     follow = [(ev["follow_begin"], ev["follow_end"])]
     iv_m, iv_u, iv_f = gaps(frames, morph), gaps(frames, unmorph), gaps(frames, follow)
     idle = [m for t, m, _c in samples if ev["idle_begin"] + 1500 <= t <= ev["idle_end"]]
+    idle_cpu = [(t, c) for t, _m, c in samples if ev["idle_begin"] + 1500 <= t <= ev["idle_end"]]
     follow_ram = [m for t, m, _c in samples if follow[0][0] <= t <= follow[0][1]]
     mins = [(t, m, c) for t, m, c in samples if ev["min_begin"] + 1500 <= t <= ev["min_end"]]
     settled = [m for t, m, _c in mins if t >= ev["min_end"] - 3000]       # 3 s cuối: sau khi app trả working set lúc thu nhỏ (2 s)
@@ -279,20 +508,29 @@ def player_run(exe: Path, env_extra: dict, topmost: bool) -> dict:
         rf = [f for f in frames if ev["restore_begin"] <= f <= ev["restore_end"]]
         restore = (rf[0] - ev["restore_begin"] if rf else float("nan"), max((b - a for a, b in zip(rf, rf[1:])), default=float("nan")))
     cpu_pct = float("nan")
+    rate = lambda pts: (pts[-1][1] - pts[0][1]) / (pts[-1][0] - pts[0][0]) * 100.0 if len(pts) >= 2 and pts[-1][0] > pts[0][0] else float("nan")   # % của MỘT nhân
+    host_min = [(t, c) for t, c in got["host_cpu"] if ev["min_begin"] + 1500 <= t <= ev["min_end"]]
+    host_idle = [(t, c) for t, c in got["host_cpu"] if ev["idle_begin"] + 1500 <= t <= ev["idle_end"]]
+    # trạng thái ổn định khi thu nhỏ: bỏ 5 s đầu (trả working set ở giây 2 + lỗi trang kéo về sau đó là chi phí một lần)
+    steady = [(t, c) for t, _m, c in samples if ev["min_begin"] + 5000 <= t <= ev["min_end"]]
+    host_steady = [(t, c) for t, c in got["host_cpu"] if ev["min_begin"] + 5000 <= t <= ev["min_end"]]
     if len(mins) >= 2 and mins[-1][0] > mins[0][0]:
         cpu_pct = (mins[-1][2] - mins[0][2]) / (mins[-1][0] - mins[0][0]) * 100.0      # % của MỘT nhân
     # che / thu nhỏ ngoài ý muốn trong các khoảng đo khung (khoảng thu nhỏ là chủ ý)
     spans = morph + unmorph + follow
-    bad = [(round(t - ev["idle_begin"]), s) for t, s in states if any(a <= t <= b for a, b in spans) and s.get("window") and (s.get("iconic") or not s.get("top_at_center"))]      # không thấy cửa sổ trong một mẫu (đang đổi cỡ) không tính là bị che
+    bad = [(round(t - ev["idle_begin"]), s) for t, s in states if any(a <= t <= b for a, b in spans) and s.get("iconic")]
     marks = {k: round(v - ev["idle_begin"]) for k, v in ev.items() if k.endswith("_begin") or k.endswith("_end")}
     fb, fe = counts.get("follow_begin"), counts.get("follow_end")
     mb, me = counts.get("min_begin"), counts.get("min_end")
     delta = lambda a, b: [y - x for x, y in zip(a, b)] if a and b else None
     return {
         "ok": True,
+        "offscreen": True,
+        "foreground_events": got["foreground_events"],
+        "rendered_frames": len(frames),
         "covered": bool(bad),
         "bad_sample": (bad[0], marks) if bad else None,
-        "cold_first_frame_ms": ev["first_frame"] - start,
+        "cold_first_frame_ms": ev.get("first_frame", float("nan")) - start,
         "private_idle_loaded_mb": statistics.median(idle) if idle else float("nan"),
         "private_follow_mb": max(follow_ram) if follow_ram else float("nan"),
         "private_min_playing_mb": max(m for _, m, _c in mins) if mins else float("nan"),
@@ -300,6 +538,11 @@ def player_run(exe: Path, env_extra: dict, topmost: bool) -> dict:
         "restore_first_ms": restore[0] if restore else float("nan"),
         "restore_max_gap_ms": restore[1] if restore else float("nan"),
         "cpu_min_playing_pct_of_core": cpu_pct,
+        "cpu_min_steady_pct_of_core": rate(steady),
+        "host_cpu_min_steady_pct_of_core": rate(host_steady),
+        "cpu_idle_loaded_pct_of_core": rate(idle_cpu),
+        "host_cpu_min_playing_pct_of_core": rate(host_min),
+        "host_cpu_idle_loaded_pct_of_core": rate(host_idle),
         "morph_frames": len(iv_m), "morph_p50": pct(iv_m, .5), "morph_p99": pct(iv_m, .99), "morph_max": max(iv_m) if iv_m else float("nan"),
         "unmorph_frames": len(iv_u), "unmorph_p99": pct(iv_u, .99), "unmorph_max": max(iv_u) if iv_u else float("nan"),
         "follow_frames": len(iv_f), "follow_p50": pct(iv_f, .5), "follow_p99": pct(iv_f, .99), "follow_max": max(iv_f) if iv_f else float("nan"),
@@ -325,7 +568,7 @@ def player_main(a, exe: Path, fixture: Path, env: dict) -> int:
         clean = fixture / "listening.clean.json"        # lượt trước đã lưu chỗ nghe vào thư viện thử: mỗi lượt bắt đầu từ trạng thái chưa nghe
         if clean.exists():
             (fixture / "listening.json").write_bytes(clean.read_bytes())
-        r = player_run(exe, env, a.topmost)
+        r = player_run(exe, env)
         if not r.get("ok"):
             print(f"lượt {attempt + 1}: lỗi - {r.get('why')}")
             dropped += 1
@@ -338,7 +581,7 @@ def player_main(a, exe: Path, fixture: Path, env: dict) -> int:
         print(f"lượt {attempt + 1}: nghỉ có sách {r['private_idle_loaded_mb']:.1f} MB | biến hình p99 {r['morph_p99']:.1f} max {r['morph_max']:.1f} ms ({r['morph_frames']} khung; "
               f"đóng p99 {r['unmorph_p99']:.1f}) | chữ chạy p50 {r['follow_p50']:.1f} p99 {r['follow_p99']:.1f} max {r['follow_max']:.1f} ms "
               f"({r['follow_frames']} khung, >12ms {r['follow_over_12']}) RAM {r['private_follow_mb']:.1f} | thu nhỏ phát: RAM {r['private_min_playing_mb']:.1f} -> {r['private_min_settled_mb']:.1f} MB "
-              f"CPU {r['cpu_min_playing_pct_of_core']:.2f} % | đếm lúc chữ chạy (nhịp, ảnh chụp, tính, đổi) {r['follow_counters_delta']} trong {r['follow_secs']:.0f} s; "
+              f"CPU {r['cpu_min_playing_pct_of_core']:.2f} % (ổn định {r['cpu_min_steady_pct_of_core']:.2f} %; nghỉ hiện {r['cpu_idle_loaded_pct_of_core']:.2f} %) | đếm lúc chữ chạy (nhịp, ảnh chụp, tính, đổi) {r['follow_counters_delta']} trong {r['follow_secs']:.0f} s; "
               f"thu nhỏ {r['min_counters_delta']} | mở lại: khung đầu {r['restore_first_ms']:.0f} ms, khoảng lớn nhất {r['restore_max_gap_ms']:.1f} ms")
         time.sleep(1.0)
     res = {"scenario": "player", "hz": refresh_hz(), "runs": good, "dropped": dropped}
@@ -351,6 +594,7 @@ def player_main(a, exe: Path, fixture: Path, env: dict) -> int:
             "private_min_playing_mb_worst": worst("private_min_playing_mb"), "private_min_settled_mb_worst": worst("private_min_settled_mb"),
             "restore_first_ms_worst": worst("restore_first_ms"), "restore_max_gap_ms_worst": worst("restore_max_gap_ms"),
             "cpu_min_playing_pct_worst": worst("cpu_min_playing_pct_of_core"),
+            "cpu_min_steady_pct_median": med("cpu_min_steady_pct_of_core"), "cpu_idle_loaded_pct_median": med("cpu_idle_loaded_pct_of_core"),
             "morph_p99_ms_median": med("morph_p99"), "morph_p99_ms_worst": worst("morph_p99"), "unmorph_p99_ms_worst": worst("unmorph_p99"),
             "follow_p99_ms_median": med("follow_p99"), "follow_p99_ms_worst": worst("follow_p99"), "follow_max_ms_worst": worst("follow_max"),
         }
@@ -368,7 +612,6 @@ def main() -> int:
     ap.add_argument("--fixture", default="D:/Novels/native_desk_proto/deskqt_fixture")
     ap.add_argument("--runs", type=int, default=5)
     ap.add_argument("--attempts", type=int, default=12)
-    ap.add_argument("--topmost", action="store_true")
     ap.add_argument("--allow-low-refresh", action="store_true",
                     help="keep RAM samples on a 60 Hz display; frame results remain labelled low_refresh")
     ap.add_argument("--scenario", choices=["library", "player"], default="library",
@@ -391,7 +634,7 @@ def main() -> int:
     for attempt in range(a.attempts):
         if len(good) >= a.runs:
             break
-        r = one_run(exe, env, a.topmost)
+        r = one_run(exe, env)
         if not r.get("ok"):
             print(f"lượt {attempt + 1}: lỗi - {r.get('why')}")
             dropped += 1

@@ -6,6 +6,8 @@ import ABook
 Item {
     id: root
     property bool compact: false
+    property real lineHeight: 0
+    property bool bottomAligned: false
     readonly property real total: Player.clock.duration
     property bool dragging: false
     property real dragFraction: 0
@@ -23,8 +25,9 @@ Item {
     Rectangle {
         id: track
         width: parent.width
-        height: root.compact ? (root.active ? 4 : 2) : (root.active ? 6 : 4)
-        anchors.verticalCenter: parent.verticalCenter
+        height: root.lineHeight > 0 ? root.lineHeight : root.compact ? (root.active ? 4 : 2) : (root.active ? 6 : 4)
+        anchors.verticalCenter: root.bottomAligned ? undefined : parent.verticalCenter
+        anchors.bottom: root.bottomAligned ? parent.bottom : undefined
         radius: height / 2
         color: root.compact ? Theme.line : Theme.sunken
         Behavior on height { NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast } }

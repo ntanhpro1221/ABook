@@ -1,7 +1,9 @@
 #include "bench.h"
+#include "player.h"
 
 #include <QJSEngine>
 #include <QCoreApplication>
+#include <QGuiApplication>
 #include <QDateTime>
 #include <QFile>
 #include <QMutex>
@@ -93,6 +95,12 @@ bool Bench::enabled() const {
     return !outPath().isEmpty();
 }
 
+bool Bench::hiddenDesktop() const {
+    // Đo ngoài mọi màn hình hoặc chạy offscreen: không được dựng khay hay gửi thông báo thật.
+    return QGuiApplication::platformName() == QStringLiteral("offscreen")
+        || (enabled() && qEnvironmentVariableIntValue("ABOOK_BENCH_HIDDEN_DESKTOP") == 1);
+}
+
 QString Bench::scenario() const {
     const QString s = qEnvironmentVariable("ABOOK_BENCH_SCENARIO");
     return s.isEmpty() ? QStringLiteral("library") : s;
@@ -110,6 +118,13 @@ void Bench::noteCounters(const QString &tag, QObject *player, QObject *readAlong
     mark(QStringLiteral("count:%1:%2:%3:%4:%5")
              .arg(tag, clock ? num(clock->property("ticks")) : QStringLiteral("0"), num(player->property("snapshotChanges")),
                   num(readAlong->property("evaluations")), num(readAlong->property("changes"))));
+}
+
+void Bench::notePlayback(const QString &tag) {
+    if (!enabled() || !Player::instance()) return;
+    const auto *player = Player::instance();
+    mark(QStringLiteral("audio:%1:%2:%3:%4").arg(tag).arg(player->chapterId())
+        .arg(player->position(), 0, 'f', 3).arg(player->playing() ? 1 : 0));
 }
 
 void Bench::mark(const QString &name) {

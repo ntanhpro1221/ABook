@@ -8,6 +8,16 @@ Column {
     ListenSave { id: store }
     SectionBlock {
         width: parent.width
+        SettingRow {
+            width: parent.width
+            label: "Thu vào khay khi đóng"
+            Switch { label: "Thu vào khay khi đóng"; checked: Nav.windowMode ? Nav.windowMode.closeToTray : true; onToggled: value => { if (Nav.windowMode) Nav.windowMode.closeToTray = value } }
+        }
+        SettingRow {
+            width: parent.width
+            label: "Tự mở cửa sổ mini"
+            Switch { label: "Tự mở cửa sổ mini"; checked: Nav.windowMode ? Nav.windowMode.autoMini : true; onToggled: value => { if (Nav.windowMode) Nav.windowMode.autoMini = value } }
+        }
         SettingChoices {
             width: parent.width
             label: "Màu"
