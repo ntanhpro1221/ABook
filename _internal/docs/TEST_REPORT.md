@@ -1,5 +1,15 @@
 # Test report
 
+## 27-10-2026 — Đo lại RAM SMTC khi thu nhỏ
+
+- Giữ nguyên app/SMTC tại `08a415c3`; chỉ sửa công cụ đo và tài liệu, không commit. Sáu cặp liên tiếp sau lần gián đoạn (round 3–8, off/on xen kẽ), lấy trung vị 3 giây cuối sau trim, đồng thời đo private working set và private commit.
+- Private WS: off **20,990 MiB** [20,039–40,563], on **20,994 MiB** [20,078–21,686]; chênh trung vị **+0,004 MiB**. Commit: **199,232 → 199,330 MiB**, **+0,098 MiB**. Mức +15,79 MiB của 4 cặp trước không tái hiện như chi phí riêng của SMTC; mục tiêu trung vị khoảng 2 MiB đã đạt trên cùng binary, không sửa app để che biến động.
+- Outlier 40,563 MiB xuất hiện khi SMTC **tắt**: page map cho thấy một allocation private resident 19,6875 MiB xuất hiện sau trim. Khởi tạo NVIDIA/DirectX muộn và tăng thread/commit có ở cả hai nhánh; chưa đủ call stack để quy allocation đó cho một thành phần cụ thể, hoặc kết luận nguyên nhân chính xác của các spike cũ.
+- 12/12 lượt mới (và 16/16 audit được giữ) AC/off-screen, 0 foreground; launcher suspended + foreground guard và chốt native được giữ. Mỗi lần khởi động chờ app/job đo khác. Bộ đếm PlayerClock/snapshot/ReadAlong không đổi trong cả 16 pha thu nhỏ.
+- `build.bat` exit 0, deploy thành công: **486 đạt, 0 lỗi/bỏ qua**, 8 bộ test; 0 dòng `FAIL!` trong các log. Theme/text-cut, compile ba công cụ Python, LF và diff check đạt. QtTest chạy offscreen; build launcher CREATE_NO_WINDOW.
+- Hash EXE đo và sau build đều `6dea8de52918192eb2d32474faeca77712fce29f47bcefe221f854c4389cb9c3`. Đọc danh sách khoá từ code có 41 mục; hash trước/sau giữ `c91761232204fedd1052a507682d1eacf53c20275e1b81389a819b4b39de9886`.
+- Số từng lượt, min/max/IQR, phân rã page và lệnh tái lập: `D:/Novels/ABook_qtsmtc/report.md`. Dữ liệu thô/summary/log build ở `D:/Novels/native_desk_proto/smtc_task/memory_*` và `build_memory.log`; giữ nguyên bằng chứng cũ.
+
 ## 27-10-2026 — Qt SMTC (dev/desk-qt-smtc)
 
 - MediaControlsTests: 6 đạt, 0 lỗi; tên chương dự phòng, trạng thái/nút, 60 giây nhịp đồng hồ không cập nhật timeline, seek/chương/tốc độ/thời lượng cập nhật theo sự kiện, lệnh về luồng UI, cache bìa và bỏ lời đáp bìa cũ.

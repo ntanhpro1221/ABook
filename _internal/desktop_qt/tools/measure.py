@@ -87,7 +87,7 @@ def window_of(pid: int):
         if q.value == pid and u32.IsWindowVisible(h):
             r = wt.RECT()
             u32.GetClientRect(h, ctypes.byref(r))
-            if r.right > 400:
+            if r.right > 400 or u32.IsIconic(h):
                 found.append(h)
         return True
 
@@ -186,7 +186,7 @@ def launch(exe: Path, env_extra: dict, offscreen: bool = True) -> dict:
     if not offscreen:
         raise ValueError("Chỉ cho phép đo ngoài màn hình")
     if out.exists():
-        subprocess.run(["node", "-e", "require('fs').rmSync(process.argv[1], {force:true})", str(out.resolve())], check=True, creationflags=subprocess.CREATE_NO_WINDOW)
+        out.replace(out.with_name(f"{out.stem}_{time.time_ns()}.previous.json"))
     env = dict(os.environ)
     env.update(env_extra)
     env["ABOOK_BENCH"] = str(out)
@@ -214,6 +214,8 @@ def launch(exe: Path, env_extra: dict, offscreen: bool = True) -> dict:
         k32.SetErrorMode(previous_error_mode)
     h = k32.OpenProcess(0x0410, False, p.pid)
     samples: list[tuple[float, float, float]] = []   # (epoch ms, MB riêng, CPU ms của tiến trình)
+    memory = []  # PrivateBytes = process commit, separate from resident private pages.
+    profiles = []
     states: list[tuple[float, dict]] = []
     stop = threading.Event()
 
@@ -279,13 +281,20 @@ def launch(exe: Path, env_extra: dict, offscreen: bool = True) -> dict:
         return sum(cpu_ms(k) for k in kids.values() if k)       # tiến trình con đã thoát vẫn đọc được qua handle giữ lại
 
     def sampler():
+        from memory_probe import counters, snapshot
+        last_profile = 0
         while not stop.is_set():
             try:
                 samples.append((time.time() * 1000, private_mb(h), cpu_ms(h)))
+                memory.append((time.time() * 1000, counters(h, p.pid)))
                 host.append((time.time() * 1000, host_cpu_ms()))
-            except Exception:
-                pass
-            states.append((time.time() * 1000, winstate(p.pid)))
+                state = winstate(p.pid)
+                states.append((time.time() * 1000, state))
+                if env.get("ABOOK_BENCH_MEMORY_MAP") == "1" and state.get("iconic") and time.monotonic() - last_profile >= 2:
+                    profiles.append((time.time() * 1000, snapshot(h, p.pid)))
+                    last_profile = time.monotonic()
+            except Exception as error:
+                memory.append((time.time() * 1000, {"error": str(error)}))
             stop.wait(0.25)
 
     th = threading.Thread(target=sampler, daemon=True)
@@ -325,6 +334,7 @@ def launch(exe: Path, env_extra: dict, offscreen: bool = True) -> dict:
             "music_mix": env.get("ABOOK_MUSIC_MIX"), "smtc": env.get("ABOOK_SMTC"), "ac_at_launch": int(power.ac),
             "foreground_events": foreground, "offscreen": True,
             "states": states, "samples": samples, "host_cpu": host, "child_pids": list(kids),
+            "memory": memory, "memory_maps": profiles, "exe": str(exe), "env_extra": env_extra,
             "bench": json.loads(out.read_bytes()) if out.exists() else {}, "app_log": out.with_suffix(".app.log").read_text(encoding="utf-8", errors="replace"),
         }, indent=1), encoding="utf-8")
     if foreground or any(s.get("fg_is_us") for _t, s in states):
@@ -335,7 +345,8 @@ def launch(exe: Path, env_extra: dict, offscreen: bool = True) -> dict:
     if not out.exists():
         return {"ok": False, "why": "app không ghi file đo"}
     d = json.loads(out.read_bytes())
-    return {"ok": True, "d": d, "samples": samples, "states": states, "host_mb": host_mb, "host_cpu": host, "foreground_events": 0, "offscreen": True}
+    return {"ok": True, "d": d, "samples": samples, "states": states, "host_mb": host_mb, "host_cpu": host, "foreground_events": 0, "offscreen": True,
+            "memory": memory, "memory_maps": profiles}
 
 
 def one_run(exe: Path, env_extra: dict, offscreen: bool = True) -> dict:
