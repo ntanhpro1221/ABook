@@ -220,7 +220,8 @@ Column {
             }
         }
         Column {
-            width: parent.width
+            objectName: "bookMusicList"
+            width: Math.min(parent.width, Theme.listMeasure)
             Repeater {
                 model: rowsModel
                 Collapse {
@@ -236,10 +237,12 @@ Column {
                     Item {
                         width: parent.width
                         height: Math.max(words.height, ask.height) + 16
+                        Icon { x: 0; y: 10; name: "eighth-note"; size: 16; color: Theme.accentText }
                         Column {
                             id: words
+                            x: 24
                             y: 8
-                            width: parent.width - ask.width - 12
+                            width: parent.width - x - ask.width - 12
                             Text {
                                 width: parent.width
                                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
@@ -248,7 +251,7 @@ Column {
                                 lineHeight: 1.25
                                 textFormat: Text.StyledText
                                 // Nốt nhạc nhấn màu đứng đầu tên bài; tên + nghệ sĩ + thời lượng (số đều) như bản web
-                                text: "<font color='" + Theme.accentText + "'>♪</font> " + escapeHtml(item.track.title)
+                                text: escapeHtml(item.track.title)
                                       + (item.track.creator ? "<font color='" + Theme.text2 + "'> · " + escapeHtml(item.track.creator) + "</font>" : "")
                                       + (item.track.duration ? "<font color='" + Theme.text2 + "'> · " + Logic.formatClock(item.track.duration) + "</font>" : "")
                                 function escapeHtml(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") }

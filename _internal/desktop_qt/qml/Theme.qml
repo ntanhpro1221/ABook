@@ -17,6 +17,7 @@ QtObject {
     readonly property int widthLarge: 1200
     readonly property int widthExtraLarge: 1600
     function widthClass(w) { return w < widthMedium ? 0 : w < widthExpanded ? 1 : w < widthLarge ? 2 : w < widthExtraLarge ? 3 : 4 }
+    readonly property int listMeasure: 640
 
     // ---- màu (DESIGN.md 5.1) ----
     readonly property color bg: dark ? "#121110" : "#f5f3ef"

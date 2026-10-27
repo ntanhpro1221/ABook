@@ -267,6 +267,7 @@ Item {
                     }
                     waitForRendering(mini); wait(80)
                     const path = Qt.resolvedUrl("../../build/d2shots/mini_" + length + "_" + theme + ".png").toString().replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, "")
+                    qtGlyphAudit.scan()
                     grabImage(mini).save(path)
                 }
                 mini.destroy()

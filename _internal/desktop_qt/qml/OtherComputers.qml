@@ -190,7 +190,7 @@ Column {
                     Column {
                         id: list
                         objectName: "computerList"
-                        width: parent.width
+                        width: Math.min(parent.width, Theme.listMeasure)
                         Repeater {
                             model: computerRows.model
                             OtherComputersRow {
@@ -236,7 +236,7 @@ Column {
                             width: parent.width
                             open: root.found !== null && root.found.length > 0
                             Column {
-                                width: parent.width
+                                width: Math.min(parent.width, Theme.listMeasure)
                                 Repeater {
                                     model: root.found || []
                                     Item {
@@ -366,7 +366,7 @@ Column {
                             }
                         }
                     }
-                    HintText { width: parent.width; text: "Máy kia: Cài đặt → Thiết bị → bật “" + root.syncLabel + "” để lấy mã; ghép một chiều để nghe thư viện của máy ấy." }
+                    HintText { width: parent.width; text: "Máy kia: Cài đặt › Thiết bị › bật “" + root.syncLabel + "” để lấy mã; ghép một chiều để nghe thư viện của máy ấy." }
                 }
             }
         }

@@ -363,7 +363,10 @@ Item {
                         visible: root.showText
                     }
                     ChapterList {
-                        anchors.fill: parent
+                        anchors.left: parent.left
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        width: Math.min(parent.width, Theme.listMeasure)
                         anchors.topMargin: Theme.s24
                         visible: !root.showText
                         model: Player.chapters
