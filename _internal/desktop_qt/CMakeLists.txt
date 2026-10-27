@@ -53,6 +53,7 @@ set(ABOOK_MIXER_SOURCES src/musicmixer.cpp src/musicmixer.h src/mixcore.h src/mp
 
 qt_add_executable(ABookDesk WIN32
     src/main.cpp
+    src/musicwindowactivity.h
     src/abookdesk.manifest
     src/audioout_mf.cpp
     src/audioout_mf.h
@@ -174,7 +175,7 @@ if(MSVC)
     target_compile_options(MusicTests PRIVATE /W3 /utf-8)
 endif()
 # Lõi trộn của đường âm thanh WASAPI: phép tính thuần, không Qt Quick, không thiết bị âm thanh
-qt_add_executable(MixTests tests/test_mix.cpp src/audioout.cpp src/audioout.h ${ABOOK_MIXER_SOURCES})
+qt_add_executable(MixTests tests/test_mix.cpp src/audioout.cpp src/audioout.h ${ABOOK_MIXER_SOURCES} ${ABOOK_MUSIC_SOURCES})
 target_include_directories(MixTests PRIVATE src third_party)
 target_compile_definitions(MixTests PRIVATE QT_NO_CAST_FROM_ASCII MIX_FIXTURES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../tests/fixtures")
 target_link_libraries(MixTests PRIVATE Qt6::Test Qt6::Network ole32 ksuser)
@@ -215,3 +216,12 @@ add_test(NAME MusicTests COMMAND MusicTests)
 add_test(NAME MixTests COMMAND MixTests)
 add_test(NAME SkipGlyphTests COMMAND SkipGlyphTests)
 add_test(NAME SidebarTests COMMAND SidebarTests)
+
+qt_add_executable(MusicWindowActivityTests tests/test_musicwindowactivity.cpp src/musicwindowactivity.h)
+target_include_directories(MusicWindowActivityTests PRIVATE src)
+target_compile_definitions(MusicWindowActivityTests PRIVATE QT_NO_CAST_FROM_ASCII)
+target_link_libraries(MusicWindowActivityTests PRIVATE Qt6::Test Qt6::Gui)
+if(MSVC)
+    target_compile_options(MusicWindowActivityTests PRIVATE /W3 /utf-8)
+endif()
+add_test(NAME MusicWindowActivityTests COMMAND MusicWindowActivityTests)

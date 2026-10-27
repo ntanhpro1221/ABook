@@ -1,5 +1,14 @@
 # Test report
 
+## 27-10-2026 — musicmix: sửa theo Lead review, chưa commit
+
+- `deskqt_fixture_music` đã khôi phục `book.json` đúng từng byte từ `music_mix_task/fixture_before`; MP3 và lượt A/B dùng fixture riêng `deskqt_fixture_mp3`.
+- Thiết bị không phải float32 hoặc có dưới hai kênh báo `AudioOut::failed`; MusicBed nhận lỗi và đánh dấu nhạc im lặng. Kiểm định dạng WASAPI, lỗi lúc mở/đang phát, hai voice, phục hồi bằng lần load mới và đường MusicBed thật.
+- Nhịp mixer xét mọi QWindow còn hiện, kể cả cửa sổ phụ được tạo muộn; có hook rõ cho mini khi merge. Kiểm main thu nhỏ/ẩn, mini hiện/thu nhỏ/khôi phục/đóng và cửa sổ không nhận focus.
+- `build.bat` exit 0; 8 bộ QtTest/QuickTest đạt **284**, 0 lỗi, 0 bỏ qua: Player 26, ReadAlong 14, Music 37, Mix 43, MusicWindowActivity 3, SkipGlyph 6, Sidebar 117, Width 38. Tất cả chạy với QPA offscreen và process ẩn.
+- A/B 4 cặp MF/mixer trên fixture MP3 riêng: CPU ổn định khi thu nhỏ từ **1,407% xuống 0,822% một nhân** (giảm **41,5%**). Cả 8 lượt trên desktop Windows riêng không được chuyển lên màn hình; worker kiểm tên desktop thật, audit không có foreground event, cả 4 lượt mixer có `mix_ready`/`mix_playing`, không có `mix_failed`. Không suy diễn thời gian khung từ phép đo ngoài màn hình.
+- Hash khoá trước và sau kiểm tra không đổi: `c91761232204fedd1052a507682d1eacf53c20275e1b81389a819b4b39de9886`. Bằng chứng build/test và báo cáo bàn giao: `D:/Novels/native_desk_proto/music_mix_task/followup/`, `music_mix_task/report.md`.
+
 ## 26-10-2026 — qtwide2: sửa theo lead review
 
 - Trang Sách: cụm hai cột tối đa 1360 px, căn giữa; bìa thẳng mép tiêu đề; thời lượng cuối hàng dùng tnum. Nền hover/chương hiện tại và thanh tiến độ giữ hết chiều rộng hàng. Sửa đường chuyển động để bìa/chữ/chương không đi xuyên nhau.

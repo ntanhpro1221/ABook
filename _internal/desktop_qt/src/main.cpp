@@ -5,6 +5,7 @@
 #include "hostnet.h"
 #include "music.h"
 #include "musicmixer.h"
+#include "musicwindowactivity.h"
 #include "platform.h"
 #include "player.h"
 #include "readalong.h"
@@ -124,22 +125,16 @@ int main(int argc, char *argv[]) {
     QGuiApplication::setFont(base);
 
     QQmlApplicationEngine engine;
+    std::unique_ptr<MusicWindowActivity> musicWindowActivity;
+    if (mixer)
+        musicWindowActivity = std::make_unique<MusicWindowActivity>([&mixer](bool relaxed) { mixer->setRelaxed(relaxed); });
     if (benchMode)
         engine.setInitialProperties({{QStringLiteral("x"), -10000}, {QStringLiteral("y"), -10000},
             {QStringLiteral("flags"), int(Qt::Window | Qt::WindowDoesNotAcceptFocus)}});
     engine.addImageProvider(QStringLiteral("cover"), new CoverProvider);
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed, &app, [] { QCoreApplication::exit(3); }, Qt::QueuedConnection);
     engine.loadFromModule("ABook", "Main");
-    if (mixer && !engine.rootObjects().isEmpty()) {
-        if (auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().first())) {
-            const auto relax = [&mixer, window] {
-                const auto v = window->visibility();
-                mixer->setRelaxed(v == QWindow::Hidden || v == QWindow::Minimized);
-            };
-            QObject::connect(window, &QQuickWindow::visibilityChanged, mixer.get(), relax);
-            relax();
-        }
-    }
+    if (musicWindowActivity) musicWindowActivity->update();
     Bench::mark(QStringLiteral("qml_loaded"));
     return app.exec();
 }

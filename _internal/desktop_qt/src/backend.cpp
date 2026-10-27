@@ -143,7 +143,7 @@ void Backend::start() {
     auto *proc = new QProcess(this);
     m_proc = proc;
     proc->setProgram(launch.python);
-    proc->setArguments({QStringLiteral("-m"), QStringLiteral("abook.webui.host"), QStringLiteral("--version"), abookVersion()});
+    proc->setArguments({QStringLiteral("-X"), QStringLiteral("utf8"), QStringLiteral("-m"), QStringLiteral("abook.webui.host"), QStringLiteral("--version"), abookVersion()});
     proc->setWorkingDirectory(launch.folder);
     QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
     env.insert(QStringLiteral("PYTHONIOENCODING"), QStringLiteral("utf-8"));

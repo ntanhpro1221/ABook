@@ -93,6 +93,7 @@ struct WasapiDevice::Impl {
     UINT32 capacity = 0;
     quint64 revision = 0;
     bool com = false;
+    QString error;
 };
 
 WasapiDevice::WasapiDevice(std::function<void()> changed) : d(new Impl) {
@@ -112,6 +113,7 @@ WasapiDevice::~WasapiDevice() {
 }
 bool WasapiDevice::refresh() {
     if (!d->notice->dirty.exchange(false) && d->client) return true;
+    d->error.clear();
     stop(); d->render.Reset(); d->client.Reset(); d->capacity = 0;
     ComPtr<IMMDevice> endpoint;
     if (!d->enumerator || FAILED(d->enumerator->GetDefaultAudioEndpoint(eRender, eMultimedia, &endpoint))
@@ -125,15 +127,12 @@ bool WasapiDevice::refresh() {
     }
     WAVEFORMATEX *format = nullptr;
     if (FAILED(d->client->GetMixFormat(&format))) { d->client.Reset(); return false; }
-    const bool floating = format->wFormatTag == WAVE_FORMAT_IEEE_FLOAT ||
-        (format->wFormatTag == WAVE_FORMAT_EXTENSIBLE && format->cbSize >= 22 &&
-         reinterpret_cast<WAVEFORMATEXTENSIBLE *>(format)->SubFormat == KSDATAFORMAT_SUBTYPE_IEEE_FLOAT);
     // Đúng định dạng mix của endpoint; không âm thầm phát float như PCM nguyên.
     HRESULT hr = E_INVALIDARG;
-    if (floating && format->wBitsPerSample == 32 && format->nChannels >= 2) {
+    if (supportsFormat(*format)) {
         d->rate = int(format->nSamplesPerSec); d->channels = format->nChannels;
         hr = d->client->Initialize(AUDCLNT_SHAREMODE_SHARED, 0, 10000000, 0, format, nullptr);
-    }
+    } else d->error = QStringLiteral("Thiết bị nhạc cần định dạng float32 với ít nhất 2 kênh.");
     CoTaskMemFree(format);
     if (FAILED(hr) || FAILED(d->client->GetBufferSize(&d->capacity)) || FAILED(d->client->GetService(IID_PPV_ARGS(&d->render)))) {
         d->render.Reset(); d->client.Reset(); d->capacity = 0; return false;
@@ -141,6 +140,13 @@ bool WasapiDevice::refresh() {
     ++d->revision;
     return true;
 }
+bool WasapiDevice::supportsFormat(const tWAVEFORMATEX &format) {
+    const bool floating = format.wFormatTag == WAVE_FORMAT_IEEE_FLOAT ||
+        (format.wFormatTag == WAVE_FORMAT_EXTENSIBLE && format.cbSize >= 22 &&
+         reinterpret_cast<const WAVEFORMATEXTENSIBLE &>(format).SubFormat == KSDATAFORMAT_SUBTYPE_IEEE_FLOAT);
+    return floating && format.wBitsPerSample == 32 && format.nChannels >= 2;
+}
+QString WasapiDevice::error() const { return d->error; }
 int WasapiDevice::rate() const { return d->rate; }
 quint64 WasapiDevice::revision() const { return d->revision; }
 bool WasapiDevice::start() {
@@ -453,6 +459,25 @@ void MusicMixer::service(size_t frames) {
     const quint64 oldCursor = d->cursor();
     if (!d->device->refresh()) {
         d->running = false;
+        const QString error = d->device->error();
+        if (!error.isEmpty()) {
+            d->device->stop(); d->device->reset();
+            d->written = d->played = 0;
+            for (const auto &s : voices) {
+                Guard guard(s->mutex);
+                if (!s->opening && !s->ready && !s->want && !s->playing) continue;
+                ++s->generation; // Discard queued readiness and in-flight reader results.
+                const bool playing = s->playing, buffering = s->buffering;
+                s->opening = s->fetching = s->haveBytes = s->ready = s->want = s->playing = s->buffering = false;
+                s->bytes.clear(); s->ring.reset(); s->file.reset(); s->spans.clear();
+                post(s, [error, playing, buffering](MixVoice *v) {
+                    if (playing) emit v->playingChanged(false);
+                    if (buffering) emit v->buffering(false);
+                    emit v->failed(error);
+                });
+            }
+            d->active = false; return;
+        }
         bool wants = false;
         for (const auto &s : voices) { Guard guard(s->mutex); wants |= s->want && s->ready; }
         d->active = wants; return;
