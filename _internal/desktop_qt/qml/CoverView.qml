@@ -9,6 +9,8 @@ Item {
     id: root
     property string coverKey: ""
     property string title: ""
+    property int part: 0
+    property bool small: false
     property real radius: Theme.radiusCover
     readonly property real dpr: Screen.devicePixelRatio
     readonly property size wantSize: Qt.size(Math.round(width * dpr), Math.round(height * dpr))
@@ -25,6 +27,8 @@ Item {
     GeneratedCover {
         anchors.fill: parent
         title: root.title
+        part: root.part
+        small: root.small
         radius: root.radius
         visible: root.coverKey === "" || image.status === Image.Error
     }

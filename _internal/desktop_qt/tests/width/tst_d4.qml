@@ -2,11 +2,13 @@ import QtQuick
 import QtTest
 import ABook
 import "../../qml/LibraryBooks.js" as Books
+import "../../qml/ProjectsLogic.js" as Projects
 
 // D4: mỗi mục một nhóm phép thử (hành vi + chuyển động) và ảnh sáng / tối ghi ra build/d2shots/d4_*.png:
 //   1. màn đọc "Đọc chương này" (menu "…" của dòng chương, bấm dòng chương chưa có audio): ReaderScreen + ChapterText + ReadAlongView
 //   2. lời báo chồng như sonner (visibleToasts 2): Api.toasts + Toast.qml, "Chi tiết" (ToastDetails)
 //   3. đang xem máy tính đã ghép: Thư viện của máy ấy (LibraryScreen + LibraryBooks.js), thanh PeerBar của cả app, máy ấy im thì tự nối lại
+//   4. Studio của máy ấy: bảng dự án chỉ đọc (StudioScreen + ProjectsList + ProjectsLogic.js, ProjectsScreen.tsx của web)
 // Player / ReadAlong / ChapterText là bản C++ thật trên âm thanh + mạng giả (tests/test_width.cpp, cuốn "reader"); HTTP của QML qua DesktopApi giả.
 Item {
     id: host
@@ -79,6 +81,7 @@ Item {
             Nav.layers = []; Nav.studioPeer = ""; Api.toasts = []
             DesktopApi.delayed = false
             if (Player.playing) Player.pause()
+            if (host.Window.window && host.Window.window.width !== 1280) host.Window.window.width = 1280
         }
 
         // ================= 1. màn đọc "Đọc chương này" =================
@@ -609,6 +612,194 @@ Item {
                 shot("peer_library", host)
                 Nav.studioPeer = ""
                 page.destroy(); studio.destroy()
+                wait(0)
+            })
+        }
+
+        // ================= 4. Studio của máy đang xem: bảng dự án =================
+        function projectBooks() {
+            const now = Date.now() / 1000
+            const base = {settings: {narrator: "", profile: "balanced", profileLabel: "Cân bằng"}, chapters: {total: 10, completed: 0}, progress: {overall: 0, analysis: 0, synthesis: 0}, eta: null}
+            const make = o => Object.assign({}, base, o)
+            return [
+                make({id: "b2", title: "Sách đã xong", phase: "done", statusLabel: "Hoàn tất", chapters: {total: 12, completed: 12, missingAudio: 1}, pendingChanges: 2,
+                      progress: {overall: 1, analysis: 1, synthesis: 1}, settings: {narrator: "Lan", profile: "quality", profileLabel: "Chất lượng cao"}, updatedAt: now - 2 * 86400}),
+                make({id: "b3", title: "Truyện đang chờ", phase: "new", statusLabel: "Mới", queuePosition: 2, updatedAt: now - 7200}),
+                make({id: "b5", title: "Truyện dài · Phần 2", phase: "stopped", statusLabel: "Đã dừng", series: {root: "b4", part: 2}, progress: {overall: 0.005, analysis: 0, synthesis: 0}, updatedAt: now - 300}),
+                make({id: "b1", title: "Truyện đang chạy", phase: "analysis", statusLabel: "Đang phân tích", running: true, chapters: {total: 10, completed: 2},
+                      settings: {narrator: "Minh", profile: "balanced", profileLabel: "Cân bằng"}, cover: {version: 4},
+                      progress: {overall: 0.42, analysis: 0.5, synthesis: 0}, eta: {phase: "analysis", seconds: 3 * 3600 + 120}, updatedAt: now - 100}),
+                make({id: "b4", title: "Truyện dài", phase: "done", statusLabel: "Hoàn tất", chapters: {total: 8, completed: 8}, progress: {overall: 1, analysis: 1, synthesis: 1}, updatedAt: now - 30 * 86400})
+            ]
+        }
+        function makeStudio(width, library) {
+            reply(peerPath("/api/app"), peerApp())
+            reply(peerPath("/api/library"), library || {status: 200, data: {root: "D:/Sach", rootMissing: false, books: projectBooks()}})
+            const studio = createTemporaryObject(studioFactory, host, {width: width || 1280, height: 800})
+            Nav.studioPeer = peerId
+            tryVerify(function() { return studio.shownView === "open" && studio.phase === 1 })
+            return studio
+        }
+        function rowsOf(studio) { return all(studio, "projectRow").filter(r => shown(r)) }
+        function rowTitled(studio, title) { return rowsOf(studio).filter(r => r.book.title === title)[0] }
+        function test_projectsLogicSaysWhatTheWebSays() {
+            compare(Projects.queueLabel(1), "Sắp tới lượt")
+            compare(Projects.queueLabel(4), "Còn 3 việc trước")
+            compare(Projects.projectStatus({starting: true, phase: "new", statusLabel: "Mới"}).label, "Đang khởi động")
+            compare(Projects.projectStatus({phase: "synthesis", statusLabel: "Đang thu âm", running: true, paused: "battery"}).tone, "warning")
+            compare(Projects.projectStatus({phase: "synthesis", statusLabel: "Đang thu âm", running: true, paused: "battery"}).live, false)
+            compare(Projects.projectStatus({phase: "casting", statusLabel: "Chờ duyệt", precast: {held: true}}).label, "Chờ bạn duyệt")
+            compare(Projects.projectStatus({phase: "error", statusLabel: "Lỗi"}).tone, "danger")
+            compare(Projects.formatPercent(0.004), "<1%")
+            compare(Projects.formatPercent(0.995), "99%")
+            compare(Projects.formatPercent(1), "100%")
+            const now = Date.UTC(2026, 9, 27, 12)
+            compare(Projects.formatRelative(now / 1000 - 30, now), "vừa xong")
+            compare(Projects.formatRelative(now / 1000 - 600, now), "10 phút trước")
+            compare(Projects.formatRelative(now / 1000 - 3 * 3600, now), "3 giờ trước")
+            compare(Projects.formatRelative(now / 1000 - 86400 - 60, now), "hôm qua")
+            compare(Projects.formatRelative(now / 1000 - 5 * 86400, now), "5 ngày trước")
+            compare(Projects.formatRelative(Date.UTC(2026, 8, 7, 12) / 1000, now), "7/9/2026")
+            compare(Projects.etaOf({eta: {phase: "synthesis", seconds: 9000}, progress: {analysis: 1, synthesis: 0.3}}, true), "thu âm còn 2 giờ 30 phút")
+            compare(Projects.etaOf({eta: {phase: "synthesis", seconds: 60}, progress: {analysis: 1, synthesis: 0.3}}, true), "thu âm còn dưới 2 phút")
+            compare(Projects.etaOf({eta: {phase: "speaker", seconds: 60}, progress: {}, speakerPass: {done: 9, total: 10}}, true), "dò người nói sắp xong")
+            compare(Projects.etaOf({eta: {phase: "analysis", seconds: 600}, progress: {analysis: 0.2}}), "pha phân tích còn khoảng 10 phút")
+            // thứ tự bảng: nhóm có cuốn đang chạy lên đầu; các phần của một cuốn chung một nhóm, theo thứ tự phần
+            const entries = Projects.ordered(projectBooks())
+            compare(entries.map(Projects.entryKey).join(","), "b1,b2,b3,series:Truyện dài")
+            compare(entries[3].books.map(b => b.id).join(","), "b4,b5")
+            compare(entries[3].unit, "phần")
+            // tập đánh số theo tên; một cuốn không số cùng tên bộ là tập 1
+            const vols = Projects.groupParts([{id: "x2", title: "Bộ A · Tập 2"}, {id: "x1", title: "Bộ A"}, {id: "y", title: "Lẻ"}])
+            compare(vols.length, 2)
+            compare(vols[0].kind, "series")
+            compare(vols[0].books.map(b => b.id).join(","), "x1,x2")
+            compare(vols[0].unit, "tập")
+            compare(Projects.subLine({settings: {narrator: "Minh", profile: "balanced", profileLabel: "Cân bằng"}}), "Giọng kể Minh")
+            compare(Projects.subLine({settings: {narrator: "Minh", profile: "fast", profileLabel: "Nhanh"}}), "Giọng kể Minh · Nhanh")
+            compare(Projects.needs({phase: "done", chapters: {redo: 3}}).join(" · "), "3 chương chờ thu lại")
+        }
+        function test_peerStudioShowsTheProjectTable() {
+            const studio = makeStudio(1280)
+            tryVerify(function() { return rowsOf(studio).length === 5 })
+            compare(calls("GET", "/api/peers/" + peerId + "/studio/api/library").length, 1)
+            verify(hasText(studio, "5 dự án"))
+            // đầu bảng: bốn cột ở cửa sổ rộng
+            for (const head of ["Dự án", "Trạng thái", "Tiến độ", "Cập nhật"]) verify(hasText(studio, head), head)
+            compare(rowsOf(studio).map(r => r.book.id).join(","), "b1,b2,b3,b4,b5")
+            // đang chạy: viên nhấn có vạch nhạc, thanh màu nhấn, phần trăm và thời gian còn lại của bước
+            const live = rowTitled(studio, "Truyện đang chạy")
+            const pill = one(live, "projectStatus")
+            verify(shown(pill))
+            compare(pill.label, "Đang phân tích")
+            compare(pill.color, Theme.accentSoft)
+            verify(shown(one(live, "projectVu")))
+            compare(one(live, "projectPercent").text, "42%")
+            compare(one(live, "projectDetail").text, "phân tích còn 3 giờ 2 phút")
+            compare(one(live, "projectBarFill").color, Theme.accent)
+            compare(one(live, "projectSub").text, "Giọng kể Minh")
+            compare(one(live, "projectUpdated").text, "vừa xong")
+            compare(all(live, "coverSmallLabel").length, 1)
+            // xong: không viên, chữ "xong/tổng chương" + việc còn của mình màu cảnh báo, chất lượng khác "Cân bằng" thì ghi
+            const done = rowTitled(studio, "Sách đã xong")
+            verify(!shown(one(done, "projectStatus")))
+            verify(one(done, "projectDone").text.indexOf("12/12 chương") === 0)
+            verify(one(done, "projectDone").text.indexOf("2 thay đổi chờ áp · 1 chương mất audio") > 0)
+            compare(one(done, "projectSub").text, "Giọng kể Lan · Chất lượng cao")
+            compare(one(done, "projectUpdated").text, "2 ngày trước")
+            // xếp hàng: viên cảnh báo "Còn N việc trước", thanh mờ
+            const queued = rowTitled(studio, "Truyện đang chờ")
+            compare(one(queued, "projectStatus").label, "Còn 1 việc trước")
+            compare(one(queued, "projectStatus").color, Theme.warningSoft)
+            compare(one(queued, "projectBarFill").color, Theme.text3)
+            compare(one(rowTitled(studio, "Truyện dài · Phần 2"), "projectPercent").text, "<1%")
+            // nhóm các phần: một dòng tên nhóm, hai hàng dưới nó
+            const group = all(studio, "projectGroup").filter(g => shown(g))
+            compare(group.length, 1)
+            verify(group[0].text.indexOf("Truyện dài") === 0 && group[0].text.indexOf(" · 2 phần") > 0)
+            // chỉ đọc: hàng không bấm được, không có "Dự án mới"
+            verify(!hasText(studio, "Dự án mới"))
+            verify(!hasText(studio, "Studio chưa mở trong bản này."))
+            // cột thẳng hàng giữa đầu bảng và các hàng; bảng rộng tới 1180
+            compare(one(studio, "projectsTable").width, 1180)
+            const statusHead = all(studio, "projectsTable")[0]
+            verify(Math.abs(pill.mapToItem(statusHead, 0, 0).x - statusHead.statusX) < 0.5)
+        }
+        function test_narrowWindowDropsTheUpdatedColumn() {
+            // cột Cập nhật theo bề ngang CỬA SỔ như xl của web (viewport), không theo bề ngang bảng
+            const studio = makeStudio(1100)
+            tryVerify(function() { return rowsOf(studio).length === 5 })
+            verify(hasText(studio, "Cập nhật"))
+            const win = studio.Window.window
+            win.width = 1200
+            tryVerify(function() { return !hasText(studio, "Cập nhật") })
+            verify(!shown(one(rowsOf(studio)[0], "projectUpdated")))
+            compare(one(studio, "projectsTable").width, 1100 - 2 * Theme.margin)
+            // tên dài xuống dòng, không cắt
+            const books = projectBooks()
+            books[0].title = "Một cái tên dự án rất dài để xem nó có xuống dòng đúng cách thay vì bị cắt mất phần cuối hay không nhé bạn ơi"
+            reply(peerPath("/api/library"), {status: 200, data: {books: books}})
+            Nav.peerRevision++
+            tryVerify(function() { return rowTitled(studio, books[0].title) !== undefined })
+            const title = one(rowTitled(studio, books[0].title), "projectTitle")
+            verify(title.lineCount > 1)
+            verify(!title.truncated)
+        }
+        function test_loadingErrorRetryEmptyAndMissing() {
+            DesktopApi.delayed = true
+            reply(peerPath("/api/app"), peerApp())
+            reply(peerPath("/api/library"), {status: 500, data: {error: "hỏng"}})
+            const studio = createTemporaryObject(studioFactory, host, {width: 1280, height: 800})
+            Nav.studioPeer = peerId
+            DesktopApi.finish()                                  // /api/app
+            tryVerify(function() { return studio.shownView === "open" && studio.phase === 1 })
+            verify(shown(one(studio, "projectsSkeleton")))
+            verify(hasText(studio, "Dự án"))                      // đầu bảng đứng sẵn khi đang tải
+            DesktopApi.finish()                                  // /api/library lỗi
+            DesktopApi.delayed = false
+            tryVerify(function() { return shown(one(studio, "projectsError")) })
+            tryVerify(function() { return hasText(studio, "Chưa tải được danh sách dự án; bạn hãy kiểm tra kết nối rồi thử lại.") })
+            verify(!shown(one(studio, "projectsSkeleton")))
+            reply(peerPath("/api/library"), {status: 200, data: {root: "D:/Sach", rootMissing: false, books: []}})
+            mouseClick(findRetry(one(studio, "projectsError")))
+            tryVerify(function() { return shown(one(studio, "projectsEmpty")) })
+            verify(hasText(studio, "Chưa có dự án"))
+            verify(hasText(studio, "Biến một truyện thành sách nói nhiều giọng."))
+            verify(!hasText(studio, "Dự án"))                     // rỗng: không đầu bảng
+            verify(hasText(studio, "\u00a0"))                   // dòng phụ giữ một dòng trống
+            reply(peerPath("/api/library"), {status: 200, data: {root: "D:/Sach", rootMissing: true, books: []}})
+            Nav.peerRevision++
+            tryVerify(function() { return shown(one(studio, "projectsMissing")) })
+            verify(hasText(studio, "Không thấy thư mục thư viện"))
+            verify(hasText(studio, "Chọn lại thư mục thư viện ở máy tính Máy bàn phòng làm việc"))
+        }
+        function findRetry(item) {
+            if (item.text === "Thử lại" && item.clicked !== undefined) return item
+            for (const child of item.children || []) { const found = findRetry(child); if (found) return found }
+            return null
+        }
+        function test_refetchesEveryFiveSecondsWhileABookRuns() {
+            const studio = makeStudio(1280)
+            tryVerify(function() { return rowsOf(studio).length === 5 })
+            const path = "/api/peers/" + peerId + "/studio/api/library"
+            const before = calls("GET", path).length
+            tryVerify(function() { return calls("GET", path).length > before }, 6500)
+            // không cuốn nào chạy: thưa hẳn (15 giây)
+            const books = projectBooks().map(b => Object.assign({}, b, {running: false}))
+            reply(peerPath("/api/library"), {status: 200, data: {books: books}})
+            const now = calls("GET", path).length
+            tryVerify(function() { return calls("GET", path).length > now }, 6500)
+            const idle = calls("GET", path).length
+            wait(5500)
+            compare(calls("GET", path).length, idle)
+        }
+        function test_shotsPeerProjects() {
+            both(function() {
+                const studio = makeStudio(1280)
+                studio.y = Qt.binding(function() { return hostBar.height })    // dưới thanh "Đang mở Studio của …" như trong app
+                tryVerify(function() { return rowsOf(studio).length === 5 })
+                shot("peer_projects", host)
+                studio.destroy()
                 wait(0)
             })
         }

@@ -120,6 +120,7 @@ qt_add_qml_module(ABookDesk
         qml/GeneratedCover.qml
         qml/BookPage.qml
         qml/StudioScreen.qml
+        qml/ProjectsList.qml
         qml/SettingsScreen.qml
         qml/Api.qml
         qml/FormLabel.qml
@@ -252,6 +253,7 @@ qt_add_qml_module(ABookDesk
         qml/ReaderChoices.qml
         qml/ReaderLogic.js
         qml/LibraryBooks.js
+        qml/ProjectsLogic.js
         qml/BenchScenario.qml
     RESOURCES
         fonts/BeVietnamPro-Regular.ttf

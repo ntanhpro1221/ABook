@@ -6,6 +6,8 @@ import ABook
 Rectangle {
     id: root
     property string title: ""
+    property int part: 0            // thứ tự phần thật ("Làm tiếp cuốn này"): phần đã đổi tên vẫn mang "Phần N"
+    property bool small: false      // bìa ô nhỏ (size "sm" của BookCover): chỉ chữ tắt / số tập giữa bìa (coverLabel)
     radius: Theme.radiusCover
 
     // FNV-1a như cover.ts hash(); Math.imul có trong QML JS.
@@ -20,7 +22,15 @@ Rectangle {
     readonly property var palette: Theme.coverPalettes[hash(title.trim().toLowerCase()) % Theme.coverPalettes.length]
     readonly property var parts: {
         const m = title.match(/^(.*?)\s*[·|:—–-]\s*(Tập|Quyển|Phần|Vol\.?|Book)\s*(.+)$/i)
-        return m ? [m[1].trim(), (m[2] + " " + m[3]).trim()] : [title.trim(), ""]
+        if (m) return [m[1].trim(), (m[2] + " " + m[3]).trim()]
+        return part > 1 ? [title.trim(), "Phần " + part] : [title.trim(), ""]
+    }
+    // cover.ts coverLabel: số tập nếu là sách trong một bộ, không thì hai chữ cái đầu
+    readonly property string label: {
+        const volume = parts[1].match(/(\d+)/)
+        if (volume) return volume[1]
+        const stop = ["the", "and", "của", "và", "những", "các", "một"]
+        return parts[0].split(/\s+/).filter(w => w.length > 2 && stop.indexOf(w.toLowerCase()) < 0).slice(0, 2).map(w => w[0].toUpperCase()).join("")
     }
 
     gradient: Gradient {
@@ -30,6 +40,16 @@ Rectangle {
 
     // Tên sách in trên bìa: thu cỡ chữ cho vừa khung (không cắt, không '...'), chừa chỗ cho nhãn "Tập N" nếu có.
     Text {
+        objectName: "coverSmallLabel"
+        visible: root.small
+        anchors.centerIn: parent
+        text: root.label
+        color: root.palette[2]
+        font.pixelSize: 17
+        font.weight: Theme.weightBold
+    }
+    Text {
+        visible: !root.small
         readonly property real pad: Math.max(8, root.width * 0.08)
         x: pad
         y: pad
@@ -47,7 +67,7 @@ Rectangle {
     }
     Rectangle {
         id: tagBox
-        visible: root.parts[1] !== ""
+        visible: !root.small && root.parts[1] !== ""
         anchors.left: parent.left
         anchors.bottom: parent.bottom
         anchors.margins: Math.max(8, root.width * 0.08)

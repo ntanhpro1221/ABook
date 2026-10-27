@@ -90,7 +90,7 @@ for (const [name, tokens] of Object.entries(surfaces)) {
 
 it("bảng trong DESIGN.md khớp styles.css", () => {
   const design = readFileSync(new URL("../../../docs/DESIGN.md", import.meta.url), "utf8");
-  for (const token of ["--bg", "--panel", "--bg-sunken", "--line", "--text", "--text-2", "--text-3", "--fg-3", "--accent", "--accent-ink", "--accent-text", "--warning", "--warning-soft", "--info-soft", "--focus", "--switch-off", "--switch-thumb"]) {
+  for (const token of ["--bg", "--panel", "--bg-sunken", "--line", "--text", "--text-2", "--text-3", "--fg-3", "--accent", "--accent-ink", "--accent-text", "--success-soft", "--warning", "--warning-soft", "--info-soft", "--focus", "--switch-off", "--switch-thumb"]) {
     const row = design.split("\n").find((line) => line.startsWith(`| \`${token}\``));
     expect(row, token).toBeDefined();
     expect(row, token).toContain(themes.light[token]);
