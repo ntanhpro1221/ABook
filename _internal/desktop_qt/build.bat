@@ -51,6 +51,9 @@ if errorlevel 1 exit /b 1
 rem WASAPI mixing core: ring, volume ramp, resampler on numbers
 "%HERE%build\MixTests.exe"
 if errorlevel 1 exit /b 1
+rem Music scheduling observes main, mini and any later application windows.
+"%HERE%build\MusicWindowActivityTests.exe"
+if errorlevel 1 exit /b 1
 rem Skip-15 icon pixel check (gap between stroke and digits, ink inside the box)
 "%HERE%build\SkipGlyphTests.exe"
 if errorlevel 1 exit /b 1
