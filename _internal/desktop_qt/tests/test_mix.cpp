@@ -1,6 +1,9 @@
-// Lõi trộn của đường âm thanh WASAPI (mixcore.h): vòng đệm, âm lượng trượt, đổi tần số - thử trên số, không cần thiết bị âm thanh.
+// Lõi trộn của đường âm thanh WASAPI (mixcore.h, mp3source.h): vòng đệm, âm lượng trượt, đổi tần số, giải mã mp3 - thử trên số và
+// trên fixture mp3 chung, không cần thiết bị âm thanh.
 #include "mixcore.h"
+#include "mp3source.h"
 
+#include <QFile>
 #include <QtTest>
 
 #include <cmath>
@@ -19,6 +22,13 @@ std::vector<float> sine(double hz, int rate, size_t frames, int channels, double
         for (int c = 0; c < channels; ++c)
             out[i * channels + c] = float(amplitude * std::sin(2 * PI * hz * double(i) / rate));
     return out;
+}
+
+QByteArray fixtureBytes(const QString &name) {
+    QFile file(QStringLiteral(MIX_FIXTURES_DIR "/") + name);
+    if (!file.open(QIODevice::ReadOnly))
+        qFatal("không đọc được %s", qPrintable(name));
+    return file.readAll();
 }
 
 double rms(const std::vector<float> &x, int channels, int channel, size_t from, size_t to) {
@@ -164,6 +174,84 @@ private slots:
         resampler.push(in.data(), size_t(inRate), out);
         const double db = 20 * std::log10(rms(out, 1, 0, 100, out.size()) / (0.5 / std::sqrt(2.0)));
         QVERIFY2(db >= minDb && db <= maxDb, qPrintable(QString::number(db)));
+    }
+
+    void mp3OpensWithLengthAndFormat_data() {
+        QTest::addColumn<QString>("file");
+        QTest::addColumn<int>("rate");
+        QTest::addColumn<int>("channels");
+        QTest::addColumn<double>("seconds");
+        QTest::newRow("stereo 44,1k") << QStringLiteral("music_student/stereo_44k.mp3") << 44100 << 2 << 12.0;
+        QTest::newRow("mono 22k") << QStringLiteral("music_student/mono_22k.mp3") << 22050 << 1 << 5.0;
+    }
+    void mp3OpensWithLengthAndFormat() {
+        QFETCH(QString, file);
+        QFETCH(int, rate);
+        QFETCH(int, channels);
+        QFETCH(double, seconds);
+        Mp3Source source(48000);
+        QVERIFY(source.open(fixtureBytes(file)));
+        QCOMPARE(source.sourceRate(), rate);
+        QCOMPARE(source.sourceChannels(), channels);
+        QVERIFY2(std::abs(source.duration() - seconds) < 0.03, qPrintable(QString::number(source.duration())));
+        // đọc hết: đúng số khung ra theo độ dài, kết thúc rõ ràng
+        std::vector<float> out;
+        while (source.read(out, 4096)) {
+        }
+        QVERIFY(source.atEnd());
+        const double frames = double(out.size() / 2);
+        QVERIFY2(std::abs(frames - source.duration() * 48000) <= 2, qPrintable(QString::number(frames)));
+        QVERIFY2(std::abs(source.position() - source.duration()) < 1e-3, qPrintable(QString::number(source.position())));
+        double peak = 0;
+        for (float x : out)
+            peak = std::max(peak, double(std::abs(x)));
+        QVERIFY(peak > 0.01 && peak <= 1.05); // có tiếng, không vỡ
+        if (channels == 1)
+            for (size_t i = 0; i < out.size(); i += 2)
+                QCOMPARE(out[i], out[i + 1]); // mono ra hai tai như nhau
+    }
+
+    void mp3ReadDoesNotDependOnChunkSize() {
+        Mp3Source a(48000), b(48000);
+        QVERIFY(a.open(fixtureBytes(QStringLiteral("music_student/stereo_44k.mp3"))));
+        QVERIFY(b.open(fixtureBytes(QStringLiteral("music_student/stereo_44k.mp3"))));
+        std::vector<float> x, y;
+        while (a.read(x, 4096)) {
+        }
+        for (size_t n = 1; b.read(y, n); n = n * 7 % 1500 + 1) {
+        }
+        QVERIFY(x == y);
+    }
+
+    void mp3SeekLandsOnTheSameAudio() {
+        const QByteArray bytes = fixtureBytes(QStringLiteral("music_student/stereo_44k.mp3"));
+        Mp3Source whole(48000), sought(48000);
+        QVERIFY(whole.open(bytes));
+        QVERIFY(sought.open(bytes));
+        std::vector<float> all, part;
+        while (whole.read(all, 4096)) {
+        }
+        sought.seek(5.0);
+        QCOMPARE(sought.position(), 5.0);
+        sought.read(part, 48000);
+        QVERIFY(std::abs(sought.position() - 6.0) < 1e-9);
+        // sau 100 khung (cửa sổ bộ đổi tần số đã đầy mẫu thật) trùng bản đọc liền một mạch
+        double worst = 0;
+        for (size_t i = 100 * 2; i < part.size(); ++i)
+            worst = std::max(worst, double(std::abs(part[i] - all[5 * 48000 * 2 + i])));
+        QVERIFY2(worst < 1e-3, qPrintable(QString::number(worst)));
+        // tua về 0 rồi đọc lại: y hệt lần đầu
+        sought.seek(0);
+        std::vector<float> again;
+        sought.read(again, 4800);
+        QVERIFY(std::equal(again.begin(), again.end(), all.begin()));
+    }
+
+    void mp3RejectsGarbage() {
+        Mp3Source source(48000);
+        QVERIFY(!source.open(QByteArray(4000, 'x')));
+        std::vector<float> out;
+        QCOMPARE(source.read(out, 100), size_t(0));
     }
 
     void resamplerResetStartsANewSource() {
