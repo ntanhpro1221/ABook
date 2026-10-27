@@ -3,6 +3,7 @@
 #include "fakes.h"
 #include "feedback.h"
 #include "music.h"
+#include "mediacontrols.h"
 #include "readalong.h"
 #include <QFontDatabase>
 #include <QQmlEngine>
@@ -32,6 +33,30 @@ private:
     FakeNet *m_net;
 };
 
+// Observe the actual SMTC adapter while QML operates the real shared Player.
+class WidthMedia : public QObject, public MediaSink {
+    Q_OBJECT
+    Q_PROPERTY(bool playing READ playing NOTIFY changed)
+    Q_PROPERTY(bool loaded READ loaded NOTIFY changed)
+    Q_PROPERTY(bool canNext READ canNext NOTIFY changed)
+    Q_PROPERTY(bool canPrevious READ canPrevious NOTIFY changed)
+public:
+    MediaControls *controls = nullptr;
+    bool playing() const { return state.status == MediaState::Playing; }
+    bool loaded() const { return state.loaded; }
+    bool canNext() const { return state.canNext; }
+    bool canPrevious() const { return state.canPrevious; }
+    void display(const MediaState &s, const QByteArray &) override { state = s; emit changed(); }
+    void playback(const MediaState &s) override { state = s; emit changed(); }
+    void timeline(const MediaState &s) override { state = s; emit changed(); }
+    Q_INVOKABLE void play() { controls->dispatch(MediaCommand::Play); }
+    Q_INVOKABLE void pause() { controls->dispatch(MediaCommand::Pause); }
+signals:
+    void changed();
+private:
+    MediaState state;
+};
+
 class WidthSetup : public QObject {
     Q_OBJECT
     QTemporaryDir dir;
@@ -42,6 +67,7 @@ class WidthSetup : public QObject {
     std::unique_ptr<Music> music;
     std::unique_ptr<Feedback> feedback;
     std::unique_ptr<WidthNet> netView;
+    std::unique_ptr<MediaControls> media;
 public slots:
     void qmlEngineAvailable(QQmlEngine *engine) {
         engine->addImageProvider(QStringLiteral("cover"), new WidthCovers);
@@ -60,6 +86,11 @@ public slots:
             QJsonObject{{QStringLiteral("timed"), true}, {QStringLiteral("segments"), segments}});
         player = std::make_unique<Player>(&audio, &net, dir.filePath(QStringLiteral("outbox.json")), nullptr);
         Player::setInstance(player.get());
+        auto mediaSink = std::make_unique<WidthMedia>();
+        auto *mediaView = mediaSink.get();
+        media = std::make_unique<MediaControls>(player.get(), &audio, std::move(mediaSink));
+        mediaView->controls = media.get();
+        qmlRegisterSingletonInstance("ABook", 1, 0, "WidthMedia", mediaView);
         read = std::make_unique<ReadAlong>(player.get(), &net);
         music = std::make_unique<Music>(player.get(), &net, [] { return new FakeOut; });
         feedback = std::make_unique<Feedback>([] { return new FakeOut; }, nullptr);

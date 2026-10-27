@@ -52,12 +52,16 @@ set(ABOOK_MUSIC_SOURCES
     src/musiclogic.h
     src/musictext.h
 )
+set(ABOOK_MIXER_SOURCES src/musicmixer.cpp src/musicmixer.h src/mixcore.h src/mp3source.cpp src/mp3source.h src/mfsource.cpp src/mfsource.h)
 
 if(WIN32)
 qt_add_executable(ABookDesk WIN32
     src/desktopapi.cpp
     src/desktopapi.h
     src/main.cpp
+    src/musicwindowactivity.h
+    src/mediacontrols.cpp
+    src/mediacontrols.h
     src/abookdesk.manifest
     src/audioout_mf.cpp
     src/audioout_mf.h
@@ -87,8 +91,9 @@ qt_add_executable(ABookDesk WIN32
     src/windowchrome.h
     ${ABOOK_PLAYER_SOURCES}
     ${ABOOK_MUSIC_SOURCES}
+    ${ABOOK_MIXER_SOURCES}
 )
-target_include_directories(ABookDesk PRIVATE src)
+target_include_directories(ABookDesk PRIVATE src third_party)
 qt_add_qml_module(ABookDesk
     URI ABook
     VERSION 1.0
@@ -96,6 +101,10 @@ qt_add_qml_module(ABookDesk
         qml/Theme.qml
         qml/Nav.qml
         qml/Main.qml
+        qml/WindowMode.qml
+        qml/DesktopTray.qml
+        qml/TrayMenuModel.qml
+        qml/MiniPlayer.qml
         qml/Icon.qml
         qml/LucidePaths.js
         qml/Interactive.qml
@@ -253,8 +262,9 @@ qt_add_qml_module(ABookDesk
 )
 target_compile_definitions(ABookDesk PRIVATE ABOOK_VERSION="${ABOOK_VERSION}" QT_NO_CAST_FROM_ASCII)
 # Âm thanh: Media Foundation của Windows (đo ở docs/NATIVE_PHONE_UI.md 7.1), không thêm DLL nào vào bản phân phối.
-target_link_libraries(ABookDesk PRIVATE Qt6::Quick Qt6::Network QWindowKit::Quick mfplat mf mfuuid ole32 ksuser propsys)
+target_link_libraries(ABookDesk PRIVATE Qt6::Quick Qt6::Network QWindowKit::Quick mfplat mf mfuuid mfreadwrite shlwapi ole32 ksuser propsys dwmapi windowsapp shell32)
 qt_add_resources(ABookDesk legal PREFIX "/legal" BASE "../docs" FILES "../docs/THIRD_PARTY.md")
+qt_add_resources(ABookDesk appicon PREFIX "/app" BASE "../ui/public" FILES "../ui/public/icon-192.png")
 if(MSVC)
     target_compile_options(ABookDesk PRIVATE /W3 /utf-8)
 endif()
@@ -285,6 +295,14 @@ target_link_libraries(MusicTests PRIVATE Qt6::Test Qt6::Qml Qt6::Network)
 if(MSVC)
     target_compile_options(MusicTests PRIVATE /W3 /utf-8)
 endif()
+# Lõi trộn của đường âm thanh WASAPI: phép tính thuần, không Qt Quick, không thiết bị âm thanh
+qt_add_executable(MixTests tests/test_mix.cpp src/audioout.cpp src/audioout.h ${ABOOK_MIXER_SOURCES} ${ABOOK_MUSIC_SOURCES})
+target_include_directories(MixTests PRIVATE src third_party)
+target_compile_definitions(MixTests PRIVATE QT_NO_CAST_FROM_ASCII MIX_FIXTURES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../tests/fixtures")
+target_link_libraries(MixTests PRIVATE Qt6::Test Qt6::Network mfplat mf mfuuid mfreadwrite shlwapi ole32 ksuser propsys)
+if(MSVC)
+    target_compile_options(MixTests PRIVATE /W3 /utf-8)
+endif()
 # Biểu tượng tua 15 giây đo bằng điểm ảnh (bộ vẽ phần mềm, nền offscreen)
 qt_add_executable(SkipGlyphTests tests/test_skipglyph.cpp)
 target_compile_definitions(SkipGlyphTests PRIVATE SKIPGLYPH_QML_DIR="${CMAKE_CURRENT_SOURCE_DIR}/qml" SKIPGLYPH_FONT_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fonts")
@@ -302,6 +320,22 @@ if(MSVC)
     target_compile_options(SidebarTests PRIVATE /W3 /utf-8)
 endif()
 enable_testing()
+qt_add_executable(MediaControlsTests tests/test_mediacontrols.cpp tests/fakes.h src/mediacontrols.cpp src/mediacontrols.h ${ABOOK_PLAYER_SOURCES})
+target_include_directories(MediaControlsTests PRIVATE src tests)
+target_compile_definitions(MediaControlsTests PRIVATE QT_NO_CAST_FROM_ASCII)
+target_link_libraries(MediaControlsTests PRIVATE Qt6::Test Qt6::Qml Qt6::Network windowsapp shell32)
+qt_add_executable(SmtcHost WIN32 tools/smtc_host.cpp tests/fakes.h src/mediacontrols.cpp src/mediacontrols.h ${ABOOK_PLAYER_SOURCES})
+target_include_directories(SmtcHost PRIVATE src tests)
+target_compile_definitions(SmtcHost PRIVATE QT_NO_CAST_FROM_ASCII)
+target_link_libraries(SmtcHost PRIVATE Qt6::Qml Qt6::Network windowsapp shell32)
+add_executable(SmtcProbe tools/smtc_probe.cpp)
+target_link_libraries(SmtcProbe PRIVATE windowsapp)
+if(MSVC)
+    foreach(target MediaControlsTests SmtcHost SmtcProbe)
+        target_compile_options(${target} PRIVATE /W3 /utf-8)
+    endforeach()
+endif()
+add_test(NAME MediaControlsTests COMMAND MediaControlsTests)
 qt_add_executable(DesktopApiTests tests/test_desktopapi.cpp tests/fakes.h src/desktopapi.cpp src/desktopapi.h src/audioout.cpp src/audioout.h
     src/feedback.cpp src/feedback.h src/hostmessage.h src/playernet.h)
 target_include_directories(DesktopApiTests PRIVATE tests)
@@ -311,12 +345,12 @@ if(MSVC)
     target_compile_options(DesktopApiTests PRIVATE /W3 /utf-8)
 endif()
 add_test(NAME DesktopApiTests COMMAND DesktopApiTests)
-qt_add_executable(WidthTests tests/test_width.cpp tests/fakes.h src/bookdetail.cpp src/bookdetail.h
+qt_add_executable(WidthTests tests/test_width.cpp tests/fakes.h src/bookdetail.cpp src/bookdetail.h src/mediacontrols.cpp src/mediacontrols.h
     src/readalong.cpp src/readalong.h src/music.cpp src/music.h src/feedback.cpp src/feedback.h ${ABOOK_PLAYER_SOURCES} ${ABOOK_MUSIC_SOURCES})
 target_include_directories(WidthTests PRIVATE src tests)
 target_compile_definitions(WidthTests PRIVATE QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/width"
     WIDTH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(WidthTests PRIVATE Qt6::QuickTest Qt6::Quick Qt6::Network)
+target_link_libraries(WidthTests PRIVATE Qt6::QuickTest Qt6::Quick Qt6::Network windowsapp shell32)
 set_target_properties(WidthTests PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/width_tests")
 if(MSVC)
     target_compile_options(WidthTests PRIVATE /W3 /utf-8)
@@ -325,5 +359,15 @@ add_test(NAME WidthTests COMMAND WidthTests)
 add_test(NAME PlayerTests COMMAND PlayerTests)
 add_test(NAME ReadAlongTests COMMAND ReadAlongTests)
 add_test(NAME MusicTests COMMAND MusicTests)
+add_test(NAME MixTests COMMAND MixTests)
 add_test(NAME SkipGlyphTests COMMAND SkipGlyphTests)
 add_test(NAME SidebarTests COMMAND SidebarTests)
+
+qt_add_executable(MusicWindowActivityTests tests/test_musicwindowactivity.cpp src/musicwindowactivity.h)
+target_include_directories(MusicWindowActivityTests PRIVATE src)
+target_compile_definitions(MusicWindowActivityTests PRIVATE QT_NO_CAST_FROM_ASCII)
+target_link_libraries(MusicWindowActivityTests PRIVATE Qt6::Test Qt6::Gui)
+if(MSVC)
+    target_compile_options(MusicWindowActivityTests PRIVATE /W3 /utf-8)
+endif()
+add_test(NAME MusicWindowActivityTests COMMAND MusicWindowActivityTests)

@@ -1,6 +1,7 @@
 #include "platform.h"
 
 #include <QJSEngine>
+#include <QGuiApplication>
 #include <QCoreApplication>
 #include <QDesktopServices>
 #include <QDir>
@@ -9,6 +10,7 @@
 #include <QKeyEvent>
 #include <QPointer>
 #include <QSettings>
+#include <QScreen>
 #include <QTimer>
 #include <QUrl>
 #include <QWindow>
@@ -71,14 +73,27 @@ void Platform::revealFile(const QString &path) {
     QDesktopServices::openUrl(QUrl::fromLocalFile(folder));
 }
 
+QRect Platform::workArea(QWindow *window, const QPointF &position) const {
+    // Vị trí mini có thể ở màn hình khác; màn hình đã tháo thì trở về màn hình cửa sổ đầy.
+    if (qIsFinite(position.x()) && qIsFinite(position.y()))
+        if (const auto *screen = QGuiApplication::screenAt(position.toPoint()))
+            return screen->availableGeometry();
+    return window && window->screen() ? window->screen()->availableGeometry() : QRect(0, 0, 1280, 800);
+}
+
 bool Platform::eventFilter(QObject *watched, QEvent *event) {
     switch (event->type()) {
     case QEvent::WindowStateChange:
-        // Thu nhỏ quá 2 s: trả working set về hệ điều hành. Lúc phát nền chỉ còn trang âm thanh đang dùng (~10 MB thay vì ~60);
+    case QEvent::Hide:
+        // Thu nhỏ hoặc ẩn vào khay quá 2 s: dùng cùng một đường trả working set về hệ điều hành;
         // mở lại thì trang về dần từ danh sách chờ (lỗi trang mềm), đo trong PROGRESS.md mục RAM.
-        if (auto *window = qobject_cast<QWindow *>(watched); window && window->windowState() == Qt::WindowMinimized)
+        if (auto *window = qobject_cast<QWindow *>(watched); window && (!window->isVisible() || window->windowState() == Qt::WindowMinimized))
             QTimer::singleShot(2000, this, [window = QPointer<QWindow>(window)] {
-                if (window && window->windowState() == Qt::WindowMinimized) {
+                if (window && (!window->isVisible() || window->windowState() == Qt::WindowMinimized)) {
+                    // Một cửa sổ phụ vừa ẩn không được trim khi cửa sổ chính hoặc mini vẫn đang hiện.
+                    for (const auto *visible : QGuiApplication::topLevelWindows())
+                        if (visible->isVisible() && visible->windowState() != Qt::WindowMinimized)
+                            return;
 #ifdef Q_OS_WIN
                     SetProcessWorkingSetSize(GetCurrentProcess(), SIZE_T(-1), SIZE_T(-1));
 #endif
