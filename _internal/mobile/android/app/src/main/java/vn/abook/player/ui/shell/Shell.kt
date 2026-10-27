@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import vn.abook.player.ui.components.SheetHost
 import vn.abook.player.ui.components.SheetLayer
@@ -107,6 +108,18 @@ class ShellState(val scope: CoroutineScope, onSortChanged: (LibrarySort) -> Unit
     val libraryGrid = LazyGridState()
     val library = LibraryUiState(scope, onSortChanged = onSortChanged)
     val sheets = SheetHost()
+
+    /**
+     * File app khác gửi tới ("Mở bằng", chia sẻ): vào hàng nhập sách rồi mở "Thêm sách" (trượt vào như mọi màn con) để bạn thấy tiến độ; Back về chỗ đang đứng.
+     * Đang ở chính Thêm sách (hay bước xem trước của nó) thì không đẩy thêm màn: hàng đợi tự hiện file mới.
+     */
+    suspend fun receive(queue: ImportQueue, sources: List<String>) {
+        queue.enqueue(sources)
+        while (nav.progress.isRunning) delay(20) // đang chuyển cảnh thì NavState.push bỏ lệnh
+        val top = nav.stack.top?.destination
+        if (top == Destination.AddBook || top is Destination.ImportReview || top is Destination.ImportChapter) return
+        nav.push(Destination.AddBook)
+    }
 }
 
 /**
