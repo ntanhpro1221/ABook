@@ -15,6 +15,9 @@ Reo khi, so với những gì chuông đã thấy:
    thì không reo, chỉ thêm vào danh sách canh.
 3. một project mới CHẾT / ĐỨNG IM (`heartbeat_tick.stopped`).
 4. máy chuyển sang chạy PIN - 24-09 sạc rút lúc 22:50 mà tới 00:07 mới biết, pin còn 5%.
+5. có thư mới trong `runtime/lead_inbox/` - phiên Model/Music hết lượt nhắn (app chặn sau 10 tin tới phiên khác kể từ
+   lần chủ sách gõ vào phiên ấy; chủ sách 27-10: "nó không nhắn lại được cho bạn thì làm việc kiểu gì được"). Phiên con
+   ghi một file `.md` vào đó; Lead đọc xong thì chuyển nó vào `lead_inbox/read/`. Reo ngay, không đợi hai lần dò.
 
 Sườn, không mức: một thứ đã sai từ trước khi chuông canh thì không reo lại mãi - chuông B và nhịp tim đầy đủ lo phần
 ấy. Mọi thay đổi trừ (1) phải đứng qua HAI lần dò liền nhau mới reo: ngay sau khi thả một ranh giới, phép đếm tiến
@@ -39,6 +42,7 @@ import bells  # noqa: E402
 import heartbeat_tick as tick  # noqa: E402
 
 DETACHED_LOG = bells.RUNTIME / "detached_runs.log"
+INBOX = bells.RUNTIME / "lead_inbox"
 BOUNDARY = r"boundary\.sh \d"
 
 
@@ -75,9 +79,17 @@ def finished_runs(log: Path = DETACHED_LOG) -> list[str]:
     return [line for line in text.splitlines() if "xong (mã" in line]
 
 
+def letters(inbox: Path = INBOX) -> list[str]:
+    try:
+        return sorted(entry.name for entry in inbox.iterdir() if entry.is_file())
+    except OSError:
+        return []
+
+
 def snapshot() -> dict:
     done = finished_runs()
     return {
+        "letters": letters(),
         "roots": boundary_roots(processes()),
         "done": len(done),
         "last_done": done[-5:],
@@ -90,11 +102,13 @@ def snapshot() -> dict:
 class Watch:
     """Nhớ những gì đã thấy; `observe` trả về các câu cần reo (rỗng = canh tiếp)."""
 
-    def __init__(self, first: dict) -> None:
+    def __init__(self, first: dict, quiet: tuple[str, ...] = ()) -> None:
+        self.quiet = quiet
         self.roots = set(first["roots"] or [])
         self.done = int(first["done"])
         self.problems = set(first["problems"])
         self.battery = bool(first["battery"])
+        self.letters: set[str] = set()  # thư chưa đọc từ trước khi canh cũng reo (tới trong lúc chuông nghỉ)
         self.suspect: set[str] = set()  # thay đổi thấy ở lần dò trước, chưa đủ hai lần
 
     def observe(self, now: dict) -> list[str]:
@@ -102,7 +116,16 @@ class Watch:
         seen: set[str] = set()
         if now["done"] > self.done:
             fresh = now["last_done"][-min(now["done"] - self.done, len(now["last_done"])):]
-            ring.append("việc rời xong: " + " | ".join(line.strip() for line in fresh))
+            self.done = now["done"]
+            # Việc của luồng khác (`--quiet`) xong êm (mã 0) thì không reo: mỗi lần reo là một lượt đầy đủ của phiên Lead
+            # (chủ sách 05-10: thức mỗi vài phút vì từng chương của Model tốn token). Hỏng (mã khác 0) thì vẫn reo.
+            fresh = [line for line in fresh if not ("(mã 0)" in line and any(part in line for part in self.quiet))]
+            if fresh:
+                ring.append("việc rời xong: " + " | ".join(line.strip() for line in fresh))
+        fresh_letters = sorted(set(now.get("letters", [])) - self.letters)
+        if fresh_letters:
+            self.letters |= set(fresh_letters)
+            ring.append("thư mới ở runtime/lead_inbox: " + ", ".join(fresh_letters))
         if now["roots"] is not None:
             current = set(now["roots"])
             for root in sorted(self.roots - current):
@@ -134,6 +157,8 @@ def main(argv: list[str]) -> int:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--every", type=float, default=60.0, help="giây giữa hai lần dò")
+    parser.add_argument("--quiet", action="append", default=[],
+                        help="việc rời có chuỗi này trong dòng lệnh mà xong êm thì không reo (lặp được)")
     args = parser.parse_args(argv)
 
     other = bells.claim(bells.EVENT_STATE, bells.EVENT_MARKER, {"every": args.every})
@@ -148,7 +173,7 @@ def main(argv: list[str]) -> int:
                 break
             time.sleep(args.every)
             first = snapshot()
-        watch = Watch(first)
+        watch = Watch(first, tuple(args.quiet))
         print(f"chuông A canh từ {time.strftime('%H:%M:%S ngày %d-%m')}: ranh giới {sorted(watch.roots) or 'không có'}"
               f" | {watch.done} việc rời đã xong | vấn đề sẵn có: {sorted(watch.problems) or 'không'}"
               f" | {'PIN' if watch.battery else 'cắm sạc'}", flush=True)
