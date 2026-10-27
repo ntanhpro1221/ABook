@@ -3,6 +3,8 @@
 #pragma once
 
 #include <QObject>
+#include <QRect>
+#include <QWindow>
 #include <QJSEngine>
 #include <QQmlEngine>
 #include <QtQml/qqmlregistration.h>
@@ -26,6 +28,7 @@ public:
     Q_INVOKABLE QString setting(const QString &key, const QString &fallback = {}) const;
     Q_INVOKABLE void setSetting(const QString &key, const QString &value);
     Q_INVOKABLE void revealFile(const QString &path);
+    Q_INVOKABLE QRect workArea(QWindow *window, const QPointF &position) const;
 
 signals:
     void reduceMotionChanged();

@@ -12,6 +12,7 @@ Column {
         : "Phím một chữ cái đang tắt" + (inSettings ? "" : " (bật ở Cài đặt › Giao diện)") + ". Space, mũi tên, Esc vẫn chạy."
     // phím theo thứ tự, việc, có là phím một chữ cái không; "+" là chữ nối giữa các phím
     readonly property var rows: [
+        {keys: ["Ctrl", "+", "Shift", "+", "M"], label: "Cửa sổ mini", letter: false},
         {keys: ["Space"], label: "Phát / tạm dừng", letter: false},
         {keys: ["←", "→"], label: "Lùi / tới 15 giây", letter: false},
         {keys: ["Shift", "+", "←", "→"], label: "Chương trước / sau", letter: false},

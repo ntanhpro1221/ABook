@@ -76,6 +76,7 @@ class Player : public QObject {
     Q_OBJECT
     QML_ELEMENT
     QML_SINGLETON
+    Q_PROPERTY(int skipSeconds READ skipSeconds CONSTANT)
     // ---- ảnh chụp ----
     Q_PROPERTY(bool loaded READ loaded NOTIFY loadedChanged)
     Q_PROPERTY(QString bookId READ bookId NOTIFY bookChanged)
@@ -118,6 +119,7 @@ public:
     static Player *create(QQmlEngine *, QJSEngine *);
     /// Gắn bản dùng chung cho QML (main.cpp dựng Player thật, create() trả lại đúng nó).
     static void setInstance(Player *player);
+    int skipSeconds() const { return int(PlayerLogic::kSkipSeconds); }
 
     bool loaded() const { return m_loaded; }
     QString bookId() const { return m_book.id; }

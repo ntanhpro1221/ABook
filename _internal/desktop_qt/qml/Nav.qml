@@ -5,6 +5,7 @@ import QtQuick
 // Back (Esc, Alt+Left, nút Back của chuột) đóng lớp nổi trên cùng trước, rồi mới lùi một màn; Back không bao giờ thoát app.
 QtObject {
     property var stack: null          // ScreenStack, gán trong Main.qml
+    property var windowMode: null
     property var layers: []           // lớp nổi đang mở, mới nhất ở cuối; mỗi lớp có close()
 
     // Studio của máy tính đã ghép đang mở ở màn Studio ("Mở Studio" ở Cài đặt › Thiết bị › Máy tính khác): mã máy (12 hex), "" = Studio của máy này

@@ -1,4 +1,7 @@
 module ABook
+WindowMode 1.0 ../../../../qml/WindowMode.qml
+MiniPlayer 1.0 ../../../../qml/MiniPlayer.qml
+TrayMenuModel 1.0 ../../../../qml/TrayMenuModel.qml
 singleton Theme 1.0 ../../../../qml/Theme.qml
 singleton Nav 1.0 ../../../../qml/Nav.qml
 singleton Platform 1.0 Platform.qml
