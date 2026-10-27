@@ -26,7 +26,7 @@ Item {
             Api.preferences = {theme: "system"}
             Api.info = {version: "fixture"}
             Api.loaded = true
-            Api.notice = ""
+            Api.toasts = []
             Nav.layers = []
             Platform.reset()
             opened = []

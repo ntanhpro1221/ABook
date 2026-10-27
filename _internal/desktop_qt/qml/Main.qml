@@ -169,7 +169,14 @@ Window {
         }
     }
     // Lời báo của app (Toaster của web): góc trên bên phải, cách dải tiêu đề và mép phải 16 px; trên cả hộp thoại
+    // "Chi tiết" của lời báo đang mở: bấm chỗ khác trong cửa sổ là đóng; handler chỉ nhìn (không giữ cú bấm), cú bấm vẫn tới chỗ được bấm
+    Item {
+        anchors.fill: parent
+        z: 89
+        TapHandler { gesturePolicy: TapHandler.DragThreshold; onPressedChanged: if (pressed) toaster.pressedAt(point.scenePosition) }
+    }
     Toast {
+        id: toaster
         z: 90
         anchors.right: parent.right
         anchors.rightMargin: 16

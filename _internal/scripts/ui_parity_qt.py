@@ -104,7 +104,7 @@ SCREENS: list[tuple[str, tuple[str, ...], tuple[tuple[str, tuple[str, ...] | Non
     ("Chung", ("Button.qml", "IconButton.qml", "MenuRow.qml", "ScreenHeader.qml", "ScreenStack.qml", "Interactive.qml", "Icon.qml",
                "Scrollbar.qml", "SmoothWheel.qml", "Nav.qml", "ClockUser.qml", "Modal.qml", "Api.qml", "Collapse.qml",
                "FormField.qml", "FormLabel.qml", "HintText.qml", "SettingsItem.qml", "Switch.qml", "ScrollEdges.qml", "Toast.qml"),
-     (("shared/ScreenHeader.tsx", None), ("shared/ui.tsx", None), ("desktop/App.tsx", ("App",)))),
+     (("shared/ScreenHeader.tsx", None), ("shared/ui.tsx", None), ("desktop/App.tsx", ("App",)), ("shared/ToastDetails.tsx", None))),
 ]
 
 # Thuộc tính QML mang chữ cho người dùng.

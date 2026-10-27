@@ -42,7 +42,7 @@ Item {
             Api.info = {version: "fixture", dialogs: true}
             Api.loaded = true
             Api.saving = false
-            Api.notice = ""
+            Api.toasts = []
             Nav.layers = []
             server = textBook()
             // Máy chủ giả: GET sách trả bản hiện tại; PUT tên / tác giả sửa nó rồi trả lời như thật

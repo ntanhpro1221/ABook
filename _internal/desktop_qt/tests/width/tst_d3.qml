@@ -79,7 +79,7 @@ Item {
             Api.info = {version: "0.4.147"}
             Api.loaded = true
             Api.saving = false
-            Api.notice = ""
+            Api.toasts = []
             Nav.layers = []
             Nav.studioPeer = ""
             Theme.reduceMotion = true
@@ -88,7 +88,7 @@ Item {
         }
         function cleanup() {
             Theme.mode = "auto"; Theme.reduceMotion = false; Theme.readingSurface = "auto"
-            Nav.layers = []; Nav.studioPeer = ""; Api.notice = ""
+            Nav.layers = []; Nav.studioPeer = ""; Api.toasts = []
             DesktopApi.delayed = false
             if (Player.volume === 0) Player.toggleMute()
             Player.setRate(1)
@@ -581,22 +581,29 @@ Item {
 
         // ================= 6. lời báo có nút =================
         function makeToast() {
+            Api.toasts = []
             const toast = createTemporaryObject(toastFactory, host, {x: host.width - 356 - 16, y: 16})
             verify(toast !== null)
             return toast
         }
+        // Thẻ trước nhất của vùng lời báo (D4: các thẻ chồng như sonner)
+        function frontCard(toast) { return all(toast, "toastCard").filter(c => c.order === 0)[0] }
         function test_toastShowsTitleDescriptionAndAction() {
+            // D4: lời báo có chi tiết hiện MỘT dòng + nút "Chi tiết" (ToastDetails của web); nút việc nằm trong bảng chi tiết
             const toast = makeToast()
             let ran = 0
             Api.toast("Đã lưu file sách\nChưa có thay đổi nào - file giống bản gốc.", {duration: 8000, action: {label: "Mở thư mục", run: function() { ran++ }}})
-            tryVerify(function() { return toast.t === 1 })
-            compare(one(toast, "toastTitle").text, "Đã lưu file sách")
-            compare(one(toast, "toastDescription").text, "Chưa có thay đổi nào - file giống bản gốc.")
-            compare(toast.duration, 8000)
-            const action = one(toast, "toastAction")
+            tryVerify(function() { const c = frontCard(toast); return c && c.opacity === 1 })
+            const card = frontCard(toast)
+            compare(one(card, "toastTitle").text, "Đã lưu file sách")
+            compare(card.duration, 8000)
+            const action = one(card, "toastAction")
             verify(shown(action))
-            compare(action.Accessible.name, "Mở thư mục")
+            compare(action.Accessible.name, "Chi tiết")
             mouseClick(action)
+            tryCompare(one(toast, "toastDetails"), "shown", 1)
+            compare(one(toast, "toastDescription").text, "Chưa có thay đổi nào - file giống bản gốc.")
+            mouseClick(one(toast, "toastDetailsAction"))
             compare(ran, 1)
             compare(Api.notice, "")
             tryVerify(function() { return !toast.visible })
@@ -606,51 +613,54 @@ Item {
             Api.toast("Có nút", {action: {label: "Hoàn tác", run: function() {}}})
             Api.notice = "Đã đổi tên chương: Chương 1"   // gán thẳng: lời trơn, không mang nút của lời trước
             compare(Api.noticeAction, null)
-            tryVerify(function() { return toast.t === 1 })
-            verify(!shown(one(toast, "toastAction")))
-            compare(toast.duration, 4000)
+            tryVerify(function() { const c = frontCard(toast); return c && c.opacity === 1 && c.key === Api.toasts[0].id })
+            verify(!shown(one(frontCard(toast), "toastAction")))
+            compare(frontCard(toast).duration, 4000)
             tryCompare(Api, "notice", "", 6000)
         }
         function test_toastCloseButtonAndHoverPause() {
             const toast = makeToast()
             Api.toast("Đã xoá mẫu “Nhanh”", {duration: 300, action: {label: "Hoàn tác", run: function() {}}})
+            tryVerify(function() { return toast.height > 0 })
             mouseMove(toast, toast.width / 2, 20)
             wait(700)
             compare(Api.notice, "Đã xoá mẫu “Nhanh”", "rê chuột vào thì dừng đếm")
             compare(one(toast, "toastClose").Accessible.name, "Đóng thông báo")
-            mouseClick(one(toast, "toastClose"))
+            mouseClick(one(frontCard(toast), "toastClose"))
             compare(Api.notice, "")
         }
         function test_sameToastAgainShowsAgain() {
+            // Cùng lời lần nữa (không id) là thẻ mới, như sonner: hai thẻ chồng nhau
             const toast = makeToast()
             Api.toast("Đã xoá mẫu “A”", {action: {label: "Hoàn tác", run: function() {}}})
-            spy.clear(); spy.target = Api; spy.signalName = "noticeChanged"
             Api.toast("Đã xoá mẫu “A”", {action: {label: "Hoàn tác", run: function() {}}})
-            verify(spy.count >= 2)
+            compare(Api.toasts.length, 2)
             compare(Api.notice, "Đã xoá mẫu “A”")
         }
         function test_toastSlidesAndScales() {
             Theme.reduceMotion = false
             const toast = makeToast()
-            const card = toast.children[toast.children.length - 1]
             Api.notice = "Đã thêm sách vào thư viện"
+            tryVerify(function() { return frontCard(toast) !== undefined })
+            const card = frontCard(toast)
             let mid = false
-            tryVerify(function() { if (toast.t > 0.05 && toast.t < 0.95 && card.scale < 1) mid = true; return toast.t === 1 }, 2000)
-            verify(mid, "mở bằng trượt + thu phóng")
+            tryVerify(function() { if (card.y < -1 && card.y > -card.height + 1) mid = true; return card.y === 0 && card.opacity === 1 }, 2000)
+            verify(mid, "vào bằng trượt từ trên xuống")
             Api.notice = ""
             tryVerify(function() { return !toast.visible }, 2000)
         }
         function test_longToastWrapsNeverCut() {
             const toast = makeToast()
-            const text = "Không lưu được mẫu\n" + "Tênkhôngcóchỗngắtrấtrấtrấtrấtrấtrấtrấtrấtrấtrấtrấtrấtrấtdài và một câu rất dài nữa để xuống nhiều dòng trong thẻ"
+            const text = "Tênkhôngcóchỗngắtrấtrấtrấtrấtrấtrấtrấtrấtrấtrấtrấtrấtrấtdài và một câu rất dài nữa để xuống nhiều dòng trong thẻ"
             Api.toast(text, {action: {label: "Hoàn tác", run: function() {}}})
-            tryVerify(function() { return toast.t === 1 })
-            const description = one(toast, "toastDescription")
-            verify(description.lineCount > 1)
-            verify(description.contentWidth <= description.width + 1)
-            const action = one(toast, "toastAction")
-            verify(description.parent.x + description.parent.width <= action.x, "chữ không chạy dưới nút")
-            verify(toast.height >= description.y + description.height + 28, "thẻ cao theo chữ")
+            tryVerify(function() { const c = frontCard(toast); return c && c.opacity === 1 })
+            const card = frontCard(toast)
+            const title = one(card, "toastTitle")
+            verify(title.lineCount > 1)
+            verify(title.contentWidth <= title.width + 1)
+            const action = one(card, "toastAction")
+            verify(title.x + title.width <= action.x || title.y + title.height <= action.y, "chữ không chạy dưới nút")
+            verify(card.height >= title.y + title.height + 32, "thẻ cao theo chữ")
         }
         function test_templateUndoAndSaveAsFolderUseToastAction() {
             Api.preferences = {theme: "system", bookTemplates: [{name: "Nhanh gọn", narrator: "", profile: "fast", analysisModel: "", startNow: true, precastWait: false}]}
@@ -677,11 +687,11 @@ Item {
         function test_shotsToast() {
             both(function() {
                 const toast = makeToast()
-                Api.toast("Đã lưu file sách\nChưa có thay đổi nào - file giống bản gốc.", {duration: 60000, action: {label: "Mở thư mục", run: function() {}}})
+                Api.toast("Đã lưu file sách", {duration: 60000, action: {label: "Mở thư mục", run: function() {}}})
                 shot("toast_action")
                 Api.toast("Đã xoá mẫu “Truyện kinh dị đọc đêm khuya của bạn”", {duration: 60000, action: {label: "Hoàn tác", run: function() {}}})
                 shot("toast_undo")
-                Api.notice = ""
+                Api.toasts = []
                 toast.destroy()
             })
         }

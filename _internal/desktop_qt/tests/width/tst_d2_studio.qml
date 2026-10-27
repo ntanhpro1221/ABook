@@ -42,7 +42,7 @@ Item {
             Api.bind(DesktopApi, Theme)
             Api.saving = false
             Api.loaded = true
-            Api.notice = ""
+            Api.toasts = []
             Api.preferences = {theme: "system", bookTemplates: templates()}
             Api.info = {version: "0.4.40", studio: {installed: true}}
             store = {status: installedStatus(), entries: readings(), prefs: {bookTemplates: templates()}}

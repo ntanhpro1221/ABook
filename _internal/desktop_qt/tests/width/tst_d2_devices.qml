@@ -66,7 +66,7 @@ Item {
             Api.preferences = {theme: "system"}
             Api.info = {version: "0.4.147"}
             Api.loaded = true
-            Api.notice = ""
+            Api.toasts = []
             Nav.layers = []
             Theme.reduceMotion = true
         }

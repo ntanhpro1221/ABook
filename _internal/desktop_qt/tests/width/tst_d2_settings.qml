@@ -48,13 +48,13 @@ Item {
             Api.info = {version: "0.4.147", dialogs: true}
             Api.loaded = true
             Api.saving = false
-            Api.notice = ""
+            Api.toasts = []
             Nav.layers = []
             Theme.reduceMotion = true
             view = {tracks: [], analyzer: false}
             DesktopApi.thirdParty = "# Thành phần sử dụng\n\nABook dùng các thành phần mã nguồn mở sau.\n\n## Qt\n\n- **Qt 6** (LGPL-3.0): khung giao diện, `QtQuick` và `QtMultimedia`.\n- Lucide (ISC): bộ biểu tượng.\n\n## Python\n\n- **CPython** (PSF): chạy phần máy chủ.\n\n## Ghi chú cho người bảo trì\n\n- Cách phát hành, không hiện cho người dùng.\n"
         }
-        function cleanup() { DesktopApi.delayed = false; Nav.layers = []; Theme.reduceMotion = false; Theme.mode = "auto"; Api.notice = "" }
+        function cleanup() { DesktopApi.delayed = false; Nav.layers = []; Theme.reduceMotion = false; Theme.mode = "auto"; Api.toasts = [] }
 
         // ---- tiện ích ----
         function make(factory, props) {
@@ -107,7 +107,7 @@ Item {
             compare(Api.preferences.autoRewind, false)
             compare(Api.notice, "Chưa lưu được cài đặt\nKhông ghi được tệp tuỳ chọn")
             DesktopApi.responses = {}
-            Api.notice = ""
+            Api.toasts = []
             const music = switchOf(page, "Tự chọn nhạc nền")
             music.toggled(false)
             compare(last("PUT", "/api/preferences").body.autoMusic, false)
@@ -322,7 +322,7 @@ Item {
             verify(!toggle.checked)
             compare(Api.notice, "Chưa lưu được cài đặt\nTệp tuỳ chọn bị khoá")
             // máy chủ đáp 200 nhưng không nhận đúng lịch
-            Api.notice = ""
+            Api.toasts = []
             replyWith("PUT /api/preferences", () => ({status: 200, data: {sleepSchedule: null}}))
             toggle.toggled(true)
             compare(Api.notice, "Chưa đổi được lịch đêm\nMáy chủ chưa nhận lịch. Thử lại sau.")
@@ -371,7 +371,7 @@ Item {
             compare(last("PUT", "/api/preferences").body.libraryRoot, "E:/Sách")
             compare(Api.notice, "Đã đổi thư mục thư viện")
             compare(Api.preferences.libraryRoot, "E:/Sách")
-            Api.notice = ""
+            Api.toasts = []
             reply("PUT /api/preferences", 400, {error: "Thư mục này không dùng được"})
             page.useLibrary("F:/Khác")
             compare(Api.preferences.libraryRoot, "E:/Sách")

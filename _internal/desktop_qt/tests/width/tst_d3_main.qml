@@ -22,7 +22,7 @@ TestCase {
         Api.bind(DesktopApi, Theme)
         Api.preferences = {theme: "system"}
         Api.loaded = true
-        Api.notice = ""
+        Api.toasts = []
         Theme.reduceMotion = true
         const component = Qt.createComponent(Qt.resolvedUrl("../../qml/Main.qml"))
         compare(component.status, Component.Ready, component.errorString())
@@ -83,16 +83,16 @@ TestCase {
         compare(Api.info.update.version, "0.4.148")
         Backend.hostEvent("abook-update-failed", "Đường tải bản mới đứng yên quá lâu.")
         compare(Api.notice, "Chưa tải được bản mới\nĐường tải bản mới đứng yên quá lâu.")
-        Api.notice = ""
+        Api.toasts = []
     }
     function test_5_toastSitsTopRightAboveDialogs() {
         const toast = all(win.contentItem, "toast")[0]
         Api.toast("Đã lưu file sách", {action: {label: "Mở thư mục", run: function() {}}})
-        tryVerify(function() { return toast.t === 1 })
+        tryVerify(function() { return all(toast, "toastCard").some(c => c.opacity === 1) })
         const p = toast.mapToItem(win.contentItem, 0, 0)
         compare(p.x + toast.width, win.width - 16)
         verify(p.y >= 40 + 16 - 0.5)
         verify(toast.z > dialog().z)
-        Api.notice = ""
+        Api.toasts = []
     }
 }

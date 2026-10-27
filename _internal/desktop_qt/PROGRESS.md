@@ -27,6 +27,24 @@ Ninja + conda g++, every test exe offscreen). App target (WIN32 only) still NOT 
    Tests: ReadAlongTests 18 (+4: textScript and anchors vs numbers printed by the web code, ChapterText load / follow / text-only / 503 / 404),
    tst_d4 reader 20. Shots: build/d2shots/d4_reader{,_type,_text_only}_{light,dark}.png, d4_reader_{paper,ivory,night}_light.png.
    ui_parity_qt: new screen "Màn đọc" (ReaderScreen/ReaderChoices/ReaderLogic ~ ReaderScreen.tsx, labels.ts readerHint/chapterOpenProblem).
+2. Toasts like sonner (desktop/App.tsx Toaster: top-right, visibleToasts 2, closeButton; styles.css overrides): Api.toasts = live toasts,
+   newest first, each {id, title, description, action, duration, version}; Api.toast(text, {id, duration, action}) pushes (same id replaces in
+   place, like toast(..., {id}) of the web), Api.dismiss(id), Api.runToastAction(id). Api.notice = text of the newest toast; `notice = "x"`
+   pushes a plain toast, `notice = ""` dismisses the newest (callers that show their error in place); noticeAction / noticeDuration /
+   runNoticeAction() = the newest one. Toast.qml keeps one delegate per toast for its whole life: front card at y 0, the one behind 14 px lower,
+   5 % smaller, as tall as the front, text hidden; a 3rd+ is hidden until promoted. Hover expands (stacked 14 apart) and pauses every timer.
+   Enter = slide down from -100 % of its height + fade; dismiss of the front = slide up out, a back card drifts 40 % down; the rest slide to
+   their new place (motionMedium / motionMediumOut, standard easing; reduced motion: fade only, stack geometry kept).
+   A toast with a description shows ONE line + "Chi tiết" (ToastDetails.tsx): panel 320 wide, 12 px under the card, title + description + the
+   toast's action as a ghost button; Back or a press elsewhere in the window closes it (Main: passive TapHandler -> Toast.pressedAt); the toast
+   does not expire while it is open. ✕ now sits inside the top-right corner (styles.css), not on the border. Every Api.toast caller with
+   "title\ndetail" (Music.toast, EditBookLogic.toastText, Queue.said...) therefore shows "Chi tiết" as the web does.
+   Tests: tst_d4 +8 (stack + 3rd hidden, hover expand + pause, enter / push / exit motion, reduced motion, same id, details open/close/hold,
+   corner ✕); old tests changed: tst_d3 toast tests (single toast `t` -> cards, description -> "Chi tiết"), tst_d3_main toast placement,
+   test resets `Api.notice = ""` -> `Api.toasts = []` (a reset must clear the whole stack). All Width files pass (288).
+   Shots: d4_toast_{stack,expanded,details}_{light,dark}.png. ui_parity_qt: "Chung" also reads shared/ToastDetails.tsx.
+- Open (D4): toasts have no type icons (success / error / warning of sonner), no swipe to dismiss, a paused timer restarts from the full
+  duration (sonner resumes the rest), no Alt+T focus shortcut.
 - Open (D4): reader has no "Tìm trong sách" (FindInBook), no sentence selection bar (Chép / Sửa câu này / cách đọc), no keyboard walk over
   sentences, no read-aloud voice for text-only chapters (Qt plays recorded audio only, so the hint says "Máy này chưa có giọng đọc."), no
   "?at=" open-at-sentence (only FindInBook uses it).
