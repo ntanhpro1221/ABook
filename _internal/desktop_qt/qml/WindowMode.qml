@@ -152,7 +152,7 @@ Item {
         NumberAnimation { id: aw; target: root.window; property: "width"; duration: ax.duration; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard }
         NumberAnimation { id: ah; target: root.window; property: "height"; duration: ax.duration; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard }
         onFinished: {
-            if (root.mini) { root.window.minimumWidth = 360; root.window.maximumWidth = 360; root.window.minimumHeight = root.miniHeight; root.window.height = root.miniHeight }
+            if (root.mini) { root.window.minimumWidth = 360; root.window.maximumWidth = 16777215; root.window.minimumHeight = root.miniHeight; root.window.height = root.miniHeight }
             else { root.window.minimumWidth = 960; root.window.minimumHeight = 600; if (root.fullMaximized) root.window.showMaximized() }
         }
     }

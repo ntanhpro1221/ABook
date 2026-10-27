@@ -119,6 +119,12 @@ Item {
             compare(mode.mini, true)
             verify(win.flags & Qt.WindowStaysOnTopHint)
             compare(Player.playing, playing)
+            for (const wide of [1024, 1366, 1630, 1920]) {
+                win.width = wide
+                compare(win.width, wide, "mini width must be resizable")
+                compare(mode.mini, true)
+                compare(Player.playing, playing)
+            }
             mode.pinned = false
             verify(!(win.flags & Qt.WindowStaysOnTopHint))
             win.x = 450; win.y = 300

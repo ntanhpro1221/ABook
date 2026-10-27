@@ -6,8 +6,15 @@ import "DevicesLogic.js" as Logic
 // (sống 5 phút, dùng một lần, sai 5 lần thì khoá), quyền điều khiển từ xa, địa chỉ + Bluetooth, danh sách máy đã ghép (đổi tên, thôi ghép).
 // Hợp đồng với máy chủ: GET/POST /api/sync, POST/DELETE /api/sync/pairing, POST /api/sync/studio, DELETE /api/sync/devices/<id>,
 // POST /api/sync/devices/<id>/name và /studio. Hỏi lại 10 giây một lần, 1,5 giây khi đang hiện mã (báo "đã ghép" ngay).
-Column {
+Item {
     id: root
+    readonly property bool expanded: Theme.widthClass(width) >= 2
+    property real wideT: expanded ? 1 : 0
+    Behavior on wideT {
+        NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard }
+    }
+    implicitHeight: Math.max(thisDevice.height, pairedDevices.y + pairedDevices.height)
+    height: implicitHeight
     property var sync: null
     property bool loadFailed: false
     property var pendingWanted: null      // công tắc đang chờ máy chủ: hiện giá trị người dùng vừa chọn (wanted = toggle.variables)
@@ -105,7 +112,9 @@ Column {
 
     // ---- Máy này ----
     SectionBlock {
-        width: parent.width
+        id: thisDevice
+        objectName: "thisDeviceColumn"
+        width: parent.width + ((parent.width - Theme.s32) / 2 - parent.width) * Math.min(1, root.wideT * 2)
         title: "Máy này"
         SettingsItem {
             width: parent.width
@@ -257,7 +266,11 @@ Column {
 
     // ---- Máy đã ghép ----
     Collapse {
-        width: parent.width
+        id: pairedDevices
+        objectName: "pairedDeviceColumn"
+        x: (thisDevice.width + Theme.s32) * Math.min(1, root.wideT * 2)
+        y: thisDevice.height * (1 - Math.max(0, root.wideT * 2 - 1))
+        width: parent.width - x
         open: Boolean(root.sync && root.sync.enabled)
         SectionBlock {
             width: parent.width

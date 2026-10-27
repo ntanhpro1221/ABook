@@ -341,7 +341,9 @@ Item {
         }
         function test_longTextWrapsNeverCut() {
             DesktopApi.responses = {"/api/listen/import/preview": {status: 200, data: longBook()}}
-            const dialog = make()
+            // Keep the original narrow-dialog stress case; WideScreens covers
+            // the same fields and chapter names in both columns and in motion.
+            const dialog = make({}, narrowHost)
             dialog.begin(["D:/Truyện/" + "Tên file rất dài ".repeat(12) + ".epub", "D:/Truyện/b.epub"])
             const names = []
             const gather = function(item) { if (item.objectName === "importQueueName") names.push(item); for (const c of item.children || []) gather(c) }

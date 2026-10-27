@@ -182,6 +182,26 @@ giống app hệ thống; không tự chế chuỗi rung dài.
 
 ### 5.5 Kích thước
 
+#### Khổ cửa sổ
+
+Qt dùng bề ngang **nội dung sau thanh bên**: compact < 600, medium < 840,
+expanded < 1200, large < 1600, extra large từ 1600 px (Theme.widthClass).
+Không suy khổ từ độ phân giải màn hình. Lưới sách tăng số cột, bìa tối đa
+200 px; trang sách từ expanded đặt bìa và thông tin cạnh danh sách chương,
+cả khối tối đa 1360 px. Đang nghe từ large đặt điều khiển cạnh mặt đọc;
+chữ đọc tối đa 640 px, khoảng 65–75 ký tự theo cỡ chữ người nghe chọn.
+
+Cài đặt từ expanded giữ nhóm bên trái và nội dung bên phải (tối đa 1180 px).
+Thiết bị chia Máy này / Máy đã ghép khi **cột nội dung** đạt expanded.
+Hộp Thêm sách ở bước xem trước và Sửa sách là ngoại lệ cho trần hộp 560 px:
+từ expanded dùng hai cột, tối đa 1160 px, mỗi cột chữ tối đa khoảng 640 px.
+Hẹp trở lại một cột; giữ bản nháp, mục đang chọn và vị trí cuộn khi đổi khổ.
+Studio chưa có bảng dự án trong Qt: trạng thái hiện có dùng biểu tượng cạnh
+lời nhắc ở expanded, xếp dọc khi hẹp, lời nhắc tối đa 640 px.
+Cửa sổ mini mở ở 360 px; có thể kéo rộng: từ medium đặt nút phát cạnh tên,
+giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lại.
+Đổi khổ dùng motionMedium/easeStandard; giảm chuyển động bỏ tween hình học.
+
 - **Khoảng cách**: 4 · 8 · 12 · 16 · 24 · 32 · 48 · 64 px. Lề màn: điện thoại 20, máy tính 40. Giữa các phần của một màn: 32
   (điện thoại) / 48 (máy tính); trong một phần: 12-16.
 - **Chữ** (Be Vietnam Pro): 12 phụ chú · 14 thân phụ · 16 thân · 18 tiêu đề mục · 24 tiêu đề màn điện thoại · 32 tiêu đề màn

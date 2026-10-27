@@ -10,7 +10,12 @@ import "ImportQueue.js" as Queue
 // hàng còn > 1 cuốn thì hỏi trước khi bỏ. Đổi tên chương là bước con của ImportChapters (cũng một lớp Back).
 Modal {
     id: root
-    panelWidth: 560
+    readonly property bool expanded: Theme.widthClass(width) >= 2 && step === "review"
+    property real wideT: expanded ? 1 : 0
+    Behavior on wideT {
+        NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard }
+    }
+    panelWidth: expanded ? Math.min(width - 2 * Theme.margin, 1160) : 560
     title: preview && queueName !== "" ? queueName + " · Thêm sách" : "Thêm sách"
     description: queue && !preview ? Queue.summaryText(Queue.summarize(queue))
                : preview ? "Xem lại chương trước khi thêm. Chữ của truyện giữ nguyên."
@@ -594,405 +599,423 @@ Modal {
             objectName: "importReview"
             width: parent.width
             open: root.step === "review"
-            Column {
+            Item {
+                id: reviewLayout
                 width: parent.width
-                Collapse {
-                    width: parent.width
-                    open: root.queue !== null && root.preview !== null
-                    Item {
+                implicitHeight: Math.max(reviewOptions.y + reviewOptions.height, reviewChapters.y + reviewChapters.height)
+                height: implicitHeight
+                Column {
+                    id: reviewMeta
+                    objectName: "importDetailsColumn"
+                    width: parent.width + (Math.min(360, (parent.width - Theme.s32) / 2) - parent.width) * Math.min(1, root.wideT * 2)
+                    Collapse {
                         width: parent.width
-                        height: queueBefore.implicitHeight + 12 + 16
-                        ImportQueueList { id: queueBefore; y: 12; width: parent.width; items: root.queue || []; currentId: root.currentId; working: root.working }
-                    }
-                }
-                Text {
-                    width: parent.width
-                    text: "Tên sách"
-                    color: Theme.text
-                    font.pixelSize: Theme.sizeBodySmall
-                    font.weight: Theme.weightMedium
-                }
-                Item {
-                    width: parent.width
-                    height: titleField.height + 6
-                    FormField {
-                        id: titleField
-                        objectName: "importTitle"
-                        y: 6
-                        width: parent.width
-                        label: "Tên sách"
-                        placeholderText: "Tên hiển thị trong thư viện"
-                        invalid: root.bookTitle.trim() === ""
-                        font.pixelSize: 15
-                        font.weight: Theme.weightMedium
-                        topPadding: 11
-                        bottomPadding: 11
-                        leftPadding: 14
-                        rightPadding: 14
-                        implicitHeight: Math.max(44, contentHeight + 22)
-                        background: Rectangle {
-                            color: Theme.bg
-                            radius: Theme.radiusCover
-                            border.width: 1
-                            border.color: titleField.invalid ? Theme.danger : titleField.activeFocus ? Theme.focus : Theme.line
-                            Behavior on border.color { ColorAnimation { duration: Theme.motionFast } }
+                        open: root.queue !== null && root.preview !== null
+                        Item {
+                            width: parent.width
+                            height: queueBefore.implicitHeight + 12 + 16
+                            ImportQueueList { id: queueBefore; y: 12; width: parent.width; items: root.queue || []; currentId: root.currentId; working: root.working }
                         }
-                        onTextChanged: root.bookTitle = text
                     }
-                }
-                Collapse {
-                    width: parent.width
-                    open: root.shown !== null && Boolean(root.shown.author)
                     Text {
                         width: parent.width
-                        topPadding: 6
-                        text: "Tác giả: " + (root.shown && root.shown.author ? root.shown.author : "")
-                        color: Theme.text2
-                        wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                        text: "Tên sách"
+                        color: Theme.text
                         font.pixelSize: Theme.sizeBodySmall
-                        textFormat: Text.PlainText
+                        font.weight: Theme.weightMedium
                     }
-                }
-                // Số chương, số chữ + Chọn hết / Bỏ chọn hết
-                Item {
-                    id: totalsRow
-                    width: parent.width
-                    readonly property bool stacked: summaryFlow.implicitWidth + 12 + links.implicitWidth > width
-                    height: 16 + (stacked && links.visible ? summaryFlow.height + 4 + links.height : Math.max(summaryFlow.height, links.height))
-                    Flow {
-                        id: summaryFlow
-                        y: 16
-                        width: parent.width - (totalsRow.stacked ? 0 : links.implicitWidth + 12)
-                        spacing: 4
-                        Text {
-                            objectName: "importTotals"
-                            text: root.totals.chapters + (shown && root.totals.chapters !== root.shown.chapters.length ? " / " + root.shown.chapters.length : "") + " chương"
-                            color: Theme.text
-                            font.pixelSize: Theme.sizeBodySmall
-                            font.weight: 600
-                            font.features: { "tnum": 1 }
+                    Item {
+                        width: parent.width
+                        height: titleField.height + 6
+                        FormField {
+                            id: titleField
+                            objectName: "importTitle"
+                            y: 6
+                            width: parent.width
+                            label: "Tên sách"
+                            placeholderText: "Tên hiển thị trong thư viện"
+                            invalid: root.bookTitle.trim() === ""
+                            font.pixelSize: 15
+                            font.weight: Theme.weightMedium
+                            topPadding: 11
+                            bottomPadding: 11
+                            leftPadding: 14
+                            rightPadding: 14
+                            implicitHeight: Math.max(44, contentHeight + 22)
+                            background: Rectangle {
+                                color: Theme.bg
+                                radius: Theme.radiusCover
+                                border.width: 1
+                                border.color: titleField.invalid ? Theme.danger : titleField.activeFocus ? Theme.focus : Theme.line
+                                Behavior on border.color { ColorAnimation { duration: Theme.motionFast } }
+                            }
+                            onTextChanged: root.bookTitle = text
                         }
+                    }
+                    Collapse {
+                        width: parent.width
+                        open: root.shown !== null && Boolean(root.shown.author)
                         Text {
-                            text: "· " + Queue.formatNumber(root.totals.words) + " chữ"
+                            width: parent.width
+                            topPadding: 6
+                            text: "Tác giả: " + (root.shown && root.shown.author ? root.shown.author : "")
                             color: Theme.text2
+                            wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                             font.pixelSize: Theme.sizeBodySmall
-                            font.features: { "tnum": 1 }
+                            textFormat: Text.PlainText
                         }
                     }
-                    Row {
-                        id: links
-                        readonly property real implicitWidth: childrenRect.width
-                        visible: root.shown !== null && root.shown.chapters.length > 1
-                        x: totalsRow.stacked ? 0 : parent.width - width
-                        y: totalsRow.stacked ? 16 + summaryFlow.height + 4 : 16
-                        spacing: 12
-                        Repeater {
-                            model: [{label: "Chọn hết", all: true}, {label: "Bỏ chọn hết", all: false}]
-                            Interactive {
-                                id: link
-                                required property var modelData
-                                width: linkText.implicitWidth
-                                height: Math.max(20, linkText.implicitHeight)
-                                enabled: root.busy === ""
-                                opacity: enabled ? 1 : 0.5
-                                ringMargin: 2
-                                Accessible.role: Accessible.Button
-                                Accessible.name: modelData.label
-                                onClicked: root.picked = modelData.all ? root.shown.chapters.map(c => c.index) : []
-                                Text {
-                                    id: linkText
-                                    text: link.modelData.label
-                                    color: Theme.accentText
-                                    font.pixelSize: Theme.sizeCaption
-                                    font.underline: link.hovered
-                                }
+                    // Số chương, số chữ + Chọn hết / Bỏ chọn hết
+                    Item {
+                        id: totalsRow
+                        width: parent.width
+                        readonly property bool stacked: summaryFlow.implicitWidth + 12 + links.implicitWidth > width
+                        height: 16 + (stacked && links.visible ? summaryFlow.height + 4 + links.height : Math.max(summaryFlow.height, links.height))
+                        Flow {
+                            id: summaryFlow
+                            y: 16
+                            width: parent.width - (totalsRow.stacked ? 0 : links.implicitWidth + 12)
+                            spacing: 4
+                            Text {
+                                objectName: "importTotals"
+                                text: root.totals.chapters + (shown && root.totals.chapters !== root.shown.chapters.length ? " / " + root.shown.chapters.length : "") + " chương"
+                                color: Theme.text
+                                font.pixelSize: Theme.sizeBodySmall
+                                font.weight: 600
+                                font.features: { "tnum": 1 }
+                            }
+                            Text {
+                                text: "· " + Queue.formatNumber(root.totals.words) + " chữ"
+                                color: Theme.text2
+                                font.pixelSize: Theme.sizeBodySmall
+                                font.features: { "tnum": 1 }
                             }
                         }
-                    }
-                }
-                // Tách theo các dòng “Chương N” (file TXT cả truyện)
-                Collapse {
-                    width: parent.width
-                    open: root.shown !== null && Boolean(root.shown.splitOffer)
-                    Item {
-                        width: parent.width
-                        height: splitCheck.height + 12
-                        ImportCheck {
-                            id: splitCheck
-                            objectName: "importSplit"
-                            y: 12
-                            width: parent.width
-                            label: root.shown && root.shown.splitOffer ? Queue.splitLabel(root.shown) : ""
-                            help: root.split ? "Mỗi dòng “Chương N” mở một chương mới; chữ của truyện giữ nguyên."
-                                             : "Cả truyện đang là một chương. Tích để tách theo các dòng ấy; chữ giữ nguyên."
-                            checked: root.split
-                            enabled: root.busy === ""
-                            onToggled: value => root.reread({split: value, footnotes: root.footnotes})
-                        }
-                    }
-                }
-                // Tên chương đúng như sẽ lưu; dòng đầu của chương ở dòng phụ
-                Item {
-                    width: parent.width
-                    height: chapterList.height + 8
-                    ImportChapters {
-                        id: chapterList
-                        x: -6
-                        y: 8
-                        width: parent.width + 12
-                        chapters: root.shown ? root.shown.chapters : []
-                        picked: root.picked
-                        names: root.names
-                        locked: root.busy !== ""
-                        onPick: (index, on) => root.picked = on ? root.picked.concat([index]) : root.picked.filter(n => n !== index)
-                        onRename: (chapter, value) => root.names = Queue.renameChapter(root.names, chapter, value)
-                    }
-                }
-                Collapse {
-                    width: parent.width
-                    open: root.nothingPicked
-                    Text {
-                        objectName: "importNothingPicked"
-                        width: parent.width
-                        topPadding: 8
-                        text: "Chưa chọn chương nào - tích ít nhất một chương để thêm vào thư viện."
-                        color: Theme.danger
-                        wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                        font.pixelSize: Theme.sizeBodySmall
-                        textFormat: Text.PlainText
-                    }
-                }
-                // Định dạng: ghi chú máy đã đổi định dạng
-                Collapse {
-                    width: parent.width
-                    open: root.notes.length > 0
-                    Item {
-                        width: parent.width
-                        height: formatFold.height + 12
-                        ImportFold {
-                            id: formatFold
-                            objectName: "importFormat"
-                            y: 12
-                            width: parent.width
-                            storageKey: "format"
-                            title: "Định dạng"
-                            summary: root.notes.length + " ghi chú"
-                            Column {
-                                width: parent.width
-                                leftPadding: 12
-                                rightPadding: 12
-                                bottomPadding: 12
-                                spacing: 4
-                                Text {
-                                    width: parent.width - 24
-                                    text: "Máy đã đổi định dạng - chữ của truyện giữ nguyên"
-                                    color: Theme.text
-                                    wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                                    font.pixelSize: Theme.sizeCaption
-                                    font.weight: Theme.weightMedium
-                                    textFormat: Text.PlainText
-                                }
-                                Repeater {
-                                    model: root.notes.slice(0, 6)
+                        Row {
+                            id: links
+                            readonly property real implicitWidth: childrenRect.width
+                            visible: root.shown !== null && root.shown.chapters.length > 1
+                            x: totalsRow.stacked ? 0 : parent.width - width
+                            y: totalsRow.stacked ? 16 + summaryFlow.height + 4 : 16
+                            spacing: 12
+                            Repeater {
+                                model: [{label: "Chọn hết", all: true}, {label: "Bỏ chọn hết", all: false}]
+                                Interactive {
+                                    id: link
+                                    required property var modelData
+                                    width: linkText.implicitWidth
+                                    height: Math.max(20, linkText.implicitHeight)
+                                    enabled: root.busy === ""
+                                    opacity: enabled ? 1 : 0.5
+                                    ringMargin: 2
+                                    Accessible.role: Accessible.Button
+                                    Accessible.name: modelData.label
+                                    onClicked: root.picked = modelData.all ? root.shown.chapters.map(c => c.index) : []
                                     Text {
-                                        required property string modelData
-                                        width: parent.width - 24
-                                        text: modelData
-                                        color: Theme.text2
-                                        wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                                        id: linkText
+                                        text: link.modelData.label
+                                        color: Theme.accentText
                                         font.pixelSize: Theme.sizeCaption
-                                        textFormat: Text.PlainText
+                                        font.underline: link.hovered
                                     }
                                 }
-                                Text {
-                                    width: parent.width - 24
-                                    visible: root.notes.length > 6
-                                    text: "…và " + (root.notes.length - 6) + " ghi chú nữa."
-                                    color: Theme.text2
-                                    font.pixelSize: Theme.sizeCaption
-                                }
                             }
                         }
                     }
-                }
-                // Chú thích: đề xuất về chú thích trong sách (EPUB / DOCX)
-                Collapse {
-                    width: parent.width
-                    open: root.shown !== null && Boolean(root.shown.footnotes)
-                    Item {
+                    // Tách theo các dòng “Chương N” (file TXT cả truyện)
+                    Collapse {
                         width: parent.width
-                        height: noteFold.height + 12
-                        ImportFold {
-                            id: noteFold
-                            objectName: "importFootnotes"
-                            y: 12
+                        open: root.shown !== null && Boolean(root.shown.splitOffer)
+                        Item {
                             width: parent.width
-                            storageKey: "footnotes"
-                            title: "Chú thích"
-                            Column {
-                                id: noteBody
+                            height: splitCheck.height + 12
+                            ImportCheck {
+                                id: splitCheck
+                                objectName: "importSplit"
+                                y: 12
                                 width: parent.width
-                                readonly property var offer: root.shown && root.shown.footnotes ? root.shown.footnotes : ({found: 0, marks: 0, examples: []})
-                                readonly property var said: Queue.footnoteSummary(offer)
-                                leftPadding: 12
-                                rightPadding: 12
-                                bottomPadding: 12
+                                label: root.shown && root.shown.splitOffer ? Queue.splitLabel(root.shown) : ""
+                                help: root.split ? "Mỗi dòng “Chương N” mở một chương mới; chữ của truyện giữ nguyên."
+                                                 : "Cả truyện đang là một chương. Tích để tách theo các dòng ấy; chữ giữ nguyên."
+                                checked: root.split
+                                enabled: root.busy === ""
+                                onToggled: value => root.reread({split: value, footnotes: root.footnotes})
+                            }
+                        }
+                    }
+
+                    Collapse {
+                        width: parent.width
+                        open: root.nothingPicked
+                        Text {
+                            objectName: "importNothingPicked"
+                            width: parent.width
+                            topPadding: 8
+                            text: "Chưa chọn chương nào - tích ít nhất một chương để thêm vào thư viện."
+                            color: Theme.danger
+                            wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                            font.pixelSize: Theme.sizeBodySmall
+                            textFormat: Text.PlainText
+                        }
+                    }
+                }
+                Column {
+                    id: reviewOptions
+                    objectName: "importOptionsColumn"
+                    width: reviewMeta.width
+                    y: reviewMeta.height + (reviewChapters.height + Theme.s16) * (1 - Math.max(0, root.wideT * 2 - 1))
+                    // Định dạng: ghi chú máy đã đổi định dạng
+                    Collapse {
+                        width: parent.width
+                        open: root.notes.length > 0
+                        Item {
+                            width: parent.width
+                            height: formatFold.height + 12
+                            ImportFold {
+                                id: formatFold
+                                objectName: "importFormat"
+                                y: 12
+                                width: parent.width
+                                storageKey: "format"
+                                title: "Định dạng"
+                                summary: root.notes.length + " ghi chú"
                                 Column {
-                                    width: parent.width - 24
-                                    topPadding: 12
-                                    spacing: 2
+                                    width: parent.width
+                                    leftPadding: 12
+                                    rightPadding: 12
+                                    bottomPadding: 12
+                                    spacing: 4
                                     Text {
-                                        width: parent.width
-                                        text: noteBody.said.title + " - ABook không tự bỏ hay sửa chữ của truyện"
+                                        width: parent.width - 24
+                                        text: "Máy đã đổi định dạng - chữ của truyện giữ nguyên"
                                         color: Theme.text
                                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                         font.pixelSize: Theme.sizeCaption
                                         font.weight: Theme.weightMedium
                                         textFormat: Text.PlainText
                                     }
+                                    Repeater {
+                                        model: root.notes.slice(0, 6)
+                                        Text {
+                                            required property string modelData
+                                            width: parent.width - 24
+                                            text: modelData
+                                            color: Theme.text2
+                                            wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                                            font.pixelSize: Theme.sizeCaption
+                                            textFormat: Text.PlainText
+                                        }
+                                    }
                                     Text {
-                                        width: parent.width
-                                        visible: text !== ""
-                                        text: noteBody.said.example
+                                        width: parent.width - 24
+                                        visible: root.notes.length > 6
+                                        text: "…và " + (root.notes.length - 6) + " ghi chú nữa."
+                                        color: Theme.text2
+                                        font.pixelSize: Theme.sizeCaption
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    // Chú thích: đề xuất về chú thích trong sách (EPUB / DOCX)
+                    Collapse {
+                        width: parent.width
+                        open: root.shown !== null && Boolean(root.shown.footnotes)
+                        Item {
+                            width: parent.width
+                            height: noteFold.height + 12
+                            ImportFold {
+                                id: noteFold
+                                objectName: "importFootnotes"
+                                y: 12
+                                width: parent.width
+                                storageKey: "footnotes"
+                                title: "Chú thích"
+                                Column {
+                                    id: noteBody
+                                    width: parent.width
+                                    readonly property var offer: root.shown && root.shown.footnotes ? root.shown.footnotes : ({found: 0, marks: 0, examples: []})
+                                    readonly property var said: Queue.footnoteSummary(offer)
+                                    leftPadding: 12
+                                    rightPadding: 12
+                                    bottomPadding: 12
+                                    Column {
+                                        width: parent.width - 24
+                                        topPadding: 12
+                                        spacing: 2
+                                        Text {
+                                            width: parent.width
+                                            text: noteBody.said.title + " - ABook không tự bỏ hay sửa chữ của truyện"
+                                            color: Theme.text
+                                            wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                                            font.pixelSize: Theme.sizeCaption
+                                            font.weight: Theme.weightMedium
+                                            textFormat: Text.PlainText
+                                        }
+                                        Text {
+                                            width: parent.width
+                                            visible: text !== ""
+                                            text: noteBody.said.example
+                                            color: Theme.text2
+                                            wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                                            font.pixelSize: Theme.sizeCaption
+                                            textFormat: Text.PlainText
+                                        }
+                                    }
+                                    Collapse {
+                                        width: parent.width - 24
+                                        open: noteBody.offer.marks > 0
+                                        ImportCheck {
+                                            width: parent.width
+                                            label: "Không đọc số chú thích"
+                                            help: "Bỏ các con số như ² hay [3] khỏi phần đọc; lời chú không đổi."
+                                            checked: root.footnotes.hideMarks
+                                            enabled: root.busy === ""
+                                            onToggled: value => root.reread({split: root.split, footnotes: {hideMarks: value, notes: root.footnotes.notes}})
+                                        }
+                                    }
+                                    ImportCheck {
+                                        width: parent.width - 24
+                                        label: "Đọc lời chú ở cuối chương"
+                                        help: "Mỗi lời chú nằm ở cuối chương có số gọi nó, kể cả khi trong sách nó nằm ở chương riêng."
+                                        checked: root.footnotes.notes === "end"
+                                        enabled: root.busy === ""
+                                        onToggled: value => root.reread({split: root.split, footnotes: {hideMarks: root.footnotes.hideMarks, notes: value ? "end" : ""}})
+                                    }
+                                    ImportCheck {
+                                        width: parent.width - 24
+                                        label: "Bỏ lời chú"
+                                        help: "Phần đọc không có lời chú nào. Bỏ tích để có lại."
+                                        checked: root.footnotes.notes === "drop"
+                                        enabled: root.busy === ""
+                                        onToggled: value => root.reread({split: root.split, footnotes: {hideMarks: root.footnotes.hideMarks, notes: value ? "drop" : ""}})
+                                    }
+                                    Text {
+                                        width: parent.width - 24
+                                        topPadding: 4
+                                        text: "Không tích gì thì sách giữ nguyên như trong file."
                                         color: Theme.text2
                                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                         font.pixelSize: Theme.sizeCaption
                                         textFormat: Text.PlainText
                                     }
                                 }
-                                Collapse {
-                                    width: parent.width - 24
-                                    open: noteBody.offer.marks > 0
-                                    ImportCheck {
-                                        width: parent.width
-                                        label: "Không đọc số chú thích"
-                                        help: "Bỏ các con số như ² hay [3] khỏi phần đọc; lời chú không đổi."
-                                        checked: root.footnotes.hideMarks
-                                        enabled: root.busy === ""
-                                        onToggled: value => root.reread({split: root.split, footnotes: {hideMarks: value, notes: root.footnotes.notes}})
-                                    }
-                                }
-                                ImportCheck {
-                                    width: parent.width - 24
-                                    label: "Đọc lời chú ở cuối chương"
-                                    help: "Mỗi lời chú nằm ở cuối chương có số gọi nó, kể cả khi trong sách nó nằm ở chương riêng."
-                                    checked: root.footnotes.notes === "end"
-                                    enabled: root.busy === ""
-                                    onToggled: value => root.reread({split: root.split, footnotes: {hideMarks: root.footnotes.hideMarks, notes: value ? "end" : ""}})
-                                }
-                                ImportCheck {
-                                    width: parent.width - 24
-                                    label: "Bỏ lời chú"
-                                    help: "Phần đọc không có lời chú nào. Bỏ tích để có lại."
-                                    checked: root.footnotes.notes === "drop"
-                                    enabled: root.busy === ""
-                                    onToggled: value => root.reread({split: root.split, footnotes: {hideMarks: root.footnotes.hideMarks, notes: value ? "drop" : ""}})
-                                }
-                                Text {
-                                    width: parent.width - 24
-                                    topPadding: 4
-                                    text: "Không tích gì thì sách giữ nguyên như trong file."
-                                    color: Theme.text2
-                                    wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                                    font.pixelSize: Theme.sizeCaption
-                                    textFormat: Text.PlainText
-                                }
                             }
                         }
                     }
-                }
-                // Gợi ý phần đọc: dòng ghi công người nghe có thể bỏ khỏi phần đọc
-                Collapse {
-                    width: parent.width
-                    open: root.groups.length > 0
-                    Item {
+                    // Gợi ý phần đọc: dòng ghi công người nghe có thể bỏ khỏi phần đọc
+                    Collapse {
                         width: parent.width
-                        height: hintFold.height + 12
-                        ImportFold {
-                            id: hintFold
-                            objectName: "importSuggestions"
-                            y: 12
+                        open: root.groups.length > 0
+                        Item {
                             width: parent.width
-                            storageKey: "suggestions"
-                            title: "Gợi ý phần đọc"
-                            summary: root.groups.length + " nhóm"
-                            Column {
+                            height: hintFold.height + 12
+                            ImportFold {
+                                id: hintFold
+                                objectName: "importSuggestions"
+                                y: 12
                                 width: parent.width
-                                leftPadding: 12
-                                rightPadding: 12
-                                bottomPadding: 12
-                                Text {
-                                    width: parent.width - 24
-                                    topPadding: 2
-                                    text: "Dòng bỏ chỉ bị bỏ qua khi đọc; chữ của sách giữ nguyên."
-                                    color: Theme.text2
-                                    wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                                    font.pixelSize: Theme.sizeCaption
-                                    textFormat: Text.PlainText
-                                }
-                                Item {
-                                    width: parent.width - 24
-                                    height: 8 + hintList.height
-                                    Flickable {
-                                        id: hintList
-                                        y: 8
-                                        width: parent.width
-                                        height: Math.min(160, hintColumn.height)
-                                        contentWidth: width
-                                        contentHeight: hintColumn.height
-                                        clip: true
-                                        boundsBehavior: Flickable.StopAtBounds
-                                        Column {
-                                            id: hintColumn
-                                            width: hintList.width
-                                            Repeater {
-                                                model: root.groups
-                                                ImportCheck {
-                                                    required property var modelData
-                                                    width: hintColumn.width
-                                                    inView: y + 11 >= hintList.contentY && y + 31 <= hintList.contentY + hintList.height
-                                                    label: "Bỏ dòng này khỏi phần đọc"
-                                                    help: "“" + modelData.line + "” - " + Queue.where(modelData.chapters)
-                                                    checked: root.skipped.indexOf(modelData.line) >= 0
-                                                    enabled: root.busy === ""
-                                                    onToggled: value => root.skipped = value ? root.skipped.concat([modelData.line]) : root.skipped.filter(line => line !== modelData.line)
+                                storageKey: "suggestions"
+                                title: "Gợi ý phần đọc"
+                                summary: root.groups.length + " nhóm"
+                                Column {
+                                    width: parent.width
+                                    leftPadding: 12
+                                    rightPadding: 12
+                                    bottomPadding: 12
+                                    Text {
+                                        width: parent.width - 24
+                                        topPadding: 2
+                                        text: "Dòng bỏ chỉ bị bỏ qua khi đọc; chữ của sách giữ nguyên."
+                                        color: Theme.text2
+                                        wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                                        font.pixelSize: Theme.sizeCaption
+                                        textFormat: Text.PlainText
+                                    }
+                                    Item {
+                                        width: parent.width - 24
+                                        height: 8 + hintList.height
+                                        Flickable {
+                                            id: hintList
+                                            y: 8
+                                            width: parent.width
+                                            height: Math.min(160, hintColumn.height)
+                                            contentWidth: width
+                                            contentHeight: hintColumn.height
+                                            clip: true
+                                            boundsBehavior: Flickable.StopAtBounds
+                                            Column {
+                                                id: hintColumn
+                                                width: hintList.width
+                                                Repeater {
+                                                    model: root.groups
+                                                    ImportCheck {
+                                                        required property var modelData
+                                                        width: hintColumn.width
+                                                        inView: y + 11 >= hintList.contentY && y + 31 <= hintList.contentY + hintList.height
+                                                        label: "Bỏ dòng này khỏi phần đọc"
+                                                        help: "“" + modelData.line + "” - " + Queue.where(modelData.chapters)
+                                                        checked: root.skipped.indexOf(modelData.line) >= 0
+                                                        enabled: root.busy === ""
+                                                        onToggled: value => root.skipped = value ? root.skipped.concat([modelData.line]) : root.skipped.filter(line => line !== modelData.line)
+                                                    }
                                                 }
                                             }
+                                            SmoothWheel { flick: hintList }
                                         }
-                                        SmoothWheel { flick: hintList }
+                                        ScrollEdges { target: hintList; color: Theme.panel; x: hintList.x; y: hintList.y; width: hintList.width; height: hintList.height }
+                                        Scrollbar { target: hintList }
                                     }
-                                    ScrollEdges { target: hintList; color: Theme.panel; x: hintList.x; y: hintList.y; width: hintList.width; height: hintList.height }
-                                    Scrollbar { target: hintList }
                                 }
                             }
                         }
                     }
-                }
-                // Cuốn đã có trong thư viện
-                Collapse {
-                    width: parent.width
-                    open: root.known !== null
-                    Text {
-                        objectName: "importKnown"
+                    // Cuốn đã có trong thư viện
+                    Collapse {
                         width: parent.width
-                        topPadding: 12 + 12
-                        bottomPadding: 12
-                        text: root.existing ? "Cuốn này đã có trong thư viện: “" + root.existing.title + "”."
-                            : root.sameSource ? "Bạn đã thêm file này thành “" + root.sameSource.title + "” (" + root.sameSource.chapters + " chương)." : ""
-                        color: Theme.accentText
-                        wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                        font.pixelSize: Theme.sizeBodySmall
-                        textFormat: Text.PlainText
+                        open: root.known !== null
+                        Text {
+                            objectName: "importKnown"
+                            width: parent.width
+                            topPadding: 12 + 12
+                            bottomPadding: 12
+                            text: root.existing ? "Cuốn này đã có trong thư viện: “" + root.existing.title + "”."
+                                : root.sameSource ? "Bạn đã thêm file này thành “" + root.sameSource.title + "” (" + root.sameSource.chapters + " chương)." : ""
+                            color: Theme.accentText
+                            wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                            font.pixelSize: Theme.sizeBodySmall
+                            textFormat: Text.PlainText
+                        }
+                    }
+                    // Đang thêm cả lô
+                    Collapse {
+                        width: parent.width
+                        open: root.busy === "adding" && root.working !== "" && root.queue !== null
+                        Item {
+                            width: parent.width
+                            height: adding.implicitHeight + 12
+                            ImportSkeleton { id: adding; y: 12; width: parent.width; shape: "rows"; count: 1; label: "Đang thêm " + root.working }
+                        }
                     }
                 }
-                // Đang thêm cả lô
-                Collapse {
-                    width: parent.width
-                    open: root.busy === "adding" && root.working !== "" && root.queue !== null
-                    Item {
+                Item {
+                    id: reviewChapters
+                    objectName: "importChapterColumn"
+                    x: (reviewMeta.width + Theme.s32) * Math.min(1, root.wideT * 2)
+                    y: (reviewMeta.height + Theme.s16) * (1 - Math.max(0, root.wideT * 2 - 1))
+                    width: parent.width - x
+                    height: chapterList.height + 8
+                    ImportChapters {
+                        id: chapterList
+                        x: 0
+                        y: 8
                         width: parent.width
-                        height: adding.implicitHeight + 12
-                        ImportSkeleton { id: adding; y: 12; width: parent.width; shape: "rows"; count: 1; label: "Đang thêm " + root.working }
+                        chapters: root.shown ? root.shown.chapters : []
+                        picked: root.picked
+                        names: root.names
+                        locked: root.busy !== ""
+                        onPick: (index, on) => root.picked = on ? root.picked.concat([index]) : root.picked.filter(n => n !== index)
+                        onRename: (chapter, value) => root.names = Queue.renameChapter(root.names, chapter, value)
                     }
                 }
             }

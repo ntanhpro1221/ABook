@@ -7,6 +7,7 @@
 #include "readalong.h"
 #include <QFontDatabase>
 #include <QQmlEngine>
+#include <QQmlContext>
 #include <QQuickImageProvider>
 #include <QDir>
 #include <QTemporaryDir>
@@ -70,6 +71,7 @@ class WidthSetup : public QObject {
     std::unique_ptr<MediaControls> media;
 public slots:
     void qmlEngineAvailable(QQmlEngine *engine) {
+        engine->rootContext()->setContextProperty(QStringLiteral("qtWideShotDir"), qEnvironmentVariable("ABOOK_WIDE_SHOTS"));
         engine->addImageProvider(QStringLiteral("cover"), new WidthCovers);
     }
     void applicationAvailable() {
