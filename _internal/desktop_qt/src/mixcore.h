@@ -72,10 +72,10 @@ public:
         if (!frames)
             m_value = target;
         else
-            m_step = (target - m_value) / float(frames);
+            m_step = (target - m_value) / double(frames);
     }
-    float value() const { return m_value; }
-    float target() const { return m_target; }
+    float value() const { return float(m_value); }
+    float target() const { return float(m_target); }
 
     /// CỘNG `frames` khung (`channels` kênh, xen kênh) của `in`, nhân âm lượng đang trượt, vào `out`.
     void mixInto(float *out, const float *in, size_t frames, int channels) {
@@ -83,16 +83,17 @@ public:
         for (; i < frames && m_left; ++i) {
             m_value = --m_left ? m_value + m_step : m_target;
             for (int c = 0; c < channels; ++c)
-                out[i * channels + c] += in[i * channels + c] * m_value;
+                out[i * channels + c] += in[i * channels + c] * float(m_value);
         }
         if (m_value == 0)
             return;
         for (size_t k = i * channels, end = frames * channels; k < end; ++k)
-            out[k] += in[k] * m_value;
+            out[k] += in[k] * float(m_value);
     }
 
 private:
-    float m_value = 0, m_target = 0, m_step = 0;
+    // Tích luỹ bằng double để hai đường mờ bù nhau vẫn cộng thành 1 sau hàng nghìn khung.
+    double m_value = 0, m_target = 0, m_step = 0;
     size_t m_left = 0;
 };
 
