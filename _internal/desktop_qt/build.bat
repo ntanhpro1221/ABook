@@ -48,6 +48,9 @@ if errorlevel 1 exit /b 1
 rem Background music: shared fixtures with the server / web / Android + MusicBed on fake audio
 "%HERE%build\MusicTests.exe"
 if errorlevel 1 exit /b 1
+rem WASAPI mixing core: ring, volume ramp, resampler on numbers
+"%HERE%build\MixTests.exe"
+if errorlevel 1 exit /b 1
 rem Skip-15 icon pixel check (gap between stroke and digits, ink inside the box)
 "%HERE%build\SkipGlyphTests.exe"
 if errorlevel 1 exit /b 1
