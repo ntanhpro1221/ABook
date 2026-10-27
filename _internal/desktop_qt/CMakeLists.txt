@@ -58,6 +58,8 @@ qt_add_executable(ABookDesk WIN32
     src/desktopapi.cpp
     src/desktopapi.h
     src/main.cpp
+    src/mediacontrols.cpp
+    src/mediacontrols.h
     src/abookdesk.manifest
     src/audioout_mf.cpp
     src/audioout_mf.h
@@ -253,7 +255,7 @@ qt_add_qml_module(ABookDesk
 )
 target_compile_definitions(ABookDesk PRIVATE ABOOK_VERSION="${ABOOK_VERSION}" QT_NO_CAST_FROM_ASCII)
 # Âm thanh: Media Foundation của Windows (đo ở docs/NATIVE_PHONE_UI.md 7.1), không thêm DLL nào vào bản phân phối.
-target_link_libraries(ABookDesk PRIVATE Qt6::Quick Qt6::Network QWindowKit::Quick mfplat mf mfuuid ole32 ksuser propsys)
+target_link_libraries(ABookDesk PRIVATE Qt6::Quick Qt6::Network QWindowKit::Quick mfplat mf mfuuid ole32 ksuser propsys windowsapp shell32)
 qt_add_resources(ABookDesk legal PREFIX "/legal" BASE "../docs" FILES "../docs/THIRD_PARTY.md")
 if(MSVC)
     target_compile_options(ABookDesk PRIVATE /W3 /utf-8)
@@ -302,6 +304,22 @@ if(MSVC)
     target_compile_options(SidebarTests PRIVATE /W3 /utf-8)
 endif()
 enable_testing()
+qt_add_executable(MediaControlsTests tests/test_mediacontrols.cpp tests/fakes.h src/mediacontrols.cpp src/mediacontrols.h ${ABOOK_PLAYER_SOURCES})
+target_include_directories(MediaControlsTests PRIVATE src tests)
+target_compile_definitions(MediaControlsTests PRIVATE QT_NO_CAST_FROM_ASCII)
+target_link_libraries(MediaControlsTests PRIVATE Qt6::Test Qt6::Qml Qt6::Network windowsapp shell32)
+qt_add_executable(SmtcHost WIN32 tools/smtc_host.cpp tests/fakes.h src/mediacontrols.cpp src/mediacontrols.h ${ABOOK_PLAYER_SOURCES})
+target_include_directories(SmtcHost PRIVATE src tests)
+target_compile_definitions(SmtcHost PRIVATE QT_NO_CAST_FROM_ASCII)
+target_link_libraries(SmtcHost PRIVATE Qt6::Qml Qt6::Network windowsapp shell32)
+add_executable(SmtcProbe tools/smtc_probe.cpp)
+target_link_libraries(SmtcProbe PRIVATE windowsapp)
+if(MSVC)
+    foreach(target MediaControlsTests SmtcHost SmtcProbe)
+        target_compile_options(${target} PRIVATE /W3 /utf-8)
+    endforeach()
+endif()
+add_test(NAME MediaControlsTests COMMAND MediaControlsTests)
 qt_add_executable(DesktopApiTests tests/test_desktopapi.cpp tests/fakes.h src/desktopapi.cpp src/desktopapi.h src/audioout.cpp src/audioout.h
     src/feedback.cpp src/feedback.h src/hostmessage.h src/playernet.h)
 target_include_directories(DesktopApiTests PRIVATE tests)

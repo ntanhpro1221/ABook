@@ -1,5 +1,14 @@
 # Test report
 
+## 27-10-2026 — Qt SMTC (dev/desk-qt-smtc)
+
+- MediaControlsTests: 6 đạt, 0 lỗi; tên chương dự phòng, trạng thái/nút, 60 giây nhịp đồng hồ không cập nhật timeline, seek/chương/tốc độ/thời lượng cập nhật theo sự kiện, lệnh về luồng UI, cache bìa và bỏ lời đáp bìa cũ.
+- `build.bat` hoàn tất và deploy dist: 8 bộ, 486 ca đạt, 0 lỗi/bỏ qua; đếm 0 dòng `FAIL!` từ từng log QtTest. Theme, máy dò cắt chữ và `git diff --check` đạt.
+- Probe C++/WinRT đọc phiên `ABook.Desktop` qua GSMTC trên HWND không bao giờ show: đúng tên chương/sách, Playing, Next/Previous đổi chương, Seek tới 42 giây, Pause tới Player trên luồng UI. `visible=false`, `foreground=false` suốt kiểm tra. Không mở flyout trên màn hình chủ máy.
+- Smoke app thật: một lượt bị guard huỷ vì Qt restore kích hoạt cửa sổ; đã thêm chốt Win32 WH_CBT trước QGuiApplication. Lượt chạy lại đọc bìa 47.480 byte và Pause tới Player, 0 foreground; chốt từ chối hai yêu cầu activation/focus lúc restore. Giữ log sự cố riêng, không tính lượt ấy vào A/B.
+- Báo cáo build, số đo A/B và log thô: `D:/Novels/native_desk_proto/smtc_task/report.md`. Launcher đo được port từ `origin/dev/desk-qt-musicmix`, có bộ gác foreground trước khi app chạy và vị trí (-10000,-10000). Không giữ nhịp PlayerClock cho SMTC.
+- A/B 4 cặp, 8/8 lượt AC/off-screen, 0 foreground: RAM nghỉ 54,68 → 55,40 MiB; CPU thu nhỏ ổn định 1,223 → 1,197% một nhân theo công cụ. RAM thu nhỏ sau trim biến động ở 2/4 lượt bật SMTC (trung vị 21,20 → 37,00 MiB); chưa xác định nguyên nhân, không kết luận chỉ tốn vài MiB khi chạy nền. Cả 8 pha thu nhỏ không tăng bộ đếm PlayerClock/ảnh chụp/ReadAlong.
+
 ## 26-10-2026 — qtwide2: sửa theo lead review
 
 - Trang Sách: cụm hai cột tối đa 1360 px, căn giữa; bìa thẳng mép tiêu đề; thời lượng cuối hàng dùng tnum. Nền hover/chương hiện tại và thanh tiến độ giữ hết chiều rộng hàng. Sửa đường chuyển động để bìa/chữ/chương không đi xuyên nhau.

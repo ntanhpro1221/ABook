@@ -43,23 +43,25 @@ cmake --build "%HERE%build"
 if errorlevel 1 exit /b 1
 
 rem Player unit tests (QtTest with fake audio/network): red stops the build before packaging
-"%HERE%build\DesktopApiTests.exe" -o "%HERE%build\desktopapi-test.txt",txt
+call :test "%HERE%build\MediaControlsTests.exe" "%HERE%build\mediacontrols-test.txt"
 if errorlevel 1 exit /b 1
-"%HERE%build\PlayerTests.exe"
+call :test "%HERE%build\DesktopApiTests.exe" "%HERE%build\desktopapi-test.txt"
 if errorlevel 1 exit /b 1
-"%HERE%build\ReadAlongTests.exe"
+call :test "%HERE%build\PlayerTests.exe" "%HERE%build\player-test.txt"
+if errorlevel 1 exit /b 1
+call :test "%HERE%build\ReadAlongTests.exe" "%HERE%build\readalong-test.txt"
 if errorlevel 1 exit /b 1
 rem Background music: shared fixtures with the server / web / Android + MusicBed on fake audio
-"%HERE%build\MusicTests.exe"
+call :test "%HERE%build\MusicTests.exe" "%HERE%build\music-test.txt"
 if errorlevel 1 exit /b 1
 rem Skip-15 icon pixel check (gap between stroke and digits, ink inside the box)
-"%HERE%build\SkipGlyphTests.exe"
+call :test "%HERE%build\SkipGlyphTests.exe" "%HERE%build\skipglyph-test.txt"
 if errorlevel 1 exit /b 1
 rem Sidebar collapse / expand / hover overlay (QtQuickTest with a stubbed Platform)
-"%HERE%build\sidebar_tests\SidebarTests.exe"
+call :test "%HERE%build\sidebar_tests\SidebarTests.exe" "%HERE%build\sidebar-test.txt"
 if errorlevel 1 exit /b 1
 rem Width classes: actual Book/Library/NowPlaying/Settings QML with fake HTTP/audio
-"%HERE%build\width_tests\WidthTests.exe"
+call :test "%HERE%build\width_tests\WidthTests.exe" "%HERE%build\width-test.txt"
 if errorlevel 1 exit /b 1
 
 if not exist "%HERE%dist" mkdir "%HERE%dist"
@@ -73,3 +75,14 @@ rem App-local VC runtime (about 1 MB of DLLs instead of the installer), so a PC 
 copy /y "%VCToolsRedistDir%x64\Microsoft.VC145.CRT\*.dll" "%HERE%dist\" >nul
 if errorlevel 1 exit /b 1
 echo OK: %HERE%dist\ABookDesk.exe
+exit /b 0
+
+rem Keep every QtTest result: GUI stderr alone can be empty even when tests fail.
+:test
+"%~1" -o "%~2",txt
+set TEST_EXIT=%errorlevel%
+type "%~2"
+if not "%TEST_EXIT%"=="0" exit /b %TEST_EXIT%
+findstr /c:"FAIL!" "%~2" >nul
+if not errorlevel 1 exit /b 1
+exit /b 0
