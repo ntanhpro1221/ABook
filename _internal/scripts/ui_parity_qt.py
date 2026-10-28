@@ -76,7 +76,7 @@ SCREENS: list[tuple[str, tuple[str, ...], tuple[tuple[str, tuple[str, ...] | Non
       ("listen/BookScreen.tsx", ("ChapterRow",)), ("listen/labels.ts", None), ("listen/sleep.ts", None))),
     ("Đọc theo", ("ReadAlongView.qml",),
      (("listen/ReadAlongText.tsx", None), ("listen/PlayerViews.tsx", ("ReadAlong",)))),
-    ("Trang sách", ("BookPage.qml",),
+    ("Trang sách", ("BookPage.qml", "Cast*.qml", "Clip.qml"),
      (("listen/BookScreen.tsx", None), ("listen/labels.ts", None))),
     ("Cài đặt", ("SettingsScreen.qml", "SettingsBody.qml", "Settings*.qml", "Voice*.qml", "VoiceLogic.js", "ProviderKey.qml",
                  "Listen*.qml", "Sleep*.qml", "Look*.qml", "Advanced*.qml", "MyMusic*", "NativeFolders.qml", "ThirdPartyText.qml",
@@ -276,10 +276,39 @@ def walk(obj: QmlObject):
 # Chữ và icon trong biểu thức
 
 
-def options(expr: str) -> list[str]:
-    """Chuỗi trực tiếp của biểu thức (mọi nhánh của `?:`, phần tử mảng), không lấy chuỗi nằm trong lệnh gọi bị bỏ qua."""
+_LIT = r"(?:\"(?:[^\"\\\n]|\\.)*\"|'(?:[^'\\\n]|\\.)*')"
+_OPERAND = r"(?:[\w.]+(?:\([^()\"'\n]*\))?)"
+# "Nghe " + name + " nói" -> "Nghe {} nói": mẫu như `${}` của web, để nhãn ghép ở QML/JS khớp nhãn mẫu bên web
+_CHAIN = re.compile(rf"(?:{_LIT}|{_OPERAND})(?:\s*\+\s*(?:{_LIT}|{_OPERAND}))+")
+
+
+def joined_literals(expr: str) -> list[tuple[int, int, str]]:
+    """Chuỗi nối bằng `+` có cả chuỗi lẫn biến: (đầu, cuối, nội dung với `{}` thay mỗi biến)."""
     out = []
+    for m in _CHAIN.finditer(expr):
+        parts = re.findall(rf"{_LIT}|{_OPERAND}", m.group(0))
+        if not any(p[0] in "\"'" for p in parts) or all(p[0] in "\"'" for p in parts):
+            continue
+        # literal_text bỏ dấu cách hai đầu của từng mảnh; giữ lại để "Nghe " + x + " nói" ra "Nghe {} nói", không "Nghe{}nói"
+        text = "".join((" " if p[1:2].isspace() else "") + up.literal_text(p) + (" " if p[-2:-1].isspace() else "")
+                       if p[0] in "\"'" else "{}" for p in parts)
+        text = re.sub(r"\s+", " ", re.sub(r"(?:\{\})+", "{}", text)).strip()
+        out.append((m.start(), m.end(), text))
+    return out
+
+
+def options(expr: str) -> list[str]:
+    """Chuỗi trực tiếp của biểu thức (mọi nhánh của `?:`, phần tử mảng), không lấy chuỗi nằm trong lệnh gọi bị bỏ qua.
+    Chuỗi nối với biến (`"Nghe " + name + " nói"`) thành một mẫu `Nghe {} nói`."""
+    out = []
+    chains = joined_literals(expr)
+    for start, _, text in chains:
+        before = expr[max(0, start - 40):start]
+        if not any(re.search(re.escape(call) + r"\w*\($", before.rstrip()) for call in SKIP_CALLS):
+            out.append(text)
     for pos, text in up.literals_in(expr):
+        if any(start <= pos < end for start, end, _ in chains):
+            continue
         before = expr[max(0, pos - 40):pos]
         if any(re.search(re.escape(call) + r"\w*\($", before.rstrip()) for call in SKIP_CALLS):
             continue
@@ -348,8 +377,25 @@ RADIUS_OK = re.compile(
     r"|(?:width|height|size|implicitWidth|implicitHeight)\s*/\s*2"  # tròn
     r"|(?:parent|root|\w+)\.(?:radius|ringRadius)"        # lấy lại bo của khung chứa
     r"|(?:Theme\.radius(?:Control|Cover|Sheet)|(?:root|parent)\.(?:radius|ringRadius))\s*\+\s*(?:\d+|root\.ringMargin)"  # vòng đồng tâm ngoài
-    r"|[\w.]+\s*===?\s*\"\w+\"\s*\?\s*Theme\.radius(?:Control|Cover|Sheet)\s*:\s*Theme\.radius(?:Control|Cover|Sheet)"  # chọn giữa hai token
     r")$")
+
+
+def radius_ok(expr: str) -> bool:
+    """Bo góc hợp lệ: một giá trị của RADIUS_OK, hay `điều kiện ? A : B` mà cả hai nhánh hợp lệ (chọn giữa hai token, khung có / không viền)."""
+    expr = expr.strip()
+    if RADIUS_OK.match(expr):
+        return True
+    depth, q = 0, -1
+    for i, c in enumerate(expr):
+        if c in "([{":
+            depth += 1
+        elif c in ")]}":
+            depth -= 1
+        elif depth == 0 and c == "?" and q < 0:
+            q = i
+        elif depth == 0 and c == ":" and q >= 0:
+            return radius_ok(expr[q + 1:i]) and radius_ok(expr[i + 1:])
+    return False
 
 
 def forwarded_icons(trees: dict[str, QmlObject]) -> dict[str, dict[str, str]]:
@@ -394,7 +440,7 @@ def qml_scan_file(path: Path, scan: QtScan, forwards: dict[str, dict[str, str]] 
                 continue
             if name == "radius":
                 r = re.sub(r"\s+", " ", expr).strip()
-                if not RADIUS_OK.match(r):
+                if not radius_ok(r):
                     scan.radii.append((file, line, r))
             if name in SKIP_PROPS:
                 continue
@@ -456,7 +502,22 @@ def qt_scan() -> QtScan:
     forwards = forwarded_icons(trees)
     for path in paths:
         qml_scan_file(path, scan, forwards)
+    for path in sorted(QML.glob("*.js")):
+        if path.name != "LucidePaths.js":
+            js_scan_file(path, scan)
     return scan
+
+
+def js_scan_file(path: Path, scan: QtScan) -> None:
+    """Chữ trong file .js cạnh QML (CastLogic.js, VoiceLogic.js): chuỗi tiếng Việt, chuỗi nối thành mẫu `{}`."""
+    src = up.blank_comments(path.read_bytes().decode("utf-8"))
+    file = up.rel(path) if path.is_relative_to(ROOT) else f"desktop_qt/qml/{path.name}"
+    chains = joined_literals(src)
+    found = [(start, text) for start, _, text in chains]
+    found += [(pos, text) for pos, text in up.literals_in(src) if not any(s <= pos < e for s, e, _ in chains)]
+    for pos, text in sorted(found):
+        if up.HAS_VI.search(text) and up.looks_ui(text):
+            scan.items.append(Item("qt", file, up.line_of(src, pos), split_shortcut(text)[0], "js"))
 
 
 JSX_TEXT = re.compile(r"(?<=[>}])([^<>{}`\"']*[^\W\d_][^<>{}`\"']*)(?=[<{])")

@@ -86,6 +86,9 @@ def test_detector_catches_each_kind(tmp_path):
         '    Rectangle { radius: 6 }\n'
         '    Rectangle { radius: Theme.radiusControl - 2 }\n'
         '    Rectangle { radius: height / 2 }\n'
+        '    Rectangle { radius: framed ? Theme.radiusSheet : 0 }\n'
+        '    Rectangle { radius: big ? Theme.radiusSheet : 5 }\n'
+        '    Text { text: "Nghe " + person.name + " nói" }\n'
         '    IconButton { icon: "moon"; tip: "Hẹn giờ  (Ctrl+T)" }\n'
         '    Row {\n'
         '        Icon { name: "check" }\n'
@@ -96,11 +99,17 @@ def test_detector_catches_each_kind(tmp_path):
         '}\n', encoding="utf-8")
     scan = tool.QtScan()
     tool.qml_scan_file(qml, scan)
-    assert [r[2] for r in scan.radii] == ["6", "Theme.radiusControl - 2"]
+    assert [r[2] for r in scan.radii] == ["6", "Theme.radiusControl - 2", "big ? Theme.radiusSheet : 5"]
     assert ("Hẹn giờ", "moon") in {(p.label, p.icon) for p in scan.pairs}
     assert ("Đã xong", "check") in {(p.label, p.icon) for p in scan.pairs}
     assert [s[0] for s in scan.spaced] == ["Hẹn giờ  (Ctrl+T)"]
     assert ("Hẹn giờ", "Ctrl+T") in {(s[0], s[1]) for s in scan.shortcuts}
     texts = {i.text for i in scan.items}
-    assert {"Hoà giải", "Đang mở...", "Sẵn sàng", "Đã xong"} <= texts and "busy" not in texts
+    assert {"Hoà giải", "Đang mở...", "Sẵn sàng", "Đã xong", "Nghe {} nói"} <= texts and "busy" not in texts
+    assert "Nghe " not in texts and " nói" not in texts
+    js = tmp_path / "ProbeLogic.js"
+    js.write_text('function label(p) { return "Bỏ gộp " + p.from + " vào " + p.into }\nvar KEY = "cast"\n', encoding="utf-8")
+    scan = tool.QtScan()
+    tool.js_scan_file(js, scan)
+    assert [i.text for i in scan.items] == ["Bỏ gộp {} vào {}"]
     assert tool.template_hit("Lùi 15 giây", ["Lùi {} giây"]) and not tool.template_hit("Lùi 15 giây", ["Tới {} giây"])

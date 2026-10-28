@@ -30,7 +30,7 @@ find_package(QWindowKit CONFIG REQUIRED)
 endif()
 
 # Theme.qml do tools/gen_theme.py sinh từ DESIGN.md; Nav.qml là singleton điều hướng.
-set_source_files_properties(qml/Theme.qml qml/Nav.qml qml/Api.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+set_source_files_properties(qml/Theme.qml qml/Nav.qml qml/Api.qml qml/Clip.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 
 # Lõi bộ phát (không đụng Qt Quick): app và bộ thử QtTest cùng biên dịch đúng các file này.
 set(ABOOK_PLAYER_SOURCES
@@ -226,6 +226,17 @@ qt_add_qml_module(ABookDesk
         qml/EditBookMyMusic.qml
         qml/EditBookReadings.qml
         qml/EditBookRename.qml
+        qml/CastDialogs.qml
+        qml/CastGender.qml
+        qml/CastList.qml
+        qml/CastMerge.qml
+        qml/CastModal.qml
+        qml/CastPeople.qml
+        qml/CastPerson.qml
+        qml/CastRename.qml
+        qml/CastSample.qml
+        qml/CastVoice.qml
+        qml/Clip.qml
         qml/EditBookSaveAs.qml
         qml/EditBookItems.qml
         qml/Scrollbar.qml

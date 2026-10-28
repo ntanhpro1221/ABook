@@ -13,9 +13,19 @@
 #include <QQmlEngine>
 #include <QPointer>
 
-DesktopApi::DesktopApi(QObject *parent) : QObject(parent) {}
-namespace { AudioOut *sampleOut = nullptr; }
-void DesktopApi::setPreviewOut(AudioOut *out) { sampleOut = out; }
+namespace {
+AudioOut *sampleOut = nullptr;
+DesktopApi *live = nullptr;     // bản đang chạy của QML (singleton): bộ phát nghe thử có trước nó
+}
+DesktopApi::DesktopApi(QObject *parent) : QObject(parent) { live = this; }
+DesktopApi::~DesktopApi() { if (live == this) live = nullptr; }
+void DesktopApi::setPreviewOut(AudioOut *out) {
+    sampleOut = out;
+    if (!out) return;
+    QObject::connect(out, &AudioOut::playingChanged, out, [](bool on) { if (on && live) emit live->previewStarted(); });
+    QObject::connect(out, &AudioOut::ended, out, [] { if (live) emit live->previewEnded(); });
+    QObject::connect(out, &AudioOut::failed, out, [](const QString &reason) { if (live) emit live->previewFailed(reason); });
+}
 void DesktopApi::preview(const QString &path) { if (sampleOut) { sampleOut->stop(); sampleOut->load(mediaUrl(path), 0); sampleOut->play(); } }
 void DesktopApi::stopPreview() { if (sampleOut) sampleOut->stop(); }
 QString DesktopApi::thirdParty() const {
