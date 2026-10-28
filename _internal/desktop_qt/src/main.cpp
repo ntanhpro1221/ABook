@@ -1,7 +1,6 @@
 #include "backend.h"
 #include "desktopapi.h"
 #include "bench.h"
-#include "audioout_mf.h"
 #include "coverprovider.h"
 #include "feedback.h"
 #include "hostnet.h"
@@ -132,9 +131,16 @@ int main(int argc, char *argv[]) {
     backend.start();
     Bench bench(nullptr);
     Platform platform(nullptr);
-    // Bộ phát: Media Foundation (mở lười, tới lệnh phát đầu tiên) + đường HTTP tới host. Phải tắt TRƯỚC host để lưu nốt chỗ nghe.
-    MfAudioOut audio(nullptr);
-    MfAudioOut sampleAudio(nullptr);
+    // One output client for chapters, music, previews and touch feedback. Outlive every voice.
+    auto mixer = std::make_unique<MusicMixer>(QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QStringLiteral("/music_pcm"));
+    MixVoice audio(mixer.get(), MixVoice::Voice);
+    MixVoice sampleAudio(mixer.get());
+    sampleAudio.setVolume(1.0);
+    if (benchMode) {
+        QObject::connect(&audio, &AudioOut::durationChanged, &audio, [](double seconds) { Bench::mark(QStringLiteral("voice_ready:%1").arg(seconds)); });
+        QObject::connect(&audio, &AudioOut::failed, &audio, [](const QString &error) { Bench::mark(QStringLiteral("voice_failed:%1").arg(error)); });
+        QObject::connect(&audio, &AudioOut::buffering, &audio, [](bool on) { Bench::mark(QStringLiteral("voice_buffering:%1").arg(on)); });
+    }
     DesktopApi::setPreviewOut(&sampleAudio);
     HostNet hostNet(backend.network(), nullptr);
     const QString outbox = QDir(qEnvironmentVariable("LOCALAPPDATA")).filePath(QStringLiteral("ABook/pending-progress.json"));
@@ -142,8 +148,6 @@ int main(int argc, char *argv[]) {
     Player player(&audio, &hostNet, outbox, nullptr);
     Player::setInstance(&player);
     player.watchInput();
-    // Mọi nhạc dùng chung mixer; MF chỉ còn phát giọng và giải mã lúc dựng cache.
-    auto mixer = std::make_unique<MusicMixer>(QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QStringLiteral("/music_pcm"));
     Music music(&player, &hostNet, [&mixer, benchMode]() -> AudioOut * {
         auto *voice = new MixVoice(mixer.get());
         if (benchMode) {
@@ -158,9 +162,7 @@ int main(int argc, char *argv[]) {
         return voice;
     }, nullptr);
     Music::setInstance(&music);
-    // Tiếng chạm (Cài đặt › Giao diện › "Âm thanh chạm"): một bộ phát Media Foundation riêng, mở lười ở tiếng đầu tiên. Sách đang phát thì im,
-    // trừ nốt báo hẹn giờ ngủ sắp tắt.
-    Feedback feedback([] { return new MfAudioOut(nullptr); }, nullptr);
+    Feedback feedback([&mixer] { return new MixVoice(mixer.get()); }, nullptr);
     Feedback::setInstance(&feedback);
     QObject::connect(&player, &Player::playingChanged, &feedback, [&player, &feedback] { feedback.setBookPlaying(player.playing()); });
     QObject::connect(&player, &Player::sleepWarning, &feedback, [&feedback] { feedback.play(QStringLiteral("sleepWarn")); });

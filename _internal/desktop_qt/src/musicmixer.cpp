@@ -3,6 +3,8 @@
 #include "mixcore.h"
 #include "mp3source.h"
 #include "mfsource.h"
+#include "streamsource.h"
+#include "timestretch.h"
 
 #include <QCryptographicHash>
 #include <QDir>
@@ -15,6 +17,7 @@
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
+#include <cstdio>
 #include <deque>
 #include <mutex>
 #include <thread>
@@ -22,9 +25,11 @@
 
 #define NOMINMAX
 #include <windows.h>
+#include <initguid.h>
 #include <audioclient.h>
 #include <mmdeviceapi.h>
 #include <ksmedia.h>
+#include <functiondiscoverykeys_devpkey.h>
 #include <wrl/client.h>
 
 using Microsoft::WRL::ComPtr;
@@ -73,6 +78,7 @@ struct DeviceNotice final : IMMNotificationClient {
     std::atomic<ULONG> refs{1};
     std::mutex mutex;
     std::function<void()> changed;
+    QString endpointId;
     std::atomic<bool> dirty{true};
     STDMETHODIMP QueryInterface(REFIID id, void **out) override {
         if (!out) return E_POINTER;
@@ -92,8 +98,16 @@ struct DeviceNotice final : IMMNotificationClient {
     }
     STDMETHODIMP OnDeviceAdded(LPCWSTR) override { return S_OK; }
     STDMETHODIMP OnDeviceRemoved(LPCWSTR) override { return S_OK; }
-    STDMETHODIMP OnDeviceStateChanged(LPCWSTR, DWORD) override { return S_OK; }
-    STDMETHODIMP OnPropertyValueChanged(LPCWSTR, const PROPERTYKEY) override { return S_OK; }
+    void invalidate(LPCWSTR id) {
+        Guard guard(mutex);
+        if (endpointId != QString::fromWCharArray(id)) return;
+        dirty = true; if (changed) changed();
+    }
+    STDMETHODIMP OnDeviceStateChanged(LPCWSTR id, DWORD) override { invalidate(id); return S_OK; }
+    STDMETHODIMP OnPropertyValueChanged(LPCWSTR id, const PROPERTYKEY key) override {
+        if (IsEqualPropertyKey(key, PKEY_AudioEngine_DeviceFormat)) invalidate(id);
+        return S_OK;
+    }
 };
 
 struct WasapiDevice::Impl {
@@ -102,6 +116,8 @@ struct WasapiDevice::Impl {
     ComPtr<IAudioRenderClient> render;
     ComPtr<DeviceNotice> notice;
     int rate = 48000, channels = 2;
+    int bits = 32;
+    bool floating = true;
     UINT32 capacity = 0;
     quint64 revision = 0;
     bool com = false;
@@ -131,6 +147,11 @@ bool WasapiDevice::refresh() {
     if (!d->enumerator || FAILED(d->enumerator->GetDefaultAudioEndpoint(eRender, eMultimedia, &endpoint))
         || FAILED(endpoint->Activate(__uuidof(IAudioClient), CLSCTX_ALL, nullptr, reinterpret_cast<void **>(d->client.GetAddressOf()))))
         return false;
+    LPWSTR id = nullptr;
+    if (SUCCEEDED(endpoint->GetId(&id))) {
+        { Guard guard(d->notice->mutex); d->notice->endpointId = QString::fromWCharArray(id); }
+        CoTaskMemFree(id);
+    }
     ComPtr<IAudioClient2> client2;
     AudioClientProperties props{};
     props.cbSize = sizeof(props); props.eCategory = AudioCategory_Media;
@@ -143,8 +164,11 @@ bool WasapiDevice::refresh() {
     HRESULT hr = E_INVALIDARG;
     if (supportsFormat(*format)) {
         d->rate = int(format->nSamplesPerSec); d->channels = format->nChannels;
+        d->bits = format->wBitsPerSample;
+        d->floating = format->wFormatTag == WAVE_FORMAT_IEEE_FLOAT ||
+            (format->wFormatTag == WAVE_FORMAT_EXTENSIBLE && reinterpret_cast<WAVEFORMATEXTENSIBLE *>(format)->SubFormat == KSDATAFORMAT_SUBTYPE_IEEE_FLOAT);
         hr = d->client->Initialize(AUDCLNT_SHAREMODE_SHARED, 0, 10000000, 0, format, nullptr);
-    } else d->error = QStringLiteral("Thiết bị nhạc cần định dạng float32 với ít nhất 2 kênh.");
+    } else d->error = QStringLiteral("Thiết bị cần định dạng float32 hoặc PCM16/32.");
     CoTaskMemFree(format);
     if (FAILED(hr) || FAILED(d->client->GetBufferSize(&d->capacity)) || FAILED(d->client->GetService(IID_PPV_ARGS(&d->render)))) {
         d->render.Reset(); d->client.Reset(); d->capacity = 0; return false;
@@ -156,7 +180,11 @@ bool WasapiDevice::supportsFormat(const tWAVEFORMATEX &format) {
     const bool floating = format.wFormatTag == WAVE_FORMAT_IEEE_FLOAT ||
         (format.wFormatTag == WAVE_FORMAT_EXTENSIBLE && format.cbSize >= 22 &&
          reinterpret_cast<const WAVEFORMATEXTENSIBLE &>(format).SubFormat == KSDATAFORMAT_SUBTYPE_IEEE_FLOAT);
-    return floating && format.wBitsPerSample == 32 && format.nChannels >= 2;
+    const bool integer = format.wFormatTag == WAVE_FORMAT_PCM ||
+        (format.wFormatTag == WAVE_FORMAT_EXTENSIBLE && format.cbSize >= 22 &&
+         reinterpret_cast<const WAVEFORMATEXTENSIBLE &>(format).SubFormat == KSDATAFORMAT_SUBTYPE_PCM);
+    return format.nChannels >= 1 && ((floating && format.wBitsPerSample == 32) ||
+        (integer && (format.wBitsPerSample == 16 || format.wBitsPerSample == 32)));
 }
 QString WasapiDevice::error() const { return d->error; }
 int WasapiDevice::rate() const { return d->rate; }
@@ -177,11 +205,15 @@ size_t WasapiDevice::padding() {
 bool WasapiDevice::write(const float *stereo, size_t frames) {
     BYTE *bytes = nullptr;
     if (!d->render || FAILED(d->render->GetBuffer(UINT32(frames), &bytes))) { d->notice->dirty = true; return false; }
-    float *out = reinterpret_cast<float *>(bytes);
-    if (d->channels == 2) std::copy_n(stereo, frames * 2, out);
+    if (d->floating && d->channels == 2) std::copy_n(stereo, frames * 2, reinterpret_cast<float *>(bytes));
     else {
-        std::fill_n(out, frames * d->channels, 0.0f);
-        for (size_t i = 0; i < frames; ++i) { out[i * d->channels] = stereo[i * 2]; out[i * d->channels + 1] = stereo[i * 2 + 1]; }
+        for (size_t i = 0; i < frames; ++i) for (int c = 0; c < d->channels; ++c) {
+            const float sample = d->channels == 1 ? (stereo[i * 2] + stereo[i * 2 + 1]) * 0.5f : c < 2 ? stereo[i * 2 + c] : 0;
+            const size_t at = i * d->channels + c;
+            if (d->floating) reinterpret_cast<float *>(bytes)[at] = sample;
+            else if (d->bits == 16) reinterpret_cast<qint16 *>(bytes)[at] = qint16(std::clamp(std::lround(sample * 32768.0), -32768L, 32767L));
+            else reinterpret_cast<qint32 *>(bytes)[at] = qint32(std::clamp(double(sample), -1.0, 1.0) * 2147483647.0);
+        }
     }
     const bool ok = SUCCEEDED(d->render->ReleaseBuffer(UINT32(frames), 0));
     if (!ok) d->notice->dirty = true;
@@ -192,6 +224,7 @@ struct MixVoiceState {
     std::mutex mutex;
     MixVoice *owner = nullptr;
     quint64 generation = 0;
+    quint64 seekSerial = 0;
     QUrl url;
     QByteArray bytes;
     bool opening = false, fetching = false, haveBytes = false, ready = false;
@@ -200,12 +233,20 @@ struct MixVoiceState {
     double target = 0, volume = 0, duration = 0;
     int rate = 48000;
     quint64 length = 0, origin = 0, mixed = 0, heard = 0, limit = 0;
-    struct Span { quint64 device, voice, frames; };
+    struct Span { quint64 device, voice, frames; double media = 0, speed = 1; MixCore::Ramp gain; std::vector<float> pcm; };
     std::deque<Span> spans;
     MixCore::Ramp ramp;
     std::unique_ptr<MixCore::Ring> ring;
     std::unique_ptr<QFile> file;
+    bool streaming = false;
+    double speed = 1, mediaMixed = 0, mediaHeard = 0;
+    std::shared_ptr<ByteSource> source;
+    std::function<std::unique_ptr<VoiceDecoder>(int)> decoderFactory;
+    std::shared_ptr<VoiceDecoder> decoder; // reader keeps an epoch alive while stop/seek/device commands proceed
+    std::unique_ptr<TimeStretch> stretch;
     float first[2] = {};
+    float audibleTail[2] = {}, transitionFrom[2] = {};
+    size_t transitionLeft = 0;
     quint64 frameAt(quint64 consumed) const {
         quint64 frame = origin + consumed;
         if (loop && length) return frame % length;
@@ -229,6 +270,8 @@ struct MusicMixer::Impl {
     std::condition_variable mixCv, readerCv;
     bool quit = false, mixDirty = false, readerDirty = false, initialized = false;
     bool threaded = false, active = false, running = false;
+    std::atomic<bool> resetQueued{false};
+    int nextWakeMs = 250;
     std::atomic<bool> relaxed{false};
     std::atomic<int> rate{48000};
     std::atomic<quint64> decodes{0};
@@ -251,6 +294,14 @@ struct MusicMixer::Impl {
         }
         return result;
     }
+    double mediaHeard(MixVoiceState &s, quint64 cursor) const {
+        double result = s.mediaHeard;
+        for (const auto &span : s.spans) {
+            if (cursor <= span.device) break;
+            result = span.media + double(std::min(span.frames, cursor - span.device)) * span.speed / s.rate;
+        }
+        return s.loop ? result : std::min(result, s.duration);
+    }
     void trim() {
         QDir dir(cacheDir); dir.mkpath(QStringLiteral("."));
         auto files = dir.entryInfoList({QStringLiteral("*.pcm")}, QDir::Files, QDir::Time | QDir::Reversed);
@@ -265,6 +316,10 @@ struct MusicMixer::Impl {
         threaded = threads;
         if (!threads) { rate = device->rate(); deviceRevision = device->revision(); initialized = true; trim(); return; }
         mixerThread = std::thread([this] {
+            SetThreadDescription(GetCurrentThread(), L"ABook audio render");
+            quint64 wakes = 0;
+            const bool traceWakes = qEnvironmentVariableIntValue("ABOOK_AUDIO_TRACE");
+            auto traceAt = Clock::now();
             if (!device) device = std::make_unique<WasapiDevice>([this] { owner->wake(); });
             rate = device->rate();
             deviceRevision = device->revision();
@@ -272,10 +327,16 @@ struct MusicMixer::Impl {
             std::unique_lock<std::mutex> wait(waitMutex);
             while (!quit) {
                 if (!active) mixCv.wait(wait, [this] { return quit || mixDirty; });
-                else mixCv.wait_for(wait, std::chrono::milliseconds(relaxed ? 250 : 50), [this] { return quit || mixDirty; });
+                else mixCv.wait_for(wait, std::chrono::milliseconds(nextWakeMs), [this] { return quit || mixDirty; });
                 if (quit) break;
+                ++wakes;
+                if (traceWakes && Clock::now() - traceAt >= std::chrono::seconds(1)) {
+                    const auto epoch = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+                    std::fprintf(stderr, "mix_wakes epoch_ms=%lld count=%llu thread=%lu\n", static_cast<long long>(epoch), static_cast<unsigned long long>(wakes), GetCurrentThreadId());
+                    traceAt = Clock::now();
+                }
                 mixDirty = false; wait.unlock();
-                const size_t lead = size_t(rate) * (relaxed ? 600 : 200) / 1000;
+                const size_t lead = size_t(rate) / 2;
                 owner->service(lead); // service giới hạn theo padding; test truyền số khung chính xác.
                 wait.lock();
             }
@@ -284,6 +345,7 @@ struct MusicMixer::Impl {
         });
         { std::unique_lock<std::mutex> wait(waitMutex); mixCv.wait(wait, [this] { return initialized; }); }
         readerThread = std::thread([this] {
+            SetThreadDescription(GetCurrentThread(), L"ABook audio decode");
             trim();
             std::unique_lock<std::mutex> wait(waitMutex);
             while (!quit) {
@@ -327,6 +389,14 @@ void MusicMixer::post(const std::shared_ptr<MixVoiceState> &state, std::function
         if (owner) event(owner);
     }, Qt::QueuedConnection);
 }
+void MusicMixer::postSeeked(const std::shared_ptr<MixVoiceState> &state) {
+    const quint64 serial = state->seekSerial;
+    post(state, [weak = std::weak_ptr<MixVoiceState>(state), serial](MixVoice *voice) {
+        const auto s = weak.lock(); if (!s) return;
+        { Guard guard(s->mutex); if (s->seekSerial != serial) return; s->seeking = false; }
+        emit voice->seeked();
+    });
+}
 void MusicMixer::fetch(const std::shared_ptr<MixVoiceState> &state, quint64 generation) {
     QUrl url;
     { Guard guard(state->mutex); if (state->generation != generation) return; url = state->url; }
@@ -355,7 +425,10 @@ void MusicMixer::fetch(const std::shared_ptr<MixVoiceState> &state, quint64 gene
 }
 
 void MusicMixer::serviceReader() {
+    // The render thread must sample the audible cursor before any reader drops spans.
+    if (d->resetQueued) { wake(); return; }
     for (const auto &s : d->snapshot()) {
+        if (s->streaming) { serviceStream(s); continue; }
         quint64 generation;
         bool opening, haveBytes;
         QByteArray bytes;
@@ -429,13 +502,13 @@ void MusicMixer::serviceReader() {
             post(s, [duration = s->duration](MixVoice *v) { emit v->durationChanged(duration); });
         }
         Guard guard(s->mutex);
-        if (!s->ready || !s->file || !s->ring) continue;
+        if (!s->ready || !s->file || !s->ring || s->flush || d->resetQueued) continue;
         if (s->reposition) {
             s->origin = std::min(s->length, quint64(std::llround(bounded(s->target) * s->rate)));
             s->limit = s->length - s->origin;
             s->file->seek(HEADER + qint64(s->origin) * 4);
             s->ring->clear(); s->mixed = s->heard = 0; s->spans.clear(); s->eof = false; s->reposition = false;
-            if (s->seeking) { s->seeking = false; post(s, [](MixVoice *v) { emit v->seeked(); }); }
+            if (s->seeking) postSeeked(s);
         }
         // Đọc trước hai giây; việc lấp vòng đệm không đánh thức giao diện.
         while (s->ring->writable() >= 2) {
@@ -469,12 +542,105 @@ void MusicMixer::serviceReader() {
     wake();
 }
 
+void MusicMixer::serviceStream(const std::shared_ptr<MixVoiceState> &s) {
+    quint64 generation;
+    int outputRate;
+    std::shared_ptr<VoiceDecoder> decoder;
+    std::shared_ptr<ByteSource> source;
+    std::function<std::unique_ptr<VoiceDecoder>(int)> factory;
+    { Guard guard(s->mutex);
+      if (s->url.isEmpty() || s->flush || d->resetQueued) return;
+      generation = s->generation; outputRate = s->rate; decoder = s->decoder; source = s->source; factory = s->decoderFactory;
+    }
+    if (!decoder) {
+        if (factory) decoder = factory(outputRate);
+        else if (source) decoder = std::make_shared<StreamMp3>(source, outputRate);
+        if (!decoder) return;
+        Guard guard(s->mutex);
+        if (s->generation != generation) return;
+        s->decoder = decoder;
+    }
+    auto fail = [&] {
+        const auto error = decoder->error();
+        if (error.isEmpty()) return false;
+        Guard guard(s->mutex);
+        if (s->generation != generation) return true;
+        ++s->generation;
+        const bool wasPlaying = s->playing, wasBuffering = s->buffering;
+        s->ready = s->opening = s->want = s->playing = s->buffering = false;
+        s->ring.reset(); s->stretch.reset(); s->spans.clear();
+        post(s, [error, wasPlaying, wasBuffering](MixVoice *v) {
+            if (wasPlaying) emit v->playingChanged(false);
+            if (wasBuffering) emit v->buffering(false);
+            emit v->failed(error);
+        });
+        s->decoder.reset(); s->source.reset(); s->url.clear();
+        return true;
+    };
+    bool opening;
+    { Guard guard(s->mutex); if (s->generation != generation) return; opening = s->opening; }
+    if (opening) {
+        if (!decoder->open()) { fail(); return; }
+        Guard guard(s->mutex);
+        if (s->generation != generation) return;
+        s->duration = decoder->duration();
+        s->length = quint64(std::llround(s->duration * s->rate));
+        s->ring = std::make_unique<MixCore::Ring>(size_t(s->rate) * 4);
+        s->opening = false; s->ready = true; s->reposition = true;
+        ++d->decodes;
+        post(s, [duration = s->duration](MixVoice *v) { emit v->durationChanged(duration); });
+    }
+    bool reposition;
+    double target;
+    quint64 seekSerial;
+    { Guard guard(s->mutex);
+      if (s->generation != generation || !s->ready || !s->ring || s->flush || d->resetQueued) return;
+      reposition = s->reposition; target = s->target; seekSerial = s->seekSerial;
+    }
+    if (reposition) {
+        if (!decoder->seek(target)) { fail(); return; }
+        Guard guard(s->mutex);
+        if (s->generation != generation) return;
+        if (s->target != target || s->seekSerial != seekSerial || s->flush || d->resetQueued) { wake(true); return; }
+        s->target = std::clamp(s->target, 0.0, s->duration);
+        s->ring->clear(); s->stretch = std::make_unique<TimeStretch>(s->rate); s->stretch->setRate(s->speed);
+        s->mediaMixed = s->mediaHeard = s->target; s->mixed = s->heard = 0; s->spans.clear();
+        s->eof = false; s->reposition = false;
+        if (s->seeking) postSeeked(s);
+    }
+    for (;;) {
+        size_t frames;
+        { Guard guard(s->mutex);
+          if (s->generation != generation || !s->ready || s->reposition || s->flush || d->resetQueued || !s->ring) return;
+          frames = std::min<size_t>(8192, s->ring->writable() / 2);
+        }
+        if (!frames) return;
+        // Disk reads, frame-index scans and decoding must NEVER hold the mutex used by the mixer/UI.
+        std::vector<float> block;
+        const size_t got = decoder->read(block, frames);
+        if (fail()) return;
+        const bool end = decoder->atEnd();
+        bool again;
+        { Guard guard(s->mutex);
+          if (s->generation != generation || !s->ready || s->reposition || s->flush || d->resetQueued) return;
+          if (got) s->ring->write(block.data(), got * 2);
+          again = end && s->loop && s->duration > 0;
+          if (end && !again) s->eof = true;
+        }
+        if (again) { if (!decoder->seek(0)) { fail(); return; } }
+        else if (!got || end) return;
+    }
+}
+
 void MusicMixer::service(size_t frames) {
     Guard engine(d->engineMutex);
     const auto voices = d->snapshot();
     const int oldRate = rate();
     const quint64 oldCursor = d->cursor();
     if (!d->device->refresh()) {
+        // Endpoint loss must freeze at the last audible cursor, including the interpolation
+        // since the last padding sample; reconnect then rebuilds from precisely this point.
+        d->played = oldCursor;
         d->running = false;
         const QString error = d->device->error();
         if (!error.isEmpty()) {
@@ -487,6 +653,7 @@ void MusicMixer::service(size_t frames) {
                 const bool playing = s->playing, buffering = s->buffering;
                 s->opening = s->fetching = s->haveBytes = s->ready = s->want = s->playing = s->buffering = false;
                 s->bytes.clear(); s->ring.reset(); s->file.reset(); s->spans.clear();
+                s->decoder.reset(); s->source.reset(); s->stretch.reset();
                 post(s, [error, playing, buffering](MixVoice *v) {
                     if (playing) emit v->playingChanged(false);
                     if (buffering) emit v->buffering(false);
@@ -508,13 +675,14 @@ void MusicMixer::service(size_t frames) {
             if (s->url.isEmpty()) continue;
             const quint64 heard = d->heard(*s, oldCursor);
             if (!s->reposition && s->ready) {
-                s->target = double(s->frameAt(heard)) / oldRate;
+                s->target = s->streaming ? d->mediaHeard(*s, oldCursor) : double(s->frameAt(heard)) / oldRate;
             }
             s->reposition = true; s->spans.clear();
             if (oldRate != d->device->rate()) {
                 ++s->generation; s->ready = false; s->opening = true; s->fetching = s->haveBytes = false;
                 s->rate = rate();
                 s->ring.reset(); s->file.reset();
+                s->decoder.reset(); s->stretch.reset();
             }
         }
         d->deviceRevision = d->device->revision();
@@ -522,44 +690,90 @@ void MusicMixer::service(size_t frames) {
     }
     size_t padding = d->device->padding();
     d->played = d->written - std::min<quint64>(padding, d->written); d->sampled = Clock::now();
-    bool any = false, flush = false;
-    int wants = 0;
+    if (d->running && !padding && d->written && qEnvironmentVariableIntValue("ABOOK_AUDIO_TRACE"))
+        std::fprintf(stderr, "mix_device_empty written=%llu\n", static_cast<unsigned long long>(d->written));
+    bool any = false;
+    for (const auto &s : voices) {
+        Guard guard(s->mutex);
+        any |= s->want && s->ready;
+    }
+    const bool resetQueued = d->resetQueued.exchange(false);
+    if (resetQueued || !any) {
+        // Freeze, then query padding: every contributor uses the same audible cursor.
+        d->device->stop();
+        padding = d->device->padding();
+        const quint64 at = d->written - std::min<quint64>(padding, d->written);
+        d->device->reset(); d->running = false;
+        for (const auto &s : voices) {
+            Guard guard(s->mutex);
+            if (!s->spans.empty() || (s->flush && s->ready && !s->reposition)) {
+                // Sonic's internal phase cannot be recovered from a media timestamp.
+                // Keep bounded queued PCM to bridge its fresh phase from the last audible sample.
+                bool haveTail = false;
+                for (const auto &span : s->spans) if (at > span.device && !span.pcm.empty()) {
+                    const size_t index = size_t(std::min(span.frames, at - span.device) - 1) * 2;
+                    std::copy_n(span.pcm.data() + index, 2, s->audibleTail);
+                    haveTail = true;
+                }
+                if (s->streaming && haveTail && !s->seeking) {
+                    std::copy_n(s->audibleTail, 2, s->transitionFrom);
+                    s->transitionLeft = size_t(s->rate) / 200;
+                }
+                for (const auto &span : s->spans) if (at < span.device + span.frames) {
+                    s->ramp = span.gain;
+                    s->ramp.advance(size_t(at > span.device ? at - span.device : 0));
+                    break;
+                }
+                if (!s->reposition || (s->flush && !s->want && !s->seeking)) {
+                    s->target = s->streaming ? d->mediaHeard(*s, at) : double(s->frameAt(d->heard(*s, at))) / s->rate;
+                    s->reposition = true;
+                }
+                s->spans.clear();
+            }
+            s->flush = false;
+        }
+        d->written = d->played = 0; padding = 0;
+        if (resetQueued) wake(true);
+        if (!any) { d->active = false; return; }
+    }
+    any = false;
     for (const auto &s : voices) {
         Guard guard(s->mutex);
         while (!s->spans.empty() && s->spans.front().device + s->spans.front().frames <= d->played) {
+            const auto &pcm = s->spans.front().pcm;
+            if (!pcm.empty()) std::copy_n(pcm.data() + pcm.size() - 2, 2, s->audibleTail);
+            s->mediaHeard = s->spans.front().media + double(s->spans.front().frames) * s->spans.front().speed / s->rate;
             s->heard = s->spans.front().voice + s->spans.front().frames; s->spans.pop_front();
         }
-        if (s->want && s->ready) { ++wants; flush |= s->flush; }
-        s->flush = false;
-        if (s->want && s->ready && !s->reposition && !s->loop && s->mixed >= s->limit && s->spans.empty()) {
+        const bool exhausted = s->streaming ? s->eof && s->stretch && s->stretch->drained() : s->mixed >= s->limit;
+        if (s->want && s->ready && !s->reposition && !s->loop && exhausted && s->spans.empty()) {
+            if (s->streaming) s->mediaHeard = s->mediaMixed = s->duration;
             s->want = s->playing = false;
             post(s, [](MixVoice *v) { emit v->playingChanged(false); emit v->ended(); });
         }
         any |= s->want && s->ready;
     }
-    if (!any || (flush && wants == 1)) {
-        const quint64 resetCursor = d->cursor();
-        d->device->stop(); d->device->reset(); d->running = false;
-        d->written = d->played = 0;
-        for (const auto &s : voices) {
-            Guard guard(s->mutex);
-            if (!s->spans.empty()) {
-                // Reset bỏ tiếng chưa ra loa: lần phát sau đọc lại từ chỗ đã nghe, không nhảy 600 ms.
-                if (!s->reposition) {
-                    s->target = double(s->frameAt(d->heard(*s, resetCursor))) / s->rate;
-                    s->reposition = true;
-                }
-                s->spans.clear(); wake(true);
-            }
-        }
-        padding = 0;
-        if (!any) { d->active = false; return; }
-    }
     d->active = any;
     // Luồng thật truyền lead, bộ thử truyền đúng số khung cần trộn.
-    if (d->threaded) frames = frames > padding ? frames - padding : 0;
+    if (d->threaded) {
+        // Use the same large lead while visible: no measurement justifies extra wakes.
+        frames = size_t(rate()) / 2;
+        frames = frames > padding ? frames - padding : 0;
+    }
     frames = std::min(frames, d->device->bufferFrames() - std::min(padding, d->device->bufferFrames()));
-    if (!frames) return;
+    // Starvation guard: with a short-capacity endpoint, shorten the next wait so
+    // at least 100 ms remains. No device event or MMCSS task is needed.
+    const auto schedule = [&](size_t queued) {
+        const int remainingMs = int(queued * 1000 / size_t(rate()));
+        const int floorMs = std::min(100, int(d->device->bufferFrames() * 1000 / size_t(rate())) / 3);
+        d->nextWakeMs = std::clamp(remainingMs - floorMs, 1, 250);
+    };
+    if (!frames) { schedule(padding); return; }
+    // Do not start a queue of silence while an audible-cursor rewind is pending.
+    for (const auto &s : voices) {
+        Guard guard(s->mutex);
+        if (s->want && s->ready && s->reposition) { d->nextWakeMs = 250; return; }
+    }
     std::vector<float> out(frames * 2, 0), block(frames * 2, 0);
     std::vector<std::pair<std::shared_ptr<MixVoiceState>, quint64>> began;
     for (const auto &s : voices) {
@@ -567,20 +781,32 @@ void MusicMixer::service(size_t frames) {
         if (!s->want || !s->ready || s->reposition) continue;
         if (s->volumeDirty) { s->ramp.set(float(AudioOut::effectiveVolume(s->volume)), size_t(rate()) / 20); s->volumeDirty = false; }
         size_t n = frames;
-        if (!s->loop) n = size_t(std::min<quint64>(n, s->limit - std::min(s->limit, s->mixed)));
+        if (!s->streaming && !s->loop) n = size_t(std::min<quint64>(n, s->limit - std::min(s->limit, s->mixed)));
         std::fill(block.begin(), block.end(), 0.0f);
-        const size_t got = s->ring->read(block.data(), n * 2) / 2;
+        if (s->streaming) s->stretch->setRate(s->speed);
+        const size_t got = s->streaming ? s->stretch->read(*s->ring, block.data(), n, s->eof) : s->ring->read(block.data(), n * 2) / 2;
+        for (size_t i = 0; i < got && s->transitionLeft; ++i) {
+            const float w = 1.0f - float(--s->transitionLeft) / float(size_t(s->rate) / 200);
+            for (size_t c = 0; c < 2; ++c) block[i * 2 + c] = s->transitionFrom[c] * (1 - w) + block[i * 2 + c] * w;
+        }
         const bool buffering = got < n && !s->eof;
         if (s->buffering != buffering) { s->buffering = buffering; post(s, [buffering](MixVoice *v) { emit v->buffering(buffering); }); }
+        if (s->streaming && buffering && s->playing) {
+            s->playing = false; post(s, [](MixVoice *v) { emit v->playingChanged(false); });
+        }
+        const auto gain = s->ramp;
         s->ramp.mixInto(out.data(), block.data(), frames, 2);
         if (got) {
-            s->spans.push_back({d->written, s->mixed, got}); s->mixed += got;
+            s->spans.push_back({d->written, s->mixed, got, s->mediaMixed, s->speed, gain,
+                s->streaming ? std::vector<float>(block.begin(), block.begin() + got * 2) : std::vector<float>{}}); s->mixed += got;
+            if (s->streaming) s->mediaMixed += double(got) * s->speed / s->rate;
             if (!s->playing) began.emplace_back(s, s->generation);
         }
         if (s->ring->readable() < size_t(rate()) * 2 && !s->eof) wake(true);
     }
     if (!d->device->write(out.data(), frames)) { d->running = false; return; }
     d->written += frames;
+    schedule(padding + frames);
     if (!d->running) d->running = d->device->start();
     if (d->running) for (const auto &entry : began) {
         const auto &s = entry.first;
@@ -594,6 +820,10 @@ void MusicMixer::service(size_t frames) {
 double MusicMixer::position(const std::shared_ptr<MixVoiceState> &s) const {
     Guard engine(d->engineMutex); Guard guard(s->mutex);
     if (s->seeking || s->reposition || !s->ready) return s->target;
+    if (s->streaming) {
+        const double at = d->mediaHeard(*s, d->cursor());
+        return s->loop && s->duration > 0 ? std::fmod(at, s->duration) : at;
+    }
     return double(s->frameAt(d->heard(*s, d->cursor()))) / s->rate;
 }
 
@@ -601,6 +831,10 @@ MixVoice::MixVoice(MusicMixer *mixer, QObject *parent) : AudioOut(parent), m_mix
     m_state->owner = this;
     m_state->rate = mixer->rate();
     Guard guard(mixer->d->voicesMutex); mixer->d->voices.push_back(m_state);
+}
+MixVoice::MixVoice(MusicMixer *mixer, Purpose purpose, QObject *parent) : MixVoice(mixer, parent) { m_state->streaming = purpose == Voice; }
+MixVoice::MixVoice(MusicMixer *mixer, std::function<std::unique_ptr<VoiceDecoder>(int)> decoder, QObject *parent) : MixVoice(mixer, Voice, parent) {
+    m_state->decoderFactory = std::move(decoder);
 }
 MixVoice::~MixVoice() {
     stop();
@@ -610,25 +844,53 @@ MixVoice::~MixVoice() {
 }
 void MixVoice::load(const QUrl &url, double startSeconds) {
     stop();
-    { Guard guard(m_state->mutex); m_state->url = url; m_state->rate = m_mixer->rate(); m_state->target = bounded(startSeconds); m_state->opening = true; }
+    { Guard guard(m_state->mutex); m_state->url = url; m_state->rate = m_mixer->rate(); m_state->target = bounded(startSeconds); m_state->opening = true;
+      if (m_state->streaming && !m_state->decoderFactory) {
+          auto *source = new RangeSource(url, [mixer = m_mixer] { mixer->wake(true); mixer->wake(); });
+          source->setParent(m_mixer);
+          m_state->source = std::shared_ptr<ByteSource>(source, [source](ByteSource *) { source->deleteLater(); });
+      }
+    }
     m_mixer->wake(true);
 }
-void MixVoice::play() { { Guard guard(m_state->mutex); if (!m_state->url.isEmpty()) m_state->want = true; } m_mixer->wake(true); m_mixer->wake(); }
+void MixVoice::play() {
+    { Guard engine(m_mixer->d->engineMutex); Guard guard(m_state->mutex);
+      if (!m_state->url.isEmpty()) {
+          if (!m_state->want && m_mixer->d->written) m_mixer->d->resetQueued = true;
+          m_state->want = true;
+          if (m_state->streaming && !m_state->ready && !m_state->buffering) {
+              m_state->buffering = true; m_mixer->post(m_state, [](MixVoice *v) { emit v->buffering(true); });
+          }
+      }
+    }
+    m_mixer->wake(true); m_mixer->wake();
+}
 void MixVoice::pause() {
     const double at = position();
-    { Guard guard(m_state->mutex);
+    { Guard engine(m_mixer->d->engineMutex); Guard guard(m_state->mutex);
+      if (m_mixer->d->written) m_mixer->d->resetQueued = m_state->flush = true;
       m_state->want = false;
+      if (m_state->buffering) { m_state->buffering = false; m_mixer->post(m_state, [](MixVoice *v) { emit v->buffering(false); }); }
       m_state->target = at; m_state->reposition = true;
       if (m_state->playing) { m_state->playing = false; m_mixer->post(m_state, [](MixVoice *v) { emit v->playingChanged(false); }); }
     }
     m_mixer->wake();
 }
 void MixVoice::stop() {
-    { Guard guard(m_state->mutex);
+    { Guard engine(m_mixer->d->engineMutex); Guard guard(m_state->mutex);
+      if (m_mixer->d->written && (m_state->want || !m_state->spans.empty())) m_mixer->d->resetQueued = true;
       ++m_state->generation; m_state->url.clear(); m_state->bytes.clear();
+      const bool wasPlaying = m_state->playing, wasBuffering = m_state->buffering;
+      if (wasPlaying || wasBuffering) m_mixer->post(m_state, [wasPlaying, wasBuffering](MixVoice *v) {
+          if (wasPlaying) emit v->playingChanged(false);
+          if (wasBuffering) emit v->buffering(false);
+      });
       m_state->opening = m_state->fetching = m_state->haveBytes = m_state->ready = m_state->want = m_state->playing = false;
       m_state->buffering = m_state->seeking = m_state->reposition = m_state->eof = m_state->flush = false;
       m_state->ring.reset(); m_state->file.reset(); m_state->spans.clear();
+      m_state->source.reset(); m_state->decoder.reset(); m_state->stretch.reset(); m_state->mediaHeard = m_state->mediaMixed = 0;
+      m_state->transitionLeft = 0;
+      std::fill_n(m_state->audibleTail, 2, 0.0f); std::fill_n(m_state->transitionFrom, 2, 0.0f);
       m_state->duration = m_state->target = 0; m_state->mixed = m_state->heard = m_state->origin = m_state->length = 0;
     }
     // Huỷ tải khi không phần tử nào còn chờ; nguồn chung vẫn được giữ cho phần tử khác.
@@ -645,20 +907,55 @@ void MixVoice::stop() {
     m_mixer->wake();
 }
 void MixVoice::seek(double seconds) {
-    { Guard guard(m_state->mutex); m_state->target = bounded(seconds); m_state->seeking = m_state->reposition = m_state->flush = true; }
+    { Guard engine(m_mixer->d->engineMutex); Guard guard(m_state->mutex);
+      if (m_mixer->d->written) m_mixer->d->resetQueued = m_state->flush = true;
+      ++m_state->seekSerial; m_state->target = bounded(seconds); m_state->seeking = m_state->reposition = true;
+      if (m_state->streaming && m_state->want && !m_state->buffering) {
+          m_state->buffering = true; m_mixer->post(m_state, [](MixVoice *v) { emit v->buffering(true); });
+      }
+      if (m_state->streaming && m_state->playing) {
+          m_state->playing = false; m_mixer->post(m_state, [](MixVoice *v) { emit v->playingChanged(false); });
+      }
+    }
     m_mixer->wake(true); m_mixer->wake();
 }
-void MixVoice::setVolume(double volume) { Guard guard(m_state->mutex); m_state->volume = effectiveVolume(volume); m_state->volumeDirty = true; }
+void MixVoice::setVolume(double volume) {
+    { Guard engine(m_mixer->d->engineMutex); Guard guard(m_state->mutex);
+      volume = effectiveVolume(volume);
+      if (m_state->volume == volume) return;
+      m_state->volume = volume; m_state->volumeDirty = true;
+      if (m_mixer->d->written && (m_state->want || !m_state->spans.empty())) m_mixer->d->resetQueued = m_state->flush = true;
+    }
+    m_mixer->wake();
+}
+void MixVoice::setRate(double speed) {
+    { Guard engine(m_mixer->d->engineMutex); Guard guard(m_state->mutex);
+      if (!std::isfinite(speed)) return;
+      speed = std::clamp(speed, 0.5, 4.0);
+      if (m_state->speed == speed) return;
+      m_state->speed = speed;
+      if (m_mixer->d->written && (m_state->want || !m_state->spans.empty())) m_mixer->d->resetQueued = m_state->flush = true;
+    }
+    m_mixer->wake();
+}
 void MixVoice::preload() { m_mixer->wake(true); }
 void MixVoice::setLoop(bool loop) {
-    { Guard guard(m_state->mutex);
+    const double at = m_state->streaming && !loop ? position() : 0;
+    { Guard engine(m_mixer->d->engineMutex); Guard guard(m_state->mutex);
+      if (m_state->streaming && m_state->loop != loop) {
+          if (!loop) {
+              m_state->target = at; m_state->reposition = true;
+              if (m_mixer->d->written) m_mixer->d->resetQueued = m_state->flush = true;
+          }
+          else if (m_state->stretch && m_state->stretch->drained()) { m_state->target = 0; m_state->reposition = true; }
+      }
       if (!loop && m_state->loop && m_state->length) {
           const quint64 at = (m_state->origin + m_state->mixed) % m_state->length;
           m_state->limit = m_state->mixed + (at || !m_state->mixed ? m_state->length - at : 0);
       }
       m_state->loop = loop; if (loop) m_state->eof = false;
     }
-    m_mixer->wake(true);
+    m_mixer->wake(true); m_mixer->wake();
 }
 double MixVoice::position() const { return m_mixer->position(m_state); }
 double MixVoice::duration() const { Guard guard(m_state->mutex); return m_state->duration; }

@@ -27,7 +27,7 @@ def wait_for_machine():
             info = proc.info
             args = info.get("cmdline") or []
             scripts = {Path(a).name.lower() for a in args if a.endswith(".py")}
-            if (info.get("name") or "").lower() == "abookdesk.exe" or scripts & {"measure.py", "ramrun.py", "measure_mini.py", "hidden_suite.py"}:
+            if (info.get("name") or "").lower() == "abookdesk.exe" or scripts & {"measure.py", "ramrun.py", "measure_mini.py", "hidden_suite.py", "private_worker.py", "voice_ab.py", "voice_validate.py"}:
                 busy.append(info)
         if not busy:
             return {"seconds": round(time.time() - start, 3), "blocked_samples": waits}
@@ -44,9 +44,11 @@ def main():
     ap.add_argument("--rounds", type=int, default=3)
     ap.add_argument("--offscreen", action="store_true")
     ap.add_argument("--require-mixer", action="store_true", help="require real mixer ready/playing markers and no decode/device failure")
+    ap.add_argument("--fixture-source", type=Path, default=Path("D:/Novels/native_desk_proto/deskqt_fixture_music"))
+    ap.add_argument("--functional-only", action="store_true", help="allow battery for playback correctness only; CPU/RAM samples are not performance evidence")
     args = ap.parse_args()
     EVIDENCE.mkdir(parents=True, exist_ok=True)
-    fixture = fixture_at(EVIDENCE / ("fixture-music-off" if args.music_off else "fixture-music"))
+    fixture = fixture_at(EVIDENCE / ("fixture-music-off" if args.music_off else "fixture-music"), args.fixture_source)
     for path in (fixture / "library").rglob("edits.json"):
         data = json.loads(path.read_bytes())
         data.setdefault("music", {})["enabled"] = not args.music_off
@@ -69,7 +71,7 @@ def main():
         wait = wait_for_machine()
         reset(fixture)
         print("START", args.label, i+1, "machine-clear", wait["seconds"], flush=True)
-        got = measure.launch(args.exe.resolve(), env, True, timeout_seconds=190)
+        got = measure.launch(args.exe.resolve(), env, True, timeout_seconds=190, require_ac=not args.functional_only)
         got.update(label=args.label, run=i+1, machine_wait=wait, exe_sha256=hashlib.sha256(args.exe.read_bytes()).hexdigest())
         if got.get("app_log"):
             log = EVIDENCE / f"{args.label}-{i+1}.app.log"
@@ -87,8 +89,10 @@ def main():
             if "hide_end" in audio and "hide_begin" in audio:
                 got["hidden_wall_s"] = (events["hide_end"]-events["hide_begin"])/1000
                 got["hidden_media_s"] = audio["hide_end"]["position"]-audio["hide_begin"]["position"]
+                got["starvation_warnings"] = Path(got["app_log"]).read_text(encoding="utf-8", errors="replace").count("mix_device_empty")
                 got["clock_pass"] = (audio["hide_begin"]["chapter"] == audio["hide_end"]["chapter"]
-                    and got["hidden_media_s"] >= 118 and all(v["playing"] == 1 for v in audio.values()))
+                    and abs(got["hidden_media_s"] - got["hidden_wall_s"]) <= 0.1
+                    and got["starvation_warnings"] == 0 and all(v["playing"] == 1 for v in audio.values()))
                 if args.require_mixer:
                     got["mixer_pass"] = (any(n.startswith("mix_ready:") for n in got["mixer_events"])
                         and "mix_playing" in got["mixer_events"] and "mix_failed" not in got["mixer_events"])
@@ -98,7 +102,7 @@ def main():
         print("RESULT", {k:got.get(k) for k in ("label","run","ok","hidden_wall_s","hidden_media_s","clock_pass","why")}, flush=True)
         if not got.get("ok"):
             raise RuntimeError(got.get("why"))  # Never retry a foreground failure.
-    assert all(row.get("clock_pass") for row in rows), "Hidden playback must advance >=118 s in 120 s"
+    assert all(row.get("clock_pass") for row in rows), "Hidden playback must stay within 0.1 s of wall time with zero starvation warnings"
     assert all(row.get("exit_code") == 0 and not row.get("forced_termination") and
                row.get("foreground_events") == 0 for row in rows), "Playback must exit normally under the foreground guard"
 
