@@ -3,6 +3,7 @@
 
 #include <QAbstractListModel>
 #include <QJsonArray>
+#include <QJsonObject>
 #include <QVariantMap>
 #include <QtQml/qqmlregistration.h>
 #include <vector>
@@ -47,6 +48,7 @@ signals:
 
 private:
     struct Book {
+        QJsonObject raw;
         QString id, title, author, narrator, subtitle, detail, coverKey, source, lastChapter;
         double progress = 0, duration = 0;
         int chaptersTotal = 0, chaptersAvailable = 0;

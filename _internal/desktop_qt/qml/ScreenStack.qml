@@ -67,6 +67,7 @@ Item {
     }
 
     // ---- API ----
+    function rootContent(index) { const s = _stacks[index]; return s && s.length ? s[0].content : null }
     function show(index) {
         if (index === current) {
             popToRoot()
