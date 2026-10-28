@@ -244,7 +244,6 @@ def launch(exe: Path, env_extra: dict, offscreen: bool = True, timeout_seconds: 
     env["QT_FORCE_STDERR_LOGGING"] = "1"
     env["QT_ASSUME_STDERR_HAS_CONSOLE"] = "1"
     desktop = None
-    startup = subprocess.STARTUPINFO()
     if env.get("QT_QPA_PLATFORM") == "offscreen" or env.get("ABOOK_BENCH_HIDDEN_DESKTOP") == "1":
         # Lớp chắn thứ hai: cả hộp lỗi trước lúc Qt nạp cũng không thể lên desktop của chủ sách.
         u32.CreateDesktopW.restype = wt.HANDLE
@@ -254,17 +253,15 @@ def launch(exe: Path, env_extra: dict, offscreen: bool = True, timeout_seconds: 
         desktop = u32.CreateDesktopW(desktop_name, None, None, 0, 0x10000000, None)
         if not desktop:
             raise ctypes.WinError()
-        startup.lpDesktop = "winsta0\\" + desktop_name
     app_log = out.with_suffix(".app.log").open("wb")
     command = [str(exe)]
     if env.get("ABOOK_BENCH_HIDDEN_DESKTOP") == "1":
         command += ["-qwindowgeometry", "1920x1080-20000-20000"]
-    startup.dwFlags = subprocess.STARTF_USESHOWWINDOW
-    startup.wShowWindow = 4  # SW_SHOWNOACTIVATE
     previous_error_mode = k32.SetErrorMode(0x0001 | 0x0002 | 0x8000)
     try:
-        p = subprocess.Popen(command, env=env, cwd=str(exe.parent), stdout=app_log, stderr=subprocess.STDOUT,
-                             creationflags=0x00000004 | subprocess.CREATE_NO_WINDOW, startupinfo=startup)
+        if not desktop:raise RuntimeError("Measurement requires an isolated desktop")
+        from windows_process import create_suspended
+        p = create_suspended(command, env=env, cwd=str(exe.parent), log=app_log, desktop=desktop_name, show=4)
     finally:
         k32.SetErrorMode(previous_error_mode)
     h = k32.OpenProcess(0x0410, False, p.pid)
@@ -274,6 +271,7 @@ def launch(exe: Path, env_extra: dict, offscreen: bool = True, timeout_seconds: 
     thread_samples = []
     shared_busy = []
     module_samples = []
+    actual_desktop = []
     states: list[tuple[float, dict]] = []
     stop = threading.Event()
 
@@ -345,6 +343,14 @@ def launch(exe: Path, env_extra: dict, offscreen: bool = True, timeout_seconds: 
     def sampler():
         while not stop.is_set():
             try:
+                if not actual_desktop:
+                    from windows_process import thread_desktop
+                    try:
+                        found = thread_desktop(p.primary_thread_id)
+                        actual_desktop.append(found)
+                        if found != desktop_name: p.kill()
+                    except OSError:
+                        pass # The native thread has not initialized user32 yet.
                 samples.append((time.time() * 1000, private_mb(h), cpu_ms(h)))
                 proc = psutil.Process(p.pid)
                 mem, cpu = proc.memory_info(), proc.cpu_times()
@@ -444,7 +450,9 @@ def launch(exe: Path, env_extra: dict, offscreen: bool = True, timeout_seconds: 
         if not end_status or any(x != 2 for x in end_status) or any(ac != 1 for _t, ac in power_samples):
             return {"ok": False, "why": "AC lost during measurement", "battery_status_at_end": end_status, "power_samples": power_samples}
     return {"ok": True, "d": d, "samples": samples, "memory_samples": memory_samples, "thread_samples": thread_samples, "shared_busy": shared_busy, "module_samples": module_samples, "battery_status_at_launch": battery_status, "battery_status_at_end": end_status, "power_samples": power_samples, "ac_at_launch": int(power.ac), "functional_only": not require_ac, "states": states, "host_mb": host_mb, "host_cpu": host, "foreground_events": 0, "offscreen": True, "app_log": str(out.with_suffix(".app.log")),
-            "exit_code": p.returncode, "forced_termination": forced_termination}
+            "exit_code": p.returncode, "forced_termination": forced_termination,
+            "desktop_verified_before_resume": p.desktop, "actual_thread_desktop": actual_desktop,
+            "qt_platform": env.get("QT_QPA_PLATFORM")}
 
 
 def one_run(exe: Path, env_extra: dict, offscreen: bool = True) -> dict:
