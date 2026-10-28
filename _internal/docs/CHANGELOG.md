@@ -7,6 +7,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Làm sách
+
+- Model xác định người nói từng câu lên bản mới (`abook-speaker:v2`): đúng người nói hơn khoảng 2,3 điểm trên 56 chương đo
+  (81,4 so với 79,1), cùng tốc độ. Studio tự tải khi cập nhật.
+
 ### Điện thoại
 
 - Nhạc nền chuyển sang chỗ nối vòng dựng sẵn đúng lúc cả trên máy thật chậm. Đo trên OPPO: 10/10 bài đổi tiếng liền mạch, lệch dưới 1 ms. Khi chỗ nối chưa dựng kịp, nhạc quay về cách lặp thường sớm ít nhất 2 giây nên không hụt tiếng hay im.
