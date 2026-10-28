@@ -6,8 +6,9 @@ mỗi file (xem `ABOOK_FILE_FORMAT.md`), app và hệ điều hành nhận ra fi
 đuôi `.abook`.
 
 `.abookproj` (cả dự án Studio trong một file, đặc tả `ABOOKPROJ_FILE_FORMAT.md`) đăng ký riêng bằng form thứ hai -
-bảng cuối file. Cả hai đã gửi ngày 01-10: `.abook` mã hồ sơ IANA #1460837, `.abookproj` #1460846
-(trạng thái: https://tools.iana.org/public-view).
+bảng cuối file. Cả hai đã gửi ngày 01-10 (`.abook` mã hồ sơ IANA #1460837, `.abookproj` #1460846) và **IANA đã đăng ký
+chính thức ngày 28-10-2026**: `application/vnd.ngdtuanh.abook+zip` và `application/vnd.ngdtuanh.abookproj+zip`, có trong
+sổ https://www.iana.org/assignments/media-types.
 
 ## Chủ sách làm (khoảng 10 phút)
 
@@ -47,7 +48,7 @@ bảng cuối file. Cả hai đã gửi ngày 01-10: `.abook` mã hồ sơ IANA 
 - **PRONOM** (danh bạ định dạng của Lưu trữ Quốc gia Anh, dùng bởi các công cụ nhận dạng file như DROID, Siegfried):
   `.abook` đã nộp ngày 01-10 bằng pull request https://github.com/digital-preservation/PRONOM_Research/pull/185 (nội
   dung ở `PRONOM_SUBMISSION.md`). `.abookproj` nộp sau khi tính năng có trong một bản phát hành.
-- Sau khi IANA duyệt: không phải đổi gì trong app - app đã dùng đúng tên kiểu này từ 0.4.0.
+- IANA đã duyệt (28-10-2026): không phải đổi gì trong app - app đã dùng đúng tên kiểu này từ 0.4.0.
 
 ## Form thứ hai: `.abookproj`
 
