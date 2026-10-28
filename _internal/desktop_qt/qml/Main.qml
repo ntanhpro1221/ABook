@@ -177,6 +177,7 @@ Window {
         id: popover
         anchorItem: sidebar.chip
     }
+    Connections { target: Nav; function onBookRequested(id) { win.openBookId(id) } }
     AddBook { id: addBook; onOpenBook: id => win.openBookId(id); onOpenStudio: id => stack.show(1) }
     EditBook { id: editBook }
     EditBookRename { id: renameChapter }      // mở từ nút “…” ở dòng chương: renameChapter.begin(book, chapter)
