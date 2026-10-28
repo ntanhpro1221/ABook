@@ -19,14 +19,13 @@ Popover {
             font.pixelSize: Theme.sizeCaption
             font.weight: Theme.weightMedium
         }
-        Grid {
-            columns: 4
+        Flow {
+            width: parent.width
             spacing: Theme.s8
             Repeater {
                 model: Player.speeds
                 ChoiceChip {
                     required property var modelData
-                    width: (root.panelWidth - 2 * root.pad - 3 * Theme.s8) / 4
                     text: root.label(modelData)
                     selected: Math.abs(modelData - Player.rate) < 0.001
                     onClicked: { Feedback.play("toggle"); Player.setRate(modelData) }

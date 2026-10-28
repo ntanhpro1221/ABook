@@ -104,7 +104,10 @@ Window {
                 anchors.fill: parent
                 property bool alive: false
                 active: alive
-                sourceComponent: NowPlaying { bar: playerBar }
+                sourceComponent: NowPlaying {
+                    bar: playerBar
+                    onSettingsRequested: group => { close(); stack.show(2); stack.rootContent(2).active = group }
+                }
                 Timer {
                     id: dropTimer
                     interval: 8000

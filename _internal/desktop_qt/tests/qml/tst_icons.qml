@@ -11,7 +11,8 @@ Item {
     height: 600
 
     readonly property var names: ["library", "clapperboard", "settings", "panel-left-close", "panel-left-open", "arrow-left", "chevron-up", "chevron-down",
-        "skip-back", "skip-forward", "list-ordered", "moon", "audio-lines", "check", "play", "pause", "rotate-ccw", "refresh-cw", "folder-open"]
+        "skip-back", "skip-forward", "list-ordered", "moon", "audio-lines", "check", "play", "pause", "rotate-ccw", "refresh-cw", "folder-open",
+        "volume-1", "volume-2", "volume-x", "keyboard", "undo-2", "lightbulb", "laptop", "arrow-down-wide-narrow"]
 
     Component {
         id: probeFactory
