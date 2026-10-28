@@ -42,7 +42,15 @@ def prepare_fixture():
     (OUT / "chapter-input.json").write_text(json.dumps(dict(source=str(source), sha256=sha, bytes=source.stat().st_size, rate=48000, channels=1), indent=2), encoding="utf-8", newline="\n")
     # Both immutable benchmark binaries open the saved chapter. Pin that state to chapter 1.
     base = fixture / "_base/listening.json"
-    listening = json.loads(base.read_bytes())
+    # Use one controlled record for the measured book. Seed links can belong to
+    # a previous ID key, and another seed book's newer last.at can otherwise win
+    # restoreLast() before BenchScenario selects the measured book.
+    ids = json.loads((fixture / "audio_books.json").read_bytes())
+    record = "r-idle-benchmark"
+    listening = dict(version=2, records={record: dict(name="Benchmark",createdAt=1792992784,
+        state=dict(rate=1.0,rateAt=1792996554,_fieldRevs={"rate":dict(counter=1,node="11111111111111111111111111111111")},
+            _clock=2,chapters={},last=dict(chapterId=1,seconds=0,at=1792996554,rev=dict(counter=2,node="11111111111111111111111111111111"))))},
+        links={ids["a"]:dict(records=[record],active=record)},deleted={})
     for record in listening["records"].values():
         state = record.get("state", {})
         state["chapters"] = {}
@@ -119,6 +127,8 @@ def run(rounds, resume=False, abc=False, probe=False, native=False):
                 shutil.copyfile(OUT / f"raw-{round}-{label}.json", excluded / "raw.json")
                 shutil.copyfile(OUT / f"{round}-{label}.app.log", excluded / "app.log")
                 raise SharedMachineBusy("Shared machine became busy; retain raw attempt but exclude this round")
+            if not got.get("desktop_verified_before_resume") or got.get("actual_thread_desktop")!=[got["desktop_verified_before_resume"]]:
+                raise RuntimeError("Private desktop assignment was not verified")
             if not got.get("power_samples") or any(ac != 1 for _t, ac in got["power_samples"]): raise RuntimeError("AC lost during measurement")
             ev = {name: t + got["d"]["epoch_offset_ms"] for t, name in got["d"]["events"]}
             begin, end = ev["min_begin"] + 5000, ev["min_end"]

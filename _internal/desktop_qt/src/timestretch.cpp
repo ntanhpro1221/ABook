@@ -3,17 +3,23 @@
 #include <new>
 
 struct TimeStretch::Impl {
-    sonicStream stream;
+    sonicStream stream = nullptr;
+    int rate;
     bool flushed = false;
     bool bypass = true;
-    explicit Impl(int rate) : stream(sonicCreateStream(rate, 2)) { if (!stream) throw std::bad_alloc(); }
-    ~Impl() { sonicDestroyStream(stream); }
+    explicit Impl(int rate) : rate(rate) {}
+    ~Impl() { if (stream) sonicDestroyStream(stream); }
 };
 TimeStretch::TimeStretch(int rate) : d(new Impl(rate)) {}
 TimeStretch::~TimeStretch() = default;
 void TimeStretch::setRate(double speed) {
     speed = std::clamp(speed, 0.5, 4.0);
-    if (speed != 1.0) d->bypass = false;
+    if (speed == 1.0 && d->bypass) return;
+    if (!d->stream) {
+        d->stream = sonicCreateStream(d->rate, 2);
+        if (!d->stream) throw std::bad_alloc();
+        d->bypass = false;
+    }
     sonicSetSpeed(d->stream, float(speed));
 }
 size_t TimeStretch::read(MixCore::Ring &input, float *stereo, size_t frames, bool eof) {
