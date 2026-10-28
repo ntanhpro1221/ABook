@@ -47,7 +47,11 @@ sổ https://www.iana.org/assignments/media-types.
 
 - **PRONOM** (danh bạ định dạng của Lưu trữ Quốc gia Anh, dùng bởi các công cụ nhận dạng file như DROID, Siegfried):
   `.abook` đã nộp ngày 01-10 bằng pull request https://github.com/digital-preservation/PRONOM_Research/pull/185 (nội
-  dung ở `PRONOM_SUBMISSION.md`). `.abookproj` nộp sau khi tính năng có trong một bản phát hành.
+  dung ở `PRONOM_SUBMISSION.md`). `.abookproj` nộp ngày 28-10 bằng pull request
+  https://github.com/digital-preservation/PRONOM_Research/pull/200.
+- **Wikidata** (28-10): `.abook` = https://www.wikidata.org/wiki/Q141898239, `.abookproj` =
+  https://www.wikidata.org/wiki/Q141898240 (loại file format, dựa trên ZIP, đuôi, media type có nguồn IANA, đặc tả).
+- **FileInfo.com** (28-10): đã gửi cả hai đuôi qua form "Add a File Type"; họ duyệt trước khi đăng.
 - IANA đã duyệt (28-10-2026): không phải đổi gì trong app - app đã dùng đúng tên kiểu này từ 0.4.0.
 
 ## Form thứ hai: `.abookproj`
