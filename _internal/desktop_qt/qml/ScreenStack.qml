@@ -18,6 +18,7 @@ Item {
     property int depth: 0
     readonly property bool canPop: depth > 1
     readonly property bool busy: seq.running
+    signal reselected(int index)          // chọn lại mục đang mở ở thanh bên: màn gốc tự về đầu (Studio: về danh sách dự án)
 
     property var _stacks: ({})
     property Item _out: null
@@ -71,6 +72,7 @@ Item {
     function show(index) {
         if (index === current) {
             popToRoot()
+            reselected(index)
             return
         }
         if (!_stacks[index]) _stacks[index] = [_wrap(roots[index])]

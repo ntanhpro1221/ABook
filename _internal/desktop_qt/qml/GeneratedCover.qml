@@ -29,8 +29,10 @@ Rectangle {
     }
 
     // Tên sách in trên bìa: thu cỡ chữ cho vừa khung (không cắt, không '...'), chừa chỗ cho nhãn "Tập N" nếu có.
+    // Bìa nhỏ (ảnh đại diện trong bảng, < 64 px): chỉ còn tên sách, nhãn "Tập N" đã có ngay trên dòng tên
+    readonly property bool compact: width < 64
     Text {
-        readonly property real pad: Math.max(8, root.width * 0.08)
+        readonly property real pad: root.compact ? 4 : Math.max(8, root.width * 0.08)
         x: pad
         y: pad
         width: root.width - 2 * pad
@@ -47,7 +49,7 @@ Rectangle {
     }
     Rectangle {
         id: tagBox
-        visible: root.parts[1] !== ""
+        visible: !root.compact && root.parts[1] !== ""
         anchors.left: parent.left
         anchors.bottom: parent.bottom
         anchors.margins: Math.max(8, root.width * 0.08)
