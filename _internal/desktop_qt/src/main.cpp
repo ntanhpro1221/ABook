@@ -7,6 +7,7 @@
 #include "music.h"
 #include "musicmixer.h"
 #include "musicwindowactivity.h"
+#include "graphicsidle.h"
 #include "idleaudit.h"
 #include "mediacontrols.h"
 #include "platform.h"
@@ -27,12 +28,41 @@
 #include <QScopedValueRollback>
 #include <QStandardPaths>
 #include <QTimer>
+#include <qpa/qwindowsysteminterface_p.h>
 #include <cstdio>
 #include <cstdlib>
+#include <string_view>
 
 #define NOMINMAX
 #include <windows.h>
 #include <dwmapi.h>
+
+// A never-switched desktop has no DWM exposure. Native benchmark probes must
+// still exercise the real D3D scene graph, including its minimize/restore path.
+// This only changes TEST exposure events, after verifying the private desktop.
+class BenchExposure final : public QWindowSystemEventHandler {
+    bool enabled;
+public:
+    explicit BenchExposure(bool enabled) : enabled(enabled) {
+        if (!enabled) return;
+        wchar_t name[256]{}; DWORD size=0;
+        if (!GetUserObjectInformationW(GetThreadDesktop(GetCurrentThreadId()),UOI_NAME,name,sizeof(name),&size)
+            || std::wstring_view(name).find(L"ABookBench-")!=0) {
+            std::fputs("OWNER RULE: native exposure probe requires a verified private desktop\n",stderr);
+            std::_Exit(6);
+        }
+        QWindowSystemInterfacePrivate::installWindowSystemEventHandler(this);
+    }
+    ~BenchExposure() { if(enabled) QWindowSystemInterfacePrivate::removeWindowSystemEventhandler(this); }
+    bool sendEvent(QWindowSystemInterfacePrivate::WindowSystemEvent *event) override {
+        if (event->type==QWindowSystemInterfacePrivate::Expose) {
+            auto *expose=static_cast<QWindowSystemInterfacePrivate::ExposeEvent *>(event);
+            if (auto *window=qobject_cast<QQuickWindow *>(expose->window.data()))
+                expose->isExposed=window->isVisible() && window->visibility()!=QWindow::Minimized;
+        }
+        return QWindowSystemEventHandler::sendEvent(event);
+    }
+};
 
 // ShowNormal của Qt dùng SW_SHOWNORMAL, bỏ qua WindowDoesNotAcceptFocus: chặn ở Win32 TRƯỚC khi Windows đổi focus.
 class BenchActivationGuard final {
@@ -120,6 +150,7 @@ int main(int argc, char *argv[]) {
     if (!qEnvironmentVariableIsSet("QT_D3D_NO_VBLANK_THREAD"))
         qputenv("QT_D3D_NO_VBLANK_THREAD", "1");
     QGuiApplication app(argc, argv);
+    BenchExposure benchExposure(benchMode && qEnvironmentVariableIntValue("ABOOK_BENCH_HIDDEN_DESKTOP")==1 && QGuiApplication::platformName()==QStringLiteral("windows"));
     BenchWindowGuard benchWindowGuard;
     if (benchMode) app.installEventFilter(&benchWindowGuard);
     QGuiApplication::setApplicationName(QStringLiteral("ABook"));
@@ -208,6 +239,7 @@ int main(int argc, char *argv[]) {
         if (relaxed) libraryRefresh.stop();
         else if (libraryDirty) { libraryDirty = false; backend.refreshLibrary(); }
     });
+    GraphicsIdle graphicsIdle;
     std::unique_ptr<MediaControls> media;
     if (qEnvironmentVariable("ABOOK_SMTC") != QStringLiteral("0"))
         media = std::make_unique<MediaControls>(&player, &audio, nullptr, [&backend](const QString &path) { return backend.get(path); });

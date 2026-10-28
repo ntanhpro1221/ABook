@@ -8,6 +8,7 @@
 #include <QTcpSocket>
 #include <QTemporaryDir>
 #include <cmath>
+#include <cstring>
 #include <condition_variable>
 #include <mutex>
 #include <thread>
@@ -109,6 +110,23 @@ public:
 class VoiceTests : public QObject {
     Q_OBJECT
 private slots:
+    void unityStretchIsBitIdenticalAcrossRingWrapAndEof() {
+        Ring input(514);
+        TimeStretch stretch(48000); stretch.setRate(1.0);
+        // Include signed zero and finite floats that would lose bits through int16 Sonic.
+        std::vector<float> source(48000*2), actual;
+        for(size_t i=0;i<source.size();++i) source[i]=i%7==0 ? -0.0f : float(std::sin(double(i)*0.017)*0.8734567);
+        float output[286]; size_t at=0;
+        while(at<source.size() || input.readable()) {
+            const auto n=input.write(source.data()+at,std::min<size_t>(314,source.size()-at));at+=n;
+            stretch.setRate(1.0);
+            const auto got=stretch.read(input,output,143,at==source.size());
+            actual.insert(actual.end(),output,output+got*2);
+        }
+        QCOMPARE(actual.size(),source.size());
+        QVERIFY(std::memcmp(actual.data(),source.data(),source.size()*sizeof(float))==0);
+        QCOMPARE(stretch.read(input,output,143,true),size_t(0));QVERIFY(stretch.drained());
+    }
     void stretchLengthAndPitch_data() {
         QTest::addColumn<double>("speed");
         for (double speed : {0.5, 1.0, 1.5, 4.0}) QTest::newRow(qPrintable(QString::number(speed))) << speed;
@@ -269,6 +287,46 @@ private slots:
         QVERIFY2(timer.elapsed() < 50, qPrintable(QString::number(timer.elapsed())));
         QVERIFY(!device->running); QCOMPARE(device->queued.load(), size_t(0));
     }
+    void hiddenLeadPreservesPcmOnRestoreAndHandlesFourTimesSpeed() {
+        struct QueueDevice : MixDevice {
+            std::atomic<size_t> queued{0}, peak{0};
+            std::atomic<int> resets{0}, empty{0};
+            bool running = false;
+            std::chrono::steady_clock::time_point sampled = std::chrono::steady_clock::now();
+            int rate() const override { return 48000; }
+            bool start() override { sampled = std::chrono::steady_clock::now(); running = true; return true; }
+            void stop() override { padding(); running = false; }
+            void reset() override { queued = peak = 0; ++resets; }
+            size_t padding() override {
+                const auto now = std::chrono::steady_clock::now();
+                if (running) {
+                    const auto n = size_t(std::chrono::duration<double>(now - sampled).count() * 48000);
+                    if (n >= queued) ++empty;
+                    queued -= std::min(queued.load(), n);
+                }
+                sampled = now; return queued;
+            }
+            size_t bufferFrames() const override { return 48000; }
+            bool write(const float *, size_t n) override { queued += n; peak = std::max(peak.load(), queued.load()); return true; }
+        };
+        QTemporaryDir dir; auto *device = new QueueDevice;
+        MusicMixer mixer(std::unique_ptr<MixDevice>(device), dir.path(), true);
+        auto control = std::make_shared<Control>(); control->duration = 60;
+        MixVoice voice(&mixer, [control](int hz) { return std::make_unique<Decoder>(control, hz); });
+        mixer.setRelaxed(true); voice.load(QUrl(QStringLiteral("fake:hidden-lead")), 0); voice.play();
+        QTRY_VERIFY_WITH_TIMEOUT(device->peak.load() >= size_t(43200), 4000);
+        const double before = voice.position(); const int resets = device->resets;
+        QElapsedTimer timer; timer.start(); mixer.setRelaxed(false);
+        QVERIFY(timer.elapsed() < 50);
+        QTest::qWait(250); QCOMPARE(device->resets.load(),resets);
+        QVERIFY(std::abs(voice.position() - before - timer.elapsed()/1000.0) < 0.03);
+        device->peak=0; QTest::qWait(650);
+        QTRY_VERIFY(voice.playing()); QVERIFY(device->peak.load() <= size_t(24000));
+        mixer.setRelaxed(true); voice.setRate(4.0);
+        QTest::qWait(3100); QVERIFY(voice.playing()); QCOMPARE(device->empty.load(), 0);
+        // Returning from 4x must also use the exact fresh unity path after reset.
+        voice.setRate(1.0); QTest::qWait(100); QVERIFY(voice.playing());
+    }
     void blockedDecoderCannotBlockMixerPauseOrStop() {
         struct Barrier { std::mutex mutex; std::condition_variable cv; std::atomic<bool> entered{false}; bool release = false; };
         struct BlockingDecoder : Decoder {
@@ -341,17 +399,19 @@ private slots:
     }
     void controlsRewindEveryContributorWithLargeLead_data() {
         QTest::addColumn<QString>("command");
-        for (const auto *command : {"rate", "volume", "pause", "seek", "stop"})
-            QTest::newRow(command) << QString::fromLatin1(command);
+        QTest::addColumn<int>("lead");
+        for (const auto *command : {"rate", "volume", "pause", "seek", "stop"}) for (int lead : {24000, 43200})
+            QTest::newRow(qPrintable(QString::fromLatin1(command) + QString::number(lead))) << QString::fromLatin1(command) << lead;
     }
     void controlsRewindEveryContributorWithLargeLead() {
         QFETCH(QString, command);
+        QFETCH(int, lead);
         Rig rig; auto otherControl = std::make_shared<Control>();
         MixVoice other(&rig.mixer, [otherControl](int hz) { return std::make_unique<Decoder>(otherControl, hz); });
         other.load(QUrl(QStringLiteral("fake:music")), 0); other.setVolume(0);
-        rig.mixer.serviceReader(); rig.voice.play(); other.play(); rig.mixer.service(24000);
-        QCOMPARE(rig.device->queued, size_t(24000));
-        rig.device->queued = 21600; rig.mixer.service(0);
+        rig.mixer.serviceReader(); rig.voice.play(); other.play(); rig.mixer.service(size_t(lead));
+        QCOMPARE(rig.device->queued, size_t(lead));
+        rig.device->queued = size_t(lead - 2400); rig.mixer.service(0);
         QCOMPARE(rig.voice.position(), 0.05); QCOMPARE(other.position(), 0.05);
         const int resets = rig.device->resets;
         if (command == QStringLiteral("rate")) rig.voice.setRate(1.5);
@@ -363,7 +423,7 @@ private slots:
         rig.mixer.serviceReader(); rig.mixer.service(0);
         QCOMPARE(rig.device->resets, resets + 1); QCOMPARE(rig.device->queued, size_t(0));
         QCOMPARE(other.position(), 0.05);
-        rig.mixer.serviceReader(); rig.device->output.clear(); rig.mixer.service(24000);
+        rig.mixer.serviceReader(); rig.device->output.clear(); rig.mixer.service(size_t(lead));
         rig.device->queued -= 4800; rig.mixer.service(0); QCoreApplication::processEvents();
         QVERIFY(std::abs(other.position() - 0.15) < 1e-8);
         const double want = command == QStringLiteral("stop") ? 0 : command == QStringLiteral("pause") ? 0.05 :
@@ -416,6 +476,21 @@ private slots:
             QVERIFY(decoder.atEnd()); QCOMPARE(a.size(), b.size());
             double error = 0; for (size_t i = 0; i < a.size(); ++i) error += std::pow(a[i] - b[i], 2);
             QVERIFY2(error / a.size() < 1e-9, qPrintable(QString::number(error / a.size(), 'g', 12)));
+        }
+    }
+    void refillChunkSizeDoesNotChangePcmOrSeeks() {
+        for(const auto &name : {QStringLiteral("cbr"),QStringLiteral("vbr")}) {
+            const QUrl url=QUrl::fromLocalFile(QStringLiteral(MIX_FIXTURES_DIR "/voice_stream/")+name+QStringLiteral(".mp3"));
+            for(double seek : {0.0, 0.073, 12.345}) {
+                std::vector<float> reference;
+                for(size_t chunk : {size_t(257),size_t(8192),size_t(48000)}) {
+                    auto source=std::make_shared<RangeSource>(url,[]{});StreamMp3 decoder(source,48000);
+                    QVERIFY(decoder.open());QVERIFY(decoder.seek(seek));std::vector<float> pcm;
+                    while(decoder.read(pcm,chunk)){}QVERIFY(decoder.atEnd());
+                    if(reference.empty())reference=pcm;
+                    else { QCOMPARE(pcm.size(),reference.size());QVERIFY(std::memcmp(pcm.data(),reference.data(),pcm.size()*sizeof(float))==0); }
+                }
+            }
         }
     }
 };
