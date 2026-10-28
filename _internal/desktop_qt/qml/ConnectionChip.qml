@@ -36,7 +36,7 @@ Interactive {
                 radius: width / 2
                 color: root.dotColor
                 SequentialAnimation on opacity {
-                    running: root.starting && !Theme.reduceMotion
+                    running: root.starting && Nav.uiVisible && !Theme.reduceMotion
                     loops: Animation.Infinite
                     onRunningChanged: if (!running) dot.opacity = 1
                     NumberAnimation { to: 0.35; duration: 700; easing.type: Easing.InOutSine }

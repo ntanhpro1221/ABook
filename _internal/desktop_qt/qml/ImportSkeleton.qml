@@ -12,7 +12,7 @@ Column {
     Accessible.role: Accessible.StaticText
     Accessible.name: label
     SequentialAnimation on opacity {
-        running: root.visible && !Theme.reduceMotion
+        running: root.visible && Nav.uiVisible && !Theme.reduceMotion
         loops: Animation.Infinite
         NumberAnimation { from: 1; to: 0.6; duration: 800; easing.type: Easing.InOutSine }
         NumberAnimation { from: 0.6; to: 1; duration: 800; easing.type: Easing.InOutSine }

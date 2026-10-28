@@ -8,6 +8,7 @@ import "MyMusicText.js" as Music
 // hiện / ẩn đều mở tại chỗ. Đang tải hay phân tích thì hỏi lại trạng thái mỗi giây.
 Column {
     id: root
+    UiActivity { target: root; id: activity; onResumed: Api.call("GET", "/api/music/local", null, function(data, error) { if (!error) root.updated(data) }) }
     objectName: "musicModule"
     property var view: null
     property bool starting: false
@@ -40,7 +41,7 @@ Column {
 
     Timer {
         interval: 1000
-        running: root.busy && root.visible
+        running: activity.running && root.busy
         repeat: true
         onTriggered: Api.call("GET", "/api/music/local", null, function(data, error) { if (!error) root.updated(data) })
     }

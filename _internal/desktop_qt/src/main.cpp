@@ -7,6 +7,7 @@
 #include "music.h"
 #include "musicmixer.h"
 #include "musicwindowactivity.h"
+#include "idleaudit.h"
 #include "mediacontrols.h"
 #include "platform.h"
 #include "player.h"
@@ -98,6 +99,7 @@ public:
 };
 
 int main(int argc, char *argv[]) {
+    SetThreadDescription(GetCurrentThread(), L"ABook main");
     MediaControls::setAppId();
     QQuickWindow::setDefaultAlphaBuffer(true);
     const bool benchMode = qEnvironmentVariableIsSet("ABOOK_BENCH");
@@ -180,10 +182,10 @@ int main(int argc, char *argv[]) {
     });
     // Chỗ nghe vừa lưu xong thì tiến độ trên Thư viện làm mới (gộp các lần liền nhau).
     QTimer libraryRefresh;
+    bool uiHidden = false, libraryDirty = false;
     libraryRefresh.setSingleShot(true);
     libraryRefresh.setInterval(1500);
-    QObject::connect(&libraryRefresh, &QTimer::timeout, &backend, &Backend::refreshLibrary);
-    QObject::connect(&player, &Player::listeningChanged, &libraryRefresh, qOverload<>(&QTimer::start));
+    QObject::connect(&libraryRefresh, &QTimer::timeout, &backend, [&] { libraryDirty = false; backend.refreshLibrary(); });
 
     const QStringList fonts = {QStringLiteral("Regular"), QStringLiteral("Medium"), QStringLiteral("Bold")};
     for (const QString &weight : fonts)
@@ -193,7 +195,19 @@ int main(int argc, char *argv[]) {
     QGuiApplication::setFont(base);
 
     QQmlApplicationEngine engine;
-    MusicWindowActivity musicWindowActivity([&mixer](bool relaxed) { mixer->setRelaxed(relaxed); });
+    IdleAudit idleAudit;
+    QObject::connect(&player, &Player::listeningChanged, &libraryRefresh, [&] {
+        libraryDirty = true;
+        if (!uiHidden) libraryRefresh.start();
+    });
+    MusicWindowActivity musicWindowActivity([&](bool relaxed) {
+        mixer->setRelaxed(relaxed);
+        idleAudit.setHidden(relaxed);
+        player.setUiActive(!relaxed);
+        uiHidden = relaxed;
+        if (relaxed) libraryRefresh.stop();
+        else if (libraryDirty) { libraryDirty = false; backend.refreshLibrary(); }
+    });
     std::unique_ptr<MediaControls> media;
     if (qEnvironmentVariable("ABOOK_SMTC") != QStringLiteral("0"))
         media = std::make_unique<MediaControls>(&player, &audio, nullptr, [&backend](const QString &path) { return backend.get(path); });

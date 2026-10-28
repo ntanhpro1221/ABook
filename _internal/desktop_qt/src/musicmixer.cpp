@@ -346,11 +346,20 @@ struct MusicMixer::Impl {
         { std::unique_lock<std::mutex> wait(waitMutex); mixCv.wait(wait, [this] { return initialized; }); }
         readerThread = std::thread([this] {
             SetThreadDescription(GetCurrentThread(), L"ABook audio decode");
+            quint64 wakes = 0;
+            const bool traceWakes = qEnvironmentVariableIntValue("ABOOK_AUDIO_TRACE");
+            auto traceAt = Clock::now();
             trim();
             std::unique_lock<std::mutex> wait(waitMutex);
             while (!quit) {
                 readerCv.wait(wait, [this] { return quit || readerDirty; });
                 if (quit) break;
+                ++wakes;
+                if (traceWakes && Clock::now() - traceAt >= std::chrono::seconds(1)) {
+                    const auto epoch = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+                    std::fprintf(stderr, "reader_wakes epoch_ms=%lld count=%llu thread=%lu\n", static_cast<long long>(epoch), static_cast<unsigned long long>(wakes), GetCurrentThreadId());
+                    traceAt = Clock::now();
+                }
                 readerDirty = false; wait.unlock(); owner->serviceReader(); wait.lock();
             }
         });

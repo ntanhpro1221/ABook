@@ -8,6 +8,7 @@ import "MyMusicText.js" as Music
 // GET /api/readaloud/cache -> {book, total}; DELETE /api/readaloud/cache?all=1 -> số liệu mới.
 Collapse {
     id: root
+    UiActivity { target: root; id: activity; onResumed: root.load() }
     objectName: "advancedStorage"
     property alias confirmDialog: dialog
     property var usage: null
@@ -33,7 +34,7 @@ Collapse {
         })
     }
     Component.onCompleted: load()
-    Timer { interval: 15000; running: root.visible; repeat: true; onTriggered: root.load() }
+    Timer { objectName: "storagePoll"; interval: 15000; running: activity.running && root.visible; repeat: true; onTriggered: root.load() }
     onHasStorageChanged: if (!hasStorage && dialog.open) dialog.dismiss()
 
     SettingRow {

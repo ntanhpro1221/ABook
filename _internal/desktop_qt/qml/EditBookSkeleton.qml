@@ -18,7 +18,7 @@ Item {
     Accessible.name: label
     property real pulse: 1
     SequentialAnimation on pulse {
-        running: root.visible && !Theme.reduceMotion
+        running: root.visible && Nav.uiVisible && !Theme.reduceMotion
         loops: Animation.Infinite
         NumberAnimation { to: 0.5; duration: 900; easing.type: Easing.InOutSine }
         NumberAnimation { to: 1; duration: 900; easing.type: Easing.InOutSine }

@@ -32,6 +32,7 @@ QString newId() {
 // ---------------------------------------------------------------------------------------------------------------- PlayerClock
 
 PlayerClock::PlayerClock(Player *owner) : QObject(owner), m_owner(owner) {
+    m_timer.setObjectName(QStringLiteral("UI position"));
     m_timer.setInterval(250);
     m_timer.setTimerType(Qt::CoarseTimer);
     connect(&m_timer, &QTimer::timeout, this, &PlayerClock::refresh);
@@ -50,7 +51,7 @@ void PlayerClock::release() {
 }
 
 void PlayerClock::restart() {
-    const bool run = m_watchers > 0 && m_owner->playing();
+    const bool run = !m_suspended && m_watchers > 0 && m_owner->playing();
     if (run && !m_timer.isActive())
         m_timer.start();
     else if (!run && m_timer.isActive())
@@ -58,7 +59,7 @@ void PlayerClock::restart() {
 }
 
 void PlayerClock::set(double position, double duration) {
-    if (!qFuzzyCompare(1 + m_position, 1 + position)) {
+    if (!m_suspended && !qFuzzyCompare(1 + m_position, 1 + position)) {
         m_position = position;
         ++m_ticks;
         emit positionChanged();
@@ -71,6 +72,7 @@ void PlayerClock::set(double position, double duration) {
 }
 
 void PlayerClock::setSleepLeft(double seconds) {
+    if (m_suspended) return;
     if (qFuzzyCompare(1 + m_sleepLeft, 1 + seconds))
         return;
     m_sleepLeft = seconds;
@@ -79,6 +81,13 @@ void PlayerClock::setSleepLeft(double seconds) {
 
 void PlayerClock::refresh() {
     set(m_owner->position(), m_owner->duration());
+}
+
+void PlayerClock::setSuspended(bool suspended) {
+    if (m_suspended == suspended) return;
+    m_suspended = suspended;
+    restart();
+    if (!suspended) refresh(); // Restore synchronously, before the next frame.
 }
 
 // -------------------------------------------------------------------------------------------------------------------- Player
@@ -90,6 +99,7 @@ Player::Player(AudioOut *out, PlayerNet *net, const QString &outboxPath, QObject
     m_outbox = std::make_unique<ProgressOutbox>([this](const ProgressSpot &spot, ProgressOutbox::Done done) { sendSpot(spot, std::move(done)); },
                                                 [this](const ProgressSpot &spot) { onAck(spot); }, outboxPath);
     m_ticker.setTimerType(Qt::CoarseTimer);
+    m_ticker.setObjectName(QStringLiteral("progress and sleep"));
     connect(&m_ticker, &QTimer::timeout, this, &Player::tick);
     m_noticeTimer.setSingleShot(true);
     m_noticeTimer.setInterval(kNoticeMs);
@@ -307,7 +317,7 @@ void Player::setFading(bool fading) {
 
 void Player::updateTicker() {
     const bool run = m_loaded || m_outbox->pending() > 0;
-    const int interval = m_playing && m_sleep.kind != Sleep::Off ? 100 : 1000;
+    const int interval = m_playing && m_sleep.kind != Sleep::Off ? 100 : m_uiActive ? 1000 : 5000;
     if (!run) {
         m_ticker.stop();
         return;
@@ -902,6 +912,7 @@ void Player::endFade() {
     m_gain = 1;
     setFading(false);
     m_out->setVolume(m_volume);
+    emit outputGainChanged();
 }
 
 void Player::tickSleep(qint64 now) {
@@ -937,6 +948,7 @@ void Player::tickSleep(qint64 now) {
     if (left < fadeMs) {
         m_gain = fadeGain(left, fadeMs);
         m_out->setVolume(m_volume * m_gain);
+        emit outputGainChanged();
         setFading(true);
     } else if (m_fading) {
         endFade();
@@ -1124,6 +1136,7 @@ void Player::onSeeked() {
         return;
     resetSleepMark();
     m_clock.refresh();
+    emit audioSeeked();
     save(true);
 }
 

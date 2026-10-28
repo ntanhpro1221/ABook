@@ -291,7 +291,7 @@ def render() -> str:
     a("")
     a("    // ---- chuyển động (5.2; cùng số với motion.ts) ----")
     for k, qn in MOTION_NAMES.items():
-        a(f"    readonly property int motion{qn}: {ms[k]}")
+        a(f"    readonly property int motion{qn}: Nav.uiVisible ? {ms[k]} : 0")
     for k, qn in EASE_NAMES.items():
         a(f"    readonly property var ease{qn}: [{', '.join(fmt(x) for x in bezier(ease[k]))}]")
     a("    // Nhấn: thu 0,97 + tối nền 6 % trong 90 ms, thả về trong 120 ms (5.2)")

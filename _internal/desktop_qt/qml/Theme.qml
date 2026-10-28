@@ -91,12 +91,12 @@ QtObject {
     readonly property real lineHeightReading: 1.7
 
     // ---- chuyển động (5.2; cùng số với motion.ts) ----
-    readonly property int motionFast: 120
-    readonly property int motionFastOut: 90
-    readonly property int motionMedium: 220
-    readonly property int motionMediumOut: 150
-    readonly property int motionSlow: 300
-    readonly property int motionSlowOut: 200
+    readonly property int motionFast: Nav.uiVisible ? 120 : 0
+    readonly property int motionFastOut: Nav.uiVisible ? 90 : 0
+    readonly property int motionMedium: Nav.uiVisible ? 220 : 0
+    readonly property int motionMediumOut: Nav.uiVisible ? 150 : 0
+    readonly property int motionSlow: Nav.uiVisible ? 300 : 0
+    readonly property int motionSlowOut: Nav.uiVisible ? 200 : 0
     readonly property var easeStandard: [0.2, 0, 0, 1, 1, 1]
     readonly property var easeDecelerate: [0.05, 0.7, 0.1, 1, 1, 1]
     readonly property var easeAccelerate: [0.3, 0, 0.8, 0.15, 1, 1]

@@ -164,6 +164,33 @@ int ticksFor(double seconds) {
 class MusicTest : public QObject {
     Q_OBJECT
 private slots:
+    void deadlinesHonorStepsRateAndCueEdges() {
+        Rig rig(200);
+        auto cue = plain(0, 90, QStringLiteral("one"));
+        cue.steps = {{20, -4}, {40, -6}};
+        rig.bed->setCues({cue});
+        rig.bed->sync(10, true);
+        rig.settle();
+        QCOMPARE(rig.bed->nextSyncSeconds(10, 1), 10.0);
+        QCOMPARE(rig.bed->nextSyncSeconds(10, 2), 5.0);
+        QCOMPARE(rig.bed->nextSyncSeconds(20, 1), 20.0);
+        QCOMPARE(rig.bed->nextSyncSeconds(40, 1), 50.0);
+        rig.bed->setCues({});
+        QVERIFY(!std::isfinite(rig.bed->nextSyncSeconds(40, 1)));
+    }
+
+    void deadlinePreparesLoopBeforeHandoff() {
+        Rig rig(100);
+        auto cue = plain(0, 500, QStringLiteral("one"));
+        rig.bed->setCues({cue});
+        rig.bed->sync(10, true);
+        rig.settle();
+        const double beforeLoop = 100 - LOOP_CROSSFADE_SECONDS - 10;
+        QCOMPARE(rig.bed->nextSyncSeconds(10, 1), beforeLoop - LOOP_STANDBY_SECONDS);
+        rig.made.first()->pos = 100 - LOOP_CROSSFADE_SECONDS - 2;
+        QCOMPARE(rig.bed->nextSyncSeconds(10, 1), 2.0);
+    }
+
     void mixConstantsComeFromSharedJson() {
         const QJsonObject mix = readJson(QStringLiteral(MUSIC_MIX_JSON));
         QCOMPARE(FADE_SECONDS, mix.value(QLatin1String("fadeSeconds")).toDouble());

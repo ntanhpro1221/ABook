@@ -17,7 +17,7 @@ Item {
     signal rightClicked()
 
     activeFocusOnTab: true
-    scale: pressed && pressScaling && !Theme.reduceMotion ? Theme.pressScale : 1
+    scale: pressed && pressScaling && Nav.uiVisible && !Theme.reduceMotion ? Theme.pressScale : 1
     Behavior on scale {
         NumberAnimation {
             duration: root.pressed ? Theme.motionFastOut : Theme.motionFast

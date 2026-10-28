@@ -6,6 +6,7 @@
 //   - GET  /api/books/<id>/music/chapters/<n>    mốc của chương (sang chương: bỏ mốc cũ ngay ở giây 0 rồi mới hỏi)
 //   - POST /api/music/warm?link=                 tải sẵn bài kế / bài mốc đầu của chương kế
 #pragma once
+#include <QElapsedTimer>
 
 #include "musicbed.h"
 #include "musiclogic.h"
@@ -98,6 +99,9 @@ private:
     NextChapterWarm m_nextWarm;
     QTimer m_tick;  // nhịp đồng bộ khi giọng đang chạy (bản web: sự kiện "time" ~4 lần mỗi giây)
     QTimer m_retry; // hỏi lại mốc (chương chưa dựng xong / danh mục chưa tải được)
+    QElapsedTimer m_syncTime;
+    bool m_wasPlaying = false;
+    double m_lastRate = 1;
 
     QString m_bookId;
     QString m_cuesFor;  // chương mà mốc trong bed thuộc về: mốc của chương cũ không được mở ở nhịp đầu của chương mới

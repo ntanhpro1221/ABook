@@ -22,7 +22,7 @@ Column {
             Accessible.name: "Đang tải nhạc riêng"
             property real pulse: 1
             SequentialAnimation on pulse {
-                running: root.state === "loading" && !Theme.reduceMotion
+                running: root.state === "loading" && Nav.uiVisible && !Theme.reduceMotion
                 loops: Animation.Infinite
                 NumberAnimation { to: 0.5; duration: 800; easing.type: Easing.InOutSine }
                 NumberAnimation { to: 1; duration: 800; easing.type: Easing.InOutSine }

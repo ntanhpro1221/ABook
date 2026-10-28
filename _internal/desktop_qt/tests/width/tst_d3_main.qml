@@ -92,4 +92,19 @@ TestCase {
         verify(toast.z > dialog().z)
         Api.notice = ""
     }
+    function test_6_minimizeStopsMotionAndRestoreShowsShell() {
+        win.showMinimized()
+        tryCompare(Nav, "uiVisible", false)
+        compare(Theme.motionMedium, 0)
+        compare(findChild(win, "mainShell").visible, false)
+        win.showNormal()
+        tryCompare(Nav, "uiVisible", true)
+        verify(Theme.motionMedium > 0)
+        compare(findChild(win, "mainShell").visible, true)
+        win.hide()
+        tryCompare(Nav, "uiVisible", false)
+        compare(Theme.motionMedium, 0)
+        win.show()
+        tryCompare(Nav, "uiVisible", true)
+    }
 }

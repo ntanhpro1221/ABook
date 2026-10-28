@@ -241,12 +241,19 @@ size_t StreamMp3::read(std::vector<float> &out, size_t frames) {
         const quint64 discard = std::min<quint64>(d->skip, d->samplesPerFrame);
         d->skip -= discard;
         if (!n || discard >= quint64(n)) continue;
-        std::vector<float> stereo(size_t(n - discard) * 2);
+        // Same-rate PCM needs no intermediate allocation or resampler copy.
+        const size_t begin = d->pending.size();
+        const bool direct = d->resampler->passthrough();
+        std::vector<float> converted;
+        if (direct) d->pending.resize(begin + size_t(n - discard) * 2);
+        else converted.resize(size_t(n - discard) * 2);
+        float *stereo = direct ? d->pending.data() + begin : converted.data();
         for (size_t i = size_t(discard); i < size_t(n); ++i) {
             stereo[(i - discard) * 2] = pcm[i * d->channels];
             stereo[(i - discard) * 2 + 1] = pcm[i * d->channels + d->channels - 1];
         }
-        d->resampler->push(stereo.data(), stereo.size() / 2, d->pending); d->fed += stereo.size() / 2;
+        if (!direct) d->resampler->push(stereo, converted.size() / 2, d->pending);
+        d->fed += size_t(n - discard);
     }
     const size_t n = std::min<size_t>(std::min(frames, (d->pending.size() - d->pendingAt) / 2), size_t(d->expected - std::min(d->expected, d->given)));
     out.insert(out.end(), d->pending.begin() + d->pendingAt, d->pending.begin() + d->pendingAt + n * 2);

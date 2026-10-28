@@ -168,7 +168,7 @@ FocusScope {
         clip: true
         visible: root.loading
         SequentialAnimation {
-            running: skeleton.visible && !Theme.reduceMotion
+            running: skeleton.visible && Nav.uiVisible && !Theme.reduceMotion
             loops: Animation.Infinite
             OpacityAnimator { target: skeleton; from: 1; to: 0.6; duration: 800; easing.type: Easing.InOutSine }
             OpacityAnimator { target: skeleton; from: 0.6; to: 1; duration: 800; easing.type: Easing.InOutSine }

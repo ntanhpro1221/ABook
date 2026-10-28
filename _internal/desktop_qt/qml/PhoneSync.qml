@@ -8,6 +8,7 @@ import "DevicesLogic.js" as Logic
 // POST /api/sync/devices/<id>/name và /studio. Hỏi lại 10 giây một lần, 1,5 giây khi đang hiện mã (báo "đã ghép" ngay).
 Item {
     id: root
+    UiActivity { target: root; id: activity; onResumed: { root.now = Date.now() / 1000; root.load() } }
     readonly property bool expanded: Theme.widthClass(width) >= 2
     property real wideT: expanded ? 1 : 0
     Behavior on wideT {
@@ -103,10 +104,9 @@ Item {
     }
 
     Component.onCompleted: load()
-    onVisibleChanged: if (visible) load()
-    Timer { interval: root.sync && root.sync.pairing ? 1500 : 10000; running: root.visible; repeat: true; onTriggered: root.load() }
-    Timer { interval: 1000; running: root.visible && Boolean(root.sync && root.sync.pairing); repeat: true; triggeredOnStart: true; onTriggered: root.now = Date.now() / 1000 }
-    Timer { interval: 30000; running: root.visible; repeat: true; onTriggered: root.now = Date.now() / 1000 }
+    Timer { interval: root.sync && root.sync.pairing ? 1500 : 10000; running: activity.running && root.visible; repeat: true; onTriggered: root.load() }
+    Timer { interval: 1000; running: activity.running && root.visible && Boolean(root.sync && root.sync.pairing); repeat: true; triggeredOnStart: true; onTriggered: root.now = Date.now() / 1000 }
+    Timer { interval: 30000; running: activity.running && root.visible; repeat: true; onTriggered: root.now = Date.now() / 1000 }
 
     DevicesRows { id: deviceRows }
 

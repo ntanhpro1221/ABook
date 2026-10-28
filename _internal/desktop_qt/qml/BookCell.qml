@@ -27,7 +27,7 @@ Interactive {
         width: root.coverWidth
         height: root.coverHeight
         // Rê chuột: bìa nhích lên 1,02; nhấn: thu 0,97 + tối 6 % (DESIGN.md 5.2). Chỉ transform / opacity.
-        scale: root.pressed ? Theme.pressScale : (root.hovered && !Theme.reduceMotion ? 1.02 : 1)
+        scale: root.pressed ? Theme.pressScale : (root.hovered && Nav.uiVisible && !Theme.reduceMotion ? 1.02 : 1)
         Behavior on scale {
             NumberAnimation {
                 duration: root.pressed ? Theme.motionFastOut : Theme.motionFast
