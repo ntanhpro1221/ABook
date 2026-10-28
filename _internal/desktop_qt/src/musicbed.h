@@ -65,6 +65,8 @@ public:
     int voices() const;
     /// Bộ thử: chạy ngay `count` nhịp mờ (STEP_MS mỗi nhịp) thay cho chờ đồng hồ.
     void tick(int count);
+    /// Next required audio action in wall seconds (not a UI refresh rate).
+    double nextSyncSeconds(double seconds, double narrationRate) const;
 
 signals:
     /// Bài đang phát đổi (kể cả thành im lặng = "").

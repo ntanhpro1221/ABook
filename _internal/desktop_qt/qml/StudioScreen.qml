@@ -8,6 +8,7 @@ import "PeerStudio.js" as Peer
 // chưa vào được thì nói vì sao (PeerTrouble), máy ấy im thì tự hỏi lại mỗi 5 giây và tự mở khi nó trả lời.
 Item {
     id: root
+    UiActivity { target: root; id: activity; onResumed: root.ask() }
     readonly property bool expanded: Theme.widthClass(width) >= 2
     property real wideT: expanded ? 1 : 0
     Behavior on wideT {
@@ -49,7 +50,7 @@ Item {
     Timer {
         interval: Peer.WATCH_EVERY_MS
         repeat: true
-        running: root.view === "trouble" && root.silent && root.watchedMs < Peer.WATCH_GIVE_UP_MS
+        running: activity.running && root.view === "trouble" && root.silent && root.watchedMs < Peer.WATCH_GIVE_UP_MS
         onTriggered: { root.watchedMs += interval; root.ask() }
     }
 

@@ -18,6 +18,8 @@ EVIDENCE = ROOT / "build/hidden-evidence"
 def wait_for_machine():
     start = time.time()
     waits = []
+    quiet_since = None
+    last_notice = None
     ancestors = {p.pid for p in psutil.Process().parents()} | {os.getpid()}
     while True:
         busy = []
@@ -27,12 +29,22 @@ def wait_for_machine():
             info = proc.info
             args = info.get("cmdline") or []
             scripts = {Path(a).name.lower() for a in args if a.endswith(".py")}
-            if (info.get("name") or "").lower() == "abookdesk.exe" or scripts & {"measure.py", "ramrun.py", "measure_mini.py", "hidden_suite.py", "private_worker.py", "voice_ab.py", "voice_validate.py"}:
+            name = (info.get("name") or "").lower()
+            if (name == "abookdesk.exe" or name.endswith("tests.exe") or
+                name in {"cl.exe", "link.exe", "ninja.exe", "cmake.exe", "qmlcachegen.exe", "qmltyperegistrar.exe"} or
+                scripts & {"measure.py", "ramrun.py", "measure_mini.py", "hidden_suite.py", "private_worker.py", "voice_ab.py", "voice_validate.py", "idle_ab.py", "build_hidden.py"}):
                 busy.append(info)
         if not busy:
-            return {"seconds": round(time.time() - start, 3), "blocked_samples": waits}
-        waits.append({"time": time.time(), "processes": busy})
-        print("WAIT shared machine:", [(p["pid"], p["exe"]) for p in busy], flush=True)
+            if quiet_since is None: quiet_since = time.time()
+            if time.time() - quiet_since >= 30:
+                return {"seconds": round(time.time() - start, 3), "quiet_seconds": 30, "blocked_samples": waits}
+        else:
+            quiet_since = None
+            waits.append({"time": time.time(), "processes": busy})
+            notice = [(p["pid"], p["exe"]) for p in busy]
+            if notice != last_notice:
+                print("WAIT shared machine:", [(pid, Path(exe).name if exe else None) for pid, exe in notice], flush=True)
+                last_notice = notice
         time.sleep(5)
 
 
@@ -100,6 +112,8 @@ def main():
         rows.append(got)
         (EVIDENCE / f"{args.label}.json").write_text(json.dumps(rows, indent=2), encoding="utf-8", newline="\n")
         print("RESULT", {k:got.get(k) for k in ("label","run","ok","hidden_wall_s","hidden_media_s","clock_pass","why")}, flush=True)
+        if got.get("shared_busy"):
+            raise RuntimeError("Shared machine became busy; retain raw evidence but do not accept this attempt")
         if not got.get("ok"):
             raise RuntimeError(got.get("why"))  # Never retry a foreground failure.
     assert all(row.get("clock_pass") for row in rows), "Hidden playback must stay within 0.1 s of wall time with zero starvation warnings"

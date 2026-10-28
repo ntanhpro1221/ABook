@@ -10,6 +10,7 @@ import "DevicesLogic.js" as Logic
 // Hỏi lại 2 giây một lần khi có máy đang chờ dậy.
 Column {
     id: root
+    UiActivity { target: root; id: activity; onResumed: { root.now = Date.now() / 1000; root.load(); root.loadBluetooth() } }
     property var view: null                // {name, computers, broken}
     property bool loadFailed: false
     property var bluetoothDevices: []
@@ -142,10 +143,9 @@ Column {
     }
 
     Component.onCompleted: { load(); loadBluetooth() }
-    onVisibleChanged: if (visible) { load(); loadBluetooth() }
     // Đang chờ một máy dậy: xem lại thường xuyên để thấy nó trả lời (hay hết hạn chờ).
-    Timer { interval: 2000; running: root.visible && root.waking !== ""; repeat: true; onTriggered: { root.now = Date.now() / 1000; root.load() } }
-    Timer { interval: 30000; running: root.visible; repeat: true; onTriggered: root.now = Date.now() / 1000 }
+    Timer { interval: 2000; running: activity.running && root.visible && root.waking !== ""; repeat: true; onTriggered: { root.now = Date.now() / 1000; root.load() } }
+    Timer { interval: 30000; running: activity.running && root.visible; repeat: true; onTriggered: root.now = Date.now() / 1000 }
     // Một máy vừa thôi "đang ngủ" (đã trả lời, hay hết hạn): sách của nó có thể vừa hiện ra.
     onWakingChanged: { if (wasWaking !== "" && wasWaking !== waking) DesktopApi.refreshLibrary(); wasWaking = waking }
 

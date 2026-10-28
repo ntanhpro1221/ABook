@@ -8,6 +8,7 @@ import "EditBookLogic.js" as Logic
 // bước xoá trước. Bài đi / đến bằng Collapse (chiều cao chạy), không bật tắt cứng.
 Column {
     id: root
+    UiActivity { target: root; id: activity; onResumed: root.load() }
     property var view: ({tracks: []})
     property bool loading: true
     property bool failed: false
@@ -103,7 +104,7 @@ Column {
     Timer {
         interval: 1000
         repeat: true
-        running: root.module !== null && (root.module.state === "downloading" || !!root.module.analysing)
+        running: activity.running && root.module !== null && (root.module.state === "downloading" || !!root.module.analysing)
         onTriggered: root.load()
     }
     FileDialog {

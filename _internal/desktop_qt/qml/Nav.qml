@@ -4,6 +4,7 @@ import QtQuick
 // Điều hướng dùng chung: ngăn xếp màn, các lớp nổi (popover, hộp thoại), chú thích khi rê chuột.
 // Back (Esc, Alt+Left, nút Back của chuột) đóng lớp nổi trên cùng trước, rồi mới lùi một màn; Back không bao giờ thoát app.
 QtObject {
+    property bool uiVisible: true
     property var stack: null          // ScreenStack, gán trong Main.qml
     property var windowMode: null
     property var layers: []           // lớp nổi đang mở, mới nhất ở cuối; mỗi lớp có close()

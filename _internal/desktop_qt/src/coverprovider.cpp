@@ -18,6 +18,9 @@
 #include <QThreadPool>
 #include <atomic>
 #include <memory>
+#ifdef Q_OS_WIN
+#include <windows.h>
+#endif
 
 namespace {
 
@@ -43,6 +46,9 @@ public:
         const QSize box2 = m_box;
         const int radius2 = m_radius;
         pool().start([self, cancelled, book2, version2, box2, radius2] {
+#ifdef Q_OS_WIN
+            SetThreadDescription(GetCurrentThread(), L"ABook cover decode");
+#endif
             QImage image;
             QString error;
             if (!cancelled->load())

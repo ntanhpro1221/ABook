@@ -48,6 +48,6 @@ Interactive {
             ctx.arc(width / 2, height / 2, width / 2 - 1, 0, Math.PI * 1.2)
             ctx.stroke()
         }
-        RotationAnimator on rotation { from: 0; to: 360; duration: 900; loops: Animation.Infinite; running: arc.visible && !Theme.reduceMotion }
+        RotationAnimator on rotation { from: 0; to: 360; duration: 900; loops: Animation.Infinite; running: arc.visible && Nav.uiVisible && !Theme.reduceMotion }
     }
 }

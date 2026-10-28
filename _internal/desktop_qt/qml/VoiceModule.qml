@@ -8,6 +8,7 @@ import "VoiceLogic.js" as VoiceLogic
 // Hỏi lại trạng thái mỗi giây khi đang tải / đo; xong thì `changed()` để danh sách giọng và cỡ thẻ kia hỏi lại.
 Item {
     id: root
+    UiActivity { target: root; id: activity; onResumed: root.refresh() }
     property var copy: VoiceLogic.VIENEU
     property bool preselect: true
     property var status: ({})
@@ -103,7 +104,7 @@ Item {
         else if (!downloading && cancelButton.activeFocus) Qt.callLater(function() { startButton.forceActiveFocus(Qt.TabFocusReason) })
     }
     Component.onCompleted: refresh()
-    Timer { interval: 1000; running: root.working; repeat: true; onTriggered: root.refresh() }
+    Timer { interval: 1000; running: activity.running && root.working; repeat: true; onTriggered: root.refresh() }
 
     Collapse {
         id: card
