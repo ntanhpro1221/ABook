@@ -6,7 +6,13 @@ QtObject {
     property var pending: []
     property string thirdParty: "Qt Quick"
     property bool delayed: false
-    function reset() { requests = []; responses = {}; pending = []; delayed = false }
+    // Nghe thử (câu mẫu của nhân vật, giọng): đường đã mở và số lần dừng; ba tín hiệu như DesktopApi thật
+    property var previews: []
+    property int stops: 0
+    signal previewStarted()
+    signal previewEnded()
+    signal previewFailed(string reason)
+    function reset() { requests = []; responses = {}; pending = []; delayed = false; previews = []; stops = 0 }
     function request(method, path, body, done) {
         requests = requests.concat([{method: method, path: path, body: body}])
         // Đáp giả: "PUT /api/x" (theo cách gọi) trước, rồi "/api/x"; đáp là hàm thì gọi với (body, method).
@@ -21,7 +27,7 @@ QtObject {
     function localPath(url) { return String(url).replace(/^file:\/\//, "") }
     function mediaUrl(path) { return path }
     function refreshLibrary() {}
-    function preview(path) {}
-    function stopPreview() {}
+    function preview(path) { previews = previews.concat([path]) }
+    function stopPreview() { stops++ }
     function imageData(file) { return "data:image/png;base64,fixture" }
 }

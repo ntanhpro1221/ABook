@@ -200,6 +200,23 @@ private slots:
         QCOMPARE(feedback.played(), 2);
         QCOMPARE(made, 1);                                    // một bộ phát dùng lại cho mọi tiếng
     }
+    // Nghe thử câu mẫu của nhân vật (trang sách › Nhân vật): QML biết clip bắt đầu / hết / hỏng qua ba tín hiệu của DesktopApi.
+    void previewSignalsFollowTheOutput() {
+        FakeOut out;
+        DesktopApi::setPreviewOut(&out);
+        QSignalSpy started(api, &DesktopApi::previewStarted);
+        QSignalSpy ended(api, &DesktopApi::previewEnded);
+        QSignalSpy failed(api, &DesktopApi::previewFailed);
+        api->preview(QStringLiteral("/media/books/b/samples/3"));
+        QCOMPARE(started.size(), 1);
+        QCOMPARE(out.url.path(), QStringLiteral("/media/books/b/samples/3"));
+        out.finish();
+        QCOMPARE(ended.size(), 1);
+        out.fail(QStringLiteral("404"));
+        QCOMPARE(failed.size(), 1);
+        QCOMPARE(failed.takeFirst().at(0).toString(), QStringLiteral("404"));
+        DesktopApi::setPreviewOut(nullptr);
+    }
     void abortDoesNotDeliverLateReply() {
         clear(); hold = true;
         const int id = api->request(QStringLiteral("GET"),QStringLiteral("/api/books/fixture/cover/search?q=old"),QJSValue(QJSValue::NullValue),done());
