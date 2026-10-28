@@ -17,6 +17,7 @@ using namespace PlayerLogic;
 namespace {
 constexpr int kNoticeMs = 8000;
 constexpr int kSessionsKept = 4;
+constexpr int kHiddenSaveEveryMs = 30'000;
 constexpr double kSafetyWarnMs = 30'000;
 constexpr double kListenedMinimum = 20; // phiên nghe dưới 20 giây thật thì bỏ
 
@@ -317,11 +318,24 @@ void Player::setFading(bool fading) {
 
 void Player::updateTicker() {
     const bool run = m_loaded || m_outbox->pending() > 0;
-    const int interval = m_playing && m_sleep.kind != Sleep::Off ? 100 : m_uiActive ? 1000 : 5000;
+    int interval = m_playing && m_sleep.kind != Sleep::Off ? 100 : m_uiActive ? 1000 : kHiddenSaveEveryMs;
+    if (!m_uiActive && m_sleep.kind == Sleep::Off) {
+        const auto until = [&](qint64 deadline) { return int(std::clamp<qint64>(deadline - m_now(), 1, kHiddenSaveEveryMs)); };
+        if (m_loaded && m_playing) {
+            // The first tick still checks the night schedule immediately.
+            if (!m_scheduleChecked) interval = 1;
+            else if (m_now() < m_lastAttempt + kHiddenSaveEveryMs)
+                interval = std::min(interval, until(m_lastAttempt + kHiddenSaveEveryMs));
+            if (m_safetyHours > 0) interval = std::min(interval, until(m_lastActivity + qint64(m_safetyHours) * 3'600'000));
+        }
+        if (m_outbox->pending() > 0) interval = std::min(interval, until(m_lastFlush + kSaveEveryMs));
+    }
     if (!run) {
         m_ticker.stop();
         return;
     }
+    const auto timerType = m_uiActive ? Qt::CoarseTimer : Qt::PreciseTimer;
+    if (m_ticker.timerType() != timerType) { m_ticker.stop(); m_ticker.setTimerType(timerType); }
     if (m_ticker.interval() != interval)
         m_ticker.setInterval(interval);
     if (!m_ticker.isActive())
@@ -976,7 +990,7 @@ void Player::save(bool force) {
     if (m_savedSpot && m_savedSpot->chapterId == m_chapterId && std::fabs(m_savedSpot->seconds - pos) < 0.05)
         return;
     const qint64 now = m_now();
-    if (!force && now - m_lastAttempt < kSaveEveryMs)
+    if (!force && now - m_lastAttempt < (m_uiActive ? kSaveEveryMs : kHiddenSaveEveryMs))
         return;
     m_lastAttempt = now;
     ProgressSpot spot;
@@ -1207,8 +1221,10 @@ void Player::tick() {
         updateTicker();
         return;
     }
-    if (!m_playing)
+    if (!m_playing) {
+        updateTicker();
         return;
+    }
     if (listening && !m_scheduleChecked) {
         m_scheduleChecked = true;
         const QString night = scheduleWindow();
@@ -1229,6 +1245,7 @@ void Player::tick() {
         m_lastSleepMinutes = lastMinutes;
         setNotice(QStringLiteral("Không thấy ai chạm máy suốt %1 giờ - sẽ tắt sau 1 phút").arg(m_safetyHours), QStringLiteral("Vẫn đang nghe"), QStringLiteral("stay"));
     }
+    updateTicker();
 }
 
 // ---- đóng / tắt app ----
