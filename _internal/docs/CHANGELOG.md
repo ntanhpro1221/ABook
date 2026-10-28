@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.148] - 2026-10-28
+
 ### Làm sách
 
 - Model xác định người nói từng câu lên bản mới (`abook-speaker:v2`): đúng người nói hơn khoảng 2,3 điểm trên 56 chương đo
