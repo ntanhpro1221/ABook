@@ -19,6 +19,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--input", type=Path, action="append", help="thread summary JSON (repeatable)")
     ap.add_argument("--output", type=Path, default=ROOT / "symbols-final.json")
+    ap.add_argument("--cache", type=Path, default=ROOT / "symbols", help="separate cache for a new evidence round")
     args = ap.parse_args()
     dll_dir = os.add_dll_directory(str(KIT))
     dbg = c.WinDLL(str(KIT / "dbghelp.dll"), use_last_error=True)
@@ -29,8 +30,8 @@ def main():
     dbg.SymCleanup.argtypes = [w.HANDLE]
     dbg.SymUnloadModule64.argtypes = [w.HANDLE, c.c_ulonglong]
     dbg.SymSetOptions(0x00000004 | 0x00000200 | 0x00080000)  # deferred, fail critical, no prompts
-    cache = ROOT / "symbols"
-    cache.mkdir(exist_ok=True)
+    cache = args.cache.resolve()
+    cache.mkdir(parents=True, exist_ok=True)
     kernel = c.WinDLL("kernel32")
     kernel.GetCurrentProcess.restype = w.HANDLE
     token = kernel.GetCurrentProcess()  # no invasion or attachment
