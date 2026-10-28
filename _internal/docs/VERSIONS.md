@@ -426,6 +426,17 @@ cũng không đổi chữ model trả: 3/3 prompt giống từng byte trên qwen
 
 ---
 
+### Model người nói v2 (súp B48-CAL 3 hạt): sự kiện phiên bản (2026-10-28)
+
+`abook-speaker:v2` (`lora-b48calsoup3-s1234-4b`) thay v1. Công thức: học tiếp từ v1 trên lịch sử người nói làm nhiễu theo đúng
+cơ cấu lỗi tự đoán của v1 (27 %), ba hạt 1234/1/4321, rồi lấy trung bình trọng số ΔW của ba lần (model soup cùng điểm xuất phát).
+Đo 56 chương lạnh, lịch sử tự đoán (Model, 28-10): 81,40 so với v1 79,11 (Δ +2,30; cổng 19 chương +1,81); so với bản đối chứng a0
+cùng công thức không nhiễu +2,18, KTC truyện [+0,51; +3,80]; đo lặp Mac 81,36 so với 78,55 (+2,81). Một hạt riêng dao động
+tới 1,6 điểm; súp hơn cả hạt tốt nhất (+1,77). Đề, lược đồ, tốc độ y như v1. Hệ quả: `speaker_pass.py` (file khoá) đổi
+`SPEAKER_MODEL` nên hash khoá đổi (`c9176123` -> `c95fac04`); sách tạo trước khoá `abook-speaker:v1` theo cuốn.
+
+---
+
 ### Lượt người nói từng câu (B41) vào dây chuyền: sự kiện phiên bản (2026-10-21)
 
 Sau khi model phân tích mặc định (B9, `abook-analyzer:v5`) làm xong cả sách, model `abook-speaker:v1` (`lora-b38pq-s1234-4b`) hỏi lại
