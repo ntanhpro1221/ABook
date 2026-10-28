@@ -5,6 +5,8 @@ import ABook
 Rectangle {
     id: root
     property var windowMode: null
+    // Khi lấp cả cửa sổ: cửa sổ tự là tấm (Windows 11 tự bo góc cửa sổ), tấm vuông không viền - bo thêm thì lộ nền cửa sổ ở góc.
+    property bool framed: true
     property string bookTitle: Player.bookTitle
     property string chapterTitle: Player.chapterTitle
     readonly property bool expanded: Theme.widthClass(width) >= 1
@@ -17,8 +19,9 @@ Rectangle {
     implicitWidth: 360
     implicitHeight: naturalHeight
     color: Theme.panel
-    radius: Theme.radiusSheet
+    radius: framed ? Theme.radiusSheet : 0
     border.color: Theme.line
+    border.width: framed ? 1 : 0
     MouseArea {
         anchors.fill: parent
         onPressed: if (root.windowMode) root.windowMode.window.startSystemMove()
