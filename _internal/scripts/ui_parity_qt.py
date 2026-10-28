@@ -53,7 +53,7 @@ DOC = ROOT / "docs" / "UI_PARITY_QT.md"
 BEGIN = "<!-- ui_parity_qt:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity_qt.py - không sửa tay, chạy lại script) -->"
 END = "<!-- ui_parity_qt:end -->"
 
-# Web máy tính: thư mục có giao diện của app Tauri (android/ là giao diện điện thoại cũ, studio/ chưa có ở Qt).
+# Web máy tính: thư mục có giao diện của app Tauri (android/ là giao diện điện thoại cũ; studio/ chỉ nạp từng file có màn Qt, qua bảng MÀN).
 WEB_DIRS = ("desktop", "listen", "shared")
 # File QML không phải giao diện: kịch bản đo của người làm.
 QML_SKIP = {"BenchScenario.qml"}
@@ -96,6 +96,10 @@ SCREENS: list[tuple[str, tuple[str, ...], tuple[tuple[str, tuple[str, ...] | Non
      (("listen/EditBook.tsx", None), ("shared/CoverSearch.tsx", None))),
     ("Thanh bên", ("Sidebar.qml", "NavItem.qml", "ConnectionChip.qml", "ConnectionPopover.qml"),
      (("desktop/Shell.tsx", ("Brand", "NavItem", "TabItem", "Producing", "UpdateNotice", "DesktopSidebar")),)),
+    ("Studio dự án", ("ProjectsScreen.qml", "ProjectScreen.qml", "ProjectRow.qml", "ProjectMenu.qml", "StudioMenuRow.qml", "StudioBar.qml",
+                      "StatusPill.qml", "OnComputerPill.qml", "StudioChapterRow.qml", "StudioTabs.qml", "TabLabel.qml", "StudioConfirm.qml",
+                      "StudioRename.qml", "StudioDialogs.qml", "StudioStore.qml", "StudioLogic.js"),
+     (("studio/ProjectsScreen.tsx", None), ("studio/ProjectScreen.tsx", None))),
     ("Studio máy khác", ("StudioScreen.qml", "PeerBar.qml", "EmptyState.qml"),
      (("desktop/PeerBar.tsx", None), ("shared/peerStudio.ts", None), ("desktop/App.tsx", ("PeerTrouble", "StudioClosed")))),
     ("Thanh tiêu đề", ("Main.qml", "TitleBar.qml", "CaptionButton.qml", "CaptionGlyph.qml"),

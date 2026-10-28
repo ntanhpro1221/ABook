@@ -94,9 +94,11 @@ Item {
                 verify(page.height >= details.y + details.height)
             }
             if (screen === "studio") {
-                const status = findChild(page, "studioStatus")
-                textFits(status, status)
-                verify(status.width <= page.width)
+                const body = findChild(page, "projectsBody")
+                textFits(body, body)
+                verify(body.width <= 1180 && body.width <= page.width)
+                const header = findChild(page, "projectsHeader")
+                fuzzyCompare(header.x, body.x, 0.5)
             }
             if (screen === "book") {
                 columns(page, "bookSummary", "bookChapterRegion")
