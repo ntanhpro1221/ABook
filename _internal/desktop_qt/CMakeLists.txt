@@ -163,7 +163,23 @@ qt_add_qml_module(ABookDesk
         qml/SettingsLook.qml
         qml/SettingsAdvanced.qml
         qml/StudioRows.qml
+        qml/StudioStore.qml
         qml/StudioSettings.qml
+        qml/ProjectsScreen.qml
+        qml/ProjectScreen.qml
+        qml/ProjectRow.qml
+        qml/ProjectMenu.qml
+        qml/StudioMenuRow.qml
+        qml/StudioBar.qml
+        qml/StatusPill.qml
+        qml/OnComputerPill.qml
+        qml/StudioChapterRow.qml
+        qml/StudioTabs.qml
+        qml/TabLabel.qml
+        qml/StudioConfirm.qml
+        qml/StudioRename.qml
+        qml/StudioDialogs.qml
+        qml/StudioLogic.js
         qml/BookTemplates.qml
         qml/SharedReadingsSettings.qml
         qml/NewBookDefaults.qml

@@ -196,12 +196,14 @@ Thiết bị chia Máy này / Máy đã ghép khi **cột nội dung** đạt ex
 Hộp Thêm sách ở bước xem trước và Sửa sách là ngoại lệ cho trần hộp 560 px:
 từ expanded dùng hai cột, tối đa 1160 px, mỗi cột chữ tối đa khoảng 640 px.
 Hẹp trở lại một cột; giữ bản nháp, mục đang chọn và vị trí cuộn khi đổi khổ.
-Studio chưa có bảng dự án trong Qt: trạng thái hiện có dùng biểu tượng cạnh
-lời nhắc ở expanded, xếp dọc khi hẹp, lời nhắc tối đa 640 px.
+Studio: lời nhắc trạng thái (chưa tải được, thiếu thư mục thư viện, chưa có dự án)
+dùng biểu tượng cạnh lời nhắc ở expanded, xếp dọc khi hẹp, tối đa 640 px.
 Danh sách chữ không có các cột dữ liệu riêng (chương, thiết bị, hàng chờ nhập,
 mẫu sách, cách đọc chung, giọng đọc) giữ cả hàng rộng tối đa 640 px, kể cả hành động và
 thời lượng; căn theo đầu cột nội dung. Lưới bìa tiếp tục tăng số cột. Bảng dự
-án Studio khi có đủ dữ liệu dùng các cột tên · trạng thái · tiến độ · cập nhật.
+án Studio dùng các cột tên · trạng thái · tiến độ · cập nhật khi khung chữ từ 1000 px;
+từ 700 px bỏ cột cập nhật; hẹp hơn thì trạng thái và tiến độ xếp dưới tên. Trang một
+dự án giữ cột chữ tối đa 960 px; hàng chương rộng từ 720 px mới có cột riêng.
 Cửa sổ mini mở ở 360 px; có thể kéo rộng: từ medium đặt nút phát cạnh tên,
 giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lại.
 Đổi khổ dùng motionMedium/easeStandard; giảm chuyển động bỏ tween hình học.

@@ -258,6 +258,8 @@ Item {
             const page = make(studioFactory, sizes()[2])
             for (let c of page.children) {
                 // Thanh "Đang mở Studio của …" (máy đã ghép) tràn cả bề ngang như PeerBar của web; nội dung của nó thẳng khối giữa
+                // Vùng nội dung tràn cả bề ngang; đầu màn dự án của nó thẳng khối giữa
+                if (c.objectName === "studioContent") { const h = findChild(c, "projectsHeader"); fuzzyCompare(h.x, (page.width - h.width) / 2, 0.5); verify(h.width <= 1180); continue }
                 if (c.objectName === "peerBar") { fuzzyCompare(c.contentX, (page.width - c.contentWidth) / 2, 0.5); verify(c.contentWidth <= 880); continue }
                 verify(c.width <= 880)
                 fuzzyCompare(c.x, (page.width - c.width) / 2, 0.5)

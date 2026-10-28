@@ -129,7 +129,7 @@ Item {
             tryVerify(function() { return shown(one(page, "peerBar")) })
             compare(one(page, "peerLine").text, "Đang mở Studio của Máy bàn phòng làm việc")
             compare(one(page, "peerHome").text, "Về máy này")
-            verify(hasText(page, "Studio chưa mở trong bản này."))
+            tryVerify(function() { return shown(one(page, "projectsHeader")) })       // Studio của máy kia mở bằng cùng danh sách dự án
             one(page, "peerHome").clicked()
             compare(Nav.studioPeer, "")
             compare(page.view, "own")

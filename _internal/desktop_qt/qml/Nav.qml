@@ -16,6 +16,9 @@ QtObject {
         if (stack) stack.show(1)
     }
 
+    // Mở trang một cuốn ở Thư viện ("Nghe trong Thư viện" của Studio); Main.qml nối với openBookId
+    signal bookRequested(string id)
+
     function openLayer(layer) { layers = layers.concat([layer]) }
     function closedLayer(layer) { layers = layers.filter(l => l !== layer) }
 
