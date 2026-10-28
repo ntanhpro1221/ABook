@@ -150,12 +150,12 @@ function RemotePlayerBar({ remote, receivedAt, onDismiss }: { remote: RemotePlay
             <KindIcon kind={remote.kind} className="size-3.5 shrink-0" />
             <span className="shrink-0 whitespace-nowrap">{state.playing ? "Đang phát trên" : "Đang dừng trên"}</span>
             {/* Một dòng, cắt cuối "…" (soát a68 lỗi 18: cắt giữa vỡ hai dòng "NGDtua…-" / "Lecoo"). */}
-            <span className="min-w-0 truncate" title={remote.name}>
+            <span className="min-w-0 [overflow-wrap:anywhere] whitespace-normal" title={remote.name}>
               {remote.name}
             </span>
             {protocolLabel(remote) && <span className="hidden shrink-0 font-normal text-fg-3 sm:inline"> · {protocolLabel(remote)}</span>}
           </div>
-          <div className="truncate text-sm">
+          <div className="[overflow-wrap:anywhere] whitespace-normal text-sm">
             <span className="font-medium">{state.chapterTitle}</span>
             <span className="text-fg-2"> · {formatClock(at)}</span>
           </div>
@@ -356,7 +356,7 @@ export function PhoneHandOffButton() {
               className="flex h-11 cursor-default items-center gap-2 rounded-control px-2 text-sm outline-none data-[highlighted]:bg-hover"
             >
               <KindIcon kind={target.kind} className="size-4 shrink-0 text-fg-2" />
-              <span className="min-w-0 flex-1 truncate">{target.name}</span>
+              <span className="min-w-0 flex-1 [overflow-wrap:anywhere] whitespace-normal">{target.name}</span>
               {protocolLabel(target) && <span className="shrink-0 text-xs text-fg-3">{protocolLabel(target)}</span>}
               {target.state?.bookId && target.state.playing && <span className="shrink-0 text-xs text-fg-3">đang phát</span>}
             </DropdownMenu.Item>

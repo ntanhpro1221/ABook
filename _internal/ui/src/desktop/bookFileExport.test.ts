@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { setApiTransport } from "@/studio/api";
 import {
-  clipStart,
   defaultExportFolder,
   exportWhereHint,
   jobView,
@@ -114,8 +113,7 @@ describe("lastExportHint with long paths", () => {
   it("names the file, never the start of the path, and keeps the full path for the tooltip", () => {
     const job: ExportJob = { state: "done", result: { folder: "D:\\Sách nói\\Đã xuất", file: long } };
     const hint = lastExportHint(job)!;
-    expect(hint.startsWith("Lần xuất gần nhất: M4B · …")).toBe(true);
-    expect(hint.endsWith("đến cuối.m4b")).toBe(true);
+    expect(hint).toBe("Lần xuất gần nhất: M4B · Một cuốn truyện có cái tên dài dằng dặc từ đầu đến cuối.m4b");
     expect(hint).not.toContain("D:");
     expect(lastExportPlace(job)).toBe(long);
   });
@@ -129,14 +127,6 @@ describe("lastExportHint with long paths", () => {
   it("has no place before anything was exported", () => {
     expect(lastExportPlace({ state: "running" })).toBeUndefined();
     expect(lastExportPlace(undefined)).toBeUndefined();
-  });
-});
-
-describe("clipStart", () => {
-  it("cuts at the start so the end of the name stays", () => {
-    expect(clipStart("abcdefghij", 6)).toBe("…fghij");
-    expect(clipStart("abcdef", 6)).toBe("abcdef");
-    expect(clipStart("ab", 6)).toBe("ab");
   });
 });
 

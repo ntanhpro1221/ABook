@@ -158,8 +158,8 @@ export function CoverSearchPanel({
                     </div>
                   )}
                 </div>
-                <div className="mt-1.5 line-clamp-2 text-xs font-medium">{found.title}</div>
-                <div className="truncate text-[0.6875rem] text-fg-3">{found.provider}</div>
+                <div className="mt-1.5 [overflow-wrap:anywhere] whitespace-normal text-xs font-medium">{found.title}</div>
+                <div className="[overflow-wrap:anywhere] whitespace-normal text-[0.6875rem] text-fg-3">{found.provider}</div>
               </button>
             ))}
           </div>

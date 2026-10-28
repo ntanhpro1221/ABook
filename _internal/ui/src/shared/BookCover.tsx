@@ -4,7 +4,7 @@ import { coverColor, coverLabel, coverStyle, splitTitle, type CoverImage } from 
 import { Vu } from "@/shared/ui";
 import { MotionRegion } from "./MotionRegion";
 
-// Bìa vuông kiểu album sách nói. Hoạ tiết là các vòng sóng âm lan ra từ góc - thứ duy nhất sách TXT
+// Bìa kiểu album sách nói, hoặc bìa dọc ở kệ. Bìa vẽ cao thêm theo chữ. Hoạ tiết là các vòng sóng âm lan ra từ góc - thứ duy nhất sách TXT
 // "có" là giọng đọc, nên bìa vẽ giọng đọc.
 //
 // Bìa nhỏ (thanh phát, danh sách) không đủ chỗ cho tên: sách trong một bộ thì số tập là thứ phân biệt được các
@@ -18,6 +18,7 @@ export function BookCover({
   part,
   badge,
   label = true,
+  portrait = false,
   className,
 }: {
   title: string;
@@ -32,6 +33,8 @@ export function BookCover({
   /** Bìa nhỏ: false = chỉ hoạ tiết, không chữ - thanh phát thu gọn đã ghi tên sách ngay cạnh, hai chữ cái đầu ("CP") trông như ảnh đại diện
    *  chứ không phải bìa (soát a66). */
   label?: boolean;
+  /** Bìa dọc ở kệ; bìa vẽ vẫn cao thêm nếu tên cần nhiều dòng hơn. */
+  portrait?: boolean;
   className?: string;
 }) {
   const [failed, setFailed] = useState<string | null>(null);
@@ -39,11 +42,12 @@ export function BookCover({
   // về bìa vẽ, hay bìa vẽ đổi màu theo tên thì mờ chéo, không thay tức thì.
   const photo = image?.url && failed !== image.url ? image : null;
   const motionKey = [photo?.url ?? null, title, part ?? null, badge ?? null];
+  const ratio = portrait ? "aspect-[2/3]" : "aspect-square";
   if (photo) {
     return (
       <MotionRegion
         motionKey={motionKey}
-        className={cn("relative aspect-square shrink-0 self-start overflow-hidden rounded-control shadow-card", className)}
+        className={cn("relative shrink-0 self-start overflow-hidden rounded-control shadow-card", ratio, className)}
         style={{ backgroundColor: coverColor(photo.color) || "var(--color-hover)" }}
         aria-hidden
       >
@@ -69,8 +73,8 @@ export function BookCover({
   return (
     <MotionRegion
       motionKey={motionKey}
-      className={cn("@container relative aspect-square shrink-0 self-start overflow-hidden rounded-control text-left shadow-card", className)}
-      style={{ background: `linear-gradient(155deg, ${style.from} 0%, ${style.to} 100%)` }}
+      className={cn("@container relative shrink-0 self-start overflow-hidden rounded-control text-left shadow-card", small ? ratio : "grid grid-cols-[minmax(0,1fr)]", className)}
+      style={{ background: `linear-gradient(155deg, ${style.from} 0%, ${style.to} 100%)`, height: small ? undefined : "auto" }}
       data-overlay="Chữ bìa trên hoạ tiết sóng"
       aria-hidden
     >
@@ -88,7 +92,8 @@ export function BookCover({
           />
         ))}
       </svg>
-      <div className="relative flex h-full flex-col justify-between gap-1" style={{ padding: text.padding }}>
+      {!small && <span className={cn("col-start-1 row-start-1 w-full", ratio)} />}
+      <div className={cn("relative flex min-w-0 w-full flex-col justify-between gap-1", small ? "h-full" : "col-start-1 row-start-1")} style={{ padding: text.padding }}>
         {small ? (
           label && (
             <span
@@ -100,17 +105,16 @@ export function BookCover({
           )
         ) : (
           <>
-            {/* Bìa lớn bị ép nhỏ (màn ngang: bìa trình phát ~55 px): chữ đã chạm sàn cỡ nên tên 3-4 dòng tràn khỏi bìa, cắt ngang dòng chữ
-                (soát a66). Dưới 5,5rem chỉ giữ hai dòng tên (có "…"), bỏ nhãn tập. */}
+            {/* Bìa vẽ cao thêm theo tên sách, giữ cỡ chữ và chuyển động chung. */}
             <span
-              className={cn("line-clamp-4 min-h-0 overflow-hidden font-bold tracking-tight text-white @max-[5.5rem]:line-clamp-2", leading)}
+              className={cn("[overflow-wrap:anywhere] whitespace-normal font-bold tracking-tight text-cover-ink", leading)}
               style={{ fontSize: text.fontSize }}
             >
               {main}
             </span>
             {sub ? (
               <span
-                className="shrink-0 self-start rounded-control px-1.5 py-0.5 font-semibold uppercase tracking-wider @max-[5.5rem]:hidden"
+                className="shrink-0 self-start rounded-control px-1.5 py-0.5 font-semibold uppercase tracking-wider"
                 style={{ color: style.ink, background: "rgb(0 0 0 / 0.28)", fontSize: "clamp(8px, 6cqw, 11px)" }}
               >
                 {sub}

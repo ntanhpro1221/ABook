@@ -80,7 +80,7 @@ export function SharedReadingsSettings() {
         <AnimatedRows className="mt-2 divide-y divide-line" items={filtered.slice(0, shown)} keyOf={(entry) => entry.surface}>
           {(entry) => (
             <div className="flex items-center gap-3 py-1.5 text-sm">
-              <span className="min-w-0 flex-1 truncate">
+              <span className="min-w-0 flex-1 [overflow-wrap:anywhere] whitespace-normal">
                 <span className="font-medium">{entry.surface}</span> <span className="text-fg-3">→</span> “{shownReading(entry.spokenForm)}”
                 {entry.from && <span className="text-xs text-fg-3"> · từ {entry.from}</span>}
               </span>

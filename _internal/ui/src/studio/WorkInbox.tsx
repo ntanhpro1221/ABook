@@ -234,7 +234,7 @@ function Example({ bookId, example, picked, onPick }: { bookId: string; example:
         <span className="mt-0.5 size-[32px] shrink-0" aria-hidden />
       )}
       <div className="min-w-0">
-        {example.before && <p className="line-clamp-2 text-fg-3"><span className="sr-only">Câu liền trước: </span>{example.before}</p>}
+        {example.before && <p className="[overflow-wrap:anywhere] whitespace-normal text-fg-3"><span className="sr-only">Câu liền trước: </span>{example.before}</p>}
         {/* Nhãn đứng NGAY TRÊN câu được hỏi (không phải trên câu trước mờ - dễ đọc nhầm là nhãn của câu ấy); vạch bên trái đánh dấu đúng câu đang hỏi
             khi có câu trước/sau làm ngữ cảnh. */}
         <div className={cn((example.before || example.after) && "border-l-2 border-accent pl-2")}>
@@ -259,7 +259,7 @@ function Example({ bookId, example, picked, onPick }: { bookId: string; example:
               : example.text}
           </p>
         </div>
-        {example.after && <p className="line-clamp-2 text-fg-3"><span className="sr-only">Câu liền sau: </span>{example.after}</p>}
+        {example.after && <p className="[overflow-wrap:anywhere] whitespace-normal text-fg-3"><span className="sr-only">Câu liền sau: </span>{example.after}</p>}
       </div>
     </li>
   );

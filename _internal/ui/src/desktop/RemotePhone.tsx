@@ -234,10 +234,10 @@ function RemoteBar({ phone, receivedAt, onDismiss }: { phone: RemotePhone; recei
               <DeviceIcon kind={phone.kind} className="size-3.5 shrink-0" />
               {/* Tên máy là chỗ phân biệt máy: câu dẫn không co, tên co sau cùng (và có tooltip), cách phát chỉ hiện khi rộng. */}
               <span className="shrink-0 whitespace-nowrap">{phone.playing ? "Đang phát trên" : "Đang dừng trên"}</span>
-              <ShortName name={phone.name} short={13} className="shrink" />
+              <ShortName name={phone.name} className="shrink" />
               {protocolLabel(phone) && <span className="hidden shrink-0 font-normal text-fg-3 lg:inline"> · {protocolLabel(phone)}</span>}
             </div>
-            <div className="truncate text-sm">
+            <div className="[overflow-wrap:anywhere] whitespace-normal text-sm">
               <span className="font-medium">{phone.chapterTitle}</span>
               <span className="text-fg-2"> · {phone.bookTitle}</span>
             </div>
@@ -478,7 +478,7 @@ export function HandOffButton({ className }: { className?: string }) {
           {targets.map((target) => (
             <DropdownMenu.Item key={target.device} onSelect={() => handOff(target)} className={MENU_ITEM}>
               <DeviceIcon kind={target.kind} className="size-4 shrink-0 text-fg-2" />
-              <span className="min-w-0 flex-1 truncate">{target.name}</span>
+              <span className="min-w-0 flex-1 [overflow-wrap:anywhere] whitespace-normal">{target.name}</span>
               {protocolLabel(target) && <span className="shrink-0 text-xs text-fg-3">{protocolLabel(target)}</span>}
               {target.bookId && target.playing && <span className="shrink-0 text-xs text-fg-3">đang phát</span>}
             </DropdownMenu.Item>

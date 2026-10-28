@@ -362,7 +362,7 @@ export function ReaderScreen(edit: SentenceEditing) {
         // Thanh rộng ~345 px với nhãn: màn dưới 380 px (hay chữ hệ thống 130 % trên máy 360 px) chỉ còn icon - nhãn vẫn đọc cho trình đọc màn hình.
         // Chữ hệ thống phóng to (textZoom Android không đổi bề rộng màn) thì nút này co, nhãn cắt "…" - các nút khác đứng yên trong thanh.
         <Button size="sm" variant="primary" icon={Headphones} onMouseDown={(event) => event.preventDefault()} onClick={listenHere} className="mx-1 min-w-0 max-sm:h-11 max-[379px]:px-3">
-          <span className="min-w-0 truncate max-[379px]:sr-only">Nghe từ đây</span>
+          <span className="min-w-0 [overflow-wrap:anywhere] whitespace-normal max-[379px]:sr-only">Nghe từ đây</span>
         </Button>
       )}
       <Popover.Root>

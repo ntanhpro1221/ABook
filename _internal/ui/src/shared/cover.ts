@@ -74,43 +74,47 @@ export function coverArtwork(title: string): string | undefined {
   if (!context) return undefined;
   const style = coverStyle(title);
   const [main, sub] = splitTitle(title);
-  const gradient = context.createLinearGradient(0, 0, 512 * 0.42, 512);
+  const titleFont = '700 58px "Be Vietnam Pro", "Segoe UI", sans-serif';
+  context.font = titleFont;
+  const lines: string[] = [];
+  let line = "";
+  for (const word of main.split(/\s+/)) {
+    const attempt = line ? `${line} ${word}` : word;
+    if (context.measureText(attempt).width <= 432) { line = attempt; continue; }
+    if (line) { lines.push(line); line = ""; }
+    // Tên liền dài cũng xuống dòng, giữ nguyên cỡ chữ và mọi ký tự.
+    for (const char of word) {
+      if (line && context.measureText(line + char).width > 432) { lines.push(line); line = ""; }
+      line += char;
+    }
+  }
+  if (line) lines.push(line);
+  // Bìa media cao thêm theo tên; không bỏ các dòng sau dòng thứ năm.
+  canvas.height = Math.max(512, 80 + lines.length * 66 + (sub ? 88 : 0));
+  const gradient = context.createLinearGradient(0, 0, 512 * 0.42, canvas.height);
   gradient.addColorStop(0, style.from);
   gradient.addColorStop(1, style.to);
   context.fillStyle = gradient;
-  context.fillRect(0, 0, 512, 512);
+  context.fillRect(0, 0, 512, canvas.height);
   context.strokeStyle = style.ink;
   context.lineWidth = 3;
   [0.28, 0.46, 0.64, 0.82, 1.0].forEach((radius, index) => {
     context.globalAlpha = 0.09 + index * 0.025;
     context.beginPath();
-    context.arc(style.seed % 2 ? 512 : 0, 512, radius * 512, 0, Math.PI * 2);
+    context.arc(style.seed % 2 ? 512 : 0, canvas.height, radius * 512, 0, Math.PI * 2);
     context.stroke();
   });
   context.globalAlpha = 1;
   context.fillStyle = "#ffffff";
-  context.font = '700 58px "Be Vietnam Pro", "Segoe UI", sans-serif';
-  const words = main.split(/\s+/);
-  const lines: string[] = [];
-  let line = "";
-  for (const word of words) {
-    const attempt = line ? `${line} ${word}` : word;
-    if (context.measureText(attempt).width > 432 && line) {
-      lines.push(line);
-      line = word;
-    } else {
-      line = attempt;
-    }
-  }
-  if (line) lines.push(line);
-  lines.slice(0, 5).forEach((text, index) => context.fillText(text, 40, 96 + index * 66));
+  context.font = titleFont;
+  lines.forEach((text, index) => context.fillText(text, 40, 96 + index * 66));
   if (sub) {
     context.font = '600 34px "Be Vietnam Pro", "Segoe UI", sans-serif';
     const width = context.measureText(sub.toUpperCase()).width;
     context.fillStyle = "rgb(0 0 0 / 0.28)";
-    context.fillRect(36, 430, width + 24, 50);
+    context.fillRect(36, canvas.height - 82, width + 24, 50);
     context.fillStyle = style.ink;
-    context.fillText(sub.toUpperCase(), 48, 467);
+    context.fillText(sub.toUpperCase(), 48, canvas.height - 45);
   }
   try {
     const url = canvas.toDataURL("image/png");

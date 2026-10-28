@@ -42,9 +42,9 @@ const VARIANTS: Record<Variant, string> = {
 };
 
 const SIZES: Record<Size, string> = {
-  sm: "h-10 min-h-10 px-3 text-[0.8125rem] gap-1.5 rounded-control",
-  md: "h-10 min-h-10 px-3.5 text-sm gap-2 rounded-control",
-  lg: "h-10 min-h-10 px-5 text-[0.9375rem] gap-2 rounded-cover",
+  sm: "min-h-10 px-3 py-1 text-[0.8125rem] gap-1.5 rounded-control",
+  md: "min-h-10 px-3.5 py-1 text-sm gap-2 rounded-control",
+  lg: "min-h-10 px-5 py-1 text-[0.9375rem] gap-2 rounded-cover",
 };
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -90,7 +90,7 @@ export function Button({
       aria-busy={loading || undefined}
       onClick={busyClick(loading, onClick)}
       className={cn(
-        "shared-button inline-flex select-none items-center justify-center whitespace-nowrap font-medium pointer-coarse:min-w-[48px] press transition-[background-color,color,border-color,outline-color,box-shadow,transform,scale,opacity] duration-motion-fast disabled:pointer-events-none disabled:opacity-45 aria-disabled:cursor-default aria-disabled:opacity-45",
+        "shared-button inline-flex max-w-full select-none items-center justify-center whitespace-normal [overflow-wrap:anywhere] font-medium pointer-coarse:min-w-[48px] press transition-[background-color,color,border-color,outline-color,box-shadow,transform,scale,opacity] duration-motion-fast disabled:pointer-events-none disabled:opacity-45 aria-disabled:cursor-default aria-disabled:opacity-45",
         VARIANTS[variant],
         SIZES[size],
         // Màn hẹp / cảm ứng: nút 28-38 px nới vùng chạm theo chiều dọc lên 40 px (touch-reach trong styles.css; soát UX 29-09 và a14: "Sửa",
@@ -986,8 +986,8 @@ export function Stat({ label, value, hint }: { label: string; value: ReactNode; 
   return (
     <div className="min-w-0">
       <div className="text-xs font-medium text-fg-3">{label}</div>
-      <div className="tabular mt-1 truncate text-xl font-semibold tracking-tight">{value}</div>
-      {hint && <div className="mt-0.5 truncate text-xs text-fg-2">{hint}</div>}
+      <div className="tabular mt-1 [overflow-wrap:anywhere] whitespace-normal text-xl font-semibold tracking-tight">{value}</div>
+      {hint && <div className="mt-0.5 [overflow-wrap:anywhere] whitespace-normal text-xs text-fg-2">{hint}</div>}
     </div>
   );
 }

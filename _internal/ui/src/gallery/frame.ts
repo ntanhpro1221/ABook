@@ -25,6 +25,9 @@ export async function startFrame(id: string, theme: Theme): Promise<void> {
     return;
   }
   document.title = `${item.title} · ABook`;
-  await runEntry(item, theme, root);
+  // The text audit waits for fonts and finite animations through CDP too. Live
+  // progress polling must not consume the full eight-second quiet timeout.
+  const textAudit = new URLSearchParams(window.location.search).has("longText");
+  await runEntry(item, theme, root, textAudit ? { quiet: 100, settleTimeout: 1500 } : {});
   report();
 }

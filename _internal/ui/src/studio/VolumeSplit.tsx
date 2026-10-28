@@ -145,11 +145,11 @@ export function VolumeSplit({
           <MotionRegion className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 py-2 sm:grid-cols-[minmax(0,1fr)_auto_90px_32px]">
             <div className="min-w-0">
               {/* Phần 1 giữ nguyên tên sách (là sách thường, như máy chủ đặt) - nên nói ra nó là phần 1; các phần sau đã có "· Phần N" trong tên. */}
-              <div className="truncate font-medium max-sm:whitespace-normal max-sm:break-words">
+              <div className="[overflow-wrap:anywhere] whitespace-normal font-medium max-sm:whitespace-normal max-sm:break-words">
                 {title}
                 {index === 0 && <span className="ml-2 text-xs font-normal text-fg-3">phần 1</span>}
               </div>
-              <div className="truncate text-xs text-fg-2">
+              <div className="[overflow-wrap:anywhere] whitespace-normal text-xs text-fg-2">
                 {files[part.start - 1]?.firstLine || files[part.start - 1]?.name}
                 {proposed.get(files[part.start - 1]?.path) ? ` · ${proposed.get(files[part.start - 1].path)}` : ""}
               </div>

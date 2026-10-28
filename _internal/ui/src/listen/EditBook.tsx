@@ -208,8 +208,8 @@ export function MusicSection({ book }: { book: ListenBook }) {
           <li key={cue.key}>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
               <div className="min-w-[9rem] flex-1">
-                <div className={cn("truncate text-sm", cue.silenced && "text-fg-3 line-through")}>{cue.title || "Nhạc nền"}</div>
-                <div className="tabular truncate text-xs text-fg-2">
+                <div className={cn("[overflow-wrap:anywhere] whitespace-normal text-sm", cue.silenced && "text-fg-3 line-through")}>{cue.title || "Nhạc nền"}</div>
+                <div className="tabular [overflow-wrap:anywhere] whitespace-normal text-xs text-fg-2">
                   {cue.chapter} · {formatClock(cue.start)} – {formatClock(cue.end)}
                   {cue.creator ? ` · ${cue.creator}` : ""}
                   {cue.pinned ? " · bài của bạn" : ""}
@@ -711,7 +711,7 @@ export function SaveAsDialog({
           <Button variant="ghost" size="sm" onClick={() => void pickFolder().then((picked) => picked && setFolder(picked))}>
             Chọn thư mục
           </Button>
-          <MotionRegion as="span" motionKey={folder ?? ""} className="min-w-0 truncate text-fg-2">{folder ?? "Mặc định: thư mục Đã xuất"}</MotionRegion>
+          <MotionRegion as="span" motionKey={folder ?? ""} className="min-w-0 [overflow-wrap:anywhere] whitespace-normal text-fg-2">{folder ?? "Mặc định: thư mục Đã xuất"}</MotionRegion>
         </div>
       )}
       {pickFolder && <p className="mt-2 text-xs text-fg-3">Đã có file cùng tên trong thư mục ấy thì file mới thêm số (2) ở cuối tên - không đè lên file cũ.</p>}

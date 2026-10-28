@@ -21,7 +21,7 @@ export function publishTrackMetadata(track: Track | null): void {
   if (typeof MediaMetadata === "undefined") return;
   const artwork = track.bookCover ? new URL(track.bookCover.url, window.location.href).href : coverArtwork(track.bookTitle);
   navigator.mediaSession.metadata = new MediaMetadata({ title: track.chapterTitle, album: track.bookTitle, artist: track.narrator,
-    artwork: artwork ? [{ src: artwork, sizes: "512x512", type: "image/png" }] : [] });
+    artwork: artwork ? [{ src: artwork, type: "image/png" }] : [] });
 }
 
 /** So từng chương chỉ khi danh sách chương đổi tham chiếu (react-query giữ nguyên tham chiếu khi dữ liệu không đổi). */

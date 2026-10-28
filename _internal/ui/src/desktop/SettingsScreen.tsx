@@ -439,7 +439,7 @@ export function AdvancedGroup({ info }: { info: AppInfo | undefined }) {
           <div className="settings-library-row flex flex-wrap items-center gap-2 py-3">
             <div className="flex min-h-10 min-w-0 flex-1 basis-48 items-center gap-3 text-sm text-fg-2">
               <FolderOpen className="size-4 shrink-0" />
-              <span className="truncate" title={preferences?.libraryRoot}>{preferences?.libraryRoot}</span>
+              <span className="[overflow-wrap:anywhere] whitespace-normal" title={preferences?.libraryRoot}>{preferences?.libraryRoot}</span>
             </div>
             {info?.dialogs && (
               <Button size="sm" variant="ghost" className={cn("settings-edge-action touch-row", WRAP_LABEL)} onClick={() => void changeLibrary()}>

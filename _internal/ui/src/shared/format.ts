@@ -55,21 +55,9 @@ export function formatClock(seconds: number): string {
   return `${hours ? `${hours}:` : ""}${mm}:${String(secs).padStart(2, "0")}`;
 }
 
-/** Đầu một câu để nhắc lại trong toast: bỏ ngoặc thoại hai đầu, cắt ở ranh giới từ - "Cậu ấy nói rằng hôm nay…". */
-export function excerpt(text: string, max = 48): string {
-  const clean = text.replace(/\s+/g, " ").trim().replace(/^["“”'‘’«»『』「」—–\-\s]+|["“”'‘’«»『』「」\s]+$/g, "");
-  if (clean.length <= max) return clean;
-  const cut = clean.slice(0, max);
-  const space = cut.lastIndexOf(" ");
-  return `${(space > max / 2 ? cut.slice(0, space) : cut).replace(/[\s,.;:!?…—–-]+$/, "")}…`;
-}
-
-/** Rút một tên dài giữ CẢ đầu lẫn đuôi - "NGDtuanh-Lecoo" thành "NGDtu…Lecoo": tên máy thường chung đầu ("NGDtuanh-…") nên chỗ phân biệt máy nằm ở đuôi. */
-export function middleEllipsis(text: string, max = 14): string {
-  if (text.length <= max) return text;
-  const tail = Math.floor((max - 1) / 2);
-  const head = max - 1 - tail;
-  return `${text.slice(0, head).trimEnd()}…${text.slice(text.length - tail).trimStart()}`;
+/** Câu nhắc trong thông báo: bỏ ngoặc thoại hai đầu, giữ trọn nội dung. */
+export function excerpt(text: string): string {
+  return text.replace(/\s+/g, " ").trim().replace(/^["“”'‘’«»『』「」—–\-\s]+|["“”'‘’«»『』「」\s]+$/g, "");
 }
 
 /** Cách đọc một tên để HIỆN: chữ đầu mỗi từ viết hoa - "rên-ta-rô" (phần tên máy tách từ "Nam rên-ta-rô") thành "Rên-ta-rô"

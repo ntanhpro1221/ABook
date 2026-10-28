@@ -214,7 +214,7 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
                 </MotionRegion>
                 <span className="min-w-0">
                   <span className={cn("block text-sm font-medium leading-tight", active ? "text-fg" : "text-fg-2")}>{STEP_TITLE[value]}</span>
-                  {counts[value] && <span className="tabular block truncate text-xs text-fg-2">{counts[value]}</span>}
+                  {counts[value] && <span className="tabular block [overflow-wrap:anywhere] whitespace-normal text-xs text-fg-2">{counts[value]}</span>}
                 </span>
               </button>
             </li>

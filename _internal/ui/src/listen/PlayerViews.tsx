@@ -383,7 +383,7 @@ export function MenuShell({
       className={cn(look === "action" ? ACTION_BUTTON : look === "row"
         ? MENU_ROW
         : "tabular inline-flex h-9 min-w-9 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-control px-2 text-[0.8125rem] font-semibold transition-colors hover:bg-hover max-sm:h-[48px] max-sm:min-w-[48px]", look !== "row" && actionTone(active))}>
-      {look === "row" && <span className="flex min-w-0 flex-1 items-center gap-3">{RowIcon && <RowIcon className="size-4 shrink-0 text-fg-2" />}<span className="truncate">{caption}</span></span>}
+      {look === "row" && <span className="flex min-w-0 flex-1 items-center gap-3">{RowIcon && <RowIcon className="size-4 shrink-0 text-fg-2" />}<span className="[overflow-wrap:anywhere] whitespace-normal">{caption}</span></span>}
       <MotionRegion as="span" motionKey={triggerKey} className={cn(look === "action" ? ACTION_GLYPH : "inline-flex items-center gap-1", look === "row" && cn("tabular min-w-0 text-xs font-medium", actionTone(active)))}>{trigger}</MotionRegion>
       {look === "action" && <MotionRegion as="span" className={ACTION_LABEL} motionKey={typeof caption === "string" ? caption.replace(/\d+/g, "#") : undefined}>{caption}</MotionRegion>}
     </button>;
@@ -587,8 +587,8 @@ function MusicMenuFor({ bookId, look }: { bookId: string; look: MenuLook }) {
       icon={EighthNote}
       triggerKey={look === "row" ? [waiting, playing, label, known] : undefined}
       trigger={look === "row"
-        ? (waiting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <span className="block max-w-32 truncate">{playing ? shortPlaylistLabel(label) : known ? "Tắt" : ""}</span>)
-        : <>{waiting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <EighthNote className="size-4" />}<span className="max-w-40 truncate max-sm:hidden @max-[83rem]:hidden" title={playing ? label : undefined}>{playing ? shortPlaylistLabel(label) : ""}</span></>}
+        ? (waiting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <span className="block max-w-32 [overflow-wrap:anywhere] whitespace-normal">{playing ? shortPlaylistLabel(label) : known ? "Tắt" : ""}</span>)
+        : <>{waiting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <EighthNote className="size-4" />}<span className="max-w-40 [overflow-wrap:anywhere] whitespace-normal max-sm:hidden @max-[83rem]:hidden" title={playing ? label : undefined}>{playing ? shortPlaylistLabel(label) : ""}</span></>}
       width="w-72"
     ><MotionRegion>
       <MenuNote title="Nhạc nền">nhớ riêng cho cuốn này</MenuNote>
@@ -729,8 +729,8 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
       triggerKey={look === "row" ? current?.id : undefined}
       // Tên giọng hiện cả trên điện thoại: người nghe thấy ngay giọng nào đang đọc, không chỉ một biểu tượng.
       trigger={look === "row"
-        ? <span className="block max-w-32 truncate">{current ? spokenVoiceName(current.name) : ""}</span>
-        : <><AudioLines className="size-4" /><span className="max-w-24 truncate @max-[75rem]:hidden">{current ? spokenVoiceName(current.name) : ""}</span></>}
+        ? <span className="block max-w-32 [overflow-wrap:anywhere] whitespace-normal">{current ? spokenVoiceName(current.name) : ""}</span>
+        : <><AudioLines className="size-4" /><span className="max-w-24 [overflow-wrap:anywhere] whitespace-normal @max-[75rem]:hidden">{current ? spokenVoiceName(current.name) : ""}</span></>}
       width="w-80 max-w-[calc(100vw-1.5rem)]"
     ><MotionRegion>
       <MenuNote title="Giọng đọc">nhớ riêng cho cuốn này</MenuNote>
@@ -1195,7 +1195,7 @@ function VolumeControl({ look = "chip" }: { look?: "chip" | "row" }) {
         {/* Một biểu tượng cho cả dòng: loa đổi theo mức, bấm tên để tắt / bật tiếng; thanh trượt bên phải chỉnh mức (trước đây loa đầu dòng + loa ở nút tắt tiếng). */}
         <button type="button" data-player-menu-row aria-label={withShortcut(volume === 0 ? "Bật tiếng" : "Tắt tiếng", "M")} className={cn(MENU_ROW, "min-w-0 flex-1")} {...keepFocus} onClick={toggleMute}>
           <Icon className="size-4 shrink-0 text-fg-2" />
-          <span className="min-w-0 flex-1 truncate">Âm lượng</span>
+          <span className="min-w-0 flex-1 [overflow-wrap:anywhere] whitespace-normal">Âm lượng</span>
         </button>
         <span className="flex shrink-0 px-2">{slider("flex w-28")}</span>
       </div>
@@ -1292,7 +1292,7 @@ function MusicCreditLine() {
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
         title={musicCreditText(musicCredit) || label}
-        className="max-w-full truncate rounded-control outline-none focus-visible:ring-2 focus-visible:ring-focus"
+        className="max-w-full [overflow-wrap:anywhere] whitespace-normal rounded-control outline-none focus-visible:ring-2 focus-visible:ring-focus"
       >
         Nhạc nền: {label}
       </button>
@@ -1331,9 +1331,9 @@ function TrackSubtitle() {
   const speaking = useSpeaking();
   // Đệm một nhịp giữa câu (~1 giây) không được làm dòng này nháy "Đang chuẩn bị giọng đọc…" rồi mất: chỉ nói khi chờ thật sự lâu (soát UX a9).
   const preparing = useAfter(speaking && playing && buffering, PREPARING_VOICE_AFTER_MS);
-  if (!track) return <MotionRegion />;
+  if (!track) return <MotionRegion as="span" />;
   return (
-    <MotionRegion>
+    <MotionRegion as="span">
       {purpose === "review" && (
         <span className="mr-1.5 inline-block rounded-control bg-info-soft px-1.5 text-xs font-medium text-info">Nghe kiểm</span>
       )}
@@ -1512,7 +1512,7 @@ function MenuRow({ icon: Icon, children, ...rest }: ButtonHTMLAttributes<HTMLBut
     <Popover.Close asChild>
       <button type="button" data-player-menu-row className={MENU_ROW} {...keepFocus} {...rest}>
         <Icon className="size-4 shrink-0 text-fg-2" />
-        <span className="min-w-0 flex-1 truncate">{children}</span>
+        <span className="min-w-0 flex-1 [overflow-wrap:anywhere] whitespace-normal">{children}</span>
       </button>
     </Popover.Close>
   );
@@ -1587,8 +1587,8 @@ export function PlayerBar({
         )}
         <FadingNotice className="mx-3 mt-2" />
         <PlayerAlert className="mx-3 mt-2" compact />
-        <div className="flex h-16 items-center gap-3 px-3">
-          {/* title: tên chương / sách bị cắt "Chương 3 · Đ…" khi phóng chữ hay cửa sổ hẹp - rê chuột đọc được đủ (soát a31 Z1). */}
+        <div className="flex min-h-16 items-center gap-3 px-3 py-2">
+          {/* Tên chương và sách xuống dòng; thanh phát cao theo nội dung. */}
           <button
             type="button"
             onClick={() => setExpanded(true)}
@@ -1598,8 +1598,8 @@ export function PlayerBar({
           >
             <BookCover title={track.bookTitle} image={track.bookCover} size="sm" label={false} className={cn("size-11", !plain && !expanded && "cover-morph")} />
             <div className="min-w-0">
-              <MotionRegion motionKey={[track.bookId, track.chapterId, track.chapterTitle]} className="truncate text-sm font-semibold">{track.chapterTitle}</MotionRegion>
-              <div className="truncate text-xs text-fg-2">
+              <MotionRegion motionKey={[track.bookId, track.chapterId, track.chapterTitle]} className="[overflow-wrap:anywhere] whitespace-normal text-sm font-semibold">{track.chapterTitle}</MotionRegion>
+              <div className="[overflow-wrap:anywhere] whitespace-normal text-xs text-fg-2">
                 <TrackSubtitle />
               </div>
             </div>
@@ -1646,8 +1646,8 @@ export function PlayerBar({
         >
           <BookCover title={track.bookTitle} image={track.bookCover} size="sm" label={false} className={cn("size-12", !plain && !expanded && "cover-morph")} />
           <div className="min-w-0">
-            <MotionRegion motionKey={[track.bookId, track.chapterId, track.chapterTitle]} className="truncate text-sm font-semibold">{track.chapterTitle}</MotionRegion>
-            <div className="truncate text-xs text-fg-2">
+            <MotionRegion motionKey={[track.bookId, track.chapterId, track.chapterTitle]} className="[overflow-wrap:anywhere] whitespace-normal text-sm font-semibold">{track.chapterTitle}</MotionRegion>
+            <div className="[overflow-wrap:anywhere] whitespace-normal text-xs text-fg-2">
               <TrackSubtitle />
             </div>
           </div>
@@ -1816,7 +1816,7 @@ const PanelChapterRow = memo(function PanelChapterRow({ chapter, current, playin
           {chapter.subtitle || chapter.title}
         </span>
         {/* Dòng phụ đổi khi chương thu xong ("Đang thu âm…" -> độ dài) hay đổi giọng: mờ chéo, không thay chữ cứng. */}
-        <MotionRegion as="span" className="tabular block truncate text-xs text-fg-2">
+        <MotionRegion as="span" className="tabular block [overflow-wrap:anywhere] whitespace-normal text-xs text-fg-2">
           {chapterSubline(chapter, producing)}
         </MotionRegion>
       </span>
@@ -1920,7 +1920,7 @@ function AfterTheEnd({ skipId }: { skipId?: string }) {
                   <BookCover title={book.title} part={book.series?.part} size="xs" image={book.cover} className="size-10" />
                   <span className="min-w-0 flex-1">
                     <span className="block break-words text-sm font-semibold text-fg">{book.title}</span>
-                    <span className="tabular block truncate text-xs text-fg-2">{otherBookLine(book)}</span>
+                    <span className="tabular block [overflow-wrap:anywhere] whitespace-normal text-xs text-fg-2">{otherBookLine(book)}</span>
                   </span>
                   <Play className="size-4 shrink-0 text-accent-text" fill="currentColor" strokeWidth={0} />
                 </button>

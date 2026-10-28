@@ -21,9 +21,9 @@ describe("previewCaption", () => {
     expect(previewCaption("“Đi thôi, Natasha.”", "Lucien")).toBe("Lúc thu thật sẽ nghe gần như vậy · câu “Đi thôi, Natasha.” · giọng Lucien");
   });
 
-  it("cuts a long line and leaves the voice out when there is none to name", () => {
+  it("keeps a long line and leaves the voice out when there is none to name", () => {
     const caption = previewCaption(`${"từ ".repeat(60)}cuối`, "");
-    expect(caption).toContain("…”");
+    expect(caption).toContain(`${"từ ".repeat(60)}cuối`);
     expect(caption).not.toContain("giọng");
   });
 });

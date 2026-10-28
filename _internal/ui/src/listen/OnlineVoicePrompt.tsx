@@ -61,7 +61,7 @@ export function OnlineVoicePrompt() {
                       item.id === voice.id && "font-semibold",
                     )}
                   >
-                    <span className="truncate">{spokenVoiceName(item.name)}</span>
+                    <span className="[overflow-wrap:anywhere] whitespace-normal">{spokenVoiceName(item.name)}</span>
                     <span className="shrink-0 text-xs font-normal text-fg-2">{item.online ? "trực tuyến" : "của máy"}{item.id === voice.id ? " · đang chọn" : ""}</span>
                   </button>
                   {source.readAloudSample && (

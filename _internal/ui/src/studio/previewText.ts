@@ -19,7 +19,7 @@ export function refusalText(reason: unknown, fallback: string, named = false): s
 
 /** Dòng dưới nút sau khi nghe: lúc thu thật sẽ nghe GẦN như vậy (âm thanh không phải lúc nào cũng tái lập từng byte), câu nào, giọng ai. */
 export function previewCaption(text: string, speaker: string): string {
-  return `Lúc thu thật sẽ nghe gần như vậy · câu “${excerpt(text, 70)}”${speaker ? ` · giọng ${speaker}` : ""}`;
+  return `Lúc thu thật sẽ nghe gần như vậy · câu “${excerpt(text)}”${speaker ? ` · giọng ${speaker}` : ""}`;
 }
 
 /** Dòng trạng thái dưới nút "Nghe thử": đang chờ máy / đang phát / đã nghe xong / bị từ chối - luôn nói MỘT điều, để người nghe biết

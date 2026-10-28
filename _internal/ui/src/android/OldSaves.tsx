@@ -79,7 +79,7 @@ export function OldSavesList({ files }: { files: OldSave[] }) {
         <div key={key} ref={ref} className="motion-row" data-state={state} inert={state === "exit"}>
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3.5">
           <div className="min-w-0 flex-[1_1_12rem]">
-            <div className="truncate text-[0.9375rem] font-medium">{oldSaveTitle(file.name)}</div>
+            <div className="[overflow-wrap:anywhere] whitespace-normal text-[0.9375rem] font-medium">{oldSaveTitle(file.name)}</div>
             <div className="mt-0.5 text-xs text-fg-2">
               {formatSize(file.size)} · {formatWhen(file.modified)}
             </div>

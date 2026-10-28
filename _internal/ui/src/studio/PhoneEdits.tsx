@@ -156,7 +156,7 @@ export function PhoneEdits({ bookId }: { bookId: string }) {
       {(device) => (
         <div className="pt-3">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="min-w-0 flex-1 truncate text-sm font-medium">
+            <h3 className="min-w-0 flex-1 [overflow-wrap:anywhere] whitespace-normal text-sm font-medium">
               {device.name} <span className="font-normal text-fg-3">· gửi {formatWhen(device.at)}</span>
             </h3>
             <Button size="sm" variant="primary" icon={Check} loading={busy === `${device.id}:all`} disabled={busy !== null} onClick={() => void decide("apply", device)}>
@@ -195,7 +195,7 @@ export function PhoneEdits({ bookId }: { bookId: string }) {
           {(device) => (
             <div className="pt-2">
               <div className="flex flex-wrap items-center gap-2">
-                <h3 className="min-w-0 flex-1 truncate text-sm font-medium text-fg">{device.name}</h3>
+                <h3 className="min-w-0 flex-1 [overflow-wrap:anywhere] whitespace-normal text-sm font-medium text-fg">{device.name}</h3>
                 <Button size="sm" variant="ghost" icon={RotateCcw} disabled={busy !== null} onClick={() => void decide("restore", device)}>
                   Khôi phục tất cả
                 </Button>
