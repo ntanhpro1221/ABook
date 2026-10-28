@@ -29,6 +29,8 @@ MusicBed::MusicBed(std::function<AudioOut *()> make, std::function<QUrl(const QS
     if (!m_now)
         m_now = [] { return QDateTime::currentMSecsSinceEpoch(); };
     m_timer.setInterval(STEP_MS);
+    m_timer.setObjectName(QStringLiteral("music fade"));
+    m_loopTicket.setObjectName(QStringLiteral("music loop"));
     connect(&m_timer, &QTimer::timeout, this, &MusicBed::fadeTick);
     m_loopTicket.setSingleShot(true);
     connect(&m_loopTicket, &QTimer::timeout, this, [this] {
@@ -532,6 +534,35 @@ void MusicBed::switchTo(std::optional<MusicCue> cue, double seconds, bool seeked
 void MusicBed::tick(int count) {
     for (int i = 0; i < count && m_timer.isActive(); ++i)
         fadeTick();
+}
+
+double MusicBed::nextSyncSeconds(double seconds, double narrationRate) const {
+    double delay = INF;
+    const auto at = [&](double chapterTime) {
+        const double wait = (chapterTime - seconds) / narrationRate;
+        if (wait > 0.001) delay = std::min(delay, wait);
+    };
+    for (const auto &cue : m_cues) {
+        at(cue.start); at(cue.end);
+        for (const auto &step : cue.steps) at(step.at);
+        const auto failed = m_failed.constFind(cue.link);
+        if (failed != m_failed.cend() && seconds >= cue.start && seconds < cue.end)
+            delay = std::min(delay, std::max(0.05, double(*failed - m_now()) / 1000));
+    }
+    if (m_current) {
+        const auto &p = *m_current;
+        // Loading and tail selection depend on the actual music cursor; retain
+        // the audio cadence only while those states require it.
+        if (!p.audio->loaded || p.audio->waiting || p.cue.tail)
+            return std::min(delay, SYNC_TICK_SECONDS);
+        const auto b = loopBounds(p.cue, duration(p.audio));
+        if (b.crossfade && !p.final) {
+            const double remaining = b.loopEnd - LOOP_CROSSFADE_SECONDS - currentTime(p.audio);
+            const double standby = remaining - LOOP_STANDBY_SECONDS;
+            delay = std::min(delay, std::max(0.001, standby > 0.001 ? standby : remaining));
+        }
+    }
+    return delay;
 }
 
 void MusicBed::startFade() {

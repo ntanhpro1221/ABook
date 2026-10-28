@@ -56,6 +56,7 @@ public:
     void refresh();
     /// Bật / tắt nhịp theo (có người nhìn) và (đang phát).
     void restart();
+    void setSuspended(bool suspended);
 
 signals:
     void positionChanged();
@@ -70,6 +71,7 @@ private:
     double m_sleepLeft = -1;
     int m_watchers = 0;
     quint64 m_ticks = 0;
+    bool m_suspended = false;
 };
 
 class Player : public QObject {
@@ -149,6 +151,7 @@ public:
     ChaptersModel *chapters() { return &m_chapters; }
     PlayerNet *net() const { return m_net; }
     PlayerClock *clock() { return &m_clock; }
+    void setUiActive(bool active) { m_uiActive = active; m_clock.setSuspended(!active); updateTicker(); }
     QVariantList speedsList() const;
     QVariantList sleepChoicesList() const;
     quint64 snapshotChanges() const { return m_snapshotChanges; }
@@ -225,6 +228,8 @@ signals:
     void bufferingChanged();
     void rateChanged();
     void volumeChanged();
+    void audioSeeked();
+    void outputGainChanged();
     /// Hẹn giờ theo phút còn 30 giây (DESIGN 5.3): báo một lần; thêm giờ quá mốc thì báo lại được.
     void sleepWarning();
     void sleepChanged();
@@ -310,6 +315,7 @@ private:
     PlayerNet *m_net;
     std::function<qint64()> m_now;
     PlayerClock m_clock;
+    bool m_uiActive = true;
     ChaptersModel m_chapters;
     std::unique_ptr<ProgressOutbox> m_outbox;
     QTimer m_ticker;

@@ -6,6 +6,7 @@ import ABook
 // để huỷ - lớp Back riêng), lần hai mới gỡ. Tiến độ cài hiện ở màn Studio (`studioRequested`), ở đây chỉ nói "Đang cài.".
 Item {
     id: root
+    UiActivity { target: root; id: activity; onResumed: root.load() }
     property var status: null           // GET /api/studio/setup
     property bool armed: false
     property bool busy: false
@@ -76,7 +77,7 @@ Item {
         else { Nav.closedLayer(armLayer); disarm.stop() }
     }
     Timer { id: disarm; interval: 6000; onTriggered: root.arm(false) }
-    Timer { interval: 2000; repeat: true; running: root.present && Boolean(root.status && root.status.running); onTriggered: root.load() }
+    Timer { interval: 2000; repeat: true; running: activity.running && root.present && Boolean(root.status && root.status.running); onTriggered: root.load() }
     Connections { target: Api; function onInfoChanged() { if (!root.status) root.load() } }
     Component.onCompleted: load()
     Component.onDestruction: Nav.closedLayer(armLayer)

@@ -231,6 +231,7 @@ qt_add_qml_module(ABookDesk
         qml/ChaptersPopover.qml
         qml/ChoiceChip.qml
         qml/ClockUser.qml
+        qml/UiActivity.qml
         qml/ControlChip.qml
         qml/NowPlaying.qml
         qml/PageSwitch.qml

@@ -12,7 +12,7 @@ folder.mkdir(parents=True, exist_ok=True)
 label = sys.argv[1]
 wait = wait_for_machine()
 (folder / f"build-{label}-wait.json").write_text(json.dumps(wait, indent=2), encoding="utf-8", newline="\n")
-print("BUILD machine-clear", wait, flush=True)
+print("BUILD machine-clear", {"seconds": wait["seconds"], "blocked_samples": len(wait["blocked_samples"])}, flush=True)
 source = (root / "build.bat").read_text(encoding="utf-8")
 source = source.replace("set HERE=%~dp0", "set HERE=" + str(root) + "\\")
 if "--compile-only" in sys.argv:

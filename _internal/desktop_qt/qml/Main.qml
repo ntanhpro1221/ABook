@@ -26,6 +26,8 @@ Window {
         onNotifyTray: if (win.tray) win.tray.showMessage("ABook", "ABook vẫn chạy ở khay")
         onMiniChanged: chrome.setMini(mini)
     }
+    readonly property bool uiVisible: visible && visibility !== Window.Minimized && visibility !== Window.Hidden
+    Binding { target: Nav; property: "uiVisible"; value: win.uiVisible }
     readonly property var tray: trayLoader.item
     Loader {
         id: trayLoader
@@ -35,7 +37,7 @@ Window {
     MiniPlayer {
         id: miniPlayer
         width: 360; height: win.height
-        visible: windowMode.mini
+        visible: windowMode.mini && win.uiVisible
         windowMode: windowMode
     }
 
@@ -58,8 +60,9 @@ Window {
 
     Item {
         id: shell
+        objectName: "mainShell"
         anchors.fill: parent
-        visible: !windowMode.mini
+        visible: !windowMode.mini && win.uiVisible
         focus: true
 
         Sidebar {
@@ -197,7 +200,7 @@ Window {
     // Lời báo của app (Toaster của web): góc trên bên phải, cách dải tiêu đề và mép phải 16 px; trên cả hộp thoại
     Toast {
         z: 90
-        visible: !windowMode.mini && t > 0
+        visible: !windowMode.mini && win.uiVisible && t > 0
         anchors.right: parent.right
         anchors.rightMargin: 16
         y: titleBar.height + 16

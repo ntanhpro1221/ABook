@@ -11,7 +11,7 @@ Column {
     Accessible.name: label
     opacity: 1
     SequentialAnimation on opacity {
-        running: root.visible && !Theme.reduceMotion
+        running: root.visible && Nav.uiVisible && !Theme.reduceMotion
         loops: Animation.Infinite
         NumberAnimation { to: 0.6; duration: 800; easing.type: Easing.InOutSine }
         NumberAnimation { to: 1; duration: 800; easing.type: Easing.InOutSine }

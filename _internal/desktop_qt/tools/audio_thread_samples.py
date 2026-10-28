@@ -14,6 +14,95 @@ k32.CloseHandle.argtypes = [w.HANDLE]
 k32.QueryThreadCycleTime.argtypes = [w.HANDLE, c.POINTER(c.c_ulonglong)]
 k32.GetThreadDescription.argtypes = [w.HANDLE, c.POINTER(c.c_void_p)]
 k32.LocalFree.argtypes = [c.c_void_p]
+nt.NtQueryInformationThread.argtypes = [w.HANDLE, w.ULONG, c.c_void_p, w.ULONG, c.c_void_p]
+k32.OpenProcess.argtypes = [w.DWORD, w.BOOL, w.DWORD]
+k32.OpenProcess.restype = w.HANDLE
+dbg = c.WinDLL("dbghelp", use_last_error=True)
+dbg.SymInitializeW.argtypes = [w.HANDLE, w.LPCWSTR, w.BOOL]
+dbg.SymFromAddr.argtypes = [w.HANDLE, c.c_ulonglong, c.POINTER(c.c_ulonglong), c.c_void_p]
+dbg.SymGetModuleBase64.argtypes = [w.HANDLE, c.c_ulonglong]
+dbg.SymGetModuleBase64.restype = c.c_ulonglong
+dbg.SymCleanup.argtypes = [w.HANDLE]
+psapi = c.WinDLL("psapi")
+psapi.GetModuleFileNameExW.argtypes = [w.HANDLE, w.HMODULE, w.LPWSTR, w.DWORD]
+_identities = {}
+_address_identities = {}
+
+
+def modules(pid):
+    """Address map for separate diagnostic traces; not used in CPU timing runs."""
+    class ModuleInfo(c.Structure):
+        _fields_ = [("base", c.c_void_p), ("size", w.DWORD), ("entry", c.c_void_p)]
+    psapi.EnumProcessModulesEx.argtypes = [w.HANDLE, c.c_void_p, w.DWORD, c.POINTER(w.DWORD), w.DWORD]
+    psapi.GetModuleInformation.argtypes = [w.HANDLE, w.HMODULE, c.POINTER(ModuleInfo), w.DWORD]
+    process = k32.OpenProcess(0x0410, False, pid)
+    result = []
+    if not process: return result
+    try:
+        handles = (w.HMODULE * 2048)()
+        used = w.DWORD()
+        if not psapi.EnumProcessModulesEx(process, handles, c.sizeof(handles), c.byref(used), 3): return result
+        for handle in list(handles)[:used.value // c.sizeof(w.HMODULE)]:
+            info = ModuleInfo()
+            path = c.create_unicode_buffer(32768)
+            if psapi.GetModuleInformation(process, handle, c.byref(info), c.sizeof(info)) and psapi.GetModuleFileNameExW(process, handle, path, len(path)):
+                result.append(dict(base=hex(info.base), size=info.size, path=path.value))
+    finally:
+        k32.CloseHandle(process)
+    return result
+
+
+def identity(pid, tid):
+    """Class 9 returns the Win32 start, unlike the kernel's common thread thunk.
+
+    DbgHelp uses loaded modules/exports and local PDBs only: no network or admin.
+    Called on the sampler thread, since DbgHelp is single-threaded.
+    """
+    key = (pid, tid)
+    if key in _identities:
+        return _identities[key]
+    result = {}
+    thread = k32.OpenThread(0x0040, False, tid)
+    address = c.c_void_p()
+    if thread:
+        try:
+            status = nt.NtQueryInformationThread(thread, 9, c.byref(address), c.sizeof(address), None)
+            result["start_query_status"] = status
+        finally:
+            k32.CloseHandle(thread)
+    if address.value:
+        result["start_address"] = hex(address.value)
+        address_key = (pid, address.value)
+        if address_key in _address_identities:
+            result.update(_address_identities[address_key])
+            _identities[key] = result
+            return result
+        process = k32.OpenProcess(0x0410, False, pid)
+        if process:
+            initialized = False
+            try:
+                initialized = bool(dbg.SymInitializeW(process, "", True))
+                if initialized:
+                    base = dbg.SymGetModuleBase64(process, address.value)
+                    path = c.create_unicode_buffer(32768)
+                    if base and psapi.GetModuleFileNameExW(process, w.HMODULE(base), path, len(path)):
+                        result.update(module=path.value, module_offset=hex(address.value - base))
+                    # SYMBOL_INFO: fixed header 88 bytes, Name starts at offset 84.
+                    symbol = c.create_string_buffer(88 + 1024)
+                    c.c_ulong.from_buffer(symbol, 0).value = 88
+                    c.c_ulong.from_buffer(symbol, 80).value = 1024
+                    delta = c.c_ulonglong()
+                    if dbg.SymFromAddr(process, address.value, c.byref(delta), symbol):
+                        result.update(symbol=c.string_at(c.addressof(symbol) + 84).decode("utf-8", "replace"), symbol_offset=hex(delta.value))
+                    else:
+                        result["symbol_error"] = c.get_last_error()
+            finally:
+                if initialized:
+                    dbg.SymCleanup(process)
+                k32.CloseHandle(process)
+        _address_identities[address_key] = {k: v for k, v in result.items() if k != "start_query_status"}
+    _identities[key] = result
+    return result
 
 
 def sample(pid):
@@ -48,14 +137,17 @@ def sample(pid):
                     desc = c.c_void_p()
                     try:
                         k32.QueryThreadCycleTime(handle, c.byref(cycles))
-                        if k32.GetThreadDescription(handle, c.byref(desc)) == 0 and desc.value:
+                        if k32.GetThreadDescription(handle, c.byref(desc)) >= 0 and desc.value:
                             name = c.wstring_at(desc)
                     finally:
                         if desc.value:
                             k32.LocalFree(desc)
                         k32.CloseHandle(handle)
                 result.append(dict(id=tid, cpu_s=kernel + user, cycles=cycles.value,
-                                   context_switches=switches, name=name))
+                                   context_switches=switches, name=name,
+                                   state=c.c_uint32.from_address(thread + 68).value,
+                                   wait_reason=c.c_uint32.from_address(thread + 72).value,
+                                   **identity(pid, tid)))
             return result
         step = c.c_uint32.from_address(address).value
         if not step:

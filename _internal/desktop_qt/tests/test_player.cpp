@@ -540,6 +540,25 @@ private slots:
         rig.player->clock()->release();
     }
 
+    void hiddenClockStopsAndRestoreIsSynchronous() {
+        Rig rig;
+        rig.player->open(QStringLiteral("a"), -1, -1, true);
+        rig.player->clock()->retain();
+        rig.run(1);
+        rig.player->setUiActive(false);
+        const auto before = rig.player->clock()->ticks();
+        const double old = rig.player->clock()->position();
+        rig.out.pos += 12;
+        rig.player->clock()->refresh();
+        QTest::qWait(550);
+        QCOMPARE(rig.player->clock()->ticks(), before);
+        QCOMPARE(rig.player->clock()->position(), old);
+        rig.player->setUiActive(true);
+        QCOMPARE(rig.player->clock()->position(), rig.player->position());
+        QVERIFY(rig.player->clock()->ticks() > before);
+        rig.player->clock()->release();
+    }
+
     void textOnlyChapterIsNotPlayable() {
         Rig rig;
         QJsonObject book = makeBook(QStringLiteral("t"), 2, true);

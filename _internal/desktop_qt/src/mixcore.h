@@ -29,10 +29,10 @@ public:
         size_t head = m_head.load(std::memory_order_relaxed);
         const size_t room = (tail + size - head - 1) % size;
         const size_t n = std::min(count, room);
-        for (size_t i = 0; i < n; ++i) {
-            m_data[head] = in[i];
-            head = head + 1 == size ? 0 : head + 1;
-        }
+        const size_t first = std::min(n, size - head);
+        std::copy_n(in, first, m_data.data() + head);
+        std::copy_n(in + first, n - first, m_data.data());
+        head = (head + n) % size;
         m_head.store(head, std::memory_order_release);
         return n;
     }
@@ -43,10 +43,10 @@ public:
         size_t tail = m_tail.load(std::memory_order_relaxed);
         const size_t have = (head + size - tail) % size;
         const size_t n = std::min(count, have);
-        for (size_t i = 0; i < n; ++i) {
-            out[i] = m_data[tail];
-            tail = tail + 1 == size ? 0 : tail + 1;
-        }
+        const size_t first = std::min(n, size - tail);
+        std::copy_n(m_data.data() + tail, first, out);
+        std::copy_n(m_data.data(), n - first, out + first);
+        tail = (tail + n) % size;
         m_tail.store(tail, std::memory_order_release);
         return n;
     }

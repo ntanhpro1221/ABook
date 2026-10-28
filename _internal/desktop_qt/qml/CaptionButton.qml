@@ -9,6 +9,7 @@ Item {
     property bool danger: false
     property bool active: true
     property var chrome: null              // WindowChrome: để giữ nền rê chuột khi Windows mở Snap Layouts (Qt thôi nhận tin rê chuột lúc đó)
+    UiActivity { target: root; onRunningChanged: if (!running) { root.latched = false; latchTimer.stop() } }
     property bool latched: false
     default property alias glyphs: holder.data
     readonly property bool hovered: hover.hovered || latched

@@ -41,6 +41,10 @@ Music::Music(Player *player, PlayerNet *net, std::function<AudioOut *()> make, Q
           },
           [this](const QString &link) { m_bed.warmLink(link); }) {
     m_tick.setInterval(int(SYNC_TICK_SECONDS * 1000));
+    m_tick.setObjectName(QStringLiteral("music sync"));
+    m_tick.setSingleShot(true);
+    m_tick.setTimerType(Qt::PreciseTimer);
+    m_syncTime.start();
     connect(&m_tick, &QTimer::timeout, this, &Music::sync);
     m_retry.setSingleShot(true);
     connect(m_player, &Player::bookChanged, this, &Music::onBook);
@@ -49,11 +53,18 @@ Music::Music(Player *player, PlayerNet *net, std::function<AudioOut *()> make, Q
         updateTicking();
         sync();
     });
+    connect(m_player, &Player::rateChanged, this, &Music::sync);
+    connect(m_player, &Player::volumeChanged, this, &Music::sync);
+    connect(m_player, &Player::outputGainChanged, this, &Music::sync);
+    connect(m_player, &Player::audioSeeked, this, [this] { m_last = -INF; sync(); });
+    connect(m_player, &Player::bufferingChanged, this, &Music::sync);
+    connect(m_player->clock(), &PlayerClock::positionChanged, this, &Music::sync);
     connect(&m_bed, &MusicBed::activeChanged, this, [this](const QString &link) {
         updateCredit(link);
         updateBroken();
     });
     connect(&m_bed, &MusicBed::loadResult, this, &Music::updateBroken);
+    connect(&m_bed, &MusicBed::loadResult, this, &Music::sync);
 }
 
 Music::~Music() {
@@ -235,7 +246,11 @@ void Music::sync() {
     if (key.isEmpty() || key != m_cuesFor)
         return; // mốc trong bed còn của chương cũ
     const double now = m_player->position();
-    const bool seeked = std::abs(now - m_last) > SEEK_JUMP_SECONDS;
+    const double expected = m_wasPlaying ? double(m_syncTime.elapsed()) / 1000 * m_lastRate : 0;
+    const bool seeked = std::abs(now - m_last - expected) > SEEK_JUMP_SECONDS;
+    m_syncTime.restart();
+    m_wasPlaying = m_player->playing();
+    m_lastRate = m_player->rate();
     const double volume = m_player->outputVolume();
     if (volume != m_volume) {
         m_volume = volume;
@@ -245,13 +260,18 @@ void Music::sync() {
     const int next = PlayerLogic::availableAfter(m_player->book().chapters, m_player->chapterId(), 1);
     m_nextWarm.update(key, next >= 0 ? std::optional<int>(next) : std::nullopt, m_player->duration() - now);
     m_last = now;
+    updateTicking();
 }
 
 void Music::updateTicking() {
-    if (m_player->playing() && !m_cuesFor.isEmpty())
-        m_tick.start();
-    else
-        m_tick.stop();
+    m_tick.stop();
+    if (!m_player->playing() || m_cuesFor.isEmpty()) return;
+    const double now = m_player->position();
+    double delay = m_bed.nextSyncSeconds(now, m_player->rate());
+    const double warm = (m_player->duration() - now - NEXT_CHAPTER_WARM_SECONDS) / m_player->rate();
+    delay = std::min(delay, warm > 0.001 ? warm : double(NEXT_CHAPTER_RETRY_MS) / 1000);
+    if (m_player->fading() || m_player->buffering()) delay = std::min(delay, SYNC_TICK_SECONDS);
+    if (std::isfinite(delay)) m_tick.start(int(std::clamp(std::ceil(delay * 1000), 1.0, double(INT_MAX))));
 }
 
 void Music::updateBroken() {
