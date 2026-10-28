@@ -171,7 +171,7 @@ PUBLISHED_MODELS: dict[str, PublishedModel] = {
         4_280_403_328,
     ),
     # docs/models/abook-analyzer-v5.md - Qwen3-4B-Instruct-2507 + LoRA (lora-b9-s1234-4b = B9), GGUF Q8_0; mặc định từ 0.4.116,
-    # đi cặp với abook-speaker:v1 (quyết 06-10, đăng 21-10).
+    # đi cặp với abook-speaker:v2 (v1 đăng 21-10, v2 thay từ 28-10).
     "abook-analyzer:v5": PublishedModel(
         "abook-analyzer:v5",
         (Download("abook-analyzer-v5.Q8_0.gguf",
@@ -181,16 +181,16 @@ PUBLISHED_MODELS: dict[str, PublishedModel] = {
         "b366713f0e5ac9c5500f0abd7738c18867f738b6a1171ce89d7347b1e9da543b",
         4_280_403_424,
     ),
-    # docs/models/abook-speaker-v1.md - Qwen3-4B-Instruct-2507 + LoRA (lora-b38pq-s1234-4b), GGUF Q8_0: lượt "người nói từng câu"
-    # (abook/speaker_pass.py) chạy sau model phân tích abook-analyzer:v5. Băm + cỡ là của file thật (scripts/publish_model.py,
-    # 21-10, đăng cùng repo Hugging Face NGDtuanh/abook-analyzer).
+    # docs/models/abook-speaker-v2.md - Qwen3-4B-Instruct-2507 + súp trọng số 3 lần học B48-CAL (lora-b48calsoup3-s1234-4b), GGUF
+    # Q8_0: lượt "người nói từng câu" (abook/speaker_pass.py) chạy sau model phân tích abook-analyzer:v5. Băm + cỡ là của file thật
+    # (scripts/publish_model.py, 28-10, đăng cùng repo Hugging Face NGDtuanh/abook-analyzer).
     SPEAKER_MODEL: PublishedModel(
         SPEAKER_MODEL,
-        (Download("abook-speaker-v1.Q8_0.gguf",
-                  "https://huggingface.co/NGDtuanh/abook-analyzer/resolve/391ac1cd5523cc5354fa8c706f13539e0aa04223/"
-                  "abook-speaker-v1.Q8_0.gguf",
-                  "156f08246478eac7de78cfe61bcca2d14df75c6fdcb0b2e896738676c341e69a", 4_280_403_424),),
-        "156f08246478eac7de78cfe61bcca2d14df75c6fdcb0b2e896738676c341e69a",
+        (Download("abook-speaker-v2.Q8_0.gguf",
+                  "https://huggingface.co/NGDtuanh/abook-analyzer/resolve/ded0fe2a2f14d65cb9d99389e95cb05afddf61ea/"
+                  "abook-speaker-v2.Q8_0.gguf",
+                  "813031b68a16c04032cc776341b0369dbec7adef66a28c2488b37fcdd376520a", 4_280_403_424),),
+        "813031b68a16c04032cc776341b0369dbec7adef66a28c2488b37fcdd376520a",
         4_280_403_424,
     ),
 }
