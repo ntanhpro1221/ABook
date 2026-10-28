@@ -47,6 +47,7 @@ void LibraryModel::setBooks(const QJsonArray &array) {
     for (const QJsonValue &value : array) {
         const QJsonObject o = value.toObject();
         Book b;
+        b.raw = o;
         b.id = o.value(QStringLiteral("id")).toString();
         if (b.id.isEmpty())
             continue;
@@ -109,9 +110,15 @@ QVariantMap LibraryModel::book(int row) const {
     if (row < 0 || row >= int(m_books.size()))
         return {};
     const Book &b = m_books[size_t(row)];
-    return {{QStringLiteral("bookId"), b.id}, {QStringLiteral("title"), b.title}, {QStringLiteral("author"), b.author}, {QStringLiteral("subtitle"), b.subtitle},
+    QVariantMap result = b.raw.toVariantMap();
+    const QVariantMap display = {{QStringLiteral("bookId"), b.id}, {QStringLiteral("title"), b.title}, {QStringLiteral("author"), b.author}, {QStringLiteral("subtitle"), b.subtitle},
             {QStringLiteral("narrator"), b.narrator}, {QStringLiteral("detail"), b.detail}, {QStringLiteral("coverKey"), b.coverKey},
             {QStringLiteral("progress"), b.progress}, {QStringLiteral("source"), b.source},
             {QStringLiteral("chapters"), b.chaptersTotal}, {QStringLiteral("lastChapter"), b.lastChapter},
             {QStringLiteral("producing"), b.producing}};
+    for (auto i = display.cbegin(); i != display.cend(); ++i) result.insert(i.key(), i.value());
+    // Keep the structured progress next to the display fraction. Filtering and the
+    // continue card need finished/caughtUp/heardSeconds, not a guessed fraction.
+    result.insert(QStringLiteral("listeningProgress"), b.raw.value(QStringLiteral("progress")).toVariant());
+    return result;
 }

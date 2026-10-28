@@ -11,9 +11,14 @@ Interactive {
     property string coverKey: ""
     property real progress: 0
     property string source: ""
+    property bool remoteSeries: false
+    property var book: ({})
+    property bool playVisible: false
+    signal readRequested()
+    property bool onPlayButton: false
     property real coverWidth: Theme.coverMin
     readonly property real coverHeight: Math.round(coverWidth * Theme.coverRatio)
-    readonly property real textBlock: 12 + titleText.implicitHeight + (subtitleText.visible ? 4 + subtitleText.implicitHeight : 0)
+    readonly property real textBlock: 12 + titleText.implicitHeight + (subtitleText.visible ? 4 + subtitleText.implicitHeight : 0) + (sourceText.visible ? 4 + sourceText.implicitHeight : 0)
 
     activeFocusOnTab: false
     ringRadius: Theme.radiusCover
@@ -62,23 +67,24 @@ Interactive {
                 color: Theme.accent
             }
         }
-        Rectangle {          // dấu nguồn: sách ở máy khác (tên máy dài thì nhãn xuống dòng, không cắt)
-            visible: root.source !== ""
-            x: 8
-            y: 8
-            width: Math.min(parent.width - 16, sourceLabel.implicitWidth + 16)
-            height: sourceLabel.implicitHeight + 8
-            radius: Theme.radiusControl
-            color: "#a6000000"
-            Text {
-                id: sourceLabel
-                x: 8
-                y: 4
-                width: parent.width - 16
-                text: root.source
-                color: "#ffffff"
-                wrapMode: Text.Wrap
-                font.pixelSize: Theme.sizeCaption
+        IconButton {
+            id: play
+            objectName: "libraryTilePlay"
+            anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.margins: 8
+            readonly property bool here: Player.loaded && Player.bookId === root.book.bookId
+            readonly property bool textOnly: root.book.stage === "text"
+            icon: textOnly ? "book-open" : here && Player.playing ? "pause" : "play"
+            tip: textOnly ? `Đọc ${root.title}` : here && Player.playing ? `Tạm dừng ${root.title}` : `Nghe ${root.title}`
+            opacity: root.playVisible && (root.hovered || root.externalFocus || play.activeFocus || here) ? 1 : 0
+            visible: opacity > 0
+            enabled: root.playVisible
+            Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
+            onClicked: {
+                root.onPlayButton = true
+                Qt.callLater(function() { root.onPlayButton = false })
+                if (textOnly) root.readRequested()
+                else if (here) Player.toggle()
+                else Player.playBook(root.book.bookId)
             }
         }
     }
@@ -104,5 +110,21 @@ Interactive {
         color: Theme.text3
         wrapMode: Text.Wrap
         font.pixelSize: Theme.sizeCaption
+    }
+    // Same laptop mark and source placement as web: below the title, leaving
+    // the cover's printed title unobstructed.
+    Text {
+        id: sourceText
+        visible: root.source !== ""
+        x: 18
+        y: subtitleText.y + (subtitleText.visible ? subtitleText.implicitHeight + 4 : 0)
+        width: root.coverWidth - x
+        text: root.remoteSeries ? "Có sách trên máy khác" : "Trên " + root.source
+        color: Theme.text3; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption
+    }
+    Icon {
+        x: 0; y: sourceText.y + 2; size: 12; name: "laptop"; color: Theme.text3
+        visible: sourceText.visible
+        Accessible.name: root.remoteSeries ? "Có sách trên máy khác" : "Trên " + root.source
     }
 }

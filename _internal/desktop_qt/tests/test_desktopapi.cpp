@@ -3,6 +3,7 @@
 #include "fakes.h"
 #include "feedback.h"
 #include "hostmessage.h"
+#include "librarymodel.h"
 #include <QFile>
 #include <QtEndian>
 #include <cmath>
@@ -31,6 +32,29 @@ class DesktopApiTests : public QObject {
     QJSValue done() { return engine.evaluate(QStringLiteral("(function(status, data) { result = {status:status,data:data}; })")); }
     void clear() { received.clear(); engine.globalObject().setProperty(QStringLiteral("result"), QJSValue(QJSValue::NullValue)); }
 private slots:
+    void libraryPreservesHostFields() {
+        LibraryModel library;
+        const auto progress = QJsonObject{{QStringLiteral("finished"), false}, {QStringLiteral("caughtUp"), true}, {QStringLiteral("heardSeconds"), 120}, {QStringLiteral("fraction"), 0.5}};
+        QJsonObject book{{QStringLiteral("id"), QStringLiteral("book")}, {QStringLiteral("title"), QStringLiteral("Tên sách")},
+            {QStringLiteral("stage"), QStringLiteral("text")}, {QStringLiteral("progress"), progress},
+            {QStringLiteral("series"), QJsonObject{{QStringLiteral("root"), QStringLiteral("first")}, {QStringLiteral("part"), 2}}},
+            {QStringLiteral("remote"), QJsonObject{{QStringLiteral("computer"), QStringLiteral("Máy của bạn")}}}};
+        QSignalSpy revisions(&library, &LibraryModel::revisionChanged);
+        library.setBooks({book});
+        QCOMPARE(library.rowCount(), 1);
+        const auto row = library.book(0);
+        QCOMPARE(row.value(QStringLiteral("stage")).toString(), QStringLiteral("text"));
+        QCOMPARE(row.value(QStringLiteral("bookId")).toString(), QStringLiteral("book"));
+        QCOMPARE(row.value(QStringLiteral("progress")).toDouble(), 0.5);
+        QCOMPARE(row.value(QStringLiteral("listeningProgress")).toMap().value(QStringLiteral("caughtUp")).toBool(), true);
+        QCOMPARE(row.value(QStringLiteral("series")).toMap().value(QStringLiteral("part")).toInt(), 2);
+        QCOMPARE(row.value(QStringLiteral("source")).toString(), QStringLiteral("Máy của bạn"));
+        book.insert(QStringLiteral("title"), QStringLiteral("Tên đã đổi"));
+        library.setBooks({book});
+        QCOMPARE(revisions.size(), 2);
+        QCOMPARE(library.book(0).value(QStringLiteral("title")).toString(), QStringLiteral("Tên đã đổi"));
+        QVERIFY(library.book(-1).isEmpty());
+    }
     void initTestCase() {
         QVERIFY(host.listen(QHostAddress::LocalHost));
         testEndpoint = {host.serverPort(), QByteArray("fixture-token")};
