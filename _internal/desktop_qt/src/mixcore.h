@@ -76,6 +76,11 @@ public:
     }
     float value() const { return float(m_value); }
     float target() const { return float(m_target); }
+    void advance(size_t frames) {
+        const size_t n = std::min(frames, m_left);
+        m_left -= n;
+        m_value = m_left ? m_value + m_step * double(n) : m_target;
+    }
 
     /// CỘNG `frames` khung (`channels` kênh, xen kênh) của `in`, nhân âm lượng đang trượt, vào `out`.
     void mixInto(float *out, const float *in, size_t frames, int channels) {

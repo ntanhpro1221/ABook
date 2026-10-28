@@ -65,7 +65,7 @@ struct MixerRig {
     MusicMixer mixer{std::unique_ptr<MixDevice>(device), dir.path()};
     bool ready(MixVoice &voice) {
         for (int i = 0; i < 200 && !voice.duration(); ++i) {
-            QCoreApplication::processEvents(); mixer.serviceReader();
+            QCoreApplication::processEvents(); mixer.service(0); mixer.serviceReader();
             if (!voice.duration()) QTest::qWait(1);
         }
         QCoreApplication::processEvents();
@@ -274,10 +274,13 @@ private slots:
         QTest::addColumn<int>("extra"); QTest::addColumn<bool>("floatSubtype"); QTest::addColumn<bool>("accepted");
         QTest::newRow("float32-stereo") << int(WAVE_FORMAT_IEEE_FLOAT) << 32 << 2 << 0 << true << true;
         QTest::newRow("float32-surround") << int(WAVE_FORMAT_EXTENSIBLE) << 32 << 6 << 22 << true << true;
-        QTest::newRow("pcm16") << int(WAVE_FORMAT_PCM) << 16 << 2 << 0 << false << false;
-        QTest::newRow("pcm32-extensible") << int(WAVE_FORMAT_EXTENSIBLE) << 32 << 2 << 22 << false << false;
+        QTest::newRow("pcm16") << int(WAVE_FORMAT_PCM) << 16 << 2 << 0 << false << true;
+        QTest::newRow("pcm32-extensible") << int(WAVE_FORMAT_EXTENSIBLE) << 32 << 2 << 22 << false << true;
+        QTest::newRow("hfp-pcm16-mono") << int(WAVE_FORMAT_PCM) << 16 << 1 << 0 << false << true;
         QTest::newRow("float64") << int(WAVE_FORMAT_IEEE_FLOAT) << 64 << 2 << 0 << true << false;
-        QTest::newRow("mono") << int(WAVE_FORMAT_IEEE_FLOAT) << 32 << 1 << 0 << true << false;
+        QTest::newRow("mono") << int(WAVE_FORMAT_IEEE_FLOAT) << 32 << 1 << 0 << true << true;
+        QTest::newRow("no-channels") << int(WAVE_FORMAT_IEEE_FLOAT) << 32 << 0 << 0 << true << false;
+        QTest::newRow("pcm8") << int(WAVE_FORMAT_PCM) << 8 << 2 << 0 << false << false;
         QTest::newRow("short-extensible") << int(WAVE_FORMAT_EXTENSIBLE) << 32 << 2 << 0 << true << false;
     }
 
@@ -305,8 +308,8 @@ private slots:
             QVERIFY(rig.ready(a)); QVERIFY(rig.ready(b));
             a.play(); b.play(); rig.serve(4800); QVERIFY(a.playing()); QVERIFY(b.playing());
             rig.device->format.Format.wFormatTag = WAVE_FORMAT_PCM;
-            rig.device->format.Format.wBitsPerSample = 16;
-        } else rig.device->format.Format.nChannels = 1;
+            rig.device->format.Format.wBitsPerSample = 8;
+        } else rig.device->format.Format.nChannels = 0;
         QSignalSpy failedA(&a, &AudioOut::failed), failedB(&b, &AudioOut::failed);
         rig.mixer.service(4800); QCoreApplication::processEvents();
         QCOMPARE(failedA.size(), 1); QCOMPARE(failedB.size(), 1);
@@ -325,7 +328,7 @@ private slots:
 
     void unsupportedDeviceMakesMusicBedSilent() {
         MixerRig rig;
-        rig.device->format.Format.nChannels = 1;
+        rig.device->format.Format.nChannels = 0;
         MusicBed bed([&rig]() -> AudioOut * { return new MixVoice(&rig.mixer); }, [](const QString &) { return track(); });
         QSignalSpy results(&bed, &MusicBed::loadResult);
         MusicLogic::MusicCue cue;
@@ -503,8 +506,8 @@ private slots:
         MusicMixer mixer(std::unique_ptr<MixDevice>(device), dir.path(), true);
         QTest::qWait(300); QCOMPARE(device->polls.load(), 0);
         MixVoice voice(&mixer); voice.load(track(), 0); QTRY_VERIFY_WITH_TIMEOUT(voice.duration() > 0, 3000);
-        mixer.setRelaxed(true); voice.play(); QTRY_VERIFY(device->running.load()); QCOMPARE(device->lastWrite.load(), 28800);
-        mixer.setRelaxed(false); QTRY_COMPARE(device->lastWrite.load(), 9600);
+        mixer.setRelaxed(true); voice.play(); QTRY_VERIFY(device->running.load()); QCOMPARE(device->lastWrite.load(), 24000);
+        mixer.setRelaxed(false); QTRY_COMPARE(device->lastWrite.load(), 24000);
         voice.pause(); QTRY_VERIFY(!device->running.load());
         QTest::qWait(100); const int polls = device->polls; QTest::qWait(600); QCOMPARE(device->polls.load(), polls);
     }

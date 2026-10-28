@@ -1,4 +1,4 @@
-// Cổng ra âm thanh của bộ phát: MỘT giao diện, Player (player.cpp) chỉ biết nó. Bản thật bọc một lõi của Windows (audioout_mf.cpp);
+// Cổng ra âm thanh của bộ phát: MỘT giao diện, Player (player.cpp) chỉ biết nó. Bản thật dùng bộ trộn WASAPI chung (musicmixer.cpp);
 // bản giả trong tests/ cho phép thử Player không cần thiết bị âm thanh.
 #pragma once
 
