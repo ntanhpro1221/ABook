@@ -14,7 +14,7 @@ Window {
     height: 800
     minimumWidth: 960
     minimumHeight: 600
-    color: windowMode.mini ? "transparent" : Theme.bg
+    color: windowMode.mini ? Theme.panel : Theme.bg
 
     WindowChrome { id: chrome }
     WindowMode {
@@ -39,6 +39,7 @@ Window {
         width: 360; height: win.height
         visible: windowMode.mini && win.uiVisible
         windowMode: windowMode
+        framed: false
     }
 
     Binding { target: Theme; property: "reduceMotion"; value: Platform.reduceMotion }
