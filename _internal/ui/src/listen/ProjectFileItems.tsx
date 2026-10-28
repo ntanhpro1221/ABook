@@ -268,7 +268,7 @@ function CastingList({ data }: { data?: CastingSnapshot }) {
     <ul className="divide-y divide-line">
       {data.chapters.map((chapter) => (
         <li key={chapter.chapterId} className="flex items-baseline justify-between gap-3 py-2">
-          <span className="min-w-0 truncate">{chapter.title || `Chương ${chapter.chapterId}`}</span>
+          <span className="min-w-0 [overflow-wrap:anywhere] whitespace-normal">{chapter.title || `Chương ${chapter.chapterId}`}</span>
           <span className="shrink-0 text-xs text-fg-3">
             {chapter.speech} câu thoại{chapter.hints ? ` · ${chapter.hints} chỗ máy nghi` : ""}
           </span>
@@ -285,7 +285,7 @@ function NamesList({ data }: { data?: NamesSnapshot }) {
     <ul className="divide-y divide-line">
       {data.items.map((item) => (
         <li key={item.surface} className="flex items-baseline justify-between gap-3 py-2">
-          <span className="min-w-0 truncate">
+          <span className="min-w-0 [overflow-wrap:anywhere] whitespace-normal">
             {item.surface} → {item.spoken}
           </span>
           <span className="shrink-0 text-xs text-fg-3">

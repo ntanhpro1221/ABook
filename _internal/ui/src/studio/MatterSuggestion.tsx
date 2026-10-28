@@ -25,7 +25,7 @@ export function MatterSuggestion({ files, keep, onKeep }: { files: ScannedFile[]
               />
               <span className="min-w-0">
                 <span className="block font-medium">{row.matter}</span>
-                <span className="block truncate text-xs text-fg-2">{row.firstLine || row.name}</span>
+                <span className="block [overflow-wrap:anywhere] whitespace-normal text-xs text-fg-2">{row.firstLine || row.name}</span>
               </span>
             </label>
           </li>

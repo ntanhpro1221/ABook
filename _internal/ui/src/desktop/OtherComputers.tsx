@@ -185,16 +185,15 @@ export function OtherComputers() {
                   </div>
                 ) : (
                   // Lời báo lỗi dài (chứng chỉ máy kia đổi...) xuống dòng cho đọc hết, không cắt giữa chừng.
-                  <div className={cn("text-xs", computer.error ? "text-danger [overflow-wrap:anywhere]" : "truncate text-fg-2")}>
+                  <div className={cn("text-xs", computer.error ? "text-danger [overflow-wrap:anywhere]" : "[overflow-wrap:anywhere] whitespace-normal text-fg-2")}>
                     {computer.error
                       ? computer.error
                       : `${routeLine(computer, devices)}${computer.lastSeen ? ` · thấy ${formatRelative(computer.lastSeen)}` : ""}`}
                   </div>
                 )}
                 {computer.fingerprint && (
-                  // 8 ký tự đầu đủ để đối chiếu với máy kia; đủ 64 ký tự ở chú giải khi rê chuột vào.
-                  <div className="mt-0.5 break-words text-[0.6875rem] text-fg-3" title={formatFingerprint(computer.fingerprint)}>
-                    Vân tay <span className="tabular-nums">{formatFingerprint(computer.fingerprint).slice(0, 9)}</span>…
+                  <div className="mt-0.5 [overflow-wrap:anywhere] text-[0.6875rem] text-fg-3">
+                    Vân tay <span className="tabular-nums">{formatFingerprint(computer.fingerprint)}</span>
                   </div>
                 )}
               </div>
@@ -256,8 +255,8 @@ export function OtherComputers() {
                     <Laptop className="size-5 shrink-0 text-fg-2" aria-label="máy tính" />
                   )}
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium">{found.name}</div>
-                    <div className="truncate text-xs text-fg-2">
+                    <div className="[overflow-wrap:anywhere] whitespace-normal text-sm font-medium">{found.name}</div>
+                    <div className="[overflow-wrap:anywhere] whitespace-normal text-xs text-fg-2">
                       {found.host}:{found.port}
                     </div>
                   </div>

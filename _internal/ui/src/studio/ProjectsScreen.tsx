@@ -64,8 +64,8 @@ function BrokenRow({ book, local }: { book: BookSummary; local: boolean }) {
     <div className={cn("grid items-center gap-x-4 px-3 py-3 text-sm", COLUMNS)}>
       <span aria-hidden className="size-10 rounded-control bg-hover" />
       <div className="min-w-0 md:col-span-2 xl:col-span-3">
-        <div className="truncate font-medium">{book.title}</div>
-        <div className={cn("truncate text-xs", busy ? "text-warning" : "text-danger")}>
+        <div className="[overflow-wrap:anywhere] whitespace-normal font-medium">{book.title}</div>
+        <div className={cn("[overflow-wrap:anywhere] whitespace-normal text-xs", busy ? "text-warning" : "text-danger")}>
           {busy ? "Chưa mở được: " : "Không đọc được: "}
           {book.broken}
         </div>
@@ -130,8 +130,8 @@ function ProjectRowBody({ book }: { book: BookSummary }) {
       >
         <BookCover title={book.title} part={book.series?.part} size="sm" image={book.cover} className="row-span-3 size-10 self-start md:row-span-1 md:self-center" />
         <div className="min-w-0">
-          <div className="truncate font-medium">{book.title}</div>
-          <div className="truncate text-[0.8125rem] text-fg-2">
+          <div className="[overflow-wrap:anywhere] whitespace-normal font-medium">{book.title}</div>
+          <div className="[overflow-wrap:anywhere] whitespace-normal text-[0.8125rem] text-fg-2">
             {/* Chất lượng "Cân bằng" là mặc định của gần mọi dự án: chữ giống nhau trên mọi hàng thì chỉ ghi ở hàng KHÁC (soát 25-10). */}
             <DotJoin parts={[book.settings.narrator && `Giọng kể ${book.settings.narrator}`, book.settings.profile !== "balanced" && book.settings.profileLabel]} />
           </div>
@@ -154,7 +154,7 @@ function ProjectRowBody({ book }: { book: BookSummary }) {
                 <Progress value={book.progress.overall} running={live} tone={live ? "accent" : "muted"} size="sm" label={`Tiến độ: ${book.title}`} />
                 <span className="tabular w-9 text-right text-xs font-medium">{formatPercent(book.progress.overall)}</span>
               </div>
-              <div className="mt-1 line-clamp-2 text-xs text-fg-2">{detail}</div>
+              <div className="mt-1 [overflow-wrap:anywhere] whitespace-normal text-xs text-fg-2">{detail}</div>
             </>
           )}
         </MotionRegion>

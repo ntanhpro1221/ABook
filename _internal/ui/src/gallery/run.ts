@@ -9,12 +9,9 @@ let watching = false;
 
 /** Cảnh báo chỉ có ở bản dev mà app thật cũng in ra (không do dữ liệu giả): ghi riêng vào `galleryState.known`, không tính là lỗi của mục.
  *  - React Query "No queryFn": app đọc bộ đệm bằng `useQuery({ queryKey, enabled: false })` không kèm queryFn (listen/player.tsx
- *    ["listen","library"], ["listen","download",<mã>]) - React Query bản dev báo mỗi lần dựng.
- *  - <div> trong <p>: màn Đang nghe đặt TrackSubtitle (MotionRegion = <div>) trong <p> (listen/PlayerViews.tsx NowPlaying). */
+ *    ["listen","library"], ["listen","download",<mã>]) - React Query bản dev báo mỗi lần dựng. */
 const KNOWN_DEV_WARNINGS = [
   /^\[\[.*\]\]: No queryFn was passed as an option/,
-  /^In HTML, %s cannot be a descendant of <%s>\.[\s\S]*<div> p\b[\s\S]*<TrackSubtitle>/,
-  /^<%s> cannot contain a nested %s\.[\s\S]*\bp <div>/,
 ];
 
 /** Lỗi trong lúc dựng (console.error, lỗi không bắt) vào `galleryState.errors` - test đòi rỗng, script chụp ghi ra. */
@@ -54,20 +51,20 @@ export async function waitStill(quiet = 400, timeout = 8000): Promise<void> {
 }
 
 /** `quiet`: bao lâu không đổi DOM thì coi là đứng yên (test dùng số nhỏ cho nhanh). */
-export async function runEntry(entry: Entry, theme: Theme, container: HTMLElement, { quiet = 400 } = {}): Promise<() => void> {
+export async function runEntry(entry: Entry, theme: Theme, container: HTMLElement, { quiet = 400, settleTimeout = 8000 } = {}): Promise<() => void> {
   watchErrors();
   installPlatform(entry.platform, entry.clock);
   prepare(entry, theme);
   window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}#${entry.route}`);
   const unmount = await mountApp(entry.platform, container, entry.showcase);
-  await waitStill(quiet);
+  await waitStill(quiet, settleTimeout);
   if (entry.act) {
     try {
       await entry.act();
     } catch (error) {
       galleryState.errors.push(`act: ${(error as Error).message}`);
     }
-    await waitStill(quiet);
+    await waitStill(quiet, settleTimeout);
   }
   // Trang mới mở đưa tiêu điểm vào tiêu đề (shared/motion usePageFocus) - viền tiêu điểm ấy chỉ làm bẩn ảnh chụp.
   const focused = document.activeElement as HTMLElement | null;

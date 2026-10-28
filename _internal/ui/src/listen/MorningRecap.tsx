@@ -187,12 +187,12 @@ export function MorningRecap({ className }: { className?: string }) {
                     <span className={cn("text-sm font-semibold", marker.suggested && "text-accent-text")}>{marker.label}</span>
                     <span className="tabular shrink-0 text-xs text-fg-2">{timeOf(marker.at)}</span>
                   </span>
-                  <span className="block truncate text-xs text-fg-2">{marker.hint}</span>
+                  <span className="block [overflow-wrap:anywhere] whitespace-normal text-xs text-fg-2">{marker.hint}</span>
                   <span className="tabular block min-w-0 break-words text-xs text-fg-2">
                     {marker.chapterTitle}
                     <span className="whitespace-nowrap">{` · ${formatClock(marker.seconds)}`}</span>
                   </span>
-                  {sentence && <span className="mt-1.5 line-clamp-2 block text-sm italic leading-snug text-fg">“{unquoted(sentence)}”</span>}
+                  {sentence && <span className="mt-1.5 [overflow-wrap:anywhere] whitespace-normal block text-sm italic leading-snug text-fg">“{unquoted(sentence)}”</span>}
                 </span>
               </button>
             </li>

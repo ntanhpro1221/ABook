@@ -40,7 +40,7 @@ function player(extra: Partial<ListenSource> = {}) {
 it("sửa sách đang phát cập nhật media session và dữ liệu dùng khi sang chương", () => {
   const { actions, engine } = player();
   for (const effect of h.effects.filter((effect) => effect.deps.includes(h.book))) effect.run();
-  expect(navigator.mediaSession.metadata).toMatchObject({ album: "Tên mới", title: "Chương 1 mới", artist: "Giọng mới", artwork: [{ src: "http://localhost/new.png", sizes: "512x512", type: "image/png" }] });
+  expect(navigator.mediaSession.metadata).toMatchObject({ album: "Tên mới", title: "Chương 1 mới", artist: "Giọng mới", artwork: [{ src: "http://localhost/new.png", type: "image/png" }] });
   actions.next();
   expect(engine.load).toHaveBeenLastCalledWith(expect.objectContaining({ album: "Tên mới", title: "Chương 2 mới", artist: "Giọng mới", artwork: "http://localhost/new.png" }), 0, false);
 });

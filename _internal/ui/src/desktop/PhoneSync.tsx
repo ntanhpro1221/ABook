@@ -362,7 +362,7 @@ export function PhoneSync() {
                   <Fold storageKey={`phone-sync.device.${device.id}`} title={device.name} summary={`Lần cuối ${formatRelative(device.lastSeen)}`} bodyClassName="flex flex-wrap items-center gap-3 pb-3">
                     <Smartphone className="glyph shrink-0 text-fg-3" />
                     <div className="min-w-0 flex-1 basis-44">
-                      <div className="truncate text-sm font-medium">{device.name}</div>
+                      <div className="[overflow-wrap:anywhere] whitespace-normal text-sm font-medium">{device.name}</div>
                       <div className="text-xs text-fg-2">
                         Kết nối lần cuối {formatRelative(device.lastSeen)} · ghép ngày {formatDate(device.pairedAt)}
                       </div>

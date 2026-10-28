@@ -114,7 +114,7 @@ export function MergeDialog({
                   into?.name === other.name ? "text-accent-text" : "hover:bg-hover",
                 )}
               >
-                <SelectionMark selected={into?.name === other.name} /><span className="min-w-0 flex-1 truncate font-medium">{cleanName(other.displayName)}</span>
+                <SelectionMark selected={into?.name === other.name} /><span className="min-w-0 flex-1 [overflow-wrap:anywhere] whitespace-normal font-medium">{cleanName(other.displayName)}</span>
                 <span className="shrink-0 text-xs text-fg-3">
                   {voiceToUse(other)}
                   {other.pendingVoice?.preset ? " (chờ áp dụng)" : ""} · {formatNumber(other.lines)} câu

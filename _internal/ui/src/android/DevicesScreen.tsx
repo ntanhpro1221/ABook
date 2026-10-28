@@ -307,7 +307,7 @@ export function RemoteRow({ book, progress, onDownload, compact = false }: { boo
     <MotionRegion as="div" data-remote-status={compact ? "compact" : undefined} className={compact ? "flex min-h-[var(--button-h)] flex-wrap items-center justify-between gap-1" : "flex items-center gap-3 py-3"}>
       {!compact && <BookCover title={book.title} size="sm" className="size-14" />}
       {!compact && <div className="min-w-0 flex-1">
-        <div className="truncate font-semibold">{book.title}</div>
+        <div className="[overflow-wrap:anywhere] whitespace-normal font-semibold">{book.title}</div>
         <div className="text-xs text-fg-2">
           {book.chaptersAvailable}/{book.chaptersTotal} chương · {formatLength(book.duration)}
           {!book.downloaded && book.bytes ? ` · ${formatSize(book.bytes)}` : ""}
@@ -374,8 +374,8 @@ export function StudioAlertsRow({ icon: Icon }: { icon?: LucideIcon } = {}) {
     <div className={cn("flex items-center", Icon ? "gap-3 py-4" : "mt-6 justify-between gap-4 py-3.5")}>
       {Icon && <Icon className="size-5 shrink-0 text-fg-2" />}
       <div className="min-w-0 flex-1">
-        <div className={Icon ? "truncate text-base font-medium" : "text-[0.9375rem] font-medium"}>Báo từ Studio</div>
-        <MotionRegion className={Icon ? "mt-1 truncate text-sm text-fg-2" : "mt-0.5 truncate text-xs leading-snug text-fg-2"}>
+        <div className={Icon ? "[overflow-wrap:anywhere] whitespace-normal text-base font-medium" : "text-[0.9375rem] font-medium"}>Báo từ Studio</div>
+        <MotionRegion className={Icon ? "mt-1 [overflow-wrap:anywhere] whitespace-normal text-sm text-fg-2" : "mt-0.5 [overflow-wrap:anywhere] whitespace-normal text-xs leading-snug text-fg-2"}>
           {enabled && state.data && !state.data.permitted
             ? "Android đang chặn thông báo của ABook."
             : "Sách xong hoặc có việc cần bạn."}
@@ -556,7 +556,7 @@ function PeersPanel() {
                 >
                   {item.kind === "phone" ? <Smartphone className="size-5 text-fg-2" /> : <Laptop className="size-5 text-fg-2" />}
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate font-medium">{item.name}</span>
+                    <span className="block [overflow-wrap:anywhere] whitespace-normal font-medium">{item.name}</span>
                     <span className="block text-xs text-fg-2">{item.host}</span>
                   </span>
                 </button>
@@ -589,7 +589,7 @@ function PeersPanel() {
           <div className="flex items-center gap-3">
             <Smartphone className="size-5 text-fg-2" />
             <div className="min-w-0 flex-1">
-              <div className="truncate font-semibold">{peer.name}</div>
+              <div className="[overflow-wrap:anywhere] whitespace-normal font-semibold">{peer.name}</div>
               <div className={cn("text-xs", peer.error || peer.unpaired ? "text-danger" : "text-fg-2")}>
                 {peer.unpaired
                   ? `${peer.name} đã bỏ ghép với điện thoại này`
@@ -738,7 +738,7 @@ export function SharePanel({ bare = false }: { bare?: boolean }) {
         <div className="mt-4 space-y-3 border-t border-line pt-4">
           <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
             <dt className="text-fg-2">Tên</dt>
-            <dd className="truncate">{data.name}</dd>
+            <dd className="[overflow-wrap:anywhere] whitespace-normal">{data.name}</dd>
           </dl>
           {/* Địa chỉ và vân tay chứng chỉ (64 chữ số hex) là thứ để dò khi máy kia không tự thấy điện thoại: người nghe bình thường không cần,
               nên gập lại (soát UX a9). */}
@@ -779,7 +779,7 @@ export function SharePanel({ bare = false }: { bare?: boolean }) {
               {data.devices.map((device) => (
                 <li key={device.id} className="flex items-center gap-3 py-2.5">
                   <Laptop className="size-4 shrink-0 text-fg-2" />
-                  <span className="min-w-0 flex-1 truncate text-sm">{device.name}</span>
+                  <span className="min-w-0 flex-1 [overflow-wrap:anywhere] whitespace-normal text-sm">{device.name}</span>
                   <button type="button" onClick={() => setRemoving(device)} className="text-xs font-medium text-danger">
                     Bỏ ghép
                   </button>
@@ -841,7 +841,7 @@ function DeviceNameRow({ bare = false }: { bare?: boolean }) {
           <div id="device-name-title" className="text-xs text-fg-2">
             Tên điện thoại
           </div>
-          <MotionRegion className="truncate font-medium">{name}</MotionRegion>
+          <MotionRegion className="[overflow-wrap:anywhere] whitespace-normal font-medium">{name}</MotionRegion>
         </div>
         <Button size="sm" variant="ghost" className="settings-edge-action" icon={Pencil} onClick={() => setDraft(name)}>
           Đổi tên
@@ -901,7 +901,7 @@ export function StoragePanel({ storage, names, bare = false }: { storage: { byte
               <li key={key} ref={ref} className="motion-row" data-state={state} inert={state === "exit"}>
               <div className="flex items-center gap-3 py-2.5">
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm">{title}</div>
+                  <div className="[overflow-wrap:anywhere] whitespace-normal text-sm">{title}</div>
                   {kind === "partial" && <MotionRegion motionKey={busy} className="text-xs text-fg-3">{busy ? "Đang tải" : "Phần đã tải, chưa thành sách"}</MotionRegion>}
                 </div>
                 <div className="shrink-0 text-xs text-fg-2">{formatSize(bytes)}</div>
@@ -967,7 +967,7 @@ export function DevicesScreen() {
             <div className="flex items-center gap-3 py-4">
               <Laptop className="size-5 text-fg-2" />
               <div className="min-w-0 flex-1">
-                <div className="truncate font-semibold">
+                <div className="[overflow-wrap:anywhere] whitespace-normal font-semibold">
                   {connection.data.name || connection.data.host}
                 </div>
                 <div className={cn("text-xs", remote.isError ? "text-danger" : "text-fg-2")}>

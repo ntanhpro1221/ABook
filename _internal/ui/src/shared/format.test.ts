@@ -25,21 +25,18 @@ describe("excerpt", () => {
     expect(excerpt("- Chị Dậu đâu rồi?")).toBe("Chị Dậu đâu rồi?");
   });
 
-  it("cuts a long line at a word, not inside one", () => {
+  it("keeps a long line complete", () => {
     const line = "Cậu ấy nói rằng hôm nay trời sẽ mưa to, nên chúng tôi ở nhà đọc sách cả buổi chiều.";
-    const short = excerpt(line);
-    expect(short.endsWith("…")).toBe(true);
-    expect(short.length).toBeLessThanOrEqual(49);
-    expect(line.startsWith(short.slice(0, -1))).toBe(true);
-    expect(line[short.length - 1]).toBe(" ");
+    expect(excerpt(line)).toBe(line);
   });
 
-  it("does not leave a comma before the ellipsis", () => {
-    expect(excerpt("Một hai ba bốn năm sáu bảy tám, chín mười mười một mười hai", 32)).toBe("Một hai ba bốn năm sáu bảy tám…");
+  it("preserves punctuation in the complete sentence", () => {
+    const line = "Một hai ba bốn năm sáu bảy tám, chín mười mười một mười hai";
+    expect(excerpt(line)).toBe(line);
   });
 
-  it("cuts inside a word only when the line has no early space", () => {
-    expect(excerpt("Aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 10)).toBe("Aaaaaaaaaa…");
+  it("preserves a long unbroken word", () => {
+    expect(excerpt("A".repeat(120))).toBe("A".repeat(120));
   });
 });
 

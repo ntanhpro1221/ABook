@@ -550,13 +550,13 @@ export function SourceStep({
                       type="button"
                       title={isSourceRef(folder) ? sourceName(folder) : folder}
                       onClick={() => onPaths([folder])}
-                      className="flex min-h-10 w-full items-center gap-2 truncate py-2 text-left text-accent-text hover:bg-hover"
+                      className="flex min-h-10 w-full items-center gap-2 [overflow-wrap:anywhere] whitespace-normal py-2 text-left text-accent-text hover:bg-hover"
                     >
                       <Folder className="size-4 shrink-0 text-fg-2" />
                       {/* Tên thư mục đứng trước: hai thư mục "Tập 1", "Tập 2" cùng một đường dẫn dài thì đuôi bị cắt nhìn y hệt nhau. */}
                       <span className="shrink-0 font-medium">{sourceName(folder)}</span>
                       {/* Tham chiếu của máy tính (Studio từ xa) không phải thứ để đọc: chỉ có tên. */}
-                      {!isSourceRef(folder) && <span className="min-w-0 truncate text-xs text-fg-3">{folder}</span>}
+                      {!isSourceRef(folder) && <span className="min-w-0 [overflow-wrap:anywhere] whitespace-normal text-xs text-fg-3">{folder}</span>}
                     </button>
                   ))}
                   {problem.subfolders.length > 8 && (
@@ -698,7 +698,7 @@ export function SourceStep({
                   <MotionPresence open={part >= 0}>
                     <div aria-hidden className="flex items-center gap-2 border-b border-accent/30 px-3 py-1.5 text-xs font-semibold text-accent-text">
                       <Layers className="size-3.5 shrink-0" />
-                      <span className="min-w-0 truncate">Phần {part + 1} bắt đầu</span>
+                      <span className="min-w-0 [overflow-wrap:anywhere] whitespace-normal">Phần {part + 1} bắt đầu</span>
                     </div>
                   </MotionPresence>
                   <div
@@ -709,8 +709,8 @@ export function SourceStep({
                       {index >= 0 ? index + 1 : ""}
                     </span>
                     <div className="min-w-0">
-                      <div className="truncate text-sm font-medium">{file.firstLine || file.title}</div>
-                      <div className="truncate text-xs text-fg-2">{file.name}</div>
+                      <div className="[overflow-wrap:anywhere] whitespace-normal text-sm font-medium">{file.firstLine || file.title}</div>
+                      <div className="[overflow-wrap:anywhere] whitespace-normal text-xs text-fg-2">{file.name}</div>
                     </div>
                     <div className="tabular text-right text-xs text-fg-2">
                       <div>{approx(file.words, file.estimated)} chữ</div>

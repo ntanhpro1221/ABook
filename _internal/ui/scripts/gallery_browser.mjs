@@ -98,7 +98,7 @@ export async function launch(executable, { preserveProfile = false } = {}) {
   const cleanProfile = () => {
     if (preserveProfile) return; // Inspector audits retain artifacts when deletion is forbidden.
     // Chỉ xoá hồ sơ vừa tạo, bằng Python và đường dẫn tuyệt đối; không đi theo junction/symlink.
-    const cleaned = spawnSync(process.env.PYTHON ?? "python", ["-c", `
+    const cleaned = spawnSync(process.env.PYTHON ?? "python", ["-X", "utf8", "-c", `
 import os, sys, tempfile, time
 root = os.path.abspath(sys.argv[1])
 assert os.path.dirname(root) == os.path.abspath(tempfile.gettempdir())
@@ -137,7 +137,7 @@ else: raise RuntimeError('Hồ sơ trình duyệt vẫn bị khoá: ' + root)
     // Chromium không chạy dưới root (máy ảo CI, container) nếu còn sandbox.
     ...(process.platform === "linux" && process.getuid?.() === 0 ? ["--no-sandbox"] : []),
     "about:blank",
-  ], { stdio: ["ignore", "ignore", "pipe"] });
+  ], { stdio: ["ignore", "ignore", "pipe"], windowsHide: true });
   let stderr = "";
   child.stderr.on("data", (chunk) => (stderr += chunk));
   child.on("error", (error) => { stderr += error.message; });
@@ -242,8 +242,8 @@ export async function waitUntil(cdp, session, expression, timeout, what) {
 }
 
 /** Mở một trang mới trong cùng trình duyệt, trả phiên (đã bật Page + Runtime). */
-export async function openPage(cdp, { width, height, scale, mobile, theme }) {
-  const { targetId } = await cdp.send("Target.createTarget", { url: "about:blank" });
+export async function openPage(cdp, { width, height, scale, mobile, theme, browserContextId }) {
+  const { targetId } = await cdp.send("Target.createTarget", { url: "about:blank", ...(browserContextId ? { browserContextId } : {}) });
   const { sessionId } = await cdp.send("Target.attachToTarget", { targetId, flatten: true });
   await cdp.send("Page.enable", {}, sessionId);
   await cdp.send("Runtime.enable", {}, sessionId);
@@ -264,4 +264,3 @@ export const STILL = `new Promise((resolve) => {
 })`;
 
 export const escapeHtml = (text) => String(text).replace(/[&<>"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[char]);
-

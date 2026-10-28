@@ -47,14 +47,11 @@ describe("đoạn trích", () => {
     expect(hit.snippet.after).toBe(" An bước vào quán.");
   });
 
-  it("câu dài thì cắt hai đầu bằng '…' ở ranh giới chữ", () => {
+  it("câu dài vẫn giữ trọn hai đầu và tô đúng chỗ khớp", () => {
     const long = `${"mở đầu rất dài ".repeat(10)}Nguyễn${" phần đuôi cũng dài ".repeat(10)}`;
     const { snippet } = hitsOf(long, "nguyen")[0];
-    expect(snippet.before.startsWith("…")).toBe(true);
-    expect(snippet.after.endsWith("…")).toBe(true);
     expect(snippet.match).toBe("Nguyễn");
-    expect(snippet.before.length).toBeLessThan(60);
-    expect(snippet.after.length).toBeLessThan(90);
+    expect(snippet.before + snippet.match + snippet.after).toBe(long.replace(/\s+/g, " "));
   });
 
   it("dấu rời đứng sau chữ cái cuối vẫn nằm trong phần tô", () => {
@@ -64,8 +61,10 @@ describe("đoạn trích", () => {
     expect(text.slice(...span!)).toBe("Hanh́");
   });
 
-  it("không dò được chỗ khớp thì lấy đầu đoạn, không tô", () => {
+  it("không dò được chỗ khớp thì giữ trọn đoạn, không tô", () => {
     expect(snippetOf("Một đoạn ngắn.", null)).toEqual({ before: "", match: "", after: "Một đoạn ngắn." });
+    const text = "Một đoạn rất dài. ".repeat(50).trim();
+    expect(snippetOf(text, null)).toEqual({ before: "", match: "", after: text });
   });
 });
 

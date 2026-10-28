@@ -9,7 +9,7 @@ export function ChapterError({ raw, studio = false }: { raw: string; studio?: bo
   const shown = friendlyError(raw, studio);
   return (
     <Popover.Root>
-      <Popover.Trigger className="block max-w-full cursor-pointer select-none truncate text-left text-xs text-danger">
+      <Popover.Trigger className="block max-w-full cursor-pointer select-none [overflow-wrap:anywhere] whitespace-normal text-left text-xs text-danger">
         {shown.summary} <span className="underline underline-offset-2">Chi tiết</span>
       </Popover.Trigger>
       <Popover.Portal>

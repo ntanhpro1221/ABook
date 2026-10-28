@@ -236,7 +236,7 @@ export function BookReadingsSection({ bookId }: { bookId: string }) {
       {list.map((item) => (
         <li key={item.surface} className="py-2">
           <div className="flex items-center gap-2">
-            <span className="min-w-0 flex-1 truncate text-sm">
+            <span className="min-w-0 flex-1 [overflow-wrap:anywhere] whitespace-normal text-sm">
               <span className="font-semibold">{item.surface}</span>
               <span className="text-fg-2"> đọc là </span>
               <span>“{item.spoken}”</span>

@@ -45,8 +45,8 @@ export function SlotFace({ value, ref, ...rest }: ButtonHTMLAttributes<HTMLButto
   return (
     <button ref={ref} type="button" data-player-menu-row className={MENU_ROW} {...keepFocus} {...rest}>
       <Icon className="size-4 shrink-0 text-fg-2" />
-      <span className="min-w-0 flex-1 truncate">{slot.label}</span>
-      {value && <span className="tabular min-w-0 max-w-[45%] truncate text-xs font-medium text-fg-2">{value}</span>}
+      <span className="min-w-0 flex-1 [overflow-wrap:anywhere] whitespace-normal">{slot.label}</span>
+      {value && <span className="tabular min-w-0 max-w-[45%] [overflow-wrap:anywhere] whitespace-normal text-xs font-medium text-fg-2">{value}</span>}
     </button>
   );
 }

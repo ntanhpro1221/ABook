@@ -266,8 +266,8 @@ export function StudioSetupCard({ className }: { className?: string }) {
                 ) : (
                   <span className="size-4 shrink-0 rounded-full border border-line-strong" aria-hidden />
                 )}
-                <span className={cn("truncate", step.done ? "text-fg-2" : active ? "font-semibold" : "text-fg-2")}>{step.label}</span>
-                <span className="truncate text-xs text-fg-3">{step.hint}</span>
+                <span className={cn("[overflow-wrap:anywhere] whitespace-normal", step.done ? "text-fg-2" : active ? "font-semibold" : "text-fg-2")}>{step.label}</span>
+                <span className="[overflow-wrap:anywhere] whitespace-normal text-xs text-fg-3">{step.hint}</span>
               </li>
             );
           })}
@@ -278,7 +278,7 @@ export function StudioSetupCard({ className }: { className?: string }) {
         <div className="mt-4">
           <Progress value={progress ?? 0} running={progress === null} size="sm" label={`Tiến độ: ${current.label}`} />
           <div className="mt-1.5 flex justify-between gap-4 text-xs text-fg-2">
-            <span className="truncate">{status.detail || current.label}</span>
+            <span className="[overflow-wrap:anywhere] whitespace-normal">{status.detail || current.label}</span>
             {status.progress && status.progress.total > 0 && (
               <span className="tabular shrink-0">
                 {formatSize(status.progress.done)} / {formatSize(status.progress.total)}

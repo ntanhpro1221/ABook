@@ -58,32 +58,15 @@ export interface Snippet {
   after: string;
 }
 
-const BEFORE = 40;
-const AFTER = 70;
-
-/** Cắt về ranh giới chữ (khoảng trắng) gần nhất để không bắt đầu / kết thúc giữa một chữ. */
-function trimLeft(text: string): string {
-  const space = text.search(/\s/);
-  return space >= 0 && space < 12 ? text.slice(space + 1) : text;
-}
-
-function trimRight(text: string): string {
-  const space = text.search(/\s\S*$/);
-  return space >= text.length - 12 && space > 0 ? text.slice(0, space) : text;
-}
-
-/** Đoạn trích quanh `span` của `text`; "…" ở đầu / cuối khi đã cắt. `span` null (không dò được chỗ khớp) thì lấy đầu đoạn, không tô. */
+/** Giữ trọn đoạn kết quả, tô chỗ khớp; `span` null thì không tô. */
 export function snippetOf(text: string, span: [number, number] | null): Snippet {
   const flat = (value: string) => value.replace(/\s+/g, " ");
   if (!span) {
-    const head = flat(text).trim();
-    return { before: "", match: "", after: head.length > BEFORE + AFTER ? `${trimRight(head.slice(0, BEFORE + AFTER))}…` : head };
+    return { before: "", match: "", after: flat(text).trim() };
   }
   const [start, end] = span;
-  let before = flat(text.slice(Math.max(0, start - BEFORE), start));
-  let after = flat(text.slice(end, end + AFTER));
-  if (start > BEFORE) before = `…${trimLeft(before)}`;
-  if (end + AFTER < text.length) after = `${trimRight(after)}…`;
+  const before = flat(text.slice(0, start));
+  const after = flat(text.slice(end));
   return { before, match: flat(text.slice(start, end)), after };
 }
 

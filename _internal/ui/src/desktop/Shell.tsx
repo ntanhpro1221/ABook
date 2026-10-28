@@ -87,7 +87,7 @@ function TabItem({ to, icon: Icon, match, children }: { to: string; icon: typeof
     >
       {/* Tab vừa chọn: biểu tượng nhún nhẹ lên (transform), màu chuyển dần - không đổi màu tức thì. */}
       <Icon className={cn("motion-tab-icon size-5 transition-transform duration-(--motion-medium) ease-decelerate", active && "-translate-y-px scale-110")} />
-      <span className="truncate">{children}</span>
+      <span className="[overflow-wrap:anywhere] whitespace-normal">{children}</span>
     </Link>
   );
 }
@@ -119,7 +119,7 @@ export function Producing() {
               ) : (
                 <Vu className="h-2.5 gap-px text-accent [&>span]:w-[2px]" />
               )}</MotionRegion>
-              <span className="min-w-0 break-words">{book.title}</span>
+              <MotionRegion as="span" className="min-w-0 [overflow-wrap:anywhere] whitespace-normal">{book.title}</MotionRegion>
             </div>
             <div className="mt-1 flex items-center gap-2">
               <Progress value={book.progress.overall} tone={book.queuePosition != null ? "muted" : "accent"} size="xs" className="flex-1" label={`Tiến độ: ${book.title}`} />
@@ -149,7 +149,7 @@ export function UpdateNotice() {
     >
       <Download className="size-4 shrink-0 text-accent-text" />
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[0.8125rem] font-semibold">Có ABook {info.update.version}</span>
+        <span className="block [overflow-wrap:anywhere] whitespace-normal text-[0.8125rem] font-semibold">Có ABook {info.update.version}</span>
         <span className="block text-xs text-fg-2">Bấm để cập nhật</span>
       </span>
     </MotionRegion>
@@ -249,6 +249,7 @@ export function Shell({ children }: { children: ReactNode }) {
         <button
           type="button"
           onClick={() => main.current?.focus()}
+          data-skip-link
           className="fixed left-[calc(env(safe-area-inset-left)+0.75rem)] top-[calc(env(safe-area-inset-top)+0.75rem)] z-[60] -translate-y-[200%] rounded-control bg-accent px-4 py-2 text-sm font-semibold text-accent-ink shadow-float transition-transform duration-motion-fast focus:translate-y-0"
         >
           Tới nội dung

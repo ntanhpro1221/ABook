@@ -1024,11 +1024,11 @@ function ChapterRow({ book, chapter, rowIndex }: { book: BookSummary; chapter: C
         )}
       </div>
       <div role="cell" className="min-w-0">
-        <div className={cn("truncate font-medium", current && "text-accent-text")}>{chapter.displayTitle}</div>
+        <div className={cn("[overflow-wrap:anywhere] whitespace-normal font-medium", current && "text-accent-text")}>{chapter.displayTitle}</div>
         {chapter.lastError ? (
           <ChapterError raw={chapter.lastError} studio={hasStudio} />
         ) : chapter.subtitle ? (
-          <div className="truncate text-xs text-fg-2">{chapter.subtitle}</div>
+          <div className="[overflow-wrap:anywhere] whitespace-normal text-xs text-fg-2">{chapter.subtitle}</div>
         ) : null}
       </div>
       <div role="cell">

@@ -27,8 +27,8 @@ export function StudioScreen() {
           <ul className="mt-8 divide-y divide-line">{rows.map(({ key, item, state, ref }) => <li key={key} ref={ref} className="motion-row" data-state={state} inert={state === "exit"}>
             <div className="flex items-center gap-3 py-4">
               <Laptop className="size-5 shrink-0 text-fg-2" />
-              <div className="min-w-0 flex-1"><div className="truncate text-base font-medium">{item.name}</div>
-                <MotionRegion as="p" className="mt-1 truncate text-sm text-fg-2">{item.listenOnly ? "Bật Điều khiển từ xa trên máy tính." : "Tạo sách nói từ xa"}</MotionRegion>
+              <div className="min-w-0 flex-1"><div className="[overflow-wrap:anywhere] whitespace-normal text-base font-medium">{item.name}</div>
+                <MotionRegion as="p" className="mt-1 [overflow-wrap:anywhere] whitespace-normal text-sm text-fg-2">{item.listenOnly ? "Bật Điều khiển từ xa trên máy tính." : "Tạo sách nói từ xa"}</MotionRegion>
               </div>
               {/* -mr-3.5 bù đúng phần đệm px-3.5 của nút ghost cỡ md: chữ thẳng mép phải với công tắc ở hàng dưới. */}
               <Button variant="ghost" disabled={item.listenOnly} className="-mr-3.5" onClick={() => void openStudioComputer(item)}>Mở Studio</Button>

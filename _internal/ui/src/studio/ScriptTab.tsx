@@ -626,7 +626,7 @@ export function DeliveryMenu({
           {picked ? (
             <div className="flex items-center gap-2 py-1.5 text-sm text-accent-text">
               <SelectionMark selected />
-              <span className="min-w-0 flex-1 truncate font-medium">
+              <span className="min-w-0 flex-1 [overflow-wrap:anywhere] whitespace-normal font-medium">
                 {picked.label}
                 {picked.newGender ? " · người mới" : ""}
               </span>
@@ -796,7 +796,7 @@ function DeliveryChip({
 
 /** Tấm trượt trên điện thoại che mất đúng câu vừa chạm (soát UX 30-09) - trích lại câu ấy ở đầu tấm. */
 export function LineQuote({ line }: { line: Line }) {
-  return <p className="mx-1.5 mt-2 line-clamp-3 py-2 text-sm leading-snug text-fg-2">{line.text}</p>;
+  return <p className="mx-1.5 mt-2 [overflow-wrap:anywhere] whitespace-normal py-2 text-sm leading-snug text-fg-2">{line.text}</p>;
 }
 
 /** `phone`: trong tấm trượt - ô tìm không tự bật bàn phím (bàn phím che danh sách người của chương, lối chọn chính).
@@ -832,7 +832,7 @@ export function SpeakerMenu({
         <span className="avatar grid size-6 shrink-0 place-items-center rounded-full text-[0.6875rem] font-bold" style={hue(person.label)} aria-hidden>
           {hotkey ?? person.label.slice(0, 1).toUpperCase()}
         </span>
-        <span className="min-w-0 flex-1 truncate">
+        <span className="min-w-0 flex-1 [overflow-wrap:anywhere] whitespace-normal">
           {current ? `Đúng là ${person.label}` : person.label}
         </span>
         {current ? <Check className="size-4 shrink-0 text-success" /> : person.lines > 0 && <span className="tabular shrink-0 text-xs text-fg-3">{formatNumber(person.lines)}</span>}
@@ -935,7 +935,7 @@ function SpeakerChip({
       className="avatar inline-flex h-7 max-w-full items-center gap-1 rounded-full px-2.5 text-[0.8125rem] font-semibold transition-[filter] hover:brightness-95 disabled:cursor-default disabled:hover:brightness-100"
       style={hue(shown)}
     >
-      <span className="truncate">{shown}</span>
+      <span className="[overflow-wrap:anywhere] whitespace-normal">{shown}</span>
       <Icon className={cn("size-3.5 shrink-0", line.wish?.state === "applied" && "text-success")} strokeWidth={2.25} />
     </button>
   );
@@ -1046,7 +1046,7 @@ function ScriptRow({
         {speech ? (
           <SpeakerChip line={line} script={script} open={menuOpen} onOpenChange={onMenu} onPick={onPick} />
         ) : (
-          <span className="flex h-7 items-center truncate text-xs text-fg-3">{line.label || "Người kể"}</span>
+          <span className="flex h-7 items-center [overflow-wrap:anywhere] whitespace-normal text-xs text-fg-3">{line.label || "Người kể"}</span>
         )}
       </div>
       {/* Nút nghe đứng ngay trước chữ (cột cố định, cao bằng dòng chữ đầu): luôn sát chữ dù câu ngắn hay dài, không trôi sang mép phải. */}
@@ -1571,7 +1571,7 @@ function ChapterMenu({ chapters, chapterId, narrow, onPick }: { chapters: Chapte
           aria-label="Chương"
           className="-ml-2.5 inline-flex h-9 min-w-0 flex-1 items-center gap-1.5 rounded-control px-2.5 text-sm font-medium transition-colors duration-motion-fast hover:bg-hover data-[state=open]:bg-hover sm:max-w-[26rem] sm:flex-initial"
         >
-          <span className="truncate">{current ? chapterLabel(current) : ""}</span>
+          <span className="[overflow-wrap:anywhere] whitespace-normal">{current ? chapterLabel(current) : ""}</span>
           <ChevronDown className="fold-chevron ink-end [--icon-w:14px] size-4 shrink-0 text-fg-3" aria-hidden />
         </button>
       </DropdownMenu.Trigger>
@@ -1592,7 +1592,7 @@ function ChapterMenu({ chapters, chapterId, narrow, onPick }: { chapters: Chapte
               >
                 {/* Dấu chọn chung: luôn giữ chỗ, mờ vào / ra (ItemIndicator gắn / gỡ cứng). */}
                 <SelectionMark selected={chapter.chapterId === chapterId} />
-                <span className="min-w-0 flex-1 truncate">{chapterLabel(chapter)}</span>
+                <span className="min-w-0 flex-1 [overflow-wrap:anywhere] whitespace-normal">{chapterLabel(chapter)}</span>
                 {!narrow && <span className="shrink-0 text-xs text-fg-2">{chapterExtras(chapter)}</span>}
               </DropdownMenu.RadioItem>
             ))}

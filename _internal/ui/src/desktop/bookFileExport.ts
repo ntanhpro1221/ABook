@@ -257,14 +257,6 @@ export function jobView(job: ExportJob, chapters = 0, announce = false, copy: Ex
   return { kind: "none" };
 }
 
-/** Chữ dài quá `max` ký tự thì cắt Ở ĐẦU (giữ phần đuôi: đuôi file và số tập là chỗ phân biệt các lần xuất), thêm "…". */
-export function clipStart(text: string, max: number): string {
-  return text.length > max ? `…${text.slice(text.length - (max - 1))}` : text;
-}
-
-/** Số ký tự tối đa của tên file / thư mục trong dòng phụ của menu (dòng phụ cắt ở cuối khi quá rộng - tên không được nằm ở chỗ bị cắt). */
-const HINT_NAME_MAX = 34;
-
 /** Studio từ xa: file xuất nằm trên máy tính, không về máy đang xem - nói thẳng máy nào và (nếu biết) tên file / thư mục. Máy chủ chỉ trả TÊN
  *  (server.without_local_paths), không đường dẫn. `detail`: phần còn lại của dòng ("5 MB", "6 file"). */
 export function exportedOnComputer(computer: string, name: string, detail = ""): string {
@@ -289,13 +281,13 @@ export function shortWhen(at: Date): string {
 }
 
 /** Dòng phụ trong menu: lần xuất gần nhất của cuốn này (nếu có), thay cho "Bạn chọn thư mục lưu ở bước kế": loại file, lúc xuất, TÊN file /
- *  thư mục ("MP3 · 10/10 14:05 · Chuyện thử"). Đường đầy đủ ở `lastExportPlace`, hiện khi rê chuột: đường dài bị cắt ngay đầu thì chỉ còn
- *  thấy ổ đĩa và thư mục cha. `now`: lúc job được hỏi (giây xong cách đây `finishedAgo` tính từ đó). */
+ *  thư mục ("MP3 · 10/10 14:05 · Chuyện thử"). Tên đầy đủ xuống dòng; đường dẫn ở `lastExportPlace` cho gợi ý khi rê chuột.
+ *  `now`: lúc job được hỏi (giây xong cách đây `finishedAgo` tính từ đó). */
 export function lastExportHint(job: ExportJob | undefined, copy: ExportCopy = BOOK_FILE_COPY, now: number = Date.now()): string | null {
   if (job?.state === "running") return `${copy.busy.replace(/…$/, "")} - xem thông báo ở góc màn hình`;
   if (job?.state === "done" && job.result) {
     const when = job.finishedAgo === undefined ? "" : shortWhen(new Date(now - job.finishedAgo * 1000));
-    const parts = [exportFormatLabel(job.result), when, clipStart(fileName(exportedPlace(job.result)), HINT_NAME_MAX)].filter(Boolean);
+    const parts = [exportFormatLabel(job.result), when, fileName(exportedPlace(job.result))].filter(Boolean);
     return `Lần xuất gần nhất: ${parts.join(" · ")}`;
   }
   return null;

@@ -3,7 +3,7 @@ import { installClock } from "./clock";
 import { installDesktopApi } from "./desktopApi";
 import { installFakeAudio } from "./fakeAudio";
 import { capacitorApp, ebookLibrary, ebookPlayer, readAloud, resetPlayer } from "./phoneNative";
-import { resetData } from "./data";
+import { BOOKS, resetData } from "./data";
 import { DEFAULT_SCENARIO, galleryState } from "./state";
 import type { Entry, Theme } from "./entries";
 import { chromeStateEvent, type WindowChrome } from "@/desktop/windowChrome";
@@ -41,6 +41,16 @@ export function prepare(entry: Entry, theme: Theme): void {
   }
   window.dispatchEvent(new Event("online"));
   resetData();
+  // Opt-in stress data, shared by the real phone and desktop gallery routes.
+  // Keep IDs and series names stable so entry actions still exercise the same screens.
+  if (new URLSearchParams(window.location.search).has("longText")) {
+    for (const book of BOOKS) {
+      book.title = `${book.title} — Thất Nghiệp Chuyển Sinh - Tôi Sẽ Nghiêm Túc Nếu Đến Một Thế Giới Khác Tập 26`;
+      for (const chapter of book.chapters) {
+        chapter.subtitle = "Ngày Trở Về Quê Hương Và Cuộc Gặp Gỡ Những Người Bạn Sau Chuyến Hành Trình Dài";
+      }
+    }
+  }
   resetPlayer();
   galleryState.scenario = { ...DEFAULT_SCENARIO, ...entry.scenario };
   galleryState.missing.clear();

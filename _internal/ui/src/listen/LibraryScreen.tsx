@@ -195,7 +195,7 @@ const BookTile = memo(function BookTile({ book, badge, twin, current, playingHer
       <div className="relative">
         {/* Bìa và nút tên bên dưới cùng mở trang sách: bàn phím chỉ dừng ở nút tên (có chữ), bìa vẫn bấm được bằng chuột (soát UX a17: ba điểm Tab mỗi thẻ). */}
         <button type="button" tabIndex={-1} onClick={() => actions.open(book)} className="block w-full rounded-control" aria-label={`Mở ${book.title}`} title={book.remote ? `${book.title} · ${remotePlace(book)}` : undefined}>
-          <BookCover title={book.title} part={book.series?.part} badge={badge} size="md" image={book.cover} playing={playingHere} className="w-full !aspect-[2/3] !rounded-cover" />
+          <BookCover title={book.title} part={book.series?.part} badge={badge} size="md" image={book.cover} playing={playingHere} portrait className="w-full !rounded-cover" />
         </button>
         <button
           type="button"
@@ -231,7 +231,7 @@ const BookTile = memo(function BookTile({ book, badge, twin, current, playingHer
         {/* Cuốn ở máy khác: dấu máy tính đầu dòng trạng thái, không đè lên bìa - nhãn góc trên từng che tên sách của bìa vẽ (audit140 V8). */}
         <div className="mt-1 flex items-center gap-1 text-xs text-fg-2">
           {book.remote && <Laptop role="img" aria-label={typeof book.remote === "object" && book.remote.downloaded ? `${remotePlace(book)}, đã tải về máy này` : remotePlace(book)} className="size-3 shrink-0" />}
-          <span className="min-w-0 truncate">{progressText(book, speaks)}</span>
+          <span className="min-w-0 [overflow-wrap:anywhere] whitespace-normal">{progressText(book, speaks)}</span>
         </div>
         {/* Hai cuốn cùng tên: nhãn "Dự án" (làm trên máy này) / "Đã nhập" (mở từ file) và ngày vào thư viện để biết cuốn nào là cuốn nào
             (tác giả, nếu có, đã nằm ở dòng trên). */}
@@ -263,7 +263,7 @@ function ContinueCard({ book }: { book: ListenBook }) {
   return (
     <section className="flex items-center gap-4 sm:gap-6" aria-label="Đang nghe">
       <button type="button" onClick={() => navigate(`/book/${book.id}`)} aria-label={`Mở ${book.title}`}>
-        <BookCover title={book.title} part={book.series?.part} size="md" image={book.cover} playing={playingHere} className="w-20 !aspect-[2/3] !rounded-cover sm:w-28" />
+        <BookCover title={book.title} part={book.series?.part} size="md" image={book.cover} playing={playingHere} portrait className="w-20 !rounded-cover sm:w-28" />
       </button>
       {/* Cột chữ giãn theo lưới: mép nút phát trùng mép nội dung và nút tìm bên dưới. */}
       <div className="min-w-0 flex-1">
@@ -348,7 +348,7 @@ function UpcomingCard({ book, onOpen: open }: { book: ListenBook; onOpen?: (book
       <BookCover title={book.title} part={book.series?.part} size="sm" image={book.cover} className="size-12 opacity-80" />
       <MotionRegion as="span" className="min-w-0" motionKey={[book.title, status]}>
         <span className="block break-words text-sm font-semibold">{book.title}</span>
-        <span className="block truncate text-xs text-fg-2">{status}</span>
+        <span className="block [overflow-wrap:anywhere] whitespace-normal text-xs text-fg-2">{status}</span>
       </MotionRegion>
     </button>
   );
@@ -414,7 +414,7 @@ const SeriesTile = memo(function SeriesTile({ item, twins, phone }: { item: Retu
   const trigger = <button type="button" aria-label={`Mở bộ ${item.label}`} aria-haspopup="dialog" onClick={() => setOpen(true)} className="group block w-full text-left">
     {/* Số tập dưới bìa đã phân biệt bộ sách; bỏ hai tờ trống nhô lên từng trông như dải báo mạng bị mất chữ. */}
     <div className="relative">
-      <BookCover title={item.label} image={item.items[0].cover} size="md" className="w-full !aspect-[2/3] !rounded-cover" />
+      <BookCover title={item.label} image={item.items[0].cover} size="md" portrait className="w-full !rounded-cover" />
       {extras.seriesCover?.(item.items)}
     </div>
     <span className="mt-2.5 block break-words text-sm font-medium leading-snug">{item.label}</span>

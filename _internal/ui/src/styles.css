@@ -492,12 +492,10 @@ select[class~="border-line"] {
 [data-sonner-toaster] [data-sonner-toast][data-styled="true"]:is(:not(:has([data-description])), .toast-one-line):has([data-close-button]) {
   padding-right: 2.5rem;
 }
-/* Lỗi / cảnh báo giữ MỘT dòng mô tả ngắn: lời máy chủ trả dài thì cắt ở hai dòng (đủ chữ nằm ở chỗ người dùng đang xem), không kéo toast cao tới nửa màn. */
+/* Lời báo lỗi dài xuống dòng đầy đủ, cùng quy tắc với thông báo thường. */
 [data-sonner-toaster] [data-sonner-toast][data-styled="true"]:is([data-type="error"], [data-type="warning"]) [data-description] {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 /* sonner cho MỌI nút margin-left: auto - trên hàng riêng hai nút sẽ chia đôi khoảng trống; nút sau chỉ cách nút trước bằng gap. */
 [data-sonner-toaster] [data-sonner-toast][data-styled="true"] [data-button] + [data-button] {

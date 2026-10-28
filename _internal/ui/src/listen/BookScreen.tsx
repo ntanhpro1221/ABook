@@ -426,7 +426,7 @@ export function PersonRow({
         </div>
         {/* Việc của Studio (giọng người nghe đã chọn, chưa áp) - trang nghe không cần (soát UX 29-09). */}
         {person.pendingVoice && (onPickVoice || waiting) && (
-          <div className="mt-0.5 truncate text-xs font-medium text-accent-text">
+          <div className="mt-0.5 [overflow-wrap:anywhere] whitespace-normal text-xs font-medium text-accent-text">
             {waiting ? "Đang chờ máy làm sách" : "Chờ áp dụng"}:{" "}
             {[person.pendingVoice.preset && `giọng ${voiceName(person.pendingVoice)}`, person.pendingVoice.gender.toLowerCase()]
               .filter(Boolean)
@@ -551,7 +551,7 @@ export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onUnmer
           <div className="label-section text-fg-2">Người kể chuyện</div>
           <div className="mt-0.5 font-semibold">{cast.narrator.voice || "Mặc định"}</div>
           {onPickNarrator && cast.narrator.pendingVoice?.preset && (
-            <div className="mt-0.5 truncate text-xs font-medium text-accent-text">Chờ áp dụng: giọng {voiceName(cast.narrator.pendingVoice)}</div>
+            <div className="mt-0.5 [overflow-wrap:anywhere] whitespace-normal text-xs font-medium text-accent-text">Chờ áp dụng: giọng {voiceName(cast.narrator.pendingVoice)}</div>
           )}
           <div className="tabular text-xs text-fg-2">{formatNumber(cast.narrator.lines)} câu dẫn truyện{cast.narrator.seconds > 0 ? ` · ${formatLength(cast.narrator.seconds)}` : ""}
             {/* Sau "Áp dụng" đổi giọng kể: các câu đã thu chờ thu lại bằng giọng mới (soát UX a24). */}
@@ -1163,10 +1163,10 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
               data-book-primary
               icon={listenFirst ? (listening && player.playing ? Pause : finished ? RotateCcw : Play) : BookOpen}
               onClick={listenFirst ? withFeedback("playPause", () => (finished ? restart() : listening ? player.toggle() : void playBook(book))) : read}
-              // Tên chương dài (truyện dịch) hay chữ hệ thống to: cắt "…" trong nút thay vì tràn ra hai mép màn hình (soát UX a9).
+              // Tên chương dài hay chữ hệ thống to: nút và nhãn cao thêm theo nội dung.
               className="min-w-0 max-w-full max-sm:w-full"
             >
-              <span className="min-w-0 truncate">{listenFirst ? primaryLabel : readLabel}</span>
+              <span className="min-w-0 [overflow-wrap:anywhere] whitespace-normal">{listenFirst ? primaryLabel : readLabel}</span>
             </Button>
           )}
           {/* Hàng phụ: luôn cùng bốn chỗ, cùng thứ tự - nút chưa dùng được thì mờ đi chứ không biến mất (không nhảy chỗ khi bắt đầu nghe). */}

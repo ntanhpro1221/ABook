@@ -102,8 +102,8 @@ export function BookTemplates() {
               ) : (
                 <>
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium">{template.name}</div>
-                    <div className="truncate text-[0.8125rem] text-fg-2">
+                    <div className="[overflow-wrap:anywhere] whitespace-normal text-sm font-medium">{template.name}</div>
+                    <div className="[overflow-wrap:anywhere] whitespace-normal text-[0.8125rem] text-fg-2">
                       {[template.narrator || "Giọng máy đề xuất", PROFILE_LABEL[template.profile], template.startNow ? "bắt đầu ngay" : "chờ bấm bắt đầu", ...(template.precastWait ? ["chờ bạn duyệt trước khi thu"] : [])].join(" · ")}
                     </div>
                   </div>
