@@ -4,6 +4,7 @@ import ABook
 // Danh sách chương của cuốn đang nghe: bấm một chương là nghe chương ấy. Mở ra thì chương đang nghe nằm giữa khung.
 Popover {
     id: root
+    signal readRequested(int chapterId)
     panelWidth: 380
     maxHeight: 460
     pad: Theme.s8
@@ -12,9 +13,11 @@ Popover {
 
     ChapterList {
         id: list
+        objectName: "nowChapterListPopover"
         width: parent.width
         height: Math.min(contentHeight, root.maxHeight - 2 * root.pad)
         model: Player.chapters
+        onReadRequested: chapterId => { root.close(); root.readRequested(chapterId) }
         onChapterClicked: (chapterId) => {
             Player.jumpTo(chapterId, 0)
             root.close()

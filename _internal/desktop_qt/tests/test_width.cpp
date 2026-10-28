@@ -12,6 +12,7 @@
 #include <QQuickImageProvider>
 #include <QDir>
 #include <QTemporaryDir>
+#include <QDateTime>
 #include <QtQuickTest/quicktest.h>
 
 class WidthCovers : public QQuickImageProvider {
@@ -29,10 +30,26 @@ public:
 class WidthNet : public QObject {
     Q_OBJECT
 public:
-    explicit WidthNet(FakeNet *net) : m_net(net) {}
+    explicit WidthNet(FakeNet *net, FakeOut *out, Player *player, std::function<void(double)> advance)
+        : m_net(net), m_out(out), m_player(player), m_advance(std::move(advance)), m_original(net->books) {}
     Q_INVOKABLE int count(const QString &method, const QString &suffix) const { return int(m_net->callsTo(suffix, method.toLatin1()).size()); }
+    Q_INVOKABLE void setBook(const QVariantMap &book) { const auto json = QJsonObject::fromVariantMap(book); m_net->books.insert(json.value(QStringLiteral("id")).toString(), json); }
+    Q_INVOKABLE void finishChapter() { m_out->finish(); }
+    Q_INVOKABLE void resetBooks() { m_net->books = m_original; }
+    Q_INVOKABLE void advance(double seconds) {
+        for (int i = 0; i < qRound(seconds * 10); ++i) {
+            m_advance(0.1);
+            if (m_out->isPlaying) m_out->pos = qMin(m_out->dur, m_out->pos + 0.1 * m_out->rate);
+            m_player->tick();
+        }
+        m_player->clock()->refresh();
+    }
 private:
     FakeNet *m_net;
+    FakeOut *m_out;
+    Player *m_player;
+    std::function<void(double)> m_advance;
+    QHash<QString, QJsonObject> m_original;
 };
 
 // Observe the actual SMTC adapter while QML operates the real shared Player.
@@ -64,6 +81,7 @@ class WidthSetup : public QObject {
     QTemporaryDir dir;
     FakeOut audio;
     FakeNet net;
+    qint64 timeOffset = 0;
     std::unique_ptr<Player> player;
     std::unique_ptr<ReadAlong> read;
     std::unique_ptr<Music> music;
@@ -90,7 +108,8 @@ public slots:
                 {QStringLiteral("start"), i * 2.0}, {QStringLiteral("end"), i * 2.0 + 2}});
         net.scripts.insert(QStringLiteral("/api/books/width/chapters/1/script"),
             QJsonObject{{QStringLiteral("timed"), true}, {QStringLiteral("segments"), segments}});
-        player = std::make_unique<Player>(&audio, &net, dir.filePath(QStringLiteral("outbox.json")), nullptr);
+        player = std::make_unique<Player>(&audio, &net, dir.filePath(QStringLiteral("outbox.json")), nullptr,
+            [this] { return QDateTime::currentMSecsSinceEpoch() + timeOffset; });
         Player::setInstance(player.get());
         auto mediaSink = std::make_unique<WidthMedia>();
         auto *mediaView = mediaSink.get();
@@ -107,7 +126,7 @@ public slots:
         qmlRegisterSingletonInstance("ABook", 1, 0, "ReadAlong", read.get());
         qmlRegisterSingletonInstance("ABook", 1, 0, "Music", music.get());
         qmlRegisterSingletonInstance("ABook", 1, 0, "Feedback", feedback.get());
-        netView = std::make_unique<WidthNet>(&net);
+        netView = std::make_unique<WidthNet>(&net, &audio, player.get(), [this](double seconds) { timeOffset += qint64(seconds * 1000); });
         qmlRegisterSingletonInstance("ABook", 1, 0, "WidthNet", netView.get());
         player->open(QStringLiteral("width"), 1, 0, false);
     }
