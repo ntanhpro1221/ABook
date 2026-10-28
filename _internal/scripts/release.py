@@ -167,7 +167,7 @@ def check_word_align_pinned() -> None:
 
 
 def check_speaker_model_pinned() -> None:
-    """Lượt "người nói từng câu" (speaker_pass) cần model `abook-speaker:v1`, Studio tải ở bước "llm": ghim ở
+    """Lượt "người nói từng câu" (speaker_pass) cần model `abook-speaker:v2`, Studio tải ở bước "llm": ghim ở
     studio_setup.PUBLISHED_MODELS. Chưa đăng (URL còn PIN_REVISION) thì Studio cài từ bộ cài này hỏng ở bước ấy - không dựng bản phát hành."""
     sys.path.insert(0, str(ROOT))
     from abook.speaker_pass import SPEAKER_MODEL
