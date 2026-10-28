@@ -108,6 +108,15 @@ Item {
             compare(tray.actions[2].enabled, false)
             compare(tray.actions[5].enabled, false); compare(tray.actions[6].enabled, false)
         }
+        function test_windowFillingSheetIsSquare() {
+            // Tấm lấp cả cửa sổ: bo góc hay viền riêng sẽ lộ nền cửa sổ ở bốn góc (hệ thống tự bo góc cửa sổ).
+            const filling = createTemporaryObject(miniFactory, host, {framed: false})
+            compare(filling.radius, 0)
+            compare(filling.border.width, 0)
+            const card = createTemporaryObject(miniFactory, host)
+            compare(card.radius, Theme.radiusSheet)
+        }
+
         function test_geometryAndPlayback() {
             const win = createTemporaryObject(windowFactory, host)
             win.show()
