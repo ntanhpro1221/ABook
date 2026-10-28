@@ -57,7 +57,7 @@ Window {
     Component { id: libraryScreen; LibraryScreen { fileOpening: addBook.opening; onOpenBook: (book) => stack.push(bookPage, { book: book }); onAddRequested: paths => addBook.begin(paths); onOpenFileRequested: addBook.openFile(); onStudioRequested: stack.show(1) } }
     Component { id: studioScreen; StudioScreen {} }
     Component { id: settingsScreen; SettingsScreen { onStudioRequested: stack.show(1) } }
-    Component { id: bookPage; BookPage { onEditRequested: data => editBook.begin(data); onSaveRequested: data => saveBookAs.quick(data); onSaveAsRequested: data => saveBookAs.begin(data); onRenameRequested: (data, chapter) => renameChapter.begin(data, chapter) } }
+    Component { id: bookPage; BookPage { onEditRequested: data => editBook.begin(data); onSaveRequested: data => saveBookAs.quick(data); onSaveAsRequested: data => saveBookAs.begin(data); onRenameRequested: (data, chapter) => renameChapter.begin(data, chapter); onCastRequested: (kind, data) => castDialogs.begin(kind, data) } }
 
     Item {
         id: shell
@@ -180,6 +180,9 @@ Window {
     AddBook { id: addBook; onOpenBook: id => win.openBookId(id); onOpenStudio: id => stack.show(1) }
     EditBook { id: editBook }
     EditBookRename { id: renameChapter }      // mở từ nút “…” ở dòng chương: renameChapter.begin(book, chapter)
+    CastDialogs { id: castDialogs }           // các hộp của tab Nhân vật (gộp, đổi tên, giới tính, giọng): castDialogs.begin(loại, dữ liệu)
+    // Câu mẫu của một người bắt đầu phát thì sách đang nghe tạm dừng (hai tiếng không chồng lên nhau)
+    Connections { target: Clip; function onStarted() { if (Player.playing) Player.pause() } }
     EditBookSaveAs { id: saveBookAs }
     // Cài đặt › Giao diện: "Phím tắt chữ" (M, [ ], ?), "Âm thanh chạm", "Nền đọc" - có hiệu lực ngay khi đổi (desktop/App.tsx)
     readonly property bool letterShortcuts: Api.preferences.letterShortcuts !== false

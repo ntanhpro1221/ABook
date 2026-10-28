@@ -1,6 +1,7 @@
 import QtQuick
 import ABook
 import "EditBookLogic.js" as Logic
+import "CastLogic.js" as Cast
 
 // One width rule on the content area. Geometry interpolates without reparenting,
 // so the cover, chapter scroll position and delegates survive a class change.
@@ -10,6 +11,7 @@ Item {
     signal saveRequested(var data)
     signal saveAsRequested(var data)
     signal renameRequested(var data, var chapter)       // "Đổi tên chương…" ở menu "…" của dòng chương: hộp EditBookRename của Main.qml
+    signal castRequested(string kind, var data)         // hộp của tab Nhân vật (CastDialogs của Main.qml): "merge" | "rename" | "gender" | "voice" | "narrator"
     property var book: ({})
     readonly property bool expanded: width >= Theme.widthExpanded
     property real split: expanded ? 1 : 0
@@ -91,6 +93,58 @@ Item {
     // Menu chương dùng cùng màn đọc với Thư viện và Đang nghe.
     property var menuChapter: null          // {chapterId, title, subtitle, fullTitle, playable, done}
     readonly property bool canRename: Logic.canEditLayer(fullBook.capabilities)
+    // Mục của sách: Chương | Nhân vật. Sách chỉ có chữ (chưa phân vai) không có dàn nhân vật nên không có mục này.
+    property int tab: 0
+    readonly property bool hasCast: fullBook.id !== undefined && fullBook.stage !== "text"
+    readonly property int paneIndex: hasCast ? tab : 0
+    // Việc sửa dàn nhân vật theo khả năng của cuốn (BookScreen.tsx: editable / waiting / workshop): đổi tên - mọi cuốn sửa được; giới tính và gộp - cuốn chờ
+    // Studio (file .abook) hay cuốn có xưởng; đổi giọng, bỏ gộp, đổi giọng người kể - cuốn có xưởng (bản Qt chưa có Studio nên làm ngay ở đây). Cuốn của máy khác: chỉ nghe.
+    readonly property bool remote: Boolean(root.book.remote)
+    readonly property bool workshop: Boolean(fullBook.capabilities && fullBook.capabilities.workshop)
+    readonly property bool castWaiting: canRename && !workshop && !remote
+    readonly property var castCaps: ({
+        rename: canRename && !remote,
+        merge: canRename && !remote,
+        gender: canRename && !remote,
+        voice: canRename && workshop && !remote,
+        unmerge: canRename && workshop && !remote,
+        narrator: canRename && workshop && !remote,
+        waiting: castWaiting})
+    // Người của các chương sau chỗ đang nghe ẩn tới khi bấm "Hiện chương sau" (không lộ nội dung chưa nghe tới)
+    readonly property var castUntil: Player.loaded && Player.bookId === root.book.bookId ? Player.chapterId
+        : (fullBook.state && fullBook.state.last ? fullBook.state.last.chapterId : undefined)
+    readonly property var castReached: fullBook.chapters && fullBook.chapters.length ? Cast.reachedTitles(fullBook.chapters, castUntil) : null
+    property var castPerson: null           // người đang mở menu "…"
+    function openCastMenu(anchor, person) {
+        castPerson = person
+        castMenu.anchorItem = anchor
+        castMenu.show()
+    }
+    function castRequest(kind, person) {
+        if (kind === "unmerge") { unmerge(person); return }
+        const data = {bookId: root.book.bookId, person: person, waiting: castWaiting}
+        if (kind === "merge") data.people = castList.characters
+        root.castRequested(kind, data)
+    }
+    // "Bỏ gộp" (useUnmerge.ts): không có đường riêng - tìm đúng lần gộp trong danh sách thay đổi đang chờ rồi rút bằng đường hoàn tác của "Ai nói câu này"
+    function unmerge(person) {
+        const id = root.book.bookId
+        const name = Cast.cleanName(person.displayName)
+        const fail = error => { Api.notice = Logic.toastText("Chưa bỏ gộp được", error) }
+        Api.quiet("GET", "/api/books/" + id + "/pending-changes", null, function(details, error) {
+            if (error) { fail(error); return }
+            const stamp = person.mergedAt
+            const items = details && details.items ? details.items : []
+            const item = typeof stamp === "number" ? items.filter(e => e.section === "speakers" && Math.abs(e.requestedAt - stamp) < 1e-6)[0] : undefined
+            if (!item) { fail("Lần gộp này đã được áp hoặc đã bị thay bằng lựa chọn khác - mở lại màn này để xem."); return }
+            const keys = item.keys || [item.key]
+            Api.quiet("POST", "/api/books/" + id + "/speaker", {lines: keys.map(k => ({stableId: k})), withdraw: true, requestedAt: item.requestedAt}, function(data, err) {
+                if (err) { fail(err); return }
+                Api.editedBook(id)
+                Api.notice = "Đã bỏ gộp " + name
+            })
+        })
+    }
     function openChapterMenu(anchor, row) {
         menuChapter = row
         chapterMenu.anchorItem = anchor
@@ -150,6 +204,38 @@ Item {
                     const c = parent.c
                     root.renameRequested(root.fullBook, {id: c.chapterId, title: c.title, subtitle: c.subtitle, fullTitle: c.fullTitle})
                 }
+            }
+        }
+    }
+    // Menu "…" của một người ở tab Nhân vật: Gộp vào người khác…, Đổi tên, Đổi giới tính (chỉ mục làm được; bảng nổi đo chỗ theo số hàng)
+    Popover {
+        id: castMenu
+        objectName: "castMenu"
+        panelWidth: 240
+        pad: 6
+        Column {
+            width: parent.width
+            readonly property var p: root.castPerson || ({})
+            readonly property bool canMerge: Boolean(root.castCaps.merge) && p.lines > 0
+            readonly property bool canGender: Boolean(root.castCaps.gender) && Boolean(p.voice) && p.lines > 0
+            height: Theme.buttonHeight * ((canMerge ? 1 : 0) + (root.castCaps.rename ? 1 : 0) + (canGender ? 1 : 0))
+            MenuRow {
+                objectName: "castMerge"
+                visible: parent.canMerge
+                width: parent.width; icon: "git-merge"; text: "Gộp vào người khác…"
+                onClicked: { castMenu.close(); root.castRequest("merge", parent.p) }
+            }
+            MenuRow {
+                objectName: "castRename"
+                visible: Boolean(root.castCaps.rename)
+                width: parent.width; icon: "text-cursor-input"; text: "Đổi tên"
+                onClicked: { castMenu.close(); root.castRequest("rename", parent.p) }
+            }
+            MenuRow {
+                objectName: "castGender"
+                visible: parent.canGender
+                width: parent.width; icon: "user-round"; text: "Đổi giới tính"
+                onClicked: { castMenu.close(); root.castRequest("gender", parent.p) }
             }
         }
     }
@@ -248,7 +334,7 @@ Item {
                         kind: "text"
                         icon: "list-ordered"
                         text: "Chương"
-                        onClicked: { list.positionViewAtBeginning(); list.forceActiveFocus() }
+                        onClicked: { root.tab = 0; list.positionViewAtBeginning(); list.forceActiveFocus() }
                     }
                 }
                 Text {
@@ -286,7 +372,7 @@ Item {
             height: Math.max(0, stage.height - y)
             Text {
                 id: chaptersTitle
-                visible: bookDetail.chapters.count > 0
+                visible: bookDetail.chapters.count > 0 && !root.hasCast
                 width: parent.width
                 text: "Chương"
                 wrapMode: Text.Wrap
@@ -294,13 +380,28 @@ Item {
                 font.pixelSize: Theme.sizeSection
                 font.weight: Theme.weightMedium
             }
+            PageSwitch {
+                id: tabs
+                objectName: "bookTabs"
+                visible: root.hasCast
+                label: "Mục của sách"
+                labels: ["Chương", "Nhân vật"]
+                index: root.paneIndex
+                onPicked: index => root.tab = index
+            }
+            readonly property real headHeight: root.hasCast ? tabs.height : chaptersTitle.height
+            readonly property int fade: Theme.reduceMotion ? Math.min(Theme.motionFast, 120) : Theme.motionMedium
             ListView {
                 id: list
                 objectName: "bookChapters"
-                y: chaptersTitle.height + Theme.s8
+                y: chapterRegion.headHeight + Theme.s8
                 width: parent.width
                 height: Math.max(0, parent.height - y)
                 clip: true
+                opacity: root.paneIndex === 0 ? 1 : 0
+                visible: opacity > 0
+                enabled: root.paneIndex === 0
+                Behavior on opacity { NumberAnimation { duration: chapterRegion.fade } }
                 model: bookDetail.chapters
                 boundsBehavior: Flickable.StopAtBounds
                 bottomMargin: Theme.s16
@@ -335,6 +436,24 @@ Item {
             ScrollEdges {
                 x: list.x; y: list.y; width: list.width; height: list.height
                 target: list
+                opacity: list.opacity
+                visible: list.visible
+            }
+            CastList {
+                id: castList
+                y: chapterRegion.headHeight + Theme.s8
+                width: parent.width
+                height: Math.max(0, parent.height - y)
+                bookId: root.book.bookId || ""
+                active: root.paneIndex === 1
+                caps: root.castCaps
+                reached: root.castReached
+                opacity: root.paneIndex === 1 ? 1 : 0
+                visible: opacity > 0
+                enabled: root.paneIndex === 1
+                Behavior on opacity { NumberAnimation { duration: chapterRegion.fade } }
+                onRequest: (kind, person) => root.castRequest(kind, person)
+                onMenuRequested: (anchor, person) => root.openCastMenu(anchor, person)
             }
         }
     }

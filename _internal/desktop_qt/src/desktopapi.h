@@ -14,6 +14,7 @@ class DesktopApi : public QObject {
     Q_PROPERTY(QString thirdParty READ thirdParty CONSTANT)
 public:
     explicit DesktopApi(QObject *parent = nullptr);
+    ~DesktopApi() override;
     Q_INVOKABLE int request(const QString &method, const QString &path, const QJSValue &body, const QJSValue &done);
     Q_INVOKABLE void cancel(int id);
     Q_INVOKABLE QString imageData(const QUrl &file) const;
@@ -24,6 +25,11 @@ public:
     Q_INVOKABLE void stopPreview();
     static void setPreviewOut(class AudioOut *out);
     QString thirdParty() const;
+signals:
+    /// Nghe thử (câu mẫu của nhân vật, giọng): clip bắt đầu ra tiếng / hết / không phát được. Cùng ba mốc của thẻ audio trong clip.tsx.
+    void previewStarted();
+    void previewEnded();
+    void previewFailed(const QString &reason);
 private:
     QNetworkAccessManager m_net;
     int m_next = 0;
