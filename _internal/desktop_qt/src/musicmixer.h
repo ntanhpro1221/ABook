@@ -47,6 +47,7 @@ private:
 
 struct MixVoiceState;
 class MixVoice;
+class VoiceDecoder;
 
 class MusicMixer : public QObject {
 public:
@@ -70,19 +71,24 @@ private:
     void fetch(const std::shared_ptr<MixVoiceState> &state, quint64 generation);
     void post(const std::shared_ptr<MixVoiceState> &state, std::function<void(MixVoice *)> event);
     double position(const std::shared_ptr<MixVoiceState> &state) const;
+    void serviceStream(const std::shared_ptr<MixVoiceState> &state);
+    void postSeeked(const std::shared_ptr<MixVoiceState> &state);
 };
 
 class MixVoice final : public AudioOut {
     Q_OBJECT
 public:
     explicit MixVoice(MusicMixer *mixer, QObject *parent = nullptr);
+    enum Purpose { Music, Voice };
+    MixVoice(MusicMixer *mixer, Purpose purpose, QObject *parent = nullptr);
+    MixVoice(MusicMixer *mixer, std::function<std::unique_ptr<VoiceDecoder>(int)> decoder, QObject *parent = nullptr);
     ~MixVoice() override;
     void load(const QUrl &url, double startSeconds) override;
     void play() override;
     void pause() override;
     void stop() override;
     void seek(double seconds) override;
-    void setRate(double) override {} // Nhạc giữ tốc độ gốc; MusicBed không đổi tốc độ nhạc.
+    void setRate(double rate) override;
     void setVolume(double volume) override;
     void preload() override;
     void setLoop(bool loop) override;

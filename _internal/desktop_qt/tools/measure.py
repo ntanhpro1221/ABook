@@ -21,6 +21,7 @@ import tempfile
 import threading
 import time
 import uuid
+from audio_thread_samples import sample as sample_threads
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent.parent
@@ -167,7 +168,7 @@ def host_tree_private_mb(parent_pid: int) -> float:
     return total
 
 
-def launch(exe: Path, env_extra: dict, offscreen: bool = True, timeout_seconds: float = 120) -> dict:
+def launch(exe: Path, env_extra: dict, offscreen: bool = True, timeout_seconds: float = 120, require_ac: bool = True) -> dict:
     """Chạy app một lượt, lấy mẫu RAM riêng + CPU mỗi 250 ms và trạng thái cửa sổ; trả về mọi thứ thô cho phần phân tích."""
     import psutil
     # Máy dùng chung: chờ job khác, tuyệt đối không dừng tiến trình của họ.
@@ -207,8 +208,19 @@ def launch(exe: Path, env_extra: dict, offscreen: bool = True, timeout_seconds: 
         _fields_ = [("ac", wt.BYTE), ("flag", wt.BYTE), ("percent", wt.BYTE), ("reserved", wt.BYTE),
                     ("life", wt.DWORD), ("full", wt.DWORD)]
     power = PowerStatus()
-    if not k32.GetSystemPowerStatus(ctypes.byref(power)) or power.ac != 1:
-        return {"ok": False, "why": "Chỉ đo khi máy cắm điện"}
+    if not k32.GetSystemPowerStatus(ctypes.byref(power)):
+        return {"ok": False, "why": "Không đọc được nguồn điện"}
+    battery_status = None
+    while require_ac:
+        check = subprocess.run(["powershell.exe", "-NoProfile", "-NonInteractive", "-Command",
+            "Get-CimInstance Win32_Battery | Select-Object -ExpandProperty BatteryStatus"],
+            capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
+        battery_status = [int(x) for x in check.stdout.split() if x.isdigit()]
+        k32.GetSystemPowerStatus(ctypes.byref(power))
+        if power.ac == 1 and battery_status and all(x == 2 for x in battery_status):
+            break
+        print("WAIT AC: BatteryStatus must equal 2;", battery_status, "AC", power.ac, flush=True)
+        time.sleep(5)
     out = Path(tempfile.gettempdir()) / f"abookdesk_bench_{os.getpid()}_{uuid.uuid4().hex}.json"
     if not offscreen:
         raise ValueError("Chỉ cho phép đo ngoài màn hình")
@@ -254,6 +266,9 @@ def launch(exe: Path, env_extra: dict, offscreen: bool = True, timeout_seconds: 
         k32.SetErrorMode(previous_error_mode)
     h = k32.OpenProcess(0x0410, False, p.pid)
     samples: list[tuple[float, float, float]] = []   # (epoch ms, MB riêng, CPU ms của tiến trình)
+    memory_samples = []  # PrivateUsage (commit), total working set, conventional CPU seconds
+    power_samples = []
+    thread_samples = []
     states: list[tuple[float, dict]] = []
     stop = threading.Event()
 
@@ -326,6 +341,12 @@ def launch(exe: Path, env_extra: dict, offscreen: bool = True, timeout_seconds: 
         while not stop.is_set():
             try:
                 samples.append((time.time() * 1000, private_mb(h), cpu_ms(h)))
+                proc = psutil.Process(p.pid)
+                mem, cpu = proc.memory_info(), proc.cpu_times()
+                memory_samples.append((time.time() * 1000, mem.private / 1048576, mem.rss / 1048576, cpu.user + cpu.system))
+                thread_samples.append((time.time() * 1000, sample_threads(p.pid)))
+                current_power = PowerStatus()
+                power_samples.append((time.time() * 1000, int(current_power.ac) if k32.GetSystemPowerStatus(ctypes.byref(current_power)) else -1))
                 host.append((time.time() * 1000, host_cpu_ms()))
             except Exception:
                 pass
@@ -402,7 +423,15 @@ def launch(exe: Path, env_extra: dict, offscreen: bool = True, timeout_seconds: 
     if not out.exists():
         return {"ok": False, "why": "app không ghi file đo"}
     d = json.loads(out.read_bytes())
-    return {"ok": True, "d": d, "samples": samples, "states": states, "host_mb": host_mb, "host_cpu": host, "foreground_events": 0, "offscreen": True, "app_log": str(out.with_suffix(".app.log")),
+    end_status = None
+    if require_ac:
+        check = subprocess.run(["powershell.exe", "-NoProfile", "-NonInteractive", "-Command",
+            "Get-CimInstance Win32_Battery | Select-Object -ExpandProperty BatteryStatus"],
+            capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
+        end_status = [int(x) for x in check.stdout.split() if x.isdigit()]
+        if not end_status or any(x != 2 for x in end_status) or any(ac != 1 for _t, ac in power_samples):
+            return {"ok": False, "why": "AC lost during measurement", "battery_status_at_end": end_status, "power_samples": power_samples}
+    return {"ok": True, "d": d, "samples": samples, "memory_samples": memory_samples, "thread_samples": thread_samples, "battery_status_at_launch": battery_status, "battery_status_at_end": end_status, "power_samples": power_samples, "ac_at_launch": int(power.ac), "functional_only": not require_ac, "states": states, "host_mb": host_mb, "host_cpu": host, "foreground_events": 0, "offscreen": True, "app_log": str(out.with_suffix(".app.log")),
             "exit_code": p.returncode, "forced_termination": forced_termination}
 
 

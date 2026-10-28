@@ -11,8 +11,7 @@ import sys
 import measure
 
 
-def fixture_at(target: Path) -> Path:
-    source = Path("D:/Novels/native_desk_proto/deskqt_fixture_music")
+def fixture_at(target: Path, source=Path("D:/Novels/native_desk_proto/deskqt_fixture_music")) -> Path:
     if not (target / "prefs.json").exists():
         shutil.copytree(source, target, dirs_exist_ok=True)
         prefs = json.loads((target / "prefs.json").read_bytes())

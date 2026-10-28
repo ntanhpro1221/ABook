@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.21)
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/../ui/package.json" ABOOK_PACKAGE_JSON)
 string(JSON ABOOK_VERSION GET "${ABOOK_PACKAGE_JSON}" version)
 
-project(ABookDesk VERSION ${ABOOK_VERSION} LANGUAGES CXX)
+project(ABookDesk VERSION ${ABOOK_VERSION} LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -52,7 +52,8 @@ set(ABOOK_MUSIC_SOURCES
     src/musiclogic.h
     src/musictext.h
 )
-set(ABOOK_MIXER_SOURCES src/musicmixer.cpp src/musicmixer.h src/mixcore.h src/mp3source.cpp src/mp3source.h src/mfsource.cpp src/mfsource.h)
+set(ABOOK_MIXER_SOURCES src/musicmixer.cpp src/musicmixer.h src/mixcore.h src/mp3source.cpp src/mp3source.h src/mfsource.cpp src/mfsource.h
+    src/streamsource.cpp src/streamsource.h src/timestretch.cpp src/timestretch.h third_party/sonic/sonic.c)
 
 if(WIN32)
 qt_add_executable(ABookDesk WIN32
@@ -63,8 +64,6 @@ qt_add_executable(ABookDesk WIN32
     src/mediacontrols.cpp
     src/mediacontrols.h
     src/abookdesk.manifest
-    src/audioout_mf.cpp
-    src/audioout_mf.h
     src/bookdetail.cpp
     src/bookdetail.h
     src/readalong.cpp
@@ -320,6 +319,21 @@ if(MSVC)
     target_compile_options(SidebarTests PRIVATE /W3 /utf-8)
 endif()
 enable_testing()
+qt_add_executable(VoiceRender tools/voice_render.cpp src/mp3source.cpp src/mfsource.cpp src/streamsource.cpp src/timestretch.cpp third_party/sonic/sonic.c)
+target_include_directories(VoiceRender PRIVATE src third_party)
+target_compile_definitions(VoiceRender PRIVATE QT_NO_CAST_FROM_ASCII)
+target_link_libraries(VoiceRender PRIVATE Qt6::Network mfplat mf mfuuid mfreadwrite shlwapi ole32)
+if(MSVC)
+    target_compile_options(VoiceRender PRIVATE /W3 /utf-8)
+endif()
+qt_add_executable(VoiceTests tests/test_voice.cpp src/audioout.cpp src/audioout.h ${ABOOK_MIXER_SOURCES})
+target_include_directories(VoiceTests PRIVATE src third_party)
+target_compile_definitions(VoiceTests PRIVATE QT_NO_CAST_FROM_ASCII MIX_FIXTURES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../tests/fixtures")
+target_link_libraries(VoiceTests PRIVATE Qt6::Test Qt6::Network mfplat mf mfuuid mfreadwrite shlwapi ole32 ksuser propsys)
+if(MSVC)
+    target_compile_options(VoiceTests PRIVATE /W3 /utf-8)
+endif()
+add_test(NAME VoiceTests COMMAND VoiceTests)
 qt_add_executable(MediaControlsTests tests/test_mediacontrols.cpp tests/fakes.h src/mediacontrols.cpp src/mediacontrols.h ${ABOOK_PLAYER_SOURCES})
 target_include_directories(MediaControlsTests PRIVATE src tests)
 target_compile_definitions(MediaControlsTests PRIVATE QT_NO_CAST_FROM_ASCII)

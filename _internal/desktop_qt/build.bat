@@ -63,6 +63,8 @@ call :test "%HERE%build\MusicTests.exe" "%HERE%build\music-test.txt"
 if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
 rem WASAPI mixing core: ring, volume ramp, resampler on numbers
+call :test "%HERE%build\VoiceTests.exe" "%HERE%build\voice-test.txt"
+if errorlevel 1 exit /b 1
 call :test "%HERE%build\MixTests.exe" "%HERE%build\mix-test.txt"
 if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
@@ -96,6 +98,12 @@ rem App-local VC runtime (about 1 MB of DLLs instead of the installer), so a PC 
 copy /y "%VCToolsRedistDir%x64\Microsoft.VC145.CRT\*.dll" "%HERE%dist\" >nul
 if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
+rem Sonic is statically linked: ship its Apache-2.0 license and pinned provenance.
+if not exist "%HERE%dist\licenses" mkdir "%HERE%dist\licenses"
+copy /y "%HERE%third_party\sonic\LICENSE" "%HERE%dist\licenses\Sonic-LICENSE.txt" >nul
+if errorlevel 1 exit /b 1
+copy /y "%HERE%third_party\sonic\UPSTREAM" "%HERE%dist\licenses\Sonic-UPSTREAM.txt" >nul
+if errorlevel 1 exit /b 1
 echo OK: %HERE%dist\ABookDesk.exe
 exit /b 0
 
