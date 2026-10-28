@@ -20,6 +20,12 @@ KOTLIN_OUT = ROOT / "mobile/android/app/src/main/java/vn/abook/player/ui/compone
 # Tên file lucide (kebab-case), mỗi tên một dòng theo thứ tự chữ cái: bản sinh ổn định, hai nhánh thêm icon khác nhau gộp không xung đột.
 ICONS = sorted({
     "maximize-2",
+    "folder-x",
+    "history",
+    "info",
+    "mic-vocal",
+    "sliders-horizontal",
+    "wand-sparkles",
     "picture-in-picture-2",
     "pin-off",
     "arrow-down-wide-narrow",

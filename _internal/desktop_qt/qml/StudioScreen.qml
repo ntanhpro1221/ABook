@@ -2,13 +2,15 @@ import QtQuick
 import ABook
 import "PeerStudio.js" as Peer
 
-// Studio: chỗ giữ cho D3 (bảng dự án gọn: tên · trạng thái · tiến độ · cập nhật, DESIGN.md mục 7).
+// Studio: danh sách dự án (ProjectsScreen), trang một dự án (ProjectScreen) và chỗ giữ cho trình tạo dự án (S2), DESIGN.md mục 7. Ba màn con là MỘT lớp
+// của Back (Esc / Alt+Left về danh sách) và đổi qua nhau bằng mờ + trượt 8 px; chọn lại "Studio" ở thanh bên cũng về danh sách.
 // Studio của máy tính đã ghép (Nav.studioPeer, "Mở Studio" ở Máy tính khác; desktop/App.tsx + PeerBar.tsx): hỏi /api/app của máy ấy qua cầu nối
-// (webui/peer_studio.py) - vào được thì thanh "Đang mở Studio của <máy>" + "Về máy này"; máy ấy chỉ cho nghe thì nói bật quyền ở đâu (StudioClosed);
-// chưa vào được thì nói vì sao (PeerTrouble), máy ấy im thì tự hỏi lại mỗi 5 giây và tự mở khi nó trả lời.
+// (webui/peer_studio.py) - vào được thì thanh "Đang mở Studio của <máy>" + "Về máy này" và CÙNG các màn con ấy, mọi lời gọi đi qua
+// /api/peers/<mã>/studio/... (StudioStore); máy ấy chỉ cho nghe thì nói bật quyền ở đâu (StudioClosed); chưa vào được thì nói vì sao (PeerTrouble),
+// máy ấy im thì tự hỏi lại mỗi 5 giây và tự mở khi nó trả lời.
 Item {
     id: root
-    UiActivity { target: root; id: activity; onResumed: root.ask() }
+    UiActivity { target: root; id: activity; onResumed: { root.ask(); dataStore.refreshNow() } }
     readonly property bool expanded: Theme.widthClass(width) >= 2
     property real wideT: expanded ? 1 : 0
     Behavior on wideT {
@@ -43,6 +45,7 @@ Item {
     function home() { Nav.studioPeer = "" }
     onPeerChanged: {
         peerInfo = null; trouble = ""; silent = false; watchedMs = 0
+        goList()
         if (peer) ask(); else asked++
     }
     Component.onCompleted: if (peer) ask()
@@ -65,23 +68,122 @@ Item {
         contentWidth: root.bodyWidth
         onHome: root.home()
     }
+    // ---- dữ liệu và đường đi ----
+    StudioStore {
+        id: dataStore
+        peer: root.peer
+        peerInfo: root.peerInfo
+        active: activity.running
+        libraryWanted: (root.view === "own" || root.view === "open") && root.route === "list"
+    }
+    readonly property var studioStore: dataStore
+    readonly property var projectsScreenModel: projects.rowKeys
+    readonly property string projectsKind: projects.kind
+    readonly property var projectsList: projects.list
+    readonly property string shownTab: projectLoader.item ? projectLoader.item.shownTab : ""
+    readonly property var projectScreenList: projectLoader.item ? projectLoader.item.list : null
+    property string route: "list"           // "list" | "project" | "new"
+    property string newMode: ""             // "" | "redo" | "continue" (trình tạo dự án sẽ nhận ở S2)
+    property bool layerOpen: false
+    function goList() { route = "list"; newMode = "" }
+    function openProject(id) { dataStore.openBook(id); route = "project" }
+    function openNew(mode, id) { newMode = mode || ""; route = "new" }
+    onRouteChanged: {
+        if (route === "list") { dataStore.openBook(""); if (layerOpen) { Nav.closedLayer(routeLayer); layerOpen = false } }
+        else if (!layerOpen) { Nav.openLayer(routeLayer); layerOpen = true }
+    }
+    QtObject { id: routeLayer; function close() { root.goList() } }
+    Component.onDestruction: if (layerOpen) Nav.closedLayer(routeLayer)
+    Connections { target: Nav.stack; function onReselected(index) { if (index === 1) root.goList() } }
+
+    // Màn đang hiện: mờ qua kèm trượt 8 px (MotionRegion của web); cái cũ khép hết rồi cái mới mới vào, không hai lớp chồng nhau
+    readonly property string screenKey: (view === "own" || view === "open") ? "route:" + route : view
+    property string shownKey: screenKey
+    property real phase: 1
+    onScreenKeyChanged: swap.restart()
+    SequentialAnimation {
+        id: swap
+        NumberAnimation { target: root; property: "phase"; to: 0; duration: Theme.motionFastOut; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeAccelerate }
+        ScriptAction { script: root.shownKey = root.screenKey }      // màn MỚI NHẤT lúc cái cũ đã khép (đổi liền hai lần vẫn ra đúng màn cuối)
+        NumberAnimation { target: root; property: "phase"; to: 1; duration: Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeDecelerate }
+    }
+    readonly property string shownView: shownKey.indexOf("route:") === 0 ? (peer ? "open" : "own") : shownKey
+
+    // ---- danh sách / trang dự án / chỗ giữ cho trình tạo ----
+    Item {
+        id: content
+        objectName: "studioContent"
+        y: bar.height
+        width: parent.width
+        height: parent.height - y
+        visible: root.shownView === "own" || root.shownView === "open"
+        opacity: root.phase
+        transform: Translate { y: Theme.reduceMotion ? 0 : 8 * (1 - root.phase) }
+        ProjectsScreen {
+            id: projects
+            objectName: "projectsScreen"
+            anchors.fill: parent
+            visible: root.shownKey === "route:list"
+            enabled: visible
+            store: dataStore
+            onProjectOpened: id => root.openProject(id)
+            onNewRequested: root.openNew("", "")
+            onNewProjectRequested: (mode, id) => root.openNew(mode, id)
+            onListenRequested: id => root.listen(id)
+        }
+        Loader {
+            id: projectLoader
+            anchors.fill: parent
+            active: root.shownKey === "route:project"
+            sourceComponent: ProjectScreen {
+                objectName: "projectScreen"
+                store: dataStore
+                onBackRequested: root.goList()
+                onListenRequested: id => root.listen(id)
+                onNewProjectRequested: (mode, id) => root.openNew(mode, id)
+            }
+        }
+        // Trình tạo dự án mới là phần S2: màn này chỉ giữ chỗ, vẫn có đường về
+        Item {
+            id: newPlaceholder
+            objectName: "newPlaceholder"
+            anchors.fill: parent
+            visible: root.shownKey === "route:new"
+            readonly property real contentW: Math.min(width - 2 * Theme.margin, 960)
+            ScreenHeader {
+                id: newHeader
+                x: (parent.width - newPlaceholder.contentW) / 2
+                width: newPlaceholder.contentW
+                showBack: true
+                backLabel: "Về Studio"
+                title: "Dự án mới"
+            }
+            Text {
+                objectName: "newPlaceholderText"
+                x: newHeader.x
+                y: newHeader.height + 32
+                width: Math.min(640, newPlaceholder.contentW)
+                text: "Mục này chưa mở trong bản này."
+                color: Theme.text2
+                wrapMode: Text.Wrap
+                font.pixelSize: Theme.sizeBodySmall
+            }
+        }
+    }
+    function listen(id) {
+        if (root.peer) { Api.notice = "Sách của máy ấy nghe ở Thư viện của máy ấy."; return }
+        Nav.bookRequested(id)
+    }
+
+    // ---- các trạng thái của Studio máy khác ----
     ScreenHeader {
         id: header
         objectName: "studioHeader"
+        visible: !content.visible
         x: (parent.width - root.bodyWidth) / 2
         y: bar.height
         width: root.bodyWidth
         title: "Studio"
-    }
-    // Đổi màn = mờ qua kèm trượt 8 px (MotionRegion của web): cái cũ khép hết rồi cái mới mới vào, không hai lớp chồng nhau
-    property string shownView: view
-    property real phase: 1
-    onViewChanged: swap.restart()
-    SequentialAnimation {
-        id: swap
-        NumberAnimation { target: root; property: "phase"; to: 0; duration: Theme.motionFastOut; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeAccelerate }
-        ScriptAction { script: root.shownView = root.view }      // màn MỚI NHẤT lúc cái cũ đã khép (đổi liền hai lần vẫn ra đúng màn cuối)
-        NumberAnimation { target: root; property: "phase"; to: 1; duration: Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeDecelerate }
     }
     Item {
         id: body
@@ -90,35 +192,9 @@ Item {
         y: header.y + header.height
         width: root.bodyWidth
         height: parent.height - y
+        visible: !content.visible
         opacity: root.phase
         transform: Translate { y: Theme.reduceMotion ? 0 : 8 * (1 - root.phase) }
-        Item {
-            objectName: "studioStatus"
-            visible: root.shownView === "own" || root.shownView === "open"
-            anchors.centerIn: parent
-            anchors.verticalCenterOffset: 40 - body.y / 2
-            width: Math.min(parent.width, statusLabel.implicitWidth + 80)
-            height: Math.max(48, statusLabel.y + statusLabel.height)
-            Icon {
-                id: statusIcon
-                name: "clapperboard"; size: 48; color: Theme.text3
-                x: (parent.width - width) / 2 * (1 - Math.min(1, root.wideT * 2))
-            }
-            Text {
-                id: statusLabel
-                objectName: "studioPlaceholder"
-                x: 80 * Math.min(1, root.wideT * 2)
-                y: 72 * (1 - Math.max(0, root.wideT * 2 - 1))
-                width: Math.min(640, parent.width - x)
-                height: Math.max(48, implicitHeight)
-                verticalAlignment: Text.AlignVCenter
-                horizontalAlignment: root.expanded ? Text.AlignLeft : Text.AlignHCenter
-                wrapMode: Text.Wrap
-                text: "Studio chưa mở trong bản này."
-                color: Theme.text2
-                font.pixelSize: Theme.sizeBodySmall
-            }
-        }
         // Thiết bị này chỉ được nghe ở máy kia (StudioClosed): nói bật quyền ở đâu
         EmptyState {
             objectName: "studioClosed"
