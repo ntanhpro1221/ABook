@@ -36,6 +36,7 @@ Item {
     }
     ScreenHeader {
         id: header
+        objectName: "bookHeader"
         // Nút ← thẳng mép khối nội dung, kể cả khi khối bị giới hạn 1360 và căn giữa ở khổ rất lớn.
         x: stage.x
         width: stage.width
@@ -87,7 +88,7 @@ Item {
             onSaveAsRequested: { more.close(); root.saveAsRequested(root.fullBook) }
         }
     }
-    // Menu "…" của một dòng chương (DropdownMenu trong ChapterRow của listen/BookScreen.tsx). "Đọc chương này" chưa có: bản Qt chưa có màn đọc.
+    // Menu chương dùng cùng màn đọc với Thư viện và Đang nghe.
     property var menuChapter: null          // {chapterId, title, subtitle, fullTitle, playable, done}
     readonly property bool canRename: Logic.canEditLayer(fullBook.capabilities)
     function openChapterMenu(anchor, row) {
@@ -116,7 +117,12 @@ Item {
             width: parent.width
             readonly property var c: root.menuChapter || ({})
             // Cao đúng tổng các hàng đang hiện: bảng nổi đo chỗ (mở lên hay xuống) ngay lúc mở, khi `visible` của hàng còn đọc ra false
-            height: Theme.buttonHeight * ((c.playable ? 2 : 0) + (root.canRename ? 1 : 0))
+            height: Theme.buttonHeight * (1 + (c.playable ? 2 : 0) + (root.canRename ? 1 : 0))
+            MenuRow {
+                objectName: "chapterRead"
+                width: parent.width; icon: "book-open"; text: "Đọc chương này"
+                onClicked: { chapterMenu.close(); reader.begin(root.book.bookId, parent.c.chapterId) }
+            }
             MenuRow {
                 objectName: "chapterFromStart"
                 visible: Boolean(parent.c.playable)
@@ -149,6 +155,7 @@ Item {
     }
     Item {
         id: stage
+        objectName: "bookStage"
         x: (parent.width - width) / 2
         y: header.height + Theme.s16
         width: parent.width - 2 * Theme.margin + (root.compositionWidth - (parent.width - 2 * Theme.margin)) * root.split
@@ -311,9 +318,14 @@ Item {
                     current: model.current
                     progress: model.progress
                     fullTitle: model.fullTitle
-                    hasMenu: model.playable || root.canRename
+                    hasMenu: true
                     menuOpen: chapterMenu.open && root.menuChapter !== null && root.menuChapter.chapterId === model.chapterId
-                    onClicked: if (model.playable && !row.onMenuButton) bookDetail.playChapter(model.chapterId)
+                    Accessible.name: model.playable ? model.current && Player.playing ? `Tạm dừng ${model.fullTitle}` : `Nghe ${model.fullTitle}` : `Đọc ${model.fullTitle} (chưa có audio)`
+                    onClicked: {
+                        if (row.onMenuButton) return
+                        if (model.playable) bookDetail.playChapter(model.chapterId)
+                        else reader.begin(root.book.bookId, model.chapterId)
+                    }
                     onMenuRequested: anchor => root.openChapterMenu(anchor, {chapterId: model.chapterId, title: model.title, subtitle: model.subtitle,
                         fullTitle: model.fullTitle, playable: model.playable, done: model.done})
                 }
@@ -326,4 +338,5 @@ Item {
             }
         }
     }
+    ChapterReader { id: reader }
 }

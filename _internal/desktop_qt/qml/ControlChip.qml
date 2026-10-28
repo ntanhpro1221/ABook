@@ -9,11 +9,13 @@ Interactive {
     property bool active: false          // đang bật (đang hẹn giờ, đang có nhạc): chữ màu nhấn
     property bool struck: false          // gạch chéo trên biểu tượng (nhạc nền tắt - lucide không có biểu tượng "nhạc tắt")
     implicitHeight: Theme.buttonHeight
+    implicitWidth: Math.max(Theme.buttonHeight, content.implicitWidth + 2 * Theme.s12)
 
     Rectangle {
         anchors.fill: parent
         radius: Theme.radiusControl
         color: root.active ? Theme.accentSoft : Theme.sunken
+        Behavior on color { ColorAnimation { duration: Theme.motionFast } }
         Rectangle {
             anchors.fill: parent
             radius: parent.radius
@@ -23,6 +25,7 @@ Interactive {
         }
     }
     Row {
+        id: content
         anchors.centerIn: parent
         spacing: Theme.s8
         Icon {
@@ -31,6 +34,7 @@ Interactive {
             name: root.icon
             size: 16
             color: root.active ? Theme.accentText : Theme.text2
+            Behavior on color { ColorAnimation { duration: Theme.motionFast } }
             anchors.verticalCenter: parent.verticalCenter
             Rectangle {
                 anchors.centerIn: parent
@@ -47,6 +51,7 @@ Interactive {
             visible: root.text !== ""
             text: root.text
             color: root.active ? Theme.accentText : Theme.text
+            Behavior on color { ColorAnimation { duration: Theme.motionFast } }
             font.pixelSize: Theme.sizeBodySmall
             font.weight: Theme.weightMedium
             anchors.verticalCenter: parent.verticalCenter

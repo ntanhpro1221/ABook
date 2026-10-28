@@ -91,6 +91,7 @@ FocusScope {
 
             ScreenHeader {
                 id: header
+                objectName: "settingsHeader"
                 width: root.layoutExpanded ? 260 : parent.width
                 title: !root.layoutExpanded && root.shown ? root.groupTitle : "Cài đặt"
                 backLabel: "Về Cài đặt"
@@ -99,6 +100,7 @@ FocusScope {
             // Tên nhóm ở đầu cột phải: 24 đậm, chân chữ thẳng chân chữ của "Cài đặt" (32) bên trái.
             Text {
                 id: groupHeading
+                objectName: "settingsGroupHeading"
                 visible: root.layoutExpanded
                 x: 260 + Theme.s32
                 width: parent.width - x

@@ -171,12 +171,14 @@ Item {
             fuzzyCompare(p.x, page.width - p.x - row.width, 0.5, "grid margins differ")
             verify(p.x <= page.width * 0.35)
         }
-        function test_shortLibraryCentred() {
+        function test_shortLibrarySharesFrame() {
             Backend.library.count = 3
             const page = make(libraryFactory, sizes()[2])
             const row = findChild(page, "libraryGridRow")
             const p = row.mapToItem(page, 0, 0)
             fuzzyCompare(p.x, page.width - p.x - row.width, 0.5)
+            fuzzyCompare(p.x, findChild(page, "libraryHeader").x, 0.5)
+            fuzzyCompare(row.children[0].x, 0, 0.5, "short row starts at the content edge")
         }
         function test_nowPlaying_data() { return sizes() }
         function test_nowPlaying(data) {
@@ -225,7 +227,10 @@ Item {
             const summary = findChild(page, "bookSummary")
             const chapters = findChild(page, "bookChapterRegion")
             page.width = 1200
-            wait(40)
+            // Offscreen rendering can start its first animation tick later than
+            // 40 ms on a busy machine. Wait for that tick, still requiring an
+            // intermediate frame rather than accepting the final geometry.
+            tryVerify(function() { return page.split > 0 }, 1000)
             verify(page.split > 0 && page.split < 1, "class transition must have intermediate geometry")
             for (let direction = 0; direction < 2; direction++) {
                 for (let frame = 0; frame < 12; frame++) {

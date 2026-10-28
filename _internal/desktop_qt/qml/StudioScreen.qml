@@ -67,6 +67,7 @@ Item {
     }
     ScreenHeader {
         id: header
+        objectName: "studioHeader"
         x: (parent.width - root.bodyWidth) / 2
         y: bar.height
         width: root.bodyWidth
@@ -84,6 +85,7 @@ Item {
     }
     Item {
         id: body
+        objectName: "studioBody"
         x: (parent.width - root.bodyWidth) / 2
         y: header.y + header.height
         width: root.bodyWidth
