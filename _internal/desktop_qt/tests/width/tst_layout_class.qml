@@ -65,11 +65,12 @@ Item {
             Backend.library.items = null; Backend.library.count = 200; Backend.library.revision++
             Nav.layers = []; Theme.reduceMotion = false; Theme.mode = "auto"
         }
-        function sectionGroups(page, screen) {
+        function sectionGroups(page, screen, tag) {
             function group(label, names) { return {label: label, items: names.map(n => findChild(page, n))} }
             if (screen === "library") return [group("library-content", ["libraryHeader", "libraryTools", "libraryContinue", "libraryFilterRow", "libraryGridRow"])]
             if (screen === "book") return [group("book-content", ["bookHeader", "bookStage"])]
-            if (screen === "studio") return [group("studio-content", ["studioHeader", "studioBody"])]
+            if (screen === "studio") return tag === "studio-closed" || tag === "studio-trouble" ? [group("studio-content", ["studioHeader", "studioBody"])]
+                                                                                                 : [group("studio-content", ["projectsHeader", "projectsBody"])]
             if (screen === "settings") return page.layoutExpanded
                 ? [group("settings-navigation", ["settingsHeader", "settingsGroups"]), group("settings-body", ["settingsGroupHeading", "settingsContent"])]
                 : [group("settings-content", ["settingsHeader", "settingsGroups", "settingsContent"])]
@@ -121,7 +122,7 @@ Item {
             if (screen === "mini") { page.height = page.naturalHeight; page.y = (content.height - page.height) / 2 }
             if (screen === "bar") { page.height = page.natural; page.y = content.height - page.height }
             wait(460)
-            const hits = Audit.scan(page, sectionGroups(page, screen)).concat(sidebar.visible ? Audit.scan(sidebar) : [])
+            const hits = Audit.scan(page, sectionGroups(page, screen, d.screen)).concat(sidebar.visible ? Audit.scan(sidebar) : [])
             if (screen === "library") {
                 const header = findChild(page, "libraryHeader")
                 // Check every virtualised row, including partially filled rows.
