@@ -61,7 +61,7 @@ QML_SKIP = {"BenchScenario.qml"}
 # Màn: (tên, file QML, nguồn web). Nguồn web = (file, tên hàm / hằng cấp trên cùng) - None là cả file.
 SCREENS: list[tuple[str, tuple[str, ...], tuple[tuple[str, tuple[str, ...] | None], ...]]] = [
     ("Khay và cửa sổ mini", ("DesktopTray.qml", "TrayMenuModel.qml", "WindowMode.qml", "MiniPlayer.qml"), ()),
-    ("Thư viện", ("LibraryScreen.qml", "BookCell.qml", "GeneratedCover.qml", "CoverView.qml"),
+    ("Thư viện", ("Library*.qml", "BookCell.qml", "GeneratedCover.qml", "CoverView.qml"),
      (("listen/LibraryScreen.tsx", None), ("desktop/App.tsx", ("EmptyLibrary", "LibraryRoute", "OpenBookFileButton")),
       ("shared/BookCover.tsx", None))),
     ("Thanh phát", ("PlayerBar.qml", "PlayButton.qml", "SkipButton.qml", "SkipGlyph.qml", "SeekBar.qml", "PlayerNotice.qml"),
@@ -69,7 +69,7 @@ SCREENS: list[tuple[str, tuple[str, ...], tuple[tuple[str, tuple[str, ...] | Non
                                   "FadingNotice", "MenuRow", "MoreMenu")),
       ("listen/labels.ts", None))),
     ("Đang nghe", ("NowPlaying.qml", "ControlChip.qml", "ChoiceChip.qml", "SpeedPopover.qml", "SleepPopover.qml", "ChaptersPopover.qml",
-                   "ChapterList.qml", "ChapterRow.qml", "PageSwitch.qml", "Popover.qml"),
+                   "ChapterList.qml", "ChapterRow.qml", "ChapterReader.qml", "VolumeControl.qml", "ReadingSuggestions.qml", "PageSwitch.qml", "Popover.qml"),
      (("listen/PlayerViews.tsx", ("NowPlaying", "NowPlayingColumn", "CoverToggle", "BookProgressLine", "AfterTheEnd", "CaughtUpNotice",
                                   "ChapterPanel", "PANELS", "SpeedMenu", "SleepMenu", "SleepPicker", "MenuShell", "MenuNote", "MusicMenu",
                                   "VoiceMenu", "VolumeControl", "SleepRing", "Transport")),
