@@ -3,7 +3,7 @@ import ABook
 
 // Một hàng chương: tên và số chương ở trái, thời lượng ở cuối hàng,
 // dấu đã nghe xong, vạch tiến độ chương dở dang, chương đang phát tô màu nhấn.
-// Dùng ở trang sách, ngăn Chương và cột phải của Đang nghe khi chưa có chữ chạy theo. Bấm hàng không nghe được thì không làm gì.
+// Dùng ở trang sách, ngăn Chương và cột phải của Đang nghe. Hàng chưa có audio mở chữ chương qua màn gọi.
 // `hasMenu` (trang sách): nút "…" ở cuối hàng (ChapterRow của listen/BookScreen.tsx) - chỉ hiện khi rê chuột vào hàng, khi có tiêu điểm hay khi
 // menu của nó đang mở; chỗ của nó luôn giữ nên hàng không xô lệch. Bấm thì `menuRequested(nút)` (bảng nổi do trang sách dựng).
 Interactive {
@@ -97,7 +97,7 @@ Interactive {
         iconSize: 16
         ink: Theme.text2
         hoverInk: Theme.text
-        Accessible.name: "Tuỳ chọn " + root.fullTitle
+        Accessible.name: `Tuỳ chọn ${root.fullTitle}`
         opacity: root.hovered || more.hovered || more.activeFocus || root.menuOpen ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
         onClicked: {

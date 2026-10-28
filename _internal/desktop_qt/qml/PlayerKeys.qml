@@ -11,6 +11,7 @@ QtObject {
     signal shortcutsRequested()
 
     function handle(event) {
+        if (Player.fading && !event.isAutoRepeat) { Player.extendSleep(); return true }
         if (event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)) return false
         const text = event.text || ""
         if (text.length === 1 && text !== " " && !letters) return false
