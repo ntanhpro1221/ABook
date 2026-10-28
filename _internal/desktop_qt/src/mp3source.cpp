@@ -1,5 +1,6 @@
 #include "mp3source.h"
 #include "streamsource.h"
+#include <QByteArrayView>
 
 #include <algorithm>
 #include <cmath>
@@ -127,11 +128,13 @@ struct StreamMp3::Impl {
     QString failure;
 
     Impl(std::shared_ptr<ByteSource> source, int rate) : bytes(std::move(source)), outputRate(rate) { mp3dec_init(&decoder); }
-    QByteArray at(qint64 offset, qint64 n) {
-        if (offset >= windowAt && offset + n <= windowAt + window.size()) return window.mid(offset - windowAt, n);
+    // Views live until the next window refill; every caller consumes a header/frame
+    // before asking for another one. Do not allocate/copy two QByteArrays per frame.
+    QByteArrayView at(qint64 offset, qint64 n) {
+        if (offset >= windowAt && offset + n <= windowAt + window.size()) return QByteArrayView(window).sliced(offset - windowAt, n);
         window = bytes->read(offset, std::max<qint64>(16384, n)); windowAt = offset;
         if (window.size() < n) return {};
-        return window.first(n);
+        return QByteArrayView(window).first(n);
     }
     bool extend(quint64 target) {
         while (!indexed && (index.empty() || scannedSamples <= target)) {
@@ -217,6 +220,7 @@ bool StreamMp3::seek(double seconds) {
 }
 size_t StreamMp3::read(std::vector<float> &out, size_t frames) {
     if (!d->opened || !error().isEmpty()) return 0;
+    d->pending.reserve(d->pending.size() + frames * 2 + MINIMP3_MAX_SAMPLES_PER_FRAME);
     while ((d->pending.size() - d->pendingAt) / 2 < frames && !d->done) {
         if (d->next >= d->index.size() && !d->extend(d->scannedSamples)) break;
         if (d->next >= d->index.size() || d->given + (d->pending.size() - d->pendingAt) / 2 >= d->expected) {
@@ -248,10 +252,9 @@ size_t StreamMp3::read(std::vector<float> &out, size_t frames) {
         if (direct) d->pending.resize(begin + size_t(n - discard) * 2);
         else converted.resize(size_t(n - discard) * 2);
         float *stereo = direct ? d->pending.data() + begin : converted.data();
-        for (size_t i = size_t(discard); i < size_t(n); ++i) {
-            stereo[(i - discard) * 2] = pcm[i * d->channels];
-            stereo[(i - discard) * 2 + 1] = pcm[i * d->channels + d->channels - 1];
-        }
+        if (d->channels == 2) std::copy_n(pcm + discard * 2, size_t(n - discard) * 2, stereo);
+        else for (size_t i = size_t(discard); i < size_t(n); ++i)
+            stereo[(i - discard) * 2] = stereo[(i - discard) * 2 + 1] = pcm[i];
         if (!direct) d->resampler->push(stereo, converted.size() / 2, d->pending);
         d->fed += size_t(n - discard);
     }

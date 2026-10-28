@@ -401,6 +401,34 @@ private slots:
         QCOMPARE(rig.net.callsTo(QStringLiteral("/progress")).size(), 2);
     }
 
+    void hiddenProgressCoalescesToThirtySecondsAndRestoreUsesTen() {
+        Rig rig; rig.player->open(QStringLiteral("a"), -1, -1, true);
+        rig.player->setUiActive(false);
+        rig.run(29.9); QCOMPARE(rig.net.callsTo(QStringLiteral("/progress")).size(), 0);
+        rig.run(0.1); QCOMPARE(rig.net.callsTo(QStringLiteral("/progress")).size(), 1);
+        QCOMPARE(rig.net.callsTo(QStringLiteral("/progress")).last().body.value(QStringLiteral("seconds")).toDouble(), 30.0);
+        rig.run(29.9); QCOMPARE(rig.net.callsTo(QStringLiteral("/progress")).size(), 1);
+        rig.run(0.1); QCOMPARE(rig.net.callsTo(QStringLiteral("/progress")).size(), 2);
+        rig.run(12); rig.player->setUiActive(true); rig.run(0.1);
+        QCOMPARE(rig.net.callsTo(QStringLiteral("/progress")).size(), 3);
+    }
+    void hiddenControlsAlwaysPersistTheLatestPosition_data() {
+        QTest::addColumn<QString>("command");
+        for (const auto *command : {"pause", "close", "chapter", "quit"}) QTest::newRow(command) << QString::fromLatin1(command);
+    }
+    void hiddenControlsAlwaysPersistTheLatestPosition() {
+        QFETCH(QString, command);
+        Rig rig; rig.player->open(QStringLiteral("a"), -1, -1, true); rig.player->setUiActive(false);
+        rig.run(12.3); QCOMPARE(rig.net.callsTo(QStringLiteral("/progress")).size(), 0);
+        if (command==QStringLiteral("pause")) rig.player->pause();
+        if (command==QStringLiteral("close")) rig.player->close();
+        if (command==QStringLiteral("chapter")) rig.player->next();
+        if (command==QStringLiteral("quit")) rig.player->shutdown();
+        const auto saves=rig.net.callsTo(QStringLiteral("/progress")); QCOMPARE(saves.size(),1);
+        QCOMPARE(saves.last().body.value(QStringLiteral("chapterId")).toInt(),1);
+        QVERIFY(std::abs(saves.last().body.value(QStringLiteral("seconds")).toDouble()-12.3)<1e-8);
+    }
+
     void chapterChangeSavesOldChapterThenMarksDone() {
         Rig rig;
         rig.player->open(QStringLiteral("a"), 1, 0, true);
