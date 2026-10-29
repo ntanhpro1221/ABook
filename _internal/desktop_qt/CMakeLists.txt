@@ -217,6 +217,19 @@ qt_add_qml_module(ABookDesk
         qml/StudioRename.qml
         qml/StudioDialogs.qml
         qml/StudioLogic.js
+        qml/ApplyChanges.qml
+        qml/ChapterError.qml
+        qml/ExportBook.qml
+        qml/ExportBusy.qml
+        qml/ExportDone.qml
+        qml/ExportJob.qml
+        qml/ExportKinds.qml
+        qml/FfmpegNeeded.qml
+        qml/PendingList.qml
+        qml/PendingRow.qml
+        qml/VoiceTry.qml
+        qml/WordTimings.qml
+        qml/ExportLogic.js
         qml/CoverPicker.qml
         qml/CoverEditor.qml
         qml/NewProjectScreen.qml
