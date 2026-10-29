@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicText
@@ -13,6 +14,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import vn.abook.player.ui.components.CloseIcon
+import vn.abook.player.ui.components.IconAction
 import vn.abook.player.ui.components.TextAction
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
@@ -27,7 +30,7 @@ import vn.abook.player.ui.voice.VoiceStuck
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun PlayerAlert(state: NowPlayingState, model: NowPlayingModel, window: NowPlayingWindowState, modifier: Modifier = Modifier) {
+fun PlayerAlert(state: NowPlayingState, model: NowPlayingModel, window: NowPlayingWindowState, modifier: Modifier = Modifier, onDismiss: (() -> Unit)? = null) {
     val stuck = VoiceStuck.isStuck(state.error)
     // Danh sách giọng chỉ được đọc khi cần (mở tấm Giọng đọc, hay lúc này): lời báo cần tên giọng đang chọn và biết đã có giọng chạy trên máy chưa.
     LaunchedEffect(stuck, state.bookId) { if (stuck) model.loadVoices() }
@@ -36,7 +39,10 @@ fun PlayerAlert(state: NowPlayingState, model: NowPlayingModel, window: NowPlayi
     }
     val message = VoiceStuck.shown(state.error, state.voiceName.ifEmpty { null })
     Column(modifier.fillMaxWidth().padding(top = Dim.s8).testTag("player_alert")) {
-        BasicText(message, style = Abook.type.caption, modifier = Modifier.testTag("player_error"))
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+            BasicText(message, style = Abook.type.caption, modifier = Modifier.weight(1f).padding(top = Dim.s12).testTag("player_error"))
+            if (onDismiss != null) IconAction("Đóng lời báo", onDismiss, "alert_dismiss") { CloseIcon(Abook.colors.text2) }
+        }
         FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Dim.s12)) {
             if (stuck && local != null) {
                 TextAction("Đọc bằng " + VoiceStuck.caption(local), {

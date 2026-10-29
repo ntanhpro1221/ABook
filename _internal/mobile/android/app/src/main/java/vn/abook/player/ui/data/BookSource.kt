@@ -1,6 +1,7 @@
 package vn.abook.player.ui.data
 
 import android.content.Intent
+import android.net.Uri
 
 /**
  * Việc của trang sách với kho dữ liệu - tách khỏi màn để thử bằng nguồn giả (nguồn thật: [LibraryRepo], qua lõi [vn.abook.player.BookActions]).
@@ -22,6 +23,18 @@ interface BookSource {
 
     /** Đóng file sách và dựng bảng chia sẻ; null khi không đóng được (đã ghi nhật ký). */
     suspend fun share(id: String): Intent?
+
+    /**
+     * "Lưu thay đổi": ghi vào chỗ lưu đã nhớ của cuốn (giữ loại file đã đến); chưa có chỗ nhớ thì [SaveStep.Ask] mang hộp "tạo file" của hệ thống.
+     * Mặc định: không lưu được (bản thử, ảnh chụp).
+     */
+    suspend fun saveKept(id: String): SaveStep = SaveStep.Failed("Chưa lưu được file sách")
+
+    /** "Lưu thành": luôn hỏi chỗ lưu; `project` = file dự án (.abookproj) thay vì sách nghe (.abook). */
+    suspend fun saveAsIntent(id: String, project: Boolean): Intent? = null
+
+    /** Ghi cuốn vào chỗ người nghe vừa chọn trong hộp "tạo file" (`project` null = giữ loại file cuốn đã đến); nhớ chỗ ấy cho lần "Lưu thay đổi" sau. */
+    suspend fun saveTo(id: String, project: Boolean?, uri: Uri): SaveStep = SaveStep.Failed("Chưa lưu được file sách")
 
     /** Dàn nhân vật như người nghe thấy (tên đã đổi, việc đang chờ); null khi không đọc được. Sách chưa phân vai: dàn rỗng. */
     suspend fun cast(id: String): CastView?
@@ -56,6 +69,12 @@ interface BookSource {
     /** "Gộp vào…": mọi câu của `from` thành của `into`. `Edit.value` = số câu. */
     suspend fun mergePeople(id: String, from: String, into: String): Edit<Int>
 
+    /** "Đổi tên chương": tên hiển thị của chương, không đổi audio. `revert`: về tên gốc của người làm sách. `Edit.value` = tên đầy đủ đang hiện. */
+    suspend fun renameChapter(id: String, chapterId: Int, title: String, revert: Boolean = false): Edit<String> = Edit(null, null)
+
+    /** Sách này chiếm bao nhiêu byte trên điện thoại (hàng "Xoá khỏi điện thoại" nói trước cái sẽ lấy lại); null = chưa biết. */
+    suspend fun bytes(id: String): Long? = null
+
     companion object {
         /** Không có kho (ảnh chụp, xem trước): trang sách chỉ có phần đầu từ ô của Thư viện, mọi việc ghi không làm gì. */
         val None: BookSource = object : BookSource {
@@ -78,6 +97,13 @@ interface BookSource {
             override suspend fun mergePeople(id: String, from: String, into: String): Edit<Int> = Edit(null, null)
         }
     }
+}
+
+/** Một bước của "Lưu thay đổi" / "Lưu thành": xong (kèm số thay đổi đã vào file), cần hỏi chỗ lưu, hay không lưu được (câu cho người nghe). */
+sealed interface SaveStep {
+    class Done(val name: String, val edits: Int) : SaveStep
+    class Ask(val intent: Intent, val project: Boolean) : SaveStep
+    class Failed(val message: String) : SaveStep
 }
 
 /** Kết quả một lần sửa: `value` khi xong, `problem` (câu của lõi cho người nghe) khi không. */

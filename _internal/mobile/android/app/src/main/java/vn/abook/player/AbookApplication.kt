@@ -92,6 +92,12 @@ class AbookApplication : Application() {
     /** Thêm nhạc vào Nhạc của tôi: MỘT lượt mỗi lúc cho cả app, Cài đặt > Nhạc của tôi và bảng Nhạc nền cùng thấy, cùng đọc lại kho khi xong. */
     private val myMusicImports by lazy { vn.abook.player.ui.voice.MineImports(voiceRepo, uiScope) }
 
+    /** Nhật ký đêm (thẻ "Tối qua" ở Thư viện, tấm Hẹn giờ nhắc thẻ ấy). */
+    val night by lazy { vn.abook.player.ui.data.NightState(vn.abook.player.ui.data.AndroidNightSource(this), uiScope) }
+
+    /** "Làm trước" các chương tới bằng giọng tải về máy: một holder cho cả tiến trình (trình phát và trang sách cùng xem một trạng thái). */
+    val prepare by lazy { vn.abook.player.ui.data.PrepareState(vn.abook.player.ui.data.AndroidPrepareSource(this), uiScope) }
+
     /** Nhạc nền của từng cuốn (bảng ở trình phát và ở trang sách): thêm nhạc đi chung kho và chung lượt với Nhạc của tôi. */
     val music by lazy { vn.abook.player.ui.music.MusicState(vn.abook.player.ui.music.MusicRepo(this), myMusicImports, uiScope) }
 

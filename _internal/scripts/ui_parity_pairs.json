@@ -57,79 +57,39 @@
           "side": "web",
           "label": "Shift F10: sửa cách đọc.",
           "reason": "computer only: keyboard hint read by screen readers (the phone opens the same sheet with a long press)"
+        },
+        {
+          "side": "web",
+          "match": "^(giữ lại|xoá|xoá bản đọc|chưa xoá được bản đọc)$",
+          "reason": "computer only: clearing the read-aloud cache of ONE book - the phone keeps a single device-wide cache (ReadAloudPlugin.cacheUsage returns book 0), cleaned from Settings > Giọng đọc"
+        },
+        {
+          "side": "web",
+          "reason": "the phone web build has no suggestions endpoint; reading suggestions live in the add-book import step of the phone, not in the player",
+          "label": "Gợi ý đọc"
+        },
+        {
+          "side": "web",
+          "reason": "computer only: Studio listening-review label on a chapter (the phone has no review queue)",
+          "label": "Nghe kiểm"
+        },
+        {
+          "side": "web",
+          "match": "^(chương này chưa có audio hoàn chỉnh.*)$",
+          "reason": "same case as the native hint under the text (\"Chưa có audio; bạn vẫn đọc được chữ.\") - one sentence per state"
+        },
+        {
+          "side": "web",
+          "match": "^(hết giờ thì \\{\\} tạm dừng.*)$",
+          "reason": "sleep timer of a cast device (RemoteSleepMenu): the native player has no remote-device menu, the Devices screen controls them"
+        },
+        {
+          "side": "web",
+          "reason": "native music sheet shows a skeleton while the playlists load (DESIGN §2: no loading words), the web still writes a line",
+          "label": "Đang tải các danh sách nhạc"
         }
       ],
       "missing": [
-        {
-          "side": "web",
-          "match": "^(thử|dừng|thêm giọng)$",
-          "reason": "voice sheet has no trial button and no way to add voices from it"
-        },
-        {
-          "side": "web",
-          "match": "^(chọn giọng khác|đọc bằng|đóng lời báo)$",
-          "reason": "player alert for an unusable voice (switch voice buttons)"
-        },
-        {
-          "side": "web",
-          "match": "^(chỉ khi đang sạc|dừng làm trước|giữ lại|xoá|xoá bản đọc|làm trước.*)$",
-          "reason": "reading the next chapters ahead of time"
-        },
-        {
-          "side": "web",
-          "label": "Gợi ý đọc",
-          "reason": "reading suggestions in the More sheet"
-        },
-        {
-          "side": "web",
-          "match": "^(nghe kiểm|đã nghe hết.*|nghe cuốn khác|nghe lại từ đầu|nghe tiếp|nghe \\{\\}|về thư viện|đã nghe chương này)$",
-          "reason": "end-of-listened-part notice inside the player"
-        },
-        {
-          "side": "web",
-          "match": "^(sắp tắt ·|sắp tắt|sẽ dừng khi hết chương này)$",
-          "reason": "sleep timer notices under the controls"
-        },
-        {
-          "side": "web",
-          "label": "Nghe tiếp từ đó",
-          "reason": "toast offering to continue from the place heard on another device"
-        },
-        {
-          "side": "web",
-          "match": "^(bật lại|chưa làm trước được|chưa xoá được bản đọc)$",
-          "reason": "reading the next chapters ahead of time: its toasts"
-        },
-        {
-          "side": "web",
-          "match": "^(hẹn giờ đã tắt tiếng lúc|tiếng nhỏ dần)$",
-          "reason": "sleep timer notices under the controls"
-        },
-        {
-          "side": "web",
-          "match": "^(nghe tiếp \\{\\}|tải giọng vieneu)$",
-          "reason": "player notices: next part toast, VieNeu download button"
-        },
-        {
-          "side": "web",
-          "match": "^(chương này chưa có audio hoàn chỉnh.*|hết giờ thì \\{\\} tạm dừng.*|sáng hôm sau, thẻ “tối qua”.*|đang làm trước cho một cuốn.*)$",
-          "reason": "player notices, sleep sheet hint, morning recap and read-ahead text"
-        },
-        {
-          "side": "web",
-          "label": "Kéo xuống còn giọng khác",
-          "reason": "native voice sheet only fades its bottom edge (ScrollFade), no 'more voices' pill"
-        },
-        {
-          "side": "web",
-          "match": "^(dừng khi|tắt sau|đặt lại|dừng phát sau)$",
-          "reason": "native sleep sheet shows the clock without the headings 'Tắt sau / Dừng khi' and 'Đặt lại / Dừng phát sau'"
-        },
-        {
-          "side": "web",
-          "label": "Đang tải các danh sách nhạc",
-          "reason": "native music sheet shows a skeleton while the playlists load (DESIGN §2), web still writes a line"
-        },
         {
           "side": "native",
           "label": "Đang chọn",
@@ -162,11 +122,15 @@
         "listen/labels.ts",
         "listen/sleep.ts",
         "android/RemotePlayers.tsx",
-        "shared/ui.tsx"
+        "shared/ui.tsx",
+        "listen/prepareAhead.ts",
+        "listen/ReaderScreen.tsx",
+        "listen/MorningRecap.tsx"
       ],
       "sentences": true,
       "native_also": [
-        "music/*.kt"
+        "music/*.kt",
+        "data/BookDetail.kt"
       ]
     },
     {
@@ -201,23 +165,23 @@
           "side": "web",
           "match": "^(chương có thể không còn trong sách)$",
           "reason": "web only: error from the web server"
+        },
+        {
+          "side": "web",
+          "match": "^(nghe tiếp · \\{\\})$",
+          "reason": "native primary button is just \"Nghe tiếp\" (labels are 1-4 words); the chapter it resumes is the line under the progress bar"
+        },
+        {
+          "side": "web",
+          "match": "^(chương tiếp theo sẽ nghe được khi máy làm xong chương ấy)$",
+          "reason": "the phone has no machine making the book, so it states only what it knows: \"Các chương sau chưa có audio.\""
         }
       ],
       "missing": [
         {
           "side": "web",
-          "match": "^(chương sau chưa có audio|các chương sau chưa có audio|đây là chương cuối|đã nghe hết cả cuốn|đã nghe \\{\\} \\{\\} · \\{\\}|nghe tiếp · \\{\\})$",
-          "reason": "player progress and next-chapter notices"
-        },
-        {
-          "side": "web",
-          "match": "^(máy này chưa có giọng đọc|nghe bằng giọng đọc.*|đang chuẩn bị giọng đọc|đang tải âm thanh|đang thu âm)$",
-          "reason": "player status line while the voice or audio is not ready"
-        },
-        {
-          "side": "web",
-          "match": "^(chưa có audio; bạn vẫn đọc được chữ|chương tiếp theo sẽ nghe được khi máy làm xong chương ấy)$",
-          "reason": "player notices"
+          "match": "^(đang thu âm)$",
+          "reason": "chapter being recorded by a computer: needs a per-chapter producing flag that the native ListenBook / PlayerChapter does not carry yet"
         }
       ],
       "deferred": [],
@@ -316,48 +280,43 @@
           "side": "web",
           "match": "^(bỏ gộp|bỏ gộp \\{\\} vào \\{\\}|chờ áp dụng|chờ áp dụng: giọng|từ phần trước|đổi giọng người kể|nếu giọng|áp dụng sẽ thu lại|đang thu; chương mới tự hiện khi xong)$",
           "reason": "Studio / workshop only: the book page of the phone never gets the unmerge, voice-pick or narrator callbacks (only Studio passes them), the cast is always 'waiting' (shown as 'Đang chờ máy làm sách'), nothing is recorded on the phone, and a book is never being recorded here"
+        },
+        {
+          "side": "web",
+          "match": "^(không mở được chương này|về trang sách|điều khiển đọc|đọc|đọc tiếp|đọc chương này|đọc \\{\\} \\(chưa có audio\\))$",
+          "reason": "the phone has no separate Reader screen: text opens as Read-along inside Now Playing (docs/NATIVE_PHONE_UI.md), a failed load is written there with \"Thử lại\", chapters without audio but with text are read aloud by Nghe"
+        },
+        {
+          "side": "web",
+          "match": "^(dừng)$",
+          "reason": "hover tooltip of the voice-sample button (touch has no hover); its accessible name \"Dừng nghe thử\" is on the native button"
+        },
+        {
+          "side": "web",
+          "match": "^(đang tải về máy)$",
+          "reason": "web menu closes and toasts the start; the native remote-book sheet shows \"Đang tải N%\" in place"
+        },
+        {
+          "side": "web",
+          "match": "^(chưa xếp lại hàng chờ làm sách|thư viện có hai cuốn trùng tên)$",
+          "reason": "computer only: the phone has no make-book queue and restore never renames (TrashPending.Occupied)"
+        },
+        {
+          "side": "web",
+          "match": "^(lần cuối dùng máy)$",
+          "reason": "computer wording of the recap marker \"Lần cuối chạm máy\" (a phone is touched, a computer is used)"
         }
       ],
       "missing": [
         {
           "side": "web",
-          "match": "^(chương sau|chương tiếp theo|chương trước|cỡ chữ.*|giãn dòng|không mở được chương này|về trang sách|điều khiển đọc|đọc|đọc tiếp|đọc chương này|đọc \\{\\} \\(chưa có audio\\))$",
-          "reason": "reading screen (Reader) and its entries"
+          "match": "^(đang chờ máy làm sách|chưa đủ chương; đang dừng thu)$",
+          "reason": "book page: producing / paused-by-battery status of a book being made on a computer - needs the producing and pause reason on the native ListenBook"
         },
         {
           "side": "web",
-          "match": "^(chọn câu cuối cùng còn nhớ|nghe tới đâu rồi thiếp đi|nghe từ đây|thu gọn|tìm đúng câu|ẩn thẻ này|hẹn giờ ngủ|lần cuối chạm máy|lần cuối dùng máy|máy bắt đầu nằm yên|tự dừng|vừa hẹn giờ|tối qua)$",
-          "reason": "morning recap card"
-        },
-        {
-          "side": "web",
-          "match": "^(dừng|dừng nghe thử|đã làm sẵn|đang chờ máy làm sách|chưa đủ chương; đang dừng thu)$",
-          "reason": "book page: trial listening and producing status"
-        },
-        {
-          "side": "web",
-          "match": "^(chiếm \\{\\}|chỉ có chữ|chưa có chương nghe được\\{\\}|đang làm \\{\\}|đang làm · \\{\\}|đang tạm dừng \\{\\}|đang tạm dừng\\{\\}|có sách trên máy khác)$",
-          "reason": "library: rows for books being made and books held by another computer"
-        },
-        {
-          "side": "web",
-          "match": "^(nối máy)$",
-          "reason": "empty library has no \"Nối máy\" button"
-        },
-        {
-          "side": "web",
-          "match": "^(xoá ô tìm|tên sách, tác giả, giọng)$",
-          "reason": "search box: clear-then-close and the placeholder hint"
-        },
-        {
-          "side": "web",
-          "match": "^(đổi tên chương)$",
-          "reason": "rename a chapter"
-        },
-        {
-          "side": "web",
-          "match": "^(chưa xếp lại hàng chờ làm sách|thư viện có hai cuốn trùng tên)$",
-          "reason": "undo toast notes (queue, duplicate name)"
+          "match": "^(chỉ có chữ|chưa có chương nghe được\\{\\}|đang làm \\{\\}|đang làm · \\{\\}|đang tạm dừng \\{\\}|đang tạm dừng\\{\\})$",
+          "reason": "library: rows for books being made on another computer - needs producing / pause reason / eta on the native ListenBook (the Devices lane carries them only on its own screen)"
         },
         {
           "side": "native",
@@ -376,11 +335,6 @@
         },
         {
           "side": "native",
-          "match": "^(tới chỗ đang nghe)$",
-          "reason": "web chapter list has no 'jump to the chapter being heard' link"
-        },
-        {
-          "side": "native",
           "match": "^(đang xoá|đang đóng file sách)$",
           "reason": "web shows a spinner in the button / closes the menu, no busy word"
         },
@@ -395,24 +349,9 @@
           "reason": "web book page offers 'Đọc' when nothing is playable; native writes a line"
         },
         {
-          "side": "web",
-          "match": "^(đang nghe|không phát được)$",
-          "reason": "native has no 'Đang nghe' row in Thư viện (LibraryScreen.kt) and no listening / error state on the book page's progress line"
-        },
-        {
-          "side": "web",
-          "match": "^(đang tải về máy)$",
-          "reason": "native remote-book sheet shows 'Đang tải N%' in place; web menu closes, so it toasts the start"
-        },
-        {
-          "side": "web",
-          "match": "^(chưa tải được)$",
-          "reason": "native writes the core's failure sentence under the button, without a title"
-        },
-        {
-          "side": "web",
-          "match": "^(lưu thay đổi|lưu thành)$",
-          "reason": "book menu: save the listener's changes into the .abook file / save as another file - the native book menu has no save entry yet"
+          "side": "native",
+          "match": "^(tới chỗ đang nghe)$",
+          "reason": "web chapter list has no 'jump to the chapter being heard' link"
         }
       ],
       "deferred": [],
@@ -428,7 +367,14 @@
       ],
       "sentences": true,
       "native_also": [
-        "screens/RemoteBookSheet.kt"
+        "screens/RemoteBookSheet.kt",
+        "nowplaying/NowPlayingScreen.kt",
+        "nowplaying/ReadAlongPane.kt",
+        "nowplaying/PlayerSheets.kt",
+        "nowplaying/ReadLook.kt",
+        "screens/MorningRecap.kt",
+        "nowplaying/PlayerText.kt",
+        "data/NightRecap.kt"
       ]
     },
     {
