@@ -36,6 +36,13 @@ QtObject {
         })
     }
     function ok(status) { return status >= 200 && status < 300 }
+    // Như Api.quiet (done(data, lỗi, thân)) nhưng đi đúng máy của Studio: tab Nhân vật tự hiện lỗi tại chỗ thay vì đặt Api.notice
+    function quiet(method, p, body, done) {
+        return request(method, p, body, function(status, data) {
+            if (ok(status)) { if (done) done(data, null) }
+            else if (done) done(null, data && (data.message || data.error) || (status === 0 ? errorText(0, null) : "Không làm được lúc này."), data)
+        })
+    }
     // Lời lỗi cho người nghe (serverMessage + failureText của web)
     function errorText(status, data) {
         if (status === 0) return "Mất kết nối tới ABook."
@@ -219,6 +226,25 @@ QtObject {
                 root.loadLibrary()
                 if (done) done(d2.id)
             })
+        })
+    }
+
+    // ---- nhân vật và "Duyệt trước khi thu" ----
+    signal castEdited(string bookId)                // một việc sửa dàn nhân vật vừa ghi xong: danh sách người, hộp việc, cách đọc tên đọc lại
+    signal precastChanged(string bookId)
+    function editedCast(id) {
+        if (id === bookId) loadBook()
+        if (libraryWanted) loadLibrary()
+        castEdited(id)
+    }
+    // Công tắc "Duyệt trước khi thu" (PrecastWaitSwitch): PUT /precast {wait}; lời đáp là trạng thái mới của màn duyệt
+    function setPrecastWait(id, wait, done) {
+        request("PUT", "/api/books/" + id + "/precast", {wait: wait}, function(status, data) {
+            if (!ok(status)) { root.fail("Chưa đổi được", status, data); if (done) done(false); return }
+            if (id === bookId) loadBook()
+            if (libraryWanted) loadLibrary()
+            precastChanged(id)
+            if (done) done(true)
         })
     }
 

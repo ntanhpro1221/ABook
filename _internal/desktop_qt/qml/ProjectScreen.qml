@@ -1,10 +1,12 @@
 import QtQuick
 import ABook
 import "StudioLogic.js" as Logic
+import "PrecastLogic.js" as Precast
+import "EditBookLogic.js" as Edit
 
 // Studio › một dự án (ProjectScreen.tsx; DESIGN.md mục 7): tên + dòng trạng thái, MỘT nút chính theo trạng thái (Bắt đầu · Tạm dừng · Tiếp tục · Nghe trong Thư viện;
 // sách xong còn thay đổi chờ thì "Áp dụng N thay đổi"), mọi việc khác trong "…". Dưới là hàng tab (Chương · Việc cần duyệt · Cần nghe lại · Nhân vật · Nhạc nền;
-// còn lại trong "Thêm") và nội dung tab: Chương, Nhật ký, Nhạc nền (StudioMusic); các tab khác nói gọn là chưa mở.
+// còn lại trong "Thêm") và nội dung tab: Chương, Việc cần duyệt, Cần nghe lại, Nhân vật (dàn người, đổi giọng / tên / giới / gộp, công tắc tự kể, cách đọc tên), Duyệt trước khi thu, Nhật ký, Nhạc nền (StudioMusic); các tab khác nói gọn là chưa mở.
 // "Tạm dừng" gọi lệnh tạm dừng, KHÔNG BAO GIỜ dừng (dừng giữa pha phân tích là đổi quyển sách, AGENTS.md); "Dừng…" chỉ ở "…" kèm lời cảnh báo.
 // Cả danh sách cuộn MỘT khung: phần đầu là header của ListView, hàng chương / nhật ký giữ theo khoá nên nhịp hỏi 3 s / 15 s không làm nhảy chỗ cuộn.
 FocusScope {
@@ -44,9 +46,10 @@ FocusScope {
     property string cameFrom: ""
     property string nameParam: ""
     property bool focusNames: false
+    property string precastStep: "cast"
     readonly property var fromLabels: ({work: "Việc cần duyệt", review: "Cần nghe lại", precast: "Duyệt trước khi thu"})
     function pickTab(key) {
-        workKind = "all"; workCard = ""; cameFrom = ""; nameParam = ""; focusNames = false
+        workKind = "all"; workCard = ""; cameFrom = ""; nameParam = ""; focusNames = false; precastStep = "cast"
         tab = Logic.tabOf(key)
     }
     function jump(next, from, card, name, names) {
@@ -83,9 +86,34 @@ FocusScope {
         store: root.store
         book: root.book
         bookId: root.book ? root.book.id : ""
-        workWanted: root.shownTab === "work"
+        workWanted: root.shownTab === "work" || root.shownTab === "precast"
         namesWanted: root.shownTab === "cast"
         counting: root.visible
+    }
+
+    // ---- nhân vật: người, giọng, tên, giới, gộp (tab Nhân vật và màn "Duyệt trước khi thu") ----
+    // Việc làm được với một người: Studio sửa mọi thứ như web (máy chủ từ chối thì báo lời của máy chủ)
+    readonly property var castCaps: ({rename: true, merge: true, gender: true, voice: true, unmerge: true, narrator: !!book && Boolean(book.castLocked), waiting: false})
+    function castRequest(kind, person) {
+        if (!book || !store) return
+        if (kind === "unmerge") { castUnmerge.run(book.id, person); return }
+        const data = {bookId: book.id, person: person, waiting: false}
+        if (kind !== "merge") { castDialogs.begin(kind, data); return }
+        // Người có thể nhận phần gộp: cả vai chính và vai phụ, đọc mới lúc bấm (như useCast của web)
+        const id = book.id
+        store.quiet("GET", "/api/books/" + id + "/cast", null, function(cast, error) {
+            if (!root.book || root.book.id !== id) return
+            if (error || !cast) { Api.notice = Edit.toastText("Chưa gộp được", error || "Không làm được lúc này."); return }
+            data.people = (cast.characters || []).concat(cast.extras || [])
+            castDialogs.begin("merge", data)
+        })
+    }
+    CastDialogs { id: castDialogs; objectName: "studioCastDialogs"; store: root.store }
+    CastUnmerge { id: castUnmerge; store: root.store }
+    CastMenu {
+        id: castMenu
+        caps: root.castCaps
+        onPicked: (kind, person) => root.castRequest(kind, person)
     }
 
     // ---- nhật ký ----
@@ -114,7 +142,7 @@ FocusScope {
         target: root.store
         function onBookIdChanged() {
             root.activityData = null; root.next = 0
-            root.workKind = "all"; root.workCard = ""; root.cameFrom = ""; root.nameParam = ""; root.focusNames = false
+            root.workKind = "all"; root.workCard = ""; root.cameFrom = ""; root.nameParam = ""; root.focusNames = false; root.precastStep = "cast"
             root.tab = "chapters"; root.shownTab = "chapters"
             Qt.callLater(root.refreshNext)
         }
@@ -380,6 +408,18 @@ FocusScope {
                         }
                     }
                 }
+                // Trước mốc phân tích xong: đặt sẵn "Duyệt trước khi thu" cho cuốn này (webui/precast.py)
+                Collapse {
+                    width: parent.width
+                    open: !!root.book && root.book.phase !== "done" && !root.book.castLocked && !!root.book.precast
+                    PrecastWait { store: root.store; book: root.book }
+                }
+                // Phân tích xong mà chưa thu bao nhiêu: lối vào "Duyệt trước khi thu" đúng lúc sửa còn miễn phí
+                Collapse {
+                    width: parent.width
+                    open: !!root.book && Precast.bannerShown(root.book, root.tab)
+                    PrecastBanner { book: root.book; onOpened: root.pickTab("precast") }
+                }
                 Item { width: 1; height: 12 }
                 StudioTabs {
                     id: tabs
@@ -387,7 +427,7 @@ FocusScope {
                     width: parent.width
                     tab: root.tab
                     precast: root.hasPrecast
-                    counts: ({chapters: root.book ? root.book.chapters.total : 0, work: studioWork.workCount || undefined, review: studioWork.reviewCount || undefined})
+                    counts: ({chapters: root.book ? root.book.chapters.total : 0, precast: studioWork.precastCount || undefined, work: studioWork.workCount || undefined, review: studioWork.reviewCount || undefined})
                     onPicked: key => root.pickTab(key)
                     onMoreRequested: anchor => { moreMenu.items = Logic.moreItems(root.hasPrecast); moreMenu.anchorItem = anchor; moreMenu.show() }
                 }
@@ -533,7 +573,8 @@ FocusScope {
             width: list.width
             readonly property bool chaptersEmpty: root.shownTab === "chapters" && root.store && root.store.chapters.length === 0
             readonly property bool activityEmpty: root.shownTab === "activity" && root.activityData !== null && root.activityData.length === 0
-            readonly property bool placeholder: Logic.MAIN_TABS.concat(["precast", "script"]).indexOf(root.shownTab) >= 0 && root.shownTab !== "chapters" && root.shownTab !== "work" && root.shownTab !== "review" && root.shownTab !== "music"
+            readonly property bool notReady: root.shownTab === "precast" && !root.hasPrecast
+            readonly property bool placeholder: ["script"].indexOf(root.shownTab) >= 0 || notReady
             readonly property real innerHeight: chaptersEmpty || activityEmpty ? emptyBlock.height : placeholder ? placeholderText.height + 48 : root.shownTab === "activity" && root.activityLoading ? 160 : 0
             height: backWrap.height + innerHeight + panels.height + (musicTab.item ? musicTab.item.height + 48 : 0)
             opacity: root.swap
@@ -577,7 +618,7 @@ FocusScope {
                 visible: parent.placeholder
                 x: 8; y: backWrap.height + 32
                 width: root.contentW
-                text: Logic.tabPlaceholder(root.shownTab)
+                text: parent.notReady ? Precast.NOT_READY : Logic.tabPlaceholder(root.shownTab)
                 color: Theme.text2
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeBodySmall
@@ -596,7 +637,11 @@ FocusScope {
                 x: 8
                 y: backWrap.height + parent.innerHeight
                 width: root.contentW
+                store: root.store
+                book: root.book
                 work: studioWork
+                caps: root.castCaps
+                precastStep: root.precastStep
                 tab: root.shownTab
                 workKind: root.workKind
                 workCard: root.workCard
@@ -605,6 +650,12 @@ FocusScope {
                 onKindChosen: value => { root.workKind = value; root.workCard = "" }
                 onJumped: (next, from, card, name, names) => root.jump(next, from, card, name, names)
                 onRevealRequested: target => root.reveal(target)
+                onPersonRequest: (kind, person) => root.castRequest(kind, person)
+                onPersonMenu: (anchor, person) => castMenu.openFor(anchor, person)
+                onPrecastStepChosen: value => root.precastStep = value
+                onPrecastOpened: root.pickTab("precast")
+                onPrecastClosed: root.pickTab("chapters")
+                onRedoRequested: if (root.book) root.newProjectRequested("redo", root.book.id)
             }
             // Tab Nhạc nền: dựng khi mở tab, gỡ khi rời (rời tab thì bài nghe thử dừng)
             Loader {

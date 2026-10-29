@@ -197,37 +197,14 @@ Item {
     readonly property var castUntil: Player.loaded && Player.bookId === root.book.bookId ? Player.chapterId
         : (fullBook.state && fullBook.state.last ? fullBook.state.last.chapterId : undefined)
     readonly property var castReached: fullBook.chapters && fullBook.chapters.length ? Cast.reachedTitles(fullBook.chapters, castUntil) : null
-    property var castPerson: null           // người đang mở menu "…"
-    function openCastMenu(anchor, person) {
-        castPerson = person
-        castMenu.anchorItem = anchor
-        castMenu.show()
-    }
+    function openCastMenu(anchor, person) { castMenu.openFor(anchor, person) }
     function castRequest(kind, person) {
-        if (kind === "unmerge") { unmerge(person); return }
+        if (kind === "unmerge") { castUnmerge.run(root.book.bookId, person); return }
         const data = {bookId: root.book.bookId, person: person, waiting: castWaiting}
         if (kind === "merge") data.people = castList.characters
         root.castRequested(kind, data)
     }
-    // "Bỏ gộp" (useUnmerge.ts): không có đường riêng - tìm đúng lần gộp trong danh sách thay đổi đang chờ rồi rút bằng đường hoàn tác của "Ai nói câu này"
-    function unmerge(person) {
-        const id = root.book.bookId
-        const name = Cast.cleanName(person.displayName)
-        const fail = error => { Api.notice = Logic.toastText("Chưa bỏ gộp được", error) }
-        Api.quiet("GET", "/api/books/" + id + "/pending-changes", null, function(details, error) {
-            if (error) { fail(error); return }
-            const stamp = person.mergedAt
-            const items = details && details.items ? details.items : []
-            const item = typeof stamp === "number" ? items.filter(e => e.section === "speakers" && Math.abs(e.requestedAt - stamp) < 1e-6)[0] : undefined
-            if (!item) { fail("Lần gộp này đã được áp hoặc đã bị thay bằng lựa chọn khác - mở lại màn này để xem."); return }
-            const keys = item.keys || [item.key]
-            Api.quiet("POST", "/api/books/" + id + "/speaker", {lines: keys.map(k => ({stableId: k})), withdraw: true, requestedAt: item.requestedAt}, function(data, err) {
-                if (err) { fail(err); return }
-                Api.editedBook(id)
-                Api.notice = "Đã bỏ gộp " + name
-            })
-        })
-    }
+    CastUnmerge { id: castUnmerge }
     function openChapterMenu(anchor, row) {
         menuChapter = row
         chapterMenu.anchorItem = anchor
@@ -290,37 +267,11 @@ Item {
             }
         }
     }
-    // Menu "…" của một người ở tab Nhân vật: Gộp vào người khác…, Đổi tên, Đổi giới tính (chỉ mục làm được; bảng nổi đo chỗ theo số hàng)
-    Popover {
+    // Menu "…" của một người ở tab Nhân vật (CastMenu, dùng chung với Studio)
+    CastMenu {
         id: castMenu
-        objectName: "castMenu"
-        panelWidth: 240
-        pad: 6
-        Column {
-            width: parent.width
-            readonly property var p: root.castPerson || ({})
-            readonly property bool canMerge: Boolean(root.castCaps.merge) && p.lines > 0
-            readonly property bool canGender: Boolean(root.castCaps.gender) && Boolean(p.voice) && p.lines > 0
-            height: Theme.buttonHeight * ((canMerge ? 1 : 0) + (root.castCaps.rename ? 1 : 0) + (canGender ? 1 : 0))
-            MenuRow {
-                objectName: "castMerge"
-                visible: parent.canMerge
-                width: parent.width; icon: "git-merge"; text: "Gộp vào người khác…"
-                onClicked: { castMenu.close(); root.castRequest("merge", parent.p) }
-            }
-            MenuRow {
-                objectName: "castRename"
-                visible: Boolean(root.castCaps.rename)
-                width: parent.width; icon: "text-cursor-input"; text: "Đổi tên"
-                onClicked: { castMenu.close(); root.castRequest("rename", parent.p) }
-            }
-            MenuRow {
-                objectName: "castGender"
-                visible: parent.canGender
-                width: parent.width; icon: "user-round"; text: "Đổi giới tính"
-                onClicked: { castMenu.close(); root.castRequest("gender", parent.p) }
-            }
-        }
+        caps: root.castCaps
+        onPicked: (kind, person) => root.castRequest(kind, person)
     }
     Item {
         id: stage

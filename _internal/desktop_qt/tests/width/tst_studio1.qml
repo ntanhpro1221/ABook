@@ -409,8 +409,8 @@ Item {
             compare(one(page, "tab_music").Accessible.name, "Nhạc nền")
             compare(one(page, "tab_moreLabel").text, "Thêm")
             // tab chưa làm: một câu trung tính
-            one(page, "tab_cast").clicked()
-            tryCompare(page, "shownTab", "cast")
+            one(page, "tab_music").clicked()
+            tryCompare(page, "shownTab", "music")
             tryCompare(page, "phase", 1)
             verify(hasText(page, "Mục này chưa mở trong bản này."))
             compare(one(page, "tab_moreLabel").text, "Thêm")
