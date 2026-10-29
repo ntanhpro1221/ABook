@@ -14,6 +14,8 @@ Column {
     property var initial: null                  // trạng thái hộp gửi sẵn trong lời đáp /voices (modules[máy đọc])
     property var fetched: null
     property bool busy: false
+    property var store: null                    // Studio: máy tính ghép (remote) thì tải giọng là việc của máy tính - chỉ nói ở đâu, không nút, không hỏi tiến độ
+    readonly property bool remote: store ? store.remote : false
     readonly property var status: fetched !== null ? fetched : initial
     readonly property bool downloading: status !== null && status.state === "downloading"
     readonly property string note: Logic.moduleNote(status)
@@ -23,7 +25,7 @@ Column {
     spacing: 2
 
     function refresh() {
-        if (!root.engine) return
+        if (!root.engine || root.remote) return
         Api.quiet("GET", "/api/studio/" + root.engine, null, function(data, error) { if (!error && data && data.state) root.fetched = data })
     }
     // Một việc ghi lên mô-đun; lỗi thì lời báo hai dòng (tiêu đề + nguyên nhân) như toast.error(failure, {description})
@@ -39,15 +41,16 @@ Column {
         if (root.initial && root.initial.state !== "ready" && status && status.state === "ready") root.ready()
     }
     onInitialChanged: fetched = null
-    Timer { interval: 1000; running: activity.running && root.downloading; repeat: true; onTriggered: root.refresh() }
+    Timer { interval: 1000; running: activity.running && root.downloading && !root.remote; repeat: true; onTriggered: root.refresh() }
 
     Item {
         width: parent.width
-        height: Math.max(head.height, start.visible ? start.height : 0)
+        readonly property real tail: pill.visible ? pill.width : start.visible ? start.width : 0
+        height: Math.max(head.height, pill.visible ? pill.height : start.visible ? start.height : 0)
         Text {
             id: head
             objectName: "engineLabel"
-            width: Math.max(0, parent.width - (start.visible ? start.width + 8 : 0))
+            width: Math.max(0, parent.width - (parent.tail > 0 ? parent.tail + 8 : 0))
             anchors.verticalCenter: parent.verticalCenter
             text: root.label
             color: Theme.text3
@@ -58,7 +61,7 @@ Column {
         Button {
             id: start
             objectName: "engineStart"
-            visible: root.action !== ""
+            visible: root.action !== "" && !root.remote
             x: parent.width - width
             anchors.verticalCenter: parent.verticalCenter
             size: "sm"
@@ -66,6 +69,16 @@ Column {
             text: root.action
             busy: root.busy
             onActivated: root.run("", "Chưa tải được giọng")
+        }
+        OnComputerPill {
+            id: pill
+            objectName: "engineOnComputer"
+            visible: root.action !== "" && root.remote
+            x: parent.width - width
+            anchors.verticalCenter: parent.verticalCenter
+            verb: "Tải giọng"
+            computer: root.store ? root.store.computerName : "máy tính"
+            maxWidth: Math.max(120, parent.width * 0.6)
         }
     }
     Text {
@@ -91,7 +104,7 @@ Column {
         Button {
             id: cancel
             objectName: "engineCancel"
-            visible: Boolean(root.status && root.status.cancellable)
+            visible: Boolean(root.status && root.status.cancellable) && !root.remote
             x: parent.width - width
             y: 2
             size: "sm"

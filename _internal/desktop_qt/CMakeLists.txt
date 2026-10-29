@@ -327,6 +327,17 @@ qt_add_qml_module(ABookDesk
         qml/CastRename.qml
         qml/CastSample.qml
         qml/CastVoice.qml
+        qml/CastMenu.qml
+        qml/CastUnmerge.qml
+        qml/CastNote.qml
+        qml/TellerMode.qml
+        qml/TellerLogic.js
+        qml/PrecastLogic.js
+        qml/PrecastReview.qml
+        qml/PrecastWait.qml
+        qml/PrecastBanner.qml
+        qml/CardFocus.qml
+        qml/WorkCards.qml
         qml/HistoryList.qml
         qml/HistoryLogic.js
         qml/RecordChip.qml

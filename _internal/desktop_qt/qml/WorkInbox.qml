@@ -16,20 +16,20 @@ FocusScope {
     property string focusKey: ""
     property int shown: W.PAGE
     property int cursor: -1
-    property string lastCard: ""
-    property var snapshot: null
     property bool focused: false
     property bool voicePick: false              // có chỗ chọn giọng để mở từ thẻ giọng (Studio chưa có thì thẻ không mời)
+    property var inPrecast: ({})                // {khoá: true} của thẻ đang nằm ở "Duyệt trước khi thu": không hiện lại ở đây, chỉ nói còn bao nhiêu
     signal kindChosen(string kind)
     signal openReview(string card)
     signal openScript(int chapterId, string stableId, bool pick, string card)
     signal openNames(string name, string card)
     signal pickVoice(var person)
+    signal openPrecast()
     signal revealRequested(var item)
 
     readonly property var query: work ? work.work : null
     readonly property var all: query && query.data ? query.data.items : null
-    readonly property var group: W.groups(all || [], ({}), kind)
+    readonly property var group: W.groups(all || [], inPrecast || ({}), kind)
     readonly property var cards: group.filtered.slice(0, shown)
     readonly property string activeKey: cursor < 0 || cards.length === 0 ? "" : cards[Math.min(cursor, cards.length - 1)].key
     readonly property bool keysOn: visible && Nav.uiVisible && !Nav.popupOpen && Api.preferences.letterShortcuts !== false
@@ -46,52 +46,22 @@ FocusScope {
         focused = true
         const index = (group ? group.filtered : []).findIndex(function(item) { return item.key === focusKey })
         if (index >= shown) shown = Math.ceil((index + 1) / W.PAGE) * W.PAGE
-        Qt.callLater(function() { root.focusCard(root.focusKey, false) })
+        Qt.callLater(function() { cardFocus.focusCard(root.focusKey, false) })
     }
 
     // ---- thẻ và tiêu điểm ----
-    function findCard(key) {
-        let found = null
-        function walk(node) {
-            if (found) return
-            for (const child of node.children) {
-                if (child.objectName === "workCard" && child.key === key) { found = child; return }
-                walk(child)
-            }
-        }
-        walk(stack)
-        return found
-    }
-    function cardKey(node) {
-        for (let n = node; n; n = n.parent) if (n.objectName === "workCard") return n.key
-        return ""
-    }
-    function inside(node) {
-        for (let n = node; n; n = n.parent) if (n === root) return true
-        return false
-    }
     function listsNow() {
         return {open: cards.map(function(item) { return item.key }), decided: group.decided.map(function(item) { return item.key })}
-    }
-    function focusCard(key, take) {
-        if (key === "end") { (endLine.visible ? endLine : lead).forceActiveFocus(); return }
-        const card = findCard(key)
-        if (!card) return
-        if (take !== false) {
-            const buttons = card.choices()
-            if (buttons.length > 0) buttons[0].forceActiveFocus(); else card.forceActiveFocus()
-        }
-        revealRequested(card)
     }
     function select(index) {
         if (cards.length === 0) return
         cursor = Math.min(Math.max(index, 0), cards.length - 1)
-        focusCard(cards[cursor].key, true)
+        cardFocus.focusCard(cards[cursor].key, true)
     }
     function moveCursor(step) { select(cursor < 0 ? 0 : cursor + step) }
     function chooseNumber(number) {
         if (cursor < 0 || cards.length === 0) return false
-        const card = findCard(activeKey)
+        const card = cardFocus.findCard(activeKey)
         const buttons = card ? card.choices() : []
         if (number > buttons.length) return false
         buttons[number - 1].clicked()
@@ -102,18 +72,12 @@ FocusScope {
         return Boolean(focus) && typeof focus.cursorPosition === "number"
     }
     // Thẻ giữ tiêu điểm rời danh sách (quyết, hoàn tác): tiêu điểm sang thẻ kế thay vì rơi về nền
-    Connections {
-        target: root.Window.window
-        function onActiveFocusItemChanged() {
-            const now = root.Window.window.activeFocusItem
-            const key = root.cardKey(now)
-            if (key !== "") { root.lastCard = key; root.snapshot = root.listsNow(); return }
-            if (root.lastCard === "" || !root.snapshot) return
-            if (now && now !== root.Window.window.contentItem) { root.lastCard = ""; return }
-            const target = W.focusAfterChange(root.snapshot, root.listsNow(), root.lastCard)
-            root.lastCard = ""
-            if (target !== null) Qt.callLater(function() { root.focusCard(target, true) })
-        }
+    CardFocus {
+        id: cardFocus
+        scope: stack
+        lists: root.listsNow
+        endTarget: function() { return endLine.visible ? endLine : lead }
+        onRevealRequested: card => root.revealRequested(card)
     }
     Keys.onShortcutOverride: event => { if (event.key === Qt.Key_Escape && root.cursor >= 0) event.accepted = true }
     Keys.onEscapePressed: event => { if (root.cursor >= 0) { root.cursor = -1; event.accepted = true } }
@@ -174,6 +138,35 @@ FocusScope {
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeBodySmall
             }
+            // Thẻ của các chương đầu nằm ở màn duyệt: chỉ nói còn bao nhiêu và đường mở màn ấy
+            Collapse {
+                width: parent.width
+                open: root.group.atReview > 0
+                Item {
+                    objectName: "workPrecast"
+                    width: parent.width
+                    height: Math.max(precastText.height, precastOpen.height) + 24 + 16
+                    Text {
+                        id: precastText
+                        y: 16 + 12
+                        width: parent.width - precastOpen.width - 12
+                        text: W.precastLine(root.group.atReview)
+                        color: Theme.text
+                        wrapMode: Text.Wrap
+                        font.pixelSize: Theme.sizeBodySmall
+                    }
+                    Button {
+                        id: precastOpen
+                        objectName: "workPrecastOpen"
+                        x: parent.width - width
+                        y: 16 + 12
+                        size: "sm"
+                        kind: "ghost"
+                        text: "Mở màn duyệt"
+                        onClicked: root.openPrecast()
+                    }
+                }
+            }
             Item { width: 1; height: 16 }
             ChoiceRow {
                 objectName: "workFilter"
@@ -199,12 +192,16 @@ FocusScope {
                 Text { height: 20; verticalAlignment: Text.AlignVCenter; text: "bỏ chọn"; color: Theme.text3; font.pixelSize: Theme.sizeCaption }
             }
             Item { width: 1; height: 12 }
-            StudioRows {
-                objectName: "workCards"
+            WorkCards {
                 width: parent.width
                 items: root.cards
-                keyField: "key"
-                delegate: cardDelegate
+                work: root.work
+                voicePick: root.voicePick
+                activeKey: root.activeKey
+                onOpenReview: card => root.openReview(card)
+                onOpenScript: (chapterId, stableId, pick, card) => root.openScript(chapterId, stableId, pick, card)
+                onOpenNames: (name, card) => root.openNames(name, card)
+                onPickVoice: person => root.pickVoice(person)
             }
             Collapse {
                 width: parent.width
@@ -225,7 +222,7 @@ FocusScope {
             }
             Collapse {
                 width: parent.width
-                open: root.group.open.length === 0
+                open: root.group.open.length === 0 && root.group.atReview === 0
                 Text {
                     id: endLine
                     objectName: "workEnd"
@@ -241,7 +238,17 @@ FocusScope {
                 objectName: "workDecided"
                 present: root.group.decided.length > 0
                 title: W.decidedSummary(root.group.decided, root.group.waiting)
-                StudioRows { width: parent.width; items: root.group.decided; keyField: "key"; delegate: cardDelegate }
+                WorkCards {
+                    objectName: "studioRows"
+                    width: parent.width
+                    items: root.group.decided
+                    work: root.work
+                    voicePick: root.voicePick
+                    onOpenReview: card => root.openReview(card)
+                    onOpenScript: (chapterId, stableId, pick, card) => root.openScript(chapterId, stableId, pick, card)
+                    onOpenNames: (name, card) => root.openNames(name, card)
+                    onPickVoice: person => root.pickVoice(person)
+                }
             }
             WorkSection {
                 objectName: "workLater"
@@ -256,32 +263,35 @@ FocusScope {
                     wrapMode: Text.Wrap
                     font.pixelSize: Theme.sizeCaption
                 }
-                StudioRows { width: parent.width; items: root.group.later; keyField: "key"; delegate: cardDelegate }
+                WorkCards {
+                    objectName: "studioRows"
+                    width: parent.width
+                    items: root.group.later
+                    work: root.work
+                    voicePick: root.voicePick
+                    onOpenReview: card => root.openReview(card)
+                    onOpenScript: (chapterId, stableId, pick, card) => root.openScript(chapterId, stableId, pick, card)
+                    onOpenNames: (name, card) => root.openNames(name, card)
+                    onPickVoice: person => root.pickVoice(person)
+                }
             }
             WorkSection {
                 objectName: "workRedo"
                 present: root.group.redo.length > 0
                 gap: 16
                 title: "Đã ghi"
-                StudioRows { width: parent.width; items: root.group.redo; keyField: "key"; delegate: cardDelegate }
+                WorkCards {
+                    objectName: "studioRows"
+                    width: parent.width
+                    items: root.group.redo
+                    work: root.work
+                    voicePick: root.voicePick
+                    onOpenReview: card => root.openReview(card)
+                    onOpenScript: (chapterId, stableId, pick, card) => root.openScript(chapterId, stableId, pick, card)
+                    onOpenNames: (name, card) => root.openNames(name, card)
+                    onPickVoice: person => root.pickVoice(person)
+                }
             }
-        }
-    }
-
-    Component {
-        id: cardDelegate
-        WorkCard {
-            property var modelData: ({})
-            work: root.work
-            item: modelData || ({})
-            active: Boolean(modelData) && modelData.key === root.activeKey
-            scriptLinks: Boolean(modelData) && !modelData.requested
-            namesLink: true
-            voicePick: root.voicePick
-            onOpenReview: card => root.openReview(card)
-            onOpenScript: (chapterId, stableId, pick, card) => root.openScript(chapterId, stableId, pick, card)
-            onOpenNames: (name, card) => root.openNames(name, card)
-            onPickVoice: person => root.pickVoice(person)
         }
     }
 }

@@ -6,9 +6,11 @@ import ABook
 Flow {
     id: root
     property string bookId: ""
+    property string peer: ""
     property var people: []
     property var caps: ({})
     property var shown: person => true
+    property Component below: null
     readonly property int columns: width >= 560 ? 2 : 1
     readonly property real cellWidth: (width - (columns - 1) * spacing) / columns
     signal request(string kind, var person)
@@ -26,10 +28,18 @@ Flow {
             CastPerson {
                 width: cell.width
                 bookId: root.bookId
+                peer: root.peer
                 person: cell.modelData
                 caps: root.caps
                 onRequest: (kind, person) => root.request(kind, person)
                 onMenuRequested: (anchor, person) => root.menuRequested(anchor, person)
+            }
+            // Dòng dưới người (màn "Duyệt trước khi thu": người trùng tên): Component có `property var person`
+            Loader {
+                width: cell.width
+                active: root.below !== null
+                sourceComponent: root.below
+                onLoaded: item.person = Qt.binding(function() { return cell.modelData })
             }
         }
     }
