@@ -121,7 +121,7 @@ Item {
             const history = openPage()
             findChild(page, "bookTabs").picked(1)
             tryCompare(history, "status", "loading")
-            settle()
+            tryVerify(function() { return findChild(history, "historySkeleton").visible })
             verify(findChild(history, "historySkeleton").visible)
             compare(findChild(history, "historySkeleton").Accessible.name, "Đang tải lịch sử")
             verify(!findChild(history, "historyEmpty").visible, "không được nháy 'Chưa có lịch sử nghe' khi còn đang hỏi")
@@ -129,7 +129,7 @@ Item {
             DesktopApi.delayed = false
             DesktopApi.finish()
             tryCompare(history, "status", "ready")
-            settle()
+            tryVerify(function() { return !findChild(history, "historySkeleton").visible && findChild(history, "historyContent").visible })
             verify(!findChild(history, "historySkeleton").visible)
             verify(findChild(history, "historyContent").visible)
             verify(!findChild(history, "historyEmpty").visible)
@@ -148,7 +148,7 @@ Item {
             const history = openPage()
             findChild(page, "bookTabs").picked(1)
             tryCompare(history, "status", "failed")
-            settle()
+            tryVerify(function() { return findChild(history, "historyEmpty").visible })
             verify(findChild(history, "historyEmpty").visible)
         }
         function test_listGroupedByDay() {
