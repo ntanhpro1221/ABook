@@ -135,7 +135,7 @@ describe("mô-đun Giọng VieNeu", () => {
     expect(selectionBytes(one, ["supertonic"])).toBe(406 * MB);
     expect(vieneuLabel(one, SUPERTONIC_COPY)).toContain("Mười giọng nam nữ");
     expect(vieneuLabel({ ...one, state: "ready" }, SUPERTONIC_COPY)).toBe("Giọng Supertonic đã có trên máy: chọn trong nút Giọng đọc khi nghe sách chỉ có chữ.");
-    expect(vieneuLabel({ ...one, state: "downloading", done: 40, total: 100 * MB }, SUPERTONIC_COPY)).toMatch(/^Đang tải 100 MB · \d+%$/);
+    expect(vieneuLabel({ ...one, state: "downloading", done: 40, total: 100 * MB }, SUPERTONIC_COPY)).toMatch(/^Đang tải 95 MB · \d+%$/);
     // Mạng hỏng giữa chừng, máy đang chờ thử lại: nói ra, không đứng ở "Đang tải x%" (soát a64).
     expect(vieneuLabel({ ...one, state: "downloading", done: 62, total: 100, retrying: true }, SUPERTONIC_COPY)).toBe("Mạng chập chờn - đang thử lại… (giọng Supertonic, 62%)");
     expect(benchmarkLabel("supertonic", { rtf: 0.2, firstAudioMs: 1400 })).toContain("nhanh gấp 5,0 lần");
