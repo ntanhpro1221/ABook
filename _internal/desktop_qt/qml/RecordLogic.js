@@ -24,7 +24,7 @@ function singleActions(book) {
         {key: "create", label: "Hồ sơ mới", icon: "plus", dialog: newDialog(book)},
         {key: "move", label: "Chuyển hồ sơ", icon: "arrow-right-left", dialog: {kind: "move", name: name}},
         {key: "rename", label: "Đổi tên hồ sơ…", icon: "text-cursor-input", dialog: {kind: "rename", name: name}},
-        {key: "delete", label: "Xoá hồ sơ…", icon: "trash-2", dialog: {kind: "delete", name: name}, danger: true}
+        {key: "delete", label: "Xoá hồ sơ…", icon: "trash", dialog: {kind: "delete", name: name}, danger: true}
     ]
 }
 
@@ -37,7 +37,7 @@ function pickerActions(book) {
         {key: "create", label: "Hồ sơ mới", icon: "plus", dialog: newDialog(book)},
         {key: "rename", label: "Đổi tên hồ sơ này…", icon: "text-cursor-input", dialog: {kind: "rename", name: name}},
         {key: "move", label: "Chuyển sang cuốn khác…", icon: "arrow-right-left", dialog: {kind: "move", name: name}},
-        {key: "delete", label: "Xoá hồ sơ này…", icon: "trash-2", dialog: {kind: "delete", name: name}, danger: true}
+        {key: "delete", label: "Xoá hồ sơ này…", icon: "trash", dialog: {kind: "delete", name: name}, danger: true}
     ]
 }
 

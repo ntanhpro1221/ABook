@@ -256,7 +256,7 @@ Modal {
                                     Button {
                                         objectName: "editRemoveCover"
                                         text: "Bỏ ảnh bìa"
-                                        icon: "trash-2"
+                                        icon: "trash"
                                         kind: "ghost"
                                         enabled: !root.busy
                                         onClicked: root.removeCover()
