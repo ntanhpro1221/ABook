@@ -3,6 +3,7 @@
 #include "bench.h"
 #include "coverprovider.h"
 #include "feedback.h"
+#include "filesinkdevice.h"
 #include "hostnet.h"
 #include "music.h"
 #include "musicmixer.h"
@@ -165,7 +166,12 @@ int main(int argc, char *argv[]) {
     Bench bench(nullptr);
     Platform platform(nullptr);
     // One output client for chapters, music, previews and touch feedback. Outlive every voice.
-    auto mixer = std::make_unique<MusicMixer>(QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QStringLiteral("/music_pcm"));
+    // ABOOK_AUDIO_SINK=<wav>: tai của phép kiểm tiếng (tools/audio_sink.py). Không mở loa; đúng những khung đáng lẽ ra WASAPI
+    // được ghi vào WAV theo nhịp đồng hồ thật, kèm .gaps/.stops/.clock để đối chiếu với mốc của bench.
+    const QString musicCache = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QStringLiteral("/music_pcm");
+    const QString audioSink = qEnvironmentVariable("ABOOK_AUDIO_SINK");
+    auto mixer = audioSink.isEmpty() ? std::make_unique<MusicMixer>(musicCache)
+                                     : std::make_unique<MusicMixer>(std::make_unique<FileSinkDevice>(audioSink), musicCache, true);
     MixVoice audio(mixer.get(), MixVoice::Voice);
     MixVoice sampleAudio(mixer.get());
     sampleAudio.setVolume(1.0);
