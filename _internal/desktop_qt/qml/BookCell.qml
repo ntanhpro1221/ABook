@@ -81,7 +81,7 @@ Interactive {
             Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
             onClicked: {
                 root.onPlayButton = true
-                Qt.callLater(function() { root.onPlayButton = false })
+                Later.call(root, function() { root.onPlayButton = false })
                 if (textOnly) root.readRequested()
                 else if (here) Player.toggle()
                 else Player.playBook(root.book.bookId)
