@@ -1,4 +1,5 @@
 .pragma library
+.import "SizeFormat.js" as Size
 .import "StudioLogic.js" as Studio
 .import "TemplateLogic.js" as Templates
 
@@ -349,14 +350,13 @@ function lengthRange(low, high) {
 
 // ---- AnalysisModelPicker.tsx ----
 function modelLabel(name) { return String(name).replace(/:latest$/, "") }
-function gigabytes(bytes) { return (bytes / 1e9).toFixed(1).replace(".", ",") + " GB" }
 function modelHint(model, defaultSize) {
     const parts = []
     const billions = Number.parseFloat(model.parameters)
     if (isFinite(billions) && /b$/i.test(String(model.parameters).trim())) parts.push(String(Math.round(billions * 10) / 10).replace(".", ",") + " tỉ tham số")
     else if (model.parameters) parts.push(model.parameters)
     if (model.size) {
-        parts.push("khoảng " + gigabytes(model.size) + " bộ nhớ card")
+        parts.push("khoảng " + Size.formatSize(model.size) + " bộ nhớ card")
         if (defaultSize > 0) {
             if (model.size > defaultSize * 1.3) parts.push("nặng và chậm hơn mặc định")
             else if (model.size < defaultSize * 0.75) parts.push("nhẹ và nhanh hơn mặc định")
