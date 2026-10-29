@@ -58,7 +58,7 @@ export function FootnoteChoices({
             disabled={disabled}
             onChange={(on) => onChange({ ...value, hideMarks: on })}
             label="Bỏ số gọi"
-            help={`${offer.marks} số gọi trong chữ`}
+            help={`${offer.marks} số gọi trong chữ. Bỏ các con số như ² hay [3] khỏi phần đọc; lời chú không đổi.`}
           />
         )}
         {/* ChoiceRow không có trạng thái tắt: lúc đang đọc lại file, cả nhóm mờ đi và không nhận chạm / phím (như ô tích bên trên). */}
@@ -74,6 +74,7 @@ export function FootnoteChoices({
               { value: "drop", label: "Bỏ lời chú" },
             ]}
           />
+          <p className="mt-1 text-xs text-fg-2">Bạn chọn Giữ nguyên để giữ lời chú như trong file; Cuối chương đặt mỗi lời chú ở cuối chương có số gọi nó.</p>
         </div>
       </div>
     </div>

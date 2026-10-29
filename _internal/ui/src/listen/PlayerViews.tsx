@@ -62,7 +62,8 @@ import { chooseVoice, chosenVoice, isNoOfflineVoice, isVoiceStuck, localVoiceFor
 import { bookHeardBase, bookProgressText, caughtUpDetail, nextChapterLabel, SHORTCUTS, withShortcut, otherBookLine, PREPARING_VOICE, PREPARING_VOICE_AFTER_MS, chapterSubline, toggleLabel } from "./labels";
 import { useAfter } from "@/shared/useAfter";
 import { useBackLayer } from "@/shared/backStack";
-import { MOTION, usePresence, useListPresence, withViewTransition } from "@/shared/motion";
+import { usePresence, useListPresence, withViewTransition } from "@/shared/motion";
+import { MORPH, morphNowPlaying, type Morph } from "./nowPlayingMorph";
 import { useRetryWhenOnline } from "./onlineRetry";
 import { askOnlineConsent, onlineConsentGiven, pickVoiceWithConsent, spokenVoiceName } from "./onlineConsent";
 import { PlaylistOptionLabel, usePlaylistChoice } from "./PlaylistChoice";
@@ -270,6 +271,7 @@ function Transport({ large = false, chapters = true }: { large?: boolean; chapte
         aria-busy={waiting || undefined}
         aria-keyshortcuts={SHORTCUTS ? "Space" : undefined}
         data-player-toggle
+        data-np="play"
         className={cn(
           // Nhấn = thu 0,97 (docs/DESIGN.md 5.2), không nảy. Màn Đang nghe: nút tròn 72 px màu nhấn - nút chính duy nhất của màn.
           "grid shrink-0 place-items-center rounded-full shadow-card transition-[transform,background-color] press",
@@ -300,7 +302,6 @@ function Transport({ large = false, chapters = true }: { large?: boolean; chapte
   );
 }
 
-const PlayerSheetSpace = createContext<(id: string, height: number) => void>(() => {});
 /** Bảng đang mở dạng bảng trượt (điện thoại): tiêu đề bảng đã nói tên menu, dòng ghi chú khỏi lặp lại. */
 const InPlayerSheet = createContext(false);
 const InPlayerMenu = createContext(false);
@@ -357,9 +358,7 @@ export function MenuShell({
   const phone = useMediaQuery("(max-width: 640px)");
   const inline = useContext(InPlayerMenu);
   const inlineRef = useRef<HTMLDivElement>(null);
-  const reserve = useContext(PlayerSheetSpace);
   const sheetId = useId();
-  const reserveHeight = useCallback((height: number) => reserve(sheetId, height), [reserve, sheetId]);
   const [localOpen, setLocalOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const [popoverOffset, setPopoverOffset] = useState(8);
@@ -395,7 +394,7 @@ export function MenuShell({
   </Popover.Root>;
   if (phone) return <Popover.Root open={isOpen} onOpenChange={changeOpen}>
     <Sheet open={isOpen} onOpenChange={changeOpen} title={dialogLabel ?? label} trigger={button}
-      focusSelector={focusSelector} onKeyDown={menuArrowKeys} footer={footer} onHeightChange={reserveHeight} className="player-sheet">
+      focusSelector={focusSelector} onKeyDown={menuArrowKeys} footer={footer} className="player-sheet">
       <InPlayerMenu.Provider value><InPlayerSheet.Provider value>{children}</InPlayerSheet.Provider></InPlayerMenu.Provider>
     </Sheet>
   </Popover.Root>;
@@ -501,12 +500,12 @@ export function MusicMenu({ look = "chip" }: { look?: MenuLook }) {
   );
 }
 
-/** "Mức nhạc dưới giọng đọc": các mức (shared/musicLevels.ts), mức hiện tại có dấu, lời kèm mức (nếu có) chữ nhỏ cạnh tên. Chung cho nhạc
+/** "Mức nhạc nền": các mức (shared/musicLevels.ts), mức hiện tại có dấu, lời kèm mức (nếu có) chữ nhỏ cạnh tên. Chung cho nhạc
  *  người làm sách gắn và nhạc nền của sách chữ. */
 export function LevelButtons({ level, disabled, onChange }: { level: number; disabled: boolean; onChange: (levelDb: number) => void }) {
   return (
     <>
-      <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">Mức nhạc dưới giọng đọc</div>
+      <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">Mức nhạc nền</div>
       <div className={cn("flex flex-col gap-0.5", MENU_LIST)}>
         {levelOptions(level).map(([value, name]) => (
           <button
@@ -1569,7 +1568,7 @@ export function PlayerBar({
   extra?: ReactNode;
 }) {
   const { track, close, playing, buffering, toggle, next, previous } = usePlayer();
-  const { expanded, setExpanded, plain } = useNowPlaying();
+  const { setExpanded } = useNowPlaying();
   const speaking = useSpeaking();
   useContinueIntoNextPart();
   useWarmVoice(track?.bookId); // trình phát mở lại với cuốn đang dở: nạp sẵn model giọng trên máy
@@ -1577,7 +1576,7 @@ export function PlayerBar({
   if (!track) return null;
   if (compact) {
     return (
-      <section aria-label="Trình phát" className="relative z-20 shrink-0 border-t border-line bg-panel">
+      <section aria-label="Trình phát" data-np-source className="relative z-20 shrink-0 border-t border-line bg-panel">
         <CompactProgress />
         {notices && (
           <>
@@ -1596,10 +1595,10 @@ export function PlayerBar({
             aria-label="Mở màn hình đang nghe"
             title={`${track.chapterTitle} · ${track.bookTitle}`}
           >
-            <BookCover title={track.bookTitle} image={track.bookCover} size="sm" label={false} className={cn("size-11", !plain && !expanded && "cover-morph")} />
+            <BookCover title={track.bookTitle} image={track.bookCover} size="sm" label={false} morph="cover" className="size-11" />
             <div className="min-w-0">
-              <MotionRegion motionKey={[track.bookId, track.chapterId, track.chapterTitle]} className="truncate text-sm font-semibold">{track.chapterTitle}</MotionRegion>
-              <div className="truncate text-xs text-fg-2">
+              <MotionRegion motionKey={[track.bookId, track.chapterId, track.chapterTitle]} data-np="chapter" className="truncate text-sm font-semibold">{track.chapterTitle}</MotionRegion>
+              <div data-np="book" className="truncate text-xs text-fg-2">
                 <TrackSubtitle />
               </div>
             </div>
@@ -1609,6 +1608,7 @@ export function PlayerBar({
             onClick={withFeedback("playPause", toggle)}
             aria-label={toggleLabel(playing, buffering, speaking)}
             aria-busy={(playing && buffering) || undefined}
+            data-np="play"
             className="touch-hit press grid size-11 shrink-0 place-items-center rounded-full bg-fg text-bg transition-transform"
           >
             <MotionRegion as="span" className="inline-grid size-5 place-items-center">{playing && buffering ? (
@@ -1624,7 +1624,7 @@ export function PlayerBar({
     );
   }
   return (
-    <section aria-label="Trình phát" className="@container relative z-20 shrink-0 border-t border-line bg-panel">
+    <section aria-label="Trình phát" data-np-source className="@container relative z-20 shrink-0 border-t border-line bg-panel">
       <FurtherElsewhere />
       <FollowRecord />
       <FadingNotice className="mx-4 mt-2" />
@@ -1644,10 +1644,10 @@ export function PlayerBar({
           aria-label="Mở màn hình đang nghe"
           title={`${track.chapterTitle} · ${track.bookTitle}`}
         >
-          <BookCover title={track.bookTitle} image={track.bookCover} size="sm" label={false} className={cn("size-12", !plain && !expanded && "cover-morph")} />
+          <BookCover title={track.bookTitle} image={track.bookCover} size="sm" label={false} morph="cover" className="size-12" />
           <div className="min-w-0">
-            <MotionRegion motionKey={[track.bookId, track.chapterId, track.chapterTitle]} className="truncate text-sm font-semibold">{track.chapterTitle}</MotionRegion>
-            <div className="truncate text-xs text-fg-2">
+            <MotionRegion motionKey={[track.bookId, track.chapterId, track.chapterTitle]} data-np="chapter" className="truncate text-sm font-semibold">{track.chapterTitle}</MotionRegion>
+            <div data-np="book" className="truncate text-xs text-fg-2">
               <TrackSubtitle />
             </div>
           </div>
@@ -1988,7 +1988,6 @@ function CaughtUpNotice() {
  *  thấy "nội dung đổi" và mờ chéo theo (W1). */
 function CoverToggle({ title, image }: { title: string; image: ComponentProps<typeof BookCover>["image"] }) {
   const { playing, buffering, toggle } = usePlayer();
-  const { plain } = useNowPlaying();
   const speaking = useSpeaking();
   return (
     <button
@@ -1997,7 +1996,7 @@ function CoverToggle({ title, image }: { title: string; image: ComponentProps<ty
       aria-label={`${toggleLabel(playing, buffering, speaking)} (chạm bìa)`}
       className="size-[min(480px,100cqw,100cqh)] shrink-0 rounded-cover transition-transform press"
     >
-      <BookCover title={title} image={image} size="xl" className={cn("w-full rounded-cover shadow-float", !plain && "cover-morph")} />
+      <BookCover title={title} image={image} size="xl" morph="cover" className="w-full rounded-cover shadow-float" />
     </button>
   );
 }
@@ -2066,10 +2065,10 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
         </div>
       )}
       <div className="mt-6 w-full min-w-0">
-        <h2 className="break-words text-xl font-bold leading-snug">
+        <h2 data-np="chapter" className="break-words text-xl font-bold leading-snug">
           <MotionRegion as="span" motionKey={[track.bookId, track.chapterId, track.chapterTitle]} className="block">{track.chapterTitle}</MotionRegion>
         </h2>
-        <p className="mt-0.5 break-words text-sm text-fg-2">
+        <p data-np="book" className="mt-0.5 break-words text-sm text-fg-2">
           <TrackSubtitle />
         </p>
         <MusicCreditLine />
@@ -2140,9 +2139,6 @@ function useStable<A extends unknown[], R>(fn: (...args: A) => R): (...args: A) 
 }
 
 export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean; actions?: ReactNode; edit?: SentenceEditing }) {
-  const [sheetHeights, setSheetHeights] = useState<Record<string, number>>({});
-  const reserveSheet = useCallback((id: string, height: number) => setSheetHeights(current => current[id] === height ? current : { ...current, [id]: height }), []);
-  const sheetHeight = Math.max(0, ...Object.values(sheetHeights));
   const player = usePlayer();
   const { track } = player;
   const { expanded, setExpanded, plain } = useNowPlaying();
@@ -2154,7 +2150,7 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
   const section = useRef<HTMLElement | null>(null);
   const opener = useRef<HTMLElement | null>(null);
   const open = expanded && Boolean(track);
-  const presence = usePresence(open, MOTION.slowOut);
+  const presence = usePresence(open, MORPH.close);
   // Điện thoại (plain): mở = vỏ màn (nền + trượt/mờ chạy trên GPU) lên trước ở khung chạm, phần ruột (~120 thành phần, đo 100+ ms ở 6x chậm) dựng ở lượt render
   // hoãn ngay sau, chia nhỏ theo khung - màn đang trượt thì luồng chính không bị một khối dựng cả màn chặn. Đóng: ruột ở lại tới khi trượt xuống xong.
   const deferredOpen = useDeferredValue(open);
@@ -2162,6 +2158,29 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
   const warming = useWarmUp(Boolean(plain && track));
   const fill = !plain || warming || (open ? deferredOpen : filled && presence.mounted);
   if (fill !== filled) setFilled(fill);
+  // Mở: cả màn nở ra từ thanh phát nhỏ, bìa / tên chương / tên sách / nút phát bay từ thanh sang chỗ mới; đóng: thu về đúng thanh ấy
+  // (nowPlayingMorph.ts). Đo trước khi trình duyệt vẽ khung đầu; không có thanh để nở từ đó thì hoạt ảnh CSS .now-playing lo.
+  const morph = useRef<Morph | null>(null);
+  const shownOpen = useRef(false);
+  useLayoutEffect(() => {
+    const screen = section.current;
+    if (!screen || open === shownOpen.current) return;
+    shownOpen.current = open;
+    morph.current?.cancel();
+    screen.dataset.morph = ""; // tắt hoạt ảnh CSS dự phòng trước khi đo - nó dịch màn khỏi chỗ thật
+    morph.current = morphNowPlaying(screen, open ? "open" : "close");
+    if (!morph.current) delete screen.dataset.morph;
+  }, [open]);
+  // Ruột màn điện thoại dựng hoãn một nhịp: phần chung của nó vào bay cùng nhịp đang chạy.
+  useLayoutEffect(() => {
+    if (fill) morph.current?.parts();
+  }, [fill]);
+  useLayoutEffect(() => {
+    if (presence.mounted) return;
+    morph.current?.cancel();
+    morph.current = null;
+    if (section.current) delete section.current.dataset.morph;
+  }, [presence.mounted]);
   // Bảng điện thoại dùng Sheet (Radix tự đăng ký Back); màn Đang nghe nằm dưới.
   useBackLayer(mobile && open, () => setExpanded(false));
 
@@ -2297,8 +2316,10 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
   // (styles.css .now-playing-tint, docs/DESIGN.md 5.1); đổi cuốn thì nền mờ chéo sang màu mới.
   const tint = { "--cover-tint": coverColor(track.bookCover?.color) || coverStyle(track.bookTitle).from } as CSSProperties;
   return (
-    <PlayerSheetSpace.Provider value={reserveSheet}>
+    // Khoá riêng: màn là một cây MỚI, không phải bản cập nhật của vùng rỗng phía trên (cùng chỗ, cùng kiểu MotionRegion) - cập nhật thì vùng ấy
+    // tự kéo cao từ 0 lên cả màn và hiện dần, đè lên cú nở từ thanh phát.
     <MotionRegion as="section"
+      key="now-playing"
       elementRef={section}
       data-state={!open && !presence.mounted ? "warm" : presence.state}
       data-plain={plain ? "" : undefined}
@@ -2309,9 +2330,9 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
       // tiến độ, lời báo...) có MotionRegion riêng. Chỉ đổi cuốn thì cả màn mờ chéo sang cuốn mới.
       motionKey={track.bookId}
       // Màn điện thoại thuộc viewport: gutter cuộn không được làm document rộng ra rồi khiến Radix bù scrollbar giả.
-      className={cn("now-playing now-playing-tint inset-0 z-30 flex", SAFE_FRAME, sheetHeight === 0 && SAFE_BOTTOM, mobile ? "fixed flex-col transition-[padding-bottom] duration-motion-medium" : "absolute", !plain && "now-playing-vt")}
-      // Chừa chỗ cho bảng đang mở bằng lề dưới, không bằng chiều cao: nền màu bìa luôn phủ kín màn, bảng báo cao chậm một nhịp (Sheet chờ đứng) cũng không hở khe.
-      style={{ ...tint, ...(mobile && sheetHeight > 0 ? { paddingBottom: sheetHeight } : {}) }}
+      className={cn("now-playing now-playing-tint inset-0 z-30 flex", SAFE_FRAME, SAFE_BOTTOM, mobile ? "fixed flex-col" : "absolute")}
+      // Bảng trượt (tốc độ, hẹn giờ, thêm tuỳ chọn...) phủ LÊN màn này; màn bên dưới đứng yên, không co bìa để chừa chỗ (chủ sách 26-10).
+      style={tint}
       // Mở ra thì đây là nội dung chính: <main> của trang nằm dưới đã khoá (inert) và ra khỏi cây trợ năng - phím "tới vùng chính" của
       // trình đọc màn hình phải tới đây (soát a31 A3). role thay vì thẻ <main>: tài liệu chỉ được có một thẻ <main>.
       role="main"
@@ -2328,6 +2349,5 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
         </div>
       )}
     </MotionRegion>
-    </PlayerSheetSpace.Provider>
   );
 }

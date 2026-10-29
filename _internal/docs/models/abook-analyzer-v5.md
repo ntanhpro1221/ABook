@@ -22,7 +22,7 @@ under ABook's own prompt and schema. Qwen3-4B-Instruct-2507 + LoRA (r=16), merge
 
 Model phân tích truyện của dây chuyền làm sách nói ABook. Với mỗi đoạn văn, model cho biết ai nói (để chọn giọng đọc),
 đoạn ấy là lời kể, lời thoại hay nội tâm, cùng cảm xúc, cường độ, nhịp, âm lượng và giới tính. Chạy được trên card
-NVIDIA 8 GB. Là mặc định cho sách mới từ ABook 0.4.116, đi cặp với abook-speaker:v1 (hỏi lại người nói từng câu). Sách đã phân tích bằng v4 vẫn giữ v4, vì app khoá model theo
+NVIDIA 8 GB. Là mặc định cho sách mới từ ABook 0.4.116, đi cặp với abook-speaker:v2 (v1 tới 0.4.147) (hỏi lại người nói từng câu). Sách đã phân tích bằng v4 vẫn giữ v4, vì app khoá model theo
 từng cuốn.
 
 ## Dùng

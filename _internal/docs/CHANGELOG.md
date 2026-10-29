@@ -12,6 +12,32 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Nút lùi / tới 15 giây trên widget màn hình chính cùng hình với trình phát: cung nông, số 15 nằm dưới, không chạm nét.
 - Giọng có sẵn của điện thoại hiện tên "Tiếng Việt" (máy có nhiều giọng thì đánh số), không còn mã như "vi-vn-x-gft-local".
 
+## [0.4.148] - 2026-10-28
+
+### Làm sách
+
+- Model xác định người nói từng câu lên bản mới (`abook-speaker:v2`): đúng người nói hơn khoảng 2,3 điểm trên 56 chương đo
+  (81,4 so với 79,1), cùng tốc độ. Studio tự tải khi cập nhật.
+
+### Điện thoại
+
+- Nhạc nền chuyển sang chỗ nối vòng dựng sẵn đúng lúc cả trên máy thật chậm. Đo trên OPPO: 10/10 bài đổi tiếng liền mạch, lệch dưới 1 ms. Khi chỗ nối chưa dựng kịp, nhạc quay về cách lặp thường sớm ít nhất 2 giây nên không hụt tiếng hay im.
+- Máy thiếu tài nguyên thu hồi bộ giải mã đúng lúc dựng chỗ nối vòng: nhạc nền thử dựng lại một lần thay vì bỏ chỗ nối.
+
+## [0.4.147] - 2026-10-26
+
+### Điện thoại
+
+- Mở bảng tốc độ, hẹn giờ hay thêm tuỳ chọn trên màn Đang nghe không còn làm bìa co lại và cả màn nhảy lên; bảng chỉ trượt lên phủ trên.
+- Màn Đang nghe nở ra từ chính thanh phát nhỏ (thu nhỏ thì thu về đúng chỗ ấy); bìa, tên chương, tên sách và nút phát bay từ chỗ cũ sang chỗ mới, đổi cỡ và đổi màu dần.
+- Lướt sang tab khác: nội dung đang trượt không còn tràn đè thanh phát và thanh tab.
+
+### Giao diện
+
+- Bìa căn giữa theo chiều dọc ở mọi hàng (thanh phát, thư viện, thiết bị, thanh bên).
+- Bấm Nghe tiếp / Tạm dừng không còn hiện khối đen trong nút khi chữ đổi.
+- Nhãn nút, mục menu và lựa chọn gọn còn tối đa bốn chữ (như "Bỏ qua gợi ý", "Mở cài đặt", "Xuất lại M4B"); máy kiểm tự chặn nhãn dài quay lại.
+
 ## [0.4.146] - 2026-10-26
 
 ### Điện thoại
