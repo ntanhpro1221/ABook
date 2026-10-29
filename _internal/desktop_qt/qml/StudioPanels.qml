@@ -25,6 +25,8 @@ Item {
     signal precastClosed()
     signal precastOpened()
     signal redoRequested()
+    // Mở tab Kịch bản tới đúng câu (phát TRƯỚC `jumped`, để tab dựng ra đã biết chương và câu)
+    signal scriptOpened(int chapterId, string stableId, bool pick)
     readonly property bool hosted: tab === "work" || tab === "review" || tab === "cast" || tab === "precast"
     height: loader.item ? loader.item.height : 0
 
@@ -48,7 +50,7 @@ Item {
                 inPrecast: root.work ? root.work.inPrecast : ({})
                 onKindChosen: value => root.kindChosen(value)
                 onOpenReview: card => root.jumped("review", "work", card, "", false)
-                onOpenScript: (chapterId, stableId, pick, card) => root.jumped("script", "work", card, "", false)
+                onOpenScript: (chapterId, stableId, pick, card) => { root.scriptOpened(chapterId, stableId, pick); root.jumped("script", "work", card, "", false) }
                 onOpenNames: (name, card) => root.jumped("cast", "work", card, name, true)
                 onPickVoice: person => root.personRequest("voice", person)
                 onOpenPrecast: root.precastOpened()
@@ -61,7 +63,7 @@ Item {
         ReviewQueue {
             work: root.work
             active: root.tab === "review"
-            onOpenScript: (chapterId, stableId) => root.jumped("script", "review", "", "", false)
+            onOpenScript: (chapterId, stableId) => { root.scriptOpened(chapterId, stableId, true); root.jumped("script", "review", "", "", false) }
             onRevealRequested: target => root.revealRequested(target)
         }
     }
@@ -110,7 +112,7 @@ Item {
             onMenuRequested: (anchor, person) => root.personMenu(anchor, person)
             onPickVoice: person => root.personRequest("voice", person)
             onOpenReview: card => root.jumped("review", "precast", card, "", false)
-            onOpenScript: (chapterId, stableId, pick, card) => root.jumped("script", "precast", card, "", false)
+            onOpenScript: (chapterId, stableId, pick, card) => { root.scriptOpened(chapterId, stableId, pick); root.jumped("script", "precast", card, "", false) }
             onOpenNames: (name, card) => root.jumped("cast", "precast", card, name, true)
             onCloseRequested: root.precastClosed()
             onRevealRequested: target => root.revealRequested(target)
