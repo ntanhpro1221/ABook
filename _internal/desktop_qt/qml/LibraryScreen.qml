@@ -341,6 +341,8 @@ FocusScope {
         clip: true
         opacity: root.loading ? 1 : 0
         visible: opacity > 0
+        Accessible.role: Accessible.StaticText
+        Accessible.name: "Đang mở ABook"
         Behavior on opacity { NumberAnimation { duration: Theme.motionMedium } }
         SequentialAnimation {
             running: skeleton.visible && Nav.uiVisible && !Theme.reduceMotion

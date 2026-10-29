@@ -67,6 +67,31 @@ Window {
         visible: !windowMode.mini && win.uiVisible
         focus: true
 
+        // Người dùng bàn phím: Tab đầu tiên tới đây, bỏ qua thanh bên để vào thẳng nội dung (như web Shell). Chỉ trượt vào khi có tiêu điểm;
+        // Đang nghe mở thì nội dung bên dưới bị khoá - nút ra khỏi Tab.
+        Button {
+            id: skipLink
+            objectName: "skipToContent"
+            z: 60
+            x: 12
+            y: activeFocus ? 12 : -height - 24
+            opacity: activeFocus ? 1 : 0
+            visible: enabled
+            enabled: !(win.nowPlaying && win.nowPlaying.open)
+            text: "Tới nội dung"
+            size: "sm"
+            Behavior on y { NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeDecelerate } }
+            Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
+            onClicked: {
+                // Tiêu điểm tới ô đầu tiên của màn đang xem (thanh bên và thanh tiêu đề bị bỏ qua).
+                let item = skipLink.nextItemInFocusChain(true)
+                for (let guard = 0; item && item !== skipLink && guard < 1000; ++guard) {
+                    for (let up = item; up; up = up.parent) if (up === stack) { item.forceActiveFocus(Qt.TabFocusReason); return }
+                    item = item.nextItemInFocusChain(true)
+                }
+            }
+        }
+
         Sidebar {
             id: sidebar
             z: 20          // mở tạm đè lên khung nội dung (kể cả Đang nghe)
@@ -87,6 +112,7 @@ Window {
 
             ScreenStack {
                 id: stack
+                objectName: "screenStack"
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.top: parent.top
