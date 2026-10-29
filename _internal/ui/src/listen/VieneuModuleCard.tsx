@@ -7,7 +7,7 @@ import { DialogActions, Button, Dialog, LiveText, Progress, useFocusFollows } fr
 import { cn } from "@/shared/cn";
 import { ErrorDetails } from "@/shared/ErrorDetails";
 import { api } from "@/studio/api";
-import { formatSize } from "@/studio/musicLocal";
+import { formatSize } from "@/shared/format";
 import { forgetVoices, switchVoices, watchVoiceModule } from "./readAloudVoice";
 import type { ReadAloudVoice } from "./readAloud";
 import {

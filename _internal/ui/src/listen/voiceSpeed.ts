@@ -1,7 +1,7 @@
 // "Tốc độ giọng trên máy" (máy tính: abook/webui/voice_speed.py, điện thoại: readaloud/VoiceSpeed.kt - cùng hình trạng thái): giọng Supertonic
 // có hai bậc khi nghe trực tiếp (giọng VieNeu chỉ có một). Một lựa chọn cho cả máy. Phần thuần (không React) để thử riêng; dòng cài đặt ở VoiceSpeedSetting.tsx.
 
-import { formatSize } from "@/studio/musicLocal";
+import { formatSize } from "@/shared/format";
 import type { VieneuChoiceId } from "./vieneuModule";
 
 export type VoiceSpeedChoice = "auto" | "quality" | "fast";
