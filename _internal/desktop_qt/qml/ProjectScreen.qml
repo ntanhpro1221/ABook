@@ -460,6 +460,7 @@ FocusScope {
                     onPlayRequested: if (cell.row.chapter.playable) {
                         if (current) Player.toggle(); else Player.review(root.book.id, cell.row.chapter.id)
                     }
+                    onErrorRequested: anchor => chapterError.openFor(anchor, cell.row.chapter.lastError, !!(root.store.info && root.store.info.studio))
                     onMenuRequested: anchor => {
                         root.menuChapter = cell.row.chapter
                         chapterMenu.items = root.chapterMenuItems(cell.row.chapter)
@@ -725,6 +726,7 @@ FocusScope {
             }
         }
     }
+    ChapterError { id: chapterError }
     StudioConfirm {
         id: retake
         objectName: "retakeConfirm"
