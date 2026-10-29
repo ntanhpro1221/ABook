@@ -1,5 +1,6 @@
 import QtQuick
 import ABook
+import "SizeFormat.js" as Size
 import "StudioSetupLogic.js" as Setup
 
 // Thẻ "Cài Studio" / "Sửa Studio" / "Cập nhật Studio" ở đầu màn Dự án (StudioSetupCard của studio/StudioSetup.tsx): app đóng gói chưa cài Studio (hay Studio cài từ
@@ -220,7 +221,7 @@ Item {
                         objectName: "studioSetupSizes"
                         visible: !!root.status && !!root.status.progress && root.status.progress.total > 0
                         anchors.right: parent.right
-                        text: root.status && root.status.progress ? Setup.formatSize(root.status.progress.done) + " / " + Setup.formatSize(root.status.progress.total) : ""
+                        text: root.status && root.status.progress ? Size.formatSize(root.status.progress.done) + " / " + Size.formatSize(root.status.progress.total) : ""
                         color: Theme.text2
                         font.pixelSize: Theme.sizeCaption
                         font.features: { "tnum": 1 }

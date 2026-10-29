@@ -14,6 +14,9 @@
 #include <QTemporaryDir>
 #include <QDateTime>
 #include <QtQuickTest/quicktest.h>
+#include <QQuickWindow>
+#include <QtQuick/private/qquickwindow_p.h>
+#include <QtQuick/private/qsgabstractsoftwarerenderer_p.h>
 
 class WidthCovers : public QQuickImageProvider {
 public:
@@ -78,6 +81,31 @@ private:
     MediaState state;
 };
 
+// Bộ thử chạy Qt Quick bằng bộ vẽ phần mềm (nền offscreen), nó chỉ vẽ lại vùng bẩn và grabImage đọc thẳng bộ đệm ấy: phần một item vẽ
+// ra ngoài khung của nó (tab "Thêm" bị cắt của trang hẹp 560 trong cửa sổ 1280) có thể nằm lại sau khi trang bị huỷ và lọt vào ảnh của
+// test sau ("⌄" lạc ở 571,333). Mỗi khung vẽ lại cả cửa sổ: ảnh chụp chỉ có thứ đang thật sự hiện.
+class FullRepaint : public QObject {
+    Q_OBJECT
+    int count = 0;
+public:
+    // số khung đã vẽ lại cả cửa sổ - tst_studio_music kiểm nó tăng
+    Q_INVOKABLE int frames() const { return count; }
+    bool eventFilter(QObject *target, QEvent *event) override {
+        auto *window = qobject_cast<QQuickWindow *>(target);
+        if (window && event->type() == QEvent::Expose && !window->property("abookFullRepaint").toBool()) {
+            window->setProperty("abookFullRepaint", true);
+            QObject::connect(window, &QQuickWindow::beforeSynchronizing, window, [this, window] {
+                auto *renderer = QQuickWindowPrivate::get(window)->renderer;
+                if (renderer && window->rendererInterface()->graphicsApi() == QSGRendererInterface::Software) {
+                    static_cast<QSGAbstractSoftwareRenderer *>(renderer)->markDirty();
+                    ++count;
+                }
+            }, Qt::DirectConnection);
+        }
+        return false;
+    }
+};
+
 class WidthSetup : public QObject {
     Q_OBJECT
     QTemporaryDir dir;
@@ -90,15 +118,18 @@ class WidthSetup : public QObject {
     std::unique_ptr<Feedback> feedback;
     std::unique_ptr<WidthNet> netView;
     std::unique_ptr<MediaControls> media;
+    FullRepaint repaint;
 public slots:
     void qmlEngineAvailable(QQmlEngine *engine) {
         engine->rootContext()->setContextProperty(QStringLiteral("qtGlyphAudit"), audit.get());
         engine->rootContext()->setContextProperty(QStringLiteral("qtGlyphProbe"), qEnvironmentVariableIsSet("ABOOK_GLYPH_PROBE"));
         engine->rootContext()->setContextProperty(QStringLiteral("qtWideShotDir"), qEnvironmentVariable("ABOOK_WIDE_SHOTS"));
+        engine->rootContext()->setContextProperty(QStringLiteral("qtFullRepaint"), &repaint);
         engine->addImageProvider(QStringLiteral("cover"), new WidthCovers);
     }
     void applicationAvailable() {
         audit = std::make_unique<GlyphAudit>();
+        qApp->installEventFilter(&repaint);
         for (const auto &weight : {"Regular", "Medium", "Bold"})
             QFontDatabase::addApplicationFont(QStringLiteral(WIDTH_SOURCE_DIR "/fonts/BeVietnamPro-%1.ttf").arg(QString::fromLatin1(weight)));
         QGuiApplication::setFont(QFont(QStringLiteral("Be Vietnam Pro")));

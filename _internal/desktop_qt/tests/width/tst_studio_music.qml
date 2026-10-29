@@ -282,7 +282,7 @@ Item {
             const page = openMusic(musicData({download: {active: true, done: 1, total: 4, doneBytes: 5000000, totalBytes: 12000000}}))
             const tab = music(page)
             tryVerify(function() { return shown(one(tab, "musicDownload")) })
-            compare(one(tab, "musicDownload").text, "Đang tải sẵn nhạc nền: 5,0 MB / 12 MB (bài 2/4)")
+            compare(one(tab, "musicDownload").text, "Đang tải sẵn nhạc nền: 4,8 MB / 11 MB (bài 2/4)")
             compare(one(tab, "musicDownload").Accessible.name, "Đang tải sẵn nhạc nền · 25%")
             verify(tab.polling, "đang tải sẵn: hỏi lại")
             reply("POST /api/books/b/music/download/cancel", {status: 200, data: musicData({download: {active: true, done: 1, total: 4}})})
@@ -594,6 +594,45 @@ Item {
             tryVerify(function() { return calls("PUT", peerBase + "/api/books/b/music").length === 1 })
             const direct = DesktopApi.requests.filter(r => (/^\/api\/(books|music)/).test(r.path))
             compare(direct.length, 0, JSON.stringify(direct))
+        }
+
+        // ================= ảnh chụp sạch =================
+        // Bộ thử vẽ bằng phần mềm, chỉ vẽ lại vùng bẩn: trang hẹp hơn cửa sổ để tab "Thêm" bị cắt (x 565 > 560) lại thành "⌄" lạc ở 571,333
+        // trong ảnh của test sau, dù không item nào ở đó. tests/test_width.cpp (FullRepaint) vẽ lại cả cửa sổ mỗi khung; chuỗi dưới đây là đúng
+        // chuỗi từng để lại nó (đổi mức nhạc ở trang rộng, rồi chọn lại nhạc ở trang hẹp).
+        function test_zzPagesLeaveNoPixelsBehind() {
+            const frames = qtFullRepaint.frames()
+            const wide = openMusic()
+            verify(qtFullRepaint.frames() > frames, "mỗi khung vẽ lại cả cửa sổ")
+            DesktopApi.delayed = true
+            reply("PUT /api/books/b/music", {status: 200, data: musicData({}, {levelDb: -28})})
+            one(music(wide), "musicLevel").picked(-28)
+            tryVerify(function() { return shown(one(music(wide), "musicBusy")) }, 2000, "đang lưu")
+            DesktopApi.finish()
+            cleanup(); wide.destroy(); init()     // trang thứ hai như một test mới
+            const narrow = openMusic(musicData({}, {genre: "western"}), {width: 560})
+            const tab = music(narrow)
+            DesktopApi.delayed = true
+            reply("POST /api/books/b/music/rebuild", {status: 200, data: musicData()})
+            one(tab, "musicRebuild").clicked()
+            tryCompare(one(tab, "musicRebuild"), "text", "Đang chọn lại")
+            scrollTo(narrow, one(tab, "musicEnabled"))
+            both("narrow", narrow)
+            DesktopApi.finish()
+            tryCompare(one(tab, "musicRebuild"), "text", "Chọn lại nhạc")
+            scrolled = null
+            narrow.destroy()
+            tryVerify(function() { return host.children.length === 2 }, 2000, "trang đã huỷ")
+            waitForRendering(host)
+            const image = grabImage(host)
+            const bg = image.pixel(5, 5)
+            const left = []
+            for (let x = 0; x < host.width; x++)
+                for (let y = 0; y < host.height; y++) {
+                    const c = image.pixel(x, y)
+                    if (Math.abs(c.r - bg.r) + Math.abs(c.g - bg.g) + Math.abs(c.b - bg.b) > 0.1) left.push(x + "," + y)
+                }
+            compare(left.length, 0, "cửa sổ trống còn pixel: " + left.slice(0, 8).join(" "))
         }
     }
 }

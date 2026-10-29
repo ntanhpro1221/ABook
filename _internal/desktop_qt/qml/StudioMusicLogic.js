@@ -1,4 +1,5 @@
 .pragma library
+.import "SizeFormat.js" as Size
 .import "MyMusicText.js" as Music
 
 // Phần thuần của tab "Nhạc nền" trong Studio (MusicTab.tsx + studio/musicScenes.ts + shared/musicLevels.ts + musicCreditText của shared/format.ts):
@@ -78,7 +79,7 @@ function aiNote(scene) {
 function downloadText(download) {
     const tracks = "bài " + Math.min(download.done + 1, download.total) + "/" + download.total
     if (!download.totalBytes) return "Đang tải sẵn nhạc nền: " + tracks
-    return "Đang tải sẵn nhạc nền: " + Music.formatSize(download.doneBytes || 0) + " / " + Music.formatSize(download.totalBytes) + " (" + tracks + ")"
+    return "Đang tải sẵn nhạc nền: " + Size.formatSize(download.doneBytes || 0) + " / " + Size.formatSize(download.totalBytes) + " (" + tracks + ")"
 }
 function downloadShare(download) {
     if (download.totalBytes) return (download.doneBytes || 0) / download.totalBytes
