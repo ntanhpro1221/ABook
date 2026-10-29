@@ -431,22 +431,29 @@ function rowMenu(book, local, computer) {
     if (local) extras.push(item("reveal", "folder-open", "Mở thư mục"))
     return projectMenu(book, {extras: extras, remote: !local, computer: computer})
 }
+// Đồng hồ "1:05:09" / "4:07" (shared/format.ts formatClock)
+function formatClock(seconds) {
+    const whole = Math.max(0, Math.floor(isFinite(seconds) ? seconds : 0)), h = Math.floor(whole / 3600), m = Math.floor((whole % 3600) / 60), sec = whole % 60
+    return (h ? h + ":" : "") + (h ? two(m) : String(m)) + ":" + two(sec)
+}
+// Tên dễ đọc của model phân tích; khoá kỹ thuật chỉ dùng gửi máy chủ (analyzerLabel.ts)
+function analyzerLabel(model) {
+    const own = /^abook-analyzer:v(\d+)$/.exec(String(model).replace(/:latest$/, ""))
+    return own ? "Bộ phân tích bản " + own[1] : "Bộ phân tích tuỳ chọn"
+}
+// Giọng kể ở dòng thông tin đầu trang: đang chờ đổi thì giọng SẼ dùng + "(chờ áp dụng)" (analyzerLabel.ts narratorLabel)
+function narratorLabel(settings) {
+    if (settings.narratorPending) return "Giọng kể " + settings.narratorPending + " (chờ áp dụng)"
+    return settings.narrator ? "Giọng kể " + settings.narrator : ""
+}
 function projectDetails(book) {
     const s = book.settings || {}
-    function clock(seconds) {
-        const whole = Math.max(0, Math.floor(seconds)), h = Math.floor(whole / 3600), m = Math.floor((whole % 3600) / 60), sec = whole % 60
-        return (h ? h + ":" : "") + (h ? two(m) : String(m)) + ":" + two(sec)
-    }
-    function analyzerLabel(model) {
-        const own = /^abook-analyzer:v(\d+)$/.exec(String(model).replace(/:latest$/, ""))
-        return own ? "Bộ phân tích bản " + own[1] : "Bộ phân tích tuỳ chọn"
-    }
     return [
-        s.narratorPending ? "Giọng kể " + s.narratorPending + " (chờ áp dụng)" : s.narrator ? "Giọng kể " + s.narrator : "",
+        narratorLabel(s),
         s.profileLabel || "",
         s.analyzer ? analyzerLabel(s.analyzer) : "",
         book.createdAt ? "Tạo " + formatDate(book.createdAt) : "",
-        book.position ? "Nghe lần cuối " + formatRelative(book.position.at) + " ở " + clock(book.position.seconds) : ""
+        book.position ? "Nghe lần cuối " + formatRelative(book.position.at) + " ở " + formatClock(book.position.seconds) : ""
     ].filter(Boolean)
 }
 
@@ -527,6 +534,4 @@ function folderName(path) { return String(path).split(/[\\/]/).filter(Boolean).p
 // ---- Chữ của hộp ----
 function renameDescription() { return "Tên mới hiện ở thư viện, điện thoại và file xuất." }
 function deleteDescription() { return "Cả thư mục dự án vào Thùng rác của Windows, khôi phục được. File truyện gốc và sách đã xuất giữ nguyên." }
-function applyTitle(count) { return "Áp dụng " + count + " thay đổi?" }
-function applyDescription() { return "Máy chỉ thu lại những câu bị ảnh hưởng, rồi dựng lại các chương có câu ấy - không làm lại cả cuốn." }
 function peerPath(path, peer) { return Peer.throughPeer(path, peer) }
