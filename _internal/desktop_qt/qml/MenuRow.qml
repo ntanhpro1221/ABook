@@ -2,11 +2,12 @@ import QtQuick
 import ABook
 
 // Một hàng hành động trong bảng nổi (kiểu menu của Windows): biểu tượng + chữ thường, cả hàng là vùng bấm, rê chuột thì nền nhạt.
-// Không chữ màu nhấn: màu nhấn dành cho nút chính của màn.
+// Không chữ màu nhấn: màu nhấn dành cho nút chính của màn. `danger`: việc không hoàn tác được ("Xoá hồ sơ…") - chữ và icon màu --danger.
 Interactive {
     id: root
     property string text: ""
     property string icon: ""
+    property bool danger: false
 
     implicitHeight: Theme.buttonHeight
 
@@ -25,12 +26,12 @@ Interactive {
         Icon {
             name: root.icon
             size: 16
-            color: Theme.text2
+            color: root.danger ? Theme.danger : Theme.text2
             anchors.verticalCenter: parent.verticalCenter
         }
         Text {
             text: root.text
-            color: Theme.text
+            color: root.danger ? Theme.danger : Theme.text
             font.pixelSize: Theme.sizeBodySmall
             anchors.verticalCenter: parent.verticalCenter
         }
