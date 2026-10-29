@@ -4,7 +4,7 @@ import "StudioLogic.js" as Logic
 
 // Studio › một dự án (ProjectScreen.tsx; DESIGN.md mục 7): tên + dòng trạng thái, MỘT nút chính theo trạng thái (Bắt đầu · Tạm dừng · Tiếp tục · Nghe trong Thư viện;
 // sách xong còn thay đổi chờ thì "Áp dụng N thay đổi"), mọi việc khác trong "…". Dưới là hàng tab (Chương · Việc cần duyệt · Cần nghe lại · Nhân vật · Nhạc nền;
-// còn lại trong "Thêm") và nội dung tab: Chương, Nhật ký; các tab khác nói gọn là chưa mở.
+// còn lại trong "Thêm") và nội dung tab: Chương, Nhật ký, Nhạc nền (StudioMusic); các tab khác nói gọn là chưa mở.
 // "Tạm dừng" gọi lệnh tạm dừng, KHÔNG BAO GIỜ dừng (dừng giữa pha phân tích là đổi quyển sách, AGENTS.md); "Dừng…" chỉ ở "…" kèm lời cảnh báo.
 // Cả danh sách cuộn MỘT khung: phần đầu là header của ListView, hàng chương / nhật ký giữ theo khoá nên nhịp hỏi 3 s / 15 s không làm nhảy chỗ cuộn.
 FocusScope {
@@ -66,7 +66,7 @@ FocusScope {
         if (!target || !list.visible) return
         const top = target.mapToItem(list.contentItem, 0, 0).y
         const bottom = top + target.height
-        if (top < list.contentY + 16) list.contentY = Math.max(-list.topMargin, top - 16)
+        if (top < list.contentY + 16) list.contentY = Math.max(list.originY - list.topMargin, top - 16)
         else if (bottom > list.contentY + list.height - 16) list.contentY = bottom - list.height + 16
     }
     onTabChanged: tabSwap.restart()
@@ -145,6 +145,9 @@ FocusScope {
                 }
             }
         }
+        // ListView không hàng nào thì mỗi lần dàn lại (footer đổi cao) Qt kéo về đầu (QQuickItemViewPrivate::layout, model rỗng): tab đặt nội dung
+        // ở footer (Nhạc nền...) giữ một hàng rỗng cao 0 để mở / đóng một khối không làm trang nhảy lên đầu
+        if (!rows.length) rows.push({key: "rest", kind: "rest"})
         return rows
     }
     readonly property var rowList: buildRows()
@@ -530,9 +533,9 @@ FocusScope {
             width: list.width
             readonly property bool chaptersEmpty: root.shownTab === "chapters" && root.store && root.store.chapters.length === 0
             readonly property bool activityEmpty: root.shownTab === "activity" && root.activityData !== null && root.activityData.length === 0
-            readonly property bool placeholder: Logic.MAIN_TABS.concat(["precast", "script"]).indexOf(root.shownTab) >= 0 && root.shownTab !== "chapters" && root.shownTab !== "work" && root.shownTab !== "review"
+            readonly property bool placeholder: Logic.MAIN_TABS.concat(["precast", "script"]).indexOf(root.shownTab) >= 0 && root.shownTab !== "chapters" && root.shownTab !== "work" && root.shownTab !== "review" && root.shownTab !== "music"
             readonly property real innerHeight: chaptersEmpty || activityEmpty ? emptyBlock.height : placeholder ? placeholderText.height + 48 : root.shownTab === "activity" && root.activityLoading ? 160 : 0
-            height: backWrap.height + innerHeight + panels.height
+            height: backWrap.height + innerHeight + panels.height + (musicTab.item ? musicTab.item.height + 48 : 0)
             opacity: root.swap
             // "Về màn trước": sau khi nhảy từ một thẻ sang tab khác, trả về đúng thẻ và bộ lọc vừa rời
             Collapse {
@@ -602,6 +605,21 @@ FocusScope {
                 onKindChosen: value => { root.workKind = value; root.workCard = "" }
                 onJumped: (next, from, card, name, names) => root.jump(next, from, card, name, names)
                 onRevealRequested: target => root.reveal(target)
+            }
+            // Tab Nhạc nền: dựng khi mở tab, gỡ khi rời (rời tab thì bài nghe thử dừng)
+            Loader {
+                id: musicTab
+                objectName: "musicTab"
+                x: 8
+                y: backWrap.height + parent.innerHeight + panels.height
+                width: root.contentW
+                active: root.shownTab === "music" && !!root.book
+                sourceComponent: StudioMusic {
+                    store: root.store
+                    bookId: root.book ? root.book.id : ""
+                    chapters: root.store ? root.store.chapters : []
+                    overlay: root
+                }
             }
         }
         SmoothWheel { flick: list }
