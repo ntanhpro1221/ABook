@@ -4,7 +4,8 @@
 // thử riêng; thẻ ở VieneuModuleCard.tsx.
 
 import { spokenProgress } from "@/shared/progressSpeech";
-import { CANCELLED_NOTE, formatSize, RETRYING_NOTE } from "@/studio/musicLocal";
+import { formatSize } from "@/shared/format";
+import { CANCELLED_NOTE, RETRYING_NOTE } from "@/studio/musicLocal";
 
 export type VieneuChoiceId = "turbo" | "nano" | "aligner" | "supertonic" | "fast" | "supertonic_fast";
 /** Giọng có kết quả tự đo riêng (mỗi tầng một lần đo). */
