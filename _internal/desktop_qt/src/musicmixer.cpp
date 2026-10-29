@@ -756,7 +756,9 @@ void MusicMixer::serviceStream(const std::shared_ptr<MixVoiceState> &s) {
         const bool end = decoder->atEnd();
         bool again;
         { Guard guard(s->mutex);
-          if (s->generation != generation || !s->ready || s->reposition || s->flush || d->resetQueued) return;
+          // Bộ giải mã đã đi qua khối này: chỉ vứt khi nguồn sẽ đặt lại chỗ. Lệnh đang chờ trộn lại (giọng khác tua,
+          // âm lượng) không làm vòng đệm sai; vứt ở đây là tiếng nhảy cóc một khối.
+          if (s->generation != generation || !s->ready || s->reposition) return;
           if (got) s->ring->write(block.data(), got * 2);
           again = end && s->loop && s->duration > 0;
           if (end && !again) s->eof = true;
