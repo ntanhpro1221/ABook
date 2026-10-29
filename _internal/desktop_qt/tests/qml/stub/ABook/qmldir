@@ -259,3 +259,9 @@ StudioMusicTrackRow 1.0 ../../../../qml/StudioMusicTrackRow.qml
 StudioMusicMoods 1.0 ../../../../qml/StudioMusicMoods.qml
 StudioMusicDetails 1.0 ../../../../qml/StudioMusicDetails.qml
 StudioMyMusic 1.0 ../../../../qml/StudioMyMusic.qml
+ScriptTab 1.0 ../../../../qml/ScriptTab.qml
+ScriptRow 1.0 ../../../../qml/ScriptRow.qml
+ScriptStore 1.0 ../../../../qml/ScriptStore.qml
+ScriptSpeakerMenu 1.0 ../../../../qml/ScriptSpeakerMenu.qml
+ScriptDelivery 1.0 ../../../../qml/ScriptDelivery.qml
+ScriptChapterMenu 1.0 ../../../../qml/ScriptChapterMenu.qml

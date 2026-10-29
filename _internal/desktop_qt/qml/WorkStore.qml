@@ -60,10 +60,13 @@ QtObject {
     function suggestionOf(data) { return data && typeof data.suggestion === "string" ? data.suggestion : "" }
 
     // refreshAfterDecision: làm mới mọi chỗ một quyết định của người nghe chạm tới
+    // `decided`: tab Kịch bản (ScriptStore) cũng làm mới chương đang xem ("casting" của web)
+    signal decided()
     function after() {
         work.invalidate(); workCounted.invalidate()
         names.invalidate(); offer.invalidate(); shared.invalidate()
         if (store) { store.loadBook(); if (store.libraryWanted) store.loadLibrary() }
+        decided()
     }
     // Một việc sửa dàn nhân vật vừa ghi (đổi giọng, tên, giới, gộp, giọng tự kể): thẻ việc, cách đọc tên và dàn người đọc lại; sách / thư viện do StudioStore làm mới
     function afterCast() {

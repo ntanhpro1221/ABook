@@ -48,7 +48,7 @@ Item {
                 implicitWidth: word.implicitWidth
                 width: Math.min(implicitWidth, root.width)
                 height: Math.max(40, word.height + 8)
-                activeFocusOnTab: selected || (root.currentIndex < 0 && index === 0)
+                activeFocusOnTab: selected || (root.currentIndex < 0 && index === 0) || activeFocus
                 Accessible.role: Accessible.RadioButton
                 Accessible.name: modelData.label
                 Accessible.checked: selected

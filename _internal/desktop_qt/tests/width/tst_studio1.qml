@@ -418,9 +418,10 @@ Item {
             pickMenu(page, "script")
             tryCompare(page, "shownTab", "script")
             compare(one(page, "tab_moreLabel").text, "Kịch bản")
-            // tab chưa làm: một câu trung tính
+            // tab Kịch bản dựng khi mở (S6), không còn câu "chưa mở"
             tryCompare(page, "phase", 1)
-            tryVerify(function() { return hasText(page, "Mục này chưa mở trong bản này.") })
+            tryVerify(function() { return all(page, "scriptTab").length > 0 && all(page, "scriptTab")[0].item !== null })
+            verify(!hasText(page, "Mục này chưa mở trong bản này."))
             one(page, "tab_more").clicked()
             pickMenu(page, "activity")
             tryCompare(page, "shownTab", "activity")
