@@ -444,8 +444,7 @@ Item {
             const page = make(pageFactory, {book: {bookId: "b1", title: "Tên cũ"}})
             tryVerify(function() { return findChild(page, "bookMore").visible })
             findChild(page, "bookMore").clicked()
-            wait(100)
-            verify(findChild(page, "menuBlocked").visible)
+            tryVerify(function() { return findChild(page, "menuBlocked") && findChild(page, "menuBlocked").visible })
             verify(!findChild(page, "menuEdit").visible)
         }
 
