@@ -1,5 +1,6 @@
 import QtQuick
 import ABook
+import "SizeFormat.js" as Size
 import "MyMusicText.js" as Music
 
 // Thẻ duy nhất của mô-đun "Phân tích nhạc" dưới danh sách nhạc (MusicModuleNotice của studio/MusicModuleNotice.tsx): nhập nhạc chạy không cần nó,
@@ -31,12 +32,12 @@ Column {
         })
     }
     function installText() {
-        const size = Music.formatSize(module.outdatedBytes !== undefined ? module.outdatedBytes : module.total)
-        return failed ? "Thử lại" : module.stopped ? "Tải lại (" + size + ")" : module.state === "outdated" ? "Cập nhật (" + size + ")" : "Tải (" + Music.formatSize(module.total) + ")"
+        const size = Size.formatSize(module.outdatedBytes !== undefined ? module.outdatedBytes : module.total)
+        return failed ? "Thử lại" : module.stopped ? "Tải lại (" + size + ")" : module.state === "outdated" ? "Cập nhật (" + size + ")" : "Tải (" + Size.formatSize(module.total) + ")"
     }
     function preciseText() {
         const p = root.precise
-        return p.state === "error" ? "Thử lại" : p.state === "missing" ? "Tải tiếp (" + Music.formatSize(p.bytes) + ")" : p.state === "ready" ? "Tắt đo cảm xúc" : p.present ? "Bật đo cảm xúc" : "Tải (" + Music.formatSize(p.bytes) + ")"
+        return p.state === "error" ? "Thử lại" : p.state === "missing" ? "Tải tiếp (" + Size.formatSize(p.bytes) + ")" : p.state === "ready" ? "Tắt đo cảm xúc" : p.present ? "Bật đo cảm xúc" : "Tải (" + Size.formatSize(p.bytes) + ")"
     }
 
     Timer {
@@ -181,7 +182,7 @@ Column {
                     }
                     Button {
                         visible: Boolean(root.precise) && root.precise.removable
-                        text: root.precise ? "Xoá file (" + Music.formatSize(root.precise.bytes) + ")" : ""
+                        text: root.precise ? "Xoá file (" + Size.formatSize(root.precise.bytes) + ")" : ""
                         kind: "ghost"; size: "sm"
                         busy: root.starting
                         onActivated: root.post("/api/music/local/precise/remove")
