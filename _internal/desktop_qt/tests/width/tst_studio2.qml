@@ -136,8 +136,7 @@ Item {
         }
         function openOptions(page) {
             if (!has(page, "newOptionsBody")) one(page, "newOptions").clicked()
-            tryVerify(function() { return has(page, "newOptionsBody") }, 3000)
-            wait(50)
+            tryVerify(function() { return has(page, "newOptionsBody") && has(page, "newProfile") && has(page, "newTemplates") }, 3000)
         }
         function byTitle(item, title, out) {
             out = out || []
