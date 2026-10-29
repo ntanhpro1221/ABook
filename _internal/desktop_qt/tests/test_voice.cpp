@@ -455,8 +455,9 @@ private slots:
             command == QStringLiteral("seek") ? 2.08 : command == QStringLiteral("rate") ? 0.16 : 0.15;
         QVERIFY2(std::abs(rig.voice.position() - want) < 0.001, qPrintable(QString::number(rig.voice.position())));
     }
-    // Tai giả (engine kéo 10 ms một chu kỳ như WASAPI chia sẻ): mờ âm lượng từng 50 ms, đổi tốc độ, tua trong lúc phát
-    // không được để lại chu kỳ im lặng, khoảng hụt hay bậc nhảy nào trước lúc pause; pause thì mờ về 0.
+    // Tai giả (engine kéo 10 ms một chu kỳ như WASAPI chia sẻ): nhạc vào giữa lúc giọng đọc, mờ vào/ra từng 50 ms như
+    // MusicBed, giọng đổi tốc độ, tua trong lúc phát không được để lại chu kỳ im lặng, khoảng hụt hay bậc nhảy nào trước
+    // lúc pause; pause thì mờ về 0.
     void controlsLeaveNoHoleOrStepOnAPeriodicEngine() {
         QTemporaryDir dir;
         const QString wav = dir.filePath(QStringLiteral("tap.wav"));
@@ -470,11 +471,16 @@ private slots:
             voice.setVolume(1); voice.load(QUrl(QStringLiteral("fake:tap")), 0); voice.play();
             QTRY_VERIFY_WITH_TIMEOUT(voice.playing(), 3000);
             QTest::qWait(300);
-            for (int i = 1; i <= 16; ++i) { marks.push_back({sink->now(), "volume"}); voice.setVolume(1.0 - i * 0.04); QTest::qWait(50); }
+            MixVoice music(&mixer, [control](int hz) { return std::make_unique<Decoder>(control, hz); });
+            marks.push_back({sink->now(), "music play"}); music.load(QUrl(QStringLiteral("fake:music")), 3); music.play();
+            for (int i = 1; i <= 16; ++i) {
+                marks.push_back({sink->now(), "volume"}); voice.setVolume(1.0 - i * 0.03); music.setVolume(i * 0.03); QTest::qWait(50);
+            }
             marks.push_back({sink->now(), "rate 1.5"}); voice.setRate(1.5); QTest::qWait(250);
             marks.push_back({sink->now(), "seek"}); voice.seek(12); QTest::qWait(250);
             marks.push_back({sink->now(), "rate 1"}); voice.setRate(1.0); QTest::qWait(250);
-            paused = sink->now(); voice.pause();
+            for (int i = 15; i >= 0; --i) { marks.push_back({sink->now(), "music volume"}); music.setVolume(i * 0.03); QTest::qWait(50); }
+            paused = sink->now(); voice.pause(); music.pause();
             QTest::qWait(200);
         }
         QFile file(wav); QVERIFY(file.open(QIODevice::ReadOnly));
@@ -490,7 +496,7 @@ private slots:
                 QVERIFY2(at >= paused, qPrintable(suffix + QStringLiteral(" at ") + QString::number(at) + QStringLiteral(" before pause ") + QString::number(paused)));
             }
         }
-        // Từ lúc có tiếng tới hết đuôi mờ của pause: sin 440 Hz biên 0,25 đổi tối đa 0,0144 mỗi mẫu.
+        // Từ lúc có tiếng tới hết đuôi mờ của pause: hai sin 440 Hz biên 0,25 và <= 0,25 · 0,48² đổi tối đa 0,018 mỗi mẫu.
         size_t first = 0; while (first < frames && x[first * 2] == 0.0f) ++first;
         double jump = 0; size_t where = 0;
         for (size_t i = first + 1; i < frames; ++i)
