@@ -154,6 +154,7 @@ EditBookMyMusic 1.0 ../../../../qml/EditBookMyMusic.qml
 EditBookReadings 1.0 ../../../../qml/EditBookReadings.qml
 EditBookRename 1.0 ../../../../qml/EditBookRename.qml
 CastDialogs 1.0 ../../../../qml/CastDialogs.qml
+CastEngine 1.0 ../../../../qml/CastEngine.qml
 CastGender 1.0 ../../../../qml/CastGender.qml
 CastList 1.0 ../../../../qml/CastList.qml
 CastMerge 1.0 ../../../../qml/CastMerge.qml
@@ -163,6 +164,10 @@ CastPerson 1.0 ../../../../qml/CastPerson.qml
 CastRename 1.0 ../../../../qml/CastRename.qml
 CastSample 1.0 ../../../../qml/CastSample.qml
 CastVoice 1.0 ../../../../qml/CastVoice.qml
+HistoryList 1.0 ../../../../qml/HistoryList.qml
+RecordChip 1.0 ../../../../qml/RecordChip.qml
+RecordDialogs 1.0 ../../../../qml/RecordDialogs.qml
+RecordMenu 1.0 ../../../../qml/RecordMenu.qml
 EditBookSaveAs 1.0 ../../../../qml/EditBookSaveAs.qml
 EditBookItems 1.0 ../../../../qml/EditBookItems.qml
 singleton Api 1.0 ../../../../qml/Api.qml
