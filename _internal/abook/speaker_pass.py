@@ -1,7 +1,7 @@
-"""Lượt "người nói từng câu" sau pha phân tích (B41, đo 21-10; docs/models/abook-speaker-v1.md).
+"""Lượt "người nói từng câu" sau pha phân tích (B41, đo 21-10; model v2 = súp B48-CAL 3 hạt, đo 28-10; docs/models/abook-speaker-v2.md).
 
 Sau khi model phân tích (kind: kể/thoại/nội tâm) xong cả cuốn, mỗi câu thoại/nội tâm được hỏi lại NGƯỜI NÓI bằng một model
-nhỏ riêng (`abook-speaker:v1`, cùng nền Qwen3-4B-Instruct-2507, LoRA khác) - mỗi câu một đề, trong một khối đoạn liên tiếp, kèm
+nhỏ riêng (`abook-speaker:v2`, cùng nền Qwen3-4B-Instruct-2507, LoRA khác) - mỗi câu một đề, trong một khối đoạn liên tiếp, kèm
 nhãn model vừa trả cho các câu trước. Câu kể giữ narration/NARRATOR, `kind` giữ của model phân tích. Đo 56 chương theo giọng
 nghe: đúng người nói hơn model phân tích đơn lẻ ~5 điểm, tốn thêm ~6 % thời gian.
 
@@ -26,7 +26,7 @@ from typing import Any, Callable, Sequence
 # --------------------------------------------------------------------------------------------------------------------
 # Cặp model (model phân tích -> model người nói) và tokenizer
 # --------------------------------------------------------------------------------------------------------------------
-SPEAKER_MODEL = "abook-speaker:v1"
+SPEAKER_MODEL = "abook-speaker:v2"
 # Chỉ cặp ĐÃ ĐO: model người nói học và đo trên đầu ra của model phân tích này (B9). Sách phân tích bằng model khác (qwen3:8b,
 # bản cũ, model người dùng tự cắm) không có cặp -> không chạy lượt, giữ nhãn của model phân tích như trước.
 PAIRED_SPEAKER_MODELS: dict[str, str] = {"abook-analyzer:v5": SPEAKER_MODEL}

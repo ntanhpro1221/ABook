@@ -368,7 +368,7 @@ private fun OptionRow(option: MusicOption, chosen: Boolean, enabled: Boolean, on
 }
 
 /**
- * "Mức nhạc dưới giọng đọc" (chữ của web): một hàng vạch to dần từ nhỏ tới to như thanh âm lượng - năm, sáu mức nằm vừa một hàng ở 360dp kể cả chữ 1.3
+ * "Mức nhạc nền" (chữ của web): một hàng vạch to dần từ nhỏ tới to như thanh âm lượng - năm, sáu mức nằm vừa một hàng ở 360dp kể cả chữ 1.3
  * (lưới ba cột để lại ô trống cuối). Vạch tới mức đang chọn tô hổ phách, chữ của mức hiện dưới tên (cùng chữ với ô chọn của web).
  */
 @Composable

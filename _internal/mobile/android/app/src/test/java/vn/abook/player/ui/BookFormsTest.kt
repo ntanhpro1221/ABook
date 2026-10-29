@@ -523,10 +523,10 @@ class BookFormsTest {
         rule.onNodeWithContentDescription("Sửa cách đọc Haruto").performClick()
         rule.waitForIdle()
         rule.onNodeWithTag("edit_book_list").performScrollToNode(hasTestTag("reading_save"))
-        // Chưa đổi gì: "Lưu cho cả cuốn" chưa bấm được; từ đã có cách đọc riêng thì có "Đọc như chữ trong sách".
+        // Chưa đổi gì: "Lưu cho cả cuốn" chưa bấm được; từ đã có cách đọc riêng thì có "Đọc như trong sách".
         rule.onNodeWithTag("reading_save").assertIsNotEnabled()
         rule.onNodeWithTag("edit_book_list").performScrollToNode(hasTestTag("reading_plain"))
-        rule.onNodeWithText("Đọc như chữ trong sách").assertIsDisplayed()
+        rule.onNodeWithText("Đọc như trong sách").assertIsDisplayed()
         rule.onNodeWithTag("reading_field").performTextReplacement("Ha-ru-to")
         rule.onNodeWithTag("reading_save").assertIsEnabled().performClick()
         rule.waitForIdle()

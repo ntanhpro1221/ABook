@@ -30,8 +30,8 @@ android {
         }
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 148
-        versionName "0.4.146"
+        versionCode 150
+        versionName "0.4.148"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         // Chỉ để mã native biết mình đang ở bản thử (-PnativeUi): chế độ sách giả cho đo đạc (abook.demo.books) không bao giờ bật ở bản thường.
         buildConfigField "boolean", "NATIVE_UI", "${nativeUi}"

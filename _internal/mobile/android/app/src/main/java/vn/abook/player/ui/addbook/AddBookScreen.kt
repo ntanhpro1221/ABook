@@ -259,11 +259,13 @@ fun ImportReviewScreen(
                     Spacer(Modifier.height(Dim.s8))
                     if (preview.footnoteMarks > 0) {
                         SwitchRow("Bỏ số gọi", choice.hideMarks, { revise { it.copy(hideMarks = !it.hideMarks) } }, "hide_marks",
-                            hint = "${preview.footnoteMarks} số gọi trong chữ")
+                            hint = "${preview.footnoteMarks} số gọi trong chữ. Bỏ các con số như ² hay [3] khỏi phần đọc; lời chú không đổi.")
                         RowLine()
                     }
                     ChoiceSetting("Lời chú", NoteMode.entries, NoteMode.entries.first { it.code == choice.notes },
                         { mode, _ -> revise { it.copy(notes = mode.code) } }, "footnote_notes")
+                    // Cùng câu với web (FootnoteChoices.tsx): hàng chọn-một không có lời riêng cho từng lựa chọn nên một câu giải thích cả ba.
+                    Caption("Bạn chọn Giữ nguyên để giữ lời chú như trong file; Cuối chương đặt mỗi lời chú ở cuối chương có số gọi nó.", Modifier.padding(top = Dim.s4).testTag("footnote_notes_help"))
                 }
             }
             item("chapter_heading", "heading") {

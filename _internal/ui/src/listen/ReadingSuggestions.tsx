@@ -179,7 +179,7 @@ export function BookSuggestions({ book }: { book: ListenBook }) {
       <MotionRegion motionKey={quiet && !open ? "quiet" : "card"}>
         {quiet && !open ? (
           <button type="button" onClick={() => setOpen(true)} className="mt-3 text-left text-xs font-medium text-accent-text hover:underline">
-            Xem lại gợi ý cho phần đọc
+            Xem lại gợi ý
           </button>
         ) : (
           <section className="mt-4 max-w-xl py-3 text-left">
@@ -192,7 +192,7 @@ export function BookSuggestions({ book }: { book: ListenBook }) {
                 dismiss();
                 setOpen(false);
               }}>
-                Bỏ qua gợi ý - giữ sách như cũ
+                Bỏ qua gợi ý
               </Button>
             </MotionPresence>
           </section>

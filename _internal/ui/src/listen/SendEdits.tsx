@@ -105,7 +105,7 @@ export function EditsNoticesBanner({ book }: { book: ListenBook }) {
           <li key={notice.id} className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <span className="min-w-0 flex-1 text-pretty">{notice.label}</span>
             <Button size="sm" variant="ghost" icon={Undo2} disabled={act.isPending} onClick={() => act.mutate({ verb: "undo", notice })}>
-              Đặt lại bản của máy này
+              Hoàn tác
             </Button>
           </li>
         ))}

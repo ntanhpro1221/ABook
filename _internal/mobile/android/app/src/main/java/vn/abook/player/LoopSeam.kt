@@ -125,6 +125,33 @@ object LoopSeam {
         }
     }
 
+    /**
+     * Tạo + cấu hình + khởi động một codec; hỏng thì luôn nhả nó. Hỏng vì IllegalStateException (gồm CodecException) thì chờ
+     * [CODEC_RETRY_PAUSE_MS] rồi thử MỘT lần nữa với codec mới; lỗi khác ném ra ngay. Máy thiếu tài nguyên có thể thu hồi codec vừa tạo (`configure() ... Released state`, PLAN_loop §45.4);
+     * trước đây lần ấy làm hỏng cả Nối và bài rơi về a87. Chỉ thử lại bước khởi động: lúc ấy chưa đọc khung nào nên nguồn còn nguyên.
+     */
+    internal fun <T> startOnce(make: () -> T, start: (T) -> Unit, release: (T) -> Unit, pauseMs: Long = CODEC_RETRY_PAUSE_MS): T {
+        val first = make()
+        try {
+            start(first)
+            return first
+        } catch (e: Throwable) {
+            release(first)
+            if (e !is IllegalStateException) throw e
+            if (pauseMs > 0) Thread.sleep(pauseMs)
+        }
+        val second = make()
+        try {
+            start(second)
+            return second
+        } catch (e: Throwable) {
+            release(second)
+            throw e
+        }
+    }
+
+    const val CODEC_RETRY_PAUSE_MS = 200L
+
     /** Nguồn khung nén cho [pump]: MediaExtractor (giải mã liền từ đầu file) hoặc danh sách khung tự quét ([decodeRegion]). */
     private interface FrameSource {
         /** Chép khung kế vào `into` (từ vị trí 0), trả cỡ; -1 = hết. */
@@ -140,9 +167,11 @@ object LoopSeam {
     private fun pump(format: MediaFormat, source: FrameSource, stopAt: Long, onPcm: (Long, ByteBuffer) -> Unit): Decoded {
         var codec: MediaCodec? = null
         try {
-            codec = MediaCodec.createDecoderByType(format.getString(MediaFormat.KEY_MIME)!!)
-            codec.configure(format, null, null, 0)
-            codec.start()
+            codec = startOnce(
+                make = { MediaCodec.createDecoderByType(format.getString(MediaFormat.KEY_MIME)!!) },
+                start = { it.configure(format, null, null, 0); it.start() },
+                release = { runCatching { it.release() } },
+            )
             var rate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE)
             var channels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
             var count = 0L
@@ -436,25 +465,141 @@ object LoopSeam {
      * (mục Clip lặp có encoderDelay = preroll bị cắt cả khi tua thẳng vào, tiếng đi trước ~78 ms; còn đọc trước mục kế làm TrimmingAudioProcessor mang số cắt của mục KHÁC).
      * Format chuyển xuống sink trong có `encoderDelay` = 0 (encoderPadding giữ cho TrimmingAudioProcessor cắt cuối mục). Số cắt đầu:
      * - chuyển mục liền / mở mục: `encoderDelay` do [mediaSourceFactory] ghi (preroll của Clip lặp), áp ở lần `configure` kế;
-     * - tua: [seekToSample] gọi [armSeek]; lần `flush` đầu sau đó đặt số cắt = số mẫu từ khung đáp tới mốc tua, và lần `configure` theo sau (nếu mục đổi) KHÔNG ghi đè nó;
+     * - tua: [seekToSample] gọi [armSeek]; MỖI lần `flush` khi còn lệnh đặt lại số cắt = số mẫu từ khung đáp tới mốc tua, và lần `configure` theo sau (nếu mục đổi) KHÔNG ghi đè nó.
+     *   Số lần xả của sink KHÔNG ứng 1-1 với số lệnh `seekTo` (máy thật OPPO, PLAN_loop §46.3 / §47.1: buffer của lệnh tua trước tới sau lần xả của lệnh tua sau). Hai đường:
+     *   (a) lệnh CÓ vị trí đích và đã biết offset dòng ra ([setOutputStreamOffsetUs]; Nối WAV): lệnh gắn với NHÃN THỜI GIAN của buffer đích: chỉ buffer ĐẦU TIÊN sau một lần xả, có nhãn
+     *   đúng vị trí đích, mới tiêu lệnh (cắt + chụp), VÀ lệnh đã qua ít nhất một lần xả sau khi nạp ([Arm.flushed]); buffer đầu có nhãn khác (hay lệnh chưa qua lần xả nào) là của dòng CŨ,
+     *   đi qua nguyên vẹn, lệnh chờ lần xả kế;
+     *   (b) lệnh KHÔNG kiểm được nhãn (Clip mp3: lần tua đệm chỉ lệch 1 ms và chưa có số máy về offset; hay chưa biết offset): đếm lần xả (`flushes`: 2 khi có lệnh tua đệm), mỗi lần xả
+     *   đặt lại số cắt, chỉ lần xả CUỐI bắt đầu chụp và bỏ lệnh;
      * mẫu bị cắt khỏi các buffer đầu dòng ngay trước khi đưa xuống sink trong, nên không phụ thuộc trạng thái nào của media3 ngoài thứ tự gọi flush -> configure -> handleBuffer.
+     * Lần tua vào Nối có lưới an toàn ([Capture]) thì sau khi cắt còn chép K khung đầu ra mảng riêng cho [seekToSample]; không có thì không chép gì.
+     * Dịch pha TRONG DÒNG ([shift], không tua, không AudioTrack mới): chèn khung lặng / bỏ khung nội dung ngay trước buffer kế; vị trí báo lên ExoPlayer được bù ([getCurrentPositionUs]).
      * Phải đặt vào ExoPlayer qua `DefaultRenderersFactory.buildAudioSink`; app thật bọc sink MusicBed bằng cái này.
      */
     class LoopSink(inner: AudioSink) : ForwardingAudioSink(inner) {
-        private class Arm(val frames: Long, val ns: Long)
+        /**
+         * Lệnh tua đang chờ: số cắt, lúc nạp, lệnh chép (lưới an toàn), vị trí đích trên trục dòng ra (µs, chưa cộng offset; [C.TIME_UNSET] = không kiểm nhãn) và độ lệch nhãn cho phép.
+         * Giữ vị trí chứ không giữ nhãn đã cộng offset vì offset có thể đổi giữa lúc nạp và lúc buffer tới (tua sang mục khác đặt offset mới).
+         * `flushed` = đã có ít nhất một lần xả SAU khi nạp: lệnh có kiểm nhãn chỉ được tiêu bởi buffer đầu sau một lần xả như thế (buffer đầu sau lần xả của lệnh tua TRƯỚC, tới sau khi lệnh này
+         * nạp mà trước các lần xả của nó, mang nhãn trùng đích khi hai lần tua cùng đích: tiêu nhầm thì hai lần xả thật sau đó không còn lệnh, rs48p §46.12).
+         */
+        private class Arm(val frames: Long, val ns: Long, val capture: Capture?, val positionUs: Long, val toleranceUs: Long, var flushesLeft: Int) {
+            @Volatile var flushed = false
+        }
+
+        /** Lệnh [shift] chờ áp; `onApplied` gọi ở luồng phát khi đã chèn / bỏ xong. */
+        private class ShiftOrder(val frames: Long, val onApplied: ((Shift) -> Unit)?)
+
+        /**
+         * Lưới an toàn của một lần tua vào Nối WAV ([seekToSample] với `onLand`): sau khi cắt, chép `frames` khung PCM16 ĐẦU TIÊN đưa xuống sink trong vào một mảng riêng (không giữ buffer)
+         * rồi gọi `onCaptured` MỘT lần, ở luồng phát (người nhận tự đẩy việc nặng sang luồng khác). Sink không ở PCM16 thì bỏ, không gọi.
+         */
+        internal class Capture(val frames: Int, val onCaptured: (ShortArray) -> Unit)
+
+        /** MÓC ĐO chỉ cho bài thử (MusicLoopSeamTest, ca RS): chỉ đọc trạng thái, không đổi gì. Gọi ở luồng phát. */
+        internal interface Probe {
+            /** Sau quyết định số cắt của mỗi lần flush: có số cắt của lệnh tua nạp không (`armed`), số cắt đầu dòng, cờ seekPending, nhãn thời gian lệnh tua ấy mong đợi (µs, -1 khi không có lệnh / không kiểm nhãn / chưa biết offset). */
+            fun onFlush(armed: Boolean, toDrop: Long, seekPending: Boolean, expectedUs: Long)
+
+            /**
+             * Buffer ĐẦU TIÊN sau flush, TRƯỚC khi cắt: nhãn thời gian (µs), số khung (-1 khi chưa biết cỡ khung), số cắt còn lại, cờ seekPending,
+             * khớp: 1 = nhãn khớp lệnh tua nên lệnh bị tiêu, 0 = nhãn khác hay lệnh chưa qua lần xả nào sau khi nạp (buffer dòng cũ, lệnh chờ tiếp), -1 = không có lệnh hay lệnh không kiểm nhãn (đường đếm lần xả, đã xử lý ở [flush]).
+             */
+            fun onFirstBuffer(presentationTimeUs: Long, frames: Long, toDrop: Long, seekPending: Boolean, match: Int)
+
+            /** Buffer đầu sau flush bị bỏ qua lệnh vì nhãn khác lệnh có kiểm nhãn mong đợi, hay lệnh chưa qua lần xả nào (nhãn, nhãn mong đợi µs): buffer của dòng cũ. */
+            fun onSkip(presentationTimeUs: Long, expectedUs: Long)
+        }
+
+        /** null (mặc định, app thật) = không gọi gì: đường cắt mẫu y nguyên. */
+        @Volatile internal var probe: Probe? = null
 
         private val armed = AtomicReference<Arm?>(null)
         private var toDrop = 0L
         private var seekPending = false
+        private var streamOffsetUs = 0L
+        private var offsetKnown = false
+        /** Buffer đầu sau lần xả gần nhất là của dòng cũ (nhãn không khớp lệnh tua): chưa bắt đầu dịch pha ([shift]) cho tới lần xả kế. */
+        private var staleLine = false
         private var frameBytes = 0
+        private var pcm16 = false
+        /** PCM tuyến tính có dấu (mọi PCM trừ 8 bit không dấu): buffer số 0 là lặng, [shift] chèn được. */
+        private var zeroIsSilence = false
         private var rate = 0
+        /** Chưa có buffer nào từ lần flush gần nhất (chỉ [probe] đọc). */
+        private var freshAfterFlush = false
+        // Lưới an toàn ([Capture]) của lần tua đang chờ: mảng đang chép + số khung đã có. Buffer sink trong chưa nhận hết (handleBuffer trả false) được gọi lại nguyên con:
+        // `retryBuffer` / `retryEnd` nhớ đã chép tới byte nào của nó để không chép hai lần.
+        private var capture: Capture? = null
+        private var captured: ShortArray? = null
+        private var capturedFrames = 0
+        private var retryBuffer: ByteBuffer? = null
+        private var retryEnd = 0
+        // Dịch pha ([shift]), mọi thứ tính từ lần xả gần nhất: byte sink trong đã NHẬN (chỉ số khung trong AudioTrack mới), sink trong còn giữ dở một buffer (trả false: lần sau phải đưa lại
+        // đúng buffer ấy nên chưa được chèn / bỏ gì), pts của buffer đầu đưa xuống, số khung lệch giữa trục đã ghi và trục nội dung (+chèn -bỏ), lần chèn / bỏ đang dở, các dịch đã bắt đầu.
+        private val shiftOrder = AtomicReference<ShiftOrder?>(null)
+        private var writtenBytes = 0L
+        private var innerBusy = false
+        private var firstPtsUs = C.TIME_UNSET
+        private var offsetFrames = 0L
+        private var silence: ByteBuffer? = null
+        private var dropLeft = 0L
+        private var shifting: ShiftOrder? = null
+        private var shifts: ArrayList<Shift>? = null
 
-        /** Gọi trước `player.seekTo`: lần flush kế (trong 2 s) mang số cắt `frames` khung đầu dòng. Số cắt cũ chưa dùng bị thay. */
-        internal fun armSeek(frames: Long) = armed.set(Arm(frames, System.nanoTime()))
+        /**
+         * Gọi trước `player.seekTo` (trong 2 s). CÓ kiểm nhãn (`positionUs` != [C.TIME_UNSET] và đã biết offset): lần flush kế đặt số cắt `frames` khung đầu dòng, và buffer ĐẦU TIÊN sau
+         * một lần xả có nhãn đúng `positionUs` (vị trí đích trên trục dòng ra, tức `plan.positionMs * 1000`; sink cộng offset dòng ra lúc buffer tới, xem [setOutputStreamOffsetUs]) tiêu
+         * lệnh: cắt `frames`, bắt đầu chép [Capture]. Buffer đầu sau xả có nhãn khác (lệnh tua trước / lệnh tua đệm còn trong ống: máy thật §46.3, §47.1) đi qua nguyên vẹn và lệnh chờ lần xả
+         * sau; buffer không phải đầu tiên sau xả không bao giờ tiêu lệnh; `flushes` bị bỏ qua. `toleranceUs` là độ lệch nhãn chấp nhận.
+         * KHÔNG kiểm nhãn (không có `positionUs`, hay chưa biết offset): `flushes` lần flush kế (= số lệnh `seekTo` sắp gọi: 2 khi có lệnh tua đệm) mỗi lần đặt lại số cắt; lệnh chép [Capture]
+         * chỉ bắt đầu ở lần xả CUỐI, rồi lệnh bị bỏ (buffer của lệnh tua đệm tới giữa hai lần xả thì vẫn bị cắt, lần xả sau đặt lại hết). Lệnh cũ chưa dùng bị thay;
+         * không có `capture` thì đường cắt mẫu không chép gì thêm.
+         */
+        internal fun armSeek(frames: Long, capture: Capture? = null, positionUs: Long = C.TIME_UNSET, toleranceUs: Long = PTS_TOLERANCE_US, flushes: Int = 1) =
+            armed.set(Arm(frames, clock(), capture, positionUs, toleranceUs, maxOf(1, flushes)))
+
+        /** Lệnh kiểm được nhãn buffer đích: có vị trí đích và đã biết offset dòng ra. */
+        private fun checks(arm: Arm) = arm.positionUs != C.TIME_UNSET && offsetKnown
+
+        /**
+         * Offset dòng ra mới nhất mà renderer báo (nhãn buffer = vị trí trong dòng + offset; mục WAV Nối của MusicBed là 1e12 + vị trí, nhưng chuyển mục tự nhiên đổi nó). MediaCodecAudioRenderer
+         * gọi hàm này (qua onOutputStreamOffsetUsChanged) mỗi khi dòng ra đổi, KHÔNG gọi lại khi tua trong mục đang phát; media3 1.11.1: MediaCodecRenderer.setOutputStreamInfo.
+         */
+        override fun setOutputStreamOffsetUs(outputStreamOffsetUs: Long) {
+            streamOffsetUs = outputStreamOffsetUs
+            offsetKnown = true
+            super.setOutputStreamOffsetUs(outputStreamOffsetUs)
+        }
+
+        /** Đồng hồ của hạn 2 s của [armSeek] (test JVM thay). */
+        internal var clock: () -> Long = System::nanoTime
+
+        /**
+         * Dịch pha TRONG DÒNG, áp một lần ở buffer kế (sau số cắt của lần tua nếu còn), không xả, không AudioTrack mới. Gọi từ luồng nào cũng được (như [armSeek]); lệnh cũ chưa áp bị thay,
+         * [flush] bỏ lệnh chưa áp lẫn lần chèn / bỏ đang dở.
+         * - `frames` < 0: BỎ |frames| khung đầu dòng (tiếng đi sau: đẩy tới), cắt như số cắt của lần tua, có thể qua nhiều buffer.
+         * - `frames` > 0: CHÈN `frames` khung lặng (tiếng đi trước: lùi lại) - một buffer số 0 cùng định dạng PCM đưa xuống sink trong TRƯỚC buffer thật; sink trong chưa nhận hết thì
+         *   trả false như hợp đồng `handleBuffer` (ExoPlayer gọi lại cùng buffer thật) và lần sau đưa tiếp phần lặng còn lại.
+         * Nhãn thời gian: sink trong nhận pts LIÊN TỤC với số khung đã ghi (pts nội dung + [offsetFrames]: +chèn, -bỏ), nên DefaultAudioSink không thấy gián đoạn (nó chỉnh lại
+         * startMediaTimeUs khi lệch > 200 ms) và vị trí nó tính (pts đầu sau lần xả + khung đã phát) đi theo trục ĐÃ GHI; [getCurrentPositionUs] đổi về trục nội dung.
+         * `onApplied` (luồng phát) nhận [Shift] khi đã chèn / bỏ xong: writtenAt = số khung sink trong đã nhận kể từ lần xả tới chỗ dịch, frames = K đã áp. Sink không ở PCM tuyến tính
+         * (chưa biết cỡ khung) thì lệnh nằm chờ, không áp. Không có lệnh thì đường cũ y nguyên: không cấp phát, pts không đổi.
+         */
+        internal fun shift(frames: Long, onApplied: ((Shift) -> Unit)? = null) = shiftOrder.set(ShiftOrder(frames, onApplied))
+
+        /** Các dịch đã bắt đầu kể từ lần xả gần nhất, cũ trước (chỉ test JVM đọc). */
+        internal val appliedShifts: List<Shift> get() = shifts.orEmpty()
+
+        /** Đang chờ / đang chép cho một lệnh [Capture] (chỉ test JVM đọc). */
+        internal val capturing: Boolean get() = capture != null
 
         override fun configure(config: AudioSink.AudioSinkConfig) {
             val f = config.format
             frameBytes = if (f.pcmEncoding != Format.NO_VALUE && f.channelCount > 0) Util.getPcmFrameSize(f.pcmEncoding, f.channelCount) else 0
+            pcm16 = f.pcmEncoding == C.ENCODING_PCM_16BIT
+            zeroIsSilence = frameBytes > 0 && f.pcmEncoding != C.ENCODING_PCM_8BIT
             rate = f.sampleRate
             if (!seekPending) toDrop = maxOf(0, f.encoderDelay).toLong()
             val stripped = AudioSink.AudioSinkConfig.Builder(f.buildUpon().setEncoderDelay(0).build())
@@ -467,17 +612,136 @@ object LoopSeam {
         }
 
         override fun flush() {
-            val arm = armed.getAndSet(null)?.takeIf { System.nanoTime() - it.ns < 2_000_000_000L }
+            val waiting = armed.get()
+            val arm = waiting?.takeIf { clock() - it.ns < 2_000_000_000L }
+            if (waiting != null && arm == null) armed.compareAndSet(waiting, null) // quá hạn: lệnh tua ấy không sinh đủ lần xả, đừng áp cho lần xả lạ
             if (arm != null) {
+                // Còn lệnh tua: mỗi lần xả đặt lại số cắt (buffer giữa hai lần xả có thể đã tiêu nó), lượt chép của lần xả trước (dở hay xong) bị bỏ.
+                arm.flushed = true
                 toDrop = arm.frames
                 seekPending = true
+                if (checks(arm)) {
+                    startCapture(null) // có kiểm nhãn: lệnh KHÔNG bị bỏ và chưa chụp, chỉ buffer đầu sau xả có nhãn đúng đích mới tiêu nó ([handleBuffer])
+                } else {
+                    // không kiểm nhãn: đếm lần xả, chỉ lần CUỐI bắt đầu chép và bỏ lệnh
+                    arm.flushesLeft--
+                    val last = arm.flushesLeft <= 0
+                    if (last) armed.compareAndSet(arm, null)
+                    startCapture(if (last) arm.capture else null)
+                }
             } else if (!seekPending) {
                 toDrop = 0
+                startCapture(null) // lần xả không phải của lệnh tua đang chờ: bỏ lệnh chép dở
             }
+            freshAfterFlush = true
+            staleLine = false
+            // Dịch pha nói về dòng của AudioTrack cũ: bỏ hết, kể cả lệnh chưa áp.
+            shiftOrder.set(null)
+            writtenBytes = 0
+            innerBusy = false
+            firstPtsUs = C.TIME_UNSET
+            offsetFrames = 0
+            silence = null
+            dropLeft = 0
+            shifting = null
+            shifts = null
+            probe?.onFlush(arm != null, toDrop, seekPending, if (arm != null && checks(arm)) streamOffsetUs + arm.positionUs else -1L)
             super.flush()
         }
 
+        /**
+         * Vị trí của sink trong đổi từ trục ĐÃ GHI sang trục NỘI DUNG khi đã có dịch ([shift]): khung lặng chèn không phải nội dung, khung bỏ thì đã qua ([contentFrames]); ExoPlayer
+         * (currentPosition, chuyển mục) và mọi chỗ đọc vị trí trình phát thấy đúng nội dung đang ra loa. Không giảm theo vị trí sink trong (renderer chỉ cho vị trí đi tới).
+         */
+        override fun getCurrentPositionUs(sourceEnded: Boolean): Long {
+            val position = super.getCurrentPositionUs(sourceEnded)
+            val list = shifts ?: return position
+            if (position == AudioSink.CURRENT_POSITION_NOT_SET || rate <= 0 || firstPtsUs == C.TIME_UNSET) return position
+            val played = maxOf(0L, ((position - firstPtsUs) * rate + 500_000L) / 1_000_000L) // làm tròn: sai < nửa khung
+            return position + (contentFrames(played, list) - played) * 1_000_000L / rate
+        }
+
+        /** Đưa `buffer` xuống sink trong, đếm byte nó nhận và nhớ nó có giữ dở không (đường cũ: chỉ thêm phép đếm). */
+        private fun down(buffer: ByteBuffer, pts: Long, encodedAccessUnitCount: Int): Boolean {
+            if (firstPtsUs == C.TIME_UNSET) firstPtsUs = maxOf(0L, pts) // như DefaultAudioSink đặt startMediaTimeUs
+            val before = buffer.position()
+            val done = super.handleBuffer(buffer, pts, encodedAccessUnitCount)
+            writtenBytes += buffer.position() - before
+            innerBusy = !done
+            return done
+        }
+
+        /** Bắt đầu lệnh dịch `order` ở chỗ đã ghi hiện tại. */
+        private fun beginShift(order: ShiftOrder) {
+            val at = Shift(writtenBytes / frameBytes, order.frames)
+            (shifts ?: ArrayList<Shift>(4).also { shifts = it }).add(at)
+            shifting = order
+            if (order.frames < 0) dropLeft = -order.frames
+            else silence = ByteBuffer.allocateDirect((order.frames * frameBytes).toInt()).order(ByteOrder.nativeOrder()) // số 0 = lặng với mọi PCM có dấu
+        }
+
+        private fun shiftDone() {
+            val order = shifting ?: return
+            shifting = null
+            order.onApplied?.invoke(shifts!!.last())
+        }
+
+        private fun startCapture(c: Capture?) {
+            capture = c
+            captured = null
+            capturedFrames = 0
+            retryBuffer = null
+        }
+
+        /** Chép phần còn thiếu của [capture] từ `buffer` (đã cắt xong, chưa đưa xuống sink trong); trả byte cuối đã chép. Đủ thì gọi `onCaptured` và thôi chép. */
+        private fun take(c: Capture, buffer: ByteBuffer): Int {
+            if (!pcm16 || frameBytes == 0) {
+                startCapture(null)
+                return buffer.position()
+            }
+            val channels = frameBytes / 2
+            val into = captured ?: ShortArray(c.frames * channels).also { captured = it }
+            val from = if (buffer === retryBuffer) maxOf(buffer.position(), retryEnd) else buffer.position()
+            val n = minOf(c.frames - capturedFrames, maxOf(0, buffer.limit() - from) / frameBytes)
+            if (n > 0) {
+                val view = buffer.duplicate().order(ByteOrder.LITTLE_ENDIAN)
+                view.position(from)
+                view.asShortBuffer().get(into, capturedFrames * channels, n * channels)
+                capturedFrames += n
+            }
+            if (capturedFrames == c.frames) {
+                startCapture(null)
+                c.onCaptured(into)
+            }
+            return from + n * frameBytes
+        }
+
         override fun handleBuffer(buffer: ByteBuffer, presentationTimeUs: Long, encodedAccessUnitCount: Int): Boolean {
+            if (freshAfterFlush) {
+                freshAfterFlush = false
+                val arm = armed.get()
+                // Chỉ lệnh CÓ kiểm nhãn xét ở đây; lệnh không kiểm nhãn đã được [flush] đếm lần xả (match -1).
+                val checked = arm != null && checks(arm)
+                val expected = if (checked) streamOffsetUs + arm!!.positionUs else -1L
+                val match = when {
+                    !checked -> -1
+                    !arm!!.flushed -> 0 // chưa có lần xả nào sau khi nạp lệnh: buffer này là của lần xả TRƯỚC (dòng cũ), dù nhãn trùng đích
+                    Math.abs(presentationTimeUs - expected) <= arm!!.toleranceUs -> 1
+                    else -> 0
+                }
+                probe?.onFirstBuffer(presentationTimeUs, if (frameBytes > 0) (buffer.remaining() / frameBytes).toLong() else -1L, toDrop, seekPending, match)
+                if (match == 1) {
+                    // Buffer đích của lệnh tua: tiêu lệnh.
+                    armed.compareAndSet(arm, null)
+                    toDrop = arm!!.frames
+                    startCapture(arm.capture)
+                } else if (match == 0) {
+                    // Buffer của dòng CŨ (lệnh tua trước / tua đệm còn trong ống): không cắt, không chụp, đi xuống nguyên vẹn; lệnh chờ lần xả kế.
+                    toDrop = 0
+                    staleLine = true
+                    probe?.onSkip(presentationTimeUs, expected)
+                }
+            }
             seekPending = false
             var pts = presentationTimeUs
             if (toDrop > 0 && frameBytes > 0) {
@@ -487,8 +751,55 @@ object LoopSeam {
                 if (rate > 0) pts += k * 1_000_000L / rate
                 if (!buffer.hasRemaining()) return true
             }
-            return super.handleBuffer(buffer, pts, encodedAccessUnitCount)
+            // Dịch pha ([shift]): chỉ bắt đầu khi sink trong không giữ dở buffer nào (không thì phải đưa lại đúng buffer ấy) và số cắt của lần tua đã xong.
+            if (shifting == null && !innerBusy && toDrop == 0L && !staleLine && zeroIsSilence && rate > 0) shiftOrder.getAndSet(null)?.let(::beginShift)
+            var dropped = 0L
+            if (dropLeft > 0) {
+                dropped = minOf(dropLeft, (buffer.remaining() / frameBytes).toLong())
+                buffer.position(buffer.position() + (dropped * frameBytes).toInt())
+                dropLeft -= dropped
+                offsetFrames -= dropped
+                if (dropLeft == 0L) shiftDone()
+                if (!buffer.hasRemaining()) return true
+            }
+            // pts xuống sink trong theo trục ĐÃ GHI: pts nội dung (đã tính khung cắt) + khung vừa bỏ ở đầu buffer này + offsetFrames; khung bỏ không đẩy pts tới, khung lặng đẩy pts các buffer sau.
+            val zeros = silence
+            if (zeros != null) {
+                if (zeros.hasRemaining() && !down(zeros, pts + (dropped + offsetFrames) * 1_000_000L / rate, 1)) return false // lặng chưa nhận hết: ExoPlayer gọi lại cùng buffer thật
+                silence = null
+                offsetFrames += shifting!!.frames
+                shiftDone()
+            }
+            if (offsetFrames != 0L || dropped != 0L) pts += (dropped + offsetFrames) * 1_000_000L / rate
+            val c = capture ?: return down(buffer, pts, encodedAccessUnitCount)
+            val end = take(c, buffer)
+            val done = down(buffer, pts, encodedAccessUnitCount)
+            if (capture === c) {
+                retryBuffer = if (done) null else buffer
+                retryEnd = end
+            }
+            return done
         }
+    }
+
+    /**
+     * Một lần dịch pha trong dòng của [LoopSink] ([LoopSink.shift]): `writtenAt` = số khung sink trong đã nhận kể từ lần xả tới chỗ dịch (= chỉ số khung trong AudioTrack sinh ra sau
+     * lần xả ấy, cùng thang với framePosition), `frames` > 0 = chèn chừng ấy khung lặng ở đó, < 0 = bỏ chừng ấy khung nội dung.
+     */
+    class Shift(val writtenAt: Long, val frames: Long)
+
+    /**
+     * Vị trí NỘI DUNG (khung, kể từ khung đầu sau lần xả) khi AudioTrack đã phát `played` khung qua các dịch `shifts`: khung lặng chèn không phải nội dung (đang phát lặng thì nội dung
+     * đứng yên), khung bỏ thì nội dung nhảy qua ngay khi tới chỗ dịch. Dịch chưa ra loa (writtenAt > played) không tính. Không giảm khi `played` tăng.
+     * Dùng chung cho vị trí sink báo ExoPlayer ([LoopSink.getCurrentPositionUs]) và pha của lần chuyển a87 -> P3 ([SeamHandover.reading]).
+     */
+    fun contentFrames(played: Long, shifts: List<Shift>): Long {
+        var content = played
+        for (s in shifts) {
+            if (s.frames > 0) content -= (played - s.writtenAt).coerceIn(0L, s.frames)
+            else if (played >= s.writtenAt) content -= s.frames
+        }
+        return content
     }
 
     /** Kế hoạch một cú tua: vị trí cửa sổ ExoPlayer (ms) tới khung đáp, và số khung PCM [LoopSink] phải cắt từ khung đáp tới mốc. */
@@ -504,6 +815,7 @@ object LoopSeam {
         if (index % 2 == 1) {
             // WavExtractor đưa mẫu theo khối sr/10 khung (100 ms). Nối đã được đọc trước (bộ đệm) thì ExoPlayer tua TRONG bộ đệm: khối chứa mốc có nhãn trước mốc nên bị bỏ nguyên khối và tiếng
             // bắt đầu ở khối sau (mốc 1005 ms -> 1100 ms, đo được +95 ms, lúc có lúc không tuỳ đã đọc trước chưa). Vì thế tua tới ĐÚNG ranh khối rồi cắt phần lẻ ở sink.
+            // b0 * 1000 / sr là ms nguyên đúng của ranh khối (floor(ms * sr / 1000) == b0) khi [seamGridExact]; lần tua đệm cũng đứng trên lưới ([stepAside] theo mục).
             val chunk = (sr / 10).toLong().coerceAtLeast(1)
             val b0 = sample / chunk * chunk
             return SeekPlan(b0 * 1000 / sr, sample - b0)
@@ -520,21 +832,99 @@ object LoopSeam {
 
     /**
      * API tua của Clip / Nối: tua tới mẫu `sample` (trục danh nghĩa của mục, xem [seekPlan]) chính xác từng mẫu; `sink` là [LoopSink] của chính player này. Gọi từ luồng của player.
+     * `onLand` (chỉ Nối WAV, mục lẻ): LƯỚI AN TOÀN theo nội dung - [LoopSink] chép [LAND_FRAMES] khung đầu sau khi cắt, luồng nền tìm chúng trong WAV Nối ([landOf]) rồi gọi `onLand`
+     * (ở luồng nền ấy) với mẫu đáp thật trên trục Nối, null = không tìm thấy (lần tua hỏng). Đọc WAV lỗi thì không gọi. Clip mp3 thì `onLand` không bao giờ được gọi.
      */
-    fun seekToSample(player: Player, sink: LoopSink, seam: Seam, index: Int, sample: Long) {
+    fun seekToSample(player: Player, sink: LoopSink, seam: Seam, index: Int, sample: Long, onLand: ((Long?) -> Unit)? = null) {
         val plan = seekPlan(seam, index, sample)
-        sink.armSeek(plan.trimFrames)
+        val capture = if (onLand != null && index % 2 == 1) LoopSink.Capture(LAND_FRAMES) { pcm -> land(seam, sample, pcm, onLand) } else null
         // ExoPlayer BỎ QUA lệnh tua tới đúng mục + vị trí nó đang đứng (đo: P3 đứng chờ ở đầu Nối, tua tới mẫu 170 cũng là mili giây 0 -> không xả bộ đệm, số cắt không áp, P3 phát tiếp từ mẫu 0).
-        // Nên lệch sang bên một bước trước: tua đó thật, rồi tua tới mốc cũng thật; số cắt đã nạp sống qua lần xả đầu (`seekPending` của [LoopSink]).
-        if (seekIsNoop(player.currentMediaItemIndex, player.currentPosition, index, plan.positionMs)) player.seekTo(index, stepAside(plan.positionMs))
+        // Nên lệch sang bên một bước trước: tua đó thật, rồi tua tới mốc cũng thật. Số lần xả của sink không ứng 1-1 với số lệnh tua (máy thật OPPO: đáp lệch -4063, PLAN_loop §46.3 / §47.1:
+        // buffer của lệnh tua trước tới sau lần xả của lệnh tua sau). Nối WAV: số cắt + lệnh chép gắn với NHÃN THỜI GIAN của buffer đích ([LoopSink.armSeek] `positionUs`: offset dòng ra + vị trí
+        // tua tới từng ms, lưới khối [seamGridExact]); buffer của lần tua đệm có nhãn khác nên tự bị bỏ qua, `flushes` không dùng. Clip mp3 không kiểm nhãn (lần tua đệm chỉ lệch 1 ms, mp3 đáp ở
+        // khung dưới mốc, chưa có số máy về offset của mục Clip): đếm lần xả (`flushes` = 2 khi có lần tua đệm), chỉ lần xả cuối cắt + chụp. Nối WAV chưa biết offset cũng rơi về đường đếm.
+        val noop = seekIsNoop(player.currentMediaItemIndex, player.currentPosition, index, plan.positionMs)
+        sink.armSeek(plan.trimFrames, capture, if (index % 2 == 1) plan.positionMs * 1000 else C.TIME_UNSET, flushes = if (noop) 2 else 1)
+        if (noop) player.seekTo(index, stepAside(index, plan.positionMs))
         player.seekTo(index, plan.positionMs)
     }
 
     /** Lệnh tua tới (`index`, `positionMs`) khi trình phát đang ở (`currentIndex`, `currentMs`) có bị ExoPlayer bỏ qua không (cùng mục, cách nhau <= 2 ms). */
     internal fun seekIsNoop(currentIndex: Int, currentMs: Long, index: Int, positionMs: Long): Boolean = currentIndex == index && Math.abs(currentMs - positionMs) <= 2
 
-    /** Vị trí khác vị trí tua thật 1 ms (trong cùng mục) để lần tua đệm không bị bỏ qua. */
+    /** Vị trí khác vị trí tua thật 1 ms (trong cùng mục) để lần tua đệm không bị bỏ qua. Clip mp3. */
     internal fun stepAside(positionMs: Long): Long = if (positionMs > 0) positionMs - 1 else 1
+
+    /**
+     * Vị trí của lần tua đệm cho mục `index`. Nối WAV: ranh khối 100 ms TRƯỚC (sau, nếu < 100 ms) chứ không lệch 1 ms. Lệnh tua đệm thường nằm ngoài bộ đệm nên ExoPlayer tải lại WAV
+     * từ floor(vị trí × sr / 1000) (WavSeekMap) và chia khối sr/10 từ đó; lệch 1 ms (399 ms ở 44,1 kHz = khung 17595) làm lưới khối lệch -45 khung, rồi lệnh tua thật (400 ms) rơi vào
+     * bộ đệm ấy, chọn khối đầu có nhãn >= 400 ms = khung 22005 và bỏ nguyên khối chứa mốc: tiếng vào muộn 4365 khung (+99 ms, PLAN_loop §44.7, result10). Ranh khối kề thì lưới
+     * vẫn đúng ([seamGridExact]). Clip mp3 giữ [stepAside].
+     */
+    internal fun stepAside(index: Int, positionMs: Long): Long =
+        if (index % 2 == 1) (if (positionMs >= SEAM_CHUNK_MS) positionMs - SEAM_CHUNK_MS else positionMs + SEAM_CHUNK_MS) else stepAside(positionMs)
+
+    /** Một khối của WavExtractor (sr/10 khung) tính bằng ms khi sr chia hết cho 10. */
+    const val SEAM_CHUNK_MS = 100L
+
+    /**
+     * Ở tần số `sampleRate`, mọi ranh khối b0 = k × (sr/10) của Nối ([seekPlan]) có đúng một mili giây nguyên `b0 × 1000 / sr` với floor(ms × sr / 1000) == b0, và khối dài đúng
+     * [SEAM_CHUNK_MS]: tải lại ở vị trí tua (hay vị trí tua đệm) nào cũng giữ lưới khối, tua trong bộ đệm cũng đáp đúng khối. Đúng khi sr chia hết cho 10 (8 / 12 / 16 / 22,05 / 24 /
+     * 32 / 44,1 / 48 kHz). 11,025 kHz thì không (khối 1102 khung = 99,95 ms): không ms nào vừa đúng khi tải lại vừa đúng khi tua trong bộ đệm - giới hạn đã biết, lưới an toàn
+     * ([seekToSample] `onLand`) bắt lệch còn lại (vài khung).
+     */
+    internal fun seamGridExact(sampleRate: Int): Boolean = sampleRate % 10 == 0
+
+    /** Số khung đầu sau một lần tua vào Nối mà lưới an toàn đem đi tìm trong WAV ([seekToSample] `onLand`): 5,8 ms ở 44,1 kHz, PCM16 khớp từng bit. */
+    const val LAND_FRAMES = 256
+
+    /** Độ lệch nhãn (µs) giữa nhãn buffer đầu và vị trí đích của lệnh tua mà [LoopSink] còn coi là buffer đích. Buffer dòng cũ cách ít nhất một khối (100 ms). */
+    const val PTS_TOLERANCE_US = 1000L
+
+    /** Lưới an toàn tìm mẫu đáp trong ±chừng này giây quanh đích (kẹp trong WAV). */
+    const val LAND_RADIUS_SECONDS = 1
+
+    /** Luồng nền của lưới an toàn: đọc WAV + so, không bao giờ ở luồng phát hay luồng chính. */
+    private val landWorker by lazy {
+        java.util.concurrent.Executors.newSingleThreadExecutor { Thread(it, "abook-seam-land").apply { isDaemon = true } }
+    }
+
+    private fun land(seam: Seam, expected: Long, pcm: ShortArray, onLand: (Long?) -> Unit) {
+        landWorker.execute {
+            val landed = try {
+                landOf(seam, expected, pcm)
+            } catch (e: java.io.IOException) {
+                android.util.Log.w("ABookMusic", "lưới an toàn Nối: không đọc được WAV (${e.message})")
+                return@execute
+            }
+            onLand(landed)
+        }
+    }
+
+    /**
+     * Mẫu đáp thật của một lần tua vào Nối: vị trí (khung trong WAV Nối) gần `expected` nhất mà `pcm` (K khung đầu sau khi cắt, PCM16 xen kênh) trùng WAV từng bit, trong ±[LAND_RADIUS_SECONDS]
+     * quanh đích (kẹp trong file); null = không thấy. Đọc đĩa: chạy ở luồng nền.
+     */
+    internal fun landOf(seam: Seam, expected: Long, pcm: ShortArray): Long? {
+        val k = pcm.size / seam.channels
+        val radius = LAND_RADIUS_SECONDS.toLong() * seam.sampleRate
+        val from = (expected - radius).coerceIn(0L, seam.xFrames.toLong())
+        val to = (expected + radius + k).coerceIn(from, seam.xFrames.toLong())
+        val ref = readWavFrames(seam.wav, seam.channels, from, (to - from).toInt())
+        return SeamMatch.nearest(ref, from, seam.channels, pcm, expected, radius)
+    }
+
+    /** `count` khung PCM16 xen kênh từ khung `first` của WAV do [writeWav] ghi (đầu 44 byte). */
+    internal fun readWavFrames(wav: File, channels: Int, first: Long, count: Int): ShortArray {
+        val bytes = ByteArray(count * channels * 2)
+        java.io.RandomAccessFile(wav, "r").use {
+            it.seek(44L + first * channels * 2)
+            it.readFully(bytes)
+        }
+        val out = ShortArray(count * channels)
+        ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(out)
+        return out
+    }
 
     /** Như [seekToSample] với mốc là `ms` mili giây trên trục danh nghĩa (mẫu = round(ms * sr / 1000)). */
     fun seekTo(player: Player, sink: LoopSink, seam: Seam, index: Int, ms: Long) =

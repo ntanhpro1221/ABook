@@ -294,7 +294,7 @@
         },
         {
           "side": "web",
-          "match": "^(bỏ gộp.*|chuyển.*|chọn cuốn|chưa có dàn nhân vật|chưa có giọng|chưa có lịch sử nghe|chờ áp dụng.*|gộp vào người khác|hiện chương sau|ẩn chương sau|hồ sơ mới|hồ sơ nghe|huỷ|lưu|lưu thay đổi|lưu thành|lần nghe \\{\\}|lịch sử|mặc định|mở cuốn ấy|nghe tiếp từ|người kể chuyện|nhân vật|quay lại chỗ cũ|tên hồ sơ|từ phần trước|vai chính|vai phụ|xoá hồ sơ.*|đang dùng hồ sơ.*|đang nghe lại từ đầu|đã xoá hồ sơ.*|đã đổi tên hồ sơ|đổi giọng người kể|đổi giới tính|đổi tên.*|về thư viện|\\{\\} ngày qua|hôm nay|hôm qua|tạo và nghe từ đầu)$",
+          "match": "^(bỏ gộp.*|chuyển.*|chọn cuốn|chưa có dàn nhân vật|chưa có giọng|chưa có lịch sử nghe|chờ áp dụng.*|gộp vào người khác|hiện chương sau|ẩn chương sau|hồ sơ mới|hồ sơ nghe|huỷ|lưu|lưu thay đổi|lưu thành|lần nghe \\{\\}|lịch sử|mặc định|mở cuốn ấy|nghe tiếp từ|người kể chuyện|nhân vật|quay lại chỗ cũ|tên hồ sơ|từ phần trước|vai chính|vai phụ|xoá hồ sơ.*|đang dùng hồ sơ.*|đang nghe lại từ đầu|đã xoá hồ sơ.*|đã đổi tên hồ sơ|đổi giọng người kể|đổi giới tính|đổi tên.*|về thư viện|\\{\\} ngày qua|hôm nay|hôm qua|tạo và nghe)$",
           "reason": "listening profiles, history and the cast tab of the book page"
         },
         {
@@ -808,7 +808,7 @@
         },
         {
           "side": "web",
-          "match": "^(chưa tải được giọng vieneu|chọn giọng khác|chọn giọng đọc|dừng|giọng đọc trực tuyến|nghe|nghe thử|tải giọng chạy trên máy|xem trong cài đặt|đang tải giọng vieneu|giọng của máy đọc ngay trên máy này, không gửi chữ đi đâu)$",
+          "match": "^(chưa tải được giọng vieneu|chọn giọng khác|chọn giọng đọc|dừng|giọng đọc trực tuyến|nghe|nghe thử|tải giọng về máy|xem trong cài đặt|đang tải giọng vieneu|giọng của máy đọc ngay trên máy này, không gửi chữ đi đâu)$",
           "reason": "native player has no offline / online-voice prompt nor the VieNeu download block (OnlineVoicePrompt, VieneuDownload)"
         },
         {
@@ -1145,7 +1145,7 @@
         },
         {
           "side": "web",
-          "match": "^(đặt\\ lại\\ bản\\ của\\ máy\\ này|đã\\ hiểu|chưa\\ làm\\ được)$",
+          "match": "^(hoàn\\ tác|đã\\ hiểu|chưa\\ làm\\ được)$",
           "reason": "native chưa có lời báo máy đã ghép đổi phần bạn đã đặt (EditsNoticesBanner) và chưa có nút bỏ lời báo đã gửi"
         },
         {
@@ -1357,7 +1357,7 @@
         },
         {
           "side": "web",
-          "match": "^mức\\ nhạc\\ dưới\\ giọng\\ đọc$",
+          "match": "^mức\\ nhạc\\ nền$",
           "reason": "nhạc nền trong màn sửa sách: thuộc nhóm Nhạc (phiên Music làm)"
         },
         {

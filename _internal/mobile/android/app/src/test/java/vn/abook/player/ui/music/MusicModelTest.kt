@@ -62,7 +62,7 @@ class MusicModelTest {
         assertEquals(listOf(-14.0, -17.0, -18.0, -20.0, -24.0, -28.0), packaged.map { it.first })
         assertEquals("-18 dB (của sách)", packaged[2].second)
         assertEquals("Vừa (mặc định)", MusicLevels.label(-20.0))
-        assertEquals("Rất nhỏ (dễ nghe lời nhất)", MusicLevels.label(-28.0))
+        assertEquals("Rất nhỏ (rõ lời)", MusicLevels.label(-28.0))
         assertEquals("-18,5 dB (của sách)", MusicLevels.label(-18.5))
     }
 
