@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "VisualReady.js" as VisualReady
 import ABook
 
 Item {
@@ -41,7 +42,7 @@ Item {
         name: "ListMeasure"
         when: windowShown
         function init() {
-            Theme.reduceMotion = true
+            Theme.reduceMotion = false
             Platform.reset(); DesktopApi.reset(); Api.bind(DesktopApi, Theme)
             Platform.setSetting("fold.my-music.library", "1")
             Api.loaded = true
@@ -80,7 +81,7 @@ Item {
             const factories = {queues: queues, studio_lists: studio, music_lists: music, chapter_list: chapters, voice_list: voices}
             const page = createTemporaryObject(factories[d.scene], content, {width: content.width, height: content.height})
             verify(page !== null)
-            wait(350)
+            VisualReady.render(this, host.Window.window, page, qtVisualReady)
             check(page)
             if (d.scene === "chapter_list") {
                 verify(page.count > 0)

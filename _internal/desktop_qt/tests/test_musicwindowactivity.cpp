@@ -48,7 +48,7 @@ private slots:
         window.show();QCoreApplication::processEvents();expose(true);
         QTRY_VERIFY(window.isSceneGraphInitialized());
         QCOMPARE(window.grabWindow().pixelColor(20,20),QColor(QStringLiteral("#c12345")));
-        const double phase=rect->property("phase").toDouble();QTest::qWait(60);QVERIFY(rect->property("phase").toDouble()!=phase);
+        const double phase=rect->property("phase").toDouble();QTRY_VERIFY(rect->property("phase").toDouble()!=phase);
         rect->setProperty("awake",false);window.showMinimized();expose(false);QCoreApplication::processEvents();idle.update();
         QVERIFY(!window.isPersistentGraphics());QVERIFY(!window.isPersistentSceneGraph());
         if(window.rendererInterface()->graphicsApi()!=QSGRendererInterface::Software) QTRY_VERIFY(!window.isSceneGraphInitialized());
@@ -56,7 +56,7 @@ private slots:
         window.hide();window.showNormal();QCoreApplication::processEvents();expose(true);
         QTRY_VERIFY(window.isSceneGraphInitialized());QCOMPARE(rect->property("saved").toInt(),42);
         QCOMPARE(window.grabWindow().pixelColor(20,20),QColor(QStringLiteral("#3456ab")));
-        rect->setProperty("awake",true);const double restored=rect->property("phase").toDouble();QTest::qWait(60);QVERIFY(rect->property("phase").toDouble()!=restored);
+        rect->setProperty("awake",true);const double restored=rect->property("phase").toDouble();QTRY_VERIFY(rect->property("phase").toDouble()!=restored);
         QVERIFY(window.isPersistentGraphics());QVERIFY(window.isPersistentSceneGraph());
     }
     void miniReusesMainWindow() {

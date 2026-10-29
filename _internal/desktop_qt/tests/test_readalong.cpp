@@ -194,7 +194,7 @@ private slots:
         // bật lại trước hạn thì không bỏ
         rig.read->setActive(false);
         rig.read->setActive(true);
-        QTest::qWait(150);
+        QTest::qWait(150); // fixed: proves absence
         QCOMPARE(rig.read->status(), QStringLiteral("ready"));
     }
 

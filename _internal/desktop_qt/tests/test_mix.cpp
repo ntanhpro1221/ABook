@@ -73,12 +73,12 @@ struct MixerRig {
     FakeDevice *device = new FakeDevice;
     MusicMixer mixer{std::unique_ptr<MixDevice>(device), dir.path()};
     bool ready(MixVoice &voice) {
-        for (int i = 0; i < 200 && !voice.duration(); ++i) {
-            QCoreApplication::processEvents(); mixer.service(0); mixer.serviceReader();
-            if (!voice.duration()) QTest::qWait(1);
-        }
+        const bool ready = QTest::qWaitFor([&] {
+            mixer.service(0); mixer.serviceReader();
+            return voice.duration() > 0;
+        }, 5000);
         QCoreApplication::processEvents();
-        return voice.duration() > 0;
+        return ready;
     }
     void serve(size_t frames, bool refill = true) {
         device->consume(device->queued); mixer.service(0);
@@ -267,7 +267,7 @@ private slots:
         QVERIFY(input.open(QIODevice::WriteOnly)); input.write(bytes); input.close();
         const QUrl url = QUrl::fromLocalFile(input.fileName());
         voice.load(url, 0); voice.play();
-        for (int i = 0; i < 200 && failed.isEmpty(); ++i) { rig.mixer.serviceReader(); QTest::qWait(1); }
+        QTRY_VERIFY(([&] { rig.mixer.serviceReader(); return !failed.isEmpty(); })());
         QCOMPARE(failed.size(), 1); QVERIFY(!failed.first().first().toString().isEmpty());
         QVERIFY(!voice.duration()); QVERIFY(!voice.playing()); QVERIFY(!QFile::exists(rig.mixer.cachePath(url)));
         for (int i = 0; i < 3; ++i) { rig.mixer.serviceReader(); rig.mixer.service(512); QCoreApplication::processEvents(); }
@@ -487,26 +487,27 @@ private slots:
     void mixerCacheSurvivesAnotherMixerAndRejectsTruncation() {
         QTemporaryDir dir;
         { MusicMixer mixer(std::make_unique<FakeDevice>(), dir.path()); MixVoice voice(&mixer); voice.load(track(), 0);
-          for (int i = 0; i < 100 && !voice.duration(); ++i) { mixer.serviceReader(); QTest::qWait(1); }
+          QTRY_VERIFY(([&] { mixer.serviceReader(); return voice.duration() > 0; })());
           QVERIFY(voice.duration()); }
         MusicMixer mixer(std::make_unique<FakeDevice>(), dir.path()); MixVoice voice(&mixer); voice.load(track(), 0);
         mixer.serviceReader(); QCoreApplication::processEvents(); QVERIFY(voice.duration()); QCOMPARE(mixer.decodeCount(), quint64(0));
         voice.stop(); QFile cache(mixer.cachePath(track())); QVERIFY(cache.open(QIODevice::WriteOnly)); QVERIFY(cache.resize(30)); cache.close();
         voice.load(track(), 0);
-        for (int i = 0; i < 100 && !voice.duration(); ++i) { mixer.serviceReader(); QTest::qWait(1); }
+        QTRY_VERIFY(([&] { mixer.serviceReader(); return voice.duration() > 0; })());
         QVERIFY(voice.duration()); QCOMPARE(mixer.decodeCount(), quint64(1));
     }
 
     void mixVoiceErrorsAreQueuedAndCancelledByStop() {
         MixerRig rig; MixVoice voice(&rig.mixer); QSignalSpy failed(&voice, &AudioOut::failed);
         voice.load(QUrl::fromLocalFile(rig.dir.filePath(QStringLiteral("missing.mp3"))), 0);
-        for (int i = 0; i < 100 && failed.isEmpty(); ++i) { rig.mixer.serviceReader(); QTest::qWait(1); }
+        QTRY_VERIFY(([&] { rig.mixer.serviceReader(); return !failed.isEmpty(); })());
         QCOMPARE(failed.size(), 1);
         QFile junk(rig.dir.filePath(QStringLiteral("bad.mp3"))); QVERIFY(junk.open(QIODevice::WriteOnly)); junk.write(QByteArray(1000, 'x')); junk.close();
         voice.load(QUrl::fromLocalFile(junk.fileName()), 0);
-        for (int i = 0; i < 100 && failed.size() < 2; ++i) { rig.mixer.serviceReader(); QTest::qWait(1); }
+        QTRY_VERIFY(([&] { rig.mixer.serviceReader(); return failed.size() >= 2; })());
         QCOMPARE(failed.size(), 2);
-        voice.load(track(), 0); voice.stop(); rig.mixer.serviceReader(); QTest::qWait(1); QCOMPARE(failed.size(), 2);
+        voice.load(track(), 0); voice.stop(); rig.mixer.serviceReader(); QTest::qWait(80); // fixed: proves absence of cancelled error delivery
+        QCOMPARE(failed.size(), 2);
     }
 
     void mixerRebuildsAtSameAndDifferentRates() {
@@ -515,7 +516,7 @@ private slots:
         ++rig.device->epoch; rig.device->queued = 0; rig.mixer.service(0); rig.mixer.serviceReader(); QCOMPARE(voice.position(), 0.05);
         rig.serve(4800); rig.device->consume(2400); rig.mixer.service(0); QCOMPARE(voice.position(), 0.1);
         rig.device->hz = 44100; ++rig.device->epoch; rig.device->queued = 0; rig.mixer.service(0); QVERIFY(rig.ready(voice));
-        for (int i = 0; i < 100 && rig.mixer.decodeCount() < 2; ++i) { rig.mixer.serviceReader(); QTest::qWait(1); }
+        QTRY_VERIFY(([&] { rig.mixer.serviceReader(); return rig.mixer.decodeCount() >= 2; })());
         QCOMPARE(rig.mixer.rate(), 44100); QCOMPARE(voice.position(), 0.1); QCOMPARE(rig.mixer.decodeCount(), quint64(2));
     }
 
@@ -533,12 +534,20 @@ private slots:
         };
         QTemporaryDir dir; auto *device = new CounterDevice;
         MusicMixer mixer(std::unique_ptr<MixDevice>(device), dir.path(), true);
-        QTest::qWait(300); QCOMPARE(device->polls.load(), 0);
+        QTest::qWait(300); // fixed: proves absence of idle polling
+        QCOMPARE(device->polls.load(), 0);
         MixVoice voice(&mixer); voice.load(track(), 0); QTRY_VERIFY_WITH_TIMEOUT(voice.duration() > 0, 3000);
         mixer.setRelaxed(true); voice.play(); QTRY_VERIFY(device->running.load()); QCOMPARE(device->lastWrite.load(), 24000);
         mixer.setRelaxed(false); QTRY_COMPARE(device->lastWrite.load(), 24000);
         voice.pause(); QTRY_VERIFY(!device->running.load());
-        QTest::qWait(100); const int polls = device->polls; QTest::qWait(600); QCOMPARE(device->polls.load(), polls);
+        // Stop is visible before the in-flight render/read acknowledgements
+        // finish. Require a complete quiet window after those drain; periodic
+        // polling can never satisfy it.
+        QVERIFY(QTest::qWaitFor([&] {
+            const int polls = device->polls;
+            QTest::qWait(600); // fixed: proves absence of paused polling
+            return device->polls.load() == polls;
+        }, 5000));
     }
 
     void mixerRateChangesWhileReaderOpensCache() {
@@ -556,14 +565,19 @@ private slots:
         };
         QTemporaryDir dir; auto *device = new RateDevice;
         MusicMixer mixer(std::unique_ptr<MixDevice>(device), dir.path(), true);
-        MixVoice voice(&mixer); QSignalSpy ready(&voice, &AudioOut::durationChanged), failed(&voice, &AudioOut::failed);
-        voice.load(track(), 0); voice.play();
+        MixVoice voice(&mixer); QSignalSpy failed(&voice, &AudioOut::failed);
+        // The switches wait for real device state; a busy machine can outlast
+        // the short fixture, so keep playback active throughout the recovery.
+        voice.setLoop(true); voice.load(track(), 0); voice.play();
         for (int i = 0; i < 10; ++i) {
             device->hz = i % 2 ? 48000 : 44100; ++device->epoch;
-            mixer.setRelaxed(i % 2 == 0); QTest::qWait(5);
+            mixer.setRelaxed(i % 2 == 0); QTRY_COMPARE(mixer.rate(), device->hz.load());
         }
-        ready.clear(); device->hz = 44100; ++device->epoch; mixer.setRelaxed(true);
-        QTRY_COMPARE(mixer.rate(), 44100); QTRY_VERIFY(!ready.isEmpty()); QTRY_VERIFY(voice.playing());
+        device->hz = 44100; ++device->epoch; mixer.setRelaxed(true);
+        QTRY_COMPARE(mixer.rate(), 44100);
+        QTRY_VERIFY(voice.duration() > 0);
+        QTRY_VERIFY(MusicMixer::cacheFrames(mixer.cachePath(track()), 44100) > 0);
+        QTRY_VERIFY(voice.playing());
         QCOMPARE(failed.size(), 0);
         for (const auto &file : QDir(dir.path()).entryInfoList({QStringLiteral("*.pcm")}, QDir::Files)) {
             const int hz = file.fileName().endsWith(QStringLiteral("44100.pcm")) ? 44100 : 48000;

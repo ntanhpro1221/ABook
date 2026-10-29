@@ -31,10 +31,11 @@ TestCase {
     function cleanup() { win.destroy(); win = null }
     function test_minimizeStopsNetworkAndRestoreRefreshes() {
         win.showMinimized()
-        wait(80)
+        tryCompare(win, "visibility", Window.Minimized)
+        tryCompare(findChild(win.storage, "storagePoll"), "running", false)
         const n = requests()
         cache(42)
-        wait(160)
+        wait(160) // fixed: proves absence
         compare(requests(), n)
         compare(win.storage.usage.total, 10)
         win.showNormal()
@@ -43,10 +44,11 @@ TestCase {
     }
     function test_trayHideStopsNetworkAndShowRefreshes() {
         win.hide()
-        wait(80)
+        tryCompare(win, "visible", false)
+        tryCompare(findChild(win.storage, "storagePoll"), "running", false)
         const n = requests()
         cache(99)
-        wait(160)
+        wait(160) // fixed: proves absence
         compare(requests(), n)
         win.show()
         tryVerify(function() { return win.storage.usage.total === 99 })

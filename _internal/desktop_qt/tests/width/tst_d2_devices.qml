@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "VisualReady.js" as VisualReady
 import ABook
 
 // Cài đặt › Thiết bị (SettingsDevices = PhoneSync + OtherComputers): hành vi (bật tắt kết nối, ghép bằng mã, đổi tên, thôi ghép, máy tính khác,
@@ -14,6 +15,7 @@ Item {
     TestCase {
         id: test
         name: "D2Devices"
+        function ready() { VisualReady.render(this, host.Window.window, host, qtVisualReady) }
         when: windowShown
 
         property var server: ({})
@@ -42,7 +44,7 @@ Item {
             DesktopApi.responses = {
                 "GET /api/sync": function() { return {status: 200, data: server.sync} },
                 "POST /api/sync": function(body) { server.sync = Object.assign({}, server.sync, {enabled: body.enabled, wanted: body.enabled, devices: body.enabled ? server.sync.devices : []}); return {status: 200, data: server.sync} },
-                "POST /api/sync/pairing": function() { server.sync = Object.assign({}, server.sync, {pairing: {code: "483920", expiresAt: nowSeconds + 300}}); return {status: 200, data: server.sync} },
+                "POST /api/sync/pairing": function() { server.sync = Object.assign({}, server.sync, {pairing: {code: "483920", expiresAt: Date.now() / 1000 + 300}}); return {status: 200, data: server.sync} },
                 "DELETE /api/sync/pairing": function() { server.sync = Object.assign({}, server.sync, {pairing: null}); return {status: 200, data: server.sync} },
                 "POST /api/sync/studio": function(body) { server.sync = Object.assign({}, server.sync, {remoteStudio: body.enabled}); return {status: 200, data: server.sync} },
                 "DELETE /api/sync/devices/aa11": function() { server.sync = Object.assign({}, server.sync, {devices: server.sync.devices.filter(d => d.id !== "aa11")}); return {status: 200, data: server.sync} },
@@ -68,14 +70,15 @@ Item {
             Api.loaded = true
             Api.notice = ""
             Nav.layers = []
-            Theme.reduceMotion = true
+            Theme.reduceMotion = false
         }
         function cleanup() { Theme.mode = "auto"; Theme.reduceMotion = false; Nav.layers = []; DesktopApi.delayed = false }
 
         function make(over) {
             const item = createTemporaryObject(devicesFactory, host, Object.assign({x: 100, width: 888}, over || {}))
             verify(item !== null)
-            verify(waitForRendering(item))
+            tryVerify(function() { return item.children[0].sync !== null })
+            ready()
             return item
         }
         function walk(item, visit) {
@@ -99,9 +102,7 @@ Item {
         function request(method, path) { return DesktopApi.requests.filter(r => r.method === method && r.path === path) }
         function shot(name, item) {
             const target = item || host
-            target.Window.window.update()
-            waitForRendering(target)
-            wait(300)
+            ready()
             qtGlyphAudit.scan()
             const img = grabImage(target)
             const path = Qt.resolvedUrl("../../build/d2shots/" + name + "_" + (Theme.dark ? "dark" : "light") + ".png").toString()
@@ -125,7 +126,6 @@ Item {
             const post = request("POST", "/api/sync")
             compare(post.length, 1)
             compare(post[0].body.enabled, true)
-            wait(50)
             tryVerify(function() { return shown(page, "Máy đã ghép") })
             tryVerify(function() { return shown(page, "Ghép thiết bị") })
             tryVerify(function() { return shown(page, "Máy cùng mạng thấy máy này là “NGDtuanh-PC”.") })
@@ -138,7 +138,6 @@ Item {
             byName(page, "syncToggle").toggled(false)
             compare(request("POST", "/api/sync")[0].body.enabled, false)
             compare(Api.notice, "Đã tắt chia sẻ qua Wi-Fi")
-            wait(250)
             tryVerify(function() { return !shown(page, "Máy đã ghép") })
         }
         function test_syncFailingShowsRetry() {
@@ -155,6 +154,7 @@ Item {
             const idle = byText(page, "Ghép thiết bị mới")
             idle.activated()
             compare(request("POST", "/api/sync/pairing").length, 1)
+            tryVerify(function() { return byName(page, "pairingCode") && byName(page, "pairingCode").visible })
             const code = byName(page, "pairingCode")
             tryVerify(function() { return code.visible && shown(page, "Mã ghép thiết bị") })
             verify(texts(code).join("").indexOf("483") >= 0)
@@ -165,8 +165,7 @@ Item {
             tryVerify(function() { return shown(page, "Vân tay: AB12CD34EF56AB12CD34EF56AB12CD34EF56AB12CD34EF56AB12CD34EF56AB12") })
             byText(page, "Huỷ mã này").clicked()
             compare(request("DELETE", "/api/sync/pairing").length, 1)
-            wait(250)
-            verify(!byName(page, "pairingCode").visible)
+            tryVerify(function() { return !byName(page, "pairingCode").visible })
             tryVerify(function() { return shown(page, "Ghép thiết bị mới") })
         }
         function test_pairingBlocked() {
@@ -197,7 +196,7 @@ Item {
             verify(!dialog.open)
             compare(request("POST", "/api/sync/studio").length, 0)
             byName(page, "studioToggle").toggled(true)
-            wait(250)
+            tryVerify(function() { return byText(window(), "Cho phép") !== null })
             byText(window(), "Cho phép").activated()
             compare(request("POST", "/api/sync/studio")[0].body.enabled, true)
             verify(!dialog.open)
@@ -237,7 +236,6 @@ Item {
             verify(!dialog.open)
             compare(Nav.layers.length, 0)
             compare(address.text, "10.0.0.5")
-            wait(30)
             tryVerify(function() { return shown(page, "Điện thoại của bạn") })
         }
         function test_renameClampsAndNeedsText() {
@@ -265,7 +263,7 @@ Item {
             verify(!dialog.open)
             compare(request("DELETE", "/api/sync/devices/aa11").length, 0)
             list.children[0].remove("aa11", "Google Pixel 8")
-            wait(250)
+            tryVerify(function() { return byText(window(), "Để nguyên") !== null })
             byText(window(), "Để nguyên").clicked()
             verify(!dialog.open)
             list.children[0].remove("aa11", "Google Pixel 8")
@@ -276,8 +274,7 @@ Item {
             compare(Api.notice, "Đã thôi ghép Google Pixel 8")
             verify(!dialog.open)
             compare(Nav.layers.length, 0)
-            wait(400)
-            compare(byName(page, "deviceList").children.length - 1 /* Repeater */, 1)
+            tryVerify(function() { return (byName(page, "deviceList").children.length - 1 /* Repeater */) === (1) })
         }
         function test_emptyDevicesHint() {
             install(baseSync({devices: []}), [])
@@ -327,7 +324,6 @@ Item {
             compare(Api.notice, "Đã ghép Laptop của bạn")
             compare(address.text, "")
             compare(code.text, "")
-            wait(60)
             tryVerify(function() { return shown(page, "Laptop của bạn") })
             // quên máy: không còn gì để mất -> thôi ghép luôn + một câu
             Platform.setSetting("fold.other-computers.c0ffee000001", "1")
@@ -348,9 +344,7 @@ Item {
             verify(dialog.open)
             compare(dialog.title, "Thôi ghép Máy bàn phòng làm việc?")
             compare(Nav.layers.length, 1)
-            wait(250)
             tryVerify(function() { return shown(window(), "2 cuốn của Máy bàn phòng làm việc sẽ rời Thư viện, và 50 MB đã tải về máy tính này sẽ bị xoá.") })
-            wait(250)
             tryVerify(function() { return shown(window(), "Gửi trước rồi thôi ghép") })
             tryVerify(function() { return shown(window(), "Vẫn thôi ghép, bỏ thay đổi") })
             verify(Nav.back())
@@ -398,7 +392,7 @@ Item {
             tryVerify(function() { return shown(dialog, "0.4.147 (4147)") })
             tryVerify(function() { return shown(dialog, "Google Pixel 8 · Android 15 (API 35)") })
             tryVerify(function() { return shown(dialog, "20 GB / 120 GB") })
-            compare(Nav.layers.length, 1)
+            tryVerify(function() { return (Nav.layers.length) === (1) })
             verify(Nav.back())
             verify(!dialog.open)
         }
@@ -476,7 +470,7 @@ Item {
                 Platform.setSetting("fold.other-computers.c0ffee000003", "1")
                 page = make()
                 byName(page, "diagnose").clicked()
-                wait(100)
+                waitForRendering(window())
                 shot("settings_devices_diagnostics", window())
                 Nav.back()
                 byName(page, "bluetoothButton").clicked()

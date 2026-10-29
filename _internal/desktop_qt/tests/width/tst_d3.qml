@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "VisualReady.js" as VisualReady
 import ABook
 
 // D3: các chỗ hở D2 để lại, mỗi mục một nhóm phép thử (hành vi + chuyển động) và ảnh sáng / tối ghi ra build/d2shots/d3_*.png:
@@ -60,8 +61,7 @@ Item {
         function hasText(item, value) { return texts(item).indexOf(value) >= 0 }
         function shot(name, item) {
             const target = item || host
-            waitForRendering(target)
-            wait(300)
+            VisualReady.render(this, host.Window.window, target, qtVisualReady)
             qtGlyphAudit.scan()
             const img = grabImage(target)
             const path = Qt.resolvedUrl("../../build/d2shots/d3_" + name + "_" + (Theme.dark ? "dark" : "light") + ".png").toString()
@@ -83,7 +83,7 @@ Item {
             Api.notice = ""
             Nav.layers = []
             Nav.studioPeer = ""
-            Theme.reduceMotion = true
+            Theme.reduceMotion = false
             Theme.readingSurface = "auto"
             Feedback.sounds = true
         }
@@ -530,8 +530,7 @@ Item {
             const view = createTemporaryObject(readFactory, host, {width: 600, height: 500})
             const bg = one(view, "readingSurface")
             Theme.readingSurface = "night"
-            wait(Theme.motionSlow / 3)
-            verify(String(bg.color) !== "#121110" && String(bg.color) !== "#fbfaf7", "nền mờ chéo, không đổi cứng: " + bg.color)
+            tryVerify(function() { return String(bg.color) !== "#121110" && String(bg.color) !== "#fbfaf7" }, 5000, "nền mờ chéo, không đổi cứng: " + bg.color)
             tryCompare(bg, "color", Qt.color("#121110"), 2000)
         }
         function test_shotsReadingSurfaces() {
@@ -563,7 +562,7 @@ Item {
             compare(card.line.text, "Bản chạy từ mã nguồn không tự cập nhật")
             // không còn hỏi /api/app định kỳ trong lúc chờ
             card.check()
-            wait(3300)
+            wait(3300) // fixed: proves absence
             compare(calls("GET", "/api/app").length, 0)
             Backend.updateChecked({state: "found"})
             compare(card.line, null)
@@ -616,7 +615,7 @@ Item {
             const toast = makeToast()
             Api.toast("Đã xoá mẫu “Nhanh”", {duration: 300, action: {label: "Hoàn tác", run: function() {}}})
             mouseMove(toast, toast.width / 2, 20)
-            wait(700)
+            wait(700) // fixed: proves absence
             compare(Api.notice, "Đã xoá mẫu “Nhanh”", "rê chuột vào thì dừng đếm")
             compare(one(toast, "toastClose").Accessible.name, "Đóng thông báo")
             mouseClick(one(toast, "toastClose"))
