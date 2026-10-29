@@ -10,6 +10,9 @@ from pathlib import Path
 TESTS = Path(__file__).resolve().parent.parent / "desktop_qt" / "tests"
 WAIT = re.compile(r"^\s*wait\(\s*\d+\s*\)\s*;?\s*(//.*)?$")
 CHECK = re.compile(r"^\s*(verify|compare|fuzzyCompare)\s*\(")
+# Chờ cố định chỉ đúng khi test chứng minh điều gì đó KHÔNG xảy ra trong một khoảng (không gửi lệnh, hàng không đổi);
+# dòng ấy ghi dấu này để máy dò bỏ qua.
+ABSENCE = "// fixed: proves absence"
 BASELINE = 66
 
 
@@ -19,7 +22,7 @@ def fixed_wait_checks(root=TESTS):
     for path in sorted(root.rglob("*.qml")):
         lines = path.read_text(encoding="utf-8").splitlines()
         for i, line in enumerate(lines):
-            if not WAIT.match(line):
+            if not WAIT.match(line) or ABSENCE in line:
                 continue
             nxt = next((l for l in lines[i + 1:] if l.strip() and not l.strip().startswith("//")), "")
             if CHECK.match(nxt):
@@ -42,6 +45,8 @@ def test_detector_sees_the_pattern(tmp_path):
         "        verify(x)\n"
         "        wait(50)\n"
         "        mouseClick(y)\n"
+        "        wait(80)   // fixed: proves absence\n"
+        "        compare(calls.length, 0)\n"
         "        tryVerify(function() { return z })\n"
         "    }\n"
         "}\n", encoding="utf-8")
