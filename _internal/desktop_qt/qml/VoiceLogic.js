@@ -1,7 +1,8 @@
 .pragma library
+.import "SizeFormat.js" as Size
 
 // Phần thuần (không giao diện) của Cài đặt › Giọng đọc, chép từng chữ từ bản web: listen/voiceGroups.ts, readAloudVoice.ts (chọn giọng mặc định,
-// lời báo chữ đi đâu), vieneuModule.ts (lời của thẻ giọng trên máy), voiceSpeed.ts (Hiệu năng), studio/musicLocal.ts (formatSize, hai câu chung).
+// lời báo chữ đi đâu), vieneuModule.ts (lời của thẻ giọng trên máy), voiceSpeed.ts (Hiệu năng), studio/musicLocal.ts (hai câu chung).
 // Chỗ web viết "khóa" thì đây viết "khoá" (chủ app 26-10: một cách viết duy nhất).
 
 var SAMPLE_TEXT = "Xin chào, tôi sẽ đọc sách cho bạn nghe. Bạn thấy giọng này thế nào?"
@@ -133,13 +134,6 @@ function lowerFirst(text) { return text.charAt(0).toLowerCase() + text.slice(1) 
 
 function tierVoicePrefix(tier) { return tier === "supertonic" ? "supertonic:" : "vieneu:" + tier + "/" }
 
-function formatSize(bytes) {
-    if (bytes >= 1e9) return (bytes / 1e9).toFixed(2).replace(".", ",") + " GB"
-    const megabytes = bytes / 1e6
-    if (megabytes < 1) return Math.max(1, Math.round(bytes / 1e3)) + " KB"
-    return (megabytes < 10 ? megabytes.toFixed(1).replace(".", ",") : String(Math.round(megabytes))) + " MB"
-}
-
 function percent(status) {
     return status.total > 0 ? Math.min(100, Math.floor((status.done / status.total) * 100)) : 0
 }
@@ -203,7 +197,7 @@ function toggleChoice(status, picked, id, on) {
 
 function meteredNotice(status, bytes) {
     if (!status.metered || bytes <= 0) return ""
-    return "Điện thoại đang dùng dữ liệu di động - tải " + formatSize(bytes) + " có thể tốn tiền mạng. Nên chờ có Wi-Fi."
+    return "Điện thoại đang dùng dữ liệu di động - tải " + Size.formatSize(bytes) + " có thể tốn tiền mạng. Nên chờ có Wi-Fi."
 }
 
 function fastUnsupportedNote(status) {
@@ -244,12 +238,12 @@ function moduleLabel(status, copy) {
     const mid = lowerFirst(copy.name)
     if (status.state === "error") return status.error
     if (status.state === "downloading")
-        return status.retrying ? RETRYING_NOTE + " (" + mid + ", " + percent(status) + "%)" : "Đang tải " + mid + " (" + formatSize(status.total) + ") " + percent(status) + "%"
+        return status.retrying ? RETRYING_NOTE + " (" + mid + ", " + percent(status) + "%)" : "Đang tải " + mid + " (" + Size.formatSize(status.total) + ") " + percent(status) + "%"
     if (status.benchmarking) return Object.keys(status.benchmark || {}).length === 0 ? "Đang thử giọng vừa tải trên máy này (vài giây)…" : "Đang đo lại tốc độ trên máy này (vài giây)…"
     if (status.state === "unsupported") return status.reason ? "Máy này chưa dùng được " + mid + ": " + status.reason + "." : "Máy này chưa dùng được " + mid + "."
     if (status.restart) return copy.name + " đã cập nhật - mở lại ABook để dùng bản mới."
     const cancelled = status.cancelled ? CANCELLED_NOTE + " " : ""
-    if (status.state === "outdated") return cancelled + copy.name + " có bản mới - " + formatSize(status.outdatedBytes) + ". Bản đang dùng vẫn đọc bình thường."
+    if (status.state === "outdated") return cancelled + copy.name + " có bản mới - " + Size.formatSize(status.outdatedBytes) + ". Bản đang dùng vẫn đọc bình thường."
     if (status.state === "ready") return copy.name + " đã có trên máy: chọn trong nút Giọng đọc khi nghe sách chỉ có chữ."
     return cancelled + copy.invite
 }
@@ -300,7 +294,7 @@ function speedWhy(voice, choice) {
 function speedLine(voice, choice) {
     const lead = voice.name + " - Đang dùng: " + SPEED_TIER[voice.using] + " (" + speedWhy(voice, choice) + ")"
     if (voice.tier === "fast" && voice.using !== "fast")
-        return voice.name + " - Đang dùng: " + SPEED_TIER.quality + ". Bản nhanh hơn cần tải thêm " + formatSize(voice.fastBytes) + "."
+        return voice.name + " - Đang dùng: " + SPEED_TIER.quality + ". Bản nhanh hơn cần tải thêm " + Size.formatSize(voice.fastBytes) + "."
     return lead + "."
 }
 

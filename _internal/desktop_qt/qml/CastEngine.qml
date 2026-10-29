@@ -6,7 +6,7 @@ import "VoiceLogic.js" as Voice
 // Đầu một nhóm giọng ở hộp "Giọng của …" (EngineHeader của studio/VoicePicker.tsx): tên nhóm và - khi máy đọc ấy chưa có trên máy này - lời nhắn + nút
 // "Tải giọng" / "Sửa giọng" / "Thử lại"; đang tải thì thanh tiến độ + "Huỷ" (phần đã tải giữ để làm tiếp). Hỏi lại trạng thái mỗi giây khi đang tải; tải xong
 // thì phát `ready()` để hộp đọc lại danh sách giọng. Cùng đường tải và cùng chữ với thẻ giọng trên máy của Cài đặt › Giọng đọc (VoiceModule.qml, VoiceLogic.js:
-// formatSize, percent, CANCELLED_NOTE) - chỉ khác hình dạng trạng thái: GET/POST /api/studio/<máy đọc>[/cancel] trả {state, done, total, bytes, error, cancelled, damaged}.
+// percent, CANCELLED_NOTE; cỡ file ở SizeFormat.js) - chỉ khác hình dạng trạng thái: GET/POST /api/studio/<máy đọc>[/cancel] trả {state, done, total, bytes, error, cancelled, damaged}.
 Column {
     id: root
     property string engine: ""

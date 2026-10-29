@@ -364,7 +364,7 @@ Item {
             const page = make()
             const card = find(page, "voiceModule.supertonic")
             verify(card.downloading)
-            verify(hasText(card, "Đang tải giọng Supertonic (228 MB) 52%"))
+            verify(hasText(card, "Đang tải giọng Supertonic (217 MB) 52%"))
             verify(find(card, "moduleBar").width > 0)
             // tóm tắt ở đầu "Bộ giọng"
             verify(hasText(page, "Supertonic · 52%"))
@@ -388,7 +388,7 @@ Item {
             click(find(card, "choice.supertonic"))          // VieNeu đã có nên Supertonic không đánh dấu sẵn
             wait(40)
             const start = find(card, "moduleStart")
-            compare(start.text, "Tải (228 MB)")
+            compare(start.text, "Tải (217 MB)")
             DesktopApi.responses["POST /api/readaloud/supertonic"] = function(body) {
                 host.supertonic = Object.assign({}, host.supertonic, {state: "downloading", done: 1000000})
                 return {status: 200, data: host.supertonic}
@@ -406,7 +406,7 @@ Item {
             const nano = find(card, "choice.nano")
             click(nano)
             wait(40)
-            compare(find(card, "moduleStart").text, "Tải (176 MB)")
+            compare(find(card, "moduleStart").text, "Tải (168 MB)")
             DesktopApi.responses["POST /api/readaloud/vieneu"] = {status: 400, data: {message: "Hết chỗ trên đĩa"}}
             click(find(card, "moduleStart"))
             wait(80)
@@ -483,7 +483,7 @@ Item {
             const choice = find(page, "voiceSpeedChoice")
             compare(choice.value, "auto")
             verify(hasText(page, "Máy kịp thì đọc bản hay nhất. Chỉ áp cho giọng Supertonic; sách xuất ra luôn dùng bản hay nhất."))
-            verify(hasText(page, "Giọng Supertonic - Đang dùng: Chất lượng cao nhất. Bản nhanh hơn cần tải thêm 65 MB."))
+            verify(hasText(page, "Giọng Supertonic - Đang dùng: Chất lượng cao nhất. Bản nhanh hơn cần tải thêm 62 MB."))
             choice.picked("fast")
             wait(80)
             compare(last("POST", "/api/readaloud/voice-speed").body.choice, "fast")
