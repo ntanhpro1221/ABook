@@ -2,6 +2,13 @@
 #include "backend.h"
 #include "audioout.h"
 #include <QBuffer>
+#include <QClipboard>
+#include <QCoreApplication>
+#include <QGuiApplication>
+#include <QImage>
+#include <QMimeData>
+#include <QDir>
+#include <QFileInfo>
 #include <QFile>
 #include <QImageReader>
 #include <QJsonDocument>
@@ -70,19 +77,62 @@ int DesktopApi::request(const QString &method, const QString &path, const QJSVal
     return id;
 }
 QString DesktopApi::localPath(const QUrl &file) const { return file.isLocalFile() ? file.toLocalFile() : QString(); }
-QString DesktopApi::imageData(const QUrl &file) const {
-    if (!file.isLocalFile()) return {};
-    QImageReader reader(file.toLocalFile());
-    reader.setAutoTransform(true);
-    const QSize size = reader.size();
-    if (size.width() > 1600 || size.height() > 1600) reader.setScaledSize(size.scaled(1600, 1600, Qt::KeepAspectRatio));
-    QImage image = reader.read();
+namespace {
+void collect(const QFileInfo &entry, const QString &relative, int depth, QVariantList &out) {
+    if (entry.isFile()) {
+        QVariantMap file;
+        file[QStringLiteral("name")] = entry.fileName();
+        file[QStringLiteral("size")] = static_cast<double>(entry.size());
+        file[QStringLiteral("path")] = relative;
+        file[QStringLiteral("local")] = entry.absoluteFilePath();
+        out.append(file);
+        return;
+    }
+    if (!entry.isDir() || depth >= 2) return;      // sâu hơn hai tầng thư mục thì trình tạo sách không lấy
+    const auto children = QDir(entry.absoluteFilePath()).entryInfoList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+    for (const QFileInfo &child : children) collect(child, relative + QLatin1Char('/') + child.fileName(), depth + 1, out);
+}
+}
+QVariantList DesktopApi::sourceFiles(const QStringList &paths) const {
+    QVariantList out;
+    for (const QString &path : paths) {
+        const QFileInfo info(path);
+        if (info.isDir()) collect(info, info.fileName(), 0, out);
+        else if (info.isFile()) collect(info, QString(), 0, out);
+    }
+    return out;
+}
+QString DesktopApi::fileBase64(const QString &local) const {
+    QFile file(local);
+    if (!file.open(QIODevice::ReadOnly)) return {};
+    return QString::fromLatin1(file.readAll().toBase64());
+}
+namespace {
+// Ảnh -> data URL PNG (cạnh dài tối đa 1600, máy chủ còn thu nhỏ thêm); dùng chung cho file và bộ nhớ tạm
+QString pngDataUrl(const QImage &image) {
     if (image.isNull()) return {};
     QByteArray bytes;
     QBuffer buffer(&bytes);
     buffer.open(QIODevice::WriteOnly);
     if (!image.save(&buffer, "PNG")) return {};
     return QStringLiteral("data:image/png;base64,") + QString::fromLatin1(bytes.toBase64());
+}
+}
+QString DesktopApi::imageData(const QUrl &file) const {
+    if (!file.isLocalFile()) return {};
+    QImageReader reader(file.toLocalFile());
+    reader.setAutoTransform(true);
+    const QSize size = reader.size();
+    if (size.width() > 1600 || size.height() > 1600) reader.setScaledSize(size.scaled(1600, 1600, Qt::KeepAspectRatio));
+    return pngDataUrl(reader.read());
+}
+QString DesktopApi::clipboardImage() const {
+    if (!qobject_cast<QGuiApplication *>(QCoreApplication::instance())) return {};     // bộ thử không cửa sổ: không có bộ nhớ tạm
+    const QClipboard *clipboard = QGuiApplication::clipboard();
+    if (!clipboard || !clipboard->mimeData() || !clipboard->mimeData()->hasImage()) return {};
+    QImage image = qvariant_cast<QImage>(clipboard->mimeData()->imageData());
+    if (image.width() > 1600 || image.height() > 1600) image = image.scaled(1600, 1600, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    return pngDataUrl(image);
 }
 QUrl DesktopApi::mediaUrl(const QString &path) const {
     if (!path.startsWith(QLatin1Char('/'))) return QUrl(path);

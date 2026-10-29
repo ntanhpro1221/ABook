@@ -213,15 +213,15 @@ Item {
             compare(one(one(page, "projectsMissing"), "emptyTitle").text, "Không thấy thư mục thư viện “Sách của tôi”")
             verify(hasText(page, "Chọn thư mục"))
         }
-        function test_newProjectButtonGoesToPlaceholder() {
+        function test_newProjectButtonOpensTheBuilder() {
             reply("GET /api/library", library([book("a")]))
             const page = makeStudio()
             listed(page, 1)
             one(page, "newProject").clicked()
             tryCompare(page, "shownKey", "route:new")
             tryCompare(page, "phase", 1)
-            verify(shown(one(page, "newPlaceholder")))
-            verify(hasText(page, "Mục này chưa mở trong bản này."))
+            verify(shown(one(page, "newProjectScreen")))
+            verify(hasText(page, "Tạo sách nói"))
             verify(Nav.layers.length > 0, "màn con là một lớp của Back")
             verify(Nav.back())
             tryCompare(page, "shownKey", "route:list")

@@ -1,16 +1,14 @@
 import QtQuick
 import ABook
+import "TemplateLogic.js" as Templates
 
 // Mẫu sách mới đã lưu (desktop/BookTemplates.tsx + studio/bookTemplates.ts): đổi tên, xoá (có "Hoàn tác" 10 giây). Lưu mẫu mới làm ở trình
 // tạo sách. Mỗi việc là một thao tác riêng gửi POST /api/book-templates nên hai thiết bị cùng sửa không đè mất nhau. Đổi tên là một lớp Back:
 // Back / Esc huỷ ô nhập trước khi làm gì khác.
 Column {
     id: root
-    readonly property int nameMax: 40
-    readonly property string defaultLabel: "Mặc định"
-    // Nhãn mức chất lượng (PROFILE_LABEL của studio/bookTemplates.ts)
-    readonly property var profileLabel: ({high_quality: "Chất lượng cao", balanced: "Cân bằng", fast: "Nhanh"})
-    readonly property var templates: templatesOf(Api.preferences ? Api.preferences.bookTemplates : null)
+    readonly property int nameMax: Templates.NAME_MAX
+    readonly property var templates: Templates.templatesOf(Api.preferences ? Api.preferences.bookTemplates : null)
     property string renaming: ""
     property bool renamingNow: false
     property string typed: ""
@@ -19,42 +17,9 @@ Column {
     objectName: "bookTemplates"
     bottomPadding: 16
 
-    function same(a, b) { return a.toLocaleLowerCase("vi") === b.toLocaleLowerCase("vi") }
-    function cleanName(value) { return value.split(/\s+/).filter(Boolean).join(" ") }
-    function templatesOf(value) {
-        if (!Array.isArray(value)) return []
-        const found = []
-        for (const item of value) {
-            if (!item || typeof item !== "object") continue
-            if (typeof item.name !== "string" || !item.name || !profileLabel[item.profile]) continue
-            found.push({
-                name: item.name,
-                narrator: typeof item.narrator === "string" ? item.narrator : "",
-                profile: item.profile,
-                analysisModel: typeof item.analysisModel === "string" ? item.analysisModel : "",
-                startNow: item.startNow !== false,
-                precastWait: item.precastWait === true
-            })
-        }
-        return found
-    }
-    function templateIndex(name) {
-        for (let i = 0; i < templates.length; ++i) if (same(templates[i].name, name)) return i
-        return -1
-    }
-    // Lời báo cho một cái tên không dùng được, "" nếu được. `except`: tên đang được đổi.
-    function nameProblem(raw, except) {
-        const name = cleanName(raw)
-        if (!name) return "Đặt cho mẫu một cái tên"
-        if (name.length > nameMax) return "Tên mẫu tối đa " + nameMax + " chữ"
-        if (same(name, defaultLabel)) return "“" + defaultLabel + "” là mẫu có sẵn của app - chọn tên khác"
-        for (const item of templates) if (same(item.name, name) && !(except !== undefined && same(item.name, except))) return "Đã có mẫu tên “" + name + "”"
-        return ""
-    }
-    function summaryOf(t) {
-        return [t.narrator || "Giọng máy đề xuất", profileLabel[t.profile], t.startNow ? "bắt đầu ngay" : "chờ bấm bắt đầu"]
-            .concat(t.precastWait ? ["chờ bạn duyệt trước khi thu"] : []).join(" · ")
-    }
+    function templateIndex(name) { return Templates.templateIndex(templates, name) }
+    function nameProblem(raw, except) { return Templates.nameProblem(templates, raw, except) }
+    function summaryOf(t) { return Templates.summaryOf(t) }
 
     // Một thao tác lên danh sách mẫu; `done(ok, status)`. Lỗi: mẫu bị thiết bị khác xoá / đặt trùng tên (404 / 409) thì nói đúng lời máy tính
     // báo và tải lại tuỳ chọn; việc khác hỏng thì "Không lưu được mẫu" + lời máy tính.

@@ -12,7 +12,7 @@ QtObject {
     signal previewStarted()
     signal previewEnded()
     signal previewFailed(string reason)
-    function reset() { requests = []; responses = {}; pending = []; delayed = false; previews = []; stops = 0 }
+    function reset() { requests = []; responses = {}; pending = []; delayed = false; previews = []; stops = 0; sources = []; read = []; pickers = [] }
     function request(method, path, body, done) {
         requests = requests.concat([{method: method, path: path, body: body}])
         // Đáp giả: "PUT /api/x" (theo cách gọi) trước, rồi "/api/x"; đáp là hàm thì gọi với (body, method).
@@ -30,4 +30,12 @@ QtObject {
     function preview(path) { previews = previews.concat([path]) }
     function stopPreview() { stops++ }
     function imageData(file) { return "data:image/png;base64,fixture" }
+    property string clipboard: ""            // ảnh trong bộ nhớ tạm giả (data URL), "" = không có
+    function clipboardImage() { return clipboard }
+    // Gửi chương lên máy khác: kể file/thư mục đã chọn (`sources` do test đặt, mỗi phần tử {name, size, path, local}) và byte giả
+    property var sources: []
+    property var read: []
+    property var pickers: []                // lần mở hộp chọn file giả của trình tạo sách (NewPicker giả)
+    function sourceFiles(paths) { return sources }
+    function fileBase64(local) { read = read.concat([local]); return "ZmFrZQ==" }
 }

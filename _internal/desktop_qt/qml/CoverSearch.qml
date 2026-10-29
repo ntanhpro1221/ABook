@@ -34,7 +34,9 @@ Item {
     implicitHeight: form.height + 16 + area.height
     height: implicitHeight
 
+    property var route: null              // Studio của máy khác: lời gọi đi qua cầu của máy ấy (StudioStore.request); trống = máy này
     function request(method, path, body, done) {
+        if (route) return route(method, path, body, done)
         return Api.transport ? Api.transport.request(method, path, body, done) : 0
     }
     function begin(id, defaultQuery) {
