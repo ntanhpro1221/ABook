@@ -29,10 +29,7 @@ import java.net.DatagramSocket
 import java.net.InetAddress
 import java.net.SocketTimeoutException
 import java.net.URL
-import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
-import java.util.concurrent.FutureTask
-import java.util.concurrent.TimeUnit
 
 /** Công tắc "Cho máy khác nghe thư viện này" (SharedPreferences "sync"). */
 private const val SHARE_KEY = ShareService.SHARE_KEY
@@ -1241,71 +1238,35 @@ class LibraryPlugin : Plugin() {
 
     // ---- hồ sơ nghe (độc lập với sách, app giữ liên kết - Store) -----------------------------------------------
 
-    /** Trả danh sách hồ sơ mới, rồi báo máy tính: hồ sơ vừa rời trước (`left` - chỗ nghe cuối của nó, lưu lúc đổi, chưa
-     *  tới máy tính: điện thoại chỉ đẩy hồ sơ đang dùng), rồi hồ sơ đang dùng (lựa chọn, tên, bia mộ). `first`: cuốn đẩy
-     *  trước tiên (cuốn vừa nhận hồ sơ chuyển tới - máy tính gắn lại hồ sơ theo lần chuyển ấy trước khi nghe cuốn cũ). */
-    private fun resolveRecords(call: PluginCall, records: JSONArray, left: String? = null, first: String? = null) {
-        call.resolve(JSObject().put("records", records))
-        val id = call.getString("id") ?: return
-        io.execute {
-            if (first != null) runCatching { pushState(first) }
-            if (left != null && left != Store.knownActiveRecord(id) && Store.hasRecord(left)) {
-                runCatching { StateSync.pushNow(context, id, left) }
-            }
-            runCatching { pushState(id) }
-        }
-    }
-
-    /** Đổi hồ sơ của một cuốn: cuốn đang nạp trong trình phát thì qua Playback trên luồng chính (trình phát theo sang
-     *  hồ sơ mới), cuốn khác thì đổi thẳng. */
-    private fun switching(id: String, change: () -> JSONArray): JSONArray {
-        if (Playback.bookId != id) return change()
-        val task = FutureTask { Playback.switchRecord(id, change) }
-        Playback.onMain { task.run() }
-        return try {
-            task.get(10, TimeUnit.SECONDS)
-        } catch (error: ExecutionException) {
-            throw error.cause ?: error
-        }
+    /** Trả danh sách hồ sơ mới, rồi báo máy tính ([ListeningRecords.Change.push]) ở luồng nền. */
+    private fun resolveRecords(call: PluginCall, change: ListeningRecords.Change) {
+        call.resolve(JSObject().put("records", change.records))
+        io.execute { change.push() }
     }
 
     @PluginMethod
     fun createRecord(call: PluginCall) = background(call) {
-        val id = call.getString("id")!!
-        val left = Store.knownActiveRecord(id)
-        resolveRecords(call, switching(id) { Store.createRecord(id, call.getString("name") ?: "") }, left)
+        resolveRecords(call, ListeningRecords.create(context, call.getString("id")!!, call.getString("name") ?: ""))
     }
 
     @PluginMethod
     fun activateRecord(call: PluginCall) = background(call) {
-        val id = call.getString("id")!!
-        val left = Store.knownActiveRecord(id)
-        val record = call.getString("record")!!
-        // Hồ sơ máy giữ sách báo trong danh sách mà điện thoại chưa có trạng thái (mới hiện ra ở bộ chọn): lấy trạng thái của đúng mã
-        // ấy trước khi nạp - đẩy hồ sơ rỗng, lời đáp mang trạng thái đã gộp (Store.applySync). Không với tới máy giữ sách thì chọn như cũ.
-        if (Store.hasRecord(record) && !Store.hasState(record)) runCatching { StateSync.pushNow(context, id, record) }
-        resolveRecords(call, switching(id) { Store.activateRecord(id, record) }, left)
+        resolveRecords(call, ListeningRecords.activate(context, call.getString("id")!!, call.getString("record")!!))
     }
 
     @PluginMethod
     fun renameRecord(call: PluginCall) = background(call) {
-        resolveRecords(call, Store.renameRecord(call.getString("id")!!, call.getString("record")!!, call.getString("name") ?: ""))
+        resolveRecords(call, ListeningRecords.rename(context, call.getString("id")!!, call.getString("record")!!, call.getString("name") ?: ""))
     }
 
     @PluginMethod
     fun moveRecord(call: PluginCall) = background(call) {
-        val id = call.getString("id")!!
-        val to = call.getString("book").orEmpty()
-        val change = { Store.moveRecord(id, call.getString("record")!!, to) }
-        // Cuốn nhận đang nạp trong trình phát: cũng qua Playback - lưu chỗ của hồ sơ đang dùng ở đó trước, rồi theo sang hồ
-        // sơ vừa chuyển tới (không thì lần lưu kế ghi chỗ của cuốn ấy đè lên hồ sơ vừa tới).
-        resolveRecords(call, if (Playback.bookId == to) switching(to, change) else switching(id, change), first = to)
+        resolveRecords(call, ListeningRecords.move(context, call.getString("id")!!, call.getString("record")!!, call.getString("book").orEmpty()))
     }
 
     @PluginMethod
     fun deleteRecord(call: PluginCall) = background(call) {
-        val id = call.getString("id")!!
-        resolveRecords(call, switching(id) { Store.deleteRecord(id, call.getString("record")!!) })
+        resolveRecords(call, ListeningRecords.delete(context, call.getString("id")!!, call.getString("record")!!))
     }
 
     /** Mở một cuốn chưa tải: gói sách mới nhất từ máy tính (mạng lỗi thì bản đã cất), bìa ngay; dàn nhân vật và câu mẫu

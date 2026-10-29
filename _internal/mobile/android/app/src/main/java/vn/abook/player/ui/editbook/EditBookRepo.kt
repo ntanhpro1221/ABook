@@ -111,14 +111,7 @@ class EditBookRepo(private val context: Context, private val library: LibraryRep
      * Một đường của [LocalStudio] - cùng đường và cùng lời đáp mà bản web gọi (`EbookLibrary.studio`), nên hai giao diện sửa sách như nhau. Khác 200: ném câu lỗi của
      * lõi. Sửa xong (khác GET): nhạc đang phát đọc lại lớp sửa, cuốn của máy tính gửi phần sửa về ([BookActions.edited], như LibraryPlugin.studio).
      */
-    private fun studio(method: String, id: String, rest: String, body: JSONObject? = null): JSONObject {
-        Store.init(context)
-        val (status, reply) = LocalStudio.handle(method, "/api/books/$id$rest", body)
-        val answer = reply as? JSONObject ?: JSONObject()
-        if (status != 200) error(answer.optString("error").ifEmpty { "Bạn hãy thử lại." })
-        if (method != "GET") BookActions.edited(context, id)
-        return answer
-    }
+    private fun studio(method: String, id: String, rest: String, body: JSONObject? = null): JSONObject = BookActions.studio(context, method, id, rest, body)
 
     private fun readingsOf(view: JSONObject): List<WordReading> {
         val list = view.optJSONArray("readings") ?: return emptyList()

@@ -9,6 +9,7 @@ import vn.abook.player.ui.data.PlayerChapter
 import vn.abook.player.ui.data.PlayerState
 import vn.abook.player.ui.music.MusicState
 import vn.abook.player.ui.music.PlayerMusic
+import vn.abook.player.ui.voice.VoiceState
 import java.math.BigDecimal
 import kotlin.math.ceil
 
@@ -16,7 +17,7 @@ import kotlin.math.ceil
 enum class NowPlayingPart { Container, Cover, Chapter, Book, Play }
 
 @Immutable
-data class PlayerVoice(val id: String, val name: String)
+data class PlayerVoice(val id: String, val name: String, val gender: String = "", val online: Boolean = false)
 
 enum class SleepKind { Off, Minutes, Chapter }
 
@@ -43,8 +44,11 @@ data class NowPlayingState(
     val returnAvailable: Boolean = false,
     /** Tăng mỗi lần tua / nhảy: chip "Về chỗ cũ" hiện lại và đếm lại từ đầu. */
     val returnSerial: Int = 0,
+    /** Giọng chạy trên máy này (danh sách của tấm "Giọng đọc"): giọng trực tuyến chỉ chọn qua hộp hỏi đồng ý, không nằm ở đây. */
     val voices: List<PlayerVoice> = emptyList(),
     val voiceId: String = "",
+    /** Tên giọng đang chọn (kể cả giọng trực tuyến), rỗng khi chưa biết: lời báo "giọng đang chọn không đọc được" nói tên giọng. */
+    val voiceName: String = "",
 )
 
 /**
@@ -65,6 +69,8 @@ interface NowPlayingModel {
     val readAlong: StateFlow<ReadAlongState>
     /** Nhạc nền của cuốn đang phát (chọn danh sách, mức to nhỏ); null = không có (bản thử) thì tấm Tuỳ chọn không có hàng Nhạc nền. */
     val music: MusicState? get() = null
+    /** Giọng đọc làm thêm (tải giọng VieNeu ngay trong khối lỗi); null = không có (bản thử). */
+    val voice: VoiceState? get() = null
     fun toggle()
     fun skip(seconds: Int)
     fun seek(milliseconds: Long)
@@ -116,5 +122,5 @@ fun nowPlayingState(player: PlayerState, voices: List<PlayerVoice>, returnAvaila
         ),
         chapters = player.chapters, readAlongAvailable = player.hasTrack, error = player.error,
         music = player.music, returnAvailable = returnAvailable, returnSerial = returnSerial,
-        voices = voices, voiceId = player.voiceId,
+        voices = voices.filter { !it.online }, voiceId = player.voiceId, voiceName = voices.firstOrNull { it.id == player.voiceId }?.name.orEmpty(),
     )

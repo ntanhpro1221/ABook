@@ -109,6 +109,15 @@ fun LucideIcon(data: String, color: Color, modifier: Modifier = Modifier, size: 
 @Composable fun ShuffleIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.SHUFFLE, color, modifier, size)
 @Composable fun PinIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.PIN, color, modifier, size)
 
+/* Trang sách: hồ sơ nghe, lịch sử, dàn nhân vật (web: UserRound, History, GitMerge, ArrowRightLeft, TextCursorInput, BookOpenText). */
+@Composable fun UserRoundIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.USER_ROUND, color, modifier, size)
+@Composable fun HistoryIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.HISTORY, color, modifier, size)
+@Composable fun GitMergeIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.GIT_MERGE, color, modifier, size)
+@Composable fun ArrowRightLeftIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.ARROW_RIGHT_LEFT, color, modifier, size)
+@Composable fun TextCursorInputIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.TEXT_CURSOR_INPUT, color, modifier, size)
+@Composable fun BookOpenTextIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.BOOK_OPEN_TEXT, color, modifier, size)
+@Composable fun ChevronDownIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.CHEVRON_DOWN, color, modifier, size)
+
 /* Sáu nhóm Cài đặt - đúng bộ của SettingsNav.tsx: AudioLines, Headphones, MoonStar, Palette, MonitorSmartphone, Wrench. */
 
 @Composable fun VoiceIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.AUDIO_LINES, color, modifier, size)

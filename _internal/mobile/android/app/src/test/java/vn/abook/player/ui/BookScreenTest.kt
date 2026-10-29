@@ -59,7 +59,7 @@ class BookScreenTest {
     val rule = createAndroidComposeRule<ComponentActivity>()
 
     /** Nguồn giả: trang sách dựng từ JSON thật qua [BookDetail.of]; ghi lại mọi việc được nhờ. */
-    private class FakeSource(var detail: BookDetail?, val texts: Map<Int, List<Passage>> = emptyMap()) : BookSource {
+    private class FakeSource(var detail: BookDetail?, val texts: Map<Int, List<Passage>> = emptyMap()) : BookSource by BookSource.None {
         val calls = ArrayList<String>()
         override suspend fun detail(id: String) = detail
         override suspend fun passages(id: String, chapter: ChapterLine) = texts[chapter.id]

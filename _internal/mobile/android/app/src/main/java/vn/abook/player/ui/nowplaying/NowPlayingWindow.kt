@@ -55,6 +55,9 @@ import vn.abook.player.ui.theme.MotionMs
 class NowPlayingWindowState(private val scope: CoroutineScope) {
     var otherPlayers: (() -> Unit)? = null
 
+    /** Tới Cài đặt > Giọng đọc (khối lỗi "Tải giọng VieNeu", "Xem trong Cài đặt"); null = không có đường ấy. */
+    var voiceSettings: (() -> Unit)? = null
+
     /** Vào cửa sổ nhỏ (PiP) ngay; null = máy / app không cho PiP thì Đang nghe không có nút "Cửa sổ mini". */
     var miniWindow: (() -> Unit)? = null
     val transition = SeekableTransitionState(false)

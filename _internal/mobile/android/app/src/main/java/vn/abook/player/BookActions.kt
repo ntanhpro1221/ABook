@@ -20,6 +20,19 @@ object BookActions {
         EditsSync.schedule(context, id)
     }
 
+    /**
+     * Một đường của [LocalStudio] - cùng đường và cùng lời đáp mà bản web gọi (`EbookLibrary.studio`), nên hai giao diện sửa sách như nhau. Khác 200: ném câu lỗi của
+     * lõi. Sửa xong (khác GET): nhạc đang phát đọc lại lớp sửa, cuốn của máy tính gửi phần sửa về ([edited], như LibraryPlugin.studio).
+     */
+    fun studio(context: Context, method: String, id: String, rest: String, body: JSONObject? = null): JSONObject {
+        Store.init(context)
+        val (status, reply) = LocalStudio.handle(method, "/api/books/$id$rest", body)
+        val answer = reply as? JSONObject ?: JSONObject()
+        if (status != 200) error(answer.optString("error").ifEmpty { "Bạn hãy thử lại." })
+        if (method != "GET") edited(context, id)
+        return answer
+    }
+
     /** Một file văn bản của gói như người nghe thấy (lớp sửa phủ lên); sách nghe thẳng chưa có file thì lấy từ máy giữ sách trước. null khi không có. */
     fun text(context: Context, id: String, path: String): String? {
         val file = Store.file(id, path)
