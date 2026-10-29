@@ -47,9 +47,11 @@ FocusScope {
     property string nameParam: ""
     property bool focusNames: false
     property string precastStep: "cast"
+    // Tab Kịch bản mở từ thẻ việc / menu chương: {chapter, line, pick} (tham số chapter/line/pick của web); đổi tab ở hàng tab thì bỏ
+    property var scriptAt: null
     readonly property var fromLabels: ({work: "Việc cần duyệt", review: "Cần nghe lại", precast: "Duyệt trước khi thu"})
     function pickTab(key) {
-        workKind = "all"; workCard = ""; cameFrom = ""; nameParam = ""; focusNames = false; precastStep = "cast"
+        workKind = "all"; workCard = ""; cameFrom = ""; nameParam = ""; focusNames = false; precastStep = "cast"; scriptAt = null
         tab = Logic.tabOf(key)
     }
     function jump(next, from, card, name, names) {
@@ -574,9 +576,9 @@ FocusScope {
             readonly property bool chaptersEmpty: root.shownTab === "chapters" && root.store && root.store.chapters.length === 0
             readonly property bool activityEmpty: root.shownTab === "activity" && root.activityData !== null && root.activityData.length === 0
             readonly property bool notReady: root.shownTab === "precast" && !root.hasPrecast
-            readonly property bool placeholder: ["script"].indexOf(root.shownTab) >= 0 || notReady
+            readonly property bool placeholder: notReady
             readonly property real innerHeight: chaptersEmpty || activityEmpty ? emptyBlock.height : placeholder ? placeholderText.height + 48 : root.shownTab === "activity" && root.activityLoading ? 160 : 0
-            height: backWrap.height + innerHeight + panels.height + (musicTab.item ? musicTab.item.height + 48 : 0)
+            height: backWrap.height + innerHeight + panels.height + (musicTab.item ? musicTab.item.height + 48 : 0) + (scriptTab.item ? scriptTab.item.height + 48 : 0)
             opacity: root.swap
             // "Về màn trước": sau khi nhảy từ một thẻ sang tab khác, trả về đúng thẻ và bộ lọc vừa rời
             Collapse {
@@ -656,6 +658,7 @@ FocusScope {
                 onPrecastOpened: root.pickTab("precast")
                 onPrecastClosed: root.pickTab("chapters")
                 onRedoRequested: if (root.book) root.newProjectRequested("redo", root.book.id)
+                onScriptOpened: (chapterId, stableId, pick) => root.scriptAt = {chapter: chapterId, line: stableId, pick: pick}
             }
             // Tab Nhạc nền: dựng khi mở tab, gỡ khi rời (rời tab thì bài nghe thử dừng)
             Loader {
@@ -670,6 +673,23 @@ FocusScope {
                     bookId: root.book ? root.book.id : ""
                     chapters: root.store ? root.store.chapters : []
                     overlay: root
+                }
+            }
+            // Tab Kịch bản: dựng khi mở tab (kể cả hỏi dấu đổi 6 giây một lần), gỡ khi rời
+            Loader {
+                id: scriptTab
+                objectName: "scriptTab"
+                x: 8
+                y: backWrap.height + parent.innerHeight + panels.height
+                width: root.contentW
+                active: root.shownTab === "script" && !!root.book
+                sourceComponent: ScriptTab {
+                    store: root.store
+                    work: studioWork
+                    bookId: root.book ? root.book.id : ""
+                    flick: list
+                    overlay: root
+                    target: root.scriptAt
                 }
             }
         }
@@ -695,7 +715,7 @@ FocusScope {
         onPicked: key => {
             const chapter = root.menuChapter
             if (key === "play") Player.review(root.book.id, chapter.id)
-            else if (key === "script") root.pickTab("script")
+            else if (key === "script") { root.pickTab("script"); root.scriptAt = {chapter: chapter.id, line: "", pick: false} }
             else if (key === "retake") {
                 root.retakeChapter = chapter
                 retake.title = "Thu lại cả " + chapter.displayTitle + "?"

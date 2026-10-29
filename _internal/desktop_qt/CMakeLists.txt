@@ -315,6 +315,13 @@ qt_add_qml_module(ABookDesk
         qml/StudioMusicDetails.qml
         qml/StudioMyMusic.qml
         qml/StudioMusicLogic.js
+        qml/ScriptTab.qml
+        qml/ScriptRow.qml
+        qml/ScriptStore.qml
+        qml/ScriptSpeakerMenu.qml
+        qml/ScriptDelivery.qml
+        qml/ScriptChapterMenu.qml
+        qml/ScriptLogic.js
         qml/EditBookReadings.qml
         qml/EditBookRename.qml
         qml/CastDialogs.qml
