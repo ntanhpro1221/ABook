@@ -75,7 +75,7 @@ Interactive {
         anchors.verticalCenter: parent.verticalCenter
         text: root.text
         color: root.ink
-        wrapMode: root.wrap ? Text.WrapAnywhere : Text.NoWrap
+        wrapMode: root.wrap ? Text.WrapAtWordBoundaryOrAnywhere : Text.NoWrap
         horizontalAlignment: Text.AlignHCenter
         lineHeight: root.wrap ? 1.25 : 1
         font.pixelSize: root.size === "sm" ? 13 : root.size === "lg" ? 15 : Theme.sizeBodySmall

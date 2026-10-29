@@ -4,7 +4,7 @@ import "StudioLogic.js" as Logic
 
 // Studio › một dự án (ProjectScreen.tsx; DESIGN.md mục 7): tên + dòng trạng thái, MỘT nút chính theo trạng thái (Bắt đầu · Tạm dừng · Tiếp tục · Nghe trong Thư viện;
 // sách xong còn thay đổi chờ thì "Áp dụng N thay đổi"), mọi việc khác trong "…". Dưới là hàng tab (Chương · Việc cần duyệt · Cần nghe lại · Nhân vật · Nhạc nền;
-// còn lại trong "Thêm") và nội dung tab: Chương, Nhật ký; các tab khác nói gọn là chưa mở.
+// còn lại trong "Thêm") và nội dung tab: Chương, Nhật ký, Nhạc nền (StudioMusic); các tab khác nói gọn là chưa mở.
 // "Tạm dừng" gọi lệnh tạm dừng, KHÔNG BAO GIỜ dừng (dừng giữa pha phân tích là đổi quyển sách, AGENTS.md); "Dừng…" chỉ ở "…" kèm lời cảnh báo.
 // Cả danh sách cuộn MỘT khung: phần đầu là header của ListView, hàng chương / nhật ký giữ theo khoá nên nhịp hỏi 3 s / 15 s không làm nhảy chỗ cuộn.
 FocusScope {
@@ -103,6 +103,9 @@ FocusScope {
                 }
             }
         }
+        // ListView không hàng nào thì mỗi lần dàn lại (footer đổi cao) Qt kéo về đầu (QQuickItemViewPrivate::layout, model rỗng): tab đặt nội dung
+        // ở footer (Nhạc nền...) giữ một hàng rỗng cao 0 để mở / đóng một khối không làm trang nhảy lên đầu
+        if (!rows.length) rows.push({key: "rest", kind: "rest"})
         return rows
     }
     readonly property var rowList: buildRows()
@@ -488,8 +491,9 @@ FocusScope {
             width: list.width
             readonly property bool chaptersEmpty: root.shownTab === "chapters" && root.store && root.store.chapters.length === 0
             readonly property bool activityEmpty: root.shownTab === "activity" && root.activityData !== null && root.activityData.length === 0
-            readonly property bool placeholder: Logic.MAIN_TABS.concat(["precast", "script"]).indexOf(root.shownTab) >= 0 && root.shownTab !== "chapters"
-            height: chaptersEmpty || activityEmpty ? emptyBlock.height : placeholder ? placeholderText.height + 48 : root.shownTab === "activity" && root.activityLoading ? 160 : 0
+            readonly property bool placeholder: Logic.MAIN_TABS.concat(["precast", "script"]).indexOf(root.shownTab) >= 0 && root.shownTab !== "chapters" && root.shownTab !== "music"
+            height: (chaptersEmpty || activityEmpty ? emptyBlock.height : placeholder ? placeholderText.height + 48 : root.shownTab === "activity" && root.activityLoading ? 160 : 0)
+                    + (musicTab.item ? musicTab.item.height + 48 : 0)
             opacity: root.swap
             EmptyState {
                 id: emptyBlock
@@ -521,6 +525,20 @@ FocusScope {
                 shape: "rows"
                 count: 4
                 label: "Đang tải nhật ký"
+            }
+            // Tab Nhạc nền: dựng khi mở tab, gỡ khi rời (rời tab thì bài nghe thử dừng)
+            Loader {
+                id: musicTab
+                objectName: "musicTab"
+                x: 8
+                width: root.contentW
+                active: root.shownTab === "music" && !!root.book
+                sourceComponent: StudioMusic {
+                    store: root.store
+                    bookId: root.book ? root.book.id : ""
+                    chapters: root.store ? root.store.chapters : []
+                    overlay: root
+                }
             }
         }
         SmoothWheel { flick: list }
