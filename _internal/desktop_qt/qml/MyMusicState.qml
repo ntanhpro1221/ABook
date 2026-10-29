@@ -7,6 +7,10 @@ Column {
     id: root
     property string state: "ready"      // "loading" | "error" | "empty" | "ready"
     property bool adding: false
+    // Studio (MyMusic của studio/MusicTab.tsx) mời "Thêm nhạc của bạn" + nút chính "Nhập nhạc"; Cài đặt giữ câu của mình
+    property string emptyTitle: "Chưa có bài nào"
+    property string addText: "Thêm nhạc của bạn"
+    property string addKind: "ghost"
     signal retry()
     signal add()
 
@@ -93,7 +97,7 @@ Column {
             Text {
                 width: parent.width
                 horizontalAlignment: Text.AlignHCenter
-                text: "Chưa có bài nào"
+                text: root.emptyTitle
                 color: Theme.text
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeBody
@@ -102,7 +106,7 @@ Column {
             Item { width: 1; height: 20 }
             Button {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: "Thêm nhạc của bạn"; icon: "upload"; kind: "ghost"
+                text: root.addText; icon: "upload"; kind: root.addKind
                 busy: root.adding
                 onActivated: root.add()
             }
