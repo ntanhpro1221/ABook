@@ -67,15 +67,13 @@ void BookDetail::recompute() {
     const bool playing = here && player->playing();
     m_chapters.setCurrent(here ? player->chapterId() : -1);
 
-    int playable = 0, textOnly = 0, doneCount = 0;
+    int playable = 0, doneCount = 0;
     double heard = 0;
     for (const Chapter &chapter : m_book.chapters) {
-        if (chapter.available || (chapter.textOnly && player && (player->hasDefaultVoice() || !m_book.voice.isEmpty()))) {
+        if (playableHere(chapter)) {
             ++playable;
             if (m_book.states.value(chapter.id).done)
                 ++doneCount;
-        } else if (chapter.textOnly) {
-            ++textOnly;
         }
         heard += m_book.states.value(chapter.id).heard;
     }
@@ -84,7 +82,7 @@ void BookDetail::recompute() {
     const bool finished = (m_finished || (m_book.complete && playable > 0 && doneCount == playable)) && !playing;
     const std::optional<ResumePoint> point = resumePoint(m_book);
 
-    QString text, caption, icon = kPlay;
+    QString text, icon = kPlay;
     if (playing) {
         text = QStringLiteral("Tạm dừng");
         icon = kPause;
@@ -93,7 +91,8 @@ void BookDetail::recompute() {
         icon = kRestart;
     } else {
         text = started ? QStringLiteral("Nghe tiếp") : QStringLiteral("Nghe");
-        // Chương nghe tiếp: đang nạp ở bộ phát thì đúng chương đang đứng, không thì điểm nghe tiếp của cuốn.
+        // Nói rõ nghe tiếp từ ĐÂU: đang nạp ở bộ phát thì đúng chương đang đứng, không thì điểm nghe tiếp của cuốn.
+        QString caption;
         if (here) {
             caption = player->chapterTitle();
         } else if (point && (point->at > 0 || started)) {
@@ -101,31 +100,41 @@ void BookDetail::recompute() {
                 if (chapter.id == point->chapterId)
                     caption = chapter.title;
         }
-    }
-    QString message;
-    if (playable == 0) {
-        if (textOnly > 0 && textOnly == m_book.chapters.size())
-            message = QStringLiteral("Chỉ có chữ · máy này chưa có giọng đọc");
-        else if (m_book.producing)
-            message = QStringLiteral("Đang thu; chương mới tự hiện khi xong.");
-        else
-            message = QStringLiteral("Chưa chương nào có audio.");
-    } else if (caughtUp) {
-        message = QStringLiteral("Đã nghe hết phần đã có. Chương mới sẽ hiện ở đây khi làm xong.");
-    } else if (!m_book.complete && m_book.producing) {
-        message = QStringLiteral("Đang thu; chương mới tự hiện khi xong.");
-    }
-    const bool listen = playable > 0 && !caughtUp;
-    if (text == m_primaryText && caption == m_primaryCaption && icon == m_primaryIcon && listen == m_canListen && message == m_message && !m_primaryText.isEmpty()) {
-        emit changed(); // trạng thái tải đổi (loading -> ready)
-        return;
+        if (!caption.isEmpty())
+            text += QStringLiteral(" · ") + caption;
     }
     m_primaryText = text;
-    m_primaryCaption = caption;
     m_primaryIcon = icon;
-    m_canListen = listen;
-    m_message = message;
+    m_hasPoint = playable > 0;
+    m_canListen = playable > 0 && !caughtUp;
+    m_caughtUp = caughtUp;
+    m_started = started;
+    m_finishedNow = finished;
     emit changed();
+}
+
+bool BookDetail::playableHere(const Chapter &chapter) const {
+    const Player *player = Player::instance();
+    return chapter.available || (chapter.textOnly && player && (player->hasDefaultVoice() || !m_book.voice.isEmpty()));
+}
+
+QVariantMap BookDetail::point() const {
+    Player *player = Player::instance();
+    if (!m_hasBook || !m_hasPoint)
+        return {};
+    if (player && player->loaded() && player->bookId() == m_bookId)
+        return {{QStringLiteral("chapterId"), player->chapterId()}, {QStringLiteral("at"), player->position()}};
+    if (const std::optional<ResumePoint> resume = resumePoint(m_book))
+        return {{QStringLiteral("chapterId"), resume->chapterId}, {QStringLiteral("at"), resume->at}};
+    const int first = firstPlayable();
+    return first < 0 ? QVariantMap() : QVariantMap{{QStringLiteral("chapterId"), first}, {QStringLiteral("at"), 0.0}};
+}
+
+int BookDetail::firstPlayable() const {
+    for (const Chapter &chapter : m_book.chapters)
+        if (playableHere(chapter))
+            return chapter.id;
+    return -1;
 }
 
 void BookDetail::activate() {

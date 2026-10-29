@@ -89,7 +89,8 @@ Item {
             Player.resume(); Player.setSleep("minutes", 1); WidthNet.advance(35); wait(180)
             verify(Player.fading); verify(fade.open); verify(findChild(fade, "playerFadeText").text.startsWith("Sắp tắt ·"))
             const countdown = findChild(sleep, "sleepCountdown")
-            compare(countdown.text, "Tắt sau " + Player.clockText(Player.clock.sleepLeft))
+            compare(findChild(sleep, "sleepCaption").text, "Tắt sau")
+            compare(countdown.text, Player.clockText(Player.clock.sleepLeft))
             const before = countdown.text
             WidthNet.advance(2); verify(countdown.text !== before)
             Player.pause(); const paused = countdown.text; WidthNet.advance(2); compare(countdown.text, paused)

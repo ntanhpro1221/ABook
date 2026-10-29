@@ -72,9 +72,11 @@ Interactive {
             objectName: "libraryTilePlay"
             anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.margins: 8
             readonly property bool here: Player.loaded && Player.bookId === root.book.bookId
-            readonly property bool textOnly: root.book.stage === "text"
+            // Sách chỉ có chữ vẫn nghe được bằng giọng đọc của máy; máy chưa có giọng nào thì nút mở trang đọc.
+            readonly property bool textOnly: root.book.stage === "text" && Api.voiceList.length === 0
             icon: textOnly ? "book-open" : here && Player.playing ? "pause" : "play"
-            tip: textOnly ? `Đọc ${root.title}` : here && Player.playing ? `Tạm dừng ${root.title}` : `Nghe ${root.title}`
+            tip: textOnly ? `Đọc ${root.title}` : here && Player.playing ? `Tạm dừng ${root.title}`
+                : root.book.stage === "text" ? `Nghe ngay ${root.title}` : `Nghe ${root.title}`
             opacity: root.playVisible && (root.hovered || root.externalFocus || play.activeFocus || here) ? 1 : 0
             visible: opacity > 0
             enabled: root.playVisible

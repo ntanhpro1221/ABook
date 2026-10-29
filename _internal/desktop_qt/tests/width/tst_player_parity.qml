@@ -76,7 +76,7 @@ Item {
             page.begin("width", 1); wait(250)
             compare(page.paragraphs.length, 2); compare(page.chapter.id, 1); compare(Nav.layers.length, 1)
             page.load(page.chapters[1]); wait(250)
-            compare(page.paragraphs[0], "Chương chưa có audio vẫn đọc được.")
+            compare(page.paragraphs[0].text, "Chương chưa có audio vẫn đọc được.")
             const field = findChild(page, "readerChapters")
             mouseClick(field); wait(150); compare(Nav.layers.length, 2)
             Nav.back(); wait(150); compare(Nav.layers.length, 1); verify(page.open)
@@ -84,7 +84,7 @@ Item {
             DesktopApi.responses["/api/books/width/chapters/2/script"] = {status: 503, data: {message: "Máy kia chưa trả lời. Bạn thử lại nhé."}}
             page.begin("width", 2); wait(200); compare(page.error, "Máy kia chưa trả lời. Bạn thử lại nhé.")
             DesktopApi.responses["/api/books/width/chapters/2/script"] = {status: 200, data: {segments: [{text: "Đã tải lại"}]}}
-            page.load(page.chapter); wait(250); compare(page.paragraphs[0], "Đã tải lại")
+            page.load(page.chapter); wait(250); compare(page.paragraphs[0].text, "Đã tải lại")
         }
         function test_reader_ignores_late_reply() {
             const page = createTemporaryObject(reader, host)

@@ -14,19 +14,32 @@ Popover {
     Column {
         width: parent.width
         spacing: Theme.s12
-        Text {
-            objectName: "sleepCountdown"
-            width: parent.width
-            text: Player.sleepKind === "minutes" ? "Tắt sau " + Player.clockText(Player.clock.sleepLeft)
-                : (Player.sleepKind === "chapter" ? "Dừng khi" : "Dừng phát sau")
-            color: Player.sleepKind === "off" ? Theme.text2 : Theme.accentText
-            wrapMode: Text.Wrap
-            font.pixelSize: Player.sleepKind === "off" ? Theme.sizeCaption : Theme.sizeBodySmall
-            font.weight: Theme.weightMedium
-        }
         Collapse {
-            width: parent.width; open: Player.sleepKind === "chapter"
-            Text { width: parent.width; text: "hết chương này"; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
+            width: parent.width; open: Player.sleepKind === "off"
+            Text { width: parent.width; text: "Dừng phát sau"; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption; font.weight: Theme.weightMedium }
+        }
+        // Đang hẹn: dòng nhỏ "Tắt sau" / "Dừng khi" trên đồng hồ đếm lùi lớn (như web SleepPicker).
+        Collapse {
+            width: parent.width; open: Player.sleepKind !== "off"; spacing: 2
+            Text {
+                objectName: "sleepCaption"
+                width: parent.width
+                text: Player.sleepKind === "chapter" ? "Dừng khi" : "Tắt sau"
+                color: Theme.text2
+                wrapMode: Text.Wrap
+                font.pixelSize: Theme.sizeCaption
+                font.weight: Theme.weightMedium
+            }
+            Text {
+                objectName: "sleepCountdown"
+                width: parent.width
+                text: Player.sleepKind === "chapter" ? "hết chương này" : Player.clockText(Player.clock.sleepLeft)
+                color: Theme.text
+                wrapMode: Text.Wrap
+                font.pixelSize: Theme.sizeTitlePhone
+                font.weight: 600
+                font.features: { "tnum": 1 }
+            }
         }
         Collapse {
             width: parent.width; open: Player.sleepKind === "minutes" && !Player.playing

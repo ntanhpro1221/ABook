@@ -129,6 +129,7 @@ ICONS = sorted({
     "square",
     "stethoscope",
     "text-cursor-input",
+    "trash",
     "trash-2",
     "triangle-alert",
     "tv",
