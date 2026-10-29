@@ -1,3 +1,4 @@
+import { formatSize } from "@/shared/format";
 import { Select } from "@/shared/ui";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { toggleDetails, type DetailsLike } from "@/shared/motion";
@@ -26,8 +27,6 @@ interface AnalysisModels {
 /** Chuẩn hoá khoá để đối chiếu các bản đã có trên máy. */
 export const modelLabel = (name: string) => name.replace(/:latest$/, "");
 
-const gigabytes = (bytes: number) => `${(bytes / 1e9).toFixed(1).replace(".", ",")} GB`;
-
 /** Gợi ý một dòng cho model khác (chỉ từ những gì Ollama báo): cỡ và nặng nhẹ so với mặc định. Model nặng hơn = cần card đồ hoạ
  *  nhiều bộ nhớ hơn và chạy chậm hơn; "bộ nhớ card" ước theo cỡ file model, chưa tính phần ngữ cảnh. */
 export function modelHint(model: AnalysisModel, defaultSize = 0): string {
@@ -37,7 +36,7 @@ export function modelHint(model: AnalysisModel, defaultSize = 0): string {
   if (Number.isFinite(billions) && /b$/i.test(model.parameters.trim())) parts.push(`${String(Math.round(billions * 10) / 10).replace(".", ",")} tỉ tham số`);
   else if (model.parameters) parts.push(model.parameters);
   if (model.size) {
-    parts.push(`khoảng ${gigabytes(model.size)} bộ nhớ card`);
+    parts.push(`khoảng ${formatSize(model.size)} bộ nhớ card`);
     if (defaultSize > 0) {
       if (model.size > defaultSize * 1.3) parts.push("nặng và chậm hơn mặc định");
       else if (model.size < defaultSize * 0.75) parts.push("nhẹ và nhanh hơn mặc định");

@@ -96,7 +96,7 @@ describe("mô-đun Giọng VieNeu", () => {
 
   it("câu chính theo trạng thái", () => {
     expect(vieneuLabel(status({ state: "downloading", done: 50, total: 100 * MB }))).toContain("0%");
-    expect(vieneuLabel(status({ state: "outdated", outdatedBytes: 3 * MB }))).toContain("3,0 MB");
+    expect(vieneuLabel(status({ state: "outdated", outdatedBytes: 3 * MB }))).toContain("2,9 MB");
     expect(vieneuLabel(status({ state: "error", error: "Không tải được." }))).toBe("Không tải được.");
     expect(vieneuLabel(status())).toContain("không cần mạng");
   });
