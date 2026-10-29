@@ -408,11 +408,8 @@ Item {
             compare(one(page, "tab_cast").Accessible.name, "Nhân vật")
             compare(one(page, "tab_music").Accessible.name, "Nhạc nền")
             compare(one(page, "tab_moreLabel").text, "Thêm")
-            // tab chưa làm: một câu trung tính
             one(page, "tab_music").clicked()
             tryCompare(page, "shownTab", "music")
-            tryCompare(page, "phase", 1)
-            verify(hasText(page, "Mục này chưa mở trong bản này."))
             compare(one(page, "tab_moreLabel").text, "Thêm")
             // "Thêm" mang tên tab đang chọn trong nó
             one(page, "tab_more").clicked()
@@ -421,6 +418,9 @@ Item {
             pickMenu(page, "script")
             tryCompare(page, "shownTab", "script")
             compare(one(page, "tab_moreLabel").text, "Kịch bản")
+            // tab chưa làm: một câu trung tính
+            tryCompare(page, "phase", 1)
+            tryVerify(function() { return hasText(page, "Mục này chưa mở trong bản này.") })
             one(page, "tab_more").clicked()
             pickMenu(page, "activity")
             tryCompare(page, "shownTab", "activity")
