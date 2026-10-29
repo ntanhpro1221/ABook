@@ -88,12 +88,23 @@ FocusScope {
         }
     }
 
+    // Thẻ cài / sửa / cập nhật Studio (StudioSetupCard): chỉ hiện khi app đóng gói chưa cài Studio, nằm giữa đầu màn và bảng
+    StudioSetupCard {
+        id: setupCard
+        objectName: "projectsSetupCard"
+        x: root.contentX
+        y: header.height
+        width: root.contentW
+        store: root.store
+        active: root.visible && Boolean(root.store && root.store.active)
+    }
+
     // Khung chữ dưới đầu màn: mép trái thẳng tiêu đề; bảng tràn ra 12 px mỗi bên (nền rê chuột, vạch kẻ), phần chữ thẳng mép
     Item {
         id: frame
         objectName: "projectsBody"
         x: root.contentX
-        y: header.height + 24
+        y: header.height + setupCard.height + 24
         width: root.contentW
         height: root.height - y
         // ---- đầu bảng ----

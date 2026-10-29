@@ -5,6 +5,8 @@
 #include "hostmessage.h"
 #include "librarymodel.h"
 #include <QFile>
+#include <QImage>
+#include <QTemporaryDir>
 #include <QtEndian>
 #include <cmath>
 #include <QtTest>
@@ -216,6 +218,47 @@ private slots:
         QCOMPARE(failed.size(), 1);
         QCOMPARE(failed.takeFirst().at(0).toString(), QStringLiteral("404"));
         DesktopApi::setPreviewOut(nullptr);
+    }
+    // Trình tạo sách của Studio máy khác: kể file / thư mục đã chọn (tên thư mục còn nguyên, tới tầng thứ hai) và đọc nguyên byte để gửi lên
+    void sourceFilesListFilesAndFolders() {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        QDir root(dir.path());
+        QVERIFY(root.mkpath(QStringLiteral("Lò rèn/Tập 1")));
+        const auto touch = [&](const QString &relative, const QByteArray &bytes) {
+            QFile file(root.filePath(relative));
+            QVERIFY(file.open(QIODevice::WriteOnly));
+            file.write(bytes);
+        };
+        touch(QStringLiteral("Lò rèn/001.txt"), "một");
+        touch(QStringLiteral("Lò rèn/Tập 1/002.txt"), "hai");
+        touch(QStringLiteral("lẻ.txt"), "ba");
+        const auto list = api->sourceFiles({root.filePath(QStringLiteral("Lò rèn")), root.filePath(QStringLiteral("lẻ.txt")), root.filePath(QStringLiteral("không có"))});
+        QCOMPARE(list.size(), 3);
+        QCOMPARE(list.at(0).toMap().value(QStringLiteral("path")).toString(), QStringLiteral("Lò rèn/001.txt"));
+        QCOMPARE(list.at(1).toMap().value(QStringLiteral("path")).toString(), QStringLiteral("Lò rèn/Tập 1/002.txt"));
+        QCOMPARE(list.at(2).toMap().value(QStringLiteral("path")).toString(), QString());      // file lẻ: không có đường thư mục
+        QCOMPARE(list.at(2).toMap().value(QStringLiteral("name")).toString(), QStringLiteral("lẻ.txt"));
+        QCOMPARE(list.at(2).toMap().value(QStringLiteral("size")).toInt(), 2);
+        QCOMPARE(api->fileBase64(list.at(0).toMap().value(QStringLiteral("local")).toString()), QStringLiteral("beG7mXQ="));
+        QVERIFY(api->fileBase64(root.filePath(QStringLiteral("không có"))).isEmpty());
+    }
+    // Ảnh bìa: file -> data URL PNG (cạnh dài tối đa 1600); bộ nhớ tạm không có ảnh (hay không có cửa sổ) thì trả rỗng, không văng
+    void coverImageDataAndClipboard() {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        QImage big(2400, 1200, QImage::Format_RGB32);
+        big.fill(Qt::darkYellow);
+        const QString path = QDir(dir.path()).filePath(QStringLiteral("bìa.png"));
+        QVERIFY(big.save(path));
+        const QString data = api->imageData(QUrl::fromLocalFile(path));
+        QVERIFY(data.startsWith(QStringLiteral("data:image/png;base64,")));
+        const QImage back = QImage::fromData(QByteArray::fromBase64(data.mid(22).toLatin1()), "PNG");
+        QCOMPARE(back.width(), 1600);
+        QCOMPARE(back.height(), 800);
+        QVERIFY(api->imageData(QUrl(QStringLiteral("https://example.com/a.png"))).isEmpty());
+        QVERIFY(api->imageData(QUrl::fromLocalFile(QDir(dir.path()).filePath(QStringLiteral("không có.png")))).isEmpty());
+        QVERIFY(api->clipboardImage().isEmpty());
     }
     void abortDoesNotDeliverLateReply() {
         clear(); hold = true;
