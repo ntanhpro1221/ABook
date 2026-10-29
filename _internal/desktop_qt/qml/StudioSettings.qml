@@ -1,72 +1,45 @@
 import QtQuick
 import ABook
+import "StudioSetupLogic.js" as Setup
 
 // Cài đặt › Studio › "Máy này" (StudioSettings của studio/StudioSetup.tsx + studio/studioFit.ts): Studio ở đâu, chạy trên card nào; chưa cài thì
 // cần gì, máy có đủ không, và Cài / Xem tiến độ cài. Gỡ là xoá 15-20 GB nên bấm hai lần: lần đầu "Xác nhận gỡ" (6 giây, hoặc Back / Esc
 // để huỷ - lớp Back riêng), lần hai mới gỡ. Tiến độ cài hiện ở màn Studio (`studioRequested`), ở đây chỉ nói "Đang cài.".
 Item {
     id: root
-    UiActivity { target: root; id: activity; onResumed: root.load() }
-    property var status: null           // GET /api/studio/setup
+    UiActivity { target: root; id: activity; onResumed: setup.load() }
+    // Tình trạng + lệnh cài / gỡ nằm ở StudioSetupState (dùng chung với thẻ "Cài Studio" ở màn Dự án)
+    StudioSetupState { id: setup; wanted: activity.running || setup.status === null }   // 1.ª lần luôn hỏi (khối còn ẩn tới khi có đáp), sau đó chỉ hỏi lại khi cửa sổ hiện
     property bool armed: false
-    property bool busy: false
+    readonly property alias busy: setup.busy
     signal studioRequested()
+    readonly property var status: setup.status
     readonly property bool present: Boolean(Api.info && Api.info.studio) && status !== null
-    readonly property bool installed: status !== null && Boolean(status.installed)
-    readonly property var fit: studioFit(status ? status.gpu : null)
-    readonly property string needs: "NVIDIA từ 8 GB · tải ~25 GB · trống 35 GB · ~7–10 phút/chương."
+    readonly property bool installed: setup.installed
+    readonly property var fit: setup.fit || Setup.studioFit(null)
+    readonly property string needs: Setup.STUDIO_NEEDS
     implicitHeight: present ? column.height : 0
     height: implicitHeight
     visible: present || column.height > 0
     objectName: "studioSettings"
 
-    // ---- studio/studioFit.ts: máy này có đủ để làm sách nói không (NVIDIA từ 8 GB đủ, 6-8 GB chưa thử, dưới 6 GB hay không có card là không) ----
-    function studioFit(gpu) {
-        if (!gpu) {
-            const reason = "không có card đồ hoạ NVIDIA, hay driver NVIDIA chưa cài"
-            return {level: "no", line: "Máy này " + reason + ".", reason: reason}
-        }
-        if (!(gpu.memory > 0)) return {level: "maybe", line: "Card " + gpu.name + ": chưa đọc được bộ nhớ của card, chưa biết có đủ không."}
-        const gb = gpu.memory / Math.pow(2, 30)
-        const shown = gpu.name + " (" + Math.round(gb) + " GB)"
-        if (gb >= 7.5) return {level: "ok", line: "Card " + shown + ": đủ để làm sách nói (đã thử trên card 8 GB)."}
-        if (gb >= 5.5) return {level: "maybe", line: "Card " + shown + ": có thể chạy được nhưng chưa thử trên card dưới 8 GB, có thể chậm."}
-        const reason = "card " + shown + " ít bộ nhớ hơn mức tối thiểu 6 GB"
-        return {level: "no", line: "Card " + shown + ": ít bộ nhớ hơn mức tối thiểu 6 GB.", reason: reason}
-    }
-    function noStudioLine(reason) { return "Máy này không làm sách nói được (" + reason + "). Bạn vẫn nghe ngay mọi sách." }
-
-    function ask(method, done) {
-        if (!Api.transport) return
-        Api.transport.request(method, "/api/studio/setup", method === "POST" ? {} : null, function(code, data) { done(code >= 200 && code < 300, data) })
-    }
-    function load() {
-        if (!Api.info || !Api.info.studio || !Api.transport) return
-        Api.transport.request("GET", "/api/studio/setup", null, function(code, data) { if (code >= 200 && code < 300) root.status = data })
-    }
-    function failure(title, data) { Api.notice = title + "\n" + (data && (data.message || data.error) || "Không làm được lúc này.") }
-    function refreshInfo() { Api.call("GET", "/api/app", null, function(data, error) { if (!error) Api.info = data }) }
+    function noStudioLine(reason) { return Setup.noStudioLine(reason) }
+    function load() { setup.load() }
 
     // Bấm là cài luôn rồi sang màn Studio xem tiến độ - không phải bấm "Cài Studio" lần hai ở đó
     function install() {
-        busy = true
-        ask("POST", function(ok, data) {
-            busy = false
-            if (!ok) { failure("Không cài được Studio", data); return }
-            status = data
+        setup.install(function(ok, data) {
+            if (!ok) { setup.failure("Không cài được Studio", data); return }
             studioRequested()
         })
     }
     function remove() {
         if (!armed) { arm(true); return }
         arm(false)
-        busy = true
-        ask("DELETE", function(ok, data) {
-            busy = false
-            if (!ok) { failure("Chưa gỡ được Studio", data); return }
-            status = data
+        setup.remove(function(ok, data) {
+            if (!ok) { setup.failure("Chưa gỡ được Studio", data); return }
             Api.notice = "Đã gỡ Studio"
-            refreshInfo()
+            setup.refreshInfo()
         })
     }
     property QtObject armLayer: QtObject { function close() { root.arm(false) } }
@@ -77,9 +50,6 @@ Item {
         else { Nav.closedLayer(armLayer); disarm.stop() }
     }
     Timer { id: disarm; interval: 6000; onTriggered: root.arm(false) }
-    Timer { interval: 2000; repeat: true; running: activity.running && root.present && Boolean(root.status && root.status.running); onTriggered: root.load() }
-    Connections { target: Api; function onInfoChanged() { if (!root.status) root.load() } }
-    Component.onCompleted: load()
     Component.onDestruction: Nav.closedLayer(armLayer)
 
     Column {
