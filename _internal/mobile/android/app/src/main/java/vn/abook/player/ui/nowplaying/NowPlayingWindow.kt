@@ -58,10 +58,27 @@ class NowPlayingWindowState(private val scope: CoroutineScope) {
     /** Tới Cài đặt > Giọng đọc (khối lỗi "Tải giọng VieNeu", "Xem trong Cài đặt"); null = không có đường ấy. */
     var voiceSettings: (() -> Unit)? = null
 
+    /** Dáng chữ của Đọc theo (cỡ chữ, giãn dòng): nhớ giữa các lần mở qua [onLook]. */
+    var look by mutableStateOf(ReadLook())
+
+    /** Nhớ dáng chữ vừa đổi; null = không nhớ (bản thử). */
+    var onLook: ((ReadLook) -> Unit)? = null
+    fun changeLook(next: ReadLook) {
+        if (next == look) return
+        look = next
+        onLook?.invoke(next)
+    }
+
+    /** "Về thư viện" sau khi nghe hết sách: thu cửa sổ, về tab Thư viện; null = không có (bản thử). */
+    var toLibrary: (() -> Unit)? = null
+
     /** Vào cửa sổ nhỏ (PiP) ngay; null = máy / app không cho PiP thì Đang nghe không có nút "Cửa sổ mini". */
     var miniWindow: (() -> Unit)? = null
     val transition = SeekableTransitionState(false)
     var reading by mutableStateOf(false)
+
+    /** Số phút của lần hẹn giờ gần nhất: tấm Hẹn giờ mời "Bật lại N phút" khi hẹn giờ vừa tắt tiếng (web: 30 lúc đầu). */
+    var lastSleepMinutes by mutableIntStateOf(30)
     var sheet by mutableStateOf(PlayerSheet.Speed)
         private set
     var sheetOpen by mutableStateOf(false)

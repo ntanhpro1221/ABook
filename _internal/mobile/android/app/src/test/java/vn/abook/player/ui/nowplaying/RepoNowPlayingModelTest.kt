@@ -144,4 +144,57 @@ class RepoNowPlayingModelTest {
         assertEquals("b2", model.readAlong.value.bookId)
         assertTrue(model.readAlong.value.paragraphs.isEmpty())
     }
+
+    private fun modelWith(books: kotlinx.coroutines.flow.MutableStateFlow<List<vn.abook.player.ui.data.ListenBook>>, now: Long = 1_000_000L) =
+        RepoNowPlayingModel(repo, scope, source, books = books, clockMs = { now })
+
+    @Test
+    fun `a finished part plays the next part of the same book on and says so`() {
+        val first = vn.abook.player.ui.data.ListenBook("b1", "Tên", chaptersAvailable = 2, chaptersTotal = 2)
+        val second = vn.abook.player.ui.data.ListenBook("b1-2", "Tên · Phần 2", chaptersAvailable = 2, chaptersTotal = 2, series = vn.abook.player.ui.data.SeriesLink("b1", 2))
+        val chosen = modelWith(kotlinx.coroutines.flow.MutableStateFlow(listOf(first, second)))
+        core.emit(playerSnapshot(book = "b1", chapter = 2, kind = "ended"))
+        assertEquals("Nghe tiếp Phần 2", chosen.note.value?.text)
+        chosen.dismissNote(chosen.note.value!!.serial)
+        assertNull(chosen.note.value)
+    }
+
+    @Test
+    fun `a finished volume of a series is only offered`() {
+        val first = vn.abook.player.ui.data.ListenBook("b1", "Bộ · Tập 1", chaptersAvailable = 2, chaptersTotal = 2)
+        val second = vn.abook.player.ui.data.ListenBook("b2", "Bộ · Tập 2", chaptersAvailable = 2, chaptersTotal = 2)
+        val chosen = modelWith(kotlinx.coroutines.flow.MutableStateFlow(listOf(first, second)))
+        core.emit(playerSnapshot(book = "b1", chapter = 2, kind = "ended"))
+        assertNull("tập khác của một bộ không tự phát", chosen.note.value)
+        assertEquals("b2", chosen.endChoices().next?.id)
+        assertFalse(chosen.endChoices().continues)
+    }
+
+    @Test
+    fun `another device that listened further after this one loaded is offered once`() {
+        val flow = kotlinx.coroutines.flow.MutableStateFlow(listOf(vn.abook.player.ui.data.ListenBook("b1", "Tên")))
+        val chosen = modelWith(flow, now = 1_000_000L)
+        assertNull(chosen.note.value)
+        val older = vn.abook.player.ui.data.Last(1, 300.0, 900.0)
+        flow.value = listOf(vn.abook.player.ui.data.ListenBook("b1", "Tên", state = vn.abook.player.ui.data.ListenState(last = older)))
+        assertNull("ghi trước lúc nạp là của máy này", chosen.note.value)
+        val newer = vn.abook.player.ui.data.Last(1, 300.0, 2_000.0)
+        flow.value = listOf(vn.abook.player.ui.data.ListenBook("b1", "Tên", state = vn.abook.player.ui.data.ListenState(last = newer)))
+        val note = chosen.note.value
+        assertEquals("Máy khác đã nghe tới Một · 5:00", note?.text)
+        assertEquals("Nghe tiếp từ đó", note?.action)
+        chosen.noteAction()
+        assertTrue(core.calls.any { it.startsWith("jump 1 300") })
+        assertNull(chosen.note.value)
+        // Cùng mốc không hỏi lại.
+        flow.value = listOf(vn.abook.player.ui.data.ListenBook("b1", "Tên", state = vn.abook.player.ui.data.ListenState(last = newer)))
+        assertNull(chosen.note.value)
+    }
+
+    @Test
+    fun `restart goes to the first chapter and plays`() {
+        model.restart()
+        assertTrue(core.calls.any { it.startsWith("jump 1 0") })
+        assertTrue(core.calls.contains("play"))
+    }
 }

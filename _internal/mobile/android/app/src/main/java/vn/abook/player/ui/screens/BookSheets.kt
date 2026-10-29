@@ -55,6 +55,7 @@ import vn.abook.player.ui.components.PlusIcon
 import vn.abook.player.ui.components.TextCursorInputIcon
 import vn.abook.player.ui.data.RecordAction
 import vn.abook.player.ui.components.DeleteBookPage
+import vn.abook.player.ui.components.QuietButton
 import vn.abook.player.ui.components.RowHint
 import vn.abook.player.ui.components.SheetPages
 import vn.abook.player.ui.components.MenuRow
@@ -71,7 +72,10 @@ import vn.abook.player.ui.components.PlayPauseGlyph
 import vn.abook.player.ui.components.PrimaryButton
 import vn.abook.player.ui.components.SearchIcon
 import vn.abook.player.ui.components.ShareIcon
+import vn.abook.player.ui.components.ExportIcon
+import vn.abook.player.ui.components.SaveIcon
 import vn.abook.player.ui.components.TrashIcon
+import vn.abook.player.ui.data.BookNotes
 import vn.abook.player.ui.components.pressable
 import vn.abook.player.ui.data.BookDetail
 import vn.abook.player.ui.data.BookSearch
@@ -94,7 +98,7 @@ import vn.abook.player.ui.components.fadeEdges
 import androidx.compose.foundation.lazy.rememberLazyListState
 
 /** Các trang của bảng "Thêm": danh sách việc, nhạc nền của cuốn, xác nhận xoá. Đi sâu = trượt sang trái, Back = trượt ngược lại. */
-private enum class MenuPage { Actions, Music, Delete }
+private enum class MenuPage { Actions, Music, SaveAs, Delete }
 
 /**
  * Bảng "Thêm" của trang sách (thay menu "…" của bản React): đã nghe xong / chưa, sửa thông tin, chia sẻ file sách, xoá khỏi máy (có bước xác nhận NGAY trong bảng);
@@ -103,16 +107,20 @@ private enum class MenuPage { Actions, Music, Delete }
 @Composable
 fun BookMenuSheet(
     book: ListenBook, detail: BookDetail?, source: BookSource, actions: BookScreenActions, dismiss: () -> Unit,
-    music: MusicState? = null, playerMusic: PlayerMusic? = null, onRecord: (RecordAction) -> Unit = {},
+    music: MusicState? = null, playerMusic: PlayerMusic? = null, onRecord: (RecordAction) -> Unit = {}, notes: BookNotes? = null,
 ) {
     var page by remember { mutableStateOf(MenuPage.Actions) }
+    // Một lần lưu cho cả hai đường (Lưu thay đổi ở trang việc, Lưu thành ở trang riêng): hộp chọn chỗ lưu của hệ thống trả về cùng một nơi.
+    val save = rememberBookSave(book.id, source, notes, dismiss)
     BackHandler(enabled = page != MenuPage.Actions) { page = MenuPage.Actions }
     SheetPages(page, { it.ordinal }, "book_menu") { shown ->
         when (shown) {
             MenuPage.Actions -> MenuActions(
                 book, detail, source, actions, dismiss, music, onEdit = { dismiss(); actions.edit(book) },
                 onMusic = { page = MenuPage.Music }, onDelete = { page = MenuPage.Delete }, onRecord = onRecord,
+                save = save, onSaveAs = { page = MenuPage.SaveAs },
             )
+            MenuPage.SaveAs -> if (detail != null) SaveAsPage(detail, save)
             MenuPage.Music -> if (music != null) Column(Modifier.fillMaxWidth()) {
                 BasicText("Nhạc nền", style = Abook.type.sectionTitle)
                 RowHint(book.title)
@@ -136,6 +144,8 @@ private fun MenuActions(
     onMusic: () -> Unit,
     onDelete: () -> Unit,
     onRecord: (RecordAction) -> Unit,
+    save: BookSaveRun,
+    onSaveAs: () -> Unit,
 ) {
     val colors = Abook.colors
     val scope = rememberCoroutineScope()
@@ -164,6 +174,14 @@ private fun MenuActions(
             }) { ink -> if (finished) DashedCircleIcon(ink) else CheckIcon(ink) }
         }
         MenuRow("Sửa thông tin", tag = "menu_edit", onClick = onEdit) { ink -> PencilIcon(ink) }
+        // Cuốn mở từ file / làm trên máy lưu được thành file sách kèm thay đổi của bạn (web: Lưu thay đổi, Lưu thành). "Lưu thay đổi" chỉ bấm được khi có gì để lưu.
+        if (detail?.canShare == true) {
+            MenuRow(
+                "Lưu thay đổi", tag = "menu_save", unavailable = detail.unsaved == 0 || save.busy,
+                hint = if (save.busy) "Đang lưu" else null, onClick = save::saveKept,
+            ) { ink -> SaveIcon(ink) }
+            MenuRow("Lưu thành", tag = "menu_save_as", onClick = onSaveAs) { ink -> ExportIcon(ink) }
+        }
         if (detail?.canShare == true) {
             MenuRow(if (sharing) "Đang đóng file sách" else "Chia sẻ", tag = "menu_share", onClick = {
                 if (sharing) return@MenuRow
@@ -221,7 +239,11 @@ private fun MenuActions(
         }
         Box(Modifier.fillMaxWidth().padding(vertical = Dim.s8).height(1.dp).background(colors.line))
         if (onlyRecord != null) MenuRow("Xoá hồ sơ", tag = "menu_record_delete", danger = true, onClick = { onRecord(RecordAction.Delete) }) { ink -> TrashIcon(ink) }
-        MenuRow("Xoá khỏi điện thoại", tag = "menu_delete", danger = true, onClick = onDelete) { ink -> TrashIcon(ink) }
+        // Cỡ về sau khi tấm đã mở: dòng phụ hiện dần tại chỗ (web: "Chiếm 148 MB" bên phải hàng).
+        var bytes by remember { mutableStateOf<Long?>(null) }
+        LaunchedEffect(book.id) { bytes = source.bytes(book.id) }
+        MenuRow("Xoá khỏi điện thoại", tag = "menu_delete", danger = true, hint = bytes?.let { "Chiếm ${Fmt.size(it)}" }, onClick = onDelete) { ink -> TrashIcon(ink) }
+        if (save.problem.isNotEmpty()) BasicText(save.problem, style = Abook.type.bodySmall.copy(color = colors.danger), modifier = Modifier.testTag("save_problem"))
         if (problem.isNotEmpty()) {
             Spacer(Modifier.height(Dim.s4))
             BasicText(problem, style = Abook.type.bodySmall.copy(color = colors.danger))
@@ -237,9 +259,11 @@ private fun DeletePage(book: ListenBook, source: BookSource, actions: BookScreen
 
 /** Bảng của một chương ("…" cuối hàng): nghe từ đầu chương, đánh dấu đã nghe xong / chưa nghe. */
 @Composable
-fun ChapterSheet(book: ListenBook, chapter: ChapterLine, source: BookSource, onListenFromStart: () -> Unit, dismiss: () -> Unit) {
+fun ChapterSheet(book: ListenBook, chapter: ChapterLine, source: BookSource, onListenFromStart: () -> Unit, dismiss: () -> Unit, notes: BookNotes? = null) {
     val colors = Abook.colors
     val scope = rememberCoroutineScope()
+    var renaming by remember { mutableStateOf(false) }
+    if (renaming) return RenameChapterPage(book, chapter, source, notes, dismiss) { renaming = false }
     Column(Modifier.fillMaxWidth().testTag("chapter_sheet")) {
         BasicText(chapter.title, style = Abook.type.sectionTitle)
         RowHint(book.title)
@@ -258,6 +282,43 @@ fun ChapterSheet(book: ListenBook, chapter: ChapterLine, source: BookSource, onL
         } else {
             BasicText("Chương này chưa có audio.", style = Abook.type.body.copy(color = colors.text2), modifier = Modifier.padding(vertical = Dim.s12))
         }
+        // Sách nghe thẳng từ máy khác thì tên chương sửa ở máy giữ sách (web: canEditLayer).
+        if (book.remote == null) MenuRow("Đổi tên chương", tag = "chapter_rename", onClick = { renaming = true }) { ink -> TextCursorInputIcon(ink) }
+    }
+}
+
+/** "Đổi tên chương": chỉ đổi tên hiển thị, giữ audio; "Về tên gốc" trả lại tên của người làm sách (web: RenameChapterDialog, ô "Tên chương"). */
+@Composable
+private fun RenameChapterPage(book: ListenBook, chapter: ChapterLine, source: BookSource, notes: BookNotes?, dismiss: () -> Unit, onBack: () -> Unit) {
+    val scope = rememberCoroutineScope()
+    var value by remember { mutableStateOf(chapter.title) }
+    var busy by remember { mutableStateOf(false) }
+    var problem by remember { mutableStateOf("") }
+    val save = { revert: Boolean ->
+        if (!busy) {
+            busy = true
+            scope.launch {
+                val done = source.renameChapter(book.id, chapter.id, value.trim(), revert)
+                busy = false
+                val name = done.value
+                if (name != null) {
+                    dismiss()
+                    notes?.say("Đã đổi tên chương: $name")
+                } else {
+                    problem = "Chưa đổi được tên chương" + done.problem?.takeIf { it.isNotBlank() }?.let { " - $it" }.orEmpty()
+                }
+            }
+        }
+    }
+    Column(Modifier.fillMaxWidth().imePadding().testTag("chapter_rename_page")) {
+        BasicText("Tên chương", style = Abook.type.sectionTitle)
+        Spacer(Modifier.height(Dim.s12))
+        SheetField(value, { value = it.take(160) }, "Tên chương", "chapter_rename_field", onDone = { if (value.isNotBlank()) save(false) })
+        ProblemLine(problem, "chapter_rename_problem")
+        Spacer(Modifier.height(Dim.s24))
+        PrimaryButton(if (busy) "Đang lưu" else "Lưu", { if (value.isNotBlank()) save(false) }, Modifier.fillMaxWidth().testTag("chapter_rename_save"), enabled = value.isNotBlank() && !busy)
+        QuietButton("Về tên gốc", { save(true) }, "chapter_rename_original")
+        QuietButton("Thôi", onBack, "chapter_rename_cancel")
     }
 }
 

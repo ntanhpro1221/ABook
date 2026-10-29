@@ -67,6 +67,13 @@ class BookScreenTest {
         override suspend fun setChapterDone(id: String, chapterId: Int, done: Boolean) { calls += "done $chapterId $done" }
         override suspend fun delete(id: String): String? { calls += "delete $id"; return null }
         override suspend fun share(id: String): Intent? = null
+        override suspend fun saveKept(id: String): vn.abook.player.ui.data.SaveStep { calls += "save kept"; return vn.abook.player.ui.data.SaveStep.Done("sach.abook", 2) }
+        override suspend fun saveAsIntent(id: String, project: Boolean): Intent? { calls += "save as $project"; return null }
+        override suspend fun bytes(id: String): Long? = 148L * 1024 * 1024
+        override suspend fun renameChapter(id: String, chapterId: Int, title: String, revert: Boolean): vn.abook.player.ui.data.Edit<String> {
+            calls += "rename $chapterId $title $revert"
+            return vn.abook.player.ui.data.Edit(if (revert) "Tên gốc" else title, null)
+        }
     }
 
     private val played = ArrayList<String>()
@@ -273,6 +280,54 @@ class BookScreenTest {
         shot("book_menu_light")
     }
 
+    private fun unsavedDetail(unsaved: Int) = BookDetail.of(
+        manifest().put("unsaved", unsaved).put("edits", unsaved), listening(), { null }, canShare = true,
+    )
+
+    @Test
+    fun saveChangesIsOnlyOfferedWhenSomethingIsUnsaved() {
+        show(unsavedDetail(0))
+        rule.onNodeWithTag("book_more").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("menu_save").assertIsDisplayed()
+        rule.onNodeWithTag("menu_save_as").assertIsDisplayed()
+        rule.onNodeWithTag("menu_save").performClick()
+        rule.waitForIdle()
+        assertTrue("không có thay đổi: hàng mờ, không gọi lõi", source.calls.none { it.startsWith("save") })
+    }
+
+    @Test
+    fun saveChangesWritesToTheRememberedPlaceAndClosesTheSheet() {
+        show(unsavedDetail(2))
+        rule.onNodeWithTag("book_more").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("menu_save").performClick()
+        rule.waitForIdle()
+        assertEquals(listOf("save kept"), source.calls)
+        rule.onNodeWithTag("book_menu").assertDoesNotExist()
+        rule.onNodeWithText("Đã lưu file sách").assertIsDisplayed()
+    }
+
+    @Test
+    fun saveAsPageNamesTheFileKindAndWhatItCarries() {
+        show(unsavedDetail(1))
+        rule.onNodeWithTag("book_more").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("menu_save_as").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("save_as_page").assertIsDisplayed()
+        rule.onNodeWithText("Lưu thành").assertIsDisplayed()
+        rule.onNodeWithTag("save_kind_note").assertTextContains("Sách nghe mở được bằng ABook", substring = true)
+        rule.onNodeWithTag("save_kind_abookproj").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("save_kind_note").assertTextContains("Studio dựng lại được dự án", substring = true)
+        shot("book_save_as_light")
+        rule.onNodeWithTag("save_as_go").performClick()
+        rule.waitForIdle()
+        assertEquals(listOf("save as true"), source.calls)
+        rule.onNodeWithTag("save_problem").assertTextContains("Chưa lưu được file sách", substring = true)
+    }
+
     @Test
     fun readAlongInTheMenuClosesTheSheetAndAsksForTheBook() {
         show(detail(listening()))
@@ -396,6 +451,41 @@ class BookScreenTest {
         rule.onNodeWithTag("chapter_done").performClick()
         rule.waitForIdle()
         assertEquals(listOf("done 1 false"), source.calls)
+    }
+
+    @Test
+    fun chapterSheetRenamesAChapterOrGoesBackToTheOriginalName() {
+        show(detail(listening()))
+        rule.onAllNodesWithTag("chapter_more")[0].performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("chapter_rename").assertIsDisplayed().performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("chapter_rename_page").assertIsDisplayed()
+        rule.onNodeWithTag("chapter_rename_field").performTextReplacement("Tên mới")
+        rule.onNodeWithTag("chapter_rename_save").performClick()
+        rule.waitForIdle()
+        val call = source.calls.single { it.startsWith("rename") }
+        assertTrue(call, call.endsWith("Tên mới false"))
+    }
+
+    @Test
+    fun chapterRenameCanRevert() {
+        show(detail(listening()))
+        rule.onAllNodesWithTag("chapter_more")[0].performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("chapter_rename").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("chapter_rename_original").performClick()
+        rule.waitForIdle()
+        assertTrue(source.calls.single().endsWith(" true"))
+    }
+
+    @Test
+    fun deleteRowSaysHowMuchRoomItGivesBack() {
+        show(detail(listening()))
+        rule.onNodeWithTag("book_more").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithText("Chiếm 148 MB").assertIsDisplayed()
     }
 
     @Test

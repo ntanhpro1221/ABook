@@ -42,6 +42,12 @@ class BookDetail(
     val records: List<ListenRecord> = emptyList(),
     /** Lịch sử nghe của hồ sơ đang dùng, cũ trước. */
     val sessions: List<ListenSession> = emptyList(),
+    /** Số thay đổi của người nghe chưa vào file sách đã lưu (menu "Lưu thay đổi" chỉ bấm được khi khác 0). */
+    val unsaved: Int = 0,
+    /** Việc đang chờ máy làm sách (đổi giới tính ...) đi theo file; "Lưu thành" nói số này. */
+    val wishes: Int = 0,
+    /** Cuốn đến từ file dự án (.abookproj): "present" = mang cả xưởng, "pending" = chờ dựng xưởng; null = từ file sách nghe (.abook). */
+    val workshop: String? = null,
 ) {
     companion object {
         /** Hàm thuần: gói sách (như người nghe thấy) + trạng thái nghe -> trang sách. */
@@ -55,7 +61,11 @@ class BookDetail(
             imported: Boolean = false,
         ): BookDetail {
             val book = BookJson.book(manifest, state, coverOf, remote, imported = imported)
-            return BookDetail(book, lines(manifest, book.state), canShare, Records.parse(records), History.sessions(state))
+            return BookDetail(
+                book, lines(manifest, book.state), canShare, Records.parse(records), History.sessions(state),
+                unsaved = manifest.optInt("unsaved", manifest.optInt("edits")), wishes = manifest.optInt("wishes"),
+                workshop = manifest.optJSONObject("projectFile")?.optString("workshop")?.takeIf { it.isNotEmpty() },
+            )
         }
 
         /** Mọi chương của gói theo thứ tự trong sách. Chương chỉ có chữ: độ dài là độ dài trình phát đã ghi lúc nghe (0 khi chưa nghe). */
@@ -151,10 +161,12 @@ object BookPage {
      * Dòng dưới vạch tiến độ: nghe xong / hết phần đã có thì nói thế; đã nghe thì "Đã nghe X · còn Y chưa nghe" ("còn" theo phần ĐÃ PHỦ - chỗ tua qua vẫn là
      * chưa nghe, nên nói rõ "chưa nghe"); chưa nghe thì thời lượng cả cuốn.
      */
-    fun progressLine(book: ListenBook): String {
+    fun progressLine(book: ListenBook, listening: Boolean = false, failed: Boolean = false): String {
         val progress = book.progress
         if (progress.finished || progress.caughtUp) return ListenLogic.progressText(book)
         val heard = progress.heardSeconds
+        // Chưa nghe gì mà trình phát đang giữ cuốn này: nói đang nghe (hay không phát được), đừng nói "Chưa nghe".
+        if (heard <= 0 && listening) return if (failed) "Không phát được" else "Đang nghe"
         if (heard <= 0) return "Chưa nghe · ${Fmt.length(book.duration)}"
         return "Đã nghe ${Fmt.length(heard)} · còn ${Fmt.length(maxOf(0.0, book.duration - heard))} chưa nghe"
     }

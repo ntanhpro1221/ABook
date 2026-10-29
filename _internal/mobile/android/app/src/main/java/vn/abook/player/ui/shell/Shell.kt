@@ -189,6 +189,7 @@ fun AppShell(
             },
             playNow = player::playNow,
             addBook = { shell.nav.push(Destination.AddBook) },
+            connect = if (settings.devices != null) ({ shell.nav.push(Destination.Devices(DevicesPage.Pair)) }) else null,
         )
     }
     val window = shell.window
@@ -206,6 +207,13 @@ fun AppShell(
         }
     }
     window.voiceSettings = openVoiceSettings
+    window.toLibrary = remember(shell, window) {
+        {
+            window.close()
+            shell.nav.popToRoot()
+            shell.tabs.select(Tab.Library)
+        }
+    }
     // Chương chỉ có chữ mà giọng trực tuyến chưa được đồng ý: hỏi trước khi phát (PlayGate); bảng tự đóng khi câu hỏi được trả lời hay bị lệnh khác thay.
     val consent by player.gate.request.collectAsState()
     LaunchedEffect(consent) {
@@ -257,7 +265,7 @@ fun AppShell(
                     screen = { destination ->
                         when (destination) {
                             is Destination.Book -> BookScreen(
-                                destination.book, library, playerState, player.clock, covers, books, shell.sheets, bookActions, music = settings.music,
+                                destination.book, library, playerState, player.clock, covers, books, shell.sheets, bookActions, music = settings.music, prepare = settings.prepare,
                             )
                             is Destination.Export -> if (exports != null) ExportScreen(destination.book, exports, nav::pop, destination.format)
                             Destination.AddBook -> if (imports != null) AddBookRoute(imports, nav::pop,
@@ -367,9 +375,15 @@ private fun RootTabs(
     Column(Modifier.fillMaxSize()) {
         TabHost(tabs, Modifier.weight(1f)) { tab ->
             when (tab) {
-                Tab.Library -> LibraryScreen(
-                    library, shell.library, shell.libraryGrid, covers, shell.sheets, actions, backEnabled = backToLibrary,
-                )
+                Tab.Library -> {
+                    val night = settings.night
+                    // Thẻ "Tối qua": đọc nhật ký đêm mỗi lần bạn quay về Thư viện (đêm mới kết thúc, hay vừa nghe tiếp thì thẻ biến mất).
+                    LaunchedEffect(night, tabs.selected) { if (tabs.selected == Tab.Library.ordinal) night?.load() }
+                    LibraryScreen(
+                        library, shell.library, shell.libraryGrid, covers, shell.sheets, actions, backEnabled = backToLibrary,
+                        recap = night?.let { n -> { books -> vn.abook.player.ui.screens.MorningRecap(n, books, repo::playChapter) } },
+                    )
+                }
                 Tab.Studio -> StudioScreen(companion = companion, devices = settings.devices, askNotifications = askNotifications,
                     openNotificationSettings = settings.links.openNotificationSettings,
                     connect = { shell.nav.push(Destination.Devices(DevicesPage.Pair)) })
