@@ -170,7 +170,7 @@ class NativeActivity : ComponentActivity() {
                     val state by library.state.collectAsStateWithLifecycle()
                     AppShell(
                         shell, state, player, covers, env, onFirstContent = ::onFirstContent, books = library, deletions = library.deletions, companion = if (demo) null else app.companion,
-                        nowPlaying = rememberRepoNowPlaying(player, readAlong, env.music),
+                        nowPlaying = rememberRepoNowPlaying(player, readAlong, env.music, env.voice),
                         imports = app.imports, editors = app.editors, exports = if (demo) null else app.exports, demo = demo, askNotifications = deviceLinks.askNotifications, autoPick = !demo,
                         pip = pip,
                     )

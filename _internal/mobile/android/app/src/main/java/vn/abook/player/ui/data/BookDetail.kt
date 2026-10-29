@@ -1,6 +1,7 @@
 package vn.abook.player.ui.data
 
 import androidx.compose.runtime.Immutable
+import org.json.JSONArray
 import org.json.JSONObject
 import vn.abook.player.LibraryTree
 
@@ -21,6 +22,8 @@ data class ChapterLine(
     val textPath: String = "",
     /** Giây bắt đầu khi chạm chương: chỗ đã nghe tới nếu chương đang nghe dở, không thì đầu chương (BookScreen.tsx ChapterRow). */
     val resumeAt: Double = 0.0,
+    /** Tên ngắn của chương (`title` của gói, không kèm tên phụ): dàn nhân vật ghi "từ <chương>" bằng tên này hay [title]. */
+    val shortTitle: String = "",
 ) {
     val playable: Boolean get() = available || textOnly
 }
@@ -35,6 +38,10 @@ class BookDetail(
     val chapters: List<ChapterLine>,
     /** Gửi được thành file sách (cuốn mở từ file / làm trên máy - BookActions.canShare). */
     val canShare: Boolean = false,
+    /** Hồ sơ nghe gắn với cuốn này (chưa nghe lần nào thì rỗng). */
+    val records: List<ListenRecord> = emptyList(),
+    /** Lịch sử nghe của hồ sơ đang dùng, cũ trước. */
+    val sessions: List<ListenSession> = emptyList(),
 ) {
     companion object {
         /** Hàm thuần: gói sách (như người nghe thấy) + trạng thái nghe -> trang sách. */
@@ -44,9 +51,11 @@ class BookDetail(
             coverOf: (String) -> CoverRef?,
             remote: RemoteRef? = null,
             canShare: Boolean = false,
+            records: JSONArray? = null,
+            imported: Boolean = false,
         ): BookDetail {
-            val book = BookJson.book(manifest, state, coverOf, remote)
-            return BookDetail(book, lines(manifest, book.state), canShare)
+            val book = BookJson.book(manifest, state, coverOf, remote, imported = imported)
+            return BookDetail(book, lines(manifest, book.state), canShare, Records.parse(records), History.sessions(state))
         }
 
         /** Mọi chương của gói theo thứ tự trong sách. Chương chỉ có chữ: độ dài là độ dài trình phát đã ghi lúc nghe (0 khi chưa nghe). */
@@ -79,6 +88,7 @@ class BookDetail(
                     done = heard >= 1f,
                     textPath = textPath,
                     resumeAt = if (heard > 0f && heard < 1f) state.chapters[id]?.heard ?: 0.0 else 0.0,
+                    shortTitle = field(entry, "title"),
                 )
             }
             return out
@@ -131,6 +141,7 @@ object BookPage {
     fun statusLine(book: ListenBook): String? = when {
         book.textOnly -> "Chỉ có chữ · nghe bằng giọng đọc"
         !book.complete && book.remote != null -> "${book.remote.deviceName.replaceFirstChar { it.uppercase() }} còn đang làm, chương mới hiện ở đây khi xong"
+        !book.complete && book.imported -> "Chưa đủ chương; mở file sách mới hơn để nghe tiếp."
         !book.complete -> "Sách này có ${book.chaptersAvailable}/${book.chaptersTotal} chương đã thu - các chương sau chưa có audio"
         book.remote != null -> "Nghe thẳng từ ${book.remote.deviceName} - chương nghe tới được giữ lại trên máy này"
         else -> null

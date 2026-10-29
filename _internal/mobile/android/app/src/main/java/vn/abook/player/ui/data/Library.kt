@@ -9,7 +9,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import vn.abook.player.AppLog
+import org.json.JSONObject
 import vn.abook.player.BookActions
+import vn.abook.player.ListeningRecords
 import vn.abook.player.Store
 import vn.abook.player.SyncLink
 import java.io.File
@@ -29,7 +31,7 @@ sealed interface LibraryState {
  * nghe thẳng đã cất (`stream.json`, cùng dữ liệu `streamableBooks` trả cho WebView) - không qua plugin. Cuốn nghe thẳng mang [RemoteRef]
  * (dấu "Trên máy tính"). DevicesRepo chuyển danh sách có thẩm quyền từ RemoteBooks.streamable vào [acceptRemote]; gói đã cất chỉ dùng trước lượt hỏi đầu.
  */
-class LibraryRepo(private val context: Context, scope: kotlinx.coroutines.CoroutineScope, removed: (String) -> Unit = {}) : BookSource {
+class LibraryRepo(private val context: Context, private val scope: kotlinx.coroutines.CoroutineScope, removed: (String) -> Unit = {}) : BookSource {
     // null until the first authoritative network catalogue; downloaded books always stay local.
     @Volatile private var remoteIds: Set<String>? = null
     // "Xoá khỏi điện thoại" như bản WebView ([BookActions.delete] / [Store.undoBook]): cuốn dời vào chỗ chờ ngay, "Hoàn tác" đưa về.
@@ -79,7 +81,7 @@ class LibraryRepo(private val context: Context, scope: kotlinx.coroutines.Corout
             val downloaded = Store.rawManifest(id) != null
             val manifest = (if (downloaded) Store.manifest(id) else Store.streamManifest(id)?.let { Store.streamed(id, it) }) ?: return@withContext null
             val remote = if (downloaded) null else RemoteRef(SyncLink.holderName(context, id))
-            BookDetail.of(manifest, Store.state(id), { coverOf(it) }, remote, BookActions.canShare(id))
+            BookDetail.of(manifest, Store.state(id), { coverOf(it) }, remote, BookActions.canShare(id), Store.records(id), Store.isImported(id))
         } catch (error: Exception) {
             AppLog.w("Library", "Không đọc được trang sách: ${error.javaClass.simpleName}")
             null
@@ -115,6 +117,81 @@ class LibraryRepo(private val context: Context, scope: kotlinx.coroutines.Corout
             AppLog.w("Library", "Không đóng được file sách để chia sẻ: ${error.javaClass.simpleName}")
             null
         }
+    }
+
+    override suspend fun cast(id: String): CastView? = withContext(Dispatchers.IO) {
+        try {
+            Store.init(context)
+            Cast.parse(BookActions.text(context, id, "cast.json"))
+        } catch (error: Exception) {
+            AppLog.w("Library", "Không đọc được dàn nhân vật: ${error.javaClass.simpleName}")
+            null
+        }
+    }
+
+    override suspend fun samplePath(id: String, sampleId: Int): String? = withContext(Dispatchers.IO) {
+        runCatching { Store.init(context); Store.file(id, "samples/$sampleId.wav").takeIf { it.isFile }?.path }.getOrNull()
+    }
+
+    // ---- hồ sơ nghe: lõi chung với bản WebView ([ListeningRecords]); xong thì đọc lại Thư viện, báo máy tính ở nền ----
+
+    private suspend fun records(change: () -> ListeningRecords.Change): String? {
+        val problem = withContext(Dispatchers.IO) {
+            try {
+                Store.init(context)
+                val done = change()
+                scope.launch(Dispatchers.IO) { done.push() }
+                null
+            } catch (error: Exception) {
+                AppLog.w("Library", "Không đổi được hồ sơ nghe: ${error.javaClass.simpleName}")
+                error.message?.takeIf { it.isNotBlank() } ?: "Bạn hãy thử lại."
+            }
+        }
+        refresh()
+        return problem
+    }
+
+    override suspend fun createRecord(id: String, name: String) = records { ListeningRecords.create(context, id, name) }
+
+    override suspend fun activateRecord(id: String, record: String) = records { ListeningRecords.activate(context, id, record) }
+
+    override suspend fun renameRecord(id: String, record: String, name: String) = records { ListeningRecords.rename(context, id, record, name) }
+
+    override suspend fun moveRecord(id: String, record: String, toBook: String) = records { ListeningRecords.move(context, id, record, toBook) }
+
+    override suspend fun deleteRecord(id: String, record: String) = records { ListeningRecords.delete(context, id, record) }
+
+    // ---- sửa một người: đường của lõi như Studio ([BookActions.studio]) ----
+
+    private suspend fun <T> person(id: String, block: () -> T): Edit<T> {
+        val result = withContext(Dispatchers.IO) {
+            try {
+                Edit(block(), null)
+            } catch (error: Exception) {
+                AppLog.w("Library", "Không sửa được nhân vật: ${error.javaClass.simpleName}")
+                Edit<T>(null, error.message?.takeIf { it.isNotBlank() } ?: "Bạn hãy thử lại.")
+            }
+        }
+        if (result.problem == null) refresh()
+        return result
+    }
+
+    override suspend fun renamePerson(id: String, character: String, name: String): Edit<Renamed> = person(id) {
+        val answer = BookActions.studio(context, "POST", id, "/characters/rename", JSONObject().put("character", character).put("name", name))
+        Renamed(answer.optString("name"), answer.optBoolean("renamed"))
+    }
+
+    override suspend fun setGender(id: String, character: String, gender: Gender): Edit<Double> = person(id) {
+        BookActions.studio(context, "POST", id, "/voice", JSONObject().put("character", character).put("gender", gender.wire)).optDouble("requestedAt")
+    }
+
+    override suspend fun withdrawGender(id: String, character: String, requestedAt: Double): String? = person(id) {
+        BookActions.studio(context, "POST", id, "/voice", JSONObject().put("character", character).put("withdraw", true).put("requestedAt", requestedAt))
+        true
+    }.problem
+
+    override suspend fun mergePeople(id: String, from: String, into: String): Edit<Int> = person(id) {
+        BookActions.studio(context, "POST", id, "/characters/merge", JSONObject().put("from", from).put("into", into)).optInt("lines")
     }
 
     private suspend fun write(block: () -> Unit) {
@@ -161,7 +238,7 @@ class LibraryRepo(private val context: Context, scope: kotlinx.coroutines.Corout
                         RemoteRef(holderNames.getOrPut(source) { SyncLink.holderName(context, id) })
                     }
                     val added = if (downloaded) File(Store.bookDir(id), "book.json").lastModified() / 1000.0 else null
-                    val book = BookJson.book(manifest, Store.state(id), ::coverOf, remote, added)
+                    val book = BookJson.book(manifest, Store.state(id), ::coverOf, remote, added, Store.isImported(id))
                     if (book.chaptersAvailable > 0 || book.textOnly) books += book
                 } catch (error: Exception) {
                     AppLog.w("Library", "Bỏ qua một cuốn không đọc được: ${error.javaClass.simpleName}")

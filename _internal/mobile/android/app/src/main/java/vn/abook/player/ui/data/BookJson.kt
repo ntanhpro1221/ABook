@@ -51,7 +51,7 @@ object BookJson {
         LibraryTree.chapters(manifest).map { ChapterInfo(it.id, it.title, it.duration, available = !it.isText, textOnly = it.isText) }
 
     /** `coverOf(id)`: bìa người nghe thấy (Store.coverFile) - tách ra để hàm này không đụng đĩa. `remote`: cuốn nghe thẳng, chưa tải. */
-    fun book(manifest: JSONObject, state: JSONObject?, coverOf: (String) -> CoverRef?, remote: RemoteRef? = null, addedAt: Double? = null): ListenBook {
+    fun book(manifest: JSONObject, state: JSONObject?, coverOf: (String) -> CoverRef?, remote: RemoteRef? = null, addedAt: Double? = null, imported: Boolean = false): ListenBook {
         val id = manifest.getString("id")
         val listen = state(state)
         val all = chapters(manifest)
@@ -81,6 +81,7 @@ object BookJson {
             cover = coverOf(id),
             series = link,
             remote = remote,
+            imported = imported,
             part = link?.part,
         )
     }

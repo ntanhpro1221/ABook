@@ -21,6 +21,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -51,6 +52,7 @@ import vn.abook.player.ui.data.LibrarySort
 import vn.abook.player.ui.data.LibraryState
 import vn.abook.player.ui.data.PlayerRepo
 import vn.abook.player.ui.data.PlayerState
+import vn.abook.player.ui.data.SettingsGroup
 import vn.abook.player.ui.motion.ScreenGeometry
 import vn.abook.player.ui.nav.Destination
 import vn.abook.player.ui.nav.NavState
@@ -195,6 +197,21 @@ fun AppShell(
     }
     val openPlayer = remember(window) { window::open }
     window.miniWindow = remember(pip) { pip?.takeIf { it.available }?.let { control -> { control.enter() } } }
+    // Tới Cài đặt > Giọng đọc (tải giọng về máy): thu cửa sổ Đang nghe rồi mở nhóm Giọng đọc như bạn chạm vào nó.
+    val openVoiceSettings = remember(shell, window) {
+        {
+            shell.sheets.dismiss()
+            window.close()
+            shell.nav.push(Destination.Settings(SettingsGroup.Voice))
+        }
+    }
+    window.voiceSettings = openVoiceSettings
+    // Chương chỉ có chữ mà giọng trực tuyến chưa được đồng ý: hỏi trước khi phát (PlayGate); bảng tự đóng khi câu hỏi được trả lời hay bị lệnh khác thay.
+    val consent by player.gate.request.collectAsState()
+    LaunchedEffect(consent) {
+        val request = consent ?: return@LaunchedEffect
+        shell.sheets.show { dismiss -> vn.abook.player.ui.voice.OnlineVoiceSheet(request, player.gate.request, settings.voice, openVoiceSettings, dismiss) }
+    }
     val inPip = pip?.active == true
     // Vào PiP: đóng mọi lớp phủ như Back (bảng trượt, menu, tìm kiếm). Ra khỏi PiP (bấm vào cửa sổ nhỏ): app đầy đủ mở ở màn Đang nghe.
     val wasInPip = remember { booleanArrayOf(false) }
@@ -209,6 +226,7 @@ fun AppShell(
         }
         wasInPip[0] = inPip
     }
+    val libraryNow = rememberUpdatedState(library)
     val bookActions = remember(shell, player, exports) {
         BookScreenActions(
             back = shell.nav::pop,
@@ -220,6 +238,7 @@ fun AppShell(
             edit = { shell.nav.push(Destination.EditBook(it)) },
             export = { book, format -> shell.nav.push(Destination.Export(book, format)) },
             exportHint = { id -> exports?.hint(id) ?: NoExportHint },
+            openBook = { id -> (libraryNow.value as? LibraryState.Ready)?.books?.firstOrNull { it.id == id }?.let { shell.nav.push(Destination.Book(it)) } },
         )
     }
     if (inPip) {

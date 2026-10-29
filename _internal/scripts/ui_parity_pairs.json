@@ -229,6 +229,8 @@
       "web": [
         "listen/LibraryScreen.tsx",
         "listen/BookScreen.tsx",
+        "studio/CastEdits.tsx",
+        "studio/MergePeople.tsx",
         "listen/bookMenu.ts",
         "listen/librarySort.ts",
         "listen/bookSearch.ts",
@@ -247,7 +249,12 @@
         "screens/LibraryUiState.kt",
         "screens/BookScreen.kt",
         "screens/BookSheets.kt",
+        "screens/BookTabs.kt",
+        "screens/BookPeople.kt",
+        "screens/BookRecords.kt",
         "data/BookDetail.kt",
+        "data/ListenExtras.kt",
+        "data/BookNotes.kt",
         "data/Format.kt",
         "data/LibraryView.kt",
         "data/ListenLogic.kt",
@@ -262,8 +269,8 @@
       "allow": [
         {
           "side": "web",
-          "match": "^(điều hướng|danh sách chương|mục của sách|việc với sách|lọc sách|mở bộ \\{\\}|mở \\{\\}|nghe ngay \\{\\}|đọc \\{\\}|thêm \\{\\}|nghe \\{\\}|tạm dừng \\{\\}|nghe \\{\\} nói|xếp theo: \\{\\}|nghe xong|thông báo|đóng thông báo|đang mở thư viện|gõ không dấu cũng được|nghe giọng \\{\\}|đổi giọng \\{\\}|nghe tiếp \\{\\}|sách)$",
-          "reason": "web only: screen-reader name, hover tooltip or tab-list name of a control both sides have (the web control is icon-only or repeats per card; Compose reads the visible label)"
+          "match": "^(điều hướng|danh sách chương|mục của sách|việc với sách|lọc sách|mở bộ \\{\\}|mở \\{\\}|nghe ngay \\{\\}|đọc \\{\\}|thêm \\{\\}|nghe \\{\\}|tạm dừng \\{\\}|nghe \\{\\} nói|xếp theo: \\{\\}|nghe xong|thông báo|đóng thông báo|đang mở thư viện|gõ không dấu cũng được|nghe giọng \\{\\}|đổi giọng \\{\\}|nghe tiếp \\{\\}|chuyển sang cuốn|giới tính|gộp vào ai|sách)$",
+          "reason": "web only: screen-reader name, hover tooltip or tab-list name of a control both sides have (the web control is icon-only or repeats per card; Compose reads the visible label); also the cast sheets' list names (Giới tính, Gộp vào ai, Chuyển sang cuốn)"
         },
         {
           "side": "web",
@@ -279,6 +286,36 @@
           "side": "native",
           "match": "^(phần đã tải của “\\{\\}” sẽ bị xoá.*)$",
           "reason": "same dialog, different data: web knows the size to reclaim but not the holder's name, native knows the holder - one sentence once both sides have both"
+        },
+        {
+          "side": "web",
+          "match": "^(chưa mang theo chỗ nghe)$",
+          "reason": "computer only: restoring a deleted book on the computer can leave its listening spot behind; the phone keeps listening records outside the book folder and restores the book to the same place, so nothing is ever left behind"
+        },
+        {
+          "side": "web",
+          "match": "^(nghe tiếp từ|tên gốc|giọng đọc của|không có ai khớp “|\\{\\} ngày qua)$",
+          "reason": "same visible line on both sides: web splits the sentence around a JSX expression and the extractor sees the fragment; native writes one template (listed below as native-only twins)"
+        },
+        {
+          "side": "native",
+          "match": "^(nghe tiếp từ \\{\\}|tên gốc: \\{\\}|giọng đọc của \\{\\} chưa đổi ngay.*|không có ai khớp “\\{\\}”|đã hoàn tác\\. \\{\\} trở lại như trước khi đổi giới tính)$",
+          "reason": "same visible line as the web fragments listed above; native writes the whole sentence as one template"
+        },
+        {
+          "side": "native",
+          "match": "^(chỗ nghe, lịch sử đi theo hồ sơ sang cuốn kia|cuốn này chuyển sang hồ sơ nghe gần nhất còn lại|cuốn này sẽ như chưa nghe lần nào)$",
+          "reason": "web builds this description from one template with a ternary inside; native keeps the two halves as separate literals - the visible sentence is the same"
+        },
+        {
+          "side": "native",
+          "match": "^(đang ghi|đang gộp|đang lưu|bạn hãy thử lại|không hoàn tác được)$",
+          "reason": "web shows a spinner or a toast from the core's own error text; native writes a busy word / retry hint in the sheet"
+        },
+        {
+          "side": "web",
+          "match": "^(bỏ gộp|bỏ gộp \\{\\} vào \\{\\}|chờ áp dụng|chờ áp dụng: giọng|từ phần trước|đổi giọng người kể|nếu giọng|áp dụng sẽ thu lại|đang thu; chương mới tự hiện khi xong)$",
+          "reason": "Studio / workshop only: the book page of the phone never gets the unmerge, voice-pick or narrator callbacks (only Studio passes them), the cast is always 'waiting' (shown as 'Đang chờ máy làm sách'), nothing is recorded on the phone, and a book is never being recorded here"
         }
       ],
       "missing": [
@@ -291,11 +328,6 @@
           "side": "web",
           "match": "^(chọn câu cuối cùng còn nhớ|nghe tới đâu rồi thiếp đi|nghe từ đây|thu gọn|tìm đúng câu|ẩn thẻ này|hẹn giờ ngủ|lần cuối chạm máy|lần cuối dùng máy|máy bắt đầu nằm yên|tự dừng|vừa hẹn giờ|tối qua)$",
           "reason": "morning recap card"
-        },
-        {
-          "side": "web",
-          "match": "^(bỏ gộp.*|chuyển.*|chọn cuốn|chưa có dàn nhân vật|chưa có giọng|chưa có lịch sử nghe|chờ áp dụng.*|gộp vào người khác|hiện chương sau|ẩn chương sau|hồ sơ mới|hồ sơ nghe|huỷ|lưu|lưu thay đổi|lưu thành|lần nghe \\{\\}|lịch sử|mặc định|mở cuốn ấy|nghe tiếp từ|người kể chuyện|nhân vật|quay lại chỗ cũ|tên hồ sơ|từ phần trước|vai chính|vai phụ|xoá hồ sơ.*|đang dùng hồ sơ.*|đang nghe lại từ đầu|đã xoá hồ sơ.*|đã đổi tên hồ sơ|đổi giọng người kể|đổi giới tính|đổi tên.*|về thư viện|\\{\\} ngày qua|hôm nay|hôm qua|tạo và nghe)$",
-          "reason": "listening profiles, history and the cast tab of the book page"
         },
         {
           "side": "web",
@@ -326,11 +358,6 @@
           "side": "web",
           "match": "^(chưa xếp lại hàng chờ làm sách|thư viện có hai cuốn trùng tên)$",
           "reason": "undo toast notes (queue, duplicate name)"
-        },
-        {
-          "side": "web",
-          "match": "^(chưa đủ chương; mở file sách mới hơn.*|đang thu; chương mới tự hiện khi xong|dàn nhân vật hiện ra.*|hồ sơ mới nghe từ đầu.*|mỗi hồ sơ giữ chỗ nghe.*|mỗi lượt nghe lưu lại.*|sách có thể đã bị chuyển.*|thư viện chưa có cuốn nào khác)$",
-          "reason": "book page: producing note, cast, profiles, history, book-not-found page"
         },
         {
           "side": "native",
@@ -374,11 +401,6 @@
         },
         {
           "side": "web",
-          "match": "^(chưa hoàn tác được|đã khôi phục “\\{\\}”|chưa mang theo chỗ nghe)$",
-          "reason": "native undo bar has no restore toast or undo-failure line"
-        },
-        {
-          "side": "web",
           "match": "^(đang tải về máy)$",
           "reason": "native remote-book sheet shows 'Đang tải N%' in place; web menu closes, so it toasts the start"
         },
@@ -386,6 +408,11 @@
           "side": "web",
           "match": "^(chưa tải được)$",
           "reason": "native writes the core's failure sentence under the button, without a title"
+        },
+        {
+          "side": "web",
+          "match": "^(lưu thay đổi|lưu thành)$",
+          "reason": "book menu: save the listener's changes into the .abook file / save as another file - the native book menu has no save entry yet"
         }
       ],
       "deferred": [],
@@ -805,11 +832,6 @@
           "side": "web",
           "match": "^đã\\ lưu\\ khoá\\.\\ bấm\\ “kiểm\\ tra”\\ để\\ thử$",
           "reason": "native chưa có: nút nhận khoá ở trang nhà cung cấp / lời báo sau khi lưu khoá / giải thích mức tô chữ"
-        },
-        {
-          "side": "web",
-          "match": "^(chưa tải được giọng vieneu|chọn giọng khác|chọn giọng đọc|dừng|giọng đọc trực tuyến|nghe|nghe thử|tải giọng về máy|xem trong cài đặt|đang tải giọng vieneu|giọng của máy đọc ngay trên máy này, không gửi chữ đi đâu)$",
-          "reason": "native player has no offline / online-voice prompt nor the VieNeu download block (OnlineVoicePrompt, VieneuDownload)"
         },
         {
           "side": "web",

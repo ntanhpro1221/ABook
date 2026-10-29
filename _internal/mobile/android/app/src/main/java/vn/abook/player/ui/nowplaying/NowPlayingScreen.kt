@@ -169,7 +169,7 @@ fun NowPlayingScreen(
                     window.miniWindow?.let { enter -> PlayerAction("Cửa sổ mini", MINI_WINDOW_GLYPH, enter, Modifier.weight(1f).testTag("player_mini")) }
                 }
             }
-            if (state.error.isNotBlank()) BasicText(state.error, Modifier.playerReveal(windowProgress), style = Abook.type.caption)
+            if (state.error.isNotBlank()) PlayerAlert(state, model, window, Modifier.playerReveal(windowProgress))
         }
         PlayerSheets(state, model, window)
     }
