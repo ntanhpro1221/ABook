@@ -144,7 +144,7 @@ FocusScope {
             root.activityData = null; root.next = 0
             root.workKind = "all"; root.workCard = ""; root.cameFrom = ""; root.nameParam = ""; root.focusNames = false; root.precastStep = "cast"
             root.tab = "chapters"; root.shownTab = "chapters"
-            Qt.callLater(root.refreshNext)
+            Later.call(root, root.refreshNext)
         }
     }
 

@@ -23,12 +23,12 @@ FocusScope {
     enabled: open
     onShownChanged: if (shown > 0 && focusPending && open) {
         focusPending = false
-        Qt.callLater(function() { if (root.open) root.focusChoice(0, true) })
+        Later.call(root, function() { if (root.open) root.focusChoice(0, true) })
     }
-    onContentHeightChanged: if (open) Qt.callLater(place)
-    onWidthChanged: if (open) Qt.callLater(place)
-    onHeightChanged: if (open) Qt.callLater(place)
-    onMaxHeightChanged: if (open) Qt.callLater(place)
+    onContentHeightChanged: if (open) Later.call(root, place)
+    onWidthChanged: if (open) Later.call(root, place)
+    onHeightChanged: if (open) Later.call(root, place)
+    onMaxHeightChanged: if (open) Later.call(root, place)
     Component.onDestruction: Nav.closedLayer(root)
 
     Behavior on shown {

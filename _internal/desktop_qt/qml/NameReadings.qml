@@ -44,7 +44,7 @@ Item {
     function reveal() {
         if (!jump || !shown || revealed) return
         revealed = true
-        Qt.callLater(function() { root.revealRequested(heading) })
+        Later.call(root, function() { root.revealRequested(heading) })
     }
 
     Collapse {

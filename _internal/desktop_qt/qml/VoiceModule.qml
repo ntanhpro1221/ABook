@@ -101,8 +101,8 @@ Item {
     }
     // Tải <-> Huỷ thay chỗ nhau: tiêu điểm theo sang nút vừa hiện
     onDownloadingChanged: {
-        if (downloading && startButton.activeFocus) Qt.callLater(function() { cancelButton.forceActiveFocus(Qt.TabFocusReason) })
-        else if (!downloading && cancelButton.activeFocus) Qt.callLater(function() { startButton.forceActiveFocus(Qt.TabFocusReason) })
+        if (downloading && startButton.activeFocus) Later.call(root, function() { cancelButton.forceActiveFocus(Qt.TabFocusReason) })
+        else if (!downloading && cancelButton.activeFocus) Later.call(root, function() { startButton.forceActiveFocus(Qt.TabFocusReason) })
     }
     Component.onCompleted: refresh()
     Timer { interval: 1000; running: activity.running && root.working; repeat: true; onTriggered: root.refresh() }

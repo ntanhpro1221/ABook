@@ -35,7 +35,7 @@ FocusScope {
     function maybePick() {
         if (!pickOnOpen || pickedOnOpen || !form) return
         pickedOnOpen = true
-        if (form.dialogs && !ready && !(form.draft.paths && form.draft.paths.length)) Qt.callLater(function() { source.chooseFiles(false) })
+        if (form.dialogs && !ready && !(form.draft.paths && form.draft.paths.length)) Later.call(root, function() { source.chooseFiles(false) })
     }
     onPickOnOpenChanged: if (pickOnOpen) { pickedOnOpen = false; maybePick() }
     Component.onCompleted: maybePick()

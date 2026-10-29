@@ -90,9 +90,9 @@ Item {
         if (following) follow(true)
         else refreshPlacement()
     }
-    // Đoạn đang đọc vừa tính xong hình chữ nhật của câu. Gọi từ Component.onCompleted của dòng đang được dựng: để sau (callLater gộp các lần gọi), vì
+    // Đoạn đang đọc vừa tính xong hình chữ nhật của câu. Gọi từ Component.onCompleted của dòng đang được dựng: để sau (Later.call gộp các lần gọi), vì
     // cuộn / positionViewAtIndex ngay trong lúc ListView đang dựng dòng bằng incubator làm dòng bị đụng lại giữa chừng (app chết trong QQmlObjectCreator::finalize).
-    function currentRectsChanged() { Qt.callLater(rectsSettled) }
+    function currentRectsChanged() { Later.call(root, rectsSettled) }
     function rectsSettled() {
         if (following) follow(true)
         else refreshPlacement()
@@ -120,7 +120,7 @@ Item {
     }
     Connections {
         target: ReadAlong
-        function onCurrentSegmentChanged() { Qt.callLater(root.afterSegment) }
+        function onCurrentSegmentChanged() { Later.call(root, root.afterSegment) }
         function onListened() { root.following = true; root.firstPlacement = false }
         function onStatusChanged() {
             if (ReadAlong.status === "ready") {

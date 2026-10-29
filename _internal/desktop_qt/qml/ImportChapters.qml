@@ -37,7 +37,7 @@ Item {
         editing = -1
         Nav.closedLayer(backLayer)
         returnTo = was
-        Qt.callLater(function() { const target = root.buttonFor(root.returnTo); if (target) target.forceActiveFocus(Qt.TabFocusReason) })
+        Later.call(root, function() { const target = root.buttonFor(root.returnTo); if (target) target.forceActiveFocus(Qt.TabFocusReason) })
     }
     function cancelEdit() { if (editing < 0) return; cancelled = true; stopEdit() }
     function finishEdit(chapter, value) {

@@ -120,14 +120,14 @@ Item {
         if (index < 0) return                   // hàng đang ra chỉ giữ hình, không được gửi thêm phán quyết
         // Câu vừa phán rời danh sách đang lọc: đưa tiêu điểm sang câu kế (hay câu trước), đừng để nó rơi về đầu trang
         const leaves = filter === "todo" ? value !== null : value === null
-        if (leaves) { focusAfter = neighbour(index); Qt.callLater(root.settleFocus) }
+        if (leaves) { focusAfter = neighbour(index); Later.call(root, root.settleFocus) }
         setVerdict(item.stableId, value)
         work.saveVerdict(item, value, function() {})
     }
     function spoken(item) {
         const index = items.findIndex(function(current) { return current.stableId === item.stableId })
         focusAfter = neighbour(index)
-        Qt.callLater(root.settleFocus)
+        Later.call(root, root.settleFocus)
         refresh()
     }
 

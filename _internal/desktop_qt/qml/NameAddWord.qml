@@ -15,7 +15,7 @@ Column {
     property string heldWord: ""
     onTypedChanged: if (typed !== "" && N.single(typed)) heldWord = typed
 
-    function openBox() { open = true; Qt.callLater(function() { field.forceActiveFocus() }) }
+    function openBox() { open = true; Later.call(root, function() { field.forceActiveFocus() }) }
     function closeBox() { word = ""; field.text = ""; open = false }
 
     Collapse {
