@@ -259,6 +259,7 @@ qt_add_qml_module(ABookDesk
         qml/OtherComputers.qml
         qml/OtherComputersRow.qml
         qml/OtherComputersBluetooth.qml
+        qml/SizeFormat.js
         qml/DevicesLogic.js
         qml/ImportQueue.js
         qml/ImportBox.qml

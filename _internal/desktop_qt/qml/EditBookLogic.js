@@ -1,4 +1,5 @@
 .pragma library
+.import "SizeFormat.js" as Size
 
 // Phần thuần của "Sửa sách" và "Tìm bìa" (EditBook.tsx, CoverSearch.tsx, shared/capabilities.ts, musicLevels.ts, studio/musicLocal.ts): chữ và quy tắc
 // chép nguyên từ bản web để hai nền tảng nói cùng một câu.
@@ -104,26 +105,20 @@ function localDigest(link) {
     const digest = String(link).indexOf("local:") === 0 ? String(link).slice(6) : ""
     return /^[0-9a-f]{40}$/.test(digest) ? digest : null
 }
-function formatSize(bytes) {
-    if (bytes >= 1e9) return (bytes / 1e9).toFixed(2).replace(".", ",") + " GB"
-    const megabytes = bytes / 1e6
-    if (megabytes < 1) return Math.max(1, Math.round(bytes / 1e3)) + " KB"
-    return (megabytes < 10 ? megabytes.toFixed(1).replace(".", ",") : String(Math.round(megabytes))) + " MB"
-}
 function modulePercent(module) { return module.total > 0 ? Math.min(100, Math.floor(module.done / module.total * 100)) : 0 }
 function moduleLabel(module) {
     if (module.state === "error") return module.error
-    if (module.state === "downloading") return module.retrying ? RETRYING_NOTE + " (Phân tích nhạc, " + modulePercent(module) + "%)" : "Đang tải Phân tích nhạc (" + formatSize(module.total) + ", một lần) " + modulePercent(module) + "%"
+    if (module.state === "downloading") return module.retrying ? RETRYING_NOTE + " (Phân tích nhạc, " + modulePercent(module) + "%)" : "Đang tải Phân tích nhạc (" + Size.formatSize(module.total) + ", một lần) " + modulePercent(module) + "%"
     if (module.analysing) return "Đang phân tích nhạc đã thêm"
     if (module.state === "unsupported") return module.reason ? "Máy này chưa phân tích được nhạc: " + module.reason + "." : "Máy này chưa phân tích được nhạc."
-    if (module.state === "outdated" && module.stopped) return "Phân tích nhạc đang tắt; tải lại " + formatSize(module.outdatedBytes || module.total) + ". Vẫn ghim tay được."
-    if (module.state === "outdated") return (module.cancelled ? CANCELLED_NOTE + " " : "") + "Có bản mới - " + formatSize(module.outdatedBytes || module.total) + "; bản hiện tại vẫn dùng được."
+    if (module.state === "outdated" && module.stopped) return "Phân tích nhạc đang tắt; tải lại " + Size.formatSize(module.outdatedBytes || module.total) + ". Vẫn ghim tay được."
+    if (module.state === "outdated") return (module.cancelled ? CANCELLED_NOTE + " " : "") + "Có bản mới - " + Size.formatSize(module.outdatedBytes || module.total) + "; bản hiện tại vẫn dùng được."
     if (module.state === "ready") {
         if (module.restart) return "Phân tích nhạc đã cập nhật - mở lại ABook để dùng thư viện mới."
         if ((module.stale || 0) > 0) return module.stale + " bài dùng phân tích cũ; có thể phân tích lại."
         return ""
     }
-    return (module.cancelled ? CANCELLED_NOTE + " " : "") + "Tải " + formatSize(module.total) + " để tự chọn nhạc phù hợp trên máy."
+    return (module.cancelled ? CANCELLED_NOTE + " " : "") + "Tải " + Size.formatSize(module.total) + " để tự chọn nhạc phù hợp trên máy."
 }
 // Tóm tắt nhập nhạc (importSummary): {title, description}
 function importSummary(result) {

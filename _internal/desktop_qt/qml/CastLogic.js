@@ -1,4 +1,5 @@
 .pragma library
+.import "SizeFormat.js" as Size
 .import "ImportQueue.js" as Queue
 .import "VoiceLogic.js" as Voice
 
@@ -237,13 +238,13 @@ function previewCaption(text, speaker) {
 // Dòng ghi chú dưới tên nhóm của một máy đọc chưa sẵn sàng trên máy này; "" khi đã dùng được
 function moduleNote(status) {
     if (!status || status.state === "ready") return ""
-    if (status.state === "downloading") return "Đang tải giọng (" + Voice.formatSize(status.total) + ") " + Voice.percent(status) + "%"
+    if (status.state === "downloading") return "Đang tải giọng (" + Size.formatSize(status.total) + ") " + Voice.percent(status) + "%"
     if (status.state === "error") return status.error || "Chưa tải được giọng - thử lại."
     if (status.state === "unsupported") return "Máy này chưa dùng được những giọng này."
     const cancelled = status.cancelled ? Voice.CANCELLED_NOTE + " " : ""
     if (status.damaged) return cancelled + "Giọng này đã tải nhưng một phần bị mất hay hỏng - bấm Sửa giọng để tải lại đúng phần ấy."
-    if (status.state === "outdated") return cancelled + "Có bản giọng mới (" + Voice.formatSize(status.bytes) + ") - tải để dùng tiếp."
-    return cancelled + "Máy đọc khác: cần tải thêm " + Voice.formatSize(status.bytes) + ", một lần."
+    if (status.state === "outdated") return cancelled + "Có bản giọng mới (" + Size.formatSize(status.bytes) + ") - tải để dùng tiếp."
+    return cancelled + "Máy đọc khác: cần tải thêm " + Size.formatSize(status.bytes) + ", một lần."
 }
 // Nút tải của nhóm: chỉ khi máy đọc chưa có / hỏng / cũ
 function moduleAction(status) {

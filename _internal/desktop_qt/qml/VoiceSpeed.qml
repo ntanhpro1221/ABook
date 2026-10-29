@@ -1,5 +1,6 @@
 import QtQuick
 import ABook
+import "SizeFormat.js" as Size
 import "VoiceLogic.js" as VoiceLogic
 
 // Mục "Hiệu năng" (VoiceSpeedSetting.tsx): "Tốc độ đọc" Tự động / Chất lượng cao nhất / Nhanh hơn, một lựa chọn cho cả máy; dưới đó mỗi giọng có hai bậc (Supertonic)
@@ -88,7 +89,7 @@ VoiceFold {
                         anchors.verticalCenter: parent.verticalCenter
                         size: "sm"
                         kind: "text"
-                        text: "Tải (" + VoiceLogic.formatSize(line.voice.fastBytes || 0) + ")"
+                        text: "Tải (" + Size.formatSize(line.voice.fastBytes || 0) + ")"
                         busy: root.supertonic !== null && root.supertonic.downloading
                         enabled: root.supertonic !== null && !root.supertonic.working
                         onActivated: root.supertonic.start([line.voice.fastChoice], "Chưa tải được bản nhanh hơn")
