@@ -333,7 +333,11 @@ target_compile_definitions(ABookDesk PRIVATE ABOOK_VERSION="${ABOOK_VERSION}" QT
 # Âm thanh: Media Foundation của Windows (đo ở docs/NATIVE_PHONE_UI.md 7.1), không thêm DLL nào vào bản phân phối.
 target_link_libraries(ABookDesk PRIVATE Qt6::Quick Qt6::Network Qt6::GuiPrivate QWindowKit::Quick mfplat mf mfuuid mfreadwrite shlwapi ole32 ksuser propsys dwmapi windowsapp shell32)
 qt_add_resources(ABookDesk legal PREFIX "/legal" BASE "../docs" FILES "../docs/THIRD_PARTY.md")
-qt_add_resources(ABookDesk appicon PREFIX "/app" BASE "../ui/public" FILES "../ui/public/icon-192.png")
+# Icon app máy tính = icon bo góc của Windows (scripts/make_icons.py -> abook/assets/app.ico, 16-256 px), KHÔNG phải
+# icon vuông tràn viền của web (icon maskable cho điện thoại). Cửa sổ, khay và file exe dùng chung.
+qt_add_resources(ABookDesk appicon PREFIX "/app" BASE "../abook/assets" FILES "../abook/assets/app.ico")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/appicon.rc" "IDI_ICON1 ICON \"${CMAKE_CURRENT_SOURCE_DIR}/../abook/assets/app.ico\"\n")
+target_sources(ABookDesk PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/appicon.rc")
 if(MSVC)
     target_compile_options(ABookDesk PRIVATE /W3 /utf-8)
 endif()
