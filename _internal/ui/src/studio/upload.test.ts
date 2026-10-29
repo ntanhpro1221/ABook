@@ -56,7 +56,7 @@ describe("labels", () => {
   });
   it("shows files and size sent so far", () => {
     expect(progressLabel({ files: 3, totalFiles: 12, bytes: 1_200_000, totalBytes: 4_500_000 })).toBe(
-      "Đang gửi 3/12 file · 1,2 MB / 4,5 MB",
+      "Đang gửi 3/12 file · 1,1 MB / 4,3 MB",
     );
   });
 });

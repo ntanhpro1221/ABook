@@ -6,7 +6,8 @@ import { MoreInfo } from "@/shared/SettingsNav";
 import { spokenProgress } from "@/shared/progressSpeech";
 import { Button, LiveText, Progress } from "@/shared/ui";
 import { api } from "./api";
-import { formatSize, moduleLabel, modulePercent, preciseBusy, preciseLabel, preciseOffered, type LocalMusicView } from "./musicLocal";
+import { formatSize } from "@/shared/format";
+import { moduleLabel, modulePercent, preciseBusy, preciseLabel, preciseOffered, type LocalMusicView } from "./musicLocal";
 
 /** Nút dài ("Cập nhật Phân tích nhạc (820 MB)") xuống dòng thay vì tràn ra ngoài ở màn 375 px (Button mặc định không ngắt dòng, cao 32 px). */
 const WRAP = "h-auto min-h-8 whitespace-normal py-1.5 text-left";

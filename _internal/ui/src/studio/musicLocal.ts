@@ -1,5 +1,7 @@
 // "Nhạc của tôi": nhạc người dùng tự nhập (abook/webui/music_local.py, docs/MUSIC_IMPORT.md). Phần thuần (không React) để thử riêng.
 
+import { formatSize } from "@/shared/format";
+
 /** Một bài trong kho của máy (music_local.LocalMusic.info). `analysed` false = chưa có bộ phân tích âm thanh cho ra không khí
  *  của bài: máy không tự chọn nó, nhưng ghim tay được. */
 export interface LocalTrack {
@@ -99,15 +101,6 @@ export interface LocalMusicView {
   analyzer: boolean;
   /** Mô-đun "Phân tích nhạc" (cả máy tính lẫn điện thoại). */
   module?: MusicModuleStatus;
-}
-
-/** Dung lượng cho người đọc, MỘT hệ đơn vị thập phân (KB = 10^3, MB = 10^6, GB = 10^9 byte - như Hugging Face và nhà mạng ghi): dưới 1 MB ghi KB, MB làm tròn
- *  (một chữ số thập phân dưới 10 MB), từ 1 GB ghi GB hai chữ số thập phân. Số byte lấy từ máy chủ nên nhãn "(57 MB)" khớp cỡ thật của file. */
-export function formatSize(bytes: number): string {
-  if (bytes >= 1e9) return `${(bytes / 1e9).toFixed(2).replace(".", ",")} GB`;
-  const megabytes = bytes / 1e6;
-  if (megabytes < 1) return `${Math.max(1, Math.round(bytes / 1e3))} KB`;
-  return `${megabytes < 10 ? megabytes.toFixed(1).replace(".", ",") : Math.round(megabytes)} MB`;
 }
 
 /** Lời báo lần tải vừa rồi bị huỷ - đứng đầu câu mô tả của thẻ để người dùng biết chuyện gì đã xảy ra và lần sau thế nào. */
