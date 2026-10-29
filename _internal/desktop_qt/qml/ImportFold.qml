@@ -8,7 +8,9 @@ Column {
     property string storageKey: ""
     property string title: ""
     property string summary: ""
-    property bool expanded: Platform.setting("fold.addbook." + storageKey, "0") === "1"
+    property string prefix: "fold.addbook."      // chỗ nhớ (Platform.setting): trình tạo sách dùng "fold.new-project."
+    property bool defaultOpen: false             // mở sẵn khi chưa từng gập / mở (defaultOpen của Fold)
+    property bool expanded: Platform.setting(prefix + storageKey, defaultOpen ? "1" : "0") === "1"
     default property alias content: body.content
 
     DisclosureRow {
@@ -19,7 +21,7 @@ Column {
         expanded: root.expanded
         onClicked: {
             root.expanded = !root.expanded
-            Platform.setSetting("fold.addbook." + root.storageKey, root.expanded ? "1" : "0")
+            Platform.setSetting(root.prefix + root.storageKey, root.expanded ? "1" : "0")
         }
     }
     Collapse {
