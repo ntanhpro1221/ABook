@@ -147,14 +147,15 @@ private slots:
         const double hz = double(crossings) * 48000 / double(to - from);
         QVERIFY(std::abs(hz - 440) < 8);
     }
-    void rateChangesRewindWithoutReopening() {
+    void rateChangeOnAnEmptyQueueKeepsSonicRunning() {
         Rig rig; rig.mixer.serviceReader(); rig.voice.play();
         for (int i = 0; i < 25; ++i) rig.step();
         const double before = rig.voice.position(); const auto seeks = rig.control->seeks;
         rig.voice.setRate(1.5);
         for (int i = 0; i < 20; ++i) rig.step();
         const double delta = rig.voice.position() - before;
-        QVERIFY(std::abs(delta - 0.3) < 0.02); QCOMPARE(rig.control->seeks, seeks + 1);
+        // Hàng đợi đã cạn lúc đổi: không có gì để trộn lại, Sonic đổi tốc độ ngay trên luồng đang chạy, không mở lại nguồn.
+        QVERIFY(std::abs(delta - 0.3) < 0.02); QCOMPARE(rig.control->seeks, seeks);
         double jump = 0;
         for (size_t i = 1; i < rig.device->output.size() / 2; ++i) jump = std::max(jump, std::abs(double(rig.device->output[i * 2] - rig.device->output[(i - 1) * 2])));
         QVERIFY(jump < 0.04); // ordinary sine step is 0.0144; a discontinuity is much larger
@@ -231,9 +232,14 @@ private slots:
         Rig rig; rig.mixer.serviceReader(); rig.voice.play(); rig.step(2400);
         rig.device->queued = 1200; rig.mixer.service(0); const double at = rig.voice.position();
         rig.voice.pause(); QElapsedTimer timer; timer.start(); rig.mixer.service(0);
-        QVERIFY(timer.elapsed() < 50); QVERIFY(!rig.device->running); QCOMPARE(rig.device->queued, size_t(0));
+        // Hàng đợi 25 ms: pivot lùi để đoạn mờ ra 10 ms vẫn nằm trong tiếng đã xếp; thiết bị Stop khi đuôi đã phát hết.
+        QVERIFY(timer.elapsed() < 50); QCOMPARE(rig.device->queued, size_t(1200));
+        QVERIFY(std::abs(rig.device->output.back()) < 1e-3);
+        rig.device->queued = 0; rig.mixer.service(0); QVERIFY(!rig.device->running);
         QCOMPARE(rig.voice.position(), at); rig.voice.play(); rig.step(480); QCOMPARE(rig.voice.position(), at);
-        rig.voice.stop(); rig.mixer.service(0); QVERIFY(!rig.device->running); QVERIFY(rig.device->resets > 0);
+        rig.voice.stop(); rig.mixer.service(0); QCOMPARE(rig.device->queued, size_t(480));
+        QVERIFY(std::abs(rig.device->output.back()) < 1e-3);
+        rig.device->queued = 0; rig.mixer.service(0); QVERIFY(!rig.device->running); QVERIFY(rig.device->resets > 0);
     }
     void loopCanBeReleasedAfterSeveralWraps() {
         Rig rig; rig.control->duration = 0.25; rig.voice.setLoop(true); rig.voice.play();
@@ -285,7 +291,8 @@ private slots:
         QElapsedTimer timer; timer.start(); voice.pause();
         while (device->resets == resets && timer.elapsed() < 100) QTest::qWait(1);
         QVERIFY2(timer.elapsed() < 50, qPrintable(QString::number(timer.elapsed())));
-        QVERIFY(!device->running); QCOMPARE(device->queued.load(), size_t(0));
+        // Sau đuôi mờ 10 ms thiết bị dừng hẳn.
+        QTRY_VERIFY_WITH_TIMEOUT(!device->running && device->queued.load() == 0, 200);
     }
     void hiddenLeadPreservesPcmOnRestoreAndHandlesFourTimesSpeed() {
         struct QueueDevice : MixDevice {
@@ -395,15 +402,16 @@ private slots:
         QElapsedTimer timer;
         const int resets = device->resets; timer.restart(); voice.pause();
         while (device->resets == resets && timer.elapsed() < 100) QTest::qWait(1);
-        QVERIFY(timer.elapsed() < 50); QCOMPARE(device->queued.load(), size_t(0));
+        QVERIFY(timer.elapsed() < 50); QVERIFY(device->queued.load() <= size_t(1440)); // tới pivot 20 ms + mờ ra 10 ms
+        QTRY_VERIFY_WITH_TIMEOUT(!device->running && device->queued.load() == 0, 200);
     }
-    void controlsRewindEveryContributorWithLargeLead_data() {
+    void controlsRemixAtTheCursorWithLargeLead_data() {
         QTest::addColumn<QString>("command");
         QTest::addColumn<int>("lead");
         for (const auto *command : {"rate", "volume", "pause", "seek", "stop"}) for (int lead : {24000, 43200})
             QTest::newRow(qPrintable(QString::fromLatin1(command) + QString::number(lead))) << QString::fromLatin1(command) << lead;
     }
-    void controlsRewindEveryContributorWithLargeLead() {
+    void controlsRemixAtTheCursorWithLargeLead() {
         QFETCH(QString, command);
         QFETCH(int, lead);
         Rig rig; auto otherControl = std::make_shared<Control>();
@@ -411,6 +419,7 @@ private slots:
         other.load(QUrl(QStringLiteral("fake:music")), 0); other.setVolume(0);
         rig.mixer.serviceReader(); rig.voice.play(); other.play(); rig.mixer.service(size_t(lead));
         QCOMPARE(rig.device->queued, size_t(lead));
+        const std::vector<float> queued = rig.device->output;
         rig.device->queued = size_t(lead - 2400); rig.mixer.service(0);
         QCOMPARE(rig.voice.position(), 0.05); QCOMPARE(other.position(), 0.05);
         const int resets = rig.device->resets;
@@ -420,17 +429,30 @@ private slots:
         if (command == QStringLiteral("seek")) rig.voice.seek(2);
         if (command == QStringLiteral("stop")) rig.voice.stop();
         // Reader gets a turn first: it must retain spans until the shared reset samples padding.
-        rig.mixer.serviceReader(); rig.mixer.service(0);
-        QCOMPARE(rig.device->resets, resets + 1); QCOMPARE(rig.device->queued, size_t(0));
-        QCOMPARE(other.position(), 0.05);
+        rig.mixer.serviceReader(); rig.device->output.clear(); rig.mixer.service(0);
+        // Một lần Stop/Reset/Write/Start tại con trỏ, ngay trong lượt này: giọng kia giữ nguyên hàng đợi của nó.
+        QCOMPARE(rig.device->resets, resets + 1); QCOMPARE(rig.device->queued, size_t(lead - 2400));
+        QVERIFY(rig.device->running); QCOMPARE(other.position(), 0.05);
+        const std::vector<float> remix = rig.device->output;
+        QCOMPARE(remix.size(), size_t(lead - 2400) * 2);
+        // Viết lại bắt đầu đúng mẫu đang nghe, sóng liền (bước sin thường 0,0144), rồi im đúng sau đoạn mờ của từng lệnh.
+        QVERIFY(std::abs(remix[0] - queued[2400 * 2]) < 0.001);
+        double jump = std::abs(double(remix[0] - queued[2399 * 2]));
+        for (size_t i = 1; i < remix.size() / 2; ++i) jump = std::max(jump, std::abs(double(remix[i * 2] - remix[(i - 1) * 2])));
+        QVERIFY2(jump < 0.02, qPrintable(QString::number(jump)));
+        // Mọi thay đổi bắt đầu ở pivot = con trỏ + 20 ms (960 khung); trước đó là đúng tiếng cũ.
+        QVERIFY(std::equal(remix.begin(), remix.begin() + 960 * 2, queued.begin() + 2400 * 2));
+        const size_t silentFrom = 960 + (command == QStringLiteral("volume") ? 2400 : command == QStringLiteral("rate") ? 2880 + 240 :
+            command == QStringLiteral("seek") ? 240 : 480);
+        QVERIFY(std::all_of(remix.begin() + qsizetype(silentFrom * 2), remix.end(), [](float f) { return f == 0; }));
+        QVERIFY(std::abs(remix[(silentFrom - 1) * 2]) < 0.001);
         rig.mixer.serviceReader(); rig.device->output.clear(); rig.mixer.service(size_t(lead));
         rig.device->queued -= 4800; rig.mixer.service(0); QCoreApplication::processEvents();
         QVERIFY(std::abs(other.position() - 0.15) < 1e-8);
+        // Tua: nối vào ở pivot (2 + 0,08). Tốc độ: 20 ms tới pivot + 60 ms cầu ở 1x, rồi 1,5x (0,13 + 0,02 * 1,5).
         const double want = command == QStringLiteral("stop") ? 0 : command == QStringLiteral("pause") ? 0.05 :
-            command == QStringLiteral("seek") ? 2.1 : command == QStringLiteral("rate") ? 0.2 : 0.15;
+            command == QStringLiteral("seek") ? 2.08 : command == QStringLiteral("rate") ? 0.16 : 0.15;
         QVERIFY2(std::abs(rig.voice.position() - want) < 0.001, qPrintable(QString::number(rig.voice.position())));
-        if (command == QStringLiteral("volume") || command == QStringLiteral("pause") || command == QStringLiteral("stop"))
-            QVERIFY(std::all_of(rig.device->output.begin() + 4800, rig.device->output.end(), [](float f) { return f == 0; }));
     }
     void formatRebuildPreservesRateAwarePosition() {
         Rig rig; rig.voice.setRate(1.5); rig.voice.play();
