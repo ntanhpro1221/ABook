@@ -14,6 +14,9 @@ Collapse {
     property bool entered: false
     property bool first: false
     property bool picking: false        // đang gửi công tắc tự chọn
+    property bool canPreview: false     // tab Nhạc nền của Studio có "Nghe thử" ở mỗi bài; Cài đặt thì không
+    property bool previewing: false
+    signal preview()
     signal askRemove()
     signal keep()
     signal remove()
@@ -91,10 +94,22 @@ Collapse {
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 4
-                visible: root.canImport
-                width: root.canImport ? (ask.width + confirm.width + (ask.width > 0 && confirm.width > 0 ? spacing : 0)) : 0
+                visible: root.canImport || root.canPreview
+                width: (root.canPreview ? listen.width + (root.canImport ? spacing : 0) : 0)
+                       + (root.canImport ? (ask.width + confirm.width + (ask.width > 0 && confirm.width > 0 ? spacing : 0)) : 0)
+                Button {
+                    id: listen
+                    objectName: "musicPreview"
+                    visible: root.canPreview
+                    text: root.previewing ? "Dừng nghe" : "Nghe thử"
+                    icon: root.previewing ? "square" : "play"
+                    kind: "ghost"; size: "sm"
+                    Accessible.name: text + ": " + (root.track.title || "")
+                    onActivated: root.preview()
+                }
                 Item {
                     id: ask
+                    visible: root.canImport
                     width: root.confirming ? 0 : askButton.implicitWidth
                     height: askButton.implicitHeight
                     clip: true
@@ -111,6 +126,7 @@ Collapse {
                 }
                 Item {
                     id: confirm
+                    visible: root.canImport
                     width: root.confirming ? confirmRow.implicitWidth : 0
                     height: confirmRow.implicitHeight
                     clip: true
