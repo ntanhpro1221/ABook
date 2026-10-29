@@ -38,13 +38,54 @@ FocusScope {
     readonly property alias dialogs: dialogs
 
     // ---- tab ----
-    function pickTab(key) { tab = Logic.tabOf(key) }
+    // Đổi tab ở hàng tab bỏ hết dấu vết lần nhảy trước (bộ lọc, thẻ, nơi về) như đổi địa chỉ của bản web; NHẢY từ một thẻ sang tab khác thì nhớ tab cũ, thẻ và bộ lọc để "Về màn trước" trả về đúng chỗ
+    property string workKind: "all"
+    property string workCard: ""
+    property string cameFrom: ""
+    property string nameParam: ""
+    property bool focusNames: false
+    readonly property var fromLabels: ({work: "Việc cần duyệt", review: "Cần nghe lại", precast: "Duyệt trước khi thu"})
+    function pickTab(key) {
+        workKind = "all"; workCard = ""; cameFrom = ""; nameParam = ""; focusNames = false
+        tab = Logic.tabOf(key)
+    }
+    function jump(next, from, card, name, names) {
+        if (card) workCard = card
+        cameFrom = from
+        nameParam = name || ""
+        focusNames = Boolean(names)
+        tab = Logic.tabOf(next)
+    }
+    function jumpBack() {
+        const target = cameFrom || "chapters"
+        cameFrom = ""; nameParam = ""; focusNames = false
+        tab = Logic.tabOf(target)
+    }
+    // Cuộn danh sách tới khi `target` (một thẻ, một hàng, tiêu đề mục) hiện trọn trong khung, cách mép 16
+    function reveal(target) {
+        if (!target || !list.visible) return
+        const top = target.mapToItem(list.contentItem, 0, 0).y
+        const bottom = top + target.height
+        if (top < list.contentY + 16) list.contentY = Math.max(-list.topMargin, top - 16)
+        else if (bottom > list.contentY + list.height - 16) list.contentY = bottom - list.height + 16
+    }
     onTabChanged: tabSwap.restart()
     SequentialAnimation {
         id: tabSwap
         NumberAnimation { target: root; property: "swap"; to: 0; duration: Theme.motionFastOut; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeAccelerate }
         ScriptAction { script: { root.shownTab = root.tab; list.positionViewAtBeginning() } }
         NumberAnimation { target: root; property: "swap"; to: 1; duration: Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeDecelerate }
+    }
+
+    // ---- việc cần bạn: hộp việc, câu cần nghe lại, cách đọc tên, yêu cầu từ điện thoại ----
+    WorkStore {
+        id: studioWork
+        store: root.store
+        book: root.book
+        bookId: root.book ? root.book.id : ""
+        workWanted: root.shownTab === "work"
+        namesWanted: root.shownTab === "cast"
+        counting: root.visible
     }
 
     // ---- nhật ký ----
@@ -73,6 +114,7 @@ FocusScope {
         target: root.store
         function onBookIdChanged() {
             root.activityData = null; root.next = 0
+            root.workKind = "all"; root.workCard = ""; root.cameFrom = ""; root.nameParam = ""; root.focusNames = false
             root.tab = "chapters"; root.shownTab = "chapters"
             Qt.callLater(root.refreshNext)
         }
@@ -342,7 +384,7 @@ FocusScope {
                     width: parent.width
                     tab: root.tab
                     precast: root.hasPrecast
-                    counts: ({chapters: root.book ? root.book.chapters.total : 0})
+                    counts: ({chapters: root.book ? root.book.chapters.total : 0, work: studioWork.workCount || undefined, review: studioWork.reviewCount || undefined})
                     onPicked: key => root.pickTab(key)
                     onMoreRequested: anchor => { moreMenu.items = Logic.moreItems(root.hasPrecast); moreMenu.anchorItem = anchor; moreMenu.show() }
                 }
@@ -488,14 +530,38 @@ FocusScope {
             width: list.width
             readonly property bool chaptersEmpty: root.shownTab === "chapters" && root.store && root.store.chapters.length === 0
             readonly property bool activityEmpty: root.shownTab === "activity" && root.activityData !== null && root.activityData.length === 0
-            readonly property bool placeholder: Logic.MAIN_TABS.concat(["precast", "script"]).indexOf(root.shownTab) >= 0 && root.shownTab !== "chapters"
-            height: chaptersEmpty || activityEmpty ? emptyBlock.height : placeholder ? placeholderText.height + 48 : root.shownTab === "activity" && root.activityLoading ? 160 : 0
+            readonly property bool placeholder: Logic.MAIN_TABS.concat(["precast", "script"]).indexOf(root.shownTab) >= 0 && root.shownTab !== "chapters" && root.shownTab !== "work" && root.shownTab !== "review"
+            readonly property real innerHeight: chaptersEmpty || activityEmpty ? emptyBlock.height : placeholder ? placeholderText.height + 48 : root.shownTab === "activity" && root.activityLoading ? 160 : 0
+            height: backWrap.height + innerHeight + panels.height
             opacity: root.swap
+            // "Về màn trước": sau khi nhảy từ một thẻ sang tab khác, trả về đúng thẻ và bộ lọc vừa rời
+            Collapse {
+                id: backWrap
+                objectName: "jumpBackWrap"
+                x: 8
+                width: root.contentW
+                open: root.cameFrom !== "" && root.fromLabels[root.cameFrom] !== undefined && root.shownTab !== root.cameFrom
+                Item {
+                    width: parent.width
+                    height: 16 + jumpBack.height
+                    Button {
+                        id: jumpBack
+                        objectName: "jumpBack"
+                        y: 16
+                        size: "sm"
+                        kind: "ghost"
+                        icon: "arrow-left"
+                        text: "Về màn trước"
+                        onClicked: root.jumpBack()
+                    }
+                }
+            }
             EmptyState {
                 id: emptyBlock
                 objectName: "tabEmpty"
                 visible: parent.chaptersEmpty || parent.activityEmpty
                 x: 8
+                y: backWrap.height
                 width: root.contentW
                 icon: "book-open-text"
                 title: parent.activityEmpty ? "Chưa có gì" : "Chưa có chương nào"
@@ -506,7 +572,7 @@ FocusScope {
                 id: placeholderText
                 objectName: "tabPlaceholder"
                 visible: parent.placeholder
-                x: 8; y: 32
+                x: 8; y: backWrap.height + 32
                 width: root.contentW
                 text: Logic.tabPlaceholder(root.shownTab)
                 color: Theme.text2
@@ -516,11 +582,26 @@ FocusScope {
             EditBookSkeleton {
                 objectName: "activitySkeleton"
                 visible: root.shownTab === "activity" && root.activityLoading
-                x: 8; y: 24
+                x: 8; y: backWrap.height + 24
                 width: root.contentW * 2 / 3
                 shape: "rows"
                 count: 4
                 label: "Đang tải nhật ký"
+            }
+            StudioPanels {
+                id: panels
+                x: 8
+                y: backWrap.height + parent.innerHeight
+                width: root.contentW
+                work: studioWork
+                tab: root.shownTab
+                workKind: root.workKind
+                workCard: root.workCard
+                nameParam: root.nameParam
+                focusNames: root.focusNames
+                onKindChosen: value => { root.workKind = value; root.workCard = "" }
+                onJumped: (next, from, card, name, names) => root.jump(next, from, card, name, names)
+                onRevealRequested: target => root.reveal(target)
             }
         }
         SmoothWheel { flick: list }

@@ -163,6 +163,39 @@ qt_add_qml_module(ABookDesk
         qml/SettingsLook.qml
         qml/SettingsAdvanced.qml
         qml/StudioRows.qml
+        qml/DecisionButton.qml
+        qml/StudioQuery.qml
+        qml/WorkStore.qml
+        qml/ReadingProblem.qml
+        qml/TryReading.qml
+        qml/TryButton.qml
+        qml/TryNote.qml
+        qml/WorkExample.qml
+        qml/WorkField.qml
+        qml/WorkRequested.qml
+        qml/WorkPronunciation.qml
+        qml/WorkSpeaker.qml
+        qml/WorkNarrator.qml
+        qml/WorkVoice.qml
+        qml/WorkCard.qml
+        qml/WorkBulkKeep.qml
+        qml/WorkSection.qml
+        qml/WorkInbox.qml
+        qml/ReviewVerdict.qml
+        qml/ReviewSpoken.qml
+        qml/ReviewRow.qml
+        qml/ReviewQueue.qml
+        qml/NameEdit.qml
+        qml/NameRow.qml
+        qml/NameAddWord.qml
+        qml/SharedOffer.qml
+        qml/NameReadings.qml
+        qml/PhoneEdits.qml
+        qml/StudioPanels.qml
+        qml/DecisionLogic.js
+        qml/WorkLogic.js
+        qml/ReviewLogic.js
+        qml/NameLogic.js
         qml/StudioStore.qml
         qml/StudioSettings.qml
         qml/ProjectsScreen.qml

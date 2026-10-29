@@ -29,6 +29,7 @@ public:
     Q_INVOKABLE QUrl mediaUrl(const QString &path) const;
     Q_INVOKABLE void refreshLibrary();
     Q_INVOKABLE void preview(const QString &path);
+    Q_INVOKABLE void previewFrom(const QString &path, double startSeconds);    // một đoạn của file dài (câu trong file chương): bắt đầu từ giây `startSeconds`
     Q_INVOKABLE void stopPreview();
     static void setPreviewOut(class AudioOut *out);
     QString thirdParty() const;
