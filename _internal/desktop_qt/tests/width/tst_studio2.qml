@@ -166,7 +166,7 @@ Item {
             verify(!has(page, "newCreate"))
             // "Dự án mới": hộp chọn file của máy này mở ngay (một lần)
             tryVerify(function() { return DesktopApi.pickers.length === 1 }, 2000)
-            wait(100)
+            wait(100)   // fixed: proves absence
             compare(DesktopApi.pickers.length, 1)
             both("builder_empty", page)
         }
@@ -638,7 +638,7 @@ Item {
                 withSource(page)
                 tryVerify(function() { return all(page, "newChapterRow").filter(shown).length > 0 })
                 openOptions(page)
-                wait(100)
+                tryVerify(function() { return wrapped(page).length === 0 }, 2000)
                 compare(wrapped(page), [], "rộng " + width)
                 page.destroy()
             }
@@ -669,7 +669,7 @@ Item {
         function test_setupCardHidesWhenStudioIsInstalled() {
             reply("GET /api/library", library([book("a")]))
             const page = makeStudio()
-            wait(200)
+            wait(200)   // fixed: proves absence
             verify(!has(page, "studioSetupText"))
         }
 
