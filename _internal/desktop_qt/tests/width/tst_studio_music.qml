@@ -282,7 +282,7 @@ Item {
             const page = openMusic(musicData({download: {active: true, done: 1, total: 4, doneBytes: 5000000, totalBytes: 12000000}}))
             const tab = music(page)
             tryVerify(function() { return shown(one(tab, "musicDownload")) })
-            compare(one(tab, "musicDownload").text, "Đang tải sẵn nhạc nền: 5,0 MB / 12 MB (bài 2/4)")
+            compare(one(tab, "musicDownload").text, "Đang tải sẵn nhạc nền: 4,8 MB / 11 MB (bài 2/4)")
             compare(one(tab, "musicDownload").Accessible.name, "Đang tải sẵn nhạc nền · 25%")
             verify(tab.polling, "đang tải sẵn: hỏi lại")
             reply("POST /api/books/b/music/download/cancel", {status: 200, data: musicData({download: {active: true, done: 1, total: 4}})})

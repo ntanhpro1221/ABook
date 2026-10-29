@@ -1,18 +1,10 @@
 .pragma library
+.import "SizeFormat.js" as Size
 
 // Phần chữ và logic thuần của Cài đặt › Thiết bị, chép từ bản web để hai nền tảng nói CÙNG một câu: shared/format.ts (formatRelative,
-// formatDate, formatFingerprint, formatSize), shared/connectionRoute.ts, desktop/computerRoutes.ts, shared/unpair.ts, shared/diagnostics.ts.
+// formatDate, formatFingerprint; formatSize ở SizeFormat.js), shared/connectionRoute.ts, desktop/computerRoutes.ts, shared/unpair.ts, shared/diagnostics.ts.
 
 function pad2(value) { return String(value).padStart(2, "0") }
-
-// Số kiểu Việt: dấu chấm ngăn nghìn, dấu phẩy thập phân (Intl vi-VN)
-function groupThousands(whole) { return String(whole).replace(/\B(?=(\d{3})+(?!\d))/g, ".") }
-function decimal1(value) {
-    const rounded = Math.round(value * 10) / 10
-    const whole = Math.floor(rounded)
-    const tenth = Math.round((rounded - whole) * 10)
-    return groupThousands(whole) + (tenth ? "," + tenth : "")
-}
 
 function formatDate(epochSeconds) {
     const date = new Date(epochSeconds * 1000)
@@ -36,14 +28,6 @@ function formatRelative(epochSeconds, nowSeconds) {
 function formatFingerprint(value) {
     const hex = String(value || "").replace(/\s+/g, "").toUpperCase()
     return hex.replace(/(.{4})(?=.)/g, "$1 ")
-}
-
-function formatSize(bytes) {
-    if (bytes >= Math.pow(1024, 3)) return decimal1(bytes / Math.pow(1024, 3)) + " GB"
-    const megabytes = bytes / Math.pow(1024, 2)
-    if (megabytes < 0.1) return Math.max(1, Math.round(bytes / 1024)) + " KB"
-    if (megabytes < 10) return decimal1(megabytes) + " MB"
-    return groupThousands(Math.round(megabytes)) + " MB"
 }
 
 // Thoát ký tự cho chữ rich text (tên máy, địa chỉ do người dùng / máy kia đặt)
@@ -108,7 +92,7 @@ function unpairCopy(device, self, unsent, reachable) {
     if (!unsent || (!edited && !cache)) return null
     const lines = []
     if (cache) {
-        const downloaded = cache.bytes > 0 ? ", và " + (cache.bytes < Math.pow(1024, 2) ? "dưới 1 MB" : formatSize(cache.bytes)) + " đã tải về " + self + " này sẽ bị xoá" : ""
+        const downloaded = cache.bytes > 0 ? ", và " + (cache.bytes < Math.pow(1024, 2) ? "dưới 1 MB" : Size.formatSize(cache.bytes)) + " đã tải về " + self + " này sẽ bị xoá" : ""
         lines.push(cache.books + " cuốn của " + device + " sẽ rời Thư viện" + downloaded + ".")
         if (cache.places > 0) lines.push("Chỗ nghe của " + cache.places + " cuốn vẫn giữ - ghép lại đúng " + device + " là nghe tiếp được.")
     }
@@ -212,7 +196,7 @@ function summaryRows(report) {
     })
     add("Chỗ trống", report.storage, function() {
         const storage = report.storage
-        return typeof storage.freeBytes === "number" ? formatSize(storage.freeBytes) + (storage.totalBytes ? " / " + formatSize(storage.totalBytes) : "") : null
+        return typeof storage.freeBytes === "number" ? Size.formatSize(storage.freeBytes) + (storage.totalBytes ? " / " + Size.formatSize(storage.totalBytes) : "") : null
     })
     add("Thông báo", report.notifications, function() { return report.notifications.enabled ? "đang bật" : "đang tắt" })
     add("Chạy nền", report.power, function() {
