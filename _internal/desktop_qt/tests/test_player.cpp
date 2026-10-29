@@ -592,7 +592,7 @@ private slots:
         const double old = rig.player->clock()->position();
         rig.out.pos += 12;
         rig.player->clock()->refresh();
-        QTest::qWait(550);
+        QTest::qWait(550); // fixed: proves absence
         QCOMPARE(rig.player->clock()->ticks(), before);
         QCOMPARE(rig.player->clock()->position(), old);
         rig.player->setUiActive(true);

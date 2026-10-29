@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "VisualReady.js" as VisualReady
 import ABook
 import "../../qml/LibraryLogic.js" as Logic
 
@@ -10,13 +11,18 @@ Item {
     Component { id: library; LibraryScreen {} }
     TestCase {
         name: "LibraryParity"
+        function ready() { VisualReady.render(this, host.Window.window, host, qtVisualReady) }
+        function clickReady(item, x, y, button, modifiers, delay) {
+            ready()
+            mouseClick(item, x, y, button, modifiers, delay)
+        }
         when: windowShown
         property var fixture: [
             {bookId: "a", title: "Miền đất · Tập 10", author: "Đặng An", narrator: "Đức Trí", progress: 0.2, listeningProgress: {heardSeconds: 10}, state: {last: {at: 2}}, addedAt: 2},
             {bookId: "b", title: "Miền đất · Tập 2", author: "Bình", progress: 1, listeningProgress: {finished: true}, addedAt: 4, source: "Máy của bạn"},
             {bookId: "c", title: "Cuốn mới", stage: "text", addedAt: 3}
         ]
-        function init() { Theme.reduceMotion = true; Nav.layers = []; Platform.reset(); DesktopApi.reset(); Api.bind(DesktopApi, Theme) }
+        function init() { Theme.reduceMotion = false; Nav.layers = []; Platform.reset(); DesktopApi.reset(); Api.bind(DesktopApi, Theme) }
         function cleanup() { Nav.layers = []; Theme.reduceMotion = false }
         function test_filters_search_sort() {
             compare(fixture.filter(b => Logic.matches(b, "listening", "")).length, 1)
@@ -51,40 +57,35 @@ Item {
             const page = createTemporaryObject(library, host, {width: host.width, height: host.height})
             verify(page)
             const find = findChild(page, "librarySearch")
-            mouseClick(find); wait(200)
-            compare(Nav.layers.length, 1)
+            clickReady(find); tryVerify(function() { return (Nav.layers.length) === (1) })
             const field = findChild(page, "librarySearchField")
-            field.text = "khong co"; wait(300); compare(page.count, 0)
-            Nav.back(); wait(300); compare(page.query, ""); compare(Nav.layers.length, 0)
-            mouseClick(findChild(page, "filter_finished")); wait(300); compare(page.filter, "finished")
-            mouseClick(findChild(page, "librarySort")); wait(200); compare(Nav.layers.length, 1)
-            keyClick(Qt.Key_Down); keyClick(Qt.Key_Return); wait(200)
-            compare(page.sortOrder, "title"); compare(Nav.layers.length, 0)
-            verify(findChild(page, "librarySort").activeFocus)
+            field.text = "khong co"; tryCompare(page, "count", 0)
+            Nav.back(); tryCompare(page, "query", ""); tryVerify(function() { return (Nav.layers.length) === (0) })
+            clickReady(findChild(page, "filter_finished")); tryCompare(page, "filter", "finished")
+            clickReady(findChild(page, "librarySort")); tryVerify(function() { return (Nav.layers.length) === (1) })
+            ready(); keyClick(Qt.Key_Down); keyClick(Qt.Key_Return); tryCompare(page, "sortOrder", "title"); tryVerify(function() { return (Nav.layers.length) === (0) })
+            tryVerify(function() { return findChild(page, "librarySort").activeFocus })
             page.destroy()
         }
         function test_live_results_and_series() {
             const page = createTemporaryObject(library, host, {width: host.width, height: host.height})
             page.books = fixture
-            wait(300); compare(page.count, 2)
-            page.activate(0); wait(250)
-            verify(findChild(page, "librarySeries").open); compare(Nav.layers.length, 1)
-            Nav.back(); wait(250); compare(Nav.layers.length, 0)
-            page.filter = "finished"; wait(300); compare(page.count, 1)
-            compare(page.filtered[0].bookId, "b")
-            page.query = "zzzz"; wait(300); compare(page.count, 0)
+            tryCompare(page, "count", 2)
+            page.activate(0); tryVerify(function() { return findChild(page, "librarySeries").open }); tryVerify(function() { return (Nav.layers.length) === (1) })
+            Nav.back(); tryVerify(function() { return (Nav.layers.length) === (0) })
+            page.filter = "finished"; tryCompare(page, "count", 1)
+            tryVerify(function() { return (page.filtered[0].bookId) === ("b") })
+            page.query = "zzzz"; tryCompare(page, "count", 0)
             page.destroy()
         }
         function test_filter_motion_keyboard_and_refresh_preserves_scroll() {
             const page = createTemporaryObject(library, host, {width: 792, height: 700})
-            wait(300); page.list.contentY = 400; const before = page.list.contentY
-            Backend.library.revision++; wait(300)
-            fuzzyCompare(page.list.contentY, before, 1)
+            tryVerify(function() { return page.list.count > 0 }); ready(); page.list.contentY = 400; const before = page.list.contentY
+            Backend.library.revision++; tryVerify(function() { return Math.abs((page.list.contentY) - (before)) <= 1 })
             page.list.forceActiveFocus(); keyClick(Qt.Key_Right); compare(page.current, 1)
             Theme.reduceMotion = false
-            page.filter = "finished"; wait(30)
-            verify(page.resultsOpacity > 0 && page.resultsOpacity < 1)
-            wait(350); compare(page.count, 0)
+            page.filter = "finished"; tryVerify(function() { return page.resultsOpacity > 0 && page.resultsOpacity < 1 })
+            tryCompare(page, "count", 0)
             page.destroy()
         }
     }
