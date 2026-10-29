@@ -23,6 +23,12 @@ Item {
     property bool restoring: false
 
     function goSettings() { if (Nav.stack) Nav.stack.show(2) }
+    // Bản sống của dự án (số thay đổi, đang chạy...) để hộp Xuất / Áp dụng đọc theo, không chụp một lần lúc mở
+    function liveOf(book) {
+        if (!store || !book) return book
+        if (store.book && store.book.id === book.id) return store.book
+        return store.books.filter(function(item) { return item.id === book.id })[0] || book
+    }
 
     // ---- nút chính ----
     function runPrimary(kind, book) {
@@ -31,7 +37,7 @@ Item {
         else if (kind === "pause") store.pause(book.id, true)
         else if (kind === "start" || kind === "record" || kind === "continue") store.begin(book.id, goSettings)
         else if (kind === "reanalyze") newProjectRequested("redo", book.id)
-        else if (kind === "apply") ask("apply", book)
+        else if (kind === "apply") applyChanges.begin(liveOf(book))
         else if (kind === "listen") listenRequested(book.id)
     }
     // ---- mục menu ----
@@ -47,9 +53,9 @@ Item {
         else if (key === "redo") newProjectRequested("redo", book.id)
         else if (key === "resumeAnyway") ask("resume", book)
         else if (key === "stop") ask("stop", book)
-        else if (key === "apply") ask("apply", book)
+        else if (key === "apply") applyChanges.begin(liveOf(book))
         else if (key === "leaveQueue") store.leaveQueue(book.id)
-        else if (key === "export") Api.notice = "Xuất sách chưa mở trong bản này."
+        else if (key === "export") exportBook.begin(liveOf(book))
         else if (key === "details") ask("details", book)
     }
 
@@ -91,11 +97,6 @@ Item {
             confirm.actions = local
                 ? [{key: "later", text: "Để sau"}, {key: "go", text: "Vẫn tiếp tục", icon: "play"}, {key: "redo", text: "Phân tích lại", icon: "rotate-ccw", kind: "primary"}]
                 : [{key: "later", text: "Để sau"}, {key: "go", text: "Vẫn tiếp tục", icon: "play", kind: "primary"}]
-        } else if (kind === "apply") {
-            confirm.title = Logic.applyTitle(book.pendingChanges || 0)
-            confirm.description = Logic.applyDescription()
-            confirm.lines = []
-            confirm.actions = [{key: "later", text: "Thôi"}, {key: "go", text: "Áp dụng " + (book.pendingChanges || 0) + " thay đổi", icon: "refresh-cw", kind: "primary"}]
         } else if (kind === "details") {
             confirm.title = "Chi tiết dự án"
             confirm.description = title
@@ -123,12 +124,13 @@ Item {
             confirm.dismiss()
             if (key === "redo") newProjectRequested("redo", id)
             else store.begin(id, goSettings)
-        } else if (mode === "apply") {
-            confirm.dismiss()
-            store.begin(id, goSettings)
         }
     }
 
     StudioRename { id: rename; store: root.store }
+    ExportBook { id: exportBook; store: root.store; onApplyFirst: applyChanges.begin(root.liveOf(exportBook.book)) }
+    ApplyChanges { id: applyChanges; store: root.store; onApplied: root.store.begin(applyChanges.bookId, root.goSettings) }
+    Binding { target: exportBook; property: "live"; value: root.liveOf(exportBook.snapshot); when: exportBook.open; restoreMode: Binding.RestoreNone }
+    Binding { target: applyChanges; property: "live"; value: root.liveOf(applyChanges.snapshot); when: applyChanges.open; restoreMode: Binding.RestoreNone }
     StudioConfirm { id: confirm; objectName: "studioConfirm"; panelWidth: 480; onChosen: key => root.answered(key) }
 }
