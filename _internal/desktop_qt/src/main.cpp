@@ -157,7 +157,7 @@ int main(int argc, char *argv[]) {
     QGuiApplication::setApplicationName(QStringLiteral("ABook"));
     QGuiApplication::setOrganizationName(QStringLiteral("ABook"));
     app.setQuitOnLastWindowClosed(false);
-    app.setWindowIcon(QIcon(QStringLiteral(":/app/icon-192.png")));
+    app.setWindowIcon(QIcon(QStringLiteral(":/app/app.ico")));
     Bench::mark(QStringLiteral("main"));
 
     // Backend Python chạy NGAY, song song với việc dựng giao diện (Python mất vài trăm ms để nạp).
