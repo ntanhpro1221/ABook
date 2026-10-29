@@ -3,6 +3,8 @@ import ABook
 import "DecisionLogic.js" as D
 import "WorkLogic.js" as W
 import "NameLogic.js" as N
+import "StudioLogic.js" as Studio
+import "PrecastLogic.js" as P
 
 // Việc "cần bạn" của MỘT cuốn: hộp Việc cần duyệt, Cần nghe lại, Cách đọc tên, yêu cầu từ điện thoại (WorkInbox / ReviewQueue / NameReadings / PhoneEdits của bản web). Mọi lời gọi đi
 // qua StudioStore nên Studio của máy khác tự đi đường /api/peers/<mã>/studio. Ba con số cho nhãn tab (useWorkCount, useReviewCount, useInboxCount) hỏi nhẹ; danh sách
@@ -15,27 +17,37 @@ QtObject {
     property string bookId: ""
     property bool workWanted: false
     property bool namesWanted: false
+    property bool namesOpened: false            // mục "Cách đọc tên" trong bước duyệt tên đang mở (tải theo yêu cầu)
+    property bool precastWanted: false          // màn "Duyệt trước khi thu" đang mở: cần cả dàn nhân vật
     property bool counting: true                // màn dự án đang thấy: ba con số của nhãn tab được hỏi định kỳ
     readonly property bool live: !!book && (Boolean(book.running) || Boolean(book.starting)) && !book.paused
     readonly property int producing: live ? 15000 : 0
+    // Phân tích xong mà sách chưa xong: danh sách việc đầy đủ luôn cần (chia việc cho "Duyệt trước khi thu" và "Việc cần duyệt" đếm theo nó)
+    readonly property bool precastOn: !!book && Studio.canReview(book)
+    readonly property bool full: workWanted || precastOn
 
     function path(rest) { return "/api/books/" + bookId + rest }
 
     // ---- nguồn dữ liệu ----
-    property StudioQuery work: StudioQuery { store: root.store; path: root.bookId ? root.path("/work") : ""; wanted: root.workWanted && root.bookId !== ""; interval: root.producing }
-    property StudioQuery workCounted: StudioQuery { store: root.store; path: root.bookId ? root.path("/work?count=1") : ""; wanted: root.counting && !root.workWanted && root.bookId !== ""; interval: root.producing }
+    property StudioQuery work: StudioQuery { store: root.store; path: root.bookId ? root.path("/work") : ""; wanted: root.full && root.bookId !== ""; interval: root.producing }
+    property StudioQuery workCounted: StudioQuery { store: root.store; path: root.bookId ? root.path("/work?count=1") : ""; wanted: root.counting && !root.full && root.bookId !== ""; interval: root.producing }
     property StudioQuery reviewCounted: StudioQuery { store: root.store; path: root.bookId ? root.path("/review") : ""; wanted: root.counting && root.bookId !== ""; interval: root.producing }
     property StudioQuery inbox: StudioQuery { store: root.store; path: root.bookId ? root.path("/edits-inbox") : ""; wanted: root.counting && root.bookId !== ""; interval: 15000 }
-    property StudioQuery names: StudioQuery { store: root.store; path: root.bookId ? root.path("/pronunciations") : ""; wanted: root.namesWanted && root.bookId !== "" }
-    property StudioQuery offer: StudioQuery { store: root.store; path: root.bookId ? root.path("/shared-readings") : ""; wanted: root.namesWanted && root.bookId !== "" }
-    property StudioQuery shared: StudioQuery { store: root.store; path: "/api/readings"; wanted: root.namesWanted && root.bookId !== "" }
+    property StudioQuery names: StudioQuery { store: root.store; path: root.bookId ? root.path("/pronunciations") : ""; wanted: (root.namesWanted || root.namesOpened) && root.bookId !== "" }
+    property StudioQuery offer: StudioQuery { store: root.store; path: root.bookId ? root.path("/shared-readings") : ""; wanted: (root.namesWanted || root.namesOpened) && root.bookId !== "" }
+    property StudioQuery precast: StudioQuery { store: root.store; path: root.bookId ? root.path("/precast") : ""; wanted: root.precastOn && root.bookId !== ""; interval: 15000 }
+    property StudioQuery cast: StudioQuery { store: root.store; path: root.bookId ? root.path("/cast") : ""; wanted: root.precastWanted && root.bookId !== "" }
+    property StudioQuery shared: StudioQuery { store: root.store; path: "/api/readings"; wanted: (root.namesWanted || root.namesOpened) && root.bookId !== "" }
 
     // ---- ba con số của nhãn tab ----
     // Việc đã quyết (chờ áp dụng) không còn là việc cần làm: danh sách đang mở thì đếm từ chính nó, không thì chỉ hỏi con số (?count=1)
-    readonly property int workOpen: workWanted && work.data ? work.data.items.filter(W.isOpenWork).length : (workCounted.data ? workCounted.data.count : 0)
+    readonly property int workOpen: full && work.data && work.data.items ? work.data.items.filter(W.isOpenWork).length : (workCounted.data ? workCounted.data.count || 0 : 0)
     readonly property int reviewCount: reviewCounted.data ? reviewCounted.data.pending || 0 : 0
     readonly property int inboxCount: inbox.data ? inbox.data.waiting || 0 : 0
-    readonly property int workCount: workOpen + inboxCount
+    // Thẻ nằm ở màn duyệt trước khi thu: {khoá: true}. "Duyệt trước khi thu" đếm chúng, "Việc cần duyệt" đếm phần còn lại.
+    readonly property var inPrecast: precastOn && precast.data && work.data && work.data.items ? P.keys(work.data.items, P.upcomingIds(precast.data)) : ({})
+    readonly property int precastCount: P.keyCount(inPrecast)
+    readonly property int workCount: Math.max(0, workOpen - precastCount) + inboxCount
     readonly property bool analyzed: !book || (book.segments.total > 0 && book.segments.analyzed === book.segments.total)
     readonly property string pendingNote: D.pendingNote(book)
 
@@ -52,6 +64,15 @@ QtObject {
         work.invalidate(); workCounted.invalidate()
         names.invalidate(); offer.invalidate(); shared.invalidate()
         if (store) { store.loadBook(); if (store.libraryWanted) store.loadLibrary() }
+    }
+    // Một việc sửa dàn nhân vật vừa ghi (đổi giọng, tên, giới, gộp, giọng tự kể): thẻ việc, cách đọc tên và dàn người đọc lại; sách / thư viện do StudioStore làm mới
+    function afterCast() {
+        work.invalidate(); workCounted.invalidate(); names.invalidate(); cast.invalidate(); precast.invalidate()
+    }
+    property Connections castLink: Connections {
+        target: root.store
+        function onCastEdited(id) { if (id === root.bookId) root.afterCast() }
+        function onPrecastChanged(id) { if (id === root.bookId) root.precast.invalidate() }
     }
     // "Cần thu lại" là một yêu cầu cho dây chuyền: trang dự án đếm nó vào nút "Áp dụng thay đổi"
     function afterReview() {
