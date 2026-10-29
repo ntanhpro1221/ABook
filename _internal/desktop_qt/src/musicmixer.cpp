@@ -827,8 +827,6 @@ void MusicMixer::service(size_t frames) {
     }
     size_t padding = d->device->padding();
     d->played = d->written - std::min<quint64>(padding, d->written); d->sampled = Clock::now();
-    if (d->running && !padding && d->written && qEnvironmentVariableIntValue("ABOOK_AUDIO_TRACE"))
-        std::fprintf(stderr, "mix_device_empty written=%llu\n", static_cast<unsigned long long>(d->written));
     bool any = false, join = false;
     for (const auto &s : voices) {
         Guard guard(s->mutex);
@@ -845,6 +843,9 @@ void MusicMixer::service(size_t frames) {
         const quint64 from = std::max(d->played, s->joinAt);
         join |= s->want && s->ready && !s->reposition && s->joining && from < d->written && d->ahead(*s) >= d->written - from;
     }
+    // Endpoint cạn trong lúc còn giọng phát = thiếu dữ liệu. Đuôi mờ của pause / stop phát hết rồi mới cạn là đúng ý, không ghi.
+    if (any && d->running && !padding && d->written && qEnvironmentVariableIntValue("ABOOK_AUDIO_TRACE"))
+        std::fprintf(stderr, "mix_device_empty written=%llu\n", static_cast<unsigned long long>(d->written));
     d->tails.erase(std::remove_if(d->tails.begin(), d->tails.end(), [&](const Span &span) {
         return std::min(span.device + span.frames, span.outEnd) <= d->played;
     }), d->tails.end());
