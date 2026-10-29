@@ -38,7 +38,7 @@ struct Device : MixDevice {
     quint64 revision() const override { return epoch; }
     bool write(const float *samples, size_t n) override { output.insert(output.end(), samples, samples + n * 2); queued += n; return true; }
 };
-struct Control { bool starved = false, unavailable = false; double duration = 6; int seeks = 0; };
+struct Control { bool starved = false, unavailable = false; double duration = 6; int seeks = 0; std::function<void()> duringRead; };
 class Decoder : public VoiceDecoder {
     std::shared_ptr<Control> control;
     int hz;
@@ -49,6 +49,7 @@ public:
     bool seek(double seconds) override { at = quint64(std::llround(seconds * hz)); ++control->seeks; return !control->unavailable; }
     size_t read(std::vector<float> &out, size_t frames) override {
         if (control->starved) return 0;
+        if (control->duringRead) { const auto hook = std::exchange(control->duringRead, nullptr); hook(); }
         const auto end = quint64(std::llround(duration() * hz));
         frames = size_t(std::min<quint64>(frames, end - std::min(end, at)));
         for (size_t i = 0; i < frames; ++i, ++at) {
@@ -148,6 +149,34 @@ private slots:
         const double hz = double(crossings) * 48000 / double(to - from);
         QVERIFY(std::abs(hz - 440) < 8);
     }
+    // Sonic C hụt mẫu mỗi chu kỳ cao độ. Bộ trộn tính vị trí = khung ra x tốc độ, nên ghi khối 256 khung như bộ trộn,
+    // không nắn thì 300 s giọng ở 3x lệch ~0,9 s nội dung. Nắn tốc độ giữ lệch trong 0,1 s.
+    void stretchKeepsTimeOverAChapter() {
+        const double speed = 3.0; const size_t total = 48000 * 300;
+        Ring input(48000 * 2 * 2); TimeStretch stretch(48000); stretch.setRate(speed);
+        std::vector<float> chunk(4800 * 2); size_t fed = 0, filled = 0, pending = 0, out = 0; double phase = 0;
+        float block[480 * 2];
+        while (!stretch.drained()) {
+            for (;;) {
+                if (!pending && fed < total) {
+                    // Giọng giả: cao độ 100-180 Hz trôi chậm, 8 hoạ âm, âm tiết 3,7 Hz
+                    const size_t n = std::min<size_t>(4800, total - fed);
+                    for (size_t i = 0; i < n; ++i) {
+                        const double t = double(fed + i) / 48000;
+                        phase += 2 * 3.141592653589793 * (140 + 40 * std::sin(2 * 3.141592653589793 * 0.7 * t)) / 48000;
+                        double v = 0; for (int k = 1; k <= 8; ++k) v += std::sin(k * phase) / k;
+                        chunk[i * 2] = chunk[i * 2 + 1] = float(0.15 * v * std::sqrt(std::max(0.0, std::sin(2 * 3.141592653589793 * 3.7 * t))));
+                    }
+                    filled = pending = n * 2; fed += n;
+                }
+                if (!pending) break;
+                pending -= input.write(chunk.data() + (filled - pending), pending);
+                if (pending) break;
+            }
+            out += stretch.read(input, block, 480, fed == total && !pending);
+        }
+        QVERIFY2(std::abs(double(out) * speed - double(total)) < 48000 * 0.1, qPrintable(QString::number((double(out) * speed - double(total)) / 48000)));
+    }
     void rateChangeOnAnEmptyQueueKeepsSonicRunning() {
         Rig rig; rig.mixer.serviceReader(); rig.voice.play();
         for (int i = 0; i < 25; ++i) rig.step();
@@ -204,6 +233,22 @@ private slots:
         double jump = 0;
         for (size_t i = 1; i < rig.device->output.size() / 2; ++i) jump = std::max(jump, std::abs(double(rig.device->output[i * 2] - rig.device->output[(i - 1) * 2])));
         QVERIFY2(jump < 0.04, qPrintable(QString::number(jump)));
+    }
+    void controlDuringDecodeKeepsTheDecodedBlock() {
+        // Giọng khác tua (nhạc nền đổi cue khi tua chương) đúng lúc luồng đọc đang giải mã: khối vừa giải mã vẫn vào
+        // vòng đệm. Vứt nó đi thì bộ giải mã đã đi tiếp, tiếng nhảy cóc một khối (8192 khung = nghe sớm 171 ms).
+        Rig rig; rig.control->duration = 30; rig.voice.play();
+        MixVoice other{&rig.mixer, [control = std::make_shared<Control>()](int hz) { return std::make_unique<Decoder>(control, hz); }};
+        other.load(QUrl(QStringLiteral("fake:music")), 0);
+        for (int i = 0; i < 10; ++i) rig.step(437);
+        rig.control->duringRead = [&other] { other.seek(1); };
+        for (int i = 0; i < 300; ++i) rig.step(437); // qua hết hai giây đã có sẵn trong vòng đệm
+        QVERIFY(!rig.control->duringRead);
+        // Sin thuần thoả x[n+1] + x[n-1] = 2cos(w) x[n] với mọi pha; một lần nhảy pha làm phần dư lớn hơn nhiều.
+        const auto &out = rig.device->output; const double c = 2 * std::cos(2 * 3.141592653589793 * 440 / 48000);
+        double worst = 0;
+        for (size_t i = 2; i + 1 < out.size() / 2; ++i) worst = std::max(worst, std::abs(out[(i + 1) * 2] + out[(i - 1) * 2] - c * out[i * 2]));
+        QVERIFY2(worst < 1e-3, qPrintable(QString::number(worst)));
     }
     void mixerHttpSeek_data() { indexedHttpSeek_data(); }
     void mixerHttpSeek() {

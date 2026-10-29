@@ -17,6 +17,7 @@ FocusScope {
     readonly property var book: store ? store.book : null
     readonly property bool remote: store ? store.remote : false
     readonly property real contentW: Math.min(width - 2 * Theme.margin, 960)
+    readonly property bool narrowHead: width < 640
     readonly property real contentX: (width - contentW) / 2
     readonly property string failure: store ? store.bookFailure : ""
     property string tab: "chapters"
@@ -230,89 +231,108 @@ FocusScope {
                     }
                     Button { id: retry; size: "sm"; kind: "ghost"; text: "Thử lại"; onClicked: root.store.loadBook() }
                 }
-                Flow {
-                    width: parent.width
-                    spacing: 12
-                    StatusPill {
-                        objectName: "projectStatus"
-                        label: root.book ? Logic.projectStatus(root.book).label : ""
-                        tone: root.book ? Logic.projectStatus(root.book).tone : "muted"
-                        live: root.book ? Logic.projectStatus(root.book).live : false
-                        y: 1
-                    }
-                    Text {
-                        objectName: "projectMeta"
-                        width: Math.min(implicitWidth, parent.width)
-                        height: 26
-                        verticalAlignment: Text.AlignVCenter
-                        textFormat: Text.StyledText
-                        wrapMode: Text.Wrap
-                        text: root.book ? Logic.metaLine(root.book, Theme.warning) : ""
-                        color: Theme.text2
-                        font.pixelSize: Theme.sizeBodySmall
-                    }
-                }
-                // Tiến độ chung: chỉ khi sách đang làm dở
+                // Bìa thật (CoverEditor.tsx) bên trái; trạng thái, số liệu, tiến độ và lời nhắn bên phải. Màn hẹp: bìa 96, nút chỉ còn biểu tượng.
                 Row {
-                    objectName: "projectProgress"
-                    visible: !!root.book && root.book.phase !== "done" && root.book.phase !== "idle"
+                    id: headRow
+                    objectName: "projectHead"
                     width: parent.width
-                    spacing: 12
-                    StudioBar {
-                        objectName: "projectBar"
-                        width: Math.min(480, parent.width - 48 - 12)
-                        anchors.verticalCenter: parent.verticalCenter
-                        size: "md"
-                        value: root.book && root.book.progress ? root.book.progress.overall : 0
-                        tone: root.book && (root.book.running || root.book.starting) ? "accent" : "muted"
-                        label: "Tiến độ: " + (root.book ? root.book.title : "")
-                    }
-                    Text {
-                        width: 48
-                        horizontalAlignment: Text.AlignRight
-                        text: Logic.formatPercent(root.book && root.book.progress ? root.book.progress.overall : 0)
-                        color: Theme.text
-                        font.pixelSize: Theme.sizeBodySmall
-                        font.weight: Theme.weightMedium
-                        font.features: { "tnum": 1 }
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                }
-                // Lời nói thêm dưới hàng nút: hàng chờ, đang dừng, phân tích bị ngắt, chương chờ thu lại, tạm dừng vì pin, Studio chưa cài, lỗi lần làm sách
-                Column {
-                    objectName: "projectNotes"
-                    width: parent.width
-                    spacing: 6
-                    Repeater {
-                        model: root.book ? Logic.actionNotes(root.book, root.remote).concat([Logic.studioMissingNote(root.store.info && root.store.info.studio, root.book, root.remote)]).filter(Boolean) : []
-                        delegate: Text {
-                            required property string modelData
-                            objectName: "projectNote"
-                            width: parent.width
-                            text: modelData
-                            color: Theme.text2
-                            wrapMode: Text.Wrap
-                            font.pixelSize: Theme.sizeBodySmall
-                        }
-                    }
-                    Text {
-                        objectName: "projectStartError"
-                        visible: !!root.book && !!root.book.startError
-                        width: parent.width
-                        text: root.book && root.book.startError ? "Không khởi động được: " + root.book.startError : ""
-                        color: Theme.danger
-                        wrapMode: Text.Wrap
-                        font.pixelSize: Theme.sizeBodySmall
+                    spacing: root.narrowHead ? 16 : 28
+                    CoverEditor {
+                        objectName: "coverEditor"
+                        narrow: root.narrowHead
+                        store: root.store
+                        book: root.book
+                        visible: Boolean(root.book)
                     }
                     Column {
-                        id: problem
-                        objectName: "projectProblem"
-                        readonly property var shown: root.book ? Logic.bookProblem(root.book, !!(root.store.info && root.store.info.studio), false) : null
-                        visible: shown !== null
-                        width: parent.width
-                        spacing: 2
-                        Text { width: parent.width; text: problem.shown ? problem.shown.summary : ""; color: Theme.danger; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
-                        Text { width: parent.width; text: problem.shown ? problem.shown.hint : ""; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
+                        id: headRest
+                        width: parent.width - (Boolean(root.book) ? (root.narrowHead ? 96 : 176) + headRow.spacing : 0)
+                        spacing: 12
+                        Flow {
+                            width: parent.width
+                            spacing: 12
+                            StatusPill {
+                                objectName: "projectStatus"
+                                label: root.book ? Logic.projectStatus(root.book).label : ""
+                                tone: root.book ? Logic.projectStatus(root.book).tone : "muted"
+                                live: root.book ? Logic.projectStatus(root.book).live : false
+                                y: 1
+                            }
+                            Text {
+                                objectName: "projectMeta"
+                                width: Math.min(implicitWidth, parent.width)
+                                height: 26
+                                verticalAlignment: Text.AlignVCenter
+                                textFormat: Text.StyledText
+                                wrapMode: Text.Wrap
+                                text: root.book ? Logic.metaLine(root.book, Theme.warning) : ""
+                                color: Theme.text2
+                                font.pixelSize: Theme.sizeBodySmall
+                            }
+                        }
+                        // Tiến độ chung: chỉ khi sách đang làm dở
+                        Row {
+                            objectName: "projectProgress"
+                            visible: !!root.book && root.book.phase !== "done" && root.book.phase !== "idle"
+                            width: parent.width
+                            spacing: 12
+                            StudioBar {
+                                objectName: "projectBar"
+                                width: Math.min(480, parent.width - 48 - 12)
+                                anchors.verticalCenter: parent.verticalCenter
+                                size: "md"
+                                value: root.book && root.book.progress ? root.book.progress.overall : 0
+                                tone: root.book && (root.book.running || root.book.starting) ? "accent" : "muted"
+                                label: "Tiến độ: " + (root.book ? root.book.title : "")
+                            }
+                            Text {
+                                width: 48
+                                horizontalAlignment: Text.AlignRight
+                                text: Logic.formatPercent(root.book && root.book.progress ? root.book.progress.overall : 0)
+                                color: Theme.text
+                                font.pixelSize: Theme.sizeBodySmall
+                                font.weight: Theme.weightMedium
+                                font.features: { "tnum": 1 }
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
+                        // Lời nói thêm dưới hàng nút: hàng chờ, đang dừng, phân tích bị ngắt, chương chờ thu lại, tạm dừng vì pin, Studio chưa cài, lỗi lần làm sách
+                        Column {
+                            objectName: "projectNotes"
+                            width: parent.width
+                            spacing: 6
+                            Repeater {
+                                model: root.book ? Logic.actionNotes(root.book, root.remote).concat([Logic.studioMissingNote(root.store.info && root.store.info.studio, root.book, root.remote)]).filter(Boolean) : []
+                                delegate: Text {
+                                    required property string modelData
+                                    objectName: "projectNote"
+                                    width: parent.width
+                                    text: modelData
+                                    color: Theme.text2
+                                    wrapMode: Text.Wrap
+                                    font.pixelSize: Theme.sizeBodySmall
+                                }
+                            }
+                            Text {
+                                objectName: "projectStartError"
+                                visible: !!root.book && !!root.book.startError
+                                width: parent.width
+                                text: root.book && root.book.startError ? "Không khởi động được: " + root.book.startError : ""
+                                color: Theme.danger
+                                wrapMode: Text.Wrap
+                                font.pixelSize: Theme.sizeBodySmall
+                            }
+                            Column {
+                                id: problem
+                                objectName: "projectProblem"
+                                readonly property var shown: root.book ? Logic.bookProblem(root.book, !!(root.store.info && root.store.info.studio), false) : null
+                                visible: shown !== null
+                                width: parent.width
+                                spacing: 2
+                                Text { width: parent.width; text: problem.shown ? problem.shown.summary : ""; color: Theme.danger; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
+                                Text { width: parent.width; text: problem.shown ? problem.shown.hint : ""; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
+                            }
+                        }
                     }
                 }
                 Item { width: 1; height: 12 }

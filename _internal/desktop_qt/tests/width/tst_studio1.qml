@@ -160,11 +160,11 @@ Item {
             both("projects_wide", page)
             // hẹp hơn: bỏ cột "Cập nhật"; hẹp nữa: trạng thái và tiến độ xếp dưới tên
             page.width = 1024
-            wait(50)
+            tryCompare(page, "projectsKind", "mid")
             verify(!hasText(page, "Cập nhật"))
             compare(page.projectsKind, "mid")
             page.width = 720
-            wait(50)
+            tryCompare(page, "projectsKind", "stacked")
             compare(page.projectsKind, "stacked")
             verify(!hasText(page, "Trạng thái"))
         }
@@ -177,7 +177,7 @@ Item {
             verify(first !== null)
             reply("GET /api/library", library([book("a", {title: "Cuốn a", updatedAt: stamp()}), book("b", {title: "Cuốn b"})]))
             page.studioStore.loadLibrary()
-            wait(50)
+            wait(50)   // fixed: proves absence
             verify(list.itemAtIndex(0) === first, "hàng giữ nguyên khi dữ liệu đổi")
             reply("GET /api/library", library([book("a", {title: "Cuốn a"}), book("b", {title: "Cuốn b"}), book("c", {title: "Cuốn c"})]))
             page.studioStore.loadLibrary()
@@ -213,15 +213,15 @@ Item {
             compare(one(one(page, "projectsMissing"), "emptyTitle").text, "Không thấy thư mục thư viện “Sách của tôi”")
             verify(hasText(page, "Chọn thư mục"))
         }
-        function test_newProjectButtonGoesToPlaceholder() {
+        function test_newProjectButtonOpensTheBuilder() {
             reply("GET /api/library", library([book("a")]))
             const page = makeStudio()
             listed(page, 1)
             one(page, "newProject").clicked()
             tryCompare(page, "shownKey", "route:new")
             tryCompare(page, "phase", 1)
-            verify(shown(one(page, "newPlaceholder")))
-            verify(hasText(page, "Mục này chưa mở trong bản này."))
+            verify(shown(one(page, "newProjectScreen")))
+            verify(hasText(page, "Tạo sách nói"))
             verify(Nav.layers.length > 0, "màn con là một lớp của Back")
             verify(Nav.back())
             tryCompare(page, "shownKey", "route:list")
@@ -375,7 +375,7 @@ Item {
             Api.info = {version: "0.4.150", studio: {installed: false}, dialogs: true}
             const page = openBook(bookStates().idle, [])
             one(page, "primaryButton").clicked()
-            wait(100)
+            wait(100)   // fixed: proves absence
             compare(calls("POST", "/api/books/idle/start").length, 0, "không gửi lệnh rồi nhận lỗi")
             verify(shown(one(page, "primaryButton")))
         }
@@ -479,7 +479,7 @@ Item {
             // hàng không đổi chỗ khi dữ liệu đổi (nhịp hỏi 3 giây)
             const first = page.projectScreenList.itemAtIndex(0)
             page.studioStore.loadBook()
-            wait(50)
+            wait(50)   // fixed: proves absence
             verify(page.projectScreenList.itemAtIndex(0) === first)
             both("project_chapters", page)
             // "…" của chương: nghe, kịch bản, thu lại cả chương (có hộp hỏi)
