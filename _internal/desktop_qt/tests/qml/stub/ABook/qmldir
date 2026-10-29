@@ -233,3 +233,10 @@ NewSource 1.0 ../../../../qml/NewSource.qml
 NewProjectScreen 1.0 ../../../../qml/NewProjectScreen.qml
 CoverEditor 1.0 ../../../../qml/CoverEditor.qml
 CoverPicker 1.0 CoverPicker.qml
+StudioMusic 1.0 ../../../../qml/StudioMusic.qml
+StudioMusicScene 1.0 ../../../../qml/StudioMusicScene.qml
+StudioMusicSwap 1.0 ../../../../qml/StudioMusicSwap.qml
+StudioMusicTrackRow 1.0 ../../../../qml/StudioMusicTrackRow.qml
+StudioMusicMoods 1.0 ../../../../qml/StudioMusicMoods.qml
+StudioMusicDetails 1.0 ../../../../qml/StudioMusicDetails.qml
+StudioMyMusic 1.0 ../../../../qml/StudioMyMusic.qml
