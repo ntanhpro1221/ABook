@@ -46,17 +46,17 @@ describe("a voice the narrator cannot take", () => {
 describe("the note under a machine that is not on this computer yet", () => {
   it("a module with a lost or corrupt file says so and offers a repair, not a first download (a96 V2)", () => {
     expect(moduleNote(status({ damaged: true }))).toContain("bấm Sửa giọng để tải lại đúng phần ấy");
-    expect(moduleNote(status({ damaged: false }))).toBe("Máy đọc khác: cần tải thêm 903 MB, một lần.");
+    expect(moduleNote(status({ damaged: false }))).toBe("Máy đọc khác: cần tải thêm 861 MB, một lần.");
   });
 
   it("asks for a one-time download with its size, then shows progress, and disappears when ready", () => {
-    expect(moduleNote(status())).toBe("Máy đọc khác: cần tải thêm 903 MB, một lần.");
-    expect(moduleNote(status({ state: "downloading", done: 451_500_000, total: 903_000_000 }))).toBe("Đang tải giọng (903 MB) 50%");
+    expect(moduleNote(status())).toBe("Máy đọc khác: cần tải thêm 861 MB, một lần.");
+    expect(moduleNote(status({ state: "downloading", done: 451_500_000, total: 903_000_000 }))).toBe("Đang tải giọng (861 MB) 50%");
     expect(moduleNote(status({ state: "error", error: "Không tải được giọng ZeroTTS: mất mạng." }))).toContain("mất mạng");
     expect(moduleNote(status({ state: "ready" }))).toBeNull();
-    expect(moduleNote(status({ cancelled: true }))).toBe("Đã huỷ - lần tải sau làm tiếp từ chỗ dừng. Máy đọc khác: cần tải thêm 903 MB, một lần.");
+    expect(moduleNote(status({ cancelled: true }))).toBe("Đã huỷ - lần tải sau làm tiếp từ chỗ dừng. Máy đọc khác: cần tải thêm 861 MB, một lần.");
     expect(moduleNote(status({ state: "outdated", cancelled: true }))).toContain("Đã huỷ");
-    expect(moduleNote(status({ state: "downloading", total: 903_000_000, cancelled: true, cancellable: true }))).toBe("Đang tải giọng (903 MB) 0%");
+    expect(moduleNote(status({ state: "downloading", total: 903_000_000, cancelled: true, cancellable: true }))).toBe("Đang tải giọng (861 MB) 0%");
     expect(moduleNote(undefined)).toBeNull();
   });
 });
