@@ -22,7 +22,7 @@ Collapse {
     signal remove()
     signal pick(var next)
     open: entered && !leaving
-    Component.onCompleted: Qt.callLater(function() { root.entered = true })
+    Component.onCompleted: Later.call(root, function() { root.entered = true })
 
     readonly property var switcher: Music.autoSwitch(track)
     readonly property string note: Music.autoLabel(track) || Music.analysisLabel(track)

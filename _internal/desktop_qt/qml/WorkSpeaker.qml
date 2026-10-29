@@ -34,7 +34,7 @@ Column {
         busy = true
         work.keepAllSpeakers(item, W.keepRequests(item), function() { root.busy = false })
     }
-    onCreatingChanged: if (creating) Qt.callLater(function() { nameField.forceActiveFocus() })
+    onCreatingChanged: if (creating) Later.call(root, function() { nameField.forceActiveFocus() })
 
     spacing: 0
     Item { width: 1; height: 12 }

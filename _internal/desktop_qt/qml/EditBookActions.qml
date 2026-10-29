@@ -35,7 +35,8 @@ Item {
         }
         root.height = Math.max(0, y - 8)
     }
-    onWidthChanged: Qt.callLater(relayout)
+    function relayoutSoon() { Later.call(root, relayout) }
+    onWidthChanged: relayoutSoon()
     Item {
         id: holder
         width: parent.width
@@ -44,10 +45,10 @@ Item {
                 const kid = children[i]
                 if (root.watched.indexOf(kid) >= 0) continue
                 root.watched.push(kid)
-                kid.implicitWidthChanged.connect(root.relayout)
-                kid.visibleChanged.connect(root.relayout)
+                kid.implicitWidthChanged.connect(root.relayoutSoon)
+                kid.visibleChanged.connect(root.relayoutSoon)
             }
-            Qt.callLater(root.relayout)
+            root.relayoutSoon()
         }
     }
 }
