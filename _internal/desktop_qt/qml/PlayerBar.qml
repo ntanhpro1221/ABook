@@ -12,9 +12,19 @@ Item {
     property real contentShift: 0
     /// Bìa nhỏ ẩn khi bìa lớn của Đang nghe đã thế chỗ nó.
     property bool thumbShown: true
-    readonly property real natural: Math.max(84, Math.max(titles.implicitHeight, thumb.height) + 2 * Theme.s12)
+    signal settingsRequested(string group)
+    Accessible.role: Accessible.Pane
+    Accessible.name: "Trình phát"
+    readonly property real transportHeight: Math.max(84, Math.max(titles.implicitHeight, thumb.height) + 2 * Theme.s12)
+    readonly property real natural: transportHeight + alerts.height
     property real appear: Player.loaded ? 1 : 0
     signal openRequested()
+    Connections {
+        target: Player
+        function onLoadedChanged() {
+            if (!Player.loaded) { more.close(); sleep.close(); music.close(); voice.close(); output.close() }
+        }
+    }
 
     height: Math.round(natural * appear)
     visible: height > 0
@@ -36,12 +46,13 @@ Item {
     Interactive {
         id: openArea
         x: 0
-        y: 6
+        y: alerts.height + 6
         width: transport.x - Theme.s16
-        height: parent.height - 6
+        height: root.transportHeight - 6
         pressScaling: false
         ringRadius: 0
         ringMargin: -2
+        Accessible.name: "Mở màn hình đang nghe"
         Rectangle {
             anchors.fill: parent
             color: Theme.text
@@ -53,7 +64,7 @@ Item {
 
     Item {
         id: contents
-        anchors.fill: parent
+        width: parent.width; height: root.transportHeight; y: alerts.height
         opacity: root.contentOpacity
         transform: Translate { y: root.contentShift }
 
@@ -75,21 +86,16 @@ Item {
             width: transport.x - Theme.s24 - x
             spacing: 2
             Text {
+                objectName: "barChapterTitle"
                 width: parent.width
-                text: Player.bookTitle
+                text: [Player.chapterTitle, Player.chapterSubtitle].filter(s => s !== "").join(" · ")
                 color: Theme.text
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeBodySmall
                 font.weight: Theme.weightMedium
             }
-            Text {
+            PlayerSubtitle {
                 width: parent.width
-                text: Player.error !== "" ? Player.error
-                    : (Player.buffering ? "Đang tải âm thanh…"
-                    : [Player.chapterTitle, Player.chapterSubtitle].filter(s => s !== "").join(" · "))
-                color: Player.error !== "" ? Theme.danger : Theme.text2
-                wrapMode: Text.Wrap
-                font.pixelSize: Theme.sizeCaption
             }
         }
         Row {
@@ -107,6 +113,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 onClicked: Nav.windowMode.enter()
             }
+            IconButton { id: moreButton; objectName: "barMore"; icon: "ellipsis"; tip: "Thêm tuỳ chọn"; anchors.verticalCenter: parent.verticalCenter; onClicked: more.toggle() }
         }
     }
 
@@ -118,5 +125,33 @@ Item {
         width: parent.width
         height: 12
         z: 2
+    }
+    Column {
+        id: alerts; x: Theme.margin; width: parent.width - 2 * Theme.margin
+        PlayerFade { width: parent.width }
+        PlayerAlert { width: parent.width; onVoiceRequested: { root.openRequested(); voice.fromAlert() } onSettingsRequested: root.settingsRequested("voice") }
+    }
+    // Panels occupy the whole content surface, so Back/focus and geometry match
+    // the existing NowPlaying popovers rather than the short bar itself.
+    Item {
+        id: panels; parent: root.parent; anchors.fill: parent; z: 70
+        Popover {
+            id: more; objectName: "barMoreMenu"; anchorItem: moreButton; panelWidth: 320
+            Column {
+                width: parent.width
+                MenuRow { width: parent.width; text: "Hẹn giờ"; icon: "moon"; onClicked: { more.close(); sleep.show() } }
+                MenuRow { width: parent.width; text: "Chương trước"; icon: "skip-back"; onClicked: { more.close(); Player.previous() } }
+                MenuRow { width: parent.width; text: "Chương sau"; icon: "skip-forward"; onClicked: { more.close(); Player.next() } }
+                MenuRow { width: parent.width; text: "Nhạc nền"; icon: "eighth-note"; visible: Music.hasMusic; onClicked: { more.close(); music.show() } }
+                MenuRow { width: parent.width; text: "Giọng đọc"; icon: "audio-lines"; visible: Player.speaking && Api.voiceList.length > 0; onClicked: { more.close(); voice.show() } }
+                MenuRow { width: parent.width; text: "Mở màn hình đang nghe"; icon: "maximize-2"; onClicked: { more.close(); root.openRequested() } }
+                MenuRow { objectName: "barClose"; width: parent.width; text: "Đóng trình phát"; icon: "x"; onClicked: { more.close(); Player.close() } }
+                MenuRow { objectName: "barOutput"; width: parent.width; text: "Thiết bị phát"; icon: "cast"; onClicked: { more.close(); output.show() } }
+            }
+        }
+        SleepPopover { id: sleep; anchorItem: moreButton }
+        MusicPopover { id: music; anchorItem: moreButton }
+        PlayerVoicePopover { id: voice; anchorItem: moreButton; onSettingsRequested: root.settingsRequested("voice") }
+        OutputPopover { id: output; anchorItem: moreButton }
     }
 }

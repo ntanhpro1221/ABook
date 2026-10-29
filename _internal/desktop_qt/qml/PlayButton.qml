@@ -10,7 +10,9 @@ Interactive {
     ringRadius: size / 2
     enabled: Player.loaded
     opacity: enabled ? 1 : 0.4
-    tip: Player.playing ? "Tạm dừng (Space)" : "Phát (Space)"
+    tip: Player.playing ? (Player.buffering ? (Player.speaking ? "Đang chuẩn bị giọng đọc…" : "Đang tải âm thanh…") : "Tạm dừng (Space)") : "Phát (Space)"
+    Accessible.role: Accessible.Button
+    Accessible.name: tip
     onClicked: Player.toggle()
 
     Rectangle {

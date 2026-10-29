@@ -15,6 +15,7 @@ Popover {
         width: parent.width
         spacing: Theme.s12
         Text {
+            objectName: "sleepCountdown"
             width: parent.width
             text: Player.sleepKind === "minutes" ? "Tắt sau " + Player.clockText(Player.clock.sleepLeft)
                 : (Player.sleepKind === "chapter" ? "Dừng khi" : "Dừng phát sau")
@@ -90,7 +91,7 @@ Popover {
         }
         Text {
             width: parent.width
-            text: "Tiếng nhỏ dần " + root.fadeSeconds + " giây trước khi dừng. Lúc đó bấm phím bất kỳ để nghe thêm " + root.extendMinutes + " phút."
+            text: "Tiếng nhỏ dần " + root.fadeSeconds + " giây trước khi dừng. Lúc đó chạm phím hoặc chuột để nghe thêm " + root.extendMinutes + " phút."
             wrapMode: Text.Wrap; color: Theme.text2; font.pixelSize: Theme.sizeCaption
         }
     }
