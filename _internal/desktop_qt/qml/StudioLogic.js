@@ -63,6 +63,25 @@ function formatRelative(epochSeconds, nowMs) {
     if (days < 7) return days + " ngày trước"
     return formatDate(epochSeconds)
 }
+// Mốc thời gian nói kiểu người: "hôm nay 14:02", "tối qua 23:41", "hôm qua 09:15", "3 ngày trước" (formatWhen của shared/format.ts)
+function formatWhen(epochSeconds, nowMs) {
+    if (!epochSeconds) return ""
+    const date = new Date(epochSeconds * 1000)
+    const now = nowMs === undefined ? Date.now() : nowMs
+    const today = new Date(now)
+    const days = Math.round((new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime() - new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime()) / 86400000)
+    const time = two(date.getHours()) + ":" + two(date.getMinutes())
+    if (days <= 0) return now / 1000 - epochSeconds < 60 ? "vừa xong" : "hôm nay " + time
+    if (days === 1) return date.getHours() >= 18 ? "tối qua " + time : "hôm qua " + time
+    if (days < 7) return days + " ngày trước"
+    return formatDate(epochSeconds)
+}
+// Cách đọc để HIỆN: chữ đầu mỗi từ viết hoa ("rên-ta-rô" -> "Rên-ta-rô"); dữ liệu giữ nguyên cách đọc đã lưu (shownReading của shared/format.ts)
+function shownReading(spoken) {
+    return String(spoken).replace(/(^|\s)(\S)/g, function(match, gap, letter) {
+        return letter.toLowerCase() === letter && letter.toUpperCase() !== letter ? gap + letter.toUpperCase() : match
+    })
+}
 
 // ---- data.ts: trạng thái ----
 function phaseTone(phase, running) {
