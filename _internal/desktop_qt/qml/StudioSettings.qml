@@ -119,7 +119,7 @@ Item {
                     objectName: "studioRemove"
                     size: "sm"
                     kind: root.armed ? "danger" : "ghost"
-                    icon: "trash-2"
+                    icon: "trash"
                     text: root.busy ? "Đang gỡ…" : root.armed ? "Xác nhận gỡ" : "Gỡ Studio"
                     enabled: !root.busy
                     onClicked: root.remove()

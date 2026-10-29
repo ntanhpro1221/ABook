@@ -474,6 +474,8 @@ Modal {
             objectName: "importLeave"
             width: parent.width
             open: root.leave !== ""
+            Accessible.role: Accessible.AlertMessage
+            Accessible.name: root.leave === "again" ? "Chọn lại khi còn sách chưa thêm" : "Đóng khi còn sách chưa thêm"
             Column {
                 width: parent.width
                 topPadding: 14

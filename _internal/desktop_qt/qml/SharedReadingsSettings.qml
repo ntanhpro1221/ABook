@@ -95,7 +95,7 @@ SettingsItem {
                         objectName: "removeReading"
                         x: parent.width - width
                         anchors.verticalCenter: parent.verticalCenter
-                        icon: "trash-2"
+                        icon: "trash"
                         iconSize: 16
                         ink: Theme.text2
                         hoverInk: Theme.text

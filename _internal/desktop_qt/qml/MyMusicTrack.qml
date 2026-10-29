@@ -118,7 +118,7 @@ Collapse {
                     Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
                     Button {
                         id: askButton
-                        text: "Xoá"; icon: "trash-2"; kind: "ghost"; size: "sm"
+                        text: "Xoá"; icon: "trash"; kind: "ghost"; size: "sm"
                         enabled: !root.confirming
                         Accessible.name: "Xoá: " + (root.track.title || "")
                         onClicked: root.askRemove()
@@ -138,7 +138,7 @@ Collapse {
                         spacing: 4
                         Button {
                             id: removeButton
-                            text: "Xoá bài"; icon: "trash-2"; kind: "ghost"; size: "sm"
+                            text: "Xoá bài"; icon: "trash"; kind: "ghost"; size: "sm"
                             busy: root.removing
                             enabled: root.confirming
                             Accessible.name: "Xoá bài: " + (root.track.title || "")

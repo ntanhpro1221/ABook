@@ -107,4 +107,21 @@ TestCase {
         win.show()
         tryCompare(Nav, "uiVisible", true)
     }
+    // "Tới nội dung" (web Shell): Tab đầu tiên tới nút, nút trượt vào; bấm thì tiêu điểm vào màn đang xem, bỏ qua thanh bên.
+    function test_7_skipToContent() {
+        const skip = all(win.contentItem, "skipToContent")[0]
+        const shell = all(win.contentItem, "mainShell")[0]
+        shell.forceActiveFocus()
+        compare(skip.opacity, 0)
+        keyClick(Qt.Key_Tab, Qt.NoModifier, -1, win)
+        verify(skip.activeFocus)
+        tryCompare(skip, "opacity", 1)
+        verify(skip.y >= 0)
+        keyClick(Qt.Key_Return, Qt.NoModifier, -1, win)
+        verify(!skip.activeFocus)
+        let inside = false
+        for (let up = win.activeFocusItem; up; up = up.parent) if (up.objectName === "screenStack") inside = true
+        verify(inside, "tiêu điểm phải nằm trong màn đang xem: " + win.activeFocusItem)
+        tryCompare(skip, "opacity", 0)
+    }
 }
