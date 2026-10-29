@@ -23,6 +23,9 @@ public:
     // Nonempty only for a terminal device error; transient endpoint loss may retry.
     virtual QString error() const { return {}; }
     virtual quint64 revision() const { return 0; }
+    // Chờ tối đa maxMs tới ngay sau lần engine kéo kế tiếp. Stop..Start vắt qua lúc kéo thì engine phát im lặng
+    // trọn một chu kỳ (10 ms); trộn lại ngay sau lần kéo thì cả chu kỳ còn trống.
+    virtual void awaitPull(int maxMs) { Q_UNUSED(maxMs); }
 };
 
 class WasapiDevice final : public MixDevice {
@@ -36,6 +39,7 @@ public:
     size_t padding() override;
     size_t bufferFrames() const override;
     bool write(const float *stereo, size_t frames) override;
+    void awaitPull(int maxMs) override;
     bool refresh() override;
     QString error() const override;
     quint64 revision() const override;
