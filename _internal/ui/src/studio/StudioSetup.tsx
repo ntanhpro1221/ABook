@@ -13,7 +13,7 @@ import { SettingsRow } from "@/shared/SettingsNav";
 import { api } from "./api";
 import { useAppInfo, useStudioMissing } from "./data";
 import { friendlySetupError } from "./errorText";
-import { formatSize } from "./musicLocal";
+import { formatSize } from "@/shared/format";
 import { leftoverLine, type SetupLeftover } from "./setupLeftover";
 import { noStudioLine, studioFit, type StudioFit, type StudioGpu } from "./studioFit";
 
