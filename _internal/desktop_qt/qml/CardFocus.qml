@@ -50,7 +50,7 @@ Item {
             if (now && now !== root.Window.window.contentItem) { root.lastCard = ""; return }
             const target = W.focusAfterChange(root.snapshot, root.lists(), root.lastCard)
             root.lastCard = ""
-            if (target !== null) Qt.callLater(function() { root.focusCard(target, true) })
+            if (target !== null) Later.call(root, function() { root.focusCard(target, true) })
         }
     }
 }

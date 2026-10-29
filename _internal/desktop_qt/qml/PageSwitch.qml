@@ -16,10 +16,10 @@ Item {
     property real thumbX: 0
     property real thumbW: 40
     property bool settled: false            // khối sáng chỉ trượt sau lần xếp đầu tiên
-    Component.onCompleted: Qt.callLater(function() { root.settled = true })
+    Component.onCompleted: Later.call(root, function() { root.settled = true })
     property real stripEnd: 2               // mép phải lựa chọn cuối
     implicitWidth: stripEnd + 2
-    onCountChanged: Qt.callLater(function() {
+    onCountChanged: Later.call(root, function() {
         const last = tabs.itemAt(root.count - 1)
         if (last) root.stripEnd = last.x + last.width
     })
