@@ -487,7 +487,7 @@ qt_add_executable(WidthTests tests/test_width.cpp tests/glyphaudit.h tests/fakes
 target_include_directories(WidthTests PRIVATE src tests)
 target_compile_definitions(WidthTests PRIVATE QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/width"
     WIDTH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(WidthTests PRIVATE Qt6::QuickTest Qt6::Quick Qt6::Network windowsapp shell32)
+target_link_libraries(WidthTests PRIVATE Qt6::QuickTest Qt6::Quick Qt6::QuickPrivate Qt6::Network windowsapp shell32)   # QuickPrivate: FullRepaint
 set_target_properties(WidthTests PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/width_tests")
 if(MSVC)
     target_compile_options(WidthTests PRIVATE /W3 /utf-8)
