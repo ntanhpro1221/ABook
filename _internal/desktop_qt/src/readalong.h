@@ -90,6 +90,7 @@ public:
     void update();
     /// Nạp ngay kịch bản chương đang phát; bình thường tự nạp khi `active` hay khi sang chương khác.
     void reload();
+    void narrationScript(const QString &book, int chapter, const QJsonObject &script);
 
 signals:
     void activeChanged();
@@ -101,6 +102,9 @@ signals:
     void listened();
 
 private:
+    QString m_narrationBook;
+    int m_narrationChapter = 0;
+    QJsonObject m_narration;
     void scheduleReload();
     void apply(ScriptLogic::Script script);
     void setStatus(const QString &status);

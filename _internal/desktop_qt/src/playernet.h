@@ -21,4 +21,9 @@ public:
     virtual QUrl mediaUrl(const QString &path) const { return QUrl(path); }
     /// `path` bắt đầu bằng "/api/...". Không có thân thì `body` rỗng và `hasBody` false.
     virtual void request(const QByteArray &method, const QString &path, const QJsonObject &body, Done done, bool hasBody = true) = 0;
+    // Narration clips can outlive a chapter switch. Abort the HTTP response so
+    // the existing backend stops generating a discarded paragraph.
+    virtual std::function<void()> requestCancelable(const QByteArray &method, const QString &path, const QJsonObject &body, Done done, bool hasBody = true) {
+        request(method, path, body, std::move(done), hasBody); return {};
+    }
 };

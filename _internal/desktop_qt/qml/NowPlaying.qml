@@ -85,6 +85,7 @@ Item {
         capture()
         page = 0
         sidePage = ReadAlong.status === "ready" && !ReadAlong.timed ? 0 : 1
+        columnScroll.contentY = 0
         open = true
         Nav.openLayer(root)
         speed.close(); sleep.close(); chapters.close()
@@ -93,7 +94,7 @@ Item {
         if (!open) return
         capture()
         open = false
-        speed.close(); sleep.close(); chapters.close(); music.close(); more.close(); shortcuts.close(); reader.close(); recommendations.close(); suggestions.close()
+        speed.close(); sleep.close(); chapters.close(); music.close(); more.close(); shortcuts.close(); reader.close(); recommendations.close(); suggestions.close(); output.close(); voice.close()
         Nav.closedLayer(root)
     }
     onOpenChanged: {
@@ -132,7 +133,7 @@ Item {
     readonly property real coverX: colX + (colW - coverW) / 2
     readonly property real coverY: blockY
     readonly property real titlesY: coverY + coverH + 16
-    readonly property real controlsY: blend(height - 24 - controlsH, titlesY + titlesH + 24)
+    readonly property real controlsY: blend(Math.max(height - 24 - controlsH, page === 0 ? titlesY + titlesH + 24 : 0), titlesY + titlesH + 24)
     readonly property real shift: 64
     readonly property real coverPageX: -pageT * shift * (1 - wideT)
     readonly property real coverPageOpacity: blend(1 - pageT, 1)
@@ -161,7 +162,19 @@ Item {
             height: root.height
 
             // Bìa lớn: cùng một bức ảnh với bìa nhỏ của thanh, đi từ chỗ bìa nhỏ tới chỗ của nó theo đường thẳng
-            Item {
+            Flickable {
+                id: columnScroll
+                objectName: "nowColumnScroll"
+                x: 0; y: root.topH
+                width: root.wide ? root.colX + root.colW + Theme.margin : parent.width
+                height: Math.max(0, parent.height - y)
+                contentWidth: width
+                contentHeight: Math.max(height, root.controlsY + controls.height - root.topH + Theme.s24,
+                                        root.titlesY + titles.height - root.topH + Theme.s24)
+                boundsBehavior: Flickable.StopAtBounds
+                interactive: root.open && contentHeight > height
+                clip: true
+                Item {
                 id: coverLayer
                 x: root.coverPageX
                 opacity: root.coverPageOpacity
@@ -172,13 +185,16 @@ Item {
                     width: root.coverW
                     height: root.coverH
                     x: root.thumbFrom.x + (root.coverX - root.thumbFrom.x) * root.g
-                    y: root.thumbFrom.y + (root.coverY - root.thumbFrom.y) * root.g
+                    y: root.thumbFrom.y + (root.coverY - root.thumbFrom.y) * root.g - root.topH + columnScroll.contentY * (1 - root.g)
                     scale: (root.thumbW / width) + (1 - root.thumbW / width) * root.g
                     transformOrigin: Item.TopLeft
                     coverKey: Player.coverKey
                     title: Player.bookTitle
                     radius: Theme.radiusCover
                 }
+                }
+                SmoothWheel { flick: columnScroll; enabled: columnScroll.interactive }
+                Scrollbar { parent: stage; target: columnScroll }
             }
 
             Item {
@@ -224,28 +240,23 @@ Item {
                 // ---- tên ----
                 Column {
                     id: titles
+                    parent: columnScroll.contentItem
                     x: root.colX + root.coverPageX
-                    y: root.titlesY
+                    y: root.titlesY - root.topH + (1 - root.g) * (28 + columnScroll.contentY)
                     width: root.colW
-                    opacity: root.coverPageOpacity
+                    opacity: root.coverPageOpacity * root.fade
                     spacing: 4
                     Text {
+                        objectName: "nowChapterTitle"
                         width: parent.width
                         horizontalAlignment: Text.AlignHCenter
-                        text: Player.bookTitle
+                        text: [Player.chapterTitle, Player.chapterSubtitle].filter(s => s !== "").join(" · ")
                         color: Theme.text
                         wrapMode: Text.Wrap
                         font.pixelSize: Theme.sizeSection
                         font.weight: Theme.weightBold
                     }
-                    Text {
-                        width: parent.width
-                        horizontalAlignment: Text.AlignHCenter
-                        text: [Player.chapterTitle, Player.chapterSubtitle].filter(s => s !== "").join(" · ")
-                        color: Theme.text2
-                        wrapMode: Text.Wrap
-                        font.pixelSize: Theme.sizeBodySmall
-                    }
+                    PlayerSubtitle { width: parent.width; horizontalAlignment: Text.AlignHCenter }
                     Text {
                         visible: Player.narrator !== ""
                         width: parent.width
@@ -261,14 +272,16 @@ Item {
                 // ---- điều khiển ----
                 Column {
                     id: controls
+                    parent: columnScroll.contentItem
                     x: root.colX
-                    y: root.controlsY
+                    y: root.controlsY - root.topH + (1 - root.g) * (28 + columnScroll.contentY)
                     width: root.colW
+                    opacity: root.fade
                     spacing: Theme.s12
 
                     Collapse {
                         id: status
-                        open: Player.error !== "" || Player.atEnd !== "none"
+                        open: Player.atEnd !== "none"
                         width: parent.width
                         spacing: Theme.s8
                         Text {
@@ -289,7 +302,7 @@ Item {
                         }
                         Button {
                             anchors.horizontalCenter: parent.horizontalCenter
-                            visible: Player.error !== "" || Player.atEnd === "finished"
+                            visible: Player.atEnd === "finished"
                             kind: "text"
                             text: Player.error !== "" ? "Thử lại" : "Nghe lại từ đầu"
                             onClicked: Player.error !== "" ? Player.retry() : Player.restart()
@@ -310,10 +323,8 @@ Item {
                             onClicked: recommendations.show()
                         }
                     }
-                    Collapse {
-                        width: parent.width; open: Player.fading
-                        Button { width: parent.width; kind: "ghost"; text: "Vẫn đang nghe"; onClicked: Player.extendSleep() }
-                    }
+                    PlayerFade { width: parent.width }
+                    PlayerAlert { width: parent.width; onVoiceRequested: voice.fromAlert(); onSettingsRequested: root.settingsRequested("voice") }
                     Collapse {
                         width: parent.width; open: Player.sleepKind === "chapter" && !Player.fading
                         Text { width: parent.width; text: "Sẽ dừng khi hết chương này."; horizontalAlignment: Text.AlignHCenter; wrapMode: Text.Wrap; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
@@ -333,7 +344,7 @@ Item {
                         }
                         Text {
                             anchors.right: parent.right
-                            text: "-" + Player.clockText(Math.max(0, seek.total - seek.shownPosition))
+                            text: "-" + Player.clockText(Math.max(0, seek.total - seek.shownPosition) / Player.rate)
                             color: Theme.text2
                             font.pixelSize: Theme.sizeCaption
                         }
@@ -514,11 +525,15 @@ Item {
             }
             VolumeControl { width: parent.width }
             MenuRow { width: parent.width; text: "Nhạc nền"; icon: "eighth-note"; visible: Music.hasMusic; onClicked: { more.close(); music.show() } }
+            MenuRow { objectName: "nowVoice"; width: parent.width; text: "Giọng đọc"; icon: "audio-lines"; visible: Player.speaking && Api.voiceList.length > 0; onClicked: { more.close(); voice.show() } }
+            MenuRow { objectName: "nowOutput"; width: parent.width; text: "Thiết bị phát"; icon: "cast"; onClicked: { more.close(); output.show() } }
             MenuRow { objectName: "nowHistory"; width: parent.width; text: "Về chỗ vừa nghe"; icon: "undo-2"; visible: Player.canGoBack; onClicked: { more.close(); Player.goBack() } }
-            MenuRow { objectName: "nowKeys"; width: parent.width; text: "Phím"; icon: "keyboard"; onClicked: { more.close(); shortcuts.show() } }
+            MenuRow { objectName: "nowKeys"; width: parent.width; text: "Phím tắt"; icon: "keyboard"; onClicked: { more.close(); shortcuts.show() } }
             MenuRow { objectName: "nowAddVoice"; width: parent.width; text: "Thêm giọng…"; icon: "plus"; onClicked: { more.close(); root.settingsRequested("voice") } }
             MenuRow { objectName: "nowSuggestionsButton"; width: parent.width; text: "Gợi ý đọc"; icon: "lightbulb"; visible: suggestions.groups.length > 0; onClicked: { more.close(); suggestions.show() } }
             MenuRow { width: parent.width; text: "Cửa sổ mini"; icon: "picture-in-picture-2"; onClicked: { more.close(); if (Nav.windowMode) Nav.windowMode.enter() } }
         }
     }
+    OutputPopover { id: output; anchorItem: moreButton }
+    PlayerVoicePopover { id: voice; anchorItem: moreButton; onSettingsRequested: root.settingsRequested("voice") }
 }
