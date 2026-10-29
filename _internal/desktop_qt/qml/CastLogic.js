@@ -1,6 +1,7 @@
 .pragma library
 .import "ImportQueue.js" as Queue
 .import "VoiceLogic.js" as Voice
+.import "PeerStudio.js" as Peer
 
 // Hàm thuần của "Nhân vật" ở trang sách (CastList / PersonRow của listen/BookScreen.tsx, MergeDialog / GenderDialog của studio/): tên đã làm sạch,
 // chữ cái đầu và màu ô tròn, dòng giọng / chờ áp dụng / số câu, người của các chương sau, cuộc gọi chọn giọng. Chữ giữ đúng từng chữ của bản web.
@@ -93,6 +94,8 @@ function sampleId(bookId, person) { return "sample-" + bookId + "-" + person.sam
 function sampleUrl(bookId, person) { return "/media/books/" + bookId + "/samples/" + person.sampleId }
 function voiceId(name) { return "voice-" + name }
 function voiceUrl(name) { return "/media/voices/" + encodeURIComponent(name) }
+// Studio của máy tính ghép: tệp nghe thử cũng lấy qua máy ấy (cùng cầu nối với mọi lời gọi khác)
+function routed(url, peer) { return Peer.throughPeer(url, peer) }
 
 // ---- Người của các chương sau ---------------------------------------------------------------------------------------------------
 // Tên (ngắn và đầy đủ) của các chương từ đầu tới chương `until` (chưa nghe gì: tới chương đầu): {tên: true}
