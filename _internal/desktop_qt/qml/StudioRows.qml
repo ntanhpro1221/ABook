@@ -51,8 +51,8 @@ Column {
             property bool entered: !appear
             width: Math.min(root.width, Theme.listMeasure)
             open: entered && !gone
-            onSettledChanged: if (settled && gone) Qt.callLater(function() { root.drop(cell.key) })  // mỗi hàng một hàm: callLater gộp các lần gọi cùng hàm
-            Component.onCompleted: if (appear) Qt.callLater(function() { cell.entered = true })
+            onSettledChanged: if (settled && gone) Qt.callLater(function() { if (cell) root.drop(cell.key) })  // mỗi hàng một hàm: callLater gộp các lần gọi cùng hàm
+            Component.onCompleted: if (appear) Qt.callLater(function() { if (cell) cell.entered = true })
             Rectangle { width: parent.width; height: 1; color: Theme.line; visible: cell.index > 0 }
             Loader {
                 id: loader
