@@ -227,8 +227,10 @@ qt_add_qml_module(ABookDesk
         qml/EditBookReadings.qml
         qml/EditBookRename.qml
         qml/CastDialogs.qml
+        qml/CastEngine.qml
         qml/CastGender.qml
         qml/CastList.qml
+        qml/CastLogic.js
         qml/CastMerge.qml
         qml/CastModal.qml
         qml/CastPeople.qml
@@ -236,6 +238,12 @@ qt_add_qml_module(ABookDesk
         qml/CastRename.qml
         qml/CastSample.qml
         qml/CastVoice.qml
+        qml/HistoryList.qml
+        qml/HistoryLogic.js
+        qml/RecordChip.qml
+        qml/RecordDialogs.qml
+        qml/RecordLogic.js
+        qml/RecordMenu.qml
         qml/Clip.qml
         qml/EditBookSaveAs.qml
         qml/EditBookItems.qml

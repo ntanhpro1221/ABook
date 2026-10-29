@@ -99,7 +99,7 @@ Item {
             verify(page !== null && dialogs !== null)
             page.castRequested.connect((kind, data) => dialogs.begin(kind, data))
             tryVerify(function() { return findChild(page, "bookTabs").visible })
-            findChild(page, "bookTabs").picked(1)
+            findChild(page, "bookTabs").picked(2)
             tryCompare(findChild(page, "castList"), "status", "ready")
             settle()
         }
@@ -118,7 +118,7 @@ Item {
         // ---------- danh sách ----------
         function test_listRenders() {
             openCast()
-            compare(findChild(page, "bookTabs").labels.join("|"), "Chương|Nhân vật")
+            compare(findChild(page, "bookTabs").labels.join("|"), "Chương|Lịch sử|Nhân vật")
             compare(findChild(page, "castNarratorVoice").text, "Minh Quân")
             compare(findChild(page, "castNarratorPending").text, "Chờ áp dụng: giọng Hương")
             compare(all(page, "castName").map(item => item.text).join("|"), "Lan|Hạ Vy|Tuấn")
@@ -158,7 +158,7 @@ Item {
             dialogs = createTemporaryObject(dialogsFactory, host, {})
             page = createTemporaryObject(pageFactory, host, {width: host.width, height: host.height, book: {bookId: "b1", title: "Sách chữ"}})
             tryVerify(function() { return page.fullBook.id === "b1" })
-            verify(!findChild(page, "bookTabs").visible)
+            compare(findChild(page, "bookTabs").labels.join("|"), "Chương|Lịch sử")      // chưa có giọng thì chưa có tab Nhân vật
             compare(calls("GET", "/api/books/b1/cast").length, 0)
         }
         function test_castLoadsOnlyWhenOpened() {
@@ -166,11 +166,11 @@ Item {
             page = createTemporaryObject(pageFactory, host, {width: host.width, height: host.height, book: {bookId: "b1", title: "Sách có giọng"}})
             tryVerify(function() { return findChild(page, "bookTabs").visible })
             compare(calls("GET", "/api/books/b1/cast").length, 0)
-            findChild(page, "bookTabs").picked(1)
+            findChild(page, "bookTabs").picked(2)
             tryCompare(findChild(page, "castList"), "status", "ready")
             compare(calls("GET", "/api/books/b1/cast").length, 1)
             findChild(page, "bookTabs").picked(0)
-            findChild(page, "bookTabs").picked(1)
+            findChild(page, "bookTabs").picked(2)
             compare(calls("GET", "/api/books/b1/cast").length, 1)
         }
 
@@ -354,6 +354,154 @@ Item {
             tryVerify(function() { return dialog("castVoiceDialog").open })
             tryCompare(dialog("castVoiceDialog"), "status", "ready")
             compare(calls("GET", "/api/books/b1/voices?character=NARRATOR").length, 1)
+        }
+
+        // ---------- "Nghe thử bằng câu của sách" ----------
+        function openVoices(answer) {
+            if (answer) reply("GET /api/books/b1/voices?character=Lan", function() { return {status: 200, data: answer} })
+            openCast()
+            child(rowOf("Lan"), "castVoiceButton").clicked()
+            tryVerify(function() { return dialog("castVoiceDialog").open })
+            tryCompare(dialog("castVoiceDialog"), "status", "ready")
+            settle()
+            return dialog("castVoiceDialog")
+        }
+        function withLine() { return Object.assign(voicesFixture(), {tryLine: "Anh đi đâu thế?"}) }
+        function triesOf(dlg) { return all(dlg, "voiceTry") }
+        function test_tryButtonsOnlyWhenThePersonHasALine() {
+            const dlg = openVoices()
+            compare(triesOf(dlg).filter(button => button.visible).length, 0)
+            compare(findChild(dlg, "voiceTryHint").text, "Lan chưa có câu nào để đọc thử - nút ▶ là câu mẫu chung của giọng.")
+            verify(!findChild(dlg, "voiceTryNote").visible)
+        }
+        function test_tryHintExplainsTheTwoButtons() {
+            const dlg = openVoices(withLine())
+            compare(triesOf(dlg).filter(button => button.visible).length, 2)
+            compare(findChild(dlg, "voiceTryHint").text, "Nút sách đọc câu của Lan; ▶ đọc mẫu chung.")
+            compare(triesOf(dlg)[1].Accessible.name, "Nghe giọng Hoài My đọc một câu của sách")
+            shot("cast_voice_try", host)
+        }
+        function test_trySendsTheLineRequestAndPlaysTheAnswer() {
+            reply("POST /api/books/b1/voice/preview", {status: 200, data: {url: "/media/previews/p1.wav", text: "“Anh đi đâu thế?”"}})
+            const dlg = openVoices(withLine())
+            const button = triesOf(dlg)[1]
+            button.requested()
+            const sent = calls("POST", "/api/books/b1/voice/preview")
+            compare(sent.length, 1)
+            compare(sent[0].body.character, "Lan")
+            compare(sent[0].body.preset, "hoai-my")
+            compare(DesktopApi.previews[0], "/media/previews/p1.wav")
+            compare(Clip.current, "voice-try-/media/previews/p1.wav")
+            compare(findChild(dlg, "voiceTryNote").text, "Lúc thu thật sẽ nghe gần như vậy · câu “Anh đi đâu thế?” · giọng Hoài My")
+            tryVerify(function() { return findChild(dlg, "voiceTryNote").visible })
+            // Bấm lại lúc đang phát thì dừng; bấm nữa thì phát lại bản đã nghe, không hỏi máy chủ lần hai
+            button.requested()
+            compare(Clip.current, "")
+            button.requested()
+            compare(Clip.current, "voice-try-/media/previews/p1.wav")
+            compare(calls("POST", "/api/books/b1/voice/preview").length, 1)
+            dlg.close()
+            compare(Clip.current, "")
+        }
+        function test_tryAsksOneVoiceAtATime() {
+            reply("POST /api/books/b1/voice/preview", {status: 200, data: {url: "/media/previews/p2.wav", text: "Em về rồi."}})
+            const dlg = openVoices(withLine())
+            findChild(dlg, "voiceGenderFilter").picked("all")
+            settle()
+            const buttons = triesOf(dlg)
+            compare(buttons.length, 3)
+            DesktopApi.delayed = true
+            buttons[2].requested()                                        // Nam Minh
+            verify(buttons[2].busy)
+            compare(findChild(dlg, "voiceTryNote").text, "Máy đang đọc thử giọng Nam Minh - lần đầu có thể mất vài chục giây")
+            verify(!buttons[0].enabled && !buttons[1].enabled)            // đang chờ một câu thì giọng khác chưa bấm được
+            verify(buttons[2].enabled)
+            DesktopApi.delayed = false
+            DesktopApi.finish()
+            verify(!buttons[2].busy)
+            verify(buttons[0].enabled && buttons[1].enabled)
+            compare(Clip.current, "voice-try-/media/previews/p2.wav")
+        }
+        function test_tryRefusalKeepsTheCommonSample() {
+            reply("POST /api/books/b1/voice/preview", {status: 409, data: {message: "Máy bận", reason: "producing"}})
+            const dlg = openVoices(withLine())
+            triesOf(dlg)[0].requested()
+            compare(findChild(dlg, "voiceTryNote").text, "Máy đang làm sách; thử lại khi xong. - nút ▶ vẫn nghe được câu mẫu chung của giọng")
+            compare(Clip.current, "")
+            verify(!triesOf(dlg)[0].busy)
+        }
+        function test_tryWithoutALinePlaysTheCommonSample() {
+            reply("POST /api/books/b1/voice/preview", {status: 409, data: {message: "Chưa có câu", reason: "no-line"}})
+            const dlg = openVoices(withLine())
+            triesOf(dlg)[0].requested()
+            compare(Clip.current, "voice-Ngọc Linh")
+            compare(DesktopApi.previews[0], "/media/voices/ngoc-linh")
+            compare(findChild(dlg, "voiceTryNote").text, "Người này chưa có câu nào để đọc thử - đang phát câu mẫu chung của giọng")
+        }
+        function test_tryNoteWrapsLongServerMessages_data() { return [{tag: "1024", w: 1024}, {tag: "1920", w: 1920}] }
+        function test_tryNoteWrapsLongServerMessages(data) {
+            reply("POST /api/books/b1/voice/preview", {status: 500, data: {message: "Máy chưa đọc thử được vì card đồ hoạ đang bận làm việc khác và bộ nhớ không còn đủ chỗ cho giọng này, bạn thử lại sau ít phút nữa nhé"}})
+            host.width = data.w
+            const dlg = openVoices(withLine())
+            triesOf(dlg)[1].requested()
+            const note = findChild(dlg, "voiceTryNote")
+            verify(note.lineCount > 1)
+            verify(note.paintedWidth <= note.width + 0.5)
+            fuzzyCompare(note.height, note.contentHeight, 1)
+            shot("cast_voice_try_long_" + data.w, host)
+        }
+
+        // ---------- tải thêm giọng của máy đọc khác ----------
+        function twoEngines() {
+            const answer = withLine()
+            answer.voices = answer.voices.concat([
+                {key: "thu-ha", name: "Thu Hà", gender: "female", genderLabel: "Nữ", engine: "zerotts", installed: false, preview: true}])
+            answer.modules = {zerotts: {state: "missing", bytes: 52428800, cancellable: false}}
+            return answer
+        }
+        function test_singleEngineHasNoModuleHeader() {
+            const dlg = openVoices(withLine())
+            compare(all(dlg, "voiceEngine").filter(item => item.visible).length, 0)
+            compare(all(dlg, "voiceGroup").filter(item => item.visible).length, 1)
+            compare(all(dlg, "voiceGroup")[0].text, "Giọng chính")
+        }
+        function test_otherEngineOffersTheDownload() {
+            reply("POST /api/studio/zerotts", {status: 200, data: {state: "downloading", total: 52428800, done: 5242880, bytes: 52428800, cancellable: true}})
+            reply("POST /api/studio/zerotts/cancel", {status: 200, data: {state: "missing", bytes: 52428800, cancelled: true, cancellable: false}})
+            const dlg = openVoices(twoEngines())
+            const headers = all(dlg, "voiceEngine")
+            compare(headers.length, 2)
+            verify(headers[0].visible && headers[1].visible)
+            compare(all(headers[0], "engineLabel")[0].text, "Giọng chính")
+            verify(!all(headers[0], "engineStart")[0].visible)             // VieNeu sẵn có
+            compare(all(headers[1], "engineLabel")[0].text, "Giọng thêm")
+            const start = all(headers[1], "engineStart")[0]
+            verify(start.visible)
+            compare(start.text, "Tải giọng")
+            verify(all(headers[1], "engineNote")[0].text.indexOf("Máy đọc khác: cần tải thêm ") === 0)
+            // giọng của máy đọc chưa tải thì chưa chọn được
+            const actions = all(dlg, "voiceAction")
+            verify(!actions[actions.length - 1].enabled)
+            shot("cast_voice_module", host)
+            start.activated()
+            const sent = calls("POST", "/api/studio/zerotts")
+            compare(sent.length, 1)
+            verify(all(headers[1], "engineNote")[0].text.indexOf("Đang tải giọng (") === 0)
+            const cancel = all(headers[1], "engineCancel")[0]
+            tryVerify(function() { return cancel.visible })
+            compare(cancel.text, "Huỷ")
+            cancel.activated()
+            compare(calls("POST", "/api/studio/zerotts/cancel").length, 1)
+        }
+        function test_downloadedEngineReloadsTheVoices() {
+            reply("GET /api/studio/zerotts", {status: 200, data: {state: "ready", bytes: 52428800}})
+            const dlg = openVoices(twoEngines())
+            compare(calls("GET", "/api/books/b1/voices?character=Lan").length, 1)
+            const header = all(dlg, "voiceEngine")[1]
+            header.refresh()                                              // người dùng đang xem: hỏi lại trạng thái như mỗi giây lúc tải
+            tryVerify(function() { return calls("GET", "/api/books/b1/voices?character=Lan").length === 2 })
+            compare(dlg.status, "ready")                                  // không quay về khung chờ
+            verify(!all(header, "engineStart")[0].visible)
         }
 
         // ---------- chữ dài xuống dòng, không cắt ----------

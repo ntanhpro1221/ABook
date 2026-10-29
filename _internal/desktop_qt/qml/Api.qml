@@ -47,12 +47,13 @@ QtObject {
             }
         })
     }
-    // Như call() nhưng KHÔNG đặt Api.notice: chỗ gọi tự hiện lỗi tại chỗ (khung khoá giọng, thẻ giọng trên máy) hay tự dựng lời báo
+    // Như call() nhưng KHÔNG đặt Api.notice: chỗ gọi tự hiện lỗi tại chỗ (khung khoá giọng, thẻ giọng trên máy) hay tự dựng lời báo.
+    // Lỗi thì done(null, lời, thân) - `thân` là cả JSON máy chủ gửi (mã `reason` của "Nghe thử bằng câu của sách"), như ApiError.detail của web.
     function quiet(method, path, body, done) {
         if (!transport) return 0
         return transport.request(method, path, body, function(status, data) {
             if (status >= 200 && status < 300) { if (done) done(data, null) }
-            else if (done) done(null, data && (data.message || data.error) || "Không làm được lúc này.")
+            else if (done) done(null, data && (data.message || data.error) || "Không làm được lúc này.", data)
         })
     }
     function load() {

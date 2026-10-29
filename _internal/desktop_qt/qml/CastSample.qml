@@ -3,13 +3,19 @@ import ABook
 
 // Nút nghe thử của một dòng nhân vật / người kể (SampleButton của listen/BookScreen.tsx): ▶ khi nghỉ, vòng xoay lúc chờ clip, biểu tượng sóng âm
 // lúc đang ra tiếng; bấm lúc đang phát thì dừng ("Dừng nghe thử"). Ô tròn 36 như web. Clip đi qua Clip (MỘT clip một lúc cho cả app).
+// Nút "Nghe thử bằng câu của sách" (VoiceTry.tsx) cũng là ô này: `asks` - bấm thì phát `requested()` (hộp giọng hỏi máy thu câu rồi phát qua Clip), icon
+// nghỉ là quyển sách (`idleIcon`), `busy` trong lúc máy chủ đang thu thử.
 Interactive {
     id: root
     property string clipId: ""
     property string url: ""
     property string label: ""
-    readonly property bool active: Clip.current === clipId
-    readonly property bool loading: active && Clip.loading
+    property string idleIcon: "play"
+    property bool asks: false
+    property bool busy: false
+    signal requested()
+    readonly property bool active: clipId !== "" && Clip.current === clipId
+    readonly property bool loading: busy || (active && Clip.loading)
     readonly property int fade: Theme.reduceMotion ? Math.min(Theme.motionFast, 120) : Theme.motionFast
     implicitWidth: 36
     implicitHeight: 36
@@ -17,7 +23,7 @@ Interactive {
     tip: active ? "Dừng" : label
     Accessible.role: Accessible.Button
     Accessible.name: active ? "Dừng nghe thử" : label
-    onClicked: Clip.toggle(clipId, url)
+    onClicked: { if (asks) root.requested(); else Clip.toggle(clipId, url) }
 
     Rectangle {
         anchors.fill: parent
@@ -28,10 +34,10 @@ Interactive {
     }
     Icon {
         anchors.centerIn: parent
-        name: "play"
-        size: 14
+        name: root.idleIcon
+        size: root.idleIcon === "play" ? 14 : 16
         color: Theme.text2
-        opacity: root.active ? 0 : 1
+        opacity: root.active || root.busy ? 0 : 1
         Behavior on opacity { NumberAnimation { duration: root.fade } }
     }
     Icon {
