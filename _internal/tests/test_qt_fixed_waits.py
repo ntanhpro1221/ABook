@@ -8,21 +8,26 @@ import re
 from pathlib import Path
 
 TESTS = Path(__file__).resolve().parent.parent / "desktop_qt" / "tests"
-WAIT = re.compile(r"^\s*wait\(\s*\d+\s*\)\s*;?\s*(//.*)?$")
+WAIT = r"wait\(\s*\d+\s*\)"
+# Hàm trợ giúp chỉ gói một lần chờ cố định (`function settle() { wait(350) }`) cũng là chờ cố định.
+HELPER = re.compile(r"function\s+(\w+)\s*\(\s*\)\s*\{\s*" + WAIT + r"\s*;?\s*\}")
 CHECK = re.compile(r"^\s*(verify|compare|fuzzyCompare)\s*\(")
 # Chờ cố định chỉ đúng khi test chứng minh điều gì đó KHÔNG xảy ra trong một khoảng (không gửi lệnh, hàng không đổi);
 # dòng ấy ghi dấu này để máy dò bỏ qua.
 ABSENCE = "// fixed: proves absence"
-BASELINE = 66
+BASELINE = 67
 
 
 def fixed_wait_checks(root=TESTS):
-    """(file, line) của mỗi `wait(N)` mà dòng có mã kế tiếp là một phép kiểm."""
+    """(file, line) của mỗi `wait(N)` (hay hàm chỉ gói nó) mà dòng có mã kế tiếp là một phép kiểm."""
     hits = []
     for path in sorted(root.rglob("*.qml")):
-        lines = path.read_text(encoding="utf-8").splitlines()
+        text = path.read_text(encoding="utf-8")
+        calls = [WAIT] + [re.escape(name) + r"\(\s*\)" for name in HELPER.findall(text)]
+        waiting = re.compile(r"^\s*(" + "|".join(calls) + r")\s*;?\s*(//.*)?$")
+        lines = text.splitlines()
         for i, line in enumerate(lines):
-            if not WAIT.match(line) or ABSENCE in line:
+            if not waiting.match(line) or ABSENCE in line:
                 continue
             nxt = next((l for l in lines[i + 1:] if l.strip() and not l.strip().startswith("//")), "")
             if CHECK.match(nxt):
@@ -39,6 +44,11 @@ def test_fixed_waits_before_checks_only_shrink():
 def test_detector_sees_the_pattern(tmp_path):
     (tmp_path / "tst_probe.qml").write_text(
         "TestCase {\n"
+        "    function settle() { wait(350) }\n"
+        "    function test_b() {\n"
+        "        settle()\n"
+        "        compare(y, 1)\n"
+        "    }\n"
         "    function test_a() {\n"
         "        wait(100)\n"
         "        // ghi chú\n"
@@ -50,4 +60,4 @@ def test_detector_sees_the_pattern(tmp_path):
         "        tryVerify(function() { return z })\n"
         "    }\n"
         "}\n", encoding="utf-8")
-    assert fixed_wait_checks(tmp_path) == [("tst_probe.qml", 3)]
+    assert fixed_wait_checks(tmp_path) == [("tst_probe.qml", 4), ("tst_probe.qml", 8)]  # settle() rồi compare; wait(100) rồi verify
