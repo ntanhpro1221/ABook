@@ -54,7 +54,7 @@ Column {
     }
     function pick(ids, id) {
         chooseVoice(id)
-        Qt.callLater(function() { root.focusVoice(stack, id) })
+        Later.call(root, function() { root.focusVoice(stack, id) })
     }
     function focusVoice(item, id) {
         if (!item) return false

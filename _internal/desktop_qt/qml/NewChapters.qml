@@ -186,10 +186,10 @@ Column {
                     readonly property int part: root.starts && at >= 0 && root.form ? root.form.volumeStarts.indexOf(at + 1) : -1
                     width: list.width
                     open: entered && !gone
-                    onSettledChanged: if (settled && gone) Qt.callLater(function() { root.drop(cell.key) })
+                    onSettledChanged: if (settled && gone) Later.call(cell, function() { root.drop(cell.key) })
                     Component.onCompleted: {
-                        if (gone) Qt.callLater(function() { root.drop(cell.key) })
-                        else if (appear) Qt.callLater(function() { cell.entered = true })
+                        if (gone) Later.call(cell, function() { root.drop(cell.key) })
+                        else if (appear) Later.call(cell, function() { cell.entered = true })
                     }
                     Collapse {
                         width: parent.width

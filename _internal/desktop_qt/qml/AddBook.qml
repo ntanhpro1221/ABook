@@ -70,7 +70,7 @@ Modal {
             Nav.closedLayer(leaveLayer)
             const back = leaveFocus
             leaveFocus = null
-            if (back && open) Qt.callLater(function() { back.forceActiveFocus(Qt.BacktabFocusReason) })
+            if (back && open) Later.call(root, function() { back.forceActiveFocus(Qt.BacktabFocusReason) })
         }
     }
     // Lớp Back của câu hỏi: Back đóng câu hỏi, về hộp

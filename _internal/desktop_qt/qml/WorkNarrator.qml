@@ -19,7 +19,7 @@ Column {
         busy = true
         work.saveNarrator(item, request, function() { root.busy = false })
     }
-    onChoosingChanged: if (choosing) Qt.callLater(function() { nameField.forceActiveFocus() })
+    onChoosingChanged: if (choosing) Later.call(root, function() { nameField.forceActiveFocus() })
 
     spacing: 0
     Item { width: 1; height: 12 }
