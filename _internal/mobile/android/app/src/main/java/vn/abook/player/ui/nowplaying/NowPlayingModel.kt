@@ -9,6 +9,7 @@ import vn.abook.player.ui.data.PlayerChapter
 import vn.abook.player.ui.data.PlayerState
 import vn.abook.player.ui.music.MusicState
 import vn.abook.player.ui.music.PlayerMusic
+import vn.abook.player.ui.data.PrepareState
 import vn.abook.player.ui.voice.VoiceState
 import java.math.BigDecimal
 import kotlin.math.ceil
@@ -23,7 +24,7 @@ enum class SleepKind { Off, Minutes, Chapter }
 
 /** The timer as set (mode, minutes, whether it counts now). The time left runs on [PlayerPosition.sleepRemainingMs], never here. */
 @Immutable
-data class PlayerSleep(val kind: SleepKind = SleepKind.Off, val minutes: Int = 0, val counting: Boolean = false)
+data class PlayerSleep(val kind: SleepKind = SleepKind.Off, val minutes: Int = 0, val counting: Boolean = false, val stoppedAtMs: Long = 0L)
 
 @Immutable
 data class NowPlayingState(
@@ -49,7 +50,24 @@ data class NowPlayingState(
     val voiceId: String = "",
     /** Tên giọng đang chọn (kể cả giọng trực tuyến), rỗng khi chưa biết: lời báo "giọng đang chọn không đọc được" nói tên giọng. */
     val voiceName: String = "",
-)
+    /** Đang chờ âm thanh (tải, hay giọng máy đọc đoạn đầu): nhãn nút phát nói đang chờ gì. */
+    val buffering: Boolean = false,
+    /** Chương đang nghe là chương đọc to (giọng máy), không phải audio thu sẵn. */
+    val speaking: Boolean = false,
+    /** Sách đủ chương ("cả cuốn") hay mới có "phần đã có". */
+    val whole: Boolean = true,
+    /** Còn chương chưa nghe được ở sau hàng chương đang nạp. */
+    val moreChapters: Boolean = false,
+    /** Vừa phát hết chương cuối và chưa nghe lại gì: Đang nghe nói "Đã nghe hết ..." và mời nghe tiếp. */
+    val ended: Boolean = false,
+) {
+    /** Có chương sau bấm được ngay (trong hàng chương đang nạp). */
+    val hasNext: Boolean get() = PlayerText.hasNext(chapters, chapterId)
+}
+
+/** Một dòng báo ngắn của trình phát (web: toast): hiện một lúc, có thể kèm một việc để làm ngay ("Nghe tiếp từ đó"). */
+@Immutable
+data class PlayerNote(val text: String, val action: String? = null, val serial: Int = 0, val lifeMs: Long = 6_000)
 
 /**
  * The window's view of the one clock ([vn.abook.player.ui.data.PlayerClock]). Read the values only in draw / layout lambdas or `snapshotFlow`.
@@ -71,6 +89,8 @@ interface NowPlayingModel {
     val music: MusicState? get() = null
     /** Giọng đọc làm thêm (tải giọng VieNeu ngay trong khối lỗi); null = không có (bản thử). */
     val voice: VoiceState? get() = null
+    /** "Làm trước" các chương tới (khối ở tấm "Giọng đọc"); null = không có (bản thử). */
+    val prepare: PrepareState? get() = null
     fun toggle()
     fun skip(seconds: Int)
     fun seek(milliseconds: Long)
@@ -79,12 +99,43 @@ interface NowPlayingModel {
     fun previous()
     fun setRate(rate: Double)
     fun setSleep(kind: SleepKind, minutes: Int = 0)
+
+    /** Mức hẹn giờ của Cài đặt (bao lâu tiếng nhỏ dần, mỗi lần nghe thêm bao nhiêu phút): đọc lúc vẽ tấm Hẹn giờ và lời báo "Sắp tắt". */
+    val sleepOptions: SleepOptions get() = SleepOptions()
+
+    /** Người nghe đã có một đêm được ghi lại (thẻ "Tối qua"): tấm Hẹn giờ nhắc thẻ ấy. */
+    val hadNight: Boolean get() = false
+
+    /** "+N phút" ở lời báo "Sắp tắt" và ở tấm Hẹn giờ. */
+    fun extendSleep() {}
+
+    /** Dòng báo đang hiện ("Nghe tiếp Phần 2", "Máy khác đã nghe tới ..."); null = không có. */
+    val note: StateFlow<PlayerNote?> get() = NoNote
+    fun noteAction() {}
+    fun dismissNote(serial: Int) {}
+
+    /** Sau khi nghe hết: tập / phần kế và vài cuốn khác để mời (đọc một lần khi lời "Đã nghe hết ..." hiện). */
+    fun endChoices(): PlayerEnd.Choices = PlayerEnd.Choices()
+
+    /** Chạm chữ ở Đọc theo: nghe từ mốc đó (đang dừng thì phát). */
+    fun listenFrom(milliseconds: Long) {
+        seek(milliseconds)
+        if (!state.value.playing) toggle()
+    }
+
+    /** Nghe một cuốn khác (từ chỗ đã dừng). */
+    fun listen(bookId: String) {}
+
+    /** "Nghe lại từ đầu" sau khi nghe hết sách. */
+    fun restart() {}
     fun setVoice(id: String)
     suspend fun loadVoices()
     fun setReadAlongActive(active: Boolean)
     fun returnToPreviousPlace()
     suspend fun loadReadAlong()
 }
+
+private val NoNote: StateFlow<PlayerNote?> = kotlinx.coroutines.flow.MutableStateFlow(null)
 
 object PlayerLabels {
     val rates = listOf(0.75, 0.9, 1.0, 1.1, 1.2, 1.3, 1.5, 1.75, 2.0, 2.5, 3.0)
@@ -118,9 +169,11 @@ fun nowPlayingState(player: PlayerState, voices: List<PlayerVoice>, returnAvaila
         cover = player.cover, playing = player.playing, durationMs = player.durationMs.coerceAtLeast(0), rate = player.rate,
         sleep = PlayerSleep(
             when (player.sleep.mode) { "minutes" -> SleepKind.Minutes; "chapter" -> SleepKind.Chapter; else -> SleepKind.Off },
-            player.sleep.minutes, player.sleep.counting,
+            player.sleep.minutes, player.sleep.counting, player.sleep.stoppedAtMs,
         ),
         chapters = player.chapters, readAlongAvailable = player.hasTrack, error = player.error,
         music = player.music, returnAvailable = returnAvailable, returnSerial = returnSerial,
         voices = voices.filter { !it.online }, voiceId = player.voiceId, voiceName = voices.firstOrNull { it.id == player.voiceId }?.name.orEmpty(),
+        buffering = player.buffering, speaking = player.chapters.firstOrNull { it.id == player.chapterId }?.textPath.orEmpty().isNotEmpty(),
+        whole = player.whole, moreChapters = player.moreChapters, ended = player.ended,
     )

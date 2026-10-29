@@ -98,6 +98,11 @@ class LibraryUiState(
         query = text
     }
 
+    /** Nút X của ô tìm (web: LibraryScreen.tsx): có chữ thì xoá chữ, ô vẫn mở để gõ lại; ô trống thì đóng ô. */
+    fun clearOrClose() {
+        if (query.isNotEmpty()) query = "" else closeSearch()
+    }
+
     /** Đóng ô tìm và xoá chữ đã gõ; ô còn hiện trong lúc thu lại. */
     fun closeSearch() {
         if (!searchOpen) return

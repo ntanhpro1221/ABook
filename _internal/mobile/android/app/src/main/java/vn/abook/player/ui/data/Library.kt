@@ -2,6 +2,7 @@ package vn.abook.player.ui.data
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import androidx.compose.runtime.Immutable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,6 +12,8 @@ import kotlinx.coroutines.withContext
 import vn.abook.player.AppLog
 import org.json.JSONObject
 import vn.abook.player.BookActions
+import vn.abook.player.BookSave
+import vn.abook.player.BookSaves
 import vn.abook.player.ListeningRecords
 import vn.abook.player.Store
 import vn.abook.player.SyncLink
@@ -75,6 +78,11 @@ class LibraryRepo(private val context: Context, private val scope: kotlinx.corou
 
     // ---- trang sách (BookSource): đọc / ghi qua lõi, ghi xong thì đọc lại Thư viện ----------------------------------------
 
+    override suspend fun bytes(id: String): Long? = withContext(Dispatchers.IO) {
+        Store.init(context)
+        runCatching { Store.bookBytes(Store.bookDir(id)) }.getOrNull()?.takeIf { it > 0 }
+    }
+
     override suspend fun detail(id: String): BookDetail? = withContext(Dispatchers.IO) {
         try {
             Store.init(context)
@@ -116,6 +124,40 @@ class LibraryRepo(private val context: Context, private val scope: kotlinx.corou
         } catch (error: Exception) {
             AppLog.w("Library", "Không đóng được file sách để chia sẻ: ${error.javaClass.simpleName}")
             null
+        }
+    }
+
+    override suspend fun saveKept(id: String): SaveStep = withContext(Dispatchers.IO) {
+        try {
+            Store.init(context)
+            val project = BookSaves.asProject(id, null)
+            val place = BookSaves.remembered(context, id, project) ?: return@withContext SaveStep.Ask(BookSaves.askIntent(id, project), project)
+            try {
+                val written = BookSaves.write(context, id, place, project, direct = true)
+                SaveStep.Done(written.name, written.edits)
+            } catch (error: BookSave.DestinationUnavailable) {
+                // Chỗ nhớ không ghi được nữa (file bị xoá, mất quyền): hỏi lại chỗ lưu thay vì báo lỗi.
+                BookSaves.forget(context, id)
+                SaveStep.Ask(BookSaves.askIntent(id, project), project)
+            }
+        } catch (error: Exception) {
+            AppLog.w("Library", "Không lưu được file sách: ${error.javaClass.simpleName}")
+            SaveStep.Failed(error.message?.takeIf { it.isNotBlank() } ?: "Bạn hãy thử lại.")
+        }
+    }
+
+    override suspend fun saveAsIntent(id: String, project: Boolean): Intent? = withContext(Dispatchers.IO) {
+        runCatching { Store.init(context); BookSaves.askIntent(id, project) }.getOrNull()
+    }
+
+    override suspend fun saveTo(id: String, project: Boolean?, uri: Uri): SaveStep = withContext(Dispatchers.IO) {
+        try {
+            Store.init(context)
+            val written = BookSaves.write(context, id, uri, project ?: BookSaves.asProject(id, null), direct = false)
+            SaveStep.Done(written.name, written.edits)
+        } catch (error: Exception) {
+            AppLog.w("Library", "Không lưu được file sách: ${error.javaClass.simpleName}")
+            SaveStep.Failed(error.message?.takeIf { it.isNotBlank() } ?: "Bạn hãy thử lại.")
         }
     }
 
@@ -179,6 +221,11 @@ class LibraryRepo(private val context: Context, private val scope: kotlinx.corou
     override suspend fun renamePerson(id: String, character: String, name: String): Edit<Renamed> = person(id) {
         val answer = BookActions.studio(context, "POST", id, "/characters/rename", JSONObject().put("character", character).put("name", name))
         Renamed(answer.optString("name"), answer.optBoolean("renamed"))
+    }
+
+    override suspend fun renameChapter(id: String, chapterId: Int, title: String, revert: Boolean): Edit<String> = person(id) {
+        val body = if (revert) JSONObject().put("revert", true) else JSONObject().put("title", title).put("subtitle", "")
+        BookActions.studio(context, "PUT", id, "/chapters/$chapterId/title", body).optString("fullTitle")
     }
 
     override suspend fun setGender(id: String, character: String, gender: Gender): Edit<Double> = person(id) {

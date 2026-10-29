@@ -17,9 +17,11 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import vn.abook.player.ui.data.ListenBook
 import vn.abook.player.ui.data.PlayerChapter
 import vn.abook.player.ui.data.PlayerRepo
 import vn.abook.player.ui.music.MusicState
+import vn.abook.player.ui.data.PrepareState
 import vn.abook.player.ui.voice.VoiceState
 
 /** Where Read-along text and the installed voices come from (off the main thread inside); real: [AndroidReadAlongSource]. */
@@ -46,7 +48,15 @@ class RepoNowPlayingModel(
     private val source: ReadAlongSource = ReadAlongSource.None,
     override val music: MusicState? = null,
     override val voice: VoiceState? = null,
+    private val options: () -> SleepOptions = { SleepOptions() },
+    /** Thư viện lúc này: "Đã nghe hết ..." mời tập kế / cuốn khác, và hỏi khi máy khác đã nghe xa hơn. */
+    private val books: StateFlow<List<ListenBook>> = MutableStateFlow(emptyList()),
+    private val clockMs: () -> Long = System::currentTimeMillis,
+    override val prepare: PrepareState? = null,
+    private val night: vn.abook.player.ui.data.NightState? = null,
 ) : NowPlayingModel {
+    override val hadNight: Boolean get() = night?.had == true
+
     @Immutable
     private data class Place(val bookId: String, val chapterId: Int, val ms: Long)
 
@@ -71,7 +81,69 @@ class RepoNowPlayingModel(
     private var textRequested = false
     private var textJob: Job? = null
 
+    private val noteFlow = MutableStateFlow<PlayerNote?>(null)
+    override val note: StateFlow<PlayerNote?> = noteFlow.asStateFlow()
+    private var noteDo: (() -> Unit)? = null
+    private var noteSerial = 0
+
+    private fun say(text: String, action: String? = null, lifeMs: Long = 6_000, then: (() -> Unit)? = null) {
+        noteDo = then
+        noteFlow.value = PlayerNote(text, action, ++noteSerial, lifeMs)
+    }
+
+    override fun noteAction() {
+        noteDo?.invoke()
+        noteFlow.value = null
+        noteDo = null
+    }
+
+    override fun dismissNote(serial: Int) {
+        if (noteFlow.value?.serial == serial) { noteFlow.value = null; noteDo = null }
+    }
+
+    override fun endChoices(): PlayerEnd.Choices = PlayerEnd.choices(books.value, repo.state.value.bookId, extras.value.voices.isNotEmpty())
+    override fun listen(bookId: String) = repo.playNow(bookId)
+    override fun restart() {
+        val first = repo.state.value.chapters.firstOrNull() ?: return
+        repo.jumpTo(first.id, 0.0)
+        repo.play()
+    }
+
+    /** Lúc cuốn này được nạp ở đây (mili giây): chỗ nghe thư viện ghi SAU đó là của máy khác. */
+    private var loadedBook = ""
+    private var loadedAt = 0L
+    private var askedAt = ""
+    private var continued = ""
+
+    private fun checkElsewhere(list: List<ListenBook>) {
+        val now = repo.state.value
+        if (now.bookId.isEmpty() || now.bookId != loadedBook) return
+        val last = list.firstOrNull { it.id == now.bookId }?.state?.last ?: return
+        val key = "${now.bookId}:${last.at}"
+        if (askedAt == key) return
+        val here = repo.positionMs() / 1000.0
+        if (!PlayerText.newerElsewhere(last.chapterId, last.seconds, last.at, loadedAt, now.chapterId, here)) return
+        val chapter = now.chapters.firstOrNull { it.id == last.chapterId } ?: return
+        askedAt = key
+        say(PlayerText.elsewhereLine(chapter.title, last.seconds), PlayerText.ELSEWHERE_ACTION, lifeMs = 20_000) { repo.jumpTo(last.chapterId, last.seconds) }
+    }
+
+    /** Hết một PHẦN của cùng cuốn ("Làm tiếp cuốn này"): nghe nối sang phần sau, từ chỗ nghe tiếp của nó. Tập khác của một bộ thì chỉ mời (thông báo cuối). */
+    private fun continueIntoNextPart() {
+        val now = repo.state.value
+        if (!now.ended || !now.whole || continued == now.bookId) return
+        val part = PlayerEnd.continuingPart(PlayerEnd.nextVolume(books.value, now.bookId)) ?: return
+        continued = now.bookId
+        say(PlayerText.continueLine(part.title))
+        repo.playNow(part.id)
+    }
+
     init {
+        scope.launch {
+            repo.state.map { it.bookId }.distinctUntilChanged().collect { id -> loadedBook = id; loadedAt = clockMs(); askedAt = "" }
+        }
+        scope.launch { books.collect { list -> checkElsewhere(list) } }
+        scope.launch { repo.state.map { it.ended }.distinctUntilChanged().collect { continueIntoNextPart() } }
         // Another book: the text on screen is the old one's. Read-along text itself is reloaded by the window (it keys on book + chapter).
         scope.launch {
             repo.state.map { it.bookId }.distinctUntilChanged().drop(1).collect { book -> text.value = ReadAlongState(bookId = book) }
@@ -103,6 +175,9 @@ class RepoNowPlayingModel(
             SleepKind.Minutes -> if (minutes in PlayerLabels.sleepMinutes) repo.setSleep("minutes", minutes)
         }
     }
+
+    override val sleepOptions: SleepOptions get() = options()
+    override fun extendSleep() = repo.extendSleep()
 
     override fun setVoice(id: String) {
         if (extras.value.voices.none { it.id == id && !it.online }) return
@@ -159,7 +234,17 @@ class RepoNowPlayingModel(
 }
 
 @androidx.compose.runtime.Composable
-fun rememberRepoNowPlaying(repo: PlayerRepo, source: ReadAlongSource = ReadAlongSource.None, music: MusicState? = null, voice: VoiceState? = null): RepoNowPlayingModel {
+fun rememberRepoNowPlaying(
+    repo: PlayerRepo,
+    source: ReadAlongSource = ReadAlongSource.None,
+    music: MusicState? = null,
+    voice: VoiceState? = null,
+    books: StateFlow<List<ListenBook>> = androidx.compose.runtime.remember { MutableStateFlow(emptyList()) },
+    prepare: PrepareState? = null,
+    night: vn.abook.player.ui.data.NightState? = null,
+): RepoNowPlayingModel {
     val scope = androidx.compose.runtime.rememberCoroutineScope()
-    return androidx.compose.runtime.remember(repo, source, music, voice) { RepoNowPlayingModel(repo, scope, source, music, voice) }
+    // Mức hẹn giờ do lõi giữ (SleepTimer); chỉ đọc khi tấm Hẹn giờ / lời báo cần.
+    val options = { SleepOptions((vn.abook.player.SleepTimer.fadeMs / 1000).toInt(), vn.abook.player.SleepTimer.extendMinutes) }
+    return androidx.compose.runtime.remember(repo, source, music, voice, books, prepare, night) { RepoNowPlayingModel(repo, scope, source, music, voice, options, books, prepare = prepare, night = night) }
 }

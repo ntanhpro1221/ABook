@@ -41,6 +41,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import vn.abook.player.ui.components.TextAction
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
@@ -83,6 +86,8 @@ class LibraryActions(
     val openBook: (ListenBook) -> Unit,
     val playNow: (String) -> Unit,
     val addBook: () -> Unit,
+    /** "Nối máy" ở thư viện trống: tới màn ghép với máy tính; null = không có (bản thử). */
+    val connect: (() -> Unit)? = null,
 )
 
 /** Số cột: 2 trên máy hẹp (<360 dp), 3 từ 360 dp, thêm một cột mỗi 120 dp (DESIGN.md §6 "Lưới bìa": điện thoại 2-3 cột). */
@@ -103,6 +108,8 @@ fun LibraryScreen(
     actions: LibraryActions,
     modifier: Modifier = Modifier,
     backEnabled: Boolean = true,
+    /** Thẻ "Tối qua" ở đầu lưới (sau đầu trang); null = không có (bản thử). */
+    recap: (@Composable (List<ListenBook>) -> Unit)? = null,
 ) {
     val books = (state as? LibraryState.Ready)?.books ?: return Box(modifier.fillMaxSize())
     val top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
@@ -119,7 +126,7 @@ fun LibraryScreen(
     // Back đóng ô tìm trước - chỉ khi màn này đang là màn trên cùng (không bị trang sách phủ, không ở tab khác).
     BackHandler(enabled = backEnabled && ui.searchOpen) { ui.closeSearch() }
     Box(modifier.fillMaxSize().onGloballyPositioned { coords[0] = it }) {
-        LibraryGrid(books, ui, grid, covers, sheets, actions, top) { coords[1] = it }
+        LibraryGrid(books, ui, grid, covers, sheets, actions, top, recap) { coords[1] = it }
         SortMenu(ui, anchor, backEnabled)
     }
 }
@@ -133,6 +140,7 @@ private fun LibraryGrid(
     sheets: SheetHost,
     actions: LibraryActions,
     top: Dp,
+    recap: (@Composable (List<ListenBook>) -> Unit)?,
     onSortCoordinates: (LayoutCoordinates) -> Unit,
 ) {
     val view = remember(books, ui.shown, ui.query, ui.sort) { Library.view(books, ui.shown, ui.query, ui.sort) }
@@ -156,11 +164,13 @@ private fun LibraryGrid(
                 vn.abook.player.ui.components.Reveal(books.isNotEmpty()) { FilterBar(ui, onSortCoordinates) }
             }
         }
+        if (recap != null) item(key = "recap", span = { GridItemSpan(maxLineSpan) }, contentType = "recap") { recap(books) }
         if (tiles.isEmpty()) {
             item(key = "none", span = { GridItemSpan(maxLineSpan) }, contentType = "none") {
                 if (books.isEmpty()) Column {
                     BasicText("Chưa có sách trên máy", style = Abook.type.sectionTitle)
                     RowHint("Thêm sách của bạn để bắt đầu nghe.")
+                    actions.connect?.let { TextAction("Nối máy", it, "library_connect", align = Alignment.CenterStart) }
                 } else NoMatch(ui.query.trim(), ui.filter)
             }
         } else {
@@ -226,7 +236,7 @@ private fun BookTile(
             if (series?.hasRemote ?: (lead.remote != null)) {
                 // Dưới bìa (tên bìa nằm ở đầu), góc phải: chip số tập / nhãn ở góc trái.
                 Box(Modifier.align(Alignment.BottomEnd).padding(Dim.s4).padding(bottom = 3.dp).size(22.dp).clip(CircleShape).background(Color.Black.copy(alpha = 0.5f)), contentAlignment = Alignment.Center) {
-                    RemoteIcon(Color.White)
+                    RemoteIcon(Color.White, Modifier.semantics { contentDescription = "Có sách trên máy khác" })
                 }
             }
             if (series != null) {

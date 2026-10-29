@@ -336,4 +336,48 @@ class PlayerRepoTest {
         repo.attach()
         assertTrue(core.loads.single().restore)
     }
+
+    @Test
+    fun `the end of the last chapter is remembered until something is heard again`() {
+        val core = FakePlaybackCore(snap(playing = true))
+        val repo = repo(core)
+        repo.attach()
+        assertFalse(repo.state.value.ended)
+        core.emit(snap(playing = false, kind = "ended"))
+        assertTrue(repo.state.value.ended)
+        core.emit(snap(playing = false, kind = "state"))
+        assertTrue("trạng thái dừng không xoá lời \"đã nghe hết\"", repo.state.value.ended)
+        repo.seekTo(5.0)
+        assertFalse(repo.state.value.ended)
+        core.emit(snap(playing = false, kind = "ended"))
+        core.emit(snap(playing = true))
+        assertFalse("phát lại thì hết", repo.state.value.ended)
+    }
+
+    @Test
+    fun `another book or chapter ends the end`() {
+        val core = FakePlaybackCore(snap(playing = true))
+        val repo = repo(core)
+        repo.attach()
+        core.emit(snap(playing = false, kind = "ended"))
+        core.emit(snap(book = "b2", playing = false))
+        assertFalse(repo.state.value.ended)
+    }
+
+    @Test
+    fun `the library tells the player if the book is whole and whether chapters are missing after the queue`() {
+        val core = FakePlaybackCore(snap(playing = false))
+        core.chapterList = listOf(Playback.Chapter(1, "Một", "1.mp3", 60.0))
+        val repo = repo(core)
+        repo.attach()
+        assertTrue(repo.state.value.whole)
+        assertFalse(repo.state.value.moreChapters)
+        repo.reconcile(listOf(ListenBook("b1", "Tắt đèn", chaptersTotal = 5, complete = false)))
+        assertFalse(repo.state.value.whole)
+        assertTrue(repo.state.value.moreChapters)
+        // Sự kiện sau đó giữ nguyên điều thư viện đã báo.
+        core.emit(snap(playing = true))
+        assertFalse(repo.state.value.whole)
+        assertTrue(repo.state.value.moreChapters)
+    }
 }

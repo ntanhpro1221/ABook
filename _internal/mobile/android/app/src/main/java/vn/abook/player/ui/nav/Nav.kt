@@ -105,6 +105,17 @@ class NavState(private val scope: CoroutineScope) {
         job = scope.launch { finishPop() }
     }
 
+    /** Về gốc (ba tab) một lần: màn trên cùng đi ra như Back, rồi cả ngăn xếp rỗng. */
+    fun popToRoot() {
+        if (!canPop) return
+        job?.cancel()
+        job = scope.launch {
+            progress.animateTo(0f, Motion.popOut(progress.value))
+            stack = BackStack()
+            progress.snapTo(1f)
+        }
+    }
+
     /** Back dự đoán: ngón tay kéo `back` (0..1) - màn đi theo ngón tay. Gọi trong coroutine của [PredictiveBackHandler]. */
     suspend fun dragBack(back: Float) {
         job?.cancel()

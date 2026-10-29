@@ -39,6 +39,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import vn.abook.player.AbookApplication
@@ -164,13 +165,23 @@ class NativeActivity : ComponentActivity() {
                     val shell = remember {
                         ShellState(scope) { sort -> lifecycleScope.launch(Dispatchers.IO) { prefs.setSort(sort) } }
                     }
-                    val env = remember { SettingsEnv(settings, reveal, links, if (demo) null else app.devices, if (demo) null else app.voice, if (demo) null else app.music, pip) }
+                    val env = remember { SettingsEnv(settings, reveal, links, if (demo) null else app.devices, if (demo) null else app.voice, if (demo) null else app.music, pip, if (demo) null else app.prepare, if (demo) null else app.night) }
                     LaunchedEffect(shell) { for (files in incoming) shell.receive(app.imports, files) }
                     LaunchedEffect(Unit) { shell.library.restoreSort(withContext(Dispatchers.IO) { prefs.sort() }) }
+                    // Dáng chữ của Đọc theo: đọc một lần lúc mở app, ghi mỗi khi người nghe đổi.
+                    LaunchedEffect(shell) {
+                        shell.window.look = withContext(Dispatchers.IO) { prefs.readLook() }
+                        shell.window.onLook = { look -> lifecycleScope.launch(Dispatchers.IO) { prefs.setReadLook(look) } }
+                    }
                     val state by library.state.collectAsStateWithLifecycle()
+                    // Thư viện dưới dạng danh sách cuốn cho Đang nghe: lời "Đã nghe hết ..." mời cuốn kế, và hỏi khi máy khác đã nghe xa hơn.
+                    val bookList = remember(library) {
+                        library.state.map { (it as? vn.abook.player.ui.data.LibraryState.Ready)?.books.orEmpty() }
+                            .stateIn(scope, kotlinx.coroutines.flow.SharingStarted.Eagerly, emptyList())
+                    }
                     AppShell(
                         shell, state, player, covers, env, onFirstContent = ::onFirstContent, books = library, deletions = library.deletions, companion = if (demo) null else app.companion,
-                        nowPlaying = rememberRepoNowPlaying(player, readAlong, env.music, env.voice),
+                        nowPlaying = rememberRepoNowPlaying(player, readAlong, env.music, env.voice, bookList, env.prepare, env.night),
                         imports = app.imports, editors = app.editors, exports = if (demo) null else app.exports, demo = demo, askNotifications = deviceLinks.askNotifications, autoPick = !demo,
                         pip = pip,
                     )

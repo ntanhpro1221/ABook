@@ -38,6 +38,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -69,6 +70,7 @@ import kotlinx.coroutines.launch
 import vn.abook.player.ui.components.BackButton
 import vn.abook.player.ui.components.BookCover
 import vn.abook.player.ui.components.CheckIcon
+import vn.abook.player.ui.components.CloudDownloadIcon
 import vn.abook.player.ui.components.DashedCircleIcon
 import vn.abook.player.ui.components.MoreIcon
 import vn.abook.player.ui.components.PlayPauseGlyph
@@ -188,8 +190,16 @@ fun BookScreen(
     actions: BookScreenActions,
     modifier: Modifier = Modifier,
     music: MusicState? = null,
+    prepare: vn.abook.player.ui.data.PrepareState? = null,
 ) {
     val ui = remember(book.id, source) { BookUiState(book.id, source) }
+    // Chương đã "Làm trước" (dấu "Đã làm sẵn"): lắng nghe lõi chỉ khi trang đang hiện.
+    androidx.compose.runtime.DisposableEffect(prepare) {
+        prepare?.watch(true)
+        onDispose { prepare?.watch(false) }
+    }
+    val prepared by (prepare?.status ?: remember { kotlinx.coroutines.flow.MutableStateFlow(vn.abook.player.ui.data.PrepareStatus()) }).collectAsState()
+    val preparedIds = remember(prepared, book.id) { prepared.readyIds(book.id) }
     // Thư viện đọc lại (dừng phát, đánh dấu, sửa) thì trang cũng đọc lại.
     LaunchedEffect(ui, library) { ui.load() }
     val detail = ui.detail
@@ -258,7 +268,7 @@ fun BookScreen(
             modifier = Modifier.weight(1f).fillMaxWidth().fadeEdges(list).testTag("book_list"),
             contentPadding = PaddingValues(start = Dim.margin, end = Dim.margin, top = Dim.s12, bottom = bottom + Dim.s32),
         ) {
-            item(key = "head", contentType = "head") { BookHead(shown, covers, detail?.records.orEmpty()) { openRecords(null) } }
+            item(key = "head", contentType = "head") { BookHead(shown, covers, detail?.records.orEmpty(), player.bookId == shown.id && player.hasTrack, player.error.isNotEmpty()) { openRecords(null) } }
             item(key = "actions", contentType = "actions") {
                 BookButtons(shown, detail, player, sheets, source, actions, music, notes, openRecords)
             }
@@ -285,12 +295,13 @@ fun BookScreen(
                                     playing = live && player.playing,
                                     livePosition = if (live) clock else null,
                                     durationMs = if (live) player.durationMs else 0L,
+                                    prepared = chapter.id in preparedIds,
                                     onPlay = {
                                         if (live) actions.toggle() else actions.playChapter(shown.id, chapter.id, chapter.resumeAt)
                                     },
                                     onMore = {
                                         sheets.show { dismiss ->
-                                            ChapterSheet(shown, chapter, source, onListenFromStart = { actions.playChapter(shown.id, chapter.id, 0.0) }, dismiss = dismiss)
+                                            ChapterSheet(shown, chapter, source, onListenFromStart = { actions.playChapter(shown.id, chapter.id, 0.0) }, dismiss = dismiss, notes = notes)
                                         }
                                     },
                                 )
@@ -322,7 +333,7 @@ private const val TABS_ITEM = 2
 
 /** Bìa · (tập / bộ) · tên · tác giả · giọng · số chương · thời lượng · dòng tình trạng · tiến độ mảnh. Tên dài xuống dòng, không cắt. */
 @Composable
-private fun BookHead(book: ListenBook, covers: CoverLoader, records: List<ListenRecord>, onRecords: () -> Unit) {
+private fun BookHead(book: ListenBook, covers: CoverLoader, records: List<ListenRecord>, listening: Boolean, failed: Boolean, onRecords: () -> Unit) {
     val colors = Abook.colors
     val (main, sub) = remember(book.title, book.part) { CoverArt.splitTitle(book.title, book.part) }
     Column(Modifier.fillMaxWidth().testTag("book_head")) {
@@ -354,7 +365,7 @@ private fun BookHead(book: ListenBook, covers: CoverLoader, records: List<Listen
                 },
             )
             Spacer(Modifier.height(Dim.s8))
-            BasicText(BookPage.progressLine(book), style = Abook.type.caption.copy(color = colors.text2))
+            BasicText(BookPage.progressLine(book, listening, failed), style = Abook.type.caption.copy(color = colors.text2))
         }
         // Một hồ sơ thì không có chip: các việc với hồ sơ duy nhất nằm trong bảng "Thêm" (web: singleRecordActions).
         val active = if (records.size > 1) records.firstOrNull { it.active } else null
@@ -440,7 +451,7 @@ private fun BookButtons(
                 "Từ đầu", "Nghe lại từ đầu", enabled = started && resume != null && !finished && first != null, tag = "book_restart", edge = 0, onClick = restart,
             ) { color -> RestartIcon(color) }
             SecondaryButton("", "Thêm tuỳ chọn", enabled = true, tag = "book_more", edge = 1, onClick = {
-                sheets.show { dismiss -> BookMenuSheet(book, detail, source, actions, dismiss, music, player.music.takeIf { player.bookId == book.id }, onRecord = { openRecords(it) }) }
+                sheets.show { dismiss -> BookMenuSheet(book, detail, source, actions, dismiss, music, player.music.takeIf { player.bookId == book.id }, onRecord = { openRecords(it) }, notes = notes) }
             }) { color -> MoreIcon(color) }
         }
     }
@@ -542,6 +553,7 @@ private fun ChapterRow(
     playing: Boolean,
     livePosition: PlayerClock?,
     durationMs: Long,
+    prepared: Boolean,
     onPlay: () -> Unit,
     onMore: () -> Unit,
 ) {
@@ -574,6 +586,7 @@ private fun ChapterRow(
             Column(Modifier.weight(1f)) {
                 BasicText(chapter.title, style = Abook.type.body.copy(color = title, fontWeight = if (current) FontWeight.Medium else FontWeight.Normal))
                 RowHint(BookPage.chapterLine(chapter))
+                if (prepared) PreparedMark()
                 val partly = chapter.heard > 0f && chapter.heard < 1f
                 if (livePosition != null || partly) {
                     Spacer(Modifier.height(6.dp))
@@ -603,6 +616,17 @@ private fun ChapterRow(
         ) {
             MoreIcon(colors.text2)
         }
+    }
+}
+
+/** Dấu "Đã làm sẵn" của một chương đã "Làm trước": máy đã đọc sẵn, nghe liền mạch (web: viên nhỏ nền nhấn kèm CloudDownload). */
+@Composable
+private fun PreparedMark() {
+    Row(Modifier.padding(top = Dim.s4).background(Abook.colors.accentSoft, RoundedCornerShape(Dim.radiusControl)).padding(horizontal = Dim.s4).testTag("chapter_prepared"),
+        verticalAlignment = Alignment.CenterVertically) {
+        CloudDownloadIcon(Abook.colors.accentText)
+        Spacer(Modifier.width(Dim.s4))
+        BasicText("Đã làm sẵn", style = Abook.type.caption.copy(color = Abook.colors.accentText))
     }
 }
 

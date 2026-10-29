@@ -152,6 +152,8 @@ fun RollingLabel(text: String, modifier: Modifier = Modifier, style: TextStyle =
 fun PlayMorph(
     playing: Boolean, onClick: () -> Unit,
     modifier: Modifier = Modifier, large: Boolean = true,
+    /** Nhãn đọc màn hình; mặc định "Tạm dừng" / "Phát". Đang chờ âm thanh thì nói đang chờ gì ([PlayerText.toggleLabel]). */
+    description: String? = null,
 ) {
     val colors = Abook.colors
     val view = LocalView.current
@@ -163,7 +165,7 @@ fun PlayMorph(
         view.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK)
         onClick()
     }
-        .semantics { contentDescription = if (playing) "Tạm dừng" else "Phát" }
+        .semantics { contentDescription = description ?: if (playing) "Tạm dừng" else "Phát" }
         .drawBehind { drawCircle(colors.accent) }, contentAlignment = Alignment.Center) {
         Canvas(Modifier.size(if (large) 32.dp else 24.dp)) {
             val p = morph.value

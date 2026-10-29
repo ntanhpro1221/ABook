@@ -208,9 +208,13 @@ class LibraryScreenTest {
         val shown = rule.onAllNodesWithTag("book_cell").fetchSemanticsNodes().size + rule.onAllNodesWithTag("series_cell").fetchSemanticsNodes().size
         assertTrue("chỉ còn sách khớp 'tat den', không dấu", shown in 1..6)
         shot("library_search_light")
+        // Như web: nút X lần đầu chỉ xoá chữ (ô vẫn mở để gõ lại), lần sau mới đóng ô.
         rule.onNodeWithTag("search_close").performClick()
         rule.waitForIdle()
         assertEquals("", ui.query)
+        assertTrue(ui.searchOpen)
+        rule.onNodeWithTag("search_close").performClick()
+        rule.waitForIdle()
         assertEquals(false, ui.searchOpen)
         assertEquals(0f, ui.search.value, 0f)
     }

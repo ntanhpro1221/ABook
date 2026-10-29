@@ -58,6 +58,8 @@ class AndroidPlaybackCore(context: Context) : PlaybackCore {
         }
     }
 
+    override fun extendSleep() = withService { SleepTimer.extend() }
+
     override fun voiceId(): String = ReadAloud.voiceId
     override fun setVoice(voiceId: String) = withService { ReadAloud.chooseFor(Playback.bookId, voiceId, Playback.recordId) }
     override fun load(request: LoadRequest) = withService {

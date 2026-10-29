@@ -32,6 +32,7 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import vn.abook.player.ui.components.BookCover
@@ -75,6 +76,10 @@ fun MiniPlayer(
     val colors = Abook.colors
     val durationMs = state.durationMs
     val title = state.chapterTitle.ifEmpty { state.bookTitle }
+    // Vạch mảnh trên đỉnh không có nút riêng: người dùng đọc màn hình nghe được "đã nghe bao nhiêu chương này" (bước 5 %, không dựng lại theo từng nhịp).
+    val heardPercent by androidx.compose.runtime.remember(durationMs) {
+        androidx.compose.runtime.derivedStateOf { if (durationMs > 0) (positionMs() * 100 / durationMs).toInt().coerceIn(0, 100) / 5 * 5 else 0 }
+    }
     Row(
         modifier.fillMaxWidth().heightIn(min = MiniPlayerHeight)
             .drawBehind {
@@ -89,7 +94,7 @@ fun MiniPlayer(
                     drawRect(colors.accent, Offset.Zero, Size(size.width * fraction, thick))
                 }
             }
-            .semantics { contentDescription = "Trình phát" }.testTag("mini_player"),
+            .semantics { contentDescription = "Trình phát"; stateDescription = "Đã nghe chương này" + ", " + heardPercent + "%" }.testTag("mini_player"),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(

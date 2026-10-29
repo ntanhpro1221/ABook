@@ -15,6 +15,7 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
@@ -52,9 +53,25 @@ fun NowPlayingScreen(
     LaunchedEffect(window.reading, state.bookId, state.chapterId) {
         if (window.reading) model.loadReadAlong()
     }
+    // Lời nhắc ở đầu chữ cần biết máy có giọng đọc không (chương đọc to).
+    LaunchedEffect(window.reading) { if (window.reading) model.loadVoices() }
     DisposableEffect(model, window.reading) {
         model.setReadAlongActive(window.reading)
         onDispose { model.setReadAlongActive(false) }
+    }
+    // Giọng máy đọc đoạn đầu mà chờ lâu hơn ~1,5 giây mới nói "Đang chuẩn bị giọng đọc" (đệm một nhịp giữa câu không được nháy chữ).
+    val waiting = state.playing && state.buffering
+    var waited by remember { mutableStateOf(false) }
+    LaunchedEffect(waiting) {
+        waited = false
+        if (waiting) { kotlinx.coroutines.delay(PlayerText.PREPARING_AFTER_MS); waited = true }
+    }
+    val preparing = waiting && state.speaking && waited
+    val toggleLabel = PlayerText.toggleLabel(state.playing, waiting && (!state.speaking || waited), state.speaking)
+    val subtitle = when {
+        preparing -> PlayerText.PREPARING_VOICE
+        state.ended && !state.whole -> PlayerText.CAUGHT_UP_HEAD
+        else -> state.bookTitle
     }
     val panel = Abook.colors.panel
     Box(modifier.drawBehind { drawRect(lerp(panel, background.value, windowProgress.value)) }) {
@@ -78,9 +95,14 @@ fun NowPlayingScreen(
                 Box(Modifier.fillMaxSize()) {
                   if (window.reading || textShown) {
                     val reading by model.readAlong.collectAsState()
+                    val hint = ReadHint.of(state.speaking, state.voices.isNotEmpty(), reading.paragraphs.any { it.timed }, window.look.tapped)
+                    val nextTitle = if (state.hasNext) state.chapters.getOrNull(state.chapters.indexOfFirst { it.id == state.chapterId } + 1)?.title else null
                     ReadAlongPane(reading, model.position, Modifier.fillMaxSize(),
                         onManualScroll = { controlsDimmed = true }, onTap = { controlsDimmed = false },
-                        onRetry = { controlsDimmed = false; scope.launch { model.loadReadAlong() } })
+                        onRetry = { controlsDimmed = false; scope.launch { model.loadReadAlong() } },
+                        look = window.look, hint = hint,
+                        onListen = { ms -> window.changeLook(window.look.copy(tapped = true)); model.listenFrom(ms) },
+                        nextTitle = nextTitle, onNext = model::next)
                   }
                 }
                 // Chạm bìa cũng đổi chế độ: bìa lớn -> đọc theo, bìa nhỏ -> về nghe. Bìa là phần tử chung (sharedElement) nên vùng chạm của nó
@@ -92,7 +114,7 @@ fun NowPlayingScreen(
                     RollingLabel(state.chapterTitle, parts.element(NowPlayingPart.Chapter),
                         Abook.type.bodyStrong.copy(fontSize = 20.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold))
                     Spacer(Modifier.height(4.dp))
-                    RollingLabel(state.bookTitle, parts.element(NowPlayingPart.Book), Abook.type.bodySmall)
+                    RollingLabel(subtitle, parts.element(NowPlayingPart.Book), Abook.type.bodySmall)
                 }
                 Box(Modifier.testTag("player_cover_small").then(if (window.reading) Modifier
                     .pressable { setReading(false) }.semantics { contentDescription = "Về chế độ nghe" } else Modifier))
@@ -157,9 +179,11 @@ fun NowPlayingScreen(
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly) {
                     GlyphButton("Chương trước", "|‹", model::previous, Modifier.playerReveal(windowProgress))
                     GlyphButton("Lùi 15 giây", "↶15", { model.skip(-Playback.SKIP_SECONDS) }, Modifier.playerReveal(windowProgress))
-                    PlayMorph(state.playing, model::toggle, parts.element(NowPlayingPart.Play))
+                    PlayMorph(state.playing, model::toggle, parts.element(NowPlayingPart.Play), description = toggleLabel)
                     GlyphButton("Tới 15 giây", "15↷", { model.skip(Playback.SKIP_SECONDS) }, Modifier.playerReveal(windowProgress))
-                    GlyphButton("Chương sau", "›|", model::next, Modifier.playerReveal(windowProgress))
+                    // Chương cuối: nút mờ và nói đó là chương cuối; chương sau chưa có audio: nói vì sao (nút vẫn bấm được, như web).
+                    GlyphButton(PlayerText.nextLabel(state.hasNext, state.hasNext || state.moreChapters), "›|", model::next,
+                        Modifier.playerReveal(windowProgress), dimmed = !state.hasNext && !state.moreChapters)
                 }
                 // Các ô bằng nhau (ba, hoặc bốn khi máy có PiP): tâm ở giữa mỗi phần bề ngang dù nhãn dài ngắn khác nhau.
                 Row(Modifier.fillMaxWidth().playerReveal(windowProgress)) {
@@ -169,16 +193,21 @@ fun NowPlayingScreen(
                     window.miniWindow?.let { enter -> PlayerAction("Cửa sổ mini", MINI_WINDOW_GLYPH, enter, Modifier.weight(1f).testTag("player_mini")) }
                 }
             }
-            if (state.error.isNotBlank()) PlayerAlert(state, model, window, Modifier.playerReveal(windowProgress))
+            SleepNotice(state, model, Modifier.playerReveal(windowProgress))
+            PlayerNoteLine(model, Modifier.playerReveal(windowProgress))
+            EndNotice(state, model, window, Modifier.playerReveal(windowProgress))
+            // Gạt lời báo đi tới lần lỗi mới (web: "Đóng lời báo"): người đang làm việc khác không bị nó đè mãi.
+            var dismissed by remember(state.error) { mutableStateOf(false) }
+            if (state.error.isNotBlank() && !dismissed) PlayerAlert(state, model, window, Modifier.playerReveal(windowProgress), onDismiss = { dismissed = true })
         }
         PlayerSheets(state, model, window)
     }
 }
 
 @Composable
-fun GlyphButton(label: String, glyph: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun GlyphButton(label: String, glyph: String, onClick: () -> Unit, modifier: Modifier = Modifier, dimmed: Boolean = false) {
     val view = LocalView.current
-    Box(modifier.size(48.dp).pressable {
+    Box(modifier.size(48.dp).then(if (dimmed) Modifier.alpha(0.4f) else Modifier).pressable {
         view.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK)
         onClick()
     }.semantics { contentDescription = label }, contentAlignment = Alignment.Center) {

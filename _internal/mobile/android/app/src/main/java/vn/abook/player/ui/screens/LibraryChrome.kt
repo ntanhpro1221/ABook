@@ -225,7 +225,7 @@ fun SearchBox(ui: LibraryUiState, modifier: Modifier = Modifier) {
                 },
             )
             Box(
-                Modifier.size(Dim.touch).pressable { ui.closeSearch() }.semantics { contentDescription = "Đóng ô tìm" }.testTag("search_close"),
+                Modifier.size(Dim.touch).pressable { ui.clearOrClose() }.semantics { contentDescription = if (ui.query.isNotEmpty()) "Xoá ô tìm" else "Đóng ô tìm" }.testTag("search_close"),
                 contentAlignment = Alignment.Center,
             ) {
                 CloseIcon(colors.text2, size = 18.dp)
