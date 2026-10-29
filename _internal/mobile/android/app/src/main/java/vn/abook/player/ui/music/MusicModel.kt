@@ -156,11 +156,11 @@ object MusicLevels {
 
     /** Cùng chữ với web (shared/musicLevels.ts MUSIC_LEVELS, đã kèm lời levelText): -28 là mức nhạc khó che lời đọc nhất (MIX_QA mục 7.1). */
     val levels: List<Pair<Double, String>> = listOf(
-        -14.0 to "To", -17.0 to "Hơi to", -20.0 to "Vừa (mặc định)", -24.0 to "Nhỏ", -28.0 to "Rất nhỏ (dễ nghe lời nhất)",
+        -14.0 to "To", -17.0 to "Hơi to", -20.0 to "Vừa (mặc định)", -24.0 to "Nhỏ", -28.0 to "Rất nhỏ (rõ lời)",
     )
 
-    /** Tên ô chọn mức của web: "Mức nhạc dưới giọng đọc". */
-    const val TITLE = "Mức nhạc dưới giọng đọc"
+    /** Tên ô chọn mức của web: "Mức nhạc nền" (MusicTab, EditBook, menu Nhạc nền). */
+    const val TITLE = "Mức nhạc nền"
 
     /** Các mức: có sẵn, thêm mức của sách (sách đóng gói ở -18 dB, "-18 dB (của sách)" như levelOptions) nếu không trùng mức nào - xếp từ to tới nhỏ. */
     fun options(current: Double): List<Pair<Double, String>> =

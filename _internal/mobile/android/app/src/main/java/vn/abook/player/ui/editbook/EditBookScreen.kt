@@ -328,7 +328,7 @@ private fun ReadingRow(item: WordReading, editing: Boolean, saving: Boolean, onE
     }
 }
 
-/** Ô cách đọc của một từ (web: ReadingForm): "“X” đọc là", ô gõ, "Lưu cho cả cuốn", và "Đọc như chữ trong sách" khi từ đã có cách đọc riêng. */
+/** Ô cách đọc của một từ (web: ReadingForm): "“X” đọc là", ô gõ, "Lưu cho cả cuốn", và "Đọc như trong sách" khi từ đã có cách đọc riêng. */
 @Composable
 private fun ReadingForm(surface: String, current: String, saving: Boolean, onSave: (String) -> Unit) {
     var value by remember(surface, current) { mutableStateOf(current) }
@@ -338,6 +338,6 @@ private fun ReadingForm(surface: String, current: String, saving: Boolean, onSav
         Spacer(Modifier.height(Dim.s12))
         PrimaryButton("Lưu cho cả cuốn", { onSave(value) }, Modifier.fillMaxWidth().testTag("reading_save"),
             enabled = !saving && ReadingText.canSave(surface, current, value))
-        if (current.isNotEmpty()) TextAction("Đọc như chữ trong sách", { if (!saving) onSave("") }, "reading_plain", Modifier.fillMaxWidth(), align = Alignment.Center)
+        if (current.isNotEmpty()) TextAction("Đọc như trong sách", { if (!saving) onSave("") }, "reading_plain", Modifier.fillMaxWidth(), align = Alignment.Center)
     }
 }

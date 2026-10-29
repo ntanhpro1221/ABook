@@ -5,7 +5,7 @@ import { AlertTriangle, Check, ChevronLeft, ChevronRight, Loader2, RotateCw, Wif
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { ButtonHTMLAttributes, ComponentType, CSSProperties, FocusEvent, HTMLAttributes, ReactNode, Ref, SelectHTMLAttributes } from "react";
 import { cn } from "@/shared/cn";
-import { MOTION, markArrival, scrollMotion } from "@/shared/motion";
+import { markArrival, scrollMotion } from "@/shared/motion";
 import { revealedScroll, wheelScroll } from "@/shared/tabScroll";
 import { keepDots } from "./DotJoin";
 import { MotionRegion } from "./MotionRegion";
@@ -735,7 +735,6 @@ export function Sheet({
   focusSelector,
   onKeyDown,
   className,
-  onHeightChange,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -748,7 +747,6 @@ export function Sheet({
   focusSelector?: string;
   onKeyDown?: React.KeyboardEventHandler<HTMLDivElement>;
   className?: string;
-  onHeightChange?: (height: number) => void;
 }) {
   useArrivalOnOpen(open);
   const lastContent = useRef({ title, children, description, footer });
@@ -795,18 +793,6 @@ export function Sheet({
       surface.removeEventListener("touchend", end); surface.removeEventListener("touchcancel", cancel);
     };
   }, [surface, open]);
-  useEffect(() => {
-    if (!open || !onHeightChange) return;
-    const element = surface;
-    if (!element) return;
-    // Bảng đổi cao liên tục (danh sách con mở / khép) thì chỉ báo khi đã đứng: mỗi lần báo là cả màn bên dưới đổi cỡ (soát điện thoại 26-10: báo mỗi
-    // khung = tác vụ 111 ms, giật 22 % khung khi mở danh sách Giọng đọc).
-    let settle = 0;
-    const update = () => onHeightChange(element.getBoundingClientRect().height);
-    update();
-    const observer = new ResizeObserver(() => { window.clearTimeout(settle); settle = window.setTimeout(update, MOTION.medium); }); observer.observe(element);
-    return () => { observer.disconnect(); window.clearTimeout(settle); onHeightChange(0); };
-  }, [open, onHeightChange, surface]);
   useLayoutEffect(() => { if (open) opener.current = lastFocus; }, [open]);
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>

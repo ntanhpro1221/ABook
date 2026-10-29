@@ -15,8 +15,8 @@ export function ExportRevisionNotice({ book }: { book: ListenBook }) {
     <p className="font-semibold">Bạn có bản xuất đã cũ sau khi sửa và thu lại.</p>
     {stale.map((item) => <div key={item.target}>
       <p className="break-all">{item.target} · {item.changed.length} chương đã đổi</p>
-      {item.kind === "mp3" ? <Button size="sm" variant="ghost" onClick={() => void exportMp3(book, false, item.changed)}>Xuất lại các chương đã đổi</Button>
-        : item.kind === "m4b" ? <><p>M4B gộp cả cuốn: bạn cần dựng lại cả file và thay bản đã chép hoặc gửi.</p><Button size="sm" variant="ghost" onClick={() => void chooseM4b(book)}>Xuất lại cả file M4B</Button></>
+      {item.kind === "mp3" ? <Button size="sm" variant="ghost" onClick={() => void exportMp3(book, false, item.changed)}>Xuất chương đã đổi</Button>
+        : item.kind === "m4b" ? <><p>M4B gộp cả cuốn: bạn cần dựng lại cả file và thay bản đã chép hoặc gửi.</p><Button size="sm" variant="ghost" onClick={() => void chooseM4b(book)}>Xuất lại M4B</Button></>
         : <p>Bạn hãy dùng “Lưu thành…” trong menu sách để xuất lại file và thay bản đã chép hoặc gửi.</p>}
     </div>)}
   </MotionRegion>;

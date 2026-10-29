@@ -47,12 +47,12 @@ describe("tiêu đề thẻ người kể sau khi quyết", () => {
 
 describe("nút của thẻ người kể", () => {
   it("đoạn mở bằng dòng tiêu đề góc nhìn: nút nhận nói đúng tên dòng ấy gọi", () => {
-    expect(narratorButtons("Lâm", { label: "Mai" })).toEqual({ accept: "Nhận: Mai kể đoạn này", keep: "Giữ Lâm là người kể", accepted: "Người kể: Mai" });
-    expect(narratorButtons("Lâm", { label: "" })).toEqual({ accept: "Nhận: đoạn kể ngôi thứ ba", keep: "Giữ Lâm là người kể", accepted: "Đổi người kể" });
+    expect(narratorButtons("Lâm", { label: "Mai" })).toEqual({ accept: "Mai kể", keep: "Giữ Lâm", accepted: "Người kể: Mai" });
+    expect(narratorButtons("Lâm", { label: "" })).toEqual({ accept: "Kể ngôi thứ ba", keep: "Giữ Lâm", accepted: "Đổi người kể" });
   });
-  it("thẻ cũ giữ nguyên chữ; chương kể ngôi thứ ba không nói 'Giữ  là người kể'", () => {
-    expect(narratorButtons("Lâm")).toEqual({ accept: "Không phải Lâm kể - đoạn kể ngôi thứ ba", keep: "Giữ Lâm là người kể", accepted: "Đổi người kể" });
-    expect(narratorButtons("", { label: "Mai" }).keep).toBe("Giữ nguyên ngôi thứ ba");
+  it("đoạn không có tiêu đề góc nhìn: nút nhận là kể ngôi thứ ba; chương kể ngôi thứ ba không nói 'Giữ ' trống tên", () => {
+    expect(narratorButtons("Lâm")).toEqual({ accept: "Kể ngôi thứ ba", keep: "Giữ Lâm", accepted: "Đổi người kể" });
+    expect(narratorButtons("", { label: "Mai" }).keep).toBe("Giữ ngôi thứ ba");
     expect(narratorDecidedTitle("", "Giữ nguyên")).toBe("Đoạn này vẫn kể ở ngôi thứ ba");
     expect(narratorDecidedTitle("", "Người kể: Mai")).toBe("Đoạn này do Mai kể");
   });

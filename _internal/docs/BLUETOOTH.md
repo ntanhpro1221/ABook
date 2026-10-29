@@ -188,7 +188,7 @@ coi là hỏng, và các lần làm mới nền 10 phút sau không chờ lại 
 hỏng nhanh như cũ. Không gõ cửa UDP: theo đo đạc trên, gói tới socket Wi-Fi đã có sẵn lúc nối TCP.
 
 **Cho ABook chạy nền (phía điện thoại).** Không có API công khai nào để app tự xin HANS / MIUI / One UI miễn; chỉ người dùng bật được.
-Khi bật "Cho máy khác nghe thư viện này", màn Thiết bị có nút "Để máy tính khỏi phải chờ: cho ABook chạy nền" mở trang thông tin
+Khi bật "Cho máy khác nghe thư viện này", màn Thiết bị có nút "Cho ABook chạy nền" mở trang thông tin
 ứng dụng (`ACTION_APPLICATION_DETAILS_SETTINGS`, `LibraryPlugin.openAppSettings`) và một dòng chỉ đường theo `Build.MANUFACTURER`
 (`ui/src/android/backgroundHelp.ts`: OPPO/realme/OnePlus "Pin → Cho phép hoạt động nền + Tự khởi chạy", Xiaomi "Tiết kiệm pin →
 Không hạn chế", Samsung "Pin → Không hạn chế"). Không gọi thành phần riêng không công bố của hãng.

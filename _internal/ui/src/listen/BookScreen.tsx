@@ -826,7 +826,7 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
               <Plus className="size-4" /> Hồ sơ mới
             </DropdownMenu.Item>
             <DropdownMenu.Item onSelect={() => setDialog({ kind: "rename", name: active.name })} className={MENU_ITEM}>
-              <TextCursorInput className="size-4" /> Đổi tên hồ sơ này
+              <TextCursorInput className="size-4" /> Đổi tên hồ sơ
             </DropdownMenu.Item>
             <DropdownMenu.Item onSelect={() => setDialog({ kind: "move", name: active.name })} className={MENU_ITEM}>
               <ArrowRightLeft className="size-4" /> Chuyển sang cuốn khác
@@ -847,7 +847,7 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
               variant={dialog?.kind === "delete" ? "danger" : "primary"}
               disabled={(dialog?.kind === "rename" && !dialog.name.trim()) || (dialog?.kind === "move" && !dialog.target)}
             >
-              {dialog?.kind === "create" ? "Tạo và nghe từ đầu" : dialog?.kind === "delete" ? "Xoá hồ sơ" : dialog?.kind === "move" ? "Chuyển" : "Lưu"}
+              {dialog?.kind === "create" ? "Tạo và nghe" : dialog?.kind === "delete" ? "Xoá hồ sơ" : dialog?.kind === "move" ? "Chuyển" : "Lưu"}
             </Button>
           </DialogActions>}
         open={dialog !== null}

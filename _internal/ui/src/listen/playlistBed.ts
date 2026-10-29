@@ -54,7 +54,7 @@ export interface PlaylistView {
   playlistAuto?: boolean;
   /** Cuốn chưa chọn nhạc và người dùng đã tắt "tự chọn nhạc nền" trong Cài đặt: chưa có nhạc cho cuốn này. */
   autoOff?: boolean;
-  /** Mức nhạc dưới giọng đọc (dB) người nghe đã chọn cho cuốn, hay mặc định của máy khi chưa chọn. */
+  /** Mức nhạc nền (dB) người nghe đã chọn cho cuốn, hay mặc định của máy khi chưa chọn. */
   levelDb?: number;
   /** Có bài của danh sách đang bị giữ lại vì mất mạng (lõi native điện thoại; máy tính nói ở tab Nhạc của Studio): lời báo cho người nghe. */
   error?: string;

@@ -123,7 +123,8 @@ Token có sẵn (`shared/motion.ts` = `--motion-*` trong `styles.css`): nhanh 12
 - **Đổi nội dung tại chỗ = mờ qua** (ảnh cũ mờ hết rồi cái mới mới hiện, không hai lớp chữ chồng nhau); đổi cỡ thì tween chiều
   cao cùng lúc (MotionRegion, Collapse).
 - **Phần tử chung giữa hai màn** (shared element): thanh phát thu nhỏ nở thành trình phát đầy đủ (khung + bìa bay từ ô nhỏ ra
-  ô lớn); bìa ở Thư viện bay vào vị trí bìa ở trang sách. View Transitions khi WebView có, không thì mờ qua.
+  ô lớn; `listen/nowPlayingMorph.ts`, Web Animations trên chính phần tử, không chụp ảnh tài liệu); bìa ở Thư viện bay vào vị trí bìa ở trang sách.
+- **Căn giữa trục chéo**: thành phần dùng chung (bìa, icon) không tự mang `self-*`; hàng quyết định căn (máy dò CROSS CENTER).
 - **Danh sách**: thêm/xoá hàng mở/khép tại chỗ (useListPresence), hàng khác trượt theo, không nhảy.
 - **Phản hồi chạm**: nhấn = thu 0,97 + tối nền 6 % trong 90 ms, thả = về trong 120 ms; nút phát đổi icon phát/dừng bằng mờ
   chéo tại chỗ. Không nảy, không vượt đích - sang trọng là dứt khoát (mọi `cubic-bezier` giữ tung độ trong [0, 1]).
@@ -204,6 +205,7 @@ giống app hệ thống; không tự chế chuỗi rung dài.
 - **Mọi vùng cuộn dọc** (danh sách trong bảng trượt / hộp, trang dưới nút ←, màn có thanh nút đáy, Thư viện / Cài đặt trên thanh phát + thanh tab): mép mờ dần 24 px chỉ ở phía còn cuộn được - mép dưới khi còn hàng chưa thấy, mép trên khi đã cuộn; hàng không bao giờ cụt cứng dưới tiêu đề, tay nắm hay thanh cố định (soát 26-10: dòng nhật ký đầu cắt ngang dưới lời "Có tên sách; khoá..."). Một thành phần mỗi nền tảng: điện thoại `Modifier.fadeEdges(state)` (ui/components/ScrollFade.kt, đặt trước `verticalScroll`), web `useFadeScroller` / `useScrollFadeOn` (shared/scrollFade.ts, `mask-image`). Máy dò: `ScrollFadeRulesTest.kt`, `scrollFadeRules.test.ts`. Khung có viền / bóng thì mặt nạ đặt ở lớp trong (mặt nạ xoá cả bóng).
 - **Bảng trượt / hộp thoại**: điện thoại = bảng trượt từ đáy có tay nắm; máy tính = hộp giữa màn rộng ≤ 560. Nút chính ở
   đáy, luôn thấy (đáy dính khi nội dung cuộn).
+  Lớp phủ nằm LÊN trên: màn bên dưới đứng yên, không co hay chừa chỗ theo bảng (máy kiểm: gallery/overlayStill.phone.dom.test.tsx).
 - **Thanh phát thu nhỏ**: điện thoại = bìa · tên chương / tên sách · phát. Máy tính = trái bìa+tên; giữa lùi 15 · phát ·
   tới 15 + thanh tiến độ; phải tốc độ · âm lượng · "…" (hẹn giờ, phát trên thiết bị khác, nhạc nền, giọng...).
 - **Toast**: một dòng + tối đa một hành động, tự tắt, Back đóng.

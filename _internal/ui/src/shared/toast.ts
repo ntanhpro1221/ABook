@@ -1,6 +1,32 @@
 import { toast as sonner, type ExternalToast } from "sonner";
 import { prepareToast } from "./ToastDetails";
 
+/** Chỉ vùng Sonner nhận biến vị trí; đặt ở html làm mọi câu trong chương phải tính lại style. */
+export function toastOffset(edge: "top" | "bottom", doc: Document = document) {
+  const property = `--toast-${edge}`;
+  const toasters = new Set<HTMLElement>();
+  let value = "";
+  const apply = () => {
+    if (!value) return;
+    for (const toaster of doc.querySelectorAll<HTMLElement>("[data-sonner-toaster]")) {
+      toasters.add(toaster);
+      if (toaster.style.getPropertyValue(property) !== value) toaster.style.setProperty(property, value);
+    }
+  };
+  // Sonner có thể thêm vùng khi đổi vị trí thông báo hoặc thay vùng sau khi xoay màn.
+  const observer = typeof MutationObserver === "undefined" ? null : new MutationObserver(records => {
+    if (records.some(record => [...record.addedNodes].some(node => node instanceof Element && (node.matches("[data-sonner-toaster]") || node.querySelector("[data-sonner-toaster]"))))) apply();
+  });
+  observer?.observe(doc.body, { childList: true, subtree: true });
+  return {
+    set(next: string) { value = next; apply(); },
+    dispose() {
+      observer?.disconnect();
+      for (const toaster of toasters) toaster.style.removeProperty(property);
+    },
+  };
+}
+
 // Sonner không đưa ID lên DOM. Giữ ID thật (cả string lẫn number) trên lớp CSS
 // của từng toast, để Back đóng đúng thông báo dù không dựng nút đóng.
 const prefix = "abook-toast-id-";

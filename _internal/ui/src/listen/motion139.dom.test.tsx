@@ -106,7 +106,7 @@ it("C1 thanh phát: đổi chương mờ chéo tên chương, đổi cuốn mờ
     setTrack({ bookId: "b", bookTitle: "Sách B" });
     await render(<PlayerBar compact={compact} />);
     // Bìa vẽ đổi màu theo tên: cả khung bìa (MotionRegion gốc của BookCover) có ảnh cũ và hiện dần.
-    expect(animated((element) => element.classList.contains("cover-morph")).length).toBeGreaterThan(0);
+    expect(animated((element) => element.getAttribute("data-np") === "cover").length).toBeGreaterThan(0);
     await act(() => root.unmount()); document.body.replaceChildren(); host = document.createElement("div"); document.body.append(host); root = createRoot(host);
   }
 });
