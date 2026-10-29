@@ -431,7 +431,10 @@ private slots:
         rig.serve(4800); rig.device->consume(2400); rig.mixer.service(0);
         QCOMPARE(voice.position(), 5.05);
         voice.pause(); const int resets = rig.device->resets; rig.mixer.service(0); QCoreApplication::processEvents();
-        QVERIFY(!rig.device->running); QVERIFY(rig.device->resets > resets);
+        // Pause: tiếng cũ thêm 20 ms tới pivot rồi mờ ra 10 ms (không tắt phụt); thiết bị chỉ Stop khi đuôi đã phát hết.
+        QVERIFY(rig.device->resets > resets); QCOMPARE(rig.device->queued, size_t(1440));
+        QVERIFY(std::abs(rig.device->output.back()) < 1e-3);
+        rig.device->consume(rig.device->queued); rig.mixer.service(0); QVERIFY(!rig.device->running);
         QCOMPARE(playing.size(), 2); QCOMPARE(playing[1][0].toBool(), false); QCOMPARE(voice.position(), 5.05);
         voice.play(); rig.mixer.serviceReader(); rig.serve(480); QCOMPARE(voice.position(), 5.05);
         voice.seek(voice.duration() - 0.01); rig.mixer.service(0); rig.mixer.serviceReader();
