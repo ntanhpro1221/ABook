@@ -40,13 +40,13 @@ FocusScope {
 
     // Quyết xong việc cuối của loại đang lọc: loại ấy biến khỏi thanh lọc - về "Tất cả", đừng để danh sách trống không lời
     readonly property string active: group.active
-    onActiveChanged: Qt.callLater(function() { if (root.all !== null && root.kind !== root.active) { root.kind = root.active; root.kindChosen(root.active) } })   // sau khi group tính xong: đổi kind ngay trong lúc tính là vòng lặp
+    onActiveChanged: Later.call(root, function() { if (root.all !== null && root.kind !== root.active) { root.kind = root.active; root.kindChosen(root.active) } })   // sau khi group tính xong: đổi kind ngay trong lúc tính là vòng lặp
     onAllChanged: {
         if (all === null || focusKey === "" || focused) return
         focused = true
         const index = (group ? group.filtered : []).findIndex(function(item) { return item.key === focusKey })
         if (index >= shown) shown = Math.ceil((index + 1) / W.PAGE) * W.PAGE
-        Qt.callLater(function() { root.focusCard(root.focusKey, false) })
+        Later.call(root, function() { root.focusCard(root.focusKey, false) })
     }
 
     // ---- thẻ và tiêu điểm ----
@@ -112,7 +112,7 @@ FocusScope {
             if (now && now !== root.Window.window.contentItem) { root.lastCard = ""; return }
             const target = W.focusAfterChange(root.snapshot, root.listsNow(), root.lastCard)
             root.lastCard = ""
-            if (target !== null) Qt.callLater(function() { root.focusCard(target, true) })
+            if (target !== null) Later.call(root, function() { root.focusCard(target, true) })
         }
     }
     Keys.onShortcutOverride: event => { if (event.key === Qt.Key_Escape && root.cursor >= 0) event.accepted = true }

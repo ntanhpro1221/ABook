@@ -104,7 +104,7 @@ QtObject {
         // Giọng mặc định chỉ chốt khi đã biết giọng nào là giọng bạn đặt (tuỳ chọn về sau danh sách giọng thì không được chốt nhầm giọng máy đề xuất)
         if (!draft.narrator && voices.length && prefsAsked) update({narrator: Logic.defaultNarrator(voices, preferredNarrator)})
     }
-    onDraftChanged: if (!draft.narrator && voices.length && prefsAsked) Qt.callLater(settle)
+    onDraftChanged: if (!draft.narrator && voices.length && prefsAsked) Later.call(root, settle)
 
     function reset() {
         draft = Logic.emptyDraft()
@@ -149,7 +149,7 @@ QtObject {
 
     // ---- quét nguồn: chỉ khi danh sách nguồn đổi ----
     readonly property string pathsKey: Logic.sourcesKey(draft.paths)
-    onPathsKeyChanged: Qt.callLater(rescan)         // sau khi nháp đổi xong (lời đáp đồng bộ của máy thử không được ghi lại nháp giữa lúc đang đổi)
+    onPathsKeyChanged: Later.call(root, rescan)         // sau khi nháp đổi xong (lời đáp đồng bộ của máy thử không được ghi lại nháp giữa lúc đang đổi)
     function rescan() {
         if (!draft.paths.length) { latest = ""; scanned = null; problem = null; scanning = false; return }
         const key = pathsKey

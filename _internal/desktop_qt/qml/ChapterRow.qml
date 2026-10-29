@@ -102,7 +102,7 @@ Interactive {
         Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
         onClicked: {
             root.onMenuButton = true
-            Qt.callLater(function() { root.onMenuButton = false })
+            Later.call(root, function() { root.onMenuButton = false })
             root.menuRequested(more)
         }
     }

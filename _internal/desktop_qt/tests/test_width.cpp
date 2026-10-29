@@ -6,6 +6,7 @@
 #include "mediacontrols.h"
 #include "readalong.h"
 #include "glyphaudit.h"
+#include "later.h"
 #include <QFontDatabase>
 #include <QQmlEngine>
 #include <QQmlContext>
@@ -122,6 +123,7 @@ public slots:
         Feedback::setInstance(feedback.get());
         QObject::connect(player.get(), &Player::playingChanged, feedback.get(), [this] { feedback->setBookPlaying(player->playing()); });
         qmlRegisterType<BookDetail>("ABook", 1, 0, "BookDetail");
+        qmlRegisterSingletonType<Later>("ABook", 1, 0, "Later", [](QQmlEngine *, QJSEngine *) -> QObject * { return new Later; });
         qmlRegisterSingletonInstance("ABook", 1, 0, "Player", player.get());
         qmlRegisterSingletonInstance("ABook", 1, 0, "ReadAlong", read.get());
         qmlRegisterSingletonInstance("ABook", 1, 0, "Music", music.get());
