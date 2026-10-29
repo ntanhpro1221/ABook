@@ -1,5 +1,6 @@
 .pragma library
 .import "ImportQueue.js" as Queue
+.import "VoiceLogic.js" as Voice
 
 // Hàm thuần của "Nhân vật" ở trang sách (CastList / PersonRow của listen/BookScreen.tsx, MergeDialog / GenderDialog của studio/): tên đã làm sạch,
 // chữ cái đầu và màu ô tròn, dòng giọng / chờ áp dụng / số câu, người của các chương sau, cuộc gọi chọn giọng. Chữ giữ đúng từng chữ của bản web.
@@ -195,3 +196,59 @@ function rerecordText(name, cost) {
     return "Đổi giọng là thu lại " + formatNumber(cost.lines) + " câu đã thu của " + name + ", " + estimateText(cost.seconds, cost.measured) + "."
 }
 function genderWord(gender) { return gender === "female" ? "nữ" : "nam" }
+
+// ---- "Nghe thử bằng câu của sách" (VoiceTry.tsx, previewText.ts, voiceTryText.ts) -----------------------------------------------
+// Máy thu thử một câu của chính nhân vật bằng giọng đang cân nhắc - đúng giọng sẽ áp, không ghi gì vào sách. Bản đã nghe trong phiên (theo sách, người,
+// giọng): bấm lại là phát lại, không hỏi máy chủ.
+var heard = {}
+function tryKey(bookId, request) { return [bookId, request.character, request.preset || "", request.gender || "", request.avoid || ""].join("\u0000") }
+function tryId(preview) { return "voice-try-" + preview.url }
+function tryLabel(voiceName, playing) { return playing ? "Dừng nghe thử" : "Nghe giọng " + voiceName + " đọc một câu của sách" }
+function tryHint(name, hasLine) {
+    return hasLine ? "Nút sách đọc câu của " + name + "; ▶ đọc mẫu chung." : name + " chưa có câu nào để đọc thử - nút ▶ là câu mẫu chung của giọng."
+}
+function tryAsking(voiceName) { return "Máy đang đọc thử giọng " + voiceName + " - lần đầu có thể mất vài chục giây" }
+var NO_LINE = "Người này chưa có câu nào để đọc thử - đang phát câu mẫu chung của giọng"
+// Lời từ chối của máy chủ: mã quen thì câu viết sẵn, không thì lời của máy chủ (đã là tiếng Việt)
+var REFUSALS = {
+    producing: "Máy đang làm sách; thử lại khi xong.",
+    gpu: "Card đồ hoạ đang bận - thử lại sau ít phút",
+    studio: "Cài Studio để nghe thử.",
+    busy: "Đang nghe thử câu khác - bấm lại sau ít giây"
+}
+function refusalText(reason, fallback, named) {
+    if (reason === "producing" && named) return fallback
+    return (typeof reason === "string" && REFUSALS[reason]) || fallback
+}
+// Đầu một câu để nhắc lại: bỏ ngoặc thoại hai đầu, cắt ở ranh giới từ (shared/format.ts excerpt)
+function excerpt(text, max) {
+    max = max || 48
+    const clean = String(text || "").replace(/\s+/g, " ").trim().replace(/^["“”'‘’«»『』「」—–\-\s]+|["“”'‘’«»『』「」\s]+$/g, "")
+    if (clean.length <= max) return clean
+    const cut = clean.slice(0, max)
+    const space = cut.lastIndexOf(" ")
+    return (space > max / 2 ? cut.slice(0, space) : cut).replace(/[\s,.;:!?…—–-]+$/, "") + "…"
+}
+function previewCaption(text, speaker) {
+    return "Lúc thu thật sẽ nghe gần như vậy · câu “" + excerpt(text, 70) + "”" + (speaker ? " · giọng " + speaker : "")
+}
+
+// ---- Mô-đun giọng của máy đọc khác (voiceEngines.ts: EngineModuleStatus, moduleNote) --------------------------------------------------
+// Dòng ghi chú dưới tên nhóm của một máy đọc chưa sẵn sàng trên máy này; "" khi đã dùng được
+function moduleNote(status) {
+    if (!status || status.state === "ready") return ""
+    if (status.state === "downloading") return "Đang tải giọng (" + Voice.formatSize(status.total) + ") " + Voice.percent(status) + "%"
+    if (status.state === "error") return status.error || "Chưa tải được giọng - thử lại."
+    if (status.state === "unsupported") return "Máy này chưa dùng được những giọng này."
+    const cancelled = status.cancelled ? Voice.CANCELLED_NOTE + " " : ""
+    if (status.damaged) return cancelled + "Giọng này đã tải nhưng một phần bị mất hay hỏng - bấm Sửa giọng để tải lại đúng phần ấy."
+    if (status.state === "outdated") return cancelled + "Có bản giọng mới (" + Voice.formatSize(status.bytes) + ") - tải để dùng tiếp."
+    return cancelled + "Máy đọc khác: cần tải thêm " + Voice.formatSize(status.bytes) + ", một lần."
+}
+// Nút tải của nhóm: chỉ khi máy đọc chưa có / hỏng / cũ
+function moduleAction(status) {
+    if (!status || ["missing", "error", "outdated"].indexOf(status.state) < 0) return ""
+    return status.state === "error" ? "Thử lại" : status.damaged ? "Sửa giọng" : "Tải giọng"
+}
+// Nhóm có đầu riêng (tên + nút tải) khi có hai nhóm trở lên hay không phải máy đọc chính (VieNeu)
+function groupHasHeader(groups, group) { return groups.length > 1 || group.engine !== "vieneu" }
