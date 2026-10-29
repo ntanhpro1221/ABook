@@ -13,7 +13,7 @@ QtObject {
     signal previewStarted()
     signal previewEnded()
     signal previewFailed(string reason)
-    function reset() { requests = []; responses = {}; pending = []; delayed = false; previews = []; starts = []; stops = 0; sources = []; read = []; pickers = [] }
+    function reset() { requests = []; responses = {}; pending = []; delayed = false; previews = []; starts = []; stops = 0; sources = []; read = []; pickers = []; folders = []; folderAnswer = "D:/Đã xuất" }
     function request(method, path, body, done) {
         requests = requests.concat([{method: method, path: path, body: body}])
         // Đáp giả: "PUT /api/x" (theo cách gọi) trước, rồi "/api/x"; đáp là hàm thì gọi với (body, method).
@@ -38,6 +38,8 @@ QtObject {
     property var sources: []
     property var read: []
     property var pickers: []                // lần mở hộp chọn file giả của trình tạo sách (NewPicker giả)
+    property var folders: []                // lần mở hộp chọn thư mục giả (NativeFolders giả): {title, start}
+    property string folderAnswer: "D:/Đã xuất"   // thư mục hộp giả "chọn"; rỗng = người dùng đóng hộp mà không chọn
     function sourceFiles(paths) { return sources }
     function fileBase64(local) { read = read.concat([local]); return "ZmFrZQ==" }
 }

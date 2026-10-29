@@ -62,7 +62,7 @@ ProviderKey 1.0 ../../../../qml/ProviderKey.qml
 SettingsDevices 1.0 ../../../../qml/SettingsDevices.qml
 SettingsStudio 1.0 ../../../../qml/SettingsStudio.qml
 MyMusicSettings 1.0 ../../../../qml/MyMusicSettings.qml
-NativeFolders 1.0 ../../../../qml/NativeFolders.qml
+NativeFolders 1.0 NativeFolders.qml
 ThirdPartyText 1.0 ../../../../qml/ThirdPartyText.qml
 AddBook 1.0 ../../../../qml/AddBook.qml
 EditBook 1.0 ../../../../qml/EditBook.qml
@@ -259,3 +259,15 @@ StudioMusicTrackRow 1.0 ../../../../qml/StudioMusicTrackRow.qml
 StudioMusicMoods 1.0 ../../../../qml/StudioMusicMoods.qml
 StudioMusicDetails 1.0 ../../../../qml/StudioMusicDetails.qml
 StudioMyMusic 1.0 ../../../../qml/StudioMyMusic.qml
+ApplyChanges 1.0 ../../../../qml/ApplyChanges.qml
+ChapterError 1.0 ../../../../qml/ChapterError.qml
+ExportBook 1.0 ../../../../qml/ExportBook.qml
+ExportBusy 1.0 ../../../../qml/ExportBusy.qml
+ExportDone 1.0 ../../../../qml/ExportDone.qml
+ExportJob 1.0 ../../../../qml/ExportJob.qml
+ExportKinds 1.0 ../../../../qml/ExportKinds.qml
+FfmpegNeeded 1.0 ../../../../qml/FfmpegNeeded.qml
+PendingList 1.0 ../../../../qml/PendingList.qml
+PendingRow 1.0 ../../../../qml/PendingRow.qml
+VoiceTry 1.0 ../../../../qml/VoiceTry.qml
+WordTimings 1.0 ../../../../qml/WordTimings.qml
