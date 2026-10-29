@@ -371,7 +371,7 @@ FocusScope {
                     current: Player.loaded && !!root.book && Player.bookId === root.book.id && Player.chapterId === cell.row.chapter.id
                     menuOpen: chapterMenu.open && root.menuChapter.id === cell.row.chapter.id
                     onPlayRequested: if (cell.row.chapter.playable) {
-                        if (current) Player.toggle(); else Player.playChapter(root.book.id, cell.row.chapter.id)
+                        if (current) Player.toggle(); else Player.review(root.book.id, cell.row.chapter.id)
                     }
                     onMenuRequested: anchor => {
                         root.menuChapter = cell.row.chapter
@@ -544,7 +544,7 @@ FocusScope {
         objectName: "chapterMenu"
         onPicked: key => {
             const chapter = root.menuChapter
-            if (key === "play") Player.playChapter(root.book.id, chapter.id)
+            if (key === "play") Player.review(root.book.id, chapter.id)
             else if (key === "script") root.pickTab("script")
             else if (key === "retake") {
                 root.retakeChapter = chapter

@@ -38,6 +38,9 @@ set(ABOOK_PLAYER_SOURCES
     src/audioout.h
     src/chaptersmodel.cpp
     src/chaptersmodel.h
+    src/speechout.cpp
+    src/speechout.h
+    src/outputdevices.h
     src/player.cpp
     src/player.h
     src/playerlogic.h
@@ -306,6 +309,14 @@ qt_add_qml_module(ABookDesk
         qml/PageSwitch.qml
         qml/PlayButton.qml
         qml/PlayerBar.qml
+        qml/PlayerLabels.js
+        qml/PlayerConsent.qml
+        qml/OutputPopover.qml
+        qml/PlayerAlert.qml
+        qml/PlayerFade.qml
+        qml/PlayerSubtitle.qml
+        qml/PlayerVoicePopover.qml
+        qml/SidebarProgress.qml
         qml/PlayerNotice.qml
         qml/Popover.qml
         qml/ReadAlongView.qml
@@ -393,6 +404,14 @@ if(MSVC)
     target_compile_options(SidebarTests PRIVATE /W3 /utf-8)
 endif()
 enable_testing()
+qt_add_executable(PlayerNativeTests tests/test_playernative.cpp tests/fakes.h src/speechout.cpp src/speechout.h src/outputdevices.h src/audioout.cpp src/audioout.h src/playernet.h)
+target_include_directories(PlayerNativeTests PRIVATE src tests)
+target_compile_definitions(PlayerNativeTests PRIVATE QT_NO_CAST_FROM_ASCII)
+target_link_libraries(PlayerNativeTests PRIVATE Qt6::Test Qt6::Network)
+if(MSVC)
+    target_compile_options(PlayerNativeTests PRIVATE /W3 /utf-8)
+endif()
+add_test(NAME PlayerNativeTests COMMAND PlayerNativeTests)
 qt_add_executable(VoiceRender tools/voice_render.cpp src/mp3source.cpp src/mfsource.cpp src/streamsource.cpp src/timestretch.cpp third_party/sonic/sonic.c)
 target_include_directories(VoiceRender PRIVATE src third_party)
 target_compile_definitions(VoiceRender PRIVATE QT_NO_CAST_FROM_ASCII)

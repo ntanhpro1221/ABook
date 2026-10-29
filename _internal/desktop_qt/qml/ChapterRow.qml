@@ -46,6 +46,7 @@ Interactive {
             anchors.centerIn: parent
             visible: root.current || root.done
             name: root.current ? "audio-lines" : "check"
+            Accessible.name: root.done ? "Đã nghe" : ""
             size: 16
             color: root.current ? Theme.accentText : Theme.success
         }

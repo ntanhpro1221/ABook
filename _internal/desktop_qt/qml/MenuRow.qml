@@ -9,7 +9,10 @@ Interactive {
     property string icon: ""
     property bool danger: false
 
-    implicitHeight: Theme.buttonHeight
+    property bool selected: false
+    implicitHeight: Math.max(Theme.buttonHeight, label.implicitHeight + 2 * Theme.s8)
+    Accessible.name: text
+    Accessible.checked: selected
 
     Rectangle {
         anchors.fill: parent
@@ -19,6 +22,7 @@ Interactive {
         Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
     }
     Row {
+        width: parent.width - 2 * Theme.s8
         anchors.verticalCenter: parent.verticalCenter
         anchors.left: parent.left
         anchors.leftMargin: Theme.s8
@@ -30,6 +34,9 @@ Interactive {
             anchors.verticalCenter: parent.verticalCenter
         }
         Text {
+            id: label
+            width: parent.width - 16 - parent.spacing
+            wrapMode: Text.Wrap
             text: root.text
             color: root.danger ? Theme.danger : Theme.text
             font.pixelSize: Theme.sizeBodySmall
