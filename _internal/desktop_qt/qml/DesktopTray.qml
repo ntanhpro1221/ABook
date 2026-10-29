@@ -8,7 +8,7 @@ Native.SystemTrayIcon {
     property var windowMode: null
     property TrayMenuModel model: TrayMenuModel { windowMode: root.windowMode }
     visible: true
-    icon.source: "qrc:/app/icon-192.png"
+    icon.source: "qrc:/app/app.ico"
     tooltip: model.tooltip
     onActivated: reason => { if (reason === Native.SystemTrayIcon.Trigger) model.activate() }
     menu: Native.Menu {
