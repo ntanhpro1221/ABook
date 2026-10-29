@@ -35,6 +35,8 @@ public:
     Q_INVOKABLE int count(const QString &method, const QString &suffix) const { return int(m_net->callsTo(suffix, method.toLatin1()).size()); }
     Q_INVOKABLE void setBook(const QVariantMap &book) { const auto json = QJsonObject::fromVariantMap(book); m_net->books.insert(json.value(QStringLiteral("id")).toString(), json); }
     Q_INVOKABLE void finishChapter() { m_out->finish(); }
+    Q_INVOKABLE void buffering(bool value) { emit m_out->buffering(value); }
+    Q_INVOKABLE void fail(const QString &message) { m_out->fail(message); }
     Q_INVOKABLE void resetBooks() { m_net->books = m_original; }
     Q_INVOKABLE void advance(double seconds) {
         for (int i = 0; i < qRound(seconds * 10); ++i) {

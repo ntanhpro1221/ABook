@@ -123,6 +123,7 @@ struct WasapiDevice::Impl {
     bool com = false;
     HANDLE pull = nullptr; // engine báo mỗi lần kéo một chu kỳ (luồng event-driven)
     QString error;
+    QString selected;
 };
 
 WasapiDevice::WasapiDevice(std::function<void()> changed) : d(new Impl) {
@@ -144,40 +145,75 @@ WasapiDevice::~WasapiDevice() {
 }
 bool WasapiDevice::refresh() {
     if (!d->notice->dirty.exchange(false) && d->client) return true;
-    d->error.clear();
+    if (openOutput(d->selected)) return true;
+    if (!d->selected.isEmpty() && openOutput({})) return true;
     stop(); d->render.Reset(); d->client.Reset(); d->capacity = 0;
+    return false;
+}
+bool WasapiDevice::selectOutput(const QString &id) {
+    if (id == d->selected && d->client) return true;
+    return openOutput(id); // Failure leaves the old client, cursor and selection intact.
+}
+QString WasapiDevice::outputId() const { return d->selected; }
+QVariantList WasapiDevice::outputs() const {
+    QVariantList result{QVariantMap{{QStringLiteral("id"), QString()}, {QStringLiteral("name"), QStringLiteral("Mặc định")}}};
+    ComPtr<IMMDeviceCollection> endpoints;
+    if (!d->enumerator || FAILED(d->enumerator->EnumAudioEndpoints(eRender, DEVICE_STATE_ACTIVE, &endpoints))) return result;
+    UINT count = 0; endpoints->GetCount(&count);
+    for (UINT i = 0; i < count; ++i) {
+        ComPtr<IMMDevice> endpoint; ComPtr<IPropertyStore> properties;
+        LPWSTR id = nullptr;
+        if (FAILED(endpoints->Item(i, &endpoint)) || FAILED(endpoint->GetId(&id))) continue;
+        const QString key = QString::fromWCharArray(id); CoTaskMemFree(id);
+        PROPVARIANT name; PropVariantInit(&name);
+        QString title = key;
+        if (SUCCEEDED(endpoint->OpenPropertyStore(STGM_READ, &properties)) && SUCCEEDED(properties->GetValue(PKEY_Device_FriendlyName, &name)) && name.vt == VT_LPWSTR)
+            title = QString::fromWCharArray(name.pwszVal);
+        PropVariantClear(&name);
+        result.append(QVariantMap{{QStringLiteral("id"), key}, {QStringLiteral("name"), title}});
+    }
+    return result;
+}
+bool WasapiDevice::openOutput(const QString &selected) {
+    d->error.clear();
     ComPtr<IMMDevice> endpoint;
-    if (!d->enumerator || FAILED(d->enumerator->GetDefaultAudioEndpoint(eRender, eMultimedia, &endpoint))
-        || FAILED(endpoint->Activate(__uuidof(IAudioClient), CLSCTX_ALL, nullptr, reinterpret_cast<void **>(d->client.GetAddressOf()))))
+    ComPtr<IAudioClient> client;
+    ComPtr<IAudioRenderClient> render;
+    UINT32 capacity = 0;
+    if (!d->enumerator || FAILED(selected.isEmpty() ? d->enumerator->GetDefaultAudioEndpoint(eRender, eMultimedia, &endpoint)
+        : d->enumerator->GetDevice(reinterpret_cast<LPCWSTR>(selected.utf16()), &endpoint))
+        || FAILED(endpoint->Activate(__uuidof(IAudioClient), CLSCTX_ALL, nullptr, reinterpret_cast<void **>(client.GetAddressOf()))))
         return false;
+    ComPtr<IAudioClient2> client2;
+    AudioClientProperties props{};
+    props.cbSize = sizeof(props); props.eCategory = AudioCategory_Media;
+    if (FAILED(client.As(&client2)) || FAILED(client2->SetClientProperties(&props))) {
+        return false;
+    }
+    WAVEFORMATEX *format = nullptr;
+    if (FAILED(client->GetMixFormat(&format))) return false;
+    // Đúng định dạng mix của endpoint; không âm thầm phát float như PCM nguyên.
+    HRESULT hr = E_INVALIDARG;
+    if (supportsFormat(*format)) {
+        // Engine pull event belongs to the new client, before publishing the selected endpoint.
+        hr = client->Initialize(AUDCLNT_SHAREMODE_SHARED, d->pull ? AUDCLNT_STREAMFLAGS_EVENTCALLBACK : 0, 10000000, 0, format, nullptr);
+        if (SUCCEEDED(hr) && d->pull) hr = client->SetEventHandle(d->pull);
+    } else d->error = QStringLiteral("Thiết bị cần định dạng float32 hoặc PCM16/32.");
+    if (FAILED(hr) || FAILED(client->GetBufferSize(&capacity)) || FAILED(client->GetService(IID_PPV_ARGS(&render)))) {
+        CoTaskMemFree(format); return false;
+    }
+    stop(); d->render = render; d->client = client; d->capacity = capacity;
+    d->rate = int(format->nSamplesPerSec); d->channels = format->nChannels; d->bits = format->wBitsPerSample;
+    d->floating = format->wFormatTag == WAVE_FORMAT_IEEE_FLOAT ||
+        (format->wFormatTag == WAVE_FORMAT_EXTENSIBLE && reinterpret_cast<WAVEFORMATEXTENSIBLE *>(format)->SubFormat == KSDATAFORMAT_SUBTYPE_IEEE_FLOAT);
+    CoTaskMemFree(format);
+    d->selected = selected;
     LPWSTR id = nullptr;
     if (SUCCEEDED(endpoint->GetId(&id))) {
         { Guard guard(d->notice->mutex); d->notice->endpointId = QString::fromWCharArray(id); }
         CoTaskMemFree(id);
     }
-    ComPtr<IAudioClient2> client2;
-    AudioClientProperties props{};
-    props.cbSize = sizeof(props); props.eCategory = AudioCategory_Media;
-    if (FAILED(d->client.As(&client2)) || FAILED(client2->SetClientProperties(&props))) {
-        d->client.Reset(); return false;
-    }
-    WAVEFORMATEX *format = nullptr;
-    if (FAILED(d->client->GetMixFormat(&format))) { d->client.Reset(); return false; }
-    // Đúng định dạng mix của endpoint; không âm thầm phát float như PCM nguyên.
-    HRESULT hr = E_INVALIDARG;
-    if (supportsFormat(*format)) {
-        d->rate = int(format->nSamplesPerSec); d->channels = format->nChannels;
-        d->bits = format->wBitsPerSample;
-        d->floating = format->wFormatTag == WAVE_FORMAT_IEEE_FLOAT ||
-            (format->wFormatTag == WAVE_FORMAT_EXTENSIBLE && reinterpret_cast<WAVEFORMATEXTENSIBLE *>(format)->SubFormat == KSDATAFORMAT_SUBTYPE_IEEE_FLOAT);
-        // Event-driven chỉ để biết lúc engine kéo (awaitPull); việc ghi vẫn theo đồng hồ của luồng trộn.
-        hr = d->client->Initialize(AUDCLNT_SHAREMODE_SHARED, d->pull ? AUDCLNT_STREAMFLAGS_EVENTCALLBACK : 0, 10000000, 0, format, nullptr);
-        if (SUCCEEDED(hr) && d->pull) hr = d->client->SetEventHandle(d->pull);
-    } else d->error = QStringLiteral("Thiết bị cần định dạng float32 hoặc PCM16/32.");
-    CoTaskMemFree(format);
-    if (FAILED(hr) || FAILED(d->client->GetBufferSize(&d->capacity)) || FAILED(d->client->GetService(IID_PPV_ARGS(&d->render)))) {
-        d->render.Reset(); d->client.Reset(); d->capacity = 0; return false;
-    }
+    d->notice->dirty = false;
     ++d->revision;
     return true;
 }
@@ -358,6 +394,9 @@ struct MusicMixer::Impl {
     bool quit = false, mixDirty = false, readerDirty = false, initialized = false;
     bool threaded = false, active = false, running = false;
     std::atomic<bool> resetQueued{false};
+    std::mutex outputMutex;
+    bool outputRequest = false, outputSelect = false;
+    QString outputId;
     std::atomic<bool> joinSoon{false}; // nguồn vừa đặt lại chỗ: lượt trộn kế có thể trộn lại để nối nó vào
     int nextWakeMs = 250;
     std::atomic<bool> relaxed{false};
@@ -768,6 +807,14 @@ void MusicMixer::serviceStream(const std::shared_ptr<MixVoiceState> &s) {
     }
 }
 
+void MusicMixer::requestOutputs() {
+    { Guard guard(d->outputMutex); d->outputRequest = true; d->outputSelect = false; }
+    wake();
+}
+void MusicMixer::selectOutput(const QString &id) {
+    { Guard guard(d->outputMutex); d->outputRequest = d->outputSelect = true; d->outputId = id; }
+    wake();
+}
 void MusicMixer::service(size_t frames) {
     // Trộn lại sắp xảy ra: chờ ngay sau một lần engine kéo, ngoài khoá để giao diện không phải đợi.
     const bool aligned = d->running && (d->resetQueued || d->joinSoon);
@@ -776,6 +823,13 @@ void MusicMixer::service(size_t frames) {
     const auto voices = d->snapshot();
     const int oldRate = rate();
     const quint64 oldCursor = d->cursor();
+    bool requested = false, select = false; QString outputId;
+    { Guard guard(d->outputMutex); requested = d->outputRequest; select = d->outputSelect; outputId = d->outputId; d->outputRequest = false; }
+    if (requested) {
+        const bool accepted = !select || d->device->selectOutput(outputId);
+        const auto outputs = d->device->outputs(); const auto selected = d->device->outputId();
+        QMetaObject::invokeMethod(this, [this, outputs, selected, accepted] { emit outputsReady(outputs, selected, accepted); }, Qt::QueuedConnection);
+    }
     if (!d->device->refresh()) {
         // Endpoint loss must freeze at the last audible cursor, including the interpolation
         // since the last padding sample; reconnect then rebuilds from precisely this point.
@@ -806,6 +860,10 @@ void MusicMixer::service(size_t frames) {
         d->active = wants; return;
     }
     if (d->deviceRevision != d->device->revision() || oldRate != d->device->rate()) {
+        if (!requested) {
+            const auto outputs = d->device->outputs(); const auto selected = d->device->outputId();
+            QMetaObject::invokeMethod(this, [this, outputs, selected] { emit outputsReady(outputs, selected, true); }, Qt::QueuedConnection);
+        }
         // Công bố tần số trước generation mới; reader chụp cả hai dưới khoá voice, không ghép nhầm cache cũ với tần số mới.
         d->rate = d->device->rate();
         // Chuyển tai nghe có thể đổi tần số: cache/ring cũ tuyệt đối không được đọc ở tần số mới.

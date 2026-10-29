@@ -6,6 +6,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QPointer>
 
 HostNet::HostNet(QNetworkAccessManager *network, QObject *parent) : PlayerNet(parent), m_net(network) {}
 
@@ -27,14 +28,17 @@ QUrl HostNet::mediaUrl(const QString &path) const {
 }
 
 void HostNet::request(const QByteArray &method, const QString &path, const QJsonObject &body, Done done, bool hasBody) {
+    requestCancelable(method, path, body, std::move(done), hasBody);
+}
+std::function<void()> HostNet::requestCancelable(const QByteArray &method, const QString &path, const QJsonObject &body, Done done, bool hasBody) {
     const Backend::Endpoint endpoint = Backend::endpoint();
     if (!endpoint.port) {
         done(0, {});
-        return;
+        return {};
     }
     QNetworkRequest request(QUrl(QStringLiteral("http://127.0.0.1:%1%2").arg(endpoint.port).arg(path)));
     request.setRawHeader("X-Ebook-Token", endpoint.token);
-    request.setTransferTimeout(30'000);
+    request.setTransferTimeout(path == QLatin1String("/api/readaloud/clip") ? 0 : 30'000);
     QNetworkReply *reply = nullptr;
     if (method == "GET") {
         reply = m_net->get(request);
@@ -54,4 +58,5 @@ void HostNet::request(const QByteArray &method, const QString &path, const QJson
         reply->deleteLater();
         done(status, json);
     });
+    return [reply = QPointer<QNetworkReply>(reply)] { if (reply && !reply->isFinished()) reply->abort(); };
 }

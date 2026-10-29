@@ -1,5 +1,6 @@
 import QtQuick
 import ABook
+import "VoiceLogic.js" as VoiceLogic
 
 // Cửa sổ chính: dải tiêu đề tự vẽ ở trên, thanh bên trái + ngăn xếp màn bên phải. Không còn khung hệ thống; WindowChrome (QWindowKit) giữ hành vi gốc
 // của Windows (kéo, thu phóng, Aero Snap, Snap Layouts, bóng, bo góc).
@@ -74,6 +75,7 @@ Window {
             anchors.bottom: parent.bottom
             currentSection: stack.current
             onSectionRequested: (index) => stack.show(index)
+            onProjectRequested: id => { Nav.studioPeer = ""; stack.rootContent(1).openProject(id) }
         }
         // Khung nội dung: màn hiện tại, thanh phát ở đáy, Đang nghe phủ lên trên cả hai
         Item {
@@ -100,6 +102,7 @@ Window {
                 contentOpacity: nowPlaying ? 1 - Math.min(1, nowPlaying.g * 3) : 1
                 contentShift: nowPlaying ? -nowPlaying.g * 12 : 0
                 onOpenRequested: win.openNowPlaying()
+                onSettingsRequested: group => { stack.show(2); stack.rootContent(2).active = group }
             }
             // Đang nghe chỉ được dựng ở lần mở đầu tiên (thanh phát có sách nhưng chưa ai mở: không trả RAM / khung đầu của cả màn này).
             // Đã dựng thì giữ ít lâu sau khi đóng (mở lại liền không giật), rồi bỏ; cửa sổ thu nhỏ hay sách đóng thì bỏ ngay (RAM khi nghe nền).
@@ -196,7 +199,32 @@ Window {
         target: Backend
         function onStateChanged() { if (Backend.state === Backend.Ready) { Api.bind(DesktopApi, Theme); Api.load() } }
     }
-    Connections { target: Api; function onPreferencesChanged() { Player.configure(Api.preferences) } }
+    function configurePlayer() {
+        const voice = VoiceLogic.resolveVoice(Api.voiceList, Api.defaultVoice)
+        Player.configure(Object.assign({}, Api.preferences, {readAloudVoice: voice ? voice.id : ""}))
+        let allowed = []
+        try { allowed = JSON.parse(Api.store("abook-readaloud-online-ok") || "[]") } catch (error) {}
+        Narration.configure(Api.voiceList, Array.isArray(allowed) ? allowed : [])
+    }
+    PlayerConsent { id: onlineVoice }
+    Connections { target: Player; function onLoadedChanged() { if (!Player.loaded) onlineVoice.dismiss() } }
+    Connections {
+        target: Narration
+        function onConsentRequested(voice) {
+            onlineVoice.ask(voice, function(picked) {
+                if (!picked) { Narration.cancelConsent(); Player.pause(); return }
+                win.configurePlayer()
+                if (picked.id === voice.id) Narration.authorize(picked.provider)
+                else Player.chooseVoice(picked.id, true)
+            })
+        }
+    }
+    Connections {
+        target: Api
+        function onPreferencesChanged() { win.configurePlayer() }
+        function onVoiceListChanged() { win.configurePlayer() }
+        function onDefaultVoiceChanged() { win.configurePlayer() }
+    }
     // Sự kiện host chuyển lên vỏ (UpdateListener của desktop/App.tsx): vừa có bản mới thì đọc lại /api/app để hiện "Cập nhật ABook";
     // tải bản mới hỏng thì nói lời vỏ đã viết sẵn
     Connections {

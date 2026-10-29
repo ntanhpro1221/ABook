@@ -70,7 +70,7 @@ void BookDetail::recompute() {
     int playable = 0, textOnly = 0, doneCount = 0;
     double heard = 0;
     for (const Chapter &chapter : m_book.chapters) {
-        if (canPlay(chapter)) {
+        if (chapter.available || (chapter.textOnly && player && (player->hasDefaultVoice() || !m_book.voice.isEmpty()))) {
             ++playable;
             if (m_book.states.value(chapter.id).done)
                 ++doneCount;
