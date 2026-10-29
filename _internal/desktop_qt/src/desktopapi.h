@@ -1,6 +1,7 @@
 #pragma once
 #include <QObject>
 #include <QJSValue>
+#include <QVariantList>
 #include <QNetworkAccessManager>
 #include <QHash>
 #include <QtQml/qqmlregistration.h>
@@ -18,7 +19,13 @@ public:
     Q_INVOKABLE int request(const QString &method, const QString &path, const QJSValue &body, const QJSValue &done);
     Q_INVOKABLE void cancel(int id);
     Q_INVOKABLE QString imageData(const QUrl &file) const;
+    /// Ảnh đang nằm trong bộ nhớ tạm (Ctrl+V trên trang sách): data URL PNG như `imageData`, "" khi không có ảnh.
+    Q_INVOKABLE QString clipboardImage() const;
     Q_INVOKABLE QString localPath(const QUrl &file) const;
+    /// Studio ở máy khác (trình tạo sách): file lẻ hay cả thư mục chương người dùng chọn ở máy này, kể theo cách trình duyệt kể (name, size, path = "Truyện/Tập 1/001.txt"
+    /// khi từ thư mục, "" khi file lẻ; local = đường thật) - tới tầng thư mục con thứ hai như `walk` của studio/upload.ts. `fileBase64` đọc nguyên byte để gửi lên.
+    Q_INVOKABLE QVariantList sourceFiles(const QStringList &paths) const;
+    Q_INVOKABLE QString fileBase64(const QString &local) const;
     Q_INVOKABLE QUrl mediaUrl(const QString &path) const;
     Q_INVOKABLE void refreshLibrary();
     Q_INVOKABLE void preview(const QString &path);

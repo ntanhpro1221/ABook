@@ -2,7 +2,7 @@ import QtQuick
 import ABook
 import "PeerStudio.js" as Peer
 
-// Studio: danh sách dự án (ProjectsScreen), trang một dự án (ProjectScreen) và chỗ giữ cho trình tạo dự án (S2), DESIGN.md mục 7. Ba màn con là MỘT lớp
+// Studio: danh sách dự án (ProjectsScreen), trang một dự án (ProjectScreen) và trình tạo dự án (NewProjectScreen), DESIGN.md mục 7. Ba màn con là MỘT lớp
 // của Back (Esc / Alt+Left về danh sách) và đổi qua nhau bằng mờ + trượt 8 px; chọn lại "Studio" ở thanh bên cũng về danh sách.
 // Studio của máy tính đã ghép (Nav.studioPeer, "Mở Studio" ở Máy tính khác; desktop/App.tsx + PeerBar.tsx): hỏi /api/app của máy ấy qua cầu nối
 // (webui/peer_studio.py) - vào được thì thanh "Đang mở Studio của <máy>" + "Về máy này" và CÙNG các màn con ấy, mọi lời gọi đi qua
@@ -83,11 +83,23 @@ Item {
     readonly property string shownTab: projectLoader.item ? projectLoader.item.shownTab : ""
     readonly property var projectScreenList: projectLoader.item ? projectLoader.item.list : null
     property string route: "list"           // "list" | "project" | "new"
-    property string newMode: ""             // "" | "redo" | "continue" (trình tạo dự án sẽ nhận ở S2)
+    property string newMode: ""             // "" | "redo" | "continue"
     property bool layerOpen: false
-    function goList() { route = "list"; newMode = "" }
-    function openProject(id) { dataStore.openBook(id); route = "project" }
-    function openNew(mode, id) { newMode = mode || ""; route = "new" }
+    property bool newAfterPeer: false       // "Tạo trên <máy>": vào Studio của máy ấy rồi mở thẳng trình tạo
+    property bool pickNow: false            // tới từ nút "Dự án mới": mở luôn hộp chọn file
+    readonly property var newStore: newLoader.item
+    function goList() { route = "list"; newMode = ""; pickNow = false }
+    function openProject(id) { dataStore.openBook(id); route = "project"; pickNow = false }
+    // Trình tạo dựng muộn (lần đầu mở) và sống tiếp để nháp không mất khi rời trang; "Sửa thiết lập" / "Làm tiếp" điền sẵn từ máy chủ một lần
+    function openNew(mode, id) {
+        newMode = mode || ""
+        newLoader.active = true
+        pickNow = !newMode
+        route = "new"
+        if (newMode === "redo") newStore.loadRedo(id)
+        else if (newMode === "continue") newStore.loadContinuation(id)
+    }
+    onViewChanged: if (view === "open" && newAfterPeer) { newAfterPeer = false; openNew("", "") }
     onRouteChanged: {
         if (route === "list") { dataStore.openBook(""); if (layerOpen) { Nav.closedLayer(routeLayer); layerOpen = false } }
         else if (!layerOpen) { Nav.openLayer(routeLayer); layerOpen = true }
@@ -119,6 +131,17 @@ Item {
         visible: root.shownView === "own" || root.shownView === "open"
         opacity: root.phase
         transform: Translate { y: Theme.reduceMotion ? 0 : 8 * (1 - root.phase) }
+        // Dữ liệu của trình tạo sách: dựng muộn, sống tiếp khi rời trang (nháp không mất)
+        Loader {
+            id: newLoader
+            active: false
+            sourceComponent: NewProjectStore {
+                store: dataStore
+                active: root.route === "new"
+                onCreated: id => root.openProject(id)
+                onLeaveRequested: id => { if (id) root.openProject(id); else root.goList() }
+            }
+        }
         ProjectsScreen {
             id: projects
             objectName: "projectsScreen"
@@ -143,30 +166,17 @@ Item {
                 onNewProjectRequested: (mode, id) => root.openNew(mode, id)
             }
         }
-        // Trình tạo dự án mới là phần S2: màn này chỉ giữ chỗ, vẫn có đường về
-        Item {
-            id: newPlaceholder
-            objectName: "newPlaceholder"
+        Loader {
+            id: newScreenLoader
             anchors.fill: parent
-            visible: root.shownKey === "route:new"
-            readonly property real contentW: Math.min(width - 2 * Theme.margin, 960)
-            ScreenHeader {
-                id: newHeader
-                x: (parent.width - newPlaceholder.contentW) / 2
-                width: newPlaceholder.contentW
-                showBack: true
-                backLabel: "Về Studio"
-                title: "Dự án mới"
-            }
-            Text {
-                objectName: "newPlaceholderText"
-                x: newHeader.x
-                y: newHeader.height + 32
-                width: Math.min(640, newPlaceholder.contentW)
-                text: "Mục này chưa mở trong bản này."
-                color: Theme.text2
-                wrapMode: Text.Wrap
-                font.pixelSize: Theme.sizeBodySmall
+            active: newLoader.active && root.shownKey === "route:new"
+            sourceComponent: NewProjectScreen {
+                objectName: "newProjectScreen"
+                form: root.newStore
+                pickOnOpen: root.pickNow
+                onSetupRequested: root.goList()
+                onProjectRequested: id => root.openProject(id)
+                onPeerRequested: id => { root.newAfterPeer = true; Nav.openPeerStudio(id) }
             }
         }
     }
