@@ -30,7 +30,7 @@ CastModal {
         saving = true
         const mine = generation
         const from = person, target = into
-        Api.quiet("POST", "/api/books/" + bookId + "/characters/merge", {from: from.name, into: target.name}, function(data, error) {
+        root.ask("POST", "/api/books/" + bookId + "/characters/merge", {from: from.name, into: target.name}, function(data, error) {
             if (mine !== root.generation) return
             root.saving = false
             if (error) { root.fail("Chưa gộp được", error); return }

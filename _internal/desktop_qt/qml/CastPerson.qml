@@ -8,6 +8,7 @@ import "CastLogic.js" as Logic
 Item {
     id: root
     property string bookId: ""
+    property string peer: ""                    // Studio của máy tính ghép: mã máy (tệp nghe thử đi qua máy ấy)
     property var person: ({})
     property var caps: ({})
     signal request(string kind, var person)
@@ -151,7 +152,7 @@ Item {
             objectName: "castSample"
             visible: !!root.person.sampleId
             clipId: Logic.sampleId(root.bookId, root.person)
-            url: Logic.sampleUrl(root.bookId, root.person)
+            url: Logic.routed(Logic.sampleUrl(root.bookId, root.person), root.peer)
             label: "Nghe " + root.shownName + " nói"
         }
         IconButton {

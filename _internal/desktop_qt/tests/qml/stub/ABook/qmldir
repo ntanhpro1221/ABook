@@ -193,6 +193,15 @@ CastPerson 1.0 ../../../../qml/CastPerson.qml
 CastRename 1.0 ../../../../qml/CastRename.qml
 CastSample 1.0 ../../../../qml/CastSample.qml
 CastVoice 1.0 ../../../../qml/CastVoice.qml
+CastMenu 1.0 ../../../../qml/CastMenu.qml
+CastNote 1.0 ../../../../qml/CastNote.qml
+CastUnmerge 1.0 ../../../../qml/CastUnmerge.qml
+TellerMode 1.0 ../../../../qml/TellerMode.qml
+PrecastReview 1.0 ../../../../qml/PrecastReview.qml
+PrecastWait 1.0 ../../../../qml/PrecastWait.qml
+PrecastBanner 1.0 ../../../../qml/PrecastBanner.qml
+CardFocus 1.0 ../../../../qml/CardFocus.qml
+WorkCards 1.0 ../../../../qml/WorkCards.qml
 HistoryList 1.0 ../../../../qml/HistoryList.qml
 RecordChip 1.0 ../../../../qml/RecordChip.qml
 RecordDialogs 1.0 ../../../../qml/RecordDialogs.qml

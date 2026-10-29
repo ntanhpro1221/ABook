@@ -43,7 +43,7 @@ CastModal {
     // `again`: đọc lại danh sách đang hiện (một máy đọc vừa tải xong) mà không đổi sang khung chờ
     function load(again) {
         const mine = generation
-        Api.quiet("GET", "/api/books/" + bookId + "/voices?character=" + encodeURIComponent(person.name), null, function(answer, error) {
+        root.ask("GET", "/api/books/" + bookId + "/voices?character=" + encodeURIComponent(person.name), null, function(answer, error) {
             if (mine !== root.generation) return
             if (error || !answer || !answer.character) { if (!again) root.status = "failed"; return }
             root.choices = answer
@@ -52,9 +52,9 @@ CastModal {
     }
     // ---- "Nghe thử bằng câu của sách" (useVoiceTry của VoiceTry.tsx) ----
     function tryRequest(voice) { return {character: choices.character.value, preset: voice.key} }
-    function tryKey(voice) { return Logic.tryKey(bookId, tryRequest(voice)) }
+    function tryKey(voice) { return (store && store.peer ? store.peer + ":" : "") + Logic.tryKey(bookId, tryRequest(voice)) }
     function tryPlay(preview, voice) {
-        Clip.toggle(Logic.tryId(preview), preview.url)
+        Clip.toggle(Logic.tryId(preview), media(preview.url))
         tried = Object.assign({}, tried, {[voice.key]: preview})
         said = {text: Logic.previewCaption(preview.text, voice.name), status: false}
     }
@@ -66,7 +66,7 @@ CastModal {
         asking = key
         said = {text: Logic.tryAsking(voice.name), status: true}
         const mine = generation
-        Api.quiet("POST", "/api/books/" + bookId + "/voice/preview", tryRequest(voice), function(preview, error, detail) {
+        root.ask("POST", "/api/books/" + bookId + "/voice/preview", tryRequest(voice), function(preview, error, detail) {
             if (mine !== root.generation) return
             root.asking = ""
             if (!error && preview) {
@@ -77,7 +77,7 @@ CastModal {
             const reason = detail ? detail.reason : undefined
             // Người chưa có câu nào: phát câu mẫu chung của giọng
             if (reason === "no-line" && voice.preview) {
-                Clip.toggle(Logic.voiceId(voice.name), Logic.voiceUrl(voice.key))
+                Clip.toggle(Logic.voiceId(voice.name), media(Logic.voiceUrl(voice.key)))
                 root.said = {text: Logic.NO_LINE, status: true}
                 return
             }
@@ -98,7 +98,7 @@ CastModal {
         const info = choices, name = shownName || info.character.label
         const body = {character: info.character.value, preset: voice.key, seen: info.pending ? info.pending.requestedAt : 0}
         if (withGender) body.gender = voice.gender
-        Api.quiet("POST", "/api/books/" + bookId + "/voice", body, function(answer, error) {
+        root.ask("POST", "/api/books/" + bookId + "/voice", body, function(answer, error) {
             if (mine !== root.generation) return
             root.saving = false
             if (error) { root.fail("Chưa đổi được giọng", error); return }
@@ -115,7 +115,7 @@ CastModal {
         saving = true
         const mine = generation
         const info = choices
-        Api.quiet("POST", "/api/books/" + bookId + "/voice", {character: info.character.value, withdraw: true, requestedAt: info.pending.requestedAt}, function(answer, error) {
+        root.ask("POST", "/api/books/" + bookId + "/voice", {character: info.character.value, withdraw: true, requestedAt: info.pending.requestedAt}, function(answer, error) {
             if (mine !== root.generation) return
             root.saving = false
             if (error) { root.fail("Chưa bỏ được lựa chọn", error); return }
@@ -276,6 +276,7 @@ CastModal {
                         // Nhóm của máy đọc khác (hay khi có từ hai nhóm): đầu nhóm có nút tải giọng khi máy đọc ấy chưa có trên máy này
                         CastEngine {
                             objectName: "voiceEngine"
+                            store: root.store
                             visible: Logic.groupHasHeader(root.groups, group.modelData)
                             width: parent.width
                             engine: group.modelData.engine
@@ -318,7 +319,7 @@ CastModal {
                                     anchors.verticalCenter: parent.verticalCenter
                                     visible: row.voice.preview
                                     clipId: Logic.voiceId(row.voice.name)
-                                    url: Logic.voiceUrl(row.voice.key)
+                                    url: root.media(Logic.voiceUrl(row.voice.key))
                                     label: "Nghe thử giọng " + row.voice.name
                                 }
                                 // "Nghe thử bằng câu của sách": một câu của chính người này đọc bằng giọng ấy (chỉ khi người ấy có câu)
