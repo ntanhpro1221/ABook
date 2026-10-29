@@ -5,6 +5,7 @@
 
 #include <functional>
 #include <memory>
+#include <QVariantList>
 
 struct tWAVEFORMATEX;
 
@@ -23,6 +24,9 @@ public:
     // Nonempty only for a terminal device error; transient endpoint loss may retry.
     virtual QString error() const { return {}; }
     virtual quint64 revision() const { return 0; }
+    virtual QVariantList outputs() const { return {}; }
+    virtual QString outputId() const { return {}; }
+    virtual bool selectOutput(const QString &id) { return id.isEmpty(); }
     // Chờ tối đa maxMs tới ngay sau lần engine kéo kế tiếp. Stop..Start vắt qua lúc kéo thì engine phát im lặng
     // trọn một chu kỳ (10 ms); trộn lại ngay sau lần kéo thì cả chu kỳ còn trống.
     virtual void awaitPull(int maxMs) { Q_UNUSED(maxMs); }
@@ -43,8 +47,12 @@ public:
     bool refresh() override;
     QString error() const override;
     quint64 revision() const override;
+    QVariantList outputs() const override;
+    QString outputId() const override;
+    bool selectOutput(const QString &id) override;
     static bool supportsFormat(const tWAVEFORMATEX &format);
 private:
+    bool openOutput(const QString &id);
     struct Impl;
     std::unique_ptr<Impl> d;
 };
@@ -54,6 +62,7 @@ class MixVoice;
 class VoiceDecoder;
 
 class MusicMixer : public QObject {
+    Q_OBJECT
 public:
     explicit MusicMixer(const QString &cacheDir, QObject *parent = nullptr);
     // threaded=false: bộ thử tự phục vụ cả reader lẫn mixer, không phụ thuộc lịch luồng/hardware.
@@ -66,6 +75,10 @@ public:
     quint64 decodeCount() const;
     QString cachePath(const QUrl &url) const;
     static quint64 cacheFrames(const QString &path, int rate);
+    void requestOutputs();
+    void selectOutput(const QString &id);
+signals:
+    void outputsReady(const QVariantList &outputs, const QString &selected, bool accepted);
 
 private:
     friend class MixVoice;

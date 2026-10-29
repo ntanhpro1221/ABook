@@ -44,11 +44,11 @@ struct Chapter {
     QString fullTitle;
     double duration = 0;
     bool available = false;
-    bool textOnly = false; // state == "text": chỉ có chữ (đọc to là D1b)
+    bool textOnly = false;
 };
 
 inline bool canPlay(const Chapter &chapter) {
-    return chapter.available; // chương chỉ-chữ có giọng đọc là D1b
+    return chapter.available || chapter.textOnly;
 }
 
 struct ChapterState {
@@ -65,6 +65,7 @@ struct Book {
     bool complete = true;
     QString coverKey; // khoá ảnh bìa của CoverProvider ("mã/phiên bản"), cùng khoá với Thư viện
     QString record;   // hồ sơ nghe đang dùng ("" nếu không có)
+    QString voice;
     QVector<Chapter> chapters;
     // state
     std::optional<double> rate;
@@ -136,6 +137,7 @@ inline Book parseBook(const QJsonObject &json) {
         book.chapters.append(chapter);
     }
     applyState(book, json.value(QStringLiteral("state")).toObject());
+    book.voice = json.value(QStringLiteral("state")).toObject().value(QStringLiteral("voice")).toString();
     book.finished = json.value(QStringLiteral("progress")).toObject().value(QStringLiteral("finished")).toBool();
     return book;
 }

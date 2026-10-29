@@ -179,6 +179,16 @@ PeerBar 1.0 ../../../../qml/PeerBar.qml
 PlayerKeys 1.0 ../../../../qml/PlayerKeys.qml
 ShortcutsDialog 1.0 ../../../../qml/ShortcutsDialog.qml
 WindowChrome 1.0 WindowChrome.qml
+OutputPopover 1.0 ../../../../qml/OutputPopover.qml
+PlayerAlert 1.0 ../../../../qml/PlayerAlert.qml
+PlayerFade 1.0 ../../../../qml/PlayerFade.qml
+PlayerSubtitle 1.0 ../../../../qml/PlayerSubtitle.qml
+PlayerVoicePopover 1.0 ../../../../qml/PlayerVoicePopover.qml
+SidebarProgress 1.0 ../../../../qml/SidebarProgress.qml
+singleton OutputDevices 1.0 OutputDevices.qml
+PlayerConsent 1.0 ../../../../qml/PlayerConsent.qml
+PlayerBar 1.0 ../../../../qml/PlayerBar.qml
+singleton Narration 1.0 Narration.qml
 StudioSetupState 1.0 ../../../../qml/StudioSetupState.qml
 StudioSetupCard 1.0 ../../../../qml/StudioSetupCard.qml
 Prose 1.0 ../../../../qml/Prose.qml

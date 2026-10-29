@@ -13,6 +13,7 @@ public:
 
     /// Nạp một nguồn (http hoặc file), đứng ở `startSeconds` ở trạng thái DỪNG. `play()` ngay sau đó là hợp lệ: phát khi nguồn sẵn sàng.
     virtual void load(const QUrl &url, double startSeconds) = 0;
+    virtual void loadText(const QString &, int, double, const QString &) { emit failed(QStringLiteral("Máy này chưa có giọng đọc.")); }
     virtual void play() = 0;
     virtual void pause() = 0;
     /// Bỏ nguồn (đóng sách): nhả bộ giải mã và bộ đệm.

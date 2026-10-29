@@ -14,6 +14,9 @@ Item {
     property alias selector: selector
     property alias panel: panel
     signal sectionRequested(int index)
+    signal projectRequested(string bookId)
+    Accessible.role: Accessible.Pane
+    Accessible.name: "Điều hướng chính"
 
     readonly property real railWidth: 56            // tâm biểu tượng ở 28: lề mục 8 + lề biểu tượng 11 + nửa biểu tượng 9
     readonly property real fullWidth: 232
@@ -131,6 +134,30 @@ Item {
             x: Theme.s8
             y: settings.y - height - Theme.s4
             width: panel.width - 2 * Theme.s8
+        }
+        Flickable {
+            id: productionScroll
+            x: Theme.s16; y: studio.y + studio.height + Theme.s8
+            width: root.fullWidth - 2 * Theme.s16
+            height: Math.max(0, chip.y - y - Theme.s8)
+            contentHeight: production.height + update.height
+            clip: true; boundsBehavior: Flickable.StopAtBounds
+            visible: root.expanded || root.peek
+            SidebarProgress {
+                id: production; width: parent.width; height: implicitHeight
+                onProjectRequested: id => { root.choose(1); root.projectRequested(id) }
+                onAllRequested: root.choose(1)
+            }
+            Collapse {
+                id: update; y: production.height; width: parent.width
+                open: !!Api.info.update && !Api.info.remote
+                Button {
+                    objectName: "sidebarUpdate"; width: parent.width; wrap: true; kind: "ghost"; icon: "download"
+                    text: "Có ABook " + (Api.info.update ? Api.info.update.version : "") + "\nBấm để cập nhật"
+                    onClicked: { root.choose(2); if (Nav.stack) Nav.stack.rootContent(2).active = "advanced" }
+                }
+            }
+            SmoothWheel { flick: productionScroll }
         }
         NavItem {
             id: settings

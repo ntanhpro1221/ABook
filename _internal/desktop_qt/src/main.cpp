@@ -12,6 +12,8 @@
 #include "mediacontrols.h"
 #include "platform.h"
 #include "player.h"
+#include "speechout.h"
+#include "outputdevices.h"
 #include "readalong.h"
 
 #include <QDir>
@@ -178,7 +180,14 @@ int main(int argc, char *argv[]) {
     HostNet hostNet(backend.network(), nullptr);
     const QString outbox = QDir(qEnvironmentVariable("LOCALAPPDATA")).filePath(QStringLiteral("ABook/pending-progress.json"));
     QDir().mkpath(QFileInfo(outbox).absolutePath());
-    Player player(&audio, &hostNet, outbox, nullptr);
+    SpeechOut speech(&audio, &hostNet);
+    qmlRegisterSingletonInstance("ABook", 1, 0, "Narration", &speech);
+    OutputDevices outputs([&mixer](bool select, const QString &id) {
+        if (select) mixer->selectOutput(id); else mixer->requestOutputs();
+    });
+    QObject::connect(mixer.get(), &MusicMixer::outputsReady, &outputs, &OutputDevices::complete);
+    qmlRegisterSingletonInstance("ABook", 1, 0, "OutputDevices", &outputs);
+    Player player(&speech, &hostNet, outbox, nullptr);
     Player::setInstance(&player);
     player.watchInput();
     Music music(&player, &hostNet, [&mixer, benchMode]() -> AudioOut * {
@@ -200,6 +209,7 @@ int main(int argc, char *argv[]) {
     QObject::connect(&player, &Player::playingChanged, &feedback, [&player, &feedback] { feedback.setBookPlaying(player.playing()); });
     QObject::connect(&player, &Player::sleepWarning, &feedback, [&feedback] { feedback.play(QStringLiteral("sleepWarn")); });
     ReadAlong readAlong(&player, &hostNet, nullptr);
+    QObject::connect(&speech, &SpeechOut::scriptReady, &readAlong, &ReadAlong::narrationScript);
     ReadAlong::setInstance(&readAlong);
     QObject::connect(&app, &QGuiApplication::aboutToQuit, &player, [&player] { player.shutdown(); });
     QObject::connect(&app, &QGuiApplication::aboutToQuit, &backend, &Backend::stop);
@@ -242,7 +252,7 @@ int main(int argc, char *argv[]) {
     GraphicsIdle graphicsIdle;
     std::unique_ptr<MediaControls> media;
     if (qEnvironmentVariable("ABOOK_SMTC") != QStringLiteral("0"))
-        media = std::make_unique<MediaControls>(&player, &audio, nullptr, [&backend](const QString &path) { return backend.get(path); });
+        media = std::make_unique<MediaControls>(&player, &speech, nullptr, [&backend](const QString &path) { return backend.get(path); });
     if (benchMode && media)
         QObject::connect(media.get(), &MediaControls::commandExecuted, &bench, [&player](MediaCommand command) {
             Bench::mark(QStringLiteral("smtc_command:%1:playing=%2").arg(int(command)).arg(player.playing()));
