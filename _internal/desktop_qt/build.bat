@@ -41,6 +41,11 @@ rem Owner rule: never cut the user's text (no elide / maximumLineCount / clip on
 if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
 
+rem Audio sink ear (tools\audio_sink.py): detectors stay silent on clean speech + music and catch every planted fault
+"%ABOOK_PYTHON%" -X utf8 "%HERE%tools\audio_sink.py" selftest
+if errorlevel 1 exit /b 1
+if not errorlevel 0 exit /b 1
+
 cmake -S "%HERE%." -B "%HERE%build" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="%QT_ROOT%;%QWK_ROOT%\inst" -DCMAKE_MAKE_PROGRAM="%NINJA_BIN%\ninja.exe"
 if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1

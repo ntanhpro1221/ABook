@@ -15,7 +15,8 @@ Item {
     property var win: null
     property var nowPlaying: null
     readonly property bool miniScenario: Bench.scenario === "mini"
-    readonly property bool playerScenario: Bench.scenario === "player" || miniScenario
+    readonly property bool audioScenario: Bench.scenario === "audio"
+    readonly property bool playerScenario: Bench.scenario === "player" || miniScenario || audioScenario
     readonly property bool focusProbe: Bench.scenario === "focus_probe"
     readonly property var list: {
         const s = stack && stack._stacks ? stack._stacks[0] : null
@@ -79,6 +80,7 @@ Item {
     function counters(tag) { Bench.noteCounters(tag, Player, ReadAlong) }
     function run() {
         if (miniScenario) { runMini(); return }
+        if (audioScenario) { runAudio(); return }
         if (Bench.enabled) console.log("bench step", root.step)
         switch (root.step++) {
         case 0: Bench.note("idle_begin"); advance(3500); break
@@ -123,6 +125,35 @@ Item {
         }
     }
 
+    // Tai kiểm tiếng (ABOOK_AUDIO_SINK, tools/audio_sink.py): mọi thao tác nghe trên một cuốn có nhạc, mỗi mốc ghi chương + vị trí.
+    // Chương 1 của bản thử đổi nhạc ở giây 30 (mờ chéo), cuối chương tự sang chương 2.
+    Timer { id: audioTicks; interval: 250; repeat: true; onTriggered: Bench.notePlayback("tick") }
+    function audioMark(tag) { Bench.notePlayback(tag) }
+    function runAudio() {
+        switch (root.step++) {
+        case 0: audioTicks.start(); audioMark("play"); Player.resume(); advance(6000); break
+        case 1: audioMark("pause"); Player.pause(); advance(2000); break
+        case 2: audioMark("resume"); Player.resume(); advance(4000); break
+        case 3: audioMark("seek:22"); Player.seek(22); advance(12000); break
+        case 4: audioMark("duck"); Music.setLevel(-32); advance(5000); break
+        case 5: audioMark("unduck"); Music.setLevel(-20); advance(5000); break
+        case 6: audioMark("rate:0.75"); Player.setRate(0.75); advance(8000); break
+        case 7: audioMark("rate:1.25"); Player.setRate(1.25); advance(8000); break
+        case 8: audioMark("rate:1.5"); Player.setRate(1.5); advance(8000); break
+        case 9: audioMark("rate:2"); Player.setRate(2.0); advance(8000); break
+        case 10: audioMark("rate:1"); Player.setRate(1.0); advance(6000); break
+        case 11: audioMark("seek:150"); Player.seek(150); advance(4000); break
+        case 12: audioMark("skip:-15"); Player.skip(-15); advance(4000); break
+        // 30 s ở 3x (90 s nội dung): đủ dài để thấy tiếng nghe thấy trôi khỏi vị trí app báo
+        case 13: audioMark("rate:3"); Player.setRate(3.0); advance(30000); break
+        case 14: audioMark("rate:1"); Player.setRate(1.0); advance(3000); break
+        case 15: audioMark("seek:end"); Player.seek(Player.duration - 6); advance(12000); break
+        case 16: audioMark("next"); Player.next(); advance(5000); break
+        case 17: audioMark("stop"); Player.pause(); advance(1000); break
+        default: audioTicks.stop(); audioMark("done"); Bench.note("done"); Bench.finish()
+        }
+    }
+
     // Thử riêng đường thu nhỏ/khôi phục trước khi đo dài; không cần tải sách hay phát tiếng.
     Timer {
         running: Bench.enabled && root.focusProbe
@@ -137,5 +168,5 @@ Item {
     }
 
     // Backend không lên: ghi lại những gì có rồi thoát, để script đo báo lỗi thay vì treo
-    Timer { running: Bench.enabled; interval: root.miniScenario ? 170000 : root.playerScenario ? 90000 : 40000; onTriggered: { Bench.note("timeout"); Bench.finish() } }
+    Timer { running: Bench.enabled; interval: root.miniScenario ? 170000 : root.audioScenario ? 200000 : root.playerScenario ? 90000 : 40000; onTriggered: { Bench.note("timeout"); Bench.finish() } }
 }
