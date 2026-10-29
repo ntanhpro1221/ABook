@@ -378,6 +378,16 @@ struct MusicMixer::Impl {
         written = played = 0; tails.clear(); stopped.clear();
         for (const auto &s : snapshot()) { Guard guard(s->mutex); s->spans.clear(); s->joinAt = 0; }
     }
+    // Gọi khi giữ khoá của s. Số khung thiết bị giọng này trộn được ngay từ vòng đệm; SIZE_MAX khi không còn gì để chờ
+    // (luồng đã tới cuối, hay phần còn lại của tệp không lặp đã nằm cả trong vòng đệm).
+    size_t ahead(const MixVoiceState &s) const {
+        if (!s.ring || s.eof) return SIZE_MAX;
+        const size_t have = s.ring->readable() / 2;
+        if (!s.streaming) return !s.loop && s.limit - std::min(s.limit, s.mixed) <= have ? SIZE_MAX : have;
+        // Sonic giữ lại tới vài chu kỳ cao độ (~30 ms) trước khi nhả ra.
+        const size_t can = size_t(double(have) / s.speed), margin = size_t(rate) / 25;
+        return can > margin ? can - margin : 0;
+    }
     std::vector<std::shared_ptr<MixVoiceState>> snapshot() { Guard guard(voicesMutex); return voices; }
     quint64 cursor() const {
         if (!threaded || !running) return played;
@@ -758,7 +768,8 @@ void MusicMixer::serviceStream(const std::shared_ptr<MixVoiceState> &s) {
 
 void MusicMixer::service(size_t frames) {
     // Trộn lại sắp xảy ra: chờ ngay sau một lần engine kéo, ngoài khoá để giao diện không phải đợi.
-    if (d->running && (d->resetQueued || d->joinSoon)) d->device->awaitPull(12);
+    const bool aligned = d->running && (d->resetQueued || d->joinSoon);
+    if (aligned) d->device->awaitPull(12);
     Guard engine(d->engineMutex);
     const auto voices = d->snapshot();
     const int oldRate = rate();
@@ -829,18 +840,24 @@ void MusicMixer::service(size_t frames) {
             post(s, [](MixVoice *v) { emit v->playingChanged(false); emit v->ended(); });
         }
         any |= s->want && s->ready;
-        join |= s->want && s->ready && !s->reposition && s->joining;
+        // Nối vào giữa hàng đợi chỉ khi vòng đệm đã đủ phủ tới đầu ghi; chưa đủ thì chờ luồng đọc lấp tiếp
+        // (hay hàng đợi cạn: lượt trộn thường nối ở đầu ghi, đúng phần đã có).
+        const quint64 from = std::max(d->played, s->joinAt);
+        join |= s->want && s->ready && !s->reposition && s->joining && from < d->written && d->ahead(*s) >= d->written - from;
     }
     d->tails.erase(std::remove_if(d->tails.begin(), d->tails.end(), [&](const Span &span) {
         return std::min(span.device + span.frames, span.outEnd) <= d->played;
     }), d->tails.end());
     // Thao tác (tua, dừng, âm lượng, tốc độ) hay giọng vừa sẵn sàng giữa lúc thiết bị còn hàng đợi:
     // trộn lại ngay tại con trỏ nghe. Không bao giờ để endpoint chạy rỗng trong lúc chờ nguồn đọc lại.
-    if (d->resetQueued.exchange(false) || (join && d->written > d->played)) {
-        d->remix(voices);
-        padding = size_t(d->written - d->played);
+    const bool remix = d->resetQueued || (join && d->written > d->played);
+    if (remix && d->running && !aligned) {
+        // Thao tác tới sau lúc chờ engine kéo: lượt kế (ngay sau đây) chờ rồi mới trộn lại.
+        d->joinSoon = true; wake();
+    } else {
+        if (remix) { d->resetQueued = false; d->remix(voices); padding = size_t(d->written - d->played); }
+        d->joinSoon = false;
     }
-    d->joinSoon = false;
     if (!any) {
         // Đuôi mờ ra còn trong thiết bị: để nó phát hết rồi mới Stop, Stop giữa chừng là một tiếng tách.
         if (d->running && padding) { d->active = true; d->nextWakeMs = std::clamp(int(padding * 1000 / size_t(rate())) + 1, 1, 250); return; }
@@ -872,18 +889,34 @@ void MusicMixer::service(size_t frames) {
     };
     if (!frames) { schedule(padding); return; }
     // Không xếp im lặng khi chưa giọng nào góp được tiếng (đang mở hay đang tua): giọng ấy sẽ được nối vào tại con trỏ nghe.
-    bool contributes = false;
-    for (const auto &s : voices) {
-        Guard guard(s->mutex);
-        contributes |= s->want && s->ready && !s->reposition;
-    }
-    if (!contributes) { d->nextWakeMs = padding ? std::clamp(int(padding * 1000 / size_t(rate())), 1, 250) : 250; return; }
-    std::vector<float> out(frames * 2, 0);
-    std::vector<std::pair<std::shared_ptr<MixVoiceState>, quint64>> began;
-    bool refill = false;
+    // Giọng vừa nối mà hàng đợi còn tiếng (luồng đọc đặt lại chỗ ngay trong lượt này): lượt kế trộn lại, sau một lần
+    // engine kéo, đưa nó vào đúng con trỏ hay chỗ cầu để đan chéo, không nối đuôi sau khúc đã mờ hẳn.
+    std::vector<std::shared_ptr<MixVoiceState>> mixing;
+    bool joinLater = false;
     for (const auto &s : voices) {
         Guard guard(s->mutex);
         if (!s->want || !s->ready || s->reposition) continue;
+        if (s->joining && padding && s->joinAt < d->written) joinLater = true; else mixing.push_back(s);
+    }
+    if (joinLater) d->joinSoon = true;
+    if (mixing.empty()) { d->nextWakeMs = joinLater ? 1 : padding ? std::clamp(int(padding * 1000 / size_t(rate())), 1, 250) : 250; return; }
+    // Chỉ xếp phần mọi giọng đã có sẵn: giọng vừa tua hay vừa nối mà luồng đọc chưa lấp xong thì không chèn im lặng
+    // giữa câu. Thật sự cạn và hàng đợi sắp hết mới xếp im lặng, từng đoạn 20 ms để tiếng về là nghe ngay.
+    bool starved = false;
+    for (const auto &s : mixing) {
+        Guard guard(s->mutex);
+        if (const size_t can = d->ahead(*s)) frames = std::min(frames, can); else starved = true;
+    }
+    if (starved || frames < size_t(rate()) / 100) {
+        const size_t floor = size_t(rate()) * 3 / 100;
+        if (padding >= floor) { wake(true); d->nextWakeMs = std::clamp(int((padding - floor) * 1000 / size_t(rate())), 1, 20); return; }
+        if (starved) frames = std::min(frames, size_t(rate()) / 50);
+    }
+    std::vector<float> out(frames * 2, 0);
+    std::vector<std::pair<std::shared_ptr<MixVoiceState>, quint64>> began;
+    bool refill = false;
+    for (const auto &s : mixing) {
+        Guard guard(s->mutex);
         d->render(s, out.data(), d->written, frames, began);
         const double refillSeconds = quiet ? std::min(maxWaitMs / 1000.0, double(lead) / rate() - 0.1) * s->speed + 0.15 : 1.0;
         refill |= s->ring->readable() < size_t(rate() * refillSeconds) * 2 && !s->eof;
@@ -926,7 +959,7 @@ size_t MusicMixer::Impl::render(const std::shared_ptr<MixVoiceState> &s, float *
         if (!s->playing) began.emplace_back(s, s->generation);
     }
     s->ramp.advance(frames);
-    s->joining = false;
+    s->joining = false; s->joinAt = 0;
     return got;
 }
 
@@ -993,8 +1026,9 @@ void MusicMixer::Impl::remix(const std::vector<std::shared_ptr<MixVoiceState>> &
         Guard guard(s->mutex);
         if (!s->want || !s->ready || s->reposition || !s->joining) continue;
         const quint64 from = std::max(pivot, s->joinAt);
-        s->joinAt = 0;
-        if (from >= end) continue; // hàng đợi đã cạn: lượt trộn thường nối giọng này ở đầu ghi
+        // Hàng đợi đã cạn tới đó: lượt trộn thường nối giọng này ở đầu ghi. Vòng đệm chưa phủ tới đầu ghi: chờ thêm,
+        // không để im lặng giữa câu.
+        if (from >= end || ahead(*s) < end - from) continue;
         render(s, out.data() + (from - at) * 2, from, size_t(end - from), began);
         last = end;
     }
