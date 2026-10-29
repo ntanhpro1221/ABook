@@ -40,7 +40,9 @@ int main(int argc, char *argv[]) {
     if (!scriptFile.open(QIODevice::ReadOnly)) { std::fprintf(stderr, "cannot read script\n"); return 2; }
     const QJsonObject script = QJsonDocument::fromJson(scriptFile.readAll()).object();
 
-    auto sinkOwned = std::make_unique<FileSinkDevice>(script.value(QStringLiteral("out")).toString());
+    // period_ms: chu kỳ kéo của engine chia sẻ (Windows mặc định 10 ms; 1 = gần như liên tục, bi quan nhất với Stop..Start).
+    auto sinkOwned = std::make_unique<FileSinkDevice>(script.value(QStringLiteral("out")).toString(), 48000, 48000,
+                                                      script.value(QStringLiteral("period_ms")).toInt(10));
     FileSinkDevice *sink = sinkOwned.get(); // mixer sở hữu; chỉ đọc now() trước khi mixer bị huỷ
     auto mixer = std::make_unique<MusicMixer>(std::move(sinkOwned), script.value(QStringLiteral("cache")).toString(), true);
 
