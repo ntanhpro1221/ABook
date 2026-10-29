@@ -33,6 +33,15 @@ public:
     size_t queued = 0;
     quint64 epoch = 0;
     bool running = false;
+    QString selectedOutput;
+    QString outputId() const override { return selectedOutput; }
+    QVariantList outputs() const override { return {QVariantMap{{QStringLiteral("id"), QStringLiteral("headset")}, {QStringLiteral("name"), QStringLiteral("Tai nghe")}}}; }
+    bool selectOutput(const QString &id) override {
+        if (id == QLatin1String("gone")) return false;
+        selectedOutput = id; stop(); queued = 0; ++epoch;
+        if (id == QLatin1String("headset")) hz = 44100;
+        return true;
+    }
     WAVEFORMATEXTENSIBLE format{};
     FakeDevice() {
         format.Format.wFormatTag = WAVE_FORMAT_IEEE_FLOAT;
@@ -107,6 +116,23 @@ double rms(const std::vector<float> &x, int channels, int channel, size_t from, 
 class MixTests : public QObject {
     Q_OBJECT
 private slots:
+    void outputSelectionRollbackAndAudibleCursor() {
+        MixerRig rig;
+        QSignalSpy replies(&rig.mixer, &MusicMixer::outputsReady);
+        rig.mixer.requestOutputs(); rig.mixer.service(0);
+        QTRY_COMPARE(replies.size(), 1);
+        QCOMPARE(replies.last()[0].toList().size(), 1);
+        MixVoice voice(&rig.mixer, MixVoice::Voice); voice.load(track(), 1); QVERIFY(rig.ready(voice)); voice.play(); rig.serve(4800);
+        rig.device->consume(2400); const double before = voice.position();
+        rig.mixer.selectOutput(QStringLiteral("headset")); rig.mixer.service(0);
+        QTRY_COMPARE(replies.size(), 2);
+        QVERIFY(replies.last()[2].toBool()); QCOMPARE(rig.device->selectedOutput, QStringLiteral("headset"));
+        QVERIFY(rig.ready(voice)); QVERIFY(std::abs(voice.position() - before) < 0.02); QCOMPARE(rig.mixer.rate(), 44100);
+        rig.mixer.selectOutput(QStringLiteral("gone")); rig.mixer.service(0);
+        QTRY_COMPARE(replies.size(), 3); QVERIFY(!replies.last()[2].toBool());
+        QCOMPARE(rig.device->selectedOutput, QStringLiteral("headset")); QVERIFY(voice.playing());
+        rig.mixer.selectOutput({}); rig.mixer.service(0); QTRY_COMPARE(replies.size(), 4); QVERIFY(replies.last()[1].toString().isEmpty());
+    }
     void musicFormats_data() {
         QTest::addColumn<QString>("name"); QTest::addColumn<int>("rate");
         QTest::addColumn<int>("channels"); QTest::addColumn<int>("outRate");

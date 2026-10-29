@@ -91,6 +91,9 @@ class Player : public QObject {
     Q_PROPERTY(QString chapterSubtitle READ chapterSubtitle NOTIFY chapterChanged)
     Q_PROPERTY(bool playing READ playing NOTIFY playingChanged)
     Q_PROPERTY(bool buffering READ buffering NOTIFY bufferingChanged)
+    Q_PROPERTY(bool speaking READ speaking NOTIFY chapterChanged)
+    Q_PROPERTY(QString voiceId READ voiceId NOTIFY bookChanged)
+    Q_PROPERTY(QString purpose READ purpose NOTIFY bookChanged)
     Q_PROPERTY(double rate READ rate NOTIFY rateChanged)
     Q_PROPERTY(double volume READ volume NOTIFY volumeChanged)       // 0..1 của giọng (phím M tắt / bật tiếng)
     Q_PROPERTY(QString sleepKind READ sleepKind NOTIFY sleepChanged)    // "off" | "minutes" | "chapter"
@@ -134,6 +137,12 @@ public:
     QString chapterSubtitle() const;
     bool playing() const { return m_playing; }
     bool buffering() const { return m_buffering; }
+    bool speaking() const { const auto *item = chapter(m_chapterId); return item && item->textOnly; }
+    QString voiceId() const { return m_book.voice.isEmpty() ? m_defaultVoice : m_book.voice; }
+    QString purpose() const { return m_purpose; }
+    bool hasDefaultVoice() const { return !m_defaultVoice.isEmpty(); }
+    Q_INVOKABLE void chooseVoice(const QString &voice, bool resumeAfter = false);
+    Q_INVOKABLE void review(const QString &bookId, int chapterId);
     double rate() const { return m_rate; }
     double volume() const { return m_volume; }
     QString sleepKind() const;
@@ -274,7 +283,8 @@ private:
         qint64 mark = 0;
     };
 
-    void start(const PlayerLogic::Book &book, int chapterId, double at, bool autoplay);
+    void openFor(const QString &bookId, int chapterId, double at, bool autoplay, const QString &purpose);
+    void start(const PlayerLogic::Book &book, int chapterId, double at, bool autoplay, const QString &purpose);
     void adoptBook(const PlayerLogic::Book &book);
     void load(int chapterId, double at, bool autoplay);
     void resumeNow();
@@ -375,4 +385,5 @@ private:
     quint64 m_openSeq = 0;
     int m_freshMs = 1600;  // FRESH_SPOT_MS
     QString m_lastFailure;
+    QString m_defaultVoice, m_purpose = QStringLiteral("listen");
 };

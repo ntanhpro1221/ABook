@@ -49,6 +49,8 @@ if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
 
 rem Player unit tests (QtTest with fake audio/network): red stops the build before packaging
+call :test "%HERE%build\PlayerNativeTests.exe" "%HERE%build\playernative-test.txt"
+if errorlevel 1 exit /b 1
 call :test "%HERE%build\MediaControlsTests.exe" "%HERE%build\mediacontrols-test.txt"
 if errorlevel 1 exit /b 1
 call :test "%HERE%build\DesktopApiTests.exe" "%HERE%build\desktopapi-test.txt"
@@ -112,7 +114,10 @@ rem Keep every QtTest result: GUI stderr alone can be empty even when tests fail
 "%~1" -o "%~2",txt
 set TEST_EXIT=%errorlevel%
 type "%~2"
+echo Test exit: %TEST_EXIT%
 if not "%TEST_EXIT%"=="0" exit /b 1
+findstr /c:"Totals:" "%~2" >nul
+if errorlevel 1 exit /b 1
 findstr /c:"FAIL!" "%~2" >nul
 if not errorlevel 1 exit /b 1
 exit /b 0
