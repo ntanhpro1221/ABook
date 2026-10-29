@@ -133,7 +133,7 @@ Item {
         function test_syncOnThenOffAnnounces() {
             install(baseSync(), [])
             const page = make()
-            verify(shown(page, "Máy đã ghép"))
+            tryVerify(function() { return shown(page, "Máy đã ghép") })   // danh sách tới không đồng bộ: chờ điều kiện, không chờ cứng
             compare(shown(page, "Điện thoại, máy tính bảng"), true)
             byName(page, "syncToggle").toggled(false)
             compare(request("POST", "/api/sync")[0].body.enabled, false)
