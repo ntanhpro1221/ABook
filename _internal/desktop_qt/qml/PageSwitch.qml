@@ -1,7 +1,8 @@
 import QtQuick
 import ABook
 
-// Công tắc hai lựa chọn ("Bìa" / "Đọc theo"): nền chìm, khối sáng trượt sang lựa chọn mới.
+// Công tắc vài lựa chọn ("Bìa" / "Đọc theo"; "Chương" / "Lịch sử" / "Nhân vật" của trang sách): nền chìm, khối sáng trượt sang lựa chọn mới.
+// Mỗi lựa chọn rộng theo chữ của nó (chữ đậm vừa, để chọn rồi không làm công tắc nhảy); hai hay ba nhãn đều dùng một công tắc.
 Item {
     id: root
     property var labels: ["", ""]
@@ -10,12 +11,19 @@ Item {
     Accessible.role: Accessible.PageTabList
     Accessible.name: label
     signal picked(int index)
-    readonly property real firstWidth: Math.max(40, firstText.advanceWidth + 2 * Theme.s12)
-    readonly property real secondWidth: Math.max(40, secondText.advanceWidth + 2 * Theme.s12)
-    implicitWidth: firstWidth + secondWidth + 4
+    readonly property int count: labels.length
+    // Chỗ và bề rộng của lựa chọn đang chọn: chính lựa chọn ấy báo lại mỗi khi nó đổi chỗ / đổi cỡ / được chọn
+    property real thumbX: 0
+    property real thumbW: 40
+    property bool settled: false            // khối sáng chỉ trượt sau lần xếp đầu tiên
+    Component.onCompleted: Qt.callLater(function() { root.settled = true })
+    property real stripEnd: 2               // mép phải lựa chọn cuối
+    implicitWidth: stripEnd + 2
+    onCountChanged: Qt.callLater(function() {
+        const last = tabs.itemAt(root.count - 1)
+        if (last) root.stripEnd = last.x + last.width
+    })
     implicitHeight: 36
-    TextMetrics { id: firstText; text: root.labels[0]; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
-    TextMetrics { id: secondText; text: root.labels[1]; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
 
     Rectangle {
         anchors.fill: parent
@@ -23,13 +31,22 @@ Item {
         color: Theme.sunken
     }
     Rectangle {
-        x: 2 + (root.index === 0 ? 0 : root.firstWidth)
+        x: 2 + root.thumbX
         y: 2
-        width: root.index === 0 ? root.firstWidth : root.secondWidth
+        width: root.thumbW
         height: root.height - 4
         radius: Theme.radiusControl
         color: Theme.panel
         Behavior on x {
+            enabled: root.settled
+            NumberAnimation {
+                duration: Theme.reduceMotion ? 0 : Theme.motionMedium
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Theme.easeStandard
+            }
+        }
+        Behavior on width {
+            enabled: root.settled
             NumberAnimation {
                 duration: Theme.reduceMotion ? 0 : Theme.motionMedium
                 easing.type: Easing.BezierSpline
@@ -39,35 +56,54 @@ Item {
     }
     Repeater {
         id: tabs
-        model: 2
+        model: root.labels
         Interactive {
+            id: tab
             required property int index
-            x: 2 + (index === 0 ? 0 : root.firstWidth)
+            required property var modelData
+            readonly property string text: String(modelData === undefined || modelData === null ? "" : modelData)
+            readonly property bool current: root.index === index
+            // Các lựa chọn nối nhau từ mép trái: mỗi cái xếp sau cái trước, đổi cỡ thì đẩy cái sau; cái đang chọn báo chỗ cho khối sáng
+            function place() {
+                const before = index > 0 ? tabs.itemAt(index - 1) : null
+                x = before ? before.x + before.width : 2
+            }
+            function sync() {
+                if (current) { root.thumbX = x - 2; root.thumbW = width }
+                if (index === root.count - 1) root.stripEnd = x + width
+                const after = tabs.itemAt(index + 1)
+                if (after) after.place()
+            }
             y: 2
-            implicitWidth: index === 0 ? root.firstWidth : root.secondWidth
-            width: implicitWidth
+            onCurrentChanged: sync()
+            onXChanged: sync()
+            onWidthChanged: sync()
+            Component.onCompleted: { place(); sync() }
+            width: Math.max(40, metrics.advanceWidth + 2 * Theme.s12)
             height: root.height - 4
             pressScaling: false
             Accessible.role: Accessible.PageTab
-            Accessible.name: root.labels[index]
+            Accessible.name: text
             Accessible.checkable: true
-            Accessible.checked: root.index === index
-            activeFocusOnTab: root.index === index || activeFocus
+            Accessible.checked: current
+            activeFocusOnTab: current || activeFocus
             Keys.onPressed: event => {
                 let next = -1
-                if (event.key === Qt.Key_Left || event.key === Qt.Key_Right) next = 1 - root.index
+                if (event.key === Qt.Key_Left) next = (root.index + root.count - 1) % root.count
+                else if (event.key === Qt.Key_Right) next = (root.index + 1) % root.count
                 else if (event.key === Qt.Key_Home) next = 0
-                else if (event.key === Qt.Key_End) next = 1
+                else if (event.key === Qt.Key_End) next = root.count - 1
                 if (next >= 0) { root.picked(next); tabs.itemAt(next).forceActiveFocus(); event.accepted = true }
             }
             ringRadius: Theme.radiusControl - 2
             onClicked: root.picked(index)
+            TextMetrics { id: metrics; text: tab.text; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
             Text {
                 anchors.centerIn: parent
-                text: root.labels[index]
-                color: root.index === index ? Theme.text : Theme.text2
+                text: tab.text
+                color: tab.current ? Theme.text : Theme.text2
                 font.pixelSize: Theme.sizeBodySmall
-                font.weight: root.index === index ? Theme.weightMedium : Theme.weightRegular
+                font.weight: tab.current ? Theme.weightMedium : Theme.weightRegular
             }
         }
     }

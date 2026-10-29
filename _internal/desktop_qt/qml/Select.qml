@@ -10,6 +10,7 @@ Interactive {
     property var options: []            // [{value, label}]
     property var value: ""
     property string label: ""           // tên cho trình đọc màn hình
+    property string placeholder: ""     // chữ mờ khi chưa chọn mục nào ("Chọn cuốn…")
     property bool inline: false
     property bool tabular: false
     signal picked(var value)
@@ -42,8 +43,8 @@ Interactive {
         x: 10
         width: root.width - x - 10 - 14 - 8
         anchors.verticalCenter: parent.verticalCenter
-        text: root.currentLabel
-        color: Theme.text
+        text: root.currentLabel !== "" ? root.currentLabel : root.placeholder
+        color: root.currentLabel !== "" ? Theme.text : Theme.text3
         wrapMode: Text.Wrap
         font.pixelSize: Theme.sizeBodySmall
         font.features: root.tabular ? {"tnum": 1} : {}

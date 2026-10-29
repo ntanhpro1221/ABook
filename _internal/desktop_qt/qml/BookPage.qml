@@ -2,6 +2,7 @@ import QtQuick
 import ABook
 import "EditBookLogic.js" as Logic
 import "CastLogic.js" as Cast
+import "RecordLogic.js" as Records
 
 // One width rule on the content area. Geometry interpolates without reparenting,
 // so the cover, chapter scroll position and delegates survive a class change.
@@ -12,6 +13,7 @@ Item {
     signal saveAsRequested(var data)
     signal renameRequested(var data, var chapter)       // "Đổi tên chương…" ở menu "…" của dòng chương: hộp EditBookRename của Main.qml
     signal castRequested(string kind, var data)         // hộp của tab Nhân vật (CastDialogs của Main.qml): "merge" | "rename" | "gender" | "voice" | "narrator"
+    signal recordRequested(string kind, var data)       // hộp / việc của hồ sơ nghe (RecordDialogs của Main.qml): "create" | "rename" | "move" | "delete" | "activate"
     property var book: ({})
     readonly property bool expanded: width >= Theme.widthExpanded
     property real split: expanded ? 1 : 0
@@ -50,7 +52,7 @@ Item {
         Button {
             id: moreButton
             objectName: "bookMore"
-            visible: items.hasItems
+            visible: items.hasItems || root.recordRows.length > 0 || root.canToggleFinished
             text: "Thêm"; icon: "ellipsis"; kind: "text"
             Accessible.name: "Thêm việc với sách"
             onClicked: more.toggle()
@@ -68,6 +70,7 @@ Item {
         target: Api
         function onEdited(bookId) {
             if (bookId !== root.book.bookId) return
+            bookDetail.reload()         // dấu "đã nghe" của từng chương theo hồ sơ nghe vừa đổi
             Api.call("GET", "/api/listen/books/" + bookId, null, function(data, error) {
                 if (!error) {
                     root.fullBook = data
@@ -76,27 +79,107 @@ Item {
             })
         }
     }
+    // Việc với hồ sơ nghe khi cuốn chỉ có MỘT hồ sơ (singleRecordActions của BookScreen.tsx): "Hồ sơ mới", "Chuyển hồ sơ", "Đổi tên hồ sơ…" ở đầu menu,
+    // "Xoá hồ sơ…" ở cuối dưới vạch ngăn; nhiều hồ sơ thì nút "Hồ sơ nghe:" lo. "Đã nghe xong / Chưa nghe xong" cho cả cuốn nằm dưới các việc ấy.
+    readonly property var recordRows: Records.singleActions(fullBook)
+    readonly property bool canToggleFinished: fullBook.id !== undefined && fullBook.stage !== "text"
+    readonly property bool finishedNow: Boolean(fullBook.progress && fullBook.progress.finished)
+    function recordRequest(kind, dialog, record) {
+        if (fullBook.id === undefined) return
+        root.recordRequested(kind, {bookId: root.book.bookId, book: root.fullBook, dialog: dialog, record: record})
+    }
+    // Đánh dấu cả cuốn đã nghe xong / chưa (POST .../finished), ghi vào hồ sơ nghe đang hiện
+    function setFinished(finished) {
+        const id = root.book.bookId
+        const active = Records.activeRecord(root.fullBook)
+        Api.call("POST", "/api/listen/books/" + id + "/finished", active ? {finished: finished, record: active.id} : {finished: finished}, function(data, error) {
+            if (error) { if (/^Hồ sơ nghe này/.test(error)) root.loadFull(); return }
+            bookDetail.reload()
+            root.loadFull()
+            if (Api.transport) Api.transport.refreshLibrary()
+        })
+    }
     Popover {
         id: more
+        objectName: "bookMoreMenu"
         anchorItem: moreButton
         panelWidth: 280
         pad: Theme.s8
-        EditBookItems {
-            id: items
+        Column {
+            width: parent.width
+            Repeater {
+                model: root.recordRows.filter(row => !row.danger)
+                MenuRow {
+                    required property var modelData
+                    objectName: "recordRow." + modelData.key
+                    width: parent.width
+                    icon: modelData.icon
+                    text: modelData.label
+                    onClicked: { more.close(); root.recordRequest(modelData.key, modelData.dialog, null) }
+                }
+            }
+            MenuRow {
+                objectName: "menuFinished"
+                visible: root.canToggleFinished
+                width: parent.width
+                height: visible ? implicitHeight : 0
+                icon: "check-check"
+                text: root.finishedNow ? "Chưa nghe xong" : "Đã nghe xong"
+                onClicked: { more.close(); root.setFinished(!root.finishedNow) }
+            }
+            EditBookItems {
+                id: items
+                width: parent.width
+                book: root.fullBook
+                onEditRequested: { more.close(); root.editRequested(root.fullBook) }
+                onSaveRequested: { more.close(); root.saveRequested(root.fullBook) }
+                onSaveAsRequested: { more.close(); root.saveAsRequested(root.fullBook) }
+            }
+            Item {
+                visible: root.recordRows.some(row => row.danger)
+                width: parent.width
+                height: visible ? 9 : 0
+                Rectangle { y: 4; width: parent.width; height: 1; color: Theme.line }
+            }
+            Repeater {
+                model: root.recordRows.filter(row => row.danger)
+                MenuRow {
+                    required property var modelData
+                    objectName: "recordRow." + modelData.key
+                    width: parent.width
+                    icon: modelData.icon
+                    text: modelData.label
+                    danger: true
+                    onClicked: { more.close(); root.recordRequest(modelData.key, modelData.dialog, null) }
+                }
+            }
+        }
+    }
+    // Nhiều hồ sơ: danh sách của nút "Hồ sơ nghe:" (RecordMenu)
+    Popover {
+        id: recordMenu
+        objectName: "recordMenu"
+        anchorItem: recordChip
+        panelWidth: 288
+        pad: 6
+        RecordMenu {
             width: parent.width
             book: root.fullBook
-            onEditRequested: { more.close(); root.editRequested(root.fullBook) }
-            onSaveRequested: { more.close(); root.saveRequested(root.fullBook) }
-            onSaveAsRequested: { more.close(); root.saveAsRequested(root.fullBook) }
+            onActivate: record => {
+                recordMenu.close()
+                if (!record.active) root.recordRequest("activate", null, record)
+            }
+            onAction: dialog => { recordMenu.close(); root.recordRequest(dialog.kind, dialog, null) }
         }
     }
     // Menu chương dùng cùng màn đọc với Thư viện và Đang nghe.
     property var menuChapter: null          // {chapterId, title, subtitle, fullTitle, playable, done}
     readonly property bool canRename: Logic.canEditLayer(fullBook.capabilities)
-    // Mục của sách: Chương | Nhân vật. Sách chỉ có chữ (chưa phân vai) không có dàn nhân vật nên không có mục này.
+    // Mục của sách: Chương | Lịch sử | Nhân vật (0, 1, 2). Sách chỉ có chữ (chưa phân vai) không có dàn nhân vật nên không có mục cuối.
     property int tab: 0
     readonly property bool hasCast: fullBook.id !== undefined && fullBook.stage !== "text"
-    readonly property int paneIndex: hasCast ? tab : 0
+    readonly property var tabLabels: hasCast ? ["Chương", "Lịch sử", "Nhân vật"] : ["Chương", "Lịch sử"]
+    readonly property int paneIndex: Math.min(tab, tabLabels.length - 1)
     // Việc sửa dàn nhân vật theo khả năng của cuốn (BookScreen.tsx: editable / waiting / workshop): đổi tên - mọi cuốn sửa được; giới tính và gộp - cuốn chờ
     // Studio (file .abook) hay cuốn có xưởng; đổi giọng, bỏ gộp, đổi giọng người kể - cuốn có xưởng (bản Qt chưa có Studio nên làm ngay ở đây). Cuốn của máy khác: chỉ nghe.
     readonly property bool remote: Boolean(root.book.remote)
@@ -320,6 +403,19 @@ Item {
                     wrapMode: Text.Wrap
                     font.pixelSize: Theme.sizeBodySmall
                 }
+                Item {          // "Hồ sơ nghe: {tên}" (chỉ khi cuốn có từ hai hồ sơ)
+                    visible: Records.hasPicker(root.fullBook)
+                    width: parent.width
+                    height: visible ? recordChip.height + Theme.s4 : 0
+                    RecordChip {
+                        id: recordChip
+                        objectName: "recordChip"
+                        y: Theme.s4
+                        maxWidth: parent.width
+                        name: Records.activeRecord(root.fullBook) ? Records.activeRecord(root.fullBook).name : ""
+                        onClicked: recordMenu.toggle()
+                    }
+                }
                 Item { width: 1; height: Theme.s8 * root.summaryT }
                 Flow {
                     visible: bookDetail.canListen
@@ -370,26 +466,15 @@ Item {
             y: Math.max(root.stackedHeight, summary.height + Theme.s24) * (1 - root.chapterT)
             width: Math.min(stage.width - x, Theme.listMeasure)
             height: Math.max(0, stage.height - y)
-            Text {
-                id: chaptersTitle
-                visible: bookDetail.chapters.count > 0 && !root.hasCast
-                width: parent.width
-                text: "Chương"
-                wrapMode: Text.Wrap
-                color: Theme.text
-                font.pixelSize: Theme.sizeSection
-                font.weight: Theme.weightMedium
-            }
             PageSwitch {
                 id: tabs
                 objectName: "bookTabs"
-                visible: root.hasCast
                 label: "Mục của sách"
-                labels: ["Chương", "Nhân vật"]
+                labels: root.tabLabels
                 index: root.paneIndex
                 onPicked: index => root.tab = index
             }
-            readonly property real headHeight: root.hasCast ? tabs.height : chaptersTitle.height
+            readonly property real headHeight: tabs.height
             readonly property int fade: Theme.reduceMotion ? Math.min(Theme.motionFast, 120) : Theme.motionMedium
             ListView {
                 id: list
@@ -439,18 +524,32 @@ Item {
                 opacity: list.opacity
                 visible: list.visible
             }
+            HistoryList {
+                id: historyList
+                y: chapterRegion.headHeight + Theme.s8
+                width: parent.width
+                height: Math.max(0, parent.height - y)
+                bookId: root.book.bookId || ""
+                active: root.paneIndex === 1
+                chapters: root.fullBook.chapters || []
+                opacity: root.paneIndex === 1 ? 1 : 0
+                visible: opacity > 0
+                enabled: root.paneIndex === 1
+                Behavior on opacity { NumberAnimation { duration: chapterRegion.fade } }
+                onPlay: (chapterId, seconds) => Player.open(root.book.bookId, chapterId, seconds, true)
+            }
             CastList {
                 id: castList
                 y: chapterRegion.headHeight + Theme.s8
                 width: parent.width
                 height: Math.max(0, parent.height - y)
                 bookId: root.book.bookId || ""
-                active: root.paneIndex === 1
+                active: root.paneIndex === 2
                 caps: root.castCaps
                 reached: root.castReached
-                opacity: root.paneIndex === 1 ? 1 : 0
+                opacity: root.paneIndex === 2 ? 1 : 0
                 visible: opacity > 0
-                enabled: root.paneIndex === 1
+                enabled: root.paneIndex === 2
                 Behavior on opacity { NumberAnimation { duration: chapterRegion.fade } }
                 onRequest: (kind, person) => root.castRequest(kind, person)
                 onMenuRequested: (anchor, person) => root.openCastMenu(anchor, person)

@@ -4,7 +4,8 @@ import "CastLogic.js" as Logic
 
 // "Giọng của …" (VoicePicker của studio/VoicePicker.tsx): mọi giọng dùng được cho một nhân vật (hay người kể), nghe thử từng giọng, giọng đang dùng, giọng máy
 // gợi ý, ai đang dùng giọng ấy; chọn xong đi đúng đường của thẻ "Nam hay nữ" (POST /api/books/<id>/voice). Đổi giọng khác giới với nhân vật thì hỏi ngay trong
-// hộp (đổi cả giới). Chưa làm: tải thêm mô-đun giọng của máy đọc khác và "Nghe thử bằng câu của sách" - việc của Studio.
+// hộp (đổi cả giới). Mỗi giọng có thêm nút "Nghe thử bằng câu của sách" (máy thu một câu của chính người này bằng giọng ấy; Logic.heard nhớ bản đã nghe)
+// khi người ấy có câu để đọc; nhóm giọng của máy đọc khác có đầu riêng với nút tải giọng (CastEngine).
 CastModal {
     id: root
     panelWidth: 560
@@ -13,6 +14,9 @@ CastModal {
     property string status: "loading"       // loading | ready | failed
     property string filter: ""              // "" = theo giới của nhân vật
     property var crossing: null             // giọng khác giới đang chờ xác nhận
+    property string asking: ""              // khoá bản nghe thử đang chờ máy thu ("" = không)
+    property var said: null                 // {text, status}: dòng dưới ô lọc - máy đang làm gì / đã đọc câu nào / vì sao chưa nghe được
+    property var tried: ({})                // bản nghe thử vừa phát theo khoá giọng {khoá: preview}: nút biết bản nào đang ra tiếng
     readonly property string shownName: person ? (person.displayName || (choices ? choices.character.label : "")) : ""
     readonly property bool narrator: choices !== null && choices.character.value === "NARRATOR"
     readonly property string currentGender: {
@@ -32,16 +36,53 @@ CastModal {
         generation++
         bookId = info.bookId; person = info.person
         choices = null; status = "loading"; filter = ""; crossing = null; saving = false
+        asking = ""; said = null; tried = ({})
         show()
-        load()
+        load(false)
     }
-    function load() {
+    // `again`: đọc lại danh sách đang hiện (một máy đọc vừa tải xong) mà không đổi sang khung chờ
+    function load(again) {
         const mine = generation
         Api.quiet("GET", "/api/books/" + bookId + "/voices?character=" + encodeURIComponent(person.name), null, function(answer, error) {
             if (mine !== root.generation) return
-            if (error || !answer || !answer.character) { root.status = "failed"; return }
+            if (error || !answer || !answer.character) { if (!again) root.status = "failed"; return }
             root.choices = answer
             root.status = "ready"
+        })
+    }
+    // ---- "Nghe thử bằng câu của sách" (useVoiceTry của VoiceTry.tsx) ----
+    function tryRequest(voice) { return {character: choices.character.value, preset: voice.key} }
+    function tryKey(voice) { return Logic.tryKey(bookId, tryRequest(voice)) }
+    function tryPlay(preview, voice) {
+        Clip.toggle(Logic.tryId(preview), preview.url)
+        tried = Object.assign({}, tried, {[voice.key]: preview})
+        said = {text: Logic.previewCaption(preview.text, voice.name), status: false}
+    }
+    function tryVoice(voice) {
+        const key = tryKey(voice)
+        const known = Logic.heard[key]
+        if (known) { tryPlay(known, voice); return }
+        Clip.stop()
+        asking = key
+        said = {text: Logic.tryAsking(voice.name), status: true}
+        const mine = generation
+        Api.quiet("POST", "/api/books/" + bookId + "/voice/preview", tryRequest(voice), function(preview, error, detail) {
+            if (mine !== root.generation) return
+            root.asking = ""
+            if (!error && preview) {
+                Logic.heard[key] = preview
+                root.tryPlay(preview, voice)
+                return
+            }
+            const reason = detail ? detail.reason : undefined
+            // Người chưa có câu nào: phát câu mẫu chung của giọng
+            if (reason === "no-line" && voice.preview) {
+                Clip.toggle(Logic.voiceId(voice.name), Logic.voiceUrl(voice.key))
+                root.said = {text: Logic.NO_LINE, status: true}
+                return
+            }
+            const why = Logic.refusalText(reason, error, Boolean(detail && detail.busyBook))
+            root.said = {text: voice.preview ? why + " - nút ▶ vẫn nghe được câu mẫu chung của giọng" : why, status: true}
         })
     }
     // Chọn một giọng: cùng giới (hay chưa biết giới) ghi luôn; khác giới thì hỏi trước. Người kể không có giới để đổi.
@@ -122,7 +163,7 @@ CastModal {
                     wrapMode: Text.Wrap
                     font.pixelSize: Theme.sizeBodySmall
                 }
-                Button { objectName: "voiceRetry"; text: "Thử lại"; icon: "rotate-cw"; size: "sm"; kind: "ghost"; onClicked: { root.status = "loading"; root.load() } }
+                Button { objectName: "voiceRetry"; text: "Thử lại"; icon: "rotate-cw"; size: "sm"; kind: "ghost"; onClicked: { root.status = "loading"; root.load(false) } }
             }
         }
         Collapse {
@@ -201,12 +242,28 @@ CastModal {
                     onPicked: value => root.filter = value
                 }
                 Text {
+                    objectName: "voiceTryHint"
                     width: parent.width
-                    text: root.shownName + " chưa có câu nào để đọc thử - nút ▶ là câu mẫu chung của giọng."
-                    visible: root.choices !== null && !root.choices.tryLine
+                    text: root.choices ? Logic.tryHint(root.shownName, Boolean(root.choices.tryLine)) : ""
                     color: Theme.text3
                     wrapMode: Text.Wrap
                     font.pixelSize: Theme.sizeCaption
+                }
+                // Máy đang làm gì với câu thử / đã đọc câu nào / vì sao chưa nghe được (giữ chữ cũ lúc dòng khép lại)
+                Collapse {
+                    width: parent.width
+                    open: root.said !== null
+                    Text {
+                        id: sayText
+                        objectName: "voiceTryNote"
+                        property var kept: ({text: "", status: false})
+                        Connections { target: root; function onSaidChanged() { if (root.said) sayText.kept = root.said } }
+                        width: parent.width
+                        text: kept.text
+                        color: kept.status ? Theme.text2 : Theme.text3
+                        wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                        font.pixelSize: Theme.sizeCaption
+                    }
                 }
                 Repeater {
                     model: root.groups
@@ -216,11 +273,22 @@ CastModal {
                         required property int index
                         width: parent.width
                         spacing: 4
+                        // Nhóm của máy đọc khác (hay khi có từ hai nhóm): đầu nhóm có nút tải giọng khi máy đọc ấy chưa có trên máy này
+                        CastEngine {
+                            objectName: "voiceEngine"
+                            visible: Logic.groupHasHeader(root.groups, group.modelData)
+                            width: parent.width
+                            engine: group.modelData.engine
+                            label: root.labels[group.index] || ""
+                            initial: root.choices && root.choices.modules ? (root.choices.modules[group.modelData.engine] || null) : null
+                            onReady: root.load(true)
+                        }
                         Text {
                             objectName: "voiceGroup"
+                            visible: !Logic.groupHasHeader(root.groups, group.modelData)
                             width: parent.width
                             topPadding: 4
-                            text: root.labels[group.index]
+                            text: root.labels[group.index] || ""
                             color: Theme.text3
                             wrapMode: Text.Wrap
                             font.pixelSize: Theme.sizeCaption
@@ -253,9 +321,26 @@ CastModal {
                                     url: Logic.voiceUrl(row.voice.key)
                                     label: "Nghe thử giọng " + row.voice.name
                                 }
+                                // "Nghe thử bằng câu của sách": một câu của chính người này đọc bằng giọng ấy (chỉ khi người ấy có câu)
+                                CastSample {
+                                    id: tryButton
+                                    objectName: "voiceTry"
+                                    x: 44
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    visible: Boolean(root.choices.tryLine)
+                                    asks: true
+                                    idleIcon: "book-open-text"
+                                    readonly property string key: root.tryKey(row.voice)
+                                    readonly property var heard: root.tried[row.voice.key]
+                                    clipId: heard ? Logic.tryId(heard) : ""
+                                    busy: root.asking === key
+                                    enabled: row.voice.installed && (root.asking === "" || root.asking === key)
+                                    label: Logic.tryLabel(row.voice.name, false)
+                                    onRequested: root.tryVoice(row.voice)
+                                }
                                 Column {
                                     id: texts
-                                    x: 48
+                                    x: root.choices.tryLine ? 88 : 48
                                     anchors.verticalCenter: parent.verticalCenter
                                     width: parent.width - x - action.width - 20
                                     spacing: 2
