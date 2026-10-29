@@ -23,6 +23,66 @@ def dump(path, value):
     path.write_text(json.dumps(value, indent=1), encoding="utf-8", newline="\n")
 
 
+def device_empty(trace, done_ms=None):
+    """`mix_device_empty` lines that count against a stage: only those logged before the bench's `done` event.
+    The line carries no clock, so it takes the epoch_ms of the nearest earlier stamped line; once that is past `done`
+    the app is shutting down and an endpoint drained by the exit is not a gap in the hidden window."""
+    count,last=0,None
+    for line in trace.splitlines():
+        stamp=re.search(r"epoch_ms=(\d+)",line)
+        if stamp:last=int(stamp.group(1))
+        if "mix_device_empty" in line and (done_ms is None or last is None or last<=done_ms):count+=1
+    return count
+
+
+def done_ms(got):
+    for t,n in got["d"]["events"]:
+        if n=="done":return t+got["d"]["epoch_offset_ms"]
+    return None
+
+
+def accept(got,trace,speed=1,native=False):
+    ev={n:t for t,n in got["d"]["events"]}
+    audio={}
+    for n in ev:
+        if n.startswith("audio:"):
+            _,tag,ch,pos,playing=n.split(":");audio[tag]=dict(chapter=int(ch),position=float(pos),playing=int(playing))
+    wall=(ev["hide_end"]-ev["hide_begin"])/1000
+    media=audio["hide_end"]["position"]-audio["hide_begin"]["position"]
+    desktop_pass=bool(got.get("desktop_verified_before_resume")) and got.get("actual_thread_desktop")==[got.get("desktop_verified_before_resume")]
+    frames=got["d"]["frames"]
+    native_render_pass=not native or (any(f<ev["hide_begin"] for f in frames)
+        and any(f>ev["hide_end"] for f in frames) and not any(ev["hide_begin"]+5000<=f<=ev["hide_end"] for f in frames))
+    markers=[n for _,n in got["d"]["events"]]
+    accepted=(got["exit_code"]==0 and not got["forced_termination"] and got["foreground_events"]==0
+        and not got["shared_busy"] and abs(media-wall*speed)<0.1 and wall>=120 and all(v["playing"] for v in audio.values())
+        and device_empty(trace,done_ms(got))==0 and "mix_playing" in markers and "mix_failed" not in markers
+        and desktop_pass and native_render_pass)
+    return dict(hidden_wall_s=wall,hidden_media_s=media,audio=audio,desktop_pass=desktop_pass,native_render_pass=native_render_pass,accepted=accepted)
+
+
+def selftest():
+    done=1000
+    log=lambda *lines:"\n".join(lines)
+    assert device_empty(log("mix_wakes epoch_ms=900 count=1","mix_device_empty written=1"),done)==1, "gap inside the run counts"
+    assert device_empty(log("mix_wakes epoch_ms=1000 count=1","mix_device_empty written=1"),done)==1, "a gap at the done stamp counts"
+    assert device_empty(log("mix_wakes epoch_ms=900 count=1","graphics_idle_release epoch_ms=1014 x","mix_device_empty written=2"),done)==0, "shutdown drain after done is not a gap"
+    assert device_empty(log("mix_device_empty written=0","mix_wakes epoch_ms=2000 count=1"),done)==1, "no earlier stamp: count it"
+    assert device_empty(log("mix_wakes epoch_ms=2000 count=1","mix_device_empty written=2"))==1, "without a done event every line counts"
+    print("idle2_stage selftest OK")
+
+
+def recheck(label):
+    """Recompute the acceptance gate and summary from a retained raw.json + app.log (no new run)."""
+    stage=OUT/label;got=json.loads((stage/"raw.json").read_bytes());trace=(stage/"app.log").read_text(encoding="utf-8",errors="replace")
+    got["app_log"]=str(stage/"app.log")
+    gate=accept(got,trace,got.get("speed",1),got.get("native",False))
+    result=summary(got);result.update(hidden_wall_s=gate["hidden_wall_s"],hidden_media_s=gate["hidden_media_s"])
+    print("RECHECK",label,"accepted",gate["accepted"],"cpu_core_pct",round(result["cpu_core_pct"],3),
+          "device_empty_before_done",result["device_empty"],"device_empty_lines",trace.count("mix_device_empty"),flush=True)
+    return gate["accepted"],result
+
+
 def summary(got):
     events = {n: t + got["d"]["epoch_offset_ms"] for t,n in got["d"]["events"]}
     begin,end = events["hide_begin"]+5000,events["hide_end"]
@@ -51,7 +111,7 @@ def summary(got):
         main_dispatcher_iterations=re.findall(r"idle_main_dispatcher_wakes=(\d+)",trace),
         timer_deliveries=re.findall(r"idle_timer (.+) count=(\d+)",trace),
         event_deliveries=re.findall(r"idle_event (.+) count=(\d+)",trace),
-        device_empty=trace.count("mix_device_empty"),foreground_events=got["foreground_events"],
+        device_empty=device_empty(trace,done_ms(got)),foreground_events=got["foreground_events"],
         battery_status_at_launch=got["battery_status_at_launch"],battery_status_at_end=got["battery_status_at_end"],
         shared_busy=got["shared_busy"],exe_sha256=got["exe_sha256"],
         visible_frames=sum(t<raw_events["hide_begin"] for t in frames),
@@ -103,24 +163,8 @@ def run(label,exe,speed=1,native=False,event_audit=False):
     if got.get("app_log"):
         shutil.copyfile(got["app_log"],stage/"app.log");got["app_log"]=str(stage/"app.log")
     if got.get("ok"):
-        ev={n:t for t,n in got["d"]["events"]}
-        audio={}
-        for n in ev:
-            if n.startswith("audio:"):
-                _,tag,ch,pos,playing=n.split(":");audio[tag]=dict(chapter=int(ch),position=float(pos),playing=int(playing))
-        wall=(ev["hide_end"]-ev["hide_begin"])/1000
-        media=audio["hide_end"]["position"]-audio["hide_begin"]["position"]
-        trace=(stage/"app.log").read_text(encoding="utf-8",errors="replace")
-        got.update(hidden_wall_s=wall,hidden_media_s=media,audio=audio)
-        got["desktop_pass"] = bool(got.get("desktop_verified_before_resume")) and got.get("actual_thread_desktop")==[got.get("desktop_verified_before_resume")]
-        frames=got["d"]["frames"]
-        got["native_render_pass"] = not native or (any(f<ev["hide_begin"] for f in frames)
-            and any(f>ev["hide_end"] for f in frames) and not any(ev["hide_begin"]+5000<=f<=ev["hide_end"] for f in frames))
-        markers=[n for _,n in got["d"]["events"]]
-        got["accepted"]=(got["exit_code"]==0 and not got["forced_termination"] and got["foreground_events"]==0
-            and not got["shared_busy"] and abs(media-wall*speed)<0.1 and wall>=120 and all(v["playing"] for v in audio.values())
-            and "mix_device_empty" not in trace and "mix_playing" in markers and "mix_failed" not in markers
-            and got["desktop_pass"] and got["native_render_pass"])
+        got.update(accept(got,(stage/"app.log").read_text(encoding="utf-8",errors="replace"),speed,native))
+        wall,media=got["hidden_wall_s"],got["hidden_media_s"]
     dump(raw,got)
     if got.get("shared_busy"): raise SharedMachineBusy("Foreign workload started during stage; raw retained")
     if not got.get("accepted"):raise RuntimeError("Unaccepted stage: raw retained "+str(raw))
@@ -135,6 +179,10 @@ if __name__=="__main__":
     ap=argparse.ArgumentParser();ap.add_argument("label");ap.add_argument("--exe",type=Path,default=ROOT/"dist/ABookDesk.exe")
     ap.add_argument("--speed",type=float,default=1);ap.add_argument("--native",action="store_true")
     ap.add_argument("--event-audit",action="store_true",help="separate diagnostic; count Qt event targets without adding a timer")
+    if len(os.sys.argv)>1 and os.sys.argv[1] in ("--selftest","--recheck"):
+        selftest()
+        for label in os.sys.argv[2:]:recheck(label)
+        raise SystemExit(0)
     a=ap.parse_args();label=a.label
     while True:
         try:
