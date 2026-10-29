@@ -165,7 +165,7 @@ Item {
             visible: root.hasCover
             implicitWidth: 32
             implicitHeight: 32
-            icon: "trash-2"
+            icon: "trash"
             iconSize: 16
             ink: Theme.text2
             hoverInk: Theme.text

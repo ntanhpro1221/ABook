@@ -220,14 +220,18 @@ private slots:
         fresh.setBookId(QStringLiteral("n"));
         QCOMPARE(fresh.status(), QStringLiteral("ready"));
         QCOMPARE(fresh.primaryText(), QStringLiteral("Nghe"));
-        QCOMPARE(fresh.primaryCaption(), QString());
         QVERIFY(fresh.canListen());
+        QVERIFY(fresh.hasPoint());
+        QVERIFY(!fresh.started());
+        QCOMPARE(fresh.firstPlayable(), 1);
         QCOMPARE(fresh.chapters()->count(), 3);
 
         BookDetail resumed;
         resumed.setBookId(QStringLiteral("d"));
-        QCOMPARE(resumed.primaryText(), QStringLiteral("Nghe tiếp"));
-        QCOMPARE(resumed.primaryCaption(), QStringLiteral("Chương 2"));
+        QCOMPARE(resumed.primaryText(), QStringLiteral("Nghe tiếp · Chương 2"));
+        QVERIFY(resumed.started());
+        QCOMPARE(resumed.point().value(QStringLiteral("chapterId")).toInt(), 2);
+        QVERIFY(resumed.point().value(QStringLiteral("at")).toDouble() > 0);
         resumed.activate();
         QVERIFY(rig.player->loaded());
         QCOMPARE(rig.player->bookId(), QStringLiteral("d"));
@@ -235,7 +239,7 @@ private slots:
         QCOMPARE(resumed.primaryText(), QStringLiteral("Tạm dừng"));
         resumed.activate();
         QVERIFY(!rig.player->playing());
-        QCOMPARE(resumed.primaryText(), QStringLiteral("Nghe tiếp"));
+        QCOMPARE(resumed.primaryText(), QStringLiteral("Nghe tiếp · Chương 2"));
     }
 
     void bookDetailTextOnlyBookSaysWhatIsMissing() {
@@ -253,7 +257,9 @@ private slots:
         BookDetail detail;
         detail.setBookId(QStringLiteral("t"));
         QVERIFY(!detail.canListen());
-        QCOMPARE(detail.message(), QStringLiteral("Chỉ có chữ · máy này chưa có giọng đọc"));
+        QVERIFY(!detail.hasPoint());              // nút chính là "Đọc" (dòng "Chỉ có chữ · máy này chưa có giọng đọc" ở BookLogic.js)
+        QVERIFY(detail.point().isEmpty());
+        QCOMPARE(detail.firstPlayable(), -1);
         detail.activate();
         QVERIFY(!rig.player->loaded());
     }

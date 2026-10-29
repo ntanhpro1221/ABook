@@ -127,6 +127,10 @@ qt_add_qml_module(ABookDesk
         qml/LibraryContinue.qml
         qml/LibraryLogic.js
         qml/ChapterReader.qml
+        qml/FindInBook.qml
+        qml/FindLogic.js
+        qml/ActionButton.qml
+        qml/BookLogic.js
         qml/VolumeControl.qml
         qml/ReadingSuggestions.qml
         qml/BookCell.qml

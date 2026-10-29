@@ -293,7 +293,7 @@ Column {
                                 opacity: ask.asking ? 0 : 1
                                 enabled: !ask.asking
                                 Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
-                                text: "Xoá"; icon: "trash-2"; kind: "ghost"; size: "sm"
+                                text: "Xoá"; icon: "trash"; kind: "ghost"; size: "sm"
                                 Accessible.name: "Xoá: " + item.track.title
                                 onClicked: root.askRemove(item.link)
                             }
@@ -307,7 +307,7 @@ Column {
                                 Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
                                 Button {
                                     id: drop
-                                    text: "Xoá bài"; icon: "trash-2"; kind: "ghost"; size: "sm"
+                                    text: "Xoá bài"; icon: "trash"; kind: "ghost"; size: "sm"
                                     busy: root.removeBusy
                                     Accessible.name: "Xoá bài: " + item.track.title
                                     onActivated: root.removeTrack(item.link)

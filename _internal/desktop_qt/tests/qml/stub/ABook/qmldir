@@ -22,6 +22,8 @@ BookPage 1.0 ../../../../qml/BookPage.qml
 LibraryScreen 1.0 ../../../../qml/LibraryScreen.qml
 LibraryContinue 1.0 ../../../../qml/LibraryContinue.qml
 ChapterReader 1.0 ../../../../qml/ChapterReader.qml
+FindInBook 1.0 ../../../../qml/FindInBook.qml
+ActionButton 1.0 ../../../../qml/ActionButton.qml
 VolumeControl 1.0 ../../../../qml/VolumeControl.qml
 ReadingSuggestions 1.0 ../../../../qml/ReadingSuggestions.qml
 NowPlaying 1.0 ../../../../qml/NowPlaying.qml
