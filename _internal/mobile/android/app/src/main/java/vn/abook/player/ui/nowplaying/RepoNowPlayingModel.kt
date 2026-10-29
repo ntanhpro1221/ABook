@@ -20,6 +20,7 @@ import kotlinx.coroutines.launch
 import vn.abook.player.ui.data.PlayerChapter
 import vn.abook.player.ui.data.PlayerRepo
 import vn.abook.player.ui.music.MusicState
+import vn.abook.player.ui.voice.VoiceState
 
 /** Where Read-along text and the installed voices come from (off the main thread inside); real: [AndroidReadAlongSource]. */
 interface ReadAlongSource {
@@ -44,6 +45,7 @@ class RepoNowPlayingModel(
     private val scope: CoroutineScope,
     private val source: ReadAlongSource = ReadAlongSource.None,
     override val music: MusicState? = null,
+    override val voice: VoiceState? = null,
 ) : NowPlayingModel {
     @Immutable
     private data class Place(val bookId: String, val chapterId: Int, val ms: Long)
@@ -103,7 +105,7 @@ class RepoNowPlayingModel(
     }
 
     override fun setVoice(id: String) {
-        if (extras.value.voices.none { it.id == id }) return
+        if (extras.value.voices.none { it.id == id && !it.online }) return
         repo.setVoice(id)
     }
 
@@ -157,7 +159,7 @@ class RepoNowPlayingModel(
 }
 
 @androidx.compose.runtime.Composable
-fun rememberRepoNowPlaying(repo: PlayerRepo, source: ReadAlongSource = ReadAlongSource.None, music: MusicState? = null): RepoNowPlayingModel {
+fun rememberRepoNowPlaying(repo: PlayerRepo, source: ReadAlongSource = ReadAlongSource.None, music: MusicState? = null, voice: VoiceState? = null): RepoNowPlayingModel {
     val scope = androidx.compose.runtime.rememberCoroutineScope()
-    return androidx.compose.runtime.remember(repo, source, music) { RepoNowPlayingModel(repo, scope, source, music) }
+    return androidx.compose.runtime.remember(repo, source, music, voice) { RepoNowPlayingModel(repo, scope, source, music, voice) }
 }

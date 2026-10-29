@@ -2,6 +2,7 @@ package vn.abook.player.ui.screens
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
@@ -34,6 +35,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
@@ -41,6 +43,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,6 +53,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
@@ -78,7 +82,15 @@ import vn.abook.player.ui.data.BookPage
 import vn.abook.player.ui.data.BookSource
 import vn.abook.player.ui.data.ChapterLine
 import vn.abook.player.ui.data.CoverArt
+import vn.abook.player.ui.data.BookNotes
+import vn.abook.player.ui.data.Cast
+import vn.abook.player.ui.data.CastView
 import vn.abook.player.ui.data.CoverLoader
+import vn.abook.player.ui.data.ListenRecord
+import vn.abook.player.ui.data.RecordAction
+import vn.abook.player.ui.voice.AndroidSamplePlayer
+import vn.abook.player.ui.components.BookOpenTextIcon
+import vn.abook.player.ui.components.PrimaryButton
 import vn.abook.player.ui.data.LibraryState
 import vn.abook.player.ui.data.ListenBook
 import vn.abook.player.ui.export.ExportFormat
@@ -111,6 +123,8 @@ class BookScreenActions(
     val export: (ListenBook, ExportFormat?) -> Unit = { _, _ -> },
     /** Dòng phụ của hàng xuất trong bảng Thêm ("Đang xuất · 27%"); null = không có gì để nói. */
     val exportHint: (bookId: String) -> StateFlow<String?> = { NoExportHint },
+    /** Mở một cuốn khác của Thư viện ("Mở cuốn ấy" sau khi chuyển hồ sơ sang đó). */
+    val openBook: (bookId: String) -> Unit = {},
 )
 
 /** Không có việc xuất nào để nói (ảnh chụp, bản thử không dựng màn Xuất). */
@@ -129,9 +143,29 @@ class BookUiState(val bookId: String, private val source: BookSource) {
     var loaded by mutableStateOf(false)
         private set
 
+    /** Dàn nhân vật (chỉ đọc khi người nghe mở mục "Nhân vật"; sau đó đọc lại cùng trang). */
+    var cast by mutableStateOf<CastView?>(null)
+        private set
+    var castLoaded by mutableStateOf(false)
+        private set
+    private var castWanted = false
+
     suspend fun load() {
-        detail = source.detail(bookId)
+        val next = source.detail(bookId)
+        // Cuốn vừa bị xoá (trang đang đóng): giữ trang cuối, không nháy sang "Không tìm thấy sách này".
+        if (next != null || detail == null) detail = next
         loaded = true
+        if (castWanted) loadCast()
+    }
+
+    suspend fun wantCast() {
+        castWanted = true
+        loadCast()
+    }
+
+    private suspend fun loadCast() {
+        cast = source.cast(bookId)
+        castLoaded = true
     }
 }
 
@@ -159,17 +193,61 @@ fun BookScreen(
     // Thư viện đọc lại (dừng phát, đánh dấu, sửa) thì trang cũng đọc lại.
     LaunchedEffect(ui, library) { ui.load() }
     val detail = ui.detail
-    val shown = detail?.book ?: (library as? LibraryState.Ready)?.books?.firstOrNull { it.id == book.id } ?: book
+    val others = (library as? LibraryState.Ready)?.books
+    val shown = detail?.book ?: others?.firstOrNull { it.id == book.id } ?: book
     val top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     val list = rememberLazyListState()
     val current = BookPage.currentChapter(shown, player)
     val chapters = detail?.chapters
     val scope = rememberCoroutineScope()
-    val currentItem = chapters?.indexOfFirst { it.id == current }?.takeIf { it >= 0 }?.plus(HEAD_ITEMS)
-    // Chương đang nghe nằm khuất BÊN DƯỚI: đầu mục "Chương" có lối tới nó. Trang không tự cuộn - đầu trang + nút "Nghe tiếp" (đã ghi tên chương) luôn là thứ thấy đầu tiên.
+    val context = LocalContext.current
+    val notes = remember(book.id) { BookNotes(scope) }
+    var tab by rememberSaveable(book.id) { mutableStateOf(BookTab.Chapters) }
+    var later by rememberSaveable(book.id) { mutableStateOf(false) }
+    val tabs = if (shown.textOnly) listOf(BookTab.Chapters, BookTab.History) else BookTab.entries
+    val shownTab = if (tab in tabs) tab else BookTab.Chapters
+    // Đổi mục thì nội dung mờ vào (đọc trong pha vẽ); lần dựng đầu không mờ.
+    val fade = remember { Animatable(1f) }
+    val firstTab = remember { booleanArrayOf(true) }
+    LaunchedEffect(shownTab) {
+        if (firstTab[0]) {
+            firstTab[0] = false
+            return@LaunchedEffect
+        }
+        if (list.firstVisibleItemIndex > TABS_ITEM) list.scrollToItem(TABS_ITEM)
+        fade.snapTo(0f)
+        fade.animateTo(1f, tween(MotionMs.MEDIUM, easing = Motion.Decelerate))
+    }
+    LaunchedEffect(ui, shownTab == BookTab.Cast) { if (shownTab == BookTab.Cast) ui.wantCast() }
+    val samples = remember(book.id) { CastSamples(book.id, source, AndroidSamplePlayer(context), scope) }
+    DisposableEffect(samples) { onDispose { samples.stop() } }
+    LaunchedEffect(shownTab) { if (shownTab != BookTab.Cast) samples.stop() }
+    val reached = remember(chapters, current) { chapters?.let { Cast.reachedTitles(it, current) } }
+    val currentItem = if (shownTab == BookTab.Chapters) chapters?.indexOfFirst { it.id == current }?.takeIf { it >= 0 }?.plus(HEAD_ITEMS) else null
+    // Chương đang nghe nằm khuất BÊN DƯỚI: lối "Tới chỗ đang nghe" dưới thanh mục. Trang không tự cuộn - đầu trang + nút "Nghe tiếp" (đã ghi tên chương) luôn là thứ thấy đầu tiên.
     val below by remember(currentItem) {
         derivedStateOf { currentItem != null && (list.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: Int.MAX_VALUE) < currentItem }
+    }
+    // Cuốn không còn trên máy (bị chuyển thư mục / xoá ở nơi khác): trang nói rõ, nút về Thư viện.
+    val gone = ui.loaded && detail == null && others != null && others.none { it.id == book.id }
+    if (gone) {
+        Column(modifier.fillMaxSize().testTag("book_screen")) {
+            Box(Modifier.padding(top = top, start = Dim.margin, end = Dim.margin).fillMaxWidth().height(Dim.s48)) {
+                BackButton(actions.back, Modifier.testTag("book_back"))
+            }
+            EmptyNote(
+                "Không tìm thấy sách này", "Sách có thể đã bị chuyển sang thư mục khác hoặc bị xoá khỏi thư viện.",
+                Modifier.padding(horizontal = Dim.margin, vertical = Dim.s32), "book_gone", icon = { ink -> BookOpenTextIcon(ink, size = 28.dp) },
+            ) { PrimaryButton("Về thư viện", actions.back, Modifier.testTag("book_gone_back")) }
+        }
+        return
+    }
+    val openRecords: (RecordAction?) -> Unit = { start ->
+        val loaded = detail
+        if (loaded != null && loaded.records.isNotEmpty()) {
+            sheets.show { dismiss -> RecordSheet(shown, loaded.records, others.orEmpty().filter { it.id != shown.id }, source, notes, start, actions.openBook, dismiss) }
+        }
     }
     Column(modifier.fillMaxSize().testTag("book_screen")) {
         Box(Modifier.padding(top = top, start = Dim.margin, end = Dim.margin).fillMaxWidth().height(Dim.s48)) {
@@ -177,55 +255,74 @@ fun BookScreen(
         }
         LazyColumn(
             state = list,
-            modifier = Modifier.fillMaxSize().fadeEdges(list).testTag("book_list"),
+            modifier = Modifier.weight(1f).fillMaxWidth().fadeEdges(list).testTag("book_list"),
             contentPadding = PaddingValues(start = Dim.margin, end = Dim.margin, top = Dim.s12, bottom = bottom + Dim.s32),
         ) {
-            item(key = "head", contentType = "head") { BookHead(shown, covers) }
+            item(key = "head", contentType = "head") { BookHead(shown, covers, detail?.records.orEmpty()) { openRecords(null) } }
             item(key = "actions", contentType = "actions") {
-                BookButtons(shown, detail, player, sheets, source, actions, music)
+                BookButtons(shown, detail, player, sheets, source, actions, music, notes, openRecords)
             }
-            // Đã đọc xong mà sách không có chương: câu ở chỗ nút chính đã nói điều ấy - không lặp lại bằng một mục "Chương 0" rỗng.
-            val noChapters = ui.loaded && chapters.isNullOrEmpty()
-            if (!noChapters) item(key = "chapters_title", contentType = "section") {
-                ChaptersTitle(chapters?.size ?: shown.chaptersTotal, below, Modifier.padding(top = Dim.sectionGap, bottom = Dim.s8)) {
-                    currentItem?.let { scope.launch { list.animateScrollToItem((it - 1).coerceAtLeast(0)) } }
-                }
+            item(key = "tabs", contentType = "tabs") {
+                BookTabs(tabs, shownTab, chapters?.size ?: shown.chaptersTotal, { tab = it }, Modifier.padding(top = Dim.sectionGap, bottom = Dim.s8))
             }
-            when {
-                chapters == null && !ui.loaded -> items(SKELETON_ROWS, key = { "skeleton_$it" }, contentType = { "skeleton" }) { SkeletonRow() }
-                chapters.isNullOrEmpty() -> Unit
-                else -> items(chapters.orEmpty(), key = { it.id }, contentType = { "chapter" }) { chapter ->
-                    val here = chapter.id == current
-                    val live = here && player.bookId == shown.id
-                    ChapterRow(
-                        chapter = chapter,
-                        current = here,
-                        playing = live && player.playing,
-                        livePosition = if (live) clock else null,
-                        durationMs = if (live) player.durationMs else 0L,
-                        onPlay = {
-                            if (live) actions.toggle() else actions.playChapter(shown.id, chapter.id, chapter.resumeAt)
-                        },
-                        onMore = {
-                            sheets.show { dismiss ->
-                                ChapterSheet(shown, chapter, source, onListenFromStart = { actions.playChapter(shown.id, chapter.id, 0.0) }, dismiss = dismiss)
+            when (shownTab) {
+                BookTab.Chapters -> {
+                    // Đã đọc xong mà sách không có chương: câu ở chỗ nút chính đã nói điều ấy - không thêm gì ở đây.
+                    val noChapters = ui.loaded && chapters.isNullOrEmpty()
+                    if (!noChapters) item(key = "chapters_jump", contentType = "jump") {
+                        ChapterJump(below) { currentItem?.let { scope.launch { list.animateScrollToItem((it - 1).coerceAtLeast(0)) } } }
+                    }
+                    when {
+                        chapters == null && !ui.loaded -> items(SKELETON_ROWS, key = { "skeleton_$it" }, contentType = { "skeleton" }) { SkeletonRow() }
+                        chapters.isNullOrEmpty() -> Unit
+                        else -> items(chapters.orEmpty(), key = { it.id }, contentType = { "chapter" }) { chapter ->
+                            val here = chapter.id == current
+                            val live = here && player.bookId == shown.id
+                            Box(Modifier.fade { fade.value }) {
+                                ChapterRow(
+                                    chapter = chapter,
+                                    current = here,
+                                    playing = live && player.playing,
+                                    livePosition = if (live) clock else null,
+                                    durationMs = if (live) player.durationMs else 0L,
+                                    onPlay = {
+                                        if (live) actions.toggle() else actions.playChapter(shown.id, chapter.id, chapter.resumeAt)
+                                    },
+                                    onMore = {
+                                        sheets.show { dismiss ->
+                                            ChapterSheet(shown, chapter, source, onListenFromStart = { actions.playChapter(shown.id, chapter.id, 0.0) }, dismiss = dismiss)
+                                        }
+                                    },
+                                )
                             }
-                        },
-                    )
+                        }
+                    }
                 }
+                BookTab.History -> historyItems(detail, { fade.value }) { session -> actions.playChapter(shown.id, session.toChapter, session.toSeconds) }
+                BookTab.Cast -> castItems(
+                    ui.cast, ui.castLoaded, reached, later, { later = !later }, samples,
+                    onMore = { person ->
+                        sheets.show { dismiss -> PersonSheet(shown.id, person, ui.cast?.characters.orEmpty(), source, notes, dismiss) }
+                    },
+                    fade = { fade.value },
+                )
             }
         }
+        NotesBar(notes)
     }
 }
 
 private const val SKELETON_ROWS = 6
 
-/** Số mục đứng trước chương đầu trong danh sách: đầu trang, hàng nút, tiêu đề "Chương". */
-private const val HEAD_ITEMS = 3
+/** Số mục đứng trước chương đầu trong danh sách: đầu trang, hàng nút, thanh mục, lối "Tới chỗ đang nghe". */
+private const val HEAD_ITEMS = 4
+
+/** Vị trí thanh mục trong danh sách: đổi mục thì cuộn tới đây nếu trang đang ở sâu hơn. */
+private const val TABS_ITEM = 2
 
 /** Bìa · (tập / bộ) · tên · tác giả · giọng · số chương · thời lượng · dòng tình trạng · tiến độ mảnh. Tên dài xuống dòng, không cắt. */
 @Composable
-private fun BookHead(book: ListenBook, covers: CoverLoader) {
+private fun BookHead(book: ListenBook, covers: CoverLoader, records: List<ListenRecord>, onRecords: () -> Unit) {
     val colors = Abook.colors
     val (main, sub) = remember(book.title, book.part) { CoverArt.splitTitle(book.title, book.part) }
     Column(Modifier.fillMaxWidth().testTag("book_head")) {
@@ -259,6 +356,12 @@ private fun BookHead(book: ListenBook, covers: CoverLoader) {
             Spacer(Modifier.height(Dim.s8))
             BasicText(BookPage.progressLine(book), style = Abook.type.caption.copy(color = colors.text2))
         }
+        // Một hồ sơ thì không có chip: các việc với hồ sơ duy nhất nằm trong bảng "Thêm" (web: singleRecordActions).
+        val active = if (records.size > 1) records.firstOrNull { it.active } else null
+        if (active != null) {
+            Spacer(Modifier.height(Dim.s12))
+            RecordChip(active, onRecords)
+        }
     }
 }
 
@@ -274,6 +377,8 @@ private fun BookButtons(
     source: BookSource,
     actions: BookScreenActions,
     music: MusicState?,
+    notes: BookNotes,
+    openRecords: (RecordAction?) -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
     val listening = player.bookId == book.id
@@ -283,7 +388,15 @@ private fun BookButtons(
     val resume = book.resume
     val started = book.progress.heardSeconds > 0 || book.state.last != null
     val first = detail?.chapters?.firstOrNull { it.playable }
-    val restart = { if (first != null) actions.playChapter(book.id, first.id, 0.0) }
+    val restart = {
+        if (first != null) {
+            actions.playChapter(book.id, first.id, 0.0)
+            // Bấm nhầm "Từ đầu" giữa chừng: một lời báo đủ lâu để kịp quay lại chỗ đang nghe (web: toast "Quay lại chỗ cũ").
+            if (resume != null && !finished && (resume.chapterId != first.id || resume.at > 30)) {
+                notes.say("Đang nghe lại từ đầu", "Quay lại chỗ cũ") { actions.playChapter(book.id, resume.chapterId, resume.at) }
+            }
+        }
+    }
     Column(Modifier.fillMaxWidth().padding(top = Dim.s24)) {
         when {
             caughtUp -> BasicText(
@@ -327,7 +440,7 @@ private fun BookButtons(
                 "Từ đầu", "Nghe lại từ đầu", enabled = started && resume != null && !finished && first != null, tag = "book_restart", edge = 0, onClick = restart,
             ) { color -> RestartIcon(color) }
             SecondaryButton("", "Thêm tuỳ chọn", enabled = true, tag = "book_more", edge = 1, onClick = {
-                sheets.show { dismiss -> BookMenuSheet(book, detail, source, actions, dismiss, music, player.music.takeIf { player.bookId == book.id }) }
+                sheets.show { dismiss -> BookMenuSheet(book, detail, source, actions, dismiss, music, player.music.takeIf { player.bookId == book.id }, onRecord = { openRecords(it) }) }
             }) { color -> MoreIcon(color) }
         }
     }
@@ -403,22 +516,17 @@ private val EdgeInset = (Dim.touch - 22.dp) / 2
 /** Cao một dòng chữ thân (16 / 24). */
 private val FirstLine = 24.dp
 
+/** Lối tới chương đang nghe, dưới thanh mục: trượt lên từ dưới (cùng hướng với chỗ nó dẫn tới), không mờ dần; ẩn thì không chiếm chỗ. */
 @Composable
-private fun ChaptersTitle(count: Int, jump: Boolean, modifier: Modifier, onJump: () -> Unit) {
-    Row(modifier.fillMaxWidth().heightIn(min = Dim.touch), verticalAlignment = Alignment.CenterVertically) {
-        BasicText("Chương", style = Abook.type.sectionTitle, modifier = Modifier.alignByBaseline())
-        Spacer(Modifier.width(Dim.s8))
-        BasicText("$count", style = Abook.type.caption.copy(color = Abook.colors.text2), modifier = Modifier.alignByBaseline().weight(1f))
-        // Lối tới chương đang nghe trượt lên từ dưới (cùng hướng với chỗ nó dẫn tới), không mờ dần.
-        AnimatedVisibility(
-            visible = jump,
-            modifier = Modifier.clipToBounds(),
-            enter = slideInVertically(tween(MotionMs.MEDIUM, easing = Motion.Decelerate)) { it },
-            exit = slideOutVertically(tween(MotionMs.MEDIUM, easing = Motion.Decelerate)) { it },
-        ) {
-            Box(Modifier.heightIn(min = Dim.touch).pressable(onClick = onJump).testTag("book_jump_current"), contentAlignment = Alignment.CenterEnd) {
-                BasicText("Tới chỗ đang nghe", style = Abook.type.label.copy(color = Abook.colors.accentText))
-            }
+private fun ChapterJump(visible: Boolean, onJump: () -> Unit) {
+    AnimatedVisibility(
+        visible = visible,
+        modifier = Modifier.fillMaxWidth().clipToBounds(),
+        enter = slideInVertically(tween(MotionMs.MEDIUM, easing = Motion.Decelerate)) { it },
+        exit = slideOutVertically(tween(MotionMs.MEDIUM, easing = Motion.Decelerate)) { it },
+    ) {
+        Box(Modifier.fillMaxWidth().heightIn(min = Dim.touch).pressable(onClick = onJump).testTag("book_jump_current"), contentAlignment = Alignment.CenterEnd) {
+            BasicText("Tới chỗ đang nghe", style = Abook.type.label.copy(color = Abook.colors.accentText))
         }
     }
 }

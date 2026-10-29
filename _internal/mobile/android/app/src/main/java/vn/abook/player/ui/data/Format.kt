@@ -68,6 +68,9 @@ object Fmt {
         return if (tenths % 10 == 0L) grouped(tenths / 10) else "${grouped(tenths / 10)},${tenths % 10}"
     }
 
+    /** Số đếm cho người đọc, tách nghìn bằng dấu chấm (vi-VN): 1.234 (shared/format.ts formatNumber). */
+    fun number(value: Long): String = grouped(value)
+
     /** Số nguyên tách nghìn bằng dấu chấm (vi-VN): 1.234. */
     private fun grouped(value: Long): String = String.format(Locale.ROOT, "%,d", value).replace(',', '.')
 

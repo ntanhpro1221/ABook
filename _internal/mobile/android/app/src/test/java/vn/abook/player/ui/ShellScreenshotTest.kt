@@ -158,7 +158,7 @@ class ShellScreenshotTest {
         rule.onNodeWithTag("book_title").assertIsDisplayed()
         // Khung thử không có nguồn sách (BookSource.None): trang nói rõ chưa có chương, không có nút phát giả. Nút phát có ở BookScreenTest.
         rule.onNodeWithText("Sách chưa có chương nào nghe được trên máy này.").assertIsDisplayed()
-        rule.onNodeWithText("Chương").assertDoesNotExist()
+        rule.onNodeWithTag("chapter_1").assertDoesNotExist()
         shot("shell_book_light")
         rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
         rule.waitForIdle()

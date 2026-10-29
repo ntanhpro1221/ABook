@@ -50,6 +50,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import vn.abook.player.ui.components.ReadAlongIcon
+import vn.abook.player.ui.components.ArrowRightLeftIcon
+import vn.abook.player.ui.components.PlusIcon
+import vn.abook.player.ui.components.TextCursorInputIcon
+import vn.abook.player.ui.data.RecordAction
 import vn.abook.player.ui.components.DeleteBookPage
 import vn.abook.player.ui.components.RowHint
 import vn.abook.player.ui.components.SheetPages
@@ -99,7 +103,7 @@ private enum class MenuPage { Actions, Music, Delete }
 @Composable
 fun BookMenuSheet(
     book: ListenBook, detail: BookDetail?, source: BookSource, actions: BookScreenActions, dismiss: () -> Unit,
-    music: MusicState? = null, playerMusic: PlayerMusic? = null,
+    music: MusicState? = null, playerMusic: PlayerMusic? = null, onRecord: (RecordAction) -> Unit = {},
 ) {
     var page by remember { mutableStateOf(MenuPage.Actions) }
     BackHandler(enabled = page != MenuPage.Actions) { page = MenuPage.Actions }
@@ -107,7 +111,7 @@ fun BookMenuSheet(
         when (shown) {
             MenuPage.Actions -> MenuActions(
                 book, detail, source, actions, dismiss, music, onEdit = { dismiss(); actions.edit(book) },
-                onMusic = { page = MenuPage.Music }, onDelete = { page = MenuPage.Delete },
+                onMusic = { page = MenuPage.Music }, onDelete = { page = MenuPage.Delete }, onRecord = onRecord,
             )
             MenuPage.Music -> if (music != null) Column(Modifier.fillMaxWidth()) {
                 BasicText("Nhạc nền", style = Abook.type.sectionTitle)
@@ -131,6 +135,7 @@ private fun MenuActions(
     onEdit: () -> Unit,
     onMusic: () -> Unit,
     onDelete: () -> Unit,
+    onRecord: (RecordAction) -> Unit,
 ) {
     val colors = Abook.colors
     val scope = rememberCoroutineScope()
@@ -142,6 +147,13 @@ private fun MenuActions(
     Column(Modifier.fillMaxWidth()) {
         BasicText(book.title, style = Abook.type.sectionTitle)
         Spacer(Modifier.height(Dim.s8))
+        // Một hồ sơ thì không có chip "Hồ sơ nghe": các việc với hồ sơ duy nhất nằm ở đây (web: singleRecordActions); xoá hồ sơ ở cuối, cạnh xoá sách.
+        val onlyRecord = detail?.records?.takeIf { it.size == 1 }
+        if (onlyRecord != null) {
+            MenuRow("Hồ sơ mới", tag = "menu_record_create", onClick = { onRecord(RecordAction.Create) }) { ink -> PlusIcon(ink) }
+            MenuRow("Chuyển hồ sơ", tag = "menu_record_move", onClick = { onRecord(RecordAction.Move) }) { ink -> ArrowRightLeftIcon(ink) }
+            MenuRow("Đổi tên hồ sơ", tag = "menu_record_rename", onClick = { onRecord(RecordAction.Rename) }) { ink -> TextCursorInputIcon(ink) }
+        }
         if (!book.textOnly) {
             val finished = book.progress.finished
             MenuRow(if (finished) "Chưa nghe xong" else "Đã nghe xong", tag = "menu_finished", onClick = {
@@ -208,6 +220,7 @@ private fun MenuActions(
             ) { ink -> BookAudioIcon(ink) }
         }
         Box(Modifier.fillMaxWidth().padding(vertical = Dim.s8).height(1.dp).background(colors.line))
+        if (onlyRecord != null) MenuRow("Xoá hồ sơ", tag = "menu_record_delete", danger = true, onClick = { onRecord(RecordAction.Delete) }) { ink -> TrashIcon(ink) }
         MenuRow("Xoá khỏi điện thoại", tag = "menu_delete", danger = true, onClick = onDelete) { ink -> TrashIcon(ink) }
         if (problem.isNotEmpty()) {
             Spacer(Modifier.height(Dim.s4))

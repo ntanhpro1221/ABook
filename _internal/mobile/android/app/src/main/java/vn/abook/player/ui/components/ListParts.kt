@@ -235,15 +235,26 @@ fun MoreInfo(label: String, text: String, tag: String, modifier: Modifier = Modi
  * chiếm cả trang; mở hay gập giữ qua lần xoay màn hình.
  */
 @Composable
-fun Fold(title: String, tag: String, modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
-    var open by rememberSaveable { mutableStateOf(false) }
+fun Fold(
+    title: String,
+    tag: String,
+    modifier: Modifier = Modifier,
+    /** Một dòng tóm tắt dưới tên ("3 lượt nghe"), thấy cả khi gập. */
+    summary: String? = null,
+    defaultOpen: Boolean = false,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    var open by rememberSaveable(tag) { mutableStateOf(defaultOpen) }
     val turn by animateFloatAsState(if (open) 1f else 0f, if (open) Motion.Expand else Motion.Collapse, label = "fold_turn")
     Column(modifier.fillMaxWidth()) {
         Row(
             Modifier.fillMaxWidth().heightIn(min = Dim.s48).pressable { open = !open }.toggles(open) { open = !open }.testTag(tag),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            BasicText(title, style = Abook.type.sectionTitle, modifier = Modifier.weight(1f))
+            Column(Modifier.weight(1f).padding(vertical = Dim.s4)) {
+                BasicText(title, style = Abook.type.sectionTitle)
+                if (summary != null) RowHint(summary, Modifier.testTag("${tag}_summary"))
+            }
             Spacer(Modifier.width(Dim.s12))
             ChevronIcon(Abook.colors.text3, turn = { turn })
         }

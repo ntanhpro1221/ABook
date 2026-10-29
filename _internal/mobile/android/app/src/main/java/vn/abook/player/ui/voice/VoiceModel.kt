@@ -32,6 +32,8 @@ data class ModuleChoice(
     val recommended: Boolean,
     /** Gỡ được (đã cài, hay còn phần tải dở). */
     val removable: Boolean,
+    /** Mô-đun đánh dấu sẵn lựa chọn này cho máy (gói mặc định của Cài đặt). */
+    val ticked: Boolean = false,
 )
 
 @Immutable
@@ -83,7 +85,7 @@ object ModuleJson {
         val choices = (0 until (rows?.length() ?: 0)).mapNotNull { rows?.optJSONObject(it) }.map { row ->
             ModuleChoice(
                 row.optString("id"), row.optString("label"), row.optString("detail"), row.optLong("bytes"), row.optBoolean("installed"),
-                row.optBoolean("recommended"), row.optBoolean("removable"),
+                row.optBoolean("recommended"), row.optBoolean("removable"), row.optBoolean("default"),
             )
         }
         val bench = json.optJSONObject("benchmark")
@@ -253,7 +255,7 @@ object VoiceText {
     fun unsupported(status: ModuleStatus): String =
         if (status.reason.isNotEmpty()) "Máy này chưa dùng được: ${status.reason}." else "Máy này chưa dùng được."
 
-    private const val CANCELLED = "Đã huỷ - lần tải sau làm tiếp từ chỗ dừng."
+    const val CANCELLED = "Đã huỷ - lần tải sau làm tiếp từ chỗ dừng."
     /** Nhãn của lựa chọn nên tải - cùng chữ với nhãn "Khuyên dùng" của thẻ giọng bên web (VieneuModuleCard.tsx). */
     private const val RECOMMENDED = "Khuyên dùng"
 

@@ -101,6 +101,8 @@ class ListenBook(
     val cover: CoverRef? = null,
     override val series: SeriesLink? = null,
     val remote: RemoteRef? = null,
+    /** Mở từ file sách (không phải máy làm sách ra): chương còn thiếu thì cần file mới hơn, không phải chờ. */
+    val imported: Boolean = false,
     /** Số phần/tập thật của file cả bộ (BookCover nhãn "Phần 2"). */
     val part: Int? = null,
 ) : SeriesItem {

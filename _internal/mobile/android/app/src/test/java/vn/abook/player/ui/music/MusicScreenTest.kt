@@ -106,7 +106,7 @@ class MusicScreenTest {
 
     private val actions = BookScreenActions(back = {}, playBook = {}, toggle = {}, playChapter = { _, _, _ -> }, deleted = {}, readAlong = {}, edit = {})
 
-    private object NoBook : BookSource {
+    private object NoBook : BookSource by BookSource.None {
         override suspend fun detail(id: String): BookDetail? = null
         override suspend fun passages(id: String, chapter: ChapterLine): List<Passage>? = null
         override suspend fun setFinished(id: String, finished: Boolean) {}

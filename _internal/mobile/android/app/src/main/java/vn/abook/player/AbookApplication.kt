@@ -95,6 +95,9 @@ class AbookApplication : Application() {
     /** Nhạc nền của từng cuốn (bảng ở trình phát và ở trang sách): thêm nhạc đi chung kho và chung lượt với Nhạc của tôi. */
     val music by lazy { vn.abook.player.ui.music.MusicState(vn.abook.player.ui.music.MusicRepo(this), myMusicImports, uiScope) }
 
+    /** Cửa hỏi bạn trước khi đọc bằng giọng trực tuyến chưa được đồng ý (chữ chưa rời máy khi chưa có câu trả lời): trình phát qua nó, Activity vẽ câu hỏi. */
+    val consent by lazy { vn.abook.player.ui.voice.ConsentGate(vn.abook.player.ui.voice.AndroidConsentSource(this), uiScope) }
+
     /** Trình phát của giao diện native: chỉ lắng nghe lõi phát khi Activity hiện ([PlayerRepo.attach]). */
     val player by lazy {
         PlayerRepo(
@@ -103,6 +106,7 @@ class AbookApplication : Application() {
             planOf = { id -> Store.init(this); PlayPlan.fromStore(id) },
             lastPlan = { Store.init(this); PlayPlan.fromLast() },
             planAt = { id, chapter, seconds -> Store.init(this); PlayPlan.fromStoreAt(id, chapter, seconds) },
+            gate = consent,
         )
     }
 
