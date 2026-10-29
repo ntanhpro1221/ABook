@@ -768,7 +768,8 @@ void MusicMixer::serviceStream(const std::shared_ptr<MixVoiceState> &s) {
 
 void MusicMixer::service(size_t frames) {
     // Trộn lại sắp xảy ra: chờ ngay sau một lần engine kéo, ngoài khoá để giao diện không phải đợi.
-    if (d->running && (d->resetQueued || d->joinSoon)) d->device->awaitPull(12);
+    const bool aligned = d->running && (d->resetQueued || d->joinSoon);
+    if (aligned) d->device->awaitPull(12);
     Guard engine(d->engineMutex);
     const auto voices = d->snapshot();
     const int oldRate = rate();
@@ -849,11 +850,14 @@ void MusicMixer::service(size_t frames) {
     }), d->tails.end());
     // Thao tác (tua, dừng, âm lượng, tốc độ) hay giọng vừa sẵn sàng giữa lúc thiết bị còn hàng đợi:
     // trộn lại ngay tại con trỏ nghe. Không bao giờ để endpoint chạy rỗng trong lúc chờ nguồn đọc lại.
-    if (d->resetQueued.exchange(false) || (join && d->written > d->played)) {
-        d->remix(voices);
-        padding = size_t(d->written - d->played);
+    const bool remix = d->resetQueued || (join && d->written > d->played);
+    if (remix && d->running && !aligned) {
+        // Thao tác tới sau lúc chờ engine kéo: lượt kế (ngay sau đây) chờ rồi mới trộn lại.
+        d->joinSoon = true; wake();
+    } else {
+        if (remix) { d->resetQueued = false; d->remix(voices); padding = size_t(d->written - d->played); }
+        d->joinSoon = false;
     }
-    d->joinSoon = false;
     if (!any) {
         // Đuôi mờ ra còn trong thiết bị: để nó phát hết rồi mới Stop, Stop giữa chừng là một tiếng tách.
         if (d->running && padding) { d->active = true; d->nextWakeMs = std::clamp(int(padding * 1000 / size_t(rate())) + 1, 1, 250); return; }
