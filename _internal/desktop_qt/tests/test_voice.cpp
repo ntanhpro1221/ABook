@@ -1,3 +1,4 @@
+#include "filesinkdevice.h"
 #include "musicmixer.h"
 #include "streamsource.h"
 #include "mp3source.h"
@@ -453,6 +454,51 @@ private slots:
         const double want = command == QStringLiteral("stop") ? 0 : command == QStringLiteral("pause") ? 0.05 :
             command == QStringLiteral("seek") ? 2.08 : command == QStringLiteral("rate") ? 0.16 : 0.15;
         QVERIFY2(std::abs(rig.voice.position() - want) < 0.001, qPrintable(QString::number(rig.voice.position())));
+    }
+    // Tai giả (engine kéo 10 ms một chu kỳ như WASAPI chia sẻ): mờ âm lượng từng 50 ms, đổi tốc độ, tua trong lúc phát
+    // không được để lại chu kỳ im lặng, khoảng hụt hay bậc nhảy nào trước lúc pause; pause thì mờ về 0.
+    void controlsLeaveNoHoleOrStepOnAPeriodicEngine() {
+        QTemporaryDir dir;
+        const QString wav = dir.filePath(QStringLiteral("tap.wav"));
+        quint64 paused = 0;
+        std::vector<std::pair<quint64, const char *>> marks;
+        {
+            auto *sink = new FileSinkDevice(wav);
+            MusicMixer mixer(std::unique_ptr<MixDevice>(sink), dir.path(), true);
+            auto control = std::make_shared<Control>(); control->duration = 30;
+            MixVoice voice(&mixer, [control](int hz) { return std::make_unique<Decoder>(control, hz); });
+            voice.setVolume(1); voice.load(QUrl(QStringLiteral("fake:tap")), 0); voice.play();
+            QTRY_VERIFY_WITH_TIMEOUT(voice.playing(), 3000);
+            QTest::qWait(300);
+            for (int i = 1; i <= 16; ++i) { marks.push_back({sink->now(), "volume"}); voice.setVolume(1.0 - i * 0.04); QTest::qWait(50); }
+            marks.push_back({sink->now(), "rate 1.5"}); voice.setRate(1.5); QTest::qWait(250);
+            marks.push_back({sink->now(), "seek"}); voice.seek(12); QTest::qWait(250);
+            marks.push_back({sink->now(), "rate 1"}); voice.setRate(1.0); QTest::qWait(250);
+            paused = sink->now(); voice.pause();
+            QTest::qWait(200);
+        }
+        QFile file(wav); QVERIFY(file.open(QIODevice::ReadOnly));
+        const QByteArray bytes = file.readAll().mid(44);
+        const auto *x = reinterpret_cast<const float *>(bytes.constData());
+        const size_t frames = size_t(bytes.size()) / 8;
+        QVERIFY(frames > paused + 4800);
+        for (const QString suffix : {QStringLiteral(".stops"), QStringLiteral(".gaps")}) {
+            QFile list(wav + suffix); QVERIFY(list.open(QIODevice::ReadOnly));
+            for (const QByteArray &line : list.readAll().split('\n')) {
+                if (line.isEmpty()) continue;
+                const quint64 at = line.split(' ').value(0).toULongLong();
+                QVERIFY2(at >= paused, qPrintable(suffix + QStringLiteral(" at ") + QString::number(at) + QStringLiteral(" before pause ") + QString::number(paused)));
+            }
+        }
+        // Từ lúc có tiếng tới hết đuôi mờ của pause: sin 440 Hz biên 0,25 đổi tối đa 0,0144 mỗi mẫu.
+        size_t first = 0; while (first < frames && x[first * 2] == 0.0f) ++first;
+        double jump = 0; size_t where = 0;
+        for (size_t i = first + 1; i < frames; ++i)
+            if (const double d = std::abs(double(x[i * 2] - x[(i - 1) * 2])); d > jump) { jump = d; where = i; }
+        QString closest = QStringLiteral("pause");
+        qint64 from = where >= paused ? qint64(where - paused) : std::numeric_limits<qint64>::max();
+        for (const auto &[at, op] : marks) if (at <= where && qint64(where - at) < from) { from = qint64(where - at); closest = QString::fromLatin1(op); }
+        QVERIFY2(jump < 0.04, qPrintable(QStringLiteral("%1 at %2 ms after %3 (%4)").arg(jump).arg(from / 48.0).arg(closest).arg(where)));
     }
     void formatRebuildPreservesRateAwarePosition() {
         Rig rig; rig.voice.setRate(1.5); rig.voice.play();
