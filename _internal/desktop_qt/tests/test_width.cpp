@@ -7,6 +7,8 @@
 #include "readalong.h"
 #include "glyphaudit.h"
 #include "later.h"
+#include "appfonts.h"
+#include "visualready.h"
 #include <QFontDatabase>
 #include <QQmlEngine>
 #include <QQmlContext>
@@ -122,6 +124,7 @@ class WidthSetup : public QObject {
     FullRepaint repaint;
 public slots:
     void qmlEngineAvailable(QQmlEngine *engine) {
+        engine->rootContext()->setContextProperty(QStringLiteral("qtVisualReady"), new VisualReady(engine));
         engine->rootContext()->setContextProperty(QStringLiteral("qtGlyphAudit"), audit.get());
         engine->rootContext()->setContextProperty(QStringLiteral("qtGlyphProbe"), qEnvironmentVariableIsSet("ABOOK_GLYPH_PROBE"));
         engine->rootContext()->setContextProperty(QStringLiteral("qtWideShotDir"), qEnvironmentVariable("ABOOK_WIDE_SHOTS"));
@@ -131,9 +134,8 @@ public slots:
     void applicationAvailable() {
         audit = std::make_unique<GlyphAudit>();
         qApp->installEventFilter(&repaint);
-        for (const auto &weight : {"Regular", "Medium", "Bold"})
-            QFontDatabase::addApplicationFont(QStringLiteral(WIDTH_SOURCE_DIR "/fonts/BeVietnamPro-%1.ttf").arg(QString::fromLatin1(weight)));
-        QGuiApplication::setFont(QFont(QStringLiteral("Be Vietnam Pro")));
+        if (!loadAppFonts(QStringLiteral(WIDTH_SOURCE_DIR "/fonts")))
+            qFatal("Could not load application fonts");
         net.books.insert(QStringLiteral("width"), makeBook(QStringLiteral("width"), 32));
         QJsonArray segments;
         for (int i = 0; i < 40; ++i)

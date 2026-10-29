@@ -67,8 +67,15 @@ class SkipGlyphTests : public QObject {
         item->setParentItem(window.contentItem());
         item->setPosition(QPointF(kPad, kPad));
         window.show();
-        QTest::qWait(500);   // Canvas vẽ không đồng bộ
-        const QImage image = window.grabWindow().convertToFormat(QImage::Format_ARGB32);
+        QImage image;
+        const bool rendered = QTest::qWaitFor([&] {
+            window.requestUpdate();
+            image = window.grabWindow().convertToFormat(QImage::Format_ARGB32);
+            return !image.isNull()
+                && (!stroke || measure(image, QRect(kPad, kPad, size, qCeil(10.5 * size / 24))).any())
+                && (!digits || measure(image, QRect(kPad, kPad + qCeil(11.0 * size / 24), size, size / 2)).any());
+        }, 5000);
+        if (!rendered) image = {};
         delete item;
         return image;
     }

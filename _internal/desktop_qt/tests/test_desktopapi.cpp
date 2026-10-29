@@ -265,7 +265,7 @@ private slots:
         const int id = api->request(QStringLiteral("GET"),QStringLiteral("/api/books/fixture/cover/search?q=old"),QJSValue(QJSValue::NullValue),done());
         QTRY_VERIFY(!received.isEmpty());
         api->cancel(id);
-        QTest::qWait(80);
+        QTest::qWait(80); // fixed: proves absence
         QVERIFY(engine.globalObject().property(QStringLiteral("result")).isNull());
         hold = false;
     }

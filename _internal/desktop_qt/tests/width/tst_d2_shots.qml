@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "VisualReady.js" as VisualReady
 import ABook
 
 // Ảnh offscreen của các màn D2 (Cài đặt, Thêm sách, Sửa sách) sáng + tối, ghi ra build/d2shots/<tên>.png để người làm mở ra xem.
@@ -26,7 +27,7 @@ Item {
             Api.loaded = true
             Api.saving = false
             Nav.layers = []
-            Theme.reduceMotion = true
+            Theme.reduceMotion = false
         }
         function cleanup() { Theme.mode = "auto"; Theme.reduceMotion = false; Nav.layers = [] }
 
@@ -34,8 +35,7 @@ Item {
         function shot(name, item) {
             const target = item || host
             target.Window.window.update()
-            waitForRendering(target)
-            wait(400)
+            VisualReady.render(this, host.Window.window, target, qtVisualReady)
             qtGlyphAudit.scan()
             const img = grabImage(target)
             const path = Qt.resolvedUrl("../../build/d2shots/" + name + "_" + (Theme.dark ? "dark" : "light") + ".png").toString()

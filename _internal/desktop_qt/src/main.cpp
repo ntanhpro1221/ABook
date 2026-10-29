@@ -1,3 +1,4 @@
+#include "appfonts.h"
 #include "backend.h"
 #include "desktopapi.h"
 #include "bench.h"
@@ -228,12 +229,8 @@ int main(int argc, char *argv[]) {
     libraryRefresh.setInterval(1500);
     QObject::connect(&libraryRefresh, &QTimer::timeout, &backend, [&] { libraryDirty = false; backend.refreshLibrary(); });
 
-    const QStringList fonts = {QStringLiteral("Regular"), QStringLiteral("Medium"), QStringLiteral("Bold")};
-    for (const QString &weight : fonts)
-        QFontDatabase::addApplicationFont(QStringLiteral(":/qt/qml/ABook/fonts/BeVietnamPro-%1.ttf").arg(weight));
-    QFont base(QStringLiteral("Be Vietnam Pro"));
-    base.setPixelSize(16);
-    QGuiApplication::setFont(base);
+    if (!loadAppFonts(QStringLiteral(":/qt/qml/ABook/fonts")))
+        qFatal("Could not load application fonts");
 
     QQmlApplicationEngine engine;
     IdleAudit idleAudit;

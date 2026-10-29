@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "VisualReady.js" as VisualReady
 import ABook
 
 // Studio S2: trình tạo sách (NewProjectScreen.tsx) - nguồn, tên, chia phần, ghi công, mẫu, giọng, chất lượng, "Khi tạo", ghi chú tạm dừng; "Sửa thiết lập" và "Làm tiếp" điền sẵn;
@@ -41,8 +42,7 @@ Item {
         function hasPart(item, part) { return texts(item).some(t => t.indexOf(part) >= 0) }
         function shot(name, item) {
             const target = item || host
-            waitForRendering(target)
-            wait(300)
+            VisualReady.render(this, host.Window.window, target, qtVisualReady)
             const path = Qt.resolvedUrl("../../build/d2shots/s2_" + name + "_" + (Theme.dark ? "dark" : "light") + ".png").toString()
                 .replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, "")
             grabImage(target).save(path)
@@ -95,7 +95,7 @@ Item {
             Api.notice = ""
             Nav.layers = []
             Nav.studioPeer = ""
-            Theme.reduceMotion = true
+            Theme.reduceMotion = false
             prepare()
         }
         function cleanup() {
@@ -137,6 +137,7 @@ Item {
         function openOptions(page) {
             if (!has(page, "newOptionsBody")) one(page, "newOptions").clicked()
             tryVerify(function() { return has(page, "newOptionsBody") && has(page, "newProfile") && has(page, "newStartNow") }, 3000)
+            host.Window.window.update(); waitForRendering(page)
         }
         function byTitle(item, title, out) {
             out = out || []
@@ -645,7 +646,7 @@ Item {
         function test_narrowWindowKeepsTheCreateButtonReachable() {
             const page = openBuilder(640, "", "")
             withSource(page)
-            wait(100)
+            host.Window.window.update(); waitForRendering(page)
             const button = one(page, "newCreate")
             verify(button.x >= 0 && button.x + button.width <= page.width + 1)
             compare(wrapped(page), [])

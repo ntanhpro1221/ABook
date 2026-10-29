@@ -39,11 +39,11 @@ function keys(items, upcoming) {
 function keyCount(map) { return map ? Object.keys(map).length : 0 }
 function lineCount(items) { return items.reduce(function(total, item) { return total + item.affected }, 0) }
 
-// "Chương 1" / "Chương 1 đến Chương 3" cho các chương sắp thu (đã theo thứ tự đọc). Bản web viết mũi tên; phông của app không có ô cho nó nên đọc thành chữ.
+// Chapter range uses the same arrow as the web; app fonts supply the glyph.
 function chapterRange(chapters) {
     if (!chapters || !chapters.length) return ""
     const first = chapters[0].title, last = chapters[chapters.length - 1].title
-    return chapters.length === 1 ? first : first + " đến " + last
+    return chapters.length === 1 ? first : first + " → " + last
 }
 // Sửa tới đâu thì miễn phí
 function freeNote(view) {

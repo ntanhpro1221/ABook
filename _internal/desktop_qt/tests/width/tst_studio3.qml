@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "VisualReady.js" as VisualReady
 import QtQuick.Controls.Basic as C
 import ABook
 
@@ -48,8 +49,7 @@ Item {
         function hasPart(item, part) { return texts(item).some(t => t.indexOf(part) >= 0) }
         function shot(name, item) {
             const target = item || host
-            waitForRendering(target)
-            wait(300)
+            VisualReady.render(this, host.Window.window, target, qtVisualReady)
             const path = Qt.resolvedUrl("../../build/d2shots/s3_" + name + "_" + (Theme.dark ? "dark" : "light") + ".png").toString()
                 .replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, "")
             grabImage(target).save(path)
@@ -240,7 +240,7 @@ Item {
             Api.notice = ""
             Nav.layers = []
             Nav.studioPeer = ""
-            Theme.reduceMotion = true
+            Theme.reduceMotion = false
             Clip.stop()
         }
         function cleanup() {

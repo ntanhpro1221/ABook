@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "VisualReady.js" as VisualReady
 import ABook
 
 // Tab "Nhân vật" của trang sách (BookPage + CastList/CastPerson/CastSample + các hộp Gộp / Đổi tên / Giới tính / Giọng): danh sách, trạng thái trống, nghe thử,
@@ -16,6 +17,7 @@ Item {
     TestCase {
         id: test
         name: "CastTab"
+        function ready() { VisualReady.render(this, host.Window.window, host, qtVisualReady) }
         when: windowShown
 
         property var server: ({})
@@ -52,7 +54,7 @@ Item {
         }
         function reply(path, handler) { const r = DesktopApi.responses; r[path] = handler; DesktopApi.responses = r }
         function init() {
-            Theme.reduceMotion = true
+            Theme.reduceMotion = false
             DesktopApi.reset()
             Api.bind(DesktopApi, Theme)
             Api.preferences = {theme: "system"}
@@ -84,7 +86,7 @@ Item {
             host.width = 1440
         }
         function calls(method, path) { return DesktopApi.requests.filter(r => r.method === method && r.path === path) }
-        function settle() { wait(350) }
+        function render() { ready() }
         function all(item, name, found) {
             const out = found || []
             if (item.objectName === name) out.push(item)
@@ -101,7 +103,7 @@ Item {
             tryVerify(function() { return findChild(page, "bookTabs").visible })
             findChild(page, "bookTabs").picked(2)
             tryCompare(findChild(page, "castList"), "status", "ready")
-            settle()
+            render()
         }
         function person(name) {
             return all(page, "castName").filter(item => item.text === name)[0]
@@ -218,7 +220,7 @@ Item {
         function openMenu(name) {
             child(rowOf(name), "castMore").clicked()
             tryVerify(function() { return findChild(page, "castMenu").open })
-            settle()
+            render()
         }
         function test_menuListsThePossibleActions() {
             openCast()
@@ -239,7 +241,7 @@ Item {
             openMenu("Lan")
             findChild(page, "castMerge").clicked()
             tryVerify(function() { return dialog("castMergeDialog").open })
-            settle()
+            render()
             const dlg = dialog("castMergeDialog")
             const choices = all(dlg, "mergeChoice")
             compare(choices.length, 2)                  // Hạ Vy và Tuấn; Lan không gộp vào chính mình
@@ -282,7 +284,7 @@ Item {
             openMenu("Lan")
             findChild(page, "castRename").clicked()
             tryVerify(function() { return dialog("castRenameDialog").open })
-            settle()
+            render()
             const field = findChild(dialog("castRenameDialog"), "personName")
             compare(field.text, "Lan")
             field.text = "Lan Anh"
@@ -298,7 +300,7 @@ Item {
             openMenu("Lan")
             findChild(page, "castGender").clicked()
             tryVerify(function() { return dialog("castGenderDialog").open })
-            settle()
+            render()
             const dlg = dialog("castGenderDialog")
             verify(!all(dlg, "genderSave")[0].enabled)  // đang là nữ
             findChild(dlg, "genderChoice").picked("male")
@@ -317,9 +319,8 @@ Item {
             tryVerify(function() { return dialog("castVoiceDialog").open })
             const dlg = dialog("castVoiceDialog")
             tryCompare(dlg, "status", "ready")
-            settle()
-            compare(calls("GET", "/api/books/b1/voices?character=Lan").length, 1)
-            compare(dlg.title, "Giọng của Lan")
+            tryVerify(function() { return (calls("GET", "/api/books/b1/voices?character=Lan").length) === (1) })
+            tryCompare(dlg, "title", "Giọng của Lan")
             const actions = all(dlg, "voiceAction")
             compare(actions.length, 2)                  // cùng giới nữ: Nam Minh không hiện
             compare(actions[0].text, "Đang dùng")
@@ -337,7 +338,7 @@ Item {
             child(rowOf("Lan"), "castVoiceButton").clicked()
             const dlg = dialog("castVoiceDialog")
             tryCompare(dlg, "status", "ready")
-            settle()
+            render()
             all(dlg, "voicePreview")[1].clicked()
             compare(DesktopApi.previews[0], "/media/voices/hoai-my")
             dlg.close()
@@ -363,7 +364,7 @@ Item {
             child(rowOf("Lan"), "castVoiceButton").clicked()
             tryVerify(function() { return dialog("castVoiceDialog").open })
             tryCompare(dialog("castVoiceDialog"), "status", "ready")
-            settle()
+            render()
             return dialog("castVoiceDialog")
         }
         function withLine() { return Object.assign(voicesFixture(), {tryLine: "Anh đi đâu thế?"}) }
@@ -407,7 +408,7 @@ Item {
             reply("POST /api/books/b1/voice/preview", {status: 200, data: {url: "/media/previews/p2.wav", text: "Em về rồi."}})
             const dlg = openVoices(withLine())
             findChild(dlg, "voiceGenderFilter").picked("all")
-            settle()
+            render()
             const buttons = triesOf(dlg)
             compare(buttons.length, 3)
             DesktopApi.delayed = true
@@ -537,7 +538,7 @@ Item {
             openMenu(longName)
             findChild(page, "castRename").clicked()
             tryVerify(function() { return dialog("castRenameDialog").open })
-            settle()
+            render()
             const dlg = dialog("castRenameDialog")
             verify(dlg.title.indexOf(longName) >= 0)
             shot("cast_rename_long", host)
@@ -546,8 +547,7 @@ Item {
         function shot(name, item) {
             if (!item.Window.window) return
             item.Window.window.update()
-            waitForRendering(item)
-            wait(450)
+            VisualReady.render(this, host.Window.window, item, qtVisualReady)
             const img = grabImage(item)
             const path = Qt.resolvedUrl("../../build/d2shots/" + name + "_" + (Theme.dark ? "dark" : "light") + ".png").toString()
                 .replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, "")

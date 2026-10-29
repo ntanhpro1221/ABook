@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "VisualReady.js" as VisualReady
 import ABook
 
 // Studio › tab "Nhạc nền" (MusicTab.tsx): cài đặt cả cuốn (bật/tắt, thể loại, mức nhạc, chọn lại), tải sẵn + huỷ, bài đã bỏ, Nhạc theo ngữ cảnh,
@@ -44,9 +45,8 @@ Item {
         function hasPart(item, part) { return texts(item).some(t => t.indexOf(part) >= 0) }
         function shot(name, item) {
             const target = item || host
-            waitForRendering(target)
-            wait(300)
-            if (scrolled) { place(scrolled.page, scrolled.item); waitForRendering(target) }   // tải lại / đổi giao diện có thể kéo trang về đầu
+            VisualReady.render(this, host.Window.window, target, qtVisualReady)
+            if (scrolled) { place(scrolled.page, scrolled.item); VisualReady.render(this, host.Window.window, target, qtVisualReady) }   // tải lại / đổi giao diện có thể kéo trang về đầu
             const path = Qt.resolvedUrl("../../build/d2shots/sm_" + name + "_" + (Theme.dark ? "dark" : "light") + ".png").toString()
                 .replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, "")
             grabImage(target).save(path)
@@ -124,7 +124,7 @@ Item {
             Api.notice = ""
             Nav.layers = []
             Nav.studioPeer = ""
-            Theme.reduceMotion = true
+            Theme.reduceMotion = false
             Clip.stop()
         }
         function cleanup() {

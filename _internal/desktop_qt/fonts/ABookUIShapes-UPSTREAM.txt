@@ -1,0 +1,4 @@
+Derived font: ABook UI Shapes; SIL OFL 1.1.
+Source: https://raw.githubusercontent.com/google/fonts/main/ofl/notosanssymbols2/NotoSansSymbols2-Regular.ttf
+Source SHA-256: 7d5fb73b7ca67a6798101741f5d280a3d016a56a197afcd4199dbb57b4b82a21
+Subset: U+25B6 only; renamed family; fontTools 4.63.0.

@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "VisualReady.js" as VisualReady
 import ABook
 
 Item {
@@ -16,7 +17,7 @@ Item {
     TestCase {
         name: "Width"
         when: windowShown
-        function init() { Theme.reduceMotion = true; Platform.reset(); Backend.library.count = 200 }
+        function init() { Theme.reduceMotion = false; Platform.reset(); Backend.library.count = 200 }
         function cleanup() { Theme.reduceMotion = false }
         function sizes() {
             return [
@@ -35,7 +36,7 @@ Item {
             if (extra) for (let k in extra) props[k] = extra[k]
             let item = createTemporaryObject(factory, host, props)
             verify(item !== null)
-            wait(50)
+            VisualReady.render(this, host.Window.window, item, qtVisualReady)
             return item
         }
         function test_book_data() { return sizes().concat([{tag: "2560", w: 2560, h: 1080, sidebar: 232}]) }
@@ -100,16 +101,16 @@ Item {
             verify(progress.visible)
             // Render at the far end of the row, beyond the short title's ink.
             mouseMove(host, 1500, 1000)
-            wait(200)
+            tryCompare(row, "hovered", false)
+            tryCompare(fill, "opacity", 0)
+            row.Window.window.update(); waitForRendering(row)
             const plain = grabImage(row).red(data.w - 20, 5)
             mouseMove(row, data.w - 20, 5)
             tryCompare(row, "hovered", true)
-            wait(200)
-            verify(grabImage(row).red(data.w - 20, 5) !== plain, "hover must paint the row end")
+            tryVerify(function() { return grabImage(row).red(data.w - 20, 5) !== plain }, 5000, "hover must paint the row end")
             row.current = true
-            wait(200)
-            compare(fill.opacity, 1)
-            verify(grabImage(row).red(data.w - 20, 5) !== plain, "current fill must paint the row end")
+            tryCompare(fill, "opacity", 1)
+            tryVerify(function() { return grabImage(row).red(data.w - 20, 5) !== plain }, 5000, "current fill must paint the row end")
             row.done = true
             compare(progress.visible, false)
             row.status = "Chưa có audio"
@@ -154,10 +155,9 @@ Item {
             const coverY = cover.mapToItem(page, 0, 0).y
             list.positionViewAtEnd()
             list.contentY = list.originY + list.contentHeight - list.height + list.bottomMargin
-            wait(30)
-            compare(top.visible, true)
-            compare(bottom.visible, false)
-            compare(cover.mapToItem(page, 0, 0).y, coverY, "summary must stay fixed while chapters scroll")
+            tryCompare(top, "visible", true)
+            tryCompare(bottom, "visible", false)
+            tryVerify(function() { return (cover.mapToItem(page, 0, 0).y) === (coverY) }, 5000, "summary must stay fixed while chapters scroll")
         }
         function test_library_data() {
             return sizes().concat([{tag: "2560", w: 2560, h: 1080, sidebar: 232}])
@@ -211,9 +211,8 @@ Item {
             } else {
                 verify(a.visible && !b.visible)
                 page.active = "look"
-                wait(20)
-                verify(!a.visible && b.visible)
-                fuzzyCompare(b.x, a.x, 0.5)
+                tryVerify(function() { return !a.visible && b.visible })
+                tryVerify(function() { return Math.abs((b.x) - (a.x)) <= 0.5 })
             }
             const p = a.mapToItem(page, 0, 0)
             const q = b.mapToItem(page, b.width, 0)
@@ -238,7 +237,7 @@ Item {
                            "moving text must stay clear of the cover")
                     verify(chapters.x >= summary.width - 0.5 || chapters.y >= summary.height - 0.5,
                            "moving chapters must stay clear of the summary")
-                    wait(20)
+                    page.Window.window.update(); waitForRendering(page)
                 }
                 if (direction === 0) page.width = 839
             }
