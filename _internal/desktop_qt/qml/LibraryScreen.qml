@@ -347,20 +347,25 @@ FocusScope {
         SequentialAnimation {
             running: skeleton.visible && Nav.uiVisible && !Theme.reduceMotion
             loops: Animation.Infinite
-            OpacityAnimator { target: skeleton; from: 1; to: 0.6; duration: 800; easing.type: Easing.InOutSine }
-            OpacityAnimator { target: skeleton; from: 0.6; to: 1; duration: 800; easing.type: Easing.InOutSine }
+            OpacityAnimator { target: pulse; from: 1; to: 0.6; duration: 800; easing.type: Easing.InOutSine }
+            OpacityAnimator { target: pulse; from: 0.6; to: 1; duration: 800; easing.type: Easing.InOutSine }
         }
-        Repeater {
-            model: Math.max(0, root.cols * Math.ceil(skeleton.height / skeleton.skeletonCellH))
-            Item {
-                required property int index
-                x: root.contentX + (index % root.cols) * root.cellW
-                y: Math.floor(index / root.cols) * skeleton.skeletonCellH
-                width: root.coverW
-                height: skeleton.skeletonCellH
-                Rectangle { width: parent.width; height: Math.round(root.coverW * Theme.coverRatio); radius: Theme.radiusCover; color: Theme.sunken }
-                Rectangle { y: Math.round(root.coverW * Theme.coverRatio) + 14; width: parent.width * 0.85; height: 12; radius: Theme.radiusControl; color: Theme.sunken }
-                Rectangle { y: Math.round(root.coverW * Theme.coverRatio) + 34; width: parent.width * 0.5; height: 10; radius: Theme.radiusControl; color: Theme.sunken }
+        // Nhịp mờ trên lớp con: opacity của skeleton là của phần hiện / ẩn (visible bám theo nó), nhịp chạy chung thì vòng binding.
+        Item {
+            id: pulse
+            anchors.fill: parent
+            Repeater {
+                model: Math.max(0, root.cols * Math.ceil(skeleton.height / skeleton.skeletonCellH))
+                Item {
+                    required property int index
+                    x: root.contentX + (index % root.cols) * root.cellW
+                    y: Math.floor(index / root.cols) * skeleton.skeletonCellH
+                    width: root.coverW
+                    height: skeleton.skeletonCellH
+                    Rectangle { width: parent.width; height: Math.round(root.coverW * Theme.coverRatio); radius: Theme.radiusCover; color: Theme.sunken }
+                    Rectangle { y: Math.round(root.coverW * Theme.coverRatio) + 14; width: parent.width * 0.85; height: 12; radius: Theme.radiusControl; color: Theme.sunken }
+                    Rectangle { y: Math.round(root.coverW * Theme.coverRatio) + 34; width: parent.width * 0.5; height: 10; radius: Theme.radiusControl; color: Theme.sunken }
+                }
             }
         }
     }
