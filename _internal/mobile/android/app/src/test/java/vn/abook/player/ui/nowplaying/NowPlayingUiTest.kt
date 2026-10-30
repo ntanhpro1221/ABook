@@ -51,6 +51,7 @@ class NowPlayingUiTest {
     private lateinit var window: NowPlayingWindowState
     private lateinit var model: FakeNowPlayingModel
     private lateinit var scope: CoroutineScope
+    private val miniCovers = CoverLoader()
 
     private fun show(dark: Boolean = false, expanded: Boolean = true, reading: Boolean = false,
                      playing: Boolean = false, sheet: PlayerSheet? = null, longTitles: Boolean = false, base: NowPlayingState? = null,
@@ -77,9 +78,9 @@ class NowPlayingUiTest {
                             MorphingMiniPlayer(
                                 PlayerState(
                                     bookId = now.bookId, bookTitle = now.bookTitle, chapterId = now.chapterId, chapterTitle = now.chapterTitle,
-                                    playing = now.playing, durationMs = now.durationMs,
+                                    playing = now.playing, durationMs = now.durationMs, cover = now.cover,
                                 ),
-                                { model.position.milliseconds.value }, CoverLoader(), model::toggle, window::open,
+                                { model.position.milliseconds.value }, miniCovers, model::toggle, window::open,
                             )
                         }
                         Box(Modifier.fillMaxWidth().height(56.dp).background(Abook.colors.panel))
@@ -89,14 +90,16 @@ class NowPlayingUiTest {
         }
         rule.waitForIdle()
     }
+    /** The real mini player stays composed under the window (hidden from accessibility), so text of the window itself is looked up inside it. */
+    private fun inWindow(matcher: SemanticsMatcher) = matcher and hasAnyAncestor(hasTestTag("now_playing"))
     private fun shot(name: String) = rule.onRoot().captureRoboImage("src/test/snapshots/np_$name.png")
     private fun bounds(tag: String): DpRect {
-        val content = rule.onNodeWithTag(tag).getUnclippedBoundsInRoot()
-        if (tag != "now_playing") return content
-        // Compose exposes the shared overlay's translated origin on the content, and its animated size
-        // on the placeholder (ScaleToBounds keeps content at final size). Inspect both actual UI nodes.
-        val placeholder = rule.onNodeWithTag("now_playing_bounds").getUnclippedBoundsInRoot()
-        return DpRect(content.left, content.top, content.left + placeholder.width, content.top + placeholder.height)
+        if (tag != "now_playing") return rule.onNodeWithTag(tag).getUnclippedBoundsInRoot()
+        // The window is laid out at its final size and clipped by a rectangle that grows out of the bar (graphicsLayer only), so the container's
+        // bounds are the window state's own clip rectangle, in the overlay's pixels.
+        val layer = rule.onNodeWithTag("now_playing_bounds").getUnclippedBoundsInRoot()
+        val clip = with(rule.density) { window.containerBounds(layer.width.toPx(), layer.height.toPx()) }
+        return with(rule.density) { DpRect(clip.left.toDp(), clip.top.toDp(), clip.right.toDp(), clip.bottom.toDp()) }
     }
     private fun assertBounds(a: DpRect, b: DpRect, tolerance: Float = 1f) {
         assertEquals("left", a.left.value, b.left.value, tolerance)
@@ -117,8 +120,8 @@ class NowPlayingUiTest {
     @Test fun sleepDark() { show(dark = true, sheet = PlayerSheet.Sleep); shot("sleep_dark") }
     @Test fun chaptersLight() { show(sheet = PlayerSheet.Chapters); shot("chapters_light") }
     @Test fun chaptersDark() { show(dark = true, sheet = PlayerSheet.Chapters); shot("chapters_dark") }
-    @Test fun longTitlesLight() { show(longTitles = true); rule.onNodeWithText(LONG_CHAPTER).assertIsDisplayed(); shot("long_light") }
-    @Test fun longTitlesDark() { show(dark = true, longTitles = true); rule.onNodeWithText(LONG_BOOK).assertIsDisplayed(); shot("long_dark") }
+    @Test fun longTitlesLight() { show(longTitles = true); rule.onNode(inWindow(hasText(LONG_CHAPTER))).assertIsDisplayed(); shot("long_light") }
+    @Test fun longTitlesDark() { show(dark = true, longTitles = true); rule.onNode(inWindow(hasText(LONG_BOOK))).assertIsDisplayed(); shot("long_dark") }
 
     @Test fun secondaryActionsShareOneLabelLineAndEqualColumns() {
         show()
@@ -133,7 +136,7 @@ class NowPlayingUiTest {
     @Test fun readingHeaderKeepsCoverAndTitlesBesideEachOtherAboveTheText() {
         show(reading = true)
         val cover = bounds("player_cover_small")
-        val chapter = rule.onNodeWithText(FakeNowPlayingModel.demoState().chapterTitle, useUnmergedTree = true).getUnclippedBoundsInRoot()
+        val chapter = rule.onNode(inWindow(hasText(FakeNowPlayingModel.demoState().chapterTitle)), useUnmergedTree = true).getUnclippedBoundsInRoot()
         val text = bounds("read_along_text")
         assertEquals("ô bìa nhỏ 48 dp", 48f, cover.width.value, 0.5f)
         assertTrue("tên chương đứng cạnh bìa nhỏ: $cover / $chapter", chapter.left >= cover.right)
@@ -149,7 +152,7 @@ class NowPlayingUiTest {
         // Giữa chuyển cảnh, chữ chương luôn nằm dưới mép bìa và khối tên đang thu lại - không đè lên nhau.
         val cover = rule.onNodeWithTag("player_cover").getUnclippedBoundsInRoot()
         // Tên sách dưới bìa (không phải chữ trang trí trên bìa tự vẽ).
-        val book = rule.onAllNodesWithText(FakeNowPlayingModel.demoState().bookTitle, useUnmergedTree = true)
+        val book = rule.onAllNodes(inWindow(hasText(FakeNowPlayingModel.demoState().bookTitle)), useUnmergedTree = true)
             .filterToOne(!hasTestTag("cover_title")).getUnclippedBoundsInRoot()
         val text = rule.onNodeWithTag("read_along_text").getUnclippedBoundsInRoot()
         assertTrue("chữ đè tên: $book / $text", text.top >= book.bottom - 0.5.dp)
@@ -230,7 +233,8 @@ class NowPlayingUiTest {
         val mini = bounds("mini_player")
         rule.mainClock.autoAdvance = false
         rule.onNodeWithTag("mini_open").performClick()
-        rule.mainClock.advanceTimeByFrame()
+        // One build frame (the window is composed and laid out hidden), then the motion starts at the bar.
+        repeat(2) { rule.mainClock.advanceTimeByFrame() }
         val start = bounds("now_playing")
         shot("opening_start")
         assertBounds(mini, start, 4f)
@@ -250,6 +254,53 @@ class NowPlayingUiTest {
         assertBounds(mini, bounds("mini_player"), 1f)
         rule.mainClock.autoAdvance = true
     }
+    /** A real image file as the book's cover (a two-colour picture, so a placeholder and the artwork differ in pixels as well as in text). */
+    private fun artCover(): vn.abook.player.ui.data.CoverRef {
+        val file = java.io.File.createTempFile("np_cover", ".png").apply { deleteOnExit() }
+        val bitmap = android.graphics.Bitmap.createBitmap(120, 180, android.graphics.Bitmap.Config.ARGB_8888)
+        android.graphics.Canvas(bitmap).apply {
+            drawColor(android.graphics.Color.rgb(200, 40, 40))
+            drawRect(0f, 90f, 120f, 180f, android.graphics.Paint().apply { color = android.graphics.Color.rgb(30, 60, 200) })
+        }
+        file.outputStream().use { bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
+        return vn.abook.player.ui.data.CoverRef(file.path, 1)
+    }
+
+    @Test fun miniBarKeepsItsArtworkThroughOpenAndCloseAndNeverFallsBackToInitials() {
+        val ref = artCover()
+        show(expanded = false, base = FakeNowPlayingModel.demoState().copy(cover = ref))
+        val initials = vn.abook.player.ui.data.CoverArt.label(FakeNowPlayingModel.demoState().bookTitle, null)
+        val px = with(rule.density) { 36.dp.roundToPx() }
+        // The art is decoded off the main thread: wait for it, then the bar must show it (no initials text) before anything opens.
+        rule.waitUntil(5_000) { miniCovers.peek(miniCovers.key(ref.path, ref.stamp, px)) != null }
+        rule.waitForIdle()
+        rule.onAllNodesWithText(initials, useUnmergedTree = true).assertCountEquals(0)
+        rule.mainClock.autoAdvance = false
+        rule.onNodeWithTag("mini_open").performClick()
+        rule.mainClock.advanceTimeBy(1000)
+        rule.onAllNodesWithText(initials, useUnmergedTree = true).assertCountEquals(0)
+        rule.onNodeWithTag("collapse_player").performClick()
+        // Every frame of the way back, down to the last, the bar's cover is the artwork.
+        repeat(30) {
+            rule.mainClock.advanceTimeByFrame()
+            rule.onAllNodesWithText(initials, useUnmergedTree = true).assertCountEquals(0)
+        }
+        rule.mainClock.advanceTimeBy(1000)
+        rule.onNodeWithTag("now_playing").assertDoesNotExist()
+        // The bar kept its decoded artwork the whole time (it is still the cached image, not re-decoded or dropped).
+        assertNotNull(miniCovers.peek(miniCovers.key(ref.path, ref.stamp, px)))
+        rule.onAllNodesWithText(initials, useUnmergedTree = true).assertCountEquals(0)
+        rule.mainClock.autoAdvance = true
+    }
+
+    @Test fun windowIsTransparentOverTheBarAtBothEndsOfTheMotion() {
+        // At progress 0 (the start of an opening, the landing of a closing) the real bar shows, untouched; the window is fully there from a few percent on.
+        assertEquals(0f, windowAlpha(0f), 0f)
+        assertEquals(1f, windowAlpha(1f), 0f)
+        assertTrue(windowAlpha(0.02f) in 0f..1f && windowAlpha(0.02f) > 0f)
+        assertEquals(1f, windowAlpha(0.2f), 0f)
+    }
+
     @Test fun controlsUseRealModelActionsAndChoiceClosesSheet() {
         show()
         rule.onNodeWithContentDescription("Tới 15 giây").performClick()

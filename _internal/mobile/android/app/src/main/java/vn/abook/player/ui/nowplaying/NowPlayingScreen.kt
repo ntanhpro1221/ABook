@@ -74,7 +74,10 @@ fun NowPlayingScreen(
         else -> state.bookTitle
     }
     val panel = Abook.colors.panel
+    // The tint follows the window's progress, so it is drawn by this outer node (inside the container's moving layer); everything else lives in the inner layer,
+    // whose recorded drawing stays untouched while the window moves.
     Box(modifier.drawBehind { drawRect(lerp(panel, background.value, windowProgress.value)) }) {
+      Box(Modifier.fillMaxSize().graphicsLayer {}) {
         Column(Modifier.fillMaxSize().systemBarsPadding().padding(horizontal = 20.dp).padding(bottom = 12.dp)) {
             val setReading = { on: Boolean -> if (on != window.reading) { window.reading = on; controlsDimmed = false } }
             Row(Modifier.fillMaxWidth().height(56.dp).playerReveal(windowProgress)
@@ -91,7 +94,7 @@ fun NowPlayingScreen(
             // đứng cạnh nó (thu nhỏ, vẫn xuống dòng, không mất), chữ chương mở ra bên dưới. Không phần nào mờ đi rồi biến mất.
             // Ô chữ có mặt khi đang đọc hoặc còn đang chuyển cảnh; chỉ đổi khi qua mốc 0, không recompose theo từng khung.
             val textShown by remember { derivedStateOf { mode.value > 0f } }
-            Layout(modifier = Modifier.weight(1f).fillMaxWidth().clipToBounds(), content = {
+            Layout(modifier = Modifier.weight(1f).fillMaxWidth(), content = {
                 Box(Modifier.fillMaxSize()) {
                   if (window.reading || textShown) {
                     val reading by model.readAlong.collectAsState()
@@ -105,8 +108,8 @@ fun NowPlayingScreen(
                         nextTitle = nextTitle, onNext = model::next)
                   }
                 }
-                // Chạm bìa cũng đổi chế độ: bìa lớn -> đọc theo, bìa nhỏ -> về nghe. Bìa là phần tử chung (sharedElement) nên vùng chạm của nó
-                // không thu theo lớp vẽ; ở chế độ đọc theo nó không nhận chạm (để không nuốt chạm vào chữ), ô 48 dp riêng phía dưới nhận thay.
+                // Chạm bìa cũng đổi chế độ: bìa lớn -> đọc theo, bìa nhỏ -> về nghe. Bìa là phần tử chung (bay bằng lớp vẽ, xem SharedPlayerParts);
+                // ở chế độ đọc theo nó không nhận chạm (để không nuốt chạm vào chữ), ô 48 dp riêng phía dưới nhận thay.
                 PlayerCover(state.cover, state.bookTitle, parts.element(NowPlayingPart.Cover, Modifier
                     .testTag("player_cover")
                     .then(if (state.readAlongAvailable && !window.reading) Modifier.pressable { setReading(true) } else Modifier)))
@@ -144,6 +147,9 @@ fun NowPlayingScreen(
                         val titlesTop = titlesY * (1f - p) + (header - titles.height * titleScale).coerceAtLeast(0f) / 2f * p
                         val titlesBottom = titlesTop + titles.height * (1f + (titleScale - 1f) * p)
                         translationY = maxOf(coverBottom, titlesBottom) + gap * p - textTop
+                        // The text is cut at this area's edges (not the area itself: the cover and the titles fly in from the mini bar, outside it).
+                        clip = true
+                        shape = PlayerTextArea(-(textTop + translationY), height - textTop - translationY)
                     }
                     cover.placeWithLayer(coverX, coverY) {
                         val p = mode.value
@@ -201,6 +207,7 @@ fun NowPlayingScreen(
             if (state.error.isNotBlank() && !dismissed) PlayerAlert(state, model, window, Modifier.playerReveal(windowProgress), onDismiss = { dismissed = true })
         }
         PlayerSheets(state, model, window)
+      }
     }
 }
 
@@ -337,4 +344,10 @@ private fun ReturnChip(available: Boolean, serial: Int, onReturn: () -> Unit) {
                 style = Abook.type.caption.copy(color = Abook.colors.accentText, fontWeight = FontWeight.Medium))
         }
     }
+}
+
+/** The read-along text's visible band, in the text's own coordinates (it slides under the header and over the transport; nothing may show outside the band). */
+private data class PlayerTextArea(val top: Float, val bottom: Float) : androidx.compose.ui.graphics.Shape {
+    override fun createOutline(size: androidx.compose.ui.geometry.Size, layoutDirection: androidx.compose.ui.unit.LayoutDirection, density: androidx.compose.ui.unit.Density) =
+        androidx.compose.ui.graphics.Outline.Rectangle(androidx.compose.ui.geometry.Rect(0f, top, size.width, bottom))
 }

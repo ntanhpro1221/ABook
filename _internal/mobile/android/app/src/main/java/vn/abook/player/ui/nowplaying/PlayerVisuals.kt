@@ -68,14 +68,37 @@ fun PlayerCoverProvider(covers: CoverLoader, content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalPlayerCovers provides covers, content = content)
 }
 
+/** Decode width (px) of the player's cover: the final display slot of the window. */
+@Composable
+private fun playerCoverRequestPx(decodeSize: Dp? = null): Int {
+    val density = LocalDensity.current
+    val displaySize = decodeSize ?: minOf((LocalConfiguration.current.screenWidthDp - 40).dp, 320.dp)
+    return with(density) { displaySize.roundToPx().coerceAtLeast(1) }
+}
+
+/**
+ * Decodes the playing book's cover at the window's display size (and its tint sample) as soon as the track is known, off the main thread, so opening the window finds
+ * both in the cache: the big cover is in the first frame and nothing is decoded while the window moves. Same keys as [PlayerCover] / [rememberPlayerBackground].
+ */
+@Composable
+fun PrefetchPlayerCover(cover: kotlinx.coroutines.flow.Flow<CoverRef?>) {
+    val covers = LocalPlayerCovers.current
+    val requestPx = playerCoverRequestPx()
+    LaunchedEffect(cover, covers, requestPx) {
+        cover.collect { ref ->
+            if (ref == null) return@collect
+            covers.load(covers.key(ref.path, ref.stamp, requestPx), ref.path, requestPx, requestPx)
+            covers.load(covers.key(ref.path, ref.stamp, 32), ref.path, 32, 32)
+        }
+    }
+}
+
 /** Cover always decoded at requested display size on IO; cache is the app's existing byte-bounded loader. No image: the same generated cover as the Library. */
 @Composable
 fun PlayerCover(ref: CoverRef?, title: String, modifier: Modifier = Modifier, decodeSize: Dp? = null) {
     val covers = LocalPlayerCovers.current
-    val density = LocalDensity.current
     // Decode at the final display-slot bound, never at intermediate shared-element sizes.
-    val displaySize = decodeSize ?: minOf((LocalConfiguration.current.screenWidthDp - 40).dp, 320.dp)
-    val requestPx = with(density) { displaySize.roundToPx().coerceAtLeast(1) }
+    val requestPx = playerCoverRequestPx(decodeSize)
     BoxWithConstraints(modifier.clip(RoundedCornerShape(Dim.radiusCover)).background(Abook.colors.bgSunken), contentAlignment = Alignment.Center) {
         if (ref == null) {
             // Tên đã có ngay dưới bìa: chữ trên bìa tự vẽ chỉ để nhìn, trình đọc màn hình không đọc hai lần.

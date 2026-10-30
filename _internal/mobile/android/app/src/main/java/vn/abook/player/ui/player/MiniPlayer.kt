@@ -56,9 +56,9 @@ val MiniPlayerHeight: Dp = 64.dp
  * - `state`: bất biến, đổi khi có gì đổi thật (không đổi mỗi nhịp).
  * - `positionMs`: vị trí chạy theo nhịp, CHỈ đọc trong pha vẽ của vạch tiến độ (truyền `{ clock.positionMs.value }`) nên mỗi nhịp không dựng lại gì.
  * - `onToggle`: nút phát / dừng; `onOpenNowPlaying`: chạm vào phần còn lại của thanh.
- * - `modifier`: đặt NGOÀI CÙNG của thanh - cửa sổ Đang nghe đưa vào khung chung (`sharedBounds`) để thanh nở thành cả màn.
- * - `sharedModifier(part)`: móc cho chuyển phần tử chung. Cửa sổ Đang nghe trả về Modifier (`Modifier.sharedElement(...)`) cho từng [NowPlayingPart]
- *   (Cover, Chapter, Book, Play); mặc định không thêm gì. Hàm là @Composable để dùng được `rememberSharedContentState`. Modifier đặt NGOÀI CÙNG của mỗi phần
+ * - `modifier`: đặt NGOÀI CÙNG của thanh - cửa sổ Đang nghe đăng ký khung của thanh ở đây để nó nở thành cả màn (chỉ lớp vẽ, xem NowPlayingWindow).
+ * - `sharedModifier(part)`: móc cho chuyển phần tử chung. Cửa sổ Đang nghe trả về Modifier đăng ký chỗ của từng [NowPlayingPart]
+ *   (Cover, Chapter, Book, Play) làm điểm xuất phát của chuyển động; mặc định không thêm gì. Modifier đặt NGOÀI CÙNG của mỗi phần
  *   (bìa 36 dp, hai dòng chữ, nút phát 44 dp).
  *
  * Nút phát <-> dừng biến hình nét vẽ ([PlayPauseGlyph]), không mờ chéo.
