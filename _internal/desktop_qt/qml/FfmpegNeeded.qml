@@ -47,7 +47,7 @@ Column {
         width: parent.width
         height: Math.max(40, percent.implicitHeight)
         Button { id: halt; objectName: "ffmpegStop"; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; size: "sm"; kind: "ghost"; text: "Dừng"; onClicked: root.stop() }
-        Text {
+        ClockLabel {
             id: percent
             objectName: "ffmpegPercent"
             anchors.right: halt.left

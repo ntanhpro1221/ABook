@@ -67,7 +67,7 @@ Column {
                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                     font.pixelSize: Theme.sizeBodySmall
                 }
-                Text {
+                ClockLabel {
                     objectName: "recordChoiceLine"
                     width: parent.width
                     text: Logic.recordLine(root.book, row.modelData, root.now > 0 ? root.now : undefined)

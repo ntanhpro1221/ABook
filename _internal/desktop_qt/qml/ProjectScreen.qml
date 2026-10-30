@@ -418,7 +418,7 @@ FocusScope {
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
                             }
-                            Text {
+                            ClockLabel {
                                 objectName: "projectProgressNote"
                                 visible: text !== ""
                                 width: Math.min(implicitWidth, parent.width)

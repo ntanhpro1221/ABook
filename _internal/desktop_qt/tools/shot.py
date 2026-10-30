@@ -13,6 +13,7 @@ import ctypes.wintypes as wt
 import os
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -118,6 +119,11 @@ def main() -> int:
         else:
             steps.append(a[i])
             i += 1
+    if not any(a[j] == "--env" and a[j + 1].startswith("LOCALAPPDATA=") for j in range(2, len(a) - 1)):
+        # Vị trí cửa sổ, cài đặt, tiến độ chờ gửi nằm dưới LOCALAPPDATA: ảnh chụp không ghi vào dữ liệu của chủ máy.
+        data = Path(tempfile.mkdtemp(prefix="abookdesk_shot_data_"))
+        (data / "local").mkdir(); (data / "roaming").mkdir()
+        env["LOCALAPPDATA"], env["APPDATA"] = str(data / "local"), str(data / "roaming")
     p = subprocess.Popen([str(exe)], env=env, cwd=str(exe.parent))
     h = None
     t0 = time.time()

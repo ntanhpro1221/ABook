@@ -21,7 +21,7 @@ Item {
         font.weight: Theme.weightMedium
         Behavior on color { ColorAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast } }
     }
-    Text {
+    ClockLabel {
         id: countText
         visible: root.count > 0
         x: label.implicitWidth + 6

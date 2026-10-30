@@ -383,6 +383,7 @@ qt_add_qml_module(ABookDesk
         qml/ChapterRow.qml
         qml/ChaptersPopover.qml
         qml/ChoiceChip.qml
+        qml/ClockLabel.qml
         qml/ClockUser.qml
         qml/UiActivity.qml
         qml/ControlChip.qml
@@ -427,6 +428,7 @@ qt_add_qml_module(ABookDesk
         fonts/BeVietnamPro-Regular.ttf
         fonts/BeVietnamPro-Medium.ttf
         fonts/BeVietnamPro-Bold.ttf
+        fonts/OFL.txt
 )
 target_compile_definitions(ABookDesk PRIVATE ABOOK_VERSION="${ABOOK_VERSION}" QT_NO_CAST_FROM_ASCII)
 # Âm thanh: Media Foundation của Windows (đo ở docs/NATIVE_PHONE_UI.md 7.1), không thêm DLL nào vào bản phân phối.
@@ -569,7 +571,7 @@ add_test(NAME SidebarTests COMMAND SidebarTests)
 qt_add_executable(MusicWindowActivityTests tests/test_musicwindowactivity.cpp src/musicwindowactivity.h)
 target_include_directories(MusicWindowActivityTests PRIVATE src)
 target_compile_definitions(MusicWindowActivityTests PRIVATE QT_NO_CAST_FROM_ASCII)
-target_link_libraries(MusicWindowActivityTests PRIVATE Qt6::Test Qt6::Quick Qt6::GuiPrivate)
+target_link_libraries(MusicWindowActivityTests PRIVATE Qt6::Test Qt6::Gui)
 if(MSVC)
     target_compile_options(MusicWindowActivityTests PRIVATE /W3 /utf-8)
 endif()

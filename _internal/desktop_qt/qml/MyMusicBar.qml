@@ -1,7 +1,7 @@
 import QtQuick
 import ABook
 
-// Thanh tiến độ cỡ sm của Progress (shared/ui.tsx): rãnh cao 6 bo tròn màu --line, phần đã tải màu nhấn; phần trăm đổi thì thanh trượt theo.
+// Thanh tiến độ cỡ sm của Progress (shared/ui.tsx): rãnh cao 6 bo tròn màu --line, phần đã tải màu nhấn.
 Rectangle {
     id: root
     property real value: 0              // 0..1
@@ -16,6 +16,6 @@ Rectangle {
         height: parent.height
         radius: height / 2
         color: Theme.accent
-        Behavior on width { enabled: !Theme.reduceMotion; NumberAnimation { duration: Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard } }
+        // Phần tô theo giá trị tự đổi: vẽ thẳng, không Behavior (luật chủ sách 30-10; điện thoại native cũng vậy)
     }
 }
