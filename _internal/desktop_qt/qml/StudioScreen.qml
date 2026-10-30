@@ -90,6 +90,12 @@ Item {
     readonly property var newStore: newLoader.item
     function goList() { route = "list"; newMode = ""; pickNow = false }
     function openProject(id) { dataStore.openBook(id); route = "project"; pickNow = false }
+    // Mở dự án vừa mở ở một tab (lời mời "Duyệt" -> tab=precast của web): trang đã dựng thì chọn ngay, chưa thì chọn khi Loader dựng xong
+    property string pendingTab: ""
+    function openProjectTab(tab) {
+        if (projectLoader.item) projectLoader.item.pickTab(tab)
+        else pendingTab = tab
+    }
     // Trình tạo dựng muộn (lần đầu mở) và sống tiếp để nháp không mất khi rời trang; "Sửa thiết lập" / "Làm tiếp" điền sẵn từ máy chủ một lần
     function openNew(mode, id) {
         newMode = mode || ""
@@ -158,6 +164,7 @@ Item {
             id: projectLoader
             anchors.fill: parent
             active: root.shownKey === "route:project"
+            onLoaded: if (root.pendingTab !== "") { item.pickTab(root.pendingTab); root.pendingTab = "" }
             sourceComponent: ProjectScreen {
                 objectName: "projectScreen"
                 store: dataStore

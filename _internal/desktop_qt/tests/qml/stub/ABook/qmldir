@@ -56,6 +56,7 @@ FormField 1.0 ../../../../qml/FormField.qml
 SettingRow 1.0 ../../../../qml/SettingRow.qml
 SettingChoices 1.0 ../../../../qml/SettingChoices.qml
 SectionBlock 1.0 ../../../../qml/SectionBlock.qml
+WindowLayer 1.0 ../../../../qml/WindowLayer.qml
 Modal 1.0 ../../../../qml/Modal.qml
 SettingsBody 1.0 ../../../../qml/SettingsBody.qml
 SettingsVoice 1.0 ../../../../qml/SettingsVoice.qml
@@ -114,6 +115,8 @@ StudioPanels 1.0 ../../../../qml/StudioPanels.qml
 StudioSettings 1.0 ../../../../qml/StudioSettings.qml
 ProjectsScreen 1.0 ../../../../qml/ProjectsScreen.qml
 ProjectScreen 1.0 ../../../../qml/ProjectScreen.qml
+ProjectSteps 1.0 ../../../../qml/ProjectSteps.qml
+StudioChapterHead 1.0 ../../../../qml/StudioChapterHead.qml
 ProjectRow 1.0 ../../../../qml/ProjectRow.qml
 ProjectMenu 1.0 ../../../../qml/ProjectMenu.qml
 StudioMenuRow 1.0 ../../../../qml/StudioMenuRow.qml

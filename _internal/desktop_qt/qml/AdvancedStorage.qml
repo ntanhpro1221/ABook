@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Controls.Basic as C
 import ABook
 import "MyMusicText.js" as Music
 
@@ -56,7 +55,6 @@ Collapse {
     }
     Modal {
         id: dialog
-        parent: C.Overlay.overlay      // hộp phủ cả cửa sổ, không nằm trong khung cuộn của trang
         title: "Dọn bản đọc đã làm"
         description: root.usage ? Music.clearStorageQuestion(root.usage) : ""
         dismissable: !root.busy

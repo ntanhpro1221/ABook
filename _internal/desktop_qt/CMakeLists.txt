@@ -146,6 +146,7 @@ qt_add_qml_module(ABookDesk
         qml/SettingChoices.qml
         qml/SectionBlock.qml
         qml/Modal.qml
+        qml/WindowLayer.qml
         qml/SettingsBody.qml
         qml/SettingsVoice.qml
         qml/VoiceModule.qml
@@ -208,6 +209,8 @@ qt_add_qml_module(ABookDesk
         qml/StudioSettings.qml
         qml/ProjectsScreen.qml
         qml/ProjectScreen.qml
+        qml/ProjectSteps.qml
+        qml/StudioChapterHead.qml
         qml/ProjectRow.qml
         qml/ProjectMenu.qml
         qml/StudioMenuRow.qml

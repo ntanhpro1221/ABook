@@ -1,11 +1,15 @@
 import QtQuick
 import ABook
+import "PrecastLogic.js" as Precast
 
 Item {
     id: root
     property alias store: store
     signal projectRequested(string bookId)
+    signal precastRequested(string bookId)
     signal allRequested()
+    // Dự án đang mở ở Studio ("" = không): đang ở chính trang ấy thì dải mời trên trang đã nói, không mời thêm
+    property string openProject: ""
     implicitHeight: column.implicitHeight
     readonly property var live: store.books.filter(b => b.running || b.starting || b.queuePosition != null)
         .sort((a, b) => (a.queuePosition || 0) - (b.queuePosition || 0))
@@ -26,7 +30,17 @@ Item {
     }
     ListModel { id: rows; dynamicRoles: true }
     Timer { id: prune; interval: Theme.reduceMotion ? Theme.motionFast : Theme.motionMediumOut; onTriggered: { for (let i = rows.count - 1; i >= 0; --i) if (!rows.get(i).alive) rows.remove(i) } }
-    StudioStore { id: store; active: Nav.uiVisible && root.visible; libraryWanted: active }
+    StudioStore { id: store; active: Nav.uiVisible && root.visible; libraryWanted: active; onBooksChanged: root.invite() }
+    // Lời mời duyệt trước khi thu (usePrecastInvites): nhớ mốc đã mời của từng cuốn, mời bằng lời báo 30 giây có nút "Duyệt" mở thẳng tab ấy
+    function invite() {
+        if (store.peer) return
+        for (const book of Precast.invites(store.books, id => Platform.setting("precast.invited." + id, "") || null)) {
+            Platform.setSetting("precast.invited." + book.id, String(book.precast.announcedAt))
+            if (book.id === openProject) continue
+            const id = book.id
+            Api.toast(Precast.inviteText(book), {duration: 30000, action: {label: "Duyệt", run: () => root.precastRequested(id)}})
+        }
+    }
     Connections { target: Nav; function onUiVisibleChanged() { if (Nav.uiVisible && root.visible) store.loadLibrary() } }
     Column {
         id: column; width: parent.width; spacing: Theme.s4

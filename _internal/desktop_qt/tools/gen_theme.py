@@ -29,7 +29,7 @@ OUT = ROOT / "qml" / "Theme.qml"
 COLOR_NAMES = {
     "bg": "bg", "panel": "panel", "bg-sunken": "sunken", "line": "line", "text": "text", "text-2": "text2",
     "text-3": "text3", "fg-3": "faint", "accent": "accent", "accent-ink": "accentInk", "accent-text": "accentText",
-    "accent-soft": "accentSoft", "success": "success", "danger": "danger", "warning": "warning", "warning-soft": "warningSoft",
+    "accent-soft": "accentSoft", "success": "success", "success-ink": "successInk", "danger": "danger", "warning": "warning", "warning-soft": "warningSoft",
     "info-soft": "infoSoft", "focus": "focus",
     "switch-off": "switchOff", "switch-thumb": "switchThumb",
     "hover": "hover", "control-line": "controlLine", "danger-soft": "dangerSoft", "scrim": "scrim",

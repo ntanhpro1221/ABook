@@ -3,9 +3,8 @@ import ABook
 
 // Bảng nổi nhỏ trên chip trạng thái: chi tiết (bản, lời nhắn khi lỗi) + hai hành động "Khởi động lại" / "Mở thư mục nhật ký".
 // Là một lớp của ngăn xếp Back: Esc, Alt+Left, nút Back của chuột hay bấm ra ngoài đều đóng; Back không lùi màn khi lớp còn mở.
-Item {
+WindowLayer {
     id: root
-    anchors.fill: parent
     property bool open: false
     property Item anchorItem: null
     property real shown: open ? 1 : 0

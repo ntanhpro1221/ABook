@@ -23,7 +23,7 @@ Modal {
 
     // ---- Trạng thái ----
     property var preview: null              // bản xem trước của cuốn đang xem (null = chưa có / đang đọc)
-    property var shown: null                // bản xem trước cuối cùng: bước xem trước thu lại vẫn vẽ nội dung cũ tới khi thu xong
+    property var shownPreview: null                // bản xem trước cuối cùng: bước xem trước thu lại vẫn vẽ nội dung cũ tới khi thu xong
     property string path: ""                // file / thư mục của cuốn đang xem
     property string bookTitle: ""
     property string busy: ""                // "" | "reading" | "adding"
@@ -46,21 +46,21 @@ Modal {
     signal openBook(string id)
     signal openStudio(string id)
 
-    readonly property var groups: shown ? Queue.groupSuggestions(shown.suggestions || [], shown.chapters, picked) : []
-    readonly property var totals: shown ? Queue.pickedTotals(shown.chapters, picked) : ({chapters: 0, words: 0})
+    readonly property var groups: shownPreview ? Queue.groupSuggestions(shownPreview.suggestions || [], shownPreview.chapters, picked) : []
+    readonly property var totals: shownPreview ? Queue.pickedTotals(shownPreview.chapters, picked) : ({chapters: 0, words: 0})
     readonly property bool nothingPicked: preview !== null && picked.length === 0
     readonly property int pending: Queue.unfinished(queue)
-    readonly property var notes: shown ? shown.notes.slice(0, shown.notes.length - (shown.suggestions ? shown.suggestions.length : 0)) : []
+    readonly property var notes: shownPreview ? shownPreview.notes.slice(0, shownPreview.notes.length - (shownPreview.suggestions ? shownPreview.suggestions.length : 0)) : []
     // Cuốn "đã có trong thư viện" tính theo các chương MẶC ĐỊNH; tích khác đi là bộ chữ khác, cứ thêm - máy sẽ nói nếu hoá ra đã có.
-    readonly property var existing: shown && Queue.isDefaultPick(shown.chapters, picked) ? (shown.existing || null) : null
-    readonly property var sameSource: !existing && shown ? (shown.sameSource || null) : null
+    readonly property var existing: shownPreview && Queue.isDefaultPick(shownPreview.chapters, picked) ? (shownPreview.existing || null) : null
+    readonly property var sameSource: !existing && shownPreview ? (shownPreview.sameSource || null) : null
     readonly property var known: existing || sameSource
     readonly property string queueName: queue && currentId >= 0 ? Queue.queueLabel(queue, currentId) : ""
     readonly property int rest: queue && currentId >= 0 ? Queue.waitingAfter(queue, currentId).length : 0
     readonly property string step: preview ? "review" : (queue ? "queue" : "choose")
     readonly property bool canAdd: bookTitle.trim() !== "" && !nothingPicked
 
-    onPreviewChanged: if (preview) shown = preview
+    onPreviewChanged: if (preview) shownPreview = preview
     onLeaveChanged: {
         if (leave !== "") {
             shownLeave = leave
@@ -656,11 +656,11 @@ Modal {
                     }
                     Collapse {
                         width: parent.width
-                        open: root.shown !== null && Boolean(root.shown.author)
+                        open: root.shownPreview !== null && Boolean(root.shownPreview.author)
                         Text {
                             width: parent.width
                             topPadding: 6
-                            text: "Tác giả: " + (root.shown && root.shown.author ? root.shown.author : "")
+                            text: "Tác giả: " + (root.shownPreview && root.shownPreview.author ? root.shownPreview.author : "")
                             color: Theme.text2
                             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                             font.pixelSize: Theme.sizeBodySmall
@@ -680,7 +680,7 @@ Modal {
                             spacing: 4
                             Text {
                                 objectName: "importTotals"
-                                text: root.totals.chapters + (shown && root.totals.chapters !== root.shown.chapters.length ? " / " + root.shown.chapters.length : "") + " chương"
+                                text: root.totals.chapters + (shownPreview && root.totals.chapters !== root.shownPreview.chapters.length ? " / " + root.shownPreview.chapters.length : "") + " chương"
                                 color: Theme.text
                                 font.pixelSize: Theme.sizeBodySmall
                                 font.weight: 600
@@ -696,7 +696,7 @@ Modal {
                         Row {
                             id: links
                             readonly property real implicitWidth: childrenRect.width
-                            visible: root.shown !== null && root.shown.chapters.length > 1
+                            visible: root.shownPreview !== null && root.shownPreview.chapters.length > 1
                             x: totalsRow.stacked ? 0 : parent.width - width
                             y: totalsRow.stacked ? 16 + summaryFlow.height + 4 : 16
                             spacing: 12
@@ -712,7 +712,7 @@ Modal {
                                     ringMargin: 2
                                     Accessible.role: Accessible.Button
                                     Accessible.name: modelData.label
-                                    onClicked: root.picked = modelData.all ? root.shown.chapters.map(c => c.index) : []
+                                    onClicked: root.picked = modelData.all ? root.shownPreview.chapters.map(c => c.index) : []
                                     Text {
                                         id: linkText
                                         text: link.modelData.label
@@ -727,7 +727,7 @@ Modal {
                     // Tách theo các dòng “Chương N” (file TXT cả truyện)
                     Collapse {
                         width: parent.width
-                        open: root.shown !== null && Boolean(root.shown.splitOffer)
+                        open: root.shownPreview !== null && Boolean(root.shownPreview.splitOffer)
                         Item {
                             width: parent.width
                             height: splitCheck.height + 12
@@ -736,7 +736,7 @@ Modal {
                                 objectName: "importSplit"
                                 y: 12
                                 width: parent.width
-                                label: root.shown && root.shown.splitOffer ? Queue.splitLabel(root.shown) : ""
+                                label: root.shownPreview && root.shownPreview.splitOffer ? Queue.splitLabel(root.shownPreview) : ""
                                 help: root.split ? "Mỗi dòng “Chương N” mở một chương mới; chữ của truyện giữ nguyên."
                                                  : "Cả truyện đang là một chương. Tích để tách theo các dòng ấy; chữ giữ nguyên."
                                 checked: root.split
@@ -822,7 +822,7 @@ Modal {
                     // Chú thích: đề xuất về chú thích trong sách (EPUB / DOCX)
                     Collapse {
                         width: parent.width
-                        open: root.shown !== null && Boolean(root.shown.footnotes)
+                        open: root.shownPreview !== null && Boolean(root.shownPreview.footnotes)
                         Item {
                             width: parent.width
                             height: noteFold.height + 12
@@ -836,7 +836,7 @@ Modal {
                                 Column {
                                     id: noteBody
                                     width: parent.width
-                                    readonly property var offer: root.shown && root.shown.footnotes ? root.shown.footnotes : ({found: 0, marks: 0, examples: []})
+                                    readonly property var offer: root.shownPreview && root.shownPreview.footnotes ? root.shownPreview.footnotes : ({found: 0, marks: 0, examples: []})
                                     readonly property var said: Queue.footnoteSummary(offer)
                                     leftPadding: 12
                                     rightPadding: 12
@@ -1012,7 +1012,7 @@ Modal {
                         x: 0
                         y: 8
                         width: parent.width
-                        chapters: root.shown ? root.shown.chapters : []
+                        chapters: root.shownPreview ? root.shownPreview.chapters : []
                         picked: root.picked
                         names: root.names
                         locked: root.busy !== ""

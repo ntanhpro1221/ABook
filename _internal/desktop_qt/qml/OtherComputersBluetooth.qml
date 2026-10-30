@@ -10,7 +10,6 @@ Item {
     property var computer: ({})
     property var devices: []
     property bool busy: false
-    property Item overlay: null
     readonly property string current: Logic.bluetoothAddress(computer)
     signal choose(string address)
     implicitWidth: button.width
@@ -30,7 +29,6 @@ Item {
     Popover {
         id: menu
         objectName: "bluetoothMenu"
-        parent: root.overlay
         anchorItem: button
         panelWidth: 288
         pad: 6
