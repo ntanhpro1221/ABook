@@ -162,6 +162,13 @@ void Bench::attach(QQuickWindow *window) {
 void Bench::finish() {
     if (!enabled())
         return;
+    flush();
+    QCoreApplication::quit();
+}
+
+void Bench::flush() {
+    if (!enabled())
+        return;
     QByteArray json;
     json.reserve(1 << 20);
     const double epochOffset = double(QDateTime::currentMSecsSinceEpoch()) - nowMs();
@@ -189,5 +196,4 @@ void Bench::finish() {
         file.write(json);
         file.close();
     }
-    QCoreApplication::quit();
 }
