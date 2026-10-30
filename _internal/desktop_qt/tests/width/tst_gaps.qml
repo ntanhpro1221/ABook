@@ -232,7 +232,9 @@ Item {
                 before = image
                 return same
             })
-            before.save("build/d2shots/gaps_" + name + ".png")
+            // Đường dẫn tính từ file thử (build.bat chạy từ gốc cây, không phải desktop_qt)
+            before.save(Qt.resolvedUrl("../../build/d2shots/gaps_" + name + ".png").toString()
+                .replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, ""))
         }
         function shootBoth(name) { for (const mode of ["light", "dark"]) { Theme.mode = mode; shoot(name + "_" + mode) } Theme.mode = "auto" }
 
