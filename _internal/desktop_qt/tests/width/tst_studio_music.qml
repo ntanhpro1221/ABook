@@ -151,6 +151,8 @@ Item {
             tryVerify(function() { const m = all(page, "studioMusic")[0]; return !!m && m.view !== null }, 3000)
             // phần cài đặt đã hiện hẳn (Collapse mờ dần vào)
             tryVerify(function() { return hasText(music(page), "Bài cho từng đoạn") }, 2000)
+            // đầu danh sách xếp lại sau khi đổi tab (đầu cột bảng chương ẩn đi) rồi mới đo / cuộn
+            waitForRendering(page)
             return page
         }
         function music(page) { return all(page, "studioMusic")[0] }
