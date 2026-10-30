@@ -168,7 +168,7 @@ Item {
                     objectName: "keyRemove"
                     visible: Boolean(root.info.hasKey)
                     text: "Xoá khoá"
-                    icon: "trash-2"
+                    icon: "trash"
                     kind: "text"
                     busy: root.busy === "remove"
                     enabled: root.busy === ""

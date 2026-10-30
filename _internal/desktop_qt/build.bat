@@ -1,7 +1,7 @@
 @echo off
 rem Windows app, Qt Quick (D0). Release build into build\, copy + windeployqt into dist\.
 rem   build.bat           build
-rem   build.bat clean     remove build\ and dist\ (node fs.rmSync; the repo rules forbid rm/del/rmdir)
+rem   build.bat clean     remove build\ and dist\ with Python shutil
 rem Override with env vars: QWK_ROOT (QWindowKit, built by tools\build_qwindowkit.bat when missing), QT_ROOT (Qt >= 6.10.3 msvc2022_64), CMAKE_BIN, NINJA_BIN, VCVARS, ABOOK_PYTHON.
 setlocal
 set HERE=%~dp0
@@ -15,7 +15,7 @@ if not defined QWK_ROOT set QWK_ROOT=D:\Novels\native_desk_proto\qwk
 if not defined ABOOK_PYTHON set ABOOK_PYTHON=D:\Novels\ABook\_internal\runtime\.venv\Scripts\python.exe
 
 if /i "%1"=="clean" (
-  node -e "for (const d of ['build','dist']) require('fs').rmSync(process.argv[1] + '/' + d, {recursive: true, force: true})" "%HERE%."
+  "%ABOOK_PYTHON%" -X utf8 -c "import pathlib,shutil,sys; root=pathlib.Path(sys.argv[1]).resolve(); targets=[root/name for name in ('build','dist')]; assert all(p.resolve().parent==root for p in targets); [shutil.rmtree(p) for p in targets if p.exists()]" "%HERE%."
   exit /b 0
 )
 
@@ -54,6 +54,8 @@ if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
 
 rem Player unit tests (QtTest with fake audio/network): red stops the build before packaging
+call :test "%HERE%build\PlayerNativeTests.exe" "%HERE%build\playernative-test.txt"
+if errorlevel 1 exit /b 1
 call :test "%HERE%build\MediaControlsTests.exe" "%HERE%build\mediacontrols-test.txt"
 if errorlevel 1 exit /b 1
 call :test "%HERE%build\DesktopApiTests.exe" "%HERE%build\desktopapi-test.txt"
@@ -91,7 +93,9 @@ if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
 
 if not exist "%HERE%dist" mkdir "%HERE%dist"
-copy /y "%HERE%build\ABookDesk.exe" "%HERE%dist\ABookDesk.exe" >nul
+rem copyfile writes the packaged file now, so its timestamp proves this build reached packaging
+rem even when Ninja correctly leaves the unchanged executable alone on the second run.
+"%ABOOK_PYTHON%" -X utf8 -c "import shutil,sys; shutil.copyfile(sys.argv[1],sys.argv[2])" "%HERE%build\ABookDesk.exe" "%HERE%dist\ABookDesk.exe"
 if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
 rem Dynamic Qt DLLs (LGPL): windeployqt copies DLLs + plugins next to the exe
@@ -117,7 +121,15 @@ rem Keep every QtTest result: GUI stderr alone can be empty even when tests fail
 "%~1" -o "%~2",txt
 set TEST_EXIT=%errorlevel%
 type "%~2"
-if not "%TEST_EXIT%"=="0" exit /b 1
+"%ABOOK_PYTHON%" -X utf8 "%HERE%tools\check_test_results.py" "%~2"
+if errorlevel 1 (
+  echo ERROR: Qt test or glyph audit failed: %~2
+  exit /b 1
+)
+if not "%TEST_EXIT%"=="0" (
+  echo ERROR: Qt test process exited %TEST_EXIT%: %~1
+  exit /b 1
+)
 findstr /c:"FAIL!" "%~2" >nul
 if not errorlevel 1 exit /b 1
 exit /b 0

@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "VisualReady.js" as VisualReady
 import ABook
 import "ParityFixtures.js" as Fixture
 import "LayoutAudit.js" as Audit
@@ -16,9 +17,10 @@ Item {
     Component { id: now; NowPlaying {} }
     TestCase {
         name: "ParityStates"
+        function ready() { VisualReady.render(this, host.Window.window, host, qtVisualReady) }
         when: windowShown
         function init() {
-            Theme.reduceMotion = true; Nav.layers = []; Platform.reset(); DesktopApi.reset(); Api.bind(DesktopApi, Theme)
+            Theme.reduceMotion = false; Nav.layers = []; Platform.reset(); DesktopApi.reset(); Api.bind(DesktopApi, Theme)
             Api.preferences = {sleepFadeSeconds: 30, sleepExtendMinutes: 10}
             Player.configure(Api.preferences)
             Backend.state = Backend.Ready; Backend.libraryLoaded = true; Backend.library.error = ""
@@ -106,7 +108,7 @@ Item {
                 if (d.state === "chapters" || d.state === "chapter-menu") {
                     if (page.wide) page.sidePage = 0
                     else findChild(page, "nowChapters").clicked()
-                    wait(200)
+                    ready()
                     if (d.state === "chapter-menu") {
                         const list = page.wide ? findChild(page, "nowChapterList") : findChild(page, "nowChapterListPopover")
                         verify(list); const row = list.itemAtIndex(2); verify(row)
@@ -121,13 +123,13 @@ Item {
                     if (d.state === "recommendations") findChild(page, "nowRecommendations").show()
                 }
             }
-            wait(420)
+            ready()
             geometry(page, page)
             const hits = Audit.scan(page)
             console.log("LAYOUT_AUDIT " + JSON.stringify({scene: "parity_" + d.tag, hits: hits}))
             compare(hits.length, 0, JSON.stringify(hits))
             qtGlyphAudit.scan()
-            if (qtWideShotDir !== "" && d.w !== 1440) { host.Window.window.update(); waitForRendering(host); grabImage(host).save(qtWideShotDir + "/parity_" + d.tag + ".png") }
+            if (qtWideShotDir !== "" && d.w !== 1440) { ready(); grabImage(host).save(qtWideShotDir + "/parity_" + d.tag + ".png") }
             if (d.screen === "now") page.close()
             page.destroy()
         }

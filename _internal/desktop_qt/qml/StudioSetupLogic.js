@@ -1,6 +1,6 @@
 .pragma library
 
-// Phần thuần của việc cài Studio (ui/src/studio/StudioSetup.tsx, studioFit.ts, errorText.ts friendlySetupError, setupLeftover.ts, musicLocal.ts formatSize):
+// Phần thuần của việc cài Studio (ui/src/studio/StudioSetup.tsx, studioFit.ts, errorText.ts friendlySetupError, setupLeftover.ts):
 // chữ chép từng chữ để thẻ "Cài Studio" ở màn Dự án, Cài đặt › Studio và khối nhắc ở trình tạo sách nói cùng một câu.
 
 var STUDIO_WHAT = "Studio biến truyện chữ thành sách nói."
@@ -67,12 +67,6 @@ function cardButton(status, fit) {
     if (status.leftover) return status.leftover.orphan ? {kind: "cancelOld", text: "Dừng lượt cũ"} : {kind: "wait", text: "Cài tiếp"}
     if (fit && fit.level === "no") return {kind: "unfit", text: "Vẫn cài"}
     return {kind: "go", text: isRepair(status) ? "Sửa Studio" : isUpdate(status) ? "Cập nhật Studio" : started(status) ? "Cài tiếp" : "Cài Studio"}
-}
-function formatSize(bytes) {
-    if (bytes >= 1e9) return (bytes / 1e9).toFixed(2).replace(".", ",") + " GB"
-    const megabytes = bytes / 1e6
-    if (megabytes < 1) return Math.max(1, Math.round(bytes / 1e3)) + " KB"
-    return (megabytes < 10 ? megabytes.toFixed(1).replace(".", ",") : String(Math.round(megabytes))) + " MB"
 }
 
 var OFFLINE = /getaddrinfo failed|\[Errno 11001\]|WinError 11001|WinError 10051|WinError 10060|Network is unreachable|Temporary failure in name resolution|Name or service not known|timed out|Connection (?:aborted|reset)|RemoteDisconnected|IncompleteRead/i

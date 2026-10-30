@@ -1,4 +1,5 @@
 #include "readalong.h"
+#include "textscript.h"
 
 #include <QAbstractTextDocumentLayout>
 #include <QRectF>
@@ -184,15 +185,27 @@ void ReadAlong::reload() {
     emit currentSegmentChanged();
     emit currentWordChanged();
     setStatus(QStringLiteral("loading"));
-    m_net->request("GET", QStringLiteral("/api/books/%1/chapters/%2/script").arg(bookId).arg(chapterId), {}, [this, seq](int status, const QJsonObject &body) {
+    if (m_player->speaking() && m_narrationBook == bookId && m_narrationChapter == chapterId && !m_narration.isEmpty()) {
+        apply(parseScript(m_narration)); return;
+    }
+    const bool speaking = m_player->speaking();
+    const QString path = speaking ? QStringLiteral("/api/listen/books/%1/chapters/%2/text") : QStringLiteral("/api/books/%1/chapters/%2/script");
+    m_net->request("GET", path.arg(bookId).arg(chapterId), {}, [this, seq, speaking](int status, const QJsonObject &body) {
         if (seq != m_seq)
             return;
         if (status < 200 || status >= 300 || body.isEmpty()) {
             setStatus(QStringLiteral("failed"));
             return;
         }
-        apply(parseScript(body));
+        apply(parseScript(speaking ? TextScript::script(body.value(QStringLiteral("text")).toString()) : body));
     }, false);
+}
+
+void ReadAlong::narrationScript(const QString &book, int chapter, const QJsonObject &script) {
+    m_narrationBook = book; m_narrationChapter = chapter; m_narration = script;
+    if (m_active && m_player->speaking() && m_player->bookId() == book && m_player->chapterId() == chapter) {
+        ++m_seq; m_loadedBook = book; m_loadedChapter = chapter; apply(parseScript(script));
+    }
 }
 
 void ReadAlong::apply(Script script) {
@@ -240,7 +253,7 @@ void ReadAlong::update() {
 }
 
 void ReadAlong::prefetchNext() {
-    if (m_prefetching)
+    if (m_prefetching || m_player->speaking())
         return;
     const int next = PlayerLogic::availableAfter(m_player->book().chapters, m_loadedChapter, 1);
     if (next < 0 || (m_prefetchChapter == next && m_prefetchBook == m_loadedBook))

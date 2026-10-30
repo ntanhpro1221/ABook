@@ -32,5 +32,13 @@ Popover {
                 }
             }
         }
+        Text {
+            objectName: "speedKeyHint"
+            width: parent.width
+            text: "Phím [ và ] để giảm, tăng."
+            wrapMode: Text.Wrap
+            color: Theme.text2
+            font.pixelSize: Theme.sizeCaption
+        }
     }
 }

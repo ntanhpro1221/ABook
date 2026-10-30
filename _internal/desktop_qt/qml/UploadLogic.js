@@ -1,5 +1,5 @@
 .pragma library
-.import "StudioSetupLogic.js" as Setup
+.import "SizeFormat.js" as Size
 
 // Gửi chương lên máy tính khi Studio ở máy khác (ui/src/studio/upload.ts, phần thuần): máy đang xem không đưa được đường dẫn nào trên máy tính, nên nó gửi
 // các chương TXT (hay file EPUB / DOCX / PDF) vào thư viện của máy tính (POST /api/sources/upload) từng file một rồi trả các thư mục để trình tạo sách đi
@@ -85,7 +85,7 @@ function planNotice(plan) {
 function planFileCount(plan) { return plan.groups.reduce(function(sum, group) { return sum + group.files.length }, 0) }
 /** "Đang gửi 3/12 file · 1,2 MB / 4,5 MB". */
 function progressLabel(progress) {
-    return "Đang gửi " + progress.files + "/" + progress.totalFiles + " file · " + Setup.formatSize(progress.bytes) + " / " + Setup.formatSize(progress.totalBytes)
+    return "Đang gửi " + progress.files + "/" + progress.totalFiles + " file · " + Size.formatSize(progress.bytes) + " / " + Size.formatSize(progress.totalBytes)
 }
 /** "Đã gửi 3/12 file, giữ lại; 9 file chưa gửi." - nói rõ gì đã tới máy tính khi dừng giữa chừng. */
 function sendSummary(result) {

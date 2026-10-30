@@ -1,4 +1,5 @@
 .pragma library
+.import "SizeFormat.js" as Size
 
 // Chữ và phép tính thuần của "Nhạc của tôi" (studio/musicLocal.ts, studio/musicImport.ts, shared/format.ts, listen/prepareAhead.ts của bản web), giữ nguyên lời.
 
@@ -7,14 +8,6 @@ var MY_MUSIC_INTRO = "Thêm nhạc làm nền; bài đã chọn đi cùng file s
 var MY_MUSIC_HELP = "Nhạc được chép vào kho máy này; dùng Đổi bài để chọn cho từng đoạn. Hỗ trợ mp3, m4a, ogg, opus, flac, wav. Bài đã chọn đi cùng .abook / .abookproj, vẫn nghe được trên máy khác, không ai khác tải được. Tên bài và nghệ sĩ lấy từ file; ABook không xác nhận giấy phép."
 var CANCELLED_NOTE = "Đã huỷ - lần tải sau làm tiếp từ chỗ dừng."
 var RETRYING_NOTE = "Mạng chập chờn - đang thử lại…"
-
-// Dung lượng cho người đọc, MỘT hệ thập phân (KB = 10^3, MB = 10^6, GB = 10^9 byte).
-function formatSize(bytes) {
-    if (bytes >= 1e9) return (bytes / 1e9).toFixed(2).replace(".", ",") + " GB"
-    var megabytes = bytes / 1e6
-    if (megabytes < 1) return Math.max(1, Math.round(bytes / 1e3)) + " KB"
-    return (megabytes < 10 ? megabytes.toFixed(1).replace(".", ",") : String(Math.round(megabytes))) + " MB"
-}
 
 // "m:ss" hay "h:mm:ss" (formatClock của shared/format.ts)
 function formatClock(seconds) {
@@ -34,18 +27,18 @@ function modulePercent(module) {
 // Câu báo về mô-đun "Phân tích nhạc", nói bằng điều người nghe cần biết.
 function moduleLabel(module) {
     if (module.state === "error") return module.error
-    if (module.state === "downloading") return module.retrying ? RETRYING_NOTE + " (Phân tích nhạc, " + modulePercent(module) + "%)" : "Đang tải Phân tích nhạc (" + formatSize(module.total) + ", một lần) " + modulePercent(module) + "%"
+    if (module.state === "downloading") return module.retrying ? RETRYING_NOTE + " (Phân tích nhạc, " + modulePercent(module) + "%)" : "Đang tải Phân tích nhạc (" + Size.formatSize(module.total) + ", một lần) " + modulePercent(module) + "%"
     if (module.analysing) return "Đang phân tích nhạc đã thêm"
     if (module.state === "unsupported") return module.reason ? "Máy này chưa phân tích được nhạc: " + module.reason + "." : "Máy này chưa phân tích được nhạc."
     if (module.state === "outdated" && module.stopped)
-        return "Phân tích nhạc đang tắt; tải lại " + formatSize(module.outdatedBytes !== undefined ? module.outdatedBytes : module.total) + ". Vẫn ghim tay được."
-    if (module.state === "outdated") return (module.cancelled ? CANCELLED_NOTE + " " : "") + "Có bản mới - " + formatSize(module.outdatedBytes !== undefined ? module.outdatedBytes : module.total) + "; bản hiện tại vẫn dùng được."
+        return "Phân tích nhạc đang tắt; tải lại " + Size.formatSize(module.outdatedBytes !== undefined ? module.outdatedBytes : module.total) + ". Vẫn ghim tay được."
+    if (module.state === "outdated") return (module.cancelled ? CANCELLED_NOTE + " " : "") + "Có bản mới - " + Size.formatSize(module.outdatedBytes !== undefined ? module.outdatedBytes : module.total) + "; bản hiện tại vẫn dùng được."
     if (module.state === "ready") {
         if (module.restart) return "Phân tích nhạc đã cập nhật - mở lại ABook để dùng thư viện mới."
         if ((module.stale || 0) > 0) return module.stale + " bài dùng phân tích cũ; có thể phân tích lại."
         return ""
     }
-    return (module.cancelled ? CANCELLED_NOTE + " " : "") + "Tải " + formatSize(module.total) + " để tự chọn nhạc phù hợp trên máy."
+    return (module.cancelled ? CANCELLED_NOTE + " " : "") + "Tải " + Size.formatSize(module.total) + " để tự chọn nhạc phù hợp trên máy."
 }
 
 // Có mời bật "Đo cảm xúc nhạc chính xác hơn" không: máy đủ sức, và đã có bộ phân tích nhạc.
@@ -56,7 +49,7 @@ function preciseBusy(precise) {
     return Boolean(precise && (precise.state === "downloading" || precise.working))
 }
 function preciseLabel(precise) {
-    var size = formatSize(precise.bytes)
+    var size = Size.formatSize(precise.bytes)
     if (precise.state === "downloading") {
         var percent = precise.total > 0 ? Math.min(100, Math.floor((precise.done / precise.total) * 100)) : 0
         return "Đang tải bộ đo cảm xúc chính xác hơn (" + size + ", một lần) " + percent + "%"
@@ -135,10 +128,10 @@ function toast(title, description) {
 
 // ---- Bộ nhớ (listen/prepareAhead.ts) ----
 function storageLabel(usage) {
-    return usage.total > 0 ? "Bản đọc đã làm chiếm " + formatSize(usage.total) + " trên máy này." : "Chưa có bản đọc đã lưu."
+    return usage.total > 0 ? "Bản đọc đã làm chiếm " + Size.formatSize(usage.total) + " trên máy này." : "Chưa có bản đọc đã lưu."
 }
 function clearStorageQuestion(usage) {
-    return "Dọn " + formatSize(usage.total) + " bản đọc đã làm của mọi cuốn? Máy sẽ đọc lại khi nghe. Sách và chỗ đang nghe giữ nguyên."
+    return "Dọn " + Size.formatSize(usage.total) + " bản đọc đã làm của mọi cuốn? Máy sẽ đọc lại khi nghe. Sách và chỗ đang nghe giữ nguyên."
 }
 
 // ---- Cập nhật (desktop/updateCheck.ts) ----

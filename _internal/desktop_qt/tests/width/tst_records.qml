@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "VisualReady.js" as VisualReady
 import ABook
 
 // "Hồ sơ nghe" của trang sách (BookPage + RecordChip + RecordMenu + RecordDialogs): một hồ sơ thì việc nằm trong menu "Thêm", từ hai hồ sơ thì có nút
@@ -18,6 +19,7 @@ Item {
     TestCase {
         id: test
         name: "ListeningRecords"
+        function ready() { VisualReady.render(this, host.Window.window, host, qtVisualReady) }
         when: windowShown
 
         property var server: ({})
@@ -39,7 +41,7 @@ Item {
         function two() { return bookWith([record("r1", "Lần nghe 1", true, true), record("r2", "Bản của Lan", false, false)]) }
         function reply(path, handler) { const r = DesktopApi.responses; r[path] = handler; DesktopApi.responses = r }
         function init() {
-            Theme.reduceMotion = true
+            Theme.reduceMotion = false
             playerBefore = Player.loaded ? {id: Player.bookId, chapter: Player.chapterId} : null
             DesktopApi.reset()
             Platform.reset()
@@ -84,7 +86,7 @@ Item {
             host.width = 1440
         }
         function calls(method, path) { return DesktopApi.requests.filter(r => r.method === method && r.path === path) }
-        function settle() { wait(350) }
+        function render() { ready() }
         function all(item, name, found) {
             const out = found || []
             if (item.objectName === name) out.push(item)
@@ -98,20 +100,20 @@ Item {
             verify(page !== null && dialogs !== null)
             page.recordRequested.connect((kind, data) => dialogs.begin(kind, data))
             tryVerify(function() { return page.fullBook.id === "width" })
-            settle()
+            render()
         }
         function openMore() {
             findChild(page, "bookMore").clicked()
             tryVerify(function() { return findChild(page, "bookMoreMenu").open })
-            settle()
+            render()
         }
         function openRecordMenu() {
             findChild(page, "recordChip").clicked()
             tryVerify(function() { return findChild(page, "recordMenu").open })
-            settle()
+            render()
         }
         function confirm() { return all(dialogs, "recordConfirm")[0] }
-        function waitDialogOpen() { tryVerify(function() { return dialogs.open }); settle() }
+        function waitDialogOpen() { tryVerify(function() { return dialogs.open }); render() }
 
         // ---------- một hồ sơ: các việc nằm trong menu "Thêm" ----------
         function test_oneRecordMenuHoldsTheActions() {
@@ -388,8 +390,7 @@ Item {
         function shot(name, item) {
             if (!item.Window.window) return
             item.Window.window.update()
-            waitForRendering(item)
-            wait(450)
+            VisualReady.render(this, host.Window.window, item, qtVisualReady)
             const img = grabImage(item)
             const path = Qt.resolvedUrl("../../build/d2shots/" + name + "_" + (Theme.dark ? "dark" : "light") + ".png").toString()
                 .replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, "")

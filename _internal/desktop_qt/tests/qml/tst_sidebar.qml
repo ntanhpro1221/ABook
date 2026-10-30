@@ -24,7 +24,6 @@ Item {
 
         function init() {
             mouseMove(host, 850, 500)             // con trỏ ra khỏi chỗ thanh bên của bài trước
-            wait(30)
             Platform.reset()
             make()
         }
@@ -79,7 +78,7 @@ Item {
             collapse()
             const x0 = content.x
             mouseMove(sb, 20, 200)
-            wait(60)
+            wait(60) // fixed: proves absence
             compare(sb.peek, false)               // chưa đủ ~150 ms
             tryCompare(sb, "peek", true, 1000)
             tryCompare(sb.panel, "width", 232, 1500)
@@ -87,7 +86,7 @@ Item {
             compare(content.x, x0)                // khung nội dung không nhúc nhích
             verify(sb.overlay > 100)
             mouseMove(host, 700, 300)             // rê ra
-            wait(100)
+            wait(100) // fixed: proves absence
             compare(sb.peek, true)                // chưa đủ ~300 ms
             tryCompare(sb, "peek", false, 1500)
             tryCompare(sb.panel, "width", 56, 1500)
@@ -97,9 +96,9 @@ Item {
         function test_shortHoverDoesNotOpen() {
             collapse()
             mouseMove(sb, 20, 200)
-            wait(60)
+            wait(60) // fixed: proves absence
             mouseMove(host, 700, 300)
-            wait(400)
+            wait(400) // fixed: proves absence
             compare(sb.peek, false)
             compare(sb.panel.width, 56)
         }
@@ -113,7 +112,7 @@ Item {
             compare(spy.count, 1)
             compare(spy.signalArguments[0][0], 1)
             compare(sb.peek, false)
-            wait(450)
+            wait(450) // fixed: proves absence
             compare(sb.peek, false)               // con trỏ còn trên thanh nhưng không mở lại cho tới khi rời
             tryCompare(sb.panel, "width", 56, 1500)
             compare(sb.width, 56)
@@ -121,7 +120,7 @@ Item {
 
         function test_expandedHoverNeverPeeks() {
             mouseMove(sb, 20, 200)
-            wait(400)
+            wait(400) // fixed: proves absence
             compare(sb.peek, false)
             compare(sb.panel.width, 232)
         }

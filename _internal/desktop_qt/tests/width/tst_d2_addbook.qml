@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "VisualReady.js" as VisualReady
 import ABook
 
 // Hộp "Thêm sách" (AddBook.qml): hành vi (xem trước -> thêm, đổi tên chương, hàng nhiều file, hỏi khi đóng, lỗi + thử lại, không mở lại sau khi huỷ) và ảnh
@@ -20,7 +21,7 @@ Item {
 
         property var opened: []
         function init() {
-            Theme.reduceMotion = true
+            Theme.reduceMotion = false
             DesktopApi.reset()
             Api.bind(DesktopApi, Theme)
             Api.preferences = {theme: "system"}
@@ -371,14 +372,15 @@ Item {
             verify(review.reveal > 0)               // khép dần
             tryVerify(function() { return review.reveal === 0 }, 2000)
         }
+        function click(item) { VisualReady.render(this, host.Window.window, host, qtVisualReady); mouseClick(item) }
         function test_realClicksOnRowsAndLinks() {
             DesktopApi.responses = {"/api/listen/import/preview": {status: 200, data: book()}}
             const dialog = make()
             dialog.begin(["D:/x/a.epub"])
             tryVerify(function() { return dialog.shown !== null && dialog.visible })
-            wait(50)
+            tryVerify(function() { return find(dialog, "importChapters").buttonFor(4) !== null })
             const list = find(dialog, "importChapters")
-            mouseClick(list.buttonFor(4))           // bấm tên chương: mở ô sửa
+            click(list.buttonFor(4))           // bấm tên chương: mở ô sửa
             compare(list.editing, 4)
             verify(Nav.back())
             compare(list.editing, -1)
@@ -387,15 +389,15 @@ Item {
             const walk = function(n) { if (n.checked !== undefined && n.label === "Đưa vào sách: Chương 3") box = n; for (const c of n.children || []) walk(c) }
             walk(list)
             verify(box !== null)
-            mouseClick(box)
+            click(box)
             compare(dialog.picked.indexOf(3), -1)
-            mouseClick(box)
+            click(box)
             verify(dialog.picked.indexOf(3) >= 0)
             // "Bỏ chọn hết" rồi "Chọn hết"
             const none = findLink(dialog, "Bỏ chọn hết"), all = findLink(dialog, "Chọn hết")
-            mouseClick(none)
+            click(none)
             compare(dialog.picked.length, 0)
-            mouseClick(all)
+            click(all)
             compare(dialog.picked.length, 6)
         }
         function findLink(item, name) {
@@ -416,8 +418,7 @@ Item {
         function shot(name, item) {
             const target = item || host
             target.Window.window.update()
-            waitForRendering(target)
-            wait(300)
+            VisualReady.render(this, host.Window.window, target, qtVisualReady)
             qtGlyphAudit.scan()
             const img = grabImage(target)
             const path = Qt.resolvedUrl("../../build/d2shots/" + name + "_" + (Theme.dark ? "dark" : "light") + ".png").toString()
@@ -525,7 +526,7 @@ Item {
             dialog = make(null, parentItem)
             dialog.begin(["D:/q/slime.epub"])
             find(dialog, "importChapters").startEdit(3)
-            wait(100)
+            host.Window.window.update(); waitForRendering(sized)
             shot("addbook_rename" + suffix, sized)
             Nav.back()
             dialog.destroy()

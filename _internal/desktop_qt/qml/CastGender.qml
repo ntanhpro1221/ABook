@@ -27,7 +27,7 @@ CastModal {
         saving = true
         const mine = generation
         const who = person, name = shownName, picked = choice
-        Api.quiet("POST", "/api/books/" + bookId + "/voice", {character: who.name, gender: picked}, function(data, error) {
+        root.ask("POST", "/api/books/" + bookId + "/voice", {character: who.name, gender: picked}, function(data, error) {
             if (mine !== root.generation) return
             root.saving = false
             if (error) { root.fail("Chưa đổi được giới tính", error); return }

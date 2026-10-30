@@ -26,7 +26,7 @@ CastModal {
         if (saving || !person) return
         saving = true
         const mine = generation
-        Api.quiet("POST", "/api/books/" + bookId + "/characters/rename", {character: person.name, name: next}, function(data, error) {
+        root.ask("POST", "/api/books/" + bookId + "/characters/rename", {character: person.name, name: next}, function(data, error) {
             if (mine !== root.generation) return
             root.saving = false
             if (error) { root.fail("Chưa đổi được tên", error); return }

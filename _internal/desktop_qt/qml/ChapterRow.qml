@@ -46,6 +46,7 @@ Interactive {
             anchors.centerIn: parent
             visible: root.current || root.done
             name: root.current ? "audio-lines" : "check"
+            Accessible.name: root.done ? "Đã nghe" : ""
             size: 16
             color: root.current ? Theme.accentText : Theme.success
         }
@@ -102,7 +103,7 @@ Interactive {
         Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
         onClicked: {
             root.onMenuButton = true
-            Qt.callLater(function() { root.onMenuButton = false })
+            Later.call(root, function() { root.onMenuButton = false })
             root.menuRequested(more)
         }
     }

@@ -12,6 +12,10 @@ Item {
     objectName: "castList"
     property string bookId: ""
     property bool active: false
+    property var store: null                // Studio: lời gọi và tệp nghe thử đi qua StudioStore (cả máy tính ghép); trang sách của máy này để trống
+    readonly property string peer: store ? store.peer : ""
+    property bool embedded: false           // nằm trong một khung cuộn khác (tab Nhân vật của Studio): cao đúng nội dung, không cuộn riêng
+    property Component narratorNote: null   // lời dưới hàng "Người kể chuyện" (Studio: đổi giọng kể ở đâu, công tắc tự kể)
     property var caps: ({})
     property var reached: null
     property var cast: null
@@ -24,6 +28,7 @@ Item {
     readonly property bool isEmpty: status === "failed" || (status === "ready" && !hasPeople)
     readonly property var narrator: cast && cast.narrator ? cast.narrator : ({})
     property int generation: 0
+    implicitHeight: embedded ? flick.contentHeight : 0
     signal request(string kind, var person)
     signal menuRequested(Item anchor, var person)
 
@@ -31,18 +36,24 @@ Item {
         if (!bookId) return
         const mine = ++generation
         if (!cast) status = "loading"
-        Api.quiet("GET", "/api/books/" + bookId + "/cast", null, function(data, error) {
+        const answer = function(data, error) {
             if (mine !== root.generation) return
             if (error || !data) { if (!root.cast) root.status = "failed"; return }
             root.cast = data
             root.status = "ready"
-        })
+        }
+        if (store) store.quiet("GET", "/api/books/" + bookId + "/cast", null, answer)
+        else Api.quiet("GET", "/api/books/" + bookId + "/cast", null, answer)
     }
     onActiveChanged: if (active && status === "idle") load()
     onBookIdChanged: { generation++; cast = null; status = "idle"; later = false; if (active) load() }
     Connections {
         target: Api
-        function onEdited(id) { if (id === root.bookId && root.status !== "idle") root.load() }
+        function onEdited(id) { if (!root.store && id === root.bookId && root.status !== "idle") root.load() }
+    }
+    Connections {
+        target: root.store
+        function onCastEdited(id) { if (id === root.bookId && root.status !== "idle") root.load() }
     }
     function shown(person) { return root.later || !Logic.hidden(person, root.reached) }
     function fold(key) { return "book." + root.bookId + "." + key }
@@ -53,7 +64,8 @@ Item {
         anchors.fill: parent
         contentWidth: width
         contentHeight: column.height + Theme.s16
-        clip: true
+        clip: !root.embedded
+        interactive: !root.embedded
         boundsBehavior: Flickable.StopAtBounds
         Column {
             id: column
@@ -109,88 +121,96 @@ Item {
                     width: parent.width
                     topPadding: Theme.s16
                     spacing: Theme.s16
-                    // Người kể chuyện
-                    Item {
-                        id: narratorRow
-                        objectName: "castNarrator"
+                    // Người kể chuyện (+ lời dưới hàng ấy do nơi dùng đưa vào)
+                    Column {
                         width: parent.width
-                        height: Math.max(40, narratorTexts.height) + 16
-                        readonly property string voice: root.narrator.voice || ""
-                        readonly property real buttonsWidth: narratorButtons.width
-                        Rectangle {
-                            x: 0; y: 8; width: 40; height: 40; radius: width / 2
-                            color: Theme.accentSoft
-                            Icon { anchors.centerIn: parent; name: "book-open-text"; size: 20; color: Theme.accentText }
+                        Item {
+                            id: narratorRow
+                            objectName: "castNarrator"
+                            width: parent.width
+                            height: Math.max(40, narratorTexts.height) + 16
+                            readonly property string voice: root.narrator.voice || ""
+                            readonly property real buttonsWidth: narratorButtons.width
+                            Rectangle {
+                                x: 0; y: 8; width: 40; height: 40; radius: width / 2
+                                color: Theme.accentSoft
+                                Icon { anchors.centerIn: parent; name: "book-open-text"; size: 20; color: Theme.accentText }
+                            }
+                            Column {
+                                id: narratorTexts
+                                x: 52
+                                y: 8
+                                width: Math.max(0, narratorRow.width - x - 12 - narratorRow.buttonsWidth)
+                                spacing: 2
+                                Text {
+                                    width: parent.width
+                                    text: "Người kể chuyện"
+                                    color: Theme.text2
+                                    wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                                    font.pixelSize: Theme.sizeCaption
+                                    font.weight: 600
+                                    font.capitalization: Font.AllUppercase
+                                    font.letterSpacing: 0.72
+                                }
+                                Text {
+                                    objectName: "castNarratorVoice"
+                                    width: parent.width
+                                    text: narratorRow.voice || "Mặc định"
+                                    color: Theme.text
+                                    wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                                    font.pixelSize: Theme.sizeBody
+                                    font.weight: 600
+                                }
+                                Text {
+                                    objectName: "castNarratorPending"
+                                    visible: Boolean(root.caps.voice) && text !== ""
+                                    width: parent.width
+                                    text: Logic.narratorPending(root.narrator)
+                                    color: Theme.accentText
+                                    wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                                    font.pixelSize: Theme.sizeCaption
+                                    font.weight: Theme.weightMedium
+                                }
+                                Text {
+                                    width: parent.width
+                                    text: Logic.narratorLine(root.narrator)
+                                    color: Theme.text2
+                                    wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                                    font.pixelSize: Theme.sizeCaption
+                                    font.features: { "tnum": 1 }
+                                }
+                            }
+                            Row {
+                                id: narratorButtons
+                                x: narratorRow.width - width
+                                y: 8 + (40 - 36) / 2
+                                spacing: 4
+                                CastSample {
+                                    objectName: "castNarratorSample"
+                                    visible: narratorRow.voice !== ""
+                                    clipId: Logic.voiceId(narratorRow.voice)
+                                    url: Logic.routed(Logic.voiceUrl(narratorRow.voice), root.peer)
+                                    label: "Nghe giọng " + narratorRow.voice
+                                }
+                                IconButton {
+                                    objectName: "castNarratorVoiceButton"
+                                    visible: Boolean(root.caps.voice) && Boolean(root.caps.narrator)
+                                    implicitWidth: 36
+                                    implicitHeight: 36
+                                    icon: "sliders-horizontal"
+                                    iconSize: 16
+                                    ink: Theme.text2
+                                    hoverInk: Theme.text
+                                    tip: "Đổi giọng người kể"
+                                    Accessible.name: "Đổi giọng người kể"
+                                    onClicked: root.request("narrator", ({name: "NARRATOR", displayName: "người kể"}))
+                                }
+                            }
                         }
-                        Column {
-                            id: narratorTexts
-                            x: 52
-                            y: 8
-                            width: Math.max(0, narratorRow.width - x - 12 - narratorRow.buttonsWidth)
-                            spacing: 2
-                            Text {
-                                width: parent.width
-                                text: "Người kể chuyện"
-                                color: Theme.text2
-                                wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                                font.pixelSize: Theme.sizeCaption
-                                font.weight: 600
-                                font.capitalization: Font.AllUppercase
-                                font.letterSpacing: 0.72
-                            }
-                            Text {
-                                objectName: "castNarratorVoice"
-                                width: parent.width
-                                text: narratorRow.voice || "Mặc định"
-                                color: Theme.text
-                                wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                                font.pixelSize: Theme.sizeBody
-                                font.weight: 600
-                            }
-                            Text {
-                                objectName: "castNarratorPending"
-                                visible: Boolean(root.caps.voice) && text !== ""
-                                width: parent.width
-                                text: Logic.narratorPending(root.narrator)
-                                color: Theme.accentText
-                                wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                                font.pixelSize: Theme.sizeCaption
-                                font.weight: Theme.weightMedium
-                            }
-                            Text {
-                                width: parent.width
-                                text: Logic.narratorLine(root.narrator)
-                                color: Theme.text2
-                                wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                                font.pixelSize: Theme.sizeCaption
-                                font.features: { "tnum": 1 }
-                            }
-                        }
-                        Row {
-                            id: narratorButtons
-                            x: narratorRow.width - width
-                            y: 8 + (40 - 36) / 2
-                            spacing: 4
-                            CastSample {
-                                objectName: "castNarratorSample"
-                                visible: narratorRow.voice !== ""
-                                clipId: Logic.voiceId(narratorRow.voice)
-                                url: Logic.voiceUrl(narratorRow.voice)
-                                label: "Nghe giọng " + narratorRow.voice
-                            }
-                            IconButton {
-                                objectName: "castNarratorVoiceButton"
-                                visible: Boolean(root.caps.voice) && Boolean(root.caps.narrator)
-                                implicitWidth: 36
-                                implicitHeight: 36
-                                icon: "sliders-horizontal"
-                                iconSize: 16
-                                ink: Theme.text2
-                                hoverInk: Theme.text
-                                tip: "Đổi giọng người kể"
-                                Accessible.name: "Đổi giọng người kể"
-                                onClicked: root.request("narrator", ({name: "NARRATOR", displayName: "người kể"}))
-                            }
+                        Loader {
+                            objectName: "castNarratorNote"
+                            width: parent.width
+                            sourceComponent: root.narratorNote
                         }
                     }
                     DevicesFold {
@@ -205,6 +225,7 @@ Item {
                             CastPeople {
                                 width: parent.width
                                 bookId: root.bookId
+                                peer: root.peer
                                 people: root.characters
                                 caps: root.caps
                                 shown: person => root.shown(person)
@@ -248,6 +269,7 @@ Item {
                             CastPeople {
                                 width: parent.width
                                 bookId: root.bookId
+                                peer: root.peer
                                 people: root.extras
                                 caps: root.caps
                                 onRequest: (kind, person) => root.request(kind, person)
@@ -268,6 +290,7 @@ Item {
                             CastPeople {
                                 width: parent.width
                                 bookId: root.bookId
+                                peer: root.peer
                                 people: root.carried
                                 caps: ({rename: root.caps.rename, gender: root.caps.gender, voice: root.caps.voice})
                                 onRequest: (kind, person) => root.request(kind, person)
@@ -278,10 +301,11 @@ Item {
                 }
             }
         }
-        SmoothWheel { flick: flick }
+        SmoothWheel { flick: flick; enabled: !root.embedded }
     }
-    Scrollbar { target: flick }
+    Scrollbar { target: flick; visible: !root.embedded }
     ScrollEdges {
+        visible: !root.embedded
         x: flick.x; y: flick.y; width: flick.width; height: flick.height
         target: flick
     }

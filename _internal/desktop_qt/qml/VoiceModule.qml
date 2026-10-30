@@ -1,5 +1,6 @@
 import QtQuick
 import ABook
+import "SizeFormat.js" as Size
 import "VoiceLogic.js" as VoiceLogic
 
 // Thẻ một mô-đun giọng trên máy trong Cài đặt › Giọng đọc (VieneuModuleCard.tsx: "Giọng VieNeu", "Giọng Supertonic"): chọn giọng muốn tải (có "Khuyên dùng"
@@ -100,8 +101,8 @@ Item {
     }
     // Tải <-> Huỷ thay chỗ nhau: tiêu điểm theo sang nút vừa hiện
     onDownloadingChanged: {
-        if (downloading && startButton.activeFocus) Qt.callLater(function() { cancelButton.forceActiveFocus(Qt.TabFocusReason) })
-        else if (!downloading && cancelButton.activeFocus) Qt.callLater(function() { startButton.forceActiveFocus(Qt.TabFocusReason) })
+        if (downloading && startButton.activeFocus) Later.call(root, function() { cancelButton.forceActiveFocus(Qt.TabFocusReason) })
+        else if (!downloading && cancelButton.activeFocus) Later.call(root, function() { startButton.forceActiveFocus(Qt.TabFocusReason) })
     }
     Component.onCompleted: refresh()
     Timer { interval: 1000; running: activity.running && root.working; repeat: true; onTriggered: root.refresh() }
@@ -245,7 +246,7 @@ Item {
                                 anchors.right: removeButton.visible ? removeButton.left : parent.right
                                 anchors.rightMargin: removeButton.visible ? 12 : 0
                                 anchors.verticalCenter: parent.verticalCenter
-                                text: choiceRow.choice.installed ? "Đã có" : choiceRow.size > 0 ? VoiceLogic.formatSize(choiceRow.size) : "Đã có sẵn"
+                                text: choiceRow.choice.installed ? "Đã có" : choiceRow.size > 0 ? Size.formatSize(choiceRow.size) : "Đã có sẵn"
                                 color: Theme.text2
                                 font.pixelSize: Theme.sizeCaption
                             }
@@ -364,7 +365,7 @@ Item {
                     visible: root.status.state === "outdated"
                     size: "sm"
                     kind: "text"
-                    text: "Cập nhật (" + VoiceLogic.formatSize(root.status.outdatedBytes || 0) + ")"
+                    text: "Cập nhật (" + Size.formatSize(root.status.outdatedBytes || 0) + ")"
                     busy: root.busy
                     onActivated: root.start()
                 }
@@ -374,7 +375,7 @@ Item {
                     visible: root.missing.length > 0
                     size: "sm"
                     kind: root.status.state === "missing" ? "primary" : "text"
-                    text: root.failed ? "Thử lại" : root.bytes > 0 ? "Tải (" + VoiceLogic.formatSize(root.bytes) + ")" : "Dùng"
+                    text: root.failed ? "Thử lại" : root.bytes > 0 ? "Tải (" + Size.formatSize(root.bytes) + ")" : "Dùng"
                     busy: root.busy
                     onActivated: root.start(root.missing)
                 }

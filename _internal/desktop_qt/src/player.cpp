@@ -347,6 +347,8 @@ int Player::rewindBy(qint64 pausedMs) const {
 }
 
 void Player::configure(const QVariantMap &p) {
+    const QString voice = p.value(QStringLiteral("readAloudVoice")).toString();
+    if (voice != m_defaultVoice) { m_defaultVoice = voice; emit bookChanged(); }
     m_autoRewind = p.value(QStringLiteral("autoRewind"), true).toBool();
     m_safetyHours = std::clamp(p.value(QStringLiteral("safetyStopHours"), 2).toInt(), 0, 3);
     m_fadeSeconds = std::clamp(p.value(QStringLiteral("sleepFadeSeconds"), 30).toInt(), 10, 60);
@@ -379,23 +381,26 @@ QString Player::scheduleWindow() const {
 // ---- nạp sách ----
 
 void Player::open(const QString &bookId, int chapterId, double at, bool autoplay) {
+    openFor(bookId, chapterId, at, autoplay, QStringLiteral("listen"));
+}
+void Player::openFor(const QString &bookId, int chapterId, double at, bool autoplay, const QString &purpose) {
     const quint64 seq = ++m_openSeq;
     ++m_intent;
     if (autoplay)
         m_wantsPlay = true;
-    m_net->request("GET", QStringLiteral("/api/listen/books/%1").arg(bookId), {}, [this, seq, chapterId, at, autoplay](int status, const QJsonObject &body) {
+    m_net->request("GET", QStringLiteral("/api/listen/books/%1").arg(bookId), {}, [this, seq, chapterId, at, autoplay, purpose](int status, const QJsonObject &body) {
         if (seq != m_openSeq)
             return;
         if (status < 200 || status >= 300 || body.isEmpty()) {
             setNotice(QStringLiteral("Chưa mở được cuốn này. Bạn thử lại."));
             return;
         }
-        start(parseBook(body), chapterId, at, autoplay);
+        start(parseBook(body), chapterId, at, autoplay, purpose);
     }, false);
 }
 
 void Player::playBook(const QString &bookId) {
-    if (m_loaded && m_trackBook == bookId) {
+    if (m_purpose == QLatin1String("listen") && m_loaded && m_trackBook == bookId) {
         resume();
         return;
     }
@@ -403,7 +408,7 @@ void Player::playBook(const QString &bookId) {
 }
 
 void Player::playChapter(const QString &bookId, int chapterId) {
-    if (m_loaded && m_trackBook == bookId && m_chapterId == chapterId) {
+    if (m_purpose == QLatin1String("listen") && m_loaded && m_trackBook == bookId && m_chapterId == chapterId) {
         resume();
         return;
     }
@@ -431,7 +436,7 @@ void Player::restoreLast(const QJsonArray &library) {
         open(best, -1, -1, false);
 }
 
-void Player::start(const Book &book, int chapterId, double at, bool autoplay) {
+void Player::start(const Book &book, int chapterId, double at, bool autoplay, const QString &purpose) {
     // `at` < 0: chưa nói chỗ nào. -2: chỗ nghe dở riêng của chương (hàng chương ở trang sách).
     bool atGiven = at >= 0;
     if (chapterId < 0) {
@@ -452,6 +457,11 @@ void Player::start(const Book &book, int chapterId, double at, bool autoplay) {
     if (at == -2) {
         at = chapterResumeAt(book, *found);
         atGiven = true;
+    }
+    if (!autoplay && m_loaded) return;
+    if (purpose != m_purpose) {
+        save(true); closeListening(); m_session.reset();
+        m_purpose = purpose;
     }
     if (!autoplay) {
         if (m_loaded)
@@ -477,6 +487,22 @@ void Player::start(const Book &book, int chapterId, double at, bool autoplay) {
     load(chapterId, startAt, true);
 }
 
+void Player::review(const QString &bookId, int chapterId) {
+    openFor(bookId, chapterId, 0, true, QStringLiteral("review"));
+}
+void Player::chooseVoice(const QString &voice, bool resumeAfter) {
+    if (!m_loaded) return;
+    const auto book = m_book.id, record = m_book.record;
+    const quint64 intent = m_intent;
+    m_net->request("POST", QStringLiteral("/api/listen/books/%1/voice").arg(book), {{QStringLiteral("voice"), voice}, {QStringLiteral("record"), record}},
+        [this, voice, book, record, intent, resumeAfter](int status, const QJsonObject &) {
+            if (book != m_book.id || record != m_book.record || intent != m_intent || !m_loaded) return;
+            if (status < 200 || status >= 300) { setNotice(QStringLiteral("Chưa lưu được giọng đọc. Bạn thử lại.")); return; }
+            m_book.voice = voice;
+            emit bookChanged();
+            if (speaking()) { const double at = position(); load(m_chapterId, at, resumeAfter || m_wantsPlay || m_playing); }
+        });
+}
 void Player::adoptBook(const Book &book) {
     if (m_loaded && (m_trackBook != book.id || m_trackRecord != book.record)) {
         if (!m_history.isEmpty()) {
@@ -517,7 +543,7 @@ void Player::load(int chapterId, double at, bool autoplay) {
     if (m_loaded && !sameTrack)
         closeListening();
     // Phiên lưu chỗ nghe: mỗi lần nạp cuốn / hồ sơ khác là một phiên mới, bắt tay trước lần lưu đầu.
-    if (!m_session || m_session->bookId != m_book.id || m_session->record != m_book.record) {
+    if (m_purpose != QLatin1String("review") && (!m_session || m_session->bookId != m_book.id || m_session->record != m_book.record)) {
         m_session = newSession();
         ensureSession(m_session, [](int) {});
     }
@@ -539,9 +565,10 @@ void Player::load(int chapterId, double at, bool autoplay) {
     m_out->setRate(m_rate);
     m_out->setVolume(m_volume * (m_fading ? m_gain : 1.0));
     m_loadingSource = true;
-    m_out->load(m_net->audioUrl(m_book.id, chapterId), at);
+    if (item->textOnly) m_out->loadText(m_book.id, chapterId, at, voiceId());
+    else m_out->load(m_net->audioUrl(m_book.id, chapterId), at);
     m_loadingSource = false;
-    if (autoplay) {
+    if (autoplay && m_error.isEmpty()) {
         requestPlay();
     } else if (m_playing) {
         m_out->pause();
@@ -843,7 +870,7 @@ void Player::setRate(double rate) {
     if (rate <= 0)
         return;
     applyRate(rate);
-    if (!m_loaded)
+    if (!m_loaded || m_purpose == QLatin1String("review"))
         return;
     // Tốc độ nhớ riêng của cuốn: cũng nằm trong bộ nhớ của trang sách (state.rate) - nghe lại không đè tốc độ cũ lên.
     m_book.rate = rate;
@@ -984,7 +1011,7 @@ void Player::stopBySleep() {
 // ---- lưu chỗ nghe ----
 
 void Player::save(bool force) {
-    if (!m_loaded)
+    if (!m_loaded || m_purpose == QLatin1String("review"))
         return;
     const double pos = position();
     if (m_savedSpot && m_savedSpot->chapterId == m_chapterId && std::fabs(m_savedSpot->seconds - pos) < 0.05)
@@ -1090,7 +1117,7 @@ void Player::onAck(const ProgressSpot &spot) {
 // ---- phiên nghe (lịch sử) ----
 
 void Player::openListening() {
-    if (!m_loaded)
+    if (!m_loaded || m_purpose == QLatin1String("review"))
         return;
     if (m_listening && m_listening->bookId == m_trackBook && m_listening->record == m_trackRecord) {
         m_listening->mark = m_now();
@@ -1167,7 +1194,7 @@ void Player::onFailed(const QString &reason) {
     if (!m_loaded)
         return;
     m_lastFailure = reason;
-    setError(kPlayError);
+    setError(speaking() && !reason.isEmpty() ? reason : kPlayError);
     setBuffering(false);
     m_out->pause();
     markPaused(false);

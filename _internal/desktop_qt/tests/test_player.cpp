@@ -41,6 +41,20 @@ class PlayerTest : public QObject {
     };
 
 private slots:
+    void reviewKeepsListenerProgressAndRate() {
+        Rig rig;
+        rig.player->open(QStringLiteral("a"), 1, 0, true); rig.run(5);
+        rig.player->review(QStringLiteral("b"), 1);
+        QCOMPARE(rig.player->purpose(), QStringLiteral("review"));
+        QVERIFY(!rig.net.callsTo(QStringLiteral("/progress")).isEmpty());
+        QCOMPARE(rig.net.callsTo(QStringLiteral("/progress")).last().path, QStringLiteral("/api/listen/books/a/progress"));
+        rig.net.calls.clear(); rig.run(30); rig.player->setRate(1.5); rig.player->pause();
+        QVERIFY(rig.net.callsTo(QStringLiteral("/progress")).isEmpty());
+        QVERIFY(rig.net.callsTo(QStringLiteral("/progress/session")).isEmpty());
+        QVERIFY(rig.net.callsTo(QStringLiteral("/rate")).isEmpty());
+        QVERIFY(rig.net.callsTo(QStringLiteral("/sessions")).isEmpty());
+        rig.player->playBook(QStringLiteral("b")); QCOMPARE(rig.player->purpose(), QStringLiteral("listen"));
+    }
     void init() { g_now = 1'800'000'000'000; }
 
     void resumePointRewindsAfterLongPause() {
@@ -578,7 +592,7 @@ private slots:
         const double old = rig.player->clock()->position();
         rig.out.pos += 12;
         rig.player->clock()->refresh();
-        QTest::qWait(550);
+        QTest::qWait(550); // fixed: proves absence
         QCOMPARE(rig.player->clock()->ticks(), before);
         QCOMPARE(rig.player->clock()->position(), old);
         rig.player->setUiActive(true);
@@ -587,7 +601,7 @@ private slots:
         rig.player->clock()->release();
     }
 
-    void textOnlyChapterIsNotPlayable() {
+    void textOnlyChapterUsesNarrationAndBookVoice() {
         Rig rig;
         QJsonObject book = makeBook(QStringLiteral("t"), 2, true);
         QJsonArray chapters = book.value(QStringLiteral("chapters")).toArray();
@@ -600,8 +614,16 @@ private slots:
         book.insert(QStringLiteral("chapters"), chapters);
         rig.net.books.insert(QStringLiteral("t"), book);
         rig.player->open(QStringLiteral("t"), -1, -1, true);
-        QVERIFY(!rig.player->loaded());
-        QVERIFY(!rig.player->notice().isEmpty());
+        QVERIFY(rig.player->loaded());
+        QVERIFY(rig.player->speaking());
+        QCOMPARE(rig.out.textBook, QStringLiteral("t"));
+        rig.player->chooseVoice(QStringLiteral("vieneu:nu"));
+        QCOMPARE(rig.player->voiceId(), QStringLiteral("vieneu:nu"));
+        QCOMPARE(rig.out.textVoice, QStringLiteral("vieneu:nu"));
+        auto calls = rig.net.callsTo(QStringLiteral("/voice"));
+        QCOMPARE(calls.size(), 1);
+        QCOMPARE(calls[0].path, QStringLiteral("/api/listen/books/t/voice"));
+        QCOMPARE(calls[0].body.value(QStringLiteral("record")).toString(), QStringLiteral("r1"));
     }
 
     void listeningSessionPostedAfterTwentySeconds() {

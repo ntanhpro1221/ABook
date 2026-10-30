@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "VisualReady.js" as VisualReady
 import ABook
 
 // Tab "Lịch sử" của trang sách (BookPage + HistoryList): khung chờ lúc hỏi (không nháy chữ "Chưa có lịch sử nghe"), trạng thái trống, danh sách gom theo ngày,
@@ -44,7 +45,7 @@ Item {
         }
         function reply(path, handler) { const r = DesktopApi.responses; r[path] = handler; DesktopApi.responses = r }
         function init() {
-            Theme.reduceMotion = true
+            Theme.reduceMotion = false
             playerBefore = Player.loaded ? {id: Player.bookId, chapter: Player.chapterId} : null
             DesktopApi.reset()
             Platform.reset()
@@ -76,7 +77,7 @@ Item {
             host.width = 1440
         }
         function calls(method, path) { return DesktopApi.requests.filter(r => r.method === method && r.path === path) }
-        function settle() { wait(350) }
+        function render() { host.Window.window.update(); VisualReady.render(this, host.Window.window, host, qtVisualReady) }
         function all(item, name, found) {
             const out = found || []
             if (item.objectName === name) out.push(item)
@@ -97,9 +98,9 @@ Item {
             const history = openPage(width)
             findChild(page, "bookTabs").picked(1)
             tryCompare(history, "status", "ready")
-            settle()
+            render()
             for (const fold of all(history, "historyDay")) if (!fold.expanded) fold.expanded = true
-            settle()
+            render()
             return history
         }
 
@@ -206,7 +207,7 @@ Item {
             })
             const history = openHistory(data.w)
             tryVerify(function() { return page.fullBook.id === "width" && page.fullBook.chapters[1].title === longTitle })
-            settle()
+            render()
             const where = all(history, "historyWhere")
             verify(where.length > 0)
             for (const line of where) {
@@ -228,8 +229,7 @@ Item {
         function shot(name, item) {
             if (!item.Window.window) return
             item.Window.window.update()
-            waitForRendering(item)
-            wait(450)
+            VisualReady.render(this, host.Window.window, item, qtVisualReady)
             const img = grabImage(item)
             const path = Qt.resolvedUrl("../../build/d2shots/" + name + "_" + (Theme.dark ? "dark" : "light") + ".png").toString()
                 .replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, "")

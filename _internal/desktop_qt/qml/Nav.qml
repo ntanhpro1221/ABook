@@ -8,6 +8,8 @@ QtObject {
     property var stack: null          // ScreenStack, gán trong Main.qml
     property var windowMode: null
     property var layers: []           // lớp nổi đang mở, mới nhất ở cuối; mỗi lớp có close()
+    // Có hộp / popover nào đang mở không (lớp `route` chỉ là nút Back của màn, không tính): phím một chữ cái nhường cho hộp đang mở
+    readonly property bool popupOpen: layers.some(function(layer) { return layer.route !== true })
 
     // Studio của máy tính đã ghép đang mở ở màn Studio ("Mở Studio" ở Cài đặt › Thiết bị › Máy tính khác): mã máy (12 hex), "" = Studio của máy này
     property string studioPeer: ""

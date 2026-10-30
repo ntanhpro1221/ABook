@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "VisualReady.js" as VisualReady
 import ABook
 
 Item {
@@ -14,7 +15,7 @@ Item {
         name: "D2"
         when: windowShown
         function init() {
-            Theme.reduceMotion = true
+            Theme.reduceMotion = false
             DesktopApi.reset()
             Api.bind(DesktopApi, Theme)
             Api.preferences = {theme: "system", autoRewind: true, sleepSchedule: null}
@@ -46,15 +47,20 @@ Item {
             const page = make(settingsFactory)
             compare(page.groups.map(g => g.label).join("|"), "Giọng đọc|Nghe|Hẹn giờ ngủ|Giao diện|Thiết bị|Nâng cao")
             for (const group of ["listen","sleep","look","devices","advanced"]) {
-                page.active = group; wait(30)
-                const labels = allText(page)
+                page.active = group
                 const expected = {listen: ["Tự lùi","Tự chọn nhạc nền","Nhạc của tôi"], sleep: ["Tự tắt","Lịch đêm","Mỗi lần nghe thêm","Nhỏ dần"], look: ["Màu","Nền đọc","Âm thanh chạm","Phím tắt chữ","Phím tắt"], devices: ["Máy này","Kết nối Wi-Fi","Máy tính khác"], advanced: ["Thư viện","Bộ nhớ","Chẩn đoán","Giới thiệu","Gửi nhật ký","Thành phần sử dụng"]}[group]
+                tryVerify(function() { return expected.every(label => allText(page).includes(label)) })
+                VisualReady.render(this, host.Window.window, page, qtVisualReady)
+                const body = findChild(page, "settingsContent").children[0]
+                tryCompare(body, "previous", group)
+                tryCompare(body, "phase", 1)
+                const labels = allText(page)
                 for (const label of expected) verify(labels.includes(label), group + " missing " + label)
             }
         }
         function test_preferencesWriteThroughAndFailure() {
             const page = make(settingsFactory)
-            page.active = "look"; wait(30)
+            page.active = "look"; tryVerify(function() { return namedText(page, "Màu") !== null })
             const choice = namedText(page,"Màu")
             verify(choice !== null)
             choice.picked("dark")
@@ -69,8 +75,7 @@ Item {
         }
         function test_settingsBackCompact() {
             const page = make(settingsFactory,{width: 700})
-            page.active = "sleep"; wait(20)
-            compare(Nav.layers.length,1)
+            page.active = "sleep"; tryVerify(function() { return (Nav.layers.length) === (1) })
             verify(Nav.back())
             compare(page.active,"")
             compare(Nav.layers.length,0)

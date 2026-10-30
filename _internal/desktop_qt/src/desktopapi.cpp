@@ -33,7 +33,8 @@ void DesktopApi::setPreviewOut(AudioOut *out) {
     QObject::connect(out, &AudioOut::ended, out, [] { if (live) emit live->previewEnded(); });
     QObject::connect(out, &AudioOut::failed, out, [](const QString &reason) { if (live) emit live->previewFailed(reason); });
 }
-void DesktopApi::preview(const QString &path) { if (sampleOut) { sampleOut->stop(); sampleOut->load(mediaUrl(path), 0); sampleOut->play(); } }
+void DesktopApi::preview(const QString &path) { previewFrom(path, 0); }
+void DesktopApi::previewFrom(const QString &path, double startSeconds) { if (sampleOut) { sampleOut->stop(); sampleOut->load(mediaUrl(path), startSeconds); sampleOut->play(); } }
 void DesktopApi::stopPreview() { if (sampleOut) sampleOut->stop(); }
 QString DesktopApi::thirdParty() const {
     QFile file(QStringLiteral(":/legal/THIRD_PARTY.md"));

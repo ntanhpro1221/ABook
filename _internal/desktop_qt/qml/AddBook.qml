@@ -70,7 +70,7 @@ Modal {
             Nav.closedLayer(leaveLayer)
             const back = leaveFocus
             leaveFocus = null
-            if (back && open) Qt.callLater(function() { back.forceActiveFocus(Qt.BacktabFocusReason) })
+            if (back && open) Later.call(root, function() { back.forceActiveFocus(Qt.BacktabFocusReason) })
         }
     }
     // Lớp Back của câu hỏi: Back đóng câu hỏi, về hộp
@@ -474,6 +474,8 @@ Modal {
             objectName: "importLeave"
             width: parent.width
             open: root.leave !== ""
+            Accessible.role: Accessible.AlertMessage
+            Accessible.name: root.leave === "again" ? "Chọn lại khi còn sách chưa thêm" : "Đóng khi còn sách chưa thêm"
             Column {
                 width: parent.width
                 topPadding: 14

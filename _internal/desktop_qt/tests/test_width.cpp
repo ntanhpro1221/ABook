@@ -6,6 +6,9 @@
 #include "mediacontrols.h"
 #include "readalong.h"
 #include "glyphaudit.h"
+#include "later.h"
+#include "appfonts.h"
+#include "visualready.h"
 #include <QFontDatabase>
 #include <QQmlEngine>
 #include <QQmlContext>
@@ -14,6 +17,9 @@
 #include <QTemporaryDir>
 #include <QDateTime>
 #include <QtQuickTest/quicktest.h>
+#include <QQuickWindow>
+#include <QtQuick/private/qquickwindow_p.h>
+#include <QtQuick/private/qsgabstractsoftwarerenderer_p.h>
 
 class WidthCovers : public QQuickImageProvider {
 public:
@@ -35,6 +41,8 @@ public:
     Q_INVOKABLE int count(const QString &method, const QString &suffix) const { return int(m_net->callsTo(suffix, method.toLatin1()).size()); }
     Q_INVOKABLE void setBook(const QVariantMap &book) { const auto json = QJsonObject::fromVariantMap(book); m_net->books.insert(json.value(QStringLiteral("id")).toString(), json); }
     Q_INVOKABLE void finishChapter() { m_out->finish(); }
+    Q_INVOKABLE void buffering(bool value) { emit m_out->buffering(value); }
+    Q_INVOKABLE void fail(const QString &message) { m_out->fail(message); }
     Q_INVOKABLE void resetBooks() { m_net->books = m_original; }
     Q_INVOKABLE void advance(double seconds) {
         for (int i = 0; i < qRound(seconds * 10); ++i) {
@@ -76,6 +84,31 @@ private:
     MediaState state;
 };
 
+// Bộ thử chạy Qt Quick bằng bộ vẽ phần mềm (nền offscreen), nó chỉ vẽ lại vùng bẩn và grabImage đọc thẳng bộ đệm ấy: phần một item vẽ
+// ra ngoài khung của nó (tab "Thêm" bị cắt của trang hẹp 560 trong cửa sổ 1280) có thể nằm lại sau khi trang bị huỷ và lọt vào ảnh của
+// test sau ("⌄" lạc ở 571,333). Mỗi khung vẽ lại cả cửa sổ: ảnh chụp chỉ có thứ đang thật sự hiện.
+class FullRepaint : public QObject {
+    Q_OBJECT
+    int count = 0;
+public:
+    // số khung đã vẽ lại cả cửa sổ - tst_studio_music kiểm nó tăng
+    Q_INVOKABLE int frames() const { return count; }
+    bool eventFilter(QObject *target, QEvent *event) override {
+        auto *window = qobject_cast<QQuickWindow *>(target);
+        if (window && event->type() == QEvent::Expose && !window->property("abookFullRepaint").toBool()) {
+            window->setProperty("abookFullRepaint", true);
+            QObject::connect(window, &QQuickWindow::beforeSynchronizing, window, [this, window] {
+                auto *renderer = QQuickWindowPrivate::get(window)->renderer;
+                if (renderer && window->rendererInterface()->graphicsApi() == QSGRendererInterface::Software) {
+                    static_cast<QSGAbstractSoftwareRenderer *>(renderer)->markDirty();
+                    ++count;
+                }
+            }, Qt::DirectConnection);
+        }
+        return false;
+    }
+};
+
 class WidthSetup : public QObject {
     Q_OBJECT
     QTemporaryDir dir;
@@ -88,18 +121,21 @@ class WidthSetup : public QObject {
     std::unique_ptr<Feedback> feedback;
     std::unique_ptr<WidthNet> netView;
     std::unique_ptr<MediaControls> media;
+    FullRepaint repaint;
 public slots:
     void qmlEngineAvailable(QQmlEngine *engine) {
+        engine->rootContext()->setContextProperty(QStringLiteral("qtVisualReady"), new VisualReady(engine));
         engine->rootContext()->setContextProperty(QStringLiteral("qtGlyphAudit"), audit.get());
         engine->rootContext()->setContextProperty(QStringLiteral("qtGlyphProbe"), qEnvironmentVariableIsSet("ABOOK_GLYPH_PROBE"));
         engine->rootContext()->setContextProperty(QStringLiteral("qtWideShotDir"), qEnvironmentVariable("ABOOK_WIDE_SHOTS"));
+        engine->rootContext()->setContextProperty(QStringLiteral("qtFullRepaint"), &repaint);
         engine->addImageProvider(QStringLiteral("cover"), new WidthCovers);
     }
     void applicationAvailable() {
         audit = std::make_unique<GlyphAudit>();
-        for (const auto &weight : {"Regular", "Medium", "Bold"})
-            QFontDatabase::addApplicationFont(QStringLiteral(WIDTH_SOURCE_DIR "/fonts/BeVietnamPro-%1.ttf").arg(QString::fromLatin1(weight)));
-        QGuiApplication::setFont(QFont(QStringLiteral("Be Vietnam Pro")));
+        qApp->installEventFilter(&repaint);
+        if (!loadAppFonts(QStringLiteral(WIDTH_SOURCE_DIR "/fonts")))
+            qFatal("Could not load application fonts");
         net.books.insert(QStringLiteral("width"), makeBook(QStringLiteral("width"), 32));
         QJsonArray segments;
         for (int i = 0; i < 40; ++i)
@@ -122,6 +158,7 @@ public slots:
         Feedback::setInstance(feedback.get());
         QObject::connect(player.get(), &Player::playingChanged, feedback.get(), [this] { feedback->setBookPlaying(player->playing()); });
         qmlRegisterType<BookDetail>("ABook", 1, 0, "BookDetail");
+        qmlRegisterSingletonType<Later>("ABook", 1, 0, "Later", [](QQmlEngine *, QJSEngine *) -> QObject * { return new Later; });
         qmlRegisterSingletonInstance("ABook", 1, 0, "Player", player.get());
         qmlRegisterSingletonInstance("ABook", 1, 0, "ReadAlong", read.get());
         qmlRegisterSingletonInstance("ABook", 1, 0, "Music", music.get());

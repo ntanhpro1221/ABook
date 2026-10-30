@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "VisualReady.js" as VisualReady
 import ABook
 
 // Studio S1: danh sách dự án (bảng gọn, các trạng thái rỗng / chờ / lỗi), trang một dự án (MỘT nút chính theo trạng thái, "Tạm dừng" gọi lệnh tạm dừng
@@ -41,8 +42,7 @@ Item {
         function hasPart(item, part) { return texts(item).some(t => t.indexOf(part) >= 0) }
         function shot(name, item) {
             const target = item || host
-            waitForRendering(target)
-            wait(300)
+            VisualReady.render(this, host.Window.window, target, qtVisualReady)
             const path = Qt.resolvedUrl("../../build/d2shots/s1_" + name + "_" + (Theme.dark ? "dark" : "light") + ".png").toString()
                 .replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, "")
             grabImage(target).save(path)
@@ -97,7 +97,7 @@ Item {
             Api.notice = ""
             Nav.layers = []
             Nav.studioPeer = ""
-            Theme.reduceMotion = true
+            Theme.reduceMotion = false
         }
         function cleanup() {
             Theme.mode = "auto"; Theme.reduceMotion = false
@@ -132,6 +132,7 @@ Item {
             one(page, "menu_" + key).clicked()
         }
         function confirmShown(page) { return all(page, "studioConfirm").filter(shown)[0] }
+        function applyShown(page) { return all(page, "applyChanges").filter(shown)[0] }
 
         // ================= 1. bảng dự án =================
         function test_tableRendersAndSorts() {
@@ -365,10 +366,10 @@ Item {
             const page = openBook(bookStates().apply, [chapter(1)])
             compare(one(page, "primaryButton").text, "Áp dụng 3 thay đổi")
             one(page, "primaryButton").clicked()
-            tryVerify(function() { return confirmShown(page) !== undefined })
-            compare(confirmShown(page).title, "Áp dụng 3 thay đổi?")
+            tryVerify(function() { return applyShown(page) !== undefined })
+            compare(applyShown(page).title, "Áp dụng 3 thay đổi?")
             compare(calls("POST", "/api/books/apply/start").length, 0)
-            confirmShown(page).chosen("go")
+            applyShown(page).chosen("go")
             tryVerify(function() { return calls("POST", "/api/books/apply/start").length === 1 })
         }
         function test_startRefusedWhenStudioMissing() {
@@ -408,11 +409,8 @@ Item {
             compare(one(page, "tab_cast").Accessible.name, "Nhân vật")
             compare(one(page, "tab_music").Accessible.name, "Nhạc nền")
             compare(one(page, "tab_moreLabel").text, "Thêm")
-            // tab chưa làm: một câu trung tính
-            one(page, "tab_cast").clicked()
-            tryCompare(page, "shownTab", "cast")
-            tryCompare(page, "phase", 1)
-            verify(hasText(page, "Mục này chưa mở trong bản này."))
+            one(page, "tab_music").clicked()
+            tryCompare(page, "shownTab", "music")
             compare(one(page, "tab_moreLabel").text, "Thêm")
             // "Thêm" mang tên tab đang chọn trong nó
             one(page, "tab_more").clicked()
@@ -421,6 +419,10 @@ Item {
             pickMenu(page, "script")
             tryCompare(page, "shownTab", "script")
             compare(one(page, "tab_moreLabel").text, "Kịch bản")
+            // tab Kịch bản dựng khi mở (S6), không còn câu "chưa mở"
+            tryCompare(page, "phase", 1)
+            tryVerify(function() { return all(page, "scriptTab").length > 0 && all(page, "scriptTab")[0].item !== null })
+            verify(!hasText(page, "Mục này chưa mở trong bản này."))
             one(page, "tab_more").clicked()
             pickMenu(page, "activity")
             tryCompare(page, "shownTab", "activity")

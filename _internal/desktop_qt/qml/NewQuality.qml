@@ -21,7 +21,7 @@ Column {
     function step(direction) {
         const index = Logic.PROFILE_VALUES.indexOf(profile)
         const next = Math.max(0, Math.min(Logic.PROFILE_VALUES.length - 1, index + direction))
-        if (next !== index) { setProfile(Logic.PROFILE_VALUES[next]); Qt.callLater(function() { rows.itemAt(next).forceActiveFocus(Qt.TabFocusReason) }) }
+        if (next !== index) { setProfile(Logic.PROFILE_VALUES[next]); Later.call(root, function() { rows.itemAt(next).forceActiveFocus(Qt.TabFocusReason) }) }
     }
 
     Text { objectName: "newQualityTitle"; width: parent.width; text: "Chất lượng"; color: Theme.text; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeSection; font.weight: Theme.weightMedium }

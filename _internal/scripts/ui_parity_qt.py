@@ -64,12 +64,12 @@ SCREENS: list[tuple[str, tuple[str, ...], tuple[tuple[str, tuple[str, ...] | Non
     ("Thư viện", ("Library*.qml", "BookCell.qml", "GeneratedCover.qml", "CoverView.qml"),
      (("listen/LibraryScreen.tsx", None), ("desktop/App.tsx", ("EmptyLibrary", "LibraryRoute", "OpenBookFileButton")),
       ("shared/BookCover.tsx", None))),
-    ("Thanh phát", ("PlayerBar.qml", "PlayButton.qml", "SkipButton.qml", "SkipGlyph.qml", "SeekBar.qml", "PlayerNotice.qml"),
+    ("Thanh phát", ("PlayerBar.qml", "PlayButton.qml", "SkipButton.qml", "SkipGlyph.qml", "SeekBar.qml", "PlayerNotice.qml", "PlayerAlert.qml", "PlayerFade.qml", "PlayerSubtitle.qml", "PlayerVoicePopover.qml", "OutputPopover.qml", "PlayerLabels.js"),
      (("listen/PlayerViews.tsx", ("SeekBar", "skipIcon", "Transport", "PlayerBar", "TrackSubtitle", "PlayerAlert", "CompactProgress",
                                   "FadingNotice", "MenuRow", "MoreMenu")),
       ("listen/labels.ts", None))),
     ("Đang nghe", ("NowPlaying.qml", "ControlChip.qml", "ChoiceChip.qml", "SpeedPopover.qml", "SleepPopover.qml", "ChaptersPopover.qml",
-                   "ChapterList.qml", "ChapterRow.qml", "ChapterReader.qml", "VolumeControl.qml", "ReadingSuggestions.qml", "PageSwitch.qml", "Popover.qml"),
+                   "ChapterList.qml", "ChapterRow.qml", "ChapterReader.qml", "VolumeControl.qml", "ReadingSuggestions.qml", "PageSwitch.qml", "Popover.qml", "PlayerAlert.qml", "PlayerFade.qml", "PlayerSubtitle.qml", "PlayerVoicePopover.qml", "OutputPopover.qml", "PlayButton.qml"),
      (("listen/PlayerViews.tsx", ("NowPlaying", "NowPlayingColumn", "CoverToggle", "BookProgressLine", "AfterTheEnd", "CaughtUpNotice",
                                   "ChapterPanel", "PANELS", "SpeedMenu", "SleepMenu", "SleepPicker", "MenuShell", "MenuNote", "MusicMenu",
                                   "VoiceMenu", "VolumeControl", "SleepRing", "Transport")),
@@ -94,7 +94,7 @@ SCREENS: list[tuple[str, tuple[str, ...], tuple[tuple[str, tuple[str, ...] | Non
      (("listen/AddBook.tsx", None), ("listen/importQueue.ts", None), ("listen/textImport.ts", None))),
     ("Sửa sách", ("EditBook*", "CoverSearch.qml", "BookMusicSettings.qml"),
      (("listen/EditBook.tsx", None), ("shared/CoverSearch.tsx", None))),
-    ("Thanh bên", ("Sidebar.qml", "NavItem.qml", "ConnectionChip.qml", "ConnectionPopover.qml"),
+    ("Thanh bên", ("Sidebar.qml", "NavItem.qml", "ConnectionChip.qml", "ConnectionPopover.qml", "SidebarProgress.qml"),
      (("desktop/Shell.tsx", ("Brand", "NavItem", "TabItem", "Producing", "UpdateNotice", "DesktopSidebar")),)),
     ("Studio dự án", ("ProjectsScreen.qml", "ProjectScreen.qml", "ProjectRow.qml", "ProjectMenu.qml", "StudioMenuRow.qml", "StudioBar.qml",
                       "StatusPill.qml", "OnComputerPill.qml", "StudioChapterRow.qml", "StudioTabs.qml", "TabLabel.qml", "StudioConfirm.qml",
@@ -107,7 +107,29 @@ SCREENS: list[tuple[str, tuple[str, ...], tuple[tuple[str, tuple[str, ...] | Non
                          "StudioSetupState.qml", "StudioSetupLogic.js"),
      (("studio/NewProjectScreen.tsx", None), ("studio/VolumeSplit.tsx", None), ("studio/TemplateBar.tsx", None), ("studio/CoverEditor.tsx", None),
       ("studio/AnalysisModelPicker.tsx", None), ("studio/StudioSetup.tsx", None))),
-    ("Studio máy khác", ("StudioScreen.qml", "PeerBar.qml", "EmptyState.qml"),
+    ("Studio việc duyệt", ("WorkInbox.qml", "WorkStore.qml", "WorkCard.qml", "WorkSection.qml", "WorkBulkKeep.qml", "WorkPronunciation.qml", "WorkSpeaker.qml",
+                           "WorkNarrator.qml", "WorkVoice.qml", "WorkRequested.qml", "WorkExample.qml", "WorkField.qml", "DecisionButton.qml", "TryReading.qml",
+                           "TryButton.qml", "TryNote.qml", "ReadingProblem.qml", "ReviewQueue.qml", "ReviewRow.qml", "ReviewVerdict.qml", "ReviewSpoken.qml",
+                           "NameReadings.qml", "NameRow.qml", "NameEdit.qml", "NameAddWord.qml", "SharedOffer.qml", "PhoneEdits.qml", "StudioPanels.qml",
+                           "StudioQuery.qml", "DecisionLogic.js", "WorkLogic.js", "ReviewLogic.js", "NameLogic.js"),
+     (("studio/WorkInbox.tsx", None), ("studio/ReviewQueue.tsx", None), ("studio/NameReadings.tsx", None), ("studio/PhoneEdits.tsx", None),
+      ("studio/TryReading.tsx", None), ("studio/ReadingProblem.tsx", None), ("studio/workText.ts", None), ("studio/reviewText.ts", None),
+      ("studio/previewText.ts", None), ("studio/readingReach.ts", None))),
+    ("Studio nhân vật", ("PrecastReview.qml", "PrecastWait.qml", "PrecastBanner.qml", "PrecastLogic.js", "TellerMode.qml", "TellerLogic.js", "CardFocus.qml",
+                         "WorkCards.qml"),
+     (("studio/PrecastReview.tsx", None), ("studio/precast.ts", None), ("studio/TellerModeSwitch.tsx", None), ("studio/tellerMode.ts", None),
+      ("studio/VoicePicker.tsx", None), ("studio/VoiceTry.tsx", None), ("studio/CastEdits.tsx", None), ("studio/MergePeople.tsx", None),
+      ("studio/useUnmerge.ts", None), ("studio/useCardFocus.ts", None), ("studio/workFocus.ts", None), ("studio/minorGroups.ts", None),
+      ("studio/narratorChoice.ts", None))),
+    ("Studio kịch bản", ("ScriptTab.qml", "ScriptRow.qml", "ScriptStore.qml", "ScriptSpeakerMenu.qml", "ScriptDelivery.qml", "ScriptChapterMenu.qml",
+                         "ScriptLogic.js"),
+     (("studio/ScriptTab.tsx", None), ("studio/scriptFind.ts", None))),
+    ("Studio xuất và áp dụng", ("ExportBook.qml", "ExportKinds.qml", "ExportBusy.qml", "ExportDone.qml", "ExportJob.qml", "ExportLogic.js", "FfmpegNeeded.qml",
+                                "WordTimings.qml", "ApplyChanges.qml", "PendingList.qml", "PendingRow.qml", "VoiceTry.qml", "ChapterError.qml"),
+     (("studio/ExportBook.tsx", None), ("studio/exportText.ts", None), ("studio/bookFilePacking.ts", None), ("studio/WordTimings.tsx", None),
+      ("studio/ApplyChanges.tsx", None), ("studio/ChapterError.tsx", None), ("studio/errorText.ts", None), ("studio/analyzerLabel.ts", None),
+      ("studio/credits.ts", None))),
+    ("Studio máy khác",("StudioScreen.qml", "PeerBar.qml", "EmptyState.qml"),
      (("desktop/PeerBar.tsx", None), ("shared/peerStudio.ts", None), ("desktop/App.tsx", ("PeerTrouble", "StudioClosed")))),
     ("Thanh tiêu đề", ("Main.qml", "TitleBar.qml", "CaptionButton.qml", "CaptionGlyph.qml"),
      (("desktop/Shell.tsx", ("TITLES", "Shell")), ("shared/title.ts", None))),
@@ -356,8 +378,39 @@ def ternary_cond(expr: str) -> str:
     return re.sub(r"\s+", "", m.group(1)) if m else ""
 
 
+def ternary_parts(expr: str) -> tuple[str, str, str] | None:
+    """Split a top-level conditional without treating quoted/nested punctuation as branches."""
+    expr = expr.strip()
+    while expr.startswith("(") and up.skip_balanced(expr, 0, "(", ")") == len(expr):
+        expr = expr[1:-1].strip()
+    question = -1
+    depth = 0
+    i = 0
+    while i < len(expr):
+        c = expr[i]
+        if c in "\"'`":
+            i = up.skip_string(expr, i)
+            continue
+        if c in "([{":
+            i = up.skip_balanced(expr, i, c, {"(": ")", "[": "]", "{": "}"}[c])
+            continue
+        if c == "?" and expr[i:i + 2] not in ("?.", "??") and expr[i - 1:i] != "?":
+            if question < 0:
+                question = i
+            depth += 1
+        elif c == ":" and question >= 0:
+            depth -= 1
+            if depth == 0:
+                return re.sub(r"\s+", "", expr[:question]), expr[question + 1:i], expr[i + 1:]
+        i += 1
+    return None
+
+
 def pair_up(label_expr: str, icon_expr: str) -> list[tuple[str, str]]:
     """Ghép nhãn với icon: cùng điều kiện `?:` và cùng số nhánh thì theo thứ tự; một icon thì đi với mọi nhãn; không thì nhãn đầu."""
+    label_parts, icon_parts = ternary_parts(label_expr), ternary_parts(icon_expr)
+    if label_parts and icon_parts and label_parts[0] == icon_parts[0]:
+        return pair_up(label_parts[1], icon_parts[1]) + pair_up(label_parts[2], icon_parts[2])
     labels = [split_shortcut(t)[0] for t in options(label_expr) if up.looks_ui(t)]
     icons = icon_options(icon_expr)
     if not labels or not icons:
@@ -688,6 +741,7 @@ def section_a(q_items, w_screen, w_by, q_pairs, w_pairs_screen) -> list[str]:
     q_icons: dict[str, set[str]] = defaultdict(set)
     for p in q_pairs:
         q_icons[up.key_loose(p.label)].add(p.icon)
+    q_keys = {up.key_loose(i.text) for i in q_items}
     rows = []
     for screen, items in w_screen.items():
         w_keys = {up.key_loose(i.text): i for i in items if up.short(i.text)}
@@ -704,7 +758,7 @@ def section_a(q_items, w_screen, w_by, q_pairs, w_pairs_screen) -> list[str]:
                 continue
             best = None
             for wk, wi in w_keys.items():
-                if wk in {up.key_loose(x.text) for x in q_items}:
+                if wk in q_keys:
                     continue
                 score = similar(qi.text, wi.text, bool(q_icons.get(qk, set()) & w_icons.get(wk, set())))
                 if score is not None and (best is None or score > best[0]):

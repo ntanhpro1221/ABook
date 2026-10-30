@@ -45,7 +45,7 @@ Column {
         for (let i = 0; i < shown.length; ++i) if (shown[i].name === focusName) index = i
         const next = shown[(index + direction + shown.length) % shown.length]
         setNarrator(next.name)
-        Qt.callLater(function() { root.focusVoice(next.name) })
+        Later.call(root, function() { root.focusVoice(next.name) })
     }
 
     Text { objectName: "newVoiceTitle"; width: parent.width; text: "Giọng kể"; color: Theme.text; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeSection; font.weight: Theme.weightMedium }

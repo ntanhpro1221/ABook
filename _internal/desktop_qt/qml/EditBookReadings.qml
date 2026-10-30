@@ -117,7 +117,7 @@ Column {
                     x: parent.width - 32
                     width: 32; height: 32
                     anchors.verticalCenter: parent.verticalCenter
-                    icon: "trash-2"; iconSize: 16
+                    icon: "trash"; iconSize: 16
                     enabled: !root.saving
                     tip: "Bỏ cách đọc " + entry.modelData.surface
                     Accessible.name: tip

@@ -6,14 +6,15 @@ import ABook
 Item {
     id: root
     anchors.fill: parent
+    property var store: null                // Studio: StudioStore của dự án đang mở (lời gọi đi đúng máy); trang sách của máy này để trống
     function begin(kind, data) {
         if (kind === "merge") merge.begin(data)
         else if (kind === "rename") rename.begin(data)
         else if (kind === "gender") gender.begin(data)
         else if (kind === "voice" || kind === "narrator") voice.begin(data)
     }
-    CastMerge { id: merge; objectName: "castMergeDialog" }
-    CastRename { id: rename; objectName: "castRenameDialog" }
-    CastGender { id: gender; objectName: "castGenderDialog" }
-    CastVoice { id: voice; objectName: "castVoiceDialog" }
+    CastMerge { id: merge; store: root.store; objectName: "castMergeDialog" }
+    CastRename { id: rename; store: root.store; objectName: "castRenameDialog" }
+    CastGender { id: gender; store: root.store; objectName: "castGenderDialog" }
+    CastVoice { id: voice; store: root.store; objectName: "castVoiceDialog" }
 }
