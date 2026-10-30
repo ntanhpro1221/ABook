@@ -338,6 +338,15 @@ describe("không chỗ nào bật tắt cứng: các chỗ chung đều đi qua 
     expect(css).toContain('[data-radix-popper-content-wrapper] > [data-state="closed"] {');
   });
 
+  it("nền tối không làm mờ hậu cảnh: Chromium bật backdrop-filter khi hiệu ứng mờ dần xong, nên nền 'bật' sau khi hộp hiện (chủ sách 30-10)", () => {
+    const files = import.meta.glob("../**/*.tsx", { query: "?raw", import: "default", eager: true }) as Record<string, string>;
+    const scrims = Object.entries(files).flatMap(([file, text]) =>
+      [...text.matchAll(/className="[^"]*\bmotion-scrim\b[^"]*"/g)].map((m) => `${file}: ${m[0]}`));
+    expect(scrims.length).toBeGreaterThanOrEqual(2);
+    expect(scrims.filter((s) => /backdrop-/.test(s))).toEqual([]);
+    expect(css).not.toMatch(/\.motion-scrim[^{]*\{[^}]*backdrop-filter/);
+  });
+
   it("chuyển cảnh không nuốt chạm; xin giảm chuyển động chỉ bỏ phần dịch chỗ, vẫn hiện / mờ", () => {
     expect(css).toMatch(/::view-transition \{\s*pointer-events: none;/);
     expect(css).toMatch(/prefers-reduced-motion: reduce\) \{\s*:root \{\s*--motion-amount: 0;/);
