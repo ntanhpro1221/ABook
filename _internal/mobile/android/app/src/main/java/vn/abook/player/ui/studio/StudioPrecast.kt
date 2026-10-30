@@ -130,7 +130,7 @@ object PrecastText {
     const val TITLE = "Duyệt trước khi thu"
     const val LEAD = "Duyệt nhanh trước khi thu; có thể bỏ qua từng bước."
     const val HELD = "Sách đang chờ bạn duyệt - duyệt xong bấm “Thu âm”."
-    const val WAIT = "Chờ tôi duyệt"
+    const val WAIT = "Duyệt trước khi thu"
     const val WAIT_PASSED = "Phân tích đã xong. Muốn dừng thì bấm “Tạm dừng”."
     const val WAIT_ON = "Dừng sau phân tích để bạn duyệt, rồi bấm “Thu âm”."
     const val WAIT_OFF = "Phân tích xong thì thu luôn; duyệt lúc nào cũng được."

@@ -215,12 +215,12 @@ private fun MenuActions(
                 MenuRow("Nhạc nền", tag = "menu_music", onClick = onMusic, value = MusicText.value(mine, ui.menu)) { ink -> MusicIcon(ink) }
             }
         }
-        // Như web: sách có tiếng có hai hàng "Xuất MP3" / "Xuất M4B", sách chỉ có chữ có một hàng "Xuất sách nói (M4B)" - mỗi hàng đúng icon của web.
+        // Như web: sách có tiếng có hai hàng "Xuất MP3" / "Xuất M4B", sách chỉ có chữ có một hàng "Xuất sách nói" - mỗi hàng đúng icon của web.
         // Cuốn chưa có gì để xuất thì mờ đi, không hứa gì.
         val exportHint by actions.exportHint(book.id).collectAsState()
         if (book.textOnly) {
             MenuRow(
-                "Xuất sách nói (M4B)", tag = "menu_export", hint = exportHint, unavailable = book.chaptersTotal == 0,
+                "Xuất sách nói", tag = "menu_export", hint = exportHint, unavailable = book.chaptersTotal == 0,
                 onClick = {
                     dismiss()
                     actions.export(book, null)
@@ -247,7 +247,7 @@ private fun MenuActions(
         // Cỡ về sau khi tấm đã mở: dòng phụ hiện dần tại chỗ (web: "Chiếm 148 MB" bên phải hàng).
         var bytes by remember { mutableStateOf<Long?>(null) }
         LaunchedEffect(book.id) { bytes = source.bytes(book.id) }
-        MenuRow("Xoá khỏi điện thoại", tag = "menu_delete", danger = true, hint = bytes?.let { "Chiếm ${formatSize(it)}" }, onClick = onDelete) { ink -> TrashIcon(ink) }
+        MenuRow("Xoá khỏi thư viện", tag = "menu_delete", danger = true, hint = bytes?.let { "Chiếm ${formatSize(it)}" }, onClick = onDelete) { ink -> TrashIcon(ink) }
         if (save.problem.isNotEmpty()) BasicText(save.problem, style = Abook.type.bodySmall.copy(color = colors.danger), modifier = Modifier.testTag("save_problem"))
         if (problem.isNotEmpty()) {
             Spacer(Modifier.height(Dim.s4))

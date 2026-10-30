@@ -89,7 +89,7 @@ const DESKTOP: Omit<Entry, "platform">[] = [
   } },
   { id: "desktop/player-more", group: "Trình phát", title: "Menu “…” của thanh phát", route: "/", act: () => click("Thêm tuỳ chọn").then(() => undefined) },
   { id: "desktop/player-devices", group: "Trình phát", title: "Menu thiết bị phát", route: "/", act: async () => {
-    await click("Thêm tuỳ chọn"); await click("Phát trên máy khác");
+    await click("Thêm tuỳ chọn"); await click("Phát trên thiết bị khác");
   } },
   { id: "desktop/book-record-move", group: "Trang sách", title: "Chuyển hồ sơ", route: "/book/suong-mu-2", act: async () => {
     await clickFirst("Thêm tuỳ chọn"); await click("Chuyển hồ sơ");

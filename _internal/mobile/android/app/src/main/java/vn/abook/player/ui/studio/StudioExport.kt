@@ -310,8 +310,8 @@ object StudioExportText {
     const val CANCEL_CONFIRM = "Huỷ xuất"
     const val CANCEL_KEEP = "Tiếp tục xuất"
     const val STOPPING_NOTE = "Dừng ở chỗ an toàn kế tiếp."
-    const val FAILED = "Không xuất được"
-    const val STOPPED = "Đã huỷ xuất"
+    const val FAILED = "Chưa xuất được"
+    const val STOPPED = "Đã dừng xuất"
 
     fun elapsed(seconds: Double) = "đã ${Fmt.clock(seconds)}"
 
@@ -319,9 +319,9 @@ object StudioExportText {
     fun doneTitle(machine: String): String = if (machine.isBlank()) "Đã xuất vào máy tính" else "Đã xuất vào máy tính $machine"
 
     fun failedTitle(kind: StudioExportKind): String = when (kind) {
-        StudioExportKind.BookFile -> "Không xuất được file sách"
-        StudioExportKind.M4b -> "Không xuất được M4B"
-        StudioExportKind.Mp3 -> "Không xuất được MP3"
+        StudioExportKind.BookFile -> "Chưa xuất được file sách"
+        StudioExportKind.M4b -> "Chưa xuất được M4B"
+        StudioExportKind.Mp3 -> "Chưa xuất được MP3"
     }
 }
 

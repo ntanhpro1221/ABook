@@ -357,7 +357,7 @@ class DevicesStateTest {
         devices.download(a)
         assertTrue(devices.pair.value.failed.isEmpty())
         source.events.tryEmit(DownloadEvent("a", 0.3f, error = "Mất mạng giữa chừng."))
-        assertEquals("Tải bị gián đoạn. Mất mạng giữa chừng.", devices.pair.value.failed["a"])
+        assertEquals("Chưa tải xong về máy. Mất mạng giữa chừng.", devices.pair.value.failed["a"])
         assertTrue(devices.pair.value.downloading.isEmpty())
     }
 
