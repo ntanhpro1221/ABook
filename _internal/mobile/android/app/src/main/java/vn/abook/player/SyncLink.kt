@@ -256,7 +256,7 @@ object SyncLink {
             if (code >= 400) {
                 val message = runCatching { JSONObject(text).optString("error") }.getOrNull()
                 // Mang mã HTTP (NetErrors.Refused): 401 = máy kia đã bỏ ghép máy này, giao diện nói đúng thế thay vì "không kết nối được".
-                throw NetErrors.Refused(code, message?.ifBlank { null } ?: "Máy tính trả lỗi $code")
+                throw NetErrors.Refused(code, message?.ifBlank { null } ?: "Máy tính trả lỗi $code", text)
             }
             if (firstUse == null && connection is HttpsURLConnection) {
                 val credential = token ?: if (auth) SyncLink.token(context) else ""

@@ -13,6 +13,8 @@ class TickingValuePolicyTest {
         "ExportText.progress", "ExportText.spokenDuration", "ExportText.menuHint",
         "PrepareText.spokenDuration", "PrepareText.label", "BookPage.percent", "BookPage.statusLine",
         "BookSearch.status", "DeviceText.clock", "DeviceText.seen",
+        "StudioText.percent", "StudioText.eta", "StudioText.etaOf", "StudioText.progressNote", "StudioText.chapterLine", "StudioText.statusLine",
+        "StudioText.length",
     )
     private val moving = Regex("\\b(RollingLabel|AnimatedContent|Crossfade|MovingTextAction|SheetPages|animate\\w*AsState)\\s*\\(")
     private val formatter = Regex("\\b(?:" + formatters.joinToString("|") { Regex.escape(it) } + ")\\s*\\(")
