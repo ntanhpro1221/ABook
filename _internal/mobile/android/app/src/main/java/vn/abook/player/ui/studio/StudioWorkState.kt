@@ -88,17 +88,8 @@ class StudioWorkState(private val project: StudioProjectState, pause: suspend (L
         session.source.workExamples(session.computer, project.bookId, item.key, loaded, PICK_PAGE)
 
     /** Kiểm cách đọc (nghe được là lưu được) trước khi giữ 15 giây. */
-    suspend fun checkReading(item: WorkItem, spoken: String): ReadingCheck = try {
-        session.source.write(session.computer, project.bookId, WorkDecisions.pronunciationCheck(item, spoken))
-        ReadingCheck.Ok
-    } catch (cancelled: CancellationException) {
-        throw cancelled
-    } catch (error: Throwable) {
-        val failure = StudioErrors.of(error)
-        session.note(failure)
-        if (failure is StudioError.Server && failure.status == 400) ReadingCheck.Rejected(failure.message.orEmpty(), StudioErrors.detail(failure, "suggestion"))
-        else ReadingCheck.Failed(StudioText.failure(failure))
-    }
+    suspend fun checkReading(item: WorkItem, spoken: String): ReadingCheck =
+        session.checkReading(project.bookId, WorkDecisions.pronunciationCheck(item, spoken))
 
     /** "Nghe thử" một cách đọc tên: máy đọc một câu có tên ấy bằng cách đọc đang gõ. */
     suspend fun previewReading(item: WorkItem, spoken: String): PreviewOutcome = session.preview(project.bookId, WorkDecisions.pronunciationPreview(item, spoken))

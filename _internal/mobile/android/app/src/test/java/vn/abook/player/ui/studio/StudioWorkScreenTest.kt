@@ -193,8 +193,9 @@ class StudioWorkScreenTest {
         tag("studio_cast_empty").assertIsDisplayed()
     }
 
-    @Test fun onlyTheMusicTabStillHasNoContent() {
+    @Test fun theMusicTabShowsItsSettingsAndNoFrame() {
         project(StudioTab.Music)
-        tag("studio_frame_music").assertIsDisplayed()
+        tag("studio_music_settings").assertIsDisplayed()
+        assertEquals(0, rule.onAllNodesWithTag("studio_frame_music").fetchSemanticsNodes().size)
     }
 }

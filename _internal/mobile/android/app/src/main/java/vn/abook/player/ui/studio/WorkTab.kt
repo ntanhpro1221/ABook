@@ -124,7 +124,7 @@ private fun EmptyDeck(live: Boolean) {
 
 /** Một thẻ: nhãn kiểu, tiêu đề, vì sao hỏi, vài câu ví dụ, rồi các nút trả lời theo mẫu của thẻ ([WorkLogic.template]). */
 @Composable
-private fun WorkCard(item: WorkItem, deckSize: Int, state: StudioProjectState, sheets: SheetHost, clip: ClipState, goReview: () -> Unit) {
+internal fun WorkCard(item: WorkItem, deckSize: Int, state: StudioProjectState, sheets: SheetHost, clip: ClipState, goReview: () -> Unit) {
     val work = state.work
     val template = WorkLogic.template(item)
     Column(Modifier.fillMaxWidth().padding(top = Dim.s16).testTag("studio_card_${item.kind.key}")) {

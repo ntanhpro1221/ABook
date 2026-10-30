@@ -73,8 +73,10 @@ class StudioJsonRouteTest {
         assertEquals(StudioRoute("b1", StudioTab.Chapters), StudioRoute.parse("/#/studio/b1"))
         assertEquals(StudioRoute("b1", StudioTab.Work), StudioRoute.parse("/#/studio/b1?tab=work"))
         assertEquals(StudioRoute("b1", StudioTab.Cast), StudioRoute.parse("/#/studio/b1?x=1&tab=cast"))
-        // Tab chưa có ở điện thoại, hay mã lạ: về chỗ gần nhất.
-        assertEquals(StudioRoute("b1", StudioTab.Chapters), StudioRoute.parse("/#/studio/b1?tab=precast"))
+        // Màn con của web mở thẳng màn con; tab chưa có ở điện thoại, hay mã lạ: về chỗ gần nhất.
+        assertEquals(StudioRoute("b1", StudioTab.Chapters, StudioSubKind.Precast), StudioRoute.parse("/#/studio/b1?tab=precast"))
+        assertEquals(StudioRoute("b1", StudioTab.Chapters, StudioSubKind.Script), StudioRoute.parse("/#/studio/b1?tab=script"))
+        assertEquals(StudioRoute("b1", StudioTab.Chapters, StudioSubKind.Activity), StudioRoute.parse("/#/studio/b1?tab=activity"))
         assertEquals(StudioRoute(), StudioRoute.parse("/#/studio/../etc"))
         assertEquals(StudioRoute(), StudioRoute.parse("/#/library"))
     }
@@ -83,6 +85,8 @@ class StudioJsonRouteTest {
         val intent = StudioRoute.put(Intent(), "pc1", StudioRoute("b2", StudioTab.Review))
         assertEquals(StudioRequest("pc1", StudioRoute("b2", StudioTab.Review)), StudioRoute.request(intent))
         assertEquals(StudioRequest("", StudioRoute()), StudioRoute.request(StudioRoute.put(Intent(), "", StudioRoute())))
+        val precast = StudioRoute("b2", sub = StudioSubKind.Precast)
+        assertEquals(StudioRequest("pc1", precast), StudioRoute.request(StudioRoute.put(Intent(), "pc1", precast)))
         assertNull(StudioRoute.request(Intent()))
         assertNull(StudioRoute.request(null))
         // Mã sách hỏng trong Intent không mở được gì, nhưng vẫn mở Studio của máy.

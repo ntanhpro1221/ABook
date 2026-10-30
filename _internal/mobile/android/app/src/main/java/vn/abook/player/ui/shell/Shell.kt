@@ -72,9 +72,11 @@ import vn.abook.player.ui.devices.PairScreen
 import vn.abook.player.ui.devices.ShareScreen
 import vn.abook.player.ui.devices.StorageScreen
 import vn.abook.player.ui.studio.StudioHomeRoute
+import vn.abook.player.ui.studio.StudioNewRoute
 import vn.abook.player.ui.studio.StudioHub
 import vn.abook.player.ui.studio.StudioProjectRoute
 import vn.abook.player.ui.studio.StudioRequest
+import vn.abook.player.ui.studio.StudioSubRoute
 import vn.abook.player.ui.voice.KeysScreen
 import vn.abook.player.ui.voice.MyMusicScreen
 import vn.abook.player.ui.voice.VoicePage
@@ -130,15 +132,23 @@ class ShellState(val scope: CoroutineScope, onSortChanged: (LibrarySort) -> Unit
     }
 
     /**
-     * Thông báo Studio / hàng "Studio" ở Thiết bị mở Studio của một máy: danh sách dự án, hay thẳng một dự án ở tab đã xin. Thu bảng trượt và cửa sổ Đang
-     * nghe như Back; đang ở đúng nơi ấy rồi thì không đẩy thêm màn.
+     * Thông báo Studio / hàng "Studio" ở Thiết bị mở Studio của một máy: danh sách dự án, thẳng một dự án ở tab đã xin, hay màn con của dự án (đẩy dự án
+     * trước để Back về dự án). Thu bảng trượt và cửa sổ Đang nghe như Back; đang ở đúng nơi ấy rồi thì không đẩy thêm màn.
      */
     suspend fun openStudio(request: StudioRequest) {
         sheets.dismiss()
         window.close()
-        while (nav.busy) delay(20) // đang chuyển cảnh thì NavState.push bỏ lệnh
-        val target = request.route.book?.let { Destination.StudioProject(request.computer, it, request.route.tab) } ?: Destination.Studio(request.computer)
-        if (nav.stack.top?.destination != target) nav.push(target)
+        val route = request.route
+        val project = route.book?.let { Destination.StudioProject(request.computer, it, route.tab) }
+        val sub = route.sub?.let { kind -> route.book?.let { Destination.StudioSub(request.computer, it, kind) } }
+        val target = sub ?: project ?: Destination.Studio(request.computer)
+        if (nav.stack.top?.destination == target) return
+        if (sub != null && project != null && nav.stack.top?.destination != project) {
+            while (nav.busy) delay(20) // đang chuyển cảnh thì NavState.push bỏ lệnh
+            nav.push(project)
+        }
+        while (nav.busy) delay(20)
+        nav.push(target)
     }
 }
 
@@ -325,9 +335,17 @@ fun AppShell(
                                 }
                                 is Destination.Studio -> if (studio != null) StudioHomeRoute(studio, destination.computer, nav::pop,
                                     { nav.push(Destination.StudioProject(destination.computer, it)) },
+                                    active = nav.stack.top?.destination == destination && !nav.progress.isRunning,
+                                    onNew = { nav.push(Destination.StudioNew(destination.computer)) })
+                                is Destination.StudioNew -> if (studio != null) StudioNewRoute(studio, destination.computer, nav::pop,
+                                    { nav.replaceTop(Destination.StudioProject(destination.computer, it)) },
                                     active = nav.stack.top?.destination == destination && !nav.progress.isRunning)
                                 is Destination.StudioProject -> if (studio != null) StudioProjectRoute(studio, destination.computer, destination.book, destination.tab,
                                     shell.sheets, nav::pop, listen = { nav.popToRoot(); shell.tabs.select(Tab.Library) },
+                                    active = nav.stack.top?.destination == destination && !nav.progress.isRunning,
+                                    openSub = { nav.push(Destination.StudioSub(destination.computer, destination.book, it)) })
+                                is Destination.StudioSub -> if (studio != null) StudioSubRoute(studio, destination.computer, destination.book, destination.kind,
+                                    shell.sheets, nav::pop, openSub = { nav.push(Destination.StudioSub(destination.computer, destination.book, it)) },
                                     active = nav.stack.top?.destination == destination && !nav.progress.isRunning)
                             }
                         },
