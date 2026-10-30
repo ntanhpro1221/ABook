@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Dialogs
 import ABook
+import "SizeFormat.js" as Size
 import "EditBookLogic.js" as Logic
 
 // "Nhạc của tôi" trong hộp "Sửa sách" (MyMusicSection của listen/MyMusic.tsx): nhạc bạn tự có làm nhạc nền - nhập, xem, xoá ở đây; "Đổi bài" ở
@@ -171,9 +172,9 @@ Column {
                 size: "sm"; kind: "ghost"; wrap: true; busy: root.starting
                 text: !root.module ? "" : action === "reanalyse" ? "Phân tích " + root.module.stale + " bài"
                       : root.module.state === "error" ? "Thử lại"
-                      : root.module.stopped ? "Tải lại (" + Logic.formatSize(root.module.outdatedBytes || root.module.total) + ")"
-                      : root.module.state === "outdated" ? "Cập nhật (" + Logic.formatSize(root.module.outdatedBytes || root.module.total) + ")"
-                      : "Tải (" + Logic.formatSize(root.module.total) + ")"
+                      : root.module.stopped ? "Tải lại (" + Size.formatSize(root.module.outdatedBytes || root.module.total) + ")"
+                      : root.module.state === "outdated" ? "Cập nhật (" + Size.formatSize(root.module.outdatedBytes || root.module.total) + ")"
+                      : "Tải (" + Size.formatSize(root.module.total) + ")"
                 onActivated: root.post(action === "reanalyse" ? "/api/music/local/reanalyse" : "/api/music/local/module")
             }
             HintText { width: parent.width; color: Theme.warning; text: "Bạn đang dùng dữ liệu di động - nên đợi khi có Wi-Fi."; visible: !!root.module && !!root.module.metered && root.module.state !== "ready" && root.module.state !== "error" }
@@ -292,7 +293,7 @@ Column {
                                 opacity: ask.asking ? 0 : 1
                                 enabled: !ask.asking
                                 Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
-                                text: "Xoá"; icon: "trash-2"; kind: "ghost"; size: "sm"
+                                text: "Xoá"; icon: "trash"; kind: "ghost"; size: "sm"
                                 Accessible.name: "Xoá: " + item.track.title
                                 onClicked: root.askRemove(item.link)
                             }
@@ -306,7 +307,7 @@ Column {
                                 Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
                                 Button {
                                     id: drop
-                                    text: "Xoá bài"; icon: "trash-2"; kind: "ghost"; size: "sm"
+                                    text: "Xoá bài"; icon: "trash"; kind: "ghost"; size: "sm"
                                     busy: root.removeBusy
                                     Accessible.name: "Xoá bài: " + item.track.title
                                     onActivated: root.removeTrack(item.link)

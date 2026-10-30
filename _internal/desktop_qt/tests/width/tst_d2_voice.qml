@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "VisualReady.js" as VisualReady
 import ABook
 
 // Cài đặt › Giọng đọc (SettingsVoice + VoiceModule + ProviderKey): việc làm thật (yêu cầu gửi đi, giọng mặc định, nghe thử, khoá, tải / huỷ / gỡ có hỏi, Back từ hộp hỏi,
@@ -88,6 +89,7 @@ Item {
     TestCase {
         id: test
         name: "D2Voice"
+        function ready() { VisualReady.render(this, host.Window.window, host, qtVisualReady) }
         when: windowShown
 
         function init() {
@@ -102,7 +104,7 @@ Item {
             Api.voiceList = []
             Api.voiceName = ""
             Nav.layers = []
-            Theme.reduceMotion = true
+            Theme.reduceMotion = false
         }
         function cleanup() { current = null; DesktopApi.delayed = false; Theme.mode = "auto"; Theme.reduceMotion = false; Nav.layers = [] }
 
@@ -113,7 +115,7 @@ Item {
             const page = createTemporaryObject(voiceFactory, host, {width: width || 760})
             verify(page !== null)
             current = page
-            wait(300)
+            ready()
             return page
         }
         function find(item, name) {
@@ -142,14 +144,14 @@ Item {
         // Trang cao hơn cửa sổ: kéo trang lên cho phần tử vào khung nhìn rồi mới bấm (chuột thật chỉ chạm được thứ đang thấy)
         property var current: null
         function click(item) {
+            ready()
             if (current) {
                 current.y = 0
                 const y = item.mapToItem(host, 0, 0).y
                 if (y + item.height > host.height - 60) current.y = -(y - 300)
             }
             // Hit testing must see the new page position after scrolling it into view.
-            host.Window.window.update()
-            waitForRendering(host)
+            ready()
             mouseClick(item, item.width / 2, item.height / 2)
         }
         function lacksOverflow(page) {
@@ -194,21 +196,19 @@ Item {
             const target = row(page, "edge:vi-VN-NamMinhNeural")
             verify(!target.selected)
             click(target.radio)
-            wait(60)
-            compare(Api.defaultVoice, "edge:vi-VN-NamMinhNeural")
-            compare(Platform.setting("abook-readaloud-voice", ""), "edge:vi-VN-NamMinhNeural")
-            compare(last("PUT", "/api/preferences").body.readAloudVoice, "edge:vi-VN-NamMinhNeural")
-            verify(target.selected)
-            compare(find(page, "voiceCurrent").text, "Đang dùng: Nam Minh (Edge)")
-            verify(hasText(page, "trực tuyến, miễn phí · 2 giọng · đang dùng"))
-            compare(Api.voiceName, "Nam Minh")
+            tryCompare(Api, "defaultVoice", "edge:vi-VN-NamMinhNeural")
+            tryVerify(function() { return (Platform.setting("abook-readaloud-voice", "")) === ("edge:vi-VN-NamMinhNeural") })
+            tryVerify(function() { return (last("PUT", "/api/preferences").body.readAloudVoice) === ("edge:vi-VN-NamMinhNeural") })
+            tryVerify(function() { return target.selected })
+            tryVerify(function() { return (find(page, "voiceCurrent").text) === ("Đang dùng: Nam Minh (Edge)") })
+            tryVerify(function() { return hasText(page, "trực tuyến, miễn phí · 2 giọng · đang dùng") })
+            tryCompare(Api, "voiceName", "Nam Minh")
             // chỉ giọng được chọn có "Mặc định"
             compare(findAll(page, node => node.text === "Mặc định" && node.visible).length, 1)
             // lưu hỏng: lời báo cách thử lại, như web
             DesktopApi.responses["PUT /api/preferences"] = {status: 500, data: {error: "đĩa đầy"}}
             click(row(page, "edge:vi-VN-HoaiMyNeural").radio)
-            wait(60)
-            compare(Api.notice, "Chưa lưu được giọng mặc định. Bạn hãy chọn lại để thử lại.")
+            tryCompare(Api, "notice", "Chưa lưu được giọng mặc định. Bạn hãy chọn lại để thử lại.")
         }
 
         function test_arrowKeysMoveTheChoice() {
@@ -218,14 +218,11 @@ Item {
             click(row(page, "edge:vi-VN-HoaiMyNeural").radio)
             row(page, "edge:vi-VN-HoaiMyNeural").radio.forceActiveFocus()
             keyClick(Qt.Key_Down)
-            wait(60)
-            compare(Api.defaultVoice, "edge:vi-VN-NamMinhNeural")
+            tryCompare(Api, "defaultVoice", "edge:vi-VN-NamMinhNeural")
             keyClick(Qt.Key_Down)               // vòng lại đầu nhóm
-            wait(60)
-            compare(Api.defaultVoice, "edge:vi-VN-HoaiMyNeural")
+            tryCompare(Api, "defaultVoice", "edge:vi-VN-HoaiMyNeural")
             keyClick(Qt.Key_End)
-            wait(60)
-            compare(Api.defaultVoice, "edge:vi-VN-NamMinhNeural")
+            tryCompare(Api, "defaultVoice", "edge:vi-VN-NamMinhNeural")
         }
 
         function test_sampleStartsStopsAndDropsStaleReply() {
@@ -240,14 +237,12 @@ Item {
             compare(last("POST", "/api/readaloud/clip").body.text, "Xin chào, tôi sẽ đọc sách cho bạn nghe. Bạn thấy giọng này thế nào?")
             compare(target.loading, true)
             DesktopApi.finish()
-            wait(60)
-            compare(target.loading, false)
-            compare(target.playing, true)
-            verify(textItem(target, "Dừng") !== null)
+            tryCompare(target, "loading", false)
+            tryCompare(target, "playing", true)
+            tryVerify(function() { return textItem(target, "Dừng") !== null })
             click(textItem(target, "Dừng"))
-            wait(30)
-            compare(target.playing, false)
-            verify(textItem(target, "Thử giọng") !== null)
+            tryCompare(target, "playing", false)
+            tryVerify(function() { return textItem(target, "Thử giọng") !== null })
             // bấm giọng khác khi mẫu cũ còn đang về: mẫu cũ bị bỏ
             const other = row(page, "edge:vi-VN-NamMinhNeural")
             DesktopApi.delayed = true
@@ -255,13 +250,11 @@ Item {
             click(textItem(target, "Thử giọng"))
             click(textItem(other, "Thử giọng"))
             DesktopApi.finish()
-            wait(60)
-            compare(target.playing, false)
-            compare(other.playing, true)
+            tryCompare(target, "playing", false)
+            tryCompare(other, "playing", true)
             // hết thời lượng mẫu thì nút về "Thử giọng"
             DesktopApi.delayed = false
-            wait(4600)
-            compare(other.playing, false)
+            tryCompare(other, "playing", false)
         }
 
         function test_sampleErrorShowsUnderTheRow() {
@@ -270,10 +263,9 @@ Item {
             DesktopApi.responses["POST /api/readaloud/clip"] = {status: 503, data: {message: "Không có mạng - giọng Hoài My cần mạng."}}
             const target = row(page, "edge:vi-VN-HoaiMyNeural")
             click(textItem(target, "Thử giọng"))
-            wait(120)
-            verify(hasText(target, "Không có mạng - giọng Hoài My cần mạng."))
-            compare(Api.notice, "")                      // lỗi nghe thử hiện tại chỗ, không toast
-            verify(textItem(target, "Thử giọng") !== null)
+            tryVerify(function() { return hasText(target, "Không có mạng - giọng Hoài My cần mạng.") })
+            tryCompare(Api, "notice", "")                      // lỗi nghe thử hiện tại chỗ, không toast
+            tryVerify(function() { return textItem(target, "Thử giọng") !== null })
         }
 
         function test_keyFlow() {
@@ -296,7 +288,7 @@ Item {
             input.text = "  secret-key-123  "
             compare(save.enabled, true)
             save.activated()
-            wait(60)
+            tryVerify(function() { return last("PUT", "/api/readaloud/online/azure") !== null })
             const put = last("PUT", "/api/readaloud/online/azure")
             compare(put.body.key, "secret-key-123")
             compare(put.body.region, "southeastasia")
@@ -305,29 +297,25 @@ Item {
             // Kiểm tra không có gì mới gõ thì không PUT lại, chỉ POST check
             DesktopApi.requests = []
             find(azure, "keyCheck").activated()
-            wait(60)
-            compare(DesktopApi.requests.filter(r => r.method === "PUT").length, 0)
-            verify(last("POST", "/api/readaloud/online/azure/check") !== null)
-            compare(find(azure, "keyResult").text, "Dùng được · 3 giọng tiếng Việt")
+            tryVerify(function() { return (DesktopApi.requests.filter(r => r.method === "PUT").length) === (0) })
+            tryVerify(function() { return last("POST", "/api/readaloud/online/azure/check") !== null })
+            tryVerify(function() { return (find(azure, "keyResult").text) === ("Dùng được · 3 giọng tiếng Việt") })
             // khoá bị từ chối: lời của dịch vụ
             DesktopApi.responses["POST /api/readaloud/online/azure/check"] = {status: 200, data: {ok: false, message: "Khoá bị từ chối.", provider: {voices: 0}}}
             find(azure, "keyCheck").activated()
-            wait(60)
-            compare(find(azure, "keyResult").text, "Khoá bị từ chối.")
+            tryVerify(function() { return (find(azure, "keyResult").text) === ("Khoá bị từ chối.") })
             // chưa gõ khoá và chưa có: báo dán khoá, không gọi mạng
             google.open = true
-            wait(60)
+            tryCompare(find(google, "keyInput"), "text", "")
             DesktopApi.requests = []
             compare(find(google, "keyCheck").enabled, false)
             find(google, "keyInput").text = "k"
             find(google, "keySave").activated()
-            wait(60)
-            compare(last("PUT", "/api/readaloud/online/google").body.key, "k")
+            tryVerify(function() { return (last("PUT", "/api/readaloud/online/google").body.key) === ("k") })
             // gỡ khoá
             DesktopApi.requests = []
             find(azure, "keyRemove").activated()
-            wait(60)
-            verify(last("DELETE", "/api/readaloud/online/azure") !== null)
+            tryVerify(function() { return last("DELETE", "/api/readaloud/online/azure") !== null })
             // sau mỗi việc, danh sách giọng + khoá hỏi lại
             verify(last("GET", "/api/readaloud/voices") !== null)
             verify(last("GET", "/api/readaloud/online") !== null)
@@ -341,9 +329,8 @@ Item {
             DesktopApi.responses["PUT /api/readaloud/online/google"] = {status: 400, data: {message: "Khoá không hợp lệ"}}
             find(google, "keyInput").text = "bad"
             find(google, "keySave").activated()
-            wait(60)
-            compare(find(google, "keyResult").text, "Khoá không hợp lệ")
-            compare(Api.notice, "")
+            tryVerify(function() { return (find(google, "keyResult").text) === ("Khoá không hợp lệ") })
+            tryCompare(Api, "notice", "")
         }
 
         function test_azureRegionOnlyChangeEnablesSave() {
@@ -364,7 +351,7 @@ Item {
             const page = make()
             const card = find(page, "voiceModule.supertonic")
             verify(card.downloading)
-            verify(hasText(card, "Đang tải giọng Supertonic (228 MB) 52%"))
+            verify(hasText(card, "Đang tải giọng Supertonic (217 MB) 52%"))
             verify(find(card, "moduleBar").width > 0)
             // tóm tắt ở đầu "Bộ giọng"
             verify(hasText(page, "Supertonic · 52%"))
@@ -372,31 +359,28 @@ Item {
             const bar = find(card, "moduleBar").width
             supertonic = Object.assign({}, supertonic, {done: 60000000})
             card.refresh()
-            wait(40)
-            compare(find(card, "moduleBar").width, bar)
+            tryVerify(function() { return (find(card, "moduleBar").width) === (bar) })
             // Huỷ
             DesktopApi.responses["POST /api/readaloud/supertonic/cancel"] = function() {
                 host.supertonic = Object.assign({}, host.supertonic, {state: "missing", cancelled: true, done: 0})
                 return {status: 200, data: host.supertonic}
             }
             click(find(card, "moduleCancel"))
-            wait(80)
-            compare(last("POST", "/api/readaloud/supertonic/cancel").body, {})
-            verify(!card.downloading)
-            verify(hasText(card, "Đã huỷ - lần tải sau làm tiếp từ chỗ dừng. Mười giọng nam nữ, nhẹ máy, không cần mạng. Chữ của sách không rời máy.") || card.status.cancelled)
+            tryVerify(function() { return JSON.stringify(last("POST", "/api/readaloud/supertonic/cancel").body) === JSON.stringify({}) })
+            tryVerify(function() { return !card.downloading })
+            tryVerify(function() { return hasText(card, "Đã huỷ - lần tải sau làm tiếp từ chỗ dừng. Mười giọng nam nữ, nhẹ máy, không cần mạng. Chữ của sách không rời máy.") || card.status.cancelled })
             // Tải (cỡ còn thiếu) -> POST kèm lựa chọn
             click(find(card, "choice.supertonic"))          // VieNeu đã có nên Supertonic không đánh dấu sẵn
-            wait(40)
+            tryVerify(function() { return find(card, "moduleStart").text === "Tải (217 MB)" })
             const start = find(card, "moduleStart")
-            compare(start.text, "Tải (228 MB)")
+            compare(start.text, "Tải (217 MB)")
             DesktopApi.responses["POST /api/readaloud/supertonic"] = function(body) {
                 host.supertonic = Object.assign({}, host.supertonic, {state: "downloading", done: 1000000})
                 return {status: 200, data: host.supertonic}
             }
             click(start)
-            wait(80)
-            compare(last("POST", "/api/readaloud/supertonic").body.choices, ["supertonic"])
-            verify(card.downloading)
+            tryVerify(function() { return JSON.stringify(last("POST", "/api/readaloud/supertonic").body.choices) === JSON.stringify(["supertonic"]) })
+            tryVerify(function() { return card.downloading })
         }
 
         function test_downloadFailureToast() {
@@ -405,13 +389,11 @@ Item {
             const card = find(page, "voiceModule.vieneu")
             const nano = find(card, "choice.nano")
             click(nano)
-            wait(40)
-            compare(find(card, "moduleStart").text, "Tải (176 MB)")
+            tryVerify(function() { return (find(card, "moduleStart").text) === ("Tải (168 MB)") })
             DesktopApi.responses["POST /api/readaloud/vieneu"] = {status: 400, data: {message: "Hết chỗ trên đĩa"}}
             click(find(card, "moduleStart"))
-            wait(80)
-            compare(last("POST", "/api/readaloud/vieneu").body.choices, ["nano"])
-            compare(Api.notice, "Chưa tải được giọng VieNeu\nHết chỗ trên đĩa")
+            tryVerify(function() { return JSON.stringify(last("POST", "/api/readaloud/vieneu").body.choices) === JSON.stringify(["nano"]) })
+            tryCompare(Api, "notice", "Chưa tải được giọng VieNeu\nHết chỗ trên đĩa")
         }
 
         function test_removeAsksFirstAndBackClosesTheAsk() {
@@ -419,7 +401,7 @@ Item {
             const page = make()
             const card = find(page, "voiceModule.vieneu")
             click(find(card, "choiceRemove.turbo"))
-            wait(80)
+            tryVerify(function() { return overlay("removeConfirm.vieneu") !== null })
             const confirm = overlay("removeConfirm.vieneu")
             verify(confirm !== null)
             compare(confirm.open, true)
@@ -429,30 +411,27 @@ Item {
             compare(confirm.description, "Giọng sẽ không còn trên máy này cho tới khi bạn tải lại.")
             // Back đóng hộp hỏi, không gỡ gì
             verify(Nav.back())
-            wait(80)
-            compare(confirm.open, false)
-            compare(Nav.layers.length, 0)
-            compare(DesktopApi.requests.filter(r => r.path === "/api/readaloud/vieneu/remove").length, 0)
+            tryCompare(confirm, "open", false)
+            tryVerify(function() { return (Nav.layers.length) === (0) })
+            tryVerify(function() { return (DesktopApi.requests.filter(r => r.path === "/api/readaloud/vieneu/remove").length) === (0) })
             // mở lại, "Giữ lại" cũng không gỡ
             click(find(card, "choiceRemove.turbo"))
-            wait(80)
+            tryVerify(function() { return overlay("removeConfirmNo.vieneu") !== null })
             click(overlay("removeConfirmNo.vieneu"))
-            wait(80)
-            compare(confirm.open, false)
-            compare(DesktopApi.requests.filter(r => r.path === "/api/readaloud/vieneu/remove").length, 0)
+            tryCompare(confirm, "open", false)
+            tryVerify(function() { return (DesktopApi.requests.filter(r => r.path === "/api/readaloud/vieneu/remove").length) === (0) })
             // "Gỡ giọng" mới gỡ
             DesktopApi.responses["POST /api/readaloud/vieneu/remove"] = function(body) {
                 host.vieneu.choices[0] = Object.assign({}, host.vieneu.choices[0], {installed: false, bytes: 300000000})
                 return {status: 200, data: host.vieneu}
             }
             click(find(card, "choiceRemove.turbo"))
-            wait(80)
+            tryVerify(function() { return overlay("removeConfirmYes.vieneu") !== null })
             click(overlay("removeConfirmYes.vieneu"))
-            wait(80)
-            compare(last("POST", "/api/readaloud/vieneu/remove").body.choice, "turbo")
-            compare(confirm.open, false)
-            compare(Nav.layers.length, 0)
-            verify(last("GET", "/api/readaloud/voices") !== null)
+            tryVerify(function() { return (last("POST", "/api/readaloud/vieneu/remove").body.choice) === ("turbo") })
+            tryCompare(confirm, "open", false)
+            tryVerify(function() { return (Nav.layers.length) === (0) })
+            tryVerify(function() { return last("GET", "/api/readaloud/voices") !== null })
         }
 
         function test_supertonicRemoveNamesTheBooksStillUsingIt() {
@@ -462,7 +441,7 @@ Item {
             const card = find(page, "voiceModule.supertonic")
             DesktopApi.delayed = true
             click(find(card, "choiceRemove.supertonic"))
-            wait(40)
+            tryVerify(function() { return overlay("removeConfirm.supertonic") !== null })
             const confirm = overlay("removeConfirm.supertonic")
             verify(confirm !== null)
             // chưa biết cuốn nào dùng: đang xem, nút Gỡ giọng chưa bấm được
@@ -470,7 +449,7 @@ Item {
             verify(supertonicConfirm.length >= 1)
             DesktopApi.delayed = false
             DesktopApi.finish()
-            wait(80)
+            tryVerify(function() { return findAll(host.Window.window.contentItem, node => node.objectName === "removeConfirm.supertonic" && node.open).length > 0 })
             const dialog = findAll(host.Window.window.contentItem, node => node.objectName === "removeConfirm.supertonic" && node.open)[0]
             verify(dialog !== undefined)
             compare(dialog.description, "2 cuốn đang dùng giọng này (“Rokujouma”, “Sách thứ hai”), 5 nhân vật. 40 câu chưa thu sẽ im tới khi bạn tải lại giọng hay đổi giọng khác; câu đã thu vẫn nghe được.")
@@ -483,12 +462,11 @@ Item {
             const choice = find(page, "voiceSpeedChoice")
             compare(choice.value, "auto")
             verify(hasText(page, "Máy kịp thì đọc bản hay nhất. Chỉ áp cho giọng Supertonic; sách xuất ra luôn dùng bản hay nhất."))
-            verify(hasText(page, "Giọng Supertonic - Đang dùng: Chất lượng cao nhất. Bản nhanh hơn cần tải thêm 65 MB."))
+            verify(hasText(page, "Giọng Supertonic - Đang dùng: Chất lượng cao nhất. Bản nhanh hơn cần tải thêm 62 MB."))
             choice.picked("fast")
-            wait(80)
-            compare(last("POST", "/api/readaloud/voice-speed").body.choice, "fast")
-            verify(hasText(page, "Nhanh hơn, tiếng kém hơn chút - hợp máy yếu. Chỉ áp cho giọng Supertonic; sách xuất ra luôn dùng bản hay nhất."))
-            verify(hasText(page, "Nhanh hơn"))
+            tryVerify(function() { return (last("POST", "/api/readaloud/voice-speed").body.choice) === ("fast") })
+            tryVerify(function() { return hasText(page, "Nhanh hơn, tiếng kém hơn chút - hợp máy yếu. Chỉ áp cho giọng Supertonic; sách xuất ra luôn dùng bản hay nhất.") })
+            tryVerify(function() { return hasText(page, "Nhanh hơn") })
         }
 
         function test_loadErrorHasRetry() {
@@ -499,9 +477,8 @@ Item {
             compare(find(page, "voiceLoadError").text, "Bạn hãy kiểm tra kết nối rồi tải lại giọng đọc.")
             DesktopApi.responses["GET /api/readaloud/voices"] = function() { return {status: 200, data: host.voices} }
             click(textItem(page, "Thử lại"))
-            wait(120)
-            compare(page.loadError, "")
-            verify(row(page, "edge:vi-VN-HoaiMyNeural") !== null)
+            tryCompare(page, "loadError", "")
+            tryVerify(function() { return row(page, "edge:vi-VN-HoaiMyNeural") !== null })
         }
 
         function test_longVoiceNamesWrap() {
@@ -529,7 +506,7 @@ Item {
             const page = make()
             const edge = findAll(page, node => node.storageKey === "voice.provider.edge")[0]
             compare(edge.expanded, false)
-            const head = findAll(edge, node => node.title === "Edge")[0]
+            const head = findAll(edge, node => node !== edge && node.title === "Edge")[0]
             click(head)
             compare(edge.expanded, true)
             compare(Platform.setting("fold.voice.provider.edge", "0"), "1")
@@ -550,17 +527,14 @@ Item {
             const screen = createTemporaryObject(screenFactory, host, {width: 1000, height: 900})
             Api.defaultVoice = "edge:vi-VN-HoaiMyNeural"
             Api.loadVoiceName()
-            wait(60)
-            compare(Api.voiceName, "Hoài My")
-            compare(screen.summary("voice"), "Hoài My")
+            tryCompare(Api, "voiceName", "Hoài My")
+            tryVerify(function() { return (screen.summary("voice")) === ("Hoài My") })
         }
 
         // ---- ảnh ----
         function shot(name, item) {
             const target = item || host
-            target.Window.window.update()
-            waitForRendering(target)
-            wait(400)
+            ready()
             qtGlyphAudit.scan()
             const img = grabImage(target)
             const path = Qt.resolvedUrl("../../build/d2shots/" + name + "_" + (Theme.dark ? "dark" : "light") + ".png").toString()
@@ -574,11 +548,11 @@ Item {
             const frame = createTemporaryObject(frameFactory, host, {width: host.width, height: host.height})
             const page = createTemporaryObject(voiceFactory, frame.holder, {width: width, x: x === undefined ? (host.width - width) / 2 : x, y: 0})
             current = page
-            wait(300)
+            ready()
             return {frame: frame, page: page}
         }
         function scrollTo(page, item, margin) { page.y = 0; page.y = -Math.max(0, item.mapToItem(page, 0, 0).y - (margin === undefined ? 40 : margin)) }
-        function release(shown) { shown.page.destroy(); wait(20); shown.frame.destroy(); wait(20) }
+        function release(shown) { shown.page.destroy(); shown.frame.destroy(); ready() }
 
         function test_screenshotsPage() {
             openAll()
@@ -606,21 +580,21 @@ Item {
                 const shown = framed(800)
                 const page = shown.page
                 click(textItem(row(page, "edge:vi-VN-HoaiMyNeural"), "Thử giọng"))
-                wait(200)
+                ready()
                 page.y = 0
                 shot("settings_voice_sample")
                 click(textItem(row(page, "edge:vi-VN-NamMinhNeural"), "Thử giọng"))
-                wait(200)
+                ready()
                 page.y = 0
                 shot("settings_voice_sample_error")
                 find(page, "providerKey.google").open = true
                 find(page, "providerKey.azure").open = true
                 const azure = find(page, "providerKey.azure")
                 find(azure, "keyCheck").activated()
-                wait(100)
+                tryVerify(function() { return find(find(page, "providerKey.azure"), "keyResult").text.length > 0 })
                 find(find(page, "providerKey.fpt"), "keyInput").text = "dán-khoá-ở-đây"
                 findAll(azure, node => node.label === "Nhận khoá")[0].open = true
-                wait(200)
+                ready()
                 scrollTo(page, find(page, "voiceKeysHeader"), 40)
                 shot("settings_voice_keyresult")
                 release(shown)
@@ -637,10 +611,10 @@ Item {
                 scrollTo(page, row(page, "edge:long"), 200)
                 shot("settings_voice_narrow_long")
                 click(find(find(page, "voiceModule.vieneu"), "choiceRemove.turbo"))
-                wait(300)
+                ready()
                 shot("settings_voice_confirm_narrow")
                 Nav.back()
-                wait(300)
+                ready()
                 release(shown)
             })
             host.supertonic = Object.assign({}, fixtureSupertonic(), {state: "ready", choices: [Object.assign({}, fixtureSupertonic().choices[0], {installed: true, bytes: 0})]})
@@ -648,10 +622,10 @@ Item {
                 const shown = framed(800)
                 const page = shown.page
                 click(find(find(page, "voiceModule.supertonic"), "choiceRemove.supertonic"))
-                wait(300)
+                ready()
                 shot("settings_voice_confirm")
                 Nav.back()
-                wait(300)
+                ready()
                 release(shown)
             })
         }
@@ -662,7 +636,7 @@ Item {
                 const shown = framed(400)
                 const page = shown.page
                 find(page, "providerKey.google").open = true
-                wait(200)
+                ready()
                 scrollTo(page, find(page, "voiceKeysHeader"), 20)
                 shot("settings_voice_narrow_keys")
                 scrollTo(page, find(page, "voiceModule.supertonic"), 20)
@@ -692,10 +666,10 @@ Item {
             Platform.setSetting("fold.voice.modules", "1")
             both(function() {
                 const screen = createTemporaryObject(screenFactory, host, {width: host.width, height: host.height, active: "voice"})
-                wait(400)
+                ready()
                 shot("settings_voice_screen")
                 screen.destroy()
-                wait(20)
+                ready()
             })
         }
         Component {

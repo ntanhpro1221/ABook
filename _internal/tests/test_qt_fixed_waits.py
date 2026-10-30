@@ -8,30 +8,29 @@ import re
 from pathlib import Path
 
 TESTS = Path(__file__).resolve().parent.parent / "desktop_qt" / "tests"
-WAIT = r"wait\(\s*\d+\s*\)"
-# Hàm trợ giúp chỉ gói một lần chờ cố định (`function settle() { wait(350) }`) cũng là chờ cố định.
-HELPER = re.compile(r"function\s+(\w+)\s*\(\s*\)\s*\{\s*" + WAIT + r"\s*;?\s*\}")
-CHECK = re.compile(r"^\s*(verify|compare|fuzzyCompare)\s*\(")
+WAIT = re.compile(r"(?<![\w.])wait\s*\(")
+CPP_WAIT = re.compile(r"\bQTest::qWait\s*\(")
 # Chờ cố định chỉ đúng khi test chứng minh điều gì đó KHÔNG xảy ra trong một khoảng (không gửi lệnh, hàng không đổi);
 # dòng ấy ghi dấu này để máy dò bỏ qua.
 ABSENCE = "// fixed: proves absence"
-BASELINE = 67
+BASELINE = 0
 
 
 def fixed_wait_checks(root=TESTS):
-    """(file, line) của mỗi `wait(N)` (hay hàm chỉ gói nó) mà dòng có mã kế tiếp là một phép kiểm."""
+    """Catch fixed waits anywhere, including inline calls and wait-only helpers.
+
+    A declaration or an action between a sleep and an assertion does not make
+    the sleep safe. Only explicitly documented absence windows are exempt.
+    """
     hits = []
-    for path in sorted(root.rglob("*.qml")):
+    for path in sorted(p for p in root.rglob("*") if p.suffix in {".qml", ".cpp"}):
         text = path.read_text(encoding="utf-8")
-        calls = [WAIT] + [re.escape(name) + r"\(\s*\)" for name in HELPER.findall(text)]
-        waiting = re.compile(r"^\s*(" + "|".join(calls) + r")\s*;?\s*(//.*)?$")
+        waiting = WAIT if path.suffix == ".qml" else CPP_WAIT
         lines = text.splitlines()
         for i, line in enumerate(lines):
-            if not waiting.match(line) or ABSENCE in line:
+            if not waiting.search(line.split("//", 1)[0]) or ABSENCE in line:
                 continue
-            nxt = next((l for l in lines[i + 1:] if l.strip() and not l.strip().startswith("//")), "")
-            if CHECK.match(nxt):
-                hits.append((path.relative_to(root).as_posix(), i + 1))
+            hits.append((path.relative_to(root).as_posix(), i + 1))
     return hits
 
 
@@ -60,4 +59,41 @@ def test_detector_sees_the_pattern(tmp_path):
         "        tryVerify(function() { return z })\n"
         "    }\n"
         "}\n", encoding="utf-8")
-    assert fixed_wait_checks(tmp_path) == [("tst_probe.qml", 4), ("tst_probe.qml", 8)]  # settle() rồi compare; wait(100) rồi verify
+    assert fixed_wait_checks(tmp_path) == [("tst_probe.qml", 2), ("tst_probe.qml", 8), ("tst_probe.qml", 11)]
+
+
+def test_detector_sees_inline_and_deferred_checks(tmp_path):
+    (tmp_path / "tst_inline.qml").write_text(
+        "action(); wait(10); compare(x, 1)\n"
+        "wait(30)\nconst row = findChild(page, 'row')\nverify(row)\n"
+        "// wait(100) is not executable\n"
+        "wait(60) // fixed: proves absence\ncompare(calls.length, 0)\n",
+        encoding="utf-8")
+    assert fixed_wait_checks(tmp_path) == [("tst_inline.qml", 1), ("tst_inline.qml", 2)]
+
+
+def test_detector_sees_cpp_waits(tmp_path):
+    (tmp_path / "test_probe.cpp").write_text(
+        "QTest::qWait(100); QCOMPARE(x, 1);\n"
+        "QTest::qWait(50); // fixed: proves absence\nQVERIFY(calls.empty());\n"
+        "QTRY_VERIFY(ready);\n// QTest::qWait(300);\n",
+        encoding="utf-8")
+    assert fixed_wait_checks(tmp_path) == [("test_probe.cpp", 1)]
+
+
+def test_detector_sees_helper_ending_in_wait(tmp_path):
+    (tmp_path / "tst_helper.qml").write_text(
+        "function open(page) {\n    tryVerify(function() { return page.ready })\n    wait(50)\n}\n"
+        "open(page)\nverify(page.visible)\n", encoding="utf-8")
+    assert fixed_wait_checks(tmp_path) == [("tst_helper.qml", 3)]
+
+
+def test_detector_sees_duration_expressions_and_spacing(tmp_path):
+    (tmp_path / "tst_expression.qml").write_text(
+        "wait(Theme.motionSlow / 3)\nverify(visible)\n"
+        "wait (delay)\ncompare(x, 1)\n"
+        "spy.wait(1000)\n", encoding="utf-8")
+    (tmp_path / "test_expression.cpp").write_text(
+        "QTest::qWait (delay);\nQVERIFY(ready);\n", encoding="utf-8")
+    assert fixed_wait_checks(tmp_path) == [
+        ("test_expression.cpp", 1), ("tst_expression.qml", 1), ("tst_expression.qml", 3)]

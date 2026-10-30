@@ -1,10 +1,12 @@
 import QtQuick
 import ABook
 import "StudioLogic.js" as Logic
+import "PrecastLogic.js" as Precast
+import "EditBookLogic.js" as Edit
 
 // Studio › một dự án (ProjectScreen.tsx; DESIGN.md mục 7): tên + dòng trạng thái, MỘT nút chính theo trạng thái (Bắt đầu · Tạm dừng · Tiếp tục · Nghe trong Thư viện;
 // sách xong còn thay đổi chờ thì "Áp dụng N thay đổi"), mọi việc khác trong "…". Dưới là hàng tab (Chương · Việc cần duyệt · Cần nghe lại · Nhân vật · Nhạc nền;
-// còn lại trong "Thêm") và nội dung tab: Chương, Nhật ký; các tab khác nói gọn là chưa mở.
+// còn lại trong "Thêm") và nội dung tab: Chương, Việc cần duyệt, Cần nghe lại, Nhân vật (dàn người, đổi giọng / tên / giới / gộp, công tắc tự kể, cách đọc tên), Duyệt trước khi thu, Nhật ký, Nhạc nền (StudioMusic); các tab khác nói gọn là chưa mở.
 // "Tạm dừng" gọi lệnh tạm dừng, KHÔNG BAO GIỜ dừng (dừng giữa pha phân tích là đổi quyển sách, AGENTS.md); "Dừng…" chỉ ở "…" kèm lời cảnh báo.
 // Cả danh sách cuộn MỘT khung: phần đầu là header của ListView, hàng chương / nhật ký giữ theo khoá nên nhịp hỏi 3 s / 15 s không làm nhảy chỗ cuộn.
 FocusScope {
@@ -38,13 +40,82 @@ FocusScope {
     readonly property alias dialogs: dialogs
 
     // ---- tab ----
-    function pickTab(key) { tab = Logic.tabOf(key) }
+    // Đổi tab ở hàng tab bỏ hết dấu vết lần nhảy trước (bộ lọc, thẻ, nơi về) như đổi địa chỉ của bản web; NHẢY từ một thẻ sang tab khác thì nhớ tab cũ, thẻ và bộ lọc để "Về màn trước" trả về đúng chỗ
+    property string workKind: "all"
+    property string workCard: ""
+    property string cameFrom: ""
+    property string nameParam: ""
+    property bool focusNames: false
+    property string precastStep: "cast"
+    // Tab Kịch bản mở từ thẻ việc / menu chương: {chapter, line, pick} (tham số chapter/line/pick của web); đổi tab ở hàng tab thì bỏ
+    property var scriptAt: null
+    readonly property var fromLabels: ({work: "Việc cần duyệt", review: "Cần nghe lại", precast: "Duyệt trước khi thu"})
+    function pickTab(key) {
+        workKind = "all"; workCard = ""; cameFrom = ""; nameParam = ""; focusNames = false; precastStep = "cast"; scriptAt = null
+        tab = Logic.tabOf(key)
+    }
+    function jump(next, from, card, name, names) {
+        if (card) workCard = card
+        cameFrom = from
+        nameParam = name || ""
+        focusNames = Boolean(names)
+        tab = Logic.tabOf(next)
+    }
+    function jumpBack() {
+        const target = cameFrom || "chapters"
+        cameFrom = ""; nameParam = ""; focusNames = false
+        tab = Logic.tabOf(target)
+    }
+    // Cuộn danh sách tới khi `target` (một thẻ, một hàng, tiêu đề mục) hiện trọn trong khung, cách mép 16
+    function reveal(target) {
+        if (!target || !list.visible) return
+        const top = target.mapToItem(list.contentItem, 0, 0).y
+        const bottom = top + target.height
+        if (top < list.contentY + 16) list.contentY = Math.max(list.originY - list.topMargin, top - 16)
+        else if (bottom > list.contentY + list.height - 16) list.contentY = bottom - list.height + 16
+    }
     onTabChanged: tabSwap.restart()
     SequentialAnimation {
         id: tabSwap
         NumberAnimation { target: root; property: "swap"; to: 0; duration: Theme.motionFastOut; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeAccelerate }
         ScriptAction { script: { root.shownTab = root.tab; list.positionViewAtBeginning() } }
         NumberAnimation { target: root; property: "swap"; to: 1; duration: Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeDecelerate }
+    }
+
+    // ---- việc cần bạn: hộp việc, câu cần nghe lại, cách đọc tên, yêu cầu từ điện thoại ----
+    WorkStore {
+        id: studioWork
+        store: root.store
+        book: root.book
+        bookId: root.book ? root.book.id : ""
+        workWanted: root.shownTab === "work" || root.shownTab === "precast"
+        namesWanted: root.shownTab === "cast"
+        counting: root.visible
+    }
+
+    // ---- nhân vật: người, giọng, tên, giới, gộp (tab Nhân vật và màn "Duyệt trước khi thu") ----
+    // Việc làm được với một người: Studio sửa mọi thứ như web (máy chủ từ chối thì báo lời của máy chủ)
+    readonly property var castCaps: ({rename: true, merge: true, gender: true, voice: true, unmerge: true, narrator: !!book && Boolean(book.castLocked), waiting: false})
+    function castRequest(kind, person) {
+        if (!book || !store) return
+        if (kind === "unmerge") { castUnmerge.run(book.id, person); return }
+        const data = {bookId: book.id, person: person, waiting: false}
+        if (kind !== "merge") { castDialogs.begin(kind, data); return }
+        // Người có thể nhận phần gộp: cả vai chính và vai phụ, đọc mới lúc bấm (như useCast của web)
+        const id = book.id
+        store.quiet("GET", "/api/books/" + id + "/cast", null, function(cast, error) {
+            if (!root.book || root.book.id !== id) return
+            if (error || !cast) { Api.notice = Edit.toastText("Chưa gộp được", error || "Không làm được lúc này."); return }
+            data.people = (cast.characters || []).concat(cast.extras || [])
+            castDialogs.begin("merge", data)
+        })
+    }
+    CastDialogs { id: castDialogs; objectName: "studioCastDialogs"; store: root.store }
+    CastUnmerge { id: castUnmerge; store: root.store }
+    CastMenu {
+        id: castMenu
+        caps: root.castCaps
+        onPicked: (kind, person) => root.castRequest(kind, person)
     }
 
     // ---- nhật ký ----
@@ -73,8 +144,9 @@ FocusScope {
         target: root.store
         function onBookIdChanged() {
             root.activityData = null; root.next = 0
+            root.workKind = "all"; root.workCard = ""; root.cameFrom = ""; root.nameParam = ""; root.focusNames = false; root.precastStep = "cast"
             root.tab = "chapters"; root.shownTab = "chapters"
-            Qt.callLater(root.refreshNext)
+            Later.call(root, root.refreshNext)
         }
     }
 
@@ -103,6 +175,9 @@ FocusScope {
                 }
             }
         }
+        // ListView không hàng nào thì mỗi lần dàn lại (footer đổi cao) Qt kéo về đầu (QQuickItemViewPrivate::layout, model rỗng): tab đặt nội dung
+        // ở footer (Nhạc nền...) giữ một hàng rỗng cao 0 để mở / đóng một khối không làm trang nhảy lên đầu
+        if (!rows.length) rows.push({key: "rest", kind: "rest"})
         return rows
     }
     readonly property var rowList: buildRows()
@@ -335,6 +410,18 @@ FocusScope {
                         }
                     }
                 }
+                // Trước mốc phân tích xong: đặt sẵn "Duyệt trước khi thu" cho cuốn này (webui/precast.py)
+                Collapse {
+                    width: parent.width
+                    open: !!root.book && root.book.phase !== "done" && !root.book.castLocked && !!root.book.precast
+                    PrecastWait { store: root.store; book: root.book }
+                }
+                // Phân tích xong mà chưa thu bao nhiêu: lối vào "Duyệt trước khi thu" đúng lúc sửa còn miễn phí
+                Collapse {
+                    width: parent.width
+                    open: !!root.book && Precast.bannerShown(root.book, root.tab)
+                    PrecastBanner { book: root.book; onOpened: root.pickTab("precast") }
+                }
                 Item { width: 1; height: 12 }
                 StudioTabs {
                     id: tabs
@@ -342,7 +429,7 @@ FocusScope {
                     width: parent.width
                     tab: root.tab
                     precast: root.hasPrecast
-                    counts: ({chapters: root.book ? root.book.chapters.total : 0})
+                    counts: ({chapters: root.book ? root.book.chapters.total : 0, precast: studioWork.precastCount || undefined, work: studioWork.workCount || undefined, review: studioWork.reviewCount || undefined})
                     onPicked: key => root.pickTab(key)
                     onMoreRequested: anchor => { moreMenu.items = Logic.moreItems(root.hasPrecast); moreMenu.anchorItem = anchor; moreMenu.show() }
                 }
@@ -371,8 +458,9 @@ FocusScope {
                     current: Player.loaded && !!root.book && Player.bookId === root.book.id && Player.chapterId === cell.row.chapter.id
                     menuOpen: chapterMenu.open && root.menuChapter.id === cell.row.chapter.id
                     onPlayRequested: if (cell.row.chapter.playable) {
-                        if (current) Player.toggle(); else Player.playChapter(root.book.id, cell.row.chapter.id)
+                        if (current) Player.toggle(); else Player.review(root.book.id, cell.row.chapter.id)
                     }
+                    onErrorRequested: anchor => chapterError.openFor(anchor, cell.row.chapter.lastError, !!(root.store.info && root.store.info.studio))
                     onMenuRequested: anchor => {
                         root.menuChapter = cell.row.chapter
                         chapterMenu.items = root.chapterMenuItems(cell.row.chapter)
@@ -488,14 +576,39 @@ FocusScope {
             width: list.width
             readonly property bool chaptersEmpty: root.shownTab === "chapters" && root.store && root.store.chapters.length === 0
             readonly property bool activityEmpty: root.shownTab === "activity" && root.activityData !== null && root.activityData.length === 0
-            readonly property bool placeholder: Logic.MAIN_TABS.concat(["precast", "script"]).indexOf(root.shownTab) >= 0 && root.shownTab !== "chapters"
-            height: chaptersEmpty || activityEmpty ? emptyBlock.height : placeholder ? placeholderText.height + 48 : root.shownTab === "activity" && root.activityLoading ? 160 : 0
+            readonly property bool notReady: root.shownTab === "precast" && !root.hasPrecast
+            readonly property bool placeholder: notReady
+            readonly property real innerHeight: chaptersEmpty || activityEmpty ? emptyBlock.height : placeholder ? placeholderText.height + 48 : root.shownTab === "activity" && root.activityLoading ? 160 : 0
+            height: backWrap.height + innerHeight + panels.height + (musicTab.item ? musicTab.item.height + 48 : 0) + (scriptTab.item ? scriptTab.item.height + 48 : 0)
             opacity: root.swap
+            // "Về màn trước": sau khi nhảy từ một thẻ sang tab khác, trả về đúng thẻ và bộ lọc vừa rời
+            Collapse {
+                id: backWrap
+                objectName: "jumpBackWrap"
+                x: 8
+                width: root.contentW
+                open: root.cameFrom !== "" && root.fromLabels[root.cameFrom] !== undefined && root.shownTab !== root.cameFrom
+                Item {
+                    width: parent.width
+                    height: 16 + jumpBack.height
+                    Button {
+                        id: jumpBack
+                        objectName: "jumpBack"
+                        y: 16
+                        size: "sm"
+                        kind: "ghost"
+                        icon: "arrow-left"
+                        text: "Về màn trước"
+                        onClicked: root.jumpBack()
+                    }
+                }
+            }
             EmptyState {
                 id: emptyBlock
                 objectName: "tabEmpty"
                 visible: parent.chaptersEmpty || parent.activityEmpty
                 x: 8
+                y: backWrap.height
                 width: root.contentW
                 icon: "book-open-text"
                 title: parent.activityEmpty ? "Chưa có gì" : "Chưa có chương nào"
@@ -506,9 +619,9 @@ FocusScope {
                 id: placeholderText
                 objectName: "tabPlaceholder"
                 visible: parent.placeholder
-                x: 8; y: 32
+                x: 8; y: backWrap.height + 32
                 width: root.contentW
-                text: Logic.tabPlaceholder(root.shownTab)
+                text: parent.notReady ? Precast.NOT_READY : Logic.tabPlaceholder(root.shownTab)
                 color: Theme.text2
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeBodySmall
@@ -516,11 +629,69 @@ FocusScope {
             EditBookSkeleton {
                 objectName: "activitySkeleton"
                 visible: root.shownTab === "activity" && root.activityLoading
-                x: 8; y: 24
+                x: 8; y: backWrap.height + 24
                 width: root.contentW * 2 / 3
                 shape: "rows"
                 count: 4
                 label: "Đang tải nhật ký"
+            }
+            StudioPanels {
+                id: panels
+                x: 8
+                y: backWrap.height + parent.innerHeight
+                width: root.contentW
+                store: root.store
+                book: root.book
+                work: studioWork
+                caps: root.castCaps
+                precastStep: root.precastStep
+                tab: root.shownTab
+                workKind: root.workKind
+                workCard: root.workCard
+                nameParam: root.nameParam
+                focusNames: root.focusNames
+                onKindChosen: value => { root.workKind = value; root.workCard = "" }
+                onJumped: (next, from, card, name, names) => root.jump(next, from, card, name, names)
+                onRevealRequested: target => root.reveal(target)
+                onPersonRequest: (kind, person) => root.castRequest(kind, person)
+                onPersonMenu: (anchor, person) => castMenu.openFor(anchor, person)
+                onPrecastStepChosen: value => root.precastStep = value
+                onPrecastOpened: root.pickTab("precast")
+                onPrecastClosed: root.pickTab("chapters")
+                onRedoRequested: if (root.book) root.newProjectRequested("redo", root.book.id)
+                onScriptOpened: (chapterId, stableId, pick) => root.scriptAt = {chapter: chapterId, line: stableId, pick: pick}
+            }
+            // Tab Nhạc nền: dựng khi mở tab, gỡ khi rời (rời tab thì bài nghe thử dừng)
+            Loader {
+                id: musicTab
+                objectName: "musicTab"
+                x: 8
+                y: backWrap.height + parent.innerHeight + panels.height
+                width: root.contentW
+                active: root.shownTab === "music" && !!root.book
+                sourceComponent: StudioMusic {
+                    store: root.store
+                    bookId: root.book ? root.book.id : ""
+                    chapters: root.store ? root.store.chapters : []
+                    overlay: root
+                }
+            }
+            // Tab Kịch bản: dựng khi mở tab (kể cả hỏi dấu đổi 6 giây một lần), gỡ khi rời
+            Loader {
+                id: scriptTab
+                objectName: "scriptTab"
+                x: 8
+                y: backWrap.height + parent.innerHeight + panels.height
+                width: root.contentW
+                active: root.shownTab === "script" && !!root.book
+                sourceComponent: ScriptTab {
+                    store: root.store
+                    work: studioWork
+                    bookId: root.book ? root.book.id : ""
+                    flick: list
+                    overlay: root
+                    target: root.scriptAt
+                }
             }
         }
         SmoothWheel { flick: list }
@@ -544,8 +715,8 @@ FocusScope {
         objectName: "chapterMenu"
         onPicked: key => {
             const chapter = root.menuChapter
-            if (key === "play") Player.playChapter(root.book.id, chapter.id)
-            else if (key === "script") root.pickTab("script")
+            if (key === "play") Player.review(root.book.id, chapter.id)
+            else if (key === "script") { root.pickTab("script"); root.scriptAt = {chapter: chapter.id, line: "", pick: false} }
             else if (key === "retake") {
                 root.retakeChapter = chapter
                 retake.title = "Thu lại cả " + chapter.displayTitle + "?"
@@ -555,6 +726,7 @@ FocusScope {
             }
         }
     }
+    ChapterError { id: chapterError }
     StudioConfirm {
         id: retake
         objectName: "retakeConfirm"

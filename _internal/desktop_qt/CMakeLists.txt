@@ -20,7 +20,7 @@ foreach(pair fadeSeconds:FADE_SECONDS siblingFadeSeconds:SIBLING_FADE_SECONDS st
 endforeach()
 
 # Qt >= 6.10.3, liên kết ĐỘNG (LGPL): DLL Qt nằm cạnh file chạy do windeployqt chép, người dùng thay được.
-find_package(Qt6 6.10 REQUIRED COMPONENTS Quick Network Test QuickTest CorePrivate GuiPrivate QuickPrivate)   # *Private: QWindowKit cần
+find_package(Qt6 6.10 REQUIRED COMPONENTS Quick Network Test QuickTest CorePrivate GuiPrivate QmlPrivate QuickPrivate)   # *Private: QWindowKit cần
 qt_standard_project_setup(REQUIRES 6.10)
 
 # App chỉ dựng trên Windows (Media Foundation, QWindowKit); máy khác (Linux CI, cloud) dựng và chạy mọi bộ thử.
@@ -38,6 +38,9 @@ set(ABOOK_PLAYER_SOURCES
     src/audioout.h
     src/chaptersmodel.cpp
     src/chaptersmodel.h
+    src/speechout.cpp
+    src/speechout.h
+    src/outputdevices.h
     src/player.cpp
     src/player.h
     src/playerlogic.h
@@ -58,6 +61,7 @@ set(ABOOK_MIXER_SOURCES src/musicmixer.cpp src/musicmixer.h src/mixcore.h src/mp
 if(WIN32)
 qt_add_executable(ABookDesk WIN32
     src/desktopapi.cpp
+    src/later.h
     src/desktopapi.h
     src/main.cpp
     src/musicwindowactivity.h
@@ -123,6 +127,10 @@ qt_add_qml_module(ABookDesk
         qml/LibraryContinue.qml
         qml/LibraryLogic.js
         qml/ChapterReader.qml
+        qml/FindInBook.qml
+        qml/FindLogic.js
+        qml/ActionButton.qml
+        qml/BookLogic.js
         qml/VolumeControl.qml
         qml/ReadingSuggestions.qml
         qml/BookCell.qml
@@ -163,6 +171,39 @@ qt_add_qml_module(ABookDesk
         qml/SettingsLook.qml
         qml/SettingsAdvanced.qml
         qml/StudioRows.qml
+        qml/DecisionButton.qml
+        qml/StudioQuery.qml
+        qml/WorkStore.qml
+        qml/ReadingProblem.qml
+        qml/TryReading.qml
+        qml/TryButton.qml
+        qml/TryNote.qml
+        qml/WorkExample.qml
+        qml/WorkField.qml
+        qml/WorkRequested.qml
+        qml/WorkPronunciation.qml
+        qml/WorkSpeaker.qml
+        qml/WorkNarrator.qml
+        qml/WorkVoice.qml
+        qml/WorkCard.qml
+        qml/WorkBulkKeep.qml
+        qml/WorkSection.qml
+        qml/WorkInbox.qml
+        qml/ReviewVerdict.qml
+        qml/ReviewSpoken.qml
+        qml/ReviewRow.qml
+        qml/ReviewQueue.qml
+        qml/NameEdit.qml
+        qml/NameRow.qml
+        qml/NameAddWord.qml
+        qml/SharedOffer.qml
+        qml/NameReadings.qml
+        qml/PhoneEdits.qml
+        qml/StudioPanels.qml
+        qml/DecisionLogic.js
+        qml/WorkLogic.js
+        qml/ReviewLogic.js
+        qml/NameLogic.js
         qml/StudioStore.qml
         qml/StudioSettings.qml
         qml/ProjectsScreen.qml
@@ -180,6 +221,19 @@ qt_add_qml_module(ABookDesk
         qml/StudioRename.qml
         qml/StudioDialogs.qml
         qml/StudioLogic.js
+        qml/ApplyChanges.qml
+        qml/ChapterError.qml
+        qml/ExportBook.qml
+        qml/ExportBusy.qml
+        qml/ExportDone.qml
+        qml/ExportJob.qml
+        qml/ExportKinds.qml
+        qml/FfmpegNeeded.qml
+        qml/PendingList.qml
+        qml/PendingRow.qml
+        qml/VoiceTry.qml
+        qml/WordTimings.qml
+        qml/ExportLogic.js
         qml/CoverPicker.qml
         qml/CoverEditor.qml
         qml/NewProjectScreen.qml
@@ -226,6 +280,7 @@ qt_add_qml_module(ABookDesk
         qml/OtherComputers.qml
         qml/OtherComputersRow.qml
         qml/OtherComputersBluetooth.qml
+        qml/SizeFormat.js
         qml/DevicesLogic.js
         qml/ImportQueue.js
         qml/ImportBox.qml
@@ -269,6 +324,21 @@ qt_add_qml_module(ABookDesk
         qml/EditBookError.qml
         qml/EditBookSwap.qml
         qml/EditBookMyMusic.qml
+        qml/StudioMusic.qml
+        qml/StudioMusicScene.qml
+        qml/StudioMusicSwap.qml
+        qml/StudioMusicTrackRow.qml
+        qml/StudioMusicMoods.qml
+        qml/StudioMusicDetails.qml
+        qml/StudioMyMusic.qml
+        qml/StudioMusicLogic.js
+        qml/ScriptTab.qml
+        qml/ScriptRow.qml
+        qml/ScriptStore.qml
+        qml/ScriptSpeakerMenu.qml
+        qml/ScriptDelivery.qml
+        qml/ScriptChapterMenu.qml
+        qml/ScriptLogic.js
         qml/EditBookReadings.qml
         qml/EditBookRename.qml
         qml/CastDialogs.qml
@@ -283,6 +353,17 @@ qt_add_qml_module(ABookDesk
         qml/CastRename.qml
         qml/CastSample.qml
         qml/CastVoice.qml
+        qml/CastMenu.qml
+        qml/CastUnmerge.qml
+        qml/CastNote.qml
+        qml/TellerMode.qml
+        qml/TellerLogic.js
+        qml/PrecastLogic.js
+        qml/PrecastReview.qml
+        qml/PrecastWait.qml
+        qml/PrecastBanner.qml
+        qml/CardFocus.qml
+        qml/WorkCards.qml
         qml/HistoryList.qml
         qml/HistoryLogic.js
         qml/RecordChip.qml
@@ -306,6 +387,14 @@ qt_add_qml_module(ABookDesk
         qml/PageSwitch.qml
         qml/PlayButton.qml
         qml/PlayerBar.qml
+        qml/PlayerLabels.js
+        qml/PlayerConsent.qml
+        qml/OutputPopover.qml
+        qml/PlayerAlert.qml
+        qml/PlayerFade.qml
+        qml/PlayerSubtitle.qml
+        qml/PlayerVoicePopover.qml
+        qml/SidebarProgress.qml
         qml/PlayerNotice.qml
         qml/Popover.qml
         qml/ReadAlongView.qml
@@ -325,13 +414,19 @@ qt_add_qml_module(ABookDesk
         qml/ShortcutsDialog.qml
         qml/BenchScenario.qml
     RESOURCES
+        fonts/ABookUIArrows.ttf
+        fonts/ABookUIArrows-OFL.txt
+        fonts/ABookUIArrows-UPSTREAM.txt
+        fonts/ABookUIShapes.ttf
+        fonts/ABookUIShapes-OFL.txt
+        fonts/ABookUIShapes-UPSTREAM.txt
         fonts/BeVietnamPro-Regular.ttf
         fonts/BeVietnamPro-Medium.ttf
         fonts/BeVietnamPro-Bold.ttf
 )
 target_compile_definitions(ABookDesk PRIVATE ABOOK_VERSION="${ABOOK_VERSION}" QT_NO_CAST_FROM_ASCII)
 # Âm thanh: Media Foundation của Windows (đo ở docs/NATIVE_PHONE_UI.md 7.1), không thêm DLL nào vào bản phân phối.
-target_link_libraries(ABookDesk PRIVATE Qt6::Quick Qt6::Network Qt6::GuiPrivate QWindowKit::Quick mfplat mf mfuuid mfreadwrite shlwapi ole32 ksuser propsys dwmapi windowsapp shell32)
+target_link_libraries(ABookDesk PRIVATE Qt6::Quick Qt6::Network Qt6::GuiPrivate Qt6::QmlPrivate QWindowKit::Quick mfplat mf mfuuid mfreadwrite shlwapi ole32 ksuser propsys dwmapi windowsapp shell32)
 qt_add_resources(ABookDesk legal PREFIX "/legal" BASE "../docs" FILES "../docs/THIRD_PARTY.md")
 # Icon app máy tính = icon bo góc của Windows (scripts/make_icons.py -> abook/assets/app.ico, 16-256 px), KHÔNG phải
 # icon vuông tràn viền của web (icon maskable cho điện thoại). Cửa sổ, khay và file exe dùng chung.
@@ -393,6 +488,14 @@ if(MSVC)
     target_compile_options(SidebarTests PRIVATE /W3 /utf-8)
 endif()
 enable_testing()
+qt_add_executable(PlayerNativeTests tests/test_playernative.cpp tests/fakes.h src/speechout.cpp src/speechout.h src/outputdevices.h src/audioout.cpp src/audioout.h src/playernet.h)
+target_include_directories(PlayerNativeTests PRIVATE src tests)
+target_compile_definitions(PlayerNativeTests PRIVATE QT_NO_CAST_FROM_ASCII)
+target_link_libraries(PlayerNativeTests PRIVATE Qt6::Test Qt6::Network)
+if(MSVC)
+    target_compile_options(PlayerNativeTests PRIVATE /W3 /utf-8)
+endif()
+add_test(NAME PlayerNativeTests COMMAND PlayerNativeTests)
 qt_add_executable(VoiceRender tools/voice_render.cpp src/mp3source.cpp src/mfsource.cpp src/streamsource.cpp src/timestretch.cpp third_party/sonic/sonic.c)
 target_include_directories(VoiceRender PRIVATE src third_party)
 target_compile_definitions(VoiceRender PRIVATE QT_NO_CAST_FROM_ASCII)
@@ -441,12 +544,12 @@ if(MSVC)
     target_compile_options(DesktopApiTests PRIVATE /W3 /utf-8)
 endif()
 add_test(NAME DesktopApiTests COMMAND DesktopApiTests)
-qt_add_executable(WidthTests tests/test_width.cpp tests/glyphaudit.h tests/fakes.h src/bookdetail.cpp src/bookdetail.h src/mediacontrols.cpp src/mediacontrols.h
+qt_add_executable(WidthTests tests/test_width.cpp tests/glyphaudit.h tests/visualready.h tests/fakes.h src/later.h src/bookdetail.cpp src/bookdetail.h src/mediacontrols.cpp src/mediacontrols.h
     src/readalong.cpp src/readalong.h src/music.cpp src/music.h src/feedback.cpp src/feedback.h ${ABOOK_PLAYER_SOURCES} ${ABOOK_MUSIC_SOURCES})
 target_include_directories(WidthTests PRIVATE src tests)
 target_compile_definitions(WidthTests PRIVATE QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/width"
     WIDTH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(WidthTests PRIVATE Qt6::QuickTest Qt6::Quick Qt6::Network windowsapp shell32)
+target_link_libraries(WidthTests PRIVATE Qt6::QuickTest Qt6::Quick Qt6::QuickPrivate Qt6::QmlPrivate Qt6::Network windowsapp shell32)   # QuickPrivate: FullRepaint, QmlPrivate: Later
 set_target_properties(WidthTests PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/width_tests")
 if(MSVC)
     target_compile_options(WidthTests PRIVATE /W3 /utf-8)

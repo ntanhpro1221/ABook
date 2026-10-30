@@ -14,12 +14,15 @@ Collapse {
     property bool entered: false
     property bool first: false
     property bool picking: false        // đang gửi công tắc tự chọn
+    property bool canPreview: false     // tab Nhạc nền của Studio có "Nghe thử" ở mỗi bài; Cài đặt thì không
+    property bool previewing: false
+    signal preview()
     signal askRemove()
     signal keep()
     signal remove()
     signal pick(var next)
     open: entered && !leaving
-    Component.onCompleted: Qt.callLater(function() { root.entered = true })
+    Component.onCompleted: Later.call(root, function() { root.entered = true })
 
     readonly property var switcher: Music.autoSwitch(track)
     readonly property string note: Music.autoLabel(track) || Music.analysisLabel(track)
@@ -91,10 +94,22 @@ Collapse {
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 4
-                visible: root.canImport
-                width: root.canImport ? (ask.width + confirm.width + (ask.width > 0 && confirm.width > 0 ? spacing : 0)) : 0
+                visible: root.canImport || root.canPreview
+                width: (root.canPreview ? listen.width + (root.canImport ? spacing : 0) : 0)
+                       + (root.canImport ? (ask.width + confirm.width + (ask.width > 0 && confirm.width > 0 ? spacing : 0)) : 0)
+                Button {
+                    id: listen
+                    objectName: "musicPreview"
+                    visible: root.canPreview
+                    text: root.previewing ? "Dừng nghe" : "Nghe thử"
+                    icon: root.previewing ? "square" : "play"
+                    kind: "ghost"; size: "sm"
+                    Accessible.name: text + ": " + (root.track.title || "")
+                    onActivated: root.preview()
+                }
                 Item {
                     id: ask
+                    visible: root.canImport
                     width: root.confirming ? 0 : askButton.implicitWidth
                     height: askButton.implicitHeight
                     clip: true
@@ -103,7 +118,7 @@ Collapse {
                     Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
                     Button {
                         id: askButton
-                        text: "Xoá"; icon: "trash-2"; kind: "ghost"; size: "sm"
+                        text: "Xoá"; icon: "trash"; kind: "ghost"; size: "sm"
                         enabled: !root.confirming
                         Accessible.name: "Xoá: " + (root.track.title || "")
                         onClicked: root.askRemove()
@@ -111,6 +126,7 @@ Collapse {
                 }
                 Item {
                     id: confirm
+                    visible: root.canImport
                     width: root.confirming ? confirmRow.implicitWidth : 0
                     height: confirmRow.implicitHeight
                     clip: true
@@ -122,7 +138,7 @@ Collapse {
                         spacing: 4
                         Button {
                             id: removeButton
-                            text: "Xoá bài"; icon: "trash-2"; kind: "ghost"; size: "sm"
+                            text: "Xoá bài"; icon: "trash"; kind: "ghost"; size: "sm"
                             busy: root.removing
                             enabled: root.confirming
                             Accessible.name: "Xoá bài: " + (root.track.title || "")

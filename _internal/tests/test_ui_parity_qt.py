@@ -69,6 +69,13 @@ def test_web_side_reads_labels_and_back_button():
     assert any(i.text == "Hẹn giờ đã tắt tiếng lúc" for i in web.items)   # chữ JSX trong JSX của thuộc tính `idle={...}`
 
 
+def test_nested_buffering_label_keeps_its_transport_icon():
+    tool = _tool()
+    pairs = tool.pair_up('playing ? (buffering ? "Đang tải…" : "Tạm dừng (Space)") : "Phát (Space)"',
+                         'playing ? "pause" : "play"')
+    assert pairs == [("Đang tải…", "pause"), ("Tạm dừng", "pause"), ("Phát", "play")]
+
+
 def test_tray_and_mini_shared_labels_are_detected():
     tool = _tool()
     texts = {item.text for item in tool.qt_scan().items}

@@ -23,7 +23,7 @@ TestCase {
         Api.preferences = {theme: "system"}
         Api.loaded = true
         Api.notice = ""
-        Theme.reduceMotion = true
+        Theme.reduceMotion = false
         const component = Qt.createComponent(Qt.resolvedUrl("../../qml/Main.qml"))
         compare(component.status, Component.Ready, component.errorString())
         win = component.createObject(null)
@@ -57,9 +57,8 @@ TestCase {
         Api.preferences = {theme: "system", letterShortcuts: false}
         keyClick("?", Qt.ShiftModifier, -1, win)
         keyClick(Qt.Key_M, Qt.NoModifier, -1, win)
-        wait(100)
-        verify(!dialog().open)
-        compare(Player.volume, 0.9)
+        tryVerify(function() { return !dialog().open })
+        tryCompare(Player, "volume", 0.9)
         Api.preferences = {theme: "system"}
         keyClick(Qt.Key_M, Qt.NoModifier, -1, win)
         compare(Player.volume, 0)
@@ -106,5 +105,22 @@ TestCase {
         compare(Theme.motionMedium, 0)
         win.show()
         tryCompare(Nav, "uiVisible", true)
+    }
+    // "Tới nội dung" (web Shell): Tab đầu tiên tới nút, nút trượt vào; bấm thì tiêu điểm vào màn đang xem, bỏ qua thanh bên.
+    function test_7_skipToContent() {
+        const skip = all(win.contentItem, "skipToContent")[0]
+        const shell = all(win.contentItem, "mainShell")[0]
+        shell.forceActiveFocus()
+        compare(skip.opacity, 0)
+        keyClick(Qt.Key_Tab, Qt.NoModifier, -1, win)
+        verify(skip.activeFocus)
+        tryCompare(skip, "opacity", 1)
+        verify(skip.y >= 0)
+        keyClick(Qt.Key_Return, Qt.NoModifier, -1, win)
+        verify(!skip.activeFocus)
+        let inside = false
+        for (let up = win.activeFocusItem; up; up = up.parent) if (up.objectName === "screenStack") inside = true
+        verify(inside, "tiêu điểm phải nằm trong màn đang xem: " + win.activeFocusItem)
+        tryCompare(skip, "opacity", 0)
     }
 }
