@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Controls.Basic as C
 import ABook
 import "NameLogic.js" as N
 import "StudioLogic.js" as Studio
@@ -284,7 +283,6 @@ Item {
     StudioConfirm {
         id: confirm
         objectName: "skipConfirm"
-        parent: C.Overlay.overlay
         panelWidth: 448
         actions: [{key: "later", text: "Thôi"}, {key: "go", text: "Bỏ qua tất cả", kind: "primary"}]
         onChosen: key => {

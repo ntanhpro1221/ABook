@@ -73,6 +73,8 @@ Column {
                     ListView {
                         id: creditList
                         objectName: "newCreditList"
+                        Accessible.role: Accessible.List
+                        Accessible.name: "Mọi dòng gợi ý theo chương"
                         y: 8
                         width: parent.width
                         height: parent.height - 8

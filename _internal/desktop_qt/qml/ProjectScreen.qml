@@ -127,9 +127,16 @@ FocusScope {
         store.loadActivity(id, activityMode === "technical", function(status, data) {
             if (ask !== root.activityAsk || !root.book || id !== root.book.id) return
             root.activityLoading = false
-            if (status >= 200 && status < 300 && Array.isArray(data)) root.activityData = data
+            if (status >= 200 && status < 300 && Array.isArray(data)) { root.activityData = data; root.activityError = "" }
+            else root.activityError = status === 404 ? "" : root.store.errorText(status, data)
         })
     }
+    // Lời lỗi của một nguồn phụ đang hỏng (nhân vật, yêu cầu thiết bị, nhật ký - useSideError của bản web), "" khi không có; sách đã mất (404) không tính
+    property string activityError: ""
+    function queryError(query) { return query && query.error && query.error.status !== 404 ? query.error.text : "" }
+    readonly property string sideError: queryError(studioWork.cast) || queryError(studioWork.inbox) || activityError
+    property string shownSideError: ""        // giữ chữ khi dải đang khép lại
+    onSideErrorChanged: if (sideError !== "") shownSideError = sideError
     readonly property bool wantsActivity: shownTab === "activity" && !!book
     onWantsActivityChanged: if (wantsActivity) loadActivity()
     onActivityModeChanged: { activityData = null; if (wantsActivity) loadActivity() }
@@ -143,7 +150,7 @@ FocusScope {
     Connections {
         target: root.store
         function onBookIdChanged() {
-            root.activityData = null; root.next = 0
+            root.activityData = null; root.activityError = ""; root.next = 0
             root.workKind = "all"; root.workCard = ""; root.cameFrom = ""; root.nameParam = ""; root.focusNames = false; root.precastStep = "cast"
             root.tab = "chapters"; root.shownTab = "chapters"
             Later.call(root, root.refreshNext)
@@ -286,7 +293,7 @@ FocusScope {
                         icon: "ellipsis"
                         iconSize: 20
                         tip: "Tuỳ chọn dự án"
-                        Accessible.name: "Tuỳ chọn dự án"
+                        Accessible.name: "Tuỳ chọn dự án " + (root.book ? root.book.title : "")
                         onClicked: { bookMenu.items = root.bookMenuItems(); bookMenu.anchorItem = moreButton; bookMenu.show() }
                     }
                 }
@@ -346,29 +353,47 @@ FocusScope {
                             }
                         }
                         // Tiến độ chung: chỉ khi sách đang làm dở
-                        Row {
+                        Flow {
+                            id: projectProgress
                             objectName: "projectProgress"
                             visible: !!root.book && root.book.phase !== "done" && root.book.phase !== "idle"
                             width: parent.width
                             spacing: 12
-                            StudioBar {
-                                objectName: "projectBar"
-                                width: Math.min(480, parent.width - 48 - 12)
-                                anchors.verticalCenter: parent.verticalCenter
-                                size: "md"
-                                value: root.book && root.book.progress ? root.book.progress.overall : 0
-                                tone: root.book && (root.book.running || root.book.starting) ? "accent" : "muted"
-                                label: "Tiến độ: " + (root.book ? root.book.title : "")
+                            readonly property bool moving: !!root.book && (root.book.running || root.book.starting) && !root.book.paused && !root.book.stopping
+                            Row {
+                                width: Math.min(320, parent.width)
+                                height: 22
+                                spacing: 12
+                                StudioBar {
+                                    objectName: "projectBar"
+                                    width: parent.width - 40 - 12
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    size: "xs"
+                                    value: root.book && root.book.progress ? root.book.progress.overall : 0
+                                    tone: projectProgress.moving ? "accent" : "muted"
+                                    label: "Tiến độ cả sách"
+                                }
+                                Text {
+                                    width: 40
+                                    horizontalAlignment: Text.AlignRight
+                                    text: Logic.formatPercent(root.book && root.book.progress ? root.book.progress.overall : 0)
+                                    color: Theme.text
+                                    font.pixelSize: Theme.sizeBodySmall
+                                    font.weight: Theme.weightMedium
+                                    font.features: { "tnum": 1 }
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
                             }
                             Text {
-                                width: 48
-                                horizontalAlignment: Text.AlignRight
-                                text: Logic.formatPercent(root.book && root.book.progress ? root.book.progress.overall : 0)
-                                color: Theme.text
+                                objectName: "projectProgressNote"
+                                visible: text !== ""
+                                width: Math.min(implicitWidth, parent.width)
+                                height: Math.max(22, implicitHeight)
+                                verticalAlignment: Text.AlignVCenter
+                                text: root.book ? Logic.progressNote(root.book) : ""
+                                color: Theme.text2
+                                wrapMode: Text.Wrap
                                 font.pixelSize: Theme.sizeBodySmall
-                                font.weight: Theme.weightMedium
-                                font.features: { "tnum": 1 }
-                                anchors.verticalCenter: parent.verticalCenter
                             }
                         }
                         // Lời nói thêm dưới hàng nút: hàng chờ, đang dừng, phân tích bị ngắt, chương chờ thu lại, tạm dừng vì pin, Studio chưa cài, lỗi lần làm sách
@@ -388,14 +413,44 @@ FocusScope {
                                     font.pixelSize: Theme.sizeBodySmall
                                 }
                             }
-                            Text {
+                            MoreInfo {
+                                objectName: "projectBattery"
+                                visible: battery.text !== ""
+                                width: parent.width
+                                label: "Dùng pin"
+                                HintText { id: battery; width: parent.width; text: root.book ? Logic.batteryInfo(root.book, root.remote) : "" }
+                            }
+                            Flow {
                                 objectName: "projectStartError"
                                 visible: !!root.book && !!root.book.startError
                                 width: parent.width
-                                text: root.book && root.book.startError ? "Không khởi động được: " + root.book.startError : ""
-                                color: Theme.danger
-                                wrapMode: Text.Wrap
-                                font.pixelSize: Theme.sizeBodySmall
+                                spacing: 8
+                                Accessible.role: Accessible.AlertMessage
+                                Accessible.name: startErrorText.text
+                                Row {
+                                    width: parent.width - (startRetry.visible ? startRetry.width + 8 : 0)
+                                    spacing: 8
+                                    Icon { name: "circle-alert"; size: 16; color: Theme.danger; y: 2 }
+                                    Text {
+                                        id: startErrorText
+                                        width: parent.width - 16 - 8
+                                        text: root.book && root.book.startError ? "Không khởi động được: " + root.book.startError : ""
+                                        color: Theme.danger
+                                        wrapMode: Text.Wrap
+                                        font.pixelSize: Theme.sizeBodySmall
+                                    }
+                                }
+                                Button {
+                                    id: startRetry
+                                    objectName: "projectStartRetry"
+                                    visible: !!root.book && !root.book.starting && !root.book.running
+                                    size: "sm"
+                                    kind: "ghost"
+                                    icon: "rotate-ccw"
+                                    text: "Thử lại"
+                                    busy: !!root.store && root.store.starting
+                                    onActivated: root.store.start(root.book.id)
+                                }
                             }
                             Column {
                                 id: problem
@@ -410,6 +465,12 @@ FocusScope {
                         }
                     }
                 }
+                // Các bước làm sách khi sách chưa xong (ProductionPanel)
+                Collapse {
+                    width: parent.width
+                    open: !!root.book && root.book.phase !== "done"
+                    ProjectSteps { width: parent.width; book: root.book }
+                }
                 // Trước mốc phân tích xong: đặt sẵn "Duyệt trước khi thu" cho cuốn này (webui/precast.py)
                 Collapse {
                     width: parent.width
@@ -422,6 +483,23 @@ FocusScope {
                     open: !!root.book && Precast.bannerShown(root.book, root.tab)
                     PrecastBanner { book: root.book; onOpened: root.pickTab("precast") }
                 }
+                Collapse {
+                    width: parent.width
+                    open: root.sideError !== "" && root.failure !== "stale"
+                    Row {
+                        objectName: "projectSideError"
+                        width: parent.width
+                        spacing: 8
+                        Icon { name: "circle-alert"; size: 16; color: Theme.warning; y: 2 }
+                        Text {
+                            width: parent.width - 16 - 8
+                            text: "Chưa tải được " + root.shownSideError + "; tự thử lại, hoặc làm mới trang."
+                            color: Theme.text
+                            wrapMode: Text.Wrap
+                            font.pixelSize: Theme.sizeBodySmall
+                        }
+                    }
+                }
                 Item { width: 1; height: 12 }
                 StudioTabs {
                     id: tabs
@@ -432,6 +510,14 @@ FocusScope {
                     counts: ({chapters: root.book ? root.book.chapters.total : 0, precast: studioWork.precastCount || undefined, work: studioWork.workCount || undefined, review: studioWork.reviewCount || undefined})
                     onPicked: key => root.pickTab(key)
                     onMoreRequested: anchor => { moreMenu.items = Logic.moreItems(root.hasPrecast); moreMenu.anchorItem = anchor; moreMenu.show() }
+                }
+                // Hàng tiêu đề của bảng chương, thẳng cột với StudioChapterRow (ô của ListView rộng hơn nội dung 8 mỗi bên)
+                StudioChapterHead {
+                    objectName: "chapterHead"
+                    x: -8
+                    width: root.contentW + 16
+                    visible: root.shownTab === "chapters" && !!root.store && root.store.chapters.length > 0
+                    opacity: root.swap
                 }
             }
         }
@@ -734,6 +820,24 @@ FocusScope {
         onChosen: key => {
             retake.dismiss()
             if (key === "go") root.store.retakeChapter(root.book.id, root.retakeChapter)
+        }
+        // Thu lại cùng chữ không chữa được sai người nói / sai chữ: lối sang Kịch bản của chương ấy, và vì sao
+        Button {
+            objectName: "retakeEdit"
+            kind: "ghost"
+            text: "Sửa chữ"
+            onActivated: {
+                const chapter = root.retakeChapter
+                retake.dismiss()
+                root.pickTab("script")
+                root.scriptAt = {chapter: chapter.id, line: "", pick: false}
+            }
+        }
+        MoreInfo {
+            objectName: "retakeMore"
+            width: parent.width
+            label: "Thu lại chương"
+            HintText { width: parent.width; text: "Dùng hạt giống mới cho cả chương. Sai người nói hoặc chữ thì sửa Kịch bản trước; thu lại cùng chữ không chữa được." }
         }
     }
     StudioDialogs {
