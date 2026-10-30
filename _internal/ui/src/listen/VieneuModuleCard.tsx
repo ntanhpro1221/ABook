@@ -267,7 +267,7 @@ export function VieneuModuleCard({
                   </span>
                   <span id={`${id}-detail`} className="mt-0.5 block text-[0.8125rem] text-fg-2 text-pretty">{choice.detail}</span>
                 </span>
-                <span id={`${id}-size`} className="shrink-0 text-xs text-fg-2">
+                <span data-motion-live id={`${id}-size`} className="shrink-0 text-xs text-fg-2">
                   {choice.installed ? "Đã có" : (downloading ? (sizes.current[choice.id] ?? choice.bytes) : choice.bytes) > 0 ? formatSize(downloading ? (sizes.current[choice.id] ?? choice.bytes) : choice.bytes) : "Đã có sẵn"}
                 </span>
                 {choice.removable && backend.remove && canPick && (
@@ -313,7 +313,7 @@ export function VieneuModuleCard({
       )}
       {failed && (
         <div role="alert" className="text-sm text-danger text-pretty">
-          <p>{vieneuLabel(shown, copy)}</p>
+          <p data-motion-live>{vieneuLabel(shown, copy)}</p>
           <ErrorDetails technical={status.errorDetail} />
         </div>
       )}

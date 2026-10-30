@@ -1,5 +1,6 @@
 package vn.abook.player.ui.voice
 
+import vn.abook.player.ui.components.ClockLabel
 import vn.abook.player.formatSize
 
 import androidx.compose.foundation.layout.Arrangement
@@ -69,7 +70,7 @@ fun VieneuDownload(voice: VoiceState, button: String, openSettings: () -> Unit, 
                 if (failed) {
                     BasicText("Chưa tải được giọng VieNeu", style = Abook.type.bodySmall.copy(color = Abook.colors.danger), modifier = Modifier.padding(top = Dim.s4))
                 }
-                if (note != null) BasicText(note, style = Abook.type.bodySmall.copy(color = if (failed) Abook.colors.danger else Abook.colors.text2), modifier = Modifier.padding(top = Dim.s4).testTag("vieneu_note"))
+                if (note != null) ClockLabel(note, style = Abook.type.bodySmall.copy(color = if (failed) Abook.colors.danger else Abook.colors.text2), modifier = Modifier.padding(top = Dim.s4).testTag("vieneu_note"))
                 if (metered != null) BasicText(metered, style = Abook.type.bodySmall.copy(color = Abook.colors.text2), modifier = Modifier.padding(top = Dim.s4))
                 Spacer(Modifier.height(Dim.s4))
                 FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Dim.s12)) {

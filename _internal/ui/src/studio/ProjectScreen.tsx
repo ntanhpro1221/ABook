@@ -1,3 +1,4 @@
+import { TickingValue } from "@/shared/TickingValue";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { Fold } from "@/shared/Collapse";
 import { MoreInfo } from "@/shared/SettingsNav";
@@ -173,11 +174,11 @@ function Step({
         {state === "active" && <Vu className="ml-auto h-3 text-accent" />}
         {state === "paused" && <Pause className="ml-auto size-3.5 text-fg-3" />}
       </div>
-      <p className={cn("mt-2 text-xs leading-relaxed", state === "pending" ? "text-fg-3" : "text-fg-2")}>{detail}</p>
+      <p data-motion-live className={cn("mt-2 text-xs leading-relaxed", state === "pending" ? "text-fg-3" : "text-fg-2")}>{detail}</p>
       {progress !== undefined && state !== "pending" && (
         <div className="mt-3 flex items-center gap-2">
           <Progress value={progress} running={state === "active"} tone={state === "done" ? "success" : state === "paused" ? "muted" : "accent"} size="sm" label={title} />
-          <span className="tabular w-9 text-right text-xs font-semibold">{formatPercent(progress)}</span>
+          <span className="tabular w-9 text-right text-xs font-semibold"><TickingValue>{formatPercent(progress)}</TickingValue></span>
         </div>
       )}
     </MotionRegion>
@@ -290,9 +291,9 @@ export function HeaderProgress({ book }: { book: BookSummary }) {
       <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
         <div className="flex min-w-0 flex-1 basis-48 items-center gap-3 sm:max-w-xs">
           <Progress value={book.progress.overall} running={running} tone={running ? "accent" : "muted"} size="xs" label="Tiến độ cả sách" />
-          <span className="tabular w-10 shrink-0 text-right text-sm font-medium">{formatPercent(book.progress.overall)}</span>
+          <span className="tabular w-10 shrink-0 text-right text-sm font-medium"><TickingValue>{formatPercent(book.progress.overall)}</TickingValue></span>
         </div>
-        {note && <span className="text-sm text-fg-2">{note}</span>}
+        {note && <TickingValue className="text-sm text-fg-2">{note}</TickingValue>}
       </div>
     </MotionPresence>
   );
@@ -440,7 +441,7 @@ function StopDialog({ book, open, onOpenChange }: { book: BookSummary; open: boo
             <p>
               <span className="font-semibold">{ANALYSIS_STOP_FACT}</span> - {ANALYSIS_CUT_COST}.
             </p>
-            <p className="mt-2 text-fg-2">
+            <p data-motion-live className="mt-2 text-fg-2">
               Nên để chạy hết bước này{eta ? ` (${eta})` : ""}. {stopAnalysisAdvice(book)}
             </p>
           </div>
@@ -802,7 +803,7 @@ export function Actions({ book }: { book: BookSummary }) {
         ) : live && book.stopping ? (
           <p>Dừng ở checkpoint kế, giữ phần đã xong; có thể mất vài phút.</p>
         ) : kind === "reanalyze" ? (
-          <p>
+          <p data-motion-live>
             Phân tích đã dừng giữa chừng
             {book.segments.total ? ` (còn ${formatNumber(pending)}/${formatNumber(book.segments.total)} câu)` : ""}; phân tích lại để giữ kết quả liền mạch,
             tiếp tục thì {ANALYSIS_CUT_COST}.
@@ -1037,7 +1038,7 @@ function ChapterRow({ book, chapter, rowIndex }: { book: BookSummary; chapter: C
             <Progress className="self-center" value={recorded} running={book.running} tone={book.running ? "accent" : "muted"} size="xs" label="Đã thu âm" />
             <span className="tabular text-xs text-fg-2">
               {book.running ? "" : "dừng ở "}
-              {chapter.segments.finished}/{chapter.segments.total}
+              <TickingValue>{chapter.segments.finished}/{chapter.segments.total}</TickingValue>
             </span>
           </div>
         ) : mark ? (
@@ -1049,7 +1050,7 @@ function ChapterRow({ book, chapter, rowIndex }: { book: BookSummary; chapter: C
       <div role="cell" className="tabular hidden text-right text-xs text-fg-2 lg:block">
         {chapter.status === "completed" || chapter.redo ? formatLength(chapter.seconds) : chapter.segments.total ? `${formatNumber(chapter.segments.total)} câu` : ""}
       </div>
-      <div role="cell" className="tabular hidden whitespace-nowrap text-right text-xs text-fg-3 lg:block">
+      <div data-motion-live role="cell" className="tabular hidden whitespace-nowrap text-right text-xs text-fg-3 lg:block">
         {chapter.completedAt ? formatRelative(chapter.completedAt) : ""}
       </div>
       <div role="cell" className="flex justify-end [&>button]:-mr-[5px]">

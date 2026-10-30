@@ -75,7 +75,7 @@ fun OtherPlayersSheet(repo: CompanionRepo, local: PlayerRepo, dismiss: () -> Uni
                             Reveal(remote.book.isNotEmpty() && remote.chapter != null) {
                                 Column {
                                     BasicText(remote.title, style = Abook.type.bodySmall)
-                                    Caption("${Fmt.clock(remote.positionAfter(0.0))} · ${Fmt.clock(remote.duration)}")
+                                    Caption("${Fmt.clock(remote.positionAfter(0.0))} · ${Fmt.clock(remote.duration)}", ticking = true)
                                     // All playback controls belong to this device's text column, including their shared centre.
                                     Row(Modifier.fillMaxWidth().testTag("remote_transport_${remote.device}"), horizontalArrangement = Arrangement.spacedBy(Dim.s8, Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically) {
                                         IconAction("Lùi 15 giây trên ${remote.name}", { if (!ui.busy) scope.launch { repo.send(remote, "skip", -15.0) } }, "remote_back_${remote.device}") { PlayerGlyph("↶15") }
