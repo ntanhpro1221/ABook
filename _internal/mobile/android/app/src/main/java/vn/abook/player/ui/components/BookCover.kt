@@ -27,11 +27,13 @@ import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -128,24 +130,39 @@ private fun PlaceholderText(title: String, part: Int?, ink: Color, width: Dp) {
     val pad = (width.value * 0.08f).dp
     // Tên chiếm phần trên, nhãn tập nằm riêng ở đáy: tên không bao giờ chạy xuống dưới nhãn hay quá mép bìa.
     Column(Modifier.fillMaxSize().padding(pad)) {
-        BasicText(
+        FitText(
             main,
             style = TextStyle(fontFamily = BeVietnamPro, fontWeight = FontWeight.Bold, fontSize = titleSize, lineHeight = 1.18.em, color = Color.White),
-            // Tên dài thì thu cỡ chữ cho vừa phần còn lại của bìa chứ không cắt (luật: không bao giờ cắt chữ của người dùng).
-            autoSize = TextAutoSize.StepBased(minFontSize = 2.sp, maxFontSize = titleSize, stepSize = 0.25.sp),
+            maxSize = titleSize,
+            kind = "title",
+            softWrap = true,
             modifier = Modifier.weight(1f).fillMaxWidth().testTag("cover_title"),
         )
         if (sub.isNotEmpty()) {
             Spacer(Modifier.height(pad / 2))
-            BasicText(
+            FitText(
                 sub.uppercase(),
                 style = TextStyle(fontFamily = BeVietnamPro, fontWeight = FontWeight.Medium, fontSize = subSize, color = ink),
+                maxSize = subSize,
+                kind = "part",
                 softWrap = false,
-                autoSize = TextAutoSize.StepBased(minFontSize = 2.sp, maxFontSize = subSize, stepSize = 0.25.sp),
                 modifier = Modifier.background(Color.Black.copy(alpha = 0.28f)).padding(horizontal = 4.dp, vertical = 2.dp).testTag("cover_part"),
             )
         }
     }
+}
+
+/**
+ * Chữ thu cỡ cho vừa ô (luật: không bao giờ cắt chữ của người dùng): `TextAutoSize.StepBased` có nhớ cỡ đã vừa ([CoverFit]) - cùng chữ, cùng ô thì lần sau khỏi dàn thử.
+ * [kind] + [maxSize] phân biệt kiểu chữ trong khoá nhớ.
+ */
+@Composable
+private fun FitText(text: String, style: TextStyle, maxSize: TextUnit, kind: String, softWrap: Boolean, modifier: Modifier) {
+    val store = CoverFit.of(LocalContext.current)
+    val autoSize = remember(store, kind, maxSize) {
+        store.autoSize("$kind|${maxSize.value}", TextAutoSize.StepBased(minFontSize = 2.sp, maxFontSize = maxSize, stepSize = 0.25.sp))
+    }
+    BasicText(text, modifier, style, softWrap = softWrap, autoSize = autoSize)
 }
 
 /** Vẽ ảnh phủ kín ô, cắt giữa nếu tỉ lệ khác (không cấp phát: IntOffset / IntSize là giá trị). */

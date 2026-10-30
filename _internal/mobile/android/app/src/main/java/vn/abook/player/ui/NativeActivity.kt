@@ -60,7 +60,9 @@ import vn.abook.player.ui.pip.PipControl
 import vn.abook.player.ui.pip.PipParams
 import vn.abook.player.ui.pip.PipSupport
 import vn.abook.player.ui.shell.ShellState
+import androidx.compose.ui.text.font.createFontFamilyResolver
 import vn.abook.player.ui.theme.AbookTheme
+import vn.abook.player.ui.theme.BeVietnamPro
 import vn.abook.player.ui.theme.ThemeReveal
 import vn.abook.player.ui.theme.ThemeRevealHost
 
@@ -86,6 +88,8 @@ class NativeActivity : ComponentActivity() {
         val splash = installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        // Phông Be Vietnam Pro nạp ngay ở luồng nền (bộ nhớ phông dùng chung với Compose): lần dàn chữ đầu tiên của khung đầu khỏi tự nạp từng độ đậm ở luồng chính.
+        lifecycleScope.launch(Dispatchers.Default) { createFontFamilyResolver(applicationContext).preload(BeVietnamPro) }
         val library = app.library
         val covers = app.covers
         val demoBooks = if (BuildConfig.NATIVE_UI) intent.getIntExtra(DEMO_BOOKS, 0) else 0
