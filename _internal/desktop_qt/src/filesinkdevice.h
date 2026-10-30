@@ -30,7 +30,14 @@ public:
     int rate() const override { return m_rate; }
     bool start() override {
         advance();
-        if (!m_started) { m_started = true; m_epoch = Clock::now(); m_ticks = 0; m_epochNs = m_epoch.time_since_epoch().count(); }
+        if (!m_started) {
+            m_started = true; m_epoch = Clock::now(); m_ticks = 0; m_epochNs = m_epoch.time_since_epoch().count();
+            // Khung 0 của file ứng với mốc này, cùng đồng hồ với Bench::mark (ms của steady_clock).
+            QFile clock(m_file.fileName() + QStringLiteral(".clock"));
+            if (clock.open(QIODevice::WriteOnly | QIODevice::Truncate))
+                clock.write(QByteArray::number(std::chrono::duration<double, std::milli>(m_epoch.time_since_epoch()).count(), 'f', 3)
+                            + ' ' + QByteArray::number(m_rate) + '\n');
+        }
         m_running = true;
         return m_file.isOpen();
     }
@@ -70,7 +77,7 @@ private:
     size_t m_capacity, m_period;
     bool m_started = false, m_running = false;
     Clock::time_point m_epoch;
-    quint64 m_ticks = 0, m_played = 0;
+    quint64 m_ticks = 0, m_played = 0, m_saved = 0;
     std::atomic<long long> m_epochNs{0};
     std::deque<float> m_queue;
     std::vector<Gap> m_gaps, m_stops;
@@ -102,8 +109,15 @@ private:
     void emit_(const float *data, quint64 frames) {
         if (m_file.isOpen()) m_file.write(reinterpret_cast<const char *>(data), qint64(frames * 8));
         m_played += frames;
+        // Mỗi giây ghi lại đầu WAV và hai danh sách: app bị giết giữa chừng vẫn để lại file đọc được tới giây gần nhất.
+        if (m_played - m_saved >= quint64(m_rate)) { m_saved = m_played; save(); }
     }
     void finish() {
+        if (!m_file.isOpen()) return;
+        save();
+        m_file.close();
+    }
+    void save() {
         if (!m_file.isOpen()) return;
         const quint32 bytes = quint32(m_played * 8);
         QByteArray h(44, '\0');
@@ -112,7 +126,8 @@ private:
         std::copy_n("RIFF", 4, h.data()); put32(4, 36 + bytes); std::copy_n("WAVEfmt ", 8, h.data() + 8);
         put32(16, 16); put16(20, 3); put16(22, 2); put32(24, quint32(m_rate)); put32(28, quint32(m_rate) * 8); put16(32, 8); put16(34, 32);
         std::copy_n("data", 4, h.data() + 36); put32(40, bytes);
-        m_file.seek(0); m_file.write(h); m_file.close();
+        const qint64 end = m_file.pos();
+        m_file.seek(0); m_file.write(h); m_file.seek(end); m_file.flush();
         // Ghi cạnh file WAV, mỗi dòng "khung_bắt_đầu số_khung": .gaps = engine kéo mà thiếu dữ liệu;
         // .stops = engine kéo đúng lúc luồng đang dừng (pause, hay Stop/Reset/Start khi trộn lại vắt qua ranh chu kỳ).
         for (const auto &[suffix, list] : {std::pair{QStringLiteral(".gaps"), &m_gaps}, std::pair{QStringLiteral(".stops"), &m_stops}}) {
