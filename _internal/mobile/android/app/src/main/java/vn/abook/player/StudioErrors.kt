@@ -113,8 +113,44 @@ object StudioPaths {
     /** Các đường GHI của một sách mà Studio gọi (đúng tên `remote_studio.ALLOWED`); khoá lạ bị từ chối trước khi gửi. */
     val WRITES = setOf(
         "speaker", "line", "narrator-section", "voice", "voice/preview", "pronunciation", "pronunciation/preview", "pronunciation/check", "review", "pending-changes/withdraw",
-        "characters/rename",
+        "characters/rename", "shared-readings", "music/rebuild", "music/download/cancel", "music/moods",
     )
+
+    /** Các đường GHI bằng PUT (đúng tên `remote_studio.ALLOWED`): nhạc nền, "Chờ tôi duyệt", bỏ dòng ghi công khỏi phần đọc. */
+    val PUTS = setOf("music", "precast", "skip")
+
+    fun put(id: String, endpoint: String): String {
+        require(endpoint in PUTS) { "Đường không hợp lệ" }
+        return book(id) + "/" + endpoint
+    }
+
+    /** Danh sách "Cách cuốn này đọc từng tên" (`GET /pronunciations`). */
+    fun pronunciations(id: String): String = book(id) + "/pronunciations"
+
+    /** Một chữ chạm tới bao nhiêu câu (`GET /pronunciations/reach`). */
+    fun reach(id: String, surface: String): String = book(id) + "/pronunciations/reach?surface=${enc(surface)}"
+
+    /** Cách đọc chung cho mọi sách. */
+    const val READINGS = "/api/readings"
+
+    /** Cách đọc chung có tên trong cuốn này mà cuốn đang đọc khác. */
+    fun sharedReadings(id: String): String = book(id) + "/shared-readings"
+
+    /** Dòng ghi công / xin ủng hộ máy gợi ý bỏ khỏi phần đọc. */
+    fun suggestions(id: String): String = book(id) + "/suggestions"
+
+    fun precast(id: String): String = book(id) + "/precast"
+
+    fun music(id: String): String = book(id) + "/music"
+    fun musicAlternatives(id: String, scene: String): String = book(id) + "/music/scenes/${enc(scene)}/alternatives"
+    const val MOODS_MODEL = "/api/music/moods-model"
+
+    /** Nghe thử một bài trong danh mục (`link` đã mã hoá). */
+    fun musicTrack(link: String): String = "/api/music/track?link=${enc(link)}"
+
+    /** Mục lục "Kịch bản" của cuốn, và kịch bản một chương. */
+    fun casting(id: String): String = book(id) + "/casting"
+    fun castingChapter(id: String, chapter: Int): String = book(id) + "/casting/$chapter"
 
     fun write(id: String, endpoint: String): String {
         require(endpoint in WRITES) { "Đường không hợp lệ" }
@@ -144,7 +180,9 @@ object StudioPaths {
     fun voiceSample(key: String): String = "/media/voices/${enc(key)}"
 
     /** Đường `/media/...` an toàn để tải: không `..`, không truy vấn, không ký tự lạ (đường do máy tính gửi về cũng qua đây). */
-    fun safeMedia(path: String): Boolean = path.startsWith("/media/") && !path.contains("..") && MEDIA.matches(path)
+    fun safeMedia(path: String): Boolean = path.contains("..").not() && (path.startsWith("/media/") && MEDIA.matches(path) || TRACK.matches(path))
+
+    private val TRACK = Regex("/api/music/track[?]link=[A-Za-z0-9%_.~-]+")
 
     private val MEDIA = Regex("/media/[A-Za-z0-9/_.%-]+")
 

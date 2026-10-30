@@ -17,6 +17,7 @@ import vn.abook.player.ui.voice.VoicePage
 import vn.abook.player.ui.data.SettingsGroup
 import vn.abook.player.ui.motion.Motion
 import vn.abook.player.ui.motion.ScreenGeometry
+import vn.abook.player.ui.studio.StudioSubKind
 import vn.abook.player.ui.studio.StudioTab
 
 /** Màn con xếp trên ba tab. Đang nghe không phải màn con: nó là cửa sổ nở ra từ thanh phát nhỏ ([vn.abook.player.ui.nowplaying.NowPlayingLayer]), có Back riêng. */
@@ -57,6 +58,10 @@ sealed interface Destination {
     /** Một dự án Studio ở tab `tab`: từ danh sách dự án hay từ thông báo "cần duyệt / đã xong". */
     @Immutable
     data class StudioProject(val computer: String, val book: String, val tab: StudioTab = StudioTab.Chapters) : Destination
+
+    /** Một màn con của dự án Studio (Duyệt trước khi thu, Kịch bản, Cách đọc tên): đi từ "Thêm" của dự án, Back về lại dự án. */
+    @Immutable
+    data class StudioSub(val computer: String, val book: String, val kind: StudioSubKind) : Destination
 }
 
 /** Một mục của ngăn xếp: `key` ổn định để Compose giữ trạng thái màn khi nó đổi chỗ (trên cùng -> bên dưới). */

@@ -64,6 +64,12 @@ object StudioText {
     const val GONE_TITLE = "Dự án này không còn"
     const val BACK_TO_STUDIO = "Về Studio"
     const val MORE = "Thêm"
+
+    fun subLabel(kind: StudioSubKind): String = when (kind) {
+        StudioSubKind.Precast -> PrecastText.TITLE
+        StudioSubKind.Script -> ScriptText.TITLE
+        StudioSubKind.Readings -> ReadingsText.TITLE
+    }
     const val NO_CHAPTERS = "Chưa có chương nào"
 
     fun label(kind: PrimaryKind, book: StudioBook): String = when (kind) {
