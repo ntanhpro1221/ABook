@@ -30,6 +30,7 @@ import vn.abook.player.ui.components.ClockLabel
 import vn.abook.player.ui.components.GeneratedCover
 import vn.abook.player.ui.components.InlineProblem
 import vn.abook.player.ui.components.ListItem
+import vn.abook.player.ui.components.PrimaryButton
 import vn.abook.player.ui.components.RowLine
 import vn.abook.player.ui.components.SectionTitle
 import vn.abook.player.ui.components.StageProgress
@@ -47,14 +48,17 @@ import vn.abook.player.ui.theme.Dim
  * để mở. Hỏi máy tính 5 giây một lần khi có sách chạy, 15 giây khi rảnh, và chỉ khi màn đang hiện (`active`).
  */
 @Composable
-fun StudioHomeScreen(state: StudioHomeState, onBack: () -> Unit, onOpen: (StudioBook) -> Unit, active: Boolean = true) {
+fun StudioHomeScreen(state: StudioHomeState, onBack: () -> Unit, onOpen: (StudioBook) -> Unit, active: Boolean = true, onNew: (() -> Unit)? = null) {
     val session = state.session
     val poll by state.poll.collectAsState()
     PollWhileVisible(active, session.retries) { state.run() }
     val books = poll.data
     val blocked = session.listenOnly || poll.error is StudioError.ListenOnly
     val groups = remember(books) { books?.let(StudioLogic::groups).orEmpty() }
-    BookForm(StudioText.TITLE, onBack, "studio_home") {
+    BookForm(
+        StudioText.TITLE, onBack, "studio_home",
+        footer = if (onNew != null && !blocked && books != null) ({ PrimaryButton(StudioNewText.TITLE, onNew, Modifier.fillMaxWidth().testTag("studio_new")) }) else null,
+    ) {
         val list = rememberLazyListState()
         when {
             blocked -> PermissionCard(session.name, session::retry)

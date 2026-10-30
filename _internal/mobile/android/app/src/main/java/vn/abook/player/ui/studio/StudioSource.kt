@@ -1,11 +1,14 @@
 package vn.abook.player.ui.studio
 
 import android.content.Context
+import org.json.JSONArray
 import org.json.JSONObject
 import vn.abook.player.StudioApi
 import vn.abook.player.StudioError
 import vn.abook.player.StudioLink
 import vn.abook.player.StudioPaths
+import vn.abook.player.ui.editbook.CoverResults
+import java.io.InputStream
 
 /** Lệnh của nút chính / hộp Dừng: mỗi lệnh một đường `POST /api/books/<id>/...` của Studio từ xa (`remote_studio.ALLOWED`). */
 sealed interface StudioCommand {
@@ -89,6 +92,47 @@ interface StudioSource {
 
     /** Kịch bản một chương (`GET /casting/<chapterId>`). */
     suspend fun castingChapter(computer: String, id: String, chapter: Int): ChapterScript
+
+    // ---- S4: xuất / bìa / nhật ký / sách mới ----
+
+    /** Việc xuất gần nhất của kiểu `kind` (`GET .../<kiểu>-job`). */
+    suspend fun exportJob(computer: String, id: String, kind: StudioExportKind): StudioExportJob
+
+    /** Bắt đầu một lượt xuất (`POST .../<kiểu>-job`); trả trạng thái việc. */
+    suspend fun exportStart(computer: String, id: String, kind: StudioExportKind, body: JSONObject): StudioExportJob
+
+    /** Huỷ lượt xuất đang chạy (`POST .../<kiểu>-job/cancel`). */
+    suspend fun exportCancel(computer: String, id: String, kind: StudioExportKind): StudioExportJob
+
+    /** Cỡ file sách, nhạc nền kèm được không, ffmpeg và các lần xuất trước. Phần nào hỏi hụt thì để mặc định. */
+    suspend fun exportOptions(computer: String, id: String): StudioExportOptions
+
+    /** Nhật ký của sách (`GET .../activity[?technical=1]`, một mảng). */
+    suspend fun activity(computer: String, id: String, technical: Boolean): List<StudioLogItem>
+
+    /** "Tìm bìa" theo tên (`GET .../cover/search?q=`). */
+    suspend fun coverSearch(computer: String, id: String, query: String): CoverResults
+
+    /** Gửi một bước XOÁ (khoá trong [StudioPaths.DELETES]): bỏ ảnh bìa. */
+    suspend fun delete(computer: String, id: String, endpoint: String): JSONObject
+
+    /** Gửi một file nguồn lên thư mục tải lên của máy tính (`POST /api/sources/upload`); `input` mở luồng đọc khi bắt đầu gửi. */
+    suspend fun uploadSource(computer: String, folder: String, name: String, input: () -> InputStream): UploadedSource
+
+    /** Tách file gộp nhiều chương thành thư mục chương (`POST /api/sources/split`); trả thư mục. */
+    suspend fun splitSource(computer: String, path: String, title: String): String
+
+    /** Máy tính đọc các nguồn đã gửi ra chương (`POST /api/scan`). */
+    suspend fun scan(computer: String, paths: List<String>): ScanView
+
+    /** Truyện kể ngôi thứ nhất không (`POST /api/first-person`). */
+    suspend fun firstPerson(computer: String, paths: List<String>): FirstPersonView
+
+    /** Các bộ phân tích truyện máy tính có (`GET /api/analysis-models`). */
+    suspend fun analysisModels(computer: String): AnalysisModels
+
+    /** Tạo sách (`POST /api/books`). */
+    suspend fun createBook(computer: String, body: JSONObject): CreatedBook
 }
 
 /** Bản thật: [StudioApi] trên đường ghim vân tay của [vn.abook.player.SyncLink]. `api` đổi được để thử không cần ghép máy. */
@@ -169,6 +213,60 @@ class StudioRepo(
 
     override suspend fun castingChapter(computer: String, id: String, chapter: Int): ChapterScript =
         parsed { StudioScriptJson.chapter(api(computer).getObject(StudioPaths.castingChapter(id, chapter))) }
+
+    override suspend fun exportJob(computer: String, id: String, kind: StudioExportKind): StudioExportJob =
+        parsed { StudioExportJson.job(api(computer).getObject(StudioPaths.exportJob(id, kind.job))) }
+
+    override suspend fun exportStart(computer: String, id: String, kind: StudioExportKind, body: JSONObject): StudioExportJob =
+        parsed { StudioExportJson.job(api(computer).post(StudioPaths.write(id, kind.job), body)) }
+
+    override suspend fun exportCancel(computer: String, id: String, kind: StudioExportKind): StudioExportJob =
+        parsed { StudioExportJson.job(api(computer).post(StudioPaths.write(id, kind.job + "/cancel"), JSONObject())) }
+
+    override suspend fun exportOptions(computer: String, id: String): StudioExportOptions = parsed {
+        val client = api(computer)
+        // Mỗi phần chỉ để nói thêm: máy tính cũ không có đường ấy (404) hay hỏng thì để mặc định, không chặn hộp Xuất. Mất mạng, chỉ nghe, bỏ ghép thì vẫn là lỗi.
+        StudioExportJson.options(
+            optional { client.getObject(StudioPaths.exportSize(id)) },
+            optional { client.getObject(StudioPaths.exportMusic(id)) },
+            optional { client.getObject(StudioPaths.FFMPEG) },
+            optional { client.getArray(StudioPaths.exportHistory(id)).objects() },
+        )
+    }
+
+    override suspend fun activity(computer: String, id: String, technical: Boolean): List<StudioLogItem> =
+        parsed { StudioActivityJson.items(api(computer).getArray(StudioPaths.activity(id, technical))) }
+
+    override suspend fun coverSearch(computer: String, id: String, query: String): CoverResults =
+        parsed { StudioCoverJson.results(api(computer).getObject(StudioPaths.coverSearch(id, query)), query) }
+
+    override suspend fun delete(computer: String, id: String, endpoint: String): JSONObject = api(computer).delete(StudioPaths.delete(id, endpoint))
+
+    override suspend fun uploadSource(computer: String, folder: String, name: String, input: () -> InputStream): UploadedSource =
+        parsed { StudioNewJson.uploaded(api(computer).postStream(StudioPaths.SOURCE_UPLOAD, StudioUpload.writer(folder, name, input()))) }
+
+    override suspend fun splitSource(computer: String, path: String, title: String): String =
+        parsed { StudioNewJson.folder(api(computer).postSlow(StudioPaths.SOURCE_SPLIT, JSONObject().put("path", path).put("title", title))) }
+
+    override suspend fun scan(computer: String, paths: List<String>): ScanView =
+        parsed { StudioNewJson.scan(api(computer).postSlow(StudioPaths.SCAN, JSONObject().put("paths", JSONArray(paths)))) }
+
+    override suspend fun firstPerson(computer: String, paths: List<String>): FirstPersonView =
+        parsed { StudioNewJson.firstPerson(api(computer).postSlow(StudioPaths.FIRST_PERSON, JSONObject().put("paths", JSONArray(paths)))) }
+
+    override suspend fun analysisModels(computer: String): AnalysisModels = parsed { StudioNewJson.models(api(computer).getObject(StudioPaths.ANALYSIS_MODELS)) }
+
+    override suspend fun createBook(computer: String, body: JSONObject): CreatedBook = parsed { StudioNewJson.created(api(computer).postSlow(StudioPaths.CREATE_BOOK, body)) }
+
+    /** Một phần phụ của lời đáp: lỗi của máy (404, 409, 5xx) thì null; mất mạng / chỉ nghe / bỏ ghép / ghim đổi vẫn ném lên. */
+    private suspend fun <T> optional(block: suspend () -> T): T? = try {
+        block()
+    } catch (error: StudioError) {
+        when (error) {
+            is StudioError.Server, is StudioError.Gone, is StudioError.Busy -> null
+            else -> throw error
+        }
+    }
 
     /** Lời đáp thiếu trường bắt buộc (mã sách...) là lời đáp hỏng: nói như mọi lời đáp hỏng khác, không để JSONException văng lên màn. */
     private suspend fun <T> parsed(block: suspend () -> T): T = try {

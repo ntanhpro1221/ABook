@@ -137,12 +137,13 @@ object SyncLink {
         connectTimeoutMs: Int = 5000,
         token: String? = null,
         upload: File? = null,
+        stream: ((java.io.OutputStream) -> Unit)? = null,
     ): String {
         // Choose before HTTP: never replay a POST/upload after an uncertain result.
         val credential = token ?: if (auth) SyncLink.token(context) else ""
         val selected = PeerRouting.resolve(context, root, credential)
         try {
-            return send(context, method, path, body, auth, selected, readTimeoutMs, connectTimeoutMs, token, upload = upload)
+            return send(context, method, path, body, auth, selected, readTimeoutMs, connectTimeoutMs, token, upload = upload, stream = stream)
         } catch (error: IOException) {
             Route.markDown(selected.removePrefix("https://"))
             throw error
@@ -209,10 +210,11 @@ object SyncLink {
         token: String?,
         firstUse: Array<String?>? = null,
         upload: File? = null,
+        stream: ((java.io.OutputStream) -> Unit)? = null,
     ): String {
         Pin.install(context)
         return Pin.guard {
-            exchange(context, method, path, body, auth, root, readTimeoutMs, connectTimeoutMs, token, firstUse, upload)
+            exchange(context, method, path, body, auth, root, readTimeoutMs, connectTimeoutMs, token, firstUse, upload, stream)
         }
     }
 
@@ -228,6 +230,7 @@ object SyncLink {
         token: String?,
         firstUse: Array<String?>?,
         upload: File? = null,
+        stream: ((java.io.OutputStream) -> Unit)? = null,
     ): String {
         fun connect(): HttpURLConnection {
             val connection = URL(root + path).openConnection() as HttpURLConnection
@@ -248,6 +251,12 @@ object SyncLink {
                 connection.setRequestProperty("Content-Type", "application/zip")
                 connection.setFixedLengthStreamingMode(upload.length())
                 upload.inputStream().use { input -> connection.outputStream.use { input.copyTo(it, 256 * 1024) } }
+            } else if (stream != null) {
+                // Thân JSON lớn (nguồn sách tới ~17 MiB mã base64): ghi thẳng ra kết nối theo từng khúc, không dựng cả chuỗi trong bộ nhớ.
+                connection.doOutput = true
+                connection.setRequestProperty("Content-Type", "application/json; charset=utf-8")
+                connection.setChunkedStreamingMode(64 * 1024)
+                connection.outputStream.use { stream(it) }
             } else if (body != null) {
                 connection.doOutput = true
                 connection.setRequestProperty("Content-Type", "application/json; charset=utf-8")

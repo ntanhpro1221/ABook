@@ -47,6 +47,19 @@ interface EditSource {
     suspend fun thumbnail(url: String): ImageBitmap? = null
 }
 
+/** Ảnh nhỏ của một kết quả tìm bìa - dùng chung cho sửa sách trên điện thoại và bìa của Studio từ xa (cùng cửa tải, cùng trần cỡ). */
+object CoverThumbnails {
+    suspend fun load(url: String): ImageBitmap? = withContext(Dispatchers.IO) {
+        try {
+            // Cùng cửa tải với ảnh bìa đã chọn: chỉ máy chủ ảnh của các nguồn đã cho phép, có trần cỡ.
+            val bytes = CoverSearch.downloadImage(url)
+            BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
+        } catch (error: Exception) {
+            null
+        }
+    }
+}
+
 class EditBookRepo(private val context: Context, private val library: LibraryRepo) : EditSource {
     override suspend fun load(id: String): EditSnapshot = withContext(Dispatchers.IO) {
         Store.init(context)
@@ -139,15 +152,7 @@ class EditBookRepo(private val context: Context, private val library: LibraryRep
         changed(id)
     }
 
-    override suspend fun thumbnail(url: String): ImageBitmap? = withContext(Dispatchers.IO) {
-        try {
-            // Cùng cửa tải với ảnh bìa đã chọn: chỉ máy chủ ảnh của các nguồn đã cho phép, có trần cỡ.
-            val bytes = CoverSearch.downloadImage(url)
-            BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
-        } catch (error: Exception) {
-            null
-        }
-    }
+    override suspend fun thumbnail(url: String): ImageBitmap? = CoverThumbnails.load(url)
 
     override suspend fun send(id: String): EditSnapshot = withContext(Dispatchers.IO) {
         EditsSync.pushNow(context, id)
