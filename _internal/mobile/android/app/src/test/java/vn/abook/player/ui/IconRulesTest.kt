@@ -15,6 +15,7 @@ class IconRulesTest {
     private val drawingAllowed = mapOf(
         "components/Icons.kt" to "bộ vẽ lucide",
         "components/BookCover.kt" to "nền bìa sinh",
+        "components/Sheet.kt" to "viền mảnh cạnh trên của tờ ở nền tối (sheetEdge)",
         "components/Controls.kt" to "công tắc, mũi tên > (lucide qua drawLucide)",
         "components/PlayPauseGlyph.kt" to "biến hình phát <-> dừng (mực = lucide Play / Pause)",
         "nowplaying/PlayerVisuals.kt" to "nút ±15 hình riêng của web, nút phát lớn biến hình",

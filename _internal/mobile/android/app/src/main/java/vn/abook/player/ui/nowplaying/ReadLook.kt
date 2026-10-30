@@ -15,8 +15,8 @@ data class ReadLook(val size: Int = 20, val leading: Double = 1.7, val tapped: B
     fun sized(value: Int) = copy(size = value.takeIf { it in SIZES } ?: size)
     fun spaced(value: Double) = copy(leading = value.takeIf { it in LEADINGS } ?: leading)
 
-    /** "20 · 1,7": giá trị của hàng "Cỡ chữ" ở tấm Thêm tuỳ chọn. */
-    val summary: String get() = "$size · ${leadingLabel(leading)}"
+    /** "20 · giãn dòng 1,7": giá trị của hàng "Cỡ chữ" ở tấm Thêm tuỳ chọn - gọi đúng tên hai mục của bảng web ("Cỡ chữ", "Giãn dòng"), không để số trần. */
+    val summary: String get() = "$size · giãn dòng ${leadingLabel(leading)}"
 
     companion object {
         val SIZES = listOf(16, 18, 20, 22, 24)

@@ -9,7 +9,7 @@ import { toast } from "@/shared/toast";
 import { BookCover } from "@/shared/BookCover";
 import { useBackLayer } from "@/shared/backStack";
 import { cn } from "@/shared/cn";
-import { formatFingerprint, formatLength, formatSize } from "@/shared/format";
+import { formatFingerprint, formatLength, formatSize, storageSummary } from "@/shared/format";
 import { SYNC_SWITCH_LABEL } from "@/shared/syncSwitch";
 import { DialogActions, Button, Dialog, IconButton, Progress, SelectionMark } from "@/shared/ui";
 import { useUnpair } from "@/shared/useUnpair";
@@ -889,7 +889,7 @@ export function StoragePanel({ storage, names, bare = false }: { storage: { byte
     <section className={bare ? "" : "mt-8"} aria-label="Dung lượng">
       {!bare && (
         <p className="text-center text-xs text-fg-3">
-          {`Sách ${formatSize(storage.bytes)} · còn trống ${formatSize(storage.free)}`}
+          {storageSummary(storage.bytes, storage.free)}
         </p>
       )}
       {/* Khung (cả lề trên) khép lại sau khi hàng cuối khép xong / mở trước hàng đầu - không gắn / gỡ cứng. */}
@@ -1045,7 +1045,7 @@ export function DevicesScreen() {
         <Fold
           storageKey="devices.storage"
           title="Dung lượng"
-          summary={`Sách ${formatSize(storage.data.bytes)} · còn trống ${formatSize(storage.data.free)}`}
+          summary={storageSummary(storage.data.bytes, storage.data.free)}
           icon={<HardDrive className="size-5" />}
           className="mt-3 rounded-none border-0 bg-transparent"
         >

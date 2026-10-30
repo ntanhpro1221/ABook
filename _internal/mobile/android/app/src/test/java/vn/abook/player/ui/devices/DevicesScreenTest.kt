@@ -175,7 +175,7 @@ class DevicesScreenTest {
         copyWorks = false
         tap("pair_copy_release")
         rule.onNodeWithText("Đã chép địa chỉ").assertDoesNotExist()
-        rule.onNodeWithText(DeviceText.DESKTOP_RELEASES).assertIsDisplayed()
+        rule.onNodeWithText(vn.abook.player.ui.components.keepUrlTogether(DeviceText.DESKTOP_RELEASES)).assertIsDisplayed()
     }
 
     @Test fun pairedScreenHasNoInstallFoldOrCodeHelp() {

@@ -16,6 +16,14 @@ export function formatSize(bytes: number): string {
   return `${formatNumber(megabytes)} MB`;
 }
 
+/**
+ * Dòng đầu mục Dung lượng: "Sách 1,2 GB · còn trống 20 GB"; máy chưa có sách (dưới 1 KB: chỉ vài byte sổ sách) nói thẳng "Chưa có sách" thay vì "Sách 1 KB".
+ * Bản native: Storage.line (devices/DevicesModel.kt) - cùng từng chữ.
+ */
+export function storageSummary(bytes: number, free: number): string {
+  return `${bytes < 1024 ? "Chưa có sách" : `Sách ${formatSize(bytes)}`} · còn trống ${formatSize(free)}`;
+}
+
 /** Tên file trong một đường dẫn (dấu ngăn \ hay /): thông báo chỉ nói tên, đường đầy đủ để ở gợi ý khi rê chuột. */
 export function fileName(path: string): string {
   return path.replace(/[\\/]+$/, "").split(/[\\/]/).pop() || path;
