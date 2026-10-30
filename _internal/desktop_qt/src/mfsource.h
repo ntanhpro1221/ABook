@@ -17,6 +17,8 @@ public:
     MfSource &operator=(const MfSource &) = delete;
 
     bool open(const QByteArray &data);
+    /// Nhả COM/MF mà open() đã khởi động trên luồng đang gọi; gọi ở cuối luồng giải mã, sau khi mọi MfSource của luồng đã huỷ.
+    static void endThread();
     int sourceRate() const { return m_rate; }
     int sourceChannels() const { return m_channels; }
     double duration() const { return m_duration; }
