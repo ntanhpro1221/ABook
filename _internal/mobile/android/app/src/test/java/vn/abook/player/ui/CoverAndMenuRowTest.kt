@@ -7,6 +7,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsActions
@@ -27,6 +31,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import vn.abook.player.ui.components.BookCover
+import vn.abook.player.ui.components.CoverFit
 import vn.abook.player.ui.components.MenuRow
 import vn.abook.player.ui.components.PencilIcon
 import vn.abook.player.ui.data.CoverLoader
@@ -65,6 +70,39 @@ class CoverAndMenuRowTest {
             assertTrue("$tag tràn: ${layouts.single().size}", !layouts.single().hasVisualOverflow)
         }
         rule.onRoot().captureRoboImage("src/test/snapshots/cover_long_title.png")
+    }
+
+    /** Cỡ chữ đã vừa được nhớ ([vn.abook.player.ui.components.CoverFit]): lần dựng sau lấy từ bộ nhớ (không dàn thử) và dàn ra đúng như lần `StepBased` tự tìm, không tràn. */
+    @Test
+    fun rememberedFitLaysOutExactlyWhatTheSearchChose() {
+        val store = CoverFit.of(rule.activity.applicationContext)
+        var round by mutableIntStateOf(0)
+        show {
+            key(round) {
+                Box(Modifier.width(120.dp).testTag("cover_box")) { BookCover(null, "$longTitle riêng", 12, CoverLoader(), 120.dp) }
+            }
+        }
+        fun layouts() = listOf("cover_title", "cover_part").map { tag ->
+            val found = mutableListOf<TextLayoutResult>()
+            rule.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().config[SemanticsActions.GetTextLayoutResult].action!!(found)
+            found.single()
+        }
+        // Hộp chữ + bề cao từng dòng + bề rộng dòng đầu: đổi cỡ chữ dù một bậc 0,25 sp cũng làm một trong chúng đổi.
+        fun shape(results: List<TextLayoutResult>) = results.map { r ->
+            listOf(r.size.width, r.size.height, r.lineCount, r.getLineBottom(r.lineCount - 1).toInt(), r.getLineRight(0).toInt())
+        }
+        rule.waitForIdle()
+        val searched = shape(layouts())
+        val entries = store.size()
+        val hitsBefore = store.hits
+        assertTrue("lần đầu phải nhớ cỡ của tên + nhãn tập", entries >= 2)
+        round++
+        rule.waitForIdle()
+        val remembered = layouts()
+        assertTrue("lần dựng sau không dùng bộ nhớ", store.hits >= hitsBefore + 2)
+        assertEquals("không được nhớ thêm mục lạ", entries, store.size())
+        assertEquals("dàn chữ theo cỡ đã nhớ khác lần tự tìm", searched, shape(remembered))
+        assertTrue("tràn sau khi dùng cỡ đã nhớ", remembered.none { it.hasVisualOverflow })
     }
 
     @Test
