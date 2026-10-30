@@ -1,5 +1,6 @@
 package vn.abook.player.ui.devices
 
+import vn.abook.player.ui.studio.StudioRoute
 import android.content.Context
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -142,7 +143,7 @@ class DevicesRepo(private val context: Context, private val library: vn.abook.pl
         (0 until computers.length()).map { computers.getJSONObject(it) }.map { StudioComputer(it.optString("key"), it.optString("name"), it.optBoolean("listenOnly")) }
     }
 
-    override suspend fun studioTarget(key: String): Pair<String, String> = io { guard("Chưa mở được Studio") { Devices.studioTarget(context, null, key) } }
+    override suspend fun studioTarget(key: String): Pair<String, StudioRoute> = io { guard("Chưa mở được Studio") { Devices.studioTarget(context, null, key) } }
 
     override suspend fun share(): Share = io { DevicesJson.share(Devices.shareView(context)) }
 

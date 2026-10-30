@@ -232,7 +232,7 @@ class NativeActivity : ComponentActivity() {
 
     /** Cửa ra hệ điều hành của ba màn Thiết bị: Studio của máy tính, trang thông tin ứng dụng, quyền "Thiết bị ở gần" và thông báo. */
     private val deviceLinks = DeviceLinks(
-        openStudio = { computer, path -> studioRequests.trySend(StudioRequest(computer, StudioRoute.parse(path))) },
+        openStudio = { computer, route -> studioRequests.trySend(StudioRequest(computer, route)) },
         openAppSettings = { open(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))) },
         askNearby = { result ->
             if (Build.VERSION.SDK_INT < 31) {

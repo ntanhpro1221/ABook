@@ -384,9 +384,9 @@ class StudioS4StateTest {
     @Test fun theLogIsNewestFirstAndTheTechnicalSwitchAsksAgainAtOnce() {
         source.activityItems = listOf(StudioLogItem("1", 100.0, "info", "", "Bắt đầu"), StudioLogItem("2", 200.0, "error", "E1", "Hỏng"))
         launchRun { project.run() }
-        val activity = StudioActivityState(project, never)
+        val activity = StudioLogState(project, never)
         launchRun { activity.run() }
-        assertEquals(listOf("2", "1"), StudioActivityLogic.ordered(activity.poll.value.data!!).map { it.id })
+        assertEquals(listOf("2", "1"), StudioLogLogic.ordered(activity.poll.value.data!!).map { it.id })
         assertEquals(listOf(false), source.activityCalls)
         activity.showTechnical(true)
         assertEquals(listOf(false, true), source.activityCalls)
@@ -396,7 +396,7 @@ class StudioS4StateTest {
 
     @Test fun theInfoFactsAreStatusChaptersAndLength() {
         val page = StudioPage(studioBook(chaptersTotal = 10, chaptersCompleted = 4), listOf(studioChapter(1, seconds = 3600.0)))
-        val facts = StudioActivityLogic.facts(page)
+        val facts = StudioLogLogic.facts(page)
         assertEquals(listOf("Trạng thái", "Chương", "Dài"), facts.map { it.first })
         assertEquals("4/10 xong", facts[1].second)
     }

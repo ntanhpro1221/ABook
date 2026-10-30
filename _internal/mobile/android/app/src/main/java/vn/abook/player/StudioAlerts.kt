@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit
  * công tắc không được đổ ra một loạt tin cũ.
  *
  * Hỏi mỗi 15 phút (WorkManager, mức ngắn nhất Android cho) khi có mạng, và mỗi lần mở app. Bấm thông báo mở Studio từ xa
- * (StudioActivity) đúng cuốn, đúng tab.
+ * (màn native) đúng cuốn, đúng tab.
  */
 object StudioAlerts {
     private const val CHANNEL = "studio"
@@ -185,9 +185,8 @@ object StudioAlerts {
                 },
             )
         }
-        // Giao diện native: mở thẳng dự án ở đúng tab bằng màn native (mã máy, mã sách, tab - không bao giờ mã thiết bị); bản WebView mở trang Studio như cũ.
-        val open = (if (BuildConfig.NATIVE_UI) StudioRoute.put(Intent(context, NativeActivity::class.java), StudioLink.MAIN, StudioRoute.parse(path))
-            else Intent(context, StudioActivity::class.java).putExtra("path", path))
+        // Mở thẳng dự án ở đúng tab bằng màn native (mã máy, mã sách, tab - không bao giờ mã thiết bị).
+        val open = StudioRoute.put(Intent(context, NativeActivity::class.java), StudioLink.MAIN, StudioRoute.parse(path))
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         val tap = PendingIntent.getActivity(context, key.hashCode(), open,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
