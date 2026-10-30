@@ -132,7 +132,7 @@ Item {
                     font.features: { "tnum": 1 }
                 }
             }
-            Text {
+            ClockLabel {
                 objectName: "projectDetail"
                 width: parent.width
                 textFormat: Text.StyledText

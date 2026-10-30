@@ -1,7 +1,7 @@
 import QtQuick
 import ABook
 
-// Thanh tiến độ của Studio (Progress của shared/ui.tsx): rãnh màu --line bo tròn, phần đã làm theo `tone` (accent / muted / success...), trượt êm khi đổi.
+// Thanh tiến độ của Studio (Progress của shared/ui.tsx): rãnh màu --line bo tròn, phần đã làm theo `tone` (accent / muted / success...).
 // `size`: xs 4 · sm 6 · md 8.
 Rectangle {
     id: root
@@ -26,6 +26,6 @@ Rectangle {
         radius: height / 2
         color: root.fill
         Behavior on color { ColorAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionMedium } }
-        Behavior on width { enabled: !Theme.reduceMotion; NumberAnimation { duration: Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard } }
+        // Phần tô theo giá trị tự đổi: vẽ thẳng, không Behavior (luật chủ sách 30-10; điện thoại native cũng vậy)
     }
 }

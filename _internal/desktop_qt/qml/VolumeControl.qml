@@ -10,7 +10,7 @@ Column {
     Item {
         width: parent.width; height: 24
         Text { text: "Âm lượng"; color: Theme.text; font.pixelSize: Theme.sizeBodySmall }
-        Text { anchors.right: parent.right; text: Math.round(Player.volume * 100) + "%"; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
+        ClockLabel { anchors.right: parent.right; text: Math.round(Player.volume * 100) + "%"; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
     }
     Row {
         width: parent.width; spacing: Theme.s8

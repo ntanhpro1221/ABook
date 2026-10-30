@@ -54,7 +54,16 @@ FocusScope {
     property real contentOpacity: !loading && !failed && !libraryError ? 1 : 0
     Behavior on contentOpacity { NumberAnimation { duration: Theme.motionMedium } }
     readonly property var continuing: LibraryLogic.listening(books, Player.loaded ? Player.bookId : "")
-    onSectionsChanged: { resultMotion.stop(); resultMotion.start() }
+    function shapeOf(list) { return list.map(s => s.key + ":" + s.books.map(b => b.bookId).join(",")).join("|") }
+    onSectionsChanged: {
+        // Dữ liệu tự làm mới (tiến độ nghe, chuyển chương) mà vẫn là các cuốn ấy theo thứ tự ấy: đổi tại chỗ, không mờ cả danh sách
+        // (luật chủ sách 30-10). Chỉ đổi lọc / tìm / xếp hay danh sách đổi cuốn mới có chuyển động.
+        if (!resultMotion.running && filter + "\u0000" + query + "\u0000" + sortOrder === appliedSelection && shapeOf(sections) === shapeOf(shownSections)) {
+            shownSections = sections
+            return
+        }
+        resultMotion.stop(); resultMotion.start()
+    }
     SequentialAnimation {
         id: resultMotion
         NumberAnimation { target: root; property: "resultsOpacity"; to: 0; duration: Theme.reduceMotion ? 60 : Theme.motionFastOut }

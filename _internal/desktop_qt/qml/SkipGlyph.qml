@@ -64,6 +64,6 @@ Item {
         font.pointSize: 14.5 * root.u * 0.75
         font.weight: Font.DemiBold
         font.letterSpacing: -0.2 * root.u
-        font.features: { "tnum": 1 }
+        // Không tnum: "15" cố định, và web vẽ nó bằng font thân (không có tnum) nên chữ số rộng tự nhiên - khe với vòng cung như web
     }
 }

@@ -36,6 +36,7 @@ ChapterRow 1.0 ../../../../qml/ChapterRow.qml
 ChapterList 1.0 ../../../../qml/ChapterList.qml
 PageSwitch 1.0 ../../../../qml/PageSwitch.qml
 SeekBar 1.0 ../../../../qml/SeekBar.qml
+ClockLabel 1.0 ../../../../qml/ClockLabel.qml
 ClockUser 1.0 ../../../../qml/ClockUser.qml
 SkipButton 1.0 ../../../../qml/SkipButton.qml
 SkipGlyph 1.0 ../../../../qml/SkipGlyph.qml

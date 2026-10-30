@@ -52,7 +52,7 @@ Item {
                 x: 28
                 width: parent.width - 28
                 Text { width: parent.width; text: "Chữ sáng"; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightBold }
-                Text { objectName: "wordTimingsNote"; width: parent.width; text: Logic.wordTimingsNote(root.timings); color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
+                ClockLabel { objectName: "wordTimingsNote"; width: parent.width; text: Logic.wordTimingsNote(root.timings); color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
             }
         }
         Button {
