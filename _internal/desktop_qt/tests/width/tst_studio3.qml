@@ -48,6 +48,7 @@ Item {
         }
         // Cuộn danh sách của màn dự án tới một phần tử để ảnh chụp thấy đúng chỗ cần xem
         function scrollTo(page, item) {
+            waitForRendering(page)   // đầu danh sách đã xếp lại sau khi đổi tab rồi mới tính chỗ cuộn
             const list = page.projectScreenList
             list.contentY = Math.max(0, item.mapToItem(list.contentItem, 0, 0).y - 24)
         }
