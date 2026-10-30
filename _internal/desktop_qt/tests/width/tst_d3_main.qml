@@ -82,13 +82,14 @@ TestCase {
         Api.notice = ""
     }
     function test_5_toastSitsTopRightAboveDialogs() {
-        const toast = all(win.contentItem, "toast")[0]
+        const stack = all(win.contentItem, "toastStack")[0]
+        const toast = all(stack, "successToast")[0]
         Api.toast("Đã lưu file sách", {action: {label: "Mở thư mục", run: function() {}}})
         tryVerify(function() { return toast.t === 1 })
         const p = toast.mapToItem(win.contentItem, 0, 0)
         compare(p.x + toast.width, win.width - 16)
         verify(p.y >= 40 + 16 - 0.5)
-        verify(toast.z > dialog().z)
+        verify(stack.z > dialog().z)
         Api.notice = ""
     }
     function test_6_minimizeStopsMotionAndRestoreShowsShell() {
