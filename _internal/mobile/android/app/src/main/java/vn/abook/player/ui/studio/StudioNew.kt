@@ -287,7 +287,7 @@ object StudioNewText {
     const val START_NOW_HINT = "Tắt thì sách chờ ở trang dự án."
     const val CREATE = "Bắt đầu"
     const val CREATING = "Đang tạo sách"
-    const val CREATE_FAILED = "Không tạo được sách"
+    const val CREATE_FAILED = "Chưa tạo được sách"
 
     fun tooBig(name: String, size: Long) = "$name (${formatSize(size)}) lớn hơn 17 MB nên không gửi qua mạng được. Chép tệp vào máy tính rồi tạo sách ở đó."
     fun notStory(name: String) = "$name không phải file truyện - chỉ nhận .txt, .epub, .docx, .pdf."

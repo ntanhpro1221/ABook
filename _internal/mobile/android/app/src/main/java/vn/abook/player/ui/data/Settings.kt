@@ -169,7 +169,7 @@ data class AppSettings(
 /** Dòng tóm tắt dưới tên nhóm ở trang gốc Cài đặt. */
 object SettingsSummary {
     fun listen(settings: AppSettings): String =
-        (if (settings.autoRewind) "Tự lùi" else "Không tự lùi") + " · " + (if (settings.autoMusic) "nhạc tự chọn" else "không nhạc nền")
+        dotJoin(if (settings.autoRewind) "Tự lùi" else "Không tự lùi", if (settings.autoMusic) "nhạc tự chọn" else "không nhạc nền")
 
     fun sleep(settings: AppSettings): String {
         val schedule = settings.schedule

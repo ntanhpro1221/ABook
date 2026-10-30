@@ -1522,7 +1522,7 @@ export function PlayerProvider({
       engine.on("error", () => {
         const intent = refs.current.playIntent;
         // Lõi Android nói đúng lý do (nghe thẳng mà mất kết nối với máy tính khác hẳn file hỏng).
-        const fallback = native?.error || engine.error || "Không phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại.";
+        const fallback = native?.error || engine.error || "Chưa phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại.";
         setError(fallback);
         setBuffering(false);
         // Không có tiếng thì không phải "đang phát": nút chính về "Phát", thẻ thôi ghi "đang phát" (soát a27 lỗi 3).

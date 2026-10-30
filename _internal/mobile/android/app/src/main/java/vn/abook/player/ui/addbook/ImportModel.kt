@@ -83,7 +83,7 @@ object ImportLogic {
     fun rechooseQuestion(count: Int) = "Còn $count cuốn chưa thêm vào thư viện. Chọn lại thì các cuốn ấy sẽ không được thêm."
     fun openFailure(item: ImportItem, reason: String?): String {
         val book = item.name.endsWith(".abook", true) || item.name.endsWith(".abookproj", true)
-        val title = if (book) "Không mở được file sách" else "Không mở được file"
+        val title = if (book) "Chưa mở được file sách" else "Chưa mở được file"
         val details = reason?.takeIf { it.isNotBlank() } ?: if (book) "File không có sách nào." else "File này không có chữ để đọc."
         return "$title. $details"
     }

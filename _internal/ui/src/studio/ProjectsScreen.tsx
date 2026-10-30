@@ -36,7 +36,7 @@ function ProjectRow({ book }: { book: BookSummary }) {
     <RowBoundary
       fallback={
         <div className="px-3 py-3 text-sm">
-          <span className="font-medium">{book.title}</span> <span className="text-xs text-danger">Không đọc được dự án này</span>
+          <span className="font-medium">{book.title}</span> <span className="text-xs text-danger">Chưa đọc được dự án này</span>
         </div>
       }
     >
@@ -67,7 +67,7 @@ function BrokenRow({ book, local }: { book: BookSummary; local: boolean }) {
       <div className="min-w-0 md:col-span-2 xl:col-span-3">
         <div className="truncate font-medium">{book.title}</div>
         <div className={cn("truncate text-xs", busy ? "text-warning" : "text-danger")}>
-          {busy ? "Chưa mở được: " : "Không đọc được: "}
+          {busy ? "Chưa mở được: " : "Chưa đọc được: "}
           {book.broken}
         </div>
       </div>
@@ -269,7 +269,7 @@ export function ProjectsScreen() {
       const result = await open.mutateAsync(path);
       navigate(`/studio/${result.id}`);
     } catch (error) {
-      toast.error("Không mở được sách", { description: (error as Error).message });
+      toast.error("Chưa mở được sách", { description: (error as Error).message });
     }
   };
 

@@ -1296,7 +1296,7 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, onPickVo
       <MotionPresence open={!open.length && atReview === 0}>
         <p id="work-end" tabIndex={-1} className="mt-4 text-sm text-fg-2">
           {later.length > 0
-            ? "Không còn việc nào sửa được ngay - những việc bên dưới chỉ có tác dụng khi làm lại phân tích từ đầu."
+            ? "Hết việc sửa được ngay - những việc bên dưới chỉ có tác dụng khi làm lại phân tích từ đầu."
             : `Mọi việc đã có quyết định${decided.length > 0 ? ` - ${hint}` : ""}.`}
         </p>
       </MotionPresence>

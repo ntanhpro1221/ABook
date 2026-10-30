@@ -904,7 +904,7 @@ function PrepareAhead({ voice, bookId, chapterId }: { voice: ReadAloudVoice; boo
         ) : (
           upcoming.length > 0 && (
             <button type="button" data-focus-next aria-disabled={busy || undefined} aria-busy={busy || undefined} className="touch-hit -ml-2 rounded-control px-2 py-1 font-medium text-accent-text hover:bg-hover aria-disabled:opacity-45" onClick={busyClick(busy, () => void start())}>
-              {upcoming.length === 1 ? "Làm trước chương sau" : `Làm trước ${upcoming.length} chương tới`}
+              {upcoming.length === 1 ? "Làm trước chương sau" : `Làm trước ${upcoming.length} chương`}
             </button>
           )
         )}

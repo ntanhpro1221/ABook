@@ -315,7 +315,7 @@ class ExportState(
     /** "Mở": file M4B / sách nói bằng app nghe sách nói của máy. */
     fun openFile(bookId: String, uri: String) {
         scope.launch {
-            if (!source.open(uri)) edit(bookId) { it.copy(problem = "Không mở được từ đây - mở file bằng app Tệp") }
+            if (!source.open(uri)) edit(bookId) { it.copy(problem = "Chưa mở được từ đây - mở file bằng app Tệp") }
         }
     }
 
@@ -328,6 +328,6 @@ class ExportState(
 
     /** "Gửi": bảng chia sẻ của hệ thống với file vừa xuất. */
     fun share(bookId: String, uri: String, name: String) {
-        if (!links.share(uri, name)) edit(bookId) { it.copy(problem = "Không gửi được từ đây - mở file bằng app Tệp") }
+        if (!links.share(uri, name)) edit(bookId) { it.copy(problem = "Chưa gửi được từ đây - mở file bằng app Tệp") }
     }
 }

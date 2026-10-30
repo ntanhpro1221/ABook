@@ -132,7 +132,7 @@ object ReadAloud {
             when {
                 clip != null && entry.done -> entry.relocate(clip.file)
                 clip != null -> entry.fail(VoiceException("Đoạn đã đọc bằng giọng khác"))
-                else -> entry.fail(result.exceptionOrNull() as? Exception ?: VoiceException("Không đọc được đoạn này"))
+                else -> entry.fail(result.exceptionOrNull() as? Exception ?: VoiceException("Chưa đọc được đoạn này"))
             }
         }
     }
@@ -821,7 +821,7 @@ object ReadAloud {
                 Playback.emit("state")
                 return
             }
-            fail("Không đọc được chữ của chương “${chapter.title}”")
+            fail("Chưa đọc được chữ của chương “${chapter.title}”")
             return
         }
         val restored = if (segment < 0) ReadingAnchor.restore(chap.paragraphs, anchor) else null
@@ -909,7 +909,7 @@ object ReadAloud {
             if (chap == null) {
                 // Cuốn nghe thẳng: chữ chương kế còn ở máy giữ sách - lấy về rồi nạp tiếp (hàng đợi vẫn phát phần đã có).
                 if (fetchText(feedChapter) { pump() }) return
-                fail("Không đọc được chữ của chương “${chapter.title}”")
+                fail("Chưa đọc được chữ của chương “${chapter.title}”")
                 return
             }
             // Dòng ngăn cảnh không có quãng lặng (đầu / cuối chương, dòng thứ hai liền nhau) không phải là gì để phát: bỏ qua cả chuỗi mà không tốn vòng của `guard`.
@@ -1423,7 +1423,7 @@ object ReadAloud {
                 return
             }
             if (streaming != null && exo != null && liveIndex(exo, streaming) >= 0) {
-                onLiveBroke(streaming, error as? Exception ?: VoiceException("Không đọc được đoạn này"))
+                onLiveBroke(streaming, error as? Exception ?: VoiceException("Chưa đọc được đoạn này"))
                 return
             }
             // Đoạn hết cách đọc: dịch vụ trục trặc (kể cả lời cuối của [ClipReader]) hay lỗi giọng khác - nhớ đoạn này, lượt đọc kế của nó là lần hỏi mới ([StalledClips]), dù do nhịp hỏi lại,
@@ -1447,7 +1447,7 @@ object ReadAloud {
                 resume = null
                 waiting = Target(chap.index, segment, if (rest.from > 0) 0L else rest.baseMs, if (rest.from > 0) rest.from else -1, exo?.playWhenReady == true)
             }
-            fail((error as? VoiceException)?.message ?: "Không đọc được đoạn này (${error.message})", chap.index to segment)
+            fail((error as? VoiceException)?.message ?: "Chưa đọc được đoạn này (${error.message})", chap.index to segment)
             return
         }
         // Clip đuôi: `words` đủ chữ của đoạn (chữ trước chữ bấm mốc [0, 0]), âm thanh bắt đầu từ chữ ấy ([SeekPlan.tailWords]).

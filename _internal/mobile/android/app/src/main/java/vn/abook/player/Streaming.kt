@@ -247,7 +247,7 @@ object Streaming {
                 output.fd.sync()
             }
             check(expected < 0 || pending.length() == expected) { "File tải chưa đủ; bạn hãy thử lại." }
-            check(pending.renameTo(target)) { "Không lưu được file; bạn hãy thử lại." }
+            check(pending.renameTo(target)) { "Chưa lưu được file; bạn hãy thử lại." }
             target
         } finally {
             partial?.delete()

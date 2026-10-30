@@ -77,7 +77,7 @@ fun ShareScreen(devices: DevicesState, sheets: SheetHost, onBack: () -> Unit) {
                                 ListItem("Địa chỉ", Modifier.testTag("share_address"), hint = share.addressLine)
                                 if (share.fingerprint.isNotBlank()) ListItem("Vân tay", hint = share.fingerprint.uppercase().replace(Regex("(.{4})(?=.)"), "$1 "))
                             }
-                            Caption("Máy kia chưa tự thấy điện thoại? Địa chỉ nằm ở mục Chi tiết phía trên.")
+                            Caption("Máy kia chưa tự thấy điện thoại? Địa chỉ nằm ở mục Chi tiết phía trên.", Modifier.padding(top = Dim.s4, bottom = Dim.s12))
                             RowLine()
                             Reveal(share.code != null) {
                                 lastCode[0]?.let { code -> CodeRow(code, devices::cancelCode) }

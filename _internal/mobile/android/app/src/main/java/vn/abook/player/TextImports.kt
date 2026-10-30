@@ -142,7 +142,7 @@ object TextImports {
         val ref = newRef()
         val target = File(dir(ref), clean)
         try {
-            val input = open() ?: throw BookImport.Failed("Không đọc được file.")
+            val input = open() ?: throw BookImport.Failed("Chưa đọc được file.")
             input.use { copy(it, target, MAX_SOURCE_BYTES) }
         } catch (error: Exception) {
             dir(ref).deleteRecursively()
@@ -164,7 +164,7 @@ object TextImports {
             val names = JSONObject()
             for ((fileName, open) in texts) {
                 try {
-                    val input = open() ?: throw BookImport.Failed("Không mở được file.")
+                    val input = open() ?: throw BookImport.Failed("Chưa mở được file.")
                     val diskName = uniqueName(safeName(fileName, "chuong.txt"), used)
                     budget -= input.use { copy(it, File(folder, diskName), budget) }
                     names.put(diskName, fileName)

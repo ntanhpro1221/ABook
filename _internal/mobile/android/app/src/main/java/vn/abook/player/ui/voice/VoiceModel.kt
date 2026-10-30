@@ -1,5 +1,6 @@
 package vn.abook.player.ui.voice
 
+import vn.abook.player.ui.data.dotJoined
 import vn.abook.player.formatSize
 
 import androidx.compose.runtime.Immutable
@@ -355,7 +356,7 @@ object VoiceText {
 
     /** Dòng tóm tắt của hàng "Khoá giọng trực tuyến": tên các nhà cung cấp đã có khoá, hay "Chưa có khoá". */
     fun keySummary(providers: List<KeyProvider>): String =
-        providers.filter { it.hasKey }.joinToString(" · ") { it.name }.ifEmpty { "Chưa có khoá" }
+        providers.filter { it.hasKey }.map { it.name }.dotJoined().ifEmpty { "Chưa có khoá" }
 
     /** Lấy khoá ở đâu - nói theo những gì bạn thấy trên trang của nhà cung cấp (VoiceSettings.tsx `KEY_HELP`). */
     fun keyHelp(provider: String): String = when (provider) {
@@ -372,7 +373,7 @@ object VoiceText {
     fun trackLine(track: MusicTrack): String {
         val whole = track.duration.toLong().coerceAtLeast(0)
         val clock = if (track.duration > 0) String.format(Locale.ROOT, "%d:%02d", whole / 60, whole % 60) else ""
-        return listOf(track.creator, clock).filter { it.isNotEmpty() }.joinToString(" · ")
+        return listOf(track.creator, clock).dotJoined()
     }
 
     fun musicSummary(count: Int): String = if (count == 0) "Chưa có bài nào" else "$count bài"

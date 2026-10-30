@@ -293,7 +293,7 @@ export function AddBookDialog({
       try {
         const opening = onBookFile(item.choice.ref, session);
         const ok = await (session ? session.wait(opening) : opening);
-        next = ok === false ? settle(next, item.id, { state: "error", note: "Không mở được file sách này." }) : settle(next, item.id, { state: "opened", note: "Đã thêm" });
+        next = ok === false ? settle(next, item.id, { state: "error", note: "Chưa mở được file sách này." }) : settle(next, item.id, { state: "opened", note: "Đã thêm" });
       } catch (error) {
         if (error instanceof ReadCancelled) throw error;
         next = settle(next, item.id, { state: "error", note: (error as Error).message });

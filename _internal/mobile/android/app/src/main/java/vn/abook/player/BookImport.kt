@@ -232,7 +232,7 @@ object BookImport {
         val matter = all.count { it.matter.isNotEmpty() && !it.short }
         if (matter > 0 && keepShort) book.notes.add("$matter mục có vẻ là bìa, bản quyền, mục lục… chưa chọn — bạn tích nếu muốn nghe.")
         val chapters = if (keepShort) all else all.filter { !it.short }
-        if (chapters.none { pyStrip(it.text).isNotEmpty() || it.short }) throw Failed("Không lấy được chữ từ “${source.ifEmpty { book.title }}” — bạn thử bản khác; với TXT, lưu UTF-8 rồi nhập lại.")
+        if (chapters.none { pyStrip(it.text).isNotEmpty() || it.short }) throw Failed("Chưa lấy được chữ từ “${source.ifEmpty { book.title }}” — bạn thử bản khác; với TXT, lưu UTF-8 rồi nhập lại.")
         book.chapters.clear()
         if (chapters.size > 1) {
             // File TXT rỗng (hay chỉ có khoảng trắng) không thành chương - nói ra, để số chương ít hơn số file có lý do. Mục rất ngắn mà chỉ có
