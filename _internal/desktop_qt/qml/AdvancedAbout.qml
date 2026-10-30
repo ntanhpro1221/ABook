@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Controls.Basic as C
 import ABook
 
 // Nội dung khối "Giới thiệu" (phần cuối AdvancedGroup + ThirdPartyButton của desktop/SettingsScreen.tsx): tên + phiên bản, liên kết mã nguồn mở, và
@@ -55,7 +54,6 @@ Column {
     }
     Modal {
         id: third
-        parent: C.Overlay.overlay
         title: "Thành phần sử dụng"
         panelWidth: 560
         ThirdPartyText { width: parent.width }

@@ -9,7 +9,7 @@ Popover {
     objectName: "chapterError"
     property string raw: ""
     property bool studio: false
-    readonly property var shown: Logic.friendlyError(raw, studio, false, false)
+    readonly property var friendly: Logic.friendlyError(raw, studio, false, false)
     panelWidth: 512
     maxHeight: 360
     Accessible.name: "Lỗi chương"
@@ -25,18 +25,18 @@ Popover {
         Text {
             objectName: "chapterErrorHint"
             width: parent.width
-            text: root.shown.hint
+            text: root.friendly.hint
             color: Theme.text2
             wrapMode: Text.Wrap
             font.pixelSize: Theme.sizeCaption
         }
         TextEdit {
             objectName: "chapterErrorDetail"
-            visible: root.shown.detail !== ""
+            visible: root.friendly.detail !== ""
             width: parent.width
             readOnly: true
             selectByMouse: true
-            text: root.shown.detail
+            text: root.friendly.detail
             color: Theme.text2
             wrapMode: TextEdit.WrapAtWordBoundaryOrAnywhere
             font.family: "monospace"

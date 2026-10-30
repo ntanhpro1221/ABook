@@ -548,7 +548,7 @@ Item {
             if (!item.Window.window) return
             item.Window.window.update()
             VisualReady.render(this, host.Window.window, item, qtVisualReady)
-            const img = grabImage(item)
+            const img = grabImage(VisualReady.grabTarget(host.Window.window, item))
             const path = Qt.resolvedUrl("../../build/d2shots/" + name + "_" + (Theme.dark ? "dark" : "light") + ".png").toString()
                 .replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, "")
             img.save(path)
