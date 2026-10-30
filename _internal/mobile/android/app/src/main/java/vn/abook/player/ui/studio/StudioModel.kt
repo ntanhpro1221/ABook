@@ -14,8 +14,17 @@ enum class StudioTab(override val key: String, override val label: String) : Cho
     Music("music", "Nhạc nền");
 
     companion object {
-        /** Tab theo `?tab=` của web; trang chưa có ở native (precast, script, activity...) hay giá trị lạ về Chương. */
+        /** Tab theo `?tab=` của web; màn con ([StudioSubKind.of]), trang chưa có ở native (activity...) hay giá trị lạ về Chương. */
         fun of(key: String?): StudioTab = entries.firstOrNull { it.key == key } ?: Chapters
+    }
+}
+
+/** Ba màn con của một dự án (S3), mở từ "Thêm" hay thông báo: đi sau tab, Back về lại dự án. `key` là giá trị `?tab=` của web. */
+enum class StudioSubKind(val key: String) {
+    Precast("precast"), Script("script"), Readings("readings");
+
+    companion object {
+        fun of(key: String?): StudioSubKind? = entries.firstOrNull { it.key == key }
     }
 }
 
@@ -98,7 +107,7 @@ data class StudioPage(val book: StudioBook, val chapters: List<StudioChapter>)
  * trang cũ của web (`/#/studio/<mã>?tab=work`) - đường ấy chỉ được đọc ở đây, không bao giờ dựng lại.
  */
 @Immutable
-data class StudioRoute(val book: String? = null, val tab: StudioTab = StudioTab.Chapters) {
+data class StudioRoute(val book: String? = null, val tab: StudioTab = StudioTab.Chapters, val sub: StudioSubKind? = null) {
     companion object {
         const val EXTRA_COMPUTER = "studio_computer"
         const val EXTRA_BOOK = "studio_book"
@@ -111,12 +120,14 @@ data class StudioRoute(val book: String? = null, val tab: StudioTab = StudioTab.
             val id = rest.substringBefore('?')
             if (!StudioPaths.valid(id)) return StudioRoute()
             val tab = rest.substringAfter('?', "").split('&').firstOrNull { it.startsWith("tab=") }?.removePrefix("tab=")
-            return StudioRoute(id, StudioTab.of(tab))
+            return of(id, tab)
         }
 
-        /** Thông báo bấm vào: mã máy, mã sách và tab đi bằng extras (mã thiết bị không bao giờ nằm trong Intent). */
+        private fun of(book: String?, key: String?): StudioRoute = StudioRoute(book, StudioTab.of(key), StudioSubKind.of(key))
+
+        /** Thông báo bấm vào: mã máy, mã sách và tab (hay màn con) đi bằng extras (mã thiết bị không bao giờ nằm trong Intent). */
         fun put(intent: Intent, computer: String, route: StudioRoute): Intent {
-            intent.putExtra(EXTRA_COMPUTER, computer).putExtra(EXTRA_TAB, route.tab.key)
+            intent.putExtra(EXTRA_COMPUTER, computer).putExtra(EXTRA_TAB, route.sub?.key ?: route.tab.key)
             route.book?.let { intent.putExtra(EXTRA_BOOK, it) }
             return intent
         }
@@ -125,7 +136,7 @@ data class StudioRoute(val book: String? = null, val tab: StudioTab = StudioTab.
         fun request(intent: Intent?): StudioRequest? {
             if (intent == null || !intent.hasExtra(EXTRA_COMPUTER)) return null
             val book = intent.getStringExtra(EXTRA_BOOK)?.takeIf { StudioPaths.valid(it) }
-            return StudioRequest(intent.getStringExtra(EXTRA_COMPUTER).orEmpty(), StudioRoute(book, StudioTab.of(intent.getStringExtra(EXTRA_TAB))))
+            return StudioRequest(intent.getStringExtra(EXTRA_COMPUTER).orEmpty(), of(book, intent.getStringExtra(EXTRA_TAB)))
         }
     }
 }

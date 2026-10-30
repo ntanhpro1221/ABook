@@ -53,6 +53,42 @@ interface StudioSource {
 
     /** Gửi một bước ghi (khoá trong [StudioPaths.WRITES]); trả lời đáp JSON của máy. `slow`: việc máy tính làm lâu (nghe thử bằng giọng thật). */
     suspend fun write(computer: String, id: String, step: WorkStep, slow: Boolean = false): JSONObject
+
+    /** Gửi một bước ghi bằng PUT (khoá trong [StudioPaths.PUTS]): nhạc nền, "Chờ tôi duyệt", bỏ dòng ghi công. `slow`: đổi thể loại nhạc máy làm lâu. */
+    suspend fun put(computer: String, id: String, endpoint: String, body: JSONObject, slow: Boolean = false): JSONObject
+
+    /** Cách đọc tên của cuốn (`GET /pronunciations`). */
+    suspend fun readings(computer: String, id: String): NameReadings
+
+    /** Một tên chạm tới bao nhiêu câu (`GET /pronunciations/reach`). */
+    suspend fun reach(computer: String, id: String, surface: String): Reach
+
+    /** Cách đọc tên dùng chung giữa các sách của máy (`GET /api/readings`). */
+    suspend fun sharedReadings(computer: String): List<SharedReading>
+
+    /** Cách đọc dùng chung máy đề nghị cho cuốn này (`GET /shared-readings`). */
+    suspend fun sharedOffer(computer: String, id: String): List<SharedReading>
+
+    /** Dòng ghi công máy gợi ý bỏ khỏi phần đọc (`GET /suggestions`). */
+    suspend fun credits(computer: String, id: String): List<CreditGroup>
+
+    /** Màn "Duyệt trước khi thu" (`GET /precast`). */
+    suspend fun precast(computer: String, id: String): PrecastView
+
+    /** Nhạc nền của cuốn (`GET /music`). */
+    suspend fun music(computer: String, id: String): MusicView
+
+    /** Model đọc không khí (`GET /api/music/moods-model`). */
+    suspend fun moodsModel(computer: String): MoodsModel
+
+    /** Bài khác cho một cảnh (`GET /music/scenes/<key>/alternatives`). */
+    suspend fun alternatives(computer: String, id: String, scene: String): List<MusicAlternative>
+
+    /** Mục lục kịch bản (`GET /casting`). */
+    suspend fun castingContents(computer: String, id: String): ScriptContents
+
+    /** Kịch bản một chương (`GET /casting/<chapterId>`). */
+    suspend fun castingChapter(computer: String, id: String, chapter: Int): ChapterScript
 }
 
 /** Bản thật: [StudioApi] trên đường ghim vân tay của [vn.abook.player.SyncLink]. `api` đổi được để thử không cần ghép máy. */
@@ -103,6 +139,36 @@ class StudioRepo(
         val path = StudioPaths.write(id, step.endpoint)
         return if (slow) client.postSlow(path, step.body) else client.post(path, step.body)
     }
+
+    override suspend fun put(computer: String, id: String, endpoint: String, body: JSONObject, slow: Boolean): JSONObject {
+        val client = api(computer)
+        val path = StudioPaths.put(id, endpoint)
+        return if (slow) client.putSlow(path, body) else client.put(path, body)
+    }
+
+    override suspend fun readings(computer: String, id: String): NameReadings = parsed { StudioReadingsJson.readings(api(computer).getObject(StudioPaths.pronunciations(id))) }
+
+    override suspend fun reach(computer: String, id: String, surface: String): Reach = parsed { StudioReadingsJson.reach(api(computer).getObject(StudioPaths.reach(id, surface))) }
+
+    override suspend fun sharedReadings(computer: String): List<SharedReading> = parsed { StudioReadingsJson.shared(api(computer).getObject(StudioPaths.READINGS)) }
+
+    override suspend fun sharedOffer(computer: String, id: String): List<SharedReading> = parsed { StudioReadingsJson.shared(api(computer).getObject(StudioPaths.sharedReadings(id))) }
+
+    override suspend fun credits(computer: String, id: String): List<CreditGroup> = parsed { StudioReadingsJson.credits(api(computer).getObject(StudioPaths.suggestions(id))) }
+
+    override suspend fun precast(computer: String, id: String): PrecastView = parsed { StudioPrecastJson.view(api(computer).getObject(StudioPaths.precast(id))) }
+
+    override suspend fun music(computer: String, id: String): MusicView = parsed { StudioMusicJson.view(api(computer).getObject(StudioPaths.music(id))) }
+
+    override suspend fun moodsModel(computer: String): MoodsModel = parsed { StudioMusicJson.moods(api(computer).getObject(StudioPaths.MOODS_MODEL)) }
+
+    override suspend fun alternatives(computer: String, id: String, scene: String): List<MusicAlternative> =
+        parsed { StudioMusicJson.alternatives(api(computer).getObject(StudioPaths.musicAlternatives(id, scene))) }
+
+    override suspend fun castingContents(computer: String, id: String): ScriptContents = parsed { StudioScriptJson.contents(api(computer).getObject(StudioPaths.casting(id))) }
+
+    override suspend fun castingChapter(computer: String, id: String, chapter: Int): ChapterScript =
+        parsed { StudioScriptJson.chapter(api(computer).getObject(StudioPaths.castingChapter(id, chapter))) }
 
     /** Lời đáp thiếu trường bắt buộc (mã sách...) là lời đáp hỏng: nói như mọi lời đáp hỏng khác, không để JSONException văng lên màn. */
     private suspend fun <T> parsed(block: suspend () -> T): T = try {

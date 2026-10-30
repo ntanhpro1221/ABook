@@ -16,6 +16,22 @@ sealed interface PreviewOutcome {
 }
 
 /**
+ * Phép kiểm một cách đọc trước khi giữ 15 giây (nghe được là lưu được): `POST /pronunciation/check`. Máy chê (400) thì lời chê và bản viết lại đúng nằm
+ * trong kết quả; lỗi khác là [ReadingCheck.Failed]. Dùng chung cho thẻ cách đọc của "Việc cần duyệt" và màn "Cách đọc tên".
+ */
+internal suspend fun StudioSession.checkReading(bookId: String, step: WorkStep): ReadingCheck = try {
+    source.write(computer, bookId, step)
+    ReadingCheck.Ok
+} catch (cancelled: CancellationException) {
+    throw cancelled
+} catch (error: Throwable) {
+    val failure = StudioErrors.of(error)
+    note(failure)
+    if (failure is StudioError.Server && failure.status == 400) ReadingCheck.Rejected(failure.message.orEmpty(), StudioErrors.detail(failure, "suggestion"))
+    else ReadingCheck.Failed(StudioText.failure(failure))
+}
+
+/**
  * Gửi một bước "nghe thử" (`pronunciation/preview` hay `voice/preview`) và đọc lời đáp. Đi đường chậm (máy nạp giọng rồi đọc, tới ~2 phút). Mã `reason` của máy
  * đổi thành câu viết sẵn ([VoiceLogic.refusalText]); mọi lỗi khác thành [PreviewOutcome.Refused] - nghe thử không bao giờ ném lỗi lên màn.
  */
