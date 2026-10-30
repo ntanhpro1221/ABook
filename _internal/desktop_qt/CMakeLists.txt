@@ -410,6 +410,7 @@ qt_add_qml_module(ABookDesk
         qml/MusicPopover.qml
         qml/MusicCredit.qml
         qml/Toast.qml
+        qml/ToastStack.qml
         qml/EmptyState.qml
         qml/PeerBar.qml
         qml/PeerStudio.js

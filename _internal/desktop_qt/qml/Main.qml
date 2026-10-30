@@ -263,9 +263,9 @@ Window {
         }
     }
     // Lời báo của app (Toaster của web): góc trên bên phải, cách dải tiêu đề và mép phải 16 px; trên cả hộp thoại
-    Toast {
+    ToastStack {
         z: 90
-        visible: !windowMode.mini && win.uiVisible && t > 0
+        visible: !windowMode.mini && win.uiVisible
         anchors.right: parent.right
         anchors.rightMargin: 16
         y: titleBar.height + 16
