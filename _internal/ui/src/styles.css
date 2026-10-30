@@ -334,7 +334,7 @@ select[class~="border-line"] {
 }
 
 @layer utilities {
-  .tabular {
+  .tabular, .tabular-nums, .ticking-value, [data-motion-live] {
     font-family: "Be Vietnam Pro Digits", var(--font-sans);
     font-variant-numeric: tabular-nums;
   }

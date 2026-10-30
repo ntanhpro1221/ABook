@@ -359,11 +359,12 @@ export function announce(text: string) {
 export function LiveText({ shown, spoken }: { shown: ReactNode; spoken: string }) {
   return (
     <>
-      <span aria-hidden>{shown}</span>
-      <span className="sr-only">{spoken}</span>
+      <span data-motion-live aria-hidden>{shown}</span>
+      <span data-motion-live className="sr-only">{spoken}</span>
     </>
   );
 }
+LiveText.motionLive = true;
 
 // ---- Trạng thái -------------------------------------------------------------------------------------------
 

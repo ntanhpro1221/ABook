@@ -1,3 +1,4 @@
+import { TickingValue } from "@/shared/TickingValue";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { SlidingIndicator } from "@/shared/SlidingIndicator";
 import { MotionPresence } from "@/shared/MotionPresence";
@@ -156,7 +157,7 @@ function SeekBar({ large = false }: { large?: boolean }) {
   };
   return (
     <div className={cn("w-full", large ? "space-y-1.5" : "flex items-center gap-3")}>
-      {!large && <span className="tabular w-12 shrink-0 text-right text-xs text-fg-2">{formatClock(clamped)}</span>}
+      {!large && <span className="tabular w-12 shrink-0 text-right text-xs text-fg-2"><TickingValue>{formatClock(clamped)}</TickingValue></span>}
       <Slider.Root
         className={cn("group relative flex touch-none select-none items-center", large ? "h-5 w-full" : cn("h-4 flex-1", SLIDER_REACH))}
         min={0}
@@ -192,12 +193,12 @@ function SeekBar({ large = false }: { large?: boolean }) {
       </Slider.Root>
       {large ? (
         <div className="tabular flex justify-between text-xs text-fg-2">
-          <span>{formatClock(clamped)}</span>
-          <span>-{formatClock(Math.max(0, duration - shown) / (rate || 1))}</span>
+          <span><TickingValue>{formatClock(clamped)}</TickingValue></span>
+          <TickingValue>-{formatClock(Math.max(0, duration - shown) / (rate || 1))}</TickingValue>
         </div>
       ) : (
         // Thời gian còn lại THẬT ở tốc độ đang nghe (như màn "Đang nghe" ghi "6 phút ở 1,5×") - soát UX 29-09.
-        <span className="tabular w-12 shrink-0 text-xs text-fg-2">-{formatClock(Math.max(0, duration - shown) / (rate || 1))}</span>
+        <span className="tabular w-12 shrink-0 text-xs text-fg-2"><TickingValue>-{formatClock(Math.max(0, duration - shown) / (rate || 1))}</TickingValue></span>
       )}
     </div>
   );
@@ -1082,15 +1083,15 @@ function SleepPicker({
       focusSelector="[data-current-choice]"
       look={look}
       icon={Moon}
-      // Nút có nhãn: đang hẹn thì nhãn dưới là thời gian còn lại ("12 phút"), mờ chéo khi đổi.
-      caption={look === "row" ? "Hẹn giờ ngủ" : active ? sleepButtonLabel(sleep, now) : "Hẹn giờ"}
-      triggerKey={look === "row" ? active && sleepButtonLabel(sleep, now) : undefined}
-      trigger={look === "row" ? (active ? sleepButtonLabel(sleep, now) : "Tắt") :
+      // Countdown changes in place; choosing a sleep mode still changes the trigger.
+      caption={look === "row" ? "Hẹn giờ ngủ" : <TickingValue>{active ? sleepButtonLabel(sleep, now) : "Hẹn giờ"}</TickingValue>}
+      triggerKey={sleep.kind === "minutes" ? [sleep.kind, sleep.minutes] : sleep.kind}
+      trigger={look === "row" ? <TickingValue>{active ? sleepButtonLabel(sleep, now) : "Tắt"}</TickingValue> :
         <>
           <SleepRing fraction={sleep.kind === "minutes" && sleep.minutes > 0 && left !== null ? left / (sleep.minutes * 60_000) : null}>
             <Moon className={look === "action" ? "size-5" : "size-4"} />
           </SleepRing>
-          {active && look === "chip" && <span className="tabular">{sleepButtonLabel(sleep, now)}</span>}
+          {active && look === "chip" && <TickingValue>{sleepButtonLabel(sleep, now)}</TickingValue>}
         </>
       }
     ><MotionRegion>
@@ -1098,7 +1099,7 @@ function SleepPicker({
         <div className="px-2 pb-2 pt-1.5">
           <div className="text-xs font-medium text-fg-2">{sleep.kind === "chapter" ? "Dừng khi" : "Tắt sau"}</div>
           <div className="tabular mt-0.5 text-2xl font-semibold tracking-tight">
-            {sleep.kind === "chapter" ? "hết chương này" : sleepLabel(sleep, now)}
+            <TickingValue>{sleep.kind === "chapter" ? "hết chương này" : sleepLabel(sleep, now)}</TickingValue>
           </div>
           {sleep.kind === "minutes" && sleep.since === null && left !== null && (
             <div className="mt-0.5 text-xs text-fg-2">Đang tạm dừng - đồng hồ cũng dừng.</div>
@@ -1853,10 +1854,10 @@ function BookProgressLine({ className }: { className?: string }) {
   const whole = queue.every((chapter) => chapter.available);
   const finished = atEnd === "finished";
   const text = shown ? bookProgressText({ whole, heard, total, rate, speed: speedLabel(rate), finished }) : "";
-  // Số chạy theo đồng hồ không chuyển cảnh; hiện / ẩn dòng, đổi lời (cả cuốn / phần đã có / đã nghe hết, phút -> giờ) và đổi tốc độ thì mờ chéo.
+  // Clock and unit changes stay in place; visibility, scope, completion and user speed changes retain motion.
   return (
-    <MotionRegion as="p" motionKey={[rate, text.replace(/\d[\d\s.,:%–/\-]*/g, "#")]} className={cn("tabular text-xs text-fg-2", className)}>
-      {text}
+    <MotionRegion as="p" motionKey={[rate, shown, whole, finished]} className={cn("tabular text-xs text-fg-2", className)}>
+      <TickingValue>{text}</TickingValue>
     </MotionRegion>
   );
 }

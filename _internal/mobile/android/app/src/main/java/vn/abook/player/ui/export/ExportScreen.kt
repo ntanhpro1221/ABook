@@ -1,5 +1,6 @@
 package vn.abook.player.ui.export
 
+import vn.abook.player.ui.components.ClockLabel
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -275,10 +276,10 @@ private fun RunningPage(book: ListenBook, ui: ExportUi, progress: State<ExportPr
 
 /** Dòng tiến độ + thanh. Chữ đọc ở lá này; thanh chỉ đọc phần đã xong trong pha vẽ. Lời cho trình đọc màn hình chỉ đổi khi đổi pha hay qua mốc 25 %. */
 @Composable
-private fun ProgressLine(progress: State<ExportProgress>, folder: String?) {
+internal fun ProgressLine(progress: State<ExportProgress>, folder: String?) {
     val current = progress.value
     Column(Modifier.fillMaxWidth().testTag("export_progress")) {
-        BasicText(
+        ClockLabel(
             current.text, style = Abook.type.body,
             modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite; contentDescription = current.spoken }.testTag("export_progress_text"),
         )

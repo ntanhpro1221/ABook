@@ -1,5 +1,6 @@
 package vn.abook.player.ui.devices
 
+import vn.abook.player.ui.components.ClockLabel
 import vn.abook.player.formatSize
 
 import androidx.compose.animation.*
@@ -49,8 +50,8 @@ fun StorageScreen(devices: DevicesState, sheets: SheetHost, onBack: () -> Unit) 
         if (ui.loaded) LazyColumn(Modifier.fillMaxSize().fadeEdges(list).testTag("storage_list"), state = list, contentPadding = PaddingValues(bottom = Dim.s16)) {
             item("total", "total") {
                 Column(Modifier.fillMaxWidth().padding(top = Dim.s16, bottom = Dim.s8).testTag("storage_total")) {
-                    BasicText(formatSize(ui.storage.bytes), style = Abook.type.screenTitle)
-                    Caption("Còn trống ${formatSize(ui.storage.free)}")
+                    ClockLabel(formatSize(ui.storage.bytes), style = Abook.type.screenTitle)
+                    Caption("Còn trống ${formatSize(ui.storage.free)}", ticking = true)
                 }
             }
             if (entries.isEmpty()) item("empty", "status") {

@@ -123,7 +123,7 @@ export function Producing() {
             </div>
             <div className="mt-1 flex items-center gap-2">
               <Progress value={book.progress.overall} tone={book.queuePosition != null ? "muted" : "accent"} size="xs" className="flex-1" label={`Tiến độ: ${book.title}`} />
-              <MotionRegion as="span" motionKey={book.queuePosition ?? (book.starting ? "starting" : formatPercent(book.progress.overall))} className="tabular w-8 shrink-0 text-right text-[0.6875rem] text-fg-2">{book.queuePosition != null ? "Chờ" : book.starting ? "…" : formatPercent(book.progress.overall)}</MotionRegion>
+              <MotionRegion as="span" motionKey={book.queuePosition != null ? "queued" : book.starting ? "starting" : "running"} className="tabular w-8 shrink-0 text-right text-[0.6875rem] text-fg-2"><span data-motion-live>{book.queuePosition != null ? "Chờ" : book.starting ? "…" : formatPercent(book.progress.overall)}</span></MotionRegion>
             </div>
           </div>
         </button>

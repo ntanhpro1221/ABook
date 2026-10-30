@@ -1,3 +1,4 @@
+import { TickingValue } from "@/shared/TickingValue";
 import { MotionRegion } from "@/shared/MotionRegion";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -157,7 +158,7 @@ function RemotePlayerBar({ remote, receivedAt, onDismiss }: { remote: RemotePlay
           </div>
           <div className="truncate text-sm">
             <span className="font-medium">{state.chapterTitle}</span>
-            <span className="text-fg-2"> · {formatClock(at)}</span>
+            <TickingValue className="text-fg-2"> · {formatClock(at)}</TickingValue>
           </div>
         </div>
         <button type="button" aria-label={`Lùi 15 giây trên ${remote.name}`} onClick={() => send({ action: "skip", seconds: -15 })}
