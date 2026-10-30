@@ -259,6 +259,8 @@ Item {
                     y: 12
                     width: parent.width
                     spacing: 6
+                    Accessible.role: Accessible.Grouping
+                    Accessible.name: "Lựa chọn"
                     Repeater {
                         model: root.item.options || []
                         delegate: Rectangle {

@@ -131,6 +131,14 @@ Item {
         width: root.wide ? 150 : 200
         height: 24
         visible: root.hasStatus
+        // Rê chuột lên vạch đang thu: đang thu hay đứng giữa chương (title của ô trạng thái bên web)
+        HoverHandler {
+            id: statusHover
+            enabled: root.working
+            onHoveredChanged: if (hovered) statusTip.restart(); else { statusTip.stop(); Nav.hideTip(statusCell) }
+        }
+        Timer { id: statusTip; interval: 600; onTriggered: Nav.showTip(statusCell, root.running ? "Đang thu âm" : "Tạm dừng giữa chương") }
+        Accessible.description: root.working ? (root.running ? "Đang thu âm" : "Tạm dừng giữa chương") : ""
         Row {
             visible: root.working
             spacing: 8

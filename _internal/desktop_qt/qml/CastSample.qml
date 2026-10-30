@@ -10,6 +10,7 @@ Interactive {
     property string clipId: ""
     property string url: ""
     property string label: ""
+    property string stopLabel: "Dừng nghe thử"     // tên trợ năng lúc đang phát (trình tạo: "Dừng nghe <giọng>")
     property string idleIcon: "play"
     property bool asks: false
     property bool busy: false
@@ -22,7 +23,7 @@ Interactive {
     ringRadius: width / 2
     tip: active ? "Dừng" : label
     Accessible.role: Accessible.Button
-    Accessible.name: active ? "Dừng nghe thử" : label
+    Accessible.name: active ? stopLabel : label
     onClicked: { if (asks) root.requested(); else Clip.toggle(clipId, url) }
 
     Rectangle {

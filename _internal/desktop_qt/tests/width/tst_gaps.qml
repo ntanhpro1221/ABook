@@ -1,5 +1,7 @@
 import QtQuick
 import QtTest
+import "ModalLayer.js" as ModalLayer
+import "VisualReady.js" as VisualReady
 import ABook
 import "../../qml/FindLogic.js" as Find
 import "../../qml/BookLogic.js" as BookText
@@ -208,12 +210,8 @@ Item {
             page = null
             host.width = 1440
         }
-        function all(item, name, found) {
-            const out = found || []
-            if (item.objectName === name) out.push(item)
-            for (const child of item.children) all(child, name, out)
-            return out
-        }
+        // gồm cả hộp / bảng nổi do `item` mở (WindowLayer nằm ở gốc cửa sổ, không còn là con của trang)
+        function all(item, name) { return ModalLayer.findAll(item, name) }
         function one(item, name) { return all(item, name)[0] }
         function openPage(width, bookId, title) {
             host.width = width || 1440
@@ -227,14 +225,14 @@ Item {
         function shoot(name) {
             let before = null
             tryVerify(function() {
-                const image = grabImage(host)
+                const image = grabImage(VisualReady.grabTarget(host.Window.window, host))
                 const same = before !== null && image.equals(before)
                 before = image
                 return same
             })
-            // Đường dẫn tính từ file thử (build.bat chạy từ gốc cây, không phải desktop_qt)
-            before.save(Qt.resolvedUrl("../../build/d2shots/gaps_" + name + ".png").toString()
-                .replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, ""))
+            const path = Qt.resolvedUrl("../../build/d2shots/gaps_" + name + ".png").toString()
+                .replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, "")
+            before.save(path)
         }
         function shootBoth(name) { for (const mode of ["light", "dark"]) { Theme.mode = mode; shoot(name + "_" + mode) } Theme.mode = "auto" }
 

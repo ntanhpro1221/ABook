@@ -17,7 +17,6 @@ Collapse {
     property var devices: []
     property bool busy: false
     property real clock: Date.now() / 1000
-    property Item overlay: null
     readonly property var computer: JSON.parse(json)
     readonly property bool bluetoothHost: Logic.isBluetoothHost(computer.host)
     property bool entered: !fresh
@@ -117,7 +116,6 @@ Collapse {
                         computer: root.computer
                         devices: root.devices
                         busy: root.busy
-                        overlay: root.overlay
                         onChoose: address => root.bluetooth(root.rowId, address)
                     }
                     IconButton { objectName: "refreshBooks"; icon: "refresh-cw"; tip: "Hỏi lại thư viện"; enabled: !root.busy; Accessible.name: "Hỏi lại thư viện"; onClicked: root.refresh() }
