@@ -30,8 +30,8 @@ sealed interface LibraryState {
 }
 
 /**
- * Kho dữ liệu Thư viện cho giao diện native: đọc thẳng lõi ([Store]) - cùng nguồn với `LibraryPlugin.localBooks` (sách đã tải) và với gói sách
- * nghe thẳng đã cất (`stream.json`, cùng dữ liệu `streamableBooks` trả cho WebView) - không qua plugin. Cuốn nghe thẳng mang [RemoteRef]
+ * Kho dữ liệu Thư viện cho giao diện native: đọc thẳng lõi ([Store]) - sách đã tải và gói sách
+ * nghe thẳng đã cất (`stream.json`). Cuốn nghe thẳng mang [RemoteRef]
  * (dấu "Trên máy tính"). DevicesRepo chuyển danh sách có thẩm quyền từ RemoteBooks.streamable vào [acceptRemote]; gói đã cất chỉ dùng trước lượt hỏi đầu.
  */
 class LibraryRepo(private val context: Context, private val scope: kotlinx.coroutines.CoroutineScope, removed: (String) -> Unit = {}) : BookSource {
@@ -53,7 +53,7 @@ class LibraryRepo(private val context: Context, private val scope: kotlinx.corou
     }
     // null until the first authoritative network catalogue; downloaded books always stay local.
     @Volatile private var remoteIds: Set<String>? = null
-    // "Xoá khỏi điện thoại" như bản WebView ([BookActions.delete] / [Store.undoBook]): cuốn dời vào chỗ chờ ngay, "Hoàn tác" đưa về.
+    // "Xoá khỏi điện thoại" ([BookActions.delete] / [Store.undoBook]): cuốn dời vào chỗ chờ ngay, "Hoàn tác" đưa về.
     val deletions: UndoDelete = UndoDelete(
         scope,
         hold = { id -> withContext(Dispatchers.IO) { Store.init(context); BookActions.delete(context, id) { job -> scope.launch(Dispatchers.IO) { job.run() } } } },
@@ -63,7 +63,7 @@ class LibraryRepo(private val context: Context, private val scope: kotlinx.corou
     )
 
     init {
-        // Cuốn còn nằm chờ Hoàn tác từ lần chạy trước: nút ấy đã mất cùng tiến trình, xoá hẳn (như LibraryPlugin lúc nạp).
+        // Cuốn còn nằm chờ Hoàn tác từ lần chạy trước: nút ấy đã mất cùng tiến trình, xoá hẳn.
         scope.launch(Dispatchers.IO) { runCatching { Store.init(context); Store.sweepTrash(everything = true) } }
     }
 
@@ -191,7 +191,7 @@ class LibraryRepo(private val context: Context, private val scope: kotlinx.corou
         runCatching { Store.init(context); Store.file(id, "samples/$sampleId.wav").takeIf { it.isFile }?.path }.getOrNull()
     }
 
-    // ---- hồ sơ nghe: lõi chung với bản WebView ([ListeningRecords]); xong thì đọc lại Thư viện, báo máy tính ở nền ----
+    // ---- hồ sơ nghe: lõi [ListeningRecords]; xong thì đọc lại Thư viện, báo máy tính ở nền ----
 
     private suspend fun records(change: () -> ListeningRecords.Change): String? {
         val problem = withContext(Dispatchers.IO) {
@@ -282,7 +282,7 @@ class LibraryRepo(private val context: Context, private val scope: kotlinx.corou
         return problem
     }
 
-    /** Sách giả cho đo đạc (chỉ bản -PnativeUi, `abook.demo.books`): không chạm kho thật. */
+    /** Sách giả cho đo đạc (`abook.demo.books`): không chạm kho thật. */
     fun showDemo(count: Int) {
         flow.value = LibraryState.Ready(DemoLibrary.books(count))
     }

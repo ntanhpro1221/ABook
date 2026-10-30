@@ -254,14 +254,14 @@ object MusicBed {
     fun init(appContext: Context) {
         context = appContext.applicationContext
         MusicCues.mix = MusicMix.load(appContext)
-        // "Tự chọn nhạc nền" do giao diện gửi mỗi lần mở app: tiến trình khởi động lại từ widget / tai nghe / Android Auto (không có WebView) phải theo lựa chọn đã lưu, không về mặc định "bật".
+        // "Tự chọn nhạc nền" do giao diện gửi mỗi lần mở app: tiến trình khởi động lại từ widget / tai nghe / Android Auto (không có giao diện) phải theo lựa chọn đã lưu, không về mặc định "bật".
         Playlists.autoEnabled = prefs(appContext).getBoolean(AUTO_KEY, true)
         musicSeamP3 = prefs(appContext).getBoolean(SEAM_P3_KEY, false)
     }
 
     /**
      * TUỲ CHỌN THỬ NGHIỆM (mặc định TẮT): bài nhạc mp3 có vòng lặp mờ chéo phát bằng MỘT trình phát nối chính xác từng mẫu ([LoopSeam], MusicSeamBed.kt) thay vì mở trình phát mới ở
-     * mỗi chỗ lặp (đường a87). Bật: `PlayerPlugin.configure({musicSeamP3: true})` hay [rememberSeamP3]; chỉ ảnh hưởng bài mở SAU đó. Bài không dùng được (mốc `tail`, không phải mp3,
+     * mỗi chỗ lặp (đường a87). Bật: [rememberSeamP3]; chỉ ảnh hưởng bài mở SAU đó. Bài không dùng được (mốc `tail`, không phải mp3,
      * dựng Nối lỗi / không kịp) tự rơi về a87 và ghi logcat "ABookMusic".
      */
     @Volatile var musicSeamP3 = false

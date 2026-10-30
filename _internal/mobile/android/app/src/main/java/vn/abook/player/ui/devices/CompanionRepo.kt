@@ -41,7 +41,7 @@ data class OtherPlayer(
     val problem: String = "", val busy: Boolean = false, val receivedAt: Long = 0, val opening: String = "",
 )
 
-/** Same cores as LibraryPlugin; no Capacitor calls and no polling while the Activity is hidden. */
+/** Same cores as the Devices screens; no polling while the Activity is hidden. */
 interface CompanionCore {
     suspend fun scan() {}
     suspend fun players(): JSONArray
@@ -110,7 +110,7 @@ class CompanionRepo(private val core: CompanionCore, private val now: () -> Long
                 "pause" -> fresh.copy(playing = false)
                 "play" -> fresh.copy(playing = true)
                 "skip" -> fresh.copy(position = (at + (seconds ?: 0.0)).coerceIn(0.0, old.duration.takeIf { it > 0 } ?: Double.MAX_VALUE))
-                // Hẹn giờ ngủ hiện ngay dưới tay bạn, trước khi máy kia trả lời (như remoteSleepAfter của bản WebView).
+                // Hẹn giờ ngủ hiện ngay dưới tay bạn, trước khi máy kia trả lời.
                 "sleep" -> fresh.copy(sleep = if (mode == "chapter") "chapter" else if ((minutes ?: 0) > 0) "minutes" else "off")
                 else -> fresh
             }

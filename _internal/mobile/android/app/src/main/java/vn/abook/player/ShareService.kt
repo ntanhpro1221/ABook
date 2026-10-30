@@ -12,6 +12,7 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
+import vn.abook.player.ui.NativeActivity
 
 /**
  * Giữ ABook sống khi "Cho máy khác nghe thư viện này" bật. Trên ColorOS (OplusHansManager) tiến trình của app bị ĐÓNG BĂNG
@@ -62,7 +63,7 @@ class ShareService : Service() {
 
     private fun notification(): Notification {
         val open = PendingIntent.getActivity(this, 0,
-            Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), PendingIntent.FLAG_IMMUTABLE)
+            Intent(this, NativeActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), PendingIntent.FLAG_IMMUTABLE)
         val stop = PendingIntent.getService(this, ACTION_STOP.hashCode(),
             Intent(this, ShareService::class.java).setAction(ACTION_STOP), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         return NotificationCompat.Builder(this, CHANNEL)
@@ -78,13 +79,13 @@ class ShareService : Service() {
     }
 
     companion object {
-        /** Khoá SyncLink.prefs lưu công tắc "Cho máy khác nghe thư viện này" (LibraryPlugin đọc lại khi mở app). */
+        /** Khoá SyncLink.prefs lưu công tắc "Cho máy khác nghe thư viện này" (giao diện đọc lại khi mở app). */
         const val SHARE_KEY = "shareLibrary"
         private const val CHANNEL = "share"
         private const val ID = 4208
         private const val ACTION_STOP = "vn.abook.player.share.STOP"
 
-        /** Công tắc đổi từ ngoài giao diện (nút "Tắt chia sẻ" trên thông báo): LibraryPlugin báo màn hình hỏi lại trạng thái. */
+        /** Công tắc đổi từ ngoài giao diện (nút "Tắt chia sẻ" trên thông báo): màn hình nghe để hỏi lại trạng thái. */
         @Volatile
         var changed: (() -> Unit)? = null
 

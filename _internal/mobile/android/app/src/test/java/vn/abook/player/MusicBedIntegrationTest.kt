@@ -150,7 +150,7 @@ class MusicBedIntegrationTest {
         @Suppress("UNCHECKED_CAST")
         (field("fading").get(MusicBed) as MutableList<Any>).add(beds[1])
         invoke("startFade")
-        // PlayerPlugin.release (the close button) calls this lifecycle entry.
+        // The close button calls this lifecycle entry.
         MusicBed.release()
         assertNull(MusicBed.activeTrack)
         assertEquals("closed-book", field("closedBook").get(MusicBed))

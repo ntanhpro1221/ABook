@@ -3,7 +3,6 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { PhoneHandOffButton } from "@/android/RemotePlayers";
 import { HandOffButton } from "@/desktop/RemotePhone";
 import { BluetoothFallback } from "@/desktop/OtherComputers";
 
@@ -12,7 +11,6 @@ vi.mock("@tanstack/react-query", async (load) => ({ ...await load<typeof import(
 vi.mock("@/listen/player", () => ({ usePlayer: () => ({ track: { bookId: "b", chapterId: 1 }, pause() {} }) }));
 vi.mock("@/listen/clock", () => ({ useClockReader: () => () => ({ time: 0 }) }));
 vi.mock("@/listen/source", () => ({ useListenBook: () => ({ data: {} }), useSource: () => ({}) }));
-vi.mock("@/android/plugins", () => ({ EbookLibrary: { scanPlayers: async () => {} } }));
 vi.mock("@/studio/api", async (load) => ({ ...await load<typeof import("@/studio/api")>(), api: async () => ({}) }));
 let root: ReturnType<typeof createRoot>;
 let animate: ReturnType<typeof vi.spyOn>;
@@ -27,9 +25,9 @@ beforeEach(() => {
 });
 afterEach(async () => { await act(() => root.unmount()); document.body.replaceChildren(); document.head.replaceChildren(); vi.restoreAllMocks(); });
 
-it.each(["android", "desktop", "bluetooth"])("V4 %s: kết quả đổi bên trong Portal, ảnh cũ trên menu và inert", async (kind) => {
+it.each(["desktop", "bluetooth"])("V4 %s: kết quả đổi bên trong Portal, ảnh cũ trên menu và inert", async (kind) => {
   let devices: { address: string; name: string; kind: "computer" | "phone" }[] = [];
-  const render = () => act(() => root.render(<Tooltip.Provider>{kind === "android" ? <PhoneHandOffButton /> : kind === "desktop" ? <HandOffButton /> : <BluetoothFallback computer={{ name: "Máy A", host: "192.168.1.1" } as Parameters<typeof BluetoothFallback>[0]["computer"]} devices={devices} busy={false} onChoose={() => {}} />}</Tooltip.Provider>));
+  const render = () => act(() => root.render(<Tooltip.Provider>{kind === "desktop" ? <HandOffButton /> : <BluetoothFallback computer={{ name: "Máy A", host: "192.168.1.1" } as Parameters<typeof BluetoothFallback>[0]["computer"]} devices={devices} busy={false} onChoose={() => {}} />}</Tooltip.Provider>));
   await render();
   await act(() => document.querySelector<HTMLButtonElement>("button")!.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true })));
   const menu = document.querySelector<HTMLElement>('[role="menu"]')!;

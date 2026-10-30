@@ -10,7 +10,7 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 
 /**
- * "Lưu" / "Lưu thành…" vào một file có sẵn (LibraryPlugin.writeSavedBook) mà không để mất bản cũ (soát a99 C2, a100): gói hoàn chỉnh được dựng và KIỂM trong file tạm
+ * "Lưu" / "Lưu thành…" vào một file có sẵn mà không để mất bản cũ (soát a99 C2, a100): gói hoàn chỉnh được dựng và KIỂM trong file tạm
  * (cache) trước; chỉ khi đó mới mở đích để chép. Thiếu file nguồn hay gói hỏng thì đích chưa bị chạm. Mở đích ("wt") cắt nó về 0 byte ngay, nên bản cũ được
  * chép và sync ở keepDir cùng nhật ký URI/tên sách trước đó. Lỗi chép thì trả lại bản trước; chết tiến trình thì lần mở sau bản trước có ngay trong Bản lưu cũ.
  * Không giữ được bản cũ hoặc nhật ký thì dừng TRƯỚC khi mở đích; thiếu chỗ cho gói + bản cũ thì báo sớm.

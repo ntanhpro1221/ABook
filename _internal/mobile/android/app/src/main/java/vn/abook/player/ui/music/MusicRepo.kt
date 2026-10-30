@@ -12,7 +12,7 @@ import vn.abook.player.Playlists
 import vn.abook.player.Store
 
 /**
- * Nhạc nền với lõi: màn nhạc của cuốn và lần sửa đi qua [LocalStudio.bookMusic] / [LocalStudio.setBookMusic] (cùng lời đáp với WebView), menu danh sách phát qua
+ * Nhạc nền với lõi: màn nhạc của cuốn và lần sửa đi qua [LocalStudio.bookMusic] / [LocalStudio.setBookMusic], menu danh sách phát qua
  * [LocalStudio.playlistsView] (cần mạng lần đầu: luồng nền); thêm nhạc không qua đây mà qua [vn.abook.player.ui.voice.MineImports] (một kho, một lượt với Nhạc của tôi). Sửa xong: nhạc đang phát đọc lại lớp
  * sửa, cuốn tải từ máy tính gửi phần sửa về ([BookActions.edited]).
  */
@@ -21,7 +21,7 @@ class MusicRepo(context: Context) : MusicSource {
 
     private suspend fun <T> io(fallback: String, block: () -> T): T = withContext(Dispatchers.IO) {
         Store.init(app)
-        // Bản WebView đặt hai thứ này ở LibraryPlugin.load; giao diện native không nạp plugin.
+        // Hai thứ này do vn.abook.player.AppStartup.run đặt; chưa có (chạy trước khi nó xong) thì đặt ở đây.
         if (LocalStudio.musicStore == null) LocalStudio.musicStore = DeviceMusic.store(app)
         if (LocalStudio.catalog == null) LocalStudio.catalog = DeviceMusic.catalog(app)
         try {

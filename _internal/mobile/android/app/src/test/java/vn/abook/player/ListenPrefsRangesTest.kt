@@ -53,7 +53,7 @@ class ListenPrefsRangesTest {
         else -> error(key)
     }
 
-    /** Khoá WebView áp; native chỉ nhớ rồi trả lại ([ListenPrefs.stored]) - có test riêng, không có "điều lõi đang dùng". */
+    /** Khoá do giao diện áp; lõi chỉ nhớ rồi trả lại ([ListenPrefs.stored]) - có test riêng, không có "điều lõi đang dùng". */
     private val rememberedOnly = setOf("theme", "readingSurface")
 
     private fun natively() = choices.keys().asSequence().filter { it !in rememberedOnly }.toList()
@@ -113,7 +113,7 @@ class ListenPrefsRangesTest {
             "flipToPause" -> Motion.flipEnabled
             "headsetSkips" -> Playback.headsetSkips
             "autoRewind" -> Playback::class.java.getDeclaredField("autoRewind").also { it.isAccessible = true }.getBoolean(Playback)
-            // Tiếng chạm và rung do WebView áp: native chỉ nhớ rồi trả lại.
+            // Tiếng chạm và rung do giao diện áp: lõi chỉ nhớ rồi trả lại.
             "touchSounds", "haptics" -> ListenPrefs.stored().getBoolean(key)
             else -> error(key)
         }

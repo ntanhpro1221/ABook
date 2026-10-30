@@ -9,8 +9,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Chữ và mô hình của màn Xuất, mang theo ca test của bản WebView (exportM4b.test.ts, exportMp3.test.ts, listenExport.test.tsx, exportAudiobook.test.tsx,
- * backgroundHelp.test.ts): cùng câu, cùng số.
+ * Chữ và mô hình của màn Xuất: chữ và số của ba kiểu xuất (M4B, MP3, sách nói).
  */
 class ExportModelTest {
     private fun plan(chapters: Int = 12, audio: Long = 36_000, estimate: Long? = null, ready: Int = 0, readySeconds: Long = 0, rereads: Int = 0, bytes: Long = 0) =

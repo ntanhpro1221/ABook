@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /**
- * "Xoá khỏi điện thoại" có "Hoàn tác", làm đúng như bản WebView (`shared/trashUndo.ts`): cuốn dời vào chỗ chờ NGAY ([hold] = `Store.holdBook`, bền qua tắt app -
+ * "Xoá khỏi điện thoại" có "Hoàn tác": cuốn dời vào chỗ chờ NGAY ([hold] = `Store.holdBook`, bền qua tắt app -
  * tiến trình chết giữa chừng thì lần mở sau dọn hẳn), thanh nói "Đã xoá “X” khỏi điện thoại" + "Hoàn tác" trong [WINDOW_MS]; nhiều cuốn thì "Đã bỏ N cuốn" và
  * Hoàn tác trả lần lượt cũ trước. Hoàn tác thành thì "Đã khôi phục “X”", không thành (quá hạn, chỗ cũ bị chiếm) thì "Chưa hoàn tác được". Mỗi cuốn một hạn riêng.
  * Sống ở Application: rời màn hay dựng lại Activity không rút ngắn hạn.
@@ -108,7 +108,7 @@ class UndoDelete(
                     } catch (cancelled: CancellationException) {
                         throw cancelled
                     } catch (error: Exception) {
-                        // Như toast của bản WebView: tiêu đề "Chưa hoàn tác được" + lý do của lõi.
+                        // Tiêu đề "Chưa hoàn tác được" + lý do của lõi.
                         say("Chưa hoàn tác được" + " - " + (error.message?.takeIf { it.isNotBlank() } ?: "bạn thử lại"), error = true)
                         continue
                     }
@@ -148,7 +148,7 @@ class UndoDelete(
         /** Khớp `UNDO_TOAST_MS` của `trashUndo.ts` = (hạn của chỗ chờ - 2) giây: bấm ở giây chót không gặp chỗ chờ đã dọn. */
         const val WINDOW_MS = 28_000L
 
-        /** Dòng của thanh / thông báo sau khi xoá, chữ y như bản WebView. */
+        /** Dòng của thanh / thông báo sau khi xoá. */
         fun removedText(count: Int, title: String, partial: Boolean): String = when {
             count > 1 -> "Đã bỏ $count cuốn"
             partial -> "Đã xoá phần đã tải của “$title”"

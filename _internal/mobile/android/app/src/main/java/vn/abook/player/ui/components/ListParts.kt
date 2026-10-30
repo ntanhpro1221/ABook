@@ -394,15 +394,13 @@ fun QuoteSample(text: String, modifier: Modifier = Modifier) {
 }
 
 /**
- * Một dòng menu (DESIGN.md §6 "Dòng menu"): trọn bề ngang bảng, biểu tượng đầu dòng, nhãn xuống dòng khi dài (không cắt); biểu tượng và nhãn "Sắp có"
- * cùng tâm với dòng chữ đầu. `soon`: việc chưa làm ở giao diện native - nhạt đi, nhãn "Sắp có" ở mép phải, không bấm được. `unavailable`: việc có rồi
- * nhưng cuốn này không làm được - cũng nhạt đi, không bấm được, KHÔNG có nhãn "Sắp có". `hint`: một dòng nhỏ dưới nhãn nói việc đang diễn ra ("Đang xuất · 27%").
+ * Một dòng menu (DESIGN.md §6 "Dòng menu"): trọn bề ngang bảng, biểu tượng đầu dòng, nhãn xuống dòng khi dài (không cắt); biểu tượng cùng tâm với dòng chữ đầu.
+ * `unavailable`: việc có rồi nhưng cuốn này không làm được - nhạt đi, không bấm được. `hint`: một dòng nhỏ dưới nhãn nói việc đang diễn ra ("Đang xuất · 27%").
  */
 @Composable
 fun MenuRow(
     label: String,
     tag: String,
-    soon: Boolean = false,
     unavailable: Boolean = false,
     danger: Boolean = false,
     hint: String? = null,
@@ -412,15 +410,14 @@ fun MenuRow(
     icon: @Composable (Color) -> Unit,
 ) {
     val colors = Abook.colors
-    val inert = soon || unavailable
     val ink = when {
-        inert -> colors.fg3
+        unavailable -> colors.fg3
         danger -> colors.danger
         else -> colors.text
     }
     Row(
         Modifier.fillMaxWidth().heightIn(min = Dim.s48)
-            .then(if (inert) Modifier.semantics { disabled() } else Modifier.pressable(onClick = onClick))
+            .then(if (unavailable) Modifier.semantics { disabled() } else Modifier.pressable(onClick = onClick))
             .padding(vertical = Dim.s12)
             .testTag(tag),
         verticalAlignment = Alignment.Top,
@@ -430,17 +427,13 @@ fun MenuRow(
         }
         Spacer(Modifier.width(Dim.s12))
         Column(Modifier.weight(1f).then(if (value != null) Modifier.alignByBaseline() else Modifier)) {
-            BasicText(label, style = Abook.type.body.copy(color = if (inert) colors.text2 else ink), modifier = Modifier.testTag("row_title"))
+            BasicText(label, style = Abook.type.body.copy(color = if (unavailable) colors.text2 else ink), modifier = Modifier.testTag("row_title"))
             if (hint != null) RowHint(hint, Modifier.padding(top = 2.dp).testTag("${tag}_hint"), colors.text2)
         }
         if (value != null) {
             Spacer(Modifier.width(Dim.s12))
             // Cùng cỡ chữ phụ với giá trị ở hàng của tấm trình phát; chung đường chân chữ với tên, dài thì xuống dòng.
             BasicText(value, Modifier.widthIn(max = 160.dp).alignByBaseline().testTag("${tag}_value"), Abook.type.bodySmall.copy(color = colors.text2))
-        }
-        if (soon) {
-            Spacer(Modifier.width(Dim.s12))
-            Box(Modifier.height(FirstLine), contentAlignment = Alignment.CenterStart) { BasicText("Sắp có", style = Abook.type.caption) }
         }
     }
 }

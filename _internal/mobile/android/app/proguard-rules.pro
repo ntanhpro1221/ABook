@@ -4,29 +4,6 @@
 # Giữ số dòng + tên file nguồn cho stack trace (mapping.txt dịch ngược lại); chú thích/kiểu tổng quát cho phản chiếu bên dưới.
 -keepattributes *Annotation*, Signature, InnerClasses, EnclosingMethod, SourceFile, LineNumberTable
 
-# --- Capacitor -------------------------------------------------------------------------------------------------------
-# AAR capacitor-android đã mang consumer rules (proguard-rules.pro của nó): giữ lớp @CapacitorPlugin cùng @PluginMethod /
-# @PermissionCallback / @ActivityCallback / @Permission, và mọi lớp con Plugin. Bridge tìm phương thức theo tên mà JS gửi xuống
-# và đọc chú thích bằng phản chiếu, nên bốn plugin (App, Player, Library, ReadAloud) mất tên là gọi từ giao diện không tới.
-# Luật tường minh dưới đây phòng khi consumer rules đổi theo phiên bản (rẻ, không phình APK: chỉ 3 lớp plugin của app).
--keep @com.getcapacitor.annotation.CapacitorPlugin public class * {
-    @com.getcapacitor.annotation.PermissionCallback <methods>;
-    @com.getcapacitor.annotation.ActivityCallback <methods>;
-    @com.getcapacitor.annotation.Permission <methods>;
-    @com.getcapacitor.PluginMethod public <methods>;
-}
--keep public class * extends com.getcapacitor.Plugin { *; }
-# Chính lớp chú thích @CapacitorPlugin cũng phải giữ: không có luật này R8 làm PluginHandle.getPluginAnnotation() trả null (kể cả với
-# lớp plugin đã giữ), nên mọi chỗ Capacitor đọc `permissions` - xin quyền thông báo / Bluetooth (setStudioAlerts, bluetoothDevices,
-# thông báo của trình phát) - im lặng không làm gì: không hộp xin quyền, cũng không báo lỗi, lời gọi treo mãi. Thử trên máy ảo:
-# checkPermissions() trả rỗng thay vì {notifications, bluetooth}.
--keep class com.getcapacitor.annotation.CapacitorPlugin { *; }
-
-# Cầu JS <-> Java của WebView gọi theo tên qua @JavascriptInterface (Capacitor MessageHandler và nếu app thêm sau này).
--keepclassmembers class * {
-    @android.webkit.JavascriptInterface <methods>;
-}
-
 # --- JNI -------------------------------------------------------------------------------------------------------------
 # Hàm native bắt theo TÊN lớp + tên hàm (Java_vn_abook_player_vieneu_SeaG2pNative_nativeOpen...): đổi tên là UnsatisfiedLinkError.
 # libabook_sea_g2p.so (sea-g2p, giọng VieNeu) nạp từ thư mục mô-đun lúc chạy, không nằm trong APK nên R8 không thấy nó gọi gì.
@@ -50,6 +27,6 @@
     public <init>(android.content.Context, androidx.work.WorkerParameters);
 }
 
-# Không cần luật riêng: activity/service/receiver/provider khai trong manifest (AAPT tự giữ: MainActivity, StudioActivity,
+# Không cần luật riêng: activity/service/receiver/provider khai trong manifest (AAPT tự giữ: NativeActivity,
 # PlaybackService, CastService, PlayerWidget, FileProvider), Media3 (consumer rules), Tink (consumer rules; app chỉ gọi
 # Ed25519Verify trong Signatures.kt, thử trên máy ảo ở bước kiểm danh mục nhạc), org.json (thủ công, không ánh xạ lớp theo tên trường).

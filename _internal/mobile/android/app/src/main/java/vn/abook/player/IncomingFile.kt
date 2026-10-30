@@ -4,7 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 
-/** File app khác gửi tới ("Mở bằng ABook", chia sẻ tới ABook): một chỗ lấy địa chỉ ra khỏi Intent cho cả MainActivity (WebView) lẫn NativeActivity. */
+/** File app khác gửi tới ("Mở bằng ABook", chia sẻ tới ABook): một chỗ lấy địa chỉ ra khỏi Intent cho NativeActivity. */
 object IncomingFile {
     /** Lời báo khi bạn chia sẻ chữ trần (vd một đường link): app nhận SEND text/plain cho file .txt nên chữ trần cũng tới đây. */
     const val TEXT_ONLY = "Bạn gửi file EPUB, Word, PDF hoặc TXT; chưa nhận đoạn chữ chia sẻ."

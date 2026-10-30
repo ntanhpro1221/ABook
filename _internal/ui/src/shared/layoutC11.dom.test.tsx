@@ -8,7 +8,7 @@ import { Dialog, InlineError } from "./ui";
 import { SectionHeading } from "./SectionHeading";
 import { Fold } from "./Collapse";
 import { SettingsBlock } from "./SettingsNav";
-import { dismissTopLayer } from "@/android/backLayers";
+import { dismissTopLayer } from "@/shared/backLayers";
 import { installBackOrder } from "./backOrder";
 
 let root: Root, stop: () => void;

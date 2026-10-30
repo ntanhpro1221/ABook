@@ -9,9 +9,9 @@ import java.util.concurrent.ExecutionException
 import java.util.concurrent.FutureTask
 
 /**
- * Sách ở máy khác (máy tính chính và thiết bị ghép) mà cả hai giao diện cùng dùng (WebView qua [LibraryPlugin], native qua `ui.data.DevicesRepo`):
- * danh sách để tải ([library]) và gói sách để nghe thẳng ([streamable] - ghi `stream.json` cạnh sách, Thư viện đọc lại từ đó). Hàm trả JSON giữ nguyên hình đã
- * gửi cho WebView. Mọi hàm hỏi mạng / ghi đĩa: gọi ở luồng nền.
+ * Sách ở máy khác (máy tính chính và thiết bị ghép) mà giao diện dùng (`ui.data.DevicesRepo`):
+ * danh sách để tải ([library]) và gói sách để nghe thẳng ([streamable] - ghi `stream.json` cạnh sách, Thư viện đọc lại từ đó). Hàm trả JSON.
+ * Mọi hàm hỏi mạng / ghi đĩa: gọi ở luồng nền.
  */
 object RemoteBooks {
     private const val STREAM_PARALLEL = 4 // số gói sách nghe thẳng lấy cùng lúc ([streamable])

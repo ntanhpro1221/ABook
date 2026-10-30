@@ -6,7 +6,7 @@ import vn.abook.player.ui.data.Fmt
 
 /*
  * Nhạc nền của một cuốn, cho giao diện native. Cùng hình JSON với lõi (GET /music của LocalStudio, `/api/music/playlists`, `musicCredit` của Playback.state)
- * và cùng luật với bản WebView (listen/playlistBed.ts, shared/musicLevels.ts, shared/format.ts) - chỉ chữ trên nút được viết lại cho điện thoại (nhãn 1-4 chữ).
+ * Chữ trên nút viết cho điện thoại (nhãn 1-4 chữ).
  */
 
 /** Một danh sách phát của danh mục (menu "Nhạc nền" của sách chỉ có chữ). */

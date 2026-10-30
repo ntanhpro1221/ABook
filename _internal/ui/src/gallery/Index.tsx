@@ -32,7 +32,6 @@ function ThemeSwitch({ id, theme }: { id: string; theme: Theme }) {
 
 function List({ theme }: { theme: Theme }) {
   const platforms = [
-    { key: "phone" as const, label: "Điện thoại (Android)" },
     { key: "desktop" as const, label: "Máy tính (Nghe + Studio)" },
   ];
   return (

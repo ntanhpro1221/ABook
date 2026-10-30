@@ -23,7 +23,7 @@ it("nhắc màn đọc gọn, vẫn phân biệt chuột/chạm và quyền sử
   }
 });
 
-it("chuỗi PDF hỏng Kotlin trùng fixture mà Python/pdf.js dùng", () => {
+it("chuỗi PDF hỏng Kotlin trùng fixture mà Python dùng", () => {
   const fixture = JSON.parse(readFileSync(new URL("../../../tests/fixtures/import/messages.json", import.meta.url), "utf8")) as { broken: string };
   const kotlin = readFileSync(new URL("../../../mobile/android/app/src/main/java/vn/abook/player/BookImport.kt", import.meta.url), "utf8");
   expect(kotlin.match(/private const val BROKEN = "([^"]+)"/)![1].replace("%s", "PDF")).toBe(fixture.broken);

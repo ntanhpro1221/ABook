@@ -22,8 +22,8 @@ import vn.abook.player.ui.data.listenerFlow
 import vn.abook.player.ui.voice.VoiceText
 
 /**
- * Nguồn thật của màn Xuất: gọi thẳng các lõi ([ExportStart], [Mp3Exports], [M4bExports], [ListenExports], [ExportHistory], [BookMusic]) - cùng những hàm mà
- * `LibraryPlugin` chuyển tiếp cho bản WebView, không qua cầu Capacitor. Tin của việc nền đến qua [vn.abook.player.ExportLive.listen].
+ * Nguồn thật của màn Xuất: gọi thẳng các lõi ([ExportStart], [Mp3Exports], [M4bExports], [ListenExports], [ExportHistory], [BookMusic]) - không qua
+ * lớp trung gian nào. Tin của việc nền đến qua [vn.abook.player.ExportLive.listen].
  */
 class ExportRepo(private val context: Context) : ExportSource {
     private suspend fun <T> io(block: () -> T): T = withContext(Dispatchers.IO) {

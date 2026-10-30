@@ -9,7 +9,7 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Tin cuối của mỗi lượt xuất đang chạy của MỘT kiểu xuất (theo cuốn): giao diện được dựng lại (vuốt app khỏi danh sách gần đây, WebView tải lại)
+ * Tin cuối của mỗi lượt xuất đang chạy của MỘT kiểu xuất (theo cuốn): giao diện được dựng lại (vuốt app khỏi danh sách gần đây rồi mở lại)
  * trong lúc việc nền vẫn chạy thì hỏi [ExportJobs.running] để hiện lại thông báo tiến độ và nghe tiếp tin "xong" / "lỗi". Dùng chung cho
  * xuất MP3, M4B và sách nói.
  */

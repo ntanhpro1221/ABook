@@ -121,7 +121,6 @@
       "web_also": [
         "listen/labels.ts",
         "listen/sleep.ts",
-        "android/RemotePlayers.tsx",
         "shared/ui.tsx",
         "listen/prepareAhead.ts",
         "listen/ReaderScreen.tsx",
@@ -203,8 +202,7 @@
         "listen/ReaderScreen.tsx",
         "listen/MorningRecap.tsx",
         "listen/bookStatusText.ts",
-        "shared/trashUndo.ts",
-        "android/App.tsx"
+        "shared/trashUndo.ts"
       ],
       "native": [
         "screens/LibraryScreen.kt",
@@ -370,10 +368,7 @@
         "listen/sleep.ts",
         "listen/PlayerViews.tsx",
         "listen/EditBook.tsx",
-        "listen/AddBook.tsx",
-        "android/ExportMp3.tsx",
-        "android/ExportM4b.tsx",
-        "android/ExportAudiobook.tsx"
+        "listen/AddBook.tsx"
       ],
       "sentences": true,
       "native_also": [
@@ -391,20 +386,12 @@
     {
       "id": "settings",
       "web": [
-        "android/SettingsScreen.tsx",
         "shared/SettingsNav.tsx",
         "shared/settingsSummary.ts",
-        "android/Diagnostics.tsx",
-        "android/notifications.ts",
-        "android/OldSaves.tsx",
-        "android/oldSaveList.ts",
-        "android/UpdateNotice.tsx",
-        "android/updates.ts",
         "shared/feedback.ts",
         "shared/readingSurface.ts",
         "shared/ThirdPartyList.tsx",
         "listen/ReadAloudStorage.tsx",
-        "android/settings.ts",
         "listen/prepareAhead.ts"
       ],
       "native": [
@@ -500,7 +487,6 @@
       "web_also": [
         "listen/labels.ts",
         "listen/sleep.ts",
-        "android/DevicesScreen.tsx",
         "listen/playlistBed.ts",
         "shared/diagnostics.ts"
       ],
@@ -517,15 +503,6 @@
       "id": "devices",
       "sentences": true,
       "web": [
-        "android/DevicesScreen.tsx",
-        "android/RemotePlayers.tsx",
-        "android/StudioOpen.tsx",
-        "android/StudioScreen.tsx",
-        "android/LibraryDownloads.tsx",
-        "android/downloads.ts",
-        "android/storage.ts",
-        "android/bluetoothPermission.ts",
-        "android/androidSource.ts",
         "shared/UnpairDialog.tsx",
         "shared/unpair.ts",
         "shared/useUnpair.tsx"
@@ -707,7 +684,6 @@
         "shared/syncSwitch.ts",
         "listen/PlayerViews.tsx",
         "listen/LibraryScreen.tsx",
-        "android/App.tsx",
         "shared/ui.tsx"
       ],
       "native_also": [
@@ -740,8 +716,7 @@
       "web_also": [
         "listen/labels.ts",
         "listen/MyMusic.tsx",
-        "studio/musicLocal.ts",
-        "android/SettingsScreen.tsx"
+        "studio/musicLocal.ts"
       ],
       "sentences": true,
       "missing": [
@@ -968,8 +943,6 @@
         "listen/importQueue.ts",
         "listen/textImport.ts",
         "listen/FootnoteChoices.tsx",
-        "android/imports.ts",
-        "android/importPdf.ts",
         "shared/BookCover.tsx",
         "shared/CoverSearch.tsx",
         "shared/cover.ts",
@@ -1259,11 +1232,6 @@
           "side": "web",
           "match": "^chưa\\ hỗ\\ trợ\\ \\{\\}\\.\\ bạn\\ hãy\\ chọn\\ epub,\\ docx,\\ pdf\\ có\\ chữ,\\ txt\\ hoặc\\ file\\ \\.abook$",
           "reason": "máy tính: kiểm đuôi của file kéo thả / đường dẫn dán trước khi đọc; điện thoại đưa mọi file chọn được cho lõi, lõi tự báo (TextImports.kt, ngoài ui/)"
-        },
-        {
-          "side": "web",
-          "match": "^không\\ mở\\ được\\ bộ\\ chọn\\ file$",
-          "reason": "web trên Android: lỗi gọi bộ chọn qua plugin Capacitor; native gọi thẳng bộ chọn của hệ thống, không có bước lỗi này"
         },
         {
           "side": "web",

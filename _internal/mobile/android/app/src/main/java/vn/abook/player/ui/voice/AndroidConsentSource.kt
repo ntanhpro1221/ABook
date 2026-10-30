@@ -8,7 +8,7 @@ import vn.abook.player.Store
 import vn.abook.player.readaloud.ReadAloud
 
 /**
- * Nguồn thật của hộp hỏi đồng ý: gọi thẳng [ReadAloud] (cùng hàm mà bản WebView gọi qua ReadAloudPlugin). Việc đổi trạng thái của lõi chạy ở luồng chính, theo đúng thứ tự
+ * Nguồn thật của hộp hỏi đồng ý: gọi thẳng [ReadAloud] . Việc đổi trạng thái của lõi chạy ở luồng chính, theo đúng thứ tự
  * với lệnh phát đi sau (cả hai cùng xếp hàng ở [Playback.onMain]).
  */
 class AndroidConsentSource(context: Context) : ConsentSource {

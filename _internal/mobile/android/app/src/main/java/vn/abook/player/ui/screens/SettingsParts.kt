@@ -60,7 +60,7 @@ import vn.abook.player.ui.theme.MotionMs
 import vn.abook.player.ui.components.fadeEdges
 
 /*
- * Khối dựng của các màn Cài đặt (shared/SettingsNav.tsx của bản WebView): khoảng trắng + tiêu đề nhỏ thay khung (DESIGN.md §4.2), hàng = tên (16) + mô tả
+ * Khối dựng của các màn Cài đặt: khoảng trắng + tiêu đề nhỏ thay khung (DESIGN.md §4.2), hàng = tên (16) + mô tả
  * một dòng (12, mực phụ) bên trái, điều khiển bên phải; nhóm chọn-một nằm DƯỚI tên, trải hết bề ngang. Chữ dài xuống dòng, không cắt.
  */
 
@@ -82,10 +82,3 @@ fun SettingsPage(title: String, onBack: () -> Unit, tag: String, modifier: Modif
     }
 }
 
-/** Tính năng mà lõi / giao diện native chưa có: nói thẳng "Sắp có", không giả một nút chạy được. */
-@Composable
-fun SoonRow(label: String, hint: String? = null, tag: String? = null) {
-    ListRow(label, if (tag != null) Modifier.testTag(tag) else Modifier, hint = hint) {
-        BasicText("Sắp có", style = Abook.type.caption)
-    }
-}

@@ -119,54 +119,54 @@ Một việc - một cách viết, cho web (máy tính + điện thoại), nativ
 
 <!-- ui_parity:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity.py - không sửa tay, chạy lại script) -->
 
-Quét: web 5861 chữ (3269 khác nhau), 378 cặp nhãn-icon; native 1319 chữ (1033 khác nhau), 73 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
+Quét: web 5262 chữ (3049 khác nhau), 334 cặp nhãn-icon; native 1852 chữ (1444 khác nhau), 74 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
 
 ## a. Cùng việc, khác chữ
 
-Cặp nhãn ngắn (<= 6 chữ) mà phía kia KHÔNG có nguyên văn nhưng có nhãn giống (chung từ, gần nhau, hay chung icon). 177 cặp; 40 cặp đầu theo độ giống. `icon` = cùng icon lucide.
+Cặp nhãn ngắn (<= 6 chữ) mà phía kia KHÔNG có nguyên văn nhưng có nhãn giống (chung từ, gần nhau, hay chung icon). 445 cặp; 40 cặp đầu theo độ giống. `icon` = cùng icon lucide.
 
 | native | web | giống | nơi |
 |---|---|---|---|
-| Chưa có chương nghe được | Chưa có chương nghe được{} | 1.00 | `native/data/Production.kt:53` ~ `listen/LibraryScreen.tsx:335` |
-| Chọn giọng | Chọn một giọng | 1.00 | `native/nowplaying/PlayerSheets.kt:191` ~ `studio/NewProjectScreen.tsx:1273` |
+| Chưa có chương nghe được | Chưa có chương nghe được{} | 1.00 | `native/data/Production.kt:64` ~ `listen/LibraryScreen.tsx:336` |
+| Chọn giọng | Chọn một giọng | 1.00 | `native/nowplaying/PlayerSheets.kt:201` ~ `studio/NewProjectScreen.tsx:1273` |
+| Cỡ ước tính: khoảng {}{}. | Cỡ ước tính: khoảng | 1.00 | `native/studio/StudioExport.kt:242` ~ `studio/ExportBook.tsx:518` |
+| Dùng “{}” | Dùng “ | 1.00 | `native/studio/WorkText.kt:76` ~ `studio/ReadingProblem.tsx:26` |
+| Dùng “{}” | Đúng là {} | 1.00 | `native/studio/WorkText.kt:76` ~ `studio/ScriptTab.tsx:836` |
+| Ghép | Đã ghép | 1.00 | `native/devices/PairScreen.kt:83` ~ `desktop/OtherComputers.tsx:170` (+2) |
+| Huỷ mã | Huỷ mã này | 1.00 | `native/devices/DeviceParts.kt:137` ~ `desktop/PhoneSync.tsx:178` |
 | Không có ai khớp “{}”. | Không có ai khớp “ | 1.00 | `native/screens/BookPeople.kt:224` ~ `studio/MergePeople.tsx:127` |
-| Nghe tiếp từ {} | Nghe tiếp từ | 1.00 | `native/data/ListenExtras.kt:98` ~ `listen/BookScreen.tsx:676` |
-| Nghe tiếp từ {} | Nghe tiếp · {} | 1.00 | `native/data/ListenExtras.kt:98` ~ `listen/labels.ts:82` |
-| Tên gốc: {} | Tên gốc: | 1.00 | `native/addbook/BookForms.kt:97` (+2) ~ `studio/CastEdits.tsx:88` |
-| Đã xuất | Xuất | 1.00 | `native/export/ExportScreen.kt:175` ~ `studio/ExportBook.tsx:385` (+2) |
-| Đã xuất {} chương | Đã xuất {} chương{} | 1.00 | `native/export/ExportModel.kt:312` ~ `android/ExportMp3.tsx:78` |
-| Chưa mở được Studio | Chưa gỡ được Studio | 0.95 | `native/devices/DevicesRepo.kt:145` ~ `studio/StudioSetup.tsx:359` |
-| Đang đo. | Đang đổi | 0.93 | `native/screens/SettingsAdvanced.kt:61` ~ `studio/MusicTab.tsx:230` |
-| Đã xoá khỏi điện thoại | Xoá {} khỏi điện thoại | 0.93 | `native/data/UndoDelete.kt:155` ~ `android/DevicesScreen.tsx:908` (+1) |
+| Máy nghe ra | Máy nghe ra: “ | 1.00 | `native/studio/WorkText.kt:104` ~ `studio/ReviewQueue.tsx:231` |
+| Máy đang dùng: {} | Máy đang dùng | 1.00 | `native/studio/WorkText.kt:34` ~ `studio/WorkInbox.tsx:934` |
+| Mã ghép nối | Mã ghép nối: {} | 1.00 | `native/devices/PairScreen.kt:185` ~ `desktop/PhoneSync.tsx:161` (+1) |
+| Nghe một câu | Nghe từ câu này | 1.00 | `native/studio/WorkText.kt:146` ~ `listen/SentenceMenu.tsx:141` |
+| Nghe tiếp từ {} | Nghe tiếp từ | 1.00 | `native/data/ListenExtras.kt:98` ~ `listen/BookScreen.tsx:677` |
+| Nghe tiếp từ {} | Nghe tiếp · {} | 1.00 | `native/data/ListenExtras.kt:98` ~ `listen/labels.ts:81` |
+| Sẽ đọc là “{}” | Sẽ đọc là “ | 1.00 | `native/studio/ReviewTab.kt:158` ~ `studio/ReviewQueue.tsx:241` |
+| Sẽ đọc là “{}” | Đọc {} | 1.00 | `native/studio/ReviewTab.kt:158` ~ `listen/LibraryScreen.tsx:201` (+1) |
+| Tách thành {} chương | Đã tách thành {} chương | 1.00 | `native/studio/StudioNew.kt:297` ~ `studio/NewProjectScreen.tsx:1950` |
+| Tên gốc: {} | Tên gốc: | 1.00 | `native/addbook/BookForms.kt:97` (+3) ~ `studio/CastEdits.tsx:88` |
+| Đang tải phần đọc không khí{} | Đang tải phần đọc không khí | 1.00 | `native/studio/StudioMusic.kt:304` ~ `studio/MusicTab.tsx:454` |
+| Đang tải {}% | Đang tải {} | 1.00 | `native/screens/RemoteBookSheet.kt:38` ~ `listen/VieneuModuleCard.tsx:237` (+1) |
+| Đã thêm “{}” | Thêm {} | 1.00 | `native/addbook/ImportRepo.kt:118` (+1) ~ `listen/LibraryScreen.tsx:241` |
+| Đã tải | Đã tải {}% | 1.00 | `native/devices/DeviceParts.kt:95` ~ `desktop/remoteDownloadState.ts:72` |
+| Đúng rồi, giữ “{}” | Đúng rồi, giữ “ | 1.00 | `native/studio/WorkText.kt:72` ~ `studio/WorkInbox.tsx:356` |
+| Xoá khỏi điện thoại | Xoá khỏi thư viện | 0.97 · icon | `native/components/Confirm.kt:95` (+1) ~ `desktop/App.tsx:162` (+1) |
+| Dùng Bluetooth | Đường Bluetooth | 0.97 | `native/devices/DevicesModel.kt:179` ~ `desktop/OtherComputers.tsx:373` |
+| Chưa mở được Studio | Chưa gỡ được Studio | 0.95 | `native/devices/DevicesRepo.kt:146` ~ `studio/StudioSetup.tsx:360` |
+| Còn lại | Chọn lại | 0.93 | `native/studio/StudioText.kt:56` ~ `listen/AddBook.tsx:548` (+1) |
+| Đang đo. | Đang đổi | 0.93 | `native/screens/SettingsAdvanced.kt:64` ~ `studio/MusicTab.tsx:231` |
+| Chưa gửi được {}. {} | Chưa ghi được | 0.92 | `native/studio/StudioNew.kt:298` ~ `listen/LineWishes.tsx:343` (+7) |
+| Đang tạo sách | Đã tạo sách | 0.92 | `native/studio/StudioNew.kt:289` ~ `studio/NewProjectScreen.tsx:1857` |
 | Cắt ảnh bìa | Đặt ảnh bìa | 0.91 | `native/editbook/CoverCrop.kt:108` ~ `studio/CoverEditor.tsx:112` (+1) |
-| Đang đóng | Đang dùng | 0.89 | `native/music/MusicPanel.kt:245` ~ `studio/VoicePicker.tsx:339` (+1) |
-| Sách nói | Sách mới | 0.88 | `native/export/ExportModel.kt:381` ~ `desktop/SettingsScreen.tsx:410` |
-| Đang mở Studio | Đang mở Studio của {} | 0.88 | `native/devices/DeviceSheets.kt:76` ~ `shared/peerStudio.ts:52` |
-| Đang nối {} | Đang đổi | 0.88 | `native/devices/PairScreen.kt:194` ~ `studio/MusicTab.tsx:230` |
-| Chọn giọng | Đã chọn giọng {} | 0.87 | `native/nowplaying/PlayerSheets.kt:191` ~ `listen/PlayerViews.tsx:764` |
-| Đang đọc ảnh | Đang đọc là: | 0.87 | `native/editbook/CoverCrop.kt:125` ~ `studio/ReviewQueue.tsx:246` |
-| Đang đóng file sách | Đang đóng gói sách… | 0.86 | `native/screens/BookSheets.kt:190` ~ `desktop/bookFileExport.ts:28` (+1) |
-| Chọn giọng | Chung giọng | 0.86 | `native/nowplaying/PlayerSheets.kt:191` ~ `studio/WorkInbox.tsx:152` |
-| Vẫn tải | Vẫn cài | 0.86 | `native/voice/VoiceSheets.kt:124` ~ `studio/StudioSetup.tsx:227` (+1) |
-| Đang ghi | Đã ghi | 0.86 | `native/screens/BookPeople.kt:184` ~ `studio/ScriptTab.tsx:1149` (+2) |
-| Đang ghi | Đã ghi “{}” - {}. | 0.86 | `native/screens/BookPeople.kt:184` ~ `studio/WorkInbox.tsx:346` |
-| Đang ghi | Đã ghi: {} | 0.86 | `native/screens/BookPeople.kt:184` ~ `studio/WorkInbox.tsx:467` (+4) |
-| Đang lấy giọng | Đang tải giọng ({}) {}% | 0.86 | `native/screens/SettingsVoice.kt:287` ~ `studio/voiceEngines.ts:81` |
-| Đã xuất | Đề xuất | 0.86 | `native/export/ExportScreen.kt:175` ~ `studio/NewProjectScreen.tsx:1016` |
-| Đang mở Studio | Đã gỡ Studio | 0.85 | `native/devices/DeviceSheets.kt:76` ~ `studio/StudioSetup.tsx:356` |
-| Đã xuất xong | Đã xuất {} chương{} | 0.85 | `native/export/ExportModel.kt:392` ~ `android/ExportMp3.tsx:78` |
-| Tìm lại thiết bị phát | Hỏi lại thư viện | 0.84 · icon | `native/devices/CompanionSurfaces.kt:123` ~ `desktop/OtherComputers.tsx:228` (+1) |
-| Địa chỉ máy tính | Địa chỉ máy kia | 0.84 | `native/devices/PairScreen.kt:177` ~ `desktop/OtherComputers.tsx:285` |
-| Chọn thư mục để lưu trước | Chọn thư mục trước | 0.84 | `native/export/ExportRepo.kt:85` ~ `desktop/LibraryMoveRecovery.tsx:36` |
-| Đã nối {} | Ai nói? | 0.83 | `native/devices/DevicesState.kt:69` ~ `studio/ScriptTab.tsx:625` |
-| Đã nối {} | Đã tới {} | 0.83 | `native/devices/DevicesState.kt:69` ~ `listen/player.tsx:577` |
-| Bạn hãy thử lại. | Bật và thu lại | 0.83 | `native/addbook/ImportQueue.kt:149` (+8) ~ `studio/TellerModeSwitch.tsx:79` |
-| Có bản mới · {} | Bản mới | 0.82 | `native/voice/VoiceModel.kt:302` ~ `desktop/SettingsScreen.tsx:182` (+1) |
-| Dùng ảnh | Dừng nghe | 0.82 | `native/editbook/CoverCrop.kt:110` ~ `studio/MusicTab.tsx:225` (+1) |
-| Dùng ảnh | Dừng nghe {} | 0.82 | `native/editbook/CoverCrop.kt:110` ~ `studio/NewProjectScreen.tsx:989` (+1) |
-| Đang đóng | Đang đổi | 0.82 | `native/music/MusicPanel.kt:245` ~ `studio/MusicTab.tsx:230` |
-| Chưa đọc được các khoá | Chưa đổi được cách đọc | 0.82 | `native/voice/KeysScreen.kt:35` ~ `listen/VieneuModuleCard.tsx:291` |
-| Xuất sách | Xuất sách nói “{}” | 0.82 | `native/export/ExportScreen.kt:91` ~ `android/ExportAudiobook.tsx:254` (+3) |
+| Máy tính không còn đoạn này. | Máy tính không có cuốn này | 0.91 | `native/studio/WorkText.kt:21` ~ `desktop/RemotePhone.tsx:603` |
+| Chưa gửi được nhật ký | Chưa lưu được nhật ký | 0.91 | `native/NativeActivity.kt:340` ~ `desktop/PhoneDiagnostics.tsx:64` |
+| Dung lượng | Dựng xưởng | 0.90 | `native/devices/StorageScreen.kt:48` (+1) ~ `listen/ProjectFileItems.tsx:143` (+1) |
+| Đổi chương | Lỗi chương | 0.90 | `native/studio/StudioScript.kt:240` ~ `studio/ChapterError.tsx:17` |
+| Thêm thiết bị | Tên thiết bị | 0.88 | `native/devices/PairScreen.kt:95` ~ `desktop/PhoneSync.tsx:438` (+1) |
+| Ghép lại | Nghe lại | 0.88 | `native/devices/DeviceSheets.kt:90` ~ `studio/WorkInbox.tsx:939` |
+| Đang mở Studio | Đang mở Studio của {} | 0.88 | `native/devices/DeviceSheets.kt:76` (+1) ~ `shared/peerStudio.ts:52` |
+| Đang nối {} | Đang đổi | 0.88 | `native/devices/PairScreen.kt:195` ~ `studio/MusicTab.tsx:231` |
+| Đang tải {}% | Dừng tải | 0.88 | `native/screens/RemoteBookSheet.kt:38` ~ `desktop/RemoteDownload.tsx:107` |
 
 ## b. Cùng nhãn khác icon, cùng icon khác nhãn
 
@@ -191,88 +191,98 @@ Cặp nhãn ngắn (<= 6 chữ) mà phía kia KHÔNG có nguyên văn nhưng có
 | share-2 | Chia sẻ | Đang đóng file sách |
 | upload | Chọn file, Nhập nhạc, Thêm file, Thêm nhạc của bạn | Đang thêm {}/{} |
 
-Phủ của bộ ghép: icon dùng ở 134 chỗ trong mã native, ghép được với nhãn chữ ở 71; web 554 chỗ, ghép được 326. Phần còn lại là icon không đi cùng nhãn chữ (nút chỉ icon, chỉ báo) hay nhãn dựng từ model (vd tên nhóm Cài đặt), nên KHÔNG có trong bảng.
+Phủ của bộ ghép: icon dùng ở 149 chỗ trong mã native, ghép được với nhãn chữ ở 72; web 483 chỗ, ghép được 290. Phần còn lại là icon không đi cùng nhãn chữ (nút chỉ icon, chỉ báo) hay nhãn dựng từ model (vd tên nhóm Cài đặt), nên KHÔNG có trong bảng.
 Icon native chưa quy về lucide (3): `native:ChevronIcon`, `native:OtherPlayerIcon`, `native:PlayerGlyph`.
-Số cặp: web 326, native 71; icon lucide dùng: web 98, native 38.
+Số cặp: web 290, native 72; icon lucide dùng: web 94, native 39.
 
 ## c. Nhãn chỉ có ở một phía, theo màn
 
 Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể cả chữ giống chữ ở mục a. Để phân biệt tính năng thiếu với chữ trôi: một màn native có nhiều nhãn chỉ-native mà web cùng màn không có thường là tính năng mới; vài nhãn lẻ thường là chữ trôi (mục a).
 
-### c1. Chỉ có ở native (79 nhãn)
+### c1. Chỉ có ở native (274 nhãn)
 
+- `native/NativeActivity.kt` (2): Không mở được trình duyệt (`328`); Chưa gửi được nhật ký (`340`)
 - `native/addbook/BookForms.kt` (1): Tên gốc: {} (`97`)
+- `native/addbook/ImportModel.kt` (2): Không mở được file (`86`); File không có sách nào. (`87`)
 - `native/addbook/ImportQueue.kt` (1): Bạn hãy thử lại. (`149`)
-- `native/addbook/ImportRepo.kt` (1): Bạn hãy nhập tên sách. (`97`)
-- `native/components/Confirm.kt` (1): Đang xoá (`95`)
-- `native/components/ListParts.kt` (1): Sắp có (`440`)
+- `native/addbook/ImportRepo.kt` (2): Đã thêm “{}” (`59`); Bạn hãy nhập tên sách. (`97`)
+- `native/addbook/PackageReviewScreen.kt` (1): Mở sách (`15`)
+- `native/components/Confirm.kt` (4): Xoá phần đã tải của “{}”? (`94`); Xoá “{}” khỏi điện thoại? (`94`); Xoá khỏi điện thoại (`95`); Đang xoá (`95`)
 - `native/data/AndroidSettingsCore.kt` (1): Accept (`59`)
 - `native/data/DemoPlayback.kt` (1): Chương {} · {} (`13`)
 - `native/data/Library.kt` (1): Bạn hãy thử lại. (`161`)
 - `native/data/ListenExtras.kt` (1): Nghe tiếp từ {} (`98`)
 - `native/data/PrepareState.kt` (1): Chưa rõ vì sao (`74`)
-- `native/data/Production.kt` (1): Chưa có chương nghe được (`53`)
-- `native/data/UndoDelete.kt` (1): Đã xoá khỏi điện thoại (`155`)
-- `native/devices/CompanionSurfaces.kt` (4): Chọn nơi phát (`40`); Đang gửi lệnh (`58`); Chưa phát sách (`71`); Tìm lại thiết bị phát (`123`)
-- `native/devices/DeviceSheets.kt` (3): Đang mở Studio (`76`); Đang bỏ ghép (`137`); Đang lưu (`161`)
-- `native/devices/DevicesModel.kt` (2): Chưa thấy (`313`); Thấy {} (`313`)
-- `native/devices/DevicesRepo.kt` (1): Chưa mở được Studio (`145`)
-- `native/devices/DevicesState.kt` (3): Chưa nối (`69`); Đã nối {} (`69`); Đang bật · {} máy (`71`)
-- `native/devices/PairScreen.kt` (5): Máy đã nối (`113`); Sách trên {} (`138`); Cách nối (`170`); Địa chỉ máy tính (`177`); Đang nối {} (`194`)
-- `native/devices/StorageScreen.kt` (2): Còn trống {} (`53`); Chưa có gì trên máy (`57`)
+- `native/data/Production.kt` (1): Chưa có chương nghe được (`64`)
+- `native/data/Settings.kt` (3): Cộng thêm (`47`); Nhẹ tay (`52`); Mạnh tay (`54`)
+- `native/data/SettingsRepo.kt` (7): Mở Cài đặt (`127`); Có ABook {} cho điện thoại (`131`); Tải (`132`); Đã xoá bản lưu cũ (`137`); Chưa lưu ra được (`138`); Đã xoá nhật ký (`250`); Chưa xoá được nhật ký (`251`)
+- `native/data/UndoDelete.kt` (2): Đã xoá khỏi điện thoại (`155`); Đã xoá “{}” khỏi điện thoại (`156`)
+- `native/devices/CompanionRepo.kt` (1): Chưa nối được máy kia. (`95`)
+- `native/devices/CompanionSurfaces.kt` (8): Chọn nơi phát (`40`); Phát trên thiết bị khác (`56`); Đang gửi lệnh (`58`); Chưa phát sách (`71`); Nghe ở đây (`91`); Tìm lại thiết bị phát (`123`); Báo từ Studio (`133`); Mở cài đặt (`140`)
+- `native/devices/DeviceParts.kt` (5): Đã tải (`95`); Nhập mã này trên máy kia (`132`); Dùng được đến {} (`135`); Huỷ mã (`137`); Phần đã tải, chưa thành sách (`150`)
+- `native/devices/DeviceSheets.kt` (6): Đang mở Studio (`76`); Ghép lại (`90`); Đang bỏ ghép (`137`); Đổi tên điện thoại này (`151`); Tên điện thoại (`155`); Đang lưu (`161`)
+- `native/devices/DevicesJson.kt` (1): Sách tải dở (`59`)
+- `native/devices/DevicesModel.kt` (14): Qua Bluetooth (`34`); Tải (`119`); Cập nhật bản thu (`121`); Cập nhật bìa (`122`); Cập nhật tên (`123`); Cập nhật chữ (`124`); Dùng Bluetooth (`179`); Nhập địa chỉ (`179`); Tự tìm máy tính (`179`); Chưa vào mạng Wi-Fi nào (`224`); Bluetooth: {} máy đang nối (`233`); Chưa ghép với máy tính nào (`276`); Chưa thấy (`312`); Thấy {} (`312`)
+- `native/devices/DevicesRepo.kt` (4): Chưa dùng được Bluetooth (`58`); Chưa kết nối được (`65`); Chưa nối được máy kia. (`80`); Chưa mở được Studio (`146`)
+- `native/devices/DevicesState.kt` (6): Chưa nối (`69`); Đã nối {} (`69`); Đang bật · {} máy (`71`); Đã kết nối với {} (`303`); Chưa huỷ được (`384`); Tải bị gián đoạn (`392`)
+- `native/devices/PairScreen.kt` (26): Nối máy tính (`80`); Ghép (`83`); Thêm thiết bị (`95`); Máy đã nối (`114`); Nghe khi ra ngoài (`130`); Sách trên {} (`139`); Thiết bị khác (`156`); Cách lấy mã (`163`); Ghép Bluetooth (`169`); Cách nối (`171`); Địa chỉ máy tính (`178`); Địa chỉ, ví dụ 192.168.1.20:47630 (`178`); Mã ghép nối (`185`); Đang nối {} (`195`); Máy tính tìm thấy (`205`); Đang tìm máy (`206`); Chưa thấy máy nào (`207`); Quyền Bluetooth (`216`); Cần quyền Thiết bị ở gần (`224`); Mở cài đặt (`225`); Máy tính đã ghép Bluetooth (`235`); Cài trên máy tính (`267`); Studio máy tính (`269`); Tải ABook Windows (`274`); Đã chép địa chỉ (`275`); ... +1
+- `native/devices/ShareScreen.kt` (6): Chia sẻ thư viện (`58`); Cho máy khác nghe (`63`); Ghép máy mới (`86`); Cần quyền Thiết bị ở gần (`97`); Mở cài đặt (`98`); Cho ABook chạy nền (`103`)
+- `native/devices/StorageScreen.kt` (3): Dung lượng (`48`); Còn trống {} (`54`); Chưa có gì trên máy (`58`)
 - `native/editbook/BookEditor.kt` (1): Bạn hãy thử lại. (`46`)
 - `native/editbook/CoverCrop.kt` (5): Bạn hãy chọn lại ảnh bìa. (`105`); Cắt ảnh bìa (`108`); Dùng ảnh (`110`); Đang lưu (`110`); Đang đọc ảnh (`125`)
 - `native/editbook/EditBookScreen.kt` (1): Tên gốc: {} (`182`)
 - `native/editbook/EditModel.kt` (2): Bạn hãy nhập tên sách. (`57`); Bạn hãy nhập tên chương. (`58`)
-- `native/export/ExportModel.kt` (9): Chương 1/{} · 0% (`284`); Đã xuất {} chương (`312`); File dở đã xoá (`325`); Đã dừng xuất (`331`); Đã dừng xuất M4B (`332`); Còn mới (`372`); Sách nói (`381`); Đang xuất · {}% (`391`); Đã xuất xong (`392`)
+- `native/export/ExportModel.kt` (11): Đang xuất sách (`245`); Chương 1/{} · 0% (`284`); Vào {} (`312`); Đã xuất {} chương (`312`); File dở đã xoá (`325`); Đã dừng xuất (`331`); Đã dừng xuất M4B (`332`); Còn mới (`372`); Sách nói (`381`); Đang xuất · {}% (`391`); Đã xuất xong (`392`)
 - `native/export/ExportRepo.kt` (1): Chọn thư mục để lưu trước (`85`)
-- `native/export/ExportScreen.kt` (4): Xuất sách (`91`); Nơi lưu (`134`); Đã xuất (`175`); Xuất lại (`355`)
+- `native/export/ExportScreen.kt` (9): Xuất sách (`92`); Nơi lưu (`135`); Chỉ {} chương đổi (`152`); Có chương đã đổi (`154`); Đã xuất (`176`); Cho ABook chạy nền (`239`); Vào {} (`286`); Xuất lại (`356`); Gửi (`373`)
 - `native/export/ExportState.kt` (1): Bạn hãy thử lại. (`103`)
 - `native/music/MusicModel.kt` (1): Rất nhỏ (rõ lời) (`159`)
 - `native/music/MusicPanel.kt` (1): Đang đóng (`245`)
 - `native/music/MusicRepo.kt` (1): Chưa tìm được bài để đổi (`65`)
 - `native/nowplaying/FakeNowPlayingModel.kt` (5): Chương 1 · Một buổi sớm (`80`); Những ngày gió hát (`80`); Chương {} · {} (`82`); Giọng thử A (`102`); Giọng thử B (`102`)
-- `native/nowplaying/NowPlayingScreen.kt` (2): Về chế độ nghe (`120`); Cửa sổ mini (`193`)
-- `native/nowplaying/PlayerSheets.kt` (2): Chọn giọng (`191`); Giọng thu sẵn (`191`)
+- `native/nowplaying/NowPlayingScreen.kt` (2): Về chế độ nghe (`128`); Cửa sổ mini (`207`)
+- `native/nowplaying/PlayerSheets.kt` (2): Chọn giọng (`201`); Giọng thu sẵn (`201`)
 - `native/screens/BookPeople.kt` (5): Tên gốc: {} (`134`); Đang lưu (`137`); Đang ghi (`184`); Không có ai khớp “{}”. (`224`); Đang gộp (`244`)
 - `native/screens/BookSaveUi.kt` (1): Đang lưu (`133`)
-- `native/screens/BookScreen.kt` (1): Tới chỗ đang nghe (`541`)
-- `native/screens/BookSheets.kt` (3): Đang lưu (`185`); Đang đóng file sách (`190`); Chương này chưa có audio. (`287`)
-- `native/screens/SettingsAdvanced.kt` (2): Đang đo. (`61`); Đang đọc nhật ký. (`153`)
-- `native/screens/SettingsGroups.kt` (1): Tự mở cửa sổ mini (`109`)
-- `native/screens/SettingsParts.kt` (1): Sắp có (`89`)
+- `native/screens/BookScreen.kt` (1): Tới chỗ đang nghe (`543`)
+- `native/screens/BookSheets.kt` (6): Đang lưu (`186`); Đang đóng file sách (`191`); Xuất sách nói (M4B) (`223`); Chiếm {} (`250`); Xoá khỏi điện thoại (`250`); Chương này chưa có audio. (`288`)
+- `native/screens/LibraryScreen.kt` (1): Nối máy (`174`)
+- `native/screens/OtherScreens.kt` (5): Tạo sách nói từ xa (`36`); Mở Studio của máy nào? (`48`); Studio trên máy tính (`58`); Chưa ghép với máy tính nào (`60`); Nối máy tính (`61`)
+- `native/screens/RemoteBookSheet.kt` (1): Đang tải {}% (`38`)
+- `native/screens/SettingsAdvanced.kt` (10): Đã xoá nhật ký. (`58`); Giấy phép MIT - github.com/ntanhpro1221/ABo… (`61`); Đang đo. (`64`); Gửi (`95`); Xoá nhật ký (`99`); Phiên bản (`104`); Mã nguồn mở (`106`); Không đọc được nhật ký (`148`); Nhật ký của ABook (`152`); Đang đọc nhật ký. (`161`)
+- `native/screens/SettingsGroups.kt` (15): Nút tai nghe lùi/tới (`106`); Tự mở cửa sổ mini (`109`); Cử chỉ (`166`); Lắc để nghe thêm (`167`); Khi lắc (`172`); Độ nhạy (`177`); Úp máy để dừng (`183`); Khi sắp tắt (`185`); Mỗi lần thêm (`187`); Rung (`261`); Nối máy tính (`276`); Chia sẻ thư viện (`278`); Dung lượng (`280`); Điện thoại này (`283`); Tên điện thoại (`285`)
+- `native/screens/SettingsMaintenance.kt` (4): Bản lưu cũ ({}) (`25`); Lưu ra (`30`); Xoá bản lưu cũ? (`34`); Tải (`48`)
 - `native/screens/SettingsVoice.kt` (1): Đang lấy giọng (`287`)
+- `native/studio/MusicTab.kt` (1): Đang dùng ở {} đoạn (`252`)
+- `native/studio/ReviewTab.kt` (1): Sẽ đọc là “{}” (`158`)
+- `native/studio/StudioCover.kt` (1): Sách đã có ảnh bìa. (`104`)
+- `native/studio/StudioDecisions.kt` (1): Mới ghi được {}/{} việc. {} (`133`)
+- `native/studio/StudioExport.kt` (9): Đã gom {}/{} chương (`195`); Cỡ ước tính: khoảng {}{}. (`242`); Còn mới (`283`); Xuất sách (`294`); Xuất lại (`299`); Đang mở hộp Xuất (`300`); Máy tính chưa có ffmpeg (`306`); Đã xuất (`308`); Tiếp tục xuất (`311`)
+- `native/studio/StudioLog.kt` (3): Thông tin (`53`); Dài (`56`); Đang mở nhật ký (`59`)
+- `native/studio/StudioMusic.kt` (5): Chọn lại nhạc cho cả cuốn? (`264`); Bài đã bỏ (`290`); Ghi công (`299`); Chọn thể loại (`300`); Đang tải phần đọc không khí{} (`304`)
+- `native/studio/StudioNew.kt` (17): Nguồn (`48`); Chọn tệp (`256`); Dán chữ (`257`); Dán chữ truyện vào đây (`258`); Thêm chữ này (`259`); Tiếp (`260`); Chưa có chương nào (`266`); Chưa có tệp nào (`267`); Đã gửi (`269`); Trang phụ - chưa vào sách (`272`); Chờ tôi duyệt (`284`); Đang tạo sách (`289`); Bước {}/{} (`294`); Đang gửi {} (`295`); Tách thành {} chương (`297`); Chưa gửi được {}. {} (`298`); Chữ dán.txt (`409`)
+- `native/studio/StudioPrecast.kt` (3): Chờ tôi duyệt (`133`); Duyệt xong (`146`); Bước {}/{} (`154`)
+- `native/studio/StudioReadings.kt` (6): Đang tải cách đọc tên (`208`); Máy tính đang đọc thử (`214`); Cách đọc mới (`216`); Dòng nên bỏ khỏi phần đọc (`221`); Xem thêm {} tên (`227`); Dùng {} cách đọc chung (`229`)
+- `native/studio/StudioScript.kt` (4): Máy nghi (`120`); Giữ nguyên: câu này của {} (`186`); Chương này chưa có câu nào. (`238`); Đổi chương (`240`)
+- `native/studio/StudioText.kt` (7): Gói gửi lên quá lớn. (`20`); Máy tính chưa cho bạn sửa (`35`); Chưa có dự án nào (`49`); Đang mở Studio (`51`); Cần bạn duyệt (`55`); Còn lại (`56`); Chưa có chương nào (`76`)
+- `native/studio/WorkText.kt` (42): Chọn khác (`15`); Máy tính không còn đoạn này. (`21`); Đang mở danh sách việc (`25`); Đã duyệt hết (`26`); Còn {} việc (`30`); Ảnh hưởng {} câu (`32`); Máy đang dùng: {} (`34`); Chọn người nói (`40`); Chọn câu (`50`); Bỏ hết (`52`); Máy đang đọc thử (`69`); Đúng rồi, giữ “{}” (`72`); Dùng “{}” (`76`); Mở Cần nghe lại (`83`); Đang mở danh sách câu (`93`); Không còn câu nào cần xem (`94`); Bạn chưa xem câu nào. (`98`); Máy nghe ra (`104`); Máy không nghe ra chữ nào (`105`); Chưa có bản thu để nghe (`106`); Hiện cả câu lệch nhẹ (`107`); Chỉ câu lệch nhiều (`108`); Giữ của tôi (`110`); Nghe liền {} câu (`112`); Còn {} câu chưa xem (`114`); ... +17
 - `native/voice/KeysScreen.kt` (1): Chưa đọc được các khoá (`35`)
 - `native/voice/VoiceModel.kt` (2): Supertonic nhanh hơn (`228`); Có bản mới · {} (`302`)
 - `native/voice/VoiceSheets.kt` (7): Đang đo tốc độ (`86`); Đang xoá (`105`); Dữ liệu di động (`123`); Vẫn tải (`124`); Đang lưu (`137`); Đồng ý (`137`); Xoá bài này? (`302`)
 
-### c2. Chỉ có ở web phía điện thoại - listen/, android/, shared/ (276 nhãn)
+### c2. Chỉ có ở web phía điện thoại - listen/, shared/ (242 nhãn)
 
-- `android/App.tsx` (3): Điều hướng (`189`); Đang tải về máy (`236`); Đóng thông báo (`416`)
-- `android/DevicesScreen.tsx` (5): Đang tải {} (`317`); Huỷ tải {} (`329`); Thiết bị ở gần (`411`); Xoá phần đã tải của {} (`908`); Xoá {} khỏi điện thoại (`908`)
-- `android/ExportAudiobook.tsx` (1): Xuất sách nói “{}” (`254`)
-- `android/ExportM4b.tsx` (1): Xuất M4B “{}” (`157`)
-- `android/ExportMp3.tsx` (3): Đổi thư mục (`43`); Đã xuất {} chương{} (`78`); Xuất MP3 “{}” (`208`)
-- `android/ExportRevisions.tsx` (2): Xuất chương đã đổi (`18`); Xuất lại M4B (`19`)
-- `android/LibraryDownloads.tsx` (1): Đang tải {} (`21`)
-- `android/RemotePlayers.tsx` (1): Đang phát trên {} (`145`)
-- `android/backLayers.ts` (1): Escape (`48`)
-- `android/imports.ts` (1): Không mở được bộ chọn file (`57`)
-- `android/localStudio.ts` (1): Lỗi {} (`25`)
-- `android/nativeEngine.ts` (1): Chưa lưu được chỗ đang nghe (`53`)
-- `android/plugins.ts` (3): EbookPlayer (`701`); ReadAloud (`702`); EbookLibrary (`703`)
-- `android/textImport.ts` (3): Sách (`22`); Không đọc được file này. (`42`); Không đọc được PDF này: {} (`56`)
 - `listen/AddBook.tsx` (4): Không mở được file sách này. (`296`); Chọn lại (`548`); Đường dẫn file hay thư mục (`651`); Chưa đọc được (`814`)
-- `listen/BookScreen.tsx` (21): Tạm dừng {} (`150`); Đọc {} (chưa có audio) (`169`); Đọc chương này (`258`); Danh sách chương (`290`); Chờ áp dụng (`430`); Bỏ gộp {} vào {} (`440`); Bỏ gộp (`445`); Đổi giọng {} (`460`); Chờ áp dụng: giọng (`554`); Nghe giọng {} (`560`); Đổi giọng người kể (`561`); Từ phần trước (`589`); 7 ngày qua: (`654`); Nghe tiếp từ (`676`); Chuyển sang cuốn (`722`); Đang mở thư viện (`722`); Đọc (`1054`); Đọc tiếp (`1054`); Đã nghe {} (`1145`); Việc với sách (`1174`); Mục của sách (`1248`)
+- `listen/BookScreen.tsx` (19): Tạm dừng {} (`151`); Đọc {} (chưa có audio) (`170`); Đọc chương này (`259`); Danh sách chương (`291`); Bỏ gộp {} vào {} (`441`); Bỏ gộp (`446`); Đổi giọng {} (`461`); Chờ áp dụng: giọng (`555`); Nghe giọng {} (`561`); Đổi giọng người kể (`562`); 7 ngày qua: (`655`); Nghe tiếp từ (`677`); Chuyển sang cuốn (`723`); Đang mở thư viện (`723`); Đọc (`1055`); Đọc tiếp (`1055`); Đã nghe {} (`1146`); Việc với sách (`1175`); Mục của sách (`1249`)
 - `listen/DropToAdd.tsx` (1): Thả để thêm sách (`36`)
 - `listen/EditBook.tsx` (11): Chưa chỉnh được nhạc nền (`160`); Đã đổi tên sách (`332`); Đã bỏ tên tác giả (`337`); Đã đổi tác giả (`337`); Đã đặt ảnh bìa (`342`); Lưu tên (`410`); Lưu tác giả (`433`); Mở tab Nhạc nền (`468`); Tên riêng (`478`); Chọn thư mục (`711`); Mặc định: thư mục Đã xuất (`714`)
-- `listen/LibraryScreen.tsx` (13): Mở {} (`197`); Nghe ngay {} (`200`); Tạm dừng {} (`200`); Đọc {} (`200`); Thêm {} (`240`); Đang tạm dừng{} (`333`); Chưa có chương nghe được{} (`335`); Sách (`372`); Mở bộ {} (`414`); Lọc sách (`573`); Nghe xong (`575`); Xếp theo: {} (`583`); Gõ không dấu cũng được (`601`)
-- `listen/LineWishes.tsx` (27): Người kể (`79`); Người nói: {} (`98`); Cách đọc câu - {} (`101`); Thu lại câu này (`103`); Các từ trong câu (`162`); Bỏ cách đọc “{}” (`194`); Bỏ (`200`); Đã ghi: câu này của {} (`315`); Chưa ghi được người nói (`321`); Chưa lấy lại được (`334`); Đã ghi cách đọc câu này (`337`); Chưa ghi được (`343`); Đã ghi: thu lại câu này (`362`); Không bỏ được thay đổi này (`388`); Cách đọc “{}”: “{}” (`397`); Ai nghĩ câu này? (`399`); Ai nói câu này? (`399`); Cách đọc câu này (`399`); Sửa câu này (`399`); Đọc từ này là (`399`); Sửa cách đọc “{}” (`426`); Sửa (`434`); Bỏ: {} (`441`); Đang chờ máy làm sách: {} (`470`); Hiện là {} (`471`); ... +2
+- `listen/LibraryScreen.tsx` (13): Mở {} (`198`); Nghe ngay {} (`201`); Tạm dừng {} (`201`); Đọc {} (`201`); Thêm {} (`241`); Đang tạm dừng{} (`334`); Chưa có chương nghe được{} (`336`); Sách (`373`); Mở bộ {} (`415`); Lọc sách (`574`); Nghe xong (`576`); Xếp theo: {} (`584`); Gõ không dấu cũng được (`602`)
+- `listen/LineWishes.tsx` (22): Người nói: {} (`98`); Cách đọc câu - {} (`101`); Thu lại câu này (`103`); Các từ trong câu (`162`); Bỏ cách đọc “{}” (`194`); Chưa ghi được người nói (`321`); Chưa lấy lại được (`334`); Đã ghi cách đọc câu này (`337`); Chưa ghi được (`343`); Đã ghi: thu lại câu này (`362`); Không bỏ được thay đổi này (`388`); Cách đọc “{}”: “{}” (`397`); Ai nghĩ câu này? (`399`); Cách đọc câu này (`399`); Sửa câu này (`399`); Đọc từ này là (`399`); Sửa cách đọc “{}” (`426`); Bỏ: {} (`441`); Đang chờ máy làm sách: {} (`470`); Hiện là {} (`471`); Cách đọc câu (`476`); Sửa cách đọc một từ (`483`)
 - `listen/MorningRecap.tsx` (1): Lần cuối dùng máy (`73`)
-- `listen/MyMusic.tsx` (8): Đang tải bài nhạc (`70`); Đang thêm nhạc thì dừng (`119`); Đã xoá khỏi Nhạc của tôi (`135`); Nhạc riêng (`152`); Đang tải nhạc riêng (`154`); Xoá bài: {} (`175`); Giữ lại: {} (`178`); Xoá: {} (`183`)
-- `listen/PlayerViews.tsx` (23): Tốc độ đọc: {} (`91`); Giọng đọc: {} (`94`); Shift+← (`263`); Đã chọn tốc độ đọc {} (`464`); Phím (`479`); Đang chuẩn bị nhạc nền (`580`); Danh sách nhạc nền (`594`); Đang tải các danh sách nhạc (`620`); Đã chọn giọng {} (`764`); Chưa xoá được bản đọc (`947`); Xoá bản đọc (`958`); Hẹn giờ ngủ trên {} (`1079`); Âm lượng (`1183`); Âm lượng {}% (`1185`); Bật tiếng (`1195`); Tắt tiếng (`1195`); Nghe kiểm (`1337`); Đóng trình phát (`1670`); Esc (`2043`); Phím tắt (`2053`); Gợi ý đọc (`2054`); Điều khiển phụ (`2085`); Bảng (`2257`)
+- `listen/MyMusic.tsx` (8): Đang tải bài nhạc (`71`); Đang thêm nhạc thì dừng (`120`); Đã xoá khỏi Nhạc của tôi (`136`); Nhạc riêng (`153`); Đang tải nhạc riêng (`155`); Xoá bài: {} (`176`); Giữ lại: {} (`179`); Xoá: {} (`184`)
+- `listen/PlayerViews.tsx` (23): Tốc độ đọc: {} (`92`); Giọng đọc: {} (`95`); Shift+← (`264`); Đã chọn tốc độ đọc {} (`465`); Phím (`480`); Đang chuẩn bị nhạc nền (`581`); Danh sách nhạc nền (`595`); Đang tải các danh sách nhạc (`621`); Đã chọn giọng {} (`765`); Chưa xoá được bản đọc (`948`); Xoá bản đọc (`959`); Hẹn giờ ngủ trên {} (`1080`); Âm lượng (`1184`); Âm lượng {}% (`1186`); Bật tiếng (`1196`); Tắt tiếng (`1196`); Nghe kiểm (`1338`); Đóng trình phát (`1671`); Esc (`2044`); Phím tắt (`2054`); Gợi ý đọc (`2055`); Điều khiển phụ (`2086`); Bảng (`2258`)
 - `listen/PlaylistChoice.tsx` (9): Nhạc nền: {} (`67`); Nhạc nền: để máy chọn{} (`67`); Đã lưu lựa chọn (`74`); Chưa chỉnh được mức nhạc (`92`); Đang thêm nhạc (`100`); Đang thêm nhạc {}/{} (`100`); Đang thêm nhạc thì dừng (`113`); Không mở được hộp chọn file (`115`); Đang tải danh sách (`200`)
-- `listen/ProjectFileItems.tsx` (16): Mở dự án (`41`); Chưa dựng được xưởng (`44`); Cần cài Studio (card NVIDIA) - (`82`); Cần cập nhật Studio - (`82`); Studio cần sửa - (`82`); Mở dự án Studio (`103`); Tạo sách nói (`107`); Việc của xưởng (`135`); Mở xưởng đã dựng (`140`); Dựng xưởng (`143`); Việc cần duyệt (`191`); Kịch bản (`192`); Màn (`216`); Đang tải việc xưởng (`219`); Không còn việc nào cần quyết. (`257`); Ngoài ra: (`259`)
+- `listen/ProjectFileItems.tsx` (14): Mở dự án (`41`); Chưa dựng được xưởng (`44`); Cần cài Studio (card NVIDIA) - (`82`); Cần cập nhật Studio - (`82`); Studio cần sửa - (`82`); Mở dự án Studio (`103`); Tạo sách nói (`107`); Việc của xưởng (`135`); Mở xưởng đã dựng (`140`); Dựng xưởng (`143`); Màn (`216`); Đang tải việc xưởng (`219`); Không còn việc nào cần quyết. (`257`); Ngoài ra: (`259`)
 - `listen/ReadAlongText.tsx` (2): Nghe từ “{}” (`55`); Shift F10: sửa cách đọc. (`339`)
 - `listen/ReaderScreen.tsx` (3): Không mở được chương này (`264`); Về trang sách (`264`); Điều khiển đọc (`342`)
 - `listen/ReadingSuggestions.tsx` (5): Chưa đổi được phần đọc (`121`); Bỏ dòng khỏi phần đọc (`160`); Xem lại gợi ý (`181`); Gợi ý cho phần đọc (`187`); Bỏ qua gợi ý (`194`)
@@ -286,10 +296,10 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `listen/bookSearch.ts` (1): Máy chủ không trả chương nào (`112`)
 - `listen/clip.tsx` (1): Chưa nghe thử được (`92`)
 - `listen/follow.ts` (6): ArrowDown (`66`); ArrowUp (`66`); End (`66`); Home (`66`); PageDown (`66`); PageUp (`66`)
-- `listen/labels.ts` (3): Nghe tiếp · {} (`82`); Shift+→ (`103`); Bấm (`124`)
+- `listen/labels.ts` (3): Nghe tiếp · {} (`81`); Shift+→ (`99`); Bấm (`120`)
 - `listen/liveClip.ts` (2): Đã bỏ đoạn này. (`156`); Giọng đọc không phản hồi. (`192`)
 - `listen/liveTestKit.ts` (1): QuotaExceeded (`12`)
-- `listen/model.ts` (3): Phần {} · {} (`364`); Dự án (`497`); Đã nhập (`497`)
+- `listen/model.ts` (2): Phần {} · {} (`364`); Đã nhập (`497`)
 - `listen/musicBed.ts` (1): Content-Type (`139`)
 - `listen/onlineConsent.ts` (1): Microsoft (`14`)
 - `listen/player.tsx` (6): Đã tới câu chọn (`577`); Đã tới {} (`577`); Chưa tải được nhạc (`637`); Đọc chương ấy (`1166`); Nghe thêm {} phút (`1259`); Vẫn đang nghe (`1723`)
@@ -304,79 +314,93 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `shared/BookCover.tsx` (1): Chữ bìa trên hoạ tiết sóng (`78`)
 - `shared/ChapterPreview.tsx` (2): Đưa vào sách: {} (`91`); Bấm để đổi tên chương (`131`)
 - `shared/CoverSearch.tsx` (3): Google Books (`12`); Open Library (`12`); Đã đặt ảnh bìa (`76`)
-- `shared/DiagnosticsView.tsx` (2): Chi tiết kỹ thuật (`26`); Nhật ký của ABook ({} dòng) (`29`)
+- `shared/DiagnosticsView.tsx` (1): Nhật ký của ABook ({} dòng) (`29`)
 - `shared/MissingLibrary.tsx` (3): Chọn lại thư mục thư viện (`19`); Không thấy thư mục thư viện (`19`); Chọn thư mục (`27`)
 - `shared/OnComputerOnly.tsx` (1): Làm (`16`)
 - `shared/RowBoundary.tsx` (1): Hàng danh sách lỗi (`13`)
 - `shared/SettingsNav.tsx` (2): Nhóm cài đặt (`52`); Về Cài đặt (`79`)
 - `shared/ToastDetails.tsx` (1): Chi tiết thông báo (`42`)
+- `shared/backLayers.ts` (1): Escape (`48`)
 - `shared/diagnostics.ts` (18): Tải sách (`50`); Xuất sách nói (`50`); Việc nền (`58`); Việc {} (`59`); Pha: {} (`61`); Bản ABook (`103`); Điện thoại (`107`); Giờ trên máy (`111`); Pin (`115`); Mạng (`119`); Bluetooth (`122`); Wi-Fi (`122`); Chỗ trống (`125`); Chạy nền (`130`); Cho máy khác nghe thư viện (`146`); Lần tắt gần nhất (`150`); Lần văng (`154`); Phục hồi dữ liệu (`155`)
 - `shared/editsKept.ts` (1): Đã gộp {} sửa từ file (`12`)
 - `shared/latestRequest.ts` (1): AbortError (`20`)
 - `shared/musicLevels.ts` (1): Rất nhỏ (`10`)
-- `shared/pdfPages.ts` (1): PasswordException (`38`)
 - `shared/peerStudio.ts` (1): Đang mở Studio của {} (`52`)
 - `shared/trashUndo.ts` (1): Chưa mang theo chỗ nghe. (`24`)
-- `shared/ui.tsx` (2): Xem các tab trước (`515`); Xem các tab sau (`520`)
+- `shared/ui.tsx` (2): Xem các tab trước (`516`); Xem các tab sau (`521`)
 
 ### c3. Chỉ có ở web phía máy tính / Studio (chỉ đếm)
 
 | thư mục | nhãn |
 |---|---|
-| desktop/ | 213 |
-| studio/ | 688 |
+| desktop/ | 201 |
+| studio/ | 533 |
 
 ## d. Chữ hoa, dấu câu, `…` và `...`, dấu thanh, số
 
-**d1. Cùng nhãn (theo khoá lỏng) nhưng khác nguyên văn giữa hai phía** (19):
+**d1. Cùng nhãn (theo khoá lỏng) nhưng khác nguyên văn giữa hai phía** (33):
 
 | web | native | khác ở | nơi |
 |---|---|---|---|
+| bắt đầu ngay | Bắt đầu ngay | chữ hoa | `desktop/BookTemplates.tsx:107` (+2) ~ `native/studio/StudioNew.kt:286` |
 | Chưa bỏ được ảnh bìa | Chưa bỏ được ảnh bìa. | dấu câu cuối | `listen/EditBook.tsx:348` (+1) ~ `native/editbook/BookEditor.kt:85` |
 | Chưa gửi được về {} | Chưa gửi được về {}. | dấu câu cuối | `listen/SendEdits.tsx:43` ~ `native/editbook/BookEditor.kt:104` |
-| Chưa làm trước được | Chưa làm trước được. | dấu câu cuối | `listen/PlayerViews.tsx:886` ~ `native/nowplaying/PrepareBlock.kt:63` |
+| Chưa làm trước được | Chưa làm trước được. | dấu câu cuối | `listen/PlayerViews.tsx:887` ~ `native/nowplaying/PrepareBlock.kt:64` |
 | Chưa thêm được sách | Chưa thêm được sách. | dấu câu cuối | `listen/AddBook.tsx:481` ~ `native/addbook/ImportQueue.kt:86` (+1) |
 | Chưa đặt được ảnh bìa | Chưa đặt được ảnh bìa. | dấu câu cuối | `listen/EditBook.tsx:343` (+1) ~ `native/editbook/BookEditor.kt:85` |
 | Chưa đọc lại được file | Chưa đọc lại được file. | dấu câu cuối | `listen/AddBook.tsx:388` ~ `native/addbook/ImportQueue.kt:60` |
 | Chưa đổi được tác giả | Chưa đổi được tác giả. | dấu câu cuối | `listen/EditBook.tsx:338` ~ `native/editbook/EditModel.kt:67` |
 | Chưa đổi được tên sách | Chưa đổi được tên sách. | dấu câu cuối | `listen/EditBook.tsx:333` ~ `native/editbook/EditModel.kt:66` |
+| Chờ áp dụng | chờ áp dụng | chữ hoa | `listen/BookScreen.tsx:431` (+2) ~ `native/studio/StudioScript.kt:252` |
 | Chữ của cả cuốn được gửi tới {} để đọc, bằn… | Chữ của cả cuốn được gửi tới {} để đọc, bằn… | dấu thanh / ký tự | `desktop/listenExport.ts:85` ~ `native/export/ExportModel.kt:197` |
-| Giấy phép: | Giấy phép | dấu câu cuối | `listen/PlayerViews.tsx:1301` ~ `native/music/MusicPanel.kt:447` (+1) |
-| vào {} | Vào {} | chữ hoa | `android/ExportMp3.tsx:77` ~ `native/export/ExportModel.kt:312` (+1) |
+| câu {} | Câu {} | chữ hoa | `studio/WorkInbox.tsx:242` ~ `native/studio/StudioScript.kt:256` |
+| cả cuốn | Cả cuốn | chữ hoa | `listen/labels.ts:28` ~ `native/export/ExportScreen.kt:152` |
+| Giấy phép: | Giấy phép | dấu câu cuối | `listen/PlayerViews.tsx:1302` ~ `native/music/MusicPanel.kt:447` (+1) |
+| Giới (bấm để lưu): | Giới (bấm để lưu) | dấu câu cuối | `studio/WorkInbox.tsx:622` ~ `native/studio/WorkText.kt:43` |
+| hay đặt tên một người mới: | hay đặt tên một người mới | dấu câu cuối | `studio/WorkInbox.tsx:610` ~ `native/studio/WorkText.kt:41` |
+| Kể bằng “tôi”? | Kể bằng “tôi” | dấu câu cuối | `studio/NewProjectScreen.tsx:1110` ~ `native/studio/StudioNew.kt:277` |
+| Lùi {} giây trên {} | Lùi 15 giây trên {} | dấu thanh / ký tự | `desktop/RemotePhone.tsx:246` ~ `native/devices/CompanionSurfaces.kt:81` |
+| Tới {} giây trên {} | Tới 15 giây trên {} | dấu thanh / ký tự | `desktop/RemotePhone.tsx:261` ~ `native/devices/CompanionSurfaces.kt:88` |
 | {} - Đang dùng: {} ({}) | {} - Đang dùng: {} ({}). | dấu câu cuối | `listen/voiceSpeed.ts:68` ~ `native/data/SettingsRepo.kt:319` |
-| Đang chuẩn bị… | Đang chuẩn bị | dấu câu cuối | `android/ExportM4b.tsx:43` (+2) ~ `native/export/ExportModel.kt:273` |
+| đang chuẩn bị | Đang chuẩn bị | chữ hoa | `listen/LibraryScreen.tsx:332` (+1) ~ `native/export/ExportModel.kt:273` |
 | Đang chờ mạng… | Đang chờ mạng | dấu câu cuối | `desktop/bookFileExport.ts:182` ~ `native/export/ExportModel.kt:256` |
+| đang làm | Đang làm | chữ hoa | `studio/StudioSetup.tsx:266` ~ `native/studio/StudioText.kt:54` |
 | Đang làm file M4B… | Đang làm file M4B | dấu câu cuối | `desktop/bookFileExport.ts:37` (+1) ~ `native/export/ExportModel.kt:290` |
 | Đang làm sách nói… | Đang làm sách nói | dấu câu cuối | `desktop/listenExport.ts:13` ~ `native/export/ExportModel.kt:284` (+1) |
-| đang phát | Đang phát | chữ hoa | `android/RemotePlayers.tsx:361` (+1) ~ `native/music/MusicPanel.kt:438` |
-| Đang tính độ dài… | Đang tính độ dài | dấu câu cuối | `android/ExportAudiobook.tsx:174` (+1) ~ `native/export/ExportScreen.kt:216` |
+| đang phát | Đang phát | chữ hoa | `desktop/RemotePhone.tsx:482` ~ `native/music/MusicPanel.kt:438` |
+| Đang tính độ dài… | Đang tính độ dài | dấu câu cuối | `desktop/AudiobookDialog.tsx:132` ~ `native/export/ExportScreen.kt:217` |
 | đang xuất | Đang xuất | chữ hoa | `shared/diagnostics.ts:47` ~ `native/export/ExportModel.kt:391` |
+| Đang đóng gói sách… | Đang đóng gói sách | dấu câu cuối | `desktop/bookFileExport.ts:28` (+1) ~ `native/studio/StudioExport.kt:302` |
+| Đã nghe hết các câu trong danh sách | Đã nghe hết các câu trong danh sách. | dấu câu cuối | `studio/ReviewQueue.tsx:333` ~ `native/studio/WorkText.kt:102` |
+| Đã thêm sách vào thư viện | Đã thêm sách vào Thư viện | chữ hoa | `listen/AddBook.tsx:475` ~ `native/addbook/ImportQueue.kt:176` |
+| Địa chỉ: | Địa chỉ | dấu câu cuối | `desktop/PhoneSync.tsx:155` ~ `native/devices/ShareScreen.kt:77` |
+| Đọc là: | Đọc là | dấu câu cuối | `listen/WordReadings.tsx:241` (+4) ~ `native/studio/StudioScript.kt:251` |
 
 **d2. Kiểu viết theo phía** (số chữ khớp / tổng; chữ quét ở trên):
 
 | kiểu | web | native |
 |---|---|---|
-| dấu ba chấm ASCII `...` | 8 / 5861 | 0 / 1319 |
-| dấu ba chấm `…` | 42 / 5861 | 0 / 1319 |
-| kết thúc bằng dấu chấm `.` | 991 / 5861 | 266 / 1319 |
-| kết thúc bằng `!` | 0 / 5861 | 0 / 1319 |
-| kết thúc bằng `:` | 55 / 5861 | 3 / 1319 |
-| dấu thanh kiểu cũ `oà oá uý` | 467 / 5861 | 129 / 1319 |
-| dấu thanh kiểu mới `òa óa úy` | 1 / 5861 | 0 / 1319 |
-| số thập phân dấu phẩy `1,5` | 1 / 5861 | 0 / 1319 |
-| số thập phân dấu chấm `1.5` | 0 / 5861 | 0 / 1319 |
-| nhân bằng `×` | 0 / 5861 | 0 / 1319 |
-| nhân bằng `x` sau số | 0 / 5861 | 0 / 1319 |
-| ngăn cách `·` | 132 / 5861 | 33 / 1319 |
-| ngăn cách ` - ` | 287 / 5861 | 54 / 1319 |
-| gạch dài `—`/`–` | 10 / 5861 | 1 / 1319 |
-| giờ `1:30` hay `1 giờ 30` | 4 / 5861 | 2 / 1319 |
-| dấu `%` dính số | 0 / 5861 | 1 / 1319 |
-| dấu `%` cách số | 0 / 5861 | 0 / 1319 |
+| dấu ba chấm ASCII `...` | 8 / 5262 | 0 / 1852 |
+| dấu ba chấm `…` | 37 / 5262 | 0 / 1852 |
+| kết thúc bằng dấu chấm `.` | 891 / 5262 | 377 / 1852 |
+| kết thúc bằng `!` | 0 / 5262 | 0 / 1852 |
+| kết thúc bằng `:` | 54 / 5262 | 3 / 1852 |
+| dấu thanh kiểu cũ `oà oá uý` | 391 / 5262 | 181 / 1852 |
+| dấu thanh kiểu mới `òa óa úy` | 1 / 5262 | 0 / 1852 |
+| số thập phân dấu phẩy `1,5` | 1 / 5262 | 0 / 1852 |
+| số thập phân dấu chấm `1.5` | 0 / 5262 | 0 / 1852 |
+| nhân bằng `×` | 0 / 5262 | 0 / 1852 |
+| nhân bằng `x` sau số | 0 / 5262 | 0 / 1852 |
+| ngăn cách `·` | 119 / 5262 | 34 / 1852 |
+| ngăn cách ` - ` | 261 / 5262 | 83 / 1852 |
+| gạch dài `—`/`–` | 10 / 5262 | 1 / 1852 |
+| giờ `1:30` hay `1 giờ 30` | 0 / 5262 | 2 / 1852 |
+| dấu `%` dính số | 0 / 5262 | 1 / 1852 |
+| dấu `%` cách số | 0 / 5262 | 0 / 1852 |
 
-**d3. Nhãn ngắn bắt đầu bằng chữ thường** (web 155, native 0); 15 đầu mỗi phía:
+**d3. Nhãn ngắn bắt đầu bằng chữ thường** (web 147, native 0); 15 đầu mỗi phía:
 
-- web: bạn đã chọn · (`listen/ProjectFileItems.tsx:292`); bắt đầu (`studio/NewProjectScreen.tsx:701`); bắt đầu ngay (`desktop/BookTemplates.tsx:107`); bắt đầu. (`studio/NewProjectScreen.tsx:708`); bỏ chọn (`studio/WorkInbox.tsx:1281`); chưa cài (`studio/ProjectScreen.tsx:818`); chưa nghe (`listen/BookScreen.tsx:819`); chưa phân tích tới (`studio/NameReadings.tsx:289`); chưa thu - không tốn gì (`studio/ApplyChanges.tsx:93`); chương (`listen/AddBook.tsx:700`); chương (`studio/NewProjectScreen.tsx:643`); chương (`studio/NewProjectScreen.tsx:895`); chương (`studio/NewProjectScreen.tsx:910`); chương (`studio/ProjectScreen.tsx:787`); chương (`studio/VolumeSplit.tsx:173`)
+- web: bạn đã chọn · (`listen/ProjectFileItems.tsx:292`); bắt đầu (`studio/NewProjectScreen.tsx:701`); bắt đầu ngay (`desktop/BookTemplates.tsx:107`); bắt đầu. (`studio/NewProjectScreen.tsx:708`); bỏ chọn (`studio/WorkInbox.tsx:1281`); chưa cài (`studio/ProjectScreen.tsx:819`); chưa nghe (`listen/BookScreen.tsx:820`); chưa phân tích tới (`studio/NameReadings.tsx:289`); chưa thu - không tốn gì (`studio/ApplyChanges.tsx:93`); chương (`listen/AddBook.tsx:700`); chương (`studio/NewProjectScreen.tsx:643`); chương (`studio/NewProjectScreen.tsx:895`); chương (`studio/NewProjectScreen.tsx:910`); chương (`studio/ProjectScreen.tsx:788`); chương (`studio/VolumeSplit.tsx:173`)
 - native: (không có)
 
 **d3b. Chữ dùng dấu thanh kiểu mới (`òa óa úy`) - kiểu thiểu số** (DESIGN.md chưa chọn kiểu nào); 12 đầu mỗi phía:
@@ -384,62 +408,64 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - web: Chữ của cả cuốn được gửi tới {} để đọc, bằng khóa của bạn -… (`desktop/listenExport.ts:85`)
 - native: (không có)
 
-**d4. web: cùng nhãn nhưng viết khác nhau trong chính phía này** (65); 15 đầu:
+**d4. web: cùng nhãn nhưng viết khác nhau trong chính phía này** (57); 15 đầu:
 
 - `Ai nghĩ câu này` | `Ai nghĩ câu này?` (`listen/LineWishes.tsx:399`, `listen/LineWishes.tsx:461` (+2))
 - `Ai nói câu này` | `Ai nói câu này?` (`listen/LineWishes.tsx:399`, `listen/LineWishes.tsx:461` (+4))
 - `Buồn` | `buồn` (`studio/ScriptTab.tsx:184`, `studio/musicScenes.ts:29` (+1))
-- `Bắt đầu` | `bắt đầu` | `bắt đầu.` (`android/ExportAudiobook.tsx:258`, `android/ExportM4b.tsx:161` (+6))
-- `Bỏ ghép {}` | `Bỏ ghép {}?` (`android/DevicesScreen.tsx:1008`, `android/DevicesScreen.tsx:1024` (+7))
-- `Chưa cài` | `Chưa cài.` | `chưa cài` (`desktop/SettingsScreen.tsx:516`, `studio/ProjectScreen.tsx:818` (+1))
-- `Chưa có bài nào` | `chưa có bài nào` (`listen/MyMusic.tsx:142`, `listen/MyMusic.tsx:154` (+1))
-- `Chưa ghép được` | `Chưa ghép được:` (`android/DevicesScreen.tsx:474`, `desktop/OtherComputers.tsx:101` (+1))
-- `Chưa nghe` | `chưa nghe` (`listen/BookScreen.tsx:1145`, `listen/BookScreen.tsx:263` (+2))
+- `Bắt đầu` | `bắt đầu` | `bắt đầu.` (`desktop/AudiobookDialog.tsx:216`, `studio/NewProjectScreen.tsx:2041` (+3))
+- `Bỏ ghép {}` | `Bỏ ghép {}?` (`desktop/OtherComputers.tsx:232`, `desktop/OtherComputers.tsx:233` (+3))
+- `Chưa cài` | `Chưa cài.` | `chưa cài` (`desktop/SettingsScreen.tsx:516`, `studio/ProjectScreen.tsx:819` (+1))
+- `Chưa có bài nào` | `chưa có bài nào` (`listen/MyMusic.tsx:143`, `listen/MyMusic.tsx:155` (+1))
+- `Chưa ghép được` | `Chưa ghép được:` (`desktop/OtherComputers.tsx:101`, `desktop/OtherComputers.tsx:317`)
+- `Chưa nghe` | `chưa nghe` (`listen/BookScreen.tsx:1146`, `listen/BookScreen.tsx:264` (+2))
 - `Chưa nghe thử được` | `Chưa nghe thử được:` (`listen/clip.tsx:92`, `studio/TryReading.tsx:146`)
-- `Chưa thêm được chữ sáng` | `Chưa thêm được chữ sáng.` (`studio/WordTimings.tsx:33`, `studio/WordTimings.tsx:42`)
+- `Chưa thêm được chữ sáng` | `Chưa thêm được chữ sáng.` (`studio/WordTimings.tsx:34`, `studio/WordTimings.tsx:43`)
 - `Chương` | `chương` | `chương.` (`listen/AddBook.tsx:695`, `listen/AddBook.tsx:700` (+15))
 - `Chương {}` | `chương {}` (`listen/ProjectFileItems.tsx:271`, `listen/ReadingSuggestions.tsx:52` (+4))
 - `Chất lượng` | `chất lượng` (`desktop/SettingsScreen.tsx:96`, `studio/NewProjectScreen.tsx:1337` (+4))
 - `Cuối chương` | `cuối chương` (`listen/FootnoteChoices.tsx:73`, `studio/credits.ts:80`)
 
-**d4. native: cùng nhãn nhưng viết khác nhau trong chính phía này** (13); 15 đầu:
+**d4. native: cùng nhãn nhưng viết khác nhau trong chính phía này** (16); 15 đầu:
 
 - `Chưa nghe thử được giọng này` | `Chưa nghe thử được giọng này.` (`native/voice/VoiceRepo.kt:106`, `native/voice/VoiceState.kt:303` (+1))
-- `Chưa tải được` | `Chưa tải được.` (`native/devices/DevicesRepo.kt:119`, `native/screens/RemoteBookSheet.kt:38`)
+- `Chưa tải được` | `Chưa tải được.` (`native/devices/DevicesRepo.kt:120`, `native/screens/RemoteBookSheet.kt:38`)
 - `Chưa đổi được tên chương` | `Chưa đổi được tên chương.` (`native/editbook/BookEditor.kt:90`, `native/editbook/EditModel.kt:68` (+1))
-- `Hết chương này` | `hết chương này` (`native/nowplaying/PlayerSheets.kt:150`, `native/nowplaying/SleepText.kt:23`)
-- `Hồ sơ nghe` | `Hồ sơ nghe:` (`native/screens/BookRecords.kt:101`, `native/screens/BookTabs.kt:172`)
-- `Lùi 15 giây` | `Lùi {} giây` (`native/nowplaying/NowPlayingScreen.kt:181`, `native/pip/PipParams.kt:47`)
+- `Huỷ xuất` | `Huỷ xuất?` (`native/studio/StudioExport.kt:309`, `native/studio/StudioExport.kt:310`)
+- `Hết chương này` | `hết chương này` (`native/nowplaying/PlayerSheets.kt:160`, `native/nowplaying/SleepText.kt:23`)
+- `Hồ sơ nghe` | `Hồ sơ nghe:` (`native/screens/BookRecords.kt:101`, `native/screens/BookTabs.kt:197`)
+- `Lùi 15 giây` | `Lùi {} giây` (`native/nowplaying/NowPlayingScreen.kt:195`, `native/pip/PipParams.kt:47`)
 - `Mở Cài đặt` | `Mở cài đặt` (`native/data/SettingsRepo.kt:127`, `native/devices/CompanionSurfaces.kt:140` (+2))
-- `Nữ` | `nữ` (`native/data/ListenExtras.kt:361`, `native/data/ListenExtras.kt:407` (+1))
-- `Tới 15 giây` | `Tới {} giây` (`native/nowplaying/NowPlayingScreen.kt:183`, `native/pip/PipParams.kt:49`)
+- `Nữ` | `nữ` (`native/data/ListenExtras.kt:361`, `native/data/ListenExtras.kt:407` (+3))
+- `Tới 15 giây` | `Tới {} giây` (`native/nowplaying/NowPlayingScreen.kt:197`, `native/pip/PipParams.kt:49`)
 - `Xoá khoá` | `Xoá khoá?` (`native/voice/VoiceSheets.kt:254`, `native/voice/VoiceSheets.kt:278` (+1))
+- `Xoá nhật ký` | `Xoá nhật ký?` (`native/screens/SettingsAdvanced.kt:132`, `native/screens/SettingsAdvanced.kt:99`)
 - `Xoá phần đã tải` | `Xoá phần đã tải?` (`native/components/Confirm.kt:95`, `native/voice/VoiceSheets.kt:102` (+2))
-- `ĐANG NGHE` | `Đang nghe` (`native/data/BookDetail.kt:171`, `native/nowplaying/NowPlayingScreen.kt:86` (+1))
-- `Đã xoá nhật ký` | `Đã xoá nhật ký.` (`native/data/SettingsRepo.kt:250`, `native/screens/SettingsAdvanced.kt:57` (+1))
+- `Áp dụng {} thay đổi` | `Áp dụng {} thay đổi?` (`native/studio/StudioText.kt:159`, `native/studio/StudioText.kt:86`)
+- `ĐANG NGHE` | `Đang nghe` (`native/data/BookDetail.kt:171`, `native/nowplaying/NowPlayingScreen.kt:91` (+1))
 ## e. Cặp màn web <-> native (luật cứng, scripts/ui_parity_pairs.json)
 
 Trong một cặp, mỗi nhãn ngắn phải có ở cả hai phía (khoá lỏng) trừ khi nằm trong `allow` (nền tảng bắt buộc khác, có lý do) hay `missing` (tính năng / phần màn chỉ có ở một phía - Lead xếp lịch). Cột lệch phải bằng 0 thì `--check` mới qua.
 
 | cặp | nhãn web | nhãn native | lệch web | lệch native | cho phép | thiếu thật |
 |---|---|---|---|---|---|---|
-| now-playing | 101 | 102 | 0 | 0 | 32 | 6 |
-| shared-labels | 30 | 913 | 0 | 0 | 7 | 0 |
-| library-book | 220 | 185 | 0 | 0 | 67 | 8 |
-| settings | 126 | 116 | 0 | 0 | 7 | 3 |
-| devices | 142 | 172 | 0 | 0 | 6 | 27 |
-| voice | 133 | 121 | 0 | 0 | 27 | 19 |
-| add-edit-book | 174 | 139 | 0 | 0 | 70 | 0 |
+| now-playing | 101 | 102 | 0 | 1 | 32 | 6 |
+| shared-labels | 30 | 1262 | 0 | 0 | 7 | 0 |
+| library-book | 203 | 184 | 0 | 13 | 63 | 7 |
+| settings | 46 | 115 | 0 | 75 | 6 | 2 |
+| devices | 9 | 171 | 0 | 121 | 0 | 28 |
+| voice | 133 | 121 | 0 | 1 | 27 | 20 |
+| add-edit-book | 163 | 139 | 0 | 10 | 69 | 0 |
 
 Thiếu thật ở web - `now-playing`: Chưa tải được chữ. Bạn thử lại.; Chương chưa có chữ. Bạn thử lại sau.; Chọn giọng; Giọng thu sẵn; Về chế độ nghe; Đang chọn
 
-Thiếu thật ở web - `library-book`: Chương này chưa có audio.; Chương {}; Sách chưa có chương nào nghe được trên …; Sắp có; Tới chỗ đang nghe; Đang xoá; Đang đóng file sách; Đã xoá khỏi điện thoại
+Thiếu thật ở web - `library-book`: Chương này chưa có audio.; Chương {}; Sách chưa có chương nào nghe được trên …; Tới chỗ đang nghe; Đang xoá; Đang đóng file sách; Đã xoá khỏi điện thoại
 
-Thiếu thật ở web - `settings`: Sắp có; Đang đo.; Đang đọc nhật ký.
+Thiếu thật ở web - `settings`: Đang đo.; Đang đọc nhật ký.
 
-Thiếu thật ở web - `devices`: Chưa có gì trên máy; Chưa mở được Studio; Chưa nối; Chưa phát sách; Chưa thấy; Chưa thấy máy khác. Bạn kiểm tra kết nố…; Chọn nơi phát; Cách nối; Còn trống {}; Huỷ; Máy tính; Máy đã ghép; Máy đã nối; Sách trên {}; Thấy {}; Tìm lại thiết bị phát; Đang bật; Đang bật · {} máy; Đang bỏ ghép; Đang gửi lệnh; Đang kiểm tra; Đang lưu; Đang mở Studio; Đang nối {}; Đang tắt; Đã nối {}; Địa chỉ máy tính
+Thiếu thật ở web - `devices`: Chưa có gì trên máy; Chưa mở được Studio; Chưa nối; Chưa phát sách; Chưa thấy; Chưa thấy máy khác. Bạn kiểm tra kết nố…; Chọn nơi phát; Cách nối; Còn trống {}; Dùng được đến {}; Huỷ; Máy tính; Máy đã ghép; Máy đã nối; Sách trên {}; Thấy {}; Tìm lại thiết bị phát; Đang bật; Đang bật · {} máy; Đang bỏ ghép; Đang gửi lệnh; Đang kiểm tra; Đang lưu; Đang mở Studio; Đang nối {}; Đang tắt; Đã nối {}; Địa chỉ máy tính
 
-Thiếu thật ở web - `voice`: Chưa đọc được các khoá; Chưa đổi được giọng; Chờ Wi-Fi; Có bản mới · {}; Dữ liệu di động; Hiện; Khoá {} sẽ bị xoá khỏi máy này và các g…; Phần đã tải dở sẽ bị xoá khỏi máy này.; Supertonic nhanh hơn; Vẫn tải; Xoá bài này?; Đang gỡ; Đang kiểm tra; Đang lưu; Đang lấy giọng; Đang xoá; Đang đo tốc độ; Đồng ý; Ẩn
+Thiếu thật ở web - `voice`: Chưa đọc được các khoá; Chưa đổi được giọng; Chờ Wi-Fi; Có bản mới · {}; Dữ liệu di động; Hiện; Khoá {} sẽ bị xoá khỏi máy này và các g…; Không; Phần đã tải dở sẽ bị xoá khỏi máy này.; Supertonic nhanh hơn; Vẫn tải; Xoá bài này?; Đang gỡ; Đang kiểm tra; Đang lưu; Đang lấy giọng; Đang xoá; Đang đo tốc độ; Đồng ý; Ẩn
 
 
 <!-- ui_parity:end -->

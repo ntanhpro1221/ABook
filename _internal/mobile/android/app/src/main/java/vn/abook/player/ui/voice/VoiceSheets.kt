@@ -128,7 +128,7 @@ fun MeteredSheet(text: String, onGo: () -> Unit, dismiss: () -> Unit) {
 }
 
 /**
- * Bước đồng ý trước lần đầu đọc bằng giọng trực tuyến: nói chữ đi tới đâu và có thể bị tính tiền ở đâu - cùng lời với bản WebView ([VoiceText.consent]). `onAllow` chạy sau
+ * Bước đồng ý trước lần đầu đọc bằng giọng trực tuyến: nói chữ đi tới đâu và có thể bị tính tiền ở đâu - lời ở [VoiceText.consent]. `onAllow` chạy sau
  * khi bạn bấm "Đồng ý" (lõi nhớ, rồi việc đang chờ chạy tiếp).
  */
 @Composable

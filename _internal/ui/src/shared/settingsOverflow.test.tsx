@@ -13,10 +13,7 @@ vi.mock("@/studio/data", async (original) => ({
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() } }));
 vi.mock("@/listen/VoiceSettings", () => ({ VoiceSettings: () => null, useDefaultVoiceName: () => "" }));
 vi.mock("@/studio/musicImport", () => ({ hasNativeMusicImport: () => true, importMusic: vi.fn() }));
-vi.mock("@/android/plugins", () => ({ EbookPlayer: { configure: vi.fn(), listenPrefs: vi.fn() }, EbookLibrary: { systemBars: vi.fn() }, ReadAloud: {} }));
-vi.mock("@/android/updates", async (original) => ({ ...(await original<typeof import("@/android/updates")>()), useAppUpdate: () => ({ current: null, update: null }) }));
 import { SettingsScreen as DesktopSettings } from "@/desktop/SettingsScreen";
-import { AboutBlock } from "@/android/SettingsScreen";
 import { SettingsAt } from "./settingsAt";
 import { MyMusicSection } from "@/listen/MyMusic";
 
@@ -68,21 +65,6 @@ describe("Cài đặt trên máy tính: không tràn ngang ở 320 px / chữ 32
   it("liên kết github cắt đúng chỗ thay vì đẩy trang rộng ra", () => {
     const link = opening(html, "a", "github.com/ntanhpro1221/ABook");
     expect(link).toMatch(/\[overflow-wrap:anywhere\]/);
-  });
-});
-
-describe("Cài đặt trên điện thoại: không tràn ngang", () => {
-  it("dòng Mã nguồn mở bẻ được địa chỉ github trong lời giải thích", () => {
-    const html = render(<AboutBlock version="0.0.0" />);
-    const hint = /<div class="([^"]*)">Giấy phép MIT - github\.com\/ntanhpro1221\/ABook<\/div>/.exec(html);
-    expect(hint, "không thấy lời giải thích").not.toBeNull();
-    expect(hint![1]).toMatch(/\[overflow-wrap:anywhere\]/);
-  });
-
-  it("hàng Thành phần sử dụng có chữ co lại được", () => {
-    const html = render(<AboutBlock version="0.0.0" />);
-    expect(opening(html, "button", "Thành phần sử dụng")).toMatch(/\bmin-w-0\b|\bflex\b/);
-    expect(html).toMatch(/<span class="[^"]*\bmin-w-0\b[^"]*"><span class="[^"]*\[overflow-wrap:anywhere\][^"]*">Thành phần sử dụng/);
   });
 });
 

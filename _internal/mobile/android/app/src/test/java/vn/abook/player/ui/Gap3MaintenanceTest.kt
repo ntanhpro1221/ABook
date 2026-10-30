@@ -57,7 +57,10 @@ class Gap3MaintenanceTest {
             val state = DevicesState(source, scope, pollMs=10)
             state.openShare(); delay(35); assertTrue(reads > 1)
             state.closeShare(); val stoppedAt = reads
-            delay(35); assertEquals(stoppedAt, reads)
+            // Một lượt đọc đã thức dậy trên luồng hẹn giờ đúng lúc đóng vẫn có thể chạy xong; sau nó thì không lượt nào nữa.
+            delay(35); assertTrue(reads - stoppedAt <= 1)
+            val settled = reads
+            delay(35); assertEquals(settled, reads)
         } finally { scope.cancel() }
     }
 }

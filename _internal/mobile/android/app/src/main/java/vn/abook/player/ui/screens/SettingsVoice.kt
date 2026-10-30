@@ -83,7 +83,7 @@ import vn.abook.player.ui.voice.VoiceText
 import vn.abook.player.ui.components.fadeEdges
 import androidx.compose.foundation.lazy.rememberLazyListState
 
-/** Máy chưa có giọng tiếng Việt của hệ điều hành (như `deviceHint` của bản WebView). */
+/** Máy chưa có giọng tiếng Việt của hệ điều hành. */
 private const val DEVICE_HINT = "Điện thoại chưa có giọng tiếng Việt. Cài ở Cài đặt điện thoại › Chuyển văn bản thành giọng nói."
 
 private val NoSample: StateFlow<SampleUi> = MutableStateFlow(SampleUi())

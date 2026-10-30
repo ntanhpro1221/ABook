@@ -28,7 +28,7 @@ class AbookApplication : Application() {
         EditsSync.changed = { id -> uiScope.launch { editors.refresh(id); library.refresh() } }
         editors
     }
-    // Giao diện native (vn.abook.player.ui): dựng tay, lười - tiến trình chỉ chạy việc nền / bản WebView không tốn gì.
+    // Giao diện native (vn.abook.player.ui): dựng tay, lười - tiến trình chỉ chạy việc nền thì không tốn gì.
     val library by lazy { LibraryRepo(this, uiScope) { id -> player.bookRemoved(id) } }
     val companion by lazy { vn.abook.player.ui.devices.CompanionRepo(vn.abook.player.ui.devices.AndroidCompanionCore(this)) }
     val covers by lazy { CoverLoader() }
@@ -42,7 +42,7 @@ class AbookApplication : Application() {
     }
     val uiPrefs by lazy { UiPrefs(this) }
 
-    /** Cài đặt của giao diện native: cùng kho với bản WebView ([AndroidSettingsCore]). */
+    /** Cài đặt của giao diện ([AndroidSettingsCore]). */
     val settings by lazy { SettingsRepo(AndroidSettingsCore(this), uiScope, Dispatchers.IO) }
     private val uiScope by lazy { CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate) }
 

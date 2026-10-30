@@ -16,7 +16,7 @@ import vn.abook.player.ui.theme.Dim
 
 /**
  * Khoá giọng trực tuyến: mỗi nhà cung cấp (Azure, Google Cloud, FPT.AI, Viettel AI) một hàng - tên, khoá che và kết quả lần kiểm tra; chạm mở bảng nhập / kiểm tra / xoá khoá.
- * Khoá lưu và đọc đúng như bản WebView ([vn.abook.player.readaloud.OnlineVoices]); màn không bao giờ thấy khoá thật. Chưa đọc xong thì các hàng đã có tên, chưa chạm được.
+ * Khoá lưu và đọc qua [vn.abook.player.readaloud.OnlineVoices]; màn không bao giờ thấy khoá thật. Chưa đọc xong thì các hàng đã có tên, chưa chạm được.
  */
 @Composable
 fun KeysScreen(voice: VoiceState, sheets: SheetHost, onBack: () -> Unit, modifier: Modifier = Modifier) {

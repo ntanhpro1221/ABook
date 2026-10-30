@@ -12,9 +12,9 @@ import java.net.InetAddress
 import java.net.SocketTimeoutException
 
 /**
- * Việc "Thiết bị" mà cả hai giao diện cùng làm (WebView qua [LibraryPlugin], native qua `ui.data.DevicesRepo`): tìm và ghép máy, tên điện thoại, chia sẻ thư viện,
- * dung lượng, máy tính mở được Studio. Trước đây nằm trong thân phương thức plugin (docs/NATIVE_PHONE_UI.md §2: logic dời vào lõi, plugin chỉ chuyển tiếp).
- * Hàm trả JSON giữ nguyên hình đã gửi cho WebView. Mọi hàm đọc đĩa / mạng: gọi ở luồng nền.
+ * Việc "Thiết bị" của giao diện (`ui.data.DevicesRepo`): tìm và ghép máy, tên điện thoại, chia sẻ thư viện,
+ * dung lượng, máy tính mở được Studio. Logic nằm ở lõi (docs/NATIVE_PHONE_UI.md §2), giao diện chỉ chuyển tiếp.
+ * Hàm trả JSON (`ui.devices.DevicesJson` đọc lại). Mọi hàm đọc đĩa / mạng: gọi ở luồng nền.
  */
 object Devices {
     /** Công tắc "Cho máy khác nghe thư viện này" (SharedPreferences "sync"). */

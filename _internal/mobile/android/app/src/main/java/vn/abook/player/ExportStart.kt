@@ -11,7 +11,7 @@ import java.util.UUID
 
 /**
  * Mở đầu và kết của ba kiểu xuất (MP3, M4B, sách nói) sau khi người dùng đã chọn nơi lưu: kiểm sách có gì để xuất, dựng ước, giữ quyền ghi, đẩy việc nền.
- * Một nơi cho cả hai giao diện - `LibraryPlugin` (WebView) và `ui/export` (native) cùng gọi, không ai chép lại.
+ * Một nơi cho `ui/export` gọi, không chép lại ở đâu khác.
  */
 object ExportStart {
     /** Kết quả bắt đầu một lượt: mã lượt (tin của lượt mang mã này) và những gì giao diện cần nói ra ngay. */

@@ -99,7 +99,7 @@ private fun DeviceActions(device: Paired, studio: StudioComputer?, state: Device
 }
 
 /**
- * Bước bỏ ghép: nói cái sẽ mất (sửa chưa gửi, sách nghe thẳng sẽ rời Thư viện) - cùng lời với bản WebView ([DeviceText.forgetCopy]). Máy tính chính và
+ * Bước bỏ ghép: nói cái sẽ mất (sửa chưa gửi, sách nghe thẳng sẽ rời Thư viện) - lời ở [DeviceText.forgetCopy]. Máy tính chính và
  * thiết bị nào không còn gì để mất thì chỉ một câu nói sách đã tải ở lại.
  */
 @Composable

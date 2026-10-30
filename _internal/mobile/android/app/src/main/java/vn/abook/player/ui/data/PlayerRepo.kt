@@ -225,7 +225,7 @@ class PlayerRepo(
 
     /**
      * Lõi chưa giữ cuốn nào (app vừa mở): nạp cuốn nghe gần nhất ĐÚNG chỗ nghe tiếp, ở trạng thái dừng - thanh phát nhỏ hiện sẵn, bấm phát là phát đúng cuốn ấy.
-     * Cùng việc bản WebView làm khi mở lại app (Playback.load autoplay=false). Có gì khác vào lõi trong lúc đọc đĩa thì bỏ (không bao giờ đè cuốn đang có).
+     * Như khi mở lại app (Playback.load autoplay=false). Có gì khác vào lõi trong lúc đọc đĩa thì bỏ (không bao giờ đè cuốn đang có).
      */
     private fun restoreLast() {
         val generation = loadGeneration

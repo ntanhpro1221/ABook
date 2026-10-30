@@ -18,7 +18,7 @@ import java.text.Normalizer
  * nghe đổi được tên sách, bìa, tên nhân vật, tên chương, nhạc nền (bật/tắt, mức, im lặng một đoạn, đổi một đoạn sang bài trong
  * "Nhạc của tôi" - [MusicStore]) và ghi ý muốn chờ Studio (cách
  * đọc tên, người nói, giọng... - [BookWishes], không bao giờ áp vào sách); chúng nằm ở `edits.json` (+
- * `edits/cover.jpg`) trong thư mục sách, và mọi nơi đọc lớp sách (Store.manifest, LibraryPlugin.readText, LibraryServer) đi
+ * `edits/cover.jpg`) trong thư mục sách, và mọi nơi đọc lớp sách (Store.manifest, LibraryServer) đi
  * qua đây để thấy bản đã sửa.
  *
  * `edits.json` là dữ liệu của người lạ (đi theo file `.abook` phiên bản 4): [validate] chặt - đúng khoá, đúng kiểu, có trần cỡ
@@ -103,7 +103,7 @@ object BookEdits {
     }
 
     /** covers.clean_color: màu bìa chỉ là #rrggbb (chữ thường, bỏ khoảng trắng hai đầu), không thì "". Màu trong file sách / manifest của máy khác
-     *  thành CSS ở giao diện: `url(https://…)` làm WebView tự gọi máy lạ mỗi lần hiện bìa. */
+     *  thành CSS ở giao diện: `url(https://…)` làm giao diện tự gọi máy lạ mỗi lần hiện bìa. */
     internal fun cleanColor(value: Any?): String = (value as? String)?.trim()?.lowercase(java.util.Locale.ROOT)?.takeIf { COLOR.matches(it) } ?: ""
 
     /** Gói sách/manifest từ nơi khác: màu bìa không hợp lệ bị bỏ (cũng bỏ khoá nếu cuốn không có bìa kiểu đối tượng). */

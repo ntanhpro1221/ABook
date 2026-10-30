@@ -22,8 +22,8 @@ import vn.abook.player.ui.data.BookSource
 import vn.abook.player.ui.data.listenerFlow
 
 /**
- * Nguồn thật của ba màn Thiết bị: gọi thẳng các lõi ([Devices], [RemoteBooks], [Peers], [BookDownloads], [ShareService], [Store]) - cùng những hàm mà
- * `LibraryPlugin` chuyển tiếp cho bản WebView, không qua cầu Capacitor. Xoá khỏi máy đi qua `library` ([BookSource.delete]): đúng lõi và đúng đường
+ * Nguồn thật của ba màn Thiết bị: gọi thẳng các lõi ([Devices], [RemoteBooks], [Peers], [BookDownloads], [ShareService], [Store]) - không qua
+ * lớp trung gian nào. Xoá khỏi máy đi qua `library` ([BookSource.delete]): đúng lõi và đúng đường
  * làm mới Thư viện của menu "Xoá khỏi máy" ở trang sách.
  */
 class DevicesRepo(private val context: Context, private val library: vn.abook.player.ui.data.LibraryRepo) : DevicesSource {

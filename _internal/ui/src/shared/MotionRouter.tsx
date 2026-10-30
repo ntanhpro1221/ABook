@@ -1,12 +1,12 @@
 // HashRouter có chuyển trang (a120 - chủ app: "đóng mở các màn hình… quá xấu, thậm chí là không có"). Như HashRouter của react-router (cùng
-// lịch sử hash, cùng `idx` trong history.state mà android/backLayers đọc), chỉ khác: mỗi lần đổi trang, khung nội dung mờ đi trước
+// lịch sử hash, cùng `idx` trong history.state mà shared/backLayers đọc), chỉ khác: mỗi lần đổi trang, khung nội dung mờ đi trước
 // (leavePage), trang mới dựng trong lúc khuất rồi hiện vào từ phía kia (sâu vào / lùi ra) hay mờ qua (ngang hàng: tab dưới, nhóm cài đặt)
 // - enterPage. Không qua View Transition: chụp cả tài liệu làm điện thoại đứng hình trước khi chuyển (xem shared/motion.ts).
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Router, UNSAFE_createHashHistory, type Location, type NavigationType } from "react-router";
 import { enterPage, leavePage, navMotion } from "./motion";
 import { installBackOrder } from "./backOrder";
-import { dismissTopLayer } from "@/android/backLayers";
+import { dismissTopLayer } from "@/shared/backLayers";
 
 type RouterState = { action: NavigationType; location: Location };
 
@@ -22,7 +22,7 @@ export function layerHistoryGuard(dismiss: () => boolean, go: (delta: number) =>
   };
 }
 
-/** Vị trí trong lịch sử react-router ghi vào history.state (`idx`) - như android/backLayers.historyIndex. */
+/** Vị trí trong lịch sử react-router ghi vào history.state (`idx`) - như shared/backLayers.historyIndex. */
 function historyIndex(): number {
   const idx = (window.history.state as { idx?: unknown } | null)?.idx;
   return typeof idx === "number" ? idx : 0;

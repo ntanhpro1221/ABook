@@ -16,7 +16,7 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * Tải sách kèm nhạc nền (LibraryPlugin.downloadBook -> BookMusic): chỉ các bài mà một mốc dùng; cỡ và (khi biết) mã sha1 phải khớp
+ * Tải sách kèm nhạc nền (BookMusic): chỉ các bài mà một mốc dùng; cỡ và (khi biết) mã sha1 phải khớp
  * mới đổi tên khỏi `.part`; bài hỏng bị bỏ mà không để lại gì.
  */
 class BookMusicTest {

@@ -510,7 +510,7 @@ Hai phát hiện đáng báo ngoài phạm vi Studio: (a) lỗi `ProductionSourc
 
 ## 10. Danh sách P4: còn gì của WebView/Capacitor/gói web trong APK `-PnativeUi`
 
-Kiểm bằng Grep trên `_internal/mobile/android/`. "Studio" = bị bỏ trực tiếp bởi tài liệu này; "P4" = việc khác của NPU §6 P4 mà danh sách này nêu cho đủ.
+**P4 đã làm: mọi hàng "P4" dưới đây đã gỡ; bảng giữ làm lịch sử.** Kiểm bằng Grep trên `_internal/mobile/android/`. "Studio" = bị bỏ trực tiếp bởi tài liệu này; "P4" = việc khác của NPU §6 P4 mà danh sách này nêu cho đủ.
 
 | Mục | Vị trí | Gỡ bởi |
 |---|---|---|

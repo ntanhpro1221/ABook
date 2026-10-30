@@ -9,7 +9,6 @@ import vn.abook.player.ui.data.Fmt
 /*
  * Mô hình dữ liệu của ba màn Thiết bị (Nối máy tính, Chia sẻ thư viện, Dung lượng) và phần logic thuần của chúng: lời trạng thái, nhãn nút tải, điều kiện "Kết nối"
  * sẵn sàng, lời hỏi trước khi bỏ ghép. Không Android, không Compose ngoài dấu @Immutable - thử được trên JVM không cần Robolectric.
- * Lời giữ nguyên chữ của bản WebView (android/DevicesScreen.tsx, shared/connectionRoute.ts, shared/unpair.ts) ở những chỗ cùng một ý.
  */
 
 /** Ba màn con của nhóm "Thiết bị" ở Cài đặt. */

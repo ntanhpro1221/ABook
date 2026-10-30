@@ -7,7 +7,7 @@ import vn.abook.player.Store
 
 /**
  * Nạp một cuốn vào trình phát ở CHỖ NGHE TIẾP (ListenLogic.resumePoint: gần hết chương thì sang chương kế, chưa nghe thì chương đầu chưa xong) -
- * cùng quy tắc với nút "Nghe" của bản WebView, không phải chỗ `last` thô như cây duyệt Android Auto.
+ * quy tắc của nút "Nghe", không phải chỗ `last` thô như cây duyệt Android Auto.
  */
 object PlayPlan {
     /** Hàm thuần: gói sách + trạng thái nghe -> lệnh nạp; null khi cuốn chưa có chương nghe được. */

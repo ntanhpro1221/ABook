@@ -12,7 +12,7 @@ import javax.net.ssl.HttpsURLConnection
 
 /**
  * Đường tới máy tính đã ghép (địa chỉ, cổng, mã thiết bị, vân tay chứng chỉ TLS trong SharedPreferences "sync") - dùng chung
- * cho thư viện (LibraryPlugin: tải sách, đồng bộ chỗ nghe) và điều khiển từ xa (Remote). Mọi đường là HTTPS với chứng chỉ đã
+ * cho thư viện (tải sách, đồng bộ chỗ nghe) và điều khiển từ xa (Remote). Mọi đường là HTTPS với chứng chỉ đã
  * ghim lúc ghép ([Pin]); chứng chỉ đổi thì lỗi [Pin.CHANGED], không rơi về HTTP.
  */
 object SyncLink {

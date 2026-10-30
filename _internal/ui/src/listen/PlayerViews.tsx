@@ -60,7 +60,7 @@ import { genderLabel, groupedVoices, groupLabel, voiceSections } from "./voiceGr
 import { revealVoiceSettings } from "./voiceSettingsLink";
 import { VieneuDownload } from "./VieneuDownload";
 import { chooseVoice, chosenVoice, isNoOfflineVoice, isVoiceStuck, localVoiceFor, noOfflineMessage, onlineNotice, resolveVoice, unusableVoiceMessage, voiceCaption } from "./readAloudVoice";
-import { bookHeardBase, bookProgressText, caughtUpDetail, nextChapterLabel, SHORTCUTS, withShortcut, otherBookLine, PREPARING_VOICE, PREPARING_VOICE_AFTER_MS, chapterSubline, toggleLabel } from "./labels";
+import { bookHeardBase, bookProgressText, caughtUpDetail, nextChapterLabel, withShortcut, otherBookLine, PREPARING_VOICE, PREPARING_VOICE_AFTER_MS, chapterSubline, toggleLabel } from "./labels";
 import { useAfter } from "@/shared/useAfter";
 import { useBackLayer } from "@/shared/backStack";
 import { usePresence, useListPresence, withViewTransition } from "@/shared/motion";
@@ -270,7 +270,7 @@ function Transport({ large = false, chapters = true }: { large?: boolean; chapte
         // Đang chờ đoạn đầu: nói đang chờ gì, không nói "Tạm dừng" khi chưa có tiếng nào (bấm vẫn là thôi chờ).
         aria-label={toggleLabel(playing, buffering, speaking)}
         aria-busy={waiting || undefined}
-        aria-keyshortcuts={SHORTCUTS ? "Space" : undefined}
+        aria-keyshortcuts="Space"
         data-player-toggle
         data-np="play"
         className={cn(
@@ -1663,8 +1663,8 @@ export function PlayerBar({
           <VolumeControl />
           <MoreMenu scope="bar">
             <SleepMenu look="row" />
-            <MenuRow icon={SkipBack} aria-keyshortcuts={SHORTCUTS ? "Shift+ArrowLeft" : undefined} onClick={previous}>Chương trước</MenuRow>
-            <MenuRow icon={SkipForward} aria-keyshortcuts={SHORTCUTS ? "Shift+ArrowRight" : undefined} onClick={next}>Chương sau</MenuRow>
+            <MenuRow icon={SkipBack} aria-keyshortcuts="Shift+ArrowLeft" onClick={previous}>Chương trước</MenuRow>
+            <MenuRow icon={SkipForward} aria-keyshortcuts="Shift+ArrowRight" onClick={next}>Chương sau</MenuRow>
             <MusicMenu look="row" />
             <VoiceMenu look="row" />
             <MenuRow icon={Maximize2} onClick={() => setExpanded(true)}>Mở màn hình đang nghe</MenuRow>

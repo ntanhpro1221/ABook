@@ -105,7 +105,7 @@ private enum class MenuPage { Actions, Music, SaveAs, Delete }
 
 /**
  * Bảng "Thêm" của trang sách (thay menu "…" của bản React): đã nghe xong / chưa, sửa thông tin, chia sẻ file sách, xoá khỏi máy (có bước xác nhận NGAY trong bảng);
- * việc lõi native chưa làm được ở giao diện này đứng thành hàng "Sắp có" rõ ràng, không bấm được. `detail` null (trang chưa đọc xong): chỉ những việc không cần nó.
+ * việc cuốn này không làm được đứng thành hàng nhạt, không bấm được. `detail` null (trang chưa đọc xong): chỉ những việc không cần nó.
  */
 @Composable
 fun BookMenuSheet(
