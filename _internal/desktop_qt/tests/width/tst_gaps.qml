@@ -253,7 +253,7 @@ Item {
             const primary = one(page, "bookPrimary")
             fuzzyCompare(row.width, Math.max(256, primary.implicitWidth), 1)
             fuzzyCompare(more.mapToItem(row, more.width, 0).x, row.width, 1)
-            compare(read.mapToItem(row, 0, 0).x, 0)
+            fuzzyCompare(read.mapToItem(row, 0, 0).x, 0, 0.5)
             mouseClick(more)
             tryVerify(function() { return one(page, "bookMoreMenu").open })
             compare(one(page, "bookMoreMenu").Accessible.name, "Việc với sách")

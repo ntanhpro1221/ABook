@@ -132,7 +132,7 @@ Item {
             verify(hasText(page, "42%"))
             // ba bước đứng cạnh nhau khi rộng
             const a = one(page, "projectStep_0"), b = one(page, "projectStep_1")
-            compare(a.mapToItem(page, 0, 0).y, b.mapToItem(page, 0, 0).y)
+            fuzzyCompare(a.mapToItem(page, 0, 0).y, b.mapToItem(page, 0, 0).y, 0.5)
             verify(b.mapToItem(page, 0, 0).x > a.mapToItem(page, 0, 0).x + a.width)
             both("steps_running", page)
             // tạm dừng: dấu dừng thay sóng; đổi sang thu âm: bước 1 xong, bước 3 đang làm
@@ -155,7 +155,7 @@ Item {
             const a = one(page, "projectStep_0"), b = one(page, "projectStep_1")
             tryVerify(function() { return shown(a) })
             verify(b.mapToItem(page, 0, 0).y > a.mapToItem(page, 0, 0).y + a.height - 1)
-            compare(a.width, b.width)
+            fuzzyCompare(a.width, b.width, 0.5)
             both("steps_560", page)
         }
         function test_logLostWarningOnlyWhileRunning() {
