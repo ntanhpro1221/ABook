@@ -83,11 +83,18 @@ object SyncLink {
     }
 
     /** Một file của cuốn `remote` trên máy giữ sách `link` (đã nhận header, có retry GET); `resumeFrom` > 0 = tải tiếp từ byte ấy (kèm `If-Range` = [ifRange]). */
-    fun bookFile(context: Context, link: Peers.Link, remote: String, relative: String, resumeFrom: Long = 0, ifRange: String = ""): HttpURLConnection {
+    fun bookFile(context: Context, link: Peers.Link, remote: String, relative: String, resumeFrom: Long = 0, ifRange: String = ""): HttpURLConnection =
+        download(context, link, "/sync/v1/books/$remote/files/$relative", resumeFrom, ifRange)
+
+    /**
+     * GET nhị phân có ghim vân tay tới BẤT KỲ đường nào của máy `link` (`/sync/v1/...`, `/media/...` của Studio từ xa); trình phát hệ thống không ghim được
+     * vân tay nên Studio tải file về rồi mới phát. Cùng cách nối tiếp với [bookFile]: `resumeFrom` > 0 = xin từ byte ấy, kèm `If-Range` = [ifRange].
+     */
+    fun download(context: Context, link: Peers.Link, path: String, resumeFrom: Long = 0, ifRange: String = ""): HttpURLConnection {
         Pin.install(context)
         return PeerTransfer.openGet {
             val selected = PeerRouting.resolve(context, link.base, link.token)
-            val connection = URL("$selected/sync/v1/books/$remote/files/$relative").openConnection() as HttpURLConnection
+            val connection = URL("$selected$path").openConnection() as HttpURLConnection
             PeerRouting.expected(context, link.token)?.let { expected -> if (connection is HttpsURLConnection) Pin.pin(connection, expected) }
             connection.connectTimeout = 5000
             connection.readTimeout = 30000

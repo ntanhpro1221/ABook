@@ -67,6 +67,10 @@ data class StudioBook(
     val lastError: String,
     /** Vì sao không mở được (sổ làm việc hỏng, tạo dở...): rỗng khi mở được. */
     val broken: String,
+    /** Phân vai đã khoá (lúc "Duyệt trước khi thu"): sửa của người nghe áp ở ranh giới chương đầu (web `castLocked`). */
+    val castLocked: Boolean = false,
+    /** Số câu đã có bản thu; null khi máy không nói. */
+    val segmentsRecorded: Int? = null,
 ) {
     /** Máy đang làm sách này (kể cả lúc đang khởi động). */
     val working: Boolean get() = running || starting
