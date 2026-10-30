@@ -228,6 +228,9 @@ internal class WindowFlight {
         val p = progress.value
         if (p >= 1f) return
         transformOrigin = TransformOrigin(0f, 0f)
+        // Phần tử vẽ một lần vào lớp riêng, đường bay chỉ co giãn ảnh ấy. Co giãn trực tiếp thì chữ bắt Skia dựng mặt nạ nét mới ở mỗi mức
+        // (tải bảng nét + raster trên RenderThread mỗi khung: 10-13 ms "flush commands" một khung trên OPPO).
+        compositingStrategy = CompositingStrategy.Offscreen
         val s = scale0[index] + (1f - scale0[index]) * p
         scaleX = s
         scaleY = s
