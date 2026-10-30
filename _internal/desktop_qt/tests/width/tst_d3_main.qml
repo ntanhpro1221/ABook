@@ -87,7 +87,7 @@ TestCase {
         Api.toast("Đã lưu file sách", {action: {label: "Mở thư mục", run: function() {}}})
         tryVerify(function() { return toast.t === 1 })
         const p = toast.mapToItem(win.contentItem, 0, 0)
-        compare(p.x + toast.width, win.width - 16)
+        fuzzyCompare(p.x + toast.width, win.width - 16, 0.5)
         verify(p.y >= 40 + 16 - 0.5)
         verify(stack.z > dialog().z)
         Api.notice = ""

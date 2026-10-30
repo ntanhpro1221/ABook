@@ -513,6 +513,8 @@ struct MusicMixer::Impl {
                 }
                 readerDirty = false; wait.unlock(); owner->serviceReader(); wait.lock();
             }
+            wait.unlock();
+            MfSource::endThread();
         });
     }
 };
