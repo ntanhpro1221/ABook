@@ -1,5 +1,7 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.formatSize
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -174,6 +176,8 @@ private fun MenuActions(
             }) { ink -> if (finished) DashedCircleIcon(ink) else CheckIcon(ink) }
         }
         MenuRow("Sửa thông tin", tag = "menu_edit", onClick = onEdit) { ink -> PencilIcon(ink) }
+        MenuRow("Giọng và lời đọc", "menu_studio_edit", unavailable = true,
+            hint = if (book.remote != null) "Sửa ở máy gốc." else "Làm ở Studio trên máy tính") { ink -> PencilIcon(ink) }
         // Cuốn mở từ file / làm trên máy lưu được thành file sách kèm thay đổi của bạn (web: Lưu thay đổi, Lưu thành). "Lưu thay đổi" chỉ bấm được khi có gì để lưu.
         if (detail?.canShare == true) {
             MenuRow(
@@ -242,7 +246,7 @@ private fun MenuActions(
         // Cỡ về sau khi tấm đã mở: dòng phụ hiện dần tại chỗ (web: "Chiếm 148 MB" bên phải hàng).
         var bytes by remember { mutableStateOf<Long?>(null) }
         LaunchedEffect(book.id) { bytes = source.bytes(book.id) }
-        MenuRow("Xoá khỏi điện thoại", tag = "menu_delete", danger = true, hint = bytes?.let { "Chiếm ${Fmt.size(it)}" }, onClick = onDelete) { ink -> TrashIcon(ink) }
+        MenuRow("Xoá khỏi điện thoại", tag = "menu_delete", danger = true, hint = bytes?.let { "Chiếm ${formatSize(it)}" }, onClick = onDelete) { ink -> TrashIcon(ink) }
         if (save.problem.isNotEmpty()) BasicText(save.problem, style = Abook.type.bodySmall.copy(color = colors.danger), modifier = Modifier.testTag("save_problem"))
         if (problem.isNotEmpty()) {
             Spacer(Modifier.height(Dim.s4))

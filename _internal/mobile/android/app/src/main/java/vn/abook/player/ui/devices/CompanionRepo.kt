@@ -38,7 +38,7 @@ data class OtherPlayer(
 @Immutable data class StudioNoticeState(val enabled: Boolean = false, val permitted: Boolean = true)
 @Immutable data class CompanionState(
     val players: List<OtherPlayer> = emptyList(), val notices: StudioNoticeState = StudioNoticeState(),
-    val problem: String = "", val busy: Boolean = false, val receivedAt: Long = 0,
+    val problem: String = "", val busy: Boolean = false, val receivedAt: Long = 0, val opening: String = "",
 )
 
 /** Same cores as LibraryPlugin; no Capacitor calls and no polling while the Activity is hidden. */
@@ -60,6 +60,8 @@ class AndroidCompanionCore(private val context: Context) : CompanionCore {
 }
 
 class CompanionRepo(private val core: CompanionCore, private val now: () -> Long = android.os.SystemClock::elapsedRealtime) {
+    val hidden = MutableStateFlow<Set<String>>(emptySet())
+    fun hide(player: OtherPlayer) { hidden.value = hidden.value + "${player.device}:${player.book}" }
     private val flow = MutableStateFlow(CompanionState())
     val state = flow.asStateFlow()
     private val seen = linkedSetOf<String>()
@@ -93,7 +95,7 @@ class CompanionRepo(private val core: CompanionCore, private val now: () -> Long
         const val OFFLINE = "Chưa nối được máy kia."
     }
 
-    suspend fun setNotices(enabled: Boolean) = attempt { flow.value = flow.value.copy(notices = core.setNotices(enabled)) }
+    suspend fun setNotices(enabled: Boolean) = attempt("Chưa đổi được") { flow.value = flow.value.copy(notices = core.setNotices(enabled)) }
 
     suspend fun findPlayers() = attempt { core.scan(); kotlinx.coroutines.delay(2_500) }.also { refresh() }
 
@@ -132,20 +134,21 @@ class CompanionRepo(private val core: CompanionCore, private val now: () -> Long
 
     suspend fun handOff(remote: OtherPlayer, local: vn.abook.player.ui.data.PlayerState, position: Double, pause: () -> Unit): Boolean {
         if (!local.hasTrack) return false
+        if (remote.cast) flow.value = flow.value.copy(opening = "Đang mở trên ${remote.name}")
         return attempt {
             generation++
             core.command(remote.device, JSONObject().put("action", "load").put("bookId", local.bookId)
                 .put("chapterId", local.chapterId).put("seconds", position))
             pause()
-        }.also { refresh() }
+        }.also { flow.value = flow.value.copy(opening = ""); refresh() }
     }
 
-    private suspend fun attempt(block: suspend () -> Unit): Boolean {
+    private suspend fun attempt(failure: String = "Chưa làm được", block: suspend () -> Unit): Boolean {
         if (flow.value.busy) return false
         flow.value = flow.value.copy(busy = true, problem = "")
         return try { block(); true }
         catch (cancelled: CancellationException) { throw cancelled }
-        catch (_: Exception) { flow.value = flow.value.copy(problem = "Chưa làm được"); false }
+        catch (error: Exception) { flow.value = flow.value.copy(problem = DeviceText.failure(failure, error.message)); false }
         finally { flow.value = flow.value.copy(busy = false) }
     }
 }

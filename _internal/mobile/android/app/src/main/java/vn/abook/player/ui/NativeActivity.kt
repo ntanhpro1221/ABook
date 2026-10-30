@@ -115,6 +115,13 @@ class NativeActivity : ComponentActivity() {
         }
         if (!demo) app.deviceLinks = deviceLinks
         if (!demo) app.exportLinks = exportLinks
+        if (!demo) lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                player.state.map { it.playing }.distinctUntilChanged().collect { playing ->
+                    if (playing) settings.offerNotifications { deviceLinks.askNotifications {} }
+                }
+            }
+        }
         // Màn chờ giữ tới khi Thư viện có nội dung VÀ đã biết giao diện sáng / tối của bạn: khung đầu đã là lưới bìa đúng màu, không phải màn trống hay
         // màn đổi màu ngay sau khi hiện. Hai lần đọc chạy song song ở luồng nền.
         splash.setKeepOnScreenCondition { library.state.value is LibraryState.Loading || !settings.loaded.value }
@@ -284,6 +291,14 @@ class NativeActivity : ComponentActivity() {
         },
         shareLogs = ::shareLogs,
         openSource = { open(Intent(Intent.ACTION_VIEW, Uri.parse(SOURCE_URL))) },
+        openRelease = { url ->
+            if (url.startsWith("https://github.com/ntanhpro1221/ABook/")) open(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        },
+        saveOld = { name, result ->
+            app.answers.file.expect(result)
+            createFile.launch(Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
+                .setType(vn.abook.player.OldSaves.mimeOf(name)).putExtra(Intent.EXTRA_TITLE, name))
+        },
     )
 
     private fun open(intent: Intent) {
@@ -291,6 +306,7 @@ class NativeActivity : ComponentActivity() {
             startActivity(intent)
         } catch (error: ActivityNotFoundException) {
             AppLog.w("Settings", "máy không mở được ${intent.action}")
+            app.settings.problem.value = "Không mở được trình duyệt"
         }
     }
 
@@ -302,6 +318,7 @@ class NativeActivity : ComponentActivity() {
                     Diagnostics.shareIntent(this@NativeActivity)
                 } catch (error: Exception) {
                     AppLog.w("Diagnostics", "không gom được nhật ký để gửi: ${error.javaClass.simpleName}")
+                    app.settings.problem.value = "Chưa gửi được nhật ký"
                     null
                 }
             } ?: return@launch
@@ -317,6 +334,10 @@ class NativeActivity : ComponentActivity() {
         if (started) player.attach()
         // Lượt tải còn giữ, chia sẻ đã bật từ lần trước, sách nghe thẳng của máy đã ghép: sau khung đầu, không nằm trong đường mở nguội.
         if (!demo) app.devices.apply { restore(); syncStreamed() }
+        if (!demo) {
+            app.settings.openRelease = links.openRelease
+            app.settings.loadMaintenance()
+        }
     }
 
     /** Vào cửa sổ nhỏ (PiP) ngay: nút "Cửa sổ mini" của Đang nghe, và [onUserLeaveHint] trên Android 8-11. */

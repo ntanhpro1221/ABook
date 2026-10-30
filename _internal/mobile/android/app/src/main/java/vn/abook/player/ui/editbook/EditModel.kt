@@ -32,6 +32,7 @@ data class EditDiff(val title: String? = null, val author: String? = null, val c
 data class EditState(
     val saved: EditSnapshot? = null, val draft: EditDraft? = null, val loading: Boolean = true,
     val saving: Boolean = false, val sending: Boolean = false, val problem: String = "", val sendProblem: String = "",
+    val notice: String = "",
 )
 
 object EditLogic {

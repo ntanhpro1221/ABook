@@ -32,10 +32,11 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 fun OtherPlayersEntry(repo: CompanionRepo, sheets: SheetHost, player: PlayerRepo) {
     val ui by repo.state.collectAsState()
     val local by player.state.collectAsState()
-    val active = ui.players.filter { it.book.isNotEmpty() && it.chapter != null }
+    val hidden by repo.hidden.collectAsState()
+    val active = ui.players.filter { it.book.isNotEmpty() && it.chapter != null && "${it.device}:${it.book}" !in hidden }
     Reveal(ui.players.isNotEmpty() || local.hasTrack) {
         Column(Modifier.fillMaxWidth().background(Abook.colors.panel).padding(horizontal = Dim.margin)) {
-            DisclosureRow("Thiết bị phát", { sheets.show { dismiss -> OtherPlayersSheet(repo, player, dismiss) } }, "other_players",
+            DisclosureRow("Phát trên", { sheets.show { dismiss -> OtherPlayersSheet(repo, player, dismiss) } }, "other_players",
                 summary = if (active.isEmpty()) "Chọn nơi phát" else active.joinToString { it.name })
         }
     }
@@ -51,7 +52,9 @@ fun OtherPlayersSheet(repo: CompanionRepo, local: PlayerRepo, dismiss: () -> Uni
     BackHandler(enabled = sleepFor != null) { sleepFor = null }
     val available = (LocalConfiguration.current.screenHeightDp * 0.8f).dp
     Column(Modifier.fillMaxWidth().heightIn(max = available).testTag("remote_players_sheet")) {
-        BasicText("Thiết bị phát", style = Abook.type.sectionTitle)
+        BasicText("Phát trên", style = Abook.type.sectionTitle)
+        Caption("Phát trên thiết bị khác")
+        Reveal(ui.opening.isNotBlank()) { Caption(ui.opening) }
         Reveal(ui.busy) { Caption("Đang gửi lệnh") }
         Reveal(ui.problem.isNotEmpty()) { Caption(ui.problem) }
         Reveal(ui.players.isEmpty()) { Caption("Chưa thấy máy khác. Bạn kiểm tra kết nối.") }
@@ -65,9 +68,10 @@ fun OtherPlayersSheet(repo: CompanionRepo, local: PlayerRepo, dismiss: () -> Uni
                 Column(Modifier.fillMaxWidth()) {
                     ListItem(
                         remote.name, tag = "remote_${remote.device}", titleStyle = Abook.type.bodyStrong,
-                        hint = if (remote.book.isEmpty()) "Chưa phát sách" else if (remote.playing) "Đang phát" else "Đang dừng",
+                        hint = if (remote.book.isEmpty()) "Chưa phát sách" else if (remote.playing) "Đang phát trên" else "Đang dừng trên",
                         leading = { OtherPlayerIcon(remote) },
                         below = {
+                            if (remote.protocol == "gcast") Caption("Google Cast")
                             Reveal(remote.book.isNotEmpty() && remote.chapter != null) {
                                 Column {
                                     BasicText(remote.title, style = Abook.type.bodySmall)
@@ -106,8 +110,9 @@ fun OtherPlayersSheet(repo: CompanionRepo, local: PlayerRepo, dismiss: () -> Uni
                             }
                             val owner = Regex("^p([0-9a-f]{8})_").find(here.bookId)?.groupValues?.get(1) ?: "main"
                             Reveal(here.hasTrack && (remote.cast || remote.device == owner)) {
-                                TextAction("Phát ở đây", { if (!ui.busy) scope.launch { repo.handOff(remote, here, local.positionMs() / 1000.0, local::pause) } }, "remote_load_${remote.device}", align = Alignment.CenterStart)
+                                TextAction("Phát trên ${remote.name}${if (remote.protocol == "gcast") " (Google Cast)" else ""}", { if (!ui.busy) scope.launch { repo.handOff(remote, here, local.positionMs() / 1000.0, local::pause) } }, "remote_load_${remote.device}", align = Alignment.CenterStart)
                             }
+                            Reveal(remote.book.isNotEmpty()) { TextAction("Ẩn", { repo.hide(remote); dismiss() }, "remote_hide_${remote.device}", align = Alignment.CenterStart) }
                         },
                     )
                     RowLine(start = Dim.s24 + Dim.s12)
@@ -128,10 +133,10 @@ fun StudioNotices(repo: CompanionRepo, askPermission: (() -> Unit) -> Unit, open
         SwitchRow("Báo từ Studio", ui.notices.enabled, { on ->
             val apply = { scope.launch { repo.setNotices(on) }; Unit }
             if (on) askPermission(apply) else apply()
-        }, "studio_alerts", hint = "Sách xong hoặc có việc cần bạn.")
+        }, "studio_alerts", hint = if (ui.notices.enabled && !ui.notices.permitted) "Android đang chặn thông báo của ABook." else "Sách xong hoặc có việc cần bạn.")
         Reveal(ui.notices.enabled && !ui.notices.permitted) {
             Column {
-                Caption("Android đang chặn thông báo của ABook.")
+                Caption("Bật lại trong Cài đặt của máy > Ứng dụng > ABook > Thông báo.")
                 TextAction("Mở cài đặt", openSettings, "studio_notification_settings", align = Alignment.CenterStart)
             }
         }

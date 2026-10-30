@@ -1,5 +1,7 @@
 package vn.abook.player.ui.devices
 
+import vn.abook.player.formatSize
+
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Column
@@ -146,6 +148,6 @@ fun StoredRow(item: Stored, busy: Boolean, onDelete: () -> Unit) {
             item.partial -> "Phần đã tải, chưa thành sách"
             else -> null
         },
-        trailing = { BasicText(Fmt.size(item.bytes), style = Abook.type.bodySmall.copy(color = colors.text2)) },
+        trailing = { BasicText(formatSize(item.bytes), style = Abook.type.bodySmall.copy(color = colors.text2)) },
     )
 }

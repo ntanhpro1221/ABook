@@ -1,5 +1,7 @@
 package vn.abook.player.ui.voice
 
+import vn.abook.player.formatSize
+
 import androidx.compose.runtime.Immutable
 
 /*
@@ -104,8 +106,8 @@ data class OfflineOffer(val light: List<String>, val full: List<String>) {
 
         /** Chữ trên nút tải: "Thử lại" sau lỗi, không thì `button` kèm cỡ cần tải. */
         fun label(button: String, failed: Boolean, bytes: Long): String =
-            if (failed) "Thử lại" else if (bytes > 0) "$button (${VoiceText.size(bytes)})" else button
+            if (failed) "Thử lại" else if (bytes > 0) "$button (${formatSize(bytes)})" else button
 
-        fun fullLabel(bytes: Long): String = "Gói đầy đủ (" + VoiceText.size(bytes) + ")"
+        fun fullLabel(bytes: Long): String = "Gói đầy đủ (" + formatSize(bytes) + ")"
     }
 }

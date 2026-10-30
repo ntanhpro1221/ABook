@@ -1,5 +1,7 @@
 package vn.abook.player.ui.devices
 
+import vn.abook.player.formatSize
+
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import vn.abook.player.ui.motion.Motion
@@ -47,8 +49,8 @@ fun StorageScreen(devices: DevicesState, sheets: SheetHost, onBack: () -> Unit) 
         if (ui.loaded) LazyColumn(Modifier.fillMaxSize().fadeEdges(list).testTag("storage_list"), state = list, contentPadding = PaddingValues(bottom = Dim.s16)) {
             item("total", "total") {
                 Column(Modifier.fillMaxWidth().padding(top = Dim.s16, bottom = Dim.s8).testTag("storage_total")) {
-                    BasicText(Fmt.size(ui.storage.bytes), style = Abook.type.screenTitle)
-                    Caption("Còn trống ${Fmt.size(ui.storage.free)}")
+                    BasicText(formatSize(ui.storage.bytes), style = Abook.type.screenTitle)
+                    Caption("Còn trống ${formatSize(ui.storage.free)}")
                 }
             }
             if (entries.isEmpty()) item("empty", "status") {
