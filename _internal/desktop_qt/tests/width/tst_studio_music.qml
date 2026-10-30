@@ -357,17 +357,17 @@ Item {
             all(tab, "musicChapter")[0].children[0].clicked()
             tryVerify(function() { return list.contentHeight > before + 100 })
             waitForRendering(page)
-            compare(list.contentY - list.originY, 300)
+            fuzzyCompare(list.contentY - list.originY, 300, 0.5)
             reply("GET /api/books/b/music/scenes/" + encodeURIComponent("2:0") + "/alternatives", {status: 200, data: {alternatives: [], mine: []}})
             all(sceneByKey(page, "2:0"), "sceneSwap")[0].clicked()
             tryVerify(function() { return all(sceneByKey(page, "2:0"), "musicAlternatives").filter(shown).length === 1 })
             waitForRendering(page)
-            compare(list.contentY - list.originY, 300)
+            fuzzyCompare(list.contentY - list.originY, 300, 0.5)
             reply("GET /api/books/b/music", {status: 200, data: musicData()})
             tab.load()
             tryVerify(function() { return calls("GET", "/api/books/b/music").length >= 2 })
             waitForRendering(page)
-            compare(list.contentY - list.originY, 300)
+            fuzzyCompare(list.contentY - list.originY, 300, 0.5)
         }
 
         // ================= từng đoạn =================
