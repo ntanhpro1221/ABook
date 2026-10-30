@@ -192,6 +192,21 @@ class NowPlayingUiTest {
         rule.onNodeWithTag("player_sheet_speed").assertDoesNotExist()
         rule.onNodeWithTag("now_playing").assertIsDisplayed()
     }
+    /** Chủ sách 30-10: giờ đổi tại chỗ, không có khung nào mà dòng cũ và dòng mới cùng hiện (trượt). */
+    @Test fun timeReadoutsChangeInPlaceWithoutRolling() {
+        show(playing = true)
+        rule.mainClock.autoAdvance = false
+        rule.runOnUiThread { model.skip(15) }
+        rule.mainClock.advanceTimeByFrame()
+        rule.mainClock.advanceTimeBy(40)
+        for (tag in listOf("time_elapsed", "time_left")) {
+            val texts = rule.onAllNodes(inWindow(hasTestTag(tag)), useUnmergedTree = true).fetchSemanticsNodes()
+                .flatMap { it.config.getOrElse(androidx.compose.ui.semantics.SemanticsProperties.Text) { emptyList() } }
+            assertEquals("$tag shows one line mid-change: $texts", 1, texts.size)
+        }
+        rule.mainClock.autoAdvance = true
+    }
+
     @Test fun returnChipAppearsAfterSeekAndNeverMovesTransport() {
         show()
         val before = bounds("transport")

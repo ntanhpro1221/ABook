@@ -228,7 +228,7 @@ private fun SleepAction(sleep: PlayerSleep, position: PlayerPosition, onClick: (
     LaunchedEffect(sleep, position) {
         snapshotFlow { position.sleepRemainingMs.value }.collect { label = PlayerLabels.sleep(sleep, it) }
     }
-    PlayerAction("Hẹn giờ", label.takeIf { sleep.kind != SleepKind.Off } ?: "◷", onClick, modifier.testTag("player_sleep"))
+    PlayerAction("Hẹn giờ", label.takeIf { sleep.kind != SleepKind.Off } ?: "◷", onClick, modifier.testTag("player_sleep"), clock = true)
 }
 
 @Composable
@@ -274,9 +274,9 @@ fun PlayerSeekBar(durationMs: Long, position: PlayerPosition, onSeek: (Long) -> 
         // Isolated second-resolution labels. The frame clock never recomposes the transport or chapter.
         // Hàng giờ cao cố định: chip ở giữa hiện / ẩn không bao giờ đẩy hàng nút phát.
         Box(Modifier.fillMaxWidth().height(32.dp)) {
-            RollingLabel(PlayerLabels.time(seconds * 1000), Modifier.align(Alignment.TopStart), style = Abook.type.caption)
+            ClockLabel(PlayerLabels.time(seconds * 1000), Modifier.align(Alignment.TopStart).testTag("time_elapsed"), style = Abook.type.caption)
             Box(Modifier.align(Alignment.TopCenter)) { center() }
-            RollingLabel("−" + PlayerLabels.time(durationMs - seconds * 1000), Modifier.align(Alignment.TopEnd), style = Abook.type.caption)
+            ClockLabel("−" + PlayerLabels.time(durationMs - seconds * 1000), Modifier.align(Alignment.TopEnd).testTag("time_left"), style = Abook.type.caption)
         }
     }
 }
