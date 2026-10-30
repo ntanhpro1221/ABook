@@ -1,6 +1,7 @@
 package vn.abook.player.ui.nowplaying
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -71,9 +72,13 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
     var sheetHeight by remember { mutableIntStateOf(1) }
     LaunchedEffect(window.sheetOpen) { if (window.sheetOpen) drag.snapTo(0f) }
     val scrim = Abook.colors.scrim
+    // Nền tối đậm dần cùng nhịp tấm trượt lên, nhạt dần khi tấm xuống, và nhạt theo ngón tay khi kéo tấm - không bật/tắt.
+    val scrimShown by transition.animateFloat(
+        transitionSpec = { if (targetState) tween(MotionMs.SLOW) else tween(MotionMs.SLOW_OUT) }, label = "player-sheet-scrim",
+    ) { if (it) 1f else 0f }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         if (transition.currentState || transition.targetState) {
-            Box(Modifier.fillMaxSize().drawBehind { drawRect(scrim) }
+            Box(Modifier.fillMaxSize().drawBehind { drawRect(scrim, alpha = scrimShown * (1f - drag.value / sheetHeight).coerceIn(0f, 1f)) }
                 .pressable(onClick = window::closeSheet).semantics { contentDescription = "Đóng" })
         }
         transition.AnimatedVisibility(
