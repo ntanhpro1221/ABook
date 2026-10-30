@@ -15,6 +15,8 @@ Item {
     property alias panel: panel
     signal sectionRequested(int index)
     signal projectRequested(string bookId)
+    signal precastRequested(string bookId)
+    property string openProject: ""
     Accessible.role: Accessible.Pane
     Accessible.name: "Điều hướng chính"
 
@@ -145,7 +147,9 @@ Item {
             visible: root.expanded || root.peek
             SidebarProgress {
                 id: production; width: parent.width; height: implicitHeight
+                openProject: root.openProject
                 onProjectRequested: id => { root.choose(1); root.projectRequested(id) }
+                onPrecastRequested: id => { root.choose(1); root.projectRequested(id); root.precastRequested(id) }
                 onAllRequested: root.choose(1)
             }
             Collapse {

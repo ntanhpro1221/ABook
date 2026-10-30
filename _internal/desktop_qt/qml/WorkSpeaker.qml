@@ -161,6 +161,8 @@ Column {
                     width: parent.width
                     spacing: 6
                     visible: root.more.length > 0
+                    Accessible.role: Accessible.Grouping
+                    Accessible.name: "Những người khác trong sách"
                     Repeater {
                         model: root.more
                         delegate: Button {

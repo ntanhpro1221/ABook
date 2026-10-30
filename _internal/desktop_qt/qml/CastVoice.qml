@@ -25,8 +25,8 @@ CastModal {
         for (const voice of voices) if (voice.current) return voice.gender
         return ""
     }
-    readonly property string shown: filter !== "" ? filter : currentGender !== "" ? currentGender : choices && choices.character.gender === "female" ? "female" : "male"
-    readonly property var groups: choices ? Logic.groupByEngine(Logic.byGender(choices.voices, shown)) : []
+    readonly property string shownGender: filter !== "" ? filter : currentGender !== "" ? currentGender : choices && choices.character.gender === "female" ? "female" : "male"
+    readonly property var groups: choices ? Logic.groupByEngine(Logic.byGender(choices.voices, shownGender)) : []
     readonly property var labels: Logic.groupLabels(groups)
     title: "Giọng của " + (person ? person.displayName : "")
     description: choices ? Logic.formatNumber(choices.character.lines) + " câu ở " + choices.character.chapters + " chương · đang đọc bằng " + (choices.current || "chưa có giọng") : ""
@@ -211,7 +211,7 @@ CastModal {
                     objectName: "voiceGenderFilter"
                     width: parent.width
                     label: "Lọc giọng theo giới"
-                    value: root.shown
+                    value: root.shownGender
                     options: [{value: "male", label: "Nam"}, {value: "female", label: "Nữ"}, {value: "all", label: "Tất cả"}]
                     onPicked: value => root.filter = value
                 }
@@ -354,7 +354,7 @@ CastModal {
                                     }
                                     Text {
                                         width: parent.width
-                                        text: Logic.voiceMeta(row.voice, root.shown === "all")
+                                        text: Logic.voiceMeta(row.voice, root.shownGender === "all")
                                         visible: text !== ""
                                         color: (row.voice.sharedWith || []).length && !(row.voice.takenBy || []).length ? Theme.warning : Theme.text2
                                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
@@ -385,6 +385,17 @@ CastModal {
                     color: Theme.text3
                     wrapMode: Text.Wrap
                     font.pixelSize: Theme.sizeCaption
+                }
+                // Vì sao (MoreInfo của VoicePicker.tsx): người kể cần giọng riêng; giọng thêm có thể làm hai nhân vật nghe giống nhau
+                MoreInfo {
+                    objectName: "voiceMoreInfo"
+                    width: parent.width
+                    label: root.narrator ? "Tìm hiểu thêm" : "Dùng chung giọng"
+                    HintText {
+                        width: parent.width
+                        text: root.narrator ? "Người kể cần giọng riêng, nên không chọn giọng nhân vật đang dùng. Câu chưa thu dùng giọng mới ngay; bạn không cần tạo lại sách."
+                                            : "Giọng thêm có thể khiến hai nhân vật nghe giống nhau."
+                    }
                 }
             }
         }

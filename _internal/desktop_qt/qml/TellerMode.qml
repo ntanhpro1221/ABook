@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Controls.Basic as C
 import ABook
 import "TellerLogic.js" as T
 
@@ -79,7 +78,6 @@ Item {
     StudioConfirm {
         id: confirm
         objectName: "tellerConfirm"
-        parent: C.Overlay.overlay
         panelWidth: 480
         onChosen: key => {
             if (key === "go") root.save(root.asking)

@@ -33,6 +33,7 @@ QtObject {
     readonly property color accentText: dark ? "#f0b961" : "#8a5309"
     readonly property color accentSoft: dark ? "#24e9a945" : "#f7ead5"
     readonly property color success: dark ? "#5cc596" : "#2a7554"
+    readonly property color successInk: dark ? "#0c241a" : "#ffffff"
     readonly property color danger: dark ? "#ef7b70" : "#b23b33"
     readonly property color warning: dark ? "#e8b64c" : "#905b10"
     readonly property color warningSoft: dark ? "#21e8b64c" : "#fcf1dc"

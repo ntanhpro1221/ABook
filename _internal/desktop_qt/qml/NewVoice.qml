@@ -284,6 +284,7 @@ Column {
                         clipId: "voice-" + card.modelData.name
                         url: CastLogic.voiceUrl(card.modelData.name)
                         label: "Nghe thử giọng " + card.modelData.name
+                        stopLabel: "Dừng nghe " + card.modelData.name
                     }
                     Interactive {
                         id: select
