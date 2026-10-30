@@ -23,8 +23,8 @@ object NetErrors {
 
     enum class Kind { UNREACHABLE, DROPPED, SECURITY, TIMEOUT }
 
-    /** Máy kia trả lời bằng lỗi HTTP `code` (>= 400) kèm lời của nó. */
-    class Refused(val code: Int, message: String) : IllegalStateException(message)
+    /** Máy kia trả lời bằng lỗi HTTP `code` (>= 400) kèm lời của nó; `body` là nguyên thân lời đáp (Studio đọc `listenOnly` ở đó). */
+    class Refused(val code: Int, message: String, val body: String = "") : IllegalStateException(message)
 
     /** `error` hay một nguyên nhân của nó có phải 401 của máy kia (đã bỏ ghép máy này) - lời gọi của app hay audio nghe thẳng (Media3). */
     @OptIn(UnstableApi::class)

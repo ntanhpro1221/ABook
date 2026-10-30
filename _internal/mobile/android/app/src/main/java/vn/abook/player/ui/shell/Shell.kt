@@ -71,6 +71,10 @@ import vn.abook.player.ui.devices.DevicesPage
 import vn.abook.player.ui.devices.PairScreen
 import vn.abook.player.ui.devices.ShareScreen
 import vn.abook.player.ui.devices.StorageScreen
+import vn.abook.player.ui.studio.StudioHomeRoute
+import vn.abook.player.ui.studio.StudioHub
+import vn.abook.player.ui.studio.StudioProjectRoute
+import vn.abook.player.ui.studio.StudioRequest
 import vn.abook.player.ui.voice.KeysScreen
 import vn.abook.player.ui.voice.MyMusicScreen
 import vn.abook.player.ui.voice.VoicePage
@@ -124,6 +128,18 @@ class ShellState(val scope: CoroutineScope, onSortChanged: (LibrarySort) -> Unit
         if (top == Destination.AddBook || top is Destination.ImportReview || top is Destination.ImportChapter) return
         nav.push(Destination.AddBook)
     }
+
+    /**
+     * Thông báo Studio / hàng "Studio" ở Thiết bị mở Studio của một máy: danh sách dự án, hay thẳng một dự án ở tab đã xin. Thu bảng trượt và cửa sổ Đang
+     * nghe như Back; đang ở đúng nơi ấy rồi thì không đẩy thêm màn.
+     */
+    suspend fun openStudio(request: StudioRequest) {
+        sheets.dismiss()
+        window.close()
+        while (nav.busy) delay(20) // đang chuyển cảnh thì NavState.push bỏ lệnh
+        val target = request.route.book?.let { Destination.StudioProject(request.computer, it, request.route.tab) } ?: Destination.Studio(request.computer)
+        if (nav.stack.top?.destination != target) nav.push(target)
+    }
 }
 
 /**
@@ -154,6 +170,8 @@ fun AppShell(
     askNotifications: (() -> Unit) -> Unit = { it() },
     /** Cửa sổ nhỏ (PiP) của hệ điều hành; null = bản thử / máy không có. Đang ở PiP thì khung chỉ vẽ [PipContent]. */
     pip: PipControl? = null,
+    /** Studio từ xa (các phiên theo máy tính); null = bản thử không có. */
+    studio: StudioHub? = null,
 ) {
     val nav = shell.nav
     val playerState by player.state.collectAsState()
@@ -305,6 +323,12 @@ fun AppShell(
                                         VoicePage.Music -> MyMusicScreen(voice, shell.sheets, nav::pop)
                                     }
                                 }
+                                is Destination.Studio -> if (studio != null) StudioHomeRoute(studio, destination.computer, nav::pop,
+                                    { nav.push(Destination.StudioProject(destination.computer, it)) },
+                                    active = nav.stack.top?.destination == destination && !nav.progress.isRunning)
+                                is Destination.StudioProject -> if (studio != null) StudioProjectRoute(studio, destination.computer, destination.book, destination.tab,
+                                    shell.sheets, nav::pop, listen = { nav.popToRoot(); shell.tabs.select(Tab.Library) },
+                                    active = nav.stack.top?.destination == destination && !nav.progress.isRunning)
                             }
                         },
                     )

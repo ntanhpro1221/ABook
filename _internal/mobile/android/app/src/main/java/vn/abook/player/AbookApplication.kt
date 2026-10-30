@@ -32,6 +32,9 @@ class AbookApplication : Application() {
     val library by lazy { LibraryRepo(this, uiScope) { id -> player.bookRemoved(id) } }
     val companion by lazy { vn.abook.player.ui.devices.CompanionRepo(vn.abook.player.ui.devices.AndroidCompanionCore(this)) }
     val covers by lazy { CoverLoader() }
+
+    /** Studio từ xa của giao diện native: các phiên theo máy tính ghép, sống cùng tiến trình (quyền "chỉ nghe" đã biết không phải hỏi lại mỗi lần mở màn). */
+    val studio by lazy { vn.abook.player.ui.studio.StudioHub(vn.abook.player.ui.studio.StudioRepo(this), uiScope) }
     val uiPrefs by lazy { UiPrefs(this) }
 
     /** Cài đặt của giao diện native: cùng kho với bản WebView ([AndroidSettingsCore]). */
