@@ -31,7 +31,11 @@ data class ImportPreview(
     val splitOffer: Int = 0, val splitHeadings: Int = 0, val existingId: String? = null,
     /** Tên cuốn đã có trong thư viện (`existingId`), để nói cuốn nào. Trống khi không đọc được tên. */
     val existingTitle: String = "",
+    val sameSource: Boolean = false,
+    val existingChapters: Int = 0,
 )
+
+data class PackageReview(val bookId: String, val title: String, val incomingTitle: String, val how: String)
 
 @Immutable
 data class ImportChoices(
@@ -45,6 +49,9 @@ data class ImportState(
     val items: List<ImportItem> = emptyList(), val currentId: Long? = null,
     val preview: ImportPreview? = null, val choices: ImportChoices = ImportChoices(),
     val busy: Boolean = false, val problem: String = "",
+    val packageReview: PackageReview? = null,
+    val notice: String = "",
+    val addingRest: Boolean = false,
 )
 
 /** File order is preserved: native imports never navigate away automatically for a package. */
@@ -73,6 +80,13 @@ object ImportLogic {
 
     /** Lời hỏi khi đóng Thêm sách giữa hàng (cùng câu với web). */
     fun leaveQuestion(count: Int) = "Còn $count cuốn chưa thêm vào thư viện. Đóng bây giờ thì các cuốn ấy sẽ không được thêm."
+    fun rechooseQuestion(count: Int) = "Còn $count cuốn chưa thêm vào thư viện. Chọn lại thì các cuốn ấy sẽ không được thêm."
+    fun openFailure(item: ImportItem, reason: String?): String {
+        val book = item.name.endsWith(".abook", true) || item.name.endsWith(".abookproj", true)
+        val title = if (book) "Không mở được file sách" else "Không mở được file"
+        val details = reason?.takeIf { it.isNotBlank() } ?: if (book) "File không có sách nào." else "File này không có chữ để đọc."
+        return "$title. $details"
+    }
 
     /** "Chọn hết": mọi chương của bản xem trước. */
     fun all(preview: ImportPreview) = preview.chapters.map { it.index }.toSet()
@@ -89,6 +103,12 @@ object ImportLogic {
     fun defaults(preview: ImportPreview) = ImportChoices(
         title = preview.title, picked = preview.chapters.filter { it.included }.map { it.index }.toSet(),
     )
+
+    fun summary(items: List<ImportItem>): String {
+        if (items.isEmpty() || items.any { it.stage in setOf(ImportStage.Waiting, ImportStage.Reading, ImportStage.Review, ImportStage.Adding) }) return ""
+        val count = items.count { it.stage == ImportStage.Added }
+        return if (count == 0) "Không thêm cuốn nào" else "Đã thêm $count sách"
+    }
 
     fun picks(preview: ImportPreview, choice: ImportChoices) = preview.chapters.filter { it.index in choice.picked }.map {
         it.index to choice.names[it.index]?.trim().orEmpty()

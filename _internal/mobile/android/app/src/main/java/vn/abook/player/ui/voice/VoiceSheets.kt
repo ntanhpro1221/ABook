@@ -1,5 +1,7 @@
 package vn.abook.player.ui.voice
 
+import vn.abook.player.formatSize
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -77,7 +79,7 @@ private fun ModuleActions(kind: ModuleKind, choice: ModuleChoice, status: Module
         if (bench != null && status != null) Caption(VoiceText.benchmark(choice.id, bench, status.slowRtf), Modifier.padding(top = Dim.s4).testTag("module_benchmark"))
         Spacer(Modifier.height(Dim.s8))
         if (choice.installed && status?.state == ModuleState.Outdated) {
-            MenuRow("Cập nhật (${VoiceText.size(status.outdatedBytes)})", "module_update", onClick = { voice.download(kind, null); dismiss() }) { ink -> DownloadIcon(ink) }
+            MenuRow("Cập nhật (${formatSize(status.outdatedBytes)})", "module_update", onClick = { voice.download(kind, null); dismiss() }) { ink -> DownloadIcon(ink) }
         }
         if (choice.installed) {
             MenuRow(
@@ -198,7 +200,7 @@ fun KeySheet(initial: KeyProvider, voice: VoiceState, dismiss: () -> Unit) {
             val error = voice.saveKey(provider, key, region)
             work = KeyWork.None
             problem = error.orEmpty()
-            if (error == null) dismiss()
+            if (error == null) { key = ""; verdict = "Đã lưu khoá. Bấm “Kiểm tra” để thử." }
         }
     }
 
@@ -208,7 +210,8 @@ fun KeySheet(initial: KeyProvider, voice: VoiceState, dismiss: () -> Unit) {
             when (shown) {
                 KeyPage.Form -> Column(Modifier.fillMaxWidth().fadeEdges(form).verticalScroll(form)) {
                     BasicText(provider.name, style = Abook.type.sectionTitle)
-                    Caption(VoiceText.keyHelp(provider.id), Modifier.padding(top = Dim.s4).testTag("key_help"))
+                    vn.abook.player.ui.components.MoreInfo("Nhận khoá", VoiceText.keyHelp(provider.id), "key_help")
+                    Caption(if (provider.timings == "exact") "Tô đúng từng chữ đang đọc." else "Tô từng chữ đang đọc theo ước lượng.")
                     Spacer(Modifier.height(Dim.s16))
                     BookField(
                         null, key, { key = it; problem = ""; verdict = "" }, "key_field", work == KeyWork.None, "Khoá ${provider.name}",

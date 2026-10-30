@@ -1,5 +1,7 @@
 package vn.abook.player.ui.voice
 
+import vn.abook.player.formatSize
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -36,7 +38,7 @@ import vn.abook.player.ui.theme.Dim
 fun VieneuDownload(voice: VoiceState, button: String, openSettings: () -> Unit, modifier: Modifier = Modifier) {
     val modules by voice.modules.collectAsState()
     val kind = ModuleKind.Vieneu
-    LaunchedEffect(voice) { voice.openVoice() }
+    androidx.lifecycle.compose.LifecycleResumeEffect(voice) { voice.openVoice(); onPauseOrDispose { voice.hideVoice() } }
     val status = modules[kind]?.shown
     Column(modifier.fillMaxWidth().testTag("vieneu_download")) {
         // Chưa biết trạng thái mô-đun: chỉ có đường tới Cài đặt.
@@ -50,7 +52,7 @@ fun VieneuDownload(voice: VoiceState, button: String, openSettings: () -> Unit, 
             val unsupported = shown.state == ModuleState.Unsupported
             val metered = if (!shown.working && offer.missing.isNotEmpty()) VoiceText.metered(shown, bytes) else null
             val note = when {
-                downloading -> "Đang tải ${VoiceText.size(shown.total)} · ${shown.percent}%"
+                downloading -> "Đang tải ${formatSize(shown.total)} · ${shown.percent}%"
                 failed -> shown.error
                 unsupported -> VoiceText.unsupported(shown)
                 shown.cancelled -> VoiceText.CANCELLED

@@ -35,6 +35,22 @@ sealed interface LibraryState {
  * (dấu "Trên máy tính"). DevicesRepo chuyển danh sách có thẩm quyền từ RemoteBooks.streamable vào [acceptRemote]; gói đã cất chỉ dùng trước lượt hỏi đầu.
  */
 class LibraryRepo(private val context: Context, private val scope: kotlinx.coroutines.CoroutineScope, removed: (String) -> Unit = {}) : BookSource {
+    @Volatile private var production = emptyMap<Pair<String, String>, Production>()
+    private var productionAt = 0L
+    suspend fun refreshProduction() = withContext(Dispatchers.IO) {
+        val now = android.os.SystemClock.elapsedRealtime()
+        if (productionAt != 0L && now - productionAt < if (production.values.any { it.producing }) 5000 else 30000) return@withContext
+        productionAt = now
+        production = ProductionSource(context).read()
+        refresh()
+    }
+    private fun live(manifest: JSONObject): JSONObject {
+        val target = vn.abook.player.StudioLink.bookTarget(manifest.optString("id")) ?: return manifest
+        val state = production[target] ?: return manifest
+        return JSONObject(manifest.toString()).put("producing", state.producing).put("paused", state.paused)
+            .put("pauseReason", state.pauseReason ?: JSONObject.NULL)
+            .put("eta", state.etaSeconds?.let { JSONObject().put("phase", state.etaPhase).put("seconds", it) } ?: JSONObject.NULL)
+    }
     // null until the first authoritative network catalogue; downloaded books always stay local.
     @Volatile private var remoteIds: Set<String>? = null
     // "Xoá khỏi điện thoại" như bản WebView ([BookActions.delete] / [Store.undoBook]): cuốn dời vào chỗ chờ ngay, "Hoàn tác" đưa về.
@@ -67,7 +83,7 @@ class LibraryRepo(private val context: Context, private val scope: kotlinx.corou
      */
     suspend fun refresh() = withContext(Dispatchers.IO) {
         val books = try {
-            readAll(context).filter { !isHidden(it.id) && (it.remote == null || remoteIds?.contains(it.id) != false) }
+            readAll(context, ::live).filter { !isHidden(it.id) && (it.remote == null || remoteIds?.contains(it.id) != false) }
         } catch (error: Exception) {
             AppLog.w("Library", "Không đọc được thư viện: ${error.javaClass.simpleName}")
             if (flow.value is LibraryState.Ready) return@withContext
@@ -89,7 +105,7 @@ class LibraryRepo(private val context: Context, private val scope: kotlinx.corou
             val downloaded = Store.rawManifest(id) != null
             val manifest = (if (downloaded) Store.manifest(id) else Store.streamManifest(id)?.let { Store.streamed(id, it) }) ?: return@withContext null
             val remote = if (downloaded) null else RemoteRef(SyncLink.holderName(context, id))
-            BookDetail.of(manifest, Store.state(id), { coverOf(it) }, remote, BookActions.canShare(id), Store.records(id), Store.isImported(id))
+            BookDetail.of(live(manifest), Store.state(id), { coverOf(it) }, remote, BookActions.canShare(id), Store.records(id), Store.isImported(id))
         } catch (error: Exception) {
             AppLog.w("Library", "Không đọc được trang sách: ${error.javaClass.simpleName}")
             null
@@ -272,7 +288,7 @@ class LibraryRepo(private val context: Context, private val scope: kotlinx.corou
     }
 
     companion object {
-        fun readAll(context: Context): List<ListenBook> {
+        fun readAll(context: Context, live: (JSONObject) -> JSONObject = { it }): List<ListenBook> {
             Store.init(context)
             val holderNames = HashMap<String, String>()
             val books = ArrayList<ListenBook>()
@@ -285,8 +301,8 @@ class LibraryRepo(private val context: Context, private val scope: kotlinx.corou
                         RemoteRef(holderNames.getOrPut(source) { SyncLink.holderName(context, id) })
                     }
                     val added = if (downloaded) File(Store.bookDir(id), "book.json").lastModified() / 1000.0 else null
-                    val book = BookJson.book(manifest, Store.state(id), ::coverOf, remote, added, Store.isImported(id))
-                    if (book.chaptersAvailable > 0 || book.textOnly) books += book
+                    val book = BookJson.book(live(manifest), Store.state(id), ::coverOf, remote, added, Store.isImported(id))
+                    books += book
                 } catch (error: Exception) {
                     AppLog.w("Library", "Bỏ qua một cuốn không đọc được: ${error.javaClass.simpleName}")
                 }

@@ -115,7 +115,7 @@ class DevicesStateTest {
         devices.connect()
         val failed = devices.pair.value.attempt
         assertTrue(failed is Attempt.Failed)
-        assertEquals("Mã chưa đúng - bạn nhập lại.", (failed as Attempt.Failed).message)
+        assertEquals("Chưa ghép được. Mã chưa đúng - bạn nhập lại.", (failed as Attempt.Failed).message)
         assertFalse(devices.pair.value.paired)
         assertEquals("mã vẫn còn để sửa", "000000", devices.pair.value.form.code)
         source.pairError = null
@@ -186,12 +186,16 @@ class DevicesStateTest {
         val denied = state(DeviceLinks(askNearby = { result -> asked++; result(false) }))
         denied.openPair()
         denied.setMethod(PairMethod.Bluetooth)
+        assertEquals(0, asked)
+        assertEquals(Bluetooth.Explain, denied.pair.value.bluetooth)
+        denied.requestBluetooth()
         assertEquals(1, asked)
         assertEquals(Bluetooth.Denied, denied.pair.value.bluetooth)
         assertEquals(PairMethod.Bluetooth, denied.pair.value.method)
         val granted = state(DeviceLinks(askNearby = { result -> source.nearby = true; result(true) }))
         granted.openPair()
         granted.setMethod(PairMethod.Bluetooth)
+        granted.requestBluetooth()
         assertEquals(listOf("bt:AA:BB"), granted.pair.value.bluetoothChoices.map { it.address })
         assertEquals("một máy duy nhất được chọn sẵn", "bt:AA:BB", granted.pair.value.form.picked)
         granted.setMethod(PairMethod.Wifi)
@@ -352,7 +356,7 @@ class DevicesStateTest {
         devices.download(a)
         assertTrue(devices.pair.value.failed.isEmpty())
         source.events.tryEmit(DownloadEvent("a", 0.3f, error = "Mất mạng giữa chừng."))
-        assertEquals("Mất mạng giữa chừng.", devices.pair.value.failed["a"])
+        assertEquals("Tải bị gián đoạn. Mất mạng giữa chừng.", devices.pair.value.failed["a"])
         assertTrue(devices.pair.value.downloading.isEmpty())
     }
 

@@ -73,11 +73,14 @@ class VoiceState(
     private val importFlow = MutableStateFlow(0f)
     private val watchers = HashMap<ModuleKind, Job>()
     private var turn = 0
+    private var visible = false
+    fun hideVoice() { visible = false; watchers.values.forEach { it.cancel() }; watchers.clear(); stopSample() }
 
     val modules: StateFlow<Map<ModuleKind, ModuleUi>> = moduleFlow
     val keys: StateFlow<KeysUi> = keyFlow
     val consents: StateFlow<Set<String>> = consentFlow
     val sample: StateFlow<SampleUi> = sampleFlow
+    val notice = MutableStateFlow("")
     val music: StateFlow<MusicUi> = musicFlow
 
     /** Tiến độ 0..1 của việc tải một mô-đun; đọc trong pha vẽ. */
@@ -128,6 +131,7 @@ class VoiceState(
 
     /** Mở màn Giọng đọc: đọc trạng thái hai mô-đun, các khoá, và những nhà cung cấp bạn đã đồng ý gửi chữ tới (nền, không chặn). */
     fun openVoice() {
+        visible = true
         for (kind in ModuleKind.entries) scope.launch { refresh(kind) }
         loadKeys()
         loadConsents()
@@ -164,6 +168,7 @@ class VoiceState(
 
     /** Hỏi lại mỗi nhịp khi mô-đun đang tải hay đang đo; xong thì thôi. Lỗi hỏi (hiếm) cũng thôi - lần mở màn sau hỏi lại. */
     private fun watch(kind: ModuleKind) {
+        if (!visible) return
         if (watchers[kind]?.isActive == true) return
         watchers[kind] = scope.launch {
             while (true) {
@@ -181,7 +186,7 @@ class VoiceState(
         scope.launch {
             val result = attempt { source.start(kind, ids) }
             result.onSuccess { apply(kind, it) }
-            result.onFailure { error -> setModule(kind) { it.copy(problem = message(error, "Chưa tải được ${kind.title}")) } }
+            result.onFailure { error -> setModule(kind) { it.copy(problem = listOf(if (ids == listOf("supertonic_fast")) "Chưa tải được bản nhanh hơn" else "Chưa tải được ${kind.title}", error.message.orEmpty()).joinToString(". ")) } }
         }
     }
 
@@ -189,7 +194,8 @@ class VoiceState(
     fun retry(kind: ModuleKind) = download(kind, moduleFlow.value.getValue(kind).pending.ifEmpty { null })
 
     fun cancel(kind: ModuleKind) {
-        scope.launch { attempt { source.cancel(kind) }.onSuccess { apply(kind, it) } }
+        scope.launch { attempt { source.cancel(kind) }.onSuccess { apply(kind, it) }
+            .onFailure { e -> setModule(kind) { it.copy(problem = listOf("Chưa huỷ được việc tải ${kind.title}", e.message.orEmpty()).joinToString(". ")) } } }
     }
 
     fun measure(kind: ModuleKind) {
@@ -219,7 +225,7 @@ class VoiceState(
         }
         val toPrefix = if (suggestion.switchTo == "nano") "vieneu:nano/" else ONLINE_VOICE
         val result = attempt { source.switchVoices(VoiceText.tierVoicePrefix(suggestion.tier), toPrefix, ONLINE_VOICE) }
-        result.onSuccess { voicesChanged() }
+        result.onSuccess { voicesChanged(); notice.value = if (suggestion.switchTo == "nano") "Đã chuyển sang giọng VieNeu Nano" else "Đã chuyển sang giọng trực tuyến" }
         return result.exceptionOrNull()?.let { message(it, "Chưa đổi được giọng") }
     }
 

@@ -23,6 +23,54 @@ import vn.abook.player.readaloud.VoiceSpeed
  */
 class AndroidSettingsCore(context: Context) : SettingsCore {
     private val app = context.applicationContext
+    override fun takeNotificationOffer(): Boolean {
+        val prefs = app.getSharedPreferences("native_ui", Context.MODE_PRIVATE)
+        if (prefs.getBoolean("notification_asked", false)) return false
+        prefs.edit().putBoolean("notification_asked", true).apply()
+        return true
+    }
+    override fun freshOldSaves(names: List<String>): Boolean {
+        val prefs = app.getSharedPreferences("native_ui", Context.MODE_PRIVATE)
+        val seen = prefs.getStringSet("old_saves_seen", emptySet()).orEmpty()
+        val fresh = names.any { it !in seen }
+        prefs.edit().putStringSet("old_saves_seen", names.toSet()).apply()
+        return fresh
+    }
+    override fun oldSaves(): List<OldSave> {
+        val dir = vn.abook.player.OldSaves.dir(app.filesDir)
+        vn.abook.player.BookSave.recover(dir)
+        return vn.abook.player.OldSaves.list(dir).map { OldSave(it.name, it.size, it.modified) }
+    }
+    override fun deleteOldSave(name: String) {
+        check(vn.abook.player.OldSaves.delete(vn.abook.player.OldSaves.dir(app.filesDir), name)) { "Chưa xoá được" }
+    }
+    override fun exportOldSave(name: String, uri: String) {
+        val sink = app.contentResolver.openOutputStream(android.net.Uri.parse(uri), "wt") ?: error("Không mở được file để ghi")
+        sink.use { vn.abook.player.OldSaves.copyTo(vn.abook.player.OldSaves.dir(app.filesDir), name, it) }
+    }
+    override fun release(): AppRelease? {
+        val prefs = app.getSharedPreferences("app-release", Context.MODE_PRIVATE)
+        val cached = runCatching { JSONObject(prefs.getString("json", "")!!) }.getOrNull()
+        if (System.currentTimeMillis() - prefs.getLong("at", 0) < 86_400_000) return cached?.let(AppRelease::parse)
+        return runCatching {
+            val connection = java.net.URL("https://api.github.com/repos/ntanhpro1221/ABook/releases/latest").openConnection() as java.net.HttpURLConnection
+            try {
+                connection.connectTimeout = 8000; connection.readTimeout = 8000
+                connection.setRequestProperty("Accept", "application/vnd.github+json")
+                check(connection.responseCode == 200)
+                val json = connection.inputStream.bufferedReader().use { it.readText() }
+                val release = AppRelease.parse(JSONObject(json))
+                prefs.edit().putString("json", json).putLong("at", System.currentTimeMillis()).apply()
+                release
+            } finally { connection.disconnect() }
+        }.getOrElse { cached?.let(AppRelease::parse) }
+    }
+    override fun tellRelease(version: String): Boolean {
+        val prefs = app.getSharedPreferences("app-release", Context.MODE_PRIVATE)
+        if (prefs.getString("told", "") == version) return false
+        prefs.edit().putString("told", version).apply()
+        return true
+    }
 
     /** Lõi phát (và kho, giọng đọc, nhạc nền) đã dựng: `Playback.init` gọi lại được nhiều lần, các phần bên trong tự giữ lần đầu. */
     private fun ready() = Playback.init(app)
@@ -41,7 +89,7 @@ class AndroidSettingsCore(context: Context) : SettingsCore {
     override fun voices(): List<VoiceOption> {
         ready()
         return ReadAloud.voices(app).map {
-            VoiceOption(it.optString("id"), it.optString("name"), it.optString("provider"), it.optBoolean("default"))
+            VoiceOption(it.optString("id"), it.optString("name"), it.optString("provider"), it.optBoolean("default"), it.optString("gender"))
         }
     }
 

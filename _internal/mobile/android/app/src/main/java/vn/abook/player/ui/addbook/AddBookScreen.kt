@@ -64,7 +64,7 @@ fun AddBookRoute(queue: ImportQueue, onBack: () -> Unit, onReview: (Long) -> Uni
     }
     LaunchedEffect(active, state.currentId, state.preview, state.items) {
         if (active && autoPick) {
-            state.currentId?.takeIf { state.preview != null }?.let { id ->
+            state.currentId?.takeIf { state.preview != null || state.packageReview != null }?.let { id ->
                 if (queue.takeAutoReview(id)) onReview(id)
             }
             state.items.singleOrNull()?.takeIf { it.stage in setOf(ImportStage.Added, ImportStage.Existing) }?.let { item ->
@@ -75,8 +75,10 @@ fun AddBookRoute(queue: ImportQueue, onBack: () -> Unit, onReview: (Long) -> Uni
     // Đóng khi hàng còn hơn một cuốn chưa thêm: hỏi ngay ở chân màn, không bỏ cả hàng im lặng (web AddBook `confirmLeave`). Back lần nữa = "Quay lại thêm sách".
     val unfinished = ImportLogic.unfinished(state.items)
     var asking by rememberSaveable { mutableStateOf(false) }
+    var choosingAgain by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(unfinished) { if (unfinished <= 1) asking = false }
     val leave: () -> Unit = {
+        choosingAgain = false
         // Đang ghi một cuốn vào Thư viện mà hàng còn cuốn khác: chờ nó xong rồi mới hỏi (như web). Một cuốn thì đóng như cũ, hàng giữ nguyên.
         if (asking) asking = false
         else if (unfinished <= 1) onBack()
@@ -84,9 +86,13 @@ fun AddBookRoute(queue: ImportQueue, onBack: () -> Unit, onReview: (Long) -> Uni
     }
     BackHandler(enabled = active && (asking || unfinished > 1)) { leave() }
     AddBookScreen(
-        state, leave, { files.launch(arrayOf("*/*")) }, { folder.launch(null) }, onReview, queue::retry, onOpen,
+        state, leave, {
+            if (unfinished > 1) { choosingAgain = true; asking = true } else files.launch(arrayOf("*/*"))
+        }, { folder.launch(null) }, onReview, queue::retry, onOpen,
         leaving = if (asking) unfinished else 0, stay = { asking = false },
-        dropRest = { if (queue.dropRest()) { asking = false; onBack() } },
+        dropRest = { if (queue.dropRest()) { asking = false; if (choosingAgain) files.launch(arrayOf("*/*")) else onBack() } },
+        choosingAgain = choosingAgain,
+        addRest = queue::addRest,
     ) { id ->
         val progress = queue.progress(id).collectAsState()
         val read: () -> Float = { progress.value }
@@ -105,6 +111,8 @@ fun AddBookScreen(
     state: ImportState, onBack: () -> Unit, pickFiles: () -> Unit, pickFolder: () -> Unit,
     review: (Long) -> Unit, retry: (Long) -> Unit, openBook: (String) -> Unit,
     leaving: Int = 0, stay: () -> Unit = {}, dropRest: () -> Unit = {},
+    addRest: () -> Unit = {},
+    choosingAgain: Boolean = false,
     progress: @Composable (Long) -> (() -> Float) = { { 0.35f } },
 ) {
     // Số cuốn giữ lại trong lúc lời hỏi khép (không đổi thành "Còn 0 cuốn" giữa chừng).
@@ -113,15 +121,18 @@ fun AddBookScreen(
     BookForm("Thêm sách", onBack, "add_book_screen", footer = {
         Reveal(leaving == 0) {
             Column(Modifier.fillMaxWidth()) {
+                Reveal(state.items.size > 1 && ImportLogic.unfinished(state.items) > 0 && !state.busy && !state.addingRest) {
+                    TextAction("Thêm phần còn lại", addRest, "add_rest", Modifier.fillMaxWidth(), align = Alignment.Center)
+                }
                 PrimaryButton("Chọn file sách", pickFiles, Modifier.fillMaxWidth().testTag("pick_books"))
                 TextAction("Chọn thư mục TXT", pickFolder, "pick_folder", Modifier.fillMaxWidth(), align = Alignment.Center)
             }
         }
         Reveal(leaving > 0) {
             Column(Modifier.fillMaxWidth().semantics { paneTitle = "Đóng khi còn sách chưa thêm" }.testTag("leave_confirm")) {
-                BasicText(ImportLogic.leaveQuestion(lastCount[0]), style = Abook.type.bodyStrong, modifier = Modifier.padding(bottom = Dim.s12).testTag("leave_question"))
+                BasicText(if (choosingAgain) ImportLogic.rechooseQuestion(lastCount[0]) else ImportLogic.leaveQuestion(lastCount[0]), style = Abook.type.bodyStrong, modifier = Modifier.padding(bottom = Dim.s12).testTag("leave_question"))
                 PrimaryButton("Quay lại thêm sách", stay, Modifier.fillMaxWidth().testTag("leave_stay"))
-                TextAction("Bỏ phần còn lại", dropRest, "leave_drop", Modifier.fillMaxWidth(), align = Alignment.Center)
+                TextAction(if (choosingAgain) "Bỏ và chọn lại" else "Bỏ phần còn lại", dropRest, "leave_drop", Modifier.fillMaxWidth(), align = Alignment.Center)
             }
         }
     }) {
@@ -132,6 +143,11 @@ fun AddBookScreen(
         } else {
             val list = rememberLazyListState()
             LazyColumn(Modifier.fillMaxSize().fadeEdges(list).testTag("import_queue"), state = list, contentPadding = PaddingValues(bottom = Dim.s16)) {
+                item("summary", "summary") {
+                    val summary = ImportLogic.summary(state.items)
+                    Reveal(summary.isNotEmpty()) { Caption(summary, Modifier.testTag("import_summary")) }
+                    Reveal(state.notice.isNotEmpty()) { Caption(state.notice) }
+                }
                 items(state.items, key = { it.id }, contentType = { "import" }) { item ->
                     Column(Modifier.fillMaxWidth().animateItem(fadeInSpec = null, fadeOutSpec = null).animateContentSize().testTag("import_${item.id}")) {
                         ImportRow(item, review, retry, openBook, progress)
@@ -173,7 +189,8 @@ fun ImportReviewRoute(queue: ImportQueue, itemId: Long, onBack: () -> Unit, open
     val state by queue.state.collectAsState()
     // Thêm xong thì lùi một lớp về hàng đợi, không để lại bản xem trước đã cũ.
     LaunchedEffect(state.currentId) { if (state.currentId != itemId) onBack() }
-    ImportReviewScreen(state, onBack, queue::choose, queue::revise, queue::add, queue::skip, openChapter)
+    if (state.packageReview != null) PackageReviewScreen(state, onBack, queue::keepPackage, queue::add)
+    else ImportReviewScreen(state, onBack, queue::choose, queue::revise, queue::add, queue::skip, openChapter)
 }
 
 /** Cách xử lý lời chú: loại trừ nhau trong lõi (`FootnoteChoice.notes` là MỘT giá trị "", "end" hay "drop"), nên là một hàng chọn-một. */
@@ -209,7 +226,7 @@ fun ImportReviewScreen(
         if (preview != null) PrimaryButton(
             when {
                 state.busy -> if (adding) "Đang thêm" else "Đang đọc"
-                known -> "Bỏ cuốn này"
+                known -> if (state.items.size == 1) "Mở cuốn đó" else "Bỏ cuốn này"
                 else -> "Thêm vào thư viện"
             },
             add, Modifier.fillMaxWidth().testTag("confirm_import"), enabled = !state.busy && ImportLogic.canAdd(preview, choice),
@@ -228,9 +245,12 @@ fun ImportReviewScreen(
             }
             if (preview.existingId != null || preview.splitOffer > 0) item("options", "options") {
                 Column(Modifier.padding(top = Dim.sectionGap)) {
-                    if (preview.existingId != null) SwitchRow("Thêm bản riêng", choice.separate, { choose { it.copy(separate = !it.separate) } },
-                        "separate_copy", hint = if (preview.existingTitle.isEmpty()) "Cuốn này đã có trong thư viện"
-                        else "Cuốn này đã có trong thư viện: “${preview.existingTitle}”.")
+                    if (preview.existingId != null) {
+                        Caption(if (preview.sameSource) "Đã thêm từ file này rồi" else "Cuốn này đã có trong thư viện")
+                        SwitchRow(if (preview.sameSource) "Vẫn thêm bản mới" else "Thêm bản riêng", choice.separate, { choose { it.copy(separate = !it.separate) } },
+                            "separate_copy", hint = if (preview.sameSource) "Bạn đã thêm file này thành “${preview.existingTitle}” (${preview.existingChapters} chương)."
+                            else "Cuốn này đã có trong thư viện: “${preview.existingTitle}”.")
+                    }
                     if (preview.existingId != null && preview.splitOffer > 0) RowLine()
                     if (preview.splitOffer > 0) SwitchRow("Tách chương", choice.split, { revise { it.copy(split = !it.split) } },
                         "split_chapters", hint = ImportLogic.splitHint(preview))

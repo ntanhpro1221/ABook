@@ -49,7 +49,7 @@ fun PrepareBlock(state: NowPlayingState, prepare: PrepareState, modifier: Modifi
     if (label.isEmpty() && upcoming.isEmpty()) return
     Column(modifier.fillMaxWidth().padding(top = Dim.s8).testTag("prepare_block")) {
         Box(Modifier.fillMaxWidth().height(1.dp).background(Abook.colors.line))
-        BasicText(label.ifEmpty { PrepareText.INTRO }, Modifier.padding(top = Dim.s8).testTag("prepare_label"), style = Abook.type.caption.copy(color = Abook.colors.text2))
+        BasicText(label.ifEmpty { PrepareText.intro(state.voiceId) }, Modifier.padding(top = Dim.s8).testTag("prepare_label"), style = Abook.type.caption.copy(color = Abook.colors.text2))
         val estimate = plan?.takeIf { !working }?.let(PrepareText::planLabel).orEmpty()
         Reveal(estimate.isNotEmpty()) { BasicText(estimate, Modifier.padding(top = Dim.s4).testTag("prepare_plan"), style = Abook.type.caption.copy(color = Abook.colors.text2)) }
         if (working) {

@@ -1,5 +1,7 @@
 package vn.abook.player.ui.export
 
+import vn.abook.player.formatSize
+
 import androidx.compose.runtime.Immutable
 import org.json.JSONObject
 import vn.abook.player.ui.data.Choice
@@ -180,7 +182,7 @@ object ExportText {
     }
 
     /** Chỗ trống cần trong máy lúc làm (file tạm, xoá khi xong). */
-    fun spaceText(plan: AudiobookPlan): String = "Lúc làm cần khoảng ${Fmt.size(plan.bytes)} trống trong điện thoại (file tạm, xoá khi xong)."
+    fun spaceText(plan: AudiobookPlan): String = "Lúc làm cần khoảng ${formatSize(plan.bytes)} trống trong điện thoại (file tạm, xoá khi xong)."
 
     /** Lượt kèm nhạc dài (trên 20 chương) tốn pin đáng kể: gợi ý cắm sạc, không chặn. Rỗng khi không cần. */
     fun chargerHint(music: Boolean, chapters: Int): String = if (music && chapters > 20) "Cuốn dài: nên cắm sạc trong lúc làm - trộn nhạc tốn pin." else ""
@@ -312,7 +314,7 @@ object ExportText {
             )
         }
         val title = if (event.kind == ExportKind.Audiobook) "Đã xuất sách nói" else "Đã xuất M4B"
-        val lines = listOfNotNull(event.name, event.size?.takeIf { it > 0 }?.let { Fmt.size(it) })
+        val lines = listOfNotNull(event.name, event.size?.takeIf { it > 0 }?.let { formatSize(it) })
         val notes = listOf(missingChapters(event), musicMissing(event)).filter { it.isNotEmpty() }
         return ExportResult(event.kind, title, listOf(lines.joinToString(" · ")).filter { it.isNotEmpty() }, notes, event.uri)
     }

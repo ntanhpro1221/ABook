@@ -112,6 +112,7 @@ class DevicesRepo(private val context: Context, private val library: vn.abook.pl
     override suspend fun streamable() {
         val rows = io { RemoteBooks.streamable(context) }
         library.acceptRemote(rows)
+        library.refreshProduction()
     }
 
     override suspend fun download(book: RemoteBook) = io {

@@ -1,5 +1,7 @@
 package vn.abook.player.ui.devices
 
+import vn.abook.player.formatSize
+
 import androidx.compose.runtime.Immutable
 import vn.abook.player.ui.data.Choice
 import vn.abook.player.ui.data.Fmt
@@ -127,7 +129,7 @@ data class RemoteBook(
     val detail: String
         get() = buildString {
             append("$chaptersAvailable/$chaptersTotal chương · ${Fmt.length(duration)}")
-            if (!downloaded && bytes > 0) append(" · ${Fmt.size(bytes)}")
+            if (!downloaded && bytes > 0) append(" · ${formatSize(bytes)}")
             if (producing) append(" · đang làm")
         }
 }
@@ -175,7 +177,7 @@ sealed interface Attempt {
 
 /** Cách nối: tự tìm trong Wi-Fi, chọn máy đã ghép Bluetooth, hay gõ địa chỉ. */
 enum class PairMethod(override val label: String) : Choice {
-    Wifi("Wi-Fi"), Bluetooth("Bluetooth"), Address("Địa chỉ");
+    Wifi("Tự tìm máy tính"), Bluetooth("Dùng Bluetooth"), Address("Nhập địa chỉ");
 
     override val key: String get() = name.lowercase()
 }
@@ -184,6 +186,7 @@ enum class PairMethod(override val label: String) : Choice {
 @Immutable
 sealed interface Bluetooth {
     data object Off : Bluetooth
+    data object Explain : Bluetooth
     data object Listing : Bluetooth
 
     /** Android không hỏi quyền nữa (từ chối hẳn): chỉ Cài đặt bật lại được. */
@@ -242,7 +245,7 @@ data class Stored(val id: String, val title: String, val bytes: Long, val partia
 @Immutable
 data class Storage(val bytes: Long = 0, val free: Long = 0, val entries: List<Stored> = emptyList()) {
     /** Một dòng cho phần đầu danh sách: "Sách 1,2 GB · còn trống 20 GB" (cùng lời web). */
-    val line: String get() = "Sách ${Fmt.size(bytes)} · còn trống ${Fmt.size(free)}"
+    val line: String get() = "Sách ${formatSize(bytes)} · còn trống ${formatSize(free)}"
 }
 
 // ---- bỏ ghép ----------------------------------------------------------------------------------------------------------
@@ -268,6 +271,14 @@ enum class ForgetChoice { Plain, Send, Discard }
 data class ForgetCopy(val title: String, val lines: List<String>, val send: String?, val discard: String, val edited: Boolean = false)
 
 object DeviceText {
+    fun failure(title: String, detail: String?): String =
+        listOf(title, detail?.takeIf { it.isNotBlank() }).filterNotNull().joinToString(". ")
+    fun studioBlocked(names: List<String>): String = when (names.size) {
+        0 -> "Chưa ghép với máy tính nào"
+        1 -> listenOnly(names[0])
+        2 -> "Máy tính ${names[0]} và ${names[1]} đều chỉ cho nghe - trên từng máy, bật Cài đặt › Thiết bị › “Điều khiển từ xa”."
+        else -> "Các máy tính đã ghép đều chỉ cho nghe - trên từng máy, bật Cài đặt › Thiết bị › “Điều khiển từ xa”."
+    }
     const val OFFLINE = "Không kết nối được - máy đang tắt hoặc khác Wi-Fi"
 
     /** Trang tải ABook cho máy tính (web: DESKTOP_RELEASES của android/DevicesScreen.tsx) - "Tải ABook Windows" mở nó, "Chép địa chỉ" chép nó. */
@@ -315,7 +326,7 @@ object DeviceText {
         val lines = ArrayList<String>()
         if (cache) {
             val downloaded = if (unsent.cacheBytes > 0) {
-                ", và ${if (unsent.cacheBytes < 1024L * 1024) "dưới 1 MB" else Fmt.size(unsent.cacheBytes)} đã tải về điện thoại này sẽ bị xoá"
+                ", và ${if (unsent.cacheBytes < 1024L * 1024) "dưới 1 MB" else formatSize(unsent.cacheBytes)} đã tải về điện thoại này sẽ bị xoá"
             } else ""
             lines += "${unsent.cacheBooks} cuốn của $device sẽ rời Thư viện$downloaded."
             if (unsent.places > 0) lines += "Chỗ nghe của ${unsent.places} cuốn vẫn giữ - ghép lại đúng $device là nghe tiếp được."

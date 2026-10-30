@@ -168,6 +168,7 @@ fun RenameSheet(current: String, state: DevicesState, dismiss: () -> Unit) {
                 if (error == null) dismiss()
             }
         }, Modifier.fillMaxWidth().testTag("rename_save"), enabled = !working && name.isNotBlank())
+        QuietButton("Để nguyên", dismiss, "rename_cancel")
     }
 }
 

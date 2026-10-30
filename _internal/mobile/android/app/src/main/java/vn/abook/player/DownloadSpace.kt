@@ -35,8 +35,7 @@ object DownloadSpace {
     /** Lời báo khi `free` byte không đủ cho `missing` byte cộng [MARGIN]; đủ thì null. */
     fun shortage(missing: Long, free: Long): String? {
         if (missing <= 0 || missing + MARGIN <= free) return null
-        return "Thiếu chỗ tải (cần ${megabytes(missing + MARGIN)}, còn ${megabytes(free)}) — bạn dọn ở mục Dung lượng rồi tải lại."
+        return "Thiếu chỗ tải (cần ${formatSize(missing + MARGIN)}, còn ${formatSize(free)}) — bạn dọn ở mục Dung lượng rồi tải lại."
     }
 
-    private fun megabytes(bytes: Long): String = "${(bytes.coerceAtLeast(0) + (1 shl 20) - 1) shr 20} MB"
 }

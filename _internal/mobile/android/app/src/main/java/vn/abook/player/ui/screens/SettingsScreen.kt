@@ -50,6 +50,8 @@ class SettingsLinks(
     val openNotificationSettings: () -> Unit = {},
     val shareLogs: () -> Unit = {},
     val openSource: () -> Unit = {},
+    val openRelease: (String) -> Unit = {},
+    val saveOld: (String, (String?) -> Unit) -> Unit = { _, result -> result(null) },
 )
 
 /** Mọi thứ màn Cài đặt cần, gom một chỗ để khung chỉ chuyển một tham số: kho, vòng lan đổi giao diện, cửa ra hệ điều hành. */

@@ -1,5 +1,7 @@
 package vn.abook.player.ui.data
 
+import vn.abook.player.formatSize
+
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -117,14 +119,14 @@ class SettingsDataTest {
 
     @Test
     fun `sizes read like formatSize`() {
-        assertEquals("1 KB", Fmt.size(10))
-        assertEquals("100 KB", Fmt.size(100L * 1024))
-        assertEquals("0,5 MB", Fmt.size(512L * 1024))
-        assertEquals("1 MB", Fmt.size(1024L * 1024))
-        assertEquals("9,9 MB", Fmt.size((9.9 * 1024 * 1024).toLong()))
-        assertEquals("850 MB", Fmt.size(850L * 1024 * 1024))
-        assertEquals("1.000 MB", Fmt.size(1000L * 1024 * 1024))
-        assertEquals("3,2 GB", Fmt.size((3.2 * 1024 * 1024 * 1024).toLong()))
+        assertEquals("1 KB", formatSize(10))
+        assertEquals("100 KB", formatSize(100L * 1024))
+        assertEquals("0,5 MB", formatSize(512L * 1024))
+        assertEquals("1 MB", formatSize(1024L * 1024))
+        assertEquals("9,9 MB", formatSize((9.9 * 1024 * 1024).toLong()))
+        assertEquals("850 MB", formatSize(850L * 1024 * 1024))
+        assertEquals("1.000 MB", formatSize(1000L * 1024 * 1024))
+        assertEquals("3,2 GB", formatSize((3.2 * 1024 * 1024 * 1024).toLong()))
     }
 
     @Test

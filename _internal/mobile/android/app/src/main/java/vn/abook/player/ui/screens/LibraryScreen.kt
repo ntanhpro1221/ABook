@@ -261,6 +261,9 @@ private fun BookTile(
             BasicText(ListenLogic.remotePlace(lead), style = Abook.type.caption)
         }
         val sub = when {
+            !lead.textOnly && lead.chaptersAvailable == 0 -> vn.abook.player.ui.data.ProductionText.upcoming(lead)
+            lead.producing -> vn.abook.player.ui.data.ProductionText.upcoming(lead)
+            lead.textOnly && lead.author.isBlank() -> "Chỉ có chữ"
             single != null && single.twin -> ListenLogic.progressText(lead)
             else -> lead.author
         }

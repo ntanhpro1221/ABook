@@ -18,10 +18,11 @@ import vn.abook.player.TextBook
 import vn.abook.player.TextImports
 import java.io.File
 
-data class PreparedImport(val ref: String?, val name: String, val preview: ImportPreview? = null, val bookId: String? = null, val existing: Boolean = false)
+data class PreparedImport(val ref: String?, val name: String, val preview: ImportPreview? = null, val bookId: String? = null, val existing: Boolean = false, val packageReview: PackageReview? = null, val notice: String = "")
 
 /** Narrow typed boundary. Tests inject it; production calls the core, never a Plugin or LocalStudio route. */
 interface ImportSource {
+    suspend fun replace(item: ImportItem): PreparedImport = error("Chưa thay được sách")
     suspend fun describe(item: ImportItem): String = item.name
     suspend fun prepare(item: ImportItem): PreparedImport
     suspend fun revise(ref: String, choices: ImportChoices): ImportPreview
@@ -53,7 +54,10 @@ class ImportRepo(private val context: Context) : ImportSource {
         val packageFile = !item.folder && (TextImports.isAppBookFile(mime, shown) || (incoming == null && BookFileImport.looksLikeBookFile(head() ?: ByteArray(0))))
         if (packageFile) {
             val result = BookFileImport.import(context, uri)
-            return@withContext PreparedImport(null, shown, bookId = result.id, existing = result.how in setOf("existing", "older", "conflict"))
+            if (result.how in setOf("older", "conflict")) return@withContext PreparedImport(null, shown,
+                packageReview = PackageReview(result.id, result.title, result.incomingTitle, result.how))
+            val notice = if (result.incomingTitle.isNotBlank() && result.incomingTitle != result.title) "Tên trong file là “${result.incomingTitle}”, khác tên đang dùng." else "Đã thêm “${result.title}”"
+            return@withContext PreparedImport(null, shown, bookId = result.id, existing = result.how == "existing", notice = notice)
         }
         val staged = if (item.folder) stageFolder(uri) else TextImports.stageFile(incoming ?: shown) {
             context.contentResolver.openInputStream(uri)
@@ -74,8 +78,9 @@ class ImportRepo(private val context: Context) : ImportSource {
         val book = TextImports.prepare(ref, pdfPages[ref], splitChapters = choices.split,
             footnotes = BookImport.FootnoteChoice(choices.hideMarks, choices.notes))
         val picks = BookImport.defaultPicks(book)
-        val existing = (if (picks.isEmpty()) null else Store.findByChapters(TextBook.prints(BookImport.selectChapters(book, picks))))
-            ?: TextImports.sameSource(ref)
+        val exact = if (picks.isEmpty()) null else Store.findByChapters(TextBook.prints(BookImport.selectChapters(book, picks)))
+        val same = TextImports.sameSource(ref)
+        val existing = exact ?: same
         return ImportPreview(
             book.title, book.author.orEmpty(), book.chapters.mapIndexed { index, row ->
                 ImportChapter(index + 1, row.name.ifEmpty { row.title }, !row.short && (book.keepMatter || row.matter.isEmpty()), row.matter)
@@ -83,6 +88,8 @@ class ImportRepo(private val context: Context) : ImportSource {
             book.footnoteFound, book.footnoteMarks, book.footnoteExamples.firstOrNull()?.let { "${it.first}\n${it.second}" }.orEmpty(),
             book.splitOffer, book.splitHeadings, existing,
             existing?.let { Store.manifest(it)?.optString("title") }.orEmpty(),
+            sameSource = exact == null && same != null,
+            existingChapters = existing?.let { Store.manifest(it)?.optJSONArray("chapters")?.length() } ?: 0,
         )
     }
 
@@ -106,8 +113,17 @@ class ImportRepo(private val context: Context) : ImportSource {
         Unit
     }
 
-    private fun name(uri: Uri): String? = context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use {
-        if (it.moveToFirst()) it.getString(0) else null
+    override suspend fun replace(item: ImportItem): PreparedImport = withContext(Dispatchers.IO) {
+        val result = BookFileImport.import(context, Uri.parse(item.source), allowOlder = true)
+        PreparedImport(null, item.name, bookId = result.id, notice = "Đã thêm “${result.title}”")
+    }
+
+    private fun name(uri: Uri): String? {
+        // ACTION_VIEW accepts file: as well as content:. A file URI has no document-provider display name.
+        if (uri.scheme == "file") return uri.path?.let { File(it).name }
+        return context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use {
+            if (it.moveToFirst()) it.getString(0) else null
+        } ?: uri.lastPathSegment
     }
 
     private fun stageFolder(tree: Uri): TextImports.Staged {

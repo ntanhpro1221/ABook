@@ -305,6 +305,16 @@
           "side": "web",
           "match": "^(lần cuối dùng máy)$",
           "reason": "computer wording of the recap marker \"Lần cuối chạm máy\" (a phone is touched, a computer is used)"
+        },
+        {
+          "side": "web",
+          "label": "Chưa có chương nghe được{}",
+          "reason": "Same phone sentence in ProductionText.upcoming: web adds an optional desktop-only bấm để làm tiếp callback; native has no local Studio to resume and writes the complete phone sentence without the optional expression."
+        },
+        {
+          "side": "web",
+          "label": "Đang tạm dừng{}",
+          "reason": "Same phone sentence in ProductionText.upcoming: web adds an optional desktop-only bấm để làm tiếp callback; native has no local Studio to resume and writes the complete phone sentence without the optional expression."
         }
       ],
       "missing": [
@@ -374,7 +384,8 @@
         "nowplaying/ReadLook.kt",
         "screens/MorningRecap.kt",
         "nowplaying/PlayerText.kt",
-        "data/NightRecap.kt"
+        "data/NightRecap.kt",
+        "data/Production.kt"
       ]
     },
     {
@@ -402,7 +413,8 @@
         "screens/SettingsScreen.kt",
         "screens/SettingsAdvanced.kt",
         "data/Settings.kt",
-        "data/AndroidSettingsCore.kt"
+        "data/AndroidSettingsCore.kt",
+        "screens/SettingsMaintenance.kt"
       ],
       "allow": [
         {
@@ -419,6 +431,21 @@
           "side": "web",
           "match": "^(studio)$",
           "reason": "computer only: Studio settings group (no Studio on the phone)"
+        },
+        {
+          "side": "web",
+          "label": "Xoá {} bản đọc của cuốn này? Nghe tới đâu máy đọc lại tới đó.",
+          "reason": "Desktop player only: the Android cache is device-wide (ReadAloudPlugin.cacheUsage returns book=0); both Android UIs expose the all-books Dọn bản đọc action instead."
+        },
+        {
+          "side": "web",
+          "label": "Chưa lưu bản đọc nào.",
+          "reason": "Desktop player only: cacheLabel describes the per-book cache, which Android does not expose (ReadAloudPlugin.cacheUsage book=0); device-wide storageLabel is shown in SettingsAdvanced."
+        },
+        {
+          "side": "native",
+          "label": "Accept",
+          "reason": "Not UI: the HTTP Accept header of the existing GitHub release API; scanner sees the Java setter argument as text."
         }
       ],
       "missing": [
@@ -479,7 +506,11 @@
       ],
       "sentences": true,
       "native_also": [
-        "screens/SettingsVoice.kt"
+        "screens/SettingsVoice.kt",
+        "nowplaying/PrepareText.kt",
+        "data/PrepareState.kt",
+        "NativeActivity.kt",
+        "data/SettingsRepo.kt"
       ]
     },
     {
@@ -509,6 +540,16 @@
           "side": "web",
           "match": "^(huỷ tải \\{\\}|đang tải \\{\\}|xoá phần đã tải của \\{\\}|xoá \\{\\} khỏi điện thoại)$",
           "reason": "web only: screen-reader name that carries the book title (the visible button says 'Huỷ tải' / shows the bar; TalkBack reads the row title with it)"
+        },
+        {
+          "side": "web",
+          "label": "Thiết bị ở gần",
+          "reason": "Not UI text: bluetoothNeedsPermission searches the core error string for this fragment; native Share.needsNearby makes the same contains check. The visible permission explanation and action are ported."
+        },
+        {
+          "side": "web",
+          "label": "Đang phát trên {}",
+          "reason": "Web screen-reader section name combining visible state and device name; native ListItem shows the same state and name separately and TalkBack reads both."
         }
       ],
       "missing": [
@@ -670,7 +711,8 @@
         "shared/ui.tsx"
       ],
       "native_also": [
-        "nowplaying/PlayerSheets.kt"
+        "nowplaying/PlayerSheets.kt",
+        "screens/SettingsGroups.kt"
       ]
     },
     {
@@ -693,8 +735,7 @@
         "screens/SettingsVoice.kt",
         "voice/*.kt",
         "!voice/MyMusicScreen.kt",
-        "!voice/AndroidSamplePlayer.kt",
-        "data/SettingsRepo.kt"
+        "!voice/AndroidSamplePlayer.kt"
       ],
       "web_also": [
         "listen/labels.ts",
@@ -861,10 +902,61 @@
           "side": "native",
           "match": "^ghi chú cho người bảo trì$",
           "reason": "maintainer section name of docs/THIRD_PARTY.md used as a filter (never shown); web filters the same heading"
+        },
+        {
+          "side": "web",
+          "label": "Bản tăng tốc sẽ dùng từ lần đọc kế.",
+          "reason": "Windows only: the accelerate callback and AVX2 VieNeu fast runtime exist only in desktopVieneu; Android VieneuModule has Turbo/Nano, no accelerated runtime or switch (VieneuModuleCard.tsx, android/SettingsScreen.tsx)."
+        },
+        {
+          "side": "web",
+          "label": "Bản tăng tốc: máy này không chạy được ({}).",
+          "reason": "Windows only: the accelerate callback and AVX2 VieNeu fast runtime exist only in desktopVieneu; Android VieneuModule has Turbo/Nano, no accelerated runtime or switch (VieneuModuleCard.tsx, android/SettingsScreen.tsx)."
+        },
+        {
+          "side": "web",
+          "label": "Dùng bản tăng tốc",
+          "reason": "Windows only: the accelerate callback and AVX2 VieNeu fast runtime exist only in desktopVieneu; Android VieneuModule has Turbo/Nano, no accelerated runtime or switch (VieneuModuleCard.tsx, android/SettingsScreen.tsx)."
+        },
+        {
+          "side": "web",
+          "label": "Máy này chưa chạy được bản tăng tốc, đang đọc bản thường.",
+          "reason": "Windows only: the accelerate callback and AVX2 VieNeu fast runtime exist only in desktopVieneu; Android VieneuModule has Turbo/Nano, no accelerated runtime or switch (VieneuModuleCard.tsx, android/SettingsScreen.tsx)."
+        },
+        {
+          "side": "web",
+          "label": "Đang đọc bằng bản thường.",
+          "reason": "Windows only: the accelerate callback and AVX2 VieNeu fast runtime exist only in desktopVieneu; Android VieneuModule has Turbo/Nano, no accelerated runtime or switch (VieneuModuleCard.tsx, android/SettingsScreen.tsx)."
+        },
+        {
+          "side": "web",
+          "label": "Đang đọc bằng bản tăng tốc.",
+          "reason": "Windows only: the accelerate callback and AVX2 VieNeu fast runtime exist only in desktopVieneu; Android VieneuModule has Turbo/Nano, no accelerated runtime or switch (VieneuModuleCard.tsx, android/SettingsScreen.tsx)."
+        },
+        {
+          "side": "web",
+          "label": "Chưa đổi được cách đọc",
+          "reason": "Windows only: the accelerate callback and AVX2 VieNeu fast runtime exist only in desktopVieneu; Android VieneuModule has Turbo/Nano, no accelerated runtime or switch (VieneuModuleCard.tsx, android/SettingsScreen.tsx)."
+        },
+        {
+          "side": "web",
+          "label": "Chưa cuốn nào dùng giọng này. Bạn tải lại được bất cứ lúc nào.",
+          "reason": "Studio only: removeAsk(use) counts characters and sentences still awaiting recording; the Android backend has no use callback and removes a read-aloud module with removeAsk(null), already shown in ModuleRemove."
+        },
+        {
+          "side": "web",
+          "label": "Các câu đã thu vẫn nghe được.",
+          "reason": "Studio only: removeAsk(use) counts characters and sentences still awaiting recording; the Android backend has no use callback and removes a read-aloud module with removeAsk(null), already shown in ModuleRemove."
+        },
+        {
+          "side": "web",
+          "label": "Đang tải {}",
+          "reason": "Desktop moduleStatusAnnouncement only (aria-live status); Android module rows show the same download with size and progress and Compose announces the row, without this duplicate live-region fragment."
         }
       ],
       "native_also": [
-        "nowplaying/PlayerSheets.kt"
+        "nowplaying/PlayerSheets.kt",
+        "data/SettingsRepo.kt"
       ]
     },
     {
@@ -1387,6 +1479,46 @@
           "side": "web",
           "match": "^tên\\ riêng$",
           "reason": "lời chỉ đường của hộp Sửa sách web (đổi tên chương / người qua nút “…” ở trang sách); native đổi tên chương ngay trong danh sách Chương của màn Sửa sách nên không cần câu này"
+        },
+        {
+          "side": "web",
+          "label": "Đường dẫn file hay thư mục",
+          "reason": "Desktop only: AddBook path-paste input; Android uses the system document/tree picker and has no desktop filesystem paths to paste."
+        },
+        {
+          "side": "web",
+          "label": "Hoàn tác",
+          "reason": "Desktop only: EditsNoticesBanner calls /api/books/.../edits-notices directly for Studio peer edits; androidSource.toListenBook never supplies editsNotices and LocalStudio has no notices route. Native undo for actual phone edits is in BookPeople/BookNotes (library-book)."
+        },
+        {
+          "side": "web",
+          "label": "Đã hiểu",
+          "reason": "Desktop only: EditsNoticesBanner calls /api/books/.../edits-notices directly for Studio peer edits; androidSource.toListenBook never supplies editsNotices and LocalStudio has no notices route. Native undo for actual phone edits is in BookPeople/BookNotes (library-book)."
+        },
+        {
+          "side": "web",
+          "label": "Chưa làm được",
+          "reason": "Desktop only: EditsNoticesBanner calls /api/books/.../edits-notices directly for Studio peer edits; androidSource.toListenBook never supplies editsNotices and LocalStudio has no notices route. Native undo for actual phone edits is in BookPeople/BookNotes (library-book)."
+        },
+        {
+          "side": "web",
+          "label": "Đổi có hiệu lực ngay trên máy tính {} - audio và chữ của người làm sách giữ nguyên.",
+          "reason": "Desktop remote book only: EditBook remote-mode sends edits immediately through the computer server; Android keeps a local edit layer and synchronizes with EditsSync, so promising immediate remote changes would be false."
+        },
+        {
+          "side": "web",
+          "label": "Google Books",
+          "reason": "Unused web helper failedSourcesNote: no web caller; both real search grids show provider names from CoverSearch results and the same retry sentence. Android CoverSearch uses the same core provider fields, not hardcoded provider captions."
+        },
+        {
+          "side": "web",
+          "label": "Open Library",
+          "reason": "Unused web helper failedSourcesNote: no web caller; both real search grids show provider names from CoverSearch results and the same retry sentence. Android CoverSearch uses the same core provider fields, not hardcoded provider captions."
+        },
+        {
+          "side": "web",
+          "label": "Chưa nối được {}. Thử lại hoặc chọn ảnh trên máy.",
+          "reason": "Unused web helper failedSourcesNote: no web caller; both real search grids show provider names from CoverSearch results and the same retry sentence. Android CoverSearch uses the same core provider fields, not hardcoded provider captions."
         }
       ],
       "deferred": [],
@@ -1394,6 +1526,9 @@
         "listen/ReadingSuggestions.tsx",
         "shared/ui.tsx",
         "listen/WordReadings.tsx"
+      ],
+      "native_also": [
+        "screens/BookSheets.kt"
       ]
     }
   ]
