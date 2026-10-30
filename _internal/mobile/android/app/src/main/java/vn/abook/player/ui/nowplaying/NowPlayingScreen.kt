@@ -19,6 +19,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
@@ -110,7 +111,10 @@ fun NowPlayingScreen(
                 }
                 // Chạm bìa cũng đổi chế độ: bìa lớn -> đọc theo, bìa nhỏ -> về nghe. Bìa là phần tử chung (bay bằng lớp vẽ, xem SharedPlayerParts);
                 // ở chế độ đọc theo nó không nhận chạm (để không nuốt chạm vào chữ), ô 48 dp riêng phía dưới nhận thay.
+                // Khi tấm trượt trên trình phát, bìa giữ thành một tấm ảnh: dải màu, năm vòng và chữ của nó là thứ GPU vẽ lại đắt nhất mỗi khung
+                // dưới tấm (p90 19 ms một khung trên OPPO); ảnh chỉ sống khi tấm còn mở.
                 PlayerCover(state.cover, state.bookTitle, parts.element(NowPlayingPart.Cover, Modifier
+                    .graphicsLayer { if (window.sheetOpen) compositingStrategy = CompositingStrategy.Offscreen }
                     .testTag("player_cover")
                     .then(if (state.readAlongAvailable && !window.reading) Modifier.pressable { setReading(true) } else Modifier)))
                 Column(Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
@@ -153,6 +157,8 @@ fun NowPlayingScreen(
                     }
                     cover.placeWithLayer(coverX, coverY) {
                         val p = mode.value
+                        // Đang chuyển, bìa và tên co giãn như ảnh dựng sẵn (xem WindowFlight.fly): co giãn trực tiếp thì nét chữ của tên dựng lại mỗi khung.
+                        if (p > 0f && p < 1f) compositingStrategy = CompositingStrategy.Offscreen
                         transformOrigin = TransformOrigin(0f, 0f)
                         scaleX = 1f + (thumb.toFloat() / coverSide - 1f) * p; scaleY = scaleX
                         translationX = -coverX * p
@@ -161,6 +167,7 @@ fun NowPlayingScreen(
                     thumbTarget.place(0, 0)
                     titles.placeWithLayer(0, titlesY) {
                         val p = mode.value
+                        if (p > 0f && p < 1f) compositingStrategy = CompositingStrategy.Offscreen
                         transformOrigin = TransformOrigin(0f, 0f)
                         scaleX = 1f + (titleScale - 1f) * p; scaleY = scaleX
                         translationX = (thumb + gap) * p
