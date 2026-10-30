@@ -161,7 +161,7 @@ Item {
             width: parent.width
             height: visible ? heard.height + 4 : 0
             Icon { x: 0; y: 6; name: "ear"; size: 14; color: Theme.text2 }
-            Text {
+            ClockLabel {
                 id: heard
                 x: 18
                 y: 4

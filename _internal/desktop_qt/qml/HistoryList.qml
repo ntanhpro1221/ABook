@@ -157,7 +157,7 @@ Item {
                                             kind: "ghost"
                                             icon: "play"
                                             wrap: true
-                                            text: Logic.resumeLabel(session.modelData)
+                                            text: Logic.resumeLabel(session.modelData)        // tick-ok: chỗ dừng của một phiên đã ghi, không tự đổi
                                             onActivated: root.play(session.modelData.to.chapterId, session.modelData.to.seconds)
                                         }
                                     }

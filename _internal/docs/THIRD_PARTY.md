@@ -21,6 +21,9 @@ phần ấy.
 - Bản máy tính viết bằng Qt Quick (`desktop_qt/`): Qt 6 (LGPLv3, liên kết động, DLL nằm cạnh file chạy); [QWindowKit](https://github.com/stdware/qwindowkit) 1.5.0
   (Apache-2.0, (c) Stdware Collections và wangwenx190; liên kết tĩnh, không thêm DLL) - dải tiêu đề tự vẽ mà vẫn giữ hành vi gốc của Windows
   (kéo, Aero Snap, Snap Layouts); biểu tượng lucide (ISC) vẽ bằng Qt Quick Shapes; font Be Vietnam Pro (SIL OFL 1.1);
+  ba file `desktop_qt/fonts/BeVietnamPro-*.ttf` gộp từ @fontsource (`desktop_qt/tools/merge_fonts.py`) rồi thêm chữ số đều bề rộng qua tính năng `tnum`
+  bằng cùng công cụ của bản Android (`mobile/android/scripts/add_tabular_digits.py`); giữ nguyên chữ mặc định, thông tin tác giả và giấy phép SIL OFL 1.1
+  trong bảng `name` của font; toàn văn giấy phép `desktop_qt/fonts/OFL.txt` gói trong tài nguyên của file chạy cạnh ba font;
   [minimp3](https://github.com/lieff/minimp3) (CC0 1.0, commit afb604c0, `desktop_qt/third_party/minimp3/` kèm LICENSE) - giải mã mp3 cho
   đường âm thanh WASAPI (rẻ hơn Media Foundation ~4 lần).
 - FFmpeg / imageio-ffmpeg (LGPL hoặc GPL tuỳ bản build). Bản app chỉ-nghe KHÔNG mang ffmpeg trong bộ cài: mô-đun "Phân tích nhạc" và việc "Xuất sách nói" (MP3 / M4B)

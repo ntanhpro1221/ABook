@@ -143,7 +143,7 @@ Column {
             readonly property bool calm: !root.module || (root.module.state === "ready" && !root.module.analysing && !root.module.restart && (root.module.stale || 0) === 0)
             open: root.tracks.length > 0 && !calm
             spacing: 6
-            HintText { width: parent.width; text: root.module ? Logic.moduleLabel(root.module) : ""; color: root.module && root.module.state === "error" ? Theme.danger : Theme.text2; visible: text !== "" }
+            HintText { width: parent.width; font.features: {"tnum": 1}; text: root.module ? Logic.moduleLabel(root.module) : ""; color: root.module && root.module.state === "error" ? Theme.danger : Theme.text2; visible: text !== "" }
             MoreInfo {
                 width: parent.width
                 label: "Phân tích nhạc"
@@ -245,7 +245,7 @@ Column {
                             x: 24
                             y: 8
                             width: parent.width - x - ask.width - 12
-                            Text {
+                            ClockLabel {
                                 width: parent.width
                                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                 color: Theme.text

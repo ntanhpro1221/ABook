@@ -81,7 +81,7 @@ Item {
         x: Math.max(0, Math.min(root.width - width, root.width * at - width / 2))
         y: -height - (root.compact ? 2 : 4)
         Behavior on opacity { NumberAnimation { duration: root.active ? Theme.motionFast : Theme.motionFastOut } }
-        Text {
+        ClockLabel {
             id: bubbleText
             anchors.centerIn: parent
             text: Player.clockText(bubble.at * root.total)
