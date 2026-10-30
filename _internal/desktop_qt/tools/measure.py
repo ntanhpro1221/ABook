@@ -119,6 +119,35 @@ def winstate(pid: int) -> dict:
     return out
 
 
+def hide_taskbar_tabs(pid: int, stop: threading.Event) -> None:
+    """Chế độ đo khựng trên desktop thật: gỡ nút taskbar của mọi cửa sổ app (ITaskbarList.DeleteTab) lúc mới hiện và mỗi lần đổi thu nhỏ / mở lại (shell thêm lại nút)."""
+    class GUID(ctypes.Structure):
+        _fields_ = [("a", wt.DWORD), ("b", wt.WORD), ("c", wt.WORD), ("d", ctypes.c_ubyte * 8)]
+    ole = ctypes.OleDLL("ole32")
+    ole.CoInitialize(None)
+    clsid, iid = GUID(), GUID()
+    ole.CLSIDFromString("{56FDF344-FD6D-11d0-958A-006097C9A090}", ctypes.byref(clsid))
+    ole.CLSIDFromString("{56FDF342-FD6D-11d0-958A-006097C9A090}", ctypes.byref(iid))
+    taskbar = ctypes.c_void_p()
+    ole.CoCreateInstance(ctypes.byref(clsid), None, 1, ctypes.byref(iid), ctypes.byref(taskbar))
+    table = ctypes.cast(ctypes.cast(taskbar, ctypes.POINTER(ctypes.c_void_p))[0], ctypes.POINTER(ctypes.c_void_p))
+    method = lambda index, *types: ctypes.WINFUNCTYPE(ctypes.c_long, ctypes.c_void_p, *types)(table[index])
+    method(3)(taskbar)                                   # HrInit
+    delete_tab, release = method(5, wt.HWND), method(2)
+    seen = {}
+    try:
+        while not stop.is_set():
+            for window in cloak_states(pid):
+                state = (window["visible"], bool(u32.IsIconic(window["hwnd"])))
+                if window["visible"] and seen.get(window["hwnd"]) != state:   # chỉ khi mới hiện / đổi thu nhỏ: gọi liên tục làm explorer hỏi cửa sổ app, tốn CPU của app
+                    delete_tab(taskbar, window["hwnd"])
+                seen[window["hwnd"]] = state
+            stop.wait(0.05)
+    finally:
+        release(taskbar)
+        ole.CoUninitialize()
+
+
 def cloak_states(pid: int) -> list[dict]:
     result = []
     @ctypes.WINFUNCTYPE(wt.BOOL, wt.HWND, wt.LPARAM)
@@ -230,6 +259,16 @@ def launch(exe: Path, env_extra: dict, offscreen: bool = True, timeout_seconds: 
     env = dict(os.environ)
     env.update(env_extra)
     env["ABOOK_BENCH"] = str(out)
+    data = None
+    if "LOCALAPPDATA" not in env_extra:
+        # App giữ vị trí cửa sổ, cài đặt, tiến độ chờ gửi dưới LOCALAPPDATA: lượt đo không bao giờ được ghi vào của chủ máy.
+        data = Path(tempfile.mkdtemp(prefix="abookdesk_bench_data_"))
+        for name in ("local", "roaming"):
+            (data / name).mkdir()
+        env["LOCALAPPDATA"], env["APPDATA"] = str(data / "local"), str(data / "roaming")
+    # Ngoại lệ DUY NHẤT (Lead 30-10, chỉ để đo cú khựng khung): desktop ẩn không có khung frameSwapped, nên cửa sổ
+    # chạy trên desktop thật, ở (-10000,-10000) (BenchWindowGuard), không nhận tiêu điểm, nút taskbar bị gỡ.
+    real_desktop = env.get("ABOOK_BENCH_STALL_REAL_DESKTOP") == "1"
     env["QT_FORCE_STDERR_LOGGING"] = "1"
     platform = env.get("QT_QPA_PLATFORM", "windows").split(":")[0]
     candidates = [exe.parent / "platforms"]
@@ -244,7 +283,9 @@ def launch(exe: Path, env_extra: dict, offscreen: bool = True, timeout_seconds: 
     env["QT_FORCE_STDERR_LOGGING"] = "1"
     env["QT_ASSUME_STDERR_HAS_CONSOLE"] = "1"
     desktop = None
-    if env.get("QT_QPA_PLATFORM") == "offscreen" or env.get("ABOOK_BENCH_HIDDEN_DESKTOP") == "1":
+    if real_desktop:
+        desktop_name = "Default"
+    elif env.get("QT_QPA_PLATFORM") == "offscreen" or env.get("ABOOK_BENCH_HIDDEN_DESKTOP") == "1":
         # Lớp chắn thứ hai: cả hộp lỗi trước lúc Qt nạp cũng không thể lên desktop của chủ sách.
         u32.CreateDesktopW.restype = wt.HANDLE
         u32.CreateDesktopW.argtypes = [wt.LPCWSTR, wt.LPCWSTR, ctypes.c_void_p, wt.DWORD, wt.DWORD, ctypes.c_void_p]
@@ -259,7 +300,7 @@ def launch(exe: Path, env_extra: dict, offscreen: bool = True, timeout_seconds: 
         command += ["-qwindowgeometry", "1920x1080-20000-20000"]
     previous_error_mode = k32.SetErrorMode(0x0001 | 0x0002 | 0x8000)
     try:
-        if not desktop:raise RuntimeError("Measurement requires an isolated desktop")
+        if not desktop and not real_desktop:raise RuntimeError("Measurement requires an isolated desktop")
         from windows_process import create_suspended
         p = create_suspended(command, env=env, cwd=str(exe.parent), log=app_log, desktop=desktop_name, show=4)
     finally:
@@ -382,6 +423,8 @@ def launch(exe: Path, env_extra: dict, offscreen: bool = True, timeout_seconds: 
 
     th = threading.Thread(target=sampler, daemon=True)
     th.start()
+    if real_desktop:
+        threading.Thread(target=hide_taskbar_tabs, args=(p.pid, stop), daemon=True).start()
     host_mb = float("nan")
     deadline = time.time() + timeout_seconds
     while not out.exists() and time.time() < deadline and p.poll() is None and not foreground:
@@ -417,6 +460,9 @@ def launch(exe: Path, env_extra: dict, offscreen: bool = True, timeout_seconds: 
     app_log.close()
     if desktop:
         u32.CloseDesktop(desktop)
+    if data:
+        import shutil
+        shutil.rmtree(data, ignore_errors=True)
     for handle in [h, *kids.values()]:
         if handle:
             k32.CloseHandle(handle)
@@ -552,10 +598,17 @@ def player_run(exe: Path, env_extra: dict, offscreen: bool = True) -> dict:
     follow_ram = [m for t, m, _c in samples if follow[0][0] <= t <= follow[0][1]]
     mins = [(t, m, c) for t, m, c in samples if ev["min_begin"] + 1500 <= t <= ev["min_end"]]
     settled = [m for t, m, _c in mins if t >= ev["min_end"] - 3000]       # 3 s cuối: sau khi app trả working set lúc thu nhỏ (2 s)
+    # commit (PrivateUsage) và số luồng 3 s cuối thu nhỏ: trả working set không giảm commit, nhả đồ hoạ thì có
+    commit_settled = [c for t, c, _w, _u in got["memory_samples"] if ev["min_end"] - 3000 <= t <= ev["min_end"]]
+    commit_idle = [c for t, c, _w, _u in got["memory_samples"] if ev["idle_begin"] + 1500 <= t <= ev["idle_end"]]
+    threads_settled = [len(s) for t, s in got["thread_samples"] if ev["min_end"] - 3000 <= t <= ev["min_end"] and s]
     restore = None
     if "restore_begin" in ev and "restore_end" in ev:      # mở lại sau thu nhỏ: khung đầu (ms từ lệnh mở) + khoảng cách khung lớn nhất
         rf = [f for f in frames if ev["restore_begin"] <= f <= ev["restore_end"]]
         restore = (rf[0] - ev["restore_begin"] if rf else float("nan"), max((b - a for a, b in zip(rf, rf[1:])), default=float("nan")))
+        # Khoảng khung lớn nhất sau mở lại chỉ là nhịp vẽ khi không có gì đổi (Qt vẽ theo yêu cầu); chỉ số thật là show -> khung đầu.
+        show = next((t for t, n in evs if n.startswith("bench_show") and ev["restore_begin"] <= t <= ev["restore_end"]), None)
+        restore_show = rf[0] - show if rf and show is not None else float("nan")
     cpu_pct = float("nan")
     rate = lambda pts: (pts[-1][1] - pts[0][1]) / (pts[-1][0] - pts[0][0]) * 100.0 if len(pts) >= 2 and pts[-1][0] > pts[0][0] else float("nan")   # % của MỘT nhân
     host_min = [(t, c) for t, c in got["host_cpu"] if ev["min_begin"] + 1500 <= t <= ev["min_end"]]
@@ -584,8 +637,12 @@ def player_run(exe: Path, env_extra: dict, offscreen: bool = True) -> dict:
         "private_follow_mb": max(follow_ram) if follow_ram else float("nan"),
         "private_min_playing_mb": max(m for _, m, _c in mins) if mins else float("nan"),
         "private_min_settled_mb": statistics.median(settled) if settled else float("nan"),
+        "commit_idle_loaded_mb": statistics.median(commit_idle) if commit_idle else float("nan"),
+        "commit_min_settled_mb": statistics.median(commit_settled) if commit_settled else float("nan"),
+        "threads_min_settled": statistics.median(threads_settled) if threads_settled else float("nan"),
         "restore_first_ms": restore[0] if restore else float("nan"),
         "restore_max_gap_ms": restore[1] if restore else float("nan"),
+        "restore_show_to_first_ms": restore_show if restore else float("nan"),
         "cpu_min_playing_pct_of_core": cpu_pct,
         "cpu_min_steady_pct_of_core": rate(steady),
         "host_cpu_min_steady_pct_of_core": rate(host_steady),
@@ -631,7 +688,7 @@ def player_main(a, exe: Path, fixture: Path, env: dict) -> int:
               f"đóng p99 {r['unmorph_p99']:.1f}) | chữ chạy p50 {r['follow_p50']:.1f} p99 {r['follow_p99']:.1f} max {r['follow_max']:.1f} ms "
               f"({r['follow_frames']} khung, >12ms {r['follow_over_12']}) RAM {r['private_follow_mb']:.1f} | thu nhỏ phát: RAM {r['private_min_playing_mb']:.1f} -> {r['private_min_settled_mb']:.1f} MB "
               f"CPU {r['cpu_min_playing_pct_of_core']:.2f} % (ổn định {r['cpu_min_steady_pct_of_core']:.2f} %; nghỉ hiện {r['cpu_idle_loaded_pct_of_core']:.2f} %) | đếm lúc chữ chạy (nhịp, ảnh chụp, tính, đổi) {r['follow_counters_delta']} trong {r['follow_secs']:.0f} s; "
-              f"thu nhỏ {r['min_counters_delta']} | mở lại: khung đầu {r['restore_first_ms']:.0f} ms, khoảng lớn nhất {r['restore_max_gap_ms']:.1f} ms")
+              f"thu nhỏ {r['min_counters_delta']} | mở lại: khung đầu {r['restore_first_ms']:.0f} ms (từ show {r['restore_show_to_first_ms']:.0f} ms), khoảng lớn nhất {r['restore_max_gap_ms']:.1f} ms")
         time.sleep(1.0)
     res = {"scenario": "player", "hz": refresh_hz(), "runs": good, "dropped": dropped}
     if good:
@@ -641,7 +698,8 @@ def player_main(a, exe: Path, fixture: Path, env: dict) -> int:
             "cold_first_frame_ms_median": med("cold_first_frame_ms"),
             "private_idle_loaded_mb_median": med("private_idle_loaded_mb"), "private_idle_loaded_mb_worst": worst("private_idle_loaded_mb"),
             "private_min_playing_mb_worst": worst("private_min_playing_mb"), "private_min_settled_mb_worst": worst("private_min_settled_mb"),
-            "restore_first_ms_worst": worst("restore_first_ms"), "restore_max_gap_ms_worst": worst("restore_max_gap_ms"),
+            "restore_first_ms_worst": worst("restore_first_ms"), "restore_show_to_first_ms_worst": worst("restore_show_to_first_ms"),
+            "restore_show_to_first_ms_median": med("restore_show_to_first_ms"), "restore_max_gap_ms_worst": worst("restore_max_gap_ms"),
             "cpu_min_playing_pct_worst": worst("cpu_min_playing_pct_of_core"),
             "cpu_min_steady_pct_median": med("cpu_min_steady_pct_of_core"), "cpu_idle_loaded_pct_median": med("cpu_idle_loaded_pct_of_core"),
             "morph_p99_ms_median": med("morph_p99"), "morph_p99_ms_worst": worst("morph_p99"), "unmorph_p99_ms_worst": worst("unmorph_p99"),
@@ -665,6 +723,8 @@ def main() -> int:
                     help="keep RAM samples on a 60 Hz display; frame results remain labelled low_refresh")
     ap.add_argument("--scenario", choices=["library", "player"], default="library",
                     help="library: cuộn lưới; player: thanh phát + Đang nghe (thư viện thử phải có audio_books.json)")
+    ap.add_argument("--stall-real-desktop", action="store_true",
+                    help="CHỈ để đo cú khựng khung (player): chạy trên desktop thật ở (-10000,-10000), không tiêu điểm, không nút taskbar")
     ap.add_argument("--out", default="")
     ap.add_argument("--python", default="D:/Novels/ABook/_internal/runtime/.venv/Scripts/pythonw.exe")
     a = ap.parse_args()
@@ -675,6 +735,10 @@ def main() -> int:
         "ABOOK_HOST_PYTHON": a.python,
         "ABOOK_HOST_APP": str(HERE.parent),
     }
+    if a.stall_real_desktop:
+        if a.scenario != "player":
+            ap.error("--stall-real-desktop chỉ dành cho --scenario player")
+        env["ABOOK_BENCH_STALL_REAL_DESKTOP"] = "1"
     if a.scenario == "player":
         return player_main(a, exe, fixture, env)
     print(f"màn hình {refresh_hz()} Hz; exe {exe}; thư viện thử {fixture}")

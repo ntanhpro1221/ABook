@@ -144,7 +144,7 @@ Column {
             open: root.precise !== null
             spacing: 6
             Text { width: parent.width; text: "Cảm xúc chính xác"; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption; font.weight: Theme.weightMedium }
-            Text {
+            ClockLabel {
                 width: parent.width
                 text: root.precise ? Music.preciseLabel(root.precise) : ""
                 color: root.precise && root.precise.state === "error" ? Theme.danger : Theme.text2

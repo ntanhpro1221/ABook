@@ -9,7 +9,6 @@
 #include "music.h"
 #include "musicmixer.h"
 #include "musicwindowactivity.h"
-#include "graphicsidle.h"
 #include "idleaudit.h"
 #include "mediacontrols.h"
 #include "platform.h"
@@ -253,7 +252,6 @@ int main(int argc, char *argv[]) {
         if (relaxed) libraryRefresh.stop();
         else if (libraryDirty) { libraryDirty = false; backend.refreshLibrary(); }
     });
-    GraphicsIdle graphicsIdle;
     std::unique_ptr<MediaControls> media;
     if (qEnvironmentVariable("ABOOK_SMTC") != QStringLiteral("0"))
         media = std::make_unique<MediaControls>(&player, &speech, nullptr, [&backend](const QString &path) { return backend.get(path); });

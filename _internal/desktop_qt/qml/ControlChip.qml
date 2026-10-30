@@ -8,6 +8,7 @@ Interactive {
     property string icon: ""
     property bool active: false          // đang bật (đang hẹn giờ, đang có nhạc): chữ màu nhấn
     property bool struck: false          // gạch chéo trên biểu tượng (nhạc nền tắt - lucide không có biểu tượng "nhạc tắt")
+    property var reserve: []             // chữ mẫu rộng nhất khi chữ là giá trị tự đổi (đếm ngược hẹn giờ): nút không co giãn mỗi nhịp
     implicitHeight: Theme.buttonHeight
     implicitWidth: Math.max(Theme.buttonHeight, content.implicitWidth + 2 * Theme.s12)
 
@@ -47,9 +48,10 @@ Interactive {
                 Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
             }
         }
-        Text {
+        ClockLabel {
             visible: root.text !== ""
             text: root.text
+            reserve: root.reserve
             color: root.active ? Theme.accentText : Theme.text
             Behavior on color { ColorAnimation { duration: Theme.motionFast } }
             font.pixelSize: Theme.sizeBodySmall

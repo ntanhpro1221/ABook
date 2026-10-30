@@ -381,7 +381,7 @@ Item {
                         height: parent.height
                         radius: parent.radius
                         color: parent.progress.finished ? Theme.success : Theme.accent
-                        Behavior on width { NumberAnimation { duration: Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard } }
+                        // Phần tô theo giá trị tự đổi: vẽ thẳng, không Behavior (luật chủ sách 30-10; điện thoại native cũng vậy)
                     }
                 }
                 Text {

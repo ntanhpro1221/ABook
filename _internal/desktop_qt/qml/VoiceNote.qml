@@ -10,6 +10,7 @@ VoiceBlock {
     property int px: 13
     property int weight: Theme.weightRegular
     property string shown: ""
+    property bool tabular: false         // chữ có giá trị tự đổi (% đang tải): chữ số đều độ rộng
     show: text !== ""
     onTextChanged: if (text !== "") shown = text
     Text {
@@ -19,5 +20,6 @@ VoiceBlock {
         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
         font.pixelSize: root.px
         font.weight: root.weight
+        font.features: root.tabular ? ({"tnum": 1}) : ({})
     }
 }

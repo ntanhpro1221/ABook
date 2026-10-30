@@ -14,6 +14,11 @@ Item {
     signal moreRequested(Item anchor)
 
     readonly property bool inMore: Logic.moreTabs(precast).indexOf(tab) >= 0
+    // Gạch chân chỉ trượt khi người dùng đổi tab; số đếm tự tăng (việc cần duyệt lúc đang phân tích) làm tab rộng ra thì gạch chân theo
+    // tại chỗ (luật chủ sách 30-10: giá trị tự đổi không co giãn)
+    property bool sliding: false
+    onTabChanged: { sliding = true; slide.restart() }
+    Timer { id: slide; interval: Theme.motionMedium; onTriggered: root.sliding = false }
     readonly property alias moreButton: moreTab
     implicitHeight: 44
     height: 44
@@ -80,7 +85,7 @@ Item {
         y: parent.height - 2
         height: 2
         color: Theme.accent
-        Behavior on x { enabled: !Theme.reduceMotion; NumberAnimation { duration: Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard } }
-        Behavior on width { enabled: !Theme.reduceMotion; NumberAnimation { duration: Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard } }
+        Behavior on x { enabled: root.sliding && !Theme.reduceMotion; NumberAnimation { duration: Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard } }
+        Behavior on width { enabled: root.sliding && !Theme.reduceMotion; NumberAnimation { duration: Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard } }
     }
 }
