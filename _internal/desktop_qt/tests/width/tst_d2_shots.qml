@@ -37,7 +37,7 @@ Item {
             target.Window.window.update()
             VisualReady.render(this, host.Window.window, target, qtVisualReady)
             qtGlyphAudit.scan()
-            const img = grabImage(target)
+            const img = grabImage(VisualReady.grabTarget(host.Window.window, target))
             const path = Qt.resolvedUrl("../../build/d2shots/" + name + "_" + (Theme.dark ? "dark" : "light") + ".png").toString()
                 .replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, "")
             img.save(path)
