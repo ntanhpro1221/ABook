@@ -52,7 +52,7 @@ fun StudioSubRoute(
         }
         StudioSubKind.Activity -> {
             val state = remember(hub, computer, book) { StudioProjectState(hub.session(computer), book, StudioTab.Chapters) }
-            StudioActivityScreen(state, onBack, active)
+            StudioLogScreen(state, onBack, active)
         }
         StudioSubKind.Cover -> {
             val session = hub.session(computer)
