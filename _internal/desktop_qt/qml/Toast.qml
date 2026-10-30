@@ -9,7 +9,9 @@ Item {
     id: root
     objectName: "toast"
     readonly property int defaultDuration: 4000
-    readonly property bool shown: Api.notice !== ""
+    property string slot: ""
+    readonly property string noticeText: slot === "edited-elsewhere" ? (Api.elsewhereNotice ? Api.elsewhereNotice.text : "") : Api.notice
+    readonly property bool shown: noticeText !== ""
     property string title: ""
     property string description: ""
     property var action: null
@@ -21,16 +23,18 @@ Item {
     enabled: shown
 
     function take() {
-        const lines = Api.notice.split("\n")
+        const lines = noticeText.split("\n")
         title = lines[0]
         description = lines.slice(1).join("\n")
-        action = Api.noticeAction
-        duration = Api.noticeDuration > 0 ? Api.noticeDuration : defaultDuration
+        const message = slot === "edited-elsewhere" ? Api.elsewhereNotice : {action: Api.noticeAction, duration: Api.noticeDuration}
+        action = message.action
+        duration = message.duration > 0 ? message.duration : defaultDuration
         clock.restart()
     }
     Connections {
         target: Api
-        function onNoticeChanged() { if (Api.notice !== "") root.take(); else clock.stop() }
+        function onNoticeChanged() { if (!root.slot) { if (root.shown) root.take(); else clock.stop() } }
+        function onElsewhereNoticeChanged() { if (root.slot === "edited-elsewhere") { if (root.shown) root.take(); else clock.stop() } }
     }
     Component.onCompleted: if (shown) take()
 
@@ -45,7 +49,7 @@ Item {
         id: clock
         interval: root.duration
         running: false
-        onTriggered: if (!hover.hovered) Api.notice = ""; else restart()
+        onTriggered: if (!hover.hovered) Api.dismissNotice(root.slot); else restart()
     }
 
     Item {
@@ -111,7 +115,7 @@ Item {
                 implicitHeight: Math.max(24, actionLabel.implicitHeight + 6)
                 Accessible.role: Accessible.Button
                 Accessible.name: actionLabel.text
-                onClicked: Api.runNoticeAction()
+                onClicked: Api.runNoticeAction(root.slot)
                 Rectangle {
                     anchors.fill: parent
                     radius: Theme.radiusControl
@@ -144,7 +148,7 @@ Item {
             height: 20
             Accessible.role: Accessible.Button
             Accessible.name: "Đóng thông báo"
-            onClicked: Api.notice = ""
+            onClicked: Api.dismissNotice(root.slot)
             Rectangle {
                 anchors.fill: parent
                 radius: width / 2
