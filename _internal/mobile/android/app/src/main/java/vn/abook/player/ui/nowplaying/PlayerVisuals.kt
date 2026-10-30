@@ -50,6 +50,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.Dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import vn.abook.player.ui.components.ClockLabel
 import vn.abook.player.ui.components.pressable
 import vn.abook.player.ui.data.CoverLoader
 import vn.abook.player.ui.data.CoverRef
@@ -200,16 +201,6 @@ fun RollingLabel(text: String, modifier: Modifier = Modifier, style: TextStyle =
             incoming.place(0, ((1f - p) * incoming.height).toInt())
         }
     }
-}
-
-/**
- * Số đang chạy (giờ đã nghe, còn lại, đồng hồ hẹn giờ): đổi tại chỗ, không bao giờ trượt. Chủ sách 30-10: "ai lại làm thời gian trôi
- * kiểu đó?" - [RollingLabel] chỉ cho nhãn đổi theo việc người dùng làm (tên chương, tốc độ), không cho thứ đổi mỗi giây.
- * Chữ số đều bề rộng (tnum) nên dòng không rung khi số đổi.
- */
-@Composable
-fun ClockLabel(text: String, modifier: Modifier = Modifier, style: TextStyle = Abook.type.body) {
-    BasicText(text, modifier, style = style.merge(TextStyle(fontFeatureSettings = "tnum")))
 }
 
 /** Two four-point contours interpolate triangle -> pause bars. Path objects are reused in draw. */

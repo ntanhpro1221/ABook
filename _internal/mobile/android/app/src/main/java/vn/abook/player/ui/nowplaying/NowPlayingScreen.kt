@@ -1,5 +1,6 @@
 package vn.abook.player.ui.nowplaying
 
+import vn.abook.player.ui.components.ClockLabel
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas

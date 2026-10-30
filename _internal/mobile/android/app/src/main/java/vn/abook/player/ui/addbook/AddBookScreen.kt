@@ -145,7 +145,7 @@ fun AddBookScreen(
             LazyColumn(Modifier.fillMaxSize().fadeEdges(list).testTag("import_queue"), state = list, contentPadding = PaddingValues(bottom = Dim.s16)) {
                 item("summary", "summary") {
                     val summary = ImportLogic.summary(state.items)
-                    Reveal(summary.isNotEmpty()) { Caption(summary, Modifier.testTag("import_summary")) }
+                    Reveal(summary.isNotEmpty()) { Caption(summary, Modifier.testTag("import_summary"), ticking = true) }
                     Reveal(state.notice.isNotEmpty()) { Caption(state.notice) }
                 }
                 items(state.items, key = { it.id }, contentType = { "import" }) { item ->

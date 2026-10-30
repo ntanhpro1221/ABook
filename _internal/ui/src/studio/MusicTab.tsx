@@ -1,3 +1,4 @@
+import { TickingValue } from "@/shared/TickingValue";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { SectionHeading } from "@/shared/SectionHeading";
 import { useBackLayer } from "@/shared/backStack";
@@ -366,7 +367,7 @@ export function MyMusic({ bookId, previewing, onPreview }: { bookId: string; pre
       )}
       {canImport && tracks.length > 0 && (
         <Button size="sm" variant="ghost" icon={Upload} loading={Boolean(progress)} onClick={() => void importFiles()} className="-ml-3">
-          {progress ? `Đang thêm ${progress.done}/${progress.total}` : "Thêm nhạc của bạn"}
+          <TickingValue>{progress ? `Đang thêm ${progress.done}/${progress.total}` : "Thêm nhạc của bạn"}</TickingValue>
         </Button>
       )}
       <MotionPresence open={canImport && !!tracks.length}><MusicModuleNotice view={data} queryKey={key} /></MotionPresence>
@@ -450,7 +451,7 @@ function MoodsPanel({ bookId, moods, onCompute }: { bookId: string; moods?: { ru
           {moods?.error && <span className="text-sm text-warning">{moods.error}</span>}
         </div>
       ) : data.downloading ? (
-        <p className="text-sm">Đang tải phần đọc không khí{percent !== null ? ` - ${percent}%` : ""}</p>
+        <p data-motion-live className="text-sm">Đang tải phần đọc không khí{percent !== null ? ` - ${percent}%` : ""}</p>
       ) : data.downloadable && !info?.remote ? (
         <div className="flex flex-wrap items-center gap-3">
           <Button size="sm" variant="ghost" icon={Download} loading={download.isPending} onClick={() => download.mutate()}>
