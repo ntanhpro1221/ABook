@@ -108,6 +108,13 @@ copy /y "%HERE%third_party\sonic\LICENSE" "%HERE%dist\licenses\Sonic-LICENSE.txt
 if errorlevel 1 exit /b 1
 copy /y "%HERE%third_party\sonic\UPSTREAM" "%HERE%dist\licenses\Sonic-UPSTREAM.txt" >nul
 if errorlevel 1 exit /b 1
+rem Start the packaged app once on a never-switched desktop: QML tests use stub ABook singletons and cannot
+rem see a Main.qml that fails to load in the real module (0.4.x "WindowChrome is not a type").
+"%ABOOK_PYTHON%" -X utf8 "%HERE%tools\smoke_dist.py" "%HERE%dist\ABookDesk.exe"
+if errorlevel 1 (
+  echo ERROR: packaged app did not start cleanly: %HERE%dist\ABookDesk.exe
+  exit /b 1
+)
 echo OK: %HERE%dist\ABookDesk.exe
 exit /b 0
 
