@@ -1,6 +1,8 @@
 import { afterEach, expect, it, vi } from "vitest";
 import { MotionRegion, contentSignature } from "./MotionRegion";
 import { captureMotionSnapshot } from "./motion";
+import { TickingValue } from "./TickingValue";
+import { LiveText } from "./ui";
 
 vi.mock("./motion", async (original) => ({
   ...await original<typeof import("./motion")>(),
@@ -9,6 +11,24 @@ vi.mock("./motion", async (original) => ({
   prefersReducedMotion: () => false,
 }));
 afterEach(() => vi.clearAllMocks());
+
+it("live units and countdown words do not trigger snapshots, even after component minification", () => {
+  const originalName = TickingValue.name;
+  Object.defineProperty(TickingValue, "name", { value: "a", configurable: true });
+  try {
+    const before = { children: <TickingValue>1 giờ</TickingValue> };
+    const after = { children: <TickingValue>59 phút</TickingValue> };
+    expect(contentSignature(before.children)).toBe(contentSignature(after.children));
+    const region = new MotionRegion(after);
+    region.box.current = { ownerDocument: { activeElement: null } } as unknown as HTMLElement;
+    expect(region.getSnapshotBeforeUpdate(before)).toBeNull();
+    expect(captureMotionSnapshot).not.toHaveBeenCalled();
+    expect(contentSignature(<LiveText shown="Đã tải 1 MB" spoken="một phần" />))
+      .toBe(contentSignature(<LiveText shown="Đã tải 2 GB" spoken="nửa phần" />));
+  } finally {
+    Object.defineProperty(TickingValue, "name", { value: originalName, configurable: true });
+  }
+});
 
 it("đồng hồ, phần trăm, giá trị nhập và callback mới không đổi dấu nội dung", () => {
   const before = <div><span>01:02 · 12%</span><input value="a" onChange={() => {}} /></div>;

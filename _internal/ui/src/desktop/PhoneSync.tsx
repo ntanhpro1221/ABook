@@ -166,7 +166,7 @@ function PairingContent({ sync, onPair, onCancel, busy }: { sync: SyncView; onPa
               <span className="inline-block w-3" />
               {code.slice(3)}
             </div>
-            <div className="mt-2 text-xs text-fg-2 tabular-nums">
+            <div data-motion-live className="mt-2 text-xs text-fg-2 tabular">
               Hết hạn sau {minutes}:{seconds}
             </div>
           </div>
@@ -363,7 +363,7 @@ export function PhoneSync() {
                     <Smartphone className="glyph shrink-0 text-fg-3" />
                     <div className="min-w-0 flex-1 basis-44">
                       <div className="truncate text-sm font-medium">{device.name}</div>
-                      <div className="text-xs text-fg-2">
+                      <div data-motion-live className="text-xs text-fg-2">
                         Kết nối lần cuối {formatRelative(device.lastSeen)} · ghép ngày {formatDate(device.pairedAt)}
                       </div>
                     </div>

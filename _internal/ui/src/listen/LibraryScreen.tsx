@@ -1,3 +1,4 @@
+import { TickingValue } from "@/shared/TickingValue";
 import { MotionPresence } from "@/shared/MotionPresence";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { ScreenHeader } from "@/shared/ScreenHeader";
@@ -231,12 +232,12 @@ const BookTile = memo(function BookTile({ book, badge, twin, current, playingHer
         {/* Cuốn ở máy khác: dấu máy tính đầu dòng trạng thái, không đè lên bìa - nhãn góc trên từng che tên sách của bìa vẽ (audit140 V8). */}
         <div className="mt-1 flex items-center gap-1 text-xs text-fg-2">
           {book.remote && <Laptop role="img" aria-label={typeof book.remote === "object" && book.remote.downloaded ? `${remotePlace(book)}, đã tải về máy này` : remotePlace(book)} className="size-3 shrink-0" />}
-          <span className="min-w-0 truncate">{progressText(book, speaks)}</span>
+          <TickingValue className="min-w-0 truncate">{progressText(book, speaks)}</TickingValue>
         </div>
         {/* Hai cuốn cùng tên: nhãn "Dự án" (làm trên máy này) / "Đã nhập" (mở từ file) và ngày vào thư viện để biết cuốn nào là cuốn nào
             (tác giả, nếu có, đã nằm ở dòng trên). */}
         {twin && (twinKind(book) || book.addedAt) ? (
-          <div className="mt-0.5 text-xs text-fg-3">
+          <div data-motion-live className="mt-0.5 text-xs text-fg-3">
             {[twinKind(book), book.addedAt ? `Thêm ${formatWhen(book.addedAt)}` : ""].filter(Boolean).join(" · ")}
           </div>
         ) : null}
@@ -272,9 +273,9 @@ function ContinueCard({ book }: { book: ListenBook }) {
         {/* Thẻ giữ khoá theo cuốn (LibraryScreen): đổi phát / tạm dừng, chương, "nghe lần cuối" ở đây tự mờ chéo; giờ chạy không tính. */}
         <MotionRegion as="p" className="tabular mt-1 break-words text-sm text-fg-2">
           {where}
-          {current ? (playingHere ? " · đang phát" : " · tạm dừng") : last ? ` · nghe lần cuối ${formatWhen(last.at)}` : ""}
+          {current ? (playingHere ? " · đang phát" : " · tạm dừng") : last ? <TickingValue>{` · nghe lần cuối ${formatWhen(last.at)}`}</TickingValue> : ""}
         </MotionRegion>
-        <MotionRegion as="p" className="mt-0.5 text-sm text-fg-2">{bookStatusText(book, speaks)}</MotionRegion>
+        <p className="mt-0.5 text-sm text-fg-2"><TickingValue>{bookStatusText(book, speaks)}</TickingValue></p>
         <Progress value={book.progress.fraction} size="xs" className="mt-3" label="Đã nghe" />
       </div>
       <MotionRegion className="shrink-0" motionKey={book.progress.caughtUp && !current}>

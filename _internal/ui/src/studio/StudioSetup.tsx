@@ -1,3 +1,4 @@
+import { TickingValue } from "@/shared/TickingValue";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { SectionHeading } from "@/shared/SectionHeading";
 import { MotionPresence } from "@/shared/MotionPresence";
@@ -278,9 +279,9 @@ export function StudioSetupCard({ className }: { className?: string }) {
         <div className="mt-4">
           <Progress value={progress ?? 0} running={progress === null} size="sm" label={`Tiến độ: ${current.label}`} />
           <div className="mt-1.5 flex justify-between gap-4 text-xs text-fg-2">
-            <span className="truncate">{status.detail || current.label}</span>
+            <TickingValue className="truncate">{status.detail || current.label}</TickingValue>
             {status.progress && status.progress.total > 0 && (
-              <span className="tabular shrink-0">
+              <span data-motion-live className="tabular shrink-0">
                 {formatSize(status.progress.done)} / {formatSize(status.progress.total)}
               </span>
             )}

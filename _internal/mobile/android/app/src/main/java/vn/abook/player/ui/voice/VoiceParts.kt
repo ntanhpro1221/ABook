@@ -55,6 +55,7 @@ fun ModuleChoiceRow(kind: ModuleKind, row: ModuleRow, progress: () -> StateFlow<
     }
     ListItem(
         row.title, Modifier, onOpen, tag, hint = row.hint, hintColor = if (row.problem) colors.danger else colors.text2,
+        tickingHint = true,
         trailing = trailing, chevron = action == ModuleAction.Manage,
         below = if (row.progress) ({ DownloadBar(progress()) }) else null,
     )

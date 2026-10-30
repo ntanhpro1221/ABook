@@ -61,7 +61,7 @@ function signatureOf(value: object, depth: number): string {
   if (isValidElement<Record<string, unknown>>(value)) {
     if (value.type === MotionRegion) return `region:${value.key ?? ""}`;
     const type = typeof value.type === "string" ? value.type : (value.type as { displayName?: string; name?: string }).displayName ?? (value.type as { name?: string }).name ?? String(value.type);
-    if (["input", "textarea", "select"].includes(type) || value.props["data-motion-live"] !== undefined || ["progressbar", "timer"].includes(String(value.props.role))) return type;
+    if ((value.type as { motionLive?: boolean }).motionLive || ["input", "textarea", "select"].includes(type) || value.props["data-motion-live"] !== undefined || ["progressbar", "timer"].includes(String(value.props.role))) return type;
     return `${type}:${value.key ?? ""}:${contentSignature(value.props, depth + 1)}`;
   }
   return Object.entries(value).filter(([key]) => !["style", "ref", "elementRef", "value", "defaultValue"].includes(key) && !key.startsWith("on")).map(([key, item]) => `${key}:${contentSignature(item, depth + 1)}`).join(";");
