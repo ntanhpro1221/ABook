@@ -191,6 +191,21 @@ private slots:
         QCOMPARE(rig.bed->nextSyncSeconds(10, 1), 2.0);
     }
 
+    void syncJustBeforeStandbyMomentStillPreparesLoop() {
+        // §48: lần sync rơi 0,5 ms trước giờ tạo phần tử chờ sẵn. nextSyncSeconds coi khoảng ấy là đã tới, nên phần tử chờ sẵn
+        // phải có ngay - không thì lần sync kế là lúc tới hạn, bản lặp mở nguội.
+        Rig rig(100);
+        auto cue = plain(0, 500, QStringLiteral("one"));
+        rig.bed->setCues({cue});
+        rig.bed->sync(10, true);
+        rig.settle();
+        rig.made.first()->pos = 100 - LOOP_CROSSFADE_SECONDS - LOOP_STANDBY_SECONDS - 0.0005;
+        rig.bed->sync(10.5, true);
+        rig.settle();
+        QCOMPARE(rig.made.size(), 2);
+        QVERIFY(rig.bed->nextSyncSeconds(10.5, 1) > 1);
+    }
+
     void mixConstantsComeFromSharedJson() {
         const QJsonObject mix = readJson(QStringLiteral(MUSIC_MIX_JSON));
         QCOMPARE(FADE_SECONDS, mix.value(QLatin1String("fadeSeconds")).toDouble());
