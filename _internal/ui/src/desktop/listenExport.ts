@@ -12,8 +12,8 @@ export type AudiobookFormat = "mp3" | "m4b";
 export const AUDIOBOOK_COPY: ExportCopy = {
   busy: "Đang làm sách nói…",
   done: "Đã xuất sách nói",
-  failed: "Không xuất được sách nói",
-  stopped: "Đã dừng xuất sách nói",
+  failed: "Chưa xuất được sách nói",
+  stopped: "Đã dừng xuất",
   stoppedNote: "Phần đã làm được giữ - xuất lại để làm tiếp từ đó.",
 };
 

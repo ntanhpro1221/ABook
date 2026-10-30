@@ -547,7 +547,7 @@ class DevicesScreenTest {
         source.events.tryEmit(DownloadEvent("e", 0.2f, error = "Mất mạng giữa chừng."))
         rule.waitForIdle()
         rule.onNodeWithTag("pair_list").performScrollToNode(hasTestTag("book_e"))
-        rule.onNodeWithText("Tải bị gián đoạn. Mất mạng giữa chừng.").assertIsDisplayed()
+        rule.onNodeWithText("Chưa tải xong về máy. Mất mạng giữa chừng.").assertIsDisplayed()
         assertFirstLine("book_e", trailing = true)
         tap("download_e")
         assertEquals(listOf("e"), source.downloads)

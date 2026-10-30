@@ -281,7 +281,7 @@ object StudioNewText {
     const val MODEL = "Bộ phân tích truyện"
     const val MODEL_DEFAULT = "Mặc định của ABook"
     const val MODEL_HINT = "Chỉ chọn bản khác khi muốn thử trên cuốn này."
-    const val WAIT = "Chờ tôi duyệt"
+    const val WAIT = "Duyệt trước khi thu"
     const val WAIT_HINT = "Phân tích xong thì dừng để bạn duyệt trước khi thu."
     const val START_NOW = "Bắt đầu ngay"
     const val START_NOW_HINT = "Tắt thì sách chờ ở trang dự án."

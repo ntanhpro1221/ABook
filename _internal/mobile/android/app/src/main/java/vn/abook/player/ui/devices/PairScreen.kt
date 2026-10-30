@@ -80,7 +80,7 @@ fun PairScreen(devices: DevicesState, sheets: SheetHost, onBack: () -> Unit) {
         "Nối máy tính", onBack, "pair_screen",
         footer = if (ui.showForm) ({
             PrimaryButton(
-                if (ui.paired) "Ghép" else "Kết nối", devices::connect,
+                if (ui.paired) "Ghép thiết bị" else "Kết nối", devices::connect,
                 Modifier.fillMaxWidth().testTag("pair_connect"), enabled = form.ready && ui.attempt !is Attempt.Working,
             )
         }) else null,
@@ -203,8 +203,8 @@ private fun LazyListScope.wifiRows(ui: PairUi, devices: DevicesState) {
     val list = ui.wifiChoices
     when {
         list.isNotEmpty() -> { item("wifi_title", "title") { SectionTitle("Máy tính tìm thấy") }; foundRows(list, ui, devices) }
-        ui.scanning -> item("scanning", "status") { ListItem("Đang tìm máy", Modifier.testTag("pair_scanning"), below = { CreepProgress() }) }
-        else -> item("none", "status") { NoneRow("Chưa thấy máy nào", devices::scan) }
+        ui.scanning -> item("scanning", "status") { ListItem("Đang tìm thiết bị", Modifier.testTag("pair_scanning"), below = { CreepProgress() }) }
+        else -> item("none", "status") { NoneRow("Chưa thấy thiết bị", devices::scan) }
     }
 }
 
@@ -218,7 +218,7 @@ private fun LazyListScope.bluetoothRows(ui: PairUi, devices: DevicesState) {
                 TextAction("Để sau", devices::deferBluetooth, "bluetooth_later")
             }
         }
-        Bluetooth.Listing -> item("scanning", "status") { ListItem("Đang tìm máy", Modifier.testTag("pair_scanning"), below = { CreepProgress() }) }
+        Bluetooth.Listing -> item("scanning", "status") { ListItem("Đang tìm thiết bị", Modifier.testTag("pair_scanning"), below = { CreepProgress() }) }
         Bluetooth.Denied -> item("denied", "status") {
             ListItem(
                 "Cần quyền Thiết bị ở gần", Modifier.testTag("pair_denied"), titleColor = Abook.colors.danger,

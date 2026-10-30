@@ -10,7 +10,7 @@ import kotlinx.coroutines.launch
 
 /**
  * "Xoá khỏi điện thoại" có "Hoàn tác": cuốn dời vào chỗ chờ NGAY ([hold] = `Store.holdBook`, bền qua tắt app -
- * tiến trình chết giữa chừng thì lần mở sau dọn hẳn), thanh nói "Đã xoá “X” khỏi điện thoại" + "Hoàn tác" trong [WINDOW_MS]; nhiều cuốn thì "Đã bỏ N cuốn" và
+ * tiến trình chết giữa chừng thì lần mở sau dọn hẳn), thanh nói "Đã bỏ “X” khỏi thư viện" + "Hoàn tác" trong [WINDOW_MS]; nhiều cuốn thì "Đã bỏ N cuốn" và
  * Hoàn tác trả lần lượt cũ trước. Hoàn tác thành thì "Đã khôi phục “X”", không thành (quá hạn, chỗ cũ bị chiếm) thì "Chưa hoàn tác được". Mỗi cuốn một hạn riêng.
  * Sống ở Application: rời màn hay dựng lại Activity không rút ngắn hạn.
  */
@@ -152,8 +152,8 @@ class UndoDelete(
         fun removedText(count: Int, title: String, partial: Boolean): String = when {
             count > 1 -> "Đã bỏ $count cuốn"
             partial -> "Đã xoá phần đã tải của “$title”"
-            title.isEmpty() -> "Đã xoá khỏi điện thoại"
-            else -> "Đã xoá “$title” khỏi điện thoại"
+            title.isEmpty() -> "Đã bỏ khỏi thư viện"
+            else -> "Đã bỏ “$title” khỏi thư viện"
         }
     }
 }

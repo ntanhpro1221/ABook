@@ -77,7 +77,7 @@ class ImportQueue(private val source: ImportSource, private val scope: Coroutine
                     preview.existingId to true
                 } else source.add(staged, preview, current.choices)
                 changed()
-                finish(id, if (existing) ImportStage.Existing else ImportStage.Added, bookId)
+                finish(id, if (existing) ImportStage.Existing else ImportStage.Added, bookId, current.choices.title.ifBlank { preview.title })
             } catch (error: Exception) {
                 if (error is CancellationException) throw error
                 if (flow.value.addingRest) {
@@ -168,12 +168,12 @@ class ImportQueue(private val source: ImportSource, private val scope: Coroutine
         return true
     }
 
-    private fun finish(id: Long, stage: ImportStage, bookId: String? = null) {
+    private fun finish(id: Long, stage: ImportStage, bookId: String? = null, title: String = "") {
         progress.getOrPut(id) { MutableStateFlow(0f) }.value = 1f
         ref = null
         flow.value = flow.value.copy(items = ImportLogic.settle(flow.value.items, id, stage, bookId = bookId),
             currentId = null, preview = null, packageReview = null, choices = ImportChoices(), busy = false, problem = "",
-            notice = if (stage == ImportStage.Added) "Đã thêm sách vào Thư viện" else flow.value.notice)
+            notice = if (stage == ImportStage.Added) (if (title.isBlank()) "Đã thêm" else "Đã thêm “$title”") else flow.value.notice)
     }
 
     private fun advance() {

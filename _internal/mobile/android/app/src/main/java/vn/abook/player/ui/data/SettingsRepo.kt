@@ -128,7 +128,7 @@ class SettingsRepo(private val core: SettingsCore, private val scope: CoroutineS
             val release = withContext(io) { core.release() }
             update.value = release?.takeIf { AppRelease.newer(it.version, version) }
             update.value?.let { if (withContext(io) { core.tellRelease(it.version) }) {
-                notice.value = "Có ABook ${it.version} cho điện thoại"
+                notice.value = "Có ABook ${it.version}"
                 notes.say(notice.value, "Tải") { openRelease(it.apk ?: it.page) }
             } }
         }

@@ -455,7 +455,7 @@ class Mp3ExportWorker(context: Context, params: WorkerParameters) : Worker(conte
                 error is Mp3Export.Refused -> error.message.orEmpty()
                 else -> "Lỗi khi ghi: ${error.message ?: error.javaClass.simpleName}"
             }
-            Mp3Exports.finished(context, bookId, "Không xuất được", "$title · $message")
+            Mp3Exports.finished(context, bookId, "Chưa xuất được MP3", "$title · $message")
             Mp3Exports.emit(event().put("error", message))
             return Result.failure()
         } finally {

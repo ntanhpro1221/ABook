@@ -241,7 +241,7 @@ class M4bExportWorker(context: Context, params: WorkerParameters) : Worker(conte
             M4bExports.discard(context, file)
             val message = if (isStopped && Mp3Exports.timedOut(this)) Mp3Exports.TIMEOUT_NOTE
                 else M4bExports.describe(error, lowSpace = context.cacheDir.usableSpace < (32L shl 20))
-            M4bExports.finished(context, bookId, "Không xuất được M4B", "$title · $message")
+            M4bExports.finished(context, bookId, "Chưa xuất được M4B", "$title · $message")
             M4bExports.emit(event().put("error", message))
             return Result.failure()
         } finally {

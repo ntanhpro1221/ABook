@@ -176,7 +176,7 @@ sealed interface Attempt {
 
 /** Cách nối: tự tìm trong Wi-Fi, chọn máy đã ghép Bluetooth, hay gõ địa chỉ. */
 enum class PairMethod(override val label: String) : Choice {
-    Wifi("Tự tìm máy tính"), Bluetooth("Dùng Bluetooth"), Address("Nhập địa chỉ");
+    Wifi("Tìm máy trong mạng"), Bluetooth("Dùng Bluetooth"), Address("Nhập địa chỉ");
 
     override val key: String get() = name.lowercase()
 }

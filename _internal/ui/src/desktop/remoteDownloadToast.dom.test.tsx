@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-// Dòng tình trạng dưới tên sách và mục "Dừng tải về máy" trong menu đang mở cùng theo một lần tải: tải xong thì báo MỘT lần, không hai thông báo giống hệt.
+// Dòng tình trạng dưới tên sách và mục "Huỷ tải" trong menu đang mở cùng theo một lần tải: tải xong thì báo MỘT lần, không hai thông báo giống hệt.
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
