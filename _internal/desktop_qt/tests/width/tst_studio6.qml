@@ -104,8 +104,8 @@ Item {
         function shot(name, item) {
             const target = item || host
             tryVerify(function() { return all2(target, n => n.settled === false && n.reveal !== undefined).length === 0 }, 3000)
-            // Chờ khung hình đứng yên (chuyển tiếp đổi giao diện sáng / tối còn đang mờ dần thì ảnh lẫn bóng của khung trước)
-            tryVerify(function() { waitForRendering(target); const a = grabImage(target); waitForRendering(target); return a.equals(grabImage(target)) }, 3000)
+            // Chờ mọi chuyển tiếp xong như các test khác (so hai ảnh liền nhau không bao giờ bằng khi con trỏ ô nhập đang nhấp nháy)
+            VisualReady.render(this, host.Window.window, target, qtVisualReady)
             const path = Qt.resolvedUrl("../../build/d2shots/s6_" + name + "_" + (Theme.dark ? "dark" : "light") + ".png").toString()
                 .replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, "")
             grabImage(VisualReady.grabTarget(host.Window.window, target)).save(path)
