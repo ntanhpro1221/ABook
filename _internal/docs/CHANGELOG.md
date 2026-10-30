@@ -12,6 +12,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - App máy tính: nhạc nền tốn ít CPU hơn khi thu nhỏ.
 - App máy tính: giọng đọc giữ đúng nhịp khi nghe trong khay và nhạc nền lặp lại.
 - App máy tính hiện trong khung điều khiển nhạc của Windows (tên chương, bìa, phát/dừng, chương trước/sau, tua).
+- App máy tính: đóng app không còn để lại tiến trình chạy ngầm sau khi đã phát nhạc nền WAV, FLAC, M4A hay Ogg.
+- App máy tính: nhạc nền nối vào đúng chỗ của lời đọc khi bắt đầu và mỗi lần lặp lại, không còn trễ vài chục mili giây.
+- App máy tính: đồng hồ và các con số đếm đổi tại chỗ, chữ bên cạnh không còn xô lệch.
 
 ### Điện thoại
 
