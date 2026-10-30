@@ -1,5 +1,7 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.ui.components.fadeEdges
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -169,7 +171,8 @@ private fun GenreSheet(music: StudioMusicState, view: MusicView, dismiss: () -> 
     Column(Modifier.fillMaxWidth().testTag("studio_music_genre_sheet")) {
         BasicText(StudioMusicText.CHOSEN_TITLE, style = Abook.type.sectionTitle)
         RowHint(StudioMusicText.GENRE_HINT, Modifier.padding(top = Dim.s4, bottom = Dim.s8))
-        LazyColumn(Modifier.heightIn(max = 420.dp)) {
+        val list1 = rememberLazyListState()
+        LazyColumn(Modifier.heightIn(max = 420.dp).fadeEdges(list1), state = list1) {
             item("genre_none") { PickRow(StudioMusicText.GENRE_NONE, null, view.genre == null, { dismiss(); music.change(MusicLogic.genre(null)) }, "studio_genre_none") }
             items(view.genres, key = { "genre_${it.first}" }) { (code, name) ->
                 PickRow(name, null, view.genre == code, { dismiss(); music.change(MusicLogic.genre(code)) }, "studio_genre_$code")
@@ -276,17 +279,20 @@ private fun AlternativesSheet(music: StudioMusicState, scene: MusicScene, dismis
         when {
             loaded == null && problem.isEmpty() -> RowHint(StudioMusicText.ALT_LOADING, Modifier.testTag("studio_music_alt_loading"))
             loaded != null && loaded.isEmpty() -> RowHint(StudioMusicText.ALT_EMPTY, Modifier.testTag("studio_music_alt_empty"))
-            loaded != null -> LazyColumn(Modifier.heightIn(max = 420.dp)) {
-                items(loaded, key = { "alt_${it.link}" }) { alt ->
-                    Column(Modifier.fillMaxWidth().padding(vertical = Dim.s8).testTag("studio_music_alt_${alt.link.hashCode()}")) {
-                        BasicText(listOf(alt.title.ifEmpty { StudioMusicText.TRACK }, alt.creator).filter { it.isNotEmpty() }.joinToString(" · "), style = Abook.type.body)
-                        if (alt.duration > 0) ClockLabel(Fmt.clock(alt.duration), Modifier, Abook.type.bodySmall.copy(color = Abook.colors.text2))
-                        Row(horizontalArrangement = Arrangement.spacedBy(Dim.s8), verticalAlignment = Alignment.CenterVertically) {
-                            val active = clip.playing == StudioMusicState.trackClip(alt.link) || clip.loading == StudioMusicState.trackClip(alt.link)
-                            TextAction(if (active) StudioMusicText.STOP else StudioMusicText.PLAY, { music.playTrack(alt.link) }, "studio_alt_play_${alt.link.hashCode()}", align = Alignment.CenterStart)
-                            TextAction(StudioMusicText.CHOOSE, { music.release(); dismiss(); music.change(MusicLogic.pin(scene, alt.link)) }, "studio_alt_choose_${alt.link.hashCode()}", align = Alignment.CenterStart)
+            loaded != null -> {
+                val list2 = rememberLazyListState()
+                LazyColumn(Modifier.heightIn(max = 420.dp).fadeEdges(list2), state = list2) {
+                    items(loaded, key = { "alt_${it.link}" }) { alt ->
+                        Column(Modifier.fillMaxWidth().padding(vertical = Dim.s8).testTag("studio_music_alt_${alt.link.hashCode()}")) {
+                            BasicText(listOf(alt.title.ifEmpty { StudioMusicText.TRACK }, alt.creator).filter { it.isNotEmpty() }.joinToString(" · "), style = Abook.type.body)
+                            if (alt.duration > 0) ClockLabel(Fmt.clock(alt.duration), Modifier, Abook.type.bodySmall.copy(color = Abook.colors.text2))
+                            Row(horizontalArrangement = Arrangement.spacedBy(Dim.s8), verticalAlignment = Alignment.CenterVertically) {
+                                val active = clip.playing == StudioMusicState.trackClip(alt.link) || clip.loading == StudioMusicState.trackClip(alt.link)
+                                TextAction(if (active) StudioMusicText.STOP else StudioMusicText.PLAY, { music.playTrack(alt.link) }, "studio_alt_play_${alt.link.hashCode()}", align = Alignment.CenterStart)
+                                TextAction(StudioMusicText.CHOOSE, { music.release(); dismiss(); music.change(MusicLogic.pin(scene, alt.link)) }, "studio_alt_choose_${alt.link.hashCode()}", align = Alignment.CenterStart)
+                            }
+                            RowLine()
                         }
-                        RowLine()
                     }
                 }
             }
