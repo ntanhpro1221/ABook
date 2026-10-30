@@ -47,7 +47,7 @@ object StudioText {
     // ---- danh sách dự án ----
 
     const val NO_PROJECTS = "Chưa có dự án nào"
-    const val NO_PROJECTS_HINT = "Dự án tạo trên máy tính sẽ hiện ở đây."
+    const val NO_PROJECTS_HINT = "Bấm “Sách mới” để làm sách nói từ một file truyện."
     const val LOADING = "Đang mở Studio"
 
     fun group(group: StudioGroup): String = when (group) {
@@ -69,6 +69,9 @@ object StudioText {
         StudioSubKind.Precast -> PrecastText.TITLE
         StudioSubKind.Script -> ScriptText.TITLE
         StudioSubKind.Readings -> ReadingsText.TITLE
+        StudioSubKind.Export -> StudioExportText.TITLE
+        StudioSubKind.Activity -> StudioActivityText.TITLE
+        StudioSubKind.Cover -> StudioCoverText.TITLE
     }
     const val NO_CHAPTERS = "Chưa có chương nào"
 

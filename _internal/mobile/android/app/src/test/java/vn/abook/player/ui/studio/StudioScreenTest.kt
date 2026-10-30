@@ -230,7 +230,6 @@ class StudioScreenTest {
         project()
         tag("studio_primary").assertTextEquals("Bỏ xếp hàng")
         tag("studio_action_note").assertIsDisplayed()
-        absent("studio_more")
         tag("studio_primary").performClick()
         rule.waitForIdle()
         assertEquals(listOf("b1" to StudioCommand.Dequeue), source.commands)

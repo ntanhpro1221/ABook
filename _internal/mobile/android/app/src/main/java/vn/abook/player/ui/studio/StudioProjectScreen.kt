@@ -38,7 +38,10 @@ import vn.abook.player.ui.components.ChoiceRow
 import vn.abook.player.ui.components.ClockLabel
 import vn.abook.player.ui.components.ConfirmPage
 import vn.abook.player.ui.components.DangerButton
+import vn.abook.player.ui.components.ExportIcon
 import vn.abook.player.ui.components.HeadphonesIcon
+import vn.abook.player.ui.components.HistoryIcon
+import vn.abook.player.ui.components.ImageIcon
 import vn.abook.player.ui.components.IconAction
 import vn.abook.player.ui.components.InlineProblem
 import vn.abook.player.ui.components.ListItem
@@ -256,6 +259,9 @@ private fun MoreSheet(book: StudioBook, kind: PrimaryKind?, state: StudioProject
                             StudioSubKind.Precast -> CheckIcon(it)
                             StudioSubKind.Script -> ReadAlongIcon(it)
                             StudioSubKind.Readings -> TextCursorInputIcon(it)
+                            StudioSubKind.Export -> ExportIcon(it)
+                            StudioSubKind.Activity -> HistoryIcon(it)
+                            StudioSubKind.Cover -> ImageIcon(it)
                         }
                     }
                 }

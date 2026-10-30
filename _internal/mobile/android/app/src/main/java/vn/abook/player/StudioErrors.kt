@@ -114,10 +114,45 @@ object StudioPaths {
     val WRITES = setOf(
         "speaker", "line", "narrator-section", "voice", "voice/preview", "pronunciation", "pronunciation/preview", "pronunciation/check", "review", "pending-changes/withdraw",
         "characters/rename", "shared-readings", "music/rebuild", "music/download/cancel", "music/moods",
+        "bookfile-job", "bookfile-job/cancel", "m4b-job", "m4b-job/cancel", "mp3-job", "mp3-job/cancel",
     )
 
     /** Các đường GHI bằng PUT (đúng tên `remote_studio.ALLOWED`): nhạc nền, "Chờ tôi duyệt", bỏ dòng ghi công khỏi phần đọc. */
-    val PUTS = setOf("music", "precast", "skip")
+    val PUTS = setOf("music", "precast", "skip", "cover")
+
+    /** Các đường XOÁ (đúng tên `remote_studio.ALLOWED`): chỉ ảnh bìa. */
+    val DELETES = setOf("cover")
+
+    fun delete(id: String, endpoint: String): String {
+        require(endpoint in DELETES) { "Đường không hợp lệ" }
+        return book(id) + "/" + endpoint
+    }
+
+    /** Việc xuất chạy nền (`GET` hỏi, `POST` bắt đầu): `job` là `bookfile-job`, `m4b-job` hay `mp3-job`; huỷ ở `/cancel` ([WRITES]). */
+    fun exportJob(id: String, job: String): String {
+        require(job in setOf("bookfile-job", "m4b-job", "mp3-job")) { "Đường không hợp lệ" }
+        return book(id) + "/" + job
+    }
+
+    fun exportSize(id: String): String = book(id) + "/export-size"
+    fun exportMusic(id: String): String = book(id) + "/export-music"
+    fun exportHistory(id: String): String = book(id) + "/export-history"
+
+    /** Máy tính có ffmpeg chưa (chỉ đọc; tải ffmpeg chỉ làm trên máy tính). */
+    const val FFMPEG = "/api/ffmpeg"
+
+    /** Nhật ký của sách; `technical`: thêm chi tiết kỹ thuật. */
+    fun activity(id: String, technical: Boolean): String = book(id) + "/activity" + if (technical) "?technical=1" else ""
+
+    fun coverSearch(id: String, query: String): String = book(id) + "/cover/search?q=${enc(query)}"
+
+    /** Sách mới: gửi nguồn lên, tách chương, quét, hỏi ngôi kể, model phân tích, rồi tạo (`remote_studio.ALLOWED`). */
+    const val SOURCE_UPLOAD = "/api/sources/upload"
+    const val SOURCE_SPLIT = "/api/sources/split"
+    const val SCAN = "/api/scan"
+    const val FIRST_PERSON = "/api/first-person"
+    const val ANALYSIS_MODELS = "/api/analysis-models"
+    const val CREATE_BOOK = "/api/books"
 
     fun put(id: String, endpoint: String): String {
         require(endpoint in PUTS) { "Đường không hợp lệ" }

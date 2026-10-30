@@ -72,6 +72,7 @@ import vn.abook.player.ui.devices.PairScreen
 import vn.abook.player.ui.devices.ShareScreen
 import vn.abook.player.ui.devices.StorageScreen
 import vn.abook.player.ui.studio.StudioHomeRoute
+import vn.abook.player.ui.studio.StudioNewRoute
 import vn.abook.player.ui.studio.StudioHub
 import vn.abook.player.ui.studio.StudioProjectRoute
 import vn.abook.player.ui.studio.StudioRequest
@@ -334,6 +335,10 @@ fun AppShell(
                                 }
                                 is Destination.Studio -> if (studio != null) StudioHomeRoute(studio, destination.computer, nav::pop,
                                     { nav.push(Destination.StudioProject(destination.computer, it)) },
+                                    active = nav.stack.top?.destination == destination && !nav.progress.isRunning,
+                                    onNew = { nav.push(Destination.StudioNew(destination.computer)) })
+                                is Destination.StudioNew -> if (studio != null) StudioNewRoute(studio, destination.computer, nav::pop,
+                                    { nav.replaceTop(Destination.StudioProject(destination.computer, it)) },
                                     active = nav.stack.top?.destination == destination && !nav.progress.isRunning)
                                 is Destination.StudioProject -> if (studio != null) StudioProjectRoute(studio, destination.computer, destination.book, destination.tab,
                                     shell.sheets, nav::pop, listen = { nav.popToRoot(); shell.tabs.select(Tab.Library) },

@@ -76,7 +76,7 @@ class StudioJsonRouteTest {
         // Màn con của web mở thẳng màn con; tab chưa có ở điện thoại, hay mã lạ: về chỗ gần nhất.
         assertEquals(StudioRoute("b1", StudioTab.Chapters, StudioSubKind.Precast), StudioRoute.parse("/#/studio/b1?tab=precast"))
         assertEquals(StudioRoute("b1", StudioTab.Chapters, StudioSubKind.Script), StudioRoute.parse("/#/studio/b1?tab=script"))
-        assertEquals(StudioRoute("b1", StudioTab.Chapters), StudioRoute.parse("/#/studio/b1?tab=activity"))
+        assertEquals(StudioRoute("b1", StudioTab.Chapters, StudioSubKind.Activity), StudioRoute.parse("/#/studio/b1?tab=activity"))
         assertEquals(StudioRoute(), StudioRoute.parse("/#/studio/../etc"))
         assertEquals(StudioRoute(), StudioRoute.parse("/#/library"))
     }
