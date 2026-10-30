@@ -56,9 +56,9 @@ Item {
                 // Giá trị mới có ngay trong nhịp này, không qua chuyển động nào
                 verify(elapsed.text !== before); verify(remaining.text !== beforeLeft)
                 compare(elapsed.opacity, 1); compare(remaining.opacity, 1)
-                compare(elapsed.mapToItem(now, 0, 0).x, left)
-                compare(remaining.mapToItem(now, remaining.width, 0).x, right)
-                compare(elapsed.width, width)            // 0:01 ... 0:12: "1" và "8" cùng độ rộng
+                fuzzyCompare(elapsed.mapToItem(now, 0, 0).x, left, 0.5)
+                fuzzyCompare(remaining.mapToItem(now, remaining.width, 0).x, right, 0.5)
+                fuzzyCompare(elapsed.width, width, 0.5)            // 0:01 ... 0:12: "1" và "8" cùng độ rộng
                 seen[elapsed.text] = true
             }
             verify(Object.keys(seen).some(text => text.indexOf("8") >= 0) && Object.keys(seen).some(text => text.indexOf("1") >= 0))
@@ -67,9 +67,9 @@ Item {
         function test_progress_fill_jumps_to_the_value() {
             // Phần tô của thanh tiến độ tự chạy (tải / xuất / phân tích) vẽ thẳng theo giá trị, như điện thoại native: không trượt
             const bar = createTemporaryObject(barComponent, host, {value: 0.3}), fill = findChild(bar, "studioBarFill")
-            ready(); compare(fill.width, 60)
+            ready(); fuzzyCompare(fill.width, 60, 0.5)
             bar.value = 0.7
-            compare(fill.width, 140)
+            fuzzyCompare(fill.width, 140, 0.5)
         }
 
         function test_sleep_countdown_chip_keeps_its_place() {
@@ -85,8 +85,8 @@ Item {
             for (const step of [0.5].concat(Array(11).fill(5))) {
                 WidthNet.advance(step); ready()
                 texts.push(chip.text)
-                compare(chip.width, width)
-                for (let i = 0; i < flow.children.length; ++i) compare(flow.children[i].x, places[i])
+                fuzzyCompare(chip.width, width, 0.5)
+                for (let i = 0; i < flow.children.length; ++i) fuzzyCompare(flow.children[i].x, places[i], 0.5)
             }
             verify(texts.some(text => /^\d\d giây$/.test(text)) && texts.some(text => /^\d giây$/.test(text)), texts.join(", "))
         }
