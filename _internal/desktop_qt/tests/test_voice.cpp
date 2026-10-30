@@ -23,6 +23,20 @@ QByteArray fixture(const QString &name) {
     if (!file.open(QIODevice::ReadOnly)) qFatal("Missing voice fixture");
     return file.readAll();
 }
+// Bài đã giải mã sẵn trong bộ đệm của bộ trộn (48 kHz stereo 16 bit). Trái = mã khung (1 + k mod 16000) / 32768,
+// phải = 0,5: tỉ số trái / phải không phụ thuộc âm lượng, nên từng khung ghi ra cho biết đúng khung nguồn nào đang phát.
+// `code` = false: im lặng.
+void writeDecoded(const QString &path, int frames, bool code) {
+    QByteArray data(24 + frames * 4, Qt::Uninitialized);
+    std::memcpy(data.data(), "ABPCM001", 8); qToLittleEndian<quint32>(48000, data.data() + 8);
+    qToLittleEndian<quint32>(2, data.data() + 12); qToLittleEndian<quint64>(quint64(frames), data.data() + 16);
+    for (int k = 0; k < frames; ++k) {
+        qToLittleEndian<qint16>(code ? qint16(1 + k % 16000) : 0, data.data() + 24 + k * 4);
+        qToLittleEndian<qint16>(code ? 16384 : 0, data.data() + 24 + k * 4 + 2);
+    }
+    QFile file(path);
+    if (!file.open(QIODevice::WriteOnly) || file.write(data) != data.size()) qFatal("không ghi được bài thử");
+}
 struct Device : MixDevice {
     int hz = 48000, resets = 0, stops = 0;
     quint64 epoch = 0;
@@ -561,6 +575,50 @@ private slots:
         qint64 from = where >= paused ? qint64(where - paused) : std::numeric_limits<qint64>::max();
         for (const auto &[at, op] : marks) if (at <= where && qint64(where - at) < from) { from = qint64(where - at); closest = QString::fromLatin1(op); }
         QVERIFY2(jump < 0.04, qPrintable(QStringLiteral("%1 at %2 ms after %3 (%4)").arg(jump).arg(from / 48.0).arg(closest).arg(where)));
+    }
+    // §48: phần tử nhạc nền (Bed) bắt đầu khi thiết bị đang chạy có hàng đợi (giọng đọc đang phát). Tiếng vào ở chu kỳ
+    // sau con trỏ nghe, nên phải vào ở vị trí đích + phần đã trôi từ lúc gọi play(); position() theo đúng đồng hồ ấy từ
+    // lúc gọi, kể cả khi đã nối vào mà chưa ra loa.
+    void bedEntersWhereTheCallerClockHasReached() {
+        QTemporaryDir dir;
+        const QString wav = dir.filePath(QStringLiteral("tap.wav"));
+        const QUrl silence = QUrl::fromLocalFile(dir.filePath(QStringLiteral("silence.mp3"))), code = QUrl::fromLocalFile(dir.filePath(QStringLiteral("code.mp3")));
+        quint64 before = 0, after = 0;
+        std::vector<std::pair<quint64, double>> polls;
+        {
+            auto *sink = new FileSinkDevice(wav);
+            MusicMixer mixer(std::unique_ptr<MixDevice>(sink), dir.path(), true);
+            writeDecoded(mixer.cachePath(silence), 48000, false);
+            writeDecoded(mixer.cachePath(code), 48000 * 3, true);
+            MixVoice keep(&mixer);
+            keep.setLoop(true); keep.setVolume(1); keep.load(silence, 0); keep.play();
+            QTRY_VERIFY_WITH_TIMEOUT(keep.playing(), 3000);
+            QTRY_VERIFY(sink->now() >= 9600);
+            MixVoice bed(&mixer, MixVoice::Bed);
+            bed.setVolume(1); bed.load(code, 1.0); bed.preload();
+            QTRY_VERIFY_WITH_TIMEOUT(bed.duration() > 0, 5000);
+            QTest::qWait(300); // vòng đệm đã lấp: phần trễ còn lại chỉ là chờ chu kỳ thiết bị
+            before = sink->now(); bed.play(); after = sink->now();
+            while (sink->now() < after + 9600) { polls.push_back({sink->now(), bed.position()}); QTest::qWait(3); }
+            QVERIFY(bed.playing());
+            const quint64 paused = sink->now(); bed.pause(); keep.pause();
+            QTRY_VERIFY(sink->now() >= paused + 4800);
+        }
+        for (const auto &[at, position] : polls) {
+            const double want = 1.0 + double(at - before) / 48000;
+            QVERIFY2(std::abs(position - want) < 0.012, qPrintable(QStringLiteral("position %1 at %2, want %3").arg(position).arg(at).arg(want)));
+        }
+        QFile file(wav); QVERIFY(file.open(QIODevice::ReadOnly));
+        const QByteArray bytes = file.readAll().mid(44);
+        const auto *x = reinterpret_cast<const float *>(bytes.constData());
+        const size_t frames = size_t(bytes.size()) / 8;
+        size_t first = 0; while (first < frames && x[first * 2] == 0.0f) ++first;
+        QVERIFY(first < frames && first > after);
+        const long long heard = std::lround(double(x[first * 2]) / x[first * 2 + 1] * 16384) - 1;
+        const long long want = (48000 + (static_cast<long long>(first) - static_cast<long long>(before))) % 16000;
+        const long long miss = ((heard - want) % 16000 + 24000) % 16000 - 8000;
+        QVERIFY2(std::abs(miss) <= 480 + static_cast<long long>(after - before),
+                 qPrintable(QStringLiteral("vào ở khung nguồn lệch %1 khung (nghe ở khung thiết bị %2, gọi ở %3)").arg(miss).arg(first).arg(before)));
     }
     void formatRebuildPreservesRateAwarePosition() {
         Rig rig; rig.voice.setRate(1.5); rig.voice.play();

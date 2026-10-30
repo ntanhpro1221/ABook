@@ -7,6 +7,8 @@
 #include "musicbed.h"
 
 #include <QFile>
+#include <QFileInfo>
+#include <QDateTime>
 #include <QTemporaryDir>
 #include <QProcess>
 #include <QProcessEnvironment>
@@ -132,6 +134,22 @@ private slots:
         QTRY_COMPARE(replies.size(), 3); QVERIFY(!replies.last()[2].toBool());
         QCOMPARE(rig.device->selectedOutput, QStringLiteral("headset")); QVERIFY(voice.playing());
         rig.mixer.selectOutput({}); rig.mixer.service(0); QTRY_COMPARE(replies.size(), 4); QVERIFY(replies.last()[1].toString().isEmpty());
+    }
+    // trim() bỏ tệp đệm có mtime cũ nhất trước: mở lại một bài đã đệm phải ghi lần dùng, để bài vừa nghe không bị bỏ trước bài
+    // giải mã sau nhưng không nghe lại.
+    void reopeningACachedTrackMarksItUsed() {
+        MixerRig rig;
+        const QString path = rig.mixer.cachePath(track());
+        {
+            MixVoice first(&rig.mixer); first.load(track(), 0); QVERIFY(rig.ready(first));
+        }
+        QFile cache(path); QVERIFY(cache.open(QIODevice::ReadWrite));
+        const QDateTime old = QDateTime::currentDateTime().addDays(-30);
+        QVERIFY(cache.setFileTime(old, QFileDevice::FileModificationTime)); cache.close();
+        const quint64 decodes = rig.mixer.decodeCount();
+        MixVoice again(&rig.mixer); again.load(track(), 0); QVERIFY(rig.ready(again));
+        QCOMPARE(rig.mixer.decodeCount(), decodes);
+        QVERIFY2(QFileInfo(path).lastModified() > old.addDays(29), qPrintable(QFileInfo(path).lastModified().toString(Qt::ISODate)));
     }
     void musicFormats_data() {
         QTest::addColumn<QString>("name"); QTest::addColumn<int>("rate");
