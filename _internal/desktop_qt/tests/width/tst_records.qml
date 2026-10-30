@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "ModalLayer.js" as ModalLayer
 import "VisualReady.js" as VisualReady
 import ABook
 
@@ -87,12 +88,8 @@ Item {
         }
         function calls(method, path) { return DesktopApi.requests.filter(r => r.method === method && r.path === path) }
         function render() { ready() }
-        function all(item, name, found) {
-            const out = found || []
-            if (item.objectName === name) out.push(item)
-            for (const child of item.children) all(child, name, out)
-            return out
-        }
+        // gồm cả hộp / bảng nổi do `item` mở (WindowLayer nằm ở gốc cửa sổ, không còn là con của trang)
+        function all(item, name) { return ModalLayer.findAll(item, name) }
         function openPage(width) {
             host.width = width || 1440
             dialogs = createTemporaryObject(dialogsFactory, host, {})
@@ -103,26 +100,28 @@ Item {
             render()
         }
         function openMore() {
-            findChild(page, "bookMore").clicked()
-            tryVerify(function() { return findChild(page, "bookMoreMenu").open })
+            findChild(scene(), "bookMore").clicked()
+            tryVerify(function() { return findChild(scene(), "bookMoreMenu").open })
             render()
         }
         function openRecordMenu() {
-            findChild(page, "recordChip").clicked()
-            tryVerify(function() { return findChild(page, "recordMenu").open })
+            findChild(scene(), "recordChip").clicked()
+            tryVerify(function() { return findChild(scene(), "recordMenu").open })
             render()
         }
+        // Hộp / bảng nổi tự ở gốc cửa sổ (WindowLayer): tìm theo tên từ gốc cửa sổ, không từ trang
+        function scene() { return host.Window.window.contentItem }
         function confirm() { return all(dialogs, "recordConfirm")[0] }
         function waitDialogOpen() { tryVerify(function() { return dialogs.open }); render() }
 
         // ---------- một hồ sơ: các việc nằm trong menu "Thêm" ----------
         function test_oneRecordMenuHoldsTheActions() {
             openPage()
-            verify(!findChild(page, "recordChip").visible)                 // một hồ sơ: không có nút "Hồ sơ nghe:"
+            verify(!findChild(scene(), "recordChip").visible)                 // một hồ sơ: không có nút "Hồ sơ nghe:"
             openMore()
-            const create = findChild(page, "recordRow.create"), move = findChild(page, "recordRow.move")
-            const rename = findChild(page, "recordRow.rename"), del = findChild(page, "recordRow.delete")
-            const finished = findChild(page, "menuFinished")
+            const create = findChild(scene(), "recordRow.create"), move = findChild(scene(), "recordRow.move")
+            const rename = findChild(scene(), "recordRow.rename"), del = findChild(scene(), "recordRow.delete")
+            const finished = findChild(scene(), "menuFinished")
             compare(create.text, "Hồ sơ mới")
             compare(move.text, "Chuyển hồ sơ")
             compare(rename.text, "Đổi tên hồ sơ…")
@@ -134,27 +133,27 @@ Item {
             verify(y(create) < y(move) && y(move) < y(rename) && y(rename) < y(finished) && y(finished) < y(del))
             compare(Nav.layers.length, 1)
             Nav.back()
-            tryVerify(function() { return !findChild(page, "bookMoreMenu").open })
+            tryVerify(function() { return !findChild(scene(), "bookMoreMenu").open })
             shot("records_menu_one", host)
         }
         function test_textOnlyBookHasNoFinishedItem() {
             server = Object.assign(one(), {stage: "text"})
             openPage()
             openMore()
-            verify(!findChild(page, "menuFinished").visible)
+            verify(!findChild(scene(), "menuFinished").visible)
         }
         function test_manyRecordsUseTheChipInstead() {
             server = two()
             openPage()
-            const chip = findChild(page, "recordChip")
+            const chip = findChild(scene(), "recordChip")
             verify(chip.visible)
             compare(chip.Accessible.name, "Hồ sơ nghe: Lần nghe 1")
-            compare(findChild(page, "recordChipName").text, "Lần nghe 1")
+            compare(findChild(scene(), "recordChipName").text, "Lần nghe 1")
             openMore()
-            verify(findChild(page, "recordRow.create") === null || !findChild(page, "recordRow.create").visible)
-            verify(findChild(page, "recordRow.delete") === null || !findChild(page, "recordRow.delete").visible)
+            verify(findChild(scene(), "recordRow.create") === null || !findChild(scene(), "recordRow.create").visible)
+            verify(findChild(scene(), "recordRow.delete") === null || !findChild(scene(), "recordRow.delete").visible)
             Nav.back()
-            tryVerify(function() { return !findChild(page, "bookMoreMenu").open })
+            tryVerify(function() { return !findChild(scene(), "bookMoreMenu").open })
             openRecordMenu()
             const choices = all(page, "recordChoice")
             compare(choices.length, 2)
@@ -162,15 +161,15 @@ Item {
             verify(choices[0].Accessible.checked && !choices[1].Accessible.checked)
             verify(all(choices[0], "recordChoiceLine")[0].text.indexOf("Chương 2 · 1:15 · nghe gần nhất ") === 0)
             compare(all(choices[1], "recordChoiceLine")[0].text, "chưa nghe")
-            compare(findChild(page, "recordAction.create").text, "Hồ sơ mới")
-            compare(findChild(page, "recordAction.rename").text, "Đổi tên hồ sơ này…")
-            compare(findChild(page, "recordAction.move").text, "Chuyển sang cuốn khác…")
-            compare(findChild(page, "recordAction.delete").text, "Xoá hồ sơ này…")
-            verify(findChild(page, "recordAction.delete").danger)
+            compare(findChild(scene(), "recordAction.create").text, "Hồ sơ mới")
+            compare(findChild(scene(), "recordAction.rename").text, "Đổi tên hồ sơ này…")
+            compare(findChild(scene(), "recordAction.move").text, "Chuyển sang cuốn khác…")
+            compare(findChild(scene(), "recordAction.delete").text, "Xoá hồ sơ này…")
+            verify(findChild(scene(), "recordAction.delete").danger)
             compare(Nav.layers.length, 1)
             shot("records_menu_many", host)
             Nav.back()
-            tryVerify(function() { return !findChild(page, "recordMenu").open })
+            tryVerify(function() { return !findChild(scene(), "recordMenu").open })
             compare(Nav.layers.length, 0)
         }
 
@@ -178,7 +177,7 @@ Item {
         function test_createSendsNameAndStartsOver() {
             openPage()
             openMore()
-            findChild(page, "recordRow.create").clicked()
+            findChild(scene(), "recordRow.create").clicked()
             waitDialogOpen()
             compare(dialogs.title, "Nghe lại từ đầu")
             compare(dialogs.description, "Hồ sơ mới nghe từ đầu; hồ sơ cũ vẫn giữ nguyên.")
@@ -199,7 +198,7 @@ Item {
         function test_renameNeedsANameAndKeepsThePlayer() {
             openPage()
             openMore()
-            findChild(page, "recordRow.rename").clicked()
+            findChild(scene(), "recordRow.rename").clicked()
             waitDialogOpen()
             compare(dialogs.title, "Đổi tên hồ sơ")
             const field = findChild(dialogs, "recordName")
@@ -219,7 +218,7 @@ Item {
         function test_nameIsCappedAtSixtyCharacters() {
             openPage()
             openMore()
-            findChild(page, "recordRow.rename").clicked()
+            findChild(scene(), "recordRow.rename").clicked()
             waitDialogOpen()
             findChild(dialogs, "recordName").text = "x".repeat(80)
             compare(findChild(dialogs, "recordName").text.length, 60)
@@ -227,7 +226,7 @@ Item {
         function test_deleteAsksFirstAndSaysWhatIsLost() {
             openPage()
             openMore()
-            findChild(page, "recordRow.delete").clicked()
+            findChild(scene(), "recordRow.delete").clicked()
             waitDialogOpen()
             compare(dialogs.title, "Xoá hồ sơ “Lần nghe 1”?")
             compare(dialogs.description, "Chỗ nghe, lịch sử của hồ sơ này mất hẳn trên mọi máy. Sách giữ nguyên; đây là hồ sơ duy nhất nên cuốn sẽ như chưa nghe lần nào.")
@@ -243,7 +242,7 @@ Item {
             server = two()
             openPage()
             openRecordMenu()
-            findChild(page, "recordAction.delete").clicked()
+            findChild(scene(), "recordAction.delete").clicked()
             waitDialogOpen()
             verify(dialogs.description.indexOf("cuốn chuyển sang hồ sơ nghe gần nhất còn lại.") > 0)
             Nav.back()
@@ -254,7 +253,7 @@ Item {
         function test_moveAsksForTheOtherBook() {
             openPage()
             openMore()
-            findChild(page, "recordRow.move").clicked()
+            findChild(scene(), "recordRow.move").clicked()
             waitDialogOpen()
             compare(dialogs.title, "Chuyển hồ sơ “Lần nghe 1” sang cuốn khác")
             compare(dialogs.description, "Chỗ nghe, lịch sử đi theo hồ sơ sang cuốn kia. Cuốn này sẽ như chưa nghe lần nào.")
@@ -284,7 +283,7 @@ Item {
             openPage()
             openMore()
             DesktopApi.delayed = true
-            findChild(page, "recordRow.move").clicked()
+            findChild(scene(), "recordRow.move").clicked()
             waitDialogOpen()
             verify(findChild(dialogs, "recordLoading").visible)
             compare(findChild(dialogs, "recordLoading").text, "Đang mở thư viện…")
@@ -299,7 +298,7 @@ Item {
             reply("GET /api/listen/library", {status: 200, data: [{id: "width", title: "Sách nhiều lần nghe"}]})
             openPage()
             openMore()
-            findChild(page, "recordRow.move").clicked()
+            findChild(scene(), "recordRow.move").clicked()
             waitDialogOpen()
             tryVerify(function() { return findChild(dialogs, "recordNoOthers").visible })
             compare(findChild(dialogs, "recordNoOthers").text, "Thư viện chưa có cuốn nào khác.")
@@ -317,7 +316,7 @@ Item {
             const choices = all(page, "recordChoice")
             choices[0].clicked()                                          // đang dùng rồi: không gửi gì
             compare(calls("POST", "/api/listen/books/width/records/r2/activate").length, 0)
-            tryVerify(function() { return !findChild(page, "recordMenu").open })
+            tryVerify(function() { return !findChild(scene(), "recordMenu").open })
             openRecordMenu()
             all(page, "recordChoice")[1].clicked()
             const sent = calls("POST", "/api/listen/books/width/records/r2/activate")
@@ -332,7 +331,7 @@ Item {
         function test_finishedToggleWritesToTheActiveRecord() {
             openPage()
             openMore()
-            findChild(page, "menuFinished").clicked()
+            findChild(scene(), "menuFinished").clicked()
             const sent = calls("POST", "/api/listen/books/width/finished")
             compare(sent.length, 1)
             compare(sent[0].body.finished, true)
@@ -342,8 +341,8 @@ Item {
             server = bookWith([record("r1", "Lần nghe 1", true, true)], true)
             openPage()
             openMore()
-            compare(findChild(page, "menuFinished").text, "Chưa nghe xong")
-            findChild(page, "menuFinished").clicked()
+            compare(findChild(scene(), "menuFinished").text, "Chưa nghe xong")
+            findChild(scene(), "menuFinished").clicked()
             compare(calls("POST", "/api/listen/books/width/finished")[0].body.finished, false)
         }
 
@@ -352,9 +351,9 @@ Item {
         function test_longRecordNameWraps(data) {
             server = bookWith([record("r1", longName, true, true), record("r2", "Bản của Lan", false, false)])
             openPage(data.w)
-            const chip = findChild(page, "recordChip")
+            const chip = findChild(scene(), "recordChip")
             verify(chip.visible)
-            const name = findChild(page, "recordChipName")
+            const name = findChild(scene(), "recordChipName")
             verify(name.lineCount > 1, "tên hồ sơ dài phải xuống dòng")
             verify(name.paintedWidth <= name.width + 0.5)
             const edge = chip.mapToItem(page, chip.width, 0).x
@@ -370,10 +369,10 @@ Item {
             }
             shot("records_menu_long_" + data.w, host)
             Nav.back()
-            tryVerify(function() { return !findChild(page, "recordMenu").open })
-            findChild(page, "recordChip").clicked()
-            tryVerify(function() { return findChild(page, "recordMenu").open })
-            findChild(page, "recordAction.rename").clicked()
+            tryVerify(function() { return !findChild(scene(), "recordMenu").open })
+            findChild(scene(), "recordChip").clicked()
+            tryVerify(function() { return findChild(scene(), "recordMenu").open })
+            findChild(scene(), "recordAction.rename").clicked()
             waitDialogOpen()
             shot("records_rename_long_" + data.w, host)
         }
@@ -381,7 +380,7 @@ Item {
             server = bookWith([record("r1", longName, true, true)])
             openPage()
             openMore()
-            findChild(page, "recordRow.delete").clicked()
+            findChild(scene(), "recordRow.delete").clicked()
             waitDialogOpen()
             verify(dialogs.title.indexOf(longName) > 0)
             shot("records_delete_long", host)
@@ -391,7 +390,7 @@ Item {
             if (!item.Window.window) return
             item.Window.window.update()
             VisualReady.render(this, host.Window.window, item, qtVisualReady)
-            const img = grabImage(item)
+            const img = grabImage(VisualReady.grabTarget(host.Window.window, item))
             const path = Qt.resolvedUrl("../../build/d2shots/" + name + "_" + (Theme.dark ? "dark" : "light") + ".png").toString()
                 .replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, "")
             img.save(path)

@@ -207,12 +207,12 @@ Item {
             compare(previewCalls().length, 2)
             compare(previewCalls()[1].body.splitChapters, true)
             verify(dialog.split)
-            compare(dialog.shown.chapters.length, 6)
+            compare(dialog.shownPreview.chapters.length, 6)
             find(dialog, "importSplit").toggled(false)
             compare(previewCalls().length, 3)
             compare(previewCalls()[2].body.splitChapters, false)
             verify(!dialog.split)
-            compare(dialog.shown.chapters.length, 1)
+            compare(dialog.shownPreview.chapters.length, 1)
         }
         function test_footnoteChoiceRereadsAndSends() {
             DesktopApi.responses = {"/api/listen/import/preview": {status: 200, data: book({footnotes: {found: 3, marks: 3, examples: []}})}, "/api/listen/import": {status: 200, data: {id: "n", how: "new"}}}
@@ -377,7 +377,7 @@ Item {
             DesktopApi.responses = {"/api/listen/import/preview": {status: 200, data: book()}}
             const dialog = make()
             dialog.begin(["D:/x/a.epub"])
-            tryVerify(function() { return dialog.shown !== null && dialog.visible })
+            tryVerify(function() { return dialog.shownPreview !== null && dialog.visible })
             tryVerify(function() { return find(dialog, "importChapters").buttonFor(4) !== null })
             const list = find(dialog, "importChapters")
             click(list.buttonFor(4))           // bấm tên chương: mở ô sửa
@@ -420,7 +420,7 @@ Item {
             target.Window.window.update()
             VisualReady.render(this, host.Window.window, target, qtVisualReady)
             qtGlyphAudit.scan()
-            const img = grabImage(target)
+            const img = grabImage(VisualReady.grabTarget(host.Window.window, target))
             const path = Qt.resolvedUrl("../../build/d2shots/" + name + "_" + (Theme.dark ? "dark" : "light") + ".png").toString()
                 .replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, "")
             img.save(path)

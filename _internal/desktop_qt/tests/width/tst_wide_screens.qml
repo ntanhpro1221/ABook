@@ -158,7 +158,8 @@ Item {
                 qtGlyphAudit.scan()
                 grabImage(host).save(qtWideShotDir + "/" + d.tag + ".png")
             }
-            verify(page.width <= content.width + 0.5)
+            // Hộp (AddBook, EditBook) phủ cả cửa sổ như ở Main: rộng bằng cửa sổ, không bằng khung nội dung bên phải thanh bên
+            verify(page.width <= (page.owner !== undefined ? host.width : content.width) + 0.5)
             page.destroy()
         }
 
@@ -167,7 +168,8 @@ Item {
         }
         function test_reflow(d) {
             const factories = {add: add, edit: edit, devices: settings, settings: settings, studio: studio, mini: mini}
-            sidebar.visible = d.screen !== "mini"
+            // Hộp (AddBook, EditBook) phủ cả cửa sổ như ở Main, không đứng cạnh thanh bên: cửa sổ hẹp lại thì hộp hẹp theo
+            sidebar.visible = d.screen !== "mini" && d.screen !== "add" && d.screen !== "edit"
             content.x = sidebar.visible ? 232 : 0
             const narrow = d.screen === "mini" ? 360 : 792
             host.width = narrow + content.x
@@ -180,7 +182,7 @@ Item {
             if (d.screen === "settings") props.active = "look"
             const page = createTemporaryObject(factories[d.screen], content, props)
             verify(page !== null)
-            page.width = Qt.binding(() => content.width)
+            if (page.owner === undefined) page.width = Qt.binding(() => content.width)
             if (d.screen === "add") {
                 page.show(); page.showPreview({title: "Bản nháp", author: "Tác giả", chapters: [{index: 1, title: "Một tên chương dài ".repeat(12), included: true, words: 1234}],
                     totals: {chapters: 1, words: 1234}, notes: [], suggestions: []}, false)
