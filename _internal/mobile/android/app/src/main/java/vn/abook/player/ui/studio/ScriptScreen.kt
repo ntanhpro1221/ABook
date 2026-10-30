@@ -169,7 +169,8 @@ private fun PeopleSheet(state: StudioScriptState, script: ChapterScript, line: S
     Column(Modifier.fillMaxWidth().testTag("studio_script_people")) {
         BasicText(ScriptText.WHO, style = Abook.type.sectionTitle)
         Spacer(Modifier.padding(top = Dim.s8))
-        LazyColumn(Modifier.heightIn(max = 420.dp)) {
+        val list1 = rememberLazyListState()
+        LazyColumn(Modifier.heightIn(max = 420.dp).fadeEdges(list1), state = list1) {
             items(ScriptLogic.people(script), key = { "person_${it.value}" }) { person ->
                 PickRow(person.label, if (person.lines > 0) "${person.lines} câu" else null, person.value == current, { dismiss(); state.assign(line, person) }, "studio_person_${person.value}")
             }
@@ -182,7 +183,8 @@ private fun ChaptersSheet(state: StudioScriptState, contents: ScriptContents, di
     Column(Modifier.fillMaxWidth().testTag("studio_script_chapters_sheet")) {
         BasicText(ScriptText.CHAPTERS, style = Abook.type.sectionTitle)
         Spacer(Modifier.padding(top = Dim.s8))
-        LazyColumn(Modifier.heightIn(max = 420.dp)) {
+        val list2 = rememberLazyListState()
+        LazyColumn(Modifier.heightIn(max = 420.dp).fadeEdges(list2), state = list2) {
             items(contents.chapters, key = { "chapter_${it.chapterId}" }) { entry ->
                 PickRow(ScriptLogic.chapterLabel(entry), ScriptLogic.extras(entry).ifEmpty { null }, entry.chapterId == state.chapter, { dismiss(); state.open(entry.chapterId) }, "studio_script_chapter_${entry.chapterId}")
             }
