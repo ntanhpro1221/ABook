@@ -52,6 +52,7 @@ Item {
             grabImage(VisualReady.grabTarget(host.Window.window, target)).save(path)
         }
         function scrollTo(page, item) {
+            waitForRendering(page)   // đầu danh sách đã xếp lại sau khi đổi tab rồi mới tính chỗ cuộn
             const list = page.projectScreenList
             list.contentY = Math.max(0, item.mapToItem(list.contentItem, 0, 0).y - 24)
         }

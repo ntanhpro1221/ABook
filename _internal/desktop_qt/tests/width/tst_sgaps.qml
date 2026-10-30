@@ -178,6 +178,18 @@ Item {
             const page = openBook(book("se"), [])
             tryVerify(function() { return calls("GET", "/api/books/se/edits-inbox").length > 0 })
             verify(!shown(one(page, "projectSideError")))
+            // nhật ký trả 200 mà không phải danh sách: không phải lỗi tải
+            page.openProjectTab("activity")
+            tryVerify(function() { return calls("GET", "/api/books/se/activity").length > 0 })
+            waitForRendering(page)
+            verify(!shown(one(page, "projectSideError")))
+            // nhật ký hỏng thật thì dải hiện
+            reply("GET /api/books/se/activity", {status: 500, data: {error: "Hết chỗ"}})
+            page.openProjectTab("chapters")
+            tryCompare(one(page, "projectScreen"), "shownTab", "chapters")
+            page.openProjectTab("activity")
+            tryVerify(function() { return shown(one(page, "projectSideError")) })
+            verify(hasText(page, "Chưa tải được Hết chỗ; tự thử lại, hoặc làm mới trang."))
         }
 
         // ---- tiến độ cả sách ----
