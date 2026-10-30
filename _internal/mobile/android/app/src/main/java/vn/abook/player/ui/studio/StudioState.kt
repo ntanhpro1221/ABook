@@ -103,11 +103,25 @@ class StudioProjectState(
     private val workLazy = lazy { StudioWorkState(this, pause) }
     private val reviewLazy = lazy { StudioReviewState(this, pause) }
     private val castLazy = lazy { StudioCastState(this, pause) }
+    private val precastLazy = lazy { StudioPrecastState(this, pause) }
+    private val musicLazy = lazy { StudioMusicState(this, pause) }
+    private val exportLazy = lazy { StudioExportState(this, pause) }
+    private val activityLazy = lazy { StudioActivityState(this, pause) }
 
     /** Ba tab nội dung (S2): tạo khi tab được mở lần đầu, sống theo màn dự án. */
     val work: StudioWorkState get() = workLazy.value
     val review: StudioReviewState get() = reviewLazy.value
     val cast: StudioCastState get() = castLazy.value
+
+    /** Màn "Duyệt trước khi thu" (S3): dùng chính [work] và [cast] của dự án, thêm số liệu và bước của riêng nó. */
+    val precast: StudioPrecastState get() = precastLazy.value
+
+    /** Tab "Nhạc nền" (S3): tạo khi tab được mở lần đầu. */
+    val music: StudioMusicState get() = musicLazy.value
+
+    /** Màn "Xuất sách" và "Nhật ký" (S4): tạo khi màn được mở, sống theo màn con. */
+    val export: StudioExportState get() = exportLazy.value
+    val activity: StudioActivityState get() = activityLazy.value
 
     /** Rời một tab (hay cả màn): dừng tiếng đang phát và thôi "Nghe liền". */
     fun stopAudio() {
