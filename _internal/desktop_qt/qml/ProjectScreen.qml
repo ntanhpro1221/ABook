@@ -49,6 +49,41 @@ FocusScope {
     property string precastStep: "cast"
     // Tab Kịch bản mở từ thẻ việc / menu chương: {chapter, line, pick} (tham số chapter/line/pick của web); đổi tab ở hàng tab thì bỏ
     property var scriptAt: null
+    // Cùng kho UI state với Api.store (Platform -> desktop_qt.ini), riêng từng máy/sách.
+    readonly property string viewKey: store && store.bookId ? "studio.view." + encodeURIComponent(store.peer || "local") + "." + encodeURIComponent(store.bookId) : ""
+    property string loadedViewKey: ""
+    property var viewState: ({})
+    property bool viewReady: false
+    property bool viewDirty: false
+    function flushView() {
+        viewWrite.stop()
+        if (viewDirty && loadedViewKey) Platform.setSetting(loadedViewKey, JSON.stringify(viewState))
+        viewDirty = false
+    }
+    function restoreView() {
+        flushView()
+        viewReady = false
+        loadedViewKey = viewKey
+        let saved = {}
+        try { saved = viewKey ? JSON.parse(Platform.setting(viewKey, "{}")) || {} : {} } catch (error) {}
+        if (typeof saved !== "object" || Array.isArray(saved)) saved = {}
+        viewState = saved
+        scriptAt = null
+        tab = Logic.tabOf(saved.tab || "chapters")
+        viewReady = true
+    }
+    function rememberView(change) {
+        if (!viewReady || !loadedViewKey) return
+        const next = Object.assign({}, viewState, change)
+        if (JSON.stringify(next) === JSON.stringify(viewState)) return
+        viewState = next
+        viewDirty = true
+        // Throttle, không restart khi con trỏ tiếp tục đi: tối đa một lần ghi/400 ms.
+        if (!viewWrite.running) viewWrite.start()
+    }
+    onViewKeyChanged: if (viewReady) restoreView()
+    Timer { id: viewWrite; interval: 400; onTriggered: root.flushView() }
+    Component.onDestruction: flushView()
     readonly property var fromLabels: ({work: "Việc cần duyệt", review: "Cần nghe lại", precast: "Duyệt trước khi thu"})
     function pickTab(key) {
         workKind = "all"; workCard = ""; cameFrom = ""; nameParam = ""; focusNames = false; precastStep = "cast"; scriptAt = null
@@ -74,7 +109,7 @@ FocusScope {
         if (top < list.contentY + 16) list.contentY = Math.max(list.originY - list.topMargin, top - 16)
         else if (bottom > list.contentY + list.height - 16) list.contentY = bottom - list.height + 16
     }
-    onTabChanged: tabSwap.restart()
+    onTabChanged: { tabSwap.restart(); rememberView({tab: tab}) }
     SequentialAnimation {
         id: tabSwap
         NumberAnimation { target: root; property: "swap"; to: 0; duration: Theme.motionFastOut; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeAccelerate }
@@ -152,7 +187,6 @@ FocusScope {
         function onBookIdChanged() {
             root.activityData = null; root.activityError = ""; root.next = 0
             root.workKind = "all"; root.workCard = ""; root.cameFrom = ""; root.nameParam = ""; root.focusNames = false; root.precastStep = "cast"
-            root.tab = "chapters"; root.shownTab = "chapters"
             Later.call(root, root.refreshNext)
         }
     }
@@ -200,7 +234,7 @@ FocusScope {
         for (const row of rowList) rowModel.append({key: row.key})
     }
     ListModel { id: rowModel }
-    Component.onCompleted: sync()
+    Component.onCompleted: { restoreView(); sync() }
 
     function bookMenuItems() {
         const extras = Logic.actionExtras(book, {next: next, remote: remote})
@@ -777,6 +811,8 @@ FocusScope {
                     flick: list
                     overlay: root
                     target: root.scriptAt
+                    remembered: root.viewState.script || null
+                    onPositionChanged: (chapter, line) => root.rememberView({script: {chapter: chapter, line: line}})
                 }
             }
         }
