@@ -117,7 +117,7 @@ class VoiceScreenTest {
         showVoice(dark)
         scrollTo("voice_keys")
         rule.onNodeWithTag("module_vieneu_turbo").assertIsDisplayed()
-        rule.onNodeWithText("Tải (198 MB)").assertIsDisplayed()
+        rule.onNodeWithText("Tải (189 MB)").assertIsDisplayed()
         rule.onNodeWithTag("voice_keys").assertIsDisplayed()
         shot("modules_missing_${theme(dark)}")
     }
@@ -130,7 +130,7 @@ class VoiceScreenTest {
         showVoice(dark)
         scrollTo("voice_keys")
         rule.onNodeWithTag("module_vieneu_turbo_cancel", useUnmergedTree = true).assertIsDisplayed()
-        rule.onNodeWithText("Đang tải 198 MB · 40%").assertIsDisplayed()
+        rule.onNodeWithText("Đang tải 189 MB · 40%").assertIsDisplayed()
         shot("modules_downloading_${theme(dark)}")
     }
 
@@ -154,7 +154,7 @@ class VoiceScreenTest {
         showVoice(dark)
         scrollTo("voice_keys")
         rule.onNodeWithText("Đọc trực tiếp được · nhanh gấp 2,0 lần").assertIsDisplayed()
-        rule.onNodeWithText("Có bản mới · 12 MB").assertIsDisplayed()
+        rule.onNodeWithText("Có bản mới · 11 MB").assertIsDisplayed()
         shot("modules_installed_${theme(dark)}")
     }
 
@@ -424,7 +424,7 @@ class VoiceScreenTest {
     @Test fun keySheetDark() = keySheet(true)
 
     @Test
-    fun savingSendsTheKeyDownOnceAndClosesTheSheet() {
+    fun savingSendsTheKeyDownOnceAndOffersToCheckIt() {
         showKeys()
         tap("key_azure")
         rule.onNodeWithTag("key_field").performTextInput("secret-key-0001-WXYZ")
@@ -432,8 +432,9 @@ class VoiceScreenTest {
         rule.waitForIdle()
         tap("key_save")
         assertEquals(Triple("azure", "secret-key-0001-WXYZ", "southeastasia"), source.savedKeys.single())
-        rule.onNodeWithTag("key_sheet").assertDoesNotExist()
-        rule.onNodeWithText("••••WXYZ · Chưa dùng được").assertIsDisplayed()
+        rule.onNodeWithTag("key_sheet").assertIsDisplayed()
+        rule.onNodeWithText("Đã lưu khoá. Bấm “Kiểm tra” để thử.").assertIsDisplayed()
+        assertEquals("••••WXYZ", voice.keys.value.providers.first { it.id == "azure" }.masked)
     }
 
     @Test

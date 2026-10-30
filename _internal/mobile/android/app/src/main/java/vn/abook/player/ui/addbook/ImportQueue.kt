@@ -64,6 +64,7 @@ class ImportQueue(private val source: ImportSource, private val scope: Coroutine
 
     fun add() {
         if (flow.value.busy) return
+        if (flow.value.packageReview != null) { replacePackage(); return }
         val current = flow.value
         val id = current.currentId ?: return
         val staged = ref ?: return
@@ -79,11 +80,51 @@ class ImportQueue(private val source: ImportSource, private val scope: Coroutine
                 finish(id, if (existing) ImportStage.Existing else ImportStage.Added, bookId)
             } catch (error: Exception) {
                 if (error is CancellationException) throw error
+                if (flow.value.addingRest) {
+                    runCatching { source.discard(staged) }
+                    finish(id, ImportStage.Error)
+                    flow.value = flow.value.copy(items = ImportLogic.settle(flow.value.items, id, ImportStage.Error, failure("Chưa thêm được sách.", error)))
+                    advance()
+                    return@launch
+                }
                 flow.value = flow.value.copy(busy = false, problem = failure("Chưa thêm được sách.", error),
                     items = ImportLogic.settle(flow.value.items, id, ImportStage.Review))
                 return@launch
             }
             advance()
+        }
+    }
+
+    fun addRest() {
+        if (flow.value.busy) return
+        flow.value = flow.value.copy(addingRest = true)
+        val preview = flow.value.preview
+        if (preview != null) add()
+        else if (flow.value.packageReview != null) keepPackage()
+        else advance()
+    }
+
+    fun keepPackage() {
+        val p = flow.value.packageReview ?: return
+        val id = flow.value.currentId ?: return
+        finish(id, ImportStage.Existing, p.bookId)
+        advance()
+    }
+
+    private fun replacePackage() {
+        val item = flow.value.items.firstOrNull { it.id == flow.value.currentId } ?: return
+        flow.value = flow.value.copy(busy = true, problem = "")
+        worker = scope.launch {
+            try {
+                val result = source.replace(item)
+                changed()
+                finish(item.id, ImportStage.Added, result.bookId)
+                flow.value = flow.value.copy(notice = result.notice)
+                advance()
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                flow.value = flow.value.copy(busy = false, problem = failure("Chưa thay được sách", e))
+            }
         }
     }
 
@@ -131,7 +172,8 @@ class ImportQueue(private val source: ImportSource, private val scope: Coroutine
         progress.getOrPut(id) { MutableStateFlow(0f) }.value = 1f
         ref = null
         flow.value = flow.value.copy(items = ImportLogic.settle(flow.value.items, id, stage, bookId = bookId),
-            currentId = null, preview = null, choices = ImportChoices(), busy = false, problem = "")
+            currentId = null, preview = null, packageReview = null, choices = ImportChoices(), busy = false, problem = "",
+            notice = if (stage == ImportStage.Added) "Đã thêm sách vào Thư viện" else flow.value.notice)
     }
 
     private fun advance() {
@@ -146,21 +188,36 @@ class ImportQueue(private val source: ImportSource, private val scope: Coroutine
                     val result = source.prepare(item)
                     ref = result.ref
                     flow.value = flow.value.copy(items = flow.value.items.map { if (it.id == item.id) it.copy(name = result.name) else it })
-                    if (result.bookId != null) {
+                    if (result.packageReview != null) {
+                        flow.value = flow.value.copy(packageReview = result.packageReview, busy = false,
+                            items = ImportLogic.settle(flow.value.items, item.id, ImportStage.Review))
+                        if (flow.value.addingRest) { keepPackage(); return@launch }
+                    } else if (result.bookId != null) {
                         changed()
                         finish(item.id, if (result.existing) ImportStage.Existing else ImportStage.Added, result.bookId)
+                        flow.value = flow.value.copy(notice = result.notice)
                     } else {
                         val preview = requireNotNull(result.preview)
+                        if (flow.value.addingRest && (preview.chapters.isEmpty() || preview.title.isBlank())) {
+                            finish(item.id, ImportStage.Error)
+                            flow.value = flow.value.copy(items = ImportLogic.settle(flow.value.items, item.id, ImportStage.Error,
+                                if (preview.chapters.isEmpty()) "File này chưa có chương nào để thêm." else "File này chưa có tên sách - thêm riêng để đặt tên."))
+                            source.discard(result.ref!!)
+                            continue
+                        }
                         progress.getValue(item.id).value = 0.55f
                         flow.value = flow.value.copy(preview = preview, choices = ImportLogic.defaults(preview), busy = false,
                             items = ImportLogic.settle(flow.value.items, item.id, ImportStage.Review))
+                        if (flow.value.addingRest) { add(); return@launch }
                     }
                 } catch (error: Exception) {
                     if (error is CancellationException) throw error
                     flow.value = flow.value.copy(currentId = null, busy = false,
-                        items = ImportLogic.settle(flow.value.items, item.id, ImportStage.Error, error.message.orEmpty()))
+                        items = ImportLogic.settle(flow.value.items, item.id, ImportStage.Error, ImportLogic.openFailure(item, error.message)))
                 }
             }
+            if (ImportLogic.next(flow.value.items) == null && flow.value.currentId == null)
+                flow.value = flow.value.copy(addingRest = false)
         }
     }
 }

@@ -65,7 +65,7 @@ class VoiceStateTest {
         voice.download(viet, listOf("turbo"))
         val shown = voice.modules.value.getValue(viet).shown
         assertEquals(ModuleState.Error, shown?.state)
-        assertEquals("Máy không còn đủ chỗ trống", shown?.error)
+        assertEquals("Chưa tải được Giọng VieNeu. Máy không còn đủ chỗ trống", shown?.error)
         assertEquals(ModuleAction.Retry, VoiceText.rows(shown!!, listOf("turbo")).first().action)
         source.startError = null
         voice.retry(viet)

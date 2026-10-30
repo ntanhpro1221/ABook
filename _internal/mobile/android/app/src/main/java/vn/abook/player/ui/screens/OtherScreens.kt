@@ -21,6 +21,7 @@ fun StudioScreen(
     askNotifications: (() -> Unit) -> Unit = { it() },
     openNotificationSettings: () -> Unit = {},
     connect: () -> Unit = {},
+    sheets: SheetHost? = null,
 ) {
     val top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val scope = rememberCoroutineScope()
@@ -32,8 +33,23 @@ fun StudioScreen(
         ScreenHeader("Studio")
         Reveal(pair?.studio?.isNotEmpty() == true) {
             Column {
-                for (computer in pair?.studio?.values.orEmpty()) {
-                    DisclosureRow(computer.name, { scope.launch { problem = devices?.openStudio(computer.key).orEmpty() } }, "studio_${computer.key}", summary = "Tạo sách nói từ xa")
+                Caption("Tạo sách nói từ xa")
+                val computers = pair?.studio?.values.orEmpty().toList()
+                val openable = computers.filterNot { it.listenOnly }
+                if (openable.isEmpty()) {
+                    Caption(DeviceText.studioBlocked(computers.map { it.name }))
+                    Caption("Bật Điều khiển từ xa trên máy tính.")
+                } else {
+                    TextAction("Mở Studio", {
+                        fun open(computer: StudioComputer) { scope.launch { problem = devices?.openStudio(computer.key).orEmpty() } }
+                        if (openable.size == 1) open(openable[0])
+                        else sheets?.show { dismiss ->
+                            Column(Modifier.fillMaxWidth()) {
+                                BasicText("Mở Studio của máy nào?", style = Abook.type.sectionTitle)
+                                for (computer in openable) DisclosureRow(computer.name, { dismiss(); open(computer) }, "studio_${computer.key}")
+                            }
+                        }
+                    }, "studio_open")
                 }
             }
         }
@@ -41,6 +57,7 @@ fun StudioScreen(
             Column {
                 BasicText("Studio trên máy tính", style = Abook.type.sectionTitle)
                 RowHint("Nối máy tính để làm sách nói và xem tiến độ.")
+                Caption("Chưa ghép với máy tính nào")
                 TextAction("Nối máy tính", connect, "studio_connect")
             }
         }

@@ -62,7 +62,7 @@ object BookSave {
         val needed = roomNeeded(bookDir, previousSize)
         val free = spaceLeft(scratch)
         if (free < needed) {
-            throw Failed("Thiếu chỗ lưu (cần ${megabytes(needed)} MB, còn ${free.coerceAtLeast(0) shr 20} MB); giữ file đang có.")
+            throw Failed("Thiếu chỗ lưu (cần ${formatSize(needed)}, còn ${formatSize(free.coerceAtLeast(0))}); giữ file đang có.")
         }
         val built = File.createTempFile("save-", ".part", scratch)
         var backup: File? = null
@@ -137,7 +137,6 @@ object BookSave {
         }
     }
 
-    private fun megabytes(bytes: Long) = ((bytes + (1L shl 20) - 1) shr 20)
 
     private fun lostMessage(kept: File): String =
         "Lưu lỗi, chưa khôi phục được; bản cũ còn ở Cài đặt → Bản lưu cũ: ${kept.name}."

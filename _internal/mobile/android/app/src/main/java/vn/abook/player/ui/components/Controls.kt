@@ -129,8 +129,9 @@ fun <T : Choice> ChoiceRow(
         var line = 0
         var widest = 0
         for ((i, placeable) in placeables.withIndex()) {
-            val ink = inks[i].toInt().coerceAtMost(placeable.width)
-            if (x > 0 && x + ink > maxWidth) {
+            // BasicText.onTextLayout may run after this parent's measure on a real device. The measured
+            // placeable is authoritative now; using the deferred ink width puts fresh labels on top of one another.
+            if (x > 0 && x + placeable.width > maxWidth) {
                 x = 0
                 y += line
                 line = 0
@@ -140,7 +141,7 @@ fun <T : Choice> ChoiceRow(
             spans[i * 4 + 2] = placeable.width.toFloat()
             spans[i * 4 + 3] = placeable.height.toFloat()
             widest = max(widest, x + placeable.width)
-            x += ink + gap
+            x += placeable.width + gap
             line = max(line, placeable.height)
         }
         val width = if (constraints.hasBoundedWidth) constraints.maxWidth else widest

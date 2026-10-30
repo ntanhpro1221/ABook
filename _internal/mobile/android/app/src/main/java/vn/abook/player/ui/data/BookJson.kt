@@ -57,7 +57,7 @@ object BookJson {
         val all = chapters(manifest)
         val audio = all.filter { !it.textOnly }
         val entries = manifest.optJSONArray("chapters")
-        val textOnly = entries != null && entries.length() > 0 &&
+        val textOnly = !manifest.optBoolean("producing") && entries != null && entries.length() > 0 &&
             (0 until entries.length()).all { LibraryTree.textEntry(entries.getJSONObject(it)).isNotEmpty() }
         val complete = manifest.optBoolean("complete", true)
         val progress = if (textOnly) ListenLogic.textBookProgress(listen, all) else ListenLogic.bookProgress(listen, audio, complete)
@@ -83,6 +83,11 @@ object BookJson {
             remote = remote,
             imported = imported,
             part = link?.part,
+            producing = manifest.optBoolean("producing"),
+            paused = manifest.optBoolean("paused", !complete),
+            pauseReason = manifest.optString("pauseReason").takeIf { it == "battery" || it == "listener" },
+            etaPhase = manifest.optJSONObject("eta")?.optString("phase"),
+            etaSeconds = manifest.optJSONObject("eta")?.optDouble("seconds")?.takeIf { it.isFinite() },
         )
     }
 }

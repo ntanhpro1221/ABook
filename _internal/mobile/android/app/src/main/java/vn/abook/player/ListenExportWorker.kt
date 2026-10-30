@@ -191,7 +191,7 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
             work.deleteRecursively()
             val missing = mixer?.missing(chapters.map { it.id }) ?: 0
             val lost = if (missing > 0) " $missing đoạn chưa tải được nhạc — bạn tải lại nếu muốn xuất đủ nhạc." else ""
-            ListenExports.finished(context, bookId, "Đã xuất sách nói", "$title · ${result.chapters} chương, ${megabytes(result.size)} MB.$lost")
+            ListenExports.finished(context, bookId, "Đã xuất sách nói", "$title · ${result.chapters} chương, ${formatSize(result.size)}.$lost")
             val finished = event().put("finished", true).put("name", result.name).put("size", result.size).put("chapters", result.chapters)
                 .put("chaptersTotal", result.chaptersTotal).put("uri", file.toString())
             if (missing > 0) finished.put("musicMissing", missing)
@@ -245,5 +245,4 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
         }
     }
 
-    private fun megabytes(bytes: Long) = if (bytes < 10L shl 20) "%.1f".format(java.util.Locale.US, bytes / 1048576.0) else (bytes shr 20).toString()
 }

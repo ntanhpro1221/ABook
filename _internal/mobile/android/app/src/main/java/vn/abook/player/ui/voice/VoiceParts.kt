@@ -1,5 +1,7 @@
 package vn.abook.player.ui.voice
 
+import vn.abook.player.formatSize
+
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -87,7 +89,7 @@ fun KeyRow(provider: KeyProvider, onOpen: (() -> Unit)?) {
 fun TrackRow(track: MusicTrack, onOpen: () -> Unit) {
     ListItem(
         track.title, Modifier, onOpen, trackTag(track), hint = VoiceText.trackLine(track).ifEmpty { null },
-        trailing = { BasicText(VoiceText.size(track.bytes), style = Abook.type.bodySmall.copy(color = Abook.colors.text2)) },
+        trailing = { BasicText(formatSize(track.bytes), style = Abook.type.bodySmall.copy(color = Abook.colors.text2)) },
         below = if (track.analysed) null else ({ Caption(MusicText.UNANALYSED) }),
     )
 }

@@ -97,7 +97,7 @@ class BookEditor(val id: String, private val source: EditSource, private val sco
             if (!flush()) { flow.value = flow.value.copy(sending = false); return@launch }
             try {
                 val result = source.send(id)
-                flow.value = flow.value.copy(saved = result, draft = EditLogic.rebase(flow.value.saved, flow.value.draft, result))
+                flow.value = flow.value.copy(saved = result, draft = EditLogic.rebase(flow.value.saved, flow.value.draft, result), notice = SyncText.sent(result.pending, result.holder))
             } catch (error: Exception) {
                 if (error is CancellationException) throw error
                 val holder = flow.value.saved?.holder ?: "máy tính"

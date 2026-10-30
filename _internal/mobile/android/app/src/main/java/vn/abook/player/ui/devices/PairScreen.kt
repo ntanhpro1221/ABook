@@ -66,6 +66,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 @Composable
 fun PairScreen(devices: DevicesState, sheets: SheetHost, onBack: () -> Unit) {
     val ui by devices.pair.collectAsState()
+    val notice by devices.notice.collectAsState()
     LaunchedEffect(devices) { devices.openPair() }
     LaunchedEffect(ui.paired) { if (ui.paired) devices.loadStudio() }
     // Quay lại từ Cài đặt Android mà đã cho quyền "Thiết bị ở gần": tìm máy Bluetooth luôn.
@@ -78,7 +79,7 @@ fun PairScreen(devices: DevicesState, sheets: SheetHost, onBack: () -> Unit) {
         "Nối máy tính", onBack, "pair_screen",
         footer = if (ui.showForm) ({
             PrimaryButton(
-                "Kết nối", devices::connect,
+                if (ui.paired) "Ghép" else "Kết nối", devices::connect,
                 Modifier.fillMaxWidth().testTag("pair_connect"), enabled = form.ready && ui.attempt !is Attempt.Working,
             )
         }) else null,
@@ -86,6 +87,7 @@ fun PairScreen(devices: DevicesState, sheets: SheetHost, onBack: () -> Unit) {
     ) {
         val list = rememberLazyListState()
         if (ui.loaded) LazyColumn(Modifier.fillMaxSize().fadeEdges(list).testTag("pair_list"), state = list, contentPadding = PaddingValues(bottom = Dim.s16)) {
+            item("notice", "notice") { Reveal(notice.isNotBlank()) { RowHint(notice) } }
             devicesList(ui, devices, sheets)
             booksLists(ui, devices)
             if (ui.showForm) pairForm(ui, devices) else item("add_device", "action") {
@@ -150,7 +152,7 @@ private fun LazyListScope.pairForm(ui: PairUi, devices: DevicesState) {
     val form = ui.form
     if (ui.paired) item("form_title", "title") {
         Row(Modifier.fillMaxWidth().padding(top = Dim.sectionGap).heightIn(min = Dim.s48), verticalAlignment = Alignment.CenterVertically) {
-            BasicText("Thêm thiết bị", style = Abook.type.sectionTitle, modifier = Modifier.weight(1f))
+            BasicText("Thiết bị khác", style = Abook.type.sectionTitle, modifier = Modifier.weight(1f))
             TextAction("Huỷ", { devices.setAdding(false) }, "pair_cancel")
         }
     }
@@ -161,6 +163,10 @@ private fun LazyListScope.pairForm(ui: PairUi, devices: DevicesState) {
         }
     }
     item("method", "method") {
+        if (ui.paired) {
+            RowHint("Sách máy kia hiện trong Thư viện.")
+            TextAction("Ghép Bluetooth", { devices.setMethod(PairMethod.Bluetooth) }, "pair_extra_bluetooth")
+        }
         ChoiceSetting("Cách nối", PairMethod.entries, ui.method, { method, _ -> devices.setMethod(method) }, "pair_method")
     }
     when (ui.method) {
@@ -195,7 +201,7 @@ private fun LazyListScope.pairForm(ui: PairUi, devices: DevicesState) {
 private fun LazyListScope.wifiRows(ui: PairUi, devices: DevicesState) {
     val list = ui.wifiChoices
     when {
-        list.isNotEmpty() -> foundRows(list, ui, devices)
+        list.isNotEmpty() -> { item("wifi_title", "title") { SectionTitle("Máy tính tìm thấy") }; foundRows(list, ui, devices) }
         ui.scanning -> item("scanning", "status") { ListItem("Đang tìm máy", Modifier.testTag("pair_scanning"), below = { CreepProgress() }) }
         else -> item("none", "status") { NoneRow("Chưa thấy máy nào", devices::scan) }
     }
@@ -203,7 +209,15 @@ private fun LazyListScope.wifiRows(ui: PairUi, devices: DevicesState) {
 
 private fun LazyListScope.bluetoothRows(ui: PairUi, devices: DevicesState) {
     when (val bluetooth = ui.bluetooth) {
-        Bluetooth.Off, Bluetooth.Listing -> item("scanning", "status") { ListItem("Đang tìm máy", Modifier.testTag("pair_scanning"), below = { CreepProgress() }) }
+        Bluetooth.Off, Bluetooth.Explain -> item("permission", "permission") {
+            Column(Modifier.fillMaxWidth().padding(top = Dim.s12)) {
+                RowHint("Cho phép “Thiết bị ở gần” để tìm máy đã ghép.")
+                MoreInfo("Quyền Bluetooth", "Chỉ tìm máy đã ghép Bluetooth để nhận sách; ABook không dò hay kết nối thiết bị khác.", "bluetooth_reason")
+                TextAction("Cho phép", devices::requestBluetooth, "bluetooth_allow")
+                TextAction("Để sau", devices::deferBluetooth, "bluetooth_later")
+            }
+        }
+        Bluetooth.Listing -> item("scanning", "status") { ListItem("Đang tìm máy", Modifier.testTag("pair_scanning"), below = { CreepProgress() }) }
         Bluetooth.Denied -> item("denied", "status") {
             ListItem(
                 "Cần quyền Thiết bị ở gần", Modifier.testTag("pair_denied"), titleColor = Abook.colors.danger,
@@ -217,6 +231,7 @@ private fun LazyListScope.bluetoothRows(ui: PairUi, devices: DevicesState) {
             )
         }
         is Bluetooth.Devices -> {
+            item("bt_title", "title") { SectionTitle("Máy tính đã ghép Bluetooth") }
             val list = ui.bluetoothChoices
             if (list.isNotEmpty()) foundRows(list, ui, devices) else item("none", "status") {
                 NoneRow("Chưa có máy nào ghép Bluetooth. Ghép ở Cài đặt Android › Bluetooth rồi thử lại.", devices::findBluetooth)

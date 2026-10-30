@@ -108,9 +108,9 @@ fun VoiceSettings(env: SettingsEnv, sheets: SheetHost, openVoice: (VoicePage) ->
         if (repo.voices.value !is VoiceList.Ready) repo.loadVoices()
         repo.loadSpeed()
     }
-    LaunchedEffect(voice) { voice?.openVoice() }
+    androidx.lifecycle.compose.LifecycleResumeEffect(voice) { voice?.openVoice(); onPauseOrDispose { voice?.hideVoice() } }
     // Rời màn thì mẫu đang phát dừng ngay.
-    DisposableEffect(voice) { onDispose { voice?.stopSample() } }
+    DisposableEffect(voice) { onDispose { voice?.hideVoice() } }
 
     /** Chọn giọng mặc định; giọng trực tuyến chưa được bạn đồng ý gửi chữ thì hỏi trước, "Không" giữ giọng cũ. */
     fun choose(option: VoiceOption) {
@@ -153,6 +153,7 @@ fun VoiceSettings(env: SettingsEnv, sheets: SheetHost, openVoice: (VoicePage) ->
                         Column(Modifier.fillMaxWidth().padding(top = Dim.s24, bottom = Dim.s4)) {
                             BasicText(group.title, style = Abook.type.sectionTitle)
                             RowHint(detail)
+                            VoiceText.onlineNotice(group.provider)?.let { RowHint(it) }
                         }
                     }
                     items(group.voices, key = { "voice:${it.id}" }, contentType = { "voice" }) { option ->
@@ -187,10 +188,22 @@ fun VoiceSettings(env: SettingsEnv, sheets: SheetHost, openVoice: (VoicePage) ->
                     for (line in state.lines) {
                         BasicText(line, style = Abook.type.caption.copy(color = Abook.colors.text2), modifier = Modifier.padding(top = Dim.s4))
                     }
+                    for ((choice, bytes) in state.downloads) {
+                        TextAction("Tải (${vn.abook.player.formatSize(bytes)})", { voice?.download(ModuleKind.Supertonic, listOf(choice)) }, "speed_download")
+                    }
                 }
             }
         }
         if (voice != null) {
+            item(key = "modules_intro", contentType = "title") {
+                Column(Modifier.padding(top = Dim.s24)) {
+                    BasicText("Bộ giọng", style = Abook.type.sectionTitle)
+                    Caption("Tải, đo và quản lý")
+                    VoiceText.advice(modules[ModuleKind.Vieneu]?.status, modules[ModuleKind.Supertonic]?.status)?.let { Caption(it) }
+                    val notice by voice.notice.collectAsState()
+                    Reveal(notice.isNotBlank()) { Caption(notice) }
+                }
+            }
             for (kind in ModuleKind.entries) moduleItems(kind, modules[kind] ?: ModuleUi(), voice, sheets)
             item(key = "keys", contentType = "keys") {
                 ListSection {
@@ -271,7 +284,7 @@ private fun VoiceRow(
     }
     ListItem(
         voice.name, Modifier.semantics { selected = chosen }, onChoose, "voice_${voice.id}",
-        hint = failure ?: if (loading) "Đang lấy giọng" else null,
+        hint = failure ?: if (loading) "Đang lấy giọng" else listOfNotNull(VoiceText.gender(voice.gender), if (chosen) "Mặc định" else null).joinToString(" · ").ifBlank { null },
         hintColor = if (failure != null) colors.danger else colors.text2,
         titleColor = if (chosen) colors.accentText else colors.text,
         leading = {

@@ -1,5 +1,7 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.formatSize
+
 import vn.abook.player.ui.components.ListSection
 import vn.abook.player.ui.components.RowLine
 import vn.abook.player.ui.components.ListRow
@@ -57,12 +59,12 @@ private object AdvancedCopy {
 
     fun cache(bytes: Long?): String = when {
         bytes == null -> "Đang đo."
-        bytes > 0 -> "Bản đọc đã làm chiếm ${Fmt.size(bytes)} trên máy này."
+        bytes > 0 -> "Bản đọc đã làm chiếm ${formatSize(bytes)} trên máy này."
         else -> "Chưa có bản đọc đã lưu."
     }
 
     fun clearQuestion(bytes: Long): String =
-        "Dọn ${Fmt.size(bytes)} bản đọc đã làm của mọi cuốn? Máy sẽ đọc lại khi nghe. Sách và chỗ đang nghe giữ nguyên."
+        "Dọn ${formatSize(bytes)} bản đọc đã làm của mọi cuốn? Máy sẽ đọc lại khi nghe. Sách và chỗ đang nghe giữ nguyên."
 }
 
 /** Nâng cao: bộ nhớ (bản đọc đã làm), chẩn đoán (xem / gửi / xoá nhật ký), giới thiệu (phiên bản, mã nguồn, thành phần bên thứ ba). */
@@ -70,9 +72,10 @@ private object AdvancedCopy {
 fun AdvancedSettings(env: SettingsEnv, sheets: SheetHost, onBack: () -> Unit, modifier: Modifier = Modifier) {
     val repo = env.repo
     val cache by repo.cache.collectAsState()
-    var cleared by remember { mutableStateOf(false) }
+    val notice by repo.notice.collectAsState()
     LaunchedEffect(repo) { repo.loadCache() }
     SettingsPage(SettingsGroup.Advanced.label, onBack, SettingsGroup.Advanced.screenTag, modifier) {
+        MaintenanceSections(env, sheets)
         ListSection("Bộ nhớ", first = true) {
             val bytes = cache
             ListRow("Bản đọc đã làm", hint = AdvancedCopy.cache(bytes)) {
@@ -80,22 +83,24 @@ fun AdvancedSettings(env: SettingsEnv, sheets: SheetHost, onBack: () -> Unit, mo
                     TextAction("Dọn bản đọc", { sheets.show { dismiss -> ClearSheet(bytes, onClear = { repo.clearCache(); dismiss() }, dismiss) } }, "cache_clear")
                 }
             }
+            vn.abook.player.ui.components.MoreInfo("Tìm hiểu thêm", "Nghe lại đoạn đã đọc xong thì không phải chờ máy đọc lại; dọn đi thì lấy lại chỗ trống.", "cache_more")
         }
         ListSection("Chẩn đoán") {
-            NavRow("Nhật ký", { sheets.show { LogSheet(repo) } }, "logs_view", AdvancedCopy.LOG)
+            ActionRow("Nhật ký", "Xem", { sheets.show { LogSheet(repo) } }, "logs_view", AdvancedCopy.LOG)
+            vn.abook.player.ui.components.MoreInfo("Tìm hiểu thêm", AdvancedCopy.LOG_NOTE, "logs_more")
             RowLine()
             ActionRow("Gửi nhật ký", "Gửi", env.links.shareLogs, "logs_send", AdvancedCopy.SEND)
             RowLine()
             // Việc phá huỷ là hàng thường tên màu nguy hiểm (cả hàng là chỗ chạm): mỗi phần chỉ có một chữ hổ phách.
             ListItem(
-                "Xoá nhật ký", onClick = { repo.clearLogs(); cleared = true }, tag = "logs_clear", titleStyle = Abook.type.bodyStrong, titleColor = Abook.colors.danger,
-                hint = if (cleared) AdvancedCopy.CLEARED else AdvancedCopy.CLEAR,
+                "Xoá nhật ký", onClick = { repo.clearLogs() }, tag = "logs_clear", titleStyle = Abook.type.bodyStrong, titleColor = Abook.colors.danger,
+                hint = if (notice == "Đã xoá nhật ký") AdvancedCopy.CLEARED else AdvancedCopy.CLEAR,
             )
         }
         ListSection("Giới thiệu") {
             ListRow("Phiên bản") { BasicText(repo.version, style = Abook.type.bodySmall, modifier = Modifier.testTag("app_version")) }
             RowLine()
-            NavRow("Mã nguồn mở", env.links.openSource, "source_open", AdvancedCopy.SOURCE)
+            ActionRow("Mã nguồn mở", "Mở", env.links.openSource, "source_open", AdvancedCopy.SOURCE)
             RowLine()
             NavRow("Thành phần sử dụng", { sheets.show { ThirdPartySheet(repo) } }, "third_party")
         }
@@ -128,13 +133,19 @@ private fun ClearSheet(bytes: Long, onClear: () -> Unit, dismiss: () -> Unit) {
 private fun LogSheet(repo: SettingsRepo) {
     var lines by remember { mutableStateOf<List<String>?>(null) }
     var round by remember { mutableIntStateOf(0) }
-    LaunchedEffect(round) { lines = repo.logLines() }
+    var problem by remember { mutableStateOf("") }
+    LaunchedEffect(round) {
+        problem = ""
+        try { lines = repo.logLines() }
+        catch (e: Exception) { problem = "Không đọc được nhật ký"; lines = emptyList() }
+    }
     Column(Modifier.fillMaxWidth().testTag("log_sheet")) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             BasicText("Nhật ký của ABook", style = Abook.type.sectionTitle, modifier = Modifier.weight(1f))
             IconAction("Làm mới", { round++ }, "logs_refresh") { RefreshIcon(Abook.colors.text2) }
         }
         Caption(AdvancedCopy.LOG_NOTE, Modifier.padding(bottom = Dim.s8))
+        vn.abook.player.ui.components.Reveal(problem.isNotEmpty()) { Caption(problem) }
         val shown = lines
         // Mỗi lần đọc một danh sách mới, mở sẵn ở dòng cuối (mới nhất) - không cuộn sau khi đã vẽ.
         val list = remember(shown) { LazyListState(shown?.lastIndex?.coerceAtLeast(0) ?: 0) }

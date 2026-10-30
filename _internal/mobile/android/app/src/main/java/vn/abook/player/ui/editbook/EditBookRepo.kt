@@ -67,18 +67,11 @@ class EditBookRepo(private val context: Context, private val library: LibraryRep
         val edits = BookEdits.load(dir)
         val pending = EditsSync.pending(dir, edits)
         val sync = EditsSync.view(dir, pending)
+        val holder = SyncLink.holderName(context, id).ifEmpty { "máy tính" }
         val last = sync.optJSONObject("last")
         EditSnapshot(id, book.optString("title"), book.optString("author").takeUnless { it == "null" }.orEmpty(), chapters,
             LibraryRepo.coverOf(id), Playlists.isTextBook(book), Store.editDestination(id) != null,
-            SyncLink.holderName(context, id).ifEmpty { "máy tính" }, pending,
-            last?.optString("error").orEmpty().ifEmpty {
-                val waiting = last?.optInt("waiting") ?: 0
-                when {
-                    last?.optString("state") == EditsSync.FAILED -> "Chưa gửi được - sẽ thử lại."
-                    waiting > 0 -> "$waiting thay đổi chờ duyệt trên máy tính."
-                    else -> ""
-                }
-            }, BookEdits.count(edits))
+            holder, pending, SyncText.note(sync, holder), BookEdits.count(edits))
     }
 
     override suspend fun save(id: String, diff: EditDiff): EditSnapshot = withContext(Dispatchers.IO) {

@@ -1,5 +1,7 @@
 package vn.abook.player.ui.voice
 
+import vn.abook.player.formatSize
+
 import androidx.compose.runtime.Immutable
 import org.json.JSONObject
 import java.util.Locale
@@ -122,6 +124,7 @@ data class KeyProvider(
     val regionValue: String,
     val valid: Boolean,
     val voices: Int,
+    val timings: String = "estimated",
 )
 
 /** Kết quả "Kiểm tra" một khoá: câu nói được cho người nghe. */
@@ -133,7 +136,7 @@ object KeyJson {
         val limits = json.optJSONObject("limits")
         return KeyProvider(
             json.optString("id"), json.optString("name"), limits?.optString("free").orEmpty(), limits?.optBoolean("region") == true,
-            json.optBoolean("hasKey"), json.optString("masked"), json.optString("region"), json.optBoolean("valid"), json.optInt("voices"),
+            json.optBoolean("hasKey"), json.optString("masked"), json.optString("region"), json.optBoolean("valid"), json.optInt("voices"), limits?.optString("timings", "estimated") ?: "estimated",
         )
     }
 
@@ -200,14 +203,18 @@ data class ModuleRow(
 )
 
 object VoiceText {
-    /** Cỡ file cho người nghe, MỘT hệ thập phân (studio/musicLocal.ts `formatSize`): "850 MB", "1,2 GB"; dưới 10 MB một chữ số thập phân. */
-    fun size(bytes: Long): String {
-        if (bytes >= 1_000_000_000) return String.format(Locale.ROOT, "%.2f", bytes / 1e9).replace('.', ',') + " GB"
-        val megabytes = bytes / 1e6
-        if (megabytes < 1) return "${maxOf(1L, Math.round(bytes / 1e3))} KB"
-        return if (megabytes < 10) String.format(Locale.ROOT, "%.1f", megabytes).replace('.', ',') + " MB" else "${Math.round(megabytes)} MB"
+    fun gender(value: String): String? = when (value.lowercase()) { "male", "nam" -> "Nam"; "female", "nữ" -> "Nữ"; else -> null }
+    fun onlineNotice(provider: String): String? = when {
+        provider == "edge" -> "Giọng Edge gửi chữ của sách tới máy chủ Microsoft để đọc."
+        provider in KEYED -> "Giọng ${KEYED[provider]} gửi chữ của sách tới ${KEYED[provider]} bằng khoá của bạn - có thể bị tính tiền vào tài khoản của bạn."
+        else -> null
     }
-
+    fun advice(vieneu: ModuleStatus?, supertonic: ModuleStatus?): String? {
+        if (vieneu == null || supertonic == null || vieneu.installedAny || supertonic.installedAny) return null
+        if (vieneu.state == ModuleState.Unsupported) return null
+        val name = tierName(if (vieneu.recommended == "nano") "nano" else "turbo").replaceFirstChar { it.lowercase() }
+        return "Nên dùng $name; chỉ cần tải một bộ giọng."
+    }
     private fun seconds(value: Double): String = String.format(Locale.ROOT, "%.1f", value).replace('.', ',')
 
     /** Tên một tầng giọng (vieneuModule.ts `tierName`). */
@@ -225,7 +232,7 @@ object VoiceText {
 
     /** Câu nhắc trước khi tải bằng dữ liệu di động (null khi không cần nhắc). */
     fun metered(status: ModuleStatus, bytes: Long): String? =
-        if (status.metered && bytes > 0) "Điện thoại đang dùng dữ liệu di động - tải ${size(bytes)} có thể tốn tiền mạng. Nên chờ có Wi-Fi." else null
+        if (status.metered && bytes > 0) "Điện thoại đang dùng dữ liệu di động - tải ${formatSize(bytes)} có thể tốn tiền mạng. Nên chờ có Wi-Fi." else null
 
     /** Câu nói kết quả tự đo, theo điều người nghe cần biết (vieneuModule.ts `benchmarkLabel`). */
     fun benchmark(tier: String, result: ModuleBench, slow: Double): String {
@@ -278,12 +285,12 @@ object VoiceText {
         val lead = if (choice.recommended) "$RECOMMENDED · " else ""
         return when {
             status.state == ModuleState.Downloading && mine ->
-                ModuleRow(choice.id, title, "Đang tải ${size(status.total)} · ${status.percent}%", false, ModuleAction.Cancel, true)
+                ModuleRow(choice.id, title, "Đang tải ${formatSize(status.total)} · ${status.percent}%", false, ModuleAction.Cancel, true)
             status.state == ModuleState.Downloading -> ModuleRow(choice.id, title, lead + choice.detail, false, ModuleAction.None, false)
             status.state == ModuleState.Error && mine -> ModuleRow(choice.id, title, status.error, true, ModuleAction.Retry, false)
             else -> {
                 val cancelled = if (status.cancelled && mine) "$CANCELLED " else ""
-                ModuleRow(choice.id, title, cancelled + lead + choice.detail, false, ModuleAction.Download(if (choice.bytes > 0) "Tải (${size(choice.bytes)})" else "Dùng"), false)
+                ModuleRow(choice.id, title, cancelled + lead + (if (choice.bytes == 0L) "Đã có sẵn" else choice.detail), false, ModuleAction.Download(if (choice.bytes > 0) "Tải (${formatSize(choice.bytes)})" else "Dùng"), false)
             }
         }
     }
@@ -292,10 +299,10 @@ object VoiceText {
         val tier = status.benchmark[choice.id]
         val hint = when {
             status.benchmarking -> "Đang thử giọng vừa tải, vài giây"
-            status.state == ModuleState.Outdated -> "Có bản mới · ${size(status.outdatedBytes)}"
+            status.state == ModuleState.Outdated -> "Có bản mới · ${formatSize(status.outdatedBytes)}"
             tier != null && tier.rtf >= status.slowRtf -> "Chậm hơn tốc độ nghe · dùng “Làm trước”"
             tier != null && tier.rtf > 0 -> "Đọc trực tiếp được · nhanh gấp ${seconds(1 / tier.rtf)} lần"
-            else -> "Đã có trên máy"
+            else -> "Đã có"
         }
         return ModuleRow(choice.id, title, hint, false, ModuleAction.Manage, false)
     }

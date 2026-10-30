@@ -161,6 +161,7 @@ fun EditBookScreen(
                     }
                 }
                 item("problem", "problem") { InlineProblem(state.problem, retry, "edit_problem") }
+                item("notice", "notice") { Reveal(state.notice.isNotBlank()) { Caption(state.notice) } }
                 if (book.sendable && (book.pending > 0 || state.sending)) item("send", "send") {
                     Column(Modifier.padding(top = Dim.sectionGap)) {
                         ActionRow(
@@ -172,6 +173,7 @@ fun EditBookScreen(
                         InlineProblem(state.sendProblem, send, "send_problem")
                     }
                 }
+                if (book.sendable && book.pending == 0 && book.syncNote.isNotBlank()) item("sent", "sent") { Caption(book.syncNote) }
                 item("chapters_title", "section") { SectionTitle("Chương") }
                 items(draft.chapters, key = { it.id }, contentType = { "chapter" }) { row ->
                     Column {
@@ -203,7 +205,7 @@ private fun CoverButton(book: EditSnapshot, draft: EditDraft, covers: CoverLoade
     val colors = Abook.colors
     Box(
         Modifier.width(112.dp + Dim.s8).then(if (enabled) Modifier.pressable(onClick = onClick) else Modifier)
-            .semantics { contentDescription = "Đổi ảnh bìa" }.testTag("edit_cover"),
+            .semantics { contentDescription = if (book.cover == null) "Chọn ảnh bìa" else "Đổi ảnh bìa" }.testTag("edit_cover"),
     ) {
         BookCover(book.cover, draft.title, null, covers, 112.dp, Modifier.width(112.dp).padding(bottom = Dim.s8))
         Box(

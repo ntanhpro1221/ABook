@@ -296,6 +296,7 @@ fun BookScreen(
                                     livePosition = if (live) clock else null,
                                     durationMs = if (live) player.durationMs else 0L,
                                     prepared = chapter.id in preparedIds,
+                                    producing = shown.producing,
                                     onPlay = {
                                         if (live) actions.toggle() else actions.playChapter(shown.id, chapter.id, chapter.resumeAt)
                                     },
@@ -554,6 +555,7 @@ private fun ChapterRow(
     livePosition: PlayerClock?,
     durationMs: Long,
     prepared: Boolean,
+    producing: Boolean = false,
     onPlay: () -> Unit,
     onMore: () -> Unit,
 ) {
@@ -585,7 +587,7 @@ private fun ChapterRow(
             Spacer(Modifier.width(Dim.s12))
             Column(Modifier.weight(1f)) {
                 BasicText(chapter.title, style = Abook.type.body.copy(color = title, fontWeight = if (current) FontWeight.Medium else FontWeight.Normal))
-                RowHint(BookPage.chapterLine(chapter))
+                RowHint(BookPage.chapterLine(chapter, producing))
                 if (prepared) PreparedMark()
                 val partly = chapter.heard > 0f && chapter.heard < 1f
                 if (livePosition != null || partly) {

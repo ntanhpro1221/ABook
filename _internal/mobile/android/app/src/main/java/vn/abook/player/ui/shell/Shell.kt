@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -193,6 +194,10 @@ fun AppShell(
         )
     }
     val window = shell.window
+    DisposableEffect(shell) {
+        settings.repo.openAdvanced = { shell.nav.push(Destination.Settings(SettingsGroup.Advanced)) }
+        onDispose { settings.repo.openAdvanced = {} }
+    }
     window.otherPlayers = companion?.let { repo ->
         { shell.sheets.show { dismiss -> vn.abook.player.ui.devices.OtherPlayersSheet(repo, player, dismiss) } }
     }
@@ -304,6 +309,7 @@ fun AppShell(
                 }
                 if (deletions != null) vn.abook.player.ui.components.UndoBar(deletions,
                     backEnabled = shell.sheets.current == null && !window.expanded, aboveNavigation = !nav.canPop)
+                vn.abook.player.ui.screens.NotesBar(settings.repo.notes)
                 vn.abook.player.ui.components.Reveal(!nav.canPop) {
                     RootPlaybackArea(shell, playerState, player, covers, openPlayer, companion)
                 }
@@ -385,6 +391,7 @@ private fun RootTabs(
                     )
                 }
                 Tab.Studio -> StudioScreen(companion = companion, devices = settings.devices, askNotifications = askNotifications,
+                    sheets = shell.sheets,
                     openNotificationSettings = settings.links.openNotificationSettings,
                     connect = { shell.nav.push(Destination.Devices(DevicesPage.Pair)) })
                 Tab.Settings -> SettingsScreen(

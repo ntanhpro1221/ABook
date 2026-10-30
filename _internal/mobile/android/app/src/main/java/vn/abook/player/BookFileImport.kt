@@ -178,7 +178,7 @@ object BookFileImport {
 
     /** `keptEdits`: số thay đổi của người nghe đã có sẵn trên cuốn này và được giữ nguyên (0 = cuốn mới hay chưa sửa gì) - giao
      *  diện nói "giữ nguyên N chỉnh sửa của bạn". */
-    data class Imported(val id: String, val title: String, val keptEdits: Int = 0, val brokenMusic: Int = 0, val how: String = "new")
+    data class Imported(val id: String, val title: String, val keptEdits: Int = 0, val brokenMusic: Int = 0, val how: String = "new", val incomingTitle: String = "")
 
     /** Chép từ content:// (trình quản lý file, Zalo, Drive...) vào bộ nhớ đệm rồi nhập. */
     fun import(context: Context, uri: Uri, allowOlder: Boolean = false): Imported {
@@ -234,11 +234,10 @@ object BookFileImport {
     private fun requireRoom(dir: File, need: Long, freeSpace: (File) -> Long = { it.usableSpace }) {
         val free = freeSpace(dir)
         if (free < need) {
-            throw Refused("Thiếu chỗ mở sách (cần ${gigabytes(need)}, còn ${gigabytes(free)}) — bạn dọn ổ rồi thử lại.")
+            throw Refused("Thiếu chỗ mở sách (cần ${formatSize(need)}, còn ${formatSize(free)}) — bạn dọn ổ rồi thử lại.")
         }
     }
 
-    private fun gigabytes(bytes: Long) = "%.1f GB".format(java.util.Locale.ROOT, bytes / (1L shl 30).toDouble()).replace('.', ',')
 
     /** `separate`: người dùng chọn "Thêm bản riêng" dù cuốn đã có - không tìm cuốn trùng, luôn là cuốn mới với mã riêng. */
     fun importFile(file: File, separate: Boolean = false, allowOlder: Boolean = false, freeSpace: (File) -> Long = { it.usableSpace }): Imported {
@@ -328,7 +327,7 @@ object BookFileImport {
                 current.optString("audioUpdatedAt").ifEmpty { current.optJSONObject("package")?.optString("createdAt") ?: "" },
                 book.optString("audioUpdatedAt").ifEmpty { pack.optString("createdAt") })
             if (disposition in setOf("older", "conflict") && !allowOlder) {
-                return Imported(target, Store.manifest(target)?.optString("title") ?: current!!.optString("title"), how = disposition)
+                return Imported(target, Store.manifest(target)?.optString("title") ?: current!!.optString("title"), how = disposition, incomingTitle = book.optString("title"))
             }
             // Chỉ cuốn mở từ file mới nhận phần sửa của người nghe; cuốn của máy tính thì sửa ở máy ấy.
             val editable = existing == null || Store.isImported(existing)
@@ -346,7 +345,7 @@ object BookFileImport {
                         if (layout.files.has("project/$name")) zip.getEntry(resolve("project/$name"))?.let { readLimited(zip, it, MAX_JSON_BYTES.toInt()) } else null
                     }
                 }
-                return Imported(target, Store.manifest(target)?.optString("title") ?: current.optString("title"), keptEdits, how = "existing")
+                return Imported(target, Store.manifest(target)?.optString("title") ?: current.optString("title"), keptEdits, how = "existing", incomingTitle = book.optString("title"))
             }
             val books = File(Store.root, "books").apply { mkdirs() }
             // File dự án: chỗ cần là cỡ những gì sẽ giải ra (phần nghe, bản chụp, xưởng), không phải cả gói.

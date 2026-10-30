@@ -119,6 +119,7 @@ class DevicesState(
     }
 
     private fun message(error: Throwable?) = error?.message?.takeIf { it.isNotBlank() } ?: "Chưa làm được"
+    val notice = MutableStateFlow("")
 
     // ---- trang nhóm ----------------------------------------------------------------------------------------------------
 
@@ -136,8 +137,8 @@ class DevicesState(
     /** Đổi tên điện thoại này (máy kia thấy nó bằng tên ấy). Null = xong, khác null = câu lỗi. */
     suspend fun rename(name: String): String? {
         val result = attempt { source.setDeviceName(name) }
-        result.onSuccess { clean -> pairFlow.update { it.copy(link = it.link.copy(deviceName = clean)) } }
-        return result.exceptionOrNull()?.let { message(it) }
+        result.onSuccess { clean -> pairFlow.update { it.copy(link = it.link.copy(deviceName = clean)) }; notice.value = "Đã đổi tên thành “$clean”" }
+        return result.exceptionOrNull()?.let { DeviceText.failure("Chưa đổi được tên", message(it)) }
     }
 
     // ---- Nối máy tính --------------------------------------------------------------------------------------------------
@@ -229,9 +230,7 @@ class DevicesState(
         scope.launch {
             pairFlow.update { it.copy(bluetooth = Bluetooth.Listing, form = it.form.copy(manual = false, picked = null), attempt = Attempt.Idle) }
             if (!source.nearbyAllowed()) {
-                links.askNearby { granted ->
-                    if (granted) findBluetooth() else pairFlow.update { it.copy(bluetooth = Bluetooth.Denied) }
-                }
+                pairFlow.update { it.copy(bluetooth = Bluetooth.Explain) }
                 return@launch
             }
             attempt { source.bluetoothDevices() }
@@ -242,6 +241,11 @@ class DevicesState(
             if (now.method == PairMethod.Bluetooth && choices.size == 1 && now.form.picked == null) pick(choices.first())
         }
     }
+
+    fun requestBluetooth() = links.askNearby { granted ->
+        if (granted) findBluetooth() else pairFlow.update { it.copy(bluetooth = Bluetooth.Denied) }
+    }
+    fun deferBluetooth() = pairFlow.update { it.copy(bluetooth = Bluetooth.Off) }
 
     /** Quay lại từ Cài đặt Android mà quyền đã bật: tìm máy luôn, không bắt bấm lại. */
     fun recheckBluetooth() {
@@ -295,11 +299,12 @@ class DevicesState(
         pairFlow.update { it.copy(attempt = Attempt.Working(name)) }
         scope.launch {
             attempt { source.pair(address, form.digits, extra = state.paired) }
-                .onSuccess {
+                .onSuccess { pairedName ->
+                    notice.value = if (state.paired) "Đã ghép $pairedName" else "Đã kết nối với $pairedName"
                     pairFlow.update { it.copy(form = PairForm(), attempt = Attempt.Idle, adding = false, found = emptyList(), bluetooth = Bluetooth.Off) }
                     reload()
                 }
-                .onFailure { error -> pairFlow.update { it.copy(attempt = Attempt.Failed(message(error), (error as? DeviceFailure)?.technical)) } }
+                .onFailure { error -> pairFlow.update { it.copy(attempt = Attempt.Failed(DeviceText.failure("Chưa ghép được", message(error)), (error as? DeviceFailure)?.technical)) } }
         }
     }
 
@@ -321,8 +326,10 @@ class DevicesState(
 
     /** Bỏ ghép máy tính chính. Null = xong. */
     suspend fun unpairMain(): String? {
+        val name = pairFlow.value.link.shownName
         val result = attempt { source.unpair() }
         if (result.isFailure) return message(result.exceptionOrNull())
+        notice.value = "Đã bỏ ghép $name"
         pairFlow.update { it.copy(devices = it.devices.filterNot { device -> device.main }, sections = it.sections.filterNot { s -> s.source == null }) }
         reloadJob?.cancel()
         reloadJob = scope.launch { reload() }
@@ -335,9 +342,11 @@ class DevicesState(
 
     /** Bỏ ghép thiết bị `key`. Null = xong, khác null = câu lỗi (thiết bị vẫn ghép). */
     suspend fun forget(key: String, choice: ForgetChoice): String? {
+        val name = pairFlow.value.devices.firstOrNull { it.key == key }?.name ?: key
         val result = attempt { source.forget(key, choice) }
         if (result.isFailure) return message(result.exceptionOrNull())
         pairFlow.update { it.copy(devices = it.devices.filterNot { device -> device.key == key }, sections = it.sections.filterNot { s -> s.source == key }) }
+        notice.value = "Đã bỏ ghép $name"
         syncStreamed()
         return null
     }
@@ -372,7 +381,7 @@ class DevicesState(
     }
 
     fun cancelDownload(id: String) {
-        scope.launch { attempt { source.cancelDownload(id) } }
+        scope.launch { attempt { source.cancelDownload(id) }.onFailure { e -> pairFlow.update { it.copy(failed = it.failed + (id to DeviceText.failure("Chưa huỷ được", message(e)))) } } }
     }
 
     private suspend fun onDownload(event: DownloadEvent) {
@@ -380,7 +389,7 @@ class DevicesState(
         val running = event.running
         pairFlow.update { state ->
             val failed = when {
-                event.error != null -> state.failed + (event.id to event.error)
+                event.error != null -> state.failed + (event.id to DeviceText.failure("Tải bị gián đoạn", event.error))
                 event.finished || event.cancelled -> state.failed - event.id
                 else -> state.failed
             }
@@ -396,9 +405,12 @@ class DevicesState(
 
     // ---- Chia sẻ thư viện ----------------------------------------------------------------------------------------------
 
+    private var shareVisible = false
     fun openShare() {
+        shareVisible = true
         scope.launch { loadShare() }
     }
+    fun closeShare() { shareVisible = false; pollJob?.cancel() }
 
     private suspend fun loadShare() {
         attempt { source.share() }.onSuccess(::setShare)
@@ -412,7 +424,7 @@ class DevicesState(
     /** Đang hiện mã ghép: hỏi lại mỗi vài giây để thấy máy mới vào danh sách hay mã hết hạn. */
     private fun pollCode(share: Share) {
         pollJob?.cancel()
-        if (share.code == null) return
+        if (share.code == null || !shareVisible) return
         pollJob = scope.launch {
             while (isActive) {
                 delay(pollMs)

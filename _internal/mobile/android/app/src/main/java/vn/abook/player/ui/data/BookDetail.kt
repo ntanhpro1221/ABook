@@ -150,7 +150,9 @@ object BookPage {
     /** Dòng tình trạng dưới dòng trên (không hộp, không viên thuốc): sách chỉ có chữ, sách chưa đủ chương, sách nghe thẳng. null = không có gì để nói. */
     fun statusLine(book: ListenBook): String? = when {
         book.textOnly -> "Chỉ có chữ · nghe bằng giọng đọc"
-        !book.complete && book.remote != null -> "${book.remote.deviceName.replaceFirstChar { it.uppercase() }} còn đang làm, chương mới hiện ở đây khi xong"
+        book.producing && book.pauseReason != null -> ProductionText.upcoming(book)
+        book.producing -> "Đang thu; chương mới tự hiện khi xong."
+        !book.complete && book.remote != null -> "Chưa đủ chương; đang dừng thu."
         !book.complete && book.imported -> "Chưa đủ chương; mở file sách mới hơn để nghe tiếp."
         !book.complete -> "Sách này có ${book.chaptersAvailable}/${book.chaptersTotal} chương đã thu - các chương sau chưa có audio"
         book.remote != null -> "Nghe thẳng từ ${book.remote.deviceName} - chương nghe tới được giữ lại trên máy này"
@@ -172,8 +174,8 @@ object BookPage {
     }
 
     /** Dòng phụ của một chương: thời lượng (chương chữ chưa nghe thì không có) + đã nghe bao nhiêu phần trăm; chưa có audio thì nói thế. */
-    fun chapterLine(chapter: ChapterLine): String {
-        if (!chapter.playable) return "Chưa có audio"
+    fun chapterLine(chapter: ChapterLine, producing: Boolean = false): String {
+        if (!chapter.playable) return if (producing) "Đang thu âm" else "Chưa có audio"
         val parts = ArrayList<String>(2)
         if (chapter.duration > 0) parts += Fmt.length(chapter.duration)
         when {
