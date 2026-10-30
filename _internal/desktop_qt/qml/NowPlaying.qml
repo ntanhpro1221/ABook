@@ -336,13 +336,15 @@ Item {
                     Item {
                         width: parent.width
                         height: elapsed.implicitHeight
-                        Text {
+                        ClockLabel {
                             id: elapsed
+                            objectName: "nowElapsed"
                             text: Player.clockText(seek.shownPosition)
                             color: Theme.text2
                             font.pixelSize: Theme.sizeCaption
                         }
-                        Text {
+                        ClockLabel {
+                            objectName: "nowRemaining"
                             anchors.right: parent.right
                             text: "-" + Player.clockText(Math.max(0, seek.total - seek.shownPosition) / Player.rate)
                             color: Theme.text2
@@ -401,6 +403,8 @@ Item {
                             text: Player.sleepKind === "minutes"
                                 ? (Player.clock.sleepLeft < 60 ? Math.max(1, Math.ceil(Player.clock.sleepLeft)) + " giây" : Math.ceil(Player.clock.sleepLeft / 60) + " phút")
                                 : (Player.sleepKind === "chapter" ? "Hết chương" : "Hẹn giờ")
+                            // Đếm ngược đổi tại chỗ: giữ chỗ cho hai chữ số, Flow không đẩy các nút bên cạnh mỗi phút / giây
+                            reserve: Player.sleepKind === "minutes" ? ["00 phút", "00 giây"] : []
                             active: Player.sleepKind !== "off"
                             tip: "Hẹn giờ tắt"
                             Accessible.name: Player.sleepKind === "minutes"
@@ -510,7 +514,7 @@ Item {
         id: more; objectName: "nowMoreMenu"; anchorItem: moreButton; panelWidth: 320; maxHeight: 600
         Column {
             width: parent.width; spacing: Theme.s8
-            Text {
+            ClockLabel {
                 width: parent.width; wrapMode: Text.Wrap; color: Theme.text2; font.pixelSize: Theme.sizeCaption
                 text: {
                     const p = LibraryLogic.progress(root.currentBook)

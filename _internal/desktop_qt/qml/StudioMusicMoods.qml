@@ -75,7 +75,7 @@ Column {
                 font.pixelSize: Theme.sizeBodySmall
             }
         }
-        Text {
+        ClockLabel {
             width: parent.width
             visible: root.phase === "downloading"
             text: "Đang tải phần đọc không khí" + (root.percent !== null ? " - " + root.percent + "%" : "")

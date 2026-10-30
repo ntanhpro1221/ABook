@@ -88,9 +88,9 @@ Item {
                             Accessible.role: Accessible.ProgressBar
                             Accessible.name: `Tiến độ: ${row.modelData.title}`
                             Accessible.description: percent.text
-                            Rectangle { width: parent.width * Math.max(0, Math.min(1, row.modelData.progress ? row.modelData.progress.overall : 0)); height: parent.height; radius: Theme.radiusControl; color: row.modelData.queuePosition != null ? Theme.text3 : Theme.accent; Behavior on width { NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionMedium } } }
+                            Rectangle { width: parent.width * Math.max(0, Math.min(1, row.modelData.progress ? row.modelData.progress.overall : 0)); height: parent.height; radius: Theme.radiusControl; color: row.modelData.queuePosition != null ? Theme.text3 : Theme.accent }   // Phần tô theo giá trị tự đổi: vẽ thẳng, không Behavior (luật chủ sách 30-10; điện thoại native cũng vậy)
                         }
-                        Text { id: percent; text: row.modelData.queuePosition != null ? "Chờ" : row.modelData.starting ? "…" : Math.round((row.modelData.progress ? row.modelData.progress.overall : 0) * 100) + "%"; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
+                        ClockLabel { id: percent; text: row.modelData.queuePosition != null ? "Chờ" : row.modelData.starting ? "…" : Math.round((row.modelData.progress ? row.modelData.progress.overall : 0) * 100) + "%"; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
                     }
                 }
                 }

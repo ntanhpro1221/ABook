@@ -120,7 +120,7 @@ Item {
             font.weight: 600
         }
         // Lỗi tải không ở đầu thẻ mà ngay trên nút Thử lại, nơi người dùng đang nhìn
-        VoiceNote { width: parent.width; objectName: "moduleLabel"; text: root.ready && !root.failed ? VoiceLogic.moduleLabel(root.shown, root.copy) : ""; px: Theme.sizeBodySmall }
+        VoiceNote { width: parent.width; objectName: "moduleLabel"; tabular: true; text: root.ready && !root.failed ? VoiceLogic.moduleLabel(root.shown, root.copy) : ""; px: Theme.sizeBodySmall }
         VoiceBlock {
             width: parent.width
             show: root.downloading
@@ -142,7 +142,7 @@ Item {
                         height: parent.height
                         radius: height / 2
                         color: Theme.accent
-                        Behavior on width { enabled: !Theme.reduceMotion; NumberAnimation { duration: Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard } }
+                        // Phần tô theo giá trị tự đổi: vẽ thẳng, không Behavior (luật chủ sách 30-10; điện thoại native cũng vậy)
                     }
                 }
                 Button {
@@ -345,7 +345,7 @@ Item {
         VoiceBlock {
             width: parent.width
             show: root.failed
-            Text {
+            ClockLabel {
                 objectName: "moduleError"
                 width: parent.width
                 text: root.failed ? VoiceLogic.moduleLabel(root.shown, root.copy) : ""
