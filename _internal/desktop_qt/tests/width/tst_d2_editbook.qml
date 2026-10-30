@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "VisualReady.js" as VisualReady
 import ABook
 
 // "Sửa sách" + "Tìm bìa" (EditBook.qml, CoverSearch.qml, EditBookRename.qml, EditBookSaveAs.qml, EditBookItems.qml): hành vi và ảnh.
@@ -35,7 +36,7 @@ Item {
         }
         function reply(path, handler) { const r = DesktopApi.responses; r[path] = handler; DesktopApi.responses = r }
         function init() {
-            Theme.reduceMotion = true
+            Theme.reduceMotion = false
             DesktopApi.reset()
             Api.bind(DesktopApi, Theme)
             Api.preferences = {theme: "system"}
@@ -63,7 +64,7 @@ Item {
             return item
         }
         function calls(method, path) { return DesktopApi.requests.filter(r => r.method === method && r.path === path) }
-        function settle() { wait(350) }
+        function render() { host.Window.window.update(); VisualReady.render(this, host.Window.window, host, qtVisualReady) }
 
         // ---------- hai ô, hai lần lưu: lưu ô này không mất chữ gõ dở ở ô kia ----------
         function test_titleSaveKeepsAuthorDraft() {
@@ -138,8 +139,7 @@ Item {
             compare(Api.notice, "")
             const audio = make(editFactory)
             audio.begin(studioBook())                               // sách đã có giọng: không có ô tác giả, có mục nhạc nền
-            settle()
-            verify(!findChild(audio, "editAuthor").visible || findChild(audio, "editAuthor").height === 0 || findChild(audio, "editAuthor").parent.height === 0)
+            tryVerify(function() { return !findChild(audio, "editAuthor").visible || findChild(audio, "editAuthor").height === 0 || findChild(audio, "editAuthor").parent.height === 0 })
         }
 
         // ---------- ảnh bìa ----------
@@ -172,8 +172,7 @@ Item {
             compare(query.text, "Throne of Magical Arcana")        // bộ truyện, không kèm "Tập 16"
             const panel = findChild(dialog, "coverSearchPanel")
             compare(panel.results.length, 2)
-            settle()
-            compare(findChild(dialog, "coverGrid").children.length >= 2, true)
+            tryVerify(function() { return (findChild(dialog, "coverGrid").children.length >= 2) === (true) })
         }
         function test_coverSearchChooseSendsUrlAndClosesStep() {
             reply("GET /api/books/b1/cover/search?q=" + encodeURIComponent("Tên cũ"), {status: 200, data: {results: [{provider: "iTunes", title: "A", author: "B", thumb: "", url: "https://fixture/a.jpg"}], failed: []}})
@@ -194,17 +193,15 @@ Item {
             const panel = make(coverFactory, {width: 500})
             reply("GET /api/books/c/cover/search?q=" + encodeURIComponent("Rỗng"), {status: 200, data: {results: [], failed: []}})
             panel.begin("c", "Rỗng")
-            settle()
-            compare(panel.hasEmpty, true)                           // "Bạn hãy chọn ảnh trên máy"
+            tryCompare(panel, "hasEmpty", true)                           // "Bạn hãy chọn ảnh trên máy"
             let picked = 0
             panel.chooseFile.connect(function() { picked++ })
             findChild(panel, "coverPickFile").clicked()
             compare(picked, 1)
             reply("GET /api/books/c/cover/search?q=" + encodeURIComponent("Lỗi"), {status: 200, data: {results: [], failed: ["google_books"]}})
             panel.query = "Lỗi"; panel.search()
-            settle()
-            compare(panel.failed.length, 1)
-            compare(panel.hasEmpty, false)
+            tryVerify(function() { return (panel.failed.length) === (1) })
+            tryCompare(panel, "hasEmpty", false)
             reply("GET /api/books/c/cover/search?q=" + encodeURIComponent("Mạng"), {status: 500, data: {error: "x"}})
             panel.query = "Mạng"; panel.search()
             compare(panel.searchError, true)
@@ -263,7 +260,7 @@ Item {
         function test_revertConfirmBack() {
             const dialog = make(editFactory)
             dialog.begin(server)
-            settle()
+            tryVerify(function() { return findChild(dialog, "editRevert").visible && findChild(dialog, "editRevert").height > 0 })
             findChild(dialog, "editRevert").clicked()
             verify(dialog.confirmRevert)
             compare(Nav.layers.length, 2)
@@ -286,8 +283,7 @@ Item {
         function test_revertHiddenForWorkshopOrNoEdits() {
             const dialog = make(editFactory)
             dialog.begin(Object.assign(textBook(), {edits: 0}))
-            settle()
-            compare(findChild(dialog, "editRevert").height > 0 && findChild(dialog, "editRevert").visible, false)
+            tryVerify(function() { return (findChild(dialog, "editRevert").height > 0 && findChild(dialog, "editRevert").visible) === (false) })
         }
         function test_restoresFocusToOpener() {
             const opener = createTemporaryObject(openerFactory, host)
@@ -433,7 +429,7 @@ Item {
             page.editRequested.connect(function(data) { sent = data })
             tryVerify(function() { return findChild(page, "bookMore").visible })
             findChild(page, "bookMore").clicked()
-            wait(100)
+            tryVerify(function() { return findChild(page, "menuEdit") && findChild(page, "menuEdit").visible })
             findChild(page, "menuEdit").clicked()
             verify(sent !== null)
             compare(sent.id, "b1")
@@ -461,7 +457,7 @@ Item {
             reply("GET /api/books/b1/music/scenes/c1/alternatives", {status: 200, data: {mine: [{link: "local:" + "a".repeat(40), title: "Bài của tôi", creator: "Tôi", duration: 95, analysed: true, fits: true}]}})
             const dialog = make(editFactory)
             dialog.begin(server)
-            settle()
+            tryVerify(function() { return findChild(dialog, "musicSwitch") !== null })
             const music = findChild(dialog, "musicSwitch")
             verify(music !== null)
             compare(music.checked, true)
@@ -475,7 +471,7 @@ Item {
             reply("GET /api/books/b1/music", {status: 500, data: {error: "x"}})
             const dialog = make(editFactory)
             dialog.begin(server)
-            settle()
+            wait(350) // fixed: proves absence
             compare(Api.notice, "")
         }
 
@@ -498,8 +494,7 @@ Item {
         function shot(name, item) {
             const target = item || host
             target.Window.window.update()
-            waitForRendering(target)
-            wait(450)
+            VisualReady.render(this, host.Window.window, target, qtVisualReady)
             qtGlyphAudit.scan()
             const img = grabImage(target)
             const path = Qt.resolvedUrl("../../build/d2shots/" + name + "_" + (Theme.dark ? "dark" : "light") + ".png").toString()
@@ -525,7 +520,7 @@ Item {
                     const dialog = make(editFactory, {width: width})
                     dialog.begin(server)
                     findChild(dialog, "editTitle").text = server.title.slice(0, 160)
-                    settle()
+                    render()
                     shot("editbook_main_" + width, host)
                     dialog.destroy()
                     Platform.setSetting("fold.edit-book.readings", "0")
@@ -537,7 +532,7 @@ Item {
                     reply("GET /api/music/local", {status: 200, data: {tracks: [{link: "local:" + "a".repeat(40), title: "Bài nhạc của tôi", creator: "Tôi", duration: 95, analysed: false, name: "x", bytes: 1}], module: {state: "missing", total: 820000000, done: 0, error: "", analysing: false, metered: false}}})
                     const audio = make(editFactory, {width: width})
                     audio.begin(Object.assign(studioBook(), {edits: 2}))
-                    settle()
+                    render()
                     shot("editbook_music_" + width, host)
                     audio.destroy()
                     Platform.setSetting("fold.edit-book.music", "0")
@@ -549,7 +544,7 @@ Item {
                     const search = make(editFactory, {width: width})
                     search.begin(server)
                     search.search()
-                    settle()
+                    render()
                     shot("editbook_cover_" + width, host)
                     search.destroy()
                     // tìm bìa lỗi
@@ -557,14 +552,14 @@ Item {
                     const failed = make(editFactory, {width: width})
                     failed.begin(server)
                     failed.search()
-                    settle()
+                    render()
                     shot("editbook_cover_error_" + width, host)
                     failed.destroy()
                     // hỏi lại bỏ thay đổi
                     const revert = make(editFactory, {width: width})
                     revert.begin(textBook())
                     revert.askRevert()
-                    settle()
+                    render()
                     revert.scroll.contentY = Math.max(0, revert.scroll.contentHeight - revert.scroll.height)
                     shot("editbook_revert_" + width, host)
                     revert.destroy()
@@ -572,18 +567,18 @@ Item {
                 host.width = 1440
                 const rename = make(renameFactory)
                 rename.begin(textBook(), {id: 7, title: "Chương 7", subtitle: "", fullTitle: longName})
-                settle()
+                render()
                 shot("editbook_rename", host)
                 rename.destroy()
                 const rename2 = make(renameFactory)
                 rename2.begin(studioBook(), {id: 7, title: "Chương 7", subtitle: "Hồi kết", fullTitle: "Chương 7 - Hồi kết"})
-                settle()
+                render()
                 shot("editbook_rename_two", host)
                 rename2.destroy()
                 const page = make(pageFactory, {book: {bookId: "b1", title: "Tên cũ"}})
                 tryVerify(function() { return findChild(page, "bookMore").visible })
                 findChild(page, "bookMore").clicked()
-                settle()
+                render()
                 shot("editbook_menu", host)
                 Nav.back()
                 page.destroy()
@@ -591,13 +586,13 @@ Item {
                 const blocked = make(pageFactory, {book: {bookId: "b1", title: "Tên cũ"}})
                 tryVerify(function() { return findChild(blocked, "bookMore").visible })
                 findChild(blocked, "bookMore").clicked()
-                settle()
+                render()
                 shot("editbook_menu_blocked", host)
                 Nav.back()
                 blocked.destroy()
                 const saveAs = make(saveFactory)
                 saveAs.begin({id: "b1", title: "x", wishes: 2})
-                settle()
+                render()
                 shot("editbook_saveas", host)
                 saveAs.destroy()
             })

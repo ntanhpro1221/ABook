@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "VisualReady.js" as VisualReady
 import ABook
 
 // Cài đặt › Nghe / Hẹn giờ ngủ / Giao diện / Nâng cao (F2): hành vi (mỗi công tắc / lựa chọn PUT đúng thân, thất bại giữ giá trị cũ + lời báo, lịch đêm,
@@ -18,6 +19,7 @@ Item {
     TestCase {
         id: test
         name: "D2Settings"
+        function ready() { VisualReady.render(this, host.Window.window, host, qtVisualReady) }
         when: windowShown
 
         readonly property string sha1: "1f".repeat(20)
@@ -50,7 +52,7 @@ Item {
             Api.saving = false
             Api.notice = ""
             Nav.layers = []
-            Theme.reduceMotion = true
+            Theme.reduceMotion = false
             view = {tracks: [], analyzer: false}
             DesktopApi.thirdParty = "# Thành phần sử dụng\n\nABook dùng các thành phần mã nguồn mở sau.\n\n## Qt\n\n- **Qt 6** (LGPL-3.0): khung giao diện, `QtQuick` và `QtMultimedia`.\n- Lucide (ISC): bộ biểu tượng.\n\n## Python\n\n- **CPython** (PSF): chạy phần máy chủ.\n\n## Ghi chú cho người bảo trì\n\n- Cách phát hành, không hiện cho người dùng.\n"
         }
@@ -60,7 +62,7 @@ Item {
         function make(factory, props) {
             const item = createTemporaryObject(factory, host, Object.assign({width: 760}, props || {}))
             verify(item !== null)
-            wait(60)
+            ready()
             return item
         }
         function find(item, predicate) {
@@ -130,10 +132,9 @@ Item {
             head.clicked()
             verify(mine.open)
             compare(Platform.store["fold.my-music.library"], "1")
-            wait(100)
-            verify(hasText(mine, "Thêm nhạc làm nền; bài đã chọn đi cùng file sách."))
-            verify(hasText(mine, "Nhạc riêng"))
-            verify(hasText(mine, "Chưa có bài nào"))
+            tryVerify(function() { return hasText(mine, "Thêm nhạc làm nền; bài đã chọn đi cùng file sách.") })
+            tryVerify(function() { return hasText(mine, "Nhạc riêng") })
+            tryVerify(function() { return hasText(mine, "Chưa có bài nào") })
             // tải lỗi -> câu lỗi + Thử lại
             const failing = make(listenFactory)
             const broken = named(failing, "myMusic")
@@ -155,7 +156,7 @@ Item {
             compare(mine.tracks.length, 4)
             compare(find(mine, i => i.title === "Nhạc của tôi" && typeof i.clicked === "function").summary, "4 bài")
             mine.open = true
-            wait(150)
+            tryVerify(function() { return named(mine, "track:local:" + sha1) !== null })
             const row = named(mine, "track:local:" + sha1)
             verify(row !== null)
             compare(row.note, "Đã phân tích - máy có thể tự chọn")
@@ -184,8 +185,7 @@ Item {
             compare(mine.removing, "")
             compare(Nav.layers.length, 0)
             compare(mine.tracks.length, 3)
-            wait(700)
-            verify(named(mine, "track:local:" + sha1) === null)
+            tryVerify(function() { return named(mine, "track:local:" + sha1) === null })
             // công tắc tự chọn của một bài
             const gym = named(mine, "track:local:" + sha2)
             compare(gym.switcher.text, "Cho tự chọn")
@@ -225,7 +225,7 @@ Item {
             const page = make(listenFactory)
             const mine = named(page, "myMusic")
             mine.open = true
-            wait(250)
+            tryVerify(function() { return named(mine, "musicModule") !== null })
             const card = named(mine, "musicModule")
             compare(card.label, "Tải 782 MB để tự chọn nhạc phù hợp trên máy.")
             compare(card.installText(), "Tải (782 MB)")
@@ -273,8 +273,7 @@ Item {
             const sent = last("PUT", "/api/preferences").body.sleepSchedule
             compare(sent.from, "22:00"); compare(sent.to, "06:00"); compare(sent.minutes, 30)
             verify(toggle.checked)
-            wait(250)
-            verify(window.height > 40)
+            tryVerify(function() { return window.height > 40 })
             const from = choiceOf(window, "Từ"), to = choiceOf(window, "Đến"), minutes = choiceOf(window, "Số phút hẹn")
             compare(from.currentLabel, "22:00")
             compare(to.currentLabel, "06:00")
@@ -290,15 +289,13 @@ Item {
             compare(Api.preferences.sleepSchedule.minutes, 45)
             // giờ lệch 15 phút vẫn có trong danh sách
             Api.preferences = Object.assign({}, Api.preferences, {sleepSchedule: {from: "22:10", to: "06:00", minutes: 30}})
-            wait(50)
-            compare(from.currentLabel, "22:10")
-            verify(from.options.length === 97)
+            tryCompare(from, "currentLabel", "22:10")
+            tryVerify(function() { return from.options.length === 97 })
             // tắt
             toggle.toggled(false)
             verify(last("PUT", "/api/preferences").body.sleepSchedule === null)
             verify(!toggle.checked)
-            wait(250)
-            compare(window.height, 0)
+            tryCompare(window, "height", 0)
         }
         function test_nightScheduleDraftFailureAndMismatch() {
             const page = make(sleepFactory)
@@ -381,10 +378,9 @@ Item {
             Api.info = {version: "0.4.147", dialogs: true, canCheckUpdate: true, update: {version: "0.4.148", notes: "Sửa lỗi nghe lại.\nThêm lịch đêm."}}
             const page = make(advancedFactory)
             const card = named(page, "advancedUpdate")
-            wait(150)
-            verify(hasText(card, "Cập nhật ABook"))
-            verify(hasText(card, "Sửa lỗi nghe lại.\nThêm lịch đêm."))
-            compare(find(card, i => i.textFormat === Text.StyledText).text, "<b>ABook 0.4.148</b> đã có · đang dùng 0.4.147")
+            tryVerify(function() { return hasText(card, "Cập nhật ABook") })
+            tryVerify(function() { return hasText(card, "Sửa lỗi nghe lại.\nThêm lịch đêm.") })
+            tryVerify(function() { return (find(card, i => i.textFormat === Text.StyledText).text) === ("<b>ABook 0.4.148</b> đã có · đang dùng 0.4.147") })
             reply("POST /api/app/update", 409, {error: "Không có bản mới để cài"})
             card.install()
             compare(Api.notice, "Chưa cập nhật được\nKhông có bản mới để cài")
@@ -401,9 +397,8 @@ Item {
             Api.info = {version: "0.4.147", dialogs: true, canCheckUpdate: true}
             const page = make(advancedFactory)
             const card = named(page, "advancedUpdate")
-            wait(150)
-            verify(hasText(card, "ABook 0.4.147"))
-            verify(hasText(card, "Kiểm tra bản mới"))
+            tryVerify(function() { return hasText(card, "ABook 0.4.147") })
+            tryVerify(function() { return hasText(card, "Kiểm tra bản mới") })
             card.check()
             compare(count("POST", "/api/app/check-update"), 1)
             verify(card.checking)
@@ -418,9 +413,8 @@ Item {
             // vỏ im: hết hạn chờ thì báo lỗi mạng
             card.waitMs = 60
             card.check()
-            wait(150)
-            verify(!card.checking)
-            compare(card.line.text, "Chưa thấy trả lời từ trang phát hành - bạn kiểm tra mạng rồi thử lại.")
+            tryVerify(function() { return !card.checking })
+            tryVerify(function() { return (card.line.text) === ("Chưa thấy trả lời từ trang phát hành - bạn kiểm tra mạng rồi thử lại.") })
             // lệnh hỏng: lời lỗi ngay dưới nút, không thêm lời báo
             reply("POST /api/app/check-update", 409, {error: "Bản chạy từ mã nguồn không tự cập nhật"})
             card.check()
@@ -467,8 +461,7 @@ Item {
             verify(!dialog.open)
             compare(Api.notice, "Đã dọn bản đọc đã làm")
             compare(storage.usage.total, 0)
-            wait(250)
-            verify(hasText(storage, "Chưa có bản đọc đã lưu."))
+            tryVerify(function() { return hasText(storage, "Chưa có bản đọc đã lưu.") })
             // lỗi: lời lỗi, hộp đóng như bản web
             reply("GET /api/readaloud/cache", 200, {book: 0, total: 31000000})
             storage.load()
@@ -511,7 +504,7 @@ Item {
             verify(dialog.open)
             compare(dialog.panelWidth, 560)
             compare(Nav.layers.length, 1)
-            wait(100)
+            tryVerify(function() { const list = find(dialog, i => i.sections !== undefined && i.strong !== undefined); return list && list.sections.length === 3 })
             const list = find(dialog, i => i.sections !== undefined && i.strong !== undefined)
             compare(list.sections.length, 3)        // mở đầu, Qt, Python (mục người bảo trì bị bỏ)
             compare(list.sections[1].title, "Qt")
@@ -523,16 +516,14 @@ Item {
             verify(!dialog.open)
             compare(Nav.layers.length, 0)
             DesktopApi.thirdParty = ""
-            wait(30)
-            compare(list.sections.length, 0)
+            tryVerify(function() { return (list.sections.length) === (0) })
         }
 
         // ---- ảnh ----
         function shot(name, item) {
             const target = item || host
             target.Window.window.update()   // Cảnh tĩnh offscreen cần yêu cầu khung mới trước khi chờ.
-            waitForRendering(target)
-            wait(400)
+            VisualReady.render(this, host.Window.window, target, qtVisualReady)
             qtGlyphAudit.scan()
             const img = grabImage(target)
             const path = Qt.resolvedUrl("../../build/d2shots/" + name + "_" + (Theme.dark ? "dark" : "light") + ".png").toString()
@@ -543,7 +534,7 @@ Item {
         function screen(group, props) {
             const page = createTemporaryObject(screenFactory, host, Object.assign({width: host.width, height: host.height, active: group}, props || {}))
             verify(page !== null)
-            wait(120)
+            ready()
             return page
         }
         function overlayShot(name) { shot(name, host.Window.window.contentItem) }
@@ -556,10 +547,10 @@ Item {
                 shot("settings_listen_folded")
                 const mine = named(page, "myMusic")
                 mine.open = true
-                wait(250)
+                ready()
                 shot("settings_listen_music")
                 mine.removing = "local:" + sha3
-                wait(300)
+                ready()
                 shot("settings_listen_remove_confirm")
                 mine.removing = ""
                 page.destroy()
@@ -567,7 +558,7 @@ Item {
                 view = {tracks: [], analyzer: false}
                 const empty = screen("listen")
                 named(empty, "myMusic").open = true
-                wait(300)
+                ready()
                 shot("settings_listen_empty")
                 empty.destroy()
                 view = {tracks: tracks(), analyzer: true, module: moduleMissing()}
@@ -587,7 +578,7 @@ Item {
                     view = {tracks: tracks().slice(0, 2), analyzer: true, module: module}
                     const page = screen("listen")
                     named(page, "myMusic").open = true
-                    wait(300)
+                    ready()
                     shot("settings_listen_module_" + name)
                     // đang tải: hỏi lại mỗi giây nên bảng vẽ lại, bỏ hẹn giờ để ảnh không đổi
                     page.destroy()
@@ -601,7 +592,7 @@ Item {
                 off.destroy()
                 Api.preferences = Object.assign({}, Api.preferences, {sleepSchedule: {from: "22:00", to: "06:00", minutes: 30}})
                 const on = screen("sleep")
-                wait(250)
+                ready()
                 shot("settings_sleep_schedule")
                 on.destroy()
                 Api.preferences = Object.assign({}, Api.preferences, {sleepSchedule: null})
@@ -614,7 +605,7 @@ Item {
                 page.destroy()
                 Api.preferences = Object.assign({}, Api.preferences, {letterShortcuts: false})
                 const off = screen("look")
-                wait(250)
+                ready()
                 shot("settings_look_letters_off")
                 off.destroy()
                 Api.preferences = Object.assign({}, Api.preferences, {letterShortcuts: true})
@@ -625,7 +616,7 @@ Item {
             both(function() {
                 Api.info = {version: "0.4.147", dialogs: true}
                 const plain = screen("advanced")
-                wait(200)
+                ready()
                 shot("settings_advanced")
                 plain.destroy()
                 // đủ mọi khối: có thể kiểm bản mới, khối gập mở sẵn
@@ -633,35 +624,35 @@ Item {
                 Platform.setSetting("fold.settings.advanced.diagnostics", "1")
                 Platform.setSetting("fold.settings.advanced.about", "1")
                 const full = screen("advanced")
-                wait(300)
+                ready()
                 shot("settings_advanced_check")
                 const card = named(full, "advancedUpdate")
                 card.check()
                 card.heard({state: "latest"})
-                wait(300)
+                ready()
                 shot("settings_advanced_checked")
                 card.check()
                 card.heard({state: "failed"})
-                wait(300)
+                ready()
                 shot("settings_advanced_check_failed")
                 // cuối trang: khối Giới thiệu mở
                 const scroller = find(full, i => i.contentY !== undefined && i.contentHeight !== undefined)
                 scroller.contentY = Math.max(0, scroller.contentHeight - scroller.height)
-                wait(200)
+                ready()
                 shot("settings_advanced_bottom")
                 full.destroy()
                 Api.info = {version: "0.4.147", dialogs: true, canCheckUpdate: true, update: {version: "0.4.148", notes: "Nghe lại đoạn đã đọc xong không phải chờ máy đọc lại.\nThêm lịch đêm trong Hẹn giờ ngủ."}}
                 const update = screen("advanced")
-                wait(300)
+                ready()
                 shot("settings_advanced_update")
                 const storage = named(update, "advancedStorage")
                 storage.ask()
-                wait(400)
+                ready()
                 overlayShot("settings_advanced_storage_dialog")
                 storage.confirmDialog.dismiss()
                 const about = named(update, "advancedAbout")
                 about.thirdDialog.show()
-                wait(400)
+                ready()
                 overlayShot("settings_advanced_third_party")
                 about.thirdDialog.dismiss()
                 update.destroy()
@@ -669,7 +660,7 @@ Item {
                 Api.info = {version: "0.4.147", dialogs: true}
                 Api.preferences = Object.assign({}, Api.preferences, {libraryRoot: longPath})
                 const narrow = screen("advanced", {width: 520, height: 900})
-                wait(200)
+                ready()
                 shot("settings_advanced_long_path", narrow)
                 narrow.destroy()
                 Api.preferences = Object.assign({}, Api.preferences, {libraryRoot: "C:\\Users\\An\\Audiobooks"})

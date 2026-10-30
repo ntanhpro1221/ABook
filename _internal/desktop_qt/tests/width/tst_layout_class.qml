@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "VisualReady.js" as VisualReady
 import ABook
 import "../../qml" as UI
 import "ParityFixtures.js" as Fixture
@@ -47,9 +48,10 @@ Item {
     }
     TestCase {
         name: "LayoutClass"
+        function ready() { VisualReady.render(this, host.Window.window, host, qtVisualReady) }
         when: windowShown
         function init() {
-            Theme.reduceMotion = true; Platform.reset(); DesktopApi.reset(); Api.bind(DesktopApi, Theme)
+            Theme.reduceMotion = false; Platform.reset(); DesktopApi.reset(); Api.bind(DesktopApi, Theme)
             Api.loaded = true; Api.preferences = {theme: "light"}; Api.info = {version: "fixture", studio: {installed: true}}
             Nav.layers = []; Nav.studioPeer = ""
             Backend.state = Backend.Ready; Backend.libraryLoaded = true; Backend.library.error = ""
@@ -121,7 +123,7 @@ Item {
             if (["shortcuts", "speed", "sleep", "music", "chapters", "connection"].includes(screen)) page.show()
             if (screen === "mini") { page.height = page.naturalHeight; page.y = (content.height - page.height) / 2 }
             if (screen === "bar") { page.height = page.natural; page.y = content.height - page.height }
-            wait(460)
+            ready()
             const hits = Audit.scan(page, sectionGroups(page, screen, d.screen)).concat(sidebar.visible ? Audit.scan(sidebar) : [])
             if (screen === "library") {
                 const header = findChild(page, "libraryHeader")
@@ -134,7 +136,7 @@ Item {
             console.log("LAYOUT_AUDIT " + JSON.stringify({scene: d.tag, hits: hits}))
             qtGlyphAudit.scan()
             if (qtWideShotDir !== "" && d.w !== 1440) {
-                host.Window.window.update(); waitForRendering(host)
+                ready()
                 // QtQuickTest Image.save returns void; verify PNGs on disk.
                 grabImage(host).save(qtWideShotDir + "/layout_" + d.tag + ".png")
             }
