@@ -76,7 +76,7 @@ object Mp3Export {
             var fresh = freshFolderName(name) { File(root, it).exists() }
             var dir = File(root, fresh)
             while (!dir.mkdir()) {
-                if (!dir.exists()) throw Refused("Không tạo được thư mục trong chỗ đã chọn")
+                if (!dir.exists()) throw Refused("Chưa tạo được thư mục trong chỗ đã chọn")
                 fresh = freshFolderName(name) { File(root, it).exists() }
                 dir = File(root, fresh)
             }
@@ -98,7 +98,7 @@ object Mp3Export {
                 val final = File(dir, name)
                 if (!part.renameTo(final)) {
                     final.delete()
-                    if (!part.renameTo(final)) throw Refused("Không ghi được $name")
+                    if (!part.renameTo(final)) throw Refused("Chưa ghi được $name")
                 }
             }
         }

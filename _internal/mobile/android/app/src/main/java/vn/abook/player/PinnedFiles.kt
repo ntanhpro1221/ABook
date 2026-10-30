@@ -278,7 +278,7 @@ class PinnedFiles(private val dir: File, private val base: String, private val s
 
         /** A download that could not reach the server (no name lookup, timeout, connection cut) - same sentence as the desktop
          *  (abook/webui/studio_setup.py NETWORK_FAILURE). */
-        const val NETWORK_FAILURE = "Không kết nối được tới máy chủ tải. Kiểm tra mạng rồi bấm Thử lại."
+        const val NETWORK_FAILURE = "Chưa kết nối được tới máy chủ tải. Kiểm tra mạng rồi bấm Thử lại."
 
         /** The network, not the file or the phone, failed: anywhere in the cause chain. */
         fun isNetwork(error: Throwable): Boolean = generateSequence(error) { it.cause }.take(5).any {

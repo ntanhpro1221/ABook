@@ -144,7 +144,7 @@ object BookPage {
                 parts += Fmt.length(book.duration)
             }
         }
-        return parts.joinToString(" · ")
+        return parts.dotJoined()
     }
 
     /** Dòng tình trạng dưới dòng trên (không hộp, không viên thuốc): sách chỉ có chữ, sách chưa đủ chương, sách nghe thẳng. null = không có gì để nói. */
@@ -168,7 +168,7 @@ object BookPage {
         if (progress.finished || progress.caughtUp) return ListenLogic.progressText(book)
         val heard = progress.heardSeconds
         // Chưa nghe gì mà trình phát đang giữ cuốn này: nói đang nghe (hay không phát được), đừng nói "Chưa nghe".
-        if (heard <= 0 && listening) return if (failed) "Không phát được" else "Đang nghe"
+        if (heard <= 0 && listening) return if (failed) "Chưa phát được" else "Đang nghe"
         if (heard <= 0) return "Chưa nghe · ${Fmt.length(book.duration)}"
         return "Đã nghe ${Fmt.length(heard)} · còn ${Fmt.length(maxOf(0.0, book.duration - heard))} chưa nghe"
     }
@@ -182,7 +182,7 @@ object BookPage {
             chapter.done -> parts += "đã nghe hết"
             chapter.heard > 0f -> parts += "đã nghe ${percent(chapter.heard)}"
         }
-        return parts.joinToString(" · ").replaceFirstChar { it.uppercase() }
+        return parts.dotJoined().replaceFirstChar { it.uppercase() }
     }
 
     /** "1%".."99%": chưa hết thì không làm tròn lên 100, đã nghe chút ít thì không về 0. */

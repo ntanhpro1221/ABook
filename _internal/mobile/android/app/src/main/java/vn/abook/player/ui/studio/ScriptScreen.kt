@@ -1,5 +1,6 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.ui.data.dotJoined
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,7 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.text.BasicText
+import vn.abook.player.ui.components.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
@@ -130,7 +131,7 @@ private fun LineRow(state: StudioScriptState, script: ChapterScript, row: ShownL
                     BasicText(label, style = Abook.type.label, modifier = Modifier.testTag("studio_line_who_${line.stableId}"))
                 }
                 val pending = line.wish?.state == "pending"
-                Caption(listOfNotNull(ScriptText.line(line.seq), ScriptText.PENDING.takeIf { pending }, ScriptText.CONTEXT.takeIf { row.context }).joinToString(" · "))
+                Caption(listOfNotNull(ScriptText.line(line.seq), ScriptText.PENDING.takeIf { pending }, ScriptText.CONTEXT.takeIf { row.context }).dotJoined())
             }
             if (line.hasAudio && !row.context) ClipButton(StudioScriptState.clipId(line), clip, { state.play(line) }, "studio_line_play_${line.stableId}")
         }

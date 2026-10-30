@@ -1,5 +1,6 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.ui.data.dotJoined
 import androidx.compose.runtime.Immutable
 import org.json.JSONObject
 
@@ -231,10 +232,10 @@ object VoiceLogic {
     /** Dòng phụ dưới tên giọng: chất giọng, rồi ai đang dùng chung (`voiceMeta`). */
     fun meta(voice: VoiceEntry, withGender: Boolean): String {
         val parts = if (voice.description.isNotEmpty()) listOf(voice.description) else listOf(if (voice.region.isNotEmpty()) "Miền ${voice.region}" else "", voice.style)
-        val about = (listOf(if (withGender && voice.description.isEmpty()) voice.genderLabel else "") + parts).filter { it.isNotEmpty() }.joinToString(" · ")
+        val about = (listOf(if (withGender && voice.description.isEmpty()) voice.genderLabel else "") + parts).dotJoined()
         val alone = voice.current && voice.sharedWith.isEmpty() && voice.otherUsers == 0
         val use = voice.takenNote ?: if (voice.takenBy.isNotEmpty()) takenText(voice.takenBy) else if (alone) "" else sharedText(voice, voice.current)
-        return listOf(about, use).filter { it.isNotEmpty() }.joinToString(" · ")
+        return listOf(about, use).dotJoined()
     }
 
     /** Thời gian thu lại: số đo của chính cuốn ("trên máy này"), hay số ước khi chưa đo được. */

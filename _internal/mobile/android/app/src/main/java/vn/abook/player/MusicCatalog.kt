@@ -243,7 +243,7 @@ class MusicCatalog(
             val fetched = try {
                 fetch(if (remote) "$relative?v=$revision" else relative)
             } catch (error: IOException) {
-                throw CatalogError("Không tải được danh mục nhạc nền - kiểm tra mạng.")
+                throw CatalogError("Chưa tải được danh mục nhạc nền - kiểm tra mạng.")
             }
             if (sha256(fetched) != expected) {
                 log("danh mục nhạc: mảnh $relative lệch sha256 của mục lục đã ký - bỏ")
@@ -556,7 +556,7 @@ class MusicCatalog(
         /** Bài tải hỏng thật nghỉ chừng này rồi thử lại (`MUSIC_UNAVAILABLE_SECONDS`, 24 giờ). */
         const val UNAVAILABLE_MS = 24L * 3600 * 1000
         /** Chữ báo khi bài nhạc bị giữ lại vì mạng - đúng chữ `MUSIC_OFFLINE_MESSAGE` của webui/server.py. */
-        const val OFFLINE_MESSAGE = "Không tải được nhạc vì mất mạng - giữ nguyên nhạc hiện tại, bạn thử lại sau nhé"
+        const val OFFLINE_MESSAGE = "Chưa tải được nhạc vì mất mạng - giữ nguyên nhạc hiện tại, bạn thử lại sau nhé"
         private const val USER_AGENT = "ABook (+https://github.com/ntanhpro1221/ABook)"
         private val SHA1 = Regex("[0-9a-f]{40}")
 

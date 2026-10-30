@@ -217,7 +217,7 @@ class DevicesStateTest {
     @Test
     fun `an unreachable computer says why and keeps the row`() {
         source.link = main
-        source.remoteError = DeviceFailure("Không nối được Máy bàn.")
+        source.remoteError = DeviceFailure("Chưa nối được Máy bàn.")
         val devices = state()
         devices.openPair()
         val row = devices.pair.value.devices.single()

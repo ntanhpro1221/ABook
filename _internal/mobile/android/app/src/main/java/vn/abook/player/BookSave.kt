@@ -19,7 +19,7 @@ object BookSave {
     /** Không lưu được vì gói dựng ra không hợp lệ - câu chữ để người dùng đọc. */
     class Failed(message: String, cause: Throwable? = null) : Exception(message, cause)
 
-    class DestinationUnavailable(cause: Throwable? = null) : Exception("Không mở được nơi lưu cũ của bạn. Bạn hãy chọn nơi lưu khác.", cause)
+    class DestinationUnavailable(cause: Throwable? = null) : Exception("Chưa mở được nơi lưu cũ của bạn. Bạn hãy chọn nơi lưu khác.", cause)
 
     internal fun shouldChooseAnotherLocation(direct: Boolean, error: Throwable): Boolean = direct && error is DestinationUnavailable
 
@@ -77,12 +77,12 @@ object BookSave {
                 catch (error: DestinationUnavailable) { throw error }
                 catch (error: FileNotFoundException) { throw DestinationUnavailable(error) }
                 catch (error: SecurityException) { throw DestinationUnavailable(error) }
-                catch (error: Exception) { throw Failed("Không giữ được bản cũ để phòng hỏng - file đang lưu không bị thay.", error) }
+                catch (error: Exception) { throw Failed("Chưa giữ được bản cũ để phòng hỏng - file đang lưu không bị thay.", error) }
             try {
                 previousStream?.use { input ->
-                    check(keepDir.isDirectory || keepDir.mkdirs()) { "Không mở được nơi giữ bản lưu cũ của bạn" }
+                    check(keepDir.isDirectory || keepDir.mkdirs()) { "Chưa mở được nơi giữ bản lưu cũ của bạn" }
                     val pendingDir = File(keepDir, ".pending")
-                    check(pendingDir.isDirectory || pendingDir.mkdirs()) { "Không mở được nhật ký lưu sách của bạn" }
+                    check(pendingDir.isDirectory || pendingDir.mkdirs()) { "Chưa mở được nhật ký lưu sách của bạn" }
                     val stamp = java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.ROOT).format(java.util.Date(now()))
                     val extension = if (asProject) BookDocumentWriter.PROJECT_EXTENSION else BookDocumentWriter.EXTENSION
                     val title = BookDocumentWriter.defaultName(keepName, asProject).removeSuffix(extension)
@@ -90,7 +90,7 @@ object BookSave {
                     // Durable storage and fsync precede the first open("wt") on the destination.
                     FileOutputStream(temporary).use { output -> input.copyTo(output); output.fd.sync() }
                     val kept = File(keepDir, temporary.name.removeSuffix(".part") + extension)
-                    check(!kept.exists() && temporary.renameTo(kept)) { "Không giữ được bản lưu cũ của bạn" }
+                    check(!kept.exists() && temporary.renameTo(kept)) { "Chưa giữ được bản lưu cũ của bạn" }
                     backup = kept
                     val pending = File(keepDir, ".pending/${kept.name}.json")
                     Store.writeAtomic(pending, JSONObject().put("backup", kept.name).put("uri", destination)
@@ -99,7 +99,7 @@ object BookSave {
                 }
                 check(previousSize <= 0 || backup != null) { "Chưa đọc được file cũ của bạn" }
             } catch (error: Exception) {
-                throw Failed("Không giữ được bản cũ để phòng hỏng - file đang lưu không bị thay.", error)
+                throw Failed("Chưa giữ được bản cũ để phòng hỏng - file đang lưu không bị thay.", error)
             }
             try {
                 openDestination(open).use { sink ->

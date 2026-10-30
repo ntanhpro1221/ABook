@@ -193,7 +193,7 @@ function StartError({ book }: { book: BookSummary }) {
   return (
     <div role="alert" className="mt-3 flex flex-wrap items-start gap-2 py-3 text-sm text-danger">
       <CircleAlert className="mt-line-icon size-4 shrink-0" />
-      <span className="min-w-0 flex-1">Không khởi động được: {book.startError}</span>
+      <span className="min-w-0 flex-1">Chưa khởi động được: {book.startError}</span>
       {!book.starting && !book.running && (
         <Button variant="ghost" size="sm" icon={RotateCcw} loading={start.isPending} onClick={() => start.mutate(book.id)}>
           Thử lại
@@ -1366,7 +1366,7 @@ export function ProjectScreen() {
     return (
       <EmptyState
         icon={CircleAlert}
-        title="Không mở được sách"
+        title="Chưa mở được sách"
         className="mt-20"
         action={
           <div className="flex flex-wrap justify-center gap-2">

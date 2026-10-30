@@ -20,7 +20,7 @@ export function BookTemplates() {
   useBackLayer(renaming !== null, () => setRenaming(null), renameBox);
   // Mẫu vừa bị thiết bị khác xoá / đặt trùng tên: nói đúng lời máy tính báo (danh sách đã tự tải lại); việc khác hỏng thì nói không lưu được.
   const fail = (error: Error) =>
-    staleTemplateError(error) ? toast.error(error.message) : toast.error("Không lưu được mẫu", { description: error.message });
+    staleTemplateError(error) ? toast.error(error.message) : toast.error("Chưa lưu được mẫu", { description: error.message });
   const finishRename = (from: string) => {
     const wrong = nameProblem(templates, typed, from);
     if (wrong) {

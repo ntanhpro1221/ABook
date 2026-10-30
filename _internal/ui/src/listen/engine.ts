@@ -160,7 +160,7 @@ export class WebAudioEngine implements AudioEngine {
     void this.audio.play().catch((error: unknown) => {
       // Đổi nguồn / bấm dừng huỷ play đang chờ (thường là AbortError): không báo lỗi của nguồn cũ.
       if (generation !== this.generation) return;
-      this.lastError = `Không phát được chương này. Bạn hãy bấm Phát để thử lại.${error instanceof Error ? ` (${error.message})` : ""}`;
+      this.lastError = `Chưa phát được chương này. Bạn hãy bấm Phát để thử lại.${error instanceof Error ? ` (${error.message})` : ""}`;
       this.audio.pause();
       this.audio.dispatchEvent(new Event("pause"));
       this.audio.dispatchEvent(new Event("error"));

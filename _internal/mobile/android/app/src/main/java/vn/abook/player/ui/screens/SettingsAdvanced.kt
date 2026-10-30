@@ -21,7 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.text.BasicText
+import vn.abook.player.ui.components.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -52,7 +52,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 /** Lời của Chẩn đoán và Bộ nhớ. */
 private object AdvancedCopy {
     const val LOG = "Việc app làm gần đây, để tìm lỗi. Xem lại trước khi gửi."
-    const val LOG_NOTE = "Gồm thông tin máy, nhật ký gần nhất và tên sách; tự che khoá, mã ghép, đường dẫn và IP nhận ra được. Máy ghép đọc được khi bật “Chia sẻ thư viện”."
+    const val LOG_NOTE = "Gồm thông tin máy, nhật ký gần nhất và tên sách; tự che khoá, mã ghép, đường dẫn và IP nhận ra được. Thiết bị đã ghép đọc được khi bật “Kết nối Wi-Fi”."
     const val SEND = "Xem lại trước khi gửi; bạn tự gửi đi."
     const val CLEAR = "Gồm cả các lần văng đã ghi."
     const val CLEARED = "Đã xoá nhật ký."
@@ -145,7 +145,7 @@ private fun LogSheet(repo: SettingsRepo) {
     LaunchedEffect(round) {
         problem = ""
         try { lines = repo.logLines() }
-        catch (e: Exception) { problem = "Không đọc được nhật ký"; lines = emptyList() }
+        catch (e: Exception) { problem = "Chưa đọc được nhật ký"; lines = emptyList() }
     }
     Column(Modifier.fillMaxWidth().testTag("log_sheet")) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {

@@ -32,7 +32,7 @@ object ExportStart {
     /** Bắt đầu xuất cuốn `bookId` thành thư mục MP3 trong `tree`; `chapterIds`: chỉ các chương ấy; sách không có gì để xuất thì [Mp3Export.Refused] ngay, chưa bắt đầu việc nền. */
     fun mp3(context: Context, bookId: String, tree: Uri, drawn: ByteArray?, chapterIds: List<Int>?, music: Boolean): Started {
         val plan = Mp3Export.plan(bookId, drawn, chapterIds)
-        val treeName = Mp3Exports.treeName(context, tree) ?: throw Mp3Export.Refused("Không mở được thư mục đã chọn - chọn lại nơi lưu")
+        val treeName = Mp3Exports.treeName(context, tree) ?: throw Mp3Export.Refused("Chưa mở được thư mục đã chọn - chọn lại nơi lưu")
         val run = Mp3Exports.start(context, bookId, tree, coverFile(context, "mp3-export", drawn), chapterIds, music)
         return Started(run, folder = "$treeName/${Mp3Export.folderName(plan.title)}", chapters = plan.chapters.size)
     }

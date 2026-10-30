@@ -135,8 +135,8 @@ class StudioTabsStateTest {
     @Test fun aReadingIsCheckedBeforeItIsHeld() = runBlocking {
         val card = workItem(kind = WorkKind.Pronunciation, key = "p", surface = "Hên-kơ", current = "hen co")
         assertEquals(ReadingCheck.Ok, project.work.checkReading(card, "hen cơ"))
-        source.writeError = { StudioError.Server("Không đọc được chữ này", 400, """{"suggestion":"hen cơ"}""") }
-        assertEquals(ReadingCheck.Rejected("Không đọc được chữ này", "hen cơ"), project.work.checkReading(card, "hen!"))
+        source.writeError = { StudioError.Server("Chưa đọc được chữ này", 400, """{"suggestion":"hen cơ"}""") }
+        assertEquals(ReadingCheck.Rejected("Chưa đọc được chữ này", "hen cơ"), project.work.checkReading(card, "hen!"))
         source.writeError = { StudioError.Offline() }
         assertTrue(project.work.checkReading(card, "hen cơ") is ReadingCheck.Failed)
         assertTrue(source.writes.all { it.first == "pronunciation/check" })

@@ -62,3 +62,11 @@ object Fmt {
     fun resumeWhere(chapterTitle: String, seconds: Double): String =
         if (chapterTitle.isNotEmpty()) "$chapterTitle · ${clock(seconds)}" else clock(seconds)
 }
+
+/**
+ * Các mẩu nối bằng " · " ở MỌI dòng phụ: mẩu trống (null, rỗng, chỉ khoảng trắng) biến mất, nên không bao giờ có "4 MB ·" treo cuối hay " · câu 3" mở đầu. Một chỗ duy nhất
+ * (TextWrapRulesTest quét: không nơi nào khác tự nối " · "). Web: `DotJoin`.
+ */
+fun dotJoin(vararg parts: String?): String = parts.asList().dotJoined()
+
+fun Iterable<String?>.dotJoined(): String = filter { !it.isNullOrBlank() }.joinToString(" · ")

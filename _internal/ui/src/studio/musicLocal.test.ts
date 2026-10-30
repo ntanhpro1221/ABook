@@ -108,7 +108,7 @@ describe("mô-đun Phân tích nhạc", () => {
     expect(modulePercent(status({ done: 99, total: 60 }))).toBe(100);
   });
   it("nói lý do hỏng, việc đang làm và máy không tải được", () => {
-    expect(moduleLabel(status({ state: "error", error: "Không tải được" }))).toBe("Không tải được");
+    expect(moduleLabel(status({ state: "error", error: "Chưa tải được" }))).toBe("Chưa tải được");
     expect(moduleLabel(status({ state: "ready", ready: true, analysing: true }))).toContain("Đang phân tích");
     expect(moduleLabel(status({ state: "unsupported", reason: "chỉ có cho Windows 64-bit" }))).toContain("Windows 64-bit");
   });
@@ -158,7 +158,7 @@ describe("đo cảm xúc nhạc chính xác hơn", () => {
     expect(preciseLabel(precise({ state: "downloading", done: 50, total: 100 }))).toContain("50%");
     expect(preciseLabel(precise({ state: "ready", enabled: true, present: true, working: true, pending: 4 }))).toContain("4 bài");
     expect(preciseLabel(precise({ state: "ready", enabled: true, present: true }))).toContain("Đang bật");
-    expect(preciseLabel(precise({ state: "error", error: "Không tải được" }))).toBe("Không tải được");
+    expect(preciseLabel(precise({ state: "error", error: "Chưa tải được" }))).toBe("Chưa tải được");
     expect(preciseLabel(precise({ state: "missing", enabled: true }))).toContain("chưa tải xong");
   });
   it("hỏi lại view mỗi giây khi tải hoặc đang đo", () => {

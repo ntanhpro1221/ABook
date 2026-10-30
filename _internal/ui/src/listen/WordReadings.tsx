@@ -73,7 +73,7 @@ function ReadingForm({ bookId, surface, current, aloud, onDone }: {
                   { surface, spoken: current },
                   {
                     onSuccess: () => toast.success(current ? `Đã hoàn tác: “${surface}” lại đọc là “${current}”` : `Đã hoàn tác: “${surface}” lại đọc như chữ trong sách`, { id: "reading-saved" }),
-                    onError: (error) => toast.error("Không hoàn tác được", { description: (error as Error).message }),
+                    onError: (error) => toast.error("Chưa hoàn tác được", { description: (error as Error).message }),
                   },
                 ),
             },

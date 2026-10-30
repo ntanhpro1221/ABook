@@ -67,7 +67,7 @@ class ExportRepo(private val context: Context) : ExportSource {
     override suspend fun keepFolder(tree: String): String = io {
         val uri = Uri.parse(tree)
         Mp3Exports.remember(context, uri)
-        Mp3Exports.treeName(context, uri) ?: throw ExportFailure("Không mở được thư mục đã chọn - chọn lại nơi lưu")
+        Mp3Exports.treeName(context, uri) ?: throw ExportFailure("Chưa mở được thư mục đã chọn - chọn lại nơi lưu")
     }
 
     override suspend fun fileTitle(book: ListenBook, kind: ExportKind): String = io {
