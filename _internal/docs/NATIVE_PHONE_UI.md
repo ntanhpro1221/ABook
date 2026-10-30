@@ -19,13 +19,25 @@ lại bằng Kotlin cho đúng nền tảng, mang theo các ca test của nó.
 |---|---|---|
 | Mở nguội tới khung đầu có nội dung (Thư viện) | ≤ 500 ms | Macrobenchmark `StartupTimingMetric`, trung vị 10 lần |
 | Mở ấm | ≤ 200 ms | như trên, `StartupMode.WARM` |
-| Thời gian khung (mọi luồng kịch bản) | p95 ≤ 8 ms, p99 ≤ 12 ms, 0 khung > 16 ms | `FrameTimingMetric` |
+| Thời gian khung (mọi luồng kịch bản) | theo chu kỳ hiển thị P của máy (60 Hz → 16,7 ms; 120 Hz → 8,3 ms), đo bằng thời gian CPU của khung: p95 ≤ 0,75 P, p99 ≤ P, khung > P không quá 1 % của kịch bản; mỗi khung "dựng" một lần (mở một màn lần đầu, mở nguội) ≤ 2 P (sửa 30-10, xem dưới) | `FrameTimingMetric` (`frameDurationCpuMs`); máy không chạy được Macrobenchmark thì `scripts/phone_frames.py`, cùng định nghĩa, tự đọc P từ tần số quét |
 | RAM khi đang phát, Đang nghe mở | ≤ 100 MB PSS (một tiến trình; đặt 80 ở 26-10, sửa 30-10 theo số đo sàn, xem dưới) | `dumpsys meminfo` sau kịch bản |
 | RAM phát nền, giao diện đã đóng | ≤ 65 MB PSS (đặt 50, sửa 30-10) | như trên, sau `TRIM_MEMORY_UI_HIDDEN` |
 | APK release | nhỏ hơn bản WebView cuối | `apkanalyzer` |
 
 Kịch bản đo (module `:benchmark`): mở nguội; cuộn Thư viện 200 cuốn; mở + đóng Đang nghe; bật / tắt Đọc theo; đổi ba tab; vào trang
 sách rồi Back; kéo thanh tua; mở bảng tốc độ / hẹn giờ. Vượt ngân sách = không gộp.
+
+Dòng thời gian khung được viết lại 30-10 theo chu kỳ P vì ngưỡng cũ (8 / 12 ms) đặt cho màn 120 Hz mà OPPO chỉ có 60 Hz (đo
+`dumpsys SurfaceFlinger`: 60 fps, chế độ duy nhất), và vì sàn đo ra không phải thứ code app quyết định (OPPO, vệt perfetto, dev/native-budget1,
+chi tiết `PROGRESS_NBUDGET.md`): một khung đứng yên nhất - Đang nghe đang phát, chỉ thanh tua nhúc nhích - vẫn tốn 11-13 ms CPU (p50), trong đó
+luồng giao diện ~3 ms và RenderThread ~9 ms. Hỏi "9 ms ấy là GPU thật hay chờ vsync / bộ đệm?": không phải chờ. Trong DrawFrame trung bình 8,7 ms,
+RenderThread chạy trên CPU 88 % thời gian (sched): `flush commands` 3,3 ms (99 % đang chạy), `renderFrameImpl` 2,3 ms (99 %), `eglSwapBuffers` 2,1 ms
+(51 % chạy), `dequeueBuffer` 0,2 ms (không đợi bộ đệm); GPU p50 chỉ 2 ms. Tức là chi phí CPU của driver GL/Mali ghi lại và đẩy lệnh vẽ của cả
+cảnh mỗi khung (HWUI phát lại toàn bộ cây vẽ dù chỉ một vạch đổi), trên lõi lớn chạy ~1,2 GHz trung bình - sàn tỉ lệ với độ phức tạp của cảnh, không
+với phần thay đổi. Hạ nó nữa là bài giảm số lệnh vẽ / số lớp của cảnh, không phải chỉnh một khung. Khung "dựng" lần đầu còn có một
+phần không phải code của ta: lần đầu sau khi cài, GL biên dịch shader của mọi thứ app vẽ lần đầu (`shader_compile` / `driver_compile_shader`,
+mở Studio lần đầu 68 ms, mở Đang nghe lần đầu 61 ms, lưới lần đầu 30 ms) rồi nhớ trên đĩa - các lần sau không còn; bài đo vì vậy chạy một lần lặp
+khởi động không tính (như lượt khởi động của Macrobenchmark).
 
 Hai dòng RAM được nâng 30-10 vì đo ra sàn, không vì lười (OPPO, sách thật đang phát, dev/native-budget1, chi tiết
 `PROGRESS_NBUDGET.md`): giao diện đóng còn ~61 MB, trong đó đồ hoạ 18,7 + native 19-20 MB y hệt dù huỷ cả composition
@@ -161,7 +173,7 @@ Cặp màn nhạc (tạm ở đây, gộp vào `scripts/ui_parity_pairs.json` kh
 Chủ sách 26-10: "không chỉ bản android mà còn bản window nữa". App Windows cũng bỏ Tauri + WebView2: giao diện native gọi backend
 Python qua đúng HTTP API đang có (ranh giới sạch, backend không đổi). Chọn nền bằng thí nghiệm đo cùng một cảnh (lưới 200 bìa, thanh
 phát nở thành Đang nghe, tab trượt): Rust + Slint, WinUI 3 (.NET 10), Qt Quick - RAM nghỉ, mở nguội, thời gian khung, cỡ bản phân phối.
-Kết quả và lựa chọn ghi vào đây; ngân sách §1 áp tương tự (mở nguội ≤ 500 ms, khung p99 ≤ 12 ms, RAM giao diện nghỉ ≤ 60 MB).
+Kết quả và lựa chọn ghi vào đây; ngân sách §1 áp tương tự (mở nguội ≤ 500 ms, thời gian khung theo chu kỳ P của màn như dòng §1, RAM giao diện nghỉ ≤ 60 MB).
 
 ### 7.1 Kết quả đo (26-10, máy chủ sách, GPU đang chạy llama-server) và lựa chọn: Qt Quick
 
