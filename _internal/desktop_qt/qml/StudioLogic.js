@@ -359,11 +359,59 @@ function actionNotes(book, remote) {
     } else if (redoWaiting > 0 && kind === "continue") {
         notes.push((redoWaiting === 1 ? "1 chương đang chờ thu lại" : redoWaiting + " chương đang chờ thu lại") + " theo sửa của bạn. Bản cũ vẫn nghe được cho tới khi thu xong.")
     }
-    if (live && book.paused === "battery") {
-        notes.push("Studio tạm dừng; cắm sạc để tiếp tục.")
-        notes.push("Làm sách trên pin chậm và hao pin. Bấm “Tiếp tục” để làm ngay trên pin" + (remote ? "." : ", hoặc đổi ở Cài đặt › Studio."))
-    }
+    if (live && book.paused === "battery") notes.push("Studio tạm dừng; cắm sạc để tiếp tục.")
     return notes
+}
+// Vì sao tạm dừng khi chạy pin, gập sau "Dùng pin" dưới lời tạm dừng (MoreInfo của Actions trong ProjectScreen.tsx); "" khi không chạy pin
+function batteryInfo(book, remote) {
+    if (!book.running || book.paused !== "battery") return ""
+    return "Làm sách trên pin chậm và hao pin. Bấm “Tiếp tục” để làm ngay trên pin" + (remote ? "." : ", hoặc đổi ở Cài đặt › Studio.")
+}
+
+// ---- Tiến độ đầu trang và "Các bước" (HeaderProgress, ProductionPanel, stepStates của ProjectScreen.tsx) ----
+// Dòng nói còn bao lâu của cả lượt làm sách (hay vì sao đang đứng); "" khi không có gì để nói. Giữ chờ duyệt (precast.held) cũng là `paused` nhưng là
+// đợi người nghe; tạm dừng thường đã nói ở trạng thái đầu trang.
+function progressNote(book) {
+    const live = book.running || book.starting
+    if (book.stopping) return "đang dừng"
+    if (book.paused) return book.precast && book.precast.held ? "chờ bạn duyệt rồi bấm Thu âm" : ""
+    const eta = etaOf(book)
+    return eta !== null ? eta : live ? "đang ước tính thời gian…" : ""
+}
+// Trạng thái ba bước Phân tích truyện / Phân vai / Thu âm và kiểm tra: done | active | paused | pending
+function stepStates(book) {
+    const live = (book.running || book.starting) && !book.paused && !book.stopping
+    const now = live ? "active" : "paused"
+    if (book.phase === "done") return ["done", "done", "done"]
+    if (book.phase === "idle") return ["pending", "pending", "pending"]
+    if (book.phase === "analysis") return [now, "pending", "pending"]
+    if (book.phase === "casting") return ["done", now, "pending"]
+    if (book.phase === "synthesis") return ["done", "done", now]
+    // Đã dừng / lỗi: suy từ tiến độ
+    if (book.progress.analysis < 1) return [now, "pending", "pending"]
+    if (book.progress.synthesis <= 0) return ["done", now, "pending"]
+    return ["done", "done", now]
+}
+var STEP_TITLES = ["Phân tích truyện", "Phân vai", "Thu âm và kiểm tra"]
+var STEP_ICONS = ["book-open-text", "users", "mic-vocal"]
+// Dòng phụ của "Các bước": bước đang tới - cả khi đang tạm dừng (lý do dừng đã ở trên)
+function stepSummary(book) {
+    const current = stepStates(book).findIndex(function(state) { return state === "active" || state === "paused" })
+    return current >= 0 ? STEP_TITLES[current] : (book.statusLabel || "")
+}
+function stepDetails(book) {
+    const pass = book.speakerPass
+    const read = "Đọc cả truyện để nhận ra lời thoại, ai đang nói và cảm xúc từng câu."
+    return [pass && pass.active ? "Xác định người nói từng câu: " + pass.done + "/" + pass.total + " chương."
+                                : book.settings && book.settings.analyzer ? read + " " + analyzerLabel(book.settings.analyzer) + "." : read,
+            "Trao cho mỗi nhân vật một giọng riêng và khoá cách đọc tên.",
+            "Đọc từng câu, nghe lại bằng nhận dạng giọng nói, thu lại câu lệch."]
+}
+// Nhật ký làm sách không ghi được khi sách vẫn chạy; "" khi không có gì
+function logLostLine(book) {
+    if (!(book.running || book.starting) || !book.logLost) return ""
+    return "Sách vẫn đang chạy bình thường, nhưng nhật ký làm sách không ghi được (" + book.logLost.lines + " dòng đã bỏ) - thường do phần mềm diệt virus, "
+        + "đồng bộ đám mây giữ file hoặc ổ đĩa gần đầy. Kiểm lại chỗ trống ở ổ chứa thư viện."
 }
 function studioMissingNote(studio, book, remote) {
     if (!studio || (studio.installed && !studio.outdated) || book.running) return ""

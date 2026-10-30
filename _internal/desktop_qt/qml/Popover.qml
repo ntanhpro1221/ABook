@@ -3,9 +3,8 @@ import ABook
 
 // Bảng nổi neo vào một nút: nội dung đặt thẳng vào trong. Mở trên nút nếu đủ chỗ, không thì dưới; trượt 8 px + thu 0,96 -> 1 khi mở, ngược lại khi đóng
 // (ra nhanh hơn vào, DESIGN.md 5.2). Là một lớp của ngăn xếp Back: Esc, Alt+Left, nút Back của chuột hay bấm ra ngoài đều đóng.
-FocusScope {
+WindowLayer {
     id: root
-    anchors.fill: parent
     property bool open: false
     property Item anchorItem: null
     property int panelWidth: 280

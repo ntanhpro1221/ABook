@@ -94,6 +94,18 @@ function waitHint(book) {
 function bannerTitle(held) { return held ? "Phân tích xong - sách đang chờ bạn duyệt" : "Phân tích xong - duyệt trước khi thu?" }
 var BANNER_TEXT = "Duyệt giọng, tên và người nói trước để tránh thu lại."
 // Dải mời hiện khi: phân tích xong, đang không ở màn duyệt, và sách đang chờ duyệt hay chưa thu xong chương nào
+// Lời mời "Phân tích xong - duyệt trước khi thu?" (usePrecastInvites của PrecastReview.tsx, precastInvites của precast.ts): một lần cho mỗi mốc Studio báo
+// (`announcedAt`), chỉ khi còn đúng lúc - sách đang được giữ chờ duyệt, hay chưa thu xong chương nào. `seen(id)`: mốc đã mời của cuốn ấy.
+function canReview(book) { return Boolean(book.precast && book.precast.ready) && book.phase !== "done" }
+function invites(books, seen) {
+    return (books || []).filter(function(book) {
+        const at = book.precast ? book.precast.announcedAt : 0
+        if (!at || !canReview(book)) return false
+        if (!book.precast.held && book.chapters.completed > 0) return false
+        return seen(book.id) !== String(at)
+    })
+}
+function inviteText(book) { return book.precast && book.precast.held ? "“" + book.title + "” đang chờ bạn duyệt" : "“" + book.title + "” đã phân tích xong" }
 function bannerShown(book, tab) {
     return Boolean(book.precast && book.precast.ready) && book.phase !== "done" && tab !== "precast"
         && (Boolean(book.precast.held) || book.chapters.completed === 0)

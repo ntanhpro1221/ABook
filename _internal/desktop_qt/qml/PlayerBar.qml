@@ -131,27 +131,23 @@ Item {
         PlayerFade { width: parent.width }
         PlayerAlert { width: parent.width; onVoiceRequested: { root.openRequested(); voice.fromAlert() } onSettingsRequested: root.settingsRequested("voice") }
     }
-    // Panels occupy the whole content surface, so Back/focus and geometry match
-    // the existing NowPlaying popovers rather than the short bar itself.
-    Item {
-        id: panels; parent: root.parent; anchors.fill: parent; z: 70
-        Popover {
-            id: more; objectName: "barMoreMenu"; anchorItem: moreButton; panelWidth: 320
-            Column {
-                width: parent.width
-                MenuRow { width: parent.width; text: "Hẹn giờ"; icon: "moon"; onClicked: { more.close(); sleep.show() } }
-                MenuRow { width: parent.width; text: "Chương trước"; icon: "skip-back"; onClicked: { more.close(); Player.previous() } }
-                MenuRow { width: parent.width; text: "Chương sau"; icon: "skip-forward"; onClicked: { more.close(); Player.next() } }
-                MenuRow { width: parent.width; text: "Nhạc nền"; icon: "eighth-note"; visible: Music.hasMusic; onClicked: { more.close(); music.show() } }
-                MenuRow { width: parent.width; text: "Giọng đọc"; icon: "audio-lines"; visible: Player.speaking && Api.voiceList.length > 0; onClicked: { more.close(); voice.show() } }
-                MenuRow { width: parent.width; text: "Mở màn hình đang nghe"; icon: "maximize-2"; onClicked: { more.close(); root.openRequested() } }
-                MenuRow { objectName: "barClose"; width: parent.width; text: "Đóng trình phát"; icon: "x"; onClicked: { more.close(); Player.close() } }
-                MenuRow { objectName: "barOutput"; width: parent.width; text: "Thiết bị phát"; icon: "cast"; onClicked: { more.close(); output.show() } }
-            }
+    // Bảng nổi của nút "…": Popover tự đặt ở gốc cửa sổ nên phủ cả bề mặt nội dung, Back / tiêu điểm khớp với các bảng của NowPlaying
+    Popover {
+        id: more; objectName: "barMoreMenu"; anchorItem: moreButton; panelWidth: 320
+        Column {
+            width: parent.width
+            MenuRow { width: parent.width; text: "Hẹn giờ"; icon: "moon"; onClicked: { more.close(); sleep.show() } }
+            MenuRow { width: parent.width; text: "Chương trước"; icon: "skip-back"; onClicked: { more.close(); Player.previous() } }
+            MenuRow { width: parent.width; text: "Chương sau"; icon: "skip-forward"; onClicked: { more.close(); Player.next() } }
+            MenuRow { width: parent.width; text: "Nhạc nền"; icon: "eighth-note"; visible: Music.hasMusic; onClicked: { more.close(); music.show() } }
+            MenuRow { width: parent.width; text: "Giọng đọc"; icon: "audio-lines"; visible: Player.speaking && Api.voiceList.length > 0; onClicked: { more.close(); voice.show() } }
+            MenuRow { width: parent.width; text: "Mở màn hình đang nghe"; icon: "maximize-2"; onClicked: { more.close(); root.openRequested() } }
+            MenuRow { objectName: "barClose"; width: parent.width; text: "Đóng trình phát"; icon: "x"; onClicked: { more.close(); Player.close() } }
+            MenuRow { objectName: "barOutput"; width: parent.width; text: "Thiết bị phát"; icon: "cast"; onClicked: { more.close(); output.show() } }
         }
-        SleepPopover { id: sleep; anchorItem: moreButton }
-        MusicPopover { id: music; anchorItem: moreButton }
-        PlayerVoicePopover { id: voice; anchorItem: moreButton; onSettingsRequested: root.settingsRequested("voice") }
-        OutputPopover { id: output; anchorItem: moreButton }
     }
+    SleepPopover { id: sleep; anchorItem: moreButton }
+    MusicPopover { id: music; anchorItem: moreButton }
+    PlayerVoicePopover { id: voice; anchorItem: moreButton; onSettingsRequested: root.settingsRequested("voice") }
+    OutputPopover { id: output; anchorItem: moreButton }
 }

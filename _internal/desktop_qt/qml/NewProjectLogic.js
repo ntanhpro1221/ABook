@@ -380,6 +380,7 @@ function modelOptions(data) {
     let defaultSize = 0
     for (const model of data.models) if (modelLabel(model.name) === modelLabel(data.default)) defaultSize = model.size || 0
     const options = [{value: "", label: "Mặc định của ABook (khuyên dùng)"}]
+    if (others.length) options.push({header: "Bản khác (thử nghiệm)"})
     others.forEach(function(model, index) { options.push({value: model.name, label: (index + 1) + ". " + experimentalLabel(model, defaultSize)}) })
     return {others: others, options: options, defaultSize: defaultSize}
 }
