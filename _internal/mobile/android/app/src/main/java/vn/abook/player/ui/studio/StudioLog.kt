@@ -55,7 +55,7 @@ object StudioLogText {
     const val CHAPTERS = "Chương"
     const val LENGTH = "Dài"
     const val EMPTY = "Chưa có gì"
-    const val EMPTY_HINT = "Diễn biến hiện ở đây khi sách bắt đầu chạy."
+    const val EMPTY_HINT = "Diễn biến sẽ hiện ở đây khi sách bắt đầu chạy."
     const val LOADING = "Đang mở nhật ký"
     const val TECHNICAL = "Chi tiết kỹ thuật"
 

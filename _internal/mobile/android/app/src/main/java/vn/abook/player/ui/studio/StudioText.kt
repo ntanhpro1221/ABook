@@ -46,13 +46,13 @@ object StudioText {
 
     // ---- danh sách dự án ----
 
-    const val NO_PROJECTS = "Chưa có dự án nào"
+    const val NO_PROJECTS = "Chưa có dự án"
     const val NO_PROJECTS_HINT = "Bấm “Sách mới” để làm sách nói từ một file truyện."
     const val LOADING = "Đang mở Studio"
 
     fun group(group: StudioGroup): String = when (group) {
         StudioGroup.Working -> "Đang làm"
-        StudioGroup.Review -> "Cần bạn duyệt"
+        StudioGroup.Review -> "Chờ bạn duyệt"
         StudioGroup.Rest -> "Còn lại"
     }
 

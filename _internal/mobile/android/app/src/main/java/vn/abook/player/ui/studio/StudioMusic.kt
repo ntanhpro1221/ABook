@@ -260,7 +260,7 @@ object StudioMusicText {
     const val LEVEL = "Mức nhạc nền"
     const val LEVEL_HINT = "Nhỏ hơn giọng đọc bấy nhiêu; máy tự bù bài to hay nhỏ"
     const val REBUILD = "Chọn lại nhạc"
-    const val REBUILD_HINT = "Máy chọn lại bài cho từng đoạn theo thể loại và mức nhạc ở trên."
+    const val REBUILD_HINT = "Máy chọn lại theo thể loại và mức nhạc ở trên."
     const val REBUILD_TITLE = "Chọn lại nhạc cho cả cuốn?"
     const val REBUILD_LINE = "Bài bạn đã ghim vẫn được giữ. Máy tính mất cỡ nửa phút để chọn lại."
     const val REBUILDING = "Đang chọn lại nhạc, cỡ nửa phút."

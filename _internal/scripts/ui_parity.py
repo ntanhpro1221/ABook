@@ -1208,8 +1208,9 @@ def pair_diff(web: Scan, native: Scan, spec: dict) -> dict:
 
     allow, missing = spec.get("allow", []), spec.get("missing", [])
     deferred = spec.get("deferred", [])
+    wording = spec.get("wording_for_lead", [])  # TẠM: cùng việc mà hai phía viết khác nhau, chờ Lead chọn chữ chuẩn (xoá mục khi đã sửa một phía)
     result = {"id": spec["id"], "web_files": wf, "native_files": nf, "web_labels": len(w), "native_labels": len(n), "web_only": [], "native_only": [],
-              "allowed": [], "missing": [], "deferred": []}
+              "allowed": [], "missing": [], "deferred": [], "wording": []}
     for side, mine, other in (("web", w, n_all), ("native", n, w_all)):
         if only and side != only:
             continue
@@ -1218,6 +1219,8 @@ def pair_diff(web: Scan, native: Scan, spec: dict) -> dict:
                 continue
             if listed(side, key, mine[key][0], allow):
                 result["allowed"].append((side, mine[key][0]))
+            elif listed(side, key, mine[key][0], wording):
+                result["wording"].append((side, mine[key][0]))
             elif listed(side, key, mine[key][0], missing):
                 result["missing"].append((side, mine[key][0]))
             elif listed(side, key, mine[key][0], deferred):
@@ -1315,16 +1318,21 @@ def copy_violations(web: Scan, native: Scan) -> tuple[list[str], list[str]]:
 def section_e(web: Scan, native: Scan) -> list[str]:
     out = ["## e. Cặp màn web <-> native (luật cứng, scripts/ui_parity_pairs.json)", "",
            "Trong một cặp, mỗi nhãn ngắn phải có ở cả hai phía (khoá lỏng) trừ khi nằm trong `allow` (nền tảng bắt buộc khác, có lý do) hay `missing` (tính "
-           "năng / phần màn chỉ có ở một phía - Lead xếp lịch). Cột lệch phải bằng 0 thì `--check` mới qua.", "",
-           "| cặp | nhãn web | nhãn native | lệch web | lệch native | cho phép | thiếu thật |", "|---|---|---|---|---|---|---|"]
+           "năng / phần màn chỉ có ở một phía - Lead xếp lịch). Cột lệch phải bằng 0 thì `--check` mới qua. Cột \"chờ Lead\" (`wording_for_lead`) là chữ khác "
+           "nhau cho cùng một việc, chưa chọn chuẩn: TẠM, mục nào có ở đó là nợ.", "",
+           "| cặp | nhãn web | nhãn native | lệch web | lệch native | cho phép | thiếu thật | chờ Lead |", "|---|---|---|---|---|---|---|---|"]
     diffs = [pair_diff(web, native, spec) for spec in pair_specs()]
     for d in diffs:
-        out.append(f"| {d['id']} | {d['web_labels']} | {d['native_labels']} | {len(d['web_only'])} | {len(d['native_only'])} | {len(d['allowed'])} | {len(d['missing'])} |")
+        out.append(f"| {d['id']} | {d['web_labels']} | {d['native_labels']} | {len(d['web_only'])} | {len(d['native_only'])} | {len(d['allowed'])} | {len(d['missing'])} | {len(d['wording'])} |")
     for d in diffs:
         for side, other in (("web", "native"), ("native", "web")):
             lacking = [i for s, i in d["missing"] if s == side]
             if lacking:
                 out += ["", f"Thiếu thật ở {other} - `{d['id']}`: " + "; ".join(esc(i.text, 40) for i in lacking[:40])]
+    for d in diffs:
+        waiting = [i for s, i in d["wording"]]
+        if waiting:
+            out += ["", f"Chờ Lead chọn chữ - `{d['id']}`: " + "; ".join(f"{s}: {esc(i.text, 40)}" for s, i in d["wording"][:60])]
     out.append("")
     return out
 
@@ -1335,7 +1343,7 @@ def hard_checks(web: Scan, native: Scan) -> list[str]:
     for spec in pair_specs():
         d = pair_diff(web, native, spec)
         problems += [f"[{d['id']}] chỉ có ở web: \"{i.text}\" ({i.file.replace(WEB_ROOT, '')}:{i.line})" for i in d["web_only"]]
-        # Nhãn chỉ có ở native không còn là lỗi: giao diện web của điện thoại đã bỏ (P4), màn như Cài đặt / Thiết bị chỉ còn ở native.
+        problems += [f"[{d['id']}] chỉ có ở native: \"{i.text}\" ({i.file.replace(NATIVE_ROOT, 'native/')}:{i.line})" for i in d["native_only"]]
     problems += [f"[icon] {v}" for v in icon_violations(web, native)]
     hard, _ = copy_violations(web, native)
     problems += [f"[chữ] {v}" for v in hard]
@@ -1351,8 +1359,8 @@ Ba thứ, ba nguồn chung, đều có luật máy (`python -X utf8 scripts/ui_p
   `rounded-control` / `rounded-cover` / `rounded-sheet`). Luật máy: `ui/src/shared/radiusRules.test.ts`, `RadiusRulesTest.kt`.
 - **Icon**: lucide. `scripts/gen_lucide_icons.py` (MỘT danh sách `ICONS`) sinh nét cho native và Qt từ đúng gói web dùng; luật `IconRulesTest.kt`.
   Một việc = một icon trên mọi nền tảng: bảng "Việc -> icon" dưới đây là luật, `--check` báo nhãn nào dùng icon khác bảng (bên nào cũng vậy).
-- **Chữ**: cặp màn `scripts/ui_parity_pairs.json` (nhãn của web mà native không có thì `--check` đỏ, trừ mục `allow` có lý do; nhãn chỉ ở native thì chỉ được báo trong bảng tự sinh),
-  luật chữ bên dưới, và bảng đo lệch tự sinh ở cuối file.
+- **Chữ**: cặp màn `scripts/ui_parity_pairs.json` (mỗi màn native ghép với màn máy tính cùng việc; nhãn có ở một phía mà phía kia không có thì `--check` đỏ, trừ mục
+  `allow` / `missing` có lý do; cặp có `only: "native"` chỉ đòi nhãn native phải có ở web vì màn web là bản đầy đủ hơn), luật chữ bên dưới, và bảng đo lệch tự sinh ở cuối file.
 
 ## Việc -> icon
 

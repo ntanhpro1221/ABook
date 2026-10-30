@@ -23,20 +23,20 @@ import { AUDIOBOOK_COPY } from "./listenExport";
 export type ExportKind = "bookfile" | "m4b" | "mp3" | "audiobook" | "projectfile";
 
 const KINDS: Record<ExportKind, { copy: ExportCopy; pick: string; url: (id: string) => string; cancel?: (id: string) => string }> = {
-  bookfile: { copy: BOOK_FILE_COPY, pick: "Chọn nơi lưu file sách", url: (id) => `/api/books/${id}/bookfile-job`, cancel: (id) => `/api/books/${id}/bookfile-job/cancel` },
-  m4b: { copy: M4B_COPY, pick: "Chọn nơi lưu file M4B", url: (id) => `/api/books/${id}/m4b-job`, cancel: (id) => `/api/books/${id}/m4b-job/cancel` },
+  bookfile: { copy: BOOK_FILE_COPY, pick: "Chọn nơi lưu", url: (id) => `/api/books/${id}/bookfile-job`, cancel: (id) => `/api/books/${id}/bookfile-job/cancel` },
+  m4b: { copy: M4B_COPY, pick: "Chọn nơi lưu", url: (id) => `/api/books/${id}/m4b-job`, cancel: (id) => `/api/books/${id}/m4b-job/cancel` },
   // Thư mục MP3 của Studio (hộp Xuất) và của menu Thư viện: cùng việc nền, cả bộ thì thêm `extra.series`.
-  mp3: { copy: MP3_COPY, pick: "Chọn nơi lưu bản xuất", url: (id) => `/api/books/${id}/mp3-job`, cancel: (id) => `/api/books/${id}/mp3-job/cancel` },
+  mp3: { copy: MP3_COPY, pick: "Chọn nơi lưu", url: (id) => `/api/books/${id}/mp3-job`, cancel: (id) => `/api/books/${id}/mp3-job/cancel` },
   audiobook: {
     copy: AUDIOBOOK_COPY,
-    pick: "Chọn nơi lưu sách nói",
+    pick: "Chọn nơi lưu",
     url: (id) => `/api/listen/books/${id}/audiobook`,
     cancel: (id) => `/api/listen/books/${id}/audiobook/cancel`,
   },
   // Hộp Xuất của Studio (studio/ExportBook.tsx) bắt đầu và theo việc này khi còn mở; host nhận theo dõi khi hộp bị gỡ giữa chừng (`trackExport`) hay app mở lại lúc máy chủ còn gói.
   projectfile: {
     copy: PROJECT_FILE_COPY,
-    pick: "Chọn nơi lưu file dự án",
+    pick: "Chọn nơi lưu",
     url: (id) => `/api/books/${id}/projectfile-job`,
     cancel: (id) => `/api/books/${id}/projectfile-job/cancel`,
   },
@@ -137,7 +137,7 @@ export function AudiobookMenuItem({ book }: { book: ListenBook }) {
     >
       <Headphones className="mt-line-icon size-4 shrink-0 self-start" />
       <span className="min-w-0">
-        <span className="block">Xuất sách nói…</span>
+        <span className="block">Xuất sách nói</span>
         <MotionRegion as="span" className="block text-pretty text-xs text-fg-3" title={lastExportPlace(job)}>
           {lastExportHint(job, KINDS.audiobook.copy, dataUpdatedAt) ?? "Mang sang điện thoại, xe hơi, trình phát khác"}
         </MotionRegion>
@@ -226,7 +226,7 @@ export function ExportJobHost({ kind }: { kind: ExportKind }) {
           duration: Infinity,
           action: cancel
             ? {
-                label: "Huỷ",
+                label: "Dừng",
                 onClick: () => {
                   stopping.current.add(id);
                   exportToast("loading", STOPPING.title, { id: toastId(kind, id), description: stoppingNote(copy), duration: Infinity, ...NO_ACTION });

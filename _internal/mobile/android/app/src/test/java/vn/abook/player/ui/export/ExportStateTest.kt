@@ -257,7 +257,7 @@ class ExportStateTest {
         source.events.tryEmit(event { copy(error = "Không ghi được vào thư mục đã chọn") })
         source.startGate!!.complete(Unit)
         assertEquals(ExportPhase.Failed(ExportKind.Mp3, "Không ghi được vào thư mục đã chọn"), exports.phase())
-        assertEquals("Không xuất được", exports.hint("b1").value)
+        assertEquals("Chưa xuất được", exports.hint("b1").value)
     }
 
     @Test
@@ -357,7 +357,7 @@ class ExportStateTest {
         exports.start(book)
         source.events.tryEmit(event { copy(error = "Hết chỗ trống trên điện thoại hoặc ở nơi lưu - dọn bớt rồi xuất lại") })
         assertEquals(ExportPhase.Failed(ExportKind.Mp3, "Hết chỗ trống trên điện thoại hoặc ở nơi lưu - dọn bớt rồi xuất lại"), exports.phase())
-        assertEquals("Không xuất được", exports.hint("b1").value)
+        assertEquals("Chưa xuất được", exports.hint("b1").value)
     }
 
     @Test

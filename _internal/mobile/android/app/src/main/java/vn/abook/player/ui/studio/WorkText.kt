@@ -136,7 +136,7 @@ object WorkText {
     // ---- Nhân vật ----
 
     const val CAST_LOADING = "Đang mở dàn nhân vật"
-    const val CAST_EMPTY = "Chưa có nhân vật nào"
+    const val CAST_EMPTY = "Chưa có dàn nhân vật"
     const val CAST_EMPTY_HINT = "Nhân vật hiện ra khi máy đọc xong phần phân tích."
     const val CAST_NARRATOR = "Người kể"
     const val CAST_MAIN = "Nhân vật chính"

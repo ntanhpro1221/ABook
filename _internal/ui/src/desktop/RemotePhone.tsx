@@ -274,11 +274,11 @@ function RemoteBar({ phone, receivedAt, onDismiss }: { phone: RemotePhone; recei
                 type="button"
                 onClick={() => void listenHere()}
                 disabled={moving}
-                aria-label="Nghe trên máy này"
+                aria-label="Nghe ở đây"
                 className="inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-control px-2 text-xs font-medium text-fg hover:bg-hover disabled:opacity-50"
               >
                 <MotionRegion as="span" className="inline-grid shrink-0 place-items-center">{moving ? <Loader2 className="size-4 animate-spin" /> : <Laptop className="size-4" />}</MotionRegion>
-                <span className="hidden lg:inline">Nghe trên máy này</span>
+                <span className="hidden lg:inline">Nghe ở đây</span>
               </button>
             </Tooltip>
           )}
@@ -436,11 +436,11 @@ export function HandOffButton({ className }: { className?: string }) {
       }}
     >
       {slot ? (
-        <DropdownMenu.Trigger asChild><SlotFace ref={triggerRef} aria-label="Phát trên máy khác" value="Chọn" /></DropdownMenu.Trigger>
+        <DropdownMenu.Trigger asChild><SlotFace ref={triggerRef} aria-label="Phát trên thiết bị khác" value="Chọn" /></DropdownMenu.Trigger>
       ) : (
-      <Tooltip label="Phát trên máy khác">
+      <Tooltip label="Phát trên thiết bị khác">
         <DropdownMenu.Trigger
-          aria-label="Phát trên máy khác"
+          aria-label="Phát trên thiết bị khác"
           className={cn(
             "inline-flex size-8 shrink-0 items-center justify-center rounded-control text-fg-2 transition-colors hover:bg-hover hover:text-fg data-[state=open]:bg-hover data-[state=open]:text-fg",
             className,
@@ -506,7 +506,7 @@ export function commandRunner<C extends { id: string }>(
     const done = queue.then(async () => {
       for (const command of fresh) {
         // Lệnh văng lỗi vẫn có kết quả gửi về (máy kia không chờ mãi), lệnh sau vẫn chạy.
-        const problem = await apply(command).catch(() => "Chưa làm được, bạn thử lại");
+        const problem = await apply(command).catch(() => "Chưa làm được");
         ack({ id: command.id, ok: problem === null, message: problem ?? "" });
       }
       return fresh.length > 0;

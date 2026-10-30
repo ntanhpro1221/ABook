@@ -176,7 +176,7 @@ function PairingContent({ sync, onPair, onCancel, busy }: { sync: SyncView; onPa
         <DialogActions>
           {/* Chỉ huỷ mã đang hiện, không gỡ thiết bị nào - "Huỷ ghép" dễ hiểu thành gỡ thiết bị (soát UX 29-09). */}
           <Button size="sm" variant="ghost" onClick={onCancel}>
-            Huỷ mã này
+            Huỷ mã
           </Button>
         </DialogActions>
       </MotionRegion>

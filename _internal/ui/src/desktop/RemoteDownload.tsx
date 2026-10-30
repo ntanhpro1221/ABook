@@ -36,7 +36,7 @@ function useRemoteDownload(book: ListenBook) {
       client.setQueryData(key, status);
       toast("Đang tải về máy");
     },
-    onError: (error: Error) => toast.error("Không tải được", { description: error.message }),
+    onError: (error: Error) => toast.error("Chưa tải được", { description: error.message }),
   });
   const cancel = useMutation({
     mutationFn: () => api<RemoteDownload>(`/api/listen/books/${book.id}/download`, { method: "DELETE" }),
@@ -104,7 +104,7 @@ export function RemoteDownloadStatus({ book }: { book: ListenBook }) {
           loading={busy}
           onClick={note.action === "cancel" ? cancel : start}
         >
-          {note.action === "cancel" ? "Dừng tải" : "Tải tiếp"}
+          {note.action === "cancel" ? "Huỷ tải" : "Tải tiếp"}
         </Button>
       )}
     </MotionRegion>

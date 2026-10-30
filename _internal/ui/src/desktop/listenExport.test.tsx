@@ -139,7 +139,7 @@ describe("jobView for the audiobook", () => {
   });
 
   it("an M4B stopped with Huỷ says nothing was written (soát a61: trước đây M4B không huỷ được)", () => {
-    expect(jobView({ state: "cancelled" }, 0, false, M4B_COPY)).toEqual({ kind: "info", title: "Đã huỷ xuất", description: "Chưa có file M4B nào được ghi." });
+    expect(jobView({ state: "cancelled" }, 0, false, M4B_COPY)).toEqual({ kind: "info", title: "Đã dừng xuất", description: "Chưa có file M4B nào được ghi." });
   });
 
   it("an M4B downloading its background music says which track (k/n)", () => {

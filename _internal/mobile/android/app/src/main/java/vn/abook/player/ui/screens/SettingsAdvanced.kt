@@ -52,13 +52,13 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 /** Lời của Chẩn đoán và Bộ nhớ. */
 private object AdvancedCopy {
     const val LOG = "Việc app làm gần đây, để tìm lỗi. Xem lại trước khi gửi."
-    const val LOG_NOTE = "Có tên sách; che khoá, mã ghép, IP và đường dẫn nhận ra được. Máy ghép đọc được khi bật “Chia sẻ thư viện”."
-    const val SEND = "Bạn chọn gửi cho ai; app không tự gửi."
+    const val LOG_NOTE = "Gồm thông tin máy, nhật ký gần nhất và tên sách; tự che khoá, mã ghép, đường dẫn và IP nhận ra được. Máy ghép đọc được khi bật “Chia sẻ thư viện”."
+    const val SEND = "Xem lại trước khi gửi; bạn tự gửi đi."
     const val CLEAR = "Gồm cả các lần văng đã ghi."
     const val CLEARED = "Đã xoá nhật ký."
     /** Lời hỏi lại trước khi xoá (web: CLEAR_QUESTION ở android/Diagnostics.tsx - cùng từng chữ). */
     const val CLEAR_QUESTION = "Nhật ký của ABook sẽ bị xoá khỏi máy này. $CLEAR"
-    val SOURCE = keepUrlTogether("Giấy phép MIT - github.com/ntanhpro1221/ABook")
+    val SOURCE = keepUrlTogether("github.com/ntanhpro1221/ABook")
 
     fun cache(bytes: Long?): String = when {
         bytes == null -> "Đang đo."
@@ -103,7 +103,7 @@ fun AdvancedSettings(env: SettingsEnv, sheets: SheetHost, onBack: () -> Unit, mo
         ListSection("Giới thiệu") {
             ListRow("Phiên bản") { BasicText(repo.version, style = Abook.type.bodySmall, modifier = Modifier.testTag("app_version")) }
             RowLine()
-            ActionRow("Mã nguồn mở", "Mở", env.links.openSource, "source_open", AdvancedCopy.SOURCE)
+            ActionRow("Mã nguồn mở (MIT)", "Mở", env.links.openSource, "source_open", AdvancedCopy.SOURCE)
             RowLine()
             NavRow("Thành phần sử dụng", { sheets.show { ThirdPartySheet(repo) } }, "third_party")
         }

@@ -89,7 +89,7 @@ fun ExportScreen(book: ListenBook, exports: ExportState, onBack: () -> Unit, for
         else -> Unit
     }
     BookForm(
-        "Xuất sách", onBack, "export_screen",
+        if (book.textOnly) "Xuất sách nói" else "Xuất sách", onBack, "export_screen",
         footer = { Footer(book, ui, exports, last[1] as? ExportPhase.Running, last[2]) },
     ) {
         SheetPages(ui.phase.page, { it }, "export_pages") { page ->

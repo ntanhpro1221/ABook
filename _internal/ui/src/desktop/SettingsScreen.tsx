@@ -471,7 +471,7 @@ export function AdvancedGroup({ info }: { info: AppInfo | undefined }) {
           <p className="text-sm text-fg-2">ABook {info?.version} - nghe sách tiếng Việt và làm sách nói.</p>
           {/* Liên kết mở ở cửa sổ mới (target="_blank"), không điều hướng chính cửa sổ app; cửa sổ app Windows nuốt target nên openExternal nhờ máy chủ mở. */}
           <p className="select-text text-sm text-fg-2">
-            Mã nguồn mở (MIT):{" "}
+            Mã nguồn mở (MIT){" "}
             <a href={SOURCE_URL} target="_blank" rel="noopener noreferrer" onClick={(event) => openExternal(SOURCE_URL, event)} className="font-medium text-accent-text underline underline-offset-2 [overflow-wrap:anywhere]">
               github.com/ntanhpro1221/ABook
             </a>

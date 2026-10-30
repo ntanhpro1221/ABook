@@ -248,7 +248,7 @@ interface OpenedBook {
 
 // Thông báo mở file = MỘT dòng (DESIGN 6): chỉ cái vừa xảy ra; "xoá file gốc cũng không sao"... là điều người dùng không cần được nhắc mỗi lần mở.
 const OPENED_SAID: Record<NonNullable<OpenedBook["how"]>, string> = {
-  new: "Đã thêm sách",
+  new: "Đã thêm", // có tên sách thì nói “Đã thêm “tên”” (xem dưới)
   existing: "Sách đã có",
   updated: "Đã cập nhật",
   older: "File này cũ hơn bản đang có",
@@ -293,7 +293,12 @@ function useOpenedBook() {
       navigate(`/book/${result.id}`);
       // Việc đã gộp / giữ nằm ngay trong câu; tên khác hay nhạc hỏng (mở được nhưng thiếu gì đó) là cảnh báo cùng dòng ấy.
       const title = workshopMergeNote(result.workshop) ?? keptEditsTitle(result.merge?.kept) ?? mergedTitle(result) ?? OPENED_SAID[result.how ?? "new"];
-      toastDone(title, [otherTitleNote(result.otherTitle), brokenMusicNote(result.brokenMusic)].filter(Boolean).join(" ") || undefined);
+      const notes = [otherTitleNote(result.otherTitle), brokenMusicNote(result.brokenMusic)].filter(Boolean).join(" ") || undefined;
+      if (result.how === "new" && title === OPENED_SAID.new) {
+        // Cuốn mới: nói tên sách như bên điện thoại (“Đã thêm “tên””); tên chưa đọc được thì còn “Đã thêm”.
+        void api<{ title?: string }>(`/api/listen/books/${result.id}`).then((book) => book.title, () => undefined)
+          .then((name) => toastDone(name ? `Đã thêm “${name}”` : title, notes));
+      } else toastDone(title, notes);
       if (result.how === "project" && result.edits) offerFold(client, result.id, result.edits);
       return true;
     },
@@ -670,7 +675,7 @@ export function App() {
                             : info.remote
                               ? { remote: listenOnlyOwner(info) }
                               : {
-                                  pickFolder: info.dialogs ? () => pickFolder("Chọn nơi lưu file sách", "").catch(() => null) : undefined,
+                                  pickFolder: info.dialogs ? () => pickFolder("Chọn nơi lưu", "").catch(() => null) : undefined,
                                   onOpenStudio: (book) => window.location.assign(`#/studio/${book.id}?tab=music`),
                                 }
                         }

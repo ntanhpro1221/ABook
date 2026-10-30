@@ -133,11 +133,11 @@ class ExportModelTest {
 
     @Test
     fun `spoken progress only changes at the quarter marks`() {
-        assertEquals("Đang xuất sách", ExportText.busy(ExportKind.Mp3))
-        assertEquals("Đã dừng xuất M4B", ExportText.stoppedTitle(ExportKind.M4b))
-        assertEquals("Đã dừng xuất sách nói", ExportText.stoppedTitle(ExportKind.Audiobook))
-        assertEquals("Không xuất được", ExportText.failedTitle(ExportKind.Mp3))
-        assertEquals("Không xuất được sách nói", ExportText.failedTitle(ExportKind.Audiobook))
+        assertEquals("Đang xuất MP3", ExportText.busy(ExportKind.Mp3))
+        assertEquals("Đã dừng xuất", ExportText.stoppedTitle(ExportKind.M4b))
+        assertEquals("Đã dừng xuất", ExportText.stoppedTitle(ExportKind.Audiobook))
+        assertEquals("Chưa xuất được MP3", ExportText.failedTitle(ExportKind.Mp3))
+        assertEquals("Chưa xuất được sách nói", ExportText.failedTitle(ExportKind.Audiobook))
         assertEquals("Máy không mở được thư mục - mở app Tệp rồi vào Music", ExportText.noFolderOpener("Music"))
         assertEquals("Đang xuất", ExportText.spokenProgress("Đang xuất", null))
         assertEquals("Đang xuất", ExportText.spokenProgress("Đang xuất", 0.1f))

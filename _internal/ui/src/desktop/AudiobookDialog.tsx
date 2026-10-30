@@ -145,7 +145,7 @@ export function AudiobookForm({ format, onFormat, voice, plan, planError, ffmpeg
       {ffmpeg && <FfmpegNeeded status={ffmpeg} onDownload={onDownload} onStop={onStopDownload} />}
 
       <p className="text-xs text-fg-3">
-        Chạy nền; huỷ vẫn giữ phần đã làm.
+        Chạy nền; dừng vẫn giữ phần đã làm.
       </p>
     </MotionRegion>
   );
@@ -191,7 +191,7 @@ export function AudiobookDialogHost() {
     try {
       let target = "";
       if (info?.dialogs) {
-        const picked = await pickFolder("Chọn nơi lưu sách nói", "").catch(() => null);
+        const picked = await pickFolder("Chọn nơi lưu", "").catch(() => null);
         if (!picked) return;
         target = picked;
       }
@@ -219,7 +219,7 @@ export function AudiobookDialogHost() {
       </DialogActions>}
       open={book !== null}
       onOpenChange={(open) => !open && setBook(null)}
-      title={`Xuất sách nói “${book?.title ?? ""}”`}
+      title="Xuất sách nói"
       description="Đọc cả cuốn thành file âm thanh, nghe ở máy khác."
       width="max-w-[560px]"
     >

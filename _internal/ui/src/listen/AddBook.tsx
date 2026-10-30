@@ -472,7 +472,7 @@ export function AddBookDialog({
       }
       if (added.how !== "existing") feedback("confirm");
       if (added.how === "existing") toast.success("Cuốn này đã có trong thư viện");
-      else toast.success("Đã thêm sách vào thư viện");
+      else toast.success(`Đã thêm “${title.trim()}”`);
       clear(); // bản tạm đã dùng xong (native tự dọn)
       onOpenChange(false);
       navigate(`/book/${added.id}`);
