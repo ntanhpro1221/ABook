@@ -28,7 +28,6 @@ Column {
     property var asking: null              // {computer, unsent}
     property string busyChoice: ""
     property string unpairError: ""
-    readonly property Item overlay: Window.window ? Window.window.contentItem : root
     readonly property var computers: view ? view.computers || [] : []
     readonly property string waking: computers.filter(computer => computer.waking).map(computer => computer.id).join(",")
     readonly property string syncLabel: "Kết nối Wi-Fi"
@@ -207,7 +206,6 @@ Column {
                                 devices: root.bluetoothDevices
                                 busy: root.refreshBusy || root.bluetoothBusy
                                 clock: root.now
-                                overlay: root.overlay
                                 onDiagnose: target => diagnostics.openFor(target)
                                 onOpenStudio: id => { root.openStudio(id); Nav.openPeerStudio(id) }
                                 onRefresh: root.refresh()
@@ -376,12 +374,11 @@ Column {
     DevicesUnpair {
         id: unpairDialog
         objectName: "unpairDialog"
-        parent: root.overlay
         copy: root.asking ? Logic.unpairCopy(root.asking.computer.name, "máy tính", root.asking.unsent, root.reachable(root.asking.computer)) : null
         busyChoice: root.busyChoice
         error: root.unpairError
         onChoose: choice => root.chooseUnpair(choice)
         onClosed: root.asking = null
     }
-    PhoneDiagnostics { id: diagnostics; objectName: "diagnostics"; parent: root.overlay }
+    PhoneDiagnostics { id: diagnostics; objectName: "diagnostics"; }
 }

@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Controls.Basic as C
 import ABook
 import "WorkLogic.js" as W
 
@@ -43,7 +42,6 @@ Item {
     StudioConfirm {
         id: confirm
         objectName: "bulkConfirm"
-        parent: C.Overlay.overlay
         panelWidth: 480
         dismissable: !root.busy
         keepOpen: function() { return root.busy }
