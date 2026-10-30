@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "VisualReady.js" as VisualReady
 import ABook
 
 // Studio S1: danh sách dự án (bảng gọn, các trạng thái rỗng / chờ / lỗi), trang một dự án (MỘT nút chính theo trạng thái, "Tạm dừng" gọi lệnh tạm dừng
@@ -41,8 +42,7 @@ Item {
         function hasPart(item, part) { return texts(item).some(t => t.indexOf(part) >= 0) }
         function shot(name, item) {
             const target = item || host
-            waitForRendering(target)
-            wait(300)
+            VisualReady.render(this, host.Window.window, target, qtVisualReady)
             const path = Qt.resolvedUrl("../../build/d2shots/s1_" + name + "_" + (Theme.dark ? "dark" : "light") + ".png").toString()
                 .replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, "")
             grabImage(target).save(path)
@@ -97,7 +97,7 @@ Item {
             Api.notice = ""
             Nav.layers = []
             Nav.studioPeer = ""
-            Theme.reduceMotion = true
+            Theme.reduceMotion = false
         }
         function cleanup() {
             Theme.mode = "auto"; Theme.reduceMotion = false

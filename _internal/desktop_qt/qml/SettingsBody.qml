@@ -19,7 +19,9 @@ Item {
     SequentialAnimation {
         id: transition
         NumberAnimation { target: root; property: "phase"; to: 0; duration: root.previous === "" ? 0 : Theme.motionFastOut }
-        PropertyAction { target: root; property: "previous"; value: root.group }
+        // Read the requested group at the swap; a bound PropertyAction value
+        // can still contain the old group when onGroupChanged starts it.
+        ScriptAction { script: root.previous = root.group }
         NumberAnimation { target: root; property: "phase"; to: 1; duration: Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeDecelerate }
     }
     Loader {

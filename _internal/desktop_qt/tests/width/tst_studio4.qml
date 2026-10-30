@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "VisualReady.js" as VisualReady
 import QtQuick.Controls.Basic as C
 import ABook
 
@@ -58,8 +59,7 @@ Item {
         }
         function shot(name, item) {
             const target = item || host
-            tryVerify(function() { return all2(target, n => n.settled === false && n.reveal !== undefined).length === 0 }, 3000)
-            waitForRendering(target)
+            VisualReady.render(this, host.Window.window, target, qtVisualReady)
             const path = Qt.resolvedUrl("../../build/d2shots/s4_" + name + "_" + (Theme.dark ? "dark" : "light") + ".png").toString()
                 .replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, "")
             grabImage(target).save(path)
@@ -209,7 +209,7 @@ Item {
             Nav.layers = []
             Nav.studioPeer = ""
             Platform.setSetting("fold.book.a.extras", "1")
-            Theme.reduceMotion = true
+            Theme.reduceMotion = false
             Clip.stop()
         }
         function cleanup() {
@@ -368,8 +368,6 @@ Item {
             tryVerify(function() { return hasTop("castMenu") || findChild(page, "castMenu").open })
         }
         function dialog(page, name) { return findChild(page, name) }
-        // Chữ gợi ý của hộp chọn giọng có ký tự ▶ mà phông chưa có (CastLogic.tryHint, việc của người sửa lớp lỗi glyph): ẩn nó khỏi máy dò để test này không thêm điểm mới.
-        function muteHint(page) { for (const hint of all(dialog(page, "castVoiceDialog"), "voiceTryHint")) hint.opacity = 0 }
         function test_renameWritesThroughTheStudioPathAndRefreshesTheList() {
             serve()
             const page = openProject("cast")
@@ -443,7 +441,6 @@ Item {
             castReady(page)
             tryVerify(function() { return rowOf(page, "Lan") !== undefined && rowOf(page, "Lan") !== null }, 3000)
             one(rowOf(page, "Lan"), "castVoiceButton").clicked()
-            muteHint(page)
             tryVerify(function() { return dialog(page, "castVoiceDialog").open })
             tryVerify(function() { return all(dialog(page, "castVoiceDialog"), "voiceChoice").length >= 2 }, 3000)
             compare(calls("GET", base + "/voices?character=Lan").length, 1)
@@ -474,7 +471,6 @@ Item {
             castReady(page)
             tryVerify(function() { return has(page, "castNarratorVoiceButton") }, 3000)
             one(page, "castNarratorVoiceButton").clicked()
-            muteHint(page)
             tryVerify(function() { return dialog(page, "castVoiceDialog").open })
             tryVerify(function() { return calls("GET", base + "/voices?character=NARRATOR").length === 1 })
         }
@@ -501,7 +497,6 @@ Item {
             castReady(page)
             tryVerify(function() { return rowOf(page, "Lan") !== undefined && rowOf(page, "Lan") !== null }, 3000)
             one(rowOf(page, "Lan"), "castVoiceButton").clicked()
-            muteHint(page)
             tryVerify(function() { return dialog(page, "castVoiceDialog").open })
             tryVerify(function() { return has(dialog(page, "castVoiceDialog"), "engineOnComputer") }, 3000)
             verify(!has(dialog(page, "castVoiceDialog"), "engineStart"))
@@ -535,7 +530,7 @@ Item {
             verify(hasText(page, "Phân tích xong - sách đang chờ bạn duyệt"))
             page.destroy()
             const done = openProject("", 1280, precastBook({chapters: {total: 3, completed: 1, redo: 0, missingAudio: 0, failed: 0, working: 0}}))
-            wait(0) // fixed: proves absence
+            VisualReady.render(this, host.Window.window, done, qtVisualReady)
             verify(!has(done, "precastBanner"))
         }
         function test_waitSwitchWritesBeforeTheAnalysisIsAnnounced() {
@@ -612,7 +607,7 @@ Item {
             serve()
             const page = openPrecast()
             step(page, "lines")
-            tryVerify(function() { return hasPart(page, "3 câu máy chưa chắc ai nói ở Chương 1 đến Chương 2 - các chương thu đầu tiên; các chương sau xem ở Việc cần duyệt.") }, 3000)
+            tryVerify(function() { return hasPart(page, "3 câu máy chưa chắc ai nói ở Chương 1 → Chương 2 - các chương thu đầu tiên; các chương sau xem ở Việc cần duyệt.") }, 3000)
             tryVerify(function() { return cards(page).length === 1 }, 3000)
             compare(titles(page)[0], "Ai nói câu này")
             // chọn người nói: ghi đúng các câu của thẻ
@@ -621,7 +616,7 @@ Item {
             compare(calls("POST", base + "/speaker")[0].body.lines, [{stableId: "s1", textSha256: "aa"}])
             compare(calls("POST", base + "/speaker")[0].body.speaker, "Lan")
             tryVerify(function() { return counts(page).precast === 2 }, 3000)
-            tryVerify(function() { return hasPart(page, "Không có câu nghi ngờ ở Chương 1 đến Chương 2") || cards(page).length === 0 }, 3000)
+            tryVerify(function() { return hasPart(page, "Không có câu nghi ngờ ở Chương 1 → Chương 2") || cards(page).length === 0 }, 3000)
         }
         function test_castStepDecisionWritesTheVoiceAndTheCardLeaves() {
             serve()

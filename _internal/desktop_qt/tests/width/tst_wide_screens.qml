@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "VisualReady.js" as VisualReady
 import ABook
 
 // Real screens, deterministic HTTP/audio fixtures. Render through offscreen QPA.
@@ -22,7 +23,7 @@ Item {
         name: "WideScreens"
         when: windowShown
         function init() {
-            Theme.reduceMotion = true
+            Theme.reduceMotion = false
             Platform.reset(); DesktopApi.reset(); Api.bind(DesktopApi, Theme)
             Api.loaded = true; Api.preferences = {theme: "light"}
             Api.info = {version: "fixture", studio: {installed: true}}
@@ -147,7 +148,7 @@ Item {
             }
             if (d.screen === "edit") page.begin({id: "width", title: "Hành trình qua những miền đất mới", author: "Người kể chuyện", stage: "text", capabilities: {}, edits: 2})
             if (d.screen === "mini") { page.height = page.naturalHeight; page.y = (content.height - page.height) / 2 }
-            wait(600)
+            VisualReady.render(this, host.Window.window, page, qtVisualReady)
             verifyLayout(page, d.screen)
             console.log("WIDE_METRIC " + JSON.stringify({screen: d.screen, width: d.w, mode: d.mode,
                 content: content.width, expanded: !!page.expanded, columns: page.cols || 0, cover: page.coverW || 0,
@@ -186,27 +187,33 @@ Item {
             }
             if (d.screen === "edit") page.begin({id: "width", title: "Tên sách", author: "Tác giả", stage: "text", capabilities: {}, edits: 2})
             if (d.screen === "mini") { page.bookTitle = "Một tên sách dài ".repeat(12); page.chapterTitle = "Tên chương dài ".repeat(15); page.height = Qt.binding(() => page.naturalHeight) }
-            wait(600)
+            VisualReady.render(this, host.Window.window, page, qtVisualReady)
             if (d.screen === "edit") { page.titleDraft = "Bản nháp đang viết ".repeat(5); page.authorDraft = "Tác giả đang viết" }
             Theme.reduceMotion = false
             for (const width of [1688, narrow, 1688]) {
                 host.width = width + content.x
-                wait(40)
-                if (d.screen !== "settings" && d.screen !== "devices") verify(page.wideT > 0 && page.wideT < 1, "reflow must animate")
+                if (d.screen !== "settings" && d.screen !== "devices") tryVerify(function() { return page.wideT > 0 && page.wideT < 1 }, 5000, "reflow must animate")
                 if (d.screen === "add" || d.screen === "edit" || d.screen === "mini") {
                     for (let frame = 0; frame < 14; frame++) {
+                        waitForPolish(host.Window.window)
                         if (d.screen === "add") disjoint(findChild(page, "importDetailsColumn"), findChild(page, "importChapterColumn"), page)
                         if (d.screen === "edit") disjoint(findChild(page, "editDetailsColumn"), findChild(page, "editExtrasColumn"), page)
                         if (d.screen === "mini") disjoint(findChild(page, "miniDetails"), findChild(page, "miniPlayback"), page)
-                        wait(20)
+                        host.Window.window.update(); waitForRendering(page)
                     }
-                } else wait(360)
+                }
+                if (page.wideT !== undefined) tryVerify(function() { return page.wideT === (page.expanded ? 1 : 0) })
+                if (page.layoutPhase !== undefined) tryVerify(function() { return page.layoutExpanded === page.expanded && page.layoutPhase === 1 })
+                tryVerify(function() { return VisualReady.settled(page, qtVisualReady) })
+                waitForPolish(host.Window.window)
+                host.Window.window.update(); waitForRendering(page)
                 verifyLayout(page, d.screen)
             }
             if (d.screen === "edit") { compare(page.titleDraft, "Bản nháp đang viết ".repeat(5)); compare(page.authorDraft, "Tác giả đang viết") }
             if (d.screen === "add") { compare(page.bookTitle, "Bản nháp"); compare(page.picked.join(), "1") }
+            // Also verify the explicit reduced-motion setting after the animated cycles.
             Theme.reduceMotion = true
-            host.width = narrow + content.x; wait(30)
+            host.width = narrow + content.x; host.Window.window.update(); waitForRendering(page)
             if (page.wideT !== undefined) compare(page.wideT, page.expanded ? 1 : 0)
             page.destroy()
         }
