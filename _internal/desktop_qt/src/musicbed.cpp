@@ -338,7 +338,7 @@ void MusicBed::crossLoop(double seconds, bool fromTimer) {
     const LoopBounds bounds = loopBounds(playing.cue, duration(playing.audio));
     const double at = currentTime(playing.audio);
     if (!loopDue(bounds, at) && !(fromTimer && playing.audio->wantPlay && at >= bounds.loopEnd - LOOP_CROSSFADE_SECONDS - LOOP_TIMER_SLACK_SECONDS)) {
-        if (bounds.crossfade && bounds.loopEnd - LOOP_CROSSFADE_SECONDS - at < LOOP_STANDBY_SECONDS)
+        if (bounds.crossfade && bounds.loopEnd - LOOP_CROSSFADE_SECONDS - at - LOOP_STANDBY_SECONDS <= SYNC_DUE_SECONDS)
             prepareStandby(playing, bounds);
         else
             cancelStandby();
@@ -559,7 +559,7 @@ double MusicBed::nextSyncSeconds(double seconds, double narrationRate) const {
         if (b.crossfade && !p.final) {
             const double remaining = b.loopEnd - LOOP_CROSSFADE_SECONDS - currentTime(p.audio);
             const double standby = remaining - LOOP_STANDBY_SECONDS;
-            delay = std::min(delay, std::max(0.001, standby > 0.001 ? standby : remaining));
+            delay = std::min(delay, std::max(SYNC_DUE_SECONDS, standby > SYNC_DUE_SECONDS ? standby : remaining));
         }
     }
     return delay;
