@@ -1,3 +1,4 @@
+import { TickingValue } from "@/shared/TickingValue";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
@@ -152,9 +153,9 @@ function ProjectRowBody({ book }: { book: BookSummary }) {
             <>
               <div className="flex items-center gap-2">
                 <Progress value={book.progress.overall} running={live} tone={live ? "accent" : "muted"} size="sm" label={`Tiến độ: ${book.title}`} />
-                <span className="tabular w-9 text-right text-xs font-medium">{formatPercent(book.progress.overall)}</span>
+                <span className="tabular w-9 text-right text-xs font-medium"><TickingValue>{formatPercent(book.progress.overall)}</TickingValue></span>
               </div>
-              <div className="mt-1 line-clamp-2 text-xs text-fg-2">{detail}</div>
+              <div className="mt-1 line-clamp-2 text-xs text-fg-2"><TickingValue>{detail}</TickingValue></div>
             </>
           )}
         </MotionRegion>

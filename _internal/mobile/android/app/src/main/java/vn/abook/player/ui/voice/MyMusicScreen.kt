@@ -62,6 +62,7 @@ fun MyMusicScreen(voice: VoiceState, sheets: SheetHost, onBack: () -> Unit, modi
                     if (ui.importing) "Đang thêm ${ui.done}/${ui.total}" else MusicText.ADD_LABEL, Modifier,
                     if (ui.importing) null else ({ picker.launch(MusicImport.MIME_TYPES) }), "music_add",
                     titleColor = if (ui.importing) colors.text else colors.accentText,
+                    titleStyle = Abook.type.body.copy(fontFeatureSettings = "tnum"),
                     leading = { UploadIcon(if (ui.importing) colors.text2 else colors.accentText) },
                     below = if (ui.importing) ({ DownloadBar(voice.importProgress) }) else null,
                 )

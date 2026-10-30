@@ -1,3 +1,4 @@
+import { TickingValue } from "@/shared/TickingValue";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Captions } from "lucide-react";
@@ -47,7 +48,7 @@ export function WordTimingsRow({ bookId, running }: { bookId: string; running: b
       <Captions className="size-4 shrink-0 text-accent-text" />
       <span className="min-w-0 flex-1 basis-48">
         <span className="block font-semibold">Chữ sáng</span>
-        <span className="block text-fg-2 text-pretty">{note}</span>
+        <TickingValue className="block text-fg-2 text-pretty">{note}</TickingValue>
       </span>
       <Button size="sm" variant="ghost" loading={busy} disabled={running || (lines > 0 && aligned === lines && !finished)} onClick={() => start.mutate()}>
         Thêm chữ sáng

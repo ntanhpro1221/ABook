@@ -47,7 +47,7 @@ fun SeriesSheet(tile: ShelfTile.Series, covers: CoverLoader, onOpen: (ListenBook
                     Column(Modifier.weight(1f)) {
                         BasicText(book.title, style = Abook.type.body)
                         val status = ListenLogic.progressText(book)
-                        RowHint(if (book.remote != null) "$status · ${ListenLogic.remotePlace(book)}" else status)
+                        RowHint(if (book.remote != null) "$status · ${ListenLogic.remotePlace(book)}" else status, ticking = true)
                     }
                 }
             }

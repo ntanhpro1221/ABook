@@ -308,7 +308,7 @@ export function RemoteRow({ book, progress, onDownload, compact = false }: { boo
       {!compact && <BookCover title={book.title} size="sm" className="size-14" />}
       {!compact && <div className="min-w-0 flex-1">
         <div className="truncate font-semibold">{book.title}</div>
-        <div className="text-xs text-fg-2">
+        <div data-motion-live className="text-xs text-fg-2">
           {book.chaptersAvailable}/{book.chaptersTotal} chương · {formatLength(book.duration)}
           {!book.downloaded && book.bytes ? ` · ${formatSize(book.bytes)}` : ""}
           {book.producing && " · đang làm"}
@@ -329,7 +329,7 @@ export function RemoteRow({ book, progress, onDownload, compact = false }: { boo
         <Button size="sm" variant="ghost" icon={X} className="edge-start-action" onClick={cancel} aria-label={`Huỷ tải ${book.title}`}>{CANCEL_DOWNLOAD}</Button>
       ) : downloading ? (
         <div className="flex shrink-0 items-center gap-1">
-          <span data-remote-progress className="tabular w-10 text-right text-xs font-semibold text-accent-text" aria-hidden>
+          <span data-remote-progress data-motion-live className="tabular w-10 text-right text-xs font-semibold text-accent-text" aria-hidden>
             {percent}%
           </span>
           <button

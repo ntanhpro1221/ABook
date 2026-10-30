@@ -35,7 +35,7 @@ fun RemoteBookSheet(book: ListenBook, devices: DevicesState, listen: () -> Unit)
         }, "remote_book_download", Modifier.fillMaxWidth(), Alignment.CenterStart)
         }
         Reveal(downloading || started) {
-            Caption(if (downloading) "Đang tải ${(progress * 100).toInt()}%" else pair.failed[book.id]?.let { "Chưa tải được. " + it } ?: if (finished) "Đã tải xong - nghe được cả khi không có mạng" else "Đã huỷ - lần tải sau làm tiếp từ chỗ dừng.")
+            Caption(if (downloading) "Đang tải ${(progress * 100).toInt()}%" else pair.failed[book.id]?.let { "Chưa tải được. " + it } ?: if (finished) "Đã tải xong - nghe được cả khi không có mạng" else "Đã huỷ - lần tải sau làm tiếp từ chỗ dừng.", ticking = true)
         }
     }
 }

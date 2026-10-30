@@ -1,5 +1,6 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.ui.components.ClockLabel
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -267,7 +268,7 @@ private fun BookTile(
             single != null && single.twin -> ListenLogic.progressText(lead)
             else -> lead.author
         }
-        if (sub.isNotEmpty()) BasicText(sub, style = Abook.type.caption)
+        if (sub.isNotEmpty()) ClockLabel(sub, style = Abook.type.caption)
     }
 }
 

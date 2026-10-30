@@ -114,8 +114,9 @@ private fun RowLabel(label: String, hint: String?, modifier: Modifier = Modifier
 
 /** Dòng mô tả dưới tên một hàng (DESIGN.md §6: 14, `--fg-2` = bodySmall): MỘT kiểu cho mọi hàng và mọi dòng phụ dưới một tên - hàng nào cũng gọi hàm này, không tự chọn cỡ chữ; chỉ màu đổi được (lỗi). */
 @Composable
-fun RowHint(text: String, modifier: Modifier = Modifier, color: Color = Abook.colors.text2) {
-    BasicText(text, style = Abook.type.bodySmall.copy(color = color), modifier = modifier)
+fun RowHint(text: String, modifier: Modifier = Modifier, color: Color = Abook.colors.text2, ticking: Boolean = false) {
+    val style = Abook.type.bodySmall.copy(color = color)
+    if (ticking) ClockLabel(text, modifier, style) else BasicText(text, style = style, modifier = modifier)
 }
 
 /** Hàng có tên bên trái, điều khiển / giá trị bên phải (canh giữa hàng). Cao tối thiểu 56. */
@@ -318,6 +319,7 @@ fun ListItem(
     chevron: Boolean = false,
     below: (@Composable ColumnScope.() -> Unit)? = null,
     role: Role = Role.Button,
+    tickingHint: Boolean = false,
 ) {
     Column(
         modifier.fillMaxWidth()
@@ -333,7 +335,7 @@ fun ListItem(
                 BasicText(title, style = titleStyle.copy(color = titleColor), modifier = Modifier.testTag("row_title"))
                 if (hint != null) {
                     Spacer(Modifier.height(2.dp))
-                    RowHint(hint, Modifier.testTag("row_hint"), hintColor)
+                    RowHint(hint, Modifier.testTag("row_hint"), hintColor, ticking = tickingHint)
                 }
             }
             if (trailing != null || chevron) {
@@ -361,8 +363,9 @@ fun StageProgress(progress: () -> Float) {
 
 /** Một dòng thông tin phụ (12, mực phụ) - tối đa một dòng cho mỗi phần, chỉ khi nó mang tin (số đếm, nguồn, lỗi). */
 @Composable
-fun Caption(text: String, modifier: Modifier = Modifier, color: Color = Abook.colors.text2) {
-    BasicText(text, style = Abook.type.caption.copy(color = color), modifier = modifier)
+fun Caption(text: String, modifier: Modifier = Modifier, color: Color = Abook.colors.text2, ticking: Boolean = false) {
+    val style = Abook.type.caption.copy(color = color)
+    if (ticking) ClockLabel(text, modifier, style) else BasicText(text, style = style, modifier = modifier)
 }
 
 /** Lỗi tại chỗ: một câu màu nguy hiểm, kèm "Thử lại" ở mép phải khi có việc để làm lại; mở / khép chiều cao kèm trượt. */

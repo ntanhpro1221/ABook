@@ -1,5 +1,6 @@
 package vn.abook.player.ui.nowplaying
 
+import vn.abook.player.ui.components.ClockLabel
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.animation.AnimatedVisibility
@@ -218,7 +219,7 @@ private fun BookProgressLine(state: NowPlayingState, model: NowPlayingModel) {
     val tens by remember(model) { derivedStateOf { model.position.milliseconds.value / 10_000 } }
     if (base.total <= 0) return
     val heard = minOf(base.total, base.before + if (base.inside) tens * 10.0 else 0.0)
-    BasicText(PlayerText.bookProgress(state.whole, heard, base.total, state.rate, state.ended && state.whole),
+    ClockLabel(PlayerText.bookProgress(state.whole, heard, base.total, state.rate, state.ended && state.whole),
         Modifier.fillMaxWidth().padding(bottom = Dim.s8).testTag("book_progress"), style = Abook.type.caption.copy(color = Abook.colors.text2))
 }
 

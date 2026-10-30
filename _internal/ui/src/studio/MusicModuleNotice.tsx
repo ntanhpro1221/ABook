@@ -61,7 +61,7 @@ export function MusicModuleNotice({ view, queryKey }: { view: LocalMusicView | u
       {showModule && (
         <div className="space-y-1.5">
           {/* Đang tải: % đổi liên tục trong vùng role=status - trình đọc màn hình chỉ đọc mốc 25 % (soát a31 A6). */}
-          <p className={failed ? "text-danger" : undefined}>
+          <p data-motion-live className={failed ? "text-danger" : undefined}>
             {downloadingModule ? <LiveText shown={label} spoken={spokenProgress("Đang tải Phân tích nhạc", modulePercent(module) / 100)} /> : label}
           </p>
           {failed && <ErrorDetails technical={module.errorDetail} className="text-danger" />}
@@ -97,7 +97,7 @@ export function MusicModuleNotice({ view, queryKey }: { view: LocalMusicView | u
       {precise && (
         <div className="space-y-1.5">
           <p className="font-medium text-fg">Cảm xúc chính xác</p>
-          <p className={precise.state === "error" ? "text-danger" : undefined}>
+          <p data-motion-live className={precise.state === "error" ? "text-danger" : undefined}>
             {precise.state === "downloading" ? (
               <LiveText shown={preciseLabel(precise)} spoken={spokenProgress("Đang tải bộ đo cảm xúc chính xác hơn", precise.total > 0 ? precise.done / precise.total : null)} />
             ) : (

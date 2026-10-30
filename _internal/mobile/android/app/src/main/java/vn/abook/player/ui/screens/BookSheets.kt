@@ -1,5 +1,6 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.ui.components.ClockLabel
 import vn.abook.player.formatSize
 
 import androidx.activity.compose.BackHandler
@@ -398,7 +399,7 @@ fun FindInBookSheet(detail: BookDetail, source: BookSource, onPick: (FindHit) ->
             )
         }
         Spacer(Modifier.height(Dim.s8))
-        BasicText(BookSearch.status(query, progress), style = Abook.type.caption.copy(color = colors.text2), modifier = Modifier.testTag("find_status"))
+        ClockLabel(BookSearch.status(query, progress), style = Abook.type.caption.copy(color = colors.text2), modifier = Modifier.testTag("find_status"))
         val hits = progress?.hits.orEmpty()
         if (hits.isNotEmpty()) {
             Spacer(Modifier.height(Dim.s8))

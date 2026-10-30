@@ -114,7 +114,7 @@ export function NameReadings({ bookId, focus = false, name = "" }: { bookId: str
     <MotionRegion as="section" className="mt-8" aria-labelledby="name-readings-title">
       <SectionHeading as="h3" id="name-readings-title" className="scroll-mt-16">
         Cách đọc tên{" "}
-        <span className="font-normal text-fg-2">
+        <span data-motion-live className="font-normal text-fg-2">
           · {analyzed ? `${formatNumber(counted)} tên trong phần này` : "chưa phân tích - tên hiện ra sau bước ấy"}
         </span>
       </SectionHeading>

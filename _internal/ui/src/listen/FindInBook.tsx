@@ -131,7 +131,7 @@ export function FindInBook({ book, open, onOpenChange }: { book: ListenBook; ope
           className="touch-box h-11 w-full rounded-control border border-line bg-bg pl-9 pr-3 text-base outline-none focus:border-focus"
         />
       </div>
-      <p role="status" className="mt-2 text-xs text-fg-2">
+      <p data-motion-live role="status" className="mt-2 text-xs text-fg-2">
         {status}
       </p>
       {hits.length > 0 && (
