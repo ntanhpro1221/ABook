@@ -8,6 +8,7 @@
 #include <QTcpServer>
 #include <QTcpSocket>
 #include <QTemporaryDir>
+#include <atomic>
 #include <cmath>
 #include <cstring>
 #include <condition_variable>
@@ -619,6 +620,57 @@ private slots:
         const long long miss = ((heard - want) % 16000 + 24000) % 16000 - 8000;
         QVERIFY2(std::abs(miss) <= 480 + static_cast<long long>(after - before),
                  qPrintable(QStringLiteral("vào ở khung nguồn lệch %1 khung (nghe ở khung thiết bị %2, gọi ở %3)").arg(miss).arg(first).arg(before)));
+    }
+    // Thoát app khi đã phát một bài giải mã bằng Media Foundation (WAV/FLAC/M4A): huỷ bộ trộn phải trả về. MFShutdown cuối cùng
+    // từng chạy trong hàm huỷ thread_local của luồng đọc, tức dưới loader lock, và chờ mãi các luồng hàng đợi MF. Ở đây không
+    // test nào khởi động MF trên luồng chính, nên lần nhả của luồng đọc là lần cuối. Treo thì canh gác kết thúc tiến trình (đỏ)
+    // thay vì treo cả bộ test.
+    void mixerStopsAfterDecodingThroughMediaFoundation_data() {
+        QTest::addColumn<bool>("midDecode");
+        QTest::newRow("decoded") << false;
+        // Bộ trộn bị huỷ khi luồng đọc còn đang giải mã dở một bài dài (nguồn MF đang mở): nguồn phải được huỷ trên luồng đọc
+        // trước lần nhả MF ở cuối luồng.
+        QTest::newRow("mid-decode") << true;
+    }
+    void mixerStopsAfterDecodingThroughMediaFoundation() {
+        QFETCH(bool, midDecode);
+        QTemporaryDir dir;
+        QUrl url = QUrl::fromLocalFile(QStringLiteral(MIX_FIXTURES_DIR "/music_student/stereo_44k.wav"));
+        if (midDecode) {
+            // 10 phút WAV 44,1 kHz im lặng (≈ 106 MB): giải mã + đổi tần số mất vài giây, đủ để huỷ giữa chừng.
+            const quint32 frames = 44100 * 600, bytes = frames * 4;
+            QByteArray wav(44, '\0');
+            std::memcpy(wav.data(), "RIFF", 4); qToLittleEndian<quint32>(36 + bytes, wav.data() + 4); std::memcpy(wav.data() + 8, "WAVEfmt ", 8);
+            qToLittleEndian<quint32>(16, wav.data() + 16); qToLittleEndian<quint16>(1, wav.data() + 20); qToLittleEndian<quint16>(2, wav.data() + 22);
+            qToLittleEndian<quint32>(44100, wav.data() + 24); qToLittleEndian<quint32>(44100 * 4, wav.data() + 28); qToLittleEndian<quint16>(4, wav.data() + 32);
+            qToLittleEndian<quint16>(16, wav.data() + 34); std::memcpy(wav.data() + 36, "data", 4); qToLittleEndian<quint32>(bytes, wav.data() + 40);
+            wav.append(QByteArray(qsizetype(bytes), '\0'));
+            QFile file(dir.filePath(QStringLiteral("long.wav")));
+            QVERIFY(file.open(QIODevice::WriteOnly) && file.write(wav) == wav.size());
+            url = QUrl::fromLocalFile(file.fileName());
+        }
+        auto stopped = std::make_shared<std::atomic<bool>>(false);
+        std::thread([stopped] {
+            for (int i = 0; i < 100 && !*stopped; ++i) std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            if (*stopped) return;
+            std::fprintf(stderr, "FAIL!  : bộ trộn không dừng trong 10 s sau khi giải mã bằng Media Foundation\n");
+            std::fflush(stderr);
+            TerminateProcess(GetCurrentProcess(), 3);
+        }).detach();
+        {
+            MusicMixer mixer(std::make_unique<Device>(), dir.path(), true);
+            MixVoice music(&mixer);
+            music.load(url, 0);
+            if (midDecode) {
+                music.preload();
+                QTRY_VERIFY_WITH_TIMEOUT(mixer.decodeCount() == 1, 5000);
+                QVERIFY2(!QFile::exists(mixer.cachePath(url)), "bài đã giải mã xong trước khi huỷ: cần bài dài hơn");
+            } else {
+                QTRY_VERIFY_WITH_TIMEOUT(music.duration() > 0, 5000);
+                QCOMPARE(mixer.decodeCount(), quint64(1));
+            }
+        }
+        *stopped = true;
     }
     void formatRebuildPreservesRateAwarePosition() {
         Rig rig; rig.voice.setRate(1.5); rig.voice.play();
