@@ -34,7 +34,12 @@ class AbookApplication : Application() {
     val covers by lazy { CoverLoader() }
 
     /** Studio từ xa của giao diện native: các phiên theo máy tính ghép, sống cùng tiến trình (quyền "chỉ nghe" đã biết không phải hỏi lại mỗi lần mở màn). */
-    val studio by lazy { vn.abook.player.ui.studio.StudioHub(vn.abook.player.ui.studio.StudioRepo(this), uiScope) }
+    val studio by lazy {
+        // Nghe thử trong Studio: clip tải về bộ nhớ đệm (nối lại được), tối đa 50 MB, dọn khi tiến trình khởi động.
+        val clips = StudioClips(java.io.File(cacheDir, "studio_clips"), { computer, path, partial -> StudioDownloads.fetch(this, computer, path, partial) }, vn.abook.player.ui.voice.AndroidSamplePlayer(this), uiScope)
+        uiScope.launch(Dispatchers.IO) { clips.trim() }
+        vn.abook.player.ui.studio.StudioHub(vn.abook.player.ui.studio.StudioRepo(this), uiScope, clips)
+    }
     val uiPrefs by lazy { UiPrefs(this) }
 
     /** Cài đặt của giao diện native: cùng kho với bản WebView ([AndroidSettingsCore]). */

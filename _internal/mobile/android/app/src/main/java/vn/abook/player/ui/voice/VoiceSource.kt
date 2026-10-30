@@ -49,5 +49,9 @@ interface VoiceSource {
 /** Phát file mẫu: một lúc một mẫu; `onEnded` gọi khi phát hết (không gọi khi bị [stop]). Bản thật: [AndroidSamplePlayer]; test đưa bản giả (không bao giờ ra loa). */
 interface SamplePlayer {
     fun play(path: String, onEnded: () -> Unit, onFailed: () -> Unit)
+
+    /** Phát đoạn [startMs, endMs) của file (một câu trong file chương, Studio "Cần nghe lại"); `endMs` <= `startMs` = tới hết file. Bản mặc định phát cả file. */
+    fun playRange(path: String, startMs: Int, endMs: Int, onEnded: () -> Unit, onFailed: () -> Unit) = play(path, onEnded, onFailed)
+
     fun stop()
 }

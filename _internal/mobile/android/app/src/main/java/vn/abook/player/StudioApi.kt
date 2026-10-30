@@ -13,8 +13,14 @@ import org.json.JSONObject
  *
  * `transport` là đường gửi thật; test thay bằng bản giả (không cần ghép máy).
  */
-class StudioApi(private val transport: Transport) {
-    constructor(context: Context, computer: String) : this(Transport { method, path, body -> real(context, computer, method, path, body) })
+class StudioApi(private val transport: Transport, private val slow: Transport) {
+    constructor(transport: Transport) : this(transport, transport)
+
+    constructor(context: Context, computer: String) : this(
+        Transport { method, path, body -> real(context, computer, method, path, body, 20_000) },
+        // Nghe thử giọng / cách đọc: máy tính nạp giọng rồi đọc, giữ kết nối tới ~120 giây (docs mục 1.2).
+        Transport { method, path, body -> real(context, computer, method, path, body, SLOW_READ_MS) },
+    )
 
     /** Một yêu cầu đã xong: trả nguyên văn lời đáp JSON (đối tượng hay mảng), hay ném lỗi của [SyncLink.request]. */
     fun interface Transport {
@@ -27,9 +33,12 @@ class StudioApi(private val transport: Transport) {
 
     suspend fun post(path: String, body: JSONObject? = null): JSONObject = call("POST", path, body) as? JSONObject ?: throw malformed()
 
-    private suspend fun call(method: String, path: String, body: JSONObject?): Any = withContext(Dispatchers.IO) {
+    /** Như [post] cho việc máy tính làm lâu (nghe thử bằng giọng thật): chờ lời đáp tới ~130 giây. */
+    suspend fun postSlow(path: String, body: JSONObject? = null): JSONObject = call("POST", path, body, slow) as? JSONObject ?: throw malformed()
+
+    private suspend fun call(method: String, path: String, body: JSONObject?, via: Transport = transport): Any = withContext(Dispatchers.IO) {
         val text = try {
-            transport.call(method, path, body)
+            via.call(method, path, body)
         } catch (error: Throwable) {
             throw StudioErrors.of(error)
         }
@@ -43,10 +52,12 @@ class StudioApi(private val transport: Transport) {
     private fun malformed() = StudioError.Server("Dữ liệu máy gửi không hợp lệ; bạn hãy thử lại.", 0)
 
     private companion object {
+        const val SLOW_READ_MS = 130_000
+
         /** Máy tính `computer` lúc này (đường nối có thể đổi giữa các lần gọi); đã bỏ ghép thì 401 như máy kia bỏ ghép mình. */
-        fun real(context: Context, computer: String, method: String, path: String, body: JSONObject?): String {
+        fun real(context: Context, computer: String, method: String, path: String, body: JSONObject?, readTimeoutMs: Int): String {
             val link = StudioLink.link(context, computer) ?: throw StudioError.Unauthorized()
-            return SyncLink.request(context, method, path, body, auth = false, root = link.base, token = link.token, readTimeoutMs = 20_000, connectTimeoutMs = 3000)
+            return SyncLink.request(context, method, path, body, auth = false, root = link.base, token = link.token, readTimeoutMs = readTimeoutMs, connectTimeoutMs = 3000)
         }
     }
 }

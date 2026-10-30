@@ -8,9 +8,6 @@ import org.json.JSONObject
  * rỗng / 0 (máy tính cũ hơn không có `canPause`, `precast`...); thiếu mã sách thì ném - không có mã thì không mở được gì.
  */
 internal object StudioJson {
-    /** JSON null đọc bằng optString ra chữ "null": nên đọc riêng. */
-    private fun JSONObject.text(key: String): String = if (isNull(key)) "" else optString(key)
-
     private fun JSONObject.fraction(key: String): Float = optDouble(key, 0.0).let { if (it.isFinite()) it.toFloat().coerceIn(0f, 1f) else 0f }
 
     private fun pause(value: String): StudioPause? = when (value) {
@@ -56,6 +53,8 @@ internal object StudioJson {
             startError = json.text("startError"),
             lastError = json.text("lastError"),
             broken = json.text("broken"),
+            castLocked = json.optBoolean("castLocked"),
+            segmentsRecorded = segments?.takeIf { it.has("recorded") && !it.isNull("recorded") }?.optInt("recorded"),
         )
     }
 
@@ -75,6 +74,14 @@ internal object StudioJson {
 
     /** `GET /api/books/<id>`: `{book, chapters: [...]}`. */
     fun page(json: JSONObject) = StudioPage(book(json.getJSONObject("book")), json.optJSONArray("chapters").objects().map(::chapter))
-
-    private fun JSONArray?.objects(): List<JSONObject> = if (this == null) emptyList() else (0 until length()).mapNotNull { optJSONObject(it) }
 }
+
+/** JSON null đọc bằng optString ra chữ "null": nên đọc riêng. */
+internal fun JSONObject.text(key: String): String = if (isNull(key)) "" else optString(key)
+
+/** Chữ hoặc null khi trường vắng / JSON null (phân biệt "không có" với "rỗng"). */
+internal fun JSONObject.textOrNull(key: String): String? = if (!has(key) || isNull(key)) null else optString(key)
+
+internal fun JSONArray?.objects(): List<JSONObject> = if (this == null) emptyList() else (0 until length()).mapNotNull { optJSONObject(it) }
+
+internal fun JSONArray?.strings(): List<String> = if (this == null) emptyList() else (0 until length()).mapNotNull { if (isNull(it)) null else optString(it) }
