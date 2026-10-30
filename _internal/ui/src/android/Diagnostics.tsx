@@ -15,6 +15,8 @@ export const DIAGNOSTICS_MORE =
   "Có tên sách; che khoá, mã ghép, IP và đường dẫn nhận ra được. Máy ghép đọc được khi bật “Chia sẻ thư viện”.";
 export const SEND_HINT = "Bạn chọn gửi cho ai; app không tự gửi.";
 export const CLEAR_HINT = "Gồm cả các lần văng đã ghi.";
+/** Lời hỏi lại trước khi xoá (bản native: AdvancedCopy.CLEAR_QUESTION - cùng từng chữ). */
+export const CLEAR_QUESTION = `Nhật ký của ABook sẽ bị xoá khỏi máy này. ${CLEAR_HINT}`;
 export const VIEW_LINES = 500;
 
 /** Trạng thái và ba việc của mục Chẩn đoán: xem (tải bản chẩn đoán), gửi (bảng chia sẻ), xoá. */

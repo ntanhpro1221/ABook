@@ -244,8 +244,8 @@ data class Stored(val id: String, val title: String, val bytes: Long, val partia
 
 @Immutable
 data class Storage(val bytes: Long = 0, val free: Long = 0, val entries: List<Stored> = emptyList()) {
-    /** Một dòng cho phần đầu danh sách: "Sách 1,2 GB · còn trống 20 GB" (cùng lời web). */
-    val line: String get() = "Sách ${formatSize(bytes)} · còn trống ${formatSize(free)}"
+    /** Một dòng cho phần đầu danh sách: "Sách 1,2 GB · còn trống 20 GB"; chưa có sách (dưới 1 KB) thì "Chưa có sách · còn trống 20 GB" (web: storageSummary, cùng từng chữ). */
+    val line: String get() = "${if (bytes < 1024) "Chưa có sách" else "Sách ${formatSize(bytes)}"} · còn trống ${formatSize(free)}"
 }
 
 // ---- bỏ ghép ----------------------------------------------------------------------------------------------------------

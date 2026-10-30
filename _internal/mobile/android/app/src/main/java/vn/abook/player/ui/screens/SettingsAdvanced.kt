@@ -11,7 +11,6 @@ import vn.abook.player.ui.components.RefreshIcon
 import vn.abook.player.ui.components.ActionRow
 import vn.abook.player.ui.components.ListItem
 import vn.abook.player.ui.components.Caption
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -35,9 +34,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
-import vn.abook.player.ui.components.PrimaryButton
+import vn.abook.player.ui.components.ConfirmPage
+import vn.abook.player.ui.components.DangerButton
+import vn.abook.player.ui.components.QuietButton
+import vn.abook.player.ui.components.keepUrlTogether
 import vn.abook.player.ui.components.SheetHost
-import vn.abook.player.ui.components.pressable
 import vn.abook.player.ui.data.Fmt
 import vn.abook.player.ui.data.SettingsGroup
 import vn.abook.player.ui.data.SettingsRepo
@@ -55,7 +56,9 @@ private object AdvancedCopy {
     const val SEND = "Bạn chọn gửi cho ai; app không tự gửi."
     const val CLEAR = "Gồm cả các lần văng đã ghi."
     const val CLEARED = "Đã xoá nhật ký."
-    const val SOURCE = "Giấy phép MIT - github.com/ntanhpro1221/ABook"
+    /** Lời hỏi lại trước khi xoá (web: CLEAR_QUESTION ở android/Diagnostics.tsx - cùng từng chữ). */
+    const val CLEAR_QUESTION = "Nhật ký của ABook sẽ bị xoá khỏi máy này. $CLEAR"
+    val SOURCE = keepUrlTogether("Giấy phép MIT - github.com/ntanhpro1221/ABook")
 
     fun cache(bytes: Long?): String = when {
         bytes == null -> "Đang đo."
@@ -93,7 +96,7 @@ fun AdvancedSettings(env: SettingsEnv, sheets: SheetHost, onBack: () -> Unit, mo
             RowLine()
             // Việc phá huỷ là hàng thường tên màu nguy hiểm (cả hàng là chỗ chạm): mỗi phần chỉ có một chữ hổ phách.
             ListItem(
-                "Xoá nhật ký", onClick = { repo.clearLogs() }, tag = "logs_clear", titleStyle = Abook.type.bodyStrong, titleColor = Abook.colors.danger,
+                "Xoá nhật ký", onClick = { sheets.show { dismiss -> ClearLogsSheet({ repo.clearLogs(); dismiss() }, dismiss) } }, tag = "logs_clear", titleStyle = Abook.type.bodyStrong, titleColor = Abook.colors.danger,
                 hint = if (notice == "Đã xoá nhật ký") AdvancedCopy.CLEARED else AdvancedCopy.CLEAR,
             )
         }
@@ -113,18 +116,23 @@ private fun NavRow(title: String, onClick: () -> Unit, tag: String, hint: String
     ListItem(title, onClick = onClick, tag = tag, hint = hint, titleStyle = Abook.type.bodyStrong, chevron = true)
 }
 
-/** Hỏi lại trước khi dọn (như hộp hỏi của bản WebView): MỘT nút chính "Dọn", "Thôi" là nút chữ. */
+/** Hỏi lại trước khi dọn (như hộp hỏi của bản WebView): bước xác nhận chung [ConfirmPage] - nút đỏ "Dọn", "Giữ lại" là nút chữ. */
 @Composable
 private fun ClearSheet(bytes: Long, onClear: () -> Unit, dismiss: () -> Unit) {
-    Column(Modifier.fillMaxWidth().testTag("clear_sheet")) {
-        BasicText("Dọn bản đọc đã làm", style = Abook.type.sectionTitle)
-        Spacer(Modifier.height(Dim.s4))
-        BasicText(AdvancedCopy.clearQuestion(bytes), style = Abook.type.bodySmall)
-        Spacer(Modifier.height(Dim.s24))
-        PrimaryButton("Dọn", onClear, Modifier.fillMaxWidth().testTag("clear_confirm"))
-        Box(Modifier.fillMaxWidth().heightIn(min = Dim.s48).pressable(onClick = dismiss).testTag("clear_cancel"), contentAlignment = Alignment.Center) {
-            BasicText("Giữ lại", style = Abook.type.label.copy(color = Abook.colors.accentText))
-        }
+    ConfirmPage("Dọn bản đọc đã làm", "clear_sheet", listOf(AdvancedCopy.clearQuestion(bytes)), "") {
+        DangerButton("Dọn", onClear, "clear_confirm")
+        Spacer(Modifier.height(Dim.s8))
+        QuietButton("Giữ lại", dismiss, "clear_cancel")
+    }
+}
+
+/** Hỏi lại trước khi xoá nhật ký (không lấy lại được): cùng bước xác nhận với mọi việc phá huỷ khác. */
+@Composable
+private fun ClearLogsSheet(onClear: () -> Unit, dismiss: () -> Unit) {
+    ConfirmPage("Xoá nhật ký?", "logs_clear_sheet", listOf(AdvancedCopy.CLEAR_QUESTION), "") {
+        DangerButton("Xoá", onClear, "logs_clear_confirm")
+        Spacer(Modifier.height(Dim.s8))
+        QuietButton("Giữ lại", dismiss, "logs_clear_cancel")
     }
 }
 

@@ -1,6 +1,7 @@
 package vn.abook.player.ui.nav
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -88,12 +89,22 @@ class NavState(private val scope: CoroutineScope) {
 
     val canPop: Boolean get() = !stack.isEmpty
 
+    /** Đang chạy một chuyển cảnh (kể cả hai khung chờ dựng của [push]). */
+    val busy: Boolean get() = job?.isActive == true
+
+    /** Hai khung chờ dựng của [push]: màn mới còn nằm ngoài màn, chưa trượt - một màn nối tiếp (màn tự mở màn sau) vẫn được đẩy. */
+    private var staging = false
+
     fun push(destination: Destination) {
-        if (job?.isActive == true) return // đang chuyển cảnh: chạm đúp không đẩy hai màn
+        if (busy && !staging) return // đang trượt: chạm đúp không đẩy hai màn
         job?.cancel()
         job = scope.launch {
             stack = stack.push(destination)
             progress.snapTo(0f)
+            // Màn mới được dựng + dàn trang + ghi ở khung đầu khi nó còn nằm ngoài màn (p = 0); hoạt ảnh chỉ bắt đầu sau đó. Nếu chạy ngay, khung nặng nhất
+            // (dựng cả màn) là khung đầu của hoạt ảnh: đồng hồ hoạt ảnh nhảy qua nó và cả đường trượt giật một nhịp.
+            staging = true
+            try { repeat(BUILD_FRAMES) { withFrameNanos { } } } finally { staging = false }
             progress.animateTo(1f, Motion.PushIn)
         }
     }
@@ -134,5 +145,10 @@ class NavState(private val scope: CoroutineScope) {
         progress.animateTo(0f, Motion.popOut(progress.value))
         stack = stack.pop()
         progress.snapTo(1f)
+    }
+
+    private companion object {
+        /** Số khung để màn mới dựng xong trước khi trượt. */
+        const val BUILD_FRAMES = 2
     }
 }
