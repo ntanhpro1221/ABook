@@ -20,13 +20,13 @@ import vn.abook.player.ui.data.Fmt
 @Immutable
 data class StudioLogItem(val id: String, val at: Double, val level: String, val code: String, val text: String)
 
-internal object StudioActivityJson {
+internal object StudioLogJson {
     fun items(array: JSONArray): List<StudioLogItem> = array.objects().map {
         StudioLogItem(it.text("id"), it.optDouble("at", 0.0).let { at -> if (at.isFinite()) at else 0.0 }, it.text("level").ifEmpty { "info" }, it.text("code"), it.text("text"))
     }
 }
 
-object StudioActivityLogic {
+object StudioLogLogic {
     /** Nhịp hỏi khi máy đang làm sách (web: 5 giây); sách rảnh thì không hỏi theo nhịp. */
     const val LIVE_MS = 5_000L
 
@@ -41,14 +41,14 @@ object StudioActivityLogic {
         val book = page.book
         val seconds = page.chapters.sumOf { it.seconds }
         return buildList {
-            add(StudioActivityText.STATUS to StudioLogic.status(book).label)
-            add(StudioActivityText.CHAPTERS to StudioActivityText.chapters(book.chaptersCompleted, book.chaptersTotal))
-            if (seconds > 0) add(StudioActivityText.LENGTH to Fmt.length(seconds))
+            add(StudioLogText.STATUS to StudioLogic.status(book).label)
+            add(StudioLogText.CHAPTERS to StudioLogText.chapters(book.chaptersCompleted, book.chaptersTotal))
+            if (seconds > 0) add(StudioLogText.LENGTH to Fmt.length(seconds))
         }
     }
 }
 
-object StudioActivityText {
+object StudioLogText {
     const val TITLE = "Nhật ký"
     const val INFO = "Thông tin"
     const val STATUS = "Trạng thái"
@@ -65,7 +65,7 @@ object StudioActivityText {
 
 /** Nhật ký của một dự án: hỏi 5 giây một lần khi máy đang làm sách, không thì chỉ hỏi lúc mở; bật "Chi tiết kỹ thuật" thì hỏi lại ngay. */
 @Stable
-class StudioActivityState(private val project: StudioProjectState, pause: suspend (Long) -> Unit = { delay(it) }) {
+class StudioLogState(private val project: StudioProjectState, pause: suspend (Long) -> Unit = { delay(it) }) {
     private val session get() = project.session
 
     var technical by mutableStateOf(false)
@@ -73,7 +73,7 @@ class StudioActivityState(private val project: StudioProjectState, pause: suspen
 
     private val poller = StudioPoller<List<StudioLogItem>>(
         { session.source.activity(session.computer, project.bookId, technical) },
-        { if (project.live) StudioActivityLogic.LIVE_MS else null },
+        { if (project.live) StudioLogLogic.LIVE_MS else null },
         pause,
     )
     val poll: StateFlow<StudioPolling.Poll<List<StudioLogItem>>> get() = poller.state

@@ -70,7 +70,7 @@ object StudioText {
         StudioSubKind.Script -> ScriptText.TITLE
         StudioSubKind.Readings -> ReadingsText.TITLE
         StudioSubKind.Export -> StudioExportText.TITLE
-        StudioSubKind.Activity -> StudioActivityText.TITLE
+        StudioSubKind.Activity -> StudioLogText.TITLE
         StudioSubKind.Cover -> StudioCoverText.TITLE
     }
     const val NO_CHAPTERS = "Chưa có chương nào"

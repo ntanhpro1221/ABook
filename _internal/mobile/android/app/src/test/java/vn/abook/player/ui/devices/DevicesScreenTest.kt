@@ -1,5 +1,6 @@
 package vn.abook.player.ui.devices
 
+import vn.abook.player.ui.studio.StudioRoute
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -61,7 +62,7 @@ class DevicesScreenTest {
     private val sheets = SheetHost()
     private val source = FakeDevicesSource()
     private lateinit var devices: DevicesState
-    private var studio: Pair<String, String>? = null
+    private var studio: Pair<String, StudioRoute>? = null
     private var settingsOpened = 0
     private var opened: DevicesPage? = null
     private val copiedTexts = ArrayList<String>()
@@ -83,7 +84,7 @@ class DevicesScreenTest {
     private fun makeDevices() = DevicesState(
         source, CoroutineScope(Dispatchers.Unconfined),
         DeviceLinks(
-            openStudio = { computer, path -> studio = computer to path }, openAppSettings = { settingsOpened++ },
+            openStudio = { computer, route -> studio = computer to route }, openAppSettings = { settingsOpened++ },
             copyText = { text -> copiedTexts += text; copyWorks }, openRelease = { url -> releases += url },
         ),
         pollMs = 3_600_000,
@@ -497,11 +498,11 @@ class DevicesScreenTest {
     @Test
     fun studioOpensFromTheSheet() {
         pairedScene()
-        source.target = "Máy bàn" to "/studio"
+        source.target = "Máy bàn" to StudioRoute()
         show(DevicesPage.Pair)
         tap("device_main")
         tap("device_studio")
-        assertEquals("Máy bàn" to "/studio", studio)
+        assertEquals("Máy bàn" to StudioRoute(), studio)
         rule.onNodeWithTag("device_sheet").assertDoesNotExist()
     }
 

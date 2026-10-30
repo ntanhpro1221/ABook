@@ -317,10 +317,10 @@ class DevicesState(
         }
     }
 
-    /** Mở Studio của máy tính `key` ở trình xem riêng. Null = đã mở, khác null = câu lỗi. */
+    /** Mở Studio của máy tính `key` ở màn native. Null = đã mở, khác null = câu lỗi. */
     suspend fun openStudio(key: String): String? {
         val result = attempt { source.studioTarget(key) }
-        result.onSuccess { (computer, path) -> links.openStudio(computer, path) }
+        result.onSuccess { (computer, route) -> links.openStudio(computer, route) }
         return result.exceptionOrNull()?.let { message(it) }
     }
 
