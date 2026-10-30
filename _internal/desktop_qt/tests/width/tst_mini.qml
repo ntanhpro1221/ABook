@@ -232,7 +232,7 @@ Item {
             const mode = createTemporaryObject(modeFactory, host, {window: win, loaded: true})
             compare(mode.autoMini, false); compare(mode.closeToTray, false)
             mode.enter(); tryCompare(win, "x", 400); compare(win.y, 250)
-            mode.miniHeight = 280; compare(win.height, 280)
+            mode.miniHeight = 280; tryCompare(win, "height", 280)   // cửa sổ đổi cỡ bất đồng bộ
             compare(win.minimumHeight, 280)    // Kéo mép cửa sổ cũng không thể ép tên sách bị cắt.
             mode.expand(); win.hide()
         }
