@@ -33,8 +33,13 @@ class StudioApi(private val transport: Transport, private val slow: Transport) {
 
     suspend fun post(path: String, body: JSONObject? = null): JSONObject = call("POST", path, body) as? JSONObject ?: throw malformed()
 
+    suspend fun put(path: String, body: JSONObject? = null): JSONObject = call("PUT", path, body) as? JSONObject ?: throw malformed()
+
     /** Như [post] cho việc máy tính làm lâu (nghe thử bằng giọng thật): chờ lời đáp tới ~130 giây. */
     suspend fun postSlow(path: String, body: JSONObject? = null): JSONObject = call("POST", path, body, slow) as? JSONObject ?: throw malformed()
+
+    /** Như [put]: đổi thể loại / dựng lại nhạc nền máy tính làm ~30 giây. */
+    suspend fun putSlow(path: String, body: JSONObject? = null): JSONObject = call("PUT", path, body, slow) as? JSONObject ?: throw malformed()
 
     private suspend fun call(method: String, path: String, body: JSONObject?, via: Transport = transport): Any = withContext(Dispatchers.IO) {
         val text = try {

@@ -26,12 +26,14 @@ fun studioBook(
     overall: Float = 0.4f,
     eta: StudioEta? = null,
     broken: String = "",
+    segmentsAnalyzed: Int = 0,
+    castLocked: Boolean = false,
 ) = StudioBook(
     id = id, title = title, phase = phase, statusLabel = statusLabel, running = running, starting = starting, stopping = stopping, paused = paused,
     canPause = canPause, queuePosition = queuePosition, queueWaitsOn = queueWaitsOn, analysisInterrupted = analysisInterrupted, precastHeld = precastHeld,
     pendingChanges = pendingChanges, seedPending = false, chaptersTotal = chaptersTotal, chaptersCompleted = chaptersCompleted, chaptersRedo = chaptersRedo,
-    segmentsTotal = 0, segmentsAnalyzed = 0, segmentsPending = null, overall = overall, analysis = overall, synthesis = overall, eta = eta, speaker = null,
-    startError = "", lastError = "", broken = broken,
+    segmentsTotal = segmentsAnalyzed, segmentsAnalyzed = segmentsAnalyzed, segmentsPending = null, overall = overall, analysis = overall, synthesis = overall, eta = eta, speaker = null,
+    startError = "", lastError = "", broken = broken, castLocked = castLocked,
 )
 
 fun studioChapter(id: Int, title: String = "Chương $id", status: String = "completed", statusLabel: String = "Đã xong", redo: Boolean = false, seconds: Double = 600.0) =
@@ -213,4 +215,89 @@ class FakeStudioSource(
         writeError(step)?.let { throw it }
         return writeAnswers[step.endpoint] ?: JSONObject()
     }
+
+    // ---- S3: nhạc nền / duyệt trước khi thu / cách đọc tên / kịch bản ----
+
+    /** Mọi lần PUT (đường, thân, đã đi đường chậm chưa). */
+    val puts = ArrayList<Triple<String, JSONObject, Boolean>>()
+    var putError: StudioError? = null
+    var readings = NameReadings(emptyList(), 0)
+    var readingsError: StudioError? = null
+    val reachFor = HashMap<String, Reach>()
+    val reachCalls = ArrayList<String>()
+    var shared: List<SharedReading> = emptyList()
+    var offer: List<SharedReading> = emptyList()
+    var creditGroups: List<CreditGroup> = emptyList()
+    var precastView = precastView()
+    var precastError: StudioError? = null
+    var musicView = musicView()
+    var musicError: StudioError? = null
+    var moods = MoodsModel(installed = false, downloading = false, percent = null, error = "", downloadable = true)
+    var alternativesFor = HashMap<String, List<MusicAlternative>>()
+    var scriptContents = ScriptContents(true, emptyList())
+    val scriptChapters = HashMap<Int, ChapterScript>()
+    val scriptCalls = ArrayList<Int>()
+
+    override suspend fun put(computer: String, id: String, endpoint: String, body: JSONObject, slow: Boolean): JSONObject {
+        puts += Triple(endpoint, body, slow)
+        putError?.let { throw it }
+        return JSONObject()
+    }
+
+    override suspend fun readings(computer: String, id: String): NameReadings {
+        readingsError?.let { throw it }
+        return readings
+    }
+
+    override suspend fun reach(computer: String, id: String, surface: String): Reach {
+        reachCalls += surface
+        return reachFor[surface] ?: Reach(surface, 0, 0, 0, 0, false, emptyList(), null)
+    }
+
+    override suspend fun sharedReadings(computer: String): List<SharedReading> = shared
+
+    override suspend fun sharedOffer(computer: String, id: String): List<SharedReading> = offer
+
+    override suspend fun credits(computer: String, id: String): List<CreditGroup> = creditGroups
+
+    override suspend fun precast(computer: String, id: String): PrecastView {
+        precastError?.let { throw it }
+        return precastView
+    }
+
+    override suspend fun music(computer: String, id: String): MusicView {
+        musicError?.let { throw it }
+        return musicView
+    }
+
+    override suspend fun moodsModel(computer: String): MoodsModel = moods
+
+    override suspend fun alternatives(computer: String, id: String, scene: String): List<MusicAlternative> = alternativesFor[scene].orEmpty()
+
+    override suspend fun castingContents(computer: String, id: String): ScriptContents = scriptContents
+
+    override suspend fun castingChapter(computer: String, id: String, chapter: Int): ChapterScript {
+        scriptCalls += chapter
+        return scriptChapters[chapter] ?: throw StudioError.Gone()
+    }
 }
+
+fun precastView(ready: Boolean = true, wait: Boolean = false, announcedAt: Double? = null, held: Boolean = false, upcoming: List<PrecastChapter> = emptyList()) =
+    PrecastView(ready, wait, announcedAt, held, upcoming.size, 0, null, upcoming)
+
+fun musicScene(key: String, chapterId: Int = 1, start: Double = 0.0, end: Double = 60.0, link: String? = "t1", pinned: Boolean = false, silenced: Boolean = false, continued: Boolean = false) =
+    MusicScene(key, chapterId, start, end, 0.0, 0.0, emptyMap(), link, pinned, silenced, continued, false, "labels")
+
+fun musicView(
+    enabled: Boolean = true, scenes: List<MusicScene> = emptyList(), tracks: Map<String, MusicTrack> = emptyMap(), genre: String? = null, levelDb: Double = -18.0,
+    download: MusicDownload? = null, banned: List<String> = emptyList(),
+) = MusicView(true, enabled, levelDb, genre, scenes, tracks, banned, emptyMap(), "", false, "", download, listOf("calm" to "Êm dịu"), emptyMap())
+
+fun scriptLine(
+    id: String, text: String, kind: String = "dialogue", current: String = "KATI", label: String = "Kati", seq: Int = 1, hint: ScriptHint? = null,
+    wish: ScriptWish? = null, spoken: String? = null, hasAudio: Boolean = false, editable: Boolean = true,
+) = ScriptLine(seq, id, "sha-$id", seq, text, kind, current, label, editable, hasAudio, hint, wish, spoken, null)
+
+fun chapterScript(lines: List<ScriptLine>, id: Int = 1, previous: Int? = null, next: Int? = null) = ChapterScript(
+    id, id, "Chương $id", previous, next, true, listOf(ScriptPerson("KATI", "Kati", 3)), listOf(ScriptPerson("TOM", "Tom", 1)), lines,
+)

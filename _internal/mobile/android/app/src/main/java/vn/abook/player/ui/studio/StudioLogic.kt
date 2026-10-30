@@ -20,6 +20,15 @@ enum class StudioGroup { Working, Review, Rest }
  * `asksBeforeResume`): cùng điều kiện, nên nút nào hiện ở web thì hiện ở đây. Chữ nằm ở [StudioText].
  */
 object StudioLogic {
+    /** Các màn con hiện trong "Thêm": duyệt trước khi thu khi phân vai đã khoá và sách chưa xong; kịch bản và cách đọc tên khi đã phân tích được câu nào. */
+    fun subPages(book: StudioBook): List<StudioSubKind> = buildList {
+        if (PrecastLogic.canReview(book)) add(StudioSubKind.Precast)
+        if (book.segmentsAnalyzed > 0) {
+            add(StudioSubKind.Script)
+            add(StudioSubKind.Readings)
+        }
+    }
+
     /** "Tiếp tục" phải hỏi trước: pha phân tích đã bị ngắt - làm tiếp ra MỘT CUỐN KHÁC (AGENTS.md). Sau pha phân tích thì không hỏi. */
     fun asksBeforeResume(book: StudioBook): Boolean = book.phase != "done" && book.analysisInterrupted
 

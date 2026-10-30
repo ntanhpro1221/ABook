@@ -33,6 +33,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import vn.abook.player.StudioError
 import vn.abook.player.ui.addbook.BookForm
+import vn.abook.player.ui.components.CheckIcon
 import vn.abook.player.ui.components.ChoiceRow
 import vn.abook.player.ui.components.ClockLabel
 import vn.abook.player.ui.components.ConfirmPage
@@ -45,11 +46,13 @@ import vn.abook.player.ui.components.MenuRow
 import vn.abook.player.ui.components.MoreIcon
 import vn.abook.player.ui.components.PrimaryButton
 import vn.abook.player.ui.components.QuietButton
+import vn.abook.player.ui.components.ReadAlongIcon
 import vn.abook.player.ui.components.Reveal
 import vn.abook.player.ui.components.RowLine
 import vn.abook.player.ui.components.SheetHost
 import vn.abook.player.ui.components.SheetPages
 import vn.abook.player.ui.components.StopIcon
+import vn.abook.player.ui.components.TextCursorInputIcon
 import vn.abook.player.ui.components.fadeEdges
 import vn.abook.player.ui.motion.Motion
 import vn.abook.player.ui.studio.parts.DecisionStrip
@@ -68,7 +71,7 @@ import vn.abook.player.ui.theme.MotionMs
  * khỏi bấm nhầm. `listen`: mở phần Nghe (Thư viện) khi sách đã có chương nghe được.
  */
 @Composable
-fun StudioProjectScreen(state: StudioProjectState, sheets: SheetHost, onBack: () -> Unit, listen: () -> Unit, active: Boolean = true) {
+fun StudioProjectScreen(state: StudioProjectState, sheets: SheetHost, onBack: () -> Unit, listen: () -> Unit, active: Boolean = true, openSub: (StudioSubKind) -> Unit = {}) {
     val session = state.session
     val poll by state.poll.collectAsState()
     PollWhileVisible(active, session.retries) { state.run() }
@@ -77,11 +80,11 @@ fun StudioProjectScreen(state: StudioProjectState, sheets: SheetHost, onBack: ()
     val blocked = session.listenOnly || poll.error is StudioError.ListenOnly
     val kind = book?.let(StudioLogic::primaryKind)
     val canStop = book != null && book.running && !book.stopping
-    val hasMore = book != null && (canStop || (book.chaptersCompleted > 0 && kind != PrimaryKind.Listen))
+    val hasMore = book != null && (canStop || (book.chaptersCompleted > 0 && kind != PrimaryKind.Listen) || StudioLogic.subPages(book).isNotEmpty())
     BookForm(
         book?.title ?: StudioText.TITLE, onBack, "studio_project",
         trailing = if (hasMore && !blocked) ({
-            IconAction(StudioText.MORE, { if (book != null) sheets.show { dismiss -> MoreSheet(book, kind, state, listen, dismiss) } }, "studio_more") { MoreIcon(Abook.colors.text) }
+            IconAction(StudioText.MORE, { if (book != null) sheets.show { dismiss -> MoreSheet(book, kind, state, listen, openSub, dismiss) } }, "studio_more") { MoreIcon(Abook.colors.text) }
         }) else null,
     ) {
         when {
@@ -131,10 +134,13 @@ private fun ProjectBody(page: StudioPage, kind: PrimaryKind?, state: StudioProje
     PollWhileVisible(active && state.tab == StudioTab.Work, retries) { state.work.run() }
     PollWhileVisible(active && state.tab == StudioTab.Review, retries) { state.review.run() }
     PollWhileVisible(active && state.tab == StudioTab.Cast, retries) { state.cast.run() }
+    PollWhileVisible(active && state.tab == StudioTab.Music, retries) { state.music.run() }
     DisposableEffect(state.tab) { onDispose { state.stopAudio() } }
     DisposableEffect(state) { onDispose { state.leave() } }
     val reviewData = if (state.tab == StudioTab.Review) rememberReviewData(state.review) else null
     val castData = if (state.tab == StudioTab.Cast) rememberCastData(state.cast) else null
+    val musicData = if (state.tab == StudioTab.Music) rememberMusicData(state.music) else null
+    LaunchedEffect(musicData?.poll?.data) { musicData?.poll?.data?.let(state.music::seen) }
     LazyColumn(Modifier.fillMaxSize().fadeEdges(list).testTag("studio_project_list"), state = list, contentPadding = PaddingValues(bottom = Dim.s16)) {
         item("link", "notices") { LinkBanner(error, state.session.name, state::refreshSoon) }
         item("head", "head") {
@@ -163,8 +169,7 @@ private fun ProjectBody(page: StudioPage, kind: PrimaryKind?, state: StudioProje
             StudioTab.Work -> item("work", "work") { WorkDeck(state, book, sheets, { state.tab = StudioTab.Review }, slide) }
             StudioTab.Review -> if (reviewData != null) reviewTab(state.review, reviewData, book, slide)
             StudioTab.Cast -> if (castData != null) castTab(state.cast, castData, state, sheets, slide)
-            // Khung trống: nhạc nền là việc của pha sau; tab vẫn chọn được và giữ chỗ để bố cục không đổi khi có nội dung.
-            else -> item("frame_${state.tab.key}", "frame") { Spacer(Modifier.fillMaxWidth().height(Dim.s48).then(slide).testTag("studio_frame_${state.tab.key}")) }
+            StudioTab.Music -> if (musicData != null) musicTab(state.music, musicData, page.chapters, sheets, slide)
         }
     }
 }
@@ -237,13 +242,22 @@ private enum class MorePage { Menu, Stop }
 
 /** "Thêm": việc hiếm. "Dừng" mở bước xác nhận ngay trong bảng; lúc phân tích, "Tạm dừng" đứng trước nó vì tạm dừng không đổi quyển sách còn dừng thì có. */
 @Composable
-private fun MoreSheet(book: StudioBook, kind: PrimaryKind?, state: StudioProjectState, listen: () -> Unit, dismiss: () -> Unit) {
+private fun MoreSheet(book: StudioBook, kind: PrimaryKind?, state: StudioProjectState, listen: () -> Unit, openSub: (StudioSubKind) -> Unit, dismiss: () -> Unit) {
     var page by remember { mutableStateOf(MorePage.Menu) }
     SheetPages(page, { it.ordinal }, "studio_more_sheet") { shown ->
         when (shown) {
             MorePage.Menu -> Column(Modifier.fillMaxWidth()) {
                 if (book.chaptersCompleted > 0 && kind != PrimaryKind.Listen) {
                     MenuRow(StudioText.label(PrimaryKind.Listen, book), "studio_more_listen", onClick = { dismiss(); listen() }) { HeadphonesIcon(it) }
+                }
+                for (sub in StudioLogic.subPages(book)) {
+                    MenuRow(StudioText.subLabel(sub), "studio_more_${sub.name.lowercase()}", onClick = { dismiss(); openSub(sub) }) {
+                        when (sub) {
+                            StudioSubKind.Precast -> CheckIcon(it)
+                            StudioSubKind.Script -> ReadAlongIcon(it)
+                            StudioSubKind.Readings -> TextCursorInputIcon(it)
+                        }
+                    }
                 }
                 if (book.running && !book.stopping) MenuRow("Dừng", "studio_more_stop", onClick = { page = MorePage.Stop }) { StopIcon(it) }
             }
