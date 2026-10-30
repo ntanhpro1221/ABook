@@ -14,9 +14,10 @@ CastModal {
     property string status: "loading"       // loading | ready | failed
     property string filter: ""              // "" = theo giới của nhân vật
     property var crossing: null             // giọng khác giới đang chờ xác nhận
-    property string asking: ""              // khoá bản nghe thử đang chờ máy thu ("" = không)
-    property var said: null                 // {text, status}: dòng dưới ô lọc - máy đang làm gì / đã đọc câu nào / vì sao chưa nghe được
-    property var tried: ({})                // bản nghe thử vừa phát theo khoá giọng {khoá: preview}: nút biết bản nào đang ra tiếng
+    // "Nghe thử bằng câu của sách" làm ở VoiceTry (dùng chung với hộp "Áp dụng"): khoá bản đang chờ máy thu, dòng dưới ô lọc, bản vừa phát theo khoá giọng
+    property alias asking: voiceTry.asking
+    property alias said: voiceTry.said
+    property alias tried: voiceTry.tried
     readonly property string shownName: person ? (person.displayName || (choices ? choices.character.label : "")) : ""
     readonly property bool narrator: choices !== null && choices.character.value === "NARRATOR"
     readonly property string currentGender: {
@@ -30,20 +31,21 @@ CastModal {
     title: "Giọng của " + (person ? person.displayName : "")
     description: choices ? Logic.formatNumber(choices.character.lines) + " câu ở " + choices.character.chapters + " chương · đang đọc bằng " + (choices.current || "chưa có giọng") : ""
     keepOpen: function() { if (root.crossing) { root.crossing = null; return true } return false }
-    onClosed: Clip.stop()
+    onClosed: { Clip.stop(); voiceTry.reset() }
+    VoiceTry { id: voiceTry; store: root.store; bookId: root.bookId }
 
     function begin(info) {
         generation++
         bookId = info.bookId; person = info.person
         choices = null; status = "loading"; filter = ""; crossing = null; saving = false
-        asking = ""; said = null; tried = ({})
+        voiceTry.reset()
         show()
         load(false)
     }
     // `again`: đọc lại danh sách đang hiện (một máy đọc vừa tải xong) mà không đổi sang khung chờ
     function load(again) {
         const mine = generation
-        Api.quiet("GET", "/api/books/" + bookId + "/voices?character=" + encodeURIComponent(person.name), null, function(answer, error) {
+        root.ask("GET", "/api/books/" + bookId + "/voices?character=" + encodeURIComponent(person.name), null, function(answer, error) {
             if (mine !== root.generation) return
             if (error || !answer || !answer.character) { if (!again) root.status = "failed"; return }
             root.choices = answer
@@ -52,38 +54,10 @@ CastModal {
     }
     // ---- "Nghe thử bằng câu của sách" (useVoiceTry của VoiceTry.tsx) ----
     function tryRequest(voice) { return {character: choices.character.value, preset: voice.key} }
-    function tryKey(voice) { return Logic.tryKey(bookId, tryRequest(voice)) }
-    function tryPlay(preview, voice) {
-        Clip.toggle(Logic.tryId(preview), preview.url)
-        tried = Object.assign({}, tried, {[voice.key]: preview})
-        said = {text: Logic.previewCaption(preview.text, voice.name), status: false}
-    }
+    function tryKey(voice) { return voiceTry.key(tryRequest(voice)) }
     function tryVoice(voice) {
-        const key = tryKey(voice)
-        const known = Logic.heard[key]
-        if (known) { tryPlay(known, voice); return }
-        Clip.stop()
-        asking = key
-        said = {text: Logic.tryAsking(voice.name), status: true}
-        const mine = generation
-        Api.quiet("POST", "/api/books/" + bookId + "/voice/preview", tryRequest(voice), function(preview, error, detail) {
-            if (mine !== root.generation) return
-            root.asking = ""
-            if (!error && preview) {
-                Logic.heard[key] = preview
-                root.tryPlay(preview, voice)
-                return
-            }
-            const reason = detail ? detail.reason : undefined
-            // Người chưa có câu nào: phát câu mẫu chung của giọng
-            if (reason === "no-line" && voice.preview) {
-                Clip.toggle(Logic.voiceId(voice.name), Logic.voiceUrl(voice.key))
-                root.said = {text: Logic.NO_LINE, status: true}
-                return
-            }
-            const why = Logic.refusalText(reason, error, Boolean(detail && detail.busyBook))
-            root.said = {text: voice.preview ? why + " - nút ▶ vẫn nghe được câu mẫu chung của giọng" : why, status: true}
-        })
+        // Người chưa có câu nào: phát câu mẫu chung của giọng
+        voiceTry.ask(tryRequest(voice), voice.name, voice.key, voice.preview ? function() { Clip.toggle(Logic.voiceId(voice.name), media(Logic.voiceUrl(voice.key))) } : null)
     }
     // Chọn một giọng: cùng giới (hay chưa biết giới) ghi luôn; khác giới thì hỏi trước. Người kể không có giới để đổi.
     function choose(voice) {
@@ -98,7 +72,7 @@ CastModal {
         const info = choices, name = shownName || info.character.label
         const body = {character: info.character.value, preset: voice.key, seen: info.pending ? info.pending.requestedAt : 0}
         if (withGender) body.gender = voice.gender
-        Api.quiet("POST", "/api/books/" + bookId + "/voice", body, function(answer, error) {
+        root.ask("POST", "/api/books/" + bookId + "/voice", body, function(answer, error) {
             if (mine !== root.generation) return
             root.saving = false
             if (error) { root.fail("Chưa đổi được giọng", error); return }
@@ -115,7 +89,7 @@ CastModal {
         saving = true
         const mine = generation
         const info = choices
-        Api.quiet("POST", "/api/books/" + bookId + "/voice", {character: info.character.value, withdraw: true, requestedAt: info.pending.requestedAt}, function(answer, error) {
+        root.ask("POST", "/api/books/" + bookId + "/voice", {character: info.character.value, withdraw: true, requestedAt: info.pending.requestedAt}, function(answer, error) {
             if (mine !== root.generation) return
             root.saving = false
             if (error) { root.fail("Chưa bỏ được lựa chọn", error); return }
@@ -276,6 +250,7 @@ CastModal {
                         // Nhóm của máy đọc khác (hay khi có từ hai nhóm): đầu nhóm có nút tải giọng khi máy đọc ấy chưa có trên máy này
                         CastEngine {
                             objectName: "voiceEngine"
+                            store: root.store
                             visible: Logic.groupHasHeader(root.groups, group.modelData)
                             width: parent.width
                             engine: group.modelData.engine
@@ -318,7 +293,7 @@ CastModal {
                                     anchors.verticalCenter: parent.verticalCenter
                                     visible: row.voice.preview
                                     clipId: Logic.voiceId(row.voice.name)
-                                    url: Logic.voiceUrl(row.voice.key)
+                                    url: root.media(Logic.voiceUrl(row.voice.key))
                                     label: "Nghe thử giọng " + row.voice.name
                                 }
                                 // "Nghe thử bằng câu của sách": một câu của chính người này đọc bằng giọng ấy (chỉ khi người ấy có câu)

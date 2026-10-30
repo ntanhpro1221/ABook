@@ -3,6 +3,7 @@ import ABook
 import "EditBookLogic.js" as Logic
 import "CastLogic.js" as Cast
 import "RecordLogic.js" as Records
+import "BookLogic.js" as BookText
 
 // One width rule on the content area. Geometry interpolates without reparenting,
 // so the cover, chapter scroll position and delegates survive a class change.
@@ -48,15 +49,6 @@ Item {
         backLabel: "Về Thư viện"
         title: ""
         implicitHeight: Theme.s32 + Theme.headerRow
-        // Menu "Thêm": các mục sửa sách (hiện khi cuốn có gì để sửa / giải thích vì sao chưa sửa được)
-        Button {
-            id: moreButton
-            objectName: "bookMore"
-            visible: items.hasItems || root.recordRows.length > 0 || root.canToggleFinished
-            text: "Thêm"; icon: "ellipsis"; kind: "text"
-            Accessible.name: "Thêm việc với sách"
-            onClicked: more.toggle()
-        }
     }
     // Cuốn đầy đủ (quyền sửa, số thay đổi...): nạp lúc mở trang và sau mỗi lần sửa
     property var fullBook: ({})
@@ -82,6 +74,34 @@ Item {
     // Việc với hồ sơ nghe khi cuốn chỉ có MỘT hồ sơ (singleRecordActions của BookScreen.tsx): "Hồ sơ mới", "Chuyển hồ sơ", "Đổi tên hồ sơ…" ở đầu menu,
     // "Xoá hồ sơ…" ở cuối dưới vạch ngăn; nhiều hồ sơ thì nút "Hồ sơ nghe:" lo. "Đã nghe xong / Chưa nghe xong" cho cả cuốn nằm dưới các việc ấy.
     readonly property var recordRows: Records.singleActions(fullBook)
+    readonly property bool loaded: fullBook.id !== undefined
+    readonly property bool listening: Player.loaded && Player.bookId === root.book.bookId
+    readonly property bool speaks: Api.voiceList.length > 0
+    readonly property bool textOnly: fullBook.stage === "text"
+    readonly property bool moreMenu: items.hasItems || root.recordRows.length > 0 || root.canToggleFinished
+    // Đọc: đang nghe cuốn này thì mở đúng chương đang phát; không thì chỗ đọc đã lưu (hay chương đầu).
+    function read() {
+        const saved = BookText.latestReading(root.fullBook)
+        reader.begin(root.book.bookId, root.listening ? Player.chapterId : saved ? saved.chapterId : -1, root.listening || !saved ? -1 : saved.index)
+    }
+    // "Từ đầu" / "Nghe lại từ đầu": cuốn đang nạp thì nhảy như mọi cú nhảy khác (bộ phát nhớ chỗ cũ); không thì phát từ chương đầu và
+    // cho 8 giây "Quay lại chỗ cũ" khi chỗ cũ khác hẳn.
+    function restart() {
+        const first = bookDetail.firstPlayable()
+        if (first < 0) return
+        const id = root.book.bookId
+        if (root.listening) { Player.jumpTo(first, 0); return }
+        const before = bookDetail.point()
+        Player.open(id, first, 0, true)
+        if (before.chapterId !== undefined && (before.chapterId !== first || before.at > 30))
+            Api.toast("Đang nghe lại từ đầu", {duration: 8000, action: {label: "Quay lại chỗ cũ", run: function() { Player.open(id, before.chapterId, before.at, true) }}})
+    }
+    function primary() {
+        if (!bookDetail.hasPoint) root.read()
+        else if (bookDetail.finished) root.restart()
+        else bookDetail.activate()
+    }
+    function find() { finder.begin(root.book.bookId, root.book.title || root.fullBook.title || "", root.fullBook.chapters || []) }
     readonly property bool canToggleFinished: fullBook.id !== undefined && fullBook.stage !== "text"
     readonly property bool finishedNow: Boolean(fullBook.progress && fullBook.progress.finished)
     function recordRequest(kind, dialog, record) {
@@ -99,9 +119,11 @@ Item {
             if (Api.transport) Api.transport.refreshLibrary()
         })
     }
+    // Menu "Thêm" (ActionMenu "Việc với sách" của web): các việc với hồ sơ nghe, đã nghe xong, các mục sửa sách.
     Popover {
         id: more
         objectName: "bookMoreMenu"
+        Accessible.name: "Việc với sách"
         anchorItem: moreButton
         panelWidth: 280
         pad: Theme.s8
@@ -197,37 +219,14 @@ Item {
     readonly property var castUntil: Player.loaded && Player.bookId === root.book.bookId ? Player.chapterId
         : (fullBook.state && fullBook.state.last ? fullBook.state.last.chapterId : undefined)
     readonly property var castReached: fullBook.chapters && fullBook.chapters.length ? Cast.reachedTitles(fullBook.chapters, castUntil) : null
-    property var castPerson: null           // người đang mở menu "…"
-    function openCastMenu(anchor, person) {
-        castPerson = person
-        castMenu.anchorItem = anchor
-        castMenu.show()
-    }
+    function openCastMenu(anchor, person) { castMenu.openFor(anchor, person) }
     function castRequest(kind, person) {
-        if (kind === "unmerge") { unmerge(person); return }
+        if (kind === "unmerge") { castUnmerge.run(root.book.bookId, person); return }
         const data = {bookId: root.book.bookId, person: person, waiting: castWaiting}
         if (kind === "merge") data.people = castList.characters
         root.castRequested(kind, data)
     }
-    // "Bỏ gộp" (useUnmerge.ts): không có đường riêng - tìm đúng lần gộp trong danh sách thay đổi đang chờ rồi rút bằng đường hoàn tác của "Ai nói câu này"
-    function unmerge(person) {
-        const id = root.book.bookId
-        const name = Cast.cleanName(person.displayName)
-        const fail = error => { Api.notice = Logic.toastText("Chưa bỏ gộp được", error) }
-        Api.quiet("GET", "/api/books/" + id + "/pending-changes", null, function(details, error) {
-            if (error) { fail(error); return }
-            const stamp = person.mergedAt
-            const items = details && details.items ? details.items : []
-            const item = typeof stamp === "number" ? items.filter(e => e.section === "speakers" && Math.abs(e.requestedAt - stamp) < 1e-6)[0] : undefined
-            if (!item) { fail("Lần gộp này đã được áp hoặc đã bị thay bằng lựa chọn khác - mở lại màn này để xem."); return }
-            const keys = item.keys || [item.key]
-            Api.quiet("POST", "/api/books/" + id + "/speaker", {lines: keys.map(k => ({stableId: k})), withdraw: true, requestedAt: item.requestedAt}, function(data, err) {
-                if (err) { fail(err); return }
-                Api.editedBook(id)
-                Api.notice = "Đã bỏ gộp " + name
-            })
-        })
-    }
+    CastUnmerge { id: castUnmerge }
     function openChapterMenu(anchor, row) {
         menuChapter = row
         chapterMenu.anchorItem = anchor
@@ -290,41 +289,18 @@ Item {
             }
         }
     }
-    // Menu "…" của một người ở tab Nhân vật: Gộp vào người khác…, Đổi tên, Đổi giới tính (chỉ mục làm được; bảng nổi đo chỗ theo số hàng)
-    Popover {
+    // Menu "…" của một người ở tab Nhân vật (CastMenu, dùng chung với Studio)
+    CastMenu {
         id: castMenu
-        objectName: "castMenu"
-        panelWidth: 240
-        pad: 6
-        Column {
-            width: parent.width
-            readonly property var p: root.castPerson || ({})
-            readonly property bool canMerge: Boolean(root.castCaps.merge) && p.lines > 0
-            readonly property bool canGender: Boolean(root.castCaps.gender) && Boolean(p.voice) && p.lines > 0
-            height: Theme.buttonHeight * ((canMerge ? 1 : 0) + (root.castCaps.rename ? 1 : 0) + (canGender ? 1 : 0))
-            MenuRow {
-                objectName: "castMerge"
-                visible: parent.canMerge
-                width: parent.width; icon: "git-merge"; text: "Gộp vào người khác…"
-                onClicked: { castMenu.close(); root.castRequest("merge", parent.p) }
-            }
-            MenuRow {
-                objectName: "castRename"
-                visible: Boolean(root.castCaps.rename)
-                width: parent.width; icon: "text-cursor-input"; text: "Đổi tên"
-                onClicked: { castMenu.close(); root.castRequest("rename", parent.p) }
-            }
-            MenuRow {
-                objectName: "castGender"
-                visible: parent.canGender
-                width: parent.width; icon: "user-round"; text: "Đổi giới tính"
-                onClicked: { castMenu.close(); root.castRequest("gender", parent.p) }
-            }
-        }
+        caps: root.castCaps
+        onPicked: (kind, person) => root.castRequest(kind, person)
     }
     Item {
         id: stage
         objectName: "bookStage"
+        opacity: bookDetail.status === "failed" && !root.loaded ? 0 : 1
+        visible: opacity > 0
+        Behavior on opacity { NumberAnimation { duration: Theme.motionMedium } }
         x: (parent.width - width) / 2
         y: header.height + Theme.s16
         width: parent.width - 2 * Theme.margin + (root.compositionWidth - (parent.width - 2 * Theme.margin)) * root.split
@@ -379,29 +355,44 @@ Item {
                     wrapMode: Text.Wrap
                     font.pixelSize: Theme.sizeBodySmall
                 }
-                Item { width: 1; height: Theme.s8 * root.summaryT }
-                Rectangle {          // tiến độ mảnh
-                    visible: root.book.progress > 0.005
+                // Tình trạng của cuốn: một dòng chữ nhỏ (chỉ có chữ / chưa đủ chương), không hộp, không viên thuốc màu.
+                Text {
+                    objectName: "bookStatusLine"
+                    visible: text !== ""
                     width: parent.width
+                    text: root.loaded ? BookText.statusLine(root.fullBook, root.speaks) : ""
+                    color: root.textOnly ? Theme.text2 : Theme.accentText
+                    wrapMode: Text.Wrap
+                    font.pixelSize: Theme.sizeBodySmall
+                }
+                Item { width: 1; height: Theme.s8 * root.summaryT }
+                Rectangle {          // tiến độ mảnh ("Đã nghe")
+                    objectName: "bookProgress"
+                    visible: root.loaded && !root.textOnly
+                    width: Math.min(parent.width, 448)
                     height: 4
                     radius: height / 2
                     color: Theme.sunken
+                    Accessible.role: Accessible.ProgressBar
+                    Accessible.name: "Đã nghe"
+                    readonly property var progress: BookText.progressOf(root.fullBook)
                     Rectangle {
-                        width: parent.width * Math.min(1, root.book.progress || 0)
+                        width: parent.width * Math.max(0, Math.min(1, Number(parent.progress.fraction || 0)))
                         height: parent.height
                         radius: parent.radius
-                        color: Theme.accent
+                        color: parent.progress.finished ? Theme.success : Theme.accent
+                        Behavior on width { NumberAnimation { duration: Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard } }
                     }
                 }
                 Text {
-                    visible: root.book.progress > 0.005
+                    objectName: "bookProgressLine"
+                    visible: root.loaded && !root.textOnly
                     width: parent.width
-                    text: root.book.progress >= 0.995 ? "Đã nghe xong"
-                        : "Đã nghe " + Math.floor((root.book.progress || 0) * 100) + "%"
-                          + (root.book.lastChapter ? " · " + root.book.lastChapter : "")
+                    text: root.loaded ? BookText.progressLine(root.fullBook, root.listening, Player.error !== "") : ""
                     color: Theme.text2
                     wrapMode: Text.Wrap
-                    font.pixelSize: Theme.sizeBodySmall
+                    font.pixelSize: Theme.sizeCaption
+                    font.features: { "tnum": 1 }
                 }
                 Item {          // "Hồ sơ nghe: {tên}" (chỉ khi cuốn có từ hai hồ sơ)
                     visible: Records.hasPicker(root.fullBook)
@@ -417,45 +408,92 @@ Item {
                     }
                 }
                 Item { width: 1; height: Theme.s8 * root.summaryT }
-                Flow {
-                    visible: bookDetail.canListen
+                // Đúng MỘT nút chính: nghe (hay nghe tiếp) - sách không nghe được ở máy này thì "Đọc"; nghe hết phần đã có thì một dòng thay nút.
+                // Chương không lấy được (máy chủ không trả danh sách chương) mà sách có: vẫn đọc / tìm / "Thêm" được.
+                // Bố cục rộng: một cột như web. Bố cục vừa (bìa nhỏ cạnh chữ, danh sách chương ở dưới): web cuộn cả trang còn ở đây danh sách
+                // chương có khung riêng, nên khi đủ chỗ thì hàng nút phụ đứng cạnh nút chính để phần trên không ăn mất chỗ của chương.
+                Grid {
+                    id: actions
+                    objectName: "bookActions"
+                    visible: bookDetail.status === "ready" || (bookDetail.status === "failed" && root.loaded)
                     width: parent.width
-                    spacing: Theme.s8
-                    Button {
-                        text: bookDetail.primaryText
-                        icon: bookDetail.primaryIcon
-                        onClicked: bookDetail.activate()
+                    columns: !root.expanded && width >= 2 * rowWidth + Theme.s16 ? 2 : 1
+                    rowSpacing: Theme.s12
+                    columnSpacing: Theme.s16
+                    verticalItemAlignment: Grid.AlignVCenter
+                    readonly property real rowWidth: Math.min(width, Math.max(256, primaryButton.implicitWidth))
+                    Text {
+                        objectName: "bookCaughtUp"
+                        visible: bookDetail.caughtUp
+                        width: actions.columns === 1 ? parent.width : Math.max(0, parent.width - actions.rowWidth - actions.columnSpacing)
+                        text: "Đã nghe hết phần đã có. Chương mới sẽ hiện ở đây khi làm xong."
+                        color: Theme.text2
+                        wrapMode: Text.Wrap
+                        font.pixelSize: Theme.sizeBodySmall
                     }
                     Button {
-                        kind: "text"
-                        icon: "list-ordered"
-                        text: "Chương"
-                        onClicked: { root.tab = 0; list.positionViewAtBeginning(); list.forceActiveFocus() }
+                        id: primaryButton
+                        objectName: "bookPrimary"
+                        visible: !bookDetail.caughtUp
+                        size: "lg"
+                        wrap: true
+                        width: actions.rowWidth          // web: cột w-fit min-w-[16rem], nút giãn bằng cột
+                        text: bookDetail.hasPoint ? bookDetail.primaryText : BookText.readLabel(root.fullBook, root.listening)
+                        icon: bookDetail.hasPoint ? bookDetail.primaryIcon : "book-open"
+                        onClicked: root.primary()
                     }
-                }
-                Text {
-                    visible: bookDetail.primaryCaption !== ""
-                    width: parent.width
-                    text: bookDetail.primaryCaption
-                    wrapMode: Text.Wrap
-                    color: Theme.text2
-                    font.pixelSize: Theme.sizeBodySmall
-                }
-                Text {
-                    visible: bookDetail.message !== ""
-                    width: parent.width
-                    text: bookDetail.message
-                    color: Theme.text2
-                    wrapMode: Text.Wrap
-                    font.pixelSize: Theme.sizeBodySmall
-                }
-                Text {
-                    visible: bookDetail.status === "failed"
-                    width: parent.width
-                    text: "Chưa lấy được danh sách chương."
-                    color: Theme.danger
-                    wrapMode: Text.Wrap
-                    font.pixelSize: Theme.sizeBodySmall
+                    // Hàng phụ "Việc với sách": luôn cùng chỗ, cùng thứ tự - nút chưa dùng được thì mờ đi chứ không biến mất; hai đầu thẳng hai mép nút chính.
+                    Item {
+                        objectName: "bookSecondary"
+                        width: actions.rowWidth
+                        height: secondary.height
+                        Accessible.role: Accessible.Grouping
+                        Accessible.name: "Việc với sách"
+                        Row {
+                            id: secondary
+                            readonly property var shown: [readButton, findButton, restartButton, moreButton].filter(b => b.visible)
+                            readonly property real used: shown.reduce((sum, b) => sum + b.width, 0)
+                            spacing: shown.length > 1 ? Math.max(0, (actions.rowWidth - used) / (shown.length - 1)) : 0
+                            ActionButton {
+                                id: readButton
+                                objectName: "bookRead"
+                                visible: bookDetail.hasPoint || bookDetail.caughtUp
+                                icon: "book-open"
+                                label: "Đọc"
+                                Accessible.name: BookText.readLabel(root.fullBook, root.listening)
+                                onClicked: root.read()
+                            }
+                            ActionButton {
+                                id: findButton
+                                objectName: "bookFind"
+                                icon: "search"
+                                label: "Tìm"
+                                Accessible.name: "Tìm chữ trong sách"
+                                enabled: (root.fullBook.chapters || []).length > 0
+                                onClicked: root.find()
+                            }
+                            ActionButton {
+                                id: restartButton
+                                objectName: "bookRestart"
+                                visible: !root.textOnly || bookDetail.hasPoint
+                                icon: "rotate-ccw"
+                                label: "Từ đầu"
+                                Accessible.name: "Nghe lại từ đầu"
+                                enabled: bookDetail.started && bookDetail.hasPoint && !bookDetail.finished
+                                onClicked: root.restart()
+                            }
+                            ActionButton {
+                                id: moreButton
+                                objectName: "bookMore"
+                                visible: root.moreMenu
+                                icon: "ellipsis"
+                                label: "Thêm"
+                                Accessible.name: "Thêm việc với sách"
+                                active: more.open
+                                onClicked: more.toggle()
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -557,4 +595,22 @@ Item {
         }
     }
     ChapterReader { id: reader }
+    FindInBook {
+        id: finder
+        onPicked: hit => reader.begin(root.book.bookId, hit.chapterId, hit.sentence, root.listening && Player.playing, true)
+    }
+    // Không tìm thấy sách này (đã chuyển thư mục / đã xoá): cả trang thành màn trống, nút ← vẫn ở trên.
+    EmptyState {
+        objectName: "bookMissing"
+        anchors.top: header.bottom; anchors.topMargin: 80
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: Math.min(parent.width - 2 * Theme.margin, 560)
+        opacity: bookDetail.status === "failed" && !root.loaded ? 1 : 0
+        visible: opacity > 0
+        Behavior on opacity { NumberAnimation { duration: Theme.motionMedium } }
+        icon: "book-open-text"
+        title: "Không tìm thấy sách này"
+        text: "Sách có thể đã bị chuyển sang thư mục khác hoặc bị xoá khỏi thư viện."
+        Button { objectName: "bookMissingBack"; text: "Về thư viện"; onClicked: Nav.back() }
+    }
 }

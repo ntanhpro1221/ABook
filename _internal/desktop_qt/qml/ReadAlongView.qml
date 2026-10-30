@@ -1,5 +1,6 @@
 import QtQuick
 import ABook
+import "PlayerLabels.js" as Labels
 
 // Văn bản chương chạy theo giọng (bản web: ReadAlongText.tsx + follow.ts). Danh sách đoạn ảo hoá: chỉ đoạn đang thấy mới có TextEdit. Câu đang nghe được tô nền
 // theo từng dòng chữ (hình chữ nhật lấy từ QTextLayout của chính TextEdit; chỉ đoạn có câu đổi mới vẽ lại), chữ đang đọc tô đậm hơn khi sách có mốc chữ,
@@ -10,6 +11,17 @@ import ABook
 Item {
     id: root
     property bool following: true
+    property bool tapped: false
+    Connections { target: Player; function onChapterChanged() { root.tapped = false } }
+    Connections { target: ReadAlong; function onListened() { root.tapped = true } }
+    Text {
+        id: hint; objectName: "readerHint"
+        x: Theme.s24; y: Theme.s12; width: parent.width - 2 * Theme.s24
+        visible: ReadAlong.status === "ready" && text !== ""
+        text: Labels.readerHint(Player.speaking, Api.voiceList.length > 0, ReadAlong.timed, root.tapped)
+        wrapMode: Text.Wrap; color: root.surface.fg2; font.pixelSize: Theme.sizeCaption
+        z: 2
+    }
     property string placement: "inside"
     property bool firstPlacement: true
     readonly property real fontPx: Math.max(14, Number(Platform.setting("readingSize", String(Theme.sizeReading))))
@@ -78,9 +90,9 @@ Item {
         if (following) follow(true)
         else refreshPlacement()
     }
-    // Đoạn đang đọc vừa tính xong hình chữ nhật của câu. Gọi từ Component.onCompleted của dòng đang được dựng: để sau (callLater gộp các lần gọi), vì
+    // Đoạn đang đọc vừa tính xong hình chữ nhật của câu. Gọi từ Component.onCompleted của dòng đang được dựng: để sau (Later.call gộp các lần gọi), vì
     // cuộn / positionViewAtIndex ngay trong lúc ListView đang dựng dòng bằng incubator làm dòng bị đụng lại giữa chừng (app chết trong QQmlObjectCreator::finalize).
-    function currentRectsChanged() { Qt.callLater(rectsSettled) }
+    function currentRectsChanged() { Later.call(root, rectsSettled) }
     function rectsSettled() {
         if (following) follow(true)
         else refreshPlacement()
@@ -108,7 +120,7 @@ Item {
     }
     Connections {
         target: ReadAlong
-        function onCurrentSegmentChanged() { Qt.callLater(root.afterSegment) }
+        function onCurrentSegmentChanged() { Later.call(root, root.afterSegment) }
         function onListened() { root.following = true; root.firstPlacement = false }
         function onStatusChanged() {
             if (ReadAlong.status === "ready") {
@@ -130,7 +142,7 @@ Item {
         model: ReadAlong.timed ? ReadAlong.paragraphs : null
         clip: true
         cacheBuffer: 900
-        topMargin: 24
+        topMargin: hint.visible ? hint.height + 2 * Theme.s12 : 24
         bottomMargin: 96
         boundsBehavior: Flickable.StopAtBounds
         onMovementStarted: root.manual()

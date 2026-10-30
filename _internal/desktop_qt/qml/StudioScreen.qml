@@ -104,7 +104,7 @@ Item {
         if (route === "list") { dataStore.openBook(""); if (layerOpen) { Nav.closedLayer(routeLayer); layerOpen = false } }
         else if (!layerOpen) { Nav.openLayer(routeLayer); layerOpen = true }
     }
-    QtObject { id: routeLayer; function close() { root.goList() } }
+    QtObject { id: routeLayer; readonly property bool route: true; function close() { root.goList() } }
     Component.onDestruction: if (layerOpen) Nav.closedLayer(routeLayer)
     Connections { target: Nav.stack; function onReselected(index) { if (index === 1) root.goList() } }
 

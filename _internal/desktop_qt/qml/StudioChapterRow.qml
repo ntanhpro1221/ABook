@@ -15,6 +15,7 @@ Item {
     property real numberW: 48
     signal playRequested()
     signal menuRequested(Item anchor)
+    signal errorRequested(Item anchor)
 
     readonly property bool wide: width >= 720
     readonly property real pad: 8
@@ -89,10 +90,36 @@ Item {
             objectName: "chapterSubtitle"
             visible: text !== ""
             width: parent.width
-            text: root.errorLine !== "" ? root.errorLine : (root.chapter.subtitle || "")
-            color: root.errorLine !== "" ? Theme.danger : Theme.text2
+            text: root.errorLine !== "" ? "" : (root.chapter.subtitle || "")
+            color: Theme.text2
             wrapMode: Text.Wrap
             font.pixelSize: Theme.sizeCaption
+        }
+        // Lỗi của chương: một câu cho người nghe + "Chi tiết" mở khung nổi có việc nên làm và nguyên văn (ChapterError.tsx)
+        Flow {
+            objectName: "chapterErrorLine"
+            visible: root.errorLine !== ""
+            width: parent.width
+            spacing: 4
+            Text {
+                objectName: "chapterErrorText"
+                width: Math.min(implicitWidth, parent.width)
+                text: root.errorLine
+                color: Theme.danger
+                wrapMode: Text.Wrap
+                font.pixelSize: Theme.sizeCaption
+            }
+            Interactive {
+                id: errorMore
+                objectName: "chapterErrorMore"
+                width: moreLabel.implicitWidth
+                height: Math.max(20, moreLabel.implicitHeight)
+                ringMargin: 2
+                Accessible.role: Accessible.Button
+                Accessible.name: "Chi tiết lỗi " + (root.chapter.displayTitle || "")
+                onClicked: root.errorRequested(errorMore)
+                Text { id: moreLabel; text: "Chi tiết"; color: Theme.danger; font.pixelSize: Theme.sizeCaption; font.underline: true }
+            }
         }
     }
     // Trạng thái: dấu nhỏ khi chương cần chú ý, vạch + "12/30" khi đang thu

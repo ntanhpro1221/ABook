@@ -1,5 +1,6 @@
 import QtQuick
 import ABook
+import "StudioLogic.js" as Studio
 
 // Cài đặt › Studio › Cách đọc chung (SharedReadingsSettings của studio/sharedReadings.tsx): xem, thêm, bỏ cách đọc dùng chung cho mọi sách
 // (GET / POST /api/readings). Nằm trong khối gập "Cách đọc chung": lời dẫn trước, ô tìm chỉ khi danh sách đủ dài để cần tìm (> 8 mục).
@@ -15,10 +16,8 @@ SettingsItem {
     padding: 12
     objectName: "sharedReadings"
 
-    // Chữ đầu mỗi từ viết hoa - chỉ để HIỆN (shownReading của shared/format.ts); dữ liệu giữ nguyên cách đọc đã lưu
-    function shownReading(spoken) {
-        return String(spoken).replace(/(^|\s)(\S)/g, (m, gap, letter) => gap + letter.toUpperCase())
-    }
+    // Chữ đầu mỗi từ viết hoa - chỉ để HIỆN; dữ liệu giữ nguyên cách đọc đã lưu (một hàm chung với mục "Cách đọc tên" của Studio)
+    function shownReading(spoken) { return Studio.shownReading(spoken) }
     function esc(text) { return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") }
     function line(entry) {
         return "<span style=\"font-weight:500\">" + esc(entry.surface) + "</span> <span style=\"color:" + Theme.text3 + "\">đọc là</span> “" + esc(shownReading(entry.spokenForm)) + "”"
@@ -96,7 +95,7 @@ SettingsItem {
                         objectName: "removeReading"
                         x: parent.width - width
                         anchors.verticalCenter: parent.verticalCenter
-                        icon: "trash-2"
+                        icon: "trash"
                         iconSize: 16
                         ink: Theme.text2
                         hoverInk: Theme.text

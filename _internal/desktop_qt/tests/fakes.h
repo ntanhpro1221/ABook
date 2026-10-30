@@ -15,6 +15,12 @@ class FakeOut final : public AudioOut {
     Q_OBJECT
 public:
     explicit FakeOut(QObject *parent = nullptr) : AudioOut(parent) {}
+    QString textBook, textVoice;
+    int textChapter = 0;
+    void loadText(const QString &book, int chapter, double at, const QString &voice) override {
+        textBook = book; textChapter = chapter; textVoice = voice;
+        load(QUrl(QStringLiteral("text:%1/%2").arg(book).arg(chapter)), at);
+    }
     void load(const QUrl &source, double startSeconds) override {
         url = source;
         pos = startSeconds;

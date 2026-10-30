@@ -37,6 +37,8 @@ Item {
         open: root.shownInstall || root.shownUnfit
         Item {
             width: parent.width
+            Accessible.role: Accessible.Grouping
+            Accessible.name: "Cần Studio"
             readonly property bool wide: width >= 520
             readonly property real buttons: root.shownUnfit ? peerFlow.height : (root.remote ? 0 : install.height)
             height: 16 + Math.max(words.height, wide ? buttons : words.height + 8 + buttons) + 16

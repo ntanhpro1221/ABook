@@ -102,7 +102,8 @@ def main():
             if "hide_end" in audio and "hide_begin" in audio:
                 got["hidden_wall_s"] = (events["hide_end"]-events["hide_begin"])/1000
                 got["hidden_media_s"] = audio["hide_end"]["position"]-audio["hide_begin"]["position"]
-                got["starvation_warnings"] = Path(got["app_log"]).read_text(encoding="utf-8", errors="replace").count("mix_device_empty")
+                from idle2_stage import device_empty, done_ms  # same rule: an endpoint drained by the exit after `done` is not starvation
+                got["starvation_warnings"] = device_empty(Path(got["app_log"]).read_text(encoding="utf-8", errors="replace"), done_ms(got))
                 got["clock_pass"] = (audio["hide_begin"]["chapter"] == audio["hide_end"]["chapter"]
                     and abs(got["hidden_media_s"] - got["hidden_wall_s"]) <= 0.1
                     and got["starvation_warnings"] == 0 and all(v["playing"] == 1 for v in audio.values()))
