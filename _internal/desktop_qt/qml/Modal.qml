@@ -6,9 +6,9 @@ import ABook
 // mờ dần), chân hộp (`footer`) tách khỏi thân bằng vạch, luôn thấy. Mở: nổi lên 10 px + phóng từ 96 % trong motionMedium (decelerate), nền
 // mờ --scrim; đóng ngược lại trong motionMediumOut. Giảm chuyển động: chỉ mờ. Là một lớp của ngăn xếp Back; trang con trong hộp (tìm bìa...)
 // tự mở lớp riêng của nó nên Back đóng trang con trước rồi mới tới hộp. Đóng thì trả tiêu điểm về chỗ đã mở hộp.
-FocusScope {
+// Lớp: là WindowLayer, tức tự dời lên gốc cửa sổ nên z 70 luôn trên mọi màn, thanh bên và dải tiêu đề, dù khai báo ở đâu.
+WindowLayer {
     id: root
-    anchors.fill: parent
     z: 70
     property bool open: false
     property string title: ""
