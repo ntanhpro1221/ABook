@@ -1,3 +1,4 @@
+import { TickingValue } from "@/shared/TickingValue";
 import { MotionRegion } from "@/shared/MotionRegion";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -264,7 +265,7 @@ function RemoteBar({ phone, receivedAt, onDismiss }: { phone: RemotePhone; recei
           )}
         </div>
         <div className="hidden w-28 text-right text-xs tabular text-fg-2 md:block">
-          {formatClock(at)} / {formatClock(phone.duration)}
+          <TickingValue>{formatClock(at)} / {formatClock(phone.duration)}</TickingValue>
         </div>
         <div className="flex shrink-0 items-center justify-end gap-1 md:flex-1">
           {phone.known && (

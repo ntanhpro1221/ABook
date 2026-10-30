@@ -1,5 +1,6 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.ui.components.ClockLabel
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
@@ -349,10 +350,10 @@ private fun BookHead(book: ListenBook, covers: CoverLoader, records: List<Listen
                 }
                 BasicText(main, style = Abook.type.screenTitle, modifier = Modifier.testTag("book_title"))
                 Spacer(Modifier.height(Dim.s8))
-                BasicText(keepUnitsTogether(BookPage.metaLine(book)), style = Abook.type.bodySmall)
+                ClockLabel(keepUnitsTogether(BookPage.metaLine(book)), style = Abook.type.bodySmall)
                 BookPage.statusLine(book)?.let { line ->
                     Spacer(Modifier.height(Dim.s8))
-                    BasicText(line, style = Abook.type.bodySmall.copy(color = if (book.complete) colors.text2 else colors.accentText))
+                    ClockLabel(line, style = Abook.type.bodySmall.copy(color = if (book.complete) colors.text2 else colors.accentText))
                 }
             }
         }
@@ -367,7 +368,7 @@ private fun BookHead(book: ListenBook, covers: CoverLoader, records: List<Listen
                 },
             )
             Spacer(Modifier.height(Dim.s8))
-            BasicText(BookPage.progressLine(book, listening, failed), style = Abook.type.caption.copy(color = colors.text2))
+            ClockLabel(BookPage.progressLine(book, listening, failed), style = Abook.type.caption.copy(color = colors.text2))
         }
         // Một hồ sơ thì không có chip: các việc với hồ sơ duy nhất nằm trong bảng "Thêm" (web: singleRecordActions).
         val active = if (records.size > 1) records.firstOrNull { it.active } else null
@@ -588,7 +589,7 @@ private fun ChapterRow(
             Spacer(Modifier.width(Dim.s12))
             Column(Modifier.weight(1f)) {
                 BasicText(chapter.title, style = Abook.type.body.copy(color = title, fontWeight = if (current) FontWeight.Medium else FontWeight.Normal))
-                RowHint(BookPage.chapterLine(chapter, producing))
+                RowHint(BookPage.chapterLine(chapter, producing), ticking = true)
                 if (prepared) PreparedMark()
                 val partly = chapter.heard > 0f && chapter.heard < 1f
                 if (livePosition != null || partly) {

@@ -63,6 +63,7 @@ fun DeviceRow(device: Paired, onOpen: () -> Unit, onRetry: () -> Unit) {
     val failed = device.failed
     ListItem(
         device.name, Modifier, onOpen, "device_${device.key.ifEmpty { "main" }}", hint = device.state,
+        tickingHint = true,
         hintColor = if (failed) colors.danger else colors.text2,
         leading = { DeviceIcon(device.kind, colors.text2) },
         trailing = if (failed && device.reach !is Reach.Unpaired) ({ TextAction("Thử lại", onRetry, "retry_${device.key.ifEmpty { "main" }}") }) else null,
@@ -80,6 +81,7 @@ fun RemoteBookRow(
     val tag = "book_${book.id}"
     ListItem(
         book.title, Modifier, null, tag,
+        tickingHint = true,
         hint = when {
             failure != null -> failure
             downloading -> "Đang tải"
@@ -118,7 +120,7 @@ fun CreepProgress() {
 fun SharerRow(sharer: Sharer, onOpen: () -> Unit) {
     val colors = Abook.colors
     ListItem(
-        sharer.name, Modifier, onOpen, "sharer_${sharer.id}", hint = DeviceText.seen(sharer.lastSeen),
+        sharer.name, Modifier, onOpen, "sharer_${sharer.id}", hint = DeviceText.seen(sharer.lastSeen), tickingHint = true,
         leading = { DevicesIcon(colors.text2) }, chevron = true,
     )
 }

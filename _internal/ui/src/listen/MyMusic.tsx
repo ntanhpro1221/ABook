@@ -1,3 +1,4 @@
+import { TickingValue } from "@/shared/TickingValue";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { Fold } from "@/shared/Collapse";
 import { useListPresence } from "@/shared/motion";
@@ -143,7 +144,7 @@ export function MyMusicSection() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         {canImport && (
           <Button size="sm" variant="ghost" icon={Upload} className={WRAP_LABEL} loading={Boolean(progress)} onClick={() => void importFiles()}>
-            {progress ? `Đang thêm ${progress.done}/${progress.total}` : "Thêm nhạc của bạn"}
+            <TickingValue>{progress ? `Đang thêm ${progress.done}/${progress.total}` : "Thêm nhạc của bạn"}</TickingValue>
           </Button>
         )}
       </div>
