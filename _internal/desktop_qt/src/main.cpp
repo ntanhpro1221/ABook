@@ -25,6 +25,7 @@
 #include <QIcon>
 #include <QQmlApplicationEngine>
 #include <QQmlEngine>
+#include <QQmlError>
 #include <QQuickWindow>
 #include <QEvent>
 #include <QPlatformSurfaceEvent>
@@ -182,12 +183,12 @@ int main(int argc, char *argv[]) {
     const QString outbox = QDir(qEnvironmentVariable("LOCALAPPDATA")).filePath(QStringLiteral("ABook/pending-progress.json"));
     QDir().mkpath(QFileInfo(outbox).absolutePath());
     SpeechOut speech(&audio, &hostNet);
-    qmlRegisterSingletonInstance("ABook", 1, 0, "Narration", &speech);
+    SpeechOut::setInstance(&speech);
     OutputDevices outputs([&mixer](bool select, const QString &id) {
         if (select) mixer->selectOutput(id); else mixer->requestOutputs();
     });
     QObject::connect(mixer.get(), &MusicMixer::outputsReady, &outputs, &OutputDevices::complete);
-    qmlRegisterSingletonInstance("ABook", 1, 0, "OutputDevices", &outputs);
+    OutputDevices::setInstance(&outputs);
     Player player(&speech, &hostNet, outbox, nullptr);
     Player::setInstance(&player);
     player.watchInput();
@@ -259,7 +260,20 @@ int main(int argc, char *argv[]) {
             {QStringLiteral("flags"), int(Qt::Window | Qt::WindowDoesNotAcceptFocus)}});
     engine.addImageProvider(QStringLiteral("cover"), new CoverProvider);
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed, &app, [] { QCoreApplication::exit(3); }, Qt::QueuedConnection);
+    // ABOOK_SMOKE_EXIT=1 (build.bat, tools/smoke_dist.py): quit shortly after the first frame, 0 only when the
+    // engine reported no warning, so a package whose QML does not load fails the build. Tests use stub singletons.
+    const bool smokeExit = qEnvironmentVariable("ABOOK_SMOKE_EXIT") == QStringLiteral("1");
+    int engineWarnings = 0;
+    if (smokeExit)
+        QObject::connect(&engine, &QQmlEngine::warnings, &app, [&engineWarnings](const QList<QQmlError> &list) { engineWarnings += list.size(); });
     engine.loadFromModule("ABook", "Main");
+    if (smokeExit) {
+        auto *window = engine.rootObjects().isEmpty() ? nullptr : qobject_cast<QQuickWindow *>(engine.rootObjects().constFirst());
+        if (!window) return 3;
+        QObject::connect(window, &QQuickWindow::frameSwapped, &app, [&engineWarnings] {
+            QTimer::singleShot(1500, qApp, [&engineWarnings] { QCoreApplication::exit(engineWarnings ? 4 : 0); });
+        }, Qt::SingleShotConnection);
+    }
     musicWindowActivity.update();
     for (QObject *root : engine.rootObjects()) {
         if (auto *window = qobject_cast<QQuickWindow *>(root); window && media) media->attachWindow(window->winId());

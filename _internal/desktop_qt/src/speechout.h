@@ -1,6 +1,9 @@
 #pragma once
 #include "audioout.h"
 #include "playernet.h"
+#include <QJSEngine>
+#include <QQmlEngine>
+#include <QtQml/qqmlregistration.h>
 #include <QVector>
 #include <QTemporaryDir>
 #include <QJsonArray>
@@ -10,7 +13,11 @@
 // same /script and /readaloud/clip API used by the desktop web source.
 class SpeechOut final : public AudioOut {
     Q_OBJECT
+    QML_NAMED_ELEMENT(Narration)
+    QML_SINGLETON
 public:
+    static SpeechOut *create(QQmlEngine *, QJSEngine *) { QJSEngine::setObjectOwnership(s_instance, QJSEngine::CppOwnership); return s_instance; }
+    static void setInstance(SpeechOut *speech) { s_instance = speech; }
     SpeechOut(AudioOut *audio, PlayerNet *net, QObject *parent = nullptr);
     ~SpeechOut() override { stop(); }
     void load(const QUrl &url, double at) override;
@@ -31,6 +38,7 @@ signals:
     void scriptReady(const QString &book, int chapter, const QJsonObject &script);
     void consentRequested(const QVariantMap &voice);
 private:
+    static inline SpeechOut *s_instance = nullptr;
     struct Paragraph { QString text; double seconds; QUrl url; double gain = 1; QJsonArray words; bool loading = false; };
     void publishScript();
     void fetch(int index, std::function<void()> ready);

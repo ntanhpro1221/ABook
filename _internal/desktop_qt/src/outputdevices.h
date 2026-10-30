@@ -1,5 +1,8 @@
 #pragma once
+#include <QJSEngine>
 #include <QObject>
+#include <QQmlEngine>
+#include <QtQml/qqmlregistration.h>
 #include <QVariantList>
 #include <functional>
 
@@ -10,7 +13,11 @@ class OutputDevices : public QObject {
     Q_PROPERTY(QString selected READ selected NOTIFY changed)
     Q_PROPERTY(QString error READ error NOTIFY changed)
     Q_PROPERTY(bool busy READ busy NOTIFY changed)
+    QML_ELEMENT
+    QML_SINGLETON
 public:
+    static OutputDevices *create(QQmlEngine *, QJSEngine *) { QJSEngine::setObjectOwnership(s_instance, QJSEngine::CppOwnership); return s_instance; }
+    static void setInstance(OutputDevices *outputs) { s_instance = outputs; }
     using Request = std::function<void(bool, const QString &)>;
     explicit OutputDevices(Request request, QObject *parent = nullptr) : QObject(parent), m_request(std::move(request)) {}
     QVariantList devices() const { return m_devices; }
@@ -27,6 +34,7 @@ public:
 signals:
     void changed();
 private:
+    static inline OutputDevices *s_instance = nullptr;
     Request m_request;
     QVariantList m_devices;
     QString m_selected, m_error;
