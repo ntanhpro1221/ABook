@@ -289,8 +289,9 @@ object SyncLink {
             }
         }
         val text = bytes.toString("UTF-8")
+        // Một đối tượng hay một mảng (GET /api/listen/library, /api/voices... trả mảng trần): số, chữ, true/null trần vẫn bị từ chối.
         if (text.isNotEmpty()) try {
-            require(StrictJson.parse(text) is JSONObject)
+            require(StrictJson.parse(text).let { it is JSONObject || it is JSONArray })
         } catch (error: Exception) {
             throw IllegalArgumentException("Dữ liệu máy gửi không hợp lệ; bạn hãy thử lại.", error)
         }
