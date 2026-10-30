@@ -127,7 +127,7 @@ FocusScope {
         store.loadActivity(id, activityMode === "technical", function(status, data) {
             if (ask !== root.activityAsk || !root.book || id !== root.book.id) return
             root.activityLoading = false
-            if (status >= 200 && status < 300 && Array.isArray(data)) { root.activityData = data; root.activityError = "" }
+            if (status >= 200 && status < 300) { if (Array.isArray(data)) root.activityData = data; root.activityError = "" }
             else root.activityError = status === 404 ? "" : root.store.errorText(status, data)
         })
     }

@@ -239,6 +239,7 @@ Item {
         function ready(page, count) { tryVerify(function() { return rows(page).length === count }, 3000, "số câu hiện ra") }
         function rowOf(page, stableId) { return rows(page).filter(r => r.line.stableId === stableId)[0] }
         function scrollTo(page, item) {
+            waitForRendering(page)   // đầu danh sách đã xếp lại sau khi đổi tab rồi mới tính chỗ cuộn
             const list = page.projectScreenList
             list.contentY = Math.max(list.originY, Math.min(list.originY + list.contentHeight - list.height + list.bottomMargin, item.mapToItem(list.contentItem, 0, 0).y - 24))
         }
