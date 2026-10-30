@@ -326,7 +326,7 @@ class NativeActivity : ComponentActivity() {
             startActivity(intent)
         } catch (error: ActivityNotFoundException) {
             AppLog.w("Settings", "máy không mở được ${intent.action}")
-            app.settings.problem.value = "Không mở được trình duyệt"
+            app.settings.problem.value = "Chưa mở được trình duyệt"
         }
     }
 

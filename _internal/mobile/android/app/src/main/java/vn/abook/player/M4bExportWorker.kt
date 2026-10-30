@@ -187,7 +187,7 @@ class M4bExportWorker(context: Context, params: WorkerParameters) : Worker(conte
                 phase = { event -> M4bExports.phase(event, name, chapter, plan.chapters.size, round, over) }
                 if (name == "peaks" || name == "reencode") M4bExports.emit(phase(event()))
             }) { encoded = it }
-            val out = context.contentResolver.openOutputStream(file, "wt") ?: throw Mp3Export.Refused("Không ghi được vào chỗ đã chọn")
+            val out = context.contentResolver.openOutputStream(file, "wt") ?: throw Mp3Export.Refused("Chưa ghi được vào chỗ đã chọn")
             val result = out.buffered(256 * 1024).use { stream ->
                 M4bExport.run(plan, work, stream, encoder, progress = { chapters, total, fraction ->
                     done = chapters

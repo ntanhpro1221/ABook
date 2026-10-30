@@ -318,7 +318,7 @@ object Playback {
             scheduleReconnect()
             "Mất kết nối với ${SyncLink.holderName(appContext, bookId)} - đang thử lại…"
         } else {
-            "Không phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại."
+            "Chưa phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại."
         }
         saveNow()
         // Lần thử lại hỏng nữa: chỉ cập nhật lời đang hiện, không báo lần nữa.

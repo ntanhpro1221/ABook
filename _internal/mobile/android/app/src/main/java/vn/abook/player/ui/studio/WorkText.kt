@@ -1,5 +1,7 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.ui.data.dotJoin
+
 /**
  * Chữ của ba tab nội dung Studio (Việc cần duyệt, Cần nghe lại, Nhân vật) và bảng giọng, ở MỘT nơi. Chữ của chính các thẻ (tiêu đề, nút trả lời, lời đã ghi)
  * lấy từ máy tính hay từ [WorkLogic] / [ReviewLogic] / [VoiceLogic] để hai nền tảng nói cùng một câu; ở đây chỉ là chữ riêng của điện thoại. Nhãn nút 1-4 chữ.
@@ -52,8 +54,8 @@ object WorkText {
     const val PICK_NONE = "Bỏ hết"
 
     fun scope(scope: WorkScope, labels: Pair<String, String>?, alternate: Int, all: Int): String = when (scope) {
-        WorkScope.Alternate -> "${labels?.first ?: "Câu xen kẽ"} · $alternate"
-        WorkScope.All -> "${labels?.second ?: "Cả chuỗi"} · $all"
+        WorkScope.Alternate -> dotJoin(labels?.first ?: "Câu xen kẽ", "$alternate")
+        WorkScope.All -> dotJoin(labels?.second ?: "Cả chuỗi", "$all")
     }
 
     fun scopeNote(labels: Pair<String, String>?): String =

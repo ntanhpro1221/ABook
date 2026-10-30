@@ -7,7 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.BasicText
+import vn.abook.player.ui.components.BasicText
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,7 +53,6 @@ fun OtherPlayersSheet(repo: CompanionRepo, local: PlayerRepo, dismiss: () -> Uni
     val available = (LocalConfiguration.current.screenHeightDp * 0.8f).dp
     Column(Modifier.fillMaxWidth().heightIn(max = available).testTag("remote_players_sheet")) {
         BasicText("Phát trên", style = Abook.type.sectionTitle)
-        Caption("Phát trên thiết bị khác")
         Reveal(ui.opening.isNotBlank()) { Caption(ui.opening) }
         Reveal(ui.busy) { Caption("Đang gửi lệnh") }
         Reveal(ui.problem.isNotEmpty()) { Caption(ui.problem) }
@@ -68,7 +67,7 @@ fun OtherPlayersSheet(repo: CompanionRepo, local: PlayerRepo, dismiss: () -> Uni
                 Column(Modifier.fillMaxWidth()) {
                     ListItem(
                         remote.name, tag = "remote_${remote.device}", titleStyle = Abook.type.bodyStrong,
-                        hint = if (remote.book.isEmpty()) "Chưa phát sách" else if (remote.playing) "Đang phát trên" else "Đang dừng trên",
+                        hint = if (remote.book.isEmpty()) "Chưa phát sách" else if (remote.playing) "Đang phát" else "Đang dừng",
                         leading = { OtherPlayerIcon(remote) },
                         below = {
                             if (remote.protocol == "gcast") Caption("Google Cast")

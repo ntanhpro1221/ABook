@@ -1,5 +1,6 @@
 package vn.abook.player
 
+import vn.abook.player.ui.data.dotJoin
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -150,7 +151,7 @@ object StudioAlerts {
                         else "Làm sách gặp sự cố") +
                             " · $progress — bạn mở Studio.", "/#/studio/$id")
                     "stopped" -> Alert("$id:stopped", "Đã dừng: $title", "Bạn đã bấm Dừng · $progress", "/#/studio/$id")
-                    else -> Alert("$id:stopped", "Đã dừng: $title", "${book.optString("statusLabel")} · $progress", "/#/studio/$id")
+                    else -> Alert("$id:stopped", "Đã dừng: $title", dotJoin(book.optString("statusLabel"), progress), "/#/studio/$id")
                 }
             // Máy tính rút sạc nên Studio tự tạm dừng (power_source.py): báo để người ta biết máy tuột sạc - 24-09 sạc tuột
             // 22:50 mà 00:07 mới có người thấy.

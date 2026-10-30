@@ -98,7 +98,7 @@ class AndroidPrepareSource(context: Context) : PrepareSource {
         try {
             PrepareStatus.parse(PrepareAhead.start(app, bookId, voice, chapterIds, label, chargingOnly))
         } catch (error: VoiceException) {
-            throw IllegalStateException(error.message ?: "Không làm trước được")
+            throw IllegalStateException(error.message ?: "Chưa làm trước được")
         }
     }
 

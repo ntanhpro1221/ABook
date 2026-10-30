@@ -99,7 +99,7 @@ class NativeIncomingFileTest {
         val uri = Uri.parse(sender() + "la.bin")
         launch(Intent(Intent.ACTION_SEND).setType("application/octet-stream").putExtra(Intent.EXTRA_STREAM, uri))
         until("màn Thêm sách") { shown("add_book_screen") }
-        val refusal = "Không mở được file. Bạn chọn .abook, .abookproj, EPUB, Word, PDF hoặc TXT; chưa nhận loại file này."
+        val refusal = "Chưa mở được file. Bạn chọn .abook, .abookproj, EPUB, Word, PDF hoặc TXT; chưa nhận loại file này."
         until("lời từ chối trong hàng") { app.imports.state.value.items.singleOrNull()?.problem == refusal }
         until("lời từ chối trên màn") { runCatching { rule.onNodeWithText(refusal).assertIsDisplayed() }.isSuccess }
     }

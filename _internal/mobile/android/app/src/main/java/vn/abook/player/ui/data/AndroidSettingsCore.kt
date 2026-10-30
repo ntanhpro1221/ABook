@@ -45,7 +45,7 @@ class AndroidSettingsCore(context: Context) : SettingsCore {
         check(vn.abook.player.OldSaves.delete(vn.abook.player.OldSaves.dir(app.filesDir), name)) { "Chưa xoá được" }
     }
     override fun exportOldSave(name: String, uri: String) {
-        val sink = app.contentResolver.openOutputStream(android.net.Uri.parse(uri), "wt") ?: error("Không mở được file để ghi")
+        val sink = app.contentResolver.openOutputStream(android.net.Uri.parse(uri), "wt") ?: error("Chưa mở được file để ghi")
         sink.use { vn.abook.player.OldSaves.copyTo(vn.abook.player.OldSaves.dir(app.filesDir), name, it) }
     }
     override fun release(): AppRelease? {

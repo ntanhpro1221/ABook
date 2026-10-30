@@ -45,3 +45,51 @@ và mức nhạc ở trên., Đọc cả cuốn thành file âm thanh, nghe ở 
 Giữ nguyên có chủ ý (nhóm Xuất còn nằm trong `COPY_PENDING_EXPORT` của `scripts/ui_parity.py`): các chữ tiến độ có `…` cuối
 ("Đang đóng gói sách…", "Đang làm file M4B…", "Đang xuất MP3…", "Đang làm sách nói…", "Đang dừng…") chưa đổi vì nhánh Xuất còn đang gộp
 và nhiều test web khoá chúng; sửa cùng lúc khi xoá dòng `COPY_PENDING_EXPORT`.
+
+## Lượt soát hình ảnh native-p4 (31-10)
+
+Sửa cả LOẠI lỗi sau khi soát 245 ảnh; mỗi chữ web dưới đây đổi cùng chữ native. Đường dẫn tính từ `_internal/ui/src/`.
+
+| File | Cũ | Mới | Ghi chú |
+|---|---|---|---|
+| desktop/OtherComputers.tsx | Tìm máy trong mạng (cách nối, 3 lựa chọn) | Tự tìm | ba lựa chọn nằm trọn một dòng ở 360 dp: Tự tìm · Bluetooth · Nhập địa chỉ |
+| listen/PhoneDiagnostics.tsx | Trên điện thoại: Cài đặt › Thiết bị › Chia sẻ thư viện › bật tên sách... (câu chỉ công tắc cũ) | ... bật “Kết nối Wi-Fi”. Cùng Wi-Fi hay Tailscale. | công tắc tên “Kết nối Wi-Fi”, cùng nhật ký native |
+| listen/PlayerViews.tsx | Làm trước {n} chương tới (nút bắt đầu) | Làm trước {n} chương | nhãn tối đa 4 chữ; tên việc “{n} chương tới” trong tiến độ giữ nguyên |
+
+Mọi câu cụt `Không … được` thành `Chưa … được` (chuỗi chữ trong mã giao diện; `copyRules.test.ts` quét giữ luật này; chuỗi do máy chủ Python trả về không đổi, nên `SendEdits.tsx` khớp cả hai):
+
+| File | Cũ | Mới | Ghi chú |
+|---|---|---|---|
+| desktop/App.tsx | Không mở được | Chưa mở được | |
+| desktop/BookTemplates.tsx | Không lưu được | Chưa lưu được | |
+| desktop/httpSource.ts | Không đọc được / Không gọi được | Chưa đọc được / Chưa gọi được | |
+| gallery/desktopApi.ts | Không đọc được | Chưa đọc được | |
+| listen/AddBook.tsx | Không mở được | Chưa mở được | |
+| listen/BookScreen.tsx | Không phát được | Chưa phát được | |
+| listen/EditBook.tsx | Không đọc được | Chưa đọc được | |
+| listen/engine.ts | Không phát được | Chưa phát được | |
+| listen/LineWishes.tsx | Không hoàn tác được / Không bỏ được | Chưa hoàn tác được / Chưa bỏ được | |
+| listen/player.tsx | Không phát được | Chưa phát được | |
+| listen/PlaylistChoice.tsx | Không mở được | Chưa mở được | |
+| listen/readAloud.ts | Không tải được / Không phát được | Chưa tải được / Chưa phát được | |
+| listen/readAloudVoice.ts | Không dùng được | Chưa dùng được | |
+| listen/ReaderScreen.tsx | Không mở được | Chưa mở được | |
+| listen/SendEdits.tsx | Không kết nối được | Chưa kết nối được | |
+| listen/WishesDialog.tsx | Không bỏ được | Chưa bỏ được | |
+| listen/WordReadings.tsx | Không hoàn tác được | Chưa hoàn tác được | |
+| studio/ApplyChanges.tsx | Không bỏ được | Chưa bỏ được | |
+| studio/AutoPickNote.tsx | Không đổi được | Chưa đổi được | |
+| studio/CoverEditor.tsx | Không đọc được | Chưa đọc được | |
+| studio/data.ts | Không bắt đầu được / Không dừng được / Không tạm dừng được / Không làm tiếp được / Không mở được | Chưa bắt đầu được / Chưa dừng được / Chưa tạm dừng được / Chưa làm tiếp được / Chưa mở được | |
+| studio/decisions.ts | Không hoàn tác được | Chưa hoàn tác được | |
+| studio/MusicTab.tsx | Không xoá được / Không tải được / Không đọc lại được / Không đổi được / Không dừng được / Không chọn lại được | Chưa xoá được / Chưa tải được / Chưa đọc lại được / Chưa đổi được / Chưa dừng được / Chưa chọn lại được | |
+| studio/NewProjectScreen.tsx | Không đọc được / Không mở được / Không tạo được / Không tách được | Chưa đọc được / Chưa mở được / Chưa tạo được / Chưa tách được | |
+| studio/projectPacking.ts | Không ghi được | Chưa ghi được | |
+| studio/ProjectScreen.tsx | Không khởi động được / Không mở được | Chưa khởi động được / Chưa mở được | |
+| studio/ProjectsScreen.tsx | Không đọc được / {busy ? "Chưa mở được: " : "Không đọc đư / Không mở được | Chưa đọc được / {busy ? "Chưa mở được: " : "Chưa đọc đượ / Chưa mở được | |
+| studio/ScriptTab.tsx | Không hoàn tác được | Chưa hoàn tác được | |
+| studio/StudioSetup.tsx | Không cài được | Chưa cài được | |
+| studio/NewProjectScreen.tsx | Không đổi được sau khi tạo, để mọi chương đọc giống nhau. | Cố định sau khi tạo, để mọi chương đọc giống nhau. | nói điều gì xảy ra thay vì phủ định |
+| studio/NewProjectScreen.tsx | Không làm lại với thiết lập khác được nữa. | Không thể làm lại với thiết lập khác nữa. | câu mô tả, không phải lỗi |
+| studio/PhoneEdits.tsx | Không có việc nào ghi được | Chưa ghi được việc nào | |
+| studio/WorkInbox.tsx | Không còn việc nào sửa được ngay - những việc bên dưới ... | Hết việc sửa được ngay - những việc bên dưới ... | |

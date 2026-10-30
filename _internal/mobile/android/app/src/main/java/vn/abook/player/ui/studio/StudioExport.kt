@@ -1,5 +1,6 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.ui.data.dotJoined
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -257,7 +258,7 @@ object StudioExportLogic {
             if (result.coverBroken) "ảnh bìa của sách bị hỏng nên dùng bìa vẽ từ tên" else null,
             result.skipped.takeIf { it.isNotEmpty() }?.let { "chưa có chương nào nên bỏ qua: " + it.joinToString(", ") { part -> "Phần $part" } },
         )
-        return StudioExportOutcome(StudioExportText.doneTitle(machine), listOf((listOf(name) + detail).filter { it.isNotEmpty() }.joinToString(" · ")).filter { it.isNotEmpty() }, notes)
+        return StudioExportOutcome(StudioExportText.doneTitle(machine), listOf((listOf(name) + detail).dotJoined()).filter { it.isNotEmpty() }, notes)
     }
 
     /** Điều còn lại sau khi huỷ, theo kiểu xuất (web `stoppedNote`). */
@@ -278,7 +279,7 @@ object StudioExportLogic {
     /** Tên cuối của đích (chỉ TÊN, không đường dẫn) - đích do máy tính gửi, có thể là đường Windows. */
     fun pastName(past: StudioPast): String = past.target.trimEnd('/', '\\').substringAfterLast('/').substringAfterLast('\\')
 
-    fun pastTitle(past: StudioPast): String = listOf(pastLabel(past), pastName(past)).filter { it.isNotEmpty() }.joinToString(" · ")
+    fun pastTitle(past: StudioPast): String = listOf(pastLabel(past), pastName(past)).dotJoined()
 
     fun pastLine(past: StudioPast): String = if (past.changed == 0) "Còn mới" else "${past.changed} chương đã đổi từ lần xuất này"
 

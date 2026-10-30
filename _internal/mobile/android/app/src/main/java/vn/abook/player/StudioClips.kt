@@ -101,7 +101,7 @@ class StudioClips(
         val partial = File(target.path + ".part")
         fetch(spec.computer, spec.path, partial)
         PartResume.tagFile(partial).delete()
-        if (!partial.renameTo(target)) throw IOException("Không ghi được bản thu vào bộ nhớ đệm")
+        if (!partial.renameTo(target)) throw IOException("Chưa ghi được bản thu vào bộ nhớ đệm")
         trim(keep = target)
         return target
     }

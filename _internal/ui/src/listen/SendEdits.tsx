@@ -136,7 +136,7 @@ export function EditsSyncBanner({ book }: { book: ListenBook }) {
   // một khung nói lý do dài, khung này giữ phần riêng của nó (số thay đổi chưa gửi, nút gửi) - không lặp nguyên câu.
   const download = useQuery<{ state: string; retry?: boolean }>({ queryKey: ["listen", "download", book.id], queryFn: skipToken });
   const found = editsSyncNote(book.editsSync, where);
-  const unreachable = /Không kết nối được|không trả lời/.test(book.editsSync?.last?.error ?? "");
+  const unreachable = /(?:Không|Chưa) kết nối được|không trả lời/.test(book.editsSync?.last?.error ?? "");
   const note =
     found && found.tone === "error" && unreachable && download.data?.state === "failed" && download.data.retry
       ? { ...found, lines: [`Tự gửi khi ${where} trả lời lại; bấm “Gửi về ${where}” để gửi ngay.`] }

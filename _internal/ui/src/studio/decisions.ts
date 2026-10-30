@@ -129,7 +129,7 @@ export function undoSteps(client: QueryClient, bookId: string, steps: { endpoint
           toastDone(...undoToast(restored, sent, message));
         } catch (error) {
           // Nhiều quyết định gửi lần lượt: một cái lỗi giữa chừng thì những cái trước đã hoàn tác thật - nói đúng số.
-          toast.error(done > 0 ? `Mới hoàn tác được ${done}/${steps.length} việc` : "Không hoàn tác được", { description: (error as Error).message });
+          toast.error(done > 0 ? `Mới hoàn tác được ${done}/${steps.length} việc` : "Chưa hoàn tác được", { description: (error as Error).message });
         } finally {
           refreshAfterDecision(client, bookId);
         }

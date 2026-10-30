@@ -27,7 +27,7 @@ class LocalStudioTest {
     /** Bìa giả: ảnh 96x128 mà bộ ví dụ khai (không cần Bitmap trong test JVM). */
     private class FakeCodec : CoverCodec {
         override fun normalize(raw: ByteArray): CoverCodec.Normalized {
-            if (raw.size < 4 || raw[0] != 0xFF.toByte()) throw CoverCodec.CoverError("Không đọc được ảnh này")
+            if (raw.size < 4 || raw[0] != 0xFF.toByte()) throw CoverCodec.CoverError("Chưa đọc được ảnh này")
             return CoverCodec.Normalized(raw, "#aa5522", 96, 128)
         }
     }
@@ -311,7 +311,7 @@ class LocalStudioTest {
         assertEquals("Chỉ nhận ảnh PNG, JPEG, WebP, GIF hoặc BMP", refused(""))
         assertEquals("Dữ liệu ảnh bị hỏng", refused("data:image/png;base64,AAA"))
         assertEquals("Dữ liệu ảnh bị hỏng", refused("data:image/png;base64,A=AA"))
-        assertEquals("Không đọc được ảnh này", refused("data:image/png;base64,AAAA"))
+        assertEquals("Chưa đọc được ảnh này", refused("data:image/png;base64,AAAA"))
         val big = "data:image/jpeg;base64," + Base64.getEncoder().encodeToString(ByteArray(Covers.MAX_UPLOAD_BYTES + 1) { 1 })
         assertEquals("Ảnh quá lớn (tối đa 16 MB)", refused(big))
         assertFalse("không có gì được ghi", File(dir, "edits.json").exists())
@@ -368,7 +368,7 @@ class LocalStudioTest {
         assertEquals(CoverSearch.REFUSAL, refused(WebStub(ByteArray(0)), "https://evil.example/x.jpg"))
         assertEquals("Ảnh quá lớn", refused(WebStub(ByteArray(Covers.MAX_UPLOAD_BYTES + 9) { 1 }), allowed))
         assertEquals(CoverSearch.DOWNLOAD_FAILED, refused(WebStub(ByteArray(0), failWith = java.io.IOException("HTTP 503")), allowed))
-        assertEquals("Không đọc được ảnh này", refused(WebStub(ByteArray(40) { 1 }), allowed))
+        assertEquals("Chưa đọc được ảnh này", refused(WebStub(ByteArray(40) { 1 }), allowed))
         assertFalse("không có gì được ghi", File(dir, "edits.json").exists())
         assertFalse(File(dir, "edits/cover.jpg").exists())
     }

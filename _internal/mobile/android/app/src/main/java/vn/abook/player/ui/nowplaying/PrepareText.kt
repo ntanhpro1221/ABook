@@ -3,6 +3,7 @@ package vn.abook.player.ui.nowplaying
 import vn.abook.player.ui.data.PlayerChapter
 import vn.abook.player.ui.data.PreparePlan
 import vn.abook.player.ui.data.PrepareStatus
+import vn.abook.player.ui.data.dotJoin
 
 /**
  * Chữ của "Làm trước" (web: listen/prepareAhead.ts): câu mời, ước trước khi bấm, tiến độ - nói theo cái người nghe cần biết (còn bao lâu, đang chờ gì).
@@ -38,8 +39,8 @@ object PrepareText {
     /** Tên việc gửi cho lõi: một chương thì tên chương, nhiều thì "N chương tới". */
     fun jobLabel(upcoming: List<PlayerChapter>): String = if (upcoming.size == 1) upcoming[0].title else "${upcoming.size} chương tới"
 
-    /** Nút bắt đầu: "Làm trước chương sau" / "Làm trước N chương tới". */
-    fun startLabel(count: Int): String = if (count == 1) "Làm trước chương sau" else "Làm trước $count chương tới"
+    /** Nút bắt đầu: "Làm trước chương sau" / "Làm trước N chương". */
+    fun startLabel(count: Int): String = if (count == 1) "Làm trước chương sau" else "Làm trước $count chương"
 
     /** "khoảng 1 giờ 20 phút", "khoảng 12 phút", "dưới 1 phút". */
     fun spokenDuration(seconds: Long): String {
@@ -78,8 +79,7 @@ object PrepareText {
         return when (status.state) {
             "running" -> {
                 if (chapters != null) {
-                    val how = status.waitingFor?.let { " · " + waiting(it) } ?: status.secondsLeft?.let { " · còn " + spokenDuration(it) }.orEmpty()
-                    ready + how
+                    dotJoin(ready, status.waitingFor?.let { waiting(it) } ?: status.secondsLeft?.let { "còn " + spokenDuration(it) })
                 } else {
                     val left = status.secondsLeft?.let { ", còn " + spokenDuration(it) }.orEmpty()
                     "Đang làm trước $what$listen: ${status.done}/${status.total} đoạn$left."

@@ -130,7 +130,7 @@ internal object PeerRouting {
             // Still pinned by the actual request; never learn addresses from a TCP-only probe.
             return base
         }
-        throw java.io.IOException("Không kết nối được máy kia; bạn hãy kiểm tra Wi-Fi hoặc Tailscale")
+        throw java.io.IOException("Chưa kết nối được máy kia; bạn hãy kiểm tra Wi-Fi hoặc Tailscale")
     }
 
     /** Discovery is only a hint: verify the socket against each stored pin before saving a new route. */

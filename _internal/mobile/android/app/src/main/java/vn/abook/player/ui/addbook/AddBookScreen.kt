@@ -1,5 +1,6 @@
 package vn.abook.player.ui.addbook
 
+import vn.abook.player.ui.data.dotJoined
 import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -8,7 +9,7 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.BasicText
+import vn.abook.player.ui.components.BasicText
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -240,7 +241,7 @@ fun ImportReviewScreen(
                         placeholder = "Tên hiển thị trong thư viện")
                     val meta = listOfNotNull(preview.author.takeIf { it.isNotEmpty() }, "${choice.picked.size} / ${preview.chapters.size} chương")
                     Spacer(Modifier.height(Dim.s8))
-                    BasicText(meta.joinToString(" · "), style = Abook.type.bodySmall, modifier = Modifier.testTag("import_meta"))
+                    BasicText(meta.dotJoined(), style = Abook.type.bodySmall, modifier = Modifier.testTag("import_meta"))
                 }
             }
             if (preview.existingId != null || preview.splitOffer > 0) item("options", "options") {

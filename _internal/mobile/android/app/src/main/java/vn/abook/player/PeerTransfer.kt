@@ -95,7 +95,7 @@ internal object PeerTransfer {
         // 416: phần dở dài hơn file hiện có trên máy kia (file đã đổi) - bỏ phần dở như đuôi lạ bên dưới.
         if (code >= 400 && !(code == 416 && have > 0)) {
             connection.disconnect()
-            throw IllegalStateException("Không tải được $label (mã $code)")
+            throw IllegalStateException("Chưa tải được $label (mã $code)")
         }
         var answer = if (code == 416) PartResume.Answer.STALE_TAIL
         else PartResume.answer(code, connection.getHeaderField("Content-Range"), connection.getHeaderField("ETag"), have, tag)
@@ -108,7 +108,7 @@ internal object PeerTransfer {
             code = Pin.guard { connection.responseCode }
             if (code >= 400) {
                 connection.disconnect()
-                throw IllegalStateException("Không tải được $label (mã $code)")
+                throw IllegalStateException("Chưa tải được $label (mã $code)")
             }
             answer = PartResume.Answer.WHOLE
         }

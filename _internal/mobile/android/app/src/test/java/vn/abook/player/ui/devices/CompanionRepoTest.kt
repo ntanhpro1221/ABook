@@ -28,12 +28,12 @@ class CompanionRepoTest {
     @Test
     fun `a refused command is still reported after the next poll`() = runBlocking {
         val core = FakeCompanionCore()
-        core.rows.getJSONObject(0).put("acks", JSONArray().put(org.json.JSONObject().put("id", "a1").put("ok", false).put("message", "Không mở được cuốn này")))
+        core.rows.getJSONObject(0).put("acks", JSONArray().put(org.json.JSONObject().put("id", "a1").put("ok", false).put("message", "Chưa mở được cuốn này")))
         val repo = CompanionRepo(core) { 1_000 }
         repo.refresh()
-        assertEquals("Máy tính phòng khách: Không mở được cuốn này", repo.state.value.problem)
+        assertEquals("Máy tính phòng khách: Chưa mở được cuốn này", repo.state.value.problem)
         repo.refresh()
-        assertEquals("Máy tính phòng khách: Không mở được cuốn này", repo.state.value.problem)
+        assertEquals("Máy tính phòng khách: Chưa mở được cuốn này", repo.state.value.problem)
     }
 
     @Test

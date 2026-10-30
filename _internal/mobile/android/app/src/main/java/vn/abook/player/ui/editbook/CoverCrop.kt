@@ -51,7 +51,7 @@ object CoverCrop {
         val resolver = context.contentResolver
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
-        require(bounds.outWidth > 0 && bounds.outHeight > 0) { "Không đọc được ảnh. Bạn hãy chọn JPEG, PNG hoặc WebP." }
+        require(bounds.outWidth > 0 && bounds.outHeight > 0) { "Chưa đọc được ảnh. Bạn hãy chọn JPEG, PNG hoặc WebP." }
         var sample = 1
         val side = displayPixels.coerceIn(360, 1600)
         while (maxOf(bounds.outWidth, bounds.outHeight) / sample > side * 2) sample *= 2

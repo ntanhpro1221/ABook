@@ -17,7 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicText
+import vn.abook.player.ui.components.BasicText
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -161,7 +161,7 @@ private fun GenderPage(bookId: String, person: CastMember, source: BookSource, n
                     notes.say(Cast.genderNote(name, picked), "Hoàn tác") {
                         scope.launch {
                             val problem = source.withdrawGender(bookId, person.name, at)
-                            notes.say(if (problem == null) Cast.genderUndone(name) else failure("Không hoàn tác được", problem))
+                            notes.say(if (problem == null) Cast.genderUndone(name) else failure("Chưa hoàn tác được", problem))
                         }
                     }
                 } else {

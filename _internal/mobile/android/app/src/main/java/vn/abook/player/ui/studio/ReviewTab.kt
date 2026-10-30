@@ -1,5 +1,6 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.ui.data.dotJoin
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -8,7 +9,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.BasicText
+import vn.abook.player.ui.components.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -147,7 +148,7 @@ private fun ReviewRow(item: ReviewItem, review: StudioReviewState, clip: ClipSta
     Column(Modifier.fillMaxWidth().padding(vertical = Dim.s12).testTag("studio_review_${item.segmentId}")) {
         Row(verticalAlignment = Alignment.Top) {
             Column(Modifier.weight(1f)) {
-                Caption("${WorkText.kind(item.kind)} · ${item.chapterTitle}")
+                Caption(dotJoin(WorkText.kind(item.kind), item.chapterTitle))
                 BasicText(item.text, style = Abook.type.body, modifier = Modifier.padding(top = Dim.s4).testTag("studio_review_text"))
             }
             if (spec != null) ClipButton(ReviewLogic.clipId(item), clip, { review.play(item) }, "studio_review_play")

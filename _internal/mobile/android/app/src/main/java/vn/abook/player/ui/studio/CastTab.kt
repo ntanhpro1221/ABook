@@ -1,5 +1,6 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.ui.data.dotJoined
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -12,7 +13,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.text.BasicText
+import vn.abook.player.ui.components.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
@@ -138,7 +139,7 @@ private fun memberHint(member: CastMember): String = listOfNotNull(
     member.pendingVoice?.let { WorkText.pendingVoice(it.label) },
     member.mergedInto?.let { WorkText.mergedInto(it) },
     member.originalName?.let { WorkText.renamed(it) },
-).joinToString(" · ")
+).dotJoined()
 
 // ---- bảng giọng ----
 

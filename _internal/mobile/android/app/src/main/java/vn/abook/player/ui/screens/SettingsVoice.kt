@@ -1,5 +1,6 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.ui.data.dotJoined
 import vn.abook.player.ui.components.PageHeader
 import vn.abook.player.ui.components.ListSection
 import vn.abook.player.ui.components.ListRow
@@ -34,7 +35,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicText
+import vn.abook.player.ui.components.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -284,7 +285,7 @@ private fun VoiceRow(
     }
     ListItem(
         voice.name, Modifier.semantics { selected = chosen }, onChoose, "voice_${voice.id}",
-        hint = failure ?: if (loading) "Đang lấy giọng" else listOfNotNull(VoiceText.gender(voice.gender), if (chosen) "Mặc định" else null).joinToString(" · ").ifBlank { null },
+        hint = failure ?: if (loading) "Đang lấy giọng" else listOfNotNull(VoiceText.gender(voice.gender), if (chosen) "Mặc định" else null).dotJoined().ifBlank { null },
         hintColor = if (failure != null) colors.danger else colors.text2,
         titleColor = if (chosen) colors.accentText else colors.text,
         leading = {

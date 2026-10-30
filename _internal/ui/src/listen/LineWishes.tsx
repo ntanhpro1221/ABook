@@ -369,7 +369,7 @@ export function LineWishDialog({
                 // Câu đã gửi sang máy giữ sách rồi: chỉ nhờ được máy ấy rút lại - nói đúng điều đó, đừng làm như đã xong.
                 if (answer?.sent) toastDone(...undoToast(false, true));
               })
-              .catch((error: Error) => toast.error("Không hoàn tác được", { description: error.message })),
+              .catch((error: Error) => toast.error("Chưa hoàn tác được", { description: error.message })),
         },
         duration: UNDO_MS,
       });
@@ -385,7 +385,7 @@ export function LineWishDialog({
         body: { section: item.section, key: item.key ?? ref.stableId, keys: [item.key ?? ref.stableId], requestedAt: item.requestedAt },
       }),
     onSuccess: done,
-    onError: (error: Error) => toast.error("Không bỏ được thay đổi này", { description: error.message }),
+    onError: (error: Error) => toast.error("Chưa bỏ được thay đổi này", { description: error.message }),
   });
   const withdrawName = (name: NameWish) => withdraw.mutate({ section: "pronunciations", key: name.key, requestedAt: name.requestedAt });
 

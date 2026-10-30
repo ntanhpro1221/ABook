@@ -497,7 +497,7 @@ class BookImportTest {
         val empty = File(work, "trong").apply { mkdirs() }
         File(empty, "1.txt").writeBytes("  \n".toByteArray())
         val emptyReason = failure { BookImport.importFile(empty) }
-        assertEquals("Không lấy được chữ từ “trong” — bạn thử bản khác; với TXT, lưu UTF-8 rồi nhập lại.", emptyReason)
+        assertEquals("Chưa lấy được chữ từ “trong” — bạn thử bản khác; với TXT, lưu UTF-8 rồi nhập lại.", emptyReason)
         assertNotNull(work)
     }
 }

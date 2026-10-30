@@ -1,5 +1,6 @@
 package vn.abook.player.ui.export
 
+import vn.abook.player.ui.data.dotJoined
 import vn.abook.player.formatSize
 
 import androidx.compose.runtime.Immutable
@@ -262,7 +263,7 @@ object ExportText {
             "network" -> "Mất mạng - đang chờ mạng về để làm tiếp"
             else -> spokenProgress("Đang xuất $chapters chương", fraction)
         }
-        return ExportProgress(parts.joinToString(" · "), spoken, fraction)
+        return ExportProgress(parts.dotJoined(), spoken, fraction)
     }
 
     /** Tiến độ của một tin: MP3 / M4B có "3/10 chương · 27%" lúc đang làm, trước tin đầu chỉ có số chương; sách nói thêm "nhường cho chương đang nghe", "còn 2 giờ"... */
@@ -316,7 +317,7 @@ object ExportText {
         val title = if (event.kind == ExportKind.Audiobook) "Đã xuất sách nói" else "Đã xuất M4B"
         val lines = listOfNotNull(event.name, event.size?.takeIf { it > 0 }?.let { formatSize(it) })
         val notes = listOf(missingChapters(event), musicMissing(event)).filter { it.isNotEmpty() }
-        return ExportResult(event.kind, title, listOf(lines.joinToString(" · ")).filter { it.isNotEmpty() }, notes, event.uri)
+        return ExportResult(event.kind, title, listOf(lines.dotJoined()).filter { it.isNotEmpty() }, notes, event.uri)
     }
 
     /** Lượt dừng: điều còn lại sau khi dừng, theo kiểu xuất. */

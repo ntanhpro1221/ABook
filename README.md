@@ -100,7 +100,7 @@ Android Auto bật chế độ nhà phát triển (chạm nhiều lần vào s�
 - **Trình duyệt** (iPhone, iPad, TV, máy tính không cài ABook): mở `https://<máy tính>:47630` rồi gõ mã 6 số như trên.
   Thiết bị chỉ nghe được sách, không thấy Studio hay thư mục trên máy tính - trừ khi bạn bật **"Cho phép điều khiển sản
   xuất từ thiết bị đã ghép"** trong Cài đặt và cho riêng thiết bị ấy quyền đó.
-- **Máy tính khác có ABook**: Cài đặt → **"Máy tính khác"** → "Tìm máy trong mạng" → gõ mã 6 số đang hiện trên máy kia.
+- **Máy tính khác có ABook**: Cài đặt → **"Máy tính khác"** → "Tự tìm" → gõ mã 6 số đang hiện trên máy kia.
 - **Điện thoại khác**: trên máy có sách, Tải sách → bật **"Cho máy khác nghe thư viện này"** → "Ghép máy mới"; trên máy
   kia, Tải sách → "Thiết bị khác" → **"Ghép thiết bị"**.
 

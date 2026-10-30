@@ -564,7 +564,7 @@ object BookEdits {
     fun save(folder: File, edits: JSONObject) = synchronized(lock) {
         if (isEmpty(edits)) {
             val file = File(folder, EDITS_FILE)
-            check(!file.exists() || file.delete()) { "Không lưu được phần sửa sách của bạn" }
+            check(!file.exists() || file.delete()) { "Chưa lưu được phần sửa sách của bạn" }
             File(folder, EDITS_COVER).delete()
             return@synchronized
         }

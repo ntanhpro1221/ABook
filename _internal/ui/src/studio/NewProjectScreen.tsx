@@ -424,7 +424,7 @@ export function SourceStep({
             setDragging(false);
             pickedFromDrop(event.dataTransfer).then(
               (picked) => upload(picked, false),
-              (error: Error) => toast.error("Không đọc được các file vừa thả", { description: error.message }),
+              (error: Error) => toast.error("Chưa đọc được các file vừa thả", { description: error.message }),
             );
           }}
         >
@@ -1336,7 +1336,7 @@ export function QualityStep({
     <div>
       <SectionHeading>Chất lượng</SectionHeading>
       <p className="mt-1 text-sm text-fg-2 text-pretty">
-        Không đổi được sau khi tạo, để mọi chương đọc giống nhau.
+        Cố định sau khi tạo, để mọi chương đọc giống nhau.
       </p>
       <div
         role="radiogroup"
@@ -1619,7 +1619,7 @@ export function NewProjectScreen() {
   useEffect(() => {
     if (!redoId || !redo) return;
     if (redo.started) {
-      toast.error("Sách đã bắt đầu chạy", { description: "Không làm lại với thiết lập khác được nữa." });
+      toast.error("Sách đã bắt đầu chạy", { description: "Không thể làm lại với thiết lập khác nữa." });
       navigate(`/studio/${redoId}`, { replace: true });
       return;
     }
@@ -1648,7 +1648,7 @@ export function NewProjectScreen() {
     setParams({}, { replace: true });
   }, [redoId, redo, setParams, navigate]);
   useEffect(() => {
-    if (redoError) toast.error("Không đọc được thiết lập của sách", { description: (redoError as Error).message });
+    if (redoError) toast.error("Chưa đọc được thiết lập của sách", { description: (redoError as Error).message });
   }, [redoError]);
 
   // "Làm tiếp cuốn này" (?continue=<id>): điền sẵn một lần từ phần trước rồi bỏ tham số, để quay lại trang không điền đè
@@ -1684,7 +1684,7 @@ export function NewProjectScreen() {
   }, [continueId, plan, setParams]);
 
   useEffect(() => {
-    if (planError) toast.error("Không mở được phần trước", { description: planError.message });
+    if (planError) toast.error("Chưa mở được phần trước", { description: planError.message });
   }, [planError]);
 
   useEffect(() => {
@@ -1740,7 +1740,7 @@ export function NewProjectScreen() {
         if (!result.files.length) {
           setProblem(
             result.errors?.length
-              ? { text: `Không mở được ${result.errors[0]}`, subfolders: [] }
+              ? { text: `Chưa mở được ${result.errors[0]}`, subfolders: [] }
               : result.missing.length
               ? { text: isSourceRef(result.missing[0]) ? `Không tìm thấy “${sourceName(result.missing[0])}” trên máy tính. Gửi lại rồi thử lần nữa.` : `Không tìm thấy “${result.missing[0]}”. Kiểm tra lại đường dẫn.`, subfolders: [] }
               : { text: "Thư mục này không có file .txt (hay .epub, .docx, .pdf) nằm ngay bên trong.", subfolders: result.subfolders },
@@ -1753,7 +1753,7 @@ export function NewProjectScreen() {
       onError: (error: Error) => {
         if (latestSources.current !== key) return;
         setScanned({ key, result: null });
-        setProblem({ text: `Không đọc được: ${error.message}`, subfolders: [] });
+        setProblem({ text: `Chưa đọc được: ${error.message}`, subfolders: [] });
       },
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1860,7 +1860,7 @@ export function NewProjectScreen() {
           if (result.replaceError) toast.warning("Bản cũ vẫn còn trong Dự án", { description: result.replaceError });
           navigate(`/studio/${result.id}`, { replace: true });
         },
-        onError: (error: Error) => toast.error("Không tạo được sách", { description: error.message }),
+        onError: (error: Error) => toast.error("Chưa tạo được sách", { description: error.message }),
         onSettled: () => {
           submitting.current = false;
         },
@@ -1949,7 +1949,7 @@ export function NewProjectScreen() {
                 const chapters = plan ? splitOutcome(plan, draft.title).chapters : undefined;
                 toast.success(chapters ? `Đã tách thành ${formatNumber(chapters)} chương` : "Đã tách thành các chương");
               } catch (error) {
-                toast.error("Không tách được", { description: (error as Error).message });
+                toast.error("Chưa tách được", { description: (error as Error).message });
               }
             }}
           />

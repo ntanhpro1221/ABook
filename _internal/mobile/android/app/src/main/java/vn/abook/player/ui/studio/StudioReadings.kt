@@ -1,5 +1,6 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.ui.data.dotJoin
 import androidx.compose.runtime.Immutable
 import org.json.JSONObject
 import java.text.Normalizer
@@ -228,5 +229,5 @@ object ReadingsText {
     fun add(surface: String) = "Đọc “$surface”"
     fun sharedOffer(count: Int) = "Dùng $count cách đọc chung"
     fun sharedDone(count: Int) = "Đã dùng $count cách đọc chung"
-    fun playTitle(item: NameReading) = "${item.example?.chapterTitle.orEmpty()} · câu ${item.example?.seq ?: 0}"
+    fun playTitle(item: NameReading) = dotJoin(item.example?.chapterTitle, "câu ${item.example?.seq ?: 0}")
 }

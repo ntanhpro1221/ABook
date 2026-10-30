@@ -276,7 +276,7 @@ object BookDownloads {
             throw java.io.IOException("Bản thu đã đổi trong lúc tải; bạn hãy tải lại.")
         }
         if (!partial.renameTo(target)) {
-            throw java.io.IOException("Không ghi được file; bạn hãy thử tải lại.")
+            throw java.io.IOException("Chưa ghi được file; bạn hãy thử tải lại.")
         }
         if (actual.isNotEmpty()) Store.rememberDigest(id, relative, target, actual)
         PartResume.tagFile(partial).delete()

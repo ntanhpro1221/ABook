@@ -181,7 +181,7 @@ object Remote {
             val id = command.optString("bookId")
             if (command.optString("action") == "load" && Store.manifest(id) == null) {
                 runCatching { Streaming.fetchManifest(context, id) }
-                    .onFailure { fetchProblems[command.optString("id")] = "Không lấy được sách từ máy tính: ${it.message}" }
+                    .onFailure { fetchProblems[command.optString("id")] = "Chưa lấy được sách từ máy tính: ${it.message}" }
             }
         }
         Playback.onMain {

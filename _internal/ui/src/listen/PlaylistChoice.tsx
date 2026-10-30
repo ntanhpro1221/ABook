@@ -112,7 +112,7 @@ export function usePlaylistChoice(bookId: string, enabled = true) {
       }
       if (error) toast.error("Đang thêm nhạc thì dừng", { description: error.message });
     } catch (error) {
-      toast.error("Không mở được hộp chọn file", { id: ADD_TOAST, description: (error as Error).message });
+      toast.error("Chưa mở được hộp chọn file", { id: ADD_TOAST, description: (error as Error).message });
     } finally {
       adding = false;
     }

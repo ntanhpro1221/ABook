@@ -281,14 +281,14 @@ object Store {
             }
             unpreservedData.remove(target.absolutePath)
         }
-        check(!target.isDirectory) { "Không ghi được dữ liệu của bạn lên thư mục: ${target.name}" }
+        check(!target.isDirectory) { "Chưa ghi được dữ liệu của bạn lên thư mục: ${target.name}" }
         target.parentFile?.mkdirs()
         val temporary = File(target.path + ".part")
         FileOutputStream(temporary).use { stream ->
             stream.write(bytes)
             stream.fd.sync()
         }
-        check(temporary.renameTo(target)) { "Không lưu được dữ liệu của bạn: ${target.name}" }
+        check(temporary.renameTo(target)) { "Chưa lưu được dữ liệu của bạn: ${target.name}" }
     }
 
     /** Giữ nguyên byte hỏng để có thể cứu lại, trước khi reader tạo dữ liệu mới. Lỗi I/O vẫn phải báo cho nơi gọi. */
@@ -310,12 +310,12 @@ object Store {
     private fun keepCorruptBytes(file: File, copyOnly: Boolean): File {
         val copy = File(file.path + ".corrupt-${System.currentTimeMillis()}-${UUID.randomUUID()}")
         if (copyOnly) {
-            check(copy.createNewFile()) { "Không giữ được bản dữ liệu cũ của bạn" }
+            check(copy.createNewFile()) { "Chưa giữ được bản dữ liệu cũ của bạn" }
             file.inputStream().use { input -> FileOutputStream(copy).use { output ->
                 input.copyTo(output)
                 output.fd.sync()
             } }
-        } else check(!copy.exists() && file.renameTo(copy)) { "Không giữ được bản dữ liệu hỏng của bạn: ${file.name}" }
+        } else check(!copy.exists() && file.renameTo(copy)) { "Chưa giữ được bản dữ liệu hỏng của bạn: ${file.name}" }
         return copy
     }
 
@@ -1423,7 +1423,7 @@ object Store {
         val action = JSONObject().put("to", newId).put("adopt", adopt)
         journal.put(oldId, action)
         writeAtomic(rekeyJournal, journal.toString())
-        check(rekeyJournal.isFile) { "Không lưu được việc đổi mã sách của bạn" }
+        check(rekeyJournal.isFile) { "Chưa lưu được việc đổi mã sách của bạn" }
         // Lần đổi này báo lỗi cho nơi gọi (journal còn, lần mở sau làm tiếp); chỉ phần khôi phục lúc mở app mới nuốt lỗi.
         if (finishRekey(oldId, action)) {
             journal.remove(oldId)
@@ -1456,7 +1456,7 @@ object Store {
         if (source.isDirectory) {
             if (rawManifest(newId) != null) return true // mã mới đã thành một cuốn khác: bỏ việc đổi, cuốn cũ giữ nguyên
             target.deleteRecursively() // chỉ là cache nghe thẳng, như trước khi có journal
-            check(source.renameTo(target)) { "Không chuyển được thư mục sách của bạn" }
+            check(source.renameTo(target)) { "Chưa chuyển được thư mục sách của bạn" }
         }
         if (!target.isDirectory) return true // cả hai thư mục đã mất (sách bị xoá): không còn gì để làm
         rawManifest(newId)?.let { writeAtomic(File(target, "book.json"), it.put("id", newId).toString()) }

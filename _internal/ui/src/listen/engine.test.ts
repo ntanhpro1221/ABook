@@ -75,7 +75,7 @@ it("play bị từ chối phát error/pause; AbortError do đổi nguồn không
   engine.play(); await Promise.resolve();
   expect(error).toHaveBeenCalledTimes(1);
   expect(pause).toHaveBeenCalledTimes(1);
-  expect(engine.error).toContain("Không phát được");
+  expect(engine.error).toContain("Chưa phát được");
   vi.mocked(audio.play).mockRejectedValueOnce(new DOMException("source changed", "AbortError"));
   engine.load(track, 0, true);
   engine.load({ ...track, url: "/other" }, 0, false); await Promise.resolve();

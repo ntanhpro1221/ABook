@@ -274,7 +274,7 @@
         },
         {
           "side": "native",
-          "match": "^(đang ghi|đang gộp|đang lưu|bạn hãy thử lại|không hoàn tác được)$",
+          "match": "^(đang ghi|đang gộp|đang lưu|bạn hãy thử lại|chưa hoàn tác được)$",
           "reason": "web shows a spinner or a toast from the core's own error text; native writes a busy word / retry hint in the sheet"
         },
         {
@@ -284,7 +284,7 @@
         },
         {
           "side": "web",
-          "match": "^(không mở được chương này|về trang sách|điều khiển đọc|đọc|đọc tiếp|đọc chương này|đọc \\{\\} \\(chưa có audio\\))$",
+          "match": "^(chưa mở được chương này|về trang sách|điều khiển đọc|đọc|đọc tiếp|đọc chương này|đọc \\{\\} \\(chưa có audio\\))$",
           "reason": "the phone has no separate Reader screen: text opens as Read-along inside Now Playing (docs/NATIVE_PHONE_UI.md), a failed load is written there with \"Thử lại\", chapters without audio but with text are read aloud by Nghe"
         },
         {
@@ -515,8 +515,8 @@
         },
         {
           "side": "native",
-          "match": "^gồm thông tin máy, nhật ký gần nhất và tên sách; .*chia sẻ thư viện.*$",
-          "reason": "phone log bundle includes book names and paired devices can read it while 'Chia sẻ thư viện' is on - a true platform difference, not wording drift"
+          "match": "^gồm thông tin máy, nhật ký gần nhất và tên sách; .*kết nối wi-fi.*$",
+          "reason": "phone log bundle includes book names and paired devices can read it while 'Kết nối Wi-Fi' (Chia sẻ thư viện screen) is on - a true platform difference, not wording drift"
         }
       ],
       "missing": [
@@ -552,12 +552,12 @@
         },
         {
           "side": "native",
-          "match": "^(tải|cài\\ đè;\\ sách\\ và\\ chỗ\\ đang\\ nghe\\ giữ\\ nguyên|không\\ mở\\ được\\ trình\\ duyệt)$",
+          "match": "^(tải|cài\\ đè;\\ sách\\ và\\ chỗ\\ đang\\ nghe\\ giữ\\ nguyên|chưa\\ mở\\ được\\ trình\\ duyệt)$",
           "reason": "phone updates by opening the release page in the browser and installing over; the computer updates in place from Cập nhật ABook"
         },
         {
           "side": "native",
-          "match": "^(nhật\\ ký|nhật\\ ký\\ của\\ abook|xem|làm\\ mới|xoá\\ nhật\\ ký|đã\\ xoá\\ nhật\\ ký|chưa\\ xoá\\ được\\ nhật\\ ký|không\\ đọc\\ được\\ nhật\\ ký|gồm\\ cả\\ các\\ lần\\ văng\\ đã\\ ghi)$",
+          "match": "^(nhật\\ ký|nhật\\ ký\\ của\\ abook|xem|làm\\ mới|xoá\\ nhật\\ ký|đã\\ xoá\\ nhật\\ ký|chưa\\ xoá\\ được\\ nhật\\ ký|chưa\\ đọc\\ được\\ nhật\\ ký|gồm\\ cả\\ các\\ lần\\ văng\\ đã\\ ghi)$",
           "reason": "in-app log viewer of the phone (see, refresh, delete, crash records); the computer only saves a diagnostics package (desktop/OwnDiagnostics.tsx)"
         },
         {
@@ -683,7 +683,7 @@
         {
           "side": "native",
           "match": "^(nhập\\ địa\\ chỉ)$",
-          "reason": "native: tên cách nối (Tìm máy trong mạng / Dùng Bluetooth / Nhập địa chỉ); web: cùng việc là nhãn ô 'Địa chỉ máy kia'"
+          "reason": "native: tên cách nối (Tự tìm / Bluetooth / Nhập địa chỉ); web: cùng việc là nhãn ô 'Địa chỉ máy kia'"
         },
         {
           "side": "web",
@@ -732,8 +732,8 @@
         },
         {
           "side": "web",
-          "match": "^(dùng\\ bluetooth\\ cho\\ \\{\\})$",
-          "reason": "screen-reader name of the 'Dùng Bluetooth' tooltip button (names the computer)"
+          "match": "^(dùng\\ bluetooth\\ cho\\ \\{\\}|dùng\\ bluetooth)$",
+          "reason": "tooltip / screen-reader name of the 'Dùng Bluetooth' button (names the computer); native writes the same choice as the plain 'Bluetooth' tab of the connection row"
         },
         {
           "side": "web",
@@ -854,7 +854,7 @@
         },
         {
           "side": "web",
-          "match": "^(chưa\\ lưu\\ được\\ nhật\\ ký|chọn\\ nơi\\ lưu\\ nhật\\ ký|đã\\ lưu\\ nhật\\ ký|đã\\ tải\\ nhật\\ ký\\ về|lưu\\ nhật\\ ký|đang\\ tải\\ chẩn\\ đoán|nhật\\ ký\\ có\\ tên\\ sách;\\ thông\\ tin\\ riêng\\ được\\ che\\ nhưng\\ hãy\\ xem\\ lại\\ trước\\ khi\\ gửi|trên\\ điện\\ thoại:\\ cài\\ đặt\\ ›\\ thiết\\ bị\\ ›\\ điện\\ thoại\\ này\\ ›\\ bật\\ “chia\\ sẻ\\ thư\\ viện”\\.\\ cùng\\ wi\\-fi\\ hay\\ tailscale)$",
+          "match": "^(chưa\\ lưu\\ được\\ nhật\\ ký|chọn\\ nơi\\ lưu\\ nhật\\ ký|đã\\ lưu\\ nhật\\ ký|đã\\ tải\\ nhật\\ ký\\ về|lưu\\ nhật\\ ký|đang\\ tải\\ chẩn\\ đoán|nhật\\ ký\\ có\\ tên\\ sách;\\ thông\\ tin\\ riêng\\ được\\ che\\ nhưng\\ hãy\\ xem\\ lại\\ trước\\ khi\\ gửi|trên\\ điện\\ thoại:\\ cài\\ đặt\\ ›\\ thiết\\ bị\\ ›\\ chia\\ sẻ\\ thư\\ viện\\ ›\\ bật\\ “kết\\ nối\\ wi\\-fi”\\.\\ cùng\\ wi\\-fi\\ hay\\ tailscale)$",
           "reason": "computer reading a phone's diagnostics over the network (PhoneDiagnostics.tsx)"
         },
         {
@@ -1045,7 +1045,7 @@
       "allow": [
         {
           "side": "web",
-          "match": "^(giọng \\{\\} đang không dùng được|giọng đang chọn đang không dùng được|giọng đọc của máy|khoá \\{\\} không dùng được - tạm đọc bằng .*|khoá \\{\\} đã hết hạn mức - tạm đọc bằng \\{\\}|không có giọng nào đọc được - .*|không có mạng - giọng|không có mạng - giọng đang chọn cần mạng|không dùng được giọng trực tuyến - tạm đọc bằng .*|không dùng được giọng \\{\\} lúc này - tạm đọc bằng \\{\\})$",
+          "match": "^(giọng \\{\\} đang không dùng được|giọng đang chọn đang không dùng được|giọng đọc của máy|khoá \\{\\} không dùng được - tạm đọc bằng .*|khoá \\{\\} đã hết hạn mức - tạm đọc bằng \\{\\}|chưa có giọng nào đọc được - .*|không có mạng - giọng|không có mạng - giọng đang chọn cần mạng|chưa dùng được giọng trực tuyến - tạm đọc bằng .*|chưa dùng được giọng \\{\\} lúc này - tạm đọc bằng \\{\\})$",
           "reason": "same sentence on both sides, but the native one lives in the read-aloud core (readaloud/ClipReader.kt, LibraryTree.kt), outside the scanned ui/ folder; web also fills in the voice name"
         },
         {
@@ -1208,7 +1208,7 @@
         },
         {
           "side": "native",
-          "match": "^(không\\ mở\\ được\\ file|file\\ không\\ có\\ sách\\ nào|file\\ này\\ không\\ có\\ chữ\\ để\\ đọc)$",
+          "match": "^(chưa\\ mở\\ được\\ file|file\\ không\\ có\\ sách\\ nào|file\\ này\\ không\\ có\\ chữ\\ để\\ đọc)$",
           "reason": "native core's reasons for a file that is not a book / has no text: the computer checks the extension before reading, so it never reaches these"
         }
       ],
@@ -1235,7 +1235,7 @@
         },
         {
           "side": "web",
-          "match": "^(không\\ mở\\ được\\ file\\ sách\\ này|ở\\ đây\\ chưa\\ mở\\ được\\ file\\ sách\\ \\.abook\\ \\-\\ dùng\\ nút\\ “mở\\ file\\ sách”)$",
+          "match": "^(chưa\\ mở\\ được\\ file\\ sách\\ này|ở\\ đây\\ chưa\\ mở\\ được\\ file\\ sách\\ \\.abook\\ \\-\\ dùng\\ nút\\ “mở\\ file\\ sách”)$",
           "reason": "web: file .abook đi đường mở riêng của vỏ (onBookFile), vỏ không có đường ấy thì báo; native mở .abook ngay trong hàng đợi Thêm sách (ImportRepo.prepare)"
         },
         {
@@ -1497,7 +1497,7 @@
       "allow": [
         {
           "side": "native",
-          "match": "^(sẽ\\ đọc\\ là\\ “\\{\\}”|cỡ\\ ước\\ tính:\\ khoảng\\ \\{\\}|bài\\ đã\\ bỏ|ghi\\ công|đang\\ tải\\ phần\\ đọc\\ không\\ khí\\{\\}|đúng\\ rồi,\\ giữ\\ “\\{\\}”|dùng\\ “\\{\\}”|máy\\ nghe\\ ra|tên\\ gốc:\\ \\{\\}|câu\\ \\{\\}|đang\\ làm|đã\\ nghe\\ hết\\ các\\ câu\\ trong\\ danh\\ sách|chọn\\ câu|mở\\ cần\\ nghe\\ lại)$",
+          "match": "^(sẽ\\ đọc\\ là\\ “\\{\\}”|cỡ\\ ước\\ tính:\\ khoảng\\ \\{\\}|bài\\ đã\\ bỏ|ghi\\ công|đang\\ tải\\ phần\\ đọc\\ không\\ khí\\{\\}|đúng\\ rồi,\\ giữ\\ “\\{\\}”|dùng\\ “\\{\\}”|máy\\ nghe\\ ra|tên\\ gốc:\\ \\{\\}|câu\\ \\{\\}|đang\\ làm|đã\\ nghe\\ hết\\ các\\ câu\\ trong\\ danh\\ sách|chọn\\ câu|mở\\ cần\\ nghe\\ lại|câu\\ xen\\ kẽ|cả\\ chuỗi)$",
           "reason": "same words as the web (reviewed by hand): the web string is a template cut at its placeholder / a sentence with a trailing part, so the scanner sees a different label"
         },
         {
@@ -1657,7 +1657,7 @@
         },
         {
           "side": "web",
-          "match": "^(dự\\ án|file\\ sách|xuất\\ file\\ sách|đang\\ đóng\\ gói\\ dự\\ án|đang\\ đóng\\ gói\\ sách|đã\\ gói\\ dự\\ án|đã\\ xuất\\ file\\ sách|không\\ gói\\ được\\ dự\\ án|không\\ xuất\\ được\\ file\\ sách|chưa\\ có\\ file\\ dự\\ án\\ nào\\ được\\ ghi|chưa\\ có\\ file\\ sách\\ nào\\ được\\ ghi|chọn\\ nơi\\ lưu\\ file\\ dự\\ án|chọn\\ nơi\\ lưu\\ file\\ sách|kiểu\\ file|lần\\ xuất\\ gần\\ nhất:\\ \\{\\}|đã\\ xuất\\ vào\\ máy\\ tính|đã\\ xuất\\ vào\\ máy\\ tính\\ \\{\\}|chọn\\ nơi\\ lưu\\ file\\ m\\{\\}b|chưa\\ có\\ file\\ m\\{\\}b\\ nào\\ được\\ ghi)$",
+          "match": "^(dự\\ án|file\\ sách|xuất\\ file\\ sách|đang\\ đóng\\ gói\\ dự\\ án|đang\\ đóng\\ gói\\ sách|đã\\ gói\\ dự\\ án|đã\\ xuất\\ file\\ sách|chưa\\ gói\\ được\\ dự\\ án|không\\ xuất\\ được\\ file\\ sách|chưa\\ có\\ file\\ dự\\ án\\ nào\\ được\\ ghi|chưa\\ có\\ file\\ sách\\ nào\\ được\\ ghi|chọn\\ nơi\\ lưu\\ file\\ dự\\ án|chọn\\ nơi\\ lưu\\ file\\ sách|kiểu\\ file|lần\\ xuất\\ gần\\ nhất:\\ \\{\\}|đã\\ xuất\\ vào\\ máy\\ tính|đã\\ xuất\\ vào\\ máy\\ tính\\ \\{\\}|chọn\\ nơi\\ lưu\\ file\\ m\\{\\}b|chưa\\ có\\ file\\ m\\{\\}b\\ nào\\ được\\ ghi)$",
           "reason": "book-file and project packaging export (.abook / .abookproj) of the computer; the phone saves through 'Lưu thay đổi' / 'Lưu thành' (library-book pair)"
         },
         {

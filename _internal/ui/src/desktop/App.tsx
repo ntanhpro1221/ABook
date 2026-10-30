@@ -267,7 +267,7 @@ function useOpenedBook() {
   return useCallback(
     (result: OpenedBook): boolean => {
       if (result.error) {
-        toast.error("Không mở được file sách", { description: result.file ? `${result.file}: ${result.error}` : result.error });
+        toast.error("Chưa mở được file sách", { description: result.file ? `${result.file}: ${result.error}` : result.error });
         return false;
       }
       if (!result.id) return false;
@@ -443,7 +443,7 @@ function OpenBookFileButton({ variant = "ghost" }: { variant?: "ghost" }) {
     try {
       opened(await api<OpenedBook>("/api/listen/open-book-file", { method: "POST", body: {} }));
     } catch (error) {
-      toast.error("Không mở được file sách", { description: (error as Error).message });
+      toast.error("Chưa mở được file sách", { description: (error as Error).message });
     } finally {
       setBusy(false);
     }
