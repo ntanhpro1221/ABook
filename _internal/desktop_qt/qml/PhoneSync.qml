@@ -26,7 +26,6 @@ Item {
     property real now: Date.now() / 1000
     property var known: null
     // Hộp thoại / bảng nổi vẽ ở lớp ngoài cùng của cửa sổ (không bị khung cuộn cắt)
-    readonly property Item overlay: Window.window ? Window.window.contentItem : root
     readonly property bool wanted: pendingWanted !== null ? Boolean(pendingWanted) : Boolean(sync && sync.wanted)
     readonly property bool failing: Boolean(sync && sync.wanted && !sync.enabled)
     readonly property bool studioWanted: pendingStudio !== null ? Boolean(pendingStudio) : Boolean(sync && sync.remoteStudio)
@@ -333,7 +332,6 @@ Item {
     Modal {
         id: studioDialog
         objectName: "studioDialog"
-        parent: root.overlay
         title: "Bật Studio từ xa?"
         description: "Bật quyền riêng cho từng thiết bị để mở Studio trong trình duyệt."
         footer: Row {
@@ -346,7 +344,6 @@ Item {
     Modal {
         id: removeDialog
         objectName: "removeDialog"
-        parent: root.overlay
         property string targetId: ""
         property string targetName: ""
         title: "Thôi ghép " + (targetName || "thiết bị") + "?"
@@ -361,7 +358,6 @@ Item {
     Modal {
         id: renameDialog
         objectName: "renameDialog"
-        parent: root.overlay
         property string targetId: ""
         property string draft: ""
         property bool focusPending: false
