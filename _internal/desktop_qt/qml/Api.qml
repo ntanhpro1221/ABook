@@ -9,6 +9,8 @@ QtObject {
     property bool loaded: false
     property bool saving: false
     property string notice: ""
+    // Slot có ID của web: cảnh báo edited-elsewhere sống độc lập với lời Đã ghi.
+    property var elsewhereNotice: null
     // Nút của lời báo ("Hoàn tác", "Mở thư mục"; action của toast bên web): {label, run} hay null. Gán `notice` thẳng là lời báo trơn, không nút.
     property var noticeAction: null
     property int noticeDuration: 0         // ms; 0 = mặc định của Toast (như sonner)
@@ -16,6 +18,10 @@ QtObject {
     onNoticeChanged: if (!toasting) { noticeAction = null; noticeDuration = 0 }
     // Lời báo kèm tuỳ chọn (toast(text, {duration, action: {label, onClick}}) của web): `options.action` = {label, run}. Cùng lời lần nữa vẫn hiện lại.
     function toast(text, options) {
+        if (options && options.id === "edited-elsewhere") {
+            elsewhereNotice = {text: text, action: options.action || null, duration: options.duration || 20000}
+            return
+        }
         toasting = true
         if (notice === text) notice = ""
         noticeAction = options && options.action ? options.action : null
@@ -24,9 +30,10 @@ QtObject {
         toasting = false
     }
     // Bấm nút của lời báo: lời báo khép lại rồi mới làm việc (việc ấy có thể báo lời mới)
-    function runNoticeAction() {
-        const action = noticeAction
-        notice = ""
+    function dismissNotice(slot) { if (slot === "edited-elsewhere") elsewhereNotice = null; else notice = "" }
+    function runNoticeAction(slot) {
+        const action = slot === "edited-elsewhere" ? (elsewhereNotice ? elsewhereNotice.action : null) : noticeAction
+        dismissNotice(slot)
         if (action && action.run) action.run()
     }
     property string voiceName: ""          // tên giọng đọc mặc định (dòng tóm tắt "Giọng đọc", useDefaultVoiceName của web)

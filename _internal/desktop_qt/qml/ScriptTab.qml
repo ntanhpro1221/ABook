@@ -19,6 +19,12 @@ Item {
     property string pendingNote: work ? work.pendingNote : ""
     // Mở từ nơi khác (thẻ việc, menu chương): chương, câu cần tới, có mở sẵn ô chọn người không
     property var target: null
+    property var remembered: null
+    signal positionChanged(int chapter, string line)
+    property string restoreLine: ""
+    property bool restorePick: false
+    property bool restoring: true
+    property bool initialized: false
 
     property string filter: "all"
     property string who: ""
@@ -33,6 +39,7 @@ Item {
     property string deliveryLine: ""
     property string openedLine: ""
     property real stick: 0
+    property var rowById: ({})
     readonly property bool narrow: width < 600
     readonly property alias scriptStore: scripts
 
@@ -74,28 +81,64 @@ Item {
     implicitHeight: page.height
     height: implicitHeight
 
-    onTargetChanged: if (target) { asked = target.chapter || asked; openedLine = "" }
-    Component.onCompleted: if (target) asked = target.chapter || 0
+    function restorePosition(place) {
+        restoring = true
+        restoreLine = place && typeof place.line === "string" ? place.line : ""
+        restorePick = !!(place && place.pick)
+        asked = place && Number(place.chapter) || 0
+        openedLine = ""
+        Later.call(root, root.openWanted)
+    }
+    onTargetChanged: if (initialized && target) restorePosition(target)
+    Component.onCompleted: { initialized = true; restorePosition(target || remembered) }
+    onActiveChanged: if (!restoring && script) positionChanged(script.chapterId, active)
     // Đổi chương thì bỏ chọn, bỏ menu (useEffect theo chapterId)
     Connections {
         target: scripts
         function onChapterIdChanged() {
+            root.restoring = true
             root.active = ""; root.menuLine = ""; root.deliveryLine = ""; root.selected = []; root.anchorLine = ""
             speakerPop.close(); deliveryPop.close()
         }
     }
     onNowMatchChanged: if (nowMatch) Later.call(root, function() { root.center(root.rowItem(root.nowMatch)) })
     onFindAtChanged: if (nowMatch) Later.call(root, function() { root.center(root.rowItem(root.nowMatch)) })
-    onShownChanged: Later.call(root, root.openWanted)
+    onShownChanged: Later.call(root, root.syncRows)
+
+    // Giữ delegate theo stableId, kể cả câu đang bị lọc. Đổi bộ lọc không tạo lại
+    // hàng/chữ; mỗi hàng chỉ mờ + Translate. Column dàn lại tại hai đầu hiệu ứng,
+    // không hoạt họa height/y của bố cục qua từng khung.
+    ListModel { id: lineModel }
+    function syncRows() {
+        const next = {}, visible = {}
+        for (let i = 0; i < shown.length; ++i) visible[shown[i].line.stableId] = {context: shown[i].context, gap: S.gapBefore(shown, i, filter)}
+        const keys = script ? script.lines.map(line => line.stableId) : []
+        for (const line of script ? script.lines : []) {
+            const found = visible[line.stableId]
+            next[line.stableId] = {line: line, context: found ? found.context : false, gap: found ? found.gap : false, present: !!found}
+        }
+        for (let i = lineModel.count - 1; i >= 0; --i) if (!next[lineModel.get(i).key]) lineModel.remove(i)
+        rowById = next
+        for (let i = 0; i < keys.length; ++i) {
+            if (i < lineModel.count && lineModel.get(i).key === keys[i]) continue
+            let at = i + 1
+            while (at < lineModel.count && lineModel.get(at).key !== keys[i]) ++at
+            if (at < lineModel.count) lineModel.move(at, i, 1)
+            else lineModel.insert(i, {key: keys[i]})
+        }
+        lines.forceLayout()
+        Later.call(root, root.openWanted)
+    }
 
     function go(id) {
         if (!id) return
         who = ""
         findAt = 0
+        restoreLine = ""; restorePick = false
         asked = id
     }
-    function setWho(value) { who = who === value ? "" : value; fade.restart() }
-    function setFilter(value) { if (filter !== value) { filter = value; fade.restart() } }
+    function setWho(value) { who = who === value ? "" : value }
+    function setFilter(value) { filter = value }
 
     // ---- hàng và cuộn ----
     function rowItem(stableId) {
@@ -125,8 +168,13 @@ Item {
         const top = root.mapToItem(flick.contentItem, 0, 0).y + headerSlot.y
         stick = Math.max(0, Math.min(flick.contentY - top, page.height - headerSlot.y - header.height))
     }
-    Connections { target: root.flick; function onContentYChanged() { root.updateStick() } function onHeightChanged() { root.updateStick() } }
-    onHeightChanged: updateStick()
+    Connections {
+        target: root.flick
+        function onContentYChanged() { root.updateStick() }
+        function onHeightChanged() { root.updateStick() }
+        function onContentHeightChanged() { if (root.restoring) Later.call(root, root.openWanted) }
+    }
+    onHeightChanged: { updateStick(); if (restoring) Later.call(root, root.openWanted) }
 
     function range(from, to) {
         const start = speechRows.findIndex(line => line.stableId === from)
@@ -210,15 +258,25 @@ Item {
     }
     // Câu được mở từ thẻ việc: tới đó một lần (giữa khung) và mở ô chọn người nói (tìm được mọi người trong truyện)
     function openWanted() {
-        if (!target || !target.line || !script || openedLine === target.line) return
-        const line = script.lines.find(item => item.stableId === target.line)
-        if (!line) return
-        const item = rowItem(line.stableId)
-        if (!item) return
-        openedLine = target.line
-        focusRow(line, false)
-        center(item)
-        if (target.pick && script.castReady && line.editable) openSpeaker(line, item.speakerChip)
+        if (!script) return
+        if (restoreLine) {
+            const line = script.lines.find(item => item.stableId === restoreLine)
+            if (line) {
+                const item = rowItem(line.stableId)
+                if (!item) return
+                // Column và footer ListView polish ở lượt khác. Đợi chiều cao
+                // thật trước khi cuộn, nếu không Flickable kẹp về đầu khung cũ.
+                if (flick && (height < lines.height || flick.originY + flick.contentHeight < mapToItem(flick.contentItem, 0, height).y - 1)) return
+                openedLine = restoreLine
+                focusRow(line, false)
+                center(item)
+                if (restorePick && script.castReady && line.editable) openSpeaker(line, item.speakerChip)
+            }
+            // Như web: câu đã mất thì giữ chương, không tự chọn câu khác.
+            restoreLine = ""; restorePick = false
+        }
+        restoring = false
+        positionChanged(script.chapterId, active)
     }
 
     function onKey(event) {
@@ -442,21 +500,37 @@ Item {
                 Column {
                     id: lines
                     objectName: "scriptLines"
-                    visible: root.shown.length > 0
+                    visible: height > topPadding
                     width: parent.width
                     topPadding: 12
                     Keys.onPressed: event => root.onKey(event)
-                    NumberAnimation on opacity { id: fade; running: false; from: Theme.reduceMotion ? 1 : 0; to: 1; duration: Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeDecelerate }
                     Accessible.role: Accessible.List
                     Accessible.name: root.script ? "Kịch bản " + root.script.title : ""
                     Repeater {
                         id: rows
-                        model: root.shown.length
+                        model: lineModel
                         delegate: Item {
                             id: holder
-                            required property int index
-                            readonly property var item: root.shown[index] || ({line: {}, context: false})
-                            readonly property bool gap: S.gapBefore(root.shown, index, root.filter)
+                            required property string key
+                            readonly property var item: root.rowById[key] || ({line: {}, context: false, gap: false, present: false})
+                            readonly property bool gap: item.gap
+                            readonly property bool present: item.present
+                            property real reveal: present ? 1 : 0
+                            property bool motionReady: false
+                            readonly property bool settled: reveal === (present ? 1 : 0)
+                            visible: present || reveal > 0
+                            enabled: present
+                            opacity: reveal
+                            transform: Translate { y: Theme.reduceMotion ? 0 : (holder.present ? 6 : -4) * (1 - holder.reveal) }
+                            Behavior on reveal {
+                                enabled: holder.motionReady
+                                NumberAnimation {
+                                    duration: Theme.reduceMotion ? Theme.motionFast : (holder.present ? Theme.motionMedium : Theme.motionMediumOut)
+                                    easing.type: Easing.BezierSpline
+                                    easing.bezierCurve: holder.present ? Theme.easeDecelerate : Theme.easeAccelerate
+                                }
+                            }
+                            Component.onCompleted: motionReady = true
                             property alias row: scriptRow
                             width: lines.width
                             height: scriptRow.height + (gap ? 8 : 0)
