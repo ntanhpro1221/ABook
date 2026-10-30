@@ -101,7 +101,7 @@ class StudioS4ScreenTest {
     @Test fun theLogShowsEachEntryAndTheTechnicalSwitchAsksAgain() {
         source.activityItems = listOf(StudioLogItem("1", 100.0, "info", "", "Bắt đầu"), StudioLogItem("2", 200.0, "error", "E1", "Hỏng"))
         val state = project()
-        show { StudioActivityScreen(state, {}, true) }
+        show { StudioLogScreen(state, {}, true) }
         tag("studio_log_error").assertIsDisplayed()
         tag("studio_activity_technical").performClick()
         rule.waitForIdle()

@@ -577,14 +577,6 @@ class LibraryPlugin : Plugin() {
         call.resolve(JSObject().put("computers", out))
     }
 
-    /** Studio từ xa (StudioActivity.kt): trang Studio của một máy tính đã ghép, mang sẵn mã thiết bị - máy và đường trang do [Devices.studioTarget]. */
-    @PluginMethod
-    fun openStudio(call: PluginCall) = background(call) {
-        val (computer, path) = Devices.studioTarget(context, call.getString("book"), call.getString("computer"))
-        activity.startActivity(Intent(activity, StudioActivity::class.java).putExtra("computer", computer).putExtra("path", path))
-        call.resolve()
-    }
-
     /**
      * Mở trang (hay file APK) của bản phát hành mới bằng trình duyệt của máy: điện thoại không tự cập nhật như app Windows,
      * nên Cài đặt báo có bản mới và mời tải (updates.ts). Chỉ mở đường của chính ABook trên GitHub - không phải cửa mở mọi

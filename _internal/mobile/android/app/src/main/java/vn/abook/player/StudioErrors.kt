@@ -93,7 +93,7 @@ object StudioErrors {
 }
 
 /**
- * Đường `/api/...` của Studio. Mã sách đi vào đường dẫn nên phải đúng `[A-Za-z0-9_-]+` (như [StudioLink.bookPath]): mã lạ bị từ chối
+ * Đường `/api/...` của Studio. Mã sách đi vào đường dẫn nên phải đúng `[A-Za-z0-9_-]+`: mã lạ bị từ chối
  * trước khi gửi, không bao giờ ghép nguyên vào đường dẫn.
  */
 object StudioPaths {

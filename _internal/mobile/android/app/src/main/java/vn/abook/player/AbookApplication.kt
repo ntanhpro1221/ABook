@@ -56,7 +56,7 @@ class AbookApplication : Application() {
         vn.abook.player.ui.devices.DevicesState(
             vn.abook.player.ui.devices.DevicesRepo(this, library), uiScope,
             vn.abook.player.ui.devices.DeviceLinks(
-                openStudio = { computer, path -> deviceLinks.openStudio(computer, path) },
+                openStudio = { computer, route -> deviceLinks.openStudio(computer, route) },
                 openAppSettings = { deviceLinks.openAppSettings() },
                 askNearby = { result -> deviceLinks.askNearby(result) },
                 askNotifications = { then -> deviceLinks.askNotifications(then) },

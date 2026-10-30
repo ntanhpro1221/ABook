@@ -1,5 +1,6 @@
 package vn.abook.player.ui.devices
 
+import vn.abook.player.ui.studio.StudioRoute
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import kotlinx.coroutines.flow.Flow
@@ -62,8 +63,8 @@ interface DevicesSource {
     fun downloadEvents(): Flow<DownloadEvent>
     suspend fun studio(): List<StudioComputer>
 
-    /** Máy và đường trang để mở Studio của máy tính `key`. */
-    suspend fun studioTarget(key: String): Pair<String, String>
+    /** Máy và màn native để mở Studio của máy tính `key`. */
+    suspend fun studioTarget(key: String): Pair<String, StudioRoute>
     suspend fun share(): Share
     suspend fun setShare(on: Boolean): Share
     suspend fun startCode(): Share
@@ -85,8 +86,8 @@ interface DevicesSource {
 /** Việc cần hệ điều hành: Activity cung cấp, test đưa bản giả. */
 @Stable
 class DeviceLinks(
-    /** Mở Studio của máy tính `computer` ở đường trang `path`. */
-    val openStudio: (computer: String, path: String) -> Unit = { _, _ -> },
+    /** Mở Studio của máy tính `computer` ở màn `route`. */
+    val openStudio: (computer: String, route: StudioRoute) -> Unit = { _, _ -> },
     val openAppSettings: () -> Unit = {},
     /** Xin quyền "Thiết bị ở gần": hộp của Android hiện ra, `result(true)` khi được cho. */
     val askNearby: (result: (Boolean) -> Unit) -> Unit = { it(true) },
