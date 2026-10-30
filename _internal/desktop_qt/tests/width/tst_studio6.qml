@@ -16,6 +16,23 @@ Item {
     // Hộp / bảng nổi và hộp chọn đều nằm dưới gốc cửa sổ (WindowLayer, Overlay)
     readonly property var overlay: Window.window ? Window.window.contentItem : null
     Component { id: studioFactory; StudioScreen {} }
+    Component { id: toastFactory; ToastStack {} }
+    property var frameSamples: []
+    property var frameTab: null
+    FrameAnimation {
+        running: host.frameTab !== null
+        onTriggered: {
+            host.frameSamples.push(frameTime * 1000)
+            const n = host.frameSamples.length
+            if (n % 30 === 1) {
+                const step = Math.floor(n / 30) % 4
+                if (step === 0) host.frameTab.setFilter("speech")
+                else if (step === 1) host.frameTab.setWho("HEIDI")
+                else if (step === 2) host.frameTab.setWho("HEIDI")
+                else host.frameTab.setFilter("all")
+            }
+        }
+    }
 
     // ---- scriptFind.test.ts + scriptFilter.test.ts (cùng ca, cùng chữ) ----
     TestCase {
@@ -180,14 +197,14 @@ Item {
             reply("GET " + p + base + "/pronunciations", {status: 200, data: {items: [{surface: "Tuấn", spoken: "tuấn", byListener: false, lines: 3, requested: null, example: null}], unseen: 0}})
             reply("POST " + p + base + "/speaker", function(body) {
                 if (server.speakerFails && !body.withdraw) return {status: 500, data: {detail: "Máy bận"}}
-                return {status: 200, data: {lines: (body.lines || []).length, requestedAt: 77}}
+                return {status: 200, data: {lines: (body.lines || []).length, requestedAt: 77, elsewhere: server.speakerElsewhere || {}}}
             })
             reply("POST " + p + base + "/review", function(body) {
                 const ids = (body.lines || []).map(item => item.stableId)
                 for (const item of server.chapters[1].lines) if (ids.indexOf(item.stableId) >= 0) { item.retake = body.verdict === "redo" ? "pending" : null; item.verdict = body.verdict }
-                return {status: 200, data: {lines: ids.length, requestedAt: 55}}
+                return {status: 200, data: {lines: ids.length, requestedAt: 55, elsewhere: server.reviewElsewhere || {}}}
             })
-            reply("POST " + p + base + "/line", function(body) { return {status: 200, data: {requestedAt: body.withdraw ? 0 : 88}} })
+            reply("POST " + p + base + "/line", function(body) { return {status: 200, data: {requestedAt: body.withdraw ? 0 : 88, elsewhere: server.deliveryElsewhere}} })
         }
 
         function init() {
@@ -199,12 +216,15 @@ Item {
             Api.loaded = true
             Api.saving = false
             Api.notice = ""
+            Api.elsewhereNotice = null
             Nav.layers = []
             Nav.studioPeer = ""
             Theme.reduceMotion = true
             Clip.stop()
         }
         function cleanup() {
+            host.frameTab = null
+            Api.elsewhereNotice = null
             Theme.mode = "auto"; Theme.reduceMotion = false
             Nav.layers = []; Nav.studioPeer = ""; Api.notice = ""
             DesktopApi.delayed = false
@@ -245,6 +265,7 @@ Item {
         }
         function focusLine(page, stableId) {
             const tab = tabOf(page)
+            tryCompare(tab, "restoring", false)
             tab.focusRow(tab.speechRows.find(item => item.stableId === stableId), false)
             tryCompare(tab, "active", stableId)
             tryVerify(function() { return rowOf(page, stableId).activeFocus })
@@ -311,7 +332,7 @@ Item {
             one(page, "scriptFilter").picked("doubt")
             ready(page, 4)
             // "Máy nghi": câu nói liền trước là ngữ cảnh
-            compare(rows(page).map(r => [r.line.stableId, r.context]), [["d1", true], ["d2", false], ["t1", true], ["d3", false]])
+            tryVerify(function() { return JSON.stringify(rows(page).map(r => [r.line.stableId, r.context])) === JSON.stringify([["d1", true], ["d2", false], ["t1", true], ["d3", false]]) })
             one(page, "scriptFilter").picked("all")
             ready(page, 6)
             const lucien = all(page, "legendChip").filter(shown).filter(c => c.modelData.person.value === "LUCIEN")[0]
@@ -646,6 +667,272 @@ Item {
                 both("long_" + width, page)
                 page.destroy()
             }
+        }
+
+        function longChapter(id, count) {
+            const many = []
+            for (let i = 0; i < count; ++i) many.push(line("saved" + i, i, i, "dialogue", "HEIDI", "Một câu trong chương dài để kiểm vị trí đã nhớ."))
+            return Object.assign(chapterTwo(), {chapterId: id, lines: many})
+        }
+        function test_positionReopensTabChapterAndCenteredLine() {
+            serve({chapters: {1: chapterOne(), 2: longChapter(2, 120)}})
+            let page = openScript()
+            ready(page, 6)
+            tabOf(page).go(2)
+            ready(page, 120)
+            focusLine(page, "saved90")
+            // Rời sách trước khi hết throttle: destruction phải flush vị trí cuối.
+            page.goList()
+            tryCompare(page, "shownKey", "route:list")
+            tryVerify(function() { return !page.projectScreenList })
+            page.openProject("a")
+            tryCompare(page, "shownKey", "route:project")
+            ready(page, 120)
+            tryCompare(tabOf(page), "active", "saved90")
+            VisualReady.render(this, host.Window.window, page, qtVisualReady)
+            const row = rowOf(page, "saved90"), list = page.projectScreenList
+            const y = row.mapToItem(list, 0, 0).y
+            verify(y > 100 && y + row.height < list.height, "câu đã nhớ ở trong khung, dưới thanh dính: " + JSON.stringify({y: y, row: row.height, viewport: list.height, contentY: list.contentY, contentHeight: list.contentHeight, rowTop: row.mapToItem(list.contentItem, 0, 0).y}))
+            both("restored", page)
+            // Dựng lại toàn bộ Studio, chỉ giữ kho Platform (như mở lại app).
+            page.goList()
+            tryCompare(page, "shownKey", "route:list")
+            tryVerify(function() { return !page.projectScreenList })
+            page.destroy()
+            page = openProject()
+            ready(page, 120)
+            tryCompare(tabOf(page), "active", "saved90")
+            compare(screenOf(page).shownTab, "script")
+        }
+        function test_positionWritesAreThrottledAndScrollDoesNotWrite() {
+            serve()
+            const page = openScript()
+            ready(page, 6)
+            const screen = screenOf(page), tab = tabOf(page)
+            VisualReady.render(this, host.Window.window, page, qtVisualReady)
+            screen.flushView()
+            const before = Platform.writes
+            for (let i = 0; i < 30; ++i) tab.activate(tab.speechRows[i % tab.speechRows.length])
+            compare(Platform.writes, before)
+            tryVerify(function() { return Platform.writes > before })
+            compare(Platform.writes, before + 1)
+            const saved = JSON.parse(Platform.setting(screen.viewKey, "{}"))
+            compare(saved.script.line, tab.active)
+            for (let i = 0; i < 30; ++i) page.projectScreenList.contentY += 1
+            verify(!screen.viewDirty)
+            compare(Platform.writes, before + 1)
+        }
+        function test_positionMissingLineKeepsChapterAndNoSelection() {
+            serve()
+            Platform.setSetting("studio.view.local.a", JSON.stringify({tab: "script", script: {chapter: 2, line: "gone"}}))
+            const page = openProject()
+            ready(page, 2)
+            tryVerify(function() { return !tabOf(page).restoring })
+            compare(tabOf(page).scriptStore.chapterId, 2)
+            compare(tabOf(page).active, "")
+        }
+        function test_positionMissingChapterUsesWebFallback() {
+            serve()
+            Platform.setSetting("studio.view.local.a", JSON.stringify({tab: "script", script: {chapter: 99, line: "gone"}}))
+            const page = openProject()
+            ready(page, 6)
+            compare(tabOf(page).scriptStore.chapterId, 1)
+            compare(tabOf(page).active, "")
+        }
+        function test_positionExplicitTargetWinsThenTabRowRemembersNewPlace() {
+            serve()
+            Platform.setSetting("studio.view.local.a", JSON.stringify({tab: "chapters", script: {chapter: 2, line: "x1"}}))
+            const page = openProject(), screen = screenOf(page)
+            screen.scriptAt = {chapter: 1, line: "d2", pick: false}
+            screen.jump("script", "work", "speaker:d2", "", false)
+            ready(page, 6)
+            tryCompare(tabOf(page), "active", "d2")
+            focusLine(page, "d3")
+            screen.pickTab("chapters")
+            tryCompare(screen, "shownTab", "chapters")
+            screen.pickTab("script")
+            ready(page, 6)
+            tryCompare(tabOf(page), "active", "d3")
+        }
+        function test_positionBookKeysAreIndependent() {
+            serve()
+            const page = openScript()
+            ready(page, 6)
+            focusLine(page, "d2")
+            screenOf(page).flushView()
+            const saved = Platform.setting("studio.view.local.a", "")
+            reply("GET /api/books/b", {status: 200, data: {book: book({id: "b"}), chapters: [chapter(1)]}})
+            page.openProject("b")
+            tryVerify(function() { return screenOf(page).book && screenOf(page).book.id === "b" })
+            tryCompare(screenOf(page), "shownTab", "chapters")
+            compare(screenOf(page).viewKey, "studio.view.local.b")
+            compare(Platform.setting("studio.view.local.a", ""), saved)
+        }
+        function test_positionPeerKeyIsIndependent() {
+            serve({}, peerBase)
+            reply("GET " + peerBase + "/api/app", {status: 200, data: {studio: {installed: true}, peer: {id: peerId, name: "Máy bàn"}}})
+            reply("GET " + peerBase + "/api/library", library([book()]))
+            reply("GET " + peerBase + base, {status: 200, data: {book: book(), chapters: [chapter(1), chapter(2)]}})
+            Platform.setSetting("studio.view.local.a", JSON.stringify({tab: "script", script: {chapter: 1, line: "d2"}}))
+            Platform.setSetting("studio.view." + peerId + ".a", JSON.stringify({tab: "script", script: {chapter: 2, line: "x1"}}))
+            Nav.studioPeer = peerId
+            const page = makeStudio()
+            tryVerify(function() { return all(page, "projectName").filter(shown).length >= 1 }, 3000)
+            page.openProject("a")
+            tryCompare(page, "shownKey", "route:project")
+            ready(page, 2)
+            tryCompare(tabOf(page), "active", "x1")
+            compare(screenOf(page).viewKey, "studio.view." + peerId + ".a")
+            compare(JSON.parse(Platform.setting("studio.view.local.a", "{}")).script.line, "d2")
+        }
+        function test_positionWaitsForChapterResponse() {
+            serve()
+            const page = openScript(), screen = screenOf(page)
+            ready(page, 6)
+            focusLine(page, "d2")
+            DesktopApi.delayed = true
+            screen.scriptAt = {chapter: 2, line: "x1", pick: false}
+            tryCompare(tabOf(page).scriptStore, "chapterId", 2)
+            verify(tabOf(page).restoring)
+            compare(screen.viewState.script.line, "d2", "không ghi vị trí rỗng trong lúc chờ chương")
+            DesktopApi.delayed = false
+            DesktopApi.finish()
+            ready(page, 2)
+            tryCompare(tabOf(page), "active", "x1")
+            tryCompare(tabOf(page), "restoring", false)
+            compare(screen.viewState.script.chapter, 2)
+            compare(screen.viewState.script.line, "x1")
+        }
+        function test_motionOnlyChangedRowsAnimateAndCanReverse() {
+            serve()
+            const page = openScript()
+            ready(page, 6)
+            VisualReady.render(this, host.Window.window, page, qtVisualReady)
+            const tab = tabOf(page), removed = rowOf(page, "n1").parent, retained = rowOf(page, "d1")
+            Theme.reduceMotion = false
+            tab.setFilter("speech")
+            tryVerify(function() { return removed.reveal > 0 && removed.reveal < 1 })
+            verify(!removed.enabled)
+            compare(retained.parent.reveal, 1)
+            compare(one(page, "scriptLines").opacity, 1)
+            verify(removed.transform[0].y < 0)
+            tab.setFilter("all")
+            tryCompare(removed, "reveal", 1)
+            compare(rowOf(page, "d1"), retained, "delegate theo stableId không bị dựng lại")
+            tab.setWho("HEIDI")
+            ready(page, 1)
+            tryVerify(function() { return !removed.visible })
+            tab.setWho("HEIDI")
+            tryVerify(function() { return removed.reveal > 0 && removed.reveal < 1 })
+            verify(removed.transform[0].y > 0)
+            ready(page, 6)
+            tryCompare(removed, "reveal", 1)
+        }
+        function test_motionReducedUsesOpacityWithoutTranslation() {
+            serve()
+            const page = openScript()
+            ready(page, 6)
+            const removed = rowOf(page, "n1").parent
+            tabOf(page).setFilter("speech")
+            tryVerify(function() { return removed.reveal > 0 && removed.reveal < 1 })
+            compare(removed.transform[0].y, 0)
+            tryCompare(removed, "reveal", 0)
+            tabOf(page).setFilter("all")
+            tryCompare(removed, "reveal", 1)
+            compare(removed.transform[0].y, 0)
+        }
+        function test_motionSpeakerAssignmentExitsOnlyChangedRow() {
+            serve()
+            const page = openScript()
+            ready(page, 6)
+            const tab = tabOf(page)
+            tab.setWho("LUCIEN")
+            ready(page, 2)
+            VisualReady.render(this, host.Window.window, page, qtVisualReady)
+            const removed = rowOf(page, "d1").parent, retained = rowOf(page, "t1")
+            Theme.reduceMotion = false
+            DesktopApi.delayed = true
+            tab.scriptStore.assign([removed.row.line], {value: "HEIDI", label: "Heidi"})
+            tryVerify(function() { return removed.reveal > 0 && removed.reveal < 1 })
+            compare(retained.parent.reveal, 1)
+            verify(!removed.enabled)
+            tryCompare(removed, "reveal", 0)
+            server.chapters[1].lines[1].wish = {value: "HEIDI", label: "Heidi", state: "pending"}
+            DesktopApi.delayed = false
+            DesktopApi.finish()
+            ready(page, 1)
+            compare(rowOf(page, "t1"), retained)
+        }
+        function checkNotices(kind) {
+            serve({speakerElsewhere: {d1: "HEIDI"}, reviewElsewhere: {d1: "ok"}, deliveryElsewhere: {delivery: {kind: "thought", emotion: "", intensity: null}}})
+            const page = openScript()
+            ready(page, 6)
+            const stack = createTemporaryObject(toastFactory, host, {x: host.width - 372, y: 16, z: 90})
+            const scripts = tabOf(page).scriptStore, line = rowOf(page, "d1").line
+            let title = "", was = "Heidi"
+            if (kind === "assign") { scripts.assign([line], {value: "HEIDI", label: "Heidi"}); title = "Đã ghi: câu này của Heidi" }
+            if (kind === "confirm") { scripts.confirm(tabOf(page).openLines); title = "Đã xác nhận 2 câu là đúng" }
+            if (kind === "retake") { scripts.retake([line]); title = "Đã ghi: thu lại câu này"; was = "“Ổn”" }
+            if (kind === "cancel") { scripts.cancelRetake([line]); title = "Đã bỏ yêu cầu thu lại"; was = "“Ổn”" }
+            if (kind === "delivery") { scripts.fixLine(line, {emotion: "angry"}); title = "Đã ghi cách đọc câu này"; was = "loại câu: nội tâm" }
+            tryCompare(Api, "notice", title)
+            tryVerify(function() { return Api.elsewhereNotice !== null })
+            const success = one(stack, "successToast"), warning = one(stack, "elsewhereToast")
+            tryCompare(success, "t", 1)
+            tryCompare(warning, "t", 1)
+            compare(success.title, title)
+            compare(warning.title, "Chỗ này vừa được sửa ở máy hay cửa sổ khác")
+            compare(warning.description, "Trước đó đang là " + was + " - lần ghi của bạn đã thay nó.")
+            if (kind === "cancel") compare(success.action, null)
+            else compare(success.action.label, "Hoàn tác")
+            compare(warning.action.label, "Lấy của máy kia")
+            compare(success.duration, kind === "cancel" ? 4000 : 15000)
+            compare(warning.duration, 20000)
+            verify(success.y < warning.y, "thứ tự Sonner: Đã ghi ở trên, cảnh báo ở dưới")
+            noCut(stack)
+            if (kind === "assign") both("notices", host)
+            one(success, "toastClose").clicked()
+            tryVerify(function() { return !success.visible })
+            verify(warning.visible)
+            one(warning, "toastAction").clicked()
+            tryVerify(function() { return Api.elsewhereNotice === null })
+            return {page: page, scripts: scripts}
+        }
+        function test_noticesAssignCoexist() { checkNotices("assign") }
+        function test_noticesConfirmCoexist() { checkNotices("confirm") }
+        function test_noticesRetakeCoexist() { checkNotices("retake") }
+        function test_noticesCancelRetakeCoexist() { checkNotices("cancel") }
+        function test_noticesDeliveryCoexist() { checkNotices("delivery") }
+        function test_noticesAssignmentSharesOneUndo() {
+            serve({speakerElsewhere: {d1: "HEIDI"}})
+            const page = openScript()
+            ready(page, 6)
+            tabOf(page).scriptStore.assign([rowOf(page, "d1").line], {value: "HEIDI", label: "Heidi"})
+            tryVerify(function() { return Api.elsewhereNotice !== null })
+            const undo = Api.noticeAction.run
+            verify(undo === Api.elsewhereNotice.action.run)
+            Api.runNoticeAction("edited-elsewhere")
+            verify(!undo(), "hai nút cùng một lần hoàn tác")
+            tryVerify(function() { return calls("POST", base + "/speaker").filter(r => r.body.withdraw).length === 1 })
+        }
+
+        function test_motionLongChapterFrames() {
+            const many = []
+            for (let i = 0; i < 600; ++i) many.push(line("long" + i, i, i, i % 3 === 0 ? "narration" : "dialogue",
+                i % 2 ? "HEIDI" : "LUCIEN", "Một câu trong chương dài để đo chuyển động từng hàng và thời gian khung."))
+            serve({chapters: {1: chapterOne({lines: many}), 2: chapterTwo()}})
+            const page = openScript()
+            ready(page, 600)
+            VisualReady.render(this, host.Window.window, page, qtVisualReady)
+            Theme.reduceMotion = false
+            host.frameSamples = []
+            host.frameTab = tabOf(page)
+            tryVerify(function() { return host.frameSamples.length >= 240 }, 30000)
+            host.frameTab = null
+            const samples = host.frameSamples.slice(1).sort((a, b) => a - b)
+            console.log("S6_FRAME_MS " + JSON.stringify({rows: 600, frames: samples.length,
+                p50: samples[Math.floor(samples.length * .5)], p95: samples[Math.floor(samples.length * .95)], max: samples[samples.length - 1]}))
+            Theme.reduceMotion = true
         }
     }
 }

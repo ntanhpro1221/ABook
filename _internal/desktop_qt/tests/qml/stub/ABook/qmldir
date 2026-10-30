@@ -217,6 +217,7 @@ singleton Api 1.0 ../../../../qml/Api.qml
 singleton DesktopApi 1.0 DesktopApi.qml
 singleton Clip 1.0 ../../../../qml/Clip.qml
 Toast 1.0 ../../../../qml/Toast.qml
+ToastStack 1.0 ../../../../qml/ToastStack.qml
 EmptyState 1.0 ../../../../qml/EmptyState.qml
 PeerBar 1.0 ../../../../qml/PeerBar.qml
 PlayerKeys 1.0 ../../../../qml/PlayerKeys.qml
