@@ -22,7 +22,7 @@ class ReadLookTest {
     fun `leading is written with a comma`() {
         assertEquals("1,5", ReadLook.leadingLabel(1.5))
         assertEquals("1,7", ReadLook.leadingLabel(1.7))
-        assertEquals("20 · 1,7", ReadLook().summary)
+        assertEquals("20 · giãn dòng 1,7", ReadLook().summary)
     }
 
     @Test

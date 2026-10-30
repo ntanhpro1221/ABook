@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MUSIC_MODIFIED_NOTE, etaOf, excerpt, fileName, formatEta, formatFingerprint, formatLengthUp, formatSize, joinParts, licenseLabel, musicCreditText, musicNeedsModifiedNote, shownReading } from "./format";
+import { MUSIC_MODIFIED_NOTE, etaOf, excerpt, fileName, formatEta, formatFingerprint, formatLengthUp, formatSize, joinParts, licenseLabel, musicCreditText, musicNeedsModifiedNote, shownReading, storageSummary } from "./format";
 
 describe("joinParts", () => {
   it("nối các phần bằng đúng một dấu \" · \" và bỏ phần rỗng", () => {
@@ -155,5 +155,13 @@ describe("musicCreditText", () => {
     expect(musicNeedsModifiedNote("")).toBe(false);
     expect(musicNeedsModifiedNote(undefined)).toBe(false);
     expect(MUSIC_MODIFIED_NOTE).toMatch(/^Đã chỉnh sửa/);
+  });
+});
+
+describe("storageSummary", () => {
+  it("máy chưa có sách nói thẳng \"Chưa có sách\", không phải \"Sách 1 KB\" (bản native: Storage.line)", () => {
+    expect(storageSummary(0, 20 * 1024 ** 3)).toBe("Chưa có sách · còn trống 20 GB");
+    expect(storageSummary(300, 20 * 1024 ** 3)).toBe("Chưa có sách · còn trống 20 GB");
+    expect(storageSummary(2 * 1024 ** 2, 10 * 1024 ** 3)).toBe("Sách 2 MB · còn trống 10 GB");
   });
 });

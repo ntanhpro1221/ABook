@@ -36,7 +36,9 @@ import vn.abook.player.ui.components.pressable
 import vn.abook.player.ui.music.MusicKind
 import vn.abook.player.ui.music.MusicPanel
 import vn.abook.player.ui.music.MusicText
+import vn.abook.player.ui.components.sheetEdge
 import vn.abook.player.ui.theme.Abook
+import vn.abook.player.ui.theme.scrim
 import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.theme.MotionMs
 import vn.abook.player.ui.components.fadeEdges
@@ -68,9 +70,10 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
     val scope = rememberCoroutineScope()
     var sheetHeight by remember { mutableIntStateOf(1) }
     LaunchedEffect(window.sheetOpen) { if (window.sheetOpen) drag.snapTo(0f) }
+    val scrim = Abook.colors.scrim
     BoxWithConstraints(Modifier.fillMaxSize()) {
         if (transition.currentState || transition.targetState) {
-            Box(Modifier.fillMaxSize().drawBehind { drawRect(Color.Black.copy(alpha = 0.24f)) }
+            Box(Modifier.fillMaxSize().drawBehind { drawRect(scrim) }
                 .pressable(onClick = window::closeSheet).semantics { contentDescription = "Đóng" })
         }
         transition.AnimatedVisibility(
@@ -82,6 +85,7 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                 .onSizeChanged { sheetHeight = it.height.coerceAtLeast(1) }
                 .graphicsLayer { translationY = drag.value }
                 .clip(RoundedCornerShape(topStart = Dim.radiusSheet, topEnd = Dim.radiusSheet)).background(Abook.colors.panel)
+                .then(if (Abook.colors.dark) Modifier.sheetEdge(Abook.colors.line) else Modifier)
                 .navigationBarsPadding().padding(horizontal = 20.dp).padding(top = 12.dp, bottom = 20.dp)
                 .testTag("player_sheet_${window.sheet.name.lowercase()}").semantics { paneTitle = sheetTitle(window.sheet) }) {
                 // Đầu tấm (vạch + tên) là chỗ kéo; danh sách bên dưới vẫn cuộn bình thường. Đóng bằng kéo, chạm nền tối hay Back - không nút đóng riêng.

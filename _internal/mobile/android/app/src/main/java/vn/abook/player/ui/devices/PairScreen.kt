@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import vn.abook.player.ui.addbook.BookField
 import vn.abook.player.ui.addbook.BookForm
+import vn.abook.player.ui.components.keepUrlTogether
 import vn.abook.player.ui.components.ChoiceSetting
 import vn.abook.player.ui.components.CopyIcon
 import vn.abook.player.ui.components.DownloadIcon
@@ -271,7 +272,7 @@ private fun InstallFold(devices: DevicesState) {
         RowLine(start = 36.dp)
         ListItem(
             "Tải ABook Windows", Modifier, devices::openDesktopRelease, "pair_download",
-            hint = copied?.let { if (it) "Đã chép địa chỉ" else DeviceText.DESKTOP_RELEASES },
+            hint = copied?.let { if (it) "Đã chép địa chỉ" else keepUrlTogether(DeviceText.DESKTOP_RELEASES) },
             titleColor = colors.accentText, titleStyle = Abook.type.bodyStrong, leading = { DownloadIcon(colors.text2) },
             trailing = { IconAction("Chép địa chỉ", { copied = devices.copyDesktopRelease() }, "pair_copy_release") { CopyIcon(colors.text2) } },
         )

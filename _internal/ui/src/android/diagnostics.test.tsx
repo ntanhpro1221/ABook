@@ -20,7 +20,8 @@ vi.mock("./plugins", () => ({
 }));
 vi.mock("sonner", () => ({ toast: { error: h.error, success: h.success } }));
 
-import { CLEAR_HINT, DIAGNOSTICS_HINT, DIAGNOSTICS_MORE, DiagnosticsPanel, SEND_HINT, VIEW_LINES, useDiagnostics } from "./Diagnostics";
+import { readFileSync } from "node:fs";
+import { CLEAR_HINT, CLEAR_QUESTION, DIAGNOSTICS_HINT, DIAGNOSTICS_MORE, DiagnosticsPanel, SEND_HINT, VIEW_LINES, useDiagnostics } from "./Diagnostics";
 import { SettingsScreen } from "./SettingsScreen";
 import { SettingsAt } from "@/shared/settingsAt";
 
@@ -64,6 +65,16 @@ describe("mục Chẩn đoán của Cài đặt", () => {
     expect(DIAGNOSTICS_MORE).toContain("Chia sẻ thư viện");
     expect(SEND_HINT).toContain("Bạn chọn gửi cho ai");
     expect(CLEAR_HINT).toContain("văng");
+  });
+
+  it("xoá hỏi lại trước: hàng chỉ mở hộp, chỉ nút đỏ trong hộp mới xoá; lời hỏi cùng chữ với bản native", () => {
+    expect(CLEAR_QUESTION).toBe("Nhật ký của ABook sẽ bị xoá khỏi máy này. Gồm cả các lần văng đã ghi.");
+    const source = readFileSync(new URL("./SettingsScreen.tsx", import.meta.url), "utf8");
+    const calls = source.split("diagnostics.clear()");
+    expect(calls.length - 1).toBe(1);
+    // Cuộc gọi duy nhất nằm trong nút danger của hộp (không phải onClick của hàng "Xoá nhật ký").
+    expect(calls[0].slice(-120)).toContain('variant="danger"');
+    expect(source).toContain('title="Xoá nhật ký?"');
   });
 
   it("xem: hỏi plugin với số dòng của màn xem", async () => {

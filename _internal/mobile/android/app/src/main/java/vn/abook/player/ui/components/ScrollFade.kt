@@ -22,19 +22,24 @@ val ScrollFadeEdge: Dp = Dim.s24
  * Đặt TRƯỚC `verticalScroll(state)` trong chuỗi modifier (để mặt nạ theo khung nhìn, không theo nội dung). Vị trí cuộn chỉ đọc trong pha vẽ; khi không có gì
  * để cuộn thì không dựng lớp vẽ riêng. Máy dò `ScrollFadeRulesTest` bắt vùng cuộn nào quên nó.
  */
-fun Modifier.fadeEdges(state: ScrollableState, edge: Dp = ScrollFadeEdge): Modifier = graphicsLayer {
+fun Modifier.fadeEdges(state: ScrollableState, edge: Dp = ScrollFadeEdge): Modifier = fade(state, edge, horizontal = false)
+
+/**
+ * Cùng mép mờ cho hàng cuộn NGANG (chip, tab): mờ ở đầu / cuối còn cuộn được, như `useRowFade` bên web. Đặt TRƯỚC `horizontalScroll(state)` trong chuỗi modifier.
+ */
+fun Modifier.fadeEdgesHorizontal(state: ScrollableState, edge: Dp = ScrollFadeEdge): Modifier = fade(state, edge, horizontal = true)
+
+private fun Modifier.fade(state: ScrollableState, edge: Dp, horizontal: Boolean): Modifier = graphicsLayer {
     compositingStrategy = if (state.canScrollBackward || state.canScrollForward) CompositingStrategy.Offscreen else CompositingStrategy.Auto
 }.drawWithContent {
     drawContent()
-    val top = state.canScrollBackward
-    val bottom = state.canScrollForward
-    if (!top && !bottom) return@drawWithContent
-    val fraction = (edge.toPx() / size.height).coerceIn(0f, 0.5f)
-    drawRect(
-        Brush.verticalGradient(
-            0f to (if (top) Color.Transparent else Color.Black), fraction to Color.Black,
-            1f - fraction to Color.Black, 1f to (if (bottom) Color.Transparent else Color.Black),
-        ),
-        blendMode = BlendMode.DstIn,
+    val start = state.canScrollBackward
+    val end = state.canScrollForward
+    if (!start && !end) return@drawWithContent
+    val fraction = (edge.toPx() / (if (horizontal) size.width else size.height)).coerceIn(0f, 0.5f)
+    val stops = arrayOf(
+        0f to (if (start) Color.Transparent else Color.Black), fraction to Color.Black,
+        1f - fraction to Color.Black, 1f to (if (end) Color.Transparent else Color.Black),
     )
+    drawRect(if (horizontal) Brush.horizontalGradient(*stops) else Brush.verticalGradient(*stops), blendMode = BlendMode.DstIn)
 }

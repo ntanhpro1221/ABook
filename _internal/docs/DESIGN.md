@@ -179,7 +179,17 @@ giống app hệ thống; không tự chế chuỗi rung dài.
   máy tính · 20/1.7 chữ đọc theo. Đậm: 400 / 500 / 700 - tối đa ba mức một màn. Chữ hoa giãn chỉ cho nhãn phần (12, 600, +0.06em).
 - **Bo góc**: 8 điều khiển · 12 bìa/ảnh · 20 bảng trượt/hộp thoại · tròn cho nút tròn. Danh sách không bo khung.
 - **Viền**: 1px `--line` chỉ làm vạch chia hàng trong danh sách dài, thụt theo nội dung.
-- **Bóng**: chỉ lớp nổi (thanh phát, bảng trượt, menu, hộp thoại).
+- **Bóng**: chỉ lớp nổi (thanh phát, bảng trượt, menu, hộp thoại). Bóng không thấy được trên nền tối (bảng `--panel` #1b1a18 chỉ hơn nền #121110 một bậc),
+  nên bờ của bảng trượt / hộp ở chế độ tối do ba thứ: màn mờ `--scrim` tối rgb(6 5 4 / .62) (sáng rgb(20 17 13 / .45); điện thoại `AbookColors.scrim`), vạch 1 px
+  `--line` theo mép trên (điện thoại `Modifier.sheetEdge`), và chính bóng (vô hình ở tối nhưng vẫn khai báo cho sáng).
+- **Chữ xuống dòng**: không để MỘT chữ lẻ ở dòng cuối (`text-wrap: pretty` / `balance` web; điện thoại `LineBreak.Strategy.Balanced` trong mọi kiểu chữ của
+  `Theme.kt`, riêng chữ đọc dài của Đọc theo dùng `LineBreak.Paragraph`), không gạch nối giữa chữ; địa chỉ web đi nguyên một khối, chỉ khi rộng hơn cả dòng mới đứt ở dấu "/" (`keepUrlTogether`).
+- **Hàng chip / tab ngang**: khe giữa hai chữ tối thiểu 16 px (24 khi dư chỗ); thiếu chỗ (màn 320, chữ hệ thống to) thì hàng CUỘN ngang với mép mờ
+  (`fadeEdgesHorizontal`, `useRowFade` bên web) - không ép sát nút bên cạnh, không xuống dòng, không cụt chữ; mục đang chọn tự cuộn vào khung.
+- **Chân màn**: thanh đáy (thanh tab) chừa dưới nó ít nhất 8 px kể cả khi máy báo inset thanh điều hướng 0 (ColorOS giấu vạch cử chỉ): vạch hổ phách không bao giờ
+  sát mép màn (điện thoại `bottomClearance`).
+- **Việc không lấy lại được** (xoá nhật ký, xoá khỏi máy, bỏ ghép, gỡ giọng, xoá khoá / bài nhạc, bỏ thay đổi): luôn hỏi lại bằng bước xác nhận chung (điện thoại
+  `ConfirmPage` + `DangerButton`, web `Dialog` + nút `danger`), nút "Giữ lại" là nút chữ. Máy dò `NativePolishTest.everyDestructiveActionOfTheScreensAsksFirst`.
 - **Vùng chạm**: tối thiểu 44×44 (điện thoại), 32×32 (máy tính, có tooltip).
 
 ## 6. Thành phần

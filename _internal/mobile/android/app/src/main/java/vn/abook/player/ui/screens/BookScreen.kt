@@ -70,6 +70,7 @@ import kotlinx.coroutines.launch
 import vn.abook.player.ui.components.BackButton
 import vn.abook.player.ui.components.BookCover
 import vn.abook.player.ui.components.CheckIcon
+import vn.abook.player.ui.components.keepUnitsTogether
 import vn.abook.player.ui.components.CloudDownloadIcon
 import vn.abook.player.ui.components.DashedCircleIcon
 import vn.abook.player.ui.components.MoreIcon
@@ -348,7 +349,7 @@ private fun BookHead(book: ListenBook, covers: CoverLoader, records: List<Listen
                 }
                 BasicText(main, style = Abook.type.screenTitle, modifier = Modifier.testTag("book_title"))
                 Spacer(Modifier.height(Dim.s8))
-                BasicText(BookPage.metaLine(book), style = Abook.type.bodySmall)
+                BasicText(keepUnitsTogether(BookPage.metaLine(book)), style = Abook.type.bodySmall)
                 BookPage.statusLine(book)?.let { line ->
                     Spacer(Modifier.height(Dim.s8))
                     BasicText(line, style = Abook.type.bodySmall.copy(color = if (book.complete) colors.text2 else colors.accentText))

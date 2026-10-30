@@ -5,12 +5,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.runtime.collectAsState
@@ -20,6 +17,8 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -31,6 +30,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
@@ -46,6 +46,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import vn.abook.player.ui.components.SheetHost
 import vn.abook.player.ui.components.SheetLayer
+import vn.abook.player.ui.components.navigationClearance
 import vn.abook.player.ui.components.pressable
 import vn.abook.player.ui.data.BookSource
 import vn.abook.player.ui.data.CoverLoader
@@ -118,7 +119,7 @@ class ShellState(val scope: CoroutineScope, onSortChanged: (LibrarySort) -> Unit
      */
     suspend fun receive(queue: ImportQueue, sources: List<String>) {
         queue.enqueue(sources)
-        while (nav.progress.isRunning) delay(20) // đang chuyển cảnh thì NavState.push bỏ lệnh
+        while (nav.busy) delay(20) // đang chuyển cảnh thì NavState.push bỏ lệnh
         val top = nav.stack.top?.destination
         if (top == Destination.AddBook || top is Destination.ImportReview || top is Destination.ImportChapter) return
         nav.push(Destination.AddBook)
@@ -262,60 +263,126 @@ fun AppShell(
         // Cửa sổ Đang nghe nằm TRÊN cả ngăn xếp màn lẫn thanh tab; thanh phát nhỏ thật ở gốc là nguồn của chuyển động nở ra (NowPlayingSource).
         PlayerCoverProvider(covers) {
             NowPlayingLayer(nowPlaying, window, sampleClock) {
-                Column(Modifier.fillMaxSize()) {
-                Box(Modifier.weight(1f)) {
-                ScreenStack(
-                    nav = nav,
-                    root = { RootTabs(shell, library, playerState, player, covers, actions, openPlayer, settings, companion, askNotifications) },
-                    screen = { destination ->
-                        when (destination) {
-                            is Destination.Book -> BookScreen(
-                                destination.book, library, playerState, player.clock, covers, books, shell.sheets, bookActions, music = settings.music, prepare = settings.prepare,
-                            )
-                            is Destination.Export -> if (exports != null) ExportScreen(destination.book, exports, nav::pop, destination.format)
-                            Destination.AddBook -> if (imports != null) AddBookRoute(imports, nav::pop,
-                                { nav.push(Destination.ImportReview(it)) }, { id ->
-                                    (library as? LibraryState.Ready)?.books?.firstOrNull { it.id == id }?.let { nav.push(Destination.Book(it)) }
-                                }, autoPick, active = nav.stack.top?.destination == Destination.AddBook && !nav.progress.isRunning)
-                            is Destination.ImportReview -> if (imports != null) ImportReviewRoute(imports, destination.itemId, nav::pop) { nav.push(Destination.ImportChapter(destination.itemId, it)) }
-                            is Destination.ImportChapter -> if (imports != null) ImportChapterRoute(imports, destination.index, nav::pop)
-                            is Destination.EditBook -> if (editors != null) EditBookRoute(editors.session(destination.book, demo), covers, shell.sheets, nav::pop,
-                                { nav.push(Destination.CropCover(destination.book, it)) }, { nav.push(Destination.EditChapter(destination.book, it)) },
-                                findCover = { nav.push(Destination.CoverSearch(destination.book)) })
-                            is Destination.CoverSearch -> if (editors != null) CoverSearchRoute(editors.session(destination.book, demo), destination.book.title, nav::pop,
-                                { nav.push(Destination.CropCover(destination.book, it)) }, active = nav.stack.top?.destination == destination && !nav.progress.isRunning)
-                            is Destination.EditChapter -> if (editors != null) EditChapterRoute(editors.session(destination.book, demo), destination.chapterId, nav::pop)
-                            is Destination.CropCover -> if (editors != null) CoverCropRoute(editors.session(destination.book, demo), destination.uri, nav::pop)
-                            is Destination.Settings -> SettingsGroupScreen(
-                                destination.group, settings, shell.sheets, onBack = nav::pop, openDevices = { nav.push(Destination.Devices(it)) },
-                                openVoice = { nav.push(Destination.Voice(it)) },
-                            )
-                            is Destination.Devices -> settings.devices?.let { devices ->
-                                when (destination.page) {
-                                    DevicesPage.Pair -> PairScreen(devices, shell.sheets, nav::pop)
-                                    DevicesPage.Share -> ShareScreen(devices, shell.sheets, nav::pop)
-                                    DevicesPage.Storage -> StorageScreen(devices, shell.sheets, nav::pop)
+                ShellFrame(
+                    nav,
+                    stack = { insets ->
+                    ScreenStack(
+                        nav = nav, insets = insets,
+                        root = { RootTabs(shell, library, playerState, player, covers, actions, openPlayer, settings, companion, askNotifications) },
+                        screen = { destination ->
+                            when (destination) {
+                                is Destination.Book -> BookScreen(
+                                    destination.book, library, playerState, player.clock, covers, books, shell.sheets, bookActions, music = settings.music, prepare = settings.prepare,
+                                )
+                                is Destination.Export -> if (exports != null) ExportScreen(destination.book, exports, nav::pop, destination.format)
+                                Destination.AddBook -> if (imports != null) AddBookRoute(imports, nav::pop,
+                                    { nav.push(Destination.ImportReview(it)) }, { id ->
+                                        (library as? LibraryState.Ready)?.books?.firstOrNull { it.id == id }?.let { nav.push(Destination.Book(it)) }
+                                    }, autoPick, active = nav.stack.top?.destination == Destination.AddBook && !nav.progress.isRunning)
+                                is Destination.ImportReview -> if (imports != null) ImportReviewRoute(imports, destination.itemId, nav::pop) { nav.push(Destination.ImportChapter(destination.itemId, it)) }
+                                is Destination.ImportChapter -> if (imports != null) ImportChapterRoute(imports, destination.index, nav::pop)
+                                is Destination.EditBook -> if (editors != null) EditBookRoute(editors.session(destination.book, demo), covers, shell.sheets, nav::pop,
+                                    { nav.push(Destination.CropCover(destination.book, it)) }, { nav.push(Destination.EditChapter(destination.book, it)) },
+                                    findCover = { nav.push(Destination.CoverSearch(destination.book)) })
+                                is Destination.CoverSearch -> if (editors != null) CoverSearchRoute(editors.session(destination.book, demo), destination.book.title, nav::pop,
+                                    { nav.push(Destination.CropCover(destination.book, it)) }, active = nav.stack.top?.destination == destination && !nav.progress.isRunning)
+                                is Destination.EditChapter -> if (editors != null) EditChapterRoute(editors.session(destination.book, demo), destination.chapterId, nav::pop)
+                                is Destination.CropCover -> if (editors != null) CoverCropRoute(editors.session(destination.book, demo), destination.uri, nav::pop)
+                                is Destination.Settings -> SettingsGroupScreen(
+                                    destination.group, settings, shell.sheets, onBack = nav::pop, openDevices = { nav.push(Destination.Devices(it)) },
+                                    openVoice = { nav.push(Destination.Voice(it)) },
+                                )
+                                is Destination.Devices -> settings.devices?.let { devices ->
+                                    when (destination.page) {
+                                        DevicesPage.Pair -> PairScreen(devices, shell.sheets, nav::pop)
+                                        DevicesPage.Share -> ShareScreen(devices, shell.sheets, nav::pop)
+                                        DevicesPage.Storage -> StorageScreen(devices, shell.sheets, nav::pop)
+                                    }
+                                }
+                                is Destination.Voice -> settings.voice?.let { voice ->
+                                    when (destination.page) {
+                                        VoicePage.Keys -> KeysScreen(voice, shell.sheets, nav::pop)
+                                        VoicePage.Music -> MyMusicScreen(voice, shell.sheets, nav::pop)
+                                    }
                                 }
                             }
-                            is Destination.Voice -> settings.voice?.let { voice ->
-                                when (destination.page) {
-                                    VoicePage.Keys -> KeysScreen(voice, shell.sheets, nav::pop)
-                                    VoicePage.Music -> MyMusicScreen(voice, shell.sheets, nav::pop)
-                                }
-                            }
-                        }
+                        },
+                    )
                     },
+                    bars = {
+                        if (deletions != null) vn.abook.player.ui.components.UndoBar(deletions,
+                            backEnabled = shell.sheets.current == null && !window.expanded, aboveNavigation = !nav.canPop)
+                        vn.abook.player.ui.screens.NotesBar(settings.repo.notes)
+                    },
+                    footer = { RootPlaybackArea(shell, playerState, player, covers, openPlayer, companion) },
                 )
-                }
-                if (deletions != null) vn.abook.player.ui.components.UndoBar(deletions,
-                    backEnabled = shell.sheets.current == null && !window.expanded, aboveNavigation = !nav.canPop)
-                vn.abook.player.ui.screens.NotesBar(settings.repo.notes)
-                vn.abook.player.ui.components.Reveal(!nav.canPop) {
-                    RootPlaybackArea(shell, playerState, player, covers, openPlayer, companion)
-                }
-                }
             }
             SheetLayer(shell.sheets)
+        }
+    }
+}
+
+/**
+ * Chỗ chừa ở đáy của các lớp màn, đo bởi [ShellFrame]: lớp gốc (ba tab) nhường chỗ cho thanh báo + chân (thanh phát nhỏ, thanh tab), màn con chỉ nhường chỗ cho
+ * thanh báo (chân đã trượt khuất dưới nó). Kích cỡ từng lớp vì thế KHÔNG đổi trong lúc chuyển cảnh - chỉ phép dịch (graphicsLayer) chạy theo khung. Trước đây chân
+ * là một khối thu chiều cao trong dòng chảy (Reveal): mỗi khung chuyển cảnh dàn trang lại, vẽ lại cả màn con lẫn gốc, và dựng lại cả chân lúc Back xong
+ * (trace Perfetto NATIVE_POLISH: 6-9 ms dựng + 1-2 ms dàn trang mỗi khung trên máy ảo).
+ */
+@Stable
+class LayerInsets {
+    var root by mutableIntStateOf(0)
+    var screen by mutableIntStateOf(0)
+}
+
+private fun Modifier.layerInset(insets: LayerInsets, isRoot: Boolean): Modifier = layout { measurable, constraints ->
+    val inset = if (isRoot) insets.root else insets.screen
+    val height = (constraints.maxHeight - inset).coerceAtLeast(0)
+    val placeable = measurable.measure(Constraints.fixed(constraints.maxWidth, height))
+    layout(constraints.maxWidth, height) { placeable.place(0, 0) }
+}
+
+/** Phần chân đang lộ (1 = đầy, 0 = khuất): gốc đầy; màn con đầu tiên trượt vào thì chân trượt xuống theo (1 - p); sâu hơn nữa thì đã khuất. */
+internal fun footerShown(nav: NavState): Float = when (nav.stack.size) {
+    0 -> 1f
+    1 -> 1f - nav.progress.value
+    else -> 0f
+}
+
+/**
+ * Khung đáy của app: từ dưới lên là chân (thanh phát nhỏ + thanh tab), ngăn xếp màn, thanh báo (hoàn tác, lời báo trang). Ba khối được đo MỘT lần ở đây; chân và
+ * thanh báo chỉ được đặt bằng lớp vẽ (trượt theo [footerShown]), nên đổi màn không làm đổi dàn trang của ai. Chân luôn nằm trong cây (không dựng lại lúc Back xong);
+ * thanh báo nằm TRÊN ngăn xếp để vẫn bấm được khi có màn con, và đứng ngay trên chân khi chân đang lộ.
+ */
+@Composable
+private fun ShellFrame(
+    nav: NavState,
+    stack: @Composable (LayerInsets) -> Unit,
+    bars: @Composable () -> Unit,
+    footer: @Composable () -> Unit,
+) {
+    val insets = remember { LayerInsets() }
+    Layout(
+        content = {
+            Box(
+                Modifier.layoutId(0).semantics { if (footerShown(nav) <= 0f) hideFromAccessibility() },
+            ) { Column(Modifier.fillMaxWidth()) { footer() } }
+            Box(Modifier.layoutId(1)) { stack(insets) }
+            Column(Modifier.layoutId(2).fillMaxWidth()) { bars() }
+        },
+        modifier = Modifier.fillMaxSize(),
+    ) { measurables, constraints ->
+        val width = constraints.maxWidth
+        val height = constraints.maxHeight
+        val loose = Constraints(maxWidth = width, maxHeight = height)
+        val footerPlaceable = measurables.first { it.layoutId == 0 }.measure(loose)
+        val barsPlaceable = measurables.first { it.layoutId == 2 }.measure(loose)
+        insets.root = footerPlaceable.height + barsPlaceable.height
+        insets.screen = barsPlaceable.height
+        val stackPlaceable = measurables.first { it.layoutId == 1 }.measure(Constraints.fixed(width, height))
+        layout(width, height) {
+            footerPlaceable.placeWithLayer(0, height - footerPlaceable.height) { translationY = footerPlaceable.height * (1f - footerShown(nav)) }
+            stackPlaceable.place(0, 0)
+            barsPlaceable.placeWithLayer(0, height - barsPlaceable.height) { translationY = -footerPlaceable.height * footerShown(nav) }
         }
     }
 }
@@ -329,7 +396,7 @@ private const val ROOT_KEY = -1
  * đọc trong graphicsLayer (pha vẽ). Lớp bên dưới đã khuất hẳn thì đẩy ra ngoài màn (không vẽ) nhưng vẫn giữ trong cây: Back không phải dựng lại nó.
  */
 @Composable
-fun ScreenStack(nav: NavState, root: @Composable () -> Unit, screen: @Composable (Destination) -> Unit) {
+fun ScreenStack(nav: NavState, root: @Composable () -> Unit, insets: LayerInsets? = null, screen: @Composable (Destination) -> Unit) {
     val entries = nav.stack.entries
     val count = entries.size
     val background = Abook.colors.bg
@@ -343,7 +410,8 @@ fun ScreenStack(nav: NavState, root: @Composable () -> Unit, screen: @Composable
                     else -> Layer.Below
                 }
                 Box(
-                    Modifier.fillMaxSize()
+                    // Chừa chỗ cho thanh báo / chân ở đáy NGAY TRONG lớp (kích cỡ lớp cố định suốt chuyển cảnh): xem [LayerInsets].
+                    (if (insets == null) Modifier.fillMaxSize() else Modifier.layerInset(insets, index < 0))
                         .graphicsLayer {
                             val fraction = when (layer) {
                                 Layer.Alone -> 0f
@@ -466,7 +534,8 @@ fun TabHost(tabs: TabState, modifier: Modifier = Modifier, content: @Composable 
 @Composable
 fun TabBar(tabs: TabState, modifier: Modifier = Modifier) {
     val colors = Abook.colors
-    val navBar = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    // Vạch hổ phách nằm đáy hàng tab: chừa ít nhất 8 dp dưới nó kể cả khi máy báo inset đáy 0 (components/Insets.kt).
+    val clearance = navigationClearance()
     Column(modifier.fillMaxWidth().background(colors.panel)) {
         Box(Modifier.fillMaxWidth().height(1.dp).background(colors.line))
         Box(Modifier.fillMaxWidth().height(Dim.s48 + Dim.s8)) {
@@ -478,10 +547,10 @@ fun TabBar(tabs: TabState, modifier: Modifier = Modifier) {
                     .graphicsLayer { translationX = tabs.position.value * size.width },
                 contentAlignment = Alignment.Center,
             ) {
-                Box(Modifier.width(28.dp).height(3.dp).background(colors.accent))
+                Box(Modifier.width(28.dp).height(3.dp).background(colors.accent).testTag("tab_indicator"))
             }
         }
-        Box(Modifier.fillMaxWidth().height(navBar))
+        Box(Modifier.fillMaxWidth().height(clearance))
     }
 }
 

@@ -28,6 +28,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import vn.abook.player.ui.theme.scrim
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -85,12 +92,12 @@ fun SheetLayer(host: SheetHost) {
     val sheet = shown ?: return
     BackHandler(enabled = spec != null) { host.dismiss() }
     val colors = Abook.colors
-    val scrim = if (colors.dark) Color.Black else Color(0xFF1A1814)
+    val scrim = colors.scrim
     val scope = rememberCoroutineScope()
     val closeAt = with(LocalDensity.current) { 120.dp.toPx() }
     Box(
         Modifier.fillMaxSize().testTag("sheet_layer")
-            .drawBehind { drawRect(scrim, alpha = 0.42f * progress.value) }
+            .drawBehind { drawRect(scrim, alpha = progress.value) }
             .pointerInput(Unit) { detectTapGestures { host.dismiss() } },
     ) {
         Column(
@@ -98,6 +105,7 @@ fun SheetLayer(host: SheetHost) {
                 .graphicsLayer { translationY = (1f - progress.value) * size.height + drag.value }
                 .clip(RoundedCornerShape(topStart = Dim.radiusSheet, topEnd = Dim.radiusSheet))
                 .background(colors.panel)
+                .then(if (colors.dark) Modifier.sheetEdge(colors.line) else Modifier)
                 .pointerInput(Unit) { detectTapGestures { } },
         ) {
             Box(
@@ -117,5 +125,15 @@ fun SheetLayer(host: SheetHost) {
                 sheet.content { host.dismiss() }
             }
         }
+    }
+}
+
+/** Vạch 1 dp theo mép trên (cả hai góc bo) của bảng trượt tối: bóng đổ không thấy trên nền tối, vạch này tách bảng khỏi trang (DESIGN.md §5.5 Bóng). */
+internal fun Modifier.sheetEdge(color: Color): Modifier = drawWithContent {
+    drawContent()
+    val radius = Dim.radiusSheet.toPx()
+    val stroke = 1.dp.toPx()
+    clipRect(bottom = radius) {
+        drawRoundRect(color, Offset(stroke / 2, stroke / 2), Size(size.width - stroke, radius * 4), CornerRadius(radius - stroke / 2), Stroke(stroke))
     }
 }

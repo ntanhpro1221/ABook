@@ -113,7 +113,7 @@ fun ReadAlongPane(
                                 }
                             }
                         },
-                        style = Abook.type.body.copy(fontSize = look.size.sp, lineHeight = look.lineHeight.sp),
+                        style = Abook.type.body.copy(fontSize = look.size.sp, lineHeight = look.lineHeight.sp, lineBreak = androidx.compose.ui.text.style.LineBreak.Paragraph),
                         onTextLayout = { layout = it; geometry = ParagraphInk(it, paragraph) },
                     )
                 }

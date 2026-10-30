@@ -13,6 +13,7 @@ import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
@@ -277,7 +278,19 @@ class SettingsScreenTest {
         rule.onNodeWithText("Chưa có bản đọc đã lưu.").assertIsDisplayed()
         rule.onNodeWithTag("logs_send").performScrollTo().performClick()
         assertEquals(1, shared)
+        // Xoá nhật ký không lấy lại được: chạm một lần chỉ MỞ lời hỏi, "Giữ lại" bỏ qua, chỉ nút đỏ mới xoá.
         rule.onNodeWithTag("logs_clear").performScrollTo().performClick()
+        rule.waitForIdle()
+        assertEquals(0, core.logsCleared)
+        rule.onNodeWithTag("logs_clear_sheet").assertIsDisplayed()
+        rule.onNodeWithTag("logs_clear_cancel").performClick()
+        rule.waitUntil(5_000) { rule.onAllNodesWithTag("logs_clear_sheet").fetchSemanticsNodes().isEmpty() }
+        assertEquals(0, core.logsCleared)
+        rule.onNodeWithTag("logs_clear").performScrollTo().performClick()
+        rule.waitForIdle()
+        shot("settings_logs_clear_sheet_light")
+        rule.onNodeWithTag("logs_clear_confirm").performClick()
+        rule.waitForIdle()
         assertEquals(1, core.logsCleared)
         rule.onNodeWithText("Đã xoá nhật ký.").assertIsDisplayed()
         rule.onNodeWithTag("source_open").performScrollTo().performClick()

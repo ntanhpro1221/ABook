@@ -5,7 +5,7 @@ import { Download, TriangleAlert } from "lucide-react";
 import { toast } from "@/shared/toast";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
-import { Select, Button, ChoiceRow, Sheet, TimeSelect } from "@/shared/ui";
+import { Select, Button, ChoiceRow, Dialog, DialogActions, Sheet, TimeSelect } from "@/shared/ui";
 import { GroupHeader, isSettingsGroup, MoreInfo, SettingsBlock, SettingsList, SettingsRow, settingsPath, type GroupRow, type SettingsGroupId } from "@/shared/SettingsNav";
 import { ScreenHeader } from "@/shared/ScreenHeader";
 import { listenSummary, sleepSummary, themeSummary } from "@/shared/settingsSummary";
@@ -17,7 +17,7 @@ import { LocalVoiceModules, type VieneuBackend } from "@/listen/VieneuModuleCard
 import { VoiceSpeedSetting, type VoiceSpeedBackend } from "@/listen/VoiceSpeedSetting";
 import { useDefaultVoiceName, VoiceSettings, type VoiceSettingsApi } from "@/listen/VoiceSettings";
 import { androidSource, phoneVieneu } from "./androidSource";
-import { CLEAR_HINT, DIAGNOSTICS_HINT, DIAGNOSTICS_MORE, DiagnosticsPanel, SEND_HINT, useDiagnostics } from "./Diagnostics";
+import { CLEAR_HINT, CLEAR_QUESTION, DIAGNOSTICS_HINT, DIAGNOSTICS_MORE, DiagnosticsPanel, SEND_HINT, useDiagnostics } from "./Diagnostics";
 import { NOTIFICATION_ROW_HINT, notificationState, openNotificationSettings, type NotificationState } from "./notifications";
 import { ReadAloud } from "./plugins";
 import { applySenses, applyTheme, loadSettings, saveSettings, type PlayerSettings } from "./settings";
@@ -306,6 +306,7 @@ function OldSavesBlock() {
 /** "Chẩn đoán": xem / gửi / xoá nhật ký của app (Diagnostics.kt). Gửi = bảng chia sẻ của hệ thống, bạn tự chọn gửi cho ai. */
 function DiagnosticsBlock() {
   const diagnostics = useDiagnostics();
+  const [asking, setAsking] = useState(false);
   return (
     <SettingsBlock title="Chẩn đoán" id="diagnostics" fold="advanced.diagnostics">
       <SettingsRow label="Nhật ký" hint={DIAGNOSTICS_HINT}>
@@ -325,10 +326,27 @@ function DiagnosticsBlock() {
         </Button>
       </SettingsRow>
       <SettingsRow label="Xoá nhật ký" hint={CLEAR_HINT}>
-        <Button size="sm" onClick={() => void diagnostics.clear()}>
+        <Button size="sm" onClick={() => setAsking(true)}>
           Xoá
         </Button>
       </SettingsRow>
+      {/* Việc không lấy lại được thì hỏi lại trong hộp dùng chung (cùng lời với bản native: CLEAR_QUESTION). */}
+      <Dialog
+        open={asking}
+        onOpenChange={setAsking}
+        title="Xoá nhật ký?"
+        description={CLEAR_QUESTION}
+        footer={
+          <DialogActions>
+            <Button variant="ghost" onClick={() => setAsking(false)}>
+              Giữ lại
+            </Button>
+            <Button variant="danger" onClick={() => { setAsking(false); void diagnostics.clear(); }}>
+              Xoá
+            </Button>
+          </DialogActions>
+        }
+      />
     </SettingsBlock>
   );
 }

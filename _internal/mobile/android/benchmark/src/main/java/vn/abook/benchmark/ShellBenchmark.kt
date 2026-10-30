@@ -98,6 +98,28 @@ class ShellBenchmark {
         }
     }
 
+    /** Mở một nhóm Cài đặt rồi Back (màn con đẩy vào bằng NavState, như trang sách). */
+    @Test
+    fun settingsGroupBackFiveTimes() = rule.measureRepeated(
+        packageName = PACKAGE, metrics = listOf(FrameTimingMetric()), iterations = 8,
+        startupMode = StartupMode.WARM, compilationMode = CompilationMode.Partial(),
+        setupBlock = {
+            launchLibrary()
+            device.findObject(By.res("tab_settings")).click()
+            check(device.wait(Until.hasObject(By.res("settings_look")), 2_000))
+            device.waitForIdle()
+        },
+    ) {
+        repeat(5) {
+            device.findObject(By.res("settings_look")).click()
+            check(device.wait(Until.hasObject(By.res("settings_look_screen")), 2_000))
+            device.waitForIdle()
+            device.pressBack()
+            check(device.wait(Until.hasObject(By.res("settings_look")), 2_000))
+            device.waitForIdle()
+        }
+    }
+
     private companion object {
         const val PACKAGE = BuildConfig.TARGET_PACKAGE
     }

@@ -3,6 +3,8 @@ package vn.abook.player.ui.screens
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,6 +41,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
@@ -57,6 +60,7 @@ import kotlinx.coroutines.launch
 import vn.abook.player.ui.components.BookOpenTextIcon
 import vn.abook.player.ui.components.ChevronDownIcon
 import vn.abook.player.ui.components.Fold
+import vn.abook.player.ui.components.fadeEdgesHorizontal
 import vn.abook.player.ui.components.MoreIcon
 import vn.abook.player.ui.components.PlayIcon
 import vn.abook.player.ui.components.PrimaryButton
@@ -113,11 +117,31 @@ fun BookTabs(tabs: List<BookTab>, selected: BookTab, chapterCount: Int, onPick: 
     val widths = remember(tabs.size) { FloatArray(tabs.size) }
     // Số lần dàn trang đổi vị trí: gạch chân đọc nó nên vẽ lại khi các mục dịch chỗ.
     var layouts by remember { mutableIntStateOf(0) }
+    val viewport = remember { intArrayOf(0) }
+    val scroll = rememberScrollState()
+    // Đường kẻ chân nằm ở khung ngoài (trải cả bề rộng); gạch chân hổ phách ở hàng trong, trôi cùng chữ khi hàng cuộn (chữ hệ thống to / màn 320 dp: thiếu chỗ thì
+    // cuộn ngang với mép mờ, không cắt chữ). Mục đang chọn tự cuộn vào khung.
+    LaunchedEffect(index) {
+        val left = lefts[index].toInt()
+        val right = left + widths[index].toInt()
+        val view = viewport[0]
+        val target = when {
+            view <= 0 -> scroll.value
+            left < scroll.value -> left
+            right > scroll.value + view -> right - view
+            else -> scroll.value
+        }
+        if (target != scroll.value) scroll.animateScrollTo(target.coerceIn(0, scroll.maxValue), Motion.TabSlide)
+    }
+    Box(
+        modifier.fillMaxWidth().testTag("book_tabs").onSizeChanged { viewport[0] = it.width }.drawBehind {
+            drawRect(colors.line, Offset(0f, size.height - 1.dp.toPx()), Size(size.width, 1.dp.toPx()))
+        },
+    ) {
     Row(
-        modifier.fillMaxWidth().testTag("book_tabs").drawBehind {
+        Modifier.fadeEdgesHorizontal(scroll).horizontalScroll(scroll).drawBehind {
             if (layouts < 0) return@drawBehind // chỉ để vẽ lại khi các mục dịch chỗ
             val thick = 3.dp.toPx()
-            drawRect(colors.line, Offset(0f, size.height - 1.dp.toPx()), Size(size.width, 1.dp.toPx()))
             if (tabs.isEmpty()) return@drawBehind
             val p = position.value
             val low = floor(p).toInt().coerceIn(0, tabs.size - 1)
@@ -155,6 +179,7 @@ fun BookTabs(tabs: List<BookTab>, selected: BookTab, chapterCount: Int, onPick: 
                 }
             }
         }
+    }
     }
 }
 

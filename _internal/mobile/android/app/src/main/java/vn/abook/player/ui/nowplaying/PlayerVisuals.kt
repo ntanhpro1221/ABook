@@ -1,13 +1,10 @@
 package vn.abook.player.ui.nowplaying
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.ui.layout.Layout
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -135,16 +132,51 @@ fun rememberPlayerBackground(ref: CoverRef?): State<Color> {
         tween(MotionMs.SLOW), label = "cover-tint")
 }
 
-/** Every label replacement travels vertically through a clipped aperture. No default cross-fades. */
+/** Nhãn đang chạy: chữ đang hiện, chữ đang đi ra (null khi đứng yên), tiến trình của chữ mới (1 = đã vào hẳn). */
+@Stable
+private class Roll(first: String) {
+    var shown by mutableStateOf(first)
+    var leaving by mutableStateOf<String?>(null)
+    val progress = Animatable(1f)
+}
+
+/**
+ * Every label replacement travels vertically through a clipped aperture (chữ mới trồi từ dưới 220 ms, chữ cũ đi lên 150 ms, khung đổi cỡ theo). No default cross-fades.
+ * Không dùng AnimatedContent: mỗi nhãn tĩnh của Đang nghe (tên chương, tên sách, giờ, nhãn nút...) mang một AnimatedContent, ~0,8 ms dựng lần đầu mỗi cái trong trace
+ * Perfetto (NATIVE_POLISH) và cả chục cái cùng lúc ở khung đầu của cửa sổ. Ở đây lúc đứng yên chỉ là một BasicText; hai chữ chỉ có trong lúc chạy,
+ * toạ độ đọc trong pha dàn trang.
+ */
 @Composable
 fun RollingLabel(text: String, modifier: Modifier = Modifier, style: TextStyle = Abook.type.body) {
-    AnimatedContent(
-        targetState = text, modifier = modifier.clipToBounds(), label = "rolling-label",
-        transitionSpec = {
-            (slideInVertically(tween(MotionMs.MEDIUM)) { it } togetherWith
-                slideOutVertically(tween(MotionMs.MEDIUM_OUT)) { -it }).using(SizeTransform(clip = true))
+    val roll = remember { Roll(text) }
+    LaunchedEffect(text) {
+        if (roll.shown == text) return@LaunchedEffect
+        roll.leaving = roll.shown
+        roll.shown = text
+        roll.progress.snapTo(0f)
+        roll.progress.animateTo(1f, tween(MotionMs.MEDIUM))
+        roll.leaving = null
+    }
+    Layout(
+        content = {
+            BasicText(roll.shown, style = style)
+            roll.leaving?.let { BasicText(it, style = style) }
         },
-    ) { value -> BasicText(value, style = style) }
+        modifier = modifier.clipToBounds(),
+    ) { measurables, constraints ->
+        val incoming = measurables[0].measure(constraints)
+        val outgoing = measurables.getOrNull(1)?.measure(constraints)
+        val p = roll.progress.value
+        val width = if (outgoing == null) incoming.width else (outgoing.width + (incoming.width - outgoing.width) * p).toInt()
+        val height = if (outgoing == null) incoming.height else (outgoing.height + (incoming.height - outgoing.height) * p).toInt()
+        layout(width, height) {
+            if (outgoing != null) {
+                val out = (p * MotionMs.MEDIUM / MotionMs.MEDIUM_OUT).coerceAtMost(1f)
+                outgoing.place(0, (-out * outgoing.height).toInt())
+            }
+            incoming.place(0, ((1f - p) * incoming.height).toInt())
+        }
+    }
 }
 
 /** Two four-point contours interpolate triangle -> pause bars. Path objects are reused in draw. */

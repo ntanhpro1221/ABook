@@ -57,6 +57,11 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import vn.abook.player.ui.components.fadeEdgesHorizontal
+import vn.abook.player.ui.theme.MotionMs
 import androidx.compose.ui.unit.dp
 import vn.abook.player.ui.components.CheckIcon
 import vn.abook.player.ui.components.CloseIcon
@@ -90,15 +95,40 @@ fun AddBookButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
 
 private val LabelPad = 6.dp
 
+/** Khe tối thiểu giữa hai chữ bộ lọc (web: `RowGap w-4`) và tối đa khi còn dư chỗ. */
+internal val FilterGapMin = 16.dp
+private val FilterGapMax = 24.dp
+
 /**
- * Hàng bộ lọc: chữ có gạch chân hổ phách trượt theo [LibraryUiState.position] (không hộp segmented). Chữ giãn đều trong bề rộng có sẵn (tối đa 24 dp giữa hai chữ),
- * chữ đầu thẳng mép nội dung; hẹp quá thì chữ xuống dòng chứ không cắt. Màu chữ và gạch chân đọc vị trí trong pha vẽ.
+ * Bề rộng nội dung của hàng bộ lọc và khe giữa các chữ, theo bề rộng khung nhìn [viewport], tổng bề rộng chữ [ink] (không tính lề chạm) và số chữ [count]:
+ * đủ chỗ thì giãn đều trong khoảng [FilterGapMin]..[FilterGapMax] (nội dung = khung nhìn); thiếu thì khe giữ [FilterGapMin] và nội dung dài hơn khung - hàng cuộn.
+ * Hàm thuần để test kiểm ở 320 / 360 / 411 dp.
+ */
+internal fun filterSpread(viewport: Int, ink: Int, count: Int, minGap: Int, maxGap: Int): Pair<Int, Int> {
+    if (count <= 1) return maxOf(viewport, ink) to 0
+    val gap = ((viewport - ink) / (count - 1)).coerceIn(minGap, maxGap)
+    return maxOf(viewport, ink + gap * (count - 1)) to gap
+}
+
+/**
+ * Hàng bộ lọc: chữ có gạch chân hổ phách trượt theo [LibraryUiState.position] (không hộp segmented). Chữ giãn đều trong bề rộng có sẵn (khe 16..24 dp giữa hai chữ,
+ * như web), chữ đầu thẳng mép nội dung; hẹp quá (màn 320 dp, chữ hệ thống to) thì hàng CUỘN ngang với mép mờ - chữ không bị ép sát nút Xếp theo, không xuống dòng.
+ * Mục đang chọn tự cuộn vào giữa. Màu chữ và gạch chân đọc vị trí trong pha vẽ.
  */
 @Composable
 fun FilterRow(ui: LibraryUiState, modifier: Modifier = Modifier) {
     val colors = Abook.colors
     val filters = LibraryFilter.entries
     val spans = remember { FloatArray(filters.size * 2) }
+    val scroll = rememberScrollState()
+    val viewportWidth = remember { intArrayOf(0) }
+    LaunchedEffect(ui.filter) {
+        val width = viewportWidth[0]
+        if (width <= 0) return@LaunchedEffect
+        val index = ui.filter.ordinal
+        val target = (spans[index * 2] + spans[index * 2 + 1] / 2f - width / 2f).roundToInt().coerceIn(0, scroll.maxValue)
+        scroll.animateScrollTo(target, tween(MotionMs.MEDIUM, easing = Motion.Standard))
+    }
     Layout(
         content = {
             for (filter in filters) {
@@ -114,11 +144,13 @@ fun FilterRow(ui: LibraryUiState, modifier: Modifier = Modifier) {
                         filter.label,
                         style = Abook.type.label,
                         color = { lerp(colors.text2, colors.text, (1f - abs(ui.position.value - filter.ordinal)).coerceIn(0f, 1f)) },
+                        softWrap = false,
                     )
                 }
             }
         },
-        modifier = modifier.height(Dim.s48).drawBehind {
+        // Khung nhìn cố định (fillMaxWidth trước cuộn) -> trong khối đo, minWidth = bề rộng khung nhìn, maxWidth vô hạn.
+        modifier = modifier.height(Dim.s48).fillMaxWidth().testTag("filter_row").fadeEdgesHorizontal(scroll).horizontalScroll(scroll).drawBehind {
             val position = ui.position.value
             val low = floor(position).toInt().coerceIn(0, filters.size - 1)
             val high = ceil(position).toInt().coerceIn(0, filters.size - 1)
@@ -131,17 +163,13 @@ fun FilterRow(ui: LibraryUiState, modifier: Modifier = Modifier) {
         },
     ) { measurables, constraints ->
         val pad = LabelPad.roundToPx()
-        val loose = Constraints(maxWidth = constraints.maxWidth, maxHeight = constraints.maxHeight)
-        var placeables = measurables.map { it.measure(loose) }
-        var ink = placeables.sumOf { it.width - 2 * pad }
-        if (ink > constraints.maxWidth) {
-            // Quá hẹp: mỗi chữ một phần đều, chữ xuống dòng.
-            val share = Constraints(maxWidth = constraints.maxWidth / placeables.size + 2 * pad, maxHeight = constraints.maxHeight)
-            placeables = measurables.map { it.measure(share) }
-            ink = placeables.sumOf { it.width - 2 * pad }
-        }
-        val spread = if (placeables.size > 1) ((constraints.maxWidth - ink) / (placeables.size - 1)).coerceIn(0, 24.dp.roundToPx()) else 0
-        layout(constraints.maxWidth, constraints.maxHeight) {
+        val viewport = constraints.minWidth
+        viewportWidth[0] = viewport
+        val loose = Constraints(maxHeight = constraints.maxHeight)
+        val placeables = measurables.map { it.measure(loose) }
+        val ink = placeables.sumOf { it.width - 2 * pad }
+        val (content, spread) = filterSpread(viewport, ink, placeables.size, FilterGapMin.roundToPx(), FilterGapMax.roundToPx())
+        layout(content, constraints.maxHeight) {
             var x = 0
             for ((index, placeable) in placeables.withIndex()) {
                 spans[index * 2] = x.toFloat()
