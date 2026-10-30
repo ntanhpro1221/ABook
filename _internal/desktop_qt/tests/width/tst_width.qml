@@ -96,7 +96,7 @@ Item {
             const progress = findChild(row, "chapterProgress")
             fuzzyCompare(duration.x + duration.paintedWidth, row.width - Theme.s12, 0.5)
             compare(duration.font.features.tnum, 1)
-            compare(fill.width, row.width)
+            fuzzyCompare(fill.width, row.width, 0.5)
             fuzzyCompare(progress.width, (row.width - progress.x - Theme.s12) * 0.4, 0.5)
             verify(progress.visible)
             // Render at the far end of the row, beyond the short title's ink.

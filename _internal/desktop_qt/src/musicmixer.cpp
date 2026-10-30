@@ -7,6 +7,7 @@
 #include "timestretch.h"
 
 #include <QCryptographicHash>
+#include <QDateTime>
 #include <QDir>
 #include <QFile>
 #include <QNetworkAccessManager>
@@ -301,6 +302,9 @@ struct MixVoiceState {
     // fadeIn: tiếng trước đó bị cắt giữa chừng nên khúc đầu tiên mờ vào. speedDirty: đổi tốc độ khi đang phát.
     bool joining = false, fadeIn = false, speedDirty = false;
     quint64 joinAt = 0;
+    // Bed: requested = có lời gọi play() / tua đang chờ nối vào, requestAt = con trỏ nghe lúc gọi.
+    bool alignToRequest = false, requested = false;
+    quint64 requestAt = 0;
     quint64 frameAt(quint64 consumed) const {
         quint64 frame = origin + consumed;
         if (loop && length) return frame % length;
@@ -509,6 +513,8 @@ struct MusicMixer::Impl {
                 }
                 readerDirty = false; wait.unlock(); owner->serviceReader(); wait.lock();
             }
+            wait.unlock();
+            MfSource::endThread();
         });
     }
 };
@@ -608,6 +614,11 @@ void MusicMixer::serviceReader() {
             const QString path = cacheName(d->cacheDir, url, outRate);
             auto file = std::make_unique<QFile>(path);
             quint64 frames = file->open(QIODevice::ReadOnly) ? readHeader(*file, outRate) : 0;
+            if (frames) {
+                // Ghi lần dùng: trim() bỏ tệp có mtime cũ nhất trước, nên bài vừa nghe lại được giữ, không theo giờ giải mã.
+                QFile used(path);
+                if (used.open(QIODevice::ReadWrite)) used.setFileTime(QDateTime::currentDateTime(), QFileDevice::FileModificationTime);
+            }
             QString error;
             if (!frames && !haveBytes) {
                 Guard guard(s->mutex);
@@ -1000,6 +1011,18 @@ void MusicMixer::service(size_t frames) {
 size_t MusicMixer::Impl::render(const std::shared_ptr<MixVoiceState> &s, float *out, quint64 device, size_t frames,
                                 std::vector<std::pair<std::shared_ptr<MixVoiceState>, quint64>> &began) {
     if (s->volumeDirty) { s->ramp.set(float(AudioOut::effectiveVolume(s->volume)), size_t(rate) / 20); s->volumeDirty = false; }
+    if (s->joining && s->requested && !s->streaming) {
+        // Bed nối vào ở khung `device`, muộn hơn lời gọi: bỏ qua phần đã trôi (tối đa phần vòng đệm có dư sau khúc này).
+        s->requested = false;
+        const size_t have = s->ring->readable() / 2;
+        quint64 skip = std::min<quint64>(device > s->requestAt ? device - s->requestAt : 0, have > frames ? have - frames : 0);
+        if (!s->loop) skip = std::min(skip, s->limit - std::min(s->limit, s->mixed));
+        if (skip) {
+            std::vector<float> drop(size_t(skip) * 2);
+            s->ring->read(drop.data(), drop.size());
+            s->mixed += skip; s->heard = s->mixed;
+        }
+    }
     size_t n = frames;
     if (!s->streaming && !s->loop) n = size_t(std::min<quint64>(n, s->limit - std::min(s->limit, s->mixed)));
     std::vector<float> block(frames * 2, 0.0f), scratch;
@@ -1121,7 +1144,14 @@ double MusicMixer::position(const std::shared_ptr<MixVoiceState> &s) const {
         const double at = d->mediaHeard(*s, d->cursor());
         return s->loop && s->duration > 0 ? std::fmod(at, s->duration) : at;
     }
-    return double(s->frameAt(d->heard(*s, d->cursor()))) / s->rate;
+    const quint64 cursor = d->cursor();
+    if (!s->spans.empty() && cursor < s->spans.front().device) {
+        // Đã nối vào nhưng chưa ra loa: khung nghe lúc này là khúc đầu lùi lại đúng chừng ấy (liền mạch với lúc có tiếng).
+        const Span &first = s->spans.front();
+        const quint64 back = first.device - cursor;
+        return double(s->frameAt(first.voice > back ? first.voice - back : 0)) / s->rate;
+    }
+    return double(s->frameAt(d->heard(*s, cursor))) / s->rate;
 }
 
 MixVoice::MixVoice(MusicMixer *mixer, QObject *parent) : AudioOut(parent), m_mixer(mixer), m_state(std::make_shared<MixVoiceState>()) {
@@ -1129,7 +1159,9 @@ MixVoice::MixVoice(MusicMixer *mixer, QObject *parent) : AudioOut(parent), m_mix
     m_state->rate = mixer->rate();
     Guard guard(mixer->d->voicesMutex); mixer->d->voices.push_back(m_state);
 }
-MixVoice::MixVoice(MusicMixer *mixer, Purpose purpose, QObject *parent) : MixVoice(mixer, parent) { m_state->streaming = purpose == Voice; }
+MixVoice::MixVoice(MusicMixer *mixer, Purpose purpose, QObject *parent) : MixVoice(mixer, parent) {
+    m_state->streaming = purpose == Voice; m_state->alignToRequest = purpose == Bed;
+}
 MixVoice::MixVoice(MusicMixer *mixer, std::function<std::unique_ptr<VoiceDecoder>(int)> decoder, QObject *parent) : MixVoice(mixer, Voice, parent) {
     m_state->decoderFactory = std::move(decoder);
 }
@@ -1157,6 +1189,7 @@ void MixVoice::play() {
     { Guard engine(m_mixer->d->engineMutex); Guard guard(m_state->mutex);
       m_mixer->d->responsiveUntil = Clock::now() + std::chrono::seconds(2);
       if (!m_state->url.isEmpty()) {
+          if (m_state->alignToRequest && !m_state->want) { m_state->requestAt = m_mixer->d->cursor(); m_state->requested = true; }
           // Không flush: giọng được nối vào tại con trỏ nghe ngay khi nguồn sẵn (MusicMixer::service, joining).
           m_state->want = true;
           if (m_state->streaming && !m_state->ready && !m_state->buffering) {
@@ -1171,7 +1204,7 @@ void MixVoice::pause() {
     { Guard engine(m_mixer->d->engineMutex); Guard guard(m_state->mutex);
       m_mixer->d->responsiveUntil = Clock::now() + std::chrono::seconds(2);
       if (m_mixer->d->written) m_mixer->d->resetQueued = m_state->flush = true;
-      m_state->want = false;
+      m_state->want = m_state->requested = false;
       if (m_state->buffering) { m_state->buffering = false; m_mixer->post(m_state, [](MixVoice *v) { emit v->buffering(false); }); }
       m_state->target = at; m_state->reposition = true;
       if (m_state->playing) { m_state->playing = false; m_mixer->post(m_state, [](MixVoice *v) { emit v->playingChanged(false); }); }
@@ -1194,7 +1227,7 @@ void MixVoice::stop() {
       m_state->buffering = m_state->seeking = m_state->reposition = m_state->eof = m_state->flush = false;
       m_state->ring.reset(); m_state->file.reset(); m_state->spans.clear();
       m_state->source.reset(); m_state->decoder.reset(); m_state->stretch.reset(); m_state->mediaHeard = m_state->mediaMixed = 0;
-      m_state->joining = m_state->fadeIn = m_state->speedDirty = false; m_state->joinAt = 0;
+      m_state->joining = m_state->fadeIn = m_state->speedDirty = m_state->requested = false; m_state->joinAt = 0;
       m_state->duration = m_state->target = 0; m_state->mixed = m_state->heard = m_state->origin = m_state->length = 0;
     }
     // Huỷ tải khi không phần tử nào còn chờ; nguồn chung vẫn được giữ cho phần tử khác.
@@ -1215,6 +1248,7 @@ void MixVoice::seek(double seconds) {
       m_mixer->d->responsiveUntil = Clock::now() + std::chrono::seconds(2);
       if (m_mixer->d->written) m_mixer->d->resetQueued = m_state->flush = true;
       ++m_state->seekSerial; m_state->target = bounded(seconds); m_state->seeking = m_state->reposition = true;
+      if (m_state->alignToRequest && m_state->want) { m_state->requestAt = m_mixer->d->cursor(); m_state->requested = true; }
       if (m_state->streaming && m_state->want && !m_state->buffering) {
           m_state->buffering = true; m_mixer->post(m_state, [](MixVoice *v) { emit v->buffering(true); });
       }

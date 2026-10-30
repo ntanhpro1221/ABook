@@ -16,15 +16,20 @@
 using Microsoft::WRL::ComPtr;
 
 namespace {
-// Giữ COM/MF tới cuối luồng reader, không khởi động lại cho từng bài.
+// Giữ COM/MF tới MfSource::endThread() ở cuối luồng reader, không khởi động lại cho từng bài. Không nhả trong hàm huỷ
+// thread_local: nó chạy dưới loader lock lúc luồng thoát, và MFShutdown cuối cùng ở đó chờ mãi các luồng hàng đợi MF
+// (chúng cũng cần loader lock để thoát) - huỷ bộ trộn, tức thoát app, treo.
 struct ReaderRuntime {
-    HRESULT com = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
-    HRESULT mf = SUCCEEDED(com) ? MFStartup(MF_VERSION) : com;
-    ~ReaderRuntime() {
-        if (SUCCEEDED(mf)) MFShutdown();
-        if (SUCCEEDED(com)) CoUninitialize();
-    }
+    bool started = false;
+    HRESULT com = E_FAIL, mf = E_FAIL;
 };
+thread_local ReaderRuntime runtime;
+}
+
+void MfSource::endThread() {
+    if (SUCCEEDED(runtime.mf)) MFShutdown();
+    if (SUCCEEDED(runtime.com)) CoUninitialize();
+    runtime = {};
 }
 
 struct MfSource::Decoder {
@@ -49,7 +54,11 @@ bool MfSource::open(const QByteArray &data) {
     m_resampler.reset(); m_pending.clear(); m_pendingAt = 0;
     m_rate = m_channels = 0; m_duration = 0; m_fed = m_given = m_length = 0; m_done = false;
     m_error.clear(); m_ogg = data.startsWith("OggS");
-    thread_local ReaderRuntime runtime;
+    if (!runtime.started) {
+        runtime.started = true;
+        runtime.com = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+        runtime.mf = SUCCEEDED(runtime.com) ? MFStartup(MF_VERSION) : runtime.com;
+    }
     if (FAILED(runtime.mf)) return fail(runtime.mf);
     if (data.isEmpty() || quint64(data.size()) > std::numeric_limits<UINT>::max()) return fail(E_INVALIDARG);
     d->stream.Attach(SHCreateMemStream(reinterpret_cast<const BYTE *>(data.constData()), UINT(data.size())));

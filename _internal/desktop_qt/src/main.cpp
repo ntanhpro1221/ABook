@@ -198,7 +198,7 @@ int main(int argc, char *argv[]) {
     Player::setInstance(&player);
     player.watchInput();
     Music music(&player, &hostNet, [&mixer, benchMode]() -> AudioOut * {
-        auto *voice = new MixVoice(mixer.get());
+        auto *voice = new MixVoice(mixer.get(), MixVoice::Bed);
         if (benchMode) {
             QObject::connect(voice, &AudioOut::durationChanged, voice, [&mixer](double seconds) {
                 Bench::mark(QStringLiteral("mix_ready:%1:%2:decodes=%3").arg(mixer->rate()).arg(seconds).arg(mixer->decodeCount()));
