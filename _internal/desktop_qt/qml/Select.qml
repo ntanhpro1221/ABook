@@ -7,7 +7,7 @@ import ABook
 // tích ĐẦU dòng (SelectionMark), tên dài xuống dòng, mũi tên / Enter chọn, Back / bấm ra ngoài đóng. Mở / đóng: trượt 8 px + mờ.
 Interactive {
     id: root
-    property var options: []            // [{value, label}]
+    property var options: []            // [{value, label}]; {header} là đầu một nhóm (optgroup của web): không chọn được, mũi tên đi qua
     property var value: ""
     property string label: ""           // tên cho trình đọc màn hình
     property string placeholder: ""     // chữ mờ khi chưa chọn mục nào ("Chọn cuốn…")
@@ -15,7 +15,7 @@ Interactive {
     property bool tabular: false
     signal picked(var value)
     readonly property int currentIndex: {
-        for (let i = 0; i < options.length; ++i) if (String(options[i].value) === String(value)) return i
+        for (let i = 0; i < options.length; ++i) if (!options[i].header && String(options[i].value) === String(value)) return i
         return -1
     }
     readonly property string currentLabel: currentIndex >= 0 ? options[currentIndex].label : ""
@@ -103,23 +103,43 @@ Interactive {
             Keys.onReturnPressed: pick(currentIndex)
             Keys.onEnterPressed: pick(currentIndex)
             Keys.onSpacePressed: pick(currentIndex)
-            function pick(i) { if (i >= 0 && i < root.options.length) root.picked(root.options[i].value); list.close() }
+            function pick(i) {
+                if (i >= 0 && i < root.options.length && root.options[i].header) return
+                if (i >= 0 && i < root.options.length) root.picked(root.options[i].value)
+                list.close()
+            }
+            // Mũi tên dừng ở đầu nhóm thì đi tiếp theo cùng chiều (hết chỗ thì quay lại)
+            property int lastIndex: 0
+            onCurrentIndexChanged: {
+                const at = currentIndex
+                if (at >= 0 && at < root.options.length && root.options[at].header) {
+                    const step = at >= lastIndex ? 1 : -1
+                    const next = at + step >= 0 && at + step < root.options.length ? at + step : at - step
+                    lastIndex = at
+                    currentIndex = next
+                    return
+                }
+                lastIndex = at
+            }
             delegate: Interactive {
                 id: row
                 required property var modelData
                 required property int index
                 readonly property bool selected: index === root.currentIndex
+                readonly property bool header: Boolean(modelData.header)
                 width: ListView.view.width
-                height: Math.max(36, rowText.implicitHeight + 16)
+                height: header ? Math.max(28, rowText.implicitHeight + 12) : Math.max(36, rowText.implicitHeight + 16)
+                enabled: !header
                 pressScaling: false
                 activeFocusOnTab: false
                 externalFocus: ListView.isCurrentItem && rows.activeFocus
-                Accessible.role: Accessible.ListItem
-                Accessible.name: modelData.label
+                Accessible.role: header ? Accessible.StaticText : Accessible.ListItem
+                Accessible.name: header ? modelData.header : modelData.label
                 Accessible.selected: selected
                 onClicked: rows.pick(index)
-                Rectangle { anchors.fill: parent; radius: Theme.radiusControl; color: Theme.hover; opacity: row.hovered || row.ListView.isCurrentItem ? 1 : 0 }
+                Rectangle { anchors.fill: parent; radius: Theme.radiusControl; color: Theme.hover; opacity: !row.header && (row.hovered || row.ListView.isCurrentItem) ? 1 : 0 }
                 Icon {
+                    visible: !row.header
                     x: 8
                     anchors.verticalCenter: parent.verticalCenter
                     name: "check"
@@ -130,13 +150,14 @@ Interactive {
                 }
                 Text {
                     id: rowText
-                    x: 8 + 16 + 8
+                    x: row.header ? 8 : 8 + 16 + 8
                     width: row.width - x - 8
                     anchors.verticalCenter: parent.verticalCenter
-                    text: row.modelData.label
+                    text: row.header ? row.modelData.header : row.modelData.label
                     wrapMode: Text.Wrap
-                    color: row.selected ? Theme.accentText : Theme.text
-                    font.pixelSize: Theme.sizeBodySmall
+                    color: row.header ? Theme.text2 : row.selected ? Theme.accentText : Theme.text
+                    font.pixelSize: row.header ? Theme.sizeCaption : Theme.sizeBodySmall
+                    font.weight: row.header ? Font.DemiBold : Theme.weightRegular
                     font.features: root.tabular ? {"tnum": 1} : {}
                 }
             }

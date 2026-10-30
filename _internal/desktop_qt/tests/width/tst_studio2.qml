@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "ModalLayer.js" as ModalLayer
 import "VisualReady.js" as VisualReady
 import ABook
 
@@ -32,12 +33,7 @@ Item {
         function shown(item) { for (let node = item; node; node = node.parent) if (!node.visible || node.opacity === 0) return false; return true }
         function one(item, name) { const found = all(item, name); verify(found.length > 0, "thiếu " + name); return found.filter(shown)[0] || found[0] }
         function has(item, name) { return all(item, name).filter(shown).length > 0 }
-        function texts(item, out) {
-            out = out || []
-            if (item.text !== undefined && shown(item)) out.push(String(item.text))
-            for (const child of item.children || []) texts(child, out)
-            return out
-        }
+        function texts(item) { return ModalLayer.collect(item, node => node.text !== undefined && shown(node)).map(node => String(node.text)) }
         function hasText(item, value) { return texts(item).indexOf(value) >= 0 }
         function hasPart(item, part) { return texts(item).some(t => t.indexOf(part) >= 0) }
         function shot(name, item) {
@@ -45,7 +41,7 @@ Item {
             VisualReady.render(this, host.Window.window, target, qtVisualReady)
             const path = Qt.resolvedUrl("../../build/d2shots/s2_" + name + "_" + (Theme.dark ? "dark" : "light") + ".png").toString()
                 .replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, "")
-            grabImage(target).save(path)
+            grabImage(VisualReady.grabTarget(host.Window.window, target)).save(path)
         }
         function both(name, item) { for (const mode of ["light", "dark"]) { Theme.mode = mode; shot(name, item) } Theme.mode = "auto" }
 
@@ -261,7 +257,7 @@ Item {
             one(page, "newStartOver").activated()
             tryVerify(function() { return !has(page, "newCreate") })
             compare(page.newStore.draft.paths.length, 0)
-            verify(has(page, "newDrop"))
+            tryVerify(function() { return has(page, "newDrop") })
         }
 
         // ================= 3. Tuỳ chọn =================

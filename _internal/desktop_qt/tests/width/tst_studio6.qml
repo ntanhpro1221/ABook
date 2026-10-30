@@ -1,6 +1,7 @@
 import QtQuick
 import QtTest
-import QtQuick.Controls.Basic as C
+import "VisualReady.js" as VisualReady
+import "ModalLayer.js" as ModalLayer
 import ABook
 import "../../qml/ScriptLogic.js" as S
 
@@ -12,7 +13,8 @@ Item {
     width: 1280
     height: 900
     Rectangle { anchors.fill: parent; color: Theme.bg }
-    readonly property var overlay: C.Overlay.overlay
+    // Hộp / bảng nổi và hộp chọn đều nằm dưới gốc cửa sổ (WindowLayer, Overlay)
+    readonly property var overlay: Window.window ? Window.window.contentItem : null
     Component { id: studioFactory; StudioScreen {} }
 
     // ---- scriptFind.test.ts + scriptFilter.test.ts (cùng ca, cùng chữ) ----
@@ -90,29 +92,15 @@ Item {
 
         function reply(key, value) { const r = DesktopApi.responses; r[key] = value; DesktopApi.responses = r }
         function calls(method, path) { return DesktopApi.requests.filter(r => r.method === method && r.path === path) }
-        function all(item, name, out) {
-            out = out || []
-            if (item.objectName === name) out.push(item)
-            for (const child of item.children || []) all(child, name, out)
-            return out
-        }
+        // gồm cả hộp / bảng nổi do `item` mở (WindowLayer nằm ở gốc cửa sổ, không còn là con của trang)
+        function all(item, name) { return ModalLayer.findAll(item, name) }
         function shown(item) { for (let node = item; node; node = node.parent) if (!node.visible || node.opacity === 0) return false; return true }
         function one(item, name) { const found = all(item, name); verify(found.length > 0, "thiếu " + name); return found.filter(shown)[0] || found[0] }
         function has(item, name) { return all(item, name).filter(shown).length > 0 }
-        function texts(item, out) {
-            out = out || []
-            if (item.text !== undefined && shown(item)) out.push(String(item.text))
-            for (const child of item.children || []) texts(child, out)
-            return out
-        }
+        function texts(item) { return ModalLayer.collect(item, node => node.text !== undefined && shown(node)).map(node => String(node.text)) }
         function hasText(item, value) { return texts(item).indexOf(value) >= 0 }
         function hasPart(item, part) { return texts(item).some(t => t.indexOf(part) >= 0) }
-        function all2(item, test, out) {
-            out = out || []
-            if (test(item)) out.push(item)
-            for (const child of item.children || []) all2(child, test, out)
-            return out
-        }
+        function all2(item, test) { return ModalLayer.collect(item, test) }
         function shot(name, item) {
             const target = item || host
             tryVerify(function() { return all2(target, n => n.settled === false && n.reveal !== undefined).length === 0 }, 3000)
@@ -120,7 +108,7 @@ Item {
             tryVerify(function() { waitForRendering(target); const a = grabImage(target); waitForRendering(target); return a.equals(grabImage(target)) }, 3000)
             const path = Qt.resolvedUrl("../../build/d2shots/s6_" + name + "_" + (Theme.dark ? "dark" : "light") + ".png").toString()
                 .replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, "")
-            grabImage(target).save(path)
+            grabImage(VisualReady.grabTarget(host.Window.window, target)).save(path)
         }
         function both(name, item) { for (const mode of ["light", "dark"]) { Theme.mode = mode; shot(name, item) } Theme.mode = "auto" }
         function noCut(item) {

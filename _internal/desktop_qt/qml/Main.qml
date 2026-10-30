@@ -101,6 +101,8 @@ Window {
             currentSection: stack.current
             onSectionRequested: (index) => stack.show(index)
             onProjectRequested: id => { Nav.studioPeer = ""; stack.rootContent(1).openProject(id) }
+            onPrecastRequested: id => stack.rootContent(1).openProjectTab("precast")
+            openProject: stack.current === 1 && stack.rootContent(1) && stack.rootContent(1).route === "project" && !Nav.studioPeer ? stack.rootContent(1).studioStore.bookId : ""
         }
         // Khung nội dung: màn hiện tại, thanh phát ở đáy, Đang nghe phủ lên trên cả hai
         Item {
