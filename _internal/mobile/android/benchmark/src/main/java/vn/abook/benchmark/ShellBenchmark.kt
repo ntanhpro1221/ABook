@@ -1,13 +1,11 @@
 package vn.abook.benchmark
 
-import androidx.benchmark.macro.CompilationMode
 import androidx.benchmark.macro.FrameTimingMetric
 import androidx.benchmark.macro.MacrobenchmarkScope
 import androidx.benchmark.macro.StartupMode
 import androidx.benchmark.macro.StartupTimingMetric
 import androidx.benchmark.macro.junit4.MacrobenchmarkRule
 import androidx.test.uiautomator.By
-import androidx.test.uiautomator.Direction
 import androidx.test.uiautomator.Until
 import org.junit.Rule
 import org.junit.Test
@@ -20,52 +18,58 @@ class ShellBenchmark {
     @get:Rule
     val rule = MacrobenchmarkRule()
 
-    private fun MacrobenchmarkScope.launchLibrary(books: Int = 200) {
-        pressHome()
+    /**
+     * [home] false for the frame scenarios: Home puts the playing app into picture-in-picture and the next launch leaves PiP into Now playing (a feature),
+     * which would turn every library scenario into a Now playing one. The launch intent already restarts the activity (NEW_TASK | CLEAR_TASK).
+     */
+    private fun MacrobenchmarkScope.launchLibrary(books: Int = 200, home: Boolean = true) {
+        if (home) pressHome()
         startActivityAndWait { it.putExtra("abook.demo.books", books) }
-        device.wait(Until.hasObject(By.res("library_grid")), 5_000)
+        Thread.sleep(1_500)
     }
 
     @Test
     fun coldStartup() = rule.measureRepeated(
         packageName = PACKAGE, metrics = listOf(StartupTimingMetric()), iterations = 10,
-        startupMode = StartupMode.COLD, compilationMode = CompilationMode.Partial(),
+        startupMode = StartupMode.COLD, compilationMode = compilation(),
+    ) { launchLibrary() }
+
+    /** Khung vẽ của chính lần mở nguội (tới khi lưới Thư viện hiện): ngân sách khung áp cho cả kịch bản này. */
+    @Test
+    fun coldStartFrames() = rule.measureRepeated(
+        packageName = PACKAGE, metrics = listOf(FrameTimingMetric()), iterations = 10,
+        startupMode = StartupMode.COLD, compilationMode = compilation(),
     ) { launchLibrary() }
 
     @Test
     fun warmStartup() = rule.measureRepeated(
         packageName = PACKAGE, metrics = listOf(StartupTimingMetric()), iterations = 10,
-        startupMode = StartupMode.WARM, compilationMode = CompilationMode.Partial(),
+        startupMode = StartupMode.WARM, compilationMode = compilation(),
     ) { launchLibrary() }
 
     @Test
     fun tabSwitching() = rule.measureRepeated(
         packageName = PACKAGE, metrics = listOf(FrameTimingMetric()), iterations = 8,
-        startupMode = StartupMode.WARM, compilationMode = CompilationMode.Partial(),
-        setupBlock = { launchLibrary() },
+        startupMode = StartupMode.WARM, compilationMode = compilation(),
+        setupBlock = { launchLibrary(home = false) },
     ) {
-        for (tag in listOf("tab_studio", "tab_settings", "tab_library", "tab_settings", "tab_studio", "tab_library")) {
-            device.findObject(By.res(tag)).click()
-            device.waitForIdle()
-        }
+        for (spot in listOf(Spot.tabStudio, Spot.tabSettings, Spot.tabLibrary, Spot.tabSettings, Spot.tabStudio, Spot.tabLibrary)) tap(spot, 600)
     }
 
     @Test
     fun gridScroll() = rule.measureRepeated(
         packageName = PACKAGE, metrics = listOf(FrameTimingMetric()), iterations = 8,
-        startupMode = StartupMode.WARM, compilationMode = CompilationMode.Partial(),
-        setupBlock = { launchLibrary() },
+        startupMode = StartupMode.WARM, compilationMode = compilation(),
+        setupBlock = { launchLibrary(home = false) },
     ) {
-        val grid = device.findObject(By.res("library_grid"))
-        grid.setGestureMargin(device.displayWidth / 5)
-        repeat(3) { grid.fling(Direction.DOWN) }
-        repeat(3) { grid.fling(Direction.UP) }
+        repeat(3) { swipe(0.5f, 0.75f, 0.5f, 0.2f, 120, 900) }
+        repeat(3) { swipe(0.5f, 0.2f, 0.5f, 0.75f, 120, 900) }
     }
 
     @Test
     fun addAndEditBackFiveTimes() = rule.measureRepeated(
         packageName = PACKAGE, metrics = listOf(FrameTimingMetric()), iterations = 5,
-        startupMode = StartupMode.WARM, compilationMode = CompilationMode.Partial(),
+        startupMode = StartupMode.WARM, compilationMode = compilation(),
         setupBlock = { launchLibrary() },
     ) {
         repeat(5) {
@@ -87,14 +91,12 @@ class ShellBenchmark {
     @Test
     fun pushAndBack() = rule.measureRepeated(
         packageName = PACKAGE, metrics = listOf(FrameTimingMetric()), iterations = 8,
-        startupMode = StartupMode.WARM, compilationMode = CompilationMode.Partial(),
-        setupBlock = { launchLibrary() },
+        startupMode = StartupMode.WARM, compilationMode = compilation(),
+        setupBlock = { launchLibrary(home = false) },
     ) {
         repeat(3) {
-            device.findObjects(By.res("book_cell")).first().click()
-            device.wait(Until.hasObject(By.res("book_screen")), 2_000)
-            device.pressBack()
-            device.wait(Until.hasObject(By.res("library_grid")), 2_000)
+            tap(Spot.firstBook, 900)
+            back(900)
         }
     }
 
@@ -102,7 +104,7 @@ class ShellBenchmark {
     @Test
     fun settingsGroupBackFiveTimes() = rule.measureRepeated(
         packageName = PACKAGE, metrics = listOf(FrameTimingMetric()), iterations = 8,
-        startupMode = StartupMode.WARM, compilationMode = CompilationMode.Partial(),
+        startupMode = StartupMode.WARM, compilationMode = compilation(),
         setupBlock = {
             launchLibrary()
             device.findObject(By.res("tab_settings")).click()
