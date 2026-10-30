@@ -9,6 +9,9 @@ import msvcrt
 import os
 import subprocess
 import struct
+from pathlib import Path
+
+from private_profile import isolate
 
 k = c.WinDLL("kernel32", use_last_error=True)
 u = c.WinDLL("user32", use_last_error=True)
@@ -81,6 +84,8 @@ class Process:
         if getattr(self,"_handle",None):k.CloseHandle(self._handle)
 
 def create_suspended(args, *, cwd, env, log, desktop, show=0):
+    if Path(str(args[0])).name.lower() == "abookdesk.exe":
+        env = isolate(dict(env))
     current=k.GetCurrentProcess();handles=[]
     def inherit(file):
         target=w.HANDLE()
