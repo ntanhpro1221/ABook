@@ -30,9 +30,11 @@ inline constexpr double NEXT_CHAPTER_WARM_SECONDS = 120;
 inline constexpr qint64 NEXT_CHAPTER_RETRY_MS = 15000;
 /// Nhịp đồng bộ với giọng (bản web: `timeupdate` tới 250 ms; ở đây đồng hồ của Player cũng ~4 lần mỗi giây).
 inline constexpr double SYNC_TICK_SECONDS = 0.25;
-inline constexpr double LOOP_DRIFT_TOLERANCE_SECONDS = 0.02;
+inline constexpr double LOOP_DRIFT_TOLERANCE_SECONDS = 0.005; // §48: 20 ms để lọt ε 20-40 ms
 inline constexpr double LOOP_DRIFT_QUIET = 0.1;
 inline constexpr double LOOP_STANDBY_SECONDS = 3;
+/// Hẹn giờ nhỏ hơn mức này coi như đã tới (nextSyncSeconds), nên crossLoop cũng tính chừng ấy là đã tới giờ tạo phần tử chờ sẵn.
+inline constexpr double SYNC_DUE_SECONDS = 0.001;
 inline constexpr double LOOP_TIMER_SLACK_SECONDS = 0.05;
 
 inline constexpr double INF = std::numeric_limits<double>::infinity();

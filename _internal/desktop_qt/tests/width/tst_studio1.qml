@@ -368,7 +368,8 @@ Item {
             Api.info = {version: "0.4.150", studio: {installed: false}, dialogs: true}
             const page = openBook(bookStates().idle, [])
             one(page, "primaryButton").clicked()
-            wait(100)   // fixed: proves absence
+            // Lời từ chối là dấu nút đã đi đường "chưa cài": sau nó mới chắc là không có lệnh nào được gửi.
+            tryCompare(Api, "notice", "Cần cài Studio\nPhân tích và thu âm chạy bằng Studio.")
             compare(calls("POST", "/api/books/idle/start").length, 0, "không gửi lệnh rồi nhận lỗi")
             verify(shown(one(page, "primaryButton")))
         }
