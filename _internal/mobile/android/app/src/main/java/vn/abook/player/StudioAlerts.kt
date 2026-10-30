@@ -16,6 +16,8 @@ import androidx.work.WorkManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import org.json.JSONObject
+import vn.abook.player.ui.NativeActivity
+import vn.abook.player.ui.studio.StudioRoute
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
@@ -183,8 +185,9 @@ object StudioAlerts {
                 },
             )
         }
-        val open = Intent(context, StudioActivity::class.java)
-            .putExtra("path", path)
+        // Giao diện native: mở thẳng dự án ở đúng tab bằng màn native (mã máy, mã sách, tab - không bao giờ mã thiết bị); bản WebView mở trang Studio như cũ.
+        val open = (if (BuildConfig.NATIVE_UI) StudioRoute.put(Intent(context, NativeActivity::class.java), StudioLink.MAIN, StudioRoute.parse(path))
+            else Intent(context, StudioActivity::class.java).putExtra("path", path))
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         val tap = PendingIntent.getActivity(context, key.hashCode(), open,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)

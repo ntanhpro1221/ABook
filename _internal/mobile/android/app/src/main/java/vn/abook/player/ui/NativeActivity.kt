@@ -6,7 +6,6 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
-import vn.abook.player.StudioActivity
 import vn.abook.player.ui.devices.DeviceLinks
 import vn.abook.player.ui.export.ExportLinks
 import vn.abook.player.M4bExports
@@ -60,6 +59,8 @@ import vn.abook.player.ui.pip.PipControl
 import vn.abook.player.ui.pip.PipParams
 import vn.abook.player.ui.pip.PipSupport
 import vn.abook.player.ui.shell.ShellState
+import vn.abook.player.ui.studio.StudioRequest
+import vn.abook.player.ui.studio.StudioRoute
 import androidx.compose.ui.text.font.createFontFamilyResolver
 import vn.abook.player.ui.theme.AbookTheme
 import vn.abook.player.ui.theme.BeVietnamPro
@@ -83,6 +84,9 @@ class NativeActivity : ComponentActivity() {
 
     /** File app khác gửi tới ("Mở bằng", chia sẻ) chờ khung vẽ xong để vào hàng nhập sách ([ShellState.receive]); mở nguội thì khung chưa có, nên cần chỗ đợi. */
     private val incoming = Channel<List<String>>(Channel.UNLIMITED)
+
+    /** Nơi cần mở trong Studio từ xa (thông báo "cần duyệt / đã xong", hàng "Studio" ở Thiết bị): cũng chờ khung vẽ xong rồi [ShellState.openStudio]. */
+    private val studioRequests = Channel<StudioRequest>(Channel.UNLIMITED)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splash = installSplashScreen()
@@ -178,6 +182,7 @@ class NativeActivity : ComponentActivity() {
                     }
                     val env = remember { SettingsEnv(settings, reveal, links, if (demo) null else app.devices, if (demo) null else app.voice, if (demo) null else app.music, pip, if (demo) null else app.prepare, if (demo) null else app.night) }
                     LaunchedEffect(shell) { for (files in incoming) shell.receive(app.imports, files) }
+                    LaunchedEffect(shell) { for (request in studioRequests) shell.openStudio(request) }
                     LaunchedEffect(Unit) { shell.library.restoreSort(withContext(Dispatchers.IO) { prefs.sort() }) }
                     // Dáng chữ của Đọc theo: đọc một lần lúc mở app, ghi mỗi khi người nghe đổi.
                     LaunchedEffect(shell) {
@@ -194,7 +199,7 @@ class NativeActivity : ComponentActivity() {
                         shell, state, player, covers, env, onFirstContent = ::onFirstContent, books = library, deletions = library.deletions, companion = if (demo) null else app.companion,
                         nowPlaying = rememberRepoNowPlaying(player, readAlong, env.music, env.voice, bookList, env.prepare, env.night),
                         imports = app.imports, editors = app.editors, exports = if (demo) null else app.exports, demo = demo, askNotifications = deviceLinks.askNotifications, autoPick = !demo,
-                        pip = pip,
+                        pip = pip, studio = if (demo) null else app.studio,
                     )
                 }
             }
@@ -210,6 +215,7 @@ class NativeActivity : ComponentActivity() {
     /** "Mở bằng ABook" / chia sẻ một file tới app (cùng cách lấy địa chỉ với MainActivity): vào hàng nhập sách như file chọn từ "Thêm sách". */
     private fun receive(intent: Intent?) {
         if (demo || intent == null) return
+        StudioRoute.request(intent)?.let { studioRequests.trySend(it) }
         val uri = IncomingFile.uri(intent)
         if (uri == null) {
             if (IncomingFile.textOnly(intent)) Toast.makeText(this, IncomingFile.TEXT_ONLY, Toast.LENGTH_LONG).show()
@@ -226,7 +232,7 @@ class NativeActivity : ComponentActivity() {
 
     /** Cửa ra hệ điều hành của ba màn Thiết bị: Studio của máy tính, trang thông tin ứng dụng, quyền "Thiết bị ở gần" và thông báo. */
     private val deviceLinks = DeviceLinks(
-        openStudio = { computer, path -> open(Intent(this, StudioActivity::class.java).putExtra("computer", computer).putExtra("path", path)) },
+        openStudio = { computer, path -> studioRequests.trySend(StudioRequest(computer, StudioRoute.parse(path))) },
         openAppSettings = { open(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))) },
         askNearby = { result ->
             if (Build.VERSION.SDK_INT < 31) {
