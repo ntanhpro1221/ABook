@@ -8,7 +8,7 @@ import java.util.Locale
 import java.util.TimeZone
 
 /*
- * Phần của trang sách mà bản WebView có và native từng chưa: lịch sử nghe, hồ sơ nghe, dàn nhân vật. Viết lại từ listen/BookScreen.tsx (HistoryTab, RecordPicker, CastList,
+ * Phần của trang sách: lịch sử nghe, hồ sơ nghe, dàn nhân vật. Viết lại từ listen/BookScreen.tsx (HistoryTab, RecordPicker, CastList,
  * PersonRow), studio/CastEdits.tsx, studio/MergePeople.tsx, listen/voiceTone.ts - cùng chữ, cùng luật. Hàm thuần, không Android, không Compose ngoài @Immutable -
  * thử trên JVM (ListenExtrasTest).
  */

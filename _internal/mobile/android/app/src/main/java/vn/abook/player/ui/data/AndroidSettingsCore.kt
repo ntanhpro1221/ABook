@@ -17,9 +17,9 @@ import vn.abook.player.readaloud.ReadAloud
 import vn.abook.player.readaloud.VoiceSpeed
 
 /**
- * Lõi thật của Cài đặt native: đọc / ghi ĐÚNG những chỗ bản WebView dùng - tuỳ chọn nghe ở [ListenPrefs] (`listen-prefs.json`, qua [ListenPrefs.apply] như
- * `PlayerPlugin.configure`), "Tự chọn nhạc nền" ở [MusicBed], giọng mặc định ở [ReadAloud] (`readaloud-voices.json`), tốc độ giọng ở [VoiceSpeed], nhật ký ở
- * [AppLog] / [Diagnostics]. Không qua plugin. Mọi hàm gọi ở luồng nền.
+ * Lõi thật của Cài đặt native: đọc / ghi ĐÚNG những chỗ lõi dùng - tuỳ chọn nghe ở [ListenPrefs] (`listen-prefs.json`, qua [ListenPrefs.apply]),
+ * "Tự chọn nhạc nền" ở [MusicBed], giọng mặc định ở [ReadAloud] (`readaloud-voices.json`), tốc độ giọng ở [VoiceSpeed], nhật ký ở
+ * [AppLog] / [Diagnostics]. Mọi hàm gọi ở luồng nền.
  */
 class AndroidSettingsCore(context: Context) : SettingsCore {
     private val app = context.applicationContext
@@ -121,7 +121,7 @@ class AndroidSettingsCore(context: Context) : SettingsCore {
 
     override fun clearCache(): Long {
         ready()
-        // Như "Dọn bản đọc đã làm" của bản WebView (ReadAloudPlugin.cacheClear): "Làm trước" đang chạy dừng trước, không thì nó ghi lại đúng những đoạn vừa dọn.
+        // "Dọn bản đọc đã làm": "Làm trước" đang chạy dừng trước, không thì nó ghi lại đúng những đoạn vừa dọn.
         vn.abook.player.readaloud.PrepareAhead.cancel(app)
         ReadAloud.cache().clear()
         return ReadAloud.cache().sizeBytes()
@@ -146,10 +146,10 @@ class AndroidSettingsCore(context: Context) : SettingsCore {
     override val version: String get() = BuildConfig.VERSION_NAME
 
     companion object {
-        /** Số dòng nhật ký của "Xem" (như `VIEW_LINES` của bản WebView). */
+        /** Số dòng nhật ký của "Xem". */
         const val VIEW_LINES = 500
 
-        /** docs/THIRD_PARTY.md gói vào asset của bản -PnativeUi (app/build.gradle). */
+        /** docs/THIRD_PARTY.md gói vào asset lúc build (app/build.gradle, nativeThirdPartyAsset). */
         const val THIRD_PARTY_ASSET = "THIRD_PARTY.md"
     }
 }

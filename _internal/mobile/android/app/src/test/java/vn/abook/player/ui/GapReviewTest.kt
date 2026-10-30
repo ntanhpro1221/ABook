@@ -88,7 +88,7 @@ class GapReviewTest {
         assertEquals(tabsBefore, tabs)
         rule.onRoot().captureRoboImage("src/test/snapshots/gap1b_shell_${if (failure) "error" else "undo"}_${if (dark) "dark" else "light"}.png")
         if (!failure) {
-            // Hoàn tác xong thì thanh nói "Đã khôi phục" (như thông báo của bản WebView) và hết nút Hoàn tác.
+            // Hoàn tác xong thì thanh nói "Đã khôi phục" và hết nút Hoàn tác.
             rule.onNodeWithTag("undo_delete").performClick()
             rule.waitForIdle()
             rule.onNodeWithText("Đã khôi phục “Tắt đèn”").assertIsDisplayed()

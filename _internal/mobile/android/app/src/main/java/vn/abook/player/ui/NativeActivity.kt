@@ -68,8 +68,7 @@ import vn.abook.player.ui.theme.ThemeReveal
 import vn.abook.player.ui.theme.ThemeRevealHost
 
 /**
- * Màn mở app của giao diện native (docs/NATIVE_PHONE_UI.md): một Activity, Compose, không WebView. Chỉ là màn khởi động khi dựng với `-PnativeUi`
- * (src/nativeUi/AndroidManifest.xml); bản thường vẫn mở MainActivity (WebView).
+ * Màn mở app (docs/NATIVE_PHONE_UI.md): một Activity, Compose; nhận cả "Mở bằng" / chia sẻ file (manifest).
  */
 class NativeActivity : ComponentActivity() {
     private val app get() = application as AbookApplication
@@ -96,7 +95,7 @@ class NativeActivity : ComponentActivity() {
         lifecycleScope.launch(Dispatchers.Default) { createFontFamilyResolver(applicationContext).preload(BeVietnamPro) }
         val library = app.library
         val covers = app.covers
-        val demoBooks = if (BuildConfig.NATIVE_UI) intent.getIntExtra(DEMO_BOOKS, 0) else 0
+        val demoBooks = if (BuildConfig.DEMO) intent.getIntExtra(DEMO_BOOKS, 0) else 0
         demo = demoBooks > 0
         if (savedInstanceState == null) receive(intent)
         // Chế độ đo: cùng đường thật (PlayerRepo -> cửa sổ Đang nghe) nhưng nguồn là một cuốn giả, không chạm lõi phát thật.
@@ -206,13 +205,24 @@ class NativeActivity : ComponentActivity() {
         }
     }
 
+    // Mở app là máy tính thấy điện thoại (để "Phát trên điện thoại" được cả khi chưa nghe gì) - Remote.
+    override fun onResume() {
+        super.onResume()
+        vn.abook.player.Remote.foreground = true
+    }
+
+    override fun onPause() {
+        vn.abook.player.Remote.foreground = false
+        super.onPause()
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
         receive(intent)
     }
 
-    /** "Mở bằng ABook" / chia sẻ một file tới app (cùng cách lấy địa chỉ với MainActivity): vào hàng nhập sách như file chọn từ "Thêm sách". */
+    /** "Mở bằng ABook" / chia sẻ một file tới app (địa chỉ lấy ra bằng [IncomingFile]): vào hàng nhập sách như file chọn từ "Thêm sách". */
     private fun receive(intent: Intent?) {
         if (demo || intent == null) return
         StudioRoute.request(intent)?.let { studioRequests.trySend(it) }
@@ -347,6 +357,7 @@ class NativeActivity : ComponentActivity() {
         if (!demo) {
             app.settings.openRelease = links.openRelease
             app.settings.loadMaintenance()
+            lifecycleScope.launch(Dispatchers.IO) { vn.abook.player.AppStartup.run(applicationContext) }
         }
     }
 
@@ -402,7 +413,7 @@ class NativeActivity : ComponentActivity() {
     }
 
     companion object {
-        /** Extra của Intent: số sách giả thay Thư viện thật (đo đạc, chỉ bản -PnativeUi). */
+        /** Extra của Intent: số sách giả thay Thư viện thật (đo đạc; chỉ bản thử -PbenchAppId, [BuildConfig.DEMO]). */
         const val DEMO_BOOKS = "abook.demo.books"
 
         /** "Mã nguồn mở" (Cài đặt > Nâng cao): trang của ABook trên GitHub - địa chỉ cố định, không nhận từ đâu. */

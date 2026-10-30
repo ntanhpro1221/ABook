@@ -95,6 +95,6 @@ class DeviceLinks(
     val askNotifications: (then: () -> Unit) -> Unit = { it() },
     /** Chép chữ vào bộ nhớ tạm của máy; false khi máy không chép được. */
     val copyText: (text: String) -> Boolean = { false },
-    /** Mở một trang của ABook trên GitHub bằng trình duyệt của máy (chỉ đường của ABook - như LibraryPlugin.openRelease). */
+    /** Mở một trang của ABook trên GitHub bằng trình duyệt của máy (chỉ đường của ABook). */
     val openRelease: (url: String) -> Unit = {},
 )

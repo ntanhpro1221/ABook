@@ -115,7 +115,7 @@ class EditBookRepo(private val context: Context, private val library: LibraryRep
 
     /**
      * Một đường của [LocalStudio] - cùng đường và cùng lời đáp mà bản web gọi (`EbookLibrary.studio`), nên hai giao diện sửa sách như nhau. Khác 200: ném câu lỗi của
-     * lõi. Sửa xong (khác GET): nhạc đang phát đọc lại lớp sửa, cuốn của máy tính gửi phần sửa về ([BookActions.edited], như LibraryPlugin.studio).
+     * lõi. Sửa xong (khác GET): nhạc đang phát đọc lại lớp sửa, cuốn của máy tính gửi phần sửa về ([BookActions.edited]).
      */
     private fun studio(method: String, id: String, rest: String, body: JSONObject? = null): JSONObject = BookActions.studio(context, method, id, rest, body)
 

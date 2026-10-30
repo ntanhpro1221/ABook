@@ -23,7 +23,7 @@ import java.util.concurrent.Executors
 
 /**
  * "Nghe ngay" cho chương CHỈ CÓ CHỮ (docs/LISTEN_ANYTHING.md mục 1 và 3): một giọng máy đọc chương, không phân tích. Sống trong lõi phát (như chương audio) vì
- * tắt màn hình thì WebView bị treo - sang đoạn kế, sang chương kế, hẹn giờ ngủ, nút tai nghe, lưu vị trí đều phải chạy không cần JavaScript.
+ * tắt màn hình thì giao diện bị treo - sang đoạn kế, sang chương kế, hẹn giờ ngủ, nút tai nghe, lưu vị trí đều phải chạy không cần giao diện.
  *
  * Cách làm: chương chia thành các đoạn ([Paragraphs.of], đúng như màn đọc), mỗi đoạn một đoạn âm thanh ([Clip]) do [ClipReader] đọc ở luồng nền. Chỉ đọc đoạn đang
  * nghe + [AHEAD] đoạn sau (giọng trực tuyến mà clip về chậm thì nhiều hơn - [ReadAheadPolicy]); đoạn nào xong thì nối thêm vào hàng đợi của ExoPlayer (một MediaItem mỗi đoạn, `mediaId` = mã chương, `tag` = [Slot]) nên chuyển đoạn
@@ -431,7 +431,7 @@ object ReadAloud {
         if (bookId.isEmpty() || (bookId == Playback.bookId && (recordId.isEmpty() || recordId == Playback.recordId))) setVoice(id)
     }
 
-    /** Chỉ nhớ giọng của cuốn `bookId`, không đổi giọng đang đọc: lúc nạp cuốn ([vn.abook.player.PlayerPlugin.load]) - [useVoiceOf] của lần nạp đặt giọng ngay sau đó.
+    /** Chỉ nhớ giọng của cuốn `bookId`, không đổi giọng đang đọc: lúc nạp cuốn - [useVoiceOf] của lần nạp đặt giọng ngay sau đó.
      *  Qua [chooseFor] thì nạp lại cùng cuốn với giọng khác sẽ đọc lại chỗ chờ của lượt cũ bằng giọng mới, rồi lần nạp bỏ ngay lượt đọc ấy. */
     fun rememberFor(bookId: String, id: String, recordId: String = "") {
         choices?.remember(bookId, id, recordId)
@@ -744,7 +744,7 @@ object ReadAloud {
         val ctx = context ?: return false
         if (Store.rawManifest(book) != null) return false
         if (runCatching { Store.file(book, chapter.text).isFile }.getOrDefault(true)) {
-            // Chữ vừa về bằng đường khác giữa lúc chapFor đọc và lúc này (giao diện xin chữ chương để hiện - LibraryPlugin.readText): đọc lại ngay.
+            // Chữ vừa về bằng đường khác giữa lúc chapFor đọc và lúc này (giao diện xin chữ chương để hiện): đọc lại ngay.
             if (chapFor(index) == null) return false
             then()
             return true

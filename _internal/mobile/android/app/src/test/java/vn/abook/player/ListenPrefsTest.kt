@@ -12,7 +12,7 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * Soát a77 #6: tuỳ chọn nghe mà Kotlin cần lúc KHỞI ĐỘNG không có WebView (nút tai nghe, tự lùi, lắc / úp, lịch ngủ, số phút thêm, dừng an toàn) nằm ở kho native, nạp lại khi
+ * Soát a77 #6: tuỳ chọn nghe mà Kotlin cần lúc KHỞI ĐỘNG không có giao diện (nút tai nghe, tự lùi, lắc / úp, lịch ngủ, số phút thêm, dừng an toàn) nằm ở kho native, nạp lại khi
  * tiến trình dậy; hẹn giờ ngủ đang chạy được khôi phục theo mốc kết thúc tuyệt đối nếu chưa quá.
  */
 class ListenPrefsTest {
@@ -52,11 +52,11 @@ class ListenPrefsTest {
             "shakeSensitivity":"firm","flipToPause":false,"safetyStopHours":3.0,"schedule":{"from":"23:00","to":"06:30","minutes":45},"readAloudVoice":"edge:x"}""",
     )
 
-    @Test fun theChoicesSurviveTheProcessDyingBeforeAnyWebViewPushesThemAgain() {
+    @Test fun theChoicesSurviveTheProcessDyingBeforeTheUiPushesThemAgain() {
         ListenPrefs.apply(chosen())
         assertFalse(Playback.headsetSkips)
         assertEquals(15, SleepTimer.extendMinutes)
-        defaults() // tiến trình chết, dậy lại từ tai nghe / widget / xe: chưa có WebView
+        defaults() // tiến trình chết, dậy lại từ tai nghe / widget / xe: chưa có giao diện
         assertTrue(Playback.headsetSkips)
         ListenPrefs.load()
         assertFalse("nút tai nghe chuyển chương vẫn là lựa chọn của bạn", Playback.headsetSkips)

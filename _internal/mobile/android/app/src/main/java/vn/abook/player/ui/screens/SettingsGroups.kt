@@ -62,7 +62,7 @@ private val ScheduleOptions = SleepSchedule.MINUTES.map { Option(it, "$it phút"
 private val ExtendOptions = AppSettings.EXTEND_MINUTES.map { Option(it, "$it′") }
 private val FadeOptions = AppSettings.FADE_SECONDS.map { Option(it, "${it}s") }
 
-/** Lời của các hàng: cùng chữ với bản WebView (android/SettingsScreen.tsx, listen/playlistBed.ts, shared/feedback.ts, android/notifications.ts). */
+/** Lời của các hàng. */
 private object GroupCopy {
     const val NOTIFY = "Đang tắt: không báo khi sách xong. Nút tạm dừng vẫn chạy."
     const val REWIND = "Nghỉ quá 30 giây thì lùi 5 giây (quá 10 phút: 10 giây)."
