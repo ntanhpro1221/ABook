@@ -598,10 +598,17 @@ def player_run(exe: Path, env_extra: dict, offscreen: bool = True) -> dict:
     follow_ram = [m for t, m, _c in samples if follow[0][0] <= t <= follow[0][1]]
     mins = [(t, m, c) for t, m, c in samples if ev["min_begin"] + 1500 <= t <= ev["min_end"]]
     settled = [m for t, m, _c in mins if t >= ev["min_end"] - 3000]       # 3 s cuối: sau khi app trả working set lúc thu nhỏ (2 s)
+    # commit (PrivateUsage) và số luồng 3 s cuối thu nhỏ: trả working set không giảm commit, nhả đồ hoạ thì có
+    commit_settled = [c for t, c, _w, _u in got["memory_samples"] if ev["min_end"] - 3000 <= t <= ev["min_end"]]
+    commit_idle = [c for t, c, _w, _u in got["memory_samples"] if ev["idle_begin"] + 1500 <= t <= ev["idle_end"]]
+    threads_settled = [len(s) for t, s in got["thread_samples"] if ev["min_end"] - 3000 <= t <= ev["min_end"] and s]
     restore = None
     if "restore_begin" in ev and "restore_end" in ev:      # mở lại sau thu nhỏ: khung đầu (ms từ lệnh mở) + khoảng cách khung lớn nhất
         rf = [f for f in frames if ev["restore_begin"] <= f <= ev["restore_end"]]
         restore = (rf[0] - ev["restore_begin"] if rf else float("nan"), max((b - a for a, b in zip(rf, rf[1:])), default=float("nan")))
+        # Khoảng khung lớn nhất sau mở lại chỉ là nhịp vẽ khi không có gì đổi (Qt vẽ theo yêu cầu); chỉ số thật là show -> khung đầu.
+        show = next((t for t, n in evs if n.startswith("bench_show") and ev["restore_begin"] <= t <= ev["restore_end"]), None)
+        restore_show = rf[0] - show if rf and show is not None else float("nan")
     cpu_pct = float("nan")
     rate = lambda pts: (pts[-1][1] - pts[0][1]) / (pts[-1][0] - pts[0][0]) * 100.0 if len(pts) >= 2 and pts[-1][0] > pts[0][0] else float("nan")   # % của MỘT nhân
     host_min = [(t, c) for t, c in got["host_cpu"] if ev["min_begin"] + 1500 <= t <= ev["min_end"]]
@@ -630,8 +637,12 @@ def player_run(exe: Path, env_extra: dict, offscreen: bool = True) -> dict:
         "private_follow_mb": max(follow_ram) if follow_ram else float("nan"),
         "private_min_playing_mb": max(m for _, m, _c in mins) if mins else float("nan"),
         "private_min_settled_mb": statistics.median(settled) if settled else float("nan"),
+        "commit_idle_loaded_mb": statistics.median(commit_idle) if commit_idle else float("nan"),
+        "commit_min_settled_mb": statistics.median(commit_settled) if commit_settled else float("nan"),
+        "threads_min_settled": statistics.median(threads_settled) if threads_settled else float("nan"),
         "restore_first_ms": restore[0] if restore else float("nan"),
         "restore_max_gap_ms": restore[1] if restore else float("nan"),
+        "restore_show_to_first_ms": restore_show if restore else float("nan"),
         "cpu_min_playing_pct_of_core": cpu_pct,
         "cpu_min_steady_pct_of_core": rate(steady),
         "host_cpu_min_steady_pct_of_core": rate(host_steady),
@@ -677,7 +688,7 @@ def player_main(a, exe: Path, fixture: Path, env: dict) -> int:
               f"đóng p99 {r['unmorph_p99']:.1f}) | chữ chạy p50 {r['follow_p50']:.1f} p99 {r['follow_p99']:.1f} max {r['follow_max']:.1f} ms "
               f"({r['follow_frames']} khung, >12ms {r['follow_over_12']}) RAM {r['private_follow_mb']:.1f} | thu nhỏ phát: RAM {r['private_min_playing_mb']:.1f} -> {r['private_min_settled_mb']:.1f} MB "
               f"CPU {r['cpu_min_playing_pct_of_core']:.2f} % (ổn định {r['cpu_min_steady_pct_of_core']:.2f} %; nghỉ hiện {r['cpu_idle_loaded_pct_of_core']:.2f} %) | đếm lúc chữ chạy (nhịp, ảnh chụp, tính, đổi) {r['follow_counters_delta']} trong {r['follow_secs']:.0f} s; "
-              f"thu nhỏ {r['min_counters_delta']} | mở lại: khung đầu {r['restore_first_ms']:.0f} ms, khoảng lớn nhất {r['restore_max_gap_ms']:.1f} ms")
+              f"thu nhỏ {r['min_counters_delta']} | mở lại: khung đầu {r['restore_first_ms']:.0f} ms (từ show {r['restore_show_to_first_ms']:.0f} ms), khoảng lớn nhất {r['restore_max_gap_ms']:.1f} ms")
         time.sleep(1.0)
     res = {"scenario": "player", "hz": refresh_hz(), "runs": good, "dropped": dropped}
     if good:
@@ -687,7 +698,8 @@ def player_main(a, exe: Path, fixture: Path, env: dict) -> int:
             "cold_first_frame_ms_median": med("cold_first_frame_ms"),
             "private_idle_loaded_mb_median": med("private_idle_loaded_mb"), "private_idle_loaded_mb_worst": worst("private_idle_loaded_mb"),
             "private_min_playing_mb_worst": worst("private_min_playing_mb"), "private_min_settled_mb_worst": worst("private_min_settled_mb"),
-            "restore_first_ms_worst": worst("restore_first_ms"), "restore_max_gap_ms_worst": worst("restore_max_gap_ms"),
+            "restore_first_ms_worst": worst("restore_first_ms"), "restore_show_to_first_ms_worst": worst("restore_show_to_first_ms"),
+            "restore_show_to_first_ms_median": med("restore_show_to_first_ms"), "restore_max_gap_ms_worst": worst("restore_max_gap_ms"),
             "cpu_min_playing_pct_worst": worst("cpu_min_playing_pct_of_core"),
             "cpu_min_steady_pct_median": med("cpu_min_steady_pct_of_core"), "cpu_idle_loaded_pct_median": med("cpu_idle_loaded_pct_of_core"),
             "morph_p99_ms_median": med("morph_p99"), "morph_p99_ms_worst": worst("morph_p99"), "unmorph_p99_ms_worst": worst("unmorph_p99"),
