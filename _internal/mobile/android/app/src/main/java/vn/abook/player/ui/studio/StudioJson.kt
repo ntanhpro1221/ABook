@@ -55,6 +55,7 @@ internal object StudioJson {
             broken = json.text("broken"),
             castLocked = json.optBoolean("castLocked"),
             segmentsRecorded = segments?.takeIf { it.has("recorded") && !it.isNull("recorded") }?.optInt("recorded"),
+            cover = json.optJSONObject("cover")?.let { it.opt("version")?.toString()?.takeIf { v -> v != "null" && v.isNotEmpty() } ?: "1" },
         )
     }
 

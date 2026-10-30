@@ -280,7 +280,118 @@ class FakeStudioSource(
         scriptCalls += chapter
         return scriptChapters[chapter] ?: throw StudioError.Gone()
     }
+
+    // ---- S4: xuất / nhật ký / bìa / sách mới ----
+
+    /** Việc xuất theo kiểu; thiếu thì `idle`. `exportStart` đặt việc thành đang chạy. */
+    val exportJobs = HashMap<StudioExportKind, StudioExportJob>()
+    val exportCalls = ArrayList<StudioExportKind>()
+    val exportStarts = ArrayList<Pair<StudioExportKind, JSONObject>>()
+    val exportCancels = ArrayList<StudioExportKind>()
+    var exportError: StudioError? = null
+    var exportStartError: StudioError? = null
+    var exportOptionsView = StudioExportOptions()
+    var exportOptionsError: StudioError? = null
+    var exportOptionsCalls = 0
+    var activityItems: List<StudioLogItem> = emptyList()
+    var activityError: StudioError? = null
+    val activityCalls = ArrayList<Boolean>()
+    var coverResults = vn.abook.player.ui.editbook.CoverResults("", emptyList(), emptyList())
+    val coverQueries = ArrayList<String>()
+    val deletes = ArrayList<String>()
+
+    override suspend fun exportJob(computer: String, id: String, kind: StudioExportKind): StudioExportJob {
+        exportCalls += kind
+        exportError?.let { throw it }
+        return exportJobs[kind] ?: studioExportJob("idle")
+    }
+
+    override suspend fun exportStart(computer: String, id: String, kind: StudioExportKind, body: JSONObject): StudioExportJob {
+        exportStarts += kind to body
+        exportStartError?.let { throw it }
+        return studioExportJob("running").also { exportJobs[kind] = it }
+    }
+
+    override suspend fun exportCancel(computer: String, id: String, kind: StudioExportKind): StudioExportJob {
+        exportCancels += kind
+        return exportJobs[kind] ?: studioExportJob("idle")
+    }
+
+    override suspend fun exportOptions(computer: String, id: String): StudioExportOptions {
+        exportOptionsCalls++
+        exportOptionsError?.let { throw it }
+        return exportOptionsView
+    }
+
+    override suspend fun activity(computer: String, id: String, technical: Boolean): List<StudioLogItem> {
+        activityCalls += technical
+        activityError?.let { throw it }
+        return activityItems
+    }
+
+    override suspend fun coverSearch(computer: String, id: String, query: String): vn.abook.player.ui.editbook.CoverResults {
+        coverQueries += query
+        return coverResults
+    }
+
+    override suspend fun delete(computer: String, id: String, endpoint: String): JSONObject {
+        deletes += endpoint
+        return JSONObject()
+    }
+
+    /** Mọi file đã gửi (thư mục, tên, nội dung). */
+    val uploads = ArrayList<Triple<String, String, ByteArray>>()
+    var uploadError: StudioError? = null
+    var uploadGate: CompletableDeferred<Unit>? = null
+    val splits = ArrayList<String>()
+    var scanView = ScanView(emptyList(), emptyList(), emptyList(), emptyList(), "", emptyList())
+    var scanError: StudioError? = null
+    val scanCalls = ArrayList<List<String>>()
+    var firstPersonView = FirstPersonView(false, 0.0, emptyList())
+    var modelsView = AnalysisModels("", emptyList(), false)
+    var createdBook = CreatedBook("new1", null)
+    var createError: StudioError? = null
+    val creates = ArrayList<JSONObject>()
+
+    override suspend fun uploadSource(computer: String, folder: String, name: String, input: () -> java.io.InputStream): UploadedSource {
+        val bytes = input().use { it.readBytes() }
+        uploadGate?.await()
+        uploadError?.let { throw it }
+        uploads += Triple(folder, name, bytes)
+        return UploadedSource(folder, "$folder/$name")
+    }
+
+    override suspend fun splitSource(computer: String, path: String, title: String): String {
+        splits += path
+        return "$path.chuong"
+    }
+
+    override suspend fun scan(computer: String, paths: List<String>): ScanView {
+        scanCalls += paths
+        scanError?.let { throw it }
+        return scanView
+    }
+
+    override suspend fun firstPerson(computer: String, paths: List<String>) = firstPersonView
+
+    override suspend fun analysisModels(computer: String) = modelsView
+
+    override suspend fun createBook(computer: String, body: JSONObject): CreatedBook {
+        creates += body
+        createError?.let { throw it }
+        return createdBook
+    }
 }
+
+fun studioExportJob(
+    state: String = "running", phase: String? = null, done: Int? = null, total: Int? = null, finishedAgo: Double? = null, result: StudioExportResult? = null, error: String = "",
+) = StudioExportJob(state, "run1", phase, done, total, null, null, null, null, null, null, null, 5.0, finishedAgo, result, error)
+
+fun exportResult(file: String = "Tắt đèn.abook", size: Long = 2_000_000) =
+    StudioExportResult(file, "", size, 0, null, null, null, 0, "", false, 0, emptyList())
+
+fun scannedChapter(path: String, title: String = path, matter: String = "", split: Int = 0, words: Int = 1000) =
+    ScannedChapter(path, path, title, "", words, 600.0, matter, split, false)
 
 fun precastView(ready: Boolean = true, wait: Boolean = false, announcedAt: Double? = null, held: Boolean = false, upcoming: List<PrecastChapter> = emptyList()) =
     PrecastView(ready, wait, announcedAt, held, upcoming.size, 0, null, upcoming)

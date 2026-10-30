@@ -55,6 +55,10 @@ sealed interface Destination {
     @Immutable
     data class Studio(val computer: String) : Destination
 
+    /** Trình tạo sách mới trên máy tính `computer`: đi từ danh sách dự án; tạo xong thì được thay bằng dự án vừa tạo. */
+    @Immutable
+    data class StudioNew(val computer: String) : Destination
+
     /** Một dự án Studio ở tab `tab`: từ danh sách dự án hay từ thông báo "cần duyệt / đã xong". */
     @Immutable
     data class StudioProject(val computer: String, val book: String, val tab: StudioTab = StudioTab.Chapters) : Destination
@@ -111,9 +115,19 @@ class NavState(private val scope: CoroutineScope) {
 
     fun push(destination: Destination) {
         if (busy && !staging) return // đang trượt: chạm đúp không đẩy hai màn
+        enter { it.push(destination) }
+    }
+
+    /** Thay màn trên cùng bằng `destination` (màn mới trượt vào, Back từ nó về màn bên dưới màn cũ): "Sách mới" xong thì mở dự án vừa tạo, không để màn tạo nằm sau lưng. */
+    fun replaceTop(destination: Destination) {
+        if (!canPop || (busy && !staging)) return
+        enter { it.pop().push(destination) }
+    }
+
+    private fun enter(next: (BackStack) -> BackStack) {
         job?.cancel()
         job = scope.launch {
-            stack = stack.push(destination)
+            stack = next(stack)
             progress.snapTo(0f)
             // Màn mới được dựng + dàn trang + ghi ở khung đầu khi nó còn nằm ngoài màn (p = 0); hoạt ảnh chỉ bắt đầu sau đó. Nếu chạy ngay, khung nặng nhất
             // (dựng cả màn) là khung đầu của hoạt ảnh: đồng hồ hoạt ảnh nhảy qua nó và cả đường trượt giật một nhịp.

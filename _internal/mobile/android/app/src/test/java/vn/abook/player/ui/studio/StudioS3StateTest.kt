@@ -308,10 +308,12 @@ class StudioS3StateTest {
     }
 
     @Test fun theMoreMenuListsTheSubPagesThatApply() {
-        assertTrue(StudioLogic.subPages(studioBook()).isEmpty())
-        assertEquals(listOf(StudioSubKind.Script, StudioSubKind.Readings), StudioLogic.subPages(studioBook(segmentsAnalyzed = 40)))
+        // Từ S4 bìa và nhật ký luôn có; xuất khi sách có chương.
+        val always = listOf(StudioSubKind.Export, StudioSubKind.Cover, StudioSubKind.Activity)
+        assertEquals(always, StudioLogic.subPages(studioBook()))
+        assertEquals(listOf(StudioSubKind.Script, StudioSubKind.Readings) + always, StudioLogic.subPages(studioBook(segmentsAnalyzed = 40)))
         assertEquals(
-            listOf(StudioSubKind.Precast, StudioSubKind.Script, StudioSubKind.Readings),
+            listOf(StudioSubKind.Precast, StudioSubKind.Script, StudioSubKind.Readings) + always,
             StudioLogic.subPages(studioBook(segmentsAnalyzed = 40, castLocked = true)),
         )
     }

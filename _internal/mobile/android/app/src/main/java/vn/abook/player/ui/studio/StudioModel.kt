@@ -19,9 +19,9 @@ enum class StudioTab(override val key: String, override val label: String) : Cho
     }
 }
 
-/** Ba màn con của một dự án (S3), mở từ "Thêm" hay thông báo: đi sau tab, Back về lại dự án. `key` là giá trị `?tab=` của web. */
+/** Các màn con của một dự án (S3: duyệt, kịch bản, cách đọc tên; S4: xuất, nhật ký, bìa), mở từ "Thêm" hay thông báo: đi sau tab, Back về lại dự án. `key` là giá trị `?tab=` của web. */
 enum class StudioSubKind(val key: String) {
-    Precast("precast"), Script("script"), Readings("readings");
+    Precast("precast"), Script("script"), Readings("readings"), Export("export"), Activity("activity"), Cover("cover");
 
     companion object {
         fun of(key: String?): StudioSubKind? = entries.firstOrNull { it.key == key }
@@ -80,6 +80,8 @@ data class StudioBook(
     val castLocked: Boolean = false,
     /** Số câu đã có bản thu; null khi máy không nói. */
     val segmentsRecorded: Int? = null,
+    /** Phiên bản ảnh bìa thật của sách (đổi khi đổi ảnh); null = chưa có, sách dùng bìa vẽ từ tên. */
+    val cover: String? = null,
 ) {
     /** Máy đang làm sách này (kể cả lúc đang khởi động). */
     val working: Boolean get() = running || starting

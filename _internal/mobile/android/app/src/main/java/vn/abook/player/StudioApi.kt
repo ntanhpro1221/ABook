@@ -13,18 +13,24 @@ import org.json.JSONObject
  *
  * `transport` là đường gửi thật; test thay bằng bản giả (không cần ghép máy).
  */
-class StudioApi(private val transport: Transport, private val slow: Transport) {
+class StudioApi(private val transport: Transport, private val slow: Transport, private val uploader: Uploader = Uploader { _, _ -> throw IllegalStateException("Không gửi được tệp") }) {
     constructor(transport: Transport) : this(transport, transport)
 
     constructor(context: Context, computer: String) : this(
         Transport { method, path, body -> real(context, computer, method, path, body, 20_000) },
         // Nghe thử giọng / cách đọc: máy tính nạp giọng rồi đọc, giữ kết nối tới ~120 giây (docs mục 1.2).
         Transport { method, path, body -> real(context, computer, method, path, body, SLOW_READ_MS) },
+        Uploader { path, write -> upload(context, computer, path, write) },
     )
 
     /** Một yêu cầu đã xong: trả nguyên văn lời đáp JSON (đối tượng hay mảng), hay ném lỗi của [SyncLink.request]. */
     fun interface Transport {
         fun call(method: String, path: String, body: JSONObject?): String
+    }
+
+    /** Gửi một thân JSON dài ghi thẳng ra kết nối (nguồn sách): máy tính từ chối vì quá lớn thì [StudioError.TooBig]. */
+    fun interface Uploader {
+        fun call(path: String, write: (java.io.OutputStream) -> Unit): String
     }
 
     suspend fun getObject(path: String): JSONObject = call("GET", path, null) as? JSONObject ?: throw malformed()
@@ -40,6 +46,22 @@ class StudioApi(private val transport: Transport, private val slow: Transport) {
 
     /** Như [put]: đổi thể loại / dựng lại nhạc nền máy tính làm ~30 giây. */
     suspend fun putSlow(path: String, body: JSONObject? = null): JSONObject = call("PUT", path, body, slow) as? JSONObject ?: throw malformed()
+
+    suspend fun delete(path: String): JSONObject = call("DELETE", path, null) as? JSONObject ?: throw malformed()
+
+    /** `POST` với thân do `write` ghi ra từng khúc; chờ lời đáp tới ~130 giây (tệp lớn trên Wi-Fi yếu). */
+    suspend fun postStream(path: String, write: (java.io.OutputStream) -> Unit): JSONObject = withContext(Dispatchers.IO) {
+        val text = try {
+            uploader.call(path, write)
+        } catch (error: Throwable) {
+            throw StudioErrors.of(error)
+        }
+        try {
+            if (text.isBlank()) JSONObject() else StrictJson.parse(text)
+        } catch (error: Exception) {
+            null
+        } as? JSONObject ?: throw malformed()
+    }
 
     private suspend fun call(method: String, path: String, body: JSONObject?, via: Transport = transport): Any = withContext(Dispatchers.IO) {
         val text = try {
@@ -63,6 +85,11 @@ class StudioApi(private val transport: Transport, private val slow: Transport) {
         fun real(context: Context, computer: String, method: String, path: String, body: JSONObject?, readTimeoutMs: Int): String {
             val link = StudioLink.link(context, computer) ?: throw StudioError.Unauthorized()
             return SyncLink.request(context, method, path, body, auth = false, root = link.base, token = link.token, readTimeoutMs = readTimeoutMs, connectTimeoutMs = 3000)
+        }
+
+        fun upload(context: Context, computer: String, path: String, write: (java.io.OutputStream) -> Unit): String {
+            val link = StudioLink.link(context, computer) ?: throw StudioError.Unauthorized()
+            return SyncLink.request(context, "POST", path, null, auth = false, root = link.base, token = link.token, readTimeoutMs = SLOW_READ_MS, connectTimeoutMs = 3000, stream = write)
         }
     }
 }
