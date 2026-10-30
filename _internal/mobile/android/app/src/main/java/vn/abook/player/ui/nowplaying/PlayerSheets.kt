@@ -313,7 +313,7 @@ private fun SleepClock(sleep: PlayerSleep, position: PlayerPosition) {
     LaunchedEffect(sleep, position) { snapshotFlow { position.sleepRemainingMs.value }.collect {
         label = readout(it)
     } }
-    RollingLabel(label, Modifier.padding(bottom = 12.dp), Abook.type.screenTitle)
+    ClockLabel(label, Modifier.padding(bottom = 12.dp), Abook.type.screenTitle)
     if (sleep.kind == SleepKind.Minutes && !sleep.counting)
         BasicText("Đang tạm dừng - đồng hồ cũng dừng.", style = Abook.type.caption)
 }

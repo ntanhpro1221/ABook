@@ -202,6 +202,16 @@ fun RollingLabel(text: String, modifier: Modifier = Modifier, style: TextStyle =
     }
 }
 
+/**
+ * Số đang chạy (giờ đã nghe, còn lại, đồng hồ hẹn giờ): đổi tại chỗ, không bao giờ trượt. Chủ sách 30-10: "ai lại làm thời gian trôi
+ * kiểu đó?" - [RollingLabel] chỉ cho nhãn đổi theo việc người dùng làm (tên chương, tốc độ), không cho thứ đổi mỗi giây.
+ * Chữ số đều bề rộng (tnum) nên dòng không rung khi số đổi.
+ */
+@Composable
+fun ClockLabel(text: String, modifier: Modifier = Modifier, style: TextStyle = Abook.type.body) {
+    BasicText(text, modifier, style = style.merge(TextStyle(fontFeatureSettings = "tnum")))
+}
+
 /** Two four-point contours interpolate triangle -> pause bars. Path objects are reused in draw. */
 @Composable
 fun PlayMorph(
@@ -246,12 +256,13 @@ fun PlayMorph(
 const val MINI_WINDOW_GLYPH = "⧉"
 
 @Composable
-fun PlayerAction(label: String, glyph: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun PlayerAction(label: String, glyph: String, onClick: () -> Unit, modifier: Modifier = Modifier, clock: Boolean = false) {
     Column(modifier.widthIn(min = 48.dp).pressable(onClick = onClick).padding(vertical = 8.dp)
         .semantics { contentDescription = label }, horizontalAlignment = Alignment.CenterHorizontally) {
         // Ô trên cùng một chiều cao (= ô icon 28 dp) dù là icon hay chữ ("1×", "12:30"): nhãn dưới của cả hàng nằm trên cùng một đường.
         Box(Modifier.height(28.dp), contentAlignment = Alignment.Center) {
             if (glyph == "◷" || glyph == "☷" || glyph == MINI_WINDOW_GLYPH) PlayerGlyph(glyph)
+            else if (clock) ClockLabel(glyph, style = Abook.type.sectionTitle)
             else RollingLabel(glyph, style = Abook.type.sectionTitle)
         }
         Spacer(Modifier.height(4.dp))
