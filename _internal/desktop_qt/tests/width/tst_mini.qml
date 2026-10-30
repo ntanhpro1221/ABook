@@ -43,7 +43,7 @@ Item {
     TestCase {
         name: "Mini"
         when: windowShown
-        function init() { Platform.reset(); Theme.reduceMotion = true; Nav.layers = []; Nav.windowMode = null; Player.open("width", 1, 0, false); Player.seek(0) }
+        function init() { Platform.reset(); Theme.reduceMotion = false; Nav.layers = []; Nav.windowMode = null; Player.open("width", 1, 0, false); Player.seek(0) }
         function cleanup() { Player.pause(); Theme.reduceMotion = false; Theme.mode = "auto"; Nav.windowMode = null; Nav.layers = [] }
         function test_menu() {
             const player = createTemporaryObject(fakePlayerFactory, host)
@@ -159,9 +159,10 @@ Item {
         function test_maximizedRestore() {
             const win = createTemporaryObject(windowFactory, host)
             const mode = createTemporaryObject(modeFactory, host, {window: win, loaded: true})
-            win.show(); wait(10)
-            win.width = 1180; win.height = 740; wait(10)
-            win.showMaximized(); wait(10)
+            win.show(); tryCompare(win, "visible", true)
+            win.width = 1180; win.height = 740
+            tryVerify(function() { return mode.fullRect.width === 1180 && mode.fullRect.height === 740 })
+            win.showMaximized(); tryCompare(win, "visibility", Window.Maximized)
             mode.enter(); tryCompare(win, "width", 360)
             compare(mode.fullRect.width, 1180); compare(mode.fullRect.height, 740)
             mode.expand(); tryCompare(win, "visibility", Window.Maximized)
@@ -214,7 +215,7 @@ Item {
             win.show()
             const mode = createTemporaryObject(modeFactory, host, {window: win, loaded: true})
             mode.enter(); compare(mode.transitioning, true)
-            wait(70); verify(win.width < 1100 && win.width > 360)
+            tryVerify(function() { return win.width < 1100 && win.width > 360 })
             mode.expand(); mode.enter()
             tryCompare(mode, "transitioning", false)
             compare(win.width, 360)
@@ -274,7 +275,7 @@ Item {
                         verify(title.lineCount > 1)
                         verify(title.paintedWidth <= title.width + 1)
                     }
-                    waitForRendering(mini); wait(80)
+                    waitForRendering(mini)
                     const path = Qt.resolvedUrl("../../build/d2shots/mini_" + length + "_" + theme + ".png").toString().replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, "")
                     qtGlyphAudit.scan()
                     grabImage(mini).save(path)

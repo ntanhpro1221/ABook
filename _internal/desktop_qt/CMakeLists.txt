@@ -414,6 +414,12 @@ qt_add_qml_module(ABookDesk
         qml/ShortcutsDialog.qml
         qml/BenchScenario.qml
     RESOURCES
+        fonts/ABookUIArrows.ttf
+        fonts/ABookUIArrows-OFL.txt
+        fonts/ABookUIArrows-UPSTREAM.txt
+        fonts/ABookUIShapes.ttf
+        fonts/ABookUIShapes-OFL.txt
+        fonts/ABookUIShapes-UPSTREAM.txt
         fonts/BeVietnamPro-Regular.ttf
         fonts/BeVietnamPro-Medium.ttf
         fonts/BeVietnamPro-Bold.ttf
@@ -538,7 +544,7 @@ if(MSVC)
     target_compile_options(DesktopApiTests PRIVATE /W3 /utf-8)
 endif()
 add_test(NAME DesktopApiTests COMMAND DesktopApiTests)
-qt_add_executable(WidthTests tests/test_width.cpp tests/glyphaudit.h tests/fakes.h src/later.h src/bookdetail.cpp src/bookdetail.h src/mediacontrols.cpp src/mediacontrols.h
+qt_add_executable(WidthTests tests/test_width.cpp tests/glyphaudit.h tests/visualready.h tests/fakes.h src/later.h src/bookdetail.cpp src/bookdetail.h src/mediacontrols.cpp src/mediacontrols.h
     src/readalong.cpp src/readalong.h src/music.cpp src/music.h src/feedback.cpp src/feedback.h ${ABOOK_PLAYER_SOURCES} ${ABOOK_MUSIC_SOURCES})
 target_include_directories(WidthTests PRIVATE src tests)
 target_compile_definitions(WidthTests PRIVATE QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/width"

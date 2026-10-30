@@ -586,7 +586,7 @@ Item {
             tryVerify(function() { return calls("GET", base + "/mp3-job").length >= 1 }, 3000)
             const store = screenOf(page).store
             store.active = false
-            wait(50)   // fixed: let a tick in flight land
+            wait(200)  // fixed: proves absence (a request already in flight lands before the count)
             const before = calls("GET", base + "/mp3-job").length
             wait(1500) // fixed: proves absence (the poll interval is 1 s)
             compare(calls("GET", base + "/mp3-job").length, before)

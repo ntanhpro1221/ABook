@@ -23,7 +23,7 @@ TestCase {
         Api.preferences = {theme: "system"}
         Api.loaded = true
         Api.notice = ""
-        Theme.reduceMotion = true
+        Theme.reduceMotion = false
         const component = Qt.createComponent(Qt.resolvedUrl("../../qml/Main.qml"))
         compare(component.status, Component.Ready, component.errorString())
         win = component.createObject(null)
@@ -57,9 +57,8 @@ TestCase {
         Api.preferences = {theme: "system", letterShortcuts: false}
         keyClick("?", Qt.ShiftModifier, -1, win)
         keyClick(Qt.Key_M, Qt.NoModifier, -1, win)
-        wait(100)
-        verify(!dialog().open)
-        compare(Player.volume, 0.9)
+        tryVerify(function() { return !dialog().open })
+        tryCompare(Player, "volume", 0.9)
         Api.preferences = {theme: "system"}
         keyClick(Qt.Key_M, Qt.NoModifier, -1, win)
         compare(Player.volume, 0)

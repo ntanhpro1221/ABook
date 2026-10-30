@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "VisualReady.js" as VisualReady
 import ABook
 
 // Cài đặt › Studio (máy này): chọn giọng kể / chất lượng, công tắc pin, cài / gỡ (hỏi lại + Back), mẫu sách mới (đổi tên giữ nguyên phần còn
@@ -37,7 +38,7 @@ Item {
             return [{surface: "Nasdell", spokenForm: "hên-cơ", addedAt: 1, from: "Rokujouma"}, {surface: "Aiya", spokenForm: "a-i-a", addedAt: 2, from: ""}]
         }
         function init() {
-            Theme.reduceMotion = true
+            Theme.reduceMotion = false
             DesktopApi.reset()
             Api.bind(DesktopApi, Theme)
             Api.saving = false
@@ -79,7 +80,7 @@ Item {
             const page = createTemporaryObject(studioFactory, host, Object.assign({width: 760}, props || {}))
             verify(page !== null)
             wantsStudio.target = page
-            wait(60)
+            host.Window.window.update(); waitForRendering(page)
             return page
         }
         function all(item, name, out) {
@@ -98,7 +99,7 @@ Item {
             for (const child of item.children || []) texts(child, out)
             return out
         }
-        function has(page, value) { wait(10); return texts(page).some(t => t.includes(value)) }
+        function has(page, value) { tryVerify(function() { return texts(page).some(t => t.includes(value)) }); return texts(page).some(t => t.includes(value)) }
         function last() { return DesktopApi.requests[DesktopApi.requests.length - 1] }
         function requestsOf(method, path) { return DesktopApi.requests.filter(r => r.method === method && r.path === path) }
 
@@ -393,8 +394,7 @@ Item {
         function shot(name, item) {
             const target = item || host
             target.Window.window.update()
-            waitForRendering(target)
-            wait(400)
+            VisualReady.render(this, host.Window.window, target, qtVisualReady)
             qtGlyphAudit.scan()
             const img = grabImage(target)
             const path = Qt.resolvedUrl("../../build/d2shots/" + name + "_" + (Theme.dark ? "dark" : "light") + ".png").toString()

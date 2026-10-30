@@ -13,13 +13,14 @@
 #include <QRawFont>
 #include <QSet>
 #include <QTextDocument>
+#include <QTextLayout>
+#include <QGlyphRun>
 #include <QTextBlock>
 #include <QTimer>
 #include <QtTest/QTest>
 
 // Inspect the live visual tree, including nested delegates and overlays. Deliberately
-// require the selected font to contain the glyph: platform fallback is not portable
-// to offscreen QPA and was responsible for the empty shortcut caps.
+// inspect shaped fallback glyphs too: bundled fonts must work in offscreen QPA.
 class GlyphAudit : public QObject {
     Q_OBJECT
     QTimer timer;
@@ -66,7 +67,20 @@ class GlyphAudit : public QObject {
                         for (const auto cp : fragment.text().toUcs4()) {
                             if (QChar::isSpace(cp) || QChar::category(cp) == QChar::Other_Control
                                 || QChar::category(cp) == QChar::Other_Format) continue;
-                            if (raw.isValid() && raw.supportsCharacter(cp) && cp != 0xfffd) continue;
+                            if (cp != 0xfffd) {
+                                if (raw.isValid() && raw.supportsCharacter(cp)) continue;
+                                // Shape using Qt's real fallback stack. Checking only the
+                                // primary QRawFont falsely rejects bundled symbol fonts.
+                                QTextLayout layout(QString::fromUcs4(&cp, 1), fragment.charFormat().font().resolve(font));
+                                layout.beginLayout();
+                                layout.createLine();
+                                layout.endLayout();
+                                bool drawn = false;
+                                for (const auto &run : layout.glyphRuns())
+                                    for (const auto glyph : run.glyphIndexes())
+                                        drawn |= glyph != 0 && run.rawFont().supportsCharacter(cp);
+                                if (drawn) continue;
+                            }
                             const QString code = QStringLiteral("U+%1").arg(cp, 4, 16, QLatin1Char('0')).toUpper();
                             const auto where = path(item);
                             const auto key = where + '\n' + text + '\n' + code + '\n' + raw.familyName();

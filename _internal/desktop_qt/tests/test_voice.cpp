@@ -335,7 +335,7 @@ private slots:
         QVERIFY(device->peakAfterReset.load() <= size_t(24000));
         music.pause(); const int resets = device->resets;
         QElapsedTimer timer; timer.start(); voice.pause();
-        while (device->resets == resets && timer.elapsed() < 100) QTest::qWait(1);
+        QTRY_VERIFY_WITH_TIMEOUT(device->resets != resets, 100);
         QVERIFY2(timer.elapsed() < 50, qPrintable(QString::number(timer.elapsed())));
         // Sau đuôi mờ 10 ms thiết bị dừng hẳn.
         QTRY_VERIFY_WITH_TIMEOUT(!device->running && device->queued.load() == 0, 200);
@@ -371,14 +371,18 @@ private slots:
         const double before = voice.position(); const int resets = device->resets;
         QElapsedTimer timer; timer.start(); mixer.setRelaxed(false);
         QVERIFY(timer.elapsed() < 50);
-        QTest::qWait(250); QCOMPARE(device->resets.load(),resets);
+        QTest::qWait(250); // fixed: proves absence of an audio reset during restoration
+        QCOMPARE(device->resets.load(),resets);
         QVERIFY(std::abs(voice.position() - before - timer.elapsed()/1000.0) < 0.03);
-        device->peak=0; QTest::qWait(650);
+        device->peak=0;
+        QTRY_VERIFY(device->peak.load() > 0);
         QTRY_VERIFY(voice.playing()); QVERIFY(device->peak.load() <= size_t(24000));
         mixer.setRelaxed(true); voice.setRate(4.0);
-        QTest::qWait(3100); QVERIFY(voice.playing()); QCOMPARE(device->empty.load(), 0);
+        QTest::qWait(3100); // fixed: proves absence of underruns over several queue refills
+        QVERIFY(voice.playing()); QCOMPARE(device->empty.load(), 0);
         // Returning from 4x must also use the exact fresh unity path after reset.
-        voice.setRate(1.0); QTest::qWait(100); QVERIFY(voice.playing());
+        const int unityResets = device->resets; voice.setRate(1.0);
+        QTRY_VERIFY(device->resets > unityResets); QTRY_VERIFY(voice.playing());
     }
     void blockedDecoderCannotBlockMixerPauseOrStop() {
         struct Barrier { std::mutex mutex; std::condition_variable cv; std::atomic<bool> entered{false}; bool release = false; };
@@ -415,7 +419,7 @@ private slots:
         });
         QElapsedTimer timer; timer.start(); const int resets = device->resets;
         voice.pause(); QVERIFY(timer.elapsed() < 50);
-        while (device->resets == resets && timer.elapsed() < 100) QTest::qWait(1);
+        QTRY_VERIFY_WITH_TIMEOUT(device->resets != resets, 100);
         QVERIFY(timer.elapsed() < 50);
         timer.restart(); voice.stop(); QVERIFY(timer.elapsed() < 50);
     }
@@ -443,11 +447,11 @@ private slots:
         MixVoice voice(&mixer, [control](int hz) { return std::make_unique<Decoder>(control, hz); });
         voice.load(QUrl(QStringLiteral("fake:event-device")), 0); voice.play();
         QTRY_VERIFY_WITH_TIMEOUT(voice.playing(), 3000);
-        const int writes = device->writes; QTest::qWait(180);
-        QVERIFY(device->writes >= writes + 2);
+        const int writes = device->writes;
+        QTRY_VERIFY(device->writes >= writes + 2);
         QElapsedTimer timer;
         const int resets = device->resets; timer.restart(); voice.pause();
-        while (device->resets == resets && timer.elapsed() < 100) QTest::qWait(1);
+        QTRY_VERIFY_WITH_TIMEOUT(device->resets != resets, 100);
         QVERIFY(timer.elapsed() < 50); QVERIFY(device->queued.load() <= size_t(1440)); // tới pivot 20 ms + mờ ra 10 ms
         QTRY_VERIFY_WITH_TIMEOUT(!device->running && device->queued.load() == 0, 200);
     }
@@ -515,18 +519,25 @@ private slots:
             MixVoice voice(&mixer, [control](int hz) { return std::make_unique<Decoder>(control, hz); });
             voice.setVolume(1); voice.load(QUrl(QStringLiteral("fake:tap")), 0); voice.play();
             QTRY_VERIFY_WITH_TIMEOUT(voice.playing(), 3000);
-            QTest::qWait(300);
+            QTRY_VERIFY(sink->now() >= 14400);
             MixVoice music(&mixer, [control](int hz) { return std::make_unique<Decoder>(control, hz); });
             marks.push_back({sink->now(), "music play"}); music.load(QUrl(QStringLiteral("fake:music")), 3); music.play();
             for (int i = 1; i <= 16; ++i) {
-                marks.push_back({sink->now(), "volume"}); voice.setVolume(1.0 - i * 0.03); music.setVolume(i * 0.03); QTest::qWait(50);
+                marks.push_back({sink->now(), "volume"}); voice.setVolume(1.0 - i * 0.03); music.setVolume(i * 0.03);
+                QTRY_VERIFY(sink->now() >= marks.back().first + 2400);
             }
-            marks.push_back({sink->now(), "rate 1.5"}); voice.setRate(1.5); QTest::qWait(250);
-            marks.push_back({sink->now(), "seek"}); voice.seek(12); QTest::qWait(250);
-            marks.push_back({sink->now(), "rate 1"}); voice.setRate(1.0); QTest::qWait(250);
-            for (int i = 15; i >= 0; --i) { marks.push_back({sink->now(), "music volume"}); music.setVolume(i * 0.03); QTest::qWait(50); }
+            marks.push_back({sink->now(), "rate 1.5"}); voice.setRate(1.5);
+            QTRY_VERIFY(sink->now() >= marks.back().first + 12000);
+            marks.push_back({sink->now(), "seek"}); voice.seek(12);
+            QTRY_VERIFY(sink->now() >= marks.back().first + 12000);
+            marks.push_back({sink->now(), "rate 1"}); voice.setRate(1.0);
+            QTRY_VERIFY(sink->now() >= marks.back().first + 12000);
+            for (int i = 15; i >= 0; --i) {
+                marks.push_back({sink->now(), "music volume"}); music.setVolume(i * 0.03);
+                QTRY_VERIFY(sink->now() >= marks.back().first + 2400);
+            }
             paused = sink->now(); voice.pause(); music.pause();
-            QTest::qWait(200);
+            QTRY_VERIFY(sink->now() >= paused + 9600);
         }
         QFile file(wav); QVERIFY(file.open(QIODevice::ReadOnly));
         const QByteArray bytes = file.readAll().mid(44);
