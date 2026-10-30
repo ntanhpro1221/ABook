@@ -39,7 +39,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 
 /**
  * Nhạc của tôi: nhạc riêng của bạn, dùng làm nhạc nền cho mọi cuốn. "Thêm nhạc của bạn" mở hộp chọn file của hệ thống; tiến độ (xong / tổng) chạy ngay hàng ấy. Mỗi bài một hàng
- * (nghệ sĩ · độ dài, cỡ file); chạm một bài mở bảng "Xoá bài". Cùng kho với bản WebView ([vn.abook.player.MusicStore]).
+ * (nghệ sĩ · độ dài, cỡ file); chạm một bài mở bảng "Xoá bài". Kho: [vn.abook.player.MusicStore].
  */
 @Composable
 fun MyMusicScreen(voice: VoiceState, sheets: SheetHost, onBack: () -> Unit, modifier: Modifier = Modifier) {

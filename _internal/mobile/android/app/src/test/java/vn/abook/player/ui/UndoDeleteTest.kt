@@ -20,7 +20,7 @@ import vn.abook.player.ui.data.UndoDelete
 import java.time.Duration
 
 /**
- * "Xoá khỏi điện thoại" có Hoàn tác làm như bản WebView (`shared/trashUndo.ts`): cuốn vào chỗ chờ NGAY (không đợi hết hạn - tiến trình chết giữa chừng thì cuốn
+ * "Xoá khỏi điện thoại" có Hoàn tác: cuốn vào chỗ chờ NGAY (không đợi hết hạn - tiến trình chết giữa chừng thì cuốn
  * không quay lại), chữ y như web, hạn 28 giây mỗi cuốn, Hoàn tác trả cũ trước.
  */
 @RunWith(RobolectricTestRunner::class)

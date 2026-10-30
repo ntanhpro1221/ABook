@@ -1,6 +1,6 @@
 // "Thêm sách từ file…": đưa EPUB / DOCX / PDF / thư mục TXT vào thư viện thành sách CHỈ-CÓ-CHỮ (docs/LISTEN_ANYTHING.md mục 1 và 2).
-// Máy tính: máy chủ cục bộ chạy `abook/importers.py` (webui/textbook.py). Điện thoại: `BookImport.kt` ở native; PDF thì pdf.js trong
-// WebView lấy chữ từng trang rồi đưa sang Kotlin (android/textImport.ts).
+// Máy tính: máy chủ cục bộ chạy `abook/importers.py` (webui/textbook.py). Điện thoại: `BookImport.kt` ở native; PDF thì
+// `ImportRepo` (PdfRenderer) lấy chữ từng trang rồi đưa vào lớp luật của Kotlin.
 
 import { formatNumber } from "@/shared/format";
 

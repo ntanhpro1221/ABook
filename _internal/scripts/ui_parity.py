@@ -1,6 +1,6 @@
 """Máy dò lệch chữ và icon giữa các nền tảng giao diện (chủ sách 26-10: "từng cái chữ, từng cái icon, từng cái bo góc").
 
-Hai phía: web (ui/src: desktop/, listen/, studio/, shared/, android/ - app máy tính Tauri và giao diện điện thoại cũ) và điện thoại native
+Hai phía: web (ui/src: desktop/, listen/, studio/, shared/ - app máy tính Tauri; phần listen/ + shared/ cũng là cái điện thoại phải khớp) và điện thoại native
 (mobile/android/.../ui, Compose). Đọc nguồn của cả hai, không chạy app, không mạng:
 
   - chữ người nghe thấy: chữ trong JSX, thuộc tính label / title / aria-label / placeholder ..., chuỗi Kotlin đưa vào BasicText / hàng /
@@ -36,8 +36,8 @@ BEGIN = "<!-- ui_parity:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity.py - kh
 END = "<!-- ui_parity:end -->"
 
 # Web: thư mục có giao diện thật; gallery/ là thư viện mẫu của người làm. Phía điện thoại web chỉ tính listen / android / shared khi so "chỉ một phía".
-WEB_DIRS = ("android", "desktop", "listen", "shared", "studio")
-PHONE_WEB_DIRS = ("android", "listen", "shared")
+WEB_DIRS = ("desktop", "listen", "shared", "studio")
+PHONE_WEB_DIRS = ("listen", "shared")
 
 # Thuộc tính / khoá đối tượng mang chữ cho người nghe.
 TEXT_ATTRS = {"label", "title", "aria-label", "ariaLabel", "placeholder", "alt", "description", "hint", "caption", "tooltip", "heading",
@@ -1029,7 +1029,7 @@ def section_c(w_items, n_items, w_by, n_by) -> list[str]:
            "một màn native có nhiều nhãn chỉ-native mà web cùng màn không có thường là tính năng mới; vài nhãn lẻ thường là chữ trôi (mục a).", "",
            f"### c1. Chỉ có ở native ({len({key_loose(i.text) for i in n_only})} nhãn)", ""]
     out += grouped(n_only, 25)
-    out += ["", f"### c2. Chỉ có ở web phía điện thoại - listen/, android/, shared/ ({len({key_loose(i.text) for i in w_only})} nhãn)", ""]
+    out += ["", f"### c2. Chỉ có ở web phía điện thoại - listen/, shared/ ({len({key_loose(i.text) for i in w_only})} nhãn)", ""]
     out += grouped(w_only, 25)
     other = group(w_other, lambda i: i.file.replace("ui/src/", "").split("/")[0])
     out += ["", "### c3. Chỉ có ở web phía máy tính / Studio (chỉ đếm)", "",
@@ -1280,11 +1280,11 @@ def strip_ts_comments(src: str) -> str:
 ELLIPSIS_END = re.compile(r"(?<=[^\W_])(?:…|\.\.\.)(?=[\"'`<]|\s*$)|`(?:[^`$\n]|\$\{[^}\n]*\})*[^\W\d_][ ]?(?:\$\{[^}\n]*\})?…`")
 # Hàm cắt bớt chữ dài bằng `…` (không phải chữ giao diện) và một dấu cắt ở vân tay.
 # Nhóm Xuất đang được gộp ở nhánh khác: file của nó chưa quét luật chữ (Lead đã dặn bỏ qua). Gộp xong thì sửa rồi xoá dòng này.
-COPY_PENDING_EXPORT = ("android/ExportAudiobook.tsx", "android/ExportM4b.tsx", "android/ExportMp3.tsx", "desktop/AudiobookDialog.tsx", "desktop/ExportBookFileJob.tsx",
+COPY_PENDING_EXPORT = ("desktop/AudiobookDialog.tsx", "desktop/ExportBookFileJob.tsx",
                        "desktop/bookFileExport.ts", "desktop/listenExport.ts", "studio/ExportBook.tsx", "studio/projectPacking.ts")
 # Nhóm Nhạc do phiên Music đang sửa: cùng lý do.
 COPY_PENDING_MUSIC = ("listen/MyMusic.tsx", "studio/MusicTab.tsx", "studio/musicLocal.ts")
-COPY_ELLIPSIS_OK = ("shared/format.ts", "listen/findText.ts", "desktop/bookFileExport.ts:262", "desktop/OtherComputers.tsx:197", "android/SettingsScreen.tsx:347")
+COPY_ELLIPSIS_OK = ("shared/format.ts", "listen/findText.ts", "desktop/bookFileExport.ts:262", "desktop/OtherComputers.tsx:197")
 
 
 def copy_violations(web: Scan, native: Scan) -> tuple[list[str], list[str]]:
@@ -1335,7 +1335,7 @@ def hard_checks(web: Scan, native: Scan) -> list[str]:
     for spec in pair_specs():
         d = pair_diff(web, native, spec)
         problems += [f"[{d['id']}] chỉ có ở web: \"{i.text}\" ({i.file.replace(WEB_ROOT, '')}:{i.line})" for i in d["web_only"]]
-        problems += [f"[{d['id']}] chỉ có ở native: \"{i.text}\" ({i.file.replace(NATIVE_ROOT, 'native/')}:{i.line})" for i in d["native_only"]]
+        # Nhãn chỉ có ở native không còn là lỗi: giao diện web của điện thoại đã bỏ (P4), màn như Cài đặt / Thiết bị chỉ còn ở native.
     problems += [f"[icon] {v}" for v in icon_violations(web, native)]
     hard, _ = copy_violations(web, native)
     problems += [f"[chữ] {v}" for v in hard]
@@ -1351,7 +1351,7 @@ Ba thứ, ba nguồn chung, đều có luật máy (`python -X utf8 scripts/ui_p
   `rounded-control` / `rounded-cover` / `rounded-sheet`). Luật máy: `ui/src/shared/radiusRules.test.ts`, `RadiusRulesTest.kt`.
 - **Icon**: lucide. `scripts/gen_lucide_icons.py` (MỘT danh sách `ICONS`) sinh nét cho native và Qt từ đúng gói web dùng; luật `IconRulesTest.kt`.
   Một việc = một icon trên mọi nền tảng: bảng "Việc -> icon" dưới đây là luật, `--check` báo nhãn nào dùng icon khác bảng (bên nào cũng vậy).
-- **Chữ**: cặp màn `scripts/ui_parity_pairs.json` (nhãn có ở một phía mà phía kia không có thì `--check` đỏ, trừ mục `allow` có lý do),
+- **Chữ**: cặp màn `scripts/ui_parity_pairs.json` (nhãn của web mà native không có thì `--check` đỏ, trừ mục `allow` có lý do; nhãn chỉ ở native thì chỉ được báo trong bảng tự sinh),
   luật chữ bên dưới, và bảng đo lệch tự sinh ở cuối file.
 
 ## Việc -> icon

@@ -314,12 +314,9 @@ describe("không chỗ nào bật tắt cứng: các chỗ chung đều đi qua 
   const source = (path: string) => readFileSync(new URL(path, import.meta.url), "utf8");
   const css = source("../styles.css");
 
-  it("hai nền đổi trang qua MotionHashRouter (View Transition + đường dự phòng), vùng trang mang tên chuyển cảnh", () => {
-    for (const app of ["../android/App.tsx", "../desktop/App.tsx"]) {
-      expect(source(app)).toContain("<MotionHashRouter>");
-      expect(source(app)).not.toMatch(/<HashRouter>/);
-    }
-    expect(source("../android/App.tsx")).toMatch(/<main[^>]*className="page-motion/);
+  it("nền máy tính đổi trang qua MotionHashRouter (View Transition + đường dự phòng), vùng trang mang tên chuyển cảnh", () => {
+    expect(source("../desktop/App.tsx")).toContain("<MotionHashRouter>");
+    expect(source("../desktop/App.tsx")).not.toMatch(/<HashRouter>/);
     expect(source("../desktop/Shell.tsx")).toMatch(/<main[^>]*className="page-motion/);
     expect(css).toMatch(/\.page-motion \{\s*view-transition-name: page;/);
   });
@@ -353,16 +350,14 @@ describe("không chỗ nào bật tắt cứng: các chỗ chung đều đi qua 
     expect(css).not.toMatch(/transition-duration: 0ms/);
   });
 
-  it("mọi <details> mở / gập có chuyển động: cài một lần ở cả hai lối vào", () => {
+  it("mọi <details> mở / gập có chuyển động: cài một lần ở lối vào", () => {
     expect(source("../main.tsx")).toContain("installDetailsMotion();");
-    expect(source("../android/main.tsx")).toContain("installDetailsMotion();");
   });
 
   it("mở / đóng Đang nghe nở ra từ thanh phát nhỏ; đổi giao diện sáng / tối đi qua withViewTransition", () => {
     // Chủ sách 26-10: màn Đang nghe nở ra từ thanh nhỏ, phần chung bay riêng (nowPlayingMorph.ts) - không trượt + mờ cả màn.
     expect(source("../listen/PlayerViews.tsx")).toContain('morphNowPlaying(screen, open ? "open" : "close")');
     expect(source("../listen/player.tsx")).not.toContain("prefersReducedMotion()");
-    expect(source("../android/settings.ts")).toContain("withViewTransition(set");
     expect(source("../desktop/App.tsx")).toContain("withViewTransition(() => (root.dataset.theme = next)");
   });
 });

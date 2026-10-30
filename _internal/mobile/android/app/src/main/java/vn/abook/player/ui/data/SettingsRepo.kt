@@ -16,7 +16,7 @@ import org.json.JSONObject
 @Immutable
 data class VoiceOption(val id: String, val name: String, val provider: String, val isDefault: Boolean, val gender: String = "")
 
-/** Một nhóm giọng theo nơi đọc (Edge, khoá của bạn, VieNeu, Supertonic, giọng của máy) - cùng thứ tự `VOICE_GROUPS` của bản WebView. */
+/** Một nhóm giọng theo nơi đọc (Edge, khoá của bạn, VieNeu, Supertonic, giọng của máy) - theo thứ tự hiện trên màn. */
 @Immutable
 data class VoiceGroup(val provider: String, val title: String, val detail: String, val voices: List<VoiceOption>)
 
@@ -44,7 +44,7 @@ enum class VoiceSpeedChoice(override val key: String, override val label: String
     Quality("quality", "Chất lượng cao nhất", "Luôn đọc bản hay nhất; máy chậm có thể phải chờ."),
     Fast("fast", "Nhanh hơn", "Nhanh hơn, tiếng kém hơn chút - hợp máy yếu.");
 
-    /** Câu dưới hàng chọn (cùng `voiceSpeedDescription` của bản WebView). */
+    /** Câu dưới hàng chọn. */
     val sentence: String get() = "$description Chỉ áp cho giọng Supertonic; sách xuất ra luôn dùng bản hay nhất."
 }
 
@@ -69,7 +69,7 @@ interface SettingsCore {
     /** Tuỳ chọn đã nhớ ở kho native, dạng `ListenPrefs.stored()` + `autoMusic`. */
     fun load(): JSONObject
 
-    /** Áp và nhớ các trường đổi (dạng `PlayerPlugin.configure` nhận, kèm `settingsStamp`). */
+    /** Áp và nhớ các trường đổi (dạng [vn.abook.player.ListenPrefs.apply] nhận, kèm `settingsStamp`). */
     fun save(changes: JSONObject)
 
     /** Giọng của máy (có thể chờ vài giây: hỏi bộ đọc của hệ điều hành). */
@@ -103,8 +103,8 @@ interface SettingsCore {
 
 /**
  * Kho dữ liệu Cài đặt cho giao diện native (NATIVE_PHONE_UI.md §2): [state] bất biến, đổi NGAY khi người dùng chọn (màn không chờ đĩa), còn việc ghi
- * xuống lõi xếp hàng trên MỘT coroutine nền theo đúng thứ tự chạm. Ghi qua cùng cửa với bản WebView ([vn.abook.player.ListenPrefs.apply], cùng khoá, cùng giá trị)
- * kèm dấu giờ mới: lần mở bản WebView sau thấy bản native mới hơn thì lấy nó (`syncSettings`).
+ * xuống lõi xếp hàng trên MỘT coroutine nền theo đúng thứ tự chạm. Ghi qua [vn.abook.player.ListenPrefs.apply]
+ * kèm dấu giờ mới.
  */
 class SettingsRepo(private val core: SettingsCore, private val scope: CoroutineScope, private val io: CoroutineDispatcher) {
     val notes = BookNotes(scope, holdActionMs = 20_000)
@@ -255,7 +255,7 @@ class SettingsRepo(private val core: SettingsCore, private val scope: CoroutineS
     suspend fun thirdParty(): List<ThirdPartySection> = withContext(io) { ThirdParty.parse(runCatching { core.thirdParty() }.getOrDefault("")) }
 }
 
-/** Nhóm giọng như bản WebView (listen/voiceGroups.ts, readAloudVoice.ts `resolveVoice`). Hàm thuần. */
+/** Nhóm giọng theo khoá đang chọn. Hàm thuần. */
 object Voices {
     private val KEYED = listOf("azure" to "Azure Speech", "google" to "Google Cloud", "fpt" to "FPT.AI", "viettel" to "Viettel AI")
     private val GROUPS: List<Triple<String, String, String>> =

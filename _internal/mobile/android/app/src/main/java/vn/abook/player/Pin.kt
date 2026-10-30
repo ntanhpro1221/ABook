@@ -46,7 +46,7 @@ object Pin {
         if (expected.isEmpty() || fingerprint(leaf.encoded) != expected.lowercase()) throw CertificateException(CHANGED)
     }
 
-    /** Mã lỗi Capacitor cho [ChangedException]: giao diện thấy mã này thì hiện nguyên câu [CHANGED] thay vì "không kết nối được". */
+    /** Mã lỗi cho [ChangedException]: giao diện thấy mã này thì hiện nguyên câu [CHANGED] thay vì "không kết nối được". */
     const val CODE = "PIN_CHANGED"
 
     /** Lỗi chứng chỉ đã đổi lời cho người nghe (không phải IOException: không phải "mất mạng"). */

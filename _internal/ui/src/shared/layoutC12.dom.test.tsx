@@ -2,7 +2,6 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { RemoteRow } from "@/android/DevicesScreen";
 import { BookCover } from "./BookCover";
 import { ScreenHeader } from "./ScreenHeader";
 import { submenuOffsets } from "./menuPosition";
@@ -20,19 +19,6 @@ it("ô chọn trường chiếm cột; bộ giờ/phút dùng chiều rộng c�
   const [field, time] = host.querySelectorAll("select");
   expect(field.dataset.selectLayout).toBe("column"); expect(field.classList.contains("w-full")).toBe(true);
   expect(time.dataset.selectLayout).toBe("inline"); expect(time.classList.contains("w-auto")).toBe(true);
-});
-
-// Soát ảnh 4x 26-10: thẻ đang tải hiện "Đang tải 42%" trên bìa VÀ "42%" dưới tên - một thông tin hai chỗ. Dưới bìa chỉ còn nút Huỷ thẳng mép như nút Tải.
-it("dưới bìa đang tải chỉ có nút Huỷ (tiến độ ở bìa), hàng thiết bị giữ ô số canh phải", async () => {
-  const book = { id: "a", title: "Sách A", chaptersAvailable: 5, chaptersTotal: 5, duration: 300 };
-  const progress = { bookId: "a", total: 100, done: 42 };
-  await act(() => root.render(<><div data-case="compact"><RemoteRow compact book={book as never} progress={progress as never} onDownload={() => {}} /></div><div data-case="row"><RemoteRow book={book as never} progress={progress as never} onDownload={() => {}} /></div></>));
-  const compact = host.querySelector('[data-case="compact"]')!, row = host.querySelector('[data-case="row"]')!;
-  expect(compact.textContent).not.toContain("%");
-  const cancel = compact.querySelector<HTMLButtonElement>('button[aria-label="Huỷ tải Sách A"]')!;
-  expect(cancel.textContent?.trim()).toBe("Huỷ tải"); expect(cancel.classList.contains("edge-start-action")).toBe(true);
-  expect(row.querySelector("[data-remote-progress]")?.textContent?.trim()).toBe("42%");
-  expect(row.querySelector("[data-remote-progress]")?.classList.contains("text-right")).toBe(true);
 });
 
 it("ảnh chính và nền mờ đều giữ kích thước trước khi tải", async () => {

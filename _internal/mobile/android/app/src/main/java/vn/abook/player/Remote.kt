@@ -42,7 +42,7 @@ object Remote {
     private val handled = LinkedHashMap<String, Long>()
     private var service: ListenableFuture<MediaController>? = null
 
-    /** App đang hiện trên màn hình (MainActivity): mở app là máy tính thấy điện thoại, kể cả khi chưa phát gì. */
+    /** App đang hiện trên màn hình (NativeActivity): mở app là máy tính thấy điện thoại, kể cả khi chưa phát gì. */
     @Volatile
     var foreground = false
         set(value) {
@@ -234,7 +234,7 @@ object Remote {
         return null
     }
 
-    /** Dịch vụ phát chưa chạy (mở app mà chưa nghe gì): dựng nó như PlayerPlugin rồi mới làm. */
+    /** Dịch vụ phát chưa chạy (mở app mà chưa nghe gì): dựng nó rồi mới làm. */
     private fun withService(block: () -> Unit) {
         if (Playback.player != null) {
             block()

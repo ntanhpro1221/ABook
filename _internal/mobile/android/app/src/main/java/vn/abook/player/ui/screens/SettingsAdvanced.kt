@@ -49,7 +49,7 @@ import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.components.fadeEdges
 import androidx.compose.foundation.lazy.rememberLazyListState
 
-/** Lời của Chẩn đoán và Bộ nhớ: cùng chữ với bản WebView (android/Diagnostics.tsx, listen/ReadAloudStorage.tsx, listen/prepareAhead.ts). */
+/** Lời của Chẩn đoán và Bộ nhớ. */
 private object AdvancedCopy {
     const val LOG = "Việc app làm gần đây, để tìm lỗi. Xem lại trước khi gửi."
     const val LOG_NOTE = "Có tên sách; che khoá, mã ghép, IP và đường dẫn nhận ra được. Máy ghép đọc được khi bật “Chia sẻ thư viện”."
@@ -116,7 +116,7 @@ private fun NavRow(title: String, onClick: () -> Unit, tag: String, hint: String
     ListItem(title, onClick = onClick, tag = tag, hint = hint, titleStyle = Abook.type.bodyStrong, chevron = true)
 }
 
-/** Hỏi lại trước khi dọn (như hộp hỏi của bản WebView): bước xác nhận chung [ConfirmPage] - nút đỏ "Dọn", "Giữ lại" là nút chữ. */
+/** Hỏi lại trước khi dọn: bước xác nhận chung [ConfirmPage] - nút đỏ "Dọn", "Giữ lại" là nút chữ. */
 @Composable
 private fun ClearSheet(bytes: Long, onClear: () -> Unit, dismiss: () -> Unit) {
     ConfirmPage("Dọn bản đọc đã làm", "clear_sheet", listOf(AdvancedCopy.clearQuestion(bytes)), "") {
@@ -169,7 +169,7 @@ private fun LogSheet(repo: SettingsRepo) {
     }
 }
 
-/** "Thành phần sử dụng": docs/THIRD_PARTY.md (gói lúc build, cùng file bản WebView hiện), mỗi mục tiêu đề + các dòng. */
+/** "Thành phần sử dụng": docs/THIRD_PARTY.md (gói lúc build), mỗi mục tiêu đề + các dòng. */
 @Composable
 private fun ThirdPartySheet(repo: SettingsRepo) {
     var sections by remember { mutableStateOf<List<ThirdPartySection>?>(null) }

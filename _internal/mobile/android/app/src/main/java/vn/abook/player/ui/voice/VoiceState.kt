@@ -259,7 +259,7 @@ class VoiceState(
     }
 
     /**
-     * "Kiểm tra": khoá vừa gõ (hay vùng vừa đổi) được lưu trước rồi mới gọi dịch vụ - như bản WebView. Dùng được thì danh sách giọng đọc lại để giọng của khoá hiện ngay;
+     * "Kiểm tra": khoá vừa gõ (hay vùng vừa đổi) được lưu trước rồi mới gọi dịch vụ. Dùng được thì danh sách giọng đọc lại để giọng của khoá hiện ngay;
      * `ok` false kèm câu nói được.
      */
     suspend fun checkKey(provider: KeyProvider, key: String, region: String): KeyResult {

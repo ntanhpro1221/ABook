@@ -21,6 +21,7 @@ import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaStyleNotificationHelper
 import org.json.JSONObject
 import java.util.concurrent.atomic.AtomicBoolean
+import vn.abook.player.ui.NativeActivity
 
 /**
  * Điện thoại phát sách CỦA NÓ lên loa / TV DLNA và Chromecast / Google TV / loa Nest (01-10, Cast 02-10): [DlnaPlayers] với
@@ -236,7 +237,7 @@ class CastService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     private fun openApp(): PendingIntent = PendingIntent.getActivity(this, 0,
-        Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), PendingIntent.FLAG_IMMUTABLE)
+        Intent(this, NativeActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), PendingIntent.FLAG_IMMUTABLE)
 
     /** [names]: thiết bị điện thoại tự phát; rỗng thì nói về loa / TV máy tính đang phát. */
     private fun notification(names: List<String>): Notification {

@@ -5,7 +5,7 @@ import org.json.JSONObject
 import vn.abook.player.Playback
 
 /**
- * Lõi phát giả cho chế độ đo (`abook.demo.books`, chỉ bản -PnativeUi): một cuốn 12 chương đứng sẵn ở trình phát, KHÔNG chạm `Playback`, thư viện hay mạng.
+ * Lõi phát giả cho chế độ đo (`abook.demo.books`): một cuốn 12 chương đứng sẵn ở trình phát, KHÔNG chạm `Playback`, thư viện hay mạng.
  * Thanh phát nhỏ, cửa sổ Đang nghe và Đọc theo chạy đúng đường thật ([PlayerRepo] -> RepoNowPlayingModel), chỉ nguồn là cuốn giả này - số đo khung là của đường thật.
  */
 class DemoPlaybackCore : PlaybackCore {

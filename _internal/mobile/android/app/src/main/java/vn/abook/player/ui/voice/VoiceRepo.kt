@@ -17,8 +17,8 @@ import vn.abook.player.vieneu.VieneuVoices
 import vn.abook.player.vieneu.VoiceModule
 
 /**
- * Nguồn thật của Giọng đọc: gọi thẳng các lõi - cùng những hàm mà `ReadAloudPlugin` / `LibraryPlugin` chuyển tiếp cho bản WebView ([VoiceModule], [OnlineVoices],
- * [ReadAloud], [vn.abook.player.MusicStore]), không qua cầu Capacitor. Khoá chỉ đi xuống [OnlineVoices.saveKey], không ghi log, không trả lại.
+ * Nguồn thật của Giọng đọc: gọi thẳng các lõi ([VoiceModule], [OnlineVoices],
+ * [ReadAloud], [vn.abook.player.MusicStore]). Khoá chỉ đi xuống [OnlineVoices.saveKey], không ghi log, không trả lại.
  */
 class VoiceRepo(context: Context) : VoiceSource {
     private val app = context.applicationContext
@@ -106,7 +106,7 @@ class VoiceRepo(context: Context) : VoiceSource {
         guard("Chưa nghe thử được giọng này") { ReadAloud.readExactly(voice, text, null, emptyMap()).file.absolutePath }
     }
 
-    /** Kho "Nhạc của tôi" của máy này; bản WebView đặt nó ở LibraryPlugin.load, bản native đặt ở đây (MỘT kho: [DeviceMusic.store]). */
+    /** Kho "Nhạc của tôi" của máy này: [vn.abook.player.AppStartup.run] đặt, chưa có thì đặt ở đây (MỘT kho: [DeviceMusic.store]). */
     private fun store() = DeviceMusic.store(app).also { if (LocalStudio.musicStore == null) LocalStudio.musicStore = it }
 
     override suspend fun tracks(): List<MusicTrack> = io { MusicJson.tracks(org.json.JSONArray(store().entries())) }

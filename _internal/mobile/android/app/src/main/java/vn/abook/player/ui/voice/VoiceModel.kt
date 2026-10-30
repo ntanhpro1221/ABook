@@ -8,7 +8,7 @@ import java.util.Locale
 
 /*
  * Mô hình và lời của các việc Giọng đọc làm thêm: giọng tải về máy (VieNeu, Supertonic), khoá giọng trực tuyến, nghe thử, đồng ý gửi chữ, Nhạc của tôi. Cùng hình JSON
- * với lõi (VoiceModule.status, OnlineKeys.public, MusicStore.entries) và cùng lời với bản WebView (listen/vieneuModule.ts, onlineConsent.ts, studio/musicLocal.ts).
+ * với lõi (VoiceModule.status, OnlineKeys.public, MusicStore.entries).
  * Hàm thuần, không Android: thử trên JVM.
  */
 

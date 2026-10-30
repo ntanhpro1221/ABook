@@ -173,15 +173,8 @@ describe("Mọi lớp tự dựng đã đăng ký vào ngăn xếp Back", () => 
   it.each([
     ["../listen/PlayerViews.tsx", /useBackLayer\(mobile && open,[\s\S]*<Sheet open=\{open && showPanel\}/],
     ["../listen/LineWishes.tsx", /useBackLayer\(view !== "menu"/],
-    ["./DevicesScreen.tsx", /useBackLayer\(manual,[\s\S]*useBackLayer\(open,/],
   ])("%s", (path, pattern) => {
     expect(source(path)).toMatch(pattern);
-  });
-
-  it("App: listener Back đăng ký một lần, không còn nhánh riêng cho màn Đang nghe", () => {
-    const app = source("./App.tsx");
-    expect(app).toMatch(/addListener\("backButton"[\s\S]*?\}, \[\]\);/);
-    expect(app).not.toMatch(/if \(expanded\) setExpanded\(false\)/);
   });
 });
 

@@ -31,7 +31,7 @@ import vn.abook.player.readaloud.Paragraphs
  *
  * Không thư viện ngoài: java.util.zip + một bộ tách thẻ nhỏ (`Markup`) chịu được XHTML của EPUB (&nbsp; và các thực thể HTML,
  * không phải XML chặt nên XmlPullParser sẽ từ chối), và chạy được trong test JVM (android.jar chỉ có vỏ rỗng của XmlPullParser).
- * PDF: đọc chữ ra từng dòng bằng pdf.js ở lớp giao diện (ui/src/shared/pdfPages.ts) rồi đưa vào `fromPdfPages` - lớp LUẬT ở đây.
+ * PDF: đọc chữ ra từng dòng ở lớp giao diện (ui/addbook/ImportRepo.kt, PdfRenderer) rồi đưa vào `fromPdfPages` - lớp LUẬT ở đây.
  */
 object BookImport {
     /** Không nhập được; câu chữ cho người dùng đọc. */
@@ -111,7 +111,7 @@ object BookImport {
 
     // ---- vào ----------------------------------------------------------------------------------------------------------
 
-    /** Một thư mục TXT, hay file .epub / .docx / .txt. (PDF đi qua `fromPdfPages`: lấy chữ ra là việc của pdf.js.) `splitChapters`: file .txt cả
+    /** Một thư mục TXT, hay file .epub / .docx / .txt. (PDF đi qua `fromPdfPages`: lấy chữ ra là việc của lớp giao diện.) `splitChapters`: file .txt cả
      *  truyện thì tách thành các chương theo dòng "Chương N" (người dùng tích gợi ý `splitOffer`). `keepShort`: bước xem trước - mục rất ngắn vẫn nằm
      *  trong danh sách, đúng chỗ của nó trong file ([defaultPicks] bỏ chúng); không có thì chúng bị bỏ như trước. `footnotes`: EPUB / DOCX có chú thích -
      *  lựa chọn người nghe đã tích ở bước xem trước ([FootnoteChoice]); không có thì như trong sách. */
@@ -123,7 +123,7 @@ object BookImport {
                 "epub" -> epub(path, choice)
                 "docx" -> docx(path, choice)
                 "txt" -> txtFile(path, splitChapters)
-                "pdf" -> throw Failed("PDF cần lấy chữ bằng pdf.js trước (fromPdfPages)")
+                "pdf" -> throw Failed("PDF cần lấy chữ từng trang trước (fromPdfPages)")
                 else -> throw Failed("Chưa đọc được file ${if (suffix.isEmpty()) "không có đuôi" else ".$suffix"} - dùng .epub, .docx, .pdf, .txt hay một thư mục TXT")
             }
             else -> throw Failed("Không thấy ${path.path}.")
@@ -159,7 +159,7 @@ object BookImport {
             book.footnoteFound, book.footnoteMarks, book.footnoteExamples.toMutableList(), book.keepMatter, book.defaultSkips.toMutableSet())
     }
 
-    /** PDF có lớp chữ: `pages` là các dòng CÓ CHỮ của từng trang (pdf.js, như file pages trong bộ ví dụ). */
+    /** PDF có lớp chữ: `pages` là các dòng CÓ CHỮ của từng trang (như file pages trong bộ ví dụ). */
     fun fromPdfPages(stem: String, pages: List<List<String>>, title: String = "", author: String = ""): Book {
         if (pages.isEmpty()) throw broken("PDF")
         val chars = pages.sumOf { page -> page.sumOf { cpLen(it) } }

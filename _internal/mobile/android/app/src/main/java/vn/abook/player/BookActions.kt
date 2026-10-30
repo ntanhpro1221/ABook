@@ -9,7 +9,7 @@ import androidx.core.content.FileProvider
 import org.json.JSONObject
 
 /**
- * Việc với MỘT cuốn mà cả hai giao diện cùng làm (WebView qua [LibraryPlugin], native qua `ui.data.LibraryRepo`): sửa tên / tác giả, đánh dấu đã nghe,
+ * Việc với MỘT cuốn của giao diện (`ui.data.LibraryRepo`): sửa tên / tác giả, đánh dấu đã nghe,
  * xoá khỏi máy, đóng file sách để chia sẻ. Trước đây nằm trong thân phương thức plugin (docs/NATIVE_PHONE_UI.md §2: logic dời vào lõi, plugin chỉ chuyển tiếp).
  * Mọi hàm đọc / ghi đĩa: gọi ở luồng nền.
  */
@@ -22,7 +22,7 @@ object BookActions {
 
     /**
      * Một đường của [LocalStudio] - cùng đường và cùng lời đáp mà bản web gọi (`EbookLibrary.studio`), nên hai giao diện sửa sách như nhau. Khác 200: ném câu lỗi của
-     * lõi. Sửa xong (khác GET): nhạc đang phát đọc lại lớp sửa, cuốn của máy tính gửi phần sửa về ([edited], như LibraryPlugin.studio).
+     * lõi. Sửa xong (khác GET): nhạc đang phát đọc lại lớp sửa, cuốn của máy tính gửi phần sửa về ([edited]).
      */
     fun studio(context: Context, method: String, id: String, rest: String, body: JSONObject? = null): JSONObject {
         Store.init(context)
