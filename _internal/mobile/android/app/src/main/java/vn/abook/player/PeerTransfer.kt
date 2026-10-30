@@ -73,6 +73,65 @@ internal object PeerTransfer {
         }
     }
 
+    /**
+     * Tải một file về `partial`, nối tiếp phần dở khi đúng phiên bản (dùng chung cho sách tải về điện thoại và clip của Studio từ xa). `open(resumeFrom, ifRange)`
+     * mở kết nối GET (đã ghim vân tay); `label` đứng trong lời lỗi. Phần dở chỉ được nối khi biết nó thuộc phiên bản nào (ETag cạnh nó) và máy kia xác nhận đúng
+     * phiên bản + đúng chỗ ([PartResume]). `keepPartial`: lỗi giữa chừng giữ phần dở để nối lại (mặc định chỉ khi biết cỡ file); khi chưa biết cỡ, cỡ thật lấy từ
+     * Content-Range / Content-Length và file thiếu thì ném lỗi (phần dở còn đó). Không đổi tên `partial`: nơi gọi kiểm cuối rồi đổi.
+     */
+    fun fetchResumable(
+        open: (resumeFrom: Long, ifRange: String) -> HttpURLConnection,
+        label: String,
+        partial: File,
+        expectedSize: Long,
+        limit: Long,
+        dir: File,
+        keepPartial: Boolean = expectedSize > 0,
+        check: () -> Unit = {},
+    ) {
+        var (have, tag) = PartResume.point(partial, expectedSize)
+        var connection = open(have, tag)
+        var code = Pin.guard { connection.responseCode }
+        // 416: phần dở dài hơn file hiện có trên máy kia (file đã đổi) - bỏ phần dở như đuôi lạ bên dưới.
+        if (code >= 400 && !(code == 416 && have > 0)) {
+            connection.disconnect()
+            throw IllegalStateException("Không tải được $label (mã $code)")
+        }
+        var answer = if (code == 416) PartResume.Answer.STALE_TAIL
+        else PartResume.answer(code, connection.getHeaderField("Content-Range"), connection.getHeaderField("ETag"), have, tag)
+        if (have > 0 && answer == PartResume.Answer.STALE_TAIL) {
+            // 206 mà ETag lệch (máy kia bỏ qua If-Range): đây là đuôi của file khác. Bỏ phần dở, hỏi lại cả file.
+            connection.disconnect()
+            PartResume.discard(partial)
+            have = 0
+            connection = open(0, "")
+            code = Pin.guard { connection.responseCode }
+            if (code >= 400) {
+                connection.disconnect()
+                throw IllegalStateException("Không tải được $label (mã $code)")
+            }
+            answer = PartResume.Answer.WHOLE
+        }
+        val append = answer == PartResume.Answer.RESUME
+        try {
+            val initial = if (append) have else 0L
+            val length = connection.getHeaderFieldLong("Content-Length", -1)
+            if (length > limit - initial) throw Limit()
+            java.io.FileOutputStream(partial, append).use { output ->
+                // Ghi phiên bản SAU khi cắt `.part` (mở không nối): phần cũ không bao giờ mang ETag mới.
+                if (!append) PartResume.stamp(partial, connection.getHeaderField("ETag"))
+                connection.inputStream.use { input -> copy(input, output, limit, dir, initial, check) }
+                output.fd.sync()
+            }
+            if (expectedSize <= 0 && length >= 0 && partial.length() < initial + length) throw IOException("Tải $label chưa đủ (${partial.length()}/${initial + length} byte)")
+        } catch (error: Exception) {
+            if (error is Limit || !keepPartial) PartResume.discard(partial)
+            throw error
+        } finally {
+            connection.disconnect()
+        }
+    }
+
     fun checkJob(files: List<Pair<String, Long>>) {
         if (files.size > JOB_FILES) throw Limit()
         var remaining = JOB_BYTES

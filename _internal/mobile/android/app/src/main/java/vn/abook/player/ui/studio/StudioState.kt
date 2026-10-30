@@ -10,6 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import vn.abook.player.StudioClips
 import vn.abook.player.StudioError
 import vn.abook.player.StudioErrors
 import vn.abook.player.StudioPoller
@@ -21,7 +22,7 @@ import vn.abook.player.StudioPolling
  * cho bạn sửa" - không có nút xám rải rác.
  */
 @Stable
-class StudioSession(val computer: String, val source: StudioSource, val scope: CoroutineScope) {
+class StudioSession(val computer: String, val source: StudioSource, val scope: CoroutineScope, val clips: StudioClips? = null) {
     /** Một lệnh (không phải lần hỏi định kỳ) vừa bị từ chối vì chỉ nghe; lần hỏi định kỳ báo qua `poll.error` của từng màn. */
     var listenOnly by mutableStateOf(false)
         private set
@@ -44,10 +45,10 @@ class StudioSession(val computer: String, val source: StudioSource, val scope: C
 
 /** Các phiên theo máy tính; sống cùng tiến trình (Application) để rời màn rồi quay lại không phải hỏi lại quyền. */
 @Stable
-class StudioHub(private val source: StudioSource, private val scope: CoroutineScope) {
+class StudioHub(private val source: StudioSource, private val scope: CoroutineScope, private val clips: StudioClips? = null) {
     private val sessions = HashMap<String, StudioSession>()
 
-    fun session(computer: String): StudioSession = sessions.getOrPut(computer) { StudioSession(computer, source, scope) }
+    fun session(computer: String): StudioSession = sessions.getOrPut(computer) { StudioSession(computer, source, scope, clips) }
 }
 
 /** Danh sách dự án của một máy tính (6.1): hỏi 5 giây một lần khi có sách chạy, 15 giây khi rảnh; chỉ hỏi khi màn đang hiện ([run] trong `repeatOnLifecycle`). */
@@ -82,9 +83,49 @@ class StudioHomeState(val session: StudioSession, pause: suspend (Long) -> Unit 
  * bấm Back giữa chừng) và mỗi lúc chỉ một lệnh (như `scope: start-stop` của web).
  */
 @Stable
-class StudioProjectState(val session: StudioSession, val bookId: String, tab: StudioTab = StudioTab.Chapters, pause: suspend (Long) -> Unit = { delay(it) }) {
+class StudioProjectState(
+    val session: StudioSession,
+    val bookId: String,
+    tab: StudioTab = StudioTab.Chapters,
+    private val pause: suspend (Long) -> Unit = { delay(it) },
+    /** Chờ giữ quyết định cho "Hoàn tác" (đổi được để thử không cần đợi 15 giây thật). */
+    hold: suspend (Long) -> Unit = { delay(it) },
+) {
     private val poller = StudioPoller<StudioPage>({ session.source.book(session.computer, bookId) }, StudioLogic::bookInterval, pause)
     val poll: StateFlow<StudioPolling.Poll<StudioPage>> get() = poller.state
+
+    /** Máy đang làm sách thật (không tạm dừng): việc và câu nghe lại mới sinh ra, nên các tab hỏi theo nhịp. */
+    val live: Boolean get() = poll.value.data?.book?.let { (it.running || it.starting) && it.paused == null } == true
+
+    /** Hàng chờ gửi quyết định (giữ 15 giây để hoàn tác), dùng chung cho Việc cần duyệt và bảng giọng. */
+    val decisions = StudioDecisions(session, bookId, hold) { sent -> afterSend(sent) }
+
+    private val workLazy = lazy { StudioWorkState(this, pause) }
+    private val reviewLazy = lazy { StudioReviewState(this, pause) }
+    private val castLazy = lazy { StudioCastState(this, pause) }
+
+    /** Ba tab nội dung (S2): tạo khi tab được mở lần đầu, sống theo màn dự án. */
+    val work: StudioWorkState get() = workLazy.value
+    val review: StudioReviewState get() = reviewLazy.value
+    val cast: StudioCastState get() = castLazy.value
+
+    /** Rời một tab (hay cả màn): dừng tiếng đang phát và thôi "Nghe liền". */
+    fun stopAudio() {
+        if (reviewLazy.isInitialized()) review.release() else session.clips?.stop()
+    }
+
+    /** Rời cả màn dự án: quyết định đang giữ gửi ngay (không mất việc bạn đã quyết) và dừng tiếng. */
+    fun leave() {
+        decisions.flush()
+        stopAudio()
+    }
+
+    /** Sau mỗi lần gửi quyết định xong hay hỏng: nạp lại những gì người duyệt đang thấy và trang sách (số "chờ áp dụng"). */
+    private suspend fun afterSend(sent: Boolean) {
+        if (workLazy.isInitialized()) work.afterSend()
+        if (castLazy.isInitialized()) cast.refresh()
+        if (sent) poller.refresh()
+    }
 
     var tab by mutableStateOf(tab)
 

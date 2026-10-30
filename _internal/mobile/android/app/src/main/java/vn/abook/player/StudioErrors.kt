@@ -27,11 +27,11 @@ sealed class StudioError(message: String? = null, cause: Throwable? = null) : Ex
     /** 413: gói gửi lên quá lớn. */
     class TooBig : StudioError()
 
-    /** 409 / 423: máy tính đang bận việc khác hay trạng thái đã đổi - làm mới rồi thử lại. */
-    class Busy(message: String) : StudioError(message)
+    /** 409 / 423: máy tính đang bận việc khác hay trạng thái đã đổi - làm mới rồi thử lại. `body`: thân JSON của lời đáp (mã `reason`...). */
+    class Busy(message: String, val body: String = "") : StudioError(message)
 
-    /** Lỗi khác của máy chủ; `status` 0 = lời đáp không đọc được. */
-    class Server(message: String, val status: Int) : StudioError(message)
+    /** Lỗi khác của máy chủ; `status` 0 = lời đáp không đọc được. `body`: thân JSON của lời đáp (`reason`, `suggestion`...). */
+    class Server(message: String, val status: Int, val body: String = "") : StudioError(message)
 }
 
 /** Phân loại lỗi - phần thuần (không Context), cùng lời với `ui/src/studio/api.ts` (ApiError, serverMessage) và `polling.ts`. */
@@ -55,9 +55,29 @@ object StudioErrors {
             status == 401 -> StudioError.Unauthorized()
             status == 404 -> StudioError.Gone()
             status == 413 -> StudioError.TooBig()
-            status == 409 || status == 423 -> StudioError.Busy(serverMessage(status, body))
-            else -> StudioError.Server(serverMessage(status, body), status)
+            status == 409 || status == 423 -> StudioError.Busy(serverMessage(status, body), body)
+            else -> StudioError.Server(serverMessage(status, body), status, body)
         }
+    }
+
+    /** Một khoá chữ trong thân lỗi (`reason`, `suggestion`): "" khi không có. Lỗi nào mang thân thì đọc được, loại khác thì "". */
+    fun detail(error: StudioError, key: String): String {
+        val body = when (error) {
+            is StudioError.Server -> error.body
+            is StudioError.Busy -> error.body
+            else -> ""
+        }
+        return runCatching { JSONObject(body).optString(key) }.getOrDefault("")
+    }
+
+    /** `busyBook` của thân lỗi (máy đã nói cuốn nào đang chặn): true khi có. */
+    fun named(error: StudioError): Boolean {
+        val body = when (error) {
+            is StudioError.Server -> error.body
+            is StudioError.Busy -> error.body
+            else -> ""
+        }
+        return runCatching { JSONObject(body).has("busyBook") }.getOrDefault(false)
     }
 
     /** Ngoại lệ của [SyncLink.request] thành lỗi Studio. Huỷ coroutine đi qua nguyên vẹn. */
@@ -89,6 +109,47 @@ object StudioPaths {
     fun stop(id: String): String = book(id) + "/stop"
     fun pause(id: String): String = book(id) + "/pause"
     fun dequeue(id: String): String = book(id) + "/dequeue"
+
+    /** Các đường GHI của một sách mà Studio gọi (đúng tên `remote_studio.ALLOWED`); khoá lạ bị từ chối trước khi gửi. */
+    val WRITES = setOf(
+        "speaker", "line", "narrator-section", "voice", "voice/preview", "pronunciation", "pronunciation/preview", "pronunciation/check", "review", "pending-changes/withdraw",
+        "characters/rename",
+    )
+
+    fun write(id: String, endpoint: String): String {
+        require(endpoint in WRITES) { "Đường không hợp lệ" }
+        return book(id) + "/" + endpoint
+    }
+
+    fun work(id: String): String = book(id) + "/work"
+
+    /** Trang kế của ví dụ một thẻ nhóm lớn (`GET /work/examples`). */
+    fun workExamples(id: String, key: String, offset: Int, limit: Int): String =
+        book(id) + "/work/examples?key=${enc(key)}&offset=$offset&limit=$limit"
+
+    /** `filter` todo | done; `all` = cả câu nhẹ; `cursor` rỗng = trang đầu (`GET /review`). */
+    fun review(id: String, filter: String, all: Boolean, cursor: String): String =
+        book(id) + "/review?filter=${enc(filter)}" + (if (all) "&all=1" else "") + (if (cursor.isNotEmpty()) "&cursor=${enc(cursor)}" else "")
+
+    fun cast(id: String): String = book(id) + "/cast"
+    fun voices(id: String, character: String): String = book(id) + "/voices?character=${enc(character)}"
+
+    /** Bản thu riêng của một câu. */
+    fun sample(id: String, segmentId: Int): String = "/media/books/${checked(id)}/samples/$segmentId"
+
+    /** File chương đã ghép (một câu nằm trong đó ở [start, end] giây). */
+    fun chapterAudio(id: String, chapterId: Int): String = "/media/books/${checked(id)}/chapters/$chapterId"
+
+    /** Câu mẫu chung của một giọng. */
+    fun voiceSample(key: String): String = "/media/voices/${enc(key)}"
+
+    /** Đường `/media/...` an toàn để tải: không `..`, không truy vấn, không ký tự lạ (đường do máy tính gửi về cũng qua đây). */
+    fun safeMedia(path: String): Boolean = path.startsWith("/media/") && !path.contains("..") && MEDIA.matches(path)
+
+    private val MEDIA = Regex("/media/[A-Za-z0-9/_.%-]+")
+
+    /** encodeURIComponent của web: khoảng trắng là %20, không phải +. */
+    private fun enc(text: String): String = java.net.URLEncoder.encode(text, "UTF-8").replace("+", "%20")
 
     private fun checked(id: String): String {
         require(valid(id)) { "Mã sách không hợp lệ" }

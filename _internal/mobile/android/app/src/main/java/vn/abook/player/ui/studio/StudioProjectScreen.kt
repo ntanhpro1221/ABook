@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -51,6 +52,7 @@ import vn.abook.player.ui.components.SheetPages
 import vn.abook.player.ui.components.StopIcon
 import vn.abook.player.ui.components.fadeEdges
 import vn.abook.player.ui.motion.Motion
+import vn.abook.player.ui.studio.parts.DecisionStrip
 import vn.abook.player.ui.studio.parts.LinkBanner
 import vn.abook.player.ui.studio.parts.PermissionCard
 import vn.abook.player.ui.studio.parts.PollWhileVisible
@@ -90,7 +92,7 @@ fun StudioProjectScreen(state: StudioProjectState, sheets: SheetHost, onBack: ()
                 modifier = Modifier.padding(top = Dim.s24).testTag("studio_loading"),
             )
             page == null -> InlineProblem(poll.error?.let { StudioText.failure(it) }.orEmpty(), state::refreshSoon, "studio_project_problem")
-            else -> ProjectBody(page, kind, state, poll.error, sheets, listen)
+            else -> ProjectBody(page, kind, state, poll.error, sheets, listen, active)
         }
     }
 }
@@ -108,7 +110,7 @@ private fun GoneCard(onBack: () -> Unit) {
 }
 
 @Composable
-private fun ProjectBody(page: StudioPage, kind: PrimaryKind?, state: StudioProjectState, error: StudioError?, sheets: SheetHost, listen: () -> Unit) {
+private fun ProjectBody(page: StudioPage, kind: PrimaryKind?, state: StudioProjectState, error: StudioError?, sheets: SheetHost, listen: () -> Unit, active: Boolean) {
     val book = page.book
     val status = StudioLogic.status(book)
     val list = rememberLazyListState()
@@ -124,6 +126,15 @@ private fun ProjectBody(page: StudioPage, kind: PrimaryKind?, state: StudioProje
         }
     }
     val slide = Modifier.graphicsLayer { translationX = shift.value }
+    val retries = state.session.retries
+    // Mỗi tab nội dung chỉ hỏi máy khi nó đang hiện (và màn đang ở trên cùng); đổi tab hay rời màn thì dừng tiếng, rời màn thì gửi nốt quyết định đang giữ.
+    PollWhileVisible(active && state.tab == StudioTab.Work, retries) { state.work.run() }
+    PollWhileVisible(active && state.tab == StudioTab.Review, retries) { state.review.run() }
+    PollWhileVisible(active && state.tab == StudioTab.Cast, retries) { state.cast.run() }
+    DisposableEffect(state.tab) { onDispose { state.stopAudio() } }
+    DisposableEffect(state) { onDispose { state.leave() } }
+    val reviewData = if (state.tab == StudioTab.Review) rememberReviewData(state.review) else null
+    val castData = if (state.tab == StudioTab.Cast) rememberCastData(state.cast) else null
     LazyColumn(Modifier.fillMaxSize().fadeEdges(list).testTag("studio_project_list"), state = list, contentPadding = PaddingValues(bottom = Dim.s16)) {
         item("link", "notices") { LinkBanner(error, state.session.name, state::refreshSoon) }
         item("head", "head") {
@@ -146,9 +157,13 @@ private fun ProjectBody(page: StudioPage, kind: PrimaryKind?, state: StudioProje
                 RowLine()
             }
         }
+        item("undo", "undo") { DecisionStrip(state.decisions) }
         when (state.tab) {
             StudioTab.Chapters -> chapters(page.chapters, slide)
-            // Khung trống: nội dung của bốn tab này là việc của các pha sau; tab vẫn chọn được và giữ chỗ để bố cục không đổi khi có nội dung.
+            StudioTab.Work -> item("work", "work") { WorkDeck(state, book, sheets, { state.tab = StudioTab.Review }, slide) }
+            StudioTab.Review -> if (reviewData != null) reviewTab(state.review, reviewData, book, slide)
+            StudioTab.Cast -> if (castData != null) castTab(state.cast, castData, state, sheets, slide)
+            // Khung trống: nhạc nền là việc của pha sau; tab vẫn chọn được và giữ chỗ để bố cục không đổi khi có nội dung.
             else -> item("frame_${state.tab.key}", "frame") { Spacer(Modifier.fillMaxWidth().height(Dim.s48).then(slide).testTag("studio_frame_${state.tab.key}")) }
         }
     }

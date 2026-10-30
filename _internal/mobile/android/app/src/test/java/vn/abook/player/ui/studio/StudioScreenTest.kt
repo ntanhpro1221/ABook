@@ -236,17 +236,16 @@ class StudioScreenTest {
         assertEquals(listOf("b1" to StudioCommand.Dequeue), source.commands)
     }
 
-    @Test fun chaptersShowOnlyWhatDeviatesAndEmptyTabsAreFrames() {
+    @Test fun chaptersShowOnlyWhatDeviatesAndMusicIsStillAFrame() {
         withBook(studioBook(phase = "done", statusLabel = "Đã xong"), listOf(studioChapter(1), studioChapter(2, redo = true, statusLabel = "Chờ thu lại")))
         val state = project()
         tag("studio_chapter_1").assertIsDisplayed()
         tag("studio_chapter_2").assertIsDisplayed()
-        for (tab in StudioTab.entries.drop(1)) {
-            rule.runOnIdle { state.tab = tab }
-            rule.waitForIdle()
-            tag("studio_frame_${tab.key}").assertExists()
-            absent("studio_chapter_1")
-        }
+        // Việc cần duyệt, Cần nghe lại và Nhân vật đã có nội dung (StudioWorkScreenTest); chỉ Nhạc nền còn là khung trống.
+        rule.runOnIdle { state.tab = StudioTab.Music }
+        rule.waitForIdle()
+        tag("studio_frame_music").assertExists()
+        absent("studio_chapter_1")
     }
 
     @Test fun listenOnlyOnAProjectIsTheSameSingleCard() {
