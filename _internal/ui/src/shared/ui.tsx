@@ -660,7 +660,7 @@ export function Dialog({
       <DialogPrimitive.Portal>
         {/* Mở / đóng đều có chuyển động (styles.css .motion-scrim / .motion-dialog): Radix giữ hộp lại tới khi hiệu ứng đóng xong. Làm mờ nền chỉ
             khi có chuột - trên điện thoại tầm trung, mờ nền mỗi khung hình làm hiệu ứng mở giật. */}
-        <DialogPrimitive.Overlay inert={!open} style={open ? undefined : CLOSING} className="motion-scrim fixed inset-0 z-40 bg-scrim pointer-fine:backdrop-blur-[2px]" />
+        <DialogPrimitive.Overlay inert={!open} style={open ? undefined : CLOSING} className="motion-scrim fixed inset-0 z-40 bg-scrim" />
         <DialogPrimitive.Content
           inert={!open}
           style={open ? undefined : CLOSING}
