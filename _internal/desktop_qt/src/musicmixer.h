@@ -96,7 +96,10 @@ class MixVoice final : public AudioOut {
     Q_OBJECT
 public:
     explicit MixVoice(MusicMixer *mixer, QObject *parent = nullptr);
-    enum Purpose { Music, Voice };
+    // Bed: phần tử nhạc nền bám đồng hồ chương. play() / tua khi đang phát ghi lại con trỏ nghe lúc gọi; tiếng vào muộn hơn
+    // (chờ chu kỳ thiết bị, chờ luồng đọc) thì bỏ qua đúng phần đã trôi, nên tiếng vào ở vị trí đích + (khung nghe đầu − con
+    // trỏ lúc gọi) / rate. Music (tiếng phản hồi) giữ nguyên đầu tiếng.
+    enum Purpose { Music, Voice, Bed };
     MixVoice(MusicMixer *mixer, Purpose purpose, QObject *parent = nullptr);
     MixVoice(MusicMixer *mixer, std::function<std::unique_ptr<VoiceDecoder>(int)> decoder, QObject *parent = nullptr);
     ~MixVoice() override;
