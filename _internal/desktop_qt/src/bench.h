@@ -39,4 +39,6 @@ public:
     Q_INVOKABLE void notePlayback(const QString &tag);
     Q_INVOKABLE void attach(QQuickWindow *window);
     Q_INVOKABLE void finish();
+    /// Ghi tệp đo như finish() nhưng không thoát (lượt dài: treo hay bị giết vẫn còn số tới lần ghi cuối).
+    Q_INVOKABLE void flush();
 };
