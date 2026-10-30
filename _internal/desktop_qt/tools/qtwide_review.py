@@ -104,6 +104,7 @@ def main():
         # Use measure.py's private-byte sampler on the Book page itself as well.
         import measure
         import shot
+        from private_profile import isolate
         name = sys.argv[2]
         exe = Path(sys.argv[3]).resolve() if len(sys.argv) > 3 else HERE / 'dist/ABookDesk.exe'
         env.update(ABOOK_HOST_PYTHON='D:/Novels/ABook/_internal/runtime/.venv/Scripts/pythonw.exe',
@@ -114,7 +115,7 @@ def main():
         for i in range(3):
             (FIXTURE / 'listening.json').write_bytes((FIXTURE / 'listening.clean.json').read_bytes())
             (local / 'ABook/desktop_qt.ini').write_bytes(b'[General]\nthemeMode=dark\nsidebarExpanded=1\n')
-            app = subprocess.Popen([str(exe)], env=env, cwd=str(exe.parent))
+            app = subprocess.Popen([str(exe)], env=isolate(dict(env)), cwd=str(exe.parent))
             h = None
             handle = None
             try:

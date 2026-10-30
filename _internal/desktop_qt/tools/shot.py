@@ -19,6 +19,8 @@ from pathlib import Path
 
 from PIL import Image
 
+from private_profile import isolate
+
 ctypes.windll.shcore.SetProcessDpiAwareness(2)
 u = ctypes.windll.user32
 g = ctypes.windll.gdi32
@@ -124,7 +126,7 @@ def main() -> int:
         data = Path(tempfile.mkdtemp(prefix="abookdesk_shot_data_"))
         (data / "local").mkdir(); (data / "roaming").mkdir()
         env["LOCALAPPDATA"], env["APPDATA"] = str(data / "local"), str(data / "roaming")
-    p = subprocess.Popen([str(exe)], env=env, cwd=str(exe.parent))
+    p = subprocess.Popen([str(exe)], env=isolate(env), cwd=str(exe.parent))
     h = None
     t0 = time.time()
     while h is None and time.time() - t0 < 15:
