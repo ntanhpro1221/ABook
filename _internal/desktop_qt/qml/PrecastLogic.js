@@ -69,7 +69,7 @@ function namesIntro(count) {
 function linesIntro(lineCards, view, range) {
     const head = lineCards.length
         ? Cast.formatNumber(lineCount(lineCards)) + " câu máy chưa chắc ai nói ở " + (range || "những chương sắp thu") + " - các chương thu đầu tiên;"
-        : view.upcoming.length ? "Không có câu nghi ngờ ở " + range : "Đã thu mọi chương"
+        : (view.upcoming || []).length ? "Không có câu nghi ngờ ở " + range : "Đã thu mọi chương"
     return head + " các chương sau xem ở Việc cần duyệt."
 }
 function doneText(book) {

@@ -136,7 +136,7 @@ Item {
                     topPadding: 4
                     Text {
                         width: Math.min(implicitWidth, outdated.width)
-                        text: (outdated.damaged ? "Mất " + root.status.damaged.join(", ") + " (file đã bị xoá hay hỏng)" : "Cần cập nhật " + (root.status ? root.status.outdated : []).join(", ")) + " - "
+                        text: (outdated.damaged ? "Mất " + root.status.damaged.join(", ") + " (file đã bị xoá hay hỏng)" : "Cần cập nhật " + ((root.status && root.status.outdated) || []).join(", ")) + " - "
                         color: Theme.text2
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                         font.pixelSize: 13
