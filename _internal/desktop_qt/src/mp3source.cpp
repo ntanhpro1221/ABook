@@ -115,12 +115,13 @@ size_t Mp3Source::read(std::vector<float> &out, size_t frames) {
 struct StreamMp3::Impl {
     std::shared_ptr<ByteSource> bytes;
     int outputRate, hz = 0, channels = 0, samplesPerFrame = 0, delay = 0, padding = 0;
-    bool opened = false, indexed = false, done = false;
+    bool opened = false, indexed = false, done = false, estimate = false, estimated = false;
+    double frameBytes = 0; // mean bytes per frame at the first frame's bitrate; only for length estimates
     qint64 scanAt = 0, first = 0, windowAt = -1;
     QByteArray window;
     struct Frame { qint64 offset; quint64 sample; };
     std::vector<Frame> index;
-    quint64 scannedSamples = 0, totalSamples = 0, skip = 0, fed = 0, given = 0, expected = 0;
+    quint64 scannedSamples = 0, totalSamples = 0, skip = 0, fed = 0, given = 0, expected = 0, seekTarget = 0;
     size_t next = 0, pendingAt = 0;
     std::vector<float> pending;
     mp3dec_t decoder{};
@@ -155,11 +156,14 @@ struct StreamMp3::Impl {
             index.push_back({scanAt, scannedSamples}); scanAt += count; scannedSamples += hdr_frame_samples(hdr);
         }
         if (indexed) totalSamples = scannedSamples > quint64(delay + std::max(0, padding)) ? scannedSamples - delay - std::max(0, padding) : 0;
+        if (indexed && estimated) { estimated = false; expected = resampler->outFramesFor(totalSamples - std::min(totalSamples, seekTarget)); }
         return indexed || scannedSamples > target;
     }
 };
 
-StreamMp3::StreamMp3(std::shared_ptr<ByteSource> bytes, int outputRate) : d(new Impl(std::move(bytes), outputRate)) {}
+StreamMp3::StreamMp3(std::shared_ptr<ByteSource> bytes, int outputRate, bool estimateLength) : d(new Impl(std::move(bytes), outputRate)) {
+    d->estimate = estimateLength;
+}
 StreamMp3::~StreamMp3() = default;
 QString StreamMp3::error() const { return !d->failure.isEmpty() ? d->failure : d->bytes->error(); }
 double StreamMp3::duration() const { return d->hz ? double(d->totalSamples) / d->hz : 0; }
@@ -187,6 +191,7 @@ bool StreamMp3::open() {
         if (HDR_GET_LAYER(hdr) != 1) { d->failure = QStringLiteral("Chapter must use MP3 Layer III"); return false; }
         d->hz = int(hdr_sample_rate_hz(hdr)); d->channels = HDR_IS_MONO(hdr) ? 1 : 2;
         d->samplesPerFrame = int(hdr_frame_samples(hdr));
+        d->frameBytes = double(d->samplesPerFrame) * hdr_bitrate_kbps(hdr) * 125.0 / d->hz;
         uint32_t frames = 0;
         if (mp3dec_check_vbrtag(hdr, frameBytes, &frames, &d->delay, &d->padding) > 0) {
             d->first += frameBytes; // Xing/Info is metadata, not an audio frame
@@ -198,7 +203,13 @@ bool StreamMp3::open() {
         d->resampler = std::make_unique<MixCore::Resampler>(d->hz, d->outputRate, 2);
     }
     // Untagged CBR/VBR: header-only scan builds an exact sample index. It never decodes a whole chapter into RAM.
-    if (!d->totalSamples && !d->extend(UINT64_MAX - 1)) return false;
+    if (!d->totalSamples && !d->extend(UINT64_MAX - 1)) {
+        // A downloading track without a Xing tag (incompetech): scanning every header means waiting for the whole
+        // download. Estimate from the bitrate (exact for CBR to a frame); the scan's end sets the real count.
+        if (!d->estimate || !error().isEmpty() || d->index.empty()) return false;
+        d->totalSamples = quint64(std::max<qint64>(1, std::llround(double(d->bytes->size() - d->first) / d->frameBytes))) * quint64(d->samplesPerFrame);
+        d->estimated = true;
+    }
     if (!d->totalSamples) { d->failure = QStringLiteral("No MP3 samples in chapter"); return false; }
     d->opened = true;
     return seek(0);
@@ -214,7 +225,9 @@ bool StreamMp3::seek(double seconds) {
     d->next = frame; d->skip = raw - (d->index.empty() ? 0 : d->index[frame].sample);
     mp3dec_init(&d->decoder); d->resampler->reset();
     d->pending.clear(); d->pendingAt = 0; d->fed = d->given = 0;
-    d->expected = d->resampler->outFramesFor(d->totalSamples - std::min(d->totalSamples, target));
+    // While the length is an estimate, read to the end of the index; extend() sets the real count.
+    d->seekTarget = target;
+    d->expected = d->estimated ? UINT64_MAX / 4 : d->resampler->outFramesFor(d->totalSamples - std::min(d->totalSamples, target));
     d->done = false;
     return true;
 }
