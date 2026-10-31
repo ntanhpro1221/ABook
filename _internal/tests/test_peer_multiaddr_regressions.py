@@ -207,27 +207,19 @@ def test_f6_eighth_route_after_slow_tcp_tls_uses_real_connect_deadline(monkeypat
 
 
 def test_f6_dns_and_multiple_tcp_addresses_share_one_deadline(monkeypatch):
+    # TCP đua các địa chỉ trong netconnect (một hạn tính từ TRƯỚC khi tra DNS - test_netconnect.py kiểm phần ấy); tls chỉ phải đưa nguyên phần hạn còn lại của nó.
     now = [0.0]
-    timeouts, sockets = [], []
-    class Raw(FakeSocket):
-        def __init__(self, *args):
-            super().__init__(*args)
-            sockets.append(self)
-        def connect(self, address):
-            timeouts.append(self.timeout)
-            now[0] += .03
-            raise OSError("down")
-    def dns(*args):
-        now[0] += .04
-        return [(socket.AF_INET, socket.SOCK_STREAM, 0, "", (f"10.0.0.{i}", 443)) for i in range(1, 4)]
+    seen = []
+    def dial(address, timeout, source_address=None):
+        seen.append((address, timeout))
+        now[0] += .03
+        raise OSError("down")
     connection = tls.PinnedHTTPSConnection("manual.local", 443, expected=PIN, timeout=.1)
     monkeypatch.setattr(tls.time, "monotonic", lambda: now[0])
-    monkeypatch.setattr(socket, "getaddrinfo", dns)
-    monkeypatch.setattr(socket, "socket", Raw)
+    monkeypatch.setattr(tls.netconnect, "create_connection", dial)
     with pytest.raises(OSError):
         connection.connect()
-    assert timeouts == pytest.approx([.06, .03])
-    assert all(raw.closed for raw in sockets)
+    assert seen == [(("manual.local", 443), pytest.approx(.1))]
 
 
 @pytest.mark.parametrize("row", rows("peer_discovery_ports.json"))

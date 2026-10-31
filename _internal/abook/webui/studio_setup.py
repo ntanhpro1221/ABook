@@ -568,6 +568,7 @@ print("VieNeu", c.VIENEU_CACHE_REVISION[:12], "ok")
 ASR_SCRIPT = r"""
 import os
 from pathlib import Path
+import abook  # cài cách nối TCP đua IPv6/IPv4 (abook.netconnect) TRƯỚC mọi lần tải
 import whisper
 from faster_whisper import WhisperModel
 from huggingface_hub import snapshot_download

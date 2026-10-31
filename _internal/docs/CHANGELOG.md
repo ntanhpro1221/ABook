@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Sửa lỗi
+
+- Giọng Edge và các lần tải (model giọng, nhạc, bìa, kết nối giữa hai máy) không còn treo khi mạng nhà có IPv6 mà IPv6 không ra được Internet (hay gặp sau khi mất điện, router lên lại): app thử IPv6 và IPv4 song song, dùng đường nào nối được trước, thay vì chờ hết hạn từng đường IPv6 rồi mới tới IPv4.
+
 ### Điện thoại
 
 - Nút lùi / tới 15 giây trên widget màn hình chính cùng hình với trình phát: cung nông, số 15 nằm dưới, không chạm nét.
