@@ -49,6 +49,11 @@ Window {
         nowLoader.alive = true                               // dựng ngay (đồng bộ) rồi mở
         if (nowPlaying) nowPlaying.show()
     }
+    // Lần mở khác của app (src/singleinstance.h): bấm lối tắt, bấm đúp file khi app đang mở - hiện cửa sổ. `files`: đường file của
+    // lần mở ấy (mở chúng: Q5).
+    function otherLaunch(files) {
+        windowMode.reveal()
+    }
     function openBookId(id) {
         Api.call("GET", "/api/listen/books/" + id, null, function(data, error) {
             if (!error) { stack.show(0); stack.push(bookPage, {book: Object.assign({}, data, {bookId: data.id, coverKey: data.cover ? data.id + "/" + (data.cover.version || 0) : ""})}) }

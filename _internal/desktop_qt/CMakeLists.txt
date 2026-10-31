@@ -61,6 +61,8 @@ set(ABOOK_MIXER_SOURCES src/musicmixer.cpp src/musicmixer.h src/mixcore.h src/mp
 if(WIN32)
 qt_add_executable(ABookDesk WIN32
     src/desktopapi.cpp
+    src/singleinstance.cpp
+    src/singleinstance.h
     src/later.h
     src/desktopapi.h
     src/main.cpp
@@ -568,6 +570,14 @@ if(MSVC)
     target_compile_options(BackendTests PRIVATE /W3 /utf-8)
 endif()
 add_test(NAME BackendTests COMMAND BackendTests)
+# One running copy per profile (Q4): second launch hands its files over, no window
+qt_add_executable(SingleInstanceTests tests/test_singleinstance.cpp src/singleinstance.cpp src/singleinstance.h)
+target_include_directories(SingleInstanceTests PRIVATE src)
+target_link_libraries(SingleInstanceTests PRIVATE Qt6::Test Qt6::Network)
+if(MSVC)
+    target_compile_options(SingleInstanceTests PRIVATE /W3 /utf-8)
+endif()
+add_test(NAME SingleInstanceTests COMMAND SingleInstanceTests)
 qt_add_executable(WidthTests tests/test_width.cpp tests/glyphaudit.h tests/visualready.h tests/fakes.h src/later.h src/bookdetail.cpp src/bookdetail.h src/mediacontrols.cpp src/mediacontrols.h
     src/readalong.cpp src/readalong.h src/music.cpp src/music.h src/feedback.cpp src/feedback.h ${ABOOK_PLAYER_SOURCES} ${ABOOK_MUSIC_SOURCES})
 target_include_directories(WidthTests PRIVATE src tests)
