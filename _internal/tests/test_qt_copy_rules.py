@@ -8,7 +8,9 @@ import re
 from pathlib import Path
 
 QT = Path(__file__).resolve().parent.parent / "desktop_qt"
-RULE = re.compile(r'"[^"\n]*\bKhông [^"\n]{1,30} được\b[^"\n]*"|`[^`\n]*\bKhông [^`\n]{1,30} được\b[^`\n]*`')
+# Câu sau dấu xuống dòng trong chuỗi ("...\nKhông đọc được") cũng là một câu: `\b` không thấy ranh giới giữa `n` và `K`.
+START = r"(?:\b|(?<=\\n))"
+RULE = re.compile(rf'"[^"\n]*{START}Không [^"\n]{{1,30}} được\b[^"\n]*"|`[^`\n]*{START}Không [^`\n]{{1,30}} được\b[^`\n]*`')
 LOG = re.compile(r"\b(?:console\.\w+|q(?:Warning|Debug|Info|Critical)|qCWarning|qCDebug|Bench::mark)\b")
 
 
@@ -36,6 +38,7 @@ def test_rule_catches_what_it_promises():
     assert len(cut_copy_offences("x.qml", 'text: "Không mở được sách"')) == 1
     assert len(cut_copy_offences("x.js", "return `Không lưu được ${name}`")) == 1
     assert len(cut_copy_offences("x.cpp", 'QStringLiteral("Không đọc được tệp nhạc mp3.")')) == 1
+    assert len(cut_copy_offences("x.qml", r'notice = "Chưa đặt được ảnh bìa\nKhông đọc được file ảnh"')) == 1
     assert cut_copy_offences("x.qml", 'text: "Chưa mở được sách"') == []
     assert cut_copy_offences("x.qml", 'text: "Không có sách nào"') == []
     assert cut_copy_offences("x.qml", '// "Không mở được" là chữ cũ') == []
