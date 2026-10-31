@@ -73,13 +73,32 @@ def bump(new: str, root: Path = ROOT, today: datetime.date | None = None) -> lis
         "ui/package.json": json_version,
         "ui/package-lock.json": json_version,
         "mobile/android/app/build.gradle": gradle,
-        "docs/CHANGELOG.md": lambda t: t.replace("## [Chưa phát hành]\n", f"## [Chưa phát hành]\n\n## [{new}] - {day}\n", 1),
+        "docs/CHANGELOG.md": lambda t: changelog_cut(t, new, day),
     }
     changed = []
     for relative, change in edits.items():
         _edit(root / relative, change)
         changed.append(root / relative)
     return changed
+
+
+# Phần "### ..." của [Chưa phát hành] mà tên có dấu này là việc chưa vào bản phát hành (vd bản Qt khi bộ cài còn là Tauri): ở lại.
+HELD = "chưa có trong bộ cài"
+
+
+def changelog_cut(text: str, new: str, day: str) -> str:
+    """Mở mục [new] dưới [Chưa phát hành], chuyển vào đó mọi phần trừ phần HELD (ở lại [Chưa phát hành] chờ bản thật có nó)."""
+    head = "## [Chưa phát hành]\n"
+    start = text.index(head) + len(head)
+    end = re.search(r"^## \[", text[start:], re.M)
+    end = start + end.start() if end else len(text)
+    parts = re.split(r"(?=^### )", text[start:end], flags=re.M)
+    held = [p for p in parts if p.startswith("### ") and HELD in p.split("\n", 1)[0]]
+    shipped = [p for p in parts if p not in held]
+    out = text[:start]
+    for heading, body in (("", "".join(held).strip("\n")), (f"\n## [{new}] - {day}\n", "".join(shipped).strip("\n"))):
+        out += heading + (f"\n{body}\n" if body else "")
+    return f"{out}\n{text[end:]}"
 
 
 def release_notes(version: str, repo: Path = REPO, out: Path | None = None) -> str:
@@ -92,6 +111,7 @@ def release_notes(version: str, repo: Path = REPO, out: Path | None = None) -> s
     section = re.search(rf"^## \[{re.escape(version)}\][^\n]*\n(.*?)(?=^## \[)", changelog, re.S | re.M)
     requirements = re.search(r"^## Yêu cầu máy\n(.*?)(?=^## )", readme, re.S | re.M)
     assert section and section.group(1).strip(), f"CHANGELOG không có mục [{version}] (chạy bump trước?)"
+    assert HELD not in section.group(1), f"mục [{version}] có phần '{HELD}': người dùng bản này không có nó - để ở [Chưa phát hành]"
     assert requirements, "README không có mục Yêu cầu máy"
     return f"""ABook {version} - app nghe và làm sách nói tiếng Việt: máy tính Windows làm sách (Studio), điện thoại Android và trình
 duyệt nghe cùng một thư viện.

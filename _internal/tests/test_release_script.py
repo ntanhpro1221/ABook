@@ -52,9 +52,31 @@ def test_bump_changes_exactly_the_package_versions_the_build_number_and_the_chan
     gradle = (root / "mobile/android/app/build.gradle").read_text(encoding="utf-8")
     assert f"versionCode {code + 1}" in gradle and f'versionName "{new}"' in gradle
     changelog = (root / "docs/CHANGELOG.md").read_text(encoding="utf-8")
-    assert f"## [Chưa phát hành]\n\n## [{new}] - 2026-10-01\n" in changelog
+    unreleased = changelog.index("## [Chưa phát hành]\n")
+    assert changelog.index(f"\n## [{new}] - 2026-10-01\n") > unreleased
+    assert changelog.count("## [Chưa phát hành]") == 1
     for relative in FILES:  # kiểu xuống dòng giữ nguyên
         assert (root / relative).read_bytes().count(b"\r\n") == before[relative].count(b"\r\n"), relative
+
+
+def test_bump_leaves_what_the_installer_does_not_have_under_unreleased() -> None:
+    text = ("# x\n\n## [Chưa phát hành]\n\n### Máy tính\n\n- Sửa bộ gỡ.\n\n### Máy tính (bản Qt, chưa có trong bộ cài)\n\n- Khay.\n\n"
+            "### Điện thoại\n\n- Giải thích.\n\n## [1.0.0] - x\n\n- cũ\n")
+    cut = release.changelog_cut(text, "1.0.1", "2026-10-31")
+    assert cut == ("# x\n\n## [Chưa phát hành]\n\n### Máy tính (bản Qt, chưa có trong bộ cài)\n\n- Khay.\n\n"
+                   "## [1.0.1] - 2026-10-31\n\n### Máy tính\n\n- Sửa bộ gỡ.\n\n### Điện thoại\n\n- Giải thích.\n\n## [1.0.0] - x\n\n- cũ\n")
+    # Không gì giữ lại: như trước.
+    assert release.changelog_cut("## [Chưa phát hành]\n\n- Mới.\n\n## [1.0.0] - x\n", "1.0.1", "d") == \
+        "## [Chưa phát hành]\n\n## [1.0.1] - d\n\n- Mới.\n\n## [1.0.0] - x\n"
+
+
+def test_release_notes_refuse_a_section_the_installer_does_not_have(tmp_path: Path) -> None:
+    (tmp_path / "_internal/docs").mkdir(parents=True)
+    (tmp_path / "README.md").write_text("# ABook\n\n## Yêu cầu máy\n\n- Windows.\n\n## Cài đặt\n", encoding="utf-8")
+    (tmp_path / "_internal/docs/CHANGELOG.md").write_text(
+        "# x\n\n## [9.9.9] - d\n\n### Máy tính (bản Qt, chưa có trong bộ cài)\n\n- Khay.\n\n## [9.9.8] - x\n", encoding="utf-8")
+    with pytest.raises(AssertionError):
+        release.release_notes("9.9.9", tmp_path)
 
 
 def test_bump_refuses_the_same_or_a_malformed_version(tmp_path: Path) -> None:
