@@ -311,6 +311,7 @@ private:
     void applySleepState(Sleep::Kind kind, int minutes, double leftMs);
     void setPlaying(bool playing);
     void setBuffering(bool buffering);
+    void checkStall();
     void setError(const QString &error);
     void setNotice(const QString &notice, const QString &actionLabel = QString(), const QString &actionKey = QString());
     void setAtEnd(const QString &atEnd);
@@ -330,6 +331,8 @@ private:
     std::unique_ptr<ProgressOutbox> m_outbox;
     QTimer m_ticker;
     QTimer m_noticeTimer;
+    QTimer m_stallTimer;           // last guard of every AudioOut (HostWait::kStallMs): buffering that never ends
+    qint64 m_bufferingSince = 0;
 
     bool m_loaded = false;
     PlayerLogic::Book m_book;

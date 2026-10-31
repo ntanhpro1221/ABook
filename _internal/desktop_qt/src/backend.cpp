@@ -51,6 +51,14 @@ QString abookVersion() {
 Backend::Backend(QObject *parent) : QObject(parent), m_library(new LibraryModel(this)) {
     g_instance = this;
     m_since.start();
+    m_startLimit.setSingleShot(true);
+    connect(&m_startLimit, &QTimer::timeout, this, [this] {
+        if (m_state != Starting)
+            return;
+        qWarning().noquote() << "host chưa báo sẵn sàng sau" << s_startLimitMs << "ms";
+        // A late Ready still opens the app (parseReady); "Thử lại" restarts the stuck host.
+        fail(QStringLiteral("ABook chưa mở được. Bạn thử lại; nếu vẫn lỗi, xem nhật ký trong Cài đặt."));
+    });
 }
 
 Backend::~Backend() {
@@ -133,6 +141,7 @@ void Backend::start() {
     m_token.clear();
     publishEndpoint(0, {});
     m_buffer.clear();
+    m_startLimit.start(s_startLimitMs);
     emit stateChanged();
 
     Launch launch;
@@ -222,6 +231,7 @@ void Backend::parseReady(const QString &address) {
     }
     publishEndpoint(m_port, m_token.toUtf8());
     m_readyMs = int(m_since.elapsed());
+    m_startLimit.stop();
     m_state = Ready;
     m_message.clear();
     emit stateChanged();
@@ -238,6 +248,7 @@ void Backend::onFinished(int, QProcess::ExitStatus) {
 }
 
 void Backend::fail(const QString &message) {
+    m_startLimit.stop();
     m_state = Failed;
     m_message = message;
     emit stateChanged();
@@ -285,6 +296,7 @@ void Backend::restart() {
     m_state = Starting;
     m_message.clear();
     m_libraryLoaded = false;
+    m_startLimit.start(s_startLimitMs);    // a host that will not quit is killed after kStopGraceMs, then start() restarts this
     emit stateChanged();
     emit libraryLoadedChanged();
     QProcess *old = m_proc;
