@@ -140,7 +140,8 @@ Item {
         onTriggered: {
             Bench.notePlayback("tick")
             if (++root.listenTickCount % 30 === 0) Bench.flush()
-            root.listenHeard = root.listenHeard || Player.playing && Player.position > 0
+            // Player không có thuộc tính position cho QML (undefined > 0 là false: kịch bản không bao giờ thoát); vị trí ở Player.clock.
+            root.listenHeard = root.listenHeard || Player.playing && Player.clock.position > 0
             root.listenIdle = Player.playing || !root.listenHeard ? 0 : root.listenIdle + 1
             if (root.listenIdle > 0) Bench.note("listen_idle:" + root.listenIdle + ":" + (root.listenHeard ? 1 : 0))
             if (root.listenIdle >= 15) { listenTicks.stop(); Bench.notePlayback("done"); Bench.note("done"); Bench.finish() }
@@ -181,7 +182,7 @@ Item {
         // 30 s ở 3x (90 s nội dung): đủ dài để thấy tiếng nghe thấy trôi khỏi vị trí app báo
         case 13: audioMark("rate:3"); Player.setRate(3.0); advance(30000); break
         case 14: audioMark("rate:1"); Player.setRate(1.0); advance(3000); break
-        case 15: audioMark("seek:end"); Player.seek(Player.duration - 6); advance(12000); break
+        case 15: audioMark("seek:end"); Player.seek(Player.clock.duration - 6); advance(12000); break
         case 16: audioMark("next"); Player.next(); advance(5000); break
         case 17: audioMark("stop"); Player.pause(); advance(1000); break
         default: audioTicks.stop(); audioMark("done"); Bench.note("done"); Bench.finish()
