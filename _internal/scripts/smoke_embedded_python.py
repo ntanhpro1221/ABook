@@ -1,4 +1,4 @@
-"""Thử Python nhúng của bộ cài app Windows SAU KHI đã cắt phần không dùng (build_windows_app.ps1 > Remove-UnusedFromPython).
+"""Thử Python nhúng của bộ cài app Windows SAU KHI đã cắt phần không dùng (windows_resources.ps1 > Remove-UnusedFromPython, chung cho bộ cài Tauri và Qt).
 
 Chạy bằng chính `resources\\python\\python.exe` với thư mục làm việc là `resources\\app` (không phải pytest - gói thử không
 nằm trong bộ cài):
