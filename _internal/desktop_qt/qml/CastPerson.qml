@@ -1,6 +1,7 @@
 import QtQuick
 import ABook
 import "CastLogic.js" as Logic
+import "TextWrap.js" as TextWrap
 
 // Một người ở tab Nhân vật (PersonRow của listen/BookScreen.tsx): ô tròn chữ cái, tên + giới (xuống dòng, không cắt), giọng, dòng "Chờ áp dụng" /
 // "gộp vào …" (+ "Bỏ gộp"), số câu; bên phải nghe thử, "Đổi giọng", "…" (Gộp vào người khác…, Đổi tên, Đổi giới tính). Nút nào có tuỳ khả năng
@@ -52,7 +53,7 @@ Item {
             Text {
                 objectName: "castName"
                 width: Math.min(implicitWidth, parent.width)
-                text: root.shownName
+                text: TextWrap.pretty(root.shownName)
                 color: Theme.text
                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                 font.pixelSize: Theme.sizeBody
@@ -93,7 +94,7 @@ Item {
             objectName: "castPending"
             visible: !!root.person.pendingVoice && root.showsPending
             width: parent.width
-            text: Logic.pendingVoiceLine(root.person, Boolean(root.caps.waiting))
+            text: TextWrap.pretty(Logic.pendingVoiceLine(root.person, Boolean(root.caps.waiting)))
             color: Theme.accentText
             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
             font.pixelSize: Theme.sizeCaption
@@ -106,7 +107,7 @@ Item {
             spacing: 8
             Text {
                 width: Math.min(implicitWidth, parent.width)
-                text: Logic.mergedLine(root.person, Boolean(root.caps.waiting))
+                text: TextWrap.pretty(Logic.mergedLine(root.person, Boolean(root.caps.waiting)))
                 color: Theme.accentText
                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                 font.pixelSize: Theme.sizeCaption

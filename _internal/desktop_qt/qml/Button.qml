@@ -32,6 +32,9 @@ Interactive {
     implicitHeight: Math.max(Theme.buttonHeight, label.implicitHeight + 8)
     implicitWidth: label.implicitWidth + iconBox + 2 * pad
     opacity: enabled && !busy ? 1 : 0.45
+    // Mờ như MỘT nhóm như opacity của CSS (disabled:opacity-45): mờ từng lớp thì chữ 45% chồng lên nền 45% thành chữ nâu nhạt trên khối
+    // nâu (Lead soát 0.4.151 lượt 2, "Lưu tên" tối); dựng nhóm vào một lớp rồi mới mờ - chữ vẫn đậm trên nền như web
+    layer.enabled: opacity < 1
     Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
     onClicked: if (!busy) root.activated()
 

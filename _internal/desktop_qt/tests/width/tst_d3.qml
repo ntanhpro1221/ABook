@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "../../qml/TextWrap.js" as TextWrap
 import "ModalLayer.js" as ModalLayer
 import "VisualReady.js" as VisualReady
 import ABook
@@ -50,7 +51,7 @@ Item {
         function one(item, name) { const found = all(item, name); verify(found.length > 0, "thiếu " + name); return found[0] }
         function shown(item) { for (let node = item; node; node = node.parent) if (!node.visible || node.opacity === 0) return false; return true }
         function texts(item) { return ModalLayer.collect(item, node => node.text !== undefined && shown(node)).map(node => String(node.text)) }
-        function hasText(item, value) { return texts(item).indexOf(value) >= 0 }
+        function hasText(item, value) { const all = texts(item); return all.indexOf(value) >= 0 || all.indexOf(TextWrap.pretty(value)) >= 0 }    // chữ vẽ qua text-wrap: pretty (TextWrap.js)
         function shot(name, item) {
             const target = item || host
             VisualReady.render(this, host.Window.window, target, qtVisualReady)

@@ -3,6 +3,7 @@ import ABook
 import "ScriptLogic.js" as S
 import "CastLogic.js" as Cast
 import "StudioLogic.js" as Studio
+import "TextWrap.js" as TextWrap
 
 // Tab "Kịch bản" của dự án (ScriptTab.tsx, docs/STUDIO_REVIEW.md mục 3): đọc cả chương như kịch bản - câu nào của ai - và đổi người nói của bất kỳ câu
 // thoại hay nội tâm nào. Hộp "Việc cần duyệt" chỉ đưa ra chỗ máy nghi; ở đây người nghe duyệt cả chương. Sửa đi đúng đường của thẻ "Ai nói câu này"
@@ -661,7 +662,7 @@ Item {
                             x: 10
                             width: Math.min(implicitWidth, chapterButton.width - 36)
                             anchors.verticalCenter: parent.verticalCenter
-                            text: root.entry ? S.chapterLabel(root.entry) : ""
+                            text: root.entry ? TextWrap.pretty(S.chapterLabel(root.entry)) : ""
                             color: Theme.text
                             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                             font.pixelSize: Theme.sizeBodySmall

@@ -1,5 +1,6 @@
 import QtQuick
 import ABook
+import "TextWrap.js" as TextWrap
 
 // Một hàng cho cả đi tới và gập mở (shared/DisclosureRow.tsx): icon (tuỳ), tên 16 + một dòng tóm tắt 14 mực phụ, mũi tên neo mép phải
 // (xoay 90° khi mở). Mục đang mở của danh sách nhóm là điều hướng (DESIGN 6): nền trung tính nhạt + chữ đậm màu thường. Nền rê chuột tràn
@@ -53,7 +54,7 @@ Interactive {
         Text {
             width: parent.width
             visible: root.summary !== ""
-            text: root.summary
+            text: TextWrap.pretty(root.summary)
             color: Theme.text2
             wrapMode: Text.Wrap
             font.pixelSize: Theme.sizeBodySmall

@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "../../qml/TextWrap.js" as TextWrap
 import "VisualReady.js" as VisualReady
 import ABook
 
@@ -80,7 +81,7 @@ Item {
             for (const child of item.children || []) texts(child, out)
             return out
         }
-        function hasText(item, value) { return texts(item).indexOf(value) >= 0 }
+        function hasText(item, value) { const all = texts(item); return all.indexOf(value) >= 0 || all.indexOf(TextWrap.pretty(value)) >= 0 }    // chữ vẽ qua text-wrap: pretty (TextWrap.js)
         function switchOf(page, label) { const s = find(page, i => i.label === label && typeof i.toggled === "function"); verify(s !== null, "no switch " + label); return s }
         function choiceOf(page, label) { const c = find(page, i => i.label === label && typeof i.picked === "function"); verify(c !== null, "no choice " + label); return c }
         function buttonOf(page, text) { const b = find(page, i => i.text === text && typeof i.clicked === "function" && i.visible); verify(b !== null, "no button " + text); return b }

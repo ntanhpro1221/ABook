@@ -135,7 +135,7 @@ Item {
             // Lỗi tải ở thanh bên là InlineError chung (tam giác + câu mực phụ + "Thử lại"), không phải nút ghost chữ vàng gãy dòng
             const error = findChild(progress, "sidebarError")
             tryCompare(error, "open", true)
-            compare(findChild(error, "inlineErrorText").text, "Bạn hãy thử tải lại tiến độ.")
+            compare(findChild(error, "inlineErrorText").text, "Bạn hãy thử tải lại tiến\u00a0độ.")    // text-wrap: pretty (TextWrap.js)
             compare(findChild(error, "inlineErrorRetry").text, "Thử lại")
             // Ảnh soát (Lead lượt 1 mục 2): cột thanh bên rộng 232 trên nền trang, sáng + tối -> build/d2shots/d3_sidebar_error_*.png
             const frame = createTemporaryQmlObject("import QtQuick; import ABook; Rectangle { width: 232; height: 220; color: Theme.bg }", host)

@@ -1,5 +1,6 @@
 import QtQuick
 import ABook
+import "TextWrap.js" as TextWrap
 
 // Nút "Hồ sơ nghe: {tên}" dưới tiến độ của trang sách (nút của RecordPicker, listen/BookScreen.tsx): viên thuốc cao tối thiểu 32, icon người + nhãn + tên hồ sơ
 // đang dùng + mũi tên; bấm mở danh sách hồ sơ. Chỉ có khi cuốn có từ hai hồ sơ trở lên (một hồ sơ thì việc ấy nằm ở menu "Thêm"). Tên dài xuống dòng, nút cao thêm.
@@ -47,7 +48,7 @@ Interactive {
             id: nameText
             objectName: "recordChipName"
             width: Math.min(implicitWidth, flow.width)
-            text: root.name
+            text: TextWrap.pretty(root.name)
             color: Theme.text
             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
             font.pixelSize: Theme.sizeCaption

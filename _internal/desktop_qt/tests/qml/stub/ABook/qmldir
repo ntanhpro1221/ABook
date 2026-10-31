@@ -14,6 +14,7 @@ Shadow 1.0 ../../../../qml/Shadow.qml
 CoverButton 1.0 ../../../../qml/CoverButton.qml
 InlineError 1.0 ../../../../qml/InlineError.qml
 FlowDetail 1.0 ../../../../qml/FlowDetail.qml
+Vu 1.0 ../../../../qml/Vu.qml
 LineIcon 1.0 ../../../../qml/LineIcon.qml
 NavItem 1.0 ../../../../qml/NavItem.qml
 ConnectionChip 1.0 ../../../../qml/ConnectionChip.qml

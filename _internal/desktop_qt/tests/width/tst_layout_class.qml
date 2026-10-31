@@ -12,7 +12,8 @@ Item {
     id: host
     width: 1920; height: 1080
     Rectangle { anchors.fill: parent; color: Theme.bg }
-    Sidebar { id: sidebar; width: 232; height: parent.height }
+    // Như Main: thanh bên tô mục của màn đang hiện (currentSection: stack.current, bấm mục = stack.show)
+    Sidebar { id: sidebar; width: 232; height: parent.height; onSectionRequested: index => currentSection = index }
     Item { id: content; x: sidebar.visible ? 232 : 0; width: host.width - x; height: host.height }
     Item { id: anchor; x: 500; y: 120; width: 40; height: 40 }
     Component { id: library; LibraryScreen {} }
@@ -96,9 +97,11 @@ Item {
             return rows
         }
         function test_routes(d) {
-            host.width = d.w; host.height = d.w === 1024 ? 900 : 1080; Theme.mode = d.mode
+            // Theme như người dùng chọn ở Giao diện (tuỳ chọn -> Theme), mục thanh bên như người dùng bấm: ảnh nói thật
+            host.width = d.w; host.height = d.w === 1024 ? 900 : 1080; Api.update({theme: d.mode})
             sidebar.visible = d.screen !== "mini"
             let screen = d.screen.split("-")[0]
+            sidebar.choose({studio: 1, settings: 2}[screen] || 0)
             const factories = {library: library, book: book, now: now, studio: studio, settings: settings, add: add, edit: edit, rename: rename,
                 save: save, reader: reader, suggestions: suggestions, shortcuts: shortcuts, speed: speed, sleep: sleep, music: music,
                 chapters: chapters, connection: connection, mini: mini, bar: bar}

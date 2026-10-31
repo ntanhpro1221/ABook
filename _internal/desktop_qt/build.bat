@@ -52,7 +52,8 @@ rem Listen audit (tools\listen_audit.py): a run with a voice error, a stall or t
 if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
 rem Python rules over the Qt sources (copy rules, parity with web/phone, layout lints, fixed waits, icon, imports):
-rem 31-10 a reversed parity edit ("Không tìm được") passed every Qt test because only pytest knew the copy rule
+rem 31-10 a reversed parity edit (four labels) passed every Qt test because only pytest knew the copy rule.
+rem Keep this file ASCII: cmd re-reads it by offset after call, and a UTF-8 letter shifts it (tests\test_qt_bat_ascii.py)
 "%ABOOK_PYTHON%" -X utf8 "%HERE%tools\qt_pytests.py"
 if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
