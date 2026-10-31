@@ -84,6 +84,8 @@ class CopyRulesTest {
     @Test
     fun theClippedSentenceRuleCatchesAndLetsThrough() {
         assertEquals(1, cutSentences(listOf("""BasicText("Không mở được sách")""")).size)
+        // Câu đứng sau "\n" trong chuỗi vẫn là câu cụt (bản Qt từng lọt vì ranh giới từ).
+        assertEquals(1, cutSentences(listOf("""BasicText("Lỗi.\nKhông đọc được file ảnh")""")).size)
         assertEquals(0, cutSentences(listOf("""BasicText("Chưa mở được sách")""", """BasicText("Không có sách")""", """// "Không mở được" cũ""", """AppLog.w("Không mở được")""")).size)
     }
 }
