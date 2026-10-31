@@ -19,6 +19,16 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - App máy tính tự kiểm bản mới khi mở; bấm "Cập nhật" thì tải, kiểm chữ ký của ABook, rồi cài và mở lại app. Gói không đúng chữ ký hay tên lạ thì không cài.
 - Bộ cài: gỡ app có ô "Xoá cả dữ liệu" (thư viện ở chỗ khác vẫn giữ); file `.abook` / `.abookproj` mở bằng ABook, gỡ app thì trả lại app cũ đã mở chúng.
 
+## [0.4.150] - 2026-10-31
+
+### Máy tính
+
+- Gỡ cài đặt có "Xoá dữ liệu" không còn đi theo liên kết thư mục (junction) bên trong thư mục dữ liệu: có liên kết thì giữ lại dữ liệu, không làm rỗng thư mục ở chỗ khác.
+
+### Điện thoại
+
+- Thêm các lời giải thích gập sau "?" như bản máy tính: Nhạc của tôi, Studio tạm dừng khi máy chạy pin, bảng chọn giọng, gợi ý người kể "tôi", chương chờ thu lại, khoá giọng trực tuyến.
+
 ## [0.4.149] - 2026-10-31
 
 ### Sửa lỗi

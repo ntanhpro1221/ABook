@@ -155,7 +155,7 @@ Chữ chung với web (luật chủ sách 26-10 "đồng nhất từng cái ch�
 | Xoá bài | hai bước "Xoá" → "Xoá khỏi kho" / "Giữ lại" | tấm "Xoá bài này?" → "Xoá bài" / "Giữ lại" | nút xác nhận "Xoá bài" ở cả hai | ngắn, cùng chữ; tấm xác nhận là dạng của điện thoại |
 | Giá trị khi tự chọn đang tắt / danh sách không còn | "Chưa có nhạc (tắt trong Cài đặt)" / "Danh sách đã chọn" | "Tắt" / "Đã chọn" | "Chưa có nhạc" / "Danh sách đã chọn" | "Tắt" nói sai (cuốn này không tắt nhạc); chỗ bật lại đã nói ở lời dưới bảng |
 
-Chỉ điện thoại có, có lý do: cỡ file ở cuối hàng bài (bộ nhớ máy là chuyện của điện thoại); lời "Nhạc do người làm sách chọn. Đổi ở đây chỉ trên máy này."; "Bài nhạc chương này không phát được." Chỉ web có, chờ thành phần chung của đợt đồng nhất: "Nhạc riêng" (MoreInfo, chưa có bản native).
+Chỉ điện thoại có, có lý do: cỡ file ở cuối hàng bài (bộ nhớ máy là chuyện của điện thoại); lời "Nhạc do người làm sách chọn. Đổi ở đây chỉ trên máy này."; "Bài nhạc chương này không phát được." "Nhạc riêng" (MoreInfo `MusicText.MY_MUSIC_HELP`, ở Nhạc của tôi và hàng "Thêm nhạc của bạn" của Sửa sách) đã có ở cả hai; `tests/test_moreinfo_parity.py` giữ chữ và nhãn của mọi MoreInfo giống nhau giữa web, Qt và điện thoại.
 Trạng thái đang làm của phần nhạc web cũng bỏ "…" ("Đang lưu lựa chọn", "Đang đổi", "Đang chọn lại", "Đang đọc không khí", "Đang thêm nhạc 2/5"); `RETRYING_NOTE` dùng chung với giọng đọc nên để đợt đồng nhất chung sửa.
 
 Cặp màn nhạc (tạm ở đây, gộp vào `scripts/ui_parity_pairs.json` khi file ấy có trên native1):

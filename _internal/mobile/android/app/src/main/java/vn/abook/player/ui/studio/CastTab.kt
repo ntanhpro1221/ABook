@@ -34,6 +34,7 @@ import vn.abook.player.ui.components.ChoiceRow
 import vn.abook.player.ui.components.Fold
 import vn.abook.player.ui.components.InlineProblem
 import vn.abook.player.ui.components.ListItem
+import vn.abook.player.ui.components.MoreInfo
 import vn.abook.player.ui.components.Option
 import vn.abook.player.ui.components.RowHint
 import vn.abook.player.ui.components.RowLine
@@ -206,6 +207,8 @@ private fun VoiceBody(sheet: VoiceSheetState, choices: VoiceChoices, clip: ClipS
                 }
             }
         }
+        if (sheet.narrator) MoreInfo("Tìm hiểu thêm", WorkText.VOICE_NARRATOR_MORE, "studio_voice_narrator_more")
+        else MoreInfo("Dùng chung giọng", WorkText.VOICE_SHARED_MORE, "studio_voice_shared_more")
     }
 }
 
