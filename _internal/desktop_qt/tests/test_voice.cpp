@@ -601,7 +601,7 @@ private slots:
             QTRY_VERIFY_WITH_TIMEOUT(bed.duration() > 0, 5000);
             QTest::qWait(300); // fixed: samples timing - vòng đệm đã lấp: phần trễ còn lại chỉ là chờ chu kỳ thiết bị
             before = sink->now(); bed.play(); after = sink->now();
-            while (sink->now() < after + 9600) { polls.push_back({sink->now(), bed.position()}); QTest::qWait(3); } // fixed: samples timing
+            while (sink->now() < after + 9600) { polls.push_back({sink->now(), bed.position()}); QTest::qWait(3); } // fixed: samples timing - đọc vị trí nhạc nền mỗi 3 ms của đồng hồ thiết bị
             QVERIFY(bed.playing());
             const quint64 paused = sink->now(); bed.pause(); keep.pause();
             QTRY_VERIFY(sink->now() >= paused + 4800);
