@@ -175,8 +175,9 @@ int main(int argc, char *argv[]) {
     // trước khi tốn công khởi động host. Hồ sơ giả của test / bộ cài thử có kênh riêng, không gửi sang app thật.
     QStringList launchFiles;
     for (const QString &argument : app.arguments().mid(1)) {
+        // Đường tương đối theo thư mục của lần mở này, không phải của bản đang chạy nhận nó.
         if (!argument.startsWith(QLatin1Char('-')))
-            launchFiles << argument;
+            launchFiles << QDir::toNativeSeparators(QFileInfo(argument).absoluteFilePath());
     }
     SingleInstance instance;
     // Hai lần mở cùng lúc: cả hai chưa thấy ai, một bên giữ được quyền, bên kia gửi sang nó.
@@ -371,9 +372,12 @@ int main(int argc, char *argv[]) {
         }
     }
     musicWindowActivity.update();
-    // Lần mở khác của app: hiện cửa sổ (Main.qml otherLaunch). Đo đạc (ABOOK_BENCH) không bao giờ đưa cửa sổ lên.
+    // File trên dòng lệnh của chính lần mở này (Main.qml openFiles), rồi các lần mở khác: hiện cửa sổ + mở file của chúng
+    // (otherLaunch). Đo đạc (ABOOK_BENCH) không bao giờ đưa cửa sổ lên.
     if (!engine.rootObjects().isEmpty() && !benchMode) {
         QObject *root = engine.rootObjects().constFirst();
+        if (!launchFiles.isEmpty())
+            QMetaObject::invokeMethod(root, "openFiles", Q_ARG(QVariant, QVariant(launchFiles)));
         QObject::connect(&instance, &SingleInstance::launched, root, [root](const QStringList &files) {
             QMetaObject::invokeMethod(root, "otherLaunch", Q_ARG(QVariant, QVariant(files)));
         });
