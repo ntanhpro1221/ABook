@@ -52,7 +52,7 @@ StudioConfirm {
         const remaining = count
         store.quiet("POST", "/api/books/" + bookId + "/pending-changes/withdraw", {section: item.section, key: item.key, keys: item.keys, requestedAt: item.requestedAt}, function(result, error) {
             root.dropping = ""
-            if (error) { root.store.say("Không bỏ được thay đổi này", error); return }
+            if (error) { root.store.say("Chưa bỏ được thay đổi này", error); return }
             if (remaining <= 1) root.dismiss()
             root.store.refresh(root.bookId)
             root.load()

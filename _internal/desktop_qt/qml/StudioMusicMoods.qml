@@ -29,7 +29,7 @@ Column {
         store.request("POST", "/api/music/moods-model", null, function(status, data) {
             root.downloading = false
             if (root.store.ok(status) && data) root.model = data
-            else Api.notice = "Không tải được phần đọc không khí\n" + root.store.errorText(status, data)
+            else Api.notice = "Chưa tải được phần đọc không khí\n" + root.store.errorText(status, data)
         })
     }
     function compute() {
@@ -37,7 +37,7 @@ Column {
         store.request("POST", "/api/books/" + bookId + "/music/moods", null, function(status, data) {
             root.computing = false
             if (root.store.ok(status) && data) root.computed(data)
-            else Api.notice = "Không đọc lại được không khí các đoạn\n" + root.store.errorText(status, data)
+            else Api.notice = "Chưa đọc lại được không khí các đoạn\n" + root.store.errorText(status, data)
         })
     }
     Component.onCompleted: load()
