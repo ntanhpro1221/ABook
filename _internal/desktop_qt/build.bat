@@ -76,6 +76,8 @@ call :test "%HERE%build\MediaControlsTests.exe" "%HERE%build\mediacontrols-test.
 if errorlevel 1 exit /b 1
 call :test "%HERE%build\DesktopApiTests.exe" "%HERE%build\desktopapi-test.txt"
 if errorlevel 1 exit /b 1
+call :test "%HERE%build\BackendTests.exe" "%HERE%build\backend-test.txt"
+if errorlevel 1 exit /b 1
 call :test "%HERE%build\PlayerTests.exe" "%HERE%build\player-test.txt"
 if errorlevel 1 exit /b 1
 call :test "%HERE%build\ReadAlongTests.exe" "%HERE%build\readalong-test.txt"
