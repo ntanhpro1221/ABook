@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.153] - 2026-11-01
+
 ### Nhạc nền
 
 - Nhạc của tôi: mỗi bài có công tắc "Tự chọn" (máy được tự chọn bài này cho các đoạn hay không) thay cho nút đổi chữ; dưới tên bài chỉ còn "Có lời" hay "Chưa phân tích" khi cần biết. Cỡ tải Phân tích nhạc chỉ ghi một lần, trên nút. Máy tính và điện thoại.
