@@ -21,6 +21,10 @@ struct RangeSource::Impl {
     bool ignored = false, headers = false;
     QString error;
     std::function<void()> ready;
+    bool covered(qint64 offset) const {
+        auto it = ranges.upper_bound(offset);
+        return it != ranges.begin() && std::prev(it)->second > offset;
+    }
     void insert(qint64 begin, qint64 end) {
         auto it = ranges.lower_bound(begin);
         if (it != ranges.begin() && std::prev(it)->second >= begin) --it;
@@ -74,6 +78,12 @@ void RangeSource::request(qint64 offset) {
         Guard lock(d->mutex);
         d->pending = -1;
         if (d->reply || !d->error.isEmpty()) return;
+        // The decoder saw these bytes missing, but the download in flight delivered them and finished before this queued call ran
+        // (a slow machine). Asking again re-downloads them - the WHOLE object from zero when the server ignores Range.
+        if (d->covered(offset)) {
+            QMetaObject::invokeMethod(this, [this] { d->ready(); }, Qt::QueuedConnection);
+            return;
+        }
         d->headers = false; d->wanted = offset; d->responseAt = offset; d->responseEnd = -1;
     }
     QNetworkRequest request(d->url);
