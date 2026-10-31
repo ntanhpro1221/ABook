@@ -32,6 +32,7 @@ import org.json.JSONObject
 import java.io.File
 import java.net.HttpURLConnection
 import vn.abook.player.net.FastConnect
+import vn.abook.player.net.HostWait
 
 /**
  * Nghe thẳng thư viện máy tính mà không tải về (stream play): chương nào đã có file trên máy thì phát file, chưa có thì
@@ -60,7 +61,7 @@ object Streaming {
      */
     fun mediaSourceFactory(context: Context, exactMp3Seek: Boolean = false): MediaSource.Factory {
         Pin.install(context)
-        val http = DefaultHttpDataSource.Factory().setConnectTimeoutMs(5000).setReadTimeoutMs(20_000)
+        val http = DefaultHttpDataSource.Factory().setConnectTimeoutMs(5000).setReadTimeoutMs(HostWait.IDLE_MS)
         val retrying = DataSource.Factory { RetryingDataSource(http.createDataSource()) }
         val pinned = DataSource.Factory {
             val upstream = retrying.createDataSource()
@@ -223,9 +224,8 @@ object Streaming {
         return fetchSmallFile(target) {
             val (link, remote) = SyncLink.linkFor(context, id)
             val selected = PeerRouting.resolve(context, link.base, link.token)
-            val connection = FastConnect.open("$selected/sync/v1/books/$remote/files/$relative", 3000)
+            val connection = HostWait.open("$selected/sync/v1/books/$remote/files/$relative", 3000)
             PeerRouting.expected(context, link.token)?.let { if (connection is javax.net.ssl.HttpsURLConnection) Pin.pin(connection, it) }
-            connection.readTimeout = 15_000
             connection.setRequestProperty("Authorization", "Bearer ${link.token}")
             connection
         }

@@ -231,7 +231,7 @@ object Peers {
     }
 
     fun request(context: Context, key: String, method: String, path: String, body: JSONObject? = null,
-                readTimeoutMs: Int = 20_000, connectTimeoutMs: Int = 5000, upload: File? = null): String {
+                readTimeoutMs: Int? = null, connectTimeoutMs: Int = 5000, upload: File? = null): String {
         val link = link(context, key) ?: throw IllegalStateException("Thiết bị này chưa ghép")
         return SyncLink.request(context, method, path, body, auth = false, root = link.base, readTimeoutMs = readTimeoutMs,
             connectTimeoutMs = connectTimeoutMs, token = link.token, upload = upload)
