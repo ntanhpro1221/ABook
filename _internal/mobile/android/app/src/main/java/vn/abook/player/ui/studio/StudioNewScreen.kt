@@ -36,6 +36,7 @@ import vn.abook.player.ui.components.ChoiceRow
 import vn.abook.player.ui.components.Fold
 import vn.abook.player.ui.components.InlineProblem
 import vn.abook.player.ui.components.ListItem
+import vn.abook.player.ui.components.MoreInfo
 import vn.abook.player.ui.components.PrimaryButton
 import vn.abook.player.ui.components.Reveal
 import vn.abook.player.ui.components.RowHint
@@ -244,6 +245,7 @@ private fun StartStep(state: StudioNewState) {
             Column(Modifier.fillMaxWidth().padding(top = Dim.s12)) {
                 BookField(StudioNewText.FIRST_PERSON, state.firstPerson, state::editFirstPerson, "studio_new_first_person", placeholder = StudioNewText.FIRST_PERSON_PLACEHOLDER)
                 RowHint(StudioNewText.FIRST_PERSON_HINT, Modifier.padding(top = Dim.s4))
+                if (hint != null) MoreInfo("Máy đoán", StudioNewText.firstPersonGuess(hint), "studio_new_guess")
                 Reveal(hint != null && hint.suggestions.isNotEmpty() && state.firstPerson.isBlank()) {
                     Column(Modifier.fillMaxWidth()) {
                         for (name in hint?.suggestions.orEmpty().take(4)) {
@@ -276,6 +278,12 @@ private fun StartStep(state: StudioNewState) {
                 RowLine()
                 SwitchRow(StudioNewText.START_NOW, state.startNow, state::chooseStartNow, "studio_new_start_now", StudioNewText.START_NOW_HINT)
                 RowLine()
+            }
+        }
+        item("pause", "field") {
+            Column(Modifier.fillMaxWidth().padding(top = Dim.s16)) {
+                RowHint(StudioNewText.PAUSE_NOTE, Modifier.testTag("studio_new_pause_note"))
+                MoreInfo("Vì sao?", StudioNewText.PAUSE_WHY, "studio_new_pause_why")
             }
         }
     }

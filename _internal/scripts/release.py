@@ -73,13 +73,32 @@ def bump(new: str, root: Path = ROOT, today: datetime.date | None = None) -> lis
         "ui/package.json": json_version,
         "ui/package-lock.json": json_version,
         "mobile/android/app/build.gradle": gradle,
-        "docs/CHANGELOG.md": lambda t: t.replace("## [Chưa phát hành]\n", f"## [Chưa phát hành]\n\n## [{new}] - {day}\n", 1),
+        "docs/CHANGELOG.md": lambda t: changelog_cut(t, new, day),
     }
     changed = []
     for relative, change in edits.items():
         _edit(root / relative, change)
         changed.append(root / relative)
     return changed
+
+
+# Phần "### ..." của [Chưa phát hành] mà tên có dấu này là việc chưa vào bản phát hành (vd bản Qt khi bộ cài còn là Tauri): ở lại.
+HELD = "chưa có trong bộ cài"
+
+
+def changelog_cut(text: str, new: str, day: str) -> str:
+    """Mở mục [new] dưới [Chưa phát hành], chuyển vào đó mọi phần trừ phần HELD (ở lại [Chưa phát hành] chờ bản thật có nó)."""
+    head = "## [Chưa phát hành]\n"
+    start = text.index(head) + len(head)
+    end = re.search(r"^## \[", text[start:], re.M)
+    end = start + end.start() if end else len(text)
+    parts = re.split(r"(?=^### )", text[start:end], flags=re.M)
+    held = [p for p in parts if p.startswith("### ") and HELD in p.split("\n", 1)[0]]
+    shipped = [p for p in parts if p not in held]
+    out = text[:start]
+    for heading, body in (("", "".join(held).strip("\n")), (f"\n## [{new}] - {day}\n", "".join(shipped).strip("\n"))):
+        out += heading + (f"\n{body}\n" if body else "")
+    return f"{out}\n{text[end:]}"
 
 
 def release_notes(version: str, repo: Path = REPO, out: Path | None = None) -> str:
@@ -92,6 +111,7 @@ def release_notes(version: str, repo: Path = REPO, out: Path | None = None) -> s
     section = re.search(rf"^## \[{re.escape(version)}\][^\n]*\n(.*?)(?=^## \[)", changelog, re.S | re.M)
     requirements = re.search(r"^## Yêu cầu máy\n(.*?)(?=^## )", readme, re.S | re.M)
     assert section and section.group(1).strip(), f"CHANGELOG không có mục [{version}] (chạy bump trước?)"
+    assert HELD not in section.group(1), f"mục [{version}] có phần '{HELD}': người dùng bản này không có nó - để ở [Chưa phát hành]"
     assert requirements, "README không có mục Yêu cầu máy"
     return f"""ABook {version} - app nghe và làm sách nói tiếng Việt: máy tính Windows làm sách (Studio), điện thoại Android và trình
 duyệt nghe cùng một thư viện.
@@ -168,17 +188,22 @@ def check_word_align_pinned() -> None:
 
 
 def check_speaker_model_pinned() -> None:
-    """Lượt "người nói từng câu" (speaker_pass) cần model `abook-speaker:v2`, Studio tải ở bước "llm": ghim ở
-    studio_setup.PUBLISHED_MODELS. Chưa đăng (URL còn PIN_REVISION) thì Studio cài từ bộ cài này hỏng ở bước ấy - không dựng bản phát hành."""
+    """Model phân tích mặc định (config.DEFAULT_SETTINGS, vd `abook-analyzer:v5`) và model người nói đi cặp (`abook-speaker:v2`,
+    lượt speaker_pass) Studio tải ở bước "llm": cả hai ghim ở studio_setup.PUBLISHED_MODELS. Chưa đăng (thiếu mục, URL còn
+    PIN_REVISION) thì Studio cài từ bộ cài này hỏng ở bước ấy - không dựng bản phát hành."""
     sys.path.insert(0, str(ROOT))
-    from abook.speaker_pass import SPEAKER_MODEL
+    from abook.config import DEFAULT_SETTINGS
+    from abook.speaker_pass import SPEAKER_MODEL, paired_speaker_model
     from abook.webui.studio_setup import PUBLISHED_MODELS
 
-    model = PUBLISHED_MODELS.get(SPEAKER_MODEL)
-    assert model is not None and model.size > 0 and re.fullmatch(r"[0-9a-f]{64}", model.sha256) and all(
-        "PIN_REVISION" not in part.url and part.size > 0 and re.fullmatch(r"[0-9a-f]{64}", part.sha256) for part in model.parts), (
-        f"{SPEAKER_MODEL} (webui/studio_setup.py, PUBLISHED_MODELS) chưa ghim: chạy scripts/publish_model.py ... --hf <repo>, "
-        "điền mã commit thay PIN_REVISION")
+    analysis_model = DEFAULT_SETTINGS["analysis"]["model"]
+    assert paired_speaker_model(analysis_model) == SPEAKER_MODEL, f"{analysis_model} chưa đi cặp {SPEAKER_MODEL} (speaker_pass)"
+    for name in (analysis_model, SPEAKER_MODEL):
+        model = PUBLISHED_MODELS.get(name)
+        assert model is not None and model.size > 0 and re.fullmatch(r"[0-9a-f]{64}", model.sha256) and all(
+            "PIN_REVISION" not in part.url and part.size > 0 and re.fullmatch(r"[0-9a-f]{64}", part.sha256) for part in model.parts), (
+            f"{name} (webui/studio_setup.py, PUBLISHED_MODELS) chưa ghim: chạy scripts/publish_model.py ... --hf <repo>, "
+            "điền mã commit thay PIN_REVISION")
 
 
 def build(version: str, out: Path) -> None:

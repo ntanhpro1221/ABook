@@ -21,7 +21,8 @@ PHONE = ROOT / "mobile" / "android" / "app" / "src" / "main" / "java" / "vn" / "
 def long_work(path: Path) -> list[str]:
     """Các chuỗi trong khối `LONG_WORK` / `kLongWork` của một file, theo thứ tự."""
     text = path.read_text(encoding="utf-8")
-    found = re.search(r"(?:LONG_WORK|kLongWork)\b[^\[({]*[\[({](.*?)[\])}]", text, re.S)
+    # Chỗ ĐỊNH NGHĨA (tên rồi "=" trên cùng dòng), không phải chú thích hay chỗ dùng có nhắc tên.
+    found = re.search(r"(?:LONG_WORK|kLongWork)\b[^\n=]*=[^\[({\n]*[\[({](.*?)[\])}]", text, re.S)
     assert found, f"{path.name}: không thấy danh sách LONG_WORK/kLongWork"
     return re.findall(r'"([^"]+)"', found.group(1))
 
@@ -48,4 +49,9 @@ def test_the_reader_finds_a_short_list(tmp_path: Path):
     cut = tmp_path / "x.kt"
     cut.write_text('val LONG_WORK = listOf(\n    "/api/readaloud/clip",\n)\n', encoding="utf-8")
     assert long_work(cut) == ["/api/readaloud/clip"]
+    # Chú thích hay chỗ dùng nhắc tên trước định nghĩa không làm phép đọc lấy nhầm khối.
+    named = tmp_path / "y.h"
+    named.write_text('// kLongWork (below) lists [long] routes\nbool longWork(p) { return in(kLongWork, p); }\n'
+                     'inline constexpr std::array<QStringView, 1> kLongWork = {\n    u"/api/scan",\n};\n', encoding="utf-8")
+    assert long_work(named) == ["/api/scan"]
     assert long_work(cut) != long_work(WEB)

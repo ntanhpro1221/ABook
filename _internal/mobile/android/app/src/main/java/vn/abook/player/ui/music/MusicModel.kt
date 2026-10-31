@@ -190,6 +190,8 @@ object MusicText {
     const val ADD_LABEL = "Thêm nhạc của bạn"
     /** musicLocal.ts MY_MUSIC_INTRO: một câu cho mọi nơi nói về Nhạc của tôi. */
     const val MY_MUSIC_INTRO = "Thêm nhạc làm nền; bài đã chọn đi cùng file sách."
+    /** musicLocal.ts MY_MUSIC_HELP: lời gập "Nhạc riêng" dưới [MY_MUSIC_INTRO] ở mọi nơi nói về Nhạc của tôi. */
+    const val MY_MUSIC_HELP = "Nhạc được chép vào kho máy này; dùng Đổi bài để chọn cho từng đoạn. Hỗ trợ mp3, m4a, ogg, opus, flac, wav. Bài đã chọn đi cùng .abook / .abookproj, vẫn nghe được trên máy khác, không ai khác tải được. Tên bài và nghệ sĩ lấy từ file; ABook không xác nhận giấy phép."
     /** musicLocal.ts `analysisLabel` của bài chưa phân tích (điện thoại không tự chọn nên không nói bài đã phân tích). */
     const val UNANALYSED = "Chưa phân tích - máy chưa tự chọn, bạn vẫn ghim được"
     const val PACKAGED_NOTE = "Nhạc do người làm sách chọn. Đổi ở đây chỉ trên máy này."

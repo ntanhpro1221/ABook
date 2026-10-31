@@ -84,7 +84,7 @@ data class ScanView(
 
 /** `POST /api/first-person`: truyện kể ngôi thứ nhất không, và vài tên gợi ý (không phải đáp án). */
 @Immutable
-data class FirstPersonView(val firstPerson: Boolean, val rate: Double, val suggestions: List<String>)
+data class FirstPersonView(val firstPerson: Boolean, val rate: Double, val suggestions: List<String>, val chaptersSampled: Int = 0, val chaptersWithI: Int = 0)
 
 @Immutable
 data class AnalysisModel(val name: String, val size: Long, val parameters: String)
@@ -130,7 +130,7 @@ internal object StudioNewJson {
         existing = json.optJSONArray("existing").objects().map { ExistingBook(it.text("id"), it.text("title"), it.text("statusLabel")) },
     )
 
-    fun firstPerson(json: JSONObject) = FirstPersonView(json.optBoolean("firstPerson"), json.optDouble("rate", 0.0), json.optJSONArray("suggestions").strings())
+    fun firstPerson(json: JSONObject) = FirstPersonView(json.optBoolean("firstPerson"), json.optDouble("rate", 0.0), json.optJSONArray("suggestions").strings(), json.optInt("chaptersSampled"), json.optInt("chaptersWithI"))
 
     fun models(json: JSONObject) = AnalysisModels(
         default = json.text("default"),
@@ -277,6 +277,9 @@ object StudioNewText {
     const val FIRST_PERSON = "Kể bằng “tôi”"
     const val FIRST_PERSON_HINT = "Tên người xưng “tôi” giúp phân vai đúng lời thoại. Bỏ trống nếu truyện kể ngôi thứ ba."
     const val FIRST_PERSON_PLACEHOLDER = "Tên người kể"
+    /** Dòng nhắc cuối bước Bắt đầu và lời gập "Vì sao?" của nó (web: StartNotes ở NewProjectScreen.tsx; phân tích không nên bị ngắt - AGENTS.md). Thiếu "Thời gian tham khảo": điện thoại chưa có số ước. */
+    const val PAUSE_NOTE = "Đang phân tích mà cần nghỉ, hãy dùng Tạm dừng."
+    const val PAUSE_WHY = "Đừng tắt máy, cho máy ngủ hoặc bấm Dừng trong lúc phân tích. Dừng hoặc nạp lại model có thể đổi phân vai và audio; bản cũ cần tạo dự án mới nếu bị ngắt. Tạm dừng quá 30 phút cũng có thể dỡ model. Sau phân tích, bạn có thể dừng và tiếp tục."
     const val QUALITY = "Chất lượng"
     const val MODEL = "Bộ phân tích truyện"
     const val MODEL_DEFAULT = "Mặc định của ABook"
@@ -288,6 +291,13 @@ object StudioNewText {
     const val CREATE = "Bắt đầu"
     const val CREATING = "Đang tạo sách"
     const val CREATE_FAILED = "Chưa tạo được sách"
+
+    /** Máy đoán người kể "tôi" (web: MoreInfo "Máy đoán" của NewProjectScreen.tsx). */
+    fun firstPersonGuess(hint: FirstPersonView): String =
+        (if (hint.firstPerson) {
+            if (hint.chaptersSampled > 0 && hint.chaptersWithI > 0) "${hint.chaptersWithI}/${hint.chaptersSampled} chương đầu có lời kể xưng “tôi”."
+            else "${Math.round(hint.rate * 100)}% đoạn lời kể có “tôi”."
+        } else "Chọn nhân vật xưng “tôi” trong lời kể.") + " Bạn có thể sửa gợi ý này."
 
     fun tooBig(name: String, size: Long) = "$name (${formatSize(size)}) lớn hơn 17 MB nên không gửi qua mạng được. Chép tệp vào máy tính rồi tạo sách ở đó."
     fun notStory(name: String) = "$name không phải file truyện - chỉ nhận .txt, .epub, .docx, .pdf."
