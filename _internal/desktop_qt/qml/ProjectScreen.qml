@@ -140,7 +140,7 @@ FocusScope {
         const id = book.id
         store.quiet("GET", "/api/books/" + id + "/cast", null, function(cast, error) {
             if (!root.book || root.book.id !== id) return
-            if (error || !cast) { Api.notice = Edit.toastText("Chưa gộp được", error || "Không làm được lúc này."); return }
+            if (error || !cast) { Api.notice = Edit.toastText("Chưa gộp được", error || "Chưa làm được lúc này."); return }
             data.people = (cast.characters || []).concat(cast.extras || [])
             castDialogs.begin("merge", data)
         })
@@ -277,7 +277,7 @@ FocusScope {
         y: 80 - 56
         width: root.contentW
         icon: "circle-alert"
-        title: "Không mở được sách"
+        title: "Chưa mở được sách"
         text: root.store && root.store.bookError ? Logic.failureText(root.store.bookError.status, root.store.bookError.text) : ""
         Button { objectName: "projectRetry"; text: "Thử lại"; kind: "ghost"; onClicked: root.store.loadBook() }
         Button { objectName: "projectErrorBack"; text: "Về Studio"; onClicked: root.backRequested() }
@@ -468,7 +468,7 @@ FocusScope {
                                     Text {
                                         id: startErrorText
                                         width: parent.width - 16 - 8
-                                        text: root.book && root.book.startError ? "Không khởi động được: " + root.book.startError : ""
+                                        text: root.book && root.book.startError ? "Chưa khởi động được: " + root.book.startError : ""
                                         color: Theme.danger
                                         wrapMode: Text.Wrap
                                         font.pixelSize: Theme.sizeBodySmall
@@ -614,7 +614,7 @@ FocusScope {
                         Text {
                             id: techLabel
                             anchors.centerIn: parent
-                            text: root.activityMode === "technical" ? "Ẩn chi tiết kỹ thuật" : "Chi tiết kỹ thuật"
+                            text: root.activityMode === "technical" ? "Ẩn chi tiết" : "Chi tiết kỹ thuật"
                             color: Theme.accentText
                             font.pixelSize: Theme.sizeCaption
                             font.weight: Theme.weightMedium

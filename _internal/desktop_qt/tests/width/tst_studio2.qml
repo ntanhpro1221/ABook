@@ -201,7 +201,7 @@ Item {
             const page = openBuilder()
             page.newStore.setPaths([folder])
             tryVerify(function() { return has(page, "newSourceProblemText") })
-            verify(one(page, "newSourceProblemText").text.indexOf("Không đọc được: ") === 0)
+            verify(one(page, "newSourceProblemText").text.indexOf("Chưa đọc được: ") === 0)
         }
 
         // ================= 2. tên sách + nút tạo =================
@@ -246,7 +246,7 @@ Item {
             const page = openBuilder()
             withSource(page)
             one(page, "newCreate").activated()
-            tryVerify(function() { return Api.notice.indexOf("Không tạo được sách") === 0 })
+            tryVerify(function() { return Api.notice.indexOf("Chưa tạo được sách") === 0 })
             compare(page.route, "new")
             compare(page.newStore.draft.paths.length, 1)
             compare(page.newStore.submitting, false)
@@ -536,7 +536,7 @@ Item {
             const page = makeStudio()
             page.openNew("redo", "hong")
             tryCompare(page, "route", "list", 3000)
-            verify(Api.notice.indexOf("Không đọc được thiết lập của sách") === 0)
+            verify(Api.notice.indexOf("Chưa đọc được thiết lập của sách") === 0)
         }
         function continuation(over) {
             return Object.assign({paths: [folder], title: "Lò rèn · Tập 2", narrator: "Mai", firstPerson: "", profile: "balanced", sourceId: "tap1", sourceTitle: "Lò rèn · Tập 1",
@@ -722,7 +722,7 @@ Item {
             tryVerify(function() { return Api.notice.indexOf("Chưa đặt được ảnh bìa\n") === 0 })
             verify(Api.notice.indexOf("Ảnh quá lớn") > 0)
             one(page, "coverEditor").setImage("")
-            compare(Api.notice, "Chưa đặt được ảnh bìa\nKhông đọc được file ảnh")
+            compare(Api.notice, "Chưa đặt được ảnh bìa\nChưa đọc được file ảnh")
         }
         function test_coverEditorGoesThroughThePeerBridge() {
             const b = book("c3", {cover: {version: 1}})

@@ -227,7 +227,7 @@ Item {
             const page = makeStudio()
             tryVerify(function() { return all(page, "brokenLine").filter(shown).length === 2 })
             const lines = all(page, "brokenLine").map(t => t.text)
-            verify(lines.indexOf("Không đọc được: thiếu tệp") >= 0, JSON.stringify(lines))
+            verify(lines.indexOf("Chưa đọc được: thiếu tệp") >= 0, JSON.stringify(lines))
             verify(lines.indexOf("Chưa mở được: tệp đang mở") >= 0, JSON.stringify(lines))
             compare(all(page, "brokenRetry").filter(shown).length, 1)
             const before = calls("GET", "/api/library").length
@@ -562,7 +562,7 @@ Item {
             tryVerify(function() { return calls("GET", "/api/books/running/activity?technical=1").length === 1 })
             tryVerify(function() { return all(page, "activityTech").filter(shown).length === 1 })
             verify(hasPart(page, "pipeline.slow"))
-            verify(hasText(page, "Ẩn chi tiết kỹ thuật"))
+            verify(hasText(page, "Ẩn chi tiết"))
             // trống: lời mời
             reply("GET /api/books/idle/activity", {status: 200, data: []})
             const empty = openBook(bookStates().idle, [])

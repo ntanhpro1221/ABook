@@ -3,8 +3,8 @@ import ABook
 import "DevicesLogic.js" as Logic
 
 // Một thiết bị đã ghép trong "Máy đã ghép" (hàng <li> của desktop/PhoneSync.tsx): khối gập (tên + "Lần cuối ..."), thân có icon điện thoại,
-// tên + "Kết nối lần cuối ... · ghép ngày ...", công tắc "Điều khiển sản xuất" (khi Studio từ xa bật), "Đổi tên", "Thôi ghép". Hàng mới
-// mở ra từ chiều cao 0, hàng đã thôi ghép khép lại rồi mới gỡ khỏi danh sách (DevicesRows). Tên máy dài xuống dòng, không cắt.
+// tên + "Kết nối lần cuối ... · ghép ngày ...", công tắc "Điều khiển sản xuất" (khi Studio từ xa bật), "Đổi tên", "Bỏ ghép". Hàng mới
+// mở ra từ chiều cao 0, hàng đã bỏ ghép khép lại rồi mới gỡ khỏi danh sách (DevicesRows). Tên máy dài xuống dòng, không cắt.
 Collapse {
     id: root
     property var rows: null
@@ -90,7 +90,7 @@ Collapse {
                         }
                     }
                     Button { size: "sm"; kind: "ghost"; text: "Đổi tên"; onClicked: root.rename(root.rowId, root.device.name || "") }
-                    Button { size: "sm"; kind: "ghost"; text: "Thôi ghép"; onClicked: root.remove(root.rowId, root.device.name || "") }
+                    Button { size: "sm"; kind: "ghost"; text: "Bỏ ghép"; onClicked: root.remove(root.rowId, root.device.name || "") }
                 }
             }
         }

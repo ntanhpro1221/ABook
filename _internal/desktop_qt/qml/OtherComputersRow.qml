@@ -4,8 +4,8 @@ import "DevicesLogic.js" as Logic
 
 // Một máy tính / điện thoại đã ghép một chiều trong "Máy tính khác" (hàng của desktop/OtherComputers.tsx): khối gập (tên + "Đã ghép" /
 // "Đang chờ" / "Cần kiểm tra"), thân có icon máy tính, dòng trạng thái (đường nối + "thấy ... trước", hay lời báo lỗi dài xuống dòng, hay
-// "đang ngủ ... Thôi chờ"), vân tay, rồi các nút: Mở Studio (máy tính) / Chẩn đoán (điện thoại), Bluetooth dự phòng, Hỏi lại thư viện, Thôi ghép.
-// Hàng mới mở ra từ chiều cao 0, hàng đã thôi ghép khép lại rồi mới gỡ (DevicesRows).
+// "đang ngủ ... Thôi chờ"), vân tay, rồi các nút: Mở Studio (máy tính) / Chẩn đoán (điện thoại), Bluetooth dự phòng, Hỏi lại thư viện, Bỏ ghép.
+// Hàng mới mở ra từ chiều cao 0, hàng đã bỏ ghép khép lại rồi mới gỡ (DevicesRows).
 Collapse {
     id: root
     property var rows: null
@@ -119,7 +119,7 @@ Collapse {
                         onChoose: address => root.bluetooth(root.rowId, address)
                     }
                     IconButton { objectName: "refreshBooks"; icon: "refresh-cw"; tip: "Hỏi lại thư viện"; enabled: !root.busy; Accessible.name: "Hỏi lại thư viện"; onClicked: root.refresh() }
-                    IconButton { objectName: "unpairComputer"; icon: "unplug"; tip: "Thôi ghép " + (root.computer.name || ""); Accessible.name: "Thôi ghép " + (root.computer.name || ""); onClicked: root.unpair(root.computer) }
+                    IconButton { objectName: "unpairComputer"; icon: "unplug"; tip: "Bỏ ghép " + (root.computer.name || ""); Accessible.name: "Bỏ ghép " + (root.computer.name || ""); onClicked: root.unpair(root.computer) }
                 }
             }
         }

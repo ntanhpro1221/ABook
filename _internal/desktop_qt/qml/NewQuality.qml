@@ -25,7 +25,7 @@ Column {
     }
 
     Text { objectName: "newQualityTitle"; width: parent.width; text: "Chất lượng"; color: Theme.text; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeSection; font.weight: Theme.weightMedium }
-    Prose { topPadding: 4; text: "Không đổi được sau khi tạo, để mọi chương đọc giống nhau." }
+    Prose { topPadding: 4; text: "Cố định sau khi tạo, để mọi chương đọc giống nhau." }
     Item { width: 1; height: 24 }
     Column {
         width: parent.width

@@ -224,7 +224,7 @@ Modal {
         opening = true
         send("POST", "/api/listen/open-book-file", {}, function(result, error) {
             root.opening = false
-            if (error) { Api.notice = Queue.said("Không mở được file sách", error); return }
+            if (error) { Api.notice = Queue.said("Chưa mở được file sách", error); return }
             root.applyOpened(Queue.openedOutcome(result))
         })
     }
@@ -239,7 +239,7 @@ Modal {
             const item = current[at++]
             root.openBookPath(item.path, mine, function(ok, error) {
                 current = error ? Queue.settle(current, item.id, {state: "error", note: error})
-                                : Queue.settle(current, item.id, ok === false ? {state: "error", note: "Không mở được file sách này."} : {state: "opened", note: "Đã mở"})
+                                : Queue.settle(current, item.id, ok === false ? {state: "error", note: "Chưa mở được file sách này."} : {state: "opened", note: "Đã mở"})
                 root.queue = current
                 step()
             })

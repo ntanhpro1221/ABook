@@ -49,7 +49,7 @@ function createGate(title, reading, unfit) {
 
 /** Lỗi quét: nguồn không đọc được -> {text, subfolders}. */
 function scanProblem(result) {
-    if (result.errors && result.errors.length) return {text: "Không mở được " + result.errors[0], subfolders: []}
+    if (result.errors && result.errors.length) return {text: "Chưa mở được " + result.errors[0], subfolders: []}
     if (result.missing && result.missing.length) {
         const first = result.missing[0]
         return {text: isSourceRef(first) ? "Không tìm thấy “" + sourceName(first) + "” trên máy tính. Gửi lại rồi thử lần nữa." : "Không tìm thấy “" + first + "”. Kiểm tra lại đường dẫn.", subfolders: []}
@@ -379,7 +379,7 @@ function modelOptions(data) {
     const others = data.models.filter(function(model) { return modelLabel(model.name) !== modelLabel(data.default) })
     let defaultSize = 0
     for (const model of data.models) if (modelLabel(model.name) === modelLabel(data.default)) defaultSize = model.size || 0
-    const options = [{value: "", label: "Mặc định của ABook (khuyên dùng)"}]
+    const options = [{value: "", label: "Mặc định (khuyên dùng)"}]
     if (others.length) options.push({header: "Bản khác (thử nghiệm)"})
     others.forEach(function(model, index) { options.push({value: model.name, label: (index + 1) + ". " + experimentalLabel(model, defaultSize)}) })
     return {others: others, options: options, defaultSize: defaultSize}

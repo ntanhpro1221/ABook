@@ -60,7 +60,7 @@ function progressLine(book, listening, failed) {
     if (p.finished || p.caughtUp) return bookStatusText(book)
     const heard = Number(p.heardSeconds || 0)
     if (heard > 0) return "Đã nghe " + formatLength(heard) + " · còn " + formatLength(Math.max(0, Number(book.duration || 0) - heard)) + " chưa nghe"
-    if (listening) return failed ? "Không phát được" : "Đang nghe"
+    if (listening) return failed ? "Chưa phát được" : "Đang nghe"
     return "Chưa nghe"
 }
 

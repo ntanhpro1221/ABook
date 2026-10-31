@@ -3,7 +3,7 @@ import ABook
 import "DevicesLogic.js" as Logic
 
 // Hai khối "Máy này" và "Máy đã ghép" của Cài đặt › Thiết bị (desktop/PhoneSync.tsx): bật "Kết nối Wi-Fi", ghép thiết bị bằng mã 6 số
-// (sống 5 phút, dùng một lần, sai 5 lần thì khoá), quyền điều khiển từ xa, địa chỉ + Bluetooth, danh sách máy đã ghép (đổi tên, thôi ghép).
+// (sống 5 phút, dùng một lần, sai 5 lần thì khoá), quyền điều khiển từ xa, địa chỉ + Bluetooth, danh sách máy đã ghép (đổi tên, bỏ ghép).
 // Hợp đồng với máy chủ: GET/POST /api/sync, POST/DELETE /api/sync/pairing, POST /api/sync/studio, DELETE /api/sync/devices/<id>,
 // POST /api/sync/devices/<id>/name và /studio. Hỏi lại 10 giây một lần, 1,5 giây khi đang hiện mã (báo "đã ghép" ngay).
 Item {
@@ -86,9 +86,9 @@ Item {
     function revoke(id, name) {
         Api.call("DELETE", "/api/sync/devices/" + id, null, function(data, error) {
             if (error) return
-            // Thôi ghép xong nói một câu (soát a68 lỗi 15): dòng thiết bị biến mất không đủ để biết đã xong và hệ quả là gì.
+            // Bỏ ghép xong nói một câu (soát a68 lỗi 15): dòng thiết bị biến mất không đủ để biết đã xong và hệ quả là gì.
             root.take(data)
-            root.say("Đã thôi ghép " + name)
+            root.say("Đã bỏ ghép " + name)
         })
     }
     function rename(id, name) {
@@ -346,13 +346,13 @@ Item {
         objectName: "removeDialog"
         property string targetId: ""
         property string targetName: ""
-        title: "Thôi ghép " + (targetName || "thiết bị") + "?"
+        title: "Bỏ ghép " + (targetName || "thiết bị") + "?"
         description: "Dừng tải và đồng bộ; giữ sách đã tải."
         footer: Row {
             anchors.right: parent.right
             spacing: 8
             Button { kind: "ghost"; text: "Để nguyên"; onClicked: removeDialog.dismiss() }
-            Button { kind: "danger"; text: "Thôi ghép"; onClicked: { root.revoke(removeDialog.targetId, removeDialog.targetName); removeDialog.dismiss() } }
+            Button { kind: "danger"; text: "Bỏ ghép"; onClicked: { root.revoke(removeDialog.targetId, removeDialog.targetName); removeDialog.dismiss() } }
         }
     }
     Modal {

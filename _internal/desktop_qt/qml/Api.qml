@@ -48,7 +48,7 @@ QtObject {
         return transport.request(method, path, body, function(status, data) {
             if (status >= 200 && status < 300) { if (done) done(data, null) }
             else {
-                const error = data && (data.message || data.error) || "Không làm được lúc này."
+                const error = data && (data.message || data.error) || "Chưa làm được lúc này."
                 notice = error
                 if (done) done(null, error)
             }
@@ -60,7 +60,7 @@ QtObject {
         if (!transport) return 0
         return transport.request(method, path, body, function(status, data) {
             if (status >= 200 && status < 300) { if (done) done(data, null) }
-            else if (done) done(null, data && (data.message || data.error) || "Không làm được lúc này.", data)
+            else if (done) done(null, data && (data.message || data.error) || "Chưa làm được lúc này.", data)
         })
     }
     function load() {

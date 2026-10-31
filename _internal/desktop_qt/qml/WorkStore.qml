@@ -91,7 +91,7 @@ QtObject {
                 if (i >= steps.length) { Api.toast(D.undoText(restored, sent, message)); root.after(); return }
                 root.store.request("POST", root.path("/" + steps[i].endpoint), Object.assign({}, steps[i].decision, {withdraw: true}), function(status, data) {
                     if (!root.ok(status)) {
-                        root.fail(done > 0 ? "Mới hoàn tác được " + done + "/" + steps.length + " việc" : "Không hoàn tác được", status, data)
+                        root.fail(done > 0 ? "Mới hoàn tác được " + done + "/" + steps.length + " việc" : "Chưa hoàn tác được", status, data)
                         root.after()
                         return
                     }
@@ -341,7 +341,7 @@ QtObject {
                 const skipped = data.skipped || 0
                 const held = data.held || 0
                 const dropped = (data.dropped || []).map(function(row) { return row.label })
-                say(made ? "Đã ghi " + made + " việc vào “Áp dụng thay đổi”" : "Không có việc nào ghi được", skipped || held ? N.applyNote(skipped, held, dropped) : "")
+                say(made ? "Đã ghi " + made + " việc vào “Áp dụng thay đổi”" : "Chưa ghi được việc nào", skipped || held ? N.applyNote(skipped, held, dropped) : "")
             } else if (verb === "restore") say("Đã khôi phục")
             else say("Đã bỏ qua", "", kept(D.UNDO_MS, {label: "Khôi phục", run: function() { root.decide("restore", device, item, function() {}) }}))
             after()

@@ -24,7 +24,7 @@ Modal {
         const book = bookId
         Api.toast(text, {duration: undoMs, action: {label: "Hoàn tác", run: function() {
             root.ask("POST", "/api/books/" + book + "/voice", {character: character, requestedAt: requestedAt, keep: false, withdraw: true}, function(data, error) {
-                if (error) { Api.notice = Logic.toastText("Không hoàn tác được", error); return }
+                if (error) { Api.notice = Logic.toastText("Chưa hoàn tác được", error); return }
                 root.saved(book)
                 Api.notice = data && data.restored ? "Đã hoàn tác - máy đọc lại theo cách cũ" : message ? "Đã hoàn tác. " + message : "Đã hoàn tác"
             })

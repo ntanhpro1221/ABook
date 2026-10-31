@@ -83,7 +83,7 @@ Column {
             if (error || !data || !data.url) {
                 root.playing = ""
                 root.failedVoice = id
-                root.failedMessage = error || "Không làm được lúc này."
+                root.failedMessage = error || "Chưa làm được lúc này."
                 return
             }
             DesktopApi.preview(data.url)

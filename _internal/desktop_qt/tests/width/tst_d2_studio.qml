@@ -223,7 +223,7 @@ Item {
             DesktopApi.responses["POST /api/studio/setup"] = {status: 500, data: {message: "Hết chỗ"}}
             const page = make()
             one(page, "studioInstall").clicked()
-            compare(Api.notice, "Không cài được Studio\nHết chỗ")
+            compare(Api.notice, "Chưa cài được Studio\nHết chỗ")
             compare(wantsStudio.count, 0)
             compare(one(page, "studioInstall").text, "Cài Studio")
         }

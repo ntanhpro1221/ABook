@@ -175,7 +175,7 @@ Item {
             row.askRemove()
             reply("DELETE /api/music/local/" + sha1, 500, {error: "Tệp đang được dùng"})
             row.remove()
-            compare(Api.notice, "Không xoá được bài này\nTệp đang được dùng")
+            compare(Api.notice, "Chưa xoá được bài này\nTệp đang được dùng")
             compare(mine.removing, "local:" + sha1)
             // thành công: bài ra khỏi danh sách (hàng khép lại rồi gỡ), lớp Back đóng
             view = {tracks: tracks().slice(1), analyzer: true}

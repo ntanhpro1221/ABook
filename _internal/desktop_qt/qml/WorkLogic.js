@@ -50,8 +50,8 @@ function narratorButtons(current, heading) {
     const keep = current ? "Giữ " + current + " là người kể" : "Giữ nguyên ngôi thứ ba"
     if (!heading) return {accept: "Không phải " + current + " kể - đoạn kể ngôi thứ ba", keep: keep, accepted: "Đổi người kể"}
     return heading.label
-        ? {accept: "Nhận: " + heading.label + " kể đoạn này", keep: keep, accepted: "Người kể: " + heading.label}
-        : {accept: "Nhận: đoạn kể ngôi thứ ba", keep: keep, accepted: "Đổi người kể"}
+        ? {accept: heading.label + " kể", keep: keep, accepted: "Người kể: " + heading.label}
+        : {accept: "Kể ngôi thứ ba", keep: keep, accepted: "Đổi người kể"}
 }
 // Thẻ đã quyết nói KẾT QUẢ thay vì lặp câu hỏi; null = giữ tiêu đề
 function decidedTitle(item) {
@@ -270,7 +270,7 @@ function decidedSummary(decided, waiting) {
 }
 function endLine(group, hint) {
     return group.later.length > 0
-        ? "Không còn việc nào sửa được ngay - những việc bên dưới chỉ có tác dụng khi làm lại phân tích từ đầu."
+        ? "Hết việc sửa được ngay - những việc bên dưới chỉ có tác dụng khi làm lại phân tích từ đầu."
         : "Mọi việc đã có quyết định" + (group.decided.length > 0 ? " - " + hint : "") + "."
 }
 function precastLine(count) { return count + " việc của các chương đầu đang chờ ở “Duyệt trước khi thu”." }

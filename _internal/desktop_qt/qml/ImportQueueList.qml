@@ -14,7 +14,7 @@ Item {
     readonly property var spot: Queue.queueFocus(items, currentId, working)
     objectName: "importQueueList"
     Accessible.role: Accessible.List
-    Accessible.name: "Các file đã chọn"
+    Accessible.name: "File đã chọn"
     implicitHeight: view.height + 20
 
     Flickable {

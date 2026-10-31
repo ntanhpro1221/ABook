@@ -46,7 +46,7 @@ QtObject {
     function install(done) { ask("POST", "/api/studio/setup", done) }
     function cancel(done) { ask("POST", "/api/studio/setup/cancel", done) }
     function remove(done) { ask("DELETE", "/api/studio/setup", done) }
-    function failure(title, data) { Api.notice = title + "\n" + (data && (data.message || data.error) || "Không làm được lúc này.") }
+    function failure(title, data) { Api.notice = title + "\n" + (data && (data.message || data.error) || "Chưa làm được lúc này.") }
     // Hỏi lại /api/app sau khi cài / gỡ để cả app biết Studio đã đổi
     function refreshInfo() { if (!store) Api.call("GET", "/api/app", null, function(data, error) { if (!error) Api.info = data }) }
 

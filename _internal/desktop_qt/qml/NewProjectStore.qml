@@ -55,7 +55,7 @@ QtObject {
 
     // ---- đọc dữ liệu ----
     function request(method, path, body, done) { return store ? store.request(method, path, body, done) : 0 }
-    function fail(title, status, data) { Api.notice = title + "\n" + (store ? store.errorText(status, data) : "Không làm được lúc này.") }
+    function fail(title, status, data) { Api.notice = title + "\n" + (store ? store.errorText(status, data) : "Chưa làm được lúc này.") }
     function loadVoices() {
         const mine = store ? store.peer : ""
         request("GET", "/api/voices", null, function(status, data) {
@@ -122,7 +122,7 @@ QtObject {
         redoing = true
         request("GET", "/api/books/" + id + "/redo", null, function(status, data) {
             root.redoing = false
-            if (status < 200 || status >= 300 || !data) { root.fail("Không đọc được thiết lập của sách", status, data); root.leaveRequested(""); return }
+            if (status < 200 || status >= 300 || !data) { root.fail("Chưa đọc được thiết lập của sách", status, data); root.leaveRequested(""); return }
             if (data.started) {
                 Api.notice = "Sách đã bắt đầu chạy\nKhông làm lại với thiết lập khác được nữa."
                 root.leaveRequested(id)
@@ -136,7 +136,7 @@ QtObject {
         redoing = true
         request("GET", "/api/books/" + id + "/continuation", null, function(status, data) {
             root.redoing = false
-            if (status < 200 || status >= 300 || !data) { root.fail("Không mở được phần trước", status, data); root.leaveRequested(""); return }
+            if (status < 200 || status >= 300 || !data) { root.fail("Chưa mở được phần trước", status, data); root.leaveRequested(""); return }
             root.draft = Logic.draftFromContinuation(data, id)
             root.profileApplied = true
         })
@@ -161,7 +161,7 @@ QtObject {
             root.scanning = false
             if (status < 200 || status >= 300 || !data) {
                 root.scanned = {key: key, result: null}
-                root.problem = {text: "Không đọc được: " + (root.store ? root.store.errorText(status, data) : ""), subfolders: []}
+                root.problem = {text: "Chưa đọc được: " + (root.store ? root.store.errorText(status, data) : ""), subfolders: []}
                 return
             }
             root.scanned = {key: key, result: data}
@@ -243,7 +243,7 @@ QtObject {
                 root.prefs = data
                 if (root.store && !root.store.peer) Api.preferences = Object.assign({}, Api.preferences, data)
             } else if (status === 404 || status === 409) root.loadPrefs()
-            if (done) done(ok, ok ? "" : (data && (data.message || data.error)) || "Không làm được lúc này.")
+            if (done) done(ok, ok ? "" : (data && (data.message || data.error)) || "Chưa làm được lúc này.")
         })
     }
 
@@ -293,7 +293,7 @@ QtObject {
         request("POST", "/api/sources/upload", {folder: group.folder, name: picked.name, data: data}, function(status, reply) {
             if (root.sendJob !== job) return
             if (status < 200 || status >= 300 || !reply) {
-                job.result.error = root.store ? root.store.errorText(status, reply) : "Không gửi được."
+                job.result.error = root.store ? root.store.errorText(status, reply) : "Chưa gửi được."
                 root.closeGroup(job, group)
                 root.finishUpload(job, false)
                 return
@@ -328,7 +328,7 @@ QtObject {
     // ---- tách một file cả truyện thành các chương ----
     function splitSource(path, done) {
         request("POST", "/api/sources/split", {path: path, title: String(draft.title).trim()}, function(status, data) {
-            if (status < 200 || status >= 300 || !data) { root.fail("Không tách được", status, data); if (done) done(); return }
+            if (status < 200 || status >= 300 || !data) { root.fail("Chưa tách được", status, data); if (done) done(); return }
             const folder = data.folder
             // File đã chọn thẳng: thư mục chương thay chỗ nó. File nằm trong một thư mục đã chọn: thêm thư mục chương, bỏ file cả truyện khỏi danh sách
             const replaced = root.draft.paths.some(function(item) { return Logic.samePath(item, path) })
@@ -354,7 +354,7 @@ QtObject {
         const body = Logic.createBody({draft: mine, files: scan.files, volumeStarts: volumeStarts, povChapters: povChapters, auto: autoNarrator, remote: remote, noStudio: noStudio, credits: credits})
         request("POST", "/api/books", body, function(status, data) {
             root.submitting = false
-            if (status < 200 || status >= 300 || !data) { root.fail("Không tạo được sách", status, data); return }
+            if (status < 200 || status >= 300 || !data) { root.fail("Chưa tạo được sách", status, data); return }
             const text = Logic.createdText(data, mine, root.noStudio)
             Api.notice = text[1] ? text[0] + "\n" + text[1] : text[0]
             if (data.replaceError) Api.toast("Bản cũ vẫn còn trong Dự án\n" + data.replaceError)

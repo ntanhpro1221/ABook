@@ -19,7 +19,7 @@ Column {
     property string pairError: ""
     property bool pairBusy: false
     property bool discovering: false
-    property var found: null               // kết quả "Tìm máy trong mạng": null = chưa tìm
+    property var found: null               // kết quả "Tự tìm": null = chưa tìm
     property bool refreshBusy: false
     property bool bluetoothBusy: false
     property real now: Date.now() / 1000
@@ -102,7 +102,7 @@ Column {
         addressField.text = target
         codeField.forceActiveFocus()
     }
-    // ---- Thôi ghép: có gì để mất thì hỏi trước, nói rõ mất gì và giữ gì (shared/useUnpair.tsx) ----
+    // ---- Bỏ ghép: có gì để mất thì hỏi trước, nói rõ mất gì và giữ gì (shared/useUnpair.tsx) ----
     function reachable(computer) {
         const current = computers.find(item => item.id === computer.id) || computer
         return !current.error && !current.waking
@@ -118,9 +118,9 @@ Column {
     }
     function startUnpair(computer) {
         Api.call("GET", "/api/computers/" + computer.id + "/unsent", null, function(unsent, error) {
-            if (error) { root.say("Chưa thôi ghép được"); return }
+            if (error) { root.say("Chưa bỏ ghép được"); return }
             if (Logic.unpairCopy(computer.name, "máy tính", unsent, root.reachable(computer)) === null) {
-                root.runUnpair(computer, null, function(problem) { root.say(problem ? "Chưa thôi ghép được" : Logic.unpairDone(computer.name)) })
+                root.runUnpair(computer, null, function(problem) { root.say(problem ? "Chưa bỏ ghép được" : Logic.unpairDone(computer.name)) })
                 return
             }
             root.unpairError = ""
@@ -178,7 +178,7 @@ Column {
                     Text { id: brokenText; width: parent.width; text: root.view && root.view.broken ? root.view.broken : ""; color: Theme.warning; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeBodySmall }
                 }
             }
-            // Ghép / thôi ghép: hàng mở / khép tại chỗ
+            // Ghép / bỏ ghép: hàng mở / khép tại chỗ
             Collapse {
                 width: parent.width
                 open: computerRows.revision >= 0 && computerRows.presentCount() > 0
@@ -229,7 +229,7 @@ Column {
                     Column {
                         width: parent.width
                         spacing: 8
-                        Button { objectName: "discover"; kind: "ghost"; icon: "radar"; text: "Tìm máy trong mạng"; busy: root.discovering; onActivated: root.discover() }
+                        Button { objectName: "discover"; kind: "ghost"; icon: "radar"; text: "Tự tìm"; busy: root.discovering; onActivated: root.discover() }
                         Collapse {
                             width: parent.width
                             open: root.found !== null && root.found.length > 0

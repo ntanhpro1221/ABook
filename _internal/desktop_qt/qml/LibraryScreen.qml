@@ -170,7 +170,7 @@ FocusScope {
                     onTextChanged: root.query = text
                     escapeLocal: true; onEscaped: search.close()
                 }
-                IconButton { id: clear; objectName: "librarySearchClear"; icon: "x"; tip: root.query ? "Xoá ô tìm" : "Đóng tìm kiếm"; onClicked: root.query ? root.query = "" : search.close() }
+                IconButton { id: clear; objectName: "librarySearchClear"; icon: "x"; tip: root.query ? "Xoá ô tìm" : "Đóng ô tìm"; onClicked: root.query ? root.query = "" : search.close() }
             }
         }
     }

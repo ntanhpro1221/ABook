@@ -40,7 +40,7 @@ QtObject {
     function quiet(method, p, body, done) {
         return request(method, p, body, function(status, data) {
             if (ok(status)) { if (done) done(data, null) }
-            else if (done) done(null, data && (data.message || data.error) || (status === 0 ? errorText(0, null) : "Không làm được lúc này."), data)
+            else if (done) done(null, data && (data.message || data.error) || (status === 0 ? errorText(0, null) : "Chưa làm được lúc này."), data)
         })
     }
     // Lời lỗi cho người nghe (serverMessage + failureText của web)
@@ -132,7 +132,7 @@ QtObject {
         starting = true
         request("POST", "/api/books/" + id + "/start", null, function(status, data) {
             root.starting = false
-            if (!ok(status)) { root.fail("Không bắt đầu được", status, data); return }
+            if (!ok(status)) { root.fail("Chưa bắt đầu được", status, data); return }
             root.refresh(id)
             Api.notice = data && data.queuePosition ? "Đã xếp hàng - tự bắt đầu khi cuốn đang chạy xong (cần mở app)" : "Đang khởi động"
         })
@@ -150,7 +150,7 @@ QtObject {
         pausing = true
         request("POST", "/api/books/" + id + "/pause", {paused: paused}, function(status, data) {
             root.pausing = false
-            if (!ok(status)) { root.refresh(id); root.fail(paused ? "Không tạm dừng được" : "Không làm tiếp được", status, data); return }
+            if (!ok(status)) { root.refresh(id); root.fail(paused ? "Chưa tạm dừng được" : "Chưa làm tiếp được", status, data); return }
             root.adopt(data)
             const notice = Logic.pauseNotice(paused, data, Boolean(battery))
             root.say(notice.title, notice.description)
@@ -161,7 +161,7 @@ QtObject {
         stopping = true
         request("POST", "/api/books/" + id + "/stop", null, function(status, data) {
             root.stopping = false
-            if (!ok(status)) { root.refresh(id); root.fail("Không dừng được", status, data); return }
+            if (!ok(status)) { root.refresh(id); root.fail("Chưa dừng được", status, data); return }
             root.adopt(data)
             Api.notice = wasPaused ? "Đang dừng hẳn - mọi thứ đã xong được giữ nguyên" : "Sẽ dừng ở chỗ an toàn kế tiếp - mọi thứ đã xong được giữ nguyên"
         })
@@ -177,7 +177,7 @@ QtObject {
     }
     function reveal(id) {
         request("POST", "/api/books/" + id + "/reveal", null, function(status, data) {
-            if (!ok(status)) root.fail("Không mở được thư mục", status, data)
+            if (!ok(status)) root.fail("Chưa mở được thư mục", status, data)
         })
     }
     function rename(id, title, done) {
@@ -219,10 +219,10 @@ QtObject {
     // "Mở dự án có sẵn…": chọn thư mục rồi mở nó (pickFolder + useOpenBook của web)
     function openExisting(done) {
         request("POST", "/api/dialog/folder", {title: "Chọn thư mục một cuốn sách đã tạo", start: ""}, function(status, data) {
-            if (!ok(status)) { root.fail("Không mở được sách", status, data); return }
+            if (!ok(status)) { root.fail("Chưa mở được sách", status, data); return }
             if (!data || !data.path) return
             root.request("POST", "/api/books/open", {path: data.path}, function(s2, d2) {
-                if (!root.ok(s2)) { root.fail("Không mở được sách", s2, d2); return }
+                if (!root.ok(s2)) { root.fail("Chưa mở được sách", s2, d2); return }
                 root.loadLibrary()
                 if (done) done(d2.id)
             })
