@@ -1745,6 +1745,12 @@ object ReadAloud {
     /** Đang trong lần máy tự hỏi lại ([retryAfterFailure] `byItself`): [startAt] không coi đó là người nghe chọn chỗ mới. */
     private var retryingByItself = false
 
+    /** Người nghe đã chờ âm thanh quá lâu ([vn.abook.player.BufferingGuard]): cùng trạng thái hỏng như một lượt đọc lỗi - bấm phát ("Thử lại") đọc lại đúng đoạn đang chờ ([retryAfterFailure]). */
+    fun giveUp(message: String) {
+        if (!active || failure != null) return
+        fail(message, waiting?.let { it.chapterIndex to it.segment })
+    }
+
     /** `spot` = (chương, đoạn) hỏng nếu biết: máy tự hỏi lại đúng chỗ vừa báo mà hỏng nữa thì không báo lần nữa ([FailureNotice]). */
     private fun fail(message: String, spot: Pair<Int, Int>? = null) {
         failure = message

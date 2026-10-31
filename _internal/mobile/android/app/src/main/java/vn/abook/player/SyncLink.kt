@@ -8,7 +8,7 @@ import java.io.File
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
-import vn.abook.player.net.FastConnect
+import vn.abook.player.net.HostWait
 import javax.net.ssl.HttpsURLConnection
 
 /**
@@ -95,9 +95,8 @@ object SyncLink {
         Pin.install(context)
         return PeerTransfer.openGet {
             val selected = PeerRouting.resolve(context, link.base, link.token)
-            val connection = FastConnect.open("$selected$path", 5000)
+            val connection = HostWait.open("$selected$path", 5000)
             PeerRouting.expected(context, link.token)?.let { expected -> if (connection is HttpsURLConnection) Pin.pin(connection, expected) }
-            connection.readTimeout = 30000
             connection.setRequestProperty("Authorization", "Bearer ${link.token}")
             if (resumeFrom > 0) {
                 connection.setRequestProperty("Range", "bytes=$resumeFrom-")
@@ -133,7 +132,7 @@ object SyncLink {
         body: JSONObject? = null,
         auth: Boolean = true,
         root: String = base(context),
-        readTimeoutMs: Int = 20_000,
+        readTimeoutMs: Int? = null,
         connectTimeoutMs: Int = 5000,
         token: String? = null,
         upload: File? = null,
@@ -205,7 +204,7 @@ object SyncLink {
         body: JSONObject?,
         auth: Boolean,
         root: String,
-        readTimeoutMs: Int,
+        readTimeoutMs: Int?,
         connectTimeoutMs: Int,
         token: String?,
         firstUse: Array<String?>? = null,
@@ -218,6 +217,10 @@ object SyncLink {
         }
     }
 
+    /**
+     * Một lời gọi tới máy đã ghép theo chính sách chờ chung ([HostWait]): im quá `readTimeoutMs` (mặc định theo đường: việc nặng ([HostWait.LONG_WORK]: giọng đọc, quét/tạo sách, dựng nhạc...) 100 giây, còn lại 30 giây) thì gửi lại một lần rồi báo
+     * [HostWait.Timeout]. `readTimeoutMs` do người gọi đặt là hạn riêng của một phép dò nhanh: không gửi lại. Tệp gửi lên (`upload`, `stream`) cũng không gửi lại - không phát lại được.
+     */
     private fun exchange(
         context: Context,
         method: String,
@@ -225,15 +228,35 @@ object SyncLink {
         body: JSONObject?,
         auth: Boolean,
         root: String,
-        readTimeoutMs: Int,
+        readTimeoutMs: Int?,
         connectTimeoutMs: Int,
         token: String?,
         firstUse: Array<String?>?,
         upload: File? = null,
         stream: ((java.io.OutputStream) -> Unit)? = null,
     ): String {
+        val idleMs = readTimeoutMs ?: HostWait.idleMs(path)
+        return HostWait.call(resend = readTimeoutMs == null && upload == null && stream == null) {
+            exchangeOnce(context, method, path, body, auth, root, idleMs, connectTimeoutMs, token, firstUse, upload, stream)
+        }
+    }
+
+    private fun exchangeOnce(
+        context: Context,
+        method: String,
+        path: String,
+        body: JSONObject?,
+        auth: Boolean,
+        root: String,
+        idleMs: Int,
+        connectTimeoutMs: Int,
+        token: String?,
+        firstUse: Array<String?>?,
+        upload: File?,
+        stream: ((java.io.OutputStream) -> Unit)?,
+    ): String {
         fun connect(): HttpURLConnection {
-            val connection = FastConnect.open(root + path, connectTimeoutMs)
+            val connection = HostWait.open(root + path, connectTimeoutMs, idleMs)
             // `firstUse` != null: yêu cầu ghép - nhận chứng chỉ lạ một lần và đọc vân tay ra mảng này.
             if (firstUse != null && connection is HttpsURLConnection) Pin.firstUse(connection)
             else if (connection is HttpsURLConnection) {
@@ -241,7 +264,6 @@ object SyncLink {
                 PeerRouting.expected(context, credential)?.let { Pin.pin(connection, it) }
             }
             connection.requestMethod = method
-            connection.readTimeout = readTimeoutMs
             if (token != null) connection.setRequestProperty("Authorization", "Bearer $token")
             else if (auth) connection.setRequestProperty("Authorization", "Bearer ${prefs(context).getString("token", "")}")
             if (upload != null) {
@@ -249,24 +271,29 @@ object SyncLink {
                 connection.doOutput = true
                 connection.setRequestProperty("Content-Type", "application/zip")
                 connection.setFixedLengthStreamingMode(upload.length())
-                upload.inputStream().use { input -> connection.outputStream.use { input.copyTo(it, 256 * 1024) } }
+                HostWait.writing(connection, idleMs) { alive ->
+                    upload.inputStream().use { input -> HostWait.counting(connection.outputStream, alive).use { input.copyTo(it, 256 * 1024) } }
+                }
             } else if (stream != null) {
                 // Thân JSON lớn (nguồn sách tới ~17 MiB mã base64): ghi thẳng ra kết nối theo từng khúc, không dựng cả chuỗi trong bộ nhớ.
                 connection.doOutput = true
                 connection.setRequestProperty("Content-Type", "application/json; charset=utf-8")
                 connection.setChunkedStreamingMode(64 * 1024)
-                connection.outputStream.use { stream(it) }
+                HostWait.writing(connection, idleMs) { alive -> HostWait.counting(connection.outputStream, alive).use { stream(it) } }
             } else if (body != null) {
                 connection.doOutput = true
                 connection.setRequestProperty("Content-Type", "application/json; charset=utf-8")
-                connection.outputStream.use { it.write(body.toString().toByteArray()) }
+                HostWait.writing(connection, idleMs) { alive -> HostWait.counting(connection.outputStream, alive).use { it.write(body.toString().toByteArray()) } }
             }
             return connection
         }
-        val connection = if (method == "GET") PeerTransfer.openGet { connect() } else connect()
+        val connection = if (method == "GET") PeerTransfer.openGet(resend = false) { connect() } else connect()
         try {
-            val code = connection.responseCode
-            val text = responseText(connection, code)
+            // Mã trả lời + thân đọc trong MỘT lượt canh: byte nào về cũng làm hạn "im lặng" đếm lại; im quá hạn là HostWait.Timeout (gửi lại ở HostWait.call).
+            val (code, text) = HostWait.awaiting(connection) {
+                val status = connection.responseCode
+                status to responseText(connection, status)
+            }
             if (firstUse != null && connection is HttpsURLConnection) firstUse[0] = Pin.peerFingerprint(connection)
             if (code >= 400) {
                 val message = runCatching { JSONObject(text).optString("error") }.getOrNull()

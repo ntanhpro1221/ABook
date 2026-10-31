@@ -15,6 +15,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Nút lùi / tới 15 giây trên widget màn hình chính cùng hình với trình phát: cung nông, số 15 nằm dưới, không chạm nét.
 - Giọng có sẵn của điện thoại hiện tên "Tiếng Việt" (máy có nhiều giọng thì đánh số), không còn mã như "vi-vn-x-gft-local".
 - Mạng nhà có IPv6 mà không ra được Internet (hay gặp khi mạng vừa có điện lại) không còn làm tải bìa, nhạc nền, gói tải thêm, giọng Edge, kiểm bản mới hay nối với máy khác đứng chờ hàng chục giây: điện thoại thử các địa chỉ song song và dùng địa chỉ nối được trước, thay vì chờ từng cái hết giờ.
+- Điện thoại không còn chờ im lặng mãi khi máy tính đã ghép không trả lời: việc nặng (nghe thử giọng, quét nguồn, tạo sách, dựng nhạc) im quá 100 giây, việc khác (Studio từ xa, đồng bộ, tải sách) im quá 30 giây thì gửi lại một lần rồi báo "Máy chưa trả lời kịp."; lần tải đang về chậm thì không bị cắt. Trình phát chờ âm thanh quá 215 giây cũng báo lỗi kèm "Thử lại".
 
 ## [0.4.148] - 2026-10-28
 
