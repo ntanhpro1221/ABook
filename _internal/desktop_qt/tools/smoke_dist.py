@@ -32,10 +32,13 @@ FATAL = re.compile(r"is not a type|is not installed|ReferenceError|TypeError|Can
 
 
 def run(exe: Path, seconds: float, smoke: str = "1", root: Path | None = None,
-        extra: dict | None = None) -> tuple[int | None, str, set[str]]:
+        extra: dict | None = None, linger: float = 300) -> tuple[int | None, str, set[str]]:
     """Start `exe` once on a private desktop with ABOOK_SMOKE_EXIT=`smoke`; return (exit code or None on timeout, its log,
     the executables of every child process seen meanwhile). `root`: the profile folder (the caller keeps it, and may have put
-    prefs.json there already); default a temporary one. `extra`: environment set last, over the defaults."""
+    prefs.json there already); default a temporary one. `extra`: environment set last, over the defaults. The desktop is
+    closed only after every process of the run's tree is gone (the update installer outlives the app): up to `linger`
+    seconds after the app exits, then the rest is killed. A process still starting on a desktop that is being destroyed dies
+    with 0xc0000142 and csrss shows that error on the owner's screen (31-10)."""
     user = ctypes.WinDLL("user32", use_last_error=True)
     user.CreateDesktopW.restype = wt.HANDLE
     user.CreateDesktopW.argtypes = [wt.LPCWSTR, wt.LPCWSTR, ctypes.c_void_p, wt.DWORD, wt.DWORD, ctypes.c_void_p]
@@ -44,6 +47,16 @@ def run(exe: Path, seconds: float, smoke: str = "1", root: Path | None = None,
     nt.NtResumeProcess.argtypes = [wt.HANDLE]
     nt.NtResumeProcess.restype = wt.LONG
     children: set[str] = set()
+    tree: dict[int, psutil.Process] = {}
+
+    def track(parent: psutil.Process) -> None:
+        try:
+            for child in parent.children(recursive=True):
+                if child.pid not in tree:
+                    tree[child.pid] = child
+                    children.add(child.exe())
+        except psutil.Error:
+            pass
     with contextlib.nullcontext(str(root)) if root else tempfile.TemporaryDirectory(prefix="abook-smoke-") as tmp:
         root = Path(tmp)
         for name in ("local", "roaming", "temp"):
@@ -69,12 +82,9 @@ def run(exe: Path, seconds: float, smoke: str = "1", root: Path | None = None,
                 raise RuntimeError("cannot resume the smoke process")
             deadline = time.monotonic() + seconds
             code = None
+            app = psutil.Process(process.pid)
             while code is None and time.monotonic() < deadline:
-                try:
-                    for child in psutil.Process(process.pid).children(recursive=True):
-                        children.add(child.exe())
-                except psutil.Error:
-                    pass
+                track(app)
                 try:
                     code = process.wait(0.25)
                 except subprocess.TimeoutExpired:
@@ -84,6 +94,23 @@ def run(exe: Path, seconds: float, smoke: str = "1", root: Path | None = None,
                 process.wait(10)
             text = log_path.read_text(encoding="utf-8", errors="replace")
         finally:
+            # Orphans the app left (installer, its children) keep the desktop until they are done.
+            settle = time.monotonic() + linger
+            while time.monotonic() < settle:
+                for member in list(tree.values()):
+                    if member.is_running():
+                        track(member)
+                    else:
+                        del tree[member.pid]
+                if not tree:
+                    break
+                time.sleep(0.25)
+            for member in tree.values():
+                try:
+                    member.kill()
+                except psutil.Error:
+                    pass
+            psutil.wait_procs(list(tree.values()), timeout=10)
             user.CloseDesktop(desk)
     return code, text, children
 
