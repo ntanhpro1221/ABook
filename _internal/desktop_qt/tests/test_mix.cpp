@@ -5,10 +5,14 @@
 #include "mfsource.h"
 #include "musicmixer.h"
 #include "musicbed.h"
+#include "streamsource.h"
 
 #include <QFile>
 #include <QFileInfo>
 #include <QDateTime>
+#include <QPointer>
+#include <QTcpServer>
+#include <QTcpSocket>
 #include <QTemporaryDir>
 #include <QProcess>
 #include <QProcessEnvironment>
@@ -74,10 +78,11 @@ struct MixerRig {
     QTemporaryDir dir;
     FakeDevice *device = new FakeDevice;
     MusicMixer mixer{std::unique_ptr<MixDevice>(device), dir.path()};
+    // Chờ cả bộ đệm giải mã xong: giọng vào sau ba giây đầu, các phép thử dưới đây đọc tệp đệm trọn.
     bool ready(MixVoice &voice) {
         const bool ready = QTest::qWaitFor([&] {
-            mixer.service(0); mixer.serviceReader();
-            return voice.duration() > 0;
+            mixer.service(0); mixer.serviceReader(); QCoreApplication::processEvents();
+            return voice.duration() > 0 && !mixer.decodingCount();
         }, 5000);
         QCoreApplication::processEvents();
         return ready;
@@ -87,6 +92,34 @@ struct MixerRig {
         if (refill) mixer.serviceReader();
         mixer.service(frames); QCoreApplication::processEvents();
     }
+};
+
+// Gửi phần đầu bài rồi giữ kết nối, như một máy chủ còn đang tải bài về: nhạc phải vào trước khi tải xong.
+class HeldServer : public QTcpServer {
+public:
+    QByteArray bytes;
+    qint64 sent = 0, first;
+    QPointer<QTcpSocket> socket;
+    HeldServer(QByteArray data, qint64 head) : bytes(std::move(data)), first(head) {
+        connect(this, &QTcpServer::newConnection, this, [this] {
+            auto *client = nextPendingConnection(); socket = client;
+            auto request = std::make_shared<QByteArray>();
+            connect(client, &QTcpSocket::readyRead, client, [this, client, request] {
+                if (client->property("answered").toBool()) return;
+                request->append(client->readAll()); if (!request->contains("\r\n\r\n")) return;
+                client->setProperty("answered", true);
+                client->write("HTTP/1.1 200 OK\r\nContent-Type: audio/mpeg\r\nContent-Length: " + QByteArray::number(bytes.size()) +
+                    "\r\nConnection: close\r\n\r\n");
+                send(first);
+            });
+            connect(client, &QTcpSocket::disconnected, client, &QObject::deleteLater);
+        });
+        if (!listen(QHostAddress::LocalHost)) qFatal("Cannot listen");
+    }
+    QUrl url() const { return QUrl(QStringLiteral("http://127.0.0.1:%1/music/track?link=held").arg(serverPort())); }
+    void send(qint64 upTo) { socket->write(bytes.mid(sent, upTo - sent)); socket->flush(); sent = upTo; }
+    void finish() { send(bytes.size()); socket->disconnectFromHost(); }
+    void drop() { socket->abort(); }
 };
 
 const double PI = 3.14159265358979323846;
@@ -104,6 +137,17 @@ QByteArray fixtureBytes(const QString &name) {
     if (!file.open(QIODevice::ReadOnly))
         qFatal("không đọc được %s", qPrintable(name));
     return file.readAll();
+}
+
+// Bỏ khung Info/Xing như các bài incompetech: bộ giải mã luồng không biết trước số khung.
+QByteArray withoutXing(QByteArray bytes) {
+    qsizetype at = 0;
+    if (bytes.startsWith("ID3")) at = 10 + ((quint8(bytes[6]) << 21) | (quint8(bytes[7]) << 14) | (quint8(bytes[8]) << 7) | quint8(bytes[9]));
+    static const int kbps[] = {0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320};
+    static const int hz[] = {44100, 48000, 32000};
+    const quint8 b2 = quint8(bytes[at + 2]);
+    if (bytes.mid(at + 36, 4) != "Info" && bytes.mid(at + 36, 4) != "Xing") qFatal("fixture has no Info frame");
+    return bytes.remove(at, 144000 * kbps[b2 >> 4] / hz[(b2 >> 2) & 3] + ((b2 >> 1) & 1));
 }
 
 double rms(const std::vector<float> &x, int channels, int channel, size_t from, size_t to) {
@@ -502,10 +546,125 @@ private slots:
         QCOMPARE(rig.mixer.decodeCount(), quint64(1)); QCOMPARE(second.position(), 2.0); QVERIFY(!second.playing());
     }
 
+    // PLAN_lx §19.1: nhạc chương I tới sau 22 s vì mixer chờ tải trọn bài rồi giải mã trọn bài mới phát.
+    // Giờ nhạc vào khi đã giải mã ba giây; tệp đệm ghi dần và chỉ thành bộ đệm trọn khi bài tải xong.
+    void bedPlaysWhileTheTrackDownloads() {
+        const QByteArray bytes = fixtureBytes(QStringLiteral("music_student/stereo_44k.mp3"));
+        HeldServer server(bytes, bytes.size() / 2);
+        MixerRig rig; MixVoice voice(&rig.mixer); voice.setVolume(1); voice.load(server.url(), 0);
+        QSignalSpy failed(&voice, &AudioOut::failed);
+        QVERIFY(QTest::qWaitFor([&] { rig.mixer.service(0); rig.mixer.serviceReader(); return voice.duration() > 0; }, 5000));
+        QCoreApplication::processEvents();
+        QCOMPARE(server.sent, qint64(bytes.size() / 2));
+        const QString path = rig.mixer.cachePath(server.url());
+        QCOMPARE(rig.mixer.decodingCount(), size_t(1)); QCOMPARE(MusicMixer::cacheFrames(path, rig.mixer.rate()), quint64(0));
+        Mp3Source source(rig.mixer.rate()); QVERIFY(source.open(bytes));
+        std::vector<float> all; while (source.read(all, 8192)) {}
+        QVERIFY2(std::abs(voice.duration() - source.duration()) < 0.01, qPrintable(QString::number(voice.duration())));
+        voice.play();
+        const size_t second = size_t(rig.mixer.rate());
+        for (size_t at = 0; at < 2 * second; at += second / 10) rig.serve(second / 10);
+        QVERIFY(voice.playing());
+        QVERIFY(rms(rig.device->output, 2, 0, second, 2 * second) > 0.001);
+        server.finish();
+        QVERIFY(QTest::qWaitFor([&] { rig.serve(second / 10); return !rig.mixer.decodingCount(); }, 5000));
+        QCOMPARE(MusicMixer::cacheFrames(path, rig.mixer.rate()), quint64(all.size() / 2));
+        QTRY_COMPARE(voice.duration(), double(all.size() / 2) / rig.mixer.rate());
+        QCOMPARE(failed.size(), 0);
+        // Cùng tiếng như giải mã cả tệp: phần đã nghe khớp từng mẫu với bộ đệm trọn (âm lượng 1, sau đoạn mờ vào).
+        QFile cache(path); QVERIFY(cache.open(QIODevice::ReadOnly)); cache.seek(24);
+        const QByteArray pcm = cache.read(qint64(second) * 4);
+        const auto &out = rig.device->output;
+        for (size_t i = second / 2 * 2; i < second * 2; ++i)
+            QVERIFY(std::abs(out[i] - qFromLittleEndian<qint16>(pcm.constData() + i * 2) / 32768.0f) < 1e-6);
+    }
+    // Bộ giải mã luồng, bài không thẻ Xing: mở với độ dài ước khi mới có nửa bài, ra đúng từng khung như giải mã cả tệp.
+    // Chỉ khi được phép ước (nhạc nền); giọng đọc chương vẫn chờ quét trọn để có độ dài thật.
+    void streamDecoderEstimatesAnUntaggedLength() {
+        struct Arriving final : ByteSource {
+            QByteArray all; qint64 arrived = 0;
+            QByteArray read(qint64 offset, qint64 count) override {
+                count = std::min(count, qint64(all.size()) - offset);
+                if (offset < 0 || count <= 0 || offset + count > arrived) return {};
+                return all.mid(offset, count);
+            }
+            qint64 size() const override { return all.size(); }
+            QString error() const override { return {}; }
+        };
+        const QByteArray bytes = withoutXing(fixtureBytes(QStringLiteral("music_student/stereo_44k.mp3")));
+        Mp3Source source(48000); QVERIFY(source.open(bytes));
+        std::vector<float> all; while (source.read(all, 8192)) {}
+        for (const bool estimate : {false, true}) {
+            auto arriving = std::make_shared<Arriving>(); arriving->all = bytes; arriving->arrived = bytes.size() / 2;
+            StreamMp3 decoder(arriving, 48000, estimate);
+            QCOMPARE(decoder.open(), estimate);
+            if (estimate) QVERIFY2(std::abs(decoder.duration() - source.duration()) < 0.05, qPrintable(QString::number(decoder.duration())));
+            std::vector<float> out;
+            while (decoder.read(out, 8192)) {}
+            QVERIFY(!decoder.atEnd());
+            arriving->arrived = bytes.size();
+            QVERIFY(decoder.open());
+            while (decoder.read(out, 8192)) {}
+            QVERIFY(decoder.atEnd()); QVERIFY(decoder.error().isEmpty());
+            QCOMPARE(out.size(), all.size());
+            QCOMPARE(decoder.duration(), source.duration());
+        }
+    }
+    // Bài đầu chương I Tắt đèn (incompetech) không có thẻ Xing: bộ giải mã quét trọn tệp để biết độ dài, tức chờ tải xong,
+    // nên nhạc vào ở giây 99. Giờ độ dài ước theo bitrate, đúng số khung khi tải xong.
+    void untaggedTrackPlaysWhileItDownloads() {
+        const QByteArray bytes = withoutXing(fixtureBytes(QStringLiteral("music_student/stereo_44k.mp3")));
+        HeldServer server(bytes, bytes.size() / 2);
+        MixerRig rig; MixVoice voice(&rig.mixer); voice.setVolume(1); voice.load(server.url(), 0);
+        QSignalSpy failed(&voice, &AudioOut::failed);
+        QVERIFY(QTest::qWaitFor([&] { rig.mixer.service(0); rig.mixer.serviceReader(); return voice.duration() > 0; }, 5000));
+        QCoreApplication::processEvents();
+        QCOMPARE(server.sent, qint64(bytes.size() / 2));
+        Mp3Source source(rig.mixer.rate()); QVERIFY(source.open(bytes));
+        std::vector<float> all; while (source.read(all, 8192)) {}
+        const double exact = double(all.size() / 2) / rig.mixer.rate();
+        // CBR: ước theo bitrate lệch dưới một khung (26 ms).
+        QVERIFY2(std::abs(voice.duration() - exact) < 0.05, qPrintable(QString::number(voice.duration()) + QStringLiteral(" / ") + QString::number(exact)));
+        voice.play();
+        const size_t second = size_t(rig.mixer.rate());
+        for (size_t at = 0; at < 2 * second; at += second / 10) rig.serve(second / 10);
+        QVERIFY(voice.playing());
+        QVERIFY(rms(rig.device->output, 2, 0, second, 2 * second) > 0.001);
+        server.finish();
+        const QString path = rig.mixer.cachePath(server.url());
+        QVERIFY(QTest::qWaitFor([&] { rig.serve(second / 10); return !rig.mixer.decodingCount(); }, 5000));
+        QCOMPARE(MusicMixer::cacheFrames(path, rig.mixer.rate()), quint64(all.size() / 2));
+        QTRY_COMPARE(voice.duration(), exact);
+        QCOMPARE(failed.size(), 0);
+    }
+    // Mạng đứt giữa bài: giọng báo lỗi, tệp đệm dở bị bỏ, lần mở sau tải lại từ đầu.
+    void brokenDownloadLeavesNoCache() {
+        const QByteArray bytes = fixtureBytes(QStringLiteral("music_student/stereo_44k.mp3"));
+        HeldServer server(bytes, bytes.size() / 2);
+        MixerRig rig; MixVoice voice(&rig.mixer); QSignalSpy failed(&voice, &AudioOut::failed); voice.load(server.url(), 0);
+        QVERIFY(QTest::qWaitFor([&] { rig.mixer.service(0); rig.mixer.serviceReader(); return voice.duration() > 0; }, 5000));
+        const QString path = rig.mixer.cachePath(server.url());
+        QVERIFY(QFile::exists(path));
+        server.drop();
+        QVERIFY(QTest::qWaitFor([&] { rig.mixer.service(0); rig.mixer.serviceReader(); return !failed.isEmpty(); }, 5000));
+        QCOMPARE(failed.size(), 1); QCOMPARE(rig.mixer.decodingCount(), size_t(0)); QVERIFY(!QFile::exists(path));
+    }
+    // Bỏ bài đang tải (đổi cảnh): huỷ tải, không để lại tệp đệm dở, không báo lỗi cho giọng đã dừng.
+    void stoppingADownloadingTrackCancelsIt() {
+        const QByteArray bytes = fixtureBytes(QStringLiteral("music_student/stereo_44k.mp3"));
+        HeldServer server(bytes, bytes.size() / 2);
+        MixerRig rig; MixVoice voice(&rig.mixer); QSignalSpy failed(&voice, &AudioOut::failed); voice.load(server.url(), 0);
+        QVERIFY(QTest::qWaitFor([&] { rig.mixer.service(0); rig.mixer.serviceReader(); return voice.duration() > 0; }, 5000));
+        const QString path = rig.mixer.cachePath(server.url());
+        voice.stop();
+        QVERIFY(QTest::qWaitFor([&] { rig.mixer.service(0); rig.mixer.serviceReader(); return !rig.mixer.decodingCount(); }, 5000));
+        QVERIFY(!QFile::exists(path)); QCoreApplication::processEvents(); QCOMPARE(failed.size(), 0);
+    }
+
     void mixerCacheSurvivesAnotherMixerAndRejectsTruncation() {
         QTemporaryDir dir;
         { MusicMixer mixer(std::make_unique<FakeDevice>(), dir.path()); MixVoice voice(&mixer); voice.load(track(), 0);
-          QTRY_VERIFY(([&] { mixer.serviceReader(); return voice.duration() > 0; })());
+          QTRY_VERIFY(([&] { mixer.serviceReader(); return voice.duration() > 0 && !mixer.decodingCount(); })());
           QVERIFY(voice.duration()); }
         MusicMixer mixer(std::make_unique<FakeDevice>(), dir.path()); MixVoice voice(&mixer); voice.load(track(), 0);
         mixer.serviceReader(); QCoreApplication::processEvents(); QVERIFY(voice.duration()); QCOMPARE(mixer.decodeCount(), quint64(0));

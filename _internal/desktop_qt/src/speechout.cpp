@@ -6,6 +6,7 @@
 #include <QPointer>
 #include <QRegularExpression>
 #include <cmath>
+#include <utility>
 
 SpeechOut::SpeechOut(AudioOut *audio, PlayerNet *net, QObject *parent) : AudioOut(parent), m_audio(audio), m_net(net) {
     // A normal source on the same native mixer: scene pauses need no UI timer.
@@ -79,7 +80,9 @@ void SpeechOut::render(int index, double offset) {
         m_ready = true;
         m_audio->setRate(m_rate); m_audio->setVolume(m_volume * m_paragraphs[index].gain);
         m_audio->load(m_paragraphs[index].url, std::min(offset, std::max(0.0, m_paragraphs[index].seconds - 0.01)));
-        emit durationChanged(duration()); emit buffering(false); emit seeked();
+        // Only an open or a seek is a seek: the next paragraph continues the chapter clock. A seeked() here made
+        // the music bed jump to the narration position at every paragraph boundary.
+        emit durationChanged(duration()); emit buffering(false); if (std::exchange(m_seeking, false)) emit seeked();
         if (m_wants) m_audio->play();
         if (index + 1 < m_paragraphs.size()) fetch(index + 1, {});
     };
@@ -148,7 +151,7 @@ void SpeechOut::stop() {
     ++m_generation; ++m_request;
     const auto cancel = std::move(m_cancel); m_cancel.clear();
     for (const auto &abort : cancel) if (abort) abort();
-    m_wants = m_ready = m_pendingConsent = m_askedConsent = false;
+    m_wants = m_ready = m_pendingConsent = m_askedConsent = m_seeking = false;
     m_audio->stop(); m_paragraphs.clear(); m_target = 0;
 }
 void SpeechOut::authorize(const QString &provider) {
@@ -168,6 +171,7 @@ void SpeechOut::seek(double at) {
     if (!m_wants) { m_audio->stop(); m_ready = false; emit seeked(); return; }
     double offset = m_target; int index = 0;
     while (index + 1 < m_paragraphs.size() && offset >= m_paragraphs[index].seconds) offset -= m_paragraphs[index++].seconds;
+    m_seeking = true;
     render(index, offset);
 }
 double SpeechOut::startOf(int index) const { double seconds = 0; for (int i = 0; i < index; ++i) seconds += m_paragraphs[i].seconds; return seconds; }

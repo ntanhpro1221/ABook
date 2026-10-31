@@ -73,6 +73,7 @@ public:
     void service(size_t frames);
     void serviceReader();
     quint64 decodeCount() const;
+    size_t decodingCount() const; // bài MP3 đang giải mã dần vào tệp đệm
     QString cachePath(const QUrl &url) const;
     static quint64 cacheFrames(const QString &path, int rate);
     void requestOutputs();
