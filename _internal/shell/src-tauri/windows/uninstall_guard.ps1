@@ -29,5 +29,17 @@ try {
                 $library.StartsWith($target + '\', [StringComparison]::OrdinalIgnoreCase)) { exit 3 }
         }
     }
+    # NSIS RMDir /r follows junctions: a reparse point anywhere inside the target would empty a folder outside it.
+    # Walk the target without ever entering one; the first one found refuses.
+    if (Test-Path -LiteralPath $target -PathType Container) {
+        $pending = New-Object System.Collections.Generic.Stack[IO.DirectoryInfo]
+        $pending.Push([IO.DirectoryInfo]::new($target))
+        while ($pending.Count) {
+            foreach ($entry in $pending.Pop().EnumerateFileSystemInfos()) {
+                if ($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'reparse point inside' }
+                if ($entry -is [IO.DirectoryInfo]) { $pending.Push($entry) }
+            }
+        }
+    }
     exit 0
 } catch { exit 4 } # Unknown location: preserve data.

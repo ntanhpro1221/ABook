@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Máy tính
+
+- Gỡ cài đặt có "Xoá dữ liệu" không còn đi theo liên kết thư mục (junction) bên trong thư mục dữ liệu: có liên kết thì giữ lại dữ liệu, không làm rỗng thư mục ở chỗ khác.
+
 ### Máy tính (bản Qt, chưa có trong bộ cài)
 
 - App máy tính: nhạc nền tốn ít CPU hơn khi thu nhỏ.
