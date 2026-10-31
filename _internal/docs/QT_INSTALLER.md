@@ -368,6 +368,38 @@ bytecode HLSL, không phụ thuộc card). Lợi tối đa là phần của 0,4 
       không chạy bộ cài. Ca dương: Q7.
   - Bản cài nay hỏi GitHub latest.json mỗi lần mở, kể cả trong các lượt smoke / test bộ cài (im lặng nếu không có mạng).
 
+### Q7. Phát hành bằng bộ cài Qt
+Lead duyệt 31-10, thứ tự: (1) cập nhật thật N -> N+1 + ca an toàn tham số Tauri, (2) release.py một đường Qt (gửi diff
+trước), (3) bản Qt đầu tiên do Lead quyết. latest.json dùng chung; không viết đường chuyển Tauri -> Qt.
+- Bước 1 (`tools/test_installer.py`, sau bước mở file):
+  - Khoá minisign THỬ của lượt (`tools/update_site.py`, cùng định dạng `tauri signer`) thay khoá trong updater.json của bản N
+    đã cài; bản N+1 (số 9.9.9) dựng từ bản sao dist có updater.json khác làm dấu. Trang phát hành giả trên 127.0.0.1.
+  - App chạy `ABOOK_SMOKE_EXIT=update` (main.cpp): thấy bản mới thì `POST /api/app/update` như nút "Cập nhật"; thoát 0 là do
+    `Backend::runInstaller`, 8 khi host từ chối gói.
+  - Ca âm trước: đúng khoá, chữ ký của gói khác -> tải rồi từ chối, khoá gỡ cài vẫn số N, file app không đổi, gói không nằm lại.
+  - Ca dương: bộ cài chạy với đúng tham số của host (`/P /UPDATE /R`, không `/D`) -> khoá gỡ cài 9.9.9, file N+1 đúng từng
+    byte, .pyc biên dịch lại, app mở lại (/R), dữ liệu + worker Studio đang chạy còn nguyên.
+  - Lượt đầu bắt được một lỗi thật: bộ cài tới bước dừng app khi app còn đang tự tắt (host lưu nốt, tối đa 5 s), rồi
+    `Stop-Process -Force` cắt ngang (app thoát -1). Với /UPDATE, `stop_processes.ps1 -GraceSeconds 15` chờ app thoát êm,
+    hết hạn mới dừng cứng; test đòi app thoát 0.
+  - Gốc của exit -1 (lỗi thật, không phải của test): `Backend::runInstaller` gọi `QCoreApplication::quit()`, mà ở
+    QGuiApplication thì quit hỏi đóng cửa sổ trước; Main.qml (closeToTray) từ chối và thu xuống khay, nên app không thoát
+    tới khi bộ cài dừng cứng. Nay là `QCoreApplication::exit(0)`; BackendTests
+    `runInstallerLeavesEvenWhenTheWindowStaysOpen` (cửa sổ từ chối Close, vòng sự kiện phải thoát 0) hỏng với quit(), qua
+    với exit. Lệnh `run_installer` cũng chạy sau slot readyRead của host (stop() xoá chính QProcess ấy).
+  - test_installer 31-10 tối: INSTALLER_OK (72 phép kiểm), cả ca cập nhật dương / âm và ca tham số Tauri.
+  - Lý do hỏng in dạng percent-encoding UTF-8 (`SMOKE_UPDATE_FAILED`): stderr của Qt ra theo bảng mã ANSI, chữ Việt thành '?'.
+  - Mỗi lượt chạy app có hồ sơ riêng do test giữ: bộ cài và app nó mở lại thừa hưởng handle app.log.
+  - Bản test của bộ cài không /D thì lấy chỗ cài từ gốc registry test (như bản thật đọc `Software\ABook\ABook`), không có
+    thì vẫn từ chối; `AbookTestGuard` vẫn đòi chỗ ấy nằm trong %TEMP%.
+- Ca an toàn tham số Tauri: tauri-plugin-updater 2.14 chạy bộ cài bằng ShellExecute với `/P /UPDATE /R /ARGS` (installMode
+  passive, restart_after_install mặc định), không /D. Test dựng một bản Tauri đã cài (exe, bộ gỡ, resources\, khoá
+  Uninstall + Software\ABook\ABook + .abook của Tauri) cùng dữ liệu đúng tên của một máy dùng thật (book_ids.key,
+  computers.json, listening-node.json, cache\, logs\, Studio\, thư viện bên trong, WebView2 của com.ngdtuanh.abook, một
+  junction ra ngoài). Chạy bộ cài Qt với đúng chuỗi ấy: cài được hay thoát lỗi đều được, dữ liệu phải còn nguyên từng byte.
+  Ca này ghi lệnh mở lại vào `ABOOK_TEST_RELAUNCH_LOG` thay vì mở app (chỉ bản test), để app vừa mở không kịp ghi gì
+  trước khi so.
+
 - `build` gọi bước dựng Qt thay `build_windows_app.ps1`; cùng tên file, cùng `latest.json`, kiểm `.sig`.
 - Bỏ `shell/` khỏi đường phát hành sau một bản Qt chạy thật trên "máy sạch": cài mới, cập nhật lên bản kế, gỡ có và không
   xoá dữ liệu.
@@ -381,5 +413,8 @@ bytecode HLSL, không phụ thuộc card). Lợi tối đa là phần của 0,4 
   - Không bật tính năng Windows nào (Hyper-V, Sandbox) nếu chưa hỏi Lead.
 
 ## Ngoài phạm vi
+- Cảnh báo QML thấy trong WidthTests (31-10, luồng UI): `StudioSettings.qml:139` gọi `.join` trên
+  `(root.status ? root.status.outdated : [])`, ra `undefined` khi status không có `outdated` -> "TypeError: Cannot call method
+  'join' of undefined". Test vẫn qua; chưa có test nào phủ hộp `studioOutdated`, nên sửa kèm test để luồng UI làm.
 - Ký Authenticode, MSIX/Store.
 - Bản macOS / Linux của app Qt.

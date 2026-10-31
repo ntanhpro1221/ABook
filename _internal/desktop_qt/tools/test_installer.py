@@ -24,15 +24,20 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
+import urllib.parse
 import uuid
 import winreg
 from pathlib import Path
+
+import psutil
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from guarded_process import run_guarded  # noqa: E402
 from private_profile import isolate  # noqa: E402
 from smoke_dist import run as run_app  # noqa: E402
 import smoke_open  # noqa: E402
+from update_site import Site, TestKey  # noqa: E402
 
 HERE = Path(__file__).resolve().parents[1]
 INSTALLER = HERE / "installer"
@@ -190,6 +195,41 @@ def sleeper(python_dir: Path, into: Path) -> subprocess.Popen:
     return subprocess.Popen([str(into / "pythonw.exe"), "-c", "import time; time.sleep(900)"], creationflags=NO_WINDOW)
 
 
+def snapshot(root: Path) -> dict:
+    """{đường tương đối: sha256 | "-> đích" của liên kết}; không bao giờ đi theo junction / symlink."""
+    out = {}
+    for entry in os.scandir(root):
+        path = Path(entry.path)
+        rel = path.relative_to(root).as_posix()
+        if entry.stat(follow_symlinks=False).st_file_attributes & 0x400:  # FILE_ATTRIBUTE_REPARSE_POINT
+            out[rel] = "-> " + os.readlink(path)
+        elif entry.is_dir(follow_symlinks=False):
+            out.update({rel + "/" + k: v for k, v in snapshot(path).items()} or {rel + "/": "dir"})
+        else:
+            out[rel] = hashlib.sha256(path.read_bytes()).hexdigest()
+    return out
+
+
+def processes_from(path: Path) -> list[psutil.Process]:
+    found = []
+    for process in psutil.process_iter(["exe"]):
+        try:
+            if process.info["exe"] and Path(process.info["exe"]).resolve() == path.resolve():
+                found.append(process)
+        except (psutil.Error, OSError, ValueError):
+            pass
+    return found
+
+
+def wait_for(predicate, seconds: float) -> bool:
+    deadline = time.monotonic() + seconds
+    while time.monotonic() < deadline:
+        if predicate():
+            return True
+        time.sleep(0.5)
+    return predicate()
+
+
 def tree_hash(dist: Path) -> dict:
     out = {}
     for path in dist.rglob("*"):
@@ -303,13 +343,97 @@ def main() -> int:
             for log_name, text in open_logs.items():
                 print(f"--- {log_name}", *text.splitlines()[-20:], sep="\n")
 
+        # Q7: cập nhật thật N -> N+1 qua trang phát hành giả trên 127.0.0.1. Khoá THỬ của lượt này thay khoá thật trong bản N
+        # đã cài (updater.json là chỗ duy nhất app đọc khoá); bản N+1 dựng từ một bản sao của dist có updater.json khác (dấu
+        # để biết file nào là của N+1) và số 9.9.9 (lớn hơn số của exe). App chạy chế độ smoke "update": bấm "Cập nhật" như
+        # người dùng, Backend::runInstaller chạy bộ cài với đúng tham số của bộ cập nhật (/P /UPDATE /R, không /D).
+        key, nxt = TestKey(), "9.9.9"
+        installed_updater = install / "resources" / "app" / "updater.json"
+        endpoints = json.loads(installed_updater.read_text(encoding="utf-8"))["endpoints"]
+        installed_updater.write_text(json.dumps({"endpoints": endpoints, "pubkey": key.pubkey()}), encoding="utf-8")
+        next_dist = work / "next" / "dist"
+        shutil.copytree(dist, next_dist)
+        (next_dist / "resources" / "app" / "updater.json").write_text(
+            json.dumps({"endpoints": ["https://example.invalid/abook-next/latest.json"], "pubkey": key.pubkey()}), encoding="utf-8")
+        next_setup = build(next_dist, work / "next", nxt, root_key)
+        site = Site()
+        app_env = {name: env[name] for name in ("LOCALAPPDATA", "APPDATA", "TEMP", "TMP", "ABOOK_TEST_SHELL")}
+        app_env["ABOOK_UPDATE_URL"] = f"{site.base}/latest.json"
+        downloads = temp / "ABook-update"
+
+        def profile(name: str) -> Path:
+            # Hồ sơ của lượt chạy do test giữ (không phải thư mục tạm tự xoá của smoke_dist): bộ cài app chạy và app nó mở
+            # lại (/R) thừa hưởng handle app.log, nên thư mục ấy chưa xoá được khi lượt chạy trả về.
+            folder = work / "runs" / name
+            folder.mkdir(parents=True)
+            return folder
+
+        def app_files() -> dict:
+            return {rel: digest for rel, digest in snapshot(install).items() if rel.startswith("resources/") or "/" not in rel
+                    and rel.endswith(".exe")}
+        try:
+            # Ca âm: đúng khoá, nhưng chữ ký của một gói khác - tải về rồi từ chối, bản N còn nguyên.
+            before_files = app_files()
+            site.publish(nxt, next_setup, key.sign(b"not this installer", nxt))
+            code, text, _children = run_app(exe, 240, smoke="update", root=profile("bad-signature"), extra=app_env)
+            reason = next((urllib.parse.unquote(line.split("SMOKE_UPDATE_FAILED ", 1)[1]) for line in text.splitlines()
+                           if "SMOKE_UPDATE_FAILED " in line), "")
+            check(code == 8 and "chữ ký" in reason and f"/ABook_{nxt}_x64-setup.exe" in site.requests,
+                  f"cập nhật: .sig sai -> tải về rồi từ chối, app báo lỗi chữ ký (mã {code}, {reason!r})")
+            if code != 8:
+                print(text[-3000:])
+            uninst = values(read_tree(winreg.HKEY_CURRENT_USER, root_key), root_key + r"\Uninstall\ABook")
+            check(uninst.get("DisplayVersion") == args.version and app_files() == before_files
+                  and not list(downloads.glob("*.exe")), f"cập nhật: .sig sai -> bản N còn nguyên, gói bị từ chối không nằm lại ({uninst.get('DisplayVersion')})")
+
+            # Ca dương: chữ ký đúng -> app chạy bộ cài rồi thoát 0; bộ cài cài N+1 tại chỗ ghi trong registry rồi mở lại app (/R).
+            site.requests.clear()
+            site.publish(nxt, next_setup, key.sign(next_setup.read_bytes(), nxt))
+            code, text, _children = run_app(exe, 240, smoke="update", root=profile("update"), extra=app_env)
+            # App mở lại cũng kiểm bản mới: từ đây trang giả không rao bản nào lớn hơn, để nó không cài lần nữa.
+            site.manifest = dict(site.manifest, version="0.0.0")
+            check(code == 0 and "SMOKE_UPDATE_FOUND 9.9.9" in text, f"cập nhật: app tìm thấy {nxt}, chạy bộ cài rồi thoát 0 (mã {code})")
+            if code != 0:
+                print(text[-3000:])
+            setup_copy = downloads / f"ABook_{nxt}_x64-setup.exe"
+            check(wait_for(lambda: not processes_from(setup_copy), 300), "cập nhật: bộ cài N+1 chạy xong")
+            check(wait_for(lambda: bool(processes_from(exe)), 60), "cập nhật: bộ cài mở lại app đã cài (/R)")
+            relaunched = processes_from(exe)
+            for process in relaunched:
+                for child in process.children(recursive=True):
+                    child.kill()
+                process.kill()
+            psutil.wait_procs(relaunched, timeout=15)
+            uninst = values(read_tree(winreg.HKEY_CURRENT_USER, root_key), root_key + r"\Uninstall\ABook")
+            check(uninst.get("DisplayVersion") == nxt, f"cập nhật: khoá gỡ cài ghi {nxt} ({uninst.get('DisplayVersion')})")
+            want_next = tree_hash(next_dist)
+            got = snapshot(install)
+            wrong = [rel for rel, digest in want_next.items() if got.get(rel) != digest]
+            check(not wrong and compiled <= set(got), f"cập nhật: {len(want_next)} file của N+1 đúng từng byte, .pyc biên dịch lại ({wrong[:3]})")
+            check((install / "Studio" / "work.txt").read_text(encoding="utf-8") == "user"
+                  and (install / "ABook" / "cache" / "qtpipelinecache.bin").read_bytes() == b"cache"
+                  and worker.poll() is None, "cập nhật: dữ liệu người dùng + worker Studio đang chạy còn nguyên")
+        finally:
+            site.close()
+            # Ca dương hỏng giữa chừng: app mở lại từ thư mục cài test không được sống tiếp sau lượt thử.
+            for process in processes_from(exe):
+                try:
+                    for child in process.children(recursive=True):
+                        child.kill()
+                    process.kill()
+                except psutil.Error:
+                    pass
+
         # _?= : bộ gỡ chạy tại chỗ để chờ được nó; vì thế chính uninstall.exe không tự xoá được.
         check(run_setup([str(install / "uninstall.exe"), "/S", f"_?={install}"], env, log) == 0, "gỡ im lặng thoát 0")
         worker.wait(15) if worker.poll() is None else None
         check(worker.poll() is not None, "gỡ dừng worker Studio chạy từ thư mục Studio")
         check(other.poll() is None, "pythonw của người dùng ở chỗ khác không bị đụng")
         left = sorted(path.relative_to(install).as_posix() for path in install.rglob("*"))
-        check(left == ["preferences.json", "uninstall.exe"], f"gỡ xong: Studio + cache Qt đi, dữ liệu người dùng ở lại ({left[:6]})")
+        # desktop_qt.ini + logs\: app ghi lúc cập nhật ở trên (dữ liệu nằm trong %LOCALAPPDATA%\ABook như máy thật).
+        written = [rel for rel in left if rel in ("desktop_qt.ini", "logs") or rel.startswith("logs/")]
+        check("desktop_qt.ini" in written and [rel for rel in left if rel not in written] == ["preferences.json", "uninstall.exe"],
+              f"gỡ xong: Studio + cache Qt đi, dữ liệu người dùng (cả thứ app ghi) ở lại ({left[:8]})")
         links = shortcuts([lnk_programs, lnk_desktop, lnk_pin])
         check(links.get(str(lnk_programs)) is None and links.get(str(lnk_desktop)) is None, "lối tắt Start + màn hình nền đã gỡ")
         check(links.get(str(lnk_pin)) is not None, "ghim thanh tác vụ của người dùng không bị xoá")
@@ -368,6 +492,67 @@ def main() -> int:
         tree = read_tree(winreg.HKEY_CURRENT_USER, root_key)
         check(classes + r"\.abook" not in tree and classes + r"\.abookproj" not in tree,
               "không có liên kết gốc -> gỡ xong không còn khoá .abook / .abookproj")
+
+        # Ca an toàn (Lead 31-10, không phải đường chuyển): latest.json dùng chung, nên bộ cập nhật của một bản Tauri đã cài sẽ
+        # chạy bộ cài Qt với đúng tham số của nó - "/P /UPDATE /R /ARGS", không /D (tauri-plugin-updater 2.14, updater.rs
+        # updater_parameters; tauri.conf.json installMode passive). Chỗ cài là %LOCALAPPDATA%\ABook mà bộ cài Tauri ghi ở
+        # Software\ABook\ABook. Bộ cài Qt được cài hay thoát lỗi, nhưng dữ liệu người dùng phải còn nguyên từng byte.
+        tauri_local = temp / "tauri" / "local"
+        tauri = tauri_local / "ABook"
+        (tauri / "resources").mkdir(parents=True)
+        shutil.copytree(dist / "resources", tauri / "resources", dirs_exist_ok=True)
+        (tauri / "ABook.exe").write_bytes(b"MZ ABook Tauri 0.4.150")
+        (tauri / "uninstall.exe").write_bytes(b"MZ ABook Tauri uninstaller")
+        # Dữ liệu: đúng các tên có trong %LOCALAPPDATA%\ABook của một máy dùng thật, + Studio, thư viện bên trong, một file lớn
+        # ngẫu nhiên, một junction ra ngoài, và dữ liệu WebView2 của vỏ Tauri (thư mục theo identifier).
+        data = {"book_ids.key": os.urandom(32).hex().encode(), "book_ids.key.bak": os.urandom(32).hex().encode(),
+                "computers.json": b'[{"name": "Laptop"}]', "desktop_qt.ini": b"[General]\nlibraryRoot=x\n",
+                "listening-node.json": b'{"node": 1}', "listening-node.json.lock": b"", "pending-progress.json": b"{}",
+                "preferences.json": json.dumps({"libraryRoot": str(tauri / "Thư viện")}).encode(),
+                "cache/covers/1.jpg": os.urandom(4096), "logs/host.log": "dòng nhật ký\n".encode(),
+                "ABook/cache/qtpipelinecache.bin": b"cache", "Studio/Truyện A/chương 1.txt": "Chương một".encode(),
+                "Thư viện/Sách đã nhập/Truyện A.abook": os.urandom(1 << 20)}
+        for rel, content in data.items():
+            (tauri / rel).parent.mkdir(parents=True, exist_ok=True)
+            (tauri / rel).write_bytes(content)
+        webview = tauri_local / "com.ngdtuanh.abook" / "EBWebView" / "Default"
+        webview.mkdir(parents=True)
+        (webview / "Preferences").write_bytes(os.urandom(2048))
+        canary = work / "tauri-outside"
+        canary.mkdir()
+        (canary / "keep.txt").write_text("không phải của ABook", encoding="utf-8")
+        _winapi.CreateJunction(str(canary), str(tauri / "Liên kết"))
+        for path, items in ((r"\ABook\ABook", {"": str(tauri)}),
+                            (r"\Uninstall\ABook", {"DisplayName": "ABook", "DisplayVersion": "0.4.150", "Publisher": "ABook",
+                                                   "UninstallString": f'"{tauri}\\uninstall.exe"', "MainBinaryName": "ABook.exe"}),
+                            (r"\Classes\.abook", {"": "ABook", "ABook_backup": ""})):
+            with winreg.CreateKey(winreg.HKEY_CURRENT_USER, root_key + path) as key:
+                for name, value in items.items():
+                    winreg.SetValueEx(key, name, 0, winreg.REG_SZ, value)
+
+        def user_data() -> dict:
+            # File của app (cả hai vỏ) không phải dữ liệu: resources\, exe, bộ gỡ, và từng file của dist Qt.
+            own = {rel: digest for rel, digest in snapshot(tauri).items()
+                   if not rel.startswith("resources/") and rel not in want and rel != "uninstall.exe"}
+            return own | {"webview/" + rel: d for rel, d in snapshot(tauri_local / "com.ngdtuanh.abook").items()} \
+                | {"outside/" + rel: d for rel, d in snapshot(canary).items()}
+        before_data = user_data()
+        relaunch = work / "relaunch.txt"
+        tauri_env = dict(env, LOCALAPPDATA=str(tauri_local), ABOOK_TEST_RELAUNCH_LOG=str(relaunch))
+        code = run_setup([str(setup), "/P", "/UPDATE", "/R", "/ARGS"], tauri_env, log)
+        after_data = user_data()
+        changed = sorted(rel for rel in before_data.keys() | after_data.keys() if before_data.get(rel) != after_data.get(rel))
+        check(not changed and len(before_data) >= len(data) + 2,
+              f"tham số của bộ cập nhật Tauri trên bản Tauri đã cài: {len(before_data)} mục dữ liệu còn nguyên từng byte, junction vẫn "
+              f"là junction (thoát {code}; đổi: {changed[:4]})")
+        if code == 0:
+            check((tauri / "ABook.exe").read_bytes() == (dist / "ABookDesk.exe").read_bytes()
+                  and relaunch.read_text(encoding="utf-8").strip('"\r\n ') == str(tauri / "ABook.exe"),
+                  "tham số Tauri: cài được -> ABook.exe là bản Qt, /R mở lại đúng exe")
+        else:
+            check((tauri / "ABook.exe").read_bytes() == b"MZ ABook Tauri 0.4.150", f"tham số Tauri: thoát lỗi {code} -> bản Tauri còn nguyên")
+        print(f"     tham số Tauri: bộ cài Qt {'cài được' if code == 0 else f'thoát {code}'}")
+        os.rmdir(tauri / "Liên kết")  # gỡ chính liên kết, không đụng đích
     finally:
         for process in sleepers:
             if process.poll() is None:

@@ -217,8 +217,12 @@ void Backend::onStdout() {
                 emit hostEvent(message.event, message.detail);
             break;
         case HostMessage::Kind::RunInstaller:
-            runInstaller(message.installer, message.arguments);
-            break;
+            // Queued, never from inside this slot: runInstaller -> stop() waits for and deletes the very QProcess whose
+            // readyRead is being delivered. Lines after this one do not matter: the app is leaving.
+            QMetaObject::invokeMethod(this, [this, installer = message.installer, arguments = message.arguments] {
+                runInstaller(installer, arguments);
+            }, Qt::QueuedConnection);
+            return;
         case HostMessage::Kind::CheckUpdate:
             // Như check_for_update(manual) của vỏ Tauri: kết quả nào cũng báo giao diện, để nút "Kiểm tra bản mới" không đứng chờ
             emit updateChecked(HostMessage::updateCheckedWithoutUpdater());
@@ -332,7 +336,9 @@ void Backend::runInstaller(const QString &installer, const QStringList &argument
         return;
     }
     stop();
-    QCoreApplication::quit();
+    // exit, not quit: QGuiApplication::quit() asks the windows first, and with closeToTray Main.qml refuses and hides to the
+    // tray - the app stayed until the installer's process stop killed it (exit -1).
+    QCoreApplication::exit(0);
 }
 
 void Backend::stop() {
