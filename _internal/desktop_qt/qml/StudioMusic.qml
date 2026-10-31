@@ -24,7 +24,8 @@ Column {
     property int libraryVersion: 0          // "Nhạc của tôi" vừa đổi: "Đổi bài" đang mở hỏi lại
     readonly property bool changing: pending !== null
     readonly property var plan: view ? view.plan : null
-    readonly property var overrides: view ? view.overrides : ({enabled: true, levelDb: -20, genre: null, pins: {}, silenced: [], banned: []})
+    // Trường nào câu trả lời không mang thì lấy mặc định: binding đọc thẳng overrides.banned.length...
+    readonly property var overrides: Object.assign({enabled: true, levelDb: -20, genre: null, pins: {}, silenced: [], banned: []}, view ? view.overrides : null)
     readonly property var taxonomy: view ? view.taxonomy || ({}) : ({})
     readonly property var scenes: plan ? plan.scenes || [] : []
     readonly property var groups: Logic.chapterGroups(scenes)
