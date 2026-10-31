@@ -3,7 +3,8 @@
 
 export const IDLE_MS = 30_000;
 // Việc nặng: máy chủ làm xong cả việc rồi mới trả lời nên suốt lúc đó không byte nào về - đọc giọng (hạn Edge của chính máy chủ là TOTAL_TIMEOUT
-// 90 s + 1 s, abook/readaloud/edge.py: lỗi kèm lý do của nó luôn tới trước), quét/tách nguồn, kể ngôi "tôi", tạo sách, dựng lại nhạc, nghe thử cách đọc.
+// 90 s + 1 s, abook/readaloud/edge.py: lỗi kèm lý do của nó luôn tới trước), quét/tách nguồn, kể ngôi "tôi", tạo sách, nghe thử cách đọc, và mọi lời gọi dựng lại rãnh nhạc ngay trong lúc trả lời
+// (dựng lại, đổi nhạc, xem nhạc lần đầu, áp phần sửa từ file hay từ điện thoại gửi về).
 export const LONG_IDLE_MS = 100_000;
 // Máy chủ im quá hạn thì gửi lại đúng lời gọi ấy thêm một lần (huỷ cũng làm máy chủ thôi việc: server.py _peer_gone), rồi mới báo hết hạn.
 export const ATTEMPTS = 2;
@@ -16,10 +17,13 @@ export const LONG_WORK = [
   "/api/books/*/voice/preview",
   "/api/books/*/pronunciation/preview",
   "/api/books/*/music/rebuild",
+  "/api/books/*/music",
+  "/api/books/*/edits/fold",
   "/api/scan",
   "/api/sources/split",
   "/api/first-person",
   "/api/books",
+  "/sync/v1/books/*/edits",
 ];
 
 /** Đường dẫn (bỏ phần `?...`) khớp một mục của [LONG_WORK]. */
