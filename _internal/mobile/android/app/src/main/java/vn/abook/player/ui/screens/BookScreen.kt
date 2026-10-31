@@ -47,6 +47,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -261,6 +262,12 @@ fun BookScreen(
             sheets.show { dismiss -> RecordSheet(shown, loaded.records, others.orEmpty().filter { it.id != shown.id }, source, notes, start, actions.openBook, dismiss) }
         }
     }
+    // Vị trí cuộn được khôi phục (sau khi tiến trình bị giết) thì dựng cả trang ngay: danh sách chỉ một mục ở khung đầu sẽ kéo vị trí ấy về đầu.
+    var built by remember { mutableStateOf(list.firstVisibleItemIndex > 0 || list.firstVisibleItemScrollOffset > 0) }
+    LaunchedEffect(Unit) {
+        withFrameNanos { }
+        built = true
+    }
     Column(modifier.fillMaxSize().testTag("book_screen")) {
         Box(Modifier.padding(top = top, start = Dim.margin, end = Dim.margin).fillMaxWidth().height(Dim.s48)) {
             BackButton(actions.back, Modifier.testTag("book_back"))
@@ -271,55 +278,58 @@ fun BookScreen(
             contentPadding = PaddingValues(start = Dim.margin, end = Dim.margin, top = Dim.s12, bottom = bottom + Dim.s32),
         ) {
             item(key = "head", contentType = "head") { BookHead(shown, covers, detail?.records.orEmpty(), player.bookId == shown.id && player.hasTrack, player.error.isNotEmpty()) { openRecords(null) } }
-            item(key = "actions", contentType = "actions") {
-                BookButtons(shown, detail, player, sheets, source, actions, music, notes, openRecords)
-            }
-            item(key = "tabs", contentType = "tabs") {
-                BookTabs(tabs, shownTab, chapters?.size ?: shown.chaptersTotal, { tab = it }, Modifier.padding(top = Dim.sectionGap, bottom = Dim.s8))
-            }
-            when (shownTab) {
-                BookTab.Chapters -> {
-                    // Đã đọc xong mà sách không có chương: câu ở chỗ nút chính đã nói điều ấy - không thêm gì ở đây.
-                    val noChapters = ui.loaded && chapters.isNullOrEmpty()
-                    if (!noChapters) item(key = "chapters_jump", contentType = "jump") {
-                        ChapterJump(below) { currentItem?.let { scope.launch { list.animateScrollToItem((it - 1).coerceAtLeast(0)) } } }
-                    }
-                    when {
-                        chapters == null && !ui.loaded -> items(SKELETON_ROWS, key = { "skeleton_$it" }, contentType = { "skeleton" }) { SkeletonRow() }
-                        chapters.isNullOrEmpty() -> Unit
-                        else -> items(chapters.orEmpty(), key = { it.id }, contentType = { "chapter" }) { chapter ->
-                            val here = chapter.id == current
-                            val live = here && player.bookId == shown.id
-                            Box(Modifier.fade { fade.value }) {
-                                ChapterRow(
-                                    chapter = chapter,
-                                    current = here,
-                                    playing = live && player.playing,
-                                    livePosition = if (live) clock else null,
-                                    durationMs = if (live) player.durationMs else 0L,
-                                    prepared = chapter.id in preparedIds,
-                                    producing = shown.producing,
-                                    onPlay = {
-                                        if (live) actions.toggle() else actions.playChapter(shown.id, chapter.id, chapter.resumeAt)
-                                    },
-                                    onMore = {
-                                        sheets.show { dismiss ->
-                                            ChapterSheet(shown, chapter, source, onListenFromStart = { actions.playChapter(shown.id, chapter.id, 0.0) }, dismiss = dismiss, notes = notes)
-                                        }
-                                    },
-                                )
+            // Trang vào qua hai khung chờ dựng của Nav.push: khung đầu chỉ dựng đầu trang, khung sau phần còn lại (chưa ai thấy) - khung nặng nhất nhẹ đi gần nửa.
+            if (built) {
+                item(key = "actions", contentType = "actions") {
+                    BookButtons(shown, detail, player, sheets, source, actions, music, notes, openRecords)
+                }
+                item(key = "tabs", contentType = "tabs") {
+                    BookTabs(tabs, shownTab, chapters?.size ?: shown.chaptersTotal, { tab = it }, Modifier.padding(top = Dim.sectionGap, bottom = Dim.s8))
+                }
+                when (shownTab) {
+                    BookTab.Chapters -> {
+                        // Đã đọc xong mà sách không có chương: câu ở chỗ nút chính đã nói điều ấy - không thêm gì ở đây.
+                        val noChapters = ui.loaded && chapters.isNullOrEmpty()
+                        if (!noChapters) item(key = "chapters_jump", contentType = "jump") {
+                            ChapterJump(below) { currentItem?.let { scope.launch { list.animateScrollToItem((it - 1).coerceAtLeast(0)) } } }
+                        }
+                        when {
+                            chapters == null && !ui.loaded -> items(SKELETON_ROWS, key = { "skeleton_$it" }, contentType = { "skeleton" }) { SkeletonRow() }
+                            chapters.isNullOrEmpty() -> Unit
+                            else -> items(chapters.orEmpty(), key = { it.id }, contentType = { "chapter" }) { chapter ->
+                                val here = chapter.id == current
+                                val live = here && player.bookId == shown.id
+                                Box(Modifier.fade { fade.value }) {
+                                    ChapterRow(
+                                        chapter = chapter,
+                                        current = here,
+                                        playing = live && player.playing,
+                                        livePosition = if (live) clock else null,
+                                        durationMs = if (live) player.durationMs else 0L,
+                                        prepared = chapter.id in preparedIds,
+                                        producing = shown.producing,
+                                        onPlay = {
+                                            if (live) actions.toggle() else actions.playChapter(shown.id, chapter.id, chapter.resumeAt)
+                                        },
+                                        onMore = {
+                                            sheets.show { dismiss ->
+                                                ChapterSheet(shown, chapter, source, onListenFromStart = { actions.playChapter(shown.id, chapter.id, 0.0) }, dismiss = dismiss, notes = notes)
+                                            }
+                                        },
+                                    )
+                                }
                             }
                         }
                     }
+                    BookTab.History -> historyItems(detail, { fade.value }) { session -> actions.playChapter(shown.id, session.toChapter, session.toSeconds) }
+                    BookTab.Cast -> castItems(
+                        ui.cast, ui.castLoaded, reached, later, { later = !later }, samples,
+                        onMore = { person ->
+                            sheets.show { dismiss -> PersonSheet(shown.id, person, ui.cast?.characters.orEmpty(), source, notes, dismiss) }
+                        },
+                        fade = { fade.value },
+                    )
                 }
-                BookTab.History -> historyItems(detail, { fade.value }) { session -> actions.playChapter(shown.id, session.toChapter, session.toSeconds) }
-                BookTab.Cast -> castItems(
-                    ui.cast, ui.castLoaded, reached, later, { later = !later }, samples,
-                    onMore = { person ->
-                        sheets.show { dismiss -> PersonSheet(shown.id, person, ui.cast?.characters.orEmpty(), source, notes, dismiss) }
-                    },
-                    fade = { fade.value },
-                )
             }
         }
         NotesBar(notes)
@@ -468,36 +478,55 @@ private fun BookButtons(
 @Composable
 private fun ListenButton(label: String, detail: String?, playing: Boolean, restart: Boolean, onClick: () -> Unit) {
     val colors = Abook.colors
+    // Khung dựng của trang vẽ thẳng nhãn; AnimatedContent (~3 ms dựng, ở khung nặng nhất) chỉ vào sau vài khung, khi trang đã trượt vào và nhãn đứng yên.
+    // Cùng một nhãn trước và sau lúc đổi nên không có gì thay đổi trên màn; từ đó nhãn đổi thì trượt như cũ.
+    var animated by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        repeat(ANIMATE_AFTER_FRAMES) { withFrameNanos { } }
+        animated = true
+    }
     Box(
         Modifier.fillMaxWidth().heightIn(min = Dim.s48).pressable(onClick = onClick).clip(RoundedCornerShape(Dim.radiusControl))
             .background(colors.accent).padding(horizontal = Dim.s16, vertical = Dim.s12).testTag("book_primary"),
         contentAlignment = Alignment.Center,
     ) {
-        AnimatedContent(
-            targetState = label to detail,
-            transitionSpec = {
-                (slideInVertically(tween(MotionMs.MEDIUM, easing = Motion.Decelerate)) { it } togetherWith
-                    slideOutVertically(tween(MotionMs.MEDIUM_OUT, easing = Motion.Accelerate)) { -it })
-                    .using(SizeTransform(clip = true))
-            },
-            contentAlignment = Alignment.Center,
-            label = "primary",
-        ) { (text, sub) ->
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.size(Dim.s24), contentAlignment = Alignment.Center) {
-                        if (restart) RestartIcon(colors.accentInk) else PlayPauseGlyph(playing, colors.accentInk, 22.dp)
-                    }
-                    Spacer(Modifier.width(Dim.s8))
-                    BasicText(text, style = Abook.type.bodyStrong.copy(color = colors.accentInk))
-                }
-                if (sub != null) {
-                    BasicText(sub, style = Abook.type.caption.copy(color = colors.accentInk, textAlign = TextAlign.Center))
-                }
-            }
+        if (animated) {
+            AnimatedContent(
+                targetState = label to detail,
+                transitionSpec = {
+                    (slideInVertically(tween(MotionMs.MEDIUM, easing = Motion.Decelerate)) { it } togetherWith
+                        slideOutVertically(tween(MotionMs.MEDIUM_OUT, easing = Motion.Accelerate)) { -it })
+                        .using(SizeTransform(clip = true))
+                },
+                contentAlignment = Alignment.Center,
+                label = "primary",
+            ) { (text, sub) -> ListenLabel(text, sub, playing, restart) }
+        } else {
+            ListenLabel(label, detail, playing, restart)
         }
     }
 }
+
+/** Nội dung nút chính: biểu tượng + động từ, dòng phụ bên dưới. */
+@Composable
+private fun ListenLabel(text: String, sub: String?, playing: Boolean, restart: Boolean) {
+    val colors = Abook.colors
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(Dim.s24), contentAlignment = Alignment.Center) {
+                if (restart) RestartIcon(colors.accentInk) else PlayPauseGlyph(playing, colors.accentInk, 22.dp)
+            }
+            Spacer(Modifier.width(Dim.s8))
+            BasicText(text, style = Abook.type.bodyStrong.copy(color = colors.accentInk))
+        }
+        if (sub != null) {
+            BasicText(sub, style = Abook.type.caption.copy(color = colors.accentInk, textAlign = TextAlign.Center))
+        }
+    }
+}
+
+/** Số khung nút chính vẽ tĩnh trước khi bật AnimatedContent (hai khung chờ dựng của Nav.push + một khung trượt đầu). */
+private const val ANIMATE_AFTER_FRAMES = 3
 
 /** Nút phụ (DESIGN.md §6 "Nút (b)"): biểu tượng trơn trong ô chạm 44 + nhãn nhỏ dưới. Nhãn rỗng (nút ⋯): vẫn chừa dòng nhãn để các biểu tượng thẳng hàng; tên đọc màn hình ở `description`. */
 @Composable

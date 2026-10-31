@@ -1,5 +1,6 @@
 package vn.abook.player.ui
 
+import vn.abook.player.ui.nowplaying.PARK_AFTER_MS
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Recomposer
 import androidx.compose.runtime.remember
@@ -338,11 +339,17 @@ class ShellScreenshotTest {
     }
 
     @Test
-    fun theWindowContentIsNotComposedWhileCollapsed() {
+    fun theWindowContentIsComposedOnlyOnceTheAppIsQuietAndThenStaysOffTheScreenWhileCollapsed() {
         show(player = repo(playing = false))
         rule.waitForIdle()
+        // Lúc mới có cuốn: chưa dựng gì của cửa sổ (khởi động không gánh thêm).
         rule.onNodeWithTag("now_playing").assertDoesNotExist()
         rule.onNodeWithTag("now_playing_bounds").assertDoesNotExist()
+        // Yên một lúc: cửa sổ được dựng sẵn nhưng đỗ - không có trong cây ngữ nghĩa, không nhận chạm.
+        rule.mainClock.advanceTimeBy(PARK_AFTER_MS + 500)
+        rule.waitForIdle()
+        rule.onNodeWithTag("now_playing_bounds").assertExists()
+        rule.onNodeWithTag("now_playing").assertDoesNotExist()
         rule.onNodeWithTag("mini_open").performClick()
         rule.waitForIdle()
         rule.onNodeWithTag("now_playing").assertIsDisplayed()
