@@ -82,6 +82,8 @@ qt_add_executable(ABookDesk WIN32
     src/feedback.cpp
     src/feedback.h
     src/hostmessage.h
+    src/hostcall.cpp
+    src/hostcall.h
     src/hostnet.cpp
     src/hostnet.h
     src/librarymodel.cpp
@@ -549,7 +551,7 @@ if(MSVC)
     endforeach()
 endif()
 add_test(NAME MediaControlsTests COMMAND MediaControlsTests)
-qt_add_executable(DesktopApiTests tests/test_desktopapi.cpp tests/fakes.h src/desktopapi.cpp src/desktopapi.h src/audioout.cpp src/audioout.h
+qt_add_executable(DesktopApiTests tests/test_desktopapi.cpp tests/fakes.h src/desktopapi.cpp src/desktopapi.h src/hostcall.cpp src/hostcall.h src/hostwait.h src/hostnet.cpp src/hostnet.h src/audioout.cpp src/audioout.h
     src/feedback.cpp src/feedback.h src/hostmessage.h src/playernet.h src/librarymodel.cpp src/librarymodel.h)
 target_include_directories(DesktopApiTests PRIVATE tests)
 target_include_directories(DesktopApiTests PRIVATE src)
@@ -558,6 +560,14 @@ if(MSVC)
     target_compile_options(DesktopApiTests PRIVATE /W3 /utf-8)
 endif()
 add_test(NAME DesktopApiTests COMMAND DesktopApiTests)
+# Host start limit (Backend::s_startLimitMs) with a fake Python host
+qt_add_executable(BackendTests tests/test_backend.cpp src/backend.cpp src/backend.h src/hostmessage.h src/librarymodel.cpp src/librarymodel.h)
+target_include_directories(BackendTests PRIVATE src)
+target_link_libraries(BackendTests PRIVATE Qt6::Test Qt6::Quick Qt6::Network)
+if(MSVC)
+    target_compile_options(BackendTests PRIVATE /W3 /utf-8)
+endif()
+add_test(NAME BackendTests COMMAND BackendTests)
 qt_add_executable(WidthTests tests/test_width.cpp tests/glyphaudit.h tests/visualready.h tests/fakes.h src/later.h src/bookdetail.cpp src/bookdetail.h src/mediacontrols.cpp src/mediacontrols.h
     src/readalong.cpp src/readalong.h src/music.cpp src/music.h src/feedback.cpp src/feedback.h ${ABOOK_PLAYER_SOURCES} ${ABOOK_MUSIC_SOURCES})
 target_include_directories(WidthTests PRIVATE src tests)

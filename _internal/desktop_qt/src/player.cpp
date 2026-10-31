@@ -1,5 +1,7 @@
 #include "player.h"
 
+#include "hostwait.h"
+
 #include <QCoreApplication>
 #include <QDateTime>
 #include <QEvent>
@@ -22,6 +24,8 @@ constexpr double kSafetyWarnMs = 30'000;
 constexpr double kListenedMinimum = 20; // phiên nghe dưới 20 giây thật thì bỏ
 
 const QString kPlayError = QStringLiteral("Không phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại.");
+// Same sentence as the phone (ClipReader.NO_USABLE_VOICE) and the web (readAloudVoice.ts): PlayerAlert offers "Thử lại".
+const QString kVoiceStuck = QStringLiteral("Giọng đang chọn đang không dùng được.");
 
 Player *g_instance = nullptr;
 
@@ -105,6 +109,9 @@ Player::Player(AudioOut *out, PlayerNet *net, const QString &outboxPath, QObject
     m_noticeTimer.setSingleShot(true);
     m_noticeTimer.setInterval(kNoticeMs);
     connect(&m_noticeTimer, &QTimer::timeout, this, &Player::dismissNotice);
+    m_stallTimer.setSingleShot(true);
+    m_stallTimer.setInterval(HostWait::kStallMs);
+    connect(&m_stallTimer, &QTimer::timeout, this, &Player::checkStall);
 
     connect(m_out, &AudioOut::playingChanged, this, &Player::onOutPlaying);
     connect(m_out, &AudioOut::buffering, this, [this](bool on) {
@@ -275,8 +282,19 @@ void Player::setBuffering(bool buffering) {
     if (m_buffering == buffering)
         return;
     m_buffering = buffering;
+    m_bufferingSince = m_now();
+    if (buffering) m_stallTimer.start();
+    else m_stallTimer.stop();
     changed();
     emit bufferingChanged();
+}
+
+// Every request under the player already reports its own failure (HostWait); this catches what none of them sees,
+// so the player never waits silently forever: the same error as a failed source, with "Thử lại" in PlayerAlert.
+void Player::checkStall() {
+    if (!m_buffering || m_now() - m_bufferingSince < HostWait::kStallMs)
+        return;
+    onFailed(speaking() ? kVoiceStuck : QString());
 }
 
 void Player::setError(const QString &error) {
@@ -1235,6 +1253,7 @@ void Player::onEnded() {
 
 void Player::tick() {
     const qint64 now = m_now();
+    checkStall();
     if (now - m_lastFlush >= kSaveEveryMs) {
         m_lastFlush = now;
         m_outbox->flush();
