@@ -294,6 +294,8 @@ bytecode HLSL, không phụ thuộc card). Lợi tối đa là phần của 0,4 
     ấy. Cuốn khác phải khác chương 1 (`smoke_play.write_package`): máy nhận cuốn theo mã băm audio, kotlin_v4 là cùng cuốn.
   - Kiểm lực: bỏ lời gọi lúc khởi động -> đỏ bước A; bỏ `openFiles` trong `otherLaunch` -> đỏ bước B.
   - Chưa test: đuôi lạ / file mất qua dòng lệnh (cùng lối kéo thả, đã có test ở ImportQueue), `.abookproj` qua dòng lệnh.
+  - `tools/test_installer.py` chạy cùng bài trên `ABook.exe` ĐÃ CÀI, ngay sau bước host Ready (lệnh mở của liên kết đã được
+    kiểm là `"<exe>" "%1"`).
 
 ### Q6. Tự cập nhật
 - Máy chủ: `GET latest.json` (netconnect, hạn chờ như mọi lần tải), so phiên bản, tải bộ cài vào `%LOCALAPPDATA%\ABook\update`

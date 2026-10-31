@@ -105,7 +105,7 @@ def main():
               f"{bad_why}")
         # File on the command line, then a second launch handing its file to the running copy (smoke_open.py).
         logs: dict = {}
-        why = smoke_open.check(app, args.seconds, logs)
+        why = smoke_open.check(app / "ABookDesk.exe", args.seconds, logs)
         if why:
             for log_name, text in logs.items():
                 print(f"SMOKE_OPEN {log_name}:", *text.splitlines()[-20:], sep="\n")
