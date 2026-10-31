@@ -12,22 +12,22 @@ Chỉ khi bạn chọn một giọng trực tuyến cho "Nghe ngay" thì chữ c
 - **Nghe**: thư viện xếp theo bộ truyện, văn bản chạy theo lời đọc, chế độ đọc sách, ảnh bìa (tìm bìa trên mạng khi bạn
   bấm), hẹn giờ ngủ, lịch sử nghe, xuất MP3 có tag. Một cuốn có thể có nhiều hồ sơ nghe: mỗi người trong
   nhà một chỗ nghe riêng, hay nghe lại từ đầu mà vẫn giữ lần trước.
-- **Nghe ngay mọi cuốn sách**: thêm file EPUB, Word, PDF có chữ hay thư mục `.txt` vào Thư viện (máy tính và điện thoại) rồi
-  bấm **"Nghe ngay"** - máy đọc to từng đoạn, chữ đang đọc sáng lên như "Đọc to" của Edge, bấm vào chữ nào là đọc từ chữ ấy, tắt
+- **Nghe ngay mọi cuốn sách**: bấm **"Thêm sách"** trong Thư viện (máy tính và điện thoại), chọn file EPUB, Word, PDF có chữ
+  hay thư mục `.txt`, rồi bấm phát - máy đọc to từng đoạn, chữ đang đọc sáng lên như "Đọc to" của Edge, bấm vào chữ nào là đọc từ chữ ấy, tắt
   màn hình điện thoại vẫn đọc tiếp. Giọng mặc định là Hoài My của Microsoft Edge (cần mạng; app hỏi trước khi gửi chữ của đoạn
-  đang đọc tới Microsoft), hay giọng của máy, giọng dùng khoá của bạn (Azure, Google, FPT.AI, Viettel), hoặc **Giọng VieNeu** tải
-  về chạy ngay trên máy, không cần mạng ("Làm trước" khi đang sạc cho điện thoại tầm trung); trên máy tính còn có **Giọng
-  Supertonic** (mười giọng nam nữ, chạy trên máy, đọc kịp trực tiếp). Hết sách thì app mời nghe tiếp cuốn khác; nhạc nền có thể
-  là nhạc của chính bạn, thêm ngay từ menu nhạc. Tên Nhật / Hàn đọc theo cách người Việt quen ("Haruto-kun" thành "Ha-ru-tô-cun"),
+  đang đọc tới Microsoft), hay giọng của máy, giọng dùng khoá của bạn (Azure, Google, FPT.AI, Viettel), hoặc **Giọng VieNeu** và
+  **Giọng Supertonic** (mười giọng nam nữ, đọc kịp trực tiếp) tải về chạy ngay trên máy, không cần mạng - cả máy tính lẫn điện
+  thoại ("Làm trước" khi đang sạc cho điện thoại tầm trung). Hết sách thì app mời nghe tiếp cuốn khác; nhạc nền có thể
+  là nhạc của chính bạn, thêm ngay từ menu nhạc ("Thêm nhạc của bạn"). Tên Nhật / Hàn đọc theo cách người Việt quen ("Haruto-kun" thành "Ha-ru-tô-cun"),
   viết tắt đọc bằng tên chữ cái ("HP" thành "hát pê"), tiếng kêu kéo dài thành tiếng ngân ("Aaaa" thành "a… a") - chỉ đổi
   cách đọc, không bao giờ tự sửa chữ của truyện.
 - **Làm sách nói (Studio)**: đọc cả truyện để nhận ra lời thoại, ai đang nói và cảm xúc từng câu; mỗi nhân vật một giọng
   riêng giữ nguyên suốt cuốn, các giọng đứng cạnh nhau đều tốc độ và độ to (mỗi giọng một bộ hằng số đo sẵn, cảm xúc từng
   câu vẫn giữ); thu từng câu rồi tự nghe lại bằng nhận dạng giọng nói và thu lại câu lệch. Truyện kể ngôi
-  thứ nhất: Studio hỏi "tôi" là ai. Tạm dừng bất cứ lúc nào - kể cả giữa lúc phân tích - rồi làm tiếp đúng chỗ; máy tính
-  xách tay rút sạc thì Studio tự tạm dừng và điện thoại báo "Máy tính đang chạy pin".
+  thứ nhất: Studio hỏi "Tôi" là ai. Tạm dừng bất cứ lúc nào - kể cả giữa lúc phân tích - rồi làm tiếp đúng chỗ; máy tính
+  xách tay rút sạc thì Studio tự tạm dừng và điện thoại báo "Máy tính dùng pin".
 - **Bạn là người duyệt cuối**: hộp **"Việc cần duyệt"** chỉ ra những chỗ máy không chắc (ai nói câu này, hai tên là một
-  người, nam hay nữ, cách đọc một tên...), xếp theo lợi trên mỗi lần bấm. Tab **Kịch bản** cho sửa người nói, loại câu,
+  người, nam hay nữ, cách đọc một tên...), xếp theo lợi trên mỗi lần bấm. Tab **Kịch bản** (nằm trong "Thêm") cho sửa người nói, loại câu,
   cảm xúc và chữ đem đọc của từng câu; tab Nhân vật cho đổi giọng và sửa cách đọc mọi tên riêng (mục "Cách đọc tên");
   tab **Cần nghe lại** cho nghe những câu máy tự kiểm
   không chắc và bấm "Cần thu lại" để thu một bản mới. Máy vẫn tự quyết và chạy tiếp - không bắt ai chờ.
@@ -40,8 +40,8 @@ Chỉ khi bạn chọn một giọng trực tuyến cho "Nghe ngay" thì chữ c
   Máy tính nghe được thư viện của máy tính khác; điện thoại nghe được thư viện của điện thoại khác.
 - **Nghe trong trình duyệt** của iPhone, iPad, TV hay máy bất kỳ: mở `https://<tên hoặc địa chỉ máy tính>:47630` (trình
   duyệt báo "không an toàn" một lần vì chứng chỉ do chính máy tính cấp - chọn tiếp tục). Ở ngoài nhà thì cho thiết bị và
-  máy tính vào cùng một mạng riêng ảo (VPN) rồi dùng địa chỉ của máy tính trong mạng ấy - Cài đặt ghi rõ địa chỉ nào dùng
-  trong nhà, địa chỉ nào dùng khi ở ngoài.
+  máy tính vào cùng một mạng riêng ảo (VPN) rồi dùng địa chỉ của máy tính trong mạng ấy - Cài đặt → Thiết bị ghi rõ địa
+  chỉ nào dùng trong nhà, địa chỉ nào dùng khi ở ngoài.
 
 Thay đổi của từng bản phát hành: [`_internal/docs/CHANGELOG.md`](_internal/docs/CHANGELOG.md).
 
@@ -63,13 +63,15 @@ Không có card NVIDIA vẫn cài và nghe được bình thường; chỉ phầ
 1. Tải `ABook_<phiên bản>_x64-setup.exe` ở trang [Releases](https://github.com/ntanhpro1221/ABook/releases/latest)
    và chạy. Bộ cài khoảng 30 MB, không cần quyền quản trị, không cài Python hay gì khác vào máy.
 2. Mở **ABook** từ Start Menu. Bấm đúp một file `.abook` là mở cuốn sách đó; bấm đúp một file `.abookproj` (cả dự án
-   Studio, tạo bằng Xuất > Cả dự án) là có lại dự án ấy trong Studio.
-3. Muốn làm sách nói: vào **Studio → Dự án → "Cài Studio"**. Studio tải một lần khoảng 15-20 GB (Python, thư viện, Ollama
-   và các model) vào một thư mục riêng, không đụng tới thứ đã cài trên máy (máy đã có Ollama thì Ollama ấy giữ nguyên).
+   Studio, tạo ở menu "…" của trang dự án > Xuất > "Cả dự án (.abookproj)") là có lại dự án ấy trong Studio.
+3. Muốn làm sách nói: mở **Studio** ở thanh bên rồi bấm **"Cài Studio"** ở thẻ đầu trang. Studio tải một lần khoảng
+   15-20 GB (Python, thư viện, Ollama và các model) vào một thư mục riêng, không đụng tới thứ đã cài trên máy (máy đã có
+   Ollama thì Ollama ấy giữ nguyên).
    Mất mạng hay tắt máy giữa chừng thì bấm "Cài tiếp".
 
-**Cập nhật**: app tự tìm bản mới mỗi lần mở; có bản mới thì bấm "Cập nhật và mở lại" trong Cài đặt (gói có chữ ký, sai
-chữ ký thì không cài). Bản mới cần phần Studio khác thì thẻ "Cập nhật Studio" hiện ra và chỉ tải lại đúng phần ấy.
+**Cập nhật**: app tự tìm bản mới mỗi lần mở; có bản mới thì thanh bên hiện "Có ABook <phiên bản>" - bấm vào đó rồi bấm
+"Cập nhật ABook" trong **Cài đặt → Nâng cao → Cập nhật**, app tự mở lại (gói có chữ ký, sai chữ ký thì không cài). Bản mới
+cần phần Studio khác thì thẻ "Cập nhật Studio" hiện ra ở trang Studio và chỉ tải lại đúng phần ấy.
 
 **Gỡ**: gỡ ABook trong Cài đặt Windows gỡ luôn Studio. Sách đã làm, chỗ đang nghe và tuỳ chọn được giữ lại
 (`%LOCALAPPDATA%\ABook`) trừ khi bạn tích ô xoá dữ liệu trong bộ gỡ.
@@ -78,19 +80,21 @@ chữ ký thì không cài). Bản mới cần phần Studio khác thì thẻ "C
 
 1. Tải file `.apk` ở cùng trang Releases và cài (Android sẽ hỏi cho phép cài ứng dụng từ nguồn này).
 2. Ghép với máy tính - một lần là đủ:
-   - Trên máy tính: **Cài đặt** → bật **"Cho phép điện thoại kết nối qua Wi-Fi"** → bấm **"Ghép thiết bị mới"** để
-     hiện mã 6 số.
-   - Trên điện thoại: tab **Tải sách** → chọn máy tính tìm thấy → gõ mã 6 số.
+   - Trên máy tính: **Cài đặt → Thiết bị** → bật **"Kết nối Wi-Fi"** → mở mục **"Ghép thiết bị"** và bấm **"Ghép thiết bị
+     mới"** để hiện mã 6 số.
+   - Trên điện thoại: **Cài đặt → Thiết bị → Nối máy tính** → cách nối **"Tự tìm"** → chọn máy tính trong "Máy tính tìm
+     thấy" → gõ mã 6 số → **"Kết nối"**.
 3. Không chung Wi-Fi (ra khỏi nhà, máy tính cắm dây mạng...): ghép hai máy trong Cài đặt Bluetooth của Android, bật
-   Bluetooth trên máy tính, rồi trên điện thoại vào **Tải sách → "Không chung Wi-Fi? Kết nối qua Bluetooth"**. Điện thoại
-   đã ghép qua Wi-Fi mà máy tính có Bluetooth thì tự chuyển sang Bluetooth khi rời Wi-Fi, không phải ghép lại. Ở xa hơn
-   tầm Bluetooth thì dùng một mạng riêng ảo (VPN) bất kỳ cho cả hai máy - Tailscale, ZeroTier, NetBird, WireGuard... đều
-   được; app không cần cài đặt gì riêng.
+   Bluetooth trên máy tính, rồi trên điện thoại vào **Cài đặt → Thiết bị → Nối máy tính**, chọn cách nối **"Bluetooth"**
+   (bấm "Cho phép" khi app xin quyền "Thiết bị ở gần"), chọn máy trong "Máy tính đã ghép Bluetooth" và gõ mã 6 số như ở
+   bước 2. Điện thoại đã ghép qua Wi-Fi mà máy tính có Bluetooth thì tự chuyển sang Bluetooth khi rời Wi-Fi, không phải
+   ghép lại. Ở xa hơn tầm Bluetooth thì dùng một mạng riêng ảo (VPN) bất kỳ cho cả hai máy - Tailscale, ZeroTier, NetBird,
+   WireGuard... đều được; app không cần cài đặt gì riêng.
 
-Sau khi ghép, sách trên máy tính (tự làm hay thêm từ file) hiện ngay trong Thư viện điện thoại (nhãn "Máy tính") để nghe thẳng hoặc tải về.
+Sau khi ghép, sách trên máy tính (tự làm hay thêm từ file) hiện ngay trong Thư viện điện thoại (dòng "Trên <tên máy tính>") để nghe thẳng hoặc "Tải về máy".
 
 **Cập nhật**: từ bản 0.4.11 app điện thoại tự hỏi trang Releases mỗi ngày một lần; có bản mới thì nhắc một lần và
-**Cài đặt → Cập nhật** có nút **"Tải"** mở file APK mới - mở file để cài đè, sách và chỗ đang nghe giữ nguyên.
+**Cài đặt → Nâng cao → Cập nhật** có nút **"Tải"** mở file APK mới - mở file để cài đè, sách và chỗ đang nghe giữ nguyên.
 
 **Trên xe**: ABook có trong Android Auto - chọn cuốn, chọn chương ngay trên màn hình xe. App cài từ file APK thì trong
 Android Auto bật chế độ nhà phát triển (chạm nhiều lần vào số phiên bản) rồi bật "Nguồn không xác định".
@@ -98,33 +102,36 @@ Android Auto bật chế độ nhà phát triển (chạm nhiều lần vào s�
 ### Thiết bị khác
 
 - **Trình duyệt** (iPhone, iPad, TV, máy tính không cài ABook): mở `https://<máy tính>:47630` rồi gõ mã 6 số như trên.
-  Thiết bị chỉ nghe được sách, không thấy Studio hay thư mục trên máy tính - trừ khi bạn bật **"Cho phép điều khiển sản
-  xuất từ thiết bị đã ghép"** trong Cài đặt và cho riêng thiết bị ấy quyền đó.
-- **Máy tính khác có ABook**: Cài đặt → **"Máy tính khác"** → "Tự tìm" → gõ mã 6 số đang hiện trên máy kia.
-- **Điện thoại khác**: trên máy có sách, Tải sách → bật **"Cho máy khác nghe thư viện này"** → "Ghép máy mới"; trên máy
-  kia, Tải sách → "Thiết bị khác" → **"Ghép thiết bị"**.
+  Thiết bị chỉ nghe được sách, không thấy Studio hay thư mục trên máy tính - trừ khi bạn bật **"Điều khiển từ xa"**
+  (Cài đặt → Thiết bị → "Quyền điều khiển") và cho riêng thiết bị ấy quyền **"Điều khiển sản xuất"** ở mục "Máy đã ghép".
+- **Máy tính khác có ABook**: Cài đặt → Thiết bị → **"Máy tính khác"** → mở **"Ghép máy"** → "Tự tìm" → chọn máy → gõ
+  "Mã 6 số" đang hiện trên máy kia → **"Kết nối"**.
+- **Điện thoại khác**: trên máy có sách, Cài đặt → Thiết bị → **Chia sẻ thư viện** → bật **"Kết nối Wi-Fi"** (app báo sẽ
+  giữ một thông báo nhỏ: bấm "Tiếp tục") → **"Ghép thiết bị mới"**; trên máy kia, Cài đặt → Thiết bị → **Nối máy tính**
+  → "Thêm thiết bị" (khi máy đã nối với máy nào đó) → chọn máy → gõ mã → **"Ghép thiết bị"** (chưa nối máy nào thì nút là "Kết nối").
 
 ## Làm một cuốn sách nói
 
-1. Studio → Dự án → **Dự án mới**, chọn các chương `.txt` của truyện (hoặc cả thư mục). Chương xếp theo tên file.
-2. Chọn giọng kể chuyện và mức chất lượng; truyện kể ngôi thứ nhất thì trả lời "Tôi là ai?" (Studio gợi ý cả những
+1. Studio → **Dự án mới**, chọn các chương `.txt` của truyện (hoặc cả thư mục). Chương xếp theo tên file.
+2. Chọn giọng kể chuyện và mức chất lượng; truyện kể ngôi thứ nhất thì trả lời "Tôi" là ai? (Studio gợi ý cả những
    chương đổi người kể).
-3. Bấm bắt đầu. Studio đọc cả truyện trước để phân vai thống nhất cho cả cuốn, rồi thu từng chương. Sách hiện trong Thư
-   viện ngay khi chương đầu tiên thu xong - không cần chờ cả cuốn.
-4. Trong lúc chạy, mở **"Việc cần duyệt"** khi rảnh: mỗi thẻ nói rõ máy đang nghi điều gì, sửa bằng một cú bấm; câu đã
-   thu bị ảnh hưởng tự thu lại. Sách đã xong vẫn sửa được: trang dự án hiện nút **"Áp dụng N thay đổi"**, bấm là chỉ thu
-   lại những câu bị ảnh hưởng.
+3. Bấm "Bắt đầu" (tắt "Bắt đầu tạo ngay" thì nút là "Tạo sách", rồi bạn bấm "Bắt đầu" ở trang dự án). Studio đọc cả
+   truyện trước để phân vai thống nhất cho cả cuốn, rồi thu từng chương. Sách hiện trong Thư viện ngay khi chương đầu
+   tiên thu xong - không cần chờ cả cuốn.
+4. Trong lúc chạy, mở tab **"Việc cần duyệt"** của dự án khi rảnh: mỗi thẻ nói rõ máy đang nghi điều gì, sửa bằng một
+   cú bấm; câu đã thu bị ảnh hưởng tự thu lại. Sách đã xong vẫn sửa được: trang dự án hiện nút **"Áp dụng N thay
+   đổi"**, bấm là chỉ thu lại những câu bị ảnh hưởng.
 
 Có thể đóng app hay tắt máy bất kỳ lúc nào; mở lại là làm tiếp từ chỗ dừng. Riêng giai đoạn **phân tích** (trước khi
 chương đầu tiên được thu) nên để chạy liền một mạch: dừng giữa chừng rồi chạy tiếp có thể cho ra cách phân vai khác. Muốn
-nghỉ giữa chừng thì bấm **"Tạm dừng"** thay vì "Dừng": sách đứng yên và làm tiếp đúng chỗ, an toàn cả lúc phân tích (bộ
-nhớ card đồ hoạ vẫn được giữ).
+nghỉ giữa chừng thì bấm **"Tạm dừng"** thay vì "Dừng" (nằm trong menu "…" của trang dự án): sách đứng yên và làm tiếp
+đúng chỗ, an toàn cả lúc phân tích (bộ nhớ card đồ hoạ vẫn được giữ).
 Máy tính xách tay rút sạc thì Studio tự tạm dừng (chạy pin làm sách rất chậm mà hao pin) và tự làm tiếp khi cắm lại; tắt
-ở Cài đặt → Studio.
+ở Cài đặt → Studio → "Tạm dừng dùng pin".
 
 **Truyện dài, làm nhiều đợt**: khi thư mục truyện có chương mới (truyện còn ra tiếp, hay lần đầu chỉ làm vài chục chương),
-trang dự án hiện nút **"Làm tiếp cuốn này"**. Phần mới ("Tên · Phần 2") giữ nguyên giọng của mọi nhân vật đã gặp, cách
-đọc tên và những gì đã sửa ở "Việc cần duyệt"; trong Thư viện các phần đứng chung một bộ và nghe hết phần này thì được
+menu "…" của trang dự án có mục **"Làm tiếp cuốn này"** (và "Thêm N chương" khi app thấy chương mới). Phần mới
+("Tên · Phần 2") giữ nguyên giọng của mọi nhân vật đã gặp, cách đọc tên và những gì đã sửa ở "Việc cần duyệt"; trong Thư viện các phần đứng chung một bộ và nghe hết phần này thì được
 mời nghe tiếp phần sau.
 
 ## Trạng thái
