@@ -6,13 +6,15 @@ bốn tốc độ, tua xa, lùi, hết chương tự sang chương sau, bấm ch
 
   lỗ      chu kỳ engine kéo mà thiếu dữ liệu / luồng đang dừng (.gaps/.stops), chuỗi số 0 tuyệt đối, giọng mất hẳn so với nguồn
   tách    bậc nhảy mẫu-mẫu (sai phân bậc hai vượt xa nền quanh nó) mà nguồn ở cùng chỗ không có
-  trôi    vị trí app báo so với đồng hồ (độ dốc từng đoạn) và tiếng nghe thấy so với vị trí app báo (khớp dạng sóng với nguồn)
+  trôi    vị trí app báo so với đồng hồ (sai số tích luỹ từng đoạn) và tiếng nghe thấy so với vị trí app báo (khớp dạng sóng)
   mức     tiếng ra so với nguồn ở cùng đoạn nội dung, theo từng tốc độ
   rò      còn tiếng sau lúc dừng
 
   python -X utf8 tools/audio_sink.py run <label> [--exe dist/ABookDesk.exe]
   python -X utf8 tools/audio_sink.py analyze <thư_mục_lượt>
   python -X utf8 tools/audio_sink.py selftest      (build.bat: bộ dò bắt được lỗi cấy vào và im với tiếng sạch)
+  python -X utf8 tools/audio_sink.py strength <thư_mục_lượt>   (lượt xanh, lỗi cấy vào chính nó đỏ)
+  python -X utf8 tools/audio_sink.py gate <exe> [--runs 2]     (build.bat package / installer: cổng phát hành)
 
 Bằng chứng (WAV, đoạn trích quanh chỗ nghi) nằm trong build/audiosink-evidence/<label>/ - không bao giờ commit.
 """
@@ -22,6 +24,7 @@ import os
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import numpy as np
@@ -36,9 +39,17 @@ SETTLE_S = 0.6          # sau một thao tác, chờ chừng này mới coi là 
 ZERO_RUN_S = 0.002      # chuỗi số 0 tuyệt đối dài hơn thế giữa lúc phát = lỗ
 CLICK_RATIO = 14.0      # |sai phân bậc hai| gấp chừng này nền RMS quanh nó (bỏ chính nó) ...
 CLICK_FLOOR = 0.02      # ... và lớn hơn chừng này (đỉnh 1,0) mới là tiếng tách
+CLICK_FLOOR_SONIC = 0.03  # ... ở đoạn tốc độ khác 1 (Sonic chạy) thì chừng này: chỗ nối mờ chéo của Sonic tự làm gãy độ dốc
+                          # tới 0,0205 ở nơi nguồn chỉ 0,005 (01-11 lượt 5, 93,446 s; Sonic offline cùng mã: 0,011 nơi nguồn 0,004)
 DROPOUT_DB = 30.0       # tiếng ra thấp hơn nguồn chừng này dB trong 20 ms khi nguồn có tiếng = giọng mất
 LEVEL_TOL_DB = 1.0      # mức ở mỗi tốc độ lệch mức ở tốc độ 1 quá chừng này = lỗi
-DRIFT_TOL = 0.002       # vị trí chạy lệch tốc độ quá 0,2 %
+# Trôi vị trí: vị trí app báo = con trỏ nghe của bộ trộn = khung đã ra theo padding của thiết bị, mà padding chỉ đổi theo
+# chu kỳ engine (10 ms). Nên vị trí luôn trễ sự thật 0..1 chu kỳ, pha đổi chậm theo nhịp thức của luồng trộn: răng cưa ≤ 10 ms
+# (đo 01-11, 5 lượt x 15 đoạn: tối đa 10,8 ms, tiếng ra vẫn đúng đồng hồ). Đoạn 4,5 s vì thế có dốc giả tới 0,24 %.
+# Trôi thật thì cộng dồn: sai số tích luỹ trong đoạn (thời gian người nghe) vượt chừng này mới là trôi.
+DRIFT_MS = 15.0
+CLICK_SOURCE_S = 0.05   # tiếng tách mà nguồn cũng có trong chừng này giây NGƯỜI NGHE quanh vị trí báo thì là của nguồn
+CLICK_COPY = 0.5        # ... tức nguồn trong cửa sổ ấy có gai (|sai phân bậc hai|) ít nhất bằng chừng này lần gai tiếng ra
 OFFSET_SPREAD_MS = 30.0 # tiếng nghe thấy lệch vị trí app báo: dao động quá chừng này trong một đoạn = trôi / giật
 LEAK_PEAK = 1e-3        # sau lúc dừng 60 ms còn đỉnh lớn hơn thế = rò
 TREND_TOL_MS = 10.0     # tiếng nghe thấy trôi khỏi vị trí app báo quá 10 ms (thời gian người nghe) mỗi 10 s
@@ -172,28 +183,41 @@ def parse_marks(events, epoch_ms, rate):
     return marks
 
 
-def analyze(run_dir, source_path=None):
+def load(run_dir, source_path=None):
+    """Một lượt trên đĩa -> dữ liệu cho check(): tiếng ra (mono), mốc bench, lỗ thiết bị thấy, nguồn chương."""
     run_dir = Path(run_dir)
     meta = json.loads((run_dir / "run.json").read_bytes()) if (run_dir / "run.json").exists() else {}
     sink_path = run_dir / "sink.wav"
     x, rate = read_wav(sink_path)
-    mono = x.mean(axis=1)
     epoch_ms, clock_rate = Path(str(sink_path) + ".clock").read_text().split()
-    epoch_ms, clock_rate = float(epoch_ms), int(clock_rate)
-    assert clock_rate == rate
+    assert int(clock_rate) == rate
     bench = json.loads((run_dir / "bench.json").read_bytes())
-    marks = parse_marks(bench["events"], epoch_ms, rate)
+    return dict(sink=str(sink_path), rate=rate, mono=x.mean(axis=1), marks=parse_marks(bench["events"], float(epoch_ms), rate),
+                gaps=read_pairs(str(sink_path) + ".gaps"), stops=read_pairs(str(sink_path) + ".stops"),
+                source=decode(source_path or meta["source"], rate))
+
+
+def analyze(run_dir, source_path=None):
+    run_dir = Path(run_dir)
+    report = check(load(run_dir, source_path), run_dir / "snippets")
+    (run_dir / "report.json").write_text(json.dumps(report, ensure_ascii=False, indent=1), encoding="utf-8", newline="\n")
+    return report
+
+
+def check(data, snippets=None):
+    """Soi một lượt đã nạp. snippets: thư mục ghi đoạn trích quanh chỗ nghi (None = không ghi, như khi kiểm lực)."""
+    rate, mono, source, marks = data["rate"], data["mono"], data["source"], data["marks"]
     events = [m for m in marks if m["tag"] != "tick"]
     ticks = [m for m in marks if m["tag"] == "tick"]
-    source = decode(source_path or meta["source"], rate)
-    snippets = run_dir / "snippets"
-    snippets.mkdir(exist_ok=True)
+    if snippets is not None:
+        snippets.mkdir(exist_ok=True)
     findings = []
 
     def snip(kind, frame, note):
         name = f"{kind}_{frame / rate:08.3f}s.wav"
-        a, b = max(0, frame - rate // 2), min(len(mono), frame + rate // 2)
-        write_wav16(snippets / name, mono[a:b], rate)
+        if snippets is not None:
+            a, b = max(0, frame - rate // 2), min(len(mono), frame + rate // 2)
+            write_wav16(snippets / name, mono[a:b], rate)
         findings.append(dict(kind=kind, t=round(frame / rate, 3), note=note, snippet=name))
 
     # Khoảng phải có tiếng: từ "play" (+ khởi động) tới "stop", bỏ [pause, resume]; khoảng phải im: [pause, resume], [stop, ...]
@@ -214,15 +238,19 @@ def analyze(run_dir, source_path=None):
                 and not any(a["frame"] - SETTLE_S * rate < e["frame"] <= b["frame"] for e in events))
     pairs = [(a, b) for a, b in zip(ticks, ticks[1:]) if steady(a, b)]
 
+    def pair_at(f):
+        return next(((a, b) for a, b in pairs if a["frame"] <= f <= b["frame"]), None)
+
     def position_at(f):
-        for a, b in pairs:
-            if a["frame"] <= f <= b["frame"]:
-                return a["position"] + (b["position"] - a["position"]) * (f - a["frame"]) / (b["frame"] - a["frame"])
-        return None
+        ab = pair_at(f)
+        if ab is None:
+            return None
+        a, b = ab
+        return a["position"] + (b["position"] - a["position"]) * (f - a["frame"]) / (b["frame"] - a["frame"])
 
     # 1. Lỗ do thiết bị thấy: engine kéo mà thiếu / luồng đang dừng
-    for kind, path in (("hole_gap", ".gaps"), ("hole_stop", ".stops")):
-        for at, n in read_pairs(str(sink_path) + path):
+    for kind, found in (("hole_gap", data["gaps"]), ("hole_stop", data["stops"])):
+        for at, n in found:
             if in_sound(at) or in_sound(at + n - 1):
                 snip(kind, at, f"{n} khung ({n * 1000 / rate:.1f} ms)")
     # 2. Chuỗi số 0 giữa lúc phát, trừ chỗ nguồn cũng im tuyệt đối (giữa hai câu TTS, nhạc chưa vào)
@@ -263,13 +291,31 @@ def analyze(run_dir, source_path=None):
             if src > -40 and sink_db[k] < src - DROPOUT_DB:
                 snip("dropout", k * hop, f"ra {sink_db[k]:.1f} dB, nguồn {src:.1f} dB")
     # 4. Tiếng tách: có ở tiếng ra mà nguồn cùng chỗ không có
-    source_clicks = np.array(clicks(source, rate), dtype=np.int64)
+    # Dung sai tính theo thời gian người nghe: ở x3 tiếng nghe lệch vị trí báo ~22 ms = ~66 ms nguồn, nên tiếng bật phụ âm
+    # của bản ghi (Sonic chép nguyên chu kỳ chứa nó) nằm ngoài 0,05 s nguồn (01-11: 103,85 s, 4/5 lượt).
+    # "Nguồn cũng có" so độ nhọn tuyệt đối, không so tỉ số với nền: Sonic chép gai của nguồn nhưng bỏ bớt chu kỳ quanh nó, nên
+    # gai dưới tỉ số 14 ở nguồn thành trên 14 ở tiếng ra (Sonic offline, 6000 s nghe ở 0,75-3x: mọi gai vượt sàn đều như thế).
+    # Ở đoạn Sonic chạy, gãy độ dốc do chính chỗ nối của nó (tới CLICK_FLOOR_SONIC) cũng không phải tiếng tách.
+    source_d2 = np.zeros_like(source)
+    source_d2[2:] = np.abs(source[2:] - 2 * source[1:-1] + source[:-2])
+    excused = []
     for f in clicks(mono, rate):
         if not in_sound(f):
             continue
-        p = position_at(f)
-        if p is not None and len(source_clicks) and np.min(np.abs(source_clicks - int(p * rate))) < 0.05 * rate:
-            continue
+        ab = pair_at(f)
+        if ab is not None:
+            a, b = ab
+            pace = (b["position"] - a["position"]) * rate / (b["frame"] - a["frame"])
+            speed = max(1.0, pace)
+            kink = abs(float(mono[f] - 2 * mono[f - 1] + mono[f - 2]))
+            if abs(pace - 1) > 0.01 and kink <= CLICK_FLOOR_SONIC:
+                excused.append(dict(t=round(f / rate, 3), sonic=round(kink, 4)))
+                continue
+            p, w = int(position_at(f) * rate), int(CLICK_SOURCE_S * speed * rate)
+            lo, hi = max(0, p - w), max(0, p + w)
+            if hi > lo and lo < len(source_d2) and float(source_d2[lo:hi].max()) >= CLICK_COPY * kink:
+                excused.append(dict(t=round(f / rate, 3), source=round((lo + int(np.argmax(source_d2[lo:hi]))) / rate, 3)))
+                continue
         snip("click", f, "")
     # 5. Rò tiếng lúc phải im
     for a, b in quiet:
@@ -292,16 +338,18 @@ def analyze(run_dir, source_path=None):
             current = float(e["tag"].split(":")[1])
         rate_of[e["tag"]] = current
 
-    # 6. Trôi vị trí: độ dốc vị trí theo đồng hồ tiếng ra so với tốc độ đặt
+    # 6. Trôi vị trí: sai số tích luỹ của vị trí báo so với đồng hồ tiếng ra x tốc độ đặt, trong từng đoạn (DRIFT_MS)
     drift = []
     for s in segments:
         t = np.array([m["frame"] for m in s["ticks"]], dtype=np.float64) / rate
         p = np.array([m["position"] for m in s["ticks"]])
-        slope = float(np.polyfit(t, p, 1)[0])
         speed = rate_of[s["tag"]]
-        drift.append(dict(segment=s["tag"], speed=speed, slope=round(slope, 5), error=round(slope / speed - 1, 5)))
-        if abs(slope / speed - 1) > DRIFT_TOL:
-            snip("drift", s["frames"][0], f"{s['tag']}: vị trí chạy {slope:.4f} giây/giây, tốc độ {speed}")
+        slope = float(np.polyfit(t, p, 1)[0])
+        lag = p / speed - t
+        spread = float(lag.max() - lag.min()) * 1000
+        drift.append(dict(segment=s["tag"], speed=speed, slope=round(slope, 5), error=round(slope / speed - 1, 5), spread_ms=round(spread, 1)))
+        if spread > DRIFT_MS:
+            snip("drift", s["frames"][0], f"{s['tag']}: vị trí lệch đồng hồ tích luỹ {spread:.1f} ms (dốc {slope:.4f} giây/giây, tốc độ {speed})")
     # 7. Tiếng nghe thấy so với vị trí app báo: khớp dạng sóng với nguồn ở từng tick
     # Sonic chép nguyên từng chu kỳ cao độ: ở tốc độ cao cửa sổ ngắn lại (~2 chu kỳ) mới khớp được một đoạn nguồn liền.
     # Lệch đổi về thời gian người nghe (giây nguồn / tốc độ).
@@ -344,10 +392,9 @@ def analyze(run_dir, source_path=None):
     counts = {}
     for f in findings:
         counts[f["kind"]] = counts.get(f["kind"], 0) + 1
-    report = dict(sink=str(sink_path), seconds=round(len(mono) / rate, 2), events=[(e["tag"], round(e["frame"] / rate, 3), e["chapter"], e["position"]) for e in events],
-                  counts=counts, findings=findings, drift=drift, offsets=offsets, levels=levels, ok=not findings)
-    (run_dir / "report.json").write_text(json.dumps(report, ensure_ascii=False, indent=1), encoding="utf-8", newline="\n")
-    return report
+    return dict(sink=data["sink"], seconds=round(len(mono) / rate, 2), events=[(e["tag"], round(e["frame"] / rate, 3), e["chapter"], e["position"]) for e in events],
+                counts=counts, findings=findings, excused=excused, drift=drift, offsets=offsets, levels=levels, segments=[(s["tag"], s["frames"]) for s in segments],
+                ok=not findings)
 
 
 # ---------- chạy app ----------
@@ -406,12 +453,89 @@ def run(label, exe):
     return analyze(stage)
 
 
+# ---------- kiểm lực trên lượt thật: lỗi cấy vào chính lượt ấy phải đỏ ----------
+
+STRENGTH_DRIFTS = (0.003, -0.003, 0.005, -0.005)
+STRENGTH_STEP = 0.05
+
+
+def strength(data, base=None):
+    """Lượt phải xanh, và từng lỗi cấy vào nó phải đỏ đúng loại, đúng chỗ:
+    - trôi ±0,3 % / ±0,5 % từ giữa đoạn: ở mọi đoạn mà phần cấy (thời gian người nghe) vượt DRIFT_MS + răng cưa sạch của
+      chính đoạn ấy, tức là chắc chắn phải thấy; phải có ít nhất một đoạn như thế;
+    - bậc 0,05 kéo 10 ms giữa một đoạn tốc độ >= 2,5 và một đoạn tốc độ 1, xa tiếng tách của nguồn và chỗ nguồn nhọn.
+    Trả (ok, kết quả từng phép)."""
+    rate = data["rate"]
+    base = base or check(data)
+    results = [dict(case="sạch", ok=base["ok"], counts=base["counts"])]
+    segments = [dict(tag=tag, first=f0, last=f1, **d) for (tag, (f0, f1)), d in zip(base["segments"], base["drift"])]
+    for frac in STRENGTH_DRIFTS:
+        must = [s for s in segments if abs(frac) * (s["last"] - s["first"]) / rate / 2 * 1000 > DRIFT_MS + s["spread_ms"]]
+        if not must:
+            results.append(dict(case=f"trôi {frac:+.1%}", ok=False, note="không đoạn nào đủ dài để chắc chắn thấy"))
+            continue
+        for s in must:
+            mid = (s["first"] + s["last"]) / 2
+            marks = [dict(m, position=m["position"] + frac * s["speed"] * (m["frame"] - mid) / rate)
+                     if m["tag"] == "tick" and mid < m["frame"] <= s["last"] else m for m in data["marks"]]
+            got = check(dict(data, marks=marks))
+            hit = any(f["kind"] == "drift" and f["t"] == round(s["first"] / rate, 3) for f in got["findings"])
+            results.append(dict(case=f"trôi {frac:+.1%} {s['tag']}", ok=hit))
+    source = data["source"]
+    source_clicks = np.array(clicks(source, rate) or [-10 ** 9], dtype=np.int64)
+    sink_clicks = np.array(clicks(data["mono"], rate) or [-10 ** 9], dtype=np.int64)
+    source_d2 = np.zeros_like(source)
+    source_d2[2:] = np.abs(source[2:] - 2 * source[1:-1] + source[:-2])
+    for name, fast in (("x>=2,5", True), ("x1", False)):
+        pick = [s for s in segments if (s["speed"] >= 2.5) == fast and (fast or s["speed"] == 1.0)]
+        at = None
+        for s in sorted(pick, key=lambda s: s["first"] - s["last"]):
+            ticks = [m for m in data["marks"] if m["tag"] == "tick" and s["first"] <= m["frame"] <= s["last"]]
+            for a, b in zip(ticks, ticks[1:]):
+                f = (a["frame"] + b["frame"]) // 2
+                p = int((a["position"] + b["position"]) / 2 * rate)
+                w = int(CLICK_SOURCE_S * s["speed"] * rate)
+                if (np.min(np.abs(source_clicks - p)) > 0.3 * s["speed"] * rate and np.min(np.abs(sink_clicks - f)) > 0.05 * rate
+                        and source_d2[max(0, p - w):p + w].max() < CLICK_COPY * STRENGTH_STEP / 2):
+                    at = f
+                    break
+            if at is not None:
+                break
+        if at is None:
+            results.append(dict(case=f"tách {name}", ok=False, note="không tìm được chỗ cấy"))
+            continue
+        mono = data["mono"].copy()
+        mono[at: at + rate // 100] += STRENGTH_STEP
+        got = check(dict(data, mono=mono))
+        results.append(dict(case=f"tách {name} @{at / rate:.3f}s",
+                            ok=any(f["kind"] == "click" and abs(f["t"] * rate - at) < 0.001 * rate for f in got["findings"])))
+    return all(r["ok"] for r in results), results
+
+
+def gate(exe, runs):
+    """Cổng phát hành: `runs` lượt liền trên exe đều xanh, và lượt đầu qua kiểm lực. Xanh thì xoá bằng chứng (WAV lớn)."""
+    stamp = time.strftime("gate-%Y%m%d-%H%M%S")
+    labels = [f"{stamp}-{i + 1}" for i in range(runs)]
+    reports = [run(label, exe) for label in labels]
+    ok, results = strength(load(OUT / labels[0]), reports[0])
+    summary = dict(gate="audio_sink", exe=str(exe), runs=[dict(label=l, ok=r["ok"], counts=r["counts"], excused=r["excused"]) for l, r in zip(labels, reports)],
+                   strength=results, ok=ok and all(r["ok"] for r in reports))
+    print(json.dumps(summary, ensure_ascii=False, indent=1))
+    if summary["ok"]:
+        for label in labels:
+            stage = (OUT / label).resolve()
+            assert stage.parent == OUT.resolve()
+            shutil.rmtree(stage)
+    else:
+        (OUT / f"{stamp}.json").write_text(json.dumps(summary, ensure_ascii=False, indent=1), encoding="utf-8", newline="\n")
+    return summary["ok"]
+
+
 # ---------- tự kiểm hai phía ----------
 
-def selftest():
-    """Bộ dò im với tiếng sạch giống giọng + nhạc, và bắt được từng lỗi cấy vào. Không cần app hay file ngoài."""
-    rng = np.random.default_rng(7)
-    rate, n = RATE, RATE * 12
+def voice_and_music(n, rate=RATE, seed=7):
+    """Tiếng giả giống giọng (cao độ trượt, âm tiết 3,7 Hz) + nhạc nền ba nốt: không số 0 tuyệt đối, không bậc nhảy."""
+    rng = np.random.default_rng(seed)
     t = np.arange(n) / rate
     f0 = 140 + 40 * np.sin(2 * np.pi * 0.7 * t)
     phase = 2 * np.pi * np.cumsum(f0) / rate
@@ -420,7 +544,63 @@ def selftest():
     noise = np.convolve(rng.standard_normal(n), np.ones(8) / 8, mode="same")
     speech = (0.18 * voiced * syllables + 0.01 * noise * syllables).astype(np.float32)
     music = (0.02 * (np.sin(2 * np.pi * 220 * t) + 0.7 * np.sin(2 * np.pi * 277.2 * t + 1) + 0.5 * np.sin(2 * np.pi * 329.6 * t + 2))).astype(np.float32)
-    clean = speech + music
+    return speech + music, music
+
+
+def synthetic_run(speed=1.0, saw_ms=10.0, drift=0.0, lead_ms=0.0, source_step_at=None, rate=RATE):
+    """Một lượt giả cho check() theo hình kịch bản: play 0,5 s, pause 2 s, resume 2,5 s, rate:1 3 s, rate:<speed> 25,5 s,
+    stop 48 s. Tiếng ra là nguồn đọc theo vị trí thật (như Sonic chép nguyên mẫu), đi trước vị trí báo lead_ms (người nghe).
+    Tick 0,25 s báo vị trí trễ răng cưa 0..saw_ms (chu kỳ 2,5 s, như con trỏ nghe theo padding). drift: trôi thêm từ giữa
+    đoạn cuối. source_step_at: bậc 0,05 trong nguồn ở giây nguồn ấy (tiếng bật của bản ghi)."""
+    play, pause, resume, normal, change, stop, end = 0.5, 2.0, 2.5, 3.0, 25.5, 48.0, 49.0
+    middle = (change + stop) / 2
+
+    def local(t):
+        return speed if t >= change else 1.0
+
+    def truth(t):
+        if t < pause:
+            return t - play
+        if t < resume:
+            return pause - play
+        if t < change:
+            return pause - play + t - resume
+        p = pause - play + change - resume + speed * (t - change)
+        return p + (speed * drift * (t - middle) if t > middle else 0.0)
+
+    # Tiếng ra kiểu Sonic: từng khúc 25 ms (tick rơi đầu khúc) chép nguyên từ nguồn ở vị trí thật, nối mờ 5 ms (ở x3 bỏ 2/3 nguồn giữa các khúc)
+    hop, ramp = rate // 40, rate // 200
+    starts = np.array([int(round((truth(j * hop / rate) + lead_ms / 1000 * local(j * hop / rate)) * rate)) for j in range(int(end * rate) // hop)])
+    source, _ = voice_and_music(int((truth(end) + 1) * rate), rate)
+    if source_step_at is not None:  # đặt bậc giữa một khúc được chép, như chu kỳ chứa tiếng bật mà Sonic giữ lại
+        j = int(np.argmin(np.abs(starts - source_step_at * rate)))
+        source[starts[j] + ramp + hop // 2:] += STRENGTH_STEP
+    window = np.ones(hop + ramp, np.float32)
+    window[:ramp], window[hop:] = np.linspace(0, 1, ramp), np.linspace(1, 0, ramp)
+    mono = np.zeros(len(starts) * hop + ramp, np.float32)
+    for j, at in enumerate(starts):
+        mono[j * hop: j * hop + hop + ramp] += source[max(0, at): max(0, at) + hop + ramp] * window
+    t = np.arange(len(mono)) / rate
+    mono[~(((t >= play) & (t < pause)) | ((t >= resume) & (t < stop)))] = 0
+    marks = []
+
+    def mark(tag, when, on):
+        lag = saw_ms / 1000 * ((when / 2.5) % 1.0) if on else 0.0
+        marks.append(dict(tag=tag, ms=when * 1000, frame=int(round(when * rate)), chapter=1,
+                          position=round(truth(when) - local(when) * lag, 3), playing=int(on)))
+    for tag, when in (("play", play), ("pause", pause), ("resume", resume), ("rate:1", normal), (f"rate:{speed:g}", change), ("stop", stop)):
+        mark(tag, when, tag not in ("pause", "stop"))
+    for k in range(int(play / 0.25) + 1, int(end / 0.25)):
+        when = k * 0.25 + 0.006  # sau mép mờ đầu khúc
+        mark("tick", when, bool(play <= when < pause or resume <= when < stop))
+    marks.sort(key=lambda m: m["frame"])
+    return dict(sink="synthetic", rate=rate, mono=mono, marks=marks, gaps=[], stops=[], source=source)
+
+
+def selftest():
+    """Bộ dò im với tiếng sạch giống giọng + nhạc, và bắt được từng lỗi cấy vào. Không cần app hay file ngoài."""
+    rate, n = RATE, RATE * 12
+    clean, music = voice_and_music(n, rate)
     failures = []
 
     def expect(name, ok):
@@ -454,6 +634,27 @@ def selftest():
     gone = clean.copy(); gone[8 * rate: 8 * rate + 960] = music[8 * rate: 8 * rate + 960] * 0.001
     k = 8 * rate // 960
     expect("mất giọng: 20 ms", frame_db(gone, 960)[k] < frame_db(clean, 960)[k] - DROPOUT_DB)
+    # Lượt giả qua check(): răng cưa 10 ms của con trỏ nghe không phải trôi, trôi thật từ giữa đoạn là trôi
+    def kinds(data):
+        return {f["kind"] for f in check(data)["findings"]}
+    for speed in (1.0, 3.0):
+        expect(f"lượt giả x{speed:g}: sạch", kinds(synthetic_run(speed)) == set())
+    for frac in STRENGTH_DRIFTS:
+        expect(f"lượt giả: trôi {frac:+.1%}", "drift" in kinds(synthetic_run(1.0, drift=frac)))
+    # Tiếng bật của nguồn, tiếng nghe đi trước vị trí báo 22 ms: ở x3 là 66 ms nguồn mà vẫn là của nguồn; 66 ms ở x1 thì không
+    fast = synthetic_run(3.0, lead_ms=22, source_step_at=60.0)
+    expect("tách nguồn x3: tiếng ra có tách", any(abs(k - 37.3 * rate) < 0.1 * rate for k in clicks(fast["mono"], rate)))
+    expect("tách nguồn x3 lệch 22 ms: không tách", "click" not in kinds(fast))
+    expect("tách nguồn x1 lệch 66 ms: tách", "click" in kinds(synthetic_run(1.0, lead_ms=66, source_step_at=15.0)))
+    ok, results = strength(synthetic_run(3.0))
+    expect("kiểm lực trên lượt giả: " + ", ".join(r["case"] for r in results if not r["ok"]), ok)
+    # ... và kiểm lực phải đỏ khi máy dò bị nới (ngưỡng trôi to vô hạn): cổng không bao giờ xanh với bộ dò câm
+    global DRIFT_MS
+    saved, DRIFT_MS = DRIFT_MS, 1e9
+    try:
+        expect("kiểm lực đỏ khi máy dò trôi câm", not strength(synthetic_run(3.0))[0])
+    finally:
+        DRIFT_MS = saved
     print(json.dumps(dict(selftest="audio_sink", failures=failures), ensure_ascii=False))
     return not failures
 
@@ -464,9 +665,17 @@ def main():
     r = sub.add_parser("run"); r.add_argument("label"); r.add_argument("--exe", type=Path, default=ROOT / "dist/ABookDesk.exe")
     a = sub.add_parser("analyze"); a.add_argument("dir", type=Path); a.add_argument("--source", type=Path)
     sub.add_parser("selftest")
+    st = sub.add_parser("strength"); st.add_argument("dir", type=Path); st.add_argument("--source", type=Path)
+    g = sub.add_parser("gate"); g.add_argument("exe", type=Path); g.add_argument("--runs", type=int, default=2)
     args = ap.parse_args()
     if args.cmd == "selftest":
         sys.exit(0 if selftest() else 1)
+    if args.cmd == "gate":
+        sys.exit(0 if gate(args.exe, args.runs) else 1)
+    if args.cmd == "strength":
+        ok, results = strength(load(args.dir, args.source))
+        print(json.dumps(dict(strength=results, ok=ok), ensure_ascii=False, indent=1))
+        sys.exit(0 if ok else 1)
     report = run(args.label, args.exe) if args.cmd == "run" else analyze(args.dir, args.source)
     print(json.dumps({k: report[k] for k in ("seconds", "counts", "drift", "offsets", "levels", "ok")}, ensure_ascii=False, indent=1))
 
