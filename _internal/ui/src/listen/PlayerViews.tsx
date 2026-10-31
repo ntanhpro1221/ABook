@@ -567,7 +567,7 @@ function PackagedMusicMenu({ bookId, look }: { bookId: string; look: MenuLook })
       <div className={cn("transition-opacity", !music.enabled && "opacity-50")}>
         <LevelButtons level={music.levelDb} disabled={!music.enabled || change.isPending} onChange={(levelDb) => change.mutate({ levelDb })} />
       </div>
-      <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{music.project ? "Nhạc của cuốn này. Đổi ở đây là đổi luôn trong Studio." : "Nhạc do người làm sách chọn. Đổi ở đây chỉ trên máy này."}</p>
+      <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{music.project ? "Đổi luôn trong Studio." : "Chỉ đổi trên máy này."}</p>
     </MotionRegion></MenuShell>}</MotionRegion>
   );
 }

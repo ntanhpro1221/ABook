@@ -115,6 +115,11 @@
           "side": "native",
           "label": "Chọn",
           "reason": "native 'Thiết bị phát' row of the More sheet: the tail action word of a phone-only feature (controls other players; see devices)"
+        },
+        {
+          "side": "web",
+          "label": "Đổi luôn trong Studio.",
+          "reason": "native chưa có nhạc của dự án Studio trong tấm Nhạc nền (MusicKind chỉ Playlist / Packaged); lời của nhạc đóng gói 'Chỉ đổi trên máy này.' có cả hai phía"
         }
       ],
       "deferred": [
@@ -1479,7 +1484,8 @@
         "desktop/bookFileExport.ts"
       ],
       "native_also": [
-        "screens/BookSheets.kt"
+        "screens/BookSheets.kt",
+        "music/MusicModel.kt"
       ]
     },
     {

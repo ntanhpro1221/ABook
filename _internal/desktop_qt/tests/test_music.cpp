@@ -725,7 +725,7 @@ private slots:
         QCOMPARE(book.size(), 6);
         QCOMPARE(book[2].name, QStringLiteral("-18,5 dB (của sách)"));
         QCOMPARE(book[2].value, -18.5);
-        QCOMPARE(MusicText::levelNote(-28), QStringLiteral("dễ nghe lời nhất"));
+        QCOMPARE(MusicText::levelNote(-28), QStringLiteral("rõ lời"));
         QCOMPARE(MusicText::levelNote(-24), QString());
     }
 

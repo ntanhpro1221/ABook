@@ -61,7 +61,6 @@ import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import vn.abook.player.MusicImport
 import vn.abook.player.ui.components.ActionRow
@@ -160,7 +159,7 @@ private fun MainPage(music: MusicState, ui: BookMusicUi, player: PlayerMusic?, o
 }
 
 /**
- * Các đoạn nhạc gắn sẵn, như danh sách của web: tên bài (im lặng thì mờ + gạch ngang), dưới là chương · giờ · tác giả · "bài của bạn". Nhạc nền đang tắt
+ * Các đoạn nhạc gắn sẵn, như danh sách của web: tên bài (im lặng thì "Im lặng (bạn chọn)" mực phụ), dưới là chương · giờ · tác giả · "bài của bạn". Nhạc nền đang tắt
  * thì cả danh sách mờ đi (vẫn sửa được - bật lại là có).
  */
 @Composable
@@ -172,13 +171,13 @@ private fun CueList(book: BookMusic, enabled: Boolean, onCue: (String) -> Unit) 
         Box(Modifier.fillMaxWidth().height(1.dp).background(colors.line))
         book.cues.forEachIndexed { index, cue ->
             key(cue.key) {
-                val ink by animateColorAsState(if (cue.silenced || !book.enabled) colors.text3 else colors.text, tween(MotionMs.FAST), label = "cue-ink")
+                val ink by animateColorAsState(if (!book.enabled) colors.text3 else if (cue.silenced) colors.text2 else colors.text, tween(MotionMs.FAST), label = "cue-ink")
                 ListItem(
                     MusicText.cueTitle(cue), Modifier, if (enabled) ({ onCue(cue.key) }) else null, "music_cue_$index",
                     hint = MusicText.cueLine(cue),
                     hintColor = hintInk,
                     titleColor = ink,
-                    titleStyle = Abook.type.body.copy(textDecoration = if (cue.silenced) TextDecoration.LineThrough else null),
+                    titleStyle = Abook.type.body,
                     chevron = true,
                 )
             }
@@ -201,8 +200,7 @@ private fun CuePage(music: MusicState, ui: BookMusicUi, cue: MusicCue, onAdd: ()
         BasicText(
             MusicText.cueTitle(cue),
             style = Abook.type.sectionTitle.copy(
-                color = if (cue.silenced) colors.text3 else colors.text,
-                textDecoration = if (cue.silenced) TextDecoration.LineThrough else null,
+                color = if (cue.silenced) colors.text2 else colors.text,
             ),
             modifier = Modifier.padding(top = Dim.s4).testTag("music_cue_title"),
         )

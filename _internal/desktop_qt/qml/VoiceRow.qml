@@ -30,7 +30,7 @@ Item {
     Column {
         id: col
         objectName: "voiceListRow"
-        width: Math.min(root.width, Theme.listMeasure)
+        width: Theme.listWidth(root, root.width)
         Rectangle { width: parent.width; height: root.first ? 0 : 1; color: Theme.line }
         Item { width: parent.width; height: 8 }
         Item {

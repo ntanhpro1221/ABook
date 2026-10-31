@@ -28,7 +28,7 @@ inline QVector<Level> musicLevels() {
 
 /// Lời kèm vài mức: -28 là mức nhạc khó che lời đọc nhất (MIX_QA mục 7.1).
 inline QString levelNote(double value) {
-    return value == -28 ? QStringLiteral("dễ nghe lời nhất") : QString();
+    return value == -28 ? QStringLiteral("rõ lời") : QString();
 }
 
 /// Các mức có sẵn, thêm mức hiện tại của sách nếu nó không trùng mức nào (sách đóng gói ở -18 dB).

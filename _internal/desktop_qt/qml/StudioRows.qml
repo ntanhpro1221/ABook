@@ -49,7 +49,7 @@ Column {
             required property bool gone
             required property bool appear
             property bool entered: !appear
-            width: Math.min(root.width, Theme.listMeasure)
+            width: Theme.listWidth(root, root.width)
             open: entered && !gone
             onSettledChanged: if (settled && gone) Later.call(cell, function() { root.drop(cell.key) })  // mỗi hàng một hàm: Later.call gộp các lần gọi cùng hàm
             Component.onCompleted: if (appear) Later.call(cell, function() { cell.entered = true })

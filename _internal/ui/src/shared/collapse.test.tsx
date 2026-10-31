@@ -2,7 +2,9 @@
 // a120: mục gấp / mở (shared/Collapse.tsx) - chủ app: màn nhiều đầu mục thì "foldout chúng lại", và mở / gập phải có chuyển động.
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import { MemoryRouter } from "react-router";
 import { Collapse, Fold, readFold, writeFold } from "./Collapse";
+import { DisclosureRow } from "./DisclosureRow";
 import { MoreInfo, SettingsBlock } from "./SettingsNav";
 
 function memoryStorage() {
@@ -79,5 +81,18 @@ describe("Cài đặt: khối gập và Tìm hiểu thêm", () => {
     expect(html).toContain('aria-expanded="false"');
     expect(html).toContain("motion-collapse");
     expect(html).toContain("Giải thích dài");
+  });
+  it("mũi tên phải chỉ cho hàng mở trang con: Tìm hiểu thêm và khối gập mang mũi tên xuống, lật lên khi mở (soát UI nhạc 01-11 mục 3)", () => {
+    const help = renderToStaticMarkup(<MoreInfo>Giải thích</MoreInfo>);
+    const fold = renderToStaticMarkup(<Fold storageKey="chevron-check" title="Tuỳ chọn" defaultOpen>x</Fold>);
+    for (const html of [help, fold]) {
+      expect(html).toContain("lucide-chevron-down");
+      expect(html).not.toContain("lucide-chevron-right");
+    }
+    expect(help).not.toContain("rotate-180");
+    expect(fold).toContain("rotate-180");
+    const page = renderToStaticMarkup(<MemoryRouter><DisclosureRow title="Giọng đọc" to="/settings/voice" /></MemoryRouter>);
+    expect(page).toContain("lucide-chevron-right");
+    expect(page).not.toContain("lucide-chevron-down");
   });
 });

@@ -51,7 +51,7 @@ Popover {
                 width: parent.width - 2 * Theme.s8
                 topPadding: Theme.s4
                 bottomPadding: Theme.s4
-                text: "Mức nhạc dưới giọng đọc"
+                text: "Mức nhạc nền"
                 color: Theme.text2
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeCaption
@@ -81,8 +81,8 @@ Popover {
             width: parent.width - 2 * Theme.s8
             topPadding: 6
             bottomPadding: Theme.s4
-            text: Music.project ? "Nhạc của cuốn này. Đổi ở đây là đổi luôn trong Studio."
-                                : "Nhạc do người làm sách chọn. Đổi ở đây chỉ trên máy này."
+            text: Music.project ? "Đổi luôn trong Studio."
+                                : "Chỉ đổi trên máy này."
             color: Theme.text2
             wrapMode: Text.Wrap
             font.pixelSize: Theme.sizeCaption

@@ -128,7 +128,8 @@ export function moduleLabel(module: MusicModuleStatus): string {
     if ((module.stale ?? 0) > 0) return `${module.stale} bài dùng phân tích cũ; có thể phân tích lại.`;
     return "";
   }
-  return `${module.cancelled ? `${CANCELLED_NOTE} ` : ""}Tải ${formatSize(module.total)} để tự chọn nhạc phù hợp trên máy.`;
+  // Dung lượng chỉ ở nút "Tải (… MB)", câu này nói lợi ích.
+  return `${module.cancelled ? `${CANCELLED_NOTE} ` : ""}Máy tự chọn nhạc hợp từng đoạn.`;
 }
 
 /** Có mời người dùng bật "Đo cảm xúc nhạc chính xác hơn" không: máy đủ sức, và đã có bộ phân tích nhạc (nó dùng lại phần nghe của bộ ấy). */
@@ -191,35 +192,35 @@ export function hasVocals(track: Pick<LocalTrack, "analysed" | "vocalsLikely">):
   return track.analysed && track.vocalsLikely === true;
 }
 
-/** Nhãn khi máy không tự chọn bài này (có vẻ có lời hát, hay bạn đã tắt), hoặc bài có lời mà bạn cho tự chọn; bài bình thường thì không có nhãn. */
-export function autoLabel(track: Pick<LocalTrack, "analysed" | "vocalsLikely" | "auto">): string | null {
-  if (track.auto === "off") return "Máy không tự chọn bài này";
-  if (!hasVocals(track)) return null;
-  return track.auto === "on" ? "Có vẻ có lời - bạn cho máy tự chọn" : "Có vẻ có lời - máy không tự chọn bài này";
-}
+type AutoTrack = Pick<LocalTrack, "analysed" | "vocalsLikely" | "auto">;
 
-/** Nút đổi công tắc tự chọn của bài: chữ trên nút và giá trị `auto` gửi đi (null = về mặc định). */
-export function autoSwitch(track: Pick<LocalTrack, "analysed" | "vocalsLikely" | "auto">): { text: string; next: "on" | "off" | null } {
-  if (track.auto === "off") return { text: "Tự chọn lại", next: null };
-  if (track.auto === "on") return { text: "Theo mặc định", next: null };
-  return hasVocals(track) ? { text: "Cho tự chọn", next: "on" } : { text: "Tắt tự chọn", next: "off" };
+/** Công tắc "Tự chọn" của một bài (công tắc `auto`, music_local.py): bật = máy được tự chọn bài này. Mặc định máy tự chọn bài thường, bỏ qua bài có lời. */
+export const AUTO_PICK_LABEL = "Tự chọn";
+export const UNANALYSED = "Chưa phân tích";
+export function autoOn(track: AutoTrack): boolean {
+  return track.auto === "on" || (track.auto !== "off" && !hasVocals(track));
 }
-
-/** Trạng thái phân tích, nói bằng điều người nghe thấy (không nói model nào). */
-export function analysisLabel(track: Pick<LocalTrack, "analysed">): string {
-  return track.analysed ? "Đã phân tích - máy có thể tự chọn" : "Chưa phân tích - máy chưa tự chọn, bạn vẫn ghim được";
+/** Giá trị `auto` gửi đi khi gạt công tắc: trùng mặc định thì về mặc định (null). */
+export function autoNext(track: AutoTrack): "on" | "off" | null {
+  const on = !autoOn(track);
+  return on === !hasVocals(track) ? null : on ? "on" : "off";
+}
+/** Nhãn ngắn cạnh công tắc - điều công tắc không nói: bài chưa phân tích (máy chưa tự chọn được), bài có lời. */
+export function trackNote(track: Pick<LocalTrack, "analysed" | "vocalsLikely">): string {
+  return !track.analysed ? UNANALYSED : hasVocals(track) ? "Có lời" : "";
 }
 
 /** Lời giới thiệu "Nhạc của tôi" - MỘT câu cho mọi nơi nói về nó (tab Nhạc nền của dự án, Cài đặt, Sửa sách), kể cả chuyện bài ghim đi cùng file
  *  sách: người dùng không phải đoán chỗ này khác chỗ kia ra sao (soát UX a8 02-10). */
 export const MY_MUSIC_INTRO =
   "Thêm nhạc làm nền; bài đã chọn đi cùng file sách.";
-export const MY_MUSIC_HELP = "Nhạc được chép vào kho máy này; dùng Đổi bài để chọn cho từng đoạn. Hỗ trợ mp3, m4a, ogg, opus, flac, wav. Bài đã chọn đi cùng .abook / .abookproj, vẫn nghe được trên máy khác, không ai khác tải được. Tên bài và nghệ sĩ lấy từ file; ABook không xác nhận giấy phép.";
+export const MY_MUSIC_HELP = "Nhạc được chép vào kho máy này; dùng Đổi bài để chọn cho từng đoạn. Hỗ trợ mp3, m4a, ogg, opus, flac, wav. Bài đã chọn đi cùng .abook / .abookproj, vẫn nghe được trên máy khác, không ai khác tải được. Tên bài và nghệ sĩ lấy từ file; ABook không xác nhận giấy phép. Máy chỉ tự chọn bài đã phân tích và bỏ qua bài có lời; công tắc Tự chọn đổi điều này cho từng bài.";
 
-/** Dòng chú thích của một bài trong danh sách "Đổi bài" của một đoạn: nhãn tự chọn (có vẻ có lời / bạn đã tắt), hợp không khí đoạn này, hay chưa phân tích
- *  - cùng nhãn với Cài đặt và tab Nhạc của dự án. Không có gì đáng nói thì undefined. */
-export function mineNote(item: Pick<LocalTrack, "analysed" | "vocalsLikely" | "auto"> & { fits?: boolean }): string | undefined {
-  const notes = [autoLabel(item), item.analysed ? (item.fits ? "Hợp không khí đoạn này" : null) : analysisLabel(item)].filter((note): note is string => Boolean(note));
+/** Dòng phụ của một bài trong "Đổi bài" của một đoạn (không có công tắc ở đó): có lời, đã tắt tự chọn, hợp không khí đoạn này hay chưa phân tích - cùng chữ
+ *  ngắn với Cài đặt và tab Nhạc của dự án. Không có gì đáng nói thì undefined. */
+export function mineNote(item: AutoTrack & { fits?: boolean }): string | undefined {
+  const notes = [hasVocals(item) ? "Có lời" : null, item.auto === "off" ? "Không tự chọn" : null, item.analysed ? (item.fits ? "Hợp không khí đoạn này" : null) : UNANALYSED]
+    .filter((note): note is string => Boolean(note));
   return notes.length ? notes.join(" · ") : undefined;
 }
 

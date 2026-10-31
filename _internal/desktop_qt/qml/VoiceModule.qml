@@ -160,7 +160,7 @@ Item {
         }
         Column {
             objectName: "voiceDownloadList"
-            width: Math.min(parent.width, Theme.listMeasure)
+            width: Theme.listWidth(parent, parent.width)
             topPadding: 12
             Repeater {
                 model: root.ready ? root.status.choices.length : 0
