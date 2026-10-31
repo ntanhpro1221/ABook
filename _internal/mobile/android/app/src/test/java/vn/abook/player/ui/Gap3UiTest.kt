@@ -36,7 +36,7 @@ class Gap3UiTest {
     private fun shot(name: String) {
         rule.mainClock.advanceTimeBy(400); rule.waitForIdle()
         rule.assertIconLedTextColumns()
-        rule.onRoot().captureRoboImage("build/shots/gap3_$name.png")
+        rule.onRoot().captureRoboImage("src/test/snapshots/gap3_$name.png")
     }
     @Test fun maintenanceLight() = maintenance(false)
     @Test fun maintenanceDark() = maintenance(true)
