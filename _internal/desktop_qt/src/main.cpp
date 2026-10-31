@@ -207,6 +207,16 @@ int main(int argc, char *argv[]) {
                 Bench::mark(playing ? QStringLiteral("mix_playing") : QStringLiteral("mix_paused"));
             });
             QObject::connect(voice, &AudioOut::failed, voice, [](const QString &) { Bench::mark(QStringLiteral("mix_failed")); });
+            // Soát nghe §19: vị trí trong bài của từng phần tử nhạc, để so với vị trí giọng (bài trôi chậm đúng bằng quãng hở giữa clip).
+            const quintptr tag = quintptr(voice);
+            QObject::connect(voice, &AudioOut::seeked, voice, [voice, tag] {
+                Bench::mark(QStringLiteral("mix_seeked:%1:%2").arg(tag, 0, 16).arg(voice->position(), 0, 'f', 3));
+            });
+            auto *pos = new QTimer(voice);
+            QObject::connect(pos, &QTimer::timeout, voice, [voice, tag] {
+                if (voice->playing()) Bench::mark(QStringLiteral("mix_pos:%1:%2").arg(tag, 0, 16).arg(voice->position(), 0, 'f', 3));
+            });
+            pos->start(250);
         }
         return voice;
     }, nullptr);
