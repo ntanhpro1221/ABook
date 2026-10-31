@@ -1,5 +1,6 @@
 #include "desktopapi.h"
 #include "backend.h"
+#include "hostcall.h"
 #include "audioout.h"
 #include <QBuffer>
 #include <QClipboard>
@@ -47,7 +48,7 @@ QString DesktopApi::thirdParty() const {
     }
     return shown.join(QLatin1Char('\n'));
 }
-void DesktopApi::cancel(int id) { if (auto *reply = m_pending.take(id)) reply->abort(); }
+void DesktopApi::cancel(int id) { if (const QPointer<HostCall> call = m_pending.take(id)) call->abort(); }
 int DesktopApi::request(const QString &method, const QString &path, const QJSValue &body, const QJSValue &done) {
     const auto endpoint = Backend::endpoint();
     if (!path.startsWith(QStringLiteral("/api/")) || !endpoint.port) {
@@ -57,24 +58,20 @@ int DesktopApi::request(const QString &method, const QString &path, const QJSVal
     }
     QNetworkRequest request(QUrl(QStringLiteral("http://127.0.0.1:%1%2").arg(endpoint.port).arg(path)));
     request.setRawHeader("X-Ebook-Token", endpoint.token);
-    request.setTransferTimeout(30000);
     request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
     const QByteArray bytes = body.isNull() || body.isUndefined() ? QByteArray() : QJsonDocument::fromVariant(body.toVariant()).toJson(QJsonDocument::Compact);
-    auto *reply = m_net.sendCustomRequest(request, method.toLatin1(), bytes);
     const int id = ++m_next;
-    m_pending.insert(id, reply);
     const QPointer<QJSEngine> engine = qjsEngine(this);
-    connect(reply, &QNetworkReply::finished, this, [this, id, reply, engine, done]() mutable {
-        const bool active = m_pending.remove(id) > 0;
-        const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-        const auto document = QJsonDocument::fromJson(reply->readAll());
-        reply->deleteLater();
-        if (!active || !engine || !done.isCallable()) return;
+    // Wait limit by path (HostWait): a voice try waits like the player's clip, not 30 s.
+    m_pending.insert(id, HostCall::send(&m_net, request, method.toLatin1(), bytes, [this, id, engine, done](int status, const QByteArray &answer, bool) {
+        m_pending.remove(id);
+        if (!engine || !done.isCallable()) return;
         QJSValue callback = done;
+        const auto document = QJsonDocument::fromJson(answer);
         // Qua QJsonValue (không qua QVariant): mảng về thành mảng JS thật, thân rỗng thành null.
         const QJsonValue data = document.isArray() ? QJsonValue(document.array()) : document.isObject() ? QJsonValue(document.object()) : QJsonValue();
         callback.call({QJSValue(status), engine->toScriptValue(data)});
-    });
+    }, this));
     return id;
 }
 QString DesktopApi::localPath(const QUrl &file) const { return file.isLocalFile() ? file.toLocalFile() : QString(); }
