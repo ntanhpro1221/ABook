@@ -390,11 +390,17 @@ Item {
             compare(Api.notice.indexOf("Đã tạo"), 0)
         }
         function test_splitSuggestionIsOfferedNotApplied() {
-            reply("POST /api/scan", {status: 200, data: scanOf(6, {volumes: {kind: "folders", order: null, volumes: [
-                {startPath: chapterFiles(6)[0].path, label: "Tập 1"}, {startPath: chapterFiles(6)[3].path, label: "Tập 2"}]}})})
+            reply("POST /api/scan", {status: 200, data: scanOf(6, {volumes: {source: "folders", order: null, volumes: [
+                {label: "Tập 1", start: 1, startPath: chapterFiles(6)[0].path, chapters: 3, firstTitle: ""},       // dạng volumes._proposal
+                {label: "Tập 2", start: 4, startPath: chapterFiles(6)[3].path, chapters: 3, firstTitle: ""}]}})})
             const page = openBuilder()
             withSource(page)
             tryVerify(function() { return has(page, "newVolumeProposal") })
+            // Câu giải thích (trong "Thêm thông tin", có thể đang gập) nói đúng nguồn: fixture từng gửi `kind` thay `source` mà vẫn đạt
+            const told = ModalLayer.collect(one(page, "newVolumeProposal"), node => typeof node.text === "string" && node.text.indexOf("Máy thấy") === 0).map(node => node.text)
+            compare(told.length, 1)
+            verify(told[0].indexOf("Máy thấy mỗi thư mục là một tập: Tập 1 (3 chương), Tập 2 (3 chương).") === 0, told[0])
+            verify(!/\bundefined\b|\bNaN\b/.test(told[0]), told[0])
             compare(page.newStore.splitting, false)
             compare(page.newStore.volumeStarts, [1])
             one(page, "newSplitAccept").activated()
