@@ -206,9 +206,21 @@ def check_speaker_model_pinned() -> None:
             "điền mã commit thay PIN_REVISION")
 
 
+def check_android_sdk() -> None:
+    """Gradle cần biết SDK Android (local.properties sdk.dir, hay ANDROID_HOME / ANDROID_SDK_ROOT). local.properties không vào git,
+    nên worktree mới không có: 01-11 bản 0.4.152 dựng xong bộ cài Qt (~30 phút) rồi mới hỏng ở bước APK. Kiểm trước khi dựng gì."""
+    props = ROOT / "mobile/android/local.properties"
+    found = re.search(r"^sdk\.dir=(.+)$", props.read_text(encoding="utf-8"), re.M) if props.is_file() else None
+    candidates = [found.group(1).strip().replace("\\:", ":").replace("\\\\", "\\")] if found else []
+    candidates += [os.environ.get(name, "") for name in ("ANDROID_HOME", "ANDROID_SDK_ROOT")]
+    assert any(path and Path(path, "platform-tools").is_dir() for path in candidates), (
+        f"không thấy SDK Android: tạo {props} với sdk.dir=<thư mục Sdk> (chép từ worktree khác) hay đặt ANDROID_HOME")
+
+
 def build(version: str, out: Path) -> None:
     """Bộ cài Windows (NSIS + chữ ký cập nhật + latest.json) và APK ký khoá phát hành, chép vào `out`, kiểm cả hai."""
     assert current_version() == version, f"repo đang là {current_version()}, chưa bump {version}?"
+    check_android_sdk()
     check_studio_assets_pinned()
     check_word_align_pinned()
     check_speaker_model_pinned()

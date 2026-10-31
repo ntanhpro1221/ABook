@@ -122,7 +122,7 @@ def _fake_build(monkeypatch, tmp_path: Path, files: dict[str, str]) -> list[list
     calls: list[list[str]] = []
     monkeypatch.setattr(release, "ROOT", tmp_path)
     monkeypatch.setattr(release, "current_version", lambda *_: "9.9.9")
-    for name in ("check_studio_assets_pinned", "check_word_align_pinned", "check_speaker_model_pinned"):
+    for name in ("check_android_sdk", "check_studio_assets_pinned", "check_word_align_pinned", "check_speaker_model_pinned"):
         monkeypatch.setattr(release, name, lambda: None)
 
     def run(command, cwd, env=None, low=False):
@@ -161,3 +161,25 @@ def test_build_refuses_an_incomplete_or_mismatched_installer(monkeypatch, tmp_pa
     _fake_build(monkeypatch, tmp_path, files)
     with pytest.raises(AssertionError, match=why):
         release.build("9.9.9", tmp_path / "out")
+
+
+def test_build_stops_before_the_long_qt_build_when_gradle_cannot_find_the_android_sdk(tmp_path: Path, monkeypatch) -> None:
+    """01-11: worktree mới không có local.properties (không vào git) - 0.4.152 dựng xong bộ cài Qt rồi mới hỏng ở bước APK."""
+    android = tmp_path / "mobile/android"
+    android.mkdir(parents=True)
+    monkeypatch.setattr(release, "ROOT", tmp_path)
+    monkeypatch.delenv("ANDROID_HOME", raising=False)
+    monkeypatch.delenv("ANDROID_SDK_ROOT", raising=False)
+    with pytest.raises(AssertionError, match="SDK Android"):
+        release.check_android_sdk()
+    (android / "local.properties").write_text(f"sdk.dir={(tmp_path / 'nowhere').as_posix()}\n", encoding="utf-8")
+    with pytest.raises(AssertionError, match="SDK Android"):
+        release.check_android_sdk()
+    sdk = tmp_path / "Sdk"
+    (sdk / "platform-tools").mkdir(parents=True)
+    (android / "local.properties").write_text("sdk.dir=" + str(sdk).replace("\\", "\\\\").replace(":", "\\:") + "\n",
+                                              encoding="utf-8")
+    release.check_android_sdk()
+    (android / "local.properties").unlink()
+    monkeypatch.setenv("ANDROID_HOME", str(sdk))
+    release.check_android_sdk()
