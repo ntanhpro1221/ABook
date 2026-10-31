@@ -3,6 +3,7 @@ import type { CoverImage } from "@/shared/cover";
 import type { VolumeProposal } from "@/studio/volumes";
 import type { BookTemplate } from "@/studio/bookTemplates";
 import { LISTEN_ONLY_EVENT, PEER_SILENT_EVENT, peerOf, throughPeer } from "@/shared/peerStudio";
+import { HostTimeout, idleMs, readText, watchedCall } from "@/shared/hostWait";
 // Hợp đồng với server Python (abook/webui/server.py). Mọi chữ hiển thị đã được server dịch sẵn
 // sang tiếng Việt (humanize.py); ở đây chỉ định kiểu và gọi.
 
@@ -440,22 +441,35 @@ export function hasLocalTransport(): boolean {
   return transport !== null;
 }
 
-function send(path: string, init?: ApiInit): Promise<Response> {
-  return fetch(throughPeer(path, peer), {
-    method: init?.method ?? "GET",
-    headers: {
-      "X-Ebook-Token": token,
-      ...(init?.body !== undefined ? { "Content-Type": "application/json" } : {}),
-    },
-    body: init?.body !== undefined ? JSON.stringify(init.body) : undefined,
-    signal: init?.signal,
-    keepalive: init?.keepalive,
-  });
+/** Một lời gọi tới máy chủ cục bộ theo chính sách chờ chung (shared/hostWait.ts): không byte nào về quá hạn của đường dẫn thì gửi lại một lần, rồi báo hết hạn
+ *  như chính máy chủ báo (504, `reason` "timeout" - giọng đọc coi hai trường hợp là một). `read` đọc lời đáp, gọi `alive()` mỗi khi có byte về. */
+async function call<T>(path: string, init: ApiInit | undefined, read: (response: Response, alive: () => void) => Promise<T>): Promise<T> {
+  try {
+    return await watchedCall(
+      (signal) =>
+        fetch(throughPeer(path, peer), {
+          method: init?.method ?? "GET",
+          headers: {
+            "X-Ebook-Token": token,
+            ...(init?.body !== undefined ? { "Content-Type": "application/json" } : {}),
+          },
+          body: init?.body !== undefined ? JSON.stringify(init.body) : undefined,
+          signal,
+          keepalive: init?.keepalive,
+        }),
+      idleMs(path),
+      read,
+      init?.signal,
+    );
+  } catch (error) {
+    if (error instanceof HostTimeout) throw new ApiError(504, error.message, { reason: "timeout" });
+    throw error;
+  }
 }
 
 export async function api<T>(path: string, init?: ApiInit): Promise<T> {
   if (transport) return (await transport(path, init)) as T;
-  return settle<T>(await send(path, init));
+  return call(path, init, async (response, alive) => settle<T>(response, await readText(response, alive)));
 }
 
 /** Trang này nhận được lời đáp phát luồng từ máy chủ cục bộ (clip đang đọc, listen/liveClip.ts)? Không khi có đường truyền native (điện thoại) hay đang mở Studio của máy khác (cầu nối gom cả lời đáp). */
@@ -465,13 +479,12 @@ export function canStream(): boolean {
 
 /** Như [api], nhưng lời đáp có `Content-Type` bắt đầu bằng `streamType` thì giao cho `onStream` (đọc dần) thay vì đọc hết thành JSON; các lời đáp khác (JSON, lỗi) y như `api`. Chỉ gọi khi [canStream]. */
 export async function apiOrStream<T, S>(path: string, init: ApiInit, streamType: string, onStream: (response: Response) => Promise<S>): Promise<T | S> {
-  const response = await send(path, init);
-  if (response.ok && (response.headers.get("Content-Type") ?? "").startsWith(streamType)) return onStream(response);
-  return settle<T>(response);
+  return call<T | S>(path, init, async (response, alive) =>
+    response.ok && (response.headers.get("Content-Type") ?? "").startsWith(streamType) ? onStream(response) : settle<T>(response, await readText(response, alive)),
+  );
 }
 
-async function settle<T>(response: Response): Promise<T> {
-  const text = await response.text();
+function settle<T>(response: Response, text: string): T {
   const data = text ? JSON.parse(text) : null;
   if (!response.ok) {
     // Máy kia tắt / mất mạng giữa chừng: thanh "Studio của <máy>" báo và tự nối lại (desktop/PeerBar.tsx).

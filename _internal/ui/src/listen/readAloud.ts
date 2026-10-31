@@ -2,6 +2,7 @@ import type { AudioEngine, EngineEvent, TrackInfo } from "./engine";
 import type { Script, ScriptSegment } from "./model";
 import { makeAnchor, restoreAnchor, textFingerprint, type ReadingAnchor } from "./readingAnchor";
 import { LiveClip, MP3_MIME } from "./liveClip";
+import { fetchWatched } from "@/shared/hostWait";
 import { LiveFeed, type MediaSourceLike } from "./liveFeed";
 import { isSpeakable, sceneBreakGaps, textScript } from "./textScript";
 import { absoluteWords, countTokens, usableWords, WORD_LEAD_MS, wordIndexAt, type WordSpan } from "./words";
@@ -49,7 +50,7 @@ export interface ReadAloudClip {
 }
 
 /** Tải file audio của clip bằng fetch (không đi qua phần tử <audio>); lỗi nào cũng là clip hỏng (`service`, đi đường thử lại như lúc máy chủ trả lỗi). */
-export async function fetchClipBytes(url: string, get: (url: string) => Promise<Response> = (target) => fetch(target)): Promise<Blob> {
+export async function fetchClipBytes(url: string, get: (url: string) => Promise<Response> = (target) => fetchWatched(target)): Promise<Blob> {
   try {
     const response = await get(url);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
