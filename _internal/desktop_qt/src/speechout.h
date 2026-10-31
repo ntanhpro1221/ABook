@@ -62,5 +62,5 @@ private:
     double m_voiceGain = 1;
     QList<std::function<void()>> m_cancel;
     double m_target = 0, m_rate = 1, m_volume = 0.9;
-    bool m_text = false, m_ready = false, m_wants = false;
+    bool m_text = false, m_ready = false, m_wants = false, m_seeking = false;
 };

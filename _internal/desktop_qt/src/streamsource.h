@@ -43,7 +43,9 @@ public:
 
 class StreamMp3 final : public VoiceDecoder {
 public:
-    StreamMp3(std::shared_ptr<ByteSource> bytes, int outputRate);
+    // estimateLength: open a still-downloading file without a Xing tag at a bitrate-based length instead of
+    // scanning every frame header first (music beds stream while they download).
+    StreamMp3(std::shared_ptr<ByteSource> bytes, int outputRate, bool estimateLength = false);
     ~StreamMp3() override;
     bool open() override;
     bool seek(double seconds) override;

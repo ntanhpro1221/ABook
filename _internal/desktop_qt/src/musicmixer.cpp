@@ -13,6 +13,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QSaveFile>
+#include <QSet>
 #include <QtEndian>
 
 #include <atomic>
@@ -20,6 +21,7 @@
 #include <condition_variable>
 #include <cstdio>
 #include <deque>
+#include <map>
 #include <mutex>
 #include <thread>
 #include <vector>
@@ -73,6 +75,87 @@ QString cacheName(const QString &dir, const QUrl &url, int rate) {
     return QDir(dir).filePath(QString::fromLatin1(sha) + QString::number(rate) + QStringLiteral(".pcm"));
 }
 }
+
+// Byte của một lần tải đang chạy: luồng Qt nối thêm, luồng giải mã đọc phần đã tới.
+class GrowingBytes final : public ByteSource {
+public:
+    void append(const QByteArray &data, qint64 size) {
+        Guard guard(m_mutex); m_data += data;
+        if (!m_done && size >= 0) m_size = size;
+    }
+    void finish(const QString &error) { Guard guard(m_mutex); m_done = true; m_error = error; m_size = m_data.size(); }
+    QByteArray read(qint64 offset, qint64 count) override {
+        Guard guard(m_mutex);
+        if (m_size >= 0) count = std::min(count, m_size - offset);
+        if (offset < 0 || count <= 0 || offset + count > m_data.size()) return {};
+        return m_data.mid(offset, count);
+    }
+    qint64 size() const override { Guard guard(m_mutex); return m_size; }
+    QString error() const override { Guard guard(m_mutex); return m_error; }
+    bool done() const { Guard guard(m_mutex); return m_done; }
+    QByteArray all() const { Guard guard(m_mutex); return m_data; }
+private:
+    mutable std::mutex m_mutex;
+    QByteArray m_data;
+    qint64 m_size = -1;
+    bool m_done = false;
+    QString m_error;
+};
+
+// Một bài MP3 đang giải mã dần vào tệp đệm, theo tốc độ byte tải về. Chỉ luồng giải mã đụng tới; giọng đọc tệp tới `frames`.
+// Header ghi frames = 0 tới khi xong, nên tệp dở (app tắt giữa chừng) không bao giờ được dùng như bộ đệm trọn.
+struct DecodeJob {
+    QString path;
+    int rate;
+    std::shared_ptr<GrowingBytes> bytes;
+    StreamMp3 decoder;
+    QFile out;
+    quint64 frames = 0, total = 0;
+    bool opened = false, done = false, fallback = false;
+    QString error;
+    DecodeJob(const QString &file, int outRate, std::shared_ptr<GrowingBytes> source)
+        : path(file), rate(outRate), bytes(source), decoder(std::move(source), outRate, true), out(file) {}
+    ~DecodeJob() { if (!done) { out.close(); QFile::remove(path); } }
+    // Giải mã tối đa `budget` khung đã có byte; true khi có tiến triển.
+    bool pump(quint64 budget) {
+        if (done || fallback || !error.isEmpty()) return false;
+        if (!opened) {
+            if (!decoder.open()) {
+                // Bộ giải mã luồng không đọc được mà mạng không lỗi: chờ trọn bài cho đường giải mã cả tệp.
+                if (!bytes->error().isEmpty()) error = bytes->error();
+                else if (!decoder.error().isEmpty()) fallback = true;
+                return false;
+            }
+            if (!out.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Unbuffered) || out.write(header(rate, 0)) != HEADER) {
+                error = QStringLiteral("Không lưu được bộ đệm nhạc: ") + out.errorString(); return false;
+            }
+            opened = true; total = quint64(std::llround(decoder.duration() * rate));
+        }
+        std::vector<float> block;
+        quint64 got = 0;
+        while (got < budget) {
+            block.clear();
+            const size_t n = decoder.read(block, 8192);
+            if (!n) break;
+            QByteArray pcm(qsizetype(n * 4), Qt::Uninitialized);
+            for (size_t i = 0; i < n * 2; ++i) {
+                const auto sample = qint16(std::clamp(std::lround(block[i] * 32768.0f), -32768L, 32767L));
+                qToLittleEndian<qint16>(sample, pcm.data() + i * 2);
+            }
+            if (out.write(pcm) != pcm.size()) { error = QStringLiteral("Không lưu được bộ đệm nhạc: ") + out.errorString(); return false; }
+            frames += n; got += n;
+        }
+        if (!bytes->error().isEmpty()) { error = bytes->error(); return false; }
+        // Khung hỏng giữa bài: giữ phần đã giải mã như bài ngắn hơn, không bỏ cả bài.
+        if (decoder.atEnd() || !decoder.error().isEmpty()) {
+            if (!frames || !out.seek(0) || out.write(header(rate, frames)) != HEADER) {
+                error = QStringLiteral("Không lưu được bộ đệm nhạc: ") + out.errorString(); return false;
+            }
+            out.close(); done = true;
+        }
+        return got > 0;
+    }
+};
 
 // Callback không giữ con trỏ chủ: Unregister có thể đụng một callback còn đang chạy.
 struct DeviceNotice final : IMMNotificationClient {
@@ -273,8 +356,9 @@ struct MixVoiceState {
     quint64 generation = 0;
     quint64 seekSerial = 0;
     QUrl url;
-    QByteArray bytes;
-    bool opening = false, fetching = false, haveBytes = false, ready = false;
+    std::shared_ptr<GrowingBytes> stream; // bài đang tải (fetch); job: lần giải mã ghi dần mà giọng này đang chờ/đọc
+    std::shared_ptr<DecodeJob> job;
+    bool opening = false, fetching = false, ready = false;
     bool want = false, playing = false, loop = false, buffering = false, seeking = false, reposition = false, flush = false;
     bool eof = false, volumeDirty = true;
     double target = 0, volume = 0, duration = 0;
@@ -388,8 +472,12 @@ struct MusicMixer::Impl {
     MusicMixer *owner;
     QString cacheDir;
     QNetworkAccessManager network;
-    struct Download { QNetworkReply *reply; std::vector<std::pair<std::weak_ptr<MixVoiceState>, quint64>> waiters; };
+    struct Download { QNetworkReply *reply; std::shared_ptr<GrowingBytes> stream; };
     QHash<QUrl, Download> downloads;
+    // Chỉ luồng giải mã: lần giải mã đang ghi dần theo tệp đệm, và tệp mà StreamMp3 không đọc được (giải mã cả tệp).
+    std::map<QString, std::shared_ptr<DecodeJob>> jobs;
+    QSet<QString> fallback;
+    std::atomic<size_t> decoding{0};
     std::mutex voicesMutex, engineMutex, waitMutex;
     std::vector<std::shared_ptr<MixVoiceState>> voices;
     std::unique_ptr<MixDevice> device;
@@ -530,6 +618,7 @@ MusicMixer::~MusicMixer() {
 }
 int MusicMixer::rate() const { return d->rate; }
 quint64 MusicMixer::decodeCount() const { return d->decodes; }
+size_t MusicMixer::decodingCount() const { return d->decoding; }
 QString MusicMixer::cachePath(const QUrl &url) const {
     return cacheName(d->cacheDir, url, rate());
 }
@@ -572,103 +661,157 @@ void MusicMixer::fetch(const std::shared_ptr<MixVoiceState> &state, quint64 gene
     QUrl url;
     { Guard guard(state->mutex); if (state->generation != generation) return; url = state->url; }
     auto it = d->downloads.find(url);
-    if (it != d->downloads.end()) { it->waiters.emplace_back(state, generation); return; }
-    QNetworkRequest request(url);
-    request.setTransferTimeout(30000);
-    auto *reply = d->network.get(request);
-    d->downloads.insert(url, {reply, {{state, generation}}});
-    connect(reply, &QNetworkReply::finished, this, [this, reply, url] {
-        const auto download = d->downloads.take(url);
-        const QByteArray bytes = reply->readAll();
-        const QString error = reply->error() == QNetworkReply::NoError ? QString() : reply->errorString();
-        reply->deleteLater();
-        for (const auto &waiter : download.waiters) {
-            const auto s = waiter.first.lock(); if (!s) continue;
-            Guard guard(s->mutex);
-            if (s->generation != waiter.second) continue;
-            if (!error.isEmpty()) {
-                s->opening = s->want = false;
-                post(s, [error](MixVoice *v) { emit v->failed(error); });
-            } else { s->bytes = bytes; s->haveBytes = true; }
-        }
-        wake(true); wake();
-    });
+    if (it == d->downloads.end()) {
+        QNetworkRequest request(url);
+        request.setTransferTimeout(30000);
+        auto *reply = d->network.get(request);
+        auto stream = std::make_shared<GrowingBytes>();
+        it = d->downloads.insert(url, {reply, stream});
+        // Bộ giải mã đọc phần đã tới: nhạc vào khi đủ vài giây, không chờ trọn bài.
+        // Content-Length của thân đã nén không phải cỡ byte nhận được, nên khi đó cỡ chỉ biết lúc tải xong.
+        const auto size = [reply] {
+            bool ok = false;
+            const qint64 n = reply->header(QNetworkRequest::ContentLengthHeader).toLongLong(&ok);
+            return ok && !reply->hasRawHeader("Content-Encoding") ? n : qint64(-1);
+        };
+        connect(reply, &QNetworkReply::readyRead, this, [this, reply, stream, size] { stream->append(reply->readAll(), size()); wake(true); });
+        connect(reply, &QNetworkReply::finished, this, [this, reply, url, stream, size] {
+            d->downloads.remove(url);
+            if (reply->isOpen()) stream->append(reply->readAll(), size()); // reply bị huỷ (hết hạn chờ, abort) đã đóng: readAll chỉ cảnh báo
+            stream->finish(reply->error() == QNetworkReply::NoError ? QString() : reply->errorString());
+            reply->deleteLater();
+            wake(true); wake();
+        });
+    }
+    { Guard guard(state->mutex); if (state->generation == generation) state->stream = it->stream; }
+    wake(true);
 }
 
 void MusicMixer::serviceReader() {
     // The render thread must sample the audible cursor before any reader drops spans.
     if (d->resetQueued) { wake(); return; }
-    bool renderNeeded = false;
+    bool renderNeeded = false, decoded = false;
+    // Giải mã dần mọi bài đang tải, mỗi lượt hai giây âm thanh rồi thức lại: luồng đọc (cũng là luồng lấp giọng đọc)
+    // không bị một bài nhạc dài chiếm trọn như khi giải mã cả bài trong một lượt.
+    for (auto it = d->jobs.begin(); it != d->jobs.end();) {
+        const auto job = it->second;
+        decoded |= job->pump(quint64(job->rate) * 2);
+        if (!job->done && !job->fallback && job->error.isEmpty()) { ++it; continue; }
+        it = d->jobs.erase(it);
+        if (job->fallback) d->fallback.insert(job->path);
+        if (job->done) continue; // giọng tự nhận số khung cuối khi đọc tới
+        for (const auto &s : d->snapshot()) {
+            Guard guard(s->mutex);
+            if (s->job != job) continue;
+            s->job.reset(); s->file.reset();
+            if (job->fallback) continue;
+            renderNeeded |= s->want;
+            s->opening = s->ready = s->want = false;
+            post(s, [error = job->error](MixVoice *v) { emit v->failed(error); });
+        }
+    }
     for (const auto &s : d->snapshot()) {
         { Guard guard(s->mutex);
           renderNeeded |= s->want && (!s->ready || s->reposition || s->buffering || !s->playing);
         }
         if (s->streaming) { serviceStream(s); continue; }
         quint64 generation;
-        bool opening, haveBytes;
-        QByteArray bytes;
+        bool opening;
+        std::shared_ptr<GrowingBytes> stream;
+        std::shared_ptr<DecodeJob> job;
         QUrl url;
         int outRate;
-        { Guard guard(s->mutex); outRate = s->rate; generation = s->generation; opening = s->opening; haveBytes = s->haveBytes; bytes = s->bytes; url = s->url; }
+        { Guard guard(s->mutex); outRate = s->rate; generation = s->generation; opening = s->opening; stream = s->stream; job = s->job; url = s->url; }
         if (opening) {
             const QString path = cacheName(d->cacheDir, url, outRate);
+            if (!job) if (const auto it = d->jobs.find(path); it != d->jobs.end()) job = it->second;
             auto file = std::make_unique<QFile>(path);
-            quint64 frames = file->open(QIODevice::ReadOnly) ? readHeader(*file, outRate) : 0;
-            if (frames) {
-                // Ghi lần dùng: trim() bỏ tệp có mtime cũ nhất trước, nên bài vừa nghe lại được giữ, không theo giờ giải mã.
-                QFile used(path);
-                if (used.open(QIODevice::ReadWrite)) used.setFileTime(QDateTime::currentDateTime(), QFileDevice::FileModificationTime);
+            quint64 frames = 0;
+            if (!job) {
+                frames = file->open(QIODevice::ReadOnly) ? readHeader(*file, outRate) : 0;
+                if (frames) {
+                    // Ghi lần dùng: trim() bỏ tệp có mtime cũ nhất trước, nên bài vừa nghe lại được giữ, không theo giờ giải mã.
+                    QFile used(path);
+                    if (used.open(QIODevice::ReadWrite)) used.setFileTime(QDateTime::currentDateTime(), QFileDevice::FileModificationTime);
+                }
             }
             QString error;
-            if (!frames && !haveBytes) {
-                Guard guard(s->mutex);
-                if (s->generation == generation && !s->fetching) {
-                    s->fetching = true;
-                    QMetaObject::invokeMethod(this, [this, s, generation] { fetch(s, generation); }, Qt::QueuedConnection);
-                }
-                continue;
-            }
-            if (!frames) {
-                file->close();
-                const Format format = formatOf(bytes);
-                Mp3Source mp3(outRate);
-                MfSource mf(outRate);
-                QSaveFile cache(path);
-                if (format == Format::Unknown) error = QStringLiteral("Không nhận ra định dạng tệp nhạc (MP3, WAV, FLAC, M4A, Ogg/Opus).");
-                else if (format == Format::Mp3 && !mp3.open(bytes)) error = QStringLiteral("Không đọc được tệp nhạc mp3.");
-                else if (format == Format::Mf && !mf.open(bytes)) error = mf.error();
-                else if (!cache.open(QIODevice::WriteOnly) || cache.write(header(outRate, 0)) != HEADER) error = cache.errorString();
-                else {
-                    ++d->decodes;
-                    std::vector<float> block;
-                    for (;;) {
-                        { Guard guard(s->mutex); if (s->generation != generation) break; }
-                        block.clear();
-                        const size_t n = format == Format::Mp3 ? mp3.read(block, 8192) : mf.read(block, 8192);
-                        if (format == Format::Mf && !mf.error().isEmpty()) { error = mf.error(); break; }
-                        if (!n) break;
-                        QByteArray pcm(qsizetype(n * 4), Qt::Uninitialized);
-                        for (size_t i = 0; i < n * 2; ++i) {
-                            const auto sample = qint16(std::clamp(std::lround(block[i] * 32768.0f), -32768L, 32767L));
-                            qToLittleEndian<qint16>(sample, pcm.data() + i * 2);
-                        }
-                        if (cache.write(pcm) != pcm.size()) { error = cache.errorString(); break; }
-                        frames += n;
+            if (!frames && !job) {
+                if (!stream) {
+                    Guard guard(s->mutex);
+                    if (s->generation == generation && !s->fetching) {
+                        s->fetching = true;
+                        QMetaObject::invokeMethod(this, [this, s, generation] { fetch(s, generation); }, Qt::QueuedConnection);
                     }
-                    bool current;
-                    { Guard guard(s->mutex); current = s->generation == generation; }
-                    if (!current) continue;
-                    if (error.isEmpty() && (!frames || !cache.seek(0) || cache.write(header(outRate, frames)) != HEADER || !cache.commit()))
-                        error = QStringLiteral("Không lưu được bộ đệm nhạc: ") + cache.errorString();
+                    continue;
                 }
-                if (error.isEmpty() && (!file->open(QIODevice::ReadOnly) || readHeader(*file, outRate) != frames))
-                    error = QStringLiteral("Bộ đệm nhạc bị thiếu dữ liệu.");
+                const bool complete = stream->done();
+                const QByteArray head = stream->read(0, 64);
+                if (head.isEmpty() && !complete) continue;
+                const Format format = formatOf(complete ? stream->all() : head);
+                if (!stream->error().isEmpty()) error = stream->error();
+                else if (format == Format::Mp3 && !d->fallback.contains(path)) {
+                    job = std::make_shared<DecodeJob>(path, outRate, stream);
+                    d->jobs.emplace(path, job); ++d->decodes;
+                    decoded |= job->pump(quint64(outRate) * 2);
+                } else if (!complete) continue;
+                else {
+                    file->close();
+                    const QByteArray bytes = stream->all();
+                    Mp3Source mp3(outRate);
+                    MfSource mf(outRate);
+                    QSaveFile cache(path);
+                    if (format == Format::Unknown) error = QStringLiteral("Không nhận ra định dạng tệp nhạc (MP3, WAV, FLAC, M4A, Ogg/Opus).");
+                    else if (format == Format::Mp3 && !mp3.open(bytes)) error = QStringLiteral("Không đọc được tệp nhạc mp3.");
+                    else if (format == Format::Mf && !mf.open(bytes)) error = mf.error();
+                    else if (!cache.open(QIODevice::WriteOnly) || cache.write(header(outRate, 0)) != HEADER) error = cache.errorString();
+                    else {
+                        ++d->decodes;
+                        std::vector<float> block;
+                        for (;;) {
+                            { Guard guard(s->mutex); if (s->generation != generation) break; }
+                            block.clear();
+                            const size_t n = format == Format::Mp3 ? mp3.read(block, 8192) : mf.read(block, 8192);
+                            if (format == Format::Mf && !mf.error().isEmpty()) { error = mf.error(); break; }
+                            if (!n) break;
+                            QByteArray pcm(qsizetype(n * 4), Qt::Uninitialized);
+                            for (size_t i = 0; i < n * 2; ++i) {
+                                const auto sample = qint16(std::clamp(std::lround(block[i] * 32768.0f), -32768L, 32767L));
+                                qToLittleEndian<qint16>(sample, pcm.data() + i * 2);
+                            }
+                            if (cache.write(pcm) != pcm.size()) { error = cache.errorString(); break; }
+                            frames += n;
+                        }
+                        bool current;
+                        { Guard guard(s->mutex); current = s->generation == generation; }
+                        if (!current) continue;
+                        if (error.isEmpty() && (!frames || !cache.seek(0) || cache.write(header(outRate, frames)) != HEADER || !cache.commit()))
+                            error = QStringLiteral("Không lưu được bộ đệm nhạc: ") + cache.errorString();
+                    }
+                    if (error.isEmpty() && (!file->open(QIODevice::ReadOnly) || readHeader(*file, outRate) != frames))
+                        error = QStringLiteral("Bộ đệm nhạc bị thiếu dữ liệu.");
+                }
+            }
+            if (job && error.isEmpty()) {
+                { Guard guard(s->mutex); if (s->generation != generation) continue; s->job = job; }
+                if (!job->error.isEmpty()) error = job->error;
+                else if (job->fallback) { Guard guard(s->mutex); if (s->generation == generation) s->job.reset(); continue; }
+                // Vào khi đã có ba giây (hay cả bài ngắn hơn); phần còn lại giải mã kịp trước con trỏ đọc.
+                else if (!job->opened || (!job->done && job->frames < std::min(job->total, quint64(outRate) * 3))) continue;
+                else if (job->done) {
+                    frames = job->frames;
+                    if (!file->open(QIODevice::ReadOnly) || readHeader(*file, outRate) != frames) error = QStringLiteral("Bộ đệm nhạc bị thiếu dữ liệu.");
+                } else {
+                    frames = job->total;
+                    if (!file->open(QIODevice::ReadOnly | QIODevice::Unbuffered)) error = file->errorString();
+                }
             }
             Guard guard(s->mutex);
             if (s->generation != generation || outRate != rate()) continue;
-            s->bytes.clear(); s->haveBytes = s->opening = false;
+            s->stream.reset(); s->opening = false;
+            if (job && job->done) s->job.reset();
             if (!error.isEmpty()) {
-                s->want = false;
+                s->want = false; s->job.reset();
                 post(s, [error](MixVoice *v) { emit v->failed(error); });
                 wake(); continue;
             }
@@ -682,6 +825,15 @@ void MusicMixer::serviceReader() {
             post(s, [duration = s->duration](MixVoice *v) { emit v->durationChanged(duration); });
         }
         Guard guard(s->mutex);
+        if (s->ready && s->job && s->job->done) {
+            // Độ dài lúc vào là ước lượng từ thẻ Xing; số khung thật chỉ biết khi giải mã xong.
+            const quint64 frames = s->job->frames; s->job.reset();
+            if (frames != s->length) {
+                s->limit = s->limit + frames > s->length ? s->limit + frames - s->length : 0;
+                s->length = frames; s->duration = double(frames) / s->rate;
+                post(s, [duration = s->duration](MixVoice *v) { emit v->durationChanged(duration); });
+            }
+        }
         if (!s->ready || !s->file || !s->ring || s->flush || d->resetQueued) continue;
         if (s->reposition) {
             s->origin = std::min(s->length, quint64(std::llround(bounded(s->target) * s->rate)));
@@ -692,8 +844,13 @@ void MusicMixer::serviceReader() {
         }
         // Đọc trước hai giây; việc lấp vòng đệm không đánh thức giao diện.
         while (s->ring->writable() >= 2) {
-            const qint64 n = qint64(std::min<size_t>(s->ring->writable() / 2, 16384));
+            qint64 n = qint64(std::min<size_t>(s->ring->writable() / 2, 16384));
             const quint64 at = quint64((s->file->pos() - HEADER) / 4);
+            if (s->job) {
+                // Bài còn đang giải mã: chưa phải hết bài, chỉ là chưa tới. Lượt giải mã kế đánh thức lại.
+                if (at >= s->job->frames) break;
+                n = std::min<qint64>(n, qint64(s->job->frames - at));
+            }
             const QByteArray pcm = s->file->read(n * 4);
             if (pcm.isEmpty()) {
                 if (s->file->error() != QFileDevice::NoError) {
@@ -720,9 +877,11 @@ void MusicMixer::serviceReader() {
             s->ring->write(block.data(), block.size());
         }
     }
+    d->decoding = d->jobs.size();
     // A normal top-up has no control/readiness event to deliver. The output
     // deadline already covers it; waking here adds an empty padding poll.
     if (renderNeeded) wake();
+    if (decoded && !d->jobs.empty()) wake(true);
 }
 
 void MusicMixer::serviceStream(const std::shared_ptr<MixVoiceState> &s) {
@@ -855,8 +1014,8 @@ void MusicMixer::service(size_t frames) {
                 if (!s->opening && !s->ready && !s->want && !s->playing) continue;
                 ++s->generation; // Discard queued readiness and in-flight reader results.
                 const bool playing = s->playing, buffering = s->buffering;
-                s->opening = s->fetching = s->haveBytes = s->ready = s->want = s->playing = s->buffering = false;
-                s->bytes.clear(); s->ring.reset(); s->file.reset(); s->spans.clear();
+                s->opening = s->fetching = s->ready = s->want = s->playing = s->buffering = false;
+                s->stream.reset(); s->job.reset(); s->ring.reset(); s->file.reset(); s->spans.clear();
                 s->decoder.reset(); s->source.reset(); s->stretch.reset();
                 post(s, [error, playing, buffering](MixVoice *v) {
                     if (playing) emit v->playingChanged(false);
@@ -887,7 +1046,7 @@ void MusicMixer::service(size_t frames) {
             }
             s->reposition = true; s->spans.clear();
             if (oldRate != d->device->rate()) {
-                ++s->generation; s->ready = false; s->opening = true; s->fetching = s->haveBytes = false;
+                ++s->generation; s->ready = false; s->opening = true; s->fetching = false; s->job.reset();
                 s->rate = rate();
                 s->ring.reset(); s->file.reset();
                 s->decoder.reset(); s->stretch.reset();
@@ -1217,28 +1376,32 @@ void MixVoice::stop() {
       if (m_mixer->d->written && (m_state->want || !m_state->spans.empty())) m_mixer->d->resetQueued = true;
       // Phần đã xếp vào thiết bị thuộc về luồng trộn: nó mờ ra từ con trỏ nghe, không tắt phụt.
       for (auto &span : m_state->spans) m_mixer->d->stopped.push_back(std::move(span));
-      ++m_state->generation; m_state->url.clear(); m_state->bytes.clear();
+      ++m_state->generation; m_state->url.clear(); m_state->stream.reset(); m_state->job.reset();
       const bool wasPlaying = m_state->playing, wasBuffering = m_state->buffering;
       if (wasPlaying || wasBuffering) m_mixer->post(m_state, [wasPlaying, wasBuffering](MixVoice *v) {
           if (wasPlaying) emit v->playingChanged(false);
           if (wasBuffering) emit v->buffering(false);
       });
-      m_state->opening = m_state->fetching = m_state->haveBytes = m_state->ready = m_state->want = m_state->playing = false;
+      m_state->opening = m_state->fetching = m_state->ready = m_state->want = m_state->playing = false;
       m_state->buffering = m_state->seeking = m_state->reposition = m_state->eof = m_state->flush = false;
       m_state->ring.reset(); m_state->file.reset(); m_state->spans.clear();
       m_state->source.reset(); m_state->decoder.reset(); m_state->stretch.reset(); m_state->mediaHeard = m_state->mediaMixed = 0;
       m_state->joining = m_state->fadeIn = m_state->speedDirty = m_state->requested = false; m_state->joinAt = 0;
       m_state->duration = m_state->target = 0; m_state->mixed = m_state->heard = m_state->origin = m_state->length = 0;
     }
-    // Huỷ tải khi không phần tử nào còn chờ; nguồn chung vẫn được giữ cho phần tử khác.
+    // Huỷ tải khi không giọng nào còn chờ hay còn đọc bài đang giải mã dở; nguồn chung vẫn được giữ cho giọng khác.
+    const auto others = m_mixer->d->snapshot();
     for (auto it = m_mixer->d->downloads.begin(); it != m_mixer->d->downloads.end();) {
-        auto &waiters = it->waiters;
-        waiters.erase(std::remove_if(waiters.begin(), waiters.end(), [this](const auto &w) {
-            const auto s = w.first.lock(); return !s || s == m_state;
-        }), waiters.end());
-        if (waiters.empty()) {
+        const auto stream = it->stream;
+        const bool used = std::any_of(others.begin(), others.end(), [&](const auto &s) {
+            if (s == m_state) return false;
+            Guard guard(s->mutex); return s->stream == stream || (s->job && s->job->bytes == stream);
+        });
+        if (!used) {
             auto *reply = it->reply; it = m_mixer->d->downloads.erase(it);
             reply->disconnect(m_mixer); reply->abort(); reply->deleteLater();
+            stream->finish(QStringLiteral("Đã huỷ tải nhạc.")); // lần giải mã dở bỏ tệp đệm của nó
+            m_mixer->wake(true);
         } else ++it;
     }
     m_mixer->wake();

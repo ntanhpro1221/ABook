@@ -53,6 +53,22 @@ private slots:
         QCOMPARE(net.callsTo(QStringLiteral("/clip")).size(), 2); // one paragraph lookahead
         QSignalSpy ended(&speech, &AudioOut::ended); audio.finish(); QCOMPARE(ended.size(), 1);
     }
+    // The next paragraph is the chapter playing on, not a seek: Music re-aligned the bed to the narration position at every
+    // paragraph (the 50-100 ms music dips of the listen audit). Only an open and a seek report seeked().
+    void nextParagraphIsNotASeek() {
+        FakeOut audio; FakeNet net; SpeechOut speech(&audio, &net);
+        net.answers.insert(QStringLiteral("GET /api/listen/books/b/chapters/1/text"), QJsonObject{{QStringLiteral("text"), QStringLiteral("Buổi sáng ấy.\n\nChúng tôi đi học.\n\nTrời mưa.")}});
+        net.answers.insert(QStringLiteral("POST /api/readaloud/clip"), QJsonObject{{QStringLiteral("url"), QStringLiteral("/media/clip.wav")}, {QStringLiteral("duration_ms"), 2500}});
+        QSignalSpy seeked(&speech, &AudioOut::seeked);
+        speech.loadText(QStringLiteral("b"), 1, 0, QStringLiteral("local")); speech.play();
+        QVERIFY(speech.playing());
+        const qsizetype opened = seeked.size();
+        QVERIFY(opened >= 1);
+        audio.finish(); QVERIFY(audio.isPlaying); QCOMPARE(speech.position(), 2.5);
+        QCOMPARE(seeked.size(), opened);
+        speech.seek(6); QVERIFY(audio.isPlaying); QCOMPARE(seeked.size(), opened + 1);
+        audio.finish(); QCOMPARE(seeked.size(), opened + 1);
+    }
     void discardedChapterCannotStartAudio() {
         FakeOut audio; FakeNet net; SpeechOut speech(&audio, &net);
         net.hold = true;
