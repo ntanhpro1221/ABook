@@ -11,6 +11,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Gỡ cài đặt có "Xoá dữ liệu" không còn đi theo liên kết thư mục (junction) bên trong thư mục dữ liệu: có liên kết thì giữ lại dữ liệu, không làm rỗng thư mục ở chỗ khác.
 
+### Điện thoại
+
+- Thêm các lời giải thích gập sau "?" như bản máy tính: Nhạc của tôi, Studio tạm dừng khi máy chạy pin, bảng chọn giọng, gợi ý người kể "tôi", chương chờ thu lại, khoá giọng trực tuyến.
+
 ### Máy tính (bản Qt, chưa có trong bộ cài)
 
 - App máy tính: nhạc nền tốn ít CPU hơn khi thu nhỏ.
