@@ -285,6 +285,15 @@ bytecode HLSL, không phụ thuộc card). Lợi tối đa là phần của 0,4 
 - `main.cpp`: đường `.abook` -> cùng lối của "Mở file sách" (`addBook.begin([path])`, như `useOpenedBook` của web);
   `.abookproj` -> lối mở dự án của Studio. Đường lạ hay hỏng -> câu lỗi có sẵn, không màn trắng.
 - Test: Width/QML test mở app với argv giả (đúng, sai đuôi, file không có); test bộ cài kiểm khoá registry trong hive tạm.
+- Đã làm (31-10): registry ở Q3. `main.cpp` lấy đường tuyệt đối theo thư mục của lần mở (lần mở thứ hai có thư mục khác bản
+  đang chạy), gọi `Main.qml openFiles` lúc khởi động; lần mở khác qua `otherLaunch`. `openFiles` giữ file tới khi host Ready
+  rồi đưa vào `addBook.begin(paths)` - đúng lối kéo thả: `.abook` -> trang sách, `.abookproj` -> Studio (server quyết), đuôi
+  lạ / file mất -> câu lỗi trong hộp "Thêm sách" (ImportQueue.itemFromPath, open-book-file), EPUB... -> bản xem trước.
+  - Test thay cho Width/QML: `tools/smoke_open.py` trên bản đóng gói chép ra ngoài cây nguồn (smoke_packaged.py gọi nó):
+    A mở với python_v4.abook -> cuốn vào Thư viện riêng; B mở với cuốn khác khi A còn sống -> B thoát 0 (< 10 s), A nhập cuốn
+    ấy. Cuốn khác phải khác chương 1 (`smoke_play.write_package`): máy nhận cuốn theo mã băm audio, kotlin_v4 là cùng cuốn.
+  - Kiểm lực: bỏ lời gọi lúc khởi động -> đỏ bước A; bỏ `openFiles` trong `otherLaunch` -> đỏ bước B.
+  - Chưa test: đuôi lạ / file mất qua dòng lệnh (cùng lối kéo thả, đã có test ở ImportQueue), `.abookproj` qua dòng lệnh.
 
 ### Q6. Tự cập nhật
 - Máy chủ: `GET latest.json` (netconnect, hạn chờ như mọi lần tải), so phiên bản, tải bộ cài vào `%LOCALAPPDATA%\ABook\update`

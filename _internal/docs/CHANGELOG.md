@@ -14,6 +14,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - App máy tính hiện trong khung điều khiển nhạc của Windows (tên chương, bìa, phát/dừng, chương trước/sau, tua).
 - App máy tính: đóng app không còn để lại tiến trình chạy ngầm sau khi đã phát nhạc nền WAV, FLAC, M4A hay Ogg.
 - App máy tính: nhạc nền nối vào đúng chỗ của lời đọc khi bắt đầu và mỗi lần lặp lại, không còn trễ vài chục mili giây.
+- App máy tính chỉ chạy một bản: mở app lần nữa (lối tắt, hay bấm đúp file khi app đang mở) đưa cửa sổ đang mở lên, không mở thêm bản thứ hai.
+- App máy tính: bấm đúp file `.abook` mở thẳng trang sách, file `.abookproj` mở dự án trong Studio, cả khi app chưa mở lẫn đang mở.
+- Bộ cài: gỡ app có ô "Xoá cả dữ liệu" (thư viện ở chỗ khác vẫn giữ); file `.abook` / `.abookproj` mở bằng ABook, gỡ app thì trả lại app cũ đã mở chúng.
 
 ## [0.4.149] - 2026-10-31
 

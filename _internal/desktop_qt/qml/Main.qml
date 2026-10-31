@@ -49,10 +49,21 @@ Window {
         nowLoader.alive = true                               // dựng ngay (đồng bộ) rồi mở
         if (nowPlaying) nowPlaying.show()
     }
-    // Lần mở khác của app (src/singleinstance.h): bấm lối tắt, bấm đúp file khi app đang mở - hiện cửa sổ. `files`: đường file của
-    // lần mở ấy (mở chúng: Q5).
+    // Lần mở khác của app (src/singleinstance.h): bấm lối tắt, bấm đúp file khi app đang mở - hiện cửa sổ rồi mở các file của nó.
     function otherLaunch(files) {
         windowMode.reveal()
+        openFiles(files)
+    }
+    // Đường file trên dòng lệnh (bấm đúp .abook / .abookproj, "Mở bằng" một EPUB...): cùng lối với kéo thả vào "Thêm sách"
+    // (AddBook.begin), nên .abook mở trang sách, .abookproj mở Studio, đuôi lạ hay file hỏng thành câu lỗi trong hộp. Host chưa
+    // sẵn sàng (vừa khởi động) thì giữ lại tới lúc Ready.
+    property var pendingFiles: []
+    function openFiles(files) {
+        if (!files || !files.length) return
+        const list = []                                      // QStringList từ C++ là dãy của Qt, không phải mảng JS
+        for (let i = 0; i < files.length; i++) list.push(String(files[i]))
+        if (Backend.state !== Backend.Ready) { pendingFiles = pendingFiles.concat(list); return }
+        addBook.begin(list)
     }
     function openBookId(id) {
         Api.call("GET", "/api/listen/books/" + id, null, function(data, error) {
@@ -230,7 +241,13 @@ Window {
     Binding { target: Theme; property: "readingSurface"; value: ["paper", "ivory", "night"].indexOf(Api.preferences.readingSurface) >= 0 ? Api.preferences.readingSurface : "auto" }
     Connections {
         target: Backend
-        function onStateChanged() { if (Backend.state === Backend.Ready) { Api.bind(DesktopApi, Theme); Api.load() } }
+        function onStateChanged() {
+            if (Backend.state !== Backend.Ready) return
+            Api.bind(DesktopApi, Theme); Api.load()
+            const files = win.pendingFiles
+            win.pendingFiles = []
+            win.openFiles(files)
+        }
     }
     function configurePlayer() {
         const voice = VoiceLogic.resolveVoice(Api.voiceList, Api.defaultVoice)
