@@ -449,6 +449,10 @@ Section Install
   !insertmacro ABOOK_STOP_APP
   !insertmacro ABOOK_REMOVE_RESOURCES
   !include "${ABOOK_FILES}\install_files.nsh"
+  ; Mã app chở dạng .py (.pyc làm bộ cài nặng thêm 2,6 MB): biên dịch ở đây, ~1 giây, để lần mở đầu không chậm. Lỗi thì
+  ; Python tự biên dịch khi nạp (thư mục cài ghi được). Gỡ cài xoá cả resources\, gồm các __pycache__ này.
+  nsExec::Exec '"$INSTDIR\resources\python\python.exe" -E -m compileall -q -j 0 "$INSTDIR\resources\app\abook"'
+  Pop $0
   WriteUninstaller "$INSTDIR\uninstall.exe"
 
   WriteRegStr HKCU "${REG_MANUPRODUCT}" "" "$INSTDIR"

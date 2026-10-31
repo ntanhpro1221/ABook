@@ -125,12 +125,17 @@ rem Trim: D3D11 backend only (no dxc / d3d compiler / software GL), no debugger 
 windeployqt --release --qmldir "%HERE%qml" --no-translations --no-system-d3d-compiler --no-system-dxc-compiler --no-opengl-sw --no-compiler-runtime --skip-plugin-types qmltooling,generic "%HERE%dist\ABookDesk.exe"
 if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
-rem Only the Basic style is ever loaded (main.cpp fixes it): drop the other Qt Quick Controls styles windeployqt copies
+rem Drop what the app never loads (other Controls styles, Effects, QStyle/TLS/network-information plugins, unused VC DLLs)
 "%ABOOK_PYTHON%" -X utf8 "%HERE%tools\trim_dist.py" "%HERE%dist"
 if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
-rem App-local VC runtime (about 1 MB of DLLs instead of the installer), so a PC without the redistributable still starts
-copy /y "%VCToolsRedistDir%x64\Microsoft.VC145.CRT\*.dll" "%HERE%dist\" >nul
+rem App-local VC runtime (1.2 MB instead of the installer), so a PC without the redistributable still starts: only the
+rem five DLLs something imports; check_imports.py fails the build when a binary needs one more
+for %%D in (vcruntime140.dll vcruntime140_1.dll msvcp140.dll msvcp140_1.dll msvcp140_2.dll) do (
+  copy /y "%VCToolsRedistDir%x64\Microsoft.VC145.CRT\%%D" "%HERE%dist\" >nul
+  if errorlevel 1 exit /b 1
+)
+"%ABOOK_PYTHON%" -X utf8 "%HERE%tools\check_imports.py" "%HERE%dist"
 if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
 rem Sonic is statically linked: ship its Apache-2.0 license and pinned provenance.

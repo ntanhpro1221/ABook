@@ -42,9 +42,14 @@ if (-not $SkipResources) {
     throw "Chưa có $Resources - bỏ -SkipResources"
 }
 Test-Host
+# Bộ cài Qt chở mã app dạng .py và biên dịch lúc cài (installer\abook.nsi): .pyc của Copy-App và của các lượt thử ở trên
+# nặng 2,6 MB trong bộ cài. Các lượt chạy thử dưới đây chạy đúng thứ được chở đi.
+Get-ChildItem (Join-Path $Resources "app") -Recurse -Directory -Filter "__pycache__" | Remove-Item -Recurse -Force
 
 Step "Chạy thử bản đóng gói (không có cây mã nguồn bên trên)"
 $python = Get-BuildPython
+# Mọi DLL mà exe/dll/pyd của gói cần phải đi kèm gói hay có sẵn trong Windows (máy dựng có sẵn VC++ nên chạy thử không thấy)
+Invoke-Checked { & $python -X utf8 (Join-Path $Qt "tools\check_imports.py") $Dist } "check_imports"
 Invoke-Checked { & $python -X utf8 (Join-Path $Qt "tools\smoke_packaged.py") $Dist } "smoke_packaged"
 Write-Host ("   {0}: {1} MB" -f $Dist, (Get-SizeMB $Dist))
 if (-not $Installer) { return }

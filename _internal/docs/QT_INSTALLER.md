@@ -54,6 +54,47 @@ sạc. Kịch bản: `desktop_qt/tools/prep_shells.py` (dựng hai bố cục) +
     bằng smoke).
   - Đích sau khi cắt: ≈ 34-36 MB nén.
 
+### Cỡ bộ cài, từng MB có lý do (31-10, sau Q6)
+Lead hỏi: 10 file lớn nhất, cái nào bỏ được, số trước/sau. NSIS nén LZMA **solid** cả gói, nên cỡ thô và cỡ "nén riêng
+từng file" không cộng được; mỗi phần dưới đây đo bằng cách dựng lại bộ cài thật không có phần ấy (`makensis` cùng
+cờ, mốc 35,30 MiB = bộ cài 0.4.150 của nhánh). Mười file lớn nhất (thô / LZMA riêng, MB):
+
+| File | Thô | Nén | Vì sao giữ |
+|---|---|---|---|
+| ABookDesk.exe | 17,6 | 3,1 | QML biên dịch trước (AOT) vào exe: mở nhanh, không có JIT lúc chạy |
+| Qt6Core.dll | 9,8 | 2,4 | lõi Qt |
+| Qt6Gui.dll | 9,1 | 3,0 | vẽ, font, ảnh |
+| python314.zip | 7,7 | 2,1 | thư viện chuẩn của Python nhúng (host) |
+| python314.dll | 6,5 | 2,0 | Python nhúng |
+| Qt6Widgets.dll | 6,3 | 2,2 | chỉ `Qt.labs.platform` (SystemTrayIcon của khay) kéo theo |
+| Qt6Quick.dll | 6,2 | 2,1 | Qt Quick |
+| libcrypto-3.dll | 5,7 | 1,6 | OpenSSL của Python: https tới trang phát hành, tải nhạc, đồng bộ |
+| Qt6Qml.dll | 5,1 | 1,5 | QML engine |
+| Qt6QuickDialogs2QuickImpl.dll | 2,7 | 0,5 | hộp chọn file / thư mục |
+
+Theo nhóm (thô / nén riêng): Qt + CRT 55,9 / 16,4; `resources/app` 25,1 / 9,8; `resources/python` 33,5 / 10,4.
+
+Đã cắt (`tools/trim_dist.py`, `build.bat`, `abook.nsi`), số là phần bộ cài nhỏ đi khi bỏ riêng phần ấy:
+- VC runtime chỉ còn 5 DLL có binary import (bỏ concrt140, vccorlib140, msvcp140_atomic_wait, msvcp140_codecvt_ids,
+  vcruntime140_threads): 0,06 MiB. `tools/check_imports.py` đọc bảng import + delay-import của mọi exe/dll/pyd và làm
+  hỏng bản dựng nếu một binary cần DLL redist không có cạnh nó (máy dựng có VC++ trong System32 nên smoke không bắt được).
+- Style Qt Quick Controls không dùng + biến thể `+Style` của Dialogs: 0,07 MiB (phần lớn đã cắt ở Q1).
+- `tls\` + `networkinformation\`: 0,09 MiB - mọi yêu cầu của phía C++ là http://127.0.0.1 tới host.
+- QtQuick.Effects (+ Qt6QuickEffects.dll): 0,29 MiB - chỉ các style đã bỏ import nó.
+- Cộng bốn mục an toàn: **0,53 MiB** (solid nén nên nhỏ).
+- `.pyc` không chở trong gói, biên dịch lúc cài (`compileall -j 0`, ~0,7 s cho ~250 file; bộ gỡ xoá cả `resources\`):
+  **2,57 MiB**. test_installer đòi mỗi .py của `abook` có đúng một .pyc sau khi cài.
+- **Đo lại cả gói sau khi cắt: 32,21 MiB (33.772.115 byte), từ 35,30 MiB = −3,10 MiB**, đúng tổng hai dòng trên.
+  Trên đĩa sau khi cài: 122 MB (EstimatedSize của khoá gỡ cài).
+
+Không cắt, có lý do:
+- Qt6Widgets qua khay Win32 tự viết (Shell_NotifyIcon thay `Qt.labs.platform`): 2,24 MiB - phải viết lại khay bằng C++,
+  đề xuất cho Lead, chưa làm.
+- `webui/static` (0,81 MiB): host vẫn phục vụ trang web cho iPhone/iPad qua LAN (sync.py) và Studio trong trình duyệt
+  (remote_studio.py).
+- `vcruntime140*.dll` trùng trong `resources/app`: 0,00 MiB (solid nén bỏ được bản trùng).
+- AOT trong exe: giữ vì mở nhanh; có thể đo `--only-bytecode` nếu Lead muốn đổi ~2 MB lấy thời gian mở.
+
 ### Mở lần đầu, đo lại (31-10, sau Q1)
 
 Câu hỏi: lần mở đầu Qt 5,4 s > Tauri 4,5 s ở trên là do đâu (host Python, cache QML, nạp DLL/plugin)?
