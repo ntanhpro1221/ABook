@@ -29,7 +29,7 @@ Item {
     // Bấm là cài luôn rồi sang màn Studio xem tiến độ - không phải bấm "Cài Studio" lần hai ở đó
     function install() {
         setup.install(function(ok, data) {
-            if (!ok) { setup.failure("Không cài được Studio", data); return }
+            if (!ok) { setup.failure("Chưa cài được Studio", data); return }
             studioRequested()
         })
     }

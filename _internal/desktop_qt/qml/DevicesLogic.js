@@ -82,8 +82,8 @@ function wakingLine(computer, nowSeconds) {
     return what + " · chờ thêm tối đa " + rest
 }
 
-// ---- Thôi ghép (shared/unpair.ts) ----
-function unpairDone(device) { return "Đã thôi ghép " + device }
+// ---- Bỏ ghép (shared/unpair.ts) ----
+function unpairDone(device) { return "Đã bỏ ghép " + device }
 
 // `self`: "điện thoại" | "máy tính"; trả null khi không còn gì để mất - gỡ như thường.
 function unpairCopy(device, self, unsent, reachable) {
@@ -105,13 +105,13 @@ function unpairCopy(device, self, unsent, reachable) {
         if (!unsent.sendable) {
             lines.push(device + " không nhận phần sửa - những thay đổi này chỉ có trên " + self + " này.")
         } else if (up) {
-            send = "Gửi trước rồi thôi ghép"
+            send = "Gửi trước rồi bỏ ghép"
         } else {
-            send = "Thử gửi trước rồi thôi ghép"
+            send = "Thử gửi trước rồi bỏ ghép"
             lines.push(device + " đang tắt hay khác mạng lúc này nên chưa gửi được - mở máy ấy rồi gửi, hay bỏ thay đổi.")
         }
     }
-    return {title: "Thôi ghép " + device + "?", lines: lines, send: send, sendPrimary: edited && up, discard: edited ? "Vẫn thôi ghép, bỏ thay đổi" : "Thôi ghép", cancel: "Huỷ"}
+    return {title: "Bỏ ghép " + device + "?", lines: lines, send: send, sendPrimary: edited && up, discard: edited ? "Vẫn bỏ ghép, bỏ thay đổi" : "Bỏ ghép", cancel: "Giữ lại"}
 }
 
 // ---- Chẩn đoán điện thoại (shared/diagnostics.ts) ----

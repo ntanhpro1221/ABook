@@ -19,7 +19,7 @@ Item {
         Select {
             width: 320
             label: "Model phân tích"
-            options: [{value: "", label: "Mặc định của ABook (khuyên dùng)"}, {header: "Bản khác (thử nghiệm)"},
+            options: [{value: "", label: "Mặc định (khuyên dùng)"}, {header: "Bản khác (thử nghiệm)"},
                       {value: "a", label: "1. Bản thử nghiệm · nhanh"}, {value: "b", label: "2. Bản thử nghiệm"}]
         }
     }
@@ -215,7 +215,7 @@ Item {
                                   chapters: {total: 3, completed: 1, redo: 0, missingAudio: 0, failed: 0, working: 0}})
             const page = openBook(b, [])
             tryVerify(function() { return shown(one(page, "projectStartError")) })
-            verify(hasText(page, "Không khởi động được: Chưa cài Ollama."))
+            verify(hasText(page, "Chưa khởi động được: Chưa cài Ollama."))
             reply("POST /api/books/se/start", {status: 200, data: b})
             const retry = one(page, "projectStartRetry")
             compare(retry.text, "Thử lại")

@@ -32,9 +32,9 @@ Column {
             if (ok) {
                 Api.preferences = Object.assign({}, Api.preferences, data)
             } else {
-                const message = data && (data.message || data.error) || "Không làm được lúc này."
+                const message = data && (data.message || data.error) || "Chưa làm được lúc này."
                 if (status === 404 || status === 409) { Api.notice = message; Api.load() }
-                else Api.notice = "Không lưu được mẫu\n" + message
+                else Api.notice = "Chưa lưu được mẫu\n" + message
             }
             if (done) done(ok, status)
         })
