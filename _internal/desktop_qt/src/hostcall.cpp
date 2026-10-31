@@ -5,6 +5,15 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 
+#include <utility>
+
+namespace {
+QList<QPointer<HostCall>> &manualCalls() {
+    static QList<QPointer<HostCall>> calls;
+    return calls;
+}
+}
+
 HostCall *HostCall::send(QNetworkAccessManager *net, QNetworkRequest request, const QByteArray &method, const QByteArray &body, Done done, QObject *parent) {
     auto *call = new HostCall(net, std::move(request), method, body, std::move(done), parent);
     call->attempt();
@@ -16,13 +25,31 @@ HostCall::HostCall(QNetworkAccessManager *net, QNetworkRequest request, const QB
     m_request.setTransferTimeout(0);    // Qt's own limit cannot tell a silent host from the caller's abort: m_idle decides
     m_idle.setSingleShot(true);
     m_idle.setInterval(s_idleOverrideMs ? s_idleOverrideMs : HostWait::idleMs(m_request.url().path()));
-    connect(&m_idle, &QTimer::timeout, this, [this] {
-        QNetworkReply *silent = m_reply;
-        m_reply = nullptr;
-        if (silent) silent->abort();
-        if (m_attempts < HostWait::kAttempts) attempt();
-        else finish(0, {}, true);
-    });
+    connect(&m_idle, &QTimer::timeout, this, &HostCall::idleExpired);
+    if (s_manualClock) manualCalls().append(this);
+}
+
+void HostCall::advanceIdle(int ms) {
+    auto &calls = manualCalls();
+    calls.removeAll(nullptr);
+    for (const QPointer<HostCall> &call : QList(calls))
+        if (call && call->m_reply && (call->m_silentMs += ms) >= call->m_idle.interval()) call->idleExpired();
+}
+
+void HostCall::restartIdle() {
+    if (!s_manualClock) {
+        m_idle.start();
+        return;
+    }
+    m_silentMs = 0;
+}
+
+void HostCall::idleExpired() {
+    QNetworkReply *silent = m_reply;
+    m_reply = nullptr;
+    if (silent) silent->abort();
+    if (m_attempts < HostWait::kAttempts) attempt();
+    else finish(0, {}, true);
 }
 
 void HostCall::attempt() {
@@ -30,10 +57,14 @@ void HostCall::attempt() {
     QNetworkReply *reply = m_method == "GET" && m_body.isEmpty() ? m_net->get(m_request) : m_net->sendCustomRequest(m_request, m_method, m_body);
     m_reply = reply;
     // Bytes either way restart the limit. Qt reports nothing inside a half-received response head; the host sends its
-    // head in one write, so the limit runs on the body.
-    const auto alive = [this] { m_idle.start(); };
+    // head in one write, so the limit runs on the body. readyRead, not downloadProgress: Qt sends that one at most every
+    // 100 ms. Nothing reads the reply before it finishes, so bytesAvailable() is all the body heard so far.
+    const auto alive = [this] { restartIdle(); };
     connect(reply, &QNetworkReply::metaDataChanged, this, alive);
-    connect(reply, &QNetworkReply::downloadProgress, this, alive);
+    connect(reply, &QIODevice::readyRead, this, [this, reply, heard = qint64(0)]() mutable {
+        if (s_manualClock) s_bytesHeard += reply->bytesAvailable() - std::exchange(heard, reply->bytesAvailable());
+        restartIdle();
+    });
     connect(reply, &QNetworkReply::uploadProgress, this, alive);
     connect(reply, &QNetworkReply::finished, this, [this, reply] {
         reply->deleteLater();
@@ -42,7 +73,7 @@ void HostCall::attempt() {
         const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         finish(status, status ? reply->readAll() : QByteArray(), false);
     });
-    m_idle.start();
+    restartIdle();
 }
 
 void HostCall::finish(int status, const QByteArray &body, bool timedOut) {

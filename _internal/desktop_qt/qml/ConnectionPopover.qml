@@ -39,9 +39,7 @@ WindowLayer {
         scale: Theme.reduceMotion ? 1 : 0.96 + 0.04 * root.shown
         transformOrigin: Item.BottomLeft
 
-        // Bóng nhẹ cho lớp nổi (DESIGN.md 5.5: bóng chỉ cho lớp nổi)
-        Rectangle { anchors.fill: parent; anchors.margins: -8; radius: Theme.radiusCover + 8; color: "#000000"; opacity: 0.04 }
-        Rectangle { anchors.fill: parent; anchors.margins: -3; anchors.topMargin: -1; anchors.bottomMargin: -5; radius: Theme.radiusCover + 3; color: "#000000"; opacity: 0.06 }
+        Shadow {}      // bóng chung của lớp nổi (DESIGN.md 5.5: bóng chỉ cho lớp nổi)
         Rectangle {
             anchors.fill: parent
             radius: Theme.radiusCover

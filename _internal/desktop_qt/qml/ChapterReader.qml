@@ -85,10 +85,11 @@ Modal {
             width: parent.width; open: root.loading
             Text { width: parent.width; text: "Đang tải chương…"; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
         }
-        Collapse {
+        InlineError {
+            objectName: "readerError"
             width: parent.width; open: root.error !== ""
-            Text { width: parent.width; text: root.error; color: Theme.danger; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
-            Button { text: "Thử lại"; kind: "ghost"; onClicked: root.chapter ? root.load(root.chapter) : root.begin(root.bookId, -1) }
+            message: root.error
+            onRetry: root.chapter ? root.load(root.chapter) : root.begin(root.bookId, -1)
         }
         ListView {
             id: reading; objectName: "readerText"

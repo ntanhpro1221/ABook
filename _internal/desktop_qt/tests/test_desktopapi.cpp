@@ -17,9 +17,12 @@
 #include <QQmlEngine>
 #include <QTcpServer>
 #include <QTcpSocket>
+#include <QPointer>
 #include <QTimer>
 #include <QJsonDocument>
 #include <QSignalSpy>
+
+#include <functional>
 
 namespace { Backend::Endpoint testEndpoint; }
 Backend::Endpoint Backend::endpoint() { return testEndpoint; }
@@ -34,12 +37,14 @@ class DesktopApiTests : public QObject {
     bool hold = false;
     int holdFirst = 0;     // the first N requests get no answer (a silent host), later ones the answer
     int requests = 0;      // requests the host received in full
-    int dripMs = 0;        // > 0: the answer goes out a few bytes at a time, one piece every dripMs
+    bool drip = false;     // the answer's head at once, then its body 8 bytes per nextPiece() - the test paces it, no timer
+    std::function<bool()> nextPiece;    // drip: sends the next piece of the body; false once it was the last
     QQmlEngine engine;
     std::unique_ptr<QObject> owner;
     DesktopApi *api = nullptr;
     QJSValue done() { return engine.evaluate(QStringLiteral("(function(status, data) { result = {status:status,data:data}; })")); }
-    void clear() { received.clear(); requests = holdFirst = dripMs = 0; HostCall::s_idleOverrideMs = 0; engine.globalObject().setProperty(QStringLiteral("result"), QJSValue(QJSValue::NullValue)); }
+    void clear() { received.clear(); requests = holdFirst = 0; hold = drip = false; nextPiece = {};
+                 HostCall::s_idleOverrideMs = 0; HostCall::s_manualClock = false; HostCall::s_bytesHeard = 0; engine.globalObject().setProperty(QStringLiteral("result"), QJSValue(QJSValue::NullValue)); }
 private slots:
     void libraryPreservesHostFields() {
         LibraryModel library;
@@ -84,7 +89,7 @@ private slots:
                 ++requests;
                 if (hold || requests <= holdFirst) return;
                 const QByteArray reply = "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nConnection: close\r\nContent-Length: " + QByteArray::number(answer.size()) + "\r\n\r\n" + answer;
-                if (!dripMs) {
+                if (!drip) {
                     socket->write(reply);
                     socket->disconnectFromHost();
                     return;
@@ -93,13 +98,13 @@ private slots:
                 // (Qt reports no progress inside a half-received head, so HostCall's limit counts body bytes).
                 const qsizetype head = reply.indexOf("\r\n\r\n") + 4;
                 socket->write(reply.left(head));
-                auto *pieces = new QTimer(socket);
                 auto left = std::make_shared<QByteArray>(reply.mid(head));
-                connect(pieces, &QTimer::timeout, socket, [socket, pieces, left] {
-                    socket->write(left->left(8)); left->remove(0, 8);
-                    if (left->isEmpty()) { pieces->stop(); socket->disconnectFromHost(); }
-                });
-                pieces->start(dripMs);
+                nextPiece = [to = QPointer<QTcpSocket>(socket), left] {
+                    if (to) to->write(left->left(8));
+                    left->remove(0, 8);
+                    if (to && left->isEmpty()) to->disconnectFromHost();
+                    return !left->isEmpty();
+                };
             });
         });
         qmlRegisterType<DesktopApi>("ApiTest",1,0,"DesktopApi");
@@ -314,40 +319,66 @@ private slots:
         QFETCH(int, idle);
         QCOMPARE(HostWait::idleMs(path), idle);
     }
+    // HostCall's limit runs on the test's own clock (HostCall::s_manualClock), so every count below follows what the host
+    // did - stayed silent, kept sending - and never how busy the machine was: on the wall clock a stalled event loop let the
+    // limit fire ahead of the bytes that should have restarted it, and a request counted 2 where the cause said 1.
     void silentHostIsAskedOnceMoreThenTimesOut() {
-        clear(); hold = true; HostCall::s_idleOverrideMs = 150;
+        clear(); hold = true; HostCall::s_manualClock = true; HostCall::s_idleOverrideMs = 1000;
         api->request(QStringLiteral("POST"),QStringLiteral("/api/books/b1/voice/preview"),engine.evaluate(QStringLiteral("({voice:'v'})")),done());
-        QTRY_VERIFY_WITH_TIMEOUT(!engine.globalObject().property(QStringLiteral("result")).isNull(), 3000);
+        for (int attempt = 1; attempt <= HostWait::kAttempts; ++attempt) {
+            QTRY_COMPARE(requests, attempt);
+            QVERIFY(engine.globalObject().property(QStringLiteral("result")).isNull());
+            HostCall::advanceIdle(1000);
+        }
+        QTRY_VERIFY(!engine.globalObject().property(QStringLiteral("result")).isNull());
         QCOMPARE(engine.globalObject().property(QStringLiteral("result")).property(QStringLiteral("status")).toInt(), 0);
         QCOMPARE(requests, HostWait::kAttempts);
         hold = false;
     }
     void secondAttemptCarriesTheAnswer() {
-        clear(); holdFirst = 1; answer = "{\"url\":\"/media/readaloud/a.mp3\"}"; HostCall::s_idleOverrideMs = 150;
+        clear(); holdFirst = 1; answer = "{\"url\":\"/media/readaloud/a.mp3\"}"; HostCall::s_manualClock = true; HostCall::s_idleOverrideMs = 1000;
         api->request(QStringLiteral("POST"),QStringLiteral("/api/readaloud/clip"),engine.evaluate(QStringLiteral("({voice:'v',text:'t'})")),done());
-        QTRY_VERIFY_WITH_TIMEOUT(!engine.globalObject().property(QStringLiteral("result")).isNull(), 3000);
+        QTRY_COMPARE(requests, 1);
+        HostCall::advanceIdle(1000);
+        QTRY_VERIFY(!engine.globalObject().property(QStringLiteral("result")).isNull());
         const auto result = engine.globalObject().property(QStringLiteral("result"));
         QCOMPARE(result.property(QStringLiteral("status")).toInt(), 200);
         QCOMPARE(result.property(QStringLiteral("data")).property(QStringLiteral("url")).toString(), QStringLiteral("/media/readaloud/a.mp3"));
         QCOMPARE(requests, 2);
     }
     void slowAnswerThatKeepsComingIsNotCut() {
-        clear(); dripMs = 60; HostCall::s_idleOverrideMs = 250;
-        answer = "{\"text\":\"" + QByteArray(120, 'a') + "\"}";    // ~16 body pieces over ~1 s: 4x the limit in total, never silent for it
+        clear(); drip = true; HostCall::s_manualClock = true; HostCall::s_idleOverrideMs = 1000;
+        answer = "{\"text\":\"" + QByteArray(120, 'a') + "\"}";
         api->request(QStringLiteral("GET"),QStringLiteral("/api/listen/books/b1/chapters/1/text"),QJSValue(QJSValue::NullValue),done());
-        QTRY_VERIFY_WITH_TIMEOUT(!engine.globalObject().property(QStringLiteral("result")).isNull(), 6000);
+        QTRY_VERIFY(bool(nextPiece));
+        // 6/10 of the limit passes after each piece arrives: 16 pieces = ~10 limits of waiting in all, never one whole limit silent
+        int pieces = 0;
+        for (bool more = true; more; ) {
+            more = nextPiece();
+            if (!more) break;
+            ++pieces;
+            QTRY_COMPARE(HostCall::s_bytesHeard, qint64(8 * pieces));
+            HostCall::advanceIdle(600);
+        }
+        QVERIFY(pieces * 600 > 4 * 1000);
+        QTRY_VERIFY(!engine.globalObject().property(QStringLiteral("result")).isNull());
         const auto result = engine.globalObject().property(QStringLiteral("result"));
         QCOMPARE(result.property(QStringLiteral("status")).toInt(), 200);
         QCOMPARE(result.property(QStringLiteral("data")).property(QStringLiteral("text")).toString().size(), 120);
         QCOMPARE(requests, 1);
     }
     void hostNetReportsASilentHostAsTimeout() {
-        clear(); hold = true; HostCall::s_idleOverrideMs = 150;
+        clear(); hold = true; HostCall::s_manualClock = true; HostCall::s_idleOverrideMs = 1000;
         QNetworkAccessManager net;
         HostNet host(&net);
         int status = -1; QJsonObject body;
         host.request("POST", QStringLiteral("/api/readaloud/clip"), {{QStringLiteral("text"), QStringLiteral("t")}}, [&](int code, const QJsonObject &answer) { status = code; body = answer; });
-        QTRY_VERIFY_WITH_TIMEOUT(status >= 0, 3000);
+        for (int attempt = 1; attempt <= HostWait::kAttempts; ++attempt) {
+            QTRY_COMPARE(requests, attempt);
+            QCOMPARE(status, -1);
+            HostCall::advanceIdle(1000);
+        }
+        QTRY_VERIFY(status >= 0);
         QCOMPARE(status, 0);
         QCOMPARE(requests, HostWait::kAttempts);
         QCOMPARE(body.value(QStringLiteral("reason")).toString(), QStringLiteral("timeout"));    // SpeechOut: "Giọng đang chọn đang không dùng được."

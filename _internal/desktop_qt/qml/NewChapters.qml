@@ -72,8 +72,8 @@ Column {
             color: Theme.text2
             font.pixelSize: Theme.sizeBodySmall
             font.features: { "tnum": 1 }
-            text: root.scan ? "<font color=\"" + Theme.text + "\"><b>" + Studio.formatNumber(root.files.length) + " chương</b></font> · " +
-                              Logic.approx(root.scan.totals.words, root.scan.totals.estimated) + " chữ · khoảng " + Studio.formatLength(root.scan.totals.audioSeconds) : " "
+            text: root.scan ? "<font color=\"" + Theme.text + "\"><b>" + Studio.formatNumber(root.files.length) + " chương</b></font>&nbsp;· " +
+                              Logic.approx(root.scan.totals.words, root.scan.totals.estimated) + " chữ&nbsp;· khoảng " + Studio.formatLength(root.scan.totals.audioSeconds) : " "
         }
         Flow {
             id: buttons
@@ -136,14 +136,12 @@ Column {
                     value: root.form && root.form.draft.limit ? String(root.form.draft.limit) : "all"
                     onPicked: value => root.form.update({limit: value === "all" ? null : Number(value)})
                 }
-                Text {
+                FlowDetail {
                     objectName: "newLimitLater"
                     visible: Boolean(root.form) && Boolean(root.form.draft.limit) && root.form.later > 0
-                    height: 36
+                    height: Math.max(36, implicitHeight)
                     verticalAlignment: Text.AlignVCenter
-                    text: "· còn " + Studio.formatNumber(root.form ? root.form.later : 0) + " chương cho đợt sau"
-                    color: Theme.text2
-                    font.pixelSize: Theme.sizeBodySmall
+                    detail: "còn " + Studio.formatNumber(root.form ? root.form.later : 0) + " chương cho đợt sau"
                 }
             }
         }

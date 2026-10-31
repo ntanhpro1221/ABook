@@ -87,7 +87,7 @@ FocusScope {
             count: 4
             label: "Đang tải lượt duyệt"
         }
-        EditBookError {
+        InlineError {
             objectName: "precastError"
             width: parent.width
             open: root.failed
@@ -284,13 +284,7 @@ FocusScope {
                                     font.pixelSize: Theme.sizeBodySmall
                                     font.weight: 600
                                 }
-                                Text {
-                                    width: Math.min(implicitWidth, parent.width)
-                                    text: P.doubtLine(root.castCards.length)
-                                    color: Theme.text2
-                                    wrapMode: Text.Wrap
-                                    font.pixelSize: Theme.sizeBodySmall
-                                }
+                                FlowDetail { detail: P.doubtLine(root.castCards.length) }
                             }
                             Loader { width: parent.width; sourceComponent: cardsFor; onLoaded: item.items = Qt.binding(function() { return root.castCards }) }
                         }

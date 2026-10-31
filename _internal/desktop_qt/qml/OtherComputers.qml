@@ -94,7 +94,7 @@ Column {
         discovering = true
         Api.call("GET", "/api/computers/discover", null, function(result, error) {
             root.discovering = false
-            if (error) { root.say("Không tìm được"); return }
+            if (error) { root.say("Chưa tìm được"); return }
             root.found = result.found || []
         })
     }
@@ -156,7 +156,7 @@ Column {
         open: root.view === null && !root.loadFailed
         DevicesSkeleton { width: parent.width; count: 2; label: "Đang tải thiết bị" }
     }
-    DevicesError {
+    InlineError {
         width: parent.width
         open: root.view === null && root.loadFailed
         message: "Bạn hãy kiểm tra kết nối rồi tải lại thiết bị."
@@ -357,7 +357,7 @@ Column {
                                         kind: "ghost"
                                         icon: "bluetooth"
                                         wrap: true
-                                        text: modelData.name + " · " + Logic.deviceKindLabel(modelData.kind)
+                                        text: modelData.name + "\u00a0· " + Logic.deviceKindLabel(modelData.kind)
                                         onClicked: root.choose(modelData.address)
                                     }
                                 }

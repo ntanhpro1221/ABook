@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "../../qml/TextWrap.js" as TextWrap
 import "ModalLayer.js" as ModalLayer
 import "VisualReady.js" as VisualReady
 import ABook
@@ -148,7 +149,7 @@ Item {
             const chip = findChild(scene(), "recordChip")
             verify(chip.visible)
             compare(chip.Accessible.name, "Hồ sơ nghe: Lần nghe 1")
-            compare(findChild(scene(), "recordChipName").text, "Lần nghe 1")
+            compare(findChild(scene(), "recordChipName").text, TextWrap.pretty("Lần nghe 1"))      // tên vẽ qua text-wrap: pretty (TextWrap.js)
             openMore()
             verify(findChild(scene(), "recordRow.create") === null || !findChild(scene(), "recordRow.create").visible)
             verify(findChild(scene(), "recordRow.delete") === null || !findChild(scene(), "recordRow.delete").visible)
@@ -159,7 +160,7 @@ Item {
             compare(choices.length, 2)
             compare(choices[0].Accessible.name, "Lần nghe 1")
             verify(choices[0].Accessible.checked && !choices[1].Accessible.checked)
-            verify(all(choices[0], "recordChoiceLine")[0].text.indexOf("Chương 2 · 1:15 · nghe gần nhất ") === 0)
+            verify(all(choices[0], "recordChoiceLine")[0].text.indexOf("Chương 2\u00a0· 1:15\u00a0· nghe gần nhất ") === 0)
             compare(all(choices[1], "recordChoiceLine")[0].text, "chưa nghe")
             compare(findChild(scene(), "recordAction.create").text, "Hồ sơ mới")
             compare(findChild(scene(), "recordAction.rename").text, "Đổi tên hồ sơ này…")

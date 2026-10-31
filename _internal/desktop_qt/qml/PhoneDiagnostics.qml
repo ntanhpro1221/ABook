@@ -72,7 +72,7 @@ Modal {
         open: root.loading && !root.report
         DevicesSkeleton { width: parent.width; count: 2; label: "Đang tải chẩn đoán" }
     }
-    DevicesError {
+    InlineError {
         width: parent.width
         open: Boolean(root.failure)
         message: root.failure ? root.failure.title + " " + (root.failure.help || "Bạn hãy thử tải lại chẩn đoán.") : ""

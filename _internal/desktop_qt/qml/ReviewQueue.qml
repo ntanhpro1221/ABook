@@ -204,7 +204,7 @@ Item {
             count: 4
             label: "Đang tải câu nghe"
         }
-        EditBookError {
+        InlineError {
             objectName: "reviewError"
             width: parent.width
             open: first.error !== null && root.view === null
@@ -263,7 +263,7 @@ Item {
                         spacing: 6
                         Text { anchors.verticalCenter: parent.verticalCenter; text: "Đang nghe liền:"; color: Theme.text3; font.pixelSize: Theme.sizeCaption }
                         LookKbd { anchors.verticalCenter: parent.verticalCenter; text: "O" }
-                        Text { anchors.verticalCenter: parent.verticalCenter; text: "Ổn ·"; color: Theme.text3; font.pixelSize: Theme.sizeCaption }
+                        Text { anchors.verticalCenter: parent.verticalCenter; text: "Ổn\u00a0·"; color: Theme.text3; font.pixelSize: Theme.sizeCaption }
                         LookKbd { anchors.verticalCenter: parent.verticalCenter; text: "R" }
                         Text { anchors.verticalCenter: parent.verticalCenter; text: "Cần thu lại - rồi sang câu kế"; color: Theme.text3; font.pixelSize: Theme.sizeCaption }
                     }

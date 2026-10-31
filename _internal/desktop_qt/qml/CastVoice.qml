@@ -29,7 +29,7 @@ CastModal {
     readonly property var groups: choices ? Logic.groupByEngine(Logic.byGender(choices.voices, shownGender)) : []
     readonly property var labels: Logic.groupLabels(groups)
     title: "Giọng của " + (person ? person.displayName : "")
-    description: choices ? Logic.formatNumber(choices.character.lines) + " câu ở " + choices.character.chapters + " chương · đang đọc bằng " + (choices.current || "chưa có giọng") : ""
+    description: choices ? Logic.formatNumber(choices.character.lines) + " câu ở " + choices.character.chapters + " chương\u00a0· đang đọc bằng " + (choices.current || "chưa có giọng") : ""
     keepOpen: function() { if (root.crossing) { root.crossing = null; return true } return false }
     onClosed: { Clip.stop(); voiceTry.reset() }
     VoiceTry { id: voiceTry; store: root.store; bookId: root.bookId }
@@ -123,22 +123,12 @@ CastModal {
             }
         }
         // Không hỏi được danh sách giọng
-        Collapse {
+        InlineError {
+            objectName: "voiceFailed"
             width: parent.width
             open: root.status === "failed"
-            Column {
-                width: parent.width
-                spacing: 8
-                Text {
-                    objectName: "voiceFailed"
-                    width: parent.width
-                    text: "Bạn hãy kiểm tra kết nối rồi tải lại danh sách giọng."
-                    color: Theme.text2
-                    wrapMode: Text.Wrap
-                    font.pixelSize: Theme.sizeBodySmall
-                }
-                Button { objectName: "voiceRetry"; text: "Thử lại"; icon: "rotate-cw"; size: "sm"; kind: "ghost"; onClicked: { root.status = "loading"; root.load(false) } }
-            }
+            message: "Bạn hãy kiểm tra kết nối rồi tải lại danh sách giọng."
+            onRetry: { root.status = "loading"; root.load(false) }
         }
         Collapse {
             width: parent.width

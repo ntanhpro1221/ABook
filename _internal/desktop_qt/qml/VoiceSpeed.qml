@@ -2,6 +2,7 @@ import QtQuick
 import ABook
 import "SizeFormat.js" as Size
 import "VoiceLogic.js" as VoiceLogic
+import "TextWrap.js" as TextWrap
 
 // Mục "Hiệu năng" (VoiceSpeedSetting.tsx): "Tốc độ đọc" Tự động / Chất lượng cao nhất / Nhanh hơn, một lựa chọn cho cả máy; dưới đó mỗi giọng có hai bậc (Supertonic)
 // nói đang dùng bậc nào và vì sao. Muốn bậc nhanh mà chưa có bản nhanh hơn: nút tải kèm cỡ (tải qua thẻ Supertonic nên tiến độ hiện ở thẻ ấy).
@@ -76,7 +77,7 @@ VoiceFold {
                         id: sentence
                         width: line.wants ? parent.width - download.width - 12 : parent.width
                         anchors.verticalCenter: parent.verticalCenter
-                        text: VoiceLogic.speedLine(line.voice, root.status.choice)
+                        text: TextWrap.pretty(VoiceLogic.speedLine(line.voice, root.status.choice))
                         color: Theme.text
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                         font.pixelSize: 13

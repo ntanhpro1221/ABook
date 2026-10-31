@@ -32,7 +32,7 @@ function formatFingerprint(value) {
 
 // Thoát ký tự cho chữ rich text (tên máy, địa chỉ do người dùng / máy kia đặt)
 function esc(text) {
-    return String(text === undefined || text === null ? "" : text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    return String(text === undefined || text === null ? "" : text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\u00a0/g, "&nbsp;")
 }
 
 // ---- Địa chỉ của máy này (Where của PhoneSync.tsx): trong nhà và khi ở ngoài (mạng riêng ảo), chữ đậm vừa. Trả về HTML. ----
@@ -79,7 +79,7 @@ function wakingLine(computer, nowSeconds) {
     const what = computer.kind === "computer"
         ? "Máy kia chưa trả lời - mở ABook trên máy ấy"
         : "Điện thoại đang ngủ - mở ABook trên điện thoại để trả lời ngay"
-    return what + " · chờ thêm tối đa " + rest
+    return what + "\u00a0· chờ thêm tối đa " + rest
 }
 
 // ---- Bỏ ghép (shared/unpair.ts) ----
@@ -148,7 +148,7 @@ function workProgressRows(report) {
         const title = (job.tags || []).map(tag => kinds[tag]).find(Boolean) || "Việc nền"
         rows.push({label: "Việc " + (index + 1), value: [title, states[job.state] || "chưa rõ trạng thái",
             done !== undefined && total !== undefined ? done + "/" + total : done !== undefined ? "đã làm " + done : total !== undefined ? "tổng " + total : "",
-            phase ? "Pha: " + (phases[phase] || phase) : ""].filter(Boolean).join(" · ")})
+            phase ? "Pha: " + (phases[phase] || phase) : ""].filter(Boolean).join("\u00a0· ")})
     })
     return rows
 }
@@ -174,25 +174,25 @@ function summaryRows(report) {
     }
     add("Bản ABook", report.app, function() {
         const app = report.app
-        return [(app.versionName === undefined ? "?" : app.versionName) + (app.versionCode !== undefined ? " (" + app.versionCode + ")" : ""), app.debug ? "bản thử" : ""].filter(Boolean).join(" · ")
+        return [(app.versionName === undefined ? "?" : app.versionName) + (app.versionCode !== undefined ? " (" + app.versionCode + ")" : ""), app.debug ? "bản thử" : ""].filter(Boolean).join("\u00a0· ")
     })
     add("Điện thoại", report.device, function() {
         const device = report.device
-        return [device.manufacturer, device.model].filter(Boolean).join(" ") + " · Android " + (device.release === undefined ? "?" : device.release) + (device.sdk ? " (API " + device.sdk + ")" : "")
+        return [device.manufacturer, device.model].filter(Boolean).join(" ") + "\u00a0· Android " + (device.release === undefined ? "?" : device.release) + (device.sdk ? " (API " + device.sdk + ")" : "")
     })
     add("Giờ trên máy", report.time, function() {
         const time = report.time
-        return time.epochMillis ? when(time.epochMillis) + (time.timezone ? " · " + time.timezone : "") : null
+        return time.epochMillis ? when(time.epochMillis) + (time.timezone ? "\u00a0· " + time.timezone : "") : null
     })
     add("Pin", report.battery, function() {
         const battery = report.battery
-        return (typeof battery.percent === "number" ? battery.percent + "%" : "không rõ") + (battery.charging ? " · đang sạc" : "")
+        return (typeof battery.percent === "number" ? battery.percent + "%" : "không rõ") + (battery.charging ? "\u00a0· đang sạc" : "")
     })
     add("Mạng", report.network, function() {
         const net = report.network
         if (!net.connected) return "chưa có mạng"
         const ways = [net.wifi && "Wi-Fi", net.cellular && "di động", net.vpn && "VPN", net.ethernet && "dây mạng", net.bluetooth && "Bluetooth"].filter(Boolean)
-        return [ways.join(" + ") || "có mạng", net.validated ? "" : "chưa ra được Internet", net.metered ? "tính cước" : ""].filter(Boolean).join(" · ")
+        return [ways.join(" + ") || "có mạng", net.validated ? "" : "chưa ra được Internet", net.metered ? "tính cước" : ""].filter(Boolean).join("\u00a0· ")
     })
     add("Chỗ trống", report.storage, function() {
         const storage = report.storage
@@ -201,34 +201,34 @@ function summaryRows(report) {
     add("Thông báo", report.notifications, function() { return report.notifications.enabled ? "đang bật" : "đang tắt" })
     add("Chạy nền", report.power, function() {
         const power = report.power
-        return ["miễn tối ưu pin: " + yes(power.ignoringBatteryOptimizations), power.backgroundRestricted ? "bị hạn chế chạy nền" : "", power.powerSave ? "đang tiết kiệm pin" : ""].filter(Boolean).join(" · ")
+        return ["miễn tối ưu pin: " + yes(power.ignoringBatteryOptimizations), power.backgroundRestricted ? "bị hạn chế chạy nền" : "", power.powerSave ? "đang tiết kiệm pin" : ""].filter(Boolean).join("\u00a0· ")
     })
     add("Đang nghe", report.playback, function() {
         const playback = report.playback
         if (!playback.bookTitle) return "chưa mở cuốn nào"
-        const place = typeof playback.position === "number" ? " · " + Math.floor(playback.position / 60) + " phút " + Math.floor(playback.position % 60) + " giây" : ""
-        return playback.bookTitle + (playback.chapterId !== undefined ? " · chương " + playback.chapterId : "") + place + " · " + (playback.playing ? "đang phát" : "tạm dừng") + (playback.error && String(playback.error).trim() ? " · có lỗi phát" : "")
+        const place = typeof playback.position === "number" ? "\u00a0· " + Math.floor(playback.position / 60) + " phút " + Math.floor(playback.position % 60) + " giây" : ""
+        return playback.bookTitle + (playback.chapterId !== undefined ? "\u00a0· chương " + playback.chapterId : "") + place + "\u00a0· " + (playback.playing ? "đang phát" : "tạm dừng") + (playback.error && String(playback.error).trim() ? "\u00a0· có lỗi phát" : "")
     })
     add("Việc nền", report.work, function() {
         const work = Array.isArray(report.work) ? report.work : []
         if (!work.length) return "không có việc nào"
         const count = state => work.filter(job => job.state === state).length
-        return [count("RUNNING") + " đang chạy", count("ENQUEUED") + " đang chờ", count("FAILED") ? count("FAILED") + " hỏng" : "", count("CANCELLED") ? count("CANCELLED") + " đã dừng" : ""].filter(Boolean).join(" · ")
+        return [count("RUNNING") + " đang chạy", count("ENQUEUED") + " đang chờ", count("FAILED") ? count("FAILED") + " hỏng" : "", count("CANCELLED") ? count("CANCELLED") + " đã dừng" : ""].filter(Boolean).join("\u00a0· ")
     })
     add("Cho máy khác nghe thư viện", report.share, function() {
         const share = report.share
-        return share.running ? "đang bật · " + (share.pairedDevices || 0) + " máy đã ghép" : "đang tắt" + (share.lastError ? " (" + share.lastError + ")" : "")
+        return share.running ? "đang bật\u00a0· " + (share.pairedDevices || 0) + " máy đã ghép" : "đang tắt" + (share.lastError ? " (" + share.lastError + ")" : "")
     })
     add("Lần tắt gần nhất", report.exitReasons, function() {
         const last = Array.isArray(report.exitReasons) ? report.exitReasons[0] : undefined
-        return last ? last.reason + (last.timestamp ? " · " + when(last.timestamp) : "") : null
+        return last ? last.reason + (last.timestamp ? "\u00a0· " + when(last.timestamp) : "") : null
     })
     add("Lần văng", report.crashes, function() { return Array.isArray(report.crashes) && report.crashes.length ? report.crashes.length + " lần được ghi lại" : null })
     add("Phục hồi dữ liệu", report.dataRecovery, function() {
         const recovery = report.dataRecovery
         const kinds = {recovered: "đã giữ bản cũ", "saving-blocked": "đang chặn lưu", "notice-read-error": "chưa đọc được cảnh báo", warning: "cảnh báo"}
         const notes = (recovery.notices || []).map(notice =>
-            [kinds[notice.kind || ""] || "cảnh báo", notice.at ? when(notice.at) : "", notice.preservedFile, notice.pending ? "chưa lưu cảnh báo" : ""].filter(Boolean).join(" · "))
+            [kinds[notice.kind || ""] || "cảnh báo", notice.at ? when(notice.at) : "", notice.preservedFile, notice.pending ? "chưa lưu cảnh báo" : ""].filter(Boolean).join("\u00a0· "))
         return [recovery.savingBlocked ? "App đang chặn lưu để giữ dữ liệu của bạn" : ""].concat(notes).filter(Boolean).join("; ") || "chưa có cảnh báo"
     })
     return rows

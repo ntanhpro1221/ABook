@@ -88,7 +88,7 @@ Item {
             Text {
                 objectName: "barChapterTitle"
                 width: parent.width
-                text: [Player.chapterTitle, Player.chapterSubtitle].filter(s => s !== "").join(" · ")
+                text: [Player.chapterTitle, Player.chapterSubtitle].filter(s => s !== "").join("\u00a0· ")
                 color: Theme.text
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeBodySmall

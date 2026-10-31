@@ -61,7 +61,7 @@ Column {
         open: root.loading
         EditBookSkeleton { width: parent.width; label: "Đang tải nhạc nền" }
     }
-    EditBookError {
+    InlineError {
         width: parent.width
         open: root.failed && !root.loading
         message: "Bạn hãy thử tải lại nhạc nền của cuốn này."
@@ -164,8 +164,8 @@ Column {
                                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                         font.pixelSize: Theme.sizeCaption
                                         font.features: {"tnum": 1}
-                                        text: cue.modelData.chapter + " · " + Logic.formatClock(cue.modelData.start) + " – " + Logic.formatClock(cue.modelData.end)
-                                              + (cue.modelData.creator ? " · " + cue.modelData.creator : "") + (cue.modelData.pinned ? " · bài của bạn" : "")
+                                        text: cue.modelData.chapter + "\u00a0· " + Logic.formatClock(cue.modelData.start) + " – " + Logic.formatClock(cue.modelData.end)
+                                              + (cue.modelData.creator ? "\u00a0· " + cue.modelData.creator : "") + (cue.modelData.pinned ? "\u00a0· bài của bạn" : "")
                                     }
                                 }
                                 Row {

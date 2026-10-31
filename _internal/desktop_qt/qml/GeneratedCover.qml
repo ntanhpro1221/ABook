@@ -1,5 +1,6 @@
 import QtQuick
 import ABook
+import "TextWrap.js" as TextWrap
 
 // Bìa vẽ từ tên khi sách chưa có ảnh: cặp màu cố định băm từ tên (cùng tên, cùng bìa), như ui/src/shared/cover.ts.
 // Bảng màu lấy từ Theme.coverPalettes (sinh từ cover.ts); phần băm và tách "Tập N" là bản QML của coverStyle / splitTitle.
@@ -38,7 +39,7 @@ Rectangle {
         width: root.width - 2 * pad
         height: root.height - 2 * pad - (tagBox.visible ? tagBox.height + 8 : 0)
         verticalAlignment: Text.AlignTop
-        text: root.parts[0]
+        text: TextWrap.pretty(root.parts[0])
         color: "#ffffff"
         wrapMode: Text.Wrap
         fontSizeMode: Text.Fit

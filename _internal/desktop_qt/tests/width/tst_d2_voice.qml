@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "../../qml/TextWrap.js" as TextWrap
 import "VisualReady.js" as VisualReady
 import ABook
 
@@ -134,7 +135,7 @@ Item {
             return all.length ? all[0] : null
         }
         // chữ đang THẤY được (Collapse khép / khối ẩn thì không tính)
-        function hasText(item, value) { return findAll(item, node => typeof node.text === "string" && node.text === value && node.visible).length > 0 }
+        function hasText(item, value) { return findAll(item, node => typeof node.text === "string" && (node.text === value || node.text === TextWrap.pretty(value)) && node.visible).length > 0 }    // chữ vẽ qua text-wrap: pretty (TextWrap.js)
         function overlay(name) { return find(host.Window.window.contentItem, name) }
         function row(page, id) { const found = findAll(page, node => node.voiceId === id); verify(found.length > 0, "no row " + id); return found[0] }
         function last(method, path) {
@@ -171,10 +172,10 @@ Item {
             // chưa chọn mà máy có giọng VieNeu: giọng kể chuyện trung tính của VieNeu, không phải Edge
             compare(find(page, "voiceCurrent").text, "Đang dùng: Phạm Tuyên (VieNeu Turbo)")
             for (const text of ["Edge", "Azure Speech", "VieNeu", "Giọng của máy", "Bộ giọng", "Hiệu năng", "Khoá trực tuyến"]) verify(textItem(page, text) !== null, "thiếu " + text)
-            verify(hasText(page, "trực tuyến, miễn phí · 2 giọng"))
-            verify(hasText(page, "dùng khoá của bạn · 1 giọng"))
-            verify(hasText(page, "trên máy này, không cần mạng · 4 giọng · đang dùng"))
-            verify(hasText(page, "không cần mạng · 1 giọng"))
+            verify(hasText(page, "trực tuyến, miễn phí\u00a0· 2 giọng"))
+            verify(hasText(page, "dùng khoá của bạn\u00a0· 1 giọng"))
+            verify(hasText(page, "trên máy này, không cần mạng\u00a0· 4 giọng\u00a0· đang dùng"))
+            verify(hasText(page, "không cần mạng\u00a0· 1 giọng"))
             verify(hasText(page, "Giọng Edge gửi chữ của sách tới máy chủ Microsoft để đọc."))
             verify(hasText(page, "Giọng Azure Speech gửi chữ của sách tới Azure Speech bằng khoá của bạn - có thể bị tính tiền vào tài khoản của bạn."))
             verify(!hasText(page, "Cài giọng tiếng Việt tại Cài đặt Windows › Thời gian và ngôn ngữ › Giọng nói."))
@@ -187,7 +188,7 @@ Item {
             openAll()
             const page = make()
             verify(hasText(page, "Cài giọng tiếng Việt tại Cài đặt Windows › Thời gian và ngôn ngữ › Giọng nói."))
-            verify(hasText(page, "không cần mạng · 0 giọng"))
+            verify(hasText(page, "không cần mạng\u00a0· 0 giọng"))
         }
 
         function test_choosingDefaultVoice() {
@@ -201,7 +202,7 @@ Item {
             tryVerify(function() { return (last("PUT", "/api/preferences").body.readAloudVoice) === ("edge:vi-VN-NamMinhNeural") })
             tryVerify(function() { return target.selected })
             tryVerify(function() { return (find(page, "voiceCurrent").text) === ("Đang dùng: Nam Minh (Edge)") })
-            tryVerify(function() { return hasText(page, "trực tuyến, miễn phí · 2 giọng · đang dùng") })
+            tryVerify(function() { return hasText(page, "trực tuyến, miễn phí\u00a0· 2 giọng\u00a0· đang dùng") })
             tryCompare(Api, "voiceName", "Nam Minh")
             // chỉ giọng được chọn có "Mặc định"
             compare(findAll(page, node => node.text === "Mặc định" && node.visible).length, 1)
@@ -277,7 +278,7 @@ Item {
             // đã có khoá: gập mở sẵn; chưa có: gập
             compare(azure.open, true)
             compare(google.open, false)
-            verify(hasText(azure, "Dùng được · 3 giọng"))
+            verify(hasText(azure, "Dùng được\u00a0· 3 giọng"))
             verify(hasText(azure, "Miễn phí 500.000 ký tự mỗi tháng. Tô đúng từng chữ đang đọc."))
             // Lưu bị khoá khi chưa gõ gì
             const save = find(azure, "keySave")
@@ -299,7 +300,7 @@ Item {
             find(azure, "keyCheck").activated()
             tryVerify(function() { return (DesktopApi.requests.filter(r => r.method === "PUT").length) === (0) })
             tryVerify(function() { return last("POST", "/api/readaloud/online/azure/check") !== null })
-            tryVerify(function() { return (find(azure, "keyResult").text) === ("Dùng được · 3 giọng tiếng Việt") })
+            tryVerify(function() { return (find(azure, "keyResult").text) === ("Dùng được\u00a0· 3 giọng tiếng Việt") })
             // khoá bị từ chối: lời của dịch vụ
             DesktopApi.responses["POST /api/readaloud/online/azure/check"] = {status: 200, data: {ok: false, message: "Khoá bị từ chối.", provider: {voices: 0}}}
             find(azure, "keyCheck").activated()
@@ -354,7 +355,7 @@ Item {
             verify(hasText(card, "Đang tải giọng Supertonic (217 MB) 52%"))
             verify(find(card, "moduleBar").width > 0)
             // tóm tắt ở đầu "Bộ giọng"
-            verify(hasText(page, "Supertonic · 52%"))
+            verify(hasText(page, "Supertonic\u00a0· 52%"))
             // cỡ mỗi lựa chọn đứng yên, % không lùi
             const bar = find(card, "moduleBar").width
             supertonic = Object.assign({}, supertonic, {done: 60000000})
@@ -474,7 +475,7 @@ Item {
             openAll()
             const page = make()
             verify(find(page, "voiceLoadError") !== null)
-            compare(find(page, "voiceLoadError").text, "Bạn hãy kiểm tra kết nối rồi tải lại giọng đọc.")
+            compare(find(page, "voiceLoadError").message, "Bạn hãy kiểm tra kết nối rồi tải lại giọng đọc.")
             DesktopApi.responses["GET /api/readaloud/voices"] = function() { return {status: 200, data: host.voices} }
             click(textItem(page, "Thử lại"))
             tryCompare(page, "loadError", "")

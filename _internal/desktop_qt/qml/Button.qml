@@ -21,6 +21,10 @@ Interactive {
     readonly property bool showsIcon: icon !== "" || busy
     readonly property real iconBox: showsIcon ? 16 + (size === "sm" ? 6 : 8) : 0
     readonly property color ink: primary ? Theme.accentInk : danger ? Theme.danger : Theme.accentText
+    // `wrap`: dòng cao 1,25 mà Qt dồn phần dư xuống DƯỚI chữ - chữ nổi cao hơn tâm nút 1/8 dòng. Hạ khối chữ đúng phần ấy (leading-[1.25]
+    // của web chia đều hai bên), icon đứng giữa dòng đầu khi chữ gãy nhiều dòng (máy dò IconText).
+    readonly property real slot: label.implicitHeight / Math.max(1, label.lineCount)
+    readonly property real halfLeading: wrap ? slot * 0.1 : 0
     signal activated()
 
     Accessible.role: Accessible.Button
@@ -28,6 +32,9 @@ Interactive {
     implicitHeight: Math.max(Theme.buttonHeight, label.implicitHeight + 8)
     implicitWidth: label.implicitWidth + iconBox + 2 * pad
     opacity: enabled && !busy ? 1 : 0.45
+    // Mờ như MỘT nhóm như opacity của CSS (disabled:opacity-45): mờ từng lớp thì chữ 45% chồng lên nền 45% thành chữ nâu nhạt trên khối
+    // nâu (Lead soát 0.4.151 lượt 2, "Lưu tên" tối); dựng nhóm vào một lớp rồi mới mờ - chữ vẫn đậm trên nền như web
+    layer.enabled: opacity < 1
     Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
     onClicked: if (!busy) root.activated()
 
@@ -51,7 +58,7 @@ Interactive {
         x: Math.max(root.pad, (root.width - root.implicitWidth) / 2 + root.pad)
         width: 16
         height: 16
-        anchors.verticalCenter: parent.verticalCenter
+        y: root.wrap && label.lineCount > 1 ? label.y + root.slot / 2.5 - height / 2 : (root.height - height) / 2
         Icon {
             anchors.centerIn: parent
             visible: !root.busy
@@ -73,6 +80,7 @@ Interactive {
         x: root.showsIcon ? lead.x + root.iconBox : Math.max(root.pad, (root.width - implicitWidth) / 2)
         width: Math.min(implicitWidth, root.width - x - root.pad)
         anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenterOffset: root.halfLeading
         text: root.text
         color: root.ink
         wrapMode: root.wrap ? Text.WrapAtWordBoundaryOrAnywhere : Text.NoWrap

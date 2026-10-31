@@ -11,7 +11,7 @@ Collapse {
     Item {
         width: root.width
         height: line.height + 8
-        Icon { x: 0; y: 2; name: "check"; size: 14; color: Theme.success }
+        LineIcon { line: line; name: "check"; size: 14; color: Theme.success }
         Text {
             id: line
             objectName: "workRequested"

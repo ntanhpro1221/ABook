@@ -153,7 +153,10 @@ Item {
                                     Behavior on color { ColorAnimation { duration: Theme.motionFast } }
                                 }
                                 Icon {
-                                    readonly property rect end: titleText.positionToRectangle(titleText.length)
+                                    // đọc width + contentWidth/Height để binding tính lại khi chữ gãy dòng theo bề rộng mới (chỉ length thì bút ở chỗ cũ,
+                                    // đè lên dòng dưới - Lead soát 0.4.151, máy dò IconText)
+                                    readonly property rect end: titleText.width + titleText.contentWidth + titleText.contentHeight >= 0
+                                                                ? titleText.positionToRectangle(titleText.length) : Qt.rect(0, 0, 0, 0)
                                     visible: root.inside(row.y + 8 + end.y, 14)
                                     x: end.x + 6
                                     y: end.y + (end.height - 12) / 2 + 1

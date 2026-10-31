@@ -1,5 +1,6 @@
 import QtQuick
 import ABook
+import "TextWrap.js" as TextWrap
 
 // Hộp thoại giữa màn (DESIGN 6: thường <= 560; Thêm / Sửa sách theo khổ ở 5.5): nền --panel, viền --line, bo 20, đệm 24,
 // bóng lớp nổi. Đầu hộp: tên 18 đậm + mô tả 14 mực phụ, nút ✕ ("Đóng") ở góc. Thân cuộn trong hộp khi cao hơn cửa sổ (mép còn nội dung thì
@@ -76,9 +77,7 @@ WindowLayer {
         scale: Theme.reduceMotion ? 1 : 0.96 + 0.04 * root.shown
         opacity: root.shown
 
-        // Bóng lớp nổi (DESIGN 5.5) như Popover
-        Rectangle { anchors.fill: parent; anchors.margins: -12; radius: Theme.radiusSheet + 12; color: "#000000"; opacity: 0.05 }
-        Rectangle { anchors.fill: parent; anchors.margins: -4; anchors.topMargin: -2; anchors.bottomMargin: -8; radius: Theme.radiusSheet + 4; color: "#000000"; opacity: 0.08 }
+        Shadow { radius: Theme.radiusSheet }      // bóng chung của lớp nổi (DESIGN 5.5)
         Rectangle { anchors.fill: parent; radius: Theme.radiusSheet; color: Theme.panel; border.width: 1; border.color: Theme.line }
         MouseArea { anchors.fill: parent }      // bấm trong hộp không đóng
 
@@ -88,7 +87,7 @@ WindowLayer {
             y: 24
             width: Math.min(640, panel.width - 48 - 44 - 16 + 17)     // chừa nút ✕ (mực ✕ thẳng mép nội dung bên phải)
             spacing: 4
-            Text { width: parent.width; text: root.title; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeSection; font.weight: Theme.weightBold }
+            Text { width: parent.width; text: TextWrap.pretty(root.title); color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeSection; font.weight: Theme.weightBold }
             Text { width: parent.width; text: root.description; visible: text !== ""; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
         }
         IconButton {

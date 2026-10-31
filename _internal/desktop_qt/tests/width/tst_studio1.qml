@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "../../qml/TextWrap.js" as TextWrap
 import "ModalLayer.js" as ModalLayer
 import "VisualReady.js" as VisualReady
 import ABook
@@ -30,8 +31,9 @@ Item {
         function one(item, name) { const found = all(item, name); verify(found.length > 0, "thiếu " + name); return found.filter(shown)[0] || found[0] }
         function shown(item) { for (let node = item; node; node = node.parent) if (!node.visible || node.opacity === 0) return false; return true }
         function texts(item) { return ModalLayer.collect(item, node => node.text !== undefined && shown(node)).map(node => String(node.text)) }
-        function hasText(item, value) { return texts(item).indexOf(value) >= 0 }
-        function hasPart(item, part) { return texts(item).some(t => t.indexOf(part) >= 0) }
+        function hasText(item, value) { const all = texts(item); return all.indexOf(value) >= 0 || all.indexOf(TextWrap.pretty(value)) >= 0 }    // chữ vẽ qua text-wrap: pretty (TextWrap.js)
+        function plain(text) { return String(text).replace(/\u00a0/g, " ") }
+        function hasPart(item, part) { return texts(item).some(t => plain(t).indexOf(plain(part)) >= 0) }    // NBSP của text-wrap: pretty = dấu cách
         function shot(name, item) {
             const target = item || host
             VisualReady.render(this, host.Window.window, target, qtVisualReady)
@@ -132,14 +134,14 @@ Item {
             const live = book("live", {title: "Đang chạy", phase: "synthesis", statusLabel: "Đang thu âm", running: true, canPause: true, progress: {overall: 0.4, analysis: 1, synthesis: 0.4},
                                        chapters: {total: 10, completed: 4, redo: 0, missingAudio: 0, failed: 0, working: 1}})
             const needs = book("needs", {title: "Còn việc", pendingChanges: 2, chapters: {total: 3, completed: 3, redo: 0, missingAudio: 1, failed: 0, working: 0}})
-            const volumeOne = book("v1", {title: "Lò rèn · Tập 1"})
-            const volumeTwo = book("v2", {title: "Lò rèn · Tập 2"})
+            const volumeOne = book("v1", {title: "Lò rèn\u00a0· Tập 1"})
+            const volumeTwo = book("v2", {title: "Lò rèn\u00a0· Tập 2"})
             reply("GET /api/library", library([old, needs, volumeOne, volumeTwo, live]))
             const page = makeStudio(1280)
             listed(page, 5)
             // đang chạy lên đầu, rồi theo thứ tự máy chủ; cuốn nhiều phần gom dưới một dòng tên
             compare(keys(page), ["book:live", "book:old", "book:needs", "series:Lò rèn", "book:v1", "book:v2"])
-            compare(one(page, "groupHead").text, "Lò rèn · 2 tập")
+            compare(one(page, "groupHead").text, "Lò rèn\u00a0· 2 tập")
             verify(hasText(page, "5 dự án"))
             verify(shown(one(page, "newProject")))
             compare(one(page, "newProject").text, "Dự án mới")

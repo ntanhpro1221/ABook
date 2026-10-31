@@ -1,5 +1,6 @@
 import QtQuick
 import ABook
+import "TextWrap.js" as TextWrap
 
 // Một đoạn chữ ngắn của thẻ giọng (p text-[0.8125rem] text-fg-2 text-pretty): hiện khi `text` không rỗng, mở / khép theo chiều cao; giữ chữ cũ
 // trong lúc khép. Không bao giờ cắt chữ.
@@ -15,7 +16,7 @@ VoiceBlock {
     onTextChanged: if (text !== "") shown = text
     Text {
         width: parent.width
-        text: root.shown
+        text: TextWrap.pretty(root.shown)
         color: root.ink
         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
         font.pixelSize: root.px

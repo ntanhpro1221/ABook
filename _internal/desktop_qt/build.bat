@@ -55,6 +55,12 @@ rem QtWidgets stays out of dist: the tray is plain Win32 (src\trayicon.cpp), no 
 "%ABOOK_PYTHON%" -X utf8 "%HERE%tools\check_dist_deps.py" selftest
 if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
+rem Python rules over the Qt sources (copy rules, parity with web/phone, layout lints, fixed waits, icon, imports):
+rem 31-10 a reversed parity edit (four labels) passed every Qt test because only pytest knew the copy rule.
+rem Keep this file ASCII: cmd re-reads it by offset after call, and a UTF-8 letter shifts it (tests\test_qt_bat_ascii.py)
+"%ABOOK_PYTHON%" -X utf8 "%HERE%tools\qt_pytests.py"
+if errorlevel 1 exit /b 1
+if not errorlevel 0 exit /b 1
 rem Owner rule 30-10: self-changing values (clock, countdown, %, ETA) change in place with tabular digits
 "%ABOOK_PYTHON%" -X utf8 "%HERE%tools\check_ticks.py"
 if errorlevel 1 exit /b 1

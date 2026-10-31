@@ -105,7 +105,7 @@ FocusScope {
             count: 4
             label: "Đang tải việc duyệt"
         }
-        EditBookError {
+        InlineError {
             objectName: "workError"
             width: parent.width
             open: root.query !== null && root.query.error !== null && root.query.data === null
@@ -185,9 +185,9 @@ FocusScope {
                 spacing: 6
                 LookKbd { text: "J" }
                 LookKbd { text: "K" }
-                Text { height: 20; verticalAlignment: Text.AlignVCenter; text: "chọn thẻ ·"; color: Theme.text3; font.pixelSize: Theme.sizeCaption }
+                Text { height: 20; verticalAlignment: Text.AlignVCenter; text: "chọn thẻ\u00a0·"; color: Theme.text3; font.pixelSize: Theme.sizeCaption }
                 LookKbd { text: "1–9" }
-                Text { height: 20; verticalAlignment: Text.AlignVCenter; text: "chọn đáp án ·"; color: Theme.text3; font.pixelSize: Theme.sizeCaption }
+                Text { height: 20; verticalAlignment: Text.AlignVCenter; text: "chọn đáp án\u00a0·"; color: Theme.text3; font.pixelSize: Theme.sizeCaption }
                 LookKbd { text: "Esc" }
                 Text { height: 20; verticalAlignment: Text.AlignVCenter; text: "bỏ chọn"; color: Theme.text3; font.pixelSize: Theme.sizeCaption }
             }

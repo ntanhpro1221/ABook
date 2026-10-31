@@ -1,5 +1,7 @@
 # Đóng gói app Windows
 
+> Từ 0.4.151 app Windows là bản Qt (`desktop_qt/`, bộ cài NSIS riêng): xem [`QT_INSTALLER.md`](QT_INSTALLER.md). Phần Tauri dưới đây là lịch sử.
+
 Chủ sách, 26-09: app Windows **Tauri 2 + NSIS + updater**, **Studio tải thêm khi cần**, một APK mỗi phiên bản. Tài liệu
 này là kế hoạch và là chỗ ghi các quyết định; làm tới đâu cập nhật tới đó.
 

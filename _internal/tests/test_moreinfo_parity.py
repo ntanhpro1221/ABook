@@ -101,7 +101,10 @@ def literal_pieces(expr: str, templates: bool = False) -> list[str]:
         buf = ""
         while j < len(expr) and expr[j] != quote:
             char = expr[j]
-            if char == "\\" and j + 1 < len(expr):
+            if char == "\\" and expr.startswith("u", j + 1) and re.fullmatch(r"[0-9a-fA-F]{4}", expr[j + 2:j + 6]):
+                buf += chr(int(expr[j + 2:j + 6], 16))      # " · " (dấu ngăn dính mảnh trước) so như " · " nhờ norm()
+                j += 6
+            elif char == "\\" and j + 1 < len(expr):
                 buf += expr[j + 1]
                 j += 2
             elif interpolates and char == "$" and expr.startswith("${", j):

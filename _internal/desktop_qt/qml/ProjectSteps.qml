@@ -91,14 +91,17 @@ Column {
                             font.pixelSize: Theme.sizeBodySmall
                             font.weight: Font.DemiBold
                         }
-                        Icon {
+                        // Đang làm: vạch nhảy Vu như web (h-3, mực nhấn); tạm dừng: icon pause
+                        Item {
                             objectName: "projectStepMark_" + step.index
+                            readonly property string name: step.look === "active" ? "vu" : "pause"
                             anchors.right: parent.right
                             anchors.verticalCenter: parent.verticalCenter
+                            width: 18
+                            height: 14
                             visible: step.look === "active" || step.look === "paused"
-                            name: step.look === "active" ? "audio-lines" : "pause"
-                            size: 14
-                            color: step.look === "active" ? Theme.accent : Theme.text3
+                            Vu { anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; visible: step.look === "active"; color: Theme.accent }
+                            Icon { anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; visible: step.look === "paused"; name: "pause"; size: 14; color: Theme.text3 }
                         }
                     }
                     Text {

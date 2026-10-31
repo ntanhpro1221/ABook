@@ -36,7 +36,7 @@ Column {
         objectName: "ffmpegLine"
         width: parent.width
         text: (root.outdated ? "Có bản mới để ghép lời đọc thành file MP3 / M4B" : "Tải một lần để ghép MP3 / M4B")
-              + " (khoảng " + Size.formatSize(root.status ? root.status.bytes : 0).replace(" ", " ") + ")."
+              + " (khoảng " + Size.formatSize(root.status ? root.status.bytes : 0).replace(" ", "\u00a0") + ")."
         color: Theme.text2
         wrapMode: Text.Wrap
         font.pixelSize: Theme.sizeBodySmall

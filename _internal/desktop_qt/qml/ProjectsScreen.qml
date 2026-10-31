@@ -208,7 +208,7 @@ FocusScope {
         Scrollbar { target: list }
 
         // ---- lời nói thẳng ----
-        DevicesError {
+        InlineError {
             objectName: "projectsError"
             x: 0
             y: 24

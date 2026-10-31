@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "../../qml/TextWrap.js" as TextWrap
 import "VisualReady.js" as VisualReady
 import "ModalLayer.js" as ModalLayer
 import ABook
@@ -40,7 +41,7 @@ Item {
         function has(item, name) { return all(item, name).filter(shown).length > 0 }
         function texts(item) { return ModalLayer.collect(item, node => node.text !== undefined && shown(node)).map(node => String(node.text)) }
         function textOf(item, name) { const found = all(item, name).filter(shown)[0]; return found ? String(found.text) : "" }
-        function hasText(item, value) { return texts(item).indexOf(value) >= 0 }
+        function hasText(item, value) { const all = texts(item); return all.indexOf(value) >= 0 || all.indexOf(TextWrap.pretty(value)) >= 0 }    // chữ vẽ qua text-wrap: pretty (TextWrap.js)
         function hasPart(item, part) { return texts(item).some(t => t.indexOf(part) >= 0) }
         function all2(item, test) { return ModalLayer.collect(item, test) }
         function shot(name, item) {
@@ -463,7 +464,7 @@ Item {
             stepJob("mp3-job", {state: "done", result: {folder: "D:\\Đã xuất\\Cuốn a", files: 3, size: 15000000}})
             tryCompare(dlg, "phase", "finished", 4000)
             compare(one(dlg, "exportDoneTitle").text, "Đã xuất MP3")
-            verify(one(dlg, "exportDoneDetail").text.indexOf("Cuốn a · 3 file · 14 MB") === 0)
+            verify(one(dlg, "exportDoneDetail").text.indexOf("Cuốn a\u00a0· 3 file\u00a0· 14 MB") === 0)
             compare(one(dlg, "confirm_done").text, "Xong")
             one(dlg, "confirm_reveal").clicked()
             tryVerify(function() { return calls("POST", "/api/reveal-export").length === 1 }, 3000)
@@ -498,7 +499,7 @@ Item {
             stepJob("bookfile-job", {state: "done", result: {file: "D:\\Đã xuất\\Cuốn a.abook", folder: "D:\\Đã xuất", size: 5000000}})
             tryCompare(dlg, "phase", "finished", 4000)
             compare(one(dlg, "exportDoneTitle").text, "Đã xuất file sách")
-            compare(one(dlg, "exportDoneDetail").text, "D:\\Đã xuất\\Cuốn a.abook · 4,8 MB")
+            compare(one(dlg, "exportDoneDetail").text, "D:\\Đã xuất\\Cuốn a.abook\u00a0· 4,8 MB")
         }
         function test_projectExportSendsOnlyTheTargetAndAFailureSaysItInWords() {
             serve()
@@ -604,7 +605,7 @@ Item {
             stepJob("bookfile-job", {state: "done", result: {folder: "D:\\Đã xuất\\Bộ", parts: [{part: 1, title: "a"}, {part: 2, title: "b"}], skipped: [{part: 3}]}})
             tryCompare(dlg, "phase", "finished", 4000)
             compare(one(dlg, "exportDoneTitle").text, "Đã xuất 2 file sách")
-            verify(one(dlg, "exportDoneDetail").text.indexOf("D:\\Đã xuất\\Bộ · mỗi phần một file .abook riêng · chưa có chương nào nên bỏ qua: Phần 3") === 0)
+            verify(one(dlg, "exportDoneDetail").text.indexOf("D:\\Đã xuất\\Bộ\u00a0· mỗi phần một file .abook riêng\u00a0· chưa có chương nào nên bỏ qua: Phần 3") === 0)
             tryVerify(function() { return has(dlg, "exportDoneNote") }, 3000)
         }
         function test_m4bNeedsTheMixingToolAndOffersToDownloadIt() {
@@ -664,7 +665,7 @@ Item {
             const dlg = exportDlg(page)
             tryVerify(function() { return has(dlg, "exportStale") && all(dlg, "exportStale").filter(shown).length === 2 }, 3000)
             verify(hasText(dlg, "Bản xuất đã cũ"))
-            verify(hasText(dlg, "D:\\Đã xuất\\Cuốn a · 2 chương đã đổi"))
+            verify(hasText(dlg, "D:\\Đã xuất\\Cuốn a\u00a0· 2 chương đã đổi"))
             verify(hasText(dlg, "M4B gộp cả cuốn: bạn cần dựng lại cả file và thay bản đã chép hoặc gửi."))
             verify(hasText(dlg, "Xuất chương đổi") && hasText(dlg, "Xuất lại M4B"))
             compare(one(dlg, "exportChangedOnly").label, "Xuất 2 chương đổi")
@@ -747,7 +748,7 @@ Item {
             stepJob("bookfile-job", {state: "done", result: {file: "Cuốn a.abook", folder: "Đã xuất", size: 5000000}})
             tryCompare(dlg, "phase", "finished", 4000)
             compare(one(dlg, "exportDoneTitle").text, "Đã xuất file sách")
-            compare(one(dlg, "exportDoneDetail").text, "Đã xuất vào máy tính Máy bàn phòng làm việc: Cuốn a.abook · 4,8 MB")
+            compare(one(dlg, "exportDoneDetail").text, "Đã xuất vào máy tính Máy bàn phòng làm việc: Cuốn a.abook\u00a0· 4,8 MB")
             verify(!has(dlg, "confirm_reveal"))
             // KHÔNG một lời gọi nào đi thẳng vào máy này
             const direct = DesktopApi.requests.filter(r => (/^\/api\/books\/a\//).test(r.path))
@@ -807,7 +808,7 @@ Item {
             compare(dlg.description, "Máy chỉ thu lại những câu bị ảnh hưởng, rồi dựng lại các chương có câu ấy - không làm lại cả cuốn.")
             tryVerify(function() { return all(dlg, "pendingRow").filter(shown).length === 3 }, 3000)
             verify(hasText(dlg, "“Lucien” đọc là “lu-xi-ăng”"))
-            verify(hasText(dlg, "“Đi thôi,” - Natasha · Chương 2 · từ Máy bàn"))
+            verify(hasText(dlg, "“Đi thôi,” - Natasha\u00a0· Chương 2\u00a0· từ Máy bàn"))
             verify(hasText(dlg, "4 câu thu lại") && hasText(dlg, "1 câu thu lại") && hasText(dlg, "chưa thu - không tốn gì"))
             compare(one(dlg, "applySummary").text, "Thu lại 5 câu ở 2 chương (Chương 1, Chương 2) - khoảng 3 phút trên máy này.")
             compare(one(dlg, "confirm_later").text, "Để sau")
@@ -840,7 +841,7 @@ Item {
             compare(body.key, "c2s4")
             compare(body.requestedAt, 2)
             tryVerify(function() { return all(dlg, "pendingRow").filter(shown).length === 2 }, 4000)
-            verify(!hasText(dlg, "“Đi thôi,” - Natasha · Chương 2 · từ Máy bàn"))
+            verify(!hasText(dlg, "“Đi thôi,” - Natasha\u00a0· Chương 2\u00a0· từ Máy bàn"))
         }
         function test_applyDropOfTheLastOneClosesTheDialog() {
             serve({pending: pendingFixture({items: [pendingFixture().items[0]], lines: 4, chapters: ["Chương 1"]})})

@@ -190,7 +190,7 @@ Column {
             open: root.loading
             EditBookSkeleton { width: parent.width; count: 2; label: "Đang tải nhạc riêng" }
         }
-        EditBookError {
+        InlineError {
             width: parent.width
             open: root.failed && !root.loading
             message: "Bạn hãy thử tải lại nhạc của bạn."
@@ -254,9 +254,9 @@ Column {
                                 textFormat: Text.StyledText
                                 // Nốt nhạc nhấn màu đứng đầu tên bài; tên + nghệ sĩ + thời lượng (số đều) như bản web
                                 text: escapeHtml(item.track.title)
-                                      + (item.track.creator ? "<font color='" + Theme.text2 + "'> · " + escapeHtml(item.track.creator) + "</font>" : "")
-                                      + (item.track.duration ? "<font color='" + Theme.text2 + "'> · " + Logic.formatClock(item.track.duration) + "</font>" : "")
-                                function escapeHtml(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") }
+                                      + (item.track.creator ? "<font color='" + Theme.text2 + "'>&nbsp;· " + escapeHtml(item.track.creator) + "</font>" : "")
+                                      + (item.track.duration ? "<font color='" + Theme.text2 + "'>&nbsp;· " + Logic.formatClock(item.track.duration) + "</font>" : "")
+                                function escapeHtml(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\u00a0/g, "&nbsp;") }
                             }
                             Flow {
                                 width: parent.width

@@ -66,7 +66,7 @@ Column {
         open: root.loading
         EditBookSkeleton { width: parent.width; count: 2; label: "Đang tải cách đọc" }
     }
-    EditBookError {
+    InlineError {
         width: parent.width
         open: root.failed && !root.loading
         message: "Bạn hãy thử tải lại danh sách cách đọc."
@@ -102,7 +102,7 @@ Column {
                     font.pixelSize: Theme.sizeBodySmall
                     textFormat: Text.StyledText
                     text: "<b>" + escapeHtml(entry.modelData.surface) + "</b><font color='" + Theme.text2 + "'> đọc là </font>“" + escapeHtml(entry.modelData.spoken) + "”"
-                    function escapeHtml(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") }
+                    function escapeHtml(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\u00a0/g, "&nbsp;") }
                 }
                 IconButton {
                     x: parent.width - 72

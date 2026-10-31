@@ -93,7 +93,7 @@ Item {
             const sleep = createTemporaryObject(sleepComponent, host)
             sleep.show(); tryCompare(sleep, "shown", 1)
             Player.resume(); Player.setSleep("minutes", 1); WidthNet.advance(35)
-            tryCompare(Player, "fading", true); tryCompare(fade, "open", true); verify(findChild(fade, "playerFadeText").text.startsWith("Sắp tắt ·"))
+            tryCompare(Player, "fading", true); tryCompare(fade, "open", true); verify(findChild(fade, "playerFadeText").text.startsWith("Sắp tắt\u00a0·"))
             const countdown = findChild(sleep, "sleepCountdown")
             compare(findChild(sleep, "sleepCaption").text, "Tắt sau")
             compare(countdown.text, Player.clockText(Player.clock.sleepLeft))
@@ -132,6 +132,22 @@ Item {
             Nav.uiVisible = true; verify(DesktopApi.requests.length > count)
             progress.store.libraryData = null; DesktopApi.responses["/api/library"] = {status: 503, data: {message: "Bạn hãy thử tải lại tiến độ."}}
             progress.store.loadLibrary(); tryVerify(function() { return progress.store.libraryError !== "" })
+            // Lỗi tải ở thanh bên là InlineError chung (tam giác + câu mực phụ + "Thử lại"), không phải nút ghost chữ vàng gãy dòng
+            const error = findChild(progress, "sidebarError")
+            tryCompare(error, "open", true)
+            compare(findChild(error, "inlineErrorText").text, "Bạn hãy thử tải lại tiến\u00a0độ.")    // text-wrap: pretty (TextWrap.js)
+            compare(findChild(error, "inlineErrorRetry").text, "Thử lại")
+            // Ảnh soát (Lead lượt 1 mục 2): cột thanh bên rộng 232 trên nền trang, sáng + tối -> build/d2shots/d3_sidebar_error_*.png
+            const frame = createTemporaryQmlObject("import QtQuick; import ABook; Rectangle { width: 232; height: 220; color: Theme.bg }", host)
+            progress.parent = frame; progress.x = 16; progress.y = 16
+            for (const mode of ["light", "dark"]) {
+                Theme.mode = mode
+                VisualReady.render(this, host.Window.window, frame, qtVisualReady)
+                const img = grabImage(VisualReady.grabTarget(host.Window.window, frame))
+                img.save(Qt.resolvedUrl("../../build/d2shots/d3_sidebar_error_" + mode + ".png").toString()
+                    .replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, ""))
+            }
+            Theme.mode = "auto"
         }
         function test_long_vietnamese_data() { return [{tag: "1024", pixels: 1024}, {tag: "1920", pixels: 1920}] }
         function test_long_vietnamese(data) {

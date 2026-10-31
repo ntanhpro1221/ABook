@@ -72,11 +72,11 @@ Column {
                         font.weight: Theme.weightBold
                         Behavior on color { ColorAnimation { duration: Theme.motionFast } }
                     }
-                    Row {
-                        spacing: 6
-                        topPadding: 4
-                        Icon { y: 3; name: "gauge"; size: 14; color: Theme.text2 }
-                        Text { width: col.width - 20; text: option.modelData.pace; color: Theme.text2; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeCaption; font.weight: Theme.weightMedium }
+                    Item {
+                        width: col.width
+                        height: 4 + pace.height
+                        LineIcon { line: pace; name: "gauge"; size: 14; color: Theme.text2 }
+                        Text { id: pace; x: 20; y: 4; width: col.width - 20; text: option.modelData.pace; color: Theme.text2; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeCaption; font.weight: Theme.weightMedium }
                     }
                     Prose { topPadding: 12; text: option.modelData.summary }
                 }
@@ -107,7 +107,7 @@ Column {
                 required property string modelData
                 width: parent.width
                 height: pointText.height + 8
-                Icon { y: 3; name: "check"; size: 14; color: Theme.success }
+                LineIcon { line: pointText; name: "check"; size: 14; color: Theme.success }
                 Text { id: pointText; x: 22; width: parent.width - 22; text: modelData; color: Theme.text; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeBodySmall; lineHeight: 1.4 }
             }
         }

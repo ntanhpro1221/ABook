@@ -25,7 +25,7 @@ Interactive {
     // phát chương). Cờ chỉ sống tới hết lượt xử lý cú bấm này.
     property bool onMenuButton: false
     readonly property string headline: subtitle !== "" ? subtitle : title
-    readonly property string detail: [subtitle !== "" ? title : "", status].filter(s => s !== "").join(" · ")
+    readonly property string detail: [subtitle !== "" ? title : "", status].filter(s => s !== "").join("\u00a0· ")
     implicitHeight: Math.max(56, Math.max(textColumn.implicitHeight, duration.implicitHeight) + 2 * Theme.s12)
     opacity: playable ? 1 : 0.55
 
@@ -42,10 +42,11 @@ Interactive {
         x: Theme.s12
         width: 20
         height: parent.height
+        Vu { anchors.centerIn: parent; visible: root.current; color: Theme.accent }
         Icon {
             anchors.centerIn: parent
-            visible: root.current || root.done
-            name: root.current ? "audio-lines" : "check"
+            visible: !root.current && root.done
+            name: "check"
             Accessible.name: root.done ? "Đã nghe" : ""
             size: 16
             color: root.current ? Theme.accentText : Theme.success
