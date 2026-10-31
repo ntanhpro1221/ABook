@@ -7,6 +7,16 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nhạc nền
+
+- Nhạc của tôi: mỗi bài có công tắc "Tự chọn" (máy được tự chọn bài này cho các đoạn hay không) thay cho nút đổi chữ; dưới tên bài chỉ còn "Có lời" hay "Chưa phân tích" khi cần biết. Cỡ tải Phân tích nhạc chỉ ghi một lần, trên nút. Máy tính và điện thoại.
+- Nhạc nền của cuốn: công tắc ghi "Bật" / "Tắt"; đoạn bạn cho im lặng ghi "Im lặng (bạn chọn)" thay vì gạch ngang tên bài; nút "Đổi bài" đứng thẳng một cột. "Mức nhạc nền" và "rõ lời" thay cho chữ dài cũ.
+
+### Giao diện
+
+- Hàng mở ra tại chỗ (Tìm hiểu thêm, các khối gập của Cài đặt) mang mũi tên xuống, lật lên khi mở; mũi tên ">" ở mép phải chỉ còn cho hàng đi tới trang khác. Máy tính và điện thoại.
+- App máy tính: danh sách trong Cài đặt (như Nhạc của tôi) chạy hết bề ngang cột, thẳng mép với các hàng quanh nó.
+
 ### Sửa lỗi
 
 - Nhạc nền không còn tắt phụt khi hết chương: tự sang chương sau thì nhạc chương cũ mờ dần trong lúc nhạc chương mới vào, hết sách thì nhạc mờ tắt. Bấm dừng vẫn dừng ngay như cũ. Máy tính và bản web; trên điện thoại lỗi chỉ gặp lúc hết sách, nay cũng mờ tắt.
