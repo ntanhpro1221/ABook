@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Sửa lỗi
+
+- Điện thoại: nghe chương phát qua mạng từ máy khác, mỗi lần giọng khựng lại chờ tải thì nhạc theo cảnh không còn tắt phụt rồi vào lại - nhạc chạy tiếp như trên máy tính; chờ quá lâu mà vẫn không có tiếng thì nhạc mới dừng.
+
 ## [0.4.153] - 2026-11-01
 
 ### Nhạc nền

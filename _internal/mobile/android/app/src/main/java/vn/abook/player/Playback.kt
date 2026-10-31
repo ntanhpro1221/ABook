@@ -57,6 +57,16 @@ internal fun refreshedChapters(old: List<Playback.Chapter>, fresh: List<Playback
     return result
 }
 
+/** Giọng đang ra sao, theo cách nhạc nền hiểu ([MusicBed.sync]): `on` = giọng chạy, `stopNow` = người nghe dừng, `ended` = giọng tự hết. */
+internal data class MusicVoice(val on: Boolean, val stopNow: Boolean, val ended: Boolean)
+
+/** Đọc to cạn hàng (`starved`) hay chương phát qua mạng đang đệm mà người nghe vẫn muốn phát: giọng chỉ khựng, nhạc chạy tiếp - như trình phát web
+ *  (`<audio>.paused` không đổi khi đệm) và Qt; chờ quá lâu thì [BufferingGuard] dừng hẳn (IDLE). Giọng dừng vì người nghe (playWhenReady = false) thì nhạc dừng ngay. */
+internal fun musicVoice(playing: Boolean, starved: Boolean, playWhenReady: Boolean, state: Int): MusicVoice {
+    val on = playing || starved || (playWhenReady && state == Player.STATE_BUFFERING)
+    return MusicVoice(on, stopNow = !on && !playWhenReady, ended = !on && state == Player.STATE_ENDED)
+}
+
 object Playback {
     /** Bước nút "Lùi / Tới ... giây" (trình phát, widget, cửa sổ nhỏ PiP): một chỗ để mọi nút nói cùng một số. */
     const val SKIP_SECONDS = 15
@@ -682,10 +692,16 @@ object Playback {
     /** Báo nhạc nền giọng đang chạy hay không. Đọc to mà hàng đợi cạn (Edge chậm, đang chờ đoạn kế - [ReadAloud.starved]) thì người nghe vẫn đang nghe: nhạc theo cảnh không ngắt rồi phải
      *  vào lại ở từng khe im (trước đây `isPlaying` rơi về false ngay khi ExoPlayer ENDED nên nhạc dừng cùng giọng). Người nghe bấm dừng thì `starved` tắt ngay. */
     private fun syncMusic(playing: Boolean) {
-        val voiceOn = playing || ReadAloud.starved()
-        // Giọng dừng vì người nghe (nút, rút tai nghe, mất focus, cuộc gọi: playWhenReady = false) thì nhạc dừng ngay; giọng chỉ đang đệm / chờ đoạn kế (playWhenReady vẫn true) là khe nối - nhạc chờ.
-        MusicBed.sync(bookId, currentChapter?.id, positionSeconds, voiceOn, stopNow = !voiceOn && player?.playWhenReady != true,
-            ended = !voiceOn && player?.playbackState == Player.STATE_ENDED)
+        val voice = musicVoiceNow(playing)
+        // Giọng chỉ khựng (đệm, chờ đoạn kế): nhịp đồng hồ vẫn chạy để nhạc lặp, nối vòng, đổi mốc như lúc có tiếng - MusicBed chỉ làm những việc ấy khi được sync.
+        if (voice.on) startTicking()
+        MusicBed.sync(bookId, currentChapter?.id, positionSeconds, voice.on, stopNow = voice.stopNow, ended = voice.ended)
+    }
+
+    /** Nhạc nền hiểu giọng đang ra sao ([musicVoice]); `playing` = ExoPlayer đang ra tiếng. */
+    private fun musicVoiceNow(playing: Boolean): MusicVoice {
+        val exo = player
+        return musicVoice(playing, ReadAloud.starved(), exo?.playWhenReady == true, exo?.playbackState ?: Player.STATE_IDLE)
     }
 
     private const val STALL_LOG_MS = 3_000L
@@ -704,7 +720,7 @@ object Playback {
         stalledSince = 0L
     }
 
-    /** Người nghe đổi ý phát / dừng mà `isPlaying` không đổi (đang chờ đoạn kế của đọc to, hay giọng đang đệm): nhạc cũng theo. */
+    /** Người nghe đổi ý phát / dừng, hay ExoPlayer đổi trạng thái (đệm, chờ quá lâu nên dừng hẳn, hỏng) mà `isPlaying` không đổi: nhạc cũng theo. */
     fun onWantsChanged() {
         if (!isPlaying && player != null) syncMusic(false)
     }
@@ -784,8 +800,8 @@ object Playback {
             var beats = 0
             override fun run() {
                 val exo = player
-                // Đọc to chờ đoạn kế (hàng đợi cạn vì Edge chậm) vẫn là "đang nghe": nhịp nhạc nền không đứt (starved).
-                if (exo == null || !(exo.isPlaying || ReadAloud.starved())) {
+                // Đọc to chờ đoạn kế (hàng đợi cạn vì Edge chậm) hay chương phát qua mạng đang đệm vẫn là "đang nghe": nhịp nhạc nền không đứt ([musicVoice]).
+                if (exo == null || !musicVoiceNow(exo.isPlaying).on) {
                     ticking = false
                     stalledSince = 0L // người nghe dừng: lần dừng không phải lần đứng chờ
                     return

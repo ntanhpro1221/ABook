@@ -124,6 +124,7 @@ class PlaybackService : MediaLibraryService() {
             override fun onPlaybackStateChanged(state: Int) {
                 if (state == Player.STATE_ENDED) Playback.onEnded()
                 if (state == Player.STATE_READY) Playback.onReady()
+                Playback.onWantsChanged() // đang đệm thì nhạc chạy tiếp; chờ quá lâu ([BufferingGuard] -> IDLE) thì nhạc dừng theo
                 Playback.emit("state")
             }
 
