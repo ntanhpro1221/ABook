@@ -20,6 +20,7 @@ import java.io.IOException
 import java.net.InetAddress
 import java.net.ServerSocket
 import java.net.Socket
+import vn.abook.player.net.FastConnect
 import java.util.UUID
 import java.util.concurrent.Executors
 
@@ -142,7 +143,7 @@ private class Gateway(private val context: Context, private val address: String)
             lastError = "Chưa cho ABook dùng Bluetooth"
             runCatching { client.close() }
         } catch (error: Exception) { // địa chỉ hỏng, Bluetooth stack lỗi...: không được làm sập app
-            lastError = "Không kết nối được qua Bluetooth: ${error.message ?: error.javaClass.simpleName}"
+            lastError = "Chưa kết nối được qua Bluetooth: ${error.message ?: error.javaClass.simpleName}"
             runCatching { client.close() }
         }
     }
@@ -153,7 +154,7 @@ private class Gateway(private val context: Context, private val address: String)
         if (closed) throw IOException("Đã bỏ ghép máy này")
         mux?.takeIf { it.alive }?.let { return it }
         val now = System.currentTimeMillis()
-        if (now - failedAt < RETRY_MILLIS) throw IOException(lastError.ifBlank { "Không kết nối được qua Bluetooth" })
+        if (now - failedAt < RETRY_MILLIS) throw IOException(lastError.ifBlank { "Chưa kết nối được qua Bluetooth" })
         val adapter = context.getSystemService(BluetoothManager::class.java)?.adapter
             ?: throw IOException("Điện thoại này không có Bluetooth")
         if (!adapter.isEnabled) throw IOException("Bluetooth của điện thoại đang tắt")
@@ -170,7 +171,7 @@ private class Gateway(private val context: Context, private val address: String)
         } catch (error: IOException) {
             runCatching { socket.close() }
             failedAt = System.currentTimeMillis()
-            lastError = "Không kết nối được qua Bluetooth - máy kia có bật ABook và Bluetooth không?"
+            lastError = "Chưa kết nối được qua Bluetooth - máy kia có bật ABook và Bluetooth không?"
             throw IOException(lastError, error)
         }
         val fresh = BtMux(socket.inputStream, socket.outputStream, { socket.close() })
@@ -218,6 +219,7 @@ private class Gateway(private val context: Context, private val address: String)
  * Tắt Bluetooth thì thôi nghe và nói rõ; bật lại (ACTION_STATE_CHANGED) thì tự nghe lại khi chia sẻ còn bật.
  */
 object BluetoothShare {
+    private const val LOOPBACK_MS = 5_000 // nối vòng lặp 127.0.0.1 tức thì; hạn chỉ để không treo mãi nếu cổng đầy
     private var server: BluetoothServerSocket? = null
     private val links = mutableSetOf<BtMux>()
     private var wanted = false
@@ -261,7 +263,7 @@ object BluetoothShare {
         val socket = try {
             adapter.listenUsingRfcommWithServiceRecord("ABook", BluetoothLink.SERVICE)
         } catch (error: IOException) {
-            status = "Không mở được Bluetooth: ${error.message}"
+            status = "Chưa mở được Bluetooth: ${error.message}"
             return
         } catch (_: SecurityException) {
             status = "Chưa cho ABook dùng Bluetooth"
@@ -303,7 +305,7 @@ object BluetoothShare {
                 return
             }
             val mux = BtMux(link.inputStream, link.outputStream, { link.close() },
-                dial = { Socket("127.0.0.1", LibraryServer.PORT) }, odd = false)
+                dial = { FastConnect.connect("127.0.0.1", LibraryServer.PORT, LOOPBACK_MS) }, odd = false)
             synchronized(links) { links += mux }
             Thread({
                 try {

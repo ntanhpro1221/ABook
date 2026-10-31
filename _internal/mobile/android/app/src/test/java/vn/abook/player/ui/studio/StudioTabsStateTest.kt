@@ -30,8 +30,8 @@ import java.nio.file.Files
 @Config(sdk = [35])
 class StudioTabsStateTest {
     private class Player : SamplePlayer {
-        var ended: (() -> Unit)? = null
-        val played = ArrayList<String>()
+        @Volatile var ended: (() -> Unit)? = null
+        val played = java.util.concurrent.CopyOnWriteArrayList<String>()
 
         override fun play(path: String, onEnded: () -> Unit, onFailed: () -> Unit) {
             played += File(path).name
@@ -135,8 +135,8 @@ class StudioTabsStateTest {
     @Test fun aReadingIsCheckedBeforeItIsHeld() = runBlocking {
         val card = workItem(kind = WorkKind.Pronunciation, key = "p", surface = "Hên-kơ", current = "hen co")
         assertEquals(ReadingCheck.Ok, project.work.checkReading(card, "hen cơ"))
-        source.writeError = { StudioError.Server("Không đọc được chữ này", 400, """{"suggestion":"hen cơ"}""") }
-        assertEquals(ReadingCheck.Rejected("Không đọc được chữ này", "hen cơ"), project.work.checkReading(card, "hen!"))
+        source.writeError = { StudioError.Server("Chưa đọc được chữ này", 400, """{"suggestion":"hen cơ"}""") }
+        assertEquals(ReadingCheck.Rejected("Chưa đọc được chữ này", "hen cơ"), project.work.checkReading(card, "hen!"))
         source.writeError = { StudioError.Offline() }
         assertTrue(project.work.checkReading(card, "hen cơ") is ReadingCheck.Failed)
         assertTrue(source.writes.all { it.first == "pronunciation/check" })
@@ -204,9 +204,10 @@ class StudioTabsStateTest {
         source.reviewPages[""] = emptyReview(listOf(reviewItem(1), reviewItem(2), reviewItem(3, playable = false)))
         launchRun { project.review.run() }
         project.review.startContinuous()
-        until("câu 1") { clips.state.value.playing == "review-1" }
+        // "đang phát" đổi trước khi bộ phát giả nhận clip (khác luồng): chờ cả lần play() của đúng clip ấy rồi mới báo hết (từng NPE khi chạy cả bộ test).
+        until("câu 1") { clips.state.value.playing == "review-1" && player.played.size == 1 }
         player.ended!!.invoke()
-        until("câu 2") { clips.state.value.playing == "review-2" }
+        until("câu 2") { clips.state.value.playing == "review-2" && player.played.size == 2 }
         assertTrue(project.review.continuous)
         player.ended!!.invoke()
         until("hết") { project.review.finished }

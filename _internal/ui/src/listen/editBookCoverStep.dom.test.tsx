@@ -4,7 +4,7 @@ import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { TooltipProvider } from "@/shared/ui";
-import { dismissTopLayer } from "@/android/backLayers";
+import { dismissTopLayer } from "@/shared/backLayers";
 import type { ListenBook } from "./model";
 import { ClipProvider } from "./clip";
 

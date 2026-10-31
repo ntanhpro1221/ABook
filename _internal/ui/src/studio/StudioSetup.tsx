@@ -172,7 +172,7 @@ export function StudioSetupCard({ className }: { className?: string }) {
     try {
       client.setQueryData(["studio-setup"], await api<SetupStatus>(path, { method: "POST", body: {} }));
     } catch (error) {
-      toast.error("Không cài được Studio", { description: (error as Error).message });
+      toast.error("Chưa cài được Studio", { description: (error as Error).message });
     }
   };
   const damaged = status.damaged ?? [];
@@ -316,7 +316,7 @@ export function StudioSettings() {
         client.setQueryData(["studio-setup"], await api<SetupStatus>("/api/studio/setup", { method: "POST", body: {} }));
         navigate("/studio");
       } catch (error) {
-        toast.error("Không cài được Studio", { description: (error as Error).message });
+        toast.error("Chưa cài được Studio", { description: (error as Error).message });
       } finally {
         setBusy(false);
       }

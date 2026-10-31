@@ -1,12 +1,13 @@
 package vn.abook.player.ui.music
 
+import vn.abook.player.ui.data.dotJoined
 import androidx.compose.runtime.Immutable
 import org.json.JSONObject
 import vn.abook.player.ui.data.Fmt
 
 /*
  * Nhạc nền của một cuốn, cho giao diện native. Cùng hình JSON với lõi (GET /music của LocalStudio, `/api/music/playlists`, `musicCredit` của Playback.state)
- * và cùng luật với bản WebView (listen/playlistBed.ts, shared/musicLevels.ts, shared/format.ts) - chỉ chữ trên nút được viết lại cho điện thoại (nhãn 1-4 chữ).
+ * Chữ trên nút viết cho điện thoại (nhãn 1-4 chữ).
  */
 
 /** Một danh sách phát của danh mục (menu "Nhạc nền" của sách chỉ có chữ). */
@@ -260,7 +261,7 @@ object MusicText {
     }
 
     /** Tên ngắn trên hàng "Đang phát": tên bài · tác giả. */
-    fun creditLine(credit: MusicCredit): String = listOf(credit.title.trim(), credit.creator.trim()).filter { it.isNotEmpty() }.joinToString(" · ")
+    fun creditLine(credit: MusicCredit): String = listOf(credit.title.trim(), credit.creator.trim()).dotJoined()
 
     private val CC_URL = Regex("""creativecommons\.org/(licenses|publicdomain)/([a-z-]+)/(\d+(?:\.\d+)?)""", RegexOption.IGNORE_CASE)
     private val CC_CODE = Regex("""by(-(nc|nd|sa))*""")
@@ -303,11 +304,11 @@ object MusicText {
     /** Dòng phụ của một đoạn, như web: chương · khoảng giờ · tác giả · "bài của bạn" khi đã đổi (im lặng thì tên bài gạch ngang). */
     fun cueLine(cue: MusicCue): String = listOf(
         cue.chapter.trim(), "${Fmt.clock(cue.start)} – ${Fmt.clock(cue.end)}", cue.creator.trim(), if (cue.pinned) "bài của bạn" else "",
-    ).filter { it.isNotEmpty() }.joinToString(" · ")
+    ).dotJoined()
 
     /** Dòng phụ của một bài để đổi (SwapTrack): nghệ sĩ · độ dài. */
     fun mineLine(track: MineTrack): String =
-        listOf(track.creator.trim(), if (track.duration > 0) Fmt.clock(track.duration) else "").filter { it.isNotEmpty() }.joinToString(" · ")
+        listOf(track.creator.trim(), if (track.duration > 0) Fmt.clock(track.duration) else "").dotJoined()
 
     /**
      * Dòng chú thích dưới một bài (studio/musicLocal.ts `mineNote`; điện thoại không có công tắc tự chọn nên `auto` luôn là mặc định):
@@ -316,7 +317,7 @@ object MusicText {
     fun mineNote(track: MineTrack): String = listOf(
         if (track.analysed && track.vocalsLikely) "Có vẻ có lời - máy không tự chọn bài này" else "",
         if (track.analysed) (if (track.fits) "Hợp không khí đoạn này" else "") else UNANALYSED,
-    ).filter { it.isNotEmpty() }.joinToString(" · ")
+    ).dotJoined()
 
     /** Giấy phép đòi ghi công (khác cc0; nhạc bạn tự thêm không có giấy phép) thì kèm [MODIFIED_NOTE]. */
     fun needsModifiedNote(license: String): Boolean = license.trim().lowercase().let { it.isNotEmpty() && it != "cc0" }

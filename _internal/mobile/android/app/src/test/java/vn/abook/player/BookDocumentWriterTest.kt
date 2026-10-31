@@ -191,7 +191,7 @@ class BookDocumentWriterTest {
             BookDocumentWriter.write(empty, java.io.ByteArrayOutputStream())
             fail("lẽ ra bị từ chối")
         } catch (error: BookDocumentWriter.Refused) {
-            assertEquals("Không đọc được thư mục sách này.", error.message)
+            assertEquals("Chưa đọc được thư mục sách này.", error.message)
         }
         val noPackage = File(work, "nopackage").apply { mkdirs() }
         File(noPackage, "book.json").writeText("{\"title\": \"x\"}")

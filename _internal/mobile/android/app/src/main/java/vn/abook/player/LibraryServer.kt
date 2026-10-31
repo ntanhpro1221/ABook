@@ -321,7 +321,7 @@ object LibraryServer {
     private fun readDevices(devicesFile: File): JSONObject {
         if (!devicesFile.exists()) return JSONObject().put("devices", JSONObject())
         val text = try { devicesFile.readText(Charsets.UTF_8) } catch (error: Exception) {
-            throw java.io.IOException("Không đọc được danh sách máy đã ghép; bạn hãy thử lại. Dữ liệu cũ vẫn được giữ.", error)
+            throw java.io.IOException("Chưa đọc được danh sách máy đã ghép; bạn hãy thử lại. Dữ liệu cũ vẫn được giữ.", error)
         }
         try {
             val data = StrictJson.parse(text) as? JSONObject ?: error("sai dạng")

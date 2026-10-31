@@ -48,7 +48,7 @@ def _edit(path: Path, change) -> None:
 
 
 def bump(new: str, root: Path = ROOT, today: datetime.date | None = None) -> list[Path]:
-    """Nâng số phiên bản ở đúng 8 file của một commit phát hành; trả về các file đã đổi."""
+    """Nâng số phiên bản ở đúng 6 file của một commit phát hành; trả về các file đã đổi."""
     assert VERSION.match(new), f"số phiên bản lạ: {new}"
     old = current_version(root)
     assert old != new, f"đã là {new}"
@@ -72,8 +72,6 @@ def bump(new: str, root: Path = ROOT, today: datetime.date | None = None) -> lis
         "uv.lock": uv_lock,
         "ui/package.json": json_version,
         "ui/package-lock.json": json_version,
-        "mobile/package.json": json_version,
-        "mobile/package-lock.json": json_version,
         "mobile/android/app/build.gradle": gradle,
         "docs/CHANGELOG.md": lambda t: t.replace("## [Chưa phát hành]\n", f"## [Chưa phát hành]\n\n## [{new}] - {day}\n", 1),
     }
@@ -196,8 +194,6 @@ def build(version: str, out: Path) -> None:
     assert manifest.get("version") == version, f"latest.json ghi {manifest.get('version')}"
 
     env = dict(os.environ, JAVA_HOME=os.environ.get("JAVA_HOME") or "C:/Program Files/Android/Android Studio/jbr")
-    _run([_tool("npm"), "run", "-s", "build:android"], ROOT / "ui", env, low=True)
-    _run([_tool("npx"), "cap", "sync", "android"], ROOT / "mobile", env, low=True)
     _run([str(ROOT / "mobile/android/gradlew.bat"), "--no-daemon", "-q", ":app:assembleRelease"], ROOT / "mobile/android", env,
          low=True)
     apk = ROOT / "mobile/android/app/build/outputs/apk/release/app-release.apk"

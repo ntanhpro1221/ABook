@@ -43,7 +43,7 @@ export function WishesDialog({
       refreshAfterEdit(client, bookId);
       await client.invalidateQueries({ queryKey: ["pending-changes", bookId] });
     } catch (error) {
-      toast.error("Không bỏ được thay đổi này", { description: (error as Error).message });
+      toast.error("Chưa bỏ được thay đổi này", { description: (error as Error).message });
     } finally {
       setDropping(null);
     }

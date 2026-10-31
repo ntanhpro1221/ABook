@@ -1,5 +1,5 @@
 // Macrobenchmark của giao diện native (docs/NATIVE_PHONE_UI.md §1): mở nguội / ấm, đổi tab, cuộn lưới - FrameTimingMetric.
-// Đo bản -PnativeUi: gradlew -PnativeUi :benchmark:connectedBenchmarkAndroidTest (đặt ANDROID_SERIAL cho đúng máy; máy ảo cần
+// Đo: gradlew :benchmark:connectedBenchmarkAndroidTest (đặt ANDROID_SERIAL cho đúng máy; máy ảo cần
 // -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.suppressErrors=EMULATOR và số đo chỉ để chạy thử, ngân sách đo trên OPPO).
 apply plugin: 'com.android.test'
 apply plugin: 'kotlin-android'

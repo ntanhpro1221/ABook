@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.BasicText
+import vn.abook.player.ui.components.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -99,7 +99,7 @@ private fun DeviceActions(device: Paired, studio: StudioComputer?, state: Device
 }
 
 /**
- * Bước bỏ ghép: nói cái sẽ mất (sửa chưa gửi, sách nghe thẳng sẽ rời Thư viện) - cùng lời với bản WebView ([DeviceText.forgetCopy]). Máy tính chính và
+ * Bước bỏ ghép: nói cái sẽ mất (sửa chưa gửi, sách nghe thẳng sẽ rời Thư viện) - lời ở [DeviceText.forgetCopy]. Máy tính chính và
  * thiết bị nào không còn gì để mất thì chỉ một câu nói sách đã tải ở lại.
  */
 @Composable
@@ -148,11 +148,11 @@ fun RenameSheet(current: String, state: DevicesState, dismiss: () -> Unit) {
     var working by remember { mutableStateOf(false) }
     var problem by remember { mutableStateOf("") }
     Column(Modifier.fillMaxWidth().testTag("rename_sheet")) {
-        BasicText("Đổi tên điện thoại này", style = Abook.type.sectionTitle)
+        BasicText("Đổi tên thiết bị", style = Abook.type.sectionTitle)
         Spacer(Modifier.height(Dim.s8))
-        Caption("Máy tính và các máy đã ghép thấy điện thoại bằng tên này.")
+        Caption("Tên hiện ở danh sách thiết bị đã ghép của máy này.")
         Spacer(Modifier.height(Dim.s16))
-        BookField(null, name, { name = it; problem = "" }, "rename_field", !working, "Tên điện thoại")
+        BookField(null, name, { name = it; problem = "" }, "rename_field", !working, "Tên thiết bị")
         if (problem.isNotEmpty()) {
             Spacer(Modifier.height(Dim.s8))
             BasicText(problem, style = Abook.type.bodySmall.copy(color = Abook.colors.danger), modifier = Modifier.testTag("rename_problem"))

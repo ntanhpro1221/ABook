@@ -16,9 +16,9 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * "Thêm sách từ file…" trên điện thoại (TextImports.kt, phần không dính Android của LibraryPlugin) trên bộ ví dụ nhập sách dùng chung
+ * "Thêm sách từ file…" trên điện thoại (TextImports.kt, phần không dính Android) trên bộ ví dụ nhập sách dùng chung
  * (tests/fixtures/import/): chép thứ đã chọn, xem trước danh sách chương bằng luật của BookImport, nhập thành sách chỉ-có-chữ - kể cả PDF,
- * nơi WebView (pdf.js) lấy chữ từng trang rồi đưa sang Kotlin (cầu `previewImport` với `pages`).
+ * nơi giao diện lấy chữ từng trang (PdfRenderer) rồi gọi `preview` với `pages`.
  */
 class TextImportsTest {
     @Test fun a84_16_original_long_names_decide_folder_order_and_titles() {
@@ -109,7 +109,7 @@ class TextImportsTest {
     @Test
     fun an_epub_previews_the_chapter_list_python_shows_and_suggests_without_applying() {
         val staged = stageFile("epub3.epub")
-        assertNull("chỉ PDF mới cần WebView", staged.pdf)
+        assertNull("chỉ PDF mới cần bản sao để lấy chữ", staged.pdf)
         val preview = TextImports.preview(staged.ref)
         val expected = sharedPreview("epub3")
         assertEquals(titles(expected), titles(preview, ticked = true))
@@ -279,11 +279,11 @@ class TextImportsTest {
     @Test
     fun a_pdf_goes_through_the_webview_pages_and_the_kotlin_rules() {
         val staged = stageFile("story.pdf")
-        assertNotNull("WebView đọc bản sao này bằng pdf.js", staged.pdf)
+        assertNotNull("giao diện đọc bản sao PDF này", staged.pdf)
         assertTrue(staged.pdf!!.isFile)
         try {
             TextImports.preview(staged.ref)
-            fail("PDF cần chữ do pdf.js lấy")
+            fail("PDF cần chữ do lớp giao diện lấy")
         } catch (error: BookImport.Failed) {
             assertTrue(error.message!!, error.message!!.contains("PDF"))
         }

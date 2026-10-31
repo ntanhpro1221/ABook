@@ -5,15 +5,16 @@ import android.os.Build
 import android.os.PowerManager
 import org.json.JSONArray
 import org.json.JSONObject
+import vn.abook.player.ui.studio.StudioRoute
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetAddress
 import java.net.SocketTimeoutException
 
 /**
- * Việc "Thiết bị" mà cả hai giao diện cùng làm (WebView qua [LibraryPlugin], native qua `ui.data.DevicesRepo`): tìm và ghép máy, tên điện thoại, chia sẻ thư viện,
- * dung lượng, máy tính mở được Studio. Trước đây nằm trong thân phương thức plugin (docs/NATIVE_PHONE_UI.md §2: logic dời vào lõi, plugin chỉ chuyển tiếp).
- * Hàm trả JSON giữ nguyên hình đã gửi cho WebView. Mọi hàm đọc đĩa / mạng: gọi ở luồng nền.
+ * Việc "Thiết bị" của giao diện (`ui.data.DevicesRepo`): tìm và ghép máy, tên điện thoại, chia sẻ thư viện,
+ * dung lượng, máy tính mở được Studio. Logic nằm ở lõi (docs/NATIVE_PHONE_UI.md §2), giao diện chỉ chuyển tiếp.
+ * Hàm trả JSON (`ui.devices.DevicesJson` đọc lại). Mọi hàm đọc đĩa / mạng: gọi ở luồng nền.
  */
 object Devices {
     /** Công tắc "Cho máy khác nghe thư viện này" (SharedPreferences "sync"). */
@@ -213,17 +214,17 @@ object Devices {
     }
 
     /**
-     * Máy và đường trang để mở Studio từ xa (StudioActivity.kt): `book` = mã cuốn trên điện thoại này (mở thẳng cuốn ấy ở máy giữ nó), không thì `computer`
-     * (mã máy, "" = máy tính chính) ở danh sách dự án. Chỉ mã máy và đường trang đi qua Intent, không bao giờ mã thiết bị.
+     * Máy và màn native để mở Studio từ xa: `book` = mã cuốn trên điện thoại này (mở thẳng cuốn ấy ở máy giữ nó), không thì `computer`
+     * (mã máy, "" = máy tính chính) ở danh sách dự án. Chỉ mã máy và mã sách đi qua Intent, không bao giờ mã thiết bị; mã sách lạ thì về danh sách dự án.
      */
-    fun studioTarget(context: Context, book: String?, computer: String?): Pair<String, String> {
-        val (key, path) = if (book != null) {
+    fun studioTarget(context: Context, book: String?, computer: String?): Pair<String, StudioRoute> {
+        val (key, route) = if (book != null) {
             val (holder, remote) = StudioLink.bookTarget(book) ?: throw IllegalStateException("Cuốn này không làm trên máy tính nào đã ghép")
-            holder to StudioLink.bookPath(remote)
+            holder to StudioRoute(remote.takeIf { StudioPaths.valid(it) })
         } else {
-            (computer ?: StudioLink.MAIN) to StudioLink.bookPath(null)
+            (computer ?: StudioLink.MAIN) to StudioRoute()
         }
         if (!StudioLink.known(key, SyncLink.paired(context), Peers.all(context))) throw IllegalStateException("Chưa ghép với máy tính nào")
-        return key to path
+        return key to route
     }
 }

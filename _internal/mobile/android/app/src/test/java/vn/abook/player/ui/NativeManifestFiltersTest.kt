@@ -1,6 +1,7 @@
 package vn.abook.player.ui
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.w3c.dom.Element
@@ -8,41 +9,46 @@ import java.io.File
 import javax.xml.parsers.DocumentBuilderFactory
 
 /**
- * Bản -PnativeUi: MainActivity (WebView) mất mọi bộ lọc "Mở bằng" / chia sẻ, NativeActivity giữ đúng những bộ lọc ấy (không thì "Mở bằng" ra trang trắng của WebView).
- * Hai bản chép trong hai manifest phải khớp nhau từng dòng - sửa một bên mà quên bên kia là test này đỏ.
+ * Manifest: NativeActivity là màn mở app duy nhất và là nơi nhận mọi "Mở bằng" / chia sẻ file sách (không thì "Mở bằng" ra nơi không ai nhận).
  */
 class NativeManifestFiltersTest {
-    private fun manifest(name: String): Element {
-        val file = listOf(File("src/$name/AndroidManifest.xml"), File("app/src/$name/AndroidManifest.xml")).first { it.isFile }
+    private fun manifest(): Element {
+        val file = listOf(File("src/main/AndroidManifest.xml"), File("app/src/main/AndroidManifest.xml")).first { it.isFile }
         return DocumentBuilderFactory.newInstance().apply { isNamespaceAware = false }.newDocumentBuilder().parse(file).documentElement
     }
 
-    private fun activity(root: Element, name: String): Element {
+    private fun activities(root: Element): List<Element> {
         val nodes = root.getElementsByTagName("activity")
-        return (0 until nodes.length).map { nodes.item(it) as Element }.first { it.getAttribute("android:name") == name }
+        return (0 until nodes.length).map { nodes.item(it) as Element }
     }
 
-    /** Mỗi bộ lọc thành một chuỗi các dòng "thẻ|thuộc tính=giá trị" đã sắp; bỏ bộ lọc MAIN (màn mở app, không phải "Mở bằng"). */
-    private fun filters(activity: Element): List<String> {
+    private fun filters(activity: Element): List<Element> {
         val nodes = activity.getElementsByTagName("intent-filter")
-        return (0 until nodes.length).map { nodes.item(it) as Element }.map { filter ->
-            val lines = ArrayList<String>()
-            for (index in 0 until filter.childNodes.length) {
-                val child = filter.childNodes.item(index) as? Element ?: continue
-                val attributes = (0 until child.attributes.length).map { child.attributes.item(it) }.map { "${it.nodeName}=${it.nodeValue}" }.sorted()
-                lines += child.tagName + "|" + attributes.joinToString(",")
-            }
-            lines.sorted().joinToString("\n")
-        }.filter { !it.contains("android.intent.action.MAIN") }.sorted()
+        return (0 until nodes.length).map { nodes.item(it) as Element }
     }
 
-    @Test fun nativeActivityReceivesExactlyTheFiltersMainActivityLoses() {
-        val main = filters(activity(manifest("main"), ".MainActivity"))
-        val native = filters(activity(manifest("nativeUi"), ".ui.NativeActivity"))
-        assertTrue("MainActivity phải có bộ lọc \"Mở bằng\" ở manifest chính", main.isNotEmpty())
-        assertEquals(main, native)
-        val removed = activity(manifest("nativeUi"), ".MainActivity").getElementsByTagName("intent-filter")
-        assertEquals("overlay chỉ có một lệnh gỡ hết bộ lọc của MainActivity", 1, removed.length)
-        assertEquals("removeAll", (removed.item(0) as Element).getAttribute("tools:node"))
+    private fun values(filter: Element, tag: String, attribute: String): Set<String> {
+        val nodes = filter.getElementsByTagName(tag)
+        return (0 until nodes.length).map { (nodes.item(it) as Element).getAttribute(attribute) }.toSet()
+    }
+
+    @Test fun nativeActivityIsTheOnlyActivityAndTheLauncher() {
+        val all = activities(manifest())
+        assertEquals(listOf(".ui.NativeActivity"), all.map { it.getAttribute("android:name") })
+        val launcher = filters(all.single()).filter { "android.intent.action.MAIN" in values(it, "action", "android:name") }
+        assertEquals(1, launcher.size)
+        assertTrue("android.intent.category.LAUNCHER" in values(launcher.single(), "category", "android:name"))
+    }
+
+    @Test fun nativeActivityReceivesBookFilesFromOpenWithAndShare() {
+        val received = filters(activities(manifest()).single()).filter { "android.intent.action.MAIN" !in values(it, "action", "android:name") }
+        val types = received.flatMap { values(it, "data", "android:mimeType") }.toSet()
+        for (type in listOf("application/vnd.ngdtuanh.abook+zip", "application/vnd.ngdtuanh.abookproj+zip", "application/epub+zip", "application/pdf", "text/plain")) {
+            assertTrue("thiếu bộ lọc cho $type", type in types)
+        }
+        val actions = received.flatMap { values(it, "action", "android:name") }.toSet()
+        assertTrue("android.intent.action.VIEW" in actions)
+        assertTrue("android.intent.action.SEND" in actions)
+        assertFalse("không nhận \"*/*\"", "*/*" in types)
     }
 }

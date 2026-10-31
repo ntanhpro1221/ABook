@@ -1,5 +1,6 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.ui.data.dotJoin
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,7 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.BasicText
+import vn.abook.player.ui.components.BasicText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -123,7 +124,7 @@ private fun MarkerRow(marker: NightMarker, paragraphs: List<ReadParagraph>, onCl
                 MarkerClock(marker.at)
             }
             RowHint(marker.hint)
-            RowHint(marker.chapterTitle + " · " + Fmt.clock(marker.seconds))
+            RowHint(dotJoin(marker.chapterTitle, Fmt.clock(marker.seconds)))
             sentenceAt(paragraphs, marker.seconds)?.let {
                 BasicText("“$it”", Modifier.padding(top = Dim.s4), style = Abook.type.bodySmall.copy(color = colors.text, fontStyle = FontStyle.Italic))
             }

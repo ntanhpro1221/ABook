@@ -99,7 +99,7 @@ const KNOWN: { pattern: RegExp; summary: string }[] = [
   { pattern: /No space left|ENOSPC|disk full|WinError 112|not enough space|disk quota/i, summary: "Ổ đĩa hết chỗ trống. Giải phóng dung lượng hoặc chọn thư mục ở ổ khác rồi gói lại." },
   {
     pattern: /PermissionError|WinError 5\b|WinError 32|Access is denied|being used by another process|Errno 13/i,
-    summary: "Không ghi được vào thư mục đã chọn (đang bị khoá hay không đủ quyền). Chọn thư mục khác rồi gói lại.",
+    summary: "Chưa ghi được vào thư mục đã chọn (đang bị khoá hay không đủ quyền). Chọn thư mục khác rồi gói lại.",
   },
 ];
 

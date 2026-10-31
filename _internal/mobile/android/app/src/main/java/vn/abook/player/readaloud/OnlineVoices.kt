@@ -5,9 +5,8 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.io.IOException
-import java.net.HttpURLConnection
 import java.net.SocketTimeoutException
-import java.net.URL
+import vn.abook.player.net.FastConnect
 
 /**
  * Giọng trực tuyến dùng khoá của chính người dùng ("Bring your own key", docs/LISTEN_ANYTHING.md mục 3) trên điện thoại - bản Kotlin của `abook/readaloud/byok.py`.
@@ -25,11 +24,9 @@ object OnlineHttp {
 
     fun request(method: String, url: String, headers: Map<String, String>, body: ByteArray?, name: String, timeoutMs: Int = TIMEOUT_MS): Response {
         try {
-            val connection = URL(url).openConnection() as HttpURLConnection
+            val connection = FastConnect.open(url, timeoutMs) // không theo chuyển hướng: 3xx là lỗi, khoá không bao giờ đi sang máy khác
             try {
-                connection.instanceFollowRedirects = false // 3xx là lỗi: khoá không bao giờ đi sang máy khác
                 connection.requestMethod = method
-                connection.connectTimeout = timeoutMs
                 connection.readTimeout = timeoutMs
                 connection.setRequestProperty("User-Agent", "ABook-ReadAloud")
                 headers.forEach { (key, value) -> connection.setRequestProperty(key, value) }
@@ -56,7 +53,7 @@ object OnlineHttp {
                 connection.disconnect()
             }
         } catch (error: SocketTimeoutException) {
-            throw VoiceException("$name không trả lời (quá giờ)", offline = true, cause = error, reason = "timeout")
+            throw VoiceException("$name không trả lời (quá giờ)", cause = error, reason = "timeout") // có mạng mà dịch vụ không trả lời: không phải "mất mạng" (như byok.py)
         } catch (error: IOException) {
             throw VoiceException("Không có mạng để dùng giọng $name", offline = true, cause = error)
         }

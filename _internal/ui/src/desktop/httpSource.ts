@@ -69,7 +69,7 @@ function watchBrowserDrops({ hover, drop }: Parameters<NonNullable<TextImport["w
     hover(false);
     // Phải đọc danh sách file ngay trong sự kiện (qua một await trình duyệt xoá nó).
     droppedItems(pickedFromDrop(event.dataTransfer!)).then(drop, (error: Error) =>
-      toast.error("Không đọc được các file vừa thả", { description: error.message }),
+      toast.error("Chưa đọc được các file vừa thả", { description: error.message }),
     );
   };
   window.addEventListener("dragenter", enter);
@@ -174,7 +174,7 @@ async function requestClip(voice: string, text: string, options?: ClipOptions): 
     // Máy chủ nói đúng lý do (offline / timeout / rejected / service...); mất kết nối tới chính máy chủ cục bộ là "service".
     if (error instanceof ReadAloudError) throw error;
     if (error instanceof ApiError) throw new ReadAloudError(error.message, String(error.detail.reason ?? "service"));
-    throw new ReadAloudError("Không gọi được giọng đọc.", "service");
+    throw new ReadAloudError("Chưa gọi được giọng đọc.", "service");
   }
   const tailed = stream && tail !== null ? { fromWord: from } : {};
   if ("durationMs" in clip) return { ...clip, ...tailed }; // clip phát luồng đã dựng sẵn

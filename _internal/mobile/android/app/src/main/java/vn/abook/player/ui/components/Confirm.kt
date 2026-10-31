@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -91,8 +90,8 @@ fun DeleteBookPage(title: String, holder: String?, delete: suspend () -> String?
     val scope = rememberCoroutineScope()
     var working by remember { mutableStateOf(false) }
     var problem by remember { mutableStateOf("") }
-    ConfirmPage(if (holder != null) "Xoá phần đã tải của “$title”?" else "Xoá “$title” khỏi điện thoại?", "delete_confirm", listOf(deleteBookLine(title, holder)), problem) {
-        DangerButton(if (working) "Đang xoá" else if (holder != null) "Xoá phần đã tải" else "Xoá khỏi điện thoại", {
+    ConfirmPage(if (holder != null) "Xoá phần đã tải của “$title”?" else "Bỏ “$title” khỏi thư viện?", "delete_confirm", listOf(deleteBookLine(title, holder)), problem) {
+        DangerButton(if (working) "Đang xoá" else if (holder != null) "Xoá phần đã tải" else "Xoá khỏi thư viện", {
             if (working) return@DangerButton
             working = true
             scope.launch {

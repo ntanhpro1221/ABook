@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.BasicText
+import vn.abook.player.ui.components.BasicText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -128,7 +128,7 @@ fun MeteredSheet(text: String, onGo: () -> Unit, dismiss: () -> Unit) {
 }
 
 /**
- * Bước đồng ý trước lần đầu đọc bằng giọng trực tuyến: nói chữ đi tới đâu và có thể bị tính tiền ở đâu - cùng lời với bản WebView ([VoiceText.consent]). `onAllow` chạy sau
+ * Bước đồng ý trước lần đầu đọc bằng giọng trực tuyến: nói chữ đi tới đâu và có thể bị tính tiền ở đâu - lời ở [VoiceText.consent]. `onAllow` chạy sau
  * khi bạn bấm "Đồng ý" (lõi nhớ, rồi việc đang chờ chạy tiếp).
  */
 @Composable

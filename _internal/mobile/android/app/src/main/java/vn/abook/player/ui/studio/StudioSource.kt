@@ -235,7 +235,7 @@ class StudioRepo(
     }
 
     override suspend fun activity(computer: String, id: String, technical: Boolean): List<StudioLogItem> =
-        parsed { StudioActivityJson.items(api(computer).getArray(StudioPaths.activity(id, technical))) }
+        parsed { StudioLogJson.items(api(computer).getArray(StudioPaths.activity(id, technical))) }
 
     override suspend fun coverSearch(computer: String, id: String, query: String): CoverResults =
         parsed { StudioCoverJson.results(api(computer).getObject(StudioPaths.coverSearch(id, query)), query) }

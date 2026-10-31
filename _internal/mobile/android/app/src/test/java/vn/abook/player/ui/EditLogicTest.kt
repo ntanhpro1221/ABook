@@ -281,7 +281,7 @@ internal class FakeEditSource(var snapshot: EditSnapshot) : EditSource {
     val saves = mutableListOf<EditDiff>()
     override suspend fun load(id: String) = snapshot
     override suspend fun save(id: String, diff: EditDiff): EditSnapshot {
-        if (fail) error("Không ghi được file")
+        if (fail) error("Chưa ghi được file")
         saves += diff
         snapshot = snapshot.copy(title = diff.title ?: snapshot.title, author = diff.author ?: snapshot.author,
             chapters = snapshot.chapters.map { old -> diff.chapters.firstOrNull { it.id == old.id } ?: old })
@@ -295,7 +295,7 @@ internal class FakeEditSource(var snapshot: EditSnapshot) : EditSource {
     var original: EditSnapshot = snapshot
     var discards = 0
     override suspend fun discardAll(id: String): EditSnapshot {
-        if (fail) error("Không ghi được file")
+        if (fail) error("Chưa ghi được file")
         discards++
         snapshot = original
         words.clear()
@@ -305,11 +305,11 @@ internal class FakeEditSource(var snapshot: EditSnapshot) : EditSource {
     val words = linkedMapOf<String, String>()
     val readingCalls = mutableListOf<Pair<String, String>>()
     override suspend fun readings(id: String): List<WordReading> {
-        if (fail) error("Không đọc được")
+        if (fail) error("Chưa đọc được")
         return words.map { (surface, spoken) -> WordReading(surface, spoken) }
     }
     override suspend fun setReading(id: String, surface: String, spoken: String): List<WordReading> {
-        if (fail) error("Không ghi được file")
+        if (fail) error("Chưa ghi được file")
         readingCalls += surface to spoken
         if (spoken.isEmpty()) words.remove(surface) else words[surface] = spoken
         snapshot = snapshot.copy(edits = words.size)

@@ -498,7 +498,7 @@ object ListenExport {
 
         private fun publish(part: File, final: File, chapter: Chapter) {
             final.delete()
-            if (!part.renameTo(final)) throw Mp3Export.Refused("Không ghi được file tạm của “${chapter.title}”")
+            if (!part.renameTo(final)) throw Mp3Export.Refused("Chưa ghi được file tạm của “${chapter.title}”")
         }
 
         /**

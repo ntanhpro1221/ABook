@@ -31,7 +31,7 @@ import vn.abook.player.readaloud.LiveClips
 import org.json.JSONObject
 import java.io.File
 import java.net.HttpURLConnection
-import java.net.URL
+import vn.abook.player.net.FastConnect
 
 /**
  * Nghe thẳng thư viện máy tính mà không tải về (stream play): chương nào đã có file trên máy thì phát file, chưa có thì
@@ -68,7 +68,9 @@ object Streaming {
                 override fun open(dataSpec: DataSpec): Long {
                     val token = dataSpec.httpRequestHeaders["Authorization"]?.removePrefix("Bearer ").orEmpty()
                     val expected = PeerRouting.expected(context, token)
-                    return if (expected == null) upstream.open(dataSpec) else Pin.forPeer(expected) { upstream.open(dataSpec) }
+                    // Thiết bị đã ghép kiểm bằng vân tay, không bằng tên máy: tên có nhiều địa chỉ thì đua trước (FastConnect) rồi nối thẳng địa chỉ thắng.
+                    return if (expected == null) upstream.open(dataSpec)
+                        else Pin.forPeer(expected) { upstream.open(dataSpec.withUri(Uri.parse(FastConnect.literalUrl(dataSpec.uri.toString())))) }
                 }
             }
         }
@@ -221,9 +223,8 @@ object Streaming {
         return fetchSmallFile(target) {
             val (link, remote) = SyncLink.linkFor(context, id)
             val selected = PeerRouting.resolve(context, link.base, link.token)
-            val connection = URL("$selected/sync/v1/books/$remote/files/$relative").openConnection() as HttpURLConnection
+            val connection = FastConnect.open("$selected/sync/v1/books/$remote/files/$relative", 3000)
             PeerRouting.expected(context, link.token)?.let { if (connection is javax.net.ssl.HttpsURLConnection) Pin.pin(connection, it) }
-            connection.connectTimeout = 3000
             connection.readTimeout = 15_000
             connection.setRequestProperty("Authorization", "Bearer ${link.token}")
             connection
@@ -247,7 +248,7 @@ object Streaming {
                 output.fd.sync()
             }
             check(expected < 0 || pending.length() == expected) { "File tải chưa đủ; bạn hãy thử lại." }
-            check(pending.renameTo(target)) { "Không lưu được file; bạn hãy thử lại." }
+            check(pending.renameTo(target)) { "Chưa lưu được file; bạn hãy thử lại." }
             target
         } finally {
             partial?.delete()

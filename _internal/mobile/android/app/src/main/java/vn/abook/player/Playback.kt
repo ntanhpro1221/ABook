@@ -24,10 +24,10 @@ internal fun msOf(seconds: Double): Long = Math.round(seconds * 1000).coerceAtLe
 
 /**
  * Lõi phát - sống trong tiến trình app, dùng chung giữa PlaybackService (thông báo, màn hình khoá, nút tai nghe)
- * và PlayerPlugin (giao diện). Mọi thao tác trên ExoPlayer chạy ở luồng chính.
+ * và giao diện (`ui.data.PlaybackCore`). Mọi thao tác trên ExoPlayer chạy ở luồng chính.
  *
- * Vì sao hàng đợi, lưu vị trí, hẹn giờ đều ở ĐÂY chứ không ở JavaScript: tắt màn hình thì WebView bị treo, nên
- * tự sang chương kế hay tắt nhạc lúc ngủ mà nằm trong JS thì sẽ không bao giờ chạy.
+ * Vì sao hàng đợi, lưu vị trí, hẹn giờ đều ở ĐÂY chứ không ở tầng giao diện: tắt màn hình thì giao diện bị treo, nên
+ * tự sang chương kế hay tắt nhạc lúc ngủ mà nằm ở giao diện thì sẽ không bao giờ chạy.
  */
 /** Artist line of the media card: the narrator, or the book title when there is none ("Nghe ngay", a book without a narrator). The system
  *  speaks the card as "<chapter> by <artist> is playing from ABook" - a null artist came out as "by null" (a67). */
@@ -215,7 +215,7 @@ object Playback {
         Remote.init(appContext)
         MusicBed.init(appContext)
         ReadAloud.init(appContext)
-        ListenPrefs.loadOnce() // tuỳ chọn nghe + hẹn giờ ngủ còn dở: tiến trình dậy từ tai nghe / widget / xe chưa có WebView đẩy chúng xuống
+        ListenPrefs.loadOnce() // tuỳ chọn nghe + hẹn giờ ngủ còn dở: tiến trình dậy từ tai nghe / widget / xe chưa có giao diện đẩy chúng xuống
     }
 
     fun onMain(block: () -> Unit) {
@@ -318,7 +318,7 @@ object Playback {
             scheduleReconnect()
             "Mất kết nối với ${SyncLink.holderName(appContext, bookId)} - đang thử lại…"
         } else {
-            "Không phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại."
+            "Chưa phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại."
         }
         saveNow()
         // Lần thử lại hỏng nữa: chỉ cập nhật lời đang hiện, không báo lần nữa.

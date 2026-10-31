@@ -1,8 +1,7 @@
 import { afterEach, expect, it, vi } from "vitest";
-import type { ListenBook, ListenChapter } from "./model";
+import type { ListenBook } from "./model";
 import { latestReading, localReading, nextReadingRevision, newerReading, readingKey } from "./readingPosition";
 import malformed from "../../../tests/fixtures/listening_revision/malformed.json";
-import { bookProgress } from "@/android/progress";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -47,10 +46,4 @@ it("bản đã đồng bộ mới hơn thắng bản dự phòng có giờ tươ
   const book = { id: "b", chapters: [{ id: 1 }], state: { reading: { chapterId: 1, index: 100, at: 100, rev: { counter: 2, node: "phone" } } } } as unknown as ListenBook;
   vi.stubGlobal("localStorage", { getItem: () => JSON.stringify(local) });
   expect(latestReading(book)?.index).toBe(100);
-});
-
-it("nghe lại sau khi chỉnh giờ lùi không bị kẹt ở đã nghe xong", () => {
-  const state = { chapters: {}, finished: true, finishedAt: 200, _fieldRevs: { finished: { counter: 1, node: "desktop" } },
-    last: { chapterId: 1, seconds: 10, at: 100, rev: { counter: 2, node: "desktop" } } };
-  expect(bookProgress(state, [{ id: 1, duration: 1000 } as ListenChapter]).rewound).toBe(true);
 });

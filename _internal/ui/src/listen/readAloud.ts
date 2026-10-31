@@ -56,7 +56,7 @@ export async function fetchClipBytes(url: string, get: (url: string) => Promise<
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return await response.blob();
   } catch {
-    throw new ReadAloudError("Không tải được đoạn giọng đọc.", "service");
+    throw new ReadAloudError("Chưa tải được đoạn giọng đọc.", "service");
   }
 }
 
@@ -1770,7 +1770,7 @@ export class ReadAloudEngine implements AudioEngine {
       if (index === this.target.index && this.wanted) this.fire("waiting");
     };
     const broken = () => {
-      if (index === this.target.index && this.wanted) this.fail(new ReadAloudError("Không phát được clip giọng đọc.", "service"));
+      if (index === this.target.index && this.wanted) this.fail(new ReadAloudError("Chưa phát được clip giọng đọc.", "service"));
     };
     audio.addEventListener("ended", ended);
     audio.addEventListener("timeupdate", tick);

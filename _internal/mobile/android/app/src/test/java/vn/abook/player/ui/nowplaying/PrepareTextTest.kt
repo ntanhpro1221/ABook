@@ -32,7 +32,7 @@ class PrepareTextTest {
     @Test
     fun `button and job names`() {
         assertEquals("Làm trước chương sau", PrepareText.startLabel(1))
-        assertEquals("Làm trước 3 chương tới", PrepareText.startLabel(3))
+        assertEquals("Làm trước 3 chương", PrepareText.startLabel(3))
         assertEquals("Chương 2", PrepareText.jobLabel(listOf(PlayerChapter(2, "Chương 2", 0, "t"))))
         assertEquals("2 chương tới", PrepareText.jobLabel(listOf(PlayerChapter(2, "x", 0, "t"), PlayerChapter(3, "y", 0, "t"))))
     }

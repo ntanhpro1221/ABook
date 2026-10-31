@@ -4,11 +4,6 @@ apply plugin: 'org.jetbrains.kotlin.plugin.compose'
 apply plugin: 'androidx.baselineprofile'
 apply plugin: 'io.github.takahirom.roborazzi'
 
-// Giao diện native (docs/NATIVE_PHONE_UI.md): -PnativeUi làm NativeActivity (Compose) thành màn mở app; không cờ thì app đúng như trước (MainActivity,
-// WebView). Công tắc nằm ở MỘT chỗ: manifest chồng src/nativeUi/AndroidManifest.xml, chỉ được gắn khi có cờ (mọi build type, kể cả benchmark
-// / nonMinified do plugin baseline profile thêm) - manifest chính không đổi, nên bản không cờ không có NativeActivity trong manifest.
-def nativeUi = project.hasProperty("nativeUi")
-
 // Khoá ký bản phát hành (docs/RELEASING.md): nằm NGOÀI repo - %USERPROFILE%\.abook-keys\android-release.properties (storeFile,
 // storePassword, keyAlias, keyPassword; ABOOK_ANDROID_SIGNING trỏ chỗ khác) - không bao giờ commit. Mọi bản cập nhật APK
 // phải cùng khoá này, nên chủ sách giữ bản sao. Thiếu file thì bản release KHÔNG ký, không bao giờ rơi về khoá debug.
@@ -28,18 +23,14 @@ android {
         if (project.hasProperty("benchAppId")) {
             applicationId project.property("benchAppId")
         }
+        // Chế độ sách giả cho đo đạc (NativeActivity.DEMO_BOOKS) chỉ có ở bản thử dưới gói riêng: Activity mở app nhận Intent của mọi app khác,
+        // nên bản phát hành không bao giờ nghe extra ấy.
+        buildConfigField "boolean", "DEMO", "${project.hasProperty("benchAppId")}"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 150
         versionName "0.4.148"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        // Chỉ để mã native biết mình đang ở bản thử (-PnativeUi): chế độ sách giả cho đo đạc (abook.demo.books) không bao giờ bật ở bản thường.
-        buildConfigField "boolean", "NATIVE_UI", "${nativeUi}"
-        aaptOptions {
-             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
-             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
-            ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
-        }
     }
     // App chỉ có tiếng Việt (res/values) và muốn chữ của media3 cũng tiếng Việt cả khi máy để tiếng Anh (strings.xml). Thư viện media3 mang theo
     // values-en-rGB / en-rAU / en-rIN: trên máy đặt các vùng ấy, bản dịch cụ thể hơn của thư viện thắng chữ Việt mặc định của app. Chỉ giữ "vi" của thư viện;
@@ -47,17 +38,16 @@ android {
     androidResources {
         localeFilters += ["vi"]
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
+    }
     buildFeatures {
         compose true
         buildConfig true
     }
-    if (nativeUi) {
-        buildTypes.configureEach { type ->
-            sourceSets.maybeCreate(type.name).manifest.srcFile("src/nativeUi/AndroidManifest.xml")
-        }
-        // Cài đặt > Giới thiệu > "Thành phần sử dụng" của giao diện native đọc docs/THIRD_PARTY.md (cùng file bản WebView gói lúc build): chép thành asset.
-        sourceSets.main.assets.srcDirs += layout.buildDirectory.dir("generated/nativeUiAssets").get().asFile
-    }
+    // Cài đặt > Giới thiệu > "Thành phần sử dụng" đọc docs/THIRD_PARTY.md: chép thành asset lúc build (nativeThirdPartyAsset).
+    sourceSets.main.assets.srcDirs += layout.buildDirectory.dir("generated/thirdPartyAssets").get().asFile
     testOptions {
         // Robolectric (ảnh chụp màn bằng Roborazzi) cần tài nguyên gộp của app.
         unitTests.includeAndroidResources = true
@@ -124,18 +114,8 @@ baselineProfile {
     dexLayoutOptimization = true
 }
 
-repositories {
-    flatDir{
-        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
-    }
-}
-
 dependencies {
-    implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
-    implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
     implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
-    implementation project(':capacitor-android')
     implementation "androidx.core:core-ktx:$androidxCoreVersion"
     implementation "androidx.media3:media3-exoplayer:1.11.1"
     implementation "androidx.media3:media3-session:1.11.1"
@@ -175,7 +155,6 @@ dependencies {
     testImplementation "org.json:json:20240303"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
-    implementation project(':capacitor-cordova-android-plugins')
 }
 
 // Robolectric tự tải android-all bằng HTTP riêng (hỏng khi DNS / tường lửa chập chờn): để Gradle tải, Robolectric đọc offline từ thư mục này.
@@ -197,21 +176,8 @@ tasks.withType(Test).configureEach {
     systemProperty "robolectric.dependency.dir", robolectricDir.get().asFile.path
 }
 
-if (nativeUi) {
-    def thirdPartyAsset = tasks.register("nativeThirdPartyAsset", Copy) {
-        from "../../../docs/THIRD_PARTY.md"
-        into layout.buildDirectory.dir("generated/nativeUiAssets")
-    }
-    tasks.named("preBuild").configure { dependsOn thirdPartyAsset }
+def thirdPartyAsset = tasks.register("nativeThirdPartyAsset", Copy) {
+    from "../../../docs/THIRD_PARTY.md"
+    into layout.buildDirectory.dir("generated/thirdPartyAssets")
 }
-
-apply from: 'capacitor.build.gradle'
-
-try {
-    def servicesJSON = file('google-services.json')
-    if (servicesJSON.text) {
-        apply plugin: 'com.google.gms.google-services'
-    }
-} catch(Exception e) {
-    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
-}
+tasks.named("preBuild").configure { dependsOn thirdPartyAsset }

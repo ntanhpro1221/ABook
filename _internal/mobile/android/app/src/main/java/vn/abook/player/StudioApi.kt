@@ -13,7 +13,7 @@ import org.json.JSONObject
  *
  * `transport` là đường gửi thật; test thay bằng bản giả (không cần ghép máy).
  */
-class StudioApi(private val transport: Transport, private val slow: Transport, private val uploader: Uploader = Uploader { _, _ -> throw IllegalStateException("Không gửi được tệp") }) {
+class StudioApi(private val transport: Transport, private val slow: Transport, private val uploader: Uploader = Uploader { _, _ -> throw IllegalStateException("Chưa gửi được tệp") }) {
     constructor(transport: Transport) : this(transport, transport)
 
     constructor(context: Context, computer: String) : this(

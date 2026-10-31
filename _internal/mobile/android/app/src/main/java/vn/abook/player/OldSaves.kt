@@ -6,7 +6,7 @@ import java.io.OutputStream
 /**
  * "Bản lưu cũ": file bản lưu trước mà [BookSave] giữ lại khi lần lưu mới bị gián đoạn hoặc bản trước chưa trả lại vào chỗ đã chọn được
  * (filesDir/ban-luu-cu). Người dùng thấy danh sách ở Cài đặt, lưu ra chỗ khác hoặc xoá - phần thuần ở đây (liệt kê, chặn tên, chép, xoá),
- * phần hộp chọn chỗ lưu của hệ thống nằm ở LibraryPlugin.
+ * phần hộp chọn chỗ lưu của hệ thống nằm ở giao diện.
  */
 object OldSaves {
     const val DIR = "ban-luu-cu"

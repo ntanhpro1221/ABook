@@ -260,7 +260,7 @@ class PlaylistsTest {
         assertTrue("chưa có gì hỏng: không lời báo", !musicView(id).has("error"))
         assertTrue(runCatching { catalog.download("https://x/calm.mp3", null) }.exceptionOrNull() is MusicCatalog.Offline)
         assertEquals(MusicCatalog.OFFLINE_MESSAGE, musicView(id).getString("error"))
-        assertEquals("cùng chữ với máy tính", "Không tải được nhạc vì mất mạng - giữ nguyên nhạc hiện tại, bạn thử lại sau nhé", MusicCatalog.OFFLINE_MESSAGE)
+        assertEquals("cùng chữ với máy tính", "Chưa tải được nhạc vì mất mạng - giữ nguyên nhạc hiện tại, bạn thử lại sau nhé", MusicCatalog.OFFLINE_MESSAGE)
         val (_, saved) = LocalStudio.handle("PUT", "/api/books/$id/music", JSONObject().put("playlist", "calm"))
         assertEquals(MusicCatalog.OFFLINE_MESSAGE, (saved as JSONObject).getString("error"))
         val (_, off) = LocalStudio.handle("PUT", "/api/books/$id/music", JSONObject().put("playlist", "off"))

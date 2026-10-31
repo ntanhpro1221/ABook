@@ -260,7 +260,7 @@ class TextBookTest {
     /** Bộ chuẩn hoá ảnh giả cho test JVM (không có Bitmap): ảnh hợp lệ khi dài hơn 3 byte. */
     private class FakeCodec : CoverCodec {
         override fun normalize(raw: ByteArray): CoverCodec.Normalized {
-            if (raw.size < 4) throw CoverCodec.CoverError("Không đọc được ảnh này")
+            if (raw.size < 4) throw CoverCodec.CoverError("Chưa đọc được ảnh này")
             return CoverCodec.Normalized(byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte(), 1), "#aa3333", 240, 320)
         }
     }

@@ -49,7 +49,7 @@ class ImportRepo(private val context: Context) : ImportSource {
         val mime = context.contentResolver.getType(document(item))
         val incoming = TextImports.incomingName(mime, shown)
         val head = { context.contentResolver.openInputStream(uri)?.use { input -> ByteArray(512).let { buffer -> buffer.copyOf(maxOf(0, input.read(buffer))) } } }
-        // File chia sẻ qua kiểu chung (octet-stream, zip) mà không phải thứ app nhận: cùng lời từ chối với màn WebView (LibraryPlugin.openFrom).
+        // File chia sẻ qua kiểu chung (octet-stream, zip) mà không phải thứ app nhận: từ chối bằng lời của [TextImports.refuseShared].
         if (!item.folder) TextImports.refuseShared(mime, shown, head)?.let { throw BookImport.Failed(it) }
         val packageFile = !item.folder && (TextImports.isAppBookFile(mime, shown) || (incoming == null && BookFileImport.looksLikeBookFile(head() ?: ByteArray(0))))
         if (packageFile) {
