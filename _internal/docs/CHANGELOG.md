@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.150] - 2026-10-31
+
 ### Máy tính
 
 - Gỡ cài đặt có "Xoá dữ liệu" không còn đi theo liên kết thư mục (junction) bên trong thư mục dữ liệu: có liên kết thì giữ lại dữ liệu, không làm rỗng thư mục ở chỗ khác.
