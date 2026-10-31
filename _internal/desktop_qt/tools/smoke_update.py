@@ -12,8 +12,6 @@ smoke_update.py <dist có resources/> [--seconds 60]   -> UPDATE_OK / UPDATE_FAI
 smoke_packaged.py gọi `check` trên bản chép của nó.
 """
 import argparse
-import base64
-import hashlib
 import json
 import os
 import queue
@@ -25,28 +23,15 @@ import threading
 import time
 import urllib.parse
 import urllib.request
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from update_site import Site, TestKey  # noqa: E402
 
 INTERNAL = Path(__file__).resolve().parents[2]
 VERSION = "9.9.9"
 NAME = f"ABook_{VERSION}_x64-setup.exe"
 SETUP = b"MZ not an installer " * 5000
-
-
-def _b64(*lines: str) -> str:
-    return base64.b64encode(("\n".join(lines) + "\n").encode()).decode()
-
-
-def test_signature(data: bytes, version: str) -> str:
-    """Chữ ký minisign (dạng .sig của Tauri) bằng một khoá thử vừa sinh - không bao giờ là khoá thật."""
-    secret = Ed25519PrivateKey.generate()
-    trusted = f"timestamp:1\tfile:ABook_{version}_x64-setup.exe\tversion:{version}"
-    signature = secret.sign(hashlib.blake2b(data, digest_size=64).digest())
-    return _b64("untrusted comment: signature from a smoke test key", base64.b64encode(b"ED" + b"smoketst" + signature).decode(),
-                "trusted comment: " + trusted, base64.b64encode(secret.sign(signature + trusted.encode())).decode())
 
 
 def check(app: Path, seconds: float) -> str | None:
@@ -55,29 +40,10 @@ def check(app: Path, seconds: float) -> str | None:
     tauri = json.loads((INTERNAL / "shell/src-tauri/tauri.conf.json").read_text(encoding="utf-8"))["plugins"]["updater"]
     if packaged != {"endpoints": tauri["endpoints"], "pubkey": tauri["pubkey"]}:
         return "resources/app/updater.json khác plugins.updater của tauri.conf.json"
-    requests: list[str] = []
-    manifest = {}
-
-    class Handler(BaseHTTPRequestHandler):
-        def log_message(self, *args) -> None:
-            pass
-
-        def do_GET(self) -> None:
-            requests.append(self.path)
-            body = json.dumps(manifest).encode() if self.path == "/latest.json" else SETUP if self.path == "/" + NAME else None
-            if body is None:
-                self.send_error(404)
-                return
-            self.send_response(200)
-            self.send_header("Content-Length", str(len(body)))
-            self.end_headers()
-            self.wfile.write(body)
-
-    site = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
-    base = f"http://127.0.0.1:{site.server_address[1]}"
-    manifest.update(version=VERSION, notes="Bản thử", platforms={"windows-x86_64": {"url": f"{base}/{NAME}",
-                                                                                     "signature": test_signature(SETUP, VERSION)}})
-    threading.Thread(target=site.serve_forever, daemon=True).start()
+    # Khoá thử vừa sinh: bản đóng gói chỉ tin khoá thật, nên gói này phải bị từ chối.
+    site = Site()
+    site.publish(VERSION, SETUP, TestKey().sign(SETUP, VERSION))
+    requests, base = site.requests, site.base
     with tempfile.TemporaryDirectory(prefix="abook-update-", ignore_cleanup_errors=True) as tmp:
         root = Path(tmp)
         for name in ("local", "roaming", "temp", "profile"):
@@ -157,7 +123,7 @@ def check(app: Path, seconds: float) -> str | None:
             except (OSError, subprocess.TimeoutExpired):
                 host.kill()
                 host.wait(10)
-            site.shutdown()
+            site.close()
 
 
 def main():

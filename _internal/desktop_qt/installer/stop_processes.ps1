@@ -1,4 +1,4 @@
-param([switch] $Find)
+param([switch] $Find, [int] $GraceSeconds = 0)
 # Stop every process started FROM the installed app: exactly $env:ABOOK_STOP_EXE, or any executable under
 # $env:ABOOK_STOP_ROOT. Matched by executable path, never by name, so a pythonw.exe elsewhere is untouched.
 # Spares itself and its parent (the uninstaller runs in place with _?= when a newer installer calls it).
@@ -16,6 +16,14 @@ try {
             ($exe -and $_.ExecutablePath.Equals($exe, [StringComparison]::OrdinalIgnoreCase)))
     })
     if ($Find) { if ($processes.Count) { exit 3 } else { exit 0 } }
+    # -GraceSeconds (cập nhật từ trong app): app vừa chạy bộ cài rồi tự tắt, host còn đang ghi nốt - chờ nó thoát êm,
+    # chỉ dừng cứng những gì còn chạy khi hết hạn.
+    $deadline = [DateTime]::UtcNow.AddSeconds($GraceSeconds)
+    while ([DateTime]::UtcNow -lt $deadline -and @($processes | Where-Object {
+            $current = Get-CimInstance Win32_Process -Filter ('ProcessId=' + $_.ProcessId)
+            $current -and $current.CreationDate -eq $_.CreationDate }).Count) {
+        Start-Sleep -Milliseconds 250
+    }
     foreach ($process in $processes) {
         $current = Get-CimInstance Win32_Process -Filter ('ProcessId=' + $process.ProcessId)
         if ($current -and $current.CreationDate -eq $process.CreationDate -and $current.ExecutablePath -eq $process.ExecutablePath) {

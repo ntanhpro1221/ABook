@@ -305,7 +305,11 @@ FunctionEnd
         Abort
       ${EndIf}
     ${EndIf}
-    nsExec::Exec 'powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$PLUGINSDIR\abook-stop-processes.ps1"'
+    ; /UPDATE = bộ cập nhật trong app vừa chạy bộ cài rồi tự tắt (host lưu nốt, tối đa 5 s): chờ nó thoát êm trước khi dừng
+    ; cứng, để không cắt ngang lúc host đang ghi.
+    StrCpy $2 0
+    ${IfThen} $UpdateMode = 1 ${|} StrCpy $2 15 ${|}
+    nsExec::Exec 'powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$PLUGINSDIR\abook-stop-processes.ps1" -GraceSeconds $2'
     Pop $0
   ${EndIf}
   ${If} $0 != 0
@@ -420,9 +424,14 @@ Function .onInit
   Call AbookSetupContext
   ${If} $INSTDIR == "${PLACEHOLDER_INSTALL_DIR}"
     !ifdef ABOOK_TEST_ROOT
-      ; Bản test luôn được gọi với /D=: không có thì từ chối, không đoán chỗ cài.
-      SetErrorLevel ${TEST_REFUSED}
-      Quit
+      ; Bản test không bao giờ đoán chỗ cài: không /D= thì chỉ lấy chỗ mà chính một lượt cài test đã ghi dưới gốc registry
+      ; test (đường của bộ cập nhật, không truyền /D), không có thì từ chối. AbookTestGuard còn đòi nó nằm trong %TEMP%.
+      ReadRegStr $0 HKCU "${REG_MANUPRODUCT}" ""
+      ${If} $0 == ""
+        SetErrorLevel ${TEST_REFUSED}
+        Quit
+      ${EndIf}
+      StrCpy $INSTDIR $0
     !else
       StrCpy $INSTDIR "$LOCALAPPDATA\${PRODUCTNAME}"
       ReadRegStr $0 HKCU "${REG_MANUPRODUCT}" ""
@@ -491,6 +500,16 @@ Function .onInstSuccess
   ${OrIf} ${Silent}
     ${GetOptions} $CMDLINE "/R" $0
     ${IfNot} ${Errors}
+      !ifdef ABOOK_TEST_ROOT
+        ; Ca an toàn của test_installer: ghi lệnh mở lại thay vì mở, để so dữ liệu từng byte trước khi app kịp ghi gì.
+        ReadEnvStr $1 "ABOOK_TEST_RELAUNCH_LOG"
+        ${If} $1 != ""
+          FileOpen $2 $1 w
+          FileWrite $2 '"$INSTDIR\${MAINBINARY}"'
+          FileClose $2
+          Return
+        ${EndIf}
+      !endif
       Exec '"$INSTDIR\${MAINBINARY}"'
     ${EndIf}
   ${EndIf}
