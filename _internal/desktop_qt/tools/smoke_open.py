@@ -57,9 +57,9 @@ def tree(process) -> list[psutil.Process]:
         return []
 
 
-def check(dist: Path, seconds: float, logs: dict) -> str | None:
-    """None khi qua; không thì lý do. `logs`: nhật ký từng lần mở (a.log, b.log), điền khi xong."""
-    exe = dist / "ABookDesk.exe"
+def check(exe: Path, seconds: float, logs: dict) -> str | None:
+    """None khi qua; không thì lý do. `exe`: ABookDesk.exe của bản đóng gói, hay ABook.exe của bản đã cài (test_installer.py).
+    `logs`: nhật ký từng lần mở (a.log, b.log), điền khi xong."""
     user = ctypes.WinDLL("user32", use_last_error=True)
     user.CreateDesktopW.restype = wt.HANDLE
     user.CreateDesktopW.argtypes = [wt.LPCWSTR, wt.LPCWSTR, ctypes.c_void_p, wt.DWORD, wt.DWORD, ctypes.c_void_p]
@@ -91,7 +91,7 @@ def check(dist: Path, seconds: float, logs: dict) -> str | None:
 
         def launch(args, log_name):
             with (root / log_name).open("wb") as log:
-                process = create_suspended([str(exe), *map(str, args)], env=env, cwd=str(dist), log=log, desktop=name, show=4)
+                process = create_suspended([str(exe), *map(str, args)], env=env, cwd=str(exe.parent), log=log, desktop=name, show=4)
             started.append(process)
             if nt.NtResumeProcess(wt.HANDLE(int(process._handle))) != 0:
                 raise RuntimeError("cannot resume the app")
@@ -153,7 +153,7 @@ def main():
             print(f"OPEN_FAIL {copy} nằm dưới một cây nguồn; host sẽ không chạy từ resources/")
             return 1
         shutil.copytree(dist, copy / "ABook")
-        why = check(copy / "ABook", args.seconds, logs)
+        why = check(copy / "ABook" / "ABookDesk.exe", args.seconds, logs)
     finally:
         shutil.rmtree(copy, ignore_errors=True)
     if why is not None:

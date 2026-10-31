@@ -9,7 +9,8 @@ Không bước nào đụng HKCU hay thư mục cài thật của chủ máy (Le
 - bộ cài và app đã cài chạy trên desktop riêng có bộ canh tiêu điểm (guarded_process / smoke_dist).
 
 Kịch bản: kiểm tĩnh kịch bản test -> hai lần từ chối -> một bản giả cũ hơn (exe, resources thừa, lối tắt, ghim, dữ liệu người
-dùng) -> cài im lặng -> file, khoá, lối tắt -> app đã cài tới host Ready bằng Python nhúng của nó -> gỡ im lặng -> sạch.
+dùng) -> cài im lặng -> file, khoá, lối tắt -> app đã cài tới host Ready bằng Python nhúng của nó -> app đã cài mở file trên
+dòng lệnh + file của lần mở thứ hai (smoke_open.py) -> gỡ im lặng -> sạch.
 
 test_installer.py <dist> [--version 0.0.1]
 """
@@ -31,6 +32,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from guarded_process import run_guarded  # noqa: E402
 from private_profile import isolate  # noqa: E402
 from smoke_dist import run as run_app  # noqa: E402
+import smoke_open  # noqa: E402
 
 HERE = Path(__file__).resolve().parents[1]
 INSTALLER = HERE / "installer"
@@ -288,6 +290,13 @@ def main() -> int:
               f"app đã cài tới host Ready bằng Python nhúng (mã {code}, host {hosts})")
         if code != 0:
             print(text[-3000:])
+        # Bấm đúp file: lệnh mở của liên kết là '"<exe>" "%1"' (check_associations) - chạy đúng như thế, rồi lần mở thứ hai.
+        open_logs: dict = {}
+        why = smoke_open.check(exe, 120, open_logs)
+        check(why is None, f"app đã cài mở file trên dòng lệnh và file của lần mở thứ hai ({why or 'ổn'})")
+        if why:
+            for log_name, text in open_logs.items():
+                print(f"--- {log_name}", *text.splitlines()[-20:], sep="\n")
 
         # _?= : bộ gỡ chạy tại chỗ để chờ được nó; vì thế chính uninstall.exe không tự xoá được.
         check(run_setup([str(install / "uninstall.exe"), "/S", f"_?={install}"], env, log) == 0, "gỡ im lặng thoát 0")
