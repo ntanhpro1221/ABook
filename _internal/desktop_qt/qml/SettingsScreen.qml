@@ -151,6 +151,7 @@ FocusScope {
             Item {
                 id: content
                 objectName: "settingsContent"
+                property bool wholeRows: true     // mọi hàng chạy hết cột: danh sách trong đây cũng vậy (Theme.listWidth)
                 x: root.layoutExpanded ? 260 + Theme.s32 : 0
                 y: header.height
                 width: parent.width - x

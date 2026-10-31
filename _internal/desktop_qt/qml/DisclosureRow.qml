@@ -3,14 +3,16 @@ import ABook
 import "TextWrap.js" as TextWrap
 
 // Một hàng cho cả đi tới và gập mở (shared/DisclosureRow.tsx): icon (tuỳ), tên 16 + một dòng tóm tắt 14 mực phụ, mũi tên neo mép phải
-// (xoay 90° khi mở). Mục đang mở của danh sách nhóm là điều hướng (DESIGN 6): nền trung tính nhạt + chữ đậm màu thường. Nền rê chuột tràn
+// (mũi tên phải chỉ cho hàng mở trang con; hàng gập mở tại chỗ - `expanded` có gán - mang mũi tên xuống, lật lên khi mở). Mục đang mở của danh sách nhóm là điều hướng (DESIGN 6): nền trung tính nhạt + chữ đậm màu thường. Nền rê chuột tràn
 // 12 px ra hai bên, bố cục hàng không đổi. `section`: đầu khối gập của Cài đặt (tên cỡ tiêu đề mục 18/500).
 Interactive {
     id: root
     property string title: ""
     property string summary: ""
     property string icon: ""
-    property bool expanded: false
+    // undefined = hàng đi tới (mũi tên phải); true / false = hàng gập mở tại chỗ (mũi tên xuống), như `expanded` của bản web
+    property var expanded: undefined
+    readonly property bool toggles: expanded !== undefined
     property bool current: false
     property bool section: false
     Accessible.role: Accessible.Button
@@ -62,12 +64,12 @@ Interactive {
     }
     Icon {
         anchors.right: parent.right
-        anchors.rightMargin: -1     // mực của chevron (14 px trong ô 16) thẳng mép cột
+        anchors.rightMargin: root.toggles ? 1 : -1     // mực của chevron (14 px trong ô 16) thẳng mép cột; mũi tên xuống rộng hơn 2 px mỗi bên
         anchors.verticalCenter: parent.verticalCenter
-        name: "chevron-right"
+        name: root.toggles ? "chevron-down" : "chevron-right"
         size: 16
         color: Theme.text3
-        rotation: root.expanded ? 90 : 0
+        rotation: root.expanded === true ? 180 : 0
         Behavior on rotation { enabled: !Theme.reduceMotion; NumberAnimation { duration: Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard } }
     }
 }

@@ -160,11 +160,12 @@ Item {
             tryVerify(function() { return named(mine, "track:local:" + sha1) !== null })
             const row = named(mine, "track:local:" + sha1)
             verify(row !== null)
-            compare(row.note, "Đã phân tích - máy có thể tự chọn")
-            compare(named(mine, "track:local:" + sha2).note, "Có vẻ có lời - máy không tự chọn bài này")
-            compare(named(mine, "track:local:" + sha3).note, "Chưa phân tích - máy chưa tự chọn, bạn vẫn ghim được")
-            compare(named(mine, "track:local:" + sha4).note, "Máy không tự chọn bài này")
-            compare(named(mine, "track:local:" + sha4).switcher.text, "Tự chọn lại")
+            // lời dưới tên chỉ nói điều đáng biết; công tắc "Tự chọn" nói máy có được tự chọn bài này không
+            compare(row.note, "")
+            compare(named(mine, "track:local:" + sha2).note, "Có lời")
+            compare(named(mine, "track:local:" + sha3).note, "Chưa phân tích")
+            compare(named(mine, "track:local:" + sha4).note, "")
+            compare([sha1, sha2, sha3, sha4].map(sha => named(named(mine, "track:local:" + sha), "autoPick").checked), [true, false, true, false])
             // Xoá: bước hỏi lại mở một lớp Back
             row.askRemove()
             compare(mine.removing, "local:" + sha1)
@@ -189,8 +190,9 @@ Item {
             tryVerify(function() { return named(mine, "track:local:" + sha1) === null })
             // công tắc tự chọn của một bài
             const gym = named(mine, "track:local:" + sha2)
-            compare(gym.switcher.text, "Cho tự chọn")
-            gym.pick("on")
+            const gymSwitch = named(gym, "autoPick")
+            compare(gymSwitch.checked, false)
+            gymSwitch.toggled(true)
             compare(last("POST", "/api/music/local/" + sha2 + "/auto").body.auto, "on")
         }
         function test_myMusicImportSummary() {
@@ -228,7 +230,7 @@ Item {
             mine.open = true
             tryVerify(function() { return named(mine, "musicModule") !== null })
             const card = named(mine, "musicModule")
-            compare(card.label, "Tải 782 MB để tự chọn nhạc phù hợp trên máy.")
+            compare(card.label, "Máy tự chọn nhạc hợp từng đoạn.")  // cỡ tải chỉ nói một lần, trên nút
             compare(card.installText(), "Tải (782 MB)")
             verify(hasText(card, "Tải một lần, phân tích trên máy rồi dùng không cần mạng. Chưa tải vẫn nhập, nghe và ghim nhạc bằng tay."))
             replyWith("POST /api/music/local/module", () => ({status: 200, data: {tracks: test.tracks(), analyzer: false, module: {state: "downloading", done: 410000000, total: 820000000, error: "", ready: false, analysing: false, metered: false, cancellable: true}}}))

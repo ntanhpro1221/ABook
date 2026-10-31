@@ -2,7 +2,7 @@ import QtQuick
 import ABook
 import "ExportLogic.js" as Logic
 import "SizeFormat.js" as Size
-import "EditBookLogic.js" as Notes
+import "MyMusicText.js" as Notes
 
 // Máy chưa có (hay có bản cũ của) công cụ ghép âm thanh (FfmpegNeeded của desktop/AudiobookDialog.tsx): tải một lần ngay trong hộp. Đang tải: thanh + % + "Dừng".
 // Studio từ xa chỉ nói việc này làm ở máy tính; máy không tải được thì nói lý do; tải hỏng thì lời lỗi + nút "Thử lại" + nguyên văn trong "Chi tiết".

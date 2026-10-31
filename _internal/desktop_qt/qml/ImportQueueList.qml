@@ -21,7 +21,7 @@ Item {
         id: view
         y: 10
         objectName: "importQueueViewport"
-        width: Math.min(root.width, Theme.listMeasure)
+        width: Theme.listWidth(root, root.width)
         height: Math.min(root.tall ? 288 : 144, column.height)
         contentWidth: width
         contentHeight: column.height

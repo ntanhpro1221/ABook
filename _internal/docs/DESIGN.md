@@ -202,7 +202,8 @@ Studio: lời nhắc trạng thái (chưa tải được, thiếu thư mục th�
 dùng biểu tượng cạnh lời nhắc ở expanded, xếp dọc khi hẹp, tối đa 640 px.
 Danh sách chữ không có các cột dữ liệu riêng (chương, thiết bị, hàng chờ nhập,
 mẫu sách, cách đọc chung, giọng đọc) giữ cả hàng rộng tối đa 640 px, kể cả hành động và
-thời lượng; căn theo đầu cột nội dung. Lưới bìa tiếp tục tăng số cột. Bảng dự
+thời lượng; căn theo đầu cột nội dung. Trong cột Cài đặt (đã có trần, mọi hàng chạy hết cột)
+danh sách chạy hết cột như các hàng quanh nó, không để mép phải lởm chởm. Lưới bìa tiếp tục tăng số cột. Bảng dự
 án Studio dùng các cột tên · trạng thái · tiến độ · cập nhật khi khung chữ từ 1000 px;
 từ 700 px bỏ cột cập nhật; hẹp hơn thì trạng thái và tiến độ xếp dưới tên. Trang một
 dự án giữ cột chữ tối đa 960 px; hàng chương rộng từ 720 px mới có cột riêng.

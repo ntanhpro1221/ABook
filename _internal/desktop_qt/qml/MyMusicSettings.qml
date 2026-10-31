@@ -148,13 +148,14 @@ Column {
                 onActivated: files.open()
             }
         }
+        // Câu giới thiệu tả nút Thêm ngay trên nó, rồi mới tới khối tải Phân tích nhạc
+        HintText { width: parent.width; text: Music.MY_MUSIC_INTRO }
+        MoreInfo { width: parent.width; label: "Nhạc riêng"; HintText { width: parent.width; text: Music.MY_MUSIC_HELP } }
         Collapse {
             width: parent.width
             open: root.tracks.length > 0
             MyMusicModule { width: parent.width; view: root.view; onUpdated: next => root.refresh(next) }
         }
-        HintText { width: parent.width; text: Music.MY_MUSIC_INTRO }
-        MoreInfo { width: parent.width; label: "Nhạc riêng"; HintText { width: parent.width; text: Music.MY_MUSIC_HELP } }
         Collapse {
             width: parent.width
             open: !root.canImport
@@ -170,7 +171,7 @@ Column {
         Column {
             id: list
             objectName: "musicTrackList"
-            width: Math.min(parent.width, Theme.listMeasure)
+            width: Theme.listWidth(parent, parent.width)
             Repeater {
                 model: rows
                 MyMusicTrack {

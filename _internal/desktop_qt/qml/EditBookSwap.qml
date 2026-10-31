@@ -1,6 +1,7 @@
 import QtQuick
 import ABook
 import "EditBookLogic.js" as Logic
+import "MyMusicText.js" as Music
 
 // "Đổi bài" của một đoạn nhạc (SwapTrack của listen/MyMusic.tsx): chọn một bài trong "Nhạc của tôi" thay bài người làm sách gắn. Mỗi lần mở
 // (`active`) hỏi lại `GET /api/books/<mã>/music/scenes/<khoá>/alternatives`. Đang tải: khung chờ; lỗi: câu + "Thử lại"; chưa có bài: một câu;
@@ -78,7 +79,7 @@ Column {
                     Text {
                         width: parent.width
                         visible: text !== ""
-                        text: Logic.mineNote(row.modelData)
+                        text: Music.mineNote(row.modelData)
                         color: Theme.text2
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                         font.pixelSize: Theme.sizeCaption

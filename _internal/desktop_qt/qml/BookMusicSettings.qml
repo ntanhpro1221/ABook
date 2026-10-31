@@ -86,7 +86,7 @@ Column {
         Flow {
             width: parent.width
             spacing: 12
-            // Công tắc có nhãn hành động rõ ("Nhạc nền: Bật")
+            // Công tắc nói trạng thái ("Bật" / "Tắt"); tên mục "Nhạc nền" đã ở ngay trên, không lặp lại
             Row {
                 height: 36
                 spacing: 10
@@ -98,26 +98,30 @@ Column {
                     enabled: !root.changing
                     onToggled: value => root.change({enabled: value})
                 }
-                Row {
+                Text {
                     anchors.verticalCenter: parent.verticalCenter
-                    Text { text: "Nhạc nền: "; color: Theme.text; font.pixelSize: Theme.sizeBodySmall }
-                    Text { text: root.view && root.view.enabled ? "Bật" : "Tắt"; color: Theme.text; font.pixelSize: Theme.sizeBodySmall; font.weight: 600 }
+                    text: root.view && root.view.enabled ? "Bật" : "Tắt"
+                    color: Theme.text
+                    font.pixelSize: Theme.sizeBodySmall
                 }
             }
             Column {
                 width: Math.min(260, parent.width)
                 spacing: 4
-                Text { width: parent.width; text: "Mức nhạc dưới giọng đọc"; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
+                Text { width: parent.width; text: "Mức nhạc nền"; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
                 Select {
                     objectName: "musicLevel"
                     width: parent.width
-                    label: "Mức nhạc dưới giọng đọc"
+                    label: "Mức nhạc nền"
                     options: root.view ? Logic.levelOptions(root.view.levelDb) : []
                     value: root.view ? root.view.levelDb : -20
                     onPicked: value => root.change({levelDb: Number(value)})
                 }
             }
         }
+        // Thước đo hai chữ của nút im lặng (không vẽ): nút giữ bề ngang của chữ dài hơn
+        Button { id: silenceWide; visible: false; text: "Im lặng"; kind: "ghost"; size: "sm" }
+        Button { id: soundWide; visible: false; text: "Có nhạc"; kind: "ghost"; size: "sm" }
         // Các đoạn nhạc: cao tối đa 288, cuộn trong khung; tắt nhạc thì mờ đi
         Item {
             width: parent.width
@@ -152,9 +156,9 @@ Column {
                                     width: Math.max(144, cue.width - cueButtons.width - 12)
                                     Text {
                                         width: parent.width
-                                        text: cue.modelData.title || "Nhạc nền"
-                                        color: cue.modelData.silenced ? Theme.text3 : Theme.text
-                                        font.strikeout: cue.modelData.silenced
+                                        // Đoạn người nghe cho im: nói thẳng (như StudioMusicScene), không gạch ngang tên - gạch ngang đọc như lỗi
+                                        text: cue.modelData.silenced ? "Im lặng (bạn chọn)" : (cue.modelData.title || "Nhạc nền")
+                                        color: cue.modelData.silenced ? Theme.text2 : Theme.text
                                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                         font.pixelSize: Theme.sizeBodySmall
                                     }
@@ -183,6 +187,8 @@ Column {
                                         onClicked: root.swapping === cue.modelData.key ? root.closeSwap() : root.openSwap(cue.modelData.key)
                                     }
                                     Button {
+                                        // Bề ngang theo chữ dài hơn trong hai chữ: "Đổi bài" đứng một cột ở mọi dòng
+                                        width: Math.max(implicitWidth, silenceWide.implicitWidth, soundWide.implicitWidth)
                                         text: cue.modelData.silenced ? "Có nhạc" : "Im lặng"; kind: "ghost"; size: "sm"
                                         enabled: !root.changing
                                         onClicked: { const silence = {}; silence[cue.modelData.key] = !cue.modelData.silenced; root.change({silence: silence}) }

@@ -47,7 +47,7 @@ function formatClock(seconds) {
 
 // ---- musicLevels.ts ----
 var MUSIC_LEVELS = [[-14, "To"], [-17, "Hơi to"], [-20, "Vừa (mặc định)"], [-24, "Nhỏ"], [-28, "Rất nhỏ"]]
-var LEVEL_NOTES = {"-28": "dễ nghe lời nhất"}
+var LEVEL_NOTES = {"-28": "rõ lời"}
 function levelText(value, name) { const note = LEVEL_NOTES[String(value)]; return note ? name + " (" + note + ")" : name }
 // [{value, label}] cho ô chọn: các mức có sẵn, thêm mức hiện tại của sách nếu nó không trùng mức nào
 function levelOptions(current) {
@@ -79,61 +79,6 @@ function failedSourcesNote(failed) {
     return "Chưa nối được " + failed.map(function(name) { return PROVIDER_NAMES[name] || String(name).replace("_", " ") }).join(", ") + ". Thử lại hoặc chọn ảnh trên máy."
 }
 function coverTitle(found) { return found.title + (found.author ? " - " + found.author : "") + " (" + found.provider + ")" }
-
-// ---- studio/musicLocal.ts ----
-var MY_MUSIC_INTRO = "Thêm nhạc làm nền; bài đã chọn đi cùng file sách."
-var MY_MUSIC_HELP = "Nhạc được chép vào kho máy này; dùng Đổi bài để chọn cho từng đoạn. Hỗ trợ mp3, m4a, ogg, opus, flac, wav. Bài đã chọn đi cùng .abook / .abookproj, vẫn nghe được trên máy khác, không ai khác tải được. Tên bài và nghệ sĩ lấy từ file; ABook không xác nhận giấy phép."
-var CANCELLED_NOTE = "Đã huỷ - lần tải sau làm tiếp từ chỗ dừng."
-var RETRYING_NOTE = "Mạng chập chờn - đang thử lại…"
-function hasVocals(track) { return !!track.analysed && track.vocalsLikely === true }
-function autoLabel(track) {
-    if (track.auto === "off") return "Máy không tự chọn bài này"
-    if (!hasVocals(track)) return null
-    return track.auto === "on" ? "Có vẻ có lời - bạn cho máy tự chọn" : "Có vẻ có lời - máy không tự chọn bài này"
-}
-function autoSwitch(track) {
-    if (track.auto === "off") return {text: "Tự chọn lại", next: null}
-    if (track.auto === "on") return {text: "Theo mặc định", next: null}
-    return hasVocals(track) ? {text: "Cho tự chọn", next: "on"} : {text: "Tắt tự chọn", next: "off"}
-}
-function analysisLabel(track) { return track.analysed ? "Đã phân tích - máy có thể tự chọn" : "Chưa phân tích - máy chưa tự chọn, bạn vẫn ghim được" }
-function mineNote(item) {
-    const notes = [autoLabel(item), item.analysed ? (item.fits ? "Hợp không khí đoạn này" : null) : analysisLabel(item)].filter(function(note) { return !!note })
-    return notes.length ? notes.join("\u00a0· ") : ""
-}
-function localDigest(link) {
-    const digest = String(link).indexOf("local:") === 0 ? String(link).slice(6) : ""
-    return /^[0-9a-f]{40}$/.test(digest) ? digest : null
-}
-function modulePercent(module) { return module.total > 0 ? Math.min(100, Math.floor(module.done / module.total * 100)) : 0 }
-function moduleLabel(module) {
-    if (module.state === "error") return module.error
-    if (module.state === "downloading") return module.retrying ? RETRYING_NOTE + " (Phân tích nhạc, " + modulePercent(module) + "%)" : "Đang tải Phân tích nhạc (" + Size.formatSize(module.total) + ", một lần) " + modulePercent(module) + "%"
-    if (module.analysing) return "Đang phân tích nhạc đã thêm"
-    if (module.state === "unsupported") return module.reason ? "Máy này chưa phân tích được nhạc: " + module.reason + "." : "Máy này chưa phân tích được nhạc."
-    if (module.state === "outdated" && module.stopped) return "Phân tích nhạc đang tắt; tải lại " + Size.formatSize(module.outdatedBytes || module.total) + ". Vẫn ghim tay được."
-    if (module.state === "outdated") return (module.cancelled ? CANCELLED_NOTE + " " : "") + "Có bản mới - " + Size.formatSize(module.outdatedBytes || module.total) + "; bản hiện tại vẫn dùng được."
-    if (module.state === "ready") {
-        if (module.restart) return "Phân tích nhạc đã cập nhật - mở lại ABook để dùng thư viện mới."
-        if ((module.stale || 0) > 0) return module.stale + " bài dùng phân tích cũ; có thể phân tích lại."
-        return ""
-    }
-    return (module.cancelled ? CANCELLED_NOTE + " " : "") + "Tải " + Size.formatSize(module.total) + " để tự chọn nhạc phù hợp trên máy."
-}
-// Tóm tắt nhập nhạc (importSummary): {title, description}
-function importSummary(result) {
-    const added = result.added || [], existing = result.existing || [], failed = result.failed || []
-    const parts = []
-    if (added.length) parts.push(added.length + " bài mới")
-    if (existing.length) parts.push(existing.length + " bài đã có từ trước")
-    if (!added.length && !existing.length)
-        return {title: "Chưa thêm được nhạc", description: failed.join("\n")}
-    const notes = []
-    if (failed.length) notes.push(failed.join("\n"))
-    const unanalysed = added.filter(function(track) { return !track.analysed }).length
-    if (unanalysed) notes.push(unanalysed + " bài chưa phân tích - máy chưa tự chọn, bạn ghim được ở “Đổi bài”.")
-    return {title: "Đã thêm: " + parts.join(", "), description: notes.join("\n")}
-}
 
 // ---- readings.ts ----
 function cleanSpoken(value) { return String(value || "").normalize("NFC").trim().replace(/\s+/gu, " ") }

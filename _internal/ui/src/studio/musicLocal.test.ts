@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { formatSize } from "@/shared/format";
 import {
-  analysisLabel, hasVocals, MY_MUSIC_INTRO, mineNote, importSummary, isLocal, localDigest, mergeImports, moduleLabel, modulePercent, preciseBusy, preciseLabel, preciseOffered, previewPath, autoLabel, autoSwitch,
+  AUTO_PICK_LABEL, autoNext, autoOn, hasVocals, MY_MUSIC_INTRO, mineNote, importSummary, isLocal, localDigest, mergeImports, moduleLabel, modulePercent, preciseBusy, preciseLabel, preciseOffered, previewPath, trackNote,
   type ImportResult, type LocalTrack, type MusicModuleStatus, type PreciseMood,
 } from "./musicLocal";
 
@@ -26,10 +26,11 @@ describe("local music links", () => {
   });
 });
 
-describe("analysis label", () => {
-  it("says what the user can do with an unanalysed track instead of hiding it", () => {
-    expect(analysisLabel({ analysed: false })).toContain("bạn vẫn ghim được");
-    expect(analysisLabel({ analysed: true })).toContain("máy có thể tự chọn");
+describe("track note", () => {
+  it("is a short label of what the switch does not say: unanalysed, or sung (soát UI nhạc 01-11 mục 5: nhãn 1-4 chữ)", () => {
+    expect(trackNote({ analysed: false })).toBe("Chưa phân tích");
+    expect(trackNote({ analysed: true, vocalsLikely: true })).toBe("Có lời");
+    expect(trackNote({ analysed: true })).toBe("");
   });
 });
 
@@ -45,19 +46,20 @@ describe("vocals flag", () => {
 describe("auto-pick switch", () => {
   const sung = { analysed: true, vocalsLikely: true } as const;
   const plain = { analysed: true } as const;
-  it("labels only the tracks the machine will not pick on its own (or that the listener allowed despite lyrics)", () => {
-    expect(autoLabel(sung)).toBe("Có vẻ có lời - máy không tự chọn bài này");
-    expect(autoLabel({ ...sung, auto: "on" })).toBe("Có vẻ có lời - bạn cho máy tự chọn");
-    expect(autoLabel({ ...plain, auto: "off" })).toBe("Máy không tự chọn bài này");
-    expect(autoLabel({ ...sung, auto: "off" })).toBe("Máy không tự chọn bài này");
-    expect(autoLabel(plain)).toBeNull();
-    expect(autoLabel({ analysed: false })).toBeNull();
+  it("is ONE switch named Tự chọn: on when the machine may pick the track (plain by default, sung only when allowed)", () => {
+    expect(AUTO_PICK_LABEL).toBe("Tự chọn");
+    expect(autoOn(plain)).toBe(true);
+    expect(autoOn(sung)).toBe(false);
+    expect(autoOn({ ...sung, auto: "on" })).toBe(true);
+    expect(autoOn({ ...plain, auto: "off" })).toBe(false);
   });
-  it("offers exactly one button per state, each leading to the next state", () => {
-    expect(autoSwitch(plain)).toEqual({ text: "Tắt tự chọn", next: "off" });
-    expect(autoSwitch(sung)).toEqual({ text: "Cho tự chọn", next: "on" });
-    expect(autoSwitch({ ...sung, auto: "on" })).toEqual({ text: "Theo mặc định", next: null });
-    expect(autoSwitch({ ...plain, auto: "off" })).toEqual({ text: "Tự chọn lại", next: null });
+  it("flipping it stores an override, and flipping back returns to the default (null)", () => {
+    expect(autoNext(plain)).toBe("off");
+    expect(autoNext(sung)).toBe("on");
+    expect(autoNext({ ...sung, auto: "on" })).toBeNull();
+    expect(autoNext({ ...plain, auto: "off" })).toBeNull();
+    expect(autoNext({ ...sung, auto: "off" })).toBe("on");
+    expect(autoNext({ ...plain, auto: "on" })).toBe("off");
   });
 });
 
@@ -100,8 +102,9 @@ describe("mô-đun Phân tích nhạc", () => {
     state: "missing", done: 0, total: 92_000_000, error: "", ready: false, analysing: false, metered: false, ...over,
   });
   it("nói MỘT tổng dung lượng trước khi bấm và phần trăm khi tải", () => {
-    expect(moduleLabel(status())).toContain(formatSize(92_000_000));
-    expect(moduleLabel(status())).toContain("tự chọn nhạc phù hợp trên máy"); // Quyền ghim tay nằm ở trợ giúp của thẻ.
+    // Chưa tải: câu nói lợi ích, dung lượng chỉ ở nút "Tải (… MB)" (soát UI nhạc 01-11 mục 1: "782 MB" từng nói hai lần).
+    expect(moduleLabel(status())).toBe("Máy tự chọn nhạc hợp từng đoạn.");
+    expect(moduleLabel(status())).not.toContain(formatSize(92_000_000));
     expect(moduleLabel(status({ state: "downloading", done: 30, total: 60 }))).toContain("50%");
     expect(moduleLabel(status({ state: "downloading", done: 30, total: 60, retrying: true }))).toBe("Mạng chập chờn - đang thử lại… (Phân tích nhạc, 50%)");
     expect(modulePercent(status({ done: 5, total: 0 }))).toBe(0);
@@ -170,11 +173,11 @@ describe("đo cảm xúc nhạc chính xác hơn", () => {
 });
 
 describe("note of a track in the swap list", () => {
-  it("names a sung track and an unanalysed one the same way as Settings and the project tab", () => {
-    expect(mineNote({ analysed: true, vocalsLikely: true, fits: false })).toBe("Có vẻ có lời - máy không tự chọn bài này");
-    expect(mineNote({ analysed: true, vocalsLikely: true, fits: true })).toBe("Có vẻ có lời - máy không tự chọn bài này · Hợp không khí đoạn này");
-    expect(mineNote({ analysed: true, auto: "off", fits: false })).toBe("Máy không tự chọn bài này");
-    expect(mineNote({ analysed: false })).toBe(analysisLabel({ analysed: false }));
+  it("names a sung track, a switched-off one and an unanalysed one with the same short words as Settings and the project tab", () => {
+    expect(mineNote({ analysed: true, vocalsLikely: true, fits: false })).toBe("Có lời");
+    expect(mineNote({ analysed: true, vocalsLikely: true, fits: true })).toBe("Có lời · Hợp không khí đoạn này");
+    expect(mineNote({ analysed: true, auto: "off", fits: false })).toBe("Không tự chọn");
+    expect(mineNote({ analysed: false })).toBe("Chưa phân tích");
   });
   it("says nothing about an ordinary analysed track that does not fit", () => {
     expect(mineNote({ analysed: true, fits: false })).toBeUndefined();

@@ -204,13 +204,13 @@ Column {
             }
             SettingRow {
                 width: parent.width
-                label: "Mức nhạc dưới giọng đọc"
+                label: "Mức nhạc nền"
                 hint: "Nhỏ hơn giọng đọc bấy nhiêu; máy tự bù bài to hay nhỏ"
                 Select {
                     objectName: "musicLevel"
                     implicitWidth: 200
                     width: 200
-                    label: "Mức nhạc dưới giọng đọc"
+                    label: "Mức nhạc nền"
                     options: Logic.levelOptions()
                     value: root.overrides.levelDb
                     enabled: !root.changing && !root.rebuilding

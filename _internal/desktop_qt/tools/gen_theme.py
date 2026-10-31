@@ -247,6 +247,9 @@ def render() -> str:
     if not measure:
         raise Missing("khổ hàng danh sách")
     a(f"    readonly property int listMeasure: {measure.group(1)}")
+    a("    // Bề ngang một danh sách chữ: tối đa listMeasure trên trang tự do; trong cột đã có trần riêng mà mọi hàng chạy hết cột (nội dung Cài đặt khai")
+    a("    // `wholeRows: true`) thì chạy hết cột như các hàng quanh nó - không để mép phải lởm chởm (DESIGN.md \"Danh sách chữ\").")
+    a("    function listWidth(column, available) { for (let p = column; p; p = p.parent) if (p.wholeRows === true) return available; return Math.min(available, listMeasure) }")
     a("")
     a("    // ---- màu (DESIGN.md 5.1) ----")
     for dm, qn in COLOR_NAMES.items():

@@ -76,13 +76,13 @@ class MusicModelTest {
         assertEquals(listOf("3:0", "3:95500", "4:0"), read.cues.map { it.key })
         val (first, quiet, mine) = read.cues
         assertEquals("Chương 1 · 0:00 – 1:35 · Kevin MacLeod", MusicText.cueLine(first))
-        assertEquals("Nhạc nền", MusicText.cueTitle(quiet))
+        assertEquals("Im lặng (bạn chọn)", MusicText.cueTitle(quiet))
         assertTrue(quiet.silenced)
         assertEquals("Chương 2 · 0:00 – 1:00 · Tôi · bài của bạn", MusicText.cueLine(mine))
         assertTrue(first.holds(3, 95.0))
         assertFalse("mốc cuối thuộc đoạn sau", first.holds(3, 95.5))
-        assertEquals("Nhạc nền: Bật", MusicText.switchLabel(true))
-        assertEquals("Nhạc nền: Tắt", MusicText.switchLabel(false))
+        assertEquals("Bật", MusicText.switchLabel(true))
+        assertEquals("Tắt", MusicText.switchLabel(false))
     }
 
     @Test
@@ -96,8 +96,8 @@ class MusicModelTest {
         assertEquals("Ai · 2:05", MusicText.mineLine(mine[0]))
         assertEquals("", MusicText.mineNote(mine[0]))
         assertEquals("", MusicText.mineLine(mine[1]))
-        assertEquals("Có vẻ có lời - máy không tự chọn bài này · Hợp không khí đoạn này", MusicText.mineNote(mine[1]))
-        assertEquals("Chưa phân tích - máy chưa tự chọn, bạn vẫn ghim được", MusicText.mineNote(mine[2]))
+        assertEquals("Có lời · Hợp không khí đoạn này", MusicText.mineNote(mine[1]))
+        assertEquals("Chưa phân tích", MusicText.mineNote(mine[2]))
     }
 
     @Test

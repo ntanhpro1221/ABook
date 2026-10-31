@@ -12,7 +12,7 @@ ListView {
     delegate: ChapterRow {
         id: row
         required property var model
-        width: Math.min(ListView.view.width, Theme.listMeasure)
+        width: Theme.listWidth(ListView.view, ListView.view.width)
         title: model.title
         subtitle: model.subtitle
         length: model.length

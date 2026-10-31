@@ -225,7 +225,7 @@ class MusicScreenTest {
         shot("cue_page_$mode")
         rule.onNodeWithTag("music_cue_swap").performClick()
         rule.waitForIdle()
-        rule.onNodeWithText("Có vẻ có lời - máy không tự chọn bài này").assertIsDisplayed()
+        rule.onNodeWithText("Có lời").assertIsDisplayed()
         shot("cue_swap_$mode")
     }
 

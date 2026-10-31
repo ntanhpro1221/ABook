@@ -5,7 +5,7 @@
 
 var LOCAL_PREFIX = "local:"
 var MY_MUSIC_INTRO = "Thêm nhạc làm nền; bài đã chọn đi cùng file sách."
-var MY_MUSIC_HELP = "Nhạc được chép vào kho máy này; dùng Đổi bài để chọn cho từng đoạn. Hỗ trợ mp3, m4a, ogg, opus, flac, wav. Bài đã chọn đi cùng .abook / .abookproj, vẫn nghe được trên máy khác, không ai khác tải được. Tên bài và nghệ sĩ lấy từ file; ABook không xác nhận giấy phép."
+var MY_MUSIC_HELP = "Nhạc được chép vào kho máy này; dùng Đổi bài để chọn cho từng đoạn. Hỗ trợ mp3, m4a, ogg, opus, flac, wav. Bài đã chọn đi cùng .abook / .abookproj, vẫn nghe được trên máy khác, không ai khác tải được. Tên bài và nghệ sĩ lấy từ file; ABook không xác nhận giấy phép. Máy chỉ tự chọn bài đã phân tích và bỏ qua bài có lời; công tắc Tự chọn đổi điều này cho từng bài."
 var CANCELLED_NOTE = "Đã huỷ - lần tải sau làm tiếp từ chỗ dừng."
 var RETRYING_NOTE = "Mạng chập chờn - đang thử lại…"
 
@@ -38,7 +38,7 @@ function moduleLabel(module) {
         if ((module.stale || 0) > 0) return module.stale + " bài dùng phân tích cũ; có thể phân tích lại."
         return ""
     }
-    return (module.cancelled ? CANCELLED_NOTE + " " : "") + "Tải " + Size.formatSize(module.total) + " để tự chọn nhạc phù hợp trên máy."
+    return (module.cancelled ? CANCELLED_NOTE + " " : "") + "Máy tự chọn nhạc hợp từng đoạn."     // dung lượng chỉ ở nút "Tải (… MB)"
 }
 
 // Có mời bật "Đo cảm xúc nhạc chính xác hơn" không: máy đủ sức, và đã có bộ phân tích nhạc.
@@ -75,22 +75,21 @@ function localDigest(link) {
 
 function hasVocals(track) { return track.analysed && track.vocalsLikely === true }
 
-// Nhãn khi máy không tự chọn bài này (có vẻ có lời hát, hay bạn đã tắt); bài bình thường thì không có nhãn.
-function autoLabel(track) {
-    if (track.auto === "off") return "Máy không tự chọn bài này"
-    if (!hasVocals(track)) return null
-    return track.auto === "on" ? "Có vẻ có lời - bạn cho máy tự chọn" : "Có vẻ có lời - máy không tự chọn bài này"
+// Công tắc "Tự chọn" của một bài (công tắc `auto`, music_local.py): bật = máy được tự chọn bài này. Mặc định máy tự chọn bài thường, bỏ qua bài có lời.
+var AUTO_PICK_LABEL = "Tự chọn"
+var UNANALYSED = "Chưa phân tích"
+function autoOn(track) { return track.auto === "on" || (track.auto !== "off" && !hasVocals(track)) }
+// Giá trị `auto` gửi đi khi gạt công tắc: trùng mặc định thì về mặc định (null).
+function autoNext(track) {
+    var on = !autoOn(track)
+    return on === !hasVocals(track) ? null : (on ? "on" : "off")
 }
-
-// Nút đổi công tắc tự chọn của bài: chữ trên nút và giá trị `auto` gửi đi (null = về mặc định).
-function autoSwitch(track) {
-    if (track.auto === "off") return {text: "Tự chọn lại", next: null}
-    if (track.auto === "on") return {text: "Theo mặc định", next: null}
-    return hasVocals(track) ? {text: "Cho tự chọn", next: "on"} : {text: "Tắt tự chọn", next: "off"}
-}
-
-function analysisLabel(track) {
-    return track.analysed ? "Đã phân tích - máy có thể tự chọn" : "Chưa phân tích - máy chưa tự chọn, bạn vẫn ghim được"
+// Nhãn ngắn cạnh công tắc - điều công tắc không nói: bài chưa phân tích (máy chưa tự chọn được), bài có lời.
+function trackNote(track) { return !track.analysed ? UNANALYSED : hasVocals(track) ? "Có lời" : "" }
+// Dòng phụ của một bài trong "Đổi bài" (không có công tắc ở đó): có lời, đã tắt tự chọn, hợp đoạn này / chưa phân tích.
+function mineNote(item) {
+    var notes = [hasVocals(item) ? "Có lời" : null, item.auto === "off" ? "Không tự chọn" : null, item.analysed ? (item.fits ? "Hợp không khí đoạn này" : null) : UNANALYSED]
+    return notes.filter(function(note) { return !!note }).join("\u00a0· ")
 }
 
 // Gộp kết quả của nhiều lượt nhập (mỗi file một lượt): danh sách bài và mô-đun lấy của lượt cuối.

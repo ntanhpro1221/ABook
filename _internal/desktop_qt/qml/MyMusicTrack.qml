@@ -2,7 +2,8 @@ import QtQuick
 import ABook
 import "MyMusicText.js" as Music
 
-// Một bài trong "Nhạc của tôi" (hàng của MyMusicSection + AutoPickNote của bản web): nốt nhạc, "tên · nghệ sĩ · m:ss", dòng tự chọn (nhãn + nút đổi), và
+// Một bài trong "Nhạc của tôi" (hàng của MyMusicSection + AutoPickNote của bản web): nốt nhạc, "tên · nghệ sĩ · m:ss", dòng tự chọn (nhãn ngắn + công tắc
+// "Tự chọn"), và
 // "Xoá" -> "Xoá bài" / "Giữ lại" (hai bước). Hàng vào / ra bằng chiều cao (useListPresence): `leaving` khép hàng lại trước khi gỡ.
 Collapse {
     id: root
@@ -24,8 +25,7 @@ Collapse {
     open: entered && !leaving
     Component.onCompleted: Later.call(root, function() { root.entered = true })
 
-    readonly property var switcher: Music.autoSwitch(track)
-    readonly property string note: Music.autoLabel(track) || Music.analysisLabel(track)
+    readonly property string note: Music.trackNote(track)
     readonly property string line: {
         const dim = Qt.color(Theme.text2).toString()
         let html = Music.escapeHtml(track.title || "")
@@ -61,29 +61,25 @@ Collapse {
                     width: parent.width
                     topPadding: 2
                     spacing: 8
-                    Text { id: noteText; text: root.note; color: Theme.text2; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; width: Math.min(implicitWidth, parent.width); font.pixelSize: Theme.sizeCaption; height: 24; verticalAlignment: Text.AlignVCenter }
-                    Interactive {
-                        id: switchButton
-                        width: switchLabel.implicitWidth + 16
-                        height: 24
-                        opacity: root.picking ? 0.45 : 1
-                        Accessible.role: Accessible.Button
-                        Accessible.name: root.switcher.text + ": " + (root.track.title || "")
-                        onClicked: if (!root.picking) root.pick(root.switcher.next)
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: Theme.radiusControl
-                            color: Theme.hover
-                            opacity: switchButton.hovered || switchButton.pressed ? 1 : 0
-                            Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
+                    Text { id: noteText; visible: text !== ""; text: root.note; color: Theme.text2; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; width: Math.min(implicitWidth, parent.width); font.pixelSize: Theme.sizeCaption; height: 24; verticalAlignment: Text.AlignVCenter }
+                    Row {
+                        visible: root.canImport     // tự chọn là việc của máy chủ sách (AutoPickNote canOverride)
+                        spacing: 8
+                        Switch {
+                            id: autoSwitch
+                            objectName: "autoPick"
+                            label: Music.AUTO_PICK_LABEL + ": " + (root.track.title || "")
+                            checked: Music.autoOn(root.track)
+                            enabled: !root.picking
+                            onToggled: root.pick(Music.autoNext(root.track))
                         }
                         Text {
-                            id: switchLabel
-                            anchors.centerIn: parent
-                            text: root.switcher.text
-                            color: Theme.accentText
+                            text: Music.AUTO_PICK_LABEL
+                            color: Theme.text2
                             font.pixelSize: Theme.sizeCaption
-                            font.weight: Theme.weightMedium
+                            height: 24
+                            verticalAlignment: Text.AlignVCenter
+                            TapHandler { enabled: autoSwitch.enabled; onTapped: autoSwitch.clicked() }
                         }
                     }
                 }

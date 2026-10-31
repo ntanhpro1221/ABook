@@ -208,7 +208,7 @@ fun DisclosureRow(
 val IconSlot = 22.dp
 val IconGap = 14.dp
 
-/** Hàng mở / khép tại chỗ: mũi tên ">" xoay xuống khi mở (web: DisclosureRow `expanded`), trợ năng đọc được việc mở / khép. */
+/** Hàng mở / khép tại chỗ: mũi tên xuống lật lên khi mở (web: DisclosureRow `expanded`), trợ năng đọc được việc mở / khép. */
 private fun Modifier.toggles(open: Boolean, onToggle: () -> Unit): Modifier = semantics {
     if (open) collapse { onToggle(); true } else expand { onToggle(); true }
 }

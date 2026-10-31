@@ -13,7 +13,7 @@ import { formatClock } from "@/shared/format";
 import { Button, WRAP_LABEL, ContentSkeleton, InlineError, EmptyState } from "@/shared/ui";
 import { api, type AppInfo } from "@/studio/api";
 import { hasNativeMusicImport, importMusic } from "@/studio/musicImport";
-import { analysisLabel, importSummary, LOCAL_PREFIX, MY_MUSIC_INTRO, mineNote, type LocalMusicView } from "@/studio/musicLocal";
+import { importSummary, LOCAL_PREFIX, MY_MUSIC_INTRO, mineNote, type LocalMusicView } from "@/studio/musicLocal";
 import { AutoPickNote } from "@/studio/AutoPickNote";
 import { MusicModuleNotice } from "@/studio/MusicModuleNotice";
 import { MUSIC_CHANGED_ALL, MUSIC_CHANGED_EVENT } from "./musicBed";
@@ -148,9 +148,10 @@ export function MyMusicSection() {
           </Button>
         )}
       </div>
-      {!!tracks.length && <MusicModuleNotice view={data} queryKey={MY_MUSIC_KEY} />}
+      {/* Câu giới thiệu tả nút Thêm ngay trên nó, rồi mới tới khối tải Phân tích nhạc */}
       <p className="text-xs text-fg-2 text-pretty">{MY_MUSIC_INTRO}</p>
       <MoreInfo label="Nhạc riêng">{MY_MUSIC_HELP}</MoreInfo>
+      {!!tracks.length && <MusicModuleNotice view={data} queryKey={MY_MUSIC_KEY} />}
       {!canImport && <p className="text-xs text-fg-2">Thêm và xoá nhạc làm trên máy tính chủ sách.</p>}
       <MotionRegion motionKey={isLoading ? "loading" : error && !data ? "error" : tracks.length ? "ready" : "empty"}>{isLoading ? <ContentSkeleton count={2} label="Đang tải nhạc riêng" /> : error && !data ? <InlineError message="Bạn hãy thử tải lại nhạc của bạn." onRetry={() => void refetch()} /> : canImport && !tracks.length ? <EmptyState icon={EighthNote} title="Chưa có bài nào" className="py-6" action={<Button icon={Upload} onClick={() => void importFiles()} loading={Boolean(progress)}>Thêm nhạc của bạn</Button>} /> : null}</MotionRegion>
       {!!rows.length && (
@@ -162,13 +163,8 @@ export function MyMusicSection() {
                 {track.title}
                 {track.creator && <span className="text-fg-2"> · {track.creator}</span>}
                 {track.duration ? <span className="tabular text-fg-2"> · {formatClock(track.duration)}</span> : null}
-                {/* Chưa phân tích: nói như tab Nhạc của dự án. Máy tính còn nói bài đã phân tích thì máy tự chọn được; điện thoại không tự chọn nên không nói. */}
-                <AutoPickNote
-                  track={track}
-                  canOverride={canImport && !hasNativeMusicImport()}
-                  onView={refresh}
-                  idleLabel={hasNativeMusicImport() && track.analysed ? undefined : analysisLabel(track)}
-                />
+                {/* Nhãn ngắn như tab Nhạc của dự án; công tắc Tự chọn chỉ ở máy tính (điện thoại không tự chọn). */}
+                <AutoPickNote track={track} canOverride={canImport && !hasNativeMusicImport()} onView={refresh} />
               </span>
               {canImport &&
                 (removing === track.link ? (

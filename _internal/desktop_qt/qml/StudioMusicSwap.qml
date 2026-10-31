@@ -1,7 +1,7 @@
 import QtQuick
 import ABook
 import "StudioMusicLogic.js" as Logic
-import "EditBookLogic.js" as Book
+import "MyMusicText.js" as Music
 
 // "Đổi bài" của một đoạn nhạc trong Studio (Alternatives của MusicTab.tsx): các bài khác trong danh mục hợp đoạn này, hợp nhất trước (cùng cách
 // chấm điểm với lúc máy chọn); dưới là nhóm "Nhạc của tôi" - mọi bài bạn đã nhập, kể cả bài chưa phân tích (máy không tự chọn, nhưng ghim được).
@@ -101,7 +101,7 @@ Column {
                     objectName: "musicMine"
                     width: parent.width
                     item: modelData
-                    note: Book.mineNote(modelData)
+                    note: Music.mineNote(modelData)
                     canPreview: root.canPreviewMine
                     busy: root.busy
                     choosing: root.choosing

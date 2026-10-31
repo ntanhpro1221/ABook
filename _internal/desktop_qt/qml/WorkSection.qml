@@ -51,10 +51,10 @@ Item {
                     Icon {
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
-                        name: "chevron-right"
+                        name: "chevron-down"     // hàng mở tại chỗ: mũi tên xuống, không phải ">" của hàng đi tới trang con
                         size: 16
                         color: Theme.text3
-                        rotation: root.expanded ? 90 : 0
+                        rotation: root.expanded ? 180 : 0
                         Behavior on rotation { NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast } }
                     }
                 }

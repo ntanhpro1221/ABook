@@ -168,12 +168,12 @@ Item {
         function test_settingsRowsAndChapterFolds() {
             const page = openMusic(musicData(), {folds: [1, 2]})
             const tab = music(page)
-            for (const line of ["Nhạc nền", "Đang bật cho cuốn này.", "Thể loại truyện", "Chưa chọn thì nhạc lấy từ mọi thể loại", "Mức nhạc dưới giọng đọc",
+            for (const line of ["Nhạc nền", "Đang bật cho cuốn này.", "Thể loại truyện", "Chưa chọn thì nhạc lấy từ mọi thể loại", "Mức nhạc nền",
                                 "Nhỏ hơn giọng đọc bấy nhiêu; máy tự bù bài to hay nhỏ", "Bài cho từng đoạn", "Máy chọn lại theo thể loại và mức nhạc ở trên.",
                                 "Chọn lại nhạc", "Nhạc theo ngữ cảnh", "Nhạc của tôi", "Chương 1", "Chương 2"])
                 tryVerify(function() { return hasText(tab, line) }, 2000, line)
             compare(one(tab, "musicGenre").options.map(o => o.label), ["Chưa chọn", "Tiên hiệp", "Dị giới / kỳ ảo phương Tây (kiếm, phép, rồng, hiệp sĩ)"])
-            compare(one(tab, "musicLevel").options.map(o => o.label), ["To", "Hơi to", "Vừa (mặc định)", "Nhỏ", "Rất nhỏ (dễ nghe lời nhất)"])
+            compare(one(tab, "musicLevel").options.map(o => o.label), ["To", "Hơi to", "Vừa (mặc định)", "Nhỏ", "Rất nhỏ (rõ lời)"])
             compare(one(tab, "musicLevel").value, -20)
             // khối chương: tên chương + số đoạn
             const folds = all(tab, "musicChapter")
