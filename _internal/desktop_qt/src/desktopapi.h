@@ -4,6 +4,7 @@
 #include <QVariantList>
 #include <QNetworkAccessManager>
 #include <QHash>
+#include <QPointer>
 #include <QtQml/qqmlregistration.h>
 
 // JSON boundary shared by Settings and the book dialogs. Uses the existing host,
@@ -41,5 +42,5 @@ signals:
 private:
     QNetworkAccessManager m_net;
     int m_next = 0;
-    QHash<int, class QNetworkReply *> m_pending;
+    QHash<int, QPointer<class HostCall>> m_pending;
 };
