@@ -358,7 +358,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `shared/backLayers.ts` (1): Escape (`48`)
 - `shared/diagnostics.ts` (16): Tải sách (`50`); Việc nền (`58`); Việc {} (`59`); Pha: {} (`61`); Bản ABook (`103`); Điện thoại (`107`); Giờ trên máy (`111`); Pin (`115`); Mạng (`119`); Wi-Fi (`122`); Chỗ trống (`125`); Chạy nền (`130`); Cho máy khác nghe thư viện (`146`); Lần tắt gần nhất (`150`); Lần văng (`154`); Phục hồi dữ liệu (`155`)
 - `shared/editsKept.ts` (1): Đã gộp {} sửa từ file (`12`)
-- `shared/hostWait.ts` (1): Máy chưa trả lời kịp. (`25`)
+- `shared/hostWait.ts` (1): Máy chưa trả lời kịp. (`44`)
 - `shared/latestRequest.ts` (1): AbortError (`20`)
 - `shared/musicLevels.ts` (1): Rất nhỏ (`10`)
 - `shared/peerStudio.ts` (1): Đang mở Studio của {} (`52`)
