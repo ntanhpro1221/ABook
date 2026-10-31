@@ -124,7 +124,7 @@ Item {
                 open: root.sync === null && !root.loadFailed
                 DevicesSkeleton { width: parent.width; count: 2; label: "Đang tải kết nối" }
             }
-            DevicesError {
+            InlineError {
                 width: parent.width
                 open: root.sync === null && root.loadFailed
                 message: "Bạn hãy thử tải lại cài đặt kết nối."

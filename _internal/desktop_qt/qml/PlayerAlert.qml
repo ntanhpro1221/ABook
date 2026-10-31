@@ -15,10 +15,12 @@ Collapse {
     Column {
         width: parent.width; spacing: Theme.s8
         Item {
-            width: parent.width; height: Math.max(message.implicitHeight, close.height)
-            Icon { name: "triangle-alert"; size: 16; y: 6; color: Theme.danger }
+            width: parent.width; height: Math.max(message.y + message.implicitHeight, close.height)
+            // Tam giác, dòng chữ ĐẦU và nút ✕ cùng một tâm dọc (máy dò IconText); câu dài xuống dòng bên dưới
+            readonly property real firstLine: message.implicitHeight / Math.max(1, message.lineCount)
+            Icon { objectName: "playerErrorIcon"; name: "triangle-alert"; size: 16; y: (close.height - size) / 2; color: Theme.danger }
             Text {
-                id: message; objectName: "playerErrorText"; x: 24; width: Math.max(0, parent.width - x - close.width)
+                id: message; objectName: "playerErrorText"; x: 24; y: Math.max(0, (close.height - parent.firstLine) / 2); width: Math.max(0, parent.width - x - close.width)
                 text: root.stuck && root.current ? Player.error.startsWith("Không có mạng - ")
                     ? `Không có mạng - giọng ${VoiceLogic.spokenVoiceName(root.current.name)} cần mạng.`
                     : `Giọng ${VoiceLogic.spokenVoiceName(root.current.name)} đang không dùng được.` : Player.error

@@ -68,10 +68,10 @@ void LibraryModel::setBooks(const QJsonArray &array) {
         b.coverKey = PlayerLogic::coverKeyOf(b.id, o.value(QStringLiteral("cover")).toObject());
         QStringList detail;
         if (b.producing)
-            detail << QStringLiteral("Đang làm · %1/%2 chương").arg(b.chaptersAvailable).arg(b.chaptersTotal);
+            detail << QStringLiteral("Đang làm\u00a0· %1/%2 chương").arg(b.chaptersAvailable).arg(b.chaptersTotal);
         else if (const QString d = durationText(b.duration); !d.isEmpty())
             detail << d;
-        b.detail = detail.join(QStringLiteral(" · "));
+        b.detail = detail.join(QStringLiteral("\u00a0· "));   // dấu ngăn dính mảnh trước: không bao giờ đứng đầu dòng
         b.subtitle = b.producing || b.author.isEmpty() ? b.detail : b.author;
         books.push_back(std::move(b));
     }

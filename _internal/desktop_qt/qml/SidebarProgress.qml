@@ -48,9 +48,11 @@ Item {
             width: parent.width; open: store.libraryLoading
             Text { objectName: "sidebarLoading"; width: parent.width; text: "Đang tải tiến độ"; wrapMode: Text.Wrap; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
         }
-        Collapse {
+        InlineError {
+            objectName: "sidebarError"
             width: parent.width; open: !!store.libraryError && !store.libraryData
-            Button { width: parent.width; wrap: true; kind: "ghost"; text: "Bạn hãy thử tải lại tiến độ."; onClicked: store.loadLibrary() }
+            message: "Bạn hãy thử tải lại tiến độ."
+            onRetry: store.loadLibrary()
         }
         Repeater {
             model: rows

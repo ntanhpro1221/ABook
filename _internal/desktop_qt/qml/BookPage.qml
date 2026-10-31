@@ -350,7 +350,7 @@ Item {
                 Text {
                     visible: text !== ""
                     width: parent.width
-                    text: [root.book.detail, root.book.chapters > 0 ? root.book.chapters + " chương" : ""].filter(s => !!s).join(" · ")
+                    text: [root.book.detail, root.book.chapters > 0 ? root.book.chapters + " chương" : ""].filter(s => !!s).join("\u00a0· ")
                     color: Theme.text3
                     wrapMode: Text.Wrap
                     font.pixelSize: Theme.sizeBodySmall

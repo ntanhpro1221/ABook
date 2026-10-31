@@ -167,7 +167,7 @@ function parseThirdParty(markdown) {
     return sections.filter(function(s) { return s.items.length && s.title.indexOf(MAINTAINER_SECTION) !== 0 })
 }
 function escapeHtml(text) {
-    return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\u00a0/g, "&nbsp;")
 }
 // Chữ đậm `**...**` và mã `...` của Markdown thành HTML của Text (RichText); còn lại để nguyên. `strong`: màu chữ đậm; `codeBack`: nền mã.
 function inlineHtml(text, strong, codeBack) {

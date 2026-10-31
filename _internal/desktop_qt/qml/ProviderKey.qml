@@ -17,7 +17,7 @@ Item {
     readonly property string savedRegion: info.region || ""
     readonly property bool hasRegion: Boolean(info.limits && info.limits.region)
     readonly property bool regionChanged: hasRegion && regionField.text.trim() !== savedRegion
-    readonly property string status: info.valid ? "Dùng được · " + info.voices + " giọng" : info.hasKey ? "Chưa dùng được" : ""
+    readonly property string status: info.valid ? "Dùng được\u00a0· " + info.voices + " giọng" : info.hasKey ? "Chưa dùng được" : ""
     signal changed()
     objectName: "providerKey." + (info.id || "")
     implicitHeight: col.height + 24
@@ -45,7 +45,7 @@ Item {
                 else {
                     secret.text = ""
                     resultOk = checked.ok === true
-                    result = checked.ok ? "Dùng được · " + (checked.voices !== undefined && checked.voices !== null ? checked.voices : checked.provider.voices) + " giọng tiếng Việt"
+                    result = checked.ok ? "Dùng được\u00a0· " + (checked.voices !== undefined && checked.voices !== null ? checked.voices : checked.provider.voices) + " giọng tiếng Việt"
                                         : (checked.message || "Khoá chưa dùng được.")
                 }
                 finish()
