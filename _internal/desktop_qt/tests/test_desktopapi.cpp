@@ -1,5 +1,8 @@
 #include "desktopapi.h"
 #include "backend.h"
+#include "hostcall.h"
+#include "hostnet.h"
+#include "hostwait.h"
 #include "fakes.h"
 #include "feedback.h"
 #include "hostmessage.h"
@@ -14,6 +17,7 @@
 #include <QQmlEngine>
 #include <QTcpServer>
 #include <QTcpSocket>
+#include <QTimer>
 #include <QJsonDocument>
 #include <QSignalSpy>
 
@@ -28,11 +32,14 @@ class DesktopApiTests : public QObject {
     QByteArray received;
     QByteArray answer;
     bool hold = false;
+    int holdFirst = 0;     // the first N requests get no answer (a silent host), later ones the answer
+    int requests = 0;      // requests the host received in full
+    int dripMs = 0;        // > 0: the answer goes out a few bytes at a time, one piece every dripMs
     QQmlEngine engine;
     std::unique_ptr<QObject> owner;
     DesktopApi *api = nullptr;
     QJSValue done() { return engine.evaluate(QStringLiteral("(function(status, data) { result = {status:status,data:data}; })")); }
-    void clear() { received.clear(); engine.globalObject().setProperty(QStringLiteral("result"), QJSValue(QJSValue::NullValue)); }
+    void clear() { received.clear(); requests = holdFirst = dripMs = 0; HostCall::s_idleOverrideMs = 0; engine.globalObject().setProperty(QStringLiteral("result"), QJSValue(QJSValue::NullValue)); }
 private slots:
     void libraryPreservesHostFields() {
         LibraryModel library;
@@ -73,9 +80,26 @@ private slots:
                     if (line.toLower().startsWith("content-length:")) length = line.mid(15).trimmed().toInt();
                 if (bytes->size() < header + 4 + length) return;
                 received = *bytes;
-                if (hold) return;
-                socket->write("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nConnection: close\r\nContent-Length: " + QByteArray::number(answer.size()) + "\r\n\r\n" + answer);
-                socket->disconnectFromHost();
+                bytes->clear();
+                ++requests;
+                if (hold || requests <= holdFirst) return;
+                const QByteArray reply = "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nConnection: close\r\nContent-Length: " + QByteArray::number(answer.size()) + "\r\n\r\n" + answer;
+                if (!dripMs) {
+                    socket->write(reply);
+                    socket->disconnectFromHost();
+                    return;
+                }
+                // Like the host's streamed answers: the head at once, then the body a few bytes at a time
+                // (Qt reports no progress inside a half-received head, so HostCall's limit counts body bytes).
+                const qsizetype head = reply.indexOf("\r\n\r\n") + 4;
+                socket->write(reply.left(head));
+                auto *pieces = new QTimer(socket);
+                auto left = std::make_shared<QByteArray>(reply.mid(head));
+                connect(pieces, &QTimer::timeout, socket, [socket, pieces, left] {
+                    socket->write(left->left(8)); left->remove(0, 8);
+                    if (left->isEmpty()) { pieces->stop(); socket->disconnectFromHost(); }
+                });
+                pieces->start(dripMs);
             });
         });
         qmlRegisterType<DesktopApi>("ApiTest",1,0,"DesktopApi");
@@ -259,6 +283,68 @@ private slots:
         QVERIFY(api->imageData(QUrl(QStringLiteral("https://example.com/a.png"))).isEmpty());
         QVERIFY(api->imageData(QUrl::fromLocalFile(QDir(dir.path()).filePath(QStringLiteral("không có.png")))).isEmpty());
         QVERIFY(api->clipboardImage().isEmpty());
+    }
+    // ---- one wait policy for C++ and QML (hostwait.h): limit = no byte for N ms, one more attempt, then timeout ----
+    void speechWaitsPastTheHostsOwnDeadline() {
+        // Host Edge deadline: TOTAL_TIMEOUT 90 s + 1 s (abook/readaloud/edge.py): its error with a reason must come first.
+        QVERIFY(HostWait::kSpeechIdleMs > 91'000);
+        QCOMPARE(HostWait::idleMs(QStringLiteral("/api/readaloud/clip")), HostWait::kSpeechIdleMs);
+        QCOMPARE(HostWait::idleMs(QStringLiteral("/api/books/b1/voice/preview")), HostWait::kSpeechIdleMs);
+        QCOMPARE(HostWait::idleMs(QStringLiteral("/api/books/b1/voice/preview?x=1")), HostWait::kSpeechIdleMs);
+        QCOMPARE(HostWait::idleMs(QStringLiteral("/api/listen/import/preview")), HostWait::kIdleMs);
+        QCOMPARE(HostWait::idleMs(QStringLiteral("/api/readaloud/voices")), HostWait::kIdleMs);
+        QVERIFY(HostWait::kStallMs > HostWait::kAttempts * HostWait::kSpeechIdleMs);
+    }
+    void silentHostIsAskedOnceMoreThenTimesOut() {
+        clear(); hold = true; HostCall::s_idleOverrideMs = 150;
+        api->request(QStringLiteral("POST"),QStringLiteral("/api/books/b1/voice/preview"),engine.evaluate(QStringLiteral("({voice:'v'})")),done());
+        QTRY_VERIFY_WITH_TIMEOUT(!engine.globalObject().property(QStringLiteral("result")).isNull(), 3000);
+        QCOMPARE(engine.globalObject().property(QStringLiteral("result")).property(QStringLiteral("status")).toInt(), 0);
+        QCOMPARE(requests, HostWait::kAttempts);
+        hold = false;
+    }
+    void secondAttemptCarriesTheAnswer() {
+        clear(); holdFirst = 1; answer = "{\"url\":\"/media/readaloud/a.mp3\"}"; HostCall::s_idleOverrideMs = 150;
+        api->request(QStringLiteral("POST"),QStringLiteral("/api/readaloud/clip"),engine.evaluate(QStringLiteral("({voice:'v',text:'t'})")),done());
+        QTRY_VERIFY_WITH_TIMEOUT(!engine.globalObject().property(QStringLiteral("result")).isNull(), 3000);
+        const auto result = engine.globalObject().property(QStringLiteral("result"));
+        QCOMPARE(result.property(QStringLiteral("status")).toInt(), 200);
+        QCOMPARE(result.property(QStringLiteral("data")).property(QStringLiteral("url")).toString(), QStringLiteral("/media/readaloud/a.mp3"));
+        QCOMPARE(requests, 2);
+    }
+    void slowAnswerThatKeepsComingIsNotCut() {
+        clear(); dripMs = 60; HostCall::s_idleOverrideMs = 250;
+        answer = "{\"text\":\"" + QByteArray(120, 'a') + "\"}";    // ~16 body pieces over ~1 s: 4x the limit in total, never silent for it
+        api->request(QStringLiteral("GET"),QStringLiteral("/api/listen/books/b1/chapters/1/text"),QJSValue(QJSValue::NullValue),done());
+        QTRY_VERIFY_WITH_TIMEOUT(!engine.globalObject().property(QStringLiteral("result")).isNull(), 6000);
+        const auto result = engine.globalObject().property(QStringLiteral("result"));
+        QCOMPARE(result.property(QStringLiteral("status")).toInt(), 200);
+        QCOMPARE(result.property(QStringLiteral("data")).property(QStringLiteral("text")).toString().size(), 120);
+        QCOMPARE(requests, 1);
+    }
+    void hostNetReportsASilentHostAsTimeout() {
+        clear(); hold = true; HostCall::s_idleOverrideMs = 150;
+        QNetworkAccessManager net;
+        HostNet host(&net);
+        int status = -1; QJsonObject body;
+        host.request("POST", QStringLiteral("/api/readaloud/clip"), {{QStringLiteral("text"), QStringLiteral("t")}}, [&](int code, const QJsonObject &answer) { status = code; body = answer; });
+        QTRY_VERIFY_WITH_TIMEOUT(status >= 0, 3000);
+        QCOMPARE(status, 0);
+        QCOMPARE(requests, HostWait::kAttempts);
+        QCOMPARE(body.value(QStringLiteral("reason")).toString(), QStringLiteral("timeout"));    // SpeechOut: "Giọng đang chọn đang không dùng được."
+        hold = false;
+    }
+    void hostNetAbortCallsNothing() {
+        clear(); hold = true;
+        QNetworkAccessManager net;
+        HostNet host(&net);
+        bool called = false;
+        const auto abort = host.requestCancelable("POST", QStringLiteral("/api/readaloud/clip"), {}, [&](int, const QJsonObject &) { called = true; });
+        QTRY_VERIFY(!received.isEmpty());
+        abort();
+        QTest::qWait(80); // fixed: proves absence
+        QVERIFY(!called);
+        hold = false;
     }
     void abortDoesNotDeliverLateReply() {
         clear(); hold = true;
