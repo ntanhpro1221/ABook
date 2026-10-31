@@ -13,6 +13,9 @@ CPP_WAIT = re.compile(r"\bQTest::qWait\s*\(")
 # Chờ cố định chỉ đúng khi test chứng minh điều gì đó KHÔNG xảy ra trong một khoảng (không gửi lệnh, hàng không đổi);
 # dòng ấy ghi dấu này để máy dò bỏ qua.
 ABSENCE = "// fixed: proves absence"
+# Test đo thời gian (bộ trộn âm, đồng hồ thiết bị) lấy mẫu theo nhịp cố định rồi mới tính số: chờ ấy là phép đo, không phải chờ
+# một trạng thái - dòng ấy ghi dấu này.
+SAMPLES = "// fixed: samples timing"
 BASELINE = 0
 
 
@@ -28,7 +31,7 @@ def fixed_wait_checks(root=TESTS):
         waiting = WAIT if path.suffix == ".qml" else CPP_WAIT
         lines = text.splitlines()
         for i, line in enumerate(lines):
-            if not waiting.search(line.split("//", 1)[0]) or ABSENCE in line:
+            if not waiting.search(line.split("//", 1)[0]) or ABSENCE in line or SAMPLES in line:
                 continue
             hits.append((path.relative_to(root).as_posix(), i + 1))
     return hits
@@ -76,7 +79,8 @@ def test_detector_sees_cpp_waits(tmp_path):
     (tmp_path / "test_probe.cpp").write_text(
         "QTest::qWait(100); QCOMPARE(x, 1);\n"
         "QTest::qWait(50); // fixed: proves absence\nQVERIFY(calls.empty());\n"
-        "QTRY_VERIFY(ready);\n// QTest::qWait(300);\n",
+        "QTRY_VERIFY(ready);\n// QTest::qWait(300);\n"
+        "while (n < 9) { samples.push_back(now()); QTest::qWait(3); } // fixed: samples timing\n",
         encoding="utf-8")
     assert fixed_wait_checks(tmp_path) == [("test_probe.cpp", 1)]
 
