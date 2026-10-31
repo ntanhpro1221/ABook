@@ -57,6 +57,14 @@ cmake --build "%HERE%build"
 if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
 
+rem QML must not read members a real type lacks (qmllint missing-property; 31-10 Player.position read as undefined)
+"%ABOOK_PYTHON%" -X utf8 "%HERE%tools\check_qml_members.py" selftest "%HERE%build"
+if errorlevel 1 exit /b 1
+if not errorlevel 0 exit /b 1
+"%ABOOK_PYTHON%" -X utf8 "%HERE%tools\check_qml_members.py" "%HERE%build"
+if errorlevel 1 exit /b 1
+if not errorlevel 0 exit /b 1
+
 rem Player unit tests (QtTest with fake audio/network): red stops the build before packaging
 call :test "%HERE%build\PlayerNativeTests.exe" "%HERE%build\playernative-test.txt"
 if errorlevel 1 exit /b 1
