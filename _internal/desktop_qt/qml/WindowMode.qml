@@ -132,11 +132,20 @@ Item {
             hideToTray()
         } else quit()
     }
-    function quit() {
+    function save() {
         if (transitioning) geometry.complete()
         if (mini) saveMini(); else saveFull()
+    }
+    function quit() {
+        save()
         quitting = true
         exitRequested()
+    }
+    // Cập nhật (Backend::runInstaller) thoát bằng QCoreApplication::exit, không qua quit() hay closeRequested: aboutToQuit vẫn
+    // phát, nên vị trí + cỡ cửa sổ vẫn được lưu như khi người dùng thoát.
+    Connections {
+        target: Qt.application
+        function onAboutToQuit() { if (!root.quitting) root.save() }
     }
     onCloseToTrayChanged: Platform.setSetting("closeToTray", String(closeToTray))
     onAutoMiniChanged: Platform.setSetting("autoMini", String(autoMini))

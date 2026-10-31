@@ -51,10 +51,11 @@ File phát hành nằm ở thư mục tạm của máy (`abook-release/X.Y.Z`, h
 tương ứng, để hiểu script làm gì:
 
 1. Tag git `vX.Y.Z` trên commit phát hành, đẩy tag.
-2. App máy tính: `scripts\build_windows_app.ps1` (không `-TauriConfig` - bản phát hành chỉ nhận cập nhật qua https) ra
-   trong `shell\src-tauri\target\release\bundle\nsis\`: bộ cài `ABook_X.Y.Z_x64-setup.exe`, chữ ký `.sig` (khoá ở
-   `%USERPROFILE%\.abook-keys`, không bao giờ commit) và `latest.json` (ghi chú lấy từ mục `[X.Y.Z]` của CHANGELOG -
-   đổi tên mục trước khi dựng). App điện thoại (Kotlin + Compose, không có bước web):
+2. App máy tính (bản Qt, `docs/QT_INSTALLER.md`): `desktop_qt\build.bat installer` - test Qt, đóng gói, smoke bản đóng gói,
+   test bộ cài trong hồ sơ giả (cài, cập nhật thật N -> N+1, tham số bộ cập nhật Tauri, gỡ) - ra trong
+   `desktop_qt\build\installer\`: bộ cài `ABook_X.Y.Z_x64-setup.exe`, chữ ký `.sig` (khoá ở `%USERPROFILE%\.abook-keys`,
+   không bao giờ commit; kiểm lại bằng khoá công khai ngay sau khi ký) và `latest.json` (ghi chú lấy từ mục `[X.Y.Z]` của
+   CHANGELOG - đổi tên mục trước khi dựng; `release.py build` kiểm latest.json mang đúng chữ ký của `.sig`). App điện thoại (Kotlin + Compose, không có bước web):
    `gradlew assembleRelease` trong `mobile\android\` - Gradle ký bằng `%USERPROFILE%\.abook-keys\android-release.properties`
    (thiếu file ấy thì APK không ký, không phát hành được). Bản release chạy R8 (thu nhỏ mã + tài nguyên, luật ở
    `mobile\android\app\proguard-rules.pro`): ngay sau khi dựng, CẤT `mobile\android\app\build\outputs\mapping\release\mapping.txt`

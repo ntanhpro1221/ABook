@@ -209,6 +209,24 @@ Item {
             mode.closeRequested(close, false); compare(spy.count, 2)
             spy.destroy()
         }
+        function test_exitWithoutQuitStillSavesTheWindow() {
+            // Bộ cập nhật thoát app bằng QCoreApplication::exit(0): không có quit(), chỉ aboutToQuit.
+            Theme.reduceMotion = true
+            const win = createTemporaryObject(windowFactory, host)
+            win.show()
+            const mode = createTemporaryObject(modeFactory, host, {window: win, loaded: true})
+            win.x = 200; win.y = 150; win.width = 1000; win.height = 650
+            tryCompare(win, "width", 1000)
+            Qt.application.aboutToQuit()
+            compare(Platform.setting("window", ""), "200,150,1000,650,0")
+            mode.enter()
+            tryCompare(mode, "transitioning", false)
+            win.x = 300; win.y = 220
+            tryCompare(win, "x", 300)
+            Qt.application.aboutToQuit()
+            compare(Platform.setting("miniPosition", ""), "300,220")
+            mode.expand(); win.hide()
+        }
         function test_motionAndInterruptedTransition() {
             Theme.reduceMotion = false
             const win = createTemporaryObject(windowFactory, host)

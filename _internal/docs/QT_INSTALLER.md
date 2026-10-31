@@ -378,7 +378,8 @@ trước), (3) bản Qt đầu tiên do Lead quyết. latest.json dùng chung; k
     `Backend::runInstaller`, 8 khi host từ chối gói.
   - Ca âm trước: đúng khoá, chữ ký của gói khác -> tải rồi từ chối, khoá gỡ cài vẫn số N, file app không đổi, gói không nằm lại.
   - Ca dương: bộ cài chạy với đúng tham số của host (`/P /UPDATE /R`, không `/D`) -> khoá gỡ cài 9.9.9, file N+1 đúng từng
-    byte, .pyc biên dịch lại, app mở lại (/R), dữ liệu + worker Studio đang chạy còn nguyên.
+    byte, .pyc biên dịch lại, bộ cài ghi lệnh mở lại app (/R) vào `ABOOK_TEST_RELAUNCH_LOG` (bản test không mở app - xem
+    sự cố 18:28 dưới), dữ liệu + worker Studio đang chạy còn nguyên.
   - Lượt đầu bắt được một lỗi thật: bộ cài tới bước dừng app khi app còn đang tự tắt (host lưu nốt, tối đa 5 s), rồi
     `Stop-Process -Force` cắt ngang (app thoát -1). Với /UPDATE, `stop_processes.ps1 -GraceSeconds 15` chờ app thoát êm,
     hết hạn mới dừng cứng; test đòi app thoát 0.
@@ -399,8 +400,32 @@ trước), (3) bản Qt đầu tiên do Lead quyết. latest.json dùng chung; k
   junction ra ngoài). Chạy bộ cài Qt với đúng chuỗi ấy: cài được hay thoát lỗi đều được, dữ liệu phải còn nguyên từng byte.
   Ca này ghi lệnh mở lại vào `ABOOK_TEST_RELAUNCH_LOG` thay vì mở app (chỉ bản test), để app vừa mở không kịp ghi gì
   trước khi so.
+- **Sự cố 31-10 18:28: hộp lỗi trên màn hình THẬT của chủ máy.** Lượt test_installer thứ tư, ca cập nhật dương: bộ cài bản
+  test chạy /R = `Exec` ABook.exe đã cài (trong `%TEMP%book-inst-*`). App con thừa hưởng desktop riêng
+  `ABookSmoke-<pid>` của smoke_dist; bộ cài thoát ngay sau Exec và smoke_dist đã đóng handle desktop, nên desktop bị huỷ khi
+  con còn khởi tạo user32 -> 0xc0000142 (STATUS_DLL_INIT_FAILED). Hộp lỗi hệ thống do csrss vẽ trên desktop TƯƠNG TÁC, không
+  theo desktop riêng - và test vẫn xanh (nó chỉ thấy app "đã mở lại" rồi giết).
+  Luật từ đó (sửa cả loại, 31-10 tối):
+  - Bản test của bộ cài **không bao giờ mở chương trình** (`Exec`/`ExecShell`/`ExecWait`): /R và nút "Chạy ABook" chỉ ghi
+    lệnh vào `ABOOK_TEST_RELAUNCH_LOG`; "app mở lại" kiểm bằng log. Kiểm tĩnh REAL_STATE đỏ khi kịch bản test (makensis /PPO)
+    còn dòng Exec nào; bản phát hành vẫn Exec.
+  - Mọi tiến trình thử tạo với chế độ lỗi `SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX | SEM_NOOPENFILEERRORBOX`
+    (`windows_process.create_suspended` cho mọi công cụ desktop riêng; test_installer đặt cho chính nó - cả cây thừa hưởng):
+    chết lúc khởi động thì trả mã, không vẽ hộp.
+  - Desktop riêng sống tới khi CẢ CÂY xong: smoke_dist theo dõi mọi con (kể cả mồ côi app để lại: bộ cài, con của nó), chỉ
+    đóng desktop khi cây rỗng; quá `linger` (300 s) thì giết đúng các PID ấy rồi mới đóng.
+  - Bộ canh `tools/default_desktop_watch.py` chạy suốt test_installer (EnumWindows desktop mặc định, 200 ms): đỏ khi có cửa sổ
+    hiện của tiến trình chạy từ thư mục thử, hay hộp lỗi hệ thống "<exe của lượt>.exe - ..." (cửa sổ có trước lượt không
+    tính). Kiểm lực: `test_installer.py --selftest-watch` mở cửa sổ ngoài màn (x=-10000, không kích hoạt, tool window) và một
+    hộp lỗi giả "ABook.exe - Application Error", phải bị bắt; cửa sổ có trước phải bị bỏ qua; đóng ngay sau đó.
+  - test_installer 31-10 18:47 sau bản sửa: INSTALLER_OK (73 kiểm, gồm kiểm bộ canh), selftest bộ canh qua.
+- Vị trí cửa sổ khi cập nhật: `Backend::runInstaller` thoát bằng `exit(0)`, không qua `WindowMode.quit()`; WindowMode lưu
+  hình học ở `Qt.application.aboutToQuit` (vẫn phát với exit). WidthTests `Mini::test_exitWithoutQuitStillSavesTheWindow`.
 
-- `build` gọi bước dựng Qt thay `build_windows_app.ps1`; cùng tên file, cùng `latest.json`, kiểm `.sig`.
+- Bước 2 (Lead duyệt 31-10): `release.py build` gọi `desktop_qtuild.bat installer` thay `build_windows_app.ps1`, lấy file
+  ở `desktop_qtuild\installer\`; cùng tên file, cùng `latest.json`, kiểm latest.json mang đúng chữ ký của `.sig`.
+  tests/test_release_script.py: `_run` giả - lệnh đúng build.bat installer, không lệnh Tauri nào; thiếu file / sai số phiên bản
+  / latest.json khác .sig đều đỏ.
 - Bỏ `shell/` khỏi đường phát hành sau một bản Qt chạy thật trên "máy sạch": cài mới, cập nhật lên bản kế, gỡ có và không
   xoá dữ liệu.
 - **"Máy sạch" = hồ sơ giả, không phải máy ảo** (chọn 31-10, Lead duyệt).

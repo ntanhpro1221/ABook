@@ -448,7 +448,9 @@ Function SkipIfPassive
 FunctionEnd
 
 Function RunMainBinary
-  Exec '"$INSTDIR\${MAINBINARY}"'
+  !ifndef ABOOK_TEST_ROOT   ; bản test không mở app (xem .onInstSuccess)
+    Exec '"$INSTDIR\${MAINBINARY}"'
+  !endif
 FunctionEnd
 
 Section Install
@@ -501,16 +503,17 @@ Function .onInstSuccess
     ${GetOptions} $CMDLINE "/R" $0
     ${IfNot} ${Errors}
       !ifdef ABOOK_TEST_ROOT
-        ; Ca an toàn của test_installer: ghi lệnh mở lại thay vì mở, để so dữ liệu từng byte trước khi app kịp ghi gì.
+        ; Bản test KHÔNG BAO GIỜ mở app: chỉ ghi lệnh mở lại vào ABOOK_TEST_RELAUNCH_LOG (nếu có) để test kiểm. App mở lại từ
+        ; desktop riêng của lượt thử chết với 0xc0000142 khi desktop ấy đóng, và hộp lỗi hiện trên màn hình chủ máy (31-10).
         ReadEnvStr $1 "ABOOK_TEST_RELAUNCH_LOG"
         ${If} $1 != ""
           FileOpen $2 $1 w
           FileWrite $2 '"$INSTDIR\${MAINBINARY}"'
           FileClose $2
-          Return
         ${EndIf}
+      !else
+        Exec '"$INSTDIR\${MAINBINARY}"'
       !endif
-      Exec '"$INSTDIR\${MAINBINARY}"'
     ${EndIf}
   ${EndIf}
 FunctionEnd

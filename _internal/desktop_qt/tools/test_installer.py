@@ -16,6 +16,7 @@ test_installer.py <dist> [--version 0.0.1]
 """
 import _winapi
 import argparse
+import ctypes
 import hashlib
 import json
 import os
@@ -34,6 +35,7 @@ import psutil
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from guarded_process import run_guarded  # noqa: E402
+from default_desktop_watch import DefaultDesktopWatch  # noqa: E402
 from private_profile import isolate  # noqa: E402
 from smoke_dist import run as run_app  # noqa: E402
 import smoke_open  # noqa: E402
@@ -49,7 +51,9 @@ REAL_KEYS = [r"Software\Classes\.abook", r"Software\Classes\.abookproj", r"Softw
 RUN_KEY = r"Software\Microsoft\Windows\CurrentVersion\Run"
 # Dòng nào của kịch bản test (đã tiền xử lý) chứa những chữ này là nó chạm vào trạng thái thật.
 REAL_STATE = re.compile(r"Software\\Classes|Software\\ABook[\\\"]|CurrentVersion\\(?:Uninstall|Run)|\$SMPROGRAMS|\$DESKTOP|\$LOCALAPPDATA|\$APPDATA|"
-                        r"StartMenuPin|ApplicationDestinations|SHChangeNotify", re.I)
+                        r"StartMenuPin|ApplicationDestinations|SHChangeNotify|"
+                        # Mở chương trình (app sau khi cài, /R): bản test không bao giờ mở gì ngoài nsExec ẩn (31-10 0xc0000142).
+                        r"(?:^|\s)Exec(?:Shell|Wait|ShellWait)?\s", re.I)
 NO_WINDOW = 0x08000000
 failures: list[str] = []
 
@@ -239,16 +243,61 @@ def tree_hash(dist: Path) -> dict:
     return out
 
 
+def selftest_watch() -> int:
+    """Kiểm lực bộ canh desktop chủ máy: cửa sổ của một tiến trình trong thư mục thử, và hộp lỗi giả "ABook.exe - Application
+    Error", mở trong lượt canh -> phải bị bắt; cửa sổ có trước lượt -> không. Cửa sổ ở x=-10000, không kích hoạt, không nút
+    thanh tác vụ (tool window), đóng ngay khi bộ canh đã thấy."""
+    user = ctypes.WinDLL("user32", use_last_error=True)
+    user.CreateWindowExW.restype = ctypes.c_void_p
+    user.CreateWindowExW.argtypes = [ctypes.c_ulong, ctypes.c_wchar_p, ctypes.c_wchar_p, ctypes.c_ulong] + [ctypes.c_int] * 4 \
+        + [ctypes.c_void_p] * 4
+    user.ShowWindow.argtypes = [ctypes.c_void_p, ctypes.c_int]
+    user.DestroyWindow.argtypes = [ctypes.c_void_p]
+
+    def offscreen(title: str):
+        # WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE, WS_POPUP; SW_SHOWNOACTIVATE
+        hwnd = user.CreateWindowExW(0x80 | 0x08000000, "STATIC", title, 0x80000000, -10000, -10000, 10, 10, None, None, None, None)
+        user.ShowWindow(hwnd, 4)
+        return hwnd
+
+    own = Path(psutil.Process().exe()).parent
+    for title, root, want in (("abook-selftest-before", own, False), ("abook-selftest-own", own, True),
+                              ("ABook.exe - Application Error", Path(tempfile.gettempdir()) / "abook-selftest-none", True)):
+        early = offscreen(title) if not want else None
+        with DefaultDesktopWatch(root) as watch:
+            hwnd = offscreen(title) if want else None
+            deadline = time.monotonic() + 5
+            while want and not watch.seen and time.monotonic() < deadline:
+                time.sleep(0.05)
+            if hwnd:
+                user.DestroyWindow(hwnd)
+        if early:
+            user.DestroyWindow(early)
+        hit = any(title in item for item in watch.seen)
+        check(hit == want, f"bộ canh {'bắt' if want else 'bỏ qua'} cửa sổ {title!r} ({watch.seen})")
+    print("WATCH_SELFTEST_OK" if not failures else f"WATCH_SELFTEST_FAIL {len(failures)}")
+    return 1 if failures else 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("dist", type=Path)
+    ap.add_argument("dist", type=Path, nargs="?")
     ap.add_argument("--version", default="0.0.1")
+    ap.add_argument("--selftest-watch", action="store_true", help="chỉ kiểm lực bộ canh desktop chủ máy (mở cửa sổ ngoài màn)")
     args = ap.parse_args()
+    if args.selftest_watch:
+        return selftest_watch()
+    if args.dist is None:
+        ap.error("cần dist")
     dist = args.dist.resolve()
     root_key = rf"Software\ABookTest-{uuid.uuid4().hex}"
+    # Cả cây tiến trình thử thừa hưởng chế độ lỗi này (không ai tạo con với CREATE_DEFAULT_ERROR_MODE): DLL không nạp được hay
+    # tiến trình chết lúc khởi động thì trả mã lỗi, không vẽ hộp lỗi hệ thống lên màn hình chủ máy (31-10 0xc0000142).
+    ctypes.windll.kernel32.SetErrorMode(0x0001 | 0x0002 | 0x8000)  # FAILCRITICALERRORS | NOGPFAULTERRORBOX | NOOPENFILEERRORBOX
     before = real_state()
     work = Path(tempfile.mkdtemp(prefix="abook-inst-"))
     sleepers: list[subprocess.Popen] = []
+    watch = DefaultDesktopWatch(work).__enter__()
     try:
         temp = work / "temp"
         local, roaming, shell = temp / "local", temp / "roaming", temp / "shell"
@@ -359,6 +408,10 @@ def main() -> int:
         site = Site()
         app_env = {name: env[name] for name in ("LOCALAPPDATA", "APPDATA", "TEMP", "TMP", "ABOOK_TEST_SHELL")}
         app_env["ABOOK_UPDATE_URL"] = f"{site.base}/latest.json"
+        # Bản test của bộ cài không mở app (/R): ghi lệnh mở vào đây (abook.nsi .onInstSuccess) - không gì của lượt thử mở ra
+        # trên desktop chủ máy.
+        relaunch_log = work / "update-relaunch.txt"
+        app_env["ABOOK_TEST_RELAUNCH_LOG"] = str(relaunch_log)
         downloads = temp / "ABook-update"
 
         def profile(name: str) -> Path:
@@ -397,13 +450,9 @@ def main() -> int:
                 print(text[-3000:])
             setup_copy = downloads / f"ABook_{nxt}_x64-setup.exe"
             check(wait_for(lambda: not processes_from(setup_copy), 300), "cập nhật: bộ cài N+1 chạy xong")
-            check(wait_for(lambda: bool(processes_from(exe)), 60), "cập nhật: bộ cài mở lại app đã cài (/R)")
-            relaunched = processes_from(exe)
-            for process in relaunched:
-                for child in process.children(recursive=True):
-                    child.kill()
-                process.kill()
-            psutil.wait_procs(relaunched, timeout=15)
+            relaunched = relaunch_log.read_text(encoding="utf-8").strip('"\r\n ') if relaunch_log.exists() else ""
+            check(relaunched == str(exe) and not processes_from(exe),
+                  f"cập nhật: bộ cài ghi lệnh mở lại app đã cài (/R), không mở thật ({relaunched!r})")
             uninst = values(read_tree(winreg.HKEY_CURRENT_USER, root_key), root_key + r"\Uninstall\ABook")
             check(uninst.get("DisplayVersion") == nxt, f"cập nhật: khoá gỡ cài ghi {nxt} ({uninst.get('DisplayVersion')})")
             want_next = tree_hash(next_dist)
@@ -558,8 +607,10 @@ def main() -> int:
             if process.poll() is None:
                 process.kill()
                 process.wait(10)
+        watch.__exit__(None, None, None)
         delete_tree(winreg.HKEY_CURRENT_USER, root_key)
         shutil.rmtree(work, ignore_errors=True)
+    check(not watch.seen, f"không cửa sổ nào của lượt thử, không hộp lỗi hệ thống trên desktop chủ máy ({watch.seen[:4]})")
     after = real_state()
     check(after == before, "HKCU và file cài thật của chủ máy không đổi một byte")
     check(not read_tree(winreg.HKEY_CURRENT_USER, root_key), "gốc registry test đã xoá")
