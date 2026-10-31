@@ -58,6 +58,37 @@ describe("nhạc nền theo mốc của chương", () => {
     expect(bed.activeLink).toBeNull();
   });
 
+  it("giọng tự hết chương / cuốn: nhạc mờ ra rồi nhả, không dừng cùng giọng; người nghe bấm dừng vẫn dừng ngay", () => {
+    vi.useFakeTimers();
+    const made: { paused: boolean; volume: number }[] = [];
+    const bed = new MusicBed(() => {
+      const fake = { paused: true, volume: 0, loop: false, currentTime: 0, duration: 200 };
+      made.push(fake);
+      return Object.assign(fake, {
+        play: () => { fake.paused = false; return Promise.resolve(); },
+        pause: () => { fake.paused = true; },
+        addEventListener: () => undefined,
+      });
+    });
+    bed.setCues(cues, -20);
+    bed.sync(10, true);
+    vi.advanceTimersByTime(FADE_SECONDS * 1000 + 500);
+    const level = made[0].volume;
+    bed.sync(100, false, false, true);
+    expect(bed.activeLink).toBeNull();
+    expect(made[0].paused).toBe(false);
+    vi.advanceTimersByTime(500);
+    expect(made[0].volume).toBeLessThan(level);
+    expect(made[0].volume).toBeGreaterThan(0);
+    bed.sync(100, false, false, true); // lần đồng bộ sau trong lúc chờ chương kế
+    expect(made[0].paused).toBe(false);
+    bed.setCues(cues, -20);
+    bed.sync(10, true);
+    bed.sync(10, false);
+    expect(made.every((audio) => audio.paused)).toBe(true);
+    bed.stop();
+  });
+
   it("đổi cuốn lúc tạm dừng: bài của cuốn cũ (đang mờ đi) không bị chơi lại khi giọng mới chạy", () => {
     const plays: string[] = [];
     const bed = new MusicBed((src) => {

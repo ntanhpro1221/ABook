@@ -5,6 +5,9 @@ truth by 0..10 ms (the mixer's cursor follows the device padding, one 10 ms engi
 of the recording that Sonic copies intact at x3, 22 ms (listener) from where the app says it is. A third came on run 5:
 a slope bend Sonic's own crossfade makes (offline Sonic built from the same sonic.c makes them too). These tests keep
 all three silent and keep real faults red, on a synthetic run shaped like the bench scenario.
+
+The same day it heard a fault the listener does hear: at the end of chapter 1 the music stopped with the voice (-30 -> -91 dB
+in 6 ms). The sudden-silence detector ("cut") came in with the fix, red on 0.4.152.
 """
 import importlib.util
 from pathlib import Path
@@ -89,3 +92,33 @@ def test_sonic_segments_carry_their_own_floor(speed, size, red):
     mono[f:f + rate // 100] += size
     report = sink.check(dict(data, mono=mono))
     assert any(x["kind"] == "click" and abs(x["t"] * rate - f) < rate // 1000 for x in report["findings"]) == red
+
+
+def test_music_stopping_with_the_voice_is_a_cut():
+    data = sink.synthetic_run(1.0)
+    rate = data["rate"]
+    mono = data["mono"].copy()
+    mono[10 * rate: 10 * rate + rate * 3 // 10] = 0
+    report = sink.check(dict(data, mono=mono))
+    assert any(f["kind"] == "cut" and abs(f["t"] - 10) < 0.02 for f in report["findings"])
+
+
+def test_a_voice_that_goes_silent_by_itself_is_not_a_cut():
+    # TTS hard-cut at a sentence end with no music under it: the sink copies the source, so the silence is the recording's
+    assert "cut" not in kinds(sink.synthetic_run(1.0, source_quiet_at=12.0))
+
+
+@pytest.mark.parametrize("tag", ["pause", "stop"])
+def test_silence_right_after_a_listener_action_is_not_a_cut(tag):
+    # synthetic_run goes silent exactly at pause and stop; the frame before the fall may sit up to 20 ms before the action
+    data = sink.synthetic_run(1.0)
+    at = next(m["frame"] for m in data["marks"] if m["tag"] == tag) / data["rate"]
+    assert not any(f["kind"] == "cut" and abs(f["t"] - at) < 0.1 for f in sink.check(data)["findings"])
+
+
+def test_strength_goes_red_with_a_deaf_cut_detector(monkeypatch):
+    data = sink.synthetic_run(3.0)
+    monkeypatch.setattr(sink, "CUT_TO_DB", -1e9)
+    ok, results = sink.strength(data)
+    assert not ok
+    assert [r["case"] for r in results if not r["ok"]] == [next(r["case"] for r in results if r["case"].startswith("đột im"))]
