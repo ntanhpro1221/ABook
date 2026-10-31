@@ -268,6 +268,17 @@ bytecode HLSL, không phụ thuộc card). Lợi tối đa là phần của 0,4 
   mã 0; bản đang chạy nhận, đưa cửa sổ lên (`raise` + `requestActivate`; KHÔNG bao giờ trong test), rồi mở file.
 - Đặt trước Q5 vì bấm đúp file khi app đang mở chính là lần mở thứ hai.
 - Test (C++, GUILESS): server giả nhận đúng danh sách; lần hai thoát ngay; server chết thì lần hai tự làm server.
+- Đã làm (31-10): `src/singleinstance.{h,cpp}`, `tests/test_singleinstance.cpp` (SingleInstanceTests trong build.bat).
+  - Tên kênh `ABookDesk-` + sha256(SID | `%LOCALAPPDATA%` chữ thường).16 hex. Hồ sơ giả của mọi công cụ đo / smoke / bộ cài
+    thử có `LOCALAPPDATA` riêng (`tools/private_profile.py`), nên không bao giờ gửi file sang app thật của chủ máy.
+  - Quyền làm bản đang chạy là mutex `Local\<tên>`, không phải ống: Windows cho nhiều `QLocalServer` nghe cùng một tên ống
+    (test bắt được: hai server cùng tên đều `listen` thành công). Tiến trình chết thì Windows nhả mutex (ca tiến trình con
+    `--hold` bị giết).
+  - Giao thức một dòng mỗi chiều: bản đang chạy chào `<pid>` (bản mới gọi `AllowSetForegroundWindow`), bản mới gửi
+    `{"files": [...]}`, bản đang chạy đáp `ok`. Có người nghe mà không đáp kịp thì bản mới vẫn thoát (hai host cùng hồ sơ là
+    hai bên ghi một `preferences.json`).
+  - `main.cpp` hỏi trước khi khởi động host; `Main.qml otherLaunch(files)` hiện cửa sổ (`windowMode.reveal()`), đo đạc
+    (`ABOOK_BENCH`) không nối. Mở `files`: Q5.
 
 ### Q5. Liên kết file + đọc dòng lệnh
 - Bộ cài ghi `HKCU\Software\Classes\.abook` -> `ABook`, `.abookproj` -> `ABook.Project`, lệnh mở `"<exe>" "%1"`, icon.
