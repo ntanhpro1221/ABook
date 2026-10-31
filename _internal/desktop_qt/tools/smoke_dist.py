@@ -9,6 +9,7 @@ never the user's.
 smoke_dist.py <dist/ABookDesk.exe> [--seconds 60]
 """
 import argparse
+import contextlib
 import ctypes
 import os
 import re
@@ -30,9 +31,11 @@ FATAL = re.compile(r"is not a type|is not installed|ReferenceError|TypeError|Can
                    r"Type \S+ unavailable|module \S+ plugin|failed to load component|Component is not ready")
 
 
-def run(exe: Path, seconds: float, smoke: str = "1") -> tuple[int | None, str, set[str]]:
+def run(exe: Path, seconds: float, smoke: str = "1", root: Path | None = None,
+        extra: dict | None = None) -> tuple[int | None, str, set[str]]:
     """Start `exe` once on a private desktop with ABOOK_SMOKE_EXIT=`smoke`; return (exit code or None on timeout, its log,
-    the executables of every child process seen meanwhile)."""
+    the executables of every child process seen meanwhile). `root`: the profile folder (the caller keeps it, and may have put
+    prefs.json there already); default a temporary one. `extra`: environment set last, over the defaults."""
     user = ctypes.WinDLL("user32", use_last_error=True)
     user.CreateDesktopW.restype = wt.HANDLE
     user.CreateDesktopW.argtypes = [wt.LPCWSTR, wt.LPCWSTR, ctypes.c_void_p, wt.DWORD, wt.DWORD, ctypes.c_void_p]
@@ -41,14 +44,15 @@ def run(exe: Path, seconds: float, smoke: str = "1") -> tuple[int | None, str, s
     nt.NtResumeProcess.argtypes = [wt.HANDLE]
     nt.NtResumeProcess.restype = wt.LONG
     children: set[str] = set()
-    with tempfile.TemporaryDirectory(prefix="abook-smoke-") as tmp:
+    with contextlib.nullcontext(str(root)) if root else tempfile.TemporaryDirectory(prefix="abook-smoke-") as tmp:
         root = Path(tmp)
         for name in ("local", "roaming", "temp"):
-            (root / name).mkdir()
+            (root / name).mkdir(exist_ok=True)
         env = {k: v for k, v in os.environ.items() if not k.upper().startswith(("QT_", "QML", "ABOOK_"))}
         env.update(LOCALAPPDATA=str(root / "local"), APPDATA=str(root / "roaming"), TEMP=str(root / "temp"),
                    TMP=str(root / "temp"), ABOOK_PREFERENCES=str(root / "prefs.json"), ABOOK_MUTE="1", ABOOK_SMOKE_EXIT=smoke,
                    QT_FORCE_STDERR_LOGGING="1")
+        env.update(extra or {})
         # QStandardPaths (cache nhạc, cache QML) theo USERPROFILE, không theo LOCALAPPDATA của env.
         isolate(env)
         name = f"ABookSmoke-{os.getpid()}"
