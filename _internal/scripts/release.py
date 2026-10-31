@@ -213,13 +213,17 @@ def build(version: str, out: Path) -> None:
     check_word_align_pinned()
     check_speaker_model_pinned()
     out.mkdir(parents=True, exist_ok=True)
-    _run(["powershell", "-ExecutionPolicy", "Bypass", "-File", str(ROOT / "scripts/build_windows_app.ps1")], ROOT, low=True)
-    nsis = ROOT / "shell/src-tauri/target/release/bundle/nsis"
+    # Bộ cài Qt (docs/QT_INSTALLER.md Q7): test Qt, đóng gói, smoke bản đóng gói, test_installer (cài, cập nhật thật N -> N+1,
+    # ca tham số bộ cập nhật Tauri, gỡ), ký .sig rồi kiểm bằng khoá công khai, ghi latest.json - một đường, không cờ chọn vỏ.
+    _run(["cmd", "/c", str(ROOT / "desktop_qt/build.bat"), "installer"], ROOT, dict(os.environ, ABOOK_PYTHON=sys.executable), low=True)
+    nsis = ROOT / "desktop_qt/build/installer"
     for name in (f"ABook_{version}_x64-setup.exe", f"ABook_{version}_x64-setup.exe.sig", "latest.json"):
         assert (nsis / name).is_file(), f"bộ cài thiếu {name}"
         shutil.copy2(nsis / name, out / name)
     manifest = json.loads((out / "latest.json").read_text(encoding="utf-8"))
     assert manifest.get("version") == version, f"latest.json ghi {manifest.get('version')}"
+    signature = (out / f"ABook_{version}_x64-setup.exe.sig").read_text(encoding="utf-8").strip()
+    assert manifest["platforms"]["windows-x86_64"]["signature"] == signature, "latest.json mang chữ ký khác file .sig"
 
     env = dict(os.environ, JAVA_HOME=os.environ.get("JAVA_HOME") or "C:/Program Files/Android/Android Studio/jbr")
     _run([str(ROOT / "mobile/android/gradlew.bat"), "--no-daemon", "-q", ":app:assembleRelease"], ROOT / "mobile/android", env,
