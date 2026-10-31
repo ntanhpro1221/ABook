@@ -9,7 +9,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Sửa lỗi
 
-- App máy tính (cả bản Qt lẫn bản Tauri) không còn chờ im lặng mãi khi máy không trả lời: giọng đọc và nghe thử giọng im quá 100 giây, việc khác im quá 30 giây thì app gửi lại một lần rồi báo lỗi (giọng đọc báo "Giọng đang chọn đang không dùng được."); đoạn đang về chậm thì không bị cắt. Trình phát chờ âm thanh quá 215 giây cũng báo lỗi kèm "Thử lại"; app mở quá 60 giây chưa xong thì hiện lỗi kèm "Thử lại" thay vì đứng mãi ở màn mở.
+- App máy tính (cả bản Qt lẫn bản Tauri) không còn chờ im lặng mãi khi máy không trả lời: việc nặng (giọng đọc, nghe thử giọng hay cách đọc, quét và tách nguồn, kể ngôi "tôi", tạo sách, dựng lại nhạc) im quá 100 giây, việc khác im quá 30 giây thì app gửi lại một lần rồi báo lỗi (giọng đọc báo "Giọng đang chọn đang không dùng được."); đoạn đang về chậm thì không bị cắt. Trình phát chờ âm thanh quá 215 giây cũng báo lỗi kèm "Thử lại"; app mở quá 60 giây chưa xong thì hiện lỗi kèm "Thử lại" thay vì đứng mãi ở màn mở.
 - Giọng Edge và các lần tải (model giọng, nhạc, bìa, kết nối giữa hai máy) không còn treo khi mạng nhà có IPv6 mà IPv6 không ra được Internet (hay gặp sau khi mất điện, router lên lại): app thử IPv6 và IPv4 song song, dùng đường nào nối được trước, thay vì chờ hết hạn từng đường IPv6 rồi mới tới IPv4.
 - Giọng trực tuyến (Edge, Azure, giọng dùng khoá riêng) không trả lời kịp thì app báo "Giọng … đang không dùng được." và thử lại sau, thay vì báo nhầm là mất mạng khi máy vẫn có mạng.
 
@@ -30,6 +30,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Nút lùi / tới 15 giây trên widget màn hình chính cùng hình với trình phát: cung nông, số 15 nằm dưới, không chạm nét.
 - Giọng có sẵn của điện thoại hiện tên "Tiếng Việt" (máy có nhiều giọng thì đánh số), không còn mã như "vi-vn-x-gft-local".
 - Mạng nhà có IPv6 mà không ra được Internet (hay gặp khi mạng vừa có điện lại) không còn làm tải bìa, nhạc nền, gói tải thêm, giọng Edge, kiểm bản mới hay nối với máy khác đứng chờ hàng chục giây: điện thoại thử các địa chỉ song song và dùng địa chỉ nối được trước, thay vì chờ từng cái hết giờ.
+- Điện thoại không còn chờ im lặng mãi khi máy tính đã ghép không trả lời: việc nặng (nghe thử giọng, quét nguồn, tạo sách, dựng nhạc) im quá 100 giây, việc khác (Studio từ xa, đồng bộ, tải sách) im quá 30 giây thì gửi lại một lần rồi báo "Máy chưa trả lời kịp."; lần tải đang về chậm thì không bị cắt. Trình phát chờ âm thanh quá 215 giây cũng báo lỗi kèm "Thử lại".
 
 ## [0.4.148] - 2026-10-28
 
