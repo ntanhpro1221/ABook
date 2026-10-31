@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "../../qml/TextWrap.js" as TextWrap
 import "ModalLayer.js" as ModalLayer
 import "VisualReady.js" as VisualReady
 import ABook
@@ -36,8 +37,9 @@ Item {
         function hasTop(name) { return all(host.overlay, name).filter(shown).length > 0 }
         function has(item, name) { return all(item, name).filter(shown).length > 0 }
         function texts(item) { return ModalLayer.collect(item, node => node.text !== undefined && shown(node)).map(node => String(node.text)) }
-        function hasText(item, value) { return texts(item).indexOf(value) >= 0 }
-        function hasPart(item, part) { return texts(item).some(t => t.indexOf(part) >= 0) }
+        function hasText(item, value) { const all = texts(item); return all.indexOf(value) >= 0 || all.indexOf(TextWrap.pretty(value)) >= 0 }    // chữ vẽ qua text-wrap: pretty (TextWrap.js)
+        function plain(text) { return String(text).replace(/\u00a0/g, " ") }
+        function hasPart(item, part) { return texts(item).some(t => plain(t).indexOf(plain(part)) >= 0) }    // NBSP của text-wrap: pretty = dấu cách
         function all2(item, test) { return ModalLayer.collect(item, test) }
         function buttons(item, text) { return all2(item, n => n.clicked !== undefined && n.text === text && shown(n)) }
         function press(item, text) {

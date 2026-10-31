@@ -2,7 +2,7 @@ import QtQuick
 import ABook
 
 // Viên trạng thái (StatusPill của shared/ui.tsx): cao 24, bo tròn, nền nhạt + chữ theo `tone` (accent / success / danger / warning / muted), chấm tròn đầu
-// viên; `live` (đang chạy) thay chấm bằng biểu tượng sóng. Đổi nhãn / màu thì màu chuyển dần, không nhảy.
+// viên; `live` (đang chạy) thay chấm bằng vạch nhảy Vu (h-2.5). Đổi nhãn / màu thì màu chuyển dần, không nhảy.
 Rectangle {
     id: root
     property string label: ""
@@ -23,11 +23,11 @@ Rectangle {
     Item {
         id: lead
         x: 10
-        width: root.live ? 12 : 6
+        width: root.live ? vu.width : 6
         height: 12
         anchors.verticalCenter: parent.verticalCenter
         Rectangle { visible: !root.live; anchors.centerIn: parent; width: 6; height: 6; radius: width / 2; color: root.ink }
-        Icon { visible: root.live; anchors.centerIn: parent; name: "audio-lines"; size: 12; color: root.ink }
+        Vu { id: vu; visible: root.live; anchors.centerIn: parent; height: 10; color: root.ink }
     }
     Text {
         id: text

@@ -1,6 +1,7 @@
 import QtQuick
 import QtTest
 import "VisualReady.js" as VisualReady
+import "../../qml/TextWrap.js" as TextWrap
 import ABook
 
 // Tab "Nhân vật" của trang sách (BookPage + CastList/CastPerson/CastSample + các hộp Gộp / Đổi tên / Giới tính / Giọng): danh sách, trạng thái trống, nghe thử,
@@ -106,7 +107,7 @@ Item {
             render()
         }
         function person(name) {
-            return all(page, "castName").filter(item => item.text === name)[0]
+            return all(page, "castName").filter(item => item.text === name || item.text === TextWrap.pretty(name))[0]    // tên vẽ qua text-wrap: pretty
         }
         // Dòng (CastPerson) của một người: leo từ tên lên tới phần tử có `person`
         function rowOf(name) {

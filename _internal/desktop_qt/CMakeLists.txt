@@ -123,6 +123,7 @@ qt_add_qml_module(ABookDesk
         qml/CoverButton.qml
         qml/InlineError.qml
         qml/FlowDetail.qml
+        qml/Vu.qml
         qml/LineIcon.qml
         qml/NavItem.qml
         qml/TitleBar.qml
@@ -294,6 +295,7 @@ qt_add_qml_module(ABookDesk
         qml/OtherComputersRow.qml
         qml/OtherComputersBluetooth.qml
         qml/SizeFormat.js
+        qml/TextWrap.js
         qml/DevicesLogic.js
         qml/ImportQueue.js
         qml/ImportBox.qml

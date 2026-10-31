@@ -8,7 +8,8 @@ Item {
     id: host
     width: 1920; height: 900
     Rectangle { anchors.fill: parent; color: Theme.bg }
-    Sidebar { id: sidebar; width: 232; height: parent.height }
+    // Như Main: thanh bên tô mục của màn đang hiện (currentSection: stack.current, bấm mục = stack.show)
+    Sidebar { id: sidebar; width: 232; height: parent.height; onSectionRequested: index => currentSection = index }
     Item { id: content; x: 232; width: host.width - x; height: host.height }
     Component { id: library; LibraryScreen {} }
     Component { id: book; BookPage {} }
@@ -126,7 +127,9 @@ Item {
             return rows
         }
         function test_screens(d) {
-            host.width = d.w; Theme.mode = d.mode
+            // Theme như người dùng chọn ở Giao diện (tuỳ chọn -> Theme), mục thanh bên như người dùng bấm: ảnh nói thật
+            host.width = d.w; Api.update({theme: d.mode})
+            sidebar.choose({studio: 1, settings: 2, devices: 2}[d.screen] || 0)
             sidebar.visible = d.screen !== "mini"
             content.x = sidebar.visible ? 232 : 0
             const factories = {library: library, book: book, now: now, add: add, edit: edit,
@@ -171,6 +174,7 @@ Item {
             const factories = {add: add, edit: edit, devices: settings, settings: settings, studio: studio, mini: mini}
             // Hộp (AddBook, EditBook) phủ cả cửa sổ như ở Main, không đứng cạnh thanh bên: cửa sổ hẹp lại thì hộp hẹp theo
             sidebar.visible = d.screen !== "mini" && d.screen !== "add" && d.screen !== "edit"
+            sidebar.choose({studio: 1, settings: 2, devices: 2}[d.screen] || 0)
             content.x = sidebar.visible ? 232 : 0
             const narrow = d.screen === "mini" ? 360 : 792
             host.width = narrow + content.x
