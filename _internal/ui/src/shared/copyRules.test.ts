@@ -7,7 +7,8 @@ import { expect, it } from "vitest";
 // Cùng luật với app điện thoại (CopyRulesTest.kt). Chuỗi đến từ máy chủ (Python) và chữ của truyện nằm ngoài luật này; dòng ghi nhật ký (log) cũng bỏ.
 const SRC = fileURLToPath(new URL("..", import.meta.url)).replaceAll("\\", "/").replace(/\/$/, "");
 
-const RULE = /"[^"\n]*\bKhông [^"\n]{1,30} được\b[^"\n]*"|`[^`\n]*\bKhông [^`\n]{1,30} được\b[^`\n]*`/g;
+// Câu đứng sau "\n" trong chuỗi: giữa chữ "n" của \n và "K" không có ranh giới từ, nên phải nhận riêng (lỗi lọt ở bản Qt 31-10).
+const RULE = /"[^"\n]*(?:\b|(?<=\\n))Không [^"\n]{1,30} được\b[^"\n]*"|`[^`\n]*(?:\b|(?<=\\n))Không [^`\n]{1,30} được\b[^`\n]*`/g;
 
 export function cutCopyOffences(file: string, text: string): string[] {
   const found: string[] = [];
@@ -37,6 +38,8 @@ it("luật bắt đúng 'Không X được' và để câu nói rõ nguyên nhâ
   const f = `${SRC}/x.tsx`;
   expect(cutCopyOffences(f, 'const a = "Không mở được sách";')).toHaveLength(1);
   expect(cutCopyOffences(f, "const a = `Không lưu được ${name}`;")).toHaveLength(1);
+  expect(cutCopyOffences(f, 'const a = "Lỗi.\\nKhông đọc được file ảnh";')).toHaveLength(1);
+  expect(cutCopyOffences(f, "const a = `Lỗi.\\nKhông lưu được ${name}`;")).toHaveLength(1);
   expect(cutCopyOffences(f, 'const a = "Chưa mở được sách";')).toEqual([]);
   expect(cutCopyOffences(f, 'const a = "Không có sách nào";')).toEqual([]);
   expect(cutCopyOffences(f, '// "Không mở được" là chữ cũ')).toEqual([]);
