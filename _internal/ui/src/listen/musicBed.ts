@@ -460,10 +460,17 @@ export class MusicBed {
     return !(this.sounded.has(audio) && audio.readyState >= 3);
   }
 
-  /** Gọi mỗi khi thời gian giọng đọc đổi (`seeked` = người nghe vừa tua). */
-  sync(seconds: number, playing: boolean, seeked = false): void {
+  /** Gọi mỗi khi thời gian giọng đọc đổi (`seeked` = người nghe vừa tua). `ended`: giọng dừng vì tự hết chương / hết cuốn chứ không phải
+   *  người nghe - nhạc mờ ra như khi đổi đoạn thay vì tắt phụt cùng giọng. */
+  sync(seconds: number, playing: boolean, seeked = false, ended = false): void {
     this.lastTime = seconds;
     this.playing = playing;
+    if (!playing && ended) {
+      // Giọng tự hết (cuối chương, sang chương kế hay hết cuốn): bài đang kêu mờ ra trong FADE_SECONDS, các bài đang mờ mờ nốt - không dừng
+      // cùng giọng (bản Qt 0.4.152 rơi -30 -> -91 dB trong 6 ms, soát 01-11). Chương kế vào thì bài của nó mờ vào đè lên.
+      if (this.current) this.switchTo(null, seconds);
+      return;
+    }
     // Mốc của bài vừa tải hỏng tính như khoảng không nhạc; tới hạn thử lại thì lần đồng bộ này vào bài như mốc mới.
     let cue = this.playableAt(seconds);
     const current = this.current?.cue;

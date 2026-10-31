@@ -53,7 +53,7 @@ tương ứng, để hiểu script làm gì:
 1. Tag git `vX.Y.Z` trên commit phát hành, đẩy tag.
 2. App máy tính (bản Qt, `docs/QT_INSTALLER.md`): `desktop_qt\build.bat installer` - test Qt, đóng gói, smoke bản đóng gói,
    cổng tai kiểm (`tools\audio_sink.py gate`: phát bản đóng gói hai lượt trên bàn làm việc ẩn, nghe WAV - lỗ, tách, mất giọng,
-   rò, trôi, lệch, mức - cả hai lượt xanh và mọi lỗi cấy vào lượt đầu phải đỏ; đỏ thì bằng chứng ở
+   rò, đột im (nhạc tắt phụt không do thao tác), trôi, lệch, mức - cả hai lượt xanh và mọi lỗi cấy vào lượt đầu phải đỏ; đỏ thì bằng chứng ở
    `desktop_qt\build\audiosink-evidence\`, cần cuốn thử `D:\Novels\Audiobooks\book2`), test bộ cài trong hồ sơ giả (cài, cập nhật thật N -> N+1, tham số bộ cập nhật Tauri, gỡ) - ra trong
    `desktop_qt\build\installer\`: bộ cài `ABook_X.Y.Z_x64-setup.exe`, chữ ký `.sig` (khoá ở `%USERPROFILE%\.abook-keys`,
    không bao giờ commit; kiểm lại bằng khoá công khai ngay sau khi ký) và `latest.json` (ghi chú lấy từ mục `[X.Y.Z]` của

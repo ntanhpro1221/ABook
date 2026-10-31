@@ -415,8 +415,9 @@ object MusicBed {
     fun brokenHere(): Boolean = playlist == null && cues.any { isFailed(it.track) }
 
     /** Giọng đọc đang ở `seconds` của chương `chapterId` trong cuốn `bookId`; `isPlaying` = giọng đang chạy. `stopNow`: giọng dừng là do người nghe
-     *  (nút, rút tai nghe, mất focus, cuộc gọi) chứ không phải khe nối hai đoạn - danh sách phát dừng ngay, không chờ [PAUSE_GRACE_MS]. */
-    fun sync(bookId: String, chapterId: Int?, seconds: Double, isPlaying: Boolean, stopNow: Boolean = false) {
+     *  (nút, rút tai nghe, mất focus, cuộc gọi) chứ không phải khe nối hai đoạn - danh sách phát dừng ngay, không chờ [PAUSE_GRACE_MS]. `ended`: giọng dừng vì
+     *  tự hết cuốn (ExoPlayer ENDED) - nhạc theo mốc mờ ra như khi đổi đoạn thay vì tắt phụt cùng giọng. */
+    fun sync(bookId: String, chapterId: Int?, seconds: Double, isPlaying: Boolean, stopNow: Boolean = false, ended: Boolean = false) {
         val appContext = context ?: return
         if (MusicCues.staleAfterClose(closedBook, bookId, isPlaying)) return
         closedBook = ""
@@ -432,6 +433,14 @@ object MusicBed {
         }
         if (playlist != null) {
             syncPlaylist(isPlaying, stopNow)
+            return
+        }
+        if (!isPlaying && ended) {
+            // Giọng tự hết: bài đang kêu mờ ra trong fadeMs, các bài đang mờ mờ nốt - không dừng cùng giọng (bản Qt 0.4.152 rơi -30 -> -91 dB trong 6 ms
+            // ở cuối chương, soát 01-11; ở đây chuyển chương liền nên chỉ hết cuốn mới gặp).
+            playing = false
+            lastSeconds = seconds
+            if (current != null) switchTo(null, gain, 0.0)
             return
         }
         val newChapter = (chapterId ?: Int.MIN_VALUE) != chapter

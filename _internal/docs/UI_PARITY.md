@@ -337,7 +337,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `listen/model.ts` (2): Phần {} · {} (`364`); Đã nhập (`497`)
 - `listen/musicBed.ts` (1): Content-Type (`139`)
 - `listen/onlineConsent.ts` (1): Microsoft (`14`)
-- `listen/player.tsx` (6): Đã tới câu chọn (`580`); Đã tới {} (`580`); Chưa tải được nhạc (`640`); Đọc chương ấy (`1169`); Nghe thêm {} phút (`1262`); Vẫn đang nghe (`1746`)
+- `listen/player.tsx` (6): Đã tới câu chọn (`580`); Đã tới {} (`580`); Chưa tải được nhạc (`640`); Đọc chương ấy (`1173`); Nghe thêm {} phút (`1266`); Vẫn đang nghe (`1750`)
 - `listen/playlistBed.ts` (1): Đã thêm {} bài (`357`)
 - `listen/prepareAhead.ts` (1): Chưa lưu bản đọc nào. (`73`)
 - `listen/readAloud.ts` (4): Chưa tải được đoạn giọng đọc. (`59`); ReadAloudEngine cần track.speech (`486`); Chưa phát được clip giọng đọc. (`1773`); Giọng đọc không phản hồi. (`1944`)

@@ -828,13 +828,17 @@ export function PlayerProvider({
       };
     }
     let last = engine.time;
+    // Giọng dừng vì tự hết chương (sự kiện pause của <audio> tới trước ended, lúc `ended` đã đúng): giữ tới khi giọng chạy lại - khe nạp
+    // chương kế không được dừng phụt nhạc đang mờ ra.
+    let voiceEnded = false;
     const sync = () => {
+      voiceEnded = engine.paused && (voiceEnded || engine.ended);
       const current = refs.current.track;
       if (current && bedCuesFor.current !== `${current.bookId}:${current.chapterId}`) return; // mốc trong bed còn của chương cũ
       const now = engine.time;
       const seeked = Math.abs(now - last) > 3;
       if (seeked) scene?.seeked(now);
-      bed.sync(now, !engine.paused, seeked);
+      bed.sync(now, !engine.paused, seeked, voiceEnded);
       if (current && nextWarm) nextWarm.update(`${current.bookId}:${current.chapterId}`, availableAfter(refs.current.queue, current.chapterId, 1)?.id ?? null, engine.duration - now);
       last = now;
     };
