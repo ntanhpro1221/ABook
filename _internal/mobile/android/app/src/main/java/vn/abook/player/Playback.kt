@@ -13,6 +13,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import org.json.JSONArray
 import org.json.JSONObject
+import vn.abook.player.net.HostWait
 import vn.abook.player.readaloud.ReadAloud
 import java.io.File
 
@@ -226,6 +227,7 @@ object Playback {
     fun removeListener(listener: (JSONObject) -> Unit) { listeners -= listener }
 
     fun emit(kind: String) {
+        bufferingGuard.observe(waitingForSound())
         if (kind == "sleep") ReadAloud.pump() // hẹn giờ "hết chương" vừa tắt / đổi: đọc to nạp tiếp sang chương kế được rồi
         val event = state().put("kind", kind)
         listeners.toList().forEach { runCatching { it(event) } }
@@ -298,6 +300,28 @@ object Playback {
             .put("musicScene", MusicBed.sceneActive())
     }
 
+    /** Người nghe muốn phát mà chưa có âm thanh: ExoPlayer đang đệm, hay đọc to đang chờ đoạn. */
+    private fun waitingForSound(): Boolean {
+        val exo = player
+        return (exo != null && exo.playWhenReady && exo.playbackState == Player.STATE_BUFFERING) || (ReadAloud.isWaiting && ReadAloud.wantsPlay()) || ReadAloud.starved()
+    }
+
+    /** Chờ âm thanh quá [HostWait.STALL_MS] ([BufferingGuard]): dừng và báo như một nguồn hỏng, bấm phát (= "Thử lại") thử lại từ đúng chỗ. */
+    private val bufferingGuard = BufferingGuard(schedule = { delay, task -> main.postDelayed(task, delay) }, cancel = { main.removeCallbacks(it) }, onStall = ::onStalled)
+
+    private fun onStalled() {
+        if (!waitingForSound()) return
+        val inText = ReadAloud.inText()
+        val streamed = player?.currentMediaItem?.localConfiguration?.uri?.scheme == "https"
+        val message = BufferingGuard.message(inText, streamed, if (streamed) SyncLink.holderName(appContext, bookId) else "")
+        AppLog.w("Playback", "chờ âm thanh quá ${HostWait.STALL_MS / 1000} giây (sách $bookId, chương ${currentChapter?.id}): $message")
+        if (inText) return ReadAloud.giveUp(message)
+        main.removeCallbacks(reconnect)
+        reconnectDelayMs = 0L
+        player?.stop() // thôi chờ lượt tải đang treo; bấm phát chuẩn bị lại ([play])
+        fail(message)
+    }
+
     /** Lỗi phát gần nhất, cho giao diện - rỗng khi đang ổn. */
     var lastError: String = ""
         private set
@@ -318,7 +342,7 @@ object Playback {
             scheduleReconnect()
             "Mất kết nối với ${SyncLink.holderName(appContext, bookId)} - đang thử lại…"
         } else {
-            "Chưa phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại."
+            BufferingGuard.PLAY_FAILED
         }
         saveNow()
         // Lần thử lại hỏng nữa: chỉ cập nhật lời đang hiện, không báo lần nữa.
