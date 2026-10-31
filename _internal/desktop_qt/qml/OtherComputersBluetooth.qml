@@ -21,9 +21,9 @@ Item {
         icon: "bluetooth"
         ink: root.current !== "" ? Theme.accentText : Theme.text2
         hoverInk: root.current !== "" ? Theme.accentText : Theme.text
-        tip: "Dùng Bluetooth"
+        tip: "Dự phòng qua Bluetooth…"
         enabled: !root.busy
-        Accessible.name: "Dùng Bluetooth cho " + (root.computer.name || "")
+        Accessible.name: "Dự phòng qua Bluetooth cho " + (root.computer.name || "")
         onClicked: menu.toggle()
     }
     Popover {
@@ -39,7 +39,7 @@ Item {
                 width: parent.width - 16
                 topPadding: 2
                 bottomPadding: 4
-                text: "Qua Bluetooth"
+                text: "Đường Bluetooth"
                 color: Theme.text3
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeCaption
