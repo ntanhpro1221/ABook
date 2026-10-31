@@ -232,6 +232,36 @@ bytecode HLSL, không phụ thuộc card). Lợi tối đa là phần của 0,4 
 - Giữ bản sao lưu liên kết `.abook` gốc qua các lần cập nhật, gỡ xong dọn phần của mình (lỗi Tauri 28-09 trong hooks.nsh).
 - Test: từng nhánh của guard (thư viện nằm trong thư mục sắp xoá -> không xoá; settings không đọc được -> giữ; junction ->
   từ chối); app đang chạy khi gỡ -> bị dừng, pythonw của người dùng ở chỗ khác không bị đụng.
+- **Đã làm (31-10):** `installer/abook.nsi` + `installer/uninstall_guard.ps1`.
+  - Gỡ thật luôn dừng rồi xoá `Studio` và cache Qt (`%LOCALAPPDATA%\ABook\ABook`).
+  - Ô "Xoá dữ liệu ứng dụng" dưới trang xác nhận gỡ, mặc định không tích; `/DELETEDATA` cho gỡ im lặng. Có tích thì dừng
+    rồi xoá `%LOCALAPPDATA%\ABook`.
+  - Mỗi lần xoá đệ quy hỏi guard trước, với `ABOOK_PREFERENCES` truyền thẳng.
+  - `/UPDATE` không xoá gì của người dùng. Bộ cài Qt không gọi bộ gỡ cũ (cài tại chỗ), nên không cần cờ
+    ABOOK_INSTALLER_UPGRADE.
+  - Liên kết `.abook` -> `ABook`, `.abookproj` -> `ABook.Project` (Q5 phần registry):
+    - Lệnh mở `"<exe>" "%1"`, có ngoặc quanh exe. Bản Tauri thiếu ngoặc, đường có dấu cách thì hỏng.
+    - Biểu tượng `book_file.ico` / `project_file.ico`, cùng `Content Type`.
+    - Giá trị cũ của app khác giữ ở `ABook_backup` qua mọi lần cập nhật. Gỡ: còn trỏ ABook thì trả lại; gốc rỗng thì bỏ
+      khoá; ProgId xoá.
+    - `SHChangeNotify` chỉ có ở bản phát hành.
+  - **Lỗi thật test bắt được:** `RMDir /r` của NSIS ĐI THEO junction. Một junction bên trong thư mục dữ liệu (ví dụ
+    `Studio` -> chỗ khác) làm rỗng thư mục ngoài. Guard của Tauri chỉ kiểm junction trên đường TỚI thư mục, nên bộ gỡ
+    Tauri đang phát hành cũng dính lỗi này.
+    - Guard của Qt duyệt cả bên trong (không bao giờ bước vào reparse point). Thấy một cái là giữ cả thư mục (mã 4).
+  - `tools/test_installer.py`: 56 ca, hồ sơ giả + gốc registry test như Q2.
+    - Liên kết khi cài / cập nhật / gỡ (có và không có giá trị gốc).
+    - Worker Studio giả (Python nhúng chép vào `Studio\python`) sống qua cài đè + cập nhật, bị dừng khi gỡ. pythonw của
+      "người dùng" ở chỗ khác vẫn sống.
+    - Gỡ không tích: còn `preferences.json`, Studio + cache đi.
+    - `/DELETEDATA`:
+      - Thư viện trong thư mục dữ liệu -> giữ.
+      - Tuỳ chọn hỏng -> giữ.
+      - Studio là junction -> giữ, đích còn nguyên.
+      - Thư viện ở chỗ khác -> xoá hết, thư viện còn.
+  - `tests/test_a85_setup_safety.py`: các ca guard chạy trên cả hai guard, thêm ca junction bên trong.
+  - Kiểm lực: guard cũ (không duyệt bên trong) đỏ ở ca junction; bỏ việc giữ bản sao lưu gốc thì 3 ca đỏ.
+  - Chưa kiểm được: ô đánh dấu trên giao diện gỡ. Test chỉ chạy im lặng; ô chỉ đặt `$DeleteDataState` như `/DELETEDATA`.
 
 ### Q4. Một phiên bản chạy
 - `QLocalServer` tên theo người dùng (`ABookDesk-<băm SID>`). Lần mở thứ hai gửi danh sách đường file trên dòng lệnh rồi thoát

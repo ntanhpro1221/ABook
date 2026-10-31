@@ -4,9 +4,15 @@
 ; makensis /DVERSION=0.4.150 /DVERSIONWITHBUILD=0.4.150.0 /DABOOK_DIST=<dist> /DABOOK_FILES=<thư mục files.py> /DOUTFILE=<exe>
 ;          [/DABOOK_TEST_ROOT=Software\ABookTest-<uuid>] abook.nsi
 ;
-; Bản test (ABOOK_TEST_ROOT): mọi khoá registry nằm dưới HKCU\<ABOOK_TEST_ROOT>, lối tắt nằm trong %ABOOK_TEST_SHELL%,
-; $INSTDIR phải nằm dưới %TEMP% của tiến trình (không thì thoát mã 7 trước khi chạm vào gì), và không có lệnh nào đụng trạng
-; thái chung của shell (bỏ ghim Start, xoá jump list). Lead 31-10: không test nào ghi vào HKCU hay thư mục cài thật.
+; Bản test (ABOOK_TEST_ROOT): mọi khoá registry nằm dưới HKCU\<ABOOK_TEST_ROOT>, lối tắt nằm trong %ABOOK_TEST_SHELL%, dữ
+; liệu là %LOCALAPPDATA% của tiến trình; $INSTDIR, lối tắt và dữ liệu phải nằm dưới %TEMP% của tiến trình (không thì thoát mã 7
+; trước khi chạm vào gì), và không có lệnh nào đụng trạng thái chung của shell (bỏ ghim Start, xoá jump list, báo đổi liên kết).
+; Lead 31-10: không test nào ghi vào HKCU hay thư mục cài thật.
+;
+; Gỡ (Q3): bản gỡ thật luôn xoá Studio tải thêm và cache của app Qt; dữ liệu người dùng (%LOCALAPPDATA%\ABook: chỗ đang nghe,
+; tuỳ chọn, nhật ký) chỉ khi tích ô "Xoá dữ liệu" (hay /DELETEDATA khi gỡ im lặng). Mỗi lần xoá đệ quy hỏi uninstall_guard.ps1
+; trước: thư viện sách đã lưu nằm trong thư mục ấy, tuỳ chọn không đọc được, hay có junction -> giữ nguyên. Cập nhật (/UPDATE)
+; không xoá gì của người dùng.
 
 Unicode true
 ManifestDPIAware true
@@ -22,6 +28,7 @@ ManifestDPIAwareness PerMonitorV2
 !include LogicLib.nsh
 !include "Win\COM.nsh"
 !include "Win\Propkey.nsh"
+!include nsDialogs.nsh
 
 !macro ABOOK_REQUIRE NAME
   !ifndef ${NAME}
@@ -48,10 +55,12 @@ ManifestDPIAwareness PerMonitorV2
   !define REG_UNINST "${ABOOK_TEST_ROOT}\Uninstall\${PRODUCTNAME}"
   !define REG_MANU "${ABOOK_TEST_ROOT}\${MANUFACTURER}"
   !define REG_RUN "${ABOOK_TEST_ROOT}\Run"
+  !define REG_CLASSES "${ABOOK_TEST_ROOT}\Classes"
 !else
   !define REG_UNINST "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCTNAME}"
   !define REG_MANU "Software\${MANUFACTURER}"
   !define REG_RUN "Software\Microsoft\Windows\CurrentVersion\Run"
+  !define REG_CLASSES "Software\Classes"
 !endif
 !define REG_MANUPRODUCT "${REG_MANU}\${PRODUCTNAME}"
 
@@ -61,6 +70,9 @@ Var NoShortcutMode
 Var ShellPrograms
 Var ShellDesktop
 Var ShellPins
+Var DataLocal
+Var DeleteDataCheckbox
+Var DeleteDataState
 
 Name "${PRODUCTNAME}"
 BrandingText " "
@@ -94,6 +106,8 @@ VIAddVersionKey "ProductVersion" "${VERSION}"
 !insertmacro MUI_PAGE_FINISH
 
 !define MUI_PAGE_CUSTOMFUNCTION_PRE un.SkipIfPassive
+!define MUI_PAGE_CUSTOMFUNCTION_SHOW un.ConfirmShow
+!define MUI_PAGE_CUSTOMFUNCTION_LEAVE un.ConfirmLeave
 !insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_INSTFILES
 
@@ -103,6 +117,10 @@ LangString appRunning ${LANG_VIETNAMESE} "ABook đang mở. Bấm OK để đón
 LangString stopFailed ${LANG_VIETNAMESE} "Chưa đóng được ABook. Bạn hãy đóng app rồi chạy lại."
 LangString resourcesLink ${LANG_VIETNAMESE} "Thư mục resources của ABook là một liên kết, bộ cài không xoá nó. Bạn hãy gỡ liên kết ấy rồi chạy lại."
 LangString resourcesBusy ${LANG_VIETNAMESE} "Chưa xoá được bản cũ trong thư mục resources. Bạn hãy đóng ABook rồi chạy lại."
+LangString deleteData ${LANG_VIETNAMESE} "Xoá dữ liệu ứng dụng (chỗ đang nghe, tuỳ chọn). Thư viện sách vẫn giữ nguyên."
+LangString keptFolder ${LANG_VIETNAMESE} "Giữ thư mục để bảo vệ thư viện của bạn:"
+LangString bookFile ${LANG_VIETNAMESE} "Sách nói ABook"
+LangString projectFile ${LANG_VIETNAMESE} "Dự án sách nói ABook"
 
 ; --- Thư mục lối tắt: thật, hay của bản test -------------------------------------------------------------------------------
 
@@ -122,28 +140,36 @@ Function ${UN}AbookSetupContext
   ${IfNot} ${Errors}
     StrCpy $UpdateMode 1
   ${EndIf}
+  ${GetOptions} $CMDLINE "/DELETEDATA" $0
+  ${IfNot} ${Errors}
+    StrCpy $DeleteDataState ${BST_CHECKED}
+  ${EndIf}
   !ifdef ABOOK_TEST_ROOT
     ReadEnvStr $0 "ABOOK_TEST_SHELL"
     StrCpy $ShellPrograms "$0\Programs"
     StrCpy $ShellDesktop "$0\Desktop"
     StrCpy $ShellPins "$0\TaskBar"
+    ReadEnvStr $DataLocal "LOCALAPPDATA"
   !else
     StrCpy $ShellPrograms $SMPROGRAMS
     StrCpy $ShellDesktop $DESKTOP
     StrCpy $ShellPins "$APPDATA\Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar"
+    StrCpy $DataLocal $LOCALAPPDATA
   !endif
 FunctionEnd
 
-; Bản test chỉ được chạm vào thứ nằm dưới %TEMP% của chính nó: thư mục cài, lối tắt.
+; Bản test chỉ được chạm vào thứ nằm dưới %TEMP% của chính nó: thư mục cài, lối tắt, dữ liệu.
 Function ${UN}AbookTestGuard
   !ifdef ABOOK_TEST_ROOT
     ReadEnvStr $0 "ABOOK_TEST_SHELL"
     StrLen $1 "$TEMP\"
     StrCpy $2 $INSTDIR $1
     StrCpy $3 $0 $1
+    StrCpy $4 $DataLocal $1
     ${If} $0 == ""
     ${OrIf} $2 != "$TEMP\"
     ${OrIf} $3 != "$TEMP\"
+    ${OrIf} $4 != "$TEMP\"
       SetErrorLevel ${TEST_REFUSED}
       Quit
     ${EndIf}
@@ -263,6 +289,7 @@ FunctionEnd
 !macro ABOOK_STOP_APP
   InitPluginsDir
   File "/oname=$PLUGINSDIR\abook-stop-processes.ps1" "stop_processes.ps1"
+  File "/oname=$PLUGINSDIR\abook-uninstall-guard.ps1" "uninstall_guard.ps1"
   System::Call 'kernel32::SetEnvironmentVariableW(w "ABOOK_STOP_ROOT", w "$INSTDIR\resources") i .r0'
   System::Call 'kernel32::SetEnvironmentVariableW(w "ABOOK_STOP_EXE", w "$INSTDIR\${MAINBINARY}") i .r1'
   ${If} $0 = 0
@@ -303,6 +330,88 @@ FunctionEnd
       Abort
     ${EndIf}
   ${EndIf}
+!macroend
+
+; --- Dữ liệu: dừng rồi xoá, có guard -------------------------------------------------------------------------------------
+
+; Dừng mọi tiến trình chạy TỪ `FOLDER` (worker Studio, Ollama riêng...), theo đường exe như ABOOK_STOP_APP.
+!macro ABOOK_STOP_UNDER FOLDER
+  System::Call 'kernel32::SetEnvironmentVariableW(w "ABOOK_STOP_ROOT", w "${FOLDER}") i .r0'
+  System::Call 'kernel32::SetEnvironmentVariableW(w "ABOOK_STOP_EXE", p 0) i .r1'
+  ${If} $0 = 0
+    MessageBox MB_OK|MB_ICONSTOP "$(stopFailed)" /SD IDOK
+    Abort
+  ${EndIf}
+  nsExec::Exec 'powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$PLUGINSDIR\abook-stop-processes.ps1"'
+  Pop $0
+  ${If} $0 != 0
+    MessageBox MB_OK|MB_ICONSTOP "$(stopFailed)" /SD IDOK
+    Abort
+  ${EndIf}
+!macroend
+
+; Xoá đệ quy `FOLDER` chỉ khi uninstall_guard.ps1 trả 0: thư viện sách đã lưu (preferences.json của $DataLocal) không nằm trong
+; nó, tuỳ chọn đọc được, không có junction trên đường. Không chắc thì giữ, ghi một dòng chi tiết.
+!macro ABOOK_REMOVE_SAFE FOLDER
+  ${If} ${FileExists} "${FOLDER}\*.*"
+    System::Call 'kernel32::SetEnvironmentVariableW(w "ABOOK_DELETE_TARGET", w "${FOLDER}") i .r0'
+    System::Call 'kernel32::SetEnvironmentVariableW(w "ABOOK_PREFERENCES", w "$DataLocal\${PRODUCTNAME}\preferences.json") i .r1'
+    StrCpy $2 1
+    ${If} $0 <> 0
+    ${AndIf} $1 <> 0
+      nsExec::Exec 'powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$PLUGINSDIR\abook-uninstall-guard.ps1"'
+      Pop $2
+    ${EndIf}
+    ${If} $2 == 0
+      RMDir /r "${FOLDER}"
+    ${Else}
+      DetailPrint "$(keptFolder) ${FOLDER}"
+    ${EndIf}
+  ${EndIf}
+!macroend
+
+; --- Liên kết file --------------------------------------------------------------------------------------------------------
+
+; Ghi `.ext` -> `PROGID` và lệnh mở. Giá trị có sẵn của `.ext` (của app khác) giữ ở "ABook_backup" để gỡ trả lại; đã là của
+; ABook (cập nhật cài đè) thì giữ bản sao lưu cũ - lỗi của bộ cài Tauri 28-09 (shell/src-tauri/windows/hooks.nsh).
+!macro ABOOK_ASSOCIATE EXT PROGID DESCRIPTION ICON MIME
+  ReadRegStr $1 HKCU "${REG_CLASSES}\${EXT}" "ABook_backup"
+  ReadRegStr $0 HKCU "${REG_CLASSES}\${EXT}" ""
+  ${If} $0 != "${PROGID}"
+    StrCpy $1 $0
+  ${EndIf}
+  WriteRegStr HKCU "${REG_CLASSES}\${EXT}" "ABook_backup" $1
+  WriteRegStr HKCU "${REG_CLASSES}\${EXT}" "" "${PROGID}"
+  WriteRegStr HKCU "${REG_CLASSES}\${EXT}" "Content Type" "${MIME}"
+  WriteRegStr HKCU "${REG_CLASSES}\${PROGID}" "" "${DESCRIPTION}"
+  WriteRegStr HKCU "${REG_CLASSES}\${PROGID}\DefaultIcon" "" "${ICON}"
+  WriteRegStr HKCU "${REG_CLASSES}\${PROGID}\shell" "" "open"
+  WriteRegStr HKCU "${REG_CLASSES}\${PROGID}\shell\open\command" "" '"$INSTDIR\${MAINBINARY}" "%1"'
+!macroend
+
+; Gỡ thật: `.ext` còn trỏ ABook thì trả giá trị gốc (gốc rỗng: bỏ giá trị); người dùng đã chọn app khác thì để nguyên. Dọn bản
+; sao lưu, khoá `.ext` nếu rỗng, và cả ProgId.
+!macro ABOOK_UNASSOCIATE EXT PROGID
+  ReadRegStr $0 HKCU "${REG_CLASSES}\${EXT}" ""
+  ${If} $0 == "${PROGID}"
+    ReadRegStr $1 HKCU "${REG_CLASSES}\${EXT}" "ABook_backup"
+    ${If} $1 == ""
+      DeleteRegValue HKCU "${REG_CLASSES}\${EXT}" ""
+    ${Else}
+      WriteRegStr HKCU "${REG_CLASSES}\${EXT}" "" $1
+    ${EndIf}
+    DeleteRegValue HKCU "${REG_CLASSES}\${EXT}" "Content Type"
+  ${EndIf}
+  DeleteRegValue HKCU "${REG_CLASSES}\${EXT}" "ABook_backup"
+  DeleteRegKey /ifempty HKCU "${REG_CLASSES}\${EXT}"
+  DeleteRegKey HKCU "${REG_CLASSES}\${PROGID}"
+!macroend
+
+!macro ABOOK_NOTIFY_ASSOCIATIONS
+  !ifndef ABOOK_TEST_ROOT
+    ; SHCNE_ASSOCCHANGED: Explorer đọc lại biểu tượng file (trạng thái chung của shell: bản test không bao giờ gọi).
+    System::Call 'shell32::SHChangeNotify(i 0x08000000, i 0, p 0, p 0)'
+  !endif
 !macroend
 
 ; --- Cài ------------------------------------------------------------------------------------------------------------------
@@ -354,6 +463,11 @@ Section Install
   WriteRegDWORD HKCU "${REG_UNINST}" "NoRepair" 1
   ; Cỡ của chính các file đã cài (files.py), không phải cả $INSTDIR - trong đó còn Studio và dữ liệu người dùng.
   WriteRegDWORD HKCU "${REG_UNINST}" "EstimatedSize" ${ABOOK_ESTIMATED_KB}
+  !insertmacro ABOOK_ASSOCIATE ".abook" "ABook" "$(bookFile)" "$INSTDIR\resources\app\abook\assets\book_file.ico" \
+    "application/vnd.ngdtuanh.abook+zip"
+  !insertmacro ABOOK_ASSOCIATE ".abookproj" "ABook.Project" "$(projectFile)" \
+    "$INSTDIR\resources\app\abook\assets\project_file.ico" "application/vnd.ngdtuanh.abookproj+zip"
+  !insertmacro ABOOK_NOTIFY_ASSOCIATIONS
 
   Call CreateOrUpdateStartMenuShortcut
   ; Trang xong (có ô lối tắt màn hình nền) bị bỏ qua khi /P hay /S.
@@ -389,6 +503,22 @@ Function un.SkipIfPassive
   ${IfThen} $PassiveMode = 1 ${|} Abort ${|}
 FunctionEnd
 
+; Ô "Xoá dữ liệu" dưới trang xác nhận gỡ, mặc định không tích (gỡ nhầm rồi cài lại không mất chỗ đang nghe).
+Function un.ConfirmShow
+  FindWindow $1 "#32770" "" $HWNDPARENT
+  System::Call 'user32::CreateWindowEx(i ${__NSD_CheckBox_EXSTYLE}, t "${__NSD_CheckBox_CLASS}", t "$(deleteData)", i ${__NSD_CheckBox_STYLE}, i 0, i 120, i 440, i 24, p r1, p 0, p 0, p 0) p .s'
+  Pop $DeleteDataCheckbox
+  SendMessage $HWNDPARENT ${WM_GETFONT} 0 0 $1
+  SendMessage $DeleteDataCheckbox ${WM_SETFONT} $1 1
+  ${If} $DeleteDataState = ${BST_CHECKED}
+    SendMessage $DeleteDataCheckbox ${BM_SETCHECK} ${BST_CHECKED} 0
+  ${EndIf}
+FunctionEnd
+
+Function un.ConfirmLeave
+  SendMessage $DeleteDataCheckbox ${BM_GETCHECK} 0 0 $DeleteDataState
+FunctionEnd
+
 Section Uninstall
   !insertmacro ABOOK_STOP_APP
   !insertmacro ABOOK_REMOVE_RESOURCES
@@ -412,12 +542,27 @@ Section Uninstall
       ${EndIf}
     !endif
     DeleteRegValue HKCU "${REG_RUN}" "${PRODUCTNAME}"
+    !insertmacro ABOOK_UNASSOCIATE ".abook" "ABook"
+    !insertmacro ABOOK_UNASSOCIATE ".abookproj" "ABook.Project"
+    !insertmacro ABOOK_NOTIFY_ASSOCIATIONS
     ; Chỗ cài cũ chỉ có ích cho lần cập nhật; gỡ thật thì bỏ, để lần cài sau về chỗ mặc định.
     DeleteRegValue HKCU "${REG_MANUPRODUCT}" ""
     DeleteRegKey /ifempty HKCU "${REG_MANUPRODUCT}"
     DeleteRegKey /ifempty HKCU "${REG_MANU}"
   ${EndIf}
   DeleteRegKey HKCU "${REG_UNINST}"
+
+  ${If} $UpdateMode <> 1
+    ; Gỡ là gỡ hết thứ app tải thêm (Studio: Python, thư viện, Ollama riêng + model) và cache của app Qt (QStandardPaths
+    ; CacheLocation: org = app = ABook). Dữ liệu người dùng chỉ theo ô "Xoá dữ liệu". Thư viện sách không bao giờ bị đụng.
+    !insertmacro ABOOK_STOP_UNDER "$DataLocal\${PRODUCTNAME}\Studio"
+    !insertmacro ABOOK_REMOVE_SAFE "$DataLocal\${PRODUCTNAME}\Studio"
+    !insertmacro ABOOK_REMOVE_SAFE "$DataLocal\${PRODUCTNAME}\${PRODUCTNAME}"
+    ${If} $DeleteDataState = ${BST_CHECKED}
+      !insertmacro ABOOK_STOP_UNDER "$DataLocal\${PRODUCTNAME}"
+      !insertmacro ABOOK_REMOVE_SAFE "$DataLocal\${PRODUCTNAME}"
+    ${EndIf}
+  ${EndIf}
   ${If} $PassiveMode = 1
   ${OrIf} $UpdateMode = 1
     SetAutoClose true
