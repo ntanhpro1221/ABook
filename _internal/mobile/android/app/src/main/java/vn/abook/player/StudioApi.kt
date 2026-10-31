@@ -16,10 +16,10 @@ import org.json.JSONObject
 class StudioApi(private val transport: Transport, private val slow: Transport, private val uploader: Uploader = Uploader { _, _ -> throw IllegalStateException("Chưa gửi được tệp") }) {
     constructor(transport: Transport) : this(transport, transport)
 
+    /** Hạn chờ theo đường (net/HostWait.kt): việc máy tính trả lời sau khi làm xong (`HostWait.LONG_WORK`: nghe thử giọng / cách đọc, quét, tách nguồn, kể ngôi, tạo sách, dựng lại nhạc) im tới 100 giây, mọi việc khác 30 giây - nên không còn đường "chậm" riêng. */
     constructor(context: Context, computer: String) : this(
-        Transport { method, path, body -> real(context, computer, method, path, body, 20_000) },
-        // Nghe thử giọng / cách đọc: máy tính nạp giọng rồi đọc, giữ kết nối tới ~120 giây (docs mục 1.2).
-        Transport { method, path, body -> real(context, computer, method, path, body, SLOW_READ_MS) },
+        Transport { method, path, body -> real(context, computer, method, path, body) },
+        Transport { method, path, body -> real(context, computer, method, path, body) },
         Uploader { path, write -> upload(context, computer, path, write) },
     )
 
@@ -41,7 +41,7 @@ class StudioApi(private val transport: Transport, private val slow: Transport, p
 
     suspend fun put(path: String, body: JSONObject? = null): JSONObject = call("PUT", path, body) as? JSONObject ?: throw malformed()
 
-    /** Như [post] cho việc máy tính làm lâu (nghe thử bằng giọng thật): chờ lời đáp tới ~130 giây. */
+    /** Như [post] cho việc máy tính làm lâu (nghe thử bằng giọng thật); hạn chờ do đường quyết định ([HostWait.idleMs]). */
     suspend fun postSlow(path: String, body: JSONObject? = null): JSONObject = call("POST", path, body, slow) as? JSONObject ?: throw malformed()
 
     /** Như [put]: đổi thể loại / dựng lại nhạc nền máy tính làm ~30 giây. */
@@ -49,7 +49,7 @@ class StudioApi(private val transport: Transport, private val slow: Transport, p
 
     suspend fun delete(path: String): JSONObject = call("DELETE", path, null) as? JSONObject ?: throw malformed()
 
-    /** `POST` với thân do `write` ghi ra từng khúc; chờ lời đáp tới ~130 giây (tệp lớn trên Wi-Fi yếu). */
+    /** `POST` với thân do `write` ghi ra từng khúc; không khúc nào ghi được trong 30 giây (hay lời đáp im 30 giây) thì báo hết hạn, không gửi lại. */
     suspend fun postStream(path: String, write: (java.io.OutputStream) -> Unit): JSONObject = withContext(Dispatchers.IO) {
         val text = try {
             uploader.call(path, write)
@@ -79,17 +79,15 @@ class StudioApi(private val transport: Transport, private val slow: Transport, p
     private fun malformed() = StudioError.Server("Dữ liệu máy gửi không hợp lệ; bạn hãy thử lại.", 0)
 
     private companion object {
-        const val SLOW_READ_MS = 130_000
-
         /** Máy tính `computer` lúc này (đường nối có thể đổi giữa các lần gọi); đã bỏ ghép thì 401 như máy kia bỏ ghép mình. */
-        fun real(context: Context, computer: String, method: String, path: String, body: JSONObject?, readTimeoutMs: Int): String {
+        fun real(context: Context, computer: String, method: String, path: String, body: JSONObject?): String {
             val link = StudioLink.link(context, computer) ?: throw StudioError.Unauthorized()
-            return SyncLink.request(context, method, path, body, auth = false, root = link.base, token = link.token, readTimeoutMs = readTimeoutMs, connectTimeoutMs = 3000)
+            return SyncLink.request(context, method, path, body, auth = false, root = link.base, token = link.token, connectTimeoutMs = 3000)
         }
 
         fun upload(context: Context, computer: String, path: String, write: (java.io.OutputStream) -> Unit): String {
             val link = StudioLink.link(context, computer) ?: throw StudioError.Unauthorized()
-            return SyncLink.request(context, "POST", path, null, auth = false, root = link.base, token = link.token, readTimeoutMs = SLOW_READ_MS, connectTimeoutMs = 3000, stream = write)
+            return SyncLink.request(context, "POST", path, null, auth = false, root = link.base, token = link.token, connectTimeoutMs = 3000, stream = write)
         }
     }
 }

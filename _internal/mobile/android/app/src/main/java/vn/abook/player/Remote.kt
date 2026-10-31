@@ -118,7 +118,8 @@ object Remote {
             // Gửi lại kết quả lệnh trong 20 giây: giao diện máy tính hỏi 1,5 giây một lần, không được lỡ một lỗi.
             if (acks.isNotEmpty()) body.put("acks", JSONArray(acks.map { it.second }))
         }
-        val reply = SyncLink.request(context, "POST", "/sync/v1/remote", body, readTimeoutMs = (wait + 15) * 1000)
+        // Máy tính giữ lời gọi tới `wait` giây rồi mới trả lời: hạn "không byte nào" của chính sách (30 giây, HostWait) rộng hơn nó.
+        val reply = SyncLink.request(context, "POST", "/sync/v1/remote", body)
         return JSONObject(reply).optJSONArray("commands")
     }
 

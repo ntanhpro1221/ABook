@@ -2,22 +2,41 @@
 // Lời gọi hỏng khi KHÔNG CÓ BYTE NÀO về trong IDLE chừng ấy, không phải sau một tổng thời gian: câu trả lời dài mà vẫn đang về không bị cắt.
 
 export const IDLE_MS = 30_000;
-// Giọng đọc (clip, nghe thử giọng): máy chủ trả lời sau khi đọc xong cả đoạn nên suốt lúc đó không byte nào về. Hạn Edge của chính máy chủ là
-// TOTAL_TIMEOUT 90 s + 1 s (abook/readaloud/edge.py): lỗi kèm lý do của nó luôn tới trước; hạn ngắn hơn (40 s) sẽ cắt đoạn dài chậm mà vẫn khoẻ.
-export const SPEECH_IDLE_MS = 100_000;
+// Việc nặng: máy chủ làm xong cả việc rồi mới trả lời nên suốt lúc đó không byte nào về - đọc giọng (hạn Edge của chính máy chủ là TOTAL_TIMEOUT
+// 90 s + 1 s, abook/readaloud/edge.py: lỗi kèm lý do của nó luôn tới trước), quét/tách nguồn, kể ngôi "tôi", tạo sách, nghe thử cách đọc, và mọi lời gọi dựng lại rãnh nhạc ngay trong lúc trả lời
+// (dựng lại, đổi nhạc, xem nhạc lần đầu, áp phần sửa từ file hay từ điện thoại gửi về).
+export const LONG_IDLE_MS = 100_000;
 // Máy chủ im quá hạn thì gửi lại đúng lời gọi ấy thêm một lần (huỷ cũng làm máy chủ thôi việc: server.py _peer_gone), rồi mới báo hết hạn.
 export const ATTEMPTS = 2;
 // Chốt chặn cuối của trình phát: chờ âm thanh lâu thế này nghĩa là mọi lời gọi ở dưới đã có lượt báo lỗi của nó.
-export const STALL_MS = ATTEMPTS * SPEECH_IDLE_MS + 15_000;
+export const STALL_MS = ATTEMPTS * LONG_IDLE_MS + 15_000;
 
-/** Lời gọi giọng đọc: `/api/readaloud/clip` và `/api/books/<id>/voice/preview`. */
-export function isSpeech(path: string): boolean {
+// Danh sách việc nặng, giống từng chữ ở desktop_qt/src/hostwait.h và net/HostWait.kt (tests/test_host_wait_parity.py); `*` là đúng một đoạn đường dẫn.
+export const LONG_WORK = [
+  "/api/readaloud/clip",
+  "/api/books/*/voice/preview",
+  "/api/books/*/pronunciation/preview",
+  "/api/books/*/music/rebuild",
+  "/api/books/*/music",
+  "/api/books/*/edits/fold",
+  "/api/scan",
+  "/api/sources/split",
+  "/api/first-person",
+  "/api/books",
+  "/sync/v1/books/*/edits",
+];
+
+/** Đường dẫn (bỏ phần `?...`) khớp một mục của [LONG_WORK]. */
+export function isLongWork(path: string): boolean {
   const query = path.indexOf("?");
-  const route = query < 0 ? path : path.slice(0, query);
-  return route === "/api/readaloud/clip" || (route.startsWith("/api/books/") && route.endsWith("/voice/preview"));
+  const parts = (query < 0 ? path : path.slice(0, query)).split("/");
+  return LONG_WORK.some((pattern) => {
+    const want = pattern.split("/");
+    return want.length === parts.length && want.every((part, at) => part === "*" || part === parts[at]);
+  });
 }
 
-export const idleMs = (path: string): number => (isSpeech(path) ? SPEECH_IDLE_MS : IDLE_MS);
+export const idleMs = (path: string): number => (isLongWork(path) ? LONG_IDLE_MS : IDLE_MS);
 
 /** Máy chủ im quá hạn ở mọi lượt gửi. */
 export class HostTimeout extends Error {
