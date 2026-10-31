@@ -154,7 +154,7 @@ Một việc - một cách viết, cho web (máy tính + điện thoại), nativ
 
 <!-- ui_parity:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity.py - không sửa tay, chạy lại script) -->
 
-Quét: web 5265 chữ (3033 khác nhau), 334 cặp nhãn-icon; native 1878 chữ (1452 khác nhau), 74 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
+Quét: web 5265 chữ (3033 khác nhau), 334 cặp nhãn-icon; native 1877 chữ (1452 khác nhau), 74 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
 
 ## a. Cùng việc, khác chữ
 
@@ -272,7 +272,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `native/export/ExportScreen.kt` (9): Xuất sách (`92`); Nơi lưu (`135`); Chỉ {} chương đổi (`152`); Có chương đã đổi (`154`); Đã xuất (`176`); Cho ABook chạy nền (`239`); Vào {} (`286`); Xuất lại (`356`); Gửi (`373`)
 - `native/export/ExportState.kt` (1): Bạn hãy thử lại. (`103`)
 - `native/music/MusicModel.kt` (1): Rất nhỏ (rõ lời) (`160`)
-- `native/music/MusicPanel.kt` (1): Đang đóng (`246`)
+- `native/music/MusicPanel.kt` (1): Đang đóng (`245`)
 - `native/music/MusicRepo.kt` (1): Chưa tìm được bài để đổi (`65`)
 - `native/nowplaying/FakeNowPlayingModel.kt` (5): Chương 1 · Một buổi sớm (`80`); Những ngày gió hát (`80`); Chương {} · {} (`82`); Giọng thử A (`102`); Giọng thử B (`102`)
 - `native/nowplaying/NowPlayingScreen.kt` (2): Về chế độ nghe (`132`); Cửa sổ mini (`211`)
@@ -390,7 +390,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 | Chờ áp dụng | chờ áp dụng | chữ hoa | `listen/BookScreen.tsx:431` (+2) ~ `native/studio/StudioScript.kt:253` |
 | Chữ của cả cuốn được gửi tới {} để đọc, bằn… | Chữ của cả cuốn được gửi tới {} để đọc, bằn… | dấu thanh / ký tự | `desktop/listenExport.ts:85` ~ `native/export/ExportModel.kt:198` |
 | cả cuốn | Cả cuốn | chữ hoa | `listen/labels.ts:28` ~ `native/export/ExportScreen.kt:152` |
-| Giấy phép: | Giấy phép | dấu câu cuối | `listen/PlayerViews.tsx:1302` ~ `native/music/MusicPanel.kt:449` (+1) |
+| Giấy phép: | Giấy phép | dấu câu cuối | `listen/PlayerViews.tsx:1302` ~ `native/music/MusicPanel.kt:447` (+1) |
 | Giới (bấm để lưu): | Giới (bấm để lưu) | dấu câu cuối | `studio/WorkInbox.tsx:622` ~ `native/studio/WorkText.kt:45` |
 | hay đặt tên một người mới: | hay đặt tên một người mới | dấu câu cuối | `studio/WorkInbox.tsx:610` ~ `native/studio/WorkText.kt:43` |
 | Kể bằng “tôi”? | Kể bằng “tôi” | dấu câu cuối | `studio/NewProjectScreen.tsx:1110` ~ `native/studio/StudioNew.kt:277` |
@@ -415,23 +415,23 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 
 | kiểu | web | native |
 |---|---|---|
-| dấu ba chấm ASCII `...` | 8 / 5265 | 0 / 1878 |
-| dấu ba chấm `…` | 36 / 5265 | 0 / 1878 |
-| kết thúc bằng dấu chấm `.` | 891 / 5265 | 386 / 1878 |
-| kết thúc bằng `!` | 0 / 5265 | 0 / 1878 |
-| kết thúc bằng `:` | 53 / 5265 | 3 / 1878 |
-| dấu thanh kiểu cũ `oà oá uý` | 386 / 5265 | 172 / 1878 |
-| dấu thanh kiểu mới `òa óa úy` | 1 / 5265 | 0 / 1878 |
-| số thập phân dấu phẩy `1,5` | 1 / 5265 | 0 / 1878 |
-| số thập phân dấu chấm `1.5` | 0 / 5265 | 0 / 1878 |
-| nhân bằng `×` | 0 / 5265 | 0 / 1878 |
-| nhân bằng `x` sau số | 0 / 5265 | 0 / 1878 |
-| ngăn cách `·` | 120 / 5265 | 34 / 1878 |
-| ngăn cách ` - ` | 261 / 5265 | 81 / 1878 |
-| gạch dài `—`/`–` | 10 / 5265 | 1 / 1878 |
-| giờ `1:30` hay `1 giờ 30` | 0 / 5265 | 2 / 1878 |
-| dấu `%` dính số | 0 / 5265 | 1 / 1878 |
-| dấu `%` cách số | 0 / 5265 | 0 / 1878 |
+| dấu ba chấm ASCII `...` | 8 / 5265 | 0 / 1877 |
+| dấu ba chấm `…` | 36 / 5265 | 0 / 1877 |
+| kết thúc bằng dấu chấm `.` | 891 / 5265 | 386 / 1877 |
+| kết thúc bằng `!` | 0 / 5265 | 0 / 1877 |
+| kết thúc bằng `:` | 53 / 5265 | 3 / 1877 |
+| dấu thanh kiểu cũ `oà oá uý` | 386 / 5265 | 172 / 1877 |
+| dấu thanh kiểu mới `òa óa úy` | 1 / 5265 | 0 / 1877 |
+| số thập phân dấu phẩy `1,5` | 1 / 5265 | 0 / 1877 |
+| số thập phân dấu chấm `1.5` | 0 / 5265 | 0 / 1877 |
+| nhân bằng `×` | 0 / 5265 | 0 / 1877 |
+| nhân bằng `x` sau số | 0 / 5265 | 0 / 1877 |
+| ngăn cách `·` | 120 / 5265 | 34 / 1877 |
+| ngăn cách ` - ` | 261 / 5265 | 81 / 1877 |
+| gạch dài `—`/`–` | 10 / 5265 | 1 / 1877 |
+| giờ `1:30` hay `1 giờ 30` | 0 / 5265 | 2 / 1877 |
+| dấu `%` dính số | 0 / 5265 | 1 / 1877 |
+| dấu `%` cách số | 0 / 5265 | 0 / 1877 |
 
 **d3. Nhãn ngắn bắt đầu bằng chữ thường** (web 147, native 0); 15 đầu mỗi phía:
 
