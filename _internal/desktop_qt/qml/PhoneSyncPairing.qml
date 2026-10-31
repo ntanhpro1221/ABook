@@ -3,7 +3,7 @@ import ABook
 import "DevicesLogic.js" as Logic
 
 // Khung "Ghép thiết bị" của Cài đặt › Thiết bị (PairingPanel của desktop/PhoneSync.tsx): ba pha dùng chung một chỗ - mã 6 số đang hiện
-// (kèm hướng dẫn, đồng hồ đếm ngược, vân tay, "Huỷ mã này"), "Mã bị khoá" sau 5 lần sai (+ "Tạo mã mới"), và nút "Ghép thiết bị mới".
+// (kèm hướng dẫn, đồng hồ đếm ngược, vân tay, "Huỷ mã"), "Mã bị khoá" sau 5 lần sai (+ "Tạo mã mới"), và nút "Ghép thiết bị mới".
 // Mỗi pha là một Collapse: pha cũ khép lại trong lúc pha mới mở ra, không bật tắt cứng. Mã dùng một lần, sống 5 phút (máy chủ tính).
 Column {
     id: root
@@ -102,7 +102,7 @@ Column {
                 width: parent.width
                 height: cancelButton.height
                 // Chỉ huỷ mã đang hiện, không gỡ thiết bị nào - "Huỷ ghép" dễ hiểu thành gỡ thiết bị (soát UX 29-09).
-                Button { id: cancelButton; anchors.right: parent.right; size: "sm"; kind: "ghost"; text: "Huỷ mã này"; onClicked: root.cancel() }
+                Button { id: cancelButton; anchors.right: parent.right; size: "sm"; kind: "ghost"; text: "Huỷ mã"; onClicked: root.cancel() }
             }
         }
     }

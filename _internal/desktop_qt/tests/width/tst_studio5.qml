@@ -449,7 +449,7 @@ Item {
             const dlg = exportDlg(page)
             goExport(dlg)
             tryVerify(function() { return DesktopApi.folders.length === 1 }, 3000)
-            compare(DesktopApi.folders[0].title, "Chọn nơi lưu bản xuất")
+            compare(DesktopApi.folders[0].title, "Chọn nơi lưu")
             tryVerify(function() { return calls("POST", base + "/mp3-job").length === 1 }, 3000)
             compare(calls("POST", base + "/mp3-job")[0].body, {target: "D:/Đã xuất"})
             tryCompare(dlg, "phase", "busy", 3000)
@@ -491,7 +491,7 @@ Item {
             verify(one(dlg, "exportEstimate").text.indexOf("Cỡ ước tính: khoảng 4,8 MB") === 0)
             goExport(dlg)
             tryVerify(function() { return calls("POST", base + "/bookfile-job").length === 1 }, 3000)
-            compare(DesktopApi.folders[0].title, "Chọn nơi lưu file sách")
+            compare(DesktopApi.folders[0].title, "Chọn nơi lưu")
             compare(calls("POST", base + "/bookfile-job")[0].body, {target: "D:/Đã xuất", series: false})
             stepJob("bookfile-job", {state: "running", phase: "listen", done: 1, total: 3})
             tryVerify(function() { return has(dlg, "exportBar") && one(dlg, "exportBusyTitle").text === "Đang đóng gói (1/3 chương)…" }, 4000)
@@ -508,14 +508,14 @@ Item {
             compare(one(dlg, "confirm_go").text, "Lưu và xuất")
             goExport(dlg)
             tryVerify(function() { return calls("POST", base + "/projectfile-job").length === 1 }, 3000)
-            compare(DesktopApi.folders[0].title, "Chọn nơi lưu file dự án")
+            compare(DesktopApi.folders[0].title, "Chọn nơi lưu")
             compare(calls("POST", base + "/projectfile-job")[0].body, {target: "D:/Đã xuất"})
             stepJob("projectfile-job", {state: "running", phase: "hash", done: 1048576, total: 4194304})
             tryVerify(function() { return has(dlg, "exportBar") && one(dlg, "exportBusyTitle").text.indexOf("Đang đóng gói (1 MB/4 MB)") === 0 }, 4000)
             verify(one(dlg, "exportBusyNote").text === "đóng hộp vẫn xuất nền và báo khi xong.")
             stepJob("projectfile-job", {state: "error", error: "PermissionError: [Errno 13] Permission denied: 'D:/x'"})
             tryCompare(dlg, "phase", "form", 4000)
-            tryVerify(function() { return Api.notice.indexOf("Không gói được dự án") === 0 }, 3000)
+            tryVerify(function() { return Api.notice.indexOf("Chưa gói được dự án") === 0 }, 3000)
             verify(Api.notice.indexOf("Không ghi được vào thư mục đã chọn") > 0)
             verify(Api.notice.indexOf("PermissionError") > 0)
         }
@@ -526,7 +526,7 @@ Item {
             const dlg = exportDlg(page)
             pickKind(dlg, "m4b")
             goExport(dlg)
-            tryVerify(function() { return Api.notice === "Không xuất được M4B\nChưa có chương nào để xuất." }, 3000)
+            tryVerify(function() { return Api.notice === "Chưa xuất được M4B\nChưa có chương nào để xuất." }, 3000)
             compare(dlg.phase, "form")
         }
         function test_cancellingAnExportTellsTheServerAndReturnsToTheForm() {
@@ -539,7 +539,7 @@ Item {
             tryVerify(function() { return calls("POST", base + "/mp3-job/cancel").length === 1 }, 3000)
             tryVerify(function() { return one(dlg, "exportBusyTitle").text === "Đang huỷ…" || dlg.phase === "form" }, 3000)
             tryCompare(dlg, "phase", "form", 4000)
-            tryVerify(function() { return Api.notice === "Đã huỷ xuất" }, 3000)
+            tryVerify(function() { return Api.notice === "Đã dừng xuất" }, 3000)
         }
         function test_closingTheDialogKeepsExportingAndTheFinishIsAnnounced() {
             serve()
