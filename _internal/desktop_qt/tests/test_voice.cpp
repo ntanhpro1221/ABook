@@ -5,7 +5,9 @@
 #include "timestretch.h"
 #include <QtTest>
 #include <QFile>
+#include <QPointer>
 #include <QTcpServer>
+#include <QThread>
 #include <QTcpSocket>
 #include <QTemporaryDir>
 #include <atomic>
@@ -121,6 +123,50 @@ public:
         if (!listen(QHostAddress::LocalHost)) qFatal("Cannot listen");
     }
     QUrl url() const { return QUrl(QStringLiteral("http://127.0.0.1:%1/chapter?t=test").arg(serverPort())); }
+};
+
+// A server that ignores Range, on its OWN thread: answers 200 with the headers and the first `head` bytes, holds the rest until
+// release(). Server above flushes on the test thread; this one lets the test keep the client thread still while the rest arrives.
+class HoldServer {
+public:
+    HoldServer(QByteArray data, qint64 head) : bytes(std::move(data)), head(head) {
+        server.moveToThread(&thread); thread.start();
+        QMetaObject::invokeMethod(&server, [this] {
+            QObject::connect(&server, &QTcpServer::newConnection, &server, [this] {
+                while (server.hasPendingConnections()) {
+                    auto *client = server.nextPendingConnection(); auto request = std::make_shared<QByteArray>();
+                    QObject::connect(client, &QTcpSocket::disconnected, client, &QObject::deleteLater);
+                    QObject::connect(client, &QTcpSocket::readyRead, client, [this, client, request] {
+                        if (client->property("done").toBool()) return;
+                        request->append(client->readAll()); if (!request->contains("\r\n\r\n")) return;
+                        client->setProperty("done", true); ++requests; socket = client;
+                        client->write("HTTP/1.1 200 OK\r\nContent-Length: " + QByteArray::number(bytes.size()) + "\r\nConnection: close\r\n\r\n");
+                        client->write(bytes.left(this->head));
+                    });
+                }
+            });
+            if (!server.listen(QHostAddress::LocalHost)) qFatal("Cannot listen");
+            port = server.serverPort();
+        }, Qt::BlockingQueuedConnection);
+    }
+    ~HoldServer() {
+        QMetaObject::invokeMethod(&server, [this] { server.close(); }, Qt::BlockingQueuedConnection);
+        thread.quit(); thread.wait();
+    }
+    void release() {
+        QMetaObject::invokeMethod(&server, [this] {
+            if (socket) { socket->write(bytes.mid(head)); socket->disconnectFromHost(); }
+        }, Qt::BlockingQueuedConnection);
+    }
+    QUrl url() const { return QUrl(QStringLiteral("http://127.0.0.1:%1/chapter?t=hold").arg(port)); }
+    std::atomic<int> requests{0};
+private:
+    QByteArray bytes;
+    qint64 head;
+    QThread thread;
+    QTcpServer server;
+    QPointer<QTcpSocket> socket;
+    quint16 port = 0;
 };
 }
 
@@ -702,6 +748,24 @@ private slots:
         QVERIFY(!server.offsets.isEmpty());
         if (ranges) QVERIFY(std::any_of(server.offsets.begin(), server.offsets.end(), [](qint64 at) { return at > 0; }));
         else QCOMPARE(server.offsets.size(), 1);
+    }
+    // Gốc của indexedHttpSeek(vbr-200) chập chờn khi máy bận (Lead 31-10, test_voice:704 thấy 2 yêu cầu): luồng giải mã thấy thiếu byte và
+    // xếp hàng một yêu cầu, nhưng lượt tải 200 đã về đủ và kết thúc TRƯỚC khi yêu cầu ấy tới lượt - gửi lại là tải lại cả file từ đầu.
+    // Dựng đúng thứ tự ấy (phần còn lại về trong lúc luồng Qt đứng yên) thay vì trông vào máy chậm. Máy quá chậm thì phép này chỉ có
+    // thể qua oan (yêu cầu tới lượt khi lượt tải còn dở), không bao giờ trượt oan.
+    void lateRequestForBytesThatArrivedIsNotSent() {
+        const auto bytes = fixture(QStringLiteral("vbr")); const qint64 head = bytes.size() / 4;
+        HoldServer server(bytes, head);
+        auto source = std::make_shared<RangeSource>(server.url(), [] {});
+        QTRY_VERIFY_WITH_TIMEOUT(!source->read(0, 1).isEmpty(), 5000);      // headers + phần đầu đã về, phần sau còn giữ
+        QCOMPARE(source->size(), qint64(bytes.size()));
+        server.release();
+        QTest::qSleep(1000);                                               // phần còn lại + kết thúc xếp hàng chờ luồng Qt
+        QVERIFY(source->read(bytes.size() - 1, 1).isEmpty());              // luồng Qt chưa xử lý: vẫn thấy thiếu, xếp hàng yêu cầu
+        QTRY_VERIFY_WITH_TIMEOUT(source->read(bytes.size() - 1, 1) == bytes.right(1), 5000);
+        QTest::qWait(300); // fixed: proves absence of a second request - yêu cầu đã xếp hàng chạy xong mà không gửi gì
+        QCOMPARE(int(server.requests), 1);
+        QVERIFY(source->error().isEmpty());
     }
     void malformedRangeFails() {
         Server server(fixture(QStringLiteral("cbr"))); server.malformed = true;
