@@ -5,7 +5,7 @@ package vn.abook.player.ui.voice
  * luồng nền; lỗi ném [VoiceFailure] (hay [IllegalStateException]) với câu đã sẵn cho người nghe. Không hàm nào trả hay ghi khoá thật: khoá đi xuống lõi một chiều.
  */
 interface VoiceSource {
-    // ---- giọng tải về máy (VoiceModule: cùng lời gọi với ReadAloudPlugin.vieneu* / supertonic*) ----
+    // ---- giọng tải về máy (VoiceModule) ----
 
     suspend fun module(kind: ModuleKind): ModuleStatus
 

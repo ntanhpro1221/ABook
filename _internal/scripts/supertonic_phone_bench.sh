@@ -9,8 +9,7 @@
 # the listener's app and its books are never replaced or wiped; `clean` uninstalls only the bench packages and removes /data/local/tmp/stonic.
 # Needs: JAVA_HOME (Android Studio jbr), ANDROID_HOME, adb on PATH or in %LOCALAPPDATA%/Android/Sdk/platform-tools, MODEL (e.g. the desktop module's
 # <app data>/supertonic/model, or a download of Supertone/supertonic-3 at the commit of supertonic_module.SOURCE_REVISION), ORT_JNI (folder with
-# <abi>/libonnxruntime*.so of onnxruntime-android 1.30.0, default D:/Novels/LLM_Train/ort_build/maven/aar/jni). node_modules of _internal/mobile
-# must be installed (npm ci) for gradle to find Capacitor.
+# <abi>/libonnxruntime*.so of onnxruntime-android 1.30.0, default D:/Novels/LLM_Train/ort_build/maven/aar/jni).
 # Extra arguments become `-e name value` pairs of the instrumented run.
 set -euo pipefail
 SERIAL=${1:?usage: $0 <adb serial> all|build|install|push|speed|results|clean|app|wait-app [name value ...]}

@@ -1,4 +1,4 @@
-"""scripts/release.py: nâng số phiên bản đúng 8 file (chạy trên bản sao các file thật) và ghi chú GitHub Release - 2026-10-01."""
+"""scripts/release.py: nâng số phiên bản đúng 6 file (chạy trên bản sao các file thật) và ghi chú GitHub Release - 2026-10-01."""
 from __future__ import annotations
 
 import datetime
@@ -14,7 +14,7 @@ spec = importlib.util.spec_from_file_location("release_script", ROOT / "scripts/
 release = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(release)
 
-FILES = ["pyproject.toml", "uv.lock", "ui/package.json", "ui/package-lock.json", "mobile/package.json", "mobile/package-lock.json",
+FILES = ["pyproject.toml", "uv.lock", "ui/package.json", "ui/package-lock.json",
          "mobile/android/app/build.gradle", "docs/CHANGELOG.md"]
 
 
@@ -41,7 +41,7 @@ def test_bump_changes_exactly_the_package_versions_the_build_number_and_the_chan
 
     assert sorted(path.relative_to(root).as_posix() for path in changed) == sorted(FILES)
     assert release.current_version(root) == new
-    for lock in ("ui/package-lock.json", "mobile/package-lock.json", "ui/package.json", "mobile/package.json"):
+    for lock in ("ui/package-lock.json", "ui/package.json"):
         text, was = (root / lock).read_text(encoding="utf-8"), before[lock].decode("utf-8")
         # Chỉ "version" của chính gói (1 chỗ ở package.json, 2 chỗ ở lock), không đụng phụ thuộc nào.
         assert text.count(f'"version": "{new}"') - was.count(f'"version": "{new}"') == (2 if "lock" in lock else 1), lock

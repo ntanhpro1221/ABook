@@ -128,7 +128,7 @@ class BookSaveTest {
             save(target)
             fail("không giữ được bản cũ thì không được ghi đè")
         } catch (expected: BookSave.Failed) {
-            assertTrue(expected.message!!, expected.message!!.contains("Không giữ được bản cũ"))
+            assertTrue(expected.message!!, expected.message!!.contains("Chưa giữ được bản cũ"))
         }
         assertEquals("đích chưa được mở", 0, target.opens)
         assertArrayEquals("bản lưu tốt trước đó".toByteArray(), target.content)

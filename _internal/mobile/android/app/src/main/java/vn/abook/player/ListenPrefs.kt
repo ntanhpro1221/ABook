@@ -4,8 +4,8 @@ import org.json.JSONObject
 import java.io.File
 
 /**
- * Tuỳ chọn nghe mà phần Kotlin cần NGAY khi tiến trình dậy, trước cả khi có WebView: nút tai nghe, tự lùi, lắc / úp máy, lịch đêm, số phút "nghe thêm", mờ dần, dừng an toàn.
- * Giao diện giữ bản của nó ở localStorage và đẩy xuống mỗi lần mở app ([PlayerPlugin.configure]); tiến trình khởi động lại từ tai nghe / widget / Android Auto (không có WebView)
+ * Tuỳ chọn nghe mà phần Kotlin cần NGAY khi tiến trình dậy, trước cả khi có giao diện: nút tai nghe, tự lùi, lắc / úp máy, lịch đêm, số phút "nghe thêm", mờ dần, dừng an toàn.
+ * Giao diện đẩy xuống mỗi lần mở app ([apply]); tiến trình khởi động lại từ tai nghe / widget / Android Auto (không có giao diện)
  * trước đây quay về mặc định (soát a77 #6). Nay mỗi lần giao diện đẩy xuống, các trường ấy được ghi vào `listen-prefs.json` ở kho native và nạp lại ở [load].
  * Cùng file giữ hẹn giờ ngủ đang chạy (`timer`, [SleepTimer.persist]): mốc kết thúc tuyệt đối, khôi phục nếu chưa quá.
  */
@@ -14,9 +14,9 @@ object ListenPrefs {
     private val KEYS = listOf(
         "sleepExtendMinutes", "sleepFadeSeconds", "shakeToExtend", "shakeAction", "shakeSensitivity", "flipToPause",
         "headsetSkips", "autoRewind", "safetyStopHours", "schedule", "theme",
-        // Tiếng chạm, rung, nền đọc: WebView áp; native chỉ nhớ để trả lại khi localStorage của WebView mất (như theme).
+        // Tiếng chạm, rung, nền đọc: do giao diện áp; lõi chỉ nhớ để trả lại (như theme).
         "touchSounds", "haptics", "readingSurface",
-        // Chỉ giao diện native của điện thoại: tự vào cửa sổ nhỏ (PiP) khi rời app lúc có sách mở. WebView không có PiP, bảng chung ranges.json không liệt kê.
+        // Chỉ giao diện của điện thoại: tự vào cửa sổ nhỏ (PiP) khi rời app lúc có sách mở; bảng chung ranges.json không liệt kê.
         "autoPip",
         // Dấu giờ (ms) lần đổi cuối của giao diện: lúc mở app giao diện so với dấu này để biết bản nào mới hơn (soát a100 T3).
         "settingsStamp",
@@ -70,7 +70,7 @@ object ListenPrefs {
         if (json.has("safetyStopHours")) out.put("safetyStopHours", choiceOr(json, "safetyStopHours", SAFETY_HOURS, 2))
         if (json.has("shakeAction")) out.put("shakeAction", wordOr(json, "shakeAction", SHAKE_ACTIONS, "extend"))
         if (json.has("shakeSensitivity")) out.put("shakeSensitivity", wordOr(json, "shakeSensitivity", SHAKE_SENSITIVITIES, "normal"))
-        // Giao diện sáng/tối do WebView áp; native chỉ nhớ để trả lại lúc mở app ([stored]).
+        // Giao diện sáng/tối do giao diện áp; lõi chỉ nhớ để trả lại lúc mở app ([stored]).
         if (json.has("theme")) out.put("theme", wordOr(json, "theme", THEMES, "system"))
         if (json.has("readingSurface")) out.put("readingSurface", wordOr(json, "readingSurface", READING_SURFACES, "auto"))
         for ((key, default) in SWITCHES) if (json.has(key)) out.put(key, json.opt(key) as? Boolean ?: default)
@@ -113,7 +113,7 @@ object ListenPrefs {
     }
 
     /**
-     * Các tuỳ chọn nghe đã nhớ (không kèm hẹn giờ đang chạy), cho giao diện lúc mở app: WebView mất/không ghi được localStorage thì lấy bản này làm chuẩn
+     * Các tuỳ chọn nghe đã nhớ (không kèm hẹn giờ đang chạy), cho giao diện lúc mở app
      * (so `settingsStamp`). Chưa có file: `{}`.
      */
     fun stored(): JSONObject {

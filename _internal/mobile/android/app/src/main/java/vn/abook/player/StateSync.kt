@@ -11,7 +11,7 @@ import java.util.UUID
 
 /**
  * Đẩy hồ sơ nghe đang dùng của một cuốn lên máy tính đã ghép (POST /sync/v1/books/<id>/state - webui/listening.py
- * merge_record) và nhận bản đã gộp của ĐÚNG hồ sơ ấy (Store.applySync). Dùng chung cho giao diện (LibraryPlugin) và
+ * merge_record) và nhận bản đã gộp của ĐÚNG hồ sơ ấy (Store.applySync). Dùng chung cho giao diện và
  * trình phát gốc (Playback): trước đây trình phát chỉ lưu chỗ nghe trên điện thoại, máy tính không bao giờ biết.
  *
  * Trình phát đẩy ngay khi dừng, còn đang phát thì tối đa mỗi phút một lần. Không có mạng thì im lặng - cuốn ấy vào [pending] và được đẩy

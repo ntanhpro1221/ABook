@@ -1,5 +1,6 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.ui.data.dotJoined
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -257,7 +258,7 @@ object StudioExportLogic {
             if (result.coverBroken) "ảnh bìa của sách bị hỏng nên dùng bìa vẽ từ tên" else null,
             result.skipped.takeIf { it.isNotEmpty() }?.let { "chưa có chương nào nên bỏ qua: " + it.joinToString(", ") { part -> "Phần $part" } },
         )
-        return StudioExportOutcome(StudioExportText.doneTitle(machine), listOf((listOf(name) + detail).filter { it.isNotEmpty() }.joinToString(" · ")).filter { it.isNotEmpty() }, notes)
+        return StudioExportOutcome(StudioExportText.doneTitle(machine), listOf((listOf(name) + detail).dotJoined()).filter { it.isNotEmpty() }, notes)
     }
 
     /** Điều còn lại sau khi huỷ, theo kiểu xuất (web `stoppedNote`). */
@@ -278,7 +279,7 @@ object StudioExportLogic {
     /** Tên cuối của đích (chỉ TÊN, không đường dẫn) - đích do máy tính gửi, có thể là đường Windows. */
     fun pastName(past: StudioPast): String = past.target.trimEnd('/', '\\').substringAfterLast('/').substringAfterLast('\\')
 
-    fun pastTitle(past: StudioPast): String = listOf(pastLabel(past), pastName(past)).filter { it.isNotEmpty() }.joinToString(" · ")
+    fun pastTitle(past: StudioPast): String = listOf(pastLabel(past), pastName(past)).dotJoined()
 
     fun pastLine(past: StudioPast): String = if (past.changed == 0) "Còn mới" else "${past.changed} chương đã đổi từ lần xuất này"
 
@@ -310,8 +311,8 @@ object StudioExportText {
     const val CANCEL_CONFIRM = "Huỷ xuất"
     const val CANCEL_KEEP = "Tiếp tục xuất"
     const val STOPPING_NOTE = "Dừng ở chỗ an toàn kế tiếp."
-    const val FAILED = "Không xuất được"
-    const val STOPPED = "Đã huỷ xuất"
+    const val FAILED = "Chưa xuất được"
+    const val STOPPED = "Đã dừng xuất"
 
     fun elapsed(seconds: Double) = "đã ${Fmt.clock(seconds)}"
 
@@ -319,9 +320,9 @@ object StudioExportText {
     fun doneTitle(machine: String): String = if (machine.isBlank()) "Đã xuất vào máy tính" else "Đã xuất vào máy tính $machine"
 
     fun failedTitle(kind: StudioExportKind): String = when (kind) {
-        StudioExportKind.BookFile -> "Không xuất được file sách"
-        StudioExportKind.M4b -> "Không xuất được M4B"
-        StudioExportKind.Mp3 -> "Không xuất được MP3"
+        StudioExportKind.BookFile -> "Chưa xuất được file sách"
+        StudioExportKind.M4b -> "Chưa xuất được M4B"
+        StudioExportKind.Mp3 -> "Chưa xuất được MP3"
     }
 }
 

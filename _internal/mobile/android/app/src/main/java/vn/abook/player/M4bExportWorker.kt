@@ -187,7 +187,7 @@ class M4bExportWorker(context: Context, params: WorkerParameters) : Worker(conte
                 phase = { event -> M4bExports.phase(event, name, chapter, plan.chapters.size, round, over) }
                 if (name == "peaks" || name == "reencode") M4bExports.emit(phase(event()))
             }) { encoded = it }
-            val out = context.contentResolver.openOutputStream(file, "wt") ?: throw Mp3Export.Refused("Không ghi được vào chỗ đã chọn")
+            val out = context.contentResolver.openOutputStream(file, "wt") ?: throw Mp3Export.Refused("Chưa ghi được vào chỗ đã chọn")
             val result = out.buffered(256 * 1024).use { stream ->
                 M4bExport.run(plan, work, stream, encoder, progress = { chapters, total, fraction ->
                     done = chapters
@@ -207,7 +207,7 @@ class M4bExportWorker(context: Context, params: WorkerParameters) : Worker(conte
             val lost = if (missing > 0) " $missing đoạn chưa tải được nhạc — bạn tải lại nếu muốn xuất đủ nhạc." else ""
             M4bExports.finished(context, bookId, "Đã xuất M4B", "$title · ${result.chapters} chương, ${formatSize(result.size)}.$partial$lost")
             val finished = event().put("finished", true).put("name", result.name).put("size", result.size).put("chapters", result.chapters)
-                .put("chaptersTotal", result.chaptersTotal).put("uri", file.toString()) // địa chỉ để mở / gửi file vừa xuất (màn Xuất native; bản WebView bỏ qua)
+                .put("chaptersTotal", result.chaptersTotal).put("uri", file.toString()) // địa chỉ để mở / gửi file vừa xuất (màn Xuất)
             if (missing > 0) finished.put("musicMissing", missing)
             if (over.isNotEmpty()) {
                 finished.put("overCeiling", org.json.JSONArray(over.map { (chapter, dbtp) -> JSONObject().put("chapter", chapter).put("dbtp", dbtp) }))
@@ -241,7 +241,7 @@ class M4bExportWorker(context: Context, params: WorkerParameters) : Worker(conte
             M4bExports.discard(context, file)
             val message = if (isStopped && Mp3Exports.timedOut(this)) Mp3Exports.TIMEOUT_NOTE
                 else M4bExports.describe(error, lowSpace = context.cacheDir.usableSpace < (32L shl 20))
-            M4bExports.finished(context, bookId, "Không xuất được M4B", "$title · $message")
+            M4bExports.finished(context, bookId, "Chưa xuất được M4B", "$title · $message")
             M4bExports.emit(event().put("error", message))
             return Result.failure()
         } finally {

@@ -70,7 +70,7 @@ async function imageToDataUrl(file: Blob): Promise<string> {
     new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(String(reader.result));
-      reader.onerror = () => reject(reader.error ?? new Error("Không đọc được ảnh. Bạn hãy chọn JPEG, PNG hoặc WebP."));
+      reader.onerror = () => reject(reader.error ?? new Error("Chưa đọc được ảnh. Bạn hãy chọn JPEG, PNG hoặc WebP."));
       reader.readAsDataURL(file);
     });
   try {

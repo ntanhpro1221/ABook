@@ -11,7 +11,7 @@ import org.junit.Rule
 import org.junit.Test
 
 /**
- * Macrobenchmark của khung native (docs/NATIVE_PHONE_UI.md §1) trên bản `-PnativeUi`. Sách giả (`abook.demo.books`) để cuộn đủ 200 cuốn mà không
+ * Macrobenchmark của khung native (docs/NATIVE_PHONE_UI.md §1) của app. Sách giả (`abook.demo.books`) để cuộn đủ 200 cuốn mà không
  * chạm thư viện thật. Ngân sách: mở nguội <= 500 ms, ấm <= 200 ms, khung p95 <= 8 ms / p99 <= 12 ms.
  */
 class ShellBenchmark {

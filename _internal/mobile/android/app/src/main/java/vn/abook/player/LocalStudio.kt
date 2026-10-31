@@ -30,11 +30,11 @@ object LocalStudio {
     private val EDITS_ONLY_KEYS = setOf("enabled", "levelDb", "silence", "pins", "playlist")
     private val lock = Any()
 
-    /** Kho "Nhạc của tôi" của điện thoại này (LibraryPlugin đặt khi nạp; test JVM đặt kho trong thư mục tạm). */
+    /** Kho "Nhạc của tôi" của điện thoại này ([AppStartup] đặt lúc dậy; test JVM đặt kho trong thư mục tạm). */
     @Volatile
     var musicStore: MusicStore? = null
 
-    /** Danh mục nhạc nền (danh sách phát cho "Nghe ngay" - [Playlists]); LibraryPlugin đặt khi nạp, test JVM đặt danh mục trong thư mục tạm. */
+    /** Danh mục nhạc nền (danh sách phát cho "Nghe ngay" - [Playlists]); [AppStartup] đặt lúc dậy, test JVM đặt danh mục trong thư mục tạm. */
     @Volatile
     var catalog: MusicCatalog? = null
 
@@ -93,7 +93,7 @@ object LocalStudio {
             for (key in listOf("tracks", "analyzer", "module")) out.put(key, view.opt(key))
         }
 
-    /** `/api/music/local...`: kho nhạc của máy, không thuộc cuốn nào. Nhập file đi qua hộp chọn file của hệ thống (LibraryPlugin.pickMusic). */
+    /** `/api/music/local...`: kho nhạc của máy, không thuộc cuốn nào. Nhập file đi qua hộp chọn file của hệ thống. */
     private fun myMusic(method: String, digest: String?, analyze: Boolean, download: Boolean, reanalyse: Boolean, cancel: Boolean): Pair<Int, Any?> {
         val store = musicStore ?: throw Api(404, "Không có đường dẫn này")
         return when {
@@ -328,7 +328,7 @@ object LocalStudio {
         return JSONObject().put("skip", BookEdits.setSkipLine(dir, ids.map { (it as Number).toLong() }, line, body.opt("skip") != false))
     }
 
-    /** GET /music của giao diện native (ui/music): cùng lời đáp với đường của WebView, không qua chuỗi đường dẫn. */
+    /** GET /music của giao diện (ui/music): gọi thẳng, không qua chuỗi đường dẫn. */
     fun bookMusic(id: String): JSONObject = synchronized(lock) {
         val dir = editable(id)
         withAutoPlaylist(dir, BookEdits.musicView(BookEdits.rawBook(dir), BookEdits.load(dir)))
@@ -593,7 +593,7 @@ object LocalStudio {
         val waiting = BookEdits.load(dir).optJSONObject("wishes")
         for ((stableId, sha) in lines) {
             val problem = BookWishes.speakerProblem(index, cast, stableId, sha, person, newGender, BookWishes.pendingLineKind(waiting, stableId, sha))
-            if (problem != null) throw Api(400, SPEAKER_PROBLEMS[problem] ?: "Không đổi được người nói câu này")
+            if (problem != null) throw Api(400, SPEAKER_PROBLEMS[problem] ?: "Chưa đổi được người nói câu này")
         }
         val at = now()
         // Máy/cửa sổ khác vừa sửa chính câu này khác điều giao diện đã thấy (`seen`): vẫn ghi, báo lại - chỉ khi lệch (server `_edited_elsewhere`).
@@ -672,7 +672,7 @@ object LocalStudio {
         if (intensity != null && intensity !in 0..BookWishes.INTENSITY_MAX.toLong()) throw Api(400, "Cường độ phải từ 0 tới ${BookWishes.INTENSITY_MAX}")
         val (_, index, cast) = fresh(dir)
         val problem = BookWishes.lineProblem(index, cast, stableId, sha, kind, emotion, speaker, spoken)
-        if (problem != null) throw Api(400, LINE_PROBLEMS[problem] ?: "Không đổi được cách đọc câu này")
+        if (problem != null) throw Api(400, LINE_PROBLEMS[problem] ?: "Chưa đổi được cách đọc câu này")
         val elsewhere = lineElsewhere(dir, stableId, sha, body)
         val at = now()
         BookWishes.requestLine(dir, stableId, sha, kind, emotion, intensity, speaker, spoken, at)
@@ -693,7 +693,7 @@ object LocalStudio {
         if (preset.isEmpty() && gender.isEmpty() && avoid.isEmpty()) throw Api(400, "Thiếu giọng hoặc giới tính")
         val (_, _, cast) = fresh(dir)
         val problem = BookWishes.voiceProblem(cast, character, gender, avoid)
-        if (problem != null) throw Api(400, VOICE_PROBLEMS[problem] ?: "Không đổi được giọng nhân vật này")
+        if (problem != null) throw Api(400, VOICE_PROBLEMS[problem] ?: "Chưa đổi được giọng nhân vật này")
         val at = now()
         val elsewhere = voiceElsewhere(dir, character, body)
         BookWishes.requestVoice(dir, character, preset, gender, avoid, at)
@@ -751,7 +751,7 @@ object LocalStudio {
         val found = BookWishes.speakerLines(index, cast, source)
         if (found.isEmpty()) throw Api(400, "Người này không còn câu nói nào để gộp")
         val problem = BookWishes.speakerProblem(index, cast, found[0].first, found[0].second, target)
-        if (problem != null) throw Api(400, SPEAKER_PROBLEMS[problem] ?: "Không gộp được vào người này")
+        if (problem != null) throw Api(400, SPEAKER_PROBLEMS[problem] ?: "Chưa gộp được vào người này")
         val at = now()
         BookWishes.requestSpeakers(dir, found, target, at)
         BookWishes.requestAlias(dir, source, target, at)

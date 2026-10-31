@@ -28,7 +28,7 @@ class AbookApplication : Application() {
         EditsSync.changed = { id -> uiScope.launch { editors.refresh(id); library.refresh() } }
         editors
     }
-    // Giao diện native (vn.abook.player.ui): dựng tay, lười - tiến trình chỉ chạy việc nền / bản WebView không tốn gì.
+    // Giao diện native (vn.abook.player.ui): dựng tay, lười - tiến trình chỉ chạy việc nền thì không tốn gì.
     val library by lazy { LibraryRepo(this, uiScope) { id -> player.bookRemoved(id) } }
     val companion by lazy { vn.abook.player.ui.devices.CompanionRepo(vn.abook.player.ui.devices.AndroidCompanionCore(this)) }
     val covers by lazy { CoverLoader() }
@@ -42,7 +42,7 @@ class AbookApplication : Application() {
     }
     val uiPrefs by lazy { UiPrefs(this) }
 
-    /** Cài đặt của giao diện native: cùng kho với bản WebView ([AndroidSettingsCore]). */
+    /** Cài đặt của giao diện ([AndroidSettingsCore]). */
     val settings by lazy { SettingsRepo(AndroidSettingsCore(this), uiScope, Dispatchers.IO) }
     private val uiScope by lazy { CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate) }
 
@@ -56,7 +56,7 @@ class AbookApplication : Application() {
         vn.abook.player.ui.devices.DevicesState(
             vn.abook.player.ui.devices.DevicesRepo(this, library), uiScope,
             vn.abook.player.ui.devices.DeviceLinks(
-                openStudio = { computer, path -> deviceLinks.openStudio(computer, path) },
+                openStudio = { computer, route -> deviceLinks.openStudio(computer, route) },
                 openAppSettings = { deviceLinks.openAppSettings() },
                 askNearby = { result -> deviceLinks.askNearby(result) },
                 askNotifications = { then -> deviceLinks.askNotifications(then) },
@@ -128,6 +128,19 @@ class AbookApplication : Application() {
         super.onCreate()
         AppLog.init(this)
         CrashLog.install(this)
+        watchNetwork()
         AppLog.i("App", "tiến trình khởi động (Android ${android.os.Build.VERSION.SDK_INT}, ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL})")
+    }
+
+    /** Đổi mạng (Wi-Fi <-> 4G, có/mất IPv6) thì kết luận "họ địa chỉ nào sống" của FastConnect hết giá trị. */
+    private fun watchNetwork() {
+        runCatching {
+            val manager = getSystemService(android.net.ConnectivityManager::class.java) ?: return
+            manager.registerDefaultNetworkCallback(object : android.net.ConnectivityManager.NetworkCallback() {
+                override fun onAvailable(network: android.net.Network) = vn.abook.player.net.FastConnect.forgetNetwork()
+                override fun onLinkPropertiesChanged(network: android.net.Network, linkProperties: android.net.LinkProperties) =
+                    vn.abook.player.net.FastConnect.forgetNetwork()
+            })
+        }
     }
 }

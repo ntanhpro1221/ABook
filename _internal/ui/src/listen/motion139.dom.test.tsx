@@ -184,12 +184,12 @@ it("V1 / V2 / W1 màn Đang nghe: phát / dừng không mờ chéo cả màn; ti
   expect(animated((element) => element === line)).toHaveLength(1);
   expect(animated((element) => element === screen)).toHaveLength(0);
   // V2: lỗi -> lời nhắn khi khối đang hiện: mờ chéo bên trong khối.
-  player({ playing: true, error: "Không phát được chương này." });
+  player({ playing: true, error: "Chưa phát được chương này." });
   await render(<NowPlaying mobile />);
   animate.mockClear();
   player({ playing: true, notice: "Đang đọc bằng giọng của máy." });
   await render(<NowPlaying mobile />);
-  expect(snapshotWith("Không phát được chương này.")?.hasAttribute("inert")).toBe(true);
+  expect(snapshotWith("Chưa phát được chương này.")?.hasAttribute("inert")).toBe(true);
   expect(animated((element) => element.textContent?.includes("Đang đọc bằng giọng của máy.") === true && element !== screen).length).toBeGreaterThan(0);
   expect(animated((element) => element === screen)).toHaveLength(0);
 });

@@ -97,7 +97,7 @@ describe("mô-đun Giọng VieNeu", () => {
   it("câu chính theo trạng thái", () => {
     expect(vieneuLabel(status({ state: "downloading", done: 50, total: 100 * MB }))).toContain("0%");
     expect(vieneuLabel(status({ state: "outdated", outdatedBytes: 3 * MB }))).toContain("2,9 MB");
-    expect(vieneuLabel(status({ state: "error", error: "Không tải được." }))).toBe("Không tải được.");
+    expect(vieneuLabel(status({ state: "error", error: "Chưa tải được." }))).toBe("Chưa tải được.");
     expect(vieneuLabel(status())).toContain("không cần mạng");
   });
 
@@ -231,7 +231,7 @@ describe("câu trình đọc màn hình nghe ở thẻ mô-đun (soát a67)", ()
     const label = vieneuLabel(status({ cancelled: true }));
     expect(`${cancelled.live} ${cancelled.rest}`).toBe(label);
     expect(cancelled.live.length).toBeLessThan(label.length);
-    expect(vieneuSpoken(status({ state: "error", error: "Không tải được." }))).toEqual({ live: "Không tải được.", rest: "" });
+    expect(vieneuSpoken(status({ state: "error", error: "Chưa tải được." }))).toEqual({ live: "Chưa tải được.", rest: "" });
   });
 });
 

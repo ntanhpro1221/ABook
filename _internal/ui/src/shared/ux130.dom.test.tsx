@@ -9,7 +9,7 @@ import { Toaster } from "sonner";
 import { toast } from "@/shared/toast";
 import { installBackOrder } from "./backOrder";
 import { pushBackLayer } from "./backStack";
-import { dismissTopLayer } from "@/android/backLayers";
+import { dismissTopLayer } from "@/shared/backLayers";
 
 let root: Root;
 let host: HTMLDivElement;

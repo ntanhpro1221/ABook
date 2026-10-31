@@ -1,0 +1,29 @@
+WINDOW MANAGER DISPLAY CONTENTS (dumpsys window displays)
+  Display: mDisplayId=0 (organized)
+    init=1080x2400 420dpi mMinSizeOfResizeableTaskDp=220 cur=1080x2400 app=1080x2400 rng=1080x1080-2400x2400
+    deferred=false mLayoutNeeded=false
+  mLastOrientationSource=WindowedMagnification:0:31@119013404
+  deepestLastOrientationSource=ActivityRecord{229082352 u0 com.google.android.apps.nexuslauncher/.NexusLauncherActivity t5}
+  overrideConfig={1.0 310mcc260mnc [en_US] ldltr sw411dp w411dp h914dp 420dpi nrml long compactNeeded port night finger qwerty/v/v -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 0 - 1080, 2400) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_0} as.3 s.52 fontWeightAdjustment=0}
+  mHasSetIgnoreOrientationRequest=false ignoreOrientationRequest=false
+  mLayoutSeq=112
+  mImeLayeringTarget=Window{1fc32f0 u0 com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity}
+  mImeInputTarget=null
+  mImeControlTarget=RemoteInsetsControlTarget{7a57173 displayId=0 requestedVisibleTypes=503 animatingTypes=0}
+  mRemoteInsetsControlTarget=RemoteInsetsControlTarget{7a57173 displayId=0 requestedVisibleTypes=503 animatingTypes=0}
+  mCurrentFocus=null
+  mFocusedApp=ActivityRecord{229082352 u0 com.google.android.apps.nexuslauncher/.NexusLauncherActivity t5}
+  Display: mDisplayId=2 (organized)
+    init=1080x2400 420dpi mMinSizeOfResizeableTaskDp=220 cur=1080x2400 app=1080x2400 rng=1080x1080-2400x2400
+    deferred=false mLayoutNeeded=false
+  mLastOrientationSource=WindowedMagnification:0:31@197655676
+  deepestLastOrientationSource=ActivityRecord{225017397 u0 com.ngdtuanh.abook.dev2/vn.abook.player.ui.NativeActivity t218}
+  overrideConfig={0.0 ?mcc0mnc ?localeList ?layoutDir sw411dp w411dp h914dp 420dpi nrml long compactNeeded port ?uimode ?night finger qwerty/v/v -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 0 - 1080, 2400) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_0} ?fontWeightAdjustment}
+  mHasSetIgnoreOrientationRequest=false ignoreOrientationRequest=false
+  mLayoutSeq=31
+  mImeLayeringTarget=null
+  mImeInputTarget=Window{b683eed u0 com.ngdtuanh.abook.dev2/vn.abook.player.ui.NativeActivity}
+  mImeControlTarget=Window{b683eed u0 com.ngdtuanh.abook.dev2/vn.abook.player.ui.NativeActivity}
+  mRemoteInsetsControlTarget=RemoteInsetsControlTarget{c48f1d displayId=2 requestedVisibleTypes=503 animatingTypes=0}
+  mCurrentFocus=Window{b683eed u0 com.ngdtuanh.abook.dev2/vn.abook.player.ui.NativeActivity}
+  mFocusedApp=ActivityRecord{225017397 u0 com.ngdtuanh.abook.dev2/vn.abook.player.ui.NativeActivity t218}

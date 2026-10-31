@@ -18,7 +18,7 @@ import javax.net.ssl.SSLException
  * tiết kỹ thuật ([technical]) - giao diện gập lại dưới lời báo (ErrorDetails).
  */
 object NetErrors {
-    /** Mã lỗi Capacitor khi máy kia trả 401: nó đã bỏ ghép máy này (sync.py "Thiết bị chưa ghép nối") - không phải tắt máy hay khác mạng. */
+    /** Mã lỗi khi máy kia trả 401: nó đã bỏ ghép máy này (sync.py "Thiết bị chưa ghép nối") - không phải tắt máy hay khác mạng. */
     const val UNPAIRED = "UNPAIRED"
 
     enum class Kind { UNREACHABLE, DROPPED, SECURITY, TIMEOUT }

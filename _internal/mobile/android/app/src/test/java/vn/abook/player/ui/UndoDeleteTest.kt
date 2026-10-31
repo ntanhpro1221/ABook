@@ -20,7 +20,7 @@ import vn.abook.player.ui.data.UndoDelete
 import java.time.Duration
 
 /**
- * "Xoá khỏi điện thoại" có Hoàn tác làm như bản WebView (`shared/trashUndo.ts`): cuốn vào chỗ chờ NGAY (không đợi hết hạn - tiến trình chết giữa chừng thì cuốn
+ * "Xoá khỏi điện thoại" có Hoàn tác: cuốn vào chỗ chờ NGAY (không đợi hết hạn - tiến trình chết giữa chừng thì cuốn
  * không quay lại), chữ y như web, hạn 28 giây mỗi cuốn, Hoàn tác trả cũ trước.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -61,7 +61,7 @@ class UndoDeleteTest {
         assertTrue(deletes.contains("b1"))
         assertEquals(listOf("b1"), deletes.undoable.value)
         assertTrue(deletes.showing.value)
-        assertEquals("Đã xoá “Dế Mèn” khỏi điện thoại", deletes.message.value)
+        assertEquals("Đã bỏ “Dế Mèn” khỏi thư viện", deletes.message.value)
     }
 
     @Test fun undoReturnsTheBooksOldestFirstAndSaysSoLikeTheWeb() = runBlocking {
@@ -88,7 +88,7 @@ class UndoDeleteTest {
         advance(1)
         assertEquals("b1 hết hạn lúc 28 giây", listOf("b2"), deletes.undoable.value)
         assertFalse(deletes.contains("b1"))
-        assertEquals("Đã xoá “Tắt đèn” khỏi điện thoại", deletes.message.value)
+        assertEquals("Đã bỏ “Tắt đèn” khỏi thư viện", deletes.message.value)
         assertTrue(deletes.showing.value)
         advance(10_000)
         assertTrue(deletes.undoable.value.isEmpty())
@@ -100,7 +100,7 @@ class UndoDeleteTest {
     @Test fun aBookDeletedStraightIsOnlySaidNotUndoable() = runBlocking {
         straight = true
         assertNull(deletes.remove("b1", "Dế Mèn"))
-        assertEquals("Đã xoá “Dế Mèn” khỏi điện thoại", deletes.notice.value)
+        assertEquals("Đã bỏ “Dế Mèn” khỏi thư viện", deletes.notice.value)
         assertTrue(deletes.undoable.value.isEmpty())
         assertFalse(deletes.showing.value)
         assertFalse(deletes.contains("b1"))
@@ -145,6 +145,6 @@ class UndoDeleteTest {
     @Test fun aPartialDownloadIsNamedAsSuch() = runBlocking {
         deletes.remove("b1", "Dế Mèn", partial = true)
         assertEquals("Đã xoá phần đã tải của “Dế Mèn”", deletes.message.value)
-        assertEquals("Đã xoá khỏi điện thoại", UndoDelete.removedText(1, "", false))
+        assertEquals("Đã bỏ khỏi thư viện", UndoDelete.removedText(1, "", false))
     }
 }

@@ -5,6 +5,9 @@ import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
@@ -115,17 +118,22 @@ class BookScreenTest {
     private val sheets = SheetHost()
 
     private fun show(detail: BookDetail?, dark: Boolean = false, player: PlayerState = PlayerState.Empty, texts: Map<Int, List<Passage>> = emptyMap()) {
+        setBook(detail, dark, { player }, texts)
+        rule.waitForIdle()
+    }
+
+    /** Dựng trang mà KHÔNG chờ rảnh (để thử từng khung với đồng hồ tay); `player` đọc lại mỗi lần dựng nên đổi được giữa chừng. */
+    private fun setBook(detail: BookDetail?, dark: Boolean = false, player: () -> PlayerState = { PlayerState.Empty }, texts: Map<Int, List<Passage>> = emptyMap()) {
         source = FakeSource(detail, texts)
         val book = detail?.book ?: BookDetail.of(manifest(), null, { null }).book
         rule.setContent {
             AbookTheme(dark) {
                 Box(Modifier.fillMaxSize().background(Abook.colors.bg)) {
-                    BookScreen(book, LibraryState.Ready(listOf(book)), player, PlayerClock(), CoverLoader(1 shl 20), source, sheets, actions)
+                    BookScreen(book, LibraryState.Ready(listOf(book)), player(), PlayerClock(), CoverLoader(1 shl 20), source, sheets, actions)
                     SheetLayer(sheets)
                 }
             }
         }
-        rule.waitForIdle()
     }
 
     private fun shot(name: String) {
@@ -227,6 +235,47 @@ class BookScreenTest {
         show(null)
         rule.onNodeWithTag("book_title").assertIsDisplayed()
         shot("book_loading_light")
+    }
+
+    // ---- trang dựng trải qua hai khung chờ dựng của Nav.push; nút chính vẽ tĩnh vài khung đầu ----
+
+    @Test
+    fun theHeadIsInTheFirstFrameAndTheRestOfThePageFollowsWithinTwoFrames() {
+        rule.mainClock.autoAdvance = false
+        setBook(detail(listening()))
+        rule.onNodeWithTag("book_head").assertExists()
+        rule.onNodeWithTag("book_title").assertExists()
+        rule.onNodeWithTag("book_primary").assertDoesNotExist()
+        rule.onNodeWithTag("book_secondary").assertDoesNotExist()
+        rule.onNodeWithTag("book_tabs").assertDoesNotExist()
+        repeat(2) { rule.mainClock.advanceTimeByFrame() }
+        rule.onNodeWithTag("book_primary").assertExists()
+        rule.onNodeWithTag("book_secondary").assertExists()
+        rule.onNodeWithTag("book_tabs").assertExists()
+    }
+
+    @Test
+    fun theListenLabelFollowsThePlayerBeforeAndAfterTheAnimationTurnsOn() {
+        var player by mutableStateOf(PlayerState.Empty)
+        rule.mainClock.autoAdvance = false
+        setBook(detail(listening()), player = { player })
+        repeat(2) { rule.mainClock.advanceTimeByFrame() }
+        // Nút còn vẽ tĩnh: nhãn đổi theo người phát ngay, không trượt.
+        rule.onNodeWithText("Nghe tiếp").assertExists()
+        player = PlayerState(bookId = "b1", chapterId = 3, chapterTitle = "Chương 3", playing = true, durationMs = 1_500_000)
+        rule.mainClock.advanceTimeByFrame()
+        rule.onNodeWithText("Tạm dừng").assertExists()
+        rule.onAllNodesWithText("Nghe tiếp").assertCountEquals(0)
+        // Hết các khung tĩnh: AnimatedContent bật mà màn hình không đổi, rồi nhãn đổi lại thì trượt (trong lúc trượt có cả hai chữ) và dừng ở nhãn mới.
+        repeat(6) { rule.mainClock.advanceTimeByFrame() }
+        rule.onNodeWithText("Tạm dừng").assertExists()
+        player = PlayerState(bookId = "b1", chapterId = 3, chapterTitle = "Chương 3", playing = false, durationMs = 1_500_000)
+        rule.mainClock.advanceTimeByFrame()
+        rule.onNodeWithText("Nghe tiếp").assertExists()
+        rule.onNodeWithText("Tạm dừng").assertExists()
+        rule.mainClock.advanceTimeBy(1_000)
+        rule.onNodeWithText("Nghe tiếp").assertExists()
+        rule.onAllNodesWithText("Tạm dừng").assertCountEquals(0)
     }
 
     // ---- kịch bản bấm ----

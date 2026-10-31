@@ -5,13 +5,12 @@ chưa phải bản phát hành.
 
 ## Số phiên bản - một số cho cả hai nền tảng
 
-App máy tính và app điện thoại phát hành CÙNG một số `major.minor.patch`, ghi ở bốn chỗ:
+App máy tính và app điện thoại phát hành CÙNG một số `major.minor.patch`, ghi ở ba chỗ:
 
 | chỗ | trường |
 |---|---|
 | `_internal/pyproject.toml` | `version` |
 | `_internal/ui/package.json` | `version` |
-| `_internal/mobile/package.json` | `version` |
 | `_internal/mobile/android/app/build.gradle` | `versionName` (= số phiên bản) và `versionCode` (tăng 1 mỗi bản) |
 
 `pyproject.toml` nằm trong `QUALITY_IMPLEMENTATION_FILES`: đổi `version` là đổi hash chất lượng, sách đang làm dở không
@@ -55,7 +54,7 @@ tương ứng, để hiểu script làm gì:
 2. App máy tính: `scripts\build_windows_app.ps1` (không `-TauriConfig` - bản phát hành chỉ nhận cập nhật qua https) ra
    trong `shell\src-tauri\target\release\bundle\nsis\`: bộ cài `ABook_X.Y.Z_x64-setup.exe`, chữ ký `.sig` (khoá ở
    `%USERPROFILE%\.abook-keys`, không bao giờ commit) và `latest.json` (ghi chú lấy từ mục `[X.Y.Z]` của CHANGELOG -
-   đổi tên mục trước khi dựng). App điện thoại: `npm run build:android` trong `ui\`, `npx cap sync android`, rồi
+   đổi tên mục trước khi dựng). App điện thoại (Kotlin + Compose, không có bước web):
    `gradlew assembleRelease` trong `mobile\android\` - Gradle ký bằng `%USERPROFILE%\.abook-keys\android-release.properties`
    (thiếu file ấy thì APK không ký, không phát hành được). Bản release chạy R8 (thu nhỏ mã + tài nguyên, luật ở
    `mobile\android\app\proguard-rules.pro`): ngay sau khi dựng, CẤT `mobile\android\app\build\outputs\mapping\release\mapping.txt`

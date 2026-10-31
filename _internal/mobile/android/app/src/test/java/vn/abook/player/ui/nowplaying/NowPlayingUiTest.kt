@@ -308,6 +308,75 @@ class NowPlayingUiTest {
         rule.mainClock.autoAdvance = true
     }
 
+    /** Quiet time after which the layer composes the window ahead of its first opening (the test clock runs the delay). */
+    private fun letTheLayerPark() {
+        rule.mainClock.advanceTimeBy(PARK_AFTER_MS + 500)
+        rule.waitForIdle()
+    }
+
+    @Test fun aParkedWindowIsInTheTreeButNeitherOnTheScreenNorInTheSemantics() {
+        show(expanded = false)
+        assertFalse(window.composed)
+        letTheLayerPark()
+        assertTrue(window.composed)
+        assertFalse(window.shown)
+        // Not in the accessibility / test tree, so a screen reader and every "closed" assertion see nothing of it.
+        rule.onNodeWithTag("now_playing").assertDoesNotExist()
+        rule.onNodeWithTag("now_playing", useUnmergedTree = true).assertExists()
+    }
+
+    @Test fun aParkedWindowTakesNoTouchAndOpensWithoutBeingBuiltAgain() {
+        show(expanded = false)
+        letTheLayerPark()
+        val overlay = window.flight.overlay
+        assertNotNull(overlay)
+        // The window's own buttons are laid out over the bar; a tap on the bar must still reach the bar.
+        rule.onNodeWithTag("mini_open").performClick()
+        rule.mainClock.advanceTimeBy(1500)
+        rule.waitForIdle()
+        assertTrue(window.shown)
+        rule.onNodeWithTag("now_playing").assertIsDisplayed()
+        assertSame("the parked composition is the one that opens", overlay, window.flight.overlay)
+        assertBounds(bounds("now_playing"), bounds("now_playing_bounds"))
+    }
+
+    @Test fun aClosedWindowStaysParkedForTheNextOpening() {
+        show()
+        val overlay = window.flight.overlay
+        rule.onNodeWithTag("collapse_player").performClick()
+        rule.mainClock.advanceTimeBy(1500)
+        rule.waitForIdle()
+        assertFalse(window.shown)
+        assertTrue(window.composed)
+        rule.onNodeWithTag("now_playing").assertDoesNotExist()
+        rule.onNodeWithTag("mini_open").performClick()
+        rule.mainClock.advanceTimeBy(1500)
+        rule.waitForIdle()
+        rule.onNodeWithTag("now_playing").assertIsDisplayed()
+        assertSame(overlay, window.flight.overlay)
+    }
+
+    @Test fun noBookNoParkedWindow() {
+        show(expanded = false, base = FakeNowPlayingModel.demoState().copy(bookId = ""))
+        letTheLayerPark()
+        assertFalse(window.composed)
+    }
+
+    @Test fun aParkedReadingWindowReadsNothingUntilItIsOpen() {
+        show(expanded = false, reading = true)
+        letTheLayerPark()
+        assertTrue(window.composed)
+        assertFalse("loadText" in model.actions)
+        rule.runOnUiThread { window.open() }
+        rule.mainClock.advanceTimeBy(1500)
+        rule.waitForIdle()
+        assertTrue("loadText" in model.actions)
+        rule.onNodeWithTag("collapse_player").performClick()
+        rule.mainClock.advanceTimeBy(1500)
+        rule.waitForIdle()
+        rule.onNodeWithTag("read_along_text", useUnmergedTree = true).assertDoesNotExist()
+    }
+
     @Test fun windowIsTransparentOverTheBarAtBothEndsOfTheMotion() {
         // At progress 0 (the start of an opening, the landing of a closing) the real bar shows, untouched; the window is fully there from a few percent on.
         assertEquals(0f, windowAlpha(0f), 0f)
@@ -502,10 +571,10 @@ class NowPlayingUiTest {
         show(sheet = PlayerSheet.Voice, base = prepareScene(), prepare = prepare)
         rule.onNodeWithText(PrepareText.INTRO).assertIsDisplayed()
         rule.onNodeWithText("30 phút nghe · máy cần khoảng 25 phút.").assertIsDisplayed()
-        rule.onNodeWithText("Làm trước 2 chương tới").assertIsDisplayed()
+        rule.onNodeWithText("Làm trước 2 chương").assertIsDisplayed()
         rule.onNodeWithText("Chỉ khi đang sạc").assertIsDisplayed()
         shot("prepare_light")
-        rule.onNodeWithText("Làm trước 2 chương tới").performClick()
+        rule.onNodeWithText("Làm trước 2 chương").performClick()
         rule.waitForIdle()
         assertEquals(listOf("start vieneu:a [2, 3] 2 chương tới charging=true"), source.calls.filter { it.startsWith("start") })
         rule.onNodeWithText("Dừng làm trước").assertIsDisplayed().performClick()

@@ -46,7 +46,7 @@ object EditsSync {
     private val scheduled = ConcurrentHashMap<String, ScheduledFuture<*>>()
     private val attempts = ConcurrentHashMap<String, Int>()
 
-    /** Cầu tới plugin: tải lại sách từ máy tính sau khi gửi xong, và báo giao diện làm mới (đặt trong LibraryPlugin.load). */
+    /** Cầu tới giao diện: tải lại sách từ máy tính sau khi gửi xong, và báo giao diện làm mới (đặt ở AbookApplication). */
     @Volatile var refresh: ((String) -> Unit)? = null
     @Volatile var changed: ((String) -> Unit)? = null
 

@@ -21,7 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.text.BasicText
+import vn.abook.player.ui.components.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -49,16 +49,16 @@ import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.components.fadeEdges
 import androidx.compose.foundation.lazy.rememberLazyListState
 
-/** Lời của Chẩn đoán và Bộ nhớ: cùng chữ với bản WebView (android/Diagnostics.tsx, listen/ReadAloudStorage.tsx, listen/prepareAhead.ts). */
+/** Lời của Chẩn đoán và Bộ nhớ. */
 private object AdvancedCopy {
     const val LOG = "Việc app làm gần đây, để tìm lỗi. Xem lại trước khi gửi."
-    const val LOG_NOTE = "Có tên sách; che khoá, mã ghép, IP và đường dẫn nhận ra được. Máy ghép đọc được khi bật “Chia sẻ thư viện”."
-    const val SEND = "Bạn chọn gửi cho ai; app không tự gửi."
+    const val LOG_NOTE = "Gồm thông tin máy, nhật ký gần nhất và tên sách; tự che khoá, mã ghép, đường dẫn và IP nhận ra được. Thiết bị đã ghép đọc được khi bật “Kết nối Wi-Fi”."
+    const val SEND = "Xem lại trước khi gửi; bạn tự gửi đi."
     const val CLEAR = "Gồm cả các lần văng đã ghi."
     const val CLEARED = "Đã xoá nhật ký."
     /** Lời hỏi lại trước khi xoá (web: CLEAR_QUESTION ở android/Diagnostics.tsx - cùng từng chữ). */
     const val CLEAR_QUESTION = "Nhật ký của ABook sẽ bị xoá khỏi máy này. $CLEAR"
-    val SOURCE = keepUrlTogether("Giấy phép MIT - github.com/ntanhpro1221/ABook")
+    val SOURCE = keepUrlTogether("github.com/ntanhpro1221/ABook")
 
     fun cache(bytes: Long?): String = when {
         bytes == null -> "Đang đo."
@@ -103,7 +103,7 @@ fun AdvancedSettings(env: SettingsEnv, sheets: SheetHost, onBack: () -> Unit, mo
         ListSection("Giới thiệu") {
             ListRow("Phiên bản") { BasicText(repo.version, style = Abook.type.bodySmall, modifier = Modifier.testTag("app_version")) }
             RowLine()
-            ActionRow("Mã nguồn mở", "Mở", env.links.openSource, "source_open", AdvancedCopy.SOURCE)
+            ActionRow("Mã nguồn mở (MIT)", "Mở", env.links.openSource, "source_open", AdvancedCopy.SOURCE)
             RowLine()
             NavRow("Thành phần sử dụng", { sheets.show { ThirdPartySheet(repo) } }, "third_party")
         }
@@ -116,7 +116,7 @@ private fun NavRow(title: String, onClick: () -> Unit, tag: String, hint: String
     ListItem(title, onClick = onClick, tag = tag, hint = hint, titleStyle = Abook.type.bodyStrong, chevron = true)
 }
 
-/** Hỏi lại trước khi dọn (như hộp hỏi của bản WebView): bước xác nhận chung [ConfirmPage] - nút đỏ "Dọn", "Giữ lại" là nút chữ. */
+/** Hỏi lại trước khi dọn: bước xác nhận chung [ConfirmPage] - nút đỏ "Dọn", "Giữ lại" là nút chữ. */
 @Composable
 private fun ClearSheet(bytes: Long, onClear: () -> Unit, dismiss: () -> Unit) {
     ConfirmPage("Dọn bản đọc đã làm", "clear_sheet", listOf(AdvancedCopy.clearQuestion(bytes)), "") {
@@ -145,7 +145,7 @@ private fun LogSheet(repo: SettingsRepo) {
     LaunchedEffect(round) {
         problem = ""
         try { lines = repo.logLines() }
-        catch (e: Exception) { problem = "Không đọc được nhật ký"; lines = emptyList() }
+        catch (e: Exception) { problem = "Chưa đọc được nhật ký"; lines = emptyList() }
     }
     Column(Modifier.fillMaxWidth().testTag("log_sheet")) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -169,7 +169,7 @@ private fun LogSheet(repo: SettingsRepo) {
     }
 }
 
-/** "Thành phần sử dụng": docs/THIRD_PARTY.md (gói lúc build, cùng file bản WebView hiện), mỗi mục tiêu đề + các dòng. */
+/** "Thành phần sử dụng": docs/THIRD_PARTY.md (gói lúc build), mỗi mục tiêu đề + các dòng. */
 @Composable
 private fun ThirdPartySheet(repo: SettingsRepo) {
     var sections by remember { mutableStateOf<List<ThirdPartySection>?>(null) }

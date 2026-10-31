@@ -3,7 +3,7 @@ package vn.abook.player
 import java.io.File
 
 /**
- * "Chia sẻ…" một cuốn qua bảng chia sẻ của Android (Zalo, Drive, email) - phần không dính Android của [LibraryPlugin.shareBook]:
+ * "Chia sẻ…" một cuốn qua bảng chia sẻ của Android (Zalo, Drive, email) - phần không dính Android:
  * file gửi đi ghi vào `cacheDir/share/<tên sách>.abook` (FileProvider phục vụ cả `cacheDir`, res/xml/file_paths.xml), tên như "Lưu
  * thành…" ([BookDocumentWriter.defaultName]). App nhận đọc file sau khi bảng chia sẻ đã đóng, nên không xoá ngay: dọn lúc mở app.
  */

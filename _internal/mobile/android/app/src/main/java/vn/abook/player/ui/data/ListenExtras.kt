@@ -8,7 +8,7 @@ import java.util.Locale
 import java.util.TimeZone
 
 /*
- * Phần của trang sách mà bản WebView có và native từng chưa: lịch sử nghe, hồ sơ nghe, dàn nhân vật. Viết lại từ listen/BookScreen.tsx (HistoryTab, RecordPicker, CastList,
+ * Phần của trang sách: lịch sử nghe, hồ sơ nghe, dàn nhân vật. Viết lại từ listen/BookScreen.tsx (HistoryTab, RecordPicker, CastList,
  * PersonRow), studio/CastEdits.tsx, studio/MergePeople.tsx, listen/voiceTone.ts - cùng chữ, cùng luật. Hàm thuần, không Android, không Compose ngoài @Immutable -
  * thử trên JVM (ListenExtrasTest).
  */
@@ -85,7 +85,7 @@ object History {
     }
 
     /** Dòng đầu của một lượt: "13:57-14:20 · 23 phút". */
-    fun headline(session: ListenSession, zone: TimeZone = TimeZone.getDefault()): String = "${clockRange(session, zone)} · ${Fmt.length(session.listened)}"
+    fun headline(session: ListenSession, zone: TimeZone = TimeZone.getDefault()): String = dotJoin(clockRange(session, zone), Fmt.length(session.listened))
 
     /** Dòng phụ: "Chương 3 0:12 → Chương 4 1:05"; chương đã gỡ khỏi sách thì "chương đã gỡ". */
     fun route(session: ListenSession, titleOf: (Int) -> String?): String {
@@ -304,7 +304,7 @@ object Cast {
     fun pendingLine(person: CastMember): String? {
         val pending = person.pendingVoice ?: return null
         val parts = listOfNotNull(pending.preset.takeIf { it.isNotEmpty() }?.let { "giọng ${pending.shown}" }, pending.gender.lowercase().takeIf { it.isNotEmpty() })
-        return "$WAITING:" + if (parts.isEmpty()) "" else " ${parts.joinToString(" · ")}"
+        return "$WAITING:" + if (parts.isEmpty()) "" else " ${parts.dotJoined()}"
     }
 
     /** "Đang chờ máy làm sách: gộp vào Lucien". */

@@ -253,7 +253,7 @@ class ExportScreenTest {
 
     private fun notStarted(dark: Boolean) {
         source.folder = "Music"
-        source.startError = "Không mở được thư mục đã chọn - chọn lại nơi lưu"
+        source.startError = "Chưa mở được thư mục đã chọn - chọn lại nơi lưu"
         show(dark = dark)
         tap("export_start")
         rule.onNodeWithTag("export_problem").assertIsDisplayed()

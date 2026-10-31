@@ -15,7 +15,7 @@ import { PlayerProvider, usePlayer } from "./player";
 vi.mock("./OnlineVoicePrompt", () => ({ OnlineVoicePrompt: () => null }));
 vi.mock("./readAloudVoice", async (original) => ({ ...(await original<typeof import("./readAloudVoice")>()), voicesOf: async () => [] }));
 
-const PLAY_ERROR = "Không phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại.";
+const PLAY_ERROR = "Chưa phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại.";
 const audio = [1, 2].map((id) => ({ id, title: `Chương ${id}`, fullTitle: `Chương ${id}`, available: true, duration: 100 })) as ListenChapter[];
 const text = audio.map((chapter) => ({ ...chapter, state: "text" })) as ListenChapter[];
 const bookOf = (chapters: ListenChapter[]) => ({ id: "a", title: "A", narrator: "Giọng", complete: true, chapters, state: { chapters: {} } }) as ListenBook;

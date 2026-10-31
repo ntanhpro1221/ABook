@@ -225,12 +225,12 @@ class ExportStateTest {
     @Test
     fun `a start the core refuses stays on the options with the reason`() {
         source.folder = "Music"
-        source.startError = "Không mở được thư mục đã chọn - chọn lại nơi lưu"
+        source.startError = "Chưa mở được thư mục đã chọn - chọn lại nơi lưu"
         val exports = state()
         exports.open(book)
         exports.start(book)
         assertEquals(ExportPhase.Idle, exports.phase())
-        assertEquals("Không mở được thư mục đã chọn - chọn lại nơi lưu", exports.ui("b1").value.problem)
+        assertEquals("Chưa mở được thư mục đã chọn - chọn lại nơi lưu", exports.ui("b1").value.problem)
     }
 
     @Test
@@ -254,10 +254,10 @@ class ExportStateTest {
         val exports = state()
         exports.open(book)
         exports.start(book)
-        source.events.tryEmit(event { copy(error = "Không ghi được vào thư mục đã chọn") })
+        source.events.tryEmit(event { copy(error = "Chưa ghi được vào thư mục đã chọn") })
         source.startGate!!.complete(Unit)
-        assertEquals(ExportPhase.Failed(ExportKind.Mp3, "Không ghi được vào thư mục đã chọn"), exports.phase())
-        assertEquals("Không xuất được", exports.hint("b1").value)
+        assertEquals(ExportPhase.Failed(ExportKind.Mp3, "Chưa ghi được vào thư mục đã chọn"), exports.phase())
+        assertEquals("Chưa xuất được", exports.hint("b1").value)
     }
 
     @Test
@@ -357,7 +357,7 @@ class ExportStateTest {
         exports.start(book)
         source.events.tryEmit(event { copy(error = "Hết chỗ trống trên điện thoại hoặc ở nơi lưu - dọn bớt rồi xuất lại") })
         assertEquals(ExportPhase.Failed(ExportKind.Mp3, "Hết chỗ trống trên điện thoại hoặc ở nơi lưu - dọn bớt rồi xuất lại"), exports.phase())
-        assertEquals("Không xuất được", exports.hint("b1").value)
+        assertEquals("Chưa xuất được", exports.hint("b1").value)
     }
 
     @Test
@@ -469,7 +469,7 @@ class ExportStateTest {
         assertEquals("", exports.ui("b1").value.problem)
         source.openWorks = false
         exports.openFile("b1", "content://doc/a.m4b")
-        assertEquals("Không mở được từ đây - mở file bằng app Tệp", exports.ui("b1").value.problem)
+        assertEquals("Chưa mở được từ đây - mở file bằng app Tệp", exports.ui("b1").value.problem)
         exports.openFolder("b1", "content://tree/Music")
         assertEquals("Máy không mở được thư mục - mở app Tệp rồi vào thư mục đã chọn", exports.ui("b1").value.problem)
         exports.openFolder("b1", "content://tree/Music", "Music/Sách")
@@ -478,7 +478,7 @@ class ExportStateTest {
         assertEquals(listOf("content://doc/a.m4b" to "Truyện thử"), shared)
         shareWorks = false
         exports.share("b1", "content://doc/a.m4b", "Truyện thử")
-        assertEquals("Không gửi được từ đây - mở file bằng app Tệp", exports.ui("b1").value.problem)
+        assertEquals("Chưa gửi được từ đây - mở file bằng app Tệp", exports.ui("b1").value.problem)
     }
 
     @Test

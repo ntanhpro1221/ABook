@@ -62,4 +62,28 @@ class CopyRulesTest {
         assertEquals(0, offences(listOf("""BasicText("Khoá giọng trực tuyến")""", """BasicText("Tuỳ chọn")""", """BasicText("Quý khách")""")).size)
         assertEquals(0, offences(listOf("""// "Khóa" kiểu mới trong chú thích""", """BasicText("Xong")""")).size)
     }
+
+    // ---- "Không X được": câu cụt (soát 31-10) - nói "Chưa X được" kèm việc nên làm ----
+
+    private val cutSentence = Regex("""Không [^"]{1,30} được""")
+
+    private fun cutSentences(lines: List<String>): List<String> = lines.flatMapIndexed { index, raw ->
+        val trimmed = raw.trimStart()
+        if (trimmed.startsWith("//") || trimmed.startsWith("*") || trimmed.startsWith("/*") || "AppLog." in raw) emptyList()
+        else literal.findAll(raw.substringBefore(" // ")).map { it.value.trim('"') }.filter { cutSentence.containsMatchIn(it) }.map { "dòng ${index + 1}: $it" }.toList()
+    }
+
+    @Test
+    fun noUiStringIsAClippedKhongXDuoc() {
+        val offenders = (root.walkTopDown() + core.walkTopDown()).filter { it.isFile && it.extension == "kt" }
+            .filter { it.relativeTo(root).invariantSeparatorsPath !in sampleText && it.relativeTo(core).invariantSeparatorsPath !in notUiText }
+            .flatMap { file -> cutSentences(file.readLines()).map { "${file.name} $it" } }.toList()
+        assertTrue("Câu cụt 'Không … được' (dùng 'Chưa … được' + việc nên làm): $offenders", offenders.isEmpty())
+    }
+
+    @Test
+    fun theClippedSentenceRuleCatchesAndLetsThrough() {
+        assertEquals(1, cutSentences(listOf("""BasicText("Không mở được sách")""")).size)
+        assertEquals(0, cutSentences(listOf("""BasicText("Chưa mở được sách")""", """BasicText("Không có sách")""", """// "Không mở được" cũ""", """AppLog.w("Không mở được")""")).size)
+    }
 }

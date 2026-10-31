@@ -24,6 +24,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Density
@@ -32,6 +33,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -77,8 +79,15 @@ class NowPlayingWindowState(private val scope: CoroutineScope) {
     private val progressState: State<Float> = progress.asState()
     internal val flight = WindowFlight()
 
-    /** The window is composed: from the build frame of an opening until its closing motion has ended. */
+    /** Cửa sổ đang mở hoặc đang chuyển động: từ lúc bắt đầu mở tới khi cú thu về kết thúc. */
     var shown by mutableStateOf(false)
+        private set
+
+    /**
+     * Cửa sổ nằm trong cây. Từ lần mở đầu tiên, hay từ [park], nó ở lại đó - đã dàn trang, "đỗ" (không thấy, không chạm tới được, không có trong trợ năng) -
+     * nên lần mở sau không phải gánh khung dựng (dựng cả cửa sổ là 63 ms trên OPPO).
+     */
+    var composed by mutableStateOf(false)
         private set
     var reading by mutableStateOf(false)
 
@@ -98,18 +107,32 @@ class NowPlayingWindowState(private val scope: CoroutineScope) {
     /** Where the window container is now, in the overlay's pixels (what the user sees: the bar at 0, the whole layer at 1). */
     internal fun containerBounds(width: Float, height: Float): Rect = flight.container(progress.value, width, height)
 
+    /** Đưa cửa sổ vào cây ở dạng đỗ, trước lần mở đầu (lớp cửa sổ gọi khi app đã rảnh); đỗ rồi thì ở lại tới khi [unpark]. */
+    fun park() {
+        composed = true
+    }
+
+    /** Đưa cửa sổ đỗ ra khỏi cây (không còn cuốn nào để phát); cửa sổ đang mở thì giữ nguyên. */
+    fun unpark() {
+        if (!shown) composed = false
+    }
+
     fun open() {
         motion?.cancel()
         motion = scope.launch {
             if (!shown) {
                 flight.ready = false
                 progress.snapTo(0f)
-                // The window is composed and laid out hidden; the overlay's first layout (same frame) opens the gate, and only then are the rectangles
-                // of the bar and of the parts known. The motion starts on the very next frame: no waiting frames.
+                // Chưa đỗ: cửa sổ được dựng và dàn trang khi còn ẩn; lần dàn trang đầu của lớp phủ (cùng khung) mở cổng, và chỉ khi đó mới biết các hình chữ nhật
+                // của thanh và của các phần. Đã đỗ: nó đã dàn trang sẵn, chỉ cần một khung để lớp rời chỗ đỗ (các hình chữ nhật đọc xuyên qua lớp ấy).
+                // Chuyển động bắt đầu ngay khung sau trong cả hai trường hợp.
+                val warm = composed && flight.overlay?.isAttached == true
                 val laidOut = CompletableDeferred<Unit>()
-                flight.laidOut = laidOut
+                if (!warm) flight.laidOut = laidOut
+                composed = true
                 shown = true
-                withTimeoutOrNull(250) { laidOut.await() }
+                flight.parked = false
+                if (warm) withFrameNanos { } else withTimeoutOrNull(250) { laidOut.await() }
                 flight.laidOut = null
             }
             dragging = false
@@ -130,8 +153,12 @@ class NowPlayingWindowState(private val scope: CoroutineScope) {
         motion = scope.launch {
             flight.capture()
             progress.animateTo(0f, tween(MotionMs.SLOW_OUT))
-            shown = false
+            hide()
         }
+    }
+    private fun hide() {
+        shown = false
+        flight.parked = true
     }
     suspend fun dragClose(progress: Float) {
         motion?.cancel()
@@ -143,7 +170,7 @@ class NowPlayingWindowState(private val scope: CoroutineScope) {
         flight.capture()
         if (commit) {
             progress.animateTo(0f, tween(MotionMs.SLOW_OUT))
-            shown = false
+            hide()
         } else {
             progress.animateTo(1f, tween(MotionMs.SLOW))
         }
@@ -160,6 +187,9 @@ class NowPlayingWindowState(private val scope: CoroutineScope) {
 internal class WindowFlight {
     /** False while the window is composed but not yet measured: the container is invisible and the bar is still the only thing on screen. */
     var ready by mutableStateOf(false)
+
+    /** Đúng khi cửa sổ đã dựng đang chờ lần mở kế: lớp nằm dưới màn hình nên không cái chạm nào tới nút của nó (đặt lúc thu về xong, bỏ lúc mở). */
+    var parked by mutableStateOf(true)
     var density: Density = Density(1f)
     var overlay: LayoutCoordinates? = null
 
@@ -209,6 +239,7 @@ internal class WindowFlight {
      * (its own cover, initials or art, its own text weights), never the window's scaled copy of them, so nothing swaps when the motion starts or lands.
      */
     fun GraphicsLayerScope.reveal(progress: State<Float>) {
+        if (parked) { alpha = 0f; translationY = size.height; return }
         if (!ready) { alpha = 0f; return }
         val p = progress.value
         if (p >= 1f) return
@@ -239,6 +270,9 @@ internal class WindowFlight {
     }
 }
 
+/** Thời gian yên sau khi có cuốn, trước khi dựng sẵn cửa sổ cho lần mở đầu (ba tab được dựng trong ~400 ms đầu). */
+internal const val PARK_AFTER_MS = 900L
+
 /** How much of the window shows at progress `p`: nothing at 0 (the real bar), all of it from [FADE_IN]. */
 internal fun windowAlpha(p: Float): Float = (p / FADE_IN).coerceIn(0f, 1f)
 
@@ -266,6 +300,7 @@ fun NowPlayingLayer(
     model: NowPlayingModel,
     window: NowPlayingWindowState = rememberNowPlayingWindowState(),
     sampleClock: Boolean = true,
+    parkAfterMs: Long = PARK_AFTER_MS,
     content: @Composable () -> Unit,
 ) {
     val flight = window.flight
@@ -278,6 +313,17 @@ fun NowPlayingLayer(
         combine(playing, open) { isPlaying, isOpen -> isPlaying && isOpen }.collectLatest { running ->
             model.position.sample()
             if (running && sampleClock) while (true) withFrameNanos { model.position.sample() }
+        }
+    }
+    // Có cuốn rồi và app đã yên một lúc thì dựng sẵn cửa sổ (đỗ), để lần mở đầu nhẹ như các lần sau.
+    LaunchedEffect(model, window, parkAfterMs) {
+        if (parkAfterMs < 0) return@LaunchedEffect
+        model.state.map { it.bookId.isNotEmpty() }.distinctUntilChanged().collectLatest { has ->
+            if (has) {
+                delay(parkAfterMs)
+                withFrameNanos { }
+                window.park()
+            } else window.unpark()
         }
     }
     PrefetchPlayerCover(remember(model) { model.state.map { it.cover }.distinctUntilChanged() })
@@ -296,7 +342,7 @@ fun NowPlayingLayer(
                     throw cancelled
                 }
             }
-            if (window.shown) {
+            if (window.composed) {
                 val state by model.state.collectAsState()
                 val parts = remember(window) { SharedPlayerParts(flight, progress) }
                 Box(
@@ -305,7 +351,9 @@ fun NowPlayingLayer(
                         .graphicsLayer { with(flight) { reveal(progress) } }
                         // The window owns every touch inside it: nothing reaches the screens underneath, in reading mode too.
                         .pointerInput(Unit) {}
-                        .dismissPlayerOnDrag(window, !window.reading && !window.sheetOpen),
+                        .dismissPlayerOnDrag(window, !window.reading && !window.sheetOpen)
+                        // Đang đỗ: cửa sổ nằm trong cây nhưng không ở trên màn hình, nên cũng không có trong cây ngữ nghĩa (trợ năng, test).
+                        .then(if (flight.parked) Modifier.clearAndSetSemantics {} else Modifier),
                 ) {
                     NowPlayingScreen(state, model, window, parts, progress, Modifier.fillMaxSize().testTag("now_playing"))
                 }

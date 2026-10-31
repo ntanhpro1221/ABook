@@ -355,7 +355,7 @@ export function MyMusic({ bookId, previewing, onPreview }: { bookId: string; pre
       setRemoving(null);
       toast("Đã xoá khỏi Nhạc của tôi");
     },
-    onError: (error: Error) => toast.error("Không xoá được bài này", { description: error.message }),
+    onError: (error: Error) => toast.error("Chưa xoá được bài này", { description: error.message }),
   });
   const tracks = data?.tracks ?? [];
   return (
@@ -428,12 +428,12 @@ function MoodsPanel({ bookId, moods, onCompute }: { bookId: string; moods?: { ru
   const download = useMutation({
     mutationFn: () => api<MoodsModel>("/api/music/moods-model", { method: "POST" }),
     onSuccess: (result) => client.setQueryData(key, result),
-    onError: (error: Error) => toast.error("Không tải được phần đọc không khí", { description: error.message }),
+    onError: (error: Error) => toast.error("Chưa tải được phần đọc không khí", { description: error.message }),
   });
   const compute = useMutation({
     mutationFn: () => api<MusicView>(`/api/books/${bookId}/music/moods`, { method: "POST" }),
     onSuccess: onCompute,
-    onError: (error: Error) => toast.error("Không đọc lại được không khí các đoạn", { description: error.message }),
+    onError: (error: Error) => toast.error("Chưa đọc lại được không khí các đoạn", { description: error.message }),
   });
   if (!data) return <MotionRegion />;
   const running = Boolean(moods?.running) || compute.isPending;
@@ -552,7 +552,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
       refreshSoon();
       if (result.error) toast.warning("Đã lưu lựa chọn", { description: result.error });
     },
-    onError: (error: Error) => toast.error("Không đổi được nhạc nền", { description: error.message }),
+    onError: (error: Error) => toast.error("Chưa đổi được nhạc nền", { description: error.message }),
   });
   const cancelDownload = useMutation({
     mutationFn: () => api<MusicView>(`/api/books/${bookId}/music/download/cancel`, { method: "POST" }),
@@ -561,7 +561,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
       client.setQueryData(key, { ...result, download: undefined });
       toast("Đã dừng tải nhạc nền");
     },
-    onError: (error: Error) => toast.error("Không dừng được việc tải nhạc", { description: error.message }),
+    onError: (error: Error) => toast.error("Chưa dừng được việc tải nhạc", { description: error.message }),
   });
   // Đổi bài / Chọn lại nhạc vừa xong: máy bắt đầu tải bài mới ở nền - hỏi lại ngay để hiện tiến độ.
   const refreshSoon = () => window.setTimeout(() => void client.invalidateQueries({ queryKey: key }), 600);
@@ -573,7 +573,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
       announceChange(bookId);
       refreshSoon();
     },
-    onError: (error: Error) => toast.error("Không chọn lại được nhạc", { description: error.message }),
+    onError: (error: Error) => toast.error("Chưa chọn lại được nhạc", { description: error.message }),
   });
 
   /** Bỏ một bài cho cả cuốn: lặng lẽ thì khó hiểu vì sao các đoạn khác cũng đổi bài, nên báo (kèm số đoạn đang dùng bài

@@ -1,6 +1,6 @@
 // Kiểm lệnh gốc; trình bày và Back của toast kiểm riêng trong layoutC11.dom.test.tsx.
 vi.mock("@/shared/ToastDetails", () => ({ prepareToast: (args: unknown[]) => args }));
-import { expect, it, vi } from "vitest";
+import { beforeAll, expect, it, vi } from "vitest";
 import { ReadCancelled, readSessions } from "@/listen/importQueue";
 
 const mocks = vi.hoisted(() => ({ navigate: vi.fn(), invalidate: vi.fn(), api: vi.fn(), success: vi.fn(), error: vi.fn(), warning: vi.fn() }));
@@ -9,6 +9,11 @@ vi.mock("react-router", async (original) => ({ ...await original<typeof import("
 vi.mock("@tanstack/react-query", async (original) => ({ ...await original<typeof import("@tanstack/react-query")>(), useQueryClient: () => ({ invalidateQueries: mocks.invalidate }) }));
 vi.mock("@/studio/api", async (original) => ({ ...await original<typeof import("@/studio/api")>(), api: mocks.api }));
 vi.mock("sonner", async (original) => ({ ...await original<typeof import("sonner")>(), toast: Object.assign(vi.fn(), { message: vi.fn(), success: mocks.success, error: mocks.error, warning: mocks.warning }) }));
+
+// App kéo theo gần cả giao diện: lần nạp đầu khi chạy cả bộ test song song từng quá 5 giây (hạn mặc định của một test) - nạp trước, ngoài hạn ấy.
+beforeAll(async () => {
+  await import("./App");
+}, 60_000);
 
 it("hỏi trước khi thay bằng file cũ và chỉ gửi xác nhận khi bạn chọn thay", async () => {
   vi.clearAllMocks();

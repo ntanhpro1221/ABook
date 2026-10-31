@@ -12,7 +12,7 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicText
+import vn.abook.player.ui.components.BasicText
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -52,15 +52,19 @@ fun NowPlayingScreen(
     val mode = animateFloatAsState(if (window.reading) 1f else 0f, tween(MotionMs.SLOW), label = "reading-mode")
     var controlsDimmed by remember { mutableStateOf(false) }
     val dim = animateFloatAsState(if (controlsDimmed && window.reading) 0.42f else 1f, tween(MotionMs.FAST), label = "controls-visibility")
-    LaunchedEffect(window.reading, state.bookId, state.chapterId) {
-        if (window.reading) model.loadReadAlong()
+    // Cửa sổ đỗ sẵn trong cây (WindowFlight.parked) thì không đọc theo: chỉ tính là đang đọc khi cửa sổ mở (nằm trong cây, `shown` chỉ được đọc khi đang ở chế độ đọc).
+    val live = window.reading && window.shown
+    LaunchedEffect(live, state.bookId, state.chapterId) {
+        if (live) model.loadReadAlong()
     }
     // Lời nhắc ở đầu chữ cần biết máy có giọng đọc không (chương đọc to).
-    LaunchedEffect(window.reading) { if (window.reading) model.loadVoices() }
-    DisposableEffect(model, window.reading) {
-        model.setReadAlongActive(window.reading)
+    LaunchedEffect(live) { if (live) model.loadVoices() }
+    DisposableEffect(model, live) {
+        model.setReadAlongActive(live)
         onDispose { model.setReadAlongActive(false) }
     }
+    // Đóng cửa sổ thì chữ mờ do cuộn tay trở lại rõ (trước đây cây bị huỷ nên lần mở sau luôn rõ).
+    LaunchedEffect(live) { if (!live) controlsDimmed = false }
     // Giọng máy đọc đoạn đầu mà chờ lâu hơn ~1,5 giây mới nói "Đang chuẩn bị giọng đọc" (đệm một nhịp giữa câu không được nháy chữ).
     val waiting = state.playing && state.buffering
     var waited by remember { mutableStateOf(false) }
@@ -98,7 +102,7 @@ fun NowPlayingScreen(
             val textShown by remember { derivedStateOf { mode.value > 0f } }
             Layout(modifier = Modifier.weight(1f).fillMaxWidth(), content = {
                 Box(Modifier.fillMaxSize()) {
-                  if (window.reading || textShown) {
+                  if ((window.reading || textShown) && window.shown) {
                     val reading by model.readAlong.collectAsState()
                     val hint = ReadHint.of(state.speaking, state.voices.isNotEmpty(), reading.paragraphs.any { it.timed }, window.look.tapped)
                     val nextTitle = if (state.hasNext) state.chapters.getOrNull(state.chapters.indexOfFirst { it.id == state.chapterId } + 1)?.title else null
@@ -211,7 +215,8 @@ fun NowPlayingScreen(
             PlayerNoteLine(model, Modifier.playerReveal(windowProgress))
             EndNotice(state, model, window, Modifier.playerReveal(windowProgress))
             // Gạt lời báo đi tới lần lỗi mới (web: "Đóng lời báo"): người đang làm việc khác không bị nó đè mãi.
-            var dismissed by remember(state.error) { mutableStateOf(false) }
+            val errorOpen = state.error.isNotBlank() && window.shown
+            var dismissed by remember(state.error, errorOpen) { mutableStateOf(false) }
             if (state.error.isNotBlank() && !dismissed) PlayerAlert(state, model, window, Modifier.playerReveal(windowProgress), onDismiss = { dismissed = true })
         }
         PlayerSheets(state, model, window)
@@ -249,7 +254,8 @@ fun PlayerSeekBar(durationMs: Long, position: PlayerPosition, onSeek: (Long) -> 
     var seconds by remember { mutableLongStateOf(0L) }
     LaunchedEffect(position) { snapshotFlow { position.milliseconds.value / 1000 }.distinctUntilChanged().collect { seconds = it } }
     Column(modifier.fillMaxWidth()) {
-        Canvas(Modifier.fillMaxWidth().height(44.dp).testTag("player_seek")
+        // Thanh tua có lớp riêng: đang phát thì mỗi khung nó vẽ lại, và nếu không có lớp riêng thì cả lớp trong của cửa sổ (chữ, nút) ghi lại theo (~3 ms luồng giao diện mỗi khung trên OPPO).
+        Canvas(Modifier.fillMaxWidth().height(44.dp).graphicsLayer {}.testTag("player_seek")
             .semantics {
                 contentDescription = "Vị trí trong chương"
                 progressBarRangeInfo = ProgressBarRangeInfo((seconds * 1000).toFloat(), 0f..durationMs.coerceAtLeast(1).toFloat())

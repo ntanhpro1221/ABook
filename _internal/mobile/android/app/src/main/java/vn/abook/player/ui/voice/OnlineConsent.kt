@@ -5,8 +5,8 @@ import vn.abook.player.formatSize
 import androidx.compose.runtime.Immutable
 
 /*
- * Phần thuần của hộp hỏi trước khi đọc bằng giọng trực tuyến và của khối lỗi "giọng đang chọn không đọc được" của trình phát - cùng lời, cùng luật với bản WebView
- * (listen/onlineConsent.ts, listen/readAloudVoice.ts, listen/vieneuModule.ts). Không Android: thử trên JVM.
+ * Phần thuần của hộp hỏi trước khi đọc bằng giọng trực tuyến và của khối lỗi "giọng đang chọn không đọc được" của trình phát.
+ * Không Android: thử trên JVM.
  */
 
 /** Một giọng như hộp hỏi thấy: `online` = chữ của sách rời máy khi đọc bằng nó. */

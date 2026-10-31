@@ -1,4 +1,4 @@
-// Chỉ cho test chạy trên Node (pdfPages*.test.ts đọc file mẫu trong tests/fixtures, hay PDF thật của máy): vài chữ ký tối thiểu, khỏi kéo @types/node vào gói giao diện.
+// Chỉ cho test chạy trên Node (test đọc file mẫu trong tests/fixtures): vài chữ ký tối thiểu, khỏi kéo @types/node vào gói giao diện.
 declare module "node:fs" {
   export function readFileSync(path: URL | string): Uint8Array & { toString(encoding?: string): string };
   export function readFileSync(path: URL | string, encoding: string): string;

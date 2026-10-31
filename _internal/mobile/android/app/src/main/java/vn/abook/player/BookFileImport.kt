@@ -190,7 +190,7 @@ object BookFileImport {
         val copy = File(context.cacheDir, "import-${System.nanoTime()}.abook")
         try {
             sizeOf(context, uri)?.let { requireRoom(context.cacheDir, it + ROOM_MARGIN) }
-            val input = context.contentResolver.openInputStream(uri) ?: throw Refused("Không đọc được file.")
+            val input = context.contentResolver.openInputStream(uri) ?: throw Refused("Chưa đọc được file.")
             input.use { source -> copy.outputStream().use { source.copyTo(it) } }
             return importFile(copy, allowOlder = allowOlder)
         } finally {
@@ -678,14 +678,14 @@ object BookFileImport {
 
     private fun replace(books: File, staging: File, target: File, id: String) = synchronized(Store) {
         if (!target.exists()) {
-            if (!staging.renameTo(target)) throw Refused("Không ghi được sách vào thư viện.")
+            if (!staging.renameTo(target)) throw Refused("Chưa ghi được sách vào thư viện.")
             return@synchronized
         }
         val retired = File(books, ".$id.${System.nanoTime()}.old")
-        if (!target.renameTo(retired)) throw Refused("Không thay được bản cũ của sách.")
+        if (!target.renameTo(retired)) throw Refused("Chưa thay được bản cũ của sách.")
         if (!staging.renameTo(target)) {
             retired.renameTo(target)
-            throw Refused("Không ghi được sách vào thư viện.")
+            throw Refused("Chưa ghi được sách vào thư viện.")
         }
         retired.deleteRecursively()
     }

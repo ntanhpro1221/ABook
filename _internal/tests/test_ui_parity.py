@@ -3,9 +3,12 @@
 Giai đoạn này chỉ kiểm file sinh ra còn mới; BẢN THÂN chỗ lệch (chữ khác nhau, icon khác nhau) được báo cáo trong file chứ không làm test hỏng.
 """
 import importlib.util
+import json
 import sys
 import time
 from pathlib import Path
+
+import pytest
 
 SCRIPT = Path(__file__).resolve().parent.parent / "scripts" / "ui_parity.py"
 
@@ -63,7 +66,7 @@ def test_pairs_file_is_honest():
     for spec in specs:
         d = tool.pair_diff(web, native, spec)
         assert d["web_files"] and d["native_files"], f"cặp {spec['id']} không khớp file nào"
-        for kind in ("allow", "missing", "deferred"):
+        for kind in ("allow", "missing", "deferred", "wording_for_lead"):
             for entry in spec.get(kind, []):
                 assert entry["side"] in ("web", "native") and entry.get("reason", "").strip(), f"{spec['id']}.{kind}: thiếu lý do / phía: {entry}"
                 assert ("label" in entry) + ("match" in entry) + ("file" in entry) == 1, f"{spec['id']}.{kind}: cần đúng một trong label / match / file: {entry}"
@@ -89,3 +92,99 @@ def test_icon_table_flags_a_wrong_icon():
     wrong = tool.Scan()
     wrong.pairs.append(tool.Pair("native", "ui/x.kt", 1, "Bỏ ghép", "x", "call"))
     assert tool.icon_violations(tool.Scan(), wrong)
+
+
+# --- máy dò phải CẮN: dựng cây nguồn giả (web + Kotlin) trong thư mục tạm, trỏ máy dò vào đó, không đụng file thật -------------------------
+
+WEB_TSX = """export function Screen() {
+  return (
+    <div>
+      <button>{label}</button>
+    </div>
+  );
+}
+""".replace("{label}", "%s")
+KT_SCREEN = """package vn.abook.player.ui.screens
+
+fun Screen() {
+    BasicText("%s")
+}
+"""
+
+
+def _synthetic(tool, monkeypatch, tmp_path, web_label, native_label, spec_extra=None, web_extra=None, native_extra=None):
+    """Một màn web (desktop/Screen.tsx) và một màn native (screens/Screen.kt) cặp với nhau trong `tmp_path`; trả về (web_scan, native_scan)."""
+    web_dir = tmp_path / "ui" / "src" / "desktop"
+    kt_dir = tmp_path / "mobile" / "android" / "app" / "src" / "main" / "java" / "vn" / "abook" / "player" / "ui" / "screens"
+    web_dir.mkdir(parents=True)
+    kt_dir.mkdir(parents=True)
+    for d in ("listen", "shared", "studio"):
+        (tmp_path / "ui" / "src" / d).mkdir()
+    (web_dir / "Screen.tsx").write_bytes((WEB_TSX % web_label + (web_extra or "")).encode("utf-8"))
+    (kt_dir / "Screen.kt").write_bytes((KT_SCREEN % native_label + (native_extra or "")).encode("utf-8"))
+    spec = {"id": "synthetic", "web": ["desktop/Screen.tsx"], "native": ["screens/Screen.kt"], "sentences": True}
+    spec.update(spec_extra or {})
+    pairs = tmp_path / "pairs.json"
+    pairs.write_bytes(json.dumps({"_doc": "x", "pairs": [spec]}, ensure_ascii=False).encode("utf-8"))
+    monkeypatch.setattr(tool, "WEB", tmp_path / "ui" / "src")
+    monkeypatch.setattr(tool, "KT", kt_dir.parent)
+    monkeypatch.setattr(tool, "KT_CORE", kt_dir.parent.parent)
+    monkeypatch.setattr(tool, "PAIRS", pairs)
+    monkeypatch.setattr(tool, "rel", lambda path: path.relative_to(tmp_path).as_posix())
+    monkeypatch.setattr(tool, "icon_wrappers", lambda: {})
+    monkeypatch.setattr(tool, "glyph_icons", lambda: {})
+    return tool.web_scan(), tool.native_scan()
+
+
+def test_detector_bites_a_label_that_differs_between_native_and_desktop(monkeypatch, tmp_path):
+    tool = _tool()
+    web, native = _synthetic(tool, monkeypatch, tmp_path, "Xoá khỏi thư viện", "Xoá khỏi điện thoại")
+    problems = tool.hard_checks(web, native)
+    assert any("[synthetic] chỉ có ở web" in p and "Xoá khỏi thư viện" in p for p in problems), problems
+    assert any("[synthetic] chỉ có ở native" in p and "Xoá khỏi điện thoại" in p for p in problems), problems
+
+
+def test_detector_passes_when_both_sides_say_the_same(monkeypatch, tmp_path):
+    tool = _tool()
+    web, native = _synthetic(tool, monkeypatch, tmp_path, "Thêm sách", "Thêm sách")
+    assert tool.hard_checks(web, native) == []
+
+
+def test_detector_pairs_are_checked_both_ways_unless_only_says_otherwise(monkeypatch, tmp_path):
+    tool = _tool()
+    web, native = _synthetic(tool, monkeypatch, tmp_path, "Chỉ ở máy tính", "Chỉ ở điện thoại", {"only": "native"})
+    problems = tool.hard_checks(web, native)
+    assert any("chỉ có ở native" in p for p in problems) and not any("chỉ có ở web" in p for p in problems), problems
+    web, native = _synthetic(tool, monkeypatch, tmp_path / "again", "Chỉ ở máy tính", "Chỉ ở điện thoại", {"only": "web"})
+    problems = tool.hard_checks(web, native)
+    assert any("chỉ có ở web" in p for p in problems) and not any("chỉ có ở native" in p for p in problems), problems
+
+
+@pytest.mark.parametrize("kind", ["allow", "missing", "wording_for_lead"])
+def test_listed_label_is_excused_only_on_its_own_side(kind, monkeypatch, tmp_path):
+    tool = _tool()
+    entries = [{"side": "native", "label": "Xoá khỏi điện thoại", "reason": "test"}, {"side": "web", "label": "Xoá khỏi thư viện", "reason": "test"}]
+    web, native = _synthetic(tool, monkeypatch, tmp_path, "Xoá khỏi thư viện", "Xoá khỏi điện thoại", {kind: entries})
+    assert tool.hard_checks(web, native) == []
+    diff = tool.pair_diff(web, native, tool.pair_specs()[0])
+    counted = {"allow": "allowed", "missing": "missing", "wording_for_lead": "wording"}[kind]
+    assert len(diff[counted]) == 2
+    # Mục khai nhầm phía không che được nhãn của phía kia.
+    wrong = [{"side": "web", "label": "Xoá khỏi điện thoại", "reason": "test"}, {"side": "native", "label": "Xoá khỏi thư viện", "reason": "test"}]
+    web, native = _synthetic(tool, monkeypatch, tmp_path / "wrong", "Xoá khỏi thư viện", "Xoá khỏi điện thoại", {kind: wrong})
+    assert len(tool.hard_checks(web, native)) == 2
+
+
+def test_every_native_screen_file_belongs_to_a_checked_pair():
+    """Màn native mới phải được ghép với một màn máy tính (hay khai tường minh là bỏ qua): không file nào có chữ mà không ai so."""
+    tool = _tool()
+    native = tool.native_scan()
+    names = sorted({i.file[len(tool.NATIVE_ROOT):] for i in native.items})
+    checked: set[str] = set()
+    for spec in tool.pair_specs():
+        if spec.get("only") != "web":  # `only: web` không đòi nhãn native phải có ở web
+            checked |= set(tool.match_files(spec["native"], names))
+    skipped = {n for n in names if any(skip.split(":")[0].endswith(n) or n.endswith(skip.split(":")[0]) for skip in tool.COPY_SKIP_NATIVE)}
+    skipped |= {"editbook/EditBooks.kt"}  # tên chương giả "Chương N" cho sách chưa đọc được, không phải chữ giao diện
+    loose = [n for n in names if n not in checked and n not in skipped]
+    assert not loose, "file native có chữ mà không cặp màn nào so với máy tính (thêm vào scripts/ui_parity_pairs.json): " + ", ".join(loose)

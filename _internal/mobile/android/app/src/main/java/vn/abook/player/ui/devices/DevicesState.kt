@@ -300,7 +300,7 @@ class DevicesState(
         scope.launch {
             attempt { source.pair(address, form.digits, extra = state.paired) }
                 .onSuccess { pairedName ->
-                    notice.value = if (state.paired) "Đã ghép $pairedName" else "Đã kết nối với $pairedName"
+                    notice.value = "Đã ghép $pairedName"
                     pairFlow.update { it.copy(form = PairForm(), attempt = Attempt.Idle, adding = false, found = emptyList(), bluetooth = Bluetooth.Off) }
                     reload()
                 }
@@ -317,10 +317,10 @@ class DevicesState(
         }
     }
 
-    /** Mở Studio của máy tính `key` ở trình xem riêng. Null = đã mở, khác null = câu lỗi. */
+    /** Mở Studio của máy tính `key` ở màn native. Null = đã mở, khác null = câu lỗi. */
     suspend fun openStudio(key: String): String? {
         val result = attempt { source.studioTarget(key) }
-        result.onSuccess { (computer, path) -> links.openStudio(computer, path) }
+        result.onSuccess { (computer, route) -> links.openStudio(computer, route) }
         return result.exceptionOrNull()?.let { message(it) }
     }
 
@@ -389,7 +389,7 @@ class DevicesState(
         val running = event.running
         pairFlow.update { state ->
             val failed = when {
-                event.error != null -> state.failed + (event.id to DeviceText.failure("Tải bị gián đoạn", event.error))
+                event.error != null -> state.failed + (event.id to DeviceText.failure("Chưa tải xong về máy", event.error))
                 event.finished || event.cancelled -> state.failed - event.id
                 else -> state.failed
             }

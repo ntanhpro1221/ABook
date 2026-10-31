@@ -37,7 +37,7 @@ class LibraryMembershipTest {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
         val repo = LibraryRepo(context, scope)
         assertNull(repo.delete("local"))
-        assertFalse("cuốn nằm chờ ngay, không đợi hết hạn Hoàn tác (như bản WebView: bền qua tắt app)", file.exists())
+        assertFalse("cuốn nằm chờ ngay, không đợi hết hạn Hoàn tác (bền qua tắt app)", file.exists())
         assertTrue(repo.deletions.contains("local"))
         repo.deletions.undo()
         awaitTrue("cuốn về chỗ cũ") { file.isFile && !repo.deletions.contains("local") }

@@ -33,7 +33,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicText
+import vn.abook.player.ui.components.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
@@ -108,7 +108,7 @@ fun LibraryScreen(
     sheets: SheetHost,
     actions: LibraryActions,
     modifier: Modifier = Modifier,
-    backEnabled: Boolean = true,
+    backEnabled: () -> Boolean = { true },
     /** Thẻ "Tối qua" ở đầu lưới (sau đầu trang); null = không có (bản thử). */
     recap: (@Composable (List<ListenBook>) -> Unit)? = null,
 ) {
@@ -125,11 +125,17 @@ fun LibraryScreen(
         }
     }
     // Back đóng ô tìm trước - chỉ khi màn này đang là màn trên cùng (không bị trang sách phủ, không ở tab khác).
-    BackHandler(enabled = backEnabled && ui.searchOpen) { ui.closeSearch() }
+    SearchBack(ui, backEnabled)
     Box(modifier.fillMaxSize().onGloballyPositioned { coords[0] = it }) {
         LibraryGrid(books, ui, grid, covers, sheets, actions, top, recap) { coords[1] = it }
         SortMenu(ui, anchor, backEnabled)
     }
+}
+
+/** Back đóng ô tìm. Đọc `backEnabled` (trạng thái của tab / ngăn xếp) ở riêng chỗ này, để đổi tab không dựng lại cả màn Thư viện. */
+@Composable
+private fun SearchBack(ui: LibraryUiState, backEnabled: () -> Boolean) {
+    BackHandler(enabled = backEnabled() && ui.searchOpen) { ui.closeSearch() }
 }
 
 @Composable

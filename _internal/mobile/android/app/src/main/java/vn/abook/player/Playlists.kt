@@ -100,7 +100,7 @@ object Playlists {
         return span to (wrapped - span.start)
     }
 
-    /** Cài đặt > Nhạc nền > "Tự chọn nhạc nền cho sách chỉ có chữ" (`autoMusic` của PlayerPlugin.configure; mặc định bật, như `autoMusic` của
+    /** Cài đặt > Nhạc nền > "Tự chọn nhạc nền cho sách chỉ có chữ" (`autoMusic` của Cài đặt; mặc định bật, như `autoMusic` của
      *  preferences.json trên máy tính). Tắt thì sách chưa chọn nhạc không có nhạc; cuốn đã chọn (`music.playlist`) vẫn phát. */
     @Volatile
     var autoEnabled = true

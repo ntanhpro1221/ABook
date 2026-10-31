@@ -5,7 +5,7 @@ import android.net.Uri
 import org.json.JSONObject
 
 /**
- * Nhập nhạc vào "Nhạc của tôi" (MusicStore): một chỗ cho bản WebView (LibraryPlugin.pickMusic) và giao diện native (hộp chọn file của màn Nhạc của tôi). Nhập từng bản - một
+ * Nhập nhạc vào "Nhạc của tôi" (MusicStore): một chỗ cho giao diện (hộp chọn file của màn Nhạc của tôi). Nhập từng bản - một
  * bản hỏng không làm hỏng cả lượt -, báo tiến độ (xong, tổng) sau mỗi bản; trả đúng JSON của `my_music_import` ([LocalStudio.importAnswer]). Chạy ở luồng nền.
  */
 object MusicImport {

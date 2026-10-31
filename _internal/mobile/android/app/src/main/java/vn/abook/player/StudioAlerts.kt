@@ -1,5 +1,6 @@
 package vn.abook.player
 
+import vn.abook.player.ui.data.dotJoin
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -30,7 +31,7 @@ import java.util.concurrent.TimeUnit
  * công tắc không được đổ ra một loạt tin cũ.
  *
  * Hỏi mỗi 15 phút (WorkManager, mức ngắn nhất Android cho) khi có mạng, và mỗi lần mở app. Bấm thông báo mở Studio từ xa
- * (StudioActivity) đúng cuốn, đúng tab.
+ * (màn native) đúng cuốn, đúng tab.
  */
 object StudioAlerts {
     private const val CHANNEL = "studio"
@@ -150,7 +151,7 @@ object StudioAlerts {
                         else "Làm sách gặp sự cố") +
                             " · $progress — bạn mở Studio.", "/#/studio/$id")
                     "stopped" -> Alert("$id:stopped", "Đã dừng: $title", "Bạn đã bấm Dừng · $progress", "/#/studio/$id")
-                    else -> Alert("$id:stopped", "Đã dừng: $title", "${book.optString("statusLabel")} · $progress", "/#/studio/$id")
+                    else -> Alert("$id:stopped", "Đã dừng: $title", dotJoin(book.optString("statusLabel"), progress), "/#/studio/$id")
                 }
             // Máy tính rút sạc nên Studio tự tạm dừng (power_source.py): báo để người ta biết máy tuột sạc - 24-09 sạc tuột
             // 22:50 mà 00:07 mới có người thấy.
@@ -185,9 +186,8 @@ object StudioAlerts {
                 },
             )
         }
-        // Giao diện native: mở thẳng dự án ở đúng tab bằng màn native (mã máy, mã sách, tab - không bao giờ mã thiết bị); bản WebView mở trang Studio như cũ.
-        val open = (if (BuildConfig.NATIVE_UI) StudioRoute.put(Intent(context, NativeActivity::class.java), StudioLink.MAIN, StudioRoute.parse(path))
-            else Intent(context, StudioActivity::class.java).putExtra("path", path))
+        // Mở thẳng dự án ở đúng tab bằng màn native (mã máy, mã sách, tab - không bao giờ mã thiết bị).
+        val open = StudioRoute.put(Intent(context, NativeActivity::class.java), StudioLink.MAIN, StudioRoute.parse(path))
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         val tap = PendingIntent.getActivity(context, key.hashCode(), open,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)

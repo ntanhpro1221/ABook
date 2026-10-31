@@ -1,5 +1,7 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.ui.data.dotJoin
+import vn.abook.player.ui.data.dotJoined
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
@@ -15,7 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.text.BasicText
+import vn.abook.player.ui.components.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -76,7 +78,7 @@ fun StudioNewScreen(state: StudioNewState, onBack: () -> Unit, onCreated: (Strin
             PermissionCard(session.name, session::retry)
         } else {
             Column(Modifier.fillMaxWidth().padding(top = Dim.s4)) {
-                RowHint(StudioNewText.stepOf(state.step) + " · " + state.step.label, Modifier.testTag("studio_new_step"))
+                RowHint(dotJoin(StudioNewText.stepOf(state.step), state.step.label), Modifier.testTag("studio_new_step"))
                 StageProgress { StudioNewLogic.stepFraction(state.step) }
             }
             SheetPages(state.step, { it.ordinal }, "studio_new_pages") { shown ->
@@ -161,7 +163,7 @@ private fun UploadRow(state: StudioNewState, row: SourceRow) {
     val bad = row.status == UploadStatus.Failed || row.status == UploadStatus.TooBig || row.status == UploadStatus.NotStory
     val hint = when (row.status) {
         UploadStatus.Waiting -> StudioNewText.WAITING
-        UploadStatus.Sending -> StudioNewText.sending(row) + " · " + StudioNewText.percent(state.progressOf(row))
+        UploadStatus.Sending -> dotJoin(StudioNewText.sending(row), StudioNewText.percent(state.progressOf(row)))
         UploadStatus.Sent -> StudioNewText.SENT
         else -> row.problem
     }
@@ -195,7 +197,7 @@ private fun ChaptersStep(state: StudioNewState) {
                 for (line in scan?.errors.orEmpty() + scan?.notes.orEmpty()) Caption(line, Modifier.padding(top = Dim.s4).testTag("studio_new_scan_note"))
                 if (scan != null && scan.existing.isNotEmpty()) {
                     BasicText(StudioNewText.EXISTING, style = Abook.type.bodyStrong, modifier = Modifier.padding(top = Dim.s12).testTag("studio_new_existing"))
-                    for (book in scan.existing) RowHint("${book.title} · ${book.statusLabel}")
+                    for (book in scan.existing) RowHint(dotJoin(book.title, book.statusLabel))
                 }
             }
         }
@@ -212,7 +214,7 @@ private fun ChapterRow(state: StudioNewState, chapter: ScannedChapter) {
     val hint = listOfNotNull(
         chapter.matter.takeIf { it.isNotEmpty() }?.let { StudioNewText.MATTER },
         chapter.firstLine.takeIf { it.isNotEmpty() },
-    ).joinToString(" · ").ifEmpty { null }
+    ).dotJoined().ifEmpty { null }
     Column(Modifier.fillMaxWidth().testTag("studio_new_chapter")) {
         SwitchRow(label, kept, { state.toggle(chapter.path) }, "studio_new_chapter_${chapter.path.hashCode()}", hint)
         if (chapter.splitChapters > 1) {

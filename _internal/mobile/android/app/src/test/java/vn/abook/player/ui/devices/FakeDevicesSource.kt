@@ -1,5 +1,6 @@
 package vn.abook.player.ui.devices
 
+import vn.abook.player.ui.studio.StudioRoute
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -33,7 +34,7 @@ class FakeDevicesSource : DevicesSource {
     val events = MutableSharedFlow<DownloadEvent>(extraBufferCapacity = 64)
 
     var studio = emptyList<StudioComputer>()
-    var target = "may" to "/studio"
+    var target = "may" to StudioRoute()
     var targetError: DeviceFailure? = null
 
     var share = Share()
@@ -90,7 +91,7 @@ class FakeDevicesSource : DevicesSource {
 
     override fun downloadEvents(): Flow<DownloadEvent> = events
     override suspend fun studio() = studio
-    override suspend fun studioTarget(key: String): Pair<String, String> = targetError?.let { throw it } ?: target
+    override suspend fun studioTarget(key: String): Pair<String, StudioRoute> = targetError?.let { throw it } ?: target
 
     override suspend fun share(): Share = share
 

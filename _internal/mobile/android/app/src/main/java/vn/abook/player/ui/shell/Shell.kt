@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.runtime.collectAsState
-import androidx.compose.foundation.text.BasicText
+import vn.abook.player.ui.components.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -19,6 +19,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -43,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import vn.abook.player.ui.components.SheetHost
 import vn.abook.player.ui.components.SheetLayer
@@ -487,14 +489,17 @@ private fun RootTabs(
     askNotifications: (() -> Unit) -> Unit,
 ) {
     val tabs = shell.tabs
-    val backToLibrary = !shell.nav.canPop && tabs.selected == Tab.Library.ordinal
+    // Lambda đọc trạng thái (không phải giá trị): đổi tab / đẩy màn không làm RootTabs hay nội dung các tab dựng lại - chỉ chỗ gọi nó đọc, ở BackHandler của Thư viện.
+    val backToLibrary = remember(shell) { { !shell.nav.canPop && shell.tabs.selected == Tab.Library.ordinal } }
     Column(Modifier.fillMaxSize()) {
         TabHost(tabs, Modifier.weight(1f)) { tab ->
             when (tab) {
                 Tab.Library -> {
                     val night = settings.night
                     // Thẻ "Tối qua": đọc nhật ký đêm mỗi lần bạn quay về Thư viện (đêm mới kết thúc, hay vừa nghe tiếp thì thẻ biến mất).
-                    LaunchedEffect(night, tabs.selected) { if (tabs.selected == Tab.Library.ordinal) night?.load() }
+                    LaunchedEffect(night) {
+                        snapshotFlow { tabs.selected == Tab.Library.ordinal }.filter { it }.collect { night?.load() }
+                    }
                     LibraryScreen(
                         library, shell.library, shell.libraryGrid, covers, shell.sheets, actions, backEnabled = backToLibrary,
                         recap = night?.let { n -> { books -> vn.abook.player.ui.screens.MorningRecap(n, books, repo::playChapter) } },

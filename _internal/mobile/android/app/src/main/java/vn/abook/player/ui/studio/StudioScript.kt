@@ -1,5 +1,6 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.ui.data.dotJoined
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -169,7 +170,7 @@ object ScriptLogic {
     /** Chỉ ghi điều KHÁC giữa các chương: chương không có câu nói nào mới ghi "chỉ lời kể", rồi tới chỗ nghi và việc đã quyết. */
     fun extras(entry: ScriptEntry): String = listOfNotNull(
         "chỉ lời kể".takeIf { entry.speech == 0 }, "${entry.hints} chỗ nghi".takeIf { entry.hints > 0 }, "${entry.decided} đã quyết".takeIf { entry.decided > 0 },
-    ).joinToString(" · ")
+    ).dotJoined()
 
     fun chapterLabel(entry: ScriptEntry) = entry.title.ifEmpty { "Chương ${entry.index}" }
 

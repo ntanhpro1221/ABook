@@ -402,7 +402,7 @@ def closed_page(machine: str) -> str:
 def pairing_page(machine: str) -> str:
     """Trình duyệt chưa ghép: nhập mã 6 số máy tính đưa ra (như điện thoại), cổng đặt cookie rồi mở Studio."""
     return _page(f"Ghép với {machine}", f"""
-<p>Trên <b>{html.escape(machine)}</b>: Cài đặt → Điện thoại và thiết bị → “Ghép thiết bị mới”.<br>
+<p>Trên <b>{html.escape(machine)}</b>: Cài đặt → Thiết bị → Ghép thiết bị → “Ghép thiết bị mới”.<br>
 Bạn nhập mã 6 số vào đây để nghe sách của máy ấy.</p>
 <form id="pair">
   <label>Mã ghép nối<input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="7" required></label>

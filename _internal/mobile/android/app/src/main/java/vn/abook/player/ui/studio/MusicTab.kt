@@ -1,5 +1,6 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.ui.data.dotJoined
 import vn.abook.player.ui.components.fadeEdges
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.layout.Arrangement
@@ -13,7 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.BasicText
+import vn.abook.player.ui.components.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
@@ -284,7 +285,7 @@ private fun AlternativesSheet(music: StudioMusicState, scene: MusicScene, dismis
                 LazyColumn(Modifier.heightIn(max = 420.dp).fadeEdges(list2), state = list2) {
                     items(loaded, key = { "alt_${it.link}" }) { alt ->
                         Column(Modifier.fillMaxWidth().padding(vertical = Dim.s8).testTag("studio_music_alt_${alt.link.hashCode()}")) {
-                            BasicText(listOf(alt.title.ifEmpty { StudioMusicText.TRACK }, alt.creator).filter { it.isNotEmpty() }.joinToString(" · "), style = Abook.type.body)
+                            BasicText(listOf(alt.title.ifEmpty { StudioMusicText.TRACK }, alt.creator).dotJoined(), style = Abook.type.body)
                             if (alt.duration > 0) ClockLabel(Fmt.clock(alt.duration), Modifier, Abook.type.bodySmall.copy(color = Abook.colors.text2))
                             Row(horizontalArrangement = Arrangement.spacedBy(Dim.s8), verticalAlignment = Alignment.CenterVertically) {
                                 val active = clip.playing == StudioMusicState.trackClip(alt.link) || clip.loading == StudioMusicState.trackClip(alt.link)

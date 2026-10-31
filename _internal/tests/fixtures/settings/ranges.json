@@ -1,5 +1,5 @@
 {
-  "_": "Miền giá trị và mặc định của các tuỳ chọn nghe - MỘT nguồn cho ba bên: Python (abook/webui/library.py), giao diện (ui/src/listen/sleep.ts, ui/src/android/settings.ts) và lõi Kotlin (ListenPrefs.kt). Mỗi bên có test đọc file này; đổi miền ở một bên mà quên bên kia thì test đỏ.",
+  "_": "Miền giá trị và mặc định của các tuỳ chọn nghe - MỘT nguồn cho ba bên: Python (abook/webui/library.py), giao diện (ui/src/listen/sleep.ts) và lõi Kotlin (ListenPrefs.kt). Mỗi bên có test đọc file này; đổi miền ở một bên mà quên bên kia thì test đỏ.",
   "choices": {
     "theme": { "values": ["system", "light", "dark"], "default": "system" },
     "readingSurface": { "values": ["auto", "paper", "ivory", "night"], "default": "auto" },

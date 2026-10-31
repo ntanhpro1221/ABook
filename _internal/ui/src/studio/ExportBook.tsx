@@ -69,10 +69,10 @@ const KINDS: { value: Kind; title: string; detail: string; icon: typeof FolderDo
 ];
 
 const SAVING: Record<Kind, [string, string, string]> = {
-  mp3: ["Chọn nơi lưu bản xuất", "Đang xuất MP3…", "Không xuất được MP3"],
-  abook: ["Chọn nơi lưu file sách", "Đang đóng gói sách…", "Không xuất được"],
-  m4b: ["Chọn nơi lưu file M4B", "Đang làm file M4B…", "Không xuất được M4B"],
-  abookproj: ["Chọn nơi lưu file dự án", "Đang đóng gói dự án…", "Không gói được dự án"],
+  mp3: ["Chọn nơi lưu", "Đang xuất MP3…", "Chưa xuất được MP3"],
+  abook: ["Chọn nơi lưu", "Đang đóng gói sách…", "Chưa xuất được file sách"],
+  m4b: ["Chọn nơi lưu", "Đang làm file M4B…", "Chưa xuất được M4B"],
+  abookproj: ["Chọn nơi lưu", "Đang đóng gói dự án…", "Chưa gói được dự án"],
 };
 
 /** Truy vấn chọn trạng thái tải nhạc / Huỷ của đúng kiểu xuất ở máy chủ (server.py `_music_key`); `.abook` không cần. MP3 / M4B là việc nền riêng (ExportJobHost). */
@@ -287,7 +287,7 @@ export function ExportDialog({
       const pending = loadingToast.current;
       loadingToast.current = null;
       if (error instanceof PackCancelled || (error instanceof ApiError && error.detail.reason === "cancelled")) {
-        toast.info("Đã huỷ xuất", { id: pending ?? undefined, duration: 6000 });
+        toast.info("Đã dừng xuất", { id: pending ?? undefined, duration: 6000 });
       } else if (kind === "abookproj") {
         const shown = packError((error as Error).message);
         toast.error(SAVING[kind][2], {

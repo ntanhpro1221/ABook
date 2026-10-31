@@ -8,7 +8,7 @@ import org.json.JSONObject
  * Tên giọng người nghe thấy cho giọng của máy đọc khác (ZeroTTS, Supertonic): khoá là tên giọng của máy ("baotrang", "F1"), người
  * nghe thấy "Bảo Trang" / "Supertonic F1" - đúng như máy tính (`humanize.voice_label`). MỘT file `abook/webui/assets/voice_labels.json`
  * ({khoá: nhãn}, bản của voice_catalog.ENGINE_VOICES; pytest giữ hai bên khớp), nằm trong assets của app (app/build.gradle):
- * [LibraryPlugin] nạp lúc khởi động ([load]), test JVM nạp đúng file ấy từ đĩa ([parse]). Giọng VieNeu nhãn là chính khoá nên không có
+ * [AppStartup] nạp lúc khởi động ([load]), test JVM nạp đúng file ấy từ đĩa ([parse]). Giọng VieNeu nhãn là chính khoá nên không có
  * trong file; chưa nạp thì mọi giọng hiện khoá, như trước.
  */
 object VoiceLabels {

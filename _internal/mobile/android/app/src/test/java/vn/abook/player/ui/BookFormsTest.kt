@@ -414,10 +414,10 @@ class BookFormsTest {
         var sent = 0
         val book = edit
         show {
-            EditBookScreen(EditState(book, EditLogic.draft(book), loading = false, problem = "Không ghi được file.", sendProblem = "Chưa gửi được về máy tính. Phần sửa vẫn nằm trên máy này."),
+            EditBookScreen(EditState(book, EditLogic.draft(book), loading = false, problem = "Chưa ghi được file.", sendProblem = "Chưa gửi được về máy tính. Phần sửa vẫn nằm trên máy này."),
                 CoverLoader(), {}, {}, {}, {}, { sent++ }, { retried++ })
         }
-        rule.onNodeWithText("Không ghi được file.").assertIsDisplayed()
+        rule.onNodeWithText("Chưa ghi được file.").assertIsDisplayed()
         rule.onNodeWithTag("edit_problem-retry").performClick()
         rule.onNodeWithTag("send_problem-retry").performClick()
         assertEquals(1, retried)

@@ -12,14 +12,14 @@ import org.junit.Test
  * Sinh baseline profile + startup profile cho khung native: mở app (sách giả như bản đo), cuộn lưới, đổi ba tab nhiều vòng (cả đường trượt hai tab một lúc),
  * vào trang sách rồi Back, mở bảng bộ nhiều tập, menu Xếp theo, ô Tìm, bảng Thêm sách. Mọi đường mà người nghe đi thường xuyên phải nằm trong profile,
  * không thì lần đầu chạy nó bị thông dịch (khung 20-40 ms trên OPPO).
- * Chạy: gradlew -PnativeUi :app:generateBaselineProfile (đặt ANDROID_SERIAL; Android 13+ chạy được không cần root - máy ảo API 34).
+ * Chạy: gradlew -PbenchAppId=com.ngdtuanh.abook.dev2 :app:generateBaselineProfile (sách giả chỉ có ở bản thử; đặt ANDROID_SERIAL; Android 13+ chạy được không cần root - máy ảo API 34).
  */
 class BaselineProfileGenerator {
     @get:Rule
     val rule = BaselineProfileRule()
 
     @Test
-    fun generate() = rule.collect(packageName = "com.ngdtuanh.abook", includeInStartupProfile = true) {
+    fun generate() = rule.collect(packageName = BuildConfig.TARGET_PACKAGE, includeInStartupProfile = true) {
         pressHome()
         startActivityAndWait { it.putExtra("abook.demo.books", 200) }
         device.wait(Until.hasObject(By.res("library_grid")), 8_000)

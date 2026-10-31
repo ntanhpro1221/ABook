@@ -87,7 +87,7 @@ class OnlineConsentTest {
         assertTrue(VoiceStuck.isStuck("Giọng đang chọn đang không dùng được."))
         assertTrue(VoiceStuck.isStuck("Giọng Hoài My đang không dùng được."))
         assertFalse(VoiceStuck.isStuck("Giọng  đang không dùng được."))
-        assertFalse(VoiceStuck.isStuck("Không phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại."))
+        assertFalse(VoiceStuck.isStuck("Chưa phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại."))
         assertFalse(VoiceStuck.isStuck(""))
     }
 

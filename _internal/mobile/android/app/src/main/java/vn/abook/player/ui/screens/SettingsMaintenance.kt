@@ -1,7 +1,8 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.ui.data.dotJoin
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.BasicText
+import vn.abook.player.ui.components.BasicText
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
@@ -25,7 +26,7 @@ fun MaintenanceSections(env: SettingsEnv, sheets: SheetHost) {
         ListSection("Bản lưu cũ (${old.size})", first = true) {
             Caption("Bản trước của một lần lưu hỏng. Lưu ra để không mất.")
             for (file in old) {
-                ListItem(file.title, tag = "old_save_${file.name}", hint = "${formatSize(file.size)} · ${Fmt.whenText(file.modified / 1000.0)}")
+                ListItem(file.title, tag = "old_save_${file.name}", hint = dotJoin(formatSize(file.size), Fmt.whenText(file.modified / 1000.0)))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     TextAction("Lưu ra", { env.links.saveOld(file.name) { uri -> if (uri != null) repo.exportOldSave(file.name, uri) } }, "old_export_${file.name}")
                     TextAction("Xoá", { sheets.show { dismiss ->

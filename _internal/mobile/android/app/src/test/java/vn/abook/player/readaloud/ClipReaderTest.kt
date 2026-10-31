@@ -311,7 +311,7 @@ class ClipReaderTest {
         assertEquals(listOf(1, 1, 1), listOf(keyed.calls, edge.calls, device.calls))
         assertEquals(listOf(
             "Khoá FPT.AI không dùng được - tạm đọc bằng giọng Edge. Kiểm tra lại khoá trong Cài đặt.",
-            "Không dùng được giọng trực tuyến - tạm đọc bằng giọng của máy.",
+            "Chưa dùng được giọng trực tuyến - tạm đọc bằng giọng của máy.",
         ), notices)
     }
 

@@ -82,7 +82,7 @@ interface PrepareSource {
     fun listen(onStatus: (PrepareStatus) -> Unit): () -> Unit
 }
 
-/** Nguồn thật: gọi thẳng [PrepareAhead] - cùng hàm mà `ReadAloudPlugin.prepare*` chuyển tiếp cho bản WebView. */
+/** Nguồn thật: gọi thẳng [PrepareAhead]. */
 class AndroidPrepareSource(context: Context) : PrepareSource {
     private val app = context.applicationContext
 
@@ -98,7 +98,7 @@ class AndroidPrepareSource(context: Context) : PrepareSource {
         try {
             PrepareStatus.parse(PrepareAhead.start(app, bookId, voice, chapterIds, label, chargingOnly))
         } catch (error: VoiceException) {
-            throw IllegalStateException(error.message ?: "Không làm trước được")
+            throw IllegalStateException(error.message ?: "Chưa làm trước được")
         }
     }
 

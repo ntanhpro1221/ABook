@@ -8,7 +8,7 @@ import java.security.MessageDigest
 /**
  * Bài nhạc nền của MỘT cuốn sách: mục `music` của book.json (music_plan.package) nói mốc nào dùng bài nào, và bài là file
  * `music/<sha1>.<đuôi>` nằm trong thư mục sách. Một chỗ cho hai việc cần cùng một định nghĩa "bài mà sách đang dùng":
- * [LibraryServer] chỉ phục vụ các bài ấy cho máy đã ghép, và lúc tải sách ([LibraryPlugin.download]) chỉ tải các bài ấy về.
+ * [LibraryServer] chỉ phục vụ các bài ấy cho máy đã ghép, và lúc tải sách chỉ tải các bài ấy về.
  */
 object BookMusic {
     // Tên file một bài trong sách (music_plan.TRACK_FILE): bài trong file sách lẫn bài người nghe ghim.

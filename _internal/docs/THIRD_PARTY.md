@@ -71,7 +71,6 @@ băm trong `webui/studio_setup.py`):
 
 ## App điện thoại (Android)
 
-- Capacitor (MIT).
 - AndroidX Media3 - ExoPlayer, MediaSession, datasource, cache (Apache-2.0); các thư viện AndroidX khác (Apache-2.0).
 - Kotlin và Guava (Apache-2.0).
 - Giao diện native (Jetpack Compose, `docs/NATIVE_PHONE_UI.md`): AndroidX Compose ui / foundation / animation, activity-compose, lifecycle-runtime-compose,
@@ -94,9 +93,8 @@ băm trong `webui/studio_setup.py`):
   G2P giữ nguyên) cùng các crate nó dùng - `regex`, `fancy-regex`, `once_cell`, `memmap2`, `unicode-normalization`, `jni` (MIT hay
   Apache-2.0). Bảng ziggurat của bộ sinh số ngẫu nhiên chép từ numpy (`vieneu/NumpyZiggurat.kt`, BSD-3-Clause) để nhiễu đầu của Nano
   trùng máy tính.
-- pdf.js / `pdfjs-dist` (Mozilla, Apache-2.0), bản "legacy" - đọc chữ của PDF có lớp chữ khi nhập sách trên điện thoại
-  (`ui/src/shared/pdfPages.ts`); tải lười, chỉ chạy khi người dùng mở một file PDF. EPUB và DOCX do `BookImport.kt` tự đọc
-  bằng java.util.zip, không thêm thư viện.
+- PDF có lớp chữ khi nhập sách trên điện thoại: `android.graphics.pdf.PdfRenderer` của hệ thống (`ui/addbook/ImportRepo.kt`), không thêm thư viện.
+  EPUB và DOCX do `BookImport.kt` tự đọc bằng java.util.zip, không thêm thư viện.
 
 ## Nhạc nền (không đóng gói trong bộ cài)
 

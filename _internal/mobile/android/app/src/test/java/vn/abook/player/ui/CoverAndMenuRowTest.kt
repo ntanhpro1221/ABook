@@ -38,7 +38,7 @@ import vn.abook.player.ui.data.CoverLoader
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.AbookTheme
 
-/** Hai luật chung: bìa sinh không bao giờ cắt tên (dù rất dài, có nhãn tập), dòng menu giữ biểu tượng + "Sắp có" ở tâm dòng chữ đầu. */
+/** Hai luật chung: bìa sinh không bao giờ cắt tên (dù rất dài, có nhãn tập), dòng menu giữ biểu tượng ở tâm dòng chữ đầu. */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = [35], qualifiers = "w360dp-h780dp-xxhdpi")
@@ -106,20 +106,17 @@ class CoverAndMenuRowTest {
     }
 
     @Test
-    fun menuRowKeepsIconAndSoonOnTheFirstLineCenter() {
+    fun menuRowKeepsIconOnTheFirstLineCenter() {
         show {
             Column(Modifier.width(240.dp)) {
-                MenuRow("Một việc có cái tên khá dài để xuống dòng hai lần", tag = "row", soon = true) { ink -> PencilIcon(ink) }
+                MenuRow("Một việc có cái tên khá dài để xuống dòng hai lần", tag = "row") { ink -> PencilIcon(ink) }
             }
         }
         val row = rule.onNodeWithTag("row").getUnclippedBoundsInRoot()
         val icon = rule.onNodeWithTag("row_icon", useUnmergedTree = true).getUnclippedBoundsInRoot()
-        val soon = rule.onNodeWithText("Sắp có", useUnmergedTree = true).getUnclippedBoundsInRoot()
         val firstLineCenter = row.top + 12.dp + 12.dp
         val iconCenter = (icon.top + icon.bottom) / 2
-        val soonCenter = (soon.top + soon.bottom) / 2
         assertEquals(firstLineCenter.value, iconCenter.value, 1f)
-        assertEquals(firstLineCenter.value, soonCenter.value, 1f)
         assertTrue("hàng phải cao hơn một dòng khi nhãn xuống dòng", row.bottom - row.top > 48.dp)
     }
 }

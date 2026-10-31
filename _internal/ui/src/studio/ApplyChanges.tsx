@@ -141,7 +141,7 @@ export function ApplyChangesDialog({
       if (count <= 1) onOpenChange(false);
       await client.invalidateQueries();
     } catch (error) {
-      toast.error("Không bỏ được thay đổi này", { description: (error as Error).message });
+      toast.error("Chưa bỏ được thay đổi này", { description: (error as Error).message });
     } finally {
       setDropping(null);
     }

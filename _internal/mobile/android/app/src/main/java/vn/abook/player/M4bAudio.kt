@@ -184,7 +184,7 @@ object M4bAudio : M4bExport.AudioEncoder {
                     codec.releaseOutputBuffer(out, false)
                     if (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) break
                 } else if (out < 0 && out != MediaCodec.INFO_OUTPUT_FORMAT_CHANGED && inputDone && ++idle > 500) {
-                    throw Mp3Export.Refused("Không giải mã lại được âm thanh vừa mã hoá")
+                    throw Mp3Export.Refused("Chưa giải mã lại được âm thanh vừa mã hoá")
                 }
             }
             val owed = fed * AacJoin.FRAME * channels - given
@@ -194,7 +194,7 @@ object M4bAudio : M4bExport.AudioEncoder {
         } catch (error: Mp3Export.Refused) {
             throw error
         } catch (error: Exception) {
-            throw Mp3Export.Refused("Không giải mã lại được âm thanh vừa mã hoá")
+            throw Mp3Export.Refused("Chưa giải mã lại được âm thanh vừa mã hoá")
         } finally {
             runCatching { codec.stop() }
             runCatching { codec.release() }
@@ -210,13 +210,13 @@ object M4bAudio : M4bExport.AudioEncoder {
         try {
             extractor.setDataSource(file.absolutePath)
             val index = audioTrack(extractor)
-            if (index < 0) throw Mp3Export.Refused("Không đọc được âm thanh của ${file.name}")
+            if (index < 0) throw Mp3Export.Refused("Chưa đọc được âm thanh của ${file.name}")
             val format = extractor.getTrackFormat(index)
             return format.getInteger(MediaFormat.KEY_SAMPLE_RATE) to if (format.getInteger(MediaFormat.KEY_CHANNEL_COUNT) == 1) 1 else 2
         } catch (error: Mp3Export.Refused) {
             throw error
         } catch (error: Exception) {
-            throw Mp3Export.Refused("Không đọc được âm thanh của ${file.name}")
+            throw Mp3Export.Refused("Chưa đọc được âm thanh của ${file.name}")
         } finally {
             extractor.release()
         }
@@ -234,7 +234,7 @@ object M4bAudio : M4bExport.AudioEncoder {
         try {
             extractor.setDataSource(file.absolutePath)
             val index = audioTrack(extractor)
-            if (index < 0) throw Mp3Export.Refused("Không đọc được âm thanh của ${file.name}")
+            if (index < 0) throw Mp3Export.Refused("Chưa đọc được âm thanh của ${file.name}")
             extractor.selectTrack(index)
             val format = extractor.getTrackFormat(index)
             val length = if (format.containsKey(MediaFormat.KEY_DURATION)) format.getLong(MediaFormat.KEY_DURATION).toDouble() else 0.0
@@ -297,7 +297,7 @@ object M4bAudio : M4bExport.AudioEncoder {
                         codec.releaseOutputBuffer(out, false)
                         if (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) break
                     }
-                    else -> if (inputDone && ++idle > 500) throw Mp3Export.Refused("Không giải mã được ${file.name}") // 5 giây không ra gì: codec treo
+                    else -> if (inputDone && ++idle > 500) throw Mp3Export.Refused("Chưa giải mã được ${file.name}") // 5 giây không ra gì: codec treo
                 }
             }
         } catch (error: SinkError) {
@@ -307,7 +307,7 @@ object M4bAudio : M4bExport.AudioEncoder {
         } catch (error: Mp3Export.Stopped) {
             throw error
         } catch (error: Exception) {
-            throw Mp3Export.Refused("Không giải mã được ${file.name}")
+            throw Mp3Export.Refused("Chưa giải mã được ${file.name}")
         } finally {
             runCatching { codec?.stop() }
             runCatching { codec?.release() }

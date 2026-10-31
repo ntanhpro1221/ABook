@@ -120,13 +120,13 @@ class StudioWorkScreenTest {
     @Test fun aRejectedReadingStaysUnderTheFieldAndIsNeverHeld() {
         val reading = workItem(kind = WorkKind.Pronunciation, key = "p", surface = "Hên-kơ", current = "hen co")
         source.workView = WorkView(listOf(reading), emptyMap())
-        source.writeError = { vn.abook.player.StudioError.Server("Không đọc được chữ này", 400, """{"suggestion":"hen cơ"}""") }
+        source.writeError = { vn.abook.player.StudioError.Server("Chưa đọc được chữ này", 400, """{"suggestion":"hen cơ"}""") }
         project(StudioTab.Work)
         tag("studio_reading_field").performScrollTo().performTextReplacement("hen!")
         rule.waitForIdle()
         tag("studio_reading_save").performScrollTo().performClick()
         rule.waitForIdle()
-        rule.onNodeWithText("Không đọc được chữ này").assertIsDisplayed()
+        rule.onNodeWithText("Chưa đọc được chữ này").assertIsDisplayed()
         rule.onNodeWithText("Dùng “hen cơ”").assertIsDisplayed()
         absent("studio_undo")
     }

@@ -22,8 +22,8 @@ import vn.abook.player.ui.data.listenerFlow
 import vn.abook.player.ui.voice.VoiceText
 
 /**
- * Nguồn thật của màn Xuất: gọi thẳng các lõi ([ExportStart], [Mp3Exports], [M4bExports], [ListenExports], [ExportHistory], [BookMusic]) - cùng những hàm mà
- * `LibraryPlugin` chuyển tiếp cho bản WebView, không qua cầu Capacitor. Tin của việc nền đến qua [vn.abook.player.ExportLive.listen].
+ * Nguồn thật của màn Xuất: gọi thẳng các lõi ([ExportStart], [Mp3Exports], [M4bExports], [ListenExports], [ExportHistory], [BookMusic]) - không qua
+ * lớp trung gian nào. Tin của việc nền đến qua [vn.abook.player.ExportLive.listen].
  */
 class ExportRepo(private val context: Context) : ExportSource {
     private suspend fun <T> io(block: () -> T): T = withContext(Dispatchers.IO) {
@@ -67,7 +67,7 @@ class ExportRepo(private val context: Context) : ExportSource {
     override suspend fun keepFolder(tree: String): String = io {
         val uri = Uri.parse(tree)
         Mp3Exports.remember(context, uri)
-        Mp3Exports.treeName(context, uri) ?: throw ExportFailure("Không mở được thư mục đã chọn - chọn lại nơi lưu")
+        Mp3Exports.treeName(context, uri) ?: throw ExportFailure("Chưa mở được thư mục đã chọn - chọn lại nơi lưu")
     }
 
     override suspend fun fileTitle(book: ListenBook, kind: ExportKind): String = io {

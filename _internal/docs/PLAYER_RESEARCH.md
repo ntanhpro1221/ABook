@@ -132,9 +132,9 @@ thiết bị giả `scripts/fake_renderer.py` (chỉ thư viện chuẩn, chạy
   mở giao diện.
 - Audio đi thẳng từ máy tính tới thiết bị qua cổng riêng `CastMedia`: chỉ phục vụ file đã đưa, mỗi file một mã ngẫu nhiên
   128 bit trong đường dẫn, hết hạn 12 giờ, có `Range` và header DLNA. Không đi qua cổng đồng bộ: dùng được cả khi chưa bật
-  "Cho phép điện thoại kết nối".
-- Thiết bị là một "máy" trong `/api/remote` (`via` cast) như điện thoại: cùng thanh "Đang phát trên…", nút "Phát trên…" (một
-  máy: một nút; nhiều máy: một menu), "Nghe trên máy này".
+  "Kết nối Wi-Fi".
+- Thiết bị là một "máy" trong `/api/remote` (`via` cast) như điện thoại: cùng thanh "Đang phát trên…", nút "Phát trên thiết bị khác" (một
+  máy: một nút; nhiều máy: một menu), "Nghe ở đây".
 - Chỗ TV thật hay vấp, loa giả bắt chước để thử: chỉ tua khi đã chạy (đưa chương, Play, đợi PLAYING rồi mới Seek), hết bài
   về STOPPED với vị trí 0 (nhớ vị trí xa nhất), không có Pause (dừng hẳn, "phát" đưa lại đúng chỗ), không báo vị trí
   (ước theo đồng hồ), app khác chiếm thiết bị (bỏ phiên). Không ghi DLNA.ORG_PN (PN sai thì TV khó tính từ chối hẳn).

@@ -1,5 +1,6 @@
 package vn.abook.player.ui.devices
 
+import vn.abook.player.ui.studio.StudioRoute
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -18,7 +19,7 @@ import org.junit.Test
 class DevicesStateTest {
     private val source = FakeDevicesSource()
     private var changed = 0
-    private var studioOpened: Pair<String, String>? = null
+    private var studioOpened: Pair<String, StudioRoute>? = null
     private var asked = 0
     private var settingsOpened = 0
     private var notificationsAsked = 0
@@ -35,7 +36,7 @@ class DevicesStateTest {
         PeerLibrary(Paired(key, name, DeviceKind.Computer, via = "192.168.1.30:47630", reach = reach, books = books.size, host = "192.168.1.30"), books)
 
     private fun state(links: DeviceLinks = DeviceLinks(
-        openStudio = { computer, path -> studioOpened = computer to path },
+        openStudio = { computer, route -> studioOpened = computer to route },
         openAppSettings = { settingsOpened++ },
         askNearby = { result -> asked++; result(source.nearby) },
         askNotifications = { then -> notificationsAsked++; then() },
@@ -216,7 +217,7 @@ class DevicesStateTest {
     @Test
     fun `an unreachable computer says why and keeps the row`() {
         source.link = main
-        source.remoteError = DeviceFailure("Không nối được Máy bàn.")
+        source.remoteError = DeviceFailure("Chưa nối được Máy bàn.")
         val devices = state()
         devices.openPair()
         val row = devices.pair.value.devices.single()
@@ -293,13 +294,13 @@ class DevicesStateTest {
     fun `studio opens through the system link and reports a refusal`() {
         source.link = main
         source.studio = listOf(StudioComputer(MAIN_KEY, "Máy bàn", listenOnly = false))
-        source.target = "Máy bàn" to "/studio/books"
+        source.target = "Máy bàn" to StudioRoute("b1")
         val devices = state()
         devices.openPair()
         devices.loadStudio()
         assertNotNull(devices.pair.value.studio[MAIN_KEY])
         assertNull(runBlocking { devices.openStudio(MAIN_KEY) })
-        assertEquals("Máy bàn" to "/studio/books", studioOpened)
+        assertEquals("Máy bàn" to StudioRoute("b1"), studioOpened)
         source.targetError = DeviceFailure("Máy này chỉ cho nghe.")
         assertEquals("Máy này chỉ cho nghe.", runBlocking { devices.openStudio(MAIN_KEY) })
     }
@@ -356,7 +357,7 @@ class DevicesStateTest {
         devices.download(a)
         assertTrue(devices.pair.value.failed.isEmpty())
         source.events.tryEmit(DownloadEvent("a", 0.3f, error = "Mất mạng giữa chừng."))
-        assertEquals("Tải bị gián đoạn. Mất mạng giữa chừng.", devices.pair.value.failed["a"])
+        assertEquals("Chưa tải xong về máy. Mất mạng giữa chừng.", devices.pair.value.failed["a"])
         assertTrue(devices.pair.value.downloading.isEmpty())
     }
 

@@ -15,6 +15,7 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.MoreExecutors
 import org.json.JSONObject
+import vn.abook.player.ui.NativeActivity
 
 /**
  * Widget màn hình chính - trình phát thu nhỏ. Cỡ lớn: bìa, tên chương, tiến độ, lùi/phát/tới, hẹn giờ ngủ;
@@ -106,7 +107,7 @@ class PlayerWidget : AppWidgetProvider() {
             views.setImageViewResource(R.id.widget_toggle, if (view.playing) R.drawable.ic_widget_pause else R.drawable.ic_widget_play)
             views.setOnClickPendingIntent(R.id.widget_toggle, controlIntent(context, ACTION_TOGGLE, 1))
             val open = PendingIntent.getActivity(
-                context, 0, Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+                context, 0, Intent(context, NativeActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
                 PendingIntent.FLAG_IMMUTABLE,
             )
             views.setOnClickPendingIntent(R.id.widget_cover, open)

@@ -7,8 +7,7 @@ import java.util.concurrent.FutureTask
 import java.util.concurrent.TimeUnit
 
 /**
- * Hồ sơ nghe của một cuốn (độc lập với sách, app giữ liên kết - [Store]) - việc mà cả hai giao diện cùng làm: WebView qua [LibraryPlugin], native qua
- * `ui.data.LibraryRepo`. Mỗi hàm đổi xong trả [Change]: danh sách hồ sơ mới + việc báo máy tính ([Change.push], chạy ở luồng nền sau khi đã trả lời người nghe).
+ * Hồ sơ nghe của một cuốn (độc lập với sách, app giữ liên kết - [Store]) - việc của giao diện (`ui.data.LibraryRepo`). Mỗi hàm đổi xong trả [Change]: danh sách hồ sơ mới + việc báo máy tính ([Change.push], chạy ở luồng nền sau khi đã trả lời người nghe).
  * Mọi hàm đọc / ghi đĩa: gọi ở luồng nền.
  */
 object ListeningRecords {

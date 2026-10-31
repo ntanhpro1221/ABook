@@ -4,7 +4,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.text.BasicText
+import vn.abook.player.ui.components.BasicText
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.testTag
 import kotlinx.coroutines.launch
@@ -37,8 +37,12 @@ fun StudioScreen(
                 val computers = pair?.studio?.values.orEmpty().toList()
                 val openable = computers.filterNot { it.listenOnly }
                 if (openable.isEmpty()) {
-                    Caption(DeviceText.studioBlocked(computers.map { it.name }))
-                    Caption("Bật Điều khiển từ xa trên máy tính.")
+                    // Đoạn giải thích (có thể nhiều dòng): chữ 16 mực phụ cách nhau 8, như trang xác nhận - không xếp Caption chồng nhau.
+                    val line = Abook.type.body.copy(color = Abook.colors.text2)
+                    Spacer(Modifier.height(Dim.s8))
+                    BasicText(DeviceText.studioBlocked(computers.map { it.name }), style = line)
+                    Spacer(Modifier.height(Dim.s8))
+                    BasicText("Bật Điều khiển từ xa trên máy tính.", style = line)
                 } else {
                     TextAction("Mở Studio", {
                         fun open(computer: StudioComputer) { scope.launch { problem = devices?.openStudio(computer.key).orEmpty() } }

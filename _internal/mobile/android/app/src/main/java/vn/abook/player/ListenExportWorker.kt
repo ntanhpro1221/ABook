@@ -184,7 +184,7 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
             val (cover, coverName) = Mp3Export.coverOf(bookId, input.cover?.takeIf { it.isFile }?.readBytes())
             val exportPlan = ListenExport.exportPlan(book, bookId, chapters, stamps, work, cover, coverName)
             val joined = File(work, "all.m4a")
-            val out = context.contentResolver.openOutputStream(file, "wt") ?: throw Mp3Export.Refused("Không ghi được vào chỗ đã chọn")
+            val out = context.contentResolver.openOutputStream(file, "wt") ?: throw Mp3Export.Refused("Chưa ghi được vào chỗ đã chọn")
             val result = out.buffered(256 * 1024).use { stream ->
                 M4bExport.run(exportPlan, joined, stream, ListenAudio, progress = { joinedChapters, total, _ -> show(ListenExport.encodeProgress(chapters, joinedChapters, total)) }, stopped = { isStopped })
             }

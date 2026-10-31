@@ -260,7 +260,7 @@ class SafDestination(private val resolver: ContentResolver, private val tree: Ur
         val existing = children(resolver, tree, root)
         val fresh = Mp3Export.freshFolderName(name) { existing.containsKey(it) }
         val dir = DocumentsContract.createDocument(resolver, root, DocumentsContract.Document.MIME_TYPE_DIR, fresh)
-            ?: throw Mp3Export.Refused("Không tạo được thư mục trong chỗ đã chọn")
+            ?: throw Mp3Export.Refused("Chưa tạo được thư mục trong chỗ đã chọn")
         return SafFolder(resolver, tree, dir, "$treeName/$fresh")
     }
 
@@ -303,10 +303,10 @@ private class SafFolder(private val resolver: ContentResolver, private val tree:
 
     private fun create(name: String): Uri =
         DocumentsContract.createDocument(resolver, dir, "application/octet-stream", name)
-            ?: throw Mp3Export.Refused("Không ghi được vào thư mục đã chọn")
+            ?: throw Mp3Export.Refused("Chưa ghi được vào thư mục đã chọn")
 
     private fun stream(target: Uri): OutputStream =
-        resolver.openOutputStream(target, "w") ?: throw Mp3Export.Refused("Không ghi được vào thư mục đã chọn")
+        resolver.openOutputStream(target, "w") ?: throw Mp3Export.Refused("Chưa ghi được vào thư mục đã chọn")
 
     override fun write(name: String, body: (OutputStream) -> Unit) {
         val partName = "$name.part"
@@ -358,7 +358,7 @@ class Mp3ExportWorker(context: Context, params: WorkerParameters) : Worker(conte
             title = base.title
             // Không vào được dịch vụ nền (Android 12+ khi app đã ở nền lúc việc bắt đầu): vẫn chạy, chỉ không có thông báo đứng.
             runCatching { setForegroundAsync(Mp3Exports.foreground(context, id, bookId, title, 0, base.chapters.size)).get() }
-            val treeName = Mp3Exports.treeName(context, tree) ?: throw Mp3Export.Refused("Không mở được thư mục đã chọn - chọn lại nơi lưu")
+            val treeName = Mp3Exports.treeName(context, tree) ?: throw Mp3Export.Refused("Chưa mở được thư mục đã chọn - chọn lại nơi lưu")
             val ids = base.chapters.map { it.id }
             Mp3Exports.live.note(bookId, run, JSONObject().put("folder", "$treeName/${Mp3Export.folderName(title)}").put("music", Mp3Exports.music(inputData)))
             // "Kèm nhạc nền" (soát a99 V3): cùng bộ trộn, mức âm và ghi công với M4B; sách không có nhạc thì mỗi chương vẫn là MP3 như cũ.
@@ -455,7 +455,7 @@ class Mp3ExportWorker(context: Context, params: WorkerParameters) : Worker(conte
                 error is Mp3Export.Refused -> error.message.orEmpty()
                 else -> "Lỗi khi ghi: ${error.message ?: error.javaClass.simpleName}"
             }
-            Mp3Exports.finished(context, bookId, "Không xuất được", "$title · $message")
+            Mp3Exports.finished(context, bookId, "Chưa xuất được MP3", "$title · $message")
             Mp3Exports.emit(event().put("error", message))
             return Result.failure()
         } finally {
