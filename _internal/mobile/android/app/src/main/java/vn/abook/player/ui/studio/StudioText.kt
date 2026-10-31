@@ -107,10 +107,16 @@ object StudioText {
             redoWaiting > 0 && kind == PrimaryKind.Continue ->
                 (if (redoWaiting == 1) "1 chương đang chờ thu lại" else "$redoWaiting chương đang chờ thu lại") +
                     " theo sửa của bạn. Bản cũ vẫn nghe được cho tới khi thu xong."
-            book.running && book.paused == StudioPause.Battery -> "Studio tạm dừng; cắm sạc để tiếp tục. Bấm “Tiếp tục” để làm ngay trên pin (chậm và hao pin hơn)."
+            onBattery(book) -> "Studio tạm dừng; cắm sạc để tiếp tục."
             else -> ""
         }
     }
+
+    /** Đang tạm dừng vì máy chạy pin: [actionNote] nói một câu, [BATTERY_INFO] gập sau "Dùng pin" ngay dưới. */
+    fun onBattery(book: StudioBook): Boolean = book.running && book.paused == StudioPause.Battery
+
+    /** Vì sao tạm dừng khi máy chạy pin (web: MoreInfo của Actions ở ProjectScreen.tsx; điện thoại luôn là máy từ xa nên câu dừng ở "pin."). */
+    const val BATTERY_INFO = "Làm sách trên pin chậm và hao pin. Bấm “Tiếp tục” để làm ngay trên pin."
 
     /** Cuốn xếp hàng đứng sau một cuốn đang tạm dừng: hàng không tự đi tiếp (stopText.ts `queueWaitNotice`). */
     fun queueWait(waits: StudioQueueWait): String =

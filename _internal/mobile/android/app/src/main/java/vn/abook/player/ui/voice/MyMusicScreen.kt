@@ -25,6 +25,7 @@ import vn.abook.player.MusicImport
 import vn.abook.player.ui.components.Caption
 import vn.abook.player.ui.components.InlineProblem
 import vn.abook.player.ui.components.ListItem
+import vn.abook.player.ui.components.MoreInfo
 import vn.abook.player.ui.components.PageHeader
 import vn.abook.player.ui.components.UploadIcon
 import vn.abook.player.ui.components.Reveal
@@ -68,6 +69,7 @@ fun MyMusicScreen(voice: VoiceState, sheets: SheetHost, onBack: () -> Unit, modi
                 )
                 RowLine()
                 Caption(MusicText.MY_MUSIC_INTRO, Modifier.padding(top = Dim.s8).testTag("music_intro"))
+                MoreInfo("Nhạc riêng", MusicText.MY_MUSIC_HELP, "music_help")
             }
         }
         item(key = "feedback", contentType = "feedback") {

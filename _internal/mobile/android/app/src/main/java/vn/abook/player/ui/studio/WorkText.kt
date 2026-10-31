@@ -115,6 +115,9 @@ object WorkText {
 
     fun reviewPending(count: Int): String = "Còn $count câu chưa xem"
 
+    /** Lời gập dưới dòng "chương chờ thu lại" (web: MoreInfo của ReviewQueue.tsx). */
+    const val REDO_MORE = "Chạy tiếp hoặc Áp dụng thay đổi để thu lại."
+
     fun redoChapters(chapters: List<Int>): String =
         if (chapters.size == 1) "Chương ${chapters[0]} sẽ được thu lại khi bạn áp dụng thay đổi."
         else "${chapters.size} chương sẽ được thu lại khi bạn áp dụng thay đổi."
@@ -171,6 +174,9 @@ object WorkText {
     const val VOICE_CROSS_NO = "Thôi"
     const val VOICE_NO_VOICES = "Giới này chưa có giọng nào"
     const val VOICE_NOT_INSTALLED = "Giọng này cần cài thêm trên máy tính"
+    /** Lời gập cuối bảng giọng (web: MoreInfo của VoicePicker.tsx): người kể, và nhân vật thường. */
+    const val VOICE_NARRATOR_MORE = "Người kể cần giọng riêng, nên không chọn giọng nhân vật đang dùng. Câu chưa thu dùng giọng mới ngay; bạn không cần tạo lại sách."
+    const val VOICE_SHARED_MORE = "Giọng thêm có thể khiến hai nhân vật nghe giống nhau."
 
     fun voicePending(name: String): String = if (name.isEmpty()) "Giọng bạn chọn đang chờ vào sách." else "Giọng $name đang chờ vào sách."
 
