@@ -41,7 +41,7 @@ import vn.abook.player.ui.screens.BookScreenActions
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.AbookTheme
 
-/** Trang sách: ba mục (Chương / Lịch sử / Nhân vật), chip hồ sơ, bảng một người, trang "không tìm thấy". Ảnh chụp (khi bật roborazzi record) ra app/build/shots, không vào kho. */
+/** Trang sách: ba mục (Chương / Lịch sử / Nhân vật), chip hồ sơ, bảng một người, trang "không tìm thấy". Ảnh chuẩn ở src/test/snapshots (ghi: -Proborazzi.test.record=true; so: verifyRoborazziDebug). */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = [35], qualifiers = "w360dp-h780dp-xxhdpi")
@@ -109,9 +109,8 @@ class BookTabsScreenTest {
 
     private fun detail(records: Int = 2) = BookDetail.of(manifest(), state(), { null }, canShare = true, records = records(records))
 
-    /** Ảnh chụp chỉ ghi khi chạy với -Proborazzi.test.record=true; chạy thường thì không làm gì (không đụng src/test/snapshots). */
     private fun snap(name: String) {
-        rule.onRoot().captureRoboImage("build/shots/$name.png")
+        rule.onRoot().captureRoboImage("src/test/snapshots/$name.png")
     }
 
     private fun open(tag: String) {
