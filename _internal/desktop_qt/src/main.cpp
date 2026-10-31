@@ -16,6 +16,7 @@
 #include "speechout.h"
 #include "outputdevices.h"
 #include "readalong.h"
+#include "singleinstance.h"
 
 #include <QDir>
 #include <QFileInfo>
@@ -169,6 +170,18 @@ int main(int argc, char *argv[]) {
     app.setQuitOnLastWindowClosed(false);
     app.setWindowIcon(QIcon(QStringLiteral(":/app/app.ico")));
     Bench::mark(QStringLiteral("main"));
+
+    // Một bản chạy cho mỗi hồ sơ (Q4, src/singleinstance.h): đã có bản đang chạy thì gửi nó các file trên dòng lệnh rồi thoát,
+    // trước khi tốn công khởi động host. Hồ sơ giả của test / bộ cài thử có kênh riêng, không gửi sang app thật.
+    QStringList launchFiles;
+    for (const QString &argument : app.arguments().mid(1)) {
+        if (!argument.startsWith(QLatin1Char('-')))
+            launchFiles << argument;
+    }
+    SingleInstance instance;
+    // Hai lần mở cùng lúc: cả hai chưa thấy ai, một bên giữ được quyền, bên kia gửi sang nó.
+    if (instance.handOff(launchFiles) || (!instance.listen() && instance.handOff(launchFiles)))
+        return 0;
 
     // Backend Python chạy NGAY, song song với việc dựng giao diện (Python mất vài trăm ms để nạp).
     Backend backend(nullptr);
@@ -358,6 +371,13 @@ int main(int argc, char *argv[]) {
         }
     }
     musicWindowActivity.update();
+    // Lần mở khác của app: hiện cửa sổ (Main.qml otherLaunch). Đo đạc (ABOOK_BENCH) không bao giờ đưa cửa sổ lên.
+    if (!engine.rootObjects().isEmpty() && !benchMode) {
+        QObject *root = engine.rootObjects().constFirst();
+        QObject::connect(&instance, &SingleInstance::launched, root, [root](const QStringList &files) {
+            QMetaObject::invokeMethod(root, "otherLaunch", Q_ARG(QVariant, QVariant(files)));
+        });
+    }
     for (QObject *root : engine.rootObjects()) {
         if (auto *window = qobject_cast<QQuickWindow *>(root); window && media) media->attachWindow(window->winId());
     }
