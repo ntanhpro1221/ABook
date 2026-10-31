@@ -23,6 +23,7 @@ import vn.abook.player.StudioPolling
 import vn.abook.player.ui.components.Caption
 import vn.abook.player.ui.components.ChoiceRow
 import vn.abook.player.ui.components.InlineProblem
+import vn.abook.player.ui.components.MoreInfo
 import vn.abook.player.ui.components.RowHint
 import vn.abook.player.ui.components.RowLine
 import vn.abook.player.ui.components.TextAction
@@ -92,7 +93,10 @@ private fun ReviewHeader(review: StudioReviewState, list: ReviewList, data: Revi
     val minor = (list.counts[ReviewKind.Name] ?: 0) + (list.counts[ReviewKind.Text] ?: 0)
     Column(Modifier.fillMaxWidth().padding(top = Dim.s12)) {
         if (review.filter == ReviewFilter.Todo) Caption(WorkText.reviewPending(list.pending), Modifier.testTag("studio_review_pending"))
-        if (list.redoChapters.isNotEmpty()) RowHint(WorkText.redoChapters(list.redoChapters), Modifier.padding(top = Dim.s4).testTag("studio_review_redo"))
+        if (list.redoChapters.isNotEmpty()) {
+            RowHint(WorkText.redoChapters(list.redoChapters), Modifier.padding(top = Dim.s4).testTag("studio_review_redo"))
+            MoreInfo("Tìm hiểu thêm", WorkText.REDO_MORE, "studio_review_redo_more")
+        }
         if (minor > 0 || review.showMinor) {
             TextAction(
                 if (review.showMinor) WorkText.MINOR_HIDE else "${WorkText.MINOR_SHOW} ($minor)", review::toggleMinor, "studio_review_minor",

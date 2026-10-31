@@ -21,7 +21,7 @@ import vn.abook.player.ui.addbook.BookForm
 import vn.abook.player.ui.components.Caption
 import vn.abook.player.ui.components.ClockLabel
 import vn.abook.player.ui.components.DisclosureRow
-import vn.abook.player.ui.components.Fold
+import vn.abook.player.ui.components.MoreInfo
 import vn.abook.player.ui.components.InlineProblem
 import vn.abook.player.ui.components.ListItem
 import vn.abook.player.ui.components.PrimaryButton
@@ -104,7 +104,7 @@ private fun PrecastBody(state: StudioProjectState, book: StudioBook, sheets: She
                     SwitchRow(PrecastText.WAIT, data.wait, { precast.setWait(it) }, "studio_precast_wait", hint = PrecastLogic.waitHint(data))
                 }
                 InlineProblem(precast.problem, null, "studio_precast_wait_problem")
-                Fold(PrecastText.WHEN, "studio_precast_when") { RowHint(PrecastLogic.freeNote(data), Modifier.padding(bottom = Dim.s8).testTag("studio_precast_free")) }
+                MoreInfo(PrecastText.WHEN, PrecastLogic.freeNote(data), "studio_precast_when")
             }
         }
         item("undo", "undo") { DecisionStrip(state.decisions) }
