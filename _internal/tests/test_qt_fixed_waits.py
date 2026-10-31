@@ -14,8 +14,10 @@ CPP_WAIT = re.compile(r"\bQTest::qWait\s*\(")
 # dòng ấy ghi dấu này để máy dò bỏ qua.
 ABSENCE = "// fixed: proves absence"
 # Test đo thời gian (bộ trộn âm, đồng hồ thiết bị) lấy mẫu theo nhịp cố định rồi mới tính số: chờ ấy là phép đo, không phải chờ
-# một trạng thái - dòng ấy ghi dấu này.
-SAMPLES = "// fixed: samples timing"
+# một trạng thái - dòng ấy ghi dấu này, kèm lý do sau gạch ("// fixed: samples timing - ..."). Dòng có dấu mà cũng kiểm
+# (verify / compare) là chờ trá hình: máy dò không nhận dấu ấy.
+SAMPLES = re.compile(r"// fixed: samples timing - \S")
+CHECK = re.compile(r"\b(?:QVERIFY\w*|QCOMPARE\w*|QTRY_\w+|verify|compare|tryVerify|tryCompare|fuzzyCompare)\s*\(")
 BASELINE = 0
 
 
@@ -31,7 +33,9 @@ def fixed_wait_checks(root=TESTS):
         waiting = WAIT if path.suffix == ".qml" else CPP_WAIT
         lines = text.splitlines()
         for i, line in enumerate(lines):
-            if not waiting.search(line.split("//", 1)[0]) or ABSENCE in line or SAMPLES in line:
+            code = line.split("//", 1)[0]
+            sampling = SAMPLES.search(line) and not CHECK.search(code)
+            if not waiting.search(code) or ABSENCE in line or sampling:
                 continue
             hits.append((path.relative_to(root).as_posix(), i + 1))
     return hits
@@ -80,9 +84,11 @@ def test_detector_sees_cpp_waits(tmp_path):
         "QTest::qWait(100); QCOMPARE(x, 1);\n"
         "QTest::qWait(50); // fixed: proves absence\nQVERIFY(calls.empty());\n"
         "QTRY_VERIFY(ready);\n// QTest::qWait(300);\n"
-        "while (n < 9) { samples.push_back(now()); QTest::qWait(3); } // fixed: samples timing\n",
+        "while (n < 9) { samples.push_back(now()); QTest::qWait(3); } // fixed: samples timing - clock read every 3 ms\n"
+        "QTest::qWait(3); // fixed: samples timing\n"
+        "QTest::qWait(3); QVERIFY(ok); // fixed: samples timing - a check in disguise\n",
         encoding="utf-8")
-    assert fixed_wait_checks(tmp_path) == [("test_probe.cpp", 1)]
+    assert fixed_wait_checks(tmp_path) == [("test_probe.cpp", 1), ("test_probe.cpp", 7), ("test_probe.cpp", 8)]
 
 
 def test_detector_sees_helper_ending_in_wait(tmp_path):
