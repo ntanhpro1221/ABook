@@ -7,6 +7,8 @@ is Ready, 5 when the host failed. The host must have run from the copy's resourc
 Then the copy runs again with ABOOK_SMOKE_EXIT=play (smoke_play.py): the Library holds one book whose chapter is a real
 440 Hz mp3, it plays through the host + Media Foundation + mixer of the package into a WAV (ABOOK_AUDIO_SINK), and the
 WAV must hold that tone. Negative check: the same with a chapter of random bytes must NOT pass.
+Last, smoke_open.py on the copy: a .abook on the command line reaches the Library, and a second launch with another .abook
+exits at once and hands it to the running copy.
 
 smoke_packaged.py <dist> [--seconds 120]
 """
@@ -23,6 +25,7 @@ import psutil
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import smoke_play  # noqa: E402
 import smoke_dist  # noqa: E402
+import smoke_open  # noqa: E402
 from smoke_dist import report  # noqa: E402
 
 
@@ -100,6 +103,15 @@ def main():
             return 1
         print(f"SMOKE_OK packaged Library book played: {seconds:.1f} s at {frequency:.0f} Hz heard; broken chapter: exit {bad_code}, "
               f"{bad_why}")
+        # File on the command line, then a second launch handing its file to the running copy (smoke_open.py).
+        logs: dict = {}
+        why = smoke_open.check(app, args.seconds, logs)
+        if why:
+            for log_name, text in logs.items():
+                print(f"SMOKE_OPEN {log_name}:", *text.splitlines()[-20:], sep="\n")
+            print(f"SMOKE_FAIL opening files from the command line: {why}")
+            return 1
+        print("SMOKE_OK a file on the command line and one from a second launch both reached the one running copy")
         return 0
     finally:
         # The host exits when its pipe closes; anything still running from the copy is ours and only ours.

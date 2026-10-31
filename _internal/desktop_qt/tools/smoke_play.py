@@ -47,7 +47,15 @@ def library(root: Path, chapter: bytes) -> Path:
     from abook.webui.packages import IMPORTED_FOLDER
 
     root.mkdir(parents=True, exist_ok=True)
-    package = root.parent / f"{root.name}.abook"
+    package = write_package(root.parent / f"{root.name}.abook", chapter)
+    BookFile(package).extract(root / IMPORTED_FOLDER)
+    package.unlink()
+    return root
+
+
+def write_package(package: Path, chapter: bytes) -> Path:
+    """File `package`: python_v4 với chương 1 = `chapter` (mã băm khớp), không nhạc. Chương khác là cuốn khác - máy nhận ra
+    một cuốn theo mã băm audio từng chương (fingerprints.identity_prints). Trả về `package`."""
     with zipfile.ZipFile(FIXTURE) as source, zipfile.ZipFile(package, "w") as target:
         for info in source.infolist():
             if info.filename.startswith("music/"):
@@ -65,9 +73,7 @@ def library(root: Path, chapter: bytes) -> Path:
                 book["chapters"][0]["duration"] = TONE_S
                 data = json.dumps(book, ensure_ascii=False).encode("utf-8")
             target.writestr(info, data)
-    BookFile(package).extract(root / IMPORTED_FOLDER)
-    package.unlink()
-    return root
+    return package
 
 
 def read_sink(path: Path) -> np.ndarray:
