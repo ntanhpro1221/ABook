@@ -103,9 +103,10 @@ Không cắt, có lý do:
 
 #### Đã làm
 - `src/trayicon.{h,cpp}`: lớp `TrayIcon` (QML_ELEMENT trong module ABook) dùng thẳng Win32.
-  - Cửa sổ ẩn `HWND_MESSAGE` giữ icon; `Shell_NotifyIconW` NIM_ADD / MODIFY / DELETE / SETVERSION (`NOTIFYICON_VERSION_4`,
-    kèm `NIF_SHOWTIP` vì bản 4 không hiện tooltip nếu thiếu), GUID cố định để Windows nhớ vị trí icon. Windows gắn GUID với
-    đường dẫn exe: bản dựng ở thư mục khác bị từ chối, nên thêm thất bại thì gỡ rồi thêm lại, vẫn thất bại thì thêm không GUID.
+  - Cửa sổ top-level ẩn giữ icon (`WS_POPUP` + `WS_EX_TOOLWINDOW`, không bao giờ hiện; trước 01-11 là `HWND_MESSAGE`, xem
+    "Đường thành công" dưới); `Shell_NotifyIconW` NIM_ADD / MODIFY / DELETE / SETVERSION (`NOTIFYICON_VERSION_4`,
+    kèm `NIF_SHOWTIP` vì bản 4 không hiện tooltip nếu thiếu), GUID cố định để Windows nhớ vị trí icon. Thêm thất bại thì gỡ
+    rồi thêm lại, vẫn thất bại thì thêm không GUID.
   - Icon lấy từ resource `IDI_ICON1` của exe (`appicon.rc`, cùng `app.ico`), cỡ `SM_CXSMICON` theo DPI.
   - Thuộc tính `tooltip` (cắt 127 đơn vị UTF-16 của `szTip`, không chia đôi cặp surrogate), `actions` (cùng dạng TrayMenuModel),
     `visible`, `available` (icon đã vào khay; Explorer chưa chạy thì false, app đóng cửa sổ là thoát thay vì ẩn); tín hiệu
@@ -114,17 +115,18 @@ Không cắt, có lý do:
   - Menu: `CreatePopupMenu` dựng lại MỖI LẦN MỞ từ `actions` (dòng tách = `MF_SEPARATOR`, mục tắt = `MF_GRAYED`, "&" thành "&&");
     `SetForegroundWindow` + `TrackPopupMenuEx(TPM_RETURNCMD)` + `PostMessage(WM_NULL)` theo hướng dẫn của Microsoft; lệnh phát ra
     SAU khi menu đã đóng và huỷ. Chuột phải / bàn phím mở bằng `WM_CONTEXTMENU`.
-  - `TaskbarCreated`: Explorer khởi động lại thì thêm icon lại (không gửi NIM_DELETE vào thanh mới).
+  - `TaskbarCreated`: Explorer khởi động lại thì thêm icon lại (không gửi NIM_DELETE vào thanh mới). Thông điệp này đến bằng
+    phát tán, nên cửa sổ phải là top-level (sửa 01-11).
   - Gỡ icon: destructor và `aboutToQuit`. Process bị giết cứng thì icon ma vẫn còn tới khi rê chuột qua (Windows không cho cách khác).
   - Menu theo chế độ tối của Windows: ĐÃ LÀM (`TrayIcon::allowDarkMenus`: `SetPreferredAppMode(AllowDark)`,
     `AllowDarkModeForWindow`, `FlushMenuThemes` qua số hiệu 135 / 133 / 136 của uxtheme, chỉ khi `RtlGetVersion` >= build 18362;
-    thiếu thì bỏ qua êm). Mới kiểm là ba hàm có mặt trên Windows build 26300 và gọi không hỏng; CHƯA nhìn thấy menu tối trên màn hình.
+    thiếu thì bỏ qua êm). Đã chụp menu thật: xem "Đường thành công" dưới.
 - `TrayShell`: ranh giới mỏng quanh `Shell_NotifyIcon` + `TrackPopupMenuEx`, bộ thử thay bằng đồ giả nên không icon nào vào khay.
 - `qml/DesktopTray.qml` dùng `TrayIcon`; không file QML nào còn `import Qt.labs.platform`. `TrayMenuModel.qml` giữ nguyên.
 - `tools/check_dist_deps.py` (selftest ở đầu `build.bat`, kiểm thật sau windeployqt): đỏ nếu một QML `import Qt.labs.platform`
   hoặc dist có `Qt6Widgets.dll`, `Qt6LabsPlatform.dll`, `qml/Qt/labs/platform`. Kiểm lực: selftest gieo từng lỗi; chạy thật với
   QML có dòng import trở lại thì đỏ (1 vấn đề), với dist cũ thì đỏ (3 vấn đề), với cây mới thì 0.
-- `tests/test_tray.cpp` (`TrayTests`, 13 ca) và `tests/qml/stub/ABook/TrayIcon.qml` (chỗ của lớp thật cho `WidthTests` nạp `Main.qml`).
+- `tests/test_tray.cpp` (`TrayTests`, 14 ca) và `tests/qml/stub/ABook/TrayIcon.qml` (chỗ của lớp thật cho `WidthTests` nạp `Main.qml`).
 
 #### Cỡ bộ cài (dist khi chưa có `resources/`)
 
@@ -153,8 +155,62 @@ Không có `resources/` nên không có host Python: số này là riêng tiến
 | CPU giao diện tới lúc lắng | 0,72 s | 0,74 s | không đổi |
 
 Khay nay chỉ bớt ~0,5 MB RAM nghỉ (DLL không nạp thì không có trang nào chạm tới); phần được là cỡ cài đặt và tải.
-Desktop riêng không có Explorer nên `Shell_NotifyIcon` luôn thất bại ở đây (icon không vào đâu cả, `available` false): chưa nhìn
-đường THÀNH CÔNG (icon thật hiện, bấm, menu thật) vì chạy nó phải hiện icon trong khay của chủ máy.
+Desktop riêng không có Explorer nên `Shell_NotifyIcon` luôn thất bại ở đây (icon không vào đâu cả, `available` false): đường THÀNH
+CÔNG đo riêng ở mục dưới, với icon ẩn.
+
+#### Đường thành công trên Explorer thật (01-11, `tools/tray_probe.cpp`)
+
+Bộ dò `TrayProbe` `#include` nguyên `src/trayicon.cpp` (không sửa dòng nào), thay `Shell_NotifyIconW` và `GetProcAddress` bằng bộ
+bọc ghi từng lệnh. Bộ bọc ép `NIF_STATE` + `NIS_HIDDEN` vào mọi NIM_ADD / NIM_MODIFY, nên icon ẩn ngay từ lúc thêm, và chặn hẳn
+`NIF_INFO` (bong bóng). Không có gì hiện trên màn hình.
+- `shell` chạy trên desktop của chủ máy, vì `Shell_NotifyIcon` tìm thanh tác vụ qua cửa sổ, mà tìm cửa sổ là theo desktop.
+  Không tạo cửa sổ nào hiện.
+- `menu` mở menu thật nên chỉ chạy trong desktop riêng (`guarded_process.run_guarded`, 0 lần cướp tiêu điểm).
+- Chạy: `tools/tray_probe.py --qt-bin <Qt>/bin --out <thư mục>`. Không phải ctest, vì nó chạm Explorer thật.
+
+Kết quả, Windows 11 build 26300:
+
+| Bước | Mã trả về |
+|---|---|
+| Thêm (GUID) + `NIM_SETVERSION` 4 | OK / OK |
+| Đổi tooltip (`NIM_MODIFY`) / gỡ (`NIM_DELETE`) | OK / OK |
+| Icon cũ còn sót (cửa sổ chết, không NIM_DELETE), lần sau thêm | NIM_ADD **thất bại 0x80004005**, NIM_DELETE OK, NIM_ADD OK, SETVERSION OK: đường lui gỡ-rồi-thêm cần thật |
+| `handleTaskbarCreated` sau khi icon mất | NIM_ADD OK, SETVERSION OK |
+| Exe ở thư mục khác, cùng GUID | NIM_ADD OK. Không bị từ chối như tài liệu cũ nói; mục `NotifyIconSettings` của GUID đổi `ExecutablePath` theo exe mới, không thêm mục |
+
+**Lỗi tìm ra: icon không bao giờ trở lại sau khi Explorer khởi động lại.**
+- Explorer báo dựng lại thanh tác vụ (`TaskbarCreated`) bằng phát tán (`HWND_BROADCAST`). Cửa sổ `HWND_MESSAGE` không nhận
+  thông điệp phát tán.
+- Đo bằng một thông điệp đăng ký riêng, phát đúng đường ấy tới cửa sổ thật của `TrayIcon` (subclass để đếm):
+  - mã cũ: **0 lần**; gửi thẳng vẫn tới, nên bộ đếm không sai;
+  - một cửa sổ top-level ẩn cùng lúc: 1 lần;
+  - sau khi sửa: cửa sổ của `TrayIcon` nhận 1 lần.
+- Test cũ `explorerRestartAddsTheIconAgain` gửi `TaskbarCreated` THẲNG bằng `SendMessageW`, nên đạt dù đường thật hỏng.
+- **Sửa:** cửa sổ top-level ẩn (`WS_POPUP`, `WS_EX_TOOLWINDOW`, không `WS_VISIBLE`, không bao giờ `ShowWindow`).
+- **Test mới** `explorerBroadcastReachesTheTrayWindow`: phát tán thật bằng thông điệp đăng ký riêng (app khác bỏ qua), kiểm cửa sổ
+  không hiện và không lên thanh tác vụ. Kiểm lực: dựng với `HWND_MESSAGE` thì đỏ (`g_broadcastSeen` 0, chờ 1); mã mới đạt hết (Totals 16 passed, gồm initTestCase / cleanupTestCase).
+
+**Menu tối.**
+- Thứ tự gọi ghi được: `SetPreferredAppMode(1)` một lần cho cả tiến trình, rồi mỗi lần mở `AllowDarkModeForWindow(1)` →
+  `FlushMenuThemes()`. Đúng thứ tự.
+- Chụp được menu thật vào bitmap ngoài màn hình bằng `PrintWindow(PW_RENDERFULLCONTENT)`, `WM_PRINT` cho cùng kết quả. Chụp chạy
+  trong desktop riêng: bắt cửa sổ `#32768`, rồi `WM_CANCELMODE` tới cửa sổ chủ (`EndMenu` chỉ đóng menu của luồng gọi).
+- Máy chủ sách đang ở chế độ tối (`AppsUseLightTheme` = 0). Độ sáng trung bình của menu 185x81:
+  - có `allowDarkMenus`: **52/255**, nền tối, chữ sáng, mục tắt xám, có đường tách;
+  - đối chứng không gọi (`menu-plain`): **243/255**, menu Win32 sáng mặc định.
+- Như nhau với cửa sổ chủ cũ và mới.
+- `SetForegroundWindow` trả FALSE trong desktop riêng, với cả hai loại cửa sổ: desktop ấy không nhận input nên không ai lên trước
+  được. Trên desktop thật thì không thử, vì sẽ lấy tiêu điểm của chủ máy.
+  - Theo tài liệu, `SetForegroundWindow` cần cửa sổ top-level, và cửa sổ `HWND_MESSAGE` không phải top-level.
+  - Vì vậy với mã cũ, menu có thể không đóng khi bấm ra ngoài. Bản sửa trên cho cửa sổ top-level, nên cũng gỡ điểm này.
+  - Chưa đo được bằng mắt.
+
+**Dấu vết để lại:** một mục trong `HKCU/Control Panel/NotifyIconSettings`, do Explorer tự ghi cho GUID của app,
+`ExecutablePath` là `TrayProbe.exe`, không ghim (`IsPromoted` không có).
+- Mục này liệt kê trong Cài đặt > Thanh tác vụ > Biểu tượng khay khác, như các bản dựng thử trước (`ABook_qtmini`, `qtsgaps`,
+  `qtsink`, `knobdist`).
+- ABookDesk thật thêm bằng cùng GUID thì mục này đổi đường dẫn theo exe (đã đo ở dòng "Exe ở thư mục khác").
+- Không xoá, vì Explorer giữ bản trong bộ nhớ.
 
 ### Mở lần đầu, đo lại (31-10, sau Q1)
 
@@ -482,8 +538,8 @@ trước), (3) bản Qt đầu tiên do Lead quyết. latest.json dùng chung; k
 - Vị trí cửa sổ khi cập nhật: `Backend::runInstaller` thoát bằng `exit(0)`, không qua `WindowMode.quit()`; WindowMode lưu
   hình học ở `Qt.application.aboutToQuit` (vẫn phát với exit). WidthTests `Mini::test_exitWithoutQuitStillSavesTheWindow`.
 
-- Bước 2 (Lead duyệt 31-10): `release.py build` gọi `desktop_qtuild.bat installer` thay `build_windows_app.ps1`, lấy file
-  ở `desktop_qtuild\installer\`; cùng tên file, cùng `latest.json`, kiểm latest.json mang đúng chữ ký của `.sig`.
+- Bước 2 (Lead duyệt 31-10): `release.py build` gọi `desktop_qt\build.bat installer` thay `build_windows_app.ps1`, lấy file
+  ở `desktop_qt\build\installer\`; cùng tên file, cùng `latest.json`, kiểm latest.json mang đúng chữ ký của `.sig`.
   tests/test_release_script.py: `_run` giả - lệnh đúng build.bat installer, không lệnh Tauri nào; thiếu file / sai số phiên bản
   / latest.json khác .sig đều đỏ.
 - Bỏ `shell/` khỏi đường phát hành sau một bản Qt chạy thật trên "máy sạch": cài mới, cập nhật lên bản kế, gỡ có và không
