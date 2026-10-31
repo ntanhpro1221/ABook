@@ -122,7 +122,7 @@ StudioConfirm {
     }
     function jobEnded(error, result) {
         const made = job.kind
-        if (error === Logic.CANCELLED) { store.say("Đã huỷ xuất"); return }
+        if (error === Logic.CANCELLED) { store.say("Đã dừng xuất"); return }
         if (error) {
             const failure = Logic.failureOf(made, error)
             store.say(failure.title, failure.description)

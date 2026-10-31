@@ -625,7 +625,7 @@ Item {
             Theme.reduceMotion = false
             const toast = makeToast()
             const card = toast.children[toast.children.length - 1]
-            Api.notice = "Đã thêm sách vào thư viện"
+            Api.notice = "Đã thêm “Tên sách”"
             let mid = false
             tryVerify(function() { if (toast.t > 0.05 && toast.t < 0.95 && card.scale < 1) mid = true; return toast.t === 1 }, 2000)
             verify(mid, "mở bằng trượt + thu phóng")

@@ -22,7 +22,7 @@ Column {
             id: lead
             height: 24
             verticalAlignment: Text.AlignVCenter
-            text: "Mã nguồn mở (MIT): "
+            text: "Mã nguồn mở (MIT) "
             color: Theme.text2
             font.pixelSize: Theme.sizeBodySmall
         }
