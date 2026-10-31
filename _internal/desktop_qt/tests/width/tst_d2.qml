@@ -126,6 +126,18 @@ Item {
             compare(Api.notice, "Sách đã có")
             verify(!dialog.open)
         }
+        function test_newBookFileSaysItsTitle() {
+            // Như useOpenedBook của desktop/App.tsx: cuốn mới nói tên sách; tên chưa đọc được thì còn "Đã thêm".
+            DesktopApi.responses = {"/api/listen/open-book-file": {status:200,data:{id:"fresh",how:"new"}},
+                                    "/api/listen/books/fresh": {status:200,data:{id:"fresh",title:"Tắt đèn"}}}
+            make(importFactory).begin(["D:/fixture/book.abook"])
+            tryCompare(Api, "notice", "Đã thêm “Tắt đèn”")
+            DesktopApi.responses = {"/api/listen/open-book-file": {status:200,data:{id:"nameless",how:"new"}}}
+            make(importFactory).begin(["D:/fixture/other.abook"])
+            tryCompare(Api, "notice", "Đã thêm")
+            wait(50)
+            compare(Api.notice, "Đã thêm")
+        }
         function test_editIndependentDraftsAndBack() {
             DesktopApi.responses = {"/api/listen/books/edit": {status:200,data:{id:"edit",stage:"text",title:"Tên mới",author:"Tác giả cũ"}}}
             const dialog = make(editFactory)

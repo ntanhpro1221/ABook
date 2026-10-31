@@ -48,7 +48,7 @@ Modal {
     }
     FolderDialog {
         id: folders
-        title: "Chọn nơi lưu file sách"
+        title: "Chọn nơi lưu"
         onAccepted: root.folder = DesktopApi.localPath(selectedFolder)
     }
     Column {
