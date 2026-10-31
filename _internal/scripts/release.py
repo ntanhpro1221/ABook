@@ -168,17 +168,22 @@ def check_word_align_pinned() -> None:
 
 
 def check_speaker_model_pinned() -> None:
-    """Lượt "người nói từng câu" (speaker_pass) cần model `abook-speaker:v2`, Studio tải ở bước "llm": ghim ở
-    studio_setup.PUBLISHED_MODELS. Chưa đăng (URL còn PIN_REVISION) thì Studio cài từ bộ cài này hỏng ở bước ấy - không dựng bản phát hành."""
+    """Model phân tích mặc định (config.DEFAULT_SETTINGS, vd `abook-analyzer:v5`) và model người nói đi cặp (`abook-speaker:v2`,
+    lượt speaker_pass) Studio tải ở bước "llm": cả hai ghim ở studio_setup.PUBLISHED_MODELS. Chưa đăng (thiếu mục, URL còn
+    PIN_REVISION) thì Studio cài từ bộ cài này hỏng ở bước ấy - không dựng bản phát hành."""
     sys.path.insert(0, str(ROOT))
-    from abook.speaker_pass import SPEAKER_MODEL
+    from abook.config import DEFAULT_SETTINGS
+    from abook.speaker_pass import SPEAKER_MODEL, paired_speaker_model
     from abook.webui.studio_setup import PUBLISHED_MODELS
 
-    model = PUBLISHED_MODELS.get(SPEAKER_MODEL)
-    assert model is not None and model.size > 0 and re.fullmatch(r"[0-9a-f]{64}", model.sha256) and all(
-        "PIN_REVISION" not in part.url and part.size > 0 and re.fullmatch(r"[0-9a-f]{64}", part.sha256) for part in model.parts), (
-        f"{SPEAKER_MODEL} (webui/studio_setup.py, PUBLISHED_MODELS) chưa ghim: chạy scripts/publish_model.py ... --hf <repo>, "
-        "điền mã commit thay PIN_REVISION")
+    analysis_model = DEFAULT_SETTINGS["analysis"]["model"]
+    assert paired_speaker_model(analysis_model) == SPEAKER_MODEL, f"{analysis_model} chưa đi cặp {SPEAKER_MODEL} (speaker_pass)"
+    for name in (analysis_model, SPEAKER_MODEL):
+        model = PUBLISHED_MODELS.get(name)
+        assert model is not None and model.size > 0 and re.fullmatch(r"[0-9a-f]{64}", model.sha256) and all(
+            "PIN_REVISION" not in part.url and part.size > 0 and re.fullmatch(r"[0-9a-f]{64}", part.sha256) for part in model.parts), (
+            f"{name} (webui/studio_setup.py, PUBLISHED_MODELS) chưa ghim: chạy scripts/publish_model.py ... --hf <repo>, "
+            "điền mã commit thay PIN_REVISION")
 
 
 def build(version: str, out: Path) -> None:
