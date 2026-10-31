@@ -1,4 +1,3 @@
-import { Capacitor } from "@capacitor/core";
 import { formatClock, formatLength, formatPercent } from "@/shared/format";
 import type { ListenChapter } from "./model";
 
@@ -89,16 +88,13 @@ export function toggleLabel(playing: boolean, buffering: boolean, speaking: bool
   return playing ? "Tạm dừng" : "Phát";
 }
 
-/** Máy này có phím tắt của trình phát: chỉ máy tính - trên app điện thoại trình phát không bắt phím (player.tsx). */
-export const SHORTCUTS = !Capacitor.isNativePlatform();
-
-/** Tên nút kèm phím tắt ("Lùi 15 giây (←)") ở máy tính; điện thoại chỉ tên - TalkBack từng đọc cả "(Shift+←)" (soát a67). */
-export function withShortcut(label: string, key: string, keys = SHORTCUTS): string {
+/** Tên nút kèm phím tắt ("Lùi 15 giây (←)"); `keys` false thì chỉ tên. */
+export function withShortcut(label: string, key: string, keys = true): string {
   return keys ? `${label} (${key})` : label;
 }
 
 /** Nút "Chương sau": chương cuối thì nói đó là chương cuối (nút mờ); chương sau có mà chưa nghe được thì nói vì sao (nút vẫn bấm được). */
-export function nextChapterLabel(hasNext: boolean, hasLater: boolean, keys = SHORTCUTS): string {
+export function nextChapterLabel(hasNext: boolean, hasLater: boolean, keys = true): string {
   if (!hasLater) return "Đây là chương cuối";
   return hasNext ? withShortcut("Chương sau", "Shift+→", keys) : "Chương sau chưa có audio";
 }

@@ -261,7 +261,7 @@ export function ReaderScreen(edit: SentenceEditing) {
 
   if (!chapter || !script) {
     return (
-      <EmptyState icon={BookOpenText} title="Không mở được chương này" className="mt-20" action={<Button onClick={() => navigate(`/book/${id}`)}>Về trang sách</Button>}>
+      <EmptyState icon={BookOpenText} title="Chưa mở được chương này" className="mt-20" action={<Button onClick={() => navigate(`/book/${id}`)}>Về trang sách</Button>}>
         {chapterOpenProblem(scriptError)}
       </EmptyState>
     );

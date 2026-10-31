@@ -23,7 +23,7 @@ import java.util.concurrent.Executors
 
 /**
  * "Nghe ngay" cho chương CHỈ CÓ CHỮ (docs/LISTEN_ANYTHING.md mục 1 và 3): một giọng máy đọc chương, không phân tích. Sống trong lõi phát (như chương audio) vì
- * tắt màn hình thì WebView bị treo - sang đoạn kế, sang chương kế, hẹn giờ ngủ, nút tai nghe, lưu vị trí đều phải chạy không cần JavaScript.
+ * tắt màn hình thì giao diện bị treo - sang đoạn kế, sang chương kế, hẹn giờ ngủ, nút tai nghe, lưu vị trí đều phải chạy không cần giao diện.
  *
  * Cách làm: chương chia thành các đoạn ([Paragraphs.of], đúng như màn đọc), mỗi đoạn một đoạn âm thanh ([Clip]) do [ClipReader] đọc ở luồng nền. Chỉ đọc đoạn đang
  * nghe + [AHEAD] đoạn sau (giọng trực tuyến mà clip về chậm thì nhiều hơn - [ReadAheadPolicy]); đoạn nào xong thì nối thêm vào hàng đợi của ExoPlayer (một MediaItem mỗi đoạn, `mediaId` = mã chương, `tag` = [Slot]) nên chuyển đoạn
@@ -132,7 +132,7 @@ object ReadAloud {
             when {
                 clip != null && entry.done -> entry.relocate(clip.file)
                 clip != null -> entry.fail(VoiceException("Đoạn đã đọc bằng giọng khác"))
-                else -> entry.fail(result.exceptionOrNull() as? Exception ?: VoiceException("Không đọc được đoạn này"))
+                else -> entry.fail(result.exceptionOrNull() as? Exception ?: VoiceException("Chưa đọc được đoạn này"))
             }
         }
     }
@@ -431,7 +431,7 @@ object ReadAloud {
         if (bookId.isEmpty() || (bookId == Playback.bookId && (recordId.isEmpty() || recordId == Playback.recordId))) setVoice(id)
     }
 
-    /** Chỉ nhớ giọng của cuốn `bookId`, không đổi giọng đang đọc: lúc nạp cuốn ([vn.abook.player.PlayerPlugin.load]) - [useVoiceOf] của lần nạp đặt giọng ngay sau đó.
+    /** Chỉ nhớ giọng của cuốn `bookId`, không đổi giọng đang đọc: lúc nạp cuốn - [useVoiceOf] của lần nạp đặt giọng ngay sau đó.
      *  Qua [chooseFor] thì nạp lại cùng cuốn với giọng khác sẽ đọc lại chỗ chờ của lượt cũ bằng giọng mới, rồi lần nạp bỏ ngay lượt đọc ấy. */
     fun rememberFor(bookId: String, id: String, recordId: String = "") {
         choices?.remember(bookId, id, recordId)
@@ -744,7 +744,7 @@ object ReadAloud {
         val ctx = context ?: return false
         if (Store.rawManifest(book) != null) return false
         if (runCatching { Store.file(book, chapter.text).isFile }.getOrDefault(true)) {
-            // Chữ vừa về bằng đường khác giữa lúc chapFor đọc và lúc này (giao diện xin chữ chương để hiện - LibraryPlugin.readText): đọc lại ngay.
+            // Chữ vừa về bằng đường khác giữa lúc chapFor đọc và lúc này (giao diện xin chữ chương để hiện): đọc lại ngay.
             if (chapFor(index) == null) return false
             then()
             return true
@@ -821,7 +821,7 @@ object ReadAloud {
                 Playback.emit("state")
                 return
             }
-            fail("Không đọc được chữ của chương “${chapter.title}”")
+            fail("Chưa đọc được chữ của chương “${chapter.title}”")
             return
         }
         val restored = if (segment < 0) ReadingAnchor.restore(chap.paragraphs, anchor) else null
@@ -909,7 +909,7 @@ object ReadAloud {
             if (chap == null) {
                 // Cuốn nghe thẳng: chữ chương kế còn ở máy giữ sách - lấy về rồi nạp tiếp (hàng đợi vẫn phát phần đã có).
                 if (fetchText(feedChapter) { pump() }) return
-                fail("Không đọc được chữ của chương “${chapter.title}”")
+                fail("Chưa đọc được chữ của chương “${chapter.title}”")
                 return
             }
             // Dòng ngăn cảnh không có quãng lặng (đầu / cuối chương, dòng thứ hai liền nhau) không phải là gì để phát: bỏ qua cả chuỗi mà không tốn vòng của `guard`.
@@ -1423,7 +1423,7 @@ object ReadAloud {
                 return
             }
             if (streaming != null && exo != null && liveIndex(exo, streaming) >= 0) {
-                onLiveBroke(streaming, error as? Exception ?: VoiceException("Không đọc được đoạn này"))
+                onLiveBroke(streaming, error as? Exception ?: VoiceException("Chưa đọc được đoạn này"))
                 return
             }
             // Đoạn hết cách đọc: dịch vụ trục trặc (kể cả lời cuối của [ClipReader]) hay lỗi giọng khác - nhớ đoạn này, lượt đọc kế của nó là lần hỏi mới ([StalledClips]), dù do nhịp hỏi lại,
@@ -1447,7 +1447,7 @@ object ReadAloud {
                 resume = null
                 waiting = Target(chap.index, segment, if (rest.from > 0) 0L else rest.baseMs, if (rest.from > 0) rest.from else -1, exo?.playWhenReady == true)
             }
-            fail((error as? VoiceException)?.message ?: "Không đọc được đoạn này (${error.message})", chap.index to segment)
+            fail((error as? VoiceException)?.message ?: "Chưa đọc được đoạn này (${error.message})", chap.index to segment)
             return
         }
         // Clip đuôi: `words` đủ chữ của đoạn (chữ trước chữ bấm mốc [0, 0]), âm thanh bắt đầu từ chữ ấy ([SeekPlan.tailWords]).

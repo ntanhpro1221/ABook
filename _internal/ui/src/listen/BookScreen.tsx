@@ -1143,7 +1143,7 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
                 {/* Một dòng. "Còn" tính theo phần ĐÃ PHỦ (chỗ tua qua vẫn là chưa nghe), khác "còn X" theo vị trí ở màn "Đang nghe" - nói rõ
                     "chưa nghe" để hai con số không trông như mâu thuẫn (soát UX 29-09). */}
                 <p className="tabular mt-1.5 text-xs text-fg-2">
-                  {book.progress.finished || book.progress.caughtUp ? bookStatusText(book) : heard > 0 ? <TickingValue><DotJoin parts={[`Đã nghe ${formatLength(heard)}`, `còn ${formatLength(left)} chưa nghe`]} /></TickingValue> : listening ? (player.error ? "Không phát được" : "Đang nghe") : "Chưa nghe"}
+                  {book.progress.finished || book.progress.caughtUp ? bookStatusText(book) : heard > 0 ? <TickingValue><DotJoin parts={[`Đã nghe ${formatLength(heard)}`, `còn ${formatLength(left)} chưa nghe`]} /></TickingValue> : listening ? (player.error ? "Chưa phát được" : "Đang nghe") : "Chưa nghe"}
                 </p>
               </>
             )}

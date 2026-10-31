@@ -15,7 +15,7 @@ import vn.abook.player.readaloud.ReadAloud
 
 /**
  * Lõi phát thật cho giao diện native: chuyển lệnh xuống [Playback] (mọi lệnh ExoPlayer chạy ở luồng chính) sau khi bảo đảm dịch vụ phát đã chạy -
- * cùng cách [vn.abook.player.PlayerPlugin] làm cho WebView (một MediaController ghim vào luồng chính để Media3 khởi động / giữ sống dịch vụ).
+ * bằng một MediaController ghim vào luồng chính để Media3 khởi động / giữ sống dịch vụ.
  * `Playback.init` chạy ở lần dùng đầu (không ở dựng Activity: ngân sách mở nguội).
  */
 class AndroidPlaybackCore(context: Context) : PlaybackCore {

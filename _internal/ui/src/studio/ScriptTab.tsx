@@ -483,7 +483,7 @@ function useRetake(bookId: string, chapterId: number, onUndoable: (undo: () => b
         used = true;
         void api(`/api/books/${bookId}/review`, { method: "POST", body: body(null, lines) })
           .then(() => toast.success(lines.length > 1 ? `Đã hoàn tác: ${lines.length} câu không phải thu lại nữa` : "Đã hoàn tác: câu này không phải thu lại nữa"))
-          .catch((error: Error) => toast.error("Không hoàn tác được", { description: error.message }))
+          .catch((error: Error) => toast.error("Chưa hoàn tác được", { description: error.message }))
           .finally(refresh);
         return true;
       };

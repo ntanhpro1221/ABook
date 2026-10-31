@@ -1,9 +1,0 @@
-{
-  "appId": "com.ngdtuanh.abook",
-  "appName": "ABook",
-  "webDir": "www",
-  "android": {
-    "allowMixedContent": false,
-    "backgroundColor": "#121110"
-  }
-}

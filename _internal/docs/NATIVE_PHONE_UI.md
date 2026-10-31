@@ -108,7 +108,7 @@ Chủ sách 26-10: "trong các loại chuyển cảnh, loại fade là tôi ghé
 | P1 | Thư viện (Đang nghe, lưới / danh sách, lọc, xếp, tìm), thanh phát nhỏ, Đang nghe đầy đủ (tua, chương, tốc độ, hẹn giờ, "…") + Đọc theo, thanh tab | so số đo với WebView trên OPPO |
 | P2 | Trang sách, Thêm sách / nhập, Sửa sách, Cài đặt, Thiết bị / ghép máy | |
 | P3 | Studio từ xa, Xuất (MP3 / M4B), giọng đọc máy, nhạc nền, phần còn lại | danh sách đủ màn = khung `phone/*` của gallery |
-| P4 | Gỡ Capacitor, WebView, `ui/src/android`, gói web khỏi APK; bản phát hành native | ngân sách §1 đạt hết |
+| P4 | **ĐÃ LÀM** - Gỡ Capacitor, WebView, `ui/src/android`, gói web khỏi APK; bản phát hành native | ngân sách §1 đạt hết |
 
 Trong thời gian P0-P3, bản WebView chỉ nhận sửa lỗi.
 

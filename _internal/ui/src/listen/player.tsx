@@ -223,7 +223,7 @@ export const SKIP_SECONDS = 15;
 const SLEEP_WARN_MS = 30_000;
 const SAVE_EVERY_MS = 10_000;
 /** Lời báo khi nguồn âm thanh không phát được mà không có lý do nào cụ thể hơn (cùng câu với Qt Player::kPlayError). */
-const PLAY_ERROR = "Không phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại.";
+const PLAY_ERROR = "Chưa phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại.";
 /** Nghe tiếp chờ chỗ nghe mới nhất tối đa chừng này (máy chủ đổi chỗ nghe với máy kia trong 1,5 giây, máy kia tắt thì thôi). */
 const FRESH_SPOT_MS = 1600;
 /** Lời nhắn (notice) tự ẩn sau chừng này. */

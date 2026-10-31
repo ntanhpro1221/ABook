@@ -6,7 +6,7 @@ import android.net.Uri
 import java.io.File
 
 /**
- * "Lưu thay đổi" / "Lưu thành" một cuốn thành file sách - việc mà cả hai giao diện cùng làm (WebView qua [LibraryPlugin.saveBook], native qua `ui.data.LibraryRepo`).
+ * "Lưu thay đổi" / "Lưu thành" một cuốn thành file sách - việc của giao diện (`ui.data.LibraryRepo`).
  * Ghi file là [BookSave] (dựng và kiểm trong file tạm trước, bản cũ không mất); ở đây là phần quanh nó: loại file, chỗ lưu NHỚ lần trước, hộp "tạo file" của hệ thống.
  * Đọc / ghi đĩa: gọi ở luồng nền.
  */

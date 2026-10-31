@@ -26,7 +26,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.text.BasicText
+import vn.abook.player.ui.components.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -59,16 +59,16 @@ import vn.abook.player.ui.components.fadeEdges
 
 private val SafetyOptions = AppSettings.SAFETY_HOURS.map { Option(it, if (it == 0) "Không" else "$it giờ") }
 private val ScheduleOptions = SleepSchedule.MINUTES.map { Option(it, "$it phút") }
-private val ExtendOptions = AppSettings.EXTEND_MINUTES.map { Option(it, "$it′") }
-private val FadeOptions = AppSettings.FADE_SECONDS.map { Option(it, "${it}s") }
+private val ExtendOptions = AppSettings.EXTEND_MINUTES.map { Option(it, "$it phút") }
+private val FadeOptions = AppSettings.FADE_SECONDS.map { Option(it, if (it == 60) "1 phút" else "$it giây") }
 
-/** Lời của các hàng: cùng chữ với bản WebView (android/SettingsScreen.tsx, listen/playlistBed.ts, shared/feedback.ts, android/notifications.ts). */
+/** Lời của các hàng. */
 private object GroupCopy {
     const val NOTIFY = "Đang tắt: không báo khi sách xong. Nút tạm dừng vẫn chạy."
     const val REWIND = "Nghỉ quá 30 giây thì lùi 5 giây (quá 10 phút: 10 giây)."
     const val HEADSET = "Bật: nút Trước/Sau lùi/tới 15 giây. Tắt: chuyển chương."
     const val AUTO_MUSIC = "Sách chỉ có chữ: nhạc nhẹ đổi theo cảnh."
-    const val SAFETY = "Không chạm máy chừng này thì nhỏ dần rồi dừng."
+    const val SAFETY = "Không ai chạm máy chừng này thì nhỏ dần rồi dừng."
     const val FLIP = "Lật lên trong 10 phút là nghe tiếp."
     const val SOUNDS = "Tiếng khẽ khi bạn chọn. Im khi đang nghe."
     const val SCHEDULE = "Nghe trong khung giờ này thì tự hẹn giờ."
@@ -184,7 +184,7 @@ fun SleepSettings(repo: SettingsRepo, sheets: SheetHost, onBack: () -> Unit, mod
         }
         ListSection("Khi sắp tắt") {
             ChoiceSetting(
-                "Mỗi lần thêm", ExtendOptions, ExtendOptions.first { it.value == settings.sleepExtendMinutes },
+                "Mỗi lần nghe thêm", ExtendOptions, ExtendOptions.first { it.value == settings.sleepExtendMinutes },
                 { option, _ -> repo.change { it.copy(sleepExtendMinutes = option.value) } }, "sleep_extend",
             )
             RowLine()
@@ -282,7 +282,7 @@ fun DevicesSettings(devices: DevicesState?, sheets: SheetHost, open: (DevicesPag
         }
         ListSection("Điện thoại này") {
             ActionRow(
-                "Tên điện thoại", "Đổi tên", { if (devices != null) sheets.show { dismiss -> RenameSheet(summary.deviceName, devices, dismiss) } }, "devices_name",
+                "Tên thiết bị", "Đổi tên", { if (devices != null) sheets.show { dismiss -> RenameSheet(summary.deviceName, devices, dismiss) } }, "devices_name",
                 hint = summary.deviceName,
             )
         }

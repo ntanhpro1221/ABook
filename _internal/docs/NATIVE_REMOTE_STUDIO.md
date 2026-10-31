@@ -13,8 +13,8 @@
 - Thêm gói `vn.abook.player.ui.studio` (≈ 45 file mới, ~12.700 dòng mã + ~3.900 dòng test, §11) và một client `StudioApi.kt` đặt trên **`SyncLink.request` + `StudioLink.link` sẵn có** (đã Bearer + ghim vân tay). Không thêm HTTP client thứ hai.
 - 9 màn: **Studio** (danh sách dự án), **Dự án** (tab Chương · Việc cần duyệt · Cần nghe lại · Nhân vật · Nhạc nền), **Kịch bản**, **Duyệt trước khi thu**, **Xuất**, **Sách mới**, **Cách đọc tên**, **Bìa** (dùng lại màn cắt/tìm bìa của sửa sách), **Nhật ký**. Phần còn lại là sheet.
 - Máy tính phải thêm JSON ở vài chỗ nhỏ (§9); không chỗ nào trả HTML mà điện thoại cần.
-- Xong thì `StudioActivity`, `activity_main.xml`, `MainActivity` + các Plugin (nếu P4 làm cùng), Capacitor, thư mục `assets/public` đều gỡ được (§10).
-- Đi theo pha **S1–S5** (§11), mỗi pha phát hành được riêng; bản `-PnativeUi` giữ lối "Mở trang Studio" (WebView) tới hết S4, S5 xoá nó.
+- `StudioActivity` đã bị xoá ở S5; xong thì `activity_main.xml`, `MainActivity` + các Plugin (nếu P4 làm cùng), Capacitor, thư mục `assets/public` đều gỡ được (§10).
+- Đi theo pha **S1–S5** (§11); S1–S4 phát hành được riêng, bản `-PnativeUi` giữ lối "Mở trang Studio" (WebView) tới hết S4. **S5 đã xoá `StudioActivity` và `LibraryPlugin.openStudio`** (hàm này tham chiếu `StudioActivity` nên không còn biên dịch được), nên bản WebView (không cờ `-PnativeUi`) **không còn Studio từ S5**; vì vậy S5 **được gộp cùng P4**, không phát hành trước nó.
 
 ---
 
@@ -486,7 +486,7 @@ Không port: dựng URL băm (`#/studio/...`), TanStack Query, `MotionRegion` (�
 
 ### 8.3 Xoá (S5)
 
-`StudioActivity.kt` (342 dòng), `StudioLinkTest` phần `bookPath/safePath`, khai manifest, `LibraryPlugin.openStudio` (dòng 580–584, chết khi `LibraryPlugin` bị xoá ở P4).
+`StudioActivity.kt` (342 dòng), `StudioLink.bookPath/safePath/rebase/Watch/MISMATCH` và phần test của chúng trong `StudioLinkTest`, khai manifest, `LibraryPlugin.openStudio` (dòng 580–584). **Đã làm ở S5.** `LibraryPlugin.openStudio` phải xoá ngay trong S5 vì nó tạo `Intent` tới `StudioActivity` nên không biên dịch được; việc này làm bản WebView mất Studio (xem §0). `Devices.studioTarget` trả `(mã máy, StudioRoute)` thay cho đường trang chữ, và thông báo `StudioAlerts` luôn mở `NativeActivity`.
 
 ---
 
@@ -510,27 +510,27 @@ Hai phát hiện đáng báo ngoài phạm vi Studio: (a) lỗi `ProductionSourc
 
 ## 10. Danh sách P4: còn gì của WebView/Capacitor/gói web trong APK `-PnativeUi`
 
-Kiểm bằng Grep trên `_internal/mobile/android/`. "Studio" = bị bỏ trực tiếp bởi tài liệu này; "P4" = việc khác của NPU §6 P4 mà danh sách này nêu cho đủ.
+**P4 đã làm: mọi hàng "P4" dưới đây đã gỡ; bảng giữ làm lịch sử.** Kiểm bằng Grep trên `_internal/mobile/android/`. "Studio" = bị bỏ trực tiếp bởi tài liệu này; "P4" = việc khác của NPU §6 P4 mà danh sách này nêu cho đủ.
 
 | Mục | Vị trí | Gỡ bởi |
 |---|---|---|
-| `StudioActivity` (`AppCompatActivity` + `WebView`) | `StudioActivity.kt`; manifest chính dòng 86–88 | **Studio (S5)** |
-| `LibraryPlugin.openStudio` | `LibraryPlugin.kt` 580–584 | P4 (cùng lúc) |
+| `StudioActivity` (`AppCompatActivity` + `WebView`) | `StudioActivity.kt`; manifest chính dòng 86–88 | **Studio (S5) - ĐÃ XOÁ** |
+| `LibraryPlugin.openStudio` | `LibraryPlugin.kt` 580–584 | **Studio (S5) - ĐÃ XOÁ** (không biên dịch được sau khi `StudioActivity` đi; bản WebView mất Studio, nên S5 gộp cùng P4) |
 | `MainActivity` (`BridgeActivity`, `LaunchSplash`, `textZoomFor`) | `MainActivity.kt`; test `FontScaleAndArtistTest` (`textZoomFor`) | P4 |
 | `LibraryPlugin` (1.381 dòng, 109 `PluginCall`), `PlayerPlugin`, `readaloud/ReadAloudPlugin` | `*.kt` | P4 (bắt buộc kiểm: không `ui/` nào gọi Plugin ngoài chú thích) |
 | `HeldCallFields` + `HeldCallFieldsTest` | gói gốc | P4 (chỉ dùng cho `PluginCall`) |
 | Layout `activity_main.xml` (`WebView` + `CoordinatorLayout`) | `res/layout/` | P4 |
 | Theme AppCompat (`AppTheme*`, parent `Theme.AppCompat*`) | `res/values/styles.xml` | P4 → Material/Compose theme |
 | `network_security_config.xml` — `cleartextTrafficPermitted` (chú thích cũ) | `res/xml/` | P4: kiểm lại còn cần không |
-| Manifest chính khai `MainActivity` + `StudioActivity`; overlay `src/nativeUi/AndroidManifest.xml` (`removeAll` filter) và `NativeManifestFiltersTest` | manifest | P4 (và S5) |
+| Manifest chính khai `MainActivity` (`StudioActivity` đã bỏ ở S5); overlay `src/nativeUi/AndroidManifest.xml` (`removeAll` filter) và `NativeManifestFiltersTest` | manifest | P4 |
 | Capacitor: `capacitor.build.gradle`, `capacitor.settings.gradle`, `mobile/package.json`, `mobile/capacitor.config.json` (`webDir: www` → `assets/public` qua `cap copy`) | `mobile/`, `app/` | P4 |
 | Phụ thuộc Gradle: `androidx.appcompat`, `androidx.coordinatorlayout`, `capacitor-android`, `capacitor-app`, `cordova-plugins` | `app/build.gradle` | P4 |
 | Gói web `ui/dist` + `ui/src/android/` (84 file) + `assets/public` | `_internal/ui/`, APK | P4 (APK `-PnativeUi` không nên chứa; kiểm `NativeManifestFiltersTest` và bước đóng gói) |
 | Quy tắc ProGuard: giữ Capacitor, `@JavascriptInterface` | `proguard-rules.pro` | P4 |
 | `LocalStudio.kt` (809 dòng) | gốc | **Giữ**: `EditBookRepo` (sửa sách `.abook` cục bộ) vẫn dùng nó; chỉ bỏ cầu `LocalStudio.handle` qua Plugin nếu P4 đưa Plugin đi |
-| Cookie: `CookieManager` và `WebView` cho Studio | `StudioActivity` | **Studio (S5)** |
+| Cookie: `CookieManager` và `WebView` cho Studio | `StudioActivity` | **Studio (S5) - ĐÃ XOÁ** |
 
-Ghi chú: sau S5 mọi `WebView` còn lại, nếu có, đều thuộc `MainActivity`/Plugin (bản Capacitor), không còn trong luồng `-PnativeUi`. Cần chạy `grep -rn "WebView\|Capacitor\|BridgeActivity\|PluginCall"` trên cây `ui/` để làm cổng kiểm của P4 (hiện `ui/` không dính ngoài chú thích).
+Ghi chú: sau S5 mọi `WebView` còn lại, nếu có, đều thuộc `MainActivity`/Plugin (bản Capacitor), không còn trong luồng `-PnativeUi`. Cổng đã chạy ở S5: `grep -rn "WebView\|CookieManager\|StudioActivity"` trên `main` + `nativeUi` không còn `CookieManager` hay `StudioActivity`; `WebView` chỉ còn ở `MainActivity`, các `*Plugin.kt`, chú thích, regex lọc thẻ log của `Diagnostics.kt` và `res/layout/activity_main.xml` (đều thuộc P4). Cần chạy `grep -rn "WebView\|Capacitor\|BridgeActivity\|PluginCall"` trên cây `ui/` để làm cổng kiểm của P4 (hiện `ui/` không dính ngoài chú thích).
 
 ---
 
@@ -558,7 +558,13 @@ Sau S5 xoá `StudioActivity.kt` (−342) và, ở P4, các Plugin (≈ −3.000)
 | **S2** | `WorkTab` + `ReviewTab` + `CastTab` + `VoiceSheet` + `LineSample`/clip | Duyệt hết việc; nghe thử; hoàn tác 15 s đúng |
 | **S3** | `MusicTab`, `ScriptScreen`, `PrecastScreen`, `ReadingsScreen` | Sửa cách đọc/nhạc/kịch bản |
 | **S4** | `StudioNewScreen`, `StudioExportScreen`, `StudioCoverSource`, nhật ký/thông tin | Tạo sách + xuất + bìa |
-| **S5** | Xoá `StudioActivity`, cookie, manifest; chạy cổng P4 | `grep WebView` sạch trong luồng `-PnativeUi` |
+| **S5** | Xoá `StudioActivity`, cookie, manifest, `LibraryPlugin.openStudio`; chạy cổng P4 | `grep WebView` sạch trong luồng `-PnativeUi` (xong). **Gộp cùng P4**: bản WebView không còn Studio từ S5, nên không phát hành S5 trước P4 |
+
+Khác với đặc tả ở S4 (đã làm):
+
+- Sách mới: không đổi tên chương (thân tạo sách không có trường ấy), không mẫu sách (`GET /api/book-templates` chưa được phép), không bỏ dòng ghi công (không bao giờ tự sửa chữ của truyện), không tách tập, không luồng "làm tiếp"/seed, không "Kéo về điện thoại".
+- Xuất: ba kiểu (file sách, M4B, thư mục MP3); không `.abookproj`, không xuất cả bộ/series, không phạm vi "chỉ chương đã đổi" của MP3. File luôn nằm ở thư mục "Đã xuất" của máy tính.
+- Thông tin dự án gộp vào đầu màn Nhật ký; màn Bìa không vẽ ảnh bìa hiện tại.
 
 Thứ tự theo giá trị: S1+S2 là 80 % lý do dùng Studio từ điện thoại (xem tiến độ, duyệt). Nếu chỉ làm được hai pha, vẫn giữ lối WebView cho phần còn lại và **P4 vẫn bị chặn** — đó là cái giá của "đầy đủ".
 

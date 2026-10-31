@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -65,7 +64,7 @@ private val ChoiceGap = 24.dp
 /**
  * Chọn một: hàng chữ có gạch chân hổ phách TRƯỢT sang lựa chọn mới (không hộp segmented - DESIGN.md §6 "Bộ lọc"). Chữ đang chọn đậm màu mực, chữ khác mực
  * phụ; cả màu chữ lẫn gạch đọc vị trí trong pha vẽ. Lựa chọn đầu thẳng mép nội dung; hết chỗ thì xuống hàng (không bao giờ cắt chữ). Mỗi lựa chọn cao 48,
- * rộng ít nhất 44 để chạm.
+ * rộng ít nhất 44 để chạm (ô chạm nở vào khoảng trống, nên khoảng giữa hai chữ luôn bằng nhau).
  *
  * `onPick` nhận thêm tâm của lựa chọn trong toạ độ gốc (vd. vòng lan đổi giao diện bắt đầu ở đó).
  */
@@ -90,7 +89,7 @@ fun <T : Choice> ChoiceRow(
             for ((i, option) in options.withIndex()) {
                 val chosen = option == value
                 Box(
-                    Modifier.widthIn(min = Dim.touch).heightIn(min = Dim.s48)
+                    Modifier.heightIn(min = Dim.s48)
                         .pressable(Role.RadioButton) {
                             val center = Offset(spans[i * 4] + inks[i] / 2, spans[i * 4 + 1] + spans[i * 4 + 3] / 2)
                             onPick(option, where[0]?.takeIf { it.isAttached }?.localToRoot(center) ?: Offset.Unspecified)
@@ -122,7 +121,10 @@ fun <T : Choice> ChoiceRow(
         },
     ) { measurables, constraints ->
         val maxWidth = if (constraints.hasBoundedWidth) constraints.maxWidth else Int.MAX_VALUE
-        val placeables = measurables.map { it.measure(Constraints(maxWidth = maxWidth)) }
+        // Ô chạm rộng ít nhất 44 dp nhưng khoảng giữa hai CHỮ luôn đúng ChoiceGap: bề rộng chữ (tự nhiên) quyết định bước, ô chạm chỉ nở sang phải vào khoảng trống.
+        val natural = measurables.map { it.maxIntrinsicWidth(Dim.s48.roundToPx()).coerceAtMost(maxWidth) }
+        val touch = Dim.touch.roundToPx()
+        val placeables = measurables.mapIndexed { i, m -> m.measure(Constraints(minWidth = max(natural[i], touch).coerceAtMost(maxWidth), maxWidth = maxWidth)) }
         val gap = ChoiceGap.roundToPx()
         var x = 0
         var y = 0
@@ -141,7 +143,7 @@ fun <T : Choice> ChoiceRow(
             spans[i * 4 + 2] = placeable.width.toFloat()
             spans[i * 4 + 3] = placeable.height.toFloat()
             widest = max(widest, x + placeable.width)
-            x += placeable.width + gap
+            x += natural[i] + gap
             line = max(line, placeable.height)
         }
         val width = if (constraints.hasBoundedWidth) constraints.maxWidth else widest

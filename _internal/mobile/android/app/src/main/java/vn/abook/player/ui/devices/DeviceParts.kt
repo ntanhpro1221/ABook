@@ -6,7 +6,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.BasicText
+import vn.abook.player.ui.components.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -92,7 +92,7 @@ fun RemoteBookRow(
             when {
                 downloading -> TextAction("Huỷ tải", onCancel, "cancel_${book.id}")
                 failure != null -> TextAction("Thử lại", onDownload, "download_${book.id}")
-                book.upToDate -> BasicText("Đã tải", style = Abook.type.caption.copy(color = colors.success))
+                book.upToDate -> BasicText("Đã tải về máy", style = Abook.type.caption.copy(color = colors.success))
                 else -> TextAction(book.action, onDownload, "download_${book.id}")
             }
         },

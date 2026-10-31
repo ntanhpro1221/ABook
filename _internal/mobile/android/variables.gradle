@@ -3,16 +3,11 @@ ext {
     compileSdkVersion = 36
     targetSdkVersion = 36
     androidxActivityVersion = '1.13.0'
-    androidxAppCompatVersion = '1.8.0'
-    androidxCoordinatorLayoutVersion = '1.3.0'
     androidxCoreVersion = '1.17.0'
-    androidxFragmentVersion = '1.9.1'
     coreSplashScreenVersion = '1.2.0'
-    androidxWebkitVersion = '1.18.0'
     junitVersion = '4.13.2'
     androidxJunitVersion = '1.3.0'
     androidxEspressoCoreVersion = '3.7.0'
-    cordovaAndroidVersion = '14.0.1'
     // Giao diện native (Compose): bản ổn định mới nhất lúc dựng P0 (26-10) - BOM 2026.06.01 = compose ui/foundation/animation 1.11.4 (BOM 2026.08+ = Compose 1.12 đòi compileSdk 37 = AGP mới hơn 8.13; nâng cùng lúc với AGP).
     composeBomVersion = '2026.06.01'
     lifecycleComposeVersion = '2.10.0'

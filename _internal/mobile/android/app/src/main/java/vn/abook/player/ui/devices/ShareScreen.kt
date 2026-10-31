@@ -54,13 +54,13 @@ fun ShareScreen(devices: DevicesState, sheets: SheetHost, onBack: () -> Unit) {
     // Mã vừa huỷ vẫn vẽ trong lúc khối khép lại (không trống trơn giữa chừng).
     val lastCode = remember { arrayOf<Code?>(null) }
     share.code?.let { lastCode[0] = it }
-    val problem = ui.problem.ifEmpty { share.error }.ifEmpty { if (share.blocked && share.code == null) "Nhập sai mã quá 5 lần - mã đã bị huỷ. Bấm “Ghép máy mới” để có mã khác." else "" }
+    val problem = ui.problem.ifEmpty { share.error }.ifEmpty { if (share.blocked && share.code == null) "Sai 5 lần; chỉ tạo mã mới khi bạn đang ghép thiết bị." else "" }
     BookForm("Chia sẻ thư viện", onBack, "share_screen") {
         val list = rememberLazyListState()
         if (ui.loaded) LazyColumn(Modifier.fillMaxSize().fadeEdges(list).testTag("share_list"), state = list, contentPadding = PaddingValues(bottom = Dim.s16)) {
             item("switch", "switch") {
                 Column(Modifier.padding(top = Dim.s8)) {
-                    SwitchRow("Cho máy khác nghe", share.running, { on ->
+                    SwitchRow("Kết nối Wi-Fi", share.running, { on ->
                         if (!on) devices.setSharing(false) else sheets.show { dismiss ->
                             Column(Modifier.fillMaxWidth()) {
                                 Caption("Khi chia sẻ, ABook giữ một thông báo nhỏ để chạy tiếp lúc tắt màn hình.")
@@ -77,13 +77,13 @@ fun ShareScreen(devices: DevicesState, sheets: SheetHost, onBack: () -> Unit) {
                                 ListItem("Địa chỉ", Modifier.testTag("share_address"), hint = share.addressLine)
                                 if (share.fingerprint.isNotBlank()) ListItem("Vân tay", hint = share.fingerprint.uppercase().replace(Regex("(.{4})(?=.)"), "$1 "))
                             }
-                            Caption("Máy kia chưa tự thấy điện thoại? Địa chỉ nằm ở mục Chi tiết phía trên.")
+                            Caption("Máy kia chưa tự thấy điện thoại? Địa chỉ nằm ở mục Chi tiết phía trên.", Modifier.padding(top = Dim.s4, bottom = Dim.s12))
                             RowLine()
                             Reveal(share.code != null) {
                                 lastCode[0]?.let { code -> CodeRow(code, devices::cancelCode) }
                             }
                             Reveal(share.code == null) {
-                                TextAction("Ghép máy mới", devices::newCode, "share_new_code", Modifier.fillMaxWidth(), align = Alignment.CenterStart)
+                                TextAction("Ghép thiết bị mới", devices::newCode, "share_new_code", Modifier.fillMaxWidth(), align = Alignment.CenterStart)
                             }
                         }
                     }

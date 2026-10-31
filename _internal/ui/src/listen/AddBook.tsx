@@ -293,7 +293,7 @@ export function AddBookDialog({
       try {
         const opening = onBookFile(item.choice.ref, session);
         const ok = await (session ? session.wait(opening) : opening);
-        next = ok === false ? settle(next, item.id, { state: "error", note: "Không mở được file sách này." }) : settle(next, item.id, { state: "opened", note: "Đã thêm" });
+        next = ok === false ? settle(next, item.id, { state: "error", note: "Chưa mở được file sách này." }) : settle(next, item.id, { state: "opened", note: "Đã thêm" });
       } catch (error) {
         if (error instanceof ReadCancelled) throw error;
         next = settle(next, item.id, { state: "error", note: (error as Error).message });
@@ -472,7 +472,7 @@ export function AddBookDialog({
       }
       if (added.how !== "existing") feedback("confirm");
       if (added.how === "existing") toast.success("Cuốn này đã có trong thư viện");
-      else toast.success("Đã thêm sách vào thư viện");
+      else toast.success(`Đã thêm “${title.trim()}”`);
       clear(); // bản tạm đã dùng xong (native tự dọn)
       onOpenChange(false);
       navigate(`/book/${added.id}`);

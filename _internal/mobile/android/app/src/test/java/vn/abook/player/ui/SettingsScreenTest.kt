@@ -172,7 +172,7 @@ class SettingsScreenTest {
     // ---- kịch bản ----
 
     @Test
-    fun switchesWriteTheSameKeysAsTheWebView() {
+    fun switchesWriteTheCoreKeys() {
         showGroup(SettingsGroup.Listen)
         rule.onNodeWithTag("notify_allow").assertDoesNotExist()
         rule.onNodeWithTag("auto_rewind").performClick()

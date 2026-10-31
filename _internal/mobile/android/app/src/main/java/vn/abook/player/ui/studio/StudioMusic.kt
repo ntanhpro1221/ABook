@@ -1,5 +1,6 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.ui.data.dotJoined
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -175,7 +176,7 @@ object MusicLogic {
     fun moodOf(scene: MusicScene, names: Map<String, String>): String {
         val strong = scene.emotions.filter { it.value >= 0.5 }.entries.sortedByDescending { it.value }.take(2).map { names[it.key]?.takeIf { name -> name.isNotEmpty() } ?: EMOTION_VI[it.key] ?: it.key }
         return when {
-            strong.isNotEmpty() -> strong.joinToString(" · ")
+            strong.isNotEmpty() -> strong.dotJoined()
             scene.tension >= 0.5 -> "căng thẳng"
             scene.valence <= -0.4 -> "buồn"
             scene.valence >= 0.4 -> "tươi vui"
@@ -188,14 +189,14 @@ object MusicLogic {
 
     /** Tên một bài: "tên · tác giả" nếu kế hoạch còn biết bài ấy, không thì tên file trong liên kết. */
     fun trackLabel(link: String, info: MusicTrack?): String {
-        if (info != null && info.title.isNotEmpty()) return listOf(info.title, info.creator).filter { it.isNotEmpty() }.joinToString(" · ")
+        if (info != null && info.title.isNotEmpty()) return listOf(info.title, info.creator).dotJoined()
         val name = link.substringBefore('?').substringBefore('#').split('/').filter { it.isNotEmpty() }.lastOrNull() ?: link
         return runCatching { java.net.URLDecoder.decode(name, "UTF-8") }.getOrDefault(name)
     }
 
     /** Dòng ghi công của một bài (dùng chung với trình phát: [vn.abook.player.ui.music.MusicText.creditText]); nhạc bạn nhập thì nói rõ không có giấy phép. */
     fun creditText(link: String, track: MusicTrack): String =
-        if (track.source == "local") "${listOf(track.title, track.creator).filter { it.isNotEmpty() }.joinToString(" · ")} - nhạc của bạn, không có thông tin giấy phép"
+        if (track.source == "local") "${listOf(track.title, track.creator).dotJoined()} - nhạc của bạn, không có thông tin giấy phép"
         else MusicText.creditText(MusicCredit(track.title, track.creator, track.attribution, license = track.license)).ifEmpty { link }
 
     /** Có bài giấy phép đòi ghi công (khác cc0) thì kèm lời "đã chỉnh sửa". */
@@ -260,7 +261,7 @@ object StudioMusicText {
     const val LEVEL = "Mức nhạc nền"
     const val LEVEL_HINT = "Nhỏ hơn giọng đọc bấy nhiêu; máy tự bù bài to hay nhỏ"
     const val REBUILD = "Chọn lại nhạc"
-    const val REBUILD_HINT = "Máy chọn lại bài cho từng đoạn theo thể loại và mức nhạc ở trên."
+    const val REBUILD_HINT = "Máy chọn lại theo thể loại và mức nhạc ở trên."
     const val REBUILD_TITLE = "Chọn lại nhạc cho cả cuốn?"
     const val REBUILD_LINE = "Bài bạn đã ghim vẫn được giữ. Máy tính mất cỡ nửa phút để chọn lại."
     const val REBUILDING = "Đang chọn lại nhạc, cỡ nửa phút."

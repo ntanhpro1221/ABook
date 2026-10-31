@@ -1,7 +1,6 @@
 package vn.abook.player.ui
 
 import android.content.ContentProvider
-import android.content.ComponentName
 import android.content.ContentValues
 import android.content.Intent
 import android.content.pm.ProviderInfo
@@ -32,7 +31,7 @@ import vn.abook.player.AbookApplication
 import vn.abook.player.IncomingFile
 import java.io.File
 
-/** "Mở bằng" / chia sẻ file tới app (bản -PnativeUi): NativeActivity đưa file vào hàng nhập sách và mở "Thêm sách", như file chọn từ bộ chọn. */
+/** "Mở bằng" / chia sẻ file tới app: NativeActivity đưa file vào hàng nhập sách và mở "Thêm sách", như file chọn từ bộ chọn. */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = [35], qualifiers = "w360dp-h780dp-xxhdpi")
@@ -67,8 +66,6 @@ class NativeIncomingFileTest {
     }
 
     private fun launch(intent: Intent): ActivityScenario<NativeActivity> {
-        // Bản thường không khai báo NativeActivity trong manifest (chỉ bản -PnativeUi): khai báo cho Robolectric để cả hai bản chạy được test này.
-        shadowOf(app.packageManager).addActivityIfNotPresent(ComponentName(app, NativeActivity::class.java))
         return ActivityScenario.launch(intent.setClass(app, NativeActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
     }
 
@@ -102,7 +99,7 @@ class NativeIncomingFileTest {
         val uri = Uri.parse(sender() + "la.bin")
         launch(Intent(Intent.ACTION_SEND).setType("application/octet-stream").putExtra(Intent.EXTRA_STREAM, uri))
         until("màn Thêm sách") { shown("add_book_screen") }
-        val refusal = "Không mở được file. Bạn chọn .abook, .abookproj, EPUB, Word, PDF hoặc TXT; chưa nhận loại file này."
+        val refusal = "Chưa mở được file. Bạn chọn .abook, .abookproj, EPUB, Word, PDF hoặc TXT; chưa nhận loại file này."
         until("lời từ chối trong hàng") { app.imports.state.value.items.singleOrNull()?.problem == refusal }
         until("lời từ chối trên màn") { runCatching { rule.onNodeWithText(refusal).assertIsDisplayed() }.isSuccess }
     }
