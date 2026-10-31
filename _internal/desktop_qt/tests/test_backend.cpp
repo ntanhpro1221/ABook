@@ -72,7 +72,7 @@ private slots:
         Backend backend(nullptr);
         startWith(backend, "ready", 3000);
         QTRY_COMPARE_WITH_TIMEOUT(backend.state(), Backend::Ready, 10000);
-        QTest::qWait(3500); // fixed: proves the limit does not fire after Ready
+        QTest::qWait(3500); // fixed: proves absence (the start limit does not fire after Ready)
         QCOMPARE(backend.state(), Backend::Ready);
     }
 };
