@@ -71,6 +71,7 @@ import vn.abook.player.ui.components.ChevronIcon
 import vn.abook.player.ui.components.InlineProblem
 import vn.abook.player.ui.components.ListItem
 import vn.abook.player.ui.components.ListRow
+import vn.abook.player.ui.components.MoreInfo
 import vn.abook.player.ui.components.PinIcon
 import vn.abook.player.ui.components.PlusIcon
 import vn.abook.player.ui.components.Reveal
@@ -317,6 +318,7 @@ private fun AddRow(ui: BookMusicUi, onAdd: () -> Unit) {
         below = if (ui.importing) ({ StageProgress { if (ui.total > 0) ui.done.toFloat() / ui.total else 0f } }) else null,
     )
     Reveal(ui.notice.isNotEmpty() && !ui.importing) { Caption(ui.notice, Modifier.testTag("music_notice")) }
+    MoreInfo("Nhạc riêng", MusicText.MY_MUSIC_HELP, "music_help")
 }
 
 @Composable
