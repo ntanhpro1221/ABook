@@ -293,12 +293,13 @@ private slots:
         Rig rig; rig.mixer.serviceReader(); rig.voice.play(); rig.step(2400);
         rig.device->queued = 1200; rig.mixer.service(0); const double at = rig.voice.position();
         rig.voice.pause(); QElapsedTimer timer; timer.start(); rig.mixer.service(0);
-        // Hàng đợi 25 ms: pivot lùi để đoạn mờ ra 10 ms vẫn nằm trong tiếng đã xếp; thiết bị Stop khi đuôi đã phát hết.
-        QVERIFY(timer.elapsed() < 50); QCOMPARE(rig.device->queued, size_t(1200));
+        // Hàng đợi 25 ms: pivot lùi để đoạn mờ ra 10 ms vẫn nằm trong tiếng đã xếp, sau đó 50 ms lặng xếp sẵn;
+        // thiết bị Stop khi đuôi đã phát hết.
+        QVERIFY(timer.elapsed() < 50); QCOMPARE(rig.device->queued, size_t(1200 + 2400));
         QVERIFY(std::abs(rig.device->output.back()) < 1e-3);
         rig.device->queued = 0; rig.mixer.service(0); QVERIFY(!rig.device->running);
         QCOMPARE(rig.voice.position(), at); rig.voice.play(); rig.step(480); QCOMPARE(rig.voice.position(), at);
-        rig.voice.stop(); rig.mixer.service(0); QCOMPARE(rig.device->queued, size_t(480));
+        rig.voice.stop(); rig.mixer.service(0); QCOMPARE(rig.device->queued, size_t(480 + 2400));
         QVERIFY(std::abs(rig.device->output.back()) < 1e-3);
         rig.device->queued = 0; rig.mixer.service(0); QVERIFY(!rig.device->running); QVERIFY(rig.device->resets > 0);
     }
@@ -467,7 +468,7 @@ private slots:
         QElapsedTimer timer;
         const int resets = device->resets; timer.restart(); voice.pause();
         QTRY_VERIFY_WITH_TIMEOUT(device->resets != resets, 100);
-        QVERIFY(timer.elapsed() < 50); QVERIFY(device->queued.load() <= size_t(1440)); // tới pivot 20 ms + mờ ra 10 ms
+        QVERIFY(timer.elapsed() < 50); QVERIFY(device->queued.load() <= size_t(1440 + 2400)); // tới pivot 20 ms + mờ ra 10 ms + 50 ms lặng
         QTRY_VERIFY_WITH_TIMEOUT(!device->running && device->queued.load() == 0, 200);
     }
     void controlsRemixAtTheCursorWithLargeLead_data() {
