@@ -3,6 +3,47 @@
 File này là trách nhiệm thường trực của người dev project, không phải một lần rà soát. Mỗi phiên bản
 phải kiểm lại bảng dưới và ghi kết quả vào `VERSIONS.md`.
 
+## Kiểm 2026-11-01 — chuông báo 16 dòng, nâng ba gói phía app trên `dev/deps-0452`
+
+Chuông `upstream_daily` báo 16 dòng "outdated", tức 15 gói vì `setuptools` bị đếm hai lần. Bảng dưới đọc release notes
+của từng gói. Chỉ phía app được nâng. Stack model (`torch`, `torchaudio`, `torchvision`, `ctranslate2`,
+`huggingface-hub`, `transformers`) do luồng Model giữ; ở đây chỉ ghi điều mới để Model quyết.
+
+Nâng bất kỳ gói nào cũng đổi hash chất lượng, vì `pyproject.toml` và `uv.lock` nằm trong `QUALITY_IMPLEMENTATION_FILES`.
+Vì vậy ba gói được nâng đều nằm trên nhánh dev và chỉ gộp ở ranh giới.
+
+Cách kiểm:
+- Venv thử riêng dựng từ Python 3.11.9 gốc. File `.pth` trong venv thử trỏ sang site-packages của runtime. Gói nâng
+  được cài vào venv thử nên che bản cũ. Không cài gì vào `runtime/.venv`.
+- `pluggy`, `packaging`, `pygments`, `iniconfig` được ghim đúng bản runtime, để chỉ ba gói đổi.
+- `uv lock --upgrade-package` chỉ đổi sáu mục:
+  - `pyside6`, `pyside6-essentials`, `pyside6-addons`, `shiboken6`;
+  - `pytest`;
+  - `ruff`.
+- `shell/python/studio-requirements.txt` không đổi, vì cả ba gói không có trong bộ cài Studio.
+
+| Gói | Đang ghim → mới | Điều mới đáng giá cho ABook | Rủi ro | Quyết |
+|---|---|---|---|---|
+| `PySide6` | 6.11.2 → **6.11.3** (26-10; 6.12.0 ra 08-10) | Bản cuối của dòng 6.11, "khoảng 200 sửa lỗi, cải thiện bảo mật". Mức vá bảo mật Chromium của QtWebEngine (`qWebEngineChromiumSecurityPatchVersion`) lên **151.0.7922.71 → 155.0.8059.85**; lõi vẫn Chromium 140. `abook/desktop.py` (vỏ dev qua `app.py`, `start_windows.ps1`) mở trang web UI bằng `QWebEngineView`. App máy tính phát hành là Qt C++, không dùng PySide6 | thấp: bản vá cùng dòng, API không đổi. Xem kết quả `test_gui_layout.py`, `test_one_click_startup.py` ở dưới; import `abook.gui`, `abook.desktop`, `abook.desktop_shell` thành công | **nâng** |
+| `PySide6` 6.12 | 6.12.0 | WebEngine và Pdf tách thành wheel riêng (`freeze_studio_requirements.py` đã biết). Lên Chromium mới hơn | trung: bản `.0` của LTS, đổi cách đóng gói | chờ 6.12.1 |
+| `pytest` (dev) | 9.1.1 → **9.2.0** (27-10) | Bắt fd nhanh hơn, `tmp_path` nhanh hơn, diff dễ đọc hơn | Phá vỡ: `-c` đường sai thì báo lỗi; `indirect`/`ids`/`scope` của `parametrize` thành keyword-only; plugin nạp hỏng thoát mã 4/3. Ini không phải chuỗi sinh `PytestRemovedIn10Warning`; ini của ta toàn chuỗi. Plugin `anyio` (pytest11) import `CallSpec2` nên sinh một cảnh báo deprecate. Không thành lỗi trừ khi chạy với `-W error` | **nâng** |
+| `ruff` (dev) | 0.16.10 → **0.17.3** | Binary Windows có chữ ký Authenticode. Bộ luật mặc định bỏ nhóm DTZ. Trên cây này: 2.613 → **2.598** phát hiện | không: ruff không phải cổng nào (không test, không build gọi) | **nâng** |
+| `imageio-ffmpeg` | 0.6.0 → 0.7.0 (28-10) | Chỉ có "truyền fps khi ghi dưới dạng phân số" và bảo trì. Wheel Windows 31.247.004 vs 31.246.824 byte: cùng bản ffmpeg | ffmpeg không đổi nên không được gì | không nâng |
+| `setuptools` | 81.0.0 → 84.2.1 | Vá advisory legacy-wheel Windows từ 84.1.0 | **bị chặn**: `torch` 2.11.0 đòi `setuptools<82`. `torch` 2.15 đã đổi thành `>=77.0.3`, nên setuptools đi theo đợt nâng torch | giữ |
+| `setuptools` lệch | ghim 81.0.0, runtime cài **78.1.0** | `runtime/.venv` chưa được đồng bộ từ đợt 21-10. Hash không đổi vì setuptools không thuộc `CRITICAL_RUNTIME_DISTRIBUTIONS` | runtime dev thiếu bản vá CVE-2025-47273 | đồng bộ khi dựng lại runtime ở ranh giới |
+| `cryptography` (dev) lệch | ghim 50.0.2 = mới nhất, runtime cài 50.0.0 | Cùng nguyên nhân: runtime chưa đồng bộ | chỉ test dùng | như trên |
+| `gradio` | 6.16.0 → 6.31.0 | Ta không import; `vieneu` kéo vào (`>=5.49.1`). Không advisory nào sau 6.7 | `gradio-client` 2.5 → 2.7.2 | không nâng; xem `huggingface-hub` |
+| `filelock` | 3.32.3 → 4.2.6 | Bản 4 đổi giao thức trên đĩa của `SoftReadWriteLock`. `torch` và `huggingface-hub` dùng `FileLock` thường. Các bản sau là sửa đua lock mềm và read-write lock | major, không lợi gì | không nâng |
+| `platformdirs` | 4.11.0 → 4.14.2 | Chỉ `pooch` dùng. Sửa thư mục XDG và thư mục media, phần lớn ở Unix | không lợi gì trên Windows | không nâng |
+| `ctranslate2` (Model) | ghim 4.8.3, runtime **4.8.2**, mới 4.8.4 (25-10) | Chặn tràn số nguyên ở reshape/size; sửa Conv1D/INT8. **Thêm TTS thử nghiệm Drama 3** chạy CPU/CUDA: đáng để luồng nghiên cứu giọng xem. Không đụng đường Whisper | đổi số học CPU int8 | Model quyết. Runtime vẫn lệch ghim từ 21-10 |
+| `torch` / `torchvision` (Model) | 2.11.0+cu128 / 0.26.0 → 2.15.0 / 0.29.2 | Index cu128 vẫn dừng ở 2.11.0. Ràng buộc ghi ngày 18-10 vẫn đúng: lên cu130 thì `ctranslate2` CUDA 12 mất `cublas64_12` | đổi giọng | Model giữ |
+| `torchaudio` (Model) | 2.11.0 → 2.11.1 (28-10) | Chỉ đóng gói: một wheel `py3-none`, khai `torch>=2.11`. CUDA lệch bản phụ không còn báo lỗi | thấp, nhưng thuộc `CRITICAL_RUNTIME_DISTRIBUTIONS` | Model giữ |
+| `huggingface-hub` (Model) | 1.33.0 → 2.4.0 | **Hết bị chặn**: `tokenizers` 0.23.3 và `gradio` 6.31 / `gradio-client` 2.7.2 đều cho `<3`. Nâng thì phải kéo cả ba | tầng HTTP sang `httpx2`, bỏ API cũ (ghi ngày 26-09). Phải kiểm `HF_HUB_OFFLINE` vẫn chặn mạng thật | Model quyết, cùng đợt `transformers` |
+| `transformers` (Model) | 5.18.0 → 5.22.1 | 5.22.0 thêm Mistral Large 4; 5.22.1 chỉ sửa tài liệu | không liên quan đường VieNeu | Model giữ |
+
+Không gói nào bị chặn vì Python 3.11 thay đổi: `numpy` 2.5.4, `scipy` 1.18.1, `pyworld` 0.3.6, `librosa` 1.0.0 vẫn như ghi
+ở trên.
+
 ## Đợt nâng có kiểm 21-10-2026 — `dev/deps`, chưa phát hành
 
 Chỉ nâng các gói dưới đây; giữ số phiên bản dự án `0.4.117`, Radix, ORT, AGP và toàn bộ stack model.
