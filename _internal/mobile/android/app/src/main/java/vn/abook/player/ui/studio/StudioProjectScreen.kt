@@ -47,6 +47,7 @@ import vn.abook.player.ui.components.InlineProblem
 import vn.abook.player.ui.components.ListItem
 import vn.abook.player.ui.components.MenuRow
 import vn.abook.player.ui.components.MoreIcon
+import vn.abook.player.ui.components.MoreInfo
 import vn.abook.player.ui.components.PrimaryButton
 import vn.abook.player.ui.components.QuietButton
 import vn.abook.player.ui.components.ReadAlongIcon
@@ -156,6 +157,7 @@ private fun ProjectBody(page: StudioPage, kind: PrimaryKind?, state: StudioProje
                 PrimaryAction(book, kind, state.busy, onPick = { picked -> pick(picked, book, state, sheets, listen) })
                 val note = StudioText.actionNote(book, kind)
                 if (note.isNotEmpty()) BasicText(note, style = Abook.type.bodySmall.copy(color = Abook.colors.text2), modifier = Modifier.padding(top = Dim.s8).testTag("studio_action_note"))
+                if (StudioText.onBattery(book)) MoreInfo("Dùng pin", StudioText.BATTERY_INFO, "studio_battery_info")
                 InlineProblem(state.problem, state::retryLast, "studio_problem")
             }
         }

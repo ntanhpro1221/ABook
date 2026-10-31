@@ -228,3 +228,9 @@ def test_a_release_cannot_be_built_while_the_speaker_model_is_unpublished(monkey
     monkeypatch.setitem(studio_setup.PUBLISHED_MODELS, speaker_pass.SPEAKER_MODEL, unpinned)
     with pytest.raises(AssertionError, match="chưa ghim"):
         release.check_speaker_model_pinned()
+    monkeypatch.setitem(studio_setup.PUBLISHED_MODELS, speaker_pass.SPEAKER_MODEL, pinned)
+    from abook.config import DEFAULT_SETTINGS
+
+    monkeypatch.delitem(studio_setup.PUBLISHED_MODELS, DEFAULT_SETTINGS["analysis"]["model"])
+    with pytest.raises(AssertionError, match="chưa ghim"):
+        release.check_speaker_model_pinned()
