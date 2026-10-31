@@ -146,7 +146,7 @@ Mã nguồn, test và tài liệu kỹ thuật nằm trong `_internal/`:
 
 - [`_internal/docs/PIPELINE_OVERVIEW.md`](_internal/docs/PIPELINE_OVERVIEW.md) - dây chuyền làm sách: phân tích, phân vai,
   thu âm, kiểm tra bằng nhận dạng giọng nói, an toàn và phục hồi.
-- [`_internal/docs/PACKAGING.md`](_internal/docs/PACKAGING.md) - app Windows (Tauri), Studio, tự cập nhật.
+- [`_internal/docs/PACKAGING.md`](_internal/docs/PACKAGING.md) - app Windows, Studio, tự cập nhật; bản Qt: [`QT_INSTALLER.md`](_internal/docs/QT_INSTALLER.md).
 - [`_internal/docs/RELEASING.md`](_internal/docs/RELEASING.md) - quy trình phát hành.
 - [`_internal/docs/LLM_EVAL.md`](_internal/docs/LLM_EVAL.md) - đo và huấn luyện model phân tích.
 - `AGENTS.md` - quy tắc làm việc trên mã nguồn (file bị khoá, không dừng giữa pha phân tích).
