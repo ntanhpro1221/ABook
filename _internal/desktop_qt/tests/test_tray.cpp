@@ -1,4 +1,4 @@
-// Khay Win32 tự viết (src/trayicon.cpp). GUILESS: cửa sổ ẩn chỉ nhận thông điệp, menu Win32 dựng thật nhưng không bao giờ mở,
+// Khay Win32 tự viết (src/trayicon.cpp). GUILESS: cửa sổ top-level ẩn không bao giờ hiện, menu Win32 dựng thật nhưng không bao giờ mở,
 // Shell_NotifyIcon thay bằng đồ giả nên KHÔNG icon nào vào khay của máy chạy test.
 #include "trayicon.h"
 
@@ -90,6 +90,16 @@ struct Tray {
         SendMessageW(hwnd(), TrayIcon::kCallbackMessage, WPARAM(MAKELONG(short(x), short(y))), LPARAM(MAKELONG(event, 1)));
     }
 };
+
+// Đếm một thông điệp đăng ký riêng tới cửa sổ khay (subclass), để biết thông điệp PHÁT TÁN có tới không
+UINT g_broadcastProbe = 0;
+int g_broadcastSeen = 0;
+WNDPROC g_trayProc = nullptr;
+LRESULT CALLBACK countingProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    if (message == g_broadcastProbe)
+        ++g_broadcastSeen;
+    return CallWindowProcW(g_trayProc, hwnd, message, wParam, lParam);
+}
 
 }  // namespace
 
@@ -279,6 +289,22 @@ private slots:
         QCOMPARE(tray.shell->adds, 2);
         QVERIFY(tray.icon->available());
         QCOMPARE(tray.shell->removes, 0);   // thanh tác vụ cũ đã mất icon, không gửi NIM_DELETE vào thanh mới
+    }
+
+    // Explorer báo dựng lại thanh tác vụ bằng PHÁT TÁN (HWND_BROADCAST), không gửi thẳng như hai test trên: cửa sổ HWND_MESSAGE
+    // không bao giờ nhận (tools/tray_probe.cpp trên Explorer thật, 01-11). Thông điệp đăng ký riêng đi cùng đường, app khác không
+    // biết nên bỏ qua; với cửa sổ của chính luồng này SendNotifyMessage gửi đồng bộ, không phải chờ. Cửa sổ vẫn không bao giờ hiện.
+    void explorerBroadcastReachesTheTrayWindow() {
+        Tray tray;
+        const HWND hwnd = tray.hwnd();
+        g_broadcastProbe = RegisterWindowMessageW(L"ABookTrayTests-Broadcast-5e2a");
+        g_broadcastSeen = 0;
+        g_trayProc = reinterpret_cast<WNDPROC>(SetWindowLongPtrW(hwnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(countingProc)));
+        QVERIFY(SendNotifyMessageW(HWND_BROADCAST, g_broadcastProbe, 0, 0));
+        SetWindowLongPtrW(hwnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(g_trayProc));
+        QCOMPARE(g_broadcastSeen, 1);
+        QVERIFY(!IsWindowVisible(hwnd));
+        QVERIFY(GetWindowLongPtrW(hwnd, GWL_EXSTYLE) & WS_EX_TOOLWINDOW);   // không lên thanh tác vụ / Alt+Tab
     }
 
     void iconAddedLaterWhenExplorerWasNotUpAtStart() {

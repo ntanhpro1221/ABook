@@ -22,7 +22,8 @@ public:
 };
 
 // Khay hệ thống viết thẳng bằng Win32 (Shell_NotifyIcon, bản 4) thay Qt.labs.platform: bản ấy kéo Qt6Widgets.dll (6,3 MB) vào chỉ vì
-// khay. Một cửa sổ ẩn chỉ nhận thông điệp giữ icon; menu dựng lại từ `actions` mỗi lần mở nên luôn theo trạng thái mới nhất.
+// khay. Một cửa sổ top-level ẩn giữ icon (nhận được TaskbarCreated phát tán); menu dựng lại từ `actions` mỗi lần mở nên luôn
+// theo trạng thái mới nhất.
 // `actions` cùng dạng với TrayMenuModel: {action, label, enabled} hoặc {separator: true}.
 class TrayIcon : public QObject {
     Q_OBJECT
