@@ -23,7 +23,7 @@ Item {
             Api.bind(DesktopApi, Theme)
             Api.preferences = {theme: "system", autoRewind: true, autoMusic: true, safetyStopHours: 2, sleepSchedule: {from: "22:00", to: "06:00", minutes: 30}}
             Api.info = {version: "0.4.40", studio: {installed: true}}
-            DesktopApi.responses = {"/api/sync": {status: 200, data: {enabled: true, devices: [{}, {}]}}}
+            DesktopApi.responses = {"/api/sync": {status: 200, data: {enabled: true, name: "NGDtuanh-PC", devices: [{}, {}]}}}   // name: sync_view luôn trả
             Api.loaded = true
             Api.saving = false
             Nav.layers = []

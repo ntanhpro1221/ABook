@@ -17,6 +17,9 @@ Item {
             SettingsScreen { x: 232; width: parent.width - 232; height: parent.height; active: "look" }
         }
     }
+    // objectName leakProbe: GlyphAudit (bộ quét chữ rò toàn cục) bỏ qua chữ cố ý rò của phép thử lực này
+    Component { id: leakText; Text { objectName: "leakProbe"; x: 300; y: 20 } }
+    Component { id: leakField; TextInput { x: 300; y: 60; width: 100; height: 20 } }
     TestCase {
         name: "ShotTruth"
         when: windowShown
@@ -46,6 +49,21 @@ Item {
             compare(rules(ShotTruth.problems(host)), "")
             Api.update({theme: "light"})
             verify(!Theme.dark)
+            compare(rules(ShotTruth.problems(host)), "")
+        }
+        function test_leakedValuesAreCaught() {
+            const page = createTemporaryObject(scene, host)
+            page.sidebar.choose(2)
+            waitForRendering(page)
+            compare(rules(ShotTruth.problems(host)), "")
+            for (const leak of ["Máy thấy undefined: mỗi thư mục", "Còn NaN phút", "Tên: [object Object]"]) {
+                const label = createTemporaryObject(leakText, page, {text: leak})
+                compare(rules(ShotTruth.problems(host)), "leak", leak)
+                label.visible = false
+            }
+            const field = createTemporaryObject(leakField, page, {text: "undefined"})   // ô nhập: chữ người dùng gõ
+            compare(rules(ShotTruth.problems(host)), "")
+            const fine = createTemporaryObject(leakText, page, {text: "Không xác định (undefinedness là một từ khác)"})
             compare(rules(ShotTruth.problems(host)), "")
         }
         function test_typeNameReadsQmlTypes() {
