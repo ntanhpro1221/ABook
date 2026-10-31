@@ -8,6 +8,7 @@ import java.io.EOFException
 import java.net.HttpURLConnection
 import java.net.SocketException
 import javax.net.ssl.SSLException
+import vn.abook.player.net.HostWait
 
 /** Cùng ngân sách peer_limits.py; kiểm trước khi ghi từng khối, kể cả stream không có Content-Length. */
 internal object PeerTransfer {
@@ -20,15 +21,22 @@ internal object PeerTransfer {
 
     class Limit : IOException("File vượt giới hạn tải; bạn hãy kiểm tra lại máy gửi sách.")
 
-    /** Chỉ dùng GET; retry trước khi giao stream cho caller, không phát lại POST hoặc stream đã đọc dở. */
-    fun openGet(pause: (Long) -> Unit = { Thread.sleep(it) }, connect: () -> HttpURLConnection): HttpURLConnection {
+    /**
+     * Chỉ dùng GET; retry trước khi giao stream cho caller, không phát lại POST hoặc stream đã đọc dở. Máy kia im quá hạn "không byte nào" của kết nối ([HostWait.open]) trước khi
+     * trả lời: gửi lại một lần rồi [HostWait.Timeout] (`resend` false: người gọi đã nằm trong một [HostWait.call] của riêng nó).
+     */
+    fun openGet(pause: (Long) -> Unit = { Thread.sleep(it) }, resend: Boolean = true, connect: () -> HttpURLConnection): HttpURLConnection =
+        HostWait.call(resend) { openGetOnce(pause, connect) }
+
+    private fun openGetOnce(pause: (Long) -> Unit, connect: () -> HttpURLConnection): HttpURLConnection {
         for (attempt in 0..2) {
             var connection: HttpURLConnection? = null
             try {
-                connection = connect()
-                check(connection.requestMethod == "GET")
-                val code = connection.responseCode
-                if (code != 503 || attempt == 2) return connection
+                val opened = connect()
+                connection = opened
+                check(opened.requestMethod == "GET")
+                val code = HostWait.awaiting(opened) { opened.responseCode }
+                if (code != 503 || attempt == 2) return opened
             } catch (error: IOException) {
                 connection?.disconnect()
                 connection = null
