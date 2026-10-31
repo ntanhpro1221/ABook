@@ -138,7 +138,7 @@ function SpokenEditor({
       }}
     >
       <label htmlFor={`spoken-${item.stableId}`} className="text-xs font-medium text-fg-2">
-        Máy đọc câu này thành
+        Cách đọc
       </label>
       <input
         id={`spoken-${item.stableId}`}
@@ -521,7 +521,7 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
       )}
       {hasNextPage && (
         <Button className="mt-4" variant="ghost" disabled={isFetchingNextPage} onClick={() => void fetchNextPage()}>
-          {isFetchingNextPage ? "Đang tải…" : `Tải tiếp · còn ${pages?.pages.at(-1)?.remaining ?? 0} câu`}
+          {isFetchingNextPage ? "Đang tải" : `Tải tiếp · còn ${pages?.pages.at(-1)?.remaining ?? 0} câu`}
         </Button>
       )}
       {minor > 0 && (

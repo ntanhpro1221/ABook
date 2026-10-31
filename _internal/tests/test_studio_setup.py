@@ -685,7 +685,7 @@ def test_the_speaker_model_is_pinned_to_the_file_the_card_describes() -> None:
 
     model = studio_setup.PUBLISHED_MODELS[speaker_pass.SPEAKER_MODEL]
     assert model.parts[0].sha256 == model.sha256 and model.parts[0].size == model.size > 4_000_000_000
-    card = (Path(__file__).resolve().parents[1] / "docs" / "models" / "abook-speaker-v1.md").read_text(encoding="utf-8")
+    card = (Path(__file__).resolve().parents[1] / "docs" / "models" / "abook-speaker-v2.md").read_text(encoding="utf-8")
     assert model.sha256 in card, "thẻ model ghi đúng băm của file đã ghim"
     assert speaker_pass.paired_speaker_model("abook-analyzer:v5") == speaker_pass.SPEAKER_MODEL
     assert studio_setup.SPEAKER_TOKENIZER.sha256 == speaker_pass.TOKENIZER_SHA256

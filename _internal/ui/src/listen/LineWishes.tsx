@@ -1,5 +1,5 @@
 import { withViewTransition } from "@/shared/motion";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Clock, MessageSquareQuote, RefreshCw, Type, UserRound, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast, toastDone } from "@/shared/toast";
@@ -21,40 +21,13 @@ import { refreshAfterEdit } from "./EditBook";
 import type { Cast, CastMember, ListenBook, Script, ScriptSegment } from "./model";
 import { useReadAloudTry } from "./readings";
 import { useCast } from "./source";
+import { useFadeScroller } from "@/shared/scrollFade";
+import type { LineWish, NameWish, WishesView } from "./lineWishData";
 
 // Sửa MỘT CÂU từ trang đọc, trên cuốn không có xưởng (file .abook trên máy tính hay điện thoại - docs/EDITING.md, P2a). Cùng
 // những việc tab Kịch bản của Studio làm cho cuốn có xưởng - ai nói câu này, loại câu / cảm xúc / chữ đem đọc, cách đọc một tên,
 // thu lại câu - đi cùng các đường POST /speaker, /line, /pronunciation, /review. Khác ở chỗ ghi: ý muốn nằm trong lớp sửa của
 // file sách và chờ Studio ("Đang chờ Studio"), không áp vào giọng đọc nào. Dùng lại đúng các bảng chọn của tab Kịch bản.
-
-/** Ý muốn của một câu đang chờ Studio (GET /wishes): người nói, cách đọc, thu lại. */
-export interface LineWish {
-  /** `newGender`: người nghe TẠO người này (chưa có trong sách) - chọn lại ở câu khác cần cùng giới. */
-  speaker?: { name: string; shown: string; requestedAt: number; newGender?: "male" | "female" | "unknown"; held?: boolean };
-  delivery?: { kind: string; emotion: string; intensity: number | null; spoken?: string; requestedAt: number };
-  retake?: { requestedAt: number };
-}
-
-export interface NameWish {
-  key: string;
-  surface: string;
-  spokenForm: string;
-  requestedAt: number;
-}
-
-export interface WishesView {
-  pronunciations: NameWish[];
-  lines: Record<string, LineWish>;
-}
-
-/** Ý muốn theo từng câu của cuốn không có xưởng - trang đọc đánh dấu "đang chờ Studio" ngay trên câu. */
-export function useWishes(bookId: string, enabled: boolean) {
-  return useQuery({
-    queryKey: ["wishes", bookId],
-    enabled,
-    queryFn: () => api<WishesView>(`/api/books/${bookId}/wishes`),
-  });
-}
 
 function sameWord(a: string, b: string): boolean {
   return a.normalize("NFC").toLocaleLowerCase("vi") === b.normalize("NFC").toLocaleLowerCase("vi");
@@ -129,11 +102,6 @@ function waitingItems(wish: LineWish | undefined): { key: string; text: string; 
   }
   if (wish?.retake) items.push({ key: "retake", text: "Thu lại câu này", section: "retakes", requestedAt: wish.retake.requestedAt });
   return items;
-}
-
-/** Dấu "đang chờ Studio" cạnh một câu trong trang đọc. */
-export function WaitingMark({ className }: { className?: string }) {
-  return <Clock aria-label="Đang chờ máy làm sách" role="img" className={cn("ml-1 inline size-[0.7em] align-[-0.05em] text-fg-3", className)} />;
 }
 
 type View = "menu" | "speaker" | "delivery" | "word";
@@ -293,6 +261,7 @@ export function LineWishDialog({
   }, [segmentIndex, heldWord]);
   // Bước con (Ai nói / Cách đọc / Sửa một từ) mở từ menu câu: Back của điện thoại về menu câu trước, chưa đóng cả hộp.
   const body = useRef<HTMLDivElement | null>(null);
+  const scrollFade = useFadeScroller<HTMLDivElement>(body);
   useBackLayer(view !== "menu" && !heldWord, () => {
     setPickedWord(null);
     goView("menu");
@@ -400,7 +369,7 @@ export function LineWishDialog({
                 // Câu đã gửi sang máy giữ sách rồi: chỉ nhờ được máy ấy rút lại - nói đúng điều đó, đừng làm như đã xong.
                 if (answer?.sent) toastDone(...undoToast(false, true));
               })
-              .catch((error: Error) => toast.error("Không hoàn tác được", { description: error.message })),
+              .catch((error: Error) => toast.error("Chưa hoàn tác được", { description: error.message })),
         },
         duration: UNDO_MS,
       });
@@ -416,7 +385,7 @@ export function LineWishDialog({
         body: { section: item.section, key: item.key ?? ref.stableId, keys: [item.key ?? ref.stableId], requestedAt: item.requestedAt },
       }),
     onSuccess: done,
-    onError: (error: Error) => toast.error("Không bỏ được thay đổi này", { description: error.message }),
+    onError: (error: Error) => toast.error("Chưa bỏ được thay đổi này", { description: error.message }),
   });
   const withdrawName = (name: NameWish) => withdraw.mutate({ section: "pronunciations", key: name.key, requestedAt: name.requestedAt });
 
@@ -427,11 +396,11 @@ export function LineWishDialog({
     ...waitingItems(wish),
     ...names.map((name) => ({ key: `name:${name.key}`, text: `Cách đọc “${name.surface}”: “${name.spokenForm}”`, section: "pronunciations", requestedAt: name.requestedAt, name })),
   ];
-  const title = view === "speaker" ? (line?.kind === "thought" ? "Ai nghĩ câu này?" : "Ai nói câu này?") : view === "delivery" ? "Cách đọc câu này" : view === "word" ? "Đọc từ này là…" : "Sửa câu này";
+  const title = view === "speaker" ? (line?.kind === "thought" ? "Ai nghĩ câu này?" : "Ai nói câu này?") : view === "delivery" ? "Cách đọc câu này" : view === "word" ? "Đọc từ này là" : "Sửa câu này";
   return (
     <Dialog open={segment !== undefined} onOpenChange={(open) => !open && close()} width="max-w-md" title={title}>
       {line && (
-        <div ref={body} className="max-h-[68dvh] space-y-3 overflow-y-auto overscroll-contain pr-0.5">
+        <div ref={scrollFade.ref} style={scrollFade.style} className="max-h-[68dvh] space-y-3 overflow-y-auto overscroll-contain pr-0.5">
           <LineQuote line={line} />
           {!identified && (
             <p className="py-2 text-sm text-fg-2">

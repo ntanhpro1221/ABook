@@ -25,8 +25,9 @@ class AndroidReadAlongSource(context: Context) : ReadAlongSource {
     }
 
     override suspend fun voices(): List<PlayerVoice> =
-        // Online voices stay with the existing consent / settings flow; the picker lists the installed ones.
+        // The picker lists the installed ones only ([nowPlayingState]); online voices come in so the error line can name the chosen voice,
+        // and they are picked through the consent prompt, never here.
         withContext(Dispatchers.IO) {
-            ReadAloud.voices(app).filter { !it.optBoolean("online") }.map { PlayerVoice(it.optString("id"), it.optString("name")) }
+            ReadAloud.voices(app).map { PlayerVoice(it.optString("id"), it.optString("name"), it.optString("gender"), it.optBoolean("online")) }
         }
 }

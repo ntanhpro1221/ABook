@@ -17,13 +17,17 @@
         <!-- Cho phép đo hiệu năng bản release bằng shell (perfetto, simpleperf, Macrobenchmark) mà không cần bản debuggable. -->
         <profileable android:shell="true" />
 
+        <!-- Màn mở app (Compose) và nơi nhận "Mở bằng" / chia sẻ file: ui/NativeActivity.kt. -->
         <activity
+            android:name=".ui.NativeActivity"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density|fontScale"
-            android:name=".MainActivity"
+            android:enableOnBackInvokedCallback="true"
+            android:exported="true"
             android:label="@string/title_activity_main"
-            android:theme="@style/AppTheme.NoActionBarLaunch"
             android:launchMode="singleTask"
-            android:exported="true">
+            android:resizeableActivity="true"
+            android:supportsPictureInPicture="true"
+            android:theme="@style/AppTheme.NoActionBarLaunch">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -65,12 +69,12 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="application/vnd.ngdtuanh.abook+zip" />
                 <data android:mimeType="application/vnd.ngdtuanh.abookproj+zip" />
-                <!-- Zalo, Drive, email hay đặt kiểu chung cho file lạ: LibraryPlugin.openFrom kiểm tên / đầu file, không phải file sách thì báo rõ. -->
+                <!-- Zalo, Drive, email hay đặt kiểu chung cho file lạ: ImportRepo (ui/addbook) kiểm tên / đầu file, không phải file sách thì báo rõ. -->
                 <data android:mimeType="application/octet-stream" />
                 <data android:mimeType="application/zip" />
             </intent-filter>
             <!-- EPUB / Word / PDF / TXT từ app khác ("Mở bằng", chia sẻ tới app): mở bước xem trước của "Thêm sách từ file…"
-                 (LibraryPlugin.openFrom). Chỉ là một lựa chọn trong "Mở bằng" - không BROWSABLE, không nhận "*/*". -->
+                 (NativeActivity.receive). Chỉ là một lựa chọn trong "Mở bằng" - không BROWSABLE, không nhận "*/*". -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <action android:name="android.intent.action.SEND" />
@@ -82,14 +86,6 @@
             </intent-filter>
 
         </activity>
-
-        <!-- Studio từ xa: trang Studio của máy tính đã ghép (StudioActivity.kt). Chỉ mở từ trong app. -->
-        <activity
-            android:name=".StudioActivity"
-            android:label="Studio của máy tính"
-            android:theme="@style/AppTheme.NoActionBar"
-            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density|fontScale"
-            android:exported="false" />
 
         <!-- Dịch vụ phát nền: thông báo, màn hình khoá, nút tai nghe (Media3); là thư viện media cho Android Auto và
              trình duyệt media của hệ thống (MediaLibraryService, cây duyệt ở LibraryTree.kt). -->

@@ -2,10 +2,10 @@ package vn.abook.player.ui.voice
 
 /**
  * Việc của Giọng đọc với các lõi (VoiceModule, OnlineVoices, ReadAloud, MusicStore) - tách khỏi màn để thử bằng nguồn giả. Nguồn thật: [VoiceRepo]. Hàm suspend tự chạy ở
- * luồng nền; lỗi ném [VoiceFailure] (hay [IllegalStateException]) với câu đã sẵn cho người nghe. Không hàm nào trả hay ghi khóa thật: khóa đi xuống lõi một chiều.
+ * luồng nền; lỗi ném [VoiceFailure] (hay [IllegalStateException]) với câu đã sẵn cho người nghe. Không hàm nào trả hay ghi khoá thật: khoá đi xuống lõi một chiều.
  */
 interface VoiceSource {
-    // ---- giọng tải về máy (VoiceModule: cùng lời gọi với ReadAloudPlugin.vieneu* / supertonic*) ----
+    // ---- giọng tải về máy (VoiceModule) ----
 
     suspend fun module(kind: ModuleKind): ModuleStatus
 
@@ -20,7 +20,7 @@ interface VoiceSource {
     /** Bấm "Dùng giọng ..." của lời đề nghị: mọi cuốn đang dùng giọng bắt đầu bằng `fromPrefix` và lựa chọn chung đổi sang giọng đầu tiên bắt đầu bằng `toPrefix` (không có thì giọng `fallback`). */
     suspend fun switchVoices(fromPrefix: String, toPrefix: String, fallback: String)
 
-    // ---- khóa giọng trực tuyến (OnlineVoices) ----
+    // ---- khoá giọng trực tuyến (OnlineVoices) ----
 
     suspend fun providers(): List<KeyProvider>
     suspend fun saveKey(provider: String, key: String, region: String): KeyProvider
@@ -49,5 +49,9 @@ interface VoiceSource {
 /** Phát file mẫu: một lúc một mẫu; `onEnded` gọi khi phát hết (không gọi khi bị [stop]). Bản thật: [AndroidSamplePlayer]; test đưa bản giả (không bao giờ ra loa). */
 interface SamplePlayer {
     fun play(path: String, onEnded: () -> Unit, onFailed: () -> Unit)
+
+    /** Phát đoạn [startMs, endMs) của file (một câu trong file chương, Studio "Cần nghe lại"); `endMs` <= `startMs` = tới hết file. Bản mặc định phát cả file. */
+    fun playRange(path: String, startMs: Int, endMs: Int, onEnded: () -> Unit, onFailed: () -> Unit) = play(path, onEnded, onFailed)
+
     fun stop()
 }

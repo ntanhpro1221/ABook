@@ -229,7 +229,7 @@ class ClipReaderTest {
         for (error in listOf(
             VoiceException("Không có mạng", offline = true),
             VoiceException("Dịch vụ từ chối", reason = "rejected"),
-            VoiceException("Khóa sai", reason = "auth"),
+            VoiceException("Khoá sai", reason = "auth"),
             VoiceException("Hết hạn mức", reason = "quota"),
         )) {
             val edge = FakeVoice("edge:v", error)
@@ -287,14 +287,14 @@ class ClipReaderTest {
 
     @Test
     fun anExhaustedKeyFallsToEdgeSaysSoOnceAndStopsCallingThatProvider() {
-        val keyed = FakeVoice("fpt:banmai", VoiceException("Khóa FPT.AI đã hết hạn mức", reason = "quota"))
+        val keyed = FakeVoice("fpt:banmai", VoiceException("Khoá FPT.AI đã hết hạn mức", reason = "quota"))
         val edge = FakeVoice("edge:vi-VN-HoaiMyNeural")
         val notices = mutableListOf<String>()
         val reader = keyedReader(keyed, edge, FakeVoice("device:vi"), notices)
         assertEquals("edge:vi-VN-HoaiMyNeural", reader.read("một", "fpt:banmai").voice)
         assertEquals("edge:vi-VN-HoaiMyNeural", reader.read("hai", "fpt:banmai").voice)
         assertEquals("không gọi lại khoá đã hết hạn mức ở mỗi đoạn", 1, keyed.calls)
-        assertEquals(listOf("Khóa FPT.AI đã hết hạn mức - tạm đọc bằng giọng Edge."), notices)
+        assertEquals(listOf("Khoá FPT.AI đã hết hạn mức - tạm đọc bằng giọng Edge."), notices)
         now += ClipReader.KEY_BREAK_MS + 1
         reader.read("ba", "fpt:banmai")
         assertEquals(2, keyed.calls)
@@ -302,7 +302,7 @@ class ClipReaderTest {
 
     @Test
     fun aRejectedKeyAndAnOfflineEdgeEndOnTheDeviceVoice() {
-        val keyed = FakeVoice("fpt:banmai", VoiceException("FPT.AI từ chối khóa của bạn", reason = "auth"))
+        val keyed = FakeVoice("fpt:banmai", VoiceException("FPT.AI từ chối khoá của bạn", reason = "auth"))
         val edge = FakeVoice("edge:vi-VN-HoaiMyNeural", VoiceException("Không có mạng", offline = true))
         val device = FakeVoice("device:vi")
         val notices = mutableListOf<String>()
@@ -310,20 +310,20 @@ class ClipReaderTest {
         assertEquals("device:vi", clip.voice)
         assertEquals(listOf(1, 1, 1), listOf(keyed.calls, edge.calls, device.calls))
         assertEquals(listOf(
-            "Khoá FPT.AI lỗi; tạm dùng giọng Edge — bạn kiểm tra khoá trong Cài đặt.",
-            "Không dùng được giọng trực tuyến - tạm đọc bằng giọng của máy.",
+            "Khoá FPT.AI không dùng được - tạm đọc bằng giọng Edge. Kiểm tra lại khoá trong Cài đặt.",
+            "Chưa dùng được giọng trực tuyến - tạm đọc bằng giọng của máy.",
         ), notices)
     }
 
     @Test
     fun whenEveryVoiceFailsTheChosenVoicesProblemLeads() {
-        val keyed = FakeVoice("fpt:banmai", VoiceException("Khóa FPT.AI đã hết hạn mức", reason = "quota"))
+        val keyed = FakeVoice("fpt:banmai", VoiceException("Khoá FPT.AI đã hết hạn mức", reason = "quota"))
         val edge = FakeVoice("edge:vi-VN-HoaiMyNeural", VoiceException("Không có mạng", offline = true))
         try {
             keyedReader(keyed, edge, FakeVoice("device:vi", VoiceException("Máy chưa có giọng tiếng Việt")), mutableListOf()).read("Xin", "fpt:banmai")
             fail("đáng ra lỗi")
         } catch (error: VoiceException) {
-            assertTrue(error.message!!.startsWith("Khóa FPT.AI đã hết hạn mức"))
+            assertTrue(error.message!!.startsWith("Khoá FPT.AI đã hết hạn mức"))
             assertTrue(error.message!!.contains("giọng tiếng Việt"))
             assertEquals("quota", error.reason)
         }
@@ -389,7 +389,7 @@ class ClipReaderTest {
     @Test
     fun aRejectedKeyWithoutEdgeConsentFallsStraightToTheDeviceVoiceAndNeverCallsEdge() {
         // onlineFallback trả null khi người nghe chưa đồng ý "edge" (ReadAloud.edgeFallback): chữ không được rời máy tới Microsoft (soát a79 lỗi 1).
-        val keyed = FakeVoice("azure:vi-VN-HoaiMyNeural", VoiceException("Azure từ chối khóa của bạn", reason = "auth"))
+        val keyed = FakeVoice("azure:vi-VN-HoaiMyNeural", VoiceException("Azure từ chối khoá của bạn", reason = "auth"))
         val edge = FakeVoice("edge:vi-VN-HoaiMyNeural")
         val device = FakeVoice("device:vi")
         val reader = ClipReader(ClipCache(dir), { if (it.startsWith("azure:")) keyed else edge }, { device }, { now }, onlineFallback = { null })

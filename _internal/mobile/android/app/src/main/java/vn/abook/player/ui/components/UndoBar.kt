@@ -3,7 +3,6 @@ package vn.abook.player.ui.components
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -18,12 +17,18 @@ fun UndoBar(deletions: UndoDelete, backEnabled: Boolean = true, aboveNavigation:
     val ids by deletions.undoable.collectAsState()
     val showing by deletions.showing.collectAsState()
     val problem by deletions.problem.collectAsState()
-    var count by remember { mutableIntStateOf(1) }
-    if (ids.isNotEmpty()) count = ids.size
-    BackHandler(enabled = backEnabled && (showing || problem.isNotEmpty())) { deletions.dismiss() }
-    Reveal(showing || problem.isNotEmpty()) {
+    val notice by deletions.notice.collectAsState()
+    val message by deletions.message.collectAsState()
+    val visible = showing || problem.isNotEmpty() || notice.isNotEmpty()
+    val now = if (problem.isNotEmpty()) problem else if (notice.isNotEmpty()) notice else message
+    // Lúc thanh trượt ra, chữ giữ nguyên câu cuối đã hiện (không nhảy sang câu khác giữa chừng).
+    val last = remember { arrayOf(now) }
+    if (visible) last[0] = now
+    val shown = last[0]
+    BackHandler(enabled = backEnabled && visible) { deletions.dismiss() }
+    Reveal(visible) {
         Row(Modifier.fillMaxWidth().background(Abook.colors.panel).then(if (aboveNavigation) Modifier else Modifier.navigationBarsPadding()).heightIn(min = Dim.s48).padding(horizontal = Dim.margin).testTag("undo_bar"), verticalAlignment = Alignment.CenterVertically) {
-            BasicText(if (problem.isNotEmpty()) problem else if (count == 1) "Đã bỏ sách" else "Đã bỏ $count cuốn", style = Abook.type.bodySmall, modifier = Modifier.weight(1f).padding(vertical = Dim.s12))
+            BasicText(shown, style = Abook.type.bodySmall, modifier = Modifier.weight(1f).padding(vertical = Dim.s12))
             if (showing && ids.isNotEmpty()) {
                 Spacer(Modifier.width(Dim.s16))
                 TextAction("Hoàn tác", deletions::undo, "undo_delete")

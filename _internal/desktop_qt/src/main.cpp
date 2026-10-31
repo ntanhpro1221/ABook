@@ -16,6 +16,7 @@
 #include "speechout.h"
 #include "outputdevices.h"
 #include "readalong.h"
+#include "singleinstance.h"
 
 #include <QDir>
 #include <QFileInfo>
@@ -32,6 +33,11 @@
 #include <QScopedValueRollback>
 #include <QStandardPaths>
 #include <QTimer>
+#include <QJsonObject>
+#include <QNetworkReply>
+#include <QNetworkRequest>
+#include <memory>
+#include <optional>
 #include <qpa/qwindowsysteminterface_p.h>
 #include <cstdio>
 #include <cstdlib>
@@ -153,6 +159,10 @@ int main(int argc, char *argv[]) {
     // (PROGRESS.md mục CPU). Đặt sẵn trong môi trường thì giữ giá trị đó (đo so sánh: =0).
     if (!qEnvironmentVariableIsSet("QT_D3D_NO_VBLANK_THREAD"))
         qputenv("QT_D3D_NO_VBLANK_THREAD", "1");
+    // Mọi màn hình import QtQuick.Controls.Basic. Hộp thoại dự phòng của QtQuick.Dialogs (khi hộp thoại của Windows không mở
+    // được) import QtQuick.Controls trần, mà Qt 6.8+ chọn FluentWinUI3 trên Windows 11 - bản đóng gói chỉ mang Basic
+    // (tools/trim_dist.py), nên style cố định là Basic.
+    qputenv("QT_QUICK_CONTROLS_STYLE", "Basic");
     QGuiApplication app(argc, argv);
     BenchExposure benchExposure(benchMode && qEnvironmentVariableIntValue("ABOOK_BENCH_HIDDEN_DESKTOP")==1 && QGuiApplication::platformName()==QStringLiteral("windows"));
     BenchWindowGuard benchWindowGuard;
@@ -162,6 +172,19 @@ int main(int argc, char *argv[]) {
     app.setQuitOnLastWindowClosed(false);
     app.setWindowIcon(QIcon(QStringLiteral(":/app/app.ico")));
     Bench::mark(QStringLiteral("main"));
+
+    // Một bản chạy cho mỗi hồ sơ (Q4, src/singleinstance.h): đã có bản đang chạy thì gửi nó các file trên dòng lệnh rồi thoát,
+    // trước khi tốn công khởi động host. Hồ sơ giả của test / bộ cài thử có kênh riêng, không gửi sang app thật.
+    QStringList launchFiles;
+    for (const QString &argument : app.arguments().mid(1)) {
+        // Đường tương đối theo thư mục của lần mở này, không phải của bản đang chạy nhận nó.
+        if (!argument.startsWith(QLatin1Char('-')))
+            launchFiles << QDir::toNativeSeparators(QFileInfo(argument).absoluteFilePath());
+    }
+    SingleInstance instance;
+    // Hai lần mở cùng lúc: cả hai chưa thấy ai, một bên giữ được quyền, bên kia gửi sang nó.
+    if (instance.handOff(launchFiles) || (!instance.listen() && instance.handOff(launchFiles)))
+        return 0;
 
     // Backend Python chạy NGAY, song song với việc dựng giao diện (Python mất vài trăm ms để nạp).
     Backend backend(nullptr);
@@ -276,7 +299,12 @@ int main(int argc, char *argv[]) {
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed, &app, [] { QCoreApplication::exit(3); }, Qt::QueuedConnection);
     // ABOOK_SMOKE_EXIT=1 (build.bat, tools/smoke_dist.py): quit shortly after the first frame, 0 only when the
     // engine reported no warning, so a package whose QML does not load fails the build. Tests use stub singletons.
-    const bool smokeExit = qEnvironmentVariable("ABOOK_SMOKE_EXIT") == QStringLiteral("1");
+    // ABOOK_SMOKE_EXIT=host (tools/smoke_packaged.py): the same, but only once the host is Ready too; 5 when it failed.
+    // ABOOK_SMOKE_EXIT=play (tools/smoke_packaged.py + smoke_play.py): host Ready, the Library fetched with at least one
+    // book (7 when empty), then the first book plays; 0 once the voice has played PLAYED_S seconds, 6 when playing failed.
+    const QString smoke = qEnvironmentVariable("ABOOK_SMOKE_EXIT");
+    const bool smokePlay = smoke == QStringLiteral("play");
+    const bool smokeExit = smoke == QStringLiteral("1") || smoke == QStringLiteral("host") || smokePlay;
     int engineWarnings = 0;
     if (smokeExit)
         QObject::connect(&engine, &QQmlEngine::warnings, &app, [&engineWarnings](const QList<QQmlError> &list) { engineWarnings += list.size(); });
@@ -284,11 +312,103 @@ int main(int argc, char *argv[]) {
     if (smokeExit) {
         auto *window = engine.rootObjects().isEmpty() ? nullptr : qobject_cast<QQuickWindow *>(engine.rootObjects().constFirst());
         if (!window) return 3;
-        QObject::connect(window, &QQuickWindow::frameSwapped, &app, [&engineWarnings] {
-            QTimer::singleShot(1500, qApp, [&engineWarnings] { QCoreApplication::exit(engineWarnings ? 4 : 0); });
-        }, Qt::SingleShotConnection);
+        const bool waitHost = smoke != QStringLiteral("1");
+        auto framed = std::make_shared<bool>(false), done = std::make_shared<bool>(false);
+        auto books = std::make_shared<std::optional<QJsonArray>>();
+        auto quit = [&engineWarnings](int delayMs) {
+            QTimer::singleShot(delayMs, qApp, [&engineWarnings] { QCoreApplication::exit(engineWarnings ? 4 : 0); });
+        };
+        auto check = [&backend, &player, waitHost, smokePlay, framed, done, books, quit] {
+            if (*done || !*framed) return;
+            if (waitHost && backend.state() == Backend::Failed) {
+                *done = true;
+                qWarning("SMOKE_HOST_FAILED %s", qUtf8Printable(backend.message()));
+                QCoreApplication::exit(5);
+                return;
+            }
+            if (waitHost && backend.state() != Backend::Ready) return;
+            if (smokePlay && !books->has_value()) return;
+            *done = true;
+            if (!smokePlay) {
+                quit(1500);
+                return;
+            }
+            const QJsonArray list = **books;
+            if (list.isEmpty()) {
+                qWarning("SMOKE_LIBRARY_EMPTY");
+                QCoreApplication::exit(7);
+                return;
+            }
+            const QString id = list.first().toObject().value(QStringLiteral("id")).toString();
+            qWarning("SMOKE_LIBRARY %lld book(s), %d row(s); playing %s", qlonglong(list.size()), backend.library()->rowCount(), qUtf8Printable(id));
+            player.playBook(id);
+        };
+        QObject::connect(window, &QQuickWindow::frameSwapped, &app, [framed, check] { *framed = true; check(); }, Qt::SingleShotConnection);
+        if (waitHost) QObject::connect(&backend, &Backend::stateChanged, &app, check);
+        if (smokePlay) {
+            QObject::connect(&backend, &Backend::libraryFetched, &app, [books, check](const QJsonArray &list) {
+                if (!books->has_value()) *books = list;
+                check();
+            });
+            auto played = std::make_shared<bool>(false);
+            QObject::connect(&audio, &AudioOut::failed, &app, [played](const QString &reason) {
+                if (*played) return;
+                *played = true;
+                qWarning("SMOKE_PLAY_FAILED %s", qUtf8Printable(reason));
+                QCoreApplication::exit(6);
+            });
+            auto *poll = new QTimer(&app);
+            QObject::connect(poll, &QTimer::timeout, &app, [&audio, &player, played, quit] {
+                if (*played) return;
+                if (!player.error().isEmpty()) {
+                    *played = true;
+                    qWarning("SMOKE_PLAY_FAILED %s", qUtf8Printable(player.error()));
+                    QCoreApplication::exit(6);
+                } else if (audio.playing() && audio.position() >= 2.0 /* smoke_play.PLAYED_S */) {
+                    *played = true;
+                    qWarning("SMOKE_PLAYED %.2f s", audio.position());
+                    quit(300);
+                }
+            });
+            poll->start(100);
+        }
+    }
+    // ABOOK_SMOKE_EXIT=update (tools/test_installer.py): the update the host finds is installed the way the "Cập nhật" button
+    // does it (POST /api/app/update). Exit 0 then comes from Backend::runInstaller, 8 when the host refused the package
+    // (abook-update-failed), 9 when the route itself failed.
+    if (smoke == QStringLiteral("update")) {
+        QObject::connect(&backend, &Backend::hostEvent, &app, [&backend](const QString &name, const QVariant &detail) {
+            if (name == QLatin1String("abook-update")) {
+                qWarning("SMOKE_UPDATE_FOUND %s", qUtf8Printable(detail.toMap().value(QStringLiteral("version")).toString()));
+                const auto endpoint = Backend::endpoint();
+                QNetworkRequest request(QUrl(QStringLiteral("http://127.0.0.1:%1/api/app/update").arg(endpoint.port)));
+                request.setRawHeader("X-Ebook-Token", endpoint.token);
+                request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
+                QNetworkReply *reply = backend.network()->post(request, QByteArrayLiteral("{}"));
+                QObject::connect(reply, &QNetworkReply::finished, reply, [reply] {
+                    reply->deleteLater();
+                    if (reply->error() == QNetworkReply::NoError) return;
+                    qWarning("SMOKE_UPDATE_FAILED POST /api/app/update: %s", qUtf8Printable(reply->errorString()));
+                    QCoreApplication::exit(9);
+                });
+            } else if (name == QLatin1String("abook-update-failed")) {
+                // Percent-encoded UTF-8: stderr goes out in the ANSI code page, where the Vietnamese reason turns into '?'.
+                qWarning("SMOKE_UPDATE_FAILED %s", detail.toString().toUtf8().toPercentEncoding(" ").constData());
+                QCoreApplication::exit(8);
+            }
+        });
     }
     musicWindowActivity.update();
+    // File trên dòng lệnh của chính lần mở này (Main.qml openFiles), rồi các lần mở khác: hiện cửa sổ + mở file của chúng
+    // (otherLaunch). Đo đạc (ABOOK_BENCH) không bao giờ đưa cửa sổ lên.
+    if (!engine.rootObjects().isEmpty() && !benchMode) {
+        QObject *root = engine.rootObjects().constFirst();
+        if (!launchFiles.isEmpty())
+            QMetaObject::invokeMethod(root, "openFiles", Q_ARG(QVariant, QVariant(launchFiles)));
+        QObject::connect(&instance, &SingleInstance::launched, root, [root](const QStringList &files) {
+            QMetaObject::invokeMethod(root, "otherLaunch", Q_ARG(QVariant, QVariant(files)));
+        });
+    }
     for (QObject *root : engine.rootObjects()) {
         if (auto *window = qobject_cast<QQuickWindow *>(root); window && media) media->attachWindow(window->winId());
     }

@@ -51,7 +51,7 @@ object CoverCrop {
         val resolver = context.contentResolver
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
-        require(bounds.outWidth > 0 && bounds.outHeight > 0) { "Không đọc được ảnh. Bạn hãy chọn JPEG, PNG hoặc WebP." }
+        require(bounds.outWidth > 0 && bounds.outHeight > 0) { "Chưa đọc được ảnh. Bạn hãy chọn JPEG, PNG hoặc WebP." }
         var sample = 1
         val side = displayPixels.coerceIn(360, 1600)
         while (maxOf(bounds.outWidth, bounds.outHeight) / sample > side * 2) sample *= 2
@@ -102,7 +102,7 @@ fun CoverCropRoute(editor: BookEditor, uri: String, onBack: () -> Unit) {
     LaunchedEffect(uri, attempt) {
         problem = ""
         try { bitmap = CoverCrop.load(context, Uri.parse(uri), width) }
-        catch (error: Exception) { problem = error.message ?: "Bạn hãy chọn lại ảnh." }
+        catch (error: Exception) { problem = error.message ?: "Bạn hãy chọn lại ảnh bìa." }
     }
     val image = bitmap?.asImageBitmap()
     BookForm("Cắt ảnh bìa", onBack, "cover_crop_screen", footer = {

@@ -1,5 +1,6 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.ui.components.ClockLabel
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -32,7 +33,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicText
+import vn.abook.player.ui.components.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
@@ -41,6 +42,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import vn.abook.player.ui.components.TextAction
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
@@ -67,6 +71,7 @@ import vn.abook.player.ui.components.SheetHost
 import vn.abook.player.ui.components.pressable
 import vn.abook.player.ui.data.CoverLoader
 import vn.abook.player.ui.data.Library
+import vn.abook.player.ui.data.LibraryFilter
 import vn.abook.player.ui.data.LibraryState
 import vn.abook.player.ui.data.ListenBook
 import vn.abook.player.ui.data.ListenLogic
@@ -74,6 +79,7 @@ import vn.abook.player.ui.data.ShelfTile
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import kotlin.math.roundToInt
+import vn.abook.player.ui.components.fadeEdges
 
 /** Việc mà Thư viện nhờ nơi khác làm (mở trang sách, phát ngay, thêm sách) - tách khỏi màn để thử và để dựng ảnh chụp. */
 @Stable
@@ -81,6 +87,8 @@ class LibraryActions(
     val openBook: (ListenBook) -> Unit,
     val playNow: (String) -> Unit,
     val addBook: () -> Unit,
+    /** "Nối máy" ở thư viện trống: tới màn ghép với máy tính; null = không có (bản thử). */
+    val connect: (() -> Unit)? = null,
 )
 
 /** Số cột: 2 trên máy hẹp (<360 dp), 3 từ 360 dp, thêm một cột mỗi 120 dp (DESIGN.md §6 "Lưới bìa": điện thoại 2-3 cột). */
@@ -100,7 +108,9 @@ fun LibraryScreen(
     sheets: SheetHost,
     actions: LibraryActions,
     modifier: Modifier = Modifier,
-    backEnabled: Boolean = true,
+    backEnabled: () -> Boolean = { true },
+    /** Thẻ "Tối qua" ở đầu lưới (sau đầu trang); null = không có (bản thử). */
+    recap: (@Composable (List<ListenBook>) -> Unit)? = null,
 ) {
     val books = (state as? LibraryState.Ready)?.books ?: return Box(modifier.fillMaxSize())
     val top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
@@ -115,11 +125,17 @@ fun LibraryScreen(
         }
     }
     // Back đóng ô tìm trước - chỉ khi màn này đang là màn trên cùng (không bị trang sách phủ, không ở tab khác).
-    BackHandler(enabled = backEnabled && ui.searchOpen) { ui.closeSearch() }
+    SearchBack(ui, backEnabled)
     Box(modifier.fillMaxSize().onGloballyPositioned { coords[0] = it }) {
-        LibraryGrid(books, ui, grid, covers, sheets, actions, top) { coords[1] = it }
+        LibraryGrid(books, ui, grid, covers, sheets, actions, top, recap) { coords[1] = it }
         SortMenu(ui, anchor, backEnabled)
     }
+}
+
+/** Back đóng ô tìm. Đọc `backEnabled` (trạng thái của tab / ngăn xếp) ở riêng chỗ này, để đổi tab không dựng lại cả màn Thư viện. */
+@Composable
+private fun SearchBack(ui: LibraryUiState, backEnabled: () -> Boolean) {
+    BackHandler(enabled = backEnabled() && ui.searchOpen) { ui.closeSearch() }
 }
 
 @Composable
@@ -131,6 +147,7 @@ private fun LibraryGrid(
     sheets: SheetHost,
     actions: LibraryActions,
     top: Dp,
+    recap: (@Composable (List<ListenBook>) -> Unit)?,
     onSortCoordinates: (LayoutCoordinates) -> Unit,
 ) {
     val view = remember(books, ui.shown, ui.query, ui.sort) { Library.view(books, ui.shown, ui.query, ui.sort) }
@@ -142,7 +159,7 @@ private fun LibraryGrid(
     LazyVerticalGrid(
         columns = GridCells.Fixed(columns),
         state = grid,
-        modifier = Modifier.fillMaxSize().testTag("library_grid"),
+        modifier = Modifier.fillMaxSize().testTag("library_grid").fadeEdges(grid),
         contentPadding = PaddingValues(start = Dim.margin, end = Dim.margin, top = top, bottom = Dim.s24),
         horizontalArrangement = Arrangement.spacedBy(Dim.s12),
         verticalArrangement = Arrangement.spacedBy(Dim.s16),
@@ -154,12 +171,14 @@ private fun LibraryGrid(
                 vn.abook.player.ui.components.Reveal(books.isNotEmpty()) { FilterBar(ui, onSortCoordinates) }
             }
         }
+        if (recap != null) item(key = "recap", span = { GridItemSpan(maxLineSpan) }, contentType = "recap") { recap(books) }
         if (tiles.isEmpty()) {
             item(key = "none", span = { GridItemSpan(maxLineSpan) }, contentType = "none") {
                 if (books.isEmpty()) Column {
-                    BasicText("Chưa có sách", style = Abook.type.sectionTitle)
-                    RowHint("Thêm sách để bắt đầu nghe.")
-                } else NoMatch()
+                    BasicText("Chưa có sách trên máy", style = Abook.type.sectionTitle)
+                    RowHint("Thêm sách của bạn để bắt đầu nghe.")
+                    actions.connect?.let { TextAction("Nối máy", it, "library_connect", align = Alignment.CenterStart) }
+                } else NoMatch(ui.query.trim(), ui.filter)
             }
         } else {
             items(tiles, key = { it.item.key }, contentType = { if (it.item is ShelfTile.Series) "series" else "single" }) { tile ->
@@ -174,11 +193,19 @@ private fun LibraryGrid(
 }
 
 @Composable
-private fun NoMatch() {
+private fun NoMatch(query: String, filter: LibraryFilter) {
     Column(Modifier.fillMaxWidth().padding(vertical = Dim.s32)) {
-        BasicText("Không có sách nào", style = Abook.type.sectionTitle)
+        BasicText(if (query.isEmpty()) "Không có sách ở đây" else "Không tìm thấy sách nào khớp “$query”", style = Abook.type.sectionTitle)
         Spacer(Modifier.height(Dim.s4))
-        BasicText("Thử bộ lọc hay từ khoá khác.", style = Abook.type.bodySmall)
+        BasicText(
+            if (query.isNotEmpty()) "Thử tên sách hoặc tác giả khác." else when (filter) {
+                LibraryFilter.All -> "Thư viện chưa có sách nào."
+                LibraryFilter.Listening -> "Chưa nghe dở cuốn nào - chọn một cuốn để bắt đầu."
+                LibraryFilter.New -> "Cuốn nào cũng đã được nghe ít nhất một đoạn."
+                LibraryFilter.Finished -> "Chưa có cuốn nào nghe xong."
+            },
+            style = Abook.type.bodySmall,
+        )
     }
 }
 
@@ -216,7 +243,7 @@ private fun BookTile(
             if (series?.hasRemote ?: (lead.remote != null)) {
                 // Dưới bìa (tên bìa nằm ở đầu), góc phải: chip số tập / nhãn ở góc trái.
                 Box(Modifier.align(Alignment.BottomEnd).padding(Dim.s4).padding(bottom = 3.dp).size(22.dp).clip(CircleShape).background(Color.Black.copy(alpha = 0.5f)), contentAlignment = Alignment.Center) {
-                    RemoteIcon(Color.White)
+                    RemoteIcon(Color.White, Modifier.semantics { contentDescription = "Có sách trên máy khác" })
                 }
             }
             if (series != null) {
@@ -238,13 +265,16 @@ private fun BookTile(
         Spacer(Modifier.height(Dim.s8))
         BasicText(title, style = Abook.type.label)
         vn.abook.player.ui.components.Reveal(series?.hasRemote ?: (lead.remote != null)) {
-            BasicText("Trên máy tính", style = Abook.type.caption)
+            BasicText(ListenLogic.remotePlace(lead), style = Abook.type.caption)
         }
         val sub = when {
+            !lead.textOnly && lead.chaptersAvailable == 0 -> vn.abook.player.ui.data.ProductionText.upcoming(lead)
+            lead.producing -> vn.abook.player.ui.data.ProductionText.upcoming(lead)
+            lead.textOnly && lead.author.isBlank() -> "Chỉ có chữ"
             single != null && single.twin -> ListenLogic.progressText(lead)
             else -> lead.author
         }
-        if (sub.isNotEmpty()) BasicText(sub, style = Abook.type.caption)
+        if (sub.isNotEmpty()) ClockLabel(sub, style = Abook.type.caption)
     }
 }
 

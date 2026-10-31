@@ -85,7 +85,7 @@ Column {
         removingNow = true
         Api.call("DELETE", "/api/music/local/" + link.slice(Music.LOCAL_PREFIX.length), null, function(data, error) {
             root.removingNow = false
-            if (error) { root.toast("Không xoá được bài này", error); return }
+            if (error) { root.toast("Chưa xoá được bài này", error); return }
             root.refresh(data)
             root.removing = ""
             Api.notice = "Đã xoá khỏi Nhạc của tôi"
@@ -98,7 +98,7 @@ Column {
         picking = track.link
         Api.call("POST", "/api/music/local/" + digest + "/auto", {auto: next}, function(data, error) {
             root.picking = ""
-            if (error) { root.toast("Không đổi được", error); return }
+            if (error) { root.toast("Chưa đổi được", error); return }
             root.refresh(data)
         })
     }

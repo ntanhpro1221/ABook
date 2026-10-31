@@ -754,8 +754,10 @@ class EdgeTts(
             }
             // Hết quỹ thời gian thử lại của đoạn ([ClipBudget]) hay hạn chung của clip: thôi ngay - lần thử nữa sẽ không kịp, người gọi rơi sang giọng kế.
             if (attempt == RETRIES || !ClipBudget.fits(BACKOFF_MS[attempt]) || run.remainingMs() <= BACKOFF_MS[attempt]) {
-                val offline = (failure as? VoiceException)?.offline == true || failure is ConnectTimedOut
-                throw VoiceException(if (offline) LOST_NETWORK else NOT_ANSWERING, offline = offline, cause = failure)
+                // Bắt tay treo mọi lần: có mạng (DNS xong) mà dịch vụ không trả lời - "quá giờ", không phải "mất mạng" (như edge.py EdgeTimeout).
+                val offline = (failure as? VoiceException)?.offline == true
+                val reason = if (offline) "offline" else if (failure is ConnectTimedOut) "timeout" else "service"
+                throw VoiceException(if (offline) LOST_NETWORK else NOT_ANSWERING, offline = offline, cause = failure, reason = reason)
             }
             if (BACKOFF_MS[attempt] > 0) pause(BACKOFF_MS[attempt])
             attempt += 1

@@ -18,6 +18,9 @@ import { useSource } from "./source";
 // Cuốn tải từ máy tính (điện thoại): sửa xong thì phần sửa gửi về máy tính - tự động khi tới được máy tính, hoặc bấm "Gửi về máy
 // tính" (docs/EDITING.md, P2b). Chữ nói tình trạng ở shared/editsSync.ts.
 
+/** Câu cuối của lời báo gửi hỏng (cùng chữ với điện thoại, editbook/BookEditor.kt). */
+const KEPT_HERE = "Phần sửa vẫn nằm trên máy này.";
+
 const MENU_ITEM = "flex h-9 cursor-default items-center gap-2 rounded-control px-2 text-sm outline-none data-[highlighted]:bg-hover";
 
 /** Gửi ngay phần sửa của cuốn về máy tính. `available`: nguồn này có đường gửi (chỉ điện thoại). */
@@ -37,7 +40,7 @@ export function useSendEdits(book: ListenBook) {
     },
     onError: (error: Error) => {
       refreshAfterEdit(client, book.id);
-      toast.error(`Chưa gửi được về ${where}`, { description: `${endSentence(error.message)} Phần sửa vẫn nằm trên máy này.`, duration: 10000 });
+      toast.error(`Chưa gửi được về ${where}`, { description: `${endSentence(error.message)} ${KEPT_HERE}`, duration: 10000 });
     },
   });
   return { send: () => send.mutate(), busy: send.isPending, available: Boolean(source.sendEdits), where };
@@ -56,7 +59,7 @@ export function SendEditsItem({ book }: { book: ListenBook }) {
     >
       <MotionRegion as="span" className="mt-0.5 inline-grid shrink-0 place-items-center">{busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}</MotionRegion>
       <span className="min-w-0">
-        <span className="block">{busy ? "Đang gửi…" : pending ? `Gửi về ${where} (${pending} thay đổi)` : `Gửi về ${where}`}</span>
+        <span className="block">{busy ? "Đang gửi" : `Gửi về ${where}`}</span>
         {!busy && !pending && <span className="block text-xs text-fg-3">Chưa có thay đổi nào chờ gửi</span>}
       </span>
     </DropdownMenu.Item>
@@ -102,7 +105,7 @@ export function EditsNoticesBanner({ book }: { book: ListenBook }) {
           <li key={notice.id} className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <span className="min-w-0 flex-1 text-pretty">{notice.label}</span>
             <Button size="sm" variant="ghost" icon={Undo2} disabled={act.isPending} onClick={() => act.mutate({ verb: "undo", notice })}>
-              Đặt lại bản của máy này
+              Hoàn tác
             </Button>
           </li>
         ))}
@@ -133,7 +136,7 @@ export function EditsSyncBanner({ book }: { book: ListenBook }) {
   // một khung nói lý do dài, khung này giữ phần riêng của nó (số thay đổi chưa gửi, nút gửi) - không lặp nguyên câu.
   const download = useQuery<{ state: string; retry?: boolean }>({ queryKey: ["listen", "download", book.id], queryFn: skipToken });
   const found = editsSyncNote(book.editsSync, where);
-  const unreachable = /Không kết nối được|không trả lời/.test(book.editsSync?.last?.error ?? "");
+  const unreachable = /(?:Không|Chưa) kết nối được|không trả lời/.test(book.editsSync?.last?.error ?? "");
   const note =
     found && found.tone === "error" && unreachable && download.data?.state === "failed" && download.data.retry
       ? { ...found, lines: [`Tự gửi khi ${where} trả lời lại; bấm “Gửi về ${where}” để gửi ngay.`] }
@@ -168,7 +171,7 @@ export function EditsSyncBanner({ book }: { book: ListenBook }) {
       ))}
       {available && book.editsSync && book.editsSync.pending > 0 && (
         <Button size="sm" variant="ghost" className="mt-2" icon={Send} loading={busy} onClick={send}>
-          Gửi về {where}
+          {`Gửi về ${where}`}
         </Button>
       )}
       {note.tone === "sent" && (

@@ -321,7 +321,7 @@ object LibraryServer {
     private fun readDevices(devicesFile: File): JSONObject {
         if (!devicesFile.exists()) return JSONObject().put("devices", JSONObject())
         val text = try { devicesFile.readText(Charsets.UTF_8) } catch (error: Exception) {
-            throw java.io.IOException("Không đọc được danh sách máy đã ghép; bạn hãy thử lại. Dữ liệu cũ vẫn được giữ.", error)
+            throw java.io.IOException("Chưa đọc được danh sách máy đã ghép; bạn hãy thử lại. Dữ liệu cũ vẫn được giữ.", error)
         }
         try {
             val data = StrictJson.parse(text) as? JSONObject ?: error("sai dạng")
@@ -558,10 +558,10 @@ object LibraryServer {
             json(output, 200, identity(JSONObject()).put("books", libraryView()))
             return
         }
-        // Máy bên kia thôi ghép điện thoại này: thu hồi mã của nó ở đây luôn (như máy tính, sync.py - soát a27 lỗi 5).
+        // Máy bên kia bỏ ghép điện thoại này: thu hồi mã của nó ở đây luôn (như máy tính, sync.py - soát a27 lỗi 5).
         if (request.method == "POST" && path == "/sync/v1/unpair") {
             revoke(hash(token).take(12))
-            AppLog.i("Share", "máy ${caller.optString("name", "?").take(40)} thôi ghép")
+            AppLog.i("Share", "máy ${caller.optString("name", "?").take(40)} bỏ ghép")
             json(output, 200, JSONObject().put("ok", true))
             return
         }

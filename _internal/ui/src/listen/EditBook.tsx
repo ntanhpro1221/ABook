@@ -13,10 +13,9 @@ import { DisclosureRow } from "@/shared/DisclosureRow";
 import { SectionHeading } from "@/shared/SectionHeading";
 import { COVER_SEARCH_NOTE, COVER_SEARCH_TITLE, CoverSearchPanel } from "@/shared/CoverSearch";
 import { canEditLayer, editBlockedNote, studioNeed, syncsToComputer } from "@/shared/capabilities";
-import { holderName } from "@/shared/editsSync";
 import { formatClock } from "@/shared/format";
 import { levelOptions, levelText } from "@/shared/musicLevels";
-import { Switch } from "@/desktop/PhoneSync";
+import { Switch } from "@/desktop/Switch";
 import { DialogActions, Select, Button, Dialog, ChoiceRow, ContentSkeleton, InlineError } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { MUSIC_CHANGED_EVENT } from "./musicBed";
@@ -24,6 +23,7 @@ import { MyMusicSection, SwapTrack } from "./MyMusic";
 import { seriesOf, type ListenBook, type ListenChapter } from "./model";
 import { useSource } from "./source";
 import { BookReadingsSection } from "./WordReadings";
+import { useFadeScroller } from "@/shared/scrollFade";
 
 // Sửa sách "áp ngay" ngay trên trang nghe (docs/EDITING.md): tên sách, tác giả, bìa, tên nhân vật, tên chương, nhạc nền. Cùng một bộ
 // màn hình cho máy tính và điện thoại - lệnh đi tới `/api/books/<mã>/...`; máy tính là server Python, điện thoại là lõi native
@@ -70,7 +70,7 @@ async function imageToDataUrl(file: Blob): Promise<string> {
     new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(String(reader.result));
-      reader.onerror = () => reject(reader.error ?? new Error("Không đọc được file ảnh"));
+      reader.onerror = () => reject(reader.error ?? new Error("Chưa đọc được ảnh. Bạn hãy chọn JPEG, PNG hoặc WebP."));
       reader.readAsDataURL(file);
     });
   try {
@@ -165,6 +165,7 @@ export function useBookMusic(bookId: string, onChanged?: () => void) {
 /** Nhạc nền của cuốn nhập từ file: người làm sách đã gắn sẵn - người nghe bật/tắt, chỉnh mức, cho im lặng từng đoạn, và đổi một đoạn
  *  sang bài trong "Nhạc của tôi" (bài ấy đi cùng file sách khi lưu). */
 export function MusicSection({ book }: { book: ListenBook }) {
+  const scrollFade = useFadeScroller<HTMLUListElement>();
   const [swapping, , setSwapping] = useMotionState<string | null>(null); // MotionRegion giữ chuyển động cục bộ khi đóng "Đổi bài".
   const swapBox = useRef<HTMLDivElement>(null);
   const swapButton = useRef<HTMLButtonElement>(null);
@@ -188,7 +189,7 @@ export function MusicSection({ book }: { book: ListenBook }) {
           </label>
         </div>
         <label className="text-sm">
-          <span className="block text-fg-2">Mức nhạc dưới giọng đọc</span>
+          <span className="block text-fg-2">Mức nhạc nền</span>
           <Select
             value={String(data.levelDb)}
             onChange={(event) => change.mutate({ levelDb: Number(event.target.value) })}
@@ -202,7 +203,7 @@ export function MusicSection({ book }: { book: ListenBook }) {
           </Select>
         </label>
       </div>
-      <ul className={cn("max-h-72 divide-y divide-line overflow-y-auto", !data.enabled && "opacity-50")}>
+      <ul ref={scrollFade.ref} style={scrollFade.style} className={cn("max-h-72 divide-y divide-line overflow-y-auto", !data.enabled && "opacity-50")}>
         {data.cues.map((cue) => (
           <li key={cue.key}>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
@@ -296,6 +297,7 @@ export function EditBookDialog({
   /** Studio từ xa: tên máy tính đang giữ sách - sửa áp lên sách ở đó. */
   computer?: string;
 }) {
+  const scrollFade = useFadeScroller<HTMLDivElement>();
   const client = useQueryClient();
   const [title, setTitle] = useState(book.title);
   const [author, setAuthor] = useState(book.author ?? "");
@@ -362,14 +364,14 @@ export function EditBookDialog({
       onOpenChange={onOpenChange}
       width="max-w-[560px]"
       title={searching ? COVER_SEARCH_TITLE : "Sửa sách"}
+      // Không lời dẫn chung đầu hộp (điện thoại cũng không có): phần sửa chờ gửi tự nói ở dòng tình trạng dưới tên sách (SendEdits.tsx). Riêng
+      // Studio từ xa nói rõ là đang sửa sách trên máy tính.
       description={
         searching
           ? COVER_SEARCH_NOTE
           : computer
           ? `Đổi có hiệu lực ngay trên máy tính ${computer} - audio và chữ của người làm sách giữ nguyên.`
-          : syncsToComputer(book.capabilities)
-            ? `Đổi có hiệu lực ngay trên máy này và được gửi về ${holderName(book.remote)} khi kết nối - audio và chữ của người làm sách giữ nguyên.`
-            : "Đổi có hiệu lực ngay và chỉ trên máy này - audio và chữ của người làm sách giữ nguyên."
+          : undefined
       }
     >{/* Tìm bìa là MỘT BƯỚC của hộp này (trượt sang, có "Quay lại", Back cũng về), không phải hộp thứ hai đè lên (audit140 V9). */}
     <MotionRegion motionKey={searching}>{searching ? (
@@ -388,7 +390,7 @@ export function EditBookDialog({
         />
       </div>
     ) : (
-      <div className="focus-scroll max-h-[68vh] space-y-4 overflow-y-auto pr-1">
+      <div ref={scrollFade.ref} style={scrollFade.style} className="focus-scroll max-h-[68vh] space-y-4 overflow-y-auto pr-1">
         <Section title="Tên sách">
           <form
             className="flex gap-2"
@@ -412,7 +414,7 @@ export function EditBookDialog({
         </Section>
         {/* Chỉ sách chữ (nhập từ file): sách Studio không có chỗ áp tác giả, sửa ở máy khác rồi gửi về là mất (fold_edits bỏ qua). */}
         {book.stage === "text" && !workshop && (
-          <Section title="Tác giả" hint="Để trống nếu không rõ tác giả. Hiện ở thư viện, trang sách và trong file sách nói xuất ra.">
+          <Section title="Tác giả">
             <form
               className="flex gap-2"
               onSubmit={(event) => {
@@ -441,10 +443,10 @@ export function EditBookDialog({
             {/* Nút chữ xếp chồng canh trái chung một mép (icon thẳng hàng); kéo giãn thì chữ canh giữa từng nút, lệch nhau (soát 25-10). */}
             <div className="flex min-w-0 max-w-full flex-col items-start gap-1">
               <Button variant="ghost" className="justify-start text-left" icon={ImagePlus} disabled={busy} onClick={() => file.current?.click()}>
-                {book.cover ? "Đổi ảnh bìa…" : "Chọn ảnh bìa…"}
+                {book.cover ? "Đổi ảnh bìa" : "Chọn ảnh bìa"}
               </Button>
               <Button ref={searchOpener} variant="ghost" className="justify-start text-left" icon={Globe} disabled={busy} onClick={() => setSearching(true)}>
-                Tìm bìa…
+                Tìm bìa
               </Button>
               {book.cover && (
                 <Button variant="ghost" className="justify-start text-left" icon={Trash2} disabled={busy} onClick={() => removeCover.mutate()}>
@@ -495,7 +497,7 @@ export function EditBookDialog({
               </div>
             ) : (
               <Button ref={revertButton} variant="ghost" className="-ml-3.5" onClick={() => setConfirmRevert(true)}>
-                Bỏ mọi thay đổi…
+                Bỏ mọi thay đổi
               </Button>
             )}
           </Section>
@@ -559,8 +561,7 @@ export function RenameChapterDialog({ book, chapter, onClose }: { book: ListenBo
       open={chapter !== null}
       onOpenChange={(open) => !open && onClose()}
       width="max-w-md"
-      title="Đổi tên chương"
-      description="Chỉ đổi cái tên hiện trên màn hình - audio không đổi."
+      title="Tên chương"
     >
       <form id={dialogForm1}
         className="space-y-3"
@@ -570,7 +571,7 @@ export function RenameChapterDialog({ book, chapter, onClose }: { book: ListenBo
         }}
       >
         <label className="block text-sm">
-          <span className="text-fg-2">{single ? "Tên chương" : "Số chương hay nhãn"}</span>
+          <span className="text-fg-2">{single ? "Tên chương" : "Nhãn"}</span>
           <input
             data-autofocus
             value={label}
@@ -581,7 +582,7 @@ export function RenameChapterDialog({ book, chapter, onClose }: { book: ListenBo
         </label>
         {!single && (
           <label className="block text-sm">
-            <span className="text-fg-2">Tên chương (có thể để trống)</span>
+            <span className="text-fg-2">Tên</span>
             <input
               value={name}
               maxLength={160}
@@ -601,12 +602,13 @@ export function RenameChapterDialog({ book, chapter, onClose }: { book: ListenBo
 export function useSaveBook(book: ListenBook) {
   const source = useSource();
   const [busy, setBusy] = useState(false);
-  const save = async (options?: { folder?: string; as?: "abook" | "abookproj"; ask?: boolean }) => {
-    if (!source.saveBook) return;
+  /** Trả true khi đã lưu thành file; huỷ hộp chọn chỗ lưu hay lỗi thì false (hộp "Lưu thành" giữ nguyên lựa chọn để thử lại). */
+  const save = async (options?: { folder?: string; as?: "abook" | "abookproj"; ask?: boolean }): Promise<boolean> => {
+    if (!source.saveBook) return false;
     setBusy(true);
     try {
       const result = await source.saveBook(book.id, options);
-      if (!result.saved) return;
+      if (!result.saved) return false;
       const folder = result.folder;
       // Không có thay đổi nào vẫn lưu được, nhưng file giống hệt bản gốc: nói điều đó thành cảnh báo cùng dòng.
       toastDone("Đã lưu file sách", result.edits ? undefined : "Chưa có thay đổi nào - file giống bản gốc.", {
@@ -615,8 +617,10 @@ export function useSaveBook(book: ListenBook) {
           ? { label: "Mở thư mục", onClick: () => void api("/api/reveal-export", { method: "POST", body: { folder } }).catch(() => undefined) }
           : undefined,
       });
+      return true;
     } catch (error) {
       toast.error("Chưa lưu được file sách", { description: (error as Error).message });
+      return false;
     } finally {
       setBusy(false);
     }
@@ -670,7 +674,7 @@ export function SaveAsDialog({
           variant="primary"
           icon={FileDown}
           loading={busy}
-          onClick={() => void save({ ...(folder ? { folder } : {}), as: kind, ask: true }).then(() => onOpenChange(false))}
+          onClick={() => void save({ ...(folder ? { folder } : {}), as: kind, ask: true }).then((saved) => saved && onOpenChange(false))}
         >
           Lưu
         </Button>
@@ -678,7 +682,7 @@ export function SaveAsDialog({
       open={open}
       onOpenChange={onOpenChange}
       width="max-w-md"
-      title="Lưu thành…"
+      title="Lưu thành"
       description="Lưu cuốn này kèm những thay đổi của bạn thành một file mới. File gốc không bị đụng tới."
     >
       <ChoiceRow<SaveKind>
@@ -705,7 +709,7 @@ export function SaveAsDialog({
       {pickFolder && (
         <div className="mt-3 flex items-center gap-2 text-sm">
           <Button variant="ghost" size="sm" onClick={() => void pickFolder().then((picked) => picked && setFolder(picked))}>
-            Chọn thư mục…
+            Chọn thư mục
           </Button>
           <MotionRegion as="span" motionKey={folder ?? ""} className="min-w-0 truncate text-fg-2">{folder ?? "Mặc định: thư mục Đã xuất"}</MotionRegion>
         </div>

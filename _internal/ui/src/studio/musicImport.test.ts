@@ -59,9 +59,9 @@ describe("nhập nhạc của tôi trên máy tính", () => {
 
   it("lỗi mở hộp chọn file thì ném cho nơi gọi báo", async () => {
     setApiTransport(async () => {
-      throw new Error("Không mở được hộp chọn file");
+      throw new Error("Chưa mở được hộp chọn file");
     });
-    await expect(importMusic(() => undefined)).rejects.toThrow("Không mở được hộp chọn file");
+    await expect(importMusic(() => undefined)).rejects.toThrow("Chưa mở được hộp chọn file");
   });
 });
 

@@ -23,7 +23,7 @@ function storeDefaultVoice(voice: string): void {
 /** Sự kiện: người dùng vừa đặt giọng mặc định (Cài đặt → Giọng đọc) - lõi điện thoại nhớ theo (android/readAloud.ts). */
 export const DEFAULT_VOICE_EVENT = "abook:readaloud-default-voice";
 export const ONLINE_NOTICE = "Giọng Edge gửi chữ của sách tới máy chủ Microsoft để đọc.";
-export const FALLBACK_NOTICE = "Không dùng được giọng trực tuyến - tạm đọc bằng giọng của máy.";
+export const FALLBACK_NOTICE = "Chưa dùng được giọng trực tuyến - tạm đọc bằng giọng của máy.";
 /** Sự kiện: người dùng vừa đổi khoá của giọng dùng khoá riêng (Cài đặt) - danh sách giọng phải hỏi lại. */
 export const ONLINE_KEYS_CHANGED_EVENT = "abook:readaloud-online-keys";
 /** Lý do mà giọng kế đỡ được: dịch vụ trực tuyến không với tới / không chạy, hay khoá của người dùng bị từ chối / hết hạn mức. Chữ không đọc
@@ -71,7 +71,7 @@ export const KEYED_PROVIDERS: Record<string, string> = { azure: "Azure Speech", 
 /** Câu nói rõ chữ của sách đi đâu khi chọn giọng này (giọng dùng khoá: kèm việc có thể bị tính tiền vào tài khoản của người dùng). */
 export function onlineNotice(voice: Pick<ReadAloudVoice, "provider" | "online">): string {
   const keyed = KEYED_PROVIDERS[voice.provider];
-  if (keyed) return `Giọng ${keyed} gửi chữ của sách tới ${keyed} bằng khóa của bạn - có thể bị tính tiền vào tài khoản của bạn.`;
+  if (keyed) return `Giọng ${keyed} gửi chữ của sách tới ${keyed} bằng khoá của bạn - có thể bị tính tiền vào tài khoản của bạn.`;
   return voice.online ? ONLINE_NOTICE : "";
 }
 
@@ -187,7 +187,7 @@ export function chooseDefaultVoice(voice: string): void {
   if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(DEFAULT_VOICE_EVENT));
 }
 
-/** Câu đọc thử ("Thử giọng" trong Cài đặt): ngắn, có dấu câu để nghe cả chỗ ngắt. */
+/** Câu đọc thử ("Nghe thử" trong Cài đặt): ngắn, có dấu câu để nghe cả chỗ ngắt. */
 export const SAMPLE_TEXT = "Xin chào, tôi sẽ đọc sách cho bạn nghe. Bạn thấy giọng này thế nào?";
 
 /** Giọng VieNeu kể chuyện TRUNG TÍNH của từng bản (mô-đun tải riêng), theo thứ tự ưu tiên - giọng cho người nghe chưa chọn gì. Không bao giờ lấy
@@ -333,10 +333,10 @@ export function fallbackChain(voices: ReadAloudVoice[], voice: ReadAloudVoice, c
 function fallbackNotice(failed: ReadAloudVoice, reason: string, next: ReadAloudVoice): string {
   const keyed = KEYED_PROVIDERS[failed.provider];
   const instead = next.online ? `giọng ${next.name}` : "giọng của máy";
-  if (!keyed) return next.online ? `Không dùng được giọng trực tuyến - tạm đọc bằng ${instead}.` : FALLBACK_NOTICE;
-  if (reason === "auth") return `Khóa ${keyed} không dùng được - tạm đọc bằng ${instead}. Kiểm tra lại khóa trong Cài đặt.`;
-  if (reason === "quota") return `Khóa ${keyed} đã hết hạn mức - tạm đọc bằng ${instead}.`;
-  return `Không dùng được giọng ${keyed} lúc này - tạm đọc bằng ${instead}.`;
+  if (!keyed) return next.online ? `Chưa dùng được giọng trực tuyến - tạm đọc bằng ${instead}.` : FALLBACK_NOTICE;
+  if (reason === "auth") return `Khoá ${keyed} không dùng được - tạm đọc bằng ${instead}. Kiểm tra lại khoá trong Cài đặt.`;
+  if (reason === "quota") return `Khoá ${keyed} đã hết hạn mức - tạm đọc bằng ${instead}.`;
+  return `Chưa dùng được giọng ${keyed} lúc này - tạm đọc bằng ${instead}.`;
 }
 
 /** Bộ lấy clip cho trình phát: giọng theo lựa chọn của người nghe; giọng trực tuyến hỏng (mạng, dịch vụ, khoá bị từ chối, hết hạn mức) thì
@@ -404,6 +404,6 @@ export function speechFetcher(source: ListenSource, bookId: string, notify: (mes
         failed = { voice: candidate, reason: why };
       }
     }
-    throw new Error("Không có giọng nào đọc được đoạn này.");
+    throw new Error("Chưa có giọng nào đọc được - kiểm tra mạng hoặc cài giọng tiếng Việt cho máy."); // cùng lời ClipReader.kt
   };
 }

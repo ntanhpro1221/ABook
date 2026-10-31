@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.BasicText
+import vn.abook.player.ui.components.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -32,6 +32,7 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import vn.abook.player.ui.components.BookCover
@@ -55,9 +56,9 @@ val MiniPlayerHeight: Dp = 64.dp
  * - `state`: bất biến, đổi khi có gì đổi thật (không đổi mỗi nhịp).
  * - `positionMs`: vị trí chạy theo nhịp, CHỈ đọc trong pha vẽ của vạch tiến độ (truyền `{ clock.positionMs.value }`) nên mỗi nhịp không dựng lại gì.
  * - `onToggle`: nút phát / dừng; `onOpenNowPlaying`: chạm vào phần còn lại của thanh.
- * - `modifier`: đặt NGOÀI CÙNG của thanh - cửa sổ Đang nghe đưa vào khung chung (`sharedBounds`) để thanh nở thành cả màn.
- * - `sharedModifier(part)`: móc cho chuyển phần tử chung. Cửa sổ Đang nghe trả về Modifier (`Modifier.sharedElement(...)`) cho từng [NowPlayingPart]
- *   (Cover, Chapter, Book, Play); mặc định không thêm gì. Hàm là @Composable để dùng được `rememberSharedContentState`. Modifier đặt NGOÀI CÙNG của mỗi phần
+ * - `modifier`: đặt NGOÀI CÙNG của thanh - cửa sổ Đang nghe đăng ký khung của thanh ở đây để nó nở thành cả màn (chỉ lớp vẽ, xem NowPlayingWindow).
+ * - `sharedModifier(part)`: móc cho chuyển phần tử chung. Cửa sổ Đang nghe trả về Modifier đăng ký chỗ của từng [NowPlayingPart]
+ *   (Cover, Chapter, Book, Play) làm điểm xuất phát của chuyển động; mặc định không thêm gì. Modifier đặt NGOÀI CÙNG của mỗi phần
  *   (bìa 36 dp, hai dòng chữ, nút phát 44 dp).
  *
  * Nút phát <-> dừng biến hình nét vẽ ([PlayPauseGlyph]), không mờ chéo.
@@ -75,6 +76,10 @@ fun MiniPlayer(
     val colors = Abook.colors
     val durationMs = state.durationMs
     val title = state.chapterTitle.ifEmpty { state.bookTitle }
+    // Vạch mảnh trên đỉnh không có nút riêng: người dùng đọc màn hình nghe được "đã nghe bao nhiêu chương này" (bước 5 %, không dựng lại theo từng nhịp).
+    val heardPercent by androidx.compose.runtime.remember(durationMs) {
+        androidx.compose.runtime.derivedStateOf { if (durationMs > 0) (positionMs() * 100 / durationMs).toInt().coerceIn(0, 100) / 5 * 5 else 0 }
+    }
     Row(
         modifier.fillMaxWidth().heightIn(min = MiniPlayerHeight)
             .drawBehind {
@@ -89,11 +94,11 @@ fun MiniPlayer(
                     drawRect(colors.accent, Offset.Zero, Size(size.width * fraction, thick))
                 }
             }
-            .testTag("mini_player"),
+            .semantics { contentDescription = "Trình phát"; stateDescription = "Đã nghe chương này" + ", " + heardPercent + "%" }.testTag("mini_player"),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(
-            Modifier.weight(1f).heightIn(min = MiniPlayerHeight).pressable { onOpenNowPlaying() }.padding(start = Dim.s12, top = Dim.s4, bottom = Dim.s4).testTag("mini_open"),
+            Modifier.weight(1f).heightIn(min = MiniPlayerHeight).pressable { onOpenNowPlaying() }.semantics { contentDescription = "Mở màn hình đang nghe" }.padding(start = Dim.s12, top = Dim.s4, bottom = Dim.s4).testTag("mini_open"),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             BookCover(state.cover, state.bookTitle, null, covers, 36.dp, sharedModifier(NowPlayingPart.Cover).width(36.dp), small = true)

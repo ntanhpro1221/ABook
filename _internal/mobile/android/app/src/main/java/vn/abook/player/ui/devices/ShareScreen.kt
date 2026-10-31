@@ -28,12 +28,17 @@ import vn.abook.player.ui.components.SectionTitle
 import vn.abook.player.ui.components.SheetHost
 import vn.abook.player.ui.components.SwitchRow
 import vn.abook.player.ui.components.TextAction
+import vn.abook.player.ui.components.Fold
+import vn.abook.player.ui.components.PrimaryButton
+import vn.abook.player.ui.components.QuietButton
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.components.fadeEdges
+import androidx.compose.foundation.lazy.rememberLazyListState
 
 /*
  * Chia sẻ thư viện. Công tắc bật / tắt; khi bật: địa chỉ để gõ vào máy kia, mã ghép 6 số (hay "Tạo mã ghép"), Bluetooth nếu có tin, rồi danh sách máy đã ghép
- * để nghe thư viện này - chạm một máy để thôi ghép. Mã hiện giờ hết hạn (không đếm từng giây): màn không dựng lại mỗi nhịp đồng hồ.
+ * để nghe thư viện này - chạm một máy để bỏ ghép. Mã hiện giờ hết hạn (không đếm từng giây): màn không dựng lại mỗi nhịp đồng hồ.
  */
 
 @Composable
@@ -43,28 +48,42 @@ fun ShareScreen(devices: DevicesState, sheets: SheetHost, onBack: () -> Unit) {
     // Quay lại từ Cài đặt Android (quyền "Thiết bị ở gần", chạy nền): đọc lại trạng thái.
     LifecycleResumeEffect(devices) {
         devices.openShare()
-        onPauseOrDispose { }
+        onPauseOrDispose { devices.closeShare() }
     }
     val share = ui.share
     // Mã vừa huỷ vẫn vẽ trong lúc khối khép lại (không trống trơn giữa chừng).
     val lastCode = remember { arrayOf<Code?>(null) }
     share.code?.let { lastCode[0] = it }
-    val problem = ui.problem.ifEmpty { share.error }.ifEmpty { if (share.blocked && share.code == null) "Mã đã huỷ vì nhập sai nhiều lần." else "" }
+    val problem = ui.problem.ifEmpty { share.error }.ifEmpty { if (share.blocked && share.code == null) "Sai 5 lần; chỉ tạo mã mới khi bạn đang ghép thiết bị." else "" }
     BookForm("Chia sẻ thư viện", onBack, "share_screen") {
-        if (ui.loaded) LazyColumn(Modifier.fillMaxSize().testTag("share_list"), contentPadding = PaddingValues(bottom = Dim.s16)) {
+        val list = rememberLazyListState()
+        if (ui.loaded) LazyColumn(Modifier.fillMaxSize().fadeEdges(list).testTag("share_list"), state = list, contentPadding = PaddingValues(bottom = Dim.s16)) {
             item("switch", "switch") {
                 Column(Modifier.padding(top = Dim.s8)) {
-                    SwitchRow("Cho máy khác nghe", share.running, devices::setSharing, "share_switch")
+                    SwitchRow("Kết nối Wi-Fi", share.running, { on ->
+                        if (!on) devices.setSharing(false) else sheets.show { dismiss ->
+                            Column(Modifier.fillMaxWidth()) {
+                                Caption("Khi chia sẻ, ABook giữ một thông báo nhỏ để chạy tiếp lúc tắt màn hình.")
+                                PrimaryButton("Tiếp tục", { devices.setSharing(true); dismiss() }, Modifier.fillMaxWidth().testTag("share_continue"))
+                                QuietButton("Để sau", dismiss, "share_later")
+                            }
+                        }
+                    }, "share_switch", hint = "Máy đã ghép nghe được sách bạn thêm từ file, không cần chép sang.")
                     Reveal(share.running) {
                         Column(Modifier.fillMaxWidth()) {
                             RowLine()
-                            ListItem("Địa chỉ", Modifier.testTag("share_address"), hint = share.addressLine)
+                            ListItem("Tên", hint = share.name)
+                            Fold("Chi tiết", "share_details") {
+                                ListItem("Địa chỉ", Modifier.testTag("share_address"), hint = share.addressLine)
+                                if (share.fingerprint.isNotBlank()) ListItem("Vân tay", hint = share.fingerprint.uppercase().replace(Regex("(.{4})(?=.)"), "$1 "))
+                            }
+                            Caption("Máy kia chưa tự thấy điện thoại? Địa chỉ nằm ở mục Chi tiết phía trên.", Modifier.padding(top = Dim.s4, bottom = Dim.s12))
                             RowLine()
                             Reveal(share.code != null) {
                                 lastCode[0]?.let { code -> CodeRow(code, devices::cancelCode) }
                             }
                             Reveal(share.code == null) {
-                                TextAction("Tạo mã ghép", devices::newCode, "share_new_code", Modifier.fillMaxWidth(), align = Alignment.CenterStart)
+                                TextAction("Ghép thiết bị mới", devices::newCode, "share_new_code", Modifier.fillMaxWidth(), align = Alignment.CenterStart)
                             }
                         }
                     }
@@ -82,7 +101,7 @@ fun ShareScreen(devices: DevicesState, sheets: SheetHost, onBack: () -> Unit) {
                 if (!share.backgroundAllowed) item("background", "background") {
                     DisclosureRow(
                         "Cho ABook chạy nền", devices::openAppSettings, "share_background",
-                        summary = "Tắt màn hình có thể làm máy dừng chia sẻ",
+                        summary = "Khi tắt màn hình, máy có thể tạm dừng chia sẻ - máy tính sẽ phải chờ lâu hơn.",
                     )
                 }
             }

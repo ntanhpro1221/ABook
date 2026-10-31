@@ -710,7 +710,7 @@ class EdgePiecesTest {
     }
 
     @Test
-    fun aHandshakeThatAlwaysTimesOutEndsAsLostNetworkAfterTheRetries() {
+    fun aHandshakeThatAlwaysTimesOutEndsAsNotAnsweringNotLostNetworkAfterTheRetries() {
         val calls = AtomicInteger(0)
         val connector = EdgeTts.Connector { _, _ ->
             calls.incrementAndGet()
@@ -720,8 +720,9 @@ class EdgePiecesTest {
             EdgeTts("v", connector) { }.synthesize("Xin chào", File(dir, "t3.mp3"))
             fail("đáng ra lỗi")
         } catch (error: VoiceException) {
-            assertTrue(error.offline)
-            assertEquals(EdgeTts.LOST_NETWORK, error.message)
+            assertFalse(error.offline) // có mạng mà dịch vụ không trả lời: không nói "mất mạng"
+            assertEquals("timeout", error.reason)
+            assertEquals(EdgeTts.NOT_ANSWERING, error.message)
             assertEquals(EdgeTts.RETRIES + 1, calls.get())
         }
     }

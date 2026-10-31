@@ -24,6 +24,9 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.unit.dp
 import com.github.takahirom.roborazzi.captureRoboImage
+import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
+import com.github.takahirom.roborazzi.RoborazziOptions
+import com.github.takahirom.roborazzi.RoborazziTaskType
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -53,7 +56,7 @@ class IconSheetTest {
         "Sort" to { c -> SortIcon(c) }, "Check" to { c -> CheckIcon(c) }, "Remote" to { c -> RemoteIcon(c) },
         "More" to { c -> MoreIcon(c) }, "Restart" to { c -> RestartIcon(c) }, "DashedCircle" to { c -> DashedCircleIcon(c) },
         "Pencil" to { c -> PencilIcon(c) }, "Share" to { c -> ShareIcon(c) }, "Trash" to { c -> TrashIcon(c) },
-        "BookOpen" to { c -> BookOpenIcon(c) }, "Export" to { c -> ExportIcon(c) }, "Voice" to { c -> VoiceIcon(c) },
+        "ReadAlong" to { c -> ReadAlongIcon(c) }, "Export" to { c -> ExportIcon(c) }, "Voice" to { c -> VoiceIcon(c) },
         "Headphones" to { c -> HeadphonesIcon(c) }, "Moon" to { c -> MoonIcon(c) }, "Theme" to { c -> ThemeIcon(c) },
         "Devices" to { c -> DevicesIcon(c) }, "Wrench" to { c -> WrenchIcon(c) }, "File" to { c -> FileIcon(c) },
         "Folder" to { c -> FolderIcon(c) }, "Image" to { c -> ImageIcon(c) }, "Laptop" to { c -> LaptopIcon(c) },
@@ -74,6 +77,7 @@ class IconSheetTest {
     private val touchesEdgeOk = setOf("Chevron", "ChevronOpen", "Back")
 
     @Test
+    @OptIn(ExperimentalRoborazziApi::class)
     fun everyIconHasInkInsideItsBoxAndSitsCentered() {
         val dark = mutableStateOf(false)
         val solo = mutableStateOf<String?>(null)
@@ -110,7 +114,8 @@ class IconSheetTest {
             solo.value = name
             rule.waitForIdle()
             val file = "build/icon_probe/${name.replace(' ', '_')}.png"
-            rule.onNodeWithTag("solo").captureRoboImage(file)
+            // Phép đo cần ảnh mới cả khi test thường không bật ghi snapshot; chỉ ghi probe trong build/, không đổi ảnh chuẩn.
+            rule.onNodeWithTag("solo").captureRoboImage(file, roborazziOptions = RoborazziOptions(taskType = RoborazziTaskType.Record))
             problems += measure(BitmapFactory.decodeFile(File(file).absolutePath), name)
         }
         assertTrue(problems.joinToString("\n"), problems.isEmpty())

@@ -1,5 +1,8 @@
 package vn.abook.player.ui.export
 
+import vn.abook.player.ui.data.dotJoined
+import vn.abook.player.formatSize
+
 import androidx.compose.runtime.Immutable
 import org.json.JSONObject
 import vn.abook.player.ui.data.Choice
@@ -22,7 +25,7 @@ enum class ExportKind(val wire: String) {
 
 /** Hai dạng file người nghe chọn cho sách đã có tiếng. Sách chỉ có chữ chỉ có M4B (máy đọc cả cuốn rồi ghép), nên không có lựa chọn. */
 enum class ExportFormat(override val key: String, override val label: String) : Choice {
-    Mp3("mp3", "MP3"), M4b("m4b", "M4B");
+    Mp3("mp3", "MP3 theo chương"), M4b("m4b", "M4B cả cuốn");
 
     fun kind(textOnly: Boolean): ExportKind = if (textOnly) ExportKind.Audiobook else if (this == Mp3) ExportKind.Mp3 else ExportKind.M4b
 }
@@ -180,7 +183,7 @@ object ExportText {
     }
 
     /** Chỗ trống cần trong máy lúc làm (file tạm, xoá khi xong). */
-    fun spaceText(plan: AudiobookPlan): String = "Lúc làm cần khoảng ${Fmt.size(plan.bytes)} trống trong điện thoại (file tạm, xoá khi xong)."
+    fun spaceText(plan: AudiobookPlan): String = "Lúc làm cần khoảng ${formatSize(plan.bytes)} trống trong điện thoại (file tạm, xoá khi xong)."
 
     /** Lượt kèm nhạc dài (trên 20 chương) tốn pin đáng kể: gợi ý cắm sạc, không chặn. Rỗng khi không cần. */
     fun chargerHint(music: Boolean, chapters: Int): String = if (music && chapters > 20) "Cuốn dài: nên cắm sạc trong lúc làm - trộn nhạc tốn pin." else ""
@@ -192,7 +195,7 @@ object ExportText {
     /** Chữ của giọng trực tuyến gửi CẢ CUỐN ra ngoài máy; rỗng khi giọng chạy trên máy. */
     fun wholeBookNotice(voice: ExportVoice): String {
         if (!voice.online) return ""
-        VoiceText.KEYED[voice.provider]?.let { return "Chữ của cả cuốn được gửi tới $it để đọc, bằng khóa của bạn - dịch vụ có thể tính tiền vào tài khoản của bạn." }
+        VoiceText.KEYED[voice.provider]?.let { return "Chữ của cả cuốn được gửi tới $it để đọc, bằng khoá của bạn - dịch vụ có thể tính tiền vào tài khoản của bạn." }
         if (voice.provider == "edge") return "Chữ của cả cuốn được gửi tới máy chủ Microsoft để đọc."
         return "Chữ của cả cuốn được gửi tới dịch vụ ngoài để đọc."
     }
@@ -240,7 +243,7 @@ object ExportText {
             "encode" -> return ExportProgress(if (retry.isNotEmpty()) "$retry · $where" else "Đang ghép file âm thanh · $where", retry.ifEmpty { "Đang ghép file âm thanh" }, 1f)
             "chapters" -> {
                 val fraction = (chapter - 1f) / chapters
-                return ExportProgress("Đang ghi chương $chapter/$chapters", spokenProgress("Đang xuất sách", fraction), fraction)
+                return ExportProgress("Đang ghi chương $chapter/$chapters", spokenProgress("Đang xuất MP3", fraction), fraction)
             }
             "music" -> {
                 val text = "Đang trộn nhạc chương $chapter/$chapters"
@@ -260,7 +263,7 @@ object ExportText {
             "network" -> "Mất mạng - đang chờ mạng về để làm tiếp"
             else -> spokenProgress("Đang xuất $chapters chương", fraction)
         }
-        return ExportProgress(parts.joinToString(" · "), spoken, fraction)
+        return ExportProgress(parts.dotJoined(), spoken, fraction)
     }
 
     /** Tiến độ của một tin: MP3 / M4B có "3/10 chương · 27%" lúc đang làm, trước tin đầu chỉ có số chương; sách nói thêm "nhường cho chương đang nghe", "còn 2 giờ"... */
@@ -284,7 +287,7 @@ object ExportText {
 
     /** Tên việc đang làm, một tiêu đề cho cả ba kiểu. */
     fun busy(kind: ExportKind): String = when (kind) {
-        ExportKind.Mp3 -> "Đang xuất sách"
+        ExportKind.Mp3 -> "Đang xuất MP3"
         ExportKind.M4b -> "Đang làm file M4B"
         ExportKind.Audiobook -> "Đang làm sách nói"
     }
@@ -312,9 +315,9 @@ object ExportText {
             )
         }
         val title = if (event.kind == ExportKind.Audiobook) "Đã xuất sách nói" else "Đã xuất M4B"
-        val lines = listOfNotNull(event.name, event.size?.takeIf { it > 0 }?.let { Fmt.size(it) })
+        val lines = listOfNotNull(event.name, event.size?.takeIf { it > 0 }?.let { formatSize(it) })
         val notes = listOf(missingChapters(event), musicMissing(event)).filter { it.isNotEmpty() }
-        return ExportResult(event.kind, title, listOf(lines.joinToString(" · ")).filter { it.isNotEmpty() }, notes, event.uri)
+        return ExportResult(event.kind, title, listOf(lines.dotJoined()).filter { it.isNotEmpty() }, notes, event.uri)
     }
 
     /** Lượt dừng: điều còn lại sau khi dừng, theo kiểu xuất. */
@@ -326,24 +329,22 @@ object ExportText {
 
     /** Tiêu đề khi dừng, cùng chữ với thông báo của bản web (ExportMp3 / ExportM4b / listenExport.ts). */
     fun stoppedTitle(kind: ExportKind): String = when (kind) {
-        ExportKind.Mp3 -> "Đã dừng xuất"
-        ExportKind.M4b -> "Đã dừng xuất M4B"
-        ExportKind.Audiobook -> "Đã dừng xuất sách nói"
+        ExportKind.Mp3, ExportKind.M4b, ExportKind.Audiobook -> "Đã dừng xuất"
     }
 
     /** Tiêu đề khi lỗi, cùng chữ với bản web. */
     fun failedTitle(kind: ExportKind): String = when (kind) {
-        ExportKind.Mp3 -> "Không xuất được"
-        ExportKind.M4b -> "Không xuất được M4B"
-        ExportKind.Audiobook -> "Không xuất được sách nói"
+        ExportKind.Mp3 -> "Chưa xuất được MP3"
+        ExportKind.M4b -> "Chưa xuất được M4B"
+        ExportKind.Audiobook -> "Chưa xuất được sách nói"
     }
 
     // ---- lựa chọn -------------------------------------------------------------------------------------------------------
 
     /** Một câu nói dạng file là gì, cho người chưa biết MP3 / M4B khác nhau chỗ nào. */
     fun about(format: ExportFormat): String = when (format) {
-        ExportFormat.Mp3 -> "Mỗi chương một file, kèm bìa và danh sách phát: app nghe nhạc nào cũng mở được."
-        ExportFormat.M4b -> "Một file có mục lục chương: app nghe sách nói nào cũng mở được, nhớ chỗ nghe dở."
+        ExportFormat.Mp3 -> "Một thư mục, mỗi chương một MP3 kèm danh sách phát. Trình phát nào cũng mở được."
+        ExportFormat.M4b -> "Một file có mục lục chương, nhớ chỗ nghe dở. Hợp Apple Books, BookPlayer, Smart AudioBook Player."
     }
 
     const val ABOUT_AUDIOBOOK = "Máy đọc cả cuốn rồi ghép thành MỘT file M4B có mục lục chương: app nghe sách nói nào cũng mở được, nhớ chỗ nghe dở."
@@ -355,8 +356,8 @@ object ExportText {
     const val MP3_MUSIC_NOTE = "Có nhạc nền thì mỗi chương là file .m4a thay vì .mp3 (điện thoại không ghi được MP3 có trộn nhạc). Âm thanh y như bản M4B."
 
     /** Việc của sách nói và lời báo chạy nền - đúng chữ của hộp Xuất sách nói trên web. */
-    const val AUDIOBOOK_PURPOSE = "Để nghe ở app sách nói khác, trên xe hơi hay máy khác."
-    const val AUDIOBOOK_NOTE = "Xuất chạy nền, nhường lúc nghe; dừng rồi làm tiếp được."
+    const val AUDIOBOOK_PURPOSE = "Đọc cả cuốn thành file âm thanh, nghe ở máy khác."
+    const val AUDIOBOOK_NOTE = "Chạy nền; dừng vẫn giữ phần đã làm."
 
     /** Máy không mở được thư mục: chỉ đường bằng tên thư mục nếu biết - đúng chữ của web. */
     fun noFolderOpener(folder: String?): String =
@@ -388,7 +389,7 @@ object ExportText {
     fun menuHint(phase: ExportPhase, fraction: Float?): String? = when (phase) {
         is ExportPhase.Running -> if (fraction == null) "Đang xuất" else "Đang xuất · ${(fraction * 100).toInt().coerceIn(0, 99)}%"
         is ExportPhase.Done -> "Đã xuất xong"
-        is ExportPhase.Failed -> "Không xuất được"
+        is ExportPhase.Failed -> "Chưa xuất được"
         else -> null
     }
 }

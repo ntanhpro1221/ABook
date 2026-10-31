@@ -377,8 +377,9 @@ def test_a_closed_port_is_offline_with_a_clear_reason() -> None:
     listener.bind(("127.0.0.1", 0))
     port = listener.getsockname()[1]
     listener.close()
+    # Windows thử lại SYN tới cổng đóng ~2 giây rồi mới báo "bị từ chối": hạn 2 giây ra "quá giờ" (dịch vụ không trả lời), nên cho dư hạn để thấy đúng lời từ chối.
     with pytest.raises(edge.EdgeOffline) as caught:
-        edge.EdgeClient(host="127.0.0.1", port=port, secure=False, connect_timeout=2).synthesize("Xin chào", edge.DEFAULT_VOICE)
+        edge.EdgeClient(host="127.0.0.1", port=port, secure=False, connect_timeout=5).synthesize("Xin chào", edge.DEFAULT_VOICE)
     assert caught.value.reason == "offline"
 
 

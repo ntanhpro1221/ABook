@@ -118,7 +118,8 @@ class DevicesState(
         Result.failure(error)
     }
 
-    private fun message(error: Throwable?) = error?.message?.takeIf { it.isNotBlank() } ?: "Bạn hãy thử lại."
+    private fun message(error: Throwable?) = error?.message?.takeIf { it.isNotBlank() } ?: "Chưa làm được"
+    val notice = MutableStateFlow("")
 
     // ---- trang nhóm ----------------------------------------------------------------------------------------------------
 
@@ -136,8 +137,8 @@ class DevicesState(
     /** Đổi tên điện thoại này (máy kia thấy nó bằng tên ấy). Null = xong, khác null = câu lỗi. */
     suspend fun rename(name: String): String? {
         val result = attempt { source.setDeviceName(name) }
-        result.onSuccess { clean -> pairFlow.update { it.copy(link = it.link.copy(deviceName = clean)) } }
-        return result.exceptionOrNull()?.let { message(it) }
+        result.onSuccess { clean -> pairFlow.update { it.copy(link = it.link.copy(deviceName = clean)) }; notice.value = "Đã đổi tên thành “$clean”" }
+        return result.exceptionOrNull()?.let { DeviceText.failure("Chưa đổi được tên", message(it)) }
     }
 
     // ---- Nối máy tính --------------------------------------------------------------------------------------------------
@@ -149,7 +150,7 @@ class DevicesState(
             val link = attempt { source.link() }.getOrNull() ?: return@launch
             pairFlow.update { it.copy(link = link, loaded = true) }
             if (!link.paired) {
-                // Máy tính ghép lần trước: ghép lại sau khi nó thôi ghép không phải gõ lại địa chỉ.
+                // Máy tính ghép lần trước: ghép lại sau khi nó bỏ ghép không phải gõ lại địa chỉ.
                 if (!prefilled && link.lastAddress.isNotEmpty()) pairFlow.update { it.copy(form = it.form.copy(address = link.lastAddress, manual = true)) }
                 prefilled = true
                 scan()
@@ -229,9 +230,7 @@ class DevicesState(
         scope.launch {
             pairFlow.update { it.copy(bluetooth = Bluetooth.Listing, form = it.form.copy(manual = false, picked = null), attempt = Attempt.Idle) }
             if (!source.nearbyAllowed()) {
-                links.askNearby { granted ->
-                    if (granted) findBluetooth() else pairFlow.update { it.copy(bluetooth = Bluetooth.Denied) }
-                }
+                pairFlow.update { it.copy(bluetooth = Bluetooth.Explain) }
                 return@launch
             }
             attempt { source.bluetoothDevices() }
@@ -243,6 +242,11 @@ class DevicesState(
         }
     }
 
+    fun requestBluetooth() = links.askNearby { granted ->
+        if (granted) findBluetooth() else pairFlow.update { it.copy(bluetooth = Bluetooth.Denied) }
+    }
+    fun deferBluetooth() = pairFlow.update { it.copy(bluetooth = Bluetooth.Off) }
+
     /** Quay lại từ Cài đặt Android mà quyền đã bật: tìm máy luôn, không bắt bấm lại. */
     fun recheckBluetooth() {
         if (pairFlow.value.bluetooth !is Bluetooth.Denied) return
@@ -250,6 +254,12 @@ class DevicesState(
     }
 
     fun openAppSettings() = links.openAppSettings()
+
+    /** "Tải ABook Windows": trang tải ABook cho máy tính, mở bằng trình duyệt của máy. */
+    fun openDesktopRelease() = links.openRelease(DeviceText.DESKTOP_RELEASES)
+
+    /** "Chép địa chỉ" của trang tải ABook máy tính (để mở trên máy tính): true khi đã chép. */
+    fun copyDesktopRelease(): Boolean = links.copyText(DeviceText.DESKTOP_RELEASES)
 
     /** Đổi cách nối: Wi-Fi (tự tìm), Bluetooth (máy đã ghép), hay gõ địa chỉ. */
     fun setMethod(method: PairMethod) {
@@ -289,11 +299,12 @@ class DevicesState(
         pairFlow.update { it.copy(attempt = Attempt.Working(name)) }
         scope.launch {
             attempt { source.pair(address, form.digits, extra = state.paired) }
-                .onSuccess {
+                .onSuccess { pairedName ->
+                    notice.value = "Đã ghép $pairedName"
                     pairFlow.update { it.copy(form = PairForm(), attempt = Attempt.Idle, adding = false, found = emptyList(), bluetooth = Bluetooth.Off) }
                     reload()
                 }
-                .onFailure { error -> pairFlow.update { it.copy(attempt = Attempt.Failed(message(error), (error as? DeviceFailure)?.technical)) } }
+                .onFailure { error -> pairFlow.update { it.copy(attempt = Attempt.Failed(DeviceText.failure("Chưa ghép được", message(error)), (error as? DeviceFailure)?.technical)) } }
         }
     }
 
@@ -306,17 +317,19 @@ class DevicesState(
         }
     }
 
-    /** Mở Studio của máy tính `key` ở trình xem riêng. Null = đã mở, khác null = câu lỗi. */
+    /** Mở Studio của máy tính `key` ở màn native. Null = đã mở, khác null = câu lỗi. */
     suspend fun openStudio(key: String): String? {
         val result = attempt { source.studioTarget(key) }
-        result.onSuccess { (computer, path) -> links.openStudio(computer, path) }
+        result.onSuccess { (computer, route) -> links.openStudio(computer, route) }
         return result.exceptionOrNull()?.let { message(it) }
     }
 
     /** Bỏ ghép máy tính chính. Null = xong. */
     suspend fun unpairMain(): String? {
+        val name = pairFlow.value.link.shownName
         val result = attempt { source.unpair() }
         if (result.isFailure) return message(result.exceptionOrNull())
+        notice.value = "Đã bỏ ghép $name"
         pairFlow.update { it.copy(devices = it.devices.filterNot { device -> device.main }, sections = it.sections.filterNot { s -> s.source == null }) }
         reloadJob?.cancel()
         reloadJob = scope.launch { reload() }
@@ -329,14 +342,16 @@ class DevicesState(
 
     /** Bỏ ghép thiết bị `key`. Null = xong, khác null = câu lỗi (thiết bị vẫn ghép). */
     suspend fun forget(key: String, choice: ForgetChoice): String? {
+        val name = pairFlow.value.devices.firstOrNull { it.key == key }?.name ?: key
         val result = attempt { source.forget(key, choice) }
         if (result.isFailure) return message(result.exceptionOrNull())
         pairFlow.update { it.copy(devices = it.devices.filterNot { device -> device.key == key }, sections = it.sections.filterNot { s -> s.source == key }) }
+        notice.value = "Đã bỏ ghép $name"
         syncStreamed()
         return null
     }
 
-    /** "Ghép lại" một máy đã thôi ghép điện thoại này: mở khung ghép với sẵn địa chỉ của nó, chỉ còn nhập mã mới. */
+    /** "Ghép lại" một máy đã bỏ ghép điện thoại này: mở khung ghép với sẵn địa chỉ của nó, chỉ còn nhập mã mới. */
     fun repair(device: Paired) {
         scope.launch {
             if (device.main) {
@@ -366,7 +381,7 @@ class DevicesState(
     }
 
     fun cancelDownload(id: String) {
-        scope.launch { attempt { source.cancelDownload(id) } }
+        scope.launch { attempt { source.cancelDownload(id) }.onFailure { e -> pairFlow.update { it.copy(failed = it.failed + (id to DeviceText.failure("Chưa huỷ được", message(e)))) } } }
     }
 
     private suspend fun onDownload(event: DownloadEvent) {
@@ -374,7 +389,7 @@ class DevicesState(
         val running = event.running
         pairFlow.update { state ->
             val failed = when {
-                event.error != null -> state.failed + (event.id to event.error)
+                event.error != null -> state.failed + (event.id to DeviceText.failure("Chưa tải xong về máy", event.error))
                 event.finished || event.cancelled -> state.failed - event.id
                 else -> state.failed
             }
@@ -390,9 +405,12 @@ class DevicesState(
 
     // ---- Chia sẻ thư viện ----------------------------------------------------------------------------------------------
 
+    private var shareVisible = false
     fun openShare() {
+        shareVisible = true
         scope.launch { loadShare() }
     }
+    fun closeShare() { shareVisible = false; pollJob?.cancel() }
 
     private suspend fun loadShare() {
         attempt { source.share() }.onSuccess(::setShare)
@@ -406,7 +424,7 @@ class DevicesState(
     /** Đang hiện mã ghép: hỏi lại mỗi vài giây để thấy máy mới vào danh sách hay mã hết hạn. */
     private fun pollCode(share: Share) {
         pollJob?.cancel()
-        if (share.code == null) return
+        if (share.code == null || !shareVisible) return
         pollJob = scope.launch {
             while (isActive) {
                 delay(pollMs)
@@ -450,8 +468,8 @@ class DevicesState(
     }
 
     /** Xoá khỏi máy (cùng lõi và lời xác nhận với menu "Xoá khỏi máy" ở trang sách). Null = đã xoá, khác null = câu lỗi. */
-    suspend fun delete(id: String): String? {
-        val result = attempt { source.delete(id) }
+    suspend fun delete(id: String, title: String = "", partial: Boolean = false): String? {
+        val result = attempt { source.delete(id, title, partial) }
         val error = result.exceptionOrNull()?.let { message(it) } ?: result.getOrNull()
         if (error == null) {
             storageFlow.update { ui -> ui.copy(storage = ui.storage.copy(entries = ui.storage.entries.filterNot { it.id == id })) }

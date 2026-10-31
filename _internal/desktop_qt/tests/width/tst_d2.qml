@@ -135,7 +135,7 @@ Item {
             DesktopApi.responses = {"/api/listen/open-book-file": {status:200,data:{id:"nameless",how:"new"}}}
             make(importFactory).begin(["D:/fixture/other.abook"])
             tryCompare(Api, "notice", "Đã thêm")
-            wait(50)
+            wait(50) // fixed: proves absence (no title arrives later to change the notice)
             compare(Api.notice, "Đã thêm")
         }
         function test_editIndependentDraftsAndBack() {

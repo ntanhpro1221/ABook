@@ -52,7 +52,8 @@ data class VoiceSummary(val keys: String? = null, val music: String? = null)
 
 /**
  * Trạng thái sống của Giọng đọc làm thêm. Màn chỉ vẽ các luồng ở đây và gọi hàm ở đây; mọi việc với lõi đi qua [VoiceSource]. Tiến độ tải là một luồng riêng
- * ([progress]) để thanh tiến độ đọc nó trong pha vẽ, không dựng lại hàng mỗi nhịp. `voicesChanged`: danh sách giọng cần đọc lại (giọng vừa tải / gỡ, khóa vừa dùng được).
+ * ([progress]) để thanh tiến độ đọc nó trong pha vẽ, không dựng lại hàng mỗi nhịp. `voicesChanged`: danh sách giọng cần đọc lại (giọng vừa tải / gỡ, khoá vừa dùng được).
+ * `imports`: lượt thêm nhạc dùng chung với bảng Nhạc nền ([MineImports]).
  */
 @Stable
 class VoiceState(
@@ -61,6 +62,7 @@ class VoiceState(
     private val player: SamplePlayer,
     private val voicesChanged: () -> Unit = {},
     private val pollMs: Long = 700,
+    private val imports: MineImports,
 ) {
     private val moduleFlow = MutableStateFlow(ModuleKind.entries.associateWith { ModuleUi() })
     private val progresses = ModuleKind.entries.associateWith { MutableStateFlow(0f) }
@@ -71,11 +73,14 @@ class VoiceState(
     private val importFlow = MutableStateFlow(0f)
     private val watchers = HashMap<ModuleKind, Job>()
     private var turn = 0
+    private var visible = false
+    fun hideVoice() { visible = false; watchers.values.forEach { it.cancel() }; watchers.clear(); stopSample() }
 
     val modules: StateFlow<Map<ModuleKind, ModuleUi>> = moduleFlow
     val keys: StateFlow<KeysUi> = keyFlow
     val consents: StateFlow<Set<String>> = consentFlow
     val sample: StateFlow<SampleUi> = sampleFlow
+    val notice = MutableStateFlow("")
     val music: StateFlow<MusicUi> = musicFlow
 
     /** Tiến độ 0..1 của việc tải một mô-đun; đọc trong pha vẽ. */
@@ -91,6 +96,27 @@ class VoiceState(
         )
     }.stateIn(scope, SharingStarted.Eagerly, VoiceSummary())
 
+    init {
+        imports.listen(object : MineImports.Listener {
+            override fun changed(turn: MineImports.Turn?) {
+                importFlow.value = if (turn != null && turn.total > 0) turn.done.toFloat() / turn.total else 0f
+                musicFlow.update { it.copy(importing = turn != null, done = turn?.done ?: 0, total = turn?.total ?: 0) }
+            }
+
+            // Lượt nào xong (kể cả lượt bấm ở bảng Nhạc nền) thì danh sách đọc lại; câu báo chỉ cho lượt bấm ở đây.
+            override fun finished(owner: String, result: Result<MusicImportResult>) {
+                val mine = owner == MineImports.MY_MUSIC
+                result.onSuccess { done ->
+                    musicFlow.update {
+                        if (mine) it.copy(loaded = true, tracks = done.tracks, summary = VoiceText.imported(done), problems = done.failed)
+                        else it.copy(loaded = true, tracks = done.tracks)
+                    }
+                }
+                result.onFailure { error -> if (mine) musicFlow.update { it.copy(problems = listOf(message(error, "Chưa thêm được nhạc"))) } }
+            }
+        })
+    }
+
     private suspend fun <T> attempt(block: suspend () -> T): Result<T> = try {
         Result.success(block())
     } catch (cancelled: CancellationException) {
@@ -103,14 +129,15 @@ class VoiceState(
 
     // ---- mở màn ----------------------------------------------------------------------------------------------------------------
 
-    /** Mở màn Giọng đọc: đọc trạng thái hai mô-đun, các khóa, và những nhà cung cấp bạn đã đồng ý gửi chữ tới (nền, không chặn). */
+    /** Mở màn Giọng đọc: đọc trạng thái hai mô-đun, các khoá, và những nhà cung cấp bạn đã đồng ý gửi chữ tới (nền, không chặn). */
     fun openVoice() {
+        visible = true
         for (kind in ModuleKind.entries) scope.launch { refresh(kind) }
         loadKeys()
         loadConsents()
     }
 
-    /** Những nhà cung cấp bạn đã đồng ý gửi chữ tới (màn Khóa cần biết trước khi hỏi lại đồng ý). */
+    /** Những nhà cung cấp bạn đã đồng ý gửi chữ tới (màn Khoá cần biết trước khi hỏi lại đồng ý). */
     fun loadConsents() {
         scope.launch { attempt { source.consents() }.onSuccess { consentFlow.value = it } }
     }
@@ -141,6 +168,7 @@ class VoiceState(
 
     /** Hỏi lại mỗi nhịp khi mô-đun đang tải hay đang đo; xong thì thôi. Lỗi hỏi (hiếm) cũng thôi - lần mở màn sau hỏi lại. */
     private fun watch(kind: ModuleKind) {
+        if (!visible) return
         if (watchers[kind]?.isActive == true) return
         watchers[kind] = scope.launch {
             while (true) {
@@ -158,7 +186,7 @@ class VoiceState(
         scope.launch {
             val result = attempt { source.start(kind, ids) }
             result.onSuccess { apply(kind, it) }
-            result.onFailure { error -> setModule(kind) { it.copy(problem = message(error, "Chưa tải được ${kind.title}")) } }
+            result.onFailure { error -> setModule(kind) { it.copy(problem = listOf(if (ids == listOf("supertonic_fast")) "Chưa tải được bản nhanh hơn" else "Chưa tải được ${kind.title}", error.message.orEmpty()).joinToString(". ")) } }
         }
     }
 
@@ -166,7 +194,8 @@ class VoiceState(
     fun retry(kind: ModuleKind) = download(kind, moduleFlow.value.getValue(kind).pending.ifEmpty { null })
 
     fun cancel(kind: ModuleKind) {
-        scope.launch { attempt { source.cancel(kind) }.onSuccess { apply(kind, it) } }
+        scope.launch { attempt { source.cancel(kind) }.onSuccess { apply(kind, it) }
+            .onFailure { e -> setModule(kind) { it.copy(problem = listOf("Chưa huỷ được việc tải ${kind.title}", e.message.orEmpty()).joinToString(". ")) } } }
     }
 
     fun measure(kind: ModuleKind) {
@@ -196,7 +225,7 @@ class VoiceState(
         }
         val toPrefix = if (suggestion.switchTo == "nano") "vieneu:nano/" else ONLINE_VOICE
         val result = attempt { source.switchVoices(VoiceText.tierVoicePrefix(suggestion.tier), toPrefix, ONLINE_VOICE) }
-        result.onSuccess { voicesChanged() }
+        result.onSuccess { voicesChanged(); notice.value = if (suggestion.switchTo == "nano") "Đã chuyển sang giọng VieNeu Nano" else "Đã chuyển sang giọng trực tuyến" }
         return result.exceptionOrNull()?.let { message(it, "Chưa đổi được giọng") }
     }
 
@@ -209,7 +238,7 @@ class VoiceState(
         attempt { source.allow(provider) }.onSuccess { consentFlow.update { it + provider } }
     }
 
-    // ---- khóa giọng trực tuyến --------------------------------------------------------------------------------------------
+    // ---- khoá giọng trực tuyến --------------------------------------------------------------------------------------------
 
     fun loadKeys() {
         scope.launch {
@@ -221,16 +250,16 @@ class VoiceState(
 
     private fun replace(provider: KeyProvider) = keyFlow.update { ui -> ui.copy(providers = ui.providers.map { if (it.id == provider.id) provider else it }) }
 
-    /** "Lưu": chỉ cất khóa trên máy này, không gửi gì ra mạng. Null = xong, khác null = câu lỗi. */
+    /** "Lưu": chỉ cất khoá trên máy này, không gửi gì ra mạng. Null = xong, khác null = câu lỗi. */
     suspend fun saveKey(provider: KeyProvider, key: String, region: String): String? {
-        if (key.isBlank() && !provider.hasKey) return "Dán khóa trước đã."
+        if (key.isBlank() && !provider.hasKey) return "Dán khoá trước đã."
         val result = attempt { source.saveKey(provider.id, key.trim(), region.trim()) }
         result.onSuccess { replace(it) }
-        return result.exceptionOrNull()?.let { message(it, "Chưa lưu được khóa") }
+        return result.exceptionOrNull()?.let { message(it, "Chưa lưu được khoá") }
     }
 
     /**
-     * "Kiểm tra": khóa vừa gõ (hay vùng vừa đổi) được lưu trước rồi mới gọi dịch vụ - như bản WebView. Dùng được thì danh sách giọng đọc lại để giọng của khóa hiện ngay;
+     * "Kiểm tra": khoá vừa gõ (hay vùng vừa đổi) được lưu trước rồi mới gọi dịch vụ. Dùng được thì danh sách giọng đọc lại để giọng của khoá hiện ngay;
      * `ok` false kèm câu nói được.
      */
     suspend fun checkKey(provider: KeyProvider, key: String, region: String): KeyResult {
@@ -241,17 +270,17 @@ class VoiceState(
             checked.provider?.let(::replace)
             voicesChanged()
         }
-        return result.getOrNull() ?: KeyResult(false, message(result.exceptionOrNull(), "Chưa kiểm tra được khóa"))
+        return result.getOrNull() ?: KeyResult(false, message(result.exceptionOrNull(), "Chưa kiểm tra được khoá"))
     }
 
-    /** Xoá khóa khỏi máy này. Null = xong, khác null = câu lỗi. */
+    /** Xoá khoá khỏi máy này. Null = xong, khác null = câu lỗi. */
     suspend fun removeKey(provider: KeyProvider): String? {
         val result = attempt { source.removeKey(provider.id) }
         result.onSuccess {
             replace(it)
             voicesChanged()
         }
-        return result.exceptionOrNull()?.let { message(it, "Chưa xoá được khóa") }
+        return result.exceptionOrNull()?.let { message(it, "Chưa xoá được khoá") }
     }
 
     // ---- nghe thử ---------------------------------------------------------------------------------------------------------
@@ -301,23 +330,9 @@ class VoiceState(
 
     /** Nhập các file bạn vừa chọn. Tiến độ (xong / tổng) hiện ngay trong hàng "Thêm nhạc của bạn"; xong thì một câu báo và file lỗi ở dòng riêng. */
     fun importMusic(uris: List<String>) {
-        if (uris.isEmpty() || musicFlow.value.importing) return
-        importFlow.value = 0f
-        musicFlow.update { it.copy(importing = true, done = 0, total = uris.size, summary = "", problems = emptyList()) }
-        scope.launch {
-            val result = attempt {
-                source.importMusic(uris) { done, total ->
-                    importFlow.value = done.toFloat() / total
-                    musicFlow.update { it.copy(done = done, total = total) }
-                }
-            }
-            result.onSuccess { done ->
-                musicFlow.update { it.copy(importing = false, loaded = true, tracks = done.tracks, summary = VoiceText.imported(done), problems = done.failed) }
-            }
-            result.onFailure { error ->
-                musicFlow.update { it.copy(importing = false, problems = listOf(message(error, "Chưa thêm được nhạc"))) }
-            }
-        }
+        if (uris.isEmpty() || imports.turn != null) return
+        musicFlow.update { it.copy(summary = "", problems = emptyList()) }
+        imports.start(MineImports.MY_MUSIC, uris)
     }
 
     /** Xoá một bài khỏi kho. Null = xong, khác null = câu lỗi. */

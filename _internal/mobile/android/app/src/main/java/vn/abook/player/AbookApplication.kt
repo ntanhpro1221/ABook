@@ -28,13 +28,21 @@ class AbookApplication : Application() {
         EditsSync.changed = { id -> uiScope.launch { editors.refresh(id); library.refresh() } }
         editors
     }
-    // Giao diện native (vn.abook.player.ui): dựng tay, lười - tiến trình chỉ chạy việc nền / bản WebView không tốn gì.
+    // Giao diện native (vn.abook.player.ui): dựng tay, lười - tiến trình chỉ chạy việc nền thì không tốn gì.
     val library by lazy { LibraryRepo(this, uiScope) { id -> player.bookRemoved(id) } }
     val companion by lazy { vn.abook.player.ui.devices.CompanionRepo(vn.abook.player.ui.devices.AndroidCompanionCore(this)) }
     val covers by lazy { CoverLoader() }
+
+    /** Studio từ xa của giao diện native: các phiên theo máy tính ghép, sống cùng tiến trình (quyền "chỉ nghe" đã biết không phải hỏi lại mỗi lần mở màn). */
+    val studio by lazy {
+        // Nghe thử trong Studio: clip tải về bộ nhớ đệm (nối lại được), tối đa 50 MB, dọn khi tiến trình khởi động.
+        val clips = StudioClips(java.io.File(cacheDir, "studio_clips"), { computer, path, partial -> StudioDownloads.fetch(this, computer, path, partial) }, vn.abook.player.ui.voice.AndroidSamplePlayer(this), uiScope)
+        uiScope.launch(Dispatchers.IO) { clips.trim() }
+        vn.abook.player.ui.studio.StudioHub(vn.abook.player.ui.studio.StudioRepo(this), uiScope, clips)
+    }
     val uiPrefs by lazy { UiPrefs(this) }
 
-    /** Cài đặt của giao diện native: cùng kho với bản WebView ([AndroidSettingsCore]). */
+    /** Cài đặt của giao diện ([AndroidSettingsCore]). */
     val settings by lazy { SettingsRepo(AndroidSettingsCore(this), uiScope, Dispatchers.IO) }
     private val uiScope by lazy { CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate) }
 
@@ -48,7 +56,7 @@ class AbookApplication : Application() {
         vn.abook.player.ui.devices.DevicesState(
             vn.abook.player.ui.devices.DevicesRepo(this, library), uiScope,
             vn.abook.player.ui.devices.DeviceLinks(
-                openStudio = { computer, path -> deviceLinks.openStudio(computer, path) },
+                openStudio = { computer, route -> deviceLinks.openStudio(computer, route) },
                 openAppSettings = { deviceLinks.openAppSettings() },
                 askNearby = { result -> deviceLinks.askNearby(result) },
                 askNotifications = { then -> deviceLinks.askNotifications(then) },
@@ -63,6 +71,9 @@ class AbookApplication : Application() {
      */
     @Volatile
     var exportLinks = vn.abook.player.ui.export.ExportLinks()
+
+    /** Câu trả lời đang đợi của các hộp hệ thống Activity mở hộ (chọn thư mục, tạo file, xin quyền): sống qua lần Activity dựng lại. */
+    val answers = vn.abook.player.ui.PendingAnswers()
     val exports by lazy {
         vn.abook.player.ui.export.ExportState(
             vn.abook.player.ui.export.ExportRepo(this), uiScope,
@@ -76,17 +87,30 @@ class AbookApplication : Application() {
     }
 
     /**
-     * Giọng đọc làm thêm (giọng tải về máy, khóa giọng trực tuyến, nghe thử, Nhạc của tôi): một holder cho cả tiến trình nên lượt tải giọng đang chạy không mất trạng thái khi
-     * Activity dựng lại. Giọng vừa tải / gỡ, khóa vừa dùng được thì danh sách giọng của Cài đặt đọc lại.
+     * Giọng đọc làm thêm (giọng tải về máy, khoá giọng trực tuyến, nghe thử, Nhạc của tôi): một holder cho cả tiến trình nên lượt tải giọng đang chạy không mất trạng thái khi
+     * Activity dựng lại. Giọng vừa tải / gỡ, khoá vừa dùng được thì danh sách giọng của Cài đặt đọc lại.
      */
     val voice by lazy {
         vn.abook.player.ui.voice.VoiceState(
-            vn.abook.player.ui.voice.VoiceRepo(this), uiScope, vn.abook.player.ui.voice.AndroidSamplePlayer(this), voicesChanged = { settings.loadVoices() },
+            voiceRepo, uiScope, vn.abook.player.ui.voice.AndroidSamplePlayer(this), voicesChanged = { settings.loadVoices() }, imports = myMusicImports,
         )
     }
+    private val voiceRepo by lazy { vn.abook.player.ui.voice.VoiceRepo(this) }
 
-    /** Nhạc nền của từng cuốn (bảng ở trình phát và ở trang sách): thêm nhạc đi chung kho với Nhạc của tôi. */
-    val music by lazy { vn.abook.player.ui.music.MusicState(vn.abook.player.ui.music.MusicRepo(this, vn.abook.player.ui.voice.VoiceRepo(this)), uiScope) }
+    /** Thêm nhạc vào Nhạc của tôi: MỘT lượt mỗi lúc cho cả app, Cài đặt > Nhạc của tôi và bảng Nhạc nền cùng thấy, cùng đọc lại kho khi xong. */
+    private val myMusicImports by lazy { vn.abook.player.ui.voice.MineImports(voiceRepo, uiScope) }
+
+    /** Nhật ký đêm (thẻ "Tối qua" ở Thư viện, tấm Hẹn giờ nhắc thẻ ấy). */
+    val night by lazy { vn.abook.player.ui.data.NightState(vn.abook.player.ui.data.AndroidNightSource(this), uiScope) }
+
+    /** "Làm trước" các chương tới bằng giọng tải về máy: một holder cho cả tiến trình (trình phát và trang sách cùng xem một trạng thái). */
+    val prepare by lazy { vn.abook.player.ui.data.PrepareState(vn.abook.player.ui.data.AndroidPrepareSource(this), uiScope) }
+
+    /** Nhạc nền của từng cuốn (bảng ở trình phát và ở trang sách): thêm nhạc đi chung kho và chung lượt với Nhạc của tôi. */
+    val music by lazy { vn.abook.player.ui.music.MusicState(vn.abook.player.ui.music.MusicRepo(this), myMusicImports, uiScope) }
+
+    /** Cửa hỏi bạn trước khi đọc bằng giọng trực tuyến chưa được đồng ý (chữ chưa rời máy khi chưa có câu trả lời): trình phát qua nó, Activity vẽ câu hỏi. */
+    val consent by lazy { vn.abook.player.ui.voice.ConsentGate(vn.abook.player.ui.voice.AndroidConsentSource(this), uiScope) }
 
     /** Trình phát của giao diện native: chỉ lắng nghe lõi phát khi Activity hiện ([PlayerRepo.attach]). */
     val player by lazy {
@@ -96,6 +120,7 @@ class AbookApplication : Application() {
             planOf = { id -> Store.init(this); PlayPlan.fromStore(id) },
             lastPlan = { Store.init(this); PlayPlan.fromLast() },
             planAt = { id, chapter, seconds -> Store.init(this); PlayPlan.fromStoreAt(id, chapter, seconds) },
+            gate = consent,
         )
     }
 
@@ -103,6 +128,19 @@ class AbookApplication : Application() {
         super.onCreate()
         AppLog.init(this)
         CrashLog.install(this)
+        watchNetwork()
         AppLog.i("App", "tiến trình khởi động (Android ${android.os.Build.VERSION.SDK_INT}, ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL})")
+    }
+
+    /** Đổi mạng (Wi-Fi <-> 4G, có/mất IPv6) thì kết luận "họ địa chỉ nào sống" của FastConnect hết giá trị. */
+    private fun watchNetwork() {
+        runCatching {
+            val manager = getSystemService(android.net.ConnectivityManager::class.java) ?: return
+            manager.registerDefaultNetworkCallback(object : android.net.ConnectivityManager.NetworkCallback() {
+                override fun onAvailable(network: android.net.Network) = vn.abook.player.net.FastConnect.forgetNetwork()
+                override fun onLinkPropertiesChanged(network: android.net.Network, linkProperties: android.net.LinkProperties) =
+                    vn.abook.player.net.FastConnect.forgetNetwork()
+            })
+        }
     }
 }

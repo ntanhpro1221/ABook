@@ -149,6 +149,9 @@ kế tiếp.
 
 ## Build
 
+Các bước tài nguyên (giao diện, Python nhúng, mã app, chạy thử host) nằm ở `scripts/windows_resources.ps1`, dùng chung cho bộ cài
+Tauri và bộ cài Qt (`scripts/build_windows_qt.ps1`, docs/QT_INSTALLER.md), nên hai bộ cài mang đúng một bộ Python.
+
 `scripts/build_windows_app.ps1`: build giao diện (`ui/`) -> tải + kiểm Python nhúng -> cài gói phụ -> cắt phần không dùng -> chép `abook`
 (không `__pycache__`, không test, không dữ liệu của Studio) + VC++ runtime (tìm bằng `vswhere`, cho Studio) -> thử Python nhúng
 (`scripts/smoke_embedded_python.py`) -> chạy thử host -> `tauri build

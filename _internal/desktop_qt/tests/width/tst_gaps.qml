@@ -126,7 +126,7 @@ Item {
         function test_progressLine() {
             compare(BookText.progressLine(book(), false, false), "Chưa nghe")
             compare(BookText.progressLine(book(), true, false), "Đang nghe")
-            compare(BookText.progressLine(book(), true, true), "Không phát được")
+            compare(BookText.progressLine(book(), true, true), "Chưa phát được")
             compare(BookText.progressLine(book({progress: {heardSeconds: 1800}}), false, false), "Đã nghe 30 phút · còn 1 giờ 30 phút chưa nghe")
             compare(BookText.progressLine(book({progress: {heardSeconds: 7200, finished: true}}), false, false), "Đã nghe xong")
             compare(BookText.progressLine(book({complete: false, producing: true, progress: {heardSeconds: 10, caughtUp: true}}), false, false), "Đã nghe hết phần đã có · 3/5 chương")

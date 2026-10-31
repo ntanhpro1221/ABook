@@ -1,3 +1,4 @@
+import { TickingValue } from "@/shared/TickingValue";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { SectionHeading } from "@/shared/SectionHeading";
 import { MotionPresence } from "@/shared/MotionPresence";
@@ -13,7 +14,7 @@ import { SettingsRow } from "@/shared/SettingsNav";
 import { api } from "./api";
 import { useAppInfo, useStudioMissing } from "./data";
 import { friendlySetupError } from "./errorText";
-import { formatSize } from "./musicLocal";
+import { formatSize } from "@/shared/format";
 import { leftoverLine, type SetupLeftover } from "./setupLeftover";
 import { noStudioLine, studioFit, type StudioFit, type StudioGpu } from "./studioFit";
 
@@ -171,7 +172,7 @@ export function StudioSetupCard({ className }: { className?: string }) {
     try {
       client.setQueryData(["studio-setup"], await api<SetupStatus>(path, { method: "POST", body: {} }));
     } catch (error) {
-      toast.error("Không cài được Studio", { description: (error as Error).message });
+      toast.error("Chưa cài được Studio", { description: (error as Error).message });
     }
   };
   const damaged = status.damaged ?? [];
@@ -278,9 +279,9 @@ export function StudioSetupCard({ className }: { className?: string }) {
         <div className="mt-4">
           <Progress value={progress ?? 0} running={progress === null} size="sm" label={`Tiến độ: ${current.label}`} />
           <div className="mt-1.5 flex justify-between gap-4 text-xs text-fg-2">
-            <span className="truncate">{status.detail || current.label}</span>
+            <TickingValue className="truncate">{status.detail || current.label}</TickingValue>
             {status.progress && status.progress.total > 0 && (
-              <span className="tabular shrink-0">
+              <span data-motion-live className="tabular shrink-0">
                 {formatSize(status.progress.done)} / {formatSize(status.progress.total)}
               </span>
             )}
@@ -315,7 +316,7 @@ export function StudioSettings() {
         client.setQueryData(["studio-setup"], await api<SetupStatus>("/api/studio/setup", { method: "POST", body: {} }));
         navigate("/studio");
       } catch (error) {
-        toast.error("Không cài được Studio", { description: (error as Error).message });
+        toast.error("Chưa cài được Studio", { description: (error as Error).message });
       } finally {
         setBusy(false);
       }
@@ -368,7 +369,7 @@ export function StudioSettings() {
         <p className="mt-1 break-all">{status.root}</p>
       </>}>
         <Button size="sm" variant={armed ? "danger" : "ghost"} icon={Trash2} disabled={busy} onClick={() => void remove()}>
-          {busy ? "Đang gỡ…" : armed ? "Xác nhận gỡ" : "Gỡ Studio"}
+          {busy ? "Đang gỡ" : armed ? "Xác nhận gỡ" : "Gỡ Studio"}
         </Button>
       </SettingsRow>
       {status.outdated.length > 0 && (

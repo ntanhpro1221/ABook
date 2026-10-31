@@ -1,19 +1,16 @@
 package vn.abook.player.ui.nowplaying
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.ui.layout.Layout
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicText
+import vn.abook.player.ui.components.BasicText
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,6 +21,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.unit.Density
+import vn.abook.player.Playback
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -50,6 +50,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.Dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import vn.abook.player.ui.components.ClockLabel
 import vn.abook.player.ui.components.pressable
 import vn.abook.player.ui.data.CoverLoader
 import vn.abook.player.ui.data.CoverRef
@@ -68,14 +69,37 @@ fun PlayerCoverProvider(covers: CoverLoader, content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalPlayerCovers provides covers, content = content)
 }
 
+/** Decode width (px) of the player's cover: the final display slot of the window. */
+@Composable
+private fun playerCoverRequestPx(decodeSize: Dp? = null): Int {
+    val density = LocalDensity.current
+    val displaySize = decodeSize ?: minOf((LocalConfiguration.current.screenWidthDp - 40).dp, 320.dp)
+    return with(density) { displaySize.roundToPx().coerceAtLeast(1) }
+}
+
+/**
+ * Decodes the playing book's cover at the window's display size (and its tint sample) as soon as the track is known, off the main thread, so opening the window finds
+ * both in the cache: the big cover is in the first frame and nothing is decoded while the window moves. Same keys as [PlayerCover] / [rememberPlayerBackground].
+ */
+@Composable
+fun PrefetchPlayerCover(cover: kotlinx.coroutines.flow.Flow<CoverRef?>) {
+    val covers = LocalPlayerCovers.current
+    val requestPx = playerCoverRequestPx()
+    LaunchedEffect(cover, covers, requestPx) {
+        cover.collect { ref ->
+            if (ref == null) return@collect
+            covers.load(covers.key(ref.path, ref.stamp, requestPx), ref.path, requestPx, requestPx)
+            covers.load(covers.key(ref.path, ref.stamp, 32), ref.path, 32, 32)
+        }
+    }
+}
+
 /** Cover always decoded at requested display size on IO; cache is the app's existing byte-bounded loader. No image: the same generated cover as the Library. */
 @Composable
 fun PlayerCover(ref: CoverRef?, title: String, modifier: Modifier = Modifier, decodeSize: Dp? = null) {
     val covers = LocalPlayerCovers.current
-    val density = LocalDensity.current
     // Decode at the final display-slot bound, never at intermediate shared-element sizes.
-    val displaySize = decodeSize ?: minOf((LocalConfiguration.current.screenWidthDp - 40).dp, 320.dp)
-    val requestPx = with(density) { displaySize.roundToPx().coerceAtLeast(1) }
+    val requestPx = playerCoverRequestPx(decodeSize)
     BoxWithConstraints(modifier.clip(RoundedCornerShape(Dim.radiusCover)).background(Abook.colors.bgSunken), contentAlignment = Alignment.Center) {
         if (ref == null) {
             // Tên đã có ngay dưới bìa: chữ trên bìa tự vẽ chỉ để nhìn, trình đọc màn hình không đọc hai lần.
@@ -132,16 +156,51 @@ fun rememberPlayerBackground(ref: CoverRef?): State<Color> {
         tween(MotionMs.SLOW), label = "cover-tint")
 }
 
-/** Every label replacement travels vertically through a clipped aperture. No default cross-fades. */
+/** Nhãn đang chạy: chữ đang hiện, chữ đang đi ra (null khi đứng yên), tiến trình của chữ mới (1 = đã vào hẳn). */
+@Stable
+private class Roll(first: String) {
+    var shown by mutableStateOf(first)
+    var leaving by mutableStateOf<String?>(null)
+    val progress = Animatable(1f)
+}
+
+/**
+ * Every label replacement travels vertically through a clipped aperture (chữ mới trồi từ dưới 220 ms, chữ cũ đi lên 150 ms, khung đổi cỡ theo). No default cross-fades.
+ * Không dùng AnimatedContent: mỗi nhãn tĩnh của Đang nghe (tên chương, tên sách, giờ, nhãn nút...) mang một AnimatedContent, ~0,8 ms dựng lần đầu mỗi cái trong trace
+ * Perfetto (NATIVE_POLISH) và cả chục cái cùng lúc ở khung đầu của cửa sổ. Ở đây lúc đứng yên chỉ là một BasicText; hai chữ chỉ có trong lúc chạy,
+ * toạ độ đọc trong pha dàn trang.
+ */
 @Composable
 fun RollingLabel(text: String, modifier: Modifier = Modifier, style: TextStyle = Abook.type.body) {
-    AnimatedContent(
-        targetState = text, modifier = modifier.clipToBounds(), label = "rolling-label",
-        transitionSpec = {
-            (slideInVertically(tween(MotionMs.MEDIUM)) { it } togetherWith
-                slideOutVertically(tween(MotionMs.MEDIUM_OUT)) { -it }).using(SizeTransform(clip = true))
+    val roll = remember { Roll(text) }
+    LaunchedEffect(text) {
+        if (roll.shown == text) return@LaunchedEffect
+        roll.leaving = roll.shown
+        roll.shown = text
+        roll.progress.snapTo(0f)
+        roll.progress.animateTo(1f, tween(MotionMs.MEDIUM))
+        roll.leaving = null
+    }
+    Layout(
+        content = {
+            BasicText(roll.shown, style = style)
+            roll.leaving?.let { BasicText(it, style = style) }
         },
-    ) { value -> BasicText(value, style = style) }
+        modifier = modifier.clipToBounds(),
+    ) { measurables, constraints ->
+        val incoming = measurables[0].measure(constraints)
+        val outgoing = measurables.getOrNull(1)?.measure(constraints)
+        val p = roll.progress.value
+        val width = if (outgoing == null) incoming.width else (outgoing.width + (incoming.width - outgoing.width) * p).toInt()
+        val height = if (outgoing == null) incoming.height else (outgoing.height + (incoming.height - outgoing.height) * p).toInt()
+        layout(width, height) {
+            if (outgoing != null) {
+                val out = (p * MotionMs.MEDIUM / MotionMs.MEDIUM_OUT).coerceAtMost(1f)
+                outgoing.place(0, (-out * outgoing.height).toInt())
+            }
+            incoming.place(0, ((1f - p) * incoming.height).toInt())
+        }
+    }
 }
 
 /** Two four-point contours interpolate triangle -> pause bars. Path objects are reused in draw. */
@@ -149,6 +208,8 @@ fun RollingLabel(text: String, modifier: Modifier = Modifier, style: TextStyle =
 fun PlayMorph(
     playing: Boolean, onClick: () -> Unit,
     modifier: Modifier = Modifier, large: Boolean = true,
+    /** Nhãn đọc màn hình; mặc định "Tạm dừng" / "Phát". Đang chờ âm thanh thì nói đang chờ gì ([PlayerText.toggleLabel]). */
+    description: String? = null,
 ) {
     val colors = Abook.colors
     val view = LocalView.current
@@ -160,7 +221,7 @@ fun PlayMorph(
         view.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK)
         onClick()
     }
-        .semantics { contentDescription = if (playing) "Tạm dừng" else "Phát" }
+        .semantics { contentDescription = description ?: if (playing) "Tạm dừng" else "Phát" }
         .drawBehind { drawCircle(colors.accent) }, contentAlignment = Alignment.Center) {
         Canvas(Modifier.size(if (large) 32.dp else 24.dp)) {
             val p = morph.value
@@ -182,13 +243,17 @@ fun PlayMorph(
     }
 }
 
+/** Biểu tượng của "Cửa sổ mini" (lucide picture-in-picture-2) trong [PlayerGlyph]. */
+const val MINI_WINDOW_GLYPH = "⧉"
+
 @Composable
-fun PlayerAction(label: String, glyph: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun PlayerAction(label: String, glyph: String, onClick: () -> Unit, modifier: Modifier = Modifier, clock: Boolean = false) {
     Column(modifier.widthIn(min = 48.dp).pressable(onClick = onClick).padding(vertical = 8.dp)
         .semantics { contentDescription = label }, horizontalAlignment = Alignment.CenterHorizontally) {
         // Ô trên cùng một chiều cao (= ô icon 28 dp) dù là icon hay chữ ("1×", "12:30"): nhãn dưới của cả hàng nằm trên cùng một đường.
         Box(Modifier.height(28.dp), contentAlignment = Alignment.Center) {
-            if (glyph == "◷" || glyph == "☷") PlayerGlyph(glyph)
+            if (glyph == "◷" || glyph == "☷" || glyph == MINI_WINDOW_GLYPH) PlayerGlyph(glyph)
+            else if (clock) ClockLabel(glyph, style = Abook.type.sectionTitle)
             else RollingLabel(glyph, style = Abook.type.sectionTitle)
         }
         Spacer(Modifier.height(4.dp))
@@ -212,6 +277,7 @@ fun PlayerGlyph(glyph: String) {
         "›|" -> LucidePaths.SKIP_FORWARD
         "◷" -> LucidePaths.MOON
         "☷" -> LucidePaths.LIST_ORDERED
+        "⧉" -> LucidePaths.PICTURE_IN_PICTURE_2
         "+" -> LucidePaths.PLUS
         "−" -> LucidePaths.MINUS
         else -> null
@@ -230,15 +296,18 @@ fun PlayerGlyph(glyph: String) {
 private fun rememberSkipNumber(color: Color): TextLayoutResult {
     val measurer = rememberTextMeasurer(cacheSize = 1)
     val density = LocalDensity.current
-    return remember(color, density) {
-        val style = with(density) {
-            TextStyle(
-                fontFamily = BeVietnamPro, fontWeight = FontWeight.SemiBold, fontSize = SKIP_NUMBER_SIZE.dp.toSp(),
-                letterSpacing = (-0.2).dp.toSp(), fontFeatureSettings = "tnum", color = color,
-            )
-        }
-        measurer.measure("15", style)
+    return remember(color, density) { skipNumberLayout(measurer, density, color) }
+}
+
+/** Số của nút lùi / tới đã đo; cửa sổ nhỏ PiP (ui/pip) vẽ nút hệ thống ra ảnh bằng chính số này, nên đo ở hàm dùng chung chứ không ở composable. */
+internal fun skipNumberLayout(measurer: TextMeasurer, density: Density, color: Color): TextLayoutResult {
+    val style = with(density) {
+        TextStyle(
+            fontFamily = BeVietnamPro, fontWeight = FontWeight.SemiBold, fontSize = SKIP_NUMBER_SIZE.dp.toSp(),
+            letterSpacing = (-0.2).dp.toSp(), fontFeatureSettings = "tnum", color = color,
+        )
     }
+    return measurer.measure(Playback.SKIP_SECONDS.toString(), style)
 }
 
 /**
@@ -246,7 +315,7 @@ private fun rememberSkipNumber(color: Color): TextLayoutResult {
  * đầu cung, số 15 to ở dưới. Chủ sách 24-10 và 26-10: vòng gần kín với số nhét bên trong "xấu xí" - số không bao giờ chạm nét; khe đo bằng điểm ảnh
  * trong SkipGlyphTest. Ô 24 đặt giữa ô 28 của nút.
  */
-private fun DrawScope.drawSkip(forward: Boolean, color: Color, path: Path, number: TextLayoutResult?) {
+internal fun DrawScope.drawSkip(forward: Boolean, color: Color, path: Path, number: TextLayoutResult?) {
     val u = 24.dp.toPx() / 24f
     withTransform({
         translate((size.width - 24f * u) / 2f, (size.height - 24f * u) / 2f)

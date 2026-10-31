@@ -389,7 +389,7 @@ Item {
                 spacing: 8
                 Repeater {
                     model: 8
-                    delegate: Rectangle { width: parent.width; height: 36; radius: Theme.radiusControl; color: Theme.hover }
+                    delegate: Rectangle { width: parent ? parent.width : 0; height: 36; radius: Theme.radiusControl; color: Theme.hover }
                 }
             }
             Column {

@@ -49,6 +49,6 @@ describe("hoàn tác một thay đổi đã gửi", () => {
     h.api.mockRejectedValue(new Error("Quyết định này đã được thay bằng một lựa chọn sau"));
     await click(undoAction(new QueryClient(), "b1", "pronunciation", [{ surface: "Lucien", requestedAt: 5 }]));
     expect(h.success).not.toHaveBeenCalled();
-    expect(h.error.mock.calls[0][0]).toBe("Không hoàn tác được");
+    expect(h.error.mock.calls[0][0]).toBe("Chưa hoàn tác được");
   });
 });

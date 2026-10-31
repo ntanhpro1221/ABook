@@ -1,3 +1,4 @@
+import { TickingValue } from "@/shared/TickingValue";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { Fold } from "@/shared/Collapse";
 import { MoreInfo } from "@/shared/SettingsNav";
@@ -108,6 +109,7 @@ import { ExportDialog } from "@/studio/ExportBook";
 import { PrecastBanner, PrecastReview, PrecastWaitSwitch, usePrecastKeys } from "./PrecastReview";
 import { TellerModeSwitch } from "./TellerModeSwitch";
 import { canReview } from "./precast";
+import { useFadeScroller } from "@/shared/scrollFade";
 
 /** Phát một chương ngay trong Studio (nghe kiểm tra) bằng chính trình phát của phía Nghe - ở chế độ "nghe kiểm":
  *  không ghi đè chỗ đang nghe dở, tốc độ hay nhật ký đêm của người nghe. */
@@ -172,11 +174,11 @@ function Step({
         {state === "active" && <Vu className="ml-auto h-3 text-accent" />}
         {state === "paused" && <Pause className="ml-auto size-3.5 text-fg-3" />}
       </div>
-      <p className={cn("mt-2 text-xs leading-relaxed", state === "pending" ? "text-fg-3" : "text-fg-2")}>{detail}</p>
+      <p data-motion-live className={cn("mt-2 text-xs leading-relaxed", state === "pending" ? "text-fg-3" : "text-fg-2")}>{detail}</p>
       {progress !== undefined && state !== "pending" && (
         <div className="mt-3 flex items-center gap-2">
           <Progress value={progress} running={state === "active"} tone={state === "done" ? "success" : state === "paused" ? "muted" : "accent"} size="sm" label={title} />
-          <span className="tabular w-9 text-right text-xs font-semibold">{formatPercent(progress)}</span>
+          <span className="tabular w-9 text-right text-xs font-semibold"><TickingValue>{formatPercent(progress)}</TickingValue></span>
         </div>
       )}
     </MotionRegion>
@@ -191,7 +193,7 @@ function StartError({ book }: { book: BookSummary }) {
   return (
     <div role="alert" className="mt-3 flex flex-wrap items-start gap-2 py-3 text-sm text-danger">
       <CircleAlert className="mt-line-icon size-4 shrink-0" />
-      <span className="min-w-0 flex-1">Không khởi động được: {book.startError}</span>
+      <span className="min-w-0 flex-1">Chưa khởi động được: {book.startError}</span>
       {!book.starting && !book.running && (
         <Button variant="ghost" size="sm" icon={RotateCcw} loading={start.isPending} onClick={() => start.mutate(book.id)}>
           Thử lại
@@ -276,7 +278,7 @@ function progressNote(book: BookSummary): string {
   const live = book.running || book.starting;
   // Giữ chờ duyệt (precast.held) cũng là `paused` nhưng là đợi người nghe, không phải ai bấm Tạm dừng (soát UX a23: "47% tổng"
   // đứng yên không nói vì sao). Tạm dừng thường (pin, người bấm) đã nói ở trạng thái đầu trang - không nói lại ở đây (soát 24-10 T19).
-  return book.stopping ? "đang dừng" : book.paused ? (book.precast?.held ? "chờ bạn duyệt rồi bấm Thu âm" : "") : etaOf(book) ?? (live ? "đang ước tính thời gian…" : "");
+  return book.stopping ? "đang dừng" : book.paused ? (book.precast?.held ? "chờ bạn duyệt rồi bấm Thu âm" : "") : etaOf(book) ?? (live ? "đang ước tính thời gian" : "");
 }
 
 /** Tiến độ cả sách ở đầu trang dự án: thanh mảnh + phần trăm, kèm còn bao lâu (soát 25-10: trước là chữ "45% tổng" không có thanh, cách hàng tab một
@@ -289,9 +291,9 @@ export function HeaderProgress({ book }: { book: BookSummary }) {
       <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
         <div className="flex min-w-0 flex-1 basis-48 items-center gap-3 sm:max-w-xs">
           <Progress value={book.progress.overall} running={running} tone={running ? "accent" : "muted"} size="xs" label="Tiến độ cả sách" />
-          <span className="tabular w-10 shrink-0 text-right text-sm font-medium">{formatPercent(book.progress.overall)}</span>
+          <span className="tabular w-10 shrink-0 text-right text-sm font-medium"><TickingValue>{formatPercent(book.progress.overall)}</TickingValue></span>
         </div>
-        {note && <span className="text-sm text-fg-2">{note}</span>}
+        {note && <TickingValue className="text-sm text-fg-2">{note}</TickingValue>}
       </div>
     </MotionPresence>
   );
@@ -314,7 +316,7 @@ export function ProductionPanel({ book }: { book: BookSummary }) {
           </span>
         </p>
       )}
-      <Fold storageKey={`project.${book.id}.steps`} title="Các bước" summary={stepSummary} heading="h3">
+      <Fold storageKey={`project.${book.id}.steps`} title="Các bước" summary={stepSummary}>
       <div className="flex flex-col gap-6 sm:flex-row sm:gap-8">
         <Step
           index={1}
@@ -439,7 +441,7 @@ function StopDialog({ book, open, onOpenChange }: { book: BookSummary; open: boo
             <p>
               <span className="font-semibold">{ANALYSIS_STOP_FACT}</span> - {ANALYSIS_CUT_COST}.
             </p>
-            <p className="mt-2 text-fg-2">
+            <p data-motion-live className="mt-2 text-fg-2">
               Nên để chạy hết bước này{eta ? ` (${eta})` : ""}. {stopAnalysisAdvice(book)}
             </p>
           </div>
@@ -642,7 +644,7 @@ export function ProjectMenu({ book, rename = true, className, children }: { book
                 <DropdownMenu.Separator className="my-1 h-px bg-line" />
               </>
             )}
-            {rename && <MenuItem icon={TextCursorInput} onSelect={() => setDialog("rename")}>Đổi tên…</MenuItem>}
+            {rename && <MenuItem icon={TextCursorInput} onSelect={() => setDialog("rename")}>Đổi tên</MenuItem>}
             {/* Truyện dài làm nhiều đợt: phần mới giữ giọng, cách đọc tên, ghim của phần này (continuation.py). Dự án chưa
                 phân tích câu nào thì không có gì để mang theo - mờ kèm lý do thay vì dẫn tới một phần mới trống (soát UX 29-09). */}
             {/* Dự án hỏng (`broken`) không có `segments` và không có gì để mang theo: chỉ còn xoá. */}
@@ -652,7 +654,7 @@ export function ProjectMenu({ book, rename = true, className, children }: { book
                 onSelect={() => navigate(`/studio/new?continue=${book.id}`)}
                 className={cn(MENU_ITEM, "data-[disabled]:opacity-50")}
               >
-                <BookPlus className="size-4" /> Làm tiếp cuốn này…
+                <BookPlus className="size-4" /> Làm tiếp cuốn này
                 {!analyzed && <span className="ml-auto pl-3 text-xs text-fg-3">chạy phần này trước</span>}
               </DropdownMenu.Item>
             )}
@@ -662,7 +664,7 @@ export function ProjectMenu({ book, rename = true, className, children }: { book
                 <OnComputerOnly verb="Xoá dự án" />
               </div>
             ) : (
-              <MenuItem icon={Trash2} danger onSelect={() => setDialog("delete")}>Xoá dự án…</MenuItem>
+              <MenuItem icon={Trash2} danger onSelect={() => setDialog("delete")}>Xoá dự án</MenuItem>
             )}
           </DropdownMenu.Content>
         </DropdownMenu.Portal>
@@ -742,7 +744,7 @@ export function Actions({ book }: { book: BookSummary }) {
   const primary: Record<PrimaryKind, { label: string; icon?: typeof Wand2; loading?: boolean; run?: () => void }> = {
     starting: { label: "Đang khởi động", loading: true },
     // Đã bấm Dừng: sách còn chạy tới chỗ dừng sạch kế - tạm dừng / dừng thêm lần nữa không còn nghĩa (soát a88 V1).
-    stopping: { label: "Đang dừng…", loading: true },
+    stopping: { label: "Đang dừng", loading: true },
     // Giữ chờ duyệt: "Tiếp tục" và "Thu âm" là MỘT việc - tên là "Thu âm" (soát UX a8 05-10, mục 12).
     unpause: { label: book.precast?.held ? "Thu âm" : "Tiếp tục", icon: book.precast?.held ? Mic2 : Play, loading: pause.isPending, run: unpause },
     // Tạm dừng giữ tiến trình sống, làm tiếp đúng chỗ - an toàn cả giữa lúc phân tích; "Dừng" (kết thúc lượt chạy) ở "…".
@@ -770,9 +772,9 @@ export function Actions({ book }: { book: BookSummary }) {
           <MenuItem icon={Headphones} onSelect={() => navigate(`/book/${book.id}`)}>Nghe trong Thư viện</MenuItem>
         )}
         {asksBeforeResume(book) && !live && !book.starting && !book.queuePosition && (
-          <MenuItem icon={Play} onSelect={() => setConfirmResume(true)}>Vẫn tiếp tục…</MenuItem>
+          <MenuItem icon={Play} onSelect={() => setConfirmResume(true)}>Vẫn tiếp tục</MenuItem>
         )}
-        {live && !book.stopping && <MenuItem icon={Square} onSelect={() => setConfirmStop(true)}>Dừng…</MenuItem>}
+        {live && !book.stopping && <MenuItem icon={Square} onSelect={() => setConfirmStop(true)}>Dừng</MenuItem>}
         {/* Thay đổi chờ áp khi máy đang chạy: xem được, và bỏ được khi đã tạm dừng tới checkpoint (soát a83 B5). */}
         {live && book.pendingChanges ? (
           <MenuItem icon={RefreshCw} onSelect={() => setConfirmApply(true)}>{book.pendingChanges} thay đổi chờ áp</MenuItem>
@@ -782,7 +784,7 @@ export function Actions({ book }: { book: BookSummary }) {
         {book.phase === "idle" && !live && !book.queuePosition && (
           <MenuItem icon={SlidersHorizontal} onSelect={() => navigate(`/studio/new?redo=${book.id}`)}>Sửa thiết lập</MenuItem>
         )}
-        {book.chapters.completed > 0 && <MenuItem icon={FolderDown} onSelect={() => setExporting(true)}>Xuất…</MenuItem>}
+        {book.chapters.completed > 0 && <MenuItem icon={FolderDown} onSelect={() => setExporting(true)}>Xuất</MenuItem>}
         {next > 0 && <MenuItem icon={BookPlus} onSelect={() => navigate(`/studio/new?continue=${book.id}`)}>Thêm {next} chương</MenuItem>}
         {/* Mở thư mục chỉ có trên máy tính. */}
         {!remote && <MenuItem icon={FolderOpen} onSelect={() => reveal.mutate(book.id)}>Mở thư mục</MenuItem>}
@@ -801,7 +803,7 @@ export function Actions({ book }: { book: BookSummary }) {
         ) : live && book.stopping ? (
           <p>Dừng ở checkpoint kế, giữ phần đã xong; có thể mất vài phút.</p>
         ) : kind === "reanalyze" ? (
-          <p>
+          <p data-motion-live>
             Phân tích đã dừng giữa chừng
             {book.segments.total ? ` (còn ${formatNumber(pending)}/${formatNumber(book.segments.total)} câu)` : ""}; phân tích lại để giữ kết quả liền mạch,
             tiếp tục thì {ANALYSIS_CUT_COST}.
@@ -938,7 +940,7 @@ function ChapterMenu({ book, chapter, onPlay }: { book: BookSummary; chapter: Ch
               <>
                 <DropdownMenu.Separator className="my-1 h-px bg-line" />
                 <DropdownMenu.Item onSelect={() => setConfirm(true)} className={MENU_ITEM}>
-                  <RefreshCw className="size-4" /> Thu lại cả chương…
+                  <RefreshCw className="size-4" /> Thu lại cả chương
                 </DropdownMenu.Item>
               </>
             )}
@@ -1036,7 +1038,7 @@ function ChapterRow({ book, chapter, rowIndex }: { book: BookSummary; chapter: C
             <Progress className="self-center" value={recorded} running={book.running} tone={book.running ? "accent" : "muted"} size="xs" label="Đã thu âm" />
             <span className="tabular text-xs text-fg-2">
               {book.running ? "" : "dừng ở "}
-              {chapter.segments.finished}/{chapter.segments.total}
+              <TickingValue>{chapter.segments.finished}/{chapter.segments.total}</TickingValue>
             </span>
           </div>
         ) : mark ? (
@@ -1048,7 +1050,7 @@ function ChapterRow({ book, chapter, rowIndex }: { book: BookSummary; chapter: C
       <div role="cell" className="tabular hidden text-right text-xs text-fg-2 lg:block">
         {chapter.status === "completed" || chapter.redo ? formatLength(chapter.seconds) : chapter.segments.total ? `${formatNumber(chapter.segments.total)} câu` : ""}
       </div>
-      <div role="cell" className="tabular hidden whitespace-nowrap text-right text-xs text-fg-3 lg:block">
+      <div data-motion-live role="cell" className="tabular hidden whitespace-nowrap text-right text-xs text-fg-3 lg:block">
         {chapter.completedAt ? formatRelative(chapter.completedAt) : ""}
       </div>
       <div role="cell" className="flex justify-end [&>button]:-mr-[5px]">
@@ -1121,6 +1123,7 @@ const LEVEL_DOT: Record<string, string> = {
 };
 
 function ActivityView({ book }: { book: BookSummary }) {
+  const scrollFade = useFadeScroller<HTMLDivElement>();
   const [mode, setMode] = useState<"story" | "technical">("story");
   const { data, isLoading } = useActivity(book.id, mode === "technical", book.running);
   const groups = useMemo(() => {
@@ -1144,7 +1147,7 @@ function ActivityView({ book }: { book: BookSummary }) {
           onClick={() => setMode(mode === "technical" ? "story" : "technical")}
           className="touch-row -mr-2 inline-flex items-center rounded-control px-2 text-xs font-medium text-accent-text hover:underline"
         >
-          {mode === "technical" ? "Ẩn chi tiết kỹ thuật" : "Chi tiết kỹ thuật"}
+          {mode === "technical" ? "Ẩn chi tiết" : "Chi tiết kỹ thuật"}
         </button>
       </div>
       <MotionRegion motionKey={[mode, isLoading, groups.length > 0]} slideIndex={mode === "story" ? 0 : 1}>
@@ -1159,7 +1162,7 @@ function ActivityView({ book }: { book: BookSummary }) {
           Diễn biến sẽ hiện ở đây khi sách bắt đầu chạy.
         </EmptyState>
       ) : mode === "technical" ? (
-        <div className="mt-4 max-h-[560px] overflow-auto py-3 font-mono text-[0.75rem] leading-relaxed">
+        <div ref={scrollFade.ref} style={scrollFade.style} className="mt-4 max-h-[560px] overflow-auto py-3 font-mono text-[0.75rem] leading-relaxed">
           <LogRows items={data ?? []}>
             {(item) => (
               <div className="flex gap-3 whitespace-pre-wrap break-words">
@@ -1176,7 +1179,7 @@ function ActivityView({ book }: { book: BookSummary }) {
         <div className="mt-4 space-y-6">
           {groups.map((group) => (
             <section key={group.day}>
-              <h4 className="label-section mb-2 text-fg-2">{group.day}</h4>
+              <h2 className="label-section mb-2 text-fg-2">{group.day}</h2>
               {/* Hàng lùi sang trái 8 đơn vị (rồi đệm lại) để chấm nằm TRONG hộp hàng: hàng mới mở ra (cắt chiều cao) không cắt mất chấm. */}
               <LogRows as="ol" items={group.items} className="relative space-y-1 border-l border-line pl-5" rowClassName="-ml-8">
                 {(item) => (
@@ -1249,8 +1252,11 @@ export function ProjectTabBar({ tab, onTab, precast, counts }: {
       ))}
       <DropdownMenu.Root>
         <DropdownMenu.Trigger asChild>
+          {/* Nằm trong hàng tab (tablist chỉ được chứa tab): nút cũng là một tab - "đang chọn" khi tab đang mở nằm trong "Thêm". */}
           <button
             type="button"
+            role="tab"
+            aria-selected={inMore}
             data-active={inMore || undefined}
             className="touch-row relative -mb-px inline-flex h-11 shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 border-transparent text-sm font-medium text-fg-2 transition-colors hover:text-fg data-[active]:border-accent data-[active]:text-fg data-[state=open]:text-fg"
           >
@@ -1349,7 +1355,7 @@ export function ProjectScreen() {
         icon={CircleAlert}
         title="Dự án này không còn"
         className="mt-20"
-        action={<Button onClick={() => navigate("/studio")}>Về danh sách dự án</Button>}
+        action={<Button onClick={() => navigate("/studio")}>Về Studio</Button>}
       >
         Cuốn này đã bị xoá hoặc chuyển đi khỏi thư viện.
       </EmptyState>
@@ -1360,7 +1366,7 @@ export function ProjectScreen() {
     return (
       <EmptyState
         icon={CircleAlert}
-        title="Không mở được sách"
+        title="Chưa mở được sách"
         className="mt-20"
         action={
           <div className="flex flex-wrap justify-center gap-2">
@@ -1396,7 +1402,7 @@ export function ProjectScreen() {
         <div role="status" className="mt-4 flex flex-wrap items-center gap-2 py-3 text-sm">
           <CircleAlert className="size-4 shrink-0 text-warning" />
           <span className="min-w-0 flex-1 text-pretty">
-            {isOffline(error) ? "Mất kết nối tới ABook, đang thử lại…" : `Chưa tải lại được sách: ${failureText(error)} Đang thử lại…`}
+            {isOffline(error) ? "Mất kết nối tới ABook, đang thử lại" : `Chưa tải lại được sách: ${failureText(error)} Đang thử lại`}
           </span>
           <Button size="sm" variant="ghost" loading={isFetching} onClick={() => void refetch()}>
             Thử lại

@@ -234,7 +234,7 @@ function Example({ bookId, example, picked, onPick }: { bookId: string; example:
         <span className="mt-0.5 size-[32px] shrink-0" aria-hidden />
       )}
       <div className="min-w-0">
-        {example.before && <p className="line-clamp-2 text-fg-3" aria-label="Câu liền trước">{example.before}</p>}
+        {example.before && <p className="line-clamp-2 text-fg-3"><span className="sr-only">Câu liền trước: </span>{example.before}</p>}
         {/* Nhãn đứng NGAY TRÊN câu được hỏi (không phải trên câu trước mờ - dễ đọc nhầm là nhãn của câu ấy); vạch bên trái đánh dấu đúng câu đang hỏi
             khi có câu trước/sau làm ngữ cảnh. */}
         <div className={cn((example.before || example.after) && "border-l-2 border-accent pl-2")}>
@@ -259,7 +259,7 @@ function Example({ bookId, example, picked, onPick }: { bookId: string; example:
               : example.text}
           </p>
         </div>
-        {example.after && <p className="line-clamp-2 text-fg-3" aria-label="Câu liền sau">{example.after}</p>}
+        {example.after && <p className="line-clamp-2 text-fg-3"><span className="sr-only">Câu liền sau: </span>{example.after}</p>}
       </div>
     </li>
   );
@@ -391,7 +391,7 @@ function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item:
         {/* Thẻ chỉ hỏi tên máy kém chắc; mọi tên khác (kể cả tên đã chọn) sửa ở tab Nhân vật, mục "Cách đọc tên". */}
         {onOpenNames && (
           <Button size="sm" variant="ghost" type="button" className="text-fg-2 hover:text-fg" onClick={() => onOpenNames(item.surface ?? "")}>
-            Mọi cách đọc tên…
+            Mọi cách đọc tên
           </Button>
         )}
       </form>
@@ -581,13 +581,13 @@ function SpeakerFix({
         {/* Thẻ "một người hai tên" hỏi hai tên có phải một người - chọn người thứ ba lạc chủ đề (soát UX 29-09). */}
         {item.kind !== "alias" && (
           <Button size="sm" variant="ghost" icon={UserPlus} aria-expanded={creating} className="text-fg-2 hover:text-fg" onClick={() => setCreating((value) => !value)}>
-            Người khác…
+            Người khác
           </Button>
         )}
         {/* Thẻ chỉ gợi vài người; tab Kịch bản tìm được mọi nhân vật trong sách - mở đúng câu này ở đó (soát UX 29-09). */}
         {onOpenScript && item.lines?.length === 1 && item.examples?.[0] && (
           <Button size="sm" variant="ghost" icon={Search} className="text-fg-2 hover:text-fg" onClick={() => onOpenScript(item.examples![0].chapterId, item.lines![0].stableId)}>
-            Tìm người khác…
+            Tìm người khác
           </Button>
         )}
         {/* Thẻ nhóm chỉ in vài câu làm ví dụ ("Hai người chung một tên" có thể 16 câu): đọc đủ ngữ cảnh ở tab Kịch bản trước khi
@@ -696,7 +696,7 @@ function NarratorFix({ bookId, item }: { bookId: string; item: WorkItem }) {
           {buttons.keep}
         </DecisionButton>
         <Button size="sm" variant="ghost" icon={UserPlus} aria-expanded={choosing} className="text-fg-2 hover:text-fg" onClick={() => setChoosing((value) => !value)}>
-          Người kể khác…
+          Người kể khác
         </Button>
       </div>
       <Collapse open={choosing}>
@@ -912,6 +912,8 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
       id={exiting ? undefined : `work-${item.key}`}
       data-work-key={exiting ? undefined : item.key}
       tabIndex={-1}
+      // Thẻ đứng riêng (div) cần vai trò thì tên của nó mới được đọc; trong danh sách thì là listitem.
+      role={Tag === "div" ? "group" : undefined}
       aria-labelledby={exiting ? undefined : `work-${item.key}-title`}
       aria-current={active ? "true" : undefined}
       // Việc đang duyệt nổi ở tên; không thêm mặt thẻ cho từng hàng.
@@ -947,7 +949,7 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
         <div className="flex flex-wrap items-end gap-2">
           {item.pickVoice && onPickVoice && (
             <Button size="sm" variant="ghost" className="mt-3" onClick={() => onPickVoice(item.pickVoice!)}>
-              Chọn giọng khác…
+              Chọn giọng khác
             </Button>
           )}
           <VoiceFix bookId={bookId} item={item} />
@@ -957,7 +959,7 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
       ) : item.lines && item.choices ? (
         <SpeakerFix bookId={bookId} item={item} onOpenScript={openScript} scope={scope} onScope={setScope} picked={picked} />
       ) : (
-        <div className="mt-3 flex flex-wrap gap-1.5" aria-label="Lựa chọn">
+        <div role="group" className="mt-3 flex flex-wrap gap-1.5" aria-label="Lựa chọn">
           {item.options.map((option) => (
             <span key={option} className="rounded-control border border-line px-2.5 py-1 text-xs text-fg-2">
               {option}
@@ -997,7 +999,7 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
           </Button>
           {all && next && (
             <Button size="sm" variant="ghost" disabled={loadingMore} onClick={loadMore}>
-              {loadingMore ? "Đang tải…" : moreText(loaded.length, total, formatNumber)}
+              {loadingMore ? "Đang tải" : moreText(loaded.length, total, formatNumber)}
             </Button>
           )}
         </div>
@@ -1071,7 +1073,7 @@ function BulkKeep({ bookId, kind, items }: { bookId: string; kind: WorkKind; ite
   return (
     <>
       <Button size="sm" variant="ghost" icon={Check} className="mt-3" onClick={() => setConfirm(true)}>
-        Giữ {keepable.length} thẻ…
+        Giữ {keepable.length} thẻ
       </Button>
       <Dialog footer={<DialogActions>
           <Button variant="ghost" onClick={() => setConfirm(false)}>
@@ -1294,7 +1296,7 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, onPickVo
       <MotionPresence open={!open.length && atReview === 0}>
         <p id="work-end" tabIndex={-1} className="mt-4 text-sm text-fg-2">
           {later.length > 0
-            ? "Không còn việc nào sửa được ngay - những việc bên dưới chỉ có tác dụng khi làm lại phân tích từ đầu."
+            ? "Hết việc sửa được ngay - những việc bên dưới chỉ có tác dụng khi làm lại phân tích từ đầu."
             : `Mọi việc đã có quyết định${decided.length > 0 ? ` - ${hint}` : ""}.`}
         </p>
       </MotionPresence>

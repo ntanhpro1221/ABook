@@ -30,7 +30,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.BasicText
+import vn.abook.player.ui.components.BasicText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -57,9 +57,10 @@ import vn.abook.player.ui.motion.Motion
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.theme.MotionMs
+import vn.abook.player.ui.components.fadeEdges
 
 /*
- * Khối dựng của các màn Cài đặt (shared/SettingsNav.tsx của bản WebView): khoảng trắng + tiêu đề nhỏ thay khung (DESIGN.md §4.2), hàng = tên (16) + mô tả
+ * Khối dựng của các màn Cài đặt: khoảng trắng + tiêu đề nhỏ thay khung (DESIGN.md §4.2), hàng = tên (16) + mô tả
  * một dòng (12, mực phụ) bên trái, điều khiển bên phải; nhóm chọn-một nằm DƯỚI tên, trải hết bề ngang. Chữ dài xuống dòng, không cắt.
  */
 
@@ -71,8 +72,9 @@ import vn.abook.player.ui.theme.MotionMs
 fun SettingsPage(title: String, onBack: () -> Unit, tag: String, modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
     val top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val scroll = rememberScrollState()
     Column(
-        modifier.fillMaxSize().testTag(tag).verticalScroll(rememberScrollState())
+        modifier.fillMaxSize().testTag(tag).fadeEdges(scroll).verticalScroll(scroll)
             .padding(top = top, start = Dim.margin, end = Dim.margin, bottom = bottom + Dim.s48),
     ) {
         PageHeader(title, onBack)
@@ -80,10 +82,3 @@ fun SettingsPage(title: String, onBack: () -> Unit, tag: String, modifier: Modif
     }
 }
 
-/** Tính năng mà lõi / giao diện native chưa có: nói thẳng "Sắp có", không giả một nút chạy được. */
-@Composable
-fun SoonRow(label: String, hint: String? = null, tag: String? = null) {
-    ListRow(label, if (tag != null) Modifier.testTag(tag) else Modifier, hint = hint) {
-        BasicText("Sắp có", style = Abook.type.caption)
-    }
-}

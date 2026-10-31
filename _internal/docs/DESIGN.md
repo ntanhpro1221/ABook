@@ -134,7 +134,8 @@ Token có sẵn (`shared/motion.ts` = `--motion-*` trong `styles.css`): nhanh 12
 - **Đổi nội dung tại chỗ = mờ qua** (ảnh cũ mờ hết rồi cái mới mới hiện, không hai lớp chữ chồng nhau); đổi cỡ thì tween chiều
   cao cùng lúc (MotionRegion, Collapse).
 - **Phần tử chung giữa hai màn** (shared element): thanh phát thu nhỏ nở thành trình phát đầy đủ (khung + bìa bay từ ô nhỏ ra
-  ô lớn); bìa ở Thư viện bay vào vị trí bìa ở trang sách. View Transitions khi WebView có, không thì mờ qua.
+  ô lớn; `listen/nowPlayingMorph.ts`, Web Animations trên chính phần tử, không chụp ảnh tài liệu); bìa ở Thư viện bay vào vị trí bìa ở trang sách.
+- **Căn giữa trục chéo**: thành phần dùng chung (bìa, icon) không tự mang `self-*`; hàng quyết định căn (máy dò CROSS CENTER).
 - **Danh sách**: thêm/xoá hàng mở/khép tại chỗ (useListPresence), hàng khác trượt theo, không nhảy.
 - **Phản hồi chạm**: nhấn = thu 0,97 + tối nền 6 % trong 90 ms, thả = về trong 120 ms; nút phát đổi icon phát/dừng bằng mờ
   chéo tại chỗ. Không nảy, không vượt đích - sang trọng là dứt khoát (mọi `cubic-bezier` giữ tung độ trong [0, 1]).
@@ -215,7 +216,17 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
   máy tính · 20/1.7 chữ đọc theo. Đậm: 400 / 500 / 700 - tối đa ba mức một màn. Chữ hoa giãn chỉ cho nhãn phần (12, 600, +0.06em).
 - **Bo góc**: 8 điều khiển · 12 bìa/ảnh · 20 bảng trượt/hộp thoại · tròn cho nút tròn. Danh sách không bo khung.
 - **Viền**: 1px `--line` chỉ làm vạch chia hàng trong danh sách dài, thụt theo nội dung.
-- **Bóng**: chỉ lớp nổi (thanh phát, bảng trượt, menu, hộp thoại).
+- **Bóng**: chỉ lớp nổi (thanh phát, bảng trượt, menu, hộp thoại). Bóng không thấy được trên nền tối (bảng `--panel` #1b1a18 chỉ hơn nền #121110 một bậc),
+  nên bờ của bảng trượt / hộp ở chế độ tối do ba thứ: màn mờ `--scrim` tối rgb(6 5 4 / .62) (sáng rgb(20 17 13 / .45); điện thoại `AbookColors.scrim`), vạch 1 px
+  `--line` theo mép trên (điện thoại `Modifier.sheetEdge`), và chính bóng (vô hình ở tối nhưng vẫn khai báo cho sáng).
+- **Chữ xuống dòng**: không để MỘT chữ lẻ ở dòng cuối (`text-wrap: pretty` / `balance` web; điện thoại `LineBreak.Strategy.Balanced` trong mọi kiểu chữ của
+  `Theme.kt`, riêng chữ đọc dài của Đọc theo dùng `LineBreak.Paragraph`), không gạch nối giữa chữ; địa chỉ web đi nguyên một khối, chỉ khi rộng hơn cả dòng mới đứt ở dấu "/" (`keepUrlTogether`).
+- **Hàng chip / tab ngang**: khe giữa hai chữ tối thiểu 16 px (24 khi dư chỗ); thiếu chỗ (màn 320, chữ hệ thống to) thì hàng CUỘN ngang với mép mờ
+  (`fadeEdgesHorizontal`, `useRowFade` bên web) - không ép sát nút bên cạnh, không xuống dòng, không cụt chữ; mục đang chọn tự cuộn vào khung.
+- **Chân màn**: thanh đáy (thanh tab) chừa dưới nó ít nhất 8 px kể cả khi máy báo inset thanh điều hướng 0 (ColorOS giấu vạch cử chỉ): vạch hổ phách không bao giờ
+  sát mép màn (điện thoại `bottomClearance`).
+- **Việc không lấy lại được** (xoá nhật ký, xoá khỏi máy, bỏ ghép, gỡ giọng, xoá khoá / bài nhạc, bỏ thay đổi): luôn hỏi lại bằng bước xác nhận chung (điện thoại
+  `ConfirmPage` + `DangerButton`, web `Dialog` + nút `danger`), nút "Giữ lại" là nút chữ. Máy dò `NativePolishTest.everyDestructiveActionOfTheScreensAsksFirst`.
 - **Vùng chạm**: tối thiểu 44×44 (điện thoại), 32×32 (máy tính, có tooltip).
 
 ## 6. Thành phần
@@ -238,9 +249,10 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
   Tìm là icon mở rộng thành ô. Trong code: `FilterRow` (shared/ui.tsx) - mọi bộ lọc hai-ba mục trong tab (Kịch bản, Cần nghe lại, Việc cần duyệt) dùng nó, không `Segmented`. Một tab không chứa tab / bộ lọc thứ hai chỉ để đổi kiểu xem cùng một danh sách (Nhật ký: danh sách diễn biến + nút "Chi tiết kỹ thuật" mở thêm).
 - **Mục đang chọn của tab và bộ lọc**: cùng một kiểu - chữ `--text` đậm màu thường + gạch chân hổ phách; hổ phách chỉ ở gạch, không ở chữ (soát 25-10: tab chữ tối, bộ lọc chữ hổ phách trông như hai app).
 - **Tab trong trang**: chữ + gạch chân, số đếm nhỏ cạnh: số trơn `--text-2` 12 px thẳng đường chân chữ với tên tab (`TabLabel`), không viên thuốc, cả điện thoại lẫn máy tính, cả nút "Thêm". Nội dung tab không lặp lại tên tab làm tiêu đề. Không đặt nút cùng việc với một tab đang thấy trên cùng màn (máy tính "Đang nghe": "Chương" / "Đọc theo" chỉ là tab của bảng phải; máy dò REPEATED LABEL control-duplicates-tab).
-- **Danh sách cuộn trong khung** (chương khi thêm sách): mép dưới mờ dần khi còn hàng chưa thấy, mép trên mờ khi đã cuộn (`useScrollFade`); hàng không bao giờ cụt cứng ở mép khung.
+- **Mọi vùng cuộn dọc** (danh sách trong bảng trượt / hộp, trang dưới nút ←, màn có thanh nút đáy, Thư viện / Cài đặt trên thanh phát + thanh tab): mép mờ dần 24 px chỉ ở phía còn cuộn được - mép dưới khi còn hàng chưa thấy, mép trên khi đã cuộn; hàng không bao giờ cụt cứng dưới tiêu đề, tay nắm hay thanh cố định (soát 26-10: dòng nhật ký đầu cắt ngang dưới lời "Có tên sách; khoá..."). Một thành phần mỗi nền tảng: điện thoại `Modifier.fadeEdges(state)` (ui/components/ScrollFade.kt, đặt trước `verticalScroll`), web `useFadeScroller` / `useScrollFadeOn` (shared/scrollFade.ts, `mask-image`). Máy dò: `ScrollFadeRulesTest.kt`, `scrollFadeRules.test.ts`. Khung có viền / bóng thì mặt nạ đặt ở lớp trong (mặt nạ xoá cả bóng).
 - **Bảng trượt / hộp thoại**: điện thoại = bảng trượt từ đáy có tay nắm; máy tính = hộp giữa màn rộng ≤ 560. Nút chính ở
   đáy, luôn thấy (đáy dính khi nội dung cuộn).
+  Lớp phủ nằm LÊN trên: màn bên dưới đứng yên, không co hay chừa chỗ theo bảng (máy kiểm: gallery/overlayStill.phone.dom.test.tsx).
 - **Thanh phát thu nhỏ**: điện thoại = bìa · tên chương / tên sách · phát. Máy tính = trái bìa+tên; giữa lùi 15 · phát ·
   tới 15 + thanh tiến độ; phải tốc độ · âm lượng · "…" (hẹn giờ, phát trên thiết bị khác, nhạc nền, giọng...).
 - **Toast**: một dòng + tối đa một hành động, tự tắt, Back đóng.

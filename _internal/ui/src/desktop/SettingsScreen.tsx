@@ -36,15 +36,17 @@ import { useDefaultVoiceName, VoiceSettings, type KeyCheck, type OnlineProviderI
 import { httpSource } from "./httpSource";
 import { OtherComputers } from "./OtherComputers";
 import { OwnDiagnostics } from "./OwnDiagnostics";
-import { PhoneSync, Switch, type SyncView } from "./PhoneSync";
+import { PhoneSync, type SyncView } from "./PhoneSync";
+import { Switch } from "./Switch";
 import { checkLine, UPDATE_CHECKED_EVENT, UPDATE_CHECK_WAIT_MS, type CheckLine, type UpdateChecked } from "./updateCheck";
+import { useFadeScroller } from "@/shared/scrollFade";
 
 // Cài đặt của máy tính (chủ app 23-10: "như lạc vào ma trận"): cùng cây nhóm với điện thoại (shared/SettingsNav.tsx). Cửa sổ rộng: danh sách nhóm
 // bên trái, nội dung bên phải; hẹp (trình duyệt điện thoại điều khiển từ xa): trang gốc là danh sách, mỗi nhóm một màn con như điện thoại.
 
 const SOURCE_URL = "https://github.com/ntanhpro1221/ABook/";
 
-/** Giọng đọc của "Nghe ngay" trên máy tính: máy chủ cục bộ (abook/readaloud) đọc, khóa của người dùng gửi trong thân yêu cầu, chỉ nhận lại bản che. */
+/** Giọng đọc của "Nghe ngay" trên máy tính: máy chủ cục bộ (abook/readaloud) đọc, khoá của người dùng gửi trong thân yêu cầu, chỉ nhận lại bản che. */
 const desktopVoices: VoiceSettingsApi = {
   voices: () => httpSource.readAloudVoices!(),
   sample: (voice, text) => httpSource.readAloudSample!(voice, text),
@@ -142,7 +144,7 @@ function UpdateRow({ update, current }: { update: { version: string; notes: stri
       </p>
       {update.notes && <p className="mt-2 whitespace-pre-line text-[0.8125rem] leading-relaxed text-fg-2 text-pretty">{update.notes}</p>}
       <Button className="mt-3" icon={Download} disabled={busy} onClick={() => void install()}>
-        {busy ? "Đang tải bản mới…" : "Cập nhật ABook"}
+        {busy ? "Đang tải bản mới" : "Cập nhật ABook"}
       </Button>
     </div>
   );
@@ -182,7 +184,7 @@ function UpdateCheck({ current }: { current: string }) {
       hint={<MotionRegion as="span" motionKey={line?.text ?? ""}>{line && <span className={cn(line.tone === "error" && "text-danger")} role="status">{line.text}</span>}</MotionRegion>}
     >
       <Button size="sm" variant="ghost" disabled={checking} onClick={() => void check()}>
-        {checking ? "Đang kiểm tra…" : "Kiểm tra bản mới"}
+        {checking ? "Đang kiểm tra" : "Kiểm tra bản mới"}
       </Button>
     </SettingsRow>
   );
@@ -190,12 +192,13 @@ function UpdateCheck({ current }: { current: string }) {
 
 /** Danh sách thành phần bên thứ ba (docs/THIRD_PARTY.md, gói lúc build) trong một hộp - trang Cài đặt không dài thêm. */
 function ThirdPartyButton() {
+  const scrollFade = useFadeScroller<HTMLDivElement>();
   const [open, setOpen] = useState(false);
   return (
     <>
       <DisclosureRow title="Thành phần sử dụng" onClick={() => setOpen(true)} />
       <Dialog open={open} onOpenChange={setOpen} title="Thành phần sử dụng" width="max-w-[560px]">
-        <div className="mt-3 max-h-[65vh] select-text overflow-y-auto pr-1">{open && <ThirdPartyList />}</div>
+        <div ref={scrollFade.ref} style={scrollFade.style} className="mt-3 max-h-[65vh] select-text overflow-y-auto pr-1">{open && <ThirdPartyList />}</div>
       </Dialog>
     </>
   );
@@ -468,7 +471,7 @@ export function AdvancedGroup({ info }: { info: AppInfo | undefined }) {
           <p className="text-sm text-fg-2">ABook {info?.version} - nghe sách tiếng Việt và làm sách nói.</p>
           {/* Liên kết mở ở cửa sổ mới (target="_blank"), không điều hướng chính cửa sổ app; cửa sổ app Windows nuốt target nên openExternal nhờ máy chủ mở. */}
           <p className="select-text text-sm text-fg-2">
-            Mã nguồn mở (MIT):{" "}
+            Mã nguồn mở (MIT){" "}
             <a href={SOURCE_URL} target="_blank" rel="noopener noreferrer" onClick={(event) => openExternal(SOURCE_URL, event)} className="font-medium text-accent-text underline underline-offset-2 [overflow-wrap:anywhere]">
               github.com/ntanhpro1221/ABook
             </a>

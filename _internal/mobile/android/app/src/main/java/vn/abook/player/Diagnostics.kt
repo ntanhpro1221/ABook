@@ -142,7 +142,7 @@ object Diagnostics {
         }
     }
 
-    /** Gói .zip để người dùng tự gửi đi: `chan-doan.json` (JSON gọn để giữ trần) + `nhat-ky.txt`. Không gửi đi đâu - xem LibraryPlugin.shareDiagnostics. */
+    /** Gói .zip để người dùng tự gửi đi: `chan-doan.json` (JSON gọn để giữ trần) + `nhat-ky.txt`. Không gửi đi đâu. */
     internal fun bundle(report: JSONObject): ByteArray {
         val safe = fit(report)
         val out = java.io.ByteArrayOutputStream()
@@ -300,14 +300,13 @@ object Diagnostics {
         return JSONArray(filterLogcat(ArrayList(out).takeLast(lines)))
     }
 
-    // Explicit media/system allowlist. Web/plugin payloads are never diagnostics logcat sources.
+    // Explicit media/system allowlist: any other tag (app, third-party library) is never a diagnostics logcat source.
     private val allowedTags = Regex("(?:ExoPlayer[^: ]*|MediaCodec[^: ]*|CCodec[^: ]*|ACodec[^: ]*|AudioTrack|AudioSink|DefaultAudioSink|AndroidRuntime|WM-[^: ]+|StrictMode)")
-    private val forbiddenTags = Regex("(?i)(?:Capacitor(?:/.*)?|Console|chromium|WebView.*)")
     private val threadtimeTag = Regex("""^\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\.\d+\s+\d+\s+\d+\s+[VDIWEF]\s+([^:]+):""")
     private val briefTag = Regex("""^[VDIWEF]/([^(:\s]+)\s*(?:\(\s*\d+\))?:""")
 
     internal fun filterLogcat(lines: List<String>): List<String> = lines.mapNotNull { line ->
         val tag = (threadtimeTag.find(line) ?: briefTag.find(line))?.groupValues?.get(1)?.trim() ?: return@mapNotNull null
-        if (forbiddenTags.matches(tag) || !allowedTags.matches(tag)) null else AppLog.clean(line)
+        if (!allowedTags.matches(tag)) null else AppLog.clean(line)
     }
 }

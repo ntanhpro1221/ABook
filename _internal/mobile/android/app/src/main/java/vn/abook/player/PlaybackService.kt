@@ -33,6 +33,7 @@ import com.google.common.util.concurrent.ListenableFuture
 import java.io.File
 import java.security.MessageDigest
 import vn.abook.player.readaloud.ReadAloud
+import vn.abook.player.ui.NativeActivity
 
 /**
  * Dịch vụ phát nền: giữ ExoPlayer sống khi tắt màn hình, hiện điều khiển ở thanh thông báo và màn hình khoá,
@@ -134,7 +135,7 @@ class PlaybackService : MediaLibraryService() {
         })
         Playback.player = player
         val openApp = PendingIntent.getActivity(
-            this, 0, Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+            this, 0, Intent(this, NativeActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         session = MediaLibrarySession.Builder(this, HeadsetSkips(player), Callback())

@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.BasicText
+import vn.abook.player.ui.components.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -25,6 +25,7 @@ import vn.abook.player.MusicImport
 import vn.abook.player.ui.components.Caption
 import vn.abook.player.ui.components.InlineProblem
 import vn.abook.player.ui.components.ListItem
+import vn.abook.player.ui.components.MoreInfo
 import vn.abook.player.ui.components.PageHeader
 import vn.abook.player.ui.components.UploadIcon
 import vn.abook.player.ui.components.Reveal
@@ -34,10 +35,12 @@ import vn.abook.player.ui.devices.DownloadBar
 import vn.abook.player.ui.music.MusicText
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.components.fadeEdges
+import androidx.compose.foundation.lazy.rememberLazyListState
 
 /**
  * Nhạc của tôi: nhạc riêng của bạn, dùng làm nhạc nền cho mọi cuốn. "Thêm nhạc của bạn" mở hộp chọn file của hệ thống; tiến độ (xong / tổng) chạy ngay hàng ấy. Mỗi bài một hàng
- * (nghệ sĩ · độ dài, cỡ file); chạm một bài mở bảng "Xoá bài". Cùng kho với bản WebView ([vn.abook.player.MusicStore]).
+ * (nghệ sĩ · độ dài, cỡ file); chạm một bài mở bảng "Xoá bài". Kho: [vn.abook.player.MusicStore].
  */
 @Composable
 fun MyMusicScreen(voice: VoiceState, sheets: SheetHost, onBack: () -> Unit, modifier: Modifier = Modifier) {
@@ -47,8 +50,10 @@ fun MyMusicScreen(voice: VoiceState, sheets: SheetHost, onBack: () -> Unit, modi
     val top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     val colors = Abook.colors
+    val list = rememberLazyListState()
     LazyColumn(
-        modifier.fillMaxSize().testTag("music_screen"),
+        modifier.fillMaxSize().testTag("music_screen").fadeEdges(list),
+        state = list,
         contentPadding = PaddingValues(top = top, start = Dim.margin, end = Dim.margin, bottom = bottom + Dim.s48),
     ) {
         item(key = "header", contentType = "header") { PageHeader("Nhạc của tôi", onBack) }
@@ -58,11 +63,13 @@ fun MyMusicScreen(voice: VoiceState, sheets: SheetHost, onBack: () -> Unit, modi
                     if (ui.importing) "Đang thêm ${ui.done}/${ui.total}" else MusicText.ADD_LABEL, Modifier,
                     if (ui.importing) null else ({ picker.launch(MusicImport.MIME_TYPES) }), "music_add",
                     titleColor = if (ui.importing) colors.text else colors.accentText,
+                    titleStyle = Abook.type.body.copy(fontFeatureSettings = "tnum"),
                     leading = { UploadIcon(if (ui.importing) colors.text2 else colors.accentText) },
                     below = if (ui.importing) ({ DownloadBar(voice.importProgress) }) else null,
                 )
                 RowLine()
                 Caption(MusicText.MY_MUSIC_INTRO, Modifier.padding(top = Dim.s8).testTag("music_intro"))
+                MoreInfo("Nhạc riêng", MusicText.MY_MUSIC_HELP, "music_help")
             }
         }
         item(key = "feedback", contentType = "feedback") {

@@ -40,11 +40,22 @@ class PeerProbeTest {
         override fun getEnableSessionCreation() = true
     }
 
+    /** The production deadline (Pin.probeTls) around a fake socket: `address` stands for name resolution, which counts against the same deadline. */
+    private fun dial(socket: SSLSocket, address: () -> InetSocketAddress, timeoutMs: Int, nanoTime: () -> Long) {
+        socket.use {
+            Pin.probeTls(timeoutMs, nanoTime) { left ->
+                val resolved = address()
+                socket.connect(resolved, left())
+                socket
+            }
+        }
+    }
+
     @Test fun slowTcpLeavesOnlyRemainingBudgetForTls() {
         val clock = Clock()
         val socket = Socket(clock, tcpMs = 90, tlsMs = 90)
         try {
-            Pin.probeSocket(socket, { InetSocketAddress("127.0.0.1", 443) }, 100, { clock.now })
+            dial(socket, { InetSocketAddress("127.0.0.1", 443) }, 100, { clock.now })
             fail("two independent phase timeouts")
         } catch (_: java.net.SocketTimeoutException) { }
         assertEquals(100, socket.tcpTimeout)
@@ -55,13 +66,13 @@ class PeerProbeTest {
     @Test fun dnsTimeCountsBeforeTcpAndTls() {
         val clock = Clock()
         val socket = Socket(clock, tcpMs = 20, tlsMs = 10)
-        Pin.probeSocket(socket, { clock.now += 40_000_000; InetSocketAddress("127.0.0.1", 443) }, 100, { clock.now })
+        dial(socket, { clock.now += 40_000_000; InetSocketAddress("127.0.0.1", 443) }, 100, { clock.now })
         assertEquals(60, socket.tcpTimeout)
         assertEquals(40, socket.tlsTimeout)
         assertTrue(socket.closed)
         val expired = Socket(clock)
         try {
-            Pin.probeSocket(expired, { clock.now += 101_000_000; InetSocketAddress("127.0.0.1", 443) }, 100, { clock.now })
+            dial(expired, { clock.now += 101_000_000; InetSocketAddress("127.0.0.1", 443) }, 100, { clock.now })
             fail("DNS consumed deadline")
         } catch (_: java.net.SocketTimeoutException) { }
         assertEquals(0, expired.tcpTimeout)
@@ -72,7 +83,7 @@ class PeerProbeTest {
         val clock = Clock()
         val socket = Socket(clock)
         try {
-            Pin.probeSocket(socket, { InetSocketAddress("127.0.0.1", 443) }, 100, { clock.now })
+            dial(socket, { InetSocketAddress("127.0.0.1", 443) }, 100, { clock.now })
             assertTrue(socket.closed) // remember runs after Pin.probe has already left use.
             throw java.io.IOException("peer routes locked")
         } catch (_: java.io.IOException) { }

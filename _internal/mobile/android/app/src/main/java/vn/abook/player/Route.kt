@@ -1,8 +1,6 @@
 package vn.abook.player
 
-import java.net.InetAddress
-import java.net.InetSocketAddress
-import java.net.Socket
+import vn.abook.player.net.FastConnect
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 
@@ -119,6 +117,6 @@ object Route {
         val port = target.substringAfterLast(":").toIntOrNull() ?: return false
         // Only numeric literals: no hostname may block the global TCP hint workers in DNS.
         if (!numeric(target)) return false
-        return runCatching { Socket().use { it.connect(InetSocketAddress(InetAddress.getByName(host), port), PROBE_MS) } }.isSuccess
+        return runCatching { FastConnect.connect(host, port, PROBE_MS).close() }.isSuccess
     }
 }

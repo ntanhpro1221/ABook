@@ -170,7 +170,7 @@ FocusScope {
                     onTextChanged: root.query = text
                     escapeLocal: true; onEscaped: search.close()
                 }
-                IconButton { id: clear; objectName: "librarySearchClear"; icon: "x"; tip: root.query ? "Xoá ô tìm" : "Đóng tìm kiếm"; onClicked: root.query ? root.query = "" : search.close() }
+                IconButton { id: clear; objectName: "librarySearchClear"; icon: "x"; tip: root.query ? "Xoá ô tìm" : "Đóng ô tìm"; onClicked: root.query ? root.query = "" : search.close() }
             }
         }
     }
@@ -183,7 +183,7 @@ FocusScope {
                 ChoiceChip {
                     required property var modelData
                     fullWidthReason: "Single-column menu (DESIGN 6)"
-                    width: parent.width; text: modelData.label; selected: root.sortOrder === modelData.value
+                    width: parent ? parent.width : 0; text: modelData.label; selected: root.sortOrder === modelData.value
                     onClicked: { root.sortOrder = modelData.value; Api.store("abook-library-sort", modelData.value); sortMenu.close() }
                 }
             }
@@ -255,8 +255,9 @@ FocusScope {
             id: rowItem
             required property int index
             readonly property int first: index * root.cols
-            width: ListView.view.width
-            height: cells.childrenRect.height + root.gap
+            // Hàng còn trong bể tái dùng (reuseItems) khi màn bị huỷ: ngữ cảnh đã đi, root và ListView.view là null.
+            width: ListView.view ? ListView.view.width : 0
+            height: cells.childrenRect.height + (root ? root.gap : 0)
             Item {
                 id: cells
                 readonly property int count: Math.max(0, Math.min(root.cols, root.count - rowItem.first))

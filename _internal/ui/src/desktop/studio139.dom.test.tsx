@@ -9,7 +9,7 @@ import { toast } from "@/shared/toast";
 import { TooltipProvider } from "@/shared/ui";
 import { SettingsList } from "@/shared/SettingsNav";
 import { installBackOrder } from "@/shared/backOrder";
-import { dismissTopLayer } from "@/android/backLayers";
+import { dismissTopLayer } from "@/shared/backLayers";
 import { ChapterError } from "@/studio/ChapterError";
 import { PhoneSync } from "./PhoneSync";
 import { AudiobookForm } from "./AudiobookDialog";
@@ -72,7 +72,7 @@ it("nút chuyển máy giữ một vùng khi chưa phát, hiện menu hoặc cò
   await draw(<HandOffButton />); const region = host.firstElementChild;
   h.track = { bookId: "b", chapterId: 1 }; await draw(<HandOffButton />);
   expect(host.firstElementChild).toBe(region);
-  expect(host.querySelector('[aria-label="Phát trên máy khác"]')).not.toBeNull();
+  expect(host.querySelector('[aria-label="Phát trên thiết bị khác"]')).not.toBeNull();
   await finish();
   await act(() => client.setQueryData(["remote"], { phones: [{ device: "p", name: "Loa", via: "cast", kind: "cast" }] }));
   await act(() => vi.advanceTimersByTime(1));
@@ -109,8 +109,8 @@ it("toast xuất giữ node khi tiến độ, huỷ, kết quả đổi và Back
     const toastNode = document.querySelector<HTMLElement>("[data-sonner-toast]")!;
     expect(toastNode).not.toBeNull(); expect(toastNode.textContent).toContain("Chi tiết"); await finish();
     await act(() => [...toastNode.querySelectorAll("button")].find(button => button.textContent === "Chi tiết")!.click());
-    expect(toastNode.textContent).toContain("Huỷ");
-    await act(() => [...toastNode.querySelectorAll("button")].find(button => button.textContent === "Huỷ")!.click());
+    expect(toastNode.textContent).toContain("Dừng");
+    await act(() => [...toastNode.querySelectorAll("button")].find(button => button.textContent === "Dừng")!.click());
     await act(() => vi.advanceTimersByTime(50));
     expect(toastNode.textContent).toContain("Đang dừng");
     expect(document.querySelector("[data-sonner-toast]")).toBe(toastNode); await finish();

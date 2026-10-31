@@ -96,7 +96,7 @@ Studio (máy tính):
 
 ## Android: `mobile/`
 
-Capacitor bọc giao diện Nghe; mọi thứ phải chạy khi tắt màn hình nằm ở native (WebView bị treo lúc đó):
+Giao diện Nghe của điện thoại là Kotlin + Compose (`NATIVE_PHONE_UI.md`); mọi thứ phải chạy khi tắt màn hình nằm ở lõi native:
 
 - `Playback.kt` + `PlaybackService.kt` (Media3 1.11.1): cả cuốn là một hàng đợi, lưu vị trí mỗi 5 giây, tự lùi
   khi nghe lại, thông báo + màn hình khoá (lùi 15 / tới 15 / +10 phút khi đang hẹn giờ), nút tai
@@ -137,7 +137,7 @@ http://localhost:5173/?mute=1#/
 # bản build nhúng vào app máy tính (ra abook/webui/static - không đặt tên dist/, .gitignore bỏ qua nó)
 npm --prefix ui run build
 # app Android
-npm --prefix ui run build:android && cd mobile && npx cap sync android && cd android && gradlew assembleDebug
+cd mobile/android && gradlew assembleDebug
 ```
 
 Dev server đồng bộ chỉ nghe `127.0.0.1` khi có `--sync-host 127.0.0.1`: máy ảo Android gọi tới qua `10.0.2.2`

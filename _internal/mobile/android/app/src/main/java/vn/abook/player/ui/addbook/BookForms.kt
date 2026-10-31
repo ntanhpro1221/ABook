@@ -3,7 +3,7 @@ package vn.abook.player.ui.addbook
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicText
+import vn.abook.player.ui.components.BasicText
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
@@ -54,7 +54,7 @@ fun BookForm(
 fun BookField(
     label: String?, value: String, onChange: (String) -> Unit, tag: String, enabled: Boolean = true, description: String = label.orEmpty(),
     placeholder: String? = null, keyboard: KeyboardType = KeyboardType.Text,
-    /** Chấm thay chữ (khóa, mật khẩu); `trailing` là việc ở cuối ô ("Hiện" / "Ẩn"). */
+    /** Chấm thay chữ (khoá, mật khẩu); `trailing` là việc ở cuối ô ("Hiện" / "Ẩn"). */
     masked: Boolean = false, trailing: (@Composable () -> Unit)? = null,
 ) {
     Column(Modifier.fillMaxWidth()) {

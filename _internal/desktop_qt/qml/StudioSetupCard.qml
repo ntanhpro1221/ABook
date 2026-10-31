@@ -40,8 +40,8 @@ Item {
 
     function press() {
         const kind = button.kind
-        if (kind === "cancel" || kind === "cancelOld") setup.cancel(function(ok, data) { if (!ok) setup.failure("Không cài được Studio", data) })
-        else if (kind === "go" || kind === "unfit") setup.install(function(ok, data) { if (!ok) setup.failure("Không cài được Studio", data) })
+        if (kind === "cancel" || kind === "cancelOld") setup.cancel(function(ok, data) { if (!ok) setup.failure("Chưa cài được Studio", data) })
+        else if (kind === "go" || kind === "unfit") setup.install(function(ok, data) { if (!ok) setup.failure("Chưa cài được Studio", data) })
     }
 
     Collapse {

@@ -17,12 +17,61 @@ import vn.abook.player.readaloud.ReadAloud
 import vn.abook.player.readaloud.VoiceSpeed
 
 /**
- * Lõi thật của Cài đặt native: đọc / ghi ĐÚNG những chỗ bản WebView dùng - tuỳ chọn nghe ở [ListenPrefs] (`listen-prefs.json`, qua [ListenPrefs.apply] như
- * `PlayerPlugin.configure`), "Tự chọn nhạc nền" ở [MusicBed], giọng mặc định ở [ReadAloud] (`readaloud-voices.json`), tốc độ giọng ở [VoiceSpeed], nhật ký ở
- * [AppLog] / [Diagnostics]. Không qua plugin. Mọi hàm gọi ở luồng nền.
+ * Lõi thật của Cài đặt native: đọc / ghi ĐÚNG những chỗ lõi dùng - tuỳ chọn nghe ở [ListenPrefs] (`listen-prefs.json`, qua [ListenPrefs.apply]),
+ * "Tự chọn nhạc nền" ở [MusicBed], giọng mặc định ở [ReadAloud] (`readaloud-voices.json`), tốc độ giọng ở [VoiceSpeed], nhật ký ở
+ * [AppLog] / [Diagnostics]. Mọi hàm gọi ở luồng nền.
  */
 class AndroidSettingsCore(context: Context) : SettingsCore {
     private val app = context.applicationContext
+    override fun takeNotificationOffer(): Boolean {
+        val prefs = app.getSharedPreferences("native_ui", Context.MODE_PRIVATE)
+        if (prefs.getBoolean("notification_asked", false)) return false
+        prefs.edit().putBoolean("notification_asked", true).apply()
+        return true
+    }
+    override fun freshOldSaves(names: List<String>): Boolean {
+        val prefs = app.getSharedPreferences("native_ui", Context.MODE_PRIVATE)
+        val seen = prefs.getStringSet("old_saves_seen", emptySet()).orEmpty()
+        val fresh = names.any { it !in seen }
+        prefs.edit().putStringSet("old_saves_seen", names.toSet()).apply()
+        return fresh
+    }
+    override fun oldSaves(): List<OldSave> {
+        val dir = vn.abook.player.OldSaves.dir(app.filesDir)
+        vn.abook.player.BookSave.recover(dir)
+        return vn.abook.player.OldSaves.list(dir).map { OldSave(it.name, it.size, it.modified) }
+    }
+    override fun deleteOldSave(name: String) {
+        check(vn.abook.player.OldSaves.delete(vn.abook.player.OldSaves.dir(app.filesDir), name)) { "Chưa xoá được" }
+    }
+    override fun exportOldSave(name: String, uri: String) {
+        val sink = app.contentResolver.openOutputStream(android.net.Uri.parse(uri), "wt") ?: error("Chưa mở được file để ghi")
+        sink.use { vn.abook.player.OldSaves.copyTo(vn.abook.player.OldSaves.dir(app.filesDir), name, it) }
+    }
+    override fun release(): AppRelease? {
+        val prefs = app.getSharedPreferences("app-release", Context.MODE_PRIVATE)
+        val cached = runCatching { JSONObject(prefs.getString("json", "")!!) }.getOrNull()
+        if (System.currentTimeMillis() - prefs.getLong("at", 0) < 86_400_000) return cached?.let(AppRelease::parse)
+        return runCatching {
+            val connection = vn.abook.player.net.FastConnect.get("https://api.github.com/repos/ntanhpro1221/ABook/releases/latest", 8000) {
+                it.readTimeout = 8000
+                it.setRequestProperty("Accept", "application/vnd.github+json")
+            }
+            try {
+                check(connection.responseCode == 200)
+                val json = connection.inputStream.bufferedReader().use { it.readText() }
+                val release = AppRelease.parse(JSONObject(json))
+                prefs.edit().putString("json", json).putLong("at", System.currentTimeMillis()).apply()
+                release
+            } finally { connection.disconnect() }
+        }.getOrElse { cached?.let(AppRelease::parse) }
+    }
+    override fun tellRelease(version: String): Boolean {
+        val prefs = app.getSharedPreferences("app-release", Context.MODE_PRIVATE)
+        if (prefs.getString("told", "") == version) return false
+        prefs.edit().putString("told", version).apply()
+        return true
+    }
 
     /** Lõi phát (và kho, giọng đọc, nhạc nền) đã dựng: `Playback.init` gọi lại được nhiều lần, các phần bên trong tự giữ lần đầu. */
     private fun ready() = Playback.init(app)
@@ -41,7 +90,7 @@ class AndroidSettingsCore(context: Context) : SettingsCore {
     override fun voices(): List<VoiceOption> {
         ready()
         return ReadAloud.voices(app).map {
-            VoiceOption(it.optString("id"), it.optString("name"), it.optString("provider"), it.optBoolean("default"))
+            VoiceOption(it.optString("id"), it.optString("name"), it.optString("provider"), it.optBoolean("default"), it.optString("gender"))
         }
     }
 
@@ -73,7 +122,7 @@ class AndroidSettingsCore(context: Context) : SettingsCore {
 
     override fun clearCache(): Long {
         ready()
-        // Như "Dọn bản đọc đã làm" của bản WebView (ReadAloudPlugin.cacheClear): "Làm trước" đang chạy dừng trước, không thì nó ghi lại đúng những đoạn vừa dọn.
+        // "Dọn bản đọc đã làm": "Làm trước" đang chạy dừng trước, không thì nó ghi lại đúng những đoạn vừa dọn.
         vn.abook.player.readaloud.PrepareAhead.cancel(app)
         ReadAloud.cache().clear()
         return ReadAloud.cache().sizeBytes()
@@ -98,10 +147,10 @@ class AndroidSettingsCore(context: Context) : SettingsCore {
     override val version: String get() = BuildConfig.VERSION_NAME
 
     companion object {
-        /** Số dòng nhật ký của "Xem" (như `VIEW_LINES` của bản WebView). */
+        /** Số dòng nhật ký của "Xem". */
         const val VIEW_LINES = 500
 
-        /** docs/THIRD_PARTY.md gói vào asset của bản -PnativeUi (app/build.gradle). */
+        /** docs/THIRD_PARTY.md gói vào asset lúc build (app/build.gradle, nativeThirdPartyAsset). */
         const val THIRD_PARTY_ASSET = "THIRD_PARTY.md"
     }
 }

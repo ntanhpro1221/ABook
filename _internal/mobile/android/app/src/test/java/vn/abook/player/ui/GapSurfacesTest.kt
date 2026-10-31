@@ -206,10 +206,10 @@ class GapSurfacesTest {
         var library by mutableStateOf<LibraryState>(LibraryState.Ready(all))
         lateinit var deletes: UndoDelete
         lateinit var scope: CoroutineScope
-        val erased = mutableListOf<String>()
+        val restored = mutableListOf<String>()
         theme(dark) {
             scope = rememberCoroutineScope()
-            deletes = remember { UndoDelete(scope, { erased += it; null }, { library = LibraryState.Ready(all.filterNot { deletes.contains(it.id) }) }) }
+            deletes = remember { UndoDelete(scope, { "t-$it" }, { restored += it }, { library = LibraryState.Ready(all.filterNot { deletes.contains(it.id) }) }) }
             val shell = remember { ShellState(scope) }
             val player = remember { PlayerRepo(FakePlaybackCore(playerSnapshot(book = "b2", playing = true)), scope, Dispatchers.Unconfined, { null }, { null }) }
             LaunchedEffect(Unit) { player.attach() }
@@ -235,7 +235,7 @@ class GapSurfacesTest {
         rule.mainClock.autoAdvance = true
         rule.waitForIdle()
         assertEquals(before, rule.onNodeWithText(book.title).getUnclippedBoundsInRoot())
-        assertTrue(erased.isEmpty())
+        assertEquals(listOf("t-b1"), restored)
     }
 
     @Test fun deletedPlayingBookClosesTheWindowAndTheMiniPlayer() {
@@ -264,12 +264,12 @@ class GapSurfacesTest {
     @Test fun storageDeleteUsesTheSameUndoAndRestoresItsRowAtTheSamePlace() {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
         lateinit var devices: DevicesState
-        val erased = mutableListOf<String>()
-        val deletes = UndoDelete(scope, { erased += it; null }, { devices.openStorage() })
+        val restored = mutableListOf<String>()
+        val deletes = UndoDelete(scope, { "t-$it" }, { restored += it }, { devices.openStorage() })
         val stored = listOf(Stored("b1", book.title, 1_024, false), Stored("b2", "Tắt đèn", 512, false))
         val source = object : DevicesSource by FakeDevicesSource() {
             override suspend fun storage() = Storage(entries = stored.filterNot { deletes.contains(it.id) })
-            override suspend fun delete(id: String): String? { deletes.remove(id); return null }
+            override suspend fun delete(id: String, title: String, partial: Boolean): String? = deletes.remove(id, title, partial)
         }
         devices = DevicesState(source, scope, DeviceLinks(), {})
         val host = SheetHost()
@@ -288,7 +288,7 @@ class GapSurfacesTest {
         rule.onNodeWithTag("undo_delete").performClick()
         rule.waitForIdle()
         assertEquals(before, rule.onNodeWithTag("stored_b1").getUnclippedBoundsInRoot())
-        assertTrue(erased.isEmpty())
+        assertEquals(listOf("t-b1"), restored)
         scope.cancel()
     }
 

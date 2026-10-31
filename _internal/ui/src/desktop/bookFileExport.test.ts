@@ -64,7 +64,7 @@ describe("jobView", () => {
   });
 
   it("reports an error with the server's words", () => {
-    expect(jobView({ state: "error", error: "Ổ đĩa đầy" })).toEqual({ kind: "error", title: "Không xuất được file sách", description: "Ổ đĩa đầy" });
+    expect(jobView({ state: "error", error: "Ổ đĩa đầy" })).toEqual({ kind: "error", title: "Chưa xuất được file sách", description: "Ổ đĩa đầy" });
   });
 
   it("says which chapter a long book is at, then the bytes written, and that a cancelled export left no file", () => {
@@ -73,7 +73,7 @@ describe("jobView", () => {
     expect(at("listen", 120, 3000)).toMatchObject({ progress: expect.closeTo(0.02 + 0.83 * (120 / 3000)) });
     expect(at("write", 50 * 1048576, 200 * 1048576)).toMatchObject({ title: "Đang đóng gói (50 MB/200 MB)…" });
     expect(at("write", 1, 1)).toMatchObject({ progress: 1 });
-    expect(jobView({ state: "cancelled" })).toEqual({ kind: "info", title: "Đã huỷ xuất", description: "Chưa có file sách nào được ghi." });
+    expect(jobView({ state: "cancelled" })).toEqual({ kind: "info", title: "Đã dừng xuất", description: "Chưa có file sách nào được ghi." });
   });
 
   it("on reopening the page only repeats what finished recently, but always follows a running job", () => {
@@ -202,7 +202,7 @@ describe("M4B export", () => {
   it("speaks with its own words while running, when done and when failing", () => {
     expect(jobView({ state: "running", elapsed: 5 }, 2, false, M4B_COPY)).toMatchObject({ kind: "loading", title: "Đang làm file M4B…" });
     expect(jobView(m4b(6, 6), 0, false, M4B_COPY)).toEqual({ kind: "success", title: "Đã xuất M4B", description: "Truyện.m4b · 3 MB", place: "D:/x/Truyện.m4b" });
-    expect(jobView({ state: "error", error: "x" }, 0, false, M4B_COPY)).toMatchObject({ title: "Không xuất được M4B" });
+    expect(jobView({ state: "error", error: "x" }, 0, false, M4B_COPY)).toMatchObject({ title: "Chưa xuất được M4B" });
     expect(lastExportHint({ state: "running" }, M4B_COPY)).toBe("Đang làm file M4B - xem thông báo ở góc màn hình");
   });
 
@@ -237,9 +237,9 @@ describe("MP3 export", () => {
   });
 
   it("says a cancelled export left nothing behind, and speaks its own failure", () => {
-    expect(jobView({ state: "cancelled", finishedAgo: 1 }, 0, false, MP3_COPY)).toEqual({ kind: "info", title: "Đã huỷ xuất", description: "Các chương đã ghi dở được xoá." });
+    expect(jobView({ state: "cancelled", finishedAgo: 1 }, 0, false, MP3_COPY)).toEqual({ kind: "info", title: "Đã dừng xuất", description: "Các chương đã ghi dở được xoá." });
     expect(jobView({ state: "error", error: "Sách chưa có chương nào nghe được để xuất" }, 0, false, MP3_COPY)).toMatchObject({
-      title: "Không xuất được MP3",
+      title: "Chưa xuất được MP3",
       description: "Sách chưa có chương nào nghe được để xuất",
     });
     expect(lastExportHint({ state: "running" }, MP3_COPY)).toBe("Đang xuất MP3 - xem thông báo ở góc màn hình");
@@ -263,10 +263,10 @@ describe("project file export (.abookproj)", () => {
       note: "2 file nguồn chương đã bị dời hay xoá nên không có trong gói",
       place: "D:/x/Truyện.abookproj",
     });
-    expect(jobView({ state: "cancelled" }, 0, false, PROJECT_FILE_COPY)).toMatchObject({ kind: "info", title: "Đã huỷ xuất" });
+    expect(jobView({ state: "cancelled" }, 0, false, PROJECT_FILE_COPY)).toMatchObject({ kind: "info", title: "Đã dừng xuất" });
     expect(jobView({ state: "error", error: "OSError: [Errno 28] No space left on device" }, 0, false, PROJECT_FILE_COPY)).toMatchObject({
       kind: "error",
-      title: "Không gói được dự án",
+      title: "Chưa gói được dự án",
       description: expect.stringContaining("hết chỗ"),
     });
   });

@@ -20,7 +20,7 @@ import java.net.ServerSocket
 import java.net.Socket
 import java.net.SocketTimeoutException
 import java.net.URI
-import java.net.URL
+import vn.abook.player.net.FastConnect
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.concurrent.ConcurrentHashMap
@@ -211,9 +211,7 @@ object Dlna {
     // ---- mô tả, lệnh --------------------------------------------------------------------------------------------
 
     private fun open(url: String, timeoutMs: Int): HttpURLConnection =
-        (URL(url).openConnection(Proxy.NO_PROXY) as HttpURLConnection).apply {
-            instanceFollowRedirects = false // chuyển hướng = lối vòng tới máy khác: không theo
-            connectTimeout = timeoutMs
+        FastConnect.open(url, timeoutMs, Proxy.NO_PROXY).apply { // không theo chuyển hướng (FastConnect): chuyển hướng = lối vòng tới máy khác
             readTimeout = timeoutMs
             setRequestProperty("User-Agent", AGENT)
         }

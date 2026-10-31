@@ -1,5 +1,7 @@
 package vn.abook.player.ui.data
 
+import vn.abook.player.formatSize
+
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -12,7 +14,7 @@ import org.junit.Test
 import vn.abook.player.ListenPrefs
 import java.io.File
 
-/** Tầng dữ liệu Cài đặt native: cùng khoá / giá trị / mặc định với bản WebView (android/settings.ts) và kho native (ListenPrefs). */
+/** Tầng dữ liệu Cài đặt native: cùng khoá / giá trị / mặc định với kho native (ListenPrefs). */
 class SettingsDataTest {
     /** JSON so được bất kể thứ tự khoá. */
     private fun canonical(json: JSONObject): Map<String, String> = json.keys().asSequence().associateWith { json.get(it).toString() }.toSortedMap()
@@ -65,7 +67,7 @@ class SettingsDataTest {
         assertEquals("reset", changes.getString("shakeAction"))
         assertEquals("firm", changes.getString("shakeSensitivity"))
         assertEquals("23:00", changes.getJSONObject("schedule").getString("from"))
-        // ListenPrefs.clean đưa về miền giá trị: thứ Cài đặt native ghi phải đi qua nguyên vẹn (cùng khoá, cùng giá trị với bản WebView).
+        // ListenPrefs.clean đưa về miền giá trị: thứ Cài đặt native ghi phải đi qua nguyên vẹn (cùng khoá, cùng giá trị).
         assertEquals(canonical(changes), canonical(ListenPrefs.clean(changes)))
         // Đọc lại từ kho cho đúng bản vừa ghi.
         assertEquals(after, AppSettings.from(changes))
@@ -117,14 +119,14 @@ class SettingsDataTest {
 
     @Test
     fun `sizes read like formatSize`() {
-        assertEquals("1 KB", Fmt.size(10))
-        assertEquals("100 KB", Fmt.size(100L * 1024))
-        assertEquals("0,5 MB", Fmt.size(512L * 1024))
-        assertEquals("1 MB", Fmt.size(1024L * 1024))
-        assertEquals("9,9 MB", Fmt.size((9.9 * 1024 * 1024).toLong()))
-        assertEquals("850 MB", Fmt.size(850L * 1024 * 1024))
-        assertEquals("1.000 MB", Fmt.size(1000L * 1024 * 1024))
-        assertEquals("3,2 GB", Fmt.size((3.2 * 1024 * 1024 * 1024).toLong()))
+        assertEquals("1 KB", formatSize(10))
+        assertEquals("100 KB", formatSize(100L * 1024))
+        assertEquals("0,5 MB", formatSize(512L * 1024))
+        assertEquals("1 MB", formatSize(1024L * 1024))
+        assertEquals("9,9 MB", formatSize((9.9 * 1024 * 1024).toLong()))
+        assertEquals("850 MB", formatSize(850L * 1024 * 1024))
+        assertEquals("1.000 MB", formatSize(1000L * 1024 * 1024))
+        assertEquals("3,2 GB", formatSize((3.2 * 1024 * 1024 * 1024).toLong()))
     }
 
     @Test
@@ -147,7 +149,7 @@ class SettingsDataTest {
         assertEquals("Be Vietnam Pro (OFL)", ThirdParty.plain(parsed[1].items.single().text))
         val joined = ThirdParty.parse("## A\n\nmột dòng\nnối tiếp\n")
         assertEquals("một dòng nối tiếp", joined.single().items.single().text)
-        // File thật gói vào bản -PnativeUi: đọc được, có mục, không lộ mục cho người bảo trì.
+        // File thật gói vào app: đọc được, có mục, không lộ mục cho người bảo trì.
         val real = ThirdParty.parse(File("../../../docs/THIRD_PARTY.md").readText())
         assertTrue(real.size > 2)
         assertTrue(real.none { it.title == ThirdParty.MAINTAINER_SECTION })

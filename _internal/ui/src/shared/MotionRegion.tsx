@@ -22,26 +22,60 @@ type Props = HTMLAttributes<HTMLElement> & { as?: "div" | "section" | "ul" | "ol
   slideIndex?: number };
 type Snapshot = { clone?: HTMLElement; signature: string; height: number; display?: string; margins?: [number, number]; focus?: HTMLElement } | null;
 
+/** Dấu của từng đối tượng (phần tử React, mảng, dữ liệu) đã tính, theo chính đối tượng ấy: phần cây không đổi giữa hai lần vẽ (phần tử nhớ,
+ *  dữ liệu truy vấn giữ tham chiếu) không phải đi lại. Props và dữ liệu truy vấn không bao giờ bị sửa tại chỗ - cùng đối tượng là cùng nội dung. */
+const signatures = new WeakMap<object, string>();
+
+/** Băm 53 bit (cyrb53) một chuỗi: dấu của một nhánh là chuỗi ngắn cố định, vùng cả trang không dựng chuỗi hàng triệu ký tự mỗi lần vẽ. */
+function digest(text: string): string {
+  let h1 = 0xdeadbeef;
+  let h2 = 0x41c6ce57;
+  for (let i = 0; i < text.length; i++) {
+    const code = text.charCodeAt(i);
+    h1 = Math.imul(h1 ^ code, 2654435761);
+    h2 = Math.imul(h2 ^ code, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return `~${(4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36)}`;
+}
+
 /** So sánh cây React trước commit: polling/đồng hồ/ô nhập không được clone cả vùng DOM mỗi nhịp.
- * Vùng con có MotionRegion tự lo chuyển cảnh; vùng cha không chụp lại cùng thay đổi ấy. */
+ * Vùng con có MotionRegion tự lo chuyển cảnh; vùng cha không chụp lại cùng thay đổi ấy.
+ * Trang sách 2500 chương: dấu cũ đi qua cả dữ liệu cuốn sách (chuỗi 3,5 triệu ký tự, hai lần mỗi lần trang vẽ lại - docs/PERF_WEB.md);
+ * giờ mỗi nhánh là một mã băm, nhớ theo đối tượng. */
 export function contentSignature(value: unknown, depth = 0): string {
   if (value == null || typeof value === "boolean" || typeof value === "function" || depth > 24) return "";
   if (typeof value === "string") return value.replace(/\d[\d\s.,:%–/\-]*/g, "#");
   if (typeof value === "number") return "#";
+  if (typeof value !== "object") return "";
+  const known = signatures.get(value);
+  if (known !== undefined) return known;
+  const signature = digest(signatureOf(value, depth));
+  signatures.set(value, signature);
+  return signature;
+}
+
+function signatureOf(value: object, depth: number): string {
   if (Array.isArray(value)) return value.map((item) => contentSignature(item, depth + 1)).join("|");
   if (isValidElement<Record<string, unknown>>(value)) {
     if (value.type === MotionRegion) return `region:${value.key ?? ""}`;
     const type = typeof value.type === "string" ? value.type : (value.type as { displayName?: string; name?: string }).displayName ?? (value.type as { name?: string }).name ?? String(value.type);
-    if (["input", "textarea", "select"].includes(type) || value.props["data-motion-live"] !== undefined || ["progressbar", "timer"].includes(String(value.props.role))) return type;
+    if ((value.type as { motionLive?: boolean }).motionLive || ["input", "textarea", "select"].includes(type) || value.props["data-motion-live"] !== undefined || ["progressbar", "timer"].includes(String(value.props.role))) return type;
     return `${type}:${value.key ?? ""}:${contentSignature(value.props, depth + 1)}`;
   }
-  if (typeof value === "object") return Object.entries(value).filter(([key]) => !["style", "ref", "elementRef", "value", "defaultValue"].includes(key) && !key.startsWith("on")).map(([key, item]) => `${key}:${contentSignature(item, depth + 1)}`).join(";");
-  return "";
+  return Object.entries(value).filter(([key]) => !["style", "ref", "elementRef", "value", "defaultValue"].includes(key) && !key.startsWith("on")).map(([key, item]) => `${key}:${contentSignature(item, depth + 1)}`).join(";");
 }
 
 /** Crossfade đúng vùng thay đổi, giữ hình cũ (inert) qua commit, không dựng lại component/effect.
  * Height chỉ tween khi bố cục thực sự đổi; reduced chỉ fade. Ô đang gõ không bị chụp theo từng phím.
  * motionKey dùng cho vùng có tìm kiếm: chỉ đổi khi kết quả/pha đổi, không theo nội dung ô gõ. */
+/** Vết cắt của ảnh cũ / cây mới khi lướt: trái / phải theo nhịp lướt, trên / dưới giữ vết cắt theo khung cuộn ảnh đã có (`inset(t r b l)`). */
+export function slideCut(clipPath: string) {
+  const [top, , bottom] = /inset\(([\d.]+)px ([\d.]+)px ([\d.]+)px/.exec(clipPath)?.slice(1).map(Number) ?? [0, 0, 0];
+  return (left: number, right: number) => `inset(${top}px ${right}px ${bottom}px ${left}px)`;
+}
+
 export class MotionRegion extends Component<Props> {
   readonly box = createRef<HTMLElement>();
   private animation: Animation | null = null;
@@ -139,7 +173,9 @@ export class MotionRegion extends Component<Props> {
    *  "phần content ở dưới phải lướt sang thế chỗ"). Cả hai bị cắt trong khung của vùng, không tràn ra lề hay tạo cuộn ngang. */
   private slideFrames(box: HTMLElement, clone: HTMLElement, slide: number, frames: Keyframe[], duration: number) {
     const width = box.getBoundingClientRect().width;
-    const cut = (left: number, right: number) => `inset(-100vh ${right}px -100vh ${left}px)`;
+    // Trên / dưới giữ đúng vết cắt theo khung cuộn mà ảnh đã có (motion.ts trackSurfaceSnapshot): ảnh của cả danh sách dài hơn khung, cắt -100vh
+    // thì phần dưới tràn đè thanh phát và thanh điều hướng trong lúc lướt (video chủ sách 26-10 "lướt sang tab khác bị lỗi").
+    const cut = slideCut(clone.style.clipPath);
     holdMotionSnapshot(clone, duration + 80);
     clone.animate?.([
       { transform: "translateX(0px)", clipPath: cut(0, 0) },
