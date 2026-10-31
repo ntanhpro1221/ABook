@@ -204,7 +204,14 @@ Modal {
         })
     }
     function applyOpened(outcome) {
-        if (outcome.notice) Api.notice = outcome.notice
+        if (outcome.named) {
+            const named = outcome.named
+            Api.notice = Queue.said(named.title, named.note)
+            Api.quiet("GET", "/api/listen/books/" + encodeURIComponent(outcome.id), null, function(book, error) {
+                if (!error && book && book.title && Api.notice === Queue.said(named.title, named.note))
+                    Api.notice = Queue.said("Đã thêm “" + book.title + "”", named.note)
+            })
+        } else if (outcome.notice) Api.notice = outcome.notice
         if (!outcome.id) return
         DesktopApi.refreshLibrary()
         if (outcome.studio) openStudio(outcome.id)
@@ -318,7 +325,7 @@ Modal {
                 return
             }
             if (added.how !== "existing") Feedback.play("confirm")
-            Api.notice = added.how === "existing" ? "Cuốn này đã có trong thư viện" : "Đã thêm sách vào thư viện"
+            Api.notice = added.how === "existing" ? "Cuốn này đã có trong thư viện" : "Đã thêm “" + root.bookTitle.trim() + "”"
             root.clear()
             root.dismiss()
             root.openBook(added.id)

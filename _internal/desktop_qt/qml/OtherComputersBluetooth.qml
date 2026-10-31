@@ -3,7 +3,7 @@ import ABook
 import "DevicesLogic.js" as Logic
 
 // Nút + bảng chọn đường Bluetooth dự phòng của một máy ghép qua Wi-Fi (BluetoothFallback của desktop/OtherComputers.tsx): Wi-Fi vẫn đi
-// trước, Bluetooth chỉ khi Wi-Fi hỏng. Nút xanh nhấn khi đã chọn một thiết bị; bảng: nhãn "Đường Bluetooth", các thiết bị đã ghép ở Windows
+// trước, Bluetooth chỉ khi Wi-Fi hỏng. Nút xanh nhấn khi đã chọn một thiết bị; bảng: nhãn "Qua Bluetooth", các thiết bị đã ghép ở Windows
 // (dấu tích đầu dòng ở thiết bị đang chọn), "Không dùng". Bảng là một lớp của Back (Popover).
 Item {
     id: root
@@ -21,9 +21,9 @@ Item {
         icon: "bluetooth"
         ink: root.current !== "" ? Theme.accentText : Theme.text2
         hoverInk: root.current !== "" ? Theme.accentText : Theme.text
-        tip: "Dự phòng qua Bluetooth…"
+        tip: "Dùng Bluetooth"
         enabled: !root.busy
-        Accessible.name: "Dự phòng qua Bluetooth cho " + (root.computer.name || "")
+        Accessible.name: "Dùng Bluetooth cho " + (root.computer.name || "")
         onClicked: menu.toggle()
     }
     Popover {
@@ -39,7 +39,7 @@ Item {
                 width: parent.width - 16
                 topPadding: 2
                 bottomPadding: 4
-                text: "Đường Bluetooth"
+                text: "Qua Bluetooth"
                 color: Theme.text3
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeCaption

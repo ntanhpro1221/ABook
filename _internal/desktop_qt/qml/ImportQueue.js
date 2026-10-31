@@ -194,7 +194,7 @@ function footnoteSummary(offer) {
 // Lời báo sau khi máy chủ mở một file sách (useOpenedBook của desktop/App.tsx + shared/editsKept.ts). Toast của bản web là Api.notice ở đây: tiêu đề, nếu có
 // lời phụ thì nối sau " - ".
 var OPENED_SAID = {
-    "new": "Đã thêm sách", existing: "Sách đã có", updated: "Đã cập nhật", older: "File này cũ hơn bản đang có", conflict: "File này có bản thu khác",
+    "new": "Đã thêm", existing: "Sách đã có", updated: "Đã cập nhật", older: "File này cũ hơn bản đang có", conflict: "File này có bản thu khác",
     repaired: "Đã khôi phục file", project: "Sách của Studio", studio: "Đã mở dự án"
 }
 
@@ -231,5 +231,7 @@ function openedOutcome(result) {
     const title = workshopMergeNote(result.workshop) || kept || adopted || OPENED_SAID[how] || OPENED_SAID["new"]
     const note = [result.otherTitle ? "Tên trong file là “" + result.otherTitle + "”, khác tên đang dùng." : "", brokenMusicNote(result.brokenMusic) || ""]
         .filter(part => part !== "").join(" ")
+    // Cuốn mới: AddBook hỏi tên sách để nói “Đã thêm “tên”” (`named`); tên chưa đọc được thì còn “Đã thêm”.
+    if (how === "new" && title === OPENED_SAID["new"]) return {ok: true, id: result.id, notice: said(title, note), named: {title: title, note: note}}
     return {ok: true, id: result.id, notice: said(title, note)}
 }
