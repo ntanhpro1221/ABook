@@ -34,6 +34,8 @@
 #include <QStandardPaths>
 #include <QTimer>
 #include <QJsonObject>
+#include <QNetworkReply>
+#include <QNetworkRequest>
 #include <memory>
 #include <optional>
 #include <qpa/qwindowsysteminterface_p.h>
@@ -370,6 +372,31 @@ int main(int argc, char *argv[]) {
             });
             poll->start(100);
         }
+    }
+    // ABOOK_SMOKE_EXIT=update (tools/test_installer.py): the update the host finds is installed the way the "Cập nhật" button
+    // does it (POST /api/app/update). Exit 0 then comes from Backend::runInstaller, 8 when the host refused the package
+    // (abook-update-failed), 9 when the route itself failed.
+    if (smoke == QStringLiteral("update")) {
+        QObject::connect(&backend, &Backend::hostEvent, &app, [&backend](const QString &name, const QVariant &detail) {
+            if (name == QLatin1String("abook-update")) {
+                qWarning("SMOKE_UPDATE_FOUND %s", qUtf8Printable(detail.toMap().value(QStringLiteral("version")).toString()));
+                const auto endpoint = Backend::endpoint();
+                QNetworkRequest request(QUrl(QStringLiteral("http://127.0.0.1:%1/api/app/update").arg(endpoint.port)));
+                request.setRawHeader("X-Ebook-Token", endpoint.token);
+                request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
+                QNetworkReply *reply = backend.network()->post(request, QByteArrayLiteral("{}"));
+                QObject::connect(reply, &QNetworkReply::finished, reply, [reply] {
+                    reply->deleteLater();
+                    if (reply->error() == QNetworkReply::NoError) return;
+                    qWarning("SMOKE_UPDATE_FAILED POST /api/app/update: %s", qUtf8Printable(reply->errorString()));
+                    QCoreApplication::exit(9);
+                });
+            } else if (name == QLatin1String("abook-update-failed")) {
+                // Percent-encoded UTF-8: stderr goes out in the ANSI code page, where the Vietnamese reason turns into '?'.
+                qWarning("SMOKE_UPDATE_FAILED %s", detail.toString().toUtf8().toPercentEncoding(" ").constData());
+                QCoreApplication::exit(8);
+            }
+        });
     }
     musicWindowActivity.update();
     // File trên dòng lệnh của chính lần mở này (Main.qml openFiles), rồi các lần mở khác: hiện cửa sổ + mở file của chúng
