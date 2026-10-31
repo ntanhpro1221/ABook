@@ -211,7 +211,8 @@ class OnlineVoicesTest {
     @Test
     fun aClosedPortIsOffline() {
         val port = java.net.ServerSocket(0, 1, java.net.InetAddress.getByName("127.0.0.1")).use { it.localPort }
-        expectReason("offline") { OnlineHttp.request("GET", "http://127.0.0.1:$port/", emptyMap(), null, "Giả", 2000) }
+        // Windows thử lại SYN tới cổng đóng ~2 giây rồi mới báo "bị từ chối": cho dư hạn để thấy lời từ chối, không phải "quá giờ".
+        expectReason("offline") { OnlineHttp.request("GET", "http://127.0.0.1:$port/", emptyMap(), null, "Giả", 5000) }
     }
 
     // ---- FPT.AI -----------------------------------------------------------------------------------------------------------
