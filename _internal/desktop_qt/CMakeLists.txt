@@ -94,6 +94,8 @@ qt_add_executable(ABookDesk WIN32
     src/platform.h
     src/windowchrome.cpp
     src/windowchrome.h
+    src/trayicon.cpp
+    src/trayicon.h
     ${ABOOK_PLAYER_SOURCES}
     ${ABOOK_MUSIC_SOURCES}
     ${ABOOK_MIXER_SOURCES}
@@ -434,7 +436,7 @@ qt_add_qml_module(ABookDesk
 )
 target_compile_definitions(ABookDesk PRIVATE ABOOK_VERSION="${ABOOK_VERSION}" QT_NO_CAST_FROM_ASCII)
 # Âm thanh: Media Foundation của Windows (đo ở docs/NATIVE_PHONE_UI.md 7.1), không thêm DLL nào vào bản phân phối.
-target_link_libraries(ABookDesk PRIVATE Qt6::Quick Qt6::Network Qt6::GuiPrivate Qt6::QmlPrivate QWindowKit::Quick mfplat mf mfuuid mfreadwrite shlwapi ole32 ksuser propsys dwmapi windowsapp shell32)
+target_link_libraries(ABookDesk PRIVATE Qt6::Quick Qt6::Network Qt6::GuiPrivate Qt6::QmlPrivate QWindowKit::Quick mfplat mf mfuuid mfreadwrite shlwapi ole32 ksuser propsys dwmapi windowsapp shell32 user32)
 qt_add_resources(ABookDesk legal PREFIX "/legal" BASE "../docs" FILES "../docs/THIRD_PARTY.md")
 # Icon app máy tính = icon bo góc của Windows (scripts/make_icons.py -> abook/assets/app.ico, 16-256 px), KHÔNG phải
 # icon vuông tràn viền của web (icon maskable cho điện thoại). Cửa sổ, khay và file exe dùng chung.
@@ -594,3 +596,12 @@ if(MSVC)
     target_compile_options(MusicWindowActivityTests PRIVATE /W3 /utf-8)
 endif()
 add_test(NAME MusicWindowActivityTests COMMAND MusicWindowActivityTests)
+# Khay Win32 tự viết (thay Qt.labs.platform, bỏ Qt6Widgets.dll): menu, tooltip, lệnh chọn trên khay GIẢ, không icon nào vào khay thật
+qt_add_executable(TrayTests tests/test_tray.cpp src/trayicon.cpp src/trayicon.h)
+target_include_directories(TrayTests PRIVATE src)
+target_compile_definitions(TrayTests PRIVATE QT_NO_CAST_FROM_ASCII)
+target_link_libraries(TrayTests PRIVATE Qt6::Test Qt6::Qml user32 shell32)
+if(MSVC)
+    target_compile_options(TrayTests PRIVATE /W3 /utf-8)
+endif()
+add_test(NAME TrayTests COMMAND TrayTests)
