@@ -1091,7 +1091,23 @@ void MusicMixer::service(size_t frames) {
     }
     if (!any) {
         // Đuôi mờ ra còn trong thiết bị: để nó phát hết rồi mới Stop, Stop giữa chừng là một tiếng tách.
-        if (d->running && padding) { d->active = true; d->nextWakeMs = std::clamp(int(padding * 1000 / size_t(rate())) + 1, 1, 250); return; }
+        // Chỉ chờ tới mẫu cuối còn kêu, không chờ hàng đợi cạn: chờ cạn thì lượt thức trễ hơn một chu kỳ của engine
+        // là engine kéo hụt (PLAN_lx §19.1 luật 4). Sau mẫu ấy luôn xếp sẵn 50 ms lặng; Stop/Reset bỏ phần lặng còn lại.
+        quint64 audible = 0;
+        for (const auto &span : d->tails) audible = std::max(audible, std::min(span.device + span.frames, span.outEnd));
+        for (const auto &span : d->stopped) audible = std::max(audible, span.device + span.frames);
+        for (const auto &s : voices) {
+            Guard guard(s->mutex);
+            for (const auto &span : s->spans) audible = std::max(audible, span.device + span.frames);
+        }
+        if (d->running && padding && d->played < audible) {
+            const quint64 cushion = audible + quint64(rate()) / 20;
+            if (d->written < cushion) {
+                const std::vector<float> silence(size_t(cushion - d->written) * 2, 0.0f);
+                if (d->device->write(silence.data(), silence.size() / 2)) d->written = cushion;
+            }
+            d->active = true; d->nextWakeMs = std::clamp(int((audible - d->played) * 1000 / size_t(rate())) + 1, 1, 250); return;
+        }
         d->device->stop(); d->device->reset(); d->running = false;
         d->forgetQueue(); d->active = false; return;
     }

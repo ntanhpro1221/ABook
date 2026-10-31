@@ -519,8 +519,9 @@ private slots:
         rig.serve(4800); rig.device->consume(2400); rig.mixer.service(0);
         QCOMPARE(voice.position(), 5.05);
         voice.pause(); const int resets = rig.device->resets; rig.mixer.service(0); QCoreApplication::processEvents();
-        // Pause: tiếng cũ thêm 20 ms tới pivot rồi mờ ra 10 ms (không tắt phụt); thiết bị chỉ Stop khi đuôi đã phát hết.
-        QVERIFY(rig.device->resets > resets); QCOMPARE(rig.device->queued, size_t(1440));
+        // Pause: tiếng cũ thêm 20 ms tới pivot rồi mờ ra 10 ms (không tắt phụt), sau đó 50 ms lặng xếp sẵn;
+        // thiết bị chỉ Stop khi đuôi đã phát hết.
+        QVERIFY(rig.device->resets > resets); QCOMPARE(rig.device->queued, size_t(1440 + 2400));
         QVERIFY(std::abs(rig.device->output.back()) < 1e-3);
         rig.device->consume(rig.device->queued); rig.mixer.service(0); QVERIFY(!rig.device->running);
         QCOMPARE(playing.size(), 2); QCOMPARE(playing[1][0].toBool(), false); QCOMPARE(voice.position(), 5.05);
@@ -533,6 +534,28 @@ private slots:
         voice.load(track(), 0); voice.play(); rig.mixer.serviceReader(); voice.stop();
         rig.mixer.serviceReader(); rig.mixer.service(512); QCoreApplication::processEvents();
         QCOMPARE(duration.size() + playing.size() + seeked.size() + ended.size() + failed.size(), 0);
+    }
+
+    // PLAN_lx §19.1 luật 4: hai lỗ 10 ms, mỗi lỗ ngay trước một lần mixer dừng. Mixer chờ hàng đợi cạn hẳn rồi mới Stop,
+    // nên lượt thức trễ hơn một chu kỳ của engine là engine kéo hụt. Tiếng cuối đã phát thì Stop ngay, lúc hàng đợi còn lặng;
+    // đuôi mờ được trộn lại sát mép thì sau nó phải xếp sẵn lặng, đủ cho ít nhất một chu kỳ 10 ms.
+    void lastSoundNeverLeavesTheEndpointEmpty() {
+        MixerRig rig; MixVoice voice(&rig.mixer); voice.setVolume(1); voice.load(track(), 0); QVERIFY(rig.ready(voice));
+        QSignalSpy ended(&voice, &AudioOut::ended);
+        voice.play(); rig.serve(4800);
+        voice.pause(); rig.mixer.service(0); QCoreApplication::processEvents();
+        const size_t tail = 1440; // 20 ms tới pivot rồi mờ ra 10 ms
+        QVERIFY(rig.device->queued >= tail);
+        rig.device->consume(tail);
+        QVERIFY2(rig.device->queued >= 480, qPrintable(QString::number(rig.device->queued)));
+        for (size_t i = rig.device->output.size() - rig.device->queued * 2; i < rig.device->output.size(); ++i) QCOMPARE(rig.device->output[i], 0.0f);
+        QVERIFY(rig.device->running);
+        rig.mixer.service(0); QVERIFY(!rig.device->running);
+        // Hết bài: mixer đã xếp lặng sau mẫu cuối; Stop ngay khi mẫu cuối đã phát, không chờ phần lặng cạn.
+        voice.seek(voice.duration() - 0.02); voice.play(); rig.mixer.service(0); rig.mixer.serviceReader(); QCoreApplication::processEvents();
+        rig.serve(4800); QVERIFY(rig.device->running); QCOMPARE(ended.size(), 0);
+        rig.device->consume(rig.device->queued - 2400); rig.mixer.service(0); QCoreApplication::processEvents();
+        QCOMPARE(ended.size(), 1); QVERIFY(!rig.device->running);
     }
 
     void mixerCacheReusedAndHasExactFrameCount() {
