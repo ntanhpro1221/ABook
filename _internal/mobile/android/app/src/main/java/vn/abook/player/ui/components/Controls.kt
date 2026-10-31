@@ -154,17 +154,18 @@ fun <T : Choice> ChoiceRow(
 }
 
 /**
- * Mũi tên ">" cuối hàng mở một màn con (lucide ChevronRight như bản web, nét lưới 20 dp); `turn` (0..1, đọc khi vẽ) xoay nó xuống khi hàng mở khối tại
- * chỗ. Ô 16 dp, mũi nhọn chạm mép phải ô: mực thẳng mép cột như nút chữ cuối hàng.
+ * Mũi tên cuối hàng (lucide như bản web, nét lưới 20 dp): ">" cho hàng mở một màn con; có [turn] (0..1, đọc khi vẽ) là hàng gập mở tại chỗ - mũi tên xuống,
+ * lật lên khi mở (web: DisclosureRow `expanded`), để câu trợ giúp không trông như một trang nữa. Ô 16 dp, mực chạm mép phải ô: thẳng mép cột như nút chữ cuối hàng.
  */
 @Composable
-fun ChevronIcon(color: androidx.compose.ui.graphics.Color, modifier: Modifier = Modifier, turn: () -> Float = { 0f }) {
+fun ChevronIcon(color: androidx.compose.ui.graphics.Color, modifier: Modifier = Modifier, turn: (() -> Float)? = null) {
     Canvas(modifier.size(16.dp)) {
         val unit = 20.dp.toPx() / 24f
-        // Mực của ChevronRight: x 8..16, y 5..19 trên lưới 24 (kể cả nửa nét).
-        translate(size.width - 16f * unit, size.height / 2 - 12f * unit) {
-            rotate(90f * turn(), pivot = androidx.compose.ui.geometry.Offset(12f * unit, 12f * unit)) {
-                drawLucide(LucidePaths.CHEVRON_RIGHT, color, unit)
+        // Mực trên lưới 24 (kể cả nửa nét): ChevronRight x 8..16, ChevronDown x 5..19.
+        translate(size.width - (if (turn == null) 16f else 19f) * unit, size.height / 2 - 12f * unit) {
+            if (turn == null) drawLucide(LucidePaths.CHEVRON_RIGHT, color, unit)
+            else rotate(180f * turn(), pivot = androidx.compose.ui.geometry.Offset(12f * unit, 12f * unit)) {
+                drawLucide(LucidePaths.CHEVRON_DOWN, color, unit)
             }
         }
     }

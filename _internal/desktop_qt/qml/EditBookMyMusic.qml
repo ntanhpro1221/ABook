@@ -3,6 +3,7 @@ import QtQuick.Dialogs
 import ABook
 import "SizeFormat.js" as Size
 import "EditBookLogic.js" as Logic
+import "MyMusicText.js" as Music
 
 // "Nhạc của tôi" trong hộp "Sửa sách" (MyMusicSection của listen/MyMusic.tsx): nhạc bạn tự có làm nhạc nền - nhập, xem, xoá ở đây; "Đổi bài" ở
 // từng đoạn nhạc của sách. Khối gập có nhớ (khoá "my-music.library"), tên + một dòng tóm tắt. Xoá hai bước ("Xoá bài" / "Giữ lại"), Back lùi
@@ -68,7 +69,7 @@ Column {
         importing = false
         if (error) Api.notice = Logic.toastText("Đang thêm nhạc thì dừng", error)
         else {
-            const summary = Logic.importSummary({added: added, existing: existing, failed: lost})
+            const summary = Music.importSummary({added: added, existing: existing, failed: lost})
             Api.notice = Logic.toastText(summary.title, summary.description)
         }
         changed()
@@ -137,13 +138,20 @@ Column {
             busy: root.importing
             onActivated: files.open()
         }
+        // Câu giới thiệu tả nút Thêm ngay trên nó, rồi mới tới khối tải Phân tích nhạc
+        HintText { width: parent.width; text: Music.MY_MUSIC_INTRO }
+        MoreInfo {
+            width: parent.width
+            label: "Nhạc riêng"
+            HintText { width: parent.width; text: Music.MY_MUSIC_HELP }
+        }
         // Thẻ Phân tích nhạc: chỉ khi đã có bài
         Collapse {
             width: parent.width
             readonly property bool calm: !root.module || (root.module.state === "ready" && !root.module.analysing && !root.module.restart && (root.module.stale || 0) === 0)
             open: root.tracks.length > 0 && !calm
             spacing: 6
-            HintText { width: parent.width; font.features: {"tnum": 1}; text: root.module ? Logic.moduleLabel(root.module) : ""; color: root.module && root.module.state === "error" ? Theme.danger : Theme.text2; visible: text !== "" }
+            HintText { width: parent.width; font.features: {"tnum": 1}; text: root.module ? Music.moduleLabel(root.module) : ""; color: root.module && root.module.state === "error" ? Theme.danger : Theme.text2; visible: text !== "" }
             MoreInfo {
                 width: parent.width
                 label: "Phân tích nhạc"
@@ -156,7 +164,7 @@ Column {
                 visible: height > 0
                 Rectangle {
                     y: 17; width: parent.width - cancel.width - 12; height: 6; radius: height / 2; color: Theme.sunken
-                    Rectangle { width: parent.width * (root.module ? Logic.modulePercent(root.module) / 100 : 0); height: parent.height; radius: height / 2; color: Theme.accent }
+                    Rectangle { width: parent.width * (root.module ? Music.modulePercent(root.module) / 100 : 0); height: parent.height; radius: height / 2; color: Theme.accent }
                 }
                 Button {
                     id: cancel
@@ -178,12 +186,6 @@ Column {
                 onActivated: root.post(action === "reanalyse" ? "/api/music/local/reanalyse" : "/api/music/local/module")
             }
             HintText { width: parent.width; color: Theme.warning; text: "Bạn đang dùng dữ liệu di động - nên đợi khi có Wi-Fi."; visible: !!root.module && !!root.module.metered && root.module.state !== "ready" && root.module.state !== "error" }
-        }
-        HintText { width: parent.width; text: Logic.MY_MUSIC_INTRO }
-        MoreInfo {
-            width: parent.width
-            label: "Nhạc riêng"
-            HintText { width: parent.width; text: Logic.MY_MUSIC_HELP }
         }
         Collapse {
             width: parent.width
@@ -223,7 +225,7 @@ Column {
         }
         Column {
             objectName: "bookMusicList"
-            width: Math.min(parent.width, Theme.listMeasure)
+            width: Theme.listWidth(parent, parent.width)
             Repeater {
                 model: rowsModel
                 Collapse {
@@ -262,16 +264,26 @@ Column {
                                 width: parent.width
                                 spacing: 8
                                 topPadding: 2
-                                readonly property string label: Logic.autoLabel(item.track) || Logic.analysisLabel(item.track)
-                                HintText { id: note; width: Math.min(implicitWidth, parent.width); text: parent.label; anchors.verticalCenter: undefined }
-                                Button {
-                                    readonly property var swap: Logic.autoSwitch(item.track)
-                                    text: swap.text
-                                    kind: "ghost"
-                                    size: "sm"
-                                    height: 24
-                                    Accessible.name: swap.text + ": " + item.track.title
-                                    onClicked: root.post("/api/music/local/" + Logic.localDigest(item.track.link) + "/auto", {auto: swap.next})
+                                readonly property string label: Music.trackNote(item.track)
+                                HintText { id: note; visible: text !== ""; width: Math.min(implicitWidth, parent.width); height: 24; verticalAlignment: Text.AlignVCenter; text: parent.label; anchors.verticalCenter: undefined }
+                                // Công tắc "Tự chọn" (như MyMusicTrack): bật = máy được tự chọn bài này
+                                Row {
+                                    spacing: 8
+                                    Switch {
+                                        id: autoSwitch
+                                        objectName: "autoPick"
+                                        label: Music.AUTO_PICK_LABEL + ": " + item.track.title
+                                        checked: Music.autoOn(item.track)
+                                        onToggled: root.post("/api/music/local/" + Music.localDigest(item.track.link) + "/auto", {auto: Music.autoNext(item.track)})
+                                    }
+                                    Text {
+                                        text: Music.AUTO_PICK_LABEL
+                                        color: Theme.text2
+                                        font.pixelSize: Theme.sizeCaption
+                                        height: 24
+                                        verticalAlignment: Text.AlignVCenter
+                                        TapHandler { onTapped: autoSwitch.clicked() }
+                                    }
                                 }
                             }
                         }

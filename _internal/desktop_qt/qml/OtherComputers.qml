@@ -189,7 +189,7 @@ Column {
                     Column {
                         id: list
                         objectName: "computerList"
-                        width: Math.min(parent.width, Theme.listMeasure)
+                        width: Theme.listWidth(parent, parent.width)
                         Repeater {
                             model: computerRows.model
                             OtherComputersRow {
@@ -234,7 +234,7 @@ Column {
                             width: parent.width
                             open: root.found !== null && root.found.length > 0
                             Column {
-                                width: Math.min(parent.width, Theme.listMeasure)
+                                width: Theme.listWidth(parent, parent.width)
                                 Repeater {
                                     model: root.found || []
                                     Item {

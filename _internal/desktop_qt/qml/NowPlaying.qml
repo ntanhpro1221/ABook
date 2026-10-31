@@ -472,7 +472,7 @@ Item {
                         anchors.left: parent.left
                         anchors.top: parent.top
                         anchors.bottom: parent.bottom
-                        width: Math.min(parent.width, Theme.listMeasure)
+                        width: Theme.listWidth(parent, parent.width)
                         anchors.topMargin: root.wide ? sideTabs.height + 2 * Theme.s16 : Theme.s24
                         visible: !root.displayedText
                         opacity: root.panelOpacity

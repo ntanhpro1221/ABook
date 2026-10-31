@@ -18,6 +18,9 @@ QtObject {
     readonly property int widthExtraLarge: 1600
     function widthClass(w) { return w < widthMedium ? 0 : w < widthExpanded ? 1 : w < widthLarge ? 2 : w < widthExtraLarge ? 3 : 4 }
     readonly property int listMeasure: 640
+    // Bề ngang một danh sách chữ: tối đa listMeasure trên trang tự do; trong cột đã có trần riêng mà mọi hàng chạy hết cột (nội dung Cài đặt khai
+    // `wholeRows: true`) thì chạy hết cột như các hàng quanh nó - không để mép phải lởm chởm (DESIGN.md "Danh sách chữ").
+    function listWidth(column, available) { for (let p = column; p; p = p.parent) if (p.wholeRows === true) return available; return Math.min(available, listMeasure) }
 
     // ---- màu (DESIGN.md 5.1) ----
     readonly property color bg: dark ? "#121110" : "#f5f3ef"

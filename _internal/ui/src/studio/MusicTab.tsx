@@ -23,7 +23,6 @@ import { useAppInfo } from "./data";
 import { importMusic } from "./musicImport";
 import { CONTINUED_NOTE, downloadShare, downloadText, isContinuation, moodOf, swapButton, type MusicDownload } from "./musicScenes";
 import {
-  analysisLabel,
   importSummary,
   LOCAL_PREFIX,
   MY_MUSIC_INTRO,
@@ -383,7 +382,7 @@ export function MyMusic({ bookId, previewing, onPreview }: { bookId: string; pre
                 {track.title}
                 {track.creator && <span className="text-fg-2"> · {track.creator}</span>}
                 {track.duration ? <span className="tabular text-fg-2"> · {formatClock(track.duration)}</span> : null}
-                <AutoPickNote track={track} canOverride={canImport} onView={refresh} idleLabel={analysisLabel(track)} />
+                <AutoPickNote track={track} canOverride={canImport} onView={refresh} />
               </span>
               <MotionRegion as="span" className="flex shrink-0 gap-1">
                 <Button size="sm" variant="ghost" icon={previewing === track.link ? Square : Play} aria-pressed={previewing === track.link}

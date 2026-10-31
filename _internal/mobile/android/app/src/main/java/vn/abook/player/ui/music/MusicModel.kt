@@ -191,10 +191,10 @@ object MusicText {
     /** musicLocal.ts MY_MUSIC_INTRO: một câu cho mọi nơi nói về Nhạc của tôi. */
     const val MY_MUSIC_INTRO = "Thêm nhạc làm nền; bài đã chọn đi cùng file sách."
     /** musicLocal.ts MY_MUSIC_HELP: lời gập "Nhạc riêng" dưới [MY_MUSIC_INTRO] ở mọi nơi nói về Nhạc của tôi. */
-    const val MY_MUSIC_HELP = "Nhạc được chép vào kho máy này; dùng Đổi bài để chọn cho từng đoạn. Hỗ trợ mp3, m4a, ogg, opus, flac, wav. Bài đã chọn đi cùng .abook / .abookproj, vẫn nghe được trên máy khác, không ai khác tải được. Tên bài và nghệ sĩ lấy từ file; ABook không xác nhận giấy phép."
-    /** musicLocal.ts `analysisLabel` của bài chưa phân tích (điện thoại không tự chọn nên không nói bài đã phân tích). */
-    const val UNANALYSED = "Chưa phân tích - máy chưa tự chọn, bạn vẫn ghim được"
-    const val PACKAGED_NOTE = "Nhạc do người làm sách chọn. Đổi ở đây chỉ trên máy này."
+    const val MY_MUSIC_HELP = "Nhạc được chép vào kho máy này; dùng Đổi bài để chọn cho từng đoạn. Hỗ trợ mp3, m4a, ogg, opus, flac, wav. Bài đã chọn đi cùng .abook / .abookproj, vẫn nghe được trên máy khác, không ai khác tải được. Tên bài và nghệ sĩ lấy từ file; ABook không xác nhận giấy phép. Máy chỉ tự chọn bài đã phân tích và bỏ qua bài có lời; công tắc Tự chọn đổi điều này cho từng bài."
+    /** musicLocal.ts `UNANALYSED`: nhãn ngắn của bài chưa phân tích (điện thoại không tự chọn nên không nói bài đã phân tích). */
+    const val UNANALYSED = "Chưa phân tích"
+    const val PACKAGED_NOTE = "Chỉ đổi trên máy này."
     const val AUTO_OFF_NOTE = "\"Tự chọn nhạc nền\" đang tắt trong Cài đặt."
     const val BROKEN_PACKAGED = "Bài nhạc chương này không phát được."
     const val BROKEN_PLAYLIST = "Có bài nhạc chưa phát được, máy sẽ thử lại sau."
@@ -285,7 +285,6 @@ object MusicText {
     // ---- từng đoạn nhạc gắn sẵn --------------------------------------------------------------------------------------------------
 
     // Cùng chữ với Sửa sách > Nhạc nền của web (listen/EditBook.tsx MusicSection, MyMusic.tsx SwapTrack).
-    const val PACKAGED_SWITCH = "Nhạc nền"
     const val ON = "Bật"
     const val SILENCE_LABEL = "Im lặng"
     const val UNSILENCE_LABEL = "Có nhạc"
@@ -297,13 +296,16 @@ object MusicText {
     const val LOAD_FAILED = "Bạn hãy thử tải lại nhạc nền của cuốn này."
     const val NONE = "Người làm sách không gắn nhạc nền cho cuốn này."
 
-    /** "Nhạc nền: Bật" - nhãn công tắc nói trạng thái (web: chữ trên nút đổi theo trạng thái thì không biết là hiện tại hay việc sẽ làm). */
-    fun switchLabel(enabled: Boolean): String = "$PACKAGED_SWITCH: ${if (enabled) ON else OFF_LABEL}"
+    /** "Bật" / "Tắt" - nhãn công tắc nói trạng thái; tên "Nhạc nền" đã ở đầu bảng, không lặp lại (soát UI nhạc 01-11 mục 6). */
+    fun switchLabel(enabled: Boolean): String = if (enabled) ON else OFF_LABEL
 
-    /** Tên bài của một đoạn (không tên thì "Nhạc nền"). */
-    fun cueTitle(cue: MusicCue): String = cue.title.trim().ifEmpty { "Nhạc nền" }
+    /** Đoạn người nghe cho im: nói thẳng như tab Nhạc của dự án, không gạch ngang tên (gạch ngang đọc như lỗi). */
+    const val SILENCED_TITLE = "Im lặng (bạn chọn)"
 
-    /** Dòng phụ của một đoạn, như web: chương · khoảng giờ · tác giả · "bài của bạn" khi đã đổi (im lặng thì tên bài gạch ngang). */
+    /** Tên của một đoạn: im lặng thì [SILENCED_TITLE], không tên thì "Nhạc nền". */
+    fun cueTitle(cue: MusicCue): String = if (cue.silenced) SILENCED_TITLE else cue.title.trim().ifEmpty { "Nhạc nền" }
+
+    /** Dòng phụ của một đoạn, như web: chương · khoảng giờ · tác giả · "bài của bạn" khi đã đổi. */
     fun cueLine(cue: MusicCue): String = listOf(
         cue.chapter.trim(), "${Fmt.clock(cue.start)} – ${Fmt.clock(cue.end)}", cue.creator.trim(), if (cue.pinned) "bài của bạn" else "",
     ).dotJoined()
@@ -314,10 +316,10 @@ object MusicText {
 
     /**
      * Dòng chú thích dưới một bài (studio/musicLocal.ts `mineNote`; điện thoại không có công tắc tự chọn nên `auto` luôn là mặc định):
-     * có vẻ có lời, hợp không khí đoạn này, hay chưa phân tích. Không có gì đáng nói thì "".
+     * có lời, hợp không khí đoạn này, hay chưa phân tích - cùng chữ ngắn với web. Không có gì đáng nói thì "".
      */
     fun mineNote(track: MineTrack): String = listOf(
-        if (track.analysed && track.vocalsLikely) "Có vẻ có lời - máy không tự chọn bài này" else "",
+        if (track.analysed && track.vocalsLikely) "Có lời" else "",
         if (track.analysed) (if (track.fits) "Hợp không khí đoạn này" else "") else UNANALYSED,
     ).dotJoined()
 

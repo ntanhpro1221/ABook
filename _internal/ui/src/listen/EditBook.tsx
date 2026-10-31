@@ -181,12 +181,10 @@ export function MusicSection({ book }: { book: ListenBook }) {
   return (
     <MotionRegion as="div" elementRef={swapBox} className="space-y-3">
       <div className="flex flex-wrap items-end gap-3">
-        {/* Công tắc có nhãn hành động rõ ("Nhạc nền: Bật") - nút đổi chữ theo trạng thái khiến không biết chữ là hiện tại hay việc sẽ làm. */}
+        {/* Công tắc nói trạng thái ("Bật" / "Tắt"); tên mục "Nhạc nền" đã ở ngay trên, không lặp lại. */}
         <div className="flex h-9 items-center gap-2.5 text-sm">
           <Switch id={`music-enabled-${book.id}`} label="Nhạc nền" checked={data.enabled} disabled={change.isPending} onCheckedChange={(enabled) => change.mutate({ enabled })} />
-          <label htmlFor={`music-enabled-${book.id}`}>
-            Nhạc nền: <span className="font-semibold">{data.enabled ? "Bật" : "Tắt"}</span>
-          </label>
+          <label htmlFor={`music-enabled-${book.id}`}>{data.enabled ? "Bật" : "Tắt"}</label>
         </div>
         <label className="text-sm">
           <span className="block text-fg-2">Mức nhạc nền</span>
@@ -208,7 +206,8 @@ export function MusicSection({ book }: { book: ListenBook }) {
           <li key={cue.key}>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
               <div className="min-w-[9rem] flex-1">
-                <div className={cn("truncate text-sm", cue.silenced && "text-fg-3 line-through")}>{cue.title || "Nhạc nền"}</div>
+                {/* Đoạn người nghe cho im: nói thẳng (như tab Nhạc của dự án), không gạch ngang tên - gạch ngang đọc như lỗi. */}
+                <div className={cn("truncate text-sm", cue.silenced && "text-fg-2")}>{cue.silenced ? "Im lặng (bạn chọn)" : cue.title || "Nhạc nền"}</div>
                 <div className="tabular truncate text-xs text-fg-2">
                   {cue.chapter} · {formatClock(cue.start)} – {formatClock(cue.end)}
                   {cue.creator ? ` · ${cue.creator}` : ""}
@@ -232,7 +231,11 @@ export function MusicSection({ book }: { book: ListenBook }) {
                   Đổi bài
                 </Button>
                 <Button size="sm" variant="ghost" disabled={change.isPending} onClick={() => change.mutate({ silence: { [cue.key]: !cue.silenced } })}>
-                  {cue.silenced ? "Có nhạc" : "Im lặng"}
+                  {/* Bề ngang theo chữ dài hơn trong hai chữ: "Đổi bài" đứng một cột ở mọi dòng. */}
+                  <span className="grid">
+                    <span className="col-start-1 row-start-1">{cue.silenced ? "Có nhạc" : "Im lặng"}</span>
+                    <span aria-hidden className="invisible col-start-1 row-start-1">{cue.silenced ? "Im lặng" : "Có nhạc"}</span>
+                  </span>
                 </Button>
               </span>
             </div>

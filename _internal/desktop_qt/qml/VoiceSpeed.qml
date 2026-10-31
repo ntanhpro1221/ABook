@@ -62,7 +62,7 @@ VoiceFold {
         }
         Column {
             objectName: "voiceSpeedList"
-            width: Math.min(parent.width, Theme.listMeasure)
+            width: Theme.listWidth(parent, parent.width)
             spacing: 6
             Repeater {
                 model: root.ready ? root.status.voices.length : 0
