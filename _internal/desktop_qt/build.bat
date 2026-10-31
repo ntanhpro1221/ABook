@@ -51,6 +51,11 @@ rem Listen audit (tools\listen_audit.py): a run with a voice error, a stall or t
 "%ABOOK_PYTHON%" -X utf8 "%HERE%tools\listen_audit.py" selftest
 if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
+rem Python rules over the Qt sources (copy rules, parity with web/phone, layout lints, fixed waits, icon, imports):
+rem 31-10 a reversed parity edit ("Không tìm được") passed every Qt test because only pytest knew the copy rule
+"%ABOOK_PYTHON%" -X utf8 "%HERE%tools\qt_pytests.py"
+if errorlevel 1 exit /b 1
+if not errorlevel 0 exit /b 1
 rem Owner rule 30-10: self-changing values (clock, countdown, %, ETA) change in place with tabular digits
 "%ABOOK_PYTHON%" -X utf8 "%HERE%tools\check_ticks.py"
 if errorlevel 1 exit /b 1
