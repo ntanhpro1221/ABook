@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.152] - 2026-11-01
+
 ### Máy tính
 
 - Bộ cài nhẹ hơn khoảng 2 MB: icon ở khay hệ thống nay viết thẳng cho Windows, không còn kéo theo thư viện giao diện Qt Widgets.
