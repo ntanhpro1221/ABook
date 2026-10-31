@@ -82,8 +82,11 @@ def bump(new: str, root: Path = ROOT, today: datetime.date | None = None) -> lis
     return changed
 
 
-def release_notes(version: str, repo: Path = REPO) -> str:
-    """Ghi chú GitHub Release: mục CHANGELOG của bản ấy + yêu cầu máy (README) + cách cài."""
+def release_notes(version: str, repo: Path = REPO, out: Path | None = None) -> str:
+    """Ghi chú GitHub Release: mục CHANGELOG của bản ấy + yêu cầu máy (README) + cách cài. Cỡ bộ cài đo từ file đã dựng ở `out`
+    (chưa dựng thì không ghi cỡ) - không viết cứng một con số sẽ cũ đi."""
+    setup = out / f"ABook_{version}_x64-setup.exe" if out else None
+    size = f"khoảng {round(setup.stat().st_size / 1_000_000)} MB, " if setup and setup.is_file() else ""
     changelog = (repo / "_internal/docs/CHANGELOG.md").read_text(encoding="utf-8")
     readme = (repo / "README.md").read_text(encoding="utf-8")
     section = re.search(rf"^## \[{re.escape(version)}\][^\n]*\n(.*?)(?=^## \[)", changelog, re.S | re.M)
@@ -95,7 +98,7 @@ duyệt nghe cùng một thư viện.
 
 ## Cài đặt
 
-- **Windows**: tải `ABook_{version}_x64-setup.exe` bên dưới và chạy (khoảng 17 MB, không cần quyền quản trị). Bản đã cài tự
+- **Windows**: tải `ABook_{version}_x64-setup.exe` bên dưới và chạy ({size}không cần quyền quản trị). Bản đã cài tự
   báo có bản mới trong Cài đặt.
 - **Android**: tải file `.apk` bên dưới và cài; ghép với máy tính bằng mã 6 số (Cài đặt → "Ghép thiết bị mới" trên máy tính).
   App điện thoại từ 0.4.11 tự báo khi có bản mới.
@@ -212,7 +215,7 @@ def publish(version: str, commit: str, out: Path) -> None:
     missing = [name for name in artifacts(version) if not (out / name).is_file()]
     assert not missing, f"thiếu {missing} ở {out} (chạy build trước)"
     notes = out / "notes.md"
-    notes.write_bytes(release_notes(version).encode("utf-8"))
+    notes.write_bytes(release_notes(version, out=out).encode("utf-8"))
     _run(["git", "fetch", "-q", "origin"], REPO)
     # main chỉ tua nhanh: commit phát hành phải nằm trên origin/main hiện tại - hoặc đã nằm TRONG origin/main (main đi tiếp sau commit
     # phát hành, vd các phiên khác đẩy docs trong lúc dựng): khi ấy không đẩy main, chỉ gắn tag.
@@ -275,7 +278,7 @@ def main(argv: list[str] | None = None) -> int:
         build(args.version, out)
     elif args.step == "notes":
         out.mkdir(parents=True, exist_ok=True)
-        (out / "notes.md").write_bytes(release_notes(args.version).encode("utf-8"))
+        (out / "notes.md").write_bytes(release_notes(args.version, out=out).encode("utf-8"))
         print(f"ghi chú -> {out / 'notes.md'}")
     else:
         commit = subprocess.run(["git", "rev-parse", args.commit or "HEAD"], cwd=REPO, capture_output=True, text=True,
