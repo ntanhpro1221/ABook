@@ -224,6 +224,7 @@ PeerBar 1.0 ../../../../qml/PeerBar.qml
 PlayerKeys 1.0 ../../../../qml/PlayerKeys.qml
 ShortcutsDialog 1.0 ../../../../qml/ShortcutsDialog.qml
 WindowChrome 1.0 WindowChrome.qml
+TrayIcon 1.0 TrayIcon.qml
 OutputPopover 1.0 ../../../../qml/OutputPopover.qml
 PlayerAlert 1.0 ../../../../qml/PlayerAlert.qml
 PlayerFade 1.0 ../../../../qml/PlayerFade.qml
