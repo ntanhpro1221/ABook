@@ -7,6 +7,14 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Máy tính (bản Qt, chưa có trong bộ cài)
+
+- App máy tính: nhạc nền tốn ít CPU hơn khi thu nhỏ.
+- App máy tính: giọng đọc giữ đúng nhịp khi nghe trong khay và nhạc nền lặp lại.
+- App máy tính hiện trong khung điều khiển nhạc của Windows (tên chương, bìa, phát/dừng, chương trước/sau, tua).
+- App máy tính: đóng app không còn để lại tiến trình chạy ngầm sau khi đã phát nhạc nền WAV, FLAC, M4A hay Ogg.
+- App máy tính: nhạc nền nối vào đúng chỗ của lời đọc khi bắt đầu và mỗi lần lặp lại, không còn trễ vài chục mili giây.
+
 ## [0.4.150] - 2026-10-31
 
 ### Máy tính
@@ -16,14 +24,6 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Điện thoại
 
 - Thêm các lời giải thích gập sau "?" như bản máy tính: Nhạc của tôi, Studio tạm dừng khi máy chạy pin, bảng chọn giọng, gợi ý người kể "tôi", chương chờ thu lại, khoá giọng trực tuyến.
-
-### Máy tính (bản Qt, chưa có trong bộ cài)
-
-- App máy tính: nhạc nền tốn ít CPU hơn khi thu nhỏ.
-- App máy tính: giọng đọc giữ đúng nhịp khi nghe trong khay và nhạc nền lặp lại.
-- App máy tính hiện trong khung điều khiển nhạc của Windows (tên chương, bìa, phát/dừng, chương trước/sau, tua).
-- App máy tính: đóng app không còn để lại tiến trình chạy ngầm sau khi đã phát nhạc nền WAV, FLAC, M4A hay Ogg.
-- App máy tính: nhạc nền nối vào đúng chỗ của lời đọc khi bắt đầu và mỗi lần lặp lại, không còn trễ vài chục mili giây.
 
 ## [0.4.149] - 2026-10-31
 
