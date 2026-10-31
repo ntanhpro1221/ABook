@@ -208,9 +208,21 @@ bytecode HLSL, không phụ thuộc card). Lợi tối đa là phần của 0,4 
     - Cache Qt (`QStandardPaths`, org = app = `ABook`) nằm ở `%LOCALAPPDATA%\ABook\ABook\cache`, tức trong `$INSTDIR`. Gỡ thật
       phải xoá nó dù không tích ô xoá dữ liệu.
     - `desktop_qt.ini` ở `%LOCALAPPDATA%\ABook` là dữ liệu người dùng (theo ô xoá dữ liệu).
-  - **Cho Q6:** kiểm chữ ký ở máy chủ Python phải sống trong `abook/webui/`, nơi luồng Music chưa được sửa (luật Lead). Một
-    file mới ở đó không đổi `quality_implementation_hash`: 41 file khoá, trong `webui/` chỉ có `word_timing.py`. Cần Lead quyết
-    ai viết. `minisign_verify.py` là bản dùng được để chép sang.
+  - **Cho Q6 (Lead quyết 31-10, đã làm):** phép kiểm nằm ở `abook/webui/minisign_verify.py` (file mới; hash vẫn c95fac04),
+    dùng lại `ed25519_verify.py`. API:
+    - `signature_ok(data, ...)`, `digest_ok(blake2b_512, ...)`, `file_ok(path, ...)` (đọc từng MB); có `version=` thì
+      trusted comment phải ghi đúng `version:<bản>`.
+    - Đầu vào hỏng thì trả False, không ném lỗi.
+    - `installer/minisign_verify.py` chỉ còn là dòng lệnh gọi `file_ok`.
+
+    `tests/test_minisign_verify.py`, 21 ca:
+    - Phải bị từ chối: chữ ký sai, chữ ký chung sai, khoá sai, mã khoá khác (dù đúng khoá), file sửa một byte, bản khác,
+      thiếu `version:`, chữ ký / khoá công khai sai định dạng.
+    - Ca thật: `.sig` của `ABook_0.4.149_x64-setup.exe` với khoá trong tauri.conf.json. Test lưu mã BLAKE2b-512 của bộ cài,
+      không lưu file 20 MB: chữ ký "ED" ký trên chính mã ấy.
+    - Kiểm lực: 4 lỗi cấy (bỏ chữ ký chung / bỏ kiểm version / bỏ kiểm chữ ký file / bỏ kiểm mã khoá) đều làm test đỏ.
+
+    Sửa route / server.py có sẵn cho Q6: gửi Lead diff trước.
 
 ### Q3. Móc gỡ / nâng cấp
 - Dừng tiến trình chạy TỪ thư mục cài theo ExecutablePath (không theo tên), chừa chính bộ gỡ.
