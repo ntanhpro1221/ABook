@@ -157,7 +157,7 @@ Column {
         open: root.view === null && !root.failed
         EditBookSkeleton { width: parent.width; shape: "cards"; label: "Đang tải nhạc nền" }
     }
-    EditBookError {
+    InlineError {
         width: parent.width
         open: root.failed && root.view === null
         message: "Bạn hãy kiểm tra kết nối rồi tải lại nhạc nền."

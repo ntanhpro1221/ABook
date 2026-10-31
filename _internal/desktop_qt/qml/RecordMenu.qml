@@ -1,6 +1,7 @@
 import QtQuick
 import ABook
 import "RecordLogic.js" as Logic
+import "TextWrap.js" as TextWrap
 
 // Danh sách của nút "Hồ sơ nghe:" (menu của RecordPicker, listen/BookScreen.tsx): một dòng giải thích, mỗi hồ sơ (dấu tích ở hồ sơ đang dùng, chỗ nghe cuối và
 // lần nghe gần nhất), vạch ngăn, rồi "Hồ sơ mới", "Đổi tên hồ sơ này…", "Chuyển sang cuốn khác…", "Xoá hồ sơ này…". Việc chọn / làm do trang sách xử lý.
@@ -62,7 +63,7 @@ Column {
                 Text {
                     objectName: "recordChoiceName"
                     width: parent.width
-                    text: row.modelData.name
+                    text: TextWrap.pretty(row.modelData.name)
                     color: Theme.text
                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                     font.pixelSize: Theme.sizeBodySmall
@@ -70,7 +71,7 @@ Column {
                 ClockLabel {
                     objectName: "recordChoiceLine"
                     width: parent.width
-                    text: Logic.recordLine(root.book, row.modelData, root.now > 0 ? root.now : undefined)
+                    text: TextWrap.pretty(Logic.recordLine(root.book, row.modelData, root.now > 0 ? root.now : undefined))
                     color: Theme.text3
                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                     font.pixelSize: Theme.sizeCaption

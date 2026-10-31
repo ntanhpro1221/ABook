@@ -35,7 +35,7 @@ Column {
         open: root.loading
         EditBookSkeleton { x: 12; y: 8; width: parent.width - 24; count: 3; label: "Đang tải bài nhạc"; height: implicitHeight + 16 }
     }
-    EditBookError {
+    InlineError {
         width: parent.width
         open: root.failed && !root.loading
         message: "Bạn hãy kiểm tra kết nối rồi tìm lại bài nhạc."
@@ -69,7 +69,7 @@ Column {
                     Text {
                         width: parent.width
                         visible: text !== ""
-                        text: [row.modelData.creator, row.modelData.duration ? Logic.formatClock(row.modelData.duration) : ""].filter(part => !!part).join(" · ")
+                        text: [row.modelData.creator, row.modelData.duration ? Logic.formatClock(row.modelData.duration) : ""].filter(part => !!part).join("\u00a0· ")
                         color: Theme.text2
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                         font.pixelSize: Theme.sizeCaption

@@ -172,6 +172,16 @@ Item {
             const list = covered(build(data.factory))
             verify(list.length === 0, ModalLayer.report(list))
         }
+        // Mọi hộp / bảng / menu mang CÙNG một bóng (Shadow.qml, Gauss đúng token web), không tự chồng Rectangle đen mờ thành bậc thang
+        function test_everyLayerWearsTheSharedShadow_data() { return layerTypes() }
+        function test_everyLayerWearsTheSharedShadow(data) {
+            for (const layer of build(data.factory)) {
+                const panel = ModalLayer.panelOf(layer)
+                const shadows = panel.children.filter(child => /^Shadow(_|\()/.test(String(child)))
+                compare(shadows.length, 1, data.tag + " panel shadow")
+                compare(shadows[0].kind, "float", data.tag + " shadow kind")
+            }
+        }
         // Mỗi lớp tự đặt mình ở gốc cửa sổ, không để chỗ khai báo quyết định thứ tự vẽ
         function test_layerHostsItselfAtTheWindowRoot(data) {
             for (const layer of build(data.factory)) compare(layer.parent, root(), "layer parent")

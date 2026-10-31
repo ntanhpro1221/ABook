@@ -184,7 +184,7 @@ Item {
                         }
                         Text {
                             width: parent.width - 26
-                            text: modelData.label + (modelData.hint ? " · " + modelData.hint : "")
+                            text: modelData.label + (modelData.hint ? "\u00a0· " + modelData.hint : "")
                             color: parent.activeStep ? Theme.text : Theme.text2
                             font.weight: parent.activeStep ? Theme.weightBold : Theme.weightRegular
                             wrapMode: Text.Wrap

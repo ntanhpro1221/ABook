@@ -89,7 +89,7 @@ Interactive {
                            NumberAnimation { property: "shown"; from: 1; to: 0; duration: Theme.reduceMotion ? 0 : Theme.motionFastOut; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeAccelerate } }
         background: Item {
             transform: Translate { y: -8 * (1 - list.shown) }
-            Rectangle { anchors.fill: parent; anchors.margins: -6; radius: Theme.radiusCover + 6; color: "#000000"; opacity: 0.05 }
+            Shadow {}      // bóng chung của lớp nổi (DESIGN.md 5.5)
             Rectangle { anchors.fill: parent; radius: Theme.radiusCover; color: Theme.panel; border.width: 1; border.color: Theme.line }
         }
         contentItem: ListView {

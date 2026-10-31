@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "../../qml/TextWrap.js" as TextWrap
 import "ModalLayer.js" as ModalLayer
 import "VisualReady.js" as VisualReady
 import ABook
@@ -34,7 +35,7 @@ Item {
         function one(item, name) { const found = all(item, name); verify(found.length > 0, "thiếu " + name); return found.filter(shown)[0] || found[0] }
         function has(item, name) { return all(item, name).filter(shown).length > 0 }
         function texts(item) { return ModalLayer.collect(item, node => node.text !== undefined && shown(node)).map(node => String(node.text)) }
-        function hasText(item, value) { return texts(item).indexOf(value) >= 0 }
+        function hasText(item, value) { const all = texts(item); return all.indexOf(value) >= 0 || all.indexOf(TextWrap.pretty(value)) >= 0 }    // chữ vẽ qua text-wrap: pretty (TextWrap.js)
         function hasPart(item, part) { return texts(item).some(t => t.indexOf(part) >= 0) }
         function shot(name, item) {
             const target = item || host
@@ -264,7 +265,7 @@ Item {
         function test_optionsFoldSummarisesAndRemembers() {
             const page = openBuilder()
             withSource(page)
-            compare(one(page, "newOptions").summary, "Giọng kể Lan · Cân bằng · bắt đầu ngay")
+            compare(one(page, "newOptions").summary, "Giọng kể Lan\u00a0· Cân bằng\u00a0· bắt đầu ngay")
             verify(!has(page, "newOptionsBody"))
             openOptions(page)
             compare(Platform.setting("fold.new-project.options", "0"), "1")
@@ -303,7 +304,7 @@ Item {
             tryVerify(function() { return all(page, "newSummaryLabel").filter(shown).length > 0 })
             const labels = all(page, "newSummaryLabel").filter(shown).map(t => t.text)
             verify(labels.indexOf("Chương") >= 0, JSON.stringify(labels))
-            verify(hasPart(page, "5 chương · "))
+            verify(hasPart(page, "5 chương\u00a0· "))
         }
         function test_firstPersonNarratorAndBody() {
             // không đặt giọng mặc định trong Cài đặt: có "tôi" thì máy chọn giọng dẫn theo giới người kể

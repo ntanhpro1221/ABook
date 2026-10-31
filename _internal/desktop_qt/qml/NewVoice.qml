@@ -319,7 +319,7 @@ Column {
                             Text {
                                 width: parent.width
                                 topPadding: 2
-                                text: card.modelData.gender + " · Miền " + card.modelData.region + " · " + card.modelData.style
+                                text: card.modelData.gender + "\u00a0· Miền " + card.modelData.region + "\u00a0· " + card.modelData.style
                                 color: Theme.text2
                                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                 font.pixelSize: Theme.sizeCaption

@@ -1,5 +1,5 @@
 @echo off
-rem Dựng hai file đo lõi phát vào D:\Novels\native_desk_proto\audiobench (ngoài repo).
+rem Builds the two playback-core benchmarks into D:\Novels\native_desk_proto\audiobench (outside the repo).
 setlocal
 set HERE=%~dp0
 if not defined QT_ROOT set QT_ROOT=D:\Novels\native_desk_proto\qt611\6.10.3\msvc2022_64

@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "../../qml/TextWrap.js" as TextWrap
 import "VisualReady.js" as VisualReady
 import ABook
 
@@ -87,7 +88,8 @@ Item {
             return null
         }
         function byName(root, name) { return walk(root, i => i.objectName === name) }
-        function byText(root, value) { return walk(root, i => (i.text === value || i.label === value || i.title === value) && i.visible !== false) }
+        // Chữ vẽ qua text-wrap: pretty (TextWrap.js) có NBSP trước từ cuối ngắn
+        function byText(root, value) { return walk(root, i => (i.text === value || i.text === TextWrap.pretty(value) || i.label === value || i.title === value) && i.visible !== false) }
         function texts(root) {
             const out = []
             walk(root, i => { if (i.visible !== false && i.text !== undefined && String(i.text) !== "") out.push(String(i.text)); return false })
@@ -95,7 +97,7 @@ Item {
         }
         function shown(root, value) {
             let found = false
-            walk(root, i => { if (i.text === value) { let ok = true; for (let n = i; n; n = n.parent) if (n.visible === false || (n.height === 0 && n !== i)) { ok = false; break } if (ok) found = true } return false })
+            walk(root, i => { if (i.text === value || i.text === TextWrap.pretty(value)) { let ok = true; for (let n = i; n; n = n.parent) if (n.visible === false || (n.height === 0 && n !== i)) { ok = false; break } if (ok) found = true } return false })
             return found
         }
         function window() { return host.Window.window.contentItem }
@@ -163,7 +165,7 @@ Item {
             tryVerify(function() { return shown(page, "Đang hiện mã ghép") })
             tryVerify(function() { return shown(page, "Hết hạn sau 5:00") || shown(page, "Hết hạn sau 4:59") })
             tryVerify(function() { return shown(page, "Vân tay: AB12CD34EF56AB12CD34EF56AB12CD34EF56AB12CD34EF56AB12CD34EF56AB12") })
-            byText(page, "Huỷ mã này").clicked()
+            byText(page, "Huỷ mã").clicked()
             compare(request("DELETE", "/api/sync/pairing").length, 1)
             tryVerify(function() { return !byName(page, "pairingCode").visible })
             tryVerify(function() { return shown(page, "Ghép thiết bị mới") })
@@ -390,7 +392,7 @@ Item {
             verify(dialog.open)
             compare(dialog.title, "Chẩn đoán Pixel 8")
             tryVerify(function() { return shown(dialog, "0.4.147 (4147)") })
-            tryVerify(function() { return shown(dialog, "Google Pixel 8 · Android 15 (API 35)") })
+            tryVerify(function() { return shown(dialog, "Google Pixel 8\u00a0· Android 15 (API 35)") })
             tryVerify(function() { return shown(dialog, "20 GB / 120 GB") })
             tryVerify(function() { return (Nav.layers.length) === (1) })
             verify(Nav.back())

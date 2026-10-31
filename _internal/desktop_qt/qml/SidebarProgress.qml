@@ -48,9 +48,11 @@ Item {
             width: parent.width; open: store.libraryLoading
             Text { objectName: "sidebarLoading"; width: parent.width; text: "Đang tải tiến độ"; wrapMode: Text.Wrap; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
         }
-        Collapse {
+        InlineError {
+            objectName: "sidebarError"
             width: parent.width; open: !!store.libraryError && !store.libraryData
-            Button { width: parent.width; wrap: true; kind: "ghost"; text: "Bạn hãy thử tải lại tiến độ."; onClicked: store.loadLibrary() }
+            message: "Bạn hãy thử tải lại tiến độ."
+            onRetry: store.loadLibrary()
         }
         Repeater {
             model: rows
@@ -69,9 +71,15 @@ Item {
                 onClicked: root.projectRequested(modelData.id)
                 Rectangle { anchors.fill: parent; radius: Theme.radiusControl; color: Theme.sunken; opacity: row.hovered || row.pressed ? 1 : 0; Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast } } }
                 CoverView { x: Theme.s8; y: Theme.s8; width: 32; height: 32; radius: Theme.radiusControl; title: row.modelData.title; coverKey: row.modelData.cover ? row.modelData.id + "/" + (row.modelData.cover.version || 0) : "" }
+                // Đang chạy: vạch nhảy Vu như web (h-2.5, vạch 2 cách 1, mực nhấn); chờ / dừng: icon
+                Vu {
+                    visible: row.modelData.queuePosition == null && !row.modelData.paused && !row.modelData.stopping
+                    x: Theme.s8 + 40 + (12 - width) / 2; y: Theme.s8 + 2 + 1; height: 10; barWidth: 2; gap: 1; color: Theme.accent
+                }
                 Icon {
                     objectName: "sidebarStatus_" + entry.index
                     x: Theme.s8 + 40; y: Theme.s8 + 2; size: 12
+                    opacity: row.modelData.queuePosition != null || row.modelData.paused || row.modelData.stopping ? 1 : 0
                     name: row.modelData.queuePosition != null ? "clock" : row.modelData.paused || row.modelData.stopping ? "pause" : "audio-lines"
                     Accessible.name: row.modelData.queuePosition != null ? `Đang chờ ${row.modelData.queuePosition}` : row.modelData.stopping ? "Đang dừng" : row.modelData.paused ? "Đang tạm dừng" : ""
                     color: row.modelData.paused || row.modelData.stopping ? Theme.warning : Theme.accentText

@@ -62,9 +62,7 @@ Item {
         transformOrigin: Item.Top
         HoverHandler { id: hover }
 
-        // Bóng của lớp nổi (như Popover: DESIGN.md 5.5)
-        Rectangle { anchors.fill: parent; anchors.margins: -8; radius: Theme.radiusCover + 8; color: "#000000"; opacity: 0.04 }
-        Rectangle { anchors.fill: parent; anchors.margins: -3; anchors.topMargin: -1; anchors.bottomMargin: -5; radius: Theme.radiusCover + 3; color: "#000000"; opacity: 0.06 }
+        Shadow {}      // bóng chung của lớp nổi (DESIGN.md 5.5)
         Rectangle {
             anchors.fill: parent
             radius: Theme.radiusCover

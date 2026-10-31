@@ -16,7 +16,7 @@ Modal {
         NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard }
     }
     panelWidth: expanded ? Math.min(width - 2 * Theme.margin, 1160) : 560
-    title: preview && queueName !== "" ? queueName + " · Thêm sách" : "Thêm sách"
+    title: preview && queueName !== "" ? queueName + "\u00a0· Thêm sách" : "Thêm sách"
     description: queue && !preview ? Queue.summaryText(Queue.summarize(queue))
                : preview ? "Xem lại chương trước khi thêm. Chữ của truyện giữ nguyên."
                : "EPUB, DOCX, PDF có chữ, TXT, thư mục TXT hay file .abook. Chọn được nhiều file."
@@ -588,7 +588,7 @@ Modal {
                 Item {
                     width: parent.width
                     height: failure.height + (failure.open ? 12 : 0)
-                    ImportError { id: failure; y: 12; width: parent.width; message: root.step === "choose" ? root.problem : ""; onRetry: { if (root.lastRead) root.read(root.lastRead); else root.pickFiles() } }
+                    InlineError { id: failure; y: 12; width: parent.width; message: root.step === "choose" ? root.problem : ""; onRetry: { if (root.lastRead) root.read(root.lastRead); else root.pickFiles() } }
                 }
                 Text {
                     width: parent.width
@@ -693,10 +693,8 @@ Modal {
                                 font.weight: 600
                                 font.features: { "tnum": 1 }
                             }
-                            Text {
-                                text: "· " + Queue.formatNumber(root.totals.words) + " chữ"
-                                color: Theme.text2
-                                font.pixelSize: Theme.sizeBodySmall
+                            FlowDetail {
+                                detail: Queue.formatNumber(root.totals.words) + " chữ"
                                 font.features: { "tnum": 1 }
                             }
                         }
