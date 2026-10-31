@@ -11,6 +11,7 @@ import { tellSceneMusic } from "./musicHint";
 import { MUSIC_CHANGED_ALL, MUSIC_CHANGED_EVENT, MusicBed, NextChapterWarm, type MusicCredit } from "./musicBed";
 import { SceneCues, isSceneCues, sceneRetryDelay } from "./sceneCues";
 import { nextPlaylistBed, PlaylistClock, PlaylistDriver, type PlaylistBedState } from "./playlistBed";
+import { VOICE_STALL_TICK_MS, VoiceStall } from "./voiceStall";
 import { canPlay, newerElsewhere, resumePoint, startingRate, type ListenBook, type ListenChapter, type NightPosition, type Script } from "./model";
 import { NightRecorder } from "./night";
 import { leftWithPeer, watchUntilBack } from "./peerBack";
@@ -818,10 +819,18 @@ export function PlayerProvider({
       // Đồng hồ nhạc của cuốn chạy khi giọng chạy: sang chương, tua, đổi tốc độ không làm nhạc bắt đầu lại.
       bed.setCues(playlistBed.cues, playlistBed.levelDb);
       const driver = new PlaylistDriver(bed, new PlaylistClock(playlistBed.key), playlistBed.cues);
-      const update = () => driver.update(!engine.paused);
+      const stall = new VoiceStall();
+      let voiceEnded = false;
+      const update = () => {
+        voiceEnded = engine.paused && (voiceEnded || engine.ended);
+        const hushed = stall.update(Date.now(), engine.time, !engine.paused);
+        driver.update(!engine.paused && !hushed, voiceEnded || hushed);
+      };
       const offs = [engine.on("time", update), engine.on("play", update), engine.on("pause", update), engine.on("ended", update)];
+      const ticker = setInterval(() => { if (!engine.paused) update(); }, VOICE_STALL_TICK_MS); // khựng: không có sự kiện thời gian nào
       update();
       return () => {
+        clearInterval(ticker);
         offs.forEach((off) => off());
         driver.stop();
         bed.stop();
@@ -831,6 +840,8 @@ export function PlayerProvider({
     // Giọng dừng vì tự hết chương (sự kiện pause của <audio> tới trước ended, lúc `ended` đã đúng): giữ tới khi giọng chạy lại - khe nạp
     // chương kế không được dừng phụt nhạc đang mờ ra.
     let voiceEnded = false;
+    // Khựng quá VOICE_STALL_MS (mạng hỏng hẳn, máy kia không trả đoạn): nhạc mờ xuống như lúc giọng tự hết, giọng chạy lại thì nhạc lên lại.
+    const stall = new VoiceStall();
     const sync = () => {
       voiceEnded = engine.paused && (voiceEnded || engine.ended);
       const current = refs.current.track;
@@ -838,13 +849,16 @@ export function PlayerProvider({
       const now = engine.time;
       const seeked = Math.abs(now - last) > 3;
       if (seeked) scene?.seeked(now);
-      bed.sync(now, !engine.paused, seeked, voiceEnded);
+      const hushed = stall.update(Date.now(), now, !engine.paused);
+      bed.sync(now, !engine.paused && !hushed, seeked, voiceEnded || hushed);
       if (current && nextWarm) nextWarm.update(`${current.bookId}:${current.chapterId}`, availableAfter(refs.current.queue, current.chapterId, 1)?.id ?? null, engine.duration - now);
       last = now;
     };
     // Clip về (giây thật của đoạn thay giây ước): mốc nhạc theo cảnh đặt lại cho khớp.
     const offs = [engine.on("time", sync), engine.on("play", sync), engine.on("pause", sync), engine.on("ended", sync), engine.on("duration", () => scene?.refresh(engine.time))];
+    const ticker = setInterval(() => { if (!engine.paused) sync(); }, VOICE_STALL_TICK_MS); // khựng: không có sự kiện thời gian nào
     return () => {
+      clearInterval(ticker);
       offs.forEach((off) => off());
       bed.stop();
     };

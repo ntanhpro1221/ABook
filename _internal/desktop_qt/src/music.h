@@ -47,8 +47,8 @@ class Music : public QObject {
     Q_PROPERTY(QVariantMap credit READ credit NOTIFY creditChanged)
 
 public:
-    /// `make`: một AudioOut mới cho mỗi phần tử nhạc (MusicBed làm chủ).
-    Music(Player *player, PlayerNet *net, std::function<AudioOut *()> make, QObject *parent = nullptr);
+    /// `make`: một AudioOut mới cho mỗi phần tử nhạc (MusicBed làm chủ). `nowMs`: đồng hồ đếm giọng khựng (bộ thử thay được).
+    Music(Player *player, PlayerNet *net, std::function<AudioOut *()> make, QObject *parent = nullptr, std::function<qint64()> nowMs = {});
     ~Music() override;
 
     static Music *instance();
@@ -102,6 +102,8 @@ private:
     QElapsedTimer m_syncTime;
     bool m_wasPlaying = false;
     bool m_voiceEnded = false; // giọng đang dừng vì tự hết chương / cuốn (Player::ended lúc dừng)
+    std::function<qint64()> m_now;
+    MusicLogic::VoiceStall m_stall; // giọng khựng quá hạn: nhạc mờ xuống như lúc giọng tự hết
     double m_lastRate = 1;
 
     QString m_bookId;

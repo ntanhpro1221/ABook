@@ -39,6 +39,43 @@ inline constexpr double LOOP_TIMER_SLACK_SECONDS = 0.05;
 
 inline constexpr double INF = std::numeric_limits<double>::infinity();
 
+/// Giọng khựng (đang phát mà vị trí đứng yên: đọc to chờ đoạn kế, đệm) lâu hơn chừng này thì nhạc mờ xuống, có tiếng lại thì lên lại. Chọn
+/// theo khe nối đo thật (docs/MUSIC_RESEARCH.md, 01-11): đọc to Edge chưa có sẵn, 1 giờ, 153 chỗ nối - dài nhất 8,8 s.
+inline constexpr double VOICE_STALL_SECONDS = double(ABOOK_MIX_VOICE_STALL_FADE_AFTER_SECONDS);
+
+/// Đếm giọng khựng (ui/src/listen/voiceStall.ts, Android VoiceStall.kt - cùng luật): vị trí đứng yên trong lúc phát từ VOICE_STALL_SECONDS trở
+/// lên; vị trí chạy lại (có tiếng, hay người nghe tua) hay người nghe dừng thì đếm lại.
+class VoiceStall {
+public:
+    explicit VoiceStall(qint64 afterMs = qint64(VOICE_STALL_SECONDS * 1000)) : m_afterMs(afterMs) {}
+
+    /// `nowMs`: đồng hồ của trình phát; true = đã khựng quá hạn.
+    bool update(qint64 nowMs, double position, bool playing) {
+        if (!playing) {
+            m_since.reset();
+            return false;
+        }
+        if (!m_since || position != m_at) {
+            m_since = nowMs;
+            m_at = position;
+            return false;
+        }
+        return nowMs - *m_since >= m_afterMs;
+    }
+
+    /// Còn bao lâu (ms) nữa thì tới hạn, để hẹn một lần đồng bộ - trong lúc khựng không có nhịp vị trí nào; trống khi không đếm hay đã quá hạn.
+    std::optional<qint64> remainingMs(qint64 nowMs) const {
+        if (!m_since || nowMs - *m_since >= m_afterMs)
+            return std::nullopt;
+        return m_afterMs - (nowMs - *m_since);
+    }
+
+private:
+    qint64 m_afterMs;
+    std::optional<qint64> m_since;
+    double m_at = 0;
+};
+
 struct MusicStep {
     double at = 0;
     double db = 0;

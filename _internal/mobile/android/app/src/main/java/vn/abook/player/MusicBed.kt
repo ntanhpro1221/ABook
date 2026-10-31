@@ -432,7 +432,7 @@ object MusicBed {
             if (music == null && bookId.isNotEmpty()) openPlaylist(appContext, bookId)
         }
         if (playlist != null) {
-            syncPlaylist(isPlaying, stopNow)
+            if (!isPlaying && ended) quietPlaylist() else syncPlaylist(isPlaying, stopNow)
             return
         }
         if (!isPlaying && ended) {
@@ -1186,6 +1186,22 @@ object MusicBed {
         clockAt = 0L
         applyPlaying()
         saveClock()
+    }
+
+    /** Giọng im không do người nghe (hết cuốn, khựng quá [MusicMix.voiceStallMs]): đồng hồ nhạc đứng, bài đang kêu mờ ra thay vì dừng phụt; giọng chạy lại thì bài
+     *  ở chỗ đồng hồ mờ vào như lúc đổi bài. */
+    private fun quietPlaylist() {
+        main.removeCallbacks(grace)
+        if (playing) {
+            advanceClock()
+            playing = false
+            clockAt = 0L
+            saveClock()
+        }
+        if (current != null) {
+            switchTo(null, 1f, 0.0)
+            queue.currentSpan = -1
+        }
     }
 
     private fun syncPlaylist(isPlaying: Boolean, stopNow: Boolean = false) {

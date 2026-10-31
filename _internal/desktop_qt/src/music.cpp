@@ -4,6 +4,7 @@
 #include "player.h"
 #include "playernet.h"
 
+#include <QDateTime>
 #include <QJsonArray>
 
 #include <iterator>
@@ -25,7 +26,7 @@ constexpr double SEEK_JUMP_SECONDS = 3;
 
 } // namespace
 
-Music::Music(Player *player, PlayerNet *net, std::function<AudioOut *()> make, QObject *parent)
+Music::Music(Player *player, PlayerNet *net, std::function<AudioOut *()> make, QObject *parent, std::function<qint64()> nowMs)
     : QObject(parent), m_player(player), m_net(net),
       m_bed(std::move(make), [net](const QString &src) { return net->mediaUrl(src); },
             [net](const QString &link) {
@@ -39,7 +40,8 @@ Music::Music(Player *player, PlayerNet *net, std::function<AudioOut *()> make, Q
                                  done(status == 200 ? std::optional<MusicCues>(cuesFromJson(body)) : std::nullopt);
                              }, false);
           },
-          [this](const QString &link) { m_bed.warmLink(link); }) {
+          [this](const QString &link) { m_bed.warmLink(link); }),
+      m_now(nowMs ? std::move(nowMs) : [] { return QDateTime::currentMSecsSinceEpoch(); }) {
     m_tick.setInterval(int(SYNC_TICK_SECONDS * 1000));
     m_tick.setObjectName(QStringLiteral("music sync"));
     m_tick.setSingleShot(true);
@@ -258,7 +260,9 @@ void Music::sync() {
         m_volume = volume;
         m_bed.setVolume(volume);
     }
-    m_bed.sync(now, m_player->playing(), seeked, m_voiceEnded);
+    // Giọng khựng quá hạn (mạng hỏng hẳn: trình phát chờ tới HostWait::kStallMs) thì nhạc mờ xuống như lúc giọng tự hết, không kêu một mình.
+    const bool hushed = m_stall.update(m_now(), now, m_player->playing());
+    m_bed.sync(now, m_player->playing() && !hushed, seeked, m_voiceEnded || hushed);
     const int next = PlayerLogic::availableAfter(m_player->book().chapters, m_player->chapterId(), 1);
     m_nextWarm.update(key, next >= 0 ? std::optional<int>(next) : std::nullopt, m_player->duration() - now);
     m_last = now;
@@ -273,6 +277,7 @@ void Music::updateTicking() {
     const double warm = (m_player->duration() - now - NEXT_CHAPTER_WARM_SECONDS) / m_player->rate();
     delay = std::min(delay, warm > 0.001 ? warm : double(NEXT_CHAPTER_RETRY_MS) / 1000);
     if (m_player->fading() || m_player->buffering()) delay = std::min(delay, SYNC_TICK_SECONDS);
+    if (const auto stall = m_stall.remainingMs(m_now())) delay = std::min(delay, double(*stall) / 1000); // khựng thì không có nhịp vị trí
     if (std::isfinite(delay)) m_tick.start(int(std::clamp(std::ceil(delay * 1000), 1.0, double(INT_MAX))));
 }
 

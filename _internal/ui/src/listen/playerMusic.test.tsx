@@ -36,6 +36,8 @@ vi.mock("./OnlineVoicePrompt", () => ({ OnlineVoicePrompt: () => null }));
 vi.mock("./source", async (original) => ({ ...await original<typeof import("./source")>(), useListenBook: () => ({ data: undefined }) }));
 import { SourceProvider, type ListenSource } from "./source";
 import { PlayerProvider, usePlayer } from "./player";
+import { FADE_SECONDS } from "./musicBed";
+import { VOICE_STALL_MS, VOICE_STALL_TICK_MS } from "./voiceStall";
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -86,6 +88,29 @@ it("the voice ending by itself fades the music out through player.tsx instead of
   Object.assign(state, { time: 0, ended: false }); // next chapter loading, voice still silent
   fire("time");
   expect(audio.paused).toBe(false);
+});
+
+it("a voice stalled past voiceStallFadeAfterSeconds fades the music down through player.tsx and lets it back when the voice moves", async () => {
+  // Network gone for good: the voice waits up to STALL_MS (215 s) - the music must not play alone all that time. No time events fire
+  // while stalled, so player.tsx asks on its own ticker.
+  const { fire, state } = await mount();
+  const audio = h.audio[0];
+  const level = audio.volume;
+  vi.advanceTimersByTime(VOICE_STALL_MS - 3000 - VOICE_STALL_TICK_MS - 100); // mount() already spent 3 s with the voice still
+  expect(audio.volume).toBe(level); // an ordinary gap: nothing changes
+  vi.advanceTimersByTime(VOICE_STALL_TICK_MS + 500);
+  expect(audio.paused).toBe(false);
+  expect(audio.volume).toBeLessThan(level);
+  expect(audio.volume).toBeGreaterThan(0);
+  vi.advanceTimersByTime(FADE_SECONDS * 1000 + 500);
+  expect(audio.paused || audio.volume === 0).toBe(true);
+  state.time = 21; // the voice is back
+  fire("time");
+  for (let i = 0; i < 8; i++) await Promise.resolve();
+  vi.advanceTimersByTime(1000);
+  const back = h.audio.at(-1)!;
+  expect(back.paused).toBe(false);
+  expect(back.volume).toBeGreaterThan(0);
 });
 
 it("a listener Pause still stops the music at once (control for the chapter-end fade)", async () => {

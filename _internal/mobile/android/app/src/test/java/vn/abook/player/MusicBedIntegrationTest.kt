@@ -254,6 +254,67 @@ class MusicBedIntegrationTest {
         Playback::class.java.getDeclaredField("bookId").also { it.isAccessible = true }.set(Playback, "")
     }
 
+    private fun playbackField(name: String) = Playback::class.java.getDeclaredField(name).also { it.isAccessible = true }
+
+    @Test fun aVoiceStalledPastTheLimitFadesTheMusicDownAndLetsItBackWhenTheVoiceMoves() {
+        // Mạng hỏng hẳn: giọng đệm tới HostWait.STALL_MS (215 s) - nhạc không được kêu một mình suốt chừng ấy. Quá voiceStallFadeAfterSeconds thì mờ xuống
+        // (không tắt phụt), giọng có tiếng lại thì nhạc theo. Cả nhạc theo mốc lẫn danh sách phát.
+        installContext()
+        val stallMs = MusicCues.mix.voiceStallMs
+        for ((index, playlist) in listOf(null, "p").withIndex()) {
+            Handler.reset()
+            MusicBed.stop()
+            field("fadingTicker").setBoolean(MusicBed, false)
+            playbackField("ticking").setBoolean(Playback, true) // nhịp 500 ms của Playback không chạy ở đây: test gọi syncMusic như nhịp ấy
+            val voice = FakePlayer().also { it.playing = false; it.playWhenReady = true; it.state = Player.STATE_BUFFERING; it.position = 30_123L + index }
+            Playback.player = voice.player
+            playbackField("bookId").set(Playback, "stall-book")
+            field("book").set(MusicBed, "stall-book")
+            field("closedBook").set(MusicBed, "")
+            field("playlist").set(MusicBed, playlist)
+            val music = FakePlayer().also { it.state = Player.STATE_READY; it.playWhenReady = true }
+            // Mốc / hàng bài có đúng bài đang kêu ở chỗ giọng đứng: lúc chưa quá hạn nhạc chạy tiếp như thường.
+            val cue = MusicCues.Cue(0.0, 100.0, "music/a.mp3", -20.0)
+            field("cues").set(MusicBed, listOf(cue))
+            field("lastSeconds").setDouble(MusicBed, 30.0)
+            val queue = field("queue").get(MusicBed) as PlaylistQueue
+            queue.load(listOf(Playlists.Track("music/a.mp3", 600.0, -20.0)))
+            queue.currentSpan = 0
+            val current = bed(music, if (playlist == null) cue else null)
+            current.javaClass.getDeclaredField("entering").also { it.isAccessible = true }.setBoolean(current, false)
+            setLogical(current, 0.1f)
+            music.volume = 0.1f
+            field("current").set(MusicBed, current)
+            field("playing").setBoolean(MusicBed, true)
+            val sync = Playback::class.java.getDeclaredMethod("syncMusic", Boolean::class.javaPrimitiveType).also { it.isAccessible = true }
+            sync.invoke(Playback, false)
+            Handler.advance(stallMs - 500)
+            sync.invoke(Playback, false)
+            assertSame("$playlist: khe chưa tới hạn - nhạc chạy tiếp", current, field("current").get(MusicBed))
+            assertEquals(0.1f, music.volume, 1e-6f)
+            Handler.advance(500)
+            sync.invoke(Playback, false)
+            assertNull("$playlist: quá hạn - nhạc mờ ra", field("current").get(MusicBed))
+            assertTrue("$playlist: mờ, không dừng phụt", music.playWhenReady)
+            Handler.advance(500)
+            assertTrue(music.volume in 0.001f..0.099f)
+            Handler.advance(MusicCues.mix.fadeMs + 500)
+            assertEquals(1, music.released)
+            sync.invoke(Playback, false)
+            assertFalse(field("playing").getBoolean(MusicBed))
+            voice.position += 500 // có tiếng lại
+            voice.playing = true
+            voice.state = Player.STATE_READY
+            // Mốc / bài ở chỗ ấy mở lại và mờ vào như lúc vào mốc (startCue mở file - test JVM không mở được): ở đây chỉ xem nhạc đã theo giọng.
+            field("cues").set(MusicBed, emptyList<MusicCues.Cue>())
+            queue.clear()
+            sync.invoke(Playback, true)
+            assertTrue("$playlist: giọng chạy lại thì nhạc theo", field("playing").getBoolean(MusicBed))
+        }
+        playbackField("ticking").setBoolean(Playback, false)
+        playbackField("bookId").set(Playback, "")
+    }
+
     @Test fun smallSeeksThroughPlaybackDoNotSeekTheMusicOrRestartItsFade() {
         val voice = FakePlayer().also { it.state = Player.STATE_READY; it.item = MediaItem.Builder().setMediaId("1").build() }
         val music = FakePlayer().also { it.state = Player.STATE_READY; it.volume = 0.1f; it.position = 50_000 }

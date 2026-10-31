@@ -6017,3 +6017,19 @@ Phán quyết đo ở Corpus `research/music/PLAN_scenegap_confirm.md` mục 11 
   - để máy quyết ranh từ nhãn: tệ hơn ở mọi ngưỡng.
 - Ghi nhận: F1 mọi ranh ~0,73 giữa hai người chấm Sonnet là TRẦN của nhiệm vụ này. Nhánh "đồng thuận ranh" đóng (Lead 22-10).
   Mọi thước ranh của model nên đọc so với trần ấy.
+
+### 01-11 - Giọng khựng: nhạc mờ sau `voiceStallFadeAfterSeconds` = 10 s (cả ba nền)
+
+Lỗi: mạng hỏng hẳn thì trình phát chờ tới `HostWait.STALL_MS` = 2 × 100 000 + 15 000 = 215 s rồi mới báo lỗi; suốt quãng ấy nhạc nền
+kêu một mình. Sửa: giọng đang phát mà vị trí đứng yên từ N giây trở lên thì nhạc mờ xuống (cùng đường mờ như lúc giọng tự hết chương,
+không tắt phụt); vị trí chạy lại thì nhạc vào lại đúng chỗ của mốc. N là một hằng số chung trong `abook/webui/assets/music_mix.json`
+(web `listen/voiceStall.ts`, Android `VoiceStall.kt`, Qt `MusicLogic::VoiceStall` qua `ABOOK_MIX_VOICE_STALL_FADE_AFTER_SECONDS`).
+
+Chọn N theo khe nối thật, lượt nghe Qt 31-10 (`LLM_Train/music/listen_qt_3110/*/bench.json`):
+- Khe "đọc to cạn hàng" = đoạn trước hết tiếng (`voice_ready` + độ dài) tới lúc đoạn kế bắt đầu nạp; khoảng đệm `voice_buffering`
+  1 -> 0 thêm vào chỉ ~0,05 s (580 lần, không lần nào > 2 s).
+- A1, Edge chưa có sẵn, 1 giờ, 153 chỗ nối: p99 8,2 s, dài nhất 8,8 s. Các lượt đã ấm (B1, B2, C2, I2, I5, I6, M2): dài nhất 2,1 s.
+- Hai lượt gây lỗi có chủ đích (I3, I4): giọng đứng yên 14 s và 24 s - đúng loại khe cần mờ.
+
+N = 10 s: trên khe bình thường dài nhất, dưới mọi khe lỗi đo được. Bộ thử cả ba nền kiểm hằng số > 8,8 s và kiểm lực (bỏ phần mờ thì
+test hỏng).
