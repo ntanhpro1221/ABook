@@ -128,6 +128,8 @@ public slots:
         engine->rootContext()->setContextProperty(QStringLiteral("qtGlyphAudit"), audit.get());
         engine->rootContext()->setContextProperty(QStringLiteral("qtGlyphProbe"), qEnvironmentVariableIsSet("ABOOK_GLYPH_PROBE"));
         engine->rootContext()->setContextProperty(QStringLiteral("qtWideShotDir"), qEnvironmentVariable("ABOOK_WIDE_SHOTS"));
+        // Bộ ảnh soát phát hành chụp thêm khổ khác (vd "1280,960"); rỗng = bốn khổ của test.
+        engine->rootContext()->setContextProperty(QStringLiteral("qtWideWidths"), qEnvironmentVariable("ABOOK_WIDE_WIDTHS"));
         engine->rootContext()->setContextProperty(QStringLiteral("qtFullRepaint"), &repaint);
         engine->addImageProvider(QStringLiteral("cover"), new WidthCovers);
     }

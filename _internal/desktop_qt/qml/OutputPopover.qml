@@ -15,7 +15,7 @@ Popover {
             MenuRow {
                 required property var modelData
                 objectName: "output_" + modelData.id
-                width: parent.width; text: modelData.name
+                width: parent ? parent.width : 0; text: modelData.name
                 selected: OutputDevices.selected === modelData.id
                 icon: selected ? "check" : ""
                 enabled: !OutputDevices.busy

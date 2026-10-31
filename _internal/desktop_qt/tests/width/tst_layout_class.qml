@@ -90,7 +90,8 @@ Item {
             const screens = ["library", "library-short", "library-many", "book", "now", "now-chapters", "studio", "studio-peer", "studio-closed", "studio-trouble", "settings-root",
                 "settings-voice", "settings-listen", "settings-sleep", "settings-look", "settings-devices", "settings-studio", "settings-advanced",
                 "add", "add-review", "edit", "rename", "save", "reader", "suggestions", "shortcuts", "speed", "sleep", "music", "chapters", "connection", "mini", "bar"]
-            for (const mode of ["light", "dark"]) for (const w of [1024, 1440, 1920]) for (const screen of screens)
+            const widths = qtWideWidths !== "" ? qtWideWidths.split(",").map(Number) : [1024, 1440, 1920]
+            for (const mode of ["light", "dark"]) for (const w of widths) for (const screen of screens)
                 rows.push({tag: mode + "_" + screen + "_" + w, screen: screen, mode: mode, w: w})
             return rows
         }
@@ -135,7 +136,7 @@ Item {
             }
             console.log("LAYOUT_AUDIT " + JSON.stringify({scene: d.tag, hits: hits}))
             qtGlyphAudit.scan()
-            if (qtWideShotDir !== "" && d.w !== 1440) {
+            if (qtWideShotDir !== "" && (qtWideWidths !== "" || d.w !== 1440)) {
                 ready()
                 // QtQuickTest Image.save returns void; verify PNGs on disk.
                 grabImage(host).save(qtWideShotDir + "/layout_" + d.tag + ".png")
