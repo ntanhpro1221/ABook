@@ -23,9 +23,10 @@ def test_qt_never_uses_the_square_web_icon():
 
 def test_exe_window_and_tray_use_app_ico():
     cmake = (QT / "CMakeLists.txt").read_text(encoding="utf-8")
-    assert "appicon.rc" in cmake and "abook/assets/app.ico" in cmake
+    assert re.search(r'IDI_ICON1 ICON \\"\$\{CMAKE_CURRENT_SOURCE_DIR\}/\.\./abook/assets/app\.ico', cmake)
     assert ":/app/app.ico" in (QT / "src" / "main.cpp").read_text(encoding="utf-8")
-    assert "qrc:/app/app.ico" in (QT / "qml" / "DesktopTray.qml").read_text(encoding="utf-8")
+    # Khay Win32 (src/trayicon.cpp) lấy icon IDI_ICON1 mà appicon.rc nhúng vào exe, tức chính app.ico.
+    assert 'L"IDI_ICON1"' in (QT / "src" / "trayicon.cpp").read_text(encoding="utf-8")
 
 
 def test_app_ico_has_rounded_transparent_corners():
