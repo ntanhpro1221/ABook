@@ -22,8 +22,8 @@ function matches(element: Element, target: string | RegExp): boolean {
 
 function visible(element: Element): boolean {
   if (element.closest("[inert], [aria-hidden=true]")) return false;
-  // happy-dom (test) không bố cục - mọi hộp 0x0: coi như thấy.
-  if (navigator.userAgent.includes("HappyDOM")) return true;
+  // happy-dom / jsdom (test) không bố cục - mọi hộp 0x0: coi như thấy.
+  if (/HappyDOM|jsdom/.test(navigator.userAgent)) return true;
   const rect = element.getBoundingClientRect();
   return rect.width > 0 || rect.height > 0;
 }
@@ -48,6 +48,17 @@ function press(element: HTMLElement): void {
   element.dispatchEvent(new Pointer("pointerup", { ...init, buttons: 0 }));
   element.dispatchEvent(new MouseEvent("mouseup", { ...init, buttons: 0 }));
   element.click();
+}
+
+/** Như `click` nhưng lấy phần tử ĐẦU trong cây (không phải cuối): nút "Thêm tuỳ chọn" của trang sách đứng trước nút cùng tên của thanh phát. */
+export async function clickFirst(target: string | RegExp): Promise<HTMLElement> {
+  const element = await waitFor(
+    () => [...document.querySelectorAll<HTMLElement>(CLICKABLE)].find((candidate) => matches(candidate, target) && visible(candidate)) ?? null,
+    `nút “${String(target)}”`,
+  );
+  press(element);
+  await settle();
+  return element;
 }
 
 /** Chờ phần tử hiện rồi bấm. */

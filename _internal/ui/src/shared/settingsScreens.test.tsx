@@ -70,44 +70,13 @@ describe("Cài đặt", () => {
     expect(html).toContain("Nghỉ quá 30 giây thì lùi 5 giây");
     expect(html).not.toContain("Luôn bật");
   });
-
-  it("điện thoại: Nghe có Nhạc nền; Nâng cao có Giới thiệu", async () => {
-    const { SettingsScreen } = await import("@/android/SettingsScreen");
-    const listen = wrap(<SettingsAt group="listen" screen={<SettingsScreen />} />);
-    expect(sections(listen).music).toBe("Nhạc nền");
-    expect(listen).toContain("Nhạc của tôi");
-    const advanced = wrap(<SettingsAt group="advanced" screen={<SettingsScreen />} />);
-    expect(sections(advanced).about).toBe("Giới thiệu");
-    expect(advanced).toContain("Thành phần sử dụng");
-  });
-
-  it("Giới thiệu trên điện thoại ghi phiên bản đang cài", async () => {
-    const { AboutBlock } = await import("@/android/SettingsScreen");
-    expect(wrap(<AboutBlock version="0.4.29" />)).toContain("0.4.29");
-  });
 });
 
 describe("cây Cài đặt (chủ app 23-10: không còn là ma trận)", () => {
   /** Tên các nhóm trên trang gốc, theo thứ tự. */
   const groupNames = (html: string) => [...html.matchAll(/<a[^>]*href="[^"]*\/settings\/([a-z]+)"[^>]*>[\s\S]*?<span class="block text-base[^"]*">([^<]+)</g)].map((match) => [match[1], match[2]]);
 
-  it("trang gốc điện thoại: 6 nhóm, mỗi nhóm một dòng, đúng thứ tự dùng nhiều trước", async () => {
-    const { SettingsScreen } = await import("@/android/SettingsScreen");
-    const html = wrap(<SettingsAt screen={<SettingsScreen />} />);
-    expect(groupNames(html)).toEqual([
-      ["voice", "Giọng đọc"],
-      ["listen", "Nghe"],
-      ["sleep", "Hẹn giờ ngủ"],
-      ["look", "Giao diện"],
-      ["devices", "Thiết bị"],
-      ["advanced", "Nâng cao"],
-    ]);
-    // Trang gốc chỉ là danh sách: không có công tắc nào.
-    expect(html).not.toContain('role="switch"');
-    expect(html).toContain("Tự lùi · nhạc tự chọn");
-  });
-
-  it("trang gốc máy tính: tối đa 7 nhóm, cùng thứ tự với điện thoại", async () => {
+  it("trang gốc máy tính: tối đa 7 nhóm, cùng thứ tự", async () => {
     const { SettingsScreen } = await import("@/desktop/SettingsScreen");
     const names = groupNames(wrap(<SettingsAt screen={<SettingsScreen />} />)).map(([id]) => id);
     expect(names.length).toBeLessThanOrEqual(7);
@@ -116,25 +85,6 @@ describe("cây Cài đặt (chủ app 23-10: không còn là ma trận)", () => 
     expect(names).toEqual(expect.arrayContaining(["voice", "listen", "sleep", "look", "devices", "advanced"]));
   });
 
-  it("màn con có nút về Cài đặt và tiêu đề là tên nhóm", async () => {
-    const { SettingsScreen } = await import("@/android/SettingsScreen");
-    const html = wrap(<SettingsAt group="sleep" screen={<SettingsScreen />} />);
-    expect(html).toContain('aria-label="Về Cài đặt"');
-    expect(html).toMatch(/<h1[^>]*>Hẹn giờ ngủ<\/h1>/);
-  });
-
-  it("không mục nào nằm ở hai nhóm (điện thoại)", async () => {
-    const { SettingsScreen, PHONE_GROUPS } = await import("@/android/SettingsScreen");
-    const seen = new Map<string, string>();
-    for (const group of PHONE_GROUPS) {
-      const html = wrap(<SettingsAt group={group} screen={<SettingsScreen />} />);
-      for (const [, label] of html.matchAll(/<div class="text-\[0.9375rem\] font-medium[^"]*">([^<]+)<\/div>/g)) {
-        expect(seen.get(label), `${label} ở cả ${seen.get(label)} và ${group}`).toBeUndefined();
-        seen.set(label, group);
-      }
-    }
-    expect(seen.size).toBeGreaterThan(8);
-  });
 });
 
 describe("thành phần bên thứ ba", () => {

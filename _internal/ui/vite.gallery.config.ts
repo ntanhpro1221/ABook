@@ -4,7 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 import path from "node:path";
 
 // Phòng trưng bày màn hình (src/gallery/README.md) - CHỈ khi phát triển: lối vào riêng gallery.html, dựng ra dist/gallery (thư mục dist/
-// bị .gitignore bỏ qua), không đụng tới bản dựng phát hành (vite.config.ts -> abook/webui/static, vite.android.config.ts -> mobile/www).
+// bị .gitignore bỏ qua), không đụng tới bản dựng phát hành (vite.config.ts -> abook/webui/static).
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   base: "./",

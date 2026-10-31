@@ -5,7 +5,7 @@ import { SettingsRow } from "@/shared/SettingsNav";
 import { Select, TimeSelect } from "@/shared/ui";
 import { usePreferences } from "@/studio/data";
 import type { Preferences } from "@/studio/api";
-import { Switch } from "./PhoneSync";
+import { Switch } from "./Switch";
 
 type Schedule = Preferences["sleepSchedule"];
 const DEFAULT_SCHEDULE = { from: "22:00", to: "06:00", minutes: 30 };
@@ -38,7 +38,7 @@ export function SleepSchedule() {
         <span className="text-fg-2">đến</span>
         <TimeSelect ariaDisabled={draft !== null} label="Đến" value={schedule.to} onChange={(to) => change({ ...schedule, to })} />
         <span className="text-fg-2">hẹn</span>
-        <Select inline aria-label="Số phút hẹn" value={schedule.minutes} aria-disabled={draft !== null || undefined}
+        <Select inline aria-label="Hẹn" value={schedule.minutes} aria-disabled={draft !== null || undefined}
           onPointerDown={(event) => { if (draft !== null) event.preventDefault(); }}
           onKeyDown={(event) => { if (draft !== null && event.key !== "Tab") event.preventDefault(); }}
           onChange={(event) => change({ ...schedule, minutes: Number(event.target.value) })} className="aria-disabled:opacity-50">

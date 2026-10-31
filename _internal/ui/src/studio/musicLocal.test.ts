@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { formatSize } from "@/shared/format";
 import {
-  analysisLabel, formatSize, hasVocals, MY_MUSIC_INTRO, mineNote, importSummary, isLocal, localDigest, mergeImports, moduleLabel, modulePercent, preciseBusy, preciseLabel, preciseOffered, previewPath, autoLabel, autoSwitch,
+  analysisLabel, hasVocals, MY_MUSIC_INTRO, mineNote, importSummary, isLocal, localDigest, mergeImports, moduleLabel, modulePercent, preciseBusy, preciseLabel, preciseOffered, previewPath, autoLabel, autoSwitch,
   type ImportResult, type LocalTrack, type MusicModuleStatus, type PreciseMood,
 } from "./musicLocal";
 
@@ -75,7 +76,7 @@ describe("import summary", () => {
     });
     const none = importSummary({ added: [], existing: [], failed: ["a", "b"] });
     expect(none.kind).toBe("error");
-    expect(none.title).toBe("Không thêm được file nào");
+    expect(none.title).toBe("Chưa thêm được nhạc");
     expect(none.description).toBe("a\nb");
   });
 
@@ -107,7 +108,7 @@ describe("mô-đun Phân tích nhạc", () => {
     expect(modulePercent(status({ done: 99, total: 60 }))).toBe(100);
   });
   it("nói lý do hỏng, việc đang làm và máy không tải được", () => {
-    expect(moduleLabel(status({ state: "error", error: "Không tải được" }))).toBe("Không tải được");
+    expect(moduleLabel(status({ state: "error", error: "Chưa tải được" }))).toBe("Chưa tải được");
     expect(moduleLabel(status({ state: "ready", ready: true, analysing: true }))).toContain("Đang phân tích");
     expect(moduleLabel(status({ state: "unsupported", reason: "chỉ có cho Windows 64-bit" }))).toContain("Windows 64-bit");
   });
@@ -128,17 +129,6 @@ describe("mô-đun Phân tích nhạc", () => {
     expect(moduleLabel(status({ state: "ready", ready: true, stale: 3 }))).toContain("3 bài dùng phân tích cũ");
     expect(moduleLabel(status({ state: "ready", ready: true }))).toBe("");
     expect(moduleLabel(status({ state: "ready", ready: true, restart: true }))).toContain("mở lại ABook");
-  });
-  it("dung lượng dễ đọc", () => {
-    expect(formatSize(512)).toBe("1 KB");
-    expect(formatSize(5_500_000)).toBe("5,5 MB");
-    expect(formatSize(59_000_000)).toBe("59 MB");
-    expect(formatSize(1_273_217_311)).toBe("1,27 GB");
-  });
-  it("một hệ đơn vị: MB là 10^6 byte, nên cỡ thật 56,9 triệu byte ghi 57 MB chứ không phải 54", () => {
-    expect(formatSize(56_900_000)).toBe("57 MB");
-    expect(formatSize(999_999)).toBe("1000 KB");
-    expect(formatSize(1_000_000)).toBe("1,0 MB");
   });
   it("lần tải bị huỷ thì nói lần sau làm tiếp từ chỗ dừng", () => {
     expect(moduleLabel(status({ state: "missing", cancelled: true }))).toContain("Đã huỷ - lần tải sau làm tiếp từ chỗ dừng");
@@ -161,14 +151,14 @@ describe("đo cảm xúc nhạc chính xác hơn", () => {
     expect(preciseOffered(undefined)).toBe(false);
   });
   it("nói dung lượng phải tải trước khi bật, và không nhắc tải nếu file đã có", () => {
-    expect(preciseLabel(precise())).toContain("Tải thêm 1,27 GB một lần");
+    expect(preciseLabel(precise())).toContain("Tải thêm 1,2 GB một lần");
     expect(preciseLabel(precise({ present: true }))).not.toContain("Tải thêm");
   });
   it("nói phần trăm khi tải, việc đang làm khi nghe kỹ lại, và lý do khi hỏng", () => {
     expect(preciseLabel(precise({ state: "downloading", done: 50, total: 100 }))).toContain("50%");
     expect(preciseLabel(precise({ state: "ready", enabled: true, present: true, working: true, pending: 4 }))).toContain("4 bài");
     expect(preciseLabel(precise({ state: "ready", enabled: true, present: true }))).toContain("Đang bật");
-    expect(preciseLabel(precise({ state: "error", error: "Không tải được" }))).toBe("Không tải được");
+    expect(preciseLabel(precise({ state: "error", error: "Chưa tải được" }))).toBe("Chưa tải được");
     expect(preciseLabel(precise({ state: "missing", enabled: true }))).toContain("chưa tải xong");
   });
   it("hỏi lại view mỗi giây khi tải hoặc đang đo", () => {

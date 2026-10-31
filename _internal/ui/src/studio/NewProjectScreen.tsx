@@ -27,7 +27,7 @@ import {
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
 import { toast, toastDone } from "@/shared/toast";
-import { Switch } from "@/desktop/PhoneSync";
+import { Switch } from "@/desktop/Switch";
 import { useClip } from "@/listen/clip";
 import { useSource } from "@/listen/source";
 import { cn } from "@/shared/cn";
@@ -212,9 +212,6 @@ function cleanPath(value: string): string {
 }
 
 // ---- Nguồn -----------------------------------------------------------------------------------------------------
-
-/** Mở trình tạo sách từ nút "Dự án mới" / "Tạo sách nói": trang mở luôn hộp chọn file (SourceStep). */
-export const PICK_SOURCE = { state: { pick: true } };
 
 export function SourceStep({
   scan,
@@ -427,7 +424,7 @@ export function SourceStep({
             setDragging(false);
             pickedFromDrop(event.dataTransfer).then(
               (picked) => upload(picked, false),
-              (error: Error) => toast.error("Không đọc được các file vừa thả", { description: error.message }),
+              (error: Error) => toast.error("Chưa đọc được các file vừa thả", { description: error.message }),
             );
           }}
         >
@@ -436,7 +433,7 @@ export function SourceStep({
           </div>
           <p className="mt-4 font-medium">
             {scanning
-              ? "Đang đọc các chương…"
+              ? "Đang đọc các chương"
               : browser
                 ? folderPick
                   ? "Chọn hay kéo thả vào đây các chương của truyện"
@@ -476,7 +473,7 @@ export function SourceStep({
                 <LiveText shown={progressLabel(uploading)} spoken={spokenProgress("Đang gửi các chương", uploading.totalBytes ? uploading.bytes / uploading.totalBytes : null)} />
               </p>
               <Button className="mt-2" size="sm" variant="ghost" disabled={stopping} onClick={cancelUpload}>
-                {stopping ? "Đang dừng…" : "Huỷ gửi"}
+                {stopping ? "Đang dừng" : "Huỷ gửi"}
               </Button>
             </div>
           )}
@@ -659,7 +656,7 @@ export function SourceStep({
               )}
               {browser && uploading && (
                 <Button size="sm" variant="ghost" disabled={stopping} onClick={cancelUpload}>
-                  {stopping ? "Đang dừng…" : "Huỷ gửi"}
+                  {stopping ? "Đang dừng" : "Huỷ gửi"}
                 </Button>
               )}
               <Button size="sm" variant="ghost" onClick={() => onPaths([])}>
@@ -1339,7 +1336,7 @@ export function QualityStep({
     <div>
       <SectionHeading>Chất lượng</SectionHeading>
       <p className="mt-1 text-sm text-fg-2 text-pretty">
-        Không đổi được sau khi tạo, để mọi chương đọc giống nhau.
+        Cố định sau khi tạo, để mọi chương đọc giống nhau.
       </p>
       <div
         role="radiogroup"
@@ -1622,7 +1619,7 @@ export function NewProjectScreen() {
   useEffect(() => {
     if (!redoId || !redo) return;
     if (redo.started) {
-      toast.error("Sách đã bắt đầu chạy", { description: "Không làm lại với thiết lập khác được nữa." });
+      toast.error("Sách đã bắt đầu chạy", { description: "Không thể làm lại với thiết lập khác nữa." });
       navigate(`/studio/${redoId}`, { replace: true });
       return;
     }
@@ -1651,7 +1648,7 @@ export function NewProjectScreen() {
     setParams({}, { replace: true });
   }, [redoId, redo, setParams, navigate]);
   useEffect(() => {
-    if (redoError) toast.error("Không đọc được thiết lập của sách", { description: (redoError as Error).message });
+    if (redoError) toast.error("Chưa đọc được thiết lập của sách", { description: (redoError as Error).message });
   }, [redoError]);
 
   // "Làm tiếp cuốn này" (?continue=<id>): điền sẵn một lần từ phần trước rồi bỏ tham số, để quay lại trang không điền đè
@@ -1687,7 +1684,7 @@ export function NewProjectScreen() {
   }, [continueId, plan, setParams]);
 
   useEffect(() => {
-    if (planError) toast.error("Không mở được phần trước", { description: planError.message });
+    if (planError) toast.error("Chưa mở được phần trước", { description: planError.message });
   }, [planError]);
 
   useEffect(() => {
@@ -1743,7 +1740,7 @@ export function NewProjectScreen() {
         if (!result.files.length) {
           setProblem(
             result.errors?.length
-              ? { text: `Không mở được ${result.errors[0]}`, subfolders: [] }
+              ? { text: `Chưa mở được ${result.errors[0]}`, subfolders: [] }
               : result.missing.length
               ? { text: isSourceRef(result.missing[0]) ? `Không tìm thấy “${sourceName(result.missing[0])}” trên máy tính. Gửi lại rồi thử lần nữa.` : `Không tìm thấy “${result.missing[0]}”. Kiểm tra lại đường dẫn.`, subfolders: [] }
               : { text: "Thư mục này không có file .txt (hay .epub, .docx, .pdf) nằm ngay bên trong.", subfolders: result.subfolders },
@@ -1756,7 +1753,7 @@ export function NewProjectScreen() {
       onError: (error: Error) => {
         if (latestSources.current !== key) return;
         setScanned({ key, result: null });
-        setProblem({ text: `Không đọc được: ${error.message}`, subfolders: [] });
+        setProblem({ text: `Chưa đọc được: ${error.message}`, subfolders: [] });
       },
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1863,7 +1860,7 @@ export function NewProjectScreen() {
           if (result.replaceError) toast.warning("Bản cũ vẫn còn trong Dự án", { description: result.replaceError });
           navigate(`/studio/${result.id}`, { replace: true });
         },
-        onError: (error: Error) => toast.error("Không tạo được sách", { description: error.message }),
+        onError: (error: Error) => toast.error("Chưa tạo được sách", { description: error.message }),
         onSettled: () => {
           submitting.current = false;
         },
@@ -1952,7 +1949,7 @@ export function NewProjectScreen() {
                 const chapters = plan ? splitOutcome(plan, draft.title).chapters : undefined;
                 toast.success(chapters ? `Đã tách thành ${formatNumber(chapters)} chương` : "Đã tách thành các chương");
               } catch (error) {
-                toast.error("Không tách được", { description: (error as Error).message });
+                toast.error("Chưa tách được", { description: (error as Error).message });
               }
             }}
           />

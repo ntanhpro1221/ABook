@@ -22,7 +22,7 @@ import { genderLabel, groupLabel, VOICE_GROUPS, voiceSections } from "./voiceGro
 import { spokenVoiceName } from "./onlineConsent";
 
 // Cài đặt › Giọng đọc (máy tính và điện thoại dùng chung): giọng mặc định của "Nghe ngay", nghe thử từng giọng, gợi ý giọng nam / nữ, câu nói
-// rõ chữ của sách đi đâu với từng nhóm giọng trực tuyến, và phần gập "Khoá riêng" (nhập khóa, Kiểm tra, Xóa) ở cuối. Mỗi nền tảng
+// rõ chữ của sách đi đâu với từng nhóm giọng trực tuyến, và phần gập "Khoá riêng" (nhập khoá, Kiểm tra, Xoá) ở cuối. Mỗi nền tảng
 // đưa vào một `VoiceSettingsApi` (máy tính: máy chủ cục bộ abook/readaloud; điện thoại: plugin ReadAloud). Bộ nhớ bản đọc nằm ở Cài đặt › Nâng cao.
 
 /** Một nhà cung cấp giọng dùng khoá riêng như máy chủ / lõi điện thoại mô tả (abook/readaloud/byok.py `describe`, OnlineVoices.kt). */
@@ -31,7 +31,7 @@ export interface OnlineProviderInfo {
   name: string;
   limits: { max_chars: number; free: string; timings: "exact" | "estimated"; region: boolean };
   hasKey: boolean;
-  /** "••••abcd": đủ để nhận ra khóa nào, không bao giờ là khóa thật. */
+  /** "••••abcd": đủ để nhận ra khoá nào, không bao giờ là khoá thật. */
   masked: string;
   region: string;
   valid: boolean;
@@ -56,7 +56,7 @@ export interface VoiceSettingsApi {
   checkKey(provider: string): Promise<KeyCheck>;
 }
 
-/** Lấy khóa ở đâu - nói theo những gì người dùng thấy trên trang của nhà cung cấp. */
+/** Lấy khoá ở đâu - nói theo những gì người dùng thấy trên trang của nhà cung cấp. */
 const KEY_HELP: Record<string, string> = {
   azure: "Azure: tạo Speech (F0 miễn phí) › Keys and Endpoint. Chép Key 1 và Location/Region (ví dụ southeastasia).",
   google: "Google Cloud: bật Cloud Text-to-Speech API. Vào APIs & Services › Credentials › Create credentials › API key.",
@@ -69,12 +69,13 @@ function muted(): boolean {
   return typeof window !== "undefined" && new URLSearchParams(window.location.search).get("mute") === "1";
 }
 
-function errorText(error: unknown): string {
-  return (error as Error)?.message || "Không làm được lúc này.";
+/** Câu lỗi cho bạn: lời của lõi, không có thì câu theo việc - cùng lời bên native (VoiceRepo.kt). */
+function errorText(error: unknown, fallback: string): string {
+  return (error as Error)?.message || fallback;
 }
 
 /** Nghe thử giọng: Cài đặt › Giọng đọc và menu giọng của trình phát dùng chung. `sample`: đọc câu mẫu bằng giọng ấy, trả địa chỉ phát được.
- *  Mỗi lần bấm "Thử giọng" / "Dừng" là một lượt mới: mẫu của lượt cũ về muộn (lấy mẫu mất vài giây) bị bỏ, không phát chồng lên giọng bấm sau, không tự phát sau khi đã bấm dừng. */
+ *  Mỗi lần bấm "Nghe thử" / "Dừng" là một lượt mới: mẫu của lượt cũ về muộn (lấy mẫu mất vài giây) bị bỏ, không phát chồng lên giọng bấm sau, không tự phát sau khi đã bấm dừng. */
 export function useVoiceSample(sample: (voiceId: string, text: string) => Promise<string>) {
   const audio = useRef<HTMLAudioElement | null>(null);
   const turn = useRef(0);
@@ -106,7 +107,7 @@ export function useVoiceSample(sample: (voiceId: string, text: string) => Promis
     } catch (error) {
       if (turn.current !== mine) return; // lượt cũ: lỗi của nó không còn ai chờ
       setPlaying("");
-      setFailed({ voice, message: errorText(error) });
+      setFailed({ voice, message: errorText(error, "Chưa nghe thử được giọng này.") });
     } finally {
       if (turn.current === mine) setLoading("");
     }
@@ -114,26 +115,31 @@ export function useVoiceSample(sample: (voiceId: string, text: string) => Promis
   return { playing, loading, failed, play, stop };
 }
 
+/** Dòng tóm tắt của "Khoá trực tuyến": tên các nhà cung cấp đã có khoá, hay "Chưa có khoá" (VoiceText.keySummary bên native). */
+function keySummary(providers: OnlineProviderInfo[]): string {
+  return providers.filter((info) => info.hasKey).map((info) => info.name).join(" · ") || "Chưa có khoá";
+}
+
 function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: VoiceSettingsApi; onChanged: () => void }) {
   const [key, setKey] = useState("");
   const [region, setRegion] = useState(info.region);
   const [busy, setBusy] = useState<"" | "check" | "save" | "remove">("");
   const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null);
-  // Gập sẵn (soát UX 05-10: bốn khung dài chiếm hơn nửa Cài đặt trên điện thoại); đã có khóa thì mở sẵn để thấy trạng thái.
+  // Gập sẵn (soát UX 05-10: bốn khung dài chiếm hơn nửa Cài đặt trên điện thoại); đã có khoá thì mở sẵn để thấy trạng thái.
   const [open, setOpen] = useState(info.hasKey);
   useEffect(() => setRegion(info.region), [info.region]);
   const regionChanged = Boolean(info.limits.region) && region.trim() !== info.region;
-  // "Lưu" chỉ cất khóa trên máy này, không gửi gì ra mạng; "Kiểm tra" mới gọi dịch vụ (và cũng lưu khóa đang gõ trước khi kiểm).
+  // "Lưu" chỉ cất khoá trên máy này, không gửi gì ra mạng; "Kiểm tra" mới gọi dịch vụ (và cũng lưu khoá đang gõ trước khi kiểm).
   const save = async () => {
     setBusy("save");
     setResult(null);
     try {
-      if (!key.trim() && !info.hasKey) throw new Error("Dán khóa trước đã.");
+      if (!key.trim() && !info.hasKey) throw new Error("Dán khoá trước đã.");
       await api.saveKey(info.id, key.trim(), region.trim());
       setKey("");
       setResult({ ok: true, text: "Đã lưu khoá. Bấm “Kiểm tra” để thử." });
     } catch (error) {
-      setResult({ ok: false, text: errorText(error) });
+      setResult({ ok: false, text: errorText(error, "Chưa lưu được khoá") });
     } finally {
       setBusy("");
       onChanged();
@@ -144,16 +150,16 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
     setResult(null);
     try {
       if (key.trim() || (info.limits.region && region.trim() !== info.region)) {
-        if (!key.trim() && !info.hasKey) throw new Error("Dán khóa trước đã.");
+        if (!key.trim() && !info.hasKey) throw new Error("Dán khoá trước đã.");
         await api.saveKey(info.id, key.trim() || "", region.trim());
       }
       const checked = await api.checkKey(info.id);
       setKey("");
       setResult(checked.ok
         ? { ok: true, text: `Dùng được · ${checked.voices ?? checked.provider.voices} giọng tiếng Việt` }
-        : { ok: false, text: checked.message || "Khóa chưa dùng được." });
+        : { ok: false, text: checked.message || "Khoá chưa dùng được." });
     } catch (error) {
-      setResult({ ok: false, text: errorText(error) });
+      setResult({ ok: false, text: errorText(error, "Chưa kiểm tra được khoá") });
     } finally {
       setBusy("");
       onChanged();
@@ -166,7 +172,7 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
       setResult(null);
       setKey("");
     } catch (error) {
-      setResult({ ok: false, text: errorText(error) });
+      setResult({ ok: false, text: errorText(error, "Chưa xoá được khoá") });
     } finally {
       setBusy("");
       onChanged();
@@ -183,14 +189,14 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
       <MoreInfo label="Nhận khoá" className="mt-1">{KEY_HELP[info.id]}</MoreInfo>
       <div className="mt-2.5 flex flex-wrap items-center gap-2">
         <label className="min-w-0 flex-1 basis-56">
-          <span className="sr-only">Khóa {info.name}</span>
+          <span className="sr-only">{`Khoá ${info.name}`}</span>
           <input
             type="password"
             autoComplete="off"
             spellCheck={false}
             value={key}
             onChange={(event) => setKey(event.target.value)}
-            placeholder={info.hasKey ? `Đã lưu ${info.masked} - dán khóa mới để thay` : "Dán khóa của bạn"}
+            placeholder={info.hasKey ? `Đã lưu ${info.masked} - dán khoá mới để thay` : "Dán khoá của bạn"}
             className="h-9 w-full rounded-control border border-line bg-panel px-3 text-sm"
           />
         </label>
@@ -214,7 +220,7 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
         </Button>
         {info.hasKey && (
           <Button size="md" variant="ghost" icon={Trash2} loading={busy === "remove"} disabled={Boolean(busy)} onClick={() => void remove()}>
-            Xóa khóa
+            Xoá khoá
           </Button>
         )}
       </div>
@@ -256,12 +262,12 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
       setProviders(online);
       setLoadError("");
     } catch (error) {
-      setLoadError(errorText(error));
+      setLoadError(errorText(error, "Chưa tải được giọng"));
     }
   }, [api]);
   useEffect(() => void load(), [load]);
   const keysChanged = () => {
-    // Danh sách giọng của trình phát (readAloudVoice.voicesOf, useReadAloudVoices) hỏi lại: giọng của khóa vừa kiểm tra hiện / ẩn ngay.
+    // Danh sách giọng của trình phát (readAloudVoice.voicesOf, useReadAloudVoices) hỏi lại: giọng của khoá vừa kiểm tra hiện / ẩn ngay.
     window.dispatchEvent(new CustomEvent(ONLINE_KEYS_CHANGED_EVENT));
     void client.invalidateQueries({ queryKey: ["readaloud", "voices"] });
     void load();
@@ -274,7 +280,7 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
   return (
     <MotionRegion as="div" className="grid grid-cols-[minmax(0,1fr)] gap-5">
       <InlineError open={Boolean(loadError)} message="Bạn hãy kiểm tra kết nối rồi tải lại giọng đọc." onRetry={() => void load()} />
-      {current && <p className="text-sm font-medium">Đang dùng: {current.name}</p>}
+      {current && <p className="text-sm font-medium">{`Đang dùng: ${current.name}`}</p>}
       {voices === null && !loadError && <ContentSkeleton label="Đang tải giọng đọc" />}
       {voices &&
         VOICE_GROUPS.map(({ provider, title: heading, detail }) => {
@@ -282,7 +288,7 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
           if (!list.length && provider !== "device") return null;
           const notice = provider === "edge" ? ONLINE_NOTICE : list[0] ? onlineNotice(list[0]) : "";
           // Thứ tự giọng như hiển thị (theo mục): mũi tên đổi chọn, cả nhóm chỉ một điểm dừng Tab (giọng đang chọn, hay giọng đầu nếu
-          // giọng mặc định nằm ở nhóm khác). Nút "Thử giọng" chỉ vào vòng Tab ở đúng giọng ấy - 27 giọng không thành 27 điểm Tab.
+          // giọng mặc định nằm ở nhóm khác). Nút "Nghe thử" chỉ vào vòng Tab ở đúng giọng ấy - 27 giọng không thành 27 điểm Tab.
           const ids = voiceSections(list).flatMap((section) => section.voices.map(({ voice }) => voice.id));
           return (
             <Fold key={provider} storageKey={`voice.provider.${provider}`} title={heading} summary={`${detail ? `${detail} · ` : ""}${list.length} giọng${current?.provider === provider ? " · đang dùng" : ""}`} bodyClassName="pb-3">
@@ -333,9 +339,9 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
                             icon={playing ? Square : Play}
                             loading={sample.loading === voice.id}
                             onClick={() => (playing ? sample.stop() : void sample.play(voice.id))}
-                            aria-label={`${playing ? "Dừng" : "Thử"} giọng ${voice.name}`}
+                            aria-label={playing ? `Dừng nghe thử ${voice.name}` : `Nghe thử ${voice.name}`}
                           >
-                            {playing ? "Dừng" : "Thử giọng"}
+                            {playing ? "Dừng" : "Nghe thử"}
                           </Button>
                           </div>
                           {/* Lỗi nghe thử nằm ngay dưới hàng giọng vừa bấm, không ở cuối cả nhóm. */}
@@ -358,9 +364,8 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
       {providers.length > 0 && (
         <div>
           {/* Hiếm dùng: gấp sẵn, nhớ lựa chọn; số khoá luôn thấy ở đầu mục. */}
-          <DisclosureRow section title="Khoá trực tuyến" summary={providers.some((info) => info.hasKey) ? `${providers.filter((info) => info.hasKey).length} khoá` : undefined} expanded={keysShown} onClick={() => setKeysOpen(!keysOpen)} />
+          <DisclosureRow section title="Khoá trực tuyến" summary={keySummary(providers)} expanded={keysShown} onClick={() => setKeysOpen(!keysOpen)} />
           <Collapse open={keysShown}>
-              <p className="mt-1 text-[0.8125rem] text-fg-2 text-pretty">Chữ của sách gửi tới dịch vụ ấy; có thể bị tính tiền.</p>
               <MoreInfo className="mt-1">
                 Khoá chỉ lưu trên máy. Dịch vụ có thể tính phí; lỗi khoá thì tạm dùng Edge hoặc giọng máy.
               </MoreInfo>

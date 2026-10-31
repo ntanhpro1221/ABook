@@ -20,7 +20,8 @@ export interface RemoteDownload {
 export function downloadFraction(status: RemoteDownload): number {
   if (status.state === "done") return 1;
   const fraction = status.bytes > 0 ? status.bytesDone / status.bytes : status.files > 0 ? status.filesDone / status.files : 0;
-  return Math.max(0, Math.min(status.filesDone < status.files ? 0.99 : 1, fraction));
+  // Máy chủ còn báo đang chạy (kiểm file, chuyển chỗ sau byte cuối) thì cũng chưa xong: "Đang tải… 100%" kèm nút dừng là tự mâu thuẫn.
+  return Math.max(0, Math.min(status.filesDone < status.files || status.state === "running" ? 0.99 : 1, fraction));
 }
 
 export interface DownloadNote {
@@ -68,7 +69,7 @@ export function downloadNote(status: RemoteDownload | null | undefined, computer
 /** Mục trong menu của sách: tên + câu phụ, tuỳ tình trạng. */
 export function downloadMenuLabel(status: RemoteDownload | null | undefined, computer: string): { label: string; hint: string; disabled: boolean } {
   const where = computer || "máy kia";
-  if (status?.state === "running") return { label: "Dừng tải về máy", hint: `Đã tải ${Math.floor(downloadFraction(status) * 100)}%`, disabled: false };
+  if (status?.state === "running") return { label: "Huỷ tải", hint: `Đã tải ${Math.floor(downloadFraction(status) * 100)}%`, disabled: false };
   if (status?.state === "done") return { label: "Đã tải về máy", hint: `Nghe được cả khi ${where} tắt`, disabled: true };
   // “Tải nốt” chỉ khi đã có phần thật; 0% thì vẫn là tải từ đầu.
   if (status && Math.floor(downloadFraction(status) * 100) > 0) {

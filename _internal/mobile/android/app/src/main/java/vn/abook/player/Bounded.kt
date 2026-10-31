@@ -3,7 +3,7 @@ package vn.abook.player
 import java.util.concurrent.Executors
 
 /**
- * Việc song song có giới hạn và có trần thời gian tổng. Danh sách sách nghe thẳng ([LibraryPlugin.streamableBooks]) hỏi máy tính một gói sách
+ * Việc song song có giới hạn và có trần thời gian tổng. Danh sách sách nghe thẳng hỏi máy tính một gói sách
  * cho mỗi cuốn đã đổi: nối đuôi nhau thì thư viện 100 cuốn đổi tên mất hàng phút (soát a101 F2).
  */
 object Bounded {

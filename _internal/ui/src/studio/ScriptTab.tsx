@@ -21,6 +21,7 @@ import { NameInLine, useNamesInLine } from "./NameReadings";
 import { UNDO_MS, optimistic, undoAction, undoSteps, usePendingNote } from "./decisions";
 import { seenDelivery, seenFor, theirDelivery, verdictWord, warnElsewhere, type SeenDelivery } from "./elsewhere";
 import { findRanges, splitByRanges, wrapIndex } from "./scriptFind";
+import { useFadeScroller } from "@/shared/scrollFade";
 
 // Tab "Kịch bản" (webui/casting_review.py, docs/STUDIO_REVIEW.md mục 3): đọc cả chương như kịch bản - câu nào của ai - và
 // đổi người nói của bất kỳ câu thoại hay nội tâm nào. Hộp "Việc cần duyệt" chỉ đưa ra chỗ máy nghi; ở đây người nghe duyệt
@@ -482,7 +483,7 @@ function useRetake(bookId: string, chapterId: number, onUndoable: (undo: () => b
         used = true;
         void api(`/api/books/${bookId}/review`, { method: "POST", body: body(null, lines) })
           .then(() => toast.success(lines.length > 1 ? `Đã hoàn tác: ${lines.length} câu không phải thu lại nữa` : "Đã hoàn tác: câu này không phải thu lại nữa"))
-          .catch((error: Error) => toast.error("Không hoàn tác được", { description: error.message }))
+          .catch((error: Error) => toast.error("Chưa hoàn tác được", { description: error.message }))
           .finally(refresh);
         return true;
       };
@@ -814,6 +815,7 @@ export function SpeakerMenu({
   phone?: boolean;
   embedded?: boolean;
 }) {
+  const scrollFade = useFadeScroller<HTMLDivElement>();
   const [query, setQuery] = useState("");
   const everyone = [...script.cast, ...script.others];
   const suggested = line.hint?.suggest ? everyone.find((person) => person.value === line.hint?.suggest) : undefined;
@@ -848,14 +850,14 @@ export function SpeakerMenu({
           onKeyDown={(event) => {
             if (event.key === "Enter" && found[0]) onPick(found[0]);
           }}
-          placeholder="Tìm người khác trong truyện…"
+          placeholder="Tìm người khác trong truyện"
           aria-label="Tìm người nói"
           spellCheck={false}
           autoComplete="off"
           className="min-w-0 flex-1 bg-transparent text-sm text-fg outline-none placeholder:text-fg-3"
         />
       </label>
-      <div className={cn("mt-1.5 overflow-y-auto", embedded ? "max-h-56" : phone ? "max-h-[60dvh]" : "max-h-[min(60vh,360px)]")}>
+      <div ref={scrollFade.ref} style={scrollFade.style} className={cn("mt-1.5 overflow-y-auto", embedded ? "max-h-56" : phone ? "max-h-[60dvh]" : "max-h-[min(60vh,360px)]")}>
         {query.trim() ? (
           found.length ? (
             found.map((person) => item(person))
@@ -1023,7 +1025,6 @@ function ScriptRow({
       elementRef={rowRef}
       data-line={line.stableId}
       tabIndex={speech ? (active ? 0 : -1) : undefined}
-      aria-selected={speech ? selected : undefined}
       onFocus={speech ? onActivate : undefined}
       onMouseDown={(event) => {
         // Shift + bấm chọn cả đoạn - không để trình duyệt bôi đen chữ giữa hai lần bấm.
@@ -1067,6 +1068,8 @@ function ScriptRow({
       </div>
       <div className="flex min-w-0 flex-wrap items-start gap-x-2 gap-y-0.5">
       <SelectionMark selected={selected} className="mt-1" />
+      {/* Hàng là phần tử thường (chứa nút, chip), không phải option: trạng thái "đang chọn" đọc bằng chữ ẩn thay cho aria-selected. */}
+      {selected && <span className="sr-only">Đang chọn. </span>}
       <div className="min-w-0 max-w-[44rem] flex-1 basis-[min(100%,16rem)]">
         <p className={cn("text-[0.9375rem] leading-relaxed", selected ? "text-accent-text" : speech ? "text-fg" : "text-fg-2", line.kind === "thought" && "italic")}>
           {line.kind === "thought" && <span className="mr-1.5 rounded-control bg-hover px-1.5 py-px align-[1px] text-[0.6875rem] font-medium not-italic text-fg-2">nghĩ</span>}
@@ -1434,7 +1437,7 @@ function ChapterScriptView({
           })()}
         </p>
       </MotionPresence>
-      <ol aria-label={`Kịch bản ${script.title}`} aria-multiselectable onKeyDown={onKeyDown} className="-mx-2 mt-3">
+      <ol aria-label={`Kịch bản ${script.title}`} onKeyDown={onKeyDown} className="-mx-2 mt-3">
       {/* Hàng rời / vào danh sách (gán câu sang người khác khi đang lọc theo người nói) khép / mở tại chỗ; đổi chương hay bộ lọc thì dựng
           lại từ đầu (key) - cả danh sách trượt theo vùng cha, không từng hàng. */}
       <LineRows key={`${script.chapterId}|${filter}|${who ?? ""}`} items={shown}>
@@ -1736,7 +1739,7 @@ export function ScriptTab({ bookId }: { bookId: string }) {
                 setFind({ text: "", at: 0 });
               }
             }}
-            placeholder="Tìm chữ trong chương…"
+            placeholder="Tìm chữ trong chương"
             aria-label="Tìm chữ trong chương này"
             autoComplete="off"
             spellCheck={false}

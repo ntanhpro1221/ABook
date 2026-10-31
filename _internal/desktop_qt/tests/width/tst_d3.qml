@@ -634,7 +634,7 @@ Item {
         }
         function test_longToastWrapsNeverCut() {
             const toast = makeToast()
-            const text = "Không lưu được mẫu\n" + "Tênkhôngcóchỗngắtrấtrấtrấtrấtrấtrấtrấtrấtrấtrấtrấtrấtrấtdài và một câu rất dài nữa để xuống nhiều dòng trong thẻ"
+            const text = "Chưa lưu được mẫu\n" + "Tênkhôngcóchỗngắtrấtrấtrấtrấtrấtrấtrấtrấtrấtrấtrấtrấtrấtdài và một câu rất dài nữa để xuống nhiều dòng trong thẻ"
             Api.toast(text, {action: {label: "Hoàn tác", run: function() {}}})
             tryVerify(function() { return toast.t === 1 })
             const description = one(toast, "toastDescription")

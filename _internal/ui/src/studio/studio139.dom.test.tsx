@@ -59,7 +59,7 @@ it("lời từ chối giữ vùng để fade cả khi lỗi được xoá", asyn
 it.each(["speaker", "narrator"] as const)("form %s mở/khép bằng Collapse và inert ngay khi khép", async kind => {
   const entry = item(kind === "narrator" ? { kind, narratorSection: { chapterIndex: 0, fromSeq: 1, toSeq: 2, narrator: "Mai", appliesNote: "", choices: [] } } : {});
   await draw(<WorkCards book={book} items={[entry]} onOpenReview={vi.fn()} />);
-  const name = kind === "speaker" ? "Người khác…" : "Người kể khác…";
+  const name = kind === "speaker" ? "Người khác" : "Người kể khác";
   const input = host.querySelector<HTMLInputElement>(kind === "speaker" ? '[aria-label="Tên người nói mới"]' : '[aria-label="Tên người kể của đoạn"]')!;
   const body = input.closest<HTMLElement>(".motion-collapse")!;
   expect(body.hasAttribute("inert")).toBe(true);

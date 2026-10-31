@@ -1,5 +1,7 @@
 package vn.abook.player.ui.voice
 
+import vn.abook.player.formatSize
+
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -9,7 +11,7 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.text.BasicText
+import vn.abook.player.ui.components.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,6 +55,7 @@ fun ModuleChoiceRow(kind: ModuleKind, row: ModuleRow, progress: () -> StateFlow<
     }
     ListItem(
         row.title, Modifier, onOpen, tag, hint = row.hint, hintColor = if (row.problem) colors.danger else colors.text2,
+        tickingHint = true,
         trailing = trailing, chevron = action == ModuleAction.Manage,
         below = if (row.progress) ({ DownloadBar(progress()) }) else null,
     )
@@ -72,7 +75,7 @@ fun SampleButton(active: Boolean, description: String, tag: String, onClick: () 
     }
 }
 
-/** Một nhà cung cấp giọng dùng khóa: tên, khóa che + kết quả lần kiểm tra (đỏ khi khóa chưa dùng được), chạm mở bảng của nó. */
+/** Một nhà cung cấp giọng dùng khoá: tên, khoá che + kết quả lần kiểm tra (đỏ khi khoá chưa dùng được), chạm mở bảng của nó. */
 @Composable
 fun KeyRow(provider: KeyProvider, onOpen: (() -> Unit)?) {
     val colors = Abook.colors
@@ -87,7 +90,7 @@ fun KeyRow(provider: KeyProvider, onOpen: (() -> Unit)?) {
 fun TrackRow(track: MusicTrack, onOpen: () -> Unit) {
     ListItem(
         track.title, Modifier, onOpen, trackTag(track), hint = VoiceText.trackLine(track).ifEmpty { null },
-        trailing = { BasicText(VoiceText.size(track.bytes), style = Abook.type.bodySmall.copy(color = Abook.colors.text2)) },
+        trailing = { BasicText(formatSize(track.bytes), style = Abook.type.bodySmall.copy(color = Abook.colors.text2)) },
         below = if (track.analysed) null else ({ Caption(MusicText.UNANALYSED) }),
     )
 }

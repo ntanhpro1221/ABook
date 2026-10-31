@@ -516,7 +516,7 @@ Item {
             stepJob("projectfile-job", {state: "error", error: "PermissionError: [Errno 13] Permission denied: 'D:/x'"})
             tryCompare(dlg, "phase", "form", 4000)
             tryVerify(function() { return Api.notice.indexOf("Chưa gói được dự án") === 0 }, 3000)
-            verify(Api.notice.indexOf("Không ghi được vào thư mục đã chọn") > 0)
+            verify(Api.notice.indexOf("Chưa ghi được vào thư mục đã chọn") > 0)
             verify(Api.notice.indexOf("PermissionError") > 0)
         }
         function test_exportRefusedAtTheStartShowsTheServerMessage() {

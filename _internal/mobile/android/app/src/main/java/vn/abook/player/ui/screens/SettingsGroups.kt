@@ -26,7 +26,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.text.BasicText
+import vn.abook.player.ui.components.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -55,21 +55,28 @@ import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.voice.VoicePage
 import vn.abook.player.ui.voice.VoiceSummary
+import vn.abook.player.ui.components.fadeEdges
 
 private val SafetyOptions = AppSettings.SAFETY_HOURS.map { Option(it, if (it == 0) "Không" else "$it giờ") }
 private val ScheduleOptions = SleepSchedule.MINUTES.map { Option(it, "$it phút") }
-private val ExtendOptions = AppSettings.EXTEND_MINUTES.map { Option(it, "$it′") }
-private val FadeOptions = AppSettings.FADE_SECONDS.map { Option(it, "${it}s") }
+private val ExtendOptions = AppSettings.EXTEND_MINUTES.map { Option(it, "$it phút") }
+private val FadeOptions = AppSettings.FADE_SECONDS.map { Option(it, if (it == 60) "1 phút" else "$it giây") }
 
-/** Lời của các hàng: cùng chữ với bản WebView (android/SettingsScreen.tsx, listen/playlistBed.ts, shared/feedback.ts, android/notifications.ts). */
+/** Lời của các hàng. */
 private object GroupCopy {
-    const val NOTIFY = "Đang tắt"
+    const val NOTIFY = "Đang tắt: không báo khi sách xong. Nút tạm dừng vẫn chạy."
     const val REWIND = "Nghỉ quá 30 giây thì lùi 5 giây (quá 10 phút: 10 giây)."
     const val HEADSET = "Bật: nút Trước/Sau lùi/tới 15 giây. Tắt: chuyển chương."
     const val AUTO_MUSIC = "Sách chỉ có chữ: nhạc nhẹ đổi theo cảnh."
-    const val SAFETY = "Không chạm máy chừng này thì nhỏ dần rồi dừng."
+    const val SAFETY = "Không ai chạm máy chừng này thì nhỏ dần rồi dừng."
     const val FLIP = "Lật lên trong 10 phút là nghe tiếp."
-    const val SOUNDS = "Im khi đang nghe."
+    const val SOUNDS = "Tiếng khẽ khi bạn chọn. Im khi đang nghe."
+    const val SCHEDULE = "Nghe trong khung giờ này thì tự hẹn giờ."
+    const val SHAKE = "Đang hẹn giờ, lắc nhẹ hai lần để thêm giờ."
+    const val SHAKE_ACTION = "Đặt lại: hẹn giờ quay về từ đầu."
+    const val SURFACE = "Nền của chữ khi đọc theo."
+    const val HAPTICS = "Rung nhẹ khi bạn chọn hay giữ."
+    const val AUTO_PIP = "Rời app khi có sách mở thì sách thu vào cửa sổ mini."
 }
 
 /** Nghe: thông báo (chỉ khi đang tắt), tự lùi, nút tai nghe; khối Nhạc nền. */
@@ -96,7 +103,11 @@ fun ListenSettings(env: SettingsEnv, openVoice: (VoicePage) -> Unit, onBack: () 
             }
             SwitchRow("Tự lùi", settings.autoRewind, { on -> repo.change { it.copy(autoRewind = on) } }, "auto_rewind", GroupCopy.REWIND)
             RowLine()
-            SwitchRow("Nút tai nghe", settings.headsetSkips, { on -> repo.change { it.copy(headsetSkips = on) } }, "headset_skips", GroupCopy.HEADSET)
+            SwitchRow("Nút tai nghe lùi/tới", settings.headsetSkips, { on -> repo.change { it.copy(headsetSkips = on) } }, "headset_skips", GroupCopy.HEADSET)
+            if (env.pip?.available == true) {
+                RowLine()
+                SwitchRow("Tự mở cửa sổ mini", settings.autoPip, { on -> repo.change { it.copy(autoPip = on) } }, "auto_pip", GroupCopy.AUTO_PIP)
+            }
         }
         ListSection("Nhạc nền") {
             SwitchRow("Tự chọn nhạc nền", settings.autoMusic, { on -> repo.change { it.copy(autoMusic = on) } }, "auto_music", GroupCopy.AUTO_MUSIC)
@@ -131,7 +142,7 @@ fun SleepSettings(repo: SettingsRepo, sheets: SheetHost, onBack: () -> Unit, mod
             RowLine()
             SwitchRow(
                 "Lịch đêm", settings.schedule != null,
-                { on -> repo.change { it.copy(schedule = if (on) SleepSchedule.Default else null) } }, "sleep_schedule",
+                { on -> repo.change { it.copy(schedule = if (on) SleepSchedule.Default else null) } }, "sleep_schedule", GroupCopy.SCHEDULE,
             )
             Reveal(settings.schedule != null) {
                 Column(Modifier.fillMaxWidth().testTag("schedule_editor")) {
@@ -153,13 +164,13 @@ fun SleepSettings(repo: SettingsRepo, sheets: SheetHost, onBack: () -> Unit, mod
             }
         }
         ListSection("Cử chỉ") {
-            SwitchRow("Lắc để nghe thêm", settings.shakeToExtend, { on -> repo.change { it.copy(shakeToExtend = on) } }, "shake")
+            SwitchRow("Lắc để nghe thêm", settings.shakeToExtend, { on -> repo.change { it.copy(shakeToExtend = on) } }, "shake", GroupCopy.SHAKE)
             Reveal(settings.shakeToExtend) {
                 Column {
                     RowLine()
                     ChoiceSetting(
                         "Khi lắc", ShakeAction.entries, settings.shakeAction,
-                        { action, _ -> repo.change { it.copy(shakeAction = action) } }, "shake_action",
+                        { action, _ -> repo.change { it.copy(shakeAction = action) } }, "shake_action", GroupCopy.SHAKE_ACTION,
                     )
                     RowLine()
                     ChoiceSetting(
@@ -173,7 +184,7 @@ fun SleepSettings(repo: SettingsRepo, sheets: SheetHost, onBack: () -> Unit, mod
         }
         ListSection("Khi sắp tắt") {
             ChoiceSetting(
-                "Mỗi lần thêm", ExtendOptions, ExtendOptions.first { it.value == settings.sleepExtendMinutes },
+                "Mỗi lần nghe thêm", ExtendOptions, ExtendOptions.first { it.value == settings.sleepExtendMinutes },
                 { option, _ -> repo.change { it.copy(sleepExtendMinutes = option.value) } }, "sleep_extend",
             )
             RowLine()
@@ -202,7 +213,7 @@ private fun TimeSheet(title: String, value: String, onPick: (String) -> Unit) {
     Column(Modifier.fillMaxWidth().testTag("time_sheet")) {
         BasicText(title, style = Abook.type.sectionTitle)
         Spacer(Modifier.size(Dim.s8))
-        LazyColumn(Modifier.fillMaxWidth().heightIn(max = 400.dp), state = list) {
+        LazyColumn(Modifier.fillMaxWidth().heightIn(max = 400.dp).fadeEdges(list), state = list) {
             items(times, key = { it }, contentType = { "time" }) { time ->
                 val chosen = time == value
                 Row(
@@ -242,12 +253,12 @@ fun LookSettings(env: SettingsEnv, onBack: () -> Unit, modifier: Modifier = Modi
             RowLine()
             ChoiceSetting(
                 "Nền đọc", ReadingSurface.entries, settings.readingSurface,
-                { surface, _ -> repo.change { it.copy(readingSurface = surface) } }, "reading_surface",
+                { surface, _ -> repo.change { it.copy(readingSurface = surface) } }, "reading_surface", GroupCopy.SURFACE,
             )
             RowLine()
             SwitchRow("Âm thanh chạm", settings.touchSounds, { on -> repo.change { it.copy(touchSounds = on) } }, "touch_sounds", GroupCopy.SOUNDS)
             RowLine()
-            SwitchRow("Rung", settings.haptics, { on -> repo.change { it.copy(haptics = on) } }, "haptics")
+            SwitchRow("Rung", settings.haptics, { on -> repo.change { it.copy(haptics = on) } }, "haptics", GroupCopy.HAPTICS)
         }
     }
 }
@@ -268,9 +279,11 @@ fun DevicesSettings(devices: DevicesState?, sheets: SheetHost, open: (DevicesPag
             RowLine()
             DisclosureRow("Dung lượng", { open(DevicesPage.Storage) }, "devices_storage", summary = summary.storageLine)
             RowLine()
-            DisclosureRow(
-                "Tên máy này", { if (devices != null) sheets.show { dismiss -> RenameSheet(summary.deviceName, devices, dismiss) } }, "devices_name",
-                summary = summary.deviceName,
+        }
+        ListSection("Điện thoại này") {
+            ActionRow(
+                "Tên thiết bị", "Đổi tên", { if (devices != null) sheets.show { dismiss -> RenameSheet(summary.deviceName, devices, dismiss) } }, "devices_name",
+                hint = summary.deviceName,
             )
         }
     }

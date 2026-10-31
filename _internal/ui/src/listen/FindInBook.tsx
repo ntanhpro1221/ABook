@@ -10,6 +10,7 @@ import { foldedQuery, MIN_QUERY } from "./findText";
 import type { ListenBook } from "./model";
 import { usePlayer } from "./player";
 import { chapterScriptQuery, chapterTexts, useSource } from "./source";
+import { useFadeScroller } from "@/shared/scrollFade";
 
 // "Tìm trong sách": gõ một chữ / một câu, bấm một kết quả là mở màn đọc đúng câu ấy (`?at=` - ReaderScreen); đang nghe cuốn này thì nghe tiếp từ câu đó.
 // Máy tính và điện thoại dùng chung; chữ lấy qua nguồn dữ liệu (bookSearch.ts), nên sách nói, sách chỉ-chữ và sách nghe thẳng từ máy khác đều tìm được.
@@ -38,9 +39,9 @@ const count = (value: number) => value.toLocaleString("vi-VN");
 export function findStatus(query: string, progress: BookSearch | null, shown: number): string {
   if (!query.trim()) return `Gõ chữ hay câu cần tìm - không cần gõ dấu, hoa hay thường đều được.`;
   if (!foldedQuery(query)) return `Gõ ít nhất ${MIN_QUERY} ký tự.`;
-  if (!progress) return "Đang tìm…";
+  if (!progress) return "Đang tìm";
   const failed = progress.failed > 0 ? ` ${count(progress.failed)} chương chưa đọc được nên chưa tìm trong đó.` : "";
-  if (!progress.done) return `Đang tìm… đã xem ${count(progress.scanned)}/${count(progress.chapters)} chương, thấy ${count(progress.total)} chỗ.`;
+  if (!progress.done) return `Đang tìm - đã xem ${count(progress.scanned)}/${count(progress.chapters)} chương, thấy ${count(progress.total)} chỗ.`;
   if (progress.total === 0) return `Không thấy “${query.trim()}” trong sách.${failed}`;
   const more = progress.total > shown ? ` Đang hiện ${count(shown)} kết quả đầu, còn ${count(progress.total - shown)} kết quả - gõ thêm chữ để thu hẹp.` : "";
   return `${count(progress.total)} kết quả.${more}${failed}`;
@@ -55,6 +56,7 @@ export function FindInBook({ book, open, onOpenChange }: { book: ListenBook; ope
   const [progress, setProgress] = useState<BookSearch | null>(null);
   const cache = useRef(new Map<number, FoldedChapter>());
   const results = useRef<HTMLUListElement | null>(null);
+  const scrollFade = useFadeScroller<HTMLUListElement>(results);
   const search = useRef<HTMLInputElement | null>(null);
   const bookId = book.id;
   const chapterList = book.chapters ?? [];
@@ -113,6 +115,8 @@ export function FindInBook({ book, open, onOpenChange }: { book: ListenBook; ope
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           onKeyDown={(event) => {
+            // Enter chốt chữ đang soạn của bộ gõ (IME) không phải lệnh mở kết quả.
+            if (event.nativeEvent.isComposing || event.keyCode === 229) return;
             if (event.key === "Enter" && hits[0]) pick(hits[0]);
             // ↓ từ ô tìm xuống kết quả đầu; trong danh sách ↑/↓ đi giữa các kết quả, ↑ ở kết quả đầu về ô tìm.
             else if (event.key === "ArrowDown" && hits.length) {
@@ -121,18 +125,18 @@ export function FindInBook({ book, open, onOpenChange }: { book: ListenBook; ope
             }
           }}
           aria-label="Chữ hay câu cần tìm"
-          placeholder="Chữ hay câu cần tìm…"
+          placeholder="Chữ hay câu cần tìm"
           autoComplete="off"
           enterKeyHint="search"
           className="touch-box h-11 w-full rounded-control border border-line bg-bg pl-9 pr-3 text-base outline-none focus:border-focus"
         />
       </div>
-      <p role="status" className="mt-2 text-xs text-fg-2">
+      <p data-motion-live role="status" className="mt-2 text-xs text-fg-2">
         {status}
       </p>
       {hits.length > 0 && (
         <div data-list-edges="book-search"><ul
-          ref={results}
+          ref={scrollFade.ref} style={scrollFade.style}
           onKeyDown={(event) => {
             const step = event.key === "ArrowDown" ? 1 : event.key === "ArrowUp" ? -1 : 0;
             if (!step) return;
@@ -147,7 +151,7 @@ export function FindInBook({ book, open, onOpenChange }: { book: ListenBook; ope
           {hits.map((hit) => (
             <li key={`${hit.chapterId}:${hit.sentence}`}>
               <button type="button" onClick={() => pick(hit)} className="block w-full rounded-control px-1.5 py-2.5 text-left hover:bg-hover">
-                <span className="block truncate text-xs font-medium text-fg-2">{labels.get(hit.chapterId)}</span>
+                <span className="block break-words text-xs font-medium text-fg-2">{labels.get(hit.chapterId)}</span>
                 <span className="mt-0.5 block text-sm leading-relaxed">
                   <Excerpt snippet={hit.snippet} />
                 </span>

@@ -14,6 +14,7 @@ class FakeNowPlayingModel(
     initial: NowPlayingState = demoState(),
     initialText: ReadAlongState = demoText(),
     override val music: MusicState? = null,
+    override val prepare: vn.abook.player.ui.data.PrepareState? = null,
 ) : NowPlayingModel {
     private val metadata = MutableStateFlow(initial)
     override val state = metadata.asStateFlow()
@@ -59,6 +60,15 @@ class FakeNowPlayingModel(
         sleepLeft.longValue = minutes * 60_000L
         metadata.value = state.value.copy(sleep = PlayerSleep(kind, minutes, state.value.playing))
     }
+    var choices: PlayerEnd.Choices = PlayerEnd.Choices()
+    override fun endChoices() = choices
+    override fun listen(bookId: String) { actions += "listen:$bookId" }
+    override fun restart() { actions += "restart" }
+    private val noteFlow = kotlinx.coroutines.flow.MutableStateFlow<PlayerNote?>(null)
+    override val note = noteFlow.asStateFlow()
+    fun say(note: PlayerNote) { noteFlow.value = note }
+    override fun noteAction() { actions += "note"; noteFlow.value = null }
+    override fun dismissNote(serial: Int) { if (noteFlow.value?.serial == serial) noteFlow.value = null }
     override fun setVoice(id: String) { metadata.value = state.value.copy(voiceId = id) }
     override suspend fun loadVoices() { actions += "loadVoices" }
     override fun setReadAlongActive(active: Boolean) {}

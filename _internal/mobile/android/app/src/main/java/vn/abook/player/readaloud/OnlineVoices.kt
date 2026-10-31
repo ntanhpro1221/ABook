@@ -5,9 +5,8 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.io.IOException
-import java.net.HttpURLConnection
 import java.net.SocketTimeoutException
-import java.net.URL
+import vn.abook.player.net.FastConnect
 
 /**
  * Giọng trực tuyến dùng khoá của chính người dùng ("Bring your own key", docs/LISTEN_ANYTHING.md mục 3) trên điện thoại - bản Kotlin của `abook/readaloud/byok.py`.
@@ -25,11 +24,9 @@ object OnlineHttp {
 
     fun request(method: String, url: String, headers: Map<String, String>, body: ByteArray?, name: String, timeoutMs: Int = TIMEOUT_MS): Response {
         try {
-            val connection = URL(url).openConnection() as HttpURLConnection
+            val connection = FastConnect.open(url, timeoutMs) // không theo chuyển hướng: 3xx là lỗi, khoá không bao giờ đi sang máy khác
             try {
-                connection.instanceFollowRedirects = false // 3xx là lỗi: khoá không bao giờ đi sang máy khác
                 connection.requestMethod = method
-                connection.connectTimeout = timeoutMs
                 connection.readTimeout = timeoutMs
                 connection.setRequestProperty("User-Agent", "ABook-ReadAloud")
                 headers.forEach { (key, value) -> connection.setRequestProperty(key, value) }
@@ -56,7 +53,7 @@ object OnlineHttp {
                 connection.disconnect()
             }
         } catch (error: SocketTimeoutException) {
-            throw VoiceException("$name không trả lời (quá giờ)", offline = true, cause = error, reason = "timeout")
+            throw VoiceException("$name không trả lời (quá giờ)", cause = error, reason = "timeout") // có mạng mà dịch vụ không trả lời: không phải "mất mạng" (như byok.py)
         } catch (error: IOException) {
             throw VoiceException("Không có mạng để dùng giọng $name", offline = true, cause = error)
         }
@@ -66,8 +63,8 @@ object OnlineHttp {
     fun failure(status: Int, name: String, detail: String = ""): VoiceException {
         val tail = if (detail.isNotBlank()) " (${detail.take(200)})" else ""
         return when {
-            status == 401 || status == 403 -> VoiceException("$name từ chối khóa của bạn - kiểm tra lại khóa trong Cài đặt$tail", reason = "auth")
-            status == 402 || status == 429 -> VoiceException("Khóa $name đã hết hạn mức hoặc gọi quá dày$tail", reason = "quota")
+            status == 401 || status == 403 -> VoiceException("$name từ chối khoá của bạn - kiểm tra lại khoá trong Cài đặt$tail", reason = "auth")
+            status == 402 || status == 429 -> VoiceException("Khoá $name đã hết hạn mức hoặc gọi quá dày$tail", reason = "quota")
             status >= 500 -> VoiceException("$name đang trục trặc (HTTP $status)$tail", reason = "service")
             else -> VoiceException("$name không nhận yêu cầu (HTTP $status)$tail", reason = "rejected")
         }
@@ -104,7 +101,7 @@ abstract class KeyedProvider(val keys: OnlineKeys) {
     fun voice(code: String): Voice = KeyedVoice(this, code)
 
     fun synthesize(text: String, voice: String, out: File): Clip {
-        val entry = keys.get(id)?.takeIf { it.valid } ?: throw VoiceException("Khóa $name chưa dùng được - kiểm tra lại trong Cài đặt", reason = "auth")
+        val entry = keys.get(id)?.takeIf { it.valid } ?: throw VoiceException("Khoá $name chưa dùng được - kiểm tra lại trong Cài đặt", reason = "auth")
         try {
             val (duration, boundaries) = speak(entry, text, voice, out)
             return Clip(out, duration, WordTokens.map(text, boundaries, duration), "$id:$voice")
@@ -116,7 +113,7 @@ abstract class KeyedProvider(val keys: OnlineKeys) {
 
     /** "Kiểm tra" trong Cài đặt: lấy danh sách giọng rồi đọc thử một câu thật ngắn vào `scratch`. */
     fun check(scratch: File): JSONObject {
-        val entry = keys.get(id) ?: return JSONObject().put("ok", false).put("reason", "auth").put("message", "Chưa nhập khóa.")
+        val entry = keys.get(id) ?: return JSONObject().put("ok", false).put("reason", "auth").put("message", "Chưa nhập khoá.")
         return try {
             val voices = listVoices(entry)
             if (voices.isEmpty()) throw VoiceException("Tài khoản $name này không có giọng tiếng Việt", reason = "voice")

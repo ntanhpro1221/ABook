@@ -1,5 +1,8 @@
 package vn.abook.player.ui.devices
 
+import vn.abook.player.ui.components.ClockLabel
+import vn.abook.player.formatSize
+
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import vn.abook.player.ui.motion.Motion
@@ -13,7 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.BasicText
+import vn.abook.player.ui.components.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -28,6 +31,8 @@ import vn.abook.player.ui.components.SheetHost
 import vn.abook.player.ui.data.Fmt
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.components.fadeEdges
+import androidx.compose.foundation.lazy.rememberLazyListState
 
 /*
  * Dung lượng. Đầu màn: tổng đã dùng và chỗ còn trống; rồi từng thứ chiếm chỗ, lớn nhất trước. Chạm một hàng để xoá khỏi máy - cùng bước xác nhận với "Xoá khỏi máy"
@@ -41,11 +46,12 @@ fun StorageScreen(devices: DevicesState, sheets: SheetHost, onBack: () -> Unit) 
     val entries = rememberPresence(ui.storage.entries) { it.id }
     LaunchedEffect(devices) { devices.openStorage() }
     BookForm("Dung lượng", onBack, "storage_screen") {
-        if (ui.loaded) LazyColumn(Modifier.fillMaxSize().testTag("storage_list"), contentPadding = PaddingValues(bottom = Dim.s16)) {
+        val list = rememberLazyListState()
+        if (ui.loaded) LazyColumn(Modifier.fillMaxSize().fadeEdges(list).testTag("storage_list"), state = list, contentPadding = PaddingValues(bottom = Dim.s16)) {
             item("total", "total") {
                 Column(Modifier.fillMaxWidth().padding(top = Dim.s16, bottom = Dim.s8).testTag("storage_total")) {
-                    BasicText(Fmt.size(ui.storage.bytes), style = Abook.type.screenTitle)
-                    Caption("Còn trống ${Fmt.size(ui.storage.free)}")
+                    ClockLabel(formatSize(ui.storage.bytes), style = Abook.type.screenTitle)
+                    Caption("Còn trống ${formatSize(ui.storage.free)}", ticking = true)
                 }
             }
             if (entries.isEmpty()) item("empty", "status") {

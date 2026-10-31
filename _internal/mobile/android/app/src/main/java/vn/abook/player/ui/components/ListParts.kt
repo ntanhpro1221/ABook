@@ -1,6 +1,7 @@
 package vn.abook.player.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
@@ -15,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -31,7 +33,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,6 +40,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.collapse
+import androidx.compose.ui.semantics.expand
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
@@ -110,8 +113,9 @@ private fun RowLabel(label: String, hint: String?, modifier: Modifier = Modifier
 
 /** Dòng mô tả dưới tên một hàng (DESIGN.md §6: 14, `--fg-2` = bodySmall): MỘT kiểu cho mọi hàng và mọi dòng phụ dưới một tên - hàng nào cũng gọi hàm này, không tự chọn cỡ chữ; chỉ màu đổi được (lỗi). */
 @Composable
-fun RowHint(text: String, modifier: Modifier = Modifier, color: Color = Abook.colors.text2) {
-    BasicText(text, style = Abook.type.bodySmall.copy(color = color), modifier = modifier)
+fun RowHint(text: String, modifier: Modifier = Modifier, color: Color = Abook.colors.text2, ticking: Boolean = false) {
+    val style = Abook.type.bodySmall.copy(color = color)
+    if (ticking) ClockLabel(text, modifier, style) else BasicText(text, style = style, modifier = modifier)
 }
 
 /** Hàng có tên bên trái, điều khiển / giá trị bên phải (canh giữa hàng). Cao tối thiểu 56. */
@@ -204,6 +208,60 @@ fun DisclosureRow(
 val IconSlot = 22.dp
 val IconGap = 14.dp
 
+/** Hàng mở / khép tại chỗ: mũi tên ">" xoay xuống khi mở (web: DisclosureRow `expanded`), trợ năng đọc được việc mở / khép. */
+private fun Modifier.toggles(open: Boolean, onToggle: () -> Unit): Modifier = semantics {
+    if (open) collapse { onToggle(); true } else expand { onToggle(); true }
+}
+
+/**
+ * Lời giải thích gập sau dấu "?" (web: MoreInfo của shared/SettingsNav.tsx): một hàng [label] ("Tìm hiểu thêm", "Cách lấy mã"...) có biểu tượng "?" và mũi
+ * tên; chạm mở câu [text] ngay dưới, trong cột
+ * chữ của hàng - không chiếm chỗ khi không cần.
+ */
+@Composable
+fun MoreInfo(label: String, text: String, tag: String, modifier: Modifier = Modifier) {
+    var open by rememberSaveable { mutableStateOf(false) }
+    val turn by animateFloatAsState(if (open) 1f else 0f, if (open) Motion.Expand else Motion.Collapse, label = "more_info_turn")
+    ListItem(
+        label, modifier.toggles(open) { open = !open }, { open = !open }, tag, titleStyle = Abook.type.bodyStrong,
+        leading = { HelpIcon(Abook.colors.text2) }, leadingWidth = IconSlot, leadingGap = IconGap,
+        trailing = { ChevronIcon(Abook.colors.text3, turn = { turn }) },
+        below = { Reveal(open) { RowHint(text, Modifier.testTag("${tag}_text")) } },
+    )
+}
+
+/**
+ * Phần gập (web: Fold của shared/Collapse.tsx): tiêu đề phần + mũi tên, chạm mở / khép nội dung ngay dưới (mở / khép chiều cao kèm trượt). Phần ít dùng để gập, không
+ * chiếm cả trang; mở hay gập giữ qua lần xoay màn hình.
+ */
+@Composable
+fun Fold(
+    title: String,
+    tag: String,
+    modifier: Modifier = Modifier,
+    /** Một dòng tóm tắt dưới tên ("3 lượt nghe"), thấy cả khi gập. */
+    summary: String? = null,
+    defaultOpen: Boolean = false,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    var open by rememberSaveable(tag) { mutableStateOf(defaultOpen) }
+    val turn by animateFloatAsState(if (open) 1f else 0f, if (open) Motion.Expand else Motion.Collapse, label = "fold_turn")
+    Column(modifier.fillMaxWidth()) {
+        Row(
+            Modifier.fillMaxWidth().heightIn(min = Dim.s48).pressable { open = !open }.toggles(open) { open = !open }.testTag(tag),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f).padding(vertical = Dim.s4)) {
+                BasicText(title, style = Abook.type.sectionTitle)
+                if (summary != null) RowHint(summary, Modifier.testTag("${tag}_summary"))
+            }
+            Spacer(Modifier.width(Dim.s12))
+            ChevronIcon(Abook.colors.text3, turn = { turn })
+        }
+        Reveal(open) { Column(Modifier.fillMaxWidth().testTag("${tag}_body"), content = content) }
+    }
+}
+
 
 /** Hiện / ẩn một khối trong dòng chảy: mở / khép chiều cao kèm trượt dọc (NATIVE_PHONE_UI.md §4 - không mờ). */
 @Composable
@@ -260,6 +318,7 @@ fun ListItem(
     chevron: Boolean = false,
     below: (@Composable ColumnScope.() -> Unit)? = null,
     role: Role = Role.Button,
+    tickingHint: Boolean = false,
 ) {
     Column(
         modifier.fillMaxWidth()
@@ -275,7 +334,7 @@ fun ListItem(
                 BasicText(title, style = titleStyle.copy(color = titleColor), modifier = Modifier.testTag("row_title"))
                 if (hint != null) {
                     Spacer(Modifier.height(2.dp))
-                    RowHint(hint, Modifier.testTag("row_hint"), hintColor)
+                    RowHint(hint, Modifier.testTag("row_hint"), hintColor, ticking = tickingHint)
                 }
             }
             if (trailing != null || chevron) {
@@ -303,8 +362,9 @@ fun StageProgress(progress: () -> Float) {
 
 /** Một dòng thông tin phụ (12, mực phụ) - tối đa một dòng cho mỗi phần, chỉ khi nó mang tin (số đếm, nguồn, lỗi). */
 @Composable
-fun Caption(text: String, modifier: Modifier = Modifier, color: Color = Abook.colors.text2) {
-    BasicText(text, style = Abook.type.caption.copy(color = color), modifier = modifier)
+fun Caption(text: String, modifier: Modifier = Modifier, color: Color = Abook.colors.text2, ticking: Boolean = false) {
+    val style = Abook.type.caption.copy(color = color)
+    if (ticking) ClockLabel(text, modifier, style) else BasicText(text, style = style, modifier = modifier)
 }
 
 /** Lỗi tại chỗ: một câu màu nguy hiểm, kèm "Thử lại" ở mép phải khi có việc để làm lại; mở / khép chiều cao kèm trượt. */
@@ -333,15 +393,13 @@ fun QuoteSample(text: String, modifier: Modifier = Modifier) {
 }
 
 /**
- * Một dòng menu (DESIGN.md §6 "Dòng menu"): trọn bề ngang bảng, biểu tượng đầu dòng, nhãn xuống dòng khi dài (không cắt); biểu tượng và nhãn "Sắp có"
- * cùng tâm với dòng chữ đầu. `soon`: việc chưa làm ở giao diện native - nhạt đi, nhãn "Sắp có" ở mép phải, không bấm được. `unavailable`: việc có rồi
- * nhưng cuốn này không làm được - cũng nhạt đi, không bấm được, KHÔNG có nhãn "Sắp có". `hint`: một dòng nhỏ dưới nhãn nói việc đang diễn ra ("Đang xuất · 27%").
+ * Một dòng menu (DESIGN.md §6 "Dòng menu"): trọn bề ngang bảng, biểu tượng đầu dòng, nhãn xuống dòng khi dài (không cắt); biểu tượng cùng tâm với dòng chữ đầu.
+ * `unavailable`: việc có rồi nhưng cuốn này không làm được - nhạt đi, không bấm được. `hint`: một dòng nhỏ dưới nhãn nói việc đang diễn ra ("Đang xuất · 27%").
  */
 @Composable
 fun MenuRow(
     label: String,
     tag: String,
-    soon: Boolean = false,
     unavailable: Boolean = false,
     danger: Boolean = false,
     hint: String? = null,
@@ -351,15 +409,14 @@ fun MenuRow(
     icon: @Composable (Color) -> Unit,
 ) {
     val colors = Abook.colors
-    val inert = soon || unavailable
     val ink = when {
-        inert -> colors.fg3
+        unavailable -> colors.fg3
         danger -> colors.danger
         else -> colors.text
     }
     Row(
         Modifier.fillMaxWidth().heightIn(min = Dim.s48)
-            .then(if (inert) Modifier.semantics { disabled() } else Modifier.pressable(onClick = onClick))
+            .then(if (unavailable) Modifier.semantics { disabled() } else Modifier.pressable(onClick = onClick))
             .padding(vertical = Dim.s12)
             .testTag(tag),
         verticalAlignment = Alignment.Top,
@@ -369,17 +426,13 @@ fun MenuRow(
         }
         Spacer(Modifier.width(Dim.s12))
         Column(Modifier.weight(1f).then(if (value != null) Modifier.alignByBaseline() else Modifier)) {
-            BasicText(label, style = Abook.type.body.copy(color = if (inert) colors.text2 else ink), modifier = Modifier.testTag("row_title"))
+            BasicText(label, style = Abook.type.body.copy(color = if (unavailable) colors.text2 else ink), modifier = Modifier.testTag("row_title"))
             if (hint != null) RowHint(hint, Modifier.padding(top = 2.dp).testTag("${tag}_hint"), colors.text2)
         }
         if (value != null) {
             Spacer(Modifier.width(Dim.s12))
             // Cùng cỡ chữ phụ với giá trị ở hàng của tấm trình phát; chung đường chân chữ với tên, dài thì xuống dòng.
             BasicText(value, Modifier.widthIn(max = 160.dp).alignByBaseline().testTag("${tag}_value"), Abook.type.bodySmall.copy(color = colors.text2))
-        }
-        if (soon) {
-            Spacer(Modifier.width(Dim.s12))
-            Box(Modifier.height(FirstLine), contentAlignment = Alignment.CenterStart) { BasicText("Sắp có", style = Abook.type.caption) }
         }
     }
 }

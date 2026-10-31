@@ -1,7 +1,7 @@
 import { renderToString } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-// Soát a104: "Nghe trên máy này" chờ máy kia dừng xong (F4); "Phát trên…" mang hồ sơ đang nghe và báo loa / TV không có nhạc nền (F1, F3).
+// Soát a104: "Nghe ở đây" chờ máy kia dừng xong (F4); "Phát trên…" mang hồ sơ đang nghe và báo loa / TV không có nhạc nền (F1, F3).
 const h = vi.hoisted(() => ({
   listen: undefined as undefined | (() => Promise<void>),
   handOff: undefined as undefined | (() => void),
@@ -59,7 +59,7 @@ vi.mock("@/shared/ui", () => ({
     return null;
   },
   Tooltip: ({ children }: any) => {
-    if (children?.props?.["aria-label"] === "Nghe trên máy này") h.listen = children.props.onClick;
+    if (children?.props?.["aria-label"] === "Nghe ở đây") h.listen = children.props.onClick;
     return children;
   },
 }));
@@ -83,7 +83,7 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 
-describe("Nghe trên máy này", () => {
+describe("Nghe ở đây", () => {
   it("chỉ phát ở đây sau khi máy kia đã dừng", async () => {
     let finish!: (value: unknown) => void;
     h.api.mockReturnValue(new Promise((resolve) => (finish = resolve)));

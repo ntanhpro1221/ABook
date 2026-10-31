@@ -1,0 +1,9 @@
+ACTIVITY MANAGER ACTIVITIES (dumpsys activity activities)
+Display #0 (activities from top to bottom):
+  RootTask #10865: type=standard mode=fullscreen
+  isSleeping=false
+  mBounds=Rect(0, 0 - 0, 0)
+  mCreatedByOrganizer=false
+    mResumedActivity: ActivityRecord{3d8f02f u0 com.android.settings/.Settings$DevelopmentSettingsDashboardActivity t10865}
+    mLastPausedActivity: ActivityRecord{17eef9c u0 com.android.settings/.Settings$MoreSystemSettingsActivity t10865}
+    * Task{bc78e2d #10865 type=standard A=1000:com.android.settings U=0 visible=true mode=fullscreen translucent=false sz=3}

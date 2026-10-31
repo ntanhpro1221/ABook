@@ -17,7 +17,7 @@ afterEach(async () => { await act(() => root.unmount()); document.body.replaceCh
 
 it("V5 đang lưu: controls vẫn focus được, báo aria-disabled và chặn đổi lịch", async () => {
   await act(() => root.render(<SleepSchedule />));
-  const minutes = host.querySelector<HTMLSelectElement>('[aria-label="Số phút hẹn"]')!;
+  const minutes = host.querySelector<HTMLSelectElement>('[aria-label="Hẹn"]')!;
   await act(() => { minutes.value = "45"; minutes.dispatchEvent(new Event("change", { bubbles: true })); });
   expect(h.update).toHaveBeenCalledOnce();
   const controls = [...host.querySelectorAll<HTMLElement>('[role="switch"], select')];

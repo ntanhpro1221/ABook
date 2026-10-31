@@ -1,5 +1,6 @@
 package vn.abook.player.ui.nowplaying
 
+import vn.abook.player.ui.components.ClockLabel
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -11,13 +12,15 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicText
+import vn.abook.player.ui.components.BasicText
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
@@ -33,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import vn.abook.player.Playback
 import vn.abook.player.ui.components.pressable
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
@@ -48,15 +52,38 @@ fun NowPlayingScreen(
     val mode = animateFloatAsState(if (window.reading) 1f else 0f, tween(MotionMs.SLOW), label = "reading-mode")
     var controlsDimmed by remember { mutableStateOf(false) }
     val dim = animateFloatAsState(if (controlsDimmed && window.reading) 0.42f else 1f, tween(MotionMs.FAST), label = "controls-visibility")
-    LaunchedEffect(window.reading, state.bookId, state.chapterId) {
-        if (window.reading) model.loadReadAlong()
+    // Cửa sổ đỗ sẵn trong cây (WindowFlight.parked) thì không đọc theo: chỉ tính là đang đọc khi cửa sổ mở (nằm trong cây, `shown` chỉ được đọc khi đang ở chế độ đọc).
+    val live = window.reading && window.shown
+    LaunchedEffect(live, state.bookId, state.chapterId) {
+        if (live) model.loadReadAlong()
     }
-    DisposableEffect(model, window.reading) {
-        model.setReadAlongActive(window.reading)
+    // Lời nhắc ở đầu chữ cần biết máy có giọng đọc không (chương đọc to).
+    LaunchedEffect(live) { if (live) model.loadVoices() }
+    DisposableEffect(model, live) {
+        model.setReadAlongActive(live)
         onDispose { model.setReadAlongActive(false) }
     }
+    // Đóng cửa sổ thì chữ mờ do cuộn tay trở lại rõ (trước đây cây bị huỷ nên lần mở sau luôn rõ).
+    LaunchedEffect(live) { if (!live) controlsDimmed = false }
+    // Giọng máy đọc đoạn đầu mà chờ lâu hơn ~1,5 giây mới nói "Đang chuẩn bị giọng đọc" (đệm một nhịp giữa câu không được nháy chữ).
+    val waiting = state.playing && state.buffering
+    var waited by remember { mutableStateOf(false) }
+    LaunchedEffect(waiting) {
+        waited = false
+        if (waiting) { kotlinx.coroutines.delay(PlayerText.PREPARING_AFTER_MS); waited = true }
+    }
+    val preparing = waiting && state.speaking && waited
+    val toggleLabel = PlayerText.toggleLabel(state.playing, waiting && (!state.speaking || waited), state.speaking)
+    val subtitle = when {
+        preparing -> PlayerText.PREPARING_VOICE
+        state.ended && !state.whole -> PlayerText.CAUGHT_UP_HEAD
+        else -> state.bookTitle
+    }
     val panel = Abook.colors.panel
+    // The tint follows the window's progress, so it is drawn by this outer node (inside the container's moving layer); everything else lives in the inner layer,
+    // whose recorded drawing stays untouched while the window moves.
     Box(modifier.drawBehind { drawRect(lerp(panel, background.value, windowProgress.value)) }) {
+      Box(Modifier.fillMaxSize().graphicsLayer {}) {
         Column(Modifier.fillMaxSize().systemBarsPadding().padding(horizontal = 20.dp).padding(bottom = 12.dp)) {
             val setReading = { on: Boolean -> if (on != window.reading) { window.reading = on; controlsDimmed = false } }
             Row(Modifier.fillMaxWidth().height(56.dp).playerReveal(windowProgress)
@@ -66,32 +93,40 @@ fun NowPlayingScreen(
                 // Đọc theo là một chế độ của chính cửa sổ này, nên công tắc chế độ nằm ở thanh trên của cửa sổ - không phải một nút hành động ở đáy.
                 if (state.readAlongAvailable) PlayerModeSwitch(mode, setReading)
                 else BasicText("ĐANG NGHE", style = Abook.type.caption)
-                GlyphButton("Tuỳ chọn", "⋯", { window.openSheet(PlayerSheet.More) }, Modifier.testTag("player_more"))
+                GlyphButton("Thêm tuỳ chọn", "⋯", { window.openSheet(PlayerSheet.More) }, Modifier.testTag("player_more"))
             }
             // Both modes occupy this same fixed weight. Transport is outside it and never changes coordinates.
             // Nghe: bìa lớn ở trên, tên chương + tên sách ở dưới. Đọc theo: chính bìa ấy thu về ô 48 dp, chính hai dòng tên trượt lên
             // đứng cạnh nó (thu nhỏ, vẫn xuống dòng, không mất), chữ chương mở ra bên dưới. Không phần nào mờ đi rồi biến mất.
             // Ô chữ có mặt khi đang đọc hoặc còn đang chuyển cảnh; chỉ đổi khi qua mốc 0, không recompose theo từng khung.
             val textShown by remember { derivedStateOf { mode.value > 0f } }
-            Layout(modifier = Modifier.weight(1f).fillMaxWidth().clipToBounds(), content = {
+            Layout(modifier = Modifier.weight(1f).fillMaxWidth(), content = {
                 Box(Modifier.fillMaxSize()) {
-                  if (window.reading || textShown) {
+                  if ((window.reading || textShown) && window.shown) {
                     val reading by model.readAlong.collectAsState()
+                    val hint = ReadHint.of(state.speaking, state.voices.isNotEmpty(), reading.paragraphs.any { it.timed }, window.look.tapped)
+                    val nextTitle = if (state.hasNext) state.chapters.getOrNull(state.chapters.indexOfFirst { it.id == state.chapterId } + 1)?.title else null
                     ReadAlongPane(reading, model.position, Modifier.fillMaxSize(),
                         onManualScroll = { controlsDimmed = true }, onTap = { controlsDimmed = false },
-                        onRetry = { controlsDimmed = false; scope.launch { model.loadReadAlong() } })
+                        onRetry = { controlsDimmed = false; scope.launch { model.loadReadAlong() } },
+                        look = window.look, hint = hint,
+                        onListen = { ms -> window.changeLook(window.look.copy(tapped = true)); model.listenFrom(ms) },
+                        nextTitle = nextTitle, onNext = model::next)
                   }
                 }
-                // Chạm bìa cũng đổi chế độ: bìa lớn -> đọc theo, bìa nhỏ -> về nghe. Bìa là phần tử chung (sharedElement) nên vùng chạm của nó
-                // không thu theo lớp vẽ; ở chế độ đọc theo nó không nhận chạm (để không nuốt chạm vào chữ), ô 48 dp riêng phía dưới nhận thay.
+                // Chạm bìa cũng đổi chế độ: bìa lớn -> đọc theo, bìa nhỏ -> về nghe. Bìa là phần tử chung (bay bằng lớp vẽ, xem SharedPlayerParts);
+                // ở chế độ đọc theo nó không nhận chạm (để không nuốt chạm vào chữ), ô 48 dp riêng phía dưới nhận thay.
+                // Khi tấm trượt trên trình phát, bìa giữ thành một tấm ảnh: dải màu, năm vòng và chữ của nó là thứ GPU vẽ lại đắt nhất mỗi khung
+                // dưới tấm (p90 19 ms một khung trên OPPO); ảnh chỉ sống khi tấm còn mở.
                 PlayerCover(state.cover, state.bookTitle, parts.element(NowPlayingPart.Cover, Modifier
+                    .graphicsLayer { if (window.sheetOpen) compositingStrategy = CompositingStrategy.Offscreen }
                     .testTag("player_cover")
                     .then(if (state.readAlongAvailable && !window.reading) Modifier.pressable { setReading(true) } else Modifier)))
                 Column(Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
                     RollingLabel(state.chapterTitle, parts.element(NowPlayingPart.Chapter),
                         Abook.type.bodyStrong.copy(fontSize = 20.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold))
                     Spacer(Modifier.height(4.dp))
-                    RollingLabel(state.bookTitle, parts.element(NowPlayingPart.Book), Abook.type.bodySmall)
+                    RollingLabel(subtitle, parts.element(NowPlayingPart.Book), Abook.type.bodySmall)
                 }
                 Box(Modifier.testTag("player_cover_small").then(if (window.reading) Modifier
                     .pressable { setReading(false) }.semantics { contentDescription = "Về chế độ nghe" } else Modifier))
@@ -121,9 +156,14 @@ fun NowPlayingScreen(
                         val titlesTop = titlesY * (1f - p) + (header - titles.height * titleScale).coerceAtLeast(0f) / 2f * p
                         val titlesBottom = titlesTop + titles.height * (1f + (titleScale - 1f) * p)
                         translationY = maxOf(coverBottom, titlesBottom) + gap * p - textTop
+                        // The text is cut at this area's edges (not the area itself: the cover and the titles fly in from the mini bar, outside it).
+                        clip = true
+                        shape = PlayerTextArea(-(textTop + translationY), height - textTop - translationY)
                     }
                     cover.placeWithLayer(coverX, coverY) {
                         val p = mode.value
+                        // Đang chuyển, bìa và tên co giãn như ảnh dựng sẵn (xem WindowFlight.fly): co giãn trực tiếp thì nét chữ của tên dựng lại mỗi khung.
+                        if (p > 0f && p < 1f) compositingStrategy = CompositingStrategy.Offscreen
                         transformOrigin = TransformOrigin(0f, 0f)
                         scaleX = 1f + (thumb.toFloat() / coverSide - 1f) * p; scaleY = scaleX
                         translationX = -coverX * p
@@ -132,6 +172,7 @@ fun NowPlayingScreen(
                     thumbTarget.place(0, 0)
                     titles.placeWithLayer(0, titlesY) {
                         val p = mode.value
+                        if (p > 0f && p < 1f) compositingStrategy = CompositingStrategy.Offscreen
                         transformOrigin = TransformOrigin(0f, 0f)
                         scaleX = 1f + (titleScale - 1f) * p; scaleY = scaleX
                         translationX = (thumb + gap) * p
@@ -155,28 +196,38 @@ fun NowPlayingScreen(
                 Row(Modifier.fillMaxWidth().height(88.dp).testTag("transport"),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly) {
                     GlyphButton("Chương trước", "|‹", model::previous, Modifier.playerReveal(windowProgress))
-                    GlyphButton("Lùi 15 giây", "↶15", { model.skip(-15) }, Modifier.playerReveal(windowProgress))
-                    PlayMorph(state.playing, model::toggle, parts.element(NowPlayingPart.Play))
-                    GlyphButton("Tới 15 giây", "15↷", { model.skip(15) }, Modifier.playerReveal(windowProgress))
-                    GlyphButton("Chương sau", "›|", model::next, Modifier.playerReveal(windowProgress))
+                    GlyphButton("Lùi 15 giây", "↶15", { model.skip(-Playback.SKIP_SECONDS) }, Modifier.playerReveal(windowProgress))
+                    PlayMorph(state.playing, model::toggle, parts.element(NowPlayingPart.Play), description = toggleLabel)
+                    GlyphButton("Tới 15 giây", "15↷", { model.skip(Playback.SKIP_SECONDS) }, Modifier.playerReveal(windowProgress))
+                    // Chương cuối: nút mờ và nói đó là chương cuối; chương sau chưa có audio: nói vì sao (nút vẫn bấm được, như web).
+                    GlyphButton(PlayerText.nextLabel(state.hasNext, state.hasNext || state.moreChapters), "›|", model::next,
+                        Modifier.playerReveal(windowProgress), dimmed = !state.hasNext && !state.moreChapters)
                 }
-                // Ba ô bằng nhau: tâm ở 1/6, 1/2, 5/6 bề ngang dù nhãn dài ngắn khác nhau.
+                // Các ô bằng nhau (ba, hoặc bốn khi máy có PiP): tâm ở giữa mỗi phần bề ngang dù nhãn dài ngắn khác nhau.
                 Row(Modifier.fillMaxWidth().playerReveal(windowProgress)) {
                     PlayerAction("Tốc độ", PlayerLabels.rate(state.rate), { window.openSheet(PlayerSheet.Speed) }, Modifier.weight(1f).testTag("player_speed"))
                     SleepAction(state.sleep, model.position, { window.openSheet(PlayerSheet.Sleep) }, Modifier.weight(1f))
                     PlayerAction("Chương", "☷", { window.openSheet(PlayerSheet.Chapters) }, Modifier.weight(1f).testTag("player_chapters"))
+                    window.miniWindow?.let { enter -> PlayerAction("Cửa sổ mini", MINI_WINDOW_GLYPH, enter, Modifier.weight(1f).testTag("player_mini")) }
                 }
             }
-            if (state.error.isNotBlank()) BasicText(state.error, Modifier.playerReveal(windowProgress), style = Abook.type.caption)
+            SleepNotice(state, model, Modifier.playerReveal(windowProgress))
+            PlayerNoteLine(model, Modifier.playerReveal(windowProgress))
+            EndNotice(state, model, window, Modifier.playerReveal(windowProgress))
+            // Gạt lời báo đi tới lần lỗi mới (web: "Đóng lời báo"): người đang làm việc khác không bị nó đè mãi.
+            val errorOpen = state.error.isNotBlank() && window.shown
+            var dismissed by remember(state.error, errorOpen) { mutableStateOf(false) }
+            if (state.error.isNotBlank() && !dismissed) PlayerAlert(state, model, window, Modifier.playerReveal(windowProgress), onDismiss = { dismissed = true })
         }
         PlayerSheets(state, model, window)
+      }
     }
 }
 
 @Composable
-fun GlyphButton(label: String, glyph: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun GlyphButton(label: String, glyph: String, onClick: () -> Unit, modifier: Modifier = Modifier, dimmed: Boolean = false) {
     val view = LocalView.current
-    Box(modifier.size(48.dp).pressable {
+    Box(modifier.size(48.dp).then(if (dimmed) Modifier.alpha(0.4f) else Modifier).pressable {
         view.performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK)
         onClick()
     }.semantics { contentDescription = label }, contentAlignment = Alignment.Center) {
@@ -190,7 +241,7 @@ private fun SleepAction(sleep: PlayerSleep, position: PlayerPosition, onClick: (
     LaunchedEffect(sleep, position) {
         snapshotFlow { position.sleepRemainingMs.value }.collect { label = PlayerLabels.sleep(sleep, it) }
     }
-    PlayerAction("Hẹn giờ", label.takeIf { sleep.kind != SleepKind.Off } ?: "◷", onClick, modifier.testTag("player_sleep"))
+    PlayerAction("Hẹn giờ", label.takeIf { sleep.kind != SleepKind.Off } ?: "◷", onClick, modifier.testTag("player_sleep"), clock = true)
 }
 
 @Composable
@@ -203,9 +254,10 @@ fun PlayerSeekBar(durationMs: Long, position: PlayerPosition, onSeek: (Long) -> 
     var seconds by remember { mutableLongStateOf(0L) }
     LaunchedEffect(position) { snapshotFlow { position.milliseconds.value / 1000 }.distinctUntilChanged().collect { seconds = it } }
     Column(modifier.fillMaxWidth()) {
-        Canvas(Modifier.fillMaxWidth().height(44.dp).testTag("player_seek")
+        // Thanh tua có lớp riêng: đang phát thì mỗi khung nó vẽ lại, và nếu không có lớp riêng thì cả lớp trong của cửa sổ (chữ, nút) ghi lại theo (~3 ms luồng giao diện mỗi khung trên OPPO).
+        Canvas(Modifier.fillMaxWidth().height(44.dp).graphicsLayer {}.testTag("player_seek")
             .semantics {
-                contentDescription = "Vị trí nghe"
+                contentDescription = "Vị trí trong chương"
                 progressBarRangeInfo = ProgressBarRangeInfo((seconds * 1000).toFloat(), 0f..durationMs.coerceAtLeast(1).toFloat())
                 setProgress { value -> onSeek(value.toLong().coerceIn(0, durationMs)); true }
             }
@@ -236,9 +288,9 @@ fun PlayerSeekBar(durationMs: Long, position: PlayerPosition, onSeek: (Long) -> 
         // Isolated second-resolution labels. The frame clock never recomposes the transport or chapter.
         // Hàng giờ cao cố định: chip ở giữa hiện / ẩn không bao giờ đẩy hàng nút phát.
         Box(Modifier.fillMaxWidth().height(32.dp)) {
-            RollingLabel(PlayerLabels.time(seconds * 1000), Modifier.align(Alignment.TopStart), style = Abook.type.caption)
+            ClockLabel(PlayerLabels.time(seconds * 1000), Modifier.align(Alignment.TopStart).testTag("time_elapsed"), style = Abook.type.caption)
             Box(Modifier.align(Alignment.TopCenter)) { center() }
-            RollingLabel("−" + PlayerLabels.time(durationMs - seconds * 1000), Modifier.align(Alignment.TopEnd), style = Abook.type.caption)
+            ClockLabel("−" + PlayerLabels.time(durationMs - seconds * 1000), Modifier.align(Alignment.TopEnd).testTag("time_left"), style = Abook.type.caption)
         }
     }
 }
@@ -298,7 +350,7 @@ private fun ReturnChip(available: Boolean, serial: Int, onReturn: () -> Unit) {
         androidx.compose.animation.AnimatedVisibility(shown,
             enter = androidx.compose.animation.slideInVertically(tween(MotionMs.MEDIUM)) { it },
             exit = androidx.compose.animation.slideOutVertically(tween(MotionMs.MEDIUM_OUT)) { it }) {
-            BasicText("Về chỗ cũ", Modifier
+            BasicText("Về chỗ vừa nghe", Modifier
                 .background(Abook.colors.accentSoft, RoundedCornerShape(Dim.radiusCover))
                 .pressable { shown = false; onReturn() }
                 .testTag("return_place")
@@ -306,4 +358,10 @@ private fun ReturnChip(available: Boolean, serial: Int, onReturn: () -> Unit) {
                 style = Abook.type.caption.copy(color = Abook.colors.accentText, fontWeight = FontWeight.Medium))
         }
     }
+}
+
+/** The read-along text's visible band, in the text's own coordinates (it slides under the header and over the transport; nothing may show outside the band). */
+private data class PlayerTextArea(val top: Float, val bottom: Float) : androidx.compose.ui.graphics.Shape {
+    override fun createOutline(size: androidx.compose.ui.geometry.Size, layoutDirection: androidx.compose.ui.unit.LayoutDirection, density: androidx.compose.ui.unit.Density) =
+        androidx.compose.ui.graphics.Outline.Rectangle(androidx.compose.ui.geometry.Rect(0f, top, size.width, bottom))
 }

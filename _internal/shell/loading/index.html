@@ -3,13 +3,17 @@
   <head>
     <meta charset="utf-8" />
     <title>ABook</title>
+    <meta name="color-scheme" content="light dark" />
     <style>
+      :root { --bg: #f5f3ef; --text: #1a1814; color-scheme: light; }
+      [data-theme="dark"] { --bg: #121110; --text: #ece8e1; color-scheme: dark; }
+      @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #121110; --text: #ece8e1; color-scheme: dark; } }
       html,
       body {
         height: 100%;
         margin: 0;
-        background: #0e1115;
-        color: #c9d1d9;
+        background: var(--bg);
+        color: var(--text);
         font: 15px "Segoe UI", system-ui, sans-serif;
       }
       body {

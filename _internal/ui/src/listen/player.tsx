@@ -27,7 +27,8 @@ import {
   type SleepSchedule,
 } from "./sleep";
 import { VOICE_CHANGED_EVENT, type ReadAloudVoice, type SpeechTrack } from "./readAloud";
-import { adoptSyncedVoice, chooseVoice, chosenVoice, forgetVoiceTrouble, onVoiceChosen, ONLINE_NOTICE, recordOf, rememberRecordOf, resolveVoice, runsOnThisMachine, speechFetcher, voicesOf } from "./readAloudVoice";
+import { STALL_MS } from "@/shared/hostWait";
+import { adoptSyncedVoice, chooseVoice, chosenVoice, forgetVoiceTrouble, NO_USABLE_VOICE, onVoiceChosen, ONLINE_NOTICE, recordOf, rememberRecordOf, resolveVoice, runsOnThisMachine, speechFetcher, voicesOf } from "./readAloudVoice";
 import { askOnlineConsent, needsOnlineConsent } from "./onlineConsent";
 import { OnlineVoicePrompt } from "./OnlineVoicePrompt";
 import { chapterScriptQuery, useSource } from "./source";
@@ -37,7 +38,7 @@ import { reportSaveFailure } from "./saveFailure";
 import { ProgressOutbox } from "./progressOutbox";
 import { letterShortcutsOn } from "@/shared/letterShortcuts";
 import { feedback, setBookPlaying } from "@/shared/feedback";
-import { MOTION, withViewTransition } from "@/shared/motion";
+import { MORPH } from "./nowPlayingMorph";
 
 export type { SleepMode, SleepRequest } from "./sleep";
 
@@ -210,7 +211,7 @@ export function useCoveredAfterOpen(expanded: boolean): boolean {
       setSettled(false);
       return;
     }
-    const timer = window.setTimeout(() => setSettled(true), MOTION.slow + 80);
+    const timer = window.setTimeout(() => setSettled(true), MORPH.open + 80);
     return () => window.clearTimeout(timer);
   }, [expanded]);
   return expanded && settled;
@@ -221,6 +222,8 @@ export const SKIP_SECONDS = 15;
 /** Báo hẹn giờ ngủ sắp tắt trước chừng này (DESIGN 5.3). */
 const SLEEP_WARN_MS = 30_000;
 const SAVE_EVERY_MS = 10_000;
+/** Lời báo khi nguồn âm thanh không phát được mà không có lý do nào cụ thể hơn (cùng câu với Qt Player::kPlayError). */
+const PLAY_ERROR = "Chưa phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại.";
 /** Nghe tiếp chờ chỗ nghe mới nhất tối đa chừng này (máy chủ đổi chỗ nghe với máy kia trong 1,5 giây, máy kia tắt thì thôi). */
 const FRESH_SPOT_MS = 1600;
 /** Lời nhắn (notice) tự ẩn sau chừng này. */
@@ -405,7 +408,9 @@ export function PlayerProvider({
       if ((spot.savedAt ?? 0) < refs.current.lastSaved) return;
       refs.current.lastSaved = spot.savedAt ?? Date.now();
       refs.current.stamp = refs.current.lastSaved;
-      refs.current.savedSpot = { chapterId: spot.chapterId, seconds: spot.seconds };
+      // Lời lưu của chương vừa rời (gửi lúc đổi chương) về sau khi đã sang chương mới: không phải chỗ của chương đang nghe - ghi vào thì
+      // chương mới tưởng đã lưu và chỗ đầu chương ấy không bao giờ được lưu (lần mở sau quay về chương cũ).
+      if (spot.chapterId === current.chapterId) refs.current.savedSpot = { chapterId: spot.chapterId, seconds: spot.seconds };
     },
   ), [ensurePlayback, source]);
 
@@ -1283,15 +1288,15 @@ export function PlayerProvider({
     setCanGoBack(false);
   }, [applySleep, bed, client, endFade, engine, native, night, position, save]);
 
-  // Thôi ghép máy kia khi đang nạp một cuốn của nó: cuốn rời Thư viện thì trình phát đóng và nói vì sao (soát a27 lỗi 11). Chỉ đọc danh sách
-  // Thư viện đã có trong bộ đệm (Thư viện, hộp thôi ghép làm mới nó) - không hỏi thêm.
+  // Bỏ ghép máy kia khi đang nạp một cuốn của nó: cuốn rời Thư viện thì trình phát đóng và nói vì sao (soát a27 lỗi 11). Chỉ đọc danh sách
+  // Thư viện đã có trong bộ đệm (Thư viện, hộp bỏ ghép làm mới nó) - không hỏi thêm.
   const library = useQuery<ListenBook[]>({ queryKey: ["listen", "library"], enabled: false });
   useEffect(() => {
     const book = refs.current.book;
     if (!track || !book || track.bookId !== book.id || !leftWithPeer(book, library.data)) return;
     const computer = typeof book.remote === "object" && book.remote ? book.remote.computer : "";
     close();
-    toast.info(`“${book.title}” đã rời Thư viện vì đã thôi ghép ${computer || "máy kia"}`);
+    toast.info(`“${book.title}” đã rời Thư viện vì đã bỏ ghép ${computer || "máy kia"}`);
   }, [close, library.data, track]);
 
   const positionStamp = useCallback(() => refs.current.stamp, []);
@@ -1434,7 +1439,57 @@ export function PlayerProvider({
     if (!native) engine.setRate(refs.current.rate);
     engine.setVolume(refs.current.volume);
     const syncClock = () => clock.set(engine.time, engine.duration);
+    let stall: ReturnType<typeof setTimeout> | undefined;
+    const stopStall = () => {
+      clearTimeout(stall);
+      stall = undefined;
+    };
+    // Nguồn âm thanh hỏng, hay chờ quá lâu ([STALL_MS]): cùng một lời báo, cùng "Thử lại" ở PlayerAlert.
+    const failed = (fallback: string) => {
+      stopStall();
+      const intent = refs.current.playIntent;
+      setError(fallback);
+      setBuffering(false);
+      // Không có tiếng thì không phải "đang phát": nút chính về "Phát", thẻ thôi ghi "đang phát" (soát a27 lỗi 3).
+      if (!native) {
+        if (!engine.paused) engine.pause();
+        setPlaying(false);
+      }
+      // Sách “Trên máy khác” nghe thẳng trên máy tính: chương chưa tải về mà không phát được thường là máy kia đã tắt / mất mạng - hỏi máy ấy
+      // rồi nói đúng lý do, thay vì đổ cho file.
+      const bookId = refs.current.book?.id;
+      const remote = refs.current.book?.remote;
+      if (!native && remote && typeof remote === "object" && remote.device) {
+        void api<{ reachable: boolean }>(`/api/computers/${remote.device}/reachable`)
+          .then((answer) => {
+            if (answer.reachable || refs.current.playIntent !== intent || !refs.current.wantsPlay || refs.current.book?.id !== bookId) return;
+            const message = `Máy ${remote.computer || "kia"} không trả lời (tắt hay mất mạng) - chương này chưa tải về máy này.`;
+            setError((current) => (current === fallback ? message : current));
+            // Máy ấy trả lời lại thì tự thử một lần, đúng chỗ đang đứng.
+            const chapterId = refs.current.track?.chapterId;
+            stopPeerWatch.current();
+            stopPeerWatch.current = watchUntilBack(
+              () => api<{ reachable: boolean }>(`/api/computers/${remote.device}/reachable`).then((again) => again.reachable),
+              () => {
+                if (refs.current.playIntent === intent && refs.current.wantsPlay && refs.current.book?.id === bookId && refs.current.track?.chapterId === chapterId) retryRef.current();
+              },
+            );
+          })
+          .catch(() => undefined);
+      }
+    };
+    // Chốt chặn cuối trên mọi nguồn âm thanh: mọi lời gọi tới máy chủ đã có hạn chờ riêng (shared/hostWait.ts), chờ lâu hơn tất cả thì lời gọi nào đó đã
+    // lọt khỏi chúng - hiện lỗi thay vì để người nghe chờ im lặng mãi. Điện thoại có lõi riêng báo lỗi của nó.
+    const startStall = () => {
+      if (native || stall !== undefined) return;
+      stall = setTimeout(() => {
+        stall = undefined;
+        const current = refs.current;
+        failed(current.queue.find((chapter) => chapter.id === current.track?.chapterId)?.state === "text" ? NO_USABLE_VOICE : PLAY_ERROR);
+      }, STALL_MS);
+    };
     const offs = [
+      stopStall,
       engine.on("time", () => {
         syncClock();
         save();
@@ -1452,6 +1507,7 @@ export function PlayerProvider({
         openSession();
       }),
       engine.on("pause", () => {
+        stopStall();
         setPlaying(false);
         closeSession();
         syncClock();
@@ -1462,11 +1518,13 @@ export function PlayerProvider({
       }),
       engine.on("waiting", () => {
         setBuffering(true);
+        startStall();
         refs.current.audible = false;
         refs.current.sleepMark = { at: Date.now(), seconds: engine.time };
         if (!native && refs.current.sleep.kind === "minutes") applySleep({ ...refs.current.sleep, since: null });
       }),
       engine.on("playing", () => {
+        stopStall();
         setBuffering(false);
         refs.current.audible = true;
         refs.current.sleepMark = { at: Date.now(), seconds: engine.time };
@@ -1517,40 +1575,7 @@ export function PlayerProvider({
         else if (refs.current.continues !== current.bookId) finishedToast();
       }),
       engine.on("recovered", () => setError("")),
-      engine.on("error", () => {
-        const intent = refs.current.playIntent;
-        // Lõi Android nói đúng lý do (nghe thẳng mà mất kết nối với máy tính khác hẳn file hỏng).
-        const fallback = native?.error || engine.error || "Không phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại.";
-        setError(fallback);
-        setBuffering(false);
-        // Không có tiếng thì không phải "đang phát": nút chính về "Phát", thẻ thôi ghi "đang phát" (soát a27 lỗi 3).
-        if (!native) {
-          if (!engine.paused) engine.pause();
-          setPlaying(false);
-        }
-        // Sách “Trên máy khác” nghe thẳng trên máy tính: chương chưa tải về mà không phát được thường là máy kia đã tắt / mất mạng - hỏi máy ấy
-        // rồi nói đúng lý do, thay vì đổ cho file.
-        const bookId = refs.current.book?.id;
-        const remote = refs.current.book?.remote;
-        if (!native && remote && typeof remote === "object" && remote.device) {
-          void api<{ reachable: boolean }>(`/api/computers/${remote.device}/reachable`)
-            .then((answer) => {
-              if (answer.reachable || refs.current.playIntent !== intent || !refs.current.wantsPlay || refs.current.book?.id !== bookId) return;
-              const message = `Máy ${remote.computer || "kia"} không trả lời (tắt hay mất mạng) - chương này chưa tải về máy này.`;
-              setError((current) => (current === fallback ? message : current));
-              // Máy ấy trả lời lại thì tự thử một lần, đúng chỗ đang đứng.
-              const chapterId = refs.current.track?.chapterId;
-              stopPeerWatch.current();
-              stopPeerWatch.current = watchUntilBack(
-                () => api<{ reachable: boolean }>(`/api/computers/${remote.device}/reachable`).then((again) => again.reachable),
-                () => {
-                  if (refs.current.playIntent === intent && refs.current.wantsPlay && refs.current.book?.id === bookId && refs.current.track?.chapterId === chapterId) retryRef.current();
-                },
-              );
-            })
-            .catch(() => undefined);
-        }
-      }),
+      engine.on("error", () => failed(native?.error || engine.error || PLAY_ERROR)), // Lõi Android nói đúng lý do (nghe thẳng mà mất kết nối với máy tính khác hẳn file hỏng).
       engine.on("chapter", () => {
         if (!native || native.chapterId === null || !native.bookId) return;
         if (native.rate > 0 && Math.abs(native.rate - refs.current.rate) > 1e-6) applyRate(native.rate, false);
@@ -1756,7 +1781,11 @@ export function PlayerProvider({
       keyboardNavigation = false;
     };
     const onTab = (event: KeyboardEvent) => {
-      if (event.key === "Tab" || event.key.startsWith("Arrow")) keyboardNavigation = true;
+      // Mũi tên chỉ dời tiêu điểm trong một nhóm (tab, ô chọn, menu, thanh trượt); trên nút thường hay trang thì nó là tua của trình phát - không tính là
+      // đi bằng bàn phím, không thì Space ngay sau đó "bấm" lại nút vừa bấm chuột (mở lại chương) thay vì phát / tạm dừng.
+      const target = event.target instanceof HTMLElement ? event.target : null;
+      const arrowInGroup = event.key.startsWith("Arrow") && Boolean(target?.closest('[role="slider"],[role="tab"],[role="radio"],[role="option"],[role="menuitem"],[role="menu"],[role="listbox"],[role="radiogroup"],[role="tablist"]'));
+      if (event.key === "Tab" || arrowInGroup) keyboardNavigation = true;
     };
     window.addEventListener("pointerdown", onPointer, true);
     window.addEventListener("keydown", onTab, true);
@@ -1771,6 +1800,12 @@ export function PlayerProvider({
       const keyboardFocused = target !== document.body && keyboardNavigation;
       // Phím một chữ cái (M, [ ]) tắt ở Cài đặt › Phím tắt (WCAG 2.1.4); Space và mũi tên vẫn chạy.
       if (event.key.length === 1 && event.key !== " " && !letterShortcutsOn()) return;
+      // Giữ phím: bàn phím tự lặp keydown. Chỉ tua (←/→ trơn) được lặp - giữ để tua xa; phát / tạm dừng, đổi chương, tắt tiếng, tốc độ thì không
+      // (giữ Space từng bật tắt liên hồi, giữ Shift+→ nhảy qua mấy chương). Space lặp vẫn chặn mặc định để trang không cuộn.
+      if (event.repeat && !(event.key.startsWith("Arrow") && !event.shiftKey)) {
+        if (event.key === " " && !keyboardFocused) event.preventDefault();
+        return;
+      }
       switch (event.key) {
         case " ": {
           // Thanh trượt không dùng Space vào việc gì: Space trên thanh tua vẫn là phát/tạm dừng.
@@ -1875,18 +1910,16 @@ export function PlayerProvider({
     canGoBack, error, errorRepeat, notice, options, musicCredit, musicBroken, musicOffline, musicLoading, play, prepare, toggle, resume, retry, dismissError, wantsPlay, pause, seek, skip, next, previous, jumpTo, goBack, restart,
     setRate, setVolume, setSleep, extendSleep, close, switchRecord, positionStamp, setContinues]);
 
-  // Mở/đóng "Đang nghe" qua View Transitions: màn trượt lên từ đáy (đóng thì trượt xuống), bìa ở thanh phát bay lên thành bìa lớn
-  // (và bay về) - xem .now-playing-vt / .cover-morph trong styles.css. Xin giảm chuyển động: chỉ còn hiện / mờ (CSS). Không có API
-  // (trình duyệt cũ) thì đổi thẳng, màn mở vẫn trượt lên bằng hoạt ảnh CSS .now-playing. `plainOpen` (điện thoại): luôn đường CSS.
+  // Mở/đóng "Đang nghe": màn tự nở ra từ thanh phát nhỏ và thu về (PlayerViews.NowPlaying + nowPlayingMorph.ts), cả máy tính lẫn điện thoại -
+  // không qua View Transition. `plainOpen` (điện thoại) chỉ còn quyết việc dựng sẵn / dựng hoãn ruột màn.
   const expandedNow = useRef(expanded);
   expandedNow.current = expanded;
   const setExpandedAnimated = useCallback((value: boolean) => {
     // Không đổi gì thì không chạy View Transition rỗng: mục thanh bên gọi setExpanded(false) mỗi lần bấm, và một chuyển
     // cảnh rỗng khi cửa sổ không được vẽ (thu nhỏ, ẩn) bị trình duyệt huỷ thành lỗi console (soát UX 29-09).
     if (expandedNow.current === value) return;
-    if (plainOpen) setExpanded(value);
-    else withViewTransition(() => setExpanded(value));
-  }, [plainOpen]);
+    setExpanded(value);
+  }, []);
   const nowPlaying = useMemo(() => ({ expanded, setExpanded: setExpandedAnimated, plain: plainOpen }), [expanded, setExpandedAnimated, plainOpen]);
 
   return (

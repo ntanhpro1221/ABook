@@ -154,6 +154,9 @@ void Backend::start() {
     m_proc = proc;
     proc->setProgram(launch.python);
     proc->setArguments({QStringLiteral("-X"), QStringLiteral("utf8"), QStringLiteral("-m"), QStringLiteral("abook.webui.host"), QStringLiteral("--version"), abookVersion()});
+    // Bản cài tự cập nhật (host kiểm / tải / kiểm chữ ký, webui/updater.py); bản dev chỉ khi thử bằng ABOOK_UPDATE_URL, như vỏ Tauri.
+    if (launch.bundled || qEnvironmentVariableIsSet("ABOOK_UPDATE_URL"))
+        proc->setArguments(proc->arguments() << QStringLiteral("--self-update"));
     proc->setWorkingDirectory(launch.folder);
     QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
     env.insert(QStringLiteral("PYTHONIOENCODING"), QStringLiteral("utf-8"));
@@ -208,8 +211,18 @@ void Backend::onStdout() {
             parseReady(message.address);
             break;
         case HostMessage::Kind::Event:
-            emit hostEvent(message.event, message.detail);
+            if (message.event == QLatin1String("abook-update-checked"))
+                emit updateChecked(message.detail.toMap());
+            else
+                emit hostEvent(message.event, message.detail);
             break;
+        case HostMessage::Kind::RunInstaller:
+            // Queued, never from inside this slot: runInstaller -> stop() waits for and deletes the very QProcess whose
+            // readyRead is being delivered. Lines after this one do not matter: the app is leaving.
+            QMetaObject::invokeMethod(this, [this, installer = message.installer, arguments = message.arguments] {
+                runInstaller(installer, arguments);
+            }, Qt::QueuedConnection);
+            return;
         case HostMessage::Kind::CheckUpdate:
             // Như check_for_update(manual) của vỏ Tauri: kết quả nào cũng báo giao diện, để nút "Kiểm tra bản mới" không đứng chờ
             emit updateChecked(HostMessage::updateCheckedWithoutUpdater());
@@ -312,6 +325,20 @@ void Backend::restart() {
         if (old->state() != QProcess::NotRunning)
             old->kill();
     });
+}
+
+// Bộ cài đã tải và kiểm chữ ký (host). Chạy nó TRƯỚC: không chạy được thì app vẫn nguyên, trang báo, bấm lại được. Chạy được thì
+// dừng host (bộ cài ghi đè Python nhúng) rồi thoát; bộ cài passive mở lại app khi xong, stop_processes.ps1 dọn phần còn lại theo đường exe.
+void Backend::runInstaller(const QString &installer, const QStringList &arguments) {
+    if (!QProcess::startDetached(installer, arguments)) {
+        qWarning().noquote() << "không chạy được bộ cài:" << installer;
+        emit hostEvent(QStringLiteral("abook-update-failed"), QStringLiteral("Chưa cài được bản mới. Bạn đóng rồi mở lại ABook, rồi thử lại."));
+        return;
+    }
+    stop();
+    // exit, not quit: QGuiApplication::quit() asks the windows first, and with closeToTray Main.qml refuses and hides to the
+    // tray - the app stayed until the installer's process stop killed it (exit -1).
+    QCoreApplication::exit(0);
 }
 
 void Backend::stop() {

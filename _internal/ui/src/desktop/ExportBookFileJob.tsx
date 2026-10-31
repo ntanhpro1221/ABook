@@ -23,20 +23,20 @@ import { AUDIOBOOK_COPY } from "./listenExport";
 export type ExportKind = "bookfile" | "m4b" | "mp3" | "audiobook" | "projectfile";
 
 const KINDS: Record<ExportKind, { copy: ExportCopy; pick: string; url: (id: string) => string; cancel?: (id: string) => string }> = {
-  bookfile: { copy: BOOK_FILE_COPY, pick: "Chọn nơi lưu file sách", url: (id) => `/api/books/${id}/bookfile-job`, cancel: (id) => `/api/books/${id}/bookfile-job/cancel` },
-  m4b: { copy: M4B_COPY, pick: "Chọn nơi lưu file M4B", url: (id) => `/api/books/${id}/m4b-job`, cancel: (id) => `/api/books/${id}/m4b-job/cancel` },
+  bookfile: { copy: BOOK_FILE_COPY, pick: "Chọn nơi lưu", url: (id) => `/api/books/${id}/bookfile-job`, cancel: (id) => `/api/books/${id}/bookfile-job/cancel` },
+  m4b: { copy: M4B_COPY, pick: "Chọn nơi lưu", url: (id) => `/api/books/${id}/m4b-job`, cancel: (id) => `/api/books/${id}/m4b-job/cancel` },
   // Thư mục MP3 của Studio (hộp Xuất) và của menu Thư viện: cùng việc nền, cả bộ thì thêm `extra.series`.
-  mp3: { copy: MP3_COPY, pick: "Chọn nơi lưu bản xuất", url: (id) => `/api/books/${id}/mp3-job`, cancel: (id) => `/api/books/${id}/mp3-job/cancel` },
+  mp3: { copy: MP3_COPY, pick: "Chọn nơi lưu", url: (id) => `/api/books/${id}/mp3-job`, cancel: (id) => `/api/books/${id}/mp3-job/cancel` },
   audiobook: {
     copy: AUDIOBOOK_COPY,
-    pick: "Chọn nơi lưu sách nói",
+    pick: "Chọn nơi lưu",
     url: (id) => `/api/listen/books/${id}/audiobook`,
     cancel: (id) => `/api/listen/books/${id}/audiobook/cancel`,
   },
   // Hộp Xuất của Studio (studio/ExportBook.tsx) bắt đầu và theo việc này khi còn mở; host nhận theo dõi khi hộp bị gỡ giữa chừng (`trackExport`) hay app mở lại lúc máy chủ còn gói.
   projectfile: {
     copy: PROJECT_FILE_COPY,
-    pick: "Chọn nơi lưu file dự án",
+    pick: "Chọn nơi lưu",
     url: (id) => `/api/books/${id}/projectfile-job`,
     cancel: (id) => `/api/books/${id}/projectfile-job/cancel`,
   },
@@ -137,7 +137,7 @@ export function AudiobookMenuItem({ book }: { book: ListenBook }) {
     >
       <Headphones className="mt-line-icon size-4 shrink-0 self-start" />
       <span className="min-w-0">
-        <span className="block">Xuất sách nói…</span>
+        <span className="block">Xuất sách nói</span>
         <MotionRegion as="span" className="block text-pretty text-xs text-fg-3" title={lastExportPlace(job)}>
           {lastExportHint(job, KINDS.audiobook.copy, dataUpdatedAt) ?? "Mang sang điện thoại, xe hơi, trình phát khác"}
         </MotionRegion>
@@ -226,7 +226,7 @@ export function ExportJobHost({ kind }: { kind: ExportKind }) {
           duration: Infinity,
           action: cancel
             ? {
-                label: "Huỷ",
+                label: "Dừng",
                 onClick: () => {
                   stopping.current.add(id);
                   exportToast("loading", STOPPING.title, { id: toastId(kind, id), description: stoppingNote(copy), duration: Infinity, ...NO_ACTION });
@@ -261,18 +261,29 @@ export function ExportJobHost({ kind }: { kind: ExportKind }) {
     },
     [client, remote, info, kind, copy, cancel],
   );
+  // Nhịp hỏi sống lâu hơn một lần vẽ: luôn dùng `show` mới nhất (app biết máy này là Studio từ xa sau khi việc đã bắt đầu theo).
+  const showLatest = useRef(show);
+  showLatest.current = show;
 
   const track = useCallback(
     (id: string, chapters: number) => {
       if (timers.current.has(id)) return;
+      // Máy chủ trả chậm hơn nhịp hỏi: không hỏi chồng. Hai lần hỏi chồng nhau thì câu "đang chạy" về sau câu "xong" dựng lại thông báo
+      // tiến độ (có Huỷ, không tự tắt) mà không còn nhịp nào hỏi tiếp để sửa.
+      let asking = false;
       const tick = async () => {
+        if (asking) return;
+        asking = true;
         let job: ExportJob;
         try {
           job = await api<ExportJob>(jobUrl(kind, id));
         } catch {
           return; // một lần hỏi hụt (mạng chớp) không phải là việc hỏng - hỏi lại ở nhịp sau
+        } finally {
+          asking = false;
         }
-        if (!show(id, job, chapters, false)) {
+        if (!timers.current.has(id)) return; // đã thôi theo (xong ở lần hỏi khác, host gỡ)
+        if (!showLatest.current(id, job, chapters, false)) {
           window.clearInterval(timers.current.get(id));
           timers.current.delete(id);
           if (job.id) announced.add(job.id);
@@ -281,7 +292,7 @@ export function ExportJobHost({ kind }: { kind: ExportKind }) {
       timers.current.set(id, window.setInterval(() => void tick(), POLL_MS));
       void tick();
     },
-    [show, kind],
+    [kind],
   );
 
   // Menu chọn xong thì bắt đầu: máy chủ trả ngay một mã, rồi host hỏi trạng thái.
@@ -310,7 +321,8 @@ export function ExportJobHost({ kind }: { kind: ExportKind }) {
 
   // Mở (hay tải lại) trang sách: việc còn chạy thì theo tiếp, vừa xong thì nhắc lại nơi file nằm.
   useEffect(() => {
-    if (!pageId || listenOnly) return;
+    // Chờ app biết máy này là máy nào (Studio từ xa: thông báo xong không có "Mở thư mục"; chỉ nghe: không hỏi việc xuất - 403).
+    if (!pageId || !info || listenOnly) return;
     let alive = true;
     api<ExportJob>(jobUrl(kind, pageId))
       .then((job) => {
@@ -325,7 +337,7 @@ export function ExportJobHost({ kind }: { kind: ExportKind }) {
     return () => {
       alive = false;
     };
-  }, [pageId, track, show, kind, listenOnly]);
+  }, [pageId, track, show, kind, listenOnly, info]);
 
   // Mở (hay tải lại) app ở trang không phải trang sách: máy chủ vẫn đang xuất thì hiện lại thông báo tiến độ (có % và Huỷ) như lúc bắt đầu.
   useEffect(() => {
@@ -341,7 +353,10 @@ export function ExportJobHost({ kind }: { kind: ExportKind }) {
 
   useEffect(() => {
     const open = timers.current;
-    return () => open.forEach((timer) => window.clearInterval(timer));
+    return () => {
+      open.forEach((timer) => window.clearInterval(timer));
+      open.clear();
+    };
   }, []);
   return null;
 }

@@ -61,7 +61,7 @@ function packView(job, spans) {
 var PACK_KNOWN = [
     {pattern: /No space left|ENOSPC|disk full|WinError 112|not enough space|disk quota/i, summary: "Ổ đĩa hết chỗ trống. Giải phóng dung lượng hoặc chọn thư mục ở ổ khác rồi gói lại."},
     {pattern: /PermissionError|WinError 5\b|WinError 32|Access is denied|being used by another process|Errno 13/i,
-     summary: "Không ghi được vào thư mục đã chọn (đang bị khoá hay không đủ quyền). Chọn thư mục khác rồi gói lại."}
+     summary: "Chưa ghi được vào thư mục đã chọn (đang bị khoá hay không đủ quyền). Chọn thư mục khác rồi gói lại."}
 ]
 /** Lỗi thô của máy chủ -> câu cho người nghe + nguyên văn cho "Chi tiết". Lỗi đã viết bằng tiếng Việt giữ nguyên, không có Chi tiết. */
 function packError(raw) {

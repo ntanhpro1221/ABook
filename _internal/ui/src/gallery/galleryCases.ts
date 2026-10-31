@@ -3,7 +3,7 @@ import { installPlatform } from "./boot";
 import { ENTRIES, type Platform } from "./entries";
 import { galleryState } from "./state";
 
-// Phần chung của hai bài thử phòng trưng bày (gallery.phone.dom.test.tsx, gallery.desktop.dom.test.tsx): mọi mục của một nền tảng dựng
+// Phần chung của hai bài thử phòng trưng bày (gallery.desktop.dom.test.tsx): mọi mục của một nền tảng dựng
 // được trên dữ liệu giả, không console.error, không lỗi không bắt, thao tác của mục chạy hết, không gọi tới đường / phương thức chưa giả.
 
 export function galleryCases(platform: Platform): void {
@@ -17,7 +17,7 @@ export function galleryCases(platform: Platform): void {
   installPlatform(platform);
   const media = window.matchMedia.bind(window);
   window.matchMedia = query => query.trim() === "(max-width: 640px)"
-    ? { ...media(query), matches: platform === "phone", addEventListener() {}, removeEventListener() {} } as MediaQueryList
+    ? { ...media(query), matches: false, addEventListener() {}, removeEventListener() {} } as MediaQueryList
     : media(query);
   const entries = ENTRIES.filter((entry) => entry.platform === platform);
 
@@ -37,9 +37,6 @@ export function galleryCases(platform: Platform): void {
         expect(galleryState.errors, galleryState.errors.join("\n")).toEqual([]);
         expect([...galleryState.missing]).toEqual([]);
         expect(container.textContent?.trim().length).toBeGreaterThan(0);
-        if (platform === "phone" && /\/(book-menu|book-confirm-remove|add-book-[12]|player-(sleep|sleep-active|speed|more|chapters))$/.test(entry.id)) {
-          expect(document.querySelector('.motion-sheet[data-state="open"] [data-sheet-handle]')).not.toBeNull();
-        }
         if (entry.id.endsWith("player-speed") || entry.id.endsWith("player-full-speed")) {
           expect(document.querySelector('[data-current-choice][aria-pressed="true"]')?.textContent).toBe("1,15×");
         }
@@ -66,16 +63,6 @@ export function galleryCases(platform: Platform): void {
         if (entry.id.endsWith('/library-morning')) {
           const recap = container.querySelector('[aria-label="Ẩn thẻ này"]')?.closest('section');
           expect(recap?.className).not.toMatch(/\bborder\b|bg-panel|shadow-card/);
-        }
-        if (entry.id === 'phone/devices-unpaired') {
-          expect(container.querySelector('main ol')).toBeNull();
-          const install = [...container.querySelectorAll('button')].find(el => el.textContent?.includes('Cài trên máy tính'));
-          expect(install?.getAttribute('aria-expanded')).toBe('false');
-          expect([...container.querySelectorAll('button.bg-accent')].filter(el => !el.closest('[inert]')).map(el => el.textContent?.trim())).toEqual(['Kết nối']);
-          const { click } = await import('./actions');
-          await click('Cài trên máy tính');
-          expect(install?.getAttribute('aria-expanded')).toBe('true');
-          expect(container.querySelector('a[href*="releases"]')?.closest('[inert]')).toBeNull();
         }
         if (entry.id.endsWith('/book-find-results')) {
           const buttons = document.querySelectorAll<HTMLElement>('[data-list-edges="book-search"] button');

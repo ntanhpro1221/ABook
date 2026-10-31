@@ -5,7 +5,7 @@ import { AlertTriangle, Check, ChevronLeft, ChevronRight, Loader2, RotateCw, Wif
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { ButtonHTMLAttributes, ComponentType, CSSProperties, FocusEvent, HTMLAttributes, ReactNode, Ref, SelectHTMLAttributes } from "react";
 import { cn } from "@/shared/cn";
-import { MOTION, markArrival, scrollMotion } from "@/shared/motion";
+import { markArrival, scrollMotion } from "@/shared/motion";
 import { revealedScroll, wheelScroll } from "@/shared/tabScroll";
 import { keepDots } from "./DotJoin";
 import { MotionRegion } from "./MotionRegion";
@@ -14,6 +14,7 @@ import { MotionPresence } from "./MotionPresence";
 import { SlidingIndicator } from "./SlidingIndicator";
 import { useBackLayer } from "./backStack";
 import { useMediaQuery } from "./media";
+import { clampFraction, percentOf } from "./format";
 import { useRowFade, useScrollFadeOn } from "./scrollFade";
 
 type IconType = ComponentType<{ className?: string; strokeWidth?: number }>;
@@ -256,14 +257,14 @@ export function Progress({
   indeterminate?: boolean;
 }) {
   const height = { xs: "h-1", sm: "h-1.5", md: "h-2", lg: "h-2.5" }[size];
-  const clamped = Math.max(0, Math.min(1, value));
+  const clamped = clampFraction(value);
   return (
     <div
       role="progressbar"
       aria-label={label}
       aria-valuemin={0}
       aria-valuemax={100}
-      aria-valuenow={indeterminate ? undefined : Math.round(clamped * 100)}
+      aria-valuenow={indeterminate ? undefined : percentOf(clamped)}
       aria-valuetext={indeterminate ? undefined : valueText}
       className={cn("relative w-full overflow-hidden rounded-full bg-line", height, className)}
     >
@@ -324,7 +325,7 @@ export function useFocusClearOfToasts() {
 }
 
 export function heardBarProps(fraction: number) {
-  const percent = Math.round(Math.max(0, Math.min(1, fraction)) * 100);
+  const percent = percentOf(fraction);
   return {
     role: "progressbar",
     "aria-label": "Đã nghe",
@@ -358,11 +359,12 @@ export function announce(text: string) {
 export function LiveText({ shown, spoken }: { shown: ReactNode; spoken: string }) {
   return (
     <>
-      <span aria-hidden>{shown}</span>
-      <span className="sr-only">{spoken}</span>
+      <span data-motion-live aria-hidden>{shown}</span>
+      <span data-motion-live className="sr-only">{spoken}</span>
     </>
   );
 }
+LiveText.motionLive = true;
 
 // ---- Trạng thái -------------------------------------------------------------------------------------------
 
@@ -649,7 +651,8 @@ export function Dialog({
   const fade = useScrollFadeOn(body);
   // Ô mang `data-escape-local` (vd ô đổi tên chương) tự xử lý phím Esc để huỷ việc đang gõ; Esc ở đó không đóng cả hộp.
   const escapeLocal = (event: KeyboardEvent) => {
-    if ((event.target as HTMLElement | null)?.closest?.("[data-escape-local]")) event.preventDefault();
+    // Esc của bộ gõ đang soạn chữ (IME) chỉ huỷ chữ đang soạn: không đóng hộp, mất cả phần đã gõ.
+    if (event.isComposing || (event.target as HTMLElement | null)?.closest?.("[data-escape-local]")) event.preventDefault();
   };
   if (phone) return <Sheet open={open} onOpenChange={onOpenChange} title={title} description={description} footer={footer} onEscapeKeyDown={escapeLocal}>{children}</Sheet>;
   return (
@@ -657,7 +660,7 @@ export function Dialog({
       <DialogPrimitive.Portal>
         {/* Mở / đóng đều có chuyển động (styles.css .motion-scrim / .motion-dialog): Radix giữ hộp lại tới khi hiệu ứng đóng xong. Làm mờ nền chỉ
             khi có chuột - trên điện thoại tầm trung, mờ nền mỗi khung hình làm hiệu ứng mở giật. */}
-        <DialogPrimitive.Overlay inert={!open} style={open ? undefined : CLOSING} className="motion-scrim fixed inset-0 z-40 bg-scrim pointer-fine:backdrop-blur-[2px]" />
+        <DialogPrimitive.Overlay inert={!open} style={open ? undefined : CLOSING} className="motion-scrim fixed inset-0 z-40 bg-scrim" />
         <DialogPrimitive.Content
           inert={!open}
           style={open ? undefined : CLOSING}
@@ -733,7 +736,6 @@ export function Sheet({
   focusSelector,
   onKeyDown,
   className,
-  onHeightChange,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -746,7 +748,6 @@ export function Sheet({
   focusSelector?: string;
   onKeyDown?: React.KeyboardEventHandler<HTMLDivElement>;
   className?: string;
-  onHeightChange?: (height: number) => void;
 }) {
   useArrivalOnOpen(open);
   const lastContent = useRef({ title, children, description, footer });
@@ -793,18 +794,6 @@ export function Sheet({
       surface.removeEventListener("touchend", end); surface.removeEventListener("touchcancel", cancel);
     };
   }, [surface, open]);
-  useEffect(() => {
-    if (!open || !onHeightChange) return;
-    const element = surface;
-    if (!element) return;
-    // Bảng đổi cao liên tục (danh sách con mở / khép) thì chỉ báo khi đã đứng: mỗi lần báo là cả màn bên dưới đổi cỡ (soát điện thoại 26-10: báo mỗi
-    // khung = tác vụ 111 ms, giật 22 % khung khi mở danh sách Giọng đọc).
-    let settle = 0;
-    const update = () => onHeightChange(element.getBoundingClientRect().height);
-    update();
-    const observer = new ResizeObserver(() => { window.clearTimeout(settle); settle = window.setTimeout(update, MOTION.medium); }); observer.observe(element);
-    return () => { observer.disconnect(); window.clearTimeout(settle); onHeightChange(0); };
-  }, [open, onHeightChange, surface]);
   useLayoutEffect(() => { if (open) opener.current = lastFocus; }, [open]);
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
@@ -954,7 +943,8 @@ export function EmptyState({
       <div className="mb-4 grid size-14 place-items-center rounded-cover bg-accent-soft text-accent-text">
         <Icon className="size-7" strokeWidth={1.75} />
       </div>
-      <h3 className="text-base font-semibold">{title}</h3>
+      {/* h2: lời mời đứng ngay dưới tiêu đề màn (h1), không nhảy cấp (axe heading-order). */}
+      <h2 className="text-base font-semibold">{title}</h2>
       {children && <p className="mt-1.5 max-w-md text-sm leading-relaxed text-fg-2">{children}</p>}
       {action && <div className="mt-5">{action}</div>}
     </MotionRegion>

@@ -86,7 +86,7 @@ Column {
         pending = body
         store.request("PUT", "/api/books/" + bookId + "/music", body, function(status, data) {
             root.pending = null
-            if (!root.store.ok(status) || !data) { Api.notice = "Không đổi được nhạc nền\n" + root.store.errorText(status, data); return }
+            if (!root.store.ok(status) || !data) { Api.notice = "Chưa đổi được nhạc nền\n" + root.store.errorText(status, data); return }
             root.view = data
             root.closeSwap()
             Api.editedBook(root.bookId)
@@ -100,7 +100,7 @@ Column {
         rebuilding = true
         store.request("POST", "/api/books/" + bookId + "/music/rebuild", null, function(status, data) {
             root.rebuilding = false
-            if (!root.store.ok(status) || !data) { Api.notice = "Không chọn lại được nhạc\n" + root.store.errorText(status, data); return }
+            if (!root.store.ok(status) || !data) { Api.notice = "Chưa chọn lại được nhạc\n" + root.store.errorText(status, data); return }
             root.view = data
             root.closeSwap()
             Api.editedBook(root.bookId)
@@ -111,7 +111,7 @@ Column {
         cancelling = true
         store.request("POST", "/api/books/" + bookId + "/music/download/cancel", null, function(status, data) {
             root.cancelling = false
-            if (!root.store.ok(status) || !data) { Api.notice = "Không dừng được việc tải nhạc\n" + root.store.errorText(status, data); return }
+            if (!root.store.ok(status) || !data) { Api.notice = "Chưa dừng được việc tải nhạc\n" + root.store.errorText(status, data); return }
             // Máy chủ dừng ở khúc kế (một phần giây): ẩn dòng tiến độ ngay thay vì đợi lần hỏi sau
             const next = Object.assign({}, data); delete next.download
             root.view = next

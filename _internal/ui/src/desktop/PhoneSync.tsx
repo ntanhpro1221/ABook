@@ -1,9 +1,8 @@
 import { MoreInfo, SettingsBlock } from "@/shared/SettingsNav";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { Fold } from "@/shared/Collapse";
-import * as SwitchPrimitive from "@radix-ui/react-switch";
-import { feedback } from "@/shared/feedback";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Switch } from "./Switch";
 import { ShieldAlert, Smartphone } from "lucide-react";
 import { useId, useEffect, useRef, useState } from "react";
 import { toast } from "@/shared/toast";
@@ -93,10 +92,10 @@ function useSync() {
   const cancel = useMutation({ mutationFn: () => api<SyncView>("/api/sync/pairing", { method: "DELETE" }), onSuccess, onError });
   const revoke = useMutation({
     mutationFn: ({ id }: { id: string; name: string }) => api<SyncView>(`/api/sync/devices/${id}`, { method: "DELETE" }),
-    // Thôi ghép xong nói một câu (soát a68 lỗi 15): dòng thiết bị biến mất không đủ để biết đã xong và hệ quả là gì.
+    // Bỏ ghép xong nói một câu (soát a68 lỗi 15): dòng thiết bị biến mất không đủ để biết đã xong và hệ quả là gì.
     onSuccess: (data, { name }) => {
       onSuccess(data);
-      toast.success(`Đã thôi ghép ${name}`);
+      toast.success(`Đã bỏ ghép ${name}`);
     },
     onError,
   });
@@ -134,49 +133,6 @@ function useSecondsLeft(until: number | undefined): number {
   return until ? Math.max(0, Math.ceil(until - now)) : 0;
 }
 
-export function Switch({
-  id,
-  checked,
-  onCheckedChange,
-  disabled,
-  ariaDisabled,
-  label,
-  labelledBy,
-  describedBy,
-}: {
-  id?: string;
-  checked: boolean;
-  onCheckedChange: (checked: boolean) => void;
-  disabled?: boolean;
-  ariaDisabled?: boolean;
-  /** Tên cho trình đọc màn hình khi không có <label htmlFor> trỏ tới công tắc (soát UX 29-09: "Lịch đêm" chỉ đọc "switch"). */
-  label?: string;
-  /** <label> bọc cả tên lẫn đoạn mô tả dài: tên là phần tử mang mã này, đoạn mô tả đọc riêng (`describedBy`) - không thì tên đọc lên dài
-   *  300+ chữ (soát a31). */
-  labelledBy?: string;
-  describedBy?: string;
-}) {
-  return (
-    <SwitchPrimitive.Root
-      id={id}
-      aria-label={label}
-      aria-labelledby={labelledBy}
-      aria-describedby={describedBy}
-      checked={checked}
-      onCheckedChange={(value) => {
-        if (ariaDisabled) return;
-        feedback("toggle");
-        onCheckedChange(value);
-      }}
-      disabled={disabled}
-      aria-disabled={ariaDisabled || undefined}
-      className="ui-switch touch-hit focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-50 aria-disabled:opacity-50"
-    >
-      <SwitchPrimitive.Thumb className="motion-switch-thumb" />
-    </SwitchPrimitive.Root>
-  );
-}
-
 function PairingPanel(props: Parameters<typeof PairingContent>[0]) {
   return <MotionRegion><PairingContent {...props} /></MotionRegion>;
 }
@@ -210,7 +166,7 @@ function PairingContent({ sync, onPair, onCancel, busy }: { sync: SyncView; onPa
               <span className="inline-block w-3" />
               {code.slice(3)}
             </div>
-            <div className="mt-2 text-xs text-fg-2 tabular-nums">
+            <div data-motion-live className="mt-2 text-xs text-fg-2 tabular">
               Hết hạn sau {minutes}:{seconds}
             </div>
           </div>
@@ -220,7 +176,7 @@ function PairingContent({ sync, onPair, onCancel, busy }: { sync: SyncView; onPa
         <DialogActions>
           {/* Chỉ huỷ mã đang hiện, không gỡ thiết bị nào - "Huỷ ghép" dễ hiểu thành gỡ thiết bị (soát UX 29-09). */}
           <Button size="sm" variant="ghost" onClick={onCancel}>
-            Huỷ mã này
+            Huỷ mã
           </Button>
         </DialogActions>
       </MotionRegion>
@@ -260,7 +216,7 @@ export function PhoneSync() {
   // Bật điều khiển sản xuất từ xa phải hỏi lại (soát UX 29-09): thiết bị đã ghép bắt đầu / dừng sản xuất qua http trong mạng.
   const [confirmStudio, setConfirmStudio] = useState(false);
   const known = useRef<Set<string> | null>(null);
-  // Thiết bị vừa ghép / vừa thôi ghép: hàng mở ra hay khép lại tại chỗ (shared/motion.ts useListPresence).
+  // Thiết bị vừa ghép / vừa bỏ ghép: hàng mở ra hay khép lại tại chỗ (shared/motion.ts useListPresence).
   const deviceRows = useListPresence(sync?.devices ?? NO_DEVICES, (device) => device.id);
 
   // Điện thoại vừa nhập đúng mã: nó xuất hiện trong danh sách - báo ngay, người dùng đang nhìn vào máy tính.
@@ -407,7 +363,7 @@ export function PhoneSync() {
                     <Smartphone className="glyph shrink-0 text-fg-3" />
                     <div className="min-w-0 flex-1 basis-44">
                       <div className="truncate text-sm font-medium">{device.name}</div>
-                      <div className="text-xs text-fg-2">
+                      <div data-motion-live className="text-xs text-fg-2">
                         Kết nối lần cuối {formatRelative(device.lastSeen)} · ghép ngày {formatDate(device.pairedAt)}
                       </div>
                     </div>
@@ -426,7 +382,7 @@ export function PhoneSync() {
                       Đổi tên
                     </Button>
                     <Button size="sm" variant="ghost" onClick={() => setRemoving(device)}>
-                      Thôi ghép
+                      Bỏ ghép
                     </Button>
                   </Fold>
                   </li>
@@ -439,7 +395,7 @@ export function PhoneSync() {
 
       <Dialog footer={<DialogActions>
           <Button variant="ghost" onClick={() => setRemoving(null)}>
-            Để nguyên
+            Giữ lại
           </Button>
           <Button
             variant="danger"
@@ -448,12 +404,12 @@ export function PhoneSync() {
               setRemoving(null);
             }}
           >
-            Thôi ghép
+            Bỏ ghép
           </Button>
         </DialogActions>}
         open={removing !== null}
         onOpenChange={(open) => !open && setRemoving(null)}
-        title={`Thôi ghép ${removing?.name ?? "thiết bị"}?`}
+        title={`Bỏ ghép ${removing?.name ?? "thiết bị"}?`}
         description="Dừng tải và đồng bộ; giữ sách đã tải."
       >
 

@@ -38,10 +38,10 @@ data class OtherPlayer(
 @Immutable data class StudioNoticeState(val enabled: Boolean = false, val permitted: Boolean = true)
 @Immutable data class CompanionState(
     val players: List<OtherPlayer> = emptyList(), val notices: StudioNoticeState = StudioNoticeState(),
-    val problem: String = "", val busy: Boolean = false, val receivedAt: Long = 0,
+    val problem: String = "", val busy: Boolean = false, val receivedAt: Long = 0, val opening: String = "",
 )
 
-/** Same cores as LibraryPlugin; no Capacitor calls and no polling while the Activity is hidden. */
+/** Same cores as the Devices screens; no polling while the Activity is hidden. */
 interface CompanionCore {
     suspend fun scan() {}
     suspend fun players(): JSONArray
@@ -60,6 +60,8 @@ class AndroidCompanionCore(private val context: Context) : CompanionCore {
 }
 
 class CompanionRepo(private val core: CompanionCore, private val now: () -> Long = android.os.SystemClock::elapsedRealtime) {
+    val hidden = MutableStateFlow<Set<String>>(emptySet())
+    fun hide(player: OtherPlayer) { hidden.value = hidden.value + "${player.device}:${player.book}" }
     private val flow = MutableStateFlow(CompanionState())
     val state = flow.asStateFlow()
     private val seen = linkedSetOf<String>()
@@ -70,7 +72,8 @@ class CompanionRepo(private val core: CompanionCore, private val now: () -> Long
         try {
             val rows = core.players()
             if (started != generation || flow.value.busy) return
-            var problem = flow.value.problem
+            // Lượt hỏi này qua được: lời "chưa nối được" của lượt trước hết đúng; lời của lệnh bị từ chối thì giữ.
+            var problem = flow.value.problem.takeUnless { it == OFFLINE }.orEmpty()
             val players = (0 until rows.length()).map { index ->
                 val row = rows.getJSONObject(index)
                 val acks = row.optJSONArray("acks") ?: JSONArray()
@@ -78,17 +81,21 @@ class CompanionRepo(private val core: CompanionCore, private val now: () -> Long
                     val ack = acks.getJSONObject(i)
                     val id = ack.optString("id")
                     if (id.isNotBlank() && seen.add(id) && !ack.optBoolean("ok"))
-                        problem = "${row.optString("name")}: ${ack.optString("message").ifBlank { "Chưa làm được lệnh" }}"
+                        problem = "${row.optString("name")}: ${ack.optString("message").ifBlank { "không làm được lệnh này" }}"
                 }
                 OtherPlayer.from(row)
             }
             while (seen.size > 256) seen.remove(seen.first())
             flow.value = flow.value.copy(players = players, notices = core.notices(), receivedAt = now(), problem = problem)
         } catch (cancelled: CancellationException) { throw cancelled }
-        catch (_: Exception) { flow.value = flow.value.copy(problem = "Chưa nối được, bạn thử lại") }
+        catch (_: Exception) { flow.value = flow.value.copy(problem = OFFLINE) }
     }
 
-    suspend fun setNotices(enabled: Boolean) = attempt { flow.value = flow.value.copy(notices = core.setNotices(enabled)) }
+    private companion object {
+        const val OFFLINE = "Chưa nối được máy kia."
+    }
+
+    suspend fun setNotices(enabled: Boolean) = attempt("Chưa đổi được") { flow.value = flow.value.copy(notices = core.setNotices(enabled)) }
 
     suspend fun findPlayers() = attempt { core.scan(); kotlinx.coroutines.delay(2_500) }.also { refresh() }
 
@@ -103,6 +110,8 @@ class CompanionRepo(private val core: CompanionCore, private val now: () -> Long
                 "pause" -> fresh.copy(playing = false)
                 "play" -> fresh.copy(playing = true)
                 "skip" -> fresh.copy(position = (at + (seconds ?: 0.0)).coerceIn(0.0, old.duration.takeIf { it > 0 } ?: Double.MAX_VALUE))
+                // Hẹn giờ ngủ hiện ngay dưới tay bạn, trước khi máy kia trả lời.
+                "sleep" -> fresh.copy(sleep = if (mode == "chapter") "chapter" else if ((minutes ?: 0) > 0) "minutes" else "off")
                 else -> fresh
             }
         })
@@ -125,20 +134,21 @@ class CompanionRepo(private val core: CompanionCore, private val now: () -> Long
 
     suspend fun handOff(remote: OtherPlayer, local: vn.abook.player.ui.data.PlayerState, position: Double, pause: () -> Unit): Boolean {
         if (!local.hasTrack) return false
+        if (remote.cast) flow.value = flow.value.copy(opening = "Đang mở trên ${remote.name}")
         return attempt {
             generation++
             core.command(remote.device, JSONObject().put("action", "load").put("bookId", local.bookId)
                 .put("chapterId", local.chapterId).put("seconds", position))
             pause()
-        }.also { refresh() }
+        }.also { flow.value = flow.value.copy(opening = ""); refresh() }
     }
 
-    private suspend fun attempt(block: suspend () -> Unit): Boolean {
+    private suspend fun attempt(failure: String = "Chưa làm được", block: suspend () -> Unit): Boolean {
         if (flow.value.busy) return false
         flow.value = flow.value.copy(busy = true, problem = "")
         return try { block(); true }
         catch (cancelled: CancellationException) { throw cancelled }
-        catch (_: Exception) { flow.value = flow.value.copy(problem = "Chưa làm được, bạn thử lại"); false }
+        catch (error: Exception) { flow.value = flow.value.copy(problem = DeviceText.failure(failure, error.message)); false }
         finally { flow.value = flow.value.copy(busy = false) }
     }
 }

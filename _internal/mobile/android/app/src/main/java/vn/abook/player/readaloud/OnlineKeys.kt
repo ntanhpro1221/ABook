@@ -75,7 +75,7 @@ class OnlineKeys(private val store: Store, private val box: SecretBox) {
     /** Lưu khoá mới (phải kiểm tra lại: `valid` false, bỏ danh sách giọng cũ). `key` rỗng = giữ khoá đã lưu, chỉ đổi vùng. */
     @Synchronized
     fun put(provider: String, key: String, region: String) {
-        val value = key.trim().ifEmpty { get(provider)?.key ?: throw IllegalArgumentException("Thiếu khóa") }
+        val value = key.trim().ifEmpty { get(provider)?.key ?: throw IllegalArgumentException("Thiếu khoá") }
         write(provider, Entry(value, region.trim().lowercase(), false, emptyList()))
     }
 

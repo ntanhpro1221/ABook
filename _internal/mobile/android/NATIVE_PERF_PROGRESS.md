@@ -19,7 +19,7 @@ Mục tiêu NATIVE_PHONE_UI.md §1: không khung > 16,7 ms, p95 <= 8 ms phía ap
 - Máy ảo mới `abook_bp_api34` (google_apis_playstore x86_64, API 34, cổng 5584, adb -P 5038 qua ANDROID_ADB_SERVER_PORT; KHÔNG đụng emulator-5554). Gradle cần
   `ANDROID_SERIAL=emulator-5584 ANDROID_ADB_SERVER_PORT=5038` (serial dạng host:port làm UTP hỏng vì dấu ":" trong tên file) và
   `-Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.suppressErrors=EMULATOR`:
-  `gradlew -PnativeUi :app:generateBaselineProfile` ~14 phút, ra app/src/release/generated/baselineProfiles/{baseline,startup}-prof.txt (19.5k dòng mỗi file).
+  `gradlew :app:generateBaselineProfile` ~14 phút, ra app/src/release/generated/baselineProfiles/{baseline,startup}-prof.txt (19.5k dòng mỗi file).
 - `baselineprofile/.../BaselineProfileGenerator.kt` viết lại: chờ dựng trước ba tab, cuộn lưới, 3 vòng x 6 lần đổi tab (kề và nhảy cách), trang sách, bảng bộ nhiều tập,
   menu Xếp theo, ô Tìm, bảng Thêm sách, mỗi bước thiếu phần tử thì bỏ qua.
 - AGP tự sinh .dm cho APK benchmarkRelease (app/build/outputs/apk/benchmarkRelease/baselineProfiles/0 = API 31+, 1 = API 28-30; trong đó primary.prof + primary.profm).
@@ -39,7 +39,7 @@ Mục tiêu NATIVE_PHONE_UI.md §1: không khung > 16,7 ms, p95 <= 8 ms phía ap
 | trước (P1a, JIT, `install`) | 6 | 4,8 [3,4-10,6] | 11,1 [7,5-16,0] | 5 [3-7] | 5 [3-5] |
 | chỉ AOT (mã P1a + .dm) | 7 | 4,1 [0,7-7,7] | 5,7 [3,2-14,2] | 1 [1-2] | 1 [0-2] |
 | cuối (AOT + mọi tab luôn được đặt) | 10 | 1,0 [0-4,3] | 2,7 [2,6-4,1] | 1 [0-2] | 1 [0-1] |
-- main = Choreographer#doFrame luồng chính; p50 4,6 -> 2,2 -> 2,4 ms. WebView (Lead đo): janky 4,1 %, p50 12, p90 20, p99 34 ms.
+- main = Choreographer#doFrame luồng chính; p50 4,6 -> 2,2 -> 2,4 ms. bản cũ (đã gỡ ở P4) (Lead đo): janky 4,1 %, p50 12, p90 20, p99 34 ms.
 - gfxinfo p50/p90 cuối: 8 [8-9] / 16 [15-30] ms (trước 11 / 22).
 - Khung còn > 16,7 ms: đúng 1 khung mỗi lần mở app = lần trượt ĐẦU TIÊN: RenderThread `flush commands` 20-23 ms (4 shader cache_hit ~1 ms mỗi cái, tải kết cấu chữ 492x79,
   driver tạo pipeline), luồng chính chờ đồng bộ. Không có trong lượt sau của cùng tiến trình.

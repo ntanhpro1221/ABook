@@ -52,21 +52,8 @@ object Fmt {
         set(Calendar.MILLISECOND, 0)
     }.timeInMillis
 
-    /** Cỡ file (cùng `formatSize` của shared/format.ts): "850 MB", "3,2 GB"; dưới 10 MB một chữ số thập phân ("0,5 MB"); dưới 0,1 MB tính KB. */
-    fun size(bytes: Long): String {
-        val gb = bytes / (1024.0 * 1024 * 1024)
-        if (gb >= 1) return "${decimal(gb)} GB"
-        val mb = bytes / (1024.0 * 1024)
-        if (mb < 0.1) return "${maxOf(1L, Math.round(bytes / 1024.0))} KB"
-        if (mb < 10) return "${decimal(mb)} MB"
-        return "${grouped(Math.round(mb))} MB"
-    }
-
-    /** Một chữ số thập phân, dấu phẩy, bỏ ",0" (Intl vi-VN `maximumFractionDigits: 1`). */
-    private fun decimal(value: Double): String {
-        val tenths = Math.round(value * 10)
-        return if (tenths % 10 == 0L) grouped(tenths / 10) else "${grouped(tenths / 10)},${tenths % 10}"
-    }
+    /** Số đếm cho người đọc, tách nghìn bằng dấu chấm (vi-VN): 1.234 (shared/format.ts formatNumber). */
+    fun number(value: Long): String = grouped(value)
 
     /** Số nguyên tách nghìn bằng dấu chấm (vi-VN): 1.234. */
     private fun grouped(value: Long): String = String.format(Locale.ROOT, "%,d", value).replace(',', '.')
@@ -75,3 +62,11 @@ object Fmt {
     fun resumeWhere(chapterTitle: String, seconds: Double): String =
         if (chapterTitle.isNotEmpty()) "$chapterTitle · ${clock(seconds)}" else clock(seconds)
 }
+
+/**
+ * Các mẩu nối bằng " · " ở MỌI dòng phụ: mẩu trống (null, rỗng, chỉ khoảng trắng) biến mất, nên không bao giờ có "4 MB ·" treo cuối hay " · câu 3" mở đầu. Một chỗ duy nhất
+ * (TextWrapRulesTest quét: không nơi nào khác tự nối " · "). Web: `DotJoin`.
+ */
+fun dotJoin(vararg parts: String?): String = parts.asList().dotJoined()
+
+fun Iterable<String?>.dotJoined(): String = filter { !it.isNullOrBlank() }.joinToString(" · ")

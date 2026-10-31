@@ -7,7 +7,7 @@ import { DialogActions, Button, Dialog, LiveText, Progress, useFocusFollows } fr
 import { cn } from "@/shared/cn";
 import { ErrorDetails } from "@/shared/ErrorDetails";
 import { api } from "@/studio/api";
-import { formatSize } from "@/studio/musicLocal";
+import { formatSize } from "@/shared/format";
 import { forgetVoices, switchVoices, watchVoiceModule } from "./readAloudVoice";
 import type { ReadAloudVoice } from "./readAloud";
 import {
@@ -267,12 +267,12 @@ export function VieneuModuleCard({
                   </span>
                   <span id={`${id}-detail`} className="mt-0.5 block text-[0.8125rem] text-fg-2 text-pretty">{choice.detail}</span>
                 </span>
-                <span id={`${id}-size`} className="shrink-0 text-xs text-fg-2">
+                <span data-motion-live id={`${id}-size`} className="shrink-0 text-xs text-fg-2">
                   {choice.installed ? "Đã có" : (downloading ? (sizes.current[choice.id] ?? choice.bytes) : choice.bytes) > 0 ? formatSize(downloading ? (sizes.current[choice.id] ?? choice.bytes) : choice.bytes) : "Đã có sẵn"}
                 </span>
                 {choice.removable && backend.remove && canPick && (
                   <Button size="sm" variant="ghost" className="settings-edge-action -my-1 shrink-0" loading={busy} onClick={(event) => { event.preventDefault(); if (choice.installed) ask(choice.id, choice.label); else void remove(choice.id); }}>
-                    {choice.installed ? "Gỡ" : "Xoá phần đã tải"}
+                    {choice.installed ? "Gỡ giọng" : "Xoá phần đã tải"}
                   </Button>
                 )}
               </label>
@@ -313,7 +313,7 @@ export function VieneuModuleCard({
       )}
       {failed && (
         <div role="alert" className="text-sm text-danger text-pretty">
-          <p>{vieneuLabel(shown, copy)}</p>
+          <p data-motion-live>{vieneuLabel(shown, copy)}</p>
           <ErrorDetails technical={status.errorDetail} />
         </div>
       )}
@@ -355,7 +355,7 @@ export function VieneuModuleCard({
         open={asking !== null}
         onOpenChange={(open) => !open && setAsking(null)}
         title={`Gỡ “${asking?.label ?? ""}” khỏi máy này?`}
-        description={asking?.use === undefined ? "Đang xem cuốn nào còn dùng giọng này…" : removeAsk(asking?.use ?? null)}
+        description={asking?.use === undefined ? "Đang xem cuốn nào còn dùng giọng này" : removeAsk(asking?.use ?? null)}
       >
 
       </Dialog>

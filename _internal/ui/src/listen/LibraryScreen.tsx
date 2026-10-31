@@ -1,3 +1,4 @@
+import { TickingValue } from "@/shared/TickingValue";
 import { MotionPresence } from "@/shared/MotionPresence";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { ScreenHeader } from "@/shared/ScreenHeader";
@@ -10,7 +11,7 @@ import { useMediaQuery } from "@/shared/media";
 import { LoadingCrossfade } from "@/shared/MotionPresence";
 import { useListPresence } from "@/shared/motion";
 import { ArrowDownWideNarrow, BookOpen, Headphones, Laptop, Pause, Play, Search, X } from "lucide-react";
-import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode, type CSSProperties } from "react";
+import { createContext, memo, useContext, useEffect, useMemo, useRef, useState, type ReactNode, type CSSProperties } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "@/shared/toast";
 import { BookCover } from "@/shared/BookCover";
@@ -33,7 +34,40 @@ const LIBRARY_FILTERS: Filter[] = LIBRARY_FILTER_OPTIONS.map(option => option.va
 
 /** Hành động riêng của nền tảng đi cùng bìa, kể cả khi mở bộ sách. */
 type BookExtras = { actions?: (book: ListenBook) => ReactNode; cover?: (book: ListenBook) => ReactNode; seriesCover?: (books: ListenBook[]) => ReactNode };
-const BookExtrasContext = createContext<BookExtras>({});
+const NO_EXTRAS: BookExtras = {};
+const BookExtrasContext = createContext<BookExtras>(NO_EXTRAS);
+
+/** Việc của một bìa trong lưới: một đối tượng cố định cho cả thư viện (useTileActions) - bìa nhớ (memo) không vẽ lại chỉ vì hàm mới. */
+type TileActions = { open: (book: ListenBook) => void; read: (book: ListenBook) => void; play: (book: ListenBook) => void; toggle: () => void };
+const TileActionsContext = createContext<TileActions | null>(null);
+
+function useTileActions(): TileActions {
+  const navigate = useNavigate();
+  const playBook = usePlayListenBook();
+  const player = usePlayer();
+  const live = useRef({ navigate, playBook, player });
+  live.current = { navigate, playBook, player };
+  return useMemo<TileActions>(() => ({
+    open: (book) => live.current.navigate(`/book/${book.id}`),
+    read: (book) => live.current.navigate(`/book/${book.id}/read`),
+    play: (book) => void live.current.playBook(book),
+    toggle: () => live.current.player.toggle(),
+  }), []);
+}
+
+/** Trạng thái của trình phát mà lưới bìa cần (cuốn nào đang nạp, có đang phát) và máy có giọng đọc không: đọc MỘT lần ở cấp lưới rồi
+ *  đưa xuống từng bìa thành giá trị, không mỗi bìa một lần (thư viện 3000 cuốn từng vẽ lại mọi bìa đang dựng mỗi lần phát / dừng). */
+function useShelfState() {
+  const player = usePlayer();
+  const voices = useReadAloudVoices();
+  return { playingBook: player.track?.bookId, playing: player.playing, speaks: (voices.data?.length ?? 0) > 0 };
+}
+
+/** Một bìa với trạng thái lấy từ `shelf` (useShelfState). */
+function tileOf(book: ListenBook, shelf: ReturnType<typeof useShelfState>, badge?: string, twin?: boolean) {
+  const current = shelf.playingBook === book.id;
+  return <BookTile book={book} badge={badge} twin={twin} current={current} playingHere={current && shelf.playing} speaks={shelf.speaks} />;
+}
 
 function stateOf(book: ListenBook): Filter {
   if (book.progress.finished) return "finished";
@@ -85,10 +119,14 @@ function progressText(book: ListenBook, speaks: boolean): string {
   return `Còn ${formatLengthUp(left / (book.state.rate ?? 1))}`;
 }
 
+/** Lần bấm nghe gần nhất (chung cả app): lời đáp sách về muộn của lần bấm trước không được phát đè cuốn vừa chọn. */
+let latestPlay = 0;
+
 export function usePlayListenBook() {
   const source = useSource();
   const player = usePlayer();
   return async (book: ListenBook, chapterId?: number, at?: number, extra?: { word?: WordTarget; rate?: number }) => {
+    const request = ++latestPlay;
     // Cuốn đang ở trình phát: tiếp tục đúng chỗ đang phát, không nạp lại (nạp lại là lùi về điểm lưu gần nhất). player.resume hỏi lại chỗ nghe
     // trước: thiết bị khác nghe xa hơn thì tới chỗ ấy (soát a27 lỗi 2).
     if (chapterId === undefined && player.track?.bookId === book.id) {
@@ -96,6 +134,8 @@ export function usePlayListenBook() {
       return;
     }
     const full = book.chapters ? book : await source.book(book.id);
+    // Bấm A rồi B, máy chủ trả B trước A sau: A về muộn thì thôi.
+    if (request !== latestPlay) return;
     const chapters = full.chapters ?? [];
     if (chapterId !== undefined) {
       player.play(full, chapters, chapterId, at ?? 0, extra);
@@ -142,28 +182,26 @@ export function useRestoreLastListening() {
   }, [books, player, source]);
 }
 
-function BookTile({ book, badge, twin }: { book: ListenBook; badge?: string; twin?: boolean }) {
+/** Một bìa của lưới. Nhớ (memo): trình phát đổi, thư viện được hỏi lại, lưới cuộn - chỉ bìa có giá trị đổi vẽ lại (docs/PERF_WEB.md).
+ *  `current`: cuốn đang nạp trong trình phát; `speaks`: máy có giọng đọc. */
+const BookTile = memo(function BookTile({ book, badge, twin, current, playingHere, speaks }: {
+  book: ListenBook; badge?: string; twin?: boolean; current: boolean; playingHere: boolean; speaks: boolean;
+}) {
   const extras = useContext(BookExtrasContext);
-  const navigate = useNavigate();
-  const playBook = usePlayListenBook();
-  const player = usePlayer();
-  const current = player.track?.bookId === book.id;
-  const playingHere = current && player.playing;
+  const actions = useContext(TileActionsContext)!;
   // Sách chỉ có chữ: có giọng đọc trên máy thì nút trên bìa là "Nghe ngay" (giọng máy đọc), không thì vẫn là "Đọc".
-  const voices = useReadAloudVoices();
-  const speaks = (voices.data?.length ?? 0) > 0;
   const textOnly = book.stage === "text" && !speaks;
   return (
     <MotionRegion as="div" data-book-tile="" className="group">
       <div className="relative">
         {/* Bìa và nút tên bên dưới cùng mở trang sách: bàn phím chỉ dừng ở nút tên (có chữ), bìa vẫn bấm được bằng chuột (soát UX a17: ba điểm Tab mỗi thẻ). */}
-        <button type="button" tabIndex={-1} onClick={() => navigate(`/book/${book.id}`)} className="block w-full rounded-control" aria-label={`Mở ${book.title}`} title={book.remote ? `${book.title} · ${remotePlace(book)}` : undefined}>
+        <button type="button" tabIndex={-1} onClick={() => actions.open(book)} className="block w-full rounded-control" aria-label={`Mở ${book.title}`} title={book.remote ? `${book.title} · ${remotePlace(book)}` : undefined}>
           <BookCover title={book.title} part={book.series?.part} badge={badge} size="md" image={book.cover} playing={playingHere} className="w-full !aspect-[2/3] !rounded-cover" />
         </button>
         <button
           type="button"
           aria-label={textOnly ? `Đọc ${book.title}` : playingHere ? `Tạm dừng ${book.title}` : book.stage === "text" ? `Nghe ngay ${book.title}` : `Nghe ${book.title}`}
-          onClick={() => (textOnly ? navigate(`/book/${book.id}/read`) : (feedback("playPause"), current ? player.toggle() : void playBook(book)))}
+          onClick={() => (textOnly ? actions.read(book) : (feedback("playPause"), current ? actions.toggle() : actions.play(book)))}
           className={cn(
             "touch-hit touch-box absolute bottom-2.5 right-2.5 grid size-[44px] place-items-center rounded-full bg-panel text-fg shadow-card transition-opacity duration-motion-fast focus-visible:pointer-events-auto focus-visible:opacity-100",
             // Điện thoại không có rê chuột: nút chỉ hiện cho cuốn đang ở trình phát, tranh bìa không bị che (soát 24-10).
@@ -189,17 +227,17 @@ function BookTile({ book, badge, twin }: { book: ListenBook; badge?: string; twi
         )}
         {extras.cover?.(book)}
       </div>
-      <button type="button" onClick={() => navigate(`/book/${book.id}`)} className="touch-row mt-2.5 block w-full text-left">
-        <div className={cn("line-clamp-2 text-sm font-medium leading-snug", current && "text-accent-text")}>{displayTitle(book.title)}</div>
+      <button type="button" onClick={() => actions.open(book)} className="touch-row mt-2.5 block w-full text-left">
+        <div className={cn("break-words text-sm font-medium leading-snug", current && "text-accent-text")}>{displayTitle(book.title)}</div>
         {/* Cuốn ở máy khác: dấu máy tính đầu dòng trạng thái, không đè lên bìa - nhãn góc trên từng che tên sách của bìa vẽ (audit140 V8). */}
         <div className="mt-1 flex items-center gap-1 text-xs text-fg-2">
           {book.remote && <Laptop role="img" aria-label={typeof book.remote === "object" && book.remote.downloaded ? `${remotePlace(book)}, đã tải về máy này` : remotePlace(book)} className="size-3 shrink-0" />}
-          <span className="min-w-0 truncate">{progressText(book, speaks)}</span>
+          <TickingValue className="min-w-0 truncate">{progressText(book, speaks)}</TickingValue>
         </div>
         {/* Hai cuốn cùng tên: nhãn "Dự án" (làm trên máy này) / "Đã nhập" (mở từ file) và ngày vào thư viện để biết cuốn nào là cuốn nào
             (tác giả, nếu có, đã nằm ở dòng trên). */}
         {twin && (twinKind(book) || book.addedAt) ? (
-          <div className="mt-0.5 text-xs text-fg-3">
+          <div data-motion-live className="mt-0.5 text-xs text-fg-3">
             {[twinKind(book), book.addedAt ? `Thêm ${formatWhen(book.addedAt)}` : ""].filter(Boolean).join(" · ")}
           </div>
         ) : null}
@@ -207,7 +245,7 @@ function BookTile({ book, badge, twin }: { book: ListenBook; badge?: string; twi
       {extras.actions?.(book)}
     </MotionRegion>
   );
-}
+});
 
 function ContinueCard({ book }: { book: ListenBook }) {
   const navigate = useNavigate();
@@ -231,13 +269,13 @@ function ContinueCard({ book }: { book: ListenBook }) {
       {/* Cột chữ giãn theo lưới: mép nút phát trùng mép nội dung và nút tìm bên dưới. */}
       <div className="min-w-0 flex-1">
         <div className="label-section text-fg-2">Đang nghe</div>
-        <h2 className="mt-2 line-clamp-2 text-lg font-bold sm:text-2xl">{displayTitle(book.title)}</h2>
+        <h2 className="mt-2 break-words text-lg font-bold sm:text-2xl">{displayTitle(book.title)}</h2>
         {/* Thẻ giữ khoá theo cuốn (LibraryScreen): đổi phát / tạm dừng, chương, "nghe lần cuối" ở đây tự mờ chéo; giờ chạy không tính. */}
-        <MotionRegion as="p" className="tabular mt-1 truncate text-sm text-fg-2">
+        <MotionRegion as="p" className="tabular mt-1 break-words text-sm text-fg-2">
           {where}
-          {current ? (playingHere ? " · đang phát" : " · tạm dừng") : last ? ` · nghe lần cuối ${formatWhen(last.at)}` : ""}
+          {current ? (playingHere ? " · đang phát" : " · tạm dừng") : last ? <TickingValue>{` · nghe lần cuối ${formatWhen(last.at)}`}</TickingValue> : ""}
         </MotionRegion>
-        <MotionRegion as="p" className="mt-0.5 text-sm text-fg-2">{bookStatusText(book, speaks)}</MotionRegion>
+        <p className="mt-0.5 text-sm text-fg-2"><TickingValue>{bookStatusText(book, speaks)}</TickingValue></p>
         <Progress value={book.progress.fraction} size="xs" className="mt-3" label="Đã nghe" />
       </div>
       <MotionRegion className="shrink-0" motionKey={book.progress.caughtUp && !current}>
@@ -310,7 +348,7 @@ function UpcomingCard({ book, onOpen: open }: { book: ListenBook; onOpen?: (book
     >
       <BookCover title={book.title} part={book.series?.part} size="sm" image={book.cover} className="size-12 opacity-80" />
       <MotionRegion as="span" className="min-w-0" motionKey={[book.title, status]}>
-        <span className="block truncate text-sm font-semibold">{book.title}</span>
+        <span className="block break-words text-sm font-semibold">{book.title}</span>
         <span className="block truncate text-xs text-fg-2">{status}</span>
       </MotionRegion>
     </button>
@@ -324,10 +362,11 @@ const SHELF_BLOCK = 60;
 
 function Shelf({ books, badges, twins, memory }: { books: ListenBook[]; badges?: Map<string, string>; twins?: Set<string>; memory?: string }) {
   const rows = useListPresence(books, (book) => book.id);
+  const shelf = useShelfState();
   const tile = (book: ListenBook, index: number) => (
     // Hiện dần chỉ cho khối đầu: khối sau dựng khi cuộn tới, không nhún lại mỗi lần.
     <div key={book.id} className={index < SHELF_BLOCK ? "rise-in" : undefined} style={{ "--i": index } as CSSProperties}>
-      <BookTile book={book} badge={badges?.get(book.id)} twin={twins?.has(book.id)} />
+      {tileOf(book, shelf, badges?.get(book.id), twins?.has(book.id))}
     </div>
   );
   return (
@@ -370,7 +409,7 @@ function librarySections(books: ListenBook[], grouped: boolean) {
 }
 
 /** Một bìa cho cả bộ; điện thoại mở bảng đáy, máy tính mở hộp giữa màn. */
-function SeriesTile({ item, twins, phone }: { item: ReturnType<typeof librarySections>[number]; twins: Set<string>; phone: boolean }) {
+const SeriesTile = memo(function SeriesTile({ item, twins, phone }: { item: ReturnType<typeof librarySections>[number]; twins: Set<string>; phone: boolean }) {
   const extras = useContext(BookExtrasContext);
   const [open, setOpen] = useState(false);
   const trigger = <button type="button" aria-label={`Mở bộ ${item.label}`} aria-haspopup="dialog" onClick={() => setOpen(true)} className="group block w-full text-left">
@@ -379,7 +418,7 @@ function SeriesTile({ item, twins, phone }: { item: ReturnType<typeof librarySec
       <BookCover title={item.label} image={item.items[0].cover} size="md" className="w-full !aspect-[2/3] !rounded-cover" />
       {extras.seriesCover?.(item.items)}
     </div>
-    <span className="mt-2.5 block line-clamp-2 text-sm font-medium leading-snug">{item.label}</span>
+    <span className="mt-2.5 block break-words text-sm font-medium leading-snug">{item.label}</span>
     <span className="mt-1 flex items-center gap-1 text-xs text-fg-2">
       {item.items.some(book => book.remote) && <Laptop role="img" aria-label="Có sách trên máy khác" className="size-3 shrink-0" />}
       {item.items.length} tập
@@ -391,23 +430,26 @@ function SeriesTile({ item, twins, phone }: { item: ReturnType<typeof librarySec
       <div className="pb-4 pt-4">{content}</div>
     </Sheet> : <>{trigger}<Dialog open={open} onOpenChange={setOpen} title={item.label}>{content}</Dialog></>}
   </MotionRegion>;
-}
+});
 
 /** Lưới luôn mở; presence giữ các ô và Windowed giữ thư viện dài. */
 export function SeriesShelves({ books, twins, memory, grouped = true }: { books: ListenBook[]; twins: Set<string>; memory?: string; grouped?: boolean }) {
   const narrow = useMediaQuery("(max-width: 767px)");
   const coarse = useMediaQuery("(pointer: coarse)");
-  const sections = librarySections(books, grouped);
+  // Gom bộ một lần cho mỗi danh sách: ô bộ sách nhận cùng đối tượng giữa hai lần vẽ (trình phát đổi, cuộn), không tính lại cả thư viện.
+  const sections = useMemo(() => librarySections(books, grouped), [books, grouped]);
   const rows = useListPresence(sections, section => section.key);
-  return <div role="list" aria-label="Sách" className="mt-8">
+  const shelf = useShelfState();
+  const actions = useTileActions();
+  return <TileActionsContext.Provider value={actions}><div role="list" aria-label="Sách" className="mt-8">
     <Windowed memory={memory} items={rows} block={SHELF_BLOCK} estimate={130} className={SHELF_GRID} alwaysBlocks
       row={({ key, item, state, ref }, index) => <div key={key} ref={ref} role="listitem" className="motion-row" data-state={state} inert={state === "exit"}>
         <div className={index < SHELF_BLOCK ? "rise-in" : undefined} style={{ "--i": index } as CSSProperties}>
           {item.items.length > 1 ? <SeriesTile item={item} twins={twins} phone={narrow || coarse} /> :
-            <BookTile book={item.items[0]} badge={item.badges.get(item.items[0].id)} twin={twins.has(item.items[0].id)} />}
+            tileOf(item.items[0], shelf, item.badges.get(item.items[0].id), twins.has(item.items[0].id))}
         </div>
       </div>} />
-  </div>;
+  </div></TileActionsContext.Provider>;
 }
 
 const EMPTY_TEXT: Record<Filter, string> = {
@@ -422,7 +464,7 @@ export function LibraryScreen({
   header,
   recap,
   onOpenUpcoming,
-  bookExtras = {},
+  bookExtras = NO_EXTRAS,
   additionalBooks = [],
 }: {
   bookExtras?: BookExtras;
@@ -516,8 +558,8 @@ export function LibraryScreen({
         <LoadError what="thư viện" error={libraryQuery.error} onRetry={() => void libraryQuery.refetch()} className="mt-12" />
       ) : !libraryRows.length ? (
         upcoming.length ? null : empty ?? (
-          <EmptyState icon={Headphones} title="Chưa có sách nào" className="mt-12">
-            Sách nghe được sẽ hiện ở đây.
+          <EmptyState icon={Headphones} title="Chưa có sách trên máy" className="mt-12">
+            Thêm sách của bạn để bắt đầu nghe.
           </EmptyState>
         )
       ) : (
@@ -558,7 +600,7 @@ export function LibraryScreen({
               <span className="sr-only">Tìm sách</span>
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-fg-2" />
               <input ref={searchInput} aria-label="Tìm sách" type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Tên sách, tác giả, giọng" title="Gõ không dấu cũng được" className="h-[44px] w-full rounded-control bg-sunken pl-10 pr-11 text-sm outline-none placeholder:text-fg-2 focus:ring-2 focus:ring-focus [&::-webkit-search-cancel-button]:hidden" />
-              <button type="button" onClick={() => { if (query) setQuery(""); else setSearchOpen(false); }} aria-label={query ? "Xoá ô tìm" : "Đóng tìm kiếm"} className="absolute right-0 top-0 grid size-[44px] place-items-center text-fg-2"><X className="size-4" /></button>
+              <button type="button" onClick={() => { if (query) setQuery(""); else setSearchOpen(false); }} aria-label={query ? "Xoá ô tìm" : "Đóng ô tìm"} className="absolute right-0 top-0 grid size-[44px] place-items-center text-fg-2"><X className="size-4" /></button>
             </label>
           </Collapse>
           {/* Chỉ fade kết quả: header/tiếp tục nghe/controls giữ một cây. Ảnh theo scrollMemory trước paint. */}

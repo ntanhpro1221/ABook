@@ -19,6 +19,8 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONObject
 import vn.abook.player.Playback
 import vn.abook.player.ui.music.PlayerMusic
+import vn.abook.player.ui.voice.OnlineConsent
+import vn.abook.player.ui.voice.PlayGate
 
 /** Một chương trong hàng chương của trình phát (Đang nghe: danh sách chương, chương chữ cho Đọc theo). `textPath` rỗng: chương audio. */
 @Immutable
@@ -26,7 +28,7 @@ data class PlayerChapter(val id: Int, val title: String, val durationMs: Long, v
 
 /** Hẹn giờ ngủ đã đặt (chỉ phần đổi chậm; thời gian còn lại chạy theo giây nằm ở [PlayerClock.sleepRemainingMs]). */
 @Immutable
-data class SleepSetting(val mode: String = "off", val minutes: Int = 0, val counting: Boolean = false) {
+data class SleepSetting(val mode: String = "off", val minutes: Int = 0, val counting: Boolean = false, val stoppedAtMs: Long = 0L) {
     val active: Boolean get() = mode != "off"
 
     companion object {
@@ -55,6 +57,12 @@ data class PlayerState(
     val chapters: List<PlayerChapter> = emptyList(),
     val music: PlayerMusic = PlayerMusic.None,
     val voiceId: String = "",
+    /** Cuốn đã đủ chương (thư viện báo): "cả cuốn" hay mới "phần đã có" ở dòng tiến độ, và hết chương cuối là "hết sách" hay "hết phần đã có". */
+    val whole: Boolean = true,
+    /** Cuốn còn chương chưa nghe được (chưa có audio) sau hàng chương đang nạp: nút "Chương sau" nói vì sao không bấm được. */
+    val moreChapters: Boolean = false,
+    /** Phát hết chương cuối của hàng chương (lõi báo "ended") và chưa nghe lại gì: hiện lời "Đã nghe hết ...". */
+    val ended: Boolean = false,
 ) {
     /** Có cuốn trong trình phát (thanh nhỏ hiện). */
     val hasTrack: Boolean get() = bookId.isNotEmpty() && chapterId != null
@@ -82,6 +90,7 @@ data class PlayerState(
                 rate = json.optDouble("rate", 1.0),
                 sleep = if (sleep == null) SleepSetting.Off else SleepSetting(
                     sleep.optString("mode", "off"), sleep.optInt("minutes"), sleep.optBoolean("counting"),
+                    Math.round(sleep.optDouble("stoppedAt", 0.0) * 1000),
                 ),
                 error = json.optString("error").ifBlank { json.optString("saveError") },
                 chapters = chapters,
@@ -157,6 +166,9 @@ interface PlaybackCore {
     /** Hẹn giờ ngủ: `mode` = "off" | "minutes" | "chapter". */
     fun setSleep(mode: String, minutes: Int)
 
+    /** "+N phút": nghe thêm khi hẹn giờ sắp tắt (mức N là mức "Mỗi lần nghe thêm" của Cài đặt). Mặc định: không làm gì (lõi giả). */
+    fun extendSleep() = Unit
+
     /** Giọng đọc máy của cuốn đang nạp. */
     fun voiceId(): String
     fun setVoice(voiceId: String)
@@ -171,6 +183,7 @@ interface PlaybackCore {
  * `lastPlan`: như `planOf` cho cuốn nghe gần nhất (null: chưa nghe cuốn nào) - cuốn ấy được nạp sẵn ở trạng thái dừng khi mở app, để thanh phát nhỏ
  * là MỘT cửa "Đang nghe" duy nhất (không có hàng "Đang nghe" thứ hai ở Thư viện).
  * `planAt`: như `planOf` nhưng bắt đầu ở một chương + giây cho trước (trang sách: chạm một chương, "Từ đầu", kết quả tìm).
+ * `gate`: cửa trước mọi lệnh làm chữ rời máy - chương chỉ có chữ đọc bằng giọng trực tuyến chưa được đồng ý thì hỏi bạn TRƯỚC khi phát ([PlayGate]).
  */
 class PlayerRepo(
     private val core: PlaybackCore,
@@ -180,6 +193,7 @@ class PlayerRepo(
     private val planOf: (String) -> LoadRequest?,
     private val lastPlan: () -> LoadRequest? = { null },
     private val planAt: (String, Int, Double) -> LoadRequest? = { _, _, _ -> null },
+    val gate: PlayGate = PlayGate.Open,
 ) {
     private val flow = MutableStateFlow(PlayerState.Empty)
     val state: StateFlow<PlayerState> get() = flow
@@ -191,6 +205,8 @@ class PlayerRepo(
      */
     val events: SharedFlow<String> get() = changes
     private val changes = MutableSharedFlow<String>(extraBufferCapacity = 8, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    /** Cuốn nào đủ chương, còn thiếu chương nào (từ thư viện, [reconcile]); [apply] đưa vào [PlayerState] của cuốn đang nạp. */
+    private var shapes: Map<String, BookShape> = emptyMap()
     private var queue: List<Playback.Chapter>? = null
     private var queueChapters: List<PlayerChapter> = emptyList()
     private val listener: (JSONObject) -> Unit = ::onEvent
@@ -209,7 +225,7 @@ class PlayerRepo(
 
     /**
      * Lõi chưa giữ cuốn nào (app vừa mở): nạp cuốn nghe gần nhất ĐÚNG chỗ nghe tiếp, ở trạng thái dừng - thanh phát nhỏ hiện sẵn, bấm phát là phát đúng cuốn ấy.
-     * Cùng việc bản WebView làm khi mở lại app (Playback.load autoplay=false). Có gì khác vào lõi trong lúc đọc đĩa thì bỏ (không bao giờ đè cuốn đang có).
+     * Như khi mở lại app (Playback.load autoplay=false). Có gì khác vào lõi trong lúc đọc đĩa thì bỏ (không bao giờ đè cuốn đang có).
      */
     private fun restoreLast() {
         val generation = loadGeneration
@@ -233,6 +249,7 @@ class PlayerRepo(
             return
         }
         apply(json)
+        if (json.optString("kind") == "ended") flow.update { it.copy(ended = it.chapterId != null) }
         changes.tryEmit(json.optString("kind"))
     }
 
@@ -251,7 +268,14 @@ class PlayerRepo(
             queue = chapters
             queueChapters = chapters.map { PlayerChapter(it.id, it.title, Math.round(it.duration * 1000), it.text) }
         }
-        val next = PlayerState.from(json, keep, queueChapters, core.voiceId())
+        val shape = shapes[id]
+        val parsed = PlayerState.from(json, keep, queueChapters, core.voiceId())
+        // Hết chương cuối: lời "Đã nghe hết ..." ở lại tới khi nghe lại gì (phát, đổi chương hay đổi cuốn).
+        val next = parsed.copy(
+            whole = shape?.whole ?: true,
+            moreChapters = shape != null && shape.total > queueChapters.size,
+            ended = previous.ended && !parsed.playing && id == previous.bookId && parsed.chapterId == previous.chapterId,
+        )
         flow.value = next
         if (id.isNotEmpty() && id != previous.bookId) {
             scope.launch(io) {
@@ -268,6 +292,7 @@ class PlayerRepo(
     /** Invalidate in-flight plans as well as the visible player. Undo restores the row, never restarts audio. */
     fun bookRemoved(id: String) {
         loadGeneration++
+        gate.cancel()
         if (flow.value.bookId != id) return
         core.close()
         queue = null
@@ -278,20 +303,48 @@ class PlayerRepo(
     }
 
     fun reconcile(books: List<ListenBook>) {
+        shapes = books.associate { it.id to BookShape(it.complete, it.chaptersTotal) }
         val id = flow.value.bookId
         if (id.isNotEmpty() && books.none { it.id == id }) bookRemoved(id)
+        else shapes[id]?.let { shape -> flow.update { it.copy(whole = shape.whole, moreChapters = shape.total > it.chapters.size) } }
     }
 
-    fun play() = core.play()
-    fun pause() = core.pause()
-    fun toggle() = core.toggle()
-    fun skip(deltaSeconds: Double) = core.skip(deltaSeconds)
-    fun seekTo(seconds: Double) = core.seekTo(seconds)
-    fun next() = core.next()
-    fun previous() = core.previous()
+    private class BookShape(val whole: Boolean, val total: Int)
+
+    /** Người nghe làm gì đó với trình phát: lời "Đã nghe hết ..." hết nghĩa. */
+    private fun heardAgain() = flow.update { if (it.ended) it.copy(ended = false) else it }
+
+    /** Chương `chapterId` của cuốn đang nạp là chương chỉ có chữ (giọng máy đọc to). */
+    private fun isText(chapterId: Int?): Boolean = chapterId != null && core.chapters().any { it.id == chapterId && it.isText }
+
+    /** Cuốn đang nạp đang phát, hay đang chờ đoạn đầu để phát: lệnh phát tới lúc này không làm chữ đi đâu thêm. */
+    private fun running(): Boolean = flow.value.let { it.playing || it.buffering }
+
+    /** Chạy `go` (một lệnh làm cuốn ĐANG NẠP bắt đầu phát chương `chapterId`) sau khi qua cửa hỏi đồng ý. */
+    private fun before(chapterId: Int?, go: () -> Unit) {
+        if (running()) {
+            gate.cancel()
+            go()
+        } else {
+            gate.before(flow.value.bookId, isText(chapterId), go)
+        }
+    }
+
+    fun play() { heardAgain(); before(flow.value.chapterId) { core.play() } }
+    fun pause() {
+        gate.cancel()
+        core.pause()
+    }
+
+    fun toggle() { heardAgain(); before(flow.value.chapterId) { core.toggle() } }
+    fun skip(deltaSeconds: Double) { heardAgain(); core.skip(deltaSeconds) }
+    fun seekTo(seconds: Double) { heardAgain(); core.seekTo(seconds) }
+    fun next() { heardAgain(); before(OnlineConsent.stepTarget(core.chapters().map { it.id }, flow.value.chapterId, 1, 0)) { core.next() } }
+    fun previous() { heardAgain(); before(OnlineConsent.stepTarget(core.chapters().map { it.id }, flow.value.chapterId, -1, core.positionMs())) { core.previous() } }
     fun setRate(rate: Double) = core.setRate(rate)
-    fun jumpTo(chapterId: Int, seconds: Double) = core.jumpTo(chapterId, seconds)
+    fun jumpTo(chapterId: Int, seconds: Double) { heardAgain(); before(chapterId) { core.jumpTo(chapterId, seconds) } }
     fun setSleep(mode: String, minutes: Int = 0) = core.setSleep(mode, minutes)
+    fun extendSleep() = core.extendSleep()
 
     /** Đổi giọng đọc máy (cũng không có sự kiện riêng). */
     fun setVoice(voiceId: String) {
@@ -307,14 +360,14 @@ class PlayerRepo(
 
     /** Nút chính của trang sách: cuốn đang ở trình phát thì phát/dừng, không thì nạp ở chỗ nghe tiếp và phát. */
     fun togglePlay(bookId: String) {
-        if (flow.value.bookId == bookId) core.toggle() else playBook(bookId)
+        if (flow.value.bookId == bookId) toggle() else playBook(bookId)
     }
 
     /** Chạm giữ bìa: phát cuốn ngay. Đang ở trình phát thì phát tiếp (đã phát rồi thì để yên), không thì nạp ở chỗ nghe tiếp. */
     fun playNow(bookId: String) {
         val current = flow.value
         if (current.bookId == bookId) {
-            if (!current.playing) core.play()
+            if (!current.playing) play()
         } else {
             playBook(bookId)
         }
@@ -326,13 +379,13 @@ class PlayerRepo(
      */
     fun playChapter(bookId: String, chapterId: Int, seconds: Double) {
         if (flow.value.bookId == bookId) {
-            core.jumpTo(chapterId, seconds)
+            jumpTo(chapterId, seconds)
             return
         }
         val generation = loadGeneration
         scope.launch {
             val request = withContext(io) { planAt(bookId, chapterId, seconds) } ?: return@launch
-            if (generation == loadGeneration) core.load(request)
+            if (generation == loadGeneration) load(request)
         }
     }
 
@@ -353,7 +406,13 @@ class PlayerRepo(
         val generation = loadGeneration
         scope.launch {
             val request = withContext(io) { planOf(bookId) } ?: return@launch
-            if (generation == loadGeneration) core.load(request)
+            if (generation == loadGeneration) load(request)
         }
+    }
+
+    /** Nạp một cuốn để PHÁT (người nghe chọn): chương bắt đầu là chương chữ thì qua cửa hỏi đồng ý trước, chưa nạp gì khi chưa có câu trả lời. */
+    private fun load(request: LoadRequest) {
+        val text = request.chapters.any { it.id == request.startChapterId && it.isText }
+        gate.before(request.id, text) { core.load(request) }
     }
 }

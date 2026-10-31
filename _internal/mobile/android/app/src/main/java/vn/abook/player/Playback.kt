@@ -13,6 +13,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import org.json.JSONArray
 import org.json.JSONObject
+import vn.abook.player.net.HostWait
 import vn.abook.player.readaloud.ReadAloud
 import java.io.File
 
@@ -24,10 +25,10 @@ internal fun msOf(seconds: Double): Long = Math.round(seconds * 1000).coerceAtLe
 
 /**
  * Lõi phát - sống trong tiến trình app, dùng chung giữa PlaybackService (thông báo, màn hình khoá, nút tai nghe)
- * và PlayerPlugin (giao diện). Mọi thao tác trên ExoPlayer chạy ở luồng chính.
+ * và giao diện (`ui.data.PlaybackCore`). Mọi thao tác trên ExoPlayer chạy ở luồng chính.
  *
- * Vì sao hàng đợi, lưu vị trí, hẹn giờ đều ở ĐÂY chứ không ở JavaScript: tắt màn hình thì WebView bị treo, nên
- * tự sang chương kế hay tắt nhạc lúc ngủ mà nằm trong JS thì sẽ không bao giờ chạy.
+ * Vì sao hàng đợi, lưu vị trí, hẹn giờ đều ở ĐÂY chứ không ở tầng giao diện: tắt màn hình thì giao diện bị treo, nên
+ * tự sang chương kế hay tắt nhạc lúc ngủ mà nằm ở giao diện thì sẽ không bao giờ chạy.
  */
 /** Artist line of the media card: the narrator, or the book title when there is none ("Nghe ngay", a book without a narrator). The system
  *  speaks the card as "<chapter> by <artist> is playing from ABook" - a null artist came out as "by null" (a67). */
@@ -57,6 +58,9 @@ internal fun refreshedChapters(old: List<Playback.Chapter>, fresh: List<Playback
 }
 
 object Playback {
+    /** Bước nút "Lùi / Tới ... giây" (trình phát, widget, cửa sổ nhỏ PiP): một chỗ để mọi nút nói cùng một số. */
+    const val SKIP_SECONDS = 15
+
     /** Thêm chương vừa có audio; mục đang nghe giữ nguyên nguồn và vị trí. */
     @androidx.annotation.OptIn(UnstableApi::class)
     fun refreshQueue(id: String, fresh: List<Chapter>) {
@@ -212,7 +216,7 @@ object Playback {
         Remote.init(appContext)
         MusicBed.init(appContext)
         ReadAloud.init(appContext)
-        ListenPrefs.loadOnce() // tuỳ chọn nghe + hẹn giờ ngủ còn dở: tiến trình dậy từ tai nghe / widget / xe chưa có WebView đẩy chúng xuống
+        ListenPrefs.loadOnce() // tuỳ chọn nghe + hẹn giờ ngủ còn dở: tiến trình dậy từ tai nghe / widget / xe chưa có giao diện đẩy chúng xuống
     }
 
     fun onMain(block: () -> Unit) {
@@ -223,6 +227,7 @@ object Playback {
     fun removeListener(listener: (JSONObject) -> Unit) { listeners -= listener }
 
     fun emit(kind: String) {
+        bufferingGuard.observe(waitingForSound())
         if (kind == "sleep") ReadAloud.pump() // hẹn giờ "hết chương" vừa tắt / đổi: đọc to nạp tiếp sang chương kế được rồi
         val event = state().put("kind", kind)
         listeners.toList().forEach { runCatching { it(event) } }
@@ -295,6 +300,28 @@ object Playback {
             .put("musicScene", MusicBed.sceneActive())
     }
 
+    /** Người nghe muốn phát mà chưa có âm thanh: ExoPlayer đang đệm, hay đọc to đang chờ đoạn. */
+    private fun waitingForSound(): Boolean {
+        val exo = player
+        return (exo != null && exo.playWhenReady && exo.playbackState == Player.STATE_BUFFERING) || (ReadAloud.isWaiting && ReadAloud.wantsPlay()) || ReadAloud.starved()
+    }
+
+    /** Chờ âm thanh quá [HostWait.STALL_MS] ([BufferingGuard]): dừng và báo như một nguồn hỏng, bấm phát (= "Thử lại") thử lại từ đúng chỗ. */
+    private val bufferingGuard = BufferingGuard(schedule = { delay, task -> main.postDelayed(task, delay) }, cancel = { main.removeCallbacks(it) }, onStall = ::onStalled)
+
+    private fun onStalled() {
+        if (!waitingForSound()) return
+        val inText = ReadAloud.inText()
+        val streamed = player?.currentMediaItem?.localConfiguration?.uri?.scheme == "https"
+        val message = BufferingGuard.message(inText, streamed, if (streamed) SyncLink.holderName(appContext, bookId) else "")
+        AppLog.w("Playback", "chờ âm thanh quá ${HostWait.STALL_MS / 1000} giây (sách $bookId, chương ${currentChapter?.id}): $message")
+        if (inText) return ReadAloud.giveUp(message)
+        main.removeCallbacks(reconnect)
+        reconnectDelayMs = 0L
+        player?.stop() // thôi chờ lượt tải đang treo; bấm phát chuẩn bị lại ([play])
+        fail(message)
+    }
+
     /** Lỗi phát gần nhất, cho giao diện - rỗng khi đang ổn. */
     var lastError: String = ""
         private set
@@ -309,13 +336,13 @@ object Playback {
         lastError = if (streamed && error != null && Pin.isCertificateProblem(error)) {
             Pin.CHANGED // máy tính đã đổi chứng chỉ: không phải Wi-Fi hỏng, người nghe phải ghép lại
         } else if (streamed && error != null && NetErrors.unpaired(error)) {
-            "${SyncLink.holderName(appContext, bookId)} đã thôi ghép — bạn ghép lại để nghe tiếp."
+            "${SyncLink.holderName(appContext, bookId)} đã bỏ ghép — bạn ghép lại để nghe tiếp."
         } else if (streamed) {
             // Phần đã đệm đã phát hết: không bỏ cuộc - hỏi lại thưa dần, máy kia trả lời là phát tiếp đúng chỗ (soát a68 lỗi 3).
             scheduleReconnect()
             "Mất kết nối với ${SyncLink.holderName(appContext, bookId)} - đang thử lại…"
         } else {
-            "Không phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại."
+            BufferingGuard.PLAY_FAILED
         }
         saveNow()
         // Lần thử lại hỏng nữa: chỉ cập nhật lời đang hiện, không báo lần nữa.

@@ -21,8 +21,9 @@ class LoopHandoff<R : Any>(
     private val discard: (R) -> Unit,
     private val enter: (Snapshot, R?) -> Unit,
 ) {
-    /** Bài đang kêu (`owner`): vòng của nó, chỗ đang tới (giây trong bài), có đang chạy không (đứng yên thì không hẹn). */
-    class Snapshot(val owner: Any, val bounds: MusicCues.Loop, val position: Double, val playing: Boolean)
+    /** Bài đang kêu (`owner`): vòng của nó, chỗ đang tới (giây trong bài), có đang chạy không (đứng yên thì không hẹn). `leadMs` = lead của lần đọc timestamp cho `position`
+     *  (chỉ để ghi sự kiện đo; 0 khi `position` là currentPosition). */
+    class Snapshot(val owner: Any, val bounds: MusicCues.Loop, val position: Double, val playing: Boolean, val leadMs: Double = 0.0)
 
     private var ticket: Runnable? = null
     private var ready: R? = null

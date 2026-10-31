@@ -90,7 +90,7 @@ const STATES: [string, Partial<BookSummary>, string][] = [
   ["đang chạy", {}, "Tạm dừng"],
   ["tạm dừng", { paused: "listener" }, "Tiếp tục"],
   ["giữ chờ duyệt", { paused: "listener", precast: { held: true } as BookSummary["precast"] }, "Thu âm"],
-  ["đang dừng", { stopping: true }, "Đang dừng…"],
+  ["đang dừng", { stopping: true }, "Đang dừng"],
   ["dừng giữa lúc thu", { ...stopped, phase: "synthesis", chapters: { total: 10, completed: 3, failed: 0, working: 0 } }, "Tiếp tục"],
   ["phân tích bị ngắt", { ...stopped, analysisInterrupted: true }, "Phân tích lại"],
   ["xong", { ...stopped, phase: "done", chapters: { total: 10, completed: 10, failed: 0, working: 0 } }, "Nghe trong Thư viện"],
@@ -113,9 +113,9 @@ it("đang chạy: Dừng, Xuất, Mở thư mục nằm trong \"…\", không ph
   await render(<Actions book={book({ chapters: { total: 10, completed: 2, failed: 0, working: 0 }, pendingChanges: 2 })} />);
   const buttons = [...host.querySelectorAll("button")].map(text);
   expect(buttons).not.toContain("Dừng");
-  expect(buttons).not.toContain("Xuất…");
+  expect(buttons).not.toContain("Xuất");
   await openMenu(host.querySelector('[aria-label="Tuỳ chọn dự án Sách thử"]')!);
-  expect(menuItems()).toEqual(expect.arrayContaining(["Nghe trong Thư viện", "Dừng…", "2 thay đổi chờ áp", "Xuất…", "Mở thư mục", "Đổi tên…", "Xoá dự án…"]));
+  expect(menuItems()).toEqual(expect.arrayContaining(["Nghe trong Thư viện", "Dừng", "2 thay đổi chờ áp", "Xuất", "Mở thư mục", "Đổi tên", "Xoá dự án"]));
 });
 
 it("tab dự án: tối đa 5 tab hiện, phần còn lại mở được trong \"Thêm\"", async () => {
@@ -126,11 +126,15 @@ it("tab dự án: tối đa 5 tab hiện, phần còn lại mở được trong 
     </Tabs>
   );
   await render(view("chapters"));
-  const tabs = [...host.querySelectorAll('[role="tab"]')].map(text);
+  // Nút "Thêm" cũng là một tab của hàng (tablist chỉ chứa tab - axe aria-required-children) nhưng mở menu: không tính vào số tab hiện.
+  const tabs = [...host.querySelectorAll('[role="tab"]:not([aria-haspopup])')].map(text);
   expect(tabs.length).toBeLessThanOrEqual(5);
   expect(tabs).toHaveLength(MAIN_TABS.length);
   expect(tabs.map((label) => label.replace(/[\d,\s]*(mục)?$/, ""))).toEqual(["Chương", "Việc cần duyệt", "Cần nghe lại", "Nhân vật", "Nhạc nền"]);
   const more = [...host.querySelectorAll("button")].find((button) => text(button).startsWith("Thêm"))!;
+  expect(more.getAttribute("role")).toBe("tab");
+  expect(more.getAttribute("aria-haspopup")).toBe("menu");
+  expect(more.getAttribute("aria-selected")).toBe("false");
   expect(text(more)).toContain("4"); // số của "Duyệt trước khi thu" không mất khi tab nằm trong "Thêm"
   await openMenu(more);
   expect(menuItems().map((label) => label.replace(/\d+$/, ""))).toEqual(["Duyệt trước khi thu", "Kịch bản", "Nhật ký"]);
@@ -141,6 +145,7 @@ it("tab dự án: tối đa 5 tab hiện, phần còn lại mở được trong 
   await render(view("script"));
   const active = [...host.querySelectorAll("button[data-active]")];
   expect(active.map(text)).toEqual(["Kịch bản"]);
+  expect(active[0].getAttribute("aria-selected")).toBe("true");
 });
 
 it("tạo sách nói từ danh sách Studio: ≤ 3 lần bấm tới khi chạy (L10)", async () => {
