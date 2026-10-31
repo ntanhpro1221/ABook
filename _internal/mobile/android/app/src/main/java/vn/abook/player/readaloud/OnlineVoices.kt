@@ -53,7 +53,7 @@ object OnlineHttp {
                 connection.disconnect()
             }
         } catch (error: SocketTimeoutException) {
-            throw VoiceException("$name không trả lời (quá giờ)", offline = true, cause = error, reason = "timeout")
+            throw VoiceException("$name không trả lời (quá giờ)", cause = error, reason = "timeout") // có mạng mà dịch vụ không trả lời: không phải "mất mạng" (như byok.py)
         } catch (error: IOException) {
             throw VoiceException("Không có mạng để dùng giọng $name", offline = true, cause = error)
         }
