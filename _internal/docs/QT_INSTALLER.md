@@ -44,7 +44,7 @@ sạc. Kịch bản: `desktop_qt/tools/prep_shells.py` (dựng hai bố cục) +
 - Qt **nhẹ RAM hơn rõ**: giao diện −35 % USS, −42 % private; cả cây −27 % USS. Mở lại thì lắng nhanh hơn 0,6 s.
 - Qt **nặng tải hơn gần gấp đôi**: +19 MB mỗi lần cài hay cập nhật. Tauri mượn WebView2 có sẵn trong Windows, còn Qt mang DLL
   riêng.
-- Ở lần mở đầu, Qt lắng chậm hơn 0,9 s (nạp DLL nguội, tạo cache QML).
+- Ở lần mở đầu, Qt lắng chậm hơn 0,9 s. **Đo lại bên dưới: đó là lệch cách đo; khi cả hai vừa cài thì Qt 5,18 s <= Tauri 5,25 s.**
 - "Cửa sổ đầu tiên" của Tauri là khung trống trước khi WebView vẽ, nên không so trực tiếp được với Qt (vẽ xong mới hiện).
   Số so được là "lắng xuống".
 - Cắt được ở Q1:
@@ -53,6 +53,45 @@ sạc. Kịch bản: `desktop_qt/tools/prep_shells.py` (dựng hai bố cục) +
   - `Qt6Widgets.dll` 6,6 MB thô (~2,5 nén), nếu `Qt.labs.platform` chạy được với QGuiApplication mà không có nó (phải kiểm
     bằng smoke).
   - Đích sau khi cắt: ≈ 34-36 MB nén.
+
+### Mở lần đầu, đo lại (31-10, sau Q1)
+
+Câu hỏi: lần mở đầu Qt 5,4 s > Tauri 4,5 s ở trên là do đâu (host Python, cache QML, nạp DLL/plugin)?
+
+**Bảng trên lệch vì cách đo, không phải vì Qt.**
+- Lần đo ấy dùng MỘT bố cục cho mọi vòng. Bố cục Tauri là bản đã từng chạy, còn bố cục Qt vừa chép mới.
+- Vì vậy chỉ lần mở đầu của vòng 1 là nguội thật. Qt mở đầu theo vòng là 7,2 / 5,4 / 2,75 s, và ở vòng 3 thì mở đầu
+  bằng mở lại (2,73 s).
+- Hồ sơ mới chỉ thêm 64 KB DXCache của driver. Không có cache QML nào (0 file `.qmlc`): QML đã biên dịch sẵn vào exe
+  (`qt_add_qml_module`, qmlcachegen).
+- Cache pipeline của Qt Quick (`qtpipelinecache-*`) có thư mục nhưng rỗng: app bị dừng lúc hết lượt đo, không thoát êm,
+  nên không ghi.
+
+Đo lại bằng `measure_shells.py --fresh-install`: mỗi lần mở đầu chạy từ một bản chép MỚI của bố cục, đúng như ngay sau khi
+cài hay cập nhật (file chưa từng mở, Defender quét, cache đĩa trống). Qt là dist của Q1 (đã cắt, 131,9 MB). 3 vòng, xen kẽ
+thứ tự, 0 lần cướp tiêu điểm. Ngoài thời gian, đo CPU tới lúc lắng của từng phần: giao diện, host Python, tiến trình con
+khác, và Defender (`MsMpEng.exe`, chỉ đọc).
+
+| trung vị 3 vòng | Qt mở đầu | Qt mở lại | Tauri mở đầu | Tauri mở lại |
+|---|---|---|---|---|
+| Lắng xuống | **5,18 s** | **2,78 s** | 5,25 s | 3,64 s |
+| CPU giao diện | 1,47 s | 1,09 s | 0,14 s | 0,11 s |
+| CPU host Python | 2,41 s | 2,61 s | 2,70 s | 2,70 s |
+| CPU con khác (msedgewebview2...) | 0,42 s | 0,34 s | 2,70 s | 2,64 s |
+| CPU Defender cùng quãng | **6,59 s** | 3,47 s | 6,75 s | 3,02 s |
+
+Theo từng vòng ghép đôi, Qt mở đầu nhanh hơn Tauri cả 3 lần: 5,48 / 5,83, 5,18 / 5,25, 4,91 / 5,24 s. **Qt <= Tauri đã đạt**,
+không cần sửa gì thêm cho mục này.
+
+Phần chiếm của lần mở đầu (Qt):
+- **Defender**: 6,6 s CPU so với 3,5 s khi mở lại. Chênh lớn nhất là quét DLL mới. Tauri chịu y như vậy (6,75 s).
+- **Host Python**: 2,4 s, ngang nhau giữa mở đầu và mở lại, ngang Tauri. Cùng mã, cùng Python, `.pyc` đã có sẵn
+  (`compileall` trong `Copy-App`).
+- **Nạp DLL / plugin nguội**: +0,4 s CPU giao diện (1,47 so với 1,09).
+- **Cache QML**: 0, vì không có.
+
+Chưa làm: cache pipeline dựng sẵn để ship kèm (`QQuickGraphicsConfiguration::setPipelineCacheLoadFile`; với D3D11 là
+bytecode HLSL, không phụ thuộc card). Lợi tối đa là phần của 0,4 s CPU giao diện nguội, nên để sau.
 
 ## Quyết định chung
 
@@ -103,8 +142,23 @@ sạc. Kịch bản: `desktop_qt/tools/prep_shells.py` (dựng hai bố cục) +
   - `ABOOK_SMOKE_EXIT=host`: chờ khung đầu tiên VÀ `Backend::Ready`. Host hỏng thì in `SMOKE_HOST_FAILED`, thoát mã 5.
     `tools/smoke_packaged.py` chép dist sang thư mục tạm không có cây nguồn phía trên, đòi pythonw của host nằm trong
     `resources/python` của bản chép. Kiểm âm: bỏ `server.py` khỏi bản chép -> đỏ.
-  - **Còn thiếu:** smoke mới dừng ở host Ready, chưa mở Thư viện và phát clip giả. `Qt6Widgets.dll` vẫn ở lại vì
-    `Qt.labs.platform` (khay) kéo nó vào; muốn bỏ thì phải kiểm khay chạy được không có nó.
+  - `Qt6Widgets.dll` ở lại vì `Qt.labs.platform` (khay) kéo nó vào. Lead chấp nhận 31-10.
+  - **Phát thử (31-10, `ABOOK_SMOKE_EXIT=play` + `tools/smoke_play.py`):**
+    - Cuốn thử là `python_v4.abook` với chương 1 thay bằng mp3 thật: sine 440 Hz, 6 s, ffmpeg dựng. mp3 trong fixture chỉ
+      là byte giả, ffmpeg không mở được. Nhạc nền bỏ đi để nhạc không che giọng.
+    - Cuốn ấy nhập vào `<thư viện>/Sách đã nhập/` bằng `BookFile.extract`, như khi người dùng nhập file.
+    - App chạy: host Ready, rồi Thư viện tải xong (có ít nhất 1 cuốn; rỗng thì mã 7), rồi `Player.playBook(cuốn đầu)`.
+      Giọng (`AudioOut` của Player) phát quá 2 s thì mã 0. `AudioOut::failed` hay `Player.error` thì mã 6.
+    - Tai là `ABOOK_AUDIO_SINK` (`src/filesinkdevice.h`): bộ trộn ghi WAV thay vì ra loa, nên âm thanh đi thật qua host
+      của bản đóng gói, Media Foundation và bộ trộn, chỉ thiếu thiết bị WASAPI. WAV phải có ≥ 1,5 s tiếng, tần số trội
+      440 ± 5 Hz.
+    - Kiểm âm, hai lớp:
+      - `smoke_play.selftest()`: bộ soi phải bắt được file lặng, sai tần số (220 Hz), quá ngắn, quá nhỏ.
+      - Chạy lại với chương là byte rác (mã băm khớp nên vẫn nhập được): lần ấy phải KHÔNG qua.
+    - Kết quả lần đầu chạy:
+      `SMOKE_LIBRARY 1 book(s), 1 row(s)` -> `SMOKE_PLAYED 2.02 s`, nghe 2,6 s ở 440 Hz.
+      Chương rác: `SMOKE_PLAY_FAILED Chapter is not a supported MP3 file`, mã 6, tai 0 s.
+      Cả `smoke_packaged` 12 s.
 
 ### Q2. Bộ cài NSIS
 - `desktop_qt/installer/abook.nsi`: chép `dist/` vào thư mục cài của bản Tauri; lối tắt Start menu (+ màn hình nền nếu bản

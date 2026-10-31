@@ -6,11 +6,18 @@ Per launch: first visible window (ms after resume), settled (first 2 s span afte
 USS and private bytes of the tree split UI / host (python*), median of the samples between 25 s and the end.
 Each round: Qt first-run, Qt second-run (same profile), Tauri first-run, Tauri second-run; rounds alternate the order.
 Only processes whose exe lies inside <shells dir> are terminated; anything else of the tree is left to exit and reported.
+
+--fresh-install: every first-run starts from a new copy of the layout (runs/<round>_<kind>_install), as right after an
+install or update: files never opened before, so the antivirus scans them and the disk cache holds nothing of them. Without
+it the same layout serves every round, and only the first round's first-run is really cold.
+Also per launch, up to `settled`: CPU seconds of the UI process, the host (python*), other children (powershell, ...) and
+of the antivirus (MsMpEng.exe, read only - its CPU over the same span, whatever it scanned).
 """
 import argparse
 import ctypes
 import json
 import os
+import shutil
 import statistics
 import sys
 import threading
@@ -26,6 +33,7 @@ ap.add_argument("shells")
 ap.add_argument("--rounds", type=int, default=3)
 ap.add_argument("--seconds", type=float, default=40)
 ap.add_argument("--kinds", default="qt,tauri")
+ap.add_argument("--fresh-install", action="store_true")
 args = ap.parse_args()
 sys.path.insert(0, args.tools)
 from windows_process import create_suspended  # noqa: E402
@@ -69,7 +77,28 @@ def tree(root: psutil.Process) -> list[psutil.Process]:
         return []
 
 
-def one(kind: str, profile: Path, seconds: float) -> dict:
+def antivirus() -> psutil.Process | None:
+    return next((p for p in psutil.process_iter(["name"]) if (p.info["name"] or "").lower() == "msmpeng.exe"), None)
+
+
+def cpu_of(process: psutil.Process | None) -> float:
+    try:
+        t = process.cpu_times()
+        return t.user + t.system
+    except (psutil.Error, AttributeError):
+        return 0.0
+
+
+def side_of(process: psutil.Process, root_pid: int) -> str:
+    if process.pid == root_pid:
+        return "ui"
+    try:
+        return "host" if process.name().lower().startswith("python") else "child"
+    except psutil.Error:
+        return "child"
+
+
+def one(kind: str, profile: Path, seconds: float, exe: Path) -> dict:
     if kind == "tauri" and foreign_abook():
         return {"kind": kind, "skipped": "an ABook outside the test folder is running (single-instance would reach it)"}
     env = {k: v for k, v in os.environ.items() if k.upper() not in {"QT_QPA_PLATFORM"}}
@@ -82,7 +111,8 @@ def one(kind: str, profile: Path, seconds: float) -> dict:
     if not desk:
         raise ctypes.WinError(ctypes.get_last_error())
     log = open(profile / f"{kind}_stdout.log", "ab")
-    exe = EXES[kind]
+    av = antivirus()
+    av_start = cpu_of(av)
     process = create_suspended([str(exe)], cwd=exe.parent, env=env, log=log, desktop=name, show=1)
     root = psutil.Process(process.pid)
     violations, stop = [], threading.Event()
@@ -104,6 +134,9 @@ def one(kind: str, profile: Path, seconds: float) -> dict:
     start = time.perf_counter()
     first_window = settled = None
     cpu_hist: list[tuple[float, float]] = []
+    # Highest CPU seen per process (a child that exits keeps what it used) and its side; summed at `settled`.
+    seen: dict[int, tuple[str, float]] = {}
+    at_settled: dict[str, float] = {}
     samples = []
     next_mem = 0.0
     while (now := time.perf_counter() - start) < seconds and process.poll() is None:
@@ -124,18 +157,19 @@ def one(kind: str, profile: Path, seconds: float) -> dict:
             user.EnumDesktopWindows(desk, each, 0)
             if hits:
                 first_window = now
-        cpu = 0.0
         for p in procs:
-            try:
-                t = p.cpu_times()
-                cpu += t.user + t.system
-            except psutil.Error:
-                pass
+            used = cpu_of(p)
+            side = seen[p.pid][0] if p.pid in seen else side_of(p, process.pid)
+            seen[p.pid] = (side, max(used, seen.get(p.pid, (side, 0.0))[1]))
+        cpu = sum(used for _side, used in seen.values())
         cpu_hist.append((now, cpu))
         if first_window is not None and settled is None:
             old = [c for t, c in cpu_hist if now - t >= 2.0]
             if old and now - first_window >= 2.0 and (cpu - old[-1]) < 0.05 * 2.0:
                 settled = now - 2.0
+                for side in ("ui", "host", "child"):
+                    at_settled[side] = round(sum(used for s, used in seen.values() if s == side), 2)
+                at_settled["antivirus"] = round(cpu_of(av) - av_start, 2) if av else None
         if now >= next_mem:
             next_mem = now + 1.0
             row = {"t": round(now, 2), "ui_uss": 0, "host_uss": 0, "ui_private": 0, "host_private": 0, "n": len(procs)}
@@ -172,7 +206,7 @@ def one(kind: str, profile: Path, seconds: float) -> dict:
     return {"kind": kind, "first_window_ms": None if first_window is None else round(first_window * 1000),
             "settled_ms": None if settled is None else round(settled * 1000), "ui_uss_mb": med("ui_uss"),
             "host_uss_mb": med("host_uss"), "ui_private_mb": med("ui_private"), "host_private_mb": med("host_private"),
-            "processes": names, "exited_early": exited_early,
+            "cpu_s_to_settled": at_settled, "processes": names, "exited_early": exited_early,
             "foreground_violations": len(violations), "left_running": [f"{p.pid} {p.name()}" for p in alive],
             "samples": samples}
 
@@ -183,8 +217,13 @@ for r in range(args.rounds):
     order = [k for k in (["qt", "tauri"] if r % 2 == 0 else ["tauri", "qt"]) if k in args.kinds.split(",")]
     for kind in order:
         profile = runs / f"r{r}_{kind}"
+        exe = EXES[kind]
+        if args.fresh_install:
+            install = runs / f"r{r}_{kind}_install"
+            shutil.copytree(exe.parent, install)
+            exe = install / exe.name
         for launch in ("first", "second"):
-            res = one(kind, profile, args.seconds)
+            res = one(kind, profile, args.seconds, exe)
             res.update(round=r, launch=launch)
             results.append(res)
             print(json.dumps({k: v for k, v in res.items() if k != "samples"}, ensure_ascii=False), flush=True)
@@ -203,3 +242,6 @@ for kind in ("qt", "tauri"):
             return statistics.median(vals) if vals else None
         print(kind, launch, len(rows), "window", m("first_window_ms"), "settled", m("settled_ms"), "ui_uss", m("ui_uss_mb"),
               "host_uss", m("host_uss_mb"), "ui_private", m("ui_private_mb"), "host_private", m("host_private_mb"))
+        for side in ("ui", "host", "child", "antivirus"):
+            vals = [x["cpu_s_to_settled"].get(side) for x in rows if x["cpu_s_to_settled"].get(side) is not None]
+            print(f"   cpu_s {side}", statistics.median(vals) if vals else None, vals)
