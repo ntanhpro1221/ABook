@@ -1,0 +1,4 @@
+Derived font: ABook UI Arrows; SIL OFL 1.1.
+Source: https://raw.githubusercontent.com/notofonts/noto-fonts/main/hinted/ttf/NotoSansSymbols/NotoSansSymbols-Regular.ttf
+Source SHA-256: 8f02f31959bbdf6061547a188248e13f84dc5fdd940326ec494675f453f072bb
+Subset: U+2192 only; renamed family; fontTools 4.63.0.
