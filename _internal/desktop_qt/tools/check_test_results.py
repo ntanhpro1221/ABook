@@ -1,7 +1,9 @@
-"""Fail loudly on Qt failures, missing glyphs or QML TypeErrors, even when the process returned zero."""
+"""Fail loudly on Qt failures, missing glyphs, QML binding errors or JS values leaked onto the screen, even when the process returned zero."""
 import argparse
 from pathlib import Path
 import re
+
+BINDING_ERROR = re.compile(r"([\w/.-]+\.(?:qml|js):\d+)(?::\d+)?: (?:TypeError|ReferenceError|RangeError|Unable to assign \[undefined\])")
 
 
 def check(path: Path) -> bool:
@@ -14,14 +16,20 @@ def check(path: Path) -> bool:
     passed = sum(int(row[0]) for row in totals)
     failed = sum(int(row[1]) for row in totals)
     skipped = sum(int(row[2]) for row in totals)
-    # A QML binding that reads a field of missing data prints a TypeError and leaves the item half drawn; the test may still pass.
-    # Delegates and bindings print "file.qml:line:column: TypeError" - the column is optional, the line is kept.
-    type_errors = sorted({m.group(1) for m in re.finditer(r"(qml/[\w/]+\.(?:qml|js):\d+)(?::\d+)?: TypeError", text)})
+    # A QML binding that reads a field of missing data leaves the item half drawn and the test may still pass: a TypeError /
+    # ReferenceError / RangeError, or "Unable to assign [undefined]" when the missing field lands in a typed property (the
+    # property keeps its old value). Bindings print "file.qml:line:column: ..." - the column is optional, the line is kept.
+    # Any .qml / .js counts, the tests' own included; the path is shown from desktop_qt/ on.
+    type_errors = sorted({re.sub(r"^.*?desktop_qt/", "", m.group(1)) for m in re.finditer(BINDING_ERROR, text)})
     for where in type_errors:
         print(f"QML_TYPE_ERROR {where}", flush=True)
+    # GlyphAudit (tests/glyphaudit.h) sees every shown text: "undefined" / "NaN" / "[object Object]" on screen is a missing field
+    leaks = [line for line in text.splitlines() if "TEXT_LEAK {" in line]
+    for leak in leaks:
+        print(leak, flush=True)
     print(f"TEST_TOTALS {passed} passed, {failed} failed, {skipped} skipped; GLYPH_MISSING {len(hits)}; "
-          f"QML_TYPE_ERROR {len(type_errors)}", flush=True)
-    return bool(totals) and not hits and not type_errors and not failed and not re.search(r"^FAIL", text, re.MULTILINE)
+          f"QML_TYPE_ERROR {len(type_errors)}; TEXT_LEAK {len(leaks)}", flush=True)
+    return bool(totals) and not hits and not type_errors and not leaks and not failed and not re.search(r"^FAIL", text, re.MULTILINE)
 
 
 if __name__ == "__main__":

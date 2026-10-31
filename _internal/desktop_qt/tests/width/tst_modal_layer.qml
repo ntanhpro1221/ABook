@@ -105,6 +105,8 @@ Item {
             Api.bind(DesktopApi, Theme)
             Api.preferences = {theme: "system"}
             Api.info = {version: "fixture", dialogs: true}
+            // Đúng dạng máy chủ (readaloud cache_usage luôn có total): thiếu thì hộp "Dọn bản đọc" vẽ "Dọn NaN MB"
+            DesktopApi.responses = {"/api/readaloud/cache": {status: 200, data: {book: 0, total: 148000000}}}
             Api.loaded = true
             Api.notice = ""
             Nav.layers = []

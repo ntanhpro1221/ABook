@@ -9,7 +9,7 @@
 const SHORT = 4
 
 function pretty(text) {
-    return String(text).split("\n").map(function(line) {
+    return String(text == null ? "" : text).split("\n").map(function(line) {
         const tail = /^(.*\S) ([^\s\u00a0]+)(\s*)$/.exec(line)
         if (!tail || tail[1].indexOf(" ") < 0 || tail[2].replace(/^[(“"'«]+|[.,;:!?…)”"'»]+$/g, "").length > SHORT) return line
         return tail[1] + "\u00a0" + tail[2] + tail[3]
