@@ -8,6 +8,7 @@ import java.io.File
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
+import vn.abook.player.net.FastConnect
 import javax.net.ssl.HttpsURLConnection
 
 /**
@@ -94,9 +95,8 @@ object SyncLink {
         Pin.install(context)
         return PeerTransfer.openGet {
             val selected = PeerRouting.resolve(context, link.base, link.token)
-            val connection = URL("$selected$path").openConnection() as HttpURLConnection
+            val connection = FastConnect.open("$selected$path", 5000)
             PeerRouting.expected(context, link.token)?.let { expected -> if (connection is HttpsURLConnection) Pin.pin(connection, expected) }
-            connection.connectTimeout = 5000
             connection.readTimeout = 30000
             connection.setRequestProperty("Authorization", "Bearer ${link.token}")
             if (resumeFrom > 0) {
@@ -233,7 +233,7 @@ object SyncLink {
         stream: ((java.io.OutputStream) -> Unit)? = null,
     ): String {
         fun connect(): HttpURLConnection {
-            val connection = URL(root + path).openConnection() as HttpURLConnection
+            val connection = FastConnect.open(root + path, connectTimeoutMs)
             // `firstUse` != null: yêu cầu ghép - nhận chứng chỉ lạ một lần và đọc vân tay ra mảng này.
             if (firstUse != null && connection is HttpsURLConnection) Pin.firstUse(connection)
             else if (connection is HttpsURLConnection) {
@@ -241,7 +241,6 @@ object SyncLink {
                 PeerRouting.expected(context, credential)?.let { Pin.pin(connection, it) }
             }
             connection.requestMethod = method
-            connection.connectTimeout = connectTimeoutMs
             connection.readTimeout = readTimeoutMs
             if (token != null) connection.setRequestProperty("Authorization", "Bearer $token")
             else if (auth) connection.setRequestProperty("Authorization", "Bearer ${prefs(context).getString("token", "")}")

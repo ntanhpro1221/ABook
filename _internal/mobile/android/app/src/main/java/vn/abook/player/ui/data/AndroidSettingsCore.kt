@@ -53,10 +53,11 @@ class AndroidSettingsCore(context: Context) : SettingsCore {
         val cached = runCatching { JSONObject(prefs.getString("json", "")!!) }.getOrNull()
         if (System.currentTimeMillis() - prefs.getLong("at", 0) < 86_400_000) return cached?.let(AppRelease::parse)
         return runCatching {
-            val connection = java.net.URL("https://api.github.com/repos/ntanhpro1221/ABook/releases/latest").openConnection() as java.net.HttpURLConnection
+            val connection = vn.abook.player.net.FastConnect.get("https://api.github.com/repos/ntanhpro1221/ABook/releases/latest", 8000) {
+                it.readTimeout = 8000
+                it.setRequestProperty("Accept", "application/vnd.github+json")
+            }
             try {
-                connection.connectTimeout = 8000; connection.readTimeout = 8000
-                connection.setRequestProperty("Accept", "application/vnd.github+json")
                 check(connection.responseCode == 200)
                 val json = connection.inputStream.bufferedReader().use { it.readText() }
                 val release = AppRelease.parse(JSONObject(json))

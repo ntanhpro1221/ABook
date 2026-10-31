@@ -5,6 +5,7 @@ import org.json.JSONException
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import java.io.IOException
+import vn.abook.player.net.FastConnect
 import java.net.InetSocketAddress
 import java.net.Socket
 import java.net.SocketTimeoutException
@@ -385,9 +386,12 @@ class GoogleCast(renderer: Dlna.Renderer, private val timing: GCast.Timing = GCa
 
     private fun dial(): SSLSocket {
         if (!Dlna.lan(host)) throw Dlna.Failure("địa chỉ thiết bị không ở trong nhà")
-        val raw = Socket()
+        val raw = try {
+            FastConnect.connect(host, port, timing.connect)
+        } catch (error: IOException) {
+            throw Dlna.Failure(LOST_AT_CONNECT)
+        }
         try {
-            raw.connect(InetSocketAddress(host, port), timing.connect)
             raw.soTimeout = timing.connect
             val ssl = GCast.context.socketFactory.createSocket(raw, host, port, true) as SSLSocket
             ssl.enabledProtocols = ssl.supportedProtocols.filter { it == "TLSv1.2" || it == "TLSv1.3" }.toTypedArray()

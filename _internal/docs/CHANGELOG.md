@@ -14,6 +14,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
   hẹn giờ "5 phút"); máy dò tự báo khi hai bên lệch chữ.
 - Nút lùi / tới 15 giây trên widget màn hình chính cùng hình với trình phát: cung nông, số 15 nằm dưới, không chạm nét.
 - Giọng có sẵn của điện thoại hiện tên "Tiếng Việt" (máy có nhiều giọng thì đánh số), không còn mã như "vi-vn-x-gft-local".
+- Mạng nhà có IPv6 mà không ra được Internet (hay gặp khi mạng vừa có điện lại) không còn làm tải bìa, nhạc nền, gói tải thêm, giọng Edge, kiểm bản mới hay nối với máy khác đứng chờ hàng chục giây: điện thoại thử các địa chỉ song song và dùng địa chỉ nối được trước, thay vì chờ từng cái hết giờ.
 
 ## [0.4.148] - 2026-10-28
 

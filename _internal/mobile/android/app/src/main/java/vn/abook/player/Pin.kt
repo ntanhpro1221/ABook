@@ -2,7 +2,7 @@ package vn.abook.player
 
 import android.content.Context
 import java.net.Socket
-import java.net.InetSocketAddress
+import vn.abook.player.net.FastConnect
 import java.security.MessageDigest
 import java.security.KeyStore
 import java.security.cert.CertificateException
@@ -125,8 +125,10 @@ object Pin {
     private class PinningTrust(private val system: X509TrustManager) : X509ExtendedTrustManager() {
         private fun expectedFor(socket: Socket?): String? {
             if (socket == null) return null
-            val named = (socket as? SSLSocket)?.handshakeSession?.peerHost
-            return expected(named, socket.port) ?: expected(socket.inetAddress?.hostAddress, socket.port)
+            // Cổng/tên máy của PHIÊN (cái ta xin kết nối tới): socket nằm trên kênh CONNECT cục bộ của FastConnect thì socket.port là cổng của kênh.
+            val session = (socket as? SSLSocket)?.handshakeSession
+            return expected(session?.peerHost, session?.peerPort?.takeIf { it > 0 } ?: socket.port)
+                ?: expected(socket.inetAddress?.hostAddress, socket.port)
         }
 
         override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?, socket: Socket?) {
@@ -193,17 +195,15 @@ object Pin {
         connection.hostnameVerifier = javax.net.ssl.HostnameVerifier { _, _ -> true }
     }
 
-    internal fun probeSocket(socket: SSLSocket, address: () -> InetSocketAddress,
-                             timeoutMs: Int = 1500, nanoTime: () -> Long = System::nanoTime) {
+    /** One deadline for connect + TLS handshake: `dial` returns the socket to handshake (it may take as long as `left()` allows); closed when done. */
+    internal fun probeTls(timeoutMs: Int, nanoTime: () -> Long = System::nanoTime, dial: (left: () -> Int) -> SSLSocket) {
         val deadline = nanoTime() + timeoutMs * 1_000_000L
         fun left(): Int {
             val nanos = deadline - nanoTime()
             if (nanos <= 0) throw java.net.SocketTimeoutException("Hết thời gian nối TLS")
             return ((nanos + 999_999L) / 1_000_000L).toInt()
         }
-        socket.use {
-            val resolved = address() // DNS time is part of the same deadline.
-            it.connect(resolved, left())
+        dial(::left).use {
             it.soTimeout = left()
             it.startHandshake()
             left()
@@ -214,7 +214,12 @@ object Pin {
         if (expected.isBlank()) return false
         return runCatching {
             val (host, port) = PeerAddresses.split(target)
-            probeSocket(contextFor(expected).socketFactory.createSocket() as SSLSocket, { InetSocketAddress(host, port) })
+            val factory = contextFor(expected).socketFactory
+            probeTls(1500) { left ->
+                // Tên máy có nhiều địa chỉ: đua (FastConnect) rồi bọc TLS lên socket thắng, vẫn với tên máy gốc.
+                val raw = FastConnect.connect(host, port, left())
+                try { factory.createSocket(raw, host, port, true) as SSLSocket } catch (error: Throwable) { raw.close(); throw error }
+            }
         }.onFailure { if (isCertificateProblem(it)) onMismatch?.invoke(it) }.isSuccess
     }
 

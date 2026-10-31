@@ -10,9 +10,8 @@ import java.io.FilterInputStream
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
-import java.net.HttpURLConnection
 import java.net.URI
-import java.net.URL
+import vn.abook.player.net.FastConnect
 import java.security.MessageDigest
 import java.util.concurrent.Executors
 
@@ -603,10 +602,10 @@ class MusicCatalog(
         /** http(s): GET kèm User-Agent, chờ có hạn; còn lại: một file trên đĩa (test). */
         fun openUrl(url: String): InputStream {
             if (!url.startsWith("http://") && !url.startsWith("https://")) return File(url.substringBefore('?')).inputStream()
-            val connection = URL(url).openConnection() as HttpURLConnection
-            connection.connectTimeout = 15_000
-            connection.readTimeout = 60_000
-            connection.setRequestProperty("User-Agent", USER_AGENT)
+            val connection = FastConnect.get(url, 15_000) {
+                it.readTimeout = 60_000
+                it.setRequestProperty("User-Agent", USER_AGENT)
+            }
             if (connection.responseCode !in 200..299) {
                 connection.disconnect()
                 throw HttpFailure(connection.responseCode)
