@@ -9,6 +9,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Sửa lỗi
 
+- App máy tính (cả bản Qt lẫn bản Tauri) không còn chờ im lặng mãi khi máy không trả lời: giọng đọc và nghe thử giọng im quá 100 giây, việc khác im quá 30 giây thì app gửi lại một lần rồi báo lỗi (giọng đọc báo "Giọng đang chọn đang không dùng được."); đoạn đang về chậm thì không bị cắt. Trình phát chờ âm thanh quá 215 giây cũng báo lỗi kèm "Thử lại"; app mở quá 60 giây chưa xong thì hiện lỗi kèm "Thử lại" thay vì đứng mãi ở màn mở.
 - Giọng Edge và các lần tải (model giọng, nhạc, bìa, kết nối giữa hai máy) không còn treo khi mạng nhà có IPv6 mà IPv6 không ra được Internet (hay gặp sau khi mất điện, router lên lại): app thử IPv6 và IPv4 song song, dùng đường nào nối được trước, thay vì chờ hết hạn từng đường IPv6 rồi mới tới IPv4.
 - Giọng trực tuyến (Edge, Azure, giọng dùng khoá riêng) không trả lời kịp thì app báo "Giọng … đang không dùng được." và thử lại sau, thay vì báo nhầm là mất mạng khi máy vẫn có mạng.
 

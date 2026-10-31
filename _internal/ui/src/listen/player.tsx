@@ -27,7 +27,8 @@ import {
   type SleepSchedule,
 } from "./sleep";
 import { VOICE_CHANGED_EVENT, type ReadAloudVoice, type SpeechTrack } from "./readAloud";
-import { adoptSyncedVoice, chooseVoice, chosenVoice, forgetVoiceTrouble, onVoiceChosen, ONLINE_NOTICE, recordOf, rememberRecordOf, resolveVoice, runsOnThisMachine, speechFetcher, voicesOf } from "./readAloudVoice";
+import { STALL_MS } from "@/shared/hostWait";
+import { adoptSyncedVoice, chooseVoice, chosenVoice, forgetVoiceTrouble, NO_USABLE_VOICE, onVoiceChosen, ONLINE_NOTICE, recordOf, rememberRecordOf, resolveVoice, runsOnThisMachine, speechFetcher, voicesOf } from "./readAloudVoice";
 import { askOnlineConsent, needsOnlineConsent } from "./onlineConsent";
 import { OnlineVoicePrompt } from "./OnlineVoicePrompt";
 import { chapterScriptQuery, useSource } from "./source";
@@ -221,6 +222,8 @@ export const SKIP_SECONDS = 15;
 /** Báo hẹn giờ ngủ sắp tắt trước chừng này (DESIGN 5.3). */
 const SLEEP_WARN_MS = 30_000;
 const SAVE_EVERY_MS = 10_000;
+/** Lời báo khi nguồn âm thanh không phát được mà không có lý do nào cụ thể hơn (cùng câu với Qt Player::kPlayError). */
+const PLAY_ERROR = "Không phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại.";
 /** Nghe tiếp chờ chỗ nghe mới nhất tối đa chừng này (máy chủ đổi chỗ nghe với máy kia trong 1,5 giây, máy kia tắt thì thôi). */
 const FRESH_SPOT_MS = 1600;
 /** Lời nhắn (notice) tự ẩn sau chừng này. */
@@ -1436,7 +1439,57 @@ export function PlayerProvider({
     if (!native) engine.setRate(refs.current.rate);
     engine.setVolume(refs.current.volume);
     const syncClock = () => clock.set(engine.time, engine.duration);
+    let stall: ReturnType<typeof setTimeout> | undefined;
+    const stopStall = () => {
+      clearTimeout(stall);
+      stall = undefined;
+    };
+    // Nguồn âm thanh hỏng, hay chờ quá lâu ([STALL_MS]): cùng một lời báo, cùng "Thử lại" ở PlayerAlert.
+    const failed = (fallback: string) => {
+      stopStall();
+      const intent = refs.current.playIntent;
+      setError(fallback);
+      setBuffering(false);
+      // Không có tiếng thì không phải "đang phát": nút chính về "Phát", thẻ thôi ghi "đang phát" (soát a27 lỗi 3).
+      if (!native) {
+        if (!engine.paused) engine.pause();
+        setPlaying(false);
+      }
+      // Sách “Trên máy khác” nghe thẳng trên máy tính: chương chưa tải về mà không phát được thường là máy kia đã tắt / mất mạng - hỏi máy ấy
+      // rồi nói đúng lý do, thay vì đổ cho file.
+      const bookId = refs.current.book?.id;
+      const remote = refs.current.book?.remote;
+      if (!native && remote && typeof remote === "object" && remote.device) {
+        void api<{ reachable: boolean }>(`/api/computers/${remote.device}/reachable`)
+          .then((answer) => {
+            if (answer.reachable || refs.current.playIntent !== intent || !refs.current.wantsPlay || refs.current.book?.id !== bookId) return;
+            const message = `Máy ${remote.computer || "kia"} không trả lời (tắt hay mất mạng) - chương này chưa tải về máy này.`;
+            setError((current) => (current === fallback ? message : current));
+            // Máy ấy trả lời lại thì tự thử một lần, đúng chỗ đang đứng.
+            const chapterId = refs.current.track?.chapterId;
+            stopPeerWatch.current();
+            stopPeerWatch.current = watchUntilBack(
+              () => api<{ reachable: boolean }>(`/api/computers/${remote.device}/reachable`).then((again) => again.reachable),
+              () => {
+                if (refs.current.playIntent === intent && refs.current.wantsPlay && refs.current.book?.id === bookId && refs.current.track?.chapterId === chapterId) retryRef.current();
+              },
+            );
+          })
+          .catch(() => undefined);
+      }
+    };
+    // Chốt chặn cuối trên mọi nguồn âm thanh: mọi lời gọi tới máy chủ đã có hạn chờ riêng (shared/hostWait.ts), chờ lâu hơn tất cả thì lời gọi nào đó đã
+    // lọt khỏi chúng - hiện lỗi thay vì để người nghe chờ im lặng mãi. Điện thoại có lõi riêng báo lỗi của nó.
+    const startStall = () => {
+      if (native || stall !== undefined) return;
+      stall = setTimeout(() => {
+        stall = undefined;
+        const current = refs.current;
+        failed(current.queue.find((chapter) => chapter.id === current.track?.chapterId)?.state === "text" ? NO_USABLE_VOICE : PLAY_ERROR);
+      }, STALL_MS);
+    };
     const offs = [
+      stopStall,
       engine.on("time", () => {
         syncClock();
         save();
@@ -1454,6 +1507,7 @@ export function PlayerProvider({
         openSession();
       }),
       engine.on("pause", () => {
+        stopStall();
         setPlaying(false);
         closeSession();
         syncClock();
@@ -1464,11 +1518,13 @@ export function PlayerProvider({
       }),
       engine.on("waiting", () => {
         setBuffering(true);
+        startStall();
         refs.current.audible = false;
         refs.current.sleepMark = { at: Date.now(), seconds: engine.time };
         if (!native && refs.current.sleep.kind === "minutes") applySleep({ ...refs.current.sleep, since: null });
       }),
       engine.on("playing", () => {
+        stopStall();
         setBuffering(false);
         refs.current.audible = true;
         refs.current.sleepMark = { at: Date.now(), seconds: engine.time };
@@ -1519,40 +1575,7 @@ export function PlayerProvider({
         else if (refs.current.continues !== current.bookId) finishedToast();
       }),
       engine.on("recovered", () => setError("")),
-      engine.on("error", () => {
-        const intent = refs.current.playIntent;
-        // Lõi Android nói đúng lý do (nghe thẳng mà mất kết nối với máy tính khác hẳn file hỏng).
-        const fallback = native?.error || engine.error || "Không phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại.";
-        setError(fallback);
-        setBuffering(false);
-        // Không có tiếng thì không phải "đang phát": nút chính về "Phát", thẻ thôi ghi "đang phát" (soát a27 lỗi 3).
-        if (!native) {
-          if (!engine.paused) engine.pause();
-          setPlaying(false);
-        }
-        // Sách “Trên máy khác” nghe thẳng trên máy tính: chương chưa tải về mà không phát được thường là máy kia đã tắt / mất mạng - hỏi máy ấy
-        // rồi nói đúng lý do, thay vì đổ cho file.
-        const bookId = refs.current.book?.id;
-        const remote = refs.current.book?.remote;
-        if (!native && remote && typeof remote === "object" && remote.device) {
-          void api<{ reachable: boolean }>(`/api/computers/${remote.device}/reachable`)
-            .then((answer) => {
-              if (answer.reachable || refs.current.playIntent !== intent || !refs.current.wantsPlay || refs.current.book?.id !== bookId) return;
-              const message = `Máy ${remote.computer || "kia"} không trả lời (tắt hay mất mạng) - chương này chưa tải về máy này.`;
-              setError((current) => (current === fallback ? message : current));
-              // Máy ấy trả lời lại thì tự thử một lần, đúng chỗ đang đứng.
-              const chapterId = refs.current.track?.chapterId;
-              stopPeerWatch.current();
-              stopPeerWatch.current = watchUntilBack(
-                () => api<{ reachable: boolean }>(`/api/computers/${remote.device}/reachable`).then((again) => again.reachable),
-                () => {
-                  if (refs.current.playIntent === intent && refs.current.wantsPlay && refs.current.book?.id === bookId && refs.current.track?.chapterId === chapterId) retryRef.current();
-                },
-              );
-            })
-            .catch(() => undefined);
-        }
-      }),
+      engine.on("error", () => failed(native?.error || engine.error || PLAY_ERROR)), // Lõi Android nói đúng lý do (nghe thẳng mà mất kết nối với máy tính khác hẳn file hỏng).
       engine.on("chapter", () => {
         if (!native || native.chapterId === null || !native.bookId) return;
         if (native.rate > 0 && Math.abs(native.rate - refs.current.rate) > 1e-6) applyRate(native.rate, false);

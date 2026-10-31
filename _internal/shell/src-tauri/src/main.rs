@@ -35,7 +35,18 @@ const PROJECT_SUFFIX: &str = ".abookproj";
 /// Host có chừng ấy thời gian để đóng server sau lệnh thoát, rồi bị giết.
 const HOST_STOP_GRACE: Duration = Duration::from_secs(5);
 
+/// Host chưa báo sẵn sàng cũng chưa thoát sau chừng này kể từ lúc chạy thì coi là kẹt: trang chờ hiện lỗi mở app kèm "Thử lại". Đo 31-10: sẵn sàng
+/// khoảng 0,9 giây sau khi chạy; 60 giây chừa chỗ cho lần mở đầu lạnh (antivirus quét runtime). Bản Qt: Backend::s_startLimitMs.
+const HOST_START_LIMIT: Duration = Duration::from_secs(60);
+/// Cùng câu với bản Qt (Backend::start); trang chờ không có Cài đặt nên chỉ đường tới nhật ký bằng đường dẫn, như lời báo "dừng bất ngờ".
+const HOST_START_FAILURE: &str =
+    "ABook chưa mở được. Bạn thử lại; nếu vẫn lỗi, xem nhật ký: %LOCALAPPDATA%\\ABook\\logs\\host.log.";
+
 static QUITTING: AtomicBool = AtomicBool::new(false);
+/// Thế hệ của host đang chạy (tăng mỗi lần chạy / chạy lại): ống và đồng hồ canh của host cũ thấy mình đã cũ thì im lặng.
+static HOST_GENERATION: AtomicU64 = AtomicU64::new(0);
+/// "Thử lại" đang chạy lại host: bấm thêm lúc ấy không chạy thêm lần nữa.
+static RESTARTING: AtomicBool = AtomicBool::new(false);
 
 /// Bản mới đã tìm thấy, chờ người dùng bấm "Cập nhật" (host chuyển lệnh `install_update`).
 struct PendingUpdate(Mutex<Option<Update>>);
@@ -168,15 +179,27 @@ fn host_command(app: &AppHandle) -> Result<Command, String> {
     Ok(command)
 }
 
-/// Thay nội dung trang đang hiện bằng một thông báo lỗi đọc được (trang chờ, hay trang của host vừa chết).
-fn show_failure(app: &AppHandle, message: &str) {
-    let script = format!(
+/// Kịch bản thay nội dung trang bằng lời báo lỗi, có nút "Thử lại" khi `retry` (xem [show_failure]).
+fn failure_script(message: &str, retry: bool) -> String {
+    format!(
         "document.querySelectorAll('body > :not([data-loading-titlebar])').forEach(e=>e.remove());\
          document.body.style.cssText='margin:0;height:100vh;display:grid;place-items:center;\
          background:var(--bg);color:var(--text);font:15px Segoe UI,sans-serif';var p=document.createElement('p');\
-         p.style.cssText='max-width:36em;line-height:1.5;padding:40px 16px';p.textContent={};document.body.appendChild(p);",
-        Value::from(message)
-    );
+         p.style.cssText='max-width:36em;line-height:1.5;padding:40px 16px 12px';p.textContent={message};\
+         var box=document.createElement('div');box.style.cssText='display:grid;justify-items:center';box.appendChild(p);\
+         if({retry}){{var b=document.createElement('button');b.type='button';b.textContent='Thử lại';\
+         b.style.cssText='font:inherit;color:inherit;background:transparent;border:1px solid currentColor;border-radius:8px;padding:8px 22px;cursor:pointer';\
+         b.onclick=function(){{b.disabled=true;window.__ABOOK_CHROME__.action('restartHost')}};box.appendChild(b);}}\
+         document.body.appendChild(box);",
+        message = Value::from(message),
+        retry = retry
+    )
+}
+
+/// Thay nội dung trang đang hiện bằng một thông báo lỗi đọc được (trang chờ, hay trang của host vừa chết). `retry`: kèm nút "Thử lại" chạy lại host
+/// (`restart_host`, qua `window_action`); chỉ trang chờ của vỏ gọi được lệnh ấy.
+fn show_failure(app: &AppHandle, message: &str, retry: bool) {
+    let script = failure_script(message, retry);
     let app = app.clone();
     // Trang chờ có thể chưa nạp xong lúc lỗi xảy ra ngay khi mở: gửi lại vài lần (kịch bản không đổi gì nếu lặp).
     thread::spawn(move || {
@@ -350,7 +373,7 @@ fn install_update(app: &AppHandle) {
                 app.state::<Host>().stop();
                 if let Err(error) = update.install(bytes) {
                     log_line(&format!("cài bản mới hỏng: {error}"));
-                    show_failure(&app, "Không cài được bản mới. Bạn đóng rồi mở lại ABook.");
+                    show_failure(&app, "Không cài được bản mới. Bạn đóng rồi mở lại ABook.", false);
                 }
             }
             Some(Err(error)) => {
@@ -403,18 +426,24 @@ fn answer_dialog(app: &AppHandle, message: &Value) {
     app.state::<Host>().send(&reply);
 }
 
-/// Đọc từng dòng host gửi, cho tới khi host thoát.
-fn pump(app: AppHandle, stdout: ChildStdout) {
+/// Đọc từng dòng host gửi, cho tới khi host thoát. `generation`: host này còn là host hiện tại không; `ready`: báo cho đồng hồ canh khi host nói sẵn sàng
+/// (thả khi ống đóng: đồng hồ thấy host đã thoát, tự lời báo "dừng bất ngờ" ở dưới nói thay).
+fn pump(app: AppHandle, stdout: ChildStdout, generation: u64, ready: mpsc::Sender<()>) {
     for line in BufReader::new(stdout).lines() {
         let Ok(line) = line else { break };
+        if HOST_GENERATION.load(Ordering::SeqCst) != generation {
+            return; // đã "Thử lại" sang host khác: host cũ không được đụng tới cửa sổ nữa
+        }
         let Ok(message) = serde_json::from_str::<Value>(&line) else {
             continue;
         };
         if let Some(address) = message.get("ready").and_then(Value::as_str) {
+            let _ = ready.send(());
+            // Báo sẵn sàng muộn (sau lời báo kẹt) vẫn mở app: trang thật thay trang lỗi.
             if let (Some(window), Ok(url)) = (app.get_webview_window("main"), address.parse::<Url>()) {
                 match chrome::allow_host(&app, &url) {
                     Ok(()) => { let _ = window.navigate(url); }
-                    Err(error) => show_failure(&app, &error),
+                    Err(error) => show_failure(&app, &error, false),
                 }
             }
         } else if message.get("dialog").is_some() {
@@ -429,12 +458,80 @@ fn pump(app: AppHandle, stdout: ChildStdout) {
             check_for_update(&app, true);
         }
     }
-    if !QUITTING.load(Ordering::SeqCst) {
+    if !QUITTING.load(Ordering::SeqCst) && HOST_GENERATION.load(Ordering::SeqCst) == generation {
         show_failure(
             &app,
             "ABook dừng bất ngờ. Đóng cửa sổ rồi mở lại app; nếu vẫn lỗi, xem %LOCALAPPDATA%\\ABook\\logs\\host.log.",
+            false,
         );
     }
+}
+
+/// Host đã đến đâu sau khi chạy: báo sẵn sàng, thoát, hay kẹt quá `limit`.
+#[derive(Debug, PartialEq)]
+enum StartOutcome {
+    Ready,
+    Exited,
+    Stuck,
+}
+
+/// Chờ tín hiệu từ ống của host: gửi = sẵn sàng; đầu gửi bị thả (ống đóng) = host đã thoát; im quá `limit` = kẹt.
+fn wait_for_start(signal: &Receiver<()>, limit: Duration) -> StartOutcome {
+    match signal.recv_timeout(limit) {
+        Ok(()) => StartOutcome::Ready,
+        Err(RecvTimeoutError::Disconnected) => StartOutcome::Exited,
+        Err(RecvTimeoutError::Timeout) => StartOutcome::Stuck,
+    }
+}
+
+/// Chạy host, nối ống của nó và bật đồng hồ canh `HOST_START_LIMIT`: kẹt thì trang chờ hiện lỗi mở app kèm "Thử lại" (host vẫn chạy, báo sẵn sàng muộn vẫn mở app).
+fn start_host(app: &AppHandle) -> bool {
+    let generation = HOST_GENERATION.fetch_add(1, Ordering::SeqCst) + 1;
+    match host_command(app).and_then(|mut command| command.spawn().map_err(|error| error.to_string())) {
+        Ok(mut child) => {
+            let stdout = child.stdout.take().expect("stdout của host là ống");
+            let host = app.state::<Host>();
+            *host.stdin.lock().unwrap() = child.stdin.take();
+            *host.child.lock().unwrap() = Some(child);
+            // Host đọc ống sau khi báo sẵn sàng: đường dẫn gửi sớm nằm chờ trong ống, không mất.
+            let args: Vec<String> = std::env::args().collect();
+            for path in book_files(&args) {
+                host.send(&json!({"open": path}));
+            }
+            let (ready, started) = mpsc::channel();
+            let reader = app.clone();
+            thread::spawn(move || pump(reader, stdout, generation, ready));
+            let watcher = app.clone();
+            thread::spawn(move || {
+                if wait_for_start(&started, HOST_START_LIMIT) == StartOutcome::Stuck && HOST_GENERATION.load(Ordering::SeqCst) == generation {
+                    log_line(&format!("host chưa báo sẵn sàng sau {} giây", HOST_START_LIMIT.as_secs()));
+                    show_failure(&watcher, HOST_START_FAILURE, true);
+                }
+            });
+            true
+        }
+        Err(error) => {
+            show_failure(app, &format!("ABook không mở được: {error}"), false);
+            false
+        }
+    }
+}
+
+/// "Thử lại" ở trang lỗi mở app: bỏ host đang kẹt (hết hạn dừng thì bị giết), trả trang chờ, chạy host mới.
+pub fn restart_host(app: &AppHandle) {
+    if RESTARTING.swap(true, Ordering::SeqCst) {
+        return;
+    }
+    let app = app.clone();
+    thread::spawn(move || {
+        HOST_GENERATION.fetch_add(1, Ordering::SeqCst); // ống và đồng hồ canh của host cũ thôi có tiếng nói ngay từ đây
+        app.state::<Host>().stop();
+        if let Some(window) = app.get_webview_window("main") {
+            let _ = window.eval("location.reload()");
+        }
+        start_host(&app);
+        RESTARTING.store(false, Ordering::SeqCst);
+    });
 }
 
 fn main() {
@@ -479,29 +576,12 @@ fn main() {
                 .build()?;
             chrome::install(&window).map_err(std::io::Error::other)?;
             app.manage(PendingUpdate(Mutex::new(None)));
-            match host_command(&handle).and_then(|mut command| command.spawn().map_err(|error| error.to_string())) {
-                Ok(mut child) => {
-                    let stdout = child.stdout.take().expect("stdout của host là ống");
-                    let stdin = child.stdin.take();
-                    app.manage(Host {
-                        stdin: Mutex::new(stdin),
-                        child: Mutex::new(Some(child)),
-                    });
-                    // Host đọc ống sau khi báo sẵn sàng: đường dẫn gửi sớm nằm chờ trong ống, không mất.
-                    let args: Vec<String> = std::env::args().collect();
-                    for path in book_files(&args) {
-                        app.state::<Host>().send(&json!({"open": path}));
-                    }
-                    check_for_update(&handle, false);
-                    thread::spawn(move || pump(handle, stdout));
-                }
-                Err(error) => {
-                    app.manage(Host {
-                        stdin: Mutex::new(None),
-                        child: Mutex::new(None),
-                    });
-                    show_failure(&handle, &format!("ABook không mở được: {error}"));
-                }
+            app.manage(Host {
+                stdin: Mutex::new(None),
+                child: Mutex::new(None),
+            });
+            if start_host(&handle) {
+                check_for_update(&handle, false);
             }
             Ok(())
         })
@@ -563,6 +643,50 @@ mod tests {
         });
         // Cả lần tải (~800 ms) dài hơn hạn đứng yên (400 ms) nhưng không lúc nào đứng yên quá hạn.
         assert_eq!(wait_unless_stalled(&receiver, started, &progress, Duration::from_millis(400)), Some(7));
+    }
+
+    #[test]
+    fn a_host_that_says_ready_is_ready_whatever_the_limit() {
+        let (sender, receiver) = mpsc::channel();
+        sender.send(()).unwrap();
+        assert_eq!(wait_for_start(&receiver, Duration::from_secs(60)), StartOutcome::Ready);
+    }
+
+    #[test]
+    fn a_host_that_exits_before_ready_is_not_waited_for() {
+        let (sender, receiver) = mpsc::channel::<()>();
+        drop(sender); // ống đóng: pump thoát, đầu gửi bị thả
+        let started = Instant::now();
+        assert_eq!(wait_for_start(&receiver, Duration::from_secs(60)), StartOutcome::Exited);
+        assert!(started.elapsed() < Duration::from_secs(5));
+    }
+
+    #[test]
+    fn a_host_silent_past_the_limit_is_stuck_and_may_still_become_ready() {
+        let (sender, receiver) = mpsc::channel();
+        let started = Instant::now();
+        assert_eq!(wait_for_start(&receiver, Duration::from_millis(300)), StartOutcome::Stuck);
+        assert!(started.elapsed() >= Duration::from_millis(300) && started.elapsed() < Duration::from_secs(5));
+        // Báo sẵn sàng muộn: đầu gửi của pump vẫn dùng được (pump mở app theo lời báo ấy, không cần ai nhận).
+        assert!(sender.send(()).is_ok());
+        assert_eq!(wait_for_start(&receiver, Duration::from_secs(60)), StartOutcome::Ready);
+        drop(receiver);
+        assert!(sender.send(()).is_err()); // đồng hồ canh đã bỏ đi: pump chỉ bỏ qua (`let _ =`)
+    }
+
+    #[test]
+    fn the_start_limit_is_sixty_seconds_like_the_qt_app() {
+        assert_eq!(HOST_START_LIMIT, Duration::from_secs(60));
+        assert!(HOST_START_FAILURE.starts_with("ABook chưa mở được. Bạn thử lại;"));
+    }
+
+    #[test]
+    fn the_start_failure_page_offers_try_again_that_restarts_the_host_other_failures_do_not() {
+        let stuck = failure_script(HOST_START_FAILURE, true);
+        assert!(stuck.contains("Thử lại") && stuck.contains("action('restartHost')") && stuck.contains("if(true)"));
+        assert!(stuck.contains(&Value::from(HOST_START_FAILURE).to_string()));
+        let died = failure_script("ABook dừng bất ngờ.", false);
+        assert!(died.contains("if(false)"));
     }
 
     #[test]

@@ -67,6 +67,11 @@ pub fn window_action(window: WebviewWindow, state: State<'_, HostOrigin>, action
             native::system_menu(&window)?;
             Ok(())
         }
+        // "Thử lại" của lời báo mở app không được: chỉ trang chờ của vỏ, không phải trang do host phục vụ.
+        "restartHost" if local => {
+            crate::restart_host(window.app_handle());
+            Ok(())
+        }
         "state" => Ok(()),
         _ => return Err("Lệnh cửa sổ không hợp lệ".into()),
     };
