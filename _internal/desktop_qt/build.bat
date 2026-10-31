@@ -49,6 +49,10 @@ rem Listen audit (tools\listen_audit.py): a run with a voice error, a stall or t
 "%ABOOK_PYTHON%" -X utf8 "%HERE%tools\listen_audit.py" selftest
 if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
+rem QtWidgets stays out of dist: the tray is plain Win32 (src\trayicon.cpp), no Qt.labs.platform anywhere
+"%ABOOK_PYTHON%" -X utf8 "%HERE%tools\check_dist_deps.py" selftest
+if errorlevel 1 exit /b 1
+if not errorlevel 0 exit /b 1
 rem Owner rule 30-10: self-changing values (clock, countdown, %, ETA) change in place with tabular digits
 "%ABOOK_PYTHON%" -X utf8 "%HERE%tools\check_ticks.py"
 if errorlevel 1 exit /b 1
@@ -101,6 +105,10 @@ rem Skip-15 icon pixel check (gap between stroke and digits, ink inside the box)
 call :test "%HERE%build\SkipGlyphTests.exe" "%HERE%build\skipglyph-test.txt"
 if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
+rem Win32 tray: menu, tooltip limit, chosen command, explorer restart, on a fake shell (no icon in the owner's real tray)
+call :test "%HERE%build\TrayTests.exe" "%HERE%build\tray-test.txt"
+if errorlevel 1 exit /b 1
+if not errorlevel 0 exit /b 1
 rem Sidebar collapse / expand / hover overlay (QtQuickTest with a stubbed Platform)
 call :test "%HERE%build\sidebar_tests\SidebarTests.exe" "%HERE%build\sidebar-test.txt"
 if errorlevel 1 exit /b 1
@@ -119,6 +127,9 @@ if not errorlevel 0 exit /b 1
 rem Dynamic Qt DLLs (LGPL): windeployqt copies DLLs + plugins next to the exe
 rem Trim: D3D11 backend only (no dxc / d3d compiler / software GL), no debugger plugins, no touch plugin, no 18 MB vc_redist installer
 windeployqt --release --qmldir "%HERE%qml" --no-translations --no-system-d3d-compiler --no-system-dxc-compiler --no-opengl-sw --no-compiler-runtime --skip-plugin-types qmltooling,generic "%HERE%dist\ABookDesk.exe"
+if errorlevel 1 exit /b 1
+if not errorlevel 0 exit /b 1
+"%ABOOK_PYTHON%" -X utf8 "%HERE%tools\check_dist_deps.py" "%HERE%dist" "%HERE%qml"
 if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
 rem App-local VC runtime (about 1 MB of DLLs instead of the installer), so a PC without the redistributable still starts
