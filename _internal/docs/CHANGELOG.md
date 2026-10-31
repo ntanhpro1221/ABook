@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.151] - 2026-10-31
+
 ### Máy tính
 
 - App máy tính viết lại native bằng Qt Quick, không còn WebView: lúc nghỉ dùng ít RAM hơn khoảng một phần tư (giao diện 76 MB thay vì 113-119 MB), mở lại nhanh hơn. Bộ cài nặng hơn (khoảng 34 MB thay vì 20 MB) vì app mang thư viện của mình thay vì mượn WebView2 của Windows.
