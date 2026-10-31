@@ -150,6 +150,12 @@ function Copy-App {
     }
     # Danh sách thư viện của Studio tải thêm (webui/studio_setup.py đọc ở thư mục app).
     Copy-Item (Join-Path $Shell "python\studio-requirements.txt") $app
+    # Nơi hỏi bản mới + khoá công khai cho bộ cập nhật của host (webui/updater.py, vỏ Qt): đúng hai trường của tauri.conf.json,
+    # nguồn duy nhất trong repo - không bao giờ lấy khoá từ mạng.
+    $tauri = Get-Content -LiteralPath (Join-Path $Shell "src-tauri\tauri.conf.json") -Raw -Encoding UTF8 | ConvertFrom-Json
+    $updater = [ordered]@{ endpoints = @($tauri.plugins.updater.endpoints); pubkey = [string]$tauri.plugins.updater.pubkey }
+    if (-not $updater.endpoints -or -not $updater.pubkey) { throw "tauri.conf.json thiếu plugins.updater.endpoints / pubkey" }
+    [System.IO.File]::WriteAllText((Join-Path $app "updater.json"), ($updater | ConvertTo-Json -Depth 3), (New-Object System.Text.UTF8Encoding $false))
     Copy-VcRuntime (Join-Path $app "vcruntime")
     Invoke-Checked { & (Join-Path $Resources "python\python.exe") -m compileall -q -j 0 (Join-Path $app "abook") } "compileall"
 }
@@ -171,7 +177,7 @@ function Copy-VcRuntime([string]$Target) {
 
 function Test-Layout {
     # Thư mục tài nguyên dựng bằng -SkipResources có thể còn rác của lần dựng cũ (từng có `ebook_reader` 45 MB nằm trong bộ cài).
-    $allowed = @("abook", "pyproject.toml", "uv.lock", "LICENSE", "studio-requirements.txt", "vcruntime")
+    $allowed = @("abook", "pyproject.toml", "uv.lock", "LICENSE", "studio-requirements.txt", "updater.json", "vcruntime")
     $extra = Get-ChildItem (Join-Path $Resources "app") | Where-Object { $allowed -notcontains $_.Name }
     if ($extra) { throw "Thư mục tài nguyên có thứ không thuộc bộ cài: $($extra.Name -join ', ') - dựng lại không có -SkipResources" }
     foreach ($name in $StudioOnlyAssets) {

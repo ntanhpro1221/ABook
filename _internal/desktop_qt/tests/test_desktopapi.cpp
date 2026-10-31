@@ -154,6 +154,12 @@ private slots:
         QVERIFY(gone.detail.isNull());
         QCOMPARE(HostMessage::parse("{\"check_update\": true}").kind, Kind::CheckUpdate);
         QCOMPARE(HostMessage::parse("{\"install_update\": true}").kind, Kind::InstallUpdate);
+        const auto run = HostMessage::parse("{\"run_installer\": \"C:\\\\T\\\\ABook_1.0_x64-setup.exe\", \"args\": [\"/P\", \"/UPDATE\", \"/R\"]}");
+        QCOMPARE(run.kind, Kind::RunInstaller);
+        QCOMPARE(run.installer, QStringLiteral("C:\\T\\ABook_1.0_x64-setup.exe"));
+        QCOMPARE(run.arguments, (QStringList{QStringLiteral("/P"), QStringLiteral("/UPDATE"), QStringLiteral("/R")}));
+        QCOMPARE(HostMessage::parse("{\"run_installer\": \"\"}").kind, Kind::None);
+        QCOMPARE(HostMessage::parse("{\"run_installer\": 3}").kind, Kind::None);
         QCOMPARE(HostMessage::parse("{\"dialog\": 3}").kind, Kind::None);
         QCOMPARE(HostMessage::parse("không phải JSON").kind, Kind::None);
         // Vỏ Qt chưa có bộ cập nhật: nút có lời ngay, đúng câu máy chủ dùng cho bản không tự cập nhật

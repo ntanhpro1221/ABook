@@ -16,6 +16,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - App máy tính: nhạc nền nối vào đúng chỗ của lời đọc khi bắt đầu và mỗi lần lặp lại, không còn trễ vài chục mili giây.
 - App máy tính chỉ chạy một bản: mở app lần nữa (lối tắt, hay bấm đúp file khi app đang mở) đưa cửa sổ đang mở lên, không mở thêm bản thứ hai.
 - App máy tính: bấm đúp file `.abook` mở thẳng trang sách, file `.abookproj` mở dự án trong Studio, cả khi app chưa mở lẫn đang mở.
+- App máy tính tự kiểm bản mới khi mở; bấm "Cập nhật" thì tải, kiểm chữ ký của ABook, rồi cài và mở lại app. Gói không đúng chữ ký hay tên lạ thì không cài.
 - Bộ cài: gỡ app có ô "Xoá cả dữ liệu" (thư viện ở chỗ khác vẫn giữ); file `.abook` / `.abookproj` mở bằng ABook, gỡ app thì trả lại app cũ đã mở chúng.
 
 ## [0.4.149] - 2026-10-31

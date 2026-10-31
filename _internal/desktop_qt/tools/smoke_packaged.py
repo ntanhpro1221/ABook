@@ -8,7 +8,8 @@ Then the copy runs again with ABOOK_SMOKE_EXIT=play (smoke_play.py): the Library
 440 Hz mp3, it plays through the host + Media Foundation + mixer of the package into a WAV (ABOOK_AUDIO_SINK), and the
 WAV must hold that tone. Negative check: the same with a chapter of random bytes must NOT pass.
 Last, smoke_open.py on the copy: a .abook on the command line reaches the Library, and a second launch with another .abook
-exits at once and hands it to the running copy.
+exits at once and hands it to the running copy. Then smoke_update.py: the packaged host with --self-update finds a fake
+release on 127.0.0.1 and refuses its package signed with a test key (the positive case waits for Q7).
 
 smoke_packaged.py <dist> [--seconds 120]
 """
@@ -26,6 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import smoke_play  # noqa: E402
 import smoke_dist  # noqa: E402
 import smoke_open  # noqa: E402
+import smoke_update  # noqa: E402
 from smoke_dist import report  # noqa: E402
 
 
@@ -112,6 +114,12 @@ def main():
             print(f"SMOKE_FAIL opening files from the command line: {why}")
             return 1
         print("SMOKE_OK a file on the command line and one from a second launch both reached the one running copy")
+        # The packaged updater trusts only the real key: a package signed with a test key is downloaded, then refused.
+        why = smoke_update.check(app, args.seconds)
+        if why:
+            print(f"SMOKE_FAIL self-update: {why}")
+            return 1
+        print("SMOKE_OK self-update found the fake release, refused its test-key package and never ran it")
         return 0
     finally:
         # The host exits when its pipe closes; anything still running from the copy is ours and only ours.

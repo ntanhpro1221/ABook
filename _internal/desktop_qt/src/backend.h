@@ -70,6 +70,8 @@ public:
     Q_INVOKABLE void refreshLibrary();
     /// Dừng host (gửi quit, chờ tối đa 5 giây như vỏ Tauri, rồi giết). Gọi lúc app thoát.
     void stop();
+    /// {"run_installer"} của host (--self-update): chạy bộ cài đã kiểm chữ ký, dừng host, thoát app.
+    void runInstaller(const QString &installer, const QStringList &arguments);
 
     /// GET tới host kèm mã phiên; gọi từ luồng giao diện. Trả về reply (người gọi nối `finished`).
     QNetworkReply *get(const QString &path);
