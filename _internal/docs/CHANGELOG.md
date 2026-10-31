@@ -7,8 +7,15 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
-### Máy tính (bản Qt, chưa có trong bộ cài)
+### Máy tính
 
+- Bộ cài nhẹ hơn khoảng 2 MB: icon ở khay hệ thống nay viết thẳng cho Windows, không còn kéo theo thư viện giao diện Qt Widgets.
+
+## [0.4.151] - 2026-10-31
+
+### Máy tính
+
+- App máy tính viết lại native bằng Qt Quick, không còn WebView: lúc nghỉ dùng ít RAM hơn khoảng một phần tư (giao diện 76 MB thay vì 113-119 MB), mở lại nhanh hơn. Bộ cài nặng hơn (khoảng 34 MB thay vì 20 MB) vì app mang thư viện của mình thay vì mượn WebView2 của Windows.
 - App máy tính: nhạc nền tốn ít CPU hơn khi thu nhỏ.
 - App máy tính: giọng đọc giữ đúng nhịp khi nghe trong khay và nhạc nền lặp lại.
 - App máy tính hiện trong khung điều khiển nhạc của Windows (tên chương, bìa, phát/dừng, chương trước/sau, tua).
@@ -17,7 +24,6 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - App máy tính chỉ chạy một bản: mở app lần nữa (lối tắt, hay bấm đúp file khi app đang mở) đưa cửa sổ đang mở lên, không mở thêm bản thứ hai.
 - App máy tính: bấm đúp file `.abook` mở thẳng trang sách, file `.abookproj` mở dự án trong Studio, cả khi app chưa mở lẫn đang mở.
 - App máy tính tự kiểm bản mới khi mở; bấm "Cập nhật" thì tải, kiểm chữ ký của ABook, rồi cài và mở lại app. Gói không đúng chữ ký hay tên lạ thì không cài.
-- Bộ cài nhỏ hơn: không còn mang các phần Qt và thư viện chạy kèm mà app không dùng; mã app được biên dịch ngay lúc cài.
 - Bộ cài: gỡ app có ô "Xoá cả dữ liệu" (thư viện ở chỗ khác vẫn giữ); file `.abook` / `.abookproj` mở bằng ABook, gỡ app thì trả lại app cũ đã mở chúng.
 
 ## [0.4.150] - 2026-10-31

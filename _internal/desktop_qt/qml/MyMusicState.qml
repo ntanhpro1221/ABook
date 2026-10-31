@@ -46,35 +46,12 @@ Column {
     }
 
     // ---- lỗi tải ----
-    Collapse {
+    InlineError {
+        objectName: "myMusicError"
         width: parent.width
         open: root.state === "error"
-        Item {
-            width: parent.width
-            height: Math.max(failure.implicitHeight, 40) + 24
-            Icon { x: 0; y: 12 + 12; name: "triangle-alert"; size: 16; color: Theme.danger }
-            Flow {
-                id: failure
-                x: 16 + 12
-                y: 12
-                width: parent.width - x
-                spacing: 12
-                Item {
-                    width: Math.min(sentence.implicitWidth, failure.width)
-                    height: Math.max(40, sentence.implicitHeight)
-                    Text {
-                        id: sentence
-                        width: parent.width
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: "Bạn hãy thử tải lại nhạc của bạn."
-                        color: Theme.text2
-                        wrapMode: Text.Wrap
-                        font.pixelSize: Theme.sizeBodySmall
-                    }
-                }
-                Button { text: "Thử lại"; icon: "rotate-cw"; kind: "ghost"; size: "sm"; onClicked: root.retry() }
-            }
-        }
+        message: "Bạn hãy thử tải lại nhạc của bạn."
+        onRetry: root.retry()
     }
 
     // ---- chưa có bài nào ----

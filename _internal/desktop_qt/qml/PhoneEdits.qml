@@ -126,7 +126,7 @@ Item {
                     height: allApply.height
                     verticalAlignment: Text.AlignVCenter
                     textFormat: Text.RichText
-                    text: "<span style=\"font-weight:500\">" + W.esc(block.modelData.name) + "</span><span style=\"color:" + W.cssColor(Theme.text3) + "\"> · gửi " + W.esc(Studio.formatWhen(block.modelData.at)) + "</span>"
+                    text: "<span style=\"font-weight:500\">" + W.esc(block.modelData.name) + "</span><span style=\"color:" + W.cssColor(Theme.text3) + "\">&nbsp;· gửi " + W.esc(Studio.formatWhen(block.modelData.at)) + "</span>"
                     color: Theme.text
                     wrapMode: Text.Wrap
                     font.pixelSize: Theme.sizeBodySmall
@@ -170,7 +170,7 @@ Item {
                             y: 8
                             width: parent.width - 28 - 72
                             textFormat: Text.RichText
-                            text: W.esc(row.modelData.label || "") + (row.modelData.chapter ? "<span style=\"color:" + W.cssColor(Theme.text3) + "\"> · " + W.esc(row.modelData.chapter) + "</span>" : "")
+                            text: W.esc(row.modelData.label || "") + (row.modelData.chapter ? "<span style=\"color:" + W.cssColor(Theme.text3) + "\">&nbsp;· " + W.esc(row.modelData.chapter) + "</span>" : "")
                                 + (row.modelData.conflict ? "<br><span style=\"color:" + W.cssColor(Theme.warning) + "; font-size:12px\">" + W.esc(row.modelData.conflict) + "</span>" : "")
                             color: Theme.text
                             wrapMode: Text.Wrap
@@ -256,7 +256,7 @@ Item {
                             y: 8
                             width: parent.width - 40
                             textFormat: Text.RichText
-                            text: W.esc(row.modelData.label || "") + (row.modelData.chapter ? "<span style=\"color:" + W.cssColor(Theme.text3) + "\"> · " + W.esc(row.modelData.chapter) + "</span>" : "")
+                            text: W.esc(row.modelData.label || "") + (row.modelData.chapter ? "<span style=\"color:" + W.cssColor(Theme.text3) + "\">&nbsp;· " + W.esc(row.modelData.chapter) + "</span>" : "")
                             color: Theme.text
                             wrapMode: Text.Wrap
                             font.pixelSize: Theme.sizeBodySmall

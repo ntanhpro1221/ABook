@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "../../qml/TextWrap.js" as TextWrap
 import "VisualReady.js" as VisualReady
 import ABook
 
@@ -80,7 +81,7 @@ Item {
             for (const child of item.children || []) texts(child, out)
             return out
         }
-        function hasText(item, value) { return texts(item).indexOf(value) >= 0 }
+        function hasText(item, value) { const all = texts(item); return all.indexOf(value) >= 0 || all.indexOf(TextWrap.pretty(value)) >= 0 }    // chữ vẽ qua text-wrap: pretty (TextWrap.js)
         function switchOf(page, label) { const s = find(page, i => i.label === label && typeof i.toggled === "function"); verify(s !== null, "no switch " + label); return s }
         function choiceOf(page, label) { const c = find(page, i => i.label === label && typeof i.picked === "function"); verify(c !== null, "no choice " + label); return c }
         function buttonOf(page, text) { const b = find(page, i => i.text === text && typeof i.clicked === "function" && i.visible); verify(b !== null, "no button " + text); return b }
@@ -380,7 +381,7 @@ Item {
             const card = named(page, "advancedUpdate")
             tryVerify(function() { return hasText(card, "Cập nhật ABook") })
             tryVerify(function() { return hasText(card, "Sửa lỗi nghe lại.\nThêm lịch đêm.") })
-            tryVerify(function() { return (find(card, i => i.textFormat === Text.StyledText).text) === ("<b>ABook 0.4.148</b> đã có · đang dùng 0.4.147") })
+            tryVerify(function() { return (find(card, i => i.textFormat === Text.StyledText).text) === ("<b>ABook 0.4.148</b> đã có&nbsp;· đang dùng 0.4.147") })
             reply("POST /api/app/update", 409, {error: "Không có bản mới để cài"})
             card.install()
             compare(Api.notice, "Chưa cập nhật được\nKhông có bản mới để cài")

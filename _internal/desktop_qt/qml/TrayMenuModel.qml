@@ -8,7 +8,7 @@ QtObject {
     property var player: Player
     property bool loaded: player.loaded
     property bool playing: player.playing
-    readonly property string tooltip: loaded ? player.bookTitle + " · " + player.chapterTitle : "ABook"
+    readonly property string tooltip: loaded ? player.bookTitle + "\u00a0· " + player.chapterTitle : "ABook"
     readonly property var actions: [
         {action: "open", label: "Mở ABook", enabled: true},
         {separator: true},

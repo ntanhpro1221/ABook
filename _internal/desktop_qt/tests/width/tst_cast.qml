@@ -1,6 +1,7 @@
 import QtQuick
 import QtTest
 import "VisualReady.js" as VisualReady
+import "../../qml/TextWrap.js" as TextWrap
 import ABook
 
 // Tab "Nhân vật" của trang sách (BookPage + CastList/CastPerson/CastSample + các hộp Gộp / Đổi tên / Giới tính / Giọng): danh sách, trạng thái trống, nghe thử,
@@ -106,7 +107,7 @@ Item {
             render()
         }
         function person(name) {
-            return all(page, "castName").filter(item => item.text === name)[0]
+            return all(page, "castName").filter(item => item.text === name || item.text === TextWrap.pretty(name))[0]    // tên vẽ qua text-wrap: pretty
         }
         // Dòng (CastPerson) của một người: leo từ tên lên tới phần tử có `person`
         function rowOf(name) {
@@ -393,7 +394,7 @@ Item {
             compare(sent[0].body.preset, "hoai-my")
             compare(DesktopApi.previews[0], "/media/previews/p1.wav")
             compare(Clip.current, "voice-try-/media/previews/p1.wav")
-            compare(findChild(dlg, "voiceTryNote").text, "Lúc thu thật sẽ nghe gần như vậy · câu “Anh đi đâu thế?” · giọng Hoài My")
+            compare(findChild(dlg, "voiceTryNote").text, "Lúc thu thật sẽ nghe gần như vậy\u00a0· câu “Anh đi đâu thế?”\u00a0· giọng Hoài My")
             tryVerify(function() { return findChild(dlg, "voiceTryNote").visible })
             // Bấm lại lúc đang phát thì dừng; bấm nữa thì phát lại bản đã nghe, không hỏi máy chủ lần hai
             button.requested()

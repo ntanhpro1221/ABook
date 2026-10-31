@@ -4,6 +4,7 @@ import "EditBookLogic.js" as Logic
 import "CastLogic.js" as Cast
 import "RecordLogic.js" as Records
 import "BookLogic.js" as BookText
+import "TextWrap.js" as TextWrap
 
 // One width rule on the content area. Geometry interpolates without reparenting,
 // so the cover, chapter scroll position and delegates survive a class change.
@@ -332,7 +333,7 @@ Item {
                 Text {
                     objectName: "bookTitle"
                     width: parent.width
-                    text: root.book.title || ""
+                    text: TextWrap.pretty(root.book.title || "")
                     color: Theme.text
                     wrapMode: Text.Wrap
                     lineHeight: 1.15
@@ -350,7 +351,7 @@ Item {
                 Text {
                     visible: text !== ""
                     width: parent.width
-                    text: [root.book.detail, root.book.chapters > 0 ? root.book.chapters + " chương" : ""].filter(s => !!s).join(" · ")
+                    text: [root.book.detail, root.book.chapters > 0 ? root.book.chapters + " chương" : ""].filter(s => !!s).join("\u00a0· ")
                     color: Theme.text3
                     wrapMode: Text.Wrap
                     font.pixelSize: Theme.sizeBodySmall

@@ -1,6 +1,7 @@
 import QtQuick
 import ABook
 import "DevicesLogic.js" as Logic
+import "TextWrap.js" as TextWrap
 
 // Hai khối "Máy này" và "Máy đã ghép" của Cài đặt › Thiết bị (desktop/PhoneSync.tsx): bật "Kết nối Wi-Fi", ghép thiết bị bằng mã 6 số
 // (sống 5 phút, dùng một lần, sai 5 lần thì khoá), quyền điều khiển từ xa, địa chỉ + Bluetooth, danh sách máy đã ghép (đổi tên, bỏ ghép).
@@ -124,7 +125,7 @@ Item {
                 open: root.sync === null && !root.loadFailed
                 DevicesSkeleton { width: parent.width; count: 2; label: "Đang tải kết nối" }
             }
-            DevicesError {
+            InlineError {
                 width: parent.width
                 open: root.sync === null && root.loadFailed
                 message: "Bạn hãy thử tải lại cài đặt kết nối."
@@ -216,9 +217,9 @@ Item {
                                         Text {
                                             id: bluetoothNote
                                             width: parent.width
-                                            text: !root.sync || !root.sync.bluetooth ? "" : root.sync.bluetooth.running
+                                            text: !root.sync || !root.sync.bluetooth ? "" : TextWrap.pretty(root.sync.bluetooth.running
                                                 ? "Bluetooth: điện thoại đã ghép nối được cả khi khác Wi-Fi" + (root.sync.bluetooth.connections ? " - " + root.sync.bluetooth.connections + " đang kết nối" : "") + "."
-                                                : root.sync.bluetooth.error
+                                                : root.sync.bluetooth.error)
                                             color: Theme.text3
                                             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                             font.pixelSize: Theme.sizeCaption

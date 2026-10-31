@@ -42,7 +42,8 @@ Column {
                         width: library.pathWidth
                         spacing: 12
                         height: Math.max(40, label.implicitHeight + 8)
-                        Icon { anchors.verticalCenter: parent.verticalCenter; name: "folder-open"; size: 16; color: Theme.text2 }
+                        // Icon theo DÒNG ĐẦU của đường dẫn (đường dài xuống dòng), không theo giữa cả khối
+                        LineIcon { line: label; name: "folder-open"; size: 16; color: Theme.text2 }
                         Text {
                             id: label
                             anchors.verticalCenter: parent.verticalCenter

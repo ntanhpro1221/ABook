@@ -49,7 +49,7 @@ Column {
                     spacing: 8
                     Text {
                         width: Math.min(implicitWidth, parent.width)
-                        text: "“" + modelData.title + "” · " + (modelData.shared === modelData.chapters ? "cả " + modelData.chapters + " chương" : "trùng " + modelData.shared + "/" + modelData.chapters + " chương") + " · " + modelData.statusLabel
+                        text: "“" + modelData.title + "”\u00a0· " + (modelData.shared === modelData.chapters ? "cả " + modelData.chapters + " chương" : "trùng " + modelData.shared + "/" + modelData.chapters + " chương") + "\u00a0· " + modelData.statusLabel
                         color: Theme.text
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                         font.pixelSize: Theme.sizeBodySmall

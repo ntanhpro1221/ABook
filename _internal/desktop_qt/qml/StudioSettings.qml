@@ -114,7 +114,7 @@ Item {
             SettingRow {
                 width: parent.width
                 label: "Studio trên máy này"
-                hint: "Đã cài" + (root.status && root.status.gpu ? " · " + root.status.gpu.name : "") + "\n" + (root.status ? root.status.root : "")
+                hint: "Đã cài" + (root.status && root.status.gpu ? "\u00a0· " + root.status.gpu.name : "") + "\n" + (root.status ? root.status.root : "")
                 Button {
                     objectName: "studioRemove"
                     size: "sm"
