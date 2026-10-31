@@ -9,7 +9,7 @@ import java.io.InterruptedIOException
 import java.net.HttpURLConnection
 import java.net.SocketException
 import java.net.UnknownHostException
-import java.net.URL
+import vn.abook.player.net.FastConnect
 import java.security.MessageDigest
 import java.util.zip.GZIPInputStream
 import java.util.zip.ZipInputStream
@@ -218,15 +218,14 @@ class PinnedFiles(private val dir: File, private val base: String, private val s
         progress.current(have) // what a cut download left, even when it is already whole: the first report of a file is what was there
         if (have < size) {
             val url = if (remote.startsWith("https://") || remote.startsWith("http://")) remote else base + remote
-            val connection = URL(url).openConnection() as HttpURLConnection
-            try {
-                connection.connectTimeout = 20_000
-                connection.readTimeout = 30_000
-                connection.instanceFollowRedirects = true
+            val connection = FastConnect.get(url, 20_000) { // theo chuyển hướng (CDN), Range đi lại ở từng chặng
+                it.readTimeout = 30_000
                 if (have > 0) {
-                    connection.setRequestProperty("Range", "bytes=$have-")
-                    connection.setRequestProperty("If-Range", tag)
+                    it.setRequestProperty("Range", "bytes=$have-")
+                    it.setRequestProperty("If-Range", tag)
                 }
+            }
+            try {
                 val code = connection.responseCode
                 if (code == 416 && have > 0) {
                     // The part is longer than the file the server holds now: drop it; the retry asks for the whole file.

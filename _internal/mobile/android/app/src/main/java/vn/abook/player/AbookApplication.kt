@@ -128,6 +128,19 @@ class AbookApplication : Application() {
         super.onCreate()
         AppLog.init(this)
         CrashLog.install(this)
+        watchNetwork()
         AppLog.i("App", "tiến trình khởi động (Android ${android.os.Build.VERSION.SDK_INT}, ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL})")
+    }
+
+    /** Đổi mạng (Wi-Fi <-> 4G, có/mất IPv6) thì kết luận "họ địa chỉ nào sống" của FastConnect hết giá trị. */
+    private fun watchNetwork() {
+        runCatching {
+            val manager = getSystemService(android.net.ConnectivityManager::class.java) ?: return
+            manager.registerDefaultNetworkCallback(object : android.net.ConnectivityManager.NetworkCallback() {
+                override fun onAvailable(network: android.net.Network) = vn.abook.player.net.FastConnect.forgetNetwork()
+                override fun onLinkPropertiesChanged(network: android.net.Network, linkProperties: android.net.LinkProperties) =
+                    vn.abook.player.net.FastConnect.forgetNetwork()
+            })
+        }
     }
 }

@@ -20,6 +20,7 @@ import java.io.IOException
 import java.net.InetAddress
 import java.net.ServerSocket
 import java.net.Socket
+import vn.abook.player.net.FastConnect
 import java.util.UUID
 import java.util.concurrent.Executors
 
@@ -218,6 +219,7 @@ private class Gateway(private val context: Context, private val address: String)
  * Tắt Bluetooth thì thôi nghe và nói rõ; bật lại (ACTION_STATE_CHANGED) thì tự nghe lại khi chia sẻ còn bật.
  */
 object BluetoothShare {
+    private const val LOOPBACK_MS = 5_000 // nối vòng lặp 127.0.0.1 tức thì; hạn chỉ để không treo mãi nếu cổng đầy
     private var server: BluetoothServerSocket? = null
     private val links = mutableSetOf<BtMux>()
     private var wanted = false
@@ -303,7 +305,7 @@ object BluetoothShare {
                 return
             }
             val mux = BtMux(link.inputStream, link.outputStream, { link.close() },
-                dial = { Socket("127.0.0.1", LibraryServer.PORT) }, odd = false)
+                dial = { FastConnect.connect("127.0.0.1", LibraryServer.PORT, LOOPBACK_MS) }, odd = false)
             synchronized(links) { links += mux }
             Thread({
                 try {
