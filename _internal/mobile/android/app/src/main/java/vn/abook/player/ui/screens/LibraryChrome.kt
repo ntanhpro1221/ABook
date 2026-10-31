@@ -267,7 +267,7 @@ fun SearchBox(ui: LibraryUiState, modifier: Modifier = Modifier) {
  * `anchor`: góc dưới phải của nút trong toạ độ của chỗ đặt menu. Chạm ra ngoài hay Back đóng.
  */
 @Composable
-fun SortMenu(ui: LibraryUiState, anchor: IntOffset, backEnabled: Boolean = true) {
+fun SortMenu(ui: LibraryUiState, anchor: IntOffset, backEnabled: () -> Boolean = { true }) {
     val open = ui.menuOpen
     val progress = remember { Animatable(0f) }
     var present by remember { mutableStateOf(false) }
@@ -281,7 +281,7 @@ fun SortMenu(ui: LibraryUiState, anchor: IntOffset, backEnabled: Boolean = true)
         }
     }
     if (!present) return
-    BackHandler(enabled = open && backEnabled) { ui.closeMenu() }
+    BackHandler(enabled = open && backEnabled()) { ui.closeMenu() }
     val colors = Abook.colors
     val shape = RoundedCornerShape(Dim.radiusCover)
     Box(Modifier.fillMaxSize().pointerInput(Unit) { detectTapGestures { ui.closeMenu() } }.testTag("sort_menu")) {
