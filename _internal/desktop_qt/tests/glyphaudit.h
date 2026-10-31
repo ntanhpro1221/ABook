@@ -11,6 +11,7 @@
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QRawFont>
+#include <QRegularExpression>
 #include <QSet>
 #include <QTextDocument>
 #include <QTextLayout>
@@ -26,6 +27,7 @@ class GlyphAudit : public QObject {
     QTimer timer;
     QSet<QString> seen;
     QJsonArray hits;
+    QJsonArray leaks;
     qint64 texts = 0;
     QSet<QString> scenes;
 
@@ -51,6 +53,21 @@ class GlyphAudit : public QObject {
             const auto text = item->property("text").toString();
             const auto font = qvariant_cast<QFont>(item->property("font"));
             const auto type = QString::fromLatin1(item->metaObject()->className());
+            // Giá trị JS rò ra màn hình: binding đọc trường vắng hay fixture sai dạng ("Máy thấy undefined: ...", "Tập 1 (NaN chương)" -
+            // 0.4.152, test vẫn đạt). Ô nhập (có cursorPosition) là chữ người dùng gõ, không tính; objectName "leakProbe" là phép thử lực.
+            static const QRegularExpression leak(QStringLiteral(R"(\bundefined\b|\bNaN\b|\[object Object\])"));
+            if (!item->property("cursorPosition").isValid() && item->objectName() != QLatin1String("leakProbe") && leak.match(text).hasMatch()) {
+                const auto where = path(item);
+                if (!seen.contains(where + "\nleak\n" + text)) {
+                    seen.insert(where + "\nleak\n" + text);
+                    const auto *context = QQmlEngine::contextForObject(item);
+                    QJsonObject hit{{"text", text.left(160)}, {"path", where}, {"type", type},
+                        {"source", context ? context->baseUrl().toString() : QString()},
+                        {"test", QString::fromUtf8(QTest::currentTestFunction())}, {"data", QString::fromUtf8(QTest::currentDataTag())}};
+                    leaks.append(hit);
+                    qWarning().noquote() << "TEXT_LEAK" << QJsonDocument(hit).toJson(QJsonDocument::Compact);
+                }
+            }
             // TextInput/TextEdit expose a placeholder separately from their text.
             const auto placeholder = item->property("placeholderText").toString();
             if (!text.isEmpty() || !placeholder.isEmpty()) {
@@ -119,7 +136,10 @@ public:
         QStringList sorted = scenes.values();
         sorted.sort();
         output.write(QJsonDocument(QJsonObject{{"text_observations", texts}, {"scenes", QJsonArray::fromStringList(sorted)},
-            {"hits", hits}, {"hit_count", hits.size()}}).toJson());
-        return hits.isEmpty() && texts > 0;
+            {"hits", hits}, {"hit_count", hits.size()}, {"leaks", leaks}}).toJson());
+        // Lần thấy ngoài hàm test (lúc nạp file, giữa hai test) không vào log -o của QtTest: in lại ở đây, mã thoát 1 làm build hỏng
+        for (const auto &leak : leaks)
+            fprintf(stderr, "TEXT_LEAK %s\n", QJsonDocument(leak.toObject()).toJson(QJsonDocument::Compact).constData());
+        return hits.isEmpty() && leaks.isEmpty() && texts > 0;
     }
 };

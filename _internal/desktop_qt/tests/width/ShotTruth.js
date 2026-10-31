@@ -4,9 +4,12 @@
 // Ảnh chụp phải nói thật (Lead soát 0.4.151 lượt 2): bộ chụp đặt trạng thái bằng đường người dùng, không ép riêng từng mảnh.
 // Hai lời nói dối đã gặp: thanh bên tô "Thư viện" trong khi màn là Studio / Cài đặt (Sidebar trần không nối với màn như Main:
 // currentSection = stack.current), và ảnh tối mà ô Màu ở Giao diện chọn "Sáng" (Theme.mode ép tối, tuỳ chọn vẫn "light").
+// Lời nói dối thứ ba (0.4.152): chữ "undefined" / "NaN" / "[object Object]" trên màn - binding đọc trường vắng hay fixture sai
+// dạng (tst_studio2 gửi `kind` thay `source`: "Máy thấy undefined: ..." mà test vẫn đạt).
 // Dùng: VisualReady.render gọi assertTrue sau mỗi lần dựng; problems() cho bộ thử lực.
 
 const SECTION = {LibraryScreen: 0, StudioScreen: 1, SettingsScreen: 2}
+const LEAK = /\bundefined\b|\bNaN\b|\[object Object\]/
 
 // "StudioScreen_QMLTYPE_12(0x...)" / "StudioScreen(0x...)" -> "StudioScreen"
 function typeName(object) {
@@ -30,6 +33,9 @@ function problems(root) {
     if (sections.length === 1)
         for (const bar of bars)
             if (bar.currentSection !== sections[0]) out.push({rule: "sidebar", current: bar.currentSection, screen: sections[0]})
+    // Chữ hiển thị (không kể ô nhập: người dùng gõ gì cũng được)
+    for (const item of collect(root, item => typeof item.text === "string" && item.cursorPosition === undefined && LEAK.test(item.text), []))
+        out.push({rule: "leak", text: item.text.slice(0, 80), at: typeName(item.parent)})
     return out
 }
 

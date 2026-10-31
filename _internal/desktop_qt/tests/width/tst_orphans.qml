@@ -38,6 +38,7 @@ Item {
             compare(TextWrap.pretty("Đã lưu bản sửa của chương"), "Đã lưu bản sửa của chương")
             compare(TextWrap.pretty("Một dòng là đủ\nHai dòng xét từng câu"), "Một dòng là\u00a0đủ\nHai dòng xét từng\u00a0câu")
             compare(TextWrap.pretty("Một"), "Một")
+            compare(TextWrap.pretty(undefined), "")                                        // trường tuỳ chọn vắng: không thành chữ "undefined"
             compare(TextWrap.pretty("Hồ Vy"), "Hồ Vy")                                       // chỗ ngắt duy nhất: giữ
             compare(TextWrap.pretty(TextWrap.pretty(host.sentence)), TextWrap.pretty(host.sentence))
         }
