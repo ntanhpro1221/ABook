@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.149] - 2026-10-31
+
 ### Sửa lỗi
 
 - App máy tính (cả bản Qt lẫn bản Tauri) không còn chờ im lặng mãi khi máy không trả lời: việc nặng (giọng đọc, nghe thử giọng hay cách đọc, quét và tách nguồn, kể ngôi "tôi", tạo sách, dựng lại nhạc) im quá 100 giây, việc khác im quá 30 giây thì app gửi lại một lần rồi báo lỗi (giọng đọc báo "Giọng đang chọn đang không dùng được."); đoạn đang về chậm thì không bị cắt. Trình phát chờ âm thanh quá 215 giây cũng báo lỗi kèm "Thử lại"; app mở quá 60 giây chưa xong thì hiện lỗi kèm "Thử lại" thay vì đứng mãi ở màn mở.
