@@ -221,6 +221,7 @@ function layOut(cues: MusicCue[]): MusicCue[] {
  *  cùng các bài hỏng thì cùng chỗ trong hàng. */
 export class PlaylistDriver {
   private playing = false;
+  private quiet = false;
   private grace: unknown = null;
   private savedAt = 0;
   private readonly failures: PlaylistFailures;
@@ -250,11 +251,21 @@ export class PlaylistDriver {
     });
   }
 
-  update(voicePlaying: boolean): void {
+  /** `quiet`: giọng im không do người nghe (tự hết cuốn, khựng quá VOICE_STALL_MS) - đồng hồ đứng ngay và bài đang kêu mờ ra thay vì dừng
+   *  phụt sau PAUSE_GRACE_MS; giọng chạy lại thì bài ở chỗ đồng hồ mờ vào. */
+  update(voicePlaying: boolean, quiet = false): void {
+    this.quiet = quiet && !voicePlaying;
     if (voicePlaying) {
       this.clearGrace();
       this.playing = true;
       this.clock.tick(true);
+    } else if (this.quiet) {
+      this.clearGrace();
+      if (this.playing) {
+        this.playing = false;
+        this.clock.tick(false);
+        this.clock.save();
+      }
     } else if (this.playing && this.grace === null) {
       this.grace = this.timers.setTimeout(() => {
         this.grace = null;
@@ -298,7 +309,7 @@ export class PlaylistDriver {
     }
     this.lastKey = cue?.key ?? null;
     this.lastOffset = cue ? seconds - cue.start : -1;
-    this.bed.sync(seconds, this.playing);
+    this.bed.sync(seconds, this.playing, false, this.quiet);
   }
 
   private clearGrace(): void {

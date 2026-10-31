@@ -3,6 +3,7 @@
   "siblingFadeSeconds": 6,
   "stepRampSeconds": 4,
   "chapterEndFadeSeconds": 2.5,
+  "voiceStallFadeAfterSeconds": 10,
   "cueMergeGapSeconds": 5,
   "tailMinSeconds": 20,
   "loopCrossfadeSeconds": 2,

@@ -695,8 +695,12 @@ object Playback {
         val voice = musicVoiceNow(playing)
         // Giọng chỉ khựng (đệm, chờ đoạn kế): nhịp đồng hồ vẫn chạy để nhạc lặp, nối vòng, đổi mốc như lúc có tiếng - MusicBed chỉ làm những việc ấy khi được sync.
         if (voice.on) startTicking()
-        MusicBed.sync(bookId, currentChapter?.id, positionSeconds, voice.on, stopNow = voice.stopNow, ended = voice.ended)
+        // Khựng quá [MusicMix.voiceStallMs] (mạng hỏng hẳn, máy kia không trả đoạn): nhạc mờ xuống như lúc giọng tự hết, chứ không kêu một mình tới [HostWait.STALL_MS].
+        val hushed = voiceStall.update(SystemClock.elapsedRealtime(), positionSeconds, voice.on)
+        MusicBed.sync(bookId, currentChapter?.id, positionSeconds, voice.on && !hushed, stopNow = voice.stopNow, ended = voice.ended || hushed)
     }
+
+    private val voiceStall = VoiceStall(MusicCues::voiceStallMs)
 
     /** Nhạc nền hiểu giọng đang ra sao ([musicVoice]); `playing` = ExoPlayer đang ra tiếng. */
     private fun musicVoiceNow(playing: Boolean): MusicVoice {
