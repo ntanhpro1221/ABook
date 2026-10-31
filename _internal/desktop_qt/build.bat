@@ -2,6 +2,7 @@
 rem Windows app, Qt Quick (D0). Release build into build\, copy + windeployqt into dist\.
 rem   build.bat           build
 rem   build.bat package   build, then dist\resources (embedded Python + app) and a packaged smoke (scripts\build_windows_qt.ps1)
+rem   build.bat installer package, then the NSIS installer (installer\abook.nsi) tested in a fake profile, signed for the updater
 rem   build.bat clean     remove build\ and dist\ with Python shutil
 rem Override with env vars: QWK_ROOT (QWindowKit, built by tools\build_qwindowkit.bat when missing), QT_ROOT (Qt >= 6.10.3 msvc2022_64), CMAKE_BIN, NINJA_BIN, VCVARS, ABOOK_PYTHON.
 setlocal
@@ -146,6 +147,11 @@ if errorlevel 1 (
 rem build.bat package: dist\resources\{python,app} like the installed copy, then start it with no source tree above it
 if /i "%1"=="package" (
   powershell -NoProfile -ExecutionPolicy Bypass -File "%HERE%..\scripts\build_windows_qt.ps1"
+  if errorlevel 1 exit /b 1
+)
+rem build.bat installer: the same, then the installer test in a fake profile + test registry root, then build\installer\ABook_<ver>_x64-setup.exe + .sig + latest.json
+if /i "%1"=="installer" (
+  powershell -NoProfile -ExecutionPolicy Bypass -File "%HERE%..\scripts\build_windows_qt.ps1" -Installer
   if errorlevel 1 exit /b 1
 )
 echo OK: %HERE%dist\ABookDesk.exe

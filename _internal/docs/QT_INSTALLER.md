@@ -114,6 +114,49 @@ sạc. Kịch bản: `desktop_qt/tools/prep_shells.py` (dựng hai bố cục) +
   hàm `Write-LatestJson`).
 - Test: cài im lặng vào thư mục tạm -> file đủ, khoá gỡ cài đúng -> chạy exe đã cài (offscreen) Ready -> gỡ im lặng -> thư mục
   và khoá sạch. Cài đè một bản giả cũ hơn.
+- **Đã làm (31-10):** `desktop_qt/installer/` (abook.nsi, files.py, stop_processes.ps1, minisign_verify.py),
+  `build.bat installer` / `build_windows_qt.ps1 -Installer`, test `desktop_qt/tools/test_installer.py`.
+  - **Tên exe đã cài là `ABook.exe`** (đổi từ ABookDesk.exe lúc cài). Lối tắt, liên kết file, `MainBinaryName` và mọi chỗ
+    đọc đường exe của bản Tauri vẫn đúng; cài Qt đè Tauri chỉ thay exe.
+  - **Gỡ theo danh sách.** `$INSTDIR` = `%LOCALAPPDATA%\ABook`, cũng là cha của Studio và dữ liệu người dùng.
+    - `files.py` sinh danh sách cài và gỡ từ cùng một lần duyệt dist. Bộ gỡ xoá từng file, rồi `RMDir` không `/r` từ sâu lên
+      nông.
+    - Riêng `resources\` toàn của app nên xoá cả cây, cả khi cài (file thừa của bản cũ, kể cả bản Tauri, không ở lại). Trước
+      khi xoá, kiểm nó không phải junction.
+  - Trước khi chép, dừng `ABook.exe` của thư mục cài và mọi tiến trình chạy từ `resources\`, theo đường exe, không theo tên.
+    Giao diện đầy đủ thì hỏi trước; `/P` và `/S` thì dừng luôn. Không dừng cả `$INSTDIR`: worker Studio sống ở đó.
+  - **Lối tắt** Start + màn hình nền mang AUMID `ABook.Desktop`, đúng ID app Qt tự đặt (`mediacontrols.cpp`).
+    - Lối tắt hay ghim thanh tác vụ đang trỏ vào exe đã cài (kể cả của bản Tauri, có AUMID `com.ngdtuanh.abook`) được đặt lại
+      AUMID ở mọi lần cài, để cửa sổ Qt gộp vào ghim cũ.
+    - Ghim không bao giờ được tạo hay xoá: nó là của người dùng.
+    - `/UPDATE` và `/NS` không tạo lại lối tắt người dùng đã xoá.
+  - `EstimatedSize` = cỡ các file đã cài (files.py), không phải `GetSize $INSTDIR` như bản Tauri (con số ấy tính cả Studio).
+  - Gỡ thật thì xoá luôn giá trị "chỗ cài" ở `Software\ABook\ABook`, để lần cài sau về chỗ mặc định. Bản Tauri chỉ xoá khi
+    tích ô xoá dữ liệu.
+  - Bản Tauri không ghi mime và không gọi `SHChangeNotify`, nên bản test không phải bỏ lệnh nào vì lý do ấy. Những gì bản test
+    bỏ: bỏ ghim Start và xoá jump list (trạng thái chung của shell). Lối tắt lấy thư mục từ `%ABOOK_TEST_SHELL%`.
+  - Đặt tên khi dựng: makensis cảnh báo 9000 với tên `setup.exe` (Windows nạp shim tương thích), nên dựng dưới tên trung tính
+    rồi mới đổi sang `ABook_<ver>_x64-setup.exe`, như Tauri.
+  - **Ký:** `npx tauri signer sign --app-version <ver>`, cùng khoá. Trusted comment mang `version:<ver>` như chữ ký của
+    `tauri bundle`. `minisign_verify.py --version` kiểm bằng khoá công khai của tauri.conf.json.
+    - Đối chứng trên bộ cài thật 0.4.133 / 0.4.149: đúng -> OK; lật 1 bit -> FAIL; chữ ký của bản khác -> FAIL; đúng chữ ký
+      nhưng sai `--version` -> FAIL.
+  - **Kết quả test** (`INSTALLER_OK`, 21 kiểm):
+    - Kiểm tĩnh `/PPO`: kịch bản test không có dòng nào chạm khoá hay thư mục thật. Đối chứng: bản phát hành bị bắt 19 dòng.
+    - Không `/D` -> mã 7. `/D` ngoài `%TEMP%` -> mã 7, không tạo gì.
+    - Cài đè bản giả cũ (exe 3 byte, `resources\app\stale.py`, lối tắt + ghim kiểu Tauri, Studio + preferences.json):
+      1051 file đúng từng byte, `stale.py` mất, dữ liệu còn, khoá gỡ cài đúng, 3 lối tắt trỏ exe mới với AUMID mới.
+    - Exe đã cài tới host Ready bằng `resources\python\pythonw.exe` của chính nó.
+    - Gỡ: chỉ còn dữ liệu người dùng (và `uninstall.exe`, vì test chạy `_?=` để chờ được), lối tắt mất, ghim còn, khoá test
+      rỗng. HKCU thật + exe / lối tắt / ghim thật trước và sau giống hệt.
+  - Bộ cài 0.4.148 (LZMA): **35,3 MB**, so với 20,1 MB của Tauri.
+  - **Cho Q3:**
+    - Cache Qt (`QStandardPaths`, org = app = `ABook`) nằm ở `%LOCALAPPDATA%\ABook\ABook\cache`, tức trong `$INSTDIR`. Gỡ thật
+      phải xoá nó dù không tích ô xoá dữ liệu.
+    - `desktop_qt.ini` ở `%LOCALAPPDATA%\ABook` là dữ liệu người dùng (theo ô xoá dữ liệu).
+  - **Cho Q6:** kiểm chữ ký ở máy chủ Python phải sống trong `abook/webui/`, nơi luồng Music chưa được sửa (luật Lead). Một
+    file mới ở đó không đổi `quality_implementation_hash`: 41 file khoá, trong `webui/` chỉ có `word_timing.py`. Cần Lead quyết
+    ai viết. `minisign_verify.py` là bản dùng được để chép sang.
 
 ### Q3. Móc gỡ / nâng cấp
 - Dừng tiến trình chạy TỪ thư mục cài theo ExecutablePath (không theo tên), chừa chính bộ gỡ.

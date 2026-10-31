@@ -22,6 +22,7 @@ from pathlib import Path
 import psutil
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from private_profile import isolate  # noqa: E402
 from windows_process import create_suspended  # noqa: E402
 
 # A QML engine error that leaves part of the window dead even when Main itself loads.
@@ -48,6 +49,8 @@ def run(exe: Path, seconds: float, smoke: str = "1") -> tuple[int | None, str, s
         env.update(LOCALAPPDATA=str(root / "local"), APPDATA=str(root / "roaming"), TEMP=str(root / "temp"),
                    TMP=str(root / "temp"), ABOOK_PREFERENCES=str(root / "prefs.json"), ABOOK_MUTE="1", ABOOK_SMOKE_EXIT=smoke,
                    QT_FORCE_STDERR_LOGGING="1")
+        # QStandardPaths (cache nhạc, cache QML) theo USERPROFILE, không theo LOCALAPPDATA của env.
+        isolate(env)
         name = f"ABookSmoke-{os.getpid()}"
         desk = user.CreateDesktopW(name, None, None, 0, 0x10000000, None)
         if not desk:
