@@ -9,7 +9,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Sửa lỗi
 
-- Nhạc nền không còn tắt phụt khi hết chương: tự sang chương sau thì nhạc chương cũ mờ dần trong lúc nhạc chương mới vào, hết sách thì nhạc mờ tắt. Bấm dừng vẫn dừng ngay như cũ. Máy tính, điện thoại và bản web.
+- Nhạc nền không còn tắt phụt khi hết chương: tự sang chương sau thì nhạc chương cũ mờ dần trong lúc nhạc chương mới vào, hết sách thì nhạc mờ tắt. Bấm dừng vẫn dừng ngay như cũ. Máy tính và bản web; trên điện thoại lỗi chỉ gặp lúc hết sách, nay cũng mờ tắt.
 
 ## [0.4.152] - 2026-11-01
 
