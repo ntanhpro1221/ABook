@@ -45,6 +45,10 @@ rem Audio sink ear (tools\audio_sink.py): detectors stay silent on clean speech 
 "%ABOOK_PYTHON%" -X utf8 "%HERE%tools\audio_sink.py" selftest
 if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
+rem Listen audit (tools\listen_audit.py): a run with a voice error, a stall or the time cap is never scored as valid
+"%ABOOK_PYTHON%" -X utf8 "%HERE%tools\listen_audit.py" selftest
+if errorlevel 1 exit /b 1
+if not errorlevel 0 exit /b 1
 rem Owner rule 30-10: self-changing values (clock, countdown, %, ETA) change in place with tabular digits
 "%ABOOK_PYTHON%" -X utf8 "%HERE%tools\check_ticks.py"
 if errorlevel 1 exit /b 1

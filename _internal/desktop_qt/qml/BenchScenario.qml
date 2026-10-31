@@ -133,6 +133,14 @@ Item {
     property int listenIdle: 0
     property int listenTickCount: 0
     property bool listenHeard: false
+    // Đang phát mà vị trí đứng yên: giây liền (người nghe thấy app treo). Quá listenStallLimit thì lượt hỏng, dừng luôn, không chờ trần 1 giờ.
+    readonly property int listenStallLimit: 120
+    property int listenStall: 0
+    property real listenLastPosition: -1
+    property bool listenEnded: false
+    function listenEnd(why) { if (listenEnded) return; listenEnded = true; listenTicks.stop(); Bench.notePlayback("done"); Bench.note(why); Bench.note("done"); Bench.finish() }
+    // Tên sự kiện không được thoát JSON trong bench.cpp: bỏ ngoặc kép, gạch chéo ngược, dấu hai chấm và xuống dòng (như nhãn bài nhạc).
+    function benchText(text) { return String(text || "").replace(/["\\:\n\r]/g, " ") }
     Timer {
         id: listenTicks
         interval: 1000
@@ -141,17 +149,29 @@ Item {
             Bench.notePlayback("tick")
             if (++root.listenTickCount % 30 === 0) Bench.flush()
             // Player không có thuộc tính position cho QML (undefined > 0 là false: kịch bản không bao giờ thoát); vị trí ở Player.clock.
-            root.listenHeard = root.listenHeard || Player.playing && Player.clock.position > 0
-            root.listenIdle = Player.playing || !root.listenHeard ? 0 : root.listenIdle + 1
+            const position = Player.clock.position
+            root.listenHeard = root.listenHeard || Player.playing && position > 0
+            root.listenStall = Player.playing && position === root.listenLastPosition ? root.listenStall + 1 : 0
+            root.listenLastPosition = position
+            if (root.listenStall >= root.listenStallLimit) { root.listenEnd("listen_stalled:" + root.listenStall); return }
+            root.listenIdle = Player.playing ? 0 : root.listenIdle + 1
             if (root.listenIdle > 0) Bench.note("listen_idle:" + root.listenIdle + ":" + (root.listenHeard ? 1 : 0))
-            if (root.listenIdle >= 15) { listenTicks.stop(); Bench.notePlayback("done"); Bench.note("done"); Bench.finish() }
+            if (root.listenHeard && root.listenIdle >= 15) root.listenEnd("listen_finished")
+            // Chưa nghe được tiếng nào mà đã dừng (I4 31-10: chờ trần 1 giờ): cũng là treo.
+            else if (!root.listenHeard && root.listenIdle >= root.listenStallLimit) root.listenEnd("listen_stalled:" + root.listenIdle)
         }
     }
     Connections {
         target: Music
         enabled: root.listenScenario
-        // Tên sự kiện không được thoát JSON trong bench.cpp: chỉ ghi nhãn bài, bỏ ngoặc kép, gạch chéo ngược và dấu hai chấm.
         function onCreditChanged() { Bench.notePlayback("music:" + String(Music.credit && Music.credit.label || "").replace(/["\\:]/g, "")) }
+    }
+    // Lỗi và lời nhắn người nghe thấy: listen_audit coi lượt có lỗi là hỏng. Lỗi làm Player dừng hẳn, nên lượt dừng luôn.
+    Connections {
+        target: Player
+        enabled: root.listenScenario
+        function onErrorChanged() { if (Player.error) { Bench.note("player_error:" + root.benchText(Player.error)); root.listenEnd("listen_failed") } }
+        function onNoticeChanged() { if (Player.notice) Bench.note("player_notice:" + root.benchText(Player.notice)) }
     }
     function runListen() {
         Player.setRate(1.0)
