@@ -11,7 +11,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Nhạc nền
 
-- Nhạc của tôi: mỗi bài có công tắc "Tự chọn" (máy được tự chọn bài này cho các đoạn hay không) thay cho nút đổi chữ; dưới tên bài chỉ còn "Có lời" hay "Chưa phân tích" khi cần biết. Cỡ tải Phân tích nhạc chỉ ghi một lần, trên nút. Máy tính và điện thoại.
+- Nhạc của tôi: mỗi bài có công tắc "Tự chọn" (máy được tự chọn bài này cho các đoạn hay không) thay cho nút đổi chữ; dưới tên bài chỉ còn "Có lời" hay "Chưa phân tích" khi cần biết - trên máy tính (điện thoại không tự chọn nhạc riêng nên chỉ đổi chữ ghi chú). Cỡ tải Phân tích nhạc chỉ ghi một lần, trên nút, ở cả máy tính và điện thoại.
 - Nhạc nền của cuốn: công tắc ghi "Bật" / "Tắt"; đoạn bạn cho im lặng ghi "Im lặng (bạn chọn)" thay vì gạch ngang tên bài; nút "Đổi bài" đứng thẳng một cột. "Mức nhạc nền" và "rõ lời" thay cho chữ dài cũ.
 
 ### Giao diện
