@@ -162,6 +162,19 @@ void Bench::attach(QQuickWindow *window) {
 void Bench::finish() {
     if (!enabled())
         return;
+    write(outPath());
+    QFile::remove(outPath() + QStringLiteral(".partial"));
+    QCoreApplication::quit();
+}
+
+// Bản giữa chừng ra tệp .partial: tools/measure.py coi tệp kết quả xuất hiện là app đã xong.
+void Bench::flush() {
+    if (!enabled())
+        return;
+    write(outPath() + QStringLiteral(".partial"));
+}
+
+void Bench::write(const QString &path) {
     QByteArray json;
     json.reserve(1 << 20);
     const double epochOffset = double(QDateTime::currentMSecsSinceEpoch()) - nowMs();
@@ -184,10 +197,9 @@ void Bench::finish() {
         json += QByteArray::number(g_frames[size_t(i)], 'f', 3);
     }
     json += "]}\n";
-    QFile file(outPath());
+    QFile file(path);
     if (file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
         file.write(json);
         file.close();
     }
-    QCoreApplication::quit();
 }
