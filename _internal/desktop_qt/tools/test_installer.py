@@ -258,7 +258,12 @@ def main() -> int:
                for path in install.rglob("*") if path.is_file()}
         missing = [rel for rel, digest in want.items() if got.get(rel) != digest]
         check(not missing, f"{len(want)} file đúng từng byte (thiếu / khác: {missing[:3]})")
-        user_files = {"uninstall.exe", "Studio/work.txt", "preferences.json", "ABook/cache/qtpipelinecache.bin"}
+        # Mã app chở dạng .py, bộ cài biên dịch tại chỗ (abook.nsi): mỗi .py có đúng một .pyc, trước khi app nào chạy.
+        tag = next((dist / "resources" / "python").glob("python3??.dll")).stem.replace("python", "cpython-")
+        compiled = {rel.rsplit("/", 1)[0] + "/__pycache__/" + rel.rsplit("/", 1)[1][:-3] + f".{tag}.pyc"
+                    for rel in want if rel.startswith("resources/app/abook/") and rel.endswith(".py")}
+        check(compiled and compiled <= set(got), f"{len(compiled)} .pyc biên dịch lúc cài (thiếu {sorted(compiled - set(got))[:3]})")
+        user_files = {"uninstall.exe", "Studio/work.txt", "preferences.json", "ABook/cache/qtpipelinecache.bin"} | compiled
         extra = sorted(rel for rel in set(got) - set(want) - user_files if not rel.startswith("Studio/python/"))
         check(not extra, f"không file thừa, resources cũ đã xoá ({extra[:3]})")
         check((install / "Studio" / "work.txt").exists() and (install / "preferences.json").exists(), "dữ liệu người dùng còn")
