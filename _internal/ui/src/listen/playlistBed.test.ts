@@ -66,15 +66,15 @@ function fakeTimers() {
 
 /** MusicBed giả: ghi lại giây đồng hồ nhạc và trạng thái phát của mỗi lần đồng bộ. */
 function fakeBed(cues: MusicCue[]) {
-  const calls: { seconds: number; playing: boolean; key: string | null }[] = [];
+  const calls: { seconds: number; playing: boolean; key: string | null; quiet: boolean }[] = [];
   return {
     calls,
     setCues(next: MusicCue[]) {
       cues = next;
     },
     onLoadResult: () => () => undefined,
-    sync(seconds: number, playing: boolean) {
-      calls.push({ seconds, playing, key: cues.find((cue) => seconds >= cue.start && seconds < cue.end)?.key ?? null });
+    sync(seconds: number, playing: boolean, _seeked = false, quiet = false) {
+      calls.push({ seconds, playing, key: cues.find((cue) => seconds >= cue.start && seconds < cue.end)?.key ?? null, quiet });
     },
     get last() {
       return calls[calls.length - 1];
@@ -145,6 +145,29 @@ describe("danh sách phát trên đồng hồ nhạc của cuốn", () => {
     const again = new PlaylistClock("sach:calm", storage, time.now);
     expect(again.seconds).toBeCloseTo(stopped, 0);
     expect(new PlaylistClock("sach:khac", storage, time.now).seconds).toBe(0); // danh sách khác: đồng hồ riêng
+  });
+
+  it("giọng im không do người nghe (khựng quá hạn, hết cuốn): đồng hồ đứng ngay, bài mờ ra; giọng chạy lại thì nhạc theo", () => {
+    const cues = playlistCues(tracks);
+    const time = fakeTimers();
+    const bed = fakeBed(cues);
+    const driver = new PlaylistDriver(bed, new PlaylistClock("sach:calm", memory(), time.now), cues, time.timers, time.now);
+    driver.update(true);
+    for (let second = 0; second < 30; second += 1) {
+      time.advance(1000);
+      driver.update(true);
+    }
+    driver.update(false, true);
+    expect(bed.last).toMatchObject({ playing: false, quiet: true }); // MusicBed: bài đang kêu mờ ra, không chờ PAUSE_GRACE_MS rồi dừng phụt
+    const stopped = bed.last.seconds;
+    time.advance(60_000);
+    driver.update(false, true);
+    expect(bed.last.seconds).toBe(stopped);
+    driver.update(true);
+    expect(bed.last).toMatchObject({ playing: true, quiet: false, seconds: stopped });
+    // Đối chứng: dừng thường vẫn chờ PAUSE_GRACE_MS, không mờ.
+    driver.update(false);
+    expect(bed.last).toMatchObject({ playing: true, quiet: false });
   });
 
   it("đồng hồ không nhảy xa khi máy ngủ giữa hai nhịp, và chạy được khi không có chỗ nhớ", () => {

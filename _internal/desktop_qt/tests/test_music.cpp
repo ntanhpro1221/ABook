@@ -136,7 +136,7 @@ struct BookRig {
             auto *voice = new FakeOut;
             voices.append(voice);
             return voice;
-        });
+        }, nullptr, [this] { return clock; });
     }
     QStringList warmed() const {
         const QString prefix = QStringLiteral("/api/music/warm?link=");
@@ -152,6 +152,7 @@ struct BookRig {
     std::unique_ptr<Player> player;
     std::unique_ptr<Music> music;
     QVector<QPointer<FakeOut>> voices;
+    qint64 clock = 0; // đồng hồ đếm giọng khựng của Music
 };
 
 /// Đủ nhịp để một lần mờ `seconds` giây đi hết.
@@ -848,6 +849,70 @@ private slots:
         rig.player->toggle();
         QVERIFY(!rig.player->playing());
         QVERIFY(!rig.voices.last()->isPlaying);
+    }
+
+    void voiceStallCountsOnlyAStillVoiceWhilePlaying() {
+        VoiceStall stall(1000);
+        QVERIFY(!stall.update(0, 5, true));
+        QCOMPARE(stall.remainingMs(400), std::optional<qint64>(600));
+        QVERIFY(!stall.update(999, 5, true));
+        QVERIFY(stall.update(1000, 5, true));
+        QCOMPARE(stall.remainingMs(1000), std::nullopt);
+        QVERIFY(!stall.update(1500, 6, true)); // có tiếng lại: đếm lại
+        QVERIFY(!stall.update(2499, 6, true));
+        QVERIFY(!stall.update(2600, 6, false)); // người nghe dừng
+        QCOMPARE(stall.remainingMs(2600), std::nullopt);
+        QVERIFY(!stall.update(5000, 6, true));
+        // hằng số chung (music_mix.json) dài hơn khe nối dài nhất đo được (8,8 s, docs/MUSIC_RESEARCH.md 01-11)
+        QCOMPARE(VOICE_STALL_SECONDS, readJson(QStringLiteral(MUSIC_MIX_JSON)).value(QLatin1String("voiceStallFadeAfterSeconds")).toDouble());
+        QVERIFY(VOICE_STALL_SECONDS > 8.8);
+    }
+
+    void aVoiceStalledPastTheLimitFadesTheMusicDownAndLetsItBack() {
+        // Mạng hỏng hẳn: trình phát chờ tới HostWait::kStallMs (215 s) - nhạc không được kêu một mình suốt quãng ấy.
+        BookRig rig;
+        rig.player->open(QStringLiteral("a"), -1, -1, true);
+        QCOMPARE(rig.voices.size(), 1);
+        QCoreApplication::processEvents();
+        rig.music->bed()->tick(ticksFor(FADE_SECONDS));
+        const double before = rig.voices[0]->volume;
+        QVERIFY(before > 0);
+        const qint64 limit = qint64(VOICE_STALL_SECONDS * 1000);
+        rig.clock = limit - 500; // khe nối bình thường: không đổi gì
+        emit rig.player->bufferingChanged();
+        rig.music->bed()->tick(2);
+        QCOMPARE(rig.voices[0]->volume, before);
+        QCOMPARE(rig.music->bed()->activeLink(), QStringLiteral("https://x/1"));
+        rig.clock = limit;
+        emit rig.player->bufferingChanged();
+        rig.music->bed()->tick(1);
+        QVERIFY2(rig.voices[0] && rig.voices[0]->isPlaying, "mờ xuống, không tắt phụt");
+        QVERIFY(rig.voices[0]->volume < before);
+        rig.music->bed()->tick(ticksFor(FADE_SECONDS));
+        QVERIFY(!rig.voices[0] || !rig.voices[0]->isPlaying || rig.voices[0]->volume == 0);
+        rig.out.pos = 1; // giọng có tiếng lại
+        emit rig.player->clock()->positionChanged();
+        QCoreApplication::processEvents();
+        rig.music->bed()->tick(2);
+        QCOMPARE(rig.music->bed()->activeLink(), QStringLiteral("https://x/1"));
+        QVERIFY(rig.voices.last()->isPlaying);
+        QVERIFY(rig.voices.last()->volume > 0);
+    }
+
+    void theStallLimitWakesTheSyncWithoutAnyPositionEvent() {
+        // Khựng không đệm (vị trí đứng, không positionChanged, không bufferingChanged): Music tự hẹn một nhịp đúng hạn.
+        BookRig rig;
+        rig.player->open(QStringLiteral("a"), -1, -1, true);
+        QCoreApplication::processEvents();
+        rig.music->bed()->tick(ticksFor(FADE_SECONDS));
+        QVERIFY(!rig.player->buffering());
+        const double before = rig.voices[0]->volume;
+        rig.clock = qint64(VOICE_STALL_SECONDS * 1000) - 50;
+        emit rig.player->volumeChanged(); // một lần đồng bộ: còn 50 ms tới hạn
+        rig.clock += 50;
+        QTest::qWait(300);
+        rig.music->bed()->tick(1);
+        QVERIFY(rig.voices[0]->volume < before);
     }
 
     void switchingOffAsksTheCuesAgain() {

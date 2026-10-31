@@ -22,6 +22,9 @@ class MusicMix(json: JSONObject) {
     val stepRampSeconds = json.getDouble("stepRampSeconds")
     /** Mốc cuối kết muộn nhất ở (độ dài chương - số này) để nhạc mờ xong trước khi giọng hết (music_plan.clamp_to_chapter). */
     val chapterEndFadeSeconds = json.getDouble("chapterEndFadeSeconds")
+    /** Giọng khựng (đang phát mà vị trí đứng yên: đệm, đọc to chờ đoạn kế) lâu hơn chừng này thì nhạc mờ xuống, có tiếng lại thì lên lại ([VoiceStall]).
+     *  Chọn theo khe nối đo thật (docs/MUSIC_RESEARCH.md, 01-11): đọc to Edge chưa có sẵn, 1 giờ, 153 chỗ nối - dài nhất 8,8 s. */
+    val voiceStallMs = millis(json, "voiceStallFadeAfterSeconds")
     /** Bài hết mà còn ít hơn chừng này tới chỗ nhạc đổi thì không nối bài anh em (`music_select.TAIL_MIN_SECONDS`) - lượt chọn nhạc theo cảnh ([SceneChooser]). */
     val tailMinSeconds = json.getDouble("tailMinSeconds")
     /** Hai mảnh liền nhau cùng bài hở nhau ít hơn chừng này thì chung một mốc nhạc (`music_select.CUE_MERGE_GAP_SECONDS`). */

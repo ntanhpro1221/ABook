@@ -10,6 +10,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Sửa lỗi
 
 - Điện thoại: nghe chương phát qua mạng từ máy khác, mỗi lần giọng khựng lại chờ tải thì nhạc theo cảnh không còn tắt phụt rồi vào lại - nhạc chạy tiếp như trên máy tính; chờ quá lâu mà vẫn không có tiếng thì nhạc mới dừng.
+- Mạng hỏng hẳn, giọng đứng chờ mà nhạc nền không còn kêu một mình tới gần bốn phút: giọng khựng quá 10 giây thì nhạc mờ xuống, giọng có tiếng lại thì nhạc lên lại đúng chỗ. Khe nối bình thường (dài nhất đo được 8,8 giây) không bị mờ. Cả máy tính, điện thoại và bản web.
 
 ## [0.4.153] - 2026-11-01
 

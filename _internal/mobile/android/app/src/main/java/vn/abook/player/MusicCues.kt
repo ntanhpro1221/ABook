@@ -25,6 +25,9 @@ object MusicCues {
     /** Hằng số trộn (music_mix.json): [MusicBed.init] nạp từ assets, test JVM nạp từ file. */
     lateinit var mix: MusicMix
 
+    /** [MusicMix.voiceStallMs]; chưa nạp hằng số (MusicBed chưa mở) thì không bao giờ tính là khựng - lúc ấy cũng chưa có nhạc. */
+    fun voiceStallMs(): Long = if (::mix.isInitialized) mix.voiceStallMs else Long.MAX_VALUE
+
     // Bài danh mục luôn .mp3; bài người dùng nhập ("Nhạc của tôi") giữ định dạng của file (music_plan.TRACK_EXTENSIONS).
     private val TRACK = Regex("music/[0-9a-f]{40}\\.(?:mp3|m4a|ogg|opus|flac|wav)")
 

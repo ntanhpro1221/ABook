@@ -11,7 +11,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Hằng số trộn nhạc nền: MỘT file cho máy chủ, web, Android và app này (abook/webui/assets/music_mix.json) -> ABOOK_MIX_* (src/musiclogic.h).
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/../abook/webui/assets/music_mix.json" ABOOK_MIX_JSON)
 foreach(pair fadeSeconds:FADE_SECONDS siblingFadeSeconds:SIBLING_FADE_SECONDS stepRampSeconds:STEP_RAMP_SECONDS
-        loopCrossfadeSeconds:LOOP_CROSSFADE_SECONDS loopMinPeriodSeconds:LOOP_MIN_PERIOD_SECONDS)
+        loopCrossfadeSeconds:LOOP_CROSSFADE_SECONDS loopMinPeriodSeconds:LOOP_MIN_PERIOD_SECONDS voiceStallFadeAfterSeconds:VOICE_STALL_FADE_AFTER_SECONDS)
     string(REPLACE ":" ";" pair "${pair}")
     list(GET pair 0 key)
     list(GET pair 1 name)
