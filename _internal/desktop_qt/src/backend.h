@@ -7,6 +7,7 @@
 #include "librarymodel.h"
 
 #include <QElapsedTimer>
+#include <QTimer>
 #include <QJsonArray>
 #include <QJsonValue>
 #include <QNetworkAccessManager>
@@ -50,6 +51,10 @@ public:
 
     static Backend *instance();
     static Backend *create(QQmlEngine *, QJSEngine *);
+
+    /// Starting longer than this (the host neither says Ready nor exits) is a failure with "Thử lại". Measured 31-10:
+    /// Ready about 0.9 s after spawn; 60 s leaves room for a cold first start (antivirus scanning the runtime). Tests shorten it.
+    static inline int s_startLimitMs = 60'000;
 
     State state() const { return m_state; }
     QString message() const { return m_message; }
@@ -105,5 +110,6 @@ private:
     bool m_libraryLoaded = false;
     QByteArray m_buffer;
     QElapsedTimer m_since;
+    QTimer m_startLimit;
     quint64 m_generation = 0;
 };
