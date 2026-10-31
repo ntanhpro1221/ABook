@@ -1,5 +1,6 @@
 import QtQuick
 import ABook
+import "TextWrap.js" as TextWrap
 
 // Lỗi ngay ở vùng bị ảnh hưởng (InlineError của shared/ui.tsx) - MỌI lỗi tải của app dùng thành phần này: tam giác cảnh báo đỏ 16, câu 14
 // mực phụ, nút ghost nhỏ "Thử lại" (icon xoay lại) đứng ngay sau câu; hẹp thì nút xuống dòng, chữ thẳng mép với câu (-ml-3 của web).
@@ -37,7 +38,7 @@ Collapse {
                 width: Math.min(implicitWidth, row.width)
                 topPadding: (again.implicitHeight - root.line) / 2
                 bottomPadding: topPadding
-                text: root.shownMessage
+                text: TextWrap.pretty(root.shownMessage)
                 color: Theme.text2
                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                 font.pixelSize: Theme.sizeBodySmall

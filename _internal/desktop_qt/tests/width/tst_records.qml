@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "../../qml/TextWrap.js" as TextWrap
 import "ModalLayer.js" as ModalLayer
 import "VisualReady.js" as VisualReady
 import ABook
@@ -148,7 +149,7 @@ Item {
             const chip = findChild(scene(), "recordChip")
             verify(chip.visible)
             compare(chip.Accessible.name, "Hồ sơ nghe: Lần nghe 1")
-            compare(findChild(scene(), "recordChipName").text, "Lần nghe 1")
+            compare(findChild(scene(), "recordChipName").text, TextWrap.pretty("Lần nghe 1"))      // tên vẽ qua text-wrap: pretty (TextWrap.js)
             openMore()
             verify(findChild(scene(), "recordRow.create") === null || !findChild(scene(), "recordRow.create").visible)
             verify(findChild(scene(), "recordRow.delete") === null || !findChild(scene(), "recordRow.delete").visible)

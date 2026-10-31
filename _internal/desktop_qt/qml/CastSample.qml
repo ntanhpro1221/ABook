@@ -50,10 +50,8 @@ Interactive {
         Behavior on opacity { NumberAnimation { duration: root.fade } }
         RotationAnimator on rotation { running: root.loading && Nav.uiVisible && !Theme.reduceMotion; from: 0; to: 360; duration: 1000; loops: Animation.Infinite }
     }
-    Icon {
+    Vu {
         anchors.centerIn: parent
-        name: "audio-lines"
-        size: 16
         color: Theme.accentText
         opacity: root.active && !root.loading ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: root.fade } }

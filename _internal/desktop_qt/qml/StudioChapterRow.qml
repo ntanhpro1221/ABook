@@ -68,7 +68,8 @@ Item {
             font.features: { "tnum": 1 }
             anchors.verticalCenter: parent.verticalCenter
         }
-        Icon { visible: root.current && Player.playing && !(root.playable && root.hot); name: "audio-lines"; size: 16; color: Theme.accentText; anchors.verticalCenter: parent.verticalCenter }
+        Item { visible: root.current && Player.playing && !(root.playable && root.hot); width: 16; height: 16; anchors.verticalCenter: parent.verticalCenter
+               Vu { anchors.centerIn: parent; color: Theme.accent } }
         Icon { visible: root.playable && root.hot; name: root.current && Player.playing ? "pause" : "play"; size: 16; color: Theme.text; anchors.verticalCenter: parent.verticalCenter }
     }
     Column {

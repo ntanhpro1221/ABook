@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "../../qml/TextWrap.js" as TextWrap
 import "VisualReady.js" as VisualReady
 import ABook
 
@@ -134,7 +135,7 @@ Item {
             return all.length ? all[0] : null
         }
         // chữ đang THẤY được (Collapse khép / khối ẩn thì không tính)
-        function hasText(item, value) { return findAll(item, node => typeof node.text === "string" && node.text === value && node.visible).length > 0 }
+        function hasText(item, value) { return findAll(item, node => typeof node.text === "string" && (node.text === value || node.text === TextWrap.pretty(value)) && node.visible).length > 0 }    // chữ vẽ qua text-wrap: pretty (TextWrap.js)
         function overlay(name) { return find(host.Window.window.contentItem, name) }
         function row(page, id) { const found = findAll(page, node => node.voiceId === id); verify(found.length > 0, "no row " + id); return found[0] }
         function last(method, path) {

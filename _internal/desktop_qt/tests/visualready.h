@@ -34,16 +34,17 @@ public:
     }
     // Các dòng Qt đã dàn của một Text (chữ thường / StyledText): hình chữ nhật mực từng dòng trong toạ độ của Text và chữ của
     // dòng ấy - cho máy dò chữ-đè-icon (mực khối chữ nhiều dòng không phải một hình chữ nhật) và máy dò dấu ngăn đầu dòng.
-    // RichText dàn bằng QTextDocument: trả rỗng, máy dò dùng hình bao.
+    // RichText dàn bằng QTextDocument: các dòng của từng khối (đoạn), `block` = số khối (chữ thường: 0, xuống dòng cứng là U+2028).
     Q_INVOKABLE QVariantList lines(QQuickItem *item) const {
         QVariantList out;
         auto *text = qobject_cast<QQuickText *>(item);
         if (!text) return out;
         auto *d = QQuickTextPrivate::get(text);
-        const auto add = [&out](const QTextLine &line, const QString &plain, QPointF at) {
+        const auto add = [&out](const QTextLine &line, const QString &plain, QPointF at, int block) {
             const QRectF ink = line.naturalTextRect().translated(at);
             out << QVariantMap{{QStringLiteral("x"), ink.x()}, {QStringLiteral("y"), ink.y()}, {QStringLiteral("w"), ink.width()},
-                               {QStringLiteral("h"), ink.height()}, {QStringLiteral("text"), plain.mid(line.textStart(), line.textLength())}};
+                               {QStringLiteral("h"), ink.height()}, {QStringLiteral("text"), plain.mid(line.textStart(), line.textLength())},
+                               {QStringLiteral("block"), block}};
         };
         if (d->richText) {
             // RichText lays out in a QTextDocument drawn at the padding: one QTextLayout per block (paragraph)
@@ -51,11 +52,12 @@ public:
             const QPointF padding(text->leftPadding(), text->topPadding());
             for (QTextBlock block = d->extra->doc->begin(); block.isValid(); block = block.next()) {
                 const QTextLayout *layout = block.layout();
-                for (int i = 0; layout && i < layout->lineCount(); ++i) add(layout->lineAt(i), block.text(), padding + layout->position());
+                for (int i = 0; layout && i < layout->lineCount(); ++i)
+                    add(layout->lineAt(i), block.text(), padding + layout->position(), block.blockNumber());
             }
             return out;
         }
-        for (int i = 0; i < d->layout.lineCount(); ++i) add(d->layout.lineAt(i), d->layout.text(), QPointF());
+        for (int i = 0; i < d->layout.lineCount(); ++i) add(d->layout.lineAt(i), d->layout.text(), QPointF(), 0);
         return out;
     }
 };

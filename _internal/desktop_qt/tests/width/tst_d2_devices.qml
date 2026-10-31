@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import "../../qml/TextWrap.js" as TextWrap
 import "VisualReady.js" as VisualReady
 import ABook
 
@@ -87,7 +88,8 @@ Item {
             return null
         }
         function byName(root, name) { return walk(root, i => i.objectName === name) }
-        function byText(root, value) { return walk(root, i => (i.text === value || i.label === value || i.title === value) && i.visible !== false) }
+        // Chữ vẽ qua text-wrap: pretty (TextWrap.js) có NBSP trước từ cuối ngắn
+        function byText(root, value) { return walk(root, i => (i.text === value || i.text === TextWrap.pretty(value) || i.label === value || i.title === value) && i.visible !== false) }
         function texts(root) {
             const out = []
             walk(root, i => { if (i.visible !== false && i.text !== undefined && String(i.text) !== "") out.push(String(i.text)); return false })
@@ -95,7 +97,7 @@ Item {
         }
         function shown(root, value) {
             let found = false
-            walk(root, i => { if (i.text === value) { let ok = true; for (let n = i; n; n = n.parent) if (n.visible === false || (n.height === 0 && n !== i)) { ok = false; break } if (ok) found = true } return false })
+            walk(root, i => { if (i.text === value || i.text === TextWrap.pretty(value)) { let ok = true; for (let n = i; n; n = n.parent) if (n.visible === false || (n.height === 0 && n !== i)) { ok = false; break } if (ok) found = true } return false })
             return found
         }
         function window() { return host.Window.window.contentItem }

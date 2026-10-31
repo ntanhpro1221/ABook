@@ -42,10 +42,11 @@ Interactive {
         x: Theme.s12
         width: 20
         height: parent.height
+        Vu { anchors.centerIn: parent; visible: root.current; color: Theme.accent }
         Icon {
             anchors.centerIn: parent
-            visible: root.current || root.done
-            name: root.current ? "audio-lines" : "check"
+            visible: !root.current && root.done
+            name: "check"
             Accessible.name: root.done ? "Đã nghe" : ""
             size: 16
             color: root.current ? Theme.accentText : Theme.success
