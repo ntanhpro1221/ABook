@@ -1,4 +1,4 @@
-"""Danh sách "việc nặng" (hạn 100 s không byte nào về thay vì 30 s) giống từng chữ ở web, Qt và điện thoại, và mỗi mục là một đường POST có thật.
+"""Danh sách "việc nặng" (hạn 100 s không byte nào về thay vì 30 s) giống từng chữ ở web, Qt và điện thoại, và mỗi mục là một đường có thật của máy chủ.
 
 Máy chủ làm xong cả việc rồi mới trả lời (quét nguồn, tách chương, tạo sách...), nên hạn 30 s chung sẽ cắt nhầm rồi gửi lại việc ấy.
 Một bản thiếu mục là bản đó cắt nhầm; một mục không còn là đường của máy chủ là danh sách đã cũ.
@@ -26,11 +26,14 @@ def long_work(path: Path) -> list[str]:
     return re.findall(r'"([^"]+)"', found.group(1))
 
 
-def test_the_web_list_names_only_real_post_routes():
-    posts = [pattern for method, pattern, _handler in server.ROUTES if method == "POST"]
+def test_the_web_list_names_only_real_routes():
+    # Đường của máy chủ Studio (server.ROUTES) hay của cổng đồng bộ (sync.py khớp `/sync/v1/books/<mã>/...` bằng một biểu thức).
+    sync = re.search(r're\.fullmatch\(r"(/sync/v1/books/[^"]+)"', (ROOT / "abook" / "webui" / "sync.py").read_text(encoding="utf-8"))
+    assert sync, "sync.py: không thấy biểu thức đường sách của cổng đồng bộ"
+    routes = [pattern for _method, pattern, _handler in server.ROUTES] + [re.compile(sync.group(1))]
     for entry in long_work(WEB):
         sample = entry.replace("*", "abc")
-        assert any(pattern.fullmatch(sample) for pattern in posts), f"{entry}: không phải đường POST của máy chủ"
+        assert any(pattern.fullmatch(sample) for pattern in routes), f"{entry}: không phải đường của máy chủ"
 
 
 @pytest.mark.parametrize("other", [QT, PHONE], ids=["qt", "phone"])

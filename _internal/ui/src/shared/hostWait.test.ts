@@ -35,6 +35,9 @@ describe("chính sách chờ chung", () => {
       "/api/books/abc/voice/preview",
       "/api/books/abc/pronunciation/preview",
       "/api/books/abc/music/rebuild",
+      "/api/books/abc/music",
+      "/api/books/abc/edits/fold",
+      "/sync/v1/books/abc/edits",
       "/api/scan",
       "/api/sources/split",
       "/api/first-person",
@@ -52,6 +55,8 @@ describe("chính sách chờ chung", () => {
       "/api/books/a/b/voice/preview",
       "/api/scanx",
       "/api/cast/scan",
+      "/api/books/abc/music/track",
+      "/sync/v1/books/abc/manifest",
       "/api/listen/library",
     ]) {
       expect(isLongWork(other), other).toBe(false);
