@@ -76,9 +76,7 @@ WindowLayer {
         scale: Theme.reduceMotion ? 1 : 0.96 + 0.04 * root.shown
         opacity: root.shown
 
-        // Bóng lớp nổi (DESIGN 5.5) như Popover
-        Rectangle { anchors.fill: parent; anchors.margins: -12; radius: Theme.radiusSheet + 12; color: "#000000"; opacity: 0.05 }
-        Rectangle { anchors.fill: parent; anchors.margins: -4; anchors.topMargin: -2; anchors.bottomMargin: -8; radius: Theme.radiusSheet + 4; color: "#000000"; opacity: 0.08 }
+        Shadow { radius: Theme.radiusSheet }      // bóng chung của lớp nổi (DESIGN 5.5)
         Rectangle { anchors.fill: parent; radius: Theme.radiusSheet; color: Theme.panel; border.width: 1; border.color: Theme.line }
         MouseArea { anchors.fill: parent }      // bấm trong hộp không đóng
 

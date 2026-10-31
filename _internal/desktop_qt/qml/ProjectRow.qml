@@ -143,7 +143,7 @@ Item {
                     const needs = Logic.rowNeeds(root.book)
                     const detail = Logic.rowDetail(root.book)
                     // Sách "Hoàn tất" mà còn việc của mình: nói ngay trên dòng
-                    return root.done && needs.length ? detail + "<font color=\"" + Theme.warning + "\"><b> · " + needs.join(" · ") + "</b></font>" : detail
+                    return root.done && needs.length ? detail + "<font color=\"" + Theme.warning + "\"><b>&nbsp;· " + needs.join("&nbsp;· ") + "</b></font>" : detail
                 }
             }
         }

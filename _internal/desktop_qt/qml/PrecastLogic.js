@@ -62,7 +62,7 @@ function stepCounts(castCards, nameCards, lineCards, people) {
     }
 }
 function castIntro(people) { return "Nghe và chỉnh giọng cho " + people + " nhân vật nói nhiều nhất." }
-function doubtLine(count) { return "· " + count + " việc về người và giọng" }
+function doubtLine(count) { return count + " việc về người và giọng" }   // mảnh sau "Máy chưa chắc" (FlowDetail thêm dấu ngăn)
 function namesIntro(count) {
     return count ? "Nghe và sửa " + count + " cách đọc tên, tên kém chắc ở trên." : "Xem và sửa cách đọc từng tên ở danh sách dưới."
 }

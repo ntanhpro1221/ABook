@@ -41,7 +41,7 @@ function heardLine(item) {
     return "Máy nghe ra: “" + item.heard + "”"
 }
 function showsHeard(item) { return !!item.heard && !sameText(item.heard, item.text) }
-function similarityText(item) { return item.similarity === null || item.similarity === undefined ? "" : " · " + matchShort(Studio.formatPercent(item.similarity)) }
+function similarityText(item) { return item.similarity === null || item.similarity === undefined ? "" : "\u00a0· " + matchShort(Studio.formatPercent(item.similarity)) }
 function pendingSpokenLine(item, note) {
     return (item.pendingSpoken ? "Sẽ đọc là “" + item.pendingSpoken + "”" : "Sẽ đọc lại đúng chữ sách") + " - " + note + "."
 }
@@ -56,15 +56,15 @@ function emptyText(filter, unrecorded) {
 }
 function minorCount(counts) { return ((counts && counts.name) || 0) + ((counts && counts.text) || 0) }
 function redoLine(count) { return count + " chương chờ thu lại; sửa chữ ở Kịch bản." }
-function loadMoreText(remaining, busy) { return busy ? "Đang tải…" : "Tải tiếp · còn " + (remaining || 0) + " câu" }
+function loadMoreText(remaining, busy) { return busy ? "Đang tải…" : "Tải tiếp\u00a0· còn " + (remaining || 0) + " câu" }
 function spokenSaved(count) { return count > 1 ? "Đã ghi cách đọc cho " + count + " câu" : "Đã ghi cách đọc câu này" }
 
 // ---- previewText.ts ----
 function tryNote(state) {
     if (state.pending) return "Máy đang đọc thử - lần đầu có thể mất vài chục giây"
     if (state.refusal) return state.refusal
-    if (state.playing && state.caption) return "Đang phát · " + state.caption
-    if (state.caption) return "Đã nghe xong - bấm “Nghe thử” để nghe lại · " + state.caption
+    if (state.playing && state.caption) return "Đang phát\u00a0· " + state.caption
+    if (state.caption) return "Đã nghe xong - bấm “Nghe thử” để nghe lại\u00a0· " + state.caption
     if (state.bookBusy) return "Đang làm sách; bạn thử lại khi xong."
     return null
 }

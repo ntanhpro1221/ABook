@@ -287,7 +287,7 @@ Item {
             // bộ lọc như web, có số chỗ nghi
             verify(hasText(page, "Cả chương"))
             verify(hasText(page, "Chỉ lời nói"))
-            verify(hasText(page, "Máy nghi · 2"))
+            verify(hasText(page, "Máy nghi\u00a0· 2"))
             // câu nghi có lời nghi + nút gán theo gợi ý
             verify(hasText(page, "Máy nghi câu này là của người khác."))
             verify(has(page, "hintAssign"))
@@ -514,7 +514,7 @@ Item {
             tryVerify(function() { return has(panel, "speakerNew_female") })
             one(panel, "speakerNew_female").clicked()
             tryVerify(function() { return has(panel, "deliveryPicked") })
-            compare(one(panel, "deliveryPicked").text, "Bà Tư · người mới")
+            compare(one(panel, "deliveryPicked").text, "Bà Tư\u00a0· người mới")
             compare(one(panel, "deliverySave").text, "Lưu cho câu này")
             noCut(panel)
             both("delivery", page)

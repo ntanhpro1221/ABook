@@ -393,7 +393,7 @@ Item {
             compare(sent[0].body.preset, "hoai-my")
             compare(DesktopApi.previews[0], "/media/previews/p1.wav")
             compare(Clip.current, "voice-try-/media/previews/p1.wav")
-            compare(findChild(dlg, "voiceTryNote").text, "Lúc thu thật sẽ nghe gần như vậy · câu “Anh đi đâu thế?” · giọng Hoài My")
+            compare(findChild(dlg, "voiceTryNote").text, "Lúc thu thật sẽ nghe gần như vậy\u00a0· câu “Anh đi đâu thế?”\u00a0· giọng Hoài My")
             tryVerify(function() { return findChild(dlg, "voiceTryNote").visible })
             // Bấm lại lúc đang phát thì dừng; bấm nữa thì phát lại bản đã nghe, không hỏi máy chủ lần hai
             button.requested()

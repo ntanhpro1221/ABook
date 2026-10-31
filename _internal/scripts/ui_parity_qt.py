@@ -135,7 +135,8 @@ SCREENS: list[tuple[str, tuple[str, ...], tuple[tuple[str, tuple[str, ...] | Non
      (("desktop/Shell.tsx", ("TITLES", "Shell")), ("shared/title.ts", None))),
     ("Chung", ("Button.qml", "IconButton.qml", "MenuRow.qml", "ScreenHeader.qml", "ScreenStack.qml", "Interactive.qml", "Icon.qml",
                "Scrollbar.qml", "SmoothWheel.qml", "Nav.qml", "ClockUser.qml", "Modal.qml", "Api.qml", "Collapse.qml",
-               "FormField.qml", "FormLabel.qml", "HintText.qml", "SettingsItem.qml", "Switch.qml", "ScrollEdges.qml", "Toast.qml"),
+               "FormField.qml", "FormLabel.qml", "HintText.qml", "SettingsItem.qml", "Switch.qml", "ScrollEdges.qml", "Toast.qml",
+               "InlineError.qml", "FlowDetail.qml", "LineIcon.qml", "Shadow.qml", "CoverButton.qml"),
      (("shared/ScreenHeader.tsx", None), ("shared/ui.tsx", None), ("desktop/App.tsx", ("App",)))),
 ]
 

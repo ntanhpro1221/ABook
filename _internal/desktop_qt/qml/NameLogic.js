@@ -26,7 +26,7 @@ function single(typed) { return /^\S{1,80}$/.test(typed) }
 function freshItem(surface) { return {surface: surface, spoken: "", byListener: false, lines: 0, requested: null, example: null} }
 function countedNames(items) { return items.filter(function(item) { return item.lines > 0 }).length }
 function heading(analyzed, counted) {
-    return "· " + (analyzed ? Studio.formatNumber(counted) + " tên trong phần này" : "chưa phân tích - tên hiện ra sau bước ấy")
+    return (analyzed ? Studio.formatNumber(counted) + " tên trong phần này" : "chưa phân tích - tên hiện ra sau bước ấy")
 }
 var INTRO = "Nghe và sửa cách đọc tên; câu đã thu có tên ấy sẽ thu lại."
 function noMatch(typed) { return "Không khớp “" + typed + "”; dùng “Thêm cách đọc” cho một từ khác." }
@@ -38,10 +38,10 @@ function rowStatus(item, analyzed, fresh, reach, shared) {
     let base
     if (fresh) base = reach ? reachSummary(reach) : "Không có trong danh sách - máy đọc theo chữ"
     else if (!analyzed && !item.lines) base = "chưa phân tích tới"
-    else base = Studio.formatNumber(item.lines) + " câu · " + (item.never ? "máy không dùng được cách đọc này (ký hiệu)" : item.byListener ? "đã chọn" : item.spoken ? "máy đoán" : "chưa có trong sách")
-    return base + (shared ? " · dùng chung" : "")
+    else base = Studio.formatNumber(item.lines) + " câu\u00a0· " + (item.never ? "máy không dùng được cách đọc này (ký hiệu)" : item.byListener ? "đã chọn" : item.spoken ? "máy đoán" : "chưa có trong sách")
+    return base + (shared ? "\u00a0· dùng chung" : "")
 }
-function waitingPart(item) { return item.requested ? " · chờ áp dụng: “" + item.requested + "”" : "" }
+function waitingPart(item) { return item.requested ? "\u00a0· chờ áp dụng: “" + item.requested + "”" : "" }
 function editLabel(item, fresh) { return (fresh ? "Thêm" : "Sửa") + " cách đọc " + item.surface }
 function sampleLabel(item) { return "Nghe câu có " + item.surface + ": " + item.example.text }
 function addLabel(item, fresh) { return fresh ? "Đọc “" + item.surface + "”" : "Sửa" }
@@ -50,7 +50,7 @@ function addLabel(item, fresh) { return fresh ? "Đọc “" + item.surface + "�
 function where(reach) {
     const named = reach.chapters.slice(0, 3).map(function(chapter) { return chapter.title || "chương " + chapter.chapterId })
     const more = reach.chapters.length - named.length
-    return named.length ? " · ở " + named.join(", ") + (more > 0 ? " và " + more + " chương nữa" : "") : ""
+    return named.length ? "\u00a0· ở " + named.join(", ") + (more > 0 ? " và " + more + " chương nữa" : "") : ""
 }
 function neverText(surface) {
     return "Máy đọc ký hiệu trong “" + surface + "” thành một chỗ ngừng trước khi tra cách đọc, nên cách đọc cho chữ này không bao giờ được dùng. Muốn đọc khác, sửa “Chữ đem đọc” của từng câu có chữ ấy."
@@ -60,7 +60,7 @@ function reachSummary(reach, later) {
     if (!reach.lines) return "Chưa có câu nào có chữ này - cách đọc sẽ được dùng khi chữ xuất hiện."
     const cost = reach.recorded ? reach.recorded + " câu đã thu sẽ được thu lại" + (later ? " " + later : "") : "chưa thu câu nào nên không phải thu lại"
     const blocked = reach.blocked ? " (" + reach.blocked + " câu khác không dùng được vì ký hiệu)" : ""
-    return reach.reached + " câu có chữ này · " + cost + where(reach) + blocked
+    return reach.reached + " câu có chữ này\u00a0· " + cost + where(reach) + blocked
 }
 
 // ---- Lưu một cách đọc (EditReading) ----
@@ -99,7 +99,7 @@ function describePush(push) {
     if (push.requests) parts.push(push.requests + " việc đã thành yêu cầu")
     if (push.waiting) parts.push(push.waiting + " việc đang chờ duyệt")
     if (push.skipped) parts.push(push.skipped + " không còn chỗ trong sách (bỏ qua)")
-    return push.name + " · " + Studio.formatWhen(push.at) + ": " + (parts.join(", ") || "không có gì mới")
+    return push.name + "\u00a0· " + Studio.formatWhen(push.at) + ": " + (parts.join(", ") || "không có gì mới")
 }
 function applyNote(skipped, held, dropped) {
     const names = dropped || []

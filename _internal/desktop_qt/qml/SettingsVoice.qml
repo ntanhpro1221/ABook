@@ -115,26 +115,11 @@ Column {
                         width: parent.width
                         gap: 20
                         show: root.loadError !== ""
-                        Item {
+                        InlineError {
+                            objectName: "voiceLoadError"
                             width: parent.width
-                            height: errorFlow.height + 24
-                            Icon { name: "triangle-alert"; size: 16; color: Theme.danger; x: 0; y: 12 + (Theme.buttonHeight - 16) / 2 }
-                            VoiceFlex {
-                                id: errorFlow
-                                x: 28
-                                y: 12
-                                width: parent.width - 28
-                                spacing: 0
-                                Text {
-                                    objectName: "voiceLoadError"
-                                    text: VoiceLogic.LOAD_ERROR
-                                    color: Theme.text2
-                                    wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                                    font.pixelSize: Theme.sizeBodySmall
-                                    rightPadding: 12
-                                }
-                                Button { objectName: "voiceLoadRetry"; text: "Thử lại"; icon: "rotate-cw"; size: "sm"; kind: "text"; onClicked: root.load() }
-                            }
+                            message: VoiceLogic.LOAD_ERROR
+                            onRetry: root.load()
                         }
                     }
 
@@ -202,8 +187,8 @@ Column {
                                 width: parent.width
                                 storageKey: "voice.provider." + groupBlock.modelData.provider
                                 title: groupBlock.modelData.title
-                                summary: (groupBlock.modelData.detail ? groupBlock.modelData.detail + " · " : "") + groupBlock.list.length + " giọng"
-                                         + (root.current && root.current.provider === groupBlock.modelData.provider ? " · đang dùng" : "")
+                                summary: (groupBlock.modelData.detail ? groupBlock.modelData.detail + "\u00a0· " : "") + groupBlock.list.length + " giọng"
+                                         + (root.current && root.current.provider === groupBlock.modelData.provider ? "\u00a0· đang dùng" : "")
                                 // Chưa có giọng nào của nhóm (máy chưa cài giọng tiếng Việt của hệ điều hành)
                                 VoiceNote { width: parent.width; gap: 0; text: groupBlock.list.length === 0 ? VoiceLogic.DEVICE_HINT : ""; px: 13 }
                                 Column {

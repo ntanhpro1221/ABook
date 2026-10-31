@@ -59,7 +59,7 @@ Collapse {
                     Text { width: parent.width; text: root.device.name || ""; color: Theme.text; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
                     Text {
                         width: parent.width
-                        text: "Kết nối lần cuối " + Logic.formatRelative(root.device.lastSeen, root.clock) + " · ghép ngày " + Logic.formatDate(root.device.pairedAt)
+                        text: "Kết nối lần cuối " + Logic.formatRelative(root.device.lastSeen, root.clock) + "\u00a0· ghép ngày " + Logic.formatDate(root.device.pairedAt)
                         color: Theme.text2
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                         font.pixelSize: Theme.sizeCaption
