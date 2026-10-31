@@ -50,6 +50,8 @@ Music::Music(Player *player, PlayerNet *net, std::function<AudioOut *()> make, Q
     connect(m_player, &Player::bookChanged, this, &Music::onBook);
     connect(m_player, &Player::chapterChanged, this, &Music::onChapter);
     connect(m_player, &Player::playingChanged, this, [this] {
+        // Dừng vì tự hết chương: giữ tới lúc giọng chạy lại (khe nạp chương kế có thể dài) để nhạc không bị dừng phụt giữa lúc mờ ra.
+        m_voiceEnded = !m_player->playing() && m_player->ended();
         updateTicking();
         sync();
     });
@@ -256,7 +258,7 @@ void Music::sync() {
         m_volume = volume;
         m_bed.setVolume(volume);
     }
-    m_bed.sync(now, m_player->playing(), seeked);
+    m_bed.sync(now, m_player->playing(), seeked, m_voiceEnded);
     const int next = PlayerLogic::availableAfter(m_player->book().chapters, m_player->chapterId(), 1);
     m_nextWarm.update(key, next >= 0 ? std::optional<int>(next) : std::nullopt, m_player->duration() - now);
     m_last = now;

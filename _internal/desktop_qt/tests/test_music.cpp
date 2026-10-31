@@ -478,6 +478,38 @@ private slots:
         QVERIFY(rig.made[1]->isPlaying);
     }
 
+    void voiceEndingByItselfFadesTheMusicOut() {
+        // 01-11 (audio_sink trên 0.4.152): hết chương tự sang chương kế, nhạc rơi -30 -> -91 dB trong 6 ms vì bed dừng cùng giọng.
+        // Giọng tự hết: bài đang kêu mờ ra trong FADE_SECONDS rồi được nhả; người nghe bấm dừng vẫn dừng ngay.
+        Rig rig;
+        rig.bed->setCues({plain(0, 120, QStringLiteral("a")), plain(180, 300, QStringLiteral("b"))}, -20);
+        rig.bed->sync(10, true);
+        rig.settle();
+        rig.bed->tick(ticksFor(FADE_SECONDS));
+        rig.bed->sync(200, true); // "a" đang mờ ra, "b" đang mờ vào
+        rig.settle();
+        rig.bed->tick(3);
+        const double a = rig.made[0]->volume, b = rig.made[1]->volume;
+        rig.bed->sync(240, false, false, true);
+        QCOMPARE(rig.playing(), 2);
+        QCOMPARE(rig.bed->activeLink(), QString());
+        rig.bed->tick(1);
+        QVERIFY(rig.made[0]->volume < a && rig.made[1]->volume < b && rig.made[1]->volume > 0);
+        rig.bed->sync(240, false, false, true); // các lần đồng bộ sau trong lúc chờ chương kế: không dừng
+        QCOMPARE(rig.playing(), 2);
+        rig.bed->tick(ticksFor(FADE_SECONDS));
+        rig.settle();
+        QCOMPARE(rig.alive(), 0);
+
+        Rig paused;
+        paused.bed->setCues({plain(0, 120, QStringLiteral("a"))}, -20);
+        paused.bed->sync(10, true);
+        paused.settle();
+        paused.bed->sync(10, false);
+        QCOMPARE(paused.playing(), 0);
+        QCOMPARE(paused.bed->activeLink(), QStringLiteral("a"));
+    }
+
     void volumeFollowsCueGainAndUserVolume() {
         Rig rig;
         rig.bed->setCues({plain(0, 120, QStringLiteral("a"), -10), plain(120, 240, QStringLiteral("b"))}, -20);
@@ -792,6 +824,30 @@ private slots:
         rig.player->close();
         QCOMPARE(rig.music->bed()->activeLink(), QString());
         QVERIFY(!rig.music->hasMusic());
+    }
+
+    void chapterEndHandsTheMusicOverWithoutACut() {
+        // Hết chương 1 tự sang chương 2: bài chương 1 vẫn kêu và mờ dần trong lúc bài chương 2 vào, không bị dừng phụt cùng giọng.
+        BookRig rig;
+        rig.player->open(QStringLiteral("a"), -1, -1, true);
+        QCOMPARE(rig.voices.size(), 1);
+        QCoreApplication::processEvents(); // bài đã kêu (sự kiện xếp hàng) thì mới mờ vào
+        rig.music->bed()->tick(ticksFor(FADE_SECONDS));
+        const double before = rig.voices[0]->volume;
+        QVERIFY(before > 0);
+        rig.out.finish();
+        QCOMPARE(rig.player->chapterId(), 2);
+        QVERIFY(rig.player->playing());
+        QCOMPARE(rig.music->bed()->activeLink(), QStringLiteral("https://x/2"));
+        QVERIFY2(rig.voices[0] && rig.voices[0]->isPlaying, "bài chương 1 không dừng cùng giọng");
+        QCoreApplication::processEvents();
+        rig.music->bed()->tick(1);
+        QVERIFY(rig.voices[0]->volume < before && rig.voices[0]->volume > 0);
+        QVERIFY(rig.voices.last()->isPlaying);
+        // người nghe bấm dừng: dừng ngay như cũ
+        rig.player->toggle();
+        QVERIFY(!rig.player->playing());
+        QVERIFY(!rig.voices.last()->isPlaying);
     }
 
     void switchingOffAsksTheCuesAgain() {

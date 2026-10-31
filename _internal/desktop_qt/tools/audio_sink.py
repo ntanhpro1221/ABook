@@ -9,6 +9,8 @@ bốn tốc độ, tua xa, lùi, hết chương tự sang chương sau, bấm ch
   trôi    vị trí app báo so với đồng hồ (sai số tích luỹ từng đoạn) và tiếng nghe thấy so với vị trí app báo (khớp dạng sóng)
   mức     tiếng ra so với nguồn ở cùng đoạn nội dung, theo từng tốc độ
   rò      còn tiếng sau lúc dừng
+  đột im  đang có tiếng mà tắt phụt (> -45 dB xuống < -70 dB trong 20 ms) không do thao tác nào, ở chỗ nguồn không tự tắt
+          (01-11: hết chương tự sang chương sau, nhạc dừng cùng giọng - 0.4.152 rơi -30 -> -91 dB trong 6 ms)
 
   python -X utf8 tools/audio_sink.py run <label> [--exe dist/ABookDesk.exe]
   python -X utf8 tools/audio_sink.py analyze <thư_mục_lượt>
@@ -57,6 +59,10 @@ TREND_SPAN_S = 10.0     # ... chỉ đo trên đoạn dài ít nhất chừng n�
 OFFSET_MEDIAN_MS = 40.0 # tiếng nghe thấy đi trước / sau vị trí app báo quá chừng này = đọc-theo lệch thấy được (tua mất khối: 171)
 MATCH_SCORE = 0.9      # khớp dạng sóng dưới mức này là khớp nhầm chu kỳ cao độ khác, bỏ
 DROPOUT_SLACK_S = 0.06  # mất giọng: so với chỗ nguồn im nhất trong ±chừng này (giây người nghe) quanh vị trí báo
+CUT_FROM_DB = -45.0     # đột im: bao 5 ms đang trên mức này (nhạc dưới giọng ở cuốn thử ~ -36 dB) ...
+CUT_TO_DB = -70.0       # ... rồi trong CUT_WITHIN_S xuống dưới mức này
+CUT_WITHIN_S = 0.02
+CUT_ACTION_S = 0.5      # sau một thao tác (dừng, tua, sang chương, đổi tốc độ...) chừng này giây thì im phụt là do người dùng
 
 
 # ---------- đọc ----------
@@ -317,6 +323,30 @@ def check(data, snippets=None):
                 excused.append(dict(t=round(f / rate, 3), source=round((lo + int(np.argmax(source_d2[lo:hi]))) / rate, 3)))
                 continue
         snip("click", f, "")
+    # 4b. Đột im: tiếng ra tắt phụt giữa lúc phát mà không do thao tác nào. Nguồn giọng tự tắt phụt ở cùng chỗ (TTS cắt cứng
+    # cuối câu, khi không có nhạc) thì là của nguồn. Không suy được vị trí (xa mọi tick hơn 1 s) thì không tha.
+    cut_hop = int(0.005 * rate)
+    cut_db, source_cut_db = frame_db(mono, cut_hop), frame_db(source, cut_hop)
+    reach = int(CUT_WITHIN_S * rate) // cut_hop
+    actions = [e["frame"] for e in events]
+    last_cut = -rate
+    for k in np.flatnonzero(cut_db[:-reach] > CUT_FROM_DB).tolist():
+        f = k * cut_hop
+        if f - last_cut < CUT_ACTION_S * rate or cut_db[k + 1: k + 1 + reach].min() >= CUT_TO_DB or not in_sound(f):
+            continue
+        if any(a - (reach + 1) * cut_hop <= f <= a + CUT_ACTION_S * rate for a in actions):  # khung đứng trước chỗ rơi: sớm hơn thao tác tới 20 ms
+            continue
+        near = min(pairs, key=lambda ab: min(abs(ab[0]["frame"] - f), abs(ab[1]["frame"] - f)), default=None)
+        if near is not None and min(abs(near[0]["frame"] - f), abs(near[1]["frame"] - f)) <= rate:
+            a, b = near
+            pace = max(0.5, (b["position"] - a["position"]) * rate / (b["frame"] - a["frame"]))
+            j = int((a["position"] + (f - a["frame"]) / rate * pace) * rate) // cut_hop
+            w = int((DROPOUT_SLACK_S * pace) * rate) // cut_hop + reach
+            if 0 <= j - w and j + w < len(source_cut_db) and source_cut_db[j - w: j + 1].max() > CUT_FROM_DB and source_cut_db[j: j + w + 1].min() < CUT_TO_DB:
+                continue
+        last_cut = f
+        f = (k + 1 + int(np.argmax(cut_db[k + 1: k + 1 + reach] < CUT_TO_DB))) * cut_hop  # báo đúng khung đã im
+        snip("cut", f, f"{cut_db[k]:.1f} dB -> {cut_db[k + 1: k + 1 + reach].min():.1f} dB trong {CUT_WITHIN_S * 1000:.0f} ms, không thao tác nào")
     # 5. Rò tiếng lúc phải im
     for a, b in quiet:
         if b - a > 0:
@@ -457,13 +487,15 @@ def run(label, exe):
 
 STRENGTH_DRIFTS = (0.003, -0.003, 0.005, -0.005)
 STRENGTH_STEP = 0.05
+STRENGTH_CUT_S = 0.3
 
 
 def strength(data, base=None):
     """Lượt phải xanh, và từng lỗi cấy vào nó phải đỏ đúng loại, đúng chỗ:
     - trôi ±0,3 % / ±0,5 % từ giữa đoạn: ở mọi đoạn mà phần cấy (thời gian người nghe) vượt DRIFT_MS + răng cưa sạch của
       chính đoạn ấy, tức là chắc chắn phải thấy; phải có ít nhất một đoạn như thế;
-    - bậc 0,05 kéo 10 ms giữa một đoạn tốc độ >= 2,5 và một đoạn tốc độ 1, xa tiếng tách của nguồn và chỗ nguồn nhọn.
+    - bậc 0,05 kéo 10 ms giữa một đoạn tốc độ >= 2,5 và một đoạn tốc độ 1, xa tiếng tách của nguồn và chỗ nguồn nhọn;
+    - đột im: 0,3 s số 0 giữa một đoạn tốc độ 1, chỗ tiếng ra đang có tiếng và nguồn không tự tắt.
     Trả (ok, kết quả từng phép)."""
     rate = data["rate"]
     base = base or check(data)
@@ -509,6 +541,26 @@ def strength(data, base=None):
         got = check(dict(data, mono=mono))
         results.append(dict(case=f"tách {name} @{at / rate:.3f}s",
                             ok=any(f["kind"] == "click" and abs(f["t"] * rate - at) < 0.001 * rate for f in got["findings"])))
+    hop = int(0.005 * rate)
+    sink_db, source_db = frame_db(data["mono"], hop), frame_db(source, hop)
+    at = None
+    for s in sorted((s for s in segments if s["speed"] == 1.0), key=lambda s: s["first"] - s["last"]):
+        ticks = [m for m in data["marks"] if m["tag"] == "tick" and s["first"] <= m["frame"] <= s["last"]]
+        for a, b in zip(ticks, ticks[1:]):
+            f = (a["frame"] + b["frame"]) // 2 // hop * hop
+            p = int((a["position"] + b["position"]) / 2 * rate)
+            if sink_db[f // hop - 1] > CUT_FROM_DB + 3 and source_db[(p - int(0.1 * rate)) // hop: (p + int(STRENGTH_CUT_S * rate)) // hop].min() > CUT_TO_DB:
+                at = f
+                break
+        if at is not None:
+            break
+    if at is None:
+        results.append(dict(case="đột im", ok=False, note="không tìm được chỗ cấy"))
+    else:
+        mono = data["mono"].copy()
+        mono[at: at + int(STRENGTH_CUT_S * rate)] = 0
+        got = check(dict(data, mono=mono))
+        results.append(dict(case=f"đột im @{at / rate:.3f}s", ok=any(f["kind"] == "cut" and abs(f["t"] * rate - at) < 0.02 * rate for f in got["findings"])))
     return all(r["ok"] for r in results), results
 
 
@@ -547,11 +599,12 @@ def voice_and_music(n, rate=RATE, seed=7):
     return speech + music, music
 
 
-def synthetic_run(speed=1.0, saw_ms=10.0, drift=0.0, lead_ms=0.0, source_step_at=None, rate=RATE):
+def synthetic_run(speed=1.0, saw_ms=10.0, drift=0.0, lead_ms=0.0, source_step_at=None, source_quiet_at=None, rate=RATE):
     """Một lượt giả cho check() theo hình kịch bản: play 0,5 s, pause 2 s, resume 2,5 s, rate:1 3 s, rate:<speed> 25,5 s,
     stop 48 s. Tiếng ra là nguồn đọc theo vị trí thật (như Sonic chép nguyên mẫu), đi trước vị trí báo lead_ms (người nghe).
     Tick 0,25 s báo vị trí trễ răng cưa 0..saw_ms (chu kỳ 2,5 s, như con trỏ nghe theo padding). drift: trôi thêm từ giữa
-    đoạn cuối. source_step_at: bậc 0,05 trong nguồn ở giây nguồn ấy (tiếng bật của bản ghi)."""
+    đoạn cuối. source_step_at: bậc 0,05 trong nguồn ở giây nguồn ấy (tiếng bật của bản ghi). source_quiet_at: nguồn im tuyệt đối
+    0,3 s từ giây nguồn ấy (TTS cắt cứng cuối câu, không nhạc)."""
     play, pause, resume, normal, change, stop, end = 0.5, 2.0, 2.5, 3.0, 25.5, 48.0, 49.0
     middle = (change + stop) / 2
 
@@ -575,6 +628,8 @@ def synthetic_run(speed=1.0, saw_ms=10.0, drift=0.0, lead_ms=0.0, source_step_at
     if source_step_at is not None:  # đặt bậc giữa một khúc được chép, như chu kỳ chứa tiếng bật mà Sonic giữ lại
         j = int(np.argmin(np.abs(starts - source_step_at * rate)))
         source[starts[j] + ramp + hop // 2:] += STRENGTH_STEP
+    if source_quiet_at is not None:
+        source[int(source_quiet_at * rate): int((source_quiet_at + STRENGTH_CUT_S) * rate)] = 0
     window = np.ones(hop + ramp, np.float32)
     window[:ramp], window[hop:] = np.linspace(0, 1, ramp), np.linspace(1, 0, ramp)
     mono = np.zeros(len(starts) * hop + ramp, np.float32)
@@ -646,15 +701,25 @@ def selftest():
     expect("tách nguồn x3: tiếng ra có tách", any(abs(k - 37.3 * rate) < 0.1 * rate for k in clicks(fast["mono"], rate)))
     expect("tách nguồn x3 lệch 22 ms: không tách", "click" not in kinds(fast))
     expect("tách nguồn x1 lệch 66 ms: tách", "click" in kinds(synthetic_run(1.0, lead_ms=66, source_step_at=15.0)))
+    # Đột im: 0,3 s số 0 giữa lúc phát là đột im; nguồn tự im (tiếng ra chép theo) thì không; ngay sau thao tác (dừng) thì không
+    cut = synthetic_run(1.0)
+    cut["mono"] = cut["mono"].copy(); cut["mono"][10 * rate: 10 * rate + int(STRENGTH_CUT_S * rate)] = 0
+    expect("đột im: 0,3 s số 0 giữa lúc phát", any(f["kind"] == "cut" and abs(f["t"] - 10) < 0.02 for f in check(cut)["findings"]))
+    expect("đột im: nguồn tự im thì không", "cut" not in kinds(synthetic_run(1.0, source_quiet_at=12.0)))
     ok, results = strength(synthetic_run(3.0))
     expect("kiểm lực trên lượt giả: " + ", ".join(r["case"] for r in results if not r["ok"]), ok)
     # ... và kiểm lực phải đỏ khi máy dò bị nới (ngưỡng trôi to vô hạn): cổng không bao giờ xanh với bộ dò câm
-    global DRIFT_MS
+    global DRIFT_MS, CUT_TO_DB
     saved, DRIFT_MS = DRIFT_MS, 1e9
     try:
         expect("kiểm lực đỏ khi máy dò trôi câm", not strength(synthetic_run(3.0))[0])
     finally:
         DRIFT_MS = saved
+    saved, CUT_TO_DB = CUT_TO_DB, -1e9
+    try:
+        expect("kiểm lực đỏ khi máy dò đột im câm", not strength(synthetic_run(3.0))[0])
+    finally:
+        CUT_TO_DB = saved
     print(json.dumps(dict(selftest="audio_sink", failures=failures), ensure_ascii=False))
     return not failures
 

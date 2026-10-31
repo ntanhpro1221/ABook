@@ -220,6 +220,40 @@ class MusicBedIntegrationTest {
         Playback::class.java.getDeclaredField("bookId").also { it.isAccessible = true }.set(Playback, "")
     }
 
+    @Test fun theVoiceEndingTheBookFadesTheMusicOutInsteadOfCuttingIt() {
+        // 01-11 (audio_sink trên Qt 0.4.152): nhạc dừng cùng giọng lúc giọng tự hết -> -30 -> -91 dB trong 6 ms. ExoPlayer ENDED: nhạc mờ ra rồi được nhả.
+        installContext()
+        for (listenerStopped in listOf(false, true)) {
+            Handler.reset()
+            MusicBed.stop()
+            field("fadingTicker").setBoolean(MusicBed, false)
+            val voice = FakePlayer().also { it.playing = false; it.playWhenReady = !listenerStopped; it.state = if (listenerStopped) Player.STATE_READY else Player.STATE_ENDED }
+            Playback.player = voice.player
+            Playback::class.java.getDeclaredField("bookId").also { it.isAccessible = true }.set(Playback, "end-book")
+            field("book").set(MusicBed, "end-book")
+            field("closedBook").set(MusicBed, "")
+            field("playlist").set(MusicBed, null)
+            val music = FakePlayer().also { it.state = Player.STATE_READY; it.playWhenReady = true }
+            val current = bed(music)
+            setLogical(current, 0.1f)
+            music.volume = 0.1f
+            field("current").set(MusicBed, current)
+            field("playing").setBoolean(MusicBed, true)
+            Playback::class.java.getDeclaredMethod("syncMusic", Boolean::class.javaPrimitiveType).also { it.isAccessible = true }.invoke(Playback, false)
+            if (listenerStopped) {
+                assertFalse("người nghe dừng: nhạc dừng ngay", music.playWhenReady)
+                continue
+            }
+            assertNull(field("current").get(MusicBed))
+            assertTrue("giọng tự hết: nhạc không dừng cùng giọng", music.playWhenReady)
+            Handler.advance(500)
+            assertTrue(music.volume in 0.001f..0.099f)
+            Handler.advance(MusicCues.mix.fadeMs + 500)
+            assertEquals(1, music.released)
+        }
+        Playback::class.java.getDeclaredField("bookId").also { it.isAccessible = true }.set(Playback, "")
+    }
+
     @Test fun smallSeeksThroughPlaybackDoNotSeekTheMusicOrRestartItsFade() {
         val voice = FakePlayer().also { it.state = Player.STATE_READY; it.item = MediaItem.Builder().setMediaId("1").build() }
         val music = FakePlayer().also { it.state = Player.STATE_READY; it.volume = 0.1f; it.position = 50_000 }

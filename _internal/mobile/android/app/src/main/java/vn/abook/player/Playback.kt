@@ -684,7 +684,8 @@ object Playback {
     private fun syncMusic(playing: Boolean) {
         val voiceOn = playing || ReadAloud.starved()
         // Giọng dừng vì người nghe (nút, rút tai nghe, mất focus, cuộc gọi: playWhenReady = false) thì nhạc dừng ngay; giọng chỉ đang đệm / chờ đoạn kế (playWhenReady vẫn true) là khe nối - nhạc chờ.
-        MusicBed.sync(bookId, currentChapter?.id, positionSeconds, voiceOn, stopNow = !voiceOn && player?.playWhenReady != true)
+        MusicBed.sync(bookId, currentChapter?.id, positionSeconds, voiceOn, stopNow = !voiceOn && player?.playWhenReady != true,
+            ended = !voiceOn && player?.playbackState == Player.STATE_ENDED)
     }
 
     private const val STALL_LOG_MS = 3_000L

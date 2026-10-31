@@ -136,6 +136,8 @@ public:
     QString chapterTitle() const;
     QString chapterSubtitle() const;
     bool playing() const { return m_playing; }
+    /// Giọng tự hết chương / hết cuốn (không phải người nghe dừng): còn đúng tới lần nạp kế.
+    bool ended() const { return m_ended; }
     bool buffering() const { return m_buffering; }
     bool speaking() const { const auto *item = chapter(m_chapterId); return item && item->textOnly; }
     QString voiceId() const { return m_book.voice.isEmpty() ? m_defaultVoice : m_book.voice; }

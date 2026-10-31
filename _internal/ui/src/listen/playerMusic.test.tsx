@@ -49,8 +49,8 @@ afterEach(() => { h.bed?.stop(); vi.useRealTimers(); vi.unstubAllGlobals(); });
 async function mount(silent = false) {
   const listeners = new Map<string, (() => void)[]>();
   const fire = (kind: string) => listeners.get(kind)?.forEach((listener) => listener());
-  const state = { time: 20, paused: false };
-  const engine = { get time() { return state.time; }, duration: 100, get paused() { return state.paused; }, ended: false,
+  const state = { time: 20, paused: false, ended: false };
+  const engine = { get time() { return state.time; }, duration: 100, get paused() { return state.paused; }, get ended() { return state.ended; },
     on: (kind: string, listener: () => void) => { listeners.set(kind, [...(listeners.get(kind) ?? []), listener]); return () => undefined; },
     seek: (t: number) => { state.time = t; fire("time"); }, stop: () => { state.paused = true; fire("pause"); },
     setVolume: vi.fn(), setRate: vi.fn(), load: vi.fn(),
@@ -68,8 +68,32 @@ async function mount(silent = false) {
   fire("time");
   vi.advanceTimersByTime(3000);
   expect(h.audio).toHaveLength(silent ? 0 : 1);
-  return { actions, engine, fire };
+  return { actions, engine, fire, state };
 }
+
+it("the voice ending by itself fades the music out through player.tsx instead of cutting it with the voice", async () => {
+  // 01-11 audio_sink on Qt 0.4.152: chapter end dropped the music -30 -> -91 dB in 6 ms; web had the same pause-with-the-voice shape.
+  const { fire, state } = await mount();
+  const audio = h.audio[0];
+  const level = audio.volume;
+  Object.assign(state, { time: 100, paused: true, ended: true });
+  fire("pause"); // <audio> fires pause before ended, with ended already true
+  fire("ended");
+  expect(audio.paused).toBe(false);
+  vi.advanceTimersByTime(500);
+  expect(audio.volume).toBeLessThan(level);
+  expect(audio.volume).toBeGreaterThan(0);
+  Object.assign(state, { time: 0, ended: false }); // next chapter loading, voice still silent
+  fire("time");
+  expect(audio.paused).toBe(false);
+});
+
+it("a listener Pause still stops the music at once (control for the chapter-end fade)", async () => {
+  const { fire, state } = await mount();
+  state.paused = true;
+  fire("pause");
+  expect(h.audio[0].paused).toBe(true);
+});
 
 it.each([0.5, 3, -3])("seek %s seconds through player.tsx keeps the track, position and completed fade", async (delta) => {
   const { actions, engine } = await mount();

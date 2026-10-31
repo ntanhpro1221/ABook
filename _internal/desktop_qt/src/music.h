@@ -101,6 +101,7 @@ private:
     QTimer m_retry; // hỏi lại mốc (chương chưa dựng xong / danh mục chưa tải được)
     QElapsedTimer m_syncTime;
     bool m_wasPlaying = false;
+    bool m_voiceEnded = false; // giọng đang dừng vì tự hết chương / cuốn (Player::ended lúc dừng)
     double m_lastRate = 1;
 
     QString m_bookId;

@@ -163,9 +163,16 @@ bool MusicBed::awaitingSound(const Playing &playing) const {
     return playing.entering && (!playing.audio->sounded || playing.audio->waiting);
 }
 
-void MusicBed::sync(double seconds, bool playing, bool seeked) {
+void MusicBed::sync(double seconds, bool playing, bool seeked, bool ended) {
     m_lastTime = seconds;
     m_playing = playing;
+    if (!playing && ended) {
+        // Giọng tự hết (cuối chương, sang chương kế hay hết cuốn): bài đang kêu mờ ra trong FADE_SECONDS, các bài đang mờ mờ nốt - không
+        // dừng cùng giọng (đột im -30 -> -91 dB trong 6 ms, soát 01-11). Chương kế vào thì bài của nó mờ vào đè lên.
+        if (m_current)
+            switchTo(std::nullopt, seconds);
+        return;
+    }
     std::optional<MusicCue> cue = playableAt(seconds);
     if (m_current && m_current->early) {
         // Bài vào sớm giữ chỗ tới đầu mốc của nó; tua thì theo mốc tại chỗ tua như thường.

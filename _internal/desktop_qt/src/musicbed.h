@@ -50,8 +50,9 @@ public:
     /// Mốc mới (`levelDb` trống = giữ mức chung cũ). `seconds`: chỗ đang tới (trống = lần đồng bộ cuối).
     void setCues(const QVector<MusicLogic::MusicCue> &cues, std::optional<double> levelDb = std::nullopt, std::optional<double> seconds = std::nullopt);
     void setVolume(double volume);
-    /// Gọi mỗi khi thời gian giọng đọc đổi (`seeked` = người nghe vừa tua).
-    void sync(double seconds, bool playing, bool seeked = false);
+    /// Gọi mỗi khi thời gian giọng đọc đổi (`seeked` = người nghe vừa tua). `ended`: giọng dừng vì tự hết chương / hết cuốn chứ không phải
+    /// người nghe - nhạc mờ ra như khi đổi đoạn thay vì tắt phụt cùng giọng.
+    void sync(double seconds, bool playing, bool seeked = false, bool ended = false);
     void stop();
     /// Xin máy chủ tải sẵn bài `link` (một lần mỗi phiên). Chỉ bài danh mục (https).
     void warmLink(const QString &link);
