@@ -7,6 +7,8 @@ Luật đạt ghi trước ở Corpus research/music/PLAN_lx.md mục 19.
 
   python -X utf8 tools/listen_audit.py run <out_dir> <label> --text 001.txt 002.txt ... --music on|off [--exe dist/ABookDesk.exe]
   python -X utf8 tools/listen_audit.py analyze <out_dir>/<A> <out_dir>/<B>
+  python -X utf8 tools/listen_audit.py check <out_dir>/<lượt>   thoát 1 nếu lượt không dùng được (lỗi giọng, treo, chạm trần)
+  python -X utf8 tools/listen_audit.py selftest                 (build.bat)
 
 WAV và chữ nằm trong <out_dir>, không bao giờ commit.
 """
@@ -44,6 +46,7 @@ JOIN_MAX_S = 3.0        # (2) chỗ nối chương
 LEVEL_RANGE = (-26.0, -14.0)  # (3) trung vị nhạc so với giọng
 LEVEL_PEAK_DB = -10.0   # (3) cửa sổ 3 s
 CUT_DB, CUT_S = 20.0, 0.3     # (5)
+STALL_S = 10.0          # (0) chờ quá lâu: đang phát mà vị trí đứng yên chừng này (giữa hai đoạn giọng thường dưới 2 s)
 
 
 # ---------- dựng cuốn thử ----------
@@ -144,7 +147,40 @@ def load(stage: Path) -> dict:
     marks = parse_marks(bench["events"], float(epoch_ms), rate)
     hop = int(HOP_S * rate)
     return dict(rate=rate, hop=hop, db=frame_db(mono, hop), marks=marks, gaps=read_pairs(str(stage / "sink.wav") + ".gaps"),
-                done=any(name == "done" for _, name in bench["events"]), timeout=any(name == "timeout" for _, name in bench["events"]))
+                done=any(name == "done" for _, name in bench["events"]), timeout=any(name == "timeout" for _, name in bench["events"]),
+                problems=run_problems(bench["events"]))
+
+
+def run_problems(events: list) -> list[dict]:
+    """Lượt không dùng được để chấm: Player báo lỗi, đang phát mà đứng yên >= STALL_S, kịch bản tự dừng vì treo, chạm trần, không xong."""
+    t0 = events[0][0] if events else 0
+    out, names = [], [name for _, name in events]
+    for t, name in events:
+        at = round((t - t0) / 1000, 1)
+        if name.startswith("player_error:"):
+            out.append(dict(kind="error", t=at, text=name.split(":", 1)[1].strip()))
+        elif name.startswith("listen_stalled:"):
+            out.append(dict(kind="stalled_end", t=at))
+        elif name == "timeout":
+            out.append(dict(kind="timeout", t=at))
+    if "done" not in names:
+        out.append(dict(kind="unfinished"))
+    since = None  # (giờ, vị trí) của nhịp đầu chuỗi đang phát mà vị trí không đổi
+    last = None
+    for t, name in events:
+        if not name.startswith("audio:tick:"):
+            continue
+        _, position, playing = name[len("audio:tick:"):].rsplit(":", 2)
+        here = (t, float(position))
+        if playing == "1" and since and here[1] == since[1]:
+            last = here
+            continue
+        if since and last and (last[0] - since[0]) / 1000 >= STALL_S:
+            out.append(dict(kind="stall", t=round((since[0] - t0) / 1000, 1), seconds=round((last[0] - since[0]) / 1000, 1), position=since[1]))
+        since, last = (here if playing == "1" else None), None
+    if since and last and (last[0] - since[0]) / 1000 >= STALL_S:
+        out.append(dict(kind="stall", t=round((since[0] - t0) / 1000, 1), seconds=round((last[0] - since[0]) / 1000, 1), position=since[1]))
+    return out
 
 
 def runs_of(mask: np.ndarray) -> list[tuple[int, int]]:
@@ -193,6 +229,9 @@ def analyze(a_dir: Path, b_dir: Path) -> dict:
     voice_db = float(np.median(B["db"][B["db"] > VOICE_FLOOR_DB]))
     report = dict(voice_median_db=round(voice_db, 2), A_done=A["done"], B_done=B["done"], A_timeout=A["timeout"], B_timeout=B["timeout"])
     rules = {}
+
+    # (0) lượt dùng được: không lỗi giọng, không treo, chạy xong (I4 31-10: 1 giờ đứng chờ clip vẫn ra "ok")
+    rules["0_run"] = dict(A=A["problems"], B=B["problems"], ok=not A["problems"] and not B["problems"])
 
     # (1) nhạc tới - và đối chứng: lượt B không được "có nhạc"
     pres_a, pres_b = present(A["db"], voice_db, hop_s), present(B["db"], voice_db, hop_s)
@@ -299,19 +338,51 @@ def analyze(a_dir: Path, b_dir: Path) -> dict:
     return report
 
 
-def main() -> None:
+def selftest() -> int:
+    """run_problems trên mốc giả: lượt sạch im; lỗi Player, clip kẹt giữa chương (I3), kẹt từ đầu tới trần (I4) đều bị bắt."""
+    def ticks(start_s, positions, playing=1):
+        return [[(start_s + i) * 1000.0, f"audio:tick:1:{p:.3f}:{playing}"] for i, p in enumerate(positions)]
+    head = [[0.0, "main"]]
+    clean = head + ticks(5, [i * 1.0 for i in range(60)]) + ticks(65, [59.0] * 15, 0) + [[80000.0, "listen_finished"], [80000.0, "done"]]
+    error = head + ticks(5, [0.0, 1.0, 2.0]) + [[8000.0, "player_error:Giọng đang chọn đang không dùng được."], [8000.0, "listen_failed"],
+                                               [8000.0, "done"]]
+    middle = head + ticks(5, [float(i) for i in range(70)] + [70.0] * 14) + ticks(89, [70.0] * 15, 0) + [[104000.0, "done"]]
+    never = head + ticks(5, [0.0] * 3590) + [[3600300.0, "timeout"]]
+    failures = []
+    for name, events, want in (("clean", clean, []), ("error", error, ["error"]), ("I3", middle, ["stall"]),
+                               ("I4", never, ["timeout", "unfinished", "stall"])):
+        got = [p["kind"] for p in run_problems(events)]
+        if got != want:
+            failures.append(f"{name}: chờ {want}, được {got}")
+    print(json.dumps(dict(selftest="listen_audit", failures=failures), ensure_ascii=False))
+    return 1 if failures else 0
+
+
+def main() -> int:
+    global INTERNAL
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
     r = sub.add_parser("run"); r.add_argument("out", type=Path); r.add_argument("label")
     r.add_argument("--text", type=Path, nargs="+", required=True); r.add_argument("--music", choices=("on", "off"), required=True)
     r.add_argument("--exe", type=Path, default=ROOT / "dist/ABookDesk.exe")
+    r.add_argument("--host-app", type=Path, default=INTERNAL, help="thư mục _internal của máy chủ Python (mặc định: cây của app)")
     a = sub.add_parser("analyze"); a.add_argument("a", type=Path); a.add_argument("b", type=Path)
+    c = sub.add_parser("check"); c.add_argument("dir", type=Path)
+    sub.add_parser("selftest")
     args = ap.parse_args()
     if args.cmd == "run":
+        INTERNAL = args.host_app.resolve()
         run(args.out.resolve(), args.label, args.text, args.music == "on", args.exe)
+    elif args.cmd == "check":
+        problems = run_problems(json.loads((args.dir / "bench.json").read_bytes())["events"])
+        print(json.dumps(dict(run=args.dir.name, ok=not problems, problems=problems), ensure_ascii=False))
+        return 1 if problems else 0
+    elif args.cmd == "selftest":
+        return selftest()
     else:
         print(json.dumps(analyze(args.a.resolve(), args.b.resolve()), ensure_ascii=False, indent=1))
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
