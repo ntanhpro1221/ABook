@@ -27,8 +27,8 @@ export interface ExportCopy {
 export const BOOK_FILE_COPY: ExportCopy = {
   busy: "Đang đóng gói sách…",
   done: "Đã xuất file sách",
-  failed: "Không xuất được file sách",
-  stopped: "Đã huỷ xuất",
+  failed: "Chưa xuất được file sách",
+  stopped: "Đã dừng xuất",
   stoppedNote: "Chưa có file sách nào được ghi.",
   progress: (job) => packView(job as unknown as PackJob, BOOK_FILE_SPAN),
 };
@@ -36,8 +36,8 @@ export const BOOK_FILE_COPY: ExportCopy = {
 export const M4B_COPY: ExportCopy = {
   busy: "Đang làm file M4B…",
   done: "Đã xuất M4B",
-  failed: "Không xuất được M4B",
-  stopped: "Đã huỷ xuất",
+  failed: "Chưa xuất được M4B",
+  stopped: "Đã dừng xuất",
   stoppedNote: "Chưa có file M4B nào được ghi.",
   stopping: "Dừng ngay sau bước đang làm - không ghi file M4B nào.",
 };
@@ -45,8 +45,8 @@ export const M4B_COPY: ExportCopy = {
 export const MP3_COPY: ExportCopy = {
   busy: "Đang xuất MP3…",
   done: "Đã xuất MP3",
-  failed: "Không xuất được MP3",
-  stopped: "Đã huỷ xuất",
+  failed: "Chưa xuất được MP3",
+  stopped: "Đã dừng xuất",
   stoppedNote: "Các chương đã ghi dở được xoá.",
   stopping: "Dừng ngay sau bước đang làm - thư mục MP3 dở được xoá.",
 };
@@ -54,8 +54,8 @@ export const MP3_COPY: ExportCopy = {
 export const PROJECT_FILE_COPY: ExportCopy = {
   busy: "Đang đóng gói dự án…",
   done: "Đã gói dự án",
-  failed: "Không gói được dự án",
-  stopped: "Đã huỷ xuất",
+  failed: "Chưa gói được dự án",
+  stopped: "Đã dừng xuất",
   stoppedNote: "Chưa có file dự án nào được ghi.",
   progress: (job) => packView(job as unknown as PackJob),
   explain: (raw) => packError(raw).summary,
@@ -292,7 +292,11 @@ export function shortWhen(at: Date): string {
  *  thư mục ("MP3 · 10/10 14:05 · Chuyện thử"). Đường đầy đủ ở `lastExportPlace`, hiện khi rê chuột: đường dài bị cắt ngay đầu thì chỉ còn
  *  thấy ổ đĩa và thư mục cha. `now`: lúc job được hỏi (giây xong cách đây `finishedAgo` tính từ đó). */
 export function lastExportHint(job: ExportJob | undefined, copy: ExportCopy = BOOK_FILE_COPY, now: number = Date.now()): string | null {
-  if (job?.state === "running") return `${copy.busy.replace(/…$/, "")} - xem thông báo ở góc màn hình`;
+  if (job?.state === "running") {
+    // Có phần trăm thì nói thẳng (như hàng "Đang xuất · 45%" của điện thoại); chưa có thì chỉ đường tới thông báo.
+    if (job.percent !== undefined) return `Đang xuất · ${Math.min(99, Math.max(0, Math.round(job.percent)))}%`;
+    return `${copy.busy.replace(/…$/, "")} - xem thông báo ở góc màn hình`;
+  }
   if (job?.state === "done" && job.result) {
     const when = job.finishedAgo === undefined ? "" : shortWhen(new Date(now - job.finishedAgo * 1000));
     const parts = [exportFormatLabel(job.result), when, clipStart(fileName(exportedPlace(job.result)), HINT_NAME_MAX)].filter(Boolean);

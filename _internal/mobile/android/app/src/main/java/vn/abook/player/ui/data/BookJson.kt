@@ -51,13 +51,13 @@ object BookJson {
         LibraryTree.chapters(manifest).map { ChapterInfo(it.id, it.title, it.duration, available = !it.isText, textOnly = it.isText) }
 
     /** `coverOf(id)`: bìa người nghe thấy (Store.coverFile) - tách ra để hàm này không đụng đĩa. `remote`: cuốn nghe thẳng, chưa tải. */
-    fun book(manifest: JSONObject, state: JSONObject?, coverOf: (String) -> CoverRef?, remote: RemoteRef? = null, addedAt: Double? = null): ListenBook {
+    fun book(manifest: JSONObject, state: JSONObject?, coverOf: (String) -> CoverRef?, remote: RemoteRef? = null, addedAt: Double? = null, imported: Boolean = false): ListenBook {
         val id = manifest.getString("id")
         val listen = state(state)
         val all = chapters(manifest)
         val audio = all.filter { !it.textOnly }
         val entries = manifest.optJSONArray("chapters")
-        val textOnly = entries != null && entries.length() > 0 &&
+        val textOnly = !manifest.optBoolean("producing") && entries != null && entries.length() > 0 &&
             (0 until entries.length()).all { LibraryTree.textEntry(entries.getJSONObject(it)).isNotEmpty() }
         val complete = manifest.optBoolean("complete", true)
         val progress = if (textOnly) ListenLogic.textBookProgress(listen, all) else ListenLogic.bookProgress(listen, audio, complete)
@@ -81,7 +81,13 @@ object BookJson {
             cover = coverOf(id),
             series = link,
             remote = remote,
+            imported = imported,
             part = link?.part,
+            producing = manifest.optBoolean("producing"),
+            paused = manifest.optBoolean("paused", !complete),
+            pauseReason = manifest.optString("pauseReason").takeIf { it == "battery" || it == "listener" },
+            etaPhase = manifest.optJSONObject("eta")?.optString("phase"),
+            etaSeconds = manifest.optJSONObject("eta")?.optDouble("seconds")?.takeIf { it.isFinite() },
         )
     }
 }

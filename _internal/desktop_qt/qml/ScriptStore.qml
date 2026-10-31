@@ -176,7 +176,7 @@ QtObject {
             const run = root.once({run: function() {
                 root.quietly("POST", "/review", root.reviewBody(null, lines), function(done, failure) {
                     if (done) root.say(lines.length > 1 ? "Đã hoàn tác: " + lines.length + " câu không phải thu lại nữa" : "Đã hoàn tác: câu này không phải thu lại nữa")
-                    else root.sayError("Không hoàn tác được", failure)
+                    else root.sayError("Chưa hoàn tác được", failure)
                     root.refreshBook()
                 })
             }})

@@ -9,18 +9,20 @@ import { useNowPlaying } from "./player";
 import { useSource } from "./source";
 import { useVoiceSample } from "./VoiceSettings";
 import { revealVoiceSettings } from "./voiceSettingsLink";
+import { useFadeScroller } from "@/shared/scrollFade";
 
 /** Hộp hỏi trước lần đầu đọc bằng giọng trực tuyến (onlineConsent.ts). Gắn một lần trong PlayerProvider - máy tính và điện thoại như nhau. */
 export function OnlineVoicePrompt() {
   const request = useSyncExternalStore(subscribeConsent, pendingConsent);
   const [choosing, setChoosing] = useState(false);
   const { setExpanded } = useNowPlaying();
-  // Nghe thử từng giọng trước khi chọn - cùng câu mẫu và cùng đường với nút "Thử giọng" của Cài đặt (soát a64).
+  // Nghe thử từng giọng trước khi chọn - cùng câu mẫu và cùng đường với nút "Nghe thử" của Cài đặt (soát a64).
   const source = useSource();
   const sample = useVoiceSample((voice, text) => (source.readAloudSample ? source.readAloudSample(voice, text) : Promise.reject(new Error("Chưa nghe thử được giọng này."))));
   useEffect(() => setChoosing(false), [request]);
   // "Chọn giọng khác": nút vừa bấm biến mất cùng phần đồng ý - tiêu điểm vào giọng đang dùng trong danh sách, không về khung hộp (soát a67).
   const list = useRef<HTMLDivElement | null>(null);
+  const scrollFade = useFadeScroller<HTMLDivElement>(list);
   const chooseButton = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (choosing) list.current?.querySelector<HTMLElement>("[aria-current]")?.focus();
@@ -40,7 +42,7 @@ export function OnlineVoicePrompt() {
       width="max-w-md"
     ><MotionRegion>
       {choosing ? (
-        <div ref={list} className="flex max-h-[50vh] flex-col gap-0.5 overflow-y-auto">
+        <div ref={scrollFade.ref} style={scrollFade.style} className="flex max-h-[50vh] flex-col gap-0.5 overflow-y-auto">
           {voices.map((item) => {
             const playing = sample.playing === item.id;
             return (
@@ -92,7 +94,7 @@ export function OnlineVoicePrompt() {
             }}
             className="mt-1 flex min-h-[48px] flex-col items-start justify-center rounded-control border-t border-line px-3 py-2 text-left text-sm text-accent-text hover:bg-hover"
           >
-            <span>Tải giọng chạy trên máy…</span>
+            <span>Tải giọng về máy</span>
             <span className="text-xs font-normal text-fg-2">VieNeu, Supertonic - đọc được cả khi không có mạng</span>
           </button>
         </div>

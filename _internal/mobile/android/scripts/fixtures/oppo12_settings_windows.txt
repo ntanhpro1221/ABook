@@ -1,0 +1,12 @@
+Dump time : 2026-10-31 09:56:01.987
+WINDOW MANAGER DISPLAY CONTENTS (dumpsys window displays)
+  mLastOrientationSource=WindowedMagnification:0:31@127955357
+  deepestLastOrientationSource=ActivityRecord{3d8f02f u0 com.android.settings/.Settings$DevelopmentSettingsDashboardActivity t10865}
+  overrideConfig={1.0 ??mcc??mnc [vi_VN] ldltr sw360dp w360dp h763dp 480dpi nrml long port finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 110 - 1080, 2400) mMaxBounds=Rect(0, 0 - 1080, 2400) mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_0} as.2 s.65370 fontWeightAdjustment=0mThemeChanged= 0, mThemeChangedFlags= 0, mFlipFont= 0, mAccessibleChanged= -1, mUxIconConfig= 3468921665126662177, mMaterialColor= 0, mUserId= 0, mFontUserId= 0, mFontVariationSettings= 226, mFoldingAngle = -1.0, mIconPackName= , mDarkModeBackgroundMaxL= 8.0, mDarkModeDialogBgMaxL= 27.0, mDarkModeForegroundMinL= 100.0, mOplusConfigType= 1, mOplusChangedConfigs= 0, OpSans= 0}
+  Display: mDisplayId=0 rootTasks=9
+    init=1080x2400 480dpi cur=1080x2400 app=1080x2290 rng=1080x970-2290x2290
+    deferred=false mLayoutNeeded=false mTouchExcludeRegion=SkRegion((0,0,1080,2400))
+
+  mLayoutSeq=301605
+  mCurrentFocus=Window{fb9345 u0 com.android.settings/com.android.settings.Settings$DevelopmentSettingsDashboardActivity}
+  mFocusedApp=ActivityRecord{3d8f02f u0 com.android.settings/.Settings$DevelopmentSettingsDashboardActivity t10865}

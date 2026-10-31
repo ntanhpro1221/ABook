@@ -49,9 +49,8 @@ Studio product). Background music can play along.
   `TextBook.kt` + `TextImports.kt` behind `EbookLibrary.pickSource / previewImport / createImport / discardImport` (system picker → copy into
   `library/imports/<ref>/` → `BookImport` rules → `BookDocumentWriter.seal` → `BookFileImport`). Both write the SAME `book.json` and hashes on
   `tests/fixtures/text_books/` (`tests/text_book_fixtures.py`, `TextBookTest.kt`; `python_text.abook` is read by Kotlin, `kotlin_text.abook` by Python).
-- **PDF on the phone, the bridge**: Kotlin copies the PDF to the app folder, the WebView reads that copy with pdf.js (`ui/src/shared/pdfPages.ts` via
-  `android/textImport.ts`) and hands the pages' lines to `previewImport({ref, pages, title, author})`, which runs `BookImport.fromPdfPages`. Pages travel
-  over the Capacitor bridge as JSON (a 500-page text PDF is about 1-2 MB).
+- **PDF on the phone**: `ui/addbook/ImportRepo.kt` copies the PDF to the app folder, reads its lines per page with Android's `PdfRenderer` (Android 15+) and hands them
+  to `TextImports.preview(ref, pages, ...)`, which runs `BookImport.fromPdfPages`.
 - **UI**: `listen/AddBook.tsx` ("Thêm sách từ file…": choose → chapter list (`shared/ChapterPreview.tsx`, the Studio list's row layout) + suggestions never applied →
   add; shared by desktop and phone through `ListenSource.textImport`); the library card says "Chỉ có chữ" and opens the reader; the book page and
   `ReaderScreen` show "Chưa có âm thanh" and no playback controls for a text chapter, and no per-line editing; the reader builds paragraphs from the text
@@ -89,12 +88,9 @@ Text is never auto-edited (owner rule): cleanup proposals (e.g. a credit line) a
   one is "Mở đầu") live in Python (`importers.py`) and Kotlin (`BookImport.kt`) and are replayed on `tests/fixtures/import/` (made by
   `tests/import_fixtures.py`: EPUB 2/3, DOCX with/without headings, PDF, scanned PDF, TXT folder in four encodings, own text only).
   Golden JSON is byte-identical in both languages. Credit lines are never removed: they appear in `notes` as suggestions.
-- Phone PDF: **pdf.js** (`pdfjs-dist` legacy build, Apache-2.0) in the WebView, lazy-loaded. It only extracts lines per page
-  (`ui/src/shared/pdfPages.ts`, same `pages/story.pages.json` as pypdf on the fixture); the rules above run in Kotlin (`BookImport.fromPdfPages`).
-  Measured: debug APK 9,480,805 -> 10,216,254 bytes (+735 KB, +7.8%; the chunk is 488 KB + worker 1,317 KB raw, ~540 KB gzip), the main
-  JS bundle is unchanged. PdfBox-Android was the alternative (Apache-2.0, 3.25 MB aar, JVM-heavy); not chosen. The desktop UI does not need the
-  TS extractor (Studio runs the Python importer), though the same module would work in its webview.
-- Wired (03-10, section 1 "What was built"): the phone's "Thêm sách từ file…" runs `BookImport` + `readPdfPages` and creates a stage-0 book. Studio: the new-book
+- Phone PDF: Android's `PdfRenderer` (`ui/addbook/ImportRepo.kt`) only extracts lines per page; the rules above run in Kotlin (`BookImport.fromPdfPages`). The desktop UI does not need
+  an extractor (Studio runs the Python importer).
+- Wired (03-10, section 1 "What was built"): the phone's "Thêm sách từ file…" runs `BookImport` + the PDF page reader and creates a stage-0 book. Studio: the new-book
   flow, remote upload and the Tauri file dialog accept `.epub/.docx/.pdf/.txt` and a folder; the chapter list shows title, words and characters.
 - EPUB with several chapters in one XHTML file (03-10): when 2+ table-of-contents entries point at fragments of the same file that the page
   has (element id or `<a name>`), both importers cut the file's lines at those anchors in reading order, each part named by its entry; text

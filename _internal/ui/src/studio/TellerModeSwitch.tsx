@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Mic2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "@/shared/toast";
-import { Switch } from "@/desktop/PhoneSync";
+import { Switch } from "@/desktop/Switch";
 import { SettingsRow } from "@/shared/SettingsNav";
 import { cn } from "@/shared/cn";
 import { DialogActions, Button, Dialog } from "@/shared/ui";

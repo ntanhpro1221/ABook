@@ -157,7 +157,7 @@ object BookSearch {
         if (foldedQuery(query).isEmpty()) return "Gõ ít nhất $MIN_QUERY ký tự."
         if (progress == null) return "Đang tìm"
         val failed = if (progress.failed > 0) " ${progress.failed} chương chưa đọc được nên chưa tìm trong đó." else ""
-        if (!progress.done) return "Đang tìm: đã xem ${progress.scanned}/${progress.chapters} chương, thấy ${progress.total} chỗ."
+        if (!progress.done) return "Đang tìm - đã xem ${progress.scanned}/${progress.chapters} chương, thấy ${progress.total} chỗ."
         if (progress.total == 0) return "Không thấy “${query.trim()}” trong sách.$failed"
         val more = if (progress.total > progress.hits.size) {
             " Đang hiện ${progress.hits.size} kết quả đầu, còn ${progress.total - progress.hits.size} kết quả - gõ thêm chữ để thu hẹp."

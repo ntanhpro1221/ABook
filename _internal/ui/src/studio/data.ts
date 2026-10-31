@@ -173,7 +173,7 @@ export function useStart() {
       }
       toast.success("Đang khởi động");
     },
-    onError: (error: Error) => toast.error("Không bắt đầu được", { description: error.message }),
+    onError: (error: Error) => toast.error("Chưa bắt đầu được", { description: error.message }),
   });
 }
 
@@ -193,7 +193,7 @@ export function useStop() {
     // Sách đã tự dừng / tiến trình đã chết trước khi bấm: làm mới để nút đổi sang trạng thái thật.
     onError: (error: Error, { id }) => {
       refresh(id);
-      toast.error("Không dừng được", { description: error.message });
+      toast.error("Chưa dừng được", { description: error.message });
     },
   });
 }
@@ -232,7 +232,7 @@ export function usePause() {
     },
     onError: (error: Error, { id, paused }) => {
       refresh(id);
-      toast.error(paused ? "Không tạm dừng được" : "Không làm tiếp được", { description: error.message });
+      toast.error(paused ? "Chưa tạm dừng được" : "Chưa làm tiếp được", { description: error.message });
     },
   });
 }
@@ -240,7 +240,7 @@ export function usePause() {
 export function useReveal() {
   return useMutation({
     mutationFn: (id: string) => api(`/api/books/${id}/reveal`, { method: "POST" }),
-    onError: (error: Error) => toast.error("Không mở được thư mục", { description: error.message }),
+    onError: (error: Error) => toast.error("Chưa mở được thư mục", { description: error.message }),
   });
 }
 

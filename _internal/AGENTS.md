@@ -469,7 +469,7 @@ Module chính:
 - `database.py`: schema/transaction API.
 - `analysis.py`: Qwen structured analysis.
 - `speaker_pass.py`: lượt "người nói từng câu" (B41) sau khi phân tích xong cả sách và sau hai lượt hoà giải, ngay TRƯỚC character registry/casting (đúng thứ tự lượt đo): hỏi lại
-  người nói của từng câu `dialogue`/`thought` bằng model đi cặp (`abook-speaker:v1`); dựng đề trùng từng byte với mã đo
+  người nói của từng câu `dialogue`/`thought` bằng model đi cặp (`abook-speaker:v2`); dựng đề trùng từng byte với mã đo
   (`tests/fixtures/speaker_pass`). Khoá model + digest + tokenizer theo sách (`speaker_pass_state`), commit theo chương
   (`speaker_pass_chapters`), nhãn gốc của model phân tích giữ ở `speaker_pass_labels`.
 - `character_registry.py`: canonical speaker name và voice mapping; không hợp nhất identity khác tên.

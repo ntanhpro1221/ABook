@@ -33,7 +33,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicText
+import vn.abook.player.ui.components.BasicText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -83,6 +83,7 @@ import vn.abook.player.ui.motion.Motion
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.theme.MotionMs
+import vn.abook.player.ui.components.fadeEdges
 
 /**
  * Nhạc nền của một cuốn - MỘT bảng cho "…" của Đang nghe và bảng "Thêm" của trang sách (cùng lựa chọn, lưu vào lớp sửa nên đi theo sách).
@@ -117,7 +118,8 @@ fun MusicPanel(music: MusicState, bookId: String, player: PlayerMusic?, modifier
 @Composable
 private fun MainPage(music: MusicState, ui: BookMusicUi, player: PlayerMusic?, onAdd: () -> Unit, onCue: (String) -> Unit) {
     val book = ui.book
-    Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).testTag("music_panel")) {
+    val scroll = rememberScrollState()
+    Column(Modifier.fillMaxWidth().fadeEdges(scroll).verticalScroll(scroll).testTag("music_panel")) {
         val stage = when {
             book != null -> book.kind
             ui.failed -> null
@@ -194,7 +196,8 @@ private fun CuePage(music: MusicState, ui: BookMusicUi, cue: MusicCue, onAdd: ()
     val colors = Abook.colors
     val enabled = !ui.busy
     val open = ui.swapKey == cue.key
-    Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).testTag("music_cue_page")) {
+    val scroll = rememberScrollState()
+    Column(Modifier.fillMaxWidth().fadeEdges(scroll).verticalScroll(scroll).testTag("music_cue_page")) {
         BasicText(
             MusicText.cueTitle(cue),
             style = Abook.type.sectionTitle.copy(
@@ -365,7 +368,7 @@ private fun OptionRow(option: MusicOption, chosen: Boolean, enabled: Boolean, on
 }
 
 /**
- * "Mức nhạc dưới giọng đọc" (chữ của web): một hàng vạch to dần từ nhỏ tới to như thanh âm lượng - năm, sáu mức nằm vừa một hàng ở 360dp kể cả chữ 1.3
+ * "Mức nhạc nền" (chữ của web): một hàng vạch to dần từ nhỏ tới to như thanh âm lượng - năm, sáu mức nằm vừa một hàng ở 360dp kể cả chữ 1.3
  * (lưới ba cột để lại ô trống cuối). Vạch tới mức đang chọn tô hổ phách, chữ của mức hiện dưới tên (cùng chữ với ô chọn của web).
  */
 @Composable
@@ -445,7 +448,7 @@ fun MusicCreditBlock(credit: MusicCredit?) {
                         else ListRow("Giấy phép") { BasicText(label, style = Abook.type.bodySmall) }
                     }
                     if (MusicText.needsModifiedNote(shown.license)) Caption(MusicText.MODIFIED_NOTE, Modifier.padding(bottom = Dim.s8))
-                    if (shown.landing.isNotEmpty()) ActionRow("Trang của bài", "Mở", { openUri(shown.landing) }, "music_landing")
+                    if (shown.landing.isNotEmpty()) ActionRow("Trang của bài nhạc", "Mở", { openUri(shown.landing) }, "music_landing")
                 }
             }
         }

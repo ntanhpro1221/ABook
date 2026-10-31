@@ -38,7 +38,7 @@
     "path": "#/book/{listen}",
     "steps": [
       {
-        "text": "Thêm việc với sách",
+        "text": "Thêm tuỳ chọn",
         "exact": true
       },
       {
@@ -50,7 +50,7 @@
       "type": "input"
     },
     "background": {
-      "text": "Thêm việc với sách",
+      "text": "Thêm tuỳ chọn",
       "exact": true
     }
   },
@@ -59,7 +59,7 @@
     "path": "#/book/{listen}",
     "steps": [
       {
-        "selector": "button[aria-label^='Tuỳ chọn Ch']"
+        "selector": "button[aria-label^='Thêm tuỳ chọn cho Ch']"
       },
       {
         "text": "Đổi tên chương"
@@ -70,7 +70,7 @@
       "type": "input"
     },
     "background": {
-      "text": "Thêm việc với sách",
+      "text": "Thêm tuỳ chọn",
       "exact": true
     }
   },
@@ -79,7 +79,7 @@
     "path": "#/book/{listen}",
     "steps": [
       {
-        "text": "Thêm việc với sách",
+        "text": "Thêm tuỳ chọn",
         "exact": true
       },
       {
@@ -91,7 +91,7 @@
       "type": "input"
     },
     "background": {
-      "text": "Thêm việc với sách",
+      "text": "Thêm tuỳ chọn",
       "exact": true
     }
   },
@@ -100,7 +100,7 @@
     "path": "#/book/{listen}",
     "steps": [
       {
-        "text": "Thêm việc với sách",
+        "text": "Thêm tuỳ chọn",
         "exact": true
       },
       {
@@ -112,7 +112,7 @@
       "type": "input"
     },
     "background": {
-      "text": "Thêm việc với sách",
+      "text": "Thêm tuỳ chọn",
       "exact": true
     }
   },
@@ -121,11 +121,11 @@
     "path": "#/book/{listen}",
     "steps": [
       {
-        "text": "Thêm việc với sách",
+        "text": "Thêm tuỳ chọn",
         "exact": true
       },
       {
-        "text": "Xoá hồ sơ…",
+        "text": "Xoá hồ sơ",
         "exact": true
       }
     ],
@@ -135,7 +135,7 @@
       "closes": true
     },
     "background": {
-      "text": "Thêm việc với sách",
+      "text": "Thêm tuỳ chọn",
       "exact": true
     }
   },
@@ -151,7 +151,7 @@
         "text": "Tuỳ chọn dự án Tap Studio Fixture"
       },
       {
-        "text": "Đổi tên…",
+        "text": "Đổi tên",
         "exact": true
       }
     ],
@@ -396,6 +396,7 @@
         "selector": "[data-book-primary]"
       },
       {
+        "selector": "section[aria-label='Trình phát'] button",
         "text": "Thêm tuỳ chọn",
         "exact": true
       },
@@ -425,6 +426,7 @@
     ],
     "reopenSteps": [
       {
+        "selector": "section[aria-label='Trình phát'] button",
         "text": "Thêm tuỳ chọn",
         "exact": true
       },
@@ -446,6 +448,7 @@
         "selector": "[data-book-primary]"
       },
       {
+        "selector": "section[aria-label='Trình phát'] button",
         "text": "Thêm tuỳ chọn",
         "exact": true
       },
@@ -473,6 +476,7 @@
     ],
     "reopenSteps": [
       {
+        "selector": "section[aria-label='Trình phát'] button",
         "text": "Thêm tuỳ chọn",
         "exact": true
       },
@@ -494,6 +498,7 @@
         "selector": "[data-book-primary]"
       },
       {
+        "selector": "section[aria-label='Trình phát'] button",
         "text": "Thêm tuỳ chọn",
         "exact": true
       },
@@ -518,6 +523,7 @@
     ],
     "reopenSteps": [
       {
+        "selector": "section[aria-label='Trình phát'] button",
         "text": "Thêm tuỳ chọn",
         "exact": true
       },
@@ -573,7 +579,7 @@
     "path": "#/book/{listen}",
     "steps": [
       {
-        "selector": "button[aria-label^='Tuỳ chọn Ch']"
+        "selector": "button[aria-label^='Thêm tuỳ chọn cho Ch']"
       }
     ],
     "probe": {
@@ -582,7 +588,7 @@
       "expect": "!!tapAudit.top()?.querySelector('input')"
     },
     "background": {
-      "text": "Thêm việc với sách",
+      "text": "Thêm tuỳ chọn",
       "exact": true
     }
   },
@@ -591,11 +597,11 @@
     "path": "#/book/{listen}",
     "steps": [
       {
-        "text": "Thêm việc với sách",
+        "text": "Thêm tuỳ chọn",
         "exact": true
       },
       {
-        "text": "Xoá khỏi thư viện…",
+        "text": "Xoá khỏi thư viện",
         "exact": true
       }
     ],
@@ -605,7 +611,7 @@
       "closes": true
     },
     "background": {
-      "text": "Thêm việc với sách",
+      "text": "Thêm tuỳ chọn",
       "exact": true
     }
   },
@@ -623,7 +629,7 @@
       "expect": "[...document.querySelectorAll('button')].some(e=>tapAudit.label(e).startsWith('Hồ sơ nghe:')&&tapAudit.label(e).includes('Mặc định'))"
     },
     "background": {
-      "text": "Thêm việc với sách",
+      "text": "Thêm tuỳ chọn",
       "exact": true
     },
     "touchProbe": {

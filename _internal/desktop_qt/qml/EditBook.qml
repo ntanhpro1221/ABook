@@ -404,7 +404,7 @@ Modal {
         nameFilters: ["Ảnh (*.png *.jpg *.jpeg *.webp *.gif *.bmp)"]
         onAccepted: {
             const image = DesktopApi.imageData(selectedFile)
-            if (!image) { Api.notice = Logic.toastText("Chưa đặt được ảnh bìa", "Không đọc được file ảnh"); return }
+            if (!image) { Api.notice = Logic.toastText("Chưa đặt được ảnh bìa", "Chưa đọc được file ảnh"); return }
             root.setCoverImage(image)
         }
     }

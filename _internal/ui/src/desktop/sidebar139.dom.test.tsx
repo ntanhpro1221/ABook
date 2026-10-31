@@ -9,7 +9,7 @@ import { MOTION } from "@/shared/motion";
 const state = vi.hoisted(() => ({ books: [] as BookSummary[], close: vi.fn() }));
 vi.mock("@/studio/data", () => ({ useLibrary: () => ({ data: { books: state.books } }), useAppInfo: () => ({ data: {} }) }));
 vi.mock("@/listen/player", () => ({ useNowPlaying: () => ({ setExpanded: state.close }) }));
-vi.mock("@/studio/PrecastReview", () => ({ usePrecastInvites: vi.fn() }));
+vi.mock("@/studio/precastInvites", () => ({ usePrecastInvites: vi.fn() }));
 import { DesktopSidebar } from "./Shell";
 
 let root: Root, host: HTMLDivElement;

@@ -39,17 +39,15 @@ class DiagnosticsPrivacyTest {
 
     @Test fun logcat_exports_only_approved_tags_and_scrubs_the_survivors() {
         val lines = listOf(
-            "10-23 12:00:00.000 123 456 V Capacitor/Plugin: methodName: setOnlineKey, methodData: {\"key\":\"$azure\"}",
-            "10-23 12:00:00.000 123 456 V Capacitor: methodName: pair, methodData: {\"code\":\"123456\"}",
-            "10-23 12:00:00.000 123 456 I Console: private story", "I/chromium(123): story",
-            "I/WebView(123): story", "I/Unapproved(123): story", "unparseable private story",
+            "10-23 12:00:00.000 123 456 V Plugin: methodName: setOnlineKey, methodData: {\"key\":\"$azure\"}",
+            "10-23 12:00:00.000 123 456 I Console: private story", "I/Unapproved(123): story", "unparseable private story",
             "10-23 12:00:00.000 123 456 E MediaCodec: Bearer $bearer $path",
             "W/AudioTrack(123): http://192.168.1.2/c/$azure.mp3",
             "E/AndroidRuntime(123): IllegalStateException")
         val clean = Diagnostics.filterLogcat(lines)
         assertEquals(3, clean.size)
         val text = clean.joinToString("\n")
-        for (secret in listOf(azure, bearer, path, "192.168.1.2", "story", "123456", "Capacitor")) assertFalse(text, text.contains(secret))
+        for (secret in listOf(azure, bearer, path, "192.168.1.2", "story")) assertFalse(text, text.contains(secret))
     }
 
     @Test fun every_json_string_and_exit_description_trace_and_bundle_are_scrubbed() {

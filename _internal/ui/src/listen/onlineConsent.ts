@@ -65,7 +65,7 @@ export function onlineDestination(provider: string): string {
 export function onlinePromptText(voice: Pick<ReadAloudVoice, "name" | "provider">): string {
   const name = spokenVoiceName(voice.name);
   const where = onlineDestination(voice.provider);
-  if (KEYED_PROVIDERS[voice.provider]) return `Giọng ${name} dùng khóa ${where} của bạn: chữ của đoạn đang đọc được gửi tới ${where} để đọc, và dịch vụ có thể tính tiền vào tài khoản của bạn.`;
+  if (KEYED_PROVIDERS[voice.provider]) return `Giọng ${name} dùng khoá ${where} của bạn: chữ của đoạn đang đọc được gửi tới ${where} để đọc, và dịch vụ có thể tính tiền vào tài khoản của bạn.`;
   // Người nghe biết giọng này là "Edge"; chữ đi tới đâu thì vẫn nói thật: máy chủ của công ty.
   return COMPANIES[voice.provider]
     ? `Giọng ${name} là giọng ${voice.provider === "edge" ? "Edge" : "trực tuyến"}: chữ của đoạn đang đọc được gửi tới ${where} để đọc.`

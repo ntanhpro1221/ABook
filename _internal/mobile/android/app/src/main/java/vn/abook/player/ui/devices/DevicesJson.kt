@@ -4,7 +4,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * Đọc JSON của các lõi (`Devices`, `RemoteBooks`, `Peers`) thành mô hình của màn. Cùng hình JSON đã gửi cho bản WebView - lõi không đổi vì giao diện nào dùng nó.
+ * Đọc JSON của các lõi (`Devices`, `RemoteBooks`, `Peers`) thành mô hình của màn. Hình JSON do lõi trả.
  */
 internal object DevicesJson {
     private fun JSONArray?.objects(): List<JSONObject> = if (this == null) emptyList() else (0 until length()).mapNotNull { optJSONObject(it) }

@@ -124,7 +124,7 @@ class AzureProvider(byok.KeyedProvider):
         except websocket.Rejected as rejected:
             raise byok.failure(rejected.status, NAME) from rejected
         except TimeoutError as error:
-            raise VoiceError(f"Không kết nối được tới {NAME} (quá giờ).", "offline") from error
+            raise VoiceError(f"{NAME} không trả lời (quá giờ).", "timeout") from error  # như edge.py: quá giờ không phải "không có mạng"
         except ssl.SSLError as error:
             raise VoiceError(f"Không bắt tay TLS được với {NAME}: {error}", "service") from error
         except websocket.WebSocketError as error:

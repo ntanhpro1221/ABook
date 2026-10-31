@@ -38,7 +38,7 @@ describe("tốc độ giọng trên máy", () => {
 
   it("muốn bản nhanh hơn mà chưa tải: nói cỡ và mời tải; đã có thì thôi", () => {
     const lacking = voice({ tier: "fast", fastBytes: 81_526_521 });
-    expect(voiceSpeedLine(lacking, "fast")).toBe("Giọng Supertonic - Đang dùng: Chất lượng cao nhất. Bản nhanh hơn cần tải thêm 82 MB.");
+    expect(voiceSpeedLine(lacking, "fast")).toBe("Giọng Supertonic - Đang dùng: Chất lượng cao nhất. Bản nhanh hơn cần tải thêm 78 MB.");
     expect(needsFastDownload(lacking)).toBe(true);
     expect(needsFastDownload({ ...lacking, using: "fast", fastBytes: 0 })).toBe(false);
     expect(needsFastDownload(voice())).toBe(false);

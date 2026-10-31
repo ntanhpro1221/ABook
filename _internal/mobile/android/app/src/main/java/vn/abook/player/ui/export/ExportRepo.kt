@@ -3,9 +3,7 @@ package vn.abook.player.ui.export
 import android.content.Context
 import android.net.Uri
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.withContext
 import vn.abook.player.BookMusic
 import vn.abook.player.Devices
@@ -20,11 +18,12 @@ import vn.abook.player.Playback
 import vn.abook.player.Store
 import vn.abook.player.readaloud.ReadAloud
 import vn.abook.player.ui.data.ListenBook
+import vn.abook.player.ui.data.listenerFlow
 import vn.abook.player.ui.voice.VoiceText
 
 /**
- * Nguồn thật của màn Xuất: gọi thẳng các lõi ([ExportStart], [Mp3Exports], [M4bExports], [ListenExports], [ExportHistory], [BookMusic]) - cùng những hàm mà
- * `LibraryPlugin` chuyển tiếp cho bản WebView, không qua cầu Capacitor. Tin của việc nền đến qua [vn.abook.player.ExportLive.listen].
+ * Nguồn thật của màn Xuất: gọi thẳng các lõi ([ExportStart], [Mp3Exports], [M4bExports], [ListenExports], [ExportHistory], [BookMusic]) - không qua
+ * lớp trung gian nào. Tin của việc nền đến qua [vn.abook.player.ExportLive.listen].
  */
 class ExportRepo(private val context: Context) : ExportSource {
     private suspend fun <T> io(block: () -> T): T = withContext(Dispatchers.IO) {
@@ -68,7 +67,7 @@ class ExportRepo(private val context: Context) : ExportSource {
     override suspend fun keepFolder(tree: String): String = io {
         val uri = Uri.parse(tree)
         Mp3Exports.remember(context, uri)
-        Mp3Exports.treeName(context, uri) ?: throw ExportFailure("Không mở được thư mục đã chọn - chọn lại nơi lưu")
+        Mp3Exports.treeName(context, uri) ?: throw ExportFailure("Chưa mở được thư mục đã chọn - chọn lại nơi lưu")
     }
 
     override suspend fun fileTitle(book: ListenBook, kind: ExportKind): String = io {
@@ -107,11 +106,11 @@ class ExportRepo(private val context: Context) : ExportSource {
 
     override suspend fun openFolder(uri: String): Boolean = io { ExportStart.openFolder(context, Uri.parse(uri)) }
 
-    override fun events(): Flow<ExportEvent> = callbackFlow {
+    override fun events(): Flow<ExportEvent> = listenerFlow { send ->
         val stops = listOf(ExportKind.Mp3 to Mp3Exports.live, ExportKind.M4b to M4bExports.live, ExportKind.Audiobook to ListenExports.live).map { (kind, live) ->
-            live.listen { json -> ExportJson.event(json, kind)?.let { trySend(it) } }
+            live.listen { json -> ExportJson.event(json, kind)?.let(send) }
         }
-        awaitClose { stops.forEach { it() } }
+        ({ stops.forEach { it() } })
     }
 
     override suspend fun running(): List<ExportEvent> = io { ExportJobs.running(context).mapNotNull { ExportJson.event(it) } }

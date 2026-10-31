@@ -15,7 +15,7 @@ Popover {
             model: root.items
             delegate: Loader {
                 required property var modelData
-                width: parent.width
+                width: parent ? parent.width : 0
                 sourceComponent: modelData.sep ? line : row
                 Component {
                     id: row

@@ -42,7 +42,7 @@ object Remote {
     private val handled = LinkedHashMap<String, Long>()
     private var service: ListenableFuture<MediaController>? = null
 
-    /** App đang hiện trên màn hình (MainActivity): mở app là máy tính thấy điện thoại, kể cả khi chưa phát gì. */
+    /** App đang hiện trên màn hình (NativeActivity): mở app là máy tính thấy điện thoại, kể cả khi chưa phát gì. */
     @Volatile
     var foreground = false
         set(value) {
@@ -118,7 +118,8 @@ object Remote {
             // Gửi lại kết quả lệnh trong 20 giây: giao diện máy tính hỏi 1,5 giây một lần, không được lỡ một lỗi.
             if (acks.isNotEmpty()) body.put("acks", JSONArray(acks.map { it.second }))
         }
-        val reply = SyncLink.request(context, "POST", "/sync/v1/remote", body, readTimeoutMs = (wait + 15) * 1000)
+        // Máy tính giữ lời gọi tới `wait` giây rồi mới trả lời: hạn "không byte nào" của chính sách (30 giây, HostWait) rộng hơn nó.
+        val reply = SyncLink.request(context, "POST", "/sync/v1/remote", body)
         return JSONObject(reply).optJSONArray("commands")
     }
 
@@ -181,7 +182,7 @@ object Remote {
             val id = command.optString("bookId")
             if (command.optString("action") == "load" && Store.manifest(id) == null) {
                 runCatching { Streaming.fetchManifest(context, id) }
-                    .onFailure { fetchProblems[command.optString("id")] = "Không lấy được sách từ máy tính: ${it.message}" }
+                    .onFailure { fetchProblems[command.optString("id")] = "Chưa lấy được sách từ máy tính: ${it.message}" }
             }
         }
         Playback.onMain {
@@ -234,7 +235,7 @@ object Remote {
         return null
     }
 
-    /** Dịch vụ phát chưa chạy (mở app mà chưa nghe gì): dựng nó như PlayerPlugin rồi mới làm. */
+    /** Dịch vụ phát chưa chạy (mở app mà chưa nghe gì): dựng nó rồi mới làm. */
     private fun withService(block: () -> Unit) {
         if (Playback.player != null) {
             block()

@@ -32,7 +32,7 @@ export function watchUntilBack(
   return stop;
 }
 
-/** Cuốn đang nạp trong trình phát là sách của máy khác mà đã rời Thư viện (thôi ghép máy ấy): trình phát đóng, đừng giữ một cuốn không
+/** Cuốn đang nạp trong trình phát là sách của máy khác mà đã rời Thư viện (bỏ ghép máy ấy): trình phát đóng, đừng giữ một cuốn không
  *  mở lại được (soát a27 lỗi 11). `books` chưa có (chưa hỏi xong) thì chưa kết luận; sách của chính máy này không bao giờ bị đóng ở đây. */
 export function leftWithPeer(book: { id: string; remote?: unknown } | null | undefined, books: readonly { id: string }[] | undefined): boolean {
   return Boolean(book?.remote) && books !== undefined && !books.some((item) => item.id === book!.id);

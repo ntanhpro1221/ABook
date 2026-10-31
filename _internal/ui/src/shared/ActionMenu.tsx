@@ -87,8 +87,9 @@ function DesktopSubmenu({ trigger, itemClassName, children }: { trigger: ReactNo
     }}>
       <DropdownMenu.SubTrigger ref={ref} className={itemClassName}>{trigger}</DropdownMenu.SubTrigger>
       <DropdownMenu.Portal>
-        {/* Bỏ giới hạn theo dòng neo: menu con cần chạm mép bảng cha, kể cả khi dòng neo ở cuối bảng. */}
-        <DropdownMenu.SubContent {...offsets} align={align} sticky="always" data-submenu-trigger={ref.current?.id} collisionPadding={12} className="z-50 max-h-[70vh] w-72 overflow-y-auto rounded-cover border border-line bg-panel p-1.5 shadow-float">
+        {/* Bỏ giới hạn theo dòng neo: menu con cần chạm mép bảng cha, kể cả khi dòng neo ở cuối bảng.
+            Esc chỉ đóng menu con, tiêu điểm về dòng đã mở nó (Radix mặc định đóng cả cây menu) - Back đối xứng đường vào. */}
+        <DropdownMenu.SubContent onEscapeKeyDown={(event) => { event.preventDefault(); setOpen(false); ref.current?.focus(); }} {...offsets} align={align} sticky="always" data-submenu-trigger={ref.current?.id} collisionPadding={12} className="z-50 max-h-[70vh] w-72 overflow-y-auto rounded-cover border border-line bg-panel p-1.5 shadow-float">
           {children}
         </DropdownMenu.SubContent>
       </DropdownMenu.Portal>

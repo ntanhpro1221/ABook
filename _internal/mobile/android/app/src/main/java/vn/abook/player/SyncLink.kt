@@ -8,18 +8,19 @@ import java.io.File
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
+import vn.abook.player.net.HostWait
 import javax.net.ssl.HttpsURLConnection
 
 /**
  * Đường tới máy tính đã ghép (địa chỉ, cổng, mã thiết bị, vân tay chứng chỉ TLS trong SharedPreferences "sync") - dùng chung
- * cho thư viện (LibraryPlugin: tải sách, đồng bộ chỗ nghe) và điều khiển từ xa (Remote). Mọi đường là HTTPS với chứng chỉ đã
+ * cho thư viện (tải sách, đồng bộ chỗ nghe) và điều khiển từ xa (Remote). Mọi đường là HTTPS với chứng chỉ đã
  * ghim lúc ghép ([Pin]); chứng chỉ đổi thì lỗi [Pin.CHANGED], không rơi về HTTP.
  */
 object SyncLink {
     fun prefs(context: Context): SharedPreferences = context.getSharedPreferences("sync", Context.MODE_PRIVATE)
 
     /** Mã cố định của chính điện thoại này (16 chữ hex), gửi lúc ghép - như remote_books.py `Computers.own_id` của máy tính. Không nằm trong
-     *  `prefs` (thôi ghép máy tính chính xoá sạch nó). */
+     *  `prefs` (bỏ ghép máy tính chính xoá sạch nó). */
     @Synchronized
     fun selfId(context: Context): String {
         val store = context.getSharedPreferences("abook_self", Context.MODE_PRIVATE)
@@ -29,7 +30,7 @@ object SyncLink {
         return fresh
     }
 
-    /** Báo máy kia thu hồi mã của máy này ở đó (`POST /sync/v1/unpair`, sync.py) - lúc thôi ghép; máy kia tắt thì thôi (chỉ thử một lần). */
+    /** Báo máy kia thu hồi mã của máy này ở đó (`POST /sync/v1/unpair`, sync.py) - lúc bỏ ghép; máy kia tắt thì thôi (chỉ thử một lần). */
     fun tellUnpaired(context: Context, root: String, token: String) {
         if (token.isBlank()) return
         runCatching { request(context, "POST", "/sync/v1/unpair", JSONObject(), false, root, 3000, 1500, token) }
@@ -69,7 +70,7 @@ object SyncLink {
         val manifest = Store.playableManifest(bookId)
         val source = manifest?.optString("source").orEmpty()
         if (source.isNotEmpty()) {
-            val link = Peers.link(context, source) ?: throw IllegalStateException("Thiết bị giữ cuốn này đã thôi ghép")
+            val link = Peers.link(context, source) ?: throw IllegalStateException("Thiết bị giữ cuốn này đã bỏ ghép")
             return link to manifest!!.optString("remoteId", bookId)
         }
         return Peers.Link(base(context), token(context)) to bookId
@@ -83,14 +84,19 @@ object SyncLink {
     }
 
     /** Một file của cuốn `remote` trên máy giữ sách `link` (đã nhận header, có retry GET); `resumeFrom` > 0 = tải tiếp từ byte ấy (kèm `If-Range` = [ifRange]). */
-    fun bookFile(context: Context, link: Peers.Link, remote: String, relative: String, resumeFrom: Long = 0, ifRange: String = ""): HttpURLConnection {
+    fun bookFile(context: Context, link: Peers.Link, remote: String, relative: String, resumeFrom: Long = 0, ifRange: String = ""): HttpURLConnection =
+        download(context, link, "/sync/v1/books/$remote/files/$relative", resumeFrom, ifRange)
+
+    /**
+     * GET nhị phân có ghim vân tay tới BẤT KỲ đường nào của máy `link` (`/sync/v1/...`, `/media/...` của Studio từ xa); trình phát hệ thống không ghim được
+     * vân tay nên Studio tải file về rồi mới phát. Cùng cách nối tiếp với [bookFile]: `resumeFrom` > 0 = xin từ byte ấy, kèm `If-Range` = [ifRange].
+     */
+    fun download(context: Context, link: Peers.Link, path: String, resumeFrom: Long = 0, ifRange: String = ""): HttpURLConnection {
         Pin.install(context)
         return PeerTransfer.openGet {
             val selected = PeerRouting.resolve(context, link.base, link.token)
-            val connection = URL("$selected/sync/v1/books/$remote/files/$relative").openConnection() as HttpURLConnection
+            val connection = HostWait.open("$selected$path", 5000)
             PeerRouting.expected(context, link.token)?.let { expected -> if (connection is HttpsURLConnection) Pin.pin(connection, expected) }
-            connection.connectTimeout = 5000
-            connection.readTimeout = 30000
             connection.setRequestProperty("Authorization", "Bearer ${link.token}")
             if (resumeFrom > 0) {
                 connection.setRequestProperty("Range", "bytes=$resumeFrom-")
@@ -126,16 +132,17 @@ object SyncLink {
         body: JSONObject? = null,
         auth: Boolean = true,
         root: String = base(context),
-        readTimeoutMs: Int = 20_000,
+        readTimeoutMs: Int? = null,
         connectTimeoutMs: Int = 5000,
         token: String? = null,
         upload: File? = null,
+        stream: ((java.io.OutputStream) -> Unit)? = null,
     ): String {
         // Choose before HTTP: never replay a POST/upload after an uncertain result.
         val credential = token ?: if (auth) SyncLink.token(context) else ""
         val selected = PeerRouting.resolve(context, root, credential)
         try {
-            return send(context, method, path, body, auth, selected, readTimeoutMs, connectTimeoutMs, token, upload = upload)
+            return send(context, method, path, body, auth, selected, readTimeoutMs, connectTimeoutMs, token, upload = upload, stream = stream)
         } catch (error: IOException) {
             Route.markDown(selected.removePrefix("https://"))
             throw error
@@ -197,18 +204,23 @@ object SyncLink {
         body: JSONObject?,
         auth: Boolean,
         root: String,
-        readTimeoutMs: Int,
+        readTimeoutMs: Int?,
         connectTimeoutMs: Int,
         token: String?,
         firstUse: Array<String?>? = null,
         upload: File? = null,
+        stream: ((java.io.OutputStream) -> Unit)? = null,
     ): String {
         Pin.install(context)
         return Pin.guard {
-            exchange(context, method, path, body, auth, root, readTimeoutMs, connectTimeoutMs, token, firstUse, upload)
+            exchange(context, method, path, body, auth, root, readTimeoutMs, connectTimeoutMs, token, firstUse, upload, stream)
         }
     }
 
+    /**
+     * Một lời gọi tới máy đã ghép theo chính sách chờ chung ([HostWait]): im quá `readTimeoutMs` (mặc định theo đường: việc nặng ([HostWait.LONG_WORK]: giọng đọc, quét/tạo sách, dựng nhạc...) 100 giây, còn lại 30 giây) thì gửi lại một lần rồi báo
+     * [HostWait.Timeout]. `readTimeoutMs` do người gọi đặt là hạn riêng của một phép dò nhanh: không gửi lại. Tệp gửi lên (`upload`, `stream`) cũng không gửi lại - không phát lại được.
+     */
     private fun exchange(
         context: Context,
         method: String,
@@ -216,14 +228,35 @@ object SyncLink {
         body: JSONObject?,
         auth: Boolean,
         root: String,
-        readTimeoutMs: Int,
+        readTimeoutMs: Int?,
         connectTimeoutMs: Int,
         token: String?,
         firstUse: Array<String?>?,
         upload: File? = null,
+        stream: ((java.io.OutputStream) -> Unit)? = null,
+    ): String {
+        val idleMs = readTimeoutMs ?: HostWait.idleMs(path)
+        return HostWait.call(resend = readTimeoutMs == null && upload == null && stream == null) {
+            exchangeOnce(context, method, path, body, auth, root, idleMs, connectTimeoutMs, token, firstUse, upload, stream)
+        }
+    }
+
+    private fun exchangeOnce(
+        context: Context,
+        method: String,
+        path: String,
+        body: JSONObject?,
+        auth: Boolean,
+        root: String,
+        idleMs: Int,
+        connectTimeoutMs: Int,
+        token: String?,
+        firstUse: Array<String?>?,
+        upload: File?,
+        stream: ((java.io.OutputStream) -> Unit)?,
     ): String {
         fun connect(): HttpURLConnection {
-            val connection = URL(root + path).openConnection() as HttpURLConnection
+            val connection = HostWait.open(root + path, connectTimeoutMs, idleMs)
             // `firstUse` != null: yêu cầu ghép - nhận chứng chỉ lạ một lần và đọc vân tay ra mảng này.
             if (firstUse != null && connection is HttpsURLConnection) Pin.firstUse(connection)
             else if (connection is HttpsURLConnection) {
@@ -231,8 +264,6 @@ object SyncLink {
                 PeerRouting.expected(context, credential)?.let { Pin.pin(connection, it) }
             }
             connection.requestMethod = method
-            connection.connectTimeout = connectTimeoutMs
-            connection.readTimeout = readTimeoutMs
             if (token != null) connection.setRequestProperty("Authorization", "Bearer $token")
             else if (auth) connection.setRequestProperty("Authorization", "Bearer ${prefs(context).getString("token", "")}")
             if (upload != null) {
@@ -240,23 +271,34 @@ object SyncLink {
                 connection.doOutput = true
                 connection.setRequestProperty("Content-Type", "application/zip")
                 connection.setFixedLengthStreamingMode(upload.length())
-                upload.inputStream().use { input -> connection.outputStream.use { input.copyTo(it, 256 * 1024) } }
+                HostWait.writing(connection, idleMs) { alive ->
+                    upload.inputStream().use { input -> HostWait.counting(connection.outputStream, alive).use { input.copyTo(it, 256 * 1024) } }
+                }
+            } else if (stream != null) {
+                // Thân JSON lớn (nguồn sách tới ~17 MiB mã base64): ghi thẳng ra kết nối theo từng khúc, không dựng cả chuỗi trong bộ nhớ.
+                connection.doOutput = true
+                connection.setRequestProperty("Content-Type", "application/json; charset=utf-8")
+                connection.setChunkedStreamingMode(64 * 1024)
+                HostWait.writing(connection, idleMs) { alive -> HostWait.counting(connection.outputStream, alive).use { stream(it) } }
             } else if (body != null) {
                 connection.doOutput = true
                 connection.setRequestProperty("Content-Type", "application/json; charset=utf-8")
-                connection.outputStream.use { it.write(body.toString().toByteArray()) }
+                HostWait.writing(connection, idleMs) { alive -> HostWait.counting(connection.outputStream, alive).use { it.write(body.toString().toByteArray()) } }
             }
             return connection
         }
-        val connection = if (method == "GET") PeerTransfer.openGet { connect() } else connect()
+        val connection = if (method == "GET") PeerTransfer.openGet(resend = false) { connect() } else connect()
         try {
-            val code = connection.responseCode
-            val text = responseText(connection, code)
+            // Mã trả lời + thân đọc trong MỘT lượt canh: byte nào về cũng làm hạn "im lặng" đếm lại; im quá hạn là HostWait.Timeout (gửi lại ở HostWait.call).
+            val (code, text) = HostWait.awaiting(connection) {
+                val status = connection.responseCode
+                status to responseText(connection, status)
+            }
             if (firstUse != null && connection is HttpsURLConnection) firstUse[0] = Pin.peerFingerprint(connection)
             if (code >= 400) {
                 val message = runCatching { JSONObject(text).optString("error") }.getOrNull()
-                // Mang mã HTTP (NetErrors.Refused): 401 = máy kia đã thôi ghép máy này, giao diện nói đúng thế thay vì "không kết nối được".
-                throw NetErrors.Refused(code, message?.ifBlank { null } ?: "Máy tính trả lỗi $code")
+                // Mang mã HTTP (NetErrors.Refused): 401 = máy kia đã bỏ ghép máy này, giao diện nói đúng thế thay vì "không kết nối được".
+                throw NetErrors.Refused(code, message?.ifBlank { null } ?: "Máy tính trả lỗi $code", text)
             }
             if (firstUse == null && connection is HttpsURLConnection) {
                 val credential = token ?: if (auth) SyncLink.token(context) else ""
@@ -289,8 +331,9 @@ object SyncLink {
             }
         }
         val text = bytes.toString("UTF-8")
+        // Một đối tượng hay một mảng (GET /api/listen/library, /api/voices... trả mảng trần): số, chữ, true/null trần vẫn bị từ chối.
         if (text.isNotEmpty()) try {
-            require(StrictJson.parse(text) is JSONObject)
+            require(StrictJson.parse(text).let { it is JSONObject || it is JSONArray })
         } catch (error: Exception) {
             throw IllegalArgumentException("Dữ liệu máy gửi không hợp lệ; bạn hãy thử lại.", error)
         }

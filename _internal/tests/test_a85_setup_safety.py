@@ -30,13 +30,18 @@ def test_library_cannot_be_saved_in_uninstall_tree(tmp_path, monkeypatch, where)
     assert saved == []
 
 
+# Bộ gỡ Tauri và bộ gỡ Qt (desktop_qt/installer, thêm phép kiểm junction bên trong) cùng luật.
+GUARDS = ["shell/src-tauri/windows/uninstall_guard.ps1", "desktop_qt/installer/uninstall_guard.ps1"]
+
+
+@pytest.mark.parametrize("guard", GUARDS)
 @pytest.mark.parametrize("library,code", [("outside", 0), ("ABook/Books", 3), ("ABook/Studio/books", 3)])
 @pytest.mark.parametrize("target", ["ABook", "ABook/Studio"])
-def test_uninstall_guard_reads_real_preferences(tmp_path, library, code, target):
+def test_uninstall_guard_reads_real_preferences(tmp_path, library, code, target, guard):
     prefs = tmp_path / "preferences.json"
     prefs.write_text(json.dumps({"libraryRoot": str(tmp_path / library)}), encoding="utf-8")
     result = subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File",
-                             str(Path("shell/src-tauri/windows/uninstall_guard.ps1").resolve())],
+                             str(Path(guard).resolve())],
                             env={**os.environ, "ABOOK_PREFERENCES": str(prefs),
                                  "ABOOK_DELETE_TARGET": str(tmp_path / target)}, capture_output=True)
     expected = 0 if target == "ABook/Studio" and library == "ABook/Books" else code
@@ -382,17 +387,41 @@ def test_upgrade_intent_is_independent_of_installer_filename(filename):
     assert result.returncode == 3, result.stderr
 
 
+@pytest.mark.parametrize("guard", GUARDS)
 @pytest.mark.parametrize("broken", [False, True])
-def test_uninstall_guard_fails_closed_for_unreadable_preferences(tmp_path, broken):
+def test_uninstall_guard_fails_closed_for_unreadable_preferences(tmp_path, broken, guard):
     prefs = tmp_path / "prefs.json"
     if broken:
         prefs.write_text("{broken")
     else:
         prefs.mkdir()
     result = subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File",
-                             str(Path("shell/src-tauri/windows/uninstall_guard.ps1").resolve())],
+                             str(Path(guard).resolve())],
                             env={**os.environ, "ABOOK_PREFERENCES": str(prefs), "ABOOK_DELETE_TARGET": str(tmp_path)}, capture_output=True)
     assert result.returncode == 4
+
+
+@pytest.mark.parametrize("inside", [False, True])
+def test_qt_uninstall_guard_refuses_a_junction_inside_the_target(tmp_path, inside):
+    """NSIS RMDir /r đi theo junction (test_installer.py 31-10 đã thấy nó làm rỗng thư mục ngoài): bộ gỡ Qt giữ thư mục có
+    junction ở bất kỳ đâu bên trong."""
+    import _winapi
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "keep.txt").write_text("not ours", encoding="utf-8")
+    target = tmp_path / "local" / "ABook"
+    (target / "a" / "b").mkdir(parents=True)
+    (target / "a" / "file.txt").write_text("x", encoding="utf-8")
+    if inside:
+        _winapi.CreateJunction(str(outside), str(target / "a" / "b" / "Studio"))
+    result = subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File",
+                             str(Path("desktop_qt/installer/uninstall_guard.ps1").resolve())],
+                            env={**os.environ, "ABOOK_PREFERENCES": str(tmp_path / "none.json"), "ABOOK_DELETE_TARGET": str(target)},
+                            capture_output=True)
+    if inside:
+        os.rmdir(target / "a" / "b" / "Studio")
+    assert result.returncode == (4 if inside else 0), result.stderr
+    assert (outside / "keep.txt").exists()
 
 
 @pytest.mark.parametrize("failed,reused,code", [(False, False, 0), (True, False, 4), (False, True, 0)])

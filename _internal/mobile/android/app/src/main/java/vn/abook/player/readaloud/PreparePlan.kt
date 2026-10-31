@@ -280,7 +280,7 @@ class PrepareRunner(
             val paragraphs = texts(chapter)
             if (paragraphs == null) {
                 job.state = "error"
-                job.error = "Không đọc được chữ của chương “${chapter.title}” - đã dừng làm trước."
+                job.error = "Chưa đọc được chữ của chương “${chapter.title}” - đã dừng làm trước."
                 save(job)
                 return Outcome.ERROR
             }
@@ -342,7 +342,7 @@ class PrepareRunner(
         return if (job.online && error.offline) {
             "Mất mạng ở “${chapter.title}”$kept — bạn nối Wi-Fi rồi làm trước lại."
         } else {
-            "Không làm trước được “${chapter.title}”: ${error.message?.trimEnd('.')}.$kept"
+            "Chưa làm trước được “${chapter.title}”: ${error.message?.trimEnd('.')}.$kept"
         }
     }
 }

@@ -156,7 +156,7 @@ class ReadAheadTest {
         for (error in listOf(
             VoiceException("Không có mạng", offline = true),
             VoiceException("Từ chối", reason = "rejected"),
-            VoiceException("Khóa sai", reason = "auth"),
+            VoiceException("Khoá sai", reason = "auth"),
             VoiceException("Hết hạn mức", reason = "quota"),
             VoiceException(ClipReader.NO_USABLE_VOICE, reason = "service", final = true),
         )) {

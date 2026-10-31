@@ -23,7 +23,7 @@ constexpr int kHiddenSaveEveryMs = 30'000;
 constexpr double kSafetyWarnMs = 30'000;
 constexpr double kListenedMinimum = 20; // phiên nghe dưới 20 giây thật thì bỏ
 
-const QString kPlayError = QStringLiteral("Không phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại.");
+const QString kPlayError = QStringLiteral("Chưa phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại.");
 // Same sentence as the phone (ClipReader.NO_USABLE_VOICE) and the web (readAloudVoice.ts): PlayerAlert offers "Thử lại".
 const QString kVoiceStuck = QStringLiteral("Giọng đang chọn đang không dùng được.");
 

@@ -24,7 +24,7 @@ describe("tải sách của máy khác về máy này", () => {
   it("đang tải: phần trăm theo byte, nút dừng", () => {
     const note = downloadNote(status({ state: "running", bytesDone: 345, filesDone: 1 }), "")!;
     expect(note).toMatchObject({ tone: "running", title: "Đang tải về máy… 34%", action: "cancel" });
-    expect(downloadMenuLabel(status({ state: "running", bytesDone: 345 }), "").label).toBe("Dừng tải về máy");
+    expect(downloadMenuLabel(status({ state: "running", bytesDone: 345 }), "").label).toBe("Huỷ tải");
   });
 
   it("đủ audio mà chữ đọc theo / nhạc chưa có: chưa phải 100%, nói phần còn thiếu (soát a27 lỗi 8)", () => {
@@ -36,6 +36,13 @@ describe("tải sách của máy khác về máy này", () => {
       disabled: false,
     });
     expect(downloadFraction(status({ bytesDone: 1000, filesDone: 4 }))).toBe(1);
+  });
+
+  it("đã đếm đủ file và byte mà máy chủ vẫn báo đang chạy (kiểm, chuyển chỗ): chưa phải 100%, vẫn là đang tải", () => {
+    const finishing = status({ state: "running", bytesDone: 1000, filesDone: 4 });
+    expect(downloadFraction(finishing)).toBeLessThan(1);
+    expect(downloadNote(finishing, "")!.title).toBe("Đang tải về máy… 99%");
+    expect(downloadMenuLabel(finishing, "").hint).toBe("Đã tải 99%");
   });
 
   it("không biết cỡ file: tính theo số file", () => {

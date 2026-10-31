@@ -18,6 +18,11 @@ spec.loader.exec_module(results)
     ("Totals: 9 passed, 1 failed, 0 skipped\n", False),
     ("FAIL! : crashed\nTotals: 10 passed, 0 failed, 0 skipped\n", False),
     ("test aborted before totals\n", False),
+    ("QWARN : file:///D:/x/qml/StudioSettings.qml:139: TypeError: Cannot call method 'join' of undefined\n"
+     "Totals: 10 passed, 0 failed, 0 skipped\n", False),
+    # A delegate's binding carries a column too.
+    ("QWARN : file:///D:/x/qml/LookShortcuts.qml:33:17: TypeError: Cannot read property 'width' of null\n"
+     "Totals: 10 passed, 0 failed, 0 skipped\n", False),
 ])
 def test_packaging_gate(tmp_path, capsys, log, ok):
     path = tmp_path / "width-test.txt"

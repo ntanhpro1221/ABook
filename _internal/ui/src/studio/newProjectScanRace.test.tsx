@@ -29,7 +29,7 @@ vi.mock("react", async (original) => {
   };
 });
 vi.mock("react-router", () => ({ Link: () => null, useNavigate: () => vi.fn(), useSearchParams: () => [new URLSearchParams(), vi.fn()], useLocation: () => ({ pathname: "/studio/new", search: "", state: null }) }));
-vi.mock("@/desktop/PhoneSync", () => ({ Switch: () => null }));
+vi.mock("@/desktop/Switch", () => ({ Switch: () => null }));
 vi.mock("@/listen/clip", () => ({ useClip: () => ({}) }));
 vi.mock("@/listen/source", () => ({ useSource: () => ({}) }));
 vi.mock("@/shared/BookCover", () => ({ BookCover: () => null }));
@@ -69,8 +69,8 @@ beforeEach(() => {
 it("nguồn vừa đổi, kết quả quét còn của danh sách cũ: nút Tạo đợi và không gửi gì", () => {
   ev.states = [ev.draft, { key: sourcesKey(["old/1.txt"]), result: ev.scan(["old/1.txt"]) }];
   const html = renderToStaticMarkup(<NewProjectScreen />);
-  expect(html).toContain("Đang đọc nguồn…");
-  expect(ev.labels.at(-1)).toEqual({ text: "Đang đọc nguồn…", disabled: true });
+  expect(html).toContain("Đang đọc nguồn");
+  expect(ev.labels.at(-1)).toEqual({ text: "Đang đọc nguồn", disabled: true });
   ev.submit?.();
   expect(ev.create).not.toHaveBeenCalled();
 });

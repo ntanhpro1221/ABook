@@ -59,15 +59,15 @@ describe("nút điều khiển khi đang dừng", () => {
     const pause = buttons.find((button) => button.replace(/<[^>]+>/g, "") === "Tạm dừng");
     expect(pause).toContain("bg-accent");
     expect(pause).not.toMatch(/disabled=""|aria-disabled="true"/);
-    expect(out).not.toContain("Đang dừng…");
+    expect(out).not.toContain("Đang dừng");
     expect(out).toContain("Tuỳ chọn dự án Sách thử");
   });
 
-  it("đã bấm Dừng: nút chính 'Đang dừng…' bị khoá, không còn Tạm dừng / Dừng nào bấm được (V1)", async () => {
+  it("đã bấm Dừng: nút chính 'Đang dừng' bị khoá, không còn Tạm dừng / Dừng nào bấm được (V1)", async () => {
     const { Actions } = await import("./ProjectScreen");
-    const out = html(<Actions book={book({ stopping: true, canPause: false, statusLabel: "Đang dừng…" })} />);
+    const out = html(<Actions book={book({ stopping: true, canPause: false, statusLabel: "Đang dừng" })} />);
     const buttons = [...out.matchAll(/<button[^>]*>(?:(?!<\/button>).)*<\/button>/g)].map((match) => match[0]);
-    const stopping = buttons.find((button) => button.includes("Đang dừng…"));
+    const stopping = buttons.find((button) => button.includes("Đang dừng"));
     expect(stopping).toContain('aria-disabled="true"');
     expect(buttons.some((button) => ["Dừng", "Tạm dừng"].includes(button.replace(/<[^>]+>/g, "")))).toBe(false);
   });
@@ -104,7 +104,7 @@ describe("phản hồi của máy chủ vào bộ nhớ đệm", () => {
     const before = book();
     client.setQueryData(["book", "b1"], { book: before, chapters: [{ id: 7 }] });
     client.setQueryData(["library"], { root: "D:/x", books: [before, book({ id: "b2" })] });
-    const after = book({ paused: "listener", statusLabel: "Đang tạm dừng…" });
+    const after = book({ paused: "listener", statusLabel: "Đang tạm dừng" });
     adoptSummary(client, after);
     expect(client.getQueryData<{ book: BookSummary; chapters: unknown[] }>(["book", "b1"])).toEqual({ book: after, chapters: [{ id: 7 }] });
     const library = client.getQueryData<{ books: BookSummary[] }>(["library"]);

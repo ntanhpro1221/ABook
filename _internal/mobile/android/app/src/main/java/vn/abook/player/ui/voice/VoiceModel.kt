@@ -1,22 +1,25 @@
 package vn.abook.player.ui.voice
 
+import vn.abook.player.ui.data.dotJoined
+import vn.abook.player.formatSize
+
 import androidx.compose.runtime.Immutable
 import org.json.JSONObject
 import java.util.Locale
 
 /*
- * Mô hình và lời của các việc Giọng đọc làm thêm: giọng tải về máy (VieNeu, Supertonic), khóa giọng trực tuyến, nghe thử, đồng ý gửi chữ, Nhạc của tôi. Cùng hình JSON
- * với lõi (VoiceModule.status, OnlineKeys.public, MusicStore.entries) và cùng lời với bản WebView (listen/vieneuModule.ts, onlineConsent.ts, studio/musicLocal.ts).
+ * Mô hình và lời của các việc Giọng đọc làm thêm: giọng tải về máy (VieNeu, Supertonic), khoá giọng trực tuyến, nghe thử, đồng ý gửi chữ, Nhạc của tôi. Cùng hình JSON
+ * với lõi (VoiceModule.status, OnlineKeys.public, MusicStore.entries).
  * Hàm thuần, không Android: thử trên JVM.
  */
 
 /** Màn con của nhóm Giọng đọc (cấp hai, cũng là cấp cuối: Cài đặt -> Giọng đọc -> màn này). Bảng trượt là lớp nổi, không phải cấp ba. */
 enum class VoicePage { Keys, Music }
 
-/** Hai mô-đun giọng chạy trên máy, tải khi bạn bấm. */
-enum class ModuleKind(val key: String, val title: String) {
-    Vieneu("vieneu", "Giọng VieNeu"),
-    Supertonic("supertonic", "Giọng Supertonic"),
+/** Hai mô-đun giọng chạy trên máy, tải khi bạn bấm. `invite`: lời mời dưới tên khi chưa tải - cùng lời thẻ giọng bên web (vieneuModule.ts `invite`). */
+enum class ModuleKind(val key: String, val title: String, val invite: String) {
+    Vieneu("vieneu", "Giọng VieNeu", "Giọng hay, đọc ngay trên máy, không cần mạng. Chữ của sách không rời máy."),
+    Supertonic("supertonic", "Giọng Supertonic", "Mười giọng nam nữ, nhẹ máy, không cần mạng. Chữ của sách không rời máy."),
 }
 
 enum class ModuleState { Missing, Downloading, Ready, Outdated, Error, Unsupported }
@@ -32,6 +35,8 @@ data class ModuleChoice(
     val recommended: Boolean,
     /** Gỡ được (đã cài, hay còn phần tải dở). */
     val removable: Boolean,
+    /** Mô-đun đánh dấu sẵn lựa chọn này cho máy (gói mặc định của Cài đặt). */
+    val ticked: Boolean = false,
 )
 
 @Immutable
@@ -83,7 +88,7 @@ object ModuleJson {
         val choices = (0 until (rows?.length() ?: 0)).mapNotNull { rows?.optJSONObject(it) }.map { row ->
             ModuleChoice(
                 row.optString("id"), row.optString("label"), row.optString("detail"), row.optLong("bytes"), row.optBoolean("installed"),
-                row.optBoolean("recommended"), row.optBoolean("removable"),
+                row.optBoolean("recommended"), row.optBoolean("removable"), row.optBoolean("default"),
             )
         }
         val bench = json.optJSONObject("benchmark")
@@ -103,9 +108,9 @@ object ModuleJson {
 /** Lỗi đã dịch cho người nghe (lõi ném, nguồn gói lại). */
 class VoiceFailure(message: String) : Exception(message)
 
-// ---- khóa giọng trực tuyến ----------------------------------------------------------------------------------------------------
+// ---- khoá giọng trực tuyến ----------------------------------------------------------------------------------------------------
 
-/** Một nhà cung cấp giọng dùng khóa của bạn, như lõi mô tả ([vn.abook.player.readaloud.KeyedProvider.describe]): khóa chỉ ở dạng che. */
+/** Một nhà cung cấp giọng dùng khoá của bạn, như lõi mô tả ([vn.abook.player.readaloud.KeyedProvider.describe]): khoá chỉ ở dạng che. */
 @Immutable
 data class KeyProvider(
     val id: String,
@@ -115,14 +120,15 @@ data class KeyProvider(
     /** Cần nhập vùng (Azure). */
     val region: Boolean,
     val hasKey: Boolean,
-    /** "••••abcd": đủ để nhận ra khóa nào, không bao giờ là khóa thật. */
+    /** "••••abcd": đủ để nhận ra khoá nào, không bao giờ là khoá thật. */
     val masked: String,
     val regionValue: String,
     val valid: Boolean,
     val voices: Int,
+    val timings: String = "estimated",
 )
 
-/** Kết quả "Kiểm tra" một khóa: câu nói được cho người nghe. */
+/** Kết quả "Kiểm tra" một khoá: câu nói được cho người nghe. */
 @Immutable
 data class KeyResult(val ok: Boolean, val text: String, val provider: KeyProvider? = null)
 
@@ -131,7 +137,7 @@ object KeyJson {
         val limits = json.optJSONObject("limits")
         return KeyProvider(
             json.optString("id"), json.optString("name"), limits?.optString("free").orEmpty(), limits?.optBoolean("region") == true,
-            json.optBoolean("hasKey"), json.optString("masked"), json.optString("region"), json.optBoolean("valid"), json.optInt("voices"),
+            json.optBoolean("hasKey"), json.optString("masked"), json.optString("region"), json.optBoolean("valid"), json.optInt("voices"), limits?.optString("timings", "estimated") ?: "estimated",
         )
     }
 
@@ -141,7 +147,7 @@ object KeyJson {
         return if (json.optBoolean("ok")) {
             KeyResult(true, "Dùng được · ${if (json.has("voices")) json.optInt("voices") else provider?.voices ?: 0} giọng tiếng Việt", provider)
         } else {
-            KeyResult(false, json.optString("message").ifBlank { "Khóa chưa dùng được." }, provider)
+            KeyResult(false, json.optString("message").ifBlank { "Khoá chưa dùng được." }, provider)
         }
     }
 }
@@ -198,14 +204,18 @@ data class ModuleRow(
 )
 
 object VoiceText {
-    /** Cỡ file cho người nghe, MỘT hệ thập phân (studio/musicLocal.ts `formatSize`): "850 MB", "1,2 GB"; dưới 10 MB một chữ số thập phân. */
-    fun size(bytes: Long): String {
-        if (bytes >= 1_000_000_000) return String.format(Locale.ROOT, "%.2f", bytes / 1e9).replace('.', ',') + " GB"
-        val megabytes = bytes / 1e6
-        if (megabytes < 1) return "${maxOf(1L, Math.round(bytes / 1e3))} KB"
-        return if (megabytes < 10) String.format(Locale.ROOT, "%.1f", megabytes).replace('.', ',') + " MB" else "${Math.round(megabytes)} MB"
+    fun gender(value: String): String? = when (value.lowercase()) { "male", "nam" -> "Nam"; "female", "nữ" -> "Nữ"; else -> null }
+    fun onlineNotice(provider: String): String? = when {
+        provider == "edge" -> "Giọng Edge gửi chữ của sách tới máy chủ Microsoft để đọc."
+        provider in KEYED -> "Giọng ${KEYED[provider]} gửi chữ của sách tới ${KEYED[provider]} bằng khoá của bạn - có thể bị tính tiền vào tài khoản của bạn."
+        else -> null
     }
-
+    fun advice(vieneu: ModuleStatus?, supertonic: ModuleStatus?): String? {
+        if (vieneu == null || supertonic == null || vieneu.installedAny || supertonic.installedAny) return null
+        if (vieneu.state == ModuleState.Unsupported) return null
+        val name = tierName(if (vieneu.recommended == "nano") "nano" else "turbo").replaceFirstChar { it.lowercase() }
+        return "Nên dùng $name; chỉ cần tải một bộ giọng."
+    }
     private fun seconds(value: Double): String = String.format(Locale.ROOT, "%.1f", value).replace('.', ',')
 
     /** Tên một tầng giọng (vieneuModule.ts `tierName`). */
@@ -223,7 +233,7 @@ object VoiceText {
 
     /** Câu nhắc trước khi tải bằng dữ liệu di động (null khi không cần nhắc). */
     fun metered(status: ModuleStatus, bytes: Long): String? =
-        if (status.metered && bytes > 0) "Đang dùng dữ liệu di động - tải ${size(bytes)} có thể tốn tiền mạng. Nên chờ có Wi-Fi." else null
+        if (status.metered && bytes > 0) "Điện thoại đang dùng dữ liệu di động - tải ${formatSize(bytes)} có thể tốn tiền mạng. Nên chờ có Wi-Fi." else null
 
     /** Câu nói kết quả tự đo, theo điều người nghe cần biết (vieneuModule.ts `benchmarkLabel`). */
     fun benchmark(tier: String, result: ModuleBench, slow: Double): String {
@@ -253,7 +263,9 @@ object VoiceText {
     fun unsupported(status: ModuleStatus): String =
         if (status.reason.isNotEmpty()) "Máy này chưa dùng được: ${status.reason}." else "Máy này chưa dùng được."
 
-    private const val CANCELLED = "Đã huỷ - lần tải sau làm tiếp từ chỗ dừng."
+    const val CANCELLED = "Đã huỷ - lần tải sau làm tiếp từ chỗ dừng."
+    /** Nhãn của lựa chọn nên tải - cùng chữ với nhãn "Khuyên dùng" của thẻ giọng bên web (VieneuModuleCard.tsx). */
+    private const val RECOMMENDED = "Khuyên dùng"
 
     /**
      * Mỗi lựa chọn của mô-đun một hàng. `pending`: các lựa chọn bạn vừa bấm tải (mô-đun tải theo cả gói, nhưng thanh tiến độ và nút "Huỷ" nằm ở hàng bạn bấm; không rõ thì
@@ -271,15 +283,15 @@ object VoiceText {
         val title = choiceTitle(choice)
         if (status.state == ModuleState.Unsupported && !choice.installed) return ModuleRow(choice.id, title, unsupported(status), true, ModuleAction.None, false)
         if (choice.installed) return installed(status, choice, title)
-        val lead = if (choice.recommended) "Khuyên dùng · " else ""
+        val lead = if (choice.recommended) "$RECOMMENDED · " else ""
         return when {
             status.state == ModuleState.Downloading && mine ->
-                ModuleRow(choice.id, title, "Đang tải ${size(status.total)} · ${status.percent}%", false, ModuleAction.Cancel, true)
+                ModuleRow(choice.id, title, "Đang tải ${formatSize(status.total)} · ${status.percent}%", false, ModuleAction.Cancel, true)
             status.state == ModuleState.Downloading -> ModuleRow(choice.id, title, lead + choice.detail, false, ModuleAction.None, false)
             status.state == ModuleState.Error && mine -> ModuleRow(choice.id, title, status.error, true, ModuleAction.Retry, false)
             else -> {
                 val cancelled = if (status.cancelled && mine) "$CANCELLED " else ""
-                ModuleRow(choice.id, title, cancelled + lead + choice.detail, false, ModuleAction.Download(if (choice.bytes > 0) "Tải ${size(choice.bytes)}" else "Dùng"), false)
+                ModuleRow(choice.id, title, cancelled + lead + (if (choice.bytes == 0L) "Đã có sẵn" else choice.detail), false, ModuleAction.Download(if (choice.bytes > 0) "Tải (${formatSize(choice.bytes)})" else "Dùng"), false)
             }
         }
     }
@@ -288,10 +300,10 @@ object VoiceText {
         val tier = status.benchmark[choice.id]
         val hint = when {
             status.benchmarking -> "Đang thử giọng vừa tải, vài giây"
-            status.state == ModuleState.Outdated -> "Có bản mới · ${size(status.outdatedBytes)}"
+            status.state == ModuleState.Outdated -> "Có bản mới · ${formatSize(status.outdatedBytes)}"
             tier != null && tier.rtf >= status.slowRtf -> "Chậm hơn tốc độ nghe · dùng “Làm trước”"
             tier != null && tier.rtf > 0 -> "Đọc trực tiếp được · nhanh gấp ${seconds(1 / tier.rtf)} lần"
-            else -> "Đã có trên máy"
+            else -> "Đã có"
         }
         return ModuleRow(choice.id, title, hint, false, ModuleAction.Manage, false)
     }
@@ -301,12 +313,12 @@ object VoiceText {
 
     // ---- đồng ý gửi chữ -----------------------------------------------------------------------------------------------------------
 
-    /** Tên nhà cung cấp giọng dùng khóa của bạn (readAloudVoice.ts `KEYED_PROVIDERS`). */
+    /** Tên nhà cung cấp giọng dùng khoá của bạn (readAloudVoice.ts `KEYED_PROVIDERS`). */
     val KEYED = linkedMapOf("azure" to "Azure Speech", "google" to "Google Cloud", "fpt" to "FPT.AI", "viettel" to "Viettel AI")
 
     private val COMPANIES = mapOf("edge" to "Microsoft")
 
-    /** Giọng của nơi này gửi chữ ra ngoài máy (Edge, hay nhà cung cấp dùng khóa của bạn): phải được bạn đồng ý trước lần đầu. */
+    /** Giọng của nơi này gửi chữ ra ngoài máy (Edge, hay nhà cung cấp dùng khoá của bạn): phải được bạn đồng ý trước lần đầu. */
     fun isOnline(provider: String): Boolean = provider in COMPANIES || provider in KEYED
 
     /** Tên giọng như người nghe gọi: "Hoài My (Edge)" -> "Hoài My". */
@@ -319,7 +331,7 @@ object VoiceText {
     fun consent(voiceName: String, provider: String): String {
         val name = spokenName(voiceName)
         val where = destination(provider)
-        if (provider in KEYED) return "Giọng $name dùng khóa $where của bạn: chữ của đoạn đang đọc được gửi tới $where để đọc, và dịch vụ có thể tính tiền vào tài khoản của bạn."
+        if (provider in KEYED) return "Giọng $name dùng khoá $where của bạn: chữ của đoạn đang đọc được gửi tới $where để đọc, và dịch vụ có thể tính tiền vào tài khoản của bạn."
         return if (provider in COMPANIES) {
             "Giọng $name là giọng ${if (provider == "edge") "Edge" else "trực tuyến"}: chữ của đoạn đang đọc được gửi tới $where để đọc."
         } else {
@@ -330,24 +342,27 @@ object VoiceText {
     /** Câu đọc thử (readAloudVoice.ts `SAMPLE_TEXT`): ngắn, có dấu câu để nghe cả chỗ ngắt. */
     const val SAMPLE = "Xin chào, tôi sẽ đọc sách cho bạn nghe. Bạn thấy giọng này thế nào?"
 
-    // ---- khóa ---------------------------------------------------------------------------------------------------------------------
+    // ---- khoá ---------------------------------------------------------------------------------------------------------------------
 
-    /** Dòng phụ của một nhà cung cấp: chưa có khóa thì hạn mức miễn phí; có rồi thì khóa che + kết quả lần kiểm tra. */
-    fun keyHint(provider: KeyProvider): String = when {
-        !provider.hasKey -> provider.free
-        provider.valid -> "${provider.masked} · Dùng được · ${provider.voices} giọng"
-        else -> "${provider.masked} · Chưa dùng được"
+    /** Dòng phụ của một nhà cung cấp: chưa có khoá thì hạn mức miễn phí; có rồi thì khoá che + kết quả lần kiểm tra. */
+    fun keyHint(provider: KeyProvider): String = keyStatus(provider)?.let { "${provider.masked} · $it" } ?: provider.free
+
+    /** Kết quả lần kiểm tra khoá - cùng chữ với nhãn trạng thái của thẻ khoá bên web (VoiceSettings.tsx KeyCard); chưa có khoá thì null. */
+    fun keyStatus(provider: KeyProvider): String? = when {
+        !provider.hasKey -> null
+        provider.valid -> "Dùng được · ${provider.voices} giọng"
+        else -> "Chưa dùng được"
     }
 
-    /** Dòng tóm tắt của hàng "Khóa giọng trực tuyến": tên các nhà cung cấp đã có khóa, hay "Chưa có khóa". */
+    /** Dòng tóm tắt của hàng "Khoá giọng trực tuyến": tên các nhà cung cấp đã có khoá, hay "Chưa có khoá". */
     fun keySummary(providers: List<KeyProvider>): String =
-        providers.filter { it.hasKey }.joinToString(" · ") { it.name }.ifEmpty { "Chưa có khóa" }
+        providers.filter { it.hasKey }.map { it.name }.dotJoined().ifEmpty { "Chưa có khoá" }
 
-    /** Lấy khóa ở đâu - nói theo những gì bạn thấy trên trang của nhà cung cấp (VoiceSettings.tsx `KEY_HELP`). */
+    /** Lấy khoá ở đâu - nói theo những gì bạn thấy trên trang của nhà cung cấp (VoiceSettings.tsx `KEY_HELP`). */
     fun keyHelp(provider: String): String = when (provider) {
         "azure" -> "Azure: tạo Speech (F0 miễn phí) › Keys and Endpoint. Chép Key 1 và Location/Region (ví dụ southeastasia)."
         "google" -> "Google Cloud: bật Cloud Text-to-Speech API. Vào APIs & Services › Credentials › Create credentials › API key."
-        "fpt" -> "Trên console.fpt.ai: đăng nhập, mở mục “Text to Speech”, chép “API key”."
+        "fpt" -> "Trên console.fpt.ai: đăng nhập, mở mục “Text to Speech” (Chuyển văn bản thành giọng nói), chép “API key” (khoá API)."
         "viettel" -> "Trên viettelai.vn: đăng nhập, mở Tài khoản › Token, chép token."
         else -> ""
     }
@@ -358,7 +373,7 @@ object VoiceText {
     fun trackLine(track: MusicTrack): String {
         val whole = track.duration.toLong().coerceAtLeast(0)
         val clock = if (track.duration > 0) String.format(Locale.ROOT, "%d:%02d", whole / 60, whole % 60) else ""
-        return listOf(track.creator, clock).filter { it.isNotEmpty() }.joinToString(" · ")
+        return listOf(track.creator, clock).dotJoined()
     }
 
     fun musicSummary(count: Int): String = if (count == 0) "Chưa có bài nào" else "$count bài"

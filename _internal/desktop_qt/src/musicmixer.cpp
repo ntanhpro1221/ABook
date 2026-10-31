@@ -127,7 +127,7 @@ struct DecodeJob {
                 return false;
             }
             if (!out.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Unbuffered) || out.write(header(rate, 0)) != HEADER) {
-                error = QStringLiteral("Không lưu được bộ đệm nhạc: ") + out.errorString(); return false;
+                error = QStringLiteral("Chưa lưu được bộ đệm nhạc: ") + out.errorString(); return false;
             }
             opened = true; total = quint64(std::llround(decoder.duration() * rate));
         }
@@ -142,14 +142,14 @@ struct DecodeJob {
                 const auto sample = qint16(std::clamp(std::lround(block[i] * 32768.0f), -32768L, 32767L));
                 qToLittleEndian<qint16>(sample, pcm.data() + i * 2);
             }
-            if (out.write(pcm) != pcm.size()) { error = QStringLiteral("Không lưu được bộ đệm nhạc: ") + out.errorString(); return false; }
+            if (out.write(pcm) != pcm.size()) { error = QStringLiteral("Chưa lưu được bộ đệm nhạc: ") + out.errorString(); return false; }
             frames += n; got += n;
         }
         if (!bytes->error().isEmpty()) { error = bytes->error(); return false; }
         // Khung hỏng giữa bài: giữ phần đã giải mã như bài ngắn hơn, không bỏ cả bài.
         if (decoder.atEnd() || !decoder.error().isEmpty()) {
             if (!frames || !out.seek(0) || out.write(header(rate, frames)) != HEADER) {
-                error = QStringLiteral("Không lưu được bộ đệm nhạc: ") + out.errorString(); return false;
+                error = QStringLiteral("Chưa lưu được bộ đệm nhạc: ") + out.errorString(); return false;
             }
             out.close(); done = true;
         }
@@ -762,7 +762,7 @@ void MusicMixer::serviceReader() {
                     MfSource mf(outRate);
                     QSaveFile cache(path);
                     if (format == Format::Unknown) error = QStringLiteral("Không nhận ra định dạng tệp nhạc (MP3, WAV, FLAC, M4A, Ogg/Opus).");
-                    else if (format == Format::Mp3 && !mp3.open(bytes)) error = QStringLiteral("Không đọc được tệp nhạc mp3.");
+                    else if (format == Format::Mp3 && !mp3.open(bytes)) error = QStringLiteral("Chưa đọc được tệp nhạc mp3.");
                     else if (format == Format::Mf && !mf.open(bytes)) error = mf.error();
                     else if (!cache.open(QIODevice::WriteOnly) || cache.write(header(outRate, 0)) != HEADER) error = cache.errorString();
                     else {
@@ -786,7 +786,7 @@ void MusicMixer::serviceReader() {
                         { Guard guard(s->mutex); current = s->generation == generation; }
                         if (!current) continue;
                         if (error.isEmpty() && (!frames || !cache.seek(0) || cache.write(header(outRate, frames)) != HEADER || !cache.commit()))
-                            error = QStringLiteral("Không lưu được bộ đệm nhạc: ") + cache.errorString();
+                            error = QStringLiteral("Chưa lưu được bộ đệm nhạc: ") + cache.errorString();
                     }
                     if (error.isEmpty() && (!file->open(QIODevice::ReadOnly) || readHeader(*file, outRate) != frames))
                         error = QStringLiteral("Bộ đệm nhạc bị thiếu dữ liệu.");

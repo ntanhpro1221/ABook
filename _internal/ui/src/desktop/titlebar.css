@@ -1,0 +1,61 @@
+/* The strip has no fill: the actual sidebar/content surfaces extend behind it. */
+.desktop-titlebar {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  color: var(--text);
+  user-select: none;
+  z-index: 60;
+}
+.titlebar-drag { align-self: stretch; flex: 1; }
+.desktop-titlebar[hidden] { display: none; }
+html[data-native-chrome] #root:not(:has(.desktop-chrome-shell)) { padding-top: 40px; }
+.titlebar-toggle { margin-left: 12px; width: 32px; height: 32px; }
+.titlebar-toggle:empty { width: 0; margin: 0; }
+.titlebar-toggle > button { width: 32px; height: 32px; min-width: 32px; }
+.titlebar-toggle svg { width: 18px; height: 18px; }
+.caption-buttons { display: flex; height: 40px; }
+.caption-button {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 40px;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  transition: background-color var(--motion-fast, 120ms) var(--ease-standard), color var(--motion-fast, 120ms);
+}
+.desktop-titlebar[data-focused="false"] .caption-button { color: var(--fg-3); }
+.caption-button:is(:hover, [data-hovered="true"]) { background: color-mix(in srgb, var(--text) 6%, transparent); }
+.caption-button:is(:active, [data-pressed="true"]) { background: color-mix(in srgb, var(--text) 10%, transparent); transition-duration: var(--motion-fast-out, 90ms); }
+.caption-close:hover { background: #c42b1c; color: #fff !important; }
+.caption-close:active { background: #a82419; color: #fff !important; }
+.caption-button:focus-visible { outline: 2px solid var(--focus); outline-offset: -3px; }
+.caption-glyph {
+  grid-area: 1 / 1;
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 120ms linear, transform 120ms var(--ease-standard);
+  pointer-events: none;
+}
+.caption-glyph[data-shown="false"] { opacity: 0; transform: scale(0.8); }
+.desktop-chrome-shell { position: relative; }
+.desktop-chrome-shell > aside { padding-top: 60px; }
+.desktop-chrome-shell > .desktop-content { padding-top: 40px; }
+.desktop-chrome-shell > .desktop-content > .now-playing { padding-top: calc(40px + env(safe-area-inset-top, 0px)); }
+.desktop-sidebar { transition: width var(--motion-medium) var(--ease-standard); overflow: hidden; }
+.desktop-sidebar[data-collapsed="true"] { width: 56px; padding-inline: 8px; }
+.desktop-sidebar[data-collapsed="true"] [data-sidebar-brand],
+.desktop-sidebar[data-collapsed="true"] [data-sidebar-extra],
+.desktop-sidebar[data-collapsed="true"] [data-sidebar-label] { display: none; }
+.desktop-sidebar[data-collapsed="true"] [data-sidebar-top] { justify-content: center; padding-inline: 0; }
+.desktop-sidebar[data-collapsed="true"] [data-sidebar-top] > svg { margin: 0 !important; }
+.desktop-sidebar[data-collapsed="true"] nav { margin-top: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .caption-glyph, .desktop-sidebar { transition-duration: 0s; }
+}

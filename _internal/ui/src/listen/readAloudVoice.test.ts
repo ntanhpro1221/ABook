@@ -54,14 +54,14 @@ function source(fail: Record<string, string> = {}, voices: ReadAloudVoice[] = VO
 describe("giọng dự phòng của Nghe ngay", () => {
   beforeEach(() => vi.restoreAllMocks());
 
-  it("thứ tự đỡ: giọng dùng khóa -> Edge mặc định -> giọng của máy; Edge -> giọng của máy; giọng của máy thì không ai đỡ", async () => {
+  it("thứ tự đỡ: giọng dùng khoá -> Edge mặc định -> giọng của máy; Edge -> giọng của máy; giọng của máy thì không ai đỡ", async () => {
     const { module } = await fresh();
     expect(module.fallbackChain(VOICES, VOICES[2]).map((v) => v.id)).toEqual(["edge:vi-VN-HoaiMyNeural", "device:an"]);
     expect(module.fallbackChain(VOICES, VOICES[1]).map((v) => v.id)).toEqual(["device:an"]);
     expect(module.fallbackChain(VOICES, VOICES[4])).toEqual([]);
   });
 
-  it("chưa đồng ý gửi chữ cho Edge: giọng dùng khóa hỏng rơi thẳng sang giọng của máy, không gọi Edge", async () => {
+  it("chưa đồng ý gửi chữ cho Edge: giọng dùng khoá hỏng rơi thẳng sang giọng của máy, không gọi Edge", async () => {
     const { module } = await fresh(["azure"]);
     expect(module.fallbackChain(VOICES, VOICES[3]).map((v) => v.id)).toEqual(["device:an"]);
     expect(module.fallbackChain(VOICES, VOICES[3], () => true).map((v) => v.id)).toEqual(["edge:vi-VN-HoaiMyNeural", "device:an"]);
@@ -71,7 +71,7 @@ describe("giọng dự phòng của Nghe ngay", () => {
     expect(calls).toEqual(["azure:vi-VN-HoaiMyNeural", "device:an"]);
   });
 
-  it("khóa hết hạn mức: đoạn ấy đọc bằng Edge, nói một lần, các đoạn sau đi thẳng sang Edge", async () => {
+  it("khoá hết hạn mức: đoạn ấy đọc bằng Edge, nói một lần, các đoạn sau đi thẳng sang Edge", async () => {
     const { module } = await fresh();
     const { value, calls } = source({ "fpt:banmai": "quota" });
     const notify = vi.fn();
@@ -81,10 +81,10 @@ describe("giọng dự phòng của Nghe ngay", () => {
     expect(calls).toEqual(["fpt:banmai", "edge:vi-VN-HoaiMyNeural", "edge:vi-VN-HoaiMyNeural"]);
     const messages = notify.mock.calls.map((call) => call[0]);
     // Chữ đi đâu đã được hỏi TRƯỚC lần đọc đầu (onlineConsent.ts) - ở đây chỉ còn lời báo rơi giọng, mỗi chuyện một lần.
-    expect(messages).toEqual(["Khóa FPT.AI đã hết hạn mức - tạm đọc bằng giọng Hoài My."]);
+    expect(messages).toEqual(["Khoá FPT.AI đã hết hạn mức - tạm đọc bằng giọng Hoài My."]);
   });
 
-  it("khóa bị từ chối và Edge mất mạng: rơi tiếp xuống giọng của máy, mỗi chuyện một câu", async () => {
+  it("khoá bị từ chối và Edge mất mạng: rơi tiếp xuống giọng của máy, mỗi chuyện một câu", async () => {
     const { module } = await fresh();
     const { value, calls } = source({ "azure:vi-VN-HoaiMyNeural": "auth", "edge:vi-VN-HoaiMyNeural": "offline" });
     const notify = vi.fn();
@@ -92,7 +92,7 @@ describe("giọng dự phòng của Nghe ngay", () => {
     expect(clip.url).toBe("/clip/device:an");
     expect(calls).toEqual(["azure:vi-VN-HoaiMyNeural", "edge:vi-VN-HoaiMyNeural", "device:an"]);
     expect(notify.mock.calls.map((call) => call[0])).toEqual([
-      "Khóa Azure Speech không dùng được - tạm đọc bằng giọng Hoài My. Kiểm tra lại khóa trong Cài đặt.",
+      "Khoá Azure Speech không dùng được - tạm đọc bằng giọng Hoài My. Kiểm tra lại khoá trong Cài đặt.",
       module.FALLBACK_NOTICE,
     ]);
   });
@@ -213,7 +213,7 @@ describe("giọng dự phòng của Nghe ngay", () => {
     expect(notify).toHaveBeenCalledTimes(1);
   });
 
-  it("đổi khóa trong Cài đặt: giọng dùng khóa được thử lại", async () => {
+  it("đổi khoá trong Cài đặt: giọng dùng khoá được thử lại", async () => {
     const { module, target } = await fresh();
     const fail: Record<string, string> = { "fpt:banmai": "quota" };
     const { value, calls } = source(fail);

@@ -52,7 +52,7 @@ function where(chapters: number[]): string {
   return chapters.length === 1 ? `chương ${chapters[0]}` : `${chapters.length} chương`;
 }
 
-/** Các gợi ý, mỗi dòng một ô "Bỏ dòng này khỏi phần đọc". */
+/** Các gợi ý, mỗi dòng một ô "Bỏ đọc dòng" (cùng chữ với điện thoại, addbook/AddBookScreen.kt). */
 export function SuggestionChoices({ groups, isOn, onChange, disabled }: {
   groups: SuggestionGroup[];
   isOn: (group: SuggestionGroup) => boolean;
@@ -72,9 +72,9 @@ export function SuggestionChoices({ groups, isOn, onChange, disabled }: {
               className="mt-0.5 size-4 shrink-0 accent-[var(--accent)]"
             />
             <span className="min-w-0">
-              <span className="block">Bỏ dòng này khỏi phần đọc</span>
+              <span className="block">Bỏ đọc dòng</span>
               <span className="block break-words text-xs text-fg-2">
-                “{group.line}” - {where(group.chapters)}
+                “{group.line}” · {where(group.chapters)}
               </span>
             </span>
           </label>
@@ -179,7 +179,7 @@ export function BookSuggestions({ book }: { book: ListenBook }) {
       <MotionRegion motionKey={quiet && !open ? "quiet" : "card"}>
         {quiet && !open ? (
           <button type="button" onClick={() => setOpen(true)} className="mt-3 text-left text-xs font-medium text-accent-text hover:underline">
-            Xem lại gợi ý cho phần đọc
+            Xem lại gợi ý
           </button>
         ) : (
           <section className="mt-4 max-w-xl py-3 text-left">
@@ -192,7 +192,7 @@ export function BookSuggestions({ book }: { book: ListenBook }) {
                 dismiss();
                 setOpen(false);
               }}>
-                Bỏ qua gợi ý - giữ sách như cũ
+                Bỏ qua gợi ý
               </Button>
             </MotionPresence>
           </section>

@@ -20,7 +20,7 @@ function readAsDataUrl(file: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(reader.error ?? new Error("Không đọc được file ảnh"));
+    reader.onerror = () => reject(reader.error ?? new Error("Chưa đọc được file ảnh"));
     reader.readAsDataURL(file);
   });
 }

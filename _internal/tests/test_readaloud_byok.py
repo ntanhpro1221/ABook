@@ -472,7 +472,8 @@ def test_a_closed_port_is_offline() -> None:
     port = probe.getsockname()[1]
     probe.close()
     with pytest.raises(VoiceError) as caught:
-        byok.request("GET", f"http://127.0.0.1:{port}/", {}, name="Giả", timeout=2)
+        # Windows thử lại SYN tới cổng đóng ~2 giây rồi mới báo "bị từ chối": cho dư hạn để thấy lời từ chối, không phải "quá giờ".
+        byok.request("GET", f"http://127.0.0.1:{port}/", {}, name="Giả", timeout=5)
     assert caught.value.reason == "offline"
 
 

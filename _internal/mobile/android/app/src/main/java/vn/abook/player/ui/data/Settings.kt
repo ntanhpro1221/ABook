@@ -5,8 +5,8 @@ import org.json.JSONObject
 import java.util.Locale
 
 /*
- * Tuỳ chọn của Cài đặt điện thoại - cùng khoá, cùng giá trị, cùng mặc định với bản WebView (ui/src/android/settings.ts `PlayerSettings`) và với kho native
- * mà hai bản dùng chung ([vn.abook.player.ListenPrefs]: `listen-prefs.json`). Hàm thuần, không Android: thử trên JVM.
+ * Tuỳ chọn của Cài đặt điện thoại - cùng khoá, cùng giá trị, cùng mặc định với kho native
+ * ([vn.abook.player.ListenPrefs]: `listen-prefs.json`). Hàm thuần, không Android: thử trên JVM.
  */
 
 /**
@@ -21,7 +21,7 @@ enum class SettingsGroup(val label: String, val tag: String) {
     Advanced("Nâng cao", "settings_advanced"),
 }
 
-/** Một lựa chọn trong nhóm chọn-một: `key` là giá trị lưu ở kho (giữ nguyên chữ của bản WebView), `label` là chữ trên màn. */
+/** Một lựa chọn trong nhóm chọn-một: `key` là giá trị lưu ở kho (giữ nguyên chữ đã lưu), `label` là chữ trên màn. */
 interface Choice {
     val key: String
     val label: String
@@ -58,13 +58,13 @@ enum class ShakeSensitivity(override val key: String, override val label: String
 @Immutable
 data class SleepSchedule(val from: String, val to: String, val minutes: Int) {
     companion object {
-        /** Bật lịch đêm lần đầu (như bản WebView). */
+        /** Bật lịch đêm lần đầu. */
         val Default = SleepSchedule("22:00", "06:00", 30)
         val MINUTES = listOf(15, 30, 45, 60)
     }
 }
 
-/** Mọi tuỳ chọn Cài đặt đang dùng (bất biến; màn chỉ đọc). Mặc định = `DEFAULT_SETTINGS` của bản WebView. */
+/** Mọi tuỳ chọn Cài đặt đang dùng (bất biến; màn chỉ đọc). Mặc định = [AppSettings.Default]. */
 @Immutable
 data class AppSettings(
     val theme: ThemeMode = ThemeMode.System,
@@ -74,6 +74,8 @@ data class AppSettings(
     val autoRewind: Boolean = true,
     val headsetSkips: Boolean = true,
     val autoMusic: Boolean = true,
+    /** "Tự mở cửa sổ mini": rời app lúc có sách mở thì nghe tiếp trong cửa sổ nhỏ (PiP). Chỉ điện thoại native. */
+    val autoPip: Boolean = true,
     val safetyStopHours: Int = 2,
     val schedule: SleepSchedule? = null,
     val shakeToExtend: Boolean = true,
@@ -82,7 +84,7 @@ data class AppSettings(
     val flipToPause: Boolean = false,
     val sleepExtendMinutes: Int = 10,
     val sleepFadeSeconds: Int = 30,
-    /** Dấu giờ lần đổi cuối (ms; 0 = chưa đổi): bản WebView so dấu này để biết bản nào mới hơn (`syncSettings`). */
+    /** Dấu giờ lần đổi cuối (ms; 0 = chưa đổi): so dấu này để biết bản nào mới hơn. */
     val stamp: Long = 0L,
 ) {
     companion object {
@@ -113,7 +115,7 @@ data class AppSettings(
 
         /**
          * Từ kho native (`ListenPrefs.stored()` + `autoMusic`): khoá vắng hay giá trị lạ về mặc định RIÊNG khoá ấy (cùng luật `normalizeSettings`). Lịch đêm ở
-         * kho native tên `schedule` (bản WebView gọi `sleepSchedule` trong localStorage, đổi tên khi đẩy xuống).
+         * kho native tên `schedule`.
          */
         fun from(json: JSONObject): AppSettings = AppSettings(
             theme = word(json, "theme", Default.theme),
@@ -123,6 +125,7 @@ data class AppSettings(
             autoRewind = flag(json, "autoRewind", Default.autoRewind),
             headsetSkips = flag(json, "headsetSkips", Default.headsetSkips),
             autoMusic = flag(json, "autoMusic", Default.autoMusic),
+            autoPip = flag(json, "autoPip", Default.autoPip),
             safetyStopHours = pick(json, "safetyStopHours", SAFETY_HOURS, Default.safetyStopHours),
             schedule = schedule(json.opt("schedule")),
             shakeToExtend = flag(json, "shakeToExtend", Default.shakeToExtend),
@@ -136,7 +139,7 @@ data class AppSettings(
     }
 
     /**
-     * Các trường khác với `before`, ở đúng dạng `PlayerPlugin.configure` nhận (để ghi qua cùng một cửa [vn.abook.player.ListenPrefs.apply]). Không có gì
+     * Các trường khác với `before`, ở đúng dạng [vn.abook.player.ListenPrefs.apply] nhận (để ghi qua cùng một cửa). Không có gì
      * khác thì rỗng. Dấu giờ không tính ở đây: nơi ghi gắn dấu mới.
      */
     fun changesFrom(before: AppSettings): JSONObject {
@@ -148,6 +151,7 @@ data class AppSettings(
         if (autoRewind != before.autoRewind) out.put("autoRewind", autoRewind)
         if (headsetSkips != before.headsetSkips) out.put("headsetSkips", headsetSkips)
         if (autoMusic != before.autoMusic) out.put("autoMusic", autoMusic)
+        if (autoPip != before.autoPip) out.put("autoPip", autoPip)
         if (safetyStopHours != before.safetyStopHours) out.put("safetyStopHours", safetyStopHours)
         if (schedule != before.schedule) {
             out.put("schedule", schedule?.let { JSONObject().put("from", it.from).put("to", it.to).put("minutes", it.minutes) } ?: JSONObject.NULL)
@@ -162,10 +166,10 @@ data class AppSettings(
     }
 }
 
-/** Dòng tóm tắt dưới tên nhóm ở trang gốc Cài đặt - cùng lời với bản WebView (shared/settingsSummary.ts, android/SettingsScreen.tsx). */
+/** Dòng tóm tắt dưới tên nhóm ở trang gốc Cài đặt. */
 object SettingsSummary {
     fun listen(settings: AppSettings): String =
-        (if (settings.autoRewind) "Tự lùi" else "Không tự lùi") + " · " + (if (settings.autoMusic) "nhạc tự chọn" else "không nhạc nền")
+        dotJoin(if (settings.autoRewind) "Tự lùi" else "Không tự lùi", if (settings.autoMusic) "nhạc tự chọn" else "không nhạc nền")
 
     fun sleep(settings: AppSettings): String {
         val schedule = settings.schedule
@@ -179,7 +183,7 @@ object SettingsSummary {
     fun look(settings: AppSettings): String = settings.theme.label
 }
 
-/** Mốc giờ của ô chọn giờ lịch đêm: mỗi 15 phút trong ngày (như `QUARTERS` của bản WebView); giờ đã lưu lệch mốc thì chen vào đúng chỗ. */
+/** Mốc giờ của ô chọn giờ lịch đêm: mỗi 15 phút trong ngày; giờ đã lưu lệch mốc thì chen vào đúng chỗ. */
 object Quarters {
     val ALL: List<String> = List(96) { index -> String.format(Locale.ROOT, "%02d:%02d", index / 4, index % 4 * 15) }
 

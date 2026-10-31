@@ -79,7 +79,6 @@ The bench builds and installs under its own package (`com.ngdtuanh.abook.stbench
 `com.ngdtuanh.abook`, its books and settings are never replaced or wiped; `clean` removes only the bench packages and the pushed files.
 
 ```bash
-# once: node_modules in _internal/mobile and _internal/ui (npm ci), the web UI built (npm run build:android in _internal/ui, then npx cap sync android in _internal/mobile)
 export JAVA_HOME="C:/Program Files/Android/Android Studio/jbr" ANDROID_HOME="$LOCALAPPDATA/Android/Sdk" ADB="$LOCALAPPDATA/Android/Sdk/platform-tools/adb.exe"
 export MODEL=<folder with onnx/ + voice_styles/ of Supertone/supertonic-3 at the pinned commit>
 cd _internal

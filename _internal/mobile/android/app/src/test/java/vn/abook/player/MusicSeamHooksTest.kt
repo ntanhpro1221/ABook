@@ -97,6 +97,8 @@ class MusicSeamHooksTest {
         assertEquals("audiotrack 0 44100 2", SeamEvents.audioTrack(0, 44100, 2))
         assertEquals("vol 3 0.002500", SeamEvents.volume(3, 0.0025f))
         assertEquals("promote 2 loop 22.987500", SeamEvents.promote(2, 22.9875))
+        assertEquals("promote 2 loop 22.987500 1568.4", SeamEvents.promote(2, 22.9875, 1568.43))
+        assertEquals("promote 2 loop 22.987500 0.0", SeamEvents.promote(2, 22.9875, 0.0))
         assertEquals("handover 2 23.012500 23.009000", SeamEvents.handover(2, 23.0125, 23.009))
         assertEquals("hread 2 -7.437 85.011", SeamEvents.handoverReading(2, -7.4374, 85.0109))
     }

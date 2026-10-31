@@ -200,7 +200,7 @@ function rowNeeds(book) {
 // Cột trạng thái: xong là mặc định, không đeo nhãn trên mọi hàng; chỉ dự án chưa xong mới có viên trạng thái.
 function rowShowsPill(book) { return !(book.phase === "done" && !book.queuePosition) }
 function rowUpdated(book) { return isLive(book) ? "vừa xong" : formatRelative(book.updatedAt) }
-function brokenLine(book) { return (book.brokenKind === "busy" ? "Chưa mở được: " : "Không đọc được: ") + book.broken }
+function brokenLine(book) { return (book.brokenKind === "busy" ? "Chưa mở được: " : "Chưa đọc được: ") + book.broken }
 function projectsSubtitle(count) { return count ? count + " dự án" : " " }
 
 // ---- stopText.ts ----

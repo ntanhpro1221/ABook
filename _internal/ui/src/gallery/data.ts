@@ -1,7 +1,6 @@
 import type { Cast, CastMember, ListenBook, ListenChapter, ListeningSession, ListeningState, NightSession, Script, ScriptSegment, SeriesLink } from "@/listen/model";
-import type { LocalBook, ManifestChapter } from "@/android/plugins";
 import type { ImportPreview, ImportPreviewChapter } from "@/listen/textImport";
-import { bookProgress, textBookProgress } from "@/android/progress";
+import { bookProgress, textBookProgress } from "./progress";
 import { NOW_SECONDS } from "./clock";
 
 // Thư viện giả của phòng trưng bày: mười cuốn tiếng Việt tự đặt tên, văn bản tự viết (không chép truyện thật). Một nguồn duy nhất,
@@ -220,52 +219,6 @@ export function listenBook(book: GalleryBook, withChapters: boolean): ListenBook
     capabilities: { toolchain: true, workshop: !book.imported, link: false, sync: false, local: true },
     edits: 0,
     wishes: 0,
-  };
-}
-
-/** Hình dạng book.json của sách trên điện thoại (EbookLibrary.localBooks / book). */
-export function localBook(book: GalleryBook): LocalBook {
-  const chapters: ManifestChapter[] = listenChapters(book).map((chapter) => ({
-    id: chapter.id,
-    index: chapter.index,
-    title: chapter.title,
-    subtitle: chapter.subtitle,
-    fullTitle: chapter.fullTitle,
-    duration: chapter.duration,
-    available: chapter.available,
-    file: chapter.available ? `audio/${String(chapter.id).padStart(3, "0")}.mp3` : null,
-    size: Math.round(chapter.duration * 8000),
-    script: chapter.available ? `scripts/${chapter.id}.json` : null,
-    sha256: chapter.available ? `sha-${book.id}-${chapter.id}` : undefined,
-    ...(chapter.state === "text" ? { state: "text" as const, text: `texts/${chapter.id}.txt` } : {}),
-  }));
-  const available = chapters.filter((chapter) => chapter.available);
-  return {
-    format: "abook-1",
-    id: book.id,
-    title: book.title,
-    author: book.author,
-    narrator: book.narrator,
-    duration: available.reduce((sum, chapter) => sum + chapter.duration, 0),
-    chaptersTotal: chapters.length,
-    chaptersAvailable: available.length,
-    complete: isComplete(book) || Boolean(book.imported),
-    version: "1",
-    chapters,
-    parts: [],
-    series: book.series ?? null,
-    samples: [],
-    cover: book.cover ? { file: book.cover.file, version: 1, color: book.cover.color, width: 600, height: 900 } : null,
-    addedAt: book.addedAt,
-    state: book.state,
-    bytes: available.length * 14_000_000,
-    streamed: book.streamed,
-    studio: !book.imported,
-    records: [{ id: "r1", name: "Của tôi", active: true, createdAt: book.addedAt, updatedAt: book.state.updatedAt ?? null }],
-    capabilities: { toolchain: false, workshop: false, link: !book.imported, sync: !book.imported, local: true },
-    edits: book.imported ? 2 : 0,
-    wishes: 0,
-    editsSync: { pending: 0, last: null },
   };
 }
 

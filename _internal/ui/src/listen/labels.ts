@@ -1,4 +1,3 @@
-import { Capacitor } from "@capacitor/core";
 import { formatClock, formatLength, formatPercent } from "@/shared/format";
 import type { ListenChapter } from "./model";
 
@@ -6,7 +5,7 @@ import type { ListenChapter } from "./model";
 // nghe nhận ra (chương, giờ, giọng nào đang đọc), không theo trạng thái bên trong (clip đã đọc sẵn chưa, kịch bản đã có mốc chưa).
 
 /** Đang chờ giọng máy đọc xong đoạn đầu (thanh phát nhỏ, màn "Đang nghe", nhãn nút phát). */
-export const PREPARING_VOICE = "Đang chuẩn bị giọng đọc…";
+export const PREPARING_VOICE = "Đang chuẩn bị giọng đọc";
 /** Chờ giọng ngắn hơn mức này thì không nói gì (chỉ vòng quay ở nút phát). */
 export const PREPARING_VOICE_AFTER_MS = 1500;
 
@@ -29,6 +28,29 @@ export function bookProgressText(state: { whole: boolean; heard: number; total: 
   const scope = state.whole ? "cả cuốn" : "phần đã có";
   const remaining = state.rate !== 1 && left > 60 ? `còn khoảng ${formatLength(left / state.rate)} ở tốc độ ${state.speed}` : `còn ${formatLength(left)}`;
   return `Đã nghe ${formatPercent(state.heard / state.total)} ${scope} · ${remaining}`;
+}
+
+/** Phần audio của cả cuốn trước chương đang nghe và tổng phần audio đã có (giây) - nền cho `bookProgressText`. `inside`: chương đang nghe là một
+ *  phần của tổng ấy (có audio) - chương chỉ có chữ (giọng máy đọc) thì đồng hồ của nó không cộng vào. */
+export function bookHeardBase(
+  queue: ReadonlyArray<Pick<ListenChapter, "id" | "available" | "duration">>,
+  chapterId: number | undefined,
+): { before: number; total: number; inside: boolean } {
+  let before = 0;
+  let total = 0;
+  let reached = false;
+  let inside = false;
+  for (const chapter of queue) {
+    // Tìm chương đang nghe TRƯỚC khi bỏ chương chưa có audio: chương chỉ có chữ đang đọc mà bị bỏ qua thì mọi chương sau nó tính là đã nghe (100%).
+    if (chapter.id === chapterId) {
+      reached = true;
+      inside = chapter.available;
+    }
+    if (!chapter.available) continue;
+    if (!reached) before += chapter.duration;
+    total += chapter.duration;
+  }
+  return { before, total, inside };
 }
 
 /** Dòng dưới tên một cuốn trong danh sách mời "Nghe cuốn khác": đã nghe dở thì tiến độ (cùng lời với màn "Đang nghe"), chưa nghe thì độ dài. */
@@ -62,20 +84,17 @@ export function primaryListenLabel(state: {
 
 /** Nhãn đọc màn hình của nút phát: đang chờ thì nói đang chờ gì - không nói "Tạm dừng" khi chưa có tiếng nào. */
 export function toggleLabel(playing: boolean, buffering: boolean, speaking: boolean): string {
-  if (playing && buffering) return speaking ? PREPARING_VOICE : "Đang tải âm thanh…";
+  if (playing && buffering) return speaking ? PREPARING_VOICE : "Đang tải âm thanh";
   return playing ? "Tạm dừng" : "Phát";
 }
 
-/** Máy này có phím tắt của trình phát: chỉ máy tính - trên app điện thoại trình phát không bắt phím (player.tsx). */
-export const SHORTCUTS = !Capacitor.isNativePlatform();
-
-/** Tên nút kèm phím tắt ("Lùi 15 giây (←)") ở máy tính; điện thoại chỉ tên - TalkBack từng đọc cả "(Shift+←)" (soát a67). */
-export function withShortcut(label: string, key: string, keys = SHORTCUTS): string {
+/** Tên nút kèm phím tắt ("Lùi 15 giây (←)"); `keys` false thì chỉ tên. */
+export function withShortcut(label: string, key: string, keys = true): string {
   return keys ? `${label} (${key})` : label;
 }
 
 /** Nút "Chương sau": chương cuối thì nói đó là chương cuối (nút mờ); chương sau có mà chưa nghe được thì nói vì sao (nút vẫn bấm được). */
-export function nextChapterLabel(hasNext: boolean, hasLater: boolean, keys = SHORTCUTS): string {
+export function nextChapterLabel(hasNext: boolean, hasLater: boolean, keys = true): string {
   if (!hasLater) return "Đây là chương cuối";
   return hasNext ? withShortcut("Chương sau", "Shift+→", keys) : "Chương sau chưa có audio";
 }
@@ -87,7 +106,7 @@ export function textBookLine(speaks: boolean): string {
 }
 
 export function chapterStatusLabel(producing: boolean): string {
-  return producing ? "Đang thu âm…" : "Chưa có audio";
+  return producing ? "Đang thu âm" : "Chưa có audio";
 }
 
 /** Dòng phụ của một chương trong danh sách: "Chương 3 · 26 phút". Chương chỉ có chữ không có gì riêng để nói (giọng đọc là của cả cuốn và đã ở đầu

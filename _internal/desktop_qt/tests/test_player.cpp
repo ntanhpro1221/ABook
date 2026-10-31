@@ -512,7 +512,7 @@ private slots:
         rig.run(2);
         rig.out.fail(QStringLiteral("0x1"));
         QVERIFY(!rig.player->playing());
-        QCOMPARE(rig.player->error(), QStringLiteral("Không phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại."));
+        QCOMPARE(rig.player->error(), QStringLiteral("Chưa phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại."));
         const int loads = rig.out.loads;
         rig.player->toggle(); // bấm phát khi có lỗi = nạp lại đúng chỗ
         QCOMPARE(rig.out.loads, loads + 1);
@@ -532,7 +532,7 @@ private slots:
         rig.run(2);
         QVERIFY(!rig.player->buffering());
         QVERIFY(!rig.player->playing());
-        QCOMPARE(rig.player->error(), QStringLiteral("Không phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại."));
+        QCOMPARE(rig.player->error(), QStringLiteral("Chưa phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại."));
         const int loads = rig.out.loads;
         rig.player->retry();
         QCOMPARE(rig.out.loads, loads + 1);

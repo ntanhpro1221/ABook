@@ -154,6 +154,12 @@ private slots:
         QVERIFY(gone.detail.isNull());
         QCOMPARE(HostMessage::parse("{\"check_update\": true}").kind, Kind::CheckUpdate);
         QCOMPARE(HostMessage::parse("{\"install_update\": true}").kind, Kind::InstallUpdate);
+        const auto run = HostMessage::parse("{\"run_installer\": \"C:\\\\T\\\\ABook_1.0_x64-setup.exe\", \"args\": [\"/P\", \"/UPDATE\", \"/R\"]}");
+        QCOMPARE(run.kind, Kind::RunInstaller);
+        QCOMPARE(run.installer, QStringLiteral("C:\\T\\ABook_1.0_x64-setup.exe"));
+        QCOMPARE(run.arguments, (QStringList{QStringLiteral("/P"), QStringLiteral("/UPDATE"), QStringLiteral("/R")}));
+        QCOMPARE(HostMessage::parse("{\"run_installer\": \"\"}").kind, Kind::None);
+        QCOMPARE(HostMessage::parse("{\"run_installer\": 3}").kind, Kind::None);
         QCOMPARE(HostMessage::parse("{\"dialog\": 3}").kind, Kind::None);
         QCOMPARE(HostMessage::parse("không phải JSON").kind, Kind::None);
         // Vỏ Qt chưa có bộ cập nhật: nút có lời ngay, đúng câu máy chủ dùng cho bản không tự cập nhật
@@ -285,15 +291,28 @@ private slots:
         QVERIFY(api->clipboardImage().isEmpty());
     }
     // ---- one wait policy for C++ and QML (hostwait.h): limit = no byte for N ms, one more attempt, then timeout ----
-    void speechWaitsPastTheHostsOwnDeadline() {
+    void longWorkWaitsPastTheHostsOwnDeadline() {
         // Host Edge deadline: TOTAL_TIMEOUT 90 s + 1 s (abook/readaloud/edge.py): its error with a reason must come first.
-        QVERIFY(HostWait::kSpeechIdleMs > 91'000);
-        QCOMPARE(HostWait::idleMs(QStringLiteral("/api/readaloud/clip")), HostWait::kSpeechIdleMs);
-        QCOMPARE(HostWait::idleMs(QStringLiteral("/api/books/b1/voice/preview")), HostWait::kSpeechIdleMs);
-        QCOMPARE(HostWait::idleMs(QStringLiteral("/api/books/b1/voice/preview?x=1")), HostWait::kSpeechIdleMs);
-        QCOMPARE(HostWait::idleMs(QStringLiteral("/api/listen/import/preview")), HostWait::kIdleMs);
-        QCOMPARE(HostWait::idleMs(QStringLiteral("/api/readaloud/voices")), HostWait::kIdleMs);
-        QVERIFY(HostWait::kStallMs > HostWait::kAttempts * HostWait::kSpeechIdleMs);
+        QVERIFY(HostWait::kLongIdleMs > 91'000);
+        QVERIFY(HostWait::kStallMs > HostWait::kAttempts * HostWait::kLongIdleMs);
+    }
+    void longWorkMatchesWholeSegments_data() {
+        QTest::addColumn<QString>("path");
+        QTest::addColumn<int>("idle");
+        const int longer = HostWait::kLongIdleMs, plain = HostWait::kIdleMs;
+        for (const char *path : {"/api/readaloud/clip", "/api/readaloud/clip?x=1", "/api/books/b1/voice/preview",
+                 "/api/books/b1/voice/preview?x=1", "/api/books/abc/pronunciation/preview", "/api/books/abc/music/rebuild",
+                 "/api/books/abc/music", "/api/books/abc/edits/fold", "/api/scan", "/api/sources/split", "/api/first-person",
+                 "/api/books", "/sync/v1/books/abc/edits"})
+            QTest::newRow(path) << QString::fromLatin1(path) << longer;
+        for (const char *path : {"/api/books/abc", "/api/books/a/b/voice/preview", "/api/scanx", "/api/cast/scan",
+                 "/api/books/abc/music/track", "/api/listen/import/preview", "/api/readaloud/voices", "/sync/v1/books/abc"})
+            QTest::newRow(path) << QString::fromLatin1(path) << plain;
+    }
+    void longWorkMatchesWholeSegments() {
+        QFETCH(QString, path);
+        QFETCH(int, idle);
+        QCOMPARE(HostWait::idleMs(path), idle);
     }
     void silentHostIsAskedOnceMoreThenTimesOut() {
         clear(); hold = true; HostCall::s_idleOverrideMs = 150;

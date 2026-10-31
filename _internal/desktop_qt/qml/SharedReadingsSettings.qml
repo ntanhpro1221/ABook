@@ -34,7 +34,7 @@ SettingsItem {
         saving = true
         Api.transport.request("POST", "/api/readings", body, function(status, data) {
             saving = false
-            if (status < 200 || status >= 300) { problem = data && (data.message || data.error) || "Không làm được lúc này."; return }
+            if (status < 200 || status >= 300) { problem = data && (data.message || data.error) || "Chưa làm được lúc này."; return }
             load()
             if (body.remove) { Api.notice = "Đã bỏ “" + body.surface + "” khỏi cách đọc chung"; return }
             surfaceField.text = ""

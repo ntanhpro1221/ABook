@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { dismissTopLayer } from "@/android/backLayers";
+import { dismissTopLayer } from "@/shared/backLayers";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { LibraryScreen } from "./LibraryScreen";

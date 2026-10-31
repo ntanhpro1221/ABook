@@ -253,6 +253,93 @@ class TrackTooBig(OSError):
         self.size = size
 
 
+class LiveTrack:
+    """Bài nhạc đang tải vào bộ đệm (`App.music_track_file`), cho các yêu cầu GET /api/music/track đọc theo (`chunks`): byte tới đâu
+    gửi tới đó, cả bài chỉ tải một lần. `size` = `bytes` danh mục ghi: người đọc báo trước Content-Length và giữ byte cuối tới khi bài
+    đã khớp danh mục, nên bài sai sha1 không bao giờ tới tay trình phát trọn vẹn. Mỗi lượt thử một nguồn (bản gốc, rồi bản sao) là một `attempt` mới, ghi từ byte 0 vào `.part`
+    riêng. Mọi lần mở `.part` để đọc, đổi tên nó thành file bộ đệm và xoá nó đều nằm dưới `cond`: trên Windows file đang mở thì không
+    đổi tên / xoá được."""
+
+    IDLE_SECONDS = 90.0  # urlopen chờ mỗi khúc 60 s; quá lâu không thêm byte nào (kể cả lúc đổi sang bản sao) thì người đọc bỏ
+
+    def __init__(self, size: int | None) -> None:
+        self.cond = threading.Condition()
+        self.size = size
+        self.path: Path | None = None
+        self.copied = 0
+        self.attempt = 0
+        self.state = "pending"  # pending (chưa nối / giữa hai nguồn) | running | ok | failed
+        self.error: ApiError | None = None
+
+    def begin(self, part: Path) -> None:
+        with self.cond:
+            self.path, self.copied, self.state = part, 0, "running"
+            self.attempt += 1
+            self.cond.notify_all()
+
+    def grew(self, copied: int) -> None:
+        with self.cond:
+            self.copied = copied
+            self.cond.notify_all()
+
+    def discard(self, part: Path) -> None:
+        """Lượt thử này hỏng / huỷ (hay `.part` đã thành file bộ đệm): xoá file dở, người đọc chờ lượt sau."""
+        with self.cond:
+            with contextlib.suppress(OSError):
+                part.unlink(missing_ok=True)
+            if self.state == "running" and self.path == part:
+                self.state = "pending"
+                self.cond.notify_all()
+
+    def finish(self, target: Path, part: Path | None = None) -> None:
+        """Bài đã khớp danh mục: `part` (nếu có) thành `target`, người đọc gửi nốt từ `target`. Đã xong / đã hỏng thì thôi."""
+        with self.cond:
+            if part is not None:
+                os.replace(part, target)
+            if self.state in ("ok", "failed"):
+                return
+            self.path, self.copied, self.state = target, target.stat().st_size, "ok"
+            self.cond.notify_all()
+
+    def fail(self, error: ApiError) -> None:
+        with self.cond:
+            if self.state in ("ok", "failed"):
+                return
+            self.state, self.error = "failed", error
+            self.cond.notify_all()
+
+    def chunks(self, idle: float | None = None) -> Iterator[bytes]:
+        """Các khúc của bài từ byte 0, khúc nào đã ghi thì trả khúc ấy; hết khi bài đã tải xong và khớp danh mục. Tải hỏng, đổi sang
+        bản sao sau khi đã trả byte của nguồn trước, hay quá `idle` giây không thêm byte nào: ném ApiError - người gửi cắt kết nối, trình
+        phát không nhận bài cụt như bài trọn."""
+        idle = self.IDLE_SECONDS if idle is None else idle
+        sent, attempt = 0, 0
+        while True:
+            with self.cond:
+                while True:
+                    if self.state == "failed":
+                        raise self.error or ApiError(HTTPStatus.BAD_GATEWAY, "Không tải được bài nhạc từ nguồn - kiểm tra mạng")
+                    if self.attempt != attempt and sent:
+                        raise ApiError(HTTPStatus.BAD_GATEWAY, "Nguồn nhạc hỏng giữa bài - bài tải lại từ bản sao")
+                    if self.state in ("running", "ok"):
+                        attempt = self.attempt
+                        limit = self.copied if self.state == "ok" or self.size is None else min(self.copied, self.size - 1)
+                        if sent < limit:
+                            break
+                        if self.state == "ok":
+                            return
+                    if not self.cond.wait(idle):
+                        raise ApiError(HTTPStatus.GATEWAY_TIMEOUT, "Nguồn nhạc quá lâu không gửi thêm gì - kiểm tra mạng")
+                assert self.path is not None
+                with self.path.open("rb") as handle:
+                    handle.seek(sent)
+                    chunk = handle.read(min(CHUNK, limit - sent))
+            if not chunk:  # không xảy ra: `copied` chỉ tăng sau khi khúc đã ghi xuống file (buffering=0)
+                raise ApiError(HTTPStatus.BAD_GATEWAY, "Bài nhạc đang tải bị cụt")
+            sent += len(chunk)
+            yield chunk
+
+
 
 HELD_TEXT = ("Sổ làm việc đang bị chương trình khác khoá — bạn chờ một lát rồi bấm Thử lại")
 
@@ -363,6 +450,8 @@ class App:
         self._moods_lock = threading.Lock()
         # mỗi bài đang tải một khoá + số người đang dùng nó: luồng tải sẵn và trình phát không ghi đè nhau; người cuối bỏ khoá (`_music_fetch`)
         self._music_fetching: dict[str, tuple[threading.Lock, int]] = {}
+        # bài đang tải, cho trình phát đọc theo trong lúc tải (`music_track_stream`); người tải gỡ khi xong / hỏng
+        self._music_live: dict[str, LiveTrack] = {}
         # Hàng tải sẵn bài kế của trình phát máy tính (`music_warm`): MỘT luồng nền, FIFO, bỏ trùng.
         self._music_warm_lock = threading.Lock()
         self._music_warm_queue: collections.deque[str] = collections.deque()
@@ -2940,43 +3029,110 @@ class App:
         target.parent.mkdir(parents=True, exist_ok=True)
         # Cùng một bài đang được tải (luồng tải sẵn sau khi đổi nhạc, hay trình phát khác): chờ nó xong rồi dùng luôn.
         with self._music_fetch(link):
-            if target.is_file():
+            with self._music_lock:
+                live = self._music_live.setdefault(link, LiveTrack(size))
+            try:
+                path = self._music_download(link, target, mirrors, size, expected, live, progress, cancel)
+            except ApiError as exc:
+                live.fail(exc)
+                raise
+            except BaseException:  # huỷ (export_jobs.Cancelled), lỗi lạ: người đang đọc theo không chờ mãi
+                live.fail(ApiError(HTTPStatus.BAD_GATEWAY, "Không tải được bài nhạc từ nguồn - kiểm tra mạng"))
+                raise
+            finally:
+                with self._music_lock:
+                    if self._music_live.get(link) is live:
+                        del self._music_live[link]
+            live.finish(path)
+            return path
+
+    def music_track_stream(self, link: str) -> Path | LiveTrack:
+        """Nguồn của GET /api/music/track: file bộ đệm nếu đã có; chưa có thì bài đang tải (chưa ai tải thì bắt đầu tải ở luồng nền),
+        để trình phát nhận byte đầu ngay khi chúng tới thay vì chờ trọn bài. Danh mục không ghi `bytes` của bài (không báo trước được
+        Content-Length) hay bài quá cỡ thì đi `music_track_file` như trước. Link lạ / ngoài danh mục báo lỗi ngay."""
+        if not link.startswith("https://"):
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Link nhạc không hợp lệ")
+        target = self._music_file(link)
+        if target.is_file() and self._music_cache_matches(link, target):
+            self.music_cache.touch(target)
+            return target
+        try:
+            info = self.music_catalog().lookup([link])
+        except music_catalog.CatalogError as exc:
+            raise ApiError(HTTPStatus.SERVICE_UNAVAILABLE, str(exc)) from exc
+        if link not in info:
+            raise ApiError(HTTPStatus.NOT_FOUND, "Bài này không có trong danh mục nhạc nền")
+        size = info[link].get("bytes") if isinstance(info[link], dict) else None
+        if not isinstance(size, int) or not 0 < size <= MUSIC_TRACK_MAX_BYTES:
+            return self.music_track_file(link)
+        with self._music_lock:
+            live = self._music_live.get(link)
+            if live is None:
+                live = self._music_live[link] = LiveTrack(size)
+                threading.Thread(target=self._music_live_fetch, args=(link, live), name="music-track", daemon=True).start()
+        return live
+
+    def _music_live_fetch(self, link: str, live: LiveTrack) -> None:
+        """Luồng tải cho `music_track_stream`: lỗi đi tới người đọc theo qua `live` (quá cỡ, nguồn hỏng...), không tới đây."""
+        try:
+            live.finish(self.music_track_file(link))
+        except ApiError as exc:
+            live.fail(exc)
+        except Exception:  # noqa: BLE001 - luồng nền: người đọc phải nhận lỗi thay vì chờ tới hết hạn
+            log.exception("tải nhạc %s", link)
+            live.fail(ApiError(HTTPStatus.BAD_GATEWAY, "Không tải được bài nhạc từ nguồn - kiểm tra mạng"))
+        finally:
+            with self._music_lock:
+                if self._music_live.get(link) is live:
+                    del self._music_live[link]
+
+    def _music_download(self, link: str, target: Path, mirrors: list[str], size: int | None, expected: str | None, live: LiveTrack,
+                        progress: Callable[[int, int | None], None] | None, cancel: threading.Event | None) -> Path:
+        """Phần tải của `music_track_file`, đã giữ khoá tải của bài: từng nguồn một, byte nào ghi xong thì `live` báo cho người đọc theo."""
+        if target.is_file():
+            return target
+        failure: OSError | http.client.HTTPException | None = None
+        network_only = True
+        for url in [link, *mirrors]:
+            part = target.with_name(f"{target.stem}.{secrets.token_hex(4)}.part")
+            live.begin(part)
+
+            def copied(count: int, length: int | None) -> None:
+                live.grew(count)
+                if progress is not None:
+                    progress(count, length)
+
+            try:
+                request = urllib.request.Request(url, headers={"User-Agent": music_catalog.USER_AGENT})
+                # buffering=0: khúc nào đã chép là đã nằm trong file, người đọc theo (`LiveTrack.chunks`) thấy ngay
+                with urllib.request.urlopen(request, timeout=60) as response, part.open("wb", buffering=0) as sink:
+                    self._music_copy(response, sink, copied, cancel)
+                # Mọi nguồn (cả bản gốc) phải khớp `bytes` / `sha1` danh mục ghi: bài cụt hay bị đổi mà Content-Length tự nhất quán không được cất như bài tốt.
+                if not self._music_matches_catalog(part, size, expected):
+                    raise TrackMismatch(f"bài tải về khác danh mục: {url}")
+                live.finish(target, part)
+                self._music_note(url, failed=False)  # tải được = nguồn ấy có mạng
+                self._music_mark(link, failed=False)
+                self._music_prune(target)
                 return target
-            failure: OSError | http.client.HTTPException | None = None
-            network_only = True
+            except TrackTooBig as exc:  # bản sao cùng cỡ: khỏi thử
+                self._music_note(url, failed=False)
+                self._music_mark_too_big(link, exc.size)
+                raise ApiError(HTTPStatus.REQUEST_ENTITY_TOO_LARGE, TOO_BIG_TRACK) from exc
+            except (OSError, http.client.HTTPException) as exc:  # HTTPException: dòng trạng thái hỏng, nguồn ngắt giữa chừng
+                failure = exc
+                network_only = network_only and self._music_network_failure(exc)
+                if isinstance(exc, urllib.error.HTTPError):
+                    self._music_note(url, failed=False)  # nguồn trả lời (404...): nối được, chỉ bài hỏng
+            finally:
+                live.discard(part)  # thành công thì part đã thành target; hỏng / huỷ: không để file dở
+        # Mọi nguồn hỏng vì mạng: các nguồn ấy nghỉ 5 phút (không đánh dấu bài - bài vẫn tốt); còn lại: bài này hỏng.
+        if network_only:
             for url in [link, *mirrors]:
-                part = target.with_name(f"{target.stem}.{secrets.token_hex(4)}.part")
-                try:
-                    request = urllib.request.Request(url, headers={"User-Agent": music_catalog.USER_AGENT})
-                    with urllib.request.urlopen(request, timeout=60) as response, part.open("wb") as sink:
-                        self._music_copy(response, sink, progress, cancel)
-                    # Mọi nguồn (cả bản gốc) phải khớp `bytes` / `sha1` danh mục ghi: bài cụt hay bị đổi mà Content-Length tự nhất quán không được cất như bài tốt.
-                    if not self._music_matches_catalog(part, size, expected):
-                        raise TrackMismatch(f"bài tải về khác danh mục: {url}")
-                    os.replace(part, target)
-                    self._music_note(url, failed=False)  # tải được = nguồn ấy có mạng
-                    self._music_mark(link, failed=False)
-                    self._music_prune(target)
-                    return target
-                except TrackTooBig as exc:  # bản sao cùng cỡ: khỏi thử
-                    self._music_note(url, failed=False)
-                    self._music_mark_too_big(link, exc.size)
-                    raise ApiError(HTTPStatus.REQUEST_ENTITY_TOO_LARGE, TOO_BIG_TRACK) from exc
-                except (OSError, http.client.HTTPException) as exc:  # HTTPException: dòng trạng thái hỏng, nguồn ngắt giữa chừng
-                    failure = exc
-                    network_only = network_only and self._music_network_failure(exc)
-                    if isinstance(exc, urllib.error.HTTPError):
-                        self._music_note(url, failed=False)  # nguồn trả lời (404...): nối được, chỉ bài hỏng
-                finally:
-                    with contextlib.suppress(OSError):
-                        part.unlink(missing_ok=True)  # thành công thì part đã thành target; hỏng / huỷ: không để file dở
-            # Mọi nguồn hỏng vì mạng: các nguồn ấy nghỉ 5 phút (không đánh dấu bài - bài vẫn tốt); còn lại: bài này hỏng.
-            if network_only:
-                for url in [link, *mirrors]:
-                    self._music_note(url, failed=True)
-            else:
-                self._music_mark(link, failed=True)
-            raise ApiError(HTTPStatus.BAD_GATEWAY, "Không tải được bài nhạc từ nguồn - kiểm tra mạng") from failure
+                self._music_note(url, failed=True)
+        else:
+            self._music_mark(link, failed=True)
+        raise ApiError(HTTPStatus.BAD_GATEWAY, "Không tải được bài nhạc từ nguồn - kiểm tra mạng") from failure
 
     def redo(self, value: str) -> dict[str, Any]:
         """"Sửa thiết lập" (store.redo_plan): lựa chọn lúc tạo của một cuốn chưa bắt đầu, và phần trước nếu nó là phần
@@ -5049,7 +5205,33 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.OK, {"queued": self.app.music_warm((query.get("link") or [""])[0])})
 
     def get_music_track(self, query: dict[str, list[str]]) -> None:
-        self._send_file(self.app.music_track_file((query.get("link") or [""])[0]), cache=True)
+        link = (query.get("link") or [""])[0]
+        if (self.headers.get("Range") or "bytes=0-") != "bytes=0-":  # xin một đoạn giữa bài: chờ trọn bài như trước
+            self._send_file(self.app.music_track_file(link), cache=True)
+            return
+        source = self.app.music_track_stream(link)
+        if isinstance(source, Path):
+            self._send_file(source, cache=True)
+            return
+        # Bài đang tải: Content-Length = `bytes` danh mục, gửi từng khúc đã ghi. Lỗi trước byte đầu là câu trả lời lỗi bình thường; lỗi
+        # sau đó thì cắt kết nối trước khi đủ byte - trình phát (và Studio từ xa chuyển tiếp nguyên Content-Length) thấy tải hỏng.
+        chunks = source.chunks()
+        first = next(chunks, b"")
+        suffix = self.app._music_file(link).suffix.lower()
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-Type", music_plan.TRACK_TYPES.get(suffix) or mimetypes.guess_type(f"x{suffix}")[0] or "application/octet-stream")
+        self.send_header("Content-Length", str(source.size))
+        self.send_header("Cache-Control", "no-cache")
+        self.end_headers()
+        if self.command == "HEAD":
+            return
+        try:
+            self.wfile.write(first)
+            for chunk in chunks:
+                self.wfile.write(chunk)
+        except ApiError as exc:
+            log.warning("nhạc đang tải hỏng giữa chừng, cắt kết nối: %s", exc.message)
+            self.close_connection = True
 
     def get_redo(self, _query: dict[str, list[str]], value: str) -> None:
         plan = self.app.redo(value)

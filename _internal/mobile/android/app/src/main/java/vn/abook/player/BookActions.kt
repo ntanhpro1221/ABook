@@ -9,23 +9,28 @@ import androidx.core.content.FileProvider
 import org.json.JSONObject
 
 /**
- * Việc với MỘT cuốn mà cả hai giao diện cùng làm (WebView qua [LibraryPlugin], native qua `ui.data.LibraryRepo`): sửa tên / tác giả, đánh dấu đã nghe,
+ * Việc với MỘT cuốn của giao diện (`ui.data.LibraryRepo`): sửa tên / tác giả, đánh dấu đã nghe,
  * xoá khỏi máy, đóng file sách để chia sẻ. Trước đây nằm trong thân phương thức plugin (docs/NATIVE_PHONE_UI.md §2: logic dời vào lõi, plugin chỉ chuyển tiếp).
  * Mọi hàm đọc / ghi đĩa: gọi ở luồng nền.
  */
 object BookActions {
-    /** Native UI already waited out its undo window without touching disk. Do not start a second trash timer. */
-    fun deleteAfterUndo(context: Context, id: String) {
-        require(!BookDownloads.isActive(context, id)) { "Đang tải cuốn này, bạn huỷ tải trước" }
-        Store.deleteBook(id)
-        check(!Store.deletableBookDir(id).exists()) { "Chưa xoá được, bạn thử lại" }
-        runCatching { ListenExports.sweep(context) }
-    }
-
     /** Sau một lần sửa thành công (khác GET) qua [LocalStudio]: nhạc đang phát đọc lại lớp sửa, cuốn tải từ máy tính gửi phần sửa về sau vài giây. */
     fun edited(context: Context, id: String) {
         MusicBed.invalidate(id)
         EditsSync.schedule(context, id)
+    }
+
+    /**
+     * Một đường của [LocalStudio] - cùng đường và cùng lời đáp mà bản web gọi (`EbookLibrary.studio`), nên hai giao diện sửa sách như nhau. Khác 200: ném câu lỗi của
+     * lõi. Sửa xong (khác GET): nhạc đang phát đọc lại lớp sửa, cuốn của máy tính gửi phần sửa về ([edited]).
+     */
+    fun studio(context: Context, method: String, id: String, rest: String, body: JSONObject? = null): JSONObject {
+        Store.init(context)
+        val (status, reply) = LocalStudio.handle(method, "/api/books/$id$rest", body)
+        val answer = reply as? JSONObject ?: JSONObject()
+        if (status != 200) error(answer.optString("error").ifEmpty { "Bạn hãy thử lại." })
+        if (method != "GET") edited(context, id)
+        return answer
     }
 
     /** Một file văn bản của gói như người nghe thấy (lớp sửa phủ lên); sách nghe thẳng chưa có file thì lấy từ máy giữ sách trước. null khi không có. */

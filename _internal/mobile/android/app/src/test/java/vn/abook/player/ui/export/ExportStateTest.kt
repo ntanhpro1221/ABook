@@ -225,12 +225,12 @@ class ExportStateTest {
     @Test
     fun `a start the core refuses stays on the options with the reason`() {
         source.folder = "Music"
-        source.startError = "Không mở được thư mục đã chọn - chọn lại nơi lưu"
+        source.startError = "Chưa mở được thư mục đã chọn - chọn lại nơi lưu"
         val exports = state()
         exports.open(book)
         exports.start(book)
         assertEquals(ExportPhase.Idle, exports.phase())
-        assertEquals("Không mở được thư mục đã chọn - chọn lại nơi lưu", exports.ui("b1").value.problem)
+        assertEquals("Chưa mở được thư mục đã chọn - chọn lại nơi lưu", exports.ui("b1").value.problem)
     }
 
     @Test
@@ -244,6 +244,69 @@ class ExportStateTest {
         exports.start(book)
         source.startGate!!.complete(Unit)
         assertEquals(1, source.starts.size)
+    }
+
+    @Test
+    fun `a run that ends before the start returns keeps its result`() {
+        // Việc nền hỏng ngay (mất quyền ghi thư mục): tin lỗi tới luồng chính trước lời đáp của lõi - màn không được kẹt ở "Đang xuất".
+        source.folder = "Music"
+        source.startGate = CompletableDeferred()
+        val exports = state()
+        exports.open(book)
+        exports.start(book)
+        source.events.tryEmit(event { copy(error = "Chưa ghi được vào thư mục đã chọn") })
+        source.startGate!!.complete(Unit)
+        assertEquals(ExportPhase.Failed(ExportKind.Mp3, "Chưa ghi được vào thư mục đã chọn"), exports.phase())
+        assertEquals("Chưa xuất được", exports.hint("b1").value)
+    }
+
+    @Test
+    fun `coming back while the core is still starting the run shows it running`() {
+        source.folder = "Music"
+        source.startGate = CompletableDeferred()
+        val exports = state()
+        exports.open(book)
+        exports.start(book)
+        exports.leave("b1")
+        exports.open(book)
+        source.startGate!!.complete(Unit)
+        assertEquals("run-1", (exports.phase() as ExportPhase.Running).run)
+    }
+
+    @Test
+    fun `a text only book says its chapters from the plan, not from a count it does not have`() {
+        // Sách chỉ có chữ: chưa chương nào có audio nên chaptersAvailable / chaptersTotal có thể là 0; số chương đọc là của bản ước.
+        val bare = ListenBook("t2", "Sách chữ", textOnly = true)
+        val exports = state()
+        exports.open(bare)
+        exports.start(bare)
+        assertEquals("Chương 1/12 · 0%", exports.progress("t2").value.text)
+    }
+
+    @Test
+    fun `asking for a hint starts nothing that lives on`() {
+        val job = kotlinx.coroutines.Job()
+        val exports = ExportState(source, CoroutineScope(job + Dispatchers.Unconfined))
+        val before = job.children.count()
+        repeat(20) { exports.hint("b$it") }
+        assertEquals("mỗi cuốn từng mở menu không giữ thêm việc nào chạy mãi", before, job.children.count())
+    }
+
+    @Test
+    fun `the hint follows the phase and the progress of a book nobody is watching`() {
+        source.folder = "Music"
+        val exports = state()
+        exports.open(book)
+        val hint = exports.hint("b1")
+        assertNull(hint.value)
+        exports.start(book)
+        assertEquals("Đang xuất", hint.value)
+        source.events.tryEmit(event { copy(done = 6, total = 12) })
+        assertEquals("Đang xuất · 50%", hint.value)
+        source.events.tryEmit(event { copy(finished = true, files = 12, chaptersTotal = 12) })
+        assertEquals("Đã xuất xong", hint.value)
+        exports.leave("b1")
+        assertNull(hint.value)
     }
 
     // ---- tiến độ, kết quả ----
@@ -294,7 +357,7 @@ class ExportStateTest {
         exports.start(book)
         source.events.tryEmit(event { copy(error = "Hết chỗ trống trên điện thoại hoặc ở nơi lưu - dọn bớt rồi xuất lại") })
         assertEquals(ExportPhase.Failed(ExportKind.Mp3, "Hết chỗ trống trên điện thoại hoặc ở nơi lưu - dọn bớt rồi xuất lại"), exports.phase())
-        assertEquals("Không xuất được", exports.hint("b1").value)
+        assertEquals("Chưa xuất được", exports.hint("b1").value)
     }
 
     @Test
@@ -406,7 +469,7 @@ class ExportStateTest {
         assertEquals("", exports.ui("b1").value.problem)
         source.openWorks = false
         exports.openFile("b1", "content://doc/a.m4b")
-        assertEquals("Không mở được từ đây - mở file bằng app Tệp", exports.ui("b1").value.problem)
+        assertEquals("Chưa mở được từ đây - mở file bằng app Tệp", exports.ui("b1").value.problem)
         exports.openFolder("b1", "content://tree/Music")
         assertEquals("Máy không mở được thư mục - mở app Tệp rồi vào thư mục đã chọn", exports.ui("b1").value.problem)
         exports.openFolder("b1", "content://tree/Music", "Music/Sách")
@@ -415,7 +478,7 @@ class ExportStateTest {
         assertEquals(listOf("content://doc/a.m4b" to "Truyện thử"), shared)
         shareWorks = false
         exports.share("b1", "content://doc/a.m4b", "Truyện thử")
-        assertEquals("Không gửi được từ đây - mở file bằng app Tệp", exports.ui("b1").value.problem)
+        assertEquals("Chưa gửi được từ đây - mở file bằng app Tệp", exports.ui("b1").value.problem)
     }
 
     @Test

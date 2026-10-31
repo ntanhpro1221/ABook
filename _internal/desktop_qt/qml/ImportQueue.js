@@ -216,7 +216,7 @@ function brokenMusicNote(broken) {
 // {ok, notice, id, studio}: `ok` false = không mở được (lỗi / thiếu mã); `studio` mở Studio thay vì trang sách; không có `id` = chỉ báo, không chuyển trang.
 function openedOutcome(result) {
     if (!result) return {ok: false, notice: ""}
-    if (result.error) return {ok: false, notice: said("Không mở được file sách", result.file ? result.file + ": " + result.error : result.error)}
+    if (result.error) return {ok: false, notice: said("Chưa mở được file sách", result.file ? result.file + ": " + result.error : result.error)}
     if (!result.id) return {ok: false, notice: ""}
     const how = result.how || "new"
     if (how === "older" || how === "conflict")

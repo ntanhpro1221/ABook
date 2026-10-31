@@ -23,86 +23,13 @@ class GapLogicTest {
         val core = FakePlaybackCore(playerSnapshot(playing = true), simulate = true)
         val repo = PlayerRepo(core, scope, Dispatchers.Unconfined, { null }, { null })
         repo.attach()
-        val deletes = UndoDelete(scope, { null }, {}, repo::bookRemoved)
+        val deletes = UndoDelete(scope, { "token" }, {}, {}, repo::bookRemoved)
         deletes.remove("b1")
         assertFalse(repo.state.value.hasTrack)
         assertEquals(listOf("close"), core.calls)
         deletes.undo()
         assertFalse(deletes.contains("b1"))
         assertFalse(repo.state.value.hasTrack)
-        scope.cancel()
-    }
-
-    @Test fun expiryClaimsTheActionBeforeDiskIoSoALateTapCannotUndoIt() = runBlocking {
-        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-        val gate = CompletableDeferred<Unit>()
-        var erased = false
-        val deletes = UndoDelete(scope, { gate.await(); erased = true; null }, {})
-        deletes.remove("b1"); advance(28_000)
-        assertTrue(deletes.undoable.value.isEmpty())
-        deletes.undo()
-        gate.complete(Unit); advance(1)
-        assertTrue(erased)
-        scope.cancel()
-    }
-
-    @Test fun undoRestoresWithoutAnyDiskMutation() = runBlocking {
-        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-        val erased = mutableListOf<String>()
-        val removed = mutableListOf<String>()
-        val deletes = UndoDelete(scope, { erased += it; null }, {}, { removed += it })
-        deletes.remove("b1")
-        assertTrue(deletes.contains("b1"))
-        assertEquals(listOf("b1"), removed)
-        advance(27_999)
-        assertTrue(erased.isEmpty())
-        deletes.undo()
-        assertFalse(deletes.contains("b1"))
-        advance(2_000)
-        assertTrue(erased.isEmpty())
-        scope.cancel()
-    }
-
-    @Test fun expiryDeletesExactlyOnceAndEachBookHasItsOwnDeadline() = runBlocking {
-        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-        val erased = mutableListOf<String>()
-        val deletes = UndoDelete(scope, { erased += it; null }, {})
-        deletes.remove("b1")
-        advance(10_000)
-        deletes.remove("b2")
-        advance(18_000)
-        assertEquals(listOf("b1"), erased)
-        assertEquals(listOf("b2"), deletes.pending.value)
-        deletes.undo()
-        advance(30_000)
-        assertEquals(listOf("b1"), erased)
-        scope.cancel()
-    }
-
-    @Test fun dismissDoesNotUndoOrMakeTheNextActionRestoreOldBooks() = runBlocking {
-        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-        val erased = mutableListOf<String>()
-        val deletes = UndoDelete(scope, { erased += it; null }, {})
-        deletes.remove("b1"); deletes.dismiss(); deletes.remove("b2"); deletes.undo()
-        assertTrue(deletes.contains("b1"))
-        assertFalse(deletes.contains("b2"))
-        advance(28_000)
-        assertEquals(listOf("b1"), erased)
-        scope.cancel()
-    }
-
-    @Test fun deleteFailureReturnsTheBookAndShowsARecoverableError() = runBlocking {
-        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-        var refreshed = 0
-        val deletes = UndoDelete(scope, { "Chưa xoá được" }, { refreshed++ })
-        deletes.remove("b1"); advance(10_000); deletes.remove("b2"); advance(18_000)
-        assertFalse(deletes.contains("b1"))
-        assertEquals("Chưa xoá được", deletes.problem.value)
-        assertEquals(listOf("b2"), deletes.undoable.value)
-        assertTrue(deletes.showing.value)
-        assertEquals(3, refreshed)
-        deletes.undo()
-        assertFalse(deletes.contains("b2"))
         scope.cancel()
     }
 

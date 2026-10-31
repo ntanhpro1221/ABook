@@ -101,8 +101,15 @@ class ListenBook(
     val cover: CoverRef? = null,
     override val series: SeriesLink? = null,
     val remote: RemoteRef? = null,
+    /** Mở từ file sách (không phải máy làm sách ra): chương còn thiếu thì cần file mới hơn, không phải chờ. */
+    val imported: Boolean = false,
     /** Số phần/tập thật của file cả bộ (BookCover nhãn "Phần 2"). */
     val part: Int? = null,
+    val producing: Boolean = false,
+    val paused: Boolean = false,
+    val pauseReason: String? = null,
+    val etaPhase: String? = null,
+    val etaSeconds: Double? = null,
 ) : SeriesItem {
     override val isText: Boolean get() = textOnly
 
@@ -115,7 +122,9 @@ class ListenBook(
     /** Chỉ lưu trong bộ nhớ app: so hai cuốn bằng nội dung hiển thị (mã + mốc cập nhật + tiến độ). */
     override fun equals(other: Any?): Boolean = other is ListenBook && other.id == id && other.title == title && other.author == author &&
         other.updatedAt == updatedAt && other.progress == progress && other.cover == cover && other.state.last == state.last &&
-        other.resume == resume && other.remote == remote && other.chaptersAvailable == chaptersAvailable && other.series == series
+        other.resume == resume && other.remote == remote && other.chaptersAvailable == chaptersAvailable && other.series == series &&
+        other.producing == producing && other.paused == paused && other.pauseReason == pauseReason && other.etaSeconds == etaSeconds &&
+        other.etaPhase == etaPhase && other.complete == complete && other.textOnly == textOnly && other.chaptersTotal == chaptersTotal
 
     override fun hashCode(): Int = id.hashCode() * 31 + (state.last?.hashCode() ?: 0)
 }

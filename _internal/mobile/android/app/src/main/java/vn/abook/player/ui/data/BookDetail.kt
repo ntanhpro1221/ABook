@@ -1,6 +1,7 @@
 package vn.abook.player.ui.data
 
 import androidx.compose.runtime.Immutable
+import org.json.JSONArray
 import org.json.JSONObject
 import vn.abook.player.LibraryTree
 
@@ -21,6 +22,8 @@ data class ChapterLine(
     val textPath: String = "",
     /** Giây bắt đầu khi chạm chương: chỗ đã nghe tới nếu chương đang nghe dở, không thì đầu chương (BookScreen.tsx ChapterRow). */
     val resumeAt: Double = 0.0,
+    /** Tên ngắn của chương (`title` của gói, không kèm tên phụ): dàn nhân vật ghi "từ <chương>" bằng tên này hay [title]. */
+    val shortTitle: String = "",
 ) {
     val playable: Boolean get() = available || textOnly
 }
@@ -35,6 +38,16 @@ class BookDetail(
     val chapters: List<ChapterLine>,
     /** Gửi được thành file sách (cuốn mở từ file / làm trên máy - BookActions.canShare). */
     val canShare: Boolean = false,
+    /** Hồ sơ nghe gắn với cuốn này (chưa nghe lần nào thì rỗng). */
+    val records: List<ListenRecord> = emptyList(),
+    /** Lịch sử nghe của hồ sơ đang dùng, cũ trước. */
+    val sessions: List<ListenSession> = emptyList(),
+    /** Số thay đổi của người nghe chưa vào file sách đã lưu (menu "Lưu thay đổi" chỉ bấm được khi khác 0). */
+    val unsaved: Int = 0,
+    /** Việc đang chờ máy làm sách (đổi giới tính ...) đi theo file; "Lưu thành" nói số này. */
+    val wishes: Int = 0,
+    /** Cuốn đến từ file dự án (.abookproj): "present" = mang cả xưởng, "pending" = chờ dựng xưởng; null = từ file sách nghe (.abook). */
+    val workshop: String? = null,
 ) {
     companion object {
         /** Hàm thuần: gói sách (như người nghe thấy) + trạng thái nghe -> trang sách. */
@@ -44,9 +57,15 @@ class BookDetail(
             coverOf: (String) -> CoverRef?,
             remote: RemoteRef? = null,
             canShare: Boolean = false,
+            records: JSONArray? = null,
+            imported: Boolean = false,
         ): BookDetail {
-            val book = BookJson.book(manifest, state, coverOf, remote)
-            return BookDetail(book, lines(manifest, book.state), canShare)
+            val book = BookJson.book(manifest, state, coverOf, remote, imported = imported)
+            return BookDetail(
+                book, lines(manifest, book.state), canShare, Records.parse(records), History.sessions(state),
+                unsaved = manifest.optInt("unsaved", manifest.optInt("edits")), wishes = manifest.optInt("wishes"),
+                workshop = manifest.optJSONObject("projectFile")?.optString("workshop")?.takeIf { it.isNotEmpty() },
+            )
         }
 
         /** Mọi chương của gói theo thứ tự trong sách. Chương chỉ có chữ: độ dài là độ dài trình phát đã ghi lúc nghe (0 khi chưa nghe). */
@@ -79,6 +98,7 @@ class BookDetail(
                     done = heard >= 1f,
                     textPath = textPath,
                     resumeAt = if (heard > 0f && heard < 1f) state.chapters[id]?.heard ?: 0.0 else 0.0,
+                    shortTitle = field(entry, "title"),
                 )
             }
             return out
@@ -124,13 +144,16 @@ object BookPage {
                 parts += Fmt.length(book.duration)
             }
         }
-        return parts.joinToString(" · ")
+        return parts.dotJoined()
     }
 
     /** Dòng tình trạng dưới dòng trên (không hộp, không viên thuốc): sách chỉ có chữ, sách chưa đủ chương, sách nghe thẳng. null = không có gì để nói. */
     fun statusLine(book: ListenBook): String? = when {
         book.textOnly -> "Chỉ có chữ · nghe bằng giọng đọc"
-        !book.complete && book.remote != null -> "${book.remote.deviceName.replaceFirstChar { it.uppercase() }} còn đang làm, chương mới hiện ở đây khi xong"
+        book.producing && book.pauseReason != null -> ProductionText.upcoming(book)
+        book.producing -> "Đang thu; chương mới tự hiện khi xong."
+        !book.complete && book.remote != null -> "Chưa đủ chương; đang dừng thu."
+        !book.complete && book.imported -> "Chưa đủ chương; mở file sách mới hơn để nghe tiếp."
         !book.complete -> "Sách này có ${book.chaptersAvailable}/${book.chaptersTotal} chương đã thu - các chương sau chưa có audio"
         book.remote != null -> "Nghe thẳng từ ${book.remote.deviceName} - chương nghe tới được giữ lại trên máy này"
         else -> null
@@ -140,24 +163,26 @@ object BookPage {
      * Dòng dưới vạch tiến độ: nghe xong / hết phần đã có thì nói thế; đã nghe thì "Đã nghe X · còn Y chưa nghe" ("còn" theo phần ĐÃ PHỦ - chỗ tua qua vẫn là
      * chưa nghe, nên nói rõ "chưa nghe"); chưa nghe thì thời lượng cả cuốn.
      */
-    fun progressLine(book: ListenBook): String {
+    fun progressLine(book: ListenBook, listening: Boolean = false, failed: Boolean = false): String {
         val progress = book.progress
         if (progress.finished || progress.caughtUp) return ListenLogic.progressText(book)
         val heard = progress.heardSeconds
+        // Chưa nghe gì mà trình phát đang giữ cuốn này: nói đang nghe (hay không phát được), đừng nói "Chưa nghe".
+        if (heard <= 0 && listening) return if (failed) "Chưa phát được" else "Đang nghe"
         if (heard <= 0) return "Chưa nghe · ${Fmt.length(book.duration)}"
         return "Đã nghe ${Fmt.length(heard)} · còn ${Fmt.length(maxOf(0.0, book.duration - heard))} chưa nghe"
     }
 
     /** Dòng phụ của một chương: thời lượng (chương chữ chưa nghe thì không có) + đã nghe bao nhiêu phần trăm; chưa có audio thì nói thế. */
-    fun chapterLine(chapter: ChapterLine): String {
-        if (!chapter.playable) return "Chưa có audio"
+    fun chapterLine(chapter: ChapterLine, producing: Boolean = false): String {
+        if (!chapter.playable) return if (producing) "Đang thu âm" else "Chưa có audio"
         val parts = ArrayList<String>(2)
         if (chapter.duration > 0) parts += Fmt.length(chapter.duration)
         when {
             chapter.done -> parts += "đã nghe hết"
             chapter.heard > 0f -> parts += "đã nghe ${percent(chapter.heard)}"
         }
-        return parts.joinToString(" · ").replaceFirstChar { it.uppercase() }
+        return parts.dotJoined().replaceFirstChar { it.uppercase() }
     }
 
     /** "1%".."99%": chưa hết thì không làm tròn lên 100, đã nghe chút ít thì không về 0. */

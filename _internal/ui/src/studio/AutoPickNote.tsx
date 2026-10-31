@@ -17,7 +17,7 @@ export function AutoPickNote({ track, canOverride, onView, idleLabel }: {
   const change = useMutation({
     mutationFn: (auto: "on" | "off" | null) => api<LocalMusicView>(`/api/music/local/${localDigest(track.link)}/auto`, { method: "POST", body: { auto } }),
     onSuccess: onView,
-    onError: (error: Error) => toast.error("Không đổi được", { description: error.message }),
+    onError: (error: Error) => toast.error("Chưa đổi được", { description: error.message }),
   });
   const label = autoLabel(track) ?? idleLabel;
   if (!label && !canOverride) return <MotionRegion as="span" />;

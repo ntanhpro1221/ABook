@@ -24,7 +24,7 @@ class BookImportCorpusTest {
         val withText = System.getenv("ABOOK_IMPORT_TEXT") == "1" // kèm chữ từng chương để xem chỗ lệch
         for (path in corpus.split(File.pathSeparator).filter { it.isNotEmpty() }) {
             val folder = File(path)
-            // PDF: các dòng pdf.js đã lấy (`<file>.pdf.pages.json` của pdfPages.corpus.test.ts) qua lớp luật.
+            // PDF: các dòng đã lấy từng trang (`<file>.pdf.pages.json`) qua lớp luật.
             val name = folder.name.removeSuffix(".pages.json")
             val row = JSONObject().put("folder", name)
             val started = System.nanoTime()

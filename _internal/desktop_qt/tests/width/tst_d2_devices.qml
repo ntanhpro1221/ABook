@@ -3,7 +3,7 @@ import QtTest
 import "VisualReady.js" as VisualReady
 import ABook
 
-// Cài đặt › Thiết bị (SettingsDevices = PhoneSync + OtherComputers): hành vi (bật tắt kết nối, ghép bằng mã, đổi tên, thôi ghép, máy tính khác,
+// Cài đặt › Thiết bị (SettingsDevices = PhoneSync + OtherComputers): hành vi (bật tắt kết nối, ghép bằng mã, đổi tên, bỏ ghép, máy tính khác,
 // tên dài xuống dòng, Back đối xứng) và ảnh sáng + tối ghi ra build/d2shots/settings_devices_*.png. Máy chủ giả đặt vào DesktopApi giả.
 Item {
     id: host
@@ -256,7 +256,7 @@ Item {
             list.children[0].remove("aa11", "Google Pixel 8")
             const dialog = byName(window(), "removeDialog")
             verify(dialog.open)
-            compare(dialog.title, "Thôi ghép Google Pixel 8?")
+            compare(dialog.title, "Bỏ ghép Google Pixel 8?")
             compare(dialog.description, "Dừng tải và đồng bộ; giữ sách đã tải.")
             compare(Nav.layers.length, 1)
             verify(Nav.back())
@@ -267,11 +267,11 @@ Item {
             byText(window(), "Để nguyên").clicked()
             verify(!dialog.open)
             list.children[0].remove("aa11", "Google Pixel 8")
-            const confirm = walk(dialog, i => i.text === "Thôi ghép" && i.kind === "danger")
+            const confirm = walk(dialog, i => i.text === "Bỏ ghép" && i.kind === "danger")
             verify(confirm !== null)
             confirm.clicked()
             compare(request("DELETE", "/api/sync/devices/aa11").length, 1)
-            compare(Api.notice, "Đã thôi ghép Google Pixel 8")
+            compare(Api.notice, "Đã bỏ ghép Google Pixel 8")
             verify(!dialog.open)
             compare(Nav.layers.length, 0)
             tryVerify(function() { return (byName(page, "deviceList").children.length - 1 /* Repeater */) === (1) })
@@ -325,13 +325,13 @@ Item {
             compare(address.text, "")
             compare(code.text, "")
             tryVerify(function() { return shown(page, "Laptop của bạn") })
-            // quên máy: không còn gì để mất -> thôi ghép luôn + một câu
+            // quên máy: không còn gì để mất -> bỏ ghép luôn + một câu
             Platform.setSetting("fold.other-computers.c0ffee000001", "1")
             const unpair = byName(page, "unpairComputer")
             unpair.clicked()
             compare(request("GET", "/api/computers/c0ffee000001/unsent").length, 1)
             compare(request("DELETE", "/api/computers/c0ffee000001").length, 1)
-            compare(Api.notice, "Đã thôi ghép Máy bàn phòng làm việc")
+            compare(Api.notice, "Đã bỏ ghép Máy bàn phòng làm việc")
             compare(Nav.layers.length, 0)
         }
         function test_otherComputersUnpairAsksAndBackReturns() {
@@ -342,18 +342,18 @@ Item {
             byName(page, "unpairComputer").clicked()
             const dialog = byName(window(), "unpairDialog")
             verify(dialog.open)
-            compare(dialog.title, "Thôi ghép Máy bàn phòng làm việc?")
+            compare(dialog.title, "Bỏ ghép Máy bàn phòng làm việc?")
             compare(Nav.layers.length, 1)
             tryVerify(function() { return shown(window(), "2 cuốn của Máy bàn phòng làm việc sẽ rời Thư viện, và 50 MB đã tải về máy tính này sẽ bị xoá.") })
-            tryVerify(function() { return shown(window(), "Gửi trước rồi thôi ghép") })
-            tryVerify(function() { return shown(window(), "Vẫn thôi ghép, bỏ thay đổi") })
+            tryVerify(function() { return shown(window(), "Gửi trước rồi bỏ ghép") })
+            tryVerify(function() { return shown(window(), "Vẫn bỏ ghép, bỏ thay đổi") })
             verify(Nav.back())
             verify(!dialog.open)
             compare(request("DELETE", "/api/computers/c0ffee000001").length, 0)
             byName(page, "unpairComputer").clicked()
             byName(window(), "unpairDiscard").activated()
             compare(request("DELETE", "/api/computers/c0ffee000001?edits=discard").length, 1)
-            compare(Api.notice, "Đã thôi ghép Máy bàn phòng làm việc")
+            compare(Api.notice, "Đã bỏ ghép Máy bàn phòng làm việc")
             verify(!dialog.open)
             compare(Nav.layers.length, 0)
         }

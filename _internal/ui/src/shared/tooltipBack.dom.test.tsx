@@ -6,7 +6,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { Dialog, Tooltip, TooltipProvider } from "./ui";
 import { backLayerCount } from "./backStack";
 import { installBackOrder } from "./backOrder";
-import { dismissTopLayer } from "@/android/backLayers";
+import { dismissTopLayer } from "@/shared/backLayers";
 import { layerHistoryGuard } from "./MotionRouter";
 
 let root: Root, cleanup: () => void;

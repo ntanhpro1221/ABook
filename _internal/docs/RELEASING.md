@@ -5,13 +5,12 @@ chưa phải bản phát hành.
 
 ## Số phiên bản - một số cho cả hai nền tảng
 
-App máy tính và app điện thoại phát hành CÙNG một số `major.minor.patch`, ghi ở bốn chỗ:
+App máy tính và app điện thoại phát hành CÙNG một số `major.minor.patch`, ghi ở ba chỗ:
 
 | chỗ | trường |
 |---|---|
 | `_internal/pyproject.toml` | `version` |
 | `_internal/ui/package.json` | `version` |
-| `_internal/mobile/package.json` | `version` |
 | `_internal/mobile/android/app/build.gradle` | `versionName` (= số phiên bản) và `versionCode` (tăng 1 mỗi bản) |
 
 `pyproject.toml` nằm trong `QUALITY_IMPLEMENTATION_FILES`: đổi `version` là đổi hash chất lượng, sách đang làm dở không
@@ -30,7 +29,7 @@ tiếp tục được. Chỉ đổi khi không có sách nào cần tiếp tục
 ## Kiểm tra trước khi phát hành
 
 - `python -m pytest` toàn bộ, `npm run typecheck` và `npm test` (vitest, logic thuần của giao diện) của `ui/` đều qua; kiểm tra tay trên máy ảo Android (`docs/UI.md`).
-- Bắt buộc trước publish: dựng UI của cây phát hành (`node node_modules/vite/bin/vite.js build` trong `ui/`), rồi từ `_internal` chạy `python scripts/tap_audit/run.py`: phải PASS 24/24, exit 0.
+- Bắt buộc trước publish: dựng UI của cây phát hành (`node node_modules/vite/bin/vite.js build` trong `ui/`), rồi từ `_internal` chạy `python scripts/tap_audit/run.py`: phải PASS mọi kịch bản (21/21 từ khi gỡ dấu trang), exit 0; `tests/test_tap_audit_targets.py` chặn kịch bản trỏ tới nhãn không còn trong giao diện.
   Chạy tiếp `python scripts/tap_audit/run.py --inject-fault`: phải FAIL, exit 1 (đối chứng âm).
   Kiểm chạm chuột/touch thật để bắt lỗi hộp thoại không chạm được như 0.4.134; pytest/vitest logic không phát hiện được lỗi này.
 - Không có gì bị cấm lọt vào gói: khoá ký (Android keystore, khoá updater), audio, dữ liệu cá nhân (`listening.json`,
@@ -52,10 +51,11 @@ File phát hành nằm ở thư mục tạm của máy (`abook-release/X.Y.Z`, h
 tương ứng, để hiểu script làm gì:
 
 1. Tag git `vX.Y.Z` trên commit phát hành, đẩy tag.
-2. App máy tính: `scripts\build_windows_app.ps1` (không `-TauriConfig` - bản phát hành chỉ nhận cập nhật qua https) ra
-   trong `shell\src-tauri\target\release\bundle\nsis\`: bộ cài `ABook_X.Y.Z_x64-setup.exe`, chữ ký `.sig` (khoá ở
-   `%USERPROFILE%\.abook-keys`, không bao giờ commit) và `latest.json` (ghi chú lấy từ mục `[X.Y.Z]` của CHANGELOG -
-   đổi tên mục trước khi dựng). App điện thoại: `npm run build:android` trong `ui\`, `npx cap sync android`, rồi
+2. App máy tính (bản Qt, `docs/QT_INSTALLER.md`): `desktop_qt\build.bat installer` - test Qt, đóng gói, smoke bản đóng gói,
+   test bộ cài trong hồ sơ giả (cài, cập nhật thật N -> N+1, tham số bộ cập nhật Tauri, gỡ) - ra trong
+   `desktop_qt\build\installer\`: bộ cài `ABook_X.Y.Z_x64-setup.exe`, chữ ký `.sig` (khoá ở `%USERPROFILE%\.abook-keys`,
+   không bao giờ commit; kiểm lại bằng khoá công khai ngay sau khi ký) và `latest.json` (ghi chú lấy từ mục `[X.Y.Z]` của
+   CHANGELOG - đổi tên mục trước khi dựng; `release.py build` kiểm latest.json mang đúng chữ ký của `.sig`). App điện thoại (Kotlin + Compose, không có bước web):
    `gradlew assembleRelease` trong `mobile\android\` - Gradle ký bằng `%USERPROFILE%\.abook-keys\android-release.properties`
    (thiếu file ấy thì APK không ký, không phát hành được). Bản release chạy R8 (thu nhỏ mã + tài nguyên, luật ở
    `mobile\android\app\proguard-rules.pro`): ngay sau khi dựng, CẤT `mobile\android\app\build\outputs\mapping\release\mapping.txt`

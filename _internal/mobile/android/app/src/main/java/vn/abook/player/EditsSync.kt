@@ -46,7 +46,7 @@ object EditsSync {
     private val scheduled = ConcurrentHashMap<String, ScheduledFuture<*>>()
     private val attempts = ConcurrentHashMap<String, Int>()
 
-    /** Cầu tới plugin: tải lại sách từ máy tính sau khi gửi xong, và báo giao diện làm mới (đặt trong LibraryPlugin.load). */
+    /** Cầu tới giao diện: tải lại sách từ máy tính sau khi gửi xong, và báo giao diện làm mới (đặt ở AbookApplication). */
     @Volatile var refresh: ((String) -> Unit)? = null
     @Volatile var changed: ((String) -> Unit)? = null
 
@@ -285,8 +285,8 @@ object EditsSync {
     /** Gửi thật qua đường TLS đã ghim tới máy giữ sách - máy tính chính, hay máy tính khác đã ghép (không bao giờ gọi trên luồng giao diện). */
     fun pushNow(context: Context, id: String): JSONObject = push(id, holderName(context, id)) { file ->
         val (peer, remote) = Store.editDestination(id) ?: throw IllegalStateException("Cuốn này không lấy từ máy tính nên không có chỗ gửi về")
-        if (peer == null) SyncLink.request(context, "POST", "/sync/v1/books/$remote/edits", upload = file, readTimeoutMs = 120_000)
-        else Peers.request(context, peer, "POST", "/sync/v1/books/$remote/edits", readTimeoutMs = 120_000, upload = file)
+        if (peer == null) SyncLink.request(context, "POST", "/sync/v1/books/$remote/edits", upload = file)
+        else Peers.request(context, peer, "POST", "/sync/v1/books/$remote/edits", upload = file)
     }
 
     /** Tên máy giữ sách `id` như đã ghép (máy tính chính: tên nó báo lúc ghép); không biết thì rỗng. */
@@ -295,7 +295,7 @@ object EditsSync {
         return Peers.all(context).optJSONObject(peer)?.optString("name").orEmpty()
     }
 
-    /** Có đường tới máy giữ sách `id` không (chưa ghép / thôi ghép thì không gửi, không hẹn). */
+    /** Có đường tới máy giữ sách `id` không (chưa ghép / bỏ ghép thì không gửi, không hẹn). */
     private fun reachable(context: Context, id: String): Boolean {
         val (peer, _) = Store.editDestination(id) ?: return false
         return if (peer == null) SyncLink.paired(context) else Peers.link(context, peer) != null

@@ -1,5 +1,7 @@
 package vn.abook.player.ui.voice
 
+import vn.abook.player.formatSize
+
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
@@ -8,17 +10,17 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** Lời và hình dữ liệu của Giọng đọc làm thêm: cỡ file, hàng giọng trên máy, đồng ý gửi chữ, khóa, Nhạc của tôi. Hàm thuần, không Android. */
+/** Lời và hình dữ liệu của Giọng đọc làm thêm: cỡ file, hàng giọng trên máy, đồng ý gửi chữ, khoá, Nhạc của tôi. Hàm thuần, không Android. */
 class VoiceLogicTest {
     private val turbo = ModuleKind.Vieneu
 
     @Test
-    fun `sizes use one decimal system the way the web does`() {
-        assertEquals("850 MB", VoiceText.size(850_000_000))
-        assertEquals("1,20 GB", VoiceText.size(1_200_000_000))
-        assertEquals("3,5 MB", VoiceText.size(3_500_000))
-        assertEquals("1 KB", VoiceText.size(400))
-        assertEquals("198 MB", VoiceText.size(198_000_000))
+    fun `sizes use the shared 1024 formatter`() {
+        assertEquals("811 MB", formatSize(850_000_000))
+        assertEquals("1,1 GB", formatSize(1_200_000_000))
+        assertEquals("3,3 MB", formatSize(3_500_000))
+        assertEquals("1 KB", formatSize(400))
+        assertEquals("189 MB", formatSize(198_000_000))
     }
 
     @Test
@@ -50,10 +52,10 @@ class VoiceLogicTest {
         val rows = VoiceText.rows(Fixtures.missing(turbo), emptyList())
         val first = rows.first()
         assertEquals("Giọng VieNeu", first.title)
-        assertEquals(ModuleAction.Download("Tải 198 MB"), first.action)
+        assertEquals(ModuleAction.Download("Tải (189 MB)"), first.action)
         assertTrue(first.hint.startsWith("Khuyên dùng"))
         assertFalse(first.progress)
-        assertEquals(ModuleAction.Download("Tải 52 MB"), rows[1].action)
+        assertEquals(ModuleAction.Download("Tải (50 MB)"), rows[1].action)
     }
 
     @Test
@@ -61,7 +63,7 @@ class VoiceLogicTest {
         val rows = VoiceText.rows(Fixtures.downloading(turbo, 40), listOf("nano"))
         assertEquals(ModuleAction.Cancel, rows[1].action)
         assertTrue(rows[1].progress)
-        assertEquals("Đang tải 198 MB · 40%", rows[1].hint)
+        assertEquals("Đang tải 189 MB · 40%", rows[1].hint)
         assertEquals(ModuleAction.None, rows[0].action)
         assertFalse(rows[0].progress)
     }
@@ -81,8 +83,8 @@ class VoiceLogicTest {
         assertEquals("Đọc trực tiếp được · nhanh gấp 2,0 lần", fast.hint)
         val slow = VoiceText.rows(Fixtures.ready(turbo, mapOf("turbo" to ModuleBench(1.4, 800))), emptyList()).first()
         assertTrue(slow.hint.startsWith("Chậm hơn tốc độ nghe"))
-        assertEquals("Có bản mới · 12 MB", VoiceText.rows(Fixtures.outdated(turbo), emptyList()).first().hint)
-        assertEquals("Đã có trên máy", VoiceText.rows(Fixtures.ready(turbo), emptyList()).first().hint)
+        assertEquals("Có bản mới · 11 MB", VoiceText.rows(Fixtures.outdated(turbo), emptyList()).first().hint)
+        assertEquals("Đã có", VoiceText.rows(Fixtures.ready(turbo), emptyList()).first().hint)
         assertTrue(VoiceText.rows(Fixtures.benchmarking(turbo), emptyList()).first().hint.startsWith("Đang thử giọng"))
     }
 
@@ -111,7 +113,7 @@ class VoiceLogicTest {
     fun `metered data warns only when there is something to download`() {
         assertNull(VoiceText.metered(Fixtures.missing(turbo), 198_000_000))
         val warned = VoiceText.metered(Fixtures.missing(turbo, metered = true), 198_000_000)
-        assertTrue(warned!!.contains("198 MB"))
+        assertTrue(warned!!.contains("189 MB"))
         assertNull(VoiceText.metered(Fixtures.missing(turbo, metered = true), 0))
     }
 
@@ -154,7 +156,7 @@ class VoiceLogicTest {
         assertEquals("Miễn phí 500.000 ký tự mỗi tháng", VoiceText.keyHint(Fixtures.provider("azure", "Azure Speech")))
         assertEquals("••••WXYZ · Dùng được · 4 giọng", VoiceText.keyHint(Fixtures.provider("azure", "Azure Speech", hasKey = true, valid = true)))
         assertEquals("••••WXYZ · Chưa dùng được", VoiceText.keyHint(Fixtures.provider("azure", "Azure Speech", hasKey = true)))
-        assertEquals("Chưa có khóa", VoiceText.keySummary(VoiceText.KEYED.map { (id, name) -> Fixtures.provider(id, name) }))
+        assertEquals("Chưa có khoá", VoiceText.keySummary(VoiceText.KEYED.map { (id, name) -> Fixtures.provider(id, name) }))
         val some = listOf(Fixtures.provider("azure", "Azure Speech", hasKey = true), Fixtures.provider("google", "Google Cloud"), Fixtures.provider("fpt", "FPT.AI", hasKey = true))
         assertEquals("Azure Speech · FPT.AI", VoiceText.keySummary(some))
     }
@@ -164,10 +166,10 @@ class VoiceLogicTest {
         val ok = KeyJson.check(JSONObject().put("ok", true).put("voices", 6).put("provider", JSONObject().put("id", "azure").put("hasKey", true)))
         assertTrue(ok.ok)
         assertEquals("Dùng được · 6 giọng tiếng Việt", ok.text)
-        val bad = KeyJson.check(JSONObject().put("ok", false).put("message", "Khóa Azure bị từ chối (401)."))
+        val bad = KeyJson.check(JSONObject().put("ok", false).put("message", "Khoá Azure bị từ chối (401)."))
         assertFalse(bad.ok)
-        assertEquals("Khóa Azure bị từ chối (401).", bad.text)
-        assertEquals("Khóa chưa dùng được.", KeyJson.check(JSONObject().put("ok", false)).text)
+        assertEquals("Khoá Azure bị từ chối (401).", bad.text)
+        assertEquals("Khoá chưa dùng được.", KeyJson.check(JSONObject().put("ok", false)).text)
     }
 
     @Test

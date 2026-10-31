@@ -34,3 +34,36 @@ class PeerResponseTest {
         }
     }
 }
+
+/** Một máy trả mảng JSON trần (GET /api/listen/library, /api/voices, .../activity) thì đọc được; giá trị trần khác thì vẫn bị từ chối. */
+class PeerArrayReplyTest {
+    private fun reply(body: String, code: Int = 200): String {
+        val bytes = body.toByteArray()
+        val connection = object : HttpURLConnection(URL("https://peer.invalid/reply")) {
+            override fun connect() {}
+            override fun disconnect() {}
+            override fun usingProxy() = false
+            override fun getInputStream() = bytes.inputStream()
+            override fun getErrorStream() = bytes.inputStream()
+            override fun getHeaderField(name: String): String? = if (name.equals("Content-Length", true)) bytes.size.toString() else null
+        }
+        return SyncLink.responseText(connection, code)
+    }
+
+    @Test fun arraysAndObjectsAreAcceptedUnchanged() {
+        assertEquals("[{\"id\":\"b1\",\"producing\":true}]", reply("[{\"id\":\"b1\",\"producing\":true}]"))
+        assertEquals("[]", reply("[]"))
+        assertEquals("{\"a\":1}", reply("{\"a\":1}"))
+        assertEquals("", reply(""))
+    }
+
+    @Test fun bareScalarsAndBrokenJsonAreStillRefused() {
+        for (body in listOf("17", "\"text\"", "true", "null", "[1,", "{\"a\":", "[1] x", "<html></html>")) {
+            assertTrue(body, runCatching { reply(body) }.exceptionOrNull() is IllegalArgumentException)
+        }
+    }
+
+    @Test fun anArrayErrorBodyIsReadToo() {
+        assertEquals("[\"loi\"]", reply("[\"loi\"]", code = 500))
+    }
+}

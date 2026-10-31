@@ -28,7 +28,7 @@ Item {
     function refresh() { store.refresh(book.id) }
     function setImage(image) {
         if (busy || !book) return
-        if (!image) { Api.notice = "Chưa đặt được ảnh bìa\nKhông đọc được file ảnh"; return }
+        if (!image) { Api.notice = "Chưa đặt được ảnh bìa\nChưa đọc được file ảnh"; return }
         working = true
         request("PUT", {image: image}, function(status, data) {
             root.working = false

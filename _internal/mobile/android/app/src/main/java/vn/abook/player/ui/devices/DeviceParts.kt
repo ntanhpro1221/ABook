@@ -1,8 +1,12 @@
 package vn.abook.player.ui.devices
 
+import vn.abook.player.formatSize
+
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import vn.abook.player.ui.components.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -16,6 +20,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.flow.StateFlow
 import vn.abook.player.ui.components.BluetoothIcon
+import vn.abook.player.ui.components.Caption
 import vn.abook.player.ui.components.CheckIcon
 import vn.abook.player.ui.components.DevicesIcon
 import vn.abook.player.ui.components.LaptopIcon
@@ -26,6 +31,7 @@ import vn.abook.player.ui.components.TextAction
 import vn.abook.player.ui.data.Fmt
 import vn.abook.player.ui.motion.Motion
 import vn.abook.player.ui.theme.Abook
+import vn.abook.player.ui.theme.Dim
 
 /*
  * Các loại hàng của ba màn Thiết bị. Mọi hàng là một [ListItem]: biểu tượng đầu hàng và phần cuối hàng cùng thẳng dòng đầu của tên (luật của cả danh sách).
@@ -57,6 +63,7 @@ fun DeviceRow(device: Paired, onOpen: () -> Unit, onRetry: () -> Unit) {
     val failed = device.failed
     ListItem(
         device.name, Modifier, onOpen, "device_${device.key.ifEmpty { "main" }}", hint = device.state,
+        tickingHint = true,
         hintColor = if (failed) colors.danger else colors.text2,
         leading = { DeviceIcon(device.kind, colors.text2) },
         trailing = if (failed && device.reach !is Reach.Unpaired) ({ TextAction("Thử lại", onRetry, "retry_${device.key.ifEmpty { "main" }}") }) else null,
@@ -74,6 +81,7 @@ fun RemoteBookRow(
     val tag = "book_${book.id}"
     ListItem(
         book.title, Modifier, null, tag,
+        tickingHint = true,
         hint = when {
             failure != null -> failure
             downloading -> "Đang tải"
@@ -82,9 +90,9 @@ fun RemoteBookRow(
         hintColor = if (failure != null) colors.danger else colors.text2,
         trailing = {
             when {
-                downloading -> TextAction("Huỷ", onCancel, "cancel_${book.id}")
+                downloading -> TextAction("Huỷ tải", onCancel, "cancel_${book.id}")
                 failure != null -> TextAction("Thử lại", onDownload, "download_${book.id}")
-                book.upToDate -> BasicText("Đã tải", style = Abook.type.caption.copy(color = colors.success))
+                book.upToDate -> BasicText("Đã tải về máy", style = Abook.type.caption.copy(color = colors.success))
                 else -> TextAction(book.action, onDownload, "download_${book.id}")
             }
         },
@@ -107,25 +115,28 @@ fun CreepProgress() {
     StageProgress { creep.value }
 }
 
-/** Một thiết bị đang nghe thư viện này: lần cuối thấy nó; chạm mở bảng thôi ghép. */
+/** Một thiết bị đang nghe thư viện này: lần cuối thấy nó; chạm mở bảng bỏ ghép. */
 @Composable
 fun SharerRow(sharer: Sharer, onOpen: () -> Unit) {
     val colors = Abook.colors
     ListItem(
-        sharer.name, Modifier, onOpen, "sharer_${sharer.id}", hint = DeviceText.seen(sharer.lastSeen),
+        sharer.name, Modifier, onOpen, "sharer_${sharer.id}", hint = DeviceText.seen(sharer.lastSeen), tickingHint = true,
         leading = { DevicesIcon(colors.text2) }, chevron = true,
     )
 }
 
-/** Mã ghép đang hiện cho máy kia nhập: mã lớn, hạn dùng, "Huỷ mã" ở cuối dòng đầu. */
+/** Mã ghép đang hiện cho máy kia nhập: lời dặn, mã lớn, hạn dùng, "Huỷ mã" ở cuối dòng mã. */
 @Composable
 fun CodeRow(code: Code, onCancel: () -> Unit) {
-    ListItem(
-        code.digits.chunked(3).joinToString(" "), Modifier, null, "share_code",
-        hint = "Dùng được đến ${DeviceText.clock(code.expiresAt)}",
-        titleStyle = Abook.type.sectionTitle.copy(lineHeight = 24.sp, letterSpacing = 2.sp),
-        trailing = { TextAction("Huỷ mã", onCancel, "share_cancel_code") },
-    )
+    Column {
+        Caption("Nhập mã này trên máy kia", Modifier.padding(top = Dim.s8))
+        ListItem(
+            code.digits.chunked(3).joinToString(" "), Modifier, null, "share_code",
+            hint = "Dùng được đến ${DeviceText.clock(code.expiresAt)}",
+            titleStyle = Abook.type.sectionTitle.copy(lineHeight = 24.sp, letterSpacing = 2.sp),
+            trailing = { TextAction("Huỷ mã", onCancel, "share_cancel_code") },
+        )
+    }
 }
 
 /** Một thứ đang chiếm chỗ: cỡ ở cuối dòng đầu; chạm cả hàng mở bảng có "Xoá khỏi máy" (có bước xác nhận). Đang tải thì không xoá được. */
@@ -139,6 +150,6 @@ fun StoredRow(item: Stored, busy: Boolean, onDelete: () -> Unit) {
             item.partial -> "Phần đã tải, chưa thành sách"
             else -> null
         },
-        trailing = { BasicText(Fmt.size(item.bytes), style = Abook.type.bodySmall.copy(color = colors.text2)) },
+        trailing = { BasicText(formatSize(item.bytes), style = Abook.type.bodySmall.copy(color = colors.text2)) },
     )
 }

@@ -1,7 +1,7 @@
 package vn.abook.player.ui.data
 
 /**
- * Thư viện giả CHỈ cho đo đạc và ảnh chụp: bản -PnativeUi (extra `abook.demo.books` của NativeActivity, kiểm BuildConfig.NATIVE_UI ở nơi gọi) và test.
+ * Thư viện giả CHỈ cho đo đạc và ảnh chụp: extra `abook.demo.books` của NativeActivity (đo đạc) và test.
  * Có bộ nhiều tập, sách chỉ-chữ, sách trên máy tính, cuốn đang nghe dở, cuốn đã xong - đủ mọi dáng của lưới. Cố định theo chỉ số: cùng số sách, cùng ảnh.
  */
 object DemoLibrary {

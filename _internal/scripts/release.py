@@ -48,7 +48,7 @@ def _edit(path: Path, change) -> None:
 
 
 def bump(new: str, root: Path = ROOT, today: datetime.date | None = None) -> list[Path]:
-    """Nâng số phiên bản ở đúng 8 file của một commit phát hành; trả về các file đã đổi."""
+    """Nâng số phiên bản ở đúng 6 file của một commit phát hành; trả về các file đã đổi."""
     assert VERSION.match(new), f"số phiên bản lạ: {new}"
     old = current_version(root)
     assert old != new, f"đã là {new}"
@@ -72,10 +72,8 @@ def bump(new: str, root: Path = ROOT, today: datetime.date | None = None) -> lis
         "uv.lock": uv_lock,
         "ui/package.json": json_version,
         "ui/package-lock.json": json_version,
-        "mobile/package.json": json_version,
-        "mobile/package-lock.json": json_version,
         "mobile/android/app/build.gradle": gradle,
-        "docs/CHANGELOG.md": lambda t: t.replace("## [Chưa phát hành]\n", f"## [Chưa phát hành]\n\n## [{new}] - {day}\n", 1),
+        "docs/CHANGELOG.md": lambda t: changelog_cut(t, new, day),
     }
     changed = []
     for relative, change in edits.items():
@@ -84,20 +82,43 @@ def bump(new: str, root: Path = ROOT, today: datetime.date | None = None) -> lis
     return changed
 
 
-def release_notes(version: str, repo: Path = REPO) -> str:
-    """Ghi chú GitHub Release: mục CHANGELOG của bản ấy + yêu cầu máy (README) + cách cài."""
+# Phần "### ..." của [Chưa phát hành] mà tên có dấu này là việc chưa vào bản phát hành (vd bản Qt khi bộ cài còn là Tauri): ở lại.
+HELD = "chưa có trong bộ cài"
+
+
+def changelog_cut(text: str, new: str, day: str) -> str:
+    """Mở mục [new] dưới [Chưa phát hành], chuyển vào đó mọi phần trừ phần HELD (ở lại [Chưa phát hành] chờ bản thật có nó)."""
+    head = "## [Chưa phát hành]\n"
+    start = text.index(head) + len(head)
+    end = re.search(r"^## \[", text[start:], re.M)
+    end = start + end.start() if end else len(text)
+    parts = re.split(r"(?=^### )", text[start:end], flags=re.M)
+    held = [p for p in parts if p.startswith("### ") and HELD in p.split("\n", 1)[0]]
+    shipped = [p for p in parts if p not in held]
+    out = text[:start]
+    for heading, body in (("", "".join(held).strip("\n")), (f"\n## [{new}] - {day}\n", "".join(shipped).strip("\n"))):
+        out += heading + (f"\n{body}\n" if body else "")
+    return f"{out}\n{text[end:]}"
+
+
+def release_notes(version: str, repo: Path = REPO, out: Path | None = None) -> str:
+    """Ghi chú GitHub Release: mục CHANGELOG của bản ấy + yêu cầu máy (README) + cách cài. Cỡ bộ cài đo từ file đã dựng ở `out`
+    (chưa dựng thì không ghi cỡ) - không viết cứng một con số sẽ cũ đi."""
+    setup = out / f"ABook_{version}_x64-setup.exe" if out else None
+    size = f"khoảng {round(setup.stat().st_size / 1_000_000)} MB, " if setup and setup.is_file() else ""
     changelog = (repo / "_internal/docs/CHANGELOG.md").read_text(encoding="utf-8")
     readme = (repo / "README.md").read_text(encoding="utf-8")
     section = re.search(rf"^## \[{re.escape(version)}\][^\n]*\n(.*?)(?=^## \[)", changelog, re.S | re.M)
     requirements = re.search(r"^## Yêu cầu máy\n(.*?)(?=^## )", readme, re.S | re.M)
     assert section and section.group(1).strip(), f"CHANGELOG không có mục [{version}] (chạy bump trước?)"
+    assert HELD not in section.group(1), f"mục [{version}] có phần '{HELD}': người dùng bản này không có nó - để ở [Chưa phát hành]"
     assert requirements, "README không có mục Yêu cầu máy"
     return f"""ABook {version} - app nghe và làm sách nói tiếng Việt: máy tính Windows làm sách (Studio), điện thoại Android và trình
 duyệt nghe cùng một thư viện.
 
 ## Cài đặt
 
-- **Windows**: tải `ABook_{version}_x64-setup.exe` bên dưới và chạy (khoảng 17 MB, không cần quyền quản trị). Bản đã cài tự
+- **Windows**: tải `ABook_{version}_x64-setup.exe` bên dưới và chạy ({size}không cần quyền quản trị). Bản đã cài tự
   báo có bản mới trong Cài đặt.
 - **Android**: tải file `.apk` bên dưới và cài; ghép với máy tính bằng mã 6 số (Cài đặt → "Ghép thiết bị mới" trên máy tính).
   App điện thoại từ 0.4.11 tự báo khi có bản mới.
@@ -167,17 +188,22 @@ def check_word_align_pinned() -> None:
 
 
 def check_speaker_model_pinned() -> None:
-    """Lượt "người nói từng câu" (speaker_pass) cần model `abook-speaker:v1`, Studio tải ở bước "llm": ghim ở
-    studio_setup.PUBLISHED_MODELS. Chưa đăng (URL còn PIN_REVISION) thì Studio cài từ bộ cài này hỏng ở bước ấy - không dựng bản phát hành."""
+    """Model phân tích mặc định (config.DEFAULT_SETTINGS, vd `abook-analyzer:v5`) và model người nói đi cặp (`abook-speaker:v2`,
+    lượt speaker_pass) Studio tải ở bước "llm": cả hai ghim ở studio_setup.PUBLISHED_MODELS. Chưa đăng (thiếu mục, URL còn
+    PIN_REVISION) thì Studio cài từ bộ cài này hỏng ở bước ấy - không dựng bản phát hành."""
     sys.path.insert(0, str(ROOT))
-    from abook.speaker_pass import SPEAKER_MODEL
+    from abook.config import DEFAULT_SETTINGS
+    from abook.speaker_pass import SPEAKER_MODEL, paired_speaker_model
     from abook.webui.studio_setup import PUBLISHED_MODELS
 
-    model = PUBLISHED_MODELS.get(SPEAKER_MODEL)
-    assert model is not None and model.size > 0 and re.fullmatch(r"[0-9a-f]{64}", model.sha256) and all(
-        "PIN_REVISION" not in part.url and part.size > 0 and re.fullmatch(r"[0-9a-f]{64}", part.sha256) for part in model.parts), (
-        f"{SPEAKER_MODEL} (webui/studio_setup.py, PUBLISHED_MODELS) chưa ghim: chạy scripts/publish_model.py ... --hf <repo>, "
-        "điền mã commit thay PIN_REVISION")
+    analysis_model = DEFAULT_SETTINGS["analysis"]["model"]
+    assert paired_speaker_model(analysis_model) == SPEAKER_MODEL, f"{analysis_model} chưa đi cặp {SPEAKER_MODEL} (speaker_pass)"
+    for name in (analysis_model, SPEAKER_MODEL):
+        model = PUBLISHED_MODELS.get(name)
+        assert model is not None and model.size > 0 and re.fullmatch(r"[0-9a-f]{64}", model.sha256) and all(
+            "PIN_REVISION" not in part.url and part.size > 0 and re.fullmatch(r"[0-9a-f]{64}", part.sha256) for part in model.parts), (
+            f"{name} (webui/studio_setup.py, PUBLISHED_MODELS) chưa ghim: chạy scripts/publish_model.py ... --hf <repo>, "
+            "điền mã commit thay PIN_REVISION")
 
 
 def build(version: str, out: Path) -> None:
@@ -187,17 +213,19 @@ def build(version: str, out: Path) -> None:
     check_word_align_pinned()
     check_speaker_model_pinned()
     out.mkdir(parents=True, exist_ok=True)
-    _run(["powershell", "-ExecutionPolicy", "Bypass", "-File", str(ROOT / "scripts/build_windows_app.ps1")], ROOT, low=True)
-    nsis = ROOT / "shell/src-tauri/target/release/bundle/nsis"
+    # Bộ cài Qt (docs/QT_INSTALLER.md Q7): test Qt, đóng gói, smoke bản đóng gói, test_installer (cài, cập nhật thật N -> N+1,
+    # ca tham số bộ cập nhật Tauri, gỡ), ký .sig rồi kiểm bằng khoá công khai, ghi latest.json - một đường, không cờ chọn vỏ.
+    _run(["cmd", "/c", str(ROOT / "desktop_qt/build.bat"), "installer"], ROOT, dict(os.environ, ABOOK_PYTHON=sys.executable), low=True)
+    nsis = ROOT / "desktop_qt/build/installer"
     for name in (f"ABook_{version}_x64-setup.exe", f"ABook_{version}_x64-setup.exe.sig", "latest.json"):
         assert (nsis / name).is_file(), f"bộ cài thiếu {name}"
         shutil.copy2(nsis / name, out / name)
     manifest = json.loads((out / "latest.json").read_text(encoding="utf-8"))
     assert manifest.get("version") == version, f"latest.json ghi {manifest.get('version')}"
+    signature = (out / f"ABook_{version}_x64-setup.exe.sig").read_text(encoding="utf-8").strip()
+    assert manifest["platforms"]["windows-x86_64"]["signature"] == signature, "latest.json mang chữ ký khác file .sig"
 
     env = dict(os.environ, JAVA_HOME=os.environ.get("JAVA_HOME") or "C:/Program Files/Android/Android Studio/jbr")
-    _run([_tool("npm"), "run", "-s", "build:android"], ROOT / "ui", env, low=True)
-    _run([_tool("npx"), "cap", "sync", "android"], ROOT / "mobile", env, low=True)
     _run([str(ROOT / "mobile/android/gradlew.bat"), "--no-daemon", "-q", ":app:assembleRelease"], ROOT / "mobile/android", env,
          low=True)
     apk = ROOT / "mobile/android/app/build/outputs/apk/release/app-release.apk"
@@ -216,7 +244,7 @@ def publish(version: str, commit: str, out: Path) -> None:
     missing = [name for name in artifacts(version) if not (out / name).is_file()]
     assert not missing, f"thiếu {missing} ở {out} (chạy build trước)"
     notes = out / "notes.md"
-    notes.write_bytes(release_notes(version).encode("utf-8"))
+    notes.write_bytes(release_notes(version, out=out).encode("utf-8"))
     _run(["git", "fetch", "-q", "origin"], REPO)
     # main chỉ tua nhanh: commit phát hành phải nằm trên origin/main hiện tại - hoặc đã nằm TRONG origin/main (main đi tiếp sau commit
     # phát hành, vd các phiên khác đẩy docs trong lúc dựng): khi ấy không đẩy main, chỉ gắn tag.
@@ -279,7 +307,7 @@ def main(argv: list[str] | None = None) -> int:
         build(args.version, out)
     elif args.step == "notes":
         out.mkdir(parents=True, exist_ok=True)
-        (out / "notes.md").write_bytes(release_notes(args.version).encode("utf-8"))
+        (out / "notes.md").write_bytes(release_notes(args.version, out=out).encode("utf-8"))
         print(f"ghi chú -> {out / 'notes.md'}")
     else:
         commit = subprocess.run(["git", "rev-parse", args.commit or "HEAD"], cwd=REPO, capture_output=True, text=True,

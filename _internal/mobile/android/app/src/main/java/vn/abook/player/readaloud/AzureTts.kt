@@ -69,8 +69,8 @@ class AzureTts(
         fun closed(message: WebSocket.Message.Closed, name: String): VoiceException? {
             val reason = message.reason.lowercase()
             return when {
-                listOf("quota", "429", "throttl", "exceed").any { it in reason } -> VoiceException("Khóa $name đã hết hạn mức hoặc gọi quá dày", reason = "quota")
-                listOf("auth", "401", "subscription").any { it in reason } -> VoiceException("$name từ chối khóa của bạn - kiểm tra lại khóa trong Cài đặt", reason = "auth")
+                listOf("quota", "429", "throttl", "exceed").any { it in reason } -> VoiceException("Khoá $name đã hết hạn mức hoặc gọi quá dày", reason = "quota")
+                listOf("auth", "401", "subscription").any { it in reason } -> VoiceException("$name từ chối khoá của bạn - kiểm tra lại khoá trong Cài đặt", reason = "auth")
                 (message.code == 1007 || message.code == 1008) && reason.isNotEmpty() -> VoiceException("$name không nhận yêu cầu: ${message.reason.take(200)}", reason = "rejected")
                 else -> null
             }

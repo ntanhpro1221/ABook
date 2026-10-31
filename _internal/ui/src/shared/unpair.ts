@@ -1,4 +1,4 @@
-// Thôi ghép một máy (docs/EDITING.md, P2d): thôi ghép xoá thư mục các cuốn nghe thẳng của máy ấy - phần đã tải và phần sửa chưa gửi
+// Bỏ ghép một máy (docs/EDITING.md, P2d): bỏ ghép xoá thư mục các cuốn nghe thẳng của máy ấy - phần đã tải và phần sửa chưa gửi
 // của người nghe nằm trong đó - nên hỏi trước, nói bằng lời người nghe nhận ra (mất gì, giữ gì). Dùng chung cho điện thoại (Peers.kt)
 // và máy tính (webui/remote_books.py).
 import { formatSize } from "./format";
@@ -12,7 +12,7 @@ export interface UnsentEdits {
   sendable: boolean;
   /** Máy kia trả lời NGAY lúc hỏi (máy tính hỏi thật qua GET .../unsent); không có thì dùng trạng thái đã biết của danh sách máy. */
   reachable?: boolean;
-  /** Cái máy này sẽ quên khi thôi ghép: số cuốn của máy kia, byte đã tải về, số cuốn đang có chỗ nghe (những chỗ ấy giữ lại). */
+  /** Cái máy này sẽ quên khi bỏ ghép: số cuốn của máy kia, byte đã tải về, số cuốn đang có chỗ nghe (những chỗ ấy giữ lại). */
   cache?: { books: number; bytes: number; places: number };
 }
 
@@ -22,7 +22,7 @@ export interface UnpairCopy {
   title: string;
   /** Mỗi ý một dòng: cái gì sẽ mất, và vì sao không gửi được nếu có. */
   lines: string[];
-  /** Nhãn nút "gửi trước rồi thôi ghép"; null khi máy kia không nhận sửa. */
+  /** Nhãn nút "gửi trước rồi bỏ ghép"; null khi máy kia không nhận sửa. */
   send: string | null;
   /** Máy kia đang trả lời: "gửi trước" là nút chính. Máy kia tắt thì nút vẫn có (thử lại được) nhưng không là nút chính - nút chính là Huỷ. */
   sendPrimary: boolean;
@@ -32,7 +32,7 @@ export interface UnpairCopy {
 
 /** Lời báo (toast) sau khi gỡ ghép - cả khi không phải hỏi gì. MỘT dòng: sách của máy ấy rời Thư viện và chỗ nghe còn giữ đã nói ở hộp hỏi (`unpairCopy`). */
 export function unpairDone(device: string): string {
-  return `Đã thôi ghép ${device}`;
+  return `Đã bỏ ghép ${device}`;
 }
 
 /** `self`: máy đang cầm sửa ("điện thoại" hay "máy tính"); `reachable`: máy kia đang trả lời. `null` khi không còn gì để mất - gỡ như thường. */
@@ -55,11 +55,11 @@ export function unpairCopy(device: string, self: "điện thoại" | "máy tính
     if (!unsent.sendable) {
       lines.push(`${device} không nhận phần sửa - những thay đổi này chỉ có trên ${self} này.`);
     } else if (up) {
-      send = "Gửi trước rồi thôi ghép";
+      send = "Gửi trước rồi bỏ ghép";
     } else {
-      send = "Thử gửi trước rồi thôi ghép";
+      send = "Thử gửi trước rồi bỏ ghép";
       lines.push(`${device} đang tắt hay khác mạng lúc này nên chưa gửi được - mở máy ấy rồi gửi, hay bỏ thay đổi.`);
     }
   }
-  return { title: `Thôi ghép ${device}?`, lines, send, sendPrimary: edited && up, discard: edited ? "Vẫn thôi ghép, bỏ thay đổi" : "Thôi ghép", cancel: "Huỷ" };
+  return { title: `Bỏ ghép ${device}?`, lines, send, sendPrimary: edited && up, discard: edited ? "Vẫn bỏ ghép, bỏ thay đổi" : "Bỏ ghép", cancel: "Giữ lại" };
 }

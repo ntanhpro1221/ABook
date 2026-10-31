@@ -1,10 +1,6 @@
 include ':app'
-include ':capacitor-cordova-android-plugins'
-project(':capacitor-cordova-android-plugins').projectDir = new File('./capacitor-cordova-android-plugins/')
 
 // Đo giao diện native (docs/NATIVE_PHONE_UI.md §1): :benchmark = Macrobenchmark, :baselineprofile = sinh baseline + startup profile.
 // Hai module chỉ là cấu hình khi dựng app thường; chạy chúng cần máy thật hoặc máy ảo.
 include ':benchmark'
 include ':baselineprofile'
-
-apply from: 'capacitor.settings.gradle'

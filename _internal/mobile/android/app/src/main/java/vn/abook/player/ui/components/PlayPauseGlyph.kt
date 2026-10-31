@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.Dp
@@ -49,18 +50,21 @@ fun PlayPauseGlyph(playing: Boolean, color: Color, size: Dp, modifier: Modifier 
     LaunchedEffect(playing) { morph.animateTo(if (playing) 1f else 0f, Motion.GlyphMorph) }
     val points = remember { FloatArray(PlayPauseGeometry.POINTS) }
     val path = remember { Path() }
-    Canvas(modifier.size(size)) {
-        val unit = this.size.width / PlayPauseGeometry.GRID
-        PlayPauseGeometry.points(morph.value, points)
-        val round = Stroke(width = 2f * unit, join = StrokeJoin.Round)
-        for (shape in 0..1) {
-            val at = shape * 8
-            path.reset()
-            path.moveTo(points[at] * unit, points[at + 1] * unit)
-            for (corner in 1..3) path.lineTo(points[at + corner * 2] * unit, points[at + corner * 2 + 1] * unit)
-            path.close()
-            drawPath(path, color, style = Fill)
-            drawPath(path, color, style = round)
-        }
+    Canvas(modifier.size(size)) { drawPlayPause(morph.value, color, points, path) }
+}
+
+/** Hình nút phát <-> dừng ở tiến trình `t` trong ô vuông của DrawScope; `points` và `path` là đồ dùng lại của nơi gọi (không cấp phát khi vẽ). Cửa sổ nhỏ PiP vẽ nút hệ thống bằng cùng hàm này. */
+internal fun DrawScope.drawPlayPause(t: Float, color: Color, points: FloatArray, path: Path) {
+    val unit = size.width / PlayPauseGeometry.GRID
+    PlayPauseGeometry.points(t, points)
+    val round = Stroke(width = 2f * unit, join = StrokeJoin.Round)
+    for (shape in 0..1) {
+        val at = shape * 8
+        path.reset()
+        path.moveTo(points[at] * unit, points[at + 1] * unit)
+        for (corner in 1..3) path.lineTo(points[at + corner * 2] * unit, points[at + corner * 2 + 1] * unit)
+        path.close()
+        drawPath(path, color, style = Fill)
+        drawPath(path, color, style = round)
     }
 }

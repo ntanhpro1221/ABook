@@ -1,4 +1,5 @@
-import { CANCELLED_NOTE, formatSize, modulePercent } from "./musicLocal";
+import { formatSize } from "@/shared/format";
+import { CANCELLED_NOTE, modulePercent } from "./musicLocal";
 
 // Giọng trong "Đổi giọng" (webui/voice_picker.py) đến từ nhiều máy đọc: VieNeu (mọi giọng phân vai) và máy khác người nghe chọn tay
 // (ZeroTTS - mô-đun tải thêm, webui/zerotts_module.py). Phần tính toán thuần của hộp ở đây để thử được không cần giao diện.

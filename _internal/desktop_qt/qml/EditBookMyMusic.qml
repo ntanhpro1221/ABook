@@ -81,7 +81,7 @@ Column {
         removeBusy = true
         Api.call("DELETE", "/api/music/local/" + link.slice(6), null, function(data, error) {
             root.removeBusy = false
-            if (error) { Api.notice = Logic.toastText("Không xoá được bài này", error); return }
+            if (error) { Api.notice = Logic.toastText("Chưa xoá được bài này", error); return }
             root.apply(data); root.dropRemoving(); Api.notice = "Đã xoá khỏi Nhạc của tôi"; root.changed()
         })
     }

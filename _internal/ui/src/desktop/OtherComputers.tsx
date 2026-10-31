@@ -108,7 +108,7 @@ export function OtherComputers() {
     mutationFn: (id: string) => api<ComputersView>(`/api/computers/${id}/stop-waiting`, { method: "POST" }),
     onSuccess: done,
   });
-  // Thôi ghép xoá thư mục đệm của máy ấy (phần đã tải, phần sửa chưa gửi): có gì để mất thì hỏi trước, nói rõ mất gì và giữ gì (shared/unpair.ts).
+  // Bỏ ghép xoá thư mục đệm của máy ấy (phần đã tải, phần sửa chưa gửi): có gì để mất thì hỏi trước, nói rõ mất gì và giữ gì (shared/unpair.ts).
   const unpair = useUnpair<Computer>({
     self: "máy tính",
     name: (computer) => computer.name,
@@ -133,7 +133,7 @@ export function OtherComputers() {
   });
   const discover = useMutation({
     mutationFn: () => api<{ found: FoundComputer[] }>("/api/computers/discover"),
-    onError: (error: Error) => toast.error("Không tìm được", { description: error.message }),
+    onError: (error: Error) => toast.error("Chưa tìm được", { description: error.message }),
   });
   const codeInput = useRef<HTMLInputElement>(null);
   // Hộp "Chẩn đoán" của một điện thoại đã ghép (nhật ký + tình trạng, lấy qua kết nối đã ghép).
@@ -160,7 +160,7 @@ export function OtherComputers() {
           {data.broken}
         </p>
       </MotionPresence>
-      {/* Ghép / thôi ghép: hàng mở / khép tại chỗ như PhoneSync; đổi trong hàng (đang chờ, lỗi) thì hàng tự mờ qua. data-motion-live: cả
+      {/* Ghép / bỏ ghép: hàng mở / khép tại chỗ như PhoneSync; đổi trong hàng (đang chờ, lỗi) thì hàng tự mờ qua. data-motion-live: cả
           khối không mờ lại theo từng hàng. */}
       <MotionPresence open={data.computers.length > 0}>
         <div data-motion-live="">
@@ -185,7 +185,7 @@ export function OtherComputers() {
                   </div>
                 ) : (
                   // Lời báo lỗi dài (chứng chỉ máy kia đổi...) xuống dòng cho đọc hết, không cắt giữa chừng.
-                  <div className={cn("text-xs", computer.error ? "text-danger [overflow-wrap:anywhere]" : "truncate text-fg-2")}>
+                  <div data-motion-live className={cn("text-xs", computer.error ? "text-danger [overflow-wrap:anywhere]" : "truncate text-fg-2")}>
                     {computer.error
                       ? computer.error
                       : `${routeLine(computer, devices)}${computer.lastSeen ? ` · thấy ${formatRelative(computer.lastSeen)}` : ""}`}
@@ -229,9 +229,9 @@ export function OtherComputers() {
               <Button size="sm" variant="ghost" icon={RefreshCw} disabled={refresh.isPending} onClick={() => refresh.mutate()} className="sm:hidden" aria-label="Hỏi lại thư viện">
                 Hỏi lại
               </Button>
-              <IconButton label={`Thôi ghép ${computer.name}`} icon={Unplug} size="sm" onClick={() => void unpair.start(computer)} className="max-sm:hidden" />
-              <Button size="sm" variant="ghost" icon={Unplug} onClick={() => void unpair.start(computer)} className="text-danger sm:hidden max-sm:order-first max-sm:mr-auto" aria-label={`Thôi ghép ${computer.name}`}>
-                Thôi ghép
+              <IconButton label={`Bỏ ghép ${computer.name}`} icon={Unplug} size="sm" onClick={() => void unpair.start(computer)} className="max-sm:hidden" />
+              <Button size="sm" variant="ghost" icon={Unplug} onClick={() => void unpair.start(computer)} className="text-danger sm:hidden max-sm:order-first max-sm:mr-auto" aria-label={`Bỏ ghép ${computer.name}`}>
+                Bỏ ghép
               </Button>
               </div>
               </Fold>
@@ -243,7 +243,7 @@ export function OtherComputers() {
       <Fold storageKey="other-computers.pair" title="Ghép máy" summary="Nghe sách của máy tính khác" bodyClassName="space-y-3 pb-3">
       <div className="space-y-2">
         <Button variant="ghost" icon={Radar} loading={discover.isPending} onClick={() => discover.mutate()}>
-          Tìm máy trong mạng
+          Tự tìm
         </Button>
         {discover.data &&
           (discover.data.found.length ? (
@@ -272,7 +272,7 @@ export function OtherComputers() {
               ))}
             </ul>
           ) : (
-            <p className="text-xs text-fg-2">Không thấy máy nào trong mạng này.</p>
+            <p className="text-xs text-fg-2">Chưa thấy thiết bị</p>
           ))}
       </div>
       <form
@@ -355,9 +355,9 @@ export function BluetoothFallback({
   const current = bluetoothAddress(computer);
   return (
     <DropdownMenu.Root>
-      <Tooltip label="Dự phòng qua Bluetooth…">
+      <Tooltip label="Dùng Bluetooth">
         <DropdownMenu.Trigger
-          aria-label={`Dự phòng qua Bluetooth cho ${computer.name}`}
+          aria-label={`Dùng Bluetooth cho ${computer.name}`}
           disabled={busy}
           className={cn(
             "inline-flex size-8 shrink-0 items-center justify-center rounded-control transition-colors hover:bg-hover hover:text-fg data-[state=open]:bg-hover data-[state=open]:text-fg max-sm:h-9 max-sm:w-auto max-sm:px-2.5",
@@ -370,7 +370,7 @@ export function BluetoothFallback({
       </Tooltip>
       <DropdownMenu.Portal>
         <DropdownMenu.Content align="end" sideOffset={6} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 max-w-80 rounded-cover border border-line bg-panel p-1.5 shadow-float"><MotionRegion>
-          <DropdownMenu.Label className="px-2 pb-1 pt-0.5 text-xs font-medium text-fg-3">Đường Bluetooth</DropdownMenu.Label>
+          <DropdownMenu.Label className="px-2 pb-1 pt-0.5 text-xs font-medium text-fg-3">Qua Bluetooth</DropdownMenu.Label>
           {!devices.length && (
             <p className="px-2 py-1.5 text-xs text-fg-3">
               Ghép thiết bị trong Cài đặt Windows trước.

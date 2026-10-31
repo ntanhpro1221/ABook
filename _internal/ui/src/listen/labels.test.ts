@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bookProgressText, chapterSubline, caughtUpDetail, caughtUpLine, chapterOpenProblem, retryChapterText, keepTogether, nextChapterLabel, otherBookLine, partialBookLine, PREPARING_VOICE, PREPARING_VOICE_AFTER_MS, primaryListenLabel, readerHint, resumeWhere, tapVerb, textBookLine, toggleLabel, unquoted } from "./labels";
+import { bookHeardBase, bookProgressText, chapterSubline, caughtUpDetail, caughtUpLine, chapterOpenProblem, retryChapterText, keepTogether, nextChapterLabel, otherBookLine, partialBookLine, PREPARING_VOICE, PREPARING_VOICE_AFTER_MS, primaryListenLabel, readerHint, resumeWhere, tapVerb, textBookLine, toggleLabel, unquoted } from "./labels";
 
 const fresh = { playingHere: false, finished: false, point: { title: "Chương 1", at: 0 }, heard: 0, textOnly: false };
 
@@ -40,10 +40,25 @@ describe("dòng tiến độ ở màn Đang nghe", () => {
   });
 });
 
+describe("phần đã nghe của cả cuốn", () => {
+  const queue = [
+    { id: 1, available: true, duration: 600 },
+    { id: 2, available: false, duration: 0 }, // chương chỉ có chữ, giọng máy đọc
+    { id: 3, available: true, duration: 600 },
+  ];
+  it("đang nghe chương chỉ có chữ ở giữa sách: chỉ tính các chương TRƯỚC nó, không phải 100%", () => {
+    expect(bookHeardBase(queue, 2)).toEqual({ before: 600, total: 1200, inside: false });
+  });
+  it("chương có audio: các chương trước nó", () => {
+    expect(bookHeardBase(queue, 1)).toEqual({ before: 0, total: 1200, inside: true });
+    expect(bookHeardBase(queue, 3)).toEqual({ before: 600, total: 1200, inside: true });
+  });
+});
+
 describe("nút phát", () => {
   it("đang chờ giọng đọc: không nói 'Tạm dừng'", () => {
     expect(toggleLabel(true, true, true)).toBe(PREPARING_VOICE);
-    expect(toggleLabel(true, true, false)).toBe("Đang tải âm thanh…");
+    expect(toggleLabel(true, true, false)).toBe("Đang tải âm thanh");
     expect(toggleLabel(true, false, true)).toBe("Tạm dừng");
     expect(toggleLabel(false, true, true)).toBe("Phát");
   });
@@ -143,7 +158,7 @@ describe("dòng phụ của chương", () => {
   it("chương có audio nói độ dài, chương chưa có nói đang thu hay chưa có", () => {
     const audio = { ...chapter, state: null };
     expect(chapterSubline({ ...audio, available: true, duration: 1560, subtitle: "Mùi giấy cũ", title: "Chương 4" }, false)).toBe("Chương 4 · 26 phút");
-    expect(chapterSubline(audio, true)).toBe("Đang thu âm…");
+    expect(chapterSubline(audio, true)).toBe("Đang thu âm");
     expect(chapterSubline(audio, false)).toBe("Chưa có audio");
   });
 });
@@ -163,7 +178,7 @@ describe("lời nhắc màn đọc: giữ chữ ở cả hai loại sách", () =
 });
 
 describe("chờ giọng đọc", () => {
-  it("chỉ nói 'Đang chuẩn bị giọng đọc…' khi chờ quá ~1,5 giây", () => {
+  it("chỉ nói 'Đang chuẩn bị giọng đọc' khi chờ quá ~1,5 giây", () => {
     expect(PREPARING_VOICE_AFTER_MS).toBeGreaterThanOrEqual(1000);
     expect(PREPARING_VOICE_AFTER_MS).toBeLessThanOrEqual(2000);
   });

@@ -46,7 +46,7 @@ it("WorkCards dùng ở hộp việc và Precast: chọn người có icon, đư
   await act(() => root.render(<WorkCards book={{ id: "book" } as BookSummary} items={[item]} onOpenReview={vi.fn()} onOpenScript={script} />));
   const decision = host.querySelector<HTMLButtonElement>("[data-choice][data-decision]")!;
   expect(decision.textContent).toBe("An"); expect(decision.querySelector(".lucide-check")).not.toBeNull();
-  const link = buttons().find(button => button.textContent === "Tìm người khác…")!;
+  const link = buttons().find(button => button.textContent === "Tìm người khác")!;
   expect(link.classList.contains("text-fg-2")).toBe(true);
   await act(() => decision.click()); expect(mocks.mutate).toHaveBeenCalledWith({ speaker: "AN" });
   await act(() => link.click()); expect(script).toHaveBeenCalledWith(1, "line", undefined, "speaker");

@@ -43,7 +43,7 @@ export function WishesDialog({
       refreshAfterEdit(client, bookId);
       await client.invalidateQueries({ queryKey: ["pending-changes", bookId] });
     } catch (error) {
-      toast.error("Không bỏ được thay đổi này", { description: (error as Error).message });
+      toast.error("Chưa bỏ được thay đổi này", { description: (error as Error).message });
     } finally {
       setDropping(null);
     }
@@ -66,7 +66,7 @@ export function WishesDialog({
     ><MotionRegion>
       <MoreInfo>{syncs ? "Tự gửi khi kết nối lại máy tính. Chủ máy duyệt Áp dụng hoặc Bỏ qua trước khi Studio thu lại." : "Lưu file sách sẽ mang theo các thay đổi của bạn và thiết bị đã ghép. Mở bằng Studio trên máy tính để áp vào dự án và thu lại."}</MoreInfo>
       {!data ? (
-        <p className="text-sm text-fg-2">Đang xem các thay đổi…</p>
+        <p className="text-sm text-fg-2">Đang xem các thay đổi</p>
       ) : data.items.length ? (
         <PendingList items={data.items} dropping={dropping} onDrop={(item) => void drop(item)} showLines={false} />
       ) : (

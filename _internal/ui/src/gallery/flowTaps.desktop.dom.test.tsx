@@ -72,9 +72,9 @@ it("L4 nhảy chương: 2 chạm từ trình phát", async () => {
 
 it("L5 hẹn giờ ngủ: 2 chạm từ trình phát", async () => {
   await start("desktop/player-full");
-  await tap("Hẹn giờ tắt");
+  await tap("Hẹn giờ ngủ");
   await tap("30 phút");
-  await waitFor(() => find(/^Hẹn giờ tắt.+30|^Hẹn giờ.*còn/) || document.body.textContent?.match(/(29|30):\d\d/), "đã hẹn giờ");
+  await waitFor(() => find(/^Hẹn giờ ngủ.+30|^Hẹn giờ.*còn/) || document.body.textContent?.match(/(29|30):\d\d/), "đã hẹn giờ");
   expect(taps).toBe(2);
 });
 

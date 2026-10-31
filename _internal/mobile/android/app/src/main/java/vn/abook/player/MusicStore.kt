@@ -46,6 +46,7 @@ class MusicStore(
 
     private val lock = Any()
     private var index: LinkedHashMap<String, JSONObject>? = null
+    private var swept = false
 
     /** Mã của model đang cắm ([MusicStudentSetup.modelId]); ghi cạnh mỗi kết quả phân tích để biết bài nào do bản model cũ phân tích. */
     @Volatile
@@ -177,7 +178,11 @@ class MusicStore(
             throw ImportError("“$name”: chưa thêm được định dạng này - dùng ${EXTENSIONS.joinToString(", ") { ".$it" }}.")
         }
         val folder = File(root, "files").apply { mkdirs() }
-        folder.listFiles { entry -> entry.name.startsWith(TEMPORARY) }?.forEach { it.delete() } // dư của lần nhập bị ngắt
+        synchronized(lock) {
+            // Dư của lần nhập bị ngắt (tiến trình chết giữa chừng): dọn MỘT lần, ở lượt nhập đầu - sau đó file tạm nào có mặt là của một lượt đang chép.
+            if (!swept) folder.listFiles { entry -> entry.name.startsWith(TEMPORARY) }?.forEach { it.delete() }
+            swept = true
+        }
         val part = File(folder, "$TEMPORARY${System.nanoTime()}.$extension")
         try {
             val digest = MessageDigest.getInstance("SHA-1")

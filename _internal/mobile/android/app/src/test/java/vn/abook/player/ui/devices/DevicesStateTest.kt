@@ -1,5 +1,6 @@
 package vn.abook.player.ui.devices
 
+import vn.abook.player.ui.studio.StudioRoute
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -18,7 +19,7 @@ import org.junit.Test
 class DevicesStateTest {
     private val source = FakeDevicesSource()
     private var changed = 0
-    private var studioOpened: Pair<String, String>? = null
+    private var studioOpened: Pair<String, StudioRoute>? = null
     private var asked = 0
     private var settingsOpened = 0
     private var notificationsAsked = 0
@@ -35,7 +36,7 @@ class DevicesStateTest {
         PeerLibrary(Paired(key, name, DeviceKind.Computer, via = "192.168.1.30:47630", reach = reach, books = books.size, host = "192.168.1.30"), books)
 
     private fun state(links: DeviceLinks = DeviceLinks(
-        openStudio = { computer, path -> studioOpened = computer to path },
+        openStudio = { computer, route -> studioOpened = computer to route },
         openAppSettings = { settingsOpened++ },
         askNearby = { result -> asked++; result(source.nearby) },
         askNotifications = { then -> notificationsAsked++; then() },
@@ -115,7 +116,7 @@ class DevicesStateTest {
         devices.connect()
         val failed = devices.pair.value.attempt
         assertTrue(failed is Attempt.Failed)
-        assertEquals("Mã chưa đúng - bạn nhập lại.", (failed as Attempt.Failed).message)
+        assertEquals("Chưa ghép được. Mã chưa đúng - bạn nhập lại.", (failed as Attempt.Failed).message)
         assertFalse(devices.pair.value.paired)
         assertEquals("mã vẫn còn để sửa", "000000", devices.pair.value.form.code)
         source.pairError = null
@@ -186,12 +187,16 @@ class DevicesStateTest {
         val denied = state(DeviceLinks(askNearby = { result -> asked++; result(false) }))
         denied.openPair()
         denied.setMethod(PairMethod.Bluetooth)
+        assertEquals(0, asked)
+        assertEquals(Bluetooth.Explain, denied.pair.value.bluetooth)
+        denied.requestBluetooth()
         assertEquals(1, asked)
         assertEquals(Bluetooth.Denied, denied.pair.value.bluetooth)
         assertEquals(PairMethod.Bluetooth, denied.pair.value.method)
         val granted = state(DeviceLinks(askNearby = { result -> source.nearby = true; result(true) }))
         granted.openPair()
         granted.setMethod(PairMethod.Bluetooth)
+        granted.requestBluetooth()
         assertEquals(listOf("bt:AA:BB"), granted.pair.value.bluetoothChoices.map { it.address })
         assertEquals("một máy duy nhất được chọn sẵn", "bt:AA:BB", granted.pair.value.form.picked)
         granted.setMethod(PairMethod.Wifi)
@@ -212,7 +217,7 @@ class DevicesStateTest {
     @Test
     fun `an unreachable computer says why and keeps the row`() {
         source.link = main
-        source.remoteError = DeviceFailure("Không nối được Máy bàn.")
+        source.remoteError = DeviceFailure("Chưa nối được Máy bàn.")
         val devices = state()
         devices.openPair()
         val row = devices.pair.value.devices.single()
@@ -224,11 +229,11 @@ class DevicesStateTest {
     @Test
     fun `a computer that forgot this phone is told apart from one that is only off`() {
         source.link = main
-        source.remoteError = DeviceFailure("đã thôi ghép", unpaired = true)
+        source.remoteError = DeviceFailure("đã bỏ ghép", unpaired = true)
         val devices = state()
         devices.openPair()
         assertEquals(Reach.Unpaired, devices.pair.value.devices.single().reach)
-        assertEquals("Máy bàn đã thôi ghép với điện thoại này", devices.pair.value.devices.single().state)
+        assertEquals("Máy bàn đã bỏ ghép với điện thoại này", devices.pair.value.devices.single().state)
     }
 
     @Test
@@ -276,7 +281,7 @@ class DevicesStateTest {
     @Test
     fun `pairing again after the computer forgot us starts from its last address`() {
         source.link = main.copy(lastAddress = "192.168.1.20:47630")
-        source.remoteError = DeviceFailure("đã thôi ghép", unpaired = true)
+        source.remoteError = DeviceFailure("đã bỏ ghép", unpaired = true)
         val devices = state()
         devices.openPair()
         devices.repair(devices.pair.value.devices.single())
@@ -289,13 +294,13 @@ class DevicesStateTest {
     fun `studio opens through the system link and reports a refusal`() {
         source.link = main
         source.studio = listOf(StudioComputer(MAIN_KEY, "Máy bàn", listenOnly = false))
-        source.target = "Máy bàn" to "/studio/books"
+        source.target = "Máy bàn" to StudioRoute("b1")
         val devices = state()
         devices.openPair()
         devices.loadStudio()
         assertNotNull(devices.pair.value.studio[MAIN_KEY])
         assertNull(runBlocking { devices.openStudio(MAIN_KEY) })
-        assertEquals("Máy bàn" to "/studio/books", studioOpened)
+        assertEquals("Máy bàn" to StudioRoute("b1"), studioOpened)
         source.targetError = DeviceFailure("Máy này chỉ cho nghe.")
         assertEquals("Máy này chỉ cho nghe.", runBlocking { devices.openStudio(MAIN_KEY) })
     }
@@ -352,7 +357,7 @@ class DevicesStateTest {
         devices.download(a)
         assertTrue(devices.pair.value.failed.isEmpty())
         source.events.tryEmit(DownloadEvent("a", 0.3f, error = "Mất mạng giữa chừng."))
-        assertEquals("Mất mạng giữa chừng.", devices.pair.value.failed["a"])
+        assertEquals("Chưa tải xong về máy. Mất mạng giữa chừng.", devices.pair.value.failed["a"])
         assertTrue(devices.pair.value.downloading.isEmpty())
     }
 
@@ -449,7 +454,7 @@ class DevicesStateTest {
         val summary = devices.summary.value
         assertEquals("Đã nối Máy bàn", summary.pair)
         assertEquals("Đang bật · 2 máy", summary.sharing)
-        assertEquals("300 MB · còn trống 10 GB", summary.storageLine)
+        assertEquals("Sách 300 MB · còn trống 10 GB", summary.storageLine)
         assertEquals("Điện thoại của tôi", summary.deviceName)
     }
 

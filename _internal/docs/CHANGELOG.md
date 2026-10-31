@@ -7,19 +7,76 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
-### Máy tính
+### Máy tính (bản Qt, chưa có trong bộ cài)
 
 - App máy tính: nhạc nền tốn ít CPU hơn khi thu nhỏ.
 - App máy tính: giọng đọc giữ đúng nhịp khi nghe trong khay và nhạc nền lặp lại.
 - App máy tính hiện trong khung điều khiển nhạc của Windows (tên chương, bìa, phát/dừng, chương trước/sau, tua).
 - App máy tính: đóng app không còn để lại tiến trình chạy ngầm sau khi đã phát nhạc nền WAV, FLAC, M4A hay Ogg.
 - App máy tính: nhạc nền nối vào đúng chỗ của lời đọc khi bắt đầu và mỗi lần lặp lại, không còn trễ vài chục mili giây.
+- App máy tính chỉ chạy một bản: mở app lần nữa (lối tắt, hay bấm đúp file khi app đang mở) đưa cửa sổ đang mở lên, không mở thêm bản thứ hai.
+- App máy tính: bấm đúp file `.abook` mở thẳng trang sách, file `.abookproj` mở dự án trong Studio, cả khi app chưa mở lẫn đang mở.
+- App máy tính tự kiểm bản mới khi mở; bấm "Cập nhật" thì tải, kiểm chữ ký của ABook, rồi cài và mở lại app. Gói không đúng chữ ký hay tên lạ thì không cài.
+- Bộ cài nhỏ hơn: không còn mang các phần Qt và thư viện chạy kèm mà app không dùng; mã app được biên dịch ngay lúc cài.
+- Bộ cài: gỡ app có ô "Xoá cả dữ liệu" (thư viện ở chỗ khác vẫn giữ); file `.abook` / `.abookproj` mở bằng ABook, gỡ app thì trả lại app cũ đã mở chúng.
+
+## [0.4.150] - 2026-10-31
+
+### Máy tính
+
+- Gỡ cài đặt có "Xoá dữ liệu" không còn đi theo liên kết thư mục (junction) bên trong thư mục dữ liệu: có liên kết thì giữ lại dữ liệu, không làm rỗng thư mục ở chỗ khác.
+
+### Điện thoại
+
+- Thêm các lời giải thích gập sau "?" như bản máy tính: Nhạc của tôi, Studio tạm dừng khi máy chạy pin, bảng chọn giọng, gợi ý người kể "tôi", chương chờ thu lại, khoá giọng trực tuyến.
+
+## [0.4.149] - 2026-10-31
+
+### Sửa lỗi
+
+- App máy tính không còn chờ im lặng mãi khi máy không trả lời: việc nặng (giọng đọc, nghe thử giọng hay cách đọc, quét và tách nguồn, kể ngôi "tôi", tạo sách, dựng lại nhạc) im quá 100 giây, việc khác im quá 30 giây thì app gửi lại một lần rồi báo lỗi (giọng đọc báo "Giọng đang chọn đang không dùng được."); đoạn đang về chậm thì không bị cắt. Trình phát chờ âm thanh quá 215 giây cũng báo lỗi kèm "Thử lại"; app mở quá 60 giây chưa xong thì hiện lỗi kèm "Thử lại" thay vì đứng mãi ở màn mở.
+- Giọng Edge và các lần tải (model giọng, nhạc, bìa, kết nối giữa hai máy) không còn treo khi mạng nhà có IPv6 mà IPv6 không ra được Internet (hay gặp sau khi mất điện, router lên lại): app thử IPv6 và IPv4 song song, dùng đường nào nối được trước, thay vì chờ hết hạn từng đường IPv6 rồi mới tới IPv4.
+- Giọng trực tuyến (Edge, Azure, giọng dùng khoá riêng) không trả lời kịp thì app báo "Giọng … đang không dùng được." và thử lại sau, thay vì báo nhầm là mất mạng khi máy vẫn có mạng.
+
+### Máy tính
+
 - App máy tính: đồng hồ và các con số đếm đổi tại chỗ, chữ bên cạnh không còn xô lệch.
 
 ### Điện thoại
 
+- Giao diện điện thoại viết lại hoàn toàn bằng Kotlin/Compose native, không còn WebView: mở nhanh hơn, nhẹ hơn, ít RAM hơn.
+- Chữ trên điện thoại và máy tính giống nhau cho cùng một việc (vd "Chưa thấy thiết bị", "Huỷ tải", "Xoá khỏi thư viện", "Xuất sách nói",
+  hẹn giờ "5 phút"); máy dò tự báo khi hai bên lệch chữ.
 - Nút lùi / tới 15 giây trên widget màn hình chính cùng hình với trình phát: cung nông, số 15 nằm dưới, không chạm nét.
 - Giọng có sẵn của điện thoại hiện tên "Tiếng Việt" (máy có nhiều giọng thì đánh số), không còn mã như "vi-vn-x-gft-local".
+- Mạng nhà có IPv6 mà không ra được Internet (hay gặp khi mạng vừa có điện lại) không còn làm tải bìa, nhạc nền, gói tải thêm, giọng Edge, kiểm bản mới hay nối với máy khác đứng chờ hàng chục giây: điện thoại thử các địa chỉ song song và dùng địa chỉ nối được trước, thay vì chờ từng cái hết giờ.
+- Điện thoại không còn chờ im lặng mãi khi máy tính đã ghép không trả lời: việc nặng (nghe thử giọng, quét nguồn, tạo sách, dựng nhạc) im quá 100 giây, việc khác (Studio từ xa, đồng bộ, tải sách) im quá 30 giây thì gửi lại một lần rồi báo "Máy chưa trả lời kịp."; lần tải đang về chậm thì không bị cắt. Trình phát chờ âm thanh quá 215 giây cũng báo lỗi kèm "Thử lại".
+
+## [0.4.148] - 2026-10-28
+
+### Làm sách
+
+- Model xác định người nói từng câu lên bản mới (`abook-speaker:v2`): đúng người nói hơn khoảng 2,3 điểm trên 56 chương đo
+  (81,4 so với 79,1), cùng tốc độ. Studio tự tải khi cập nhật.
+
+### Điện thoại
+
+- Nhạc nền chuyển sang chỗ nối vòng dựng sẵn đúng lúc cả trên máy thật chậm. Đo trên OPPO: 10/10 bài đổi tiếng liền mạch, lệch dưới 1 ms. Khi chỗ nối chưa dựng kịp, nhạc quay về cách lặp thường sớm ít nhất 2 giây nên không hụt tiếng hay im.
+- Máy thiếu tài nguyên thu hồi bộ giải mã đúng lúc dựng chỗ nối vòng: nhạc nền thử dựng lại một lần thay vì bỏ chỗ nối.
+
+## [0.4.147] - 2026-10-26
+
+### Điện thoại
+
+- Mở bảng tốc độ, hẹn giờ hay thêm tuỳ chọn trên màn Đang nghe không còn làm bìa co lại và cả màn nhảy lên; bảng chỉ trượt lên phủ trên.
+- Màn Đang nghe nở ra từ chính thanh phát nhỏ (thu nhỏ thì thu về đúng chỗ ấy); bìa, tên chương, tên sách và nút phát bay từ chỗ cũ sang chỗ mới, đổi cỡ và đổi màu dần.
+- Lướt sang tab khác: nội dung đang trượt không còn tràn đè thanh phát và thanh tab.
+
+### Giao diện
+
+- Bìa căn giữa theo chiều dọc ở mọi hàng (thanh phát, thư viện, thiết bị, thanh bên).
+- Bấm Nghe tiếp / Tạm dừng không còn hiện khối đen trong nút khi chữ đổi.
+- Nhãn nút, mục menu và lựa chọn gọn còn tối đa bốn chữ (như "Bỏ qua gợi ý", "Mở cài đặt", "Xuất lại M4B"); máy kiểm tự chặn nhãn dài quay lại.
 
 ## [0.4.146] - 2026-10-26
 

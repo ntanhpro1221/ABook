@@ -32,7 +32,7 @@ Modal {
         reload()
     }
     function failureOf(status, data) {
-        const message = data && (data.message || data.error) || "Không làm được lúc này."
+        const message = data && (data.message || data.error) || "Chưa làm được lúc này."
         return {title: message, help: status === 409 || status === 404 ? "" : Logic.UNREACHABLE_HELP}
     }
     function reload() {

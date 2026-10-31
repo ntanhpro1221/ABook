@@ -1,5 +1,6 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.ui.data.dotJoined
 import vn.abook.player.ui.components.PageHeader
 import vn.abook.player.ui.components.ListSection
 import vn.abook.player.ui.components.ListRow
@@ -34,7 +35,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicText
+import vn.abook.player.ui.components.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -70,6 +71,7 @@ import vn.abook.player.ui.voice.MeteredSheet
 import vn.abook.player.ui.voice.ModuleAction
 import vn.abook.player.ui.voice.ModuleChoiceRow
 import vn.abook.player.ui.voice.ModuleKind
+import vn.abook.player.ui.voice.ModuleState
 import vn.abook.player.ui.voice.ModuleSheet
 import vn.abook.player.ui.voice.ModuleSuggestion
 import vn.abook.player.ui.voice.ModuleUi
@@ -79,8 +81,10 @@ import vn.abook.player.ui.voice.VoicePage
 import vn.abook.player.ui.voice.VoiceState
 import vn.abook.player.ui.voice.VoiceSummary
 import vn.abook.player.ui.voice.VoiceText
+import vn.abook.player.ui.components.fadeEdges
+import androidx.compose.foundation.lazy.rememberLazyListState
 
-/** Máy chưa có giọng tiếng Việt của hệ điều hành (như `deviceHint` của bản WebView). */
+/** Máy chưa có giọng tiếng Việt của hệ điều hành. */
 private const val DEVICE_HINT = "Điện thoại chưa có giọng tiếng Việt. Cài ở Cài đặt điện thoại › Chuyển văn bản thành giọng nói."
 
 private val NoSample: StateFlow<SampleUi> = MutableStateFlow(SampleUi())
@@ -89,8 +93,8 @@ private val NoSummary: StateFlow<VoiceSummary> = MutableStateFlow(VoiceSummary()
 
 /**
  * Giọng đọc: giọng mặc định của "Nghe ngay" (cuốn chưa chọn giọng riêng), xếp theo nơi đọc, mỗi giọng có nút nghe thử ở cuối hàng (nơi bạn đang chọn); tốc độ đọc của giọng
- * trên máy; giọng tải về máy (VieNeu, Supertonic) và khóa giọng trực tuyến. Danh sách giọng có thể dài (giọng của máy) nên cả màn là MỘT danh sách lười, mỗi giọng một mục có khoá.
- * `env.voice` null (ảnh chụp không có lõi): danh sách giọng vẫn dựng, chưa có nghe thử, giọng tải về hay khóa.
+ * trên máy; giọng tải về máy (VieNeu, Supertonic) và khoá giọng trực tuyến. Danh sách giọng có thể dài (giọng của máy) nên cả màn là MỘT danh sách lười, mỗi giọng một mục có khoá.
+ * `env.voice` null (ảnh chụp không có lõi): danh sách giọng vẫn dựng, chưa có nghe thử, giọng tải về hay khoá.
  */
 @Composable
 fun VoiceSettings(env: SettingsEnv, sheets: SheetHost, openVoice: (VoicePage) -> Unit, onBack: () -> Unit, modifier: Modifier = Modifier) {
@@ -105,9 +109,9 @@ fun VoiceSettings(env: SettingsEnv, sheets: SheetHost, openVoice: (VoicePage) ->
         if (repo.voices.value !is VoiceList.Ready) repo.loadVoices()
         repo.loadSpeed()
     }
-    LaunchedEffect(voice) { voice?.openVoice() }
+    androidx.lifecycle.compose.LifecycleResumeEffect(voice) { voice?.openVoice(); onPauseOrDispose { voice?.hideVoice() } }
     // Rời màn thì mẫu đang phát dừng ngay.
-    DisposableEffect(voice) { onDispose { voice?.stopSample() } }
+    DisposableEffect(voice) { onDispose { voice?.hideVoice() } }
 
     /** Chọn giọng mặc định; giọng trực tuyến chưa được bạn đồng ý gửi chữ thì hỏi trước, "Không" giữ giọng cũ. */
     fun choose(option: VoiceOption) {
@@ -122,8 +126,10 @@ fun VoiceSettings(env: SettingsEnv, sheets: SheetHost, openVoice: (VoicePage) ->
 
     val top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val scroll = rememberLazyListState()
     LazyColumn(
-        modifier.fillMaxSize().testTag(SettingsGroup.Voice.screenTag),
+        modifier.fillMaxSize().testTag(SettingsGroup.Voice.screenTag).fadeEdges(scroll),
+        state = scroll,
         contentPadding = PaddingValues(top = top, start = Dim.margin, end = Dim.margin, bottom = bottom + Dim.s48),
     ) {
         item(key = "header", contentType = "header") { PageHeader(SettingsGroup.Voice.label, onBack) }
@@ -148,6 +154,7 @@ fun VoiceSettings(env: SettingsEnv, sheets: SheetHost, openVoice: (VoicePage) ->
                         Column(Modifier.fillMaxWidth().padding(top = Dim.s24, bottom = Dim.s4)) {
                             BasicText(group.title, style = Abook.type.sectionTitle)
                             RowHint(detail)
+                            VoiceText.onlineNotice(group.provider)?.let { RowHint(it) }
                         }
                     }
                     items(group.voices, key = { "voice:${it.id}" }, contentType = { "voice" }) { option ->
@@ -182,14 +189,26 @@ fun VoiceSettings(env: SettingsEnv, sheets: SheetHost, openVoice: (VoicePage) ->
                     for (line in state.lines) {
                         BasicText(line, style = Abook.type.caption.copy(color = Abook.colors.text2), modifier = Modifier.padding(top = Dim.s4))
                     }
+                    for ((choice, bytes) in state.downloads) {
+                        TextAction("Tải (${vn.abook.player.formatSize(bytes)})", { voice?.download(ModuleKind.Supertonic, listOf(choice)) }, "speed_download")
+                    }
                 }
             }
         }
         if (voice != null) {
+            item(key = "modules_intro", contentType = "title") {
+                Column(Modifier.padding(top = Dim.s24)) {
+                    BasicText("Bộ giọng", style = Abook.type.sectionTitle)
+                    Caption("Tải, đo và quản lý")
+                    VoiceText.advice(modules[ModuleKind.Vieneu]?.status, modules[ModuleKind.Supertonic]?.status)?.let { Caption(it) }
+                    val notice by voice.notice.collectAsState()
+                    Reveal(notice.isNotBlank()) { Caption(notice) }
+                }
+            }
             for (kind in ModuleKind.entries) moduleItems(kind, modules[kind] ?: ModuleUi(), voice, sheets)
             item(key = "keys", contentType = "keys") {
                 ListSection {
-                    DisclosureRow("Khóa giọng trực tuyến", { openVoice(VoicePage.Keys) }, "voice_keys", summary = summary.keys)
+                    DisclosureRow("Khoá trực tuyến", { openVoice(VoicePage.Keys) }, "voice_keys", summary = summary.keys)
                 }
             }
         }
@@ -202,7 +221,12 @@ fun VoiceSettings(env: SettingsEnv, sheets: SheetHost, openVoice: (VoicePage) ->
  */
 private fun LazyListScope.moduleItems(kind: ModuleKind, ui: ModuleUi, voice: VoiceState, sheets: SheetHost) {
     val status = ui.shown ?: return
-    item(key = "module_title:${kind.key}", contentType = "title") { SectionTitle(kind.title) }
+    item(key = "module_title:${kind.key}", contentType = "title") {
+        Column(Modifier.fillMaxWidth()) {
+            SectionTitle(kind.title)
+            Reveal(status.state == ModuleState.Missing) { Caption(kind.invite) }
+        }
+    }
     val rows = VoiceText.rows(status, ui.pending)
     items(rows, key = { "module:${kind.key}:${it.id}" }, contentType = { "module" }) { row ->
         val choice = status.choice(row.id)
@@ -261,7 +285,7 @@ private fun VoiceRow(
     }
     ListItem(
         voice.name, Modifier.semantics { selected = chosen }, onChoose, "voice_${voice.id}",
-        hint = failure ?: if (loading) "Đang lấy giọng" else null,
+        hint = failure ?: if (loading) "Đang lấy giọng" else listOfNotNull(VoiceText.gender(voice.gender), if (chosen) "Mặc định" else null).dotJoined().ifBlank { null },
         hintColor = if (failure != null) colors.danger else colors.text2,
         titleColor = if (chosen) colors.accentText else colors.text,
         leading = {

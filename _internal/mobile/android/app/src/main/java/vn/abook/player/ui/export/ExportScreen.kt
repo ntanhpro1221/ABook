@@ -1,5 +1,6 @@
 package vn.abook.player.ui.export
 
+import vn.abook.player.ui.components.ClockLabel
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,7 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.BasicText
+import vn.abook.player.ui.components.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -59,6 +60,8 @@ import vn.abook.player.ui.data.ListenBook
 import vn.abook.player.ui.devices.CreepProgress
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.components.fadeEdges
+import androidx.compose.foundation.lazy.rememberLazyListState
 
 /*
  * Xuất sách (MP3 hay M4B), một màn cho cả ba kiểu xuất. Màn có ba trang trượt ngang theo việc đang làm: CHỌN (dạng file, nơi lưu, nhạc) -> LÀM (tiến độ, Dừng)
@@ -86,7 +89,7 @@ fun ExportScreen(book: ListenBook, exports: ExportState, onBack: () -> Unit, for
         else -> Unit
     }
     BookForm(
-        "Xuất sách", onBack, "export_screen",
+        if (book.textOnly) "Xuất sách nói" else "Xuất sách", onBack, "export_screen",
         footer = { Footer(book, ui, exports, last[1] as? ExportPhase.Running, last[2]) },
     ) {
         SheetPages(ui.phase.page, { it }, "export_pages") { page ->
@@ -105,7 +108,8 @@ fun ExportScreen(book: ListenBook, exports: ExportState, onBack: () -> Unit, for
 private fun OptionsPage(book: ListenBook, ui: ExportUi, exports: ExportState) {
     val mp3 = !book.textOnly && ui.format == ExportFormat.Mp3
     val kind = ui.format.kind(book.textOnly)
-    LazyColumn(Modifier.fillMaxSize().testTag("export_options"), contentPadding = PaddingValues(bottom = Dim.s16)) {
+    val list = rememberLazyListState()
+    LazyColumn(Modifier.fillMaxSize().fadeEdges(list).testTag("export_options"), state = list, contentPadding = PaddingValues(bottom = Dim.s16)) {
         item("head", "head") { BookHead(book) }
         if (book.textOnly) {
             item("about", "about") { Column(Modifier.fillMaxWidth().padding(bottom = Dim.s8)) {
@@ -272,10 +276,10 @@ private fun RunningPage(book: ListenBook, ui: ExportUi, progress: State<ExportPr
 
 /** Dòng tiến độ + thanh. Chữ đọc ở lá này; thanh chỉ đọc phần đã xong trong pha vẽ. Lời cho trình đọc màn hình chỉ đổi khi đổi pha hay qua mốc 25 %. */
 @Composable
-private fun ProgressLine(progress: State<ExportProgress>, folder: String?) {
+internal fun ProgressLine(progress: State<ExportProgress>, folder: String?) {
     val current = progress.value
     Column(Modifier.fillMaxWidth().testTag("export_progress")) {
-        BasicText(
+        ClockLabel(
             current.text, style = Abook.type.body,
             modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite; contentDescription = current.spoken }.testTag("export_progress_text"),
         )

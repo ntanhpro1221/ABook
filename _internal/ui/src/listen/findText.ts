@@ -104,12 +104,17 @@ export function findInSegments(
   foldedSegments?: readonly string[],
 ): FindHit[] {
   const hits: FindHit[] = [];
+  // Một dấu cách của từ khoá khớp cả chuỗi khoảng trắng của sách ("Nguyễn  An", "Nguyễn\r\nAn" - TXT / PDF hay có): chữ đã chuẩn hoá giữ nguyên độ dài
+  // nên khoảng trắng của sách vẫn là nhiều dấu cách liền nhau.
+  const pattern = folded.includes(" ") ? new RegExp(folded.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/ /g, " +")) : null;
   segments.forEach((segment, sentence) => {
     if (segment.sceneBreak) return;
     const haystack = foldedSegments?.[sentence] ?? foldedText(segment.text);
-    const at = haystack.indexOf(folded);
+    const found = pattern ? pattern.exec(haystack) : null;
+    const at = pattern ? (found?.index ?? -1) : haystack.indexOf(folded);
     if (at < 0) return;
-    hits.push({ chapterId, sentence, snippet: snippetOf(segment.text, originalSpan(segment.text, haystack, at, folded.length)) });
+    const length = found ? found[0].length : folded.length;
+    hits.push({ chapterId, sentence, snippet: snippetOf(segment.text, originalSpan(segment.text, haystack, at, length)) });
   });
   return hits;
 }

@@ -9,32 +9,28 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.text.BasicText
+import vn.abook.player.ui.components.BasicText
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.flow.distinctUntilChanged
+import vn.abook.player.ui.components.fadeEdges
 import vn.abook.player.ui.components.pressable
+import vn.abook.player.ui.components.RowHint
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.theme.MotionMs
@@ -49,6 +45,15 @@ private class ParagraphInk(layout: TextLayoutResult, paragraph: ReadParagraph) {
 fun ReadAlongPane(
     state: ReadAlongState, position: PlayerPosition, modifier: Modifier = Modifier,
     onManualScroll: () -> Unit = {}, onTap: () -> Unit = {}, onRetry: () -> Unit = {},
+    /** Dáng chữ (cỡ, giãn dòng). */
+    look: ReadLook = ReadLook(),
+    /** Lời nhắc ở đầu chữ ([ReadHint]); null = không có. */
+    hint: String? = null,
+    /** Chạm chữ: nghe từ mốc này. */
+    onListen: (Long) -> Unit = {},
+    /** Tên chương kế (thẻ "Chương tiếp theo" ở cuối chữ); null = chương cuối. */
+    nextTitle: String? = null,
+    onNext: () -> Unit = {},
 ) {
     val list = rememberLazyListState()
     val userDragging by list.interactionSource.collectIsDraggedAsState()
@@ -59,10 +64,12 @@ fun ReadAlongPane(
     BoxWithConstraints(modifier.clipToBounds().testTag("read_along_text")) {
         val third = maxHeight / 3
         val thirdPx = with(androidx.compose.ui.platform.LocalDensity.current) { third.roundToPx() }
-        LaunchedEffect(state.paragraphs, following) {
+        // Lời nhắc là mục đầu của danh sách (cuộn đi cùng chữ): các chỉ số đoạn lệch đi một khi nó có mặt.
+        val lead = if (hint != null) 1 else 0
+        LaunchedEffect(state.paragraphs, following, lead) {
             if (following) snapshotFlow { ReadAlongLookup.sentence(state.paragraphs, position.milliseconds.value) }
                 .distinctUntilChanged().collect { index ->
-                    if (index >= 0) list.animateScrollToItem(index, -thirdPx)
+                    if (index >= 0) list.animateScrollToItem(index + lead, -thirdPx)
                 }
         }
         when {
@@ -74,17 +81,28 @@ fun ReadAlongPane(
                 }
             }
             else -> LazyColumn(
-                state = list, modifier = Modifier.fillMaxSize().fadeEdges(24.dp, list).pointerInput(onTap) { detectTapGestures { onTap() } },
+                state = list, modifier = Modifier.fillMaxSize().fadeEdges(list).pointerInput(onTap) { detectTapGestures { onTap() } },
                 contentPadding = PaddingValues(top = 12.dp, bottom = third), verticalArrangement = Arrangement.spacedBy(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
+                if (hint != null) item(key = "hint", contentType = "hint") {
+                    RowHint(hint, Modifier.widthIn(max = 680.dp).fillMaxWidth().testTag("read_hint"))
+                }
                 itemsIndexed(state.paragraphs, key = { _, paragraph -> paragraph.id }, contentType = { _, _ -> "paragraph" }) { index, paragraph ->
                     var geometry by remember(paragraph) { mutableStateOf<ParagraphInk?>(null) }
+                    var layout by remember(paragraph) { mutableStateOf<TextLayoutResult?>(null) }
                     val sentenceColor = Abook.colors.accentSoft
                     val wordColor = Abook.colors.accent.copy(alpha = 0.27f)
                     BasicText(
                         paragraph.text,
-                        Modifier.widthIn(max = 680.dp).fillMaxWidth().testTag("paragraph_${paragraph.id}").drawBehind {
+                        Modifier.widthIn(max = 680.dp).fillMaxWidth().testTag("paragraph_${paragraph.id}")
+                            .semantics { onClick("Nghe từ đây") { onListen(paragraph.startMs); true } }
+                            .pointerInput(paragraph) {
+                                detectTapGestures { at ->
+                                    onTap()
+                                    if (paragraph.timed) onListen(ReadTap.startAt(paragraph, layout?.getOffsetForPosition(at) ?: 0))
+                                }
+                            }.drawBehind {
                             val ms = position.milliseconds.value
                             if (ReadAlongLookup.sentence(state.paragraphs, ms) == index) {
                                 val ink = geometry
@@ -95,9 +113,16 @@ fun ReadAlongPane(
                                 }
                             }
                         },
-                        style = Abook.type.body.copy(fontSize = 20.sp, lineHeight = 34.sp),
-                        onTextLayout = { geometry = ParagraphInk(it, paragraph) },
+                        style = Abook.type.body.copy(fontSize = look.size.sp, lineHeight = look.lineHeight.sp, lineBreak = androidx.compose.ui.text.style.LineBreak.Paragraph),
+                        onTextLayout = { layout = it; geometry = ParagraphInk(it, paragraph) },
                     )
+                }
+                if (nextTitle != null) item(key = "next-chapter", contentType = "next") {
+                    Column(Modifier.widthIn(max = 680.dp).fillMaxWidth().heightIn(min = 56.dp).pressable(onClick = onNext).testTag("read_next_chapter"),
+                        verticalArrangement = Arrangement.Center) {
+                        BasicText("Chương tiếp theo", style = Abook.type.caption.copy(color = Abook.colors.text2))
+                        BasicText(nextTitle, style = Abook.type.body.copy(color = Abook.colors.accentText))
+                    }
                 }
             }
         }
@@ -108,7 +133,7 @@ fun ReadAlongPane(
                 exit = slideOutVertically(tween(MotionMs.MEDIUM_OUT)) { it }) {
                 Box(Modifier.heightIn(min = 48.dp).pressable { following = true; onTap() }.testTag("follow_sentence"),
                     contentAlignment = Alignment.Center) {
-                    BasicText("Theo câu đang nghe", Modifier
+                    BasicText("Tới câu đang nghe", Modifier
                         .background(Abook.colors.accentSoft, RoundedCornerShape(Dim.radiusCover))
                         .padding(horizontal = 14.dp, vertical = 6.dp),
                         style = Abook.type.caption.copy(color = Abook.colors.accentText, fontWeight = FontWeight.Medium))
@@ -117,14 +142,3 @@ fun ReadAlongPane(
         }
     }
 }
-
-/** Text scrolls out under a soft edge instead of a hard cut at the header and the seek bar - only on a side that has more to scroll. */
-private fun Modifier.fadeEdges(edge: Dp, list: LazyListState): Modifier = graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
-    .drawWithContent {
-        drawContent()
-        val fraction = (edge.toPx() / size.height).coerceIn(0f, 0.5f)
-        val top = if (list.canScrollBackward) Color.Transparent else Color.Black
-        val bottom = if (list.canScrollForward) Color.Transparent else Color.Black
-        drawRect(Brush.verticalGradient(0f to top, fraction to Color.Black, 1f - fraction to Color.Black, 1f to bottom),
-            blendMode = BlendMode.DstIn)
-    }

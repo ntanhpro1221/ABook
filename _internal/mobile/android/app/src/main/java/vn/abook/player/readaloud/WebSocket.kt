@@ -5,8 +5,7 @@ import java.io.EOFException
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
-import java.net.InetSocketAddress
-import java.net.Socket
+import vn.abook.player.net.FastConnect
 import java.net.URI
 import java.security.MessageDigest
 import java.security.SecureRandom
@@ -157,9 +156,8 @@ class WebSocket internal constructor(private val socket: java.io.Closeable, priv
             val uri = URI(url)
             require(uri.scheme == "wss") { "chỉ hỗ trợ wss://" }
             val port = if (uri.port > 0) uri.port else 443
-            val socket = Socket()
+            val socket = FastConnect.connect(uri.host, port, connectTimeoutMs)
             try {
-                socket.connect(InetSocketAddress(uri.host, port), connectTimeoutMs)
                 socket.soTimeout = connectTimeoutMs
                 val tls = (SSLSocketFactory.getDefault() as SSLSocketFactory).createSocket(socket, uri.host, port, true) as javax.net.ssl.SSLSocket
                 tls.useClientMode = true

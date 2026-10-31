@@ -57,7 +57,7 @@ describe("mô-đun Giọng VieNeu", () => {
   it("đo lại thì không nói là giọng vừa tải; máy không chạy được bản tăng tốc thì nói thẳng", () => {
     expect(vieneuLabel(status({ state: "ready", benchmarking: true }))).toContain("vừa tải");
     const measured = status({ state: "ready", benchmarking: true, benchmark: { turbo: { rtf: 0.2, firstAudioMs: 900 } } });
-    expect(vieneuLabel(measured)).toBe("Đang đo lại tốc độ trên máy này (vài giây)…");
+    expect(vieneuLabel(measured)).toBe("Đang đo lại tốc độ trên máy này (vài giây)");
     expect(fastUnsupportedNote(status())).toBeNull();
     expect(fastUnsupportedNote(status({ fastUnsupported: "CPU của máy này không có lệnh AVX2" }))).toBe("Bản tăng tốc: máy này không chạy được (CPU của máy này không có lệnh AVX2).");
   });
@@ -96,8 +96,8 @@ describe("mô-đun Giọng VieNeu", () => {
 
   it("câu chính theo trạng thái", () => {
     expect(vieneuLabel(status({ state: "downloading", done: 50, total: 100 * MB }))).toContain("0%");
-    expect(vieneuLabel(status({ state: "outdated", outdatedBytes: 3 * MB }))).toContain("3,0 MB");
-    expect(vieneuLabel(status({ state: "error", error: "Không tải được." }))).toBe("Không tải được.");
+    expect(vieneuLabel(status({ state: "outdated", outdatedBytes: 3 * MB }))).toContain("2,9 MB");
+    expect(vieneuLabel(status({ state: "error", error: "Chưa tải được." }))).toBe("Chưa tải được.");
     expect(vieneuLabel(status())).toContain("không cần mạng");
   });
 
@@ -135,7 +135,7 @@ describe("mô-đun Giọng VieNeu", () => {
     expect(selectionBytes(one, ["supertonic"])).toBe(406 * MB);
     expect(vieneuLabel(one, SUPERTONIC_COPY)).toContain("Mười giọng nam nữ");
     expect(vieneuLabel({ ...one, state: "ready" }, SUPERTONIC_COPY)).toBe("Giọng Supertonic đã có trên máy: chọn trong nút Giọng đọc khi nghe sách chỉ có chữ.");
-    expect(vieneuLabel({ ...one, state: "downloading", done: 40, total: 100 * MB }, SUPERTONIC_COPY)).toContain("Đang tải giọng Supertonic");
+    expect(vieneuLabel({ ...one, state: "downloading", done: 40, total: 100 * MB }, SUPERTONIC_COPY)).toMatch(/^Đang tải 95 MB · \d+%$/);
     // Mạng hỏng giữa chừng, máy đang chờ thử lại: nói ra, không đứng ở "Đang tải x%" (soát a64).
     expect(vieneuLabel({ ...one, state: "downloading", done: 62, total: 100, retrying: true }, SUPERTONIC_COPY)).toBe("Mạng chập chờn - đang thử lại… (giọng Supertonic, 62%)");
     expect(benchmarkLabel("supertonic", { rtf: 0.2, firstAudioMs: 1400 })).toContain("nhanh gấp 5,0 lần");
@@ -231,7 +231,7 @@ describe("câu trình đọc màn hình nghe ở thẻ mô-đun (soát a67)", ()
     const label = vieneuLabel(status({ cancelled: true }));
     expect(`${cancelled.live} ${cancelled.rest}`).toBe(label);
     expect(cancelled.live.length).toBeLessThan(label.length);
-    expect(vieneuSpoken(status({ state: "error", error: "Không tải được." }))).toEqual({ live: "Không tải được.", rest: "" });
+    expect(vieneuSpoken(status({ state: "error", error: "Chưa tải được." }))).toEqual({ live: "Chưa tải được.", rest: "" });
   });
 });
 

@@ -45,7 +45,7 @@ function TryButton({ aloud, surface, spoken }: { aloud: ReadAloudTry; surface: s
   );
 }
 
-/** Ô cách đọc của một từ + "Nghe thử" + "Lưu cho cả cuốn" (+ "Đọc như chữ trong sách" khi từ đã có cách đọc riêng). */
+/** Ô cách đọc của một từ + "Nghe thử" + "Lưu cho cả cuốn" (+ "Đọc như trong sách" khi từ đã có cách đọc riêng). */
 function ReadingForm({ bookId, surface, current, aloud, onDone }: {
   bookId: string;
   surface: string;
@@ -73,7 +73,7 @@ function ReadingForm({ bookId, surface, current, aloud, onDone }: {
                   { surface, spoken: current },
                   {
                     onSuccess: () => toast.success(current ? `Đã hoàn tác: “${surface}” lại đọc là “${current}”` : `Đã hoàn tác: “${surface}” lại đọc như chữ trong sách`, { id: "reading-saved" }),
-                    onError: (error) => toast.error("Không hoàn tác được", { description: (error as Error).message }),
+                    onError: (error) => toast.error("Chưa hoàn tác được", { description: (error as Error).message }),
                   },
                 ),
             },
@@ -113,7 +113,7 @@ function ReadingForm({ bookId, surface, current, aloud, onDone }: {
         </Button>
         {current && (
           <Button size="sm" variant="ghost" type="button" disabled={save.isPending} onClick={() => store("")}>
-            Đọc như chữ trong sách
+            Đọc như trong sách
           </Button>
         )}
       </div>
@@ -150,7 +150,7 @@ export function WordReadingDialog({ bookId, word, sentence, wordIndex, onClose }
       open={word !== null && (Boolean(surface) || chips > 0)}
       onOpenChange={(open) => !open && onClose()}
       width="max-w-md"
-      title="Đọc từ này là…"
+      title="Đọc từ này là"
       description={
         surface ? (
           <>

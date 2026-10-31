@@ -355,7 +355,7 @@ describe("lựa chọn nhạc nền", () => {
     expect(addMusicOutcome({ added: [track, track], existing: [], failed: [] })).toEqual({ select: true, kind: "success", title: "Đã thêm 2 bài", description: undefined });
     expect(addMusicOutcome({ added: [track], existing: [], failed: ["b.mp3: hỏng"] })).toMatchObject({ select: true, kind: "warning", description: "b.mp3: hỏng" });
     expect(addMusicOutcome({ added: [], existing: [track], failed: [] })).toMatchObject({ select: true, kind: "success", title: "Những bài này đã có trong Nhạc của tôi" });
-    expect(addMusicOutcome({ added: [], existing: [], failed: ["b.mp3: hỏng"] })).toMatchObject({ select: false, kind: "error", title: "Không thêm được file này" });
+    expect(addMusicOutcome({ added: [], existing: [], failed: ["b.mp3: hỏng"] })).toMatchObject({ select: false, kind: "error", title: "Chưa thêm được nhạc" });
   });
 
   it("lưu vào phần sửa của cuốn qua cùng đường trên máy tính và điện thoại", async () => {

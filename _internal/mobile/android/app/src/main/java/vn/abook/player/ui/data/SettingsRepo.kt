@@ -1,5 +1,7 @@
 package vn.abook.player.ui.data
 
+import vn.abook.player.formatSize
+
 import androidx.compose.runtime.Immutable
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -12,9 +14,9 @@ import org.json.JSONObject
 
 /** Một giọng "Nghe ngay" của máy ([vn.abook.player.readaloud.ReadAloud.voices]). */
 @Immutable
-data class VoiceOption(val id: String, val name: String, val provider: String, val isDefault: Boolean)
+data class VoiceOption(val id: String, val name: String, val provider: String, val isDefault: Boolean, val gender: String = "")
 
-/** Một nhóm giọng theo nơi đọc (Edge, khoá của bạn, VieNeu, Supertonic, giọng của máy) - cùng thứ tự `VOICE_GROUPS` của bản WebView. */
+/** Một nhóm giọng theo nơi đọc (Edge, khoá của bạn, VieNeu, Supertonic, giọng của máy) - theo thứ tự hiện trên màn. */
 @Immutable
 data class VoiceGroup(val provider: String, val title: String, val detail: String, val voices: List<VoiceOption>)
 
@@ -35,14 +37,14 @@ sealed interface VoiceList {
 
 /** "Tốc độ đọc" của giọng trên máy ([vn.abook.player.readaloud.VoiceSpeed]): lựa chọn của cả máy + một dòng cho mỗi giọng hai bậc đã tải. */
 @Immutable
-data class VoiceSpeedState(val choice: VoiceSpeedChoice, val lines: List<String>)
+data class VoiceSpeedState(val choice: VoiceSpeedChoice, val lines: List<String>, val downloads: List<Pair<String, Long>> = emptyList())
 
 enum class VoiceSpeedChoice(override val key: String, override val label: String, val description: String) : Choice {
     Auto("auto", "Tự động", "Máy kịp thì đọc bản hay nhất."),
     Quality("quality", "Chất lượng cao nhất", "Luôn đọc bản hay nhất; máy chậm có thể phải chờ."),
     Fast("fast", "Nhanh hơn", "Nhanh hơn, tiếng kém hơn chút - hợp máy yếu.");
 
-    /** Câu dưới hàng chọn (cùng `voiceSpeedDescription` của bản WebView). */
+    /** Câu dưới hàng chọn. */
     val sentence: String get() = "$description Chỉ áp cho giọng Supertonic; sách xuất ra luôn dùng bản hay nhất."
 }
 
@@ -57,10 +59,17 @@ data class ThirdPartySection(val title: String, val items: List<ThirdPartyItem>)
  * Phần lõi mà Cài đặt cần - tách ra để thử bằng lõi giả (lõi thật: [AndroidSettingsCore]). Mọi hàm chạy ở luồng nền (đọc / ghi đĩa, hỏi bộ đọc của máy).
  */
 interface SettingsCore {
+    fun takeNotificationOffer(): Boolean = false
+    fun freshOldSaves(names: List<String>): Boolean = false
+    fun oldSaves(): List<OldSave> = emptyList()
+    fun deleteOldSave(name: String) {}
+    fun exportOldSave(name: String, uri: String) {}
+    fun release(): AppRelease? = null
+    fun tellRelease(version: String): Boolean = false
     /** Tuỳ chọn đã nhớ ở kho native, dạng `ListenPrefs.stored()` + `autoMusic`. */
     fun load(): JSONObject
 
-    /** Áp và nhớ các trường đổi (dạng `PlayerPlugin.configure` nhận, kèm `settingsStamp`). */
+    /** Áp và nhớ các trường đổi (dạng [vn.abook.player.ListenPrefs.apply] nhận, kèm `settingsStamp`). */
     fun save(changes: JSONObject)
 
     /** Giọng của máy (có thể chờ vài giây: hỏi bộ đọc của hệ điều hành). */
@@ -94,10 +103,48 @@ interface SettingsCore {
 
 /**
  * Kho dữ liệu Cài đặt cho giao diện native (NATIVE_PHONE_UI.md §2): [state] bất biến, đổi NGAY khi người dùng chọn (màn không chờ đĩa), còn việc ghi
- * xuống lõi xếp hàng trên MỘT coroutine nền theo đúng thứ tự chạm. Ghi qua cùng cửa với bản WebView ([vn.abook.player.ListenPrefs.apply], cùng khoá, cùng giá trị)
- * kèm dấu giờ mới: lần mở bản WebView sau thấy bản native mới hơn thì lấy nó (`syncSettings`).
+ * xuống lõi xếp hàng trên MỘT coroutine nền theo đúng thứ tự chạm. Ghi qua [vn.abook.player.ListenPrefs.apply]
+ * kèm dấu giờ mới.
  */
 class SettingsRepo(private val core: SettingsCore, private val scope: CoroutineScope, private val io: CoroutineDispatcher) {
+    val notes = BookNotes(scope, holdActionMs = 20_000)
+    var openRelease: (String) -> Unit = {}
+    var openAdvanced: () -> Unit = {}
+    suspend fun offerNotifications(allow: () -> Unit) {
+        if (withContext(io) { !core.notificationsAllowed() && core.takeNotificationOffer() })
+            notes.say("Cho phép thông báo để biết khi sách xong hay xuất xong.", "Cho phép", allow)
+    }
+    val oldSaves = MutableStateFlow<List<OldSave>>(emptyList())
+    val update = MutableStateFlow<AppRelease?>(null)
+    val notice = MutableStateFlow("")
+    val problem = MutableStateFlow("")
+    val maintenanceBusy = MutableStateFlow(false)
+
+    fun loadMaintenance() {
+        scope.launch {
+            oldSaves.value = withContext(io) { core.oldSaves() }
+            if (withContext(io) { core.freshOldSaves(oldSaves.value.map { it.name }) })
+                notes.say("Có ${oldSaves.value.size} bản lưu cũ chưa trả lại được - mở trong Cài đặt", "Mở Cài đặt") { openAdvanced() }
+            val release = withContext(io) { core.release() }
+            update.value = release?.takeIf { AppRelease.newer(it.version, version) }
+            update.value?.let { if (withContext(io) { core.tellRelease(it.version) }) {
+                notice.value = "Có ABook ${it.version}"
+                notes.say(notice.value, "Tải") { openRelease(it.apk ?: it.page) }
+            } }
+        }
+    }
+
+    fun deleteOldSave(name: String) = maintenance("Chưa xoá được", "Đã xoá bản lưu cũ") { core.deleteOldSave(name) }
+    fun exportOldSave(name: String, uri: String) = maintenance("Chưa lưu ra được", "Đã lưu bản cũ ra chỗ bạn chọn") { core.exportOldSave(name, uri) }
+    private fun maintenance(error: String, success: String, action: () -> Unit) {
+        if (maintenanceBusy.value) return
+        maintenanceBusy.value = true; problem.value = ""
+        scope.launch {
+            try { withContext(io) { action() }; notice.value = success; oldSaves.value = withContext(io) { core.oldSaves() } }
+            catch (e: Exception) { problem.value = listOf(error, e.message.orEmpty()).filter { it.isNotBlank() }.joinToString(". ") }
+            finally { maintenanceBusy.value = false }
+        }
+    }
     private val flow = MutableStateFlow(AppSettings.Default)
     val state: StateFlow<AppSettings> get() = flow
 
@@ -174,7 +221,10 @@ class SettingsRepo(private val core: SettingsCore, private val scope: CoroutineS
         val now = speedFlow.value ?: return
         if (now.choice == choice) return
         speedFlow.value = now.copy(choice = choice)
-        scope.launch { withContext(io) { runCatching { VoiceSpeedText.state(core.setVoiceSpeed(choice.key)) }.getOrNull() }?.let { speedFlow.value = it } }
+        scope.launch {
+            try { speedFlow.value = withContext(io) { VoiceSpeedText.state(core.setVoiceSpeed(choice.key)) } }
+            catch (e: Exception) { speedFlow.value = now; problem.value = listOf("Chưa đổi được tốc độ giọng", e.message.orEmpty()).joinToString(". ") }
+        }
     }
 
     fun loadCache() {
@@ -182,7 +232,10 @@ class SettingsRepo(private val core: SettingsCore, private val scope: CoroutineS
     }
 
     fun clearCache() {
-        scope.launch { cacheFlow.value = withContext(io) { runCatching { core.clearCache() }.getOrNull() } }
+        scope.launch {
+            try { cacheFlow.value = withContext(io) { core.clearCache() }; notice.value = "Đã dọn bản đọc đã làm" }
+            catch (e: Exception) { problem.value = listOf("Chưa dọn được bản đọc", e.message.orEmpty()).joinToString(". ") }
+        }
     }
 
     /** Hỏi lại quyền thông báo (mở màn, quay lại từ Cài đặt Android). */
@@ -190,21 +243,24 @@ class SettingsRepo(private val core: SettingsCore, private val scope: CoroutineS
         scope.launch { notifyFlow.value = withContext(io) { runCatching { core.notificationsAllowed() }.getOrDefault(true) } }
     }
 
-    suspend fun logLines(): List<String> = withContext(io) { runCatching { core.logLines() }.getOrDefault(emptyList()) }
+    suspend fun logLines(): List<String> = withContext(io) { core.logLines() }
 
     fun clearLogs() {
-        writes.trySend { core.clearLogs() }
+        scope.launch {
+            try { withContext(io) { core.clearLogs() }; notice.value = "Đã xoá nhật ký" }
+            catch (e: Exception) { problem.value = listOf("Chưa xoá được nhật ký", e.message.orEmpty()).joinToString(". ") }
+        }
     }
 
     suspend fun thirdParty(): List<ThirdPartySection> = withContext(io) { ThirdParty.parse(runCatching { core.thirdParty() }.getOrDefault("")) }
 }
 
-/** Nhóm giọng như bản WebView (listen/voiceGroups.ts, readAloudVoice.ts `resolveVoice`). Hàm thuần. */
+/** Nhóm giọng theo khoá đang chọn. Hàm thuần. */
 object Voices {
     private val KEYED = listOf("azure" to "Azure Speech", "google" to "Google Cloud", "fpt" to "FPT.AI", "viettel" to "Viettel AI")
     private val GROUPS: List<Triple<String, String, String>> =
         listOf(Triple("edge", "Edge", "trực tuyến, miễn phí")) +
-            KEYED.map { (provider, name) -> Triple(provider, name, "dùng khóa của bạn") } +
+            KEYED.map { (provider, name) -> Triple(provider, name, "dùng khoá của bạn") } +
             listOf(
                 Triple("vieneu", "VieNeu", "trên máy này, không cần mạng"),
                 Triple("supertonic", "Supertonic", "trên máy này, không cần mạng"),
@@ -240,7 +296,10 @@ object VoiceSpeedText {
         val choice = VoiceSpeedChoice.entries.firstOrNull { it.key == status.optString("choice") } ?: VoiceSpeedChoice.Auto
         val voices = status.optJSONArray("voices")
         val lines = (0 until (voices?.length() ?: 0)).mapNotNull { voices?.optJSONObject(it) }.map { line(it, choice) }
-        return VoiceSpeedState(choice, lines)
+        val downloads = (0 until (voices?.length() ?: 0)).mapNotNull { voices?.optJSONObject(it) }
+            .filter { it.optString("tier") == "fast" && it.optString("using") != "fast" && it.optLong("fastBytes") > 0 }
+            .map { it.optString("fastChoice", "supertonic_fast") to it.optLong("fastBytes") }
+        return VoiceSpeedState(choice, lines, downloads)
     }
 
     /** Dòng của một giọng: đang dùng bậc nào và vì sao; muốn bản nhanh hơn mà chưa tải thì nói cỡ cần tải. */
@@ -249,7 +308,7 @@ object VoiceSpeedText {
         val tier = voice.optString("tier")
         val using = voice.optString("using")
         if (tier == "fast" && using != "fast") {
-            return "$name - Đang dùng: ${tierLabel("quality")}. Bản nhanh hơn cần tải thêm ${Fmt.size(voice.optLong("fastBytes"))}."
+            return "$name - Đang dùng: ${tierLabel("quality")}. Bản nhanh hơn cần tải thêm ${formatSize(voice.optLong("fastBytes"))}."
         }
         val why = when {
             choice != VoiceSpeedChoice.Auto -> "bạn đã chọn"

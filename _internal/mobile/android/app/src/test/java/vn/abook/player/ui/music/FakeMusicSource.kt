@@ -17,7 +17,6 @@ class FakeMusicSource : MusicSource {
     var bookError: MusicFailure? = null
     var changeError: MusicFailure? = null
     var changeGate: CompletableDeferred<Unit>? = null
-    var importResult: (List<String>) -> MusicImported = { MusicImported("Đã thêm ${it.size} bài.", emptyList(), true) }
 
     override suspend fun menu(): MusicMenu { menuReads++; return menu }
 
@@ -64,13 +63,5 @@ class FakeMusicSource : MusicSource {
         alternativesError?.let { throw it }
         val current = books[id]?.cues?.firstOrNull { it.key == key }?.title
         return mine.filter { it.title != current }
-    }
-
-    override suspend fun importMine(uris: List<String>, progress: (done: Int, total: Int) -> Unit): MusicImported {
-        calls += "import ${uris.size}"
-        uris.indices.forEach { progress(it + 1, uris.size) }
-        val result = importResult(uris)
-        if (result.usable) menu = menu.copy(mine = menu.mine + uris.size)
-        return result
     }
 }

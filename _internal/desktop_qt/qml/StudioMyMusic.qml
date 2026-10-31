@@ -90,7 +90,7 @@ Column {
         removingNow = true
         store.request("DELETE", "/api/music/local/" + link.slice(Music.LOCAL_PREFIX.length), null, function(status, data) {
             root.removingNow = false
-            if (!root.store.ok(status) || !data) { root.say("Không xoá được bài này", status, data); return }
+            if (!root.store.ok(status) || !data) { root.say("Chưa xoá được bài này", status, data); return }
             root.refresh(data)
             root.removing = ""
             Api.notice = "Đã xoá khỏi Nhạc của tôi"
@@ -103,7 +103,7 @@ Column {
         picking = track.link
         store.request("POST", "/api/music/local/" + digest + "/auto", {auto: next}, function(status, data) {
             root.picking = ""
-            if (!root.store.ok(status) || !data) { root.say("Không đổi được", status, data); return }
+            if (!root.store.ok(status) || !data) { root.say("Chưa đổi được", status, data); return }
             root.refresh(data)
         })
     }

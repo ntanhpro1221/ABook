@@ -12,7 +12,7 @@ import {
   sameRows,
   shownTitle,
   splitIsSure,
-  splitLabel,
+  splitHint,
   type ImportPreviewChapter,
 } from "./textImport";
 
@@ -140,13 +140,13 @@ describe("split is on by default only when the file is surely a whole story", ()
   });
 });
 
-describe("split label", () => {
+describe("split hint", () => {
   // whole.txt của bộ ví dụ chung: chữ dẫn trước chương đầu + 3 dòng "Chương N" (importers.py / BookImport.kt: splitOffer 4, splitHeadings 3).
   it("counts the heading lines and names the preamble apart", () => {
-    expect(splitLabel({ splitOffer: 4, splitHeadings: 3 })).toBe("Tách theo 3 dòng “Chương N” (thêm phần Mở đầu - 4 chương)");
+    expect(splitHint({ splitOffer: 4, splitHeadings: 3 })).toBe("Theo 3 dòng “Chương N” trong file (thêm phần Mở đầu - 4 chương).");
   });
   it("says nothing extra when the file starts at its first heading", () => {
-    expect(splitLabel({ splitOffer: 3, splitHeadings: 3 })).toBe("Tách theo 3 dòng “Chương N”");
+    expect(splitHint({ splitOffer: 3, splitHeadings: 3 })).toBe("Theo 3 dòng “Chương N” trong file.");
   });
 });
 
@@ -161,8 +161,8 @@ describe("footnote proposal", () => {
   });
 
   it("says what was found with a real example, or just the count when there is none", () => {
-    expect(footnoteSummary(offer)).toEqual({ title: "Tìm thấy 12 chú thích trong sách", example: "Ví dụ: “…trees²” có lời chú “Lời chú về cây.”" });
-    expect(footnoteSummary({ found: 1, marks: 0, examples: [] })).toEqual({ title: "Tìm thấy 1 chú thích trong sách", example: null });
+    expect(footnoteSummary(offer)).toEqual({ title: "12 chú thích trong file", example: "Ví dụ: “…trees²” có lời chú “Lời chú về cây.”" });
+    expect(footnoteSummary({ found: 1, marks: 0, examples: [] })).toEqual({ title: "1 chú thích trong file", example: null });
   });
 
   it("keeps the listener's picks and names only while the chapter list is the same one", () => {

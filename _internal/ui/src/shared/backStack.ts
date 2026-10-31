@@ -1,5 +1,5 @@
 // Ngăn xếp "lớp đóng được bằng Back" ngoài Radix: màn con dựng bằng state (panel trong màn Đang nghe, bước con trong hộp, khung ghép
-// thiết bị…) tự đăng ký khi mở và tự gỡ khi đóng / rời trang. Nút Back của Android (android/backLayers.ts) đóng lớp trên cùng trước khi
+// thiết bị…) tự đăng ký khi mở và tự gỡ khi đóng / rời trang. Nút Back của Android (shared/backLayers.ts) đóng lớp trên cùng trước khi
 // lùi trang - trước đây những lớp này không ai biết tới, Back đi thẳng ra trang trước hay thu nhỏ app (chủ app 23-10).
 // Hộp / menu / tấm trượt Radix KHÔNG cần đăng ký: chúng tự mang role + data-state, backLayers đọc thẳng từ trang.
 import { useEffect, useRef, type RefObject } from "react";

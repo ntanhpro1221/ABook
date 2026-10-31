@@ -47,7 +47,7 @@ describe("watchUntilBack", () => {
   });
 });
 
-// Soát a27 lỗi 11: thôi ghép khi đang nạp cuốn của máy kia - trình phát đóng thay vì giữ cuốn đã rời Thư viện.
+// Soát a27 lỗi 11: bỏ ghép khi đang nạp cuốn của máy kia - trình phát đóng thay vì giữ cuốn đã rời Thư viện.
 describe("leftWithPeer", () => {
   it("closes only a book of another machine that is gone from the library", () => {
     const remote = { id: "r", remote: { computer: "Máy A" } };

@@ -39,16 +39,28 @@ import { watchUntilBack } from "@/listen/peerBack";
 import { api, ApiError, currentPeer, type AppInfo } from "@/studio/api";
 import { pickFolder, useAppInfo, useLibrary, usePreferences } from "@/studio/data";
 import { LibraryMoveRecovery } from "./LibraryMoveRecovery";
-import { NewProjectScreen, PICK_SOURCE } from "@/studio/NewProjectScreen";
-import { ProjectScreen } from "@/studio/ProjectScreen";
-import { ProjectsScreen } from "@/studio/ProjectsScreen";
+import { PICK_SOURCE } from "@/studio/pickSource";
+import { lazyComponent, preloadWhenIdle } from "@/shared/lazyScreen";
 import { desktopTextImport, httpSource } from "./httpSource";
 import { AudiobookDialogHost } from "./AudiobookDialog";
 import { AudiobookMenuItem, BookFileMenuItem, ExportJobHost, M4bMenuItem, Mp3MenuItem } from "./ExportBookFileJob";
 import { RemoteDownloadMenuItem, RemoteDownloadStatus } from "./RemoteDownload";
-import { SettingsScreen } from "./SettingsScreen";
 import { OpenedInbox } from "./openedInbox";
 import { Shell } from "./Shell";
+
+// Studio và Cài đặt (cả Thiết bị, Giọng đọc) ở chunk riêng: mở app chỉ tải Thư viện / trang sách / trình phát; các màn này nạp sẵn lúc rảnh
+// ngay sau đó (App), nên bấm sang vẫn tức thì (docs/PERF_WEB.md).
+const PAGE_LOADING = <ContentSkeleton count={4} className="page-x mx-auto max-w-[1180px] pt-[32px]" />;
+const ProjectsScreen = lazyComponent(() => import("@/studio/ProjectsScreen").then((module) => module.ProjectsScreen), PAGE_LOADING);
+const NewProjectScreen = lazyComponent(() => import("@/studio/NewProjectScreen").then((module) => module.NewProjectScreen), PAGE_LOADING);
+const ProjectScreen = lazyComponent(() => import("@/studio/ProjectScreen").then((module) => module.ProjectScreen), PAGE_LOADING);
+const SettingsScreen = lazyComponent(() => import("./SettingsScreen").then((module) => module.SettingsScreen), PAGE_LOADING);
+const LAZY_SCREENS = [ProjectsScreen, NewProjectScreen, ProjectScreen, SettingsScreen];
+
+/** Nạp ngay mọi màn tải lười (phòng trưng bày: mở thẳng một màn Studio / Cài đặt rồi chụp - không chụp giữa lúc chunk đang về). */
+export function preloadScreens(): Promise<unknown> {
+  return Promise.all(LAZY_SCREENS.map((screen) => screen.preload()));
+}
 
 function useTheme(theme: string | undefined) {
   // Lần đầu đặt thẳng; đổi sau đó (người dùng chọn, Windows tự chuyển sáng/tối) thì cả cửa sổ mờ chéo sang giao diện mới.
@@ -57,7 +69,7 @@ function useTheme(theme: string | undefined) {
     const root = document.documentElement;
     const media = window.matchMedia("(prefers-color-scheme: dark)");
     const apply = () => {
-      const next = theme === "dark" || (theme !== "light" && media.matches) ? "dark" : "light";
+      const next = theme === undefined && window.__ABOOK_BOOT_THEME__ ? window.__ABOOK_BOOT_THEME__ : theme === "dark" || (theme !== "light" && media.matches) ? "dark" : "light";
       if (!applied.current || root.dataset.theme === next) root.dataset.theme = next;
       else withViewTransition(() => (root.dataset.theme = next), "none", undefined, (run) => run());
       applied.current = theme !== undefined;
@@ -147,7 +159,7 @@ function RemoveImportedMenuItem({ book }: { book: ListenBook }) {
       onSelect={() => window.dispatchEvent(new CustomEvent<ListenBook>("abook-remove-imported", { detail: book }))}
       className="flex h-9 cursor-default items-center gap-2 rounded-control px-2 text-sm text-danger outline-none data-[highlighted]:bg-hover"
     >
-      <Trash2 className="size-4" /> Xoá khỏi thư viện…
+      <Trash2 className="size-4" /> Xoá khỏi thư viện
     </DropdownMenu.Item>
   );
 }
@@ -236,7 +248,7 @@ interface OpenedBook {
 
 // Thông báo mở file = MỘT dòng (DESIGN 6): chỉ cái vừa xảy ra; "xoá file gốc cũng không sao"... là điều người dùng không cần được nhắc mỗi lần mở.
 const OPENED_SAID: Record<NonNullable<OpenedBook["how"]>, string> = {
-  new: "Đã thêm sách",
+  new: "Đã thêm", // có tên sách thì nói “Đã thêm “tên”” (xem dưới)
   existing: "Sách đã có",
   updated: "Đã cập nhật",
   older: "File này cũ hơn bản đang có",
@@ -255,7 +267,7 @@ function useOpenedBook() {
   return useCallback(
     (result: OpenedBook): boolean => {
       if (result.error) {
-        toast.error("Không mở được file sách", { description: result.file ? `${result.file}: ${result.error}` : result.error });
+        toast.error("Chưa mở được file sách", { description: result.file ? `${result.file}: ${result.error}` : result.error });
         return false;
       }
       if (!result.id) return false;
@@ -281,7 +293,12 @@ function useOpenedBook() {
       navigate(`/book/${result.id}`);
       // Việc đã gộp / giữ nằm ngay trong câu; tên khác hay nhạc hỏng (mở được nhưng thiếu gì đó) là cảnh báo cùng dòng ấy.
       const title = workshopMergeNote(result.workshop) ?? keptEditsTitle(result.merge?.kept) ?? mergedTitle(result) ?? OPENED_SAID[result.how ?? "new"];
-      toastDone(title, [otherTitleNote(result.otherTitle), brokenMusicNote(result.brokenMusic)].filter(Boolean).join(" ") || undefined);
+      const notes = [otherTitleNote(result.otherTitle), brokenMusicNote(result.brokenMusic)].filter(Boolean).join(" ") || undefined;
+      if (result.how === "new" && title === OPENED_SAID.new) {
+        // Cuốn mới: nói tên sách như bên điện thoại (“Đã thêm “tên””); tên chưa đọc được thì còn “Đã thêm”.
+        void api<{ title?: string }>(`/api/listen/books/${result.id}`).then((book) => book.title, () => undefined)
+          .then((name) => toastDone(name ? `Đã thêm “${name}”` : title, notes));
+      } else toastDone(title, notes);
       if (result.how === "project" && result.edits) offerFold(client, result.id, result.edits);
       return true;
     },
@@ -426,14 +443,14 @@ function OpenBookFileButton({ variant = "ghost" }: { variant?: "ghost" }) {
     try {
       opened(await api<OpenedBook>("/api/listen/open-book-file", { method: "POST", body: {} }));
     } catch (error) {
-      toast.error("Không mở được file sách", { description: (error as Error).message });
+      toast.error("Chưa mở được file sách", { description: (error as Error).message });
     } finally {
       setBusy(false);
     }
   };
   return (
     <Button variant={variant} icon={FileAudio} className="touch-row" disabled={busy} onClick={() => void run()}>
-      {busy ? "Đang mở…" : "Mở file sách"}
+      {busy ? "Đang mở" : "Mở file sách"}
     </Button>
   );
 }
@@ -548,6 +565,9 @@ export function App() {
     });
   }, [info?.remote, preferences?.readAloudVoice]);
   useTheme(preferences?.theme ?? info?.theme);
+  // App đã vẽ màn đầu: nạp sẵn chunk của các màn ít dùng khi rảnh.
+  const ready = Boolean(info);
+  useEffect(() => (ready ? preloadWhenIdle(LAZY_SCREENS) : undefined), [ready]);
   // Cài đặt › Phím tắt: bộ bắt phím của trình phát, Việc cần duyệt, Cần nghe lại đọc cờ này lúc có phím.
   useEffect(() => setLetterShortcuts(preferences?.letterShortcuts !== false), [preferences?.letterShortcuts]);
   // Cài đặt › Giao diện: tiếng chạm (máy tính không rung) và nền vùng đọc theo.
@@ -655,7 +675,7 @@ export function App() {
                             : info.remote
                               ? { remote: listenOnlyOwner(info) }
                               : {
-                                  pickFolder: info.dialogs ? () => pickFolder("Chọn nơi lưu file sách", "").catch(() => null) : undefined,
+                                  pickFolder: info.dialogs ? () => pickFolder("Chọn nơi lưu", "").catch(() => null) : undefined,
                                   onOpenStudio: (book) => window.location.assign(`#/studio/${book.id}?tab=music`),
                                 }
                         }

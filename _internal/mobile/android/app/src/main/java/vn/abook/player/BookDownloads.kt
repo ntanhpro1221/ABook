@@ -157,7 +157,7 @@ object BookDownloads {
     /** Lời cho người nghe + chữ gốc (chỉ khi là lỗi mạng đã dịch thành câu) - dùng chung cho lời gọi bị từ chối và sự kiện "download". */
     fun describe(error: Exception, fallback: String = error.javaClass.simpleName): Pair<String, String?> {
         if (error is Pin.ChangedException) return (error.message ?: Pin.CHANGED) to null
-        if (NetErrors.unpaired(error)) return "Máy kia đã thôi ghép — bạn ghép lại để tải và nghe sách." to null
+        if (NetErrors.unpaired(error)) return "Máy kia đã bỏ ghép — bạn ghép lại để tải và nghe sách." to null
         val kind = NetErrors.kind(error) ?: return (error.message ?: fallback) to null
         return NetErrors.message(kind) to NetErrors.technical(error)
     }
@@ -258,48 +258,7 @@ object BookDownloads {
         if (expectedSize > 0 && AudioRevision.matches(target, expectedSize, digest)) return 0
         target.parentFile?.mkdirs()
         val partial = File(target.path + ".part")
-        // Phần dở chỉ được nối khi biết nó thuộc phiên bản nào (ETag cạnh nó) và máy kia xác nhận đúng phiên bản + đúng chỗ (PartResume).
-        var (have, tag) = PartResume.point(partial, expectedSize)
-        var connection = SyncLink.bookFile(context, link, remote, relative, have, tag)
-        var code = Pin.guard { connection.responseCode }
-        // 416: phần dở dài hơn file hiện có trên máy kia (file đã đổi) - bỏ phần dở như đuôi lạ bên dưới.
-        if (code >= 400 && !(code == 416 && have > 0)) {
-            connection.disconnect()
-            throw IllegalStateException("Không tải được $relative (mã $code)")
-        }
-        var answer = if (code == 416) PartResume.Answer.STALE_TAIL
-        else PartResume.answer(code, connection.getHeaderField("Content-Range"), connection.getHeaderField("ETag"), have, tag)
-        if (have > 0 && answer == PartResume.Answer.STALE_TAIL) {
-            // 206 mà ETag lệch (máy kia bỏ qua If-Range): đây là đuôi của file khác. Bỏ phần dở, hỏi lại cả file.
-            connection.disconnect()
-            PartResume.discard(partial)
-            have = 0
-            connection = SyncLink.bookFile(context, link, remote, relative)
-            code = Pin.guard { connection.responseCode }
-            if (code >= 400) {
-                connection.disconnect()
-                throw IllegalStateException("Không tải được $relative (mã $code)")
-            }
-            answer = PartResume.Answer.WHOLE
-        }
-        val append = answer == PartResume.Answer.RESUME
-        try {
-            val initial = if (append) have else 0L
-            if (connection.getHeaderFieldLong("Content-Length", -1) > limit - initial) throw PeerTransfer.Limit()
-            java.io.FileOutputStream(partial, append).use { output ->
-                // Ghi phiên bản SAU khi cắt `.part` (mở không nối): phần cũ không bao giờ mang ETag mới.
-                if (!append) PartResume.stamp(partial, connection.getHeaderField("ETag"))
-                connection.inputStream.use { input ->
-                    PeerTransfer.copy(input, output, limit, target.parentFile!!, initial) { gate.check() }
-                }
-                output.fd.sync()
-            }
-        } catch (error: Exception) {
-            if (error is PeerTransfer.Limit || expectedSize <= 0) PartResume.discard(partial)
-            throw error
-        } finally {
-            connection.disconnect()
-        }
+        PeerTransfer.fetchResumable({ from, tag -> SyncLink.bookFile(context, link, remote, relative, from, tag) }, relative, partial, expectedSize, limit, target.parentFile!!) { gate.check() }
         // Cỡ cuối phải đúng cỡ sách ghi trước khi nhận file: thiếu thì giữ phần dở cho lần sau, khác thì bỏ - không bao giờ đổi tên file sai thành file thật.
         when (PartResume.finish(partial.length(), expectedSize)) {
             PartResume.Final.OK -> {}
@@ -317,7 +276,7 @@ object BookDownloads {
             throw java.io.IOException("Bản thu đã đổi trong lúc tải; bạn hãy tải lại.")
         }
         if (!partial.renameTo(target)) {
-            throw java.io.IOException("Không ghi được file; bạn hãy thử tải lại.")
+            throw java.io.IOException("Chưa ghi được file; bạn hãy thử tải lại.")
         }
         if (actual.isNotEmpty()) Store.rememberDigest(id, relative, target, actual)
         PartResume.tagFile(partial).delete()
@@ -333,7 +292,7 @@ object BookDownloads {
             progress: (Long, Long) -> Unit = { _, _ -> }) {
         Store.bookDir(id) // xác minh đích trước mọi yêu cầu mạng hay ghi dữ liệu
         Store.requireBookId(remoteId ?: id)
-        val link = if (source != null) Peers.link(context, source) ?: throw IllegalStateException("Thiết bị này đã thôi ghép")
+        val link = if (source != null) Peers.link(context, source) ?: throw IllegalStateException("Thiết bị này đã bỏ ghép")
         else Peers.Link(SyncLink.base(context), SyncLink.prefs(context).getString("token", "") ?: "")
         val remote = if (source != null) remoteId ?: throw IllegalArgumentException("thiếu remoteId") else id
         if (source == null) matchImported(context) // đã mở cuốn này từ file: audio sẵn trên máy, chỉ tải phần còn thiếu

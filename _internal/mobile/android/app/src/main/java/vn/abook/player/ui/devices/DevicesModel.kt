@@ -1,5 +1,7 @@
 package vn.abook.player.ui.devices
 
+import vn.abook.player.formatSize
+
 import androidx.compose.runtime.Immutable
 import vn.abook.player.ui.data.Choice
 import vn.abook.player.ui.data.Fmt
@@ -7,7 +9,6 @@ import vn.abook.player.ui.data.Fmt
 /*
  * Mô hình dữ liệu của ba màn Thiết bị (Nối máy tính, Chia sẻ thư viện, Dung lượng) và phần logic thuần của chúng: lời trạng thái, nhãn nút tải, điều kiện "Kết nối"
  * sẵn sàng, lời hỏi trước khi bỏ ghép. Không Android, không Compose ngoài dấu @Immutable - thử được trên JVM không cần Robolectric.
- * Lời giữ nguyên chữ của bản WebView (android/DevicesScreen.tsx, shared/connectionRoute.ts, shared/unpair.ts) ở những chỗ cùng một ý.
  */
 
 /** Ba màn con của nhóm "Thiết bị" ở Cài đặt. */
@@ -56,7 +57,7 @@ sealed interface Reach {
     /** Không nối được: `message` là câu cho người nghe (đã có tên máy), `technical` là chữ gốc của lỗi cho phần chi tiết. */
     data class Offline(val message: String, val technical: String? = null) : Reach
 
-    /** Máy kia đã thôi ghép điện thoại này - không phải tắt máy hay khác mạng. */
+    /** Máy kia đã bỏ ghép điện thoại này - không phải tắt máy hay khác mạng. */
     data object Unpaired : Reach
 
     /** Chứng chỉ của máy kia đã đổi: `message` là câu bảo ghép lại. */
@@ -84,7 +85,7 @@ data class Paired(
             Reach.Checking -> if (via.isEmpty()) "Đang kiểm tra" else DeviceText.route(via)
             Reach.Ok -> if (!main && books > 0) "$books cuốn nghe được · ${DeviceText.route(via)}" else DeviceText.route(via)
             is Reach.Offline -> DeviceText.OFFLINE
-            Reach.Unpaired -> "$name đã thôi ghép với điện thoại này"
+            Reach.Unpaired -> "$name đã bỏ ghép với điện thoại này"
             is Reach.Changed -> reach.message
         }
 }
@@ -127,7 +128,7 @@ data class RemoteBook(
     val detail: String
         get() = buildString {
             append("$chaptersAvailable/$chaptersTotal chương · ${Fmt.length(duration)}")
-            if (!downloaded && bytes > 0) append(" · ${Fmt.size(bytes)}")
+            if (!downloaded && bytes > 0) append(" · ${formatSize(bytes)}")
             if (producing) append(" · đang làm")
         }
 }
@@ -175,7 +176,7 @@ sealed interface Attempt {
 
 /** Cách nối: tự tìm trong Wi-Fi, chọn máy đã ghép Bluetooth, hay gõ địa chỉ. */
 enum class PairMethod(override val label: String) : Choice {
-    Wifi("Wi-Fi"), Bluetooth("Bluetooth"), Address("Địa chỉ");
+    Wifi("Tự tìm"), Bluetooth("Bluetooth"), Address("Nhập địa chỉ");
 
     override val key: String get() = name.lowercase()
 }
@@ -184,6 +185,7 @@ enum class PairMethod(override val label: String) : Choice {
 @Immutable
 sealed interface Bluetooth {
     data object Off : Bluetooth
+    data object Explain : Bluetooth
     data object Listing : Bluetooth
 
     /** Android không hỏi quyền nữa (từ chối hẳn): chỉ Cài đặt bật lại được. */
@@ -241,8 +243,8 @@ data class Stored(val id: String, val title: String, val bytes: Long, val partia
 
 @Immutable
 data class Storage(val bytes: Long = 0, val free: Long = 0, val entries: List<Stored> = emptyList()) {
-    /** Một dòng cho phần đầu danh sách: "1,2 GB · còn trống 20 GB". */
-    val line: String get() = "${Fmt.size(bytes)} · còn trống ${Fmt.size(free)}"
+    /** Một dòng cho phần đầu danh sách: "Sách 1,2 GB · còn trống 20 GB"; chưa có sách (dưới 1 KB) thì "Chưa có sách · còn trống 20 GB" (web: storageSummary, cùng từng chữ). */
+    val line: String get() = "${if (bytes < 1024) "Chưa có sách" else "Sách ${formatSize(bytes)}"} · còn trống ${formatSize(free)}"
 }
 
 // ---- bỏ ghép ----------------------------------------------------------------------------------------------------------
@@ -268,7 +270,27 @@ enum class ForgetChoice { Plain, Send, Discard }
 data class ForgetCopy(val title: String, val lines: List<String>, val send: String?, val discard: String, val edited: Boolean = false)
 
 object DeviceText {
-    const val OFFLINE = "Không kết nối được - máy đang tắt hoặc khác Wi-Fi"
+    fun failure(title: String, detail: String?): String =
+        listOf(title, detail?.takeIf { it.isNotBlank() }).filterNotNull().joinToString(". ")
+    fun studioBlocked(names: List<String>): String = when (names.size) {
+        0 -> "Chưa ghép với máy tính nào"
+        1 -> listenOnly(names[0])
+        2 -> "Máy tính ${names[0]} và ${names[1]} đều chỉ cho nghe - trên từng máy, bật Cài đặt › Thiết bị › “Điều khiển từ xa”."
+        else -> "Các máy tính đã ghép đều chỉ cho nghe - trên từng máy, bật Cài đặt › Thiết bị › “Điều khiển từ xa”."
+    }
+    const val OFFLINE = "Chưa kết nối được - máy đang tắt hoặc khác Wi-Fi"
+
+    /** Trang tải ABook cho máy tính (web: DESKTOP_RELEASES của android/DevicesScreen.tsx) - "Tải ABook Windows" mở nó, "Chép địa chỉ" chép nó. */
+    const val DESKTOP_RELEASES = "https://github.com/ntanhpro1221/ABook/releases"
+
+    /** Tên công tắc chia sẻ trên máy tính (web: SYNC_SWITCH_LABEL của shared/syncSwitch.ts) - lời "Cách lấy mã" gọi đúng tên ấy. */
+    const val SYNC_SWITCH_LABEL = "Kết nối Wi-Fi"
+
+    /** "Cách lấy mã": mã 6 số lấy ở đâu trên máy tính (cùng câu với PairPanel của web). */
+    const val PAIR_CODE_HELP = "Trong Cài đặt › Thiết bị của máy tính, bật “$SYNC_SWITCH_LABEL” rồi chọn ghép thiết bị để lấy mã 6 số."
+
+    /** "Nghe khi ra ngoài": máy đã ghép không trả lời vì khác mạng - app không cần gì riêng, mạng riêng ảo cho máy tính một địa chỉ tới được (web DevicesScreen). */
+    const val AWAY_HELP = "Cho hai máy vào cùng một mạng riêng ảo (Tailscale, ZeroTier, NetBird, WireGuard), rồi mở mục này một lần khi còn ở nhà."
 
     /** Cùng chữ với shared/connectionRoute.ts: nói đường nối thành công, không lộ địa chỉ. */
     fun route(address: String?): String {
@@ -303,7 +325,7 @@ object DeviceText {
         val lines = ArrayList<String>()
         if (cache) {
             val downloaded = if (unsent.cacheBytes > 0) {
-                ", và ${if (unsent.cacheBytes < 1024L * 1024) "dưới 1 MB" else Fmt.size(unsent.cacheBytes)} đã tải về điện thoại này sẽ bị xoá"
+                ", và ${if (unsent.cacheBytes < 1024L * 1024) "dưới 1 MB" else formatSize(unsent.cacheBytes)} đã tải về điện thoại này sẽ bị xoá"
             } else ""
             lines += "${unsent.cacheBooks} cuốn của $device sẽ rời Thư viện$downloaded."
             if (unsent.places > 0) lines += "Chỗ nghe của ${unsent.places} cuốn vẫn giữ - ghép lại đúng $device là nghe tiếp được."

@@ -100,8 +100,14 @@ def create_suspended(args, *, cwd, env, log, desktop, show=0):
             startup.stdin=inherit(null);startup.stdout=startup.stderr=inherit(log)
             command=c.create_unicode_buffer(subprocess.list2cmdline([str(a) for a in args]))
             block=c.create_unicode_buffer("\0".join(f"{a}={b}" for a,b in sorted(env.items(),key=lambda p:p[0].upper()))+"\0\0")
-            if not k.CreateProcessW(None,command,None,None,True,0x08000404,block,str(cwd),c.byref(startup),c.byref(info)):
-                raise c.WinError(c.get_last_error())
+            # Con (và cả cây của nó) thừa hưởng chế độ lỗi lúc tạo: chết lúc khởi động thì trả mã, không để csrss vẽ hộp lỗi
+            # lên màn hình chủ máy - hộp ấy không nằm trên desktop riêng (31-10 0xc0000142).
+            previous=k.SetErrorMode(0x8003)
+            try:
+                if not k.CreateProcessW(None,command,None,None,True,0x08000404,block,str(cwd),c.byref(startup),c.byref(info)):
+                    raise c.WinError(c.get_last_error())
+            finally:
+                k.SetErrorMode(previous)
         process=Process(args,info,desktop)
         try:
             actual=startup_desktop(process._handle)

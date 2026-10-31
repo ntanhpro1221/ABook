@@ -30,7 +30,14 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import vn.abook.player.ui.data.CoverLoader
+import vn.abook.player.ui.data.PlayerChapter
 import vn.abook.player.ui.data.PlayerState
+import vn.abook.player.ui.data.FakePrepareSource
+import vn.abook.player.ui.data.PreparePlan
+import vn.abook.player.ui.data.PreparedChapter
+import vn.abook.player.ui.data.PrepareState
+import vn.abook.player.ui.data.PrepareStatus
+import kotlinx.coroutines.Dispatchers
 import vn.abook.player.ui.player.MiniPlayerSlot
 import vn.abook.player.ui.player.MorphingMiniPlayer
 import vn.abook.player.ui.theme.Abook
@@ -44,13 +51,15 @@ class NowPlayingUiTest {
     private lateinit var window: NowPlayingWindowState
     private lateinit var model: FakeNowPlayingModel
     private lateinit var scope: CoroutineScope
+    private val miniCovers = CoverLoader()
 
     private fun show(dark: Boolean = false, expanded: Boolean = true, reading: Boolean = false,
-                     playing: Boolean = false, sheet: PlayerSheet? = null, longTitles: Boolean = false) {
-        val initial = FakeNowPlayingModel.demoState().copy(playing = playing,
+                     playing: Boolean = false, sheet: PlayerSheet? = null, longTitles: Boolean = false, base: NowPlayingState? = null,
+                     prepare: vn.abook.player.ui.data.PrepareState? = null) {
+        val initial = (base ?: FakeNowPlayingModel.demoState()).copy(playing = playing,
             chapterTitle = if (longTitles) LONG_CHAPTER else FakeNowPlayingModel.demoState().chapterTitle,
             bookTitle = if (longTitles) LONG_BOOK else FakeNowPlayingModel.demoState().bookTitle)
-        model = FakeNowPlayingModel(initial)
+        model = FakeNowPlayingModel(initial, prepare = prepare)
         rule.setContent {
             AbookTheme(dark) {
                 scope = rememberCoroutineScope()
@@ -69,9 +78,9 @@ class NowPlayingUiTest {
                             MorphingMiniPlayer(
                                 PlayerState(
                                     bookId = now.bookId, bookTitle = now.bookTitle, chapterId = now.chapterId, chapterTitle = now.chapterTitle,
-                                    playing = now.playing, durationMs = now.durationMs,
+                                    playing = now.playing, durationMs = now.durationMs, cover = now.cover,
                                 ),
-                                { model.position.milliseconds.value }, CoverLoader(), model::toggle, window::open,
+                                { model.position.milliseconds.value }, miniCovers, model::toggle, window::open,
                             )
                         }
                         Box(Modifier.fillMaxWidth().height(56.dp).background(Abook.colors.panel))
@@ -81,14 +90,16 @@ class NowPlayingUiTest {
         }
         rule.waitForIdle()
     }
+    /** The real mini player stays composed under the window (hidden from accessibility), so text of the window itself is looked up inside it. */
+    private fun inWindow(matcher: SemanticsMatcher) = matcher and hasAnyAncestor(hasTestTag("now_playing"))
     private fun shot(name: String) = rule.onRoot().captureRoboImage("src/test/snapshots/np_$name.png")
     private fun bounds(tag: String): DpRect {
-        val content = rule.onNodeWithTag(tag).getUnclippedBoundsInRoot()
-        if (tag != "now_playing") return content
-        // Compose exposes the shared overlay's translated origin on the content, and its animated size
-        // on the placeholder (ScaleToBounds keeps content at final size). Inspect both actual UI nodes.
-        val placeholder = rule.onNodeWithTag("now_playing_bounds").getUnclippedBoundsInRoot()
-        return DpRect(content.left, content.top, content.left + placeholder.width, content.top + placeholder.height)
+        if (tag != "now_playing") return rule.onNodeWithTag(tag).getUnclippedBoundsInRoot()
+        // The window is laid out at its final size and clipped by a rectangle that grows out of the bar (graphicsLayer only), so the container's
+        // bounds are the window state's own clip rectangle, in the overlay's pixels.
+        val layer = rule.onNodeWithTag("now_playing_bounds").getUnclippedBoundsInRoot()
+        val clip = with(rule.density) { window.containerBounds(layer.width.toPx(), layer.height.toPx()) }
+        return with(rule.density) { DpRect(clip.left.toDp(), clip.top.toDp(), clip.right.toDp(), clip.bottom.toDp()) }
     }
     private fun assertBounds(a: DpRect, b: DpRect, tolerance: Float = 1f) {
         assertEquals("left", a.left.value, b.left.value, tolerance)
@@ -109,8 +120,8 @@ class NowPlayingUiTest {
     @Test fun sleepDark() { show(dark = true, sheet = PlayerSheet.Sleep); shot("sleep_dark") }
     @Test fun chaptersLight() { show(sheet = PlayerSheet.Chapters); shot("chapters_light") }
     @Test fun chaptersDark() { show(dark = true, sheet = PlayerSheet.Chapters); shot("chapters_dark") }
-    @Test fun longTitlesLight() { show(longTitles = true); rule.onNodeWithText(LONG_CHAPTER).assertIsDisplayed(); shot("long_light") }
-    @Test fun longTitlesDark() { show(dark = true, longTitles = true); rule.onNodeWithText(LONG_BOOK).assertIsDisplayed(); shot("long_dark") }
+    @Test fun longTitlesLight() { show(longTitles = true); rule.onNode(inWindow(hasText(LONG_CHAPTER))).assertIsDisplayed(); shot("long_light") }
+    @Test fun longTitlesDark() { show(dark = true, longTitles = true); rule.onNode(inWindow(hasText(LONG_BOOK))).assertIsDisplayed(); shot("long_dark") }
 
     @Test fun secondaryActionsShareOneLabelLineAndEqualColumns() {
         show()
@@ -125,7 +136,7 @@ class NowPlayingUiTest {
     @Test fun readingHeaderKeepsCoverAndTitlesBesideEachOtherAboveTheText() {
         show(reading = true)
         val cover = bounds("player_cover_small")
-        val chapter = rule.onNodeWithText(FakeNowPlayingModel.demoState().chapterTitle, useUnmergedTree = true).getUnclippedBoundsInRoot()
+        val chapter = rule.onNode(inWindow(hasText(FakeNowPlayingModel.demoState().chapterTitle)), useUnmergedTree = true).getUnclippedBoundsInRoot()
         val text = bounds("read_along_text")
         assertEquals("ô bìa nhỏ 48 dp", 48f, cover.width.value, 0.5f)
         assertTrue("tên chương đứng cạnh bìa nhỏ: $cover / $chapter", chapter.left >= cover.right)
@@ -141,7 +152,7 @@ class NowPlayingUiTest {
         // Giữa chuyển cảnh, chữ chương luôn nằm dưới mép bìa và khối tên đang thu lại - không đè lên nhau.
         val cover = rule.onNodeWithTag("player_cover").getUnclippedBoundsInRoot()
         // Tên sách dưới bìa (không phải chữ trang trí trên bìa tự vẽ).
-        val book = rule.onAllNodesWithText(FakeNowPlayingModel.demoState().bookTitle, useUnmergedTree = true)
+        val book = rule.onAllNodes(inWindow(hasText(FakeNowPlayingModel.demoState().bookTitle)), useUnmergedTree = true)
             .filterToOne(!hasTestTag("cover_title")).getUnclippedBoundsInRoot()
         val text = rule.onNodeWithTag("read_along_text").getUnclippedBoundsInRoot()
         assertTrue("chữ đè tên: $book / $text", text.top >= book.bottom - 0.5.dp)
@@ -173,7 +184,7 @@ class NowPlayingUiTest {
     }
     @Test fun sheetHandleReallyDragsAndCloses() {
         show(sheet = PlayerSheet.Speed)
-        assertTrue("không còn nút đóng trùng Back", rule.onAllNodesWithContentDescription("Đóng bảng").fetchSemanticsNodes().size <= 1)
+        assertTrue("không còn nút đóng trùng Back", rule.onAllNodesWithContentDescription("Đóng").fetchSemanticsNodes().size <= 1)
         rule.onNodeWithTag("player_sheet_grip").performTouchInput { swipeDown(startY = centerY, endY = centerY + 40f, durationMillis = 300) }
         rule.onNodeWithTag("player_sheet_speed").assertIsDisplayed()
         rule.onNodeWithTag("player_sheet_grip").performTouchInput { swipeDown(startY = centerY, endY = centerY + 900f, durationMillis = 200) }
@@ -181,6 +192,21 @@ class NowPlayingUiTest {
         rule.onNodeWithTag("player_sheet_speed").assertDoesNotExist()
         rule.onNodeWithTag("now_playing").assertIsDisplayed()
     }
+    /** Chủ sách 30-10: giờ đổi tại chỗ, không có khung nào mà dòng cũ và dòng mới cùng hiện (trượt). */
+    @Test fun timeReadoutsChangeInPlaceWithoutRolling() {
+        show(playing = true)
+        rule.mainClock.autoAdvance = false
+        rule.runOnUiThread { model.skip(15) }
+        rule.mainClock.advanceTimeByFrame()
+        rule.mainClock.advanceTimeBy(40)
+        for (tag in listOf("time_elapsed", "time_left")) {
+            val texts = rule.onAllNodes(inWindow(hasTestTag(tag)), useUnmergedTree = true).fetchSemanticsNodes()
+                .flatMap { it.config.getOrElse(androidx.compose.ui.semantics.SemanticsProperties.Text) { emptyList() } }
+            assertEquals("$tag shows one line mid-change: $texts", 1, texts.size)
+        }
+        rule.mainClock.autoAdvance = true
+    }
+
     @Test fun returnChipAppearsAfterSeekAndNeverMovesTransport() {
         show()
         val before = bounds("transport")
@@ -222,7 +248,8 @@ class NowPlayingUiTest {
         val mini = bounds("mini_player")
         rule.mainClock.autoAdvance = false
         rule.onNodeWithTag("mini_open").performClick()
-        rule.mainClock.advanceTimeByFrame()
+        // One build frame (the window is composed and laid out hidden), then the motion starts at the bar.
+        repeat(2) { rule.mainClock.advanceTimeByFrame() }
         val start = bounds("now_playing")
         shot("opening_start")
         assertBounds(mini, start, 4f)
@@ -242,6 +269,122 @@ class NowPlayingUiTest {
         assertBounds(mini, bounds("mini_player"), 1f)
         rule.mainClock.autoAdvance = true
     }
+    /** A real image file as the book's cover (a two-colour picture, so a placeholder and the artwork differ in pixels as well as in text). */
+    private fun artCover(): vn.abook.player.ui.data.CoverRef {
+        val file = java.io.File.createTempFile("np_cover", ".png").apply { deleteOnExit() }
+        val bitmap = android.graphics.Bitmap.createBitmap(120, 180, android.graphics.Bitmap.Config.ARGB_8888)
+        android.graphics.Canvas(bitmap).apply {
+            drawColor(android.graphics.Color.rgb(200, 40, 40))
+            drawRect(0f, 90f, 120f, 180f, android.graphics.Paint().apply { color = android.graphics.Color.rgb(30, 60, 200) })
+        }
+        file.outputStream().use { bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
+        return vn.abook.player.ui.data.CoverRef(file.path, 1)
+    }
+
+    @Test fun miniBarKeepsItsArtworkThroughOpenAndCloseAndNeverFallsBackToInitials() {
+        val ref = artCover()
+        show(expanded = false, base = FakeNowPlayingModel.demoState().copy(cover = ref))
+        val initials = vn.abook.player.ui.data.CoverArt.label(FakeNowPlayingModel.demoState().bookTitle, null)
+        val px = with(rule.density) { 36.dp.roundToPx() }
+        // The art is decoded off the main thread: wait for it, then the bar must show it (no initials text) before anything opens.
+        rule.waitUntil(5_000) { miniCovers.peek(miniCovers.key(ref.path, ref.stamp, px)) != null }
+        rule.waitForIdle()
+        rule.onAllNodesWithText(initials, useUnmergedTree = true).assertCountEquals(0)
+        rule.mainClock.autoAdvance = false
+        rule.onNodeWithTag("mini_open").performClick()
+        rule.mainClock.advanceTimeBy(1000)
+        rule.onAllNodesWithText(initials, useUnmergedTree = true).assertCountEquals(0)
+        rule.onNodeWithTag("collapse_player").performClick()
+        // Every frame of the way back, down to the last, the bar's cover is the artwork.
+        repeat(30) {
+            rule.mainClock.advanceTimeByFrame()
+            rule.onAllNodesWithText(initials, useUnmergedTree = true).assertCountEquals(0)
+        }
+        rule.mainClock.advanceTimeBy(1000)
+        rule.onNodeWithTag("now_playing").assertDoesNotExist()
+        // The bar kept its decoded artwork the whole time (it is still the cached image, not re-decoded or dropped).
+        assertNotNull(miniCovers.peek(miniCovers.key(ref.path, ref.stamp, px)))
+        rule.onAllNodesWithText(initials, useUnmergedTree = true).assertCountEquals(0)
+        rule.mainClock.autoAdvance = true
+    }
+
+    /** Quiet time after which the layer composes the window ahead of its first opening (the test clock runs the delay). */
+    private fun letTheLayerPark() {
+        rule.mainClock.advanceTimeBy(PARK_AFTER_MS + 500)
+        rule.waitForIdle()
+    }
+
+    @Test fun aParkedWindowIsInTheTreeButNeitherOnTheScreenNorInTheSemantics() {
+        show(expanded = false)
+        assertFalse(window.composed)
+        letTheLayerPark()
+        assertTrue(window.composed)
+        assertFalse(window.shown)
+        // Not in the accessibility / test tree, so a screen reader and every "closed" assertion see nothing of it.
+        rule.onNodeWithTag("now_playing").assertDoesNotExist()
+        rule.onNodeWithTag("now_playing", useUnmergedTree = true).assertExists()
+    }
+
+    @Test fun aParkedWindowTakesNoTouchAndOpensWithoutBeingBuiltAgain() {
+        show(expanded = false)
+        letTheLayerPark()
+        val overlay = window.flight.overlay
+        assertNotNull(overlay)
+        // The window's own buttons are laid out over the bar; a tap on the bar must still reach the bar.
+        rule.onNodeWithTag("mini_open").performClick()
+        rule.mainClock.advanceTimeBy(1500)
+        rule.waitForIdle()
+        assertTrue(window.shown)
+        rule.onNodeWithTag("now_playing").assertIsDisplayed()
+        assertSame("the parked composition is the one that opens", overlay, window.flight.overlay)
+        assertBounds(bounds("now_playing"), bounds("now_playing_bounds"))
+    }
+
+    @Test fun aClosedWindowStaysParkedForTheNextOpening() {
+        show()
+        val overlay = window.flight.overlay
+        rule.onNodeWithTag("collapse_player").performClick()
+        rule.mainClock.advanceTimeBy(1500)
+        rule.waitForIdle()
+        assertFalse(window.shown)
+        assertTrue(window.composed)
+        rule.onNodeWithTag("now_playing").assertDoesNotExist()
+        rule.onNodeWithTag("mini_open").performClick()
+        rule.mainClock.advanceTimeBy(1500)
+        rule.waitForIdle()
+        rule.onNodeWithTag("now_playing").assertIsDisplayed()
+        assertSame(overlay, window.flight.overlay)
+    }
+
+    @Test fun noBookNoParkedWindow() {
+        show(expanded = false, base = FakeNowPlayingModel.demoState().copy(bookId = ""))
+        letTheLayerPark()
+        assertFalse(window.composed)
+    }
+
+    @Test fun aParkedReadingWindowReadsNothingUntilItIsOpen() {
+        show(expanded = false, reading = true)
+        letTheLayerPark()
+        assertTrue(window.composed)
+        assertFalse("loadText" in model.actions)
+        rule.runOnUiThread { window.open() }
+        rule.mainClock.advanceTimeBy(1500)
+        rule.waitForIdle()
+        assertTrue("loadText" in model.actions)
+        rule.onNodeWithTag("collapse_player").performClick()
+        rule.mainClock.advanceTimeBy(1500)
+        rule.waitForIdle()
+        rule.onNodeWithTag("read_along_text", useUnmergedTree = true).assertDoesNotExist()
+    }
+
+    @Test fun windowIsTransparentOverTheBarAtBothEndsOfTheMotion() {
+        // At progress 0 (the start of an opening, the landing of a closing) the real bar shows, untouched; the window is fully there from a few percent on.
+        assertEquals(0f, windowAlpha(0f), 0f)
+        assertEquals(1f, windowAlpha(1f), 0f)
+        assertTrue(windowAlpha(0.02f) in 0f..1f && windowAlpha(0.02f) > 0f)
+        assertEquals(1f, windowAlpha(0.2f), 0f)
+    }
+
     @Test fun controlsUseRealModelActionsAndChoiceClosesSheet() {
         show()
         rule.onNodeWithContentDescription("Tới 15 giây").performClick()
@@ -295,6 +438,169 @@ class NowPlayingUiTest {
             swipe(Offset(width * 0.5f, height * 0.035f), Offset(width * 0.5f, height * 0.6f), 400)
         }
         rule.onNodeWithTag("mini_player").assertIsDisplayed()
+    }
+
+    private fun endedState(whole: Boolean = true) = FakeNowPlayingModel.demoState().copy(ended = true, whole = whole)
+
+    @Test fun finishedBookSaysSoOffersRestartOtherBooksAndTheLibrary() {
+        show(base = endedState())
+        var home = 0
+        window.toLibrary = { home++ }
+        model.choices = PlayerEnd.Choices(others = listOf(
+            PlayerEnd.Pick("b2", "Truyện thứ hai", "Đã nghe 40% cả cuốn · còn 3 giờ"), PlayerEnd.Pick("b3", "Truyện thứ ba", "Chưa nghe · 5 giờ")))
+        // Lời đọc model.endChoices() khi `ended` hay danh sách giọng đổi: đổi số giọng để đọc lại.
+        model.update(endedState().copy(voices = listOf(PlayerVoice("v", "Giọng"))))
+        rule.waitForIdle()
+        rule.onNodeWithText(PlayerText.ENDED_BOOK, substring = true).assertIsDisplayed()
+        rule.onNodeWithTag("end_restart").assertIsDisplayed().performClick()
+        assertTrue(model.actions.contains("restart"))
+        rule.onNodeWithText("Nghe cuốn khác").assertIsDisplayed()
+        shot("ended_light")
+        rule.onNodeWithTag("end_other_b2").assertIsDisplayed().performClick()
+        assertTrue(model.actions.contains("listen:b2"))
+        rule.onNodeWithTag("end_library").assertIsDisplayed().performClick()
+        assertEquals(1, home)
+    }
+
+    @Test fun finishedPartOffersTheNextVolumeInsteadOfRestart() {
+        show(base = endedState())
+        model.choices = PlayerEnd.Choices(next = PlayerEnd.Pick("t2", "Bộ truyện · Tập 2", "Chưa nghe · 6 giờ"))
+        model.update(endedState().copy(bookTitle = "Bộ truyện · Tập 1", voices = listOf(PlayerVoice("v", "Giọng"))))
+        rule.waitForIdle()
+        rule.onNodeWithText(PlayerText.ENDED_PART).assertIsDisplayed()
+        rule.onNodeWithTag("end_next").assertIsDisplayed()
+        rule.onNodeWithText("Nghe tiếp Tập 2").assertIsDisplayed().performClick()
+        assertTrue(model.actions.contains("listen:t2"))
+        rule.onNodeWithTag("end_restart").assertDoesNotExist()
+    }
+
+    @Test fun caughtUpBookNamesWhatIsLeftAndReplacesTheBookTitleInTheSubtitle() {
+        show(base = endedState(whole = false))
+        rule.onNodeWithTag("end_caught_up").assertIsDisplayed()
+        rule.onNodeWithText("${PlayerText.CAUGHT_UP_HEAD}. ${PlayerText.CAUGHT_UP_DETAIL}").assertIsDisplayed()
+        rule.onAllNodesWithText(PlayerText.CAUGHT_UP_HEAD, substring = true, useUnmergedTree = true).assertCountEquals(2)
+        shot("caught_up_light")
+    }
+
+    private fun oneChapter() = FakeNowPlayingModel.demoState().let { it.copy(chapters = it.chapters.take(1)) }
+
+    @Test fun lastChapterButtonSaysSo() {
+        show(base = oneChapter())
+        rule.onNodeWithContentDescription("Đây là chương cuối").assertIsDisplayed()
+    }
+
+    @Test fun nextChapterWithoutAudioSaysWhy() {
+        show(base = oneChapter().copy(moreChapters = true))
+        rule.onNodeWithContentDescription("Chương sau chưa có audio").assertIsDisplayed()
+    }
+
+    @Test fun nextChapterIsPlainWhenThereIsOne() {
+        show()
+        rule.onNodeWithContentDescription("Chương sau").assertIsDisplayed()
+    }
+
+    @Test fun playButtonSaysWhatItWaitsFor() {
+        show(base = FakeNowPlayingModel.demoState().copy(buffering = true, speaking = false), playing = true)
+        rule.onNodeWithContentDescription("Đang tải âm thanh").assertIsDisplayed()
+    }
+
+    @Test fun aNoteShowsItsActionAndTappingRunsIt() {
+        show()
+        model.say(PlayerNote("Máy khác đã nghe tới Chương 5 · 12:04", PlayerText.ELSEWHERE_ACTION, serial = 1, lifeMs = 20_000))
+        rule.waitForIdle()
+        rule.onNodeWithText("Máy khác đã nghe tới Chương 5 · 12:04").assertIsDisplayed()
+        shot("note_light")
+        rule.onNodeWithTag("player_note_action").performClick()
+        assertTrue(model.actions.contains("note"))
+        rule.waitForIdle()
+        rule.onNodeWithTag("player_note").assertDoesNotExist()
+    }
+
+    @Test fun moreSheetStartsWithTheWholeBookProgressLine() {
+        show(sheet = PlayerSheet.More, base = FakeNowPlayingModel.demoState().copy(chapters = List(4) { vn.abook.player.ui.data.PlayerChapter(it + 1, "C${it + 1}", 600_000) }, chapterId = 1))
+        rule.onNodeWithTag("book_progress").assertIsDisplayed()
+        shot("more_progress_light")
+    }
+
+    @Test fun lookSheetChangesAndRemembersTheTextSizeAndLineSpacing() {
+        show(sheet = PlayerSheet.Look)
+        var saved: ReadLook? = null
+        window.onLook = { saved = it }
+        rule.onNodeWithContentDescription("Cỡ chữ 24").assertIsDisplayed().performClick()
+        assertEquals(24, window.look.size)
+        rule.onNodeWithContentDescription("Giãn dòng 1,9").assertIsDisplayed().performClick()
+        assertEquals(1.9, window.look.leading, 0.0)
+        assertEquals(ReadLook(24, 1.9), saved)
+        shot("look_light")
+    }
+
+    @Test fun moreSheetOffersTheTextLookOnlyWhereThereIsTextToRead() {
+        show(sheet = PlayerSheet.More)
+        rule.onNodeWithContentDescription("Cỡ chữ và giãn dòng").assertIsDisplayed()
+    }
+
+    private val readingList get() = hasScrollAction() and hasAnyAncestor(hasTestTag("read_along_text"))
+
+    @Test fun readingShowsTheHintAndTouchingATextListensFromThere() {
+        show(reading = true, base = FakeNowPlayingModel.demoState().copy(voices = listOf(PlayerVoice("v", "Giọng"))))
+        rule.onNode(readingList).performScrollToNode(hasTestTag("read_hint"))
+        rule.onNodeWithTag("read_hint").assertIsDisplayed()
+        rule.onNodeWithText(ReadHint.TAP).assertIsDisplayed()
+        rule.onNodeWithTag("paragraph_0").performClick()
+        assertTrue("nghe từ chữ vừa chạm: ${model.actions}", model.actions.any { it.startsWith("seek:") })
+        assertTrue(window.look.tapped)
+        rule.waitForIdle()
+        rule.onNodeWithTag("read_hint").assertDoesNotExist()
+    }
+
+    @Test fun theEndOfTheTextOffersTheNextChapter() {
+        show(reading = true)
+        rule.onNode(readingList).performScrollToNode(hasTestTag("read_next_chapter"))
+        rule.onNodeWithTag("read_next_chapter").assertIsDisplayed().performClick()
+        assertTrue(model.actions.any { it.startsWith("jump:2") })
+    }
+
+    private fun prepareScene(): NowPlayingState = FakeNowPlayingModel.demoState().copy(
+        chapterId = 1, voiceId = "vieneu:a", voices = listOf(PlayerVoice("vieneu:a", "Giọng A")),
+        chapters = listOf(PlayerChapter(1, "Chương 1", 600_000), PlayerChapter(2, "Chương 2", 0, "t/2.txt"), PlayerChapter(3, "Chương 3", 0, "t/3.txt")),
+    )
+
+    @Test fun voiceSheetOffersToPrepareTheNextChaptersAndStopsWhenAsked() {
+        val source = FakePrepareSource(plan = PreparePlan(2, 2, 1800, 1500))
+        val prepare = PrepareState(source, CoroutineScope(Dispatchers.Unconfined))
+        show(sheet = PlayerSheet.Voice, base = prepareScene(), prepare = prepare)
+        rule.onNodeWithText(PrepareText.INTRO).assertIsDisplayed()
+        rule.onNodeWithText("30 phút nghe · máy cần khoảng 25 phút.").assertIsDisplayed()
+        rule.onNodeWithText("Làm trước 2 chương").assertIsDisplayed()
+        rule.onNodeWithText("Chỉ khi đang sạc").assertIsDisplayed()
+        shot("prepare_light")
+        rule.onNodeWithText("Làm trước 2 chương").performClick()
+        rule.waitForIdle()
+        assertEquals(listOf("start vieneu:a [2, 3] 2 chương tới charging=true"), source.calls.filter { it.startsWith("start") })
+        rule.onNodeWithText("Dừng làm trước").assertIsDisplayed().performClick()
+        rule.waitForIdle()
+        assertTrue(source.calls.contains("cancel"))
+    }
+
+    @Test fun voiceSheetShowsWhyPreparingWaitsAndWhyItFailed() {
+        val source = FakePrepareSource(status = PrepareStatus("running", "vieneu:a", "2 chương tới", bookId = FakeNowPlayingModel.demoState().bookId,
+            chapters = listOf(PreparedChapter(2, "Chương 2", 10, 4, false), PreparedChapter(3, "Chương 3", 10, 0, false)), waitingFor = "charging"))
+        val prepare = PrepareState(source, CoroutineScope(Dispatchers.Unconfined))
+        show(sheet = PlayerSheet.Voice, base = prepareScene(), prepare = prepare)
+        rule.onNodeWithText("Đã sẵn sàng 0/2 chương · chờ cắm sạc").assertIsDisplayed()
+        shot("prepare_waiting_light")
+    }
+
+    @Test fun deviceVoicesHaveNothingToPrepare() {
+        val prepare = PrepareState(FakePrepareSource(), CoroutineScope(Dispatchers.Unconfined))
+        show(sheet = PlayerSheet.Voice, base = prepareScene().copy(voiceId = "device:x"), prepare = prepare)
+        rule.onNodeWithTag("prepare_block").assertDoesNotExist()
+    }
+
+    @Test fun lastChapterOffersNothingToPrepare() {
+        val prepare = PrepareState(FakePrepareSource(), CoroutineScope(Dispatchers.Unconfined))
+        show(sheet = PlayerSheet.Voice, base = prepareScene().copy(chapterId = 3), prepare = prepare)
+        rule.onNodeWithTag("prepare_block").assertDoesNotExist()
     }
 
     companion object {

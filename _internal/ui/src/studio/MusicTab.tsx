@@ -1,8 +1,9 @@
+import { TickingValue } from "@/shared/TickingValue";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { SectionHeading } from "@/shared/SectionHeading";
 import { useBackLayer } from "@/shared/backStack";
 import { MoreInfo, SettingsRow } from "@/shared/SettingsNav";
-import { Switch } from "@/desktop/PhoneSync";
+import { Switch } from "@/desktop/Switch";
 import { MY_MUSIC_HELP } from "./musicLocal";
 import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
 import { Fold, Collapse } from "@/shared/Collapse";
@@ -354,7 +355,7 @@ export function MyMusic({ bookId, previewing, onPreview }: { bookId: string; pre
       setRemoving(null);
       toast("Đã xoá khỏi Nhạc của tôi");
     },
-    onError: (error: Error) => toast.error("Không xoá được bài này", { description: error.message }),
+    onError: (error: Error) => toast.error("Chưa xoá được bài này", { description: error.message }),
   });
   const tracks = data?.tracks ?? [];
   return (
@@ -366,7 +367,7 @@ export function MyMusic({ bookId, previewing, onPreview }: { bookId: string; pre
       )}
       {canImport && tracks.length > 0 && (
         <Button size="sm" variant="ghost" icon={Upload} loading={Boolean(progress)} onClick={() => void importFiles()} className="-ml-3">
-          {progress ? `Đang thêm ${progress.done}/${progress.total}` : "Thêm nhạc của bạn"}
+          <TickingValue>{progress ? `Đang thêm ${progress.done}/${progress.total}` : "Thêm nhạc của bạn"}</TickingValue>
         </Button>
       )}
       <MotionPresence open={canImport && !!tracks.length}><MusicModuleNotice view={data} queryKey={key} /></MotionPresence>
@@ -427,12 +428,12 @@ function MoodsPanel({ bookId, moods, onCompute }: { bookId: string; moods?: { ru
   const download = useMutation({
     mutationFn: () => api<MoodsModel>("/api/music/moods-model", { method: "POST" }),
     onSuccess: (result) => client.setQueryData(key, result),
-    onError: (error: Error) => toast.error("Không tải được phần đọc không khí", { description: error.message }),
+    onError: (error: Error) => toast.error("Chưa tải được phần đọc không khí", { description: error.message }),
   });
   const compute = useMutation({
     mutationFn: () => api<MusicView>(`/api/books/${bookId}/music/moods`, { method: "POST" }),
     onSuccess: onCompute,
-    onError: (error: Error) => toast.error("Không đọc lại được không khí các đoạn", { description: error.message }),
+    onError: (error: Error) => toast.error("Chưa đọc lại được không khí các đoạn", { description: error.message }),
   });
   if (!data) return <MotionRegion />;
   const running = Boolean(moods?.running) || compute.isPending;
@@ -450,7 +451,7 @@ function MoodsPanel({ bookId, moods, onCompute }: { bookId: string; moods?: { ru
           {moods?.error && <span className="text-sm text-warning">{moods.error}</span>}
         </div>
       ) : data.downloading ? (
-        <p className="text-sm">Đang tải phần đọc không khí{percent !== null ? ` - ${percent}%` : ""}</p>
+        <p data-motion-live className="text-sm">Đang tải phần đọc không khí{percent !== null ? ` - ${percent}%` : ""}</p>
       ) : data.downloadable && !info?.remote ? (
         <div className="flex flex-wrap items-center gap-3">
           <Button size="sm" variant="ghost" icon={Download} loading={download.isPending} onClick={() => download.mutate()}>
@@ -551,7 +552,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
       refreshSoon();
       if (result.error) toast.warning("Đã lưu lựa chọn", { description: result.error });
     },
-    onError: (error: Error) => toast.error("Không đổi được nhạc nền", { description: error.message }),
+    onError: (error: Error) => toast.error("Chưa đổi được nhạc nền", { description: error.message }),
   });
   const cancelDownload = useMutation({
     mutationFn: () => api<MusicView>(`/api/books/${bookId}/music/download/cancel`, { method: "POST" }),
@@ -560,7 +561,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
       client.setQueryData(key, { ...result, download: undefined });
       toast("Đã dừng tải nhạc nền");
     },
-    onError: (error: Error) => toast.error("Không dừng được việc tải nhạc", { description: error.message }),
+    onError: (error: Error) => toast.error("Chưa dừng được việc tải nhạc", { description: error.message }),
   });
   // Đổi bài / Chọn lại nhạc vừa xong: máy bắt đầu tải bài mới ở nền - hỏi lại ngay để hiện tiến độ.
   const refreshSoon = () => window.setTimeout(() => void client.invalidateQueries({ queryKey: key }), 600);
@@ -572,7 +573,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
       announceChange(bookId);
       refreshSoon();
     },
-    onError: (error: Error) => toast.error("Không chọn lại được nhạc", { description: error.message }),
+    onError: (error: Error) => toast.error("Chưa chọn lại được nhạc", { description: error.message }),
   });
 
   /** Bỏ một bài cho cả cuốn: lặng lẽ thì khó hiểu vì sao các đoạn khác cũng đổi bài, nên báo (kèm số đoạn đang dùng bài
@@ -636,7 +637,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
               ))}
             </Select>
           </SettingsRow>
-          <SettingsRow label={<label htmlFor="music-level">Mức nhạc dưới giọng đọc</label>} hint="Nhỏ hơn giọng đọc bấy nhiêu; máy tự bù bài to hay nhỏ">
+          <SettingsRow label={<label htmlFor="music-level">Mức nhạc nền</label>} hint="Nhỏ hơn giọng đọc bấy nhiêu; máy tự bù bài to hay nhỏ">
             <Select
               id="music-level"
               value={String(overrides.levelDb)}

@@ -9,6 +9,7 @@ import { DialogActions, Button, Dialog, IconButton } from "@/shared/ui";
 import { api } from "./api";
 import { useVoiceTry } from "./VoiceTry";
 import { estimateText, type VoiceRequest } from "./voiceTryText";
+import { useFadeScroller } from "@/shared/scrollFade";
 
 // "Áp dụng N thay đổi" mở hộp này thay vì chạy ngay (soát UX a6 01-10: bấm là chạy, không nói sẽ thu lại gì, hết bao lâu; số
 // trên nút còn lệch với "chờ áp dụng" ở Việc cần duyệt vì sửa ở Kịch bản / đổi giọng không được liệt kê ở đâu). Máy chủ
@@ -73,9 +74,10 @@ export function PendingList({
   showLines?: boolean;
   extra?: (item: PendingItem) => ReactNode;
 }) {
+  const scrollFade = useFadeScroller<HTMLUListElement>();
   const rows = useListPresence(items, (item) => `${item.section}:${item.key}`);
   return (
-    <ul className="max-h-72 divide-y divide-line overflow-y-auto">
+    <ul ref={scrollFade.ref} style={scrollFade.style} className="max-h-72 divide-y divide-line overflow-y-auto">
       {rows.map(({ item, key, state, ref }) => {
         const Icon = KIND_ICON[item.kind] ?? RefreshCw;
         return (
@@ -139,7 +141,7 @@ export function ApplyChangesDialog({
       if (count <= 1) onOpenChange(false);
       await client.invalidateQueries();
     } catch (error) {
-      toast.error("Không bỏ được thay đổi này", { description: (error as Error).message });
+      toast.error("Chưa bỏ được thay đổi này", { description: (error as Error).message });
     } finally {
       setDropping(null);
     }
@@ -180,7 +182,7 @@ export function ApplyChangesDialog({
       }
     ><MotionRegion>
       {!data ? (
-        <p className="text-sm text-fg-2">Đang xem các thay đổi…</p>
+        <p className="text-sm text-fg-2">Đang xem các thay đổi</p>
       ) : (
         <>
           <PendingList

@@ -43,12 +43,15 @@ import vn.abook.player.ui.music.MusicState
 import vn.abook.player.ui.voice.VoiceState
 import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.theme.ThemeReveal
+import vn.abook.player.ui.components.fadeEdges
 
 /** Việc Cài đặt nhờ hệ điều hành làm (mở trang khác, bảng chia sẻ): Activity cung cấp, test đưa bản giả. */
 class SettingsLinks(
     val openNotificationSettings: () -> Unit = {},
     val shareLogs: () -> Unit = {},
     val openSource: () -> Unit = {},
+    val openRelease: (String) -> Unit = {},
+    val saveOld: (String, (String?) -> Unit) -> Unit = { _, result -> result(null) },
 )
 
 /** Mọi thứ màn Cài đặt cần, gom một chỗ để khung chỉ chuyển một tham số: kho, vòng lan đổi giao diện, cửa ra hệ điều hành. */
@@ -58,6 +61,12 @@ class SettingsEnv(
     val voice: VoiceState? = null,
     /** Nhạc nền của từng cuốn (trang sách, trình phát); null = bản thử. */
     val music: MusicState? = null,
+    /** Cửa sổ nhỏ (PiP); null hay không có PiP thì Cài đặt không có công tắc "Tự mở cửa sổ mini". */
+    val pip: vn.abook.player.ui.pip.PipControl? = null,
+    /** "Làm trước" các chương tới (tấm Giọng đọc của trình phát, dấu "Đã làm sẵn" ở trang sách); null = bản thử. */
+    val prepare: vn.abook.player.ui.data.PrepareState? = null,
+    /** Nhật ký đêm: thẻ "Tối qua" ở Thư viện, và tấm Hẹn giờ nhắc thẻ ấy; null = bản thử. */
+    val night: vn.abook.player.ui.data.NightState? = null,
 )
 
 /**
@@ -77,8 +86,9 @@ fun SettingsScreen(env: SettingsEnv, onOpen: (SettingsGroup) -> Unit, modifier: 
         if (repo.voices.value is VoiceList.Loading) repo.loadVoices()
     }
     val top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val scroll = rememberScrollState()
     Column(
-        modifier.fillMaxSize().testTag("settings_screen").verticalScroll(rememberScrollState())
+        modifier.fillMaxSize().testTag("settings_screen").fadeEdges(scroll).verticalScroll(scroll)
             .padding(top = top, start = Dim.margin, end = Dim.margin, bottom = Dim.s24),
     ) {
         ScreenHeader("Cài đặt")

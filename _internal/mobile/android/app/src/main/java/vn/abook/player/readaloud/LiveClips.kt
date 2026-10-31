@@ -145,7 +145,7 @@ object LiveClips {
                     }
                 }
             }
-            throw lastError ?: IOException("Không mở được file clip")
+            throw lastError ?: IOException("Chưa mở được file clip")
         }
 
         fun close() {

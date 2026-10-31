@@ -1,6 +1,7 @@
 package vn.abook.player.ui.nav
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -16,6 +17,8 @@ import vn.abook.player.ui.voice.VoicePage
 import vn.abook.player.ui.data.SettingsGroup
 import vn.abook.player.ui.motion.Motion
 import vn.abook.player.ui.motion.ScreenGeometry
+import vn.abook.player.ui.studio.StudioSubKind
+import vn.abook.player.ui.studio.StudioTab
 
 /** Màn con xếp trên ba tab. Đang nghe không phải màn con: nó là cửa sổ nở ra từ thanh phát nhỏ ([vn.abook.player.ui.nowplaying.NowPlayingLayer]), có Back riêng. */
 @Immutable
@@ -26,6 +29,9 @@ sealed interface Destination {
     data class EditBook(val book: ListenBook) : Destination
     data class EditChapter(val book: ListenBook, val chapterId: Long) : Destination
     data class CropCover(val book: ListenBook, val uri: String) : Destination
+
+    /** "Tìm ảnh bìa" của Sửa sách (đi từ bảng ảnh bìa, Back về lại Sửa sách). */
+    data class CoverSearch(val book: ListenBook) : Destination
     @Immutable
     data class Book(val book: ListenBook) : Destination
 
@@ -41,9 +47,25 @@ sealed interface Destination {
     @Immutable
     data class Devices(val page: DevicesPage) : Destination
 
-    /** Một màn của nhóm Giọng đọc (Khóa giọng trực tuyến) hay Nghe (Nhạc của tôi): đi từ trang nhóm, Back về lại trang ấy. */
+    /** Một màn của nhóm Giọng đọc (Khoá giọng trực tuyến) hay Nghe (Nhạc của tôi): đi từ trang nhóm, Back về lại trang ấy. */
     @Immutable
     data class Voice(val page: VoicePage) : Destination
+
+    /** Studio của máy tính `computer` ("" = máy tính chính): danh sách dự án. Đi từ hàng "Studio" ở Thiết bị, Back về lại trang ấy. */
+    @Immutable
+    data class Studio(val computer: String) : Destination
+
+    /** Trình tạo sách mới trên máy tính `computer`: đi từ danh sách dự án; tạo xong thì được thay bằng dự án vừa tạo. */
+    @Immutable
+    data class StudioNew(val computer: String) : Destination
+
+    /** Một dự án Studio ở tab `tab`: từ danh sách dự án hay từ thông báo "cần duyệt / đã xong". */
+    @Immutable
+    data class StudioProject(val computer: String, val book: String, val tab: StudioTab = StudioTab.Chapters) : Destination
+
+    /** Một màn con của dự án Studio (Duyệt trước khi thu, Kịch bản, Cách đọc tên): đi từ "Thêm" của dự án, Back về lại dự án. */
+    @Immutable
+    data class StudioSub(val computer: String, val book: String, val kind: StudioSubKind) : Destination
 }
 
 /** Một mục của ngăn xếp: `key` ổn định để Compose giữ trạng thái màn khi nó đổi chỗ (trên cùng -> bên dưới). */
@@ -85,12 +107,32 @@ class NavState(private val scope: CoroutineScope) {
 
     val canPop: Boolean get() = !stack.isEmpty
 
+    /** Đang chạy một chuyển cảnh (kể cả hai khung chờ dựng của [push]). */
+    val busy: Boolean get() = job?.isActive == true
+
+    /** Hai khung chờ dựng của [push]: màn mới còn nằm ngoài màn, chưa trượt - một màn nối tiếp (màn tự mở màn sau) vẫn được đẩy. */
+    private var staging = false
+
     fun push(destination: Destination) {
-        if (job?.isActive == true) return // đang chuyển cảnh: chạm đúp không đẩy hai màn
+        if (busy && !staging) return // đang trượt: chạm đúp không đẩy hai màn
+        enter { it.push(destination) }
+    }
+
+    /** Thay màn trên cùng bằng `destination` (màn mới trượt vào, Back từ nó về màn bên dưới màn cũ): "Sách mới" xong thì mở dự án vừa tạo, không để màn tạo nằm sau lưng. */
+    fun replaceTop(destination: Destination) {
+        if (!canPop || (busy && !staging)) return
+        enter { it.pop().push(destination) }
+    }
+
+    private fun enter(next: (BackStack) -> BackStack) {
         job?.cancel()
         job = scope.launch {
-            stack = stack.push(destination)
+            stack = next(stack)
             progress.snapTo(0f)
+            // Màn mới được dựng + dàn trang + ghi ở khung đầu khi nó còn nằm ngoài màn (p = 0); hoạt ảnh chỉ bắt đầu sau đó. Nếu chạy ngay, khung nặng nhất
+            // (dựng cả màn) là khung đầu của hoạt ảnh: đồng hồ hoạt ảnh nhảy qua nó và cả đường trượt giật một nhịp.
+            staging = true
+            try { repeat(BUILD_FRAMES) { withFrameNanos { } } } finally { staging = false }
             progress.animateTo(1f, Motion.PushIn)
         }
     }
@@ -100,6 +142,17 @@ class NavState(private val scope: CoroutineScope) {
         if (!canPop) return
         job?.cancel()
         job = scope.launch { finishPop() }
+    }
+
+    /** Về gốc (ba tab) một lần: màn trên cùng đi ra như Back, rồi cả ngăn xếp rỗng. */
+    fun popToRoot() {
+        if (!canPop) return
+        job?.cancel()
+        job = scope.launch {
+            progress.animateTo(0f, Motion.popOut(progress.value))
+            stack = BackStack()
+            progress.snapTo(1f)
+        }
     }
 
     /** Back dự đoán: ngón tay kéo `back` (0..1) - màn đi theo ngón tay. Gọi trong coroutine của [PredictiveBackHandler]. */
@@ -120,5 +173,10 @@ class NavState(private val scope: CoroutineScope) {
         progress.animateTo(0f, Motion.popOut(progress.value))
         stack = stack.pop()
         progress.snapTo(1f)
+    }
+
+    private companion object {
+        /** Số khung để màn mới dựng xong trước khi trượt. */
+        const val BUILD_FRAMES = 2
     }
 }

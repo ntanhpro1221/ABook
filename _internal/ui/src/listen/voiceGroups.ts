@@ -7,7 +7,7 @@ import { KEYED_PROVIDERS } from "./readAloudVoice";
 /** Các nhóm giọng theo nhà cung cấp, đúng thứ tự và tên ở Cài đặt › Giọng đọc (trình phát chọn giọng cũng nhóm như vậy). */
 export const VOICE_GROUPS: { provider: string; title: string; detail?: string }[] = [
   { provider: "edge", title: "Edge", detail: "trực tuyến, miễn phí" },
-  ...Object.entries(KEYED_PROVIDERS).map(([provider, name]) => ({ provider, title: name, detail: "dùng khóa của bạn" })),
+  ...Object.entries(KEYED_PROVIDERS).map(([provider, name]) => ({ provider, title: name, detail: "dùng khoá của bạn" })),
   { provider: "vieneu", title: "VieNeu", detail: "trên máy này, không cần mạng" },
   { provider: "supertonic", title: "Supertonic", detail: "trên máy này, không cần mạng" },
   { provider: "device", title: "Giọng của máy", detail: "không cần mạng" },

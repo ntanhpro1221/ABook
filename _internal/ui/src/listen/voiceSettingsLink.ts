@@ -1,5 +1,5 @@
 // Cuộn tới một chỗ trong Cài đặt › Giọng đọc sau khi đã chuyển sang trang Cài đặt: nút "Tải giọng VieNeu" ở khối báo mất mạng (PlayerViews) và nút
-// "Tải giọng chạy trên máy" trong hộp chọn giọng trực tuyến (OnlineVoicePrompt) cùng đi đường này. `anchor`: mã của phần tử cần tới
+// "Tải giọng về máy" trong hộp chọn giọng trực tuyến (OnlineVoicePrompt) cùng đi đường này. `anchor`: mã của phần tử cần tới
 // (mặc định đầu mục Giọng đọc; "vieneu-module" = thẻ tải giọng VieNeu).
 export function revealVoiceSettings(anchor = "voices"): void {
   let tries = 0;

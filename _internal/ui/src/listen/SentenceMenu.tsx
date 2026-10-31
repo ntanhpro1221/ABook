@@ -7,7 +7,8 @@ import { lineEditing } from "@/shared/capabilities";
 import { useAppInfo } from "@/studio/data";
 import { canEditBook } from "./EditBook";
 import { lineToEdit, type LineToEdit } from "./follow";
-import { LineWishDialog, useWishes, WaitingMark } from "./LineWishes";
+import { useWishes, WaitingMark } from "./lineWishData";
+import { lazyComponent } from "@/shared/lazyScreen";
 import { canTeachWords, wordOf } from "./readings";
 import type { ListenBook, ListenChapter, Script, ScriptSegment } from "./model";
 import { WordReadingDialog } from "./WordReadings";
@@ -27,6 +28,9 @@ export interface SentenceEditing {
 }
 
 // Thanh nổi dưới câu đang chọn: điện thoại chỉ còn biểu tượng cho nút phụ (nhãn vẫn cho trình đọc màn hình) để cả thanh nằm MỘT hàng, không che chữ đang đọc.
+/** Hộp "Sửa câu này" (kéo theo các bảng chọn của tab Kịch bản) ở chunk riêng: nạp khi trang đọc / Đọc theo mở, không trong gói đầu. */
+const LineWishDialog = lazyComponent(() => import("./LineWishes").then((module) => module.LineWishDialog));
+
 const BAR_LABEL = "max-sm:sr-only";
 const BAR_BUTTON = "inline-flex min-h-[48px] min-w-[48px] items-center justify-center gap-2 rounded-control px-3 py-2.5 text-sm font-medium text-accent-text hover:bg-hover disabled:opacity-60";
 

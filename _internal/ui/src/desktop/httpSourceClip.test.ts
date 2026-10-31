@@ -63,7 +63,7 @@ describe("httpSource.readAloudClip tải luôn file audio (uxfix53)", () => {
     await Promise.resolve();
     controller.abort();
     const error = await pending;
-    expect(seen).toBe(controller.signal);
+    expect(seen?.aborted).toBe(true); // tín hiệu fetch nhận được đi theo signal của người gọi (watchedCall chuyển tiếp)
     expect(error).toBeInstanceOf(ReadAloudError);
     expect(error.reason).toBe("cancelled");
     expect(isTransientClipError(error)).toBe(false);

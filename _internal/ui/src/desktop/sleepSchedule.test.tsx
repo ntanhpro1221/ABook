@@ -5,7 +5,7 @@ vi.mock("react", async (original) => ({ ...await original<typeof import("react")
 vi.mock("@/studio/data", () => ({ usePreferences: () => ({ data: h.data, update: h.update }) }));
 vi.mock("sonner", () => ({ toast: { error: h.error } }));
 import { SleepSchedule } from "./SleepSchedule";
-import { Switch } from "./PhoneSync";
+import { Switch } from "./Switch";
 import { MotionPresence } from "@/shared/MotionPresence";
 import { TimeSelect } from "@/shared/ui";
 function nodes(tree: unknown): ReactElement<Record<string, unknown>>[] {

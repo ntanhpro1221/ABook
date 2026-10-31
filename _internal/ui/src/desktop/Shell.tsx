@@ -1,5 +1,5 @@
-import { Clapperboard, Clock, Download, Library, Pause, Settings } from "lucide-react";
-import { useEffect, useLayoutEffect, useRef, type ReactNode } from "react";
+import { Clapperboard, Clock, Download, Library, PanelLeftClose, PanelLeftOpen, Pause, Settings } from "lucide-react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { useRestoreLastListening } from "@/listen/LibraryScreen";
 import { useNowPlaying } from "@/listen/player";
@@ -14,11 +14,13 @@ import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { APP_TITLE } from "@/shared/title";
 import { formatPercent } from "@/shared/format";
-import { ContentSkeleton, InlineError, OfflineStrip, Progress, Vu } from "@/shared/ui";
+import { ContentSkeleton, IconButton, InlineError, OfflineStrip, Progress, Tooltip, Vu } from "@/shared/ui";
 import { useAppInfo, useLibrary } from "@/studio/data";
-import { usePrecastInvites } from "@/studio/PrecastReview";
+import { usePrecastInvites } from "@/studio/precastInvites";
 import { PeerBar } from "./PeerBar";
 import { HandOffButton, RemoteBars, ThisPlayerReporter } from "./RemotePhone";
+import { TitleBar } from "./TitleBar";
+import { windowChrome } from "./windowChrome";
 
 // Cùng ba điểm đến với điện thoại; dự án đang làm nằm ngay dưới Studio.
 
@@ -45,22 +47,26 @@ const NAV_IDLE = "font-medium text-fg-2 hover:bg-hover hover:text-fg";
 
 /** Mục thanh bên sáng cả khi ở trang con: sách thuộc Thư viện, dự án thuộc Studio. `ink`: mực icon bắt đầu bao nhiêu phần 24 trong ô
  *  (đo getBBox: Library 3, Clapperboard 1,03, Settings 2,04) - icon kéo ra chừng ấy để mực mọi mục thẳng mép logo, chữ vẫn chung một cột. */
-function NavItem({ to, icon: Icon, ink, match, children }: { to: string; icon: typeof Library; ink: number; match: (path: string) => boolean; children: ReactNode }) {
+function NavItem({ to, icon: Icon, ink, match, collapsed = false, children }: { to: string; icon: typeof Library; ink: number; match: (path: string) => boolean; collapsed?: boolean; children: ReactNode }) {
   const shift = `calc(clamp(1.125rem, 0.75rlh, 1.96875rem) * ${ink} / 24)`;
   const { pathname } = useLocation();
   const { setExpanded } = useNowPlaying();
   const active = match(pathname);
+  // Thanh bên thu gọn chỉ còn icon: chú thích bên phải mang đúng tên đọc được của mục (DESIGN 5.5: nút chỉ icon trên máy tính có tooltip).
   return (
+    <Tooltip label={collapsed && typeof children === "string" ? children : undefined} side="right">
     <Link
       to={to}
       data-sidebar-top
       onClick={() => setExpanded(false)}
       aria-current={active ? "page" : undefined}
+      aria-label={typeof children === "string" ? children : undefined}
       className={cn(NAV, active ? NAV_ACTIVE : NAV_IDLE)}
     >
       <Icon className="glyph" style={{ marginLeft: `calc(-1 * ${shift})`, marginRight: shift }} />
-      {children}
+      <span data-sidebar-label>{children}</span>
     </Link>
+    </Tooltip>
   );
 }
 
@@ -107,17 +113,17 @@ export function Producing() {
         >
           <BookCover title={book.title} part={book.series?.part} size="xs" image={book.cover} className="size-8 rounded-control" />
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5 truncate text-xs font-medium">
-              <MotionRegion as="span" className="flex size-3 shrink-0 items-center justify-center">{book.queuePosition != null ? <Clock className="size-3" aria-label={`Đang chờ ${book.queuePosition}`} /> : book.paused || book.stopping ? (
+            <div className="flex items-start gap-1.5 text-xs font-medium">
+              <MotionRegion as="span" className="flex size-3 shrink-0 items-center justify-center [--icon-w:0.75rem] mt-line-icon">{book.queuePosition != null ? <Clock className="size-3" aria-label={`Đang chờ ${book.queuePosition}`} /> : book.paused || book.stopping ? (
                 <Pause className="size-3 shrink-0 text-warning" aria-label={book.stopping ? "Đang dừng" : "Đang tạm dừng"} />
               ) : (
                 <Vu className="h-2.5 gap-px text-accent [&>span]:w-[2px]" />
               )}</MotionRegion>
-              <span className="truncate">{book.title}</span>
+              <span className="min-w-0 break-words">{book.title}</span>
             </div>
             <div className="mt-1 flex items-center gap-2">
               <Progress value={book.progress.overall} tone={book.queuePosition != null ? "muted" : "accent"} size="xs" className="flex-1" label={`Tiến độ: ${book.title}`} />
-              <MotionRegion as="span" motionKey={book.queuePosition ?? (book.starting ? "starting" : formatPercent(book.progress.overall))} className="tabular w-8 shrink-0 text-right text-[0.6875rem] text-fg-2">{book.queuePosition != null ? "Chờ" : book.starting ? "…" : formatPercent(book.progress.overall)}</MotionRegion>
+              <MotionRegion as="span" motionKey={book.queuePosition != null ? "queued" : book.starting ? "starting" : "running"} className="tabular w-8 shrink-0 text-right text-[0.6875rem] text-fg-2"><span data-motion-live>{book.queuePosition != null ? "Chờ" : book.starting ? "…" : formatPercent(book.progress.overall)}</span></MotionRegion>
             </div>
           </div>
         </button>
@@ -159,24 +165,24 @@ const TITLES: [RegExp, string][] = [
   [/^\/settings/, "Cài đặt"],
 ];
 
-export function DesktopSidebar({ listenOnly = false }: { listenOnly?: boolean }) {
+export function DesktopSidebar({ listenOnly = false, collapsed = false }: { listenOnly?: boolean; collapsed?: boolean }) {
   return (
-    <aside className="hidden w-[236px] shrink-0 flex-col border-r border-line bg-sunken px-3 pb-4 pt-5 md:flex">
-      <Brand />
+    <aside aria-label="Thanh bên" className="desktop-sidebar hidden w-[236px] shrink-0 flex-col border-r border-line bg-sunken px-3 pb-4 pt-5 md:flex" data-collapsed={collapsed}>
+      <div data-sidebar-brand><Brand /></div>
       <nav aria-label="Điều hướng chính" className="mt-8 space-y-2">
-        <NavItem to="/" icon={Library} ink={3} match={(path) => path === "/" || path.startsWith("/book/")}>
+        <NavItem to="/" icon={Library} ink={3} match={(path) => path === "/" || path.startsWith("/book/")} collapsed={collapsed}>
           Thư viện
         </NavItem>
         <MotionPresence open={!listenOnly}>
-          <NavItem to="/studio" icon={Clapperboard} ink={1.03} match={(path) => path.startsWith("/studio")}>
+          <NavItem to="/studio" icon={Clapperboard} ink={1.03} match={(path) => path.startsWith("/studio")} collapsed={collapsed}>
             Studio
           </NavItem>
-          <Producing />
+          <div data-sidebar-extra><Producing /></div>
         </MotionPresence>
       </nav>
       <div className="mt-auto pt-8">
-        <UpdateNotice />
-        <NavItem to="/settings" icon={Settings} ink={2.04} match={(path) => path.startsWith("/settings")}>
+        <div data-sidebar-extra><UpdateNotice /></div>
+        <NavItem to="/settings" icon={Settings} ink={2.04} match={(path) => path.startsWith("/settings")} collapsed={collapsed}>
           Cài đặt
         </NavItem>
       </div>
@@ -185,6 +191,25 @@ export function DesktopSidebar({ listenOnly = false }: { listenOnly?: boolean })
 }
 
 export function Shell({ children }: { children: ReactNode }) {
+  const chrome = windowChrome();
+  const [collapsed, setCollapsed] = useState(() => {
+    try { return localStorage.getItem("abook-sidebar-collapsed") === "1"; } catch { return false; }
+  });
+  const toggleSidebar = () => setCollapsed(value => !value);
+  useEffect(() => {
+    if (!chrome) return;
+    try { localStorage.setItem("abook-sidebar-collapsed", collapsed ? "1" : "0"); } catch { /* Storage may be disabled. */ }
+  }, [chrome, collapsed]);
+  useEffect(() => {
+    if (!chrome) return;
+    const shortcut = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === "b" && !(event.target instanceof Element && event.target.closest("input,textarea,[contenteditable='true']"))) {
+        event.preventDefault(); setCollapsed(value => !value);
+      }
+    };
+    window.addEventListener("keydown", shortcut);
+    return () => window.removeEventListener("keydown", shortcut);
+  }, [chrome]);
   const { pathname } = useLocation();
   const { expanded, setExpanded } = useNowPlaying();
   // Studio từ xa: thanh "Đang phát trên điện thoại" là việc của chính máy tính, cổng từ xa không mở đường ấy.
@@ -218,20 +243,21 @@ export function Shell({ children }: { children: ReactNode }) {
   }, [pathname]);
 
   return (
-    <div ref={shell} className="flex h-full">
-      {/* Người dùng bàn phím: Tab đầu tiên tới đây, bỏ qua thanh bên để vào thẳng nội dung. Màn "Đang nghe" mở thì nội dung bên dưới bị khoá (inert) - không hiện. */}
+    <div ref={shell} className={cn("flex h-full", chrome && "desktop-chrome-shell")}>
+      {/* Người dùng bàn phím: Tab đầu tiên tới đây (trước cả thanh cửa sổ), bỏ qua thanh bên để vào thẳng nội dung. Màn "Đang nghe" mở thì nội dung bên dưới bị khoá (inert) - không hiện. */}
       {!expanded && (
         <button
           type="button"
           onClick={() => main.current?.focus()}
-          className="fixed left-[calc(env(safe-area-inset-left)+0.75rem)] top-[calc(env(safe-area-inset-top)+0.75rem)] z-[60] -translate-y-[200%] rounded-control bg-accent px-4 py-2 text-sm font-semibold text-accent-ink shadow-float focus:translate-y-0"
+          className="fixed left-[calc(env(safe-area-inset-left)+0.75rem)] top-[calc(env(safe-area-inset-top)+0.75rem)] z-[60] -translate-y-[200%] rounded-control bg-accent px-4 py-2 text-sm font-semibold text-accent-ink shadow-float transition-transform duration-motion-fast focus:translate-y-0"
         >
           Tới nội dung
         </button>
       )}
+      <TitleBar toggle={<IconButton size="sm" label={collapsed ? "Mở rộng  (Ctrl+B)" : "Thu gọn  (Ctrl+B)"} icon={collapsed ? PanelLeftOpen : PanelLeftClose} onClick={toggleSidebar} />} />
       <ShortcutsHost remote={remote} />
-      <DesktopSidebar listenOnly={listenOnly} />
-      <div className="relative flex min-w-0 flex-1 flex-col">
+      <DesktopSidebar listenOnly={listenOnly} collapsed={Boolean(chrome && collapsed)} />
+      <div className="desktop-content relative flex min-w-0 flex-1 flex-col">
         <OfflineStrip />
         <PeerBar />
         <main ref={main} tabIndex={-1} className="page-motion min-h-0 flex-1 overflow-y-auto outline-none" inert={expanded}>

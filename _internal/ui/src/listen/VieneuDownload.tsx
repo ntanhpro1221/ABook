@@ -5,7 +5,8 @@ import { toast } from "@/shared/toast";
 import { cn } from "@/shared/cn";
 import { ErrorDetails } from "@/shared/ErrorDetails";
 import { busyClick, Progress, useFocusFollows } from "@/shared/ui";
-import { CANCELLED_NOTE, formatSize } from "@/studio/musicLocal";
+import { formatSize } from "@/shared/format";
+import { CANCELLED_NOTE } from "@/studio/musicLocal";
 import { useSource } from "./source";
 import { desktopVieneu, useModuleStatus } from "./VieneuModuleCard";
 import { meteredNotice, offlineChoices, selectionBytes, VIENEU_COPY, vieneuLabel, vieneuPercent, type VieneuChoiceId, type VieneuStatus } from "./vieneuModule";
@@ -72,7 +73,7 @@ export function VieneuDownload({ button, onOpenSettings }: { button: string; onO
           )}
         </div>
       )}
-      {note && <p className={cn("text-[0.8125rem] text-pretty", failed ? "text-danger" : "text-fg-2")}>{note}</p>}
+      {note && <p data-motion-live className={cn("text-[0.8125rem] text-pretty", failed ? "text-danger" : "text-fg-2")}>{note}</p>}
       {failed && <ErrorDetails technical={status.errorDetail} className="text-danger" />}
       {metered && <p className="text-[0.8125rem] text-fg-2 text-pretty">{metered}</p>}
       <div className={idle ? "contents" : "flex flex-wrap items-center gap-2"}>

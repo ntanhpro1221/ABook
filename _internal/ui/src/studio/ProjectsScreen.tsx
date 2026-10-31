@@ -1,3 +1,4 @@
+import { TickingValue } from "@/shared/TickingValue";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
@@ -20,7 +21,7 @@ import { pickFolder, projectStatus, useAppInfo, useLibrary, useOpenBook, useReve
 import { MenuItem, ProjectMenu } from "./ProjectScreen";
 import { StudioSetupCard } from "./StudioSetup";
 import { groupParts, splitLive, type Entry } from "./projectGroups";
-import { PICK_SOURCE } from "./NewProjectScreen";
+import { PICK_SOURCE } from "./pickSource";
 
 // Studio: nơi làm sách. Danh sách là bảng công việc gọn - tên · trạng thái · tiến độ · cập nhật (DESIGN.md mục 7) - chứ không
 // phải kệ sách (kệ sách là của phía Nghe). Bảng phẳng: vạch mảnh giữa các hàng, không khung; việc hiếm của một hàng ở "…".
@@ -35,7 +36,7 @@ function ProjectRow({ book }: { book: BookSummary }) {
     <RowBoundary
       fallback={
         <div className="px-3 py-3 text-sm">
-          <span className="font-medium">{book.title}</span> <span className="text-xs text-danger">Không đọc được dự án này</span>
+          <span className="font-medium">{book.title}</span> <span className="text-xs text-danger">Chưa đọc được dự án này</span>
         </div>
       }
     >
@@ -66,7 +67,7 @@ function BrokenRow({ book, local }: { book: BookSummary; local: boolean }) {
       <div className="min-w-0 md:col-span-2 xl:col-span-3">
         <div className="truncate font-medium">{book.title}</div>
         <div className={cn("truncate text-xs", busy ? "text-warning" : "text-danger")}>
-          {busy ? "Chưa mở được: " : "Không đọc được: "}
+          {busy ? "Chưa mở được: " : "Chưa đọc được: "}
           {book.broken}
         </div>
       </div>
@@ -78,7 +79,7 @@ function BrokenRow({ book, local }: { book: BookSummary; local: boolean }) {
           </>
         ) : local ? (
           <ProjectMenu book={book} rename={false}>
-            {book.backup && <MenuItem icon={History} onSelect={() => setAsking(true)}>Khôi phục bản sao…</MenuItem>}
+            {book.backup && <MenuItem icon={History} onSelect={() => setAsking(true)}>Khôi phục bản sao</MenuItem>}
             <MenuItem icon={FolderOpen} onSelect={() => reveal.mutate(book.id)}>Mở thư mục</MenuItem>
           </ProjectMenu>
         ) : (
@@ -152,9 +153,9 @@ function ProjectRowBody({ book }: { book: BookSummary }) {
             <>
               <div className="flex items-center gap-2">
                 <Progress value={book.progress.overall} running={live} tone={live ? "accent" : "muted"} size="sm" label={`Tiến độ: ${book.title}`} />
-                <span className="tabular w-9 text-right text-xs font-medium">{formatPercent(book.progress.overall)}</span>
+                <span className="tabular w-9 text-right text-xs font-medium"><TickingValue>{formatPercent(book.progress.overall)}</TickingValue></span>
               </div>
-              <div className="mt-1 line-clamp-2 text-xs text-fg-2">{detail}</div>
+              <div className="mt-1 line-clamp-2 text-xs text-fg-2"><TickingValue>{detail}</TickingValue></div>
             </>
           )}
         </MotionRegion>
@@ -182,9 +183,9 @@ function EntryView({ entry }: { entry: Entry }) {
   if (entry.kind === "book") return <ProjectRow book={entry.book} />;
   return (
     <section aria-label={entry.name}>
-      <h3 className="px-3 pb-0.5 pt-3 text-xs font-medium text-fg-2">
+      <h2 className="px-3 pb-0.5 pt-3 text-xs font-medium text-fg-2">
         {entry.name} <span className="font-normal">· {entry.books.length} {entry.unit}</span>
-      </h3>
+      </h2>
       {entry.books.map((book) => (
         <ProjectRow key={book.id} book={book} />
       ))}
@@ -238,7 +239,7 @@ function StudioMenu({ onOpenExisting }: { onOpenExisting: () => void }) {
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content collisionPadding={12} align="end" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-52 overflow-y-auto overscroll-contain rounded-cover border border-line bg-panel p-1.5 shadow-float">
-          <MenuItem icon={FolderOpen} onSelect={onOpenExisting}>Mở dự án có sẵn…</MenuItem>
+          <MenuItem icon={FolderOpen} onSelect={onOpenExisting}>Mở dự án</MenuItem>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
@@ -268,7 +269,7 @@ export function ProjectsScreen() {
       const result = await open.mutateAsync(path);
       navigate(`/studio/${result.id}`);
     } catch (error) {
-      toast.error("Không mở được sách", { description: (error as Error).message });
+      toast.error("Chưa mở được sách", { description: (error as Error).message });
     }
   };
 

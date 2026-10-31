@@ -16,6 +16,14 @@ export function formatSize(bytes: number): string {
   return `${formatNumber(megabytes)} MB`;
 }
 
+/**
+ * Dòng đầu mục Dung lượng: "Sách 1,2 GB · còn trống 20 GB"; máy chưa có sách (dưới 1 KB: chỉ vài byte sổ sách) nói thẳng "Chưa có sách" thay vì "Sách 1 KB".
+ * Bản native: Storage.line (devices/DevicesModel.kt) - cùng từng chữ.
+ */
+export function storageSummary(bytes: number, free: number): string {
+  return `${bytes < 1024 ? "Chưa có sách" : `Sách ${formatSize(bytes)}`} · còn trống ${formatSize(free)}`;
+}
+
 /** Tên file trong một đường dẫn (dấu ngăn \ hay /): thông báo chỉ nói tên, đường đầy đủ để ở gợi ý khi rê chuột. */
 export function fileName(path: string): string {
   return path.replace(/[\\/]+$/, "").split(/[\\/]/).pop() || path;
@@ -27,8 +35,18 @@ export function endSentence(text: string): string {
   return clean && !/[.!?…]$/.test(clean) ? `${clean}.` : clean;
 }
 
+/** Phân số 0..1 (NaN - tổng 0, chưa biết - là 0). */
+export function clampFraction(fraction: number): number {
+  return Number.isFinite(fraction) ? Math.max(0, Math.min(1, fraction)) : fraction === Infinity ? 1 : 0;
+}
+
+/** Số phần trăm nguyên của thanh tiến độ (aria-valuenow): làm tròn XUỐNG như chữ `formatPercent` - chưa xong thì không bao giờ 100. */
+export function percentOf(fraction: number): number {
+  return Math.floor(clampFraction(fraction) * 100);
+}
+
 export function formatPercent(fraction: number): string {
-  const value = Math.max(0, Math.min(1, fraction)) * 100;
+  const value = clampFraction(fraction) * 100;
   if (value > 0 && value < 1) return "<1%";
   if (value < 100 && value > 99) return "99%";
   return `${Math.floor(value)}%`;
@@ -130,16 +148,6 @@ export function formatRelative(epochSeconds: number | null | undefined): string 
 export function formatDate(epochSeconds: number): string {
   const date = new Date(epochSeconds * 1000);
   return date.toLocaleDateString("vi-VN", { day: "numeric", month: "numeric", year: "numeric" });
-}
-
-/** Đồng hồ đọc thành lời cho trình đọc màn hình: "5 phút 57 giây". */
-export function spokenClock(seconds: number): string {
-  const whole = Math.max(0, Math.floor(Number.isFinite(seconds) ? seconds : 0));
-  const hours = Math.floor(whole / 3600);
-  const minutes = Math.floor((whole % 3600) / 60);
-  const secs = whole % 60;
-  const parts = [hours ? `${hours} giờ` : "", minutes ? `${minutes} phút` : "", `${secs} giây`].filter(Boolean);
-  return parts.join(" ");
 }
 
 /** Mốc thời gian nói kiểu người: "hôm nay 14:02", "tối qua 23:41", "hôm qua 09:15", "3 ngày trước". */

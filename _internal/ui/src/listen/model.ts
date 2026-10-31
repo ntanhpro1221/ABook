@@ -415,7 +415,7 @@ const NEAR_END_SECONDS = 15;
 
 /** Giây nghe tiếp trong một chương khi vào nó không qua chỗ nghe cuối: chỗ xa nhất đã nghe (`heard`) nếu chương chưa xong và chưa
  *  gần hết - chương đã nghe 111 giây mở lại không về 0:00 (soát a26 L10). */
-function chapterResumeAt(state: ListeningState, chapter: ListenChapter): number {
+export function chapterResumeAt(state: ListeningState, chapter: ListenChapter): number {
   const record = state.chapters[String(chapter.id)];
   if (!record || record.done || !(record.heard > 0)) return 0;
   const length = knownDuration(state, chapter);
@@ -506,8 +506,20 @@ export function twinBookIds(books: readonly Pick<ListenBook, "id" | "title">[]):
 }
 
 /** Ô "Tìm sách": khớp tên, tác giả hoặc giọng kể, không phân biệt hoa thường và dấu ("nguyen" tìm ra "Nguyễn"). `folded` đã qua foldVietnamese. */
+/** Chữ tìm (đã gấp dấu) của từng cuốn, nhớ theo đối tượng cuốn: gõ một phím trong thư viện 3000 cuốn không gấp dấu lại 3000 lần
+ *  (docs/PERF_WEB.md). Cuốn đổi tên là một đối tượng mới (dữ liệu truy vấn không sửa tại chỗ). */
+const searchKeys = new WeakMap<object, string>();
+
 export function bookMatchesQuery(book: Pick<ListenBook, "title" | "author" | "narrator">, folded: string): boolean {
-  return !folded || foldVietnamese(`${book.title} ${book.author ?? ""} ${book.narrator}`).includes(folded);
+  // Mọi chuỗi khoảng trắng (hai dấu cách, dấu cách không ngắt của "Tập 2") so như một dấu cách.
+  const query = folded.replace(/\s+/g, " ");
+  if (!query.trim()) return true;
+  let key = searchKeys.get(book);
+  if (key === undefined) {
+    key = foldVietnamese(`${book.title} ${book.author ?? ""} ${book.narrator}`).replace(/\s+/g, " ");
+    searchKeys.set(book, key);
+  }
+  return key.includes(query);
 }
 
 /** Một lời báo "<máy> đã đổi … từ X sang Y" (webui/package_share.py `notices`). */

@@ -7,12 +7,12 @@ import java.io.InputStream
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * "Thêm sách từ file…" trên điện thoại - phần không dính Android của [LibraryPlugin]: chép thứ người dùng chọn (một file EPUB / DOCX / PDF /
+ * "Thêm sách từ file…" trên điện thoại - phần không dính Android: chép thứ người dùng chọn (một file EPUB / DOCX / PDF /
  * TXT, hay một thư mục TXT) vào thư mục tạm của app, đọc nó bằng luật nhập sách ([BookImport]) cho bước xem trước, rồi nhập thành sách
  * chỉ-có-chữ ([TextBook] → [BookFileImport], cùng đường với mọi file sách). Máy tính làm cùng việc ở `webui/textbook.py` + `server.add_text_book`.
  *
- * PDF cần pdf.js nên đi qua WebView: giao diện (ui/src/android/textImport.ts) đọc bản sao PDF đã chép, lấy các dòng của từng trang
- * (ui/src/shared/pdfPages.ts) rồi gọi [preview] với `pages`; luật bỏ tiêu đề chạy / nối đoạn / chia chương là [BookImport.fromPdfPages].
+ * PDF: giao diện (`ui.addbook.ImportRepo.readPdf`, PdfRenderer của Android 15+) đọc bản sao PDF đã chép, lấy các dòng của từng trang
+ * rồi gọi [preview] với `pages`; luật bỏ tiêu đề chạy / nối đoạn / chia chương là [BookImport.fromPdfPages].
  *
  * Mỗi lần chọn có một `ref` (tên thư mục tạm). Cuốn đã đọc giữ trong bộ nhớ tới khi thêm hay bỏ; app bị giết giữa chừng thì thư mục tạm
  * bị dọn lúc mở lại ([sweep]).
@@ -35,7 +35,7 @@ object TextImports {
     /** Bộ chuẩn hoá ảnh bìa của máy (AndroidCoverCodec); không có thì sách không có bìa. */
     @Volatile var codec: CoverCodec? = null
 
-    /** Thứ vừa chép: `ref`, tên hiện cho người dùng, và - nếu là PDF - bản sao để WebView lấy chữ. */
+    /** Thứ vừa chép: `ref`, tên hiện cho người dùng, và - nếu là PDF - bản sao để giao diện lấy chữ. */
     class Staged(val ref: String, val name: String, val pdf: File?)
 
     private fun root() = File(Store.root, "imports")
@@ -142,7 +142,7 @@ object TextImports {
         val ref = newRef()
         val target = File(dir(ref), clean)
         try {
-            val input = open() ?: throw BookImport.Failed("Không đọc được file.")
+            val input = open() ?: throw BookImport.Failed("Chưa đọc được file.")
             input.use { copy(it, target, MAX_SOURCE_BYTES) }
         } catch (error: Exception) {
             dir(ref).deleteRecursively()
@@ -164,7 +164,7 @@ object TextImports {
             val names = JSONObject()
             for ((fileName, open) in texts) {
                 try {
-                    val input = open() ?: throw BookImport.Failed("Không mở được file.")
+                    val input = open() ?: throw BookImport.Failed("Chưa mở được file.")
                     val diskName = uniqueName(safeName(fileName, "chuong.txt"), used)
                     budget -= input.use { copy(it, File(folder, diskName), budget) }
                     names.put(diskName, fileName)
@@ -186,7 +186,7 @@ object TextImports {
         return children.singleOrNull() ?: throw BookImport.Failed("Lần chọn này đã hết hạn - chọn lại file.")
     }
 
-    /** Đọc thứ đã chọn bằng luật nhập sách và trả danh sách chương (`textbook.preview`). PDF: `pages` là các dòng từng trang do pdf.js lấy.
+    /** Đọc thứ đã chọn bằng luật nhập sách và trả danh sách chương (`textbook.preview`). PDF: `pages` là các dòng từng trang do lớp giao diện lấy.
      *  `splitChapters`: file TXT cả truyện tách theo "Chương N" - cuốn giữ lại là cuốn của lần xem trước cuối, nên [create] thêm đúng thứ người dùng thấy.
      *  Cuốn giữ lại gồm MỌI hàng của danh sách xem trước (kể cả mục rất ngắn chưa tích); [create] nhận phần người dùng chọn.
      *  `footnotes`: EPUB / DOCX có chú thích - đề xuất người dùng đã tích ([BookImport.footnoteChoiceFromJson]); cuốn giữ lại theo đúng lựa chọn của lần xem trước cuối. */

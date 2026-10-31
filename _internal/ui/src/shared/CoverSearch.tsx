@@ -6,6 +6,7 @@ import { toast } from "@/shared/toast";
 import { latestRequest, wasAborted } from "@/shared/latestRequest";
 import { Button, ContentSkeleton, Dialog, EmptyState, InlineError } from "@/shared/ui";
 import { api, ApiError } from "@/studio/api";
+import { useFadeScroller } from "./scrollFade";
 
 /** Tên nguồn bìa như người đọc biết (máy chủ trả tên hàm: "google_books"). */
 const PROVIDER_NAMES: Record<string, string> = { itunes: "iTunes", open_library: "Open Library", google_books: "Google Books" };
@@ -55,6 +56,7 @@ export function CoverSearchPanel({
   onBusy?: (busy: boolean) => void;
   onChooseFile: () => void;
 }) {
+  const scrollFade = useFadeScroller<HTMLDivElement>();
   const open = active;
   const [query, setQuery] = useState(defaultQuery);
   const searches = useRef(latestRequest());
@@ -124,7 +126,7 @@ export function CoverSearchPanel({
           Tìm
         </Button>
       </form>
-      <div className="mt-4 max-h-[55vh] overflow-y-auto">
+      <div ref={scrollFade.ref} style={scrollFade.style} className="mt-4 max-h-[55vh] overflow-y-auto">
         {search.isPending ? (
           <ContentSkeleton shape="covers" count={4} label="Đang tìm ảnh bìa" />
         ) : search.isError && !wasAborted(search.error) ? (

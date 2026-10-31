@@ -12,14 +12,14 @@ export type AudiobookFormat = "mp3" | "m4b";
 export const AUDIOBOOK_COPY: ExportCopy = {
   busy: "Đang làm sách nói…",
   done: "Đã xuất sách nói",
-  failed: "Không xuất được sách nói",
-  stopped: "Đã dừng xuất sách nói",
+  failed: "Chưa xuất được sách nói",
+  stopped: "Đã dừng xuất",
   stoppedNote: "Phần đã làm được giữ - xuất lại để làm tiếp từ đó.",
 };
 
 export const FORMAT_CHOICES: { id: AudiobookFormat; label: string; hint: string }[] = [
-  { id: "mp3", label: "MP3 - mỗi chương một file", hint: "Một thư mục, mỗi chương một MP3 kèm danh sách phát. Trình phát nào cũng mở được." },
-  { id: "m4b", label: "M4B - cả cuốn một file", hint: "Một file có mục lục chương, nhớ chỗ nghe dở. Hợp Apple Books, BookPlayer, Smart AudioBook Player." },
+  { id: "mp3", label: "MP3 theo chương", hint: "Một thư mục, mỗi chương một MP3 kèm danh sách phát. Trình phát nào cũng mở được." },
+  { id: "m4b", label: "M4B cả cuốn", hint: "Một file có mục lục chương, nhớ chỗ nghe dở. Hợp Apple Books, BookPlayer, Smart AudioBook Player." },
 ];
 
 /** Phần trả lời của GET /api/listen/books/<mã>/audiobook/plan. */

@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { afterEach, expect, it, vi } from "vitest";
 import { pushBackLayer } from "./backStack";
 import { markBackOpen } from "./backOrder";
-import { dismissTopLayer } from "@/android/backLayers";
+import { dismissTopLayer } from "@/shared/backLayers";
 import { layerHistoryGuard } from "./MotionRouter";
 
 const cleanups: (() => void)[] = [];
@@ -13,8 +13,6 @@ it.each([
   ["B3", "../listen/OnlineVoicePrompt.tsx", /useBackLayer\(Boolean\(request && choosing\), \(\) => setChoosing\(false\), list, chooseButton\)/],
   ["B4", "../listen/EditBook.tsx", /useBackLayer\(swapping !== null, \(\) => setSwapping\(null\), swapBox, swapButton\)/],
   ["B5", "../listen/EditBook.tsx", /useBackLayer\(open && confirmRevert, \(\) => setConfirmRevert\(false\), revertBox, revertButton\)/],
-  ["B6", "../android/DevicesScreen.tsx", /useBackLayer\(btAsk !== null, \(\) => setBtAsk\(null\), btBox, btButton\)/],
-  ["B7", "../android/DevicesScreen.tsx", /useBackLayer\(explain && !enabled, \(\) => setExplain\(false\), explainBox, explainButton\)/],
   ["B9", "../listen/WordReadings.tsx", /useBackLayer\(word !== null && joining, \(\) => setJoining\(false\), joinBox, joinButton\)/],
   ["B10", "./ChapterPreview.tsx", /useBackLayer\(editing !== null,[\s\S]*cancelled.current = true/],
   ["B11", "../listen/AddBook.tsx", /useBackLayer\(open && confirmLeave !== null, \(\) => setConfirmLeave\(null\), confirmBox, confirmButton\)/],

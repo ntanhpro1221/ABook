@@ -79,7 +79,6 @@ băm trong `webui/studio_setup.py`):
 
 ## App điện thoại (Android)
 
-- Capacitor (MIT).
 - AndroidX Media3 - ExoPlayer, MediaSession, datasource, cache (Apache-2.0); các thư viện AndroidX khác (Apache-2.0).
 - Kotlin và Guava (Apache-2.0).
 - Giao diện native (Jetpack Compose, `docs/NATIVE_PHONE_UI.md`): AndroidX Compose ui / foundation / animation, activity-compose, lifecycle-runtime-compose,
@@ -87,6 +86,8 @@ băm trong `webui/studio_setup.py`):
   [Google Fonts](https://fonts.google.com/specimen/Be+Vietnam+Pro)) chép vào `res/font`. Nét biểu tượng Lucide (ISC, Lucide Icons and Contributors) sinh
   vào `ui/components/LucidePaths.kt` từ gói lucide-react của bản web (`scripts/gen_lucide_icons.py`). Chỉ để dựng / thử, không vào APK: Macrobenchmark và
   Baseline Profile plugin (Apache-2.0), Robolectric (MIT), Roborazzi (Apache-2.0), UI Automator (Apache-2.0).
+  Ba font Android có thêm chữ số đều bề rộng qua tính năng `tnum`, sinh bằng `mobile/android/scripts/add_tabular_digits.py` từ font đã gói;
+  giữ nguyên chữ mặc định, thông tin tác giả và giấy phép SIL OFL 1.1 trong bảng `name` của font; toàn văn giấy phép gói trong `assets/fonts/OFL.txt`.
 - Tink Android 1.24.0 (Google, Apache-2.0): kiểm chữ ký Ed25519 của danh mục nhạc và cấu hình từ xa (`Signatures.kt`).
   Artifact `com.google.crypto.tink:tink-android:1.24.0`; phiên bản, giấy phép và nguồn đối chiếu từ POM đi kèm JAR dùng khi dựng app.
   [Mã nguồn](https://github.com/tink-crypto/tink-java), [giấy phép Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0).
@@ -100,9 +101,8 @@ băm trong `webui/studio_setup.py`):
   G2P giữ nguyên) cùng các crate nó dùng - `regex`, `fancy-regex`, `once_cell`, `memmap2`, `unicode-normalization`, `jni` (MIT hay
   Apache-2.0). Bảng ziggurat của bộ sinh số ngẫu nhiên chép từ numpy (`vieneu/NumpyZiggurat.kt`, BSD-3-Clause) để nhiễu đầu của Nano
   trùng máy tính.
-- pdf.js / `pdfjs-dist` (Mozilla, Apache-2.0), bản "legacy" - đọc chữ của PDF có lớp chữ khi nhập sách trên điện thoại
-  (`ui/src/shared/pdfPages.ts`); tải lười, chỉ chạy khi người dùng mở một file PDF. EPUB và DOCX do `BookImport.kt` tự đọc
-  bằng java.util.zip, không thêm thư viện.
+- PDF có lớp chữ khi nhập sách trên điện thoại: `android.graphics.pdf.PdfRenderer` của hệ thống (`ui/addbook/ImportRepo.kt`), không thêm thư viện.
+  EPUB và DOCX do `BookImport.kt` tự đọc bằng java.util.zip, không thêm thư viện.
 
 ## Nhạc nền (không đóng gói trong bộ cài)
 

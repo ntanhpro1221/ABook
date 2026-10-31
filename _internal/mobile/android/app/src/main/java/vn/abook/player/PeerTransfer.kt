@@ -8,6 +8,7 @@ import java.io.EOFException
 import java.net.HttpURLConnection
 import java.net.SocketException
 import javax.net.ssl.SSLException
+import vn.abook.player.net.HostWait
 
 /** Cùng ngân sách peer_limits.py; kiểm trước khi ghi từng khối, kể cả stream không có Content-Length. */
 internal object PeerTransfer {
@@ -20,15 +21,22 @@ internal object PeerTransfer {
 
     class Limit : IOException("File vượt giới hạn tải; bạn hãy kiểm tra lại máy gửi sách.")
 
-    /** Chỉ dùng GET; retry trước khi giao stream cho caller, không phát lại POST hoặc stream đã đọc dở. */
-    fun openGet(pause: (Long) -> Unit = { Thread.sleep(it) }, connect: () -> HttpURLConnection): HttpURLConnection {
+    /**
+     * Chỉ dùng GET; retry trước khi giao stream cho caller, không phát lại POST hoặc stream đã đọc dở. Máy kia im quá hạn "không byte nào" của kết nối ([HostWait.open]) trước khi
+     * trả lời: gửi lại một lần rồi [HostWait.Timeout] (`resend` false: người gọi đã nằm trong một [HostWait.call] của riêng nó).
+     */
+    fun openGet(pause: (Long) -> Unit = { Thread.sleep(it) }, resend: Boolean = true, connect: () -> HttpURLConnection): HttpURLConnection =
+        HostWait.call(resend) { openGetOnce(pause, connect) }
+
+    private fun openGetOnce(pause: (Long) -> Unit, connect: () -> HttpURLConnection): HttpURLConnection {
         for (attempt in 0..2) {
             var connection: HttpURLConnection? = null
             try {
-                connection = connect()
-                check(connection.requestMethod == "GET")
-                val code = connection.responseCode
-                if (code != 503 || attempt == 2) return connection
+                val opened = connect()
+                connection = opened
+                check(opened.requestMethod == "GET")
+                val code = HostWait.awaiting(opened) { opened.responseCode }
+                if (code != 503 || attempt == 2) return opened
             } catch (error: IOException) {
                 connection?.disconnect()
                 connection = null
@@ -70,6 +78,65 @@ internal object PeerTransfer {
             if (dir.usableSpace < DISK_MARGIN + count) throw IOException("Máy không đủ chỗ trống; bạn hãy dọn bớt rồi tải lại.")
             output.write(buffer, 0, count)
             total += count
+        }
+    }
+
+    /**
+     * Tải một file về `partial`, nối tiếp phần dở khi đúng phiên bản (dùng chung cho sách tải về điện thoại và clip của Studio từ xa). `open(resumeFrom, ifRange)`
+     * mở kết nối GET (đã ghim vân tay); `label` đứng trong lời lỗi. Phần dở chỉ được nối khi biết nó thuộc phiên bản nào (ETag cạnh nó) và máy kia xác nhận đúng
+     * phiên bản + đúng chỗ ([PartResume]). `keepPartial`: lỗi giữa chừng giữ phần dở để nối lại (mặc định chỉ khi biết cỡ file); khi chưa biết cỡ, cỡ thật lấy từ
+     * Content-Range / Content-Length và file thiếu thì ném lỗi (phần dở còn đó). Không đổi tên `partial`: nơi gọi kiểm cuối rồi đổi.
+     */
+    fun fetchResumable(
+        open: (resumeFrom: Long, ifRange: String) -> HttpURLConnection,
+        label: String,
+        partial: File,
+        expectedSize: Long,
+        limit: Long,
+        dir: File,
+        keepPartial: Boolean = expectedSize > 0,
+        check: () -> Unit = {},
+    ) {
+        var (have, tag) = PartResume.point(partial, expectedSize)
+        var connection = open(have, tag)
+        var code = Pin.guard { connection.responseCode }
+        // 416: phần dở dài hơn file hiện có trên máy kia (file đã đổi) - bỏ phần dở như đuôi lạ bên dưới.
+        if (code >= 400 && !(code == 416 && have > 0)) {
+            connection.disconnect()
+            throw IllegalStateException("Chưa tải được $label (mã $code)")
+        }
+        var answer = if (code == 416) PartResume.Answer.STALE_TAIL
+        else PartResume.answer(code, connection.getHeaderField("Content-Range"), connection.getHeaderField("ETag"), have, tag)
+        if (have > 0 && answer == PartResume.Answer.STALE_TAIL) {
+            // 206 mà ETag lệch (máy kia bỏ qua If-Range): đây là đuôi của file khác. Bỏ phần dở, hỏi lại cả file.
+            connection.disconnect()
+            PartResume.discard(partial)
+            have = 0
+            connection = open(0, "")
+            code = Pin.guard { connection.responseCode }
+            if (code >= 400) {
+                connection.disconnect()
+                throw IllegalStateException("Chưa tải được $label (mã $code)")
+            }
+            answer = PartResume.Answer.WHOLE
+        }
+        val append = answer == PartResume.Answer.RESUME
+        try {
+            val initial = if (append) have else 0L
+            val length = connection.getHeaderFieldLong("Content-Length", -1)
+            if (length > limit - initial) throw Limit()
+            java.io.FileOutputStream(partial, append).use { output ->
+                // Ghi phiên bản SAU khi cắt `.part` (mở không nối): phần cũ không bao giờ mang ETag mới.
+                if (!append) PartResume.stamp(partial, connection.getHeaderField("ETag"))
+                connection.inputStream.use { input -> copy(input, output, limit, dir, initial, check) }
+                output.fd.sync()
+            }
+            if (expectedSize <= 0 && length >= 0 && partial.length() < initial + length) throw IOException("Tải $label chưa đủ (${partial.length()}/${initial + length} byte)")
+        } catch (error: Exception) {
+            if (error is Limit || !keepPartial) PartResume.discard(partial)
+            throw error
+        } finally {
+            connection.disconnect()
         }
     }
 

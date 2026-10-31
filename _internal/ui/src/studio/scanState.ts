@@ -23,5 +23,5 @@ export function createGate({ title, reading, unfit }: { title: string; reading: 
   reading: boolean;
   label: string | null;
 } {
-  return { disabled: reading || !title.trim() || unfit, reading, label: reading ? "Đang đọc nguồn…" : null };
+  return { disabled: reading || !title.trim() || unfit, reading, label: reading ? "Đang đọc nguồn" : null };
 }

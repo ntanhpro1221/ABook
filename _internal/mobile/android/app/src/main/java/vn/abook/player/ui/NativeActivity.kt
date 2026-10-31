@@ -6,7 +6,6 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
-import vn.abook.player.StudioActivity
 import vn.abook.player.ui.devices.DeviceLinks
 import vn.abook.player.ui.export.ExportLinks
 import vn.abook.player.M4bExports
@@ -17,6 +16,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -32,16 +32,20 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import vn.abook.player.AbookApplication
 import vn.abook.player.AppLog
 import vn.abook.player.BuildConfig
 import vn.abook.player.Diagnostics
+import vn.abook.player.IncomingFile
 import vn.abook.player.ui.data.DemoPlaybackCore
 import vn.abook.player.ui.data.LibraryState
 import vn.abook.player.ui.data.PlayerRepo
@@ -51,14 +55,20 @@ import vn.abook.player.ui.nowplaying.rememberRepoNowPlaying
 import vn.abook.player.ui.screens.SettingsEnv
 import vn.abook.player.ui.screens.SettingsLinks
 import vn.abook.player.ui.shell.AppShell
+import vn.abook.player.ui.pip.PipControl
+import vn.abook.player.ui.pip.PipParams
+import vn.abook.player.ui.pip.PipSupport
 import vn.abook.player.ui.shell.ShellState
+import vn.abook.player.ui.studio.StudioRequest
+import vn.abook.player.ui.studio.StudioRoute
+import androidx.compose.ui.text.font.createFontFamilyResolver
 import vn.abook.player.ui.theme.AbookTheme
+import vn.abook.player.ui.theme.BeVietnamPro
 import vn.abook.player.ui.theme.ThemeReveal
 import vn.abook.player.ui.theme.ThemeRevealHost
 
 /**
- * Màn mở app của giao diện native (docs/NATIVE_PHONE_UI.md): một Activity, Compose, không WebView. Chỉ là màn khởi động khi dựng với `-PnativeUi`
- * (src/nativeUi/AndroidManifest.xml); bản thường vẫn mở MainActivity (WebView).
+ * Màn mở app (docs/NATIVE_PHONE_UI.md): một Activity, Compose; nhận cả "Mở bằng" / chia sẻ file (manifest).
  */
 class NativeActivity : ComponentActivity() {
     private val app get() = application as AbookApplication
@@ -66,22 +76,59 @@ class NativeActivity : ComponentActivity() {
     private var contentReady = false
     private var demo = false
     private lateinit var player: PlayerRepo
+    private lateinit var pip: PipControl
+
+    /** Android 8-11: chính app vừa mở một Activity khác (chọn file, Studio, bảng chia sẻ, hộp xin quyền) - [onUserLeaveHint] cũng nổ ở đó nhưng không phải bạn rời app. */
+    private var openedByApp = false
+
+    /** File app khác gửi tới ("Mở bằng", chia sẻ) chờ khung vẽ xong để vào hàng nhập sách ([ShellState.receive]); mở nguội thì khung chưa có, nên cần chỗ đợi. */
+    private val incoming = Channel<List<String>>(Channel.UNLIMITED)
+
+    /** Nơi cần mở trong Studio từ xa (thông báo "cần duyệt / đã xong", hàng "Studio" ở Thiết bị): cũng chờ khung vẽ xong rồi [ShellState.openStudio]. */
+    private val studioRequests = Channel<StudioRequest>(Channel.UNLIMITED)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splash = installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        // Phông Be Vietnam Pro nạp ngay ở luồng nền (bộ nhớ phông dùng chung với Compose): lần dàn chữ đầu tiên của khung đầu khỏi tự nạp từng độ đậm ở luồng chính.
+        lifecycleScope.launch(Dispatchers.Default) { createFontFamilyResolver(applicationContext).preload(BeVietnamPro) }
         val library = app.library
         val covers = app.covers
-        val demoBooks = if (BuildConfig.NATIVE_UI) intent.getIntExtra(DEMO_BOOKS, 0) else 0
+        val demoBooks = if (BuildConfig.DEMO) intent.getIntExtra(DEMO_BOOKS, 0) else 0
         demo = demoBooks > 0
+        if (savedInstanceState == null) receive(intent)
         // Chế độ đo: cùng đường thật (PlayerRepo -> cửa sổ Đang nghe) nhưng nguồn là một cuốn giả, không chạm lõi phát thật.
         player = if (demo) PlayerRepo(DemoPlaybackCore(), lifecycleScope, Dispatchers.IO, { null }, { null }) else app.player
         val readAlong = if (demo) DemoReadAlongSource else AndroidReadAlongSource(this)
         val prefs = app.uiPrefs
         val settings = app.settings
+        pip = PipControl(PipSupport.available(this)) { enterPip() }
+        if (pip.available) {
+            addOnPictureInPictureModeChangedListener { info -> pip.active = info.isInPictureInPictureMode }
+            // Params của PiP luôn khớp trạng thái phát: nút Phát / Tạm dừng đổi theo, và tự vào PiP chỉ khi có sách mở + công tắc bật (Android 12+ hệ thống tự vào, nên phải đặt trước khi bạn rời app).
+            lifecycleScope.launch {
+                combine(
+                    player.state.map { it.hasTrack to it.playing }.distinctUntilChanged(), settings.state.map { it.autoPip }.distinctUntilChanged(),
+                ) { track, on -> PipParams.plan(playing = track.second, hasBook = track.first, switchOn = on) }
+                    .distinctUntilChanged().collect { plan ->
+                        try {
+                            setPictureInPictureParams(PipParams.build(this@NativeActivity, plan))
+                        } catch (error: IllegalStateException) {
+                            AppLog.w("Pip", "không đặt được thông số cửa sổ nhỏ: ${error.javaClass.simpleName}")
+                        }
+                    }
+            }
+        }
         if (!demo) app.deviceLinks = deviceLinks
         if (!demo) app.exportLinks = exportLinks
+        if (!demo) lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                player.state.map { it.playing }.distinctUntilChanged().collect { playing ->
+                    if (playing) settings.offerNotifications { deviceLinks.askNotifications {} }
+                }
+            }
+        }
         // Màn chờ giữ tới khi Thư viện có nội dung VÀ đã biết giao diện sáng / tối của bạn: khung đầu đã là lưới bìa đúng màu, không phải màn trống hay
         // màn đổi màu ngay sau khi hiện. Hai lần đọc chạy song song ở luồng nền.
         splash.setKeepOnScreenCondition { library.state.value is LibraryState.Loading || !settings.loaded.value }
@@ -132,72 +179,111 @@ class NativeActivity : ComponentActivity() {
                     val shell = remember {
                         ShellState(scope) { sort -> lifecycleScope.launch(Dispatchers.IO) { prefs.setSort(sort) } }
                     }
-                    val env = remember { SettingsEnv(settings, reveal, links, if (demo) null else app.devices, if (demo) null else app.voice, if (demo) null else app.music) }
+                    val env = remember { SettingsEnv(settings, reveal, links, if (demo) null else app.devices, if (demo) null else app.voice, if (demo) null else app.music, pip, if (demo) null else app.prepare, if (demo) null else app.night) }
+                    LaunchedEffect(shell) { for (files in incoming) shell.receive(app.imports, files) }
+                    LaunchedEffect(shell) { for (request in studioRequests) shell.openStudio(request) }
                     LaunchedEffect(Unit) { shell.library.restoreSort(withContext(Dispatchers.IO) { prefs.sort() }) }
+                    // Dáng chữ của Đọc theo: đọc một lần lúc mở app, ghi mỗi khi người nghe đổi.
+                    LaunchedEffect(shell) {
+                        shell.window.look = withContext(Dispatchers.IO) { prefs.readLook() }
+                        shell.window.onLook = { look -> lifecycleScope.launch(Dispatchers.IO) { prefs.setReadLook(look) } }
+                    }
                     val state by library.state.collectAsStateWithLifecycle()
+                    // Thư viện dưới dạng danh sách cuốn cho Đang nghe: lời "Đã nghe hết ..." mời cuốn kế, và hỏi khi máy khác đã nghe xa hơn.
+                    val bookList = remember(library) {
+                        library.state.map { (it as? vn.abook.player.ui.data.LibraryState.Ready)?.books.orEmpty() }
+                            .stateIn(scope, kotlinx.coroutines.flow.SharingStarted.Eagerly, emptyList())
+                    }
                     AppShell(
                         shell, state, player, covers, env, onFirstContent = ::onFirstContent, books = library, deletions = library.deletions, companion = if (demo) null else app.companion,
-                        nowPlaying = rememberRepoNowPlaying(player, readAlong, env.music),
+                        nowPlaying = rememberRepoNowPlaying(player, readAlong, env.music, env.voice, bookList, env.prepare, env.night),
                         imports = app.imports, editors = app.editors, exports = if (demo) null else app.exports, demo = demo, askNotifications = deviceLinks.askNotifications, autoPick = !demo,
+                        pip = pip, studio = if (demo) null else app.studio,
                     )
                 }
             }
         }
     }
 
-    private var nearbyResult: ((Boolean) -> Unit)? = null
-    private val nearby = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        nearbyResult?.invoke(granted)
-        nearbyResult = null
+    // Mở app là máy tính thấy điện thoại (để "Phát trên điện thoại" được cả khi chưa nghe gì) - Remote.
+    override fun onResume() {
+        super.onResume()
+        vn.abook.player.Remote.foreground = true
     }
-    private var notificationsThen: (() -> Unit)? = null
-    private val notifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
-        // Từ chối thông báo thì chia sẻ vẫn chạy (chỉ không có thông báo "Tắt chia sẻ").
-        notificationsThen?.invoke()
-        notificationsThen = null
+
+    override fun onPause() {
+        vn.abook.player.Remote.foreground = false
+        super.onPause()
     }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        receive(intent)
+    }
+
+    /** "Mở bằng ABook" / chia sẻ một file tới app (địa chỉ lấy ra bằng [IncomingFile]): vào hàng nhập sách như file chọn từ "Thêm sách". */
+    private fun receive(intent: Intent?) {
+        if (demo || intent == null) return
+        StudioRoute.request(intent)?.let { studioRequests.trySend(it) }
+        val uri = IncomingFile.uri(intent)
+        if (uri == null) {
+            if (IncomingFile.textOnly(intent)) Toast.makeText(this, IncomingFile.TEXT_ONLY, Toast.LENGTH_LONG).show()
+            return
+        }
+        runCatching { contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+        incoming.trySend(listOf(uri.toString()))
+    }
+
+    // Nơi đang đợi câu trả lời của các hộp hệ thống nằm ở Application ([PendingAnswers]): Activity bị huỷ lúc hộp còn mở thì Activity mới vẫn giao được.
+    private val nearby = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted -> app.answers.nearby.deliver(granted) }
+    // Từ chối thông báo thì chia sẻ vẫn chạy (chỉ không có thông báo "Tắt chia sẻ").
+    private val notifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) { app.answers.notifications.deliver(Unit) }
 
     /** Cửa ra hệ điều hành của ba màn Thiết bị: Studio của máy tính, trang thông tin ứng dụng, quyền "Thiết bị ở gần" và thông báo. */
     private val deviceLinks = DeviceLinks(
-        openStudio = { computer, path -> open(Intent(this, StudioActivity::class.java).putExtra("computer", computer).putExtra("path", path)) },
+        openStudio = { computer, route -> studioRequests.trySend(StudioRequest(computer, route)) },
         openAppSettings = { open(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))) },
         askNearby = { result ->
             if (Build.VERSION.SDK_INT < 31) {
                 result(true)
             } else {
-                nearbyResult = result
+                app.answers.nearby.expect(result)
+                openedByApp = true
                 nearby.launch(Manifest.permission.BLUETOOTH_CONNECT)
             }
         },
         askNotifications = { then ->
             if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                notificationsThen = then
+                app.answers.notifications.expect { then() }
+                openedByApp = true
                 notifications.launch(Manifest.permission.POST_NOTIFICATIONS)
             } else {
                 then()
             }
         },
+        copyText = { text ->
+            val clipboard = getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+            clipboard != null && runCatching { clipboard.setPrimaryClip(ClipData.newPlainText("ABook", text)) }.isSuccess
+        },
+        openRelease = { url -> if (url.startsWith(SOURCE_URL)) open(Intent(Intent.ACTION_VIEW, Uri.parse(url))) },
     )
 
-    private var pickFolderResult: ((String?) -> Unit)? = null
     private val pickFolder = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        pickFolderResult?.invoke(result.data?.data?.takeIf { result.resultCode == RESULT_OK }?.toString())
-        pickFolderResult = null
+        app.answers.folder.deliver(result.data?.data?.takeIf { result.resultCode == RESULT_OK }?.toString())
     }
-    private var createFileResult: ((String?) -> Unit)? = null
     private val createFile = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        createFileResult?.invoke(result.data?.data?.takeIf { result.resultCode == RESULT_OK }?.toString())
-        createFileResult = null
+        app.answers.file.deliver(result.data?.data?.takeIf { result.resultCode == RESULT_OK }?.toString())
     }
 
     /** Cửa ra hệ điều hành của màn Xuất sách: bộ chọn thư mục MP3, hộp "tạo file" của M4B và sách nói, bảng chia sẻ file vừa xuất, trang thông tin ứng dụng. */
     private val exportLinks = ExportLinks(
         pickFolder = { result ->
-            pickFolderResult = result
+            app.answers.folder.expect(result)
             pickFolder.launch(Mp3Exports.pickIntent(this))
         },
         createFile = { title, result ->
-            createFileResult = result
+            app.answers.file.expect(result)
             createFile.launch(M4bExports.createIntent(title))
         },
         share = ::shareExport,
@@ -225,6 +311,14 @@ class NativeActivity : ComponentActivity() {
         },
         shareLogs = ::shareLogs,
         openSource = { open(Intent(Intent.ACTION_VIEW, Uri.parse(SOURCE_URL))) },
+        openRelease = { url ->
+            if (url.startsWith("https://github.com/ntanhpro1221/ABook/")) open(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        },
+        saveOld = { name, result ->
+            app.answers.file.expect(result)
+            createFile.launch(Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
+                .setType(vn.abook.player.OldSaves.mimeOf(name)).putExtra(Intent.EXTRA_TITLE, name))
+        },
     )
 
     private fun open(intent: Intent) {
@@ -232,6 +326,7 @@ class NativeActivity : ComponentActivity() {
             startActivity(intent)
         } catch (error: ActivityNotFoundException) {
             AppLog.w("Settings", "máy không mở được ${intent.action}")
+            app.settings.problem.value = "Chưa mở được trình duyệt"
         }
     }
 
@@ -243,6 +338,7 @@ class NativeActivity : ComponentActivity() {
                     Diagnostics.shareIntent(this@NativeActivity)
                 } catch (error: Exception) {
                     AppLog.w("Diagnostics", "không gom được nhật ký để gửi: ${error.javaClass.simpleName}")
+                    app.settings.problem.value = "Chưa gửi được nhật ký"
                     null
                 }
             } ?: return@launch
@@ -258,11 +354,42 @@ class NativeActivity : ComponentActivity() {
         if (started) player.attach()
         // Lượt tải còn giữ, chia sẻ đã bật từ lần trước, sách nghe thẳng của máy đã ghép: sau khung đầu, không nằm trong đường mở nguội.
         if (!demo) app.devices.apply { restore(); syncStreamed() }
+        if (!demo) {
+            app.settings.openRelease = links.openRelease
+            app.settings.loadMaintenance()
+            lifecycleScope.launch(Dispatchers.IO) { vn.abook.player.AppStartup.run(applicationContext) }
+        }
+    }
+
+    /** Vào cửa sổ nhỏ (PiP) ngay: nút "Cửa sổ mini" của Đang nghe, và [onUserLeaveHint] trên Android 8-11. */
+    private fun enterPip() {
+        if (!pip.available) return
+        try {
+            enterPictureInPictureMode(PipParams.build(this, currentPipPlan()))
+        } catch (error: IllegalStateException) {
+            AppLog.w("Pip", "không vào được cửa sổ nhỏ: ${error.javaClass.simpleName}")
+        }
+    }
+
+    private fun currentPipPlan() = player.state.value.let { PipParams.plan(it.playing, it.hasTrack, app.settings.state.value.autoPip) }
+
+    // Android 12+ tự vào PiP nhờ setAutoEnterEnabled (PipParams); 8-11 thì gọi tay ở đây khi bạn rời app (Home / vuốt).
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S && pip.available && !openedByApp && !isInPictureInPictureMode && currentPipPlan().autoEnter) enterPip()
+    }
+
+    @Suppress("DEPRECATION")
+    override fun startActivityForResult(intent: Intent, requestCode: Int, options: Bundle?) {
+        openedByApp = true
+        super.startActivityForResult(intent, requestCode, options)
     }
 
     override fun onStart() {
         super.onStart()
         started = true
+        openedByApp = false
+        pip.active = pip.available && isInPictureInPictureMode
         if (contentReady) player.attach()
     }
 
@@ -278,8 +405,15 @@ class NativeActivity : ComponentActivity() {
         if (level >= ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN) app.covers.trim()
     }
 
+    override fun onDestroy() {
+        // Application sống lâu hơn Activity (phát nền sau khi bạn bấm Back): gỡ cầu nối của Activity này, không giữ cả cây Compose đã huỷ.
+        if (app.deviceLinks === deviceLinks) app.deviceLinks = DeviceLinks()
+        if (app.exportLinks === exportLinks) app.exportLinks = ExportLinks()
+        super.onDestroy()
+    }
+
     companion object {
-        /** Extra của Intent: số sách giả thay Thư viện thật (đo đạc, chỉ bản -PnativeUi). */
+        /** Extra của Intent: số sách giả thay Thư viện thật (đo đạc; chỉ bản thử -PbenchAppId, [BuildConfig.DEMO]). */
         const val DEMO_BOOKS = "abook.demo.books"
 
         /** "Mã nguồn mở" (Cài đặt > Nâng cao): trang của ABook trên GitHub - địa chỉ cố định, không nhận từ đâu. */

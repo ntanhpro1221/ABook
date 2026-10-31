@@ -1,5 +1,6 @@
 package vn.abook.player.ui.devices
 
+import vn.abook.player.ui.studio.StudioRoute
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -61,9 +62,12 @@ class DevicesScreenTest {
     private val sheets = SheetHost()
     private val source = FakeDevicesSource()
     private lateinit var devices: DevicesState
-    private var studio: Pair<String, String>? = null
+    private var studio: Pair<String, StudioRoute>? = null
     private var settingsOpened = 0
     private var opened: DevicesPage? = null
+    private val copiedTexts = ArrayList<String>()
+    private var copyWorks = true
+    private val releases = ArrayList<String>()
 
     private val main = Link(paired = true, name = "Máy bàn", host = "192.168.1.20", via = "192.168.1.20:47630", deviceName = "Điện thoại của tôi")
     private val bàn = Found("192.168.1.20:47630", "Máy bàn của nhà", DeviceKind.Computer)
@@ -79,7 +83,10 @@ class DevicesScreenTest {
 
     private fun makeDevices() = DevicesState(
         source, CoroutineScope(Dispatchers.Unconfined),
-        DeviceLinks(openStudio = { computer, path -> studio = computer to path }, openAppSettings = { settingsOpened++ }),
+        DeviceLinks(
+            openStudio = { computer, route -> studio = computer to route }, openAppSettings = { settingsOpened++ },
+            copyText = { text -> copiedTexts += text; copyWorks }, openRelease = { url -> releases += url },
+        ),
         pollMs = 3_600_000,
     )
 
@@ -130,6 +137,83 @@ class DevicesScreenTest {
 
     @Test fun pairEmptyLight() = pairEmpty(false)
     @Test fun pairEmptyDark() = pairEmpty(true)
+
+    // ---- Nối máy tính: chỉ dẫn như PairPanel / ComputerIntro của web ----
+
+    private fun scrollTo(tag: String) {
+        rule.onNodeWithTag("pair_list").performScrollToNode(hasTestTag(tag))
+        rule.waitForIdle()
+    }
+
+    @Test fun unpairedPairSaysWhereTheCodeComesFromBehindAFold() {
+        source.link = Link(deviceName = "Điện thoại của tôi")
+        show(DevicesPage.Pair)
+        rule.onNodeWithText("Cùng Wi-Fi, mở Thiết bị trên máy tính.").assertIsDisplayed()
+        rule.onNodeWithTag("pair_code_help").assertIsDisplayed()
+        // Lời giải thích gập: chưa chiếm chỗ tới khi bạn chạm "Cách lấy mã"; chạm lần nữa thì khép lại.
+        rule.onNodeWithTag("pair_code_help_text").assertDoesNotExist()
+        tap("pair_code_help")
+        rule.onNodeWithText("Trong Cài đặt › Thiết bị của máy tính, bật “Kết nối Wi-Fi” rồi chọn ghép thiết bị để lấy mã 6 số.").assertIsDisplayed()
+        tap("pair_code_help")
+        rule.onNodeWithTag("pair_code_help_text").assertDoesNotExist()
+    }
+
+    @Test fun installFoldOpensTheDesktopPageAndCopiesItsAddress() {
+        source.link = Link(deviceName = "Điện thoại của tôi")
+        show(DevicesPage.Pair)
+        scrollTo("pair_install")
+        rule.onNodeWithTag("pair_download").assertDoesNotExist()
+        tap("pair_install")
+        scrollTo("pair_download")
+        rule.onNodeWithText("Studio máy tính").assertIsDisplayed()
+        rule.onNodeWithText("Tạo sách nói rồi nghe ở đây.").assertIsDisplayed()
+        tap("pair_download")
+        assertEquals(listOf(DeviceText.DESKTOP_RELEASES), releases)
+        tap("pair_copy_release")
+        assertEquals(listOf(DeviceText.DESKTOP_RELEASES), copiedTexts)
+        rule.onNodeWithText("Đã chép địa chỉ").assertIsDisplayed()
+        // Chép không được: dòng phụ là chính địa chỉ để bạn gõ trên máy tính, không báo đã chép.
+        copyWorks = false
+        tap("pair_copy_release")
+        rule.onNodeWithText("Đã chép địa chỉ").assertDoesNotExist()
+        rule.onNodeWithText(vn.abook.player.ui.components.keepUrlTogether(DeviceText.DESKTOP_RELEASES)).assertIsDisplayed()
+    }
+
+    @Test fun pairedScreenHasNoInstallFoldOrCodeHelp() {
+        pairedScene()
+        show(DevicesPage.Pair)
+        rule.onNodeWithTag("pair_install").assertDoesNotExist()
+        rule.onNodeWithTag("pair_intro").assertDoesNotExist()
+    }
+
+    @Test fun anOfflineDeviceExplainsListeningAwayFromHome() {
+        pairedScene()
+        show(DevicesPage.Pair)
+        scrollTo("pair_away")
+        rule.onNodeWithText("Sách đã tải vẫn nghe được khi ra ngoài.").assertIsDisplayed()
+        tap("pair_away_help")
+        rule.onNodeWithText(DeviceText.AWAY_HELP).assertIsDisplayed()
+    }
+
+    @Test fun everyDeviceAnsweringHidesTheAwayNote() {
+        pairedScene()
+        source.peers = source.peers.filter { it.device.reach !is Reach.Offline }
+        show(DevicesPage.Pair)
+        rule.onNodeWithText("Sách đã tải vẫn nghe được khi ra ngoài.").assertDoesNotExist()
+    }
+
+    private fun pairInstall(dark: Boolean) {
+        source.link = Link(deviceName = "Điện thoại của tôi")
+        show(DevicesPage.Pair, dark)
+        tap("pair_code_help")
+        scrollTo("pair_install")
+        tap("pair_install")
+        scrollTo("pair_download")
+        shot("devices_pair_install_${theme(dark)}")
+    }
+
+    @Test @Config(sdk = [35], qualifiers = "w360dp-h1100dp-xxhdpi") fun pairInstallLight() = pairInstall(false)
+    @Test @Config(sdk = [35], qualifiers = "w360dp-h1100dp-xxhdpi") fun pairInstallDark() = pairInstall(true)
 
     private fun pairPick(dark: Boolean) {
         source.found = listOf(bàn, xáchTay)
@@ -344,6 +428,7 @@ class DevicesScreenTest {
         }
         rule.waitForIdle()
         tap("pair_method_bluetooth")
+        tap("bluetooth_allow")
         rule.onNodeWithTag("pair_denied").assertIsDisplayed()
         tap("pair_open_settings")
         assertEquals(1, settingsOpened)
@@ -413,11 +498,11 @@ class DevicesScreenTest {
     @Test
     fun studioOpensFromTheSheet() {
         pairedScene()
-        source.target = "Máy bàn" to "/studio"
+        source.target = "Máy bàn" to StudioRoute()
         show(DevicesPage.Pair)
         tap("device_main")
         tap("device_studio")
-        assertEquals("Máy bàn" to "/studio", studio)
+        assertEquals("Máy bàn" to StudioRoute(), studio)
         rule.onNodeWithTag("device_sheet").assertDoesNotExist()
     }
 
@@ -462,7 +547,7 @@ class DevicesScreenTest {
         source.events.tryEmit(DownloadEvent("e", 0.2f, error = "Mất mạng giữa chừng."))
         rule.waitForIdle()
         rule.onNodeWithTag("pair_list").performScrollToNode(hasTestTag("book_e"))
-        rule.onNodeWithText("Mất mạng giữa chừng.").assertIsDisplayed()
+        rule.onNodeWithText("Chưa tải xong về máy. Mất mạng giữa chừng.").assertIsDisplayed()
         assertFirstLine("book_e", trailing = true)
         tap("download_e")
         assertEquals(listOf("e"), source.downloads)
@@ -476,7 +561,10 @@ class DevicesScreenTest {
         show(DevicesPage.Share)
         rule.onNodeWithTag("share_address").assertDoesNotExist()
         tap("share_switch")
+        assertFalse(source.share.running)
+        tap("share_continue")
         assertTrue(source.share.running)
+        tap("share_details")
         rule.onNodeWithTag("share_address").assertIsDisplayed()
         rule.onNodeWithTag("share_new_code").assertIsDisplayed()
         tap("share_switch")
@@ -490,6 +578,7 @@ class DevicesScreenTest {
         source.shareError = DeviceFailure("Chưa vào mạng Wi-Fi nào.")
         show(DevicesPage.Share)
         tap("share_switch")
+        tap("share_continue")
         rule.onNodeWithTag("share_problem").assertIsDisplayed()
         rule.onNodeWithText("Chưa vào mạng Wi-Fi nào.").assertIsDisplayed()
         assertFalse(source.share.running)
@@ -610,7 +699,7 @@ class DevicesScreenTest {
         group()
         rule.onNodeWithText("Đã nối Máy bàn").assertIsDisplayed()
         rule.onNodeWithText("Đang bật · 1 máy").assertIsDisplayed()
-        rule.onNodeWithText("300 MB · còn trống 10 GB").assertIsDisplayed()
+        rule.onNodeWithText("Sách 300 MB · còn trống 10 GB").assertIsDisplayed()
         rule.onNodeWithText("Điện thoại của tôi").assertIsDisplayed()
         shot("settings_devices_filled_light")
     }
@@ -668,7 +757,7 @@ class DevicesScreenTest {
         }
     }
 
-    /** Thanh tiến độ của hàng chạy từ cột chữ tới mép phải của hàng (bằng đường kẻ), qua cả cột hành động; "Huỷ" vẫn ở dòng đầu. */
+    /** Thanh tiến độ của hàng chạy từ cột chữ tới mép phải của hàng (bằng đường kẻ), qua cả cột hành động; "Huỷ tải" vẫn ở dòng đầu. */
     @Test
     fun aProgressBarRunsToTheRightEdgeOfItsRow() {
         pairedScene()

@@ -1,5 +1,5 @@
 import { api } from "@/studio/api";
-import { formatSize } from "@/studio/musicLocal";
+import { formatSize } from "@/shared/format";
 
 /**
  * Studio trong trình duyệt (từ xa hay ngay trên máy tính): máy đang xem không đưa được đường dẫn nào trên máy tính, nên nó

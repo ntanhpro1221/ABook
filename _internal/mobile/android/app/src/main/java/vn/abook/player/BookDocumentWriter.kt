@@ -55,7 +55,7 @@ object BookDocumentWriter {
         val book = try {
             JSONObject(File(bookDir, "book.json").readText())
         } catch (error: Exception) {
-            throw Refused("Không đọc được thư mục sách này.")
+            throw Refused("Chưa đọc được thư mục sách này.")
         }
         val listed = book.optJSONObject("package")?.optJSONObject("files") ?: throw Refused("Đây không phải một cuốn đã nhập từ file sách.")
         val files = HashMap<String, Any>() // tên mục -> File hay ByteArray
@@ -109,7 +109,7 @@ object BookDocumentWriter {
         val described = LinkedHashMap<String, Any>()
         for (name in sorted) described[name] = describe(name, files.getValue(name), known[name])
         val unknown = sorted.filter { !BookFileImport.contentPattern(version).matches(it) }
-        if (unknown.isNotEmpty()) throw Refused("Không gói được các file có tên ngoài định dạng: ${unknown.take(3)}")
+        if (unknown.isNotEmpty()) throw Refused("Chưa gói được các file có tên ngoài định dạng: ${unknown.take(3)}")
         val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'+00:00'", Locale.ROOT).apply { timeZone = TimeZone.getTimeZone("UTC") }
         val packageInfo = LinkedHashMap<String, Any>()
         packageInfo["format"] = FORMAT
@@ -145,7 +145,7 @@ object BookDocumentWriter {
     private fun writeProject(bookDir: File, out: OutputStream, book: JSONObject, files: HashMap<String, Any>,
                              known: HashMap<String, JSONObject>, edits: JSONObject, version: Int): Written {
         val unknown = files.keys.filter { !BookFileImport.contentPattern(version).matches(it) }
-        if (unknown.isNotEmpty()) throw Refused("Không gói được các file có tên ngoài định dạng: ${unknown.take(3)}")
+        if (unknown.isNotEmpty()) throw Refused("Chưa gói được các file có tên ngoài định dạng: ${unknown.take(3)}")
         val kept = ProjectDocument.kept(bookDir)
         if (kept != null) {
             for (name in kept.files.keys().asSequence().toList()) {

@@ -1,12 +1,13 @@
 package vn.abook.player.ui.music
 
+import vn.abook.player.ui.data.dotJoined
 import androidx.compose.runtime.Immutable
 import org.json.JSONObject
 import vn.abook.player.ui.data.Fmt
 
 /*
  * Nhạc nền của một cuốn, cho giao diện native. Cùng hình JSON với lõi (GET /music của LocalStudio, `/api/music/playlists`, `musicCredit` của Playback.state)
- * và cùng luật với bản WebView (listen/playlistBed.ts, shared/musicLevels.ts, shared/format.ts) - chỉ chữ trên nút được viết lại cho điện thoại (nhãn 1-4 chữ).
+ * Chữ trên nút viết cho điện thoại (nhãn 1-4 chữ).
  */
 
 /** Một danh sách phát của danh mục (menu "Nhạc nền" của sách chỉ có chữ). */
@@ -156,11 +157,11 @@ object MusicLevels {
 
     /** Cùng chữ với web (shared/musicLevels.ts MUSIC_LEVELS, đã kèm lời levelText): -28 là mức nhạc khó che lời đọc nhất (MIX_QA mục 7.1). */
     val levels: List<Pair<Double, String>> = listOf(
-        -14.0 to "To", -17.0 to "Hơi to", -20.0 to "Vừa (mặc định)", -24.0 to "Nhỏ", -28.0 to "Rất nhỏ (dễ nghe lời nhất)",
+        -14.0 to "To", -17.0 to "Hơi to", -20.0 to "Vừa (mặc định)", -24.0 to "Nhỏ", -28.0 to "Rất nhỏ (rõ lời)",
     )
 
-    /** Tên ô chọn mức của web: "Mức nhạc dưới giọng đọc". */
-    const val TITLE = "Mức nhạc dưới giọng đọc"
+    /** Tên ô chọn mức của web: "Mức nhạc nền" (MusicTab, EditBook, menu Nhạc nền). */
+    const val TITLE = "Mức nhạc nền"
 
     /** Các mức: có sẵn, thêm mức của sách (sách đóng gói ở -18 dB, "-18 dB (của sách)" như levelOptions) nếu không trùng mức nào - xếp từ to tới nhỏ. */
     fun options(current: Double): List<Pair<Double, String>> =
@@ -189,6 +190,8 @@ object MusicText {
     const val ADD_LABEL = "Thêm nhạc của bạn"
     /** musicLocal.ts MY_MUSIC_INTRO: một câu cho mọi nơi nói về Nhạc của tôi. */
     const val MY_MUSIC_INTRO = "Thêm nhạc làm nền; bài đã chọn đi cùng file sách."
+    /** musicLocal.ts MY_MUSIC_HELP: lời gập "Nhạc riêng" dưới [MY_MUSIC_INTRO] ở mọi nơi nói về Nhạc của tôi. */
+    const val MY_MUSIC_HELP = "Nhạc được chép vào kho máy này; dùng Đổi bài để chọn cho từng đoạn. Hỗ trợ mp3, m4a, ogg, opus, flac, wav. Bài đã chọn đi cùng .abook / .abookproj, vẫn nghe được trên máy khác, không ai khác tải được. Tên bài và nghệ sĩ lấy từ file; ABook không xác nhận giấy phép."
     /** musicLocal.ts `analysisLabel` của bài chưa phân tích (điện thoại không tự chọn nên không nói bài đã phân tích). */
     const val UNANALYSED = "Chưa phân tích - máy chưa tự chọn, bạn vẫn ghim được"
     const val PACKAGED_NOTE = "Nhạc do người làm sách chọn. Đổi ở đây chỉ trên máy này."
@@ -260,7 +263,7 @@ object MusicText {
     }
 
     /** Tên ngắn trên hàng "Đang phát": tên bài · tác giả. */
-    fun creditLine(credit: MusicCredit): String = listOf(credit.title.trim(), credit.creator.trim()).filter { it.isNotEmpty() }.joinToString(" · ")
+    fun creditLine(credit: MusicCredit): String = listOf(credit.title.trim(), credit.creator.trim()).dotJoined()
 
     private val CC_URL = Regex("""creativecommons\.org/(licenses|publicdomain)/([a-z-]+)/(\d+(?:\.\d+)?)""", RegexOption.IGNORE_CASE)
     private val CC_CODE = Regex("""by(-(nc|nd|sa))*""")
@@ -303,11 +306,11 @@ object MusicText {
     /** Dòng phụ của một đoạn, như web: chương · khoảng giờ · tác giả · "bài của bạn" khi đã đổi (im lặng thì tên bài gạch ngang). */
     fun cueLine(cue: MusicCue): String = listOf(
         cue.chapter.trim(), "${Fmt.clock(cue.start)} – ${Fmt.clock(cue.end)}", cue.creator.trim(), if (cue.pinned) "bài của bạn" else "",
-    ).filter { it.isNotEmpty() }.joinToString(" · ")
+    ).dotJoined()
 
     /** Dòng phụ của một bài để đổi (SwapTrack): nghệ sĩ · độ dài. */
     fun mineLine(track: MineTrack): String =
-        listOf(track.creator.trim(), if (track.duration > 0) Fmt.clock(track.duration) else "").filter { it.isNotEmpty() }.joinToString(" · ")
+        listOf(track.creator.trim(), if (track.duration > 0) Fmt.clock(track.duration) else "").dotJoined()
 
     /**
      * Dòng chú thích dưới một bài (studio/musicLocal.ts `mineNote`; điện thoại không có công tắc tự chọn nên `auto` luôn là mặc định):
@@ -316,7 +319,7 @@ object MusicText {
     fun mineNote(track: MineTrack): String = listOf(
         if (track.analysed && track.vocalsLikely) "Có vẻ có lời - máy không tự chọn bài này" else "",
         if (track.analysed) (if (track.fits) "Hợp không khí đoạn này" else "") else UNANALYSED,
-    ).filter { it.isNotEmpty() }.joinToString(" · ")
+    ).dotJoined()
 
     /** Giấy phép đòi ghi công (khác cc0; nhạc bạn tự thêm không có giấy phép) thì kèm [MODIFIED_NOTE]. */
     fun needsModifiedNote(license: String): Boolean = license.trim().lowercase().let { it.isNotEmpty() && it != "cc0" }

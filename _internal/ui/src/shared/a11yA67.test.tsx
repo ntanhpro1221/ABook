@@ -80,7 +80,8 @@ describe("nút đang chạy", () => {
 describe("tên đọc được", () => {
   it("thanh đã nghe là progressbar có giá trị", async () => {
     const { heardBarProps } = await import("./ui");
-    expect(heardBarProps(0.426)).toMatchObject({ role: "progressbar", "aria-valuenow": 43, "aria-valuetext": "đã nghe 43%" });
+    // Làm tròn xuống như chữ "Đã nghe 42%" cạnh thanh (formatPercent) - trình đọc màn hình và mắt nghe / thấy cùng một số.
+    expect(heardBarProps(0.426)).toMatchObject({ role: "progressbar", "aria-valuenow": 42, "aria-valuetext": "đã nghe 42%" });
     expect(heardBarProps(1.4)["aria-valuenow"]).toBe(100);
   });
 

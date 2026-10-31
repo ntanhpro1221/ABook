@@ -63,8 +63,8 @@ def request(method: str, url: str, headers: dict[str, str], body: bytes | None =
     except TimeoutError as error:
         raise VoiceError(f"{name} không trả lời (quá giờ).", "timeout") from error
     except urllib.error.URLError as error:
-        if isinstance(error.reason, (TimeoutError, socket.timeout)):  # quá giờ lúc NỐI (như edge.py): coi như không có mạng
-            raise VoiceError(f"Không kết nối được tới {name} (quá giờ).", "offline") from error
+        if isinstance(error.reason, (TimeoutError, socket.timeout)):  # quá giờ lúc NỐI (như edge.py): có mạng mà dịch vụ không trả lời, không phải "không có mạng"
+            raise VoiceError(f"{name} không trả lời (quá giờ).", "timeout") from error
         raise VoiceError(f"Không có mạng để dùng giọng {name}.", "offline") from error
     except OSError as error:
         raise VoiceError(f"Không có mạng để dùng giọng {name}.", "offline") from error

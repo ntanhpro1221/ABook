@@ -83,11 +83,16 @@ it('năm nút cỡ chữ có nhãn số riêng',()=>{
 it('vị trí thông báo chỉ đổi style của toaster, không lan biến qua html xuống cả chương',()=>{
   const style={getPropertyValue:()=>'',setProperty:vi.fn(),removeProperty:vi.fn()};
   Object.assign(document,{querySelectorAll:()=>[{style}]});
+  let resize=()=>{}, bottom=56;
+  const disconnect=vi.fn();
+  vi.stubGlobal('ResizeObserver',class { constructor(run:()=>void){resize=run;} observe(){} disconnect=disconnect; });
   const {tree}=mount();
-  walk(tree,n=>n.type==='header')[0].props.ref.current={getBoundingClientRect:()=>({bottom:56})};
-  const cleanup=h.effects.find(e=>e.run.toString().includes('--toast-top')).run();
+  walk(tree,n=>n.type==='header')[0].props.ref.current={getBoundingClientRect:()=>({bottom})};
+  const cleanup=h.effects.find(e=>e.run.toString().includes('toastOffset')).run();
   expect(style.setProperty).toHaveBeenCalledWith('--toast-top','64px');
+  bottom=72;resize();expect(style.setProperty).toHaveBeenLastCalledWith('--toast-top','80px');
   cleanup();expect(style.removeProperty).toHaveBeenCalledWith('--toast-top');
+  expect(disconnect).toHaveBeenCalledOnce();
 });
 
 it('ẩn trang và pagehide flush ngay chỗ vừa cuộn, lỗi giữ pending và thử lại',async()=>{

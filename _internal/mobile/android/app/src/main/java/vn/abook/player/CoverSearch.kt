@@ -3,8 +3,8 @@ package vn.abook.player
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
-import java.net.HttpURLConnection
 import java.net.URL
+import vn.abook.player.net.FastConnect
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -231,10 +231,8 @@ object CoverSearch {
             val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(deadlineSeconds.toLong())
             var url = first
             repeat(MAX_REDIRECTS + 1) {
-                val connection = URL(url).openConnection() as HttpURLConnection
+                val connection = FastConnect.open(url, timeoutSeconds * 1000)
                 try {
-                    connection.instanceFollowRedirects = false
-                    connection.connectTimeout = timeoutSeconds * 1000
                     connection.readTimeout = timeoutSeconds * 1000
                     connection.setRequestProperty("User-Agent", USER_AGENT)
                     val code = connection.responseCode

@@ -1,8 +1,8 @@
 import QtQuick
 import ABook
 
-// Hộp hỏi khi thôi ghép một máy còn dữ liệu sẽ mất (UnpairDialog của shared/UnpairDialog.tsx, chữ từ unpairCopy của shared/unpair.ts):
-// nói mất gì, giữ gì; ba lựa chọn xếp dọc - "Gửi trước rồi thôi ghép" (nút chính khi máy kia trả lời), "Vẫn thôi ghép, bỏ thay đổi"
+// Hộp hỏi khi bỏ ghép một máy còn dữ liệu sẽ mất (UnpairDialog của shared/UnpairDialog.tsx, chữ từ unpairCopy của shared/unpair.ts):
+// nói mất gì, giữ gì; ba lựa chọn xếp dọc - "Gửi trước rồi bỏ ghép" (nút chính khi máy kia trả lời), "Vẫn bỏ ghép, bỏ thay đổi"
 // (nguy hiểm), "Huỷ" (nút chính khi máy kia tắt - gửi lúc này sẽ hỏng). Đang chạy thì không đóng được; lỗi lần gửi hiện ngay trong hộp,
 // hộp ở nguyên để chọn lại. Là một lớp của Back (Modal).
 Modal {

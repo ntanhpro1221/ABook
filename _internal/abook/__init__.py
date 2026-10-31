@@ -12,3 +12,8 @@ os.environ.setdefault("ABOOK_RUNTIME", str(RUNTIME_ROOT))
 os.environ.setdefault("HF_HOME", str(RUNTIME_ROOT / "models" / "huggingface"))
 os.environ.setdefault("HF_HUB_CACHE", str(RUNTIME_ROOT / "models" / "huggingface" / "hub"))
 os.environ.setdefault("TORCH_HOME", str(RUNTIME_ROOT / "models" / "torch"))
+
+# Mọi lối vào (app, worker, CLI, máy chủ) đều nạp gói này, nên đây là chỗ DUY NHẤT cài cách nối TCP đua IPv6/IPv4 (RFC 8305).
+from abook import netconnect as _netconnect
+
+_netconnect.install()

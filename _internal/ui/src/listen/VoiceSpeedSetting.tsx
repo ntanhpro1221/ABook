@@ -5,7 +5,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { toast } from "@/shared/toast";
 import { Button, ChoiceRow } from "@/shared/ui";
 import { api } from "@/studio/api";
-import { formatSize } from "@/studio/musicLocal";
+import { formatSize } from "@/shared/format";
 import { desktopSupertonic, useModuleStatus, type VieneuBackend } from "./VieneuModuleCard";
 import { SUPERTONIC_COPY, VOICE_SPEED_KEY } from "./vieneuModule";
 import {

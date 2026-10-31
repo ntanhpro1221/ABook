@@ -121,7 +121,7 @@ export function PhoneEdits({ bookId }: { bookId: string }) {
         const made = reply.requests ?? 0;
         const skipped = reply.skipped ?? 0;
         const held = reply.held ?? 0;
-        toastDone(made ? `Đã ghi ${made} việc vào “Áp dụng thay đổi”` : "Không có việc nào ghi được", skipped || held ? applyNote({ skipped, held, dropped: (reply.dropped ?? []).map((row) => row.label) }) : undefined);
+        toastDone(made ? `Đã ghi ${made} việc vào “Áp dụng thay đổi”` : "Chưa ghi được việc nào", skipped || held ? applyNote({ skipped, held, dropped: (reply.dropped ?? []).map((row) => row.label) }) : undefined);
       } else if (verb === "restore") {
         toast.success("Đã khôi phục");
       } else {

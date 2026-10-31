@@ -18,7 +18,7 @@ import java.io.ByteArrayOutputStream
 object AndroidCoverCodec : CoverCodec {
     override fun normalize(raw: ByteArray): CoverCodec.Normalized {
         if (raw.size > Covers.MAX_UPLOAD_BYTES) throw Covers.tooLarge()
-        val unreadable = CoverCodec.CoverError("Không đọc được ảnh này")
+        val unreadable = CoverCodec.CoverError("Chưa đọc được ảnh này")
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeByteArray(raw, 0, raw.size, bounds)
         if (bounds.outWidth <= 0 || bounds.outHeight <= 0) throw unreadable

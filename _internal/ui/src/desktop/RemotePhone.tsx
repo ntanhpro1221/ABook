@@ -1,9 +1,10 @@
+import { TickingValue } from "@/shared/TickingValue";
 import { MotionRegion } from "@/shared/MotionRegion";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Cast, Laptop, Loader2, MonitorSmartphone, MonitorSpeaker, Pause, Play, RefreshCw, Smartphone, Speaker, Tv, X } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { toast } from "@/shared/toast";
+import { toast, toastOffset } from "@/shared/toast";
 import { noteCastHasNoMusic } from "@/listen/castMusic";
 import { useClockReader } from "@/listen/clock";
 import { usePlayer } from "@/listen/player";
@@ -16,7 +17,7 @@ import { cn } from "@/shared/cn";
 import type { CoverImage } from "@/shared/cover";
 import { formatClock } from "@/shared/format";
 import { ShortName } from "@/shared/ShortName";
-import { IconButton, Tooltip } from "@/shared/ui";
+import { announce, IconButton, Tooltip } from "@/shared/ui";
 import { api } from "@/studio/api";
 
 // Điều khiển điện thoại đang phát từ máy tính (PLAYER_RESEARCH #12, kiểu Spotify Connect trong mạng nhà).
@@ -163,12 +164,10 @@ function useFailedCommands(view: RemoteView | undefined) {
 /** Thông báo nổi (góc dưới phải) đứng trên thanh phát; có thanh điện thoại thì phải đứng cao thêm từng ấy. */
 function useToastsAbove(bars: number) {
   useLayoutEffect(() => {
-    const root = document.documentElement;
-    if (bars) root.style.setProperty("--toast-bottom", `${96 + 57 * bars}px`);
-    else root.style.removeProperty("--toast-bottom");
-    return () => {
-      root.style.removeProperty("--toast-bottom");
-    };
+    if (!bars) return;
+    const offset = toastOffset("bottom");
+    offset.set(`${96 + 57 * bars}px`);
+    return () => offset.dispose();
   }, [bars]);
 }
 
@@ -266,7 +265,7 @@ function RemoteBar({ phone, receivedAt, onDismiss }: { phone: RemotePhone; recei
           )}
         </div>
         <div className="hidden w-28 text-right text-xs tabular text-fg-2 md:block">
-          {formatClock(at)} / {formatClock(phone.duration)}
+          <TickingValue>{formatClock(at)} / {formatClock(phone.duration)}</TickingValue>
         </div>
         <div className="flex shrink-0 items-center justify-end gap-1 md:flex-1">
           {phone.known && (
@@ -275,11 +274,11 @@ function RemoteBar({ phone, receivedAt, onDismiss }: { phone: RemotePhone; recei
                 type="button"
                 onClick={() => void listenHere()}
                 disabled={moving}
-                aria-label="Nghe trên máy này"
+                aria-label="Nghe ở đây"
                 className="inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-control px-2 text-xs font-medium text-fg hover:bg-hover disabled:opacity-50"
               >
                 <MotionRegion as="span" className="inline-grid shrink-0 place-items-center">{moving ? <Loader2 className="size-4 animate-spin" /> : <Laptop className="size-4" />}</MotionRegion>
-                <span className="hidden lg:inline">Nghe trên máy này</span>
+                <span className="hidden lg:inline">Nghe ở đây</span>
               </button>
             </Tooltip>
           )}
@@ -375,6 +374,11 @@ export function HandOffButton({ className }: { className?: string }) {
         candidate.via === "cast" ||
         (candidate.via === "peer" ? candidate.device === owner : candidate.stream || candidate.books.includes(track.bookId)))
     : [];
+  // Lời "Đang tìm / Chưa thấy thiết bị" trong menu đổi khi đang mở: nói qua vùng aria-live chung - menu chỉ được chứa mục, không chứa vùng trạng thái.
+  const nothing = Boolean(track && data) && !targets.length;
+  useEffect(() => {
+    if (menuOpen && nothing) announce(searching ? "Đang tìm thiết bị" : "Chưa thấy thiết bị");
+  }, [menuOpen, nothing, searching]);
   if (!track || !data) return <MotionRegion as="span" />;
   // Tìm lại loa / TV ngay, không đợi nhịp 30 giây của máy chủ (cast.scan); hỏi lại danh sách sau khi lượt tìm (~2 giây) xong.
   const rescan = () => {
@@ -391,7 +395,7 @@ export function HandOffButton({ className }: { className?: string }) {
     const seconds = readPosition().time;
     const wasPlaying = player.playing;
     player.pause();
-    const waiting = target.via === "cast" ? toast.loading(`Đang mở trên ${target.name}…`) : undefined;
+    const waiting = target.via === "cast" ? toast.loading(`Đang mở trên ${target.name}`) : undefined;
     if (target.via === "cast") void noteCastHasNoMusic(client, track.bookId);
     command.mutate(
       // `record`: loa / TV ghi chỗ nghe vào đúng hồ sơ đang nghe ở đây, dù sau đó ai đổi hồ sơ của cuốn.
@@ -432,11 +436,11 @@ export function HandOffButton({ className }: { className?: string }) {
       }}
     >
       {slot ? (
-        <DropdownMenu.Trigger asChild><SlotFace ref={triggerRef} aria-label="Phát trên máy khác" value="Chọn" /></DropdownMenu.Trigger>
+        <DropdownMenu.Trigger asChild><SlotFace ref={triggerRef} aria-label="Phát trên thiết bị khác" value="Chọn" /></DropdownMenu.Trigger>
       ) : (
-      <Tooltip label="Phát trên máy khác">
+      <Tooltip label="Phát trên thiết bị khác">
         <DropdownMenu.Trigger
-          aria-label="Phát trên máy khác"
+          aria-label="Phát trên thiết bị khác"
           className={cn(
             "inline-flex size-8 shrink-0 items-center justify-center rounded-control text-fg-2 transition-colors hover:bg-hover hover:text-fg data-[state=open]:bg-hover data-[state=open]:text-fg",
             className,
@@ -452,10 +456,11 @@ export function HandOffButton({ className }: { className?: string }) {
           {/* Không có máy nào: nói rõ thay vì để nút biến mất (TV tắt, khác mạng - người dùng không biết đang tìm hay đã hết). */}
           {!targets.length && (
             <>
-              <div role="status" className="px-2 py-1.5 text-sm text-fg-2">
-                {searching ? "Đang tìm thiết bị…" : "Chưa thấy thiết bị"}
+              {/* Trong menu chỉ được có mục / nhóm / vạch: lời báo là khối trơn (không role="status", không <p>); trình đọc màn hình nghe qua announce ở trên. */}
+              <div className="px-2 py-1.5 text-sm text-fg-2">
+                {searching ? "Đang tìm thiết bị" : "Chưa thấy thiết bị"}
               </div>
-              <p className="px-2 pb-1 text-xs text-fg-3">Bật máy kia và nối cùng Wi-Fi để phát.</p>
+              <div className="px-2 pb-1 text-xs text-fg-3">Bật máy kia và nối cùng Wi-Fi để phát.</div>
               <DropdownMenu.Item
                 disabled={searching}
                 onSelect={(event) => {
@@ -482,6 +487,33 @@ export function HandOffButton({ className }: { className?: string }) {
     </DropdownMenu.Root>
     </MotionRegion>
   );
+}
+
+/** Làm các lệnh host giao, mỗi mã một lần (`handled`: mã -> lúc nhận, quên sau 60 giây); trả true khi có lệnh mới.
+ *  Lần hỏi dài và lần báo ngay có thể cùng mang một lô lệnh về: đánh dấu cả lô TRƯỚC khi làm lệnh đầu ("load" chờ máy chủ) và làm từng lô
+ *  nối đuôi nhau - không thì "phát / dừng" của lô sau chạy hai lần và chạy trước lệnh mở sách. */
+export function commandRunner<C extends { id: string }>(
+  handled: Map<string, number>,
+  apply: (command: C) => Promise<string | null>,
+  ack: (ack: Ack) => void,
+) {
+  let queue: Promise<unknown> = Promise.resolve();
+  return (commands: C[]): Promise<boolean> => {
+    const now = Date.now();
+    for (const [id, at] of handled) if (now - at > 60_000) handled.delete(id);
+    const fresh = commands.filter((command) => !handled.has(command.id));
+    for (const command of fresh) handled.set(command.id, now);
+    const done = queue.then(async () => {
+      for (const command of fresh) {
+        // Lệnh văng lỗi vẫn có kết quả gửi về (máy kia không chờ mãi), lệnh sau vẫn chạy.
+        const problem = await apply(command).catch(() => "Chưa làm được");
+        ack({ id: command.id, ok: problem === null, message: problem ?? "" });
+      }
+      return fresh.length > 0;
+    });
+    queue = done;
+    return done;
+  };
 }
 
 /**
@@ -574,16 +606,9 @@ export function ThisPlayerReporter() {
           return "Máy tính chưa hiểu lệnh này - cập nhật ABook trên máy tính";
       }
     };
+    const run = commandRunner<RemoteCommand & { id: string }>(handled.current, apply, (ack) => acks.current.push({ at: Date.now(), ack }));
     const handle = async (commands: (RemoteCommand & { id: string })[]) => {
-      const now = Date.now();
-      for (const [id, at] of handled.current) if (now - at > 60_000) handled.current.delete(id);
-      const fresh = commands.filter((command) => !handled.current.has(command.id));
-      for (const command of fresh) {
-        handled.current.set(command.id, Date.now());
-        const problem = await apply(command);
-        acks.current.push({ at: Date.now(), ack: { id: command.id, ok: problem === null, message: problem ?? "" } });
-      }
-      if (fresh.length) window.setTimeout(() => void report(0).catch(() => undefined), 400);
+      if (await run(commands)) window.setTimeout(() => void report(0).catch(() => undefined), 400);
     };
     const pause = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
     void (async () => {

@@ -4,6 +4,8 @@ import android.content.Context
 import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.MediaPlayer
+import android.os.Handler
+import android.os.Looper
 import vn.abook.player.AppLog
 
 /**
@@ -15,8 +17,12 @@ class AndroidSamplePlayer(context: Context) : SamplePlayer {
     private val attributes = AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build()
     private var player: MediaPlayer? = null
     private var focused = false
+    private val handler = Handler(Looper.getMainLooper())
+    private var stopAt: Runnable? = null
 
-    override fun play(path: String, onEnded: () -> Unit, onFailed: () -> Unit) {
+    override fun play(path: String, onEnded: () -> Unit, onFailed: () -> Unit) = playRange(path, 0, 0, onEnded, onFailed)
+
+    override fun playRange(path: String, startMs: Int, endMs: Int, onEnded: () -> Unit, onFailed: () -> Unit) {
         stop()
         @Suppress("DEPRECATION") // minSdk 24: cách xin tiếng tạm thời chung cho mọi bản
         focused = audio.requestAudioFocus(null, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
@@ -35,7 +41,19 @@ class AndroidSamplePlayer(context: Context) : SamplePlayer {
                 onFailed()
                 true
             }
-            next.setOnPreparedListener { it.start() }
+            next.setOnPreparedListener { prepared ->
+                if (startMs <= 0) {
+                    prepared.start()
+                    scheduleEnd(next, endMs - startMs, endMs > startMs, onEnded)
+                } else {
+                    // Đoạn giữa file: nhảy tới đầu đoạn rồi mới phát, dừng đúng cuối đoạn.
+                    prepared.setOnSeekCompleteListener {
+                        it.start()
+                        scheduleEnd(next, endMs - startMs, endMs > startMs, onEnded)
+                    }
+                    prepared.seekTo(startMs)
+                }
+            }
             next.prepareAsync()
         } catch (error: Exception) {
             AppLog.w("Voice", "nghe thử không mở được mẫu: ${error.javaClass.simpleName}")
@@ -48,8 +66,23 @@ class AndroidSamplePlayer(context: Context) : SamplePlayer {
         player?.let(::release)
     }
 
+    /** Hết đoạn thì dừng như phát hết file (`onEnded`); đoạn không có cuối thì để file tự hết. */
+    private fun scheduleEnd(current: MediaPlayer, lengthMs: Int, bounded: Boolean, onEnded: () -> Unit) {
+        if (!bounded) return
+        val task = Runnable {
+            if (player === current) {
+                release(current)
+                onEnded()
+            }
+        }
+        stopAt = task
+        handler.postDelayed(task, lengthMs.toLong())
+    }
+
     private fun release(finished: MediaPlayer) {
         if (player === finished) {
+            stopAt?.let(handler::removeCallbacks)
+            stopAt = null
             player = null
             @Suppress("DEPRECATION")
             if (focused) audio.abandonAudioFocus(null)

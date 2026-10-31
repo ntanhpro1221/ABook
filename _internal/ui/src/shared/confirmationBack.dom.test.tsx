@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { VoicePicker } from "@/studio/VoicePicker";
 import { MyMusicSection } from "@/listen/MyMusic";
 import { MyMusic } from "@/studio/MusicTab";
-import { dismissTopLayer } from "@/android/backLayers";
+import { dismissTopLayer } from "@/shared/backLayers";
 import { installBackOrder } from "./backOrder";
 import { MotionHashRouter } from "./MotionRouter";
 

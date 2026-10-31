@@ -31,7 +31,7 @@ object LibraryTree {
     /**
      * Mục chữ của một chương CHỈ CÓ CHỮ (giọng máy đọc to - ReadAloud), "" với mọi chương khác. Chương chữ = `state` "text", hay có
      * `text` mà không có `file` (như packages.py và androidSource.ts) - lệnh `load` của giao diện chỉ gửi `text`. Chung cho gói sách
-     * (book.json) và `load` (PlayerPlugin), để hai đường thấy cùng một chương chữ.
+     * (book.json) và lệnh `load`, để hai đường thấy cùng một chương chữ.
      */
     fun textEntry(chapter: JSONObject): String {
         val text = chapter.optString("text").takeIf { it != "null" }.orEmpty()

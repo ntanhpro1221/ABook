@@ -73,7 +73,7 @@ export function SharedReadingsSettings() {
     <MotionRegion as="div" className="py-3">
       <p className="text-[0.8125rem] text-fg-2 text-pretty">Sửa cách đọc một tên một lần, sách mới tự dùng.</p>
       {entries.length > SEARCH_FROM && (
-        <input aria-label="Tìm cách đọc" value={filter} onChange={(event) => { setFilter(event.target.value); setShown(12); }} className="mt-2 h-8 w-full rounded-control border border-line bg-panel px-2.5 text-sm outline-none focus-visible:border-focus" placeholder="Tìm tên…" />
+        <input aria-label="Tìm cách đọc" value={filter} onChange={(event) => { setFilter(event.target.value); setShown(12); }} className="mt-2 h-8 w-full rounded-control border border-line bg-panel px-2.5 text-sm outline-none focus-visible:border-focus" placeholder="Tìm tên" />
       )}
       {/* Lọc / bỏ / thêm: hàng khép / mở tại chỗ; data-motion-live - khối không mờ lại cả theo từng phím gõ. */}
       <div data-motion-live="">

@@ -44,9 +44,9 @@ describe("dự án hỏng", () => {
   it("hàng lỗi khi vẽ chỉ thay bằng dòng báo, không lan ra ngoài", () => {
     // renderToString không gọi error boundary; thử đúng hai nửa của lớp: bắt lỗi rồi vẽ phần thay thế.
     expect(RowBoundary.getDerivedStateFromError()).toEqual({ failed: true });
-    const boundary = new RowBoundary({ fallback: <p>Không đọc được dự án này</p>, children: <p>hàng</p> });
+    const boundary = new RowBoundary({ fallback: <p>Chưa đọc được dự án này</p>, children: <p>hàng</p> });
     expect(renderToString(<>{boundary.render()}</>)).toContain("hàng");
     boundary.state = { failed: true };
-    expect(renderToString(<>{boundary.render()}</>)).toContain("Không đọc được dự án này");
+    expect(renderToString(<>{boundary.render()}</>)).toContain("Chưa đọc được dự án này");
   });
 });

@@ -1,5 +1,6 @@
 package vn.abook.player.ui
 
+import vn.abook.player.ui.nowplaying.PARK_AFTER_MS
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Recomposer
 import androidx.compose.runtime.remember
@@ -103,7 +104,7 @@ class ShellScreenshotTest {
     @Test
     fun emptyLibraryLight() {
         show(library = LibraryState.Ready(emptyList()))
-        rule.onNodeWithText("Chưa có sách").assertIsDisplayed()
+        rule.onNodeWithText("Chưa có sách trên máy").assertIsDisplayed()
         shot("shell_empty_light")
     }
 
@@ -158,7 +159,7 @@ class ShellScreenshotTest {
         rule.onNodeWithTag("book_title").assertIsDisplayed()
         // Khung thử không có nguồn sách (BookSource.None): trang nói rõ chưa có chương, không có nút phát giả. Nút phát có ở BookScreenTest.
         rule.onNodeWithText("Sách chưa có chương nào nghe được trên máy này.").assertIsDisplayed()
-        rule.onNodeWithText("Chương").assertDoesNotExist()
+        rule.onNodeWithTag("chapter_1").assertDoesNotExist()
         shot("shell_book_light")
         rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
         rule.waitForIdle()
@@ -247,7 +248,7 @@ class ShellScreenshotTest {
         val full = rule.onNodeWithTag("player_cover").getUnclippedBoundsInRoot()
         // Bìa nhỏ nằm trong thanh phát ở đáy; bìa lớn ở giữa màn: giữa chừng nó đang ở khoảng giữa hai chỗ ấy, cả toạ độ lẫn cỡ.
         assert(mid.top < mini.top && mid.top > full.top) { "bìa giữa chừng phải nằm giữa thanh nhỏ và màn đầy: mini=$mini mid=$mid full=$full" }
-        // Cỡ bìa giữa chừng do sharedBounds co giãn nội dung (ScaleToBounds) nên toạ độ bố cục vẫn là cỡ đầy; cỡ nhìn thấy kiểm trên ảnh shell_now_playing_mid_light.
+        // Bìa bay bằng lớp vẽ (tịnh tiến + co giãn): toạ độ ngữ nghĩa đi theo phép tịnh tiến, cỡ nhìn thấy kiểm trên ảnh shell_now_playing_mid_light.
         rule.mainClock.autoAdvance = true
     }
 
@@ -338,11 +339,17 @@ class ShellScreenshotTest {
     }
 
     @Test
-    fun theWindowContentIsNotComposedWhileCollapsed() {
+    fun theWindowContentIsComposedOnlyOnceTheAppIsQuietAndThenStaysOffTheScreenWhileCollapsed() {
         show(player = repo(playing = false))
         rule.waitForIdle()
+        // Lúc mới có cuốn: chưa dựng gì của cửa sổ (khởi động không gánh thêm).
         rule.onNodeWithTag("now_playing").assertDoesNotExist()
         rule.onNodeWithTag("now_playing_bounds").assertDoesNotExist()
+        // Yên một lúc: cửa sổ được dựng sẵn nhưng đỗ - không có trong cây ngữ nghĩa, không nhận chạm.
+        rule.mainClock.advanceTimeBy(PARK_AFTER_MS + 500)
+        rule.waitForIdle()
+        rule.onNodeWithTag("now_playing_bounds").assertExists()
+        rule.onNodeWithTag("now_playing").assertDoesNotExist()
         rule.onNodeWithTag("mini_open").performClick()
         rule.waitForIdle()
         rule.onNodeWithTag("now_playing").assertIsDisplayed()

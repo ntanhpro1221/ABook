@@ -19,13 +19,32 @@ lại bằng Kotlin cho đúng nền tảng, mang theo các ca test của nó.
 |---|---|---|
 | Mở nguội tới khung đầu có nội dung (Thư viện) | ≤ 500 ms | Macrobenchmark `StartupTimingMetric`, trung vị 10 lần |
 | Mở ấm | ≤ 200 ms | như trên, `StartupMode.WARM` |
-| Thời gian khung (mọi luồng kịch bản) | p95 ≤ 8 ms, p99 ≤ 12 ms, 0 khung > 16 ms | `FrameTimingMetric` |
-| RAM khi đang phát, Đang nghe mở | ≤ 80 MB PSS (một tiến trình) | `dumpsys meminfo` sau kịch bản |
-| RAM phát nền, giao diện đã đóng | ≤ 50 MB PSS | như trên, sau `TRIM_MEMORY_UI_HIDDEN` |
+| Thời gian khung (mọi luồng kịch bản) | theo chu kỳ hiển thị P của máy (60 Hz → 16,7 ms; 120 Hz → 8,3 ms), đo bằng thời gian CPU của khung: p95 ≤ 0,75 P, p99 ≤ P, khung > P không quá 1 % của kịch bản; mỗi khung "dựng" một lần (mở một màn lần đầu, mở nguội) ≤ 2 P (sửa 30-10, xem dưới) | `FrameTimingMetric` (`frameDurationCpuMs`); máy không chạy được Macrobenchmark thì `scripts/phone_frames.py`, cùng định nghĩa, tự đọc P từ tần số quét |
+| RAM khi đang phát, Đang nghe mở | ≤ 100 MB PSS (một tiến trình; đặt 80 ở 26-10, sửa 30-10 theo số đo sàn, xem dưới) | `dumpsys meminfo` sau kịch bản |
+| RAM phát nền, giao diện đã đóng | ≤ 65 MB PSS (đặt 50, sửa 30-10) | như trên, sau `TRIM_MEMORY_UI_HIDDEN` |
 | APK release | nhỏ hơn bản WebView cuối | `apkanalyzer` |
 
 Kịch bản đo (module `:benchmark`): mở nguội; cuộn Thư viện 200 cuốn; mở + đóng Đang nghe; bật / tắt Đọc theo; đổi ba tab; vào trang
 sách rồi Back; kéo thanh tua; mở bảng tốc độ / hẹn giờ. Vượt ngân sách = không gộp.
+
+Dòng thời gian khung được viết lại 30-10 theo chu kỳ P vì ngưỡng cũ (8 / 12 ms) đặt cho màn 120 Hz mà OPPO chỉ có 60 Hz (đo
+`dumpsys SurfaceFlinger`: 60 fps, chế độ duy nhất), và vì sàn đo ra không phải thứ code app quyết định (OPPO, vệt perfetto, dev/native-budget1,
+chi tiết `PROGRESS_NBUDGET.md`): một khung đứng yên nhất - Đang nghe đang phát, chỉ thanh tua nhúc nhích - vẫn tốn 11-13 ms CPU (p50), trong đó
+luồng giao diện ~3 ms và RenderThread ~9 ms. Hỏi "9 ms ấy là GPU thật hay chờ vsync / bộ đệm?": không phải chờ. Trong DrawFrame trung bình 8,7 ms,
+RenderThread chạy trên CPU 88 % thời gian (sched): `flush commands` 3,3 ms (99 % đang chạy), `renderFrameImpl` 2,3 ms (99 %), `eglSwapBuffers` 2,1 ms
+(51 % chạy), `dequeueBuffer` 0,2 ms (không đợi bộ đệm); GPU p50 chỉ 2 ms. Tức là chi phí CPU của driver GL/Mali ghi lại và đẩy lệnh vẽ của cả
+cảnh mỗi khung (HWUI phát lại toàn bộ cây vẽ dù chỉ một vạch đổi), trên lõi lớn chạy ~1,2 GHz trung bình - sàn tỉ lệ với độ phức tạp của cảnh, không
+với phần thay đổi. Hạ nó nữa là bài giảm số lệnh vẽ / số lớp của cảnh, không phải chỉnh một khung. Khung "dựng" lần đầu còn có một
+phần không phải code của ta: lần đầu sau khi cài, GL biên dịch shader của mọi thứ app vẽ lần đầu (`shader_compile` / `driver_compile_shader`,
+mở Studio lần đầu 68 ms, mở Đang nghe lần đầu 61 ms, lưới lần đầu 30 ms) rồi nhớ trên đĩa - các lần sau không còn; bài đo vì vậy chạy một lần lặp
+khởi động không tính (như lượt khởi động của Macrobenchmark).
+
+Hai dòng RAM được nâng 30-10 vì đo ra sàn, không vì lười (OPPO, sách thật đang phát, dev/native-budget1, chi tiết
+`PROGRESS_NBUDGET.md`): giao diện đóng còn ~61 MB, trong đó đồ hoạ 18,7 + native 19-20 MB y hệt dù huỷ cả composition
+(thử thật, chỉ bớt 1,6 MB); Đang nghe ~96 MB, hprof cho thấy heap Java còn sống chỉ hơn Thư viện 0,4 MB - phần tăng là
+trang heap/`.art` do một lượt GC chạm vào và driver GL, app không giữ. Đã cắt thứ thật: lớp offscreen cả vùng cuộn
+(-12 MB). Đường duy nhất xuống 50 MB là `finish()` Activity khi ẩn (đổi Recents, tái cấu trúc lớn) để được 0-2 MB - không
+đáng. So với bản WebView: 140 MB PSS + tiến trình vẽ ~154 MB RSS.
 
 ## 2. Kiến trúc
 
@@ -78,6 +97,7 @@ Chủ sách 26-10: "trong các loại chuyển cảnh, loại fade là tôi ghé
 - Ảnh chụp mọi màn x mọi trạng thái x sáng / tối bằng Roborazzi (Robolectric, chạy JVM, không cần máy) - thay gallery của bản web.
 - Máy dò hình học trên cây semantics trong test: căn giữa theo trục chéo (CROSS CENTER), vùng chạm ≥ 44 dp, chữ không bị cắt "…" ở nhãn
   lựa chọn, một nút chính mỗi màn, nhãn 1-4 chữ.
+- Mép cuộn: mọi `LazyColumn` / `LazyVerticalGrid` / `verticalScroll` mờ mép bằng `Modifier.fadeEdges(state)` (DESIGN.md §6 "Mọi vùng cuộn dọc"); `ScrollFadeRulesTest` quét mã nguồn, thiếu là trượt.
 - Kịch bản bấm thật: test Compose UI (`createAndroidComposeRule`) cho mọi luồng ở DESIGN.md §2, đếm số chạm.
 
 ## 6. Giai đoạn
@@ -88,7 +108,7 @@ Chủ sách 26-10: "trong các loại chuyển cảnh, loại fade là tôi ghé
 | P1 | Thư viện (Đang nghe, lưới / danh sách, lọc, xếp, tìm), thanh phát nhỏ, Đang nghe đầy đủ (tua, chương, tốc độ, hẹn giờ, "…") + Đọc theo, thanh tab | so số đo với WebView trên OPPO |
 | P2 | Trang sách, Thêm sách / nhập, Sửa sách, Cài đặt, Thiết bị / ghép máy | |
 | P3 | Studio từ xa, Xuất (MP3 / M4B), giọng đọc máy, nhạc nền, phần còn lại | danh sách đủ màn = khung `phone/*` của gallery |
-| P4 | Gỡ Capacitor, WebView, `ui/src/android`, gói web khỏi APK; bản phát hành native | ngân sách §1 đạt hết |
+| P4 | **ĐÃ LÀM** - Gỡ Capacitor, WebView, `ui/src/android`, gói web khỏi APK; bản phát hành native | ngân sách §1 đạt hết |
 
 Trong thời gian P0-P3, bản WebView chỉ nhận sửa lỗi.
 
@@ -107,7 +127,7 @@ Nhạc nền là lựa chọn của TỪNG CUỐN, có một chỗ chung cho c�
 | Danh sách chọn: Để máy chọn (kèm thứ máy đang chọn) / Tắt / Theo cảnh / các danh sách (tả + "dài 8 giờ") / Nhạc của tôi ("3 bài", trống thì mờ) | tấm "Nhạc nền" (sách chỉ có chữ) | một chạm là xong, dấu chọn trượt theo; không hộp chọn thả xuống như bản web |
 | "Thêm nhạc của bạn" (dấu +) | cuối danh sách | thêm xong thì chọn luôn "Nhạc của tôi" cho cuốn này; kho chung với Cài đặt > Nhạc của tôi |
 | "Nhạc nền: Bật" / "Nhạc nền: Tắt" (công tắc) | tấm "Nhạc nền" (sách nói có nhạc người làm sách gắn) | chữ của web: nhãn nói trạng thái, không phải việc sẽ làm |
-| "Mức nhạc dưới giọng đọc": một hàng vạch to dần từ nhỏ tới to, vạch tới mức đang chọn tô hổ phách; chữ của mức ngay dưới tên ("Vừa (mặc định)", "Rất nhỏ (dễ nghe lời nhất)", "-18 dB (của sách)") | dưới lựa chọn / công tắc, chỉ khi nhạc đang chạy | chữ y hệt ô chọn của web. Lưới 3 cột để lại ô trống cuối (3+2, Lead 26-10); năm hay sáu chữ một hàng không vừa 360dp ở cỡ chữ 1.3, nên hàng là vạch (hình âm lượng, ai cũng đọc được) và chữ nằm một chỗ. Vạch đầu / cuối thẳng mép chữ, cả ô cao 64 là chỗ chạm |
+| "Mức nhạc nền": một hàng vạch to dần từ nhỏ tới to, vạch tới mức đang chọn tô hổ phách; chữ của mức ngay dưới tên ("Vừa (mặc định)", "Rất nhỏ (rõ lời)", "-18 dB (của sách)") | dưới lựa chọn / công tắc, chỉ khi nhạc đang chạy | chữ y hệt ô chọn của web. Lưới 3 cột để lại ô trống cuối (3+2, Lead 26-10); năm hay sáu chữ một hàng không vừa 360dp ở cỡ chữ 1.3, nên hàng là vạch (hình âm lượng, ai cũng đọc được) và chữ nằm một chỗ. Vạch đầu / cuối thẳng mép chữ, cả ô cao 64 là chỗ chạm |
 | Danh sách đoạn nhạc: tên bài (im lặng thì mờ + gạch ngang), dưới là chương · giờ · tác giả · "bài của bạn" | dưới "Đang phát", sách có nhạc gắn sẵn | như danh sách của Sửa sách > Nhạc nền trên web; tắt nhạc thì cả danh sách nhạt đi (mực, không alpha) |
 | Trang một đoạn: tên + chương · giờ, ba nút chữ "Về bài gốc" (khi đã đổi) · "Đổi bài" (icon Shuffle) · "Im lặng" / "Có nhạc" | chạm một đoạn, trượt ngang; Back khép "Đổi bài" trước rồi về trang chính | ba nút của web đúng chữ, đúng thứ tự, đúng icon; trang riêng vì một hàng điện thoại không đủ chỗ cho tên + ba nút |
 | "Đổi bài": các bài trong Nhạc của tôi (tên, nghệ sĩ · độ dài, chú thích "Có vẻ có lời…"/"Chưa phân tích…"), mỗi bài "Chọn" có ghim; trống thì "Chưa có bài nào khác trong Nhạc của tôi." + "Thêm nhạc của bạn" | dưới ba nút, mở / khép tại chỗ | SwapTrack của web; chọn bài cho đoạn đang im thì đoạn ấy có nhạc lại, chọn xong thì khép như web |
@@ -125,7 +145,7 @@ Chữ chung với web (luật chủ sách 26-10 "đồng nhất từng cái ch�
 | Thêm nhạc trong menu | "Thêm nhạc của bạn…" | "Thêm nhạc" | "Thêm nhạc của bạn" (sửa cả hai) | chữ web, bỏ "…" vì máy dò chữ bị cắt của native cấm "…" trong mã |
 | Để máy chọn khi tắt / Nhạc của tôi trống | "đang tắt trong Cài đặt" / "chưa có bài nào" | "đang tắt" / "chưa có bài" | bản web | nói rõ chỗ để bật lại |
 | Công tắc nhạc gắn sẵn, lỗi tải, sách không có nhạc | "Nhạc nền: Bật", "Bạn hãy thử tải lại nhạc nền của cuốn này.", "Người làm sách không gắn nhạc nền cho cuốn này." | "Phát nhạc nền", "Chưa đọc được nhạc nền", "Cuốn này không có nhạc nền." | bản web | |
-| Mức nhạc | ô chọn "Mức nhạc dưới giọng đọc", "Vừa (mặc định)"… | lưới "Mức nhạc", "Vừa"… + lời "Rất nhỏ: dễ nghe lời nhất." | chữ web; hình vạch của điện thoại | |
+| Mức nhạc | ô chọn "Mức nhạc nền", "Vừa (mặc định)"… | lưới "Mức nhạc", "Vừa"… + lời "Rất nhỏ: rõ lời." | chữ web; hình vạch của điện thoại | |
 | Đổi bài trống | "… - nhập nhạc của bạn ở mục “Nhạc của tôi” bên dưới." | (chưa có) | "Chưa có bài nào khác trong Nhạc của tôi." (sửa web) | điện thoại không có mục bên dưới mà có hàng "Thêm nhạc của bạn" ngay đó; web vẫn có mục Nhạc của tôi ngay dưới |
 | Thêm nhạc ở Nhạc của tôi (Cài đặt, Sửa sách, tab Nhạc của Studio) | "Nhập nhạc của tôi…" / "Nhập nhạc", "Đang nhập 2/5…", "Đã nhập: …", "bài đã có sẵn từ trước", "Không nhập được file này" | "Thêm nhạc", "Đang thêm 2/5", "Đã thêm: …", "Chưa nhập được nhạc" | động từ "Thêm" ở mọi chỗ: "Thêm nhạc của bạn", "Đang thêm 2/5", "Đã thêm: …", "bài đã có từ trước", "Không thêm được file này", "Chưa thêm được nhạc", "“tên”: chưa thêm được định dạng này…" (sửa cả hai + lõi Python / Kotlin) | một việc một động từ: menu Nhạc nền đã là "Thêm nhạc của bạn"; bỏ "…" theo luật Lead 26-10 |
 | Giới thiệu Nhạc của tôi | "Nhập nhạc làm nền; bài đã chọn đi cùng file sách." | (không có) | "Thêm nhạc làm nền; bài đã chọn đi cùng file sách." ở cả hai (`MusicText.MY_MUSIC_INTRO` = `MY_MUSIC_INTRO`) | một câu cho mọi nơi nói về Nhạc của tôi |
@@ -135,7 +155,7 @@ Chữ chung với web (luật chủ sách 26-10 "đồng nhất từng cái ch�
 | Xoá bài | hai bước "Xoá" → "Xoá khỏi kho" / "Giữ lại" | tấm "Xoá bài này?" → "Xoá bài" / "Giữ lại" | nút xác nhận "Xoá bài" ở cả hai | ngắn, cùng chữ; tấm xác nhận là dạng của điện thoại |
 | Giá trị khi tự chọn đang tắt / danh sách không còn | "Chưa có nhạc (tắt trong Cài đặt)" / "Danh sách đã chọn" | "Tắt" / "Đã chọn" | "Chưa có nhạc" / "Danh sách đã chọn" | "Tắt" nói sai (cuốn này không tắt nhạc); chỗ bật lại đã nói ở lời dưới bảng |
 
-Chỉ điện thoại có, có lý do: cỡ file ở cuối hàng bài (bộ nhớ máy là chuyện của điện thoại); lời "Nhạc do người làm sách chọn. Đổi ở đây chỉ trên máy này."; "Bài nhạc chương này không phát được." Chỉ web có, chờ thành phần chung của đợt đồng nhất: "Nhạc riêng" (MoreInfo, chưa có bản native).
+Chỉ điện thoại có, có lý do: cỡ file ở cuối hàng bài (bộ nhớ máy là chuyện của điện thoại); lời "Nhạc do người làm sách chọn. Đổi ở đây chỉ trên máy này."; "Bài nhạc chương này không phát được." "Nhạc riêng" (MoreInfo `MusicText.MY_MUSIC_HELP`, ở Nhạc của tôi và hàng "Thêm nhạc của bạn" của Sửa sách) đã có ở cả hai; `tests/test_moreinfo_parity.py` giữ chữ và nhãn của mọi MoreInfo giống nhau giữa web, Qt và điện thoại.
 Trạng thái đang làm của phần nhạc web cũng bỏ "…" ("Đang lưu lựa chọn", "Đang đổi", "Đang chọn lại", "Đang đọc không khí", "Đang thêm nhạc 2/5"); `RETRYING_NOTE` dùng chung với giọng đọc nên để đợt đồng nhất chung sửa.
 
 Cặp màn nhạc (tạm ở đây, gộp vào `scripts/ui_parity_pairs.json` khi file ấy có trên native1):
@@ -153,7 +173,7 @@ Cặp màn nhạc (tạm ở đây, gộp vào `scripts/ui_parity_pairs.json` kh
 Chủ sách 26-10: "không chỉ bản android mà còn bản window nữa". App Windows cũng bỏ Tauri + WebView2: giao diện native gọi backend
 Python qua đúng HTTP API đang có (ranh giới sạch, backend không đổi). Chọn nền bằng thí nghiệm đo cùng một cảnh (lưới 200 bìa, thanh
 phát nở thành Đang nghe, tab trượt): Rust + Slint, WinUI 3 (.NET 10), Qt Quick - RAM nghỉ, mở nguội, thời gian khung, cỡ bản phân phối.
-Kết quả và lựa chọn ghi vào đây; ngân sách §1 áp tương tự (mở nguội ≤ 500 ms, khung p99 ≤ 12 ms, RAM giao diện nghỉ ≤ 60 MB).
+Kết quả và lựa chọn ghi vào đây; ngân sách §1 áp tương tự (mở nguội ≤ 500 ms, thời gian khung theo chu kỳ P của màn như dòng §1, RAM giao diện nghỉ ≤ 60 MB).
 
 ### 7.1 Kết quả đo (26-10, máy chủ sách, GPU đang chạy llama-server) và lựa chọn: Qt Quick
 
