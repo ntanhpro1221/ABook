@@ -21,7 +21,9 @@ bat = folder / "build-execution.bat"
 bat.write_bytes(source.replace("\n", "\r\n").encode("utf-8"))
 env = dict(os.environ, QT_QPA_PLATFORM="offscreen")
 with (folder / f"build-{label}.log").open("wb") as log:
-    result = run_guarded(["cmd.exe", "/d", "/c", str(bat)], cwd=root, env=env, log=log)
+    # --package: build.bat package (dist\resources + packaged smoke, scripts/build_windows_qt.ps1)
+    command = ["cmd.exe", "/d", "/c", str(bat)] + (["package"] if "--package" in sys.argv else [])
+    result = run_guarded(command, cwd=root, env=env, log=log)
 (folder / f"build-{label}-audit.json").write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8", newline="\n")
 print("BUILD", result, flush=True)
 raise SystemExit(result["exit_code"])

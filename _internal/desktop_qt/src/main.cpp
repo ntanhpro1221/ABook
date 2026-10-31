@@ -32,6 +32,7 @@
 #include <QScopedValueRollback>
 #include <QStandardPaths>
 #include <QTimer>
+#include <memory>
 #include <qpa/qwindowsysteminterface_p.h>
 #include <cstdio>
 #include <cstdlib>
@@ -153,6 +154,10 @@ int main(int argc, char *argv[]) {
     // (PROGRESS.md mục CPU). Đặt sẵn trong môi trường thì giữ giá trị đó (đo so sánh: =0).
     if (!qEnvironmentVariableIsSet("QT_D3D_NO_VBLANK_THREAD"))
         qputenv("QT_D3D_NO_VBLANK_THREAD", "1");
+    // Mọi màn hình import QtQuick.Controls.Basic. Hộp thoại dự phòng của QtQuick.Dialogs (khi hộp thoại của Windows không mở
+    // được) import QtQuick.Controls trần, mà Qt 6.8+ chọn FluentWinUI3 trên Windows 11 - bản đóng gói chỉ mang Basic
+    // (tools/trim_dist.py), nên style cố định là Basic.
+    qputenv("QT_QUICK_CONTROLS_STYLE", "Basic");
     QGuiApplication app(argc, argv);
     BenchExposure benchExposure(benchMode && qEnvironmentVariableIntValue("ABOOK_BENCH_HIDDEN_DESKTOP")==1 && QGuiApplication::platformName()==QStringLiteral("windows"));
     BenchWindowGuard benchWindowGuard;
@@ -276,7 +281,9 @@ int main(int argc, char *argv[]) {
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed, &app, [] { QCoreApplication::exit(3); }, Qt::QueuedConnection);
     // ABOOK_SMOKE_EXIT=1 (build.bat, tools/smoke_dist.py): quit shortly after the first frame, 0 only when the
     // engine reported no warning, so a package whose QML does not load fails the build. Tests use stub singletons.
-    const bool smokeExit = qEnvironmentVariable("ABOOK_SMOKE_EXIT") == QStringLiteral("1");
+    // ABOOK_SMOKE_EXIT=host (tools/smoke_packaged.py): the same, but only once the host is Ready too; 5 when it failed.
+    const QString smoke = qEnvironmentVariable("ABOOK_SMOKE_EXIT");
+    const bool smokeExit = smoke == QStringLiteral("1") || smoke == QStringLiteral("host");
     int engineWarnings = 0;
     if (smokeExit)
         QObject::connect(&engine, &QQmlEngine::warnings, &app, [&engineWarnings](const QList<QQmlError> &list) { engineWarnings += list.size(); });
@@ -284,9 +291,22 @@ int main(int argc, char *argv[]) {
     if (smokeExit) {
         auto *window = engine.rootObjects().isEmpty() ? nullptr : qobject_cast<QQuickWindow *>(engine.rootObjects().constFirst());
         if (!window) return 3;
-        QObject::connect(window, &QQuickWindow::frameSwapped, &app, [&engineWarnings] {
+        const bool waitHost = smoke == QStringLiteral("host");
+        auto framed = std::make_shared<bool>(false), done = std::make_shared<bool>(false);
+        auto check = [&backend, &engineWarnings, waitHost, framed, done] {
+            if (*done || !*framed) return;
+            if (waitHost && backend.state() == Backend::Failed) {
+                *done = true;
+                qWarning("SMOKE_HOST_FAILED %s", qUtf8Printable(backend.message()));
+                QCoreApplication::exit(5);
+                return;
+            }
+            if (waitHost && backend.state() != Backend::Ready) return;
+            *done = true;
             QTimer::singleShot(1500, qApp, [&engineWarnings] { QCoreApplication::exit(engineWarnings ? 4 : 0); });
-        }, Qt::SingleShotConnection);
+        };
+        QObject::connect(window, &QQuickWindow::frameSwapped, &app, [framed, check] { *framed = true; check(); }, Qt::SingleShotConnection);
+        if (waitHost) QObject::connect(&backend, &Backend::stateChanged, &app, check);
     }
     musicWindowActivity.update();
     for (QObject *root : engine.rootObjects()) {

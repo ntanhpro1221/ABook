@@ -141,7 +141,8 @@ def test_the_pack_script_makes_the_same_zip_every_time_from_exactly_the_asset_pa
 
 
 def test_the_installer_build_leaves_out_exactly_the_studio_assets() -> None:
-    script = (INTERNAL / "scripts" / "build_windows_app.ps1").read_text(encoding="utf-8-sig")
+    # Bước dựng tài nguyên chung của bộ cài Tauri và bộ cài Qt (docs/QT_INSTALLER.md Q1).
+    script = (INTERNAL / "scripts" / "windows_resources.ps1").read_text(encoding="utf-8-sig")
     declared = re.search(r"\$StudioOnlyAssets = @\(([^)]*)\)", script)
     assert declared and re.findall(r'"([^"]+)"', declared.group(1)) == list(ASSET_PATHS)
     assert "/XD @excludeDirs" in script and "$StudioOnlyAssets" in script.split("/XF", 1)[1].splitlines()[0]

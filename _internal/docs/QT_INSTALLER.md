@@ -93,6 +93,18 @@ sạc. Kịch bản: `desktop_qt/tools/prep_shells.py` (dựng hai bố cục) +
   trước và sau từng bước (`optional-runtime-on-demand`: đo cỡ mỗi phụ thuộc).
 - Test: `smoke_dist.py` chạy exe đóng gói KHÔNG có `_internal` bên cạnh (chép dist sang thư mục tạm) -> host Ready từ
   `resources/`, mở Thư viện, phát một clip giả. Thêm `tools/smoke_packaged.py`.
+- **Đã làm (31-10):**
+  - `scripts/windows_resources.ps1` dùng chung. Bản Tauri (`build_windows_app.ps1 -SkipUi -SkipBundle`) vẫn "host OK".
+    `resources/python` của hai bản: 284 file, giống từng byte, trừ dòng `bin/idna.exe` trong RECORD (pip sinh ra, nằm
+    ngoài thư mục đóng gói).
+  - `build.bat package` (`tools/build_hidden.py <nhãn> --package`) gọi `scripts/build_windows_qt.ps1`.
+  - `main.cpp` ép style `Basic` (Qt 6.8+ mặc định FluentWinUI3 trên Windows 11). `tools/trim_dist.py` xoá 6 style kia và
+    từ chối nếu QML của app import chúng: dist không tài nguyên 91,6 -> 75,0 MB thô. Có `resources` thì 131,9 MB thô.
+  - `ABOOK_SMOKE_EXIT=host`: chờ khung đầu tiên VÀ `Backend::Ready`. Host hỏng thì in `SMOKE_HOST_FAILED`, thoát mã 5.
+    `tools/smoke_packaged.py` chép dist sang thư mục tạm không có cây nguồn phía trên, đòi pythonw của host nằm trong
+    `resources/python` của bản chép. Kiểm âm: bỏ `server.py` khỏi bản chép -> đỏ.
+  - **Còn thiếu:** smoke mới dừng ở host Ready, chưa mở Thư viện và phát clip giả. `Qt6Widgets.dll` vẫn ở lại vì
+    `Qt.labs.platform` (khay) kéo nó vào; muốn bỏ thì phải kiểm khay chạy được không có nó.
 
 ### Q2. Bộ cài NSIS
 - `desktop_qt/installer/abook.nsi`: chép `dist/` vào thư mục cài của bản Tauri; lối tắt Start menu (+ màn hình nền nếu bản

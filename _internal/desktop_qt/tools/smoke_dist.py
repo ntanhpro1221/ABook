@@ -12,10 +12,14 @@ import argparse
 import ctypes
 import os
 import re
+import subprocess
 import sys
 import tempfile
+import time
 from ctypes import wintypes as wt
 from pathlib import Path
+
+import psutil
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from windows_process import create_suspended  # noqa: E402
@@ -25,12 +29,9 @@ FATAL = re.compile(r"is not a type|is not installed|ReferenceError|TypeError|Can
                    r"Type \S+ unavailable|module \S+ plugin|failed to load component|Component is not ready")
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("exe", type=Path)
-    ap.add_argument("--seconds", type=float, default=60)
-    args = ap.parse_args()
-    exe = args.exe.resolve()
+def run(exe: Path, seconds: float, smoke: str = "1") -> tuple[int | None, str, set[str]]:
+    """Start `exe` once on a private desktop with ABOOK_SMOKE_EXIT=`smoke`; return (exit code or None on timeout, its log,
+    the executables of every child process seen meanwhile)."""
     user = ctypes.WinDLL("user32", use_last_error=True)
     user.CreateDesktopW.restype = wt.HANDLE
     user.CreateDesktopW.argtypes = [wt.LPCWSTR, wt.LPCWSTR, ctypes.c_void_p, wt.DWORD, wt.DWORD, ctypes.c_void_p]
@@ -38,13 +39,14 @@ def main():
     nt = ctypes.WinDLL("ntdll")
     nt.NtResumeProcess.argtypes = [wt.HANDLE]
     nt.NtResumeProcess.restype = wt.LONG
+    children: set[str] = set()
     with tempfile.TemporaryDirectory(prefix="abook-smoke-") as tmp:
         root = Path(tmp)
         for name in ("local", "roaming", "temp"):
             (root / name).mkdir()
         env = {k: v for k, v in os.environ.items() if not k.upper().startswith(("QT_", "QML", "ABOOK_"))}
         env.update(LOCALAPPDATA=str(root / "local"), APPDATA=str(root / "roaming"), TEMP=str(root / "temp"),
-                   TMP=str(root / "temp"), ABOOK_PREFERENCES=str(root / "prefs.json"), ABOOK_MUTE="1", ABOOK_SMOKE_EXIT="1",
+                   TMP=str(root / "temp"), ABOOK_PREFERENCES=str(root / "prefs.json"), ABOOK_MUTE="1", ABOOK_SMOKE_EXIT=smoke,
                    QT_FORCE_STDERR_LOGGING="1")
         name = f"ABookSmoke-{os.getpid()}"
         desk = user.CreateDesktopW(name, None, None, 0, 0x10000000, None)
@@ -58,22 +60,34 @@ def main():
             if nt.NtResumeProcess(wt.HANDLE(int(process._handle))) != 0:
                 process.kill()
                 raise RuntimeError("cannot resume the smoke process")
-            try:
-                code = process.wait(args.seconds)
-            except Exception:
-                code = None
+            deadline = time.monotonic() + seconds
+            code = None
+            while code is None and time.monotonic() < deadline:
+                try:
+                    for child in psutil.Process(process.pid).children(recursive=True):
+                        children.add(child.exe())
+                except psutil.Error:
+                    pass
+                try:
+                    code = process.wait(0.25)
+                except subprocess.TimeoutExpired:
+                    code = None
             if code is None:
                 process.kill()
                 process.wait(10)
             text = log_path.read_text(encoding="utf-8", errors="replace")
         finally:
             user.CloseDesktop(desk)
+    return code, text, children
+
+
+def report(code: int | None, text: str, seconds: float) -> int:
     fatal = [line for line in text.splitlines() if FATAL.search(line)]
     for line in text.splitlines():
         if line.startswith("qrc:/"):
             print("SMOKE_QML", line)
     if code is None:
-        print(f"SMOKE_FAIL no first frame within {args.seconds:g} s")
+        print(f"SMOKE_FAIL no first frame within {seconds:g} s")
         return 1
     if code != 0:
         print(f"SMOKE_FAIL app exited with {code} (3 = Main.qml did not load, 4 = QML warnings)")
@@ -83,6 +97,15 @@ def main():
         return 1
     print("SMOKE_OK Main.qml loaded and drew its first frame without QML warnings")
     return 0
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("exe", type=Path)
+    ap.add_argument("--seconds", type=float, default=60)
+    args = ap.parse_args()
+    code, text, _children = run(args.exe.resolve(), args.seconds)
+    return report(code, text, args.seconds)
 
 
 if __name__ == "__main__":
