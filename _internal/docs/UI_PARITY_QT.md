@@ -7,7 +7,7 @@ icon `LucidePaths.js` sinh bởi `scripts/gen_lucide_icons.py --qml`. Bảng dư
 
 <!-- ui_parity_qt:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity_qt.py - không sửa tay, chạy lại script) -->
 
-Quét: web máy tính 2272 chữ (1772 khác nhau), 294 cặp nhãn-icon; Qt 3449 chữ (2584 khác nhau), 282 cặp nhãn-icon (icon dùng ở 400 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
+Quét: web máy tính 2272 chữ (1772 khác nhau), 294 cặp nhãn-icon; Qt 3451 chữ (2586 khác nhau), 281 cặp nhãn-icon (icon dùng ở 400 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
 
 ## a. Cùng việc, khác chữ
 
@@ -69,23 +69,15 @@ Nhãn ngắn Qt không có nguyên văn (khoá lỏng) ở web máy tính mà gi
 
 ## b. Cùng nhãn khác icon, cùng icon khác nhãn
 
-**Cùng nhãn, khác icon** (11 nhãn Qt có icon mà icon ấy không đi với nhãn này ở bất cứ đâu trên web máy tính):
+**Cùng nhãn, khác icon** (3 nhãn Qt có icon mà icon ấy không đi với nhãn này ở bất cứ đâu trên web máy tính):
 
 | nhãn | web | Qt | nơi |
 |---|---|---|---|
-| Bỏ cách đọc {} | trash-2 | trash | `qt/EditBookReadings.qml:120` ~ `listen/WordReadings.tsx:254` |
-| Bỏ ảnh bìa | trash-2 | trash | `qt/CoverEditor.qml:168` (+1) ~ `listen/EditBook.tsx:450` |
-| Bỏ “{}” khỏi cách đọc chung | trash-2 | trash | `qt/SharedReadingsSettings.qml:98` ~ `studio/sharedReadings.tsx:87` |
 | Chi tiết | info | chevron-right | `qt/MyMusicDetails.qml:28` (+1) ~ `studio/ProjectScreen.tsx:789` |
 | Quay lại | chevron-left | arrow-left | `qt/ScreenHeader.qml:12` ~ `listen/LineWishes.tsx:255` (+2) |
-| Thêm tuỳ chọn cho {} | more-horizontal | ellipsis | `qt/CastPerson.qml:177` ~ `listen/BookScreen.tsx:357` |
-| Tuỳ chọn Studio | more-horizontal | ellipsis | `qt/ProjectsScreen.qml:83` ~ `studio/ProjectsScreen.tsx:236` |
 | Tạm dừng {} | check, circle-dashed, play | pause | `qt/BookCell.qml:77` ~ `listen/BookScreen.tsx:94` (+2) |
-| Xoá | trash-2 | trash | `qt/EditBookMyMusic.qml:296` (+1) ~ `listen/MyMusic.tsx:183` |
-| Xoá bài | trash-2 | trash | `qt/EditBookMyMusic.qml:310` (+1) ~ `listen/MyMusic.tsx:175` |
-| Xoá khoá | trash-2 | trash | `qt/ProviderKey.qml:171` ~ `listen/VoiceSettings.tsx:216` |
 
-**Cùng icon, khác nhãn** (56 cặp Qt; web cùng màn dùng cùng icon với nhãn khác):
+**Cùng icon, khác nhãn** (62 cặp Qt; web cùng màn dùng cùng icon với nhãn khác):
 
 | màn | icon | Qt | web cùng màn | nơi |
 |---|---|---|---|---|
@@ -107,30 +99,33 @@ Nhãn ngắn Qt không có nguyên văn (khoá lỏng) ở web máy tính mà gi
 | Studio tạo sách | image-plus | Đặt bìa | Đổi ảnh bìa | `qt/CoverEditor.qml:132` |
 | Studio tạo sách | image-plus | Đổi bìa | Đổi ảnh bìa | `qt/CoverEditor.qml:132` |
 | Studio tạo sách | image-plus | Đặt ảnh bìa | Đổi ảnh bìa | `qt/CoverEditor.qml:141` |
+| Studio tạo sách | trash | Bỏ ảnh bìa | Bỏ chương {}, Bỏ chỗ cắt trước {}, Bỏ ảnh bìa, dùng lại bìa vẽ từ tên sách | `qt/CoverEditor.qml:168` |
 | Sửa sách | image-plus | Chọn ảnh bìa… | Đổi ảnh bìa… / Chọn ảnh bìa… | `qt/EditBook.qml:239` |
 | Sửa sách | image-plus | Đổi ảnh bìa… | Đổi ảnh bìa… / Chọn ảnh bìa… | `qt/EditBook.qml:239` |
 | Sửa sách | file-down | Lưu thành… | Lưu | `qt/EditBookItems.qml:81` |
+| Sửa sách | trash | Xoá | Bỏ ảnh bìa | `qt/EditBookMyMusic.qml:296` |
+| Sửa sách | trash | Xoá bài | Bỏ ảnh bìa | `qt/EditBookMyMusic.qml:310` |
+| Sửa sách | trash | Bỏ cách đọc {} | Bỏ ảnh bìa | `qt/EditBookReadings.qml:120` |
 | Thư viện | play | Nghe tiếp | Đọc {} | `qt/LibraryContinue.qml:42` |
 | Thư viện | pause | Tạm dừng | Đọc {} | `qt/LibraryContinue.qml:42` |
-| Thư viện | x | Đóng tìm kiếm | Xoá ô tìm | `qt/LibraryScreen.qml:164` |
-| Thư viện | file-audio | Mở file sách | Đang mở… / Mở file sách | `qt/LibraryScreen.qml:420` |
-| Thư viện | file-audio | Đang mở… | Đang mở… / Mở file sách | `qt/LibraryScreen.qml:420` |
-| Thư viện | search | Chưa có cuốn nào nghe xong. | Thử tên sách hoặc tác giả khác., Tìm sách | `qt/LibraryScreen.qml:431` |
+| Thư viện | x | Đóng tìm kiếm | Xoá ô tìm | `qt/LibraryScreen.qml:173` |
+| Thư viện | search | Chưa có cuốn nào nghe xong. | Thử tên sách hoặc tác giả khác., Tìm sách | `qt/LibraryScreen.qml:445` |
 | Cài đặt | upload | Thêm nhạc của bạn | Đang thêm {}/{} / Thêm nhạc của bạn | `qt/MyMusicSettings.qml:145` |
 | Cài đặt | upload | Đang thêm {}/{} | Đang thêm {}/{} / Thêm nhạc của bạn | `qt/MyMusicSettings.qml:145` |
 | Cài đặt | upload | Thêm nhạc của bạn | Đang thêm {}/{} / Thêm nhạc của bạn | `qt/MyMusicState.qml:12` |
 | Cài đặt | square | Dừng nghe | Dừng, Dừng / Thử giọng, Dừng lượt cũ | `qt/MyMusicTrack.qml:105` |
 | Cài đặt | play | Nghe thử | Dừng / Thử giọng | `qt/MyMusicTrack.qml:105` |
 | Studio tạo sách | layers | Phần | Chia thành nhiều phần, Chia thành {} phần / Chia thành mấy phần? | `qt/NewChapters.qml:205` |
-| Studio tạo sách | trash-2 | Bỏ chương này | Bỏ chương {}, Bỏ chỗ cắt trước {}, Bỏ ảnh bìa, dùng lại bìa vẽ từ tên sách | `qt/NewChapters.qml:289` |
 | Studio tạo sách | layers | Chọn {} tập | Chia thành nhiều phần, Chia thành {} phần / Chia thành mấy phần? | `qt/NewDrop.qml:209` |
 | Studio tạo sách | scissors | Tách thành {} chương | Tách thành chương | `qt/NewHints.qml:92` |
-| Studio tạo sách | trash-2 | Gộp vào phần trước | Bỏ chương {}, Bỏ chỗ cắt trước {}, Bỏ ảnh bìa, dùng lại bìa vẽ từ tên sách | `qt/NewVolumes.qml:167` |
-| Đang nghe | moon | Hẹn giờ | {} trên {} | `qt/NowPlaying.qml:399` |
-| Đang nghe | moon | Hết chương | {} trên {} | `qt/NowPlaying.qml:399` |
+| Studio tạo sách | wand-sparkles | Bắt đầu | Bắt đầu / Tạo sách | `qt/NewProjectScreen.qml:175` |
+| Đang nghe | ellipsis | Thêm tuỳ chọn | Tuỳ chọn {} | `qt/NowPlaying.qml:212` |
+| Đang nghe | moon | Hẹn giờ | {} trên {} | `qt/NowPlaying.qml:401` |
+| Đang nghe | moon | Hết chương | {} trên {} | `qt/NowPlaying.qml:401` |
 | Cài đặt | bluetooth | Dự phòng qua Bluetooth… | Dự phòng qua Bluetooth cho {} | `qt/OtherComputersBluetooth.qml:21` |
 | Cài đặt | refresh-cw | Làm mới | Hỏi lại, Hỏi lại thư viện | `qt/PhoneDiagnostics.qml:67` |
 | Cài đặt | save | Lưu nhật ký | Gửi nhật ký | `qt/PhoneDiagnostics.qml:68` |
+| Studio dự án | ellipsis | Tuỳ chọn dự án | Tuỳ chọn Studio, Tuỳ chọn dự án {}, Tuỳ chọn {} | `qt/ProjectScreen.qml:327` |
 | Studio dự án | circle-alert | Không khởi động được: {} | Cuốn này đã bị xoá hoặc chuyển đi khỏi thư …, Không mở được sách | `qt/ProjectScreen.qml:467` |
 | Studio việc duyệt | list-music | Nghe liền {} câu | Nghe liền câu | `qt/ReviewQueue.qml:252` |
 | Studio việc duyệt | rotate-ccw | Cần thu lại | Cần thu lại / Thu lại câu này, Hoàn tác, Khôi phục tất cả | `qt/ReviewRow.qml:283` |
@@ -139,6 +134,9 @@ Nhãn ngắn Qt không có nguyên văn (khoá lỏng) ở web máy tính mà gi
 | Studio kịch bản | refresh-cw | Chưa có bản thu | Thu lại câu: {}, Thu lại {} câu / Chưa có bản thu | `qt/ScriptTab.qml:482` |
 | Studio kịch bản | refresh-cw | Thu lại {} câu | Thu lại câu: {}, Thu lại {} câu / Chưa có bản thu | `qt/ScriptTab.qml:482` |
 | Studio kịch bản | check | Duyệt {} câu | Duyệt câu | `qt/ScriptTab.qml:584` |
+| Cài đặt | trash | Gỡ Studio | Bỏ “{}” khỏi cách đọc chung, Xoá, Xoá bài | `qt/StudioSettings.qml:122` |
+| Cài đặt | trash | Xác nhận gỡ | Bỏ “{}” khỏi cách đọc chung, Xoá, Xoá bài | `qt/StudioSettings.qml:122` |
+| Cài đặt | trash | Đang gỡ… | Bỏ “{}” khỏi cách đọc chung, Xoá, Xoá bài | `qt/StudioSettings.qml:122` |
 | Studio tạo sách | clapperboard | Tạo trên {} | Tạo trên | `qt/StudioSetupNotice.qml:98` |
 | Studio việc duyệt | pause | Dừng | Dừng / Nghe thử | `qt/TryButton.qml:11` |
 | Studio việc duyệt | volume-2 | Nghe thử | Dừng / Nghe thử | `qt/TryButton.qml:11` |
@@ -159,7 +157,7 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 
 ### Thư viện
 
-- chỉ Qt (11): Trên {} (`qt/BookCell.qml:124`); Tạm dừng* (`qt/LibraryContinue.qml:41`); Mới thêm* (`qt/LibraryScreen.qml:47`); Tác giả* (`qt/LibraryScreen.qml:47`); Tên sách* (`qt/LibraryScreen.qml:47`); Đang mở ABook* (`qt/LibraryScreen.qml:345`); Chưa mở được ABook (`qt/LibraryScreen.qml:386`); Chưa tải được thư viện (`qt/LibraryScreen.qml:386`); Thử lại* (`qt/LibraryScreen.qml:403`); Không có sách ở đây (`qt/LibraryScreen.qml:432`); Chưa có cuốn nào nghe xong. (`qt/LibraryScreen.qml:433`)
+- chỉ Qt (11): Trên {} (`qt/BookCell.qml:124`); Tạm dừng* (`qt/LibraryContinue.qml:41`); Mới thêm* (`qt/LibraryScreen.qml:47`); Tác giả* (`qt/LibraryScreen.qml:47`); Tên sách* (`qt/LibraryScreen.qml:47`); Đang mở ABook* (`qt/LibraryScreen.qml:354`); Chưa mở được ABook (`qt/LibraryScreen.qml:400`); Chưa tải được thư viện (`qt/LibraryScreen.qml:400`); Thử lại* (`qt/LibraryScreen.qml:417`); Không có sách ở đây (`qt/LibraryScreen.qml:446`); Chưa có cuốn nào nghe xong. (`qt/LibraryScreen.qml:447`)
 - chỉ web (1): Chưa có sách nào (`519`)
 
 ### Thanh phát
@@ -169,7 +167,7 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 
 ### Đang nghe
 
-- chỉ Qt (13): Đọc* (`qt/ChapterReader.qml:14`); Chưa có chương để đọc. (`qt/ChapterReader.qml:33`); Đang tải chương… (`qt/ChapterReader.qml:86`); Thử lại* (`qt/ChapterReader.qml:91`); Thêm tuỳ chọn* (`qt/NowPlaying.qml:212`); Bìa (`qt/NowPlaying.qml:235`); Giọng {}* (`qt/NowPlaying.qml:264`); Danh sách chương* (`qt/NowPlaying.qml:420`); Nhạc nền* (`qt/NowPlaying.qml:431`); Cửa sổ mini (`qt/NowPlaying.qml:534`); Gợi ý cho phần đọc* (`qt/ReadingSuggestions.qml:8`); Bỏ dòng (`qt/ReadingSuggestions.qml:56`); Đóng* (`qt/ReadingSuggestions.qml:78`)
+- chỉ Qt (13): Đọc* (`qt/ChapterReader.qml:14`); Chưa có chương để đọc. (`qt/ChapterReader.qml:33`); Đang tải chương… (`qt/ChapterReader.qml:86`); Thử lại* (`qt/ChapterReader.qml:91`); Thêm tuỳ chọn* (`qt/NowPlaying.qml:212`); Bìa (`qt/NowPlaying.qml:235`); Giọng {}* (`qt/NowPlaying.qml:264`); Danh sách chương* (`qt/NowPlaying.qml:424`); Nhạc nền* (`qt/NowPlaying.qml:435`); Cửa sổ mini (`qt/NowPlaying.qml:538`); Gợi ý cho phần đọc* (`qt/ReadingSuggestions.qml:8`); Bỏ dòng (`qt/ReadingSuggestions.qml:56`); Đóng* (`qt/ReadingSuggestions.qml:78`)
 - chỉ web (10): Đã làm sẵn (`119`); Shift+← (`260`); Phím (`478`); Hẹn giờ đã tắt tiếng lúc (`995`); Bật lại (`1004`); Tiếng nhỏ dần (`1012`); Nghe tiếp · {} (`59`); Chưa có audio (`90`); Chạm (`101`); Nghe bằng giọng đọc.{} (`123`)
 
 ### Đọc theo
@@ -292,7 +290,7 @@ Hợp lệ: `Theme.radiusControl / radiusCover / radiusSheet` (DESIGN.md 5.5, `d
 - Người khác… (`qt/WorkSpeaker.qml:123`) - web: `Người khác…`
 - Người kể khác… (`qt/WorkNarrator.qml:65`) - web: `Người kể khác…`
 - Thu lại cả chương… (`qt/ProjectScreen.qml:243`) - web: `Thu lại cả chương…`
-- Thêm giọng… (`qt/NowPlaying.qml:532`) - web: `Thêm giọng…`
+- Thêm giọng… (`qt/NowPlaying.qml:536`) - web: `Thêm giọng…`
 - Thêm giọng… (`qt/PlayerVoicePopover.qml:30`) - web: `Thêm giọng…`
 - Tìm bìa… (`qt/EditBook.qml:247`) - web: `Tìm bìa…`
 - Tìm chữ trong chương… (`qt/ScriptTab.qml:718`) - web: `Tìm chữ trong chương…`
@@ -322,7 +320,7 @@ Hợp lệ: `Theme.radiusControl / radiusCover / radiusSheet` (DESIGN.md 5.5, `d
 - Đang mở thư viện… (`qt/RecordDialogs.qml:97`) - web: `Đang mở thư viện…`
 - Đang mở văn bản chương… (`qt/ReadAlongView.qml:330`) - web: `Đang mở văn bản chương…`
 - Đang mở… (`qt/ConnectionChip.qml:54`) - web: `Đang mở…`
-- Đang mở… (`qt/LibraryScreen.qml:420`) - web: `Đang mở…`
+- Đang mở… (`qt/LibraryScreen.qml:434`) - web: `Đang mở…`
 - Đang thêm chữ sáng… (`qt/ExportLogic.js:257`) - web: (không có)
 - Đang thử giọng vừa tải trên máy này (vài giây)… (`qt/VoiceLogic.js:242`) - web: (không có)
 - Đang tìm… (`qt/FindLogic.js:131`) - web: (không có)
