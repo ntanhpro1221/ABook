@@ -118,8 +118,9 @@ Item {
         }
         function test_screens_data() {
             let rows = []
+            const widths = qtWideWidths !== "" ? qtWideWidths.split(",").map(Number) : [1024, 1366, 1630, 1920]
             for (const mode of ["light", "dark"])
-                for (const w of [1024, 1366, 1630, 1920])
+                for (const w of widths)
                     for (const screen of ["library", "book", "now", "add", "edit", "settings", "devices", "studio", "mini"])
                         rows.push({tag: mode + "_" + screen + "_" + w, mode: mode, w: w, screen: screen})
             return rows

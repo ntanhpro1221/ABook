@@ -15,7 +15,8 @@ def check(path: Path) -> bool:
     failed = sum(int(row[1]) for row in totals)
     skipped = sum(int(row[2]) for row in totals)
     # A QML binding that reads a field of missing data prints a TypeError and leaves the item half drawn; the test may still pass.
-    type_errors = sorted({m.group(1) for m in re.finditer(r"(qml/[\w/]+\.(?:qml|js):\d+): TypeError", text)})
+    # Delegates and bindings print "file.qml:line:column: TypeError" - the column is optional, the line is kept.
+    type_errors = sorted({m.group(1) for m in re.finditer(r"(qml/[\w/]+\.(?:qml|js):\d+)(?::\d+)?: TypeError", text)})
     for where in type_errors:
         print(f"QML_TYPE_ERROR {where}", flush=True)
     print(f"TEST_TOTALS {passed} passed, {failed} failed, {skipped} skipped; GLYPH_MISSING {len(hits)}; "
