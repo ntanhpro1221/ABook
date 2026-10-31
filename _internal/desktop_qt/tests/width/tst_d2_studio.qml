@@ -182,6 +182,15 @@ Item {
             verify(has(again, "Cần cập nhật Giọng - "))
             verify(findText(one(again, "studioFixLink"), "Cập nhật Studio") !== null)
         }
+        function test_statusWithoutOutdatedHasNoLine() {
+            // Câu trả lời không mang "outdated" (Studio chưa cài, bản host khác): không dòng cập nhật, không lỗi QML.
+            failOnWarning(/TypeError/)
+            store.status = {installed: false, running: false, step: null, steps: [], progress: null, detail: "", error: null, root: ""}
+            const page = make()
+            tryCompare(one(page, "studioState"), "text", "Chưa cài.")
+            compare(live(page, "studioOutdated").length, 0)
+            verify(!texts(page).some(t => t.includes("Cần cập nhật")))
+        }
         function test_notInstalledInstall() {
             Api.info = {version: "0.4.40", studio: {installed: false}}
             store.status = freshStatus()
