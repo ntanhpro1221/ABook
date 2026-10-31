@@ -168,6 +168,19 @@ if errorlevel 1 (
   echo ERROR: packaged app did not start cleanly: %HERE%dist\ABookDesk.exe
   exit /b 1
 )
+rem Release gate (package / installer): tools\audio_sink.py plays the packaged app twice on a hidden desktop and listens to
+rem the WAV (holes, clicks, dropouts, leak, drift, offsets, levels); both runs green and every fault planted into the first
+rem run red (drift +-0.3/0.5 %, a step at x1 and at x>=2.5). Evidence of a red gate stays in build\audiosink-evidence.
+set AUDIO_GATE=
+if /i "%1"=="package" set AUDIO_GATE=1
+if /i "%1"=="installer" set AUDIO_GATE=1
+if defined AUDIO_GATE (
+  "%ABOOK_PYTHON%" -X utf8 "%HERE%tools\audio_sink.py" gate "%HERE%dist\ABookDesk.exe"
+  if errorlevel 1 (
+    echo ERROR: audio gate failed, evidence in %HERE%build\audiosink-evidence
+    exit /b 1
+  )
+)
 rem build.bat package: dist\resources\{python,app} like the installed copy, then start it with no source tree above it
 if /i "%1"=="package" (
   powershell -NoProfile -ExecutionPolicy Bypass -File "%HERE%..\scripts\build_windows_qt.ps1"
