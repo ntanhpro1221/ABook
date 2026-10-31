@@ -82,6 +82,8 @@ qt_add_executable(ABookDesk WIN32
     src/feedback.cpp
     src/feedback.h
     src/hostmessage.h
+    src/hostcall.cpp
+    src/hostcall.h
     src/hostnet.cpp
     src/hostnet.h
     src/librarymodel.cpp
@@ -549,7 +551,7 @@ if(MSVC)
     endforeach()
 endif()
 add_test(NAME MediaControlsTests COMMAND MediaControlsTests)
-qt_add_executable(DesktopApiTests tests/test_desktopapi.cpp tests/fakes.h src/desktopapi.cpp src/desktopapi.h src/audioout.cpp src/audioout.h
+qt_add_executable(DesktopApiTests tests/test_desktopapi.cpp tests/fakes.h src/desktopapi.cpp src/desktopapi.h src/hostcall.cpp src/hostcall.h src/hostwait.h src/hostnet.cpp src/hostnet.h src/audioout.cpp src/audioout.h
     src/feedback.cpp src/feedback.h src/hostmessage.h src/playernet.h src/librarymodel.cpp src/librarymodel.h)
 target_include_directories(DesktopApiTests PRIVATE tests)
 target_include_directories(DesktopApiTests PRIVATE src)

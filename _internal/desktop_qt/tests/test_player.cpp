@@ -2,6 +2,7 @@
 // lưu chỗ nghe khi dừng / đóng, hộp thư đi gửi lại. Đồ giả ở fakes.h; đồng hồ tường là g_now (ms), thử điều khiển nó bằng tay.
 #include "fakes.h"
 #include "player.h"
+#include "hostwait.h"
 
 #include <QSignalSpy>
 #include <QTemporaryDir>
@@ -519,6 +520,56 @@ private slots:
         QVERIFY(rig.player->playing());
     }
 
+    // Last guard of every AudioOut: buffering that never ends becomes the error under PlayerAlert ("Thử lại"), never a silent wait.
+    void endlessBufferingBecomesAnError() {
+        Rig rig;
+        rig.player->open(QStringLiteral("a"), 2, 30, true);
+        rig.run(2);
+        emit rig.out.buffering(true);
+        QVERIFY(rig.player->buffering());
+        rig.run((HostWait::kStallMs - 1000) / 1000.0);
+        QVERIFY(rig.player->error().isEmpty());    // every request under it gets its own chance to report first
+        rig.run(2);
+        QVERIFY(!rig.player->buffering());
+        QVERIFY(!rig.player->playing());
+        QCOMPARE(rig.player->error(), QStringLiteral("Không phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại."));
+        const int loads = rig.out.loads;
+        rig.player->retry();
+        QCOMPARE(rig.out.loads, loads + 1);
+        QVERIFY(rig.player->error().isEmpty());
+    }
+    void bufferingThatEndsIsNotAnError() {
+        Rig rig;
+        rig.player->open(QStringLiteral("a"), 2, 30, true);
+        rig.run(2);
+        emit rig.out.buffering(true);
+        rig.run((HostWait::kStallMs - 1000) / 1000.0);
+        emit rig.out.buffering(false);
+        emit rig.out.buffering(true);    // a new wait starts its own limit
+        rig.run((HostWait::kStallMs - 1000) / 1000.0);
+        QVERIFY(rig.player->error().isEmpty());
+        QVERIFY(rig.player->playing());
+    }
+    void endlessVoiceWaitSaysTheVoiceIsNotUsable() {
+        Rig rig;
+        QJsonObject book = makeBook(QStringLiteral("t"), 2, true);
+        QJsonArray chapters = book.value(QStringLiteral("chapters")).toArray();
+        for (int i = 0; i < chapters.size(); ++i) {
+            QJsonObject item = chapters.at(i).toObject();
+            item.insert(QStringLiteral("available"), false);
+            item.insert(QStringLiteral("state"), QStringLiteral("text"));
+            chapters.replace(i, item);
+        }
+        book.insert(QStringLiteral("chapters"), chapters);
+        rig.net.books.insert(QStringLiteral("t"), book);
+        rig.player->open(QStringLiteral("t"), -1, -1, true);
+        QVERIFY(rig.player->speaking());
+        rig.run(1);
+        emit rig.out.buffering(true);
+        rig.run(HostWait::kStallMs / 1000.0 + 1);
+        // Same sentence as the phone (ClipReader.NO_USABLE_VOICE) and the web (readAloudVoice.ts isVoiceStuck).
+        QCOMPARE(rig.player->error(), QStringLiteral("Giọng đang chọn đang không dùng được."));
+    }
     void jumpFarOffersGoBack() {
         Rig rig;
         rig.player->open(QStringLiteral("a"), 1, 0, true);
