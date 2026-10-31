@@ -285,8 +285,8 @@ object EditsSync {
     /** Gửi thật qua đường TLS đã ghim tới máy giữ sách - máy tính chính, hay máy tính khác đã ghép (không bao giờ gọi trên luồng giao diện). */
     fun pushNow(context: Context, id: String): JSONObject = push(id, holderName(context, id)) { file ->
         val (peer, remote) = Store.editDestination(id) ?: throw IllegalStateException("Cuốn này không lấy từ máy tính nên không có chỗ gửi về")
-        if (peer == null) SyncLink.request(context, "POST", "/sync/v1/books/$remote/edits", upload = file, readTimeoutMs = 120_000)
-        else Peers.request(context, peer, "POST", "/sync/v1/books/$remote/edits", readTimeoutMs = 120_000, upload = file)
+        if (peer == null) SyncLink.request(context, "POST", "/sync/v1/books/$remote/edits", upload = file)
+        else Peers.request(context, peer, "POST", "/sync/v1/books/$remote/edits", upload = file)
     }
 
     /** Tên máy giữ sách `id` như đã ghép (máy tính chính: tên nó báo lúc ghép); không biết thì rỗng. */
