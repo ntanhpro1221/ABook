@@ -133,7 +133,10 @@ LRESULT CALLBACK windowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
     return DefWindowProcW(hwnd, message, wParam, lParam);
 }
 
-quintptr createMessageWindow(TrayIcon *owner) {
+// Cửa sổ top-level ẩn (không WS_VISIBLE, không bao giờ ShowWindow; WS_EX_TOOLWINDOW: không lên thanh tác vụ hay Alt+Tab), KHÔNG phải
+// HWND_MESSAGE: cửa sổ message-only không nhận thông điệp phát tán, mà Explorer báo dựng lại thanh tác vụ (TaskbarCreated) bằng phát
+// tán - với HWND_MESSAGE icon mất hẳn sau khi Explorer khởi động lại (tools/tray_probe.cpp trên Explorer thật, 01-11).
+quintptr createHiddenWindow(TrayIcon *owner) {
     static const ATOM windowClass = [] {
         WNDCLASSEXW info{};
         info.cbSize = sizeof(info);
@@ -144,7 +147,7 @@ quintptr createMessageWindow(TrayIcon *owner) {
     }();
     if (!windowClass)
         return 0;
-    return reinterpret_cast<quintptr>(CreateWindowExW(0, kWindowClass, L"", 0, 0, 0, 0, 0, HWND_MESSAGE, nullptr, GetModuleHandleW(nullptr), owner));
+    return reinterpret_cast<quintptr>(CreateWindowExW(WS_EX_TOOLWINDOW, kWindowClass, L"", WS_POPUP, 0, 0, 0, 0, nullptr, nullptr, GetModuleHandleW(nullptr), owner));
 }
 
 }  // namespace
@@ -163,7 +166,7 @@ QString TrayIcon::clip(const QString &text, int limit) {
 TrayIcon::TrayIcon(QObject *parent) : TrayIcon(makeWin32TrayShell(), parent) {}
 
 TrayIcon::TrayIcon(std::unique_ptr<TrayShell> shell, QObject *parent) : QObject(parent), m_shell(std::move(shell)) {
-    m_window = createMessageWindow(this);
+    m_window = createHiddenWindow(this);
     taskbarCreatedMessage();   // đăng ký sớm: Explorer khởi động lại thì gửi tới cửa sổ này
     // Thoát bình thường thì icon biến mất ngay, không đợi người dùng rê chuột qua icon ma.
     if (QCoreApplication::instance())
