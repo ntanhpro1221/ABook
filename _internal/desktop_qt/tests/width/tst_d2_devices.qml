@@ -163,7 +163,7 @@ Item {
             tryVerify(function() { return shown(page, "Đang hiện mã ghép") })
             tryVerify(function() { return shown(page, "Hết hạn sau 5:00") || shown(page, "Hết hạn sau 4:59") })
             tryVerify(function() { return shown(page, "Vân tay: AB12CD34EF56AB12CD34EF56AB12CD34EF56AB12CD34EF56AB12CD34EF56AB12") })
-            byText(page, "Huỷ mã này").clicked()
+            byText(page, "Huỷ mã").clicked()
             compare(request("DELETE", "/api/sync/pairing").length, 1)
             tryVerify(function() { return !byName(page, "pairingCode").visible })
             tryVerify(function() { return shown(page, "Ghép thiết bị mới") })

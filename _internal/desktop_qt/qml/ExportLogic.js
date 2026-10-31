@@ -15,10 +15,10 @@ var KINDS = [
 ]
 // [tiêu đề hộp chọn thư mục, đang làm, lỗi]
 var SAVING = {
-    mp3: ["Chọn nơi lưu bản xuất", "Đang xuất MP3…", "Không xuất được MP3"],
-    abook: ["Chọn nơi lưu file sách", "Đang đóng gói sách…", "Không xuất được"],
-    m4b: ["Chọn nơi lưu file M4B", "Đang làm file M4B…", "Không xuất được M4B"],
-    abookproj: ["Chọn nơi lưu file dự án", "Đang đóng gói dự án…", "Không gói được dự án"]
+    mp3: ["Chọn nơi lưu", "Đang xuất MP3…", "Chưa xuất được MP3"],
+    abook: ["Chọn nơi lưu", "Đang đóng gói sách…", "Chưa xuất được file sách"],
+    m4b: ["Chọn nơi lưu", "Đang làm file M4B…", "Chưa xuất được M4B"],
+    abookproj: ["Chọn nơi lưu", "Đang đóng gói dự án…", "Chưa gói được dự án"]
 }
 /** Thẻ nhớ / USB định dạng FAT32 không chứa nổi file lớn hơn 4 GiB. */
 var FAT32_LIMIT = 4 * 1024 * 1024 * 1024
@@ -79,7 +79,7 @@ var CANCELLED = "cancelled"
 function startJob(request, path, body, follow, attach, done) {
     if (attach) { follow(done); return }
     request("POST", path, body, function(status, data) {
-        if (status < 200 || status >= 300) { done(data && (data.message || data.error) || "Không xuất được", null, data); return }
+        if (status < 200 || status >= 300) { done(data && (data.message || data.error) || "Chưa xuất được file sách", null, data); return }
         follow(done)
     })
 }
@@ -185,9 +185,9 @@ function finishedOf(kind, result, opts) {
 }
 
 // ---- việc nền (MP3, M4B): bookFileExport.ts jobView ----
-var MP3_COPY = {busy: "Đang xuất MP3…", done: "Đã xuất MP3", failed: "Không xuất được MP3", stopped: "Đã huỷ xuất", stoppedNote: "Các chương đã ghi dở được xoá.",
+var MP3_COPY = {busy: "Đang xuất MP3…", done: "Đã xuất MP3", failed: "Chưa xuất được MP3", stopped: "Đã dừng xuất", stoppedNote: "Các chương đã ghi dở được xoá.",
                 stopping: "Dừng ngay sau bước đang làm - thư mục MP3 dở được xoá."}
-var M4B_COPY = {busy: "Đang làm file M4B…", done: "Đã xuất M4B", failed: "Không xuất được M4B", stopped: "Đã huỷ xuất", stoppedNote: "Chưa có file M4B nào được ghi.",
+var M4B_COPY = {busy: "Đang làm file M4B…", done: "Đã xuất M4B", failed: "Chưa xuất được M4B", stopped: "Đã dừng xuất", stoppedNote: "Chưa có file M4B nào được ghi.",
                 stopping: "Dừng ngay sau bước đang làm - không ghi file M4B nào."}
 function copyOf(kind) { return kind === "m4b" ? M4B_COPY : MP3_COPY }
 

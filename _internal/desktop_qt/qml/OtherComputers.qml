@@ -94,7 +94,7 @@ Column {
         discovering = true
         Api.call("GET", "/api/computers/discover", null, function(result, error) {
             root.discovering = false
-            if (error) { root.say("Không tìm được"); return }
+            if (error) { root.say("Chưa tìm được"); return }
             root.found = result.found || []
         })
     }
@@ -269,7 +269,7 @@ Column {
                         Collapse {
                             width: parent.width
                             open: root.found !== null && root.found.length === 0
-                            HintText { width: parent.width; text: "Không thấy máy nào trong mạng này." }
+                            HintText { width: parent.width; text: "Chưa thấy thiết bị" }
                         }
                     }
                     Flow {

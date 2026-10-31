@@ -496,7 +496,7 @@ Item {
             const page = make(advancedFactory)
             const about = named(page, "advancedAbout")
             verify(hasText(about, "ABook 0.4.147 - nghe sách tiếng Việt và làm sách nói."))
-            verify(hasText(about, "Mã nguồn mở (MIT): "))
+            verify(hasText(about, "Mã nguồn mở (MIT) "))
             verify(hasText(about, "Thành phần sử dụng"))
             const dialog = about.thirdDialog
             verify(!dialog.open)

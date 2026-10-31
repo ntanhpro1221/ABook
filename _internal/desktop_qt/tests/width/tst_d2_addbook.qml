@@ -101,7 +101,7 @@ Item {
             compare(call.body.chapters[0].title, "Tên mới của chương ba")
             compare(call.body.chapters[1].title, undefined)
             compare(call.body.footnotes, undefined)
-            compare(Api.notice, "Đã thêm sách vào thư viện")
+            compare(Api.notice, "Đã thêm “Tên sách”")
             compare(opened.join(), "new-id")
             verify(!dialog.open)
         }
