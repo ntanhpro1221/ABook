@@ -22,7 +22,8 @@ import psutil
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import smoke_play  # noqa: E402
-from smoke_dist import report, run  # noqa: E402
+import smoke_dist  # noqa: E402
+from smoke_dist import report  # noqa: E402
 
 
 def play(app: Path, work: Path, chapter: bytes, seconds: float):
@@ -33,8 +34,8 @@ def play(app: Path, work: Path, chapter: bytes, seconds: float):
     smoke_play.library(work / "library", chapter)
     (root / "prefs.json").write_text(json.dumps({"libraryRoot": str(work / "library")}), encoding="utf-8")
     sink = work / "sink.wav"
-    code, text, _children = run(app / "ABookDesk.exe", seconds, smoke="play", root=root,
-                                extra={"ABOOK_AUDIO_SINK": str(sink), "ABOOK_MUTE": "0"})
+    code, text, _children = smoke_dist.run(app / "ABookDesk.exe", seconds, smoke="play", root=root,
+                                           extra={"ABOOK_AUDIO_SINK": str(sink), "ABOOK_MUTE": "0"})
     return code, text, smoke_play.read_sink(sink)
 
 
@@ -59,7 +60,7 @@ def main():
             return 1
         app = copy / "ABook"
         shutil.copytree(dist, app)
-        code, text, children = run(app / "ABookDesk.exe", args.seconds, smoke="host")
+        code, text, children = smoke_dist.run(app / "ABookDesk.exe", args.seconds, smoke="host")
         python = (app / "resources/python").resolve()
         hosts = sorted(c for c in children if Path(c).name.lower().startswith("python"))
         for line in text.splitlines():
