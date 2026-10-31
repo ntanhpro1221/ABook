@@ -124,7 +124,7 @@ QtObject {
             root.redoing = false
             if (status < 200 || status >= 300 || !data) { root.fail("Chưa đọc được thiết lập của sách", status, data); root.leaveRequested(""); return }
             if (data.started) {
-                Api.notice = "Sách đã bắt đầu chạy\nKhông làm lại với thiết lập khác được nữa."
+                Api.notice = "Sách đã bắt đầu chạy\nKhông thể làm lại với thiết lập khác nữa."
                 root.leaveRequested(id)
                 return
             }

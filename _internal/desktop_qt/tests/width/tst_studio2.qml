@@ -529,7 +529,7 @@ Item {
             const page = makeStudio()
             page.openNew("redo", "chay")
             tryCompare(page, "route", "project", 3000)
-            compare(Api.notice, "Sách đã bắt đầu chạy\nKhông làm lại với thiết lập khác được nữa.")
+            compare(Api.notice, "Sách đã bắt đầu chạy\nKhông thể làm lại với thiết lập khác nữa.")
         }
         function test_redoFailureLeavesBackToTheList() {
             reply("GET /api/books/hong/redo", {status: 500, data: {message: "Sổ hỏng"}})
