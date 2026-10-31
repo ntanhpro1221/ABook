@@ -20,6 +20,40 @@ nào phát hành một mình.
   `shell/src-tauri/windows/` (hooks.nsh, stop_processes.ps1, uninstall_guard.ps1, upgrade_mode.ps1),
   tauri_plugin_single_instance / updater / window_state / dialog.
 
+## Đo trước khi đổi (31-10, bằng chứng cho việc đổi vỏ)
+
+Hai bố cục đúng như bộ cài đặt ra đĩa, cùng một Python nhúng (3.14 của `shell/src-tauri/resources/python`):
+- Tauri = `ABook.exe` 0.4.133 (ABook_rel437) + `resources/{python,app}` thật.
+- Qt = dist của int150 17f8a33c + `resources/python` + `resources/app` (mã `abook` của int150, luật `Copy-App`).
+
+Mỗi lượt: hồ sơ giả mới (`LOCALAPPDATA` / `APPDATA` / `USERPROFILE`), cửa sổ thật (không offscreen) trên desktop riêng, bộ canh
+tiêu điểm. 3 vòng xen kẽ thứ tự, mỗi vòng một lần mở đầu (hồ sơ trống) và một lần mở lại (cùng hồ sơ). Máy nghỉ, đang cắm
+sạc. Kịch bản: `desktop_qt/tools/prep_shells.py` (dựng hai bố cục) + `tools/measure_shells.py`. Qua cả 12 lượt: 0 lần cướp tiêu điểm, 0 tiến trình sót lại.
+
+| | Tauri | Qt (chưa cắt) |
+|---|---|---|
+| Bộ cài nén | **20,1 MB** (0.4.148 thật; LZMA bố cục 19,4) | **≈ 39 MB** (LZMA bố cục 38,2 + NSIS ~0,7) |
+| Trên đĩa sau khi cài | 65,9 MB (+ WebView2 của hệ thống) | 152,8 MB |
+| RAM nghỉ, USS, giao diện (25-40 s) | 113-119 MB (ABook.exe + msedgewebview2) | **76 MB** (ABookDesk.exe) |
+| RAM nghỉ, USS, host Python | 58-65 MB | 50-54 MB |
+| RAM nghỉ, private bytes, giao diện | 260-279 MB | 152-154 MB |
+| Cửa sổ đầu tiên (lần đầu / mở lại) | 261 / 264 ms (khung trống, trang web vẽ sau) | 1048 / 784 ms (đã có nội dung QML) |
+| Lắng xuống (CPU cả cây < 5 % một nhân trong 2 s) | 4,5 / 3,6 s | 5,4 / 3,0 s |
+
+Đọc bảng:
+- Qt **nhẹ RAM hơn rõ**: giao diện −35 % USS, −42 % private; cả cây −27 % USS. Mở lại thì lắng nhanh hơn 0,6 s.
+- Qt **nặng tải hơn gần gấp đôi**: +19 MB mỗi lần cài hay cập nhật. Tauri mượn WebView2 có sẵn trong Windows, còn Qt mang DLL
+  riêng.
+- Ở lần mở đầu, Qt lắng chậm hơn 0,9 s (nạp DLL nguội, tạo cache QML).
+- "Cửa sổ đầu tiên" của Tauri là khung trống trước khi WebView vẽ, nên không so trực tiếp được với Qt (vẽ xong mới hiện).
+  Số so được là "lắng xuống".
+- Cắt được ở Q1:
+  - Style Qt Quick Controls không dùng (app chỉ import `Controls.Basic`): Fluent 5,5 + Imagine 3,3 + Material 2,4 + Universal
+    1,8 + Fusion 1,8 + Windows / NativeStyle 1,6 MB thô = 16,6 MB thô, chỉ **2,6 MB nén**.
+  - `Qt6Widgets.dll` 6,6 MB thô (~2,5 nén), nếu `Qt.labs.platform` chạy được với QGuiApplication mà không có nó (phải kiểm
+    bằng smoke).
+  - Đích sau khi cắt: ≈ 34-36 MB nén.
+
 ## Quyết định chung
 
 - **Cùng chỗ với bản Tauri:** cài cho người dùng hiện tại (không cần quyền quản trị), cùng thư mục cài, cùng khoá gỡ cài trong
@@ -35,8 +69,19 @@ nào phát hành một mình.
 - **Kiểm chữ ký cập nhật ở máy chủ Python**, không viết lại Ed25519 bằng C++: `abook/webui/ed25519_verify.py` đã có (danh mục
   nhạc dùng). Chữ ký minisign của Tauri là Ed25519 trên BLAKE2b-512 của file (thuật toán "ED"); `hashlib.blake2b` có sẵn.
 - **Không có cửa sổ nào lên màn hình khi test:** mọi test bộ cài chạy cài im lặng (`/S`) vào thư mục tạm với
-  `LOCALAPPDATA` / `USERPROFILE` / `HKCU\Software\Classes` riêng (registry ảo qua hive tạm hoặc khoá con có tiền tố test),
-  không đụng bản ABook thật của chủ sách.
+  `LOCALAPPDATA` / `APPDATA` / `USERPROFILE` riêng (`desktop_qt/tools/private_profile.py`); app đã cài chạy trên desktop riêng
+  không bao giờ chuyển tới (`tools/windows_process.py` + bộ canh tiêu điểm của `guarded_process.py`).
+- **Không test nào đụng registry hay thư mục cài thật của chủ máy** (Lead 31-10). Cướp liên kết `.abook` của người dùng là sự
+  cố, không phải lỗi test.
+  - Kịch bản NSIS đọc gốc registry từ một hằng: bản phát hành là `Software\Classes` và khoá gỡ cài thật. Bản dựng cho test
+    (`makensis /DABOOK_TEST_ROOT=Software\ABookTest-<uuid>`) ghi mọi khoá dưới `HKCU\Software\ABookTest-<uuid>\...`.
+  - Lệnh nào không đổi gốc được (vd `SHChangeNotify`) thì không chạy trong bản test. Phần ấy kiểm bằng đọc kịch bản, không
+    bằng chạy.
+  - Test tạo khoá con có tiền tố test và dọn nó trong `finally`, kể cả khi hỏng.
+  - Một test chụp `HKCU\Software\Classes\.abook`, `.abookproj`, `ABook`, `ABook.Project` và khoá gỡ cài của ABook (đệ quy,
+    mọi giá trị) TRƯỚC và SAU cả bộ test bộ cài. Khác một byte là đỏ.
+  - Thư mục cài trong test luôn là thư mục tạm (`/D=`). Test từ chối chạy nếu `/D` trỏ vào thư mục cài thật hay
+    `%LOCALAPPDATA%\ABook` của chủ máy.
 
 ## Thứ tự
 
@@ -90,8 +135,16 @@ nào phát hành một mình.
 
 ### Q7. release.py
 - `build` gọi bước dựng Qt thay `build_windows_app.ps1`; cùng tên file, cùng `latest.json`, kiểm `.sig`.
-- Bỏ `shell/` khỏi đường phát hành sau một bản Qt chạy thật trên máy ảo sạch (cài mới, cập nhật lên bản kế, gỡ có/không xoá
-  dữ liệu).
+- Bỏ `shell/` khỏi đường phát hành sau một bản Qt chạy thật trên "máy sạch": cài mới, cập nhật lên bản kế, gỡ có và không
+  xoá dữ liệu.
+- **"Máy sạch" = hồ sơ giả, không phải máy ảo** (chọn 31-10, Lead duyệt).
+  - Vì sao không dùng Windows Sandbox: nó chưa bật trên máy (`C:\Windows\System32\WindowsSandbox.exe` không có), bật nó là đổi
+    tính năng Windows, và cửa sổ Sandbox hiện lên màn hình chủ máy.
+  - Mỗi lượt thử có thư mục cài tạm (`/D=`), `LOCALAPPDATA` / `APPDATA` / `USERPROFILE` riêng, gốc registry test (điều ở
+    "Quyết định chung"), và desktop riêng có bộ canh tiêu điểm.
+  - Kịch bản: cài mới, cập nhật lên bản kế (máy chủ HTTP giả của Q6), gỡ không xoá dữ liệu, cài lại, gỡ có xoá dữ liệu. Sau mỗi
+    bước kiểm file, khoá test và host Ready.
+  - Không bật tính năng Windows nào (Hyper-V, Sandbox) nếu chưa hỏi Lead.
 
 ## Ngoài phạm vi
 - Ký Authenticode, MSIX/Store.
