@@ -30,7 +30,7 @@ Column {
                 id: entry
                 required property var modelData
                 readonly property bool off: modelData.letter && !root.letters
-                width: parent.width
+                width: parent ? parent.width : 0
                 height: Math.max(label.implicitHeight, 20)
                 Text {
                     id: label

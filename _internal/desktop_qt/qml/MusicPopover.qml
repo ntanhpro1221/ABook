@@ -66,7 +66,7 @@ Popover {
                     model: Music.levels
                     LevelRow {
                         required property var modelData
-                        width: parent.width
+                        width: parent ? parent.width : 0
                         name: modelData.name
                         note: modelData.note
                         selected: Math.abs(modelData.value - Music.levelDb) < 0.001
