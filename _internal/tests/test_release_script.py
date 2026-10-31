@@ -77,3 +77,14 @@ def test_release_notes_carry_the_changelog_section_and_the_machine_requirements(
     assert "- Một điều mới." in notes and "- cũ" not in notes
     with pytest.raises(AssertionError):
         release.release_notes("9.9.7", tmp_path)
+
+
+def test_release_notes_measure_the_installer_instead_of_a_fixed_size(tmp_path: Path) -> None:
+    (tmp_path / "_internal/docs").mkdir(parents=True)
+    (tmp_path / "README.md").write_text("# ABook\n\n## Yêu cầu máy\n\n- Windows.\n\n## Cài đặt\n", encoding="utf-8")
+    (tmp_path / "_internal/docs/CHANGELOG.md").write_text("# x\n\n## [9.9.9] - d\n\n- Mới.\n\n## [9.9.8] - x\n", encoding="utf-8")
+    out = tmp_path / "out"
+    out.mkdir()
+    assert "MB" not in release.release_notes("9.9.9", tmp_path, out)
+    (out / "ABook_9.9.9_x64-setup.exe").write_bytes(b"0" * 19_600_000)
+    assert "khoảng 20 MB, không cần quyền quản trị" in release.release_notes("9.9.9", tmp_path, out)

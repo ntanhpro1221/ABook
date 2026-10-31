@@ -7,19 +7,24 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
-### Sửa lỗi
-
-- App máy tính (cả bản Qt lẫn bản Tauri) không còn chờ im lặng mãi khi máy không trả lời: việc nặng (giọng đọc, nghe thử giọng hay cách đọc, quét và tách nguồn, kể ngôi "tôi", tạo sách, dựng lại nhạc) im quá 100 giây, việc khác im quá 30 giây thì app gửi lại một lần rồi báo lỗi (giọng đọc báo "Giọng đang chọn đang không dùng được."); đoạn đang về chậm thì không bị cắt. Trình phát chờ âm thanh quá 215 giây cũng báo lỗi kèm "Thử lại"; app mở quá 60 giây chưa xong thì hiện lỗi kèm "Thử lại" thay vì đứng mãi ở màn mở.
-- Giọng Edge và các lần tải (model giọng, nhạc, bìa, kết nối giữa hai máy) không còn treo khi mạng nhà có IPv6 mà IPv6 không ra được Internet (hay gặp sau khi mất điện, router lên lại): app thử IPv6 và IPv4 song song, dùng đường nào nối được trước, thay vì chờ hết hạn từng đường IPv6 rồi mới tới IPv4.
-- Giọng trực tuyến (Edge, Azure, giọng dùng khoá riêng) không trả lời kịp thì app báo "Giọng … đang không dùng được." và thử lại sau, thay vì báo nhầm là mất mạng khi máy vẫn có mạng.
-
-### Máy tính
+### Máy tính (bản Qt, chưa có trong bộ cài)
 
 - App máy tính: nhạc nền tốn ít CPU hơn khi thu nhỏ.
 - App máy tính: giọng đọc giữ đúng nhịp khi nghe trong khay và nhạc nền lặp lại.
 - App máy tính hiện trong khung điều khiển nhạc của Windows (tên chương, bìa, phát/dừng, chương trước/sau, tua).
 - App máy tính: đóng app không còn để lại tiến trình chạy ngầm sau khi đã phát nhạc nền WAV, FLAC, M4A hay Ogg.
 - App máy tính: nhạc nền nối vào đúng chỗ của lời đọc khi bắt đầu và mỗi lần lặp lại, không còn trễ vài chục mili giây.
+
+## [0.4.149] - 2026-10-31
+
+### Sửa lỗi
+
+- App máy tính không còn chờ im lặng mãi khi máy không trả lời: việc nặng (giọng đọc, nghe thử giọng hay cách đọc, quét và tách nguồn, kể ngôi "tôi", tạo sách, dựng lại nhạc) im quá 100 giây, việc khác im quá 30 giây thì app gửi lại một lần rồi báo lỗi (giọng đọc báo "Giọng đang chọn đang không dùng được."); đoạn đang về chậm thì không bị cắt. Trình phát chờ âm thanh quá 215 giây cũng báo lỗi kèm "Thử lại"; app mở quá 60 giây chưa xong thì hiện lỗi kèm "Thử lại" thay vì đứng mãi ở màn mở.
+- Giọng Edge và các lần tải (model giọng, nhạc, bìa, kết nối giữa hai máy) không còn treo khi mạng nhà có IPv6 mà IPv6 không ra được Internet (hay gặp sau khi mất điện, router lên lại): app thử IPv6 và IPv4 song song, dùng đường nào nối được trước, thay vì chờ hết hạn từng đường IPv6 rồi mới tới IPv4.
+- Giọng trực tuyến (Edge, Azure, giọng dùng khoá riêng) không trả lời kịp thì app báo "Giọng … đang không dùng được." và thử lại sau, thay vì báo nhầm là mất mạng khi máy vẫn có mạng.
+
+### Máy tính
+
 - App máy tính: đồng hồ và các con số đếm đổi tại chỗ, chữ bên cạnh không còn xô lệch.
 
 ### Điện thoại
