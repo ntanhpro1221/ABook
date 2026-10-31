@@ -375,7 +375,7 @@ function analysisChoiceLabel(chosen, seedModel) {
 function availableModelNames(data) { return data && data.reachable ? [data.default].concat(data.models.map(function(model) { return model.name })) : null }
 /** Các lựa chọn của ô "Bộ phân tích truyện": mặc định + các bản khác. Trả {options, others, defaultSize}. */
 function modelOptions(data) {
-    if (!data) return {others: [], options: []}
+    if (!data || !Array.isArray(data.models)) return {others: [], options: []}
     const others = data.models.filter(function(model) { return modelLabel(model.name) !== modelLabel(data.default) })
     let defaultSize = 0
     for (const model of data.models) if (modelLabel(model.name) === modelLabel(data.default)) defaultSize = model.size || 0

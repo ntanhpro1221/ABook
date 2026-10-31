@@ -14,11 +14,12 @@ Interactive {
     property bool inline: false
     property bool tabular: false
     signal picked(var value)
+    readonly property var choices: options || []  // người gọi chưa có dữ liệu (undefined) = danh sách rỗng
     readonly property int currentIndex: {
-        for (let i = 0; i < options.length; ++i) if (!options[i].header && String(options[i].value) === String(value)) return i
+        for (let i = 0; i < choices.length; ++i) if (!choices[i].header && String(choices[i].value) === String(value)) return i
         return -1
     }
-    readonly property string currentLabel: currentIndex >= 0 ? options[currentIndex].label : ""
+    readonly property string currentLabel: currentIndex >= 0 ? choices[currentIndex].label : ""
     Accessible.role: Accessible.ComboBox
     Accessible.name: label
     Accessible.description: currentLabel
@@ -97,24 +98,24 @@ Interactive {
             implicitHeight: contentHeight
             clip: true
             boundsBehavior: Flickable.StopAtBounds
-            model: root.options
+            model: root.choices
             keyNavigationEnabled: true
             highlightMoveDuration: 0
             Keys.onReturnPressed: pick(currentIndex)
             Keys.onEnterPressed: pick(currentIndex)
             Keys.onSpacePressed: pick(currentIndex)
             function pick(i) {
-                if (i >= 0 && i < root.options.length && root.options[i].header) return
-                if (i >= 0 && i < root.options.length) root.picked(root.options[i].value)
+                if (i >= 0 && i < root.choices.length && root.choices[i].header) return
+                if (i >= 0 && i < root.choices.length) root.picked(root.choices[i].value)
                 list.close()
             }
             // Mũi tên dừng ở đầu nhóm thì đi tiếp theo cùng chiều (hết chỗ thì quay lại)
             property int lastIndex: 0
             onCurrentIndexChanged: {
                 const at = currentIndex
-                if (at >= 0 && at < root.options.length && root.options[at].header) {
+                if (at >= 0 && at < root.choices.length && root.choices[at].header) {
                     const step = at >= lastIndex ? 1 : -1
-                    const next = at + step >= 0 && at + step < root.options.length ? at + step : at - step
+                    const next = at + step >= 0 && at + step < root.choices.length ? at + step : at - step
                     lastIndex = at
                     currentIndex = next
                     return
