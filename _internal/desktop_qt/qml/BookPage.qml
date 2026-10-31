@@ -404,7 +404,7 @@ Item {
                         objectName: "recordChip"
                         y: Theme.s4
                         maxWidth: parent.width
-                        name: Records.activeRecord(root.fullBook) ? Records.activeRecord(root.fullBook).name : ""
+                        name: Records.activeRecord(root.fullBook) ? Records.activeRecord(root.fullBook).name || "" : ""
                         onClicked: recordMenu.toggle()
                     }
                 }

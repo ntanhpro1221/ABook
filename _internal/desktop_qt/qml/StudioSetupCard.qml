@@ -162,7 +162,7 @@ Item {
                     model: root.status ? root.status.steps || [] : []
                     delegate: Row {
                         required property var modelData
-                        readonly property bool activeStep: !!root.status && root.status.running && modelData.id === root.status.step
+                        readonly property bool activeStep: !!root.status && !!root.status.running && modelData.id === root.status.step
                         width: (parent.width - (root.wide ? 32 : 0)) / (root.wide ? 2 : 1)
                         spacing: 10
                         Item {
@@ -195,7 +195,7 @@ Item {
             }
             Column {
                 objectName: "studioSetupProgress"
-                visible: !!root.status && root.status.running && Setup.currentStep(root.status) !== null
+                visible: !!root.status && !!root.status.running && Setup.currentStep(root.status) !== null
                 width: parent.width
                 topPadding: 16
                 spacing: 6

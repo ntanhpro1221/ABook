@@ -34,7 +34,7 @@ Column {
             height: implicitHeight
             pressScaling: false
             Accessible.role: Accessible.MenuItem
-            Accessible.name: modelData.name
+            Accessible.name: modelData.name || ""
             Accessible.checkable: true
             Accessible.checked: modelData.active
             readonly property bool selected: modelData.active
