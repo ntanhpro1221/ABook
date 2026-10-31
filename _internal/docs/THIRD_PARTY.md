@@ -18,6 +18,14 @@ phần ấy.
   `abook/vendor/pypdf/` (kèm LICENSE và băm wheel nguồn), không phụ thuộc pyproject/uv.lock hay gói cài sẵn. Nhập EPUB và DOCX chỉ
   dùng thư viện chuẩn của Python (zipfile, xml, html.parser).
 - PySide6 / Qt (LGPLv3) - cửa sổ app máy tính.
+- Bản máy tính viết bằng Qt Quick (`desktop_qt/`): Qt 6 (LGPLv3, liên kết động, DLL nằm cạnh file chạy); [QWindowKit](https://github.com/stdware/qwindowkit) 1.5.0
+  (Apache-2.0, (c) Stdware Collections và wangwenx190; liên kết tĩnh, không thêm DLL) - dải tiêu đề tự vẽ mà vẫn giữ hành vi gốc của Windows
+  (kéo, Aero Snap, Snap Layouts); biểu tượng lucide (ISC) vẽ bằng Qt Quick Shapes; font Be Vietnam Pro (SIL OFL 1.1);
+  ba file `desktop_qt/fonts/BeVietnamPro-*.ttf` gộp từ @fontsource (`desktop_qt/tools/merge_fonts.py`) rồi thêm chữ số đều bề rộng qua tính năng `tnum`
+  bằng cùng công cụ của bản Android (`mobile/android/scripts/add_tabular_digits.py`); giữ nguyên chữ mặc định, thông tin tác giả và giấy phép SIL OFL 1.1
+  trong bảng `name` của font; toàn văn giấy phép `desktop_qt/fonts/OFL.txt` gói trong tài nguyên của file chạy cạnh ba font;
+  [minimp3](https://github.com/lieff/minimp3) (CC0 1.0, commit afb604c0, `desktop_qt/third_party/minimp3/` kèm LICENSE) - giải mã mp3 cho
+  đường âm thanh WASAPI (rẻ hơn Media Foundation ~4 lần).
 - FFmpeg / imageio-ffmpeg (LGPL hoặc GPL tuỳ bản build). Bản app chỉ-nghe KHÔNG mang ffmpeg trong bộ cài: mô-đun "Phân tích nhạc" và việc "Xuất sách nói" (MP3 / M4B)
   đều do người dùng bấm mới tải (`webui/music_module.py`, hộp xuất sách nói), cùng lấy riêng `bin/ffmpeg.exe` trong ZIP [GyanD/codexffmpeg 8.1.2 essentials](https://github.com/GyanD/codexffmpeg/releases/tag/8.1.2)
   bằng HTTP Range (~36 MB thay vì cả ZIP 110 MB; Windows x64 tĩnh, GPL-3.0-or-later).
@@ -187,3 +195,5 @@ Studio một lần (bước "wordalign"), KHÔNG nằm trong bộ cài chỉ-ngh
 Source không đóng gói model weights: lần cài đầu tải dependency và model về `_internal/runtime`. Khi phát hành gói cài đặt, APK hay
 model cache, người bảo trì phải kiểm lại phiên bản THẬT SỰ được đóng gói và đính kèm LICENSE/NOTICE tương ứng (`RELEASING.md`).
 Giấy phép MIT của ABook nằm ở `_internal/LICENSE`.
+
+- Sonic (Bill Cox, Apache-2.0): `desktop_qt/third_party/sonic/sonic.c` and `sonic.h`, unmodified; upstream commit b93885dcb70aae50c6f76b0fe4e0868f029a077e. Pitch-preserving voice playback at 0.5-4x through the shared WASAPI mixer. Full license in `desktop_qt/third_party/sonic/LICENSE`. Source: https://github.com/waywardgeek/sonic.
