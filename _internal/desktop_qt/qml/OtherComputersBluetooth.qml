@@ -67,7 +67,7 @@ Item {
                     height: implicitHeight
                     pressScaling: false
                     Accessible.role: Accessible.MenuItem
-                    Accessible.name: modelData.name + " · " + Logic.deviceKindLabel(modelData.kind) + (selected ? ", đang chọn" : "")
+                    Accessible.name: modelData.name + "\u00a0· " + Logic.deviceKindLabel(modelData.kind) + (selected ? ", đang chọn" : "")
                     onClicked: { menu.close(); root.choose(modelData.address) }
                     Rectangle { anchors.fill: parent; radius: Theme.radiusControl; color: Theme.hover; opacity: row.hovered ? 1 : 0; Behavior on opacity { NumberAnimation { duration: Theme.motionFast } } }
                     Icon { x: 8; y: 6 + 2; name: "check"; size: 16; color: Theme.accentText; opacity: row.selected ? 1 : 0; Behavior on opacity { NumberAnimation { duration: Theme.motionFast } } }
@@ -77,7 +77,7 @@ Item {
                         y: 6
                         width: parent.width - x - 8
                         textFormat: Text.RichText
-                        text: Logic.esc(modelData.name) + " <span style='color:" + Theme.text3 + "'>· " + Logic.esc(Logic.deviceKindLabel(modelData.kind)) + "</span>"
+                        text: Logic.esc(modelData.name) + "&nbsp;<span style='color:" + Theme.text3 + "'>· " + Logic.esc(Logic.deviceKindLabel(modelData.kind)) + "</span>"
                         color: Theme.text
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                         font.pixelSize: Theme.sizeBodySmall

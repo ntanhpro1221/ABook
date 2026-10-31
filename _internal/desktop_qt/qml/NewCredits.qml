@@ -92,7 +92,7 @@ Column {
                             text: {
                                 const lines = modelData.head.map(line => Logic.creditLine(line, "head", root.drop)).concat(modelData.tail.map(line => Logic.creditLine(line, "tail", root.drop)))
                                 const parts = lines.map(line => line.dropped ? "<s>" + Logic.esc(line.text) + "</s>" : Logic.esc(line.text))
-                                return "<b>" + Logic.esc(modelData.chapter) + ":</b> " + parts.join(" · ")
+                                return "<b>" + Logic.esc(modelData.chapter) + ":</b> " + parts.join("&nbsp;· ")
                             }
                         }
                         Scrollbar { target: creditList }

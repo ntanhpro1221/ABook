@@ -29,8 +29,8 @@ Collapse {
     readonly property string line: {
         const dim = Qt.color(Theme.text2).toString()
         let html = Music.escapeHtml(track.title || "")
-        if (track.creator) html += "<font color=\"" + dim + "\"> · " + Music.escapeHtml(track.creator) + "</font>"
-        if (track.duration) html += "<font color=\"" + dim + "\"> · " + Music.formatClock(track.duration) + "</font>"
+        if (track.creator) html += "<font color=\"" + dim + "\">&nbsp;· " + Music.escapeHtml(track.creator) + "</font>"
+        if (track.duration) html += "<font color=\"" + dim + "\">&nbsp;· " + Music.formatClock(track.duration) + "</font>"
         return html
     }
 

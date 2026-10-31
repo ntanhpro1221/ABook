@@ -36,7 +36,7 @@ function formatClock(seconds) { return Edit.formatClock(seconds) }
 function formatLength(seconds) { return Cast.formatLength(seconds) }
 
 // Dòng chính của một lượt nghe: "13:57-14:20 · 23 phút"
-function headline(item) { return timeRange(item) + " · " + formatLength(item.listened) }
+function headline(item) { return timeRange(item) + "\u00a0· " + formatLength(item.listened) }
 
 function titleOf(chapters, chapterId) {
     const found = (chapters || []).filter(chapter => chapter.id === chapterId)[0]

@@ -380,7 +380,7 @@ Item {
             const card = named(page, "advancedUpdate")
             tryVerify(function() { return hasText(card, "Cập nhật ABook") })
             tryVerify(function() { return hasText(card, "Sửa lỗi nghe lại.\nThêm lịch đêm.") })
-            tryVerify(function() { return (find(card, i => i.textFormat === Text.StyledText).text) === ("<b>ABook 0.4.148</b> đã có · đang dùng 0.4.147") })
+            tryVerify(function() { return (find(card, i => i.textFormat === Text.StyledText).text) === ("<b>ABook 0.4.148</b> đã có&nbsp;· đang dùng 0.4.147") })
             reply("POST /api/app/update", 409, {error: "Không có bản mới để cài"})
             card.install()
             compare(Api.notice, "Chưa cập nhật được\nKhông có bản mới để cài")

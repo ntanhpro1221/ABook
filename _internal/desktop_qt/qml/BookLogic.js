@@ -13,7 +13,7 @@ function formatLengthUp(seconds) {
 
 function progressOf(book) { return book && book.progress && typeof book.progress === "object" ? book.progress : {} }
 
-function textBookLine(speaks) { return speaks ? "Chỉ có chữ · nghe bằng giọng đọc" : "Chỉ có chữ · máy này chưa có giọng đọc" }
+function textBookLine(speaks) { return speaks ? "Chỉ có chữ\u00a0· nghe bằng giọng đọc" : "Chỉ có chữ\u00a0· máy này chưa có giọng đọc" }
 
 // Tên máy đang giữ cuốn nghe thẳng: tên máy tính đã ghép, "máy khác" khi chưa biết tên, "máy tính" khi chỉ biết là của máy tính.
 function remoteName(book) { return typeof book.remote === "object" && book.remote ? book.remote.computer || "máy khác" : "máy tính" }
@@ -26,13 +26,13 @@ function remoteUnfinishedLine(book) {
 function progressText(book, speaks) {
     if (book.stage === "text") {
         const lead = String(book.author || "").trim() || (speaks ? "" : "Chỉ có chữ")
-        return (lead ? lead + " · " : "") + book.chaptersTotal + " chương"
+        return (lead ? lead + "\u00a0· " : "") + book.chaptersTotal + " chương"
     }
     const p = progressOf(book)
     const chapters = book.chaptersAvailable + "/" + book.chaptersTotal + " chương"
     if (p.finished) return "Đã nghe xong"
-    if (p.caughtUp) return "Đã nghe hết phần đã có · " + chapters
-    if (!book.complete) return book.producing ? chapters + " · đang thu" : chapters
+    if (p.caughtUp) return "Đã nghe hết phần đã có\u00a0· " + chapters
+    if (!book.complete) return book.producing ? chapters + "\u00a0· đang thu" : chapters
     const heard = Number(p.heardSeconds || 0)
     const left = Math.max(0, Number(book.duration || 0) - heard)
     if (heard <= 0) return formatLength(book.duration)
@@ -41,7 +41,7 @@ function progressText(book, speaks) {
 
 function bookStatusText(book, speaks) {
     const status = progressText(book, Boolean(speaks))
-    return book.remote ? remotePlace(book) + " · " + status : status
+    return book.remote ? remotePlace(book) + "\u00a0· " + status : status
 }
 
 // Dòng tình trạng ngay dưới tên: sách chỉ có chữ, hay sách chưa đủ chương (đang thu / máy khác còn làm / file cũ / dừng thu); "" khi đủ chương.
@@ -59,7 +59,7 @@ function progressLine(book, listening, failed) {
     const p = progressOf(book)
     if (p.finished || p.caughtUp) return bookStatusText(book)
     const heard = Number(p.heardSeconds || 0)
-    if (heard > 0) return "Đã nghe " + formatLength(heard) + " · còn " + formatLength(Math.max(0, Number(book.duration || 0) - heard)) + " chưa nghe"
+    if (heard > 0) return "Đã nghe " + formatLength(heard) + "\u00a0· còn " + formatLength(Math.max(0, Number(book.duration || 0) - heard)) + " chưa nghe"
     if (listening) return failed ? "Chưa phát được" : "Đang nghe"
     return "Chưa nghe"
 }

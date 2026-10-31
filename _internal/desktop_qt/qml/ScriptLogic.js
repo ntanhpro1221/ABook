@@ -46,7 +46,7 @@ function kindLabel(kind) {
 }
 function deliveryText(emotion, intensity) {
     const label = emotionLabel(emotion)
-    return intensity ? label + " · " + (LEVELS[intensity] !== undefined ? LEVELS[intensity].toLowerCase() : intensity) : label
+    return intensity ? label + "\u00a0· " + (LEVELS[intensity] !== undefined ? LEVELS[intensity].toLowerCase() : intensity) : label
 }
 // Cách đọc một câu nói bằng lời ("loại câu: nội tâm, cảm xúc: buồn"); "" khi không đặt gì.
 function deliveryWords(delivery) {
@@ -119,7 +119,7 @@ function chapterExtras(chapter) {
         chapter.speech ? "" : "chỉ lời kể",
         chapter.hints ? chapter.hints + " chỗ nghi" : "",
         chapter.decided ? chapter.decided + " đã quyết" : ""
-    ].filter(Boolean).join(" · ")
+    ].filter(Boolean).join("\u00a0· ")
 }
 function chapterLabel(chapter) { return chapter.title || "Chương " + chapter.index }
 // Mở đầu ở chương đầu tiên có chỗ máy nghi - nơi người nghe sửa được nhiều nhất.
@@ -253,7 +253,7 @@ function splitByRanges(text, ranges) {
 }
 // Chuyển vòng: Enter qua hết câu khớp cuối thì về câu đầu (và ngược lại).
 function wrapIndex(at, count) { return count ? ((at % count) + count) % count : 0 }
-function esc(text) { return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") }
+function esc(text) { return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\u00a0/g, "&nbsp;") }
 // Chữ của câu với chỗ khớp tô nền (StyledText)
 function markedHtml(text, ranges, mark) {
     return splitByRanges(text, ranges).map(function(part) {

@@ -81,6 +81,8 @@ qt_add_executable(ABookDesk WIN32
     src/bench.h
     src/coverprovider.cpp
     src/coverprovider.h
+    src/shadowprovider.cpp
+    src/shadowprovider.h
     src/feedback.cpp
     src/feedback.h
     src/hostmessage.h
@@ -117,6 +119,11 @@ qt_add_qml_module(ABookDesk
         qml/Interactive.qml
         qml/Button.qml
         qml/IconButton.qml
+        qml/Shadow.qml
+        qml/CoverButton.qml
+        qml/InlineError.qml
+        qml/FlowDetail.qml
+        qml/LineIcon.qml
         qml/NavItem.qml
         qml/TitleBar.qml
         qml/CaptionButton.qml
@@ -276,7 +283,6 @@ qt_add_qml_module(ABookDesk
         qml/DevicesFold.qml
         qml/DevicesToggle.qml
         qml/DevicesRows.qml
-        qml/DevicesError.qml
         qml/DevicesSkeleton.qml
         qml/DevicesUnpair.qml
         qml/DevicesLogBox.qml
@@ -293,7 +299,6 @@ qt_add_qml_module(ABookDesk
         qml/ImportBox.qml
         qml/ImportCheck.qml
         qml/ImportSkeleton.qml
-        qml/ImportError.qml
         qml/ImportFold.qml
         qml/ImportQueueList.qml
         qml/ImportChapters.qml
@@ -328,7 +333,6 @@ qt_add_qml_module(ABookDesk
         qml/EditBookActions.qml
         qml/EditBookSection.qml
         qml/EditBookSkeleton.qml
-        qml/EditBookError.qml
         qml/EditBookSwap.qml
         qml/EditBookMyMusic.qml
         qml/StudioMusic.qml
@@ -578,7 +582,7 @@ if(MSVC)
     target_compile_options(SingleInstanceTests PRIVATE /W3 /utf-8)
 endif()
 add_test(NAME SingleInstanceTests COMMAND SingleInstanceTests)
-qt_add_executable(WidthTests tests/test_width.cpp tests/glyphaudit.h tests/visualready.h tests/fakes.h src/later.h src/bookdetail.cpp src/bookdetail.h src/mediacontrols.cpp src/mediacontrols.h
+qt_add_executable(WidthTests tests/test_width.cpp tests/glyphaudit.h tests/visualready.h tests/fakes.h src/later.h src/shadowprovider.cpp src/shadowprovider.h src/bookdetail.cpp src/bookdetail.h src/mediacontrols.cpp src/mediacontrols.h
     src/readalong.cpp src/readalong.h src/music.cpp src/music.h src/feedback.cpp src/feedback.h ${ABOOK_PLAYER_SOURCES} ${ABOOK_MUSIC_SOURCES})
 target_include_directories(WidthTests PRIVATE src tests)
 target_compile_definitions(WidthTests PRIVATE QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/width"

@@ -61,7 +61,7 @@ function moodOf(scene, names) {
         .sort(function(a, b) { return emotions[b] - emotions[a] })
         .slice(0, MOOD_MAX)
         .map(function(key) { return (names && names[key]) || EMOTION_VI[key] || key })
-    if (strong.length) return strong.join(" · ")
+    if (strong.length) return strong.join("\u00a0· ")
     if ((scene.tension || 0) >= TENSE_FROM) return "căng thẳng"
     if (scene.valence <= SAD_TO) return "buồn"
     if (scene.valence >= BRIGHT_FROM) return "tươi vui"
@@ -88,12 +88,12 @@ function downloadShare(download) {
 /** Trình đọc màn hình chỉ đọc mốc 25 % (spokenProgress của shared/progressSpeech.ts): "pha · 50%"; chưa qua mốc đầu thì chỉ nói pha. */
 function spokenProgress(phase, share) {
     const at = share === null || share === undefined || !isFinite(share) ? null : Math.floor(Math.max(0, Math.min(1, share)) * 4) * 25
-    return at === null || at === 0 ? phase : phase.replace(/…$/, "") + " · " + at + "%"
+    return at === null || at === 0 ? phase : phase.replace(/…$/, "") + "\u00a0· " + at + "%"
 }
 
 /** Tên một bài: "tên · tác giả" nếu còn biết bài ấy, không thì tên file trong liên kết. */
 function trackLabel(link, info) {
-    if (info && info.title) return [info.title, info.creator].filter(Boolean).join(" · ")
+    if (info && info.title) return [info.title, info.creator].filter(Boolean).join("\u00a0· ")
     const parts = String(link).split(/[?#]/)[0].split("/").filter(Boolean)
     const name = parts.length ? parts[parts.length - 1] : String(link)
     try { return decodeURIComponent(name) } catch (error) { return name }
@@ -106,7 +106,7 @@ function previewPath(link) {
 
 /** Một dòng "Ghi công" (musicCreditText; nhạc của bạn thì nói rõ không có giấy phép). */
 function creditLine(link, track) {
-    if (track.source === "local") return [track.title, track.creator].filter(Boolean).join(" · ") + " - nhạc của bạn, không có thông tin giấy phép"
+    if (track.source === "local") return [track.title, track.creator].filter(Boolean).join("\u00a0· ") + " - nhạc của bạn, không có thông tin giấy phép"
     const creator = String(track.creator || "").trim()
     const attribution = String(track.attribution || "").trim()
     if (attribution && creator) return attribution

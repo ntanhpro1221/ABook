@@ -49,7 +49,7 @@ Column {
         open: root.loading
         EditBookSkeleton { width: parent.width; count: 3; label: "Đang tải bài khác" }
     }
-    EditBookError {
+    InlineError {
         width: parent.width
         open: root.failed && !root.loading
         message: "Bạn hãy kiểm tra kết nối rồi tìm lại bài nhạc."

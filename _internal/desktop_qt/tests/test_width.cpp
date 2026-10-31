@@ -9,6 +9,7 @@
 #include "later.h"
 #include "appfonts.h"
 #include "visualready.h"
+#include "shadowprovider.h"
 #include <QFontDatabase>
 #include <QQmlEngine>
 #include <QQmlContext>
@@ -132,6 +133,7 @@ public slots:
         engine->rootContext()->setContextProperty(QStringLiteral("qtWideWidths"), qEnvironmentVariable("ABOOK_WIDE_WIDTHS"));
         engine->rootContext()->setContextProperty(QStringLiteral("qtFullRepaint"), &repaint);
         engine->addImageProvider(QStringLiteral("cover"), new WidthCovers);
+        engine->addImageProvider(QStringLiteral("shadow"), new ShadowProvider);
     }
     void applicationAvailable() {
         audit = std::make_unique<GlyphAudit>();

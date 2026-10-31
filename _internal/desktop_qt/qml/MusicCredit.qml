@@ -14,7 +14,7 @@ Item {
         if ((Music.credit.label || "") !== "") credit = Music.credit
         open = false
     }
-    function esc(value) { return String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;") }
+    function esc(value) { return String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\u00a0/g, "&nbsp;").replace(/"/g, "&quot;") }
     Component.onCompleted: refresh()
     Connections {
         target: Music

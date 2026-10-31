@@ -127,7 +127,7 @@ Item {
                     open: root.searching
                     EditBookSkeleton { width: parent.width; shape: "covers"; count: 4; label: "Đang tìm ảnh bìa" }
                 }
-                EditBookError {
+                InlineError {
                     width: parent.width
                     open: root.searchError && !root.searching
                     message: "Bạn hãy kiểm tra kết nối rồi tìm lại ảnh bìa."
@@ -250,13 +250,13 @@ Item {
                         }
                     }
                 }
-                EditBookError {
+                InlineError {
                     width: parent.width
                     open: root.failed.length > 0
                     message: "Bạn hãy kiểm tra kết nối rồi tìm lại các nguồn bìa."
                     onRetry: root.search()
                 }
-                EditBookError {
+                InlineError {
                     width: parent.width
                     open: root.chooseError
                     message: "Bạn hãy kiểm tra kết nối rồi đặt lại ảnh bìa."

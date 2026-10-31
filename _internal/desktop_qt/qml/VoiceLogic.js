@@ -37,7 +37,7 @@ var GROUPS = [
     {provider: "device", title: "Giọng của máy", detail: "không cần mạng"}
 ]
 
-function groupLabel(group) { return group.detail ? group.title + " · " + group.detail : group.title }
+function groupLabel(group) { return group.detail ? group.title + "\u00a0· " + group.detail : group.title }
 
 function genderLabel(gender) { return gender === "female" ? "Nữ" : gender === "male" ? "Nam" : "" }
 
@@ -148,10 +148,10 @@ function moduleActivity(vieneu, supertonic) {
     const pairs = [["VieNeu", vieneu], ["Supertonic", supertonic]]
     for (const pair of pairs) {
         const status = pair[1]
-        if (status && status.state === "downloading") out.push(pair[0] + " · " + percent(status) + "%")
-        else if (status && status.benchmarking) out.push(pair[0] + " · đang đo")
+        if (status && status.state === "downloading") out.push(pair[0] + "\u00a0· " + percent(status) + "%")
+        else if (status && status.benchmarking) out.push(pair[0] + "\u00a0· đang đo")
     }
-    return out.join(" · ") || "Tải, đo và quản lý"
+    return out.join("\u00a0· ") || "Tải, đo và quản lý"
 }
 
 function hasInstalled(status) { return Boolean(status) && (status.choices || []).some(c => c.installed) }

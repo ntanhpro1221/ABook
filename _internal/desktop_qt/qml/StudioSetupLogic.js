@@ -5,7 +5,7 @@
 
 var STUDIO_WHAT = "Studio biến truyện chữ thành sách nói."
 // Thời gian một chương: số đo của dây chuyền trên card 8 GB của máy thử (docs/ANALYSIS_RESEARCH.md)
-var STUDIO_NEEDS = "NVIDIA từ 8 GB · tải ~25 GB · trống 35 GB · ~7–10 phút/chương."
+var STUDIO_NEEDS = "NVIDIA từ 8 GB\u00a0· tải ~25 GB\u00a0· trống 35 GB\u00a0· ~7–10 phút/chương."
 var TESTED_GB = 8
 var MIN_GB = 6
 

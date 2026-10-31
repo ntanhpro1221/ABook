@@ -162,8 +162,8 @@ Item {
             // mới nhất trước trong ngày
             const rows = all(days[0], "historySession")
             compare(rows.length, 2)
-            compare(findChild(rows[0], "historyHeadline").text, "14:40 · 0 phút")
-            compare(findChild(rows[1], "historyHeadline").text, "13:57-14:20 · 23 phút")
+            compare(findChild(rows[0], "historyHeadline").text, "14:40\u00a0· 0 phút")
+            compare(findChild(rows[1], "historyHeadline").text, "13:57-14:20\u00a0· 23 phút")
             compare(findChild(rows[1], "historyWhere").text, "Chương 2 0:30 → Chương 2 23:30")
             compare(findChild(rows[1], "historyResume").text, "Nghe tiếp từ 23:30")
             shot("history_list", host)

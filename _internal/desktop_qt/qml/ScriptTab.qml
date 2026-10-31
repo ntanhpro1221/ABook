@@ -323,7 +323,7 @@ Item {
         width: parent.width
         spacing: 0
         Item { width: 1; height: 20 }
-        EditBookError {
+        InlineError {
             objectName: "scriptContentsError"
             width: parent.width
             open: scripts.contents.error !== null && scripts.contents.data === null
@@ -374,7 +374,7 @@ Item {
             }
             // Chỗ của thanh dính (thanh thật nằm trên cùng, trượt theo khung khi cuộn)
             Item { id: headerSlot; width: parent.width; height: header.height }
-            EditBookError {
+            InlineError {
                 objectName: "scriptChapterError"
                 width: parent.width
                 open: scripts.script.error !== null && !root.script
@@ -470,7 +470,7 @@ Item {
                                 width: Math.min(implicitWidth, selectionFlow.width)
                                 height: Math.max(32, implicitHeight)
                                 verticalAlignment: Text.AlignVCenter
-                                text: "- phím số hay chọn người ở một câu trong nhóm gán cả " + root.selected.length + " câu · Esc bỏ chọn"
+                                text: "- phím số hay chọn người ở một câu trong nhóm gán cả " + root.selected.length + " câu\u00a0· Esc bỏ chọn"
                                 color: Theme.text2
                                 wrapMode: Text.Wrap
                                 font.pixelSize: 13
@@ -744,7 +744,7 @@ Item {
                     objectName: "scriptFilter"
                     label: "Hiện câu nào"
                     value: root.filter
-                    options: [{value: "all", label: "Cả chương"}, {value: "speech", label: "Chỉ lời nói"}, {value: "doubt", label: "Máy nghi · " + root.doubts}]
+                    options: [{value: "all", label: "Cả chương"}, {value: "speech", label: "Chỉ lời nói"}, {value: "doubt", label: "Máy nghi\u00a0· " + root.doubts}]
                     onPicked: value => root.setFilter(value)
                 }
             }
@@ -824,19 +824,19 @@ Item {
                     LookKbd { text: "↓" }
                     Kbd_ { text: "chọn câu ("; plain: true }
                     LookKbd { text: "Shift" }
-                    Kbd_ { text: "chọn nhiều) ·"; plain: true }
+                    Kbd_ { text: "chọn nhiều)\u00a0·"; plain: true }
                     LookKbd { text: "1" }
                     Kbd_ { text: "–"; plain: true }
                     LookKbd { text: String(Math.min(S.HOTKEYS, root.people.length)) }
-                    Kbd_ { text: "gán người theo số rồi sang câu kế ·"; plain: true }
+                    Kbd_ { text: "gán người theo số rồi sang câu kế\u00a0·"; plain: true }
                     LookKbd { text: "Enter" }
-                    Kbd_ { text: "danh sách ·"; plain: true }
+                    Kbd_ { text: "danh sách\u00a0·"; plain: true }
                     LookKbd { text: "P" }
-                    Kbd_ { text: "nghe câu ·"; plain: true }
+                    Kbd_ { text: "nghe câu\u00a0·"; plain: true }
                     LookKbd { text: "R" }
-                    Kbd_ { text: "thu lại câu ·"; plain: true }
+                    Kbd_ { text: "thu lại câu\u00a0·"; plain: true }
                     LookKbd { text: "/" }
-                    Kbd_ { text: "tìm chữ ·"; plain: true }
+                    Kbd_ { text: "tìm chữ\u00a0·"; plain: true }
                     LookKbd { text: "Ctrl" }
                     Kbd_ { text: "+"; plain: true }
                     LookKbd { text: "Z" }

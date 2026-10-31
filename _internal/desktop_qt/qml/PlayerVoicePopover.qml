@@ -12,7 +12,7 @@ Popover {
     Connections { target: Player; function onLoadedChanged() { if (!Player.loaded) root.close() } }
     Column {
         width: parent.width; spacing: Theme.s8
-        Text { width: parent.width; text: "Giọng đọc · nhớ riêng cho cuốn này"; wrapMode: Text.Wrap; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
+        Text { width: parent.width; text: "Giọng đọc\u00a0· nhớ riêng cho cuốn này"; wrapMode: Text.Wrap; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
         Repeater {
             model: Api.voiceList
             MenuRow {

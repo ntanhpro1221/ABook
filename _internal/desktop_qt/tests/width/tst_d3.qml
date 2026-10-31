@@ -321,10 +321,10 @@ Item {
             compare(dialog.title, "Đổi tên chương")
             compare(dialog.label, "Chương 6")
             compare(dialog.name, "Tên 6")
-            reply("PUT /api/books/width/chapters/6/title", {status: 200, data: {fullTitle: "Chương 6 · Hồi kết"}})
+            reply("PUT /api/books/width/chapters/6/title", {status: 200, data: {fullTitle: "Chương 6\u00a0· Hồi kết"}})
             dialog.save({title: "Chương 6", subtitle: "Hồi kết"})
             compare(calls("PUT", "/api/books/width/chapters/6/title")[0].body.subtitle, "Hồi kết")
-            compare(Api.notice, "Đã đổi tên chương: Chương 6 · Hồi kết")
+            compare(Api.notice, "Đã đổi tên chương: Chương 6\u00a0· Hồi kết")
             verify(!dialog.open)
         }
         function test_chapterMenuNoRenameForLinkedBook() {

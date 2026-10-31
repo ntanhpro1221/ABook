@@ -119,7 +119,7 @@ Column {
                     text: {
                         const dim = Qt.color(Theme.text2).toString()
                         const title = (root.track && root.track.title) || "Bài nhạc"
-                        const by = root.track && root.track.creator ? "<font color=\"" + dim + "\"> · " + root.esc(root.track.creator) + "</font>" : ""
+                        const by = root.track && root.track.creator ? "<font color=\"" + dim + "\">&nbsp;· " + root.esc(root.track.creator) + "</font>" : ""
                         return root.esc(title) + by
                     }
                     textFormat: Text.StyledText
@@ -186,7 +186,7 @@ Column {
             }
         }
     }
-    function esc(text) { return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") }
+    function esc(text) { return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\u00a0/g, "&nbsp;") }
     // "Đổi bài" chỉ dựng khi mở lần đầu (sách dài có hàng trăm đoạn), rồi giữ để khép lại có chuyển động
     property bool swapMade: false
     onOpenChanged: if (open) swapMade = true

@@ -114,8 +114,8 @@ Item {
                                   progress: {heardSeconds: 0, finished: false, caughtUp: false}, state: {}, chapters: [{id: 1}, {id: 2}]}, extra || {})
         }
         function test_statusLine() {
-            compare(BookText.statusLine(book({stage: "text"}), true), "Chỉ có chữ · nghe bằng giọng đọc")
-            compare(BookText.statusLine(book({stage: "text"}), false), "Chỉ có chữ · máy này chưa có giọng đọc")
+            compare(BookText.statusLine(book({stage: "text"}), true), "Chỉ có chữ\u00a0· nghe bằng giọng đọc")
+            compare(BookText.statusLine(book({stage: "text"}), false), "Chỉ có chữ\u00a0· máy này chưa có giọng đọc")
             compare(BookText.statusLine(book(), false), "")
             compare(BookText.statusLine(book({complete: false, producing: true}), false), "Đang thu; chương mới tự hiện khi xong.")
             compare(BookText.statusLine(book({complete: false, remote: {computer: "laptop"}}), false), "Laptop còn đang làm, chương mới hiện ở đây khi xong")
@@ -127,17 +127,17 @@ Item {
             compare(BookText.progressLine(book(), false, false), "Chưa nghe")
             compare(BookText.progressLine(book(), true, false), "Đang nghe")
             compare(BookText.progressLine(book(), true, true), "Chưa phát được")
-            compare(BookText.progressLine(book({progress: {heardSeconds: 1800}}), false, false), "Đã nghe 30 phút · còn 1 giờ 30 phút chưa nghe")
+            compare(BookText.progressLine(book({progress: {heardSeconds: 1800}}), false, false), "Đã nghe 30 phút\u00a0· còn 1 giờ 30 phút chưa nghe")
             compare(BookText.progressLine(book({progress: {heardSeconds: 7200, finished: true}}), false, false), "Đã nghe xong")
-            compare(BookText.progressLine(book({complete: false, producing: true, progress: {heardSeconds: 10, caughtUp: true}}), false, false), "Đã nghe hết phần đã có · 3/5 chương")
-            compare(BookText.progressLine(book({remote: {computer: "Laptop"}, progress: {finished: true}}), false, false), "Trên Laptop · Đã nghe xong")
+            compare(BookText.progressLine(book({complete: false, producing: true, progress: {heardSeconds: 10, caughtUp: true}}), false, false), "Đã nghe hết phần đã có\u00a0· 3/5 chương")
+            compare(BookText.progressLine(book({remote: {computer: "Laptop"}, progress: {finished: true}}), false, false), "Trên Laptop\u00a0· Đã nghe xong")
         }
         function test_lengthsAndReadLabel() {
             compare(BookText.formatLengthUp(129), "3 phút")
             compare(BookText.formatLengthUp(0), "0 phút")
             compare(BookText.progressText(book({progress: {heardSeconds: 3600}, state: {rate: 2}}), false), "Còn 30 phút")
-            compare(BookText.progressText(book({stage: "text", author: "Nam Cao"}), true), "Nam Cao · 5 chương")
-            compare(BookText.progressText(book({stage: "text"}), false), "Chỉ có chữ · 5 chương")
+            compare(BookText.progressText(book({stage: "text", author: "Nam Cao"}), true), "Nam Cao\u00a0· 5 chương")
+            compare(BookText.progressText(book({stage: "text"}), false), "Chỉ có chữ\u00a0· 5 chương")
             compare(BookText.readLabel(book(), false), "Đọc")
             compare(BookText.readLabel(book({state: {reading: {chapterId: 2, index: 4}}}), false), "Đọc tiếp")
             compare(BookText.readLabel(book({state: {reading: {chapterId: 9, index: 4}}}), false), "Đọc")
@@ -157,9 +157,9 @@ Item {
 
         function reply(path, handler) { const r = DesktopApi.responses; r[path] = handler; DesktopApi.responses = r }
         function chapters() {
-            return [{id: 1, index: 1, title: "Chương 1", fullTitle: "Chương 1 · Mưa", available: true, duration: 600},
-                    {id: 2, index: 2, title: "Chương 2", fullTitle: "Chương 2 · Về nhà", available: true, duration: 600},
-                    {id: 3, index: 3, title: "Chương 3", fullTitle: "Chương 3 · Hỏng", available: true, duration: 600}]
+            return [{id: 1, index: 1, title: "Chương 1", fullTitle: "Chương 1\u00a0· Mưa", available: true, duration: 600},
+                    {id: 2, index: 2, title: "Chương 2", fullTitle: "Chương 2\u00a0· Về nhà", available: true, duration: 600},
+                    {id: 3, index: 3, title: "Chương 3", fullTitle: "Chương 3\u00a0· Hỏng", available: true, duration: 600}]
         }
         function init() {
             Theme.reduceMotion = true
@@ -238,8 +238,8 @@ Item {
 
         function test_secondaryRowLabelsAndStates() {
             ready()
-            compare(one(page, "bookPrimary").text, "Nghe tiếp · Chương 2")
-            compare(one(page, "bookProgressLine").text, "Đã nghe 1 phút · còn 29 phút chưa nghe")
+            compare(one(page, "bookPrimary").text, "Nghe tiếp\u00a0· Chương 2")
+            compare(one(page, "bookProgressLine").text, "Đã nghe 1 phút\u00a0· còn 29 phút chưa nghe")
             compare(one(page, "bookStatusLine").visible, false)
             const row = one(page, "bookSecondary")
             compare(row.Accessible.name, "Việc với sách")
@@ -351,7 +351,7 @@ Item {
             notListening()
             compare(one(page, "bookPrimary").text, "Đọc tiếp")
             compare(one(page, "bookPrimary").icon, "book-open")
-            compare(one(page, "bookStatusLine").text, "Chỉ có chữ · máy này chưa có giọng đọc")
+            compare(one(page, "bookStatusLine").text, "Chỉ có chữ\u00a0· máy này chưa có giọng đọc")
             verify(!one(page, "bookRead").visible)
             verify(!one(page, "bookRestart").visible)
             verify(!one(page, "bookProgress").visible)
@@ -399,6 +399,22 @@ Item {
             compare(play.tip, "Nghe ngay Truyện chữ")
             cell.book = {bookId: "a", stage: "audio"}
             compare(play.tip, "Nghe Truyện chữ")
+        }
+        // Nút phát trên bìa như web: tròn 44, nền panel, shadow-card, cách góc bìa 10 - bìa tối hay sáng vẫn nổi; ẩn tới khi rê chuột
+        function test_coverPlayButtonStandsOutOnAnyCover() {
+            const cell = createTemporaryObject(cellFactory, host, {title: "Bìa tối", book: {bookId: "a", stage: "audio"}, playVisible: true})
+            const play = one(cell, "libraryTilePlay")
+            verify(/^CoverButton(_|\()/.test(String(play)), String(play))
+            compare(play.width, 44); compare(play.height, 44)
+            const corner = play.mapToItem(cell, play.width, play.height)
+            compare(corner.x, cell.coverWidth - 10); compare(corner.y, cell.coverHeight - 10)
+            const shadow = play.children.filter(child => /^Shadow(_|\()/.test(String(child)))[0]
+            verify(shadow !== undefined); compare(shadow.kind, "card")
+            const plate = play.children.filter(child => child.color !== undefined && Qt.colorEqual(child.color, Theme.panel))[0]
+            verify(plate !== undefined); compare(plate.radius, 22)
+            compare(play.opacity, 0)
+            mouseMove(cell, cell.coverWidth / 2, cell.coverHeight / 2)
+            tryCompare(play, "opacity", 1)
         }
     }
 }

@@ -136,7 +136,7 @@ function findStatus(query, progress, shown) {
     return count(progress.total) + " kết quả." + more + failed
 }
 
-function escapeHtml(text) { return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") }
+function escapeHtml(text) { return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\u00a0/g, "&nbsp;") }
 
 // Đoạn trích dạng RichText, chỗ khớp nền nhấn nhạt + đậm (web <mark>).
 function snippetHtml(snippet, soft, ink) {

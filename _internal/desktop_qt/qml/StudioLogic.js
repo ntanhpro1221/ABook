@@ -50,7 +50,7 @@ function formatTime(epochSeconds, nowMs) {
     const date = new Date(epochSeconds * 1000)
     const today = new Date(nowMs === undefined ? Date.now() : nowMs)
     const time = two(date.getHours()) + ":" + two(date.getMinutes())
-    return date.toDateString() === today.toDateString() ? time : time + " · " + date.getDate() + "/" + (date.getMonth() + 1)
+    return date.toDateString() === today.toDateString() ? time : time + "\u00a0· " + date.getDate() + "/" + (date.getMonth() + 1)
 }
 function formatRelative(epochSeconds, nowMs) {
     if (!epochSeconds) return ""
@@ -156,7 +156,7 @@ function tableRows(books) {
         if (entry.kind === "book") rows.push({key: "book:" + entry.book.id, kind: "book", id: entry.book.id, book: entry.book, grouped: false})
         else {
             rows.push({key: "series:" + entry.name, kind: "group", name: entry.name, unit: entry.unit, count: entry.books.length,
-                       label: entry.name + " · " + entry.books.length + " " + entry.unit})
+                       label: entry.name + "\u00a0· " + entry.books.length + " " + entry.unit})
             for (const book of entry.books) rows.push({key: "book:" + book.id, kind: "book", id: book.id, book: book, grouped: true})
         }
     }
@@ -183,7 +183,7 @@ function tableKind(bodyWidth) { return bodyWidth >= 1000 ? "wide" : bodyWidth >=
 // ---- ProjectsScreen.tsx: nội dung một hàng ----
 function rowSubtitle(book) {
     const settings = book.settings || {}
-    return [settings.narrator && "Giọng kể " + settings.narrator, settings.profile !== "balanced" && settings.profileLabel].filter(Boolean).join(" · ")
+    return [settings.narrator && "Giọng kể " + settings.narrator, settings.profile !== "balanced" && settings.profileLabel].filter(Boolean).join("\u00a0· ")
 }
 function rowDetail(book) {
     if (!book.chapters) return ""
@@ -201,7 +201,7 @@ function rowNeeds(book) {
 function rowShowsPill(book) { return !(book.phase === "done" && !book.queuePosition) }
 function rowUpdated(book) { return isLive(book) ? "vừa xong" : formatRelative(book.updatedAt) }
 function brokenLine(book) { return (book.brokenKind === "busy" ? "Chưa mở được: " : "Chưa đọc được: ") + book.broken }
-function projectsSubtitle(count) { return count ? count + " dự án" : " " }
+function projectsSubtitle(count) { return count ? count + " dự án" : "\u00a0" }
 
 // ---- stopText.ts ----
 var ANALYSIS_CUT_COST = "có thể ra một cuốn khác: người nói ở đoạn sau chỗ dừng có thể đổi, kéo theo nhân vật và giọng đọc"
@@ -549,7 +549,7 @@ function activityGroups(items) {
     }
     return result
 }
-function activityTime(entry) { return formatTime(entry.at).split(" · ")[0] }
+function activityTime(entry) { return formatTime(entry.at).split("\u00a0· ")[0] }
 
 // ---- Đầu trang một dự án ----
 // Dòng phụ dưới tên (DotJoin của ProjectScreen.tsx, sau viên trạng thái): số chương · độ dài · việc cần để ý. StyledText; `warn` là màu cảnh báo.
@@ -558,7 +558,7 @@ function metaLine(book, warn) {
     if (book.audioSeconds > 0) parts.push(formatLength(book.audioSeconds))
     if (book.chapters.missingAudio) parts.push("<font color=\"" + warn + "\"><b>" + book.chapters.missingAudio + " chương mất file audio</b></font>")
     if (book.chapters.redo) parts.push(book.chapters.redo + " chương chờ thu lại")
-    return parts.join(" · ")
+    return parts.join("\u00a0· ")
 }
 // Dải báo khi lần hỏi gần nhất hỏng mà vẫn còn bản cũ của sách
 function staleLine(status, text) {

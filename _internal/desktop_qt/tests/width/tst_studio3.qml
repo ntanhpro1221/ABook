@@ -583,10 +583,10 @@ Item {
             serve({review: many, pageSize: 3, minor: {name: 2, text: 3}, redoChapters: [2, 5]})
             const page = openProject("review")
             tryVerify(function() { return reviewRows(page).length === 3 }, 3000)
-            compare(one(page, "reviewMore").text, "Tải tiếp · còn 4 câu")
+            compare(one(page, "reviewMore").text, "Tải tiếp\u00a0· còn 4 câu")
             one(page, "reviewMore").clicked()
             tryVerify(function() { return reviewRows(page).length === 6 }, 3000)
-            compare(one(page, "reviewMore").text, "Tải tiếp · còn 1 câu")
+            compare(one(page, "reviewMore").text, "Tải tiếp\u00a0· còn 1 câu")
             // câu nhẹ: hiện / ẩn
             compare(one(page, "reviewMinor").text, "Hiện 5 câu nhẹ")
             one(page, "reviewMinor").clicked()
@@ -620,9 +620,9 @@ Item {
             verify(hasText(page, "4 tên khác của cuốn không có câu nào trong phần này."))
             // dòng nhỏ: số câu và ai chọn; cách đọc chờ áp dụng nói riêng
             const henko = nameRows(page).filter(r => r.surface === "Henko")[0]
-            verify(hasPart(henko, "7 câu · máy đoán"))
+            verify(hasPart(henko, "7 câu&nbsp;· máy đoán"))
             const lorcan = nameRows(page).filter(r => r.surface === "Lorcan")[0]
-            verify(hasPart(lorcan, "3 câu · đã chọn"))
+            verify(hasPart(lorcan, "3 câu&nbsp;· đã chọn"))
             verify(hasPart(lorcan, "chờ áp dụng: “lo-ken”"))
             scrollTo(page, one(page, "nameReadingsTitle"))
             both("names_list", page)
@@ -700,7 +700,7 @@ Item {
             one(page, "addWordField").text = "TP.HCM"
             tryVerify(function() { return has(page, "addWordRow") && shown(one(page, "addWordRow")) })
             const row = one(page, "addWordRow")
-            tryVerify(function() { return hasPart(row, "5 câu có chữ này · 3 câu đã thu sẽ được thu lại · ở Chương 1") }, 3000)
+            tryVerify(function() { return hasPart(row, "5 câu có chữ này&nbsp;· 3 câu đã thu sẽ được thu lại&nbsp;· ở Chương 1") }, 3000)
             compare(one(row, "nameEdit").text, "Đọc “TP.HCM”")
             // chữ có ký hiệu bị xé đôi: không bao giờ được dùng
             one(page, "addWordField").text = "Mở/đóng"

@@ -1,5 +1,7 @@
 .pragma library
 .import "ModalLayer.js" as ModalLayer
+.import "IconText.js" as IconText
+.import "Separators.js" as Separators
 
 // Rendered once does not mean ready for input: Collapse and popover delegates
 // can still be hidden or moving. Wait for finite animations, keeping perpetual
@@ -25,8 +27,14 @@ function render(test, window, item, probe) {
         window.update()
         test.verify(test.waitForRendering(item))
         // A queued response can start another transition during that frame.
-        // Mọi lần dựng xong cũng kiểm lớp: hộp đang mở thì không phần tử nào của trang vẽ đè lên mặt hộp
-        if (settled(window.contentItem, probe)) { ModalLayer.assertAbove(test, window.contentItem); return }
+        // Mọi lần dựng xong cũng kiểm lớp (hộp đang mở thì không phần tử nào của trang vẽ đè lên mặt hộp), chữ / icon (chữ đè icon, icon
+        // lệch tâm dòng đầu, nút trơn trên bìa) và dấu ngăn đầu dòng: mọi cảnh chụp L_/W_/D_ đều phải sạch
+        if (settled(window.contentItem, probe)) {
+            ModalLayer.assertAbove(test, window.contentItem)
+            IconText.assertClean(test, grabTarget(window, item), probe)
+            Separators.assertClean(test, grabTarget(window, item), probe)
+            return
+        }
         test.verify(Date.now() < deadline, "visual transitions must settle after rendering")
     }
 }

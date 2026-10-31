@@ -54,7 +54,7 @@ Modal {
                 required property var modelData
                 width: parent.width
                 label: "Bỏ dòng"
-                hint: "“" + modelData.line + "” · " + modelData.chapters.length + " chương"
+                hint: "“" + modelData.line + "”\u00a0· " + modelData.chapters.length + " chương"
                 Switch {
                     objectName: "suggestionSkip"
                     label: "Bỏ dòng"
@@ -65,10 +65,11 @@ Modal {
                 }
             }
         }
-        Collapse {
+        InlineError {
+            objectName: "suggestionsError"
             width: parent.width; open: root.error !== ""
-            Text { width: parent.width; text: root.error; color: Theme.danger; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
-            Button { text: "Thử lại"; kind: "ghost"; onClicked: root.refresh() }
+            message: root.error
+            onRetry: root.refresh()
         }
         Collapse {
             width: parent.width; open: !!Api.info.listenOnly

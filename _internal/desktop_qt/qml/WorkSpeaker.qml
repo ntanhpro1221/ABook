@@ -58,8 +58,8 @@ Column {
                     label: "Đổi người nói cho những câu nào"
                     value: root.scope
                     options: root.item.allLines && root.item.lines ? [
-                        {value: "alternate", label: (root.item.scopeLabels ? root.item.scopeLabels[0] : "Câu xen kẽ") + " · " + root.item.lines.length},
-                        {value: "all", label: (root.item.scopeLabels ? root.item.scopeLabels[1] : "Cả chuỗi") + " · " + root.item.allLines.length}
+                        {value: "alternate", label: (root.item.scopeLabels ? root.item.scopeLabels[0] : "Câu xen kẽ") + "\u00a0· " + root.item.lines.length},
+                        {value: "all", label: (root.item.scopeLabels ? root.item.scopeLabels[1] : "Cả chuỗi") + "\u00a0· " + root.item.allLines.length}
                     ] : []
                     onPicked: value => root.scopeChosen(value)
                 }

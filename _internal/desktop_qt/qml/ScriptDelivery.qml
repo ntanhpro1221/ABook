@@ -65,7 +65,7 @@ Column {
                     x: 24
                     width: parent.width - x - changeLink.width - 8
                     anchors.verticalCenter: parent.verticalCenter
-                    text: root.picked ? root.picked.label + (root.picked.newGender ? " · người mới" : "") : ""
+                    text: root.picked ? root.picked.label + (root.picked.newGender ? "\u00a0· người mới" : "") : ""
                     color: Theme.accentText
                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                     font.pixelSize: Theme.sizeBodySmall

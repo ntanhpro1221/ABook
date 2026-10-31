@@ -59,7 +59,7 @@ Item {
             const mode = createTemporaryObject(fakeModeFactory, host)
             const player = createTemporaryObject(fakePlayerFactory, host)
             const tray = createTemporaryObject(trayFactory, host, {windowMode: mode, player: player})
-            compare(tray.tooltip, player.bookTitle + " · " + player.chapterTitle)
+            compare(tray.tooltip, player.bookTitle + "\u00a0· " + player.chapterTitle)
             tray.activate(); compare(mode.action, "reveal")
             for (const action of ["open", "mini", "quit"]) {
                 tray.dispatch(action); compare(mode.action, action)
@@ -287,7 +287,7 @@ Item {
                 for (const length of ["short", "long"]) {
                     if (length === "long") {
                         mini.bookTitle = "Tôi đã đi qua những ngày rất dài để tìm lại câu chuyện còn dang dở bên bờ sông trong buổi sáng đầu mùa của chúng ta"
-                        mini.chapterTitle = "Chương một trăm hai mươi ba · Những cuộc gặp gỡ trên con đường trở về nhà vào một ngày trời đầy nắng"
+                        mini.chapterTitle = "Chương một trăm hai mươi ba\u00a0· Những cuộc gặp gỡ trên con đường trở về nhà vào một ngày trời đầy nắng"
                         tryVerify(() => mini.naturalHeight > shortHeight)
                         const title = findChild(mini, "miniBookTitle")
                         verify(title.lineCount > 1)

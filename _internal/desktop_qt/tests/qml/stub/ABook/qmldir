@@ -10,6 +10,11 @@ singleton Bench 1.0 Bench.qml
 Interactive 1.0 ../../../../qml/Interactive.qml
 Icon 1.0 ../../../../qml/Icon.qml
 IconButton 1.0 ../../../../qml/IconButton.qml
+Shadow 1.0 ../../../../qml/Shadow.qml
+CoverButton 1.0 ../../../../qml/CoverButton.qml
+InlineError 1.0 ../../../../qml/InlineError.qml
+FlowDetail 1.0 ../../../../qml/FlowDetail.qml
+LineIcon 1.0 ../../../../qml/LineIcon.qml
 NavItem 1.0 ../../../../qml/NavItem.qml
 ConnectionChip 1.0 ../../../../qml/ConnectionChip.qml
 Sidebar 1.0 ../../../../qml/Sidebar.qml
@@ -137,7 +142,6 @@ NewBookDefaults 1.0 ../../../../qml/NewBookDefaults.qml
 DevicesFold 1.0 ../../../../qml/DevicesFold.qml
 DevicesToggle 1.0 ../../../../qml/DevicesToggle.qml
 DevicesRows 1.0 ../../../../qml/DevicesRows.qml
-DevicesError 1.0 ../../../../qml/DevicesError.qml
 DevicesSkeleton 1.0 ../../../../qml/DevicesSkeleton.qml
 DevicesUnpair 1.0 ../../../../qml/DevicesUnpair.qml
 DevicesLogBox 1.0 ../../../../qml/DevicesLogBox.qml
@@ -151,7 +155,6 @@ OtherComputersBluetooth 1.0 ../../../../qml/OtherComputersBluetooth.qml
 ImportBox 1.0 ../../../../qml/ImportBox.qml
 ImportCheck 1.0 ../../../../qml/ImportCheck.qml
 ImportSkeleton 1.0 ../../../../qml/ImportSkeleton.qml
-ImportError 1.0 ../../../../qml/ImportError.qml
 ImportFold 1.0 ../../../../qml/ImportFold.qml
 ImportQueueList 1.0 ../../../../qml/ImportQueueList.qml
 ImportChapters 1.0 ../../../../qml/ImportChapters.qml
@@ -183,7 +186,6 @@ AdvancedAbout 1.0 ../../../../qml/AdvancedAbout.qml
 EditBookActions 1.0 ../../../../qml/EditBookActions.qml
 EditBookSection 1.0 ../../../../qml/EditBookSection.qml
 EditBookSkeleton 1.0 ../../../../qml/EditBookSkeleton.qml
-EditBookError 1.0 ../../../../qml/EditBookError.qml
 EditBookSwap 1.0 ../../../../qml/EditBookSwap.qml
 EditBookMyMusic 1.0 ../../../../qml/EditBookMyMusic.qml
 EditBookReadings 1.0 ../../../../qml/EditBookReadings.qml

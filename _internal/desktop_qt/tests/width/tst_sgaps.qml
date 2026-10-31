@@ -20,7 +20,7 @@ Item {
             width: 320
             label: "Model phân tích"
             options: [{value: "", label: "Mặc định (khuyên dùng)"}, {header: "Bản khác (thử nghiệm)"},
-                      {value: "a", label: "1. Bản thử nghiệm · nhanh"}, {value: "b", label: "2. Bản thử nghiệm"}]
+                      {value: "a", label: "1. Bản thử nghiệm\u00a0· nhanh"}, {value: "b", label: "2. Bản thử nghiệm"}]
         }
     }
     Component { id: sampleFactory; CastSample { clipId: "voice-Mai"; url: "x"; label: "Nghe thử giọng Mai"; stopLabel: "Dừng nghe Mai" } }

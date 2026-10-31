@@ -99,7 +99,7 @@ function autoSwitch(track) {
 function analysisLabel(track) { return track.analysed ? "Đã phân tích - máy có thể tự chọn" : "Chưa phân tích - máy chưa tự chọn, bạn vẫn ghim được" }
 function mineNote(item) {
     const notes = [autoLabel(item), item.analysed ? (item.fits ? "Hợp không khí đoạn này" : null) : analysisLabel(item)].filter(function(note) { return !!note })
-    return notes.length ? notes.join(" · ") : ""
+    return notes.length ? notes.join("\u00a0· ") : ""
 }
 function localDigest(link) {
     const digest = String(link).indexOf("local:") === 0 ? String(link).slice(6) : ""
