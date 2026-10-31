@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { ATTEMPTS, HostTimeout, IDLE_MS, SPEECH_IDLE_MS, STALL_MS, fetchWatched, idleMs, isSpeech, readText, watchedCall } from "./hostWait";
+import { ATTEMPTS, HostTimeout, IDLE_MS, LONG_IDLE_MS, STALL_MS, fetchWatched, idleMs, isLongWork, readText, watchedCall } from "./hostWait";
 
 beforeEach(() => vi.useFakeTimers());
 afterEach(() => vi.useRealTimers());
@@ -27,13 +27,34 @@ function trickle(chunks: string[], gap: number, signal: AbortSignal): Response {
 }
 
 describe("chính sách chờ chung", () => {
-  it("giọng đọc 100 s, mọi thứ khác 30 s; hạn chót của trình phát lớn hơn mọi hạn bên dưới", () => {
-    expect([IDLE_MS, SPEECH_IDLE_MS, ATTEMPTS, STALL_MS]).toEqual([30_000, 100_000, 2, 215_000]);
-    expect(idleMs("/api/readaloud/clip")).toBe(100_000);
-    expect(idleMs("/api/readaloud/clip?x=1")).toBe(100_000);
-    expect(idleMs("/api/books/abc/voice/preview")).toBe(100_000);
-    for (const other of ["/api/readaloud/voices", "/api/readaloud/prepare", "/api/books/abc/voice", "/api/books/abc/script", "/api/listen/library"]) {
-      expect(isSpeech(other), other).toBe(false);
+  it("việc nặng 100 s, mọi thứ khác 30 s; hạn chót của trình phát lớn hơn mọi hạn bên dưới", () => {
+    expect([IDLE_MS, LONG_IDLE_MS, ATTEMPTS, STALL_MS]).toEqual([30_000, 100_000, 2, 215_000]);
+    for (const long of [
+      "/api/readaloud/clip",
+      "/api/readaloud/clip?x=1",
+      "/api/books/abc/voice/preview",
+      "/api/books/abc/pronunciation/preview",
+      "/api/books/abc/music/rebuild",
+      "/api/scan",
+      "/api/sources/split",
+      "/api/first-person",
+      "/api/books",
+    ]) {
+      expect(isLongWork(long), long).toBe(true);
+      expect(idleMs(long)).toBe(100_000);
+    }
+    for (const other of [
+      "/api/readaloud/voices",
+      "/api/readaloud/prepare",
+      "/api/books/abc/voice",
+      "/api/books/abc/script",
+      "/api/books/abc",
+      "/api/books/a/b/voice/preview",
+      "/api/scanx",
+      "/api/cast/scan",
+      "/api/listen/library",
+    ]) {
+      expect(isLongWork(other), other).toBe(false);
       expect(idleMs(other)).toBe(30_000);
     }
   });
@@ -65,7 +86,7 @@ describe("watchedCall: hỏng khi KHÔNG CÓ BYTE NÀO về", () => {
   });
 
   it("máy chủ trả lời sát hạn (99 s với giọng đọc) thì không bị cắt", async () => {
-    const result = watchedCall(() => new Promise<Response>((resolve) => setTimeout(() => resolve(new Response("clip")), 99_000)), SPEECH_IDLE_MS, readText);
+    const result = watchedCall(() => new Promise<Response>((resolve) => setTimeout(() => resolve(new Response("clip")), 99_000)), LONG_IDLE_MS, readText);
     await vi.advanceTimersByTimeAsync(99_000);
     expect(await result).toBe("clip");
   });
