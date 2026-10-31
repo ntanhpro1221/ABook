@@ -113,6 +113,8 @@ def _arguments(argv: list[str] | None) -> argparse.Namespace:
     parser.add_argument("--version", default="", help="phiên bản app (vỏ biết, gói Python nhúng không có metadata)")
     parser.add_argument("--fake-runner", action="store_true", help="không khởi động worker thật (thử giao diện)")
     parser.add_argument("--studio", default="", help="thư mục Studio tải thêm (bản cài); trống: bản dev, runtime cạnh mã")
+    parser.add_argument("--self-update", action="store_true",
+                        help="host tự kiểm / tải / kiểm chữ ký bản mới (vỏ Qt, updater.py); không có: vỏ làm (Tauri)")
     return parser.parse_args(argv)
 
 
@@ -143,7 +145,7 @@ def run(reader: TextIO, writer: TextIO, argv: list[str] | None = None) -> int:
     web.studio = studio
     if studio is not None:
         studio.busy = web._busy_elsewhere
-    web.shell = channel.send  # "Cập nhật": App.install_update gửi {"install_update": true} về vỏ
+    web.shell = channel.send  # "Cập nhật": App.install_update gửi {"install_update": true} về vỏ (--self-update: về updater)
     if preferences.get().get("syncEnabled"):
         web.set_sync(True)
     http = Server(web).start()
@@ -171,6 +173,12 @@ def run(reader: TextIO, writer: TextIO, argv: list[str] | None = None) -> int:
         threading.Thread(target=work, name="open-book-file", daemon=True).start()
 
     channel.send({"ready": http.url})
+    if args.self_update:
+        from .updater import Updater
+
+        updater = Updater(args.version, channel.send, lambda update: update_found({"update": update}))
+        web.shell = updater.handle
+        updater.start()  # mở app: kiểm một lần, im lặng khi mất mạng
     try:
         channel.serve({"dialog": dialogs.answer, "open": open_book_file, "update": update_found})
     finally:

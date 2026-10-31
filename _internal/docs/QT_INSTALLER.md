@@ -305,8 +305,28 @@ bytecode HLSL, không phụ thuộc card). Lợi tối đa là phần của 0,4 
   chữ; thêm tiến độ tải nếu web có.
 - Test: máy chủ HTTP giả phục vụ latest.json + bộ cài + `.sig` ký bằng khoá TEST (chữ ký đúng, sai, phiên bản cũ hơn, mạng
   im) -> đúng nhánh; không bao giờ chạy bộ cài thật trong test (lệnh chạy là hàm thay được).
+- Đã làm (31-10, Lead duyệt thư 17:00 + điều kiện). Khác kế hoạch trên: thư mục tải là `%TEMP%\ABook-update`, chưa có tiến độ.
+  - Host (`webui/updater.py`, cờ `--self-update` do vỏ Qt truyền cho bản cài, hay bản dev có `ABOOK_UPDATE_URL`) thay vỏ trả
+    lời `check_update` / `install_update` của server.py. Mở app kiểm một lần, im lặng khi mất mạng; không bao giờ tự cài.
+  - Khoá + nơi hỏi: `plugins.updater` của tauri.conf.json. Bản đóng gói mang bản chép `resources/app/updater.json`
+    (windows_resources.ps1 Copy-App), smoke so nó với tauri.conf.json. Không lấy khoá từ mạng.
+  - Chặn trước khi tải:
+    - chỉ https (http chỉ 127.0.0.1 / localhost);
+    - tên gói đúng `^ABook_\d+\.\d+\.\d+_x64-setup\.exe$` với số == version của latest.json (không lấy tên thô từ URL);
+    - thư mục tải dựng mới mỗi lần, là junction thì từ chối.
+  - Sau khi tải:
+    - ít byte hơn Content-Length thì hỏng;
+    - `minisign_verify.file_ok(..., version=<latest.json>)` luôn có version.
+    - Hỏng thì xoá gói, trang nhận `abook-update-failed`.
+  - Đúng: host gửi `{"run_installer", "args": ["/P","/UPDATE","/R"]}`; vỏ (`Backend::runInstaller`) chạy bộ cài trước, chạy
+    được mới dừng host và thoát.
+  - Test:
+    - `tests/test_updater.py`: trang giả trên 127.0.0.1, khoá thử. Ca: tên lạ / `..\x.exe` / `%2e%2e`, http://example,
+      tải dở, chữ ký bản khác, junction. Kiểm lực: phá từng điều kiện (7 chỗ) đều đỏ.
+    - `tools/smoke_update.py` (trong smoke_packaged): host đóng gói thấy bản 9.9.9 giả, tải gói ký khoá thử, từ chối,
+      không chạy bộ cài. Ca dương: Q7.
+  - Bản cài nay hỏi GitHub latest.json mỗi lần mở, kể cả trong các lượt smoke / test bộ cài (im lặng nếu không có mạng).
 
-### Q7. release.py
 - `build` gọi bước dựng Qt thay `build_windows_app.ps1`; cùng tên file, cùng `latest.json`, kiểm `.sig`.
 - Bỏ `shell/` khỏi đường phát hành sau một bản Qt chạy thật trên "máy sạch": cài mới, cập nhật lên bản kế, gỡ có và không
   xoá dữ liệu.
