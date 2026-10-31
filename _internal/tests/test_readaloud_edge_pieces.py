@@ -745,13 +745,13 @@ def test_a_hanging_handshake_in_one_piece_does_not_fail_the_whole_clip(fake_edge
     assert [b.text for b in result.boundaries] == SENTENCES.split()
 
 
-def test_a_handshake_that_always_hangs_ends_as_offline_after_the_retries(fake_edge, monkeypatch) -> None:
+def test_a_handshake_that_always_hangs_ends_as_a_timeout_not_offline_after_the_retries(fake_edge, monkeypatch) -> None:
     monkeypatch.setattr(edge.time, "sleep", lambda _seconds: None)  # nghỉ chờ giữa các lần thử không cần thật
     server, _ = fake_edge(hang=100)
     started = time.monotonic()
-    with pytest.raises(edge.EdgeOffline) as caught:
+    with pytest.raises(edge.EdgeTimeout) as caught:
         _client(server).synthesize("Xin chào", edge.DEFAULT_VOICE)
-    assert caught.value.reason == "offline"
+    assert caught.value.reason == "timeout"  # có mạng mà dịch vụ không trả lời: giao diện báo "Giọng ... đang không dùng được.", không báo mất mạng
     assert len(server.hung) == edge.RETRIES + 1  # đã thử đủ lần, mỗi lần một kết nối mới
     assert time.monotonic() - started < 6.0
 

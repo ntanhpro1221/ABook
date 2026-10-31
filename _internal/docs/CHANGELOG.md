@@ -10,6 +10,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Sửa lỗi
 
 - Giọng Edge và các lần tải (model giọng, nhạc, bìa, kết nối giữa hai máy) không còn treo khi mạng nhà có IPv6 mà IPv6 không ra được Internet (hay gặp sau khi mất điện, router lên lại): app thử IPv6 và IPv4 song song, dùng đường nào nối được trước, thay vì chờ hết hạn từng đường IPv6 rồi mới tới IPv4.
+- Giọng trực tuyến (Edge, Azure, giọng dùng khoá riêng) không trả lời kịp thì app báo "Giọng … đang không dùng được." và thử lại sau, thay vì báo nhầm là mất mạng khi máy vẫn có mạng.
 
 ### Điện thoại
 

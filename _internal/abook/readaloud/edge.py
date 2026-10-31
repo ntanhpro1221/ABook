@@ -98,7 +98,7 @@ class EdgeCancelled(EdgeError):
 
 class EdgeConnectTimeout(EdgeDropped):
     """Nối được tới máy chủ (DNS xong) mà bắt tay không xong trong CONNECT_TIMEOUT. Là một EdgeDropped (thử lại được; a51: một lần treo từng báo "không có mạng" làm cả chương dừng);
-    hết lần thử mà lần nào cũng treo thì `_speak_piece` đổi nó thành EdgeOffline (mạng bị chặn thật)."""
+    hết lần thử mà lần nào cũng treo thì `_speak_piece` đổi nó thành EdgeTimeout (có mạng mà dịch vụ không trả lời; "không có mạng" là lời sai)."""
 
 
 _clock_skew = 0.0  # giây: lệch giữa đồng hồ máy và đồng hồ máy chủ, học từ header Date của lần bị từ chối (403)
@@ -666,7 +666,8 @@ class EdgeClient:
             except EdgeDropped as error:
                 if attempt == RETRIES or (clip is not None and clip.aborted):
                     if attempt == RETRIES and isinstance(error, EdgeConnectTimeout):
-                        raise EdgeOffline("Không kết nối được tới dịch vụ đọc to (quá giờ).") from error  # lần nào cũng treo: mạng bị chặn thật
+                        # Lần nào cũng treo: có mạng (DNS xong, nối được) mà dịch vụ không trả lời - "quá giờ", không phải "không có mạng".
+                        raise EdgeTimeout("Dịch vụ đọc to không trả lời (quá giờ).") from error
                     raise
                 if attempt:  # lần thử lại đầu nối lại NGAY (kết nối mới): chỉ lần sau mới nghỉ, để mạng chập chờn có thời gian hồi
                     time.sleep(0.3 * (attempt + 1))
