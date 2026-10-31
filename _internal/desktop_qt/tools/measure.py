@@ -484,9 +484,11 @@ def launch(exe: Path, env_extra: dict, offscreen: bool = True, timeout_seconds: 
     escaped = [s for _t, s in states if s.get("rect") and not s.get("iconic") and (s["rect"][2] >= 0 or s["rect"][3] >= 0)]
     if escaped and not require_cloak:
         return {"ok": False, "why": "OWNER RULE: cửa sổ đã rời vị trí ngoài màn hình", "escaped": escaped}
-    if not out.exists():
+    partial = out.with_name(out.name + ".partial")
+    if not out.exists() and not partial.exists():
         return {"ok": False, "why": "app không ghi file đo"}
-    d = json.loads(out.read_bytes())
+    d = json.loads((out if out.exists() else partial).read_bytes())
+    d["partial"] = not out.exists()
     end_status = None
     if require_ac:
         check = subprocess.run(["powershell.exe", "-NoProfile", "-NonInteractive", "-Command",
