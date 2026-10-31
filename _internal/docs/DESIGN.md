@@ -100,6 +100,17 @@ Bộ hiện có (xám lạnh #f4f5f7 + hổ phách) chỉnh lại có chủ đí
 | `--accent-text` chữ nhấn | #8a5309 | #f0b961 | chữ màu nhấn trên nền |
 | `--accent-soft` nhấn nhạt | #f7ead5 | rgb(233 169 69 / .14) | câu đang đọc, hàng đang phát |
 | `--success` / `--danger` | #2a7554 / #b23b33 | #5cc596 / #ef7b70 | chỉ cho trạng thái, kèm chữ/icon |
+| `--success-ink` chữ trên xanh lục | #ffffff | #0c241a | chữ/icon trên nền đặc `--success` (dấu xong của "Các bước") |
+| `--warning` vàng đất | #905b10 | #e8b64c | chữ cảnh báo nhỏ (bài nhạc không phát được...), ≥ 4,5:1 cả trên `--bg-sunken` |
+| `--warning-soft` vàng nhạt | #fcf1dc | rgb(232 182 76 / 0.13) | nền dải cảnh báo (máy kia không trả lời, chỉ được nghe) |
+| `--info-soft` nền báo tin | #ece9e3 | rgb(236 232 225 / 0.08) | nền dải báo tin ("Đang mở Studio của ...") |
+| `--focus` vòng tiêu điểm | #a0600c | #e9a945 | vòng tiêu điểm, rãnh công tắc đang bật (≥ 3:1 với mọi nền) |
+| `--switch-off` rãnh công tắc tắt | #857e72 | #75706a | rãnh công tắc đang tắt (≥ 3:1 trên nền) |
+| `--switch-thumb` núm công tắc | #ffffff | #1b1204 | núm công tắc trên cả hai rãnh |
+| `--hover` nền rê chuột | #efece6 | #252320 | nền hàng / nút chữ khi rê chuột, mục đang mở của danh sách điều hướng |
+| `--control-line` viền điều khiển | #857e72 | #75706a | viền ô nhập / ô chọn chưa có tiêu điểm (≥ 3:1 trên nền) |
+| `--danger-soft` đỏ nhạt | #fbe4e4 | rgb(239 123 112 / .13) | nền nút nguy hiểm (Xoá, Gỡ) |
+| `--scrim` lớp mờ | rgb(20 17 13 / .45) | rgb(6 5 4 / .62) | nền mờ sau hộp thoại |
 
 - Mặt đọc theo có 3 nền riêng, chọn trong Giao diện > "Nền đọc": Giấy #fbfaf7 / mực #1b1a17; Ngà #f3ead8 / #3b2f1e; Đêm #121110 / #d9d3c8
   (mặc định "Tự động" = Giấy khi sáng, Đêm khi tối). Trong vùng đọc, chữ phụ và chữ nhấn theo mặt đọc (`.reading-surface`).
@@ -172,6 +183,32 @@ giống app hệ thống; không tự chế chuỗi rung dài.
 - Cài đặt > "Rung" bật/tắt, mặc định bật. Máy tính không rung.
 
 ### 5.5 Kích thước
+
+#### Khổ cửa sổ
+
+Qt dùng bề ngang **nội dung sau thanh bên**: compact < 600, medium < 840,
+expanded < 1200, large < 1600, extra large từ 1600 px (Theme.widthClass).
+Không suy khổ từ độ phân giải màn hình. Lưới sách tăng số cột, bìa tối đa
+200 px; trang sách từ expanded đặt bìa và thông tin cạnh danh sách chương,
+cả khối tối đa 1360 px. Đang nghe từ large đặt điều khiển cạnh mặt đọc;
+chữ đọc tối đa 640 px, khoảng 65–75 ký tự theo cỡ chữ người nghe chọn.
+
+Cài đặt từ expanded giữ nhóm bên trái và nội dung bên phải (tối đa 1180 px).
+Thiết bị chia Máy này / Máy đã ghép khi **cột nội dung** đạt expanded.
+Hộp Thêm sách ở bước xem trước và Sửa sách là ngoại lệ cho trần hộp 560 px:
+từ expanded dùng hai cột, tối đa 1160 px, mỗi cột chữ tối đa khoảng 640 px.
+Hẹp trở lại một cột; giữ bản nháp, mục đang chọn và vị trí cuộn khi đổi khổ.
+Studio: lời nhắc trạng thái (chưa tải được, thiếu thư mục thư viện, chưa có dự án)
+dùng biểu tượng cạnh lời nhắc ở expanded, xếp dọc khi hẹp, tối đa 640 px.
+Danh sách chữ không có các cột dữ liệu riêng (chương, thiết bị, hàng chờ nhập,
+mẫu sách, cách đọc chung, giọng đọc) giữ cả hàng rộng tối đa 640 px, kể cả hành động và
+thời lượng; căn theo đầu cột nội dung. Lưới bìa tiếp tục tăng số cột. Bảng dự
+án Studio dùng các cột tên · trạng thái · tiến độ · cập nhật khi khung chữ từ 1000 px;
+từ 700 px bỏ cột cập nhật; hẹp hơn thì trạng thái và tiến độ xếp dưới tên. Trang một
+dự án giữ cột chữ tối đa 960 px; hàng chương rộng từ 720 px mới có cột riêng.
+Cửa sổ mini mở ở 360 px; có thể kéo rộng: từ medium đặt nút phát cạnh tên,
+giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lại.
+Đổi khổ dùng motionMedium/easeStandard; giảm chuyển động bỏ tween hình học.
 
 - **Khoảng cách**: 4 · 8 · 12 · 16 · 24 · 32 · 48 · 64 px. Lề màn: điện thoại 20, máy tính 40. Giữa các phần của một màn: 32
   (điện thoại) / 48 (máy tính); trong một phần: 12-16.

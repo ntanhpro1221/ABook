@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- Segment Heap (Windows 10 2004+): trả vùng heap đã giải phóng về hệ điều hành thay vì giữ trong working set (đo trong PROGRESS.md, RAM). -->
+<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
+  <application xmlns="urn:schemas-microsoft-com:asm.v3">
+    <windowsSettings>
+      <heapType xmlns="http://schemas.microsoft.com/SMI/2020/WindowsSettings">SegmentHeap</heapType>
+    </windowsSettings>
+  </application>
+</assembly>

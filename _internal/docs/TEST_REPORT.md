@@ -1,5 +1,63 @@
 # Test report
 
+## 27-10-2026 - Qt desktop integration (dev/desk-qt-int)
+
+- Integrate hidden -> cpu -> smtc without commits. Keep WASAPI-only music, MF voice retirement/event filtering, vblank default, tray/mini and Windows media card. All-window music scheduling covers both the reused main/mini window and a late separate mini.
+- Real mini QML buttons, tray model and actual MediaControls adapter share Player in a new integration test; SMTC/tray commands update the mini in return. Tray chapter availability matches SMTC, including the last chapter.
+- Full build/test/deploy exit 0, every suite offscreen: **579 passed**, 0 failed/skipped (MediaControls 6, DesktopApi 12, Player 33, ReadAlong 14, Music 38, Mix 73, MusicWindowActivity 4, SkipGlyph 6, Sidebar 117, Width/mini/D3 276). Parity pytest: **8 passed**. Initial D3Main setup failure from the missing Bench.note stub is fixed; focused 7/7 and full 276/276 reruns pass, original failure log retained.
+- One native separate-desktop hidden-playback run, foreground guard installed before app resume: **120.027 s media in 120.029731 s hidden**, >=118 s passes. Music mixer and SMTC enabled, mixer ready/playing, no mixer/SMTC errors, 0 foreground events, normal exit 0. Launcher excludes its own venv ancestry from the shared-machine wait.
+- Hash before/after: `c91761232204fedd1052a507682d1eacf53c20275e1b81389a819b4b39de9886`. Conflict decisions and evidence locations: root `report.md`; raw evidence under `desktop_qt/build/hidden-evidence/` in this worktree.
+
+## 27-10-2026 - hidden playback clock, uncommitted
+
+- Native Windows QPA on a separate desktop, foreground guard installed before process resume. Three runs each: original MF music advanced 110.821/110.831/110.739 s in 120 s hidden; music off 120.023/120.015/120.029 s; merged retire 114.254/114.606/114.217 s. Timestamps locate MF music teardown stalls; moving teardown alone is insufficient.
+- Integrate the playback/decoder/test subset of committed music follow-up `3a04cbde`: music only through WASAPI, narration stays MF. The unchanged WAV fixture now advances 120.017/120.014/120.013 s in 120.020/120.017/120.017 s hidden. All have mixer ready/playing, no mixer failure or foreground event, and normal process exit. The >=118 s assertion is unchanged.
+- Full build/test/packaging flow exit 0, all tests offscreen: **514 passed**, 0 failed/skipped (DesktopApi 8, Player 31, ReadAlong 14, Music 37, Mix 73, MusicWindowActivity 3, SkipGlyph 6, Sidebar 117, Width/mini 225). Voice click tests wait for a rendered frame after repositioning the page.
+- Locked implementation hash unchanged: `c91761232204fedd1052a507682d1eacf53c20275e1b81389a819b4b39de9886`; code-derived list has 41 entries. Source files remain LF; cmd.exe executes a CRLF build-script copy. Shared-machine waits, raw traces, exact executable hashes and rejected experiment are documented in [the task report](../../report.md).
+
+## 27-10-2026 — mixer là đường nhạc duy nhất, sáu định dạng
+
+- Nhạc luôn dùng MixVoice; bỏ cờ A/B và factory MF cho nhạc. MfAudioOut giữ cho giọng, bỏ preload/loop không còn caller. Nhận MP3/WAV/FLAC/M4A/Ogg/Opus bằng magic, không phụ thuộc đuôi URL.
+- MfSource giải mã luồng nhớ trên reader thành float32 ở tần số gốc, giữ số kênh trước khi nhân đôi mono/lấy hai kênh đầu; dùng Resampler chung và cache PCM cũ. COM MTA/MF sống theo luồng reader. Cắt khung mồi/đệm AAC theo timestamp và độ dài trình bày.
+- `build.bat` exit 0; kết quả văn bản riêng kiểm đủ **314** ca, **0 FAIL!**, 0 lỗi/bỏ qua: Player 26, ReadAlong 14, Music 37, Mix 73, MusicWindowActivity 3, SkipGlyph 6, Sidebar 117, Width 38. MusicTests không sửa; mọi bộ thử chạy offscreen với foreground guard. MixTests dùng FakeDevice, kiểm ba tần số ra, thời lượng/mức RMS, mono/đa kênh, cache/header/tái dùng và lỗi đúng một lần.
+- Sáu clip mới dài hai giây, sinh cục bộ từ MP3 tổng hợp sẵn có, mỗi file dưới 200 KB; README cạnh fixture ghi lệnh sinh. MP3/WAV/FLAC/M4A đọc được. MF từ chối Ogg/Opus với `0xc00d36c4` cả qua URL và luồng nhớ có MIME/tên nguồn dù Web Media Extensions 2.1.51.0 đã cài; kiểm thông báo lỗi tiếng Việt rõ ràng, không cache dở/phát im lặng như thành công.
+- Không sửa QML, `_internal/abook/`, THIRD_PARTY hay dòng changelog nhạc nền ít CPU khi thu nhỏ; không có migration/fallback. Hash policy đọc từ code vẫn `c91761232204fedd1052a507682d1eacf53c20275e1b81389a819b4b39de9886` (danh sách hiện có 41 mục).
+- MP3 bốn vòng cùng desktop Windows riêng chưa được chuyển lên màn hình như mốc trước: trung vị CPU thu nhỏ ổn định **0,827%** so với **0,822%**, RAM riêng ổn định **18,66 MB** so với **18,58 MB**, trong nhiễu. Có đủ ready/playing, không failed/foreground event; AC được kiểm trước và lấy mẫu xuyên suốt. Lượt desktop hiện tại 0,915% cũng được giữ nguyên trong bằng chứng, không dùng để khẳng định CPU không đổi.
+- Probe cloak trước show giữ được qua focus/minimise/restore; hai lượt player có **2542/2583 frameSwapped**, morph p99 **16,760/17,199 ms**, khung restore đầu **15,020/18,956 ms**, 0 foreground/mất cloak. Qt có vẽ khi cảnh chuyển động dù cloak; đây là thời gian frameSwapped, không phải độ trễ hiển thị nhìn thấy. Không thay cấu hình màn hình; danh sách monitor chỉ đọc nằm trong báo cáo.
+- Bằng chứng build/test, phép đo MP3 bốn vòng và probe cloak: `D:/Novels/native_desk_proto/musicmix_step1b_task/report.md`.
+
+## 27-10-2026 — musicmix: sửa theo Lead review, chưa commit
+
+- `deskqt_fixture_music` đã khôi phục `book.json` đúng từng byte từ `music_mix_task/fixture_before`; MP3 và lượt A/B dùng fixture riêng `deskqt_fixture_mp3`.
+- Thiết bị không phải float32 hoặc có dưới hai kênh báo `AudioOut::failed`; MusicBed nhận lỗi và đánh dấu nhạc im lặng. Kiểm định dạng WASAPI, lỗi lúc mở/đang phát, hai voice, phục hồi bằng lần load mới và đường MusicBed thật.
+- Nhịp mixer xét mọi QWindow còn hiện, kể cả cửa sổ phụ được tạo muộn; có hook rõ cho mini khi merge. Kiểm main thu nhỏ/ẩn, mini hiện/thu nhỏ/khôi phục/đóng và cửa sổ không nhận focus.
+- `build.bat` exit 0; 8 bộ QtTest/QuickTest đạt **284**, 0 lỗi, 0 bỏ qua: Player 26, ReadAlong 14, Music 37, Mix 43, MusicWindowActivity 3, SkipGlyph 6, Sidebar 117, Width 38. Tất cả chạy với QPA offscreen và process ẩn.
+- A/B 4 cặp MF/mixer trên fixture MP3 riêng: CPU ổn định khi thu nhỏ từ **1,407% xuống 0,822% một nhân** (giảm **41,5%**). Cả 8 lượt trên desktop Windows riêng không được chuyển lên màn hình; worker kiểm tên desktop thật, audit không có foreground event, cả 4 lượt mixer có `mix_ready`/`mix_playing`, không có `mix_failed`. Không suy diễn thời gian khung từ phép đo ngoài màn hình.
+- Hash khoá trước và sau kiểm tra không đổi: `c91761232204fedd1052a507682d1eacf53c20275e1b81389a819b4b39de9886`. Bằng chứng build/test và báo cáo bàn giao: `D:/Novels/native_desk_proto/music_mix_task/followup/`, `music_mix_task/report.md`.
+
+## 27-10-2026 — Qt SMTC (dev/desk-qt-smtc)
+
+- MediaControlsTests: 6 đạt, 0 lỗi; tên chương dự phòng, trạng thái/nút, 60 giây nhịp đồng hồ không cập nhật timeline, seek/chương/tốc độ/thời lượng cập nhật theo sự kiện, lệnh về luồng UI, cache bìa và bỏ lời đáp bìa cũ.
+- `build.bat` hoàn tất và deploy dist: 8 bộ, 486 ca đạt, 0 lỗi/bỏ qua; đếm 0 dòng `FAIL!` từ từng log QtTest. Theme, máy dò cắt chữ và `git diff --check` đạt.
+- Probe C++/WinRT đọc phiên `ABook.Desktop` qua GSMTC trên HWND không bao giờ show: đúng tên chương/sách, Playing, Next/Previous đổi chương, Seek tới 42 giây, Pause tới Player trên luồng UI. `visible=false`, `foreground=false` suốt kiểm tra. Không mở flyout trên màn hình chủ máy.
+- Smoke app thật: một lượt bị guard huỷ vì Qt restore kích hoạt cửa sổ; đã thêm chốt Win32 WH_CBT trước QGuiApplication. Lượt chạy lại đọc bìa 47.480 byte và Pause tới Player, 0 foreground; chốt từ chối hai yêu cầu activation/focus lúc restore. Giữ log sự cố riêng, không tính lượt ấy vào A/B.
+- Báo cáo build, số đo A/B và log thô: `D:/Novels/native_desk_proto/smtc_task/report.md`. Launcher đo được port từ `origin/dev/desk-qt-musicmix`, có bộ gác foreground trước khi app chạy và vị trí (-10000,-10000). Không giữ nhịp PlayerClock cho SMTC.
+- A/B 4 cặp, 8/8 lượt AC/off-screen, 0 foreground: RAM nghỉ 54,68 → 55,40 MiB; CPU thu nhỏ ổn định 1,223 → 1,197% một nhân theo công cụ. RAM thu nhỏ sau trim biến động ở 2/4 lượt bật SMTC (trung vị 21,20 → 37,00 MiB); chưa xác định nguyên nhân, không kết luận chỉ tốn vài MiB khi chạy nền. Cả 8 pha thu nhỏ không tăng bộ đếm PlayerClock/ảnh chụp/ReadAlong.
+
+## 26-10-2026 — qtwide2: sửa theo lead review
+
+- Trang Sách: cụm hai cột tối đa 1360 px, căn giữa; bìa thẳng mép tiêu đề; thời lượng cuối hàng dùng tnum. Nền hover/chương hiện tại và thanh tiến độ giữ hết chiều rộng hàng. Sửa đường chuyển động để bìa/chữ/chương không đi xuyên nhau.
+- Phép kiểm đo Text.paintedWidth thay khung hàng: QML cũ thất bại với dải trống 64,70% / 74,01% (1920 / 2560); bản mới 10,43% / 21,31%. Có kiểm mép bìa–tiêu đề ≤1 px, cap/căn giữa, pixel cuối hàng sáng/tối, chuyển động hai chiều.
+- Build exit 0, CTest 6/6; 238 ca đạt (Width tăng 31 → 38; các bộ còn lại 26+14+37+6+117). Theme --check, check_text_cut.py và git diff --check đạt.
+- Đã mở 44 ảnh sáng/tối và 14 crop mép 2×; Sách/Thư viện có 2560×1440 thật, các màn còn lại 1024/1440/1920. Công cụ chụp phát hiện sai kích thước thay vì âm thầm gắn nhãn 2560 cho cửa sổ bị Windows ép nhỏ. Bằng chứng: desktop_qt/build/qtwide/{shots2,zooms2,shots2_dimensions.json,old_ink_control.txt,new_width_test.txt,build2.log,ctest2.log}. Không commit; mọi cửa sổ mở ở lượt này đã đóng.
+
+## 26-10-2026 — qtwide: bố cục Qt theo chiều rộng nội dung
+
+- Sách/Cài đặt đổi hai cột từ 840 px nội dung; Đang nghe có đọc theo bên phải từ 1200 px; Thư viện căn giữa, bìa 160–200 px; Studio giữa màn, tối đa 800 px. Chuyển hình học 220 ms theo Theme, tôn trọng giảm chuyển động.
+- CTest 6/6 bộ đạt; QtTest/QuickTest: Player 26, ReadAlong 14, Music 37, SkipGlyph 6, Sidebar/icons 117, Width 31 — tổng 231 đạt, 0 lỗi. Width kiểm hình học thật của QML ở 1024×700, 1440×900, 1920×1080, rail và compact, lưới tới 2560; kiểm ≥4 hàng chương, bìa ≤45%, lề/cột, đọc theo, mép mờ và chuyển động. check_text_cut.py và gen_theme.py --check đạt.
+- Đã mở 36 PNG sáng/tối, gồm 4 màn × 3 khổ, thu thanh bên, cuộn và khung resize; soát mép ở 2×. Fixture audio sao chép riêng, thêm hàng chương tổng hợp chỉ cho ảnh; không sửa thư viện/profile thật. Bằng chứng: desktop_qt/build/qtwide/{shots,zooms,ctest.txt,WidthTests.txt}.
+- RAM riêng lúc nghỉ trên trang Sách, client 1920×1080, scale 1, ba lượt/bản: 55,73 → 58,85 MB (+3,12 MB), dùng bộ lấy mẫu tools/measure.py. Không thay title bar/backend/dependency, không commit. Chi tiết ở desktop_qt/PROGRESS.md và scratchpad codex/qtwide/report.md.
+
 Ngày cập nhật: 2026-10-26
 
 Đợt gap1b, worktree `D:/Novels/ABook_ngap`, nhánh `dev/native-gaps`: sửa transport từ xa sang glyph ±15 dùng chung và phát/dừng biến hình; thêm icon loại thiết bị và làm mới đồng bộ ở bảng thiết bị phát, tìm máy trống, nhật ký. Timer cast dùng danh sách cùng mép trái, có ảnh 360/411dp và cỡ chữ 1,3. Một UndoBar nằm trên thiết bị phát/thanh phát nhỏ/tab, mở chiều cao có chuyển động; kiểm cả lỗi xoá trong Shell thật, sáng/tối. Lệnh đầy đủ có ghi ảnh: **2251 test, 2244 passed, 7 skipped, 0 failure/error**, **271 XML**, không có dòng `^e: `; IconRulesTest/IconSheetTest/MotionScanTest/TextCutScanTest đều qua. Đã mở 21 PNG thay đổi và crop phóng to hàng icon; APK native **21.573.885 → 21.590.269 byte** (+16 KiB). Bằng chứng và báo cáo ở scratchpad `codex/gap1b/report.md`. Không commit/push, không adb; không sửa Voice, lõi Python, dependency hay Capacitor settings.
@@ -989,6 +1047,20 @@ Bắt buộc smoke test một chapter 2.000–5.000 từ trước khi chạy boo
 - Bằng chứng và trạng thái từng finding ở scratchpad/codex/studio139/result.md, log tsc.log/vitest.log cùng thư mục task. DOM dùng geometry/WAAPI mô phỏng; chưa chạy emulator hoặc đo frame trên thiết bị thật.
 
 Đợt gap1, 26-10-2026, worktree `D:/Novels/ABook_ngap`, nhánh `dev/native-gaps`, nền `2d294798`: bổ sung Hoàn tác xoá 28 giây, đóng cả trình phát khi sách rời Thư viện, Báo từ Studio qua thông báo Android, bảng điều khiển thiết bị phát và lựa chọn nghe thẳng/tải ngay từ sách máy tính. Dữ liệu mạng dùng lõi Kotlin hiện có; không sửa backend, Voice settings, dependency hay manifest của bản WebView. JVM toàn bộ: **2242 test, 2235 đạt, 0 lỗi, 7 bỏ qua có sẵn**, đếm từ 270 XML; kiểm lại UI cuối **496/496**, luồng gap Compose **15/15**. Quét log các lượt thành công: không dòng `e: `. 152 PNG đã mở/soát, 12 ảnh mới sáng/tối. Native debug APK: **21491965 → 21573885 byte** (+81920, +0.38%). Báo cáo đầy đủ và lý do đặt từng điều khiển: scratchpad `codex/gap1/report.md`. Không dùng adb/emulator, không commit/push; chưa đo hiệu năng trên điện thoại thật. Hàng chờ xoá giữ qua Activity recreation, chưa giữ qua process death (file gốc vẫn nguyên nếu tiến trình chết trước hạn).
+
+## 27-10-2026 — Qt: bố cục theo khổ cửa sổ
+
+- Worktree `ABook_qtint`, nhánh `dev/desk-qt-int`, HEAD `dbc19aad`; không commit. Thêm / Sửa sách chia cột theo khổ, Thiết bị chia Máy này / Máy đã ghép theo bề ngang cột, Cài đặt mờ qua khi đổi khổ, Studio đổi bố cục trạng thái hiện có, mini cho kéo rộng và đặt nút phát cạnh tên. Giữ bố cục rộng sẵn có của Thư viện / Trang sách / Đang nghe.
+- 72 ảnh trước + 72 ảnh sau: chín màn × 1024 / 1366 / 1630 / 1920 × sáng / tối. QML thật, HTTP/audio giả, offscreen QPA + software renderer trên desktop Windows riêng; foreground guard cài trước resume: 0 sự kiện foreground. Không mở thư viện thật, không đo GPU / frame time.
+- `build.bat` qua `tools/build_hidden.py qtwide-final`: exit 0, tổng **667 đạt, 0 lỗi, 0 bỏ qua**. Bộ Width gồm kiểm chữ, cột, reflow hai chiều, bản nháp, reduced motion, mini kéo rộng và khôi phục cửa sổ. UI parity: 8 đạt. Theme / text-cut / parity / LF / diff checks đạt.
+- Hash khoá trước / sau giữ `c91761232204fedd1052a507682d1eacf53c20275e1b81389a819b4b39de9886`. Chi tiết từng màn và từng khổ, lệnh và log: `../../report.md`; ảnh và viewer ở `D:/Novels/native_desk_proto/qtwide_shots/`.
+
+## 28-10-2026 — Qt: minimized playback CPU, Round 2
+
+- Worktree `ABook_voicemix`, HEAD `ca491857`; no commit. Guarded full build: **779 passed, 0 failed, 1 existing intentional skip**. Final runtime sources match the saved build manifest; build/dist match preserved measured B `20ebb801`.
+- Target **<=0.15% of one core remains unmet**: four alternating A/B pairs give A **0.211239%**, B **0.214011%** median. Final software hidden check: **120.022817 s wall / 120.020 s media**, CPU **0.258486%**, private/working set **58.33/14.98 MiB**. Accepted runs require AC, no foreign build/test activity and zero foreground events.
+- Hidden output wait returns fall to **1.33/s**. Matched native graphics probes remove recurring NVIDIA/pool scheduling and reduce private commit **150.93 -> 59.20 MiB**, with about **98 ms** additional first restored frame latency in that single comparison. Visible motion and PCM cursor continuity are tested. Hidden bookmarks now save every 30 seconds plus forced controls/shutdown; a crash can lose that unsaved wall-time window.
+- QoS and larger compressed-fetch experiments were rejected after reversed pairs. No `_internal/abook/` change; locked hash remains `c91761232204fedd1052a507682d1eacf53c20275e1b81389a819b4b39de9886`. [Full report](../../report.md) preserves Round 1, all measurements, per-thread tables, limitations and the earlier launcher isolation/focus breach correction. Final runs verify the native startup and actual thread desktop before accepting evidence.
 
 ## 30-10-2026 - Native phone gap 3
 

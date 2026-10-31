@@ -15,10 +15,12 @@ Giai đoạn này CHỈ báo cáo, không đổi chữ nào - Lead chọn dạng
 
     python -X utf8 scripts/ui_parity.py          # ghi lại phần sinh tự động của docs/UI_PARITY.md
     python -X utf8 scripts/ui_parity.py --check  # thoát 1 nếu docs/UI_PARITY.md không còn khớp mã nguồn (tests/test_ui_parity.py)
+    python -X utf8 scripts/ui_parity.py --aliases  # sinh lại scripts/lucide_aliases.json từ ui/node_modules (sau khi đổi icon web nhập)
 """
 from __future__ import annotations
 
 import importlib.util
+import json
 import re
 import sys
 import unicodedata
@@ -32,6 +34,8 @@ WEB = ROOT / "ui" / "src"
 KT_CORE = ROOT / "mobile" / "android" / "app" / "src" / "main" / "java" / "vn" / "abook" / "player"
 KT = KT_CORE / "ui"
 DOC = ROOT / "docs" / "UI_PARITY.md"
+# Bảng alias lucide (`more-horizontal` -> `ellipsis`) cho icon web nhập: máy dò không cần ui/node_modules; sinh lại bằng --aliases.
+ALIASES = ROOT / "scripts" / "lucide_aliases.json"
 BEGIN = "<!-- ui_parity:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity.py - không sửa tay, chạy lại script) -->"
 END = "<!-- ui_parity:end -->"
 
@@ -228,32 +232,75 @@ def _lucide_dir() -> Path:
     return module.ICON_DIR  # cùng thư mục gen_lucide_icons.py đọc nét: một nơi biết lucide nằm đâu
 
 
+def lucide_kebab(ident: str) -> str:
+    """`MoreHorizontal` / `Trash2` / `EllipsisIcon` -> tên file lucide theo chữ (`more-horizontal`, `trash-2`, `ellipsis`)."""
+    base = ident[:-4] if ident.endswith("Icon") and len(ident) > 4 else ident
+    return re.sub(r"(?<=[a-z])(?=[A-Z0-9])|(?<=[A-Z])(?=[A-Z][a-z])|(?<=[0-9])(?=[A-Za-z])", "-", base).lower()
+
+
+_ALIASES: dict[str, str] | None = None
+
+
+def _follow(icons: Path, name: str) -> str:
+    """Theo chuỗi alias trong gói lucide-react: `more-horizontal` -> `ellipsis`."""
+    for _ in range(4):
+        file = icons / f"{name}.mjs"
+        if not file.is_file():
+            break
+        hop = re.search(r"export \{ default \} from '\./([\w-]+)\.mjs'", file.read_text(encoding="utf-8"))
+        if not hop:
+            break
+        name = hop.group(1)
+    return name
+
+
 _ICON_CACHE: dict[str, str] = {}
 
 
 def alias_target(name: str) -> str:
-    """Tên lucide -> tên gốc theo chuỗi alias (`trash-2` -> `trash`, `more-horizontal` -> `ellipsis`): hai tên một hình thì tính là một icon."""
+    """Tên lucide -> tên gốc theo chuỗi alias (`trash-2` -> `trash`, `more-horizontal` -> `ellipsis`): hai tên một hình thì tính là một icon.
+    Có ui/node_modules thì đọc thẳng gói; không có (cây chỉ dựng Qt) thì đọc bảng trong repo (ALIASES, chỉ gồm icon web nhập)."""
+    global _ALIASES
+    if name in _ICON_CACHE:
+        return _ICON_CACHE[name]
     icons = _lucide_dir()
-    for _ in range(4):
-        path = icons / f"{name}.mjs"
-        if not path.is_file():
-            break
-        m = re.search(r"export \{ default \} from '\./([\w-]+)\.mjs'", path.read_text(encoding="utf-8"))
-        if not m:
-            break
-        name = m.group(1)
-    return name
+    if icons.is_dir():
+        target = _follow(icons, name)
+    else:
+        if _ALIASES is None:
+            _ALIASES = json.loads(ALIASES.read_bytes().decode("utf-8"))
+        target = _ALIASES.get(name, name)
+    _ICON_CACHE[name] = target
+    return target
 
 
 def lucide_name(ident: str) -> str:
-    """`MoreHorizontal` / `Trash2` / `EllipsisIcon` -> tên file lucide thật (theo alias), vd `ellipsis`, `trash-2`."""
-    if ident in _ICON_CACHE:
-        return _ICON_CACHE[ident]
-    base = ident[:-4] if ident.endswith("Icon") and len(ident) > 4 else ident
-    kebab = re.sub(r"(?<=[a-z])(?=[A-Z0-9])|(?<=[A-Z])(?=[A-Z][a-z])|(?<=[0-9])(?=[A-Za-z])", "-", base).lower()
-    name = alias_target(kebab)
-    _ICON_CACHE[ident] = name
-    return name
+    """`MoreHorizontal` / `Trash2` / `EllipsisIcon` -> tên file lucide thật (theo alias), vd `ellipsis`, `trash`."""
+    return alias_target(lucide_kebab(ident))
+
+
+def alias_table() -> dict[str, str]:
+    """Đọc gói lucide-react trong ui/node_modules: alias -> tên thật, cho mọi icon web nhập mà tên theo chữ là alias."""
+    icons = _lucide_dir()
+    if not icons.is_dir():
+        raise SystemExit(f"thiếu {icons}: chạy npm ci trong ui/ trước khi sinh lại {ALIASES.name}")
+    table: dict[str, str] = {}
+    for path in web_files():
+        src = path.read_bytes().decode("utf-8")
+        for m in re.finditer(r"import\s*\{([^}]*)\}\s*from\s*[\"']lucide-react[\"']", src):
+            for part in m.group(1).split(","):
+                real = part.strip().partition(" as ")[0].strip()
+                if not real or real.startswith("type "):
+                    continue
+                kebab = lucide_kebab(real)
+                name = _follow(icons, kebab)
+                if name != kebab:
+                    table[kebab] = name
+    return dict(sorted(table.items()))
+
+
+def alias_json(table: dict[str, str]) -> str:
+    return json.dumps(table, ensure_ascii=False, indent=2) + "\n"
 
 
 # ---------------------------------------------------------------------------------------------------------------------------------------
@@ -561,12 +608,15 @@ def web_scan_file(path: Path, scan: Scan) -> None:
                 scan.items.append(Item("web", file, line_of(plain, start), text, f"prop:{m.group(1)}"))
 
 
+def web_files() -> list[Path]:
+    return [path for d in WEB_DIRS for path in sorted((WEB / d).rglob("*"))
+            if path.suffix in (".ts", ".tsx") and ".test." not in path.name and not path.name.endswith(".d.ts")]
+
+
 def web_scan() -> Scan:
     scan = Scan()
-    for d in WEB_DIRS:
-        for path in sorted((WEB / d).rglob("*")):
-            if path.suffix in (".ts", ".tsx") and ".test." not in path.name and not path.name.endswith(".d.ts"):
-                web_scan_file(path, scan)
+    for path in web_files():
+        web_scan_file(path, scan)
     return scan
 
 
@@ -1408,6 +1458,10 @@ def render_doc(current: str | None) -> str:
 
 
 def main(argv: list[str]) -> int:
+    if "--aliases" in argv:
+        ALIASES.write_bytes(alias_json(alias_table()).encode("utf-8"))  # LF
+        print(f"đã ghi {ALIASES}")
+        return 0
     if "--diff" in argv:  # in lệch cặp màn / icon / chữ, không ghi gì; `--diff ID` chỉ một cặp
         web, native = web_scan(), native_scan()
         only = [a for a in argv if a != "--diff"]

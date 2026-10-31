@@ -50,6 +50,7 @@ def test_ui_parity_extracts_both_sides_and_pairs_icons():
     assert any(p.label == "Sửa thông tin" and p.icon == "pencil" for p in native.pairs)
     assert any(p.label == "Sửa thông tin" and p.icon == "pencil" for p in web.pairs)
     assert tool.lucide_name("MoreHorizontal") == "ellipsis"
+    assert tool.lucide_name("Trash2") == "trash" and tool.lucide_name("Pencil") == "pencil"
 
 
 def test_ui_parity_hard_rules_pass_with_a_readable_message():
@@ -188,3 +189,11 @@ def test_every_native_screen_file_belongs_to_a_checked_pair():
     skipped |= {"editbook/EditBooks.kt"}  # tên chương giả "Chương N" cho sách chưa đọc được, không phải chữ giao diện
     loose = [n for n in names if n not in checked and n not in skipped]
     assert not loose, "file native có chữ mà không cặp màn nào so với máy tính (thêm vào scripts/ui_parity_pairs.json): " + ", ".join(loose)
+
+
+def test_lucide_alias_table_matches_the_installed_package():
+    # Bảng trong repo để máy dò chạy được ở cây không có ui/node_modules; cây nào có gói thì bảng phải đúng gói ấy.
+    tool = _tool()
+    if not tool._lucide_dir().is_dir():
+        pytest.skip("ui/node_modules chưa cài")
+    assert tool.ALIASES.read_bytes().decode("utf-8") == tool.alias_json(tool.alias_table()), "chạy scripts/ui_parity.py --aliases"
