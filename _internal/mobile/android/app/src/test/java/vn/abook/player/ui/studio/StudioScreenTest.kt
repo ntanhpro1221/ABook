@@ -18,6 +18,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -287,5 +288,26 @@ class StudioScreenTest {
         withBook(studioBook(running = true, canPause = true))
         project(active = false)
         assertEquals(0, source.bookCalls.size)
+    }
+
+    @Test fun theBatteryPauseKeepsItsWhyBehindAFold() {
+        withBook(studioBook(running = true, canPause = true, paused = StudioPause.Battery))
+        project()
+        tag("studio_action_note").assertTextEquals("Studio tạm dừng; cắm sạc để tiếp tục.")
+        tag("studio_battery_info").assertIsDisplayed()
+        // Lời giải thích gập (web: MoreInfo "Dùng pin"): chưa chiếm chỗ tới khi bạn chạm, chạm lần nữa thì khép lại.
+        rule.onNodeWithText(StudioText.BATTERY_INFO).assertDoesNotExist()
+        tag("studio_battery_info").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithText(StudioText.BATTERY_INFO).assertIsDisplayed()
+        tag("studio_battery_info").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithText(StudioText.BATTERY_INFO).assertDoesNotExist()
+    }
+
+    @Test fun aBookNotPausedOnBatteryHasNoBatteryFold() {
+        withBook(studioBook(running = true, canPause = true))
+        project()
+        absent("studio_battery_info")
     }
 }

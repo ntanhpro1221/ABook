@@ -946,6 +946,7 @@
       "web_also": [
         "listen/labels.ts",
         "listen/MyMusic.tsx",
+        "shared/SettingsNav.tsx",
         "studio/musicLocal.ts"
       ],
       "sentences": true,
@@ -1497,7 +1498,7 @@
       "allow": [
         {
           "side": "native",
-          "match": "^(sẽ\\ đọc\\ là\\ “\\{\\}”|cỡ\\ ước\\ tính:\\ khoảng\\ \\{\\}|bài\\ đã\\ bỏ|ghi\\ công|đang\\ tải\\ phần\\ đọc\\ không\\ khí\\{\\}|đúng\\ rồi,\\ giữ\\ “\\{\\}”|dùng\\ “\\{\\}”|máy\\ nghe\\ ra|tên\\ gốc:\\ \\{\\}|câu\\ \\{\\}|đang\\ làm|đã\\ nghe\\ hết\\ các\\ câu\\ trong\\ danh\\ sách|chọn\\ câu|mở\\ cần\\ nghe\\ lại|câu\\ xen\\ kẽ|cả\\ chuỗi)$",
+          "match": "^(sẽ\\ đọc\\ là\\ “\\{\\}”|cỡ\\ ước\\ tính:\\ khoảng\\ \\{\\}|bài\\ đã\\ bỏ|ghi\\ công|đang\\ tải\\ phần\\ đọc\\ không\\ khí\\{\\}|đúng\\ rồi,\\ giữ\\ “\\{\\}”|dùng\\ “\\{\\}”|máy\\ nghe\\ ra|tên\\ gốc:\\ \\{\\}|câu\\ \\{\\}|đang\\ làm|đã\\ nghe\\ hết\\ các\\ câu\\ trong\\ danh\\ sách|chọn\\ câu|mở\\ cần\\ nghe\\ lại|câu\\ xen\\ kẽ|cả\\ chuỗi|làm\\ sách\\ trên\\ pin\\ chậm\\ và\\ hao\\ pin\\.\\ bấm\\ “tiếp\\ tục”\\ để\\ làm\\ ngay\\ trên\\ pin)$",
           "reason": "same words as the web (reviewed by hand): the web string is a template cut at its placeholder / a sentence with a trailing part, so the scanner sees a different label"
         },
         {
