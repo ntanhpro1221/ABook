@@ -1,10 +1,10 @@
 #include "hostnet.h"
 
 #include "backend.h"
+#include "hostcall.h"
 
 #include <QJsonDocument>
 #include <QNetworkAccessManager>
-#include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QPointer>
 
@@ -38,25 +38,18 @@ std::function<void()> HostNet::requestCancelable(const QByteArray &method, const
     }
     QNetworkRequest request(QUrl(QStringLiteral("http://127.0.0.1:%1%2").arg(endpoint.port).arg(path)));
     request.setRawHeader("X-Ebook-Token", endpoint.token);
-    request.setTransferTimeout(path == QLatin1String("/api/readaloud/clip") ? 0 : 30'000);
-    QNetworkReply *reply = nullptr;
-    if (method == "GET") {
-        reply = m_net->get(request);
-    } else {
-        request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
-        const QByteArray data = hasBody ? QJsonDocument(body).toJson(QJsonDocument::Compact) : QByteArray();
-        reply = m_net->sendCustomRequest(request, method, data);
-    }
-    connect(reply, &QNetworkReply::finished, this, [reply, done = std::move(done)] {
-        const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    if (method != "GET") request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
+    const QByteArray data = method != "GET" && hasBody ? QJsonDocument(body).toJson(QJsonDocument::Compact) : QByteArray();
+    auto *call = HostCall::send(m_net, request, method, data, [done = std::move(done)](int status, const QByteArray &answer, bool timedOut) {
         QJsonObject json;
         if (status) {
-            const QJsonDocument document = QJsonDocument::fromJson(reply->readAll());
+            const QJsonDocument document = QJsonDocument::fromJson(answer);
             if (document.isObject())
                 json = document.object();
+        } else if (timedOut) {
+            json.insert(QStringLiteral("reason"), QStringLiteral("timeout"));    // same reason as the host's own timeout: SpeechOut says the voice is not usable
         }
-        reply->deleteLater();
         done(status, json);
-    });
-    return [reply = QPointer<QNetworkReply>(reply)] { if (reply && !reply->isFinished()) reply->abort(); };
+    }, this);
+    return [call = QPointer<HostCall>(call)] { if (call) call->abort(); };
 }
