@@ -86,15 +86,15 @@ Bluetooth / sau khi tắt sóng, không nghe khi không bật được xác th�
   `speaksTheSameProtocolAsThePythonSide` - Kotlin tải 4 MB qua đầu Python thật (`BTMUX_PY_PORT`, chạy tay; 29-09 qua với
   bản có RESET).
 - **Chưa thử trên sóng thật** (28-09 đêm: Bluetooth máy tính đang tắt, cần điện thoại thật): bật Bluetooth máy tính, ghép với
-  điện thoại trong Cài đặt Android, mở ABook máy tính (đồng bộ bật) → điện thoại: Tải sách → "Không chung Wi-Fi? Kết nối qua
-  Bluetooth" → chọn máy tính → mã 6 số. Kiểm: nghe thẳng một chương, đồng bộ chỗ nghe, điều khiển trình phát, tắt Bluetooth
+  điện thoại trong Cài đặt Android, mở ABook máy tính (đồng bộ bật) → điện thoại: Cài đặt → Thiết bị → Nối máy tính → cách nối
+  "Bluetooth" → chọn máy tính → mã 6 số. Kiểm: nghe thẳng một chương, đồng bộ chỗ nghe, điều khiển trình phát, tắt Bluetooth
   giữa chừng rồi bật lại.
 
 ## Điện thoại phục vụ qua Bluetooth (29-09)
 
-Bật "Cho máy khác nghe thư viện này" thì điện thoại nghe RFCOMM cùng UUID (`BluetoothShare`, BluetoothLink.kt) - mỗi máy
-kết nối là một BtMux vai phục vụ nối vào LibraryServer. Điện thoại khác ghép nó ở "Thiết bị khác" → "Không chung Wi-Fi?
-Ghép qua Bluetooth" (Peers: host `bt:<địa chỉ>`, đi qua BluetoothLink như máy tính chính).
+Bật "Kết nối Wi-Fi" ở Cài đặt → Thiết bị → Chia sẻ thư viện thì điện thoại nghe RFCOMM cùng UUID (`BluetoothShare`, BluetoothLink.kt) - mỗi máy
+kết nối là một BtMux vai phục vụ nối vào LibraryServer. Điện thoại khác ghép nó ở Cài đặt → Thiết bị → Nối máy tính →
+"Thêm thiết bị" → cách nối "Bluetooth" (Peers: host `bt:<địa chỉ>`, đi qua BluetoothLink như máy tính chính).
 
 **Đã thử trên HAI MÁY ẢO ghép Bluetooth ảo (netsim của Android Emulator)** - không cần phần cứng: ghép Bluetooth trong Cài
 đặt của máy ảo (một máy "cho tìm thấy", máy kia "Ghép thiết bị mới", xác nhận ở cả hai), rồi trong app: A ghép B bằng mã 6
@@ -188,7 +188,7 @@ coi là hỏng, và các lần làm mới nền 10 phút sau không chờ lại 
 hỏng nhanh như cũ. Không gõ cửa UDP: theo đo đạc trên, gói tới socket Wi-Fi đã có sẵn lúc nối TCP.
 
 **Cho ABook chạy nền (phía điện thoại).** Không có API công khai nào để app tự xin HANS / MIUI / One UI miễn; chỉ người dùng bật được.
-Khi bật "Cho máy khác nghe thư viện này", màn Thiết bị có nút "Cho ABook chạy nền" mở trang thông tin
+Khi bật "Kết nối Wi-Fi", màn Chia sẻ thư viện (Cài đặt → Thiết bị) có hàng "Cho ABook chạy nền" mở trang thông tin
 ứng dụng (`ACTION_APPLICATION_DETAILS_SETTINGS`, `LibraryPlugin.openAppSettings`) và một dòng chỉ đường theo `Build.MANUFACTURER`
 (`ui/src/android/backgroundHelp.ts`: OPPO/realme/OnePlus "Pin → Cho phép hoạt động nền + Tự khởi chạy", Xiaomi "Tiết kiệm pin →
 Không hạn chế", Samsung "Pin → Không hạn chế"). Không gọi thành phần riêng không công bố của hãng.
@@ -232,7 +232,7 @@ từ máy tính (từ 08-10 trưa gọi vào lúc nào cũng được, không c�
   tên Windows lưu KHÔNG trùng tên điện thoại báo qua Wi-Fi (xem trên). Chưa biết: Windows có hiện hộp ghép nếu thiết bị chưa
   ghép khi `SO_BTH_AUTHENTICATE` bật (thiết bị thử đã ghép sẵn).
 - Giao diện "Máy tính khác" (`ui/src/desktop/OtherComputers.tsx`, chữ ở `computerRoutes.ts`) đã có: dòng "Bluetooth · <tên thiết bị>"
-  cho máy ghép Bluetooth, menu "Dự phòng qua Bluetooth…" (kèm "Không dùng") cho máy ghép Wi-Fi, và các nút chọn thiết bị đã ghép ngay dưới
+  cho máy ghép Bluetooth, nút "Dùng Bluetooth" (menu "Qua Bluetooth", kèm "Không dùng") cho máy ghép Wi-Fi, và các nút chọn thiết bị đã ghép ngay dưới
   ô ghép. Chưa hiện máy nào đang thật sự đi đường nào lúc này (chỉ hiện đường đã cấu hình).
 - Bộ test không bao giờ chạm Bluetooth thật: `tests/conftest.py` `_no_real_bluetooth` (autouse) thay `paired_devices` bằng danh sách rỗng và
   `find_channel` / `connect_rfcomm` bằng lỗi, trừ khi bài đưa bộ giả (`dll=` / `ws2=` / `connect=`).
