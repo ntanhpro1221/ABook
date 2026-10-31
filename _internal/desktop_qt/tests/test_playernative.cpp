@@ -107,17 +107,21 @@ private slots:
         speech.loadText(QStringLiteral("b"), 1, 0, QStringLiteral("local")); QCOMPARE(failed.size(), 2);
     }
     void clipProblemsOfferTheSameVoiceRecovery_data() {
-        QTest::addColumn<QString>("reason"); QTest::addColumn<QString>("message");
-        QTest::newRow("offline") << QStringLiteral("offline") << QStringLiteral("Không có mạng - giọng đang chọn cần mạng.");
-        QTest::newRow("quota") << QStringLiteral("quota") << QStringLiteral("Giọng đang chọn đang không dùng được.");
-        QTest::newRow("empty") << QStringLiteral("empty") << QStringLiteral("Đoạn này không đọc được.");
+        QTest::addColumn<QString>("reason"); QTest::addColumn<int>("status"); QTest::addColumn<QString>("message");
+        QTest::newRow("offline") << QStringLiteral("offline") << 503 << QStringLiteral("Không có mạng - giọng đang chọn cần mạng.");
+        QTest::newRow("quota") << QStringLiteral("quota") << 502 << QStringLiteral("Giọng đang chọn đang không dùng được.");
+        // A handshake past its deadline is the voice, not the network (host 8fef2b33: Edge / Azure / own key say "timeout").
+        QTest::newRow("host timeout") << QStringLiteral("timeout") << 504 << QStringLiteral("Giọng đang chọn đang không dùng được.");
+        // HostCall gave up on a silent host (HostWait): no HTTP status, same sentence.
+        QTest::newRow("silent host") << QStringLiteral("timeout") << 0 << QStringLiteral("Giọng đang chọn đang không dùng được.");
+        QTest::newRow("empty") << QStringLiteral("empty") << 422 << QStringLiteral("Đoạn này không đọc được.");
     }
     void clipProblemsOfferTheSameVoiceRecovery() {
-        QFETCH(QString, reason); QFETCH(QString, message);
+        QFETCH(QString, reason); QFETCH(int, status); QFETCH(QString, message);
         FakeOut audio; FakeNet net; SpeechOut speech(&audio, &net); QSignalSpy failed(&speech, &AudioOut::failed);
         net.answers.insert(QStringLiteral("GET /api/listen/books/b/chapters/1/text"), QJsonObject{{QStringLiteral("text"), QStringLiteral("Một đoạn văn.")}});
         net.answers.insert(QStringLiteral("POST /api/readaloud/clip"), QJsonObject{{QStringLiteral("error"), QStringLiteral("Đoạn này không đọc được.")}, {QStringLiteral("reason"), reason}});
-        net.statuses.insert(QStringLiteral("POST /api/readaloud/clip"), 503);
+        net.statuses.insert(QStringLiteral("POST /api/readaloud/clip"), status);
         speech.loadText(QStringLiteral("b"), 1, 0, QStringLiteral("local")); speech.play();
         QCOMPARE(failed.size(), 1); QCOMPARE(failed[0][0].toString(), message); QVERIFY(!speech.playing());
     }
