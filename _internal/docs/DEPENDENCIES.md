@@ -24,7 +24,7 @@ Cách kiểm:
 
 | Gói | Đang ghim → mới | Điều mới đáng giá cho ABook | Rủi ro | Quyết |
 |---|---|---|---|---|
-| `PySide6` | 6.11.2 → **6.11.3** (26-10; 6.12.0 ra 08-10) | Bản cuối của dòng 6.11, "khoảng 200 sửa lỗi, cải thiện bảo mật". Mức vá bảo mật Chromium của QtWebEngine (`qWebEngineChromiumSecurityPatchVersion`) lên **151.0.7922.71 → 155.0.8059.85**; lõi vẫn Chromium 140. `abook/desktop.py` (vỏ dev qua `app.py`, `start_windows.ps1`) mở trang web UI bằng `QWebEngineView`. App máy tính phát hành là Qt C++, không dùng PySide6 | thấp: bản vá cùng dòng, API không đổi. Xem kết quả `test_gui_layout.py`, `test_one_click_startup.py` ở dưới; import `abook.gui`, `abook.desktop`, `abook.desktop_shell` thành công | **nâng** |
+| `PySide6` | 6.11.2 → **6.11.3** (26-10; 6.12.0 ra 08-10) | Bản cuối của dòng 6.11, "khoảng 200 sửa lỗi, cải thiện bảo mật". Mức vá bảo mật Chromium của QtWebEngine (`qWebEngineChromiumSecurityPatchVersion`) lên **151.0.7922.71 → 155.0.8059.85**; lõi vẫn Chromium 140. `abook/desktop.py` (vỏ dev qua `app.py`, `start_windows.ps1`) mở trang web UI bằng `QWebEngineView`. App máy tính phát hành là Qt C++, không dùng PySide6 | thấp: bản vá cùng dòng, API không đổi. Import `abook.gui`, `abook.desktop`, `abook.desktop_shell` thành công | **nâng** |
 | `PySide6` 6.12 | 6.12.0 | WebEngine và Pdf tách thành wheel riêng (`freeze_studio_requirements.py` đã biết). Lên Chromium mới hơn | trung: bản `.0` của LTS, đổi cách đóng gói | chờ 6.12.1 |
 | `pytest` (dev) | 9.1.1 → **9.2.0** (27-10) | Bắt fd nhanh hơn, `tmp_path` nhanh hơn, diff dễ đọc hơn | Phá vỡ: `-c` đường sai thì báo lỗi; `indirect`/`ids`/`scope` của `parametrize` thành keyword-only; plugin nạp hỏng thoát mã 4/3. Ini không phải chuỗi sinh `PytestRemovedIn10Warning`; ini của ta toàn chuỗi. Plugin `anyio` (pytest11) import `CallSpec2` nên sinh một cảnh báo deprecate. Không thành lỗi trừ khi chạy với `-W error` | **nâng** |
 | `ruff` (dev) | 0.16.10 → **0.17.3** | Binary Windows có chữ ký Authenticode. Bộ luật mặc định bỏ nhóm DTZ. Trên cây này: 2.613 → **2.598** phát hiện | không: ruff không phải cổng nào (không test, không build gọi) | **nâng** |
@@ -41,8 +41,16 @@ Cách kiểm:
 | `huggingface-hub` (Model) | 1.33.0 → 2.4.0 | **Hết bị chặn**: `tokenizers` 0.23.3 và `gradio` 6.31 / `gradio-client` 2.7.2 đều cho `<3`. Nâng thì phải kéo cả ba | tầng HTTP sang `httpx2`, bỏ API cũ (ghi ngày 26-09). Phải kiểm `HF_HUB_OFFLINE` vẫn chặn mạng thật | Model quyết, cùng đợt `transformers` |
 | `transformers` (Model) | 5.18.0 → 5.22.1 | 5.22.0 thêm Mistral Large 4; 5.22.1 chỉ sửa tài liệu | không liên quan đường VieNeu | Model giữ |
 
-Không gói nào bị chặn vì Python 3.11 thay đổi: `numpy` 2.5.4, `scipy` 1.18.1, `pyworld` 0.3.6, `librosa` 1.0.0 vẫn như ghi
-ở trên.
+Kết quả kiểm:
+- Toàn bộ `tests/` chạy bằng venv thử (PySide6 6.11.3, pytest 9.2.0, `QT_QPA_PLATFORM=offscreen`):
+  **9.686 pass, 15 skip, 2 xfail, 0 F/E, mã thoát 0**. Lượt này chạy trên cây 4b99ae71.
+- Sau khi tách lại từ 727fd3a2, chạy thêm trên nhánh này các test lock, studio requirements, GUI, khởi động, release và Qt
+  glyph: 61 pass. `test_one_click_startup.py` có chép danh sách ghim nên đã sửa theo.
+- `test_perceptual_*` in 9 cảnh báo `PytestUnhandledThreadExceptionWarning`: luồng `_readerthread` của subprocess gặp
+  `UnicodeDecodeError` (byte 0xa0) hay `TimeoutError`. Chạy lại bằng pytest 9.1.1 của runtime cũng ra đúng 9 cảnh báo ấy, nên
+  không do bản nâng gây ra.
+
+Nhóm bị chặn vì Python 3.11 không đổi: `numpy` 2.5.4, `scipy` 1.18.1, `pyworld` 0.3.6, `librosa` 1.0.0, như ghi ở trên.
 
 ## Đợt nâng có kiểm 21-10-2026 — `dev/deps`, chưa phát hành
 
