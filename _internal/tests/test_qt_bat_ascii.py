@@ -23,3 +23,19 @@ def test_every_qt_batch_file_is_ascii():
     assert batches, "no .bat found under desktop_qt"
     found = {str(path.relative_to(QT)): lines for path in batches if (lines := non_ascii_lines(path.read_text(encoding="utf-8")))}
     assert not found, f"non-ASCII lines in batch files (cmd misreads them after `call`): {found}"
+
+
+REPO = Path(__file__).resolve().parents[2]
+
+
+def test_batch_files_check_out_with_crlf():
+    """cmd also returns from `call :label` by byte offset; with LF endings, even pure ASCII, it resumed on the wrong line and on 01-11
+    build.bat silently skipped 5 of its 15 Qt test suites. Git must hand out every .bat / .cmd with CRLF."""
+    rules = (REPO / ".gitattributes").read_text(encoding="utf-8").splitlines()
+    assert "*.bat text eol=crlf" in rules and "*.cmd text eol=crlf" in rules
+
+
+def test_build_bat_guards_line_endings_and_counts_its_suites():
+    text = (QT / "build.bat").read_text(encoding="ascii")
+    assert "has LF line endings" in text, "build.bat must refuse to run from an LF checkout"
+    assert "set /a TESTS_RUN+=1" in text and "Qt test suites" in text, "build.bat must count the suites it ran"
