@@ -16,6 +16,9 @@ import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.unit.DpRect
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.onNodeWithText
+import org.junit.Assert.assertTrue
 import androidx.compose.ui.unit.width
 import androidx.compose.ui.unit.height
 import androidx.compose.ui.geometry.Offset
@@ -532,6 +535,18 @@ class NowPlayingUiTest {
         assertEquals(1.9, window.look.leading, 0.0)
         assertEquals(ReadLook(24, 1.9), saved)
         shot("look_light")
+    }
+
+    @Test fun lookSheetLabelsTheLineSpacingRowWithRoomAboveAndItsOwnRowRightBelow() {
+        show(sheet = PlayerSheet.Look, dark = true)
+        val sizes = rule.onNodeWithContentDescription("Cỡ chữ 20").getUnclippedBoundsInRoot()
+        val label = rule.onNodeWithText("Giãn dòng").getUnclippedBoundsInRoot()
+        val spacing = rule.onNodeWithContentDescription("Giãn dòng 1,5").getUnclippedBoundsInRoot()
+        val above = label.top - sizes.bottom
+        val below = spacing.top - label.bottom
+        assertTrue("chỗ trên nhãn ($above) phải >= 12 dp", above >= 12.dp)
+        assertTrue("nhãn gần hàng nó gọi tên ($below) hơn hàng trên ($above)", below < above)
+        shot("look_dark")
     }
 
     @Test fun moreSheetOffersTheTextLookOnlyWhereThereIsTextToRead() {

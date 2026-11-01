@@ -1,6 +1,8 @@
 package vn.abook.player.ui.studio
 
 import android.content.Context
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 import vn.abook.player.StudioApi
@@ -116,8 +118,8 @@ interface StudioSource {
     /** Gửi một bước XOÁ (khoá trong [StudioPaths.DELETES]): bỏ ảnh bìa. */
     suspend fun delete(computer: String, id: String, endpoint: String): JSONObject
 
-    /** Gửi một file nguồn lên thư mục tải lên của máy tính (`POST /api/sources/upload`); `input` mở luồng đọc khi bắt đầu gửi. */
-    suspend fun uploadSource(computer: String, folder: String, name: String, input: () -> InputStream): UploadedSource
+    /** Gửi một file nguồn lên thư mục tải lên của máy tính (`POST /api/sources/upload`); `input` mở luồng đọc khi bắt đầu gửi, `size` là cỡ file đã khai (<= 0: chưa biết, đọc hết trước khi gửi). */
+    suspend fun uploadSource(computer: String, folder: String, name: String, size: Long, input: () -> InputStream): UploadedSource
 
     /** Tách file gộp nhiều chương thành thư mục chương (`POST /api/sources/split`); trả thư mục. */
     suspend fun splitSource(computer: String, path: String, title: String): String
@@ -242,8 +244,8 @@ class StudioRepo(
 
     override suspend fun delete(computer: String, id: String, endpoint: String): JSONObject = api(computer).delete(StudioPaths.delete(id, endpoint))
 
-    override suspend fun uploadSource(computer: String, folder: String, name: String, input: () -> InputStream): UploadedSource =
-        parsed { StudioNewJson.uploaded(api(computer).postStream(StudioPaths.SOURCE_UPLOAD, StudioUpload.writer(folder, name, input()))) }
+    override suspend fun uploadSource(computer: String, folder: String, name: String, size: Long, input: () -> InputStream): UploadedSource =
+        parsed { StudioNewJson.uploaded(api(computer).postStream(StudioPaths.SOURCE_UPLOAD, withContext(Dispatchers.IO) { StudioUpload.body(folder, name, size, input) })) }
 
     override suspend fun splitSource(computer: String, path: String, title: String): String =
         parsed { StudioNewJson.folder(api(computer).postSlow(StudioPaths.SOURCE_SPLIT, JSONObject().put("path", path).put("title", title))) }

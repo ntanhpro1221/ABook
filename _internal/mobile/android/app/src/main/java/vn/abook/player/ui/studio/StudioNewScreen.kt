@@ -114,9 +114,13 @@ private fun NewFooter(state: StudioNewState) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Dim.s8)) {
         InlineProblem(state.problem, null, "studio_new_problem")
         when (state.step) {
-            NewStep.Source -> PrimaryButton(
-                if (state.scanning) StudioNewText.SCANNING else StudioNewText.NEXT, state::next, Modifier.fillMaxWidth().testTag("studio_new_next"), enabled = state.canScan,
-            )
+            NewStep.Source -> {
+                // Lý do nút "Tiếp" chưa bấm được nằm NGAY trên nút (chân màn không bị bàn phím hay danh sách che), không nằm trong danh sách cuộn.
+                if (state.rows.isEmpty()) RowHint(StudioNewText.NO_SOURCE, Modifier.testTag("studio_new_none"))
+                PrimaryButton(
+                    if (state.scanning) StudioNewText.SCANNING else StudioNewText.NEXT, state::next, Modifier.fillMaxWidth().testTag("studio_new_next"), enabled = state.canScan,
+                )
+            }
             NewStep.Chapters -> {
                 PrimaryButton(if (state.scanning) StudioNewText.SCANNING else StudioNewText.NEXT, state::next, Modifier.fillMaxWidth().testTag("studio_new_next"), enabled = state.kept.isNotEmpty() && !state.scanning)
                 TextAction(StudioNewText.BACK, state::back, "studio_new_back", Modifier.fillMaxWidth(), align = Alignment.Center)
@@ -150,9 +154,7 @@ private fun SourceStep(state: StudioNewState, pick: () -> Unit) {
                 TextAction(StudioNewText.PASTE_ADD, { state.addText(pasted); pasted = "" }, "studio_new_paste_add", Modifier.fillMaxWidth())
             }
         }
-        if (state.rows.isEmpty()) {
-            item("none", "status") { RowHint(StudioNewText.NO_SOURCE, Modifier.padding(top = Dim.s16).testTag("studio_new_none")) }
-        } else {
+        if (state.rows.isNotEmpty()) {
             items(state.rows, key = { "row_${it.id}" }, contentType = { "row" }) { row -> UploadRow(state, row) }
         }
     }
