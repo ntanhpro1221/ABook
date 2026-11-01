@@ -185,12 +185,18 @@ export const LOOP_CROSSFADE_SECONDS = mix.loopCrossfadeSeconds;
 /** Chu kỳ ngắn nhất (giây) để điểm vòng của danh mục được dùng (music_mix.loop_bounds). */
 const LOOP_MIN_PERIOD_SECONDS = mix.loopMinPeriodSeconds;
 const STEP_MS = 50;
-/** Bài đang tải dở chỉ còn chừng này giây đã tải trước con trỏ phát: mờ ra trong [UNDERRUN_FADE_SECONDS] rồi giữ im tới khi trình duyệt lại ước
- *  tải kịp (readyState 4) - như musicmixer.cpp của bản máy tính (NA1 01-11: nhạc im phụt 14 lần khi bài đang tải dở). */
+/** Bài <audio src> đang tải dở (trình duyệt không có MediaSource) chỉ vào - và vào lại sau hụt - khi phát được tới hết bài ([playsThrough]): cùng
+ *  công thức, cùng hằng số với `keepsUp` của bản máy tính (musicmixer.cpp) và StreamPace.kt của Android. Tốc độ tải đo bằng trung bình trượt
+ *  [DOWNLOAD_WINDOW_SECONDS] giây của phần đã tải (giây bài mỗi giây đồng hồ), gộp đợt dồn [DOWNLOAD_BURST_SECONDS] đầu (phần bộ đệm đã có sẵn). */
+const DOWNLOAD_WINDOW_SECONDS = 8;
+const DOWNLOAD_BURST_SECONDS = 0.5;
+const DOWNLOAD_MARGIN = 1.3;
+/** Phần phải có sẵn trước con trỏ lúc vào. */
+const DOWNLOAD_LEAD_SECONDS = 2;
+/** Tốc độ tụt giữa bài mà phần đã tải trước con trỏ còn dưới chừng này: mờ ra trong [UNDERRUN_FADE_SECONDS], tạm dừng tại chỗ, phát được tới hết bài
+ *  thì mờ vào cũng trong chừng ấy - không tắt / bật phụt (NA1 01-11: nhạc im phụt 14 lần khi bài đang tải dở). */
 const UNDERRUN_LOW_SECONDS = 1;
 const UNDERRUN_FADE_SECONDS = 0.3;
-/** Bài <audio src> đang tải dở chỉ vào (hay vào lại sau hụt) khi đã tải chừng này giây trước con trỏ: readyState còn 4 ngay lúc vừa hụt. */
-const UNDERRUN_RESUME_SECONDS = 3;
 /** Bài tải hỏng (mất mạng): đoạn của nó im lặng, chừng ấy sau mới thử lại - như MusicFailures.RETRY_MS của Android. */
 export const RETRY_MS = 5 * 60_000;
 /** Mốc đầu chương kế chưa dựng xong (`pending`) hay hỏi hỏng: chừng ấy ms sau mới hỏi lại; cũng là nhịp xin lại trong [NEXT_CHAPTER_LAST_CHANCE_SECONDS]. */
@@ -354,8 +360,47 @@ interface Playing {
   early?: boolean;
   /** Vòng cuối của mốc `tail`: không mở phần tử lặp nữa, bài chơi tới E là hết. */
   final?: boolean;
-  /** Bài đang tải dở sắp hụt ([bufferedAhead] < [UNDERRUN_LOW_SECONDS]): đang mờ ra, tới 0 thì chờ tiếng lại như bài mới. */
+  /** Bài đang tải dở sắp hụt ([bufferedAhead] < [UNDERRUN_LOW_SECONDS]): đang mờ ra, tới 0 thì tạm dừng tại chỗ, chờ cổng như bài mới. */
   starving?: boolean;
+  /** Cổng của bài đang tải dở: "wait" = tạm dừng ở chỗ vào, chờ phát được tới hết bài ([playsThrough]); "open" = đã qua. */
+  gate?: "wait" | "open";
+  pace?: DownloadPace;
+}
+
+/** Tốc độ tải (giây bài mỗi giây đồng hồ) của một bài đang tải dở - như StreamPace.kt của Android và DownloadRate của musicmixer.cpp. */
+export class DownloadPace {
+  private samples: [number, number][] = [];
+  private began = -1;
+
+  /** `have`: giây bài đã tải liền tới (tính từ đầu bài) lúc `now` (ms). Phần đã tải lùi (tua sang chỗ chưa tải): đo lại từ đầu. */
+  add(now: number, have: number): void {
+    const last = this.samples[this.samples.length - 1];
+    if (this.began < 0 || (last && have < last[1] - 0.05)) {
+      this.began = now;
+      this.samples = [];
+    }
+    if (now - this.began < DOWNLOAD_BURST_SECONDS * 1000) this.samples = [];
+    this.samples.push([now, have]);
+    // Giữ một mẫu ngay trước cửa sổ làm mốc đầu.
+    while (this.samples.length > 2 && now - this.samples[1][0] > DOWNLOAD_WINDOW_SECONDS * 1000) this.samples.shift();
+  }
+
+  /** Trung bình trượt tính tới `now` (nguồn đứng thì tụt dần về 0); null khi chưa đo đủ 1 giây. */
+  rate(now: number): number | null {
+    let first = this.samples[0];
+    for (const sample of this.samples) if (now - sample[0] > DOWNLOAD_WINDOW_SECONDS * 1000) first = sample;
+    if (!first) return null;
+    const span = now - first[0];
+    if (span < 1000) return null;
+    return ((this.samples[this.samples.length - 1][1] - first[1]) * 1000) / span;
+  }
+}
+
+/** Phát từ giây `from` tới hết bài dài `duration` mà không hụt, nếu tốc độ tải giữ ở `rate` chia lề: đã tải `have` + rate/lề·t, phát tới from + t - cả
+ *  hai tuyến tính theo t, nên chỉ cần đúng bây giờ (có sẵn [DOWNLOAD_LEAD_SECONDS]) và lúc phát hết. Chưa đo được tốc độ: chưa chắc, coi như không. */
+export function playsThrough(have: number, from: number, duration: number, rate: number | null): boolean {
+  if (have >= duration - 0.05) return true;
+  return have - from >= DOWNLOAD_LEAD_SECONDS && rate !== null && rate > 0 && ((duration - have) / rate) * DOWNLOAD_MARGIN <= duration - from;
 }
 
 /** Giây đã tải trước con trỏ phát của bài đang tải dở; null = đã tải trọn, hay phần tử không cho biết (bản giả, bài qua MediaSource đã nạp cả file). */
@@ -491,13 +536,14 @@ export class MusicBed {
     else playing.audio.volume = playing.goal;
   }
 
-  /** Bài mới còn đang chờ tải (chưa có sự kiện `playing`, hay `readyState` < 4 - trình duyệt chưa ước tải kịp tới hết bài): chưa được nhích âm lượng
-   *  lên - bài cũ đứng ở mức đang có ([startFade]), thay vì bài mới vào rồi hụt giữa chừng hay "vào đột ngột" ở đủ mức ngay khi tải xong. */
+  /** Bài mới còn đang chờ tải (chưa có sự kiện `playing`, `readyState` < 4 - trình duyệt chưa ước tải kịp tới hết bài, hay bài đang tải dở chưa qua
+   *  cổng [playsThrough] - đã qua thì readyState 3 là đủ): chưa được nhích âm lượng lên - bài cũ đứng ở mức đang có ([startFade]), thay vì bài mới
+   *  vào rồi hụt giữa chừng hay "vào đột ngột" ở đủ mức ngay khi tải xong. */
   private awaitingSound(playing: Playing): boolean {
     const { audio } = playing;
     if (!playing.entering || typeof audio.readyState !== "number") return false;
-    const ahead = bufferedAhead(audio);
-    return !(this.sounded.has(audio) && audio.readyState >= 4 && (ahead === null || ahead >= UNDERRUN_RESUME_SECONDS));
+    if (playing.gate === "wait") return true;
+    return !(this.sounded.has(audio) && (audio.readyState >= 4 || (playing.gate === "open" && audio.readyState >= 3)));
   }
 
   /** Gọi mỗi khi thời gian giọng đọc đổi (`seeked` = người nghe vừa tua). `ended`: giọng dừng vì tự hết chương / hết cuốn chứ không phải
@@ -531,7 +577,7 @@ export class MusicBed {
     // Chỉ bài đang kêu được chơi lại; bài đang mờ đi (đổi cuốn / chương lúc đã tạm dừng) thì chỉ dừng cùng giọng - chơi lại nó là mở một bài đã bỏ (soát a45).
     for (const audio of [this.current?.audio, ...this.fading]) {
       if (!audio) continue;
-      if (playing && audio.paused && !audio.ended && audio === this.current?.audio) void audio.play().catch(() => undefined);
+      if (playing && audio.paused && !audio.ended && audio === this.current?.audio && this.current.gate !== "wait") void audio.play().catch(() => undefined);
       // Luôn pause, kể cả phần tử đang `paused` (bài còn đang tải qua mseAudio giữ ý định phát: pause() mới huỷ nó, không thì tải xong nhạc tự kêu khi giọng đã dừng).
       if (!playing) audio.pause();
     }
@@ -760,6 +806,7 @@ export class MusicBed {
       if (!place) this.align(audio, cue, this.current?.audio === audio ? this.lastTime : seconds);
       else if (Math.abs(audio.currentTime - place.at) > 0.25) audio.currentTime = place.at;
       for (const listener of [...this.loadListeners]) listener(cue.link, true);
+      if (this.current?.audio === audio && bufferedAhead(audio) !== null) this.startFade(); // tải dở: cổng [playsThrough] tạm dừng nó ngay ở chỗ vào
     }, { once: true });
     audio.addEventListener("error", () => {
       if (this.released.has(audio)) return;
@@ -834,15 +881,35 @@ export class MusicBed {
         const { audio, goal } = playing;
         const move = Math.max(playing.perTick, 1e-5);
         const ahead = bufferedAhead(audio);
-        if (ahead !== null && !audio.paused) busy = true; // còn tải dở: canh hụt mỗi nhịp
-        if (!playing.entering && !playing.starving && !audio.paused && ahead !== null && ahead < UNDERRUN_LOW_SECONDS) playing.starving = true;
+        if (ahead !== null) {
+          // Còn tải dở: đo tốc độ, chờ cổng / canh hụt mỗi nhịp.
+          const now = Date.now();
+          const pace = (playing.pace ??= new DownloadPace());
+          pace.add(now, audio.currentTime + ahead);
+          const through = playsThrough(audio.currentTime + ahead, audio.currentTime, audio.duration, pace.rate(now));
+          if (this.playing) busy = true;
+          if (playing.entering && playing.gate !== "open" && audio.volume <= 0) {
+            // Chưa có tiếng: đứng yên ở chỗ vào (phát câm thì chỗ vào trôi đi 1 giây mỗi giây, tải chậm hơn 1x không bao giờ đuổi kịp).
+            playing.gate = through ? "open" : "wait";
+            if (!through && !audio.paused) audio.pause();
+            else if (through && this.playing && audio.paused && !audio.ended) void audio.play().catch(() => undefined);
+          } else if (!playing.starving && !audio.paused && audio.volume > 0 && ahead < UNDERRUN_LOW_SECONDS && !through) {
+            playing.starving = true;
+          }
+        } else if (playing.gate === "wait") {
+          playing.gate = "open"; // vừa tải trọn
+          if (this.playing && audio.paused && !audio.ended) void audio.play().catch(() => undefined);
+        }
         if (playing.starving) {
           audio.volume = Math.max(0, audio.volume - (Math.max(goal, 0.01) * STEP_MS) / 1000 / UNDERRUN_FADE_SECONDS);
           if (audio.volume <= 0) {
-            // Đã im: chờ tiếng lại như bài mới (readyState 4), rồi mờ vào.
+            // Đã im: tạm dừng tại chỗ, chờ cổng như bài mới, rồi mờ vào trong UNDERRUN_FADE_SECONDS.
             playing.starving = false;
             playing.entering = true;
-            playing.perTick = (goal * STEP_MS) / 1000 / playing.fadeSeconds;
+            playing.gate = "wait";
+            playing.fadeSeconds = UNDERRUN_FADE_SECONDS;
+            playing.perTick = (goal * STEP_MS) / 1000 / UNDERRUN_FADE_SECONDS;
+            audio.pause();
           }
           busy = true;
         } else if (audio.volume < goal && this.awaitingSound(playing)) {
@@ -856,7 +923,7 @@ export class MusicBed {
         }
       }
       // Bài mới còn chờ tải: bài cũ đứng ở mức đang có, không để cảnh câm suốt thời gian tải; bài mới có tiếng thì mờ tiếp.
-      const holdOld = playing !== null && !playing.audio.paused && this.awaitingSound(playing);
+      const holdOld = playing !== null && this.playing && this.awaitingSound(playing);
       this.fading = this.fading.filter((audio) => {
         if (holdOld && !audio.ended && !audio.paused) {
           busy = true;
