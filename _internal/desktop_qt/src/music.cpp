@@ -16,9 +16,6 @@ namespace {
 
 Music *g_instance = nullptr;
 
-/// Nhạc theo cảnh dựng nền: chương chưa xong thì máy chủ trả `pending` - hỏi lại chừng ấy lần, cách nhau chừng ấy (player.tsx).
-constexpr int SCENE_POLLS = 80;
-constexpr int SCENE_POLL_MS = 1500;
 /// Mốc trả `unavailable` (danh mục chưa tải được) hay hỏi hỏng: hỏi lại sau quãng lùi dần, có hạn (sceneCues.ts SCENE_RETRY_MS).
 constexpr int SCENE_RETRY_MS[] = {15000, 30000, 60000, 120000, 300000};
 /// Giọng nhảy quá chừng này giây giữa hai nhịp = người nghe vừa tua (player.tsx).
@@ -156,10 +153,10 @@ void Music::askCues(int attempt, int misses) {
         }
         const MusicCues result = cuesFromJson(body);
         m_credits = result.credits;
-        if (result.pending && attempt < SCENE_POLLS) {
+        if (const std::optional<int> poll = result.pending ? scenePollDelay(attempt) : std::nullopt) {
             m_retry.disconnect(this);
             connect(&m_retry, &QTimer::timeout, this, [this, attempt, misses] { askCues(attempt + 1, misses); });
-            m_retry.start(SCENE_POLL_MS);
+            m_retry.start(*poll);
             return;
         }
         if (!result.unavailable.isEmpty())

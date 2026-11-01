@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { MusicBed, type MusicCue } from "./musicBed";
 import type { Script, ScriptSegment } from "./model";
-import { SCENE_RETRY_MS, SceneCues, anchorSceneCues, fromSegment, isSceneCues, nextSegment, sceneRetryDelay, segmentStarts, warpOf } from "./sceneCues";
+import { SCENE_FAST_POLLS, SCENE_POLLS, SCENE_RETRY_MS, SceneCues, anchorSceneCues, fromSegment, isSceneCues, nextSegment, scenePollDelay, sceneRetryDelay, segmentStarts, warpOf } from "./sceneCues";
 
 function segment(id: number, start: number | null, end: number | null, text = "Một đoạn chữ vừa đủ dài để đọc."): ScriptSegment {
   return { id, paragraph: id, text, kind: "narration", speaker: "NARRATOR", start, end, status: "pending" };
@@ -156,5 +156,15 @@ describe("hỏi lại mốc nhạc theo cảnh khi chương trả 'chưa có' (s
     for (let i = 1; i < delays.length; i += 1) expect(delays[i]).toBeGreaterThan(delays[i - 1]);
     expect(delays[0]).toBeGreaterThanOrEqual(10_000);
     expect(sceneRetryDelay(delays.length)).toBeNull();
+  });
+});
+
+describe("hỏi lại mốc của chương chưa dựng xong (pending)", () => {
+  it("máy chủ giữ lời hỏi tới 2 giây: vài lần đầu hỏi lại ngay sau 200 ms, rồi thưa ra 1,5 giây, hết lượt thì thôi", () => {
+    expect(scenePollDelay(0)).toBe(200);
+    expect(scenePollDelay(SCENE_FAST_POLLS - 1)).toBe(200);
+    expect(scenePollDelay(SCENE_FAST_POLLS)).toBe(1500);
+    expect(scenePollDelay(SCENE_POLLS - 1)).toBe(1500);
+    expect(scenePollDelay(SCENE_POLLS)).toBeNull();
   });
 });

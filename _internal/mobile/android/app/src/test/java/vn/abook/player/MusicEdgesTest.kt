@@ -113,4 +113,14 @@ class MusicEdgesTest {
             } finally { field("context").set(MusicBed, null); MusicBed.stop(); android.os.Handler.reset() }
         } finally { root.deleteRecursively() }
     }
+
+    @Test
+    fun scenePollAsksBackSoonThenSlowsDown() {
+        // máy chủ / SceneDevice giữ lời hỏi tới 2 giây: 10 lần đầu hỏi lại sau 200 ms, rồi 1,5 giây, hết SCENE_POLLS lần thì thôi (sceneCues.ts scenePollDelay)
+        assertEquals(200L, MusicBed.scenePollDelay(0))
+        assertEquals(200L, MusicBed.scenePollDelay(MusicBed.SCENE_FAST_POLLS - 1))
+        assertEquals(1500L, MusicBed.scenePollDelay(MusicBed.SCENE_FAST_POLLS))
+        assertEquals(1500L, MusicBed.scenePollDelay(MusicBed.SCENE_POLLS - 1))
+        assertNull(MusicBed.scenePollDelay(MusicBed.SCENE_POLLS))
+    }
 }
