@@ -1693,8 +1693,8 @@ object MusicBed {
     }
 
     /**
-     * Bài stream (http) được kêu không. Chưa có tiếng: cổng [StreamPace.playsThrough] - phát được từ chỗ vào tới chỗ bài thôi kêu (hay trình phát đã ngừng tải vì đệm đầy
-     * [StreamPace.BUFFER_MS] mà có sẵn [MusicMix.underrunLeadMs]); chưa qua thì TẠM DỪNG đứng yên ở chỗ vào (phát câm thì chỗ vào trôi đi 1 giây mỗi giây, tải chậm hơn 1x
+     * Bài stream (http) được kêu không. Chưa có tiếng: cổng [StreamPace.playsThrough] - phát được từ chỗ vào tới chỗ bài thôi kêu (hay đệm phía trước đã đầy
+     * [StreamPace.BUFFER_MS] - [StreamPace.full]; không suy từ `isLoading` = false); chưa qua thì TẠM DỪNG đứng yên ở chỗ vào (phát câm thì chỗ vào trôi đi 1 giây mỗi giây, tải chậm hơn 1x
      * không bao giờ đuổi kịp), bài trước giữ chỗ / im lặng. Đã có tiếng mà đệm trước tụt dưới [MusicMix.underrunLowMs] và không còn phát được tới chỗ thôi kêu: `starving` (mờ
      * ra trước khi đệm cạn, tới 0 thì tạm dừng và chờ cổng lại - [fadeTick]). Như `keepsUp` của musicmixer.cpp và `playsThrough` của musicBed.ts.
      */
@@ -1703,11 +1703,11 @@ object MusicBed {
         val now = SystemClock.elapsedRealtime()
         val buffered = player.bufferedPosition
         val position = player.currentPosition
-        bed.pace.add(now, buffered)
+        bed.pace.add(now, buffered, position)
         val ahead = buffered - position
         // Chỉ cần tải kịp tới chỗ bài thôi kêu (tính lại mỗi nhịp: giọng chậm / khựng thì chỗ ấy dời theo).
         val end = bed.cue?.let { minOf(player.duration.toDouble(), position + (MusicCues.playEnd(cues, it) - lastSeconds) * 1000) } ?: player.duration.toDouble()
-        val through = bed.pace.playsThrough(now, buffered, position, end.toLong()) || !player.isLoading && ahead >= MusicCues.mix.underrunLeadMs
+        val through = bed.pace.playsThrough(now, buffered, position, end.toLong()) || StreamPace.full(ahead)
         if (bed.entering && !bed.admitted && bed.volume == 0f) {
             bed.awaiting = !through
             if (bed.awaiting) {
