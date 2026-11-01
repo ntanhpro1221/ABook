@@ -27,6 +27,8 @@ public:
     virtual void preload() {}
     /// Hết nguồn thì quay lại đầu, không phát `ended` (nhạc nền: bài quá ngắn để lặp mờ chéo). Mặc định: không lặp.
     virtual void setLoop(bool loop) { Q_UNUSED(loop); }
+    /// Nhạc nền: giây của bài mà tới đó bài thôi kêu (hết các mốc dùng nó + mờ ra). Bài đang tải dở chỉ cần tải kịp tới đây mới vào.
+    virtual void setPlayUntil(double seconds) { Q_UNUSED(seconds); }
 
     /// Giây hiện tại; sau `seek()` trả ngay đích tới khi nguồn đứng ở đó.
     virtual double position() const = 0;

@@ -52,6 +52,7 @@ public:
     void setVolume(double value) override { volume = value; }
     void preload() override { ++preloads; }
     void setLoop(bool value) override { loop = value; }
+    void setPlayUntil(double seconds) override { until = seconds; }
     double position() const override { return pos; }
     double duration() const override { return dur; }
     bool playing() const override { return isPlaying; }
@@ -70,6 +71,7 @@ public:
     double dur = 100;
     double rate = 1;
     double volume = 1;
+    double until = std::numeric_limits<double>::infinity();
     bool isPlaying = false;
     bool loop = false;
     int loads = 0;

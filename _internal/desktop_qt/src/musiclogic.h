@@ -184,6 +184,28 @@ inline const MusicCue *cueAt(const QVector<MusicCue> &cues, double seconds) {
     return nullptr;
 }
 
+/// Giây chương mà bài của mốc `cue` thôi kêu: hết chuỗi mốc liền nhau cùng bài (bài chơi tiếp qua các mốc ấy, không bắt đầu lại) + thời gian
+/// mờ ra khi mốc kế vào (mốc anh em: SIBLING_FADE_SECONDS, không thì FADE_SECONDS). Mốc `tail` chơi tới hết bài: vô cực. Bài đang tải dở chỉ
+/// cần tải kịp tới chỗ ấy mới vào (musicmixer keepsUp; musicBed.ts playEnd, MusicCues.kt playEnd - cùng luật): bài 863 s mà mốc chỉ dùng 342 s
+/// thì không phải chờ tải gần hết bài (U30F 02-11: nhạc chương 1 vào ở 350 s thay vì 98 s).
+inline double playEnd(const QVector<MusicCue> &cues, const MusicCue &cue) {
+    double end = cue.end;
+    bool tail = cue.tail;
+    for (bool grew = true; grew;) {
+        grew = false;
+        for (const MusicCue &other : cues)
+            if (other.link == cue.link && other.start <= end + 1e-6 && other.end > end) {
+                end = other.end; tail = tail || other.tail; grew = true;
+            }
+    }
+    if (tail)
+        return INF;
+    for (const MusicCue &other : cues)
+        if (other.link != cue.link && std::abs(other.start - end) <= 1e-6)
+            return end + (other.sibling ? SIBLING_FADE_SECONDS : FADE_SECONDS);
+    return end + FADE_SECONDS;
+}
+
 /// Mức bước (dB) của mốc tại giây `seconds` của chương: bước cuối cùng đã tới, chưa tới bước nào thì 0.
 inline double stepDbAt(const MusicCue &cue, double seconds) {
     double db = 0;
