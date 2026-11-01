@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.157] - 2026-11-01
+
 ### Sửa lỗi
 
 - Giọng đọc trực tuyến không còn đứng chờ trước một đoạn dài: luôn đọc sẵn đủ 20 giây phía trước thay vì một số đoạn cố định, nên mấy dòng thoại ngắn đứng trước một đoạn kể dài không còn làm đoạn dài được xin quá muộn (soát nghe "Tắt đèn": giọng im 3,45 giây chờ một clip 22 giây). Máy tính trước đây chỉ đọc trước đúng một đoạn. Cả máy tính, điện thoại và bản web.
