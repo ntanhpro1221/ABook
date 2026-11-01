@@ -11,6 +11,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Bài nhạc tải đứt giữa chừng (mạng chậm hay chập chờn) không phải tải lại từ đầu: phần đã tải được giữ, lần sau app tải tiếp từ đúng chỗ đứt. Trước đây một bài 13 MB đứt gần cuối là mất trắng, chương sau tải lại từ 0 và cả chương không có nhạc. Đứt sau khi đã nhận được dữ liệu cũng không còn bị coi là mất mạng, nên nguồn nhạc không bị bỏ qua 5 phút và bài vẫn nằm trong hàng tải sẵn. Máy tính, bản web và điện thoại.
 
+### Điện thoại
+
+- Gửi file truyện từ điện thoại lên máy tính (Studio → Sách mới) chạy lại: trước đây mọi file đều bị từ chối "không phải TXT, EPUB, DOCX hay PDF" dù đúng đuôi .txt.
+- Hàng thẻ của dự án Studio không còn xuống hai dòng trên màn hẹp, giờ cuộn ngang; hàng lọc thư viện có dòng riêng nên chữ "Xong" không còn bị cắt.
+- Bàn phím mở không còn che chữ phía trên nút Tiếp; nội dung cuộn mờ dần dưới thanh trạng thái thay vì chạy dưới đồng hồ; nhãn "Giãn dòng" thoáng hơn.
+
 ## [0.4.159] - 2026-11-02
 
 ### Nhạc nền
