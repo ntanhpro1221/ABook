@@ -121,13 +121,15 @@ export class SceneCues {
     this.floor = 0;
   }
 
-  /** Mốc của chương vừa về lúc giọng đang ở giây `time`: nhạc vào ở đầu câu kế (không giữa câu). */
+  /** Mốc của chương vừa về lúc giọng đang ở giây `time`: nhạc vào ở đầu câu kế (không giữa câu). Đúng mốc đang giữ về lại (mốc chương kế đọc sẵn đã đặt ở giây 0,
+   *  lời hỏi lúc sang chương về sau): giữ chỗ nhạc được vào, không đẩy sang câu kế. */
   arrive(cues: MusicCue[], estSeconds: number, levelDb: number | undefined, time: number): void {
+    const again = cues.length > 0 && estSeconds === this.estSeconds && JSON.stringify(cues) === JSON.stringify(this.raw);
     this.raw = cues;
     this.estSeconds = estSeconds;
     this.levelDb = levelDb;
     const script = this.script();
-    this.floor = script && time > 0.25 ? nextSegment(script, time) : 0;
+    if (!again) this.floor = script && time > 0.25 ? nextSegment(script, time) : 0;
     this.push(time);
   }
 

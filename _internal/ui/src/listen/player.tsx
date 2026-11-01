@@ -8,7 +8,7 @@ import { Clock, ClockContext } from "./clock";
 import { isNative, type AudioEngine } from "./engine";
 import { anchorOf, type ReadingAnchor } from "./readingAnchor";
 import { tellSceneMusic } from "./musicHint";
-import { MUSIC_CHANGED_ALL, MUSIC_CHANGED_EVENT, MusicBed, NextChapterWarm, type MusicCredit } from "./musicBed";
+import { MUSIC_CHANGED_ALL, MUSIC_CHANGED_EVENT, MusicBed, NextChapterWarm, type MusicCredit, type MusicCues } from "./musicBed";
 import { SceneCues, isSceneCues, scenePollDelay, sceneRetryDelay } from "./sceneCues";
 import { nextPlaylistBed, PlaylistClock, PlaylistDriver, type PlaylistBedState } from "./playlistBed";
 import { VOICE_STALL_TICK_MS, VoiceStall } from "./voiceStall";
@@ -589,12 +589,20 @@ export function PlayerProvider({
   // Nhạc nền (musicBed.ts): chỉ bộ máy phát web (máy tính); lõi native Android chưa có. Rãnh nhạc tắt / chưa dựng thì
   // nguồn trả không mốc nào - trình phát chạy như cũ.
   const bed = useMemo(() => (native || !source.musicCues ? null : new MusicBed(undefined, source.musicWarm && ((link) => source.musicWarm?.(link)))), [native, source]);
-  // Tải sẵn bài mốc đầu của chương kế ngay khi chương này bắt đầu (musicBed.ts NextChapterWarm): chương mới mở bằng bài đã có trong bộ đệm máy chủ.
+  // Tải sẵn bài mốc đầu của chương kế ngay khi chương này bắt đầu (musicBed.ts NextChapterWarm): chương mới mở bằng bài đã có trong bộ đệm máy chủ. Lời đáp
+  // giữ lại ("cuốn:chương"): sang chương ấy thì mốc đặt ngay ở giây 0, không chờ lời hỏi lúc sang chương (về sau 0,25 s thì nhạc đợi tới câu kế).
+  const aheadCues = useRef<{ key: string; result: MusicCues } | null>(null);
   const nextWarm = useMemo(
     () =>
       bed && source.musicCues
         ? new NextChapterWarm(
-            (chapterId) => source.musicCues!(refs.current.track?.bookId ?? "", chapterId),
+            (chapterId) => {
+              const book = refs.current.track?.bookId ?? "";
+              return source.musicCues!(book, chapterId).then((result) => {
+                if (!result.pending && !result.unavailable) aheadCues.current = { key: `${book}:${chapterId}`, result };
+                return result;
+              });
+            },
             (link) => source.musicWarm?.(link),
           )
         : null,
@@ -705,6 +713,13 @@ export function PlayerProvider({
       bedCuesFor.current = bedChapter;
       scene?.reset();
       if (!playlistBed) bed.setCues([], undefined, 0);
+      // Mốc đã đọc sẵn của chương này: đặt ngay; lời hỏi dưới vẫn đi, mốc ấy về lại y hệt thì không dời chỗ nhạc vào.
+      const ahead = aheadCues.current?.key === bedChapter ? aheadCues.current.result : null;
+      if (ahead && scene && isSceneCues(ahead.cues)) {
+        bedCredits.current = ahead.credits ?? {};
+        sceneHeard.current = true;
+        scene.arrive(ahead.cues, ahead.estSeconds ?? 0, ahead.levelDb, engine.time);
+      }
     }
     // Nhạc theo cảnh dựng nền: chương chưa xong thì máy chủ trả `pending` (giọng không chờ nhạc) - hỏi lại, xong thì nhạc vào ở đầu câu kế.
     let retry: ReturnType<typeof setTimeout> | undefined;

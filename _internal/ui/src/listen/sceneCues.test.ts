@@ -116,6 +116,23 @@ describe("nhạc theo cảnh: mốc theo đồng hồ đọc", () => {
     bed.stop();
   });
 
+  it("mốc chương kế đọc sẵn đặt ở giây 0: lời hỏi lúc sang chương về muộn với cùng mốc không đẩy nhạc sang câu kế, mốc khác thì như thường", () => {
+    const bed = fakeBed();
+    const scene = new SceneCues(bed, () => timed);
+    scene.arrive(cues, 300, -20, 0);
+    scene.arrive(cues.map((cue) => ({ ...cue })), 300, -20, 7);
+    bed.sync(7, true);
+    expect(bed.activeLink).toBe("a");
+    bed.stop();
+    const late = fakeBed();
+    const other = new SceneCues(late, () => timed);
+    other.arrive(cues, 300, -20, 0);
+    other.arrive(cues.map((cue) => ({ ...cue, end: cue.end + 1 })), 300, -20, 7);
+    late.sync(7, true);
+    expect(late.activeLink).toBeNull();
+    late.stop();
+  });
+
   it("giây thật của đoạn về sau thì mốc dịch theo, bài đang phát không bắt đầu lại", () => {
     const bed = fakeBed();
     let script = timed;
