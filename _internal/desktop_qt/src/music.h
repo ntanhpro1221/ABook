@@ -113,6 +113,9 @@ private:
     double m_last = 0;
     double m_volume = -1;
     QHash<QString, MusicLogic::MusicCredit> m_credits;
+    // Mốc chương kế NextChapterWarm đã hỏi ("cuốn:chương"): sang chương ấy thì đặt ngay, không chờ lời hỏi lúc sang chương.
+    QString m_aheadKey;
+    MusicLogic::MusicCues m_ahead;
 
     bool m_hasMusic = false;
     bool m_enabled = false;
