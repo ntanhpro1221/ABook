@@ -1012,7 +1012,12 @@ export class MusicBed {
       // Bài mới còn chờ tải: bài cũ đứng ở mức đang có, không để cảnh câm suốt thời gian tải; bài mới có tiếng thì mờ tiếp.
       const holdOld = playing !== null && this.playing && this.awaitingSound(playing);
       this.fading = this.fading.filter((audio) => {
-        if (holdOld && !audio.ended && !audio.paused) {
+        // Bài cũ đang tải dở sắp hết phần đã tải (giữ chỗ quá chỗ thôi kêu của nó): thôi giữ, mờ hết trong UNDERRUN_FADE_SECONDS - mờ thường dài hơn
+        // phần còn lại thì vẫn im phụt giữa chừng.
+        const ahead = bufferedAhead(audio);
+        const low = ahead !== null && ahead < UNDERRUN_LOW_SECONDS && !audio.paused;
+        if (low) this.fadeStep.set(audio, Math.max(this.fadeStep.get(audio) ?? 0, (Math.max(audio.volume, 0.01) * STEP_MS) / 1000 / UNDERRUN_FADE_SECONDS));
+        if (holdOld && !low && !audio.ended && !audio.paused) {
           busy = true;
           return true;
         }

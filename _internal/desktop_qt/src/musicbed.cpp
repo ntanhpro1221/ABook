@@ -385,6 +385,7 @@ void MusicBed::crossLoop(double seconds, bool fromTimer) {
     }
     const VoiceP old = playing.audio;
     old->fadeStep = (std::max(old->volume, 0.01) * STEP_MS) / 1000 / LOOP_CROSSFADE_SECONDS;
+    old->out->setPlayUntil(std::numeric_limits<double>::infinity()); // xem chỗ đổi mốc trong sync
     m_fading.append(old);
     std::optional<Standby> ready;
     if (m_standby && m_standby->owner == old)
@@ -558,6 +559,9 @@ void MusicBed::switchTo(std::optional<MusicCue> cue, double seconds, bool seeked
                 fade = siblingFadeSeconds(loopBounds(m_current->cue, duration(old)), currentTime(old));
         }
         old->fadeStep = (std::max(old->volume, 0.01) * STEP_MS) / 1000 / fade;
+        // Bài cũ có thể còn kêu quá chỗ thôi kêu của nó (giữ chỗ khi bài mới chưa tải xong): chân trời không còn biết, nên đang tải dở thì phải tải kịp
+        // tới hết bài, không thì vòng đệm cạn là mờ ra (keepsUp) thay vì im phụt.
+        old->out->setPlayUntil(std::numeric_limits<double>::infinity());
         m_fading.append(old);
         m_current.reset();
     }
