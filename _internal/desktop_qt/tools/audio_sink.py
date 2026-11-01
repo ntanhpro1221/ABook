@@ -53,13 +53,16 @@ LEVEL_TOL_DB = 1.0      # mức ở mỗi tốc độ lệch mức ở tốc đ�
 #   theo đồng hồ; padding chỉ đổi theo chu kỳ engine (WASAPI chia sẻ / FileSinkDevice: 10 ms). Nên vị trí luôn trễ sự thật
 #   0..1 chu kỳ, pha đổi theo nhịp thức của luồng trộn: lag là răng cưa một phía dưới đường thật, biên độ ENGINE_PERIOD_MS.
 #   Không chia cho tốc độ: nguồn luồng ghi vị trí nguồn theo khung thiết bị (mediaMixed += khung x tốc độ / rate), nên cỡ bộ
-#   đệm nguồn hay khối Sonic không vào vị trí báo, chỉ chu kỳ engine (thời gian thật) vào. Số đo 01-11 ở rate 1/1,5/2/3:
-#   xem SAW_MS.
+#   đệm nguồn hay khối Sonic không vào vị trí báo, chỉ chu kỳ engine (thời gian thật) vào. Ngưỡng SAW_MS = chu kỳ + 4 ms.
+#   Số đo 01-11, 12 lượt (5 exe 0.4.151, 5 exe 0.4.157, 2 cổng lúc máy bận), răng cưa lớn nhất: x0,75 10,0 / x1 10,7 /
+#   x1,25 10,4 / x1,5 10,2 / x2 10,0 / x3 11,3 ms (máy bận; máy rảnh 10,1); trôi lớn nhất 10,0 ms (x1, đoạn "next" chỉ một
+#   sườn), ở x3 1,0 ms.
 # - Trôi: dốc của đường thẳng giữa dải răng cưa (lag_parts) x độ dài đoạn. Trôi thật thì cộng dồn: vượt DRIFT_MS (thời gian
 #   người nghe) trong đoạn là trôi.
 ENGINE_PERIOD_MS = 10.0
 DRIFT_MS = 15.0
 SAW_MS = 14.0
+LATE_TICKS_FRAC = 0.02  # tick đóng dấu muộn bỏ được mỗi đoạn (ít nhất một), xem lag_parts
 CLICK_SOURCE_S = 0.05   # tiếng tách mà nguồn cũng có trong chừng này giây NGƯỜI NGHE quanh vị trí báo thì là của nguồn
 CLICK_COPY = 0.5        # ... tức nguồn trong cửa sổ ấy có gai (|sai phân bậc hai|) ít nhất bằng chừng này lần gai tiếng ra
 OFFSET_SPREAD_MS = 30.0 # tiếng nghe thấy lệch vị trí app báo: dao động quá chừng này trong một đoạn = trôi / giật
@@ -226,17 +229,36 @@ def analyze(run_dir, source_path=None):
 
 
 def lag_parts(t, lag):
-    """Tách lag (ms) theo t (giây) của một đoạn thành (dốc ms/giây, răng cưa ms): đường thẳng của dải hẹp nhất chứa mọi điểm
-    (khớp minimax; độ rộng dải lồi theo dốc nên tìm tam phân). Răng cưa = độ rộng dải; trôi = dốc x độ dài đoạn. Cộng một
-    trôi thẳng vào lag thì dốc cộng đúng chừng ấy, răng cưa giữ nguyên - kiểm lực vì thế biết chắc khi nào phải thấy.
-    Đoạn chỉ có một sườn răng cưa (không lần nào con trỏ bắt kịp) không phân biệt được với trôi: dốc giả tới một chu kỳ engine."""
-    lo, hi = -100.0, 100.0  # ms/giây: 10 % trôi
-    width = lambda b: float(np.ptp(lag - b * t))
-    for _ in range(100):
-        m1, m2 = lo + (hi - lo) / 3, hi - (hi - lo) / 3
-        lo, hi = (lo, m2) if width(m1) < width(m2) else (m1, hi)
-    b = (lo + hi) / 2
-    return b, width(b)
+    """Tách lag (ms) theo t (giây) của một đoạn thành (dốc ms/giây, răng cưa ms, số tick đóng dấu muộn): đường thẳng của dải
+    hẹp nhất chứa các điểm (khớp minimax; độ rộng dải lồi theo dốc nên tìm tam phân). Răng cưa = độ rộng dải; trôi = dốc x độ
+    dài đoạn. Cộng một trôi thẳng vào lag thì dốc cộng đúng chừng ấy, răng cưa giữ nguyên (tick bỏ chọn theo phần dư, cũng không
+    đổi) - kiểm lực vì thế biết chắc khi nào phải thấy. Đoạn chỉ có một sườn răng cưa (không lần nào con trỏ bắt kịp) không phân
+    biệt được với trôi: dốc giả tới một chu kỳ engine.
+    Tick đóng dấu muộn: Bench::notePlayback đọc vị trí rồi mới lấy đồng hồ; máy bận mà luồng giao diện bị giành CPU giữa hai lệnh
+    thì đúng một tick thụt sâu thêm (01-11 cổng trên exe 0.4.157 khi máy đang phân tích: -15,2 giữa -8,1 và -6,4, răng cưa 10 ms
+    đều quanh nó). Bỏ tối đa LATE_TICKS_FRAC số tick (ít nhất một), từng tick lẻ (hai bên vẫn giữ) mà riêng nó đã sâu quá SAW_MS
+    dưới đường bao; tick sâu hơn một chu kỳ mà dưới ngưỡng thì giữ (đáy răng cưa, dưới ngưỡng đằng nào cũng xanh). Con trỏ cập
+    nhật thưa thì sâu ở mọi chu kỳ nên vẫn đỏ."""
+    keep = np.ones(len(t), bool)
+
+    def fit():
+        tk, lk = t[keep], lag[keep]
+        width = lambda b: float(np.ptp(lk - b * tk))
+        lo, hi = -100.0, 100.0  # ms/giây: 10 % trôi
+        for _ in range(100):
+            m1, m2 = lo + (hi - lo) / 3, hi - (hi - lo) / 3
+            lo, hi = (lo, m2) if width(m1) < width(m2) else (m1, hi)
+        b = (lo + hi) / 2
+        return b, width(b), float(np.max(lk - b * tk))
+    b, w, top = fit()
+    for _ in range(max(1, int(LATE_TICKS_FRAC * len(t)))):
+        depth = np.where(keep, top + b * t - lag, -np.inf)
+        i = int(np.argmax(depth))
+        if depth[i] <= SAW_MS or 0 < i < len(t) - 1 and not (keep[i - 1] and keep[i + 1]):
+            break
+        keep[i] = False
+        b, w, top = fit()
+    return b, w, int((~keep).sum())
 
 
 def check(data, snippets=None):
@@ -462,10 +484,10 @@ def check(data, snippets=None):
         speed = rate_of[s["tag"]]
         slope = float(np.polyfit(t, p, 1)[0])
         lag = (p / speed - t) * 1000
-        trend, saw = lag_parts(t, lag)
+        trend, saw, late = lag_parts(t, lag)
         drifted = abs(trend) * float(t[-1] - t[0])
         drift.append(dict(segment=s["tag"], speed=speed, slope=round(slope, 5), error=round(slope / speed - 1, 5),
-                          spread_ms=round(float(lag.max() - lag.min()), 1), drift_ms=round(drifted, 1), saw_ms=round(saw, 1)))
+                          spread_ms=round(float(lag.max() - lag.min()), 1), drift_ms=round(drifted, 1), saw_ms=round(saw, 1), late_ticks=late))
         if drifted > DRIFT_MS:
             snip("drift", s["frames"][0], f"{s['tag']}: vị trí trôi khỏi đồng hồ {drifted:.1f} ms trong {t[-1] - t[0]:.1f} s (tốc độ {speed})")
         if saw > SAW_MS:
@@ -723,7 +745,8 @@ def gate(exe, runs):
     ok, results = strength(load(OUT / labels[0]), reports[0])
     # trôi / răng cưa lớn nhất theo tốc độ: bằng chứng ngưỡng còn dư bao nhiêu, kể cả khi cổng xanh và WAV bị xoá
     position = [{f"x{v:g}": dict(drift_ms=max(d["drift_ms"] for d in r["drift"] if d["speed"] == v),
-                                 saw_ms=max(d["saw_ms"] for d in r["drift"] if d["speed"] == v))
+                                 saw_ms=max(d["saw_ms"] for d in r["drift"] if d["speed"] == v),
+                                 late_ticks=sum(d["late_ticks"] for d in r["drift"] if d["speed"] == v))
                  for v in sorted({d["speed"] for d in r["drift"]})} for r in reports]
     summary = dict(gate="audio_sink", exe=str(exe), runs=[dict(label=l, ok=r["ok"], counts=r["counts"], excused=r["excused"], position=q)
                                                           for l, r, q in zip(labels, reports, position)],
@@ -919,6 +942,12 @@ def selftest():
         expect(f"lượt giả x{speed:g}: răng cưa {STRENGTH_SAW_MS:g} ms", kinds(synthetic_run(speed, saw_ms=STRENGTH_SAW_MS)) == {"saw"})
     for frac in STRENGTH_DRIFTS:
         expect(f"lượt giả: trôi {frac:+.1%}", "drift" in kinds(synthetic_run(1.0, drift=frac)))
+    # Một tick đóng dấu muộn 10 ms (máy bận, luồng giao diện bị giành CPU) ở chỗ răng cưa sâu: bỏ đúng tick ấy, vẫn sạch
+    late = synthetic_run(3.0)
+    tick = next(m for m in late["marks"] if m["tag"] == "tick" and m["frame"] > 30 * rate and m["frame"] / rate / 2.5 % 1 > 0.6)
+    late["marks"] = [dict(m, position=m["position"] - 3.0 * 0.010) if m is tick else m for m in late["marks"]]
+    report = check(late)
+    expect("lượt giả: một tick đóng dấu muộn", not report["findings"] and sum(d["late_ticks"] for d in report["drift"]) == 1)
     # Tiếng bật của nguồn, tiếng nghe đi trước vị trí báo 22 ms: ở x3 là 66 ms nguồn mà vẫn là của nguồn; 66 ms ở x1 thì không
     fast = synthetic_run(3.0, lead_ms=22, source_step_at=60.0)
     expect("tách nguồn x3: tiếng ra có tách", any(abs(k - 37.3 * rate) < 0.1 * rate for k in clicks(fast["mono"], rate)))
