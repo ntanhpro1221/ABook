@@ -1186,6 +1186,37 @@ describe("tải sẵn bài kế và mờ vào từ lúc có tiếng (musicwarm, 
     sim.bed.stop();
   });
 
+  it("chuỗi mốc đổi giữa chừng (sửa mốc, đổi chương): chân trời tính lại ngay theo mốc mới, không giữ chỗ thôi kêu cũ", () => {
+    vi.useFakeTimers();
+    const sim = slowBed(() => 0);
+    sim.bed.setCues([long[0], { ...long[1], end: 2000 }, { ...long[2], start: 2000 }], -20);
+    sim.bed.sync(0, true);
+    vi.advanceTimersByTime(3_000);
+    const a = sim.made[0].audio;
+    sim.bed.sync(1000, true);
+    const b = sim.made[1].audio;
+    b.duration = 600;
+    vi.advanceTimersByTime(1);
+    stream(b, () => 11 / 35);
+    for (let t = 0; t < 60; t += 0.5) {
+      sim.bed.sync(1000 + t, true);
+      vi.advanceTimersByTime(500);
+      expect(b.volume).toBe(0); // mốc dùng hết bài 600 s: tải 0,31x không bao giờ kịp
+      expect(a.volume).toBeCloseTo(GOAL, 3);
+    }
+    // Mốc còn 20 s (+ mờ ra): ~19 s đã tải là đủ - vào ngay ở nhịp kế.
+    sim.bed.setCues([long[0], { ...long[1], end: 1080 }, { ...long[2], start: 1080 }], -20, 1060);
+    let entered = -1;
+    for (let t = 60; t < 64 && entered < 0; t += 0.5) {
+      sim.bed.sync(1000 + t, true);
+      vi.advanceTimersByTime(500);
+      if (b.volume > 0) entered = t;
+    }
+    expect(entered).toBeGreaterThanOrEqual(60);
+    expect(entered).toBeLessThan(62);
+    sim.bed.stop();
+  });
+
   it("bài cũ đang tải dở giữ chỗ quá chỗ thôi kêu của nó: sắp hết phần đã tải thì mờ ra trong UNDERRUN_FADE_SECONDS, không cụt (web MSE 02-11: 8 lần cụt)", () => {
     vi.useFakeTimers();
     const sim = slowBed(() => 0);
