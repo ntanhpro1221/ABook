@@ -482,6 +482,24 @@ private slots:
         QVERIFY(std::isinf(out->until));
     }
 
+    // Chuỗi mốc đổi giữa chừng (đổi chương, sửa mốc) hay người nghe tua: chỗ thôi kêu tính lại ngay, không giữ số cũ tới nhịp đồng bộ kế.
+    void retellsWhereTheTrackStopsWhenTheCuesChangeOrTheListenerSeeks() {
+        Rig rig(400);
+        rig.bed->setCues({plain(0, 240, QStringLiteral("a")), plain(240, 300, QStringLiteral("b"))}, -20);
+        rig.bed->sync(10, true);
+        const QPointer<FakeOut> out = rig.made.value(0);
+        QVERIFY(out);
+        QCOMPARE(out->until - out->pos, 240 + FADE_SECONDS - 10);
+        rig.bed->setCues({plain(0, 150, QStringLiteral("a")), plain(150, 300, QStringLiteral("b"))}, -20);
+        QVERIFY(out);
+        QCOMPARE(out->until - out->pos, 150 + FADE_SECONDS - 10);
+        out->pos = 100;
+        rig.bed->sync(100, true, true);
+        const QPointer<FakeOut> now = rig.made.value(rig.made.size() - 1);
+        QVERIFY(now);
+        QCOMPARE(now->until - now->pos, 150 + FADE_SECONDS - 100);
+    }
+
     void fadedOutVoicesAreReleased() {
         Rig rig;
         rig.bed->setCues({plain(0, 120, QStringLiteral("a")), plain(180, 300, QStringLiteral("b"))}, -20);
