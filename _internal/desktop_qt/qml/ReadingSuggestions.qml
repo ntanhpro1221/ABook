@@ -54,7 +54,7 @@ Modal {
                 required property var modelData
                 width: parent.width
                 label: "Bỏ dòng"
-                hint: "“" + modelData.line + "”\u00a0· " + modelData.chapters.length + " chương"
+                hint: "“" + modelData.line + "”\u00a0·\u00a0" + modelData.chapters.length + " chương"
                 Switch {
                     objectName: "suggestionSkip"
                     label: "Bỏ dòng"

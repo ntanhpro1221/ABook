@@ -3,6 +3,7 @@ import ABook
 import "NewProjectLogic.js" as Logic
 import "UploadLogic.js" as Upload
 import "StudioLogic.js" as Studio
+import "TextWrap.js" as TextWrap
 
 // Phần cuối bước Nguồn khi đã có chương (SourceStep): dòng tổng (số chương, chữ, audio) với "Thêm file" / "Huỷ gửi" / "Chọn lại", chọn nhanh "Đợt này làm…" cho truyện dài,
 // danh sách chương (cuộn trong khung tối đa 340, bỏ từng chương, vạch "Phần N bắt đầu" khi chia tập), file bị bỏ qua và lời cảnh báo của lần quét.
@@ -72,8 +73,8 @@ Column {
             color: Theme.text2
             font.pixelSize: Theme.sizeBodySmall
             font.features: { "tnum": 1 }
-            text: root.scan ? "<font color=\"" + Theme.text + "\"><b>" + Studio.formatNumber(root.files.length) + " chương</b></font>&nbsp;· " +
-                              Logic.approx(root.scan.totals.words, root.scan.totals.estimated) + " chữ&nbsp;· khoảng " + Studio.formatLength(root.scan.totals.audioSeconds) : " "
+            text: root.scan ? "<font color=\"" + Theme.text + "\"><b>" + Studio.formatNumber(root.files.length) + " chương</b></font>&nbsp;·&nbsp;" +
+                              Logic.approx(root.scan.totals.words, root.scan.totals.estimated) + " chữ&nbsp;·&nbsp;khoảng " + Studio.formatLength(root.scan.totals.audioSeconds) : " "
         }
         Flow {
             id: buttons
@@ -238,7 +239,7 @@ Column {
                             width: parent.width - lead - 90 - 36 - 12 - 16
                             Text {
                                 width: parent.width
-                                text: cell.file ? (cell.file.firstLine || cell.file.title) : " "
+                                text: TextWrap.keepDots(cell.file ? (cell.file.firstLine || cell.file.title) : " ")
                                 color: Theme.text
                                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                 font.pixelSize: Theme.sizeBodySmall
@@ -246,7 +247,7 @@ Column {
                             }
                             Text {
                                 width: parent.width
-                                text: cell.file ? cell.file.name : " "
+                                text: TextWrap.keepDots(cell.file ? cell.file.name : " ")
                                 color: Theme.text2
                                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                 font.pixelSize: Theme.sizeCaption

@@ -45,7 +45,7 @@ Interactive {
         anchors.verticalCenter: parent.verticalCenter
         Text {
             width: parent.width
-            text: root.title
+            text: TextWrap.keepDots(root.title)
             color: Theme.text
             wrapMode: Text.Wrap
             font.pixelSize: root.section ? Theme.sizeSection : Theme.sizeBody

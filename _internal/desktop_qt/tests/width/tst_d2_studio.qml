@@ -110,12 +110,12 @@ Item {
             const narrator = one(page, "newBookNarrator")
             compare(narrator.options.length, 3)
             compare(narrator.options[0].label, "Máy đề xuất")
-            compare(narrator.options[1].label, "Mai\u00a0· nữ, miền Bắc")
+            compare(narrator.options[1].label, "Mai\u00a0·\u00a0nữ, miền Bắc")
             narrator.picked("Mai")
             compare(last().method, "PUT")
             compare(last().path, "/api/preferences")
             compare(last().body.newBookNarrator, "Mai")
-            compare(narrator.currentLabel, "Mai\u00a0· nữ, miền Bắc")
+            compare(narrator.currentLabel, "Mai\u00a0·\u00a0nữ, miền Bắc")
             const profile = one(page, "newBookProfile")
             compare(profile.options.map(o => o.label).join("|"), "Chất lượng cao|Cân bằng|Nhanh")
             compare(profile.currentLabel, "Chất lượng cao")
@@ -137,7 +137,7 @@ Item {
         // ---------- Studio ----------
         function test_installedRowAndUninstallConfirm() {
             const page = make()
-            verify(has(page, "Đã cài\u00a0· NVIDIA GeForce RTX 3060"))
+            verify(has(page, "Đã cài\u00a0·\u00a0NVIDIA GeForce RTX 3060"))
             verify(has(page, "C:\\Users\\Linh\\AppData\\Local\\ABook\\Studio"))
             const remove = one(page, "studioRemove")
             compare(remove.text, "Gỡ Studio")
@@ -196,7 +196,7 @@ Item {
             store.status = freshStatus()
             const page = make()
             compare(one(page, "studioState").text, "Chưa cài.")
-            verify(has(page, "NVIDIA từ 8 GB\u00a0· tải ~25 GB\u00a0· trống 35 GB\u00a0· ~7–10 phút/chương."))
+            verify(has(page, "NVIDIA từ 8 GB\u00a0·\u00a0tải ~25 GB\u00a0·\u00a0trống 35 GB\u00a0·\u00a0~7–10 phút/chương."))
             verify(has(page, "Card NVIDIA GeForce RTX 3060 (12 GB): đủ để làm sách nói (đã thử trên card 8 GB)."))
             verify(has(page, "Tuỳ chọn ở trang này dùng khi đã cài Studio."))
             const install = one(page, "studioInstall")
@@ -243,8 +243,8 @@ Item {
             const page = make()
             verify(has(page, "Mẫu sách mới"))
             verify(has(page, "Ở Tạo sách, chọn “Lưu thành mẫu…” để dùng lại."))
-            verify(has(page, "Mai\u00a0· Chất lượng cao\u00a0· bắt đầu ngay"))
-            verify(has(page, "Giọng máy đề xuất\u00a0· Nhanh\u00a0· chờ bấm bắt đầu\u00a0· chờ bạn duyệt trước khi thu"))
+            verify(has(page, "Mai\u00a0·\u00a0Chất lượng cao\u00a0·\u00a0bắt đầu ngay"))
+            verify(has(page, "Giọng máy đề xuất\u00a0·\u00a0Nhanh\u00a0·\u00a0chờ bấm bắt đầu\u00a0·\u00a0chờ bạn duyệt trước khi thu"))
             compare(all(page, "renameTemplate").length, 3)
         }
         function test_emptyTemplates() {
@@ -285,7 +285,7 @@ Item {
             compare(one(page, "readingSurface").text, "Dở dang")
             tryVerify(function() { return all(page, "renameTemplate").length === 3 })
             verify(has(page, "Đêm khuya"))
-            verify(has(page, "Cân bằng\u00a0· bắt đầu ngay") || has(page, "Nam\u00a0· Cân bằng\u00a0· bắt đầu ngay"))
+            verify(has(page, "Cân bằng\u00a0·\u00a0bắt đầu ngay") || has(page, "Nam\u00a0·\u00a0Cân bằng\u00a0·\u00a0bắt đầu ngay"))
         }
         function test_renameBackAndEscape() {
             Platform.setSetting("fold.settings.studio.new-book", "1")
@@ -362,7 +362,7 @@ Item {
             verify(has(page, "Sửa cách đọc một tên một lần, sách mới tự dùng."))
             compare(all(page, "removeReading").length, 2)
             verify(has(page, "Hên-cơ"))
-            verify(has(page, "&nbsp;· từ Rokujouma"))
+            verify(has(page, "&nbsp;·&nbsp;từ Rokujouma"))
             const add = one(page, "addReading")
             compare(add.enabled, false)
             one(page, "readingSurface").text = "  Eris "

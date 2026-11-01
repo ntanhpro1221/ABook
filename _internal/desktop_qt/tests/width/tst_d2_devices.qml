@@ -392,7 +392,7 @@ Item {
             verify(dialog.open)
             compare(dialog.title, "Chẩn đoán Pixel 8")
             tryVerify(function() { return shown(dialog, "0.4.147 (4147)") })
-            tryVerify(function() { return shown(dialog, "Google Pixel 8\u00a0· Android 15 (API 35)") })
+            tryVerify(function() { return shown(dialog, "Google Pixel 8\u00a0·\u00a0Android 15 (API 35)") })
             tryVerify(function() { return shown(dialog, "20 GB / 120 GB") })
             tryVerify(function() { return (Nav.layers.length) === (1) })
             verify(Nav.back())

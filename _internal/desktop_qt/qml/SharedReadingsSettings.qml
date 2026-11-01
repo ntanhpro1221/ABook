@@ -21,7 +21,7 @@ SettingsItem {
     function esc(text) { return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\u00a0/g, "&nbsp;") }
     function line(entry) {
         return "<span style=\"font-weight:500\">" + esc(entry.surface) + "</span> <span style=\"color:" + Theme.text3 + "\">đọc là</span> “" + esc(shownReading(entry.spokenForm)) + "”"
-            + (entry.from ? "<span style=\"font-size:12px; color:" + Theme.text3 + "\">&nbsp;· từ " + esc(entry.from) + "</span>" : "")
+            + (entry.from ? "<span style=\"font-size:12px; color:" + Theme.text3 + "\">&nbsp;·&nbsp;từ " + esc(entry.from) + "</span>" : "")
     }
     function load() {
         if (!Api.transport) return

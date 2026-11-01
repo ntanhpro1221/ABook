@@ -222,6 +222,10 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
   `--line` theo mép trên (điện thoại `Modifier.sheetEdge`), và chính bóng (vô hình ở tối nhưng vẫn khai báo cho sáng).
 - **Chữ xuống dòng**: không để MỘT chữ lẻ ở dòng cuối (`text-wrap: pretty` / `balance` web; điện thoại `LineBreak.Strategy.Balanced` trong mọi kiểu chữ của
   `Theme.kt`, riêng chữ đọc dài của Đọc theo dùng `LineBreak.Paragraph`), không gạch nối giữa chữ; địa chỉ web đi nguyên một khối, chỉ khi rộng hơn cả dòng mới đứt ở dấu "/" (`keepUrlTogether`).
+- **Dấu ngăn "·"**: không bao giờ đứng đầu HAY cuối dòng, kể cả dấu có sẵn trong tên sách ("Thành Phố Sương Mù · Tập 2"). Web: mảnh ghép qua `DotJoin`, mọi
+  chữ khác qua `installKeepDots` (khoảng trắng hai bên dấu thành khoảng không ngắt ở mọi nút chữ, trừ chữ của sách ở mặt đọc). Máy tính Qt: chuỗi ghép viết
+  dấu dính cả hai mảnh, `FlowDetail` cho khúc Flow, chữ từ dữ liệu qua `TextWrap.keepDots`. Điện thoại: `WrapText` dắt dấu theo chữ trước và vẽ trong suốt dấu
+  rơi cuối dòng. Máy dò: LINE BREAK (gallery_inspect), `Separators.js` (bốn dạng, mọi cảnh width test), `test_qt_layout_lints.py`, `TextWrapRulesTest`.
 - **Hàng chip / tab ngang**: khe giữa hai chữ tối thiểu 16 px (24 khi dư chỗ); thiếu chỗ (màn 320, chữ hệ thống to) thì hàng CUỘN ngang với mép mờ
   (`fadeEdgesHorizontal`, `useRowFade` bên web) - không ép sát nút bên cạnh, không xuống dòng, không cụt chữ; mục đang chọn tự cuộn vào khung.
 - **Chân màn**: thanh đáy (thanh tab) chừa dưới nó ít nhất 8 px kể cả khi máy báo inset thanh điều hướng 0 (ColorOS giấu vạch cử chỉ): vạch hổ phách không bao giờ

@@ -60,7 +60,7 @@ FocusScope {
         const p = Api.preferences || {}
         const info = Api.info || {}
         if (key === "voice") return Api.voiceName
-        if (key === "listen") return (p.autoRewind !== false ? "Tự lùi" : "Không tự lùi") + "\u00a0· " + (p.autoMusic !== false ? "nhạc tự chọn" : "không nhạc nền")
+        if (key === "listen") return (p.autoRewind !== false ? "Tự lùi" : "Không tự lùi") + "\u00a0·\u00a0" + (p.autoMusic !== false ? "nhạc tự chọn" : "không nhạc nền")
         if (key === "sleep") {
             if (p.sleepSchedule) return "Lịch đêm " + p.sleepSchedule.from + "–" + p.sleepSchedule.to
             const hours = p.safetyStopHours ?? 2

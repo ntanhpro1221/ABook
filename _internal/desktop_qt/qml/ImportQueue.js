@@ -86,7 +86,7 @@ function summaryText(summary) {
         summary.skipped ? "bỏ qua " + summary.skipped + " cuốn" : "",
         summary.failed ? summary.failed + " file chưa đọc được" : ""
     ].filter(part => part !== "")
-    const text = parts.join("\u00a0· ")
+    const text = parts.join("\u00a0·\u00a0")
     return text ? text[0].toUpperCase() + text.slice(1) : "Không thêm cuốn nào"
 }
 

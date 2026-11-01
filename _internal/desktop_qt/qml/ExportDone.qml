@@ -1,5 +1,6 @@
 import QtQuick
 import ABook
+import "TextWrap.js" as TextWrap
 
 // Bản xuất đã xong, hiện ngay trong hộp (khối `finished` của ExportBook.tsx): dấu tích + tên việc đậm, chỗ file nằm (bẻ ở bất kỳ đâu - đường dẫn dài) và, nếu thiếu gì, lời lưu ý.
 Column {
@@ -18,7 +19,7 @@ Column {
         Text {
             objectName: "exportDoneTitle"
             width: parent.width - 24
-            text: root.title
+            text: TextWrap.keepDots(root.title)
             color: Theme.text
             wrapMode: Text.Wrap
             font.pixelSize: Theme.sizeBodySmall

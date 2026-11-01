@@ -74,7 +74,7 @@ Item {
                     Text {
                         width: parent.width
                         textFormat: Text.StyledText
-                        text: "<b>ABook " + (root.update ? root.update.version : "") + "</b> đã có" + (root.current ? "&nbsp;· đang dùng " + root.current : "")
+                        text: "<b>ABook " + (root.update ? root.update.version : "") + "</b> đã có" + (root.current ? "&nbsp;·&nbsp;đang dùng " + root.current : "")
                         color: Theme.text
                         wrapMode: Text.Wrap
                         font.pixelSize: Theme.sizeBodySmall

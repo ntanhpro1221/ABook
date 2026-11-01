@@ -2,6 +2,7 @@ import QtQuick
 import QtTest
 import "../../qml/TextWrap.js" as TextWrap
 import "ModalLayer.js" as ModalLayer
+import "Separators.js" as Separators
 import "VisualReady.js" as VisualReady
 import ABook
 
@@ -21,7 +22,7 @@ Item {
             width: 320
             label: "Model phân tích"
             options: [{value: "", label: "Mặc định (khuyên dùng)"}, {header: "Bản khác (thử nghiệm)"},
-                      {value: "a", label: "1. Bản thử nghiệm\u00a0· nhanh"}, {value: "b", label: "2. Bản thử nghiệm"}]
+                      {value: "a", label: "1. Bản thử nghiệm\u00a0·\u00a0nhanh"}, {value: "b", label: "2. Bản thử nghiệm"}]
         }
     }
     Component { id: sampleFactory; CastSample { clipId: "voice-Mai"; url: "x"; label: "Nghe thử giọng Mai"; stopLabel: "Dừng nghe Mai" } }
@@ -284,6 +285,20 @@ Item {
             tryCompare(page, "shownTab", "script")
             tryVerify(function() { return all(page, "retakeConfirm").filter(shown).length === 0 })
             compare(calls("POST", "/api/books/rt/chapters/1/retake").length, 0)
+        }
+
+        // ---- tên sách có sẵn " · " ở thanh bên (gallery 01-11: "Thành Phố Sương Mù ·" treo cuối dòng 1, "Tập 2" xuống dòng) ----
+        function test_sidebarTitleKeepsItsDotInsideTheLine() {
+            const fog = book("fog", {title: "Thành Phố Sương Mù · Tập 2", phase: "synthesis", statusLabel: "Đang thu", running: true,
+                                     chapters: {total: 3, completed: 1, redo: 0, missingAudio: 0, failed: 0, working: 1}, progress: {overall: 0.4, analysis: 1, synthesis: 0.2}})
+            reply("GET /api/library", library([fog]))
+            const progress = createTemporaryObject(progressFactory, host)
+            tryVerify(function() { return all(progress, "sidebarTitle_0").filter(shown).length === 1 }, 3000)
+            const title = one(progress, "sidebarTitle_0")
+            compare(title.text, "Thành Phố Sương Mù\u00a0·\u00a0Tập 2")
+            verify(title.lineCount > 1, "khung 220 px phải xuống dòng thì phép thử mới có nghĩa")
+            waitForRendering(progress)
+            compare(Separators.scan(progress, qtVisualReady), [])
         }
 
         // ---- lời mời "Duyệt" khi phân tích xong (usePrecastInvites) ----

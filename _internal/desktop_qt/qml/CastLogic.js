@@ -68,23 +68,23 @@ function avatarInk(hue, dark) { return oklch(dark ? 0.84 : 0.43, 0.085, hue) }
 // ---- Dòng chữ của một người -------------------------------------------------------------------------------------------------
 function voiceLine(person) {
     if (!person.voice) return "Chưa có giọng"
-    return voiceName(person.voice) + (person.voice.tone ? "\u00a0· " + toneLabel(person.voice.tone) : "")
+    return voiceName(person.voice) + (person.voice.tone ? "\u00a0·\u00a0" + toneLabel(person.voice.tone) : "")
 }
 // "Chờ áp dụng" (dự án) / "Đang chờ máy làm sách" (cuốn không có xưởng)
 function waitPrefix(waiting) { return waiting ? "Đang chờ máy làm sách" : "Chờ áp dụng" }
 function pendingVoiceLine(person, waiting) {
     const pending = person.pendingVoice
     if (!pending) return ""
-    return waitPrefix(waiting) + ": " + [pending.preset && "giọng " + voiceName(pending), String(pending.gender || "").toLowerCase()].filter(Boolean).join("\u00a0· ")
+    return waitPrefix(waiting) + ": " + [pending.preset && "giọng " + voiceName(pending), String(pending.gender || "").toLowerCase()].filter(Boolean).join("\u00a0·\u00a0")
 }
 function mergedLine(person, waiting) { return person.mergedInto ? waitPrefix(waiting) + ": gộp vào " + cleanName(person.mergedInto) : "" }
 function countLine(person) {
-    return formatNumber(person.lines) + " câu" + (person.seconds > 0 ? "\u00a0· " + formatLength(person.seconds) : "")
-        + (person.firstChapter ? "\u00a0· từ " + keepTogether(person.firstChapter) : "")
+    return formatNumber(person.lines) + " câu" + (person.seconds > 0 ? "\u00a0·\u00a0" + formatLength(person.seconds) : "")
+        + (person.firstChapter ? "\u00a0·\u00a0từ " + keepTogether(person.firstChapter) : "")
 }
 function narratorLine(narrator) {
-    return formatNumber(narrator.lines) + " câu dẫn truyện" + (narrator.seconds > 0 ? "\u00a0· " + formatLength(narrator.seconds) : "")
-        + (narrator.redo ? "\u00a0· " + formatNumber(narrator.redo) + " câu chờ thu lại" : "")
+    return formatNumber(narrator.lines) + " câu dẫn truyện" + (narrator.seconds > 0 ? "\u00a0·\u00a0" + formatLength(narrator.seconds) : "")
+        + (narrator.redo ? "\u00a0·\u00a0" + formatNumber(narrator.redo) + " câu chờ thu lại" : "")
 }
 function narratorPending(narrator) {
     return narrator.pendingVoice && narrator.pendingVoice.preset ? "Chờ áp dụng: giọng " + voiceName(narrator.pendingVoice) : ""
@@ -172,7 +172,7 @@ function sharedText(voice, current) {
     if (!sharedWith.length) return others || (current ? "Giọng đang đọc cho người này" : "Chưa ai dùng")
     const people = sharedWith.map(person => person.label + " (" + person.chapters + " chương)").join(", ")
     const after = voice.oneStep ? "hai người sẽ nghe giống hệt nhau" : "máy lấy bậc âm sắc khác"
-    return "Cùng chương với " + people + " - " + after + (others ? "\u00a0· " + others : "")
+    return "Cùng chương với " + people + " - " + after + (others ? "\u00a0·\u00a0" + others : "")
 }
 // Hộp của người kể: giọng nhân vật đang giữ không chọn được - nói của ai (tối đa ba tên)
 function takenText(takenBy) {
@@ -181,10 +181,10 @@ function takenText(takenBy) {
 // Dòng phụ dưới tên giọng: miền + phong cách (hay chất giọng của máy khác) và ai đang dùng
 function voiceMeta(voice, withGender) {
     const parts = voice.description ? [voice.description] : [voice.region ? "Miền " + voice.region : "", voice.style]
-    const about = [withGender && !voice.description ? voice.genderLabel : ""].concat(parts).filter(Boolean).join("\u00a0· ")
+    const about = [withGender && !voice.description ? voice.genderLabel : ""].concat(parts).filter(Boolean).join("\u00a0·\u00a0")
     const alone = voice.current && !(voice.sharedWith || []).length && !voice.otherUsers
     const use = voice.takenNote || ((voice.takenBy || []).length ? takenText(voice.takenBy) : alone ? "" : sharedText(voice, voice.current))
-    return [about, use].filter(Boolean).join("\u00a0· ")
+    return [about, use].filter(Boolean).join("\u00a0·\u00a0")
 }
 // Chữ của nút cuối hàng
 function voiceAction(voice) {
@@ -234,7 +234,7 @@ function excerpt(text, max) {
     return (space > max / 2 ? cut.slice(0, space) : cut).replace(/[\s,.;:!?…—–-]+$/, "") + "…"
 }
 function previewCaption(text, speaker) {
-    return "Lúc thu thật sẽ nghe gần như vậy\u00a0· câu “" + excerpt(text, 70) + "”" + (speaker ? "\u00a0· giọng " + speaker : "")
+    return "Lúc thu thật sẽ nghe gần như vậy\u00a0·\u00a0câu “" + excerpt(text, 70) + "”" + (speaker ? "\u00a0·\u00a0giọng " + speaker : "")
 }
 
 // ---- Mô-đun giọng của máy đọc khác (voiceEngines.ts: EngineModuleStatus, moduleNote) --------------------------------------------------

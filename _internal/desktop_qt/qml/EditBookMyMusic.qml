@@ -256,8 +256,8 @@ Column {
                                 textFormat: Text.StyledText
                                 // Nốt nhạc nhấn màu đứng đầu tên bài; tên + nghệ sĩ + thời lượng (số đều) như bản web
                                 text: escapeHtml(item.track.title)
-                                      + (item.track.creator ? "<font color='" + Theme.text2 + "'>&nbsp;· " + escapeHtml(item.track.creator) + "</font>" : "")
-                                      + (item.track.duration ? "<font color='" + Theme.text2 + "'>&nbsp;· " + Logic.formatClock(item.track.duration) + "</font>" : "")
+                                      + (item.track.creator ? "<font color='" + Theme.text2 + "'>&nbsp;·&nbsp;" + escapeHtml(item.track.creator) + "</font>" : "")
+                                      + (item.track.duration ? "<font color='" + Theme.text2 + "'>&nbsp;·&nbsp;" + Logic.formatClock(item.track.duration) + "</font>" : "")
                                 function escapeHtml(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\u00a0/g, "&nbsp;") }
                             }
                             // Công tắc "Tự chọn" đầu dòng rồi nhãn ngắn (như MyMusicTrack): bật = máy được tự chọn bài này

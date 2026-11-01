@@ -117,7 +117,7 @@ Column {
                             }
                             Prose {
                                 small: true
-                                text: row.first ? Logic.esc(row.first.firstLine || row.first.name) + (root.proposed[row.first.path] ? "&nbsp;· " + Logic.esc(root.proposed[row.first.path]) : "") : " "
+                                text: row.first ? Logic.esc(row.first.firstLine || row.first.name) + (root.proposed[row.first.path] ? "&nbsp;·&nbsp;" + Logic.esc(root.proposed[row.first.path]) : "") : " "
                                 textFormat: Text.StyledText
                             }
                             Prose {

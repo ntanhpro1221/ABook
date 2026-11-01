@@ -1,6 +1,7 @@
 import QtQuick
 import ABook
 import "StudioLogic.js" as Logic
+import "TextWrap.js" as TextWrap
 
 // Một hàng của bảng chương (ChapterRow của ProjectScreen.tsx): số chương (rê chuột thành nút nghe) · tên + tên phụ / lỗi · trạng thái (dấu nhỏ hay vạch
 // "đang thu") · độ dài · xong lúc nào · "…". Khổ rộng đủ cột như web; hẹp thì trạng thái và độ dài xuống dưới tên. Tên dài xuống dòng, hàng cao theo chữ.
@@ -91,7 +92,7 @@ Item {
             objectName: "chapterSubtitle"
             visible: text !== ""
             width: parent.width
-            text: root.errorLine !== "" ? "" : (root.chapter.subtitle || "")
+            text: TextWrap.keepDots(root.errorLine !== "" ? "" : (root.chapter.subtitle || ""))
             color: Theme.text2
             wrapMode: Text.Wrap
             font.pixelSize: Theme.sizeCaption

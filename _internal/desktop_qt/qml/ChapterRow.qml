@@ -25,7 +25,7 @@ Interactive {
     // phát chương). Cờ chỉ sống tới hết lượt xử lý cú bấm này.
     property bool onMenuButton: false
     readonly property string headline: subtitle !== "" ? subtitle : title
-    readonly property string detail: [subtitle !== "" ? title : "", status].filter(s => s !== "").join("\u00a0· ")
+    readonly property string detail: [subtitle !== "" ? title : "", status].filter(s => s !== "").join("\u00a0·\u00a0")
     implicitHeight: Math.max(56, Math.max(textColumn.implicitHeight, duration.implicitHeight) + 2 * Theme.s12)
     opacity: playable ? 1 : 0.55
 

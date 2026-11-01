@@ -1,5 +1,6 @@
 import QtQuick
 import ABook
+import "TextWrap.js" as TextWrap
 
 // Cùng bìa và nút của trình phát; chữ luôn xuống dòng, chiều cao theo nội dung.
 Rectangle {
@@ -68,12 +69,12 @@ Rectangle {
         spacing: 4
         Text {
             objectName: "miniBookTitle"
-            width: parent.width; text: root.bookTitle; wrapMode: Text.Wrap
+            width: parent.width; text: TextWrap.keepDots(root.bookTitle); wrapMode: Text.Wrap
             color: Theme.text; font.pixelSize: Theme.sizeBody; font.weight: Theme.weightBold
         }
         Text {
             objectName: "miniChapterTitle"
-            width: parent.width; text: root.chapterTitle; wrapMode: Text.Wrap
+            width: parent.width; text: TextWrap.keepDots(root.chapterTitle); wrapMode: Text.Wrap
             color: Theme.text2; font.pixelSize: Theme.sizeCaption
         }
     }

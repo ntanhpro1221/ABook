@@ -13,7 +13,7 @@ Popover {
         spacing: Theme.s12
         Text {
             width: parent.width
-            text: "Tốc độ đọc\u00a0· nhớ riêng cho cuốn này"
+            text: "Tốc độ đọc\u00a0·\u00a0nhớ riêng cho cuốn này"
             wrapMode: Text.Wrap
             color: Theme.text2
             font.pixelSize: Theme.sizeCaption

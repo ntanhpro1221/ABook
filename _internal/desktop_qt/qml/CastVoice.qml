@@ -1,6 +1,7 @@
 import QtQuick
 import ABook
 import "CastLogic.js" as Logic
+import "TextWrap.js" as TextWrap
 
 // "Giọng của …" (VoicePicker của studio/VoicePicker.tsx): mọi giọng dùng được cho một nhân vật (hay người kể), nghe thử từng giọng, giọng đang dùng, giọng máy
 // gợi ý, ai đang dùng giọng ấy; chọn xong đi đúng đường của thẻ "Nam hay nữ" (POST /api/books/<id>/voice). Đổi giọng khác giới với nhân vật thì hỏi ngay trong
@@ -29,7 +30,7 @@ CastModal {
     readonly property var groups: choices ? Logic.groupByEngine(Logic.byGender(choices.voices, shownGender)) : []
     readonly property var labels: Logic.groupLabels(groups)
     title: "Giọng của " + (person ? person.displayName : "")
-    description: choices ? Logic.formatNumber(choices.character.lines) + " câu ở " + choices.character.chapters + " chương\u00a0· đang đọc bằng " + (choices.current || "chưa có giọng") : ""
+    description: choices ? Logic.formatNumber(choices.character.lines) + " câu ở " + choices.character.chapters + " chương\u00a0·\u00a0đang đọc bằng " + (choices.current || "chưa có giọng") : ""
     keepOpen: function() { if (root.crossing) { root.crossing = null; return true } return false }
     onClosed: { Clip.stop(); voiceTry.reset() }
     VoiceTry { id: voiceTry; store: root.store; bookId: root.bookId }
@@ -146,7 +147,7 @@ CastModal {
                         Text {
                             objectName: "voicePending"
                             width: Math.min(implicitWidth, parent.width)
-                            text: root.choices && root.choices.pending ? "Chờ áp dụng: đổi sang " + (root.choices.pending.name || "giọng khác") : ""
+                            text: TextWrap.keepDots(root.choices && root.choices.pending ? "Chờ áp dụng: đổi sang " + (root.choices.pending.name || "giọng khác") : "")
                             color: Theme.text
                             wrapMode: Text.Wrap
                             font.pixelSize: Theme.sizeBodySmall
@@ -314,7 +315,7 @@ CastModal {
                                         spacing: 6
                                         Text {
                                             width: Math.min(implicitWidth, parent.width)
-                                            text: row.voice.name
+                                            text: TextWrap.keepDots(row.voice.name)
                                             color: row.voice.current ? Theme.accentText : Theme.text
                                             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                             font.pixelSize: Theme.sizeBodySmall

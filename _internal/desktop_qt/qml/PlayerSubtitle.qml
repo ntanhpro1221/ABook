@@ -1,5 +1,6 @@
 import QtQuick
 import ABook
+import "TextWrap.js" as TextWrap
 
 Column {
     id: root
@@ -14,7 +15,7 @@ Column {
     Text {
         objectName: "playerSubtitleText"; width: parent.width; wrapMode: Text.Wrap
         horizontalAlignment: root.horizontalAlignment
-        text: root.delayed ? "Đang chuẩn bị giọng đọc…" : Player.atEnd === "caughtUp" ? "Đã nghe hết phần đã có" : Player.bookTitle
+        text: TextWrap.keepDots(root.delayed ? "Đang chuẩn bị giọng đọc…" : Player.atEnd === "caughtUp" ? "Đã nghe hết phần đã có" : Player.bookTitle)
         color: Theme.text2; font.pixelSize: Theme.sizeCaption
     }
 }

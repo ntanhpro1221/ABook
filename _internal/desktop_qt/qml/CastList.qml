@@ -248,7 +248,7 @@ Item {
                                         id: laterText
                                         anchors.verticalCenter: parent.verticalCenter
                                         width: parent.width
-                                        text: (root.later ? "Ẩn chương sau" : "Hiện chương sau") + "\u00a0· " + Logic.ahead(root.characters, root.reached) + " người"
+                                        text: (root.later ? "Ẩn chương sau" : "Hiện chương sau") + "\u00a0·\u00a0" + Logic.ahead(root.characters, root.reached) + " người"
                                         color: Theme.text2
                                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                         font.pixelSize: Theme.sizeBodySmall

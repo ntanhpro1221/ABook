@@ -1,5 +1,6 @@
 import QtQuick
 import ABook
+import "TextWrap.js" as TextWrap
 
 // Hàng công tắc của trình tạo sách (<label> flex gap-3 py-3 của bản web): công tắc bên trái, tên (14/500) và lời nhắc (13, mực phụ) bên phải. Lời nhắc đổi theo lựa chọn
 // thì chữ mới thay chữ cũ ngay tại chỗ; chữ không bao giờ bị cắt.
@@ -30,7 +31,7 @@ Item {
         width: root.width - x
         Text {
             width: parent.width
-            text: root.name
+            text: TextWrap.keepDots(root.name)
             color: Theme.text
             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
             font.pixelSize: Theme.sizeBodySmall
