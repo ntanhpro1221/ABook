@@ -11,6 +11,8 @@ Luật đạt ghi trước ở Corpus research/music/PLAN_lx.md mục 19.
                                                                  > VOICE_HOLE_S giữa chương vì chờ clip
   --slow-clips 200:12 (run): máy chủ chờ thêm 12 s trước mỗi clip mới của đoạn từ 200 ký tự (tools/stall_host) - kiểm lực đọc trước
   --fake-voice 0.5:0.45 (run): giọng Edge thay bằng giọng giả không ra mạng, clip về sau 0,5 s + 0,45 x độ dài (tools/stall_host)
+  --music-files <A1>/music/files (run): gieo sẵn các bài nhạc đã tải trọn của một lượt trước - lượt nhạc bật không còn phụ thuộc tốc độ
+    tải của nguồn nhạc (01-11 trưa incompetech ~11-200 KB/s: bài chương 1 sau 23 phút mới được nửa, nhạc vắng gần cả lượt)
   python -X utf8 tools/listen_audit.py selftest                 (build.bat)
 
 WAV và chữ nằm trong <out_dir>, không bao giờ commit.
@@ -118,12 +120,17 @@ def prepare(stage: Path, texts: list[Path], music: bool) -> str:
     return book
 
 
-def run(out: Path, label: str, texts: list[Path], music: bool, exe: Path, slow: str | None = None, fake: str | None = None) -> None:
+def run(out: Path, label: str, texts: list[Path], music: bool, exe: Path, slow: str | None = None, fake: str | None = None,
+        music_files: Path | None = None) -> None:
     import measure
     stage = out / label
     if (stage / "bench.json").exists():
         raise SystemExit(f"{stage} đã có kết quả; chọn nhãn khác")
     stage.mkdir(parents=True, exist_ok=True)
+    if music_files:  # cùng chỗ với App.music_dir (cạnh prefs.json); tên file = băm địa chỉ bài, nên bản trọn của lượt trước trúng ngay
+        (stage / "music/files").mkdir(parents=True, exist_ok=True)
+        for track in sorted(music_files.glob("*.mp3")):
+            shutil.copyfile(track, stage / "music/files" / track.name)
     book = prepare(stage, texts, music)
     sink = stage / "sink.wav"
     env = dict(private_env(stage), ABOOK_HOST_PYTHON=PYTHON, ABOOK_HOST_APP=str(INTERNAL), ABOOK_BENCH_SCENARIO="listen",
@@ -136,7 +143,7 @@ def run(out: Path, label: str, texts: list[Path], music: bool, exe: Path, slow: 
     got = measure.launch(exe.resolve(), env, True, timeout_seconds=3700, require_ac=False)
     if got.get("app_log"):
         shutil.copyfile(got["app_log"], stage / "app.log")
-    (stage / "run.json").write_text(json.dumps(dict(ok=bool(got.get("ok")), why=got.get("why"), exe=str(exe), music=music, slow=slow, fake=fake,
+    (stage / "run.json").write_text(json.dumps(dict(ok=bool(got.get("ok")), why=got.get("why"), exe=str(exe), music=music, slow=slow, fake=fake, music_files=str(music_files) if music_files else None,
                                                     exit_code=got.get("exit_code"), forced=got.get("forced_termination")), ensure_ascii=False),
                                     encoding="utf-8", newline="\n")
     if not got.get("ok"):
@@ -428,13 +435,14 @@ def main() -> int:
     r.add_argument("--host-app", type=Path, default=INTERNAL, help="thư mục _internal của máy chủ Python (mặc định: cây của app)")
     r.add_argument("--slow-clips", help="<số ký tự>:<giây> - máy chủ chờ thêm trước mỗi clip mới của đoạn dài (tools/stall_host)")
     r.add_argument("--fake-voice", help="<trễ>:<giây mỗi giây clip> - giọng giả không ra mạng thay Edge (tools/stall_host)")
+    r.add_argument("--music-files", type=Path, help="thư mục music/files của một lượt trước: gieo sẵn các bài đã tải trọn")
     a = sub.add_parser("analyze"); a.add_argument("a", type=Path); a.add_argument("b", type=Path)
     c = sub.add_parser("check"); c.add_argument("dir", type=Path)
     sub.add_parser("selftest")
     args = ap.parse_args()
     if args.cmd == "run":
         INTERNAL = args.host_app.resolve()
-        run(args.out.resolve(), args.label, args.text, args.music == "on", args.exe, args.slow_clips, args.fake_voice)
+        run(args.out.resolve(), args.label, args.text, args.music == "on", args.exe, args.slow_clips, args.fake_voice, args.music_files)
     elif args.cmd == "check":
         loaded = load(args.dir)
         problems = loaded["problems"] + [dict(kind="voice_hole", **hole) for hole in voice_holes(loaded)]
