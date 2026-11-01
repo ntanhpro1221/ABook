@@ -8,6 +8,10 @@ all three silent and keep real faults red, on a synthetic run shaped like the be
 
 The same day it heard a fault the listener does hear: at the end of chapter 1 the music stopped with the voice (-30 -> -91 dB
 in 6 ms). The sudden-silence detector ("cut") came in with the fix, red on 0.4.152.
+
+When the voice stalls (network gone mid-chapter) the music must hold for voiceStallFadeAfterSeconds, then fade out the
+chapter-end way, and come back when the voice moves again. The bench seeks into a range tools/stall_host makes the app's
+host hold for 25 s; the synthetic stall run below has the same shape.
 """
 import importlib.util
 from pathlib import Path
@@ -54,10 +58,10 @@ def test_source_pop_counts_in_listener_time():
 
 def test_strength_goes_red_with_a_deaf_drift_detector(monkeypatch):
     data = sink.synthetic_run(3.0)
-    ok, results = sink.strength(data)
+    ok, results = sink.strength(data, stall=False)
     assert ok, [r for r in results if not r["ok"]]
     monkeypatch.setattr(sink, "DRIFT_MS", 1e9)
-    ok, results = sink.strength(data)
+    ok, results = sink.strength(data, stall=False)
     assert not ok
     assert all(r["ok"] for r in results if not r["case"].startswith("trôi"))
 
@@ -119,6 +123,38 @@ def test_silence_right_after_a_listener_action_is_not_a_cut(tag):
 def test_strength_goes_red_with_a_deaf_cut_detector(monkeypatch):
     data = sink.synthetic_run(3.0)
     monkeypatch.setattr(sink, "CUT_TO_DB", -1e9)
-    ok, results = sink.strength(data)
+    ok, results = sink.strength(data, stall=False)
     assert not ok
     assert [r["case"] for r in results if not r["ok"]] == [next(r["case"] for r in results if r["case"].startswith("đột im"))]
+
+
+def test_a_stalled_voice_holds_then_fades_the_music_then_brings_it_back():
+    report = sink.check(sink.synthetic_stall_run())
+    assert report["findings"] == []
+    stall = report["stall"]
+    assert stall["resumed"] and stall["early_db"] > sink.STALL_MUSIC_DB > stall["return_db"] - 20
+    assert stall["late_peak_db"] < sink.STALL_QUIET_DB
+
+
+@pytest.mark.parametrize("fault, kind", [("keep", "stall_music"), ("early", "stall_early"), ("abrupt", "cut"), ("noreturn", "stall_return")])
+def test_each_wrong_stall_shape_is_red(fault, kind):
+    assert kind in kinds(sink.synthetic_stall_run(fault))
+
+
+def test_a_run_without_a_stall_window_fails_the_gate_strength():
+    ok, results = sink.strength(sink.synthetic_run(3.0))
+    assert not ok and [r["case"] for r in results if not r["ok"]] == ["khựng"]
+
+
+def test_stall_strength_goes_red_with_a_deaf_fade_detector(monkeypatch):
+    data = sink.synthetic_stall_run()
+    assert all(r["ok"] for r in sink.stall_strength(data, sink.check(data)))
+    monkeypatch.setattr(sink, "STALL_QUIET_DB", 1e9)
+    results = sink.stall_strength(data, sink.check(data))
+    assert [r["case"] for r in results if not r["ok"]] == ["khựng: nhạc không mờ"]
+
+
+def test_stall_hook_is_inert_without_its_variable():
+    hook = (ROOT / "tools/stall_host/sitecustomize.py").read_text(encoding="utf-8")
+    assert 'SPEC = os.environ.get("ABOOK_TEST_VOICE_STALL", "")' in hook and hook.rstrip().endswith("if SPEC:\n    sys.meta_path.insert(0, _After())")
+    assert "stall_host" not in (ROOT / "build.bat").read_text(encoding="ascii")  # never shipped

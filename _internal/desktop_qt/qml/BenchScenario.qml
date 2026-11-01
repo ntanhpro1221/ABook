@@ -202,9 +202,12 @@ Item {
         // 30 s ở 3x (90 s nội dung): đủ dài để thấy tiếng nghe thấy trôi khỏi vị trí app báo
         case 13: audioMark("rate:3"); Player.setRate(3.0); advance(30000); break
         case 14: audioMark("rate:1"); Player.setRate(1.0); advance(3000); break
-        case 15: audioMark("seek:end"); Player.seek(Player.clock.duration - 6); advance(12000); break
-        case 16: audioMark("next"); Player.next(); advance(5000); break
-        case 17: audioMark("stop"); Player.pause(); advance(1000); break
+        // Giọng khựng: tua tới vùng chưa tải; audio_sink giữ yêu cầu của vùng ấy 25 s ở máy chủ (tools/stall_host). Nhạc phải còn tới
+        // voiceStallFadeAfterSeconds, mờ xuống, rồi lên lại khi giọng chạy tiếp. Không có móc thì chỉ là một lần tua.
+        case 15: audioMark("stall:500"); Player.seek(500); advance(34000); break
+        case 16: audioMark("seek:end"); Player.seek(Player.clock.duration - 6); advance(12000); break
+        case 17: audioMark("next"); Player.next(); advance(5000); break
+        case 18: audioMark("stop"); Player.pause(); advance(1000); break
         default: audioTicks.stop(); audioMark("done"); Bench.note("done"); Bench.finish()
         }
     }
@@ -223,5 +226,5 @@ Item {
     }
 
     // Backend không lên: ghi lại những gì có rồi thoát, để script đo báo lỗi thay vì treo
-    Timer { running: Bench.enabled; interval: root.miniScenario ? 170000 : root.audioScenario ? 200000 : root.listenScenario ? 3600000 : root.playerScenario ? 90000 : 40000; onTriggered: { Bench.note("timeout"); Bench.finish() } }
+    Timer { running: Bench.enabled; interval: root.miniScenario ? 170000 : root.audioScenario ? 240000 : root.listenScenario ? 3600000 : root.playerScenario ? 90000 : 40000; onTriggered: { Bench.note("timeout"); Bench.finish() } }
 }
