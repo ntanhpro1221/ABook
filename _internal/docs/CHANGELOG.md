@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.158] - 2026-11-01
+
 ### Nhạc nền
 
 - Điện thoại: nhạc theo cảnh của chương kế được tải sẵn khi chương đang nghe còn hai phút, nên chương mới vào nhạc ngay thay vì đọc một quãng không nhạc chờ bài tải xong (máy tính và bản web đã làm vậy từ trước).
