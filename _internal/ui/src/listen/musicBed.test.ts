@@ -26,6 +26,8 @@ import {
   stepDbAt,
   type MusicCue,
   type MusicCues,
+  DownloadPace,
+  playsThrough,
 } from "./musicBed";
 
 const cues: MusicCue[] = [
@@ -1094,40 +1096,146 @@ describe("tải sẵn bài kế và mờ vào từ lúc có tiếng (musicwarm, 
     sim.bed.stop();
   });
 
-  it("<audio src> đang tải dở sắp hụt: mờ ra (không tắt phụt), giữ im tới khi tải kịp lại, rồi mờ vào (không vào đột ngột)", () => {
+  /** <audio src> tải dần như trình duyệt: phần đã tải [vào, have] tăng `rate()` giây bài mỗi giây đồng hồ; đang phát thì con trỏ chạy 1x tới khi đuổi kịp phần
+   *  đã tải - lúc ấy tiếng đứng; đứng khi âm lượng còn >= 30 % mức là một lần CỤT. */
+  function stream(audio: FakeAudio, rate: () => number): { cuts: number; sounding: number; have: () => number } {
+    const from = audio.currentTime;
+    let have = from;
+    let stalled = false;
+    const stats = { cuts: 0, sounding: 0, have: () => have };
+    audio.buffered = { length: 1, start: () => from, end: () => have };
+    setInterval(() => {
+      have = Math.min(audio.duration, have + rate() * 0.05);
+      if (audio.paused) return;
+      if (audio.currentTime + 0.05 <= have) {
+        audio.currentTime += 0.05;
+        stalled = false;
+        if (audio.volume > 0.001) stats.sounding += 0.05;
+      } else if (!stalled) {
+        stalled = true;
+        if (audio.volume >= 0.3 * GOAL) stats.cuts += 1;
+      }
+    }, 50);
+    return stats;
+  }
+
+  const long: MusicCue[] = slow.map((cue, i) => ({ ...cue, start: i * 1000, end: (i + 1) * 1000 }));
+
+  it("cổng phát-được-tới-hết-bài: tải 0,31x (11 KB/s, bài 35 KB/s) thì bài mới đứng yên ở chỗ vào, bài cũ giữ chỗ; vào khi đã có ~3/4 bài, không cụt lần nào", () => {
     vi.useFakeTimers();
     const sim = slowBed(() => 0);
-    sim.bed.setCues(slow, -20);
+    sim.bed.setCues(long, -20);
     sim.bed.sync(0, true);
     vi.advanceTimersByTime(3_000);
     const a = sim.made[0].audio;
-    let loaded = 50;
-    a.buffered = { length: 1, start: () => 0, end: () => loaded };
-    a.currentTime = 10;
-    sim.bed.sync(10, true); // nhịp giọng kế: bài còn tải dở thì đồng hồ mờ canh hụt
-    vi.advanceTimersByTime(1_000);
-    expect(a.volume).toBeCloseTo(GOAL, 3); // còn 40 giây đã tải trước con trỏ
-    a.currentTime = 49.5;
-    vi.advanceTimersByTime(100);
-    expect(a.volume).toBeGreaterThan(0.4 * GOAL);
-    expect(a.volume).toBeLessThan(0.9 * GOAL); // đang mờ ra
-    vi.advanceTimersByTime(300);
-    expect(a.volume).toBe(0);
-    a.readyState = 3; // trình duyệt chưa ước tải kịp
-    a.currentTime = 50;
-    vi.advanceTimersByTime(5_000);
-    expect(a.volume).toBe(0);
-    loaded = 60;
-    vi.advanceTimersByTime(1_000);
-    expect(a.volume).toBe(0); // đã có 10 giây trước con trỏ nhưng trình duyệt chưa ước tải kịp tới hết bài
-    loaded = 200;
-    a.readyState = 4;
-    vi.advanceTimersByTime(50);
-    expect(a.volume).toBeGreaterThan(0);
-    expect(a.volume).toBeLessThan(0.5 * GOAL);
-    vi.advanceTimersByTime(FADE_SECONDS * 1100);
-    expect(a.volume).toBeCloseTo(GOAL, 3);
+    sim.bed.sync(1000, true);
+    const b = sim.made[1].audio;
+    b.duration = 120;
+    vi.advanceTimersByTime(1);
+    const at = b.currentTime;
+    const loading = stream(b, () => 11 / 35);
+    let entered = -1;
+    for (let t = 0; t < 400 && entered < 0; t += 0.5) {
+      sim.bed.sync(1000 + t, true);
+      if (t > 0) expect(b.paused).toBe(true); // nhịp giọng không chơi lại bài đang chờ cổng
+      vi.advanceTimersByTime(500);
+      if (b.volume > 0) entered = loading.have() / b.duration;
+      else {
+        expect(b.paused).toBe(true); // phát câm thì chỗ vào trôi đi, tải chậm hơn 1x không bao giờ đuổi kịp
+        expect(b.currentTime).toBe(at);
+        expect(a.volume).toBeCloseTo(GOAL, 3);
+      }
+    }
+    expect(entered).toBeGreaterThan(0.7);
+    expect(entered).toBeLessThan(0.8);
+    for (let t = 0; t < 120; t += 0.5) {
+      sim.bed.sync(1400 + t, true);
+      vi.advanceTimersByTime(500);
+    }
+    expect(loading.cuts).toBe(0);
+    expect(loading.sounding).toBeGreaterThan(80);
     sim.bed.stop();
+  });
+
+  it("tốc độ tụt giữa bài: mờ ra trong 0,3 s (không tắt phụt), tạm dừng tại chỗ; phát được tới hết bài thì mờ vào trong 0,3 s từ đúng chỗ ấy", () => {
+    vi.useFakeTimers();
+    const sim = slowBed(() => 0);
+    sim.bed.setCues(long, -20);
+    sim.bed.sync(0, true);
+    const a = sim.made[0].audio;
+    vi.advanceTimersByTime(1);
+    let speed = 3;
+    const loading = stream(a, () => speed);
+    for (let t = 0; t < 10; t += 0.5) {
+      sim.bed.sync(t, true);
+      vi.advanceTimersByTime(500);
+    }
+    expect(a.volume).toBeCloseTo(GOAL, 3);
+    speed = 0.4;
+    let paused = -1;
+    let fadeFrom = -1;
+    let silentAt = -1;
+    for (let t = 10; t < 200 && paused < 0; t += 0.05) {
+      if (Math.round(t * 20) % 10 === 0) sim.bed.sync(t, true);
+      vi.advanceTimersByTime(50);
+      if (fadeFrom < 0 && a.volume < GOAL - 1e-4) fadeFrom = t;
+      if (silentAt < 0 && a.volume === 0) silentAt = t;
+      if (a.paused) paused = a.currentTime;
+    }
+    expect(paused).toBeGreaterThan(0);
+    expect(silentAt - fadeFrom).toBeGreaterThan(0.15); // mờ ra trong ~0,3 s, không tắt phụt
+    expect(silentAt - fadeFrom).toBeLessThan(0.4);
+    expect(a.volume).toBe(0);
+    expect(loading.cuts).toBe(0);
+    for (let t = 0; t < 20; t += 0.5) {
+      sim.bed.sync(50 + t, true);
+      vi.advanceTimersByTime(500);
+      expect(a.volume).toBe(0); // 0,4x không bao giờ phát được tới hết bài 200 giây
+    }
+    expect(a.currentTime).toBe(paused);
+    speed = 6;
+    let back = -1;
+    for (let t = 0; t < 60 && back < 0; t += 0.05) {
+      if (Math.round(t * 20) % 10 === 0) sim.bed.sync(70 + t, true);
+      vi.advanceTimersByTime(50);
+      if (a.volume > 0) back = t;
+    }
+    expect(back).toBeGreaterThan(0);
+    expect(a.currentTime).toBeLessThan(paused + 0.2);
+    expect(a.volume).toBeLessThan(0.5 * GOAL); // mờ vào, không vào đột ngột
+    vi.advanceTimersByTime(300);
+    expect(a.volume).toBeCloseTo(GOAL, 3);
+    for (let t = 0; t < 60; t += 0.5) {
+      sim.bed.sync(130 + t, true);
+      vi.advanceTimersByTime(500);
+    }
+    expect(loading.cuts).toBe(0);
+    sim.bed.stop();
+  });
+
+  it("DownloadPace: gộp đợt dồn 0,5 s đầu, chưa đủ 1 giây thì chưa biết, trung bình trượt 8 giây tụt dần khi nguồn đứng; playsThrough như ví dụ của Lead", () => {
+    const pace = new DownloadPace();
+    pace.add(0, 10);
+    pace.add(300, 30); // phần bộ đệm đã có sẵn tới dồn trong 0,5 s đầu: không phải tốc độ tải
+    expect(pace.rate(300)).toBeNull();
+    pace.add(1000, 30.5);
+    expect(pace.rate(1000)).toBeNull(); // mốc gốc ở 300 ms: mới 0,7 giây
+    pace.add(1300, 31);
+    expect(pace.rate(1300)).toBeCloseTo(1, 6);
+    expect(pace.rate(9300)!).toBeCloseTo(0.5 / 8.3, 6); // nguồn đứng 8 giây: tụt dần, không giữ số cũ
+    pace.add(20_000, 31);
+    expect(pace.rate(20_000)).toBe(0);
+    pace.add(20_100, 5); // tua sang chỗ chưa tải: đo lại từ đầu
+    expect(pace.rate(20_900)).toBeNull();
+    // 11 KB/s với bài 35 KB/s, bài 120 giây vào từ đầu: vào khi đã có ~3/4 bài.
+    const rate = 11 / 35;
+    let have = 0;
+    while (!playsThrough(have, 0, 120, rate)) have += 0.5;
+    expect(have / 120).toBeGreaterThan(0.74);
+    expect(have / 120).toBeLessThan(0.77);
+    expect(playsThrough(119.97, 100, 120, null)).toBe(true); // tải trọn
+    expect(playsThrough(101.5, 100, 120, 10)).toBe(false); // chưa có đủ 2 giây trước con trỏ
+    expect(playsThrough(102, 100, 120, null)).toBe(false); // chưa đo được tốc độ
   });
 
   it("trễ tải 16 giây: không lần vào nào đột ngột (J = 0); bản giả không khai báo trạng thái (hành vi cũ) thì có - bài thử đủ chặt", () => {
