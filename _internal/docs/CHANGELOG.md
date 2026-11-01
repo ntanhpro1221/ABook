@@ -7,6 +7,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nhạc nền
+
+- Nhạc không còn tắt phụt rồi bật phụt khi nguồn nhạc tải chậm hơn tốc độ bài. Bài đang tải dở chỉ được vào khi app đo thấy tốc độ tải đủ nhanh để phát tới hết bài. Nếu mạng tụt giữa bài, nhạc mờ dần ra, chờ đủ dữ liệu rồi mờ dần vào lại. Trước đây, khi nguồn chậm (khoảng 11-30 KB/s), một chương có thể bị cắt nhạc đột ngột hơn chục lần. Máy tính, bản web trên trình duyệt không có MediaSource (như Safari trên iPhone), và điện thoại khi nghe nhạc của sách thẳng từ máy tính.
+- Khi bài của cảnh mới chưa tải xong, bài đang phát tiếp tục giữ chỗ thay vì mờ đi để cả cảnh im lặng. Bài mới vào ngay khi tải xong. Máy tính, bản web và điện thoại.
+
 ## [0.4.159] - 2026-11-02
 
 ### Nhạc nền

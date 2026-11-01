@@ -42,6 +42,15 @@ using Clock = std::chrono::steady_clock;
 namespace {
 constexpr qint64 HEADER = 24;
 constexpr qint64 CACHE_LIMIT = 300 * 1024 * 1024;
+// Bài đang tải dở (nguồn chậm 11-30 KB/s, bài 256-320 kbps cần 32-40 KB/s): tốc độ tải đo bằng trung bình trượt RATE_WINDOW_S giây,
+// chia lề DOWNLOAD_MARGIN trước khi so với tốc độ bài. Hụt giữa bài thì mờ ra/vào trong UNDERRUN_FADE_S, không tắt/bật phụt (NA1 01-11: 14 lần).
+constexpr double RATE_WINDOW_S = 8.0;
+constexpr double BURST_S = 0.5;           // byte tới trong chừng này đầu lượt tải là phần máy chủ đã có sẵn, không phải tốc độ tải
+constexpr double DOWNLOAD_MARGIN = 1.3;
+constexpr double UNDERRUN_FADE_S = 0.3;
+constexpr double UNDERRUN_LOW_S = 0.5;    // vòng đệm còn dưới chừng này mà bộ giải mã đã cạn byte và tải không kịp: bắt đầu mờ ra
+constexpr double UNDERRUN_RESUME_S = 1.0; // giữ im tới khi vòng đệm có lại chừng này VÀ tải kịp (hay bài đã tải xong)
+constexpr double DECODE_LEAD_S = 2.0;     // phần phải có sẵn trước con trỏ đọc lúc vào (giải mã đi sau byte tải về một lượt)
 enum class Format { Unknown, Mp3, Mf };
 Format formatOf(const QByteArray &data) {
     // URL của host không có đuôi tệp; container phải được nhận trước khi dò sync MP3.
@@ -82,6 +91,25 @@ public:
     void append(const QByteArray &data, qint64 size) {
         Guard guard(m_mutex); m_data += data;
         if (!m_done && size >= 0) m_size = size;
+        const auto now = Clock::now();
+        if (m_samples.empty()) m_began = now;
+        // Đợt dồn đầu (máy chủ gửi một lèo phần đã tải sẵn) gộp vào mốc gốc: chỉ đo tốc độ tải tiếp sau đó.
+        if (now - m_began < std::chrono::duration<double>(BURST_S)) m_samples.clear();
+        m_samples.push_back({now, m_data.size()});
+        // Giữ một mẫu ngay trước cửa sổ làm mốc đầu.
+        while (m_samples.size() > 2 && now - m_samples[1].first > std::chrono::duration<double>(RATE_WINDOW_S)) m_samples.pop_front();
+    }
+    qint64 received() const { Guard guard(m_mutex); return m_data.size(); }
+    // Byte/giây tải về trong RATE_WINDOW_S giây vừa qua, tính tới bây giờ (nguồn đứng thì tụt dần về 0); chưa đo được (< 1 s) thì -1.
+    double rate() const {
+        Guard guard(m_mutex);
+        if (m_samples.empty()) return -1;
+        const auto now = Clock::now();
+        auto first = m_samples.front();
+        for (const auto &sample : m_samples) if (now - sample.first <= std::chrono::duration<double>(RATE_WINDOW_S)) { break; } else first = sample;
+        const double seconds = std::chrono::duration<double>(now - first.first).count();
+        if (seconds < 1.0) return -1;
+        return double(m_data.size() - first.second) / seconds;
     }
     void finish(const QString &error) { Guard guard(m_mutex); m_done = true; m_error = error; m_size = m_data.size(); }
     QByteArray read(qint64 offset, qint64 count) override {
@@ -97,6 +125,8 @@ public:
 private:
     mutable std::mutex m_mutex;
     QByteArray m_data;
+    std::deque<std::pair<Clock::time_point, qint64>> m_samples;
+    Clock::time_point m_began;
     qint64 m_size = -1;
     bool m_done = false;
     QString m_error;
@@ -156,6 +186,18 @@ struct DecodeJob {
         return got > 0;
     }
 };
+
+// Bài đang tải dở phát được từ khung `from` tới hết mà không hụt, nếu tốc độ tải giữ ở trung bình trượt chia DOWNLOAD_MARGIN: tải được
+// have + r·t byte, phát tới khung from + R·t cần (from + R·t)·p byte (+ DECODE_LEAD_S giây đi trước) - cả hai tuyến tính theo t, nên chỉ
+// cần đúng ở bây giờ và ở lúc phát hết bài. Chưa biết cỡ bài / độ dài hay chưa đo được tốc độ: chưa chắc, coi như không.
+bool keepsUp(const DecodeJob &job, quint64 from) {
+    if (job.done) return true;
+    const double size = double(job.bytes->size()), have = double(job.bytes->received()), measured = job.bytes->rate();
+    if (size <= 0 || !job.total || measured < 0) return false;
+    const double perFrame = size / double(job.total), lead = DECODE_LEAD_S * job.rate * perFrame;
+    const double left = double(job.total - std::min(from, job.total)) / job.rate;
+    return have >= std::min(size, double(from) * perFrame + lead) && have + measured / DOWNLOAD_MARGIN * left >= size;
+}
 
 // Callback không giữ con trỏ chủ: Unregister có thể đụng một callback còn đang chạy.
 struct DeviceNotice final : IMMNotificationClient {
@@ -361,6 +403,10 @@ struct MixVoiceState {
     bool opening = false, fetching = false, ready = false;
     bool want = false, playing = false, loop = false, buffering = false, seeking = false, reposition = false, flush = false;
     bool eof = false, volumeDirty = true;
+    // Bài đang tải dở hụt dữ liệu: starving (luồng đọc báo: bộ giải mã cạn byte, tải không kịp) -> render mờ ra phần còn lại của vòng đệm
+    // trong fadeOutLen khung -> hold (giữ im, không chặn giọng) -> luồng đọc thôi báo starving -> mờ vào trong fadeInLen khung.
+    bool starving = false, hold = false;
+    quint32 fadeOutLeft = 0, fadeOutLen = 0, fadeInLen = 0;
     double target = 0, volume = 0, duration = 0;
     int rate = 48000;
     quint64 length = 0, origin = 0, mixed = 0, heard = 0, limit = 0;
@@ -512,7 +558,7 @@ struct MusicMixer::Impl {
     // Gọi khi giữ khoá của s. Số khung thiết bị giọng này trộn được ngay từ vòng đệm; SIZE_MAX khi không còn gì để chờ
     // (luồng đã tới cuối, hay phần còn lại của tệp không lặp đã nằm cả trong vòng đệm).
     size_t ahead(const MixVoiceState &s) const {
-        if (!s.ring || s.eof) return SIZE_MAX;
+        if (!s.ring || s.eof || s.hold) return SIZE_MAX;
         const size_t have = s.ring->readable() / 2;
         if (!s.streaming) return !s.loop && s.limit - std::min(s.limit, s.mixed) <= have ? SIZE_MAX : have;
         // Sonic giữ lại tới vài chu kỳ cao độ (~30 ms) trước khi nhả ra.
@@ -796,8 +842,9 @@ void MusicMixer::serviceReader() {
                 { Guard guard(s->mutex); if (s->generation != generation) continue; s->job = job; }
                 if (!job->error.isEmpty()) error = job->error;
                 else if (job->fallback) { Guard guard(s->mutex); if (s->generation == generation) s->job.reset(); continue; }
-                // Vào khi đã có ba giây (hay cả bài ngắn hơn); phần còn lại giải mã kịp trước con trỏ đọc.
-                else if (!job->opened || (!job->done && job->frames < std::min(job->total, quint64(outRate) * 3))) continue;
+                // Vào khi đã có ba giây (hay cả bài ngắn hơn) và tải kịp tới hết bài từ chỗ vào (keepsUp); không kịp thì chưa vào - bài cũ
+                // giữ chỗ hay im lặng tới khi tải đủ, không vào rồi hụt giữa chừng.
+                else if (!job->opened || (!job->done && (job->frames < std::min(job->total, quint64(outRate) * 3) || !keepsUp(*job, [&] { Guard guard(s->mutex); return quint64(std::llround(std::max(0.0, s->target) * outRate)); }())))) continue;
                 else if (job->done) {
                     frames = job->frames;
                     if (!file->open(QIODevice::ReadOnly) || readHeader(*file, outRate) != frames) error = QStringLiteral("Bộ đệm nhạc bị thiếu dữ liệu.");
@@ -840,6 +887,7 @@ void MusicMixer::serviceReader() {
             s->limit = s->length - s->origin;
             s->file->seek(HEADER + qint64(s->origin) * 4);
             s->ring->clear(); s->mixed = s->heard = 0; s->spans.clear(); s->eof = false; s->reposition = false; s->joining = true; d->joinSoon = true;
+            s->starving = s->hold = false; s->fadeOutLeft = s->fadeOutLen = s->fadeInLen = 0;
             if (s->seeking) postSeeked(s);
         }
         // Đọc trước hai giây; việc lấp vòng đệm không đánh thức giao diện.
@@ -847,8 +895,12 @@ void MusicMixer::serviceReader() {
             qint64 n = qint64(std::min<size_t>(s->ring->writable() / 2, 16384));
             const quint64 at = quint64((s->file->pos() - HEADER) / 4);
             if (s->job) {
-                // Bài còn đang giải mã: chưa phải hết bài, chỉ là chưa tới. Lượt giải mã kế đánh thức lại.
-                if (at >= s->job->frames) break;
+                // Bài còn đang giải mã: chưa phải hết bài, chỉ là chưa tới. Lượt giải mã kế đánh thức lại. Vòng đệm sắp cạn mà tải không kịp:
+                // báo render mờ ra trước khi hết tiếng.
+                if (at >= s->job->frames) {
+                    if (!s->starving && s->ring->readable() < size_t(UNDERRUN_LOW_S * s->rate) * 2 && !keepsUp(*s->job, at)) s->starving = true;
+                    break;
+                }
                 n = std::min<qint64>(n, qint64(s->job->frames - at));
             }
             const QByteArray pcm = s->file->read(n * 4);
@@ -876,6 +928,9 @@ void MusicMixer::serviceReader() {
             }
             s->ring->write(block.data(), block.size());
         }
+        if (s->starving && (!s->job || (s->ring->readable() >= size_t(UNDERRUN_RESUME_S * s->rate) * 2
+                                        && keepsUp(*s->job, quint64((s->file->pos() - HEADER) / 4)))))
+            s->starving = false; // tải đã kịp (hay bài đã tải xong): render mờ vào
     }
     d->decoding = d->jobs.size();
     // A normal top-up has no control/readiness event to deliver. The output
@@ -1200,10 +1255,30 @@ size_t MusicMixer::Impl::render(const std::shared_ptr<MixVoiceState> &s, float *
     }
     size_t n = frames;
     if (!s->streaming && !s->loop) n = size_t(std::min<quint64>(n, s->limit - std::min(s->limit, s->mixed)));
+    if (!s->streaming) {
+        if (s->starving && !s->hold && !s->fadeOutLen) {
+            s->fadeOutLen = s->fadeOutLeft = quint32(std::min(s->ring->readable() / 2, size_t(UNDERRUN_FADE_S * rate)));
+            if (!s->fadeOutLen) s->hold = true;
+        }
+        if (s->hold && !s->starving) {
+            s->hold = false; s->fadeIn = true; s->fadeInLen = quint32(UNDERRUN_FADE_S * rate);
+        }
+        if (s->hold) n = 0;
+        else if (s->fadeOutLen) n = std::min<size_t>(n, s->fadeOutLeft);
+    }
     std::vector<float> block(frames * 2, 0.0f), scratch;
     if (s->streaming) s->stretch->setRate(s->speed);
     const size_t got = s->streaming ? s->stretch->read(*s->ring, block.data(), n, s->eof) : s->ring->read(block.data(), n * 2) / 2;
-    const bool buffering = got < n && !s->eof;
+    if (s->fadeOutLen && got) {
+        // Mờ ra tuyến tính tới 0 ở khung cuối còn trong vòng đệm.
+        for (size_t i = 0; i < got; ++i) {
+            const float w = float(s->fadeOutLeft - i - 1) / float(s->fadeOutLen);
+            block[i * 2] *= w; block[i * 2 + 1] *= w;
+        }
+        s->fadeOutLeft -= quint32(got);
+        if (!s->fadeOutLeft) { s->fadeOutLen = 0; s->hold = true; }
+    }
+    const bool buffering = (got < n || s->hold) && !s->eof;
     if (s->buffering != buffering) { s->buffering = buffering; owner->post(s, [buffering](MixVoice *v) { emit v->buffering(buffering); }); }
     if (s->streaming && buffering && s->playing) {
         s->playing = false; owner->post(s, [](MixVoice *v) { emit v->playingChanged(false); });
@@ -1211,7 +1286,7 @@ size_t MusicMixer::Impl::render(const std::shared_ptr<MixVoiceState> &s, float *
     if (got) {
         block.resize(got * 2);
         Span span{device, s->mixed, got, s->mediaMixed, s->speed, s->ramp, std::move(block)};
-        if (s->fadeIn) { span.inAt = device; span.inLen = quint32(rate / 200); s->fadeIn = false; }
+        if (s->fadeIn) { span.inAt = device; span.inLen = s->fadeInLen ? s->fadeInLen : quint32(rate / 200); s->fadeIn = false; s->fadeInLen = 0; }
         mixSpan(out, device, device, device + got, span, scratch);
         s->spans.push_back(std::move(span)); s->mixed += got;
         if (s->streaming) s->mediaMixed += double(got) * s->speed / s->rate;
@@ -1403,6 +1478,7 @@ void MixVoice::stop() {
       m_state->ring.reset(); m_state->file.reset(); m_state->spans.clear();
       m_state->source.reset(); m_state->decoder.reset(); m_state->stretch.reset(); m_state->mediaHeard = m_state->mediaMixed = 0;
       m_state->joining = m_state->fadeIn = m_state->speedDirty = m_state->requested = false; m_state->joinAt = 0;
+      m_state->starving = m_state->hold = false; m_state->fadeOutLeft = m_state->fadeOutLen = m_state->fadeInLen = 0;
       m_state->duration = m_state->target = 0; m_state->mixed = m_state->heard = m_state->origin = m_state->length = 0;
     }
     // Huỷ tải khi không giọng nào còn chờ hay còn đọc bài đang giải mã dở; nguồn chung vẫn được giữ cho giọng khác.
