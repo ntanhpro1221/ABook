@@ -28,6 +28,20 @@ inline constexpr qint64 RETRY_MS = 5 * 60000;
 /// Chương còn chừng này giây thì xin máy chủ tải sẵn bài mốc đầu của chương kế.
 inline constexpr double NEXT_CHAPTER_WARM_SECONDS = 120;
 inline constexpr qint64 NEXT_CHAPTER_RETRY_MS = 15000;
+/// Nhạc theo cảnh dựng nền: chương chưa xong thì máy chủ giữ lời hỏi tới 2 giây (music_nnscene.BUILD_WAIT_SECONDS) rồi trả `pending`, nên hỏi
+/// lại không cần thưa - SCENE_FAST_POLLS lần đầu cách SCENE_FAST_POLL_MS (chương xong giữa hai lần hỏi không phải chờ thêm 1,5 giây: đo 01-11
+/// máy mới, xong ở 3,3 giây mà nhạc vào ở 4,8), rồi mới thưa ra SCENE_POLL_MS (máy chủ trả `pending` tức thì thì không dồn lượt hỏi). Tối đa
+/// SCENE_POLLS lần (sceneCues.ts scenePollDelay, Android MusicBed.kt).
+inline constexpr int SCENE_POLLS = 80;
+inline constexpr int SCENE_FAST_POLLS = 10;
+inline constexpr int SCENE_FAST_POLL_MS = 200;
+inline constexpr int SCENE_POLL_MS = 1500;
+/// Chờ chừng ấy ms rồi hỏi lại lần `attempt` (từ 0) còn `pending`; hết lượt thì không.
+inline std::optional<int> scenePollDelay(int attempt) {
+    if (attempt >= SCENE_POLLS)
+        return std::nullopt;
+    return attempt < SCENE_FAST_POLLS ? SCENE_FAST_POLL_MS : SCENE_POLL_MS;
+}
 /// Nhịp đồng bộ với giọng (bản web: `timeupdate` tới 250 ms; ở đây đồng hồ của Player cũng ~4 lần mỗi giây).
 inline constexpr double SYNC_TICK_SECONDS = 0.25;
 inline constexpr double LOOP_DRIFT_TOLERANCE_SECONDS = 0.005; // §48: 20 ms để lọt ε 20-40 ms
