@@ -238,7 +238,8 @@ def lag_parts(t, lag):
     thì đúng một tick thụt sâu thêm (01-11 cổng trên exe 0.4.157 khi máy đang phân tích: -15,2 giữa -8,1 và -6,4, răng cưa 10 ms
     đều quanh nó). Bỏ tối đa LATE_TICKS_FRAC số tick (ít nhất một), từng tick lẻ (hai bên vẫn giữ) mà riêng nó đã sâu quá SAW_MS
     dưới đường bao; tick sâu hơn một chu kỳ mà dưới ngưỡng thì giữ (đáy răng cưa, dưới ngưỡng đằng nào cũng xanh). Con trỏ cập
-    nhật thưa thì sâu ở mọi chu kỳ nên vẫn đỏ."""
+    nhật thưa thì sâu ở mọi chu kỳ nên vẫn đỏ. Tick đầu và cuối đoạn chỉ có một bên nên không cần "lẻ" - riêng hai tick ấy bỏ được
+    chỉ vì sâu quá SAW_MS (vẫn trong hạn LATE_TICKS_FRAC)."""
     keep = np.ones(len(t), bool)
 
     def fit():
