@@ -11,6 +11,8 @@ bốn tốc độ, tua xa, lùi, hết chương tự sang chương sau, bấm ch
   rò      còn tiếng sau lúc dừng
   đột im  đang có tiếng mà tắt phụt (> -45 dB xuống < -70 dB trong 20 ms) không do thao tác nào, ở chỗ nguồn không tự tắt
           (01-11: hết chương tự sang chương sau, nhạc dừng cùng giọng - 0.4.152 rơi -30 -> -91 dB trong 6 ms)
+  khựng   giọng đứng (bước "stall:500": tools/stall_host giữ 25 s yêu cầu ở máy chủ của app) thì nhạc còn nguyên
+          voiceStallFadeAfterSeconds giây, mờ hết sau thêm chapterEndFadeSeconds, vào lại khi giọng chạy lại
 
   python -X utf8 tools/audio_sink.py run <label> [--exe dist/ABookDesk.exe]
   python -X utf8 tools/audio_sink.py analyze <thư_mục_lượt>
@@ -62,7 +64,12 @@ DROPOUT_SLACK_S = 0.06  # mất giọng: so với chỗ nguồn im nhất trong 
 CUT_FROM_DB = -45.0     # đột im: bao 5 ms đang trên mức này (nhạc dưới giọng ở cuốn thử ~ -36 dB) ...
 CUT_TO_DB = -70.0       # ... rồi trong CUT_WITHIN_S xuống dưới mức này
 CUT_WITHIN_S = 0.02
-CUT_ACTION_S = 0.5      # sau một thao tác (dừng, tua, sang chương, đổi tốc độ...) chừng này giây thì im phụt là do người dùng
+STALL_MUSIC_DB = -50.0  # giọng khựng: nhạc (một mình) trung vị trên mức này = còn kêu (dưới giọng ~ -36 dB)
+STALL_QUIET_DB = -60.0  # ... đã mờ hết thì mọi khung 50 ms dưới mức này (audibleThresholdDbfs)
+STALL_MIN_GAPS = 10     # ... nhạc vào lại: đo ở ít nhất chừng này khung 20 ms nguồn giọng im
+STALL_HOLD_S = 25.0     # ... máy chủ giữ chừng này (dưới hạn chờ 30 s của RangeSource; kịch bản đứng ở bước ấy 34 s)
+MUSIC_MIX = ROOT.parent / "abook/webui/assets/music_mix.json"
+CUT_ACTION_S = 0.5     # sau một thao tác (dừng, tua, sang chương, đổi tốc độ...) chừng này giây thì im phụt là do người dùng
 
 
 # ---------- đọc ----------
@@ -235,13 +242,30 @@ def check(data, snippets=None):
     quiet = [(by_tag["pause"]["frame"] + int(0.06 * rate), by_tag["resume"]["frame"]),
              (by_tag["stop"]["frame"] + int(0.06 * rate), len(mono))]
 
+    # Giọng khựng (mốc "stall:<giây>": tua tới vùng mà tools/stall_host giữ yêu cầu ở máy chủ): từ mốc tới lúc vị trí chạy lại.
+    # Trong cửa sổ ấy giọng im là đúng (không lỗ, không mất giọng, không đo trôi / mức); nhạc kiểm riêng ở 4c. Lượt cũ không có mốc.
+    stall = next((e for e in events if e["tag"].startswith("stall:")), None)
+    stall_window = None
+    if stall is not None:
+        after = next(e["frame"] for e in events if e["frame"] > stall["frame"])
+        frozen = next((t for t in ticks if t["frame"] > stall["frame"] + int(0.5 * rate)), None)
+        moved = None if frozen is None else next(
+            (t for t in ticks if t["frame"] > frozen["frame"] and t["position"] > frozen["position"] + 0.05), None)
+        stall_window = (stall["frame"], moved["frame"] if moved is not None and moved["frame"] < after else after)
+        events = sorted(events + [dict(stall, tag="stall_end", frame=stall_window[1], resumed=moved is not None and moved["frame"] < after)],
+                        key=lambda e: e["frame"])
+
+    def in_stall(f):
+        return stall_window is not None and stall_window[0] <= f < stall_window[1]
+
     def in_sound(f):
-        return any(a <= f < b for a, b in sound)
+        return any(a <= f < b for a, b in sound) and not in_stall(f)
 
     # Vị trí nội dung (giây nguồn) theo khung tiếng ra: nội suy giữa hai tick liền nhau cùng chương, đang phát, không thao tác xen giữa.
     def steady(a, b):
         return (a["playing"] and b["playing"] and a["chapter"] == b["chapter"] and 0 < b["frame"] - a["frame"] < rate
-                and not any(a["frame"] - SETTLE_S * rate < e["frame"] <= b["frame"] for e in events))
+                and not any(a["frame"] - SETTLE_S * rate < e["frame"] <= b["frame"] for e in events)
+                and not (stall_window is not None and a["frame"] < stall_window[1] and b["frame"] > stall_window[0]))
     pairs = [(a, b) for a, b in zip(ticks, ticks[1:]) if steady(a, b)]
 
     def pair_at(f):
@@ -306,7 +330,7 @@ def check(data, snippets=None):
     source_d2[2:] = np.abs(source[2:] - 2 * source[1:-1] + source[:-2])
     excused = []
     for f in clicks(mono, rate):
-        if not in_sound(f):
+        if not in_sound(f) and not in_stall(f):  # nhạc trong cửa sổ khựng cũng không được tách
             continue
         ab = pair_at(f)
         if ab is not None:
@@ -332,7 +356,7 @@ def check(data, snippets=None):
     last_cut = -rate
     for k in np.flatnonzero(cut_db[:-reach] > CUT_FROM_DB).tolist():
         f = k * cut_hop
-        if f - last_cut < CUT_ACTION_S * rate or cut_db[k + 1: k + 1 + reach].min() >= CUT_TO_DB or not in_sound(f):
+        if f - last_cut < CUT_ACTION_S * rate or cut_db[k + 1: k + 1 + reach].min() >= CUT_TO_DB or not (in_sound(f) or in_stall(f)):
             continue
         if any(a - (reach + 1) * cut_hop <= f <= a + CUT_ACTION_S * rate for a in actions):  # khung đứng trước chỗ rơi: sớm hơn thao tác tới 20 ms
             continue
@@ -347,6 +371,46 @@ def check(data, snippets=None):
         last_cut = f
         f = (k + 1 + int(np.argmax(cut_db[k + 1: k + 1 + reach] < CUT_TO_DB))) * cut_hop  # báo đúng khung đã im
         snip("cut", f, f"{cut_db[k]:.1f} dB -> {cut_db[k + 1: k + 1 + reach].min():.1f} dB trong {CUT_WITHIN_S * 1000:.0f} ms, không thao tác nào")
+    # 4c. Giọng khựng: nhạc còn nguyên trong N giây đầu (voiceStallFadeAfterSeconds), mờ hết sau N + chapterEndFadeSeconds (đường mờ
+    # là việc của 4b: rơi phụt thì là đột im), và vào lại khi giọng chạy lại - đo ở chỗ ngắt giữa câu của nguồn, nơi chỉ còn nhạc.
+    stall_report = None
+    if stall_window is not None:
+        mix = json.loads(MUSIC_MIX.read_bytes())
+        hold, fade = mix["voiceStallFadeAfterSeconds"], mix["chapterEndFadeSeconds"]
+        back = max(fade, mix["fadeSeconds"])
+        hop50, hop20 = int(0.05 * rate), int(0.02 * rate)
+        db50, db20, source_db20 = frame_db(mono, hop50), frame_db(mono, hop20), frame_db(source, hop20)
+
+        def frames(t0, t1, hop=hop50):
+            return range(max(0, int(t0 * rate) // hop), min(len(mono) // hop, int(t1 * rate) // hop))
+        t0, t1 = stall_window[0] / rate, stall_window[1] / rate
+        stall_report = dict(at=round(t0, 3), seconds=round(t1 - t0, 2), hold=hold, fade=fade)
+        if t1 - t0 < hold + fade + 2:
+            snip("stall_short", stall_window[0], f"giọng chỉ đứng {t1 - t0:.1f} s, cần >= {hold + fade + 2:g} s mới thấy nhạc mờ")
+        else:
+            early = [float(db50[k]) for k in frames(t0 + 1.5, t0 + hold - 1)]
+            late = [(float(db50[k]), k) for k in frames(t0 + hold + fade + 1, t1 - 0.25 - 0.1)]  # tick trước tick đã chạy: giọng có thể đã vào
+            stall_report.update(early_db=round(float(np.median(early)), 1), late_peak_db=round(max(late)[0], 1))
+            if stall_report["early_db"] < STALL_MUSIC_DB:
+                snip("stall_early", int((t0 + 1.5) * rate), f"trước {hold:g} s nhạc đã tắt: trung vị {stall_report['early_db']} dB")
+            if stall_report["late_peak_db"] > STALL_QUIET_DB:
+                snip("stall_music", max(late)[1] * hop50, f"khựng quá {hold + fade:g} s nhạc vẫn kêu: đỉnh {stall_report['late_peak_db']} dB")
+        end = next(e for e in events if e["tag"] == "stall_end")
+        nxt = next((e["frame"] for e in events if e["frame"] > end["frame"]), len(mono)) / rate
+        gaps = []
+        for k in frames(t1 + back + 0.5, min(t1 + back + 8, nxt), hop20):  # khung 20 ms mà nguồn im cả ±40 ms quanh vị trí báo
+            p = position_at(k * hop20 + hop20 // 2)
+            j = None if p is None else int(p * rate) // hop20
+            if j is not None and 2 <= j < len(source_db20) - 2 and source_db20[j - 2: j + 3].max() < -55:
+                gaps.append((float(db20[k]), k * hop20))
+        stall_report.update(resumed=end["resumed"], return_db=round(float(np.median([g for g, _ in gaps])), 1) if gaps else None,
+                            return_frames=[f for _, f in gaps], hop=hop20)
+        if not end["resumed"]:
+            snip("stall_return", stall_window[1], "giọng không chạy lại trước thao tác kế")
+        elif len(gaps) < STALL_MIN_GAPS:
+            snip("stall_return", stall_window[1], f"chỉ {len(gaps)} chỗ ngắt giọng sau khi giọng chạy lại, không đo được nhạc")
+        elif stall_report["return_db"] < STALL_MUSIC_DB:
+            snip("stall_return", stall_window[1], f"giọng chạy lại mà nhạc không vào: trung vị chỗ ngắt {stall_report['return_db']} dB")
     # 5. Rò tiếng lúc phải im
     for a, b in quiet:
         if b - a > 0:
@@ -359,7 +423,7 @@ def check(data, snippets=None):
     segments = []
     for e, nxt in zip(events, events[1:]):
         inside = [t for t in ticks if e["frame"] + SETTLE_S * rate <= t["frame"] < nxt["frame"] and t["playing"]]
-        if len(inside) >= 8 and len({t["chapter"] for t in inside}) == 1:
+        if len(inside) >= 8 and len({t["chapter"] for t in inside}) == 1 and not e["tag"].startswith("stall:"):
             segments.append(dict(tag=e["tag"], ticks=inside, frames=(inside[0]["frame"], inside[-1]["frame"])))
     rate_of = {}
     current = 1.0
@@ -423,7 +487,8 @@ def check(data, snippets=None):
     for f in findings:
         counts[f["kind"]] = counts.get(f["kind"], 0) + 1
     return dict(sink=data["sink"], seconds=round(len(mono) / rate, 2), events=[(e["tag"], round(e["frame"] / rate, 3), e["chapter"], e["position"]) for e in events],
-                counts=counts, findings=findings, excused=excused, drift=drift, offsets=offsets, levels=levels, segments=[(s["tag"], s["frames"]) for s in segments],
+                counts=counts, findings=findings, excused=excused, drift=drift, offsets=offsets, levels=levels, stall=stall_report,
+                segments=[(s["tag"], s["frames"]) for s in segments],
                 ok=not findings)
 
 
@@ -459,7 +524,8 @@ def run(label, exe):
     stage.mkdir(parents=True, exist_ok=True)
     fixture = prepare(stage)
     books = json.loads((fixture / "audio_books.json").read_bytes())
-    source = json.loads((stage / "chapter-input.json").read_bytes())["source"]
+    chapter = json.loads((stage / "chapter-input.json").read_bytes())
+    source = chapter["source"]
     qt = Path("D:/Novels/native_desk_proto/qt611/6.10.3/msvc2022_64")
     local = stage / "local"
     local.mkdir(exist_ok=True)
@@ -468,12 +534,18 @@ def run(label, exe):
                ABOOK_HOST_APP=str(ROOT.parent), ABOOK_BENCH_SCENARIO="audio", ABOOK_BENCH_BOOK=books["a"], ABOOK_AUDIO_SINK=str(sink),
                ABOOK_SMTC="1", LOCALAPPDATA=str(local), QT_SCALE_FACTOR="1", QT_QPA_PLATFORM="offscreen", QT_QUICK_BACKEND="software",
                ABOOK_BENCH_HIDDEN_DESKTOP="1", QT_QPA_FONTDIR=str(ROOT / "fonts"), QT_QPA_PLATFORM_PLUGIN_PATH=str(qt / "plugins/platforms"),
-               PATH=str(qt / "bin") + os.pathsep + os.environ["PATH"])
+               PATH=str(qt / "bin") + os.pathsep + os.environ["PATH"],
+               # Giọng khựng (bước "stall:500" của kịch bản): máy chủ con nạp tools/stall_host/sitecustomize.py, giữ 25 s yêu cầu đầu tiên
+               # vào 60-75 % file chương (cỡ file = chương thử; mọi chương đều là bản sao nên chỉ lần đầu - đúng lúc tua tới 500/751 s)
+               PYTHONPATH=str(ROOT / "tools/stall_host"), ABOOK_TEST_VOICE_STALL=f"{chapter['bytes']}:0.6:0.75:{STALL_HOLD_S:g}")
     reset(fixture)
     (fixture / "listening.json.journal").write_bytes(b"")
-    got = measure.launch(Path(exe).resolve(), env, True, timeout_seconds=260, require_ac=False)
+    got = measure.launch(Path(exe).resolve(), env, True, timeout_seconds=300, require_ac=False)
     if got.get("app_log"):
         shutil.copyfile(got["app_log"], stage / "app.log")
+    host_log = local / "ABook/logs/host.log"   # stderr của máy chủ con (Backend::logPath)
+    if b"ABOOK_TEST_VOICE_STALL" not in (host_log.read_bytes() if host_log.exists() else b""):
+        raise SystemExit(f"móc giọng khựng không chạy ({host_log} không có ABOOK_TEST_VOICE_STALL): lượt không kiểm được nhạc mờ")
     if not got.get("ok"):
         (stage / "run.json").write_text(json.dumps(dict(ok=False, why=got.get("why")), ensure_ascii=False), encoding="utf-8")
         raise SystemExit(f"app không chạy xong: {got.get('why')}")
@@ -490,12 +562,13 @@ STRENGTH_STEP = 0.05
 STRENGTH_CUT_S = 0.3
 
 
-def strength(data, base=None):
+def strength(data, base=None, stall=True):
     """Lượt phải xanh, và từng lỗi cấy vào nó phải đỏ đúng loại, đúng chỗ:
     - trôi ±0,3 % / ±0,5 % từ giữa đoạn: ở mọi đoạn mà phần cấy (thời gian người nghe) vượt DRIFT_MS + răng cưa sạch của
       chính đoạn ấy, tức là chắc chắn phải thấy; phải có ít nhất một đoạn như thế;
     - bậc 0,05 kéo 10 ms giữa một đoạn tốc độ >= 2,5 và một đoạn tốc độ 1, xa tiếng tách của nguồn và chỗ nguồn nhọn;
-    - đột im: 0,3 s số 0 giữa một đoạn tốc độ 1, chỗ tiếng ra đang có tiếng và nguồn không tự tắt.
+    - đột im: 0,3 s số 0 giữa một đoạn tốc độ 1, chỗ tiếng ra đang có tiếng và nguồn không tự tắt;
+    - giọng khựng (stall=True; lượt giả không có cửa sổ khựng thì tắt): xem stall_strength.
     Trả (ok, kết quả từng phép)."""
     rate = data["rate"]
     base = base or check(data)
@@ -561,7 +634,49 @@ def strength(data, base=None):
         mono[at: at + int(STRENGTH_CUT_S * rate)] = 0
         got = check(dict(data, mono=mono))
         results.append(dict(case=f"đột im @{at / rate:.3f}s", ok=any(f["kind"] == "cut" and abs(f["t"] * rate - at) < 0.02 * rate for f in got["findings"])))
+    if stall:
+        results += stall_strength(data, base)
     return all(r["ok"] for r in results), results
+
+
+def stall_strength(data, base):
+    """Giọng khựng: lượt phải có cửa sổ khựng đủ dài, và bốn lỗi cấy vào nó phải đỏ đúng loại: nhạc không mờ (chép nhạc của
+    N giây đầu đè lên phần đã mờ), nhạc tắt ngay khi khựng, rơi phụt thay vì mờ (đúng chỗ), nhạc không vào lại (xoá đúng các khung
+    ngắt giọng mà check() đo sau khi giọng chạy lại)."""
+    rate, s = data["rate"], base.get("stall")
+    if s is None or "early_db" not in s:
+        return [dict(case="khựng", ok=False, note="lượt không có cửa sổ khựng đủ dài")]
+    t0, t1, hold, fade = s["at"], s["at"] + s["seconds"], s["hold"], s["fade"]
+    results = []
+
+    def frame(t):
+        return int(round(t * rate))
+
+    def expect(name, mono, kind, at=None):
+        got = check(dict(data, mono=mono))
+        results.append(dict(case=f"khựng: {name}", ok=any(f["kind"] == kind and (at is None or abs(f["t"] * rate - at) < 0.02 * rate)
+                                                         for f in got["findings"])))
+    mono = data["mono"].copy()
+    a, b = frame(t0 + hold), frame(t1)
+    mono[a:b] = np.resize(data["mono"][frame(t0 + 1.5): frame(t0 + hold - 1)], b - a)
+    expect("nhạc không mờ", mono, "stall_music")
+    mono = data["mono"].copy()
+    mono[frame(t0 + 1.5): frame(t0 + hold + fade)] = 0
+    expect("nhạc tắt ngay", mono, "stall_early")
+    hop = int(0.005 * rate)
+    sink_db = frame_db(data["mono"], hop)
+    at = next((k * hop for k in range(frame(t0 + hold - 1) // hop, frame(t0 + 1.5) // hop, -1) if sink_db[k - 1] > CUT_FROM_DB + 3), None)
+    if at is None:
+        results.append(dict(case="khựng: rơi phụt", ok=False, note="nhạc trong cửa sổ khựng không đủ to để cấy"))
+    else:
+        mono = data["mono"].copy()
+        mono[at: frame(t1)] = 0
+        expect(f"rơi phụt @{at / rate:.3f}s", mono, "cut", at)
+    mono = data["mono"].copy()
+    for f in s["return_frames"]:
+        mono[f: f + s["hop"]] = 0
+    expect("nhạc không vào lại", mono, "stall_return")
+    return results
 
 
 def gate(exe, runs):
@@ -652,6 +767,71 @@ def synthetic_run(speed=1.0, saw_ms=10.0, drift=0.0, lead_ms=0.0, source_step_at
     return dict(sink="synthetic", rate=rate, mono=mono, marks=marks, gaps=[], stops=[], source=source)
 
 
+def synthetic_stall_run(fault=None, rate=RATE):
+    """Lượt giả có giọng khựng: play 0,5 s, pause 2 s, resume 2,5 s, tua tới giây nguồn 20 ở 6 s ("stall:20"), giọng đứng
+    hold + fade + 9,5 s, chạy lại tới stop. Nguồn là giọng (có chỗ ngắt giữa âm tiết), tiếng ra = giọng theo vị trí + nhạc nền
+    (~ -35 dB) mờ theo luật: còn nguyên hold giây, mờ fade giây, vào lại fadeSeconds giây khi giọng chạy. Mép giọng mờ 5 ms như tua.
+    fault: "keep" nhạc không mờ, "early" nhạc tắt ngay khi khựng, "abrupt" nhạc rơi phụt ở hold, "noreturn" nhạc không vào lại."""
+    mix = json.loads(MUSIC_MIX.read_bytes())
+    hold, fade, back = mix["voiceStallFadeAfterSeconds"], mix["chapterEndFadeSeconds"], mix["fadeSeconds"]
+    play, pause, resume, seek, target = 0.5, 2.0, 2.5, 6.0, 20.0
+    moves = seek + hold + fade + 9.5
+    stop = moves + 12.0
+    end = stop + 1.0
+
+    def truth(t):
+        if t < pause:
+            return t - play
+        if t < resume:
+            return pause - play
+        if t < seek:
+            return pause - play + t - resume
+        return target if t < moves else target + t - moves
+    n = int(end * rate)
+    _, music = voice_and_music(n, rate)
+    speech_full, music_src = voice_and_music(int((target + stop - moves + 1) * rate), rate, seed=5)
+    source = speech_full - music_src  # chỉ giọng: ngắt hẳn giữa các âm tiết
+    t = np.arange(n) / rate
+    voice = np.zeros(n, np.float32)
+    ramp = rate // 200
+    for a, b in ((play, pause), (resume, seek), (moves, stop)):
+        i, j = int(a * rate), int(b * rate)
+        k = int(round(truth(a) * rate))
+        piece = source[k: k + j - i].copy()
+        piece[:ramp] *= np.linspace(0, 1, ramp, dtype=np.float32)
+        piece[-ramp:] *= np.linspace(1, 0, ramp, dtype=np.float32)
+        voice[i: i + len(piece)] = piece
+    gain = np.ones(n, np.float32)
+    quiet_from = seek + (0 if fault == "early" else hold)
+    gain[(t >= quiet_from) & (t < moves)] = 0
+    if fault not in ("abrupt", "early"):
+        f = (t >= seek + hold) & (t < seek + hold + fade)
+        gain[f] = 1 - (t[f] - seek - hold) / fade
+    if fault == "keep":
+        gain[(t >= seek) & (t < moves)] = 1
+    if fault == "noreturn":
+        gain[t >= moves] = 0
+    else:
+        f = (t >= moves) & (t < moves + back)
+        gain[f] = (t[f] - moves) / back
+    gain[~(((t >= play) & (t < pause)) | ((t >= resume) & (t < stop)))] = 0
+    for edge in (play, pause, resume, stop):  # nhạc dừng / chạy theo người nghe: mờ 5 ms như bed
+        i = int(edge * rate)
+        gain[i - ramp: i + ramp] = np.minimum(gain[i - ramp: i + ramp], np.abs(np.linspace(-1, 1, 2 * ramp, dtype=np.float32)))
+    mono = voice + music * gain
+    marks = []
+
+    def mark(tag, when, on):
+        marks.append(dict(tag=tag, ms=when * 1000, frame=int(round(when * rate)), chapter=1, position=round(truth(when), 3), playing=int(on)))
+    for tag, when in (("play", play), ("pause", pause), ("resume", resume), (f"stall:{target:g}", seek), ("stop", stop)):
+        mark(tag, when, tag not in ("pause", "stop"))
+    for k in range(int(play / 0.25) + 1, int(end / 0.25)):
+        when = k * 0.25 + 0.006
+        mark("tick", when, bool(play <= when < pause or resume <= when < stop))
+    marks.sort(key=lambda m: m["frame"])
+    return dict(sink="synthetic", rate=rate, mono=mono.astype(np.float32), marks=marks, gaps=[], stops=[], source=source)
+
+
 def selftest():
     """Bộ dò im với tiếng sạch giống giọng + nhạc, và bắt được từng lỗi cấy vào. Không cần app hay file ngoài."""
     rate, n = RATE, RATE * 12
@@ -706,20 +886,38 @@ def selftest():
     cut["mono"] = cut["mono"].copy(); cut["mono"][10 * rate: 10 * rate + int(STRENGTH_CUT_S * rate)] = 0
     expect("đột im: 0,3 s số 0 giữa lúc phát", any(f["kind"] == "cut" and abs(f["t"] - 10) < 0.02 for f in check(cut)["findings"]))
     expect("đột im: nguồn tự im thì không", "cut" not in kinds(synthetic_run(1.0, source_quiet_at=12.0)))
-    ok, results = strength(synthetic_run(3.0))
+    ok, results = strength(synthetic_run(3.0), stall=False)
     expect("kiểm lực trên lượt giả: " + ", ".join(r["case"] for r in results if not r["ok"]), ok)
+    # Giọng khựng: nhạc còn N giây rồi mờ, vào lại khi giọng chạy là sạch; từng cách sai đỏ đúng loại
+    stalled = synthetic_stall_run()
+    expect("khựng giả: sạch", kinds(stalled) == set() and check(stalled)["stall"]["resumed"])
+    for fault, kind in (("keep", "stall_music"), ("early", "stall_early"), ("abrupt", "cut"), ("noreturn", "stall_return")):
+        expect(f"khựng giả {fault}: {kind}", kind in kinds(synthetic_stall_run(fault)))
+    results = stall_strength(stalled, check(stalled))
+    expect("kiểm lực khựng trên lượt giả: " + ", ".join(r["case"] for r in results if not r["ok"]), all(r["ok"] for r in results))
     # ... và kiểm lực phải đỏ khi máy dò bị nới (ngưỡng trôi to vô hạn): cổng không bao giờ xanh với bộ dò câm
     global DRIFT_MS, CUT_TO_DB
     saved, DRIFT_MS = DRIFT_MS, 1e9
     try:
-        expect("kiểm lực đỏ khi máy dò trôi câm", not strength(synthetic_run(3.0))[0])
+        expect("kiểm lực đỏ khi máy dò trôi câm", not strength(synthetic_run(3.0), stall=False)[0])
     finally:
         DRIFT_MS = saved
     saved, CUT_TO_DB = CUT_TO_DB, -1e9
     try:
-        expect("kiểm lực đỏ khi máy dò đột im câm", not strength(synthetic_run(3.0))[0])
+        expect("kiểm lực đỏ khi máy dò đột im câm", not strength(synthetic_run(3.0), stall=False)[0])
     finally:
         CUT_TO_DB = saved
+    global STALL_QUIET_DB, STALL_MUSIC_DB
+    saved, STALL_QUIET_DB = STALL_QUIET_DB, 1e9
+    try:
+        expect("kiểm lực đỏ khi máy dò nhạc không mờ câm", not all(r["ok"] for r in stall_strength(stalled, check(stalled))))
+    finally:
+        STALL_QUIET_DB = saved
+    saved, STALL_MUSIC_DB = STALL_MUSIC_DB, -1e9
+    try:
+        expect("kiểm lực đỏ khi máy dò nhạc tắt sớm / không vào lại câm", not all(r["ok"] for r in stall_strength(stalled, check(stalled))))
+    finally:
+        STALL_MUSIC_DB = saved
     print(json.dumps(dict(selftest="audio_sink", failures=failures), ensure_ascii=False))
     return not failures
 
