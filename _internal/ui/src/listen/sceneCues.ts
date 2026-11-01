@@ -14,6 +14,19 @@ export function sceneRetryDelay(misses: number): number | null {
   return SCENE_RETRY_MS[misses] ?? null;
 }
 
+/** Nhạc theo cảnh dựng nền: chương chưa xong thì máy chủ giữ lời hỏi tới 2 giây (music_nnscene.BUILD_WAIT_SECONDS) rồi trả `pending`, nên hỏi lại không cần thưa -
+ *  [SCENE_FAST_POLLS] lần đầu cách [SCENE_FAST_POLL_MS] (chương xong giữa hai lần hỏi không phải chờ thêm 1,5 giây: đo 01-11 máy mới, xong ở 3,3 giây mà nhạc vào ở 4,8),
+ *  rồi mới thưa ra [SCENE_POLL_MS] (máy chủ trả `pending` tức thì thì không dồn lượt hỏi). Tối đa [SCENE_POLLS] lần. Qt: musiclogic.h; điện thoại: MusicBed.kt. */
+export const SCENE_POLLS = 80;
+export const SCENE_FAST_POLLS = 10;
+export const SCENE_FAST_POLL_MS = 200;
+export const SCENE_POLL_MS = 1500;
+/** Chờ chừng ấy ms rồi hỏi lại lần `attempt` (từ 0) còn `pending`; hết lượt thì null. */
+export function scenePollDelay(attempt: number): number | null {
+  if (attempt >= SCENE_POLLS) return null;
+  return attempt < SCENE_FAST_POLLS ? SCENE_FAST_POLL_MS : SCENE_POLL_MS;
+}
+
 /** Giây bắt đầu từng đoạn của kịch bản (đồng hồ của bộ máy đọc) và tổng độ dài. Kịch bản đã có mốc thì dùng mốc; chưa thì ước như bộ máy sẽ ước. */
 export function segmentStarts(script: Script): { starts: number[]; total: number } {
   const segments = script.segments;

@@ -9,7 +9,7 @@ import { isNative, type AudioEngine } from "./engine";
 import { anchorOf, type ReadingAnchor } from "./readingAnchor";
 import { tellSceneMusic } from "./musicHint";
 import { MUSIC_CHANGED_ALL, MUSIC_CHANGED_EVENT, MusicBed, NextChapterWarm, type MusicCredit } from "./musicBed";
-import { SceneCues, isSceneCues, sceneRetryDelay } from "./sceneCues";
+import { SceneCues, isSceneCues, scenePollDelay, sceneRetryDelay } from "./sceneCues";
 import { nextPlaylistBed, PlaylistClock, PlaylistDriver, type PlaylistBedState } from "./playlistBed";
 import { VOICE_STALL_TICK_MS, VoiceStall } from "./voiceStall";
 import { canPlay, newerElsewhere, resumePoint, startingRate, type ListenBook, type ListenChapter, type NightPosition, type Script } from "./model";
@@ -232,9 +232,6 @@ const NOTICE_MS = 12_000;
 /** Nhảy xa hơn chừng này (tua, chương) thì mời "quay lại chỗ vừa nghe". */
 const JUMP_SECONDS = 30;
 const HISTORY = 5;
-/** Nhạc theo cảnh dựng nền (music_nnscene.py): hỏi lại mốc của chương chưa dựng xong mỗi chừng này, tối đa chừng ấy lần (~2 phút). */
-const SCENE_POLL_MS = 1500;
-const SCENE_POLLS = 80;
 
 function availableAfter(queue: ListenChapter[], chapterId: number, step: 1 | -1): ListenChapter | undefined {
   const index = queue.findIndex((chapter) => chapter.id === chapterId);
@@ -722,8 +719,9 @@ export function PlayerProvider({
           if (cancelled) return;
           bedCredits.current = result.credits ?? {};
           setMusicOffline(result.unavailable || playlistFault.current); // danh mục chưa tải được: hộp "Nhạc nền" nói lý do (rỗng thì thôi)
-          if (result.pending && attempt < SCENE_POLLS) {
-            retry = setTimeout(() => void chapterCues(attempt + 1, misses), SCENE_POLL_MS);
+          const poll = result.pending ? scenePollDelay(attempt) : null;
+          if (poll !== null) {
+            retry = setTimeout(() => void chapterCues(attempt + 1, misses), poll);
             return;
           }
           if (result.unavailable) askAgain(misses);
