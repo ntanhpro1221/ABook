@@ -113,11 +113,13 @@ object MusicBed {
         var testK = 0 // số thứ tự trình phát trong kịch bản đo ([testPlayerSeq]); chỉ cho dòng testEvents
         var trackRef: TrackRef? = null // AudioTrack mới nhất + mốc của nó (cờ P3 bật / đang đo): P3 thật sự ra loa, pha P3 - a87 ([stepHandover])
         var volume = 0f // âm lượng LOGIC (mờ vào / mờ đi / bước âm lượng, dòng đo `vol`); ExoPlayer.volume = volume x [sleepFactor] - mọi chỗ đọc mức đọc từ đây, không đọc ngược player.volume
-        // Bài stream từ máy kia (http): phát dần, có thể hụt giữa bài ([streamTick]). `awaiting` = chưa qua cổng vào (bài trước giữ chỗ), `starving` = đang mờ ra / im
-        // vì đệm sắp cạn mà tải không kịp, `recovering` = vào lại sau lần hụt: mờ vào trong [StreamPace.FADE_MS] thay vì fadeMs.
+        // Bài stream từ máy kia (http): phát dần, có thể hụt giữa bài ([streamTick]). `awaiting` = tạm dừng ở chỗ vào, chưa qua cổng [StreamPace.playsThrough] (bài trước
+        // giữ chỗ), `admitted` = đã qua cổng lần này, `starving` = đang mờ ra vì đệm sắp cạn mà tốc độ tụt, `recovering` = vào lại sau lần hụt: mờ vào trong
+        // [StreamPace.FADE_MS] thay vì fadeMs.
         var streamed = false
         val pace = StreamPace()
         var awaiting = false
+        var admitted = false
         var starving = false
         var recovering = false
     }
@@ -1020,7 +1022,7 @@ object MusicBed {
     private fun applyPlaying() {
         // Chỉ bài đang kêu được chơi lại; bài đang mờ đi thì chỉ dừng cùng giọng (như `MusicBed.sync` của trình phát web).
         for (bed in listOfNotNull(current) + fading) {
-            if (playing && !bed.player.isPlaying && bed === current) bed.player.play()
+            if (playing && !bed.player.isPlaying && bed === current && !bed.awaiting) bed.player.play() // bài stream chờ cổng: đứng yên ở chỗ vào
             // Bài đang đệm có playWhenReady = true mà isPlaying = false: không pause thì đệm xong nó tự kêu riêng sau khi giọng đã dừng (soát a77 #1).
             if (!playing && (bed.player.isPlaying || bed.player.playWhenReady)) bed.player.pause()
         }
@@ -1465,7 +1467,9 @@ object MusicBed {
             hookedRenderers(appContext, k, seam = built != null, trackRef) { loopSink = it }
         }
         val sourceFactory = Streaming.mediaSourceFactory(appContext, exactMp3Seek = true)
+        val streamed = uri.scheme == "http" || uri.scheme == "https"
         val player = ExoPlayer.Builder(appContext, renderers)
+            .apply { if (streamed) setLoadControl(StreamPace.loadControl()) }
             .setAudioAttributes(
                 AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).build(),
                 false,
@@ -1479,7 +1483,7 @@ object MusicBed {
         player.volume = 0f
         val offsetMs = (offsetSeconds.coerceAtLeast(0.0) * 1000).toLong()
         val bed = Bed(track, player, targetGain, targetGain * STEP_MS / fadeMs, cue, fadeMs)
-        bed.streamed = uri.scheme == "http" || uri.scheme == "https"
+        bed.streamed = streamed
         bed.built = built
         bed.sink = loopSink
         bed.trackRef = trackRef
@@ -1637,18 +1641,29 @@ object MusicBed {
             var busy = false
             current?.let { bed ->
                 val player = bed.player
-                // Bài còn tải / đệm thì chưa mờ vào: để lúc có tiếng mới nhích từ 0 lên, không nhảy thẳng tới mức (soát B3). Bài stream còn qua cổng tốc độ tải.
-                val ready = player.playbackState.let { it == Player.STATE_READY || it == Player.STATE_ENDED } && (!bed.streamed || streamTick(bed))
+                // Bài còn tải / đệm thì chưa mờ vào: để lúc có tiếng mới nhích từ 0 lên, không nhảy thẳng tới mức (soát B3). Bài stream còn qua cổng tốc độ tải
+                // (đo mỗi nhịp, cả lúc đang đệm).
+                val gate = !bed.streamed || streamTick(bed)
+                val ready = player.playbackState.let { it == Player.STATE_READY || it == Player.STATE_ENDED } && gate
                 if (bed.starving) {
                     setVolume(bed, maxOf(0f, bed.volume - maxOf(bed.goal, 0.01f) * STEP_MS / StreamPace.FADE_MS))
+                    if (bed.volume <= 0f) {
+                        // Đã im: tạm dừng tại chỗ, chờ cổng như bài mới, rồi mờ vào trong FADE_MS.
+                        bed.starving = false
+                        bed.entering = true
+                        bed.admitted = false
+                        bed.awaiting = true
+                        bed.recovering = true
+                        player.pause()
+                    }
                     busy = true
                 } else {
                     val step = if (bed.recovering) bed.goal * STEP_MS / StreamPace.FADE_MS else bed.perTick
                     setVolume(bed, MusicCues.towardWhenReady(bed.volume, bed.goal, step, ready))
                     if (ready && abs(bed.volume - bed.goal) < 1e-4f) { bed.entering = false; bed.recovering = false } else busy = true
                 }
-                // Bài stream chưa tải trọn: nhịp mờ canh hụt suốt lúc giọng chạy.
-                if (bed.streamed && playing && !StreamPace.whole(player.bufferedPosition, player.duration)) busy = true
+                // Bài stream chưa tải trọn (hay đang chờ cổng): nhịp mờ đo tốc độ / canh hụt suốt lúc giọng chạy.
+                if (bed.streamed && playing && (bed.awaiting || !StreamPace.whole(player.bufferedPosition, player.duration))) busy = true
             }
             // Bài mới chưa qua cổng tốc độ tải: bài trước giữ chỗ ở mức đang có, không mờ đi để cả cảnh câm suốt lúc tải (như musicbed.cpp / musicBed.ts).
             val holdOld = current?.awaiting == true
@@ -1672,30 +1687,30 @@ object MusicBed {
     }
 
     /**
-     * Bài stream (http) được kêu không: cổng vào = đệm trước >= [StreamPace.RESUME_MS] VÀ tải kịp tới hết bài (hay đệm trước >= [StreamPace.SAFE_MS], hay đã tải trọn) - không
-     * kịp thì chưa vào, bài trước giữ chỗ / im lặng tới khi tải đủ. Đã vào mà đệm trước tụt dưới [StreamPace.LOW_MS] và tải không kịp: `starving` (mờ ra trước khi đệm cạn), đệm
-     * lại đủ và kịp thì mờ vào. Như `keepsUp` của musicmixer.cpp và `bufferedAhead` của musicBed.ts.
+     * Bài stream (http) được kêu không. Chưa có tiếng: cổng [StreamPace.playsThrough] - phát được từ chỗ vào tới hết bài (hay trình phát đã ngừng tải vì đệm đầy
+     * [StreamPace.BUFFER_MS] mà có sẵn [StreamPace.LEAD_MS]); chưa qua thì TẠM DỪNG đứng yên ở chỗ vào (phát câm thì chỗ vào trôi đi 1 giây mỗi giây, tải chậm hơn 1x
+     * không bao giờ đuổi kịp), bài trước giữ chỗ / im lặng. Đã có tiếng mà đệm trước tụt dưới [StreamPace.LOW_MS] và không còn phát được tới hết bài: `starving` (mờ
+     * ra trước khi đệm cạn, tới 0 thì tạm dừng và chờ cổng lại - [fadeTick]). Như `keepsUp` của musicmixer.cpp và `playsThrough` của musicBed.ts.
      */
     private fun streamTick(bed: Bed): Boolean {
         val player = bed.player
         val now = SystemClock.elapsedRealtime()
         val buffered = player.bufferedPosition
-        val duration = player.duration
+        val position = player.currentPosition
         bed.pace.add(now, buffered)
-        val ahead = buffered - player.currentPosition
-        val whole = StreamPace.whole(buffered, duration)
-        val keeps = bed.pace.keepsUp(now, buffered, duration)
-        if (bed.entering && bed.volume == 0f && !bed.recovering) {
-            bed.awaiting = !(whole || ahead >= StreamPace.RESUME_MS && (keeps || ahead >= StreamPace.SAFE_MS))
-            return !bed.awaiting
+        val ahead = buffered - position
+        val through = bed.pace.playsThrough(now, buffered, position, player.duration) || !player.isLoading && ahead >= StreamPace.LEAD_MS
+        if (bed.entering && !bed.admitted && bed.volume == 0f) {
+            bed.awaiting = !through
+            if (bed.awaiting) {
+                if (player.playWhenReady) player.pause()
+            } else {
+                bed.admitted = true
+                if (playing && !player.playWhenReady) player.play()
+            }
+            return through
         }
-        bed.awaiting = false
-        if (!bed.starving && !whole && ahead < StreamPace.LOW_MS && !keeps) {
-            bed.starving = true
-            bed.recovering = true
-        } else if (bed.starving && (whole || ahead >= StreamPace.RESUME_MS && keeps)) {
-            bed.starving = false
-        }
+        if (!bed.starving && player.playWhenReady && bed.volume > 0f && ahead < StreamPace.LOW_MS && !through) bed.starving = true
         return !bed.starving
     }
 
