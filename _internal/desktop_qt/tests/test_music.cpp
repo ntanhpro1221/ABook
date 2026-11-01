@@ -910,9 +910,8 @@ private slots:
         rig.clock = qint64(VOICE_STALL_SECONDS * 1000) - 50;
         emit rig.player->volumeChanged(); // một lần đồng bộ: còn 50 ms tới hạn
         rig.clock += 50;
-        QTest::qWait(300);
-        rig.music->bed()->tick(1);
-        QVERIFY(rig.voices[0]->volume < before);
+        // Nhịp hẹn của Music tới thì một bước mờ đã bắt đầu; mỗi lần hỏi lại đẩy giường nhạc một bước.
+        QTRY_VERIFY((rig.music->bed()->tick(1), rig.voices[0] && rig.voices[0]->volume < before));
     }
 
     void switchingOffAsksTheCuesAgain() {
