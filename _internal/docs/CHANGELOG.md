@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Giao diện
+
+- Bản web: nút "Thêm nhạc của bạn" (Cài đặt) và các nút cuối hàng bài nhạc (tab Nhạc nền của Studio) thẳng mép chữ của cột như mọi nút đầu / cuối hàng khác.
+
 ## [0.4.154] - 2026-11-01
 
 ### Giao diện

@@ -143,7 +143,7 @@ export function MyMusicSection() {
     <MotionRegion><Fold storageKey="my-music.library" title="Nhạc của tôi" summary={tracks.length ? `${tracks.length} bài` : "Chưa có bài nào"} bodyClassName="space-y-2">
       <div className="flex flex-wrap items-center justify-between gap-3">
         {canImport && (
-          <Button size="sm" variant="ghost" icon={Upload} className={WRAP_LABEL} loading={Boolean(progress)} onClick={() => void importFiles()}>
+          <Button size="sm" variant="ghost" icon={Upload} className={`edge-start-action ${WRAP_LABEL}`} loading={Boolean(progress)} onClick={() => void importFiles()}>
             <TickingValue>{progress ? `Đang thêm ${progress.done}/${progress.total}` : "Thêm nhạc của bạn"}</TickingValue>
           </Button>
         )}

@@ -21,6 +21,8 @@ export interface Scenario {
   requests?: Record<string, "loading" | "error">;
   /** Hộp chọn file của hệ thống: bạn huỷ - hộp Thêm sách / trình tạo sách hiện bước chọn của nó (thư mục, dán đường dẫn) làm lối khác. */
   pickCancelled?: boolean;
+  /** Nhạc của tôi có ba bài với nhãn dài ngắn khác nhau (không nhãn, "Có lời", "Chưa phân tích"): công tắc Tự chọn các hàng phải cùng cột. */
+  myMusic?: boolean;
 }
 
 export const DEFAULT_SCENARIO: Scenario = { library: "full", paired: true, remoteBooks: false, night: false, playing: true, projects: "full" };

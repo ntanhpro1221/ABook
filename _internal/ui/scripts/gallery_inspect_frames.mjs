@@ -158,5 +158,43 @@ export function inspectFrames({ all, css, rect, visible, selector, add }) {
         delta: mid - want, tolerance: 1, otherSelector: selector(parent), reason: 'A child of a vertically centred row sits off the row centre (align-self overrides the row)' });
     }
   }
-  return { listEdges, sectionHeadings };
+  // Quy tắc 8, cột anh em: cùng một điều khiển (vai trò + chữ thấy được: nhãn <label for>, chữ của nút) ở các hàng anh em của một danh sách
+  // dọc phải cùng một cột - lệch cả mép trái lẫn mép phải so với hàng thì nó đang trôi theo chữ dài ngắn đứng trước (Lead 01-11: công tắc
+  // "Tự chọn" đứng sau "Có lời" / "Chưa phân tích"; Qt tst_list_measure sameColumn). So mọi hàng, kể cả khác hình DOM.
+  const columns = [];
+  const columnControl = '[role="switch"],[role="checkbox"],[role="radio"],button,select,input:not([type="hidden"]),a[href]';
+  for (const list of all) {
+    if (!list.matches('ul,ol,[role="list"],[role="listbox"],[role="menu"],[role="grid"],[role="rowgroup"],[role="tree"]')) continue;
+    const rows = [...list.children].map(row => ({ row, box: visible(row, rect(row.getBoundingClientRect())) })).filter(r => r.box);
+    if (rows.length < 2 || rows.some((r, i) => i > 0 && r.box.y < rows[i - 1].box.y + rows[i - 1].box.height - 1)) continue;
+    const found = new Map();
+    for (const { row, box: rowBox } of rows) {
+      const seen = new Map();
+      for (const el of row.querySelectorAll(columnControl)) {
+        const box = visible(el, rect(el.getBoundingClientRect()));
+        const name = (el.labels?.[0]?.textContent || (el.matches('button,a') ? el.textContent : '') || '').replace(/\s+/g, ' ').trim();
+        if (!box || !name || el.closest('[aria-hidden="true"],[inert]')) continue;
+        const kind = `${el.getAttribute('role') ?? el.localName}:${name}`;
+        const n = (seen.get(kind) ?? 0) + 1;
+        seen.set(kind, n);
+        const key = `${kind}#${n}`;
+        if (!found.has(key)) found.set(key, []);
+        found.get(key).push({ el, box, row, left: box.x - rowBox.x, right: rowBox.x + rowBox.width - box.x - box.width });
+      }
+    }
+    for (const [key, items] of found) {
+      if (items.length < 2) continue;
+      // Mốc = hàng có nhiều hàng khác cùng cột với nó nhất (hoà thì hàng đầu), như siblingDifferences của quy tắc 8.
+      const near = (a, b) => Math.abs(a.left - b.left) <= 1.01 || Math.abs(a.right - b.right) <= 1.01;
+      const reference = items.reduce((best, item) => items.filter(o => near(o, item)).length > items.filter(o => near(o, best)).length ? item : best, items[0]);
+      columns.push({ selector: selector(list), key, lefts: items.map(i => Math.round(i.left * 10) / 10) });
+      for (const item of items) {
+        if (near(item, reference)) continue;
+        add('SIBLING CONSISTENCY', item.el, item.row.textContent, [item.box, reference.box], { metric: 'sibling-column', value: item.left, referenceValue: reference.left,
+          delta: item.left - reference.left, tolerance: 1, referenceSelector: selector(reference.el), listSelector: selector(list), control: key,
+          reason: 'The same control in sibling rows moves with the text before it instead of keeping one column' });
+      }
+    }
+  }
+  return { listEdges, sectionHeadings, columns };
 }
