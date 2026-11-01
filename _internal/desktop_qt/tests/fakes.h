@@ -108,6 +108,10 @@ public:
         for (const auto &item : list)
             item();
     }
+    void releaseFirst() {
+        if (!held.isEmpty())
+            held.takeFirst()();
+    }
 
     QList<Call> callsTo(const QString &suffix, const QByteArray &method = "POST") const {
         QList<Call> list;

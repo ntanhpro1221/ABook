@@ -2,13 +2,16 @@
 #include "textscript.h"
 #include <QFile>
 #include <QDataStream>
+#include <QDateTime>
 #include <QJsonArray>
 #include <QPointer>
 #include <QRegularExpression>
+#include <algorithm>
 #include <cmath>
 #include <utility>
 
-SpeechOut::SpeechOut(AudioOut *audio, PlayerNet *net, QObject *parent) : AudioOut(parent), m_audio(audio), m_net(net) {
+SpeechOut::SpeechOut(AudioOut *audio, PlayerNet *net, QObject *parent, std::function<qint64()> nowMs)
+    : AudioOut(parent), m_audio(audio), m_net(net), m_now(nowMs ? std::move(nowMs) : [] { return QDateTime::currentMSecsSinceEpoch(); }) {
     // A normal source on the same native mixer: scene pauses need no UI timer.
     const QString file = m_silence.filePath(QStringLiteral("scene.wav"));
     QFile silence(file);
@@ -35,6 +38,7 @@ void SpeechOut::load(const QUrl &url, double at) {
     stop(); m_text = false; m_audio->setVolume(m_volume); m_audio->load(url, at);
 }
 void SpeechOut::loadText(const QString &book, int chapter, double at, const QString &voice) {
+    if (voice != m_voice) m_fetchMs.clear();
     stop(); m_text = true; m_book = book; m_chapter = chapter; m_voice = voice; m_target = at;
     if (voice.isEmpty()) { fail(QStringLiteral("Máy này chưa có giọng đọc.")); return; }
     m_voiceGain = 1;
@@ -84,25 +88,53 @@ void SpeechOut::render(int index, double offset) {
         // the music bed jump to the narration position at every paragraph boundary.
         emit durationChanged(duration()); emit buffering(false); if (std::exchange(m_seeking, false)) emit seeked();
         if (m_wants) m_audio->play();
-        if (index + 1 < m_paragraphs.size()) fetch(index + 1, {});
+        prefetch();
     };
     if (!m_paragraphs[index].url.isEmpty()) { start(); return; }
     fetch(index, [this, request, start] { if (request == m_request) start(); });
+    prefetch();
+}
+// One request for each paragraph of the read-ahead window that has no clip yet. Runs when a paragraph starts, on open / seek, and when a
+// request completes (a free slot, a real length instead of an estimate). The old single lookahead asked for a long paragraph after a short
+// one too late: listen audit §20, a 22.2 s Edge clip took ~10.7 s but was only asked for when the 8.2 s clip before it started - 2.4 s of
+// dead air.
+void SpeechOut::prefetch() {
+    const double wanted = bufferWanted();
+    double ahead = 0; int count = 0;
+    for (int i = m_index + 1; i < m_paragraphs.size() && count < MAX_FILL_AHEAD && (ahead < MIN_BUFFER_SECONDS || (ahead < wanted && count < MAX_READ_AHEAD)); ++i) {
+        auto &paragraph = m_paragraphs[i];
+        if (TextScript::speakable(paragraph.text)) {
+            ++count;
+            if (paragraph.url.isEmpty() && !paragraph.loading) {
+                if (m_inflight >= MAX_PARALLEL) return;
+                fetch(i, {});
+            }
+        }
+        ahead += paragraph.seconds;
+    }
+}
+double SpeechOut::bufferWanted() const {
+    QList<qint64> measures = m_fetchMs;
+    const qint64 now = m_now();
+    for (const auto &paragraph : m_paragraphs) if (paragraph.loading && now - paragraph.sentAt >= STALL_MS) measures.append(now - paragraph.sentAt);
+    if (measures.size() < 2) return MIN_BUFFER_SECONDS;
+    std::sort(measures.begin(), measures.end());
+    const qint64 p80 = measures[std::min(int(measures.size()) - 1, int(std::ceil(measures.size() * 0.8)) - 1)];
+    return std::clamp(BUFFER_FACTOR * double(p80) / 1000.0, MIN_BUFFER_SECONDS, MAX_BUFFER_SECONDS);
 }
 void SpeechOut::fetch(int index, std::function<void()> ready) {
     while (index < m_paragraphs.size() && !TextScript::speakable(m_paragraphs[index].text)) ++index;
     if (index >= m_paragraphs.size()) return;
     if (!m_paragraphs[index].url.isEmpty()) { if (ready) ready(); return; }
-    // At most one current request + one lookahead; no polling while hidden.
-    // If a lookahead is still running when reached, its completion starts it.
+    // A lookahead still running when reached: its completion starts it.
     if (m_paragraphs[index].loading) return;
-    m_paragraphs[index].loading = true;
+    m_paragraphs[index].loading = true; m_paragraphs[index].sentAt = m_now(); ++m_inflight;
     const auto generation = m_generation;
     QPointer<SpeechOut> self(this);
     m_cancel.append(m_net->requestCancelable("POST", QStringLiteral("/api/readaloud/clip"), {{QStringLiteral("voice"), m_voice}, {QStringLiteral("text"), m_paragraphs[index].text}, {QStringLiteral("bookId"), m_book}, {QStringLiteral("rank"), std::max(0, index - m_index)}},
         [self, generation, index, ready](int status, const QJsonObject &body) {
             if (!self || generation != self->m_generation) return;
-            self->m_paragraphs[index].loading = false;
+            self->m_paragraphs[index].loading = false; --self->m_inflight;
             if (status < 200 || status >= 300 || body.value(QStringLiteral("url")).toString().isEmpty()) {
                 if (index == self->m_index) {
                     const QString why = body.value(QStringLiteral("reason")).toString();
@@ -115,6 +147,10 @@ void SpeechOut::fetch(int index, std::function<void()> ready) {
                 return;
             }
             auto &paragraph = self->m_paragraphs[index];
+            if (const qint64 spent = self->m_now() - paragraph.sentAt; spent >= REAL_FETCH_MS) {
+                self->m_fetchMs.append(spent);
+                while (self->m_fetchMs.size() > FETCH_SAMPLES) self->m_fetchMs.removeFirst();
+            }
             paragraph.url = self->m_net->mediaUrl(body.value(QStringLiteral("url")).toString());
             paragraph.seconds = std::max(0.01, body.value(QStringLiteral("duration_ms")).toDouble() / 1000.0);
             paragraph.gain = self->m_voiceGain;
@@ -122,6 +158,7 @@ void SpeechOut::fetch(int index, std::function<void()> ready) {
             self->publishScript(); emit self->durationChanged(self->duration());
             if (ready) ready();
             if (index == self->m_index && !self->m_ready) self->render(index, self->m_target - self->startOf(index));
+            else self->prefetch();
         }));
 }
 void SpeechOut::publishScript() {
@@ -151,7 +188,7 @@ void SpeechOut::stop() {
     ++m_generation; ++m_request;
     const auto cancel = std::move(m_cancel); m_cancel.clear();
     for (const auto &abort : cancel) if (abort) abort();
-    m_wants = m_ready = m_pendingConsent = m_askedConsent = m_seeking = false;
+    m_wants = m_ready = m_pendingConsent = m_askedConsent = m_seeking = false; m_inflight = 0;
     m_audio->stop(); m_paragraphs.clear(); m_target = 0;
 }
 void SpeechOut::authorize(const QString &provider) {

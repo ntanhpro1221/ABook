@@ -1094,7 +1094,8 @@ describe("mất mạng giữa chừng với bộ lấy clip thật (soát a46)",
   /** Chương 8 đoạn, mỗi đoạn người nghe nghe 12 giây (hết đoạn k ở giây 12 x (k + 1)). Edge chết từ giây 1 tới `recoverAt` (không bao giờ nếu null); chạy tới giây `until`. */
   async function outage(recoverAt: number | null, until: number) {
     vi.useFakeTimers();
-    const paragraphs = Array.from({ length: 8 }, (_, i) => `Đoạn ${i + 1} ${Array(22).fill("từ").join(" ")}.`);
+    // chữ dài cỡ âm thanh thật (ước ~10 s, clip 12 s): cửa sổ đầu chương 3 đoạn, đoạn 5 được xin lần đầu giữa lúc mất mạng
+    const paragraphs = Array.from({ length: 8 }, (_, i) => `Đoạn ${i + 1} ${Array(22).fill("tiếng").join(" ")}.`);
     const store = new Map<string, string>();
     const globals = globalThis as unknown as { window?: EventTarget; localStorage?: Storage };
     const saved = { window: globals.window, localStorage: globals.localStorage };
@@ -1166,13 +1167,16 @@ describe("mất mạng giữa chừng với bộ lấy clip thật (soát a46)",
 });
 
 describe("độ sâu đọc trước theo tốc độ giọng trực tuyến", () => {
-  it("chưa đủ số đo hay clip về nhanh: đúng số đoạn tối thiểu; clip về chậm hơn thời gian nghe: dài ra tới trần; nhanh lại: co về", () => {
-    const shortClips = Array(10).fill(1.5); // đoạn đối thoại ngắn: 1,5 giây mỗi đoạn
-    expect(readAheadCount(3, [], shortClips)).toBe(3);
-    expect(readAheadCount(3, [20], shortClips)).toBe(3); // một số đo chưa đủ
-    expect(readAheadCount(3, [0.8, 1.1, 0.9, 1.2], shortClips)).toBe(8); // Edge nhanh nhưng đoạn ngắn: 20 s đệm tối thiểu cần hơn 8 đoạn -> trần
+  it("luôn đủ 20 s âm thanh (kể cả chưa có số đo, kể cả đoạn ngắn); clip về chậm hơn thời gian nghe: dài ra tới trần; nhanh lại: co về", () => {
+    const shortClips = Array(30).fill(1.5); // đoạn đối thoại ngắn: 1,5 giây mỗi đoạn
+    expect(readAheadCount(3, [], Array(10).fill(12))).toBe(3); // chưa có số đo, đoạn dài: 2 đoạn đã đủ 20 s, giữ tối thiểu 3
+    expect(readAheadCount(3, [], shortClips)).toBe(14); // chưa có số đo vẫn đủ 20 s: 14 đoạn 1,5 s (trước đây 3 đoạn = 4,5 s)
+    expect(readAheadCount(3, [20], shortClips)).toBe(14); // một số đo chưa đủ để đọc tốc độ
+    expect(readAheadCount(3, [0.8, 1.1, 0.9, 1.2], shortClips)).toBe(14); // Edge nhanh nhưng đoạn ngắn: 20 s đệm tối thiểu vượt trần 8 đoạn
+    expect(readAheadCount(3, [], [1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 22, 1.5])).toBe(7); // sáu dòng thoại rồi đoạn kể dài (soát nghe §20): đoạn dài trong cửa sổ ngay
+    expect(readAheadCount(3, [], Array(40).fill(0.5))).toBe(24); // dòng rất ngắn: tối đa MAX_FILL_AHEAD đoạn
     expect(readAheadCount(3, [0.8, 1.1, 0.9, 1.2], Array(10).fill(12))).toBe(3); // đoạn dài: 2 đoạn đã đủ 20 s, giữ tối thiểu 3
-    expect(readAheadCount(3, [20, 22, 9, 1, 1, 1, 1, 1], shortClips)).toBe(8); // p80 = 20 s -> cần 40 s đệm, đoạn ngắn nên chạm trần 8
+    expect(readAheadCount(3, [20, 22, 9, 1, 1, 1, 1, 1], shortClips)).toBe(14); // p80 = 20 s -> muốn 40 s, phần trên 20 s chạm trần 8 đoạn
     const longClips = Array(10).fill(12); // đoạn văn xuôi: 12 giây mỗi đoạn
     expect(readAheadCount(3, [9, 10, 11, 9, 10], longClips)).toBe(3); // cần 22 s, 3 đoạn đã có 36 s
     expect(readAheadCount(3, [20, 24, 18, 22, 19], longClips)).toBe(4); // cần 48 s: 4 đoạn
@@ -1181,7 +1185,7 @@ describe("độ sâu đọc trước theo tốc độ giọng trực tuyến", (
     // hết chương: không đòi đoạn không có
     expect(readAheadCount(3, [20, 20], [1, 1])).toBe(3);
     // số đo chậm cũ trôi khỏi cửa sổ khi clip về nhanh trở lại: độ sâu co về tối thiểu
-    expect(readAheadCount(3, [20, 22, 24, 21, 23, 22, 20, 21], shortClips)).toBe(8);
+    expect(readAheadCount(3, [20, 22, 24, 21, 23, 22, 20, 21], shortClips)).toBe(14);
     expect(readAheadCount(3, [1, 1, 1, 1, 1, 1, 1, 1], Array(10).fill(12))).toBe(3);
   });
 
@@ -1189,7 +1193,7 @@ describe("độ sâu đọc trước theo tốc độ giọng trực tuyến", (
     vi.useFakeTimers({ toFake: ["Date"] }); // chỉ đồng hồ Date: để dời giờ giữa lúc gửi và lúc về mà vẫn dùng flush()
     try {
       // văn xuôi: 24 chữ mỗi đoạn = 12 s âm thanh khi clip về
-      const chapter = Array.from({ length: 24 }, (_, i) => `Đoạn ${i + 1} ${Array(22).fill("từ").join(" ")}.`).join("\n\n");
+      const chapter = Array.from({ length: 24 }, (_, i) => `Đoạn ${i + 1} ${Array(22).fill("tiếng").join(" ")}.`).join("\n\n");
       const s = setup({ chapter });
       const t0 = Date.now();
       s.engine.load(s.trackInfo, 0, true);
@@ -1224,7 +1228,7 @@ describe("độ sâu đọc trước theo tốc độ giọng trực tuyến", (
     }
   });
 
-  it("đoạn ngắn (đối thoại): giọng trực tuyến đọc sẵn đủ ~20 giây âm thanh chứ không chỉ 3 đoạn; bộ đệm (clip về tức thì) thì không đổi", async () => {
+  it("đoạn ngắn (đối thoại): giọng trực tuyến đọc sẵn đủ ~20 giây âm thanh chứ không chỉ 3 đoạn, kể cả khi chưa có số đo (bộ đệm: clip về tức thì) và vượt trần 8 đoạn", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     try {
       const chapter = Array.from({ length: 24 }, (_, i) => `Câu số ${i + 1} đây.`).join("\n\n");
@@ -1233,7 +1237,7 @@ describe("độ sâu đọc trước theo tốc độ giọng trực tuyến", (
       await flush();
       for (const request of cached.requests.slice()) request.resolve(); // 0 ms: lấy từ bộ đệm của máy chủ
       await flush();
-      expect(cached.engine.lookahead).toBe(3);
+      expect(cached.engine.lookahead).toBeGreaterThanOrEqual(10); // 2 s mỗi đoạn: 20 s là 10 đoạn
       const t0 = Date.now();
       const s = setup({ chapter });
       s.engine.load(s.trackInfo, 0, true);
@@ -1241,7 +1245,7 @@ describe("độ sâu đọc trước theo tốc độ giọng trực tuyến", (
       vi.setSystemTime(t0 + 1000); // Edge nhanh nhưng thật: 1 giây mỗi clip
       for (const request of s.requests.slice()) request.resolve();
       await flush();
-      expect(s.engine.lookahead).toBe(8); // 1,5 s mỗi đoạn: 20 s cần hơn 8 đoạn -> chạm trần
+      expect(s.engine.lookahead).toBeGreaterThanOrEqual(10); // 2 s mỗi đoạn: 20 s đầu luôn đủ, không dừng ở trần 8
     } finally {
       vi.useRealTimers();
     }
@@ -1250,7 +1254,7 @@ describe("độ sâu đọc trước theo tốc độ giọng trực tuyến", (
   it("lượt gọi chờ lâu chưa về cũng là số đo: cửa sổ dài ra ngay khi quãng chậm bắt đầu, không đợi clip chậm về xong", async () => {
     vi.useFakeTimers();
     try {
-      const chapter = Array.from({ length: 24 }, (_, i) => `Đoạn ${i + 1} ${Array(22).fill("từ").join(" ")}.`).join("\n\n");
+      const chapter = Array.from({ length: 24 }, (_, i) => `Đoạn ${i + 1} ${Array(22).fill("tiếng").join(" ")}.`).join("\n\n");
       const s = setup({ chapter });
       s.engine.load(s.trackInfo, 0, true);
       await vi.advanceTimersByTimeAsync(0);

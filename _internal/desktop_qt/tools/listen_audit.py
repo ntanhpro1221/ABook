@@ -7,7 +7,10 @@ Luật đạt ghi trước ở Corpus research/music/PLAN_lx.md mục 19.
 
   python -X utf8 tools/listen_audit.py run <out_dir> <label> --text 001.txt 002.txt ... --music on|off [--exe dist/ABookDesk.exe]
   python -X utf8 tools/listen_audit.py analyze <out_dir>/<A> <out_dir>/<B>
-  python -X utf8 tools/listen_audit.py check <out_dir>/<lượt>   thoát 1 nếu lượt không dùng được (lỗi giọng, treo, chạm trần)
+  python -X utf8 tools/listen_audit.py check <out_dir>/<lượt>   thoát 1 nếu lượt không dùng được (lỗi giọng, treo, chạm trần) hay giọng lặng
+                                                                 > VOICE_HOLE_S giữa chương vì chờ clip
+  --slow-clips 200:12 (run): máy chủ chờ thêm 12 s trước mỗi clip mới của đoạn từ 200 ký tự (tools/stall_host) - kiểm lực đọc trước
+  --fake-voice 0.5:0.45 (run): giọng Edge thay bằng giọng giả không ra mạng, clip về sau 0,5 s + 0,45 x độ dài (tools/stall_host)
   python -X utf8 tools/listen_audit.py selftest                 (build.bat)
 
 WAV và chữ nằm trong <out_dir>, không bao giờ commit.
@@ -47,6 +50,8 @@ LEVEL_RANGE = (-26.0, -14.0)  # (3) trung vị nhạc so với giọng
 LEVEL_PEAK_DB = -10.0   # (3) cửa sổ 3 s
 CUT_DB, CUT_S = 20.0, 0.3     # (5)
 STALL_S = 10.0          # (0) chờ quá lâu: đang phát mà vị trí đứng yên chừng này (giữa hai đoạn giọng thường dưới 2 s)
+VOICE_HOLE_S = 3.0      # (0) giọng lặng vì chờ clip: luồng giọng dừng (.stops) giữa chương, cả quãng im quanh nó (đuôi / đầu clip) quá chừng này
+HOLE_MIN_STOP_S = 0.5   # ... chỉ xét lần dừng từ chừng này (chỗ nối hai clip liền nhau chỉ 10-30 ms)
 
 
 # ---------- dựng cuốn thử ----------
@@ -113,7 +118,7 @@ def prepare(stage: Path, texts: list[Path], music: bool) -> str:
     return book
 
 
-def run(out: Path, label: str, texts: list[Path], music: bool, exe: Path) -> None:
+def run(out: Path, label: str, texts: list[Path], music: bool, exe: Path, slow: str | None = None, fake: str | None = None) -> None:
     import measure
     stage = out / label
     if (stage / "bench.json").exists():
@@ -125,15 +130,22 @@ def run(out: Path, label: str, texts: list[Path], music: bool, exe: Path) -> Non
                ABOOK_BENCH_BOOK=book, ABOOK_AUDIO_SINK=str(sink), ABOOK_SMTC="1", QT_SCALE_FACTOR="1", QT_QPA_PLATFORM="offscreen",
                QT_QUICK_BACKEND="software", ABOOK_BENCH_HIDDEN_DESKTOP="1", QT_QPA_FONTDIR=str(ROOT / "fonts"),
                QT_QPA_PLATFORM_PLUGIN_PATH=str(QT / "plugins/platforms"), PATH=str(QT / "bin") + os.pathsep + os.environ["PATH"])
+    hooks = {name: value for name, value in (("ABOOK_TEST_SLOW_CLIPS", slow), ("ABOOK_TEST_FAKE_VOICE", fake)) if value}
+    if hooks:  # máy chủ con thừa hưởng môi trường, nạp tools/stall_host/sitecustomize.py
+        env.update(PYTHONPATH=str(ROOT / "tools/stall_host"), **hooks)
     got = measure.launch(exe.resolve(), env, True, timeout_seconds=3700, require_ac=False)
     if got.get("app_log"):
         shutil.copyfile(got["app_log"], stage / "app.log")
-    (stage / "run.json").write_text(json.dumps(dict(ok=bool(got.get("ok")), why=got.get("why"), exe=str(exe), music=music,
+    (stage / "run.json").write_text(json.dumps(dict(ok=bool(got.get("ok")), why=got.get("why"), exe=str(exe), music=music, slow=slow, fake=fake,
                                                     exit_code=got.get("exit_code"), forced=got.get("forced_termination")), ensure_ascii=False),
                                     encoding="utf-8", newline="\n")
     if not got.get("ok"):
         raise SystemExit(f"app không chạy xong: {got.get('why')}")
     (stage / "bench.json").write_text(json.dumps(got["d"], ensure_ascii=False), encoding="utf-8", newline="\n")
+    host_log = stage / "local/ABook/logs/host.log"   # stderr của máy chủ con (Backend::logPath)
+    for name in hooks:
+        if name.encode() not in (host_log.read_bytes() if host_log.exists() else b""):
+            raise SystemExit(f"móc máy chủ không chạy ({host_log} không có {name})")
 
 
 # ---------- soi ----------
@@ -147,6 +159,7 @@ def load(stage: Path) -> dict:
     marks = parse_marks(bench["events"], float(epoch_ms), rate)
     hop = int(HOP_S * rate)
     return dict(rate=rate, hop=hop, db=frame_db(mono, hop), marks=marks, gaps=read_pairs(str(stage / "sink.wav") + ".gaps"),
+                stops=read_pairs(str(stage / "sink.wav") + ".stops"),
                 done=any(name == "done" for _, name in bench["events"]), timeout=any(name == "timeout" for _, name in bench["events"]),
                 problems=run_problems(bench["events"]))
 
@@ -180,6 +193,34 @@ def run_problems(events: list) -> list[dict]:
         since, last = (here if playing == "1" else None), None
     if since and last and (last[0] - since[0]) / 1000 >= STALL_S:
         out.append(dict(kind="stall", t=round((since[0] - t0) / 1000, 1), seconds=round((last[0] - since[0]) / 1000, 1), position=since[1]))
+    return out
+
+
+def voice_holes(run: dict) -> list[dict]:
+    """Giọng lặng vì chờ clip: lần luồng giọng dừng (.stops, từ HOLE_MIN_STOP_S) giữa lúc đang phát, trong lòng một chương; độ dài là cả quãng
+    im (dưới SILENT_DB) chứa nó - đuôi clip trước + chờ + đầu clip sau, đúng cái người nghe thấy (soát nghe §20: dừng 2,40 s = im 3,45 s).
+    Nhạc bật thì luồng không dừng (nhạc vẫn chạy): chỉ lượt nhạc tắt đo được. Không tính trước nhịp đang phát đầu tiên, sau nhịp đang phát cuối
+    (hết cuốn), và quãng có nhịp của hai chương khác nhau hai bên (chỗ nối chương: luật JOIN_MAX_S)."""
+    rate, hop, db = run["rate"], run["hop"], run["db"]
+    ticks = [m for m in run["marks"] if m["tag"] == "tick"]
+    playing = [m["frame"] for m in ticks if m["playing"]]
+    out = []
+    for at, n in run["stops"]:
+        if n < HOLE_MIN_STOP_S * rate or not playing or not playing[0] <= at < playing[-1]:
+            continue
+        before = [m for m in ticks if m["frame"] <= at]
+        after = [m for m in ticks if m["frame"] >= at + n]
+        if not before or not after or before[-1]["chapter"] != after[0]["chapter"]:
+            continue
+        a, b = at // hop, min(len(db), (at + n) // hop + 1)
+        while a > 0 and db[a - 1] < SILENT_DB:
+            a -= 1
+        while b < len(db) and db[b] < SILENT_DB:
+            b += 1
+        seconds = max(n / rate, (b - a) * hop / rate)
+        if seconds > VOICE_HOLE_S:
+            out.append(dict(t=round(at / rate, 2), stop_s=round(n / rate, 2), silent_s=round(seconds, 2), chapter=before[-1]["chapter"],
+                            position=before[-1]["position"]))
     return out
 
 
@@ -230,8 +271,10 @@ def analyze(a_dir: Path, b_dir: Path) -> dict:
     report = dict(voice_median_db=round(voice_db, 2), A_done=A["done"], B_done=B["done"], A_timeout=A["timeout"], B_timeout=B["timeout"])
     rules = {}
 
-    # (0) lượt dùng được: không lỗi giọng, không treo, chạy xong (I4 31-10: 1 giờ đứng chờ clip vẫn ra "ok")
-    rules["0_run"] = dict(A=A["problems"], B=B["problems"], ok=not A["problems"] and not B["problems"])
+    # (0) lượt dùng được: không lỗi giọng, không treo, chạy xong (I4 31-10: 1 giờ đứng chờ clip vẫn ra "ok"); giọng không lặng > VOICE_HOLE_S vì chờ clip
+    holes_a, holes_b = voice_holes(A), voice_holes(B)
+    rules["0_run"] = dict(A=A["problems"], B=B["problems"], voice_holes_A=holes_a, voice_holes_B=holes_b,
+                          ok=not A["problems"] and not B["problems"] and not holes_a and not holes_b)
 
     # (1) nhạc tới - và đối chứng: lượt B không được "có nhạc"
     pres_a, pres_b = present(A["db"], voice_db, hop_s), present(B["db"], voice_db, hop_s)
@@ -354,6 +397,23 @@ def selftest() -> int:
         got = [p["kind"] for p in run_problems(events)]
         if got != want:
             failures.append(f"{name}: chờ {want}, được {got}")
+    # voice_holes: mức giả 50 ms/khung, giọng có tiếng trừ chỗ cấy im; nhịp mỗi giây
+    rate, hop = 1000, 50
+
+    def hole_run(stop_at, stop_s, silent_from, silent_to, join_at=None, end_s=60):
+        db = np.full(end_s * rate // hop, -20.0)
+        db[int(silent_from * rate) // hop: int(silent_to * rate) // hop] = -90.0
+        marks = [dict(tag="tick", frame=i * rate, chapter=1 if join_at is None or i < join_at else 2, position=float(i), playing=1)
+                 for i in range(end_s)]
+        return dict(rate=rate, hop=hop, db=db, marks=marks, stops=[(int(stop_at * rate), int(stop_s * rate))])
+    for name, run_, want in (("chờ clip 2,4 s + im hai đầu = 3,4 s", hole_run(20.5, 2.4, 20.0, 23.4), 1),
+                             ("chờ ngắn, im 2,5 s", hole_run(20.5, 1.5, 20.0, 22.5), 0),
+                             ("chỗ nối chương", hole_run(20.5, 4.0, 20.0, 25.0, join_at=23), 0),
+                             ("hết cuốn", hole_run(59.5, 14.0, 59.0, 60.0), 0),
+                             ("mức không đo được im, dừng 3,5 s vẫn bắt", hole_run(20.5, 3.5, 0, 0), 1)):
+        got = len(voice_holes(run_))
+        if got != want:
+            failures.append(f"voice_holes {name}: chờ {want}, được {got}")
     print(json.dumps(dict(selftest="listen_audit", failures=failures), ensure_ascii=False))
     return 1 if failures else 0
 
@@ -366,15 +426,18 @@ def main() -> int:
     r.add_argument("--text", type=Path, nargs="+", required=True); r.add_argument("--music", choices=("on", "off"), required=True)
     r.add_argument("--exe", type=Path, default=ROOT / "dist/ABookDesk.exe")
     r.add_argument("--host-app", type=Path, default=INTERNAL, help="thư mục _internal của máy chủ Python (mặc định: cây của app)")
+    r.add_argument("--slow-clips", help="<số ký tự>:<giây> - máy chủ chờ thêm trước mỗi clip mới của đoạn dài (tools/stall_host)")
+    r.add_argument("--fake-voice", help="<trễ>:<giây mỗi giây clip> - giọng giả không ra mạng thay Edge (tools/stall_host)")
     a = sub.add_parser("analyze"); a.add_argument("a", type=Path); a.add_argument("b", type=Path)
     c = sub.add_parser("check"); c.add_argument("dir", type=Path)
     sub.add_parser("selftest")
     args = ap.parse_args()
     if args.cmd == "run":
         INTERNAL = args.host_app.resolve()
-        run(args.out.resolve(), args.label, args.text, args.music == "on", args.exe)
+        run(args.out.resolve(), args.label, args.text, args.music == "on", args.exe, args.slow_clips, args.fake_voice)
     elif args.cmd == "check":
-        problems = run_problems(json.loads((args.dir / "bench.json").read_bytes())["events"])
+        loaded = load(args.dir)
+        problems = loaded["problems"] + [dict(kind="voice_hole", **hole) for hole in voice_holes(loaded)]
         print(json.dumps(dict(run=args.dir.name, ok=not problems, problems=problems), ensure_ascii=False))
         return 1 if problems else 0
     elif args.cmd == "selftest":

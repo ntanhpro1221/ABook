@@ -3,6 +3,32 @@
 #include "fakes.h"
 #include "textscript.h"
 #include <QtTest>
+#include <limits>
+
+// An online voice that is slow in proportion to length, like Edge (listen audit §20: a 22.2 s clip took ~10.7 s): each clip arrives
+// LATENCY + PER_SECOND x its length later on the test's fake clock. Clip length = characters / CHARS_PER_SECOND.
+class SlowNet final : public PlayerNet {
+public:
+    static constexpr double LATENCY = 0.5, PER_SECOND = 0.45, CHARS_PER_SECOND = 14;
+    struct Pending { qint64 at; std::function<void()> reply; };
+    SlowNet(const qint64 &now, QString text) : m_now(now), m_text(std::move(text)) {}
+    QUrl audioUrl(const QString &, int) const override { return {}; }
+    void request(const QByteArray &method, const QString &, const QJsonObject &body, Done done, bool) override {
+        if (method == "GET") { done(200, QJsonObject{{QStringLiteral("text"), m_text}}); return; }
+        ++clips;
+        const double length = body.value(QStringLiteral("text")).toString().size() / CHARS_PER_SECOND;
+        const QString url = QStringLiteral("/media/%1.wav").arg(clips);
+        seconds.insert(url, length);
+        pending.append({m_now + qint64((LATENCY + PER_SECOND * length) * 1000), [done, url, length] {
+            done(200, QJsonObject{{QStringLiteral("url"), url}, {QStringLiteral("duration_ms"), length * 1000}}); }});
+    }
+    QList<Pending> pending;
+    QHash<QString, double> seconds;
+    int clips = 0;
+private:
+    const qint64 &m_now;
+    QString m_text;
+};
 
 class PlayerNativeTests : public QObject {
     Q_OBJECT
@@ -50,7 +76,7 @@ private slots:
         speech.setRate(1.5); QCOMPARE(audio.rate, 1.5);
         speech.pause(); QVERIFY(!speech.playing());
         speech.play(); audio.finish(); QVERIFY(speech.playing());
-        QCOMPARE(net.callsTo(QStringLiteral("/clip")).size(), 2); // one paragraph lookahead
+        QCOMPARE(net.callsTo(QStringLiteral("/clip")).size(), 2); // the second paragraph is inside the read-ahead window
         QSignalSpy ended(&speech, &AudioOut::ended); audio.finish(); QCOMPARE(ended.size(), 1);
     }
     // The next paragraph is the chapter playing on, not a seek: Music re-aligned the bed to the narration position at every
@@ -91,14 +117,48 @@ private slots:
         net.answers.insert(QStringLiteral("GET /api/listen/books/b/chapters/1/text"), QJsonObject{{QStringLiteral("text"), QStringLiteral("Một đoạn văn.\n\nĐoạn tiếp theo.")}});
         net.answers.insert(QStringLiteral("POST /api/readaloud/clip"), QJsonObject{{QStringLiteral("url"), QStringLiteral("/media/clip.wav")}, {QStringLiteral("duration_ms"), 2500}});
         speech.loadText(QStringLiteral("b"), 1, 0, QStringLiteral("local"));
-        net.hold = true; speech.play(); net.releaseHeld();
+        net.hold = true; speech.play(); // the read-ahead is asked for at open, not when the first clip starts
         QCOMPARE(net.callsTo(QStringLiteral("/clip")).size(), 2);
         QCOMPARE(net.callsTo(QStringLiteral("/clip"))[0].body.value(QStringLiteral("rank")).toInt(), 0);
         QCOMPARE(net.callsTo(QStringLiteral("/clip"))[1].body.value(QStringLiteral("rank")).toInt(), 1);
+        net.releaseFirst(); QVERIFY(audio.isPlaying);
         audio.finish(); QVERIFY(!audio.isPlaying);
         net.hold = false; net.releaseHeld();
         QVERIFY(audio.isPlaying); QCOMPARE(net.callsTo(QStringLiteral("/clip")).size(), 2);
         QCOMPARE(speech.position(), 2.5);
+    }
+    // Read-ahead in SECONDS, not paragraphs: a few short dialogue lines, then a long narration paragraph, which must be asked for early enough
+    // (the old single lookahead stood ~8.5 s before every long paragraph here; 2.4 s in listen audit §20). Each paragraph is asked for once.
+    void slowVoiceAsksForLongParagraphsEarlyEnough() {
+        QStringList parts{QStringLiteral("Một câu mở đầu chương, đọc chừng mười giây. ").repeated(3)};
+        for (int block = 0; block < 4; ++block) {
+            for (int line = 0; line < 6; ++line) parts << QStringLiteral("Dòng thoại ngắn số %1.").arg(block * 10 + line);
+            parts << QStringLiteral("Một câu kể dài về buổi chiều ở làng. ").repeated(8);
+        }
+        qint64 now = 0;
+        SlowNet net(now, parts.join(QStringLiteral("\n\n")));
+        FakeOut audio; SpeechOut speech(&audio, &net, nullptr, [&now] { return now; });
+        QSignalSpy ended(&speech, &AudioOut::ended);
+        qint64 started = -1, waitFrom = -1, worst = 0; double length = 0; int plays = 0;
+        connect(&audio, &AudioOut::playingChanged, this, [&](bool on) {
+            if (!on) return;
+            started = now; length = net.seconds.value(audio.url.path()); audio.dur = length; ++plays;
+            if (waitFrom >= 0) worst = std::max(worst, now - waitFrom);
+            waitFrom = -1;
+        });
+        speech.loadText(QStringLiteral("b"), 1, 0, QStringLiteral("edge")); speech.play();
+        for (int step = 0; step < 1000 && ended.isEmpty(); ++step) {
+            const auto first = std::min_element(net.pending.begin(), net.pending.end(), [](const auto &a, const auto &b) { return a.at < b.at; });
+            const qint64 arrive = first == net.pending.end() ? std::numeric_limits<qint64>::max() : first->at;
+            const qint64 finish = audio.isPlaying ? started + qint64(length * 1000) : std::numeric_limits<qint64>::max();
+            QVERIFY(arrive != finish || arrive != std::numeric_limits<qint64>::max());
+            if (arrive <= finish) { now = arrive; const auto reply = first->reply; net.pending.erase(first); reply(); }
+            else { now = finish; audio.finish(); if (!audio.isPlaying && ended.isEmpty()) waitFrom = now; }
+        }
+        QCOMPARE(ended.size(), 1);
+        QCOMPARE(plays, int(parts.size()));
+        QCOMPARE(net.clips, int(parts.size()));
+        QVERIFY2(worst <= 300, qPrintable(QStringLiteral("narration stood %1 ms waiting for a clip").arg(worst)));
     }
     void absentVoiceAndServerFailure() {
         FakeOut audio; FakeNet net; SpeechOut speech(&audio, &net); QSignalSpy failed(&speech, &AudioOut::failed);
