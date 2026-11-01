@@ -1,5 +1,5 @@
 """Tải bài nhạc nền bị đứt giữa chừng (Wi-Fi rớt, máy chủ nguồn đóng kết nối): không được giữ file cụt trong bộ đệm như bài tốt -
-bài cụt sẽ phát (và lặp) mãi một mẩu đầu bài. Coi như lỗi mạng: không lưu, cả máy tạm coi là offline, lần sau tải lại từ đầu.
+bài cụt sẽ phát (và lặp) mãi một mẩu đầu bài. Phần đã tải nằm lại trong `.part` để lần sau tải tiếp (test_music_download_resumes.py).
 Dùng máy chủ HTTP thật trên 127.0.0.1 để http.client cư xử đúng như ngoài đời (đọc hết dữ liệu sớm trả b"", hay ném IncompleteRead)."""
 from __future__ import annotations
 
@@ -50,10 +50,10 @@ def test_a_download_cut_off_midway_is_not_kept_as_the_track(studio, tmp_path: Pa
     _to_local(monkeypatch, _cut_server(head, body))
     assert app.music_track_for_export(CALM) is None, "bài tải đứt giữa chừng mà vẫn trả file"
     assert app.music_track_cached(CALM) is None, "file cụt nằm trong bộ đệm như bài tốt"
-    assert not list((app.music_dir / "files").glob("*.part"))
-    # Đứt kết nối là lỗi mạng: bài không bị đánh dấu hỏng 24 giờ, chỉ cả máy tạm coi là offline.
+    assert [p.stat().st_size for p in (app.music_dir / "files").glob("*.part")] == [300], "phần đã tải không được giữ để tải tiếp"
+    # Đứt sau khi đã nhận byte là nguồn chậm / chập chờn: bài không bị đánh dấu hỏng 24 giờ, nguồn cũng không bị cho nghỉ.
     assert CALM not in app._music_unavailable
-    assert app.music_track_available(CALM2) is False
+    assert app.music_track_available(CALM2) is True
 
 
 def test_a_whole_download_is_kept(studio, tmp_path: Path, monkeypatch) -> None:  # noqa: F811
