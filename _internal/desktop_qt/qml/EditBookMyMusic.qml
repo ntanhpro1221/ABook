@@ -241,10 +241,10 @@ Column {
                     Item {
                         width: parent.width
                         height: Math.max(words.height, ask.height) + 16
-                        Icon { x: 0; y: 10; name: "eighth-note"; size: 16; color: Theme.accentText }
+                        Icon { id: noteIcon; x: 0; y: 10; name: "eighth-note"; size: 16; color: Theme.accentText }
                         Column {
                             id: words
-                            x: 24
+                            x: noteIcon.width + 6 // như MyMusicTrack và bản web (mr-1.5): chữ các hàng bài nhạc cùng một mép
                             y: 8
                             width: parent.width - x - ask.width - 12
                             ClockLabel {
@@ -260,31 +260,11 @@ Column {
                                       + (item.track.duration ? "<font color='" + Theme.text2 + "'>&nbsp;· " + Logic.formatClock(item.track.duration) + "</font>" : "")
                                 function escapeHtml(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\u00a0/g, "&nbsp;") }
                             }
-                            Flow {
+                            // Công tắc "Tự chọn" đầu dòng rồi nhãn ngắn (như MyMusicTrack): bật = máy được tự chọn bài này
+                            AutoPickLine {
                                 width: parent.width
-                                spacing: 8
-                                topPadding: 2
-                                readonly property string label: Music.trackNote(item.track)
-                                HintText { id: note; visible: text !== ""; width: Math.min(implicitWidth, parent.width); height: 24; verticalAlignment: Text.AlignVCenter; text: parent.label; anchors.verticalCenter: undefined }
-                                // Công tắc "Tự chọn" (như MyMusicTrack): bật = máy được tự chọn bài này
-                                Row {
-                                    spacing: 8
-                                    Switch {
-                                        id: autoSwitch
-                                        objectName: "autoPick"
-                                        label: Music.AUTO_PICK_LABEL + ": " + item.track.title
-                                        checked: Music.autoOn(item.track)
-                                        onToggled: root.post("/api/music/local/" + Music.localDigest(item.track.link) + "/auto", {auto: Music.autoNext(item.track)})
-                                    }
-                                    Text {
-                                        text: Music.AUTO_PICK_LABEL
-                                        color: Theme.text2
-                                        font.pixelSize: Theme.sizeCaption
-                                        height: 24
-                                        verticalAlignment: Text.AlignVCenter
-                                        TapHandler { onTapped: autoSwitch.clicked() }
-                                    }
-                                }
+                                track: item.track
+                                onPick: next => root.post("/api/music/local/" + Music.localDigest(item.track.link) + "/auto", {auto: next})
                             }
                         }
                         // Xoá hai bước: hàng nút đổi bề ngang (trượt) chứ không bật tắt
