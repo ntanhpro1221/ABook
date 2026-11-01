@@ -1186,6 +1186,38 @@ describe("tải sẵn bài kế và mờ vào từ lúc có tiếng (musicwarm, 
     sim.bed.stop();
   });
 
+  it("bài cũ đang tải dở giữ chỗ quá chỗ thôi kêu của nó: sắp hết phần đã tải thì mờ ra trong UNDERRUN_FADE_SECONDS, không cụt (web MSE 02-11: 8 lần cụt)", () => {
+    vi.useFakeTimers();
+    const sim = slowBed(() => 0);
+    sim.bed.setCues([{ ...long[0], end: 100 }, { ...long[1], start: 100, end: 1100 }], -20);
+    let clock = 0;
+    sim.bed.sync(0, true);
+    const a = sim.made[0].audio;
+    a.duration = 2000;
+    vi.advanceTimersByTime(1);
+    const old = stream(a, () => (clock < 20 ? 2 : clock < 150 ? 0.9 : 0)); // tải kịp tới chỗ thôi kêu (100 s) rồi đứt hẳn
+    let b: FakeAudio | null = null;
+    let gone = -1;
+    for (clock = 0; clock < 260; clock += 0.5) {
+      sim.bed.sync(clock, true);
+      if (clock === 100) {
+        b = sim.made[1].audio;
+        b.duration = 600;
+        vi.advanceTimersByTime(1);
+        stream(b, () => 0.05); // bài mới chờ cổng suốt lượt: bài cũ giữ chỗ
+      }
+      vi.advanceTimersByTime(500);
+      if (clock === 150) expect(a.volume).toBeCloseTo(GOAL, 3); // còn ~7 s phía trước: vẫn giữ chỗ
+      if (gone < 0 && clock > 100 && a.volume <= 0.001) gone = clock;
+    }
+    expect(b?.volume).toBe(0);
+    // đứt ở 150 s còn ~7 s phía trước: tụt dưới UNDERRUN_LOW_SECONDS ở ~156 s, mờ thường (FADE_SECONDS) dài hơn phần còn lại thì cụt
+    expect(gone).toBeGreaterThan(150);
+    expect(gone).toBeLessThan(160);
+    expect(old.cuts).toBe(0);
+    sim.bed.stop();
+  });
+
   it("playEnd: hết chuỗi mốc liền nhau cùng bài + mờ ra của mốc kế (anh em: mờ dài); mốc tail chơi tới hết bài", () => {
     const a = { start: 0, end: 100, link: "a", key: "1:1", src: "/a" };
     const a2 = { ...a, start: 100, end: 160, key: "1:2" };
