@@ -178,6 +178,7 @@ LookShortcuts 1.0 ../../../../qml/LookShortcuts.qml
 MyMusicBar 1.0 ../../../../qml/MyMusicBar.qml
 MyMusicDetails 1.0 ../../../../qml/MyMusicDetails.qml
 MyMusicModule 1.0 ../../../../qml/MyMusicModule.qml
+AutoPickLine 1.0 ../../../../qml/AutoPickLine.qml
 MyMusicTrack 1.0 ../../../../qml/MyMusicTrack.qml
 MyMusicState 1.0 ../../../../qml/MyMusicState.qml
 AdvancedUpdate 1.0 ../../../../qml/AdvancedUpdate.qml

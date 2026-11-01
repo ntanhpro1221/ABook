@@ -161,10 +161,11 @@ Item {
             const row = named(mine, "track:local:" + sha1)
             verify(row !== null)
             // lời dưới tên chỉ nói điều đáng biết; công tắc "Tự chọn" nói máy có được tự chọn bài này không
-            compare(row.note, "")
-            compare(named(mine, "track:local:" + sha2).note, "Có lời")
-            compare(named(mine, "track:local:" + sha3).note, "Chưa phân tích")
-            compare(named(mine, "track:local:" + sha4).note, "")
+            const note = sha => named(named(mine, "track:local:" + sha), "autoPickLine").note
+            compare(note(sha1), "")
+            compare(note(sha2), "Có lời")
+            compare(note(sha3), "Chưa phân tích")
+            compare(note(sha4), "")
             compare([sha1, sha2, sha3, sha4].map(sha => named(named(mine, "track:local:" + sha), "autoPick").checked), [true, false, true, false])
             // Xoá: bước hỏi lại mở một lớp Back
             row.askRemove()

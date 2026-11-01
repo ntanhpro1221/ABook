@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Giao diện
+
+- Nhạc của tôi: công tắc "Tự chọn" đứng đầu dòng dưới tên bài, nhãn "Có lời" / "Chưa phân tích" theo sau - công tắc mọi bài thẳng một cột thay vì xô theo độ dài nhãn. Máy tính và bản web.
+
 ## [0.4.153] - 2026-11-01
 
 ### Nhạc nền
