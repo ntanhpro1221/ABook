@@ -59,6 +59,8 @@ export interface AudioEngine {
   /** Lý do lỗi gần nhất, nói bằng lời người nghe hiểu (bộ máy đọc to); không có thì trình phát dùng câu chung. */
   readonly error?: string;
   readonly readingAnchor?: ReadingAnchor;
+  /** Giây giọng đã sẵn phía trước người nghe (bộ máy đọc to; không có = chương audio, không có giọng phải nhường): nhạc nền chỉ tải sẵn chương kế khi đủ (musicBed.ts NextChapterWarm). */
+  readonly voiceAhead?: number;
   /** Bấm vào một chữ: nghe từ đúng chữ thứ `word` của đoạn `segment` (bộ máy đọc to; chương có audio đi bằng `seek`). */
   seekWord?(segment: number, word: number): void;
   on(event: EngineEvent, handler: () => void): () => void;

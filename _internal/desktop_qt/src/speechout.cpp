@@ -214,4 +214,14 @@ void SpeechOut::seek(double at) {
 double SpeechOut::startOf(int index) const { double seconds = 0; for (int i = 0; i < index; ++i) seconds += m_paragraphs[i].seconds; return seconds; }
 double SpeechOut::position() const { return !m_text ? m_audio->position() : m_ready ? startOf(m_index) + m_audio->position() : m_target; }
 double SpeechOut::duration() const { return m_text ? startOf(m_paragraphs.size()) : m_audio->duration(); }
+double SpeechOut::voiceAhead() const {
+    if (!m_text) return m_audio->voiceAhead();
+    if (!m_ready || m_index >= m_paragraphs.size()) return 0;
+    double ahead = std::max(0.0, m_paragraphs[m_index].seconds - m_audio->position());
+    for (int i = m_index + 1; i < m_paragraphs.size(); ++i) {
+        if (TextScript::speakable(m_paragraphs[i].text) && m_paragraphs[i].url.isEmpty()) return ahead;
+        ahead += m_paragraphs[i].seconds;
+    }
+    return std::numeric_limits<double>::infinity();
+}
 void SpeechOut::fail(const QString &reason) { m_wants = false; m_ready = false; emit buffering(false); emit playingChanged(false); emit failed(reason); }
