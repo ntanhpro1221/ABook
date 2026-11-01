@@ -774,6 +774,15 @@ private slots:
         QCOMPARE(warmed.size(), 1);
     }
 
+    void scenePollAsksBackSoonThenSlowsDown() {
+        // máy chủ giữ lời hỏi tới 2 giây: vài lần đầu hỏi lại sau 200 ms, rồi 1,5 giây, hết lượt thì thôi (sceneCues.ts scenePollDelay)
+        QCOMPARE(scenePollDelay(0), std::optional<int>(200));
+        QCOMPARE(scenePollDelay(SCENE_FAST_POLLS - 1), std::optional<int>(200));
+        QCOMPARE(scenePollDelay(SCENE_FAST_POLLS), std::optional<int>(1500));
+        QCOMPARE(scenePollDelay(SCENE_POLLS - 1), std::optional<int>(1500));
+        QVERIFY(!scenePollDelay(SCENE_POLLS));
+    }
+
     void nextChapterWarmRetriesPendingAndStopsWithoutMusic() {
         qint64 clock = 1000000;
         QList<int> asked;

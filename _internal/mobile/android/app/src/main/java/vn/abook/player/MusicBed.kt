@@ -74,8 +74,19 @@ object MusicBed {
     private const val METERED_NOTICE = "Nhạc chờ Wi-Fi — bạn chọn bài ở nút Nhạc nền để tải ngay qua mạng di động."
     private const val AUTO_KEY = "auto-scene-music"
     private const val SEAM_P3_KEY = "music-seam-p3"
-    private const val SCENE_POLL_MS = 1500L // nhạc theo cảnh dựng nền: chương chưa xong thì hỏi lại mỗi chừng này, tối đa SCENE_POLLS lần (ui/src/listen/player.tsx)
-    private const val SCENE_POLLS = 80
+    /** Nhạc theo cảnh dựng nền: chương chưa xong thì [SceneDevice] giữ lời hỏi tới BUILD_WAIT_MS rồi trả `pending`, nên hỏi lại không cần thưa - [SCENE_FAST_POLLS] lần đầu
+     *  cách [SCENE_FAST_POLL_MS] (chương xong giữa hai lần hỏi không phải chờ thêm 1,5 giây), rồi mới thưa ra [SCENE_POLL_MS]. Tối đa [SCENE_POLLS] lần
+     *  (`scenePollDelay` của ui/src/listen/sceneCues.ts). */
+    internal const val SCENE_POLLS = 80
+    internal const val SCENE_FAST_POLLS = 10
+    internal const val SCENE_FAST_POLL_MS = 200L
+    internal const val SCENE_POLL_MS = 1500L
+    /** Chờ chừng ấy ms rồi hỏi lại lần `attempt` (từ 0) còn `pending`; hết lượt thì null. */
+    internal fun scenePollDelay(attempt: Int): Long? = when {
+        attempt >= SCENE_POLLS -> null
+        attempt < SCENE_FAST_POLLS -> SCENE_FAST_POLL_MS
+        else -> SCENE_POLL_MS
+    }
     /** Mốc cảnh của chương trả `unavailable` (danh mục chưa tải được) hay hỏi hỏng: hỏi lại sau chừng này, lùi dần, có hạn - như `sceneRetryDelay` của ui/src/listen/sceneCues.ts. */
     private val SCENE_RETRY_MS = longArrayOf(15_000, 30_000, 60_000, 120_000, 300_000)
     private const val METERED_CHECK_MS = 5000L
@@ -1263,7 +1274,7 @@ object MusicBed {
     }
 
     /** Hỏi mốc nhạc theo cảnh của chương `chapterId` (luồng nền: dựng nền có thể tới vài giây, danh mục cần mạng lần đầu). Chương chưa dựng xong ([DeviceScenes] trả `pending`)
-     *  thì hỏi lại sau [SCENE_POLL_MS], tối đa [SCENE_POLLS] lần; về rồi thì nhạc vào ở đầu câu kế ([SceneAnchor.Feed.arrive]). Đổi cuốn / chương thì lần hỏi cũ bị bỏ. */
+     *  thì hỏi lại sau [scenePollDelay], tối đa [SCENE_POLLS] lần; về rồi thì nhạc vào ở đầu câu kế ([SceneAnchor.Feed.arrive]). Đổi cuốn / chương thì lần hỏi cũ bị bỏ. */
     private fun askScene(appContext: Context, chapterId: Int, attempt: Int, misses: Int = 0) {
         val ticket = generation
         val bookId = book
@@ -1274,13 +1285,14 @@ object MusicBed {
             main.post {
                 if (ticket != generation || chapter != chapterId) return@post
                 sceneNotice = notice
-                if (pending && attempt < SCENE_POLLS) {
+                val poll = if (pending) scenePollDelay(attempt) else null
+                if (poll != null) {
                     val job = Runnable {
                         sceneRetry = null
                         if (ticket == generation && chapter == chapterId) askScene(appContext, chapterId, attempt + 1, misses)
                     }
                     sceneRetry = job
-                    main.postDelayed(job, SCENE_POLL_MS)
+                    main.postDelayed(job, poll)
                     return@post
                 }
                 // Chưa có mốc vì danh mục chưa tải được / dựng hỏng: hỏi lại sau một quãng (mạng về giữa chương thì nhạc vào ở đầu câu kế), không đợi tới chương sau.

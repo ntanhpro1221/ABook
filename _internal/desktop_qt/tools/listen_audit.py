@@ -6,7 +6,7 @@ Kịch bản bench "listen" (qml/BenchScenario.qml) mở chương đầu, phát 
 Luật đạt ghi trước ở Corpus research/music/PLAN_lx.md mục 19.
 
   python -X utf8 tools/listen_audit.py run <out_dir> <label> --text 001.txt 002.txt ... --music on|off [--exe dist/ABookDesk.exe]
-  python -X utf8 tools/listen_audit.py analyze <out_dir>/<A> <out_dir>/<B>
+  python -X utf8 tools/listen_audit.py analyze <out_dir>/<A> <out_dir>/<B> [--control <out_dir>/<B2>]
   python -X utf8 tools/listen_audit.py check <out_dir>/<lượt>   thoát 1 nếu lượt không dùng được (lỗi giọng, treo, chạm trần) hay giọng lặng
                                                                  > VOICE_HOLE_S giữa chương vì chờ clip
   --slow-clips 200:12 (run): máy chủ chờ thêm 12 s trước mỗi clip mới của đoạn từ 200 ký tự (tools/stall_host) - kiểm lực đọc trước
@@ -40,10 +40,20 @@ HOP_S = 0.05            # khung đo mức
 VOICE_FLOOR_DB = -45.0  # lượt B: khung trên mức này là giọng
 LOW_BELOW_DB = 12.0     # khung "thấp" (chỗ ngắt giữa chữ) = dưới trung vị giọng chừng này
 SILENT_DB = -60.0       # dưới mức này là im
-PRESENT_WINDOW_S = 5.0  # nhạc có mặt: trong cửa sổ chừng này ...
-PRESENT_SHARE = 0.8     # ... ít nhất chừng này khung thấp không im
+# (1) nhạc có mặt = lượt A thêm tiếng vào chỗ giọng lặng của lượt B (cùng chỗ giọng): trong cửa sổ PRESENT_WINDOW_S, ở các khung B lặng
+# (mọi khung B trong ±NEAR_FRAMES dưới trung vị giọng QUIET_BELOW_DB; ghép theo nhịp lệch tới 1 khung ở mép chữ), có ít nhất PRESENT_MIN_QUIET
+# khung như thế và PRESENT_SHARE trong số ấy A cao hơn B LIFT_DB, và không dưới LIFT_FLOOR_DB (B im hẳn: đầu bài nhạc nhỏ ~ -55 dB vẫn là
+# nhạc). Đo 01-11 (cửa sổ mỗi khung): hai lượt cùng tắt nhạc so nhau (NB1/B1 hai chiều) cao nhất 0,07; lượt bật nhạc p10 0,81-0,86.
+PRESENT_WINDOW_S = 5.0
+PRESENT_MIN_QUIET = 15
+PRESENT_SHARE = 0.5
+QUIET_BELOW_DB = 25.0
+NEAR_FRAMES = 2
+LIFT_DB = 6.0
+LIFT_FLOOR_DB = -66.0
 ARRIVE_FIRST_S = 6.0    # (1) chương đầu
 ARRIVE_NEXT_S = 3.0     # (1) các chương sau
+ARRIVE_CONFIRM_S = 6.0  # (1) mixer báo phát (mix_playing) và tai nghe thấy nhạc trong chừng này sau đó: tính lúc mixer phát
 DEAD_S = 1.5            # (2) lặng chết giữa chương
 DEAD_PER_10MIN = 1
 DEAD_MAX_S = 3.0
@@ -165,7 +175,8 @@ def load(stage: Path) -> dict:
     bench = json.loads((stage / "bench.json").read_bytes())
     marks = parse_marks(bench["events"], float(epoch_ms), rate)
     hop = int(HOP_S * rate)
-    return dict(rate=rate, hop=hop, db=frame_db(mono, hop), marks=marks, gaps=read_pairs(str(stage / "sink.wav") + ".gaps"),
+    mixes = [int(round((t - float(epoch_ms)) * rate / 1000)) for t, name in bench["events"] if name == "mix_playing"]
+    return dict(rate=rate, hop=hop, db=frame_db(mono, hop), marks=marks, mixes=mixes, gaps=read_pairs(str(stage / "sink.wav") + ".gaps"),
                 stops=read_pairs(str(stage / "sink.wav") + ".stops"),
                 done=any(name == "done" for _, name in bench["events"]), timeout=any(name == "timeout" for _, name in bench["events"]),
                 problems=run_problems(bench["events"]))
@@ -258,20 +269,53 @@ def first_voice(db: np.ndarray, voice_db: float, at: int) -> int | None:
     return at + int(hit[0]) if len(hit) else None
 
 
-def present(db: np.ndarray, voice_db: float, hop_s: float) -> np.ndarray:
-    """Khung i có nhạc khi trong cửa sổ PRESENT_WINDOW_S bắt đầu ở i, ít nhất PRESENT_SHARE khung thấp không im."""
-    low = db < voice_db - LOW_BELOW_DB
-    heard = low & (db > SILENT_DB)
+def aligned(A: dict, B: dict) -> np.ndarray:
+    """Khung của lượt B nghe cùng chỗ giọng với từng khung của lượt A (-1: không ghép được). Vị trí chương nội suy giữa các nhịp đang phát
+    (mỗi giây); B đứng chờ clip ở một vị trí thì lấy khung cuối của quãng đứng."""
+    def track(run):
+        out: dict[int, list] = {}
+        for m in run["marks"]:
+            if m["tag"] == "tick" and m["playing"]:
+                out.setdefault(m["chapter"], []).append((m["frame"] / run["hop"], m["position"]))
+        return {c: np.array(v) for c, v in out.items()}
+    ta, tb = track(A), track(B)
+    j = np.full(len(A["db"]), -1)
+    for c, arr in ta.items():
+        if c not in tb or len(arr) < 2 or len(tb[c]) < 2:
+            continue
+        idx = np.arange(max(0, int(np.ceil(arr[0, 0]))), min(len(j), int(arr[-1, 0]) + 1))
+        pos = np.interp(idx, arr[:, 0], arr[:, 1])
+        fb, pb = tb[c][:, 0], tb[c][:, 1] + np.arange(len(tb[c])) * 1e-9
+        inside = (pos >= pb[0]) & (pos <= pb[-1])
+        j[idx[inside]] = np.clip(np.round(np.interp(pos[inside], pb, fb)).astype(int), 0, len(B["db"]) - 1)
+    return j
+
+
+def lifted(a_db: np.ndarray, b_db: np.ndarray, j: np.ndarray, voice_db: float) -> tuple[np.ndarray, np.ndarray]:
+    """(quiet, lifted) theo khung của A: quiet = lượt B lặng quanh cùng chỗ giọng (mức lớn nhất trong ±NEAR_FRAMES dưới trung vị giọng
+    QUIET_BELOW_DB); lifted = quiet mà A cao hơn mức ấy LIFT_DB và không dưới LIFT_FLOOR_DB - tiếng thêm vào đó là nhạc. Giọng hai lượt như
+    nhau (đo 01-11: khung giọng chênh trung vị 0,0 dB)."""
+    padded = np.pad(b_db, NEAR_FRAMES, constant_values=-200.0)
+    near = np.lib.stride_tricks.sliding_window_view(padded, 2 * NEAR_FRAMES + 1).max(axis=1)
+    ok = j >= 0
+    b = np.where(ok, near[np.maximum(j, 0)], 0.0)
+    quiet = ok & (b < voice_db - QUIET_BELOW_DB)
+    return quiet, quiet & (a_db >= np.maximum(b + LIFT_DB, LIFT_FLOOR_DB))
+
+
+def present(quiet: np.ndarray, lift: np.ndarray, hop_s: float) -> np.ndarray:
+    """Khung i có nhạc khi trong cửa sổ PRESENT_WINDOW_S bắt đầu ở i, có ít nhất PRESENT_MIN_QUIET khung B lặng và PRESENT_SHARE trong số ấy
+    được A nâng lên. Thước cũ (khung thấp của riêng A không im) thấy "nhạc" ở chỗ đọc dày của lượt tắt nhạc - đuôi chữ cũng không im."""
     w = int(PRESENT_WINDOW_S / hop_s)
-    c_low = np.concatenate(([0], np.cumsum(low)))
-    c_heard = np.concatenate(([0], np.cumsum(heard)))
-    n = len(db)
+    c_quiet = np.concatenate(([0], np.cumsum(quiet)))
+    c_lift = np.concatenate(([0], np.cumsum(lift)))
+    n = len(quiet)
     end = np.minimum(np.arange(n) + w, n)
-    lows = c_low[end] - c_low[:n]
-    return (lows >= 10) & ((c_heard[end] - c_heard[:n]) >= PRESENT_SHARE * lows)
+    quiets = c_quiet[end] - c_quiet[:n]
+    return (quiets >= PRESENT_MIN_QUIET) & ((c_lift[end] - c_lift[:n]) >= PRESENT_SHARE * quiets)
 
 
-def analyze(a_dir: Path, b_dir: Path) -> dict:
+def analyze(a_dir: Path, b_dir: Path, control: Path | None = None) -> dict:
     A, B = load(a_dir), load(b_dir)
     hop_s = A["hop"] / A["rate"]
     voice_db = float(np.median(B["db"][B["db"] > VOICE_FLOOR_DB]))
@@ -283,23 +327,37 @@ def analyze(a_dir: Path, b_dir: Path) -> dict:
     rules["0_run"] = dict(A=A["problems"], B=B["problems"], voice_holes_A=holes_a, voice_holes_B=holes_b,
                           ok=not A["problems"] and not B["problems"] and not holes_a and not holes_b)
 
-    # (1) nhạc tới - và đối chứng: lượt B không được "có nhạc"
-    pres_a, pres_b = present(A["db"], voice_db, hop_s), present(B["db"], voice_db, hop_s)
-    heard_a = (A["db"] < voice_db - LOW_BELOW_DB) & (A["db"] > SILENT_DB)
+    # (1) nhạc tới: A so với B ở cùng chỗ giọng. Đối chứng: không thấy nhạc trước khi app chọn bài (mốc music: đầu tiên của chương), và nếu có
+    # lượt nhạc tắt thứ hai (--control) thì nó so với B không được "có nhạc" ở đâu cả
+    quiet_a, lift_a = lifted(A["db"], B["db"], aligned(A, B), voice_db)
+    pres_a = present(quiet_a, lift_a, hop_s)
+    music_events = [dict(t=round(m["frame"] / A["rate"], 2), chapter=m["chapter"], position=m["position"], credit=m["tag"][len("music:"):])
+                    for m in A["marks"] if m["tag"].startswith("music:")]
     arrivals = []
     for i, ch in enumerate(chapters(A)):
         v = first_voice(A["db"], voice_db, ch["start"])
-        # cửa sổ đầu tiên có nhạc, rồi khung thấp có tiếng đầu tiên trong cửa sổ ấy = lúc nhạc thật sự tới
-        hit = np.flatnonzero(pres_a[v: ch["end"]]) if v is not None else []
-        heard = np.flatnonzero(heard_a[v + int(hit[0]):]) if len(hit) else []
-        delay = round(float(hit[0] + heard[0]) * hop_s, 2) if len(heard) else None
+        # tai: khung được nâng đầu tiên mà cửa sổ bắt đầu ở nó có nhạc. Chỉ nghe được ở chỗ giọng lặng, nên trễ hơn lúc mixer phát 1,5-3 s ở
+        # đoạn đọc dày (đo 01-11 A1/A2/NA2). Mixer báo phát (mix_playing đầu tiên sau lúc app chọn bài của chương) và tai xác nhận trong
+        # ARRIVE_CONFIRM_S: nhạc tới lúc mixer phát; không thì theo tai.
+        hit = np.flatnonzero((pres_a & lift_a)[v: ch["end"]]) if v is not None else []
+        heard = v + int(hit[0]) if len(hit) else None
+        picked = next((m["frame"] for m in A["marks"] if m["tag"].startswith("music:") and m["chapter"] == ch["chapter"]), None)
+        started = next((f // A["hop"] for f in A["mixes"] if picked is not None and f >= picked), None)
+        confirmed = heard is not None and started is not None and started <= heard <= started + ARRIVE_CONFIRM_S / hop_s
+        at = started if confirmed else heard
+        delay = round(float(at - v) * hop_s, 2) if at is not None else None
+        early = bool(heard is not None and picked is not None and heard < picked // A["hop"])
         limit = ARRIVE_FIRST_S if i == 0 else ARRIVE_NEXT_S
+        rel = lambda frame: None if frame is None or v is None else round(float(frame - v) * hop_s, 2)
         arrivals.append(dict(chapter=ch["chapter"], first_voice_s=None if v is None else round(v * hop_s, 2), music_after_s=delay,
-                             ok=bool(delay is not None and delay <= limit)))
-    music_events = [dict(t=round(m["frame"] / A["rate"], 2), chapter=m["chapter"], position=m["position"], credit=m["tag"][len("music:"):])
-                    for m in A["marks"] if m["tag"].startswith("music:")]
-    rules["1_arrival"] = dict(chapters=arrivals, control_B_present_s=round(float(pres_b.sum()) * hop_s, 1),
-                              ok=bool(all(x["ok"] for x in arrivals) and pres_b.sum() == 0))
+                             picked_after_s=rel(None if picked is None else picked // A["hop"]), mixer_after_s=rel(started), heard_after_s=rel(heard),
+                             heard_before_pick=early, ok=bool(delay is not None and delay <= limit and not early)))
+    control_s = None
+    if control is not None:
+        C = load(control)
+        quiet_c, lift_c = lifted(C["db"], B["db"], aligned(C, B), voice_db)
+        control_s = round(float(present(quiet_c, lift_c, hop_s).sum()) * hop_s, 1)
+    rules["1_arrival"] = dict(chapters=arrivals, control_present_s=control_s, ok=bool(all(x["ok"] for x in arrivals) and not control_s))
 
     # (2) lặng chết ở lượt B, từ tiếng giọng đầu tới tiếng giọng cuối
     bch = chapters(B)
@@ -323,8 +381,8 @@ def analyze(a_dir: Path, b_dir: Path) -> dict:
                                ok=bool(minutes > 0) and len(dead_inside) <= DEAD_PER_10MIN * max(1.0, minutes / 10)
                                and all(d["seconds"] <= DEAD_MAX_S for d in dead_inside) and all(j["seconds"] <= JOIN_MAX_S for j in joins))
 
-    # (3) mức nhạc so với giọng, trên khung chỉ nhạc của lượt A khi nhạc đã có mặt
-    only = (A["db"] < voice_db - LOW_BELOW_DB) & (A["db"] > SILENT_DB) & pres_a
+    # (3) mức nhạc so với giọng, trên khung chỉ nhạc của lượt A (B lặng ở cùng chỗ giọng) khi nhạc đã có mặt
+    only = quiet_a & (A["db"] > SILENT_DB) & pres_a
     rel = A["db"][only] - voice_db
     w3 = int(3 / hop_s)
     peaks = []
@@ -421,6 +479,38 @@ def selftest() -> int:
         got = len(voice_holes(run_))
         if got != want:
             failures.append(f"voice_holes {name}: chờ {want}, được {got}")
+    # thước nhạc có mặt (luật 1): giọng giả 50 ms/khung - chữ 0,2-0,6 s xen ngắt 0,1-0,3 s (im, hay đuôi chữ -35 dB), một phần năm là chỗ
+    # nghỉ câu 0,4-0,9 s im; nhịp mỗi giây
+    rng = np.random.default_rng(7)
+    frames = 120 * rate // hop
+    voice = np.full(frames, -200.0)
+    i = 0
+    while i < frames:
+        word = int(rng.integers(4, 13))
+        voice[i: i + word] = rng.uniform(-24, -14, size=len(voice[i: i + word]))
+        i += word
+        pause = rng.random() < 0.2
+        gap = int(rng.integers(8, 19)) if pause else int(rng.integers(2, 7))
+        voice[i: i + gap] = -200.0 if pause or rng.random() < 0.6 else -35.0
+        i += gap
+
+    def music_run(db, offset_frames=0):
+        marks = [dict(tag="tick", frame=k * rate + offset_frames * hop, chapter=1, position=float(k), playing=1) for k in range(120)]
+        return dict(rate=rate, hop=hop, db=db, marks=marks)
+    b_run = music_run(voice)
+    m_db = 10 * np.log10(10 ** (voice / 10) + np.where(np.arange(frames) >= 30 * rate // hop, 10 ** (-52 / 10), 0.0))
+    for name, a_db, shift, want in (("lượt tắt nhạc lệch 2 khung", np.roll(voice, 2), 0, (0, None)),
+                                    ("lượt tắt nhạc, nhịp lệch 40 ms", voice, 0.8, (0, None)),
+                                    ("nhạc -52 dB vào ở 30 s", m_db, 0, (1, 30.0))):
+        a_run = music_run(a_db)
+        if shift:
+            a_run["marks"] = [dict(m, frame=m["frame"] + int(shift * hop)) for m in a_run["marks"]]
+        quiet, lift = lifted(a_db, voice, aligned(a_run, b_run), -19.0)
+        pres = present(quiet, lift, hop / rate)
+        first = np.flatnonzero(pres & lift)
+        got = (int(pres.any()), None if not len(first) else round(float(first[0]) * hop / rate, 1))
+        if got[0] != want[0] or (want[1] is not None and not (want[1] <= got[1] <= want[1] + 3)):
+            failures.append(f"nhạc có mặt {name}: chờ {want}, được {got}")
     print(json.dumps(dict(selftest="listen_audit", failures=failures), ensure_ascii=False))
     return 1 if failures else 0
 
@@ -437,6 +527,7 @@ def main() -> int:
     r.add_argument("--fake-voice", help="<trễ>:<giây mỗi giây clip> - giọng giả không ra mạng thay Edge (tools/stall_host)")
     r.add_argument("--music-files", type=Path, help="thư mục music/files của một lượt trước: gieo sẵn các bài đã tải trọn")
     a = sub.add_parser("analyze"); a.add_argument("a", type=Path); a.add_argument("b", type=Path)
+    a.add_argument("--control", type=Path, help="lượt nhạc tắt thứ hai: so với B không được thấy nhạc ở đâu (kiểm thước luật 1)")
     c = sub.add_parser("check"); c.add_argument("dir", type=Path)
     sub.add_parser("selftest")
     args = ap.parse_args()
@@ -451,7 +542,7 @@ def main() -> int:
     elif args.cmd == "selftest":
         return selftest()
     else:
-        print(json.dumps(analyze(args.a.resolve(), args.b.resolve()), ensure_ascii=False, indent=1))
+        print(json.dumps(analyze(args.a.resolve(), args.b.resolve(), args.control.resolve() if args.control else None), ensure_ascii=False, indent=1))
     return 0
 
 
