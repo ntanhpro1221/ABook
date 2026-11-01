@@ -215,6 +215,8 @@ public:
     // Cho PlayerClock, bench và test
     double position() const;
     double duration() const;
+    /// Giây giọng đã sẵn phía trước (AudioOut::voiceAhead): nhạc nền nhường giọng.
+    double voiceAhead() const { return m_loaded ? m_out->voiceAhead() : 0.0; }
     const PlayerLogic::Book &book() const { return m_book; }
     ProgressOutbox *outbox() { return m_outbox.get(); }
     double sleepLeftSeconds() const;

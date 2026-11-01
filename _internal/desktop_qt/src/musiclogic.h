@@ -25,9 +25,12 @@ inline constexpr double LOOP_MIN_PERIOD_SECONDS = double(ABOOK_MIX_LOOP_MIN_PERI
 inline constexpr int STEP_MS = 50;
 /// Bài tải hỏng (mất mạng): đoạn của nó im lặng, chừng ấy sau mới thử lại.
 inline constexpr qint64 RETRY_MS = 5 * 60000;
-/// Chương còn chừng này giây thì xin máy chủ tải sẵn bài mốc đầu của chương kế.
-inline constexpr double NEXT_CHAPTER_WARM_SECONDS = 120;
+/// Mốc đầu chương kế chưa dựng xong / hỏi hỏng: chừng ấy ms sau mới hỏi lại; cũng là nhịp xin lại trong NEXT_CHAPTER_LAST_CHANCE_SECONDS.
 inline constexpr qint64 NEXT_CHAPTER_RETRY_MS = 15000;
+/// Giọng ưu tiên tuyệt đối: chỉ tải sẵn chương kế khi giọng đã sẵn chừng này giây phía trước (= đệm tối thiểu của giọng, SpeechOut MIN_BUFFER_SECONDS).
+inline constexpr double NEXT_CHAPTER_VOICE_SECONDS = 20;
+/// Lưới cuối: chương còn chừng này giây thì xin lại bài đầu chương kế mỗi NEXT_CHAPTER_RETRY_MS (lần trước hỏng thì lần này tải; đã có thì máy chủ bỏ qua).
+inline constexpr double NEXT_CHAPTER_LAST_CHANCE_SECONDS = 120;
 /// Nhạc theo cảnh dựng nền: chương chưa xong thì máy chủ giữ lời hỏi tới 2 giây (music_nnscene.BUILD_WAIT_SECONDS) rồi trả `pending`, nên hỏi
 /// lại không cần thưa - SCENE_FAST_POLLS lần đầu cách SCENE_FAST_POLL_MS (chương xong giữa hai lần hỏi không phải chờ thêm 1,5 giây: đo 01-11
 /// máy mới, xong ở 3,3 giây mà nhạc vào ở 4,8), rồi mới thưa ra SCENE_POLL_MS (máy chủ trả `pending` tức thì thì không dồn lượt hỏi). Tối đa
