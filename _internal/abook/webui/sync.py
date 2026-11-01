@@ -51,7 +51,7 @@ from .cast import CastError
 from .fingerprints import Fingerprints
 from .library import Library, book_id
 from .listening import RECORD_ID, SYNC_KEYS, Listening
-from .remote_studio import StudioGate
+from .remote_studio import LENGTH_REQUIRED, StudioGate, lacks_length
 from .reviews import Reviews
 
 log = logging.getLogger(__name__)
@@ -940,6 +940,10 @@ class SyncApp:
         return None
 
 
+class LengthRequired(Exception):
+    """Yêu cầu có thân nhưng không khai Content-Length (chunked): `_route` trả 411 thay vì để thân đọc ra rỗng."""
+
+
 class SyncHandler(BaseHTTPRequestHandler):
     server_version = "ABookSync"
     protocol_version = "HTTP/1.1"
@@ -992,6 +996,8 @@ class SyncHandler(BaseHTTPRequestHandler):
             self.wfile.write(body)
 
     def _body(self) -> dict[str, Any]:
+        if lacks_length(self):
+            raise LengthRequired
         try:
             length = int(self.headers.get("Content-Length") or 0)
         except ValueError:
@@ -1009,6 +1015,8 @@ class SyncHandler(BaseHTTPRequestHandler):
     def _upload(self, limit: int) -> Path | None:
         """Thân yêu cầu dạng nhị phân (gói zip phần sửa) ghi ra file tạm; None khi quá `limit` hay thiếu độ dài - kết nối bị đóng
         (không đọc thân không biết cỡ). Người gọi xoá file."""
+        if lacks_length(self):
+            raise LengthRequired
         try:
             length = int(self.headers.get("Content-Length") or -1)
         except ValueError:
@@ -1208,7 +1216,7 @@ class SyncHandler(BaseHTTPRequestHandler):
             if device is None:
                 # Thân yêu cầu (chỗ nghe, báo trình phát) không đọc: đóng kết nối sau lời đáp - để lại trên kết nối giữ sống thì yêu cầu kế đọc
                 # nhầm nó làm dòng lệnh và nhận 501, điện thoại báo "máy tính đang tắt" thay vì "đã thôi ghép" (soát lại uxfix75).
-                if self.headers.get("Content-Length") not in (None, "0"):
+                if lacks_length(self) or self.headers.get("Content-Length") not in (None, "0"):
                     self.close_connection = True
                 self._json(HTTPStatus.UNAUTHORIZED, {"error": "Thiết bị chưa ghép nối"})
                 return
@@ -1336,6 +1344,8 @@ class SyncHandler(BaseHTTPRequestHandler):
                 self._json(HTTPStatus.METHOD_NOT_ALLOWED, {"error": "Không hỗ trợ"})
         except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError):
             return
+        except LengthRequired:
+            self._json(HTTPStatus.LENGTH_REQUIRED, {"error": LENGTH_REQUIRED})
         except ValueError as error:
             self._json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
         except Exception as error:  # noqa: BLE001 - lỗi nào cũng về thành JSON cho điện thoại

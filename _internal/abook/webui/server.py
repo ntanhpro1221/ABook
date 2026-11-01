@@ -54,7 +54,7 @@ from .listening import HEAVY_KEYS, RECORD_ID, Listening, RecordGone, StalePlayba
 from .opened_events import OpenedEvents
 from . import audio_revision, bluetooth, cancelled, name_rules, peer_studio, precast, remote_books, spelling, teller_mode, tls, workshop_merge
 from .. import names as renames
-from .remote_studio import REMOTE_HEADER, StudioGate
+from .remote_studio import LENGTH_REQUIRED, REMOTE_HEADER, StudioGate, lacks_length
 from .reviews import Reviews, review_view
 from .casting_review import casting_chapter, casting_stamp, casting_view
 from .name_readings import name_readings_view, never_text, package_reading_reach, reading_reach
@@ -4053,6 +4053,8 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def _body(self, limit: int = MAX_BODY) -> dict[str, Any]:
+        if lacks_length(self):  # chunked: không có Content-Length thì thân đọc ra rỗng và lời báo lỗi nói sai chỗ
+            raise ApiError(HTTPStatus.LENGTH_REQUIRED, LENGTH_REQUIRED)
         length = int(self.headers.get("Content-Length") or 0)
         if length > limit:
             raise ApiError(HTTPStatus.REQUEST_ENTITY_TOO_LARGE, "Yêu cầu quá lớn")
@@ -4262,7 +4264,7 @@ class Handler(BaseHTTPRequestHandler):
     def _drain_body(self) -> None:
         """Thân yêu cầu mà handler không đọc (nút Huỷ, "Tải công cụ"... giao diện vẫn gửi `{}`) nằm lại trong kết nối giữ sống: không bỏ đi thì yêu cầu kế
         tiếp trên kết nối ấy đọc ra dòng đầu `{}GET /...` và nhận 501."""
-        if self._body_read:
+        if self._body_read or lacks_length(self):  # chunked: không giải mã, không đọc - đóng kết nối sau câu trả lời
             return
         try:
             length = int(self.headers.get("Content-Length") or 0)
