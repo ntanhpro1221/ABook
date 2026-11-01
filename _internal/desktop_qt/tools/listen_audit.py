@@ -23,13 +23,14 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 import urllib.request
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 import numpy as np
 
-from audio_sink import frame_db, parse_marks, read_pairs, read_wav
+from audio_sink import decode, frame_db, parse_marks, read_pairs, read_wav
 
 ROOT = Path(__file__).resolve().parents[1]
 INTERNAL = ROOT.parent
@@ -61,6 +62,15 @@ JOIN_MAX_S = 3.0        # (2) chỗ nối chương
 LEVEL_RANGE = (-26.0, -14.0)  # (3) trung vị nhạc so với giọng
 LEVEL_PEAK_DB = -10.0   # (3) cửa sổ 3 s
 CUT_DB, CUT_S = 20.0, 0.3     # (5)
+# (5) chỗ rơi chỉ là "cụt" khi bài nguồn đang kêu không rơi tương ứng: bài nhịp gõ ngắt (Pyro Flow) tự tụt 20-35 dB trong 0,3-0,5 s giữa hai
+# nốt, thước cũ bắt nhầm ở mọi lượt (01-11: WA1 371,5 / 411,05 s = giây 23,60 / 63,15 của bài, chính bài rơi 27,5 / 21,0 dB). Bài + giây tìm
+# bằng đường mức trên các khung chỉ nhạc của cửa sổ quanh chỗ rơi, trong một bài (sau dấu music: + mờ chéo, trước dấu kế), trừ độ lệch mức.
+CUT_MATCH_BEFORE_S, CUT_MATCH_AFTER_S = 12.0, 8.0
+CUT_SWITCH_S = 2.5            # mờ chéo đổi bài (music_mix.json fadeSeconds 2) + lề: khung trong quãng này lẫn hai bài
+CUT_MATCH_MIN_FRAMES = 20     # khớp cần ít nhất chừng này khung chỉ nhạc
+CUT_MATCH_MAX_ERR_DB = 3.0    # sai số trung bình (dB, sau khi trừ độ lệch mức) lớn hơn = không biết bài nào, chỗ rơi vẫn là cụt
+CUT_SOURCE_SLACK_DB = 8.0     # tha khi tiếng ra rơi không quá bài nguồn rơi + chừng này (cả hai kẹp ở CUT_FLOOR_DB)
+CUT_FLOOR_DB = -70.0
 STALL_S = 10.0          # (0) chờ quá lâu: đang phát mà vị trí đứng yên chừng này (giữa hai đoạn giọng thường dưới 2 s)
 VOICE_HOLE_S = 3.0      # (0) giọng lặng vì chờ clip: luồng giọng dừng (.stops) giữa chương, cả quãng im quanh nó (đuôi / đầu clip) quá chừng này
 HOLE_MIN_STOP_S = 0.5   # ... chỉ xét lần dừng từ chừng này (chỗ nối hai clip liền nhau chỉ 10-30 ms)
@@ -315,6 +325,67 @@ def present(quiet: np.ndarray, lift: np.ndarray, hop_s: float) -> np.ndarray:
     return (quiets >= PRESENT_MIN_QUIET) & ((c_lift[end] - c_lift[:n]) >= PRESENT_SHARE * quiets)
 
 
+def source_match(seg: np.ndarray, quiet: np.ndarray, track: np.ndarray) -> tuple[int, float, int]:
+    """(khung của bài ứng với khung đầu `seg`, sai số trung bình dB, số khung đã dùng): đường mức `seg` trên các khung chỉ nhạc (`quiet`)
+    so với mọi chỗ của bài `track`, trừ độ lệch mức (âm lượng nhạc nền). Ít khung quá / bài ngắn hơn cửa sổ: (-1, inf, n)."""
+    idx = np.flatnonzero(quiet & (seg > SILENT_DB))
+    if len(idx) < CUT_MATCH_MIN_FRAMES or len(track) < len(seg):
+        return -1, float("inf"), len(idx)
+    d = seg[idx][None, :] - track[np.arange(len(track) - len(seg) + 1)[:, None] + idx[None, :]]
+    err = np.sqrt(np.mean((d - d.mean(axis=1, keepdims=True)) ** 2, axis=1))
+    best = int(np.argmin(err))
+    return best, float(err[best]), len(idx)
+
+
+def abrupt_drops(db: np.ndarray, quiet: np.ndarray, still: np.ndarray, low: float, full: float, hop_s: float, switches: list[int],
+                 tracks: dict[str, np.ndarray]) -> list[dict]:
+    """Chỗ nhạc rơi quá CUT_DB trong < CUT_S sau ít nhất 0,5 s chỉ có nhạc (`quiet`: lượt B lặng quanh cùng chỗ giọng, hay chính khung đã
+    dưới `low` - nhạc tắt ngay sau đuôi câu) từ gần mức nhạc thường (`full`, không phải đuôi một lần mờ); cả đường rơi tới đáy phải là
+    khung B lặng ĐÚNG chỗ khớp (`still`, không lề: nhạc tắt ngay trước tiếng giọng đầu vẫn được xét, còn chỗ ngắt giữa hai âm khi khớp hai
+    lượt lệch vài khung thì không). Mỗi chỗ kèm bài nguồn khớp được (`tracks`: tên -> mức theo khung, kẹp CUT_FLOOR_DB) và `content` =
+    chính bài rơi tương ứng (không phải cụt). `switches`: khung các dấu music:."""
+    band = (quiet | (db < low)) & (db > SILENT_DB)
+    k, before = int(CUT_S / hop_s), int(0.5 / hop_s)
+    steady = np.convolve(band, np.ones(before + 1), mode="full")[: len(db)] >= before + 1  # khung i và `before` khung trước đều chỉ nhạc
+    clamped = np.maximum(db, CUT_FLOOR_DB)
+    out, i = [], before
+    while i < len(db) - k:
+        bottom = i + 1 + int(np.argmin(db[i + 1: i + k + 1]))
+        if not (steady[i] and db[i] >= full and db[i] - db[bottom] > CUT_DB and still[i + 1: bottom + 1].all()):
+            i += 1
+            continue
+        drop = float(clamped[i] - clamped[i + 1: i + k + 1].min())
+        cut = dict(t=round(i * hop_s, 2), from_db=round(float(db[i]), 1), to_db=round(float(db[i + 1: i + k + 1].min()), 1), source=None, content=False)
+        prev = max((f + int(CUT_SWITCH_S / hop_s) for f in switches if f <= i), default=0)
+        nxt = min((f for f in switches if f > i), default=len(db))
+        w0 = max(0, i - int(CUT_MATCH_BEFORE_S / hop_s), prev)
+        w1 = min(len(db), i + int(CUT_MATCH_AFTER_S / hop_s), nxt)
+        if w0 <= i < w1 and tracks:
+            name, at, err, used = min(((name, *source_match(clamped[w0:w1], quiet[w0:w1], x)) for name, x in tracks.items()), key=lambda r: r[2])
+            x, j = tracks[name], at + (i - w0)
+            if err <= CUT_MATCH_MAX_ERR_DB and j + k < len(x):  # bài hết trước khi đủ CUT_S sau chỗ rơi: không đo được nguồn, vẫn là cụt
+                source_drop = float(x[j] - x[j + 1: j + k + 1].min())
+                cut.update(source=dict(track=name, at_s=round(j * hop_s, 2), err_db=round(err, 2), frames=used, drop_db=round(source_drop, 1)),
+                           content=drop <= source_drop + CUT_SOURCE_SLACK_DB)
+        out.append(cut)
+        i += k if cut["content"] else int(2 / hop_s)  # nốt của bài: chỗ rơi kế (cả một lần cụt ngay sau) vẫn phải được xét
+    return out
+
+
+def source_tracks(run_dir: Path, rate: int, hop: int) -> dict[str, np.ndarray]:
+    """Mức theo khung của các bài đã tải trọn trong bộ đệm nhạc của lượt (music/files/*.mp3; .part bỏ qua). Bài không giải mã được thì
+    bỏ: chỗ rơi trên nó không khớp được nguồn nào nên vẫn là cụt (bắt nhầm còn hơn bỏ lọt)."""
+    out = {}
+    for p in sorted((run_dir / "music" / "files").glob("*.mp3")):
+        try:
+            pcm = decode(p, rate)
+        except (OSError, subprocess.CalledProcessError):
+            continue
+        if len(pcm) >= hop:
+            out[p.stem] = np.maximum(frame_db(pcm, hop), CUT_FLOOR_DB)
+    return out
+
+
 def analyze(a_dir: Path, b_dir: Path, control: Path | None = None) -> dict:
     A, B = load(a_dir), load(b_dir)
     hop_s = A["hop"] / A["rate"]
@@ -329,7 +400,8 @@ def analyze(a_dir: Path, b_dir: Path, control: Path | None = None) -> dict:
 
     # (1) nhạc tới: A so với B ở cùng chỗ giọng. Đối chứng: không thấy nhạc trước khi app chọn bài (mốc music: đầu tiên của chương), và nếu có
     # lượt nhạc tắt thứ hai (--control) thì nó so với B không được "có nhạc" ở đâu cả
-    quiet_a, lift_a = lifted(A["db"], B["db"], aligned(A, B), voice_db)
+    at_b = aligned(A, B)
+    quiet_a, lift_a = lifted(A["db"], B["db"], at_b, voice_db)
     pres_a = present(quiet_a, lift_a, hop_s)
     music_events = [dict(t=round(m["frame"] / A["rate"], 2), chapter=m["chapter"], position=m["position"], credit=m["tag"][len("music:"):])
                     for m in A["marks"] if m["tag"].startswith("music:")]
@@ -408,28 +480,22 @@ def analyze(a_dir: Path, b_dir: Path, control: Path | None = None) -> dict:
     gaps_a, gaps_b = playing_gaps(A), playing_gaps(B)
     rules["4_device_gaps"] = dict(A=gaps_a, B=gaps_b, ok=not gaps_a and not gaps_b)
 
-    # (5) nhạc tắt cụt: sau ít nhất 0,5 s chỉ có nhạc, từ gần mức nhạc thường (không phải đuôi một lần mờ), rơi quá CUT_DB trong < CUT_S
-    # (cả lượt; đối chứng trên lượt B)
+    # (5) nhạc tắt cụt: sau ít nhất 0,5 s chỉ có nhạc, từ gần mức nhạc thường (không phải đuôi một lần mờ), rơi quá CUT_DB trong < CUT_S mà
+    # bài nguồn đang kêu không rơi tương ứng (abrupt_drops). Đối chứng trên lượt B (không bài nào: chỗ rơi nào cũng tính).
     full = (median + voice_db - 6) if median is not None else SILENT_DB
-
-    def abrupt(db):
-        band = (db < voice_db - LOW_BELOW_DB) & (db > SILENT_DB)
-        k, before = int(CUT_S / hop_s), int(0.5 / hop_s)
-        steady = np.convolve(band, np.ones(before + 1), mode="full")[: len(db)] >= before + 1  # khung i và `before` khung trước đều chỉ nhạc
-        out, i = [], before
-        while i < len(db) - k:
-            if steady[i] and db[i] >= full and db[i] - db[i + 1: i + k + 1].min() > CUT_DB:
-                out.append(dict(t=round(i * hop_s, 2), from_db=round(float(db[i]), 1), to_db=round(float(db[i + 1: i + k + 1].min()), 1)))
-                i += int(2 / hop_s)
-            else:
-                i += 1
-        return out
+    switches = [m["frame"] // A["hop"] for m in A["marks"] if m["tag"].startswith("music:")]
+    low = voice_db - LOW_BELOW_DB
+    still_a = (at_b >= 0) & (B["db"][np.maximum(at_b, 0)] < voice_db - QUIET_BELOW_DB)
+    drops = abrupt_drops(A["db"], quiet_a, still_a, low, full, hop_s, switches, source_tracks(a_dir, A["rate"], A["hop"]))
+    quiet_b, _ = lifted(B["db"], B["db"], np.arange(len(B["db"])), voice_db)
+    control = abrupt_drops(B["db"], quiet_b, B["db"] < voice_db - QUIET_BELOW_DB, low, full, hop_s, [], {})
     ach = chapters(A)
-    cuts, control = abrupt(A["db"]), abrupt(B["db"])
     boundaries = [ch["start"] * hop_s for ch in ach[1:]]
-    for c in cuts:
+    for c in drops:
         c["near_join"] = any(abs(c["t"] - b) <= 10 for b in boundaries)
-    rules["5_cut"] = dict(joins=len(ach) - 1, abrupt=cuts, control_B=len(control), ok=not cuts and not control)
+    cuts = [c for c in drops if not c["content"]]
+    rules["5_cut"] = dict(joins=len(ach) - 1, abrupt=cuts, excused=[c for c in drops if c["content"]], control_B=len(control),
+                          ok=not cuts and not control)
 
     # chỉ báo
     played = []
@@ -511,6 +577,82 @@ def selftest() -> int:
         got = (int(pres.any()), None if not len(first) else round(float(first[0]) * hop / rate, 1))
         if got[0] != want[0] or (want[1] is not None and not (want[1] <= got[1] <= want[1] + 3)):
             failures.append(f"nhạc có mặt {name}: chờ {want}, được {got}")
+    # luật 5: bài nhịp ngắt giả (nốt ngân -10 dB 0,2-0,6 s, tắt xuống -35 dB trong 0,25 s, nghỉ 0,2 s), nhạc nền -23 dB, giọng (-20 dB) 2-4 s
+    # xen quãng chỉ nhạc 3-5 s; bài vào lúc 0 ở giây 7 của nó
+    hop_s = 0.05
+    notes = []
+    while len(notes) < 4000:
+        notes += [-10.0] * int(rng.integers(4, 13)) + list(np.linspace(-15, -35, 5)) + [-35.0] * 4
+    track = np.maximum(np.array(notes), CUT_FLOOR_DB)
+    n5 = int(150 / hop_s)
+    music5 = track[140: 140 + n5] - 23
+    quiet5 = np.ones(n5, dtype=bool)
+    i = 0
+    while i < n5:
+        i += int(rng.integers(60, 101))
+        quiet5[i: i + int(rng.integers(40, 81))] = False
+        i += 80
+    natural = np.where(quiet5, music5, -20.0)
+    full5 = float(np.median(music5)) - 6
+    # cắt giả giữa nốt đang ngân, nốt trước vừa tắt tự nhiên chưa tới 1,5 s (chỗ tha ấy không được kéo bước xét qua nhát cắt)
+    ringing = [j for j in range(400, n5 - 80) if quiet5[j - 40: j + 60].all() and (track[140 + j - 2: 140 + j + 8] == -10.0).all()
+               and (track[140 + j - 30: 140 + j - 8] == -35.0).any()]
+    faked = natural.copy()
+    faked[ringing[0]: ringing[0] + 40] = -90.0
+    for name, db5, tracks5, want in (("nốt tắt dần của bài: tha hết", natural, {"bai": track}, (True, 0)),
+                                     ("cắt giả giữa nốt đang ngân: bắt", faked, {"bai": track}, (True, 1)),
+                                     ("không có file bài: chỗ rơi vẫn là cụt", natural, {}, (False, None))):
+        drops = abrupt_drops(db5, quiet5, quiet5, -32.0, full5, hop_s, [], tracks5)
+        cuts5 = [c for c in drops if not c["content"]]
+        got = (bool(drops) and (not tracks5 or all(c["source"] for c in drops)), len(cuts5) if want[1] is not None else None)
+        if not drops or (want[1] is None and len(cuts5) != len(drops)) or (want[1] is not None and got != want):
+            failures.append(f"nhạc cụt {name}: chờ {want}, được {got} ({len(drops)} chỗ rơi)")
+    # khớp hai lượt lệch: mặt nạ chỉ-nhạc có lề lấn 3 khung vào câu (mặt nạ đúng khung thì không), giọng có chỗ ngắt -60 dB ngay đó -> không phải chỗ rơi của nhạc (nhạc phẳng
+    # 3 s trước đó: không file bài thì nốt nào cũng là chỗ rơi, bước 2 s sau nó sẽ nhảy qua chỗ thử)
+    s5 = next(j for j in range(400, n5) if quiet5[j - 1] and not quiet5[j])
+    slipped, quiet_slip = natural.copy(), quiet5.copy()
+    slipped[s5 - 60: s5] = np.where(quiet5[s5 - 60: s5], -30.0, -20.0)
+    slipped[s5: s5 + 6] = [-20.0, -15.0, -13.0, -60.0, -16.0, -18.0]
+    quiet_slip[s5: s5 + 3] = True
+    near = [c for c in abrupt_drops(slipped, quiet_slip, quiet5, -32.0, full5, hop_s, [], {}) if s5 - 2 <= round(c["t"] / hop_s) <= s5 + 6]
+    if near:
+        failures.append(f"nhạc cụt: chỗ ngắt của giọng lọt mặt nạ bị tính là rơi ({near})")
+    # nhạc tắt ngay sau đuôi câu: chỉ 0,35 s B lặng, trước đó đuôi giọng thấp -> vẫn bắt
+    e5 = next(j for j in range(400, n5 - 30) if not quiet5[j - 1] and quiet5[j: j + 25].all())
+    tail = natural.copy()
+    tail[e5 - 4: e5] = -40.0
+    tail[e5: e5 + 7] = -30.0
+    tail[e5 + 7: e5 + 25] = -90.0
+    got5 = [c for c in abrupt_drops(tail, quiet5, quiet5, -32.0, full5, hop_s, [], {}) if e5 <= round(c["t"] / hop_s) <= e5 + 8]
+    if len(got5) != 1:
+        failures.append(f"nhạc cụt ngay sau đuôi câu: chờ 1 chỗ, được {got5}")
+    # nhạc tắt hẳn ngay trước tiếng giọng đầu: khung đáy nằm trong lề của mặt nạ có lề, B đúng khung vẫn lặng -> vẫn bắt
+    v5 = next(j for j in range(s5 + 200, n5) if quiet5[j - 25: j].all() and not quiet5[j])
+    onset, quiet_lag = natural.copy(), quiet5.copy()
+    onset[v5 - 60: v5] = -30.0
+    onset[v5 - 2: v5] = [-50.0, -96.0]  # như NA1 630,2 s: -39 -> -50 -> -96, rồi giọng
+    quiet_lag[v5 - 2: v5] = False
+    got6 = [c for c in abrupt_drops(onset, quiet_lag, quiet5, -32.0, full5, hop_s, [], {}) if v5 - 8 <= round(c["t"] / hop_s) <= v5]
+    if len(got6) != 1:
+        failures.append(f"nhạc tắt ngay trước tiếng giọng: chờ 1 chỗ, được {got6}")
+    # chỗ rơi sát dấu đổi bài: cửa sổ khớp dừng ở khung ngay sau chỗ rơi, bài chỉ dài bằng cửa sổ -> nguồn sau chỗ rơi không có, vẫn là cụt
+    c7 = next(j for j in range(400, n5 - 40) if quiet5[j - 12: j + 30].all() and (track[140 + j - 2: 140 + j + 8] == -10.0).all())
+    edge = natural.copy()
+    edge[c7: c7 + 20] = -90.0
+    first = abrupt_drops(edge, quiet5, quiet5, -32.0, full5, hop_s, [], {})
+    i7 = round(next(c["t"] for c in first if c7 - 8 <= round(c["t"] / hop_s) <= c7) / hop_s)
+    w7 = max(0, i7 - int(CUT_MATCH_BEFORE_S / hop_s))
+    got7 = [c for c in abrupt_drops(edge, quiet5, quiet5, -32.0, full5, hop_s, [i7 + 1], {"bai": track[140 + w7: 140 + i7 + 1]})
+            if round(c["t"] / hop_s) == i7]
+    if len(got7) != 1 or got7[0]["content"]:
+        failures.append(f"nhạc cụt sát dấu đổi bài: chờ 1 chỗ cụt, được {got7}")
+    # file bài hỏng (không giải mã được) bị bỏ qua, không làm hỏng lượt
+    with tempfile.TemporaryDirectory() as tmp:
+        (Path(tmp) / "music" / "files").mkdir(parents=True)
+        (Path(tmp) / "music" / "files" / "0123456789abcdef.mp3").write_bytes(b"not an mp3")
+        broken = source_tracks(Path(tmp), 8000, 400)
+    if broken:
+        failures.append(f"file bài hỏng: chờ bỏ qua, được {list(broken)}")
     print(json.dumps(dict(selftest="listen_audit", failures=failures), ensure_ascii=False))
     return 1 if failures else 0
 
