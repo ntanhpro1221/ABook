@@ -28,6 +28,13 @@ export interface Entry {
   act?: () => Promise<void>;
 }
 
+
+/** Mở mục gập "Nhạc của tôi" (Cài đặt: một lớp; Studio: tab Nhạc nền có thêm lớp ngoài) tới khi thấy công tắc Tự chọn, rồi đưa danh sách vào giữa khung. */
+async function openMyMusic(): Promise<void> {
+  const shown = () => [...document.querySelectorAll('[role="switch"][aria-label^="Tự chọn: "]')].find((s) => !s.closest('[aria-hidden="true"], [inert]'));
+  for (let i = 0; i < 2 && !shown(); i++) await click(/^Nhạc của tôi/);
+  shown()?.closest("ul")?.scrollIntoView({ block: "center" });
+}
 export const FRAMES: Record<Platform, { width: number; height: number }> = {
   desktop: { width: 1440, height: 900 },
 };
@@ -123,6 +130,8 @@ const DESKTOP: Omit<Entry, "platform">[] = [
     route: `/settings/${group}`,
     scenario: { installedStudio: true },
   })),
+  { id: "desktop/settings-my-music", group: "Cài đặt", title: "Cài đặt › Nhạc của tôi (ba bài)", route: "/settings/listen", scenario: { installedStudio: true, myMusic: true },
+    act: openMyMusic },
   { id: "desktop/studio-projects", group: "Studio", title: "Danh sách dự án", route: "/studio" },
   { id: "desktop/studio-projects-empty", group: "Studio", title: "Chưa có dự án", route: "/studio", scenario: { projects: "empty", library: "empty" } },
   { id: "desktop/studio-projects-loading", group: "Studio", title: "Đang tải dự án", route: "/studio", scenario: { projects: "loading" } },
@@ -138,6 +147,8 @@ const DESKTOP: Omit<Entry, "platform">[] = [
   { id: "desktop/studio-script", group: "Studio", title: "Kịch bản chương", route: "/studio/dong-ho-cat?tab=script" },
   { id: "desktop/studio-script-menu", group: "Studio", title: "Kịch bản · chọn chương", route: "/studio/dong-ho-cat?tab=script", act: () => click("Chương").then(() => undefined) },
   { id: "desktop/studio-music", group: "Studio", title: "Nhạc nền", route: "/studio/dong-ho-cat?tab=music" },
+  { id: "desktop/studio-music-mine", group: "Studio", title: "Nhạc nền · Nhạc của tôi (ba bài)", route: "/studio/dong-ho-cat?tab=music", scenario: { myMusic: true },
+    act: openMyMusic },
   { id: "desktop/studio-activity", group: "Studio", title: "Diễn biến", route: "/studio/dong-ho-cat?tab=activity" },
   { id: "desktop/studio-new", group: "Studio", title: "Tạo sách nói", route: "/studio/new" },
 ];

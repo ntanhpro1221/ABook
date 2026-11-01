@@ -384,7 +384,7 @@ export function MyMusic({ bookId, previewing, onPreview }: { bookId: string; pre
                 {track.duration ? <span className="tabular text-fg-2"> · {formatClock(track.duration)}</span> : null}
                 <AutoPickNote track={track} canOverride={canImport} onView={refresh} />
               </span>
-              <MotionRegion as="span" className="flex shrink-0 gap-1">
+              <MotionRegion as="span" className="settings-edge-action flex shrink-0 gap-1">
                 <Button size="sm" variant="ghost" icon={previewing === track.link ? Square : Play} aria-pressed={previewing === track.link}
                   onClick={() => onPreview(track.link)}>
                   {previewing === track.link ? "Dừng nghe" : "Nghe thử"}

@@ -16,6 +16,15 @@ describe.skipIf(!browserAvailable)("frames and list coverage on Edge", () => {
   it("flags a child pinned off the centre of a vertically centred row, keeps margin-offset children", () => {
     for (const r of results) expect(r.findings.filter(f => f.rule === "CROSS CENTER").map(f => f.selector)).toEqual(["#centre-bad > span:nth-of-type(1)"]);
   });
+  it("keeps one column for the same control across sibling rows, whatever the row shape", () => {
+    for (const r of results) {
+      const found = r.findings.filter(f => f.metric === "sibling-column");
+      expect(found.map(f => [f.selector, f.listSelector])).toEqual([["#cb1", "#column-bad"], ["#cb2", "#column-bad"]]);
+      expect(found.every(f => f.control === "switch:Tự chọn#1")).toBe(true);
+      const good = r.layout.columns;
+      expect(good.filter(c => c.selector === "#column-good").map(c => c.key).sort()).toEqual(["button:Xoá#1", "switch:Tự chọn#1"]);
+    }
+  });
   it("measures every marked list and detects both divider and permanent fill overhang", () => {
     for (const r of results) {
       expect(r.layout.listEdges.map(l => l.name)).toEqual(["bad", "good"]);

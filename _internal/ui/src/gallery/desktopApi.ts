@@ -15,6 +15,10 @@ class Reply {
 
 const fail = (status: number, error: string) => new Reply(status, { error });
 
+const track = (n: number, title: string, analysed: boolean, vocalsLikely: boolean) =>
+  ({ link: `local:${String(n).repeat(40)}`, title, creator: "Kevin MacLeod", duration: 150 + n * 20, analysed, vocalsLikely, name: `${title}.mp3`, bytes: 3_000_000 + n });
+const MY_MUSIC = [track(1, "Mưa đầu hạ", true, false), track(2, "Hành khúc đêm", true, true), track(3, "Đồi gió", false, false)];
+
 const projects = () => BOOKS.filter((book) => !book.imported && !book.streamed);
 const book = (id: string): GalleryBook => findBook(id) ?? (() => { throw fail(404, "Không tìm thấy sách"); })();
 
@@ -321,7 +325,7 @@ const ROUTES: [string, RegExp, Handler][] = [
   ["GET", /^\/api\/books\/([^/]+)\/music\/chapters\/(\d+)$/, () => ({ cues: [], levelDb: -20 })],
   ["GET", /^\/api\/books\/([^/]+)\/music\/playlist$/, () => ({ playlist: null, tracks: [], levelDb: -20 })],
   ["GET", /^\/api\/books\/([^/]+)\/suggestions$/, () => ({ suggestions: [] })],
-  ["GET", /^\/api\/music\/local$/, () => ({ tracks: [], analyzer: false })],
+  ["GET", /^\/api\/music\/local$/, () => galleryState.scenario.myMusic ? { tracks: MY_MUSIC, analyzer: true } : { tracks: [], analyzer: false }],
   // Trang sách: việc nền xuất file (không việc nào đang chạy).
   ["GET", /^\/api\/books\/([^/]+)\/(bookfile|m4b|mp3|projectfile)-job$/, () => ({ state: "idle" })],
   ["GET", /^\/api\/listen\/books\/([^/]+)\/audiobook$/, () => ({ state: "idle" })],
