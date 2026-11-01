@@ -4,11 +4,15 @@ package vn.abook.player.readaloud
  * Độ sâu đọc trước của giọng trực tuyến (cùng luật với `readAheadCount` ở listen/readAloud.ts): giọng Edge có lúc chậm 9-24 giây một đoạn (soát a45) mà hàng đợi chỉ
  * đọc sẵn [base] đoạn thì đoạn ngắn (đối thoại) chỉ đủ vài giây và giọng im ngay giữa chương. Ghi lại thời gian lấy clip THẬT của vài clip gần nhất; cần đọc sẵn tối thiểu [MIN_BUFFER_MS], và [FACTOR] lần thời gian lấy clip ở
  * phân vị 80 khi lớn hơn (tối đa [MAX_BUFFER_MS]) mili-giây âm thanh - đoạn ngắn thì cần nhiều đoạn hơn - nhưng không quá [MAX_AHEAD] đoạn (mỗi đoạn là một lượt gọi Edge, đoạn nào người nghe bỏ đi là uổng).
- * Chưa đủ số đo thì đúng [base] đoạn như trước. Lượt lấy từ bộ đệm (vài chục ms) không tính. An toàn giữa các luồng.
+ * [MIN_BUFFER_MS] đầu tiên thì luôn đủ, kể cả chưa có số đo và khi các đoạn đứng trước đều ngắn (trần [MAX_AHEAD] chỉ chặn phần thêm lúc giọng chậm), tới [MAX_FILL_AHEAD] đoạn.
+ * Lượt lấy từ bộ đệm (vài chục ms) không tính. An toàn giữa các luồng.
  */
 class ReadAheadPolicy(private val base: Int) {
     companion object {
         const val MAX_AHEAD = 8
+        /** Đệm tối thiểu [MIN_BUFFER_MS] luôn đủ tới chừng này đoạn: sáu dòng thoại ngắn đứng trước một đoạn kể dài thì đoạn dài vẫn được xin khi còn ~20 s phía trước (soát nghe §20 máy tính:
+         *  clip 22,2 s của Edge về sau ~10,7 s, giọng đứng 2,4 s; listen/readAloud.ts MAX_FILL_AHEAD, Qt SpeechOut cùng luật). Dòng ngắn rẻ: vài KB mỗi clip. */
+        const val MAX_FILL_AHEAD = 24
         const val FACTOR = 2.0
         const val MIN_BUFFER_MS = 20_000L
         const val MAX_BUFFER_MS = 60_000L
@@ -47,10 +51,12 @@ class ReadAheadPolicy(private val base: Int) {
             return if (gap < OPENING_GAP_MS) 0L else minOf(gap, OPENING_HOLD_MAX_MS)
         }
 
-        private fun needsMore(aheadMs: List<Long>, base: Int, cap: Int, wantedMs: Long): Boolean {
+        private fun needsMore(aheadMs: List<Long>, base: Int, cap: Int, wantedMs: Long, floorMs: Long = 0L): Boolean {
             if (aheadMs.size < base) return true
+            val sum = aheadMs.sum()
+            if (sum < floorMs && aheadMs.size < MAX_FILL_AHEAD) return true
             if (aheadMs.size >= maxOf(base, cap)) return false
-            return aheadMs.sum() < wantedMs
+            return sum < wantedMs
         }
 
         /** Một lượt lấy clip đáng ghi làm số đo: lượt thành công, hay lượt hỏng mà đã chờ từ [SLOW_MS] (lượt hỏng tức thì không nói gì về tốc độ). Dùng chung cho [ClipRetry] và [measure]. */
@@ -94,6 +100,7 @@ class ReadAheadPolicy(private val base: Int) {
     /** Giọng đang chậm (p80 >= [SLOW_MS]): đọc song song đoạn kế bằng luồng thứ hai. */
     fun slow(): Boolean = (p80() ?: 0L) >= SLOW_MS
 
-    /** Hàng đợi đã có `aheadMs` mili-giây (các đoạn ĐÃ nạp sau đoạn đang nghe, theo thứ tự) - còn cần nạp thêm đoạn nữa không? Tối thiểu [base] đoạn; hơn nữa chỉ khi chưa đủ [wantedMs] và chưa chạm [MAX_AHEAD]. */
-    fun needMore(aheadMs: List<Long>): Boolean = needsMore(aheadMs, base, MAX_AHEAD, wantedMs())
+    /** Hàng đợi đã có `aheadMs` mili-giây (các đoạn ĐÃ nạp sau đoạn đang nghe, theo thứ tự) - còn cần nạp thêm đoạn nữa không? Tối thiểu [base] đoạn và [MIN_BUFFER_MS] (tới [MAX_FILL_AHEAD] đoạn);
+     *  hơn nữa chỉ khi chưa đủ [wantedMs] và chưa chạm [MAX_AHEAD]. */
+    fun needMore(aheadMs: List<Long>): Boolean = needsMore(aheadMs, base, MAX_AHEAD, wantedMs(), MIN_BUFFER_MS)
 }
