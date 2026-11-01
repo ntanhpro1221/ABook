@@ -12,13 +12,16 @@
 #include <QUrl>
 
 #include <functional>
+#include <limits>
 #include <memory>
 #include <optional>
 
 class AudioOut;
 
-/// Tải sẵn bài mốc đầu của chương kế khi chương này còn <= NEXT_CHAPTER_WARM_SECONDS (musicBed.ts NextChapterWarm): chương mới mở bằng bài
-/// đã có trong bộ đệm máy chủ.
+/// Tải sẵn bài mốc đầu của chương kế ngay khi chương này đã biết độ dài (musicBed.ts NextChapterWarm): chương mới mở bằng bài đã có trong
+/// bộ đệm máy chủ, kể cả khi nguồn bài chậm (incompetech 30 KB/s: bài 6 MB mất hơn 3 phút, đo 01-11). Giọng trước: chỉ hỏi / xin khi giọng đã sẵn
+/// NEXT_CHAPTER_VOICE_SECONDS phía trước. Một lượt mỗi lúc; NEXT_CHAPTER_LAST_CHANCE_SECONDS cuối chương xin lại mỗi NEXT_CHAPTER_RETRY_MS (máy chủ bỏ
+/// qua bài đã có / đang tải).
 class NextChapterWarm {
 public:
     /// `ask`: hỏi mốc của một chương, gọi `done` với lời đáp (nullopt = hỏi hỏng). `warm`: xin máy chủ tải sẵn một bài.
@@ -26,15 +29,23 @@ public:
     NextChapterWarm(std::function<void(int chapterId, Answer done)> ask, std::function<void(const QString &)> warm, std::function<qint64()> now = {});
 
     /// Gọi mỗi nhịp thời gian. `key`: chương đang nghe (cuốn:chương); `next`: mã chương kế (nullopt = hết cuốn); `remaining`: giây còn
-    /// lại của chương, <= 0 khi chưa biết.
-    void update(const QString &key, std::optional<int> next, double remaining);
+    /// lại của chương, <= 0 khi chưa biết; `voiceAhead`: giây giọng đã sẵn phía trước người nghe (Player::voiceAhead).
+    void update(const QString &key, std::optional<int> next, double remaining, double voiceAhead = std::numeric_limits<double>::infinity());
+    /// Lần `update` cuối còn việc (chưa có lời đáp / chờ giọng / đang trong lưới cuối): nhịp thời gian phải quay lại trong NEXT_CHAPTER_RETRY_MS.
+    bool waiting() const { return m_waiting; }
+    /// Giây chương (theo đồng hồ đọc) tới lúc lưới cuối mở: nhịp thời gian hẹn đúng lúc ấy. Vô hạn khi không có gì để xin lại.
+    double lastChanceIn() const { return m_lastChanceIn; }
 
 private:
+    void step(const QString &ticket, int next, double remaining, double voiceAhead);
+
     std::function<void(int, Answer)> m_ask;
     std::function<void(const QString &)> m_warm;
     std::function<qint64()> m_now;
-    QSet<QString> m_done;
+    QHash<QString, QString> m_done; // vé đã có lời đáp -> link bài đầu chương kế (rỗng: không nhạc / bài sách mang theo)
     QString m_asking;
+    bool m_waiting = false;
+    double m_lastChanceIn = std::numeric_limits<double>::infinity();
     QHash<QString, qint64> m_retryAt;
 };
 

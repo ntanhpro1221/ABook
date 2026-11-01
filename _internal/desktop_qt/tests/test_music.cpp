@@ -750,7 +750,7 @@ private slots:
 
     // ---- NextChapterWarm ----
 
-    void nextChapterWarmAsksOnceNearTheEnd() {
+    void nextChapterWarmAsksOnceAsSoonAsTheLengthIsKnown() {
         qint64 clock = 1000000;
         QList<int> asked;
         QStringList warmed;
@@ -760,18 +760,58 @@ private slots:
             done(answer);
         }, [&](const QString &link) { warmed << link; }, [&] { return clock; });
         answer->cues = {plain(0, 50, QStringLiteral("https://x/2"))};
-        warm.update(QStringLiteral("a:1"), 2, 300);
         warm.update(QStringLiteral("a:1"), 2, 0);
         warm.update(QStringLiteral("a:1"), std::nullopt, 50);
         QVERIFY(asked.isEmpty());
-        warm.update(QStringLiteral("a:1"), 2, NEXT_CHAPTER_WARM_SECONDS);
+        QVERIFY(!warm.waiting());
+        warm.update(QStringLiteral("a:1"), 2, 3600); // biết độ dài là hỏi ngay, dù chương còn dài
+        QVERIFY(!warm.waiting());
+        QCOMPARE(warm.lastChanceIn(), 3600 - NEXT_CHAPTER_LAST_CHANCE_SECONDS); // nhịp hẹn lúc lưới cuối mở
         warm.update(QStringLiteral("a:1"), 2, 60);
+        QVERIFY(warm.waiting()); // trong lưới cuối: nhịp quay lại mỗi NEXT_CHAPTER_RETRY_MS
         QCOMPARE(asked, QList<int>({2}));
         QCOMPARE(warmed, QStringList({QStringLiteral("https://x/2")}));
         // chương kế mang bài trong gói: không xin máy chủ tải gì
         answer->cues[0].src = QStringLiteral("/api/books/a/music/files/x.mp3");
         warm.update(QStringLiteral("a:2"), 3, 60);
         QCOMPARE(warmed.size(), 1);
+    }
+
+    void nextChapterWarmWaitsForTheVoiceAndRetriesInTheLastChance() {
+        qint64 clock = 1000000;
+        int asks = 0;
+        QStringList warmed;
+        NextChapterWarm warm([&](int, NextChapterWarm::Answer done) {
+            ++asks;
+            MusicCues answer;
+            answer.cues = {plain(0, 50, QStringLiteral("https://x/2"))};
+            done(answer);
+        }, [&](const QString &link) { warmed << link; }, [&] { return clock; });
+        // giọng chưa sẵn đủ NEXT_CHAPTER_VOICE_SECONDS phía trước: chưa hỏi, nhịp quay lại
+        warm.update(QStringLiteral("a:1"), 2, 600, 0);
+        warm.update(QStringLiteral("a:1"), 2, 600, NEXT_CHAPTER_VOICE_SECONDS - 0.5);
+        QCOMPARE(asks, 0);
+        QVERIFY(warm.waiting());
+        warm.update(QStringLiteral("a:1"), 2, 590, NEXT_CHAPTER_VOICE_SECONDS);
+        QCOMPARE(asks, 1);
+        QCOMPARE(warmed.size(), 1);
+        // còn dài: không xin lại
+        clock += 60000;
+        warm.update(QStringLiteral("a:1"), 2, 530);
+        QCOMPARE(warmed.size(), 1);
+        // lưới cuối: xin lại mỗi NEXT_CHAPTER_RETRY_MS (máy chủ bỏ qua bài đã có), vẫn nhường giọng
+        warm.update(QStringLiteral("a:1"), 2, NEXT_CHAPTER_LAST_CHANCE_SECONDS);
+        QCOMPARE(warmed.size(), 2);
+        clock += 5000;
+        warm.update(QStringLiteral("a:1"), 2, NEXT_CHAPTER_LAST_CHANCE_SECONDS - 5);
+        QCOMPARE(warmed.size(), 2);
+        clock += NEXT_CHAPTER_RETRY_MS;
+        warm.update(QStringLiteral("a:1"), 2, NEXT_CHAPTER_LAST_CHANCE_SECONDS - 20, NEXT_CHAPTER_VOICE_SECONDS - 1);
+        QCOMPARE(warmed.size(), 2);
+        QVERIFY(warm.waiting());
+        warm.update(QStringLiteral("a:1"), 2, NEXT_CHAPTER_LAST_CHANCE_SECONDS - 20);
+        QCOMPARE(warmed, QStringList({QStringLiteral("https://x/2"), QStringLiteral("https://x/2"), QStringLiteral("https://x/2")}));
+        QCOMPARE(asks, 1); // mốc chương kế chỉ hỏi một lần
     }
 
     void scenePollAsksBackSoonThenSlowsDown() {
@@ -798,12 +838,14 @@ private slots:
         answer = MusicCues{};
         answer->pending = true;
         warm.update(QStringLiteral("a:1"), 2, 50); // chưa dựng xong: hỏi lại sau
+        QVERIFY(warm.waiting()); // nhịp thời gian phải quay lại hỏi
         clock += NEXT_CHAPTER_RETRY_MS;
         answer->pending = false;
         warm.update(QStringLiteral("a:1"), 2, 40); // không nhạc: thôi hẳn
         clock += NEXT_CHAPTER_RETRY_MS;
         warm.update(QStringLiteral("a:1"), 2, 30);
         QCOMPARE(asked.size(), 3);
+        QVERIFY(!warm.waiting());
     }
 
     // ---- Music: Player + MusicBed + máy chủ ----

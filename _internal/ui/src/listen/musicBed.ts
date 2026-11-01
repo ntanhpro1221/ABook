@@ -185,10 +185,12 @@ const LOOP_MIN_PERIOD_SECONDS = mix.loopMinPeriodSeconds;
 const STEP_MS = 50;
 /** Bài tải hỏng (mất mạng): đoạn của nó im lặng, chừng ấy sau mới thử lại - như MusicFailures.RETRY_MS của Android. */
 export const RETRY_MS = 5 * 60_000;
-/** Chương còn chừng này giây (theo độ dài đang biết) thì xin máy chủ tải sẵn bài mốc đầu của chương kế ([NextChapterWarm]). */
-export const NEXT_CHAPTER_WARM_SECONDS = 120;
-/** Mốc đầu chương kế chưa dựng xong (`pending`) hay hỏi hỏng: chừng ấy ms sau mới hỏi lại. */
+/** Mốc đầu chương kế chưa dựng xong (`pending`) hay hỏi hỏng: chừng ấy ms sau mới hỏi lại; cũng là nhịp xin lại trong [NEXT_CHAPTER_LAST_CHANCE_SECONDS]. */
 const NEXT_CHAPTER_RETRY_MS = 15_000;
+/** Giọng ưu tiên tuyệt đối: chỉ tải sẵn chương kế khi giọng đã sẵn chừng này giây phía trước người nghe (= đệm tối thiểu của giọng, readAloud.ts MIN_BUFFER_SECONDS). */
+export const NEXT_CHAPTER_VOICE_SECONDS = 20;
+/** Lưới cuối: chương còn chừng này giây thì xin lại bài đầu chương kế mỗi [NEXT_CHAPTER_RETRY_MS] (lần trước hỏng thì lần này tải; đã có thì máy chủ bỏ qua). */
+export const NEXT_CHAPTER_LAST_CHANCE_SECONDS = 120;
 
 function cueAt(cues: MusicCue[], seconds: number): MusicCue | null {
   return cues.find((cue) => seconds >= cue.start && seconds < cue.end) ?? null;
@@ -352,10 +354,13 @@ export function carriedByBook(cue: Pick<MusicCue, "src">): boolean {
   return cue.src.includes("/music/files/");
 }
 
-/** Hỏi mốc chương kế rồi xin tải sẵn bài mốc ĐẦU của nó khi chương này còn <= [NEXT_CHAPTER_WARM_SECONDS]: chương mới mở bằng bài đã nằm trong bộ đệm của
- *  máy chủ, không im lặng chờ tải (đo 15,5 giây trung vị, PLAN_lx §2). Chương kế chưa dựng xong / hỏi hỏng thì bỏ qua và hỏi lại sau [NEXT_CHAPTER_RETRY_MS]. */
+/** Hỏi mốc chương kế rồi xin tải sẵn bài mốc ĐẦU của nó ngay từ khi chương này đã biết độ dài: chương mới mở bằng bài đã nằm trong bộ đệm của máy chủ, không
+ *  im lặng chờ tải (đo 15,5 giây trung vị, PLAN_lx §2). Không đợi tới hai phút cuối: nguồn bài chậm (incompetech 30 KB/s, đo 01-11) thì bài 6 MB mất hơn 3 phút.
+ *  Giọng trước: chỉ hỏi / xin khi giọng đã sẵn [NEXT_CHAPTER_VOICE_SECONDS] phía trước. Một lượt mỗi lúc; chương kế chưa dựng xong / hỏi hỏng thì hỏi lại sau
+ *  [NEXT_CHAPTER_RETRY_MS]. [NEXT_CHAPTER_LAST_CHANCE_SECONDS] cuối chương: xin lại mỗi [NEXT_CHAPTER_RETRY_MS] (máy chủ bỏ qua bài đã có / đang tải). */
 export class NextChapterWarm {
-  private done = new Set<string>();
+  /** Vé đã có lời đáp -> link bài đầu chương kế (null: chương kế không có nhạc / bài sách mang theo). */
+  private done = new Map<string, string | null>();
   private asking: string | null = null;
   private retryAt = new Map<string, number>();
 
@@ -365,23 +370,35 @@ export class NextChapterWarm {
     private readonly now: () => number = Date.now,
   ) {}
 
-  /** Gọi mỗi nhịp thời gian. `key`: chương đang nghe (cuốn:chương); `next`: mã chương kế (null = hết cuốn); `remaining`: giây còn lại của chương, <= 0 khi chưa biết. */
-  update(key: string, next: number | null, remaining: number): void {
-    if (next === null || !(remaining > 0) || remaining > NEXT_CHAPTER_WARM_SECONDS) return;
+  /** Gọi mỗi nhịp thời gian. `key`: chương đang nghe (cuốn:chương); `next`: mã chương kế (null = hết cuốn); `remaining`: giây còn lại của chương, <= 0 khi chưa biết;
+   *  `voiceAhead`: giây giọng đã sẵn phía trước người nghe (AudioEngine.voiceAhead; chương audio: Infinity). */
+  update(key: string, next: number | null, remaining: number, voiceAhead = Infinity): void {
+    if (next === null || !(remaining > 0) || !(voiceAhead >= NEXT_CHAPTER_VOICE_SECONDS)) return;
     const ticket = `${key}>${next}`;
-    if (this.done.has(ticket) || this.asking !== null || (this.retryAt.get(ticket) ?? 0) > this.now()) return;
+    if (this.asking !== null || (this.retryAt.get(ticket) ?? 0) > this.now()) return;
+    if (this.done.has(ticket)) {
+      const link = this.done.get(ticket);
+      if (!link || remaining > NEXT_CHAPTER_LAST_CHANCE_SECONDS) return;
+      this.retryAt.set(ticket, this.now() + NEXT_CHAPTER_RETRY_MS);
+      this.warm(link);
+      return;
+    }
     this.asking = ticket;
     const later = () => this.retryAt.set(ticket, this.now() + NEXT_CHAPTER_RETRY_MS);
     this.ask(next).then(
       (result) => {
         const first = result.pending ? undefined : result.cues[0];
         if (first) {
-          this.done.add(ticket);
-          if (!carriedByBook(first)) this.warm(first.link);
+          const link = carriedByBook(first) ? null : first.link;
+          this.done.set(ticket, link);
+          if (link) {
+            later(); // lưới cuối không xin lại ngay sau lần đầu
+            this.warm(link);
+          }
         } else if (result.pending || result.unavailable) {
           later();
         } else {
-          this.done.add(ticket); // chương kế không có nhạc
+          this.done.set(ticket, null); // chương kế không có nhạc
         }
       },
       later,
