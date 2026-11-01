@@ -3,6 +3,7 @@
 #include "fakes.h"
 #include "textscript.h"
 #include <QtTest>
+#include <cmath>
 #include <limits>
 
 // An online voice that is slow in proportion to length, like Edge (listen audit §20: a 22.2 s clip took ~10.7 s): each clip arrives
@@ -126,6 +127,25 @@ private slots:
         net.hold = false; net.releaseHeld();
         QVERIFY(audio.isPlaying); QCOMPARE(net.callsTo(QStringLiteral("/clip")).size(), 2);
         QCOMPARE(speech.position(), 2.5);
+    }
+    // Seconds of voice ready ahead of the listener (the music bed warms the next chapter only when there are enough): the rest of the paragraph
+    // playing plus the ready paragraphs right after it; nothing while the current one is loading; infinite once the rest of the chapter is ready.
+    void voiceAheadCountsReadyParagraphs() {
+        FakeOut audio; FakeNet net; SpeechOut speech(&audio, &net);
+        net.answers.insert(QStringLiteral("GET /api/listen/books/b/chapters/1/text"), QJsonObject{{QStringLiteral("text"), QStringLiteral("Một đoạn văn.\n\nĐoạn tiếp theo.")}});
+        net.answers.insert(QStringLiteral("POST /api/readaloud/clip"), QJsonObject{{QStringLiteral("url"), QStringLiteral("/media/clip.wav")}, {QStringLiteral("duration_ms"), 2500}});
+        speech.loadText(QStringLiteral("b"), 1, 0, QStringLiteral("local"));
+        net.hold = true; speech.play();
+        QCOMPARE(speech.voiceAhead(), 0.0);
+        net.releaseFirst();
+        QCOMPARE(speech.voiceAhead(), 2.5);
+        audio.pos = 1;
+        QCOMPARE(speech.voiceAhead(), 1.5);
+        net.hold = false; net.releaseHeld();
+        QVERIFY(std::isinf(speech.voiceAhead()));
+        FakeOut chapter; SpeechOut file(&chapter, &net);
+        file.load(QUrl(QStringLiteral("/media/books/b/chapters/2")), 0);
+        QVERIFY(std::isinf(file.voiceAhead())); // chapter audio: no voice to give way to
     }
     // Read-ahead in SECONDS, not paragraphs: a few short dialogue lines, then a long narration paragraph, which must be asked for early enough
     // (the old single lookahead stood ~8.5 s before every long paragraph here; 2.4 s in listen audit §20). Each paragraph is asked for once.

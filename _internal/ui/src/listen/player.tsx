@@ -589,13 +589,13 @@ export function PlayerProvider({
   // Nhạc nền (musicBed.ts): chỉ bộ máy phát web (máy tính); lõi native Android chưa có. Rãnh nhạc tắt / chưa dựng thì
   // nguồn trả không mốc nào - trình phát chạy như cũ.
   const bed = useMemo(() => (native || !source.musicCues ? null : new MusicBed(undefined, source.musicWarm && ((link) => source.musicWarm?.(link)))), [native, source]);
-  // Tải sẵn bài mốc đầu của chương kế khi chương này còn <= 120 giây (musicBed.ts NextChapterWarm): chương mới mở bằng bài đã có trong bộ đệm máy chủ.
+  // Tải sẵn bài mốc đầu của chương kế ngay khi chương này bắt đầu (musicBed.ts NextChapterWarm): chương mới mở bằng bài đã có trong bộ đệm máy chủ.
   const nextWarm = useMemo(
     () =>
       bed && source.musicCues
         ? new NextChapterWarm(
             (chapterId) => source.musicCues!(refs.current.track?.bookId ?? "", chapterId),
-            (link) => bed.warmLink(link),
+            (link) => source.musicWarm?.(link),
           )
         : null,
     [bed, source],
@@ -849,7 +849,7 @@ export function PlayerProvider({
       if (seeked) scene?.seeked(now);
       const hushed = stall.update(Date.now(), now, !engine.paused);
       bed.sync(now, !engine.paused && !hushed, seeked, voiceEnded || hushed);
-      if (current && nextWarm) nextWarm.update(`${current.bookId}:${current.chapterId}`, availableAfter(refs.current.queue, current.chapterId, 1)?.id ?? null, engine.duration - now);
+      if (current && nextWarm) nextWarm.update(`${current.bookId}:${current.chapterId}`, availableAfter(refs.current.queue, current.chapterId, 1)?.id ?? null, engine.duration - now, engine.voiceAhead);
       last = now;
     };
     // Clip về (giây thật của đoạn thay giây ước): mốc nhạc theo cảnh đặt lại cho khớp.

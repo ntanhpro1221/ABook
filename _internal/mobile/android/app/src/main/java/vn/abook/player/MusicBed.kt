@@ -248,7 +248,13 @@ object MusicBed {
     private var autoPicked = false // nhạc theo cảnh là do máy tự chọn (người nghe chưa chọn gì): dữ liệu di động chặn tải ([meteredNow])
     private var sceneMode = false // cuốn này theo cảnh: mốc của chương nằm ở `scene`, bài lấy từ danh mục
     private val scene = SceneBed { sceneTiming() }
-    private val nextWarm = NextChapterWarm(::askNextChapter, { link -> context?.let { uriOf(it, link) } }, SystemClock::elapsedRealtime)
+    private val nextWarm = NextChapterWarm(::askNextChapter, { link -> context?.let { warmTrack(it, link) } }, SystemClock::elapsedRealtime)
+    // Lượt tải sẵn bài đầu chương kế: luồng riêng (một lượt mỗi lúc), không chặn bài chương này cần trên [worker] khi nó đứng nhường giọng.
+    private val warmWorker = Executors.newSingleThreadExecutor()
+    /** Bài đang tải sẵn cho chương kế (luồng chính ghi). */
+    private var warming: String? = null
+    /** Giọng thiếu đệm mà bài đang tải sẵn chưa phải bài chương này cần: lượt tải sẵn đứng chờ ([MusicCatalog.download] `yields`). Luồng chính đặt mỗi nhịp, luồng tải đọc. */
+    @Volatile private var warmYields = false
     private var sceneRetry: Runnable? = null
     private var sceneNotice = "" // lý do chưa có nhạc theo cảnh (danh mục chưa tải được) - lời `unavailable` của DeviceScenes; rỗng khi ổn
 
@@ -1277,14 +1283,37 @@ object MusicBed {
         cues.firstOrNull { it.start > seconds && it.track != sounding }?.let { uriOf(appContext, it.track) }
     }
 
-    /** Chương còn <= [NextChapterWarm.WARM_SECONDS] (theo đồng hồ đọc) thì tải sẵn bài mốc đầu của chương kế ([nextWarm]). Mạng di động tính phí thì không tải sẵn gì, kể cả
-     *  nhạc người nghe tự chọn (bài đang cần vẫn tải theo [fetch]); về Wi-Fi trong hai phút cuối thì hỏi như thường. */
+    /** Tải sẵn bài mốc đầu của chương kế ([nextWarm]) ngay khi chương này có đồng hồ đọc. Mạng di động tính phí thì không tải sẵn gì, kể cả nhạc người nghe tự
+     *  chọn (bài đang cần vẫn tải theo [fetch]); về Wi-Fi giữa chương thì hỏi như thường. */
     private fun warmNextChapter(appContext: Context, seconds: Double) {
+        val voice = vn.abook.player.readaloud.ReadAloud.voiceAheadMs() / 1000.0
+        warmYields = voice < NextChapterWarm.VOICE_SECONDS && warming?.let { link -> cues.none { it.track == link } } == true
         if (meteredNow(appContext)) return
         val total = sceneTiming()?.total ?: return
         val order = Playback.chapters
         val index = order.indexOfFirst { it.id == chapter }
-        nextWarm.update("$book:$chapter", order.getOrNull(index + 1)?.id?.takeIf { index >= 0 }, total - seconds)
+        nextWarm.update("$book:$chapter", order.getOrNull(index + 1)?.id?.takeIf { index >= 0 }, total - seconds, voice)
+    }
+
+    /** Tải sẵn một bài cho chương kế ([nextWarm]) trên [warmWorker]: bài đã có / đang tải thì thôi; đứng nhường khi giọng thiếu đệm ([warmYields]). Hỏng thì im lặng - lưới cuối
+     *  của [nextWarm] xin lại, chương kế cần mà vẫn chưa có thì [fetch] tải như thường. */
+    private fun warmTrack(appContext: Context, link: String) {
+        if (isFailed(link) || link.startsWith(MusicStore.LOCAL_PREFIX) || link in downloading) return
+        val catalog = DeviceMusic.catalog(appContext)
+        val info = infos[link]
+        if (catalog.use(link, info) != null) return
+        downloading.add(link)
+        warming = link
+        val keep = listOfNotNull(current?.track) + fading.map { it.track } + cues.map { it.track } + queue.spans.map { it.track.link } + link
+        warmWorker.execute {
+            val got = runCatching { catalog.download(link, info) { warmYields } }
+            if (got.getOrNull() != null) runCatching { catalog.prune(keep) }
+            main.post {
+                downloading.remove(link)
+                if (warming == link) warming = null
+                if (got.exceptionOrNull() is MusicCatalog.Yielded) nextWarm.again(link) // đứt vì nhường giọng: xin lại khi giọng đủ, không đợi lưới cuối
+            }
+        }
     }
 
     /** Mốc chương `chapterId` của cuốn đang nghe cho [nextWarm]: chỉ đọc bản đã dựng ([DeviceScenes.peek] - chương kế nằm trong hàng dựng trước từ lúc hỏi chương

@@ -22,6 +22,8 @@ import org.junit.runner.RunWith
 import vn.abook.player.readaloud.ClipCache
 import vn.abook.player.readaloud.ReadAloud
 import java.io.File
+import java.io.FilterInputStream
+import java.io.InputStream
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -34,7 +36,9 @@ import java.util.concurrent.TimeUnit
  * nguồn (incompetech: 30-900 KB/s) nên chỉ bắt buộc khi nguồn đủ nhanh, còn lúc bắt đầu tải thì luôn bắt buộc.
  *
  * Tham số (`-e`): `choice` = "" (máy tự chọn nhạc, mặc định) hay "scene" (người nghe chọn "Theo cảnh": được tải qua mạng tính phí); `expectWarm` = "true" / "false"
- * (ca mạng di động tính phí: KHÔNG được tải sẵn). Số in logcat thẻ "NextWarmE2E". Chạy bằng `am instrument -e class vn.abook.player.NextChapterWarmEndToEndTest`.
+ * (ca mạng di động tính phí: KHÔNG được tải sẵn); `left` = giây còn lại của chương 1 lúc bắt đầu nghe (mặc định [LEFT_SECONDS]); `kbps` = giả nguồn bài chậm (KB/s, bọc
+ * luồng tải của MusicCatalog) - khi có thì bài chương 2 BẮT BUỘC có trên máy trước ranh chương. Số in logcat thẻ "NextWarmE2E". Chạy bằng
+ * `am instrument -e class vn.abook.player.NextChapterWarmEndToEndTest`.
  */
 @RunWith(AndroidJUnit4::class)
 class NextChapterWarmEndToEndTest {
@@ -117,15 +121,45 @@ class NextChapterWarmEndToEndTest {
         return link
     }
 
-    // `item` / `playerMs`: mục đang phát của ExoPlayer và vị trí trong mục, đọc thẳng (Playback.positionMs chỉ đổi theo nhịp 500 ms).
-    private class Sample(val t: Long, val chapter: Int?, val positionMs: Long, val item: Int, val playerMs: Long, val wants: Boolean, val waiting: Boolean, val left: Double?, val starved: Boolean)
+    // `item` / `playerMs`: mục đang phát của ExoPlayer và vị trí trong mục, đọc thẳng (Playback.positionMs chỉ đổi theo nhịp 500 ms). `voiceMs`: giọng đã sẵn phía trước
+    // (ReadAloud.voiceAheadMs); `yields`: lượt tải sẵn đang đứng nhường giọng (MusicBed.warmYields).
+    private class Sample(val t: Long, val chapter: Int?, val positionMs: Long, val item: Int, val playerMs: Long, val wants: Boolean, val waiting: Boolean, val left: Double?, val starved: Boolean,
+                         val voiceMs: Long, val yields: Boolean)
+
+    /** Nguồn bài chậm giả: đọc tối đa `bytesPerSecond` mỗi giây (tính từ lần đọc đầu). */
+    private class Throttled(input: InputStream, private val bytesPerSecond: Int) : FilterInputStream(input) {
+        private var startedAt = 0L
+        private var served = 0L
+        override fun read(): Int = throw UnsupportedOperationException()
+        override fun read(b: ByteArray, off: Int, len: Int): Int {
+            if (startedAt == 0L) startedAt = SystemClock.elapsedRealtime()
+            val read = super.read(b, off, minOf(len, 4096))
+            if (read > 0) {
+                served += read
+                val wait = startedAt + served * 1000 / bytesPerSecond - SystemClock.elapsedRealtime()
+                if (wait > 0) SystemClock.sleep(wait)
+            }
+            return read
+        }
+    }
+
+    /** Trạng thái NextChapterWarm của MusicBed (đọc bằng phản chiếu, gọi trên luồng chính): vé đang hỏi, vé đã có lời đáp, hẹn hỏi lại, bài đang tải sẵn. */
+    private fun warmState(): String {
+        fun field(owner: Any, name: String): Any? = owner.javaClass.getDeclaredField(name).apply { isAccessible = true }.get(owner)
+        val warm = field(MusicBed, "nextWarm") ?: return "-"
+        return "asking=${field(warm, "asking")} done=${field(warm, "done")} retryAt=${field(warm, "retryAt")} warming=${field(MusicBed, "warming")} now=${SystemClock.elapsedRealtime()}"
+    }
+
+    private fun warmYields(): Boolean = MusicBed::class.java.getDeclaredField("warmYields").apply { isAccessible = true }.getBoolean(MusicBed)
 
     @Test
     fun theNextChapterOpensWithItsTrackAlreadyOnTheDevice() {
         val expectWarm = args.getString("expectWarm", "true") != "false"
+        val leftSeconds = args.getString("left")?.toIntOrNull() ?: LEFT_SECONDS
+        val kbps = args.getString("kbps")?.toIntOrNull()
         val metered = AndroidMusicStudent.metered(context)
-        log("bắt đầu: choice='${args.getString("choice").orEmpty()}', mạng tính phí=$metered, expectWarm=$expectWarm")
-        if (!expectWarm) assertTrue("ca không tải sẵn phải chạy trên mạng tính phí", metered)
+        log("bắt đầu: choice='${args.getString("choice").orEmpty()}', mạng tính phí=$metered, expectWarm=$expectWarm, còn $leftSeconds s, nguồn giả ${kbps ?: "-"} KB/s")
+        assertTrue(if (expectWarm) "ca tải sẵn phải chạy trên Wi-Fi không tính phí" else "ca không tải sẵn phải chạy trên mạng tính phí", metered != expectWarm)
 
         val manifest = assertNotNullAnd(Store.manifest(id))
         // Giao diện hỏi đồng ý gửi chữ cho giọng trực tuyến trước khi phát (player.tsx withConsent); thiếu thì ReadAloud đứng giữ ở đầu đoạn.
@@ -138,9 +172,9 @@ class NextChapterWarmEndToEndTest {
             if (total == null) SystemClock.sleep(200)
         }
         assertNotNull("chương 1 nạp được", total)
-        val start = total!! - LEFT_SECONDS
+        val start = total!! - leftSeconds
         log("chương 1 dài (ước) ${"%.1f".format(total)} s, tua tới $start s")
-        // Nghe thật thì người nghe đã ở chương 1 nhiều phút: bài của các mốc còn lại đã tải xong từ lâu. Tải chúng trước khi tua, để hai phút cuối
+        // Nghe thật thì người nghe đã ở chương 1 nhiều phút: bài của các mốc còn lại đã tải xong từ lâu. Tải chúng trước khi tua, để phần còn lại
         // chỉ còn việc tải sẵn chương 2 (không thì bài chương 1 chiếm làn tải duy nhất của MusicBed và đo nhầm tốc độ nguồn).
         val catalog = DeviceMusic.catalog(context)
         var scene1 = DeviceScenes.cues(context, id, 1)
@@ -150,7 +184,7 @@ class NextChapterWarmEndToEndTest {
             scene1 = DeviceScenes.cues(context, id, 1)
         }
         val tail = SceneAnchor.cuesOf(scene1).filter { it.end > start }.map { it.link }.distinct()
-        assertTrue("chương 1 có nhạc ở hai phút cuối: $scene1", tail.isNotEmpty())
+        assertTrue("chương 1 có nhạc ở đoạn cuối: $scene1", tail.isNotEmpty())
         for (link in tail) {
             val t = SystemClock.elapsedRealtime()
             val had = catalog.use(link) != null
@@ -158,6 +192,25 @@ class NextChapterWarmEndToEndTest {
             log("bài chương 1 (đoạn cuối): ${if (had) "đã có" else "tải ${(file?.length() ?: 0) / 1024} KB mất ${SystemClock.elapsedRealtime() - t} ms"} ($link)")
             assertNotNull("tải được bài chương 1", file)
         }
+        // Nguồn chậm giả: từ đây (bài chương 1 đã tải ở tốc độ thật), TRƯỚC khi MusicBed có thể xin bài chương 2 - lắp sau thì lượt tải sẵn đã mở bằng nguồn thật (đo 01-11:
+        // 162 KB/s thay vì 29). Trả lại nguồn thật khi xong.
+        val openField = MusicCatalog::class.java.getDeclaredField("open").apply { isAccessible = true }
+        val realOpen = openField.get(catalog)
+        if (kbps != null) {
+            @Suppress("UNCHECKED_CAST") val real = realOpen as (String) -> InputStream
+            // Chỉ bài (.mp3): danh mục ở nguồn khác (workers.dev) vẫn nhanh - bóp cả nó thì mốc chương 2 về trễ (đo 01-11: nhạc chương 2 vào sau 11 s dù bài đã có).
+            openField.set(catalog, { url: String ->
+                real(url).let { input -> if (!url.substringBefore('?').endsWith(".mp3")) input else MusicCatalog.Sized(Throttled(input, kbps * 1024), (input as? MusicCatalog.Sized)?.length) }
+            })
+        }
+        try {
+            prepareAndListen(catalog, tail, start, leftSeconds, kbps, expectWarm)
+        } finally {
+            openField.set(catalog, realOpen)
+        }
+    }
+
+    private fun prepareAndListen(catalog: MusicCatalog, tail: Collection<String>, start: Double, leftSeconds: Int, kbps: Int?, expectWarm: Boolean) {
         // Bài đầu chương 2 chưa có trên máy lúc bắt đầu (lượt trước có thể đã tải): bỏ bản đã tải, trừ khi chương 1 cũng dùng nó.
         var ahead: String? = null
         val aheadDeadline = SystemClock.elapsedRealtime() + 60_000
@@ -171,7 +224,17 @@ class NextChapterWarmEndToEndTest {
             // `.part` của lượt trước bị giết giữa chừng (app tự dọn sau MusicCatalog.PART_STALE_MS): bỏ để mốc "bắt đầu tải" là của lượt này.
             val target = fileOf.invoke(catalog, link) as File
             target.parentFile?.listFiles()?.filter { it.name.startsWith(target.name + ".") && it.name.endsWith(".part") }?.forEach { log("bỏ .part cũ: ${it.delete()}") }
+            // MusicBed chạy từ lúc dựng chương 1 ở trên: có thể đã hỏi chương 2 và thấy bài "đã có" ngay trước khi bị xoá (đo 01-11: sớm 3 ms) - vé ấy coi như xong, chỉ lưới
+            // cuối còn xin lại. Quên lời đáp để lượt nghe bắt đầu như người nghe mở chương 1 khi bài chương 2 chưa có.
+            onMain {
+                val warm = MusicBed::class.java.getDeclaredField("nextWarm").apply { isAccessible = true }.get(MusicBed)!!
+                for (name in listOf("done", "retryAt")) (warm.javaClass.getDeclaredField(name).apply { isAccessible = true }.get(warm) as HashMap<*, *>).clear()
+            }
         }
+        listen(catalog, fileOf, start, leftSeconds, kbps, expectWarm)
+    }
+
+    private fun listen(catalog: MusicCatalog, fileOf: java.lang.reflect.Method, start: Double, leftSeconds: Int, kbps: Int?, expectWarm: Boolean) {
         onMain {
             Playback.jumpTo(1, start)
             Playback.play()
@@ -188,7 +251,7 @@ class NextChapterWarmEndToEndTest {
         var mixAt: Long? = null
         val samples = ArrayList<Sample>()
         val t0 = SystemClock.elapsedRealtime()
-        val deadline = t0 + (LEFT_SECONDS + 60) * 1000L + AFTER_BOUNDARY_MS
+        val deadline = t0 + (leftSeconds + 60) * 1000L + AFTER_BOUNDARY_MS
         while (SystemClock.elapsedRealtime() < deadline) {
             val now = SystemClock.elapsedRealtime()
             val sample = onMain {
@@ -196,12 +259,13 @@ class NextChapterWarmEndToEndTest {
                 val left = if (chapter == 1) ReadAloud.segmentTiming(id, 1)?.second?.minus(Playback.positionSeconds) else null
                 // Hàng đợi giọng cạn (đọc chưa kịp - Edge qua mạng): ExoPlayer hết mục / đang đệm, hay ReadAloud đang chờ đoạn.
                 val state = Playback.player?.playbackState
-                Sample(now, chapter, Playback.positionMs, Playback.player?.currentMediaItemIndex ?: -1, Playback.player?.currentPosition ?: -1, ReadAloud.wantsPlay(), ReadAloud.isWaiting, left, ReadAloud.isWaiting || state == Player.STATE_ENDED || state == Player.STATE_BUFFERING)
+                Sample(now, chapter, Playback.positionMs, Playback.player?.currentMediaItemIndex ?: -1, Playback.player?.currentPosition ?: -1, ReadAloud.wantsPlay(), ReadAloud.isWaiting, left,
+                    ReadAloud.isWaiting || state == Player.STATE_ENDED || state == Player.STATE_BUFFERING, ReadAloud.voiceAheadMs(), warmYields())
             }
             samples += sample
             if (samples.size % 100 == 1) {
-                val state = onMain { "exo=${Playback.player?.isPlaying} pwr=${Playback.player?.playWhenReady} st=${Playback.player?.playbackState} music=${musicNow()} ${readAloudState()}" }
-                log("t=${(now - t0) / 1000} s chương ${sample.chapter} vị trí ${sample.positionMs / 1000} s còn ${sample.left?.toInt()} muốn phát ${sample.wants} chờ đoạn ${sample.waiting} $state")
+                val state = onMain { "exo=${Playback.player?.isPlaying} pwr=${Playback.player?.playWhenReady} st=${Playback.player?.playbackState} music=${musicNow()} ${readAloudState()} warm=${warmState()}" }
+                log("t=${(now - t0) / 1000} s chương ${sample.chapter} vị trí ${sample.positionMs / 1000} s còn ${sample.left?.toInt()} muốn phát ${sample.wants} chờ đoạn ${sample.waiting} giọng sẵn ${sample.voiceMs / 1000} s nhường ${sample.yields} $state")
             }
             if (link2 == null && now - lastPeek > 2_000) {
                 lastPeek = now
@@ -240,6 +304,9 @@ class NextChapterWarmEndToEndTest {
         val warmSize = link2?.let { catalog.cached(it)?.length() }
         if (partAt != null && cachedAt != null && warmSize != null) log("tải sẵn: ${warmSize / 1024} KB trong ${sec(cachedAt!! - partAt!!)} s (${"%.0f".format(warmSize / 1024.0 / ((cachedAt!! - partAt!!).coerceAtLeast(1) / 1000.0))} KB/s)")
         log("(a) có trước ranh chương: $before")
+        val warmSamples = samples.filter { s -> partAt != null && s.t >= partAt!! && s.t <= (cachedAt ?: boundaryAt ?: s.t) }
+        log("giọng sẵn phía trước lúc bắt đầu tải sẵn: ${samples.firstOrNull { it.t >= (partAt ?: Long.MAX_VALUE) }?.voiceMs?.div(1000.0) ?: "-"} s; thấp nhất trong lúc tải sẵn " +
+            "${warmSamples.minOfOrNull { it.voiceMs }?.div(1000.0) ?: "-"} s; đứng nhường ${warmSamples.count { it.yields } * SAMPLE_MS / 1000.0} s")
         log("(b) đầu chương 2 -> nhạc chương 2 chạy: ${sec(if (mixAt != null && boundaryAt != null) mixAt!! - boundaryAt!! else null)} s")
 
         // (c) giọng khựng: vị trí đứng yên >= STALL_MS khi đang muốn phát, bỏ ±1,5 s quanh ranh chương (đổi chương đặt lại vị trí).
@@ -283,10 +350,11 @@ class NextChapterWarmEndToEndTest {
         assertNotNull("giọng sang được chương 2", boundaryAt)
         if (link2 != link1) {
             if (expectWarm) {
-                // Bắt đầu tải sẵn là việc của app (cửa sổ 120 s, nhịp sync 0,5 s); tải xong kịp ranh chương còn tuỳ tốc độ nguồn - (a) chỉ bắt buộc khi nguồn đủ nhanh.
-                assertTrue("tải sẵn phải bắt đầu trong hai phút cuối, trước ranh chương: còn $partLeft s", partLeft != null && partLeft!! <= NextChapterWarm.WARM_SECONDS && partLeft!! > NextChapterWarm.WARM_SECONDS - 5)
-                val fastEnough = warmSize != null && partAt != null && cachedAt != null && warmSize * 1000.0 / (cachedAt!! - partAt!!) * (NextChapterWarm.WARM_SECONDS - 5) >= warmSize
-                if (fastEnough) assertTrue("(a) nguồn đủ nhanh mà bài chương 2 không có trên máy trước ranh chương", before)
+                // Bắt đầu tải sẵn là việc của app: ngay khi chương có đồng hồ đọc và mốc chương kế đã dựng (nhịp sync 0,5 s, hỏi lại 15 s); tải xong kịp ranh chương còn
+                // tuỳ tốc độ nguồn - (a) chỉ bắt buộc khi nguồn đủ nhanh cho quãng còn lại lúc bắt đầu tải.
+                assertTrue("tải sẵn phải bắt đầu ngay đầu lượt nghe: còn $partLeft s", partLeft != null && partLeft!! > leftSeconds - WARM_START_SECONDS)
+                val fastEnough = warmSize != null && partAt != null && cachedAt != null && warmSize * 1000.0 / (cachedAt!! - partAt!!) * (partLeft!! - 5) >= warmSize
+                if (fastEnough || kbps != null) assertTrue("(a) bài chương 2 không có trên máy trước ranh chương (nguồn ${kbps ?: "đủ nhanh"} KB/s)", before)
                 assertTrue("(c) trình phát không giật trong lúc tải sẵn", during == 0)
             } else {
                 assertFalse("mạng tính phí: không được tải sẵn trước ranh chương", before)
@@ -306,5 +374,7 @@ class NextChapterWarmEndToEndTest {
         // Emulator chạy -no-audio: vị trí của ExoPlayer nhảy theo bước ~0,5 s dù tiếng đều, nên khựng thật = đứng >= 1 s.
         const val STALL_MS = 1_000L
         const val AFTER_BOUNDARY_MS = 120_000L
+        /** Tải sẵn phải bắt đầu trong chừng này giây kể từ lúc phát (mốc chương kế đã dựng sẵn trước khi tua; một lần hỏi lại 15 s là cùng). */
+        const val WARM_START_SECONDS = 20
     }
 }
