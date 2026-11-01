@@ -456,6 +456,22 @@ class MusicBedIntegrationTest {
         assertEquals("bài trước mờ đi rồi nhả", 1, old.released)
     }
 
+    @Test fun aSlowStreamDoesNotSlipInWhenThePlayerBrieflyReportsItIsNotLoading() {
+        // ExoPlayer có lúc báo isLoading = false khi nguồn còn đang tải chậm (lỗi chờ thử lại, lượt tải tiến dần tạm khép chờ hỏi LoadControl). Lối tắt cũ
+        // "không tải + có 2 s đệm" cho bài vào lúc ấy, 2 s sau đệm cạn phải mờ ra - vào/ra lắp bắp. Chỉ đệm đầy thật (StreamPace.full) mới được thay cổng.
+        val music = FakePlayer().also { it.state = Player.STATE_BUFFERING; it.playWhenReady = true; it.position = 0; it.bufferedPosition = 3_000 }
+        field("current").set(MusicBed, streamedBed(music))
+        field("playing").setBoolean(MusicBed, true)
+        invoke("startFade")
+        var tick = 0
+        repeat(600) {
+            stream(music, 50) { 0.3 }
+            if (++tick % 20 < 6) music.loading = false // 300 ms mỗi giây trình phát báo không tải
+            assertEquals("chưa phát được tới hết bài ở 0,3x: chưa kêu (đệm ${music.bufferedPosition})", 0f, music.volume, 0f)
+        }
+        assertEquals("đứng yên ở chỗ vào", 0L, music.position)
+    }
+
     @Test fun aStreamedSongOnlyNeedsToKeepUpUntilItsCueStopsUsingIt() {
         // Cùng bài 200 s tải 0,6x, nhưng mốc chỉ dùng nó tới giây 60 (mốc khác bài vào ở 60, mờ ra fadeSeconds): chỉ cần tải kịp tới 62 s của bài -
         // vào khi đã có ~33 s (62 - 0,6 x 62 / 1,3) thay vì ~108 s của bản tới-hết-bài (U30F 02-11: bài 863 s mà mốc dùng 342 s, nhạc vào ở 350 s thay vì 98 s).
@@ -533,21 +549,35 @@ class MusicBedIntegrationTest {
 
     @Test fun streamPaceFoldsTheFirstBurstAndNeedsASecondOfMeasurement() {
         val pace = StreamPace()
-        pace.add(0, 0)
-        pace.add(200, 30_000) // phần đã có sẵn dồn về một lèo: không phải tốc độ tải
+        pace.add(0, 0, 0)
+        pace.add(200, 30_000, 0) // phần đã có sẵn dồn về một lèo: không phải tốc độ tải
         assertNull(pace.rate(900))
-        for (t in 300L..3_000L step 100) pace.add(t, 30_000 + (t - 200) / 2) // mốc gốc là cuối đợt dồn
+        for (t in 300L..3_000L step 100) pace.add(t, 30_000 + (t - 200) / 2, 0) // mốc gốc là cuối đợt dồn
         assertEquals(0.5, pace.rate(3_000)!!, 0.01)
         assertFalse(pace.playsThrough(3_000, 31_400, 0, 200_000))
         // 0,5x từ đầu bài 200 s: cần đã có 200 - 0,5 x 200 / 1,3 = 123 s.
         assertTrue(pace.playsThrough(3_000, 124_000, 0, 200_000))
         assertFalse(pace.playsThrough(3_000, 122_000, 0, 200_000))
         val fast = StreamPace()
-        for (t in 0L..2_000L step 100) fast.add(t, 10 * t) // 10x
+        for (t in 0L..2_000L step 100) fast.add(t, 10 * t, 0) // 10x
         assertTrue(fast.playsThrough(2_000, 100_000, 98_000, 200_000))
         assertFalse("chưa có đủ 2 giây trước con trỏ", fast.playsThrough(2_000, 100_000, 98_500, 200_000))
         assertTrue("tải trọn thì phát được", pace.playsThrough(3_000, 200_000, 0, 200_000))
         assertFalse("chưa đo được tốc độ thì chưa chắc", StreamPace().playsThrough(0, 124_000, 0, 200_000))
+        // Bài đang chờ bị dời chỗ vào tới giây của giọng (lần READY đầu): đã đệm nhảy 2,4 -> 11 s cùng con trỏ - không phải tải được 8,6 s (emulator 02-11).
+        val moved = StreamPace()
+        for (t in 0L..10_000L step 500) moved.add(t, t * 3 / 10, 0)
+        assertEquals(0.3, moved.rate(10_000)!!, 0.01)
+        moved.add(10_500, 11_000, 11_000)
+        for (t in 11_000L..12_000L step 500) moved.add(t, 11_000 + (t - 10_500) * 3 / 10, 11_000)
+        assertTrue("đo lại từ cú nhảy", (moved.rate(12_000) ?: 0.0) < 0.5)
+        assertFalse("không qua cổng với 2 s đệm", moved.playsThrough(19_000, 13_100, 11_000, 114_000))
+        for (t in 12_500L..20_000L step 500) moved.add(t, 11_000 + (t - 10_500) * 3 / 10, 11_000)
+        assertEquals(0.3, moved.rate(20_000)!!, 0.01)
+        // Đang phát 1x: con trỏ chạy đều không phải nhảy.
+        val playing = StreamPace()
+        for (t in 0L..10_000L step 500) playing.add(t, 20_000 + t * 2, t)
+        assertEquals(2.0, playing.rate(10_000)!!, 0.01)
     }
 
     @Test fun smallSeeksThroughPlaybackDoNotSeekTheMusicOrRestartItsFade() {

@@ -20,7 +20,7 @@ import java.util.Locale
  * Tham số (`-e`): `id` (tên bản ghi, cũng là mã sách - phải khác nhau mỗi lượt để bộ đệm đĩa không giữ bài lượt trước), `host` (mặc định 10.0.2.2:8766),
  * `fingerprint` (SHA-256 hex của chứng chỉ máy chủ), `cues` (`đầu:cuối:sha1,...` - giây và tên bài trong pool của máy chủ), `seconds` (giây giọng, mặc định 250).
  * Ra `getExternalFilesDir(null)/musicstream/<id>.txt`: mỗi lần đọc một dòng `t=<giây> v=<giây giọng>` rồi mỗi trình phát
- * ` | <mã> <bài 6 ký tự> vol=<logic> state=<n> pwr=<0|1> play=<0|1> pos=<ms> buf=<ms> dur=<ms>`.
+ * ` | <mã> <bài 6 ký tự> vol=<logic> state=<n> pwr=<0|1> play=<0|1> pos=<ms> buf=<ms> dur=<ms> load=<0|1>`.
  */
 @RunWith(AndroidJUnit4::class)
 class MusicStreamOnDeviceTest {
@@ -52,8 +52,8 @@ class MusicStreamOnDeviceTest {
         val player = playerField.get(bed) as ExoPlayer
         val track = (trackField.get(bed) as String).substringAfterLast('/').take(6)
         return String.format(
-            Locale.ROOT, " | %08x %s vol=%.3f state=%d pwr=%d play=%d pos=%d buf=%d dur=%d", System.identityHashCode(bed), track, volumeField.getFloat(bed),
-            player.playbackState, if (player.playWhenReady) 1 else 0, if (player.isPlaying) 1 else 0, player.currentPosition, player.bufferedPosition, player.duration,
+            Locale.ROOT, " | %08x %s vol=%.3f state=%d pwr=%d play=%d pos=%d buf=%d dur=%d load=%d", System.identityHashCode(bed), track, volumeField.getFloat(bed),
+            player.playbackState, if (player.playWhenReady) 1 else 0, if (player.isPlaying) 1 else 0, player.currentPosition, player.bufferedPosition, player.duration, if (player.isLoading) 1 else 0,
         )
     }
 

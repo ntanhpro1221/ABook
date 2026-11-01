@@ -13,10 +13,17 @@ internal class StreamPace {
     private val mix = MusicCues.mix
     private val samples = ArrayDeque<Pair<Long, Long>>()
     private var began = -1L
+    private var lastNow = 0L
+    private var lastPosition = 0L
 
-    fun add(nowMs: Long, bufferedMs: Long) {
-        // Phần đã đệm lùi (tua sang chỗ chưa tải): đo lại từ đầu.
-        if (began < 0 || samples.lastOrNull()?.let { bufferedMs < it.second - 50 } == true) { began = nowMs; samples.clear() }
+    /** `bufferedMs`: đã đệm tới (ms của bài), `positionMs`: con trỏ phát lúc `nowMs`. */
+    fun add(nowMs: Long, bufferedMs: Long, positionMs: Long) {
+        // Phần đã đệm lùi, hay con trỏ nhảy (tua; lần READY đầu dời bài đang chờ tới giây của giọng - emulator 02-11: đã đệm nhảy 2,4 -> 11 s trong tích tắc,
+        // trung bình trượt coi là tải được 8,5 s, bài 11 KB/s qua cổng với 2 s đệm rồi mờ ra ngay): đo lại từ đầu.
+        val jumped = began >= 0 && (positionMs < lastPosition - 50 || positionMs > lastPosition + (nowMs - lastNow) + 1000)
+        if (began < 0 || jumped || samples.lastOrNull()?.let { bufferedMs < it.second - 50 } == true) { began = nowMs; samples.clear() }
+        lastNow = nowMs
+        lastPosition = positionMs
         if (nowMs - began < mix.underrunBurstMs) samples.clear()
         samples.addLast(nowMs to bufferedMs)
         while (samples.size > 2 && nowMs - samples[1].first > mix.underrunRateWindowMs) samples.removeFirst() // giữ một mẫu ngay trước cửa sổ làm mốc đầu
@@ -46,6 +53,13 @@ internal class StreamPace {
         const val BUFFER_MS = 180_000
 
         fun whole(bufferedMs: Long, durationMs: Long): Boolean = durationMs > 0 && bufferedMs >= durationMs - 250
+
+        /**
+         * Đệm phía trước đã đầy [BUFFER_MS] (trình phát ngừng tải vì đủ, không phải vì nguồn chậm): có sẵn chừng ấy thì phát được dù tốc độ đo thế nào.
+         * Nói thẳng điều ấy thay vì suy từ `isLoading` = false: ExoPlayer còn ngừng tải vì lý do khác (lỗi chờ thử lại, lượt tải tiến dần tạm khép chờ hỏi
+         * LoadControl), lúc ấy 2 s đệm không nói gì về tốc độ.
+         */
+        fun full(aheadMs: Long): Boolean = aheadMs >= BUFFER_MS - 5_000
 
         /** Bộ đệm của trình phát nhạc stream: tải liền tới [BUFFER_MS] phía trước, kể cả lúc đứng chờ cổng (tạm dừng). */
         fun loadControl(): LoadControl = DefaultLoadControl.Builder()
