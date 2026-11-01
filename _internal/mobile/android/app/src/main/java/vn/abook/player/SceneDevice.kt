@@ -58,7 +58,19 @@ object DeviceScenes {
         }
     }
 
-    fun cues(context: Context, bookId: String, chapterId: Int): JSONObject {
+    /** Mốc chương `chapterId` nếu đã dựng xong, không thì `pending` - KHÔNG xếp việc dựng, không huỷ việc nào (tải sẵn bài chương kế không được giành CPU với
+     *  giọng đang đọc: chương kế đã nằm trong hàng [AHEAD_CHAPTERS] từ lúc hỏi chương đang nghe). */
+    fun peek(context: Context, bookId: String, chapterId: Int, done: (JSONObject?, Exception?) -> Unit) {
+        waiters.execute {
+            try {
+                done(cues(context, bookId, chapterId, build = false), null)
+            } catch (error: Exception) {
+                done(null, error)
+            }
+        }
+    }
+
+    fun cues(context: Context, bookId: String, chapterId: Int, build: Boolean = true): JSONObject {
         val empty = JSONObject().put("cues", JSONArray()).put("scene", true)
         val manifest = Store.manifest(bookId) ?: return empty
         val chapters = manifest.optJSONArray("chapters") ?: return empty
@@ -87,6 +99,7 @@ object DeviceScenes {
             return record
         }
         ready(chapterId)?.let { return book.response(it) }
+        if (!build) return empty.put("pending", true)
 
         val wanted = order.subList(order.indexOf(chapterId), order.size).take(AHEAD_CHAPTERS + 1)
         // Đang nghe cuốn này: việc nền của cuốn khác không còn ai chờ, chương ngoài tầm nghe cũng thôi (`Builder.cancel_others` của máy tính).
@@ -108,6 +121,7 @@ object DeviceScenes {
         } catch (error: java.util.concurrent.ExecutionException) {
             failed = true // danh mục không tải được, chữ không đọc được: hỏi lại sau
             reason = (error.cause as? MusicCatalog.CatalogError)?.message // mục lục đã cất mà mảnh ô / tracks/ không tải được (mất mạng sau lần đầu): nói lý do, như lúc chưa có mục lục
+            if (reason == null) AppLog.w("SceneMusic", "dựng nhạc chương $chapterId hỏng: ${error.cause?.javaClass?.simpleName}: ${error.cause?.message.orEmpty().take(200)}", error.cause)
         } catch (_: java.util.concurrent.CancellationException) {
             failed = true
         }
