@@ -183,7 +183,8 @@ void MusicBed::setVolume(double volume) {
         setVolumeOf(m_current->audio, m_current->goal);
 }
 
-/// Bài mới còn đang chờ tải (chưa có tiếng, hay đang chờ dữ liệu): chưa được nhích âm lượng lên - bài cũ mờ đi, im lặng bằng thời gian tải.
+/// Bài mới còn đang chờ tải (chưa có tiếng - musicmixer chỉ cho vào khi tải kịp tới hết bài -, hay đang chờ dữ liệu): chưa được nhích âm
+/// lượng lên - bài cũ đứng ở mức đang có ([fadeTick]), không để cảnh câm suốt thời gian tải.
 bool MusicBed::awaitingSound(const Playing &playing) const {
     return playing.entering && (!playing.audio->sounded || playing.audio->waiting);
 }
@@ -625,7 +626,14 @@ void MusicBed::fadeTick() {
         }
     }
     QVector<VoiceP> still;
+    // Bài mới còn chờ tải: bài cũ đứng ở mức đang có; bài mới có tiếng thì mờ tiếp.
+    const bool holdOld = m_current && m_current->audio->wantPlay && awaitingSound(*m_current);
     for (const VoiceP &audio : std::as_const(m_fading)) {
+        if (holdOld && audio->wantPlay && !audio->ended) {
+            busy = true;
+            still.append(audio);
+            continue;
+        }
         const double step = audio->fadeStep >= 0 ? audio->fadeStep : (0.1 * STEP_MS) / 1000 / FADE_SECONDS;
         setVolumeOf(audio, std::max(0.0, audio->volume - step));
         if (audio->volume <= 0.001) {

@@ -944,7 +944,8 @@ describe("tải sẵn bài kế và mờ vào từ lúc có tiếng (musicwarm, 
     { start: 200, end: 300, link: "https://x/c.mp3", key: "1:3", src: "/c" },
   ];
 
-  type FakeAudio = { paused: boolean; volume: number; loop: boolean; currentTime: number; duration: number; readyState?: number; sounded?: boolean };
+  type FakeAudio = { paused: boolean; volume: number; loop: boolean; currentTime: number; duration: number; readyState?: number; sounded?: boolean;
+    buffered?: { length: number; start(i: number): number; end(i: number): number } };
   interface Slow {
     bed: MusicBed;
     warmed: string[];
@@ -999,9 +1000,11 @@ describe("tải sẵn bài kế và mờ vào từ lúc có tiếng (musicwarm, 
   }
 
   /** Nghe tuần tự `seconds` giây của chương, mỗi TICK giây một nhịp `sync`, đồng hồ nhạc chạy từng 50 ms.
-   *  silent = giây im hẳn (không phần tử nào có âm lượng) trong các mốc sau mốc đầu; abrupt = số phần tử mà ở nhịp 50 ms ĐẦU TIÊN sau khi thật sự kêu đã quá nửa mức đích (vào đột ngột, J). */
-  function listen(sim: Slow, seconds: number): { silent: number; abrupt: number } {
+   *  silent = giây im hẳn (không phần tử nào có âm lượng) trong các mốc sau mốc đầu; waiting = giây bài của mốc chưa kêu (bài cũ giữ chỗ hay im);
+   *  abrupt = số phần tử mà ở nhịp 50 ms ĐẦU TIÊN sau khi thật sự kêu đã quá nửa mức đích (vào đột ngột, J). */
+  function listen(sim: Slow, seconds: number): { silent: number; waiting: number; abrupt: number } {
     let silent = 0;
+    let waiting = 0;
     let abrupt = 0;
     const seen = new Set<FakeAudio>();
     for (let t = 0; t < seconds; t += TICK) {
@@ -1010,6 +1013,7 @@ describe("tải sẵn bài kế và mờ vào từ lúc có tiếng (musicwarm, 
         vi.advanceTimersByTime(50);
         const live = sim.made.filter((item) => item.audio.volume > 0.001);
         if (live.length === 0 && t >= slow[0].end && t < slow[2].end) silent += 0.05;
+        if (sim.made[sim.made.length - 1].audio.volume <= 0.001 && t >= slow[0].end && t < slow[2].end) waiting += 0.05;
         for (const item of sim.made) {
           if (!item.audio.sounded || seen.has(item.audio)) continue;
           seen.add(item.audio);
@@ -1017,7 +1021,7 @@ describe("tải sẵn bài kế và mờ vào từ lúc có tiếng (musicwarm, 
         }
       }
     }
-    return { silent, abrupt };
+    return { silent, waiting, abrupt };
   }
 
   it("mốc i mở thì bài của mốc kế (khác bài đang kêu) được xin tải sẵn, mỗi bài một lần", () => {
@@ -1066,7 +1070,7 @@ describe("tải sẵn bài kế và mờ vào từ lúc có tiếng (musicwarm, 
     sim.bed.stop();
   });
 
-  it("bài mới chưa có tiếng thì âm lượng giữ 0 (bài cũ mờ như cũ); có tiếng rồi mới mờ vào trong FADE_SECONDS", () => {
+  it("bài mới chưa có tiếng thì âm lượng giữ 0 và bài cũ đứng ở mức đang có; có tiếng rồi bài mới mờ vào, bài cũ mờ đi trong FADE_SECONDS", () => {
     vi.useFakeTimers();
     const sim = slowBed((src) => (src === "/a" ? 0 : 16));
     sim.bed.setCues(slow, -20);
@@ -1078,7 +1082,7 @@ describe("tải sẵn bài kế và mờ vào từ lúc có tiếng (musicwarm, 
     const b = sim.made[1].audio;
     vi.advanceTimersByTime(15_000);
     expect(b.volume).toBe(0);
-    expect(a.volume).toBe(0); // bài cũ mờ hết trong 2 giây: im lặng bằng thời gian tải, nhưng bài mới KHÔNG vào đột ngột
+    expect(a.volume).toBeCloseTo(GOAL, 3); // bài cũ giữ chỗ suốt thời gian tải: cảnh không câm, và bài mới KHÔNG vào đột ngột
     vi.advanceTimersByTime(1_100); // b có tiếng
     expect(b.readyState).toBe(4);
     vi.advanceTimersByTime(FADE_SECONDS * 500);
@@ -1086,6 +1090,43 @@ describe("tải sẵn bài kế và mờ vào từ lúc có tiếng (musicwarm, 
     expect(b.volume).toBeLessThan(0.7 * GOAL); // đang ở giữa dốc, chưa tới mức đích
     vi.advanceTimersByTime(FADE_SECONDS * 600);
     expect(b.volume).toBeCloseTo(GOAL, 3);
+    expect(a.volume).toBeLessThan(0.001);
+    sim.bed.stop();
+  });
+
+  it("<audio src> đang tải dở sắp hụt: mờ ra (không tắt phụt), giữ im tới khi tải kịp lại, rồi mờ vào (không vào đột ngột)", () => {
+    vi.useFakeTimers();
+    const sim = slowBed(() => 0);
+    sim.bed.setCues(slow, -20);
+    sim.bed.sync(0, true);
+    vi.advanceTimersByTime(3_000);
+    const a = sim.made[0].audio;
+    let loaded = 50;
+    a.buffered = { length: 1, start: () => 0, end: () => loaded };
+    a.currentTime = 10;
+    sim.bed.sync(10, true); // nhịp giọng kế: bài còn tải dở thì đồng hồ mờ canh hụt
+    vi.advanceTimersByTime(1_000);
+    expect(a.volume).toBeCloseTo(GOAL, 3); // còn 40 giây đã tải trước con trỏ
+    a.currentTime = 49.5;
+    vi.advanceTimersByTime(100);
+    expect(a.volume).toBeGreaterThan(0.4 * GOAL);
+    expect(a.volume).toBeLessThan(0.9 * GOAL); // đang mờ ra
+    vi.advanceTimersByTime(300);
+    expect(a.volume).toBe(0);
+    a.readyState = 3; // trình duyệt chưa ước tải kịp
+    a.currentTime = 50;
+    vi.advanceTimersByTime(5_000);
+    expect(a.volume).toBe(0);
+    loaded = 60;
+    vi.advanceTimersByTime(1_000);
+    expect(a.volume).toBe(0); // đã có 10 giây trước con trỏ nhưng trình duyệt chưa ước tải kịp tới hết bài
+    loaded = 200;
+    a.readyState = 4;
+    vi.advanceTimersByTime(50);
+    expect(a.volume).toBeGreaterThan(0);
+    expect(a.volume).toBeLessThan(0.5 * GOAL);
+    vi.advanceTimersByTime(FADE_SECONDS * 1100);
+    expect(a.volume).toBeCloseTo(GOAL, 3);
     sim.bed.stop();
   });
 
@@ -1103,7 +1144,7 @@ describe("tải sẵn bài kế và mờ vào từ lúc có tiếng (musicwarm, 
     old.bed.stop();
   });
 
-  it("G: im lặng vì chờ tải còn <= 10% khi có tải sẵn (bài đã warm xong thì tới gần như ngay)", () => {
+  it("G: chờ bài mới còn <= 10% khi có tải sẵn (bài đã warm xong thì tới gần như ngay); bài cũ giữ chỗ nên không giây nào im", () => {
     vi.useFakeTimers();
     const without = slowBed(() => LOAD_SECONDS, { withWarm: false });
     without.bed.setCues(slow, -20);
@@ -1116,8 +1157,9 @@ describe("tải sẵn bài kế và mờ vào từ lúc có tiếng (musicwarm, 
     const warmed = listen(withWarm, 330);
     expect(withWarm.warmed).toEqual(["https://x/b.mp3", "https://x/c.mp3"]);
     withWarm.bed.stop();
-    expect(base.silent).toBeGreaterThan(15); // hai lần đổi bài, mỗi lần ~10 giây im sau khi bài cũ mờ hết
-    expect(warmed.silent).toBeLessThanOrEqual(0.1 * base.silent);
+    expect(base.waiting).toBeGreaterThan(15); // hai lần đổi bài, mỗi lần ~10 giây bài cũ giữ chỗ
+    expect(warmed.waiting).toBeLessThanOrEqual(0.1 * base.waiting);
+    expect(base.silent + warmed.silent).toBe(0);
     expect(warmed.abrupt).toBe(0);
   });
 
