@@ -158,7 +158,7 @@ Item {
             compare(findChild(dialog, "editPickCover").text, "Chọn ảnh bìa…")
         }
         function test_coverSearchDefaultQueryAndChoose() {
-            server.title = "Throne of Magical Arcana\u00a0· Tập 16"
+            server.title = "Throne of Magical Arcana\u00a0·\u00a0Tập 16"
             reply("GET /api/books/b1/cover/search?q=" + encodeURIComponent("Throne of Magical Arcana"), {status: 200, data: {results: [
                 {provider: "iTunes", title: "Throne of Magical Arcana", author: "Andrew Rowe", thumb: "", url: "https://fixture/a.jpg"},
                 {provider: "Open Library", title: "Another", author: "", thumb: "", url: "https://fixture/b.jpg"}], failed: []}})

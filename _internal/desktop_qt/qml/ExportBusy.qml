@@ -1,5 +1,6 @@
 import QtQuick
 import ABook
+import "TextWrap.js" as TextWrap
 
 // Lúc đang xuất (khối `busy` của ExportBook.tsx): thanh tiến độ (chưa biết mẫu số thì một đoạn chạy qua lại), dòng việc đang làm đậm, rồi lời "N chương; đóng hộp vẫn xuất nền
 // và báo khi xong". Chữ đổi theo từng nhịp hỏi; trình đọc màn hình đọc mô tả của thanh, không đọc từng giây.
@@ -52,7 +53,7 @@ Column {
         objectName: "exportBusyTitle"
         width: parent.width
         topPadding: 12
-        text: root.title
+        text: TextWrap.keepDots(root.title)
         color: Theme.text
         wrapMode: Text.Wrap
         font.pixelSize: Theme.sizeBodySmall

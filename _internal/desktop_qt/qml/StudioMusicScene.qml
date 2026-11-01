@@ -119,7 +119,7 @@ Column {
                     text: {
                         const dim = Qt.color(Theme.text2).toString()
                         const title = (root.track && root.track.title) || "Bài nhạc"
-                        const by = root.track && root.track.creator ? "<font color=\"" + dim + "\">&nbsp;· " + root.esc(root.track.creator) + "</font>" : ""
+                        const by = root.track && root.track.creator ? "<font color=\"" + dim + "\">&nbsp;·&nbsp;" + root.esc(root.track.creator) + "</font>" : ""
                         return root.esc(title) + by
                     }
                     textFormat: Text.StyledText

@@ -1,5 +1,6 @@
 import QtQuick
 import ABook
+import "TextWrap.js" as TextWrap
 
 // Thanh phát ở đáy khung nội dung (chỉ khi có sách đang nạp). Bìa nhỏ · tên sách · tên chương (xuống dòng, thanh cao lên) · lùi 15 s · phát / dừng · tới 15 s.
 // Tiến độ là đường mảnh ở mép trên thanh: rê chuột thì dày lên và hiện giờ ở chỗ con trỏ, bấm hay kéo là tua. Tốc độ, hẹn giờ, nhạc nền, giọng KHÔNG ở đây.
@@ -88,7 +89,7 @@ Item {
             Text {
                 objectName: "barChapterTitle"
                 width: parent.width
-                text: [Player.chapterTitle, Player.chapterSubtitle].filter(s => s !== "").join("\u00a0· ")
+                text: TextWrap.keepDots([Player.chapterTitle, Player.chapterSubtitle].filter(s => s !== "").join("\u00a0·\u00a0"))
                 color: Theme.text
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeBodySmall

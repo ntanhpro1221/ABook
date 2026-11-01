@@ -25,7 +25,7 @@ Item {
     readonly property real infoWidth: Math.max(120, width - 56 - 12 - (sideEdit ? sideWidth + 12 : 0))
     readonly property real tailHeight: Math.max(editButton.height * (1 - editor.reveal), editor.height)
     readonly property string statusHtml: W.esc(N.rowStatus(item, work ? work.analyzed : true, fresh, reach, false))
-        + (sharedHere ? "<span style=\"color:" + W.cssColor(Theme.text3) + "\">&nbsp;· dùng chung</span>" : "")
+        + (sharedHere ? "<span style=\"color:" + W.cssColor(Theme.text3) + "\">&nbsp;·&nbsp;dùng chung</span>" : "")
         + (item.requested ? "<span style=\"color:" + W.cssColor(Theme.accentText) + "; font-weight:600\">" + W.esc(N.waitingPart(item)) + "</span>" : "")
     width: parent ? parent.width : 600
     height: 10 + Math.max(32, info.height, sideEdit ? tail.height : 0) + (sideEdit ? 0 : 8 + tail.height) + 10
@@ -60,7 +60,7 @@ Item {
         width: 32
         height: 32
         ringRadius: 16
-        tip: root.example ? root.example.chapterTitle + "\u00a0· câu " + root.example.seq : ""
+        tip: root.example ? root.example.chapterTitle + "\u00a0·\u00a0câu " + root.example.seq : ""
         Accessible.role: Accessible.Button
         Accessible.name: root.playing ? "Dừng" : root.example ? N.sampleLabel(root.item) : ""
         onClicked: Clip.toggle(root.clipId, root.work.store.path("/media/books/" + root.work.bookId + "/samples/" + root.example.segmentId))

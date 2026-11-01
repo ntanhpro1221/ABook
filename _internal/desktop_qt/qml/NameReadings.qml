@@ -61,7 +61,7 @@ Item {
                 height: Math.max(56, implicitHeight)
                 verticalAlignment: Text.AlignVCenter
                 textFormat: Text.RichText
-                text: "Cách đọc tên&nbsp;<span style=\"color:" + W.cssColor(Theme.text2) + "; font-weight:400\">· " + W.esc(N.heading(root.analyzed, N.countedNames(root.items))) + "</span>"
+                text: "Cách đọc tên&nbsp;<span style=\"color:" + W.cssColor(Theme.text2) + "; font-weight:400\">·&nbsp;" + W.esc(N.heading(root.analyzed, N.countedNames(root.items))) + "</span>"
                 color: Theme.text
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeSection

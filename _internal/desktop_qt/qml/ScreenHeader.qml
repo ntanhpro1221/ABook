@@ -1,5 +1,6 @@
 import QtQuick
 import ABook
+import "TextWrap.js" as TextWrap
 
 // Đầu màn (DESIGN.md mục 6): đệm trên 32, hàng tiêu đề cao 40, tiêu đề 32, dòng phụ ngay dưới, nút bên phải căn giữa hàng.
 // Màn con có nút ← (Back) thẳng mép nội dung; chân chữ tiêu đề không đổi giữa màn gốc và màn con.
@@ -31,7 +32,7 @@ Item {
         height: Math.max(Theme.headerRow, implicitHeight)     // tên dài xuống dòng, không cắt
         verticalAlignment: Text.AlignVCenter
         width: parent.width - x - trailingRow.width - Theme.s16
-        text: root.title
+        text: TextWrap.keepDots(root.title)
         color: Theme.text
         wrapMode: Text.Wrap
         font.pixelSize: Theme.sizeTitleDesktop

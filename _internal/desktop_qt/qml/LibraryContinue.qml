@@ -1,6 +1,7 @@
 import QtQuick
 import ABook
 import "LibraryLogic.js" as Logic
+import "TextWrap.js" as TextWrap
 
 // One compact composition at the grid's leading edge (DESIGN 5.5: complete
 // text/action rows <= listMeasure), even when the grid has many columns.
@@ -27,13 +28,13 @@ Item {
             onClicked: root.openRequested()
             Text {
                 id: title
-                width: parent.width; text: root.book.title || ""
+                width: parent.width; text: TextWrap.keepDots(root.book.title || "")
                 wrapMode: Text.Wrap; color: Theme.accentText
                 font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium
             }
         }
-        Text { width: parent.width; text: root.here ? Player.chapterTitle : root.book.lastChapter || ""; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
-        Text { width: parent.width; text: root.book.author || root.book.subtitle || (root.book.source ? "Trên " + root.book.source : ""); color: Theme.text3; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption }
+        Text { width: parent.width; text: TextWrap.keepDots(root.here ? Player.chapterTitle : root.book.lastChapter || ""); color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
+        Text { width: parent.width; text: TextWrap.keepDots(root.book.author || root.book.subtitle || (root.book.source ? "Trên " + root.book.source : "")); color: Theme.text3; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption }
     }
     Button {
         id: action; objectName: "libraryContinuePlay"

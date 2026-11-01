@@ -9,7 +9,7 @@ SettingsItem {
     readonly property bool wide: (Window.window ? Window.window.width : 1000) >= 640
     // PROFILE_LABEL của studio/bookTemplates.ts, đúng thứ tự khoá
     readonly property var profiles: [{value: "high_quality", label: "Chất lượng cao"}, {value: "balanced", label: "Cân bằng"}, {value: "fast", label: "Nhanh"}]
-    readonly property var narrators: [{value: "", label: "Máy đề xuất"}].concat((voices || []).map(v => ({value: v.name, label: v.name + "\u00a0· " + v.gender + ", miền " + v.region})))
+    readonly property var narrators: [{value: "", label: "Máy đề xuất"}].concat((voices || []).map(v => ({value: v.name, label: v.name + "\u00a0·\u00a0" + v.gender + ", miền " + v.region})))
     padding: 12
     function load() {
         if (!Api.transport) return

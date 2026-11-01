@@ -27,3 +27,9 @@ it("a row with no note still starts with the switch; without the switch only the
   expect(phone).not.toContain('role="switch"');
   expect(phone).toContain("Chưa phân tích");
 });
+
+it("the note follows Tự chọn after a middle dot glued to both words, never read as one phrase", () => {
+  expect(html({ analysed: true, vocalsLikely: true })).toContain("Tự chọn</label>@NB@·@NB@Có lời".replace(/@NB@/g, "\u00a0"));
+  expect(html({ analysed: true })).not.toContain("·");
+  expect(html({ analysed: false }, false)).not.toContain("·");
+});

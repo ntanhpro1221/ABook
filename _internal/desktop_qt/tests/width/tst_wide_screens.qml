@@ -146,7 +146,7 @@ Item {
             if (d.screen === "add") {
                 page.show()
                 let chapters = []
-                for (let i = 1; i <= 12; i++) chapters.push({index: i, title: "Chương " + i + "\u00a0· Con đường bên bờ sông", words: 1250, included: true})
+                for (let i = 1; i <= 12; i++) chapters.push({index: i, title: "Chương " + i + "\u00a0·\u00a0Con đường bên bờ sông", words: 1250, included: true})
                 page.showPreview({title: "Hành trình qua những miền đất mới", author: "Người kể chuyện", chapters: chapters,
                     totals: {chapters: 12, words: 15000}, notes: [], suggestions: [], sourceFingerprint: "fixture"}, false)
             }

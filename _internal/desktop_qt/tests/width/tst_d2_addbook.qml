@@ -244,7 +244,7 @@ Item {
                                     "/api/listen/import": function(body) { return {status: 200, data: {id: "id-" + body.title, how: "new"}} }}
             const dialog = make()
             dialog.begin(["D:/q/A.epub", "D:/q/B.epub", "D:/q/C.epub"])
-            compare(dialog.title, "Sách 1/3\u00a0· Thêm sách")
+            compare(dialog.title, "Sách 1/3\u00a0·\u00a0Thêm sách")
             compare(dialog.pending, 3)
             // Esc / ✕ khi còn > 1 cuốn: hỏi, có lớp Back riêng; Back về hộp
             dialog.close()
@@ -266,14 +266,14 @@ Item {
             // Thêm A, bỏ B, thêm C
             dialog.add(false)
             compare(dialog.queue[0].state, "added")
-            compare(dialog.title, "Sách 2/3\u00a0· Thêm sách")
+            compare(dialog.title, "Sách 2/3\u00a0·\u00a0Thêm sách")
             compare(dialog.bookTitle, "Sách B")
             find(dialog, "importSkip").clicked()
             compare(dialog.queue[1].state, "skipped")
-            compare(dialog.title, "Sách 3/3\u00a0· Thêm sách")
+            compare(dialog.title, "Sách 3/3\u00a0·\u00a0Thêm sách")
             dialog.add(false)
             compare(importCalls().map(c => c.body.title).join("|"), "Sách A|Sách C")
-            compare(Api.notice, "Đã thêm 2 sách\u00a0· bỏ qua 1 cuốn")
+            compare(Api.notice, "Đã thêm 2 sách\u00a0·\u00a0bỏ qua 1 cuốn")
             verify(!dialog.open)
             compare(opened.length, 0)               // hai cuốn mới: không nhảy vào trang sách nào
         }
@@ -307,7 +307,7 @@ Item {
             // Thêm từ cuốn cuối về cuốn đang xem; cuốn đã có không thêm
             compare(importCalls().map(c => c.body.title).join("|"), "Sách B|Sách A")
             compare(opened.join(), "from-file")
-            compare(Api.notice, "Đã thêm 2 sách\u00a0· đã mở 1 file sách\u00a0· 1 cuốn đã có trong thư viện")
+            compare(Api.notice, "Đã thêm 2 sách\u00a0·\u00a0đã mở 1 file sách\u00a0·\u00a01 cuốn đã có trong thư viện")
             verify(!dialog.open)
         }
         function test_queueErrorKeepsDialogForReading() {

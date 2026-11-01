@@ -89,7 +89,7 @@ function trackNote(track) { return !track.analysed ? UNANALYSED : hasVocals(trac
 // Dòng phụ của một bài trong "Đổi bài" (không có công tắc ở đó): có lời, đã tắt tự chọn, hợp đoạn này / chưa phân tích.
 function mineNote(item) {
     var notes = [hasVocals(item) ? "Có lời" : null, item.auto === "off" ? "Không tự chọn" : null, item.analysed ? (item.fits ? "Hợp không khí đoạn này" : null) : UNANALYSED]
-    return notes.filter(function(note) { return !!note }).join("\u00a0· ")
+    return notes.filter(function(note) { return !!note }).join("\u00a0·\u00a0")
 }
 
 // Gộp kết quả của nhiều lượt nhập (mỗi file một lượt): danh sách bài và mô-đun lấy của lượt cuối.

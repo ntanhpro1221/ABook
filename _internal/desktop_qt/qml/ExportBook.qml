@@ -271,7 +271,7 @@ StudioConfirm {
                     spacing: 8
                     Text {
                         width: parent.width
-                        text: modelData.target + "\u00a0· " + modelData.changed.length + " chương đã đổi"
+                        text: modelData.target + "\u00a0·\u00a0" + modelData.changed.length + " chương đã đổi"
                         color: Theme.text
                         wrapMode: Text.WrapAnywhere
                         font.pixelSize: Theme.sizeBodySmall

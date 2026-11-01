@@ -265,7 +265,7 @@ Item {
         function test_optionsFoldSummarisesAndRemembers() {
             const page = openBuilder()
             withSource(page)
-            compare(one(page, "newOptions").summary, "Giọng kể Lan\u00a0· Cân bằng\u00a0· bắt đầu ngay")
+            compare(one(page, "newOptions").summary, "Giọng kể Lan\u00a0·\u00a0Cân bằng\u00a0·\u00a0bắt đầu ngay")
             verify(!has(page, "newOptionsBody"))
             openOptions(page)
             compare(Platform.setting("fold.new-project.options", "0"), "1")
@@ -304,7 +304,7 @@ Item {
             tryVerify(function() { return all(page, "newSummaryLabel").filter(shown).length > 0 })
             const labels = all(page, "newSummaryLabel").filter(shown).map(t => t.text)
             verify(labels.indexOf("Chương") >= 0, JSON.stringify(labels))
-            verify(hasPart(page, "5 chương\u00a0· "))
+            verify(hasPart(page, "5 chương\u00a0·\u00a0"))
         }
         function test_firstPersonNarratorAndBody() {
             // không đặt giọng mặc định trong Cài đặt: có "tôi" thì máy chọn giọng dẫn theo giới người kể

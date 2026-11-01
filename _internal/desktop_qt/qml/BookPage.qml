@@ -343,7 +343,7 @@ Item {
                 Text {
                     visible: !!root.book.author
                     width: parent.width
-                    text: root.book.author || ""
+                    text: TextWrap.keepDots(root.book.author || "")
                     color: Theme.text2
                     wrapMode: Text.Wrap
                     font.pixelSize: Theme.sizeBody
@@ -351,7 +351,7 @@ Item {
                 Text {
                     visible: text !== ""
                     width: parent.width
-                    text: [root.book.detail, root.book.chapters > 0 ? root.book.chapters + " chương" : ""].filter(s => !!s).join("\u00a0· ")
+                    text: [root.book.detail, root.book.chapters > 0 ? root.book.chapters + " chương" : ""].filter(s => !!s).join("\u00a0·\u00a0")
                     color: Theme.text3
                     wrapMode: Text.Wrap
                     font.pixelSize: Theme.sizeBodySmall

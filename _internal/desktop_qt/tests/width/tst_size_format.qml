@@ -41,7 +41,7 @@ Item {
             compare(label.text, row.text)
         }
         function test_showsEveryLabel() {
-            label.text = test_matchesTheWeb_data().map(row => Size.formatSize(row.bytes)).join("\u00a0· ")
+            label.text = test_matchesTheWeb_data().map(row => Size.formatSize(row.bytes)).join("\u00a0·\u00a0")
             waitForRendering(label)
             qtGlyphAudit.scan()
         }

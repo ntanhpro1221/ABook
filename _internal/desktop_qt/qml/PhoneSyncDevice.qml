@@ -1,6 +1,7 @@
 import QtQuick
 import ABook
 import "DevicesLogic.js" as Logic
+import "TextWrap.js" as TextWrap
 
 // Một thiết bị đã ghép trong "Máy đã ghép" (hàng <li> của desktop/PhoneSync.tsx): khối gập (tên + "Lần cuối ..."), thân có icon điện thoại,
 // tên + "Kết nối lần cuối ... · ghép ngày ...", công tắc "Điều khiển sản xuất" (khi Studio từ xa bật), "Đổi tên", "Bỏ ghép". Hàng mới
@@ -56,10 +57,10 @@ Collapse {
                     x: 32
                     y: (body.lineHeight - height) / 2
                     width: body.inline ? body.width - 32 - 12 - body.restWidth : body.width - 32
-                    Text { width: parent.width; text: root.device.name || ""; color: Theme.text; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
+                    Text { width: parent.width; text: TextWrap.keepDots(root.device.name || ""); color: Theme.text; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
                     Text {
                         width: parent.width
-                        text: "Kết nối lần cuối " + Logic.formatRelative(root.device.lastSeen, root.clock) + "\u00a0· ghép ngày " + Logic.formatDate(root.device.pairedAt)
+                        text: "Kết nối lần cuối " + Logic.formatRelative(root.device.lastSeen, root.clock) + "\u00a0·\u00a0ghép ngày " + Logic.formatDate(root.device.pairedAt)
                         color: Theme.text2
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                         font.pixelSize: Theme.sizeCaption

@@ -1,5 +1,6 @@
 import QtQuick
 import ABook
+import "TextWrap.js" as TextWrap
 
 // Một mục nhật ký của hộp Chẩn đoán (LogBox của shared/DiagnosticsView.tsx, <details>): hàng tên (14/500, mũi tên xoay) bấm gập / mở tại chỗ;
 // thân là khung cuộn cao tối đa 288, chữ 11 chọn được, cuộn sẵn xuống cuối (dòng mới nhất là dòng cần xem trước). Không có dòng thì một câu 12.
@@ -32,7 +33,7 @@ Column {
             x: 14 + 8
             width: parent.width - x
             anchors.verticalCenter: parent.verticalCenter
-            text: root.title
+            text: TextWrap.keepDots(root.title)
             color: Theme.text
             wrapMode: Text.Wrap
             font.pixelSize: Theme.sizeBodySmall

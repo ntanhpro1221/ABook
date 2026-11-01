@@ -18,8 +18,8 @@ Item {
         }
         when: windowShown
         property var fixture: [
-            {bookId: "a", title: "Miền đất\u00a0· Tập 10", author: "Đặng An", narrator: "Đức Trí", progress: 0.2, listeningProgress: {heardSeconds: 10}, state: {last: {at: 2}}, addedAt: 2},
-            {bookId: "b", title: "Miền đất\u00a0· Tập 2", author: "Bình", progress: 1, listeningProgress: {finished: true}, addedAt: 4, source: "Máy của bạn"},
+            {bookId: "a", title: "Miền đất\u00a0·\u00a0Tập 10", author: "Đặng An", narrator: "Đức Trí", progress: 0.2, listeningProgress: {heardSeconds: 10}, state: {last: {at: 2}}, addedAt: 2},
+            {bookId: "b", title: "Miền đất\u00a0·\u00a0Tập 2", author: "Bình", progress: 1, listeningProgress: {finished: true}, addedAt: 4, source: "Máy của bạn"},
             {bookId: "c", title: "Cuốn mới", stage: "text", addedAt: 3}
         ]
         function init() { Theme.reduceMotion = false; Nav.layers = []; Platform.reset(); DesktopApi.reset(); Api.bind(DesktopApi, Theme) }
@@ -48,9 +48,9 @@ Item {
             const groups = Logic.sections(fixture)
             compare(groups.length, 2); compare(groups[0].books.map(b => b.bookId).join(), "b,a")
             verify(groups[0].remote)
-            const chain = Logic.sections([{bookId: "root", title: "Ban đầu"}, {bookId: "next", title: "Tên khác", series: {root: "root", part: 2}}, {bookId: "other", title: "Ban đầu\u00a0· Phần 3"}])
+            const chain = Logic.sections([{bookId: "root", title: "Ban đầu"}, {bookId: "next", title: "Tên khác", series: {root: "root", part: 2}}, {bookId: "other", title: "Ban đầu\u00a0·\u00a0Phần 3"}])
             compare(chain.length, 2); compare(chain[0].books.length, 2)
-            const ambiguous = Logic.sections([{bookId: "x", title: "Bộ"}, {bookId: "y", title: "Bộ"}, {bookId: "z", title: "Bộ\u00a0· Tập 2"}])
+            const ambiguous = Logic.sections([{bookId: "x", title: "Bộ"}, {bookId: "y", title: "Bộ"}, {bookId: "z", title: "Bộ\u00a0·\u00a0Tập 2"}])
             compare(ambiguous.length, 3)
         }
         function test_controls_and_back() {

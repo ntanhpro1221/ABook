@@ -1,6 +1,7 @@
 import QtQuick
 import ABook
 import "ImportQueue.js" as Queue
+import "TextWrap.js" as TextWrap
 
 // Danh sách các file đã chọn kèm tình trạng từng cái (QueueList của AddBook.tsx): cuốn đang xem đậm, cuốn đã thêm / đã có / đã mở có dấu ✓ xanh, cuốn bỏ qua có
 // dấu trừ, cuốn lỗi có dấu cảnh báo kèm lý do, cuốn chờ có vòng rỗng. Tên file và lý do xuống dòng đủ, không cắt. Danh sách dài cuộn trong khung cao
@@ -105,7 +106,7 @@ Item {
                         objectName: "importQueueName"
                         x: 22
                         width: line.width - x
-                        text: line.modelData.name
+                        text: TextWrap.keepDots(line.modelData.name)
                         color: line.current ? Theme.text : Theme.text2
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                         font.pixelSize: Theme.sizeCaption

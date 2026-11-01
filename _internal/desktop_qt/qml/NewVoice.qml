@@ -2,6 +2,7 @@ import QtQuick
 import ABook
 import "NewProjectLogic.js" as Logic
 import "CastLogic.js" as CastLogic
+import "TextWrap.js" as TextWrap
 
 // "Giọng kể" của trình tạo sách (VoiceStep + FirstPersonQuestion + PovChapters + VoiceCard của NewProjectScreen.tsx): "“Tôi” là ai?" (tên người kể, giới, nhân vật tự kể, chương đổi
 // người kể), giọng kể phần trước, và lưới giọng (lọc theo giới / miền, nghe thử, mũi tên đổi giọng như radiogroup). Mọi lựa chọn ghi vào nháp của `form`.
@@ -308,7 +309,7 @@ Column {
                             width: parent.width - 32
                             Text {
                                 width: parent.width
-                                text: card.modelData.name
+                                text: TextWrap.keepDots(card.modelData.name)
                                 color: card.selected ? Theme.accentText : Theme.text
                                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                 font.pixelSize: Theme.sizeBody
@@ -319,7 +320,7 @@ Column {
                             Text {
                                 width: parent.width
                                 topPadding: 2
-                                text: card.modelData.gender + "\u00a0· Miền " + card.modelData.region + "\u00a0· " + card.modelData.style
+                                text: card.modelData.gender + "\u00a0·\u00a0Miền " + card.modelData.region + "\u00a0·\u00a0" + card.modelData.style
                                 color: Theme.text2
                                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                 font.pixelSize: Theme.sizeCaption

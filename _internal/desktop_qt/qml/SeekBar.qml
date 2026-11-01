@@ -22,7 +22,7 @@ Item {
     activeFocusOnTab: enabled
     Accessible.role: Accessible.Slider
     Accessible.name: "Vị trí trong chương"
-    Accessible.description: "Đã nghe chương này\u00a0· " + Player.clockText(shownPosition)
+    Accessible.description: "Đã nghe chương này\u00a0·\u00a0" + Player.clockText(shownPosition)
     Keys.onLeftPressed: Player.skip(-Player.skipSeconds)
     Keys.onRightPressed: Player.skip(Player.skipSeconds)
     Keys.onUpPressed: Player.skip(Player.skipSeconds)

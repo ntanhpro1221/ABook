@@ -147,7 +147,7 @@ Item {
             width: parent.width
             topPadding: 4
             textFormat: Text.RichText
-            text: "<span style=\"color:" + W.cssColor(root.reasonInk) + "\">" + W.esc(root.item.reason || "") + "</span>&nbsp;· " + W.esc(root.item.chapterTitle || "")
+            text: "<span style=\"color:" + W.cssColor(root.reasonInk) + "\">" + W.esc(root.item.reason || "") + "</span>&nbsp;·&nbsp;" + W.esc(root.item.chapterTitle || "")
             color: Theme.text2
             wrapMode: Text.Wrap
             font.pixelSize: Theme.sizeCaption

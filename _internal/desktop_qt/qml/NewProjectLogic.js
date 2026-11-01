@@ -309,7 +309,7 @@ function removeStart(starts, position) { return position < 1 ? starts : starts.f
 function volumeTitles(title, count) {
     const base = String(title).replace(/\s*(?:\(phần\s*\d+\)|[·|:—–-]\s*phần\s*\d+)\s*$/i, "").trim() || String(title).trim()
     const out = []
-    for (let i = 0; i < count; ++i) out.push(i === 0 ? String(title).trim() : base + "\u00a0· Phần " + (i + 1))
+    for (let i = 0; i < count; ++i) out.push(i === 0 ? String(title).trim() : base + "\u00a0·\u00a0Phần " + (i + 1))
     return out
 }
 /** Thư mục chứa file (cắt ở dấu gạch cuối): đếm số thư mục trong một tập. */
@@ -362,11 +362,11 @@ function modelHint(model, defaultSize) {
             else if (model.size < defaultSize * 0.75) parts.push("nhẹ và nhanh hơn mặc định")
         }
     }
-    return parts.join("\u00a0· ")
+    return parts.join("\u00a0·\u00a0")
 }
 function experimentalLabel(model, defaultSize) {
     const hint = modelHint(model, defaultSize)
-    return "Bản thử nghiệm" + (hint ? "\u00a0· " + hint : "")
+    return "Bản thử nghiệm" + (hint ? "\u00a0·\u00a0" + hint : "")
 }
 function analysisChoiceLabel(chosen, seedModel) {
     return chosen ? "Bản thử nghiệm (" + (seedModel === chosen ? "như phần trước" : "chỉ cuốn này") + ")" : "Mặc định của ABook"
@@ -396,7 +396,7 @@ function carriedText(carries) {
         carries.names ? n(carries.names) + " tên nhân vật đã đổi" : "",
         carries.bracket ? "quy ước lời trong 『』" : ""
     ].filter(Boolean)
-    return parts.length ? parts.join("\u00a0· ") : "những gì phần trước đã có"
+    return parts.length ? parts.join("\u00a0·\u00a0") : "những gì phần trước đã có"
 }
 
 // ---- nháp từ "Sửa thiết lập" / "Làm tiếp" ----
@@ -483,7 +483,7 @@ function summaryRows(a) {
     const exact = matchesMeasured(a.gpu, a.analysisModel)
     const guess = estimate(scan.totals.words, scan.files.length, exact)
     const measured = a.profile === "high_quality" && !a.noStudio
-    const rows = [["Chương", scan.files.length + " chương\u00a0· " + approx(scan.totals.words, scan.totals.estimated) + " chữ"]]
+    const rows = [["Chương", scan.files.length + " chương\u00a0·\u00a0" + approx(scan.totals.words, scan.totals.estimated) + " chữ"]]
     if (a.volumes) {
         const names = volumeTitles(a.title, a.volumes.length).map(function(name, index) { return "“" + name + "” (" + n(a.volumes[index].chapters) + " chương)" })
         rows.push(["Chia thành", a.volumes.length + " phần: " + names.join(", ")])
@@ -500,7 +500,7 @@ function summaryRows(a) {
     // "Nối tiếp: phần 2 của …" đọc như nối SAU phần 2 hay LÀ phần 2 đều được - nói thẳng là phần mấy, sau phần nào, và dải chương.
     if (a.seed) {
         rows.push(["Là", "phần " + a.seed.part + " của “" + a.seed.title + "”, nối sau phần " + (a.seed.part - 1) +
-            (scan.files.length ? "\u00a0· " + chapterLabel(scan.files[0]) + " → " + chapterLabel(scan.files[scan.files.length - 1]) : "")])
+            (scan.files.length ? "\u00a0·\u00a0" + chapterLabel(scan.files[0]) + " → " + chapterLabel(scan.files[scan.files.length - 1]) : "")])
     }
     rows.push(["Nhân vật", a.seed ? "Giữ " + carriedText(a.seed.carries) + "; người mới được phân vai sau khi phân tích" : "Tự động phân vai sau khi phân tích"])
     rows.push(["Chất lượng", option.title])
@@ -535,5 +535,5 @@ function pauseWhy(noStudio, analysis) {
         (!noStudio && analysis ? " Thời gian tham khảo: " + analysis + "." : "")
 }
 function optionsSummary(auto, narrator, profile, startNow, noStudio) {
-    return [auto ? "Giọng kể máy chọn" : "Giọng kể " + narrator, profileTitle(profile), startNow && !noStudio ? "bắt đầu ngay" : "chưa chạy"].filter(Boolean).join("\u00a0· ")
+    return [auto ? "Giọng kể máy chọn" : "Giọng kể " + narrator, profileTitle(profile), startNow && !noStudio ? "bắt đầu ngay" : "chưa chạy"].filter(Boolean).join("\u00a0·\u00a0")
 }

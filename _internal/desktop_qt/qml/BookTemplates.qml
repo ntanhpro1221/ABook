@@ -1,6 +1,7 @@
 import QtQuick
 import ABook
 import "TemplateLogic.js" as Templates
+import "TextWrap.js" as TextWrap
 
 // Mẫu sách mới đã lưu (desktop/BookTemplates.tsx + studio/bookTemplates.ts): đổi tên, xoá (có "Hoàn tác" 10 giây). Lưu mẫu mới làm ở trình
 // tạo sách. Mỗi việc là một thao tác riêng gửi POST /api/book-templates nên hai thiết bị cùng sửa không đè mất nhau. Đổi tên là một lớp Back:
@@ -121,7 +122,7 @@ Column {
                                 id: words
                                 width: normal.stacked ? parent.width : parent.width - normal.buttons - 12
                                 anchors.verticalCenter: normal.stacked ? undefined : parent.verticalCenter
-                                Text { width: parent.width; text: row.modelData.name; color: Theme.text; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
+                                Text { width: parent.width; text: TextWrap.keepDots(row.modelData.name); color: Theme.text; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
                                 Text { width: parent.width; text: root.summaryOf(row.modelData); color: Theme.text2; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: 13 }
                             }
                             Row {

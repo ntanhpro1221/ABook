@@ -3,7 +3,8 @@ import ABook
 import "MyMusicText.js" as Music
 
 // Dòng tự chọn của một bài nhạc (MyMusicTrack, EditBookMyMusic; bản web AutoPickNote): công tắc "Tự chọn" ĐẦU dòng rồi mới tới nhãn ngắn
-// ("Có lời", "Chưa phân tích"). Nhãn dài ngắn khác nhau nên đứng sau: công tắc của các hàng anh em luôn cùng một cột.
+// ("Có lời", "Chưa phân tích"). Nhãn dài ngắn khác nhau nên đứng sau: công tắc của các hàng anh em luôn cùng một cột. Nhãn nối sau "Tự chọn"
+// bằng dấu ngăn dính hai bên ("Tự chọn · Có lời"), không đọc dính thành một cụm; máy không tự chọn (không công tắc) thì chỉ còn nhãn.
 Flow {
     id: root
     objectName: "autoPickLine"
@@ -26,7 +27,8 @@ Flow {
             onToggled: root.pick(Music.autoNext(root.track))
         }
         Text {
-            text: Music.AUTO_PICK_LABEL
+            objectName: "autoPickLabel"
+            text: Music.AUTO_PICK_LABEL + (root.note !== "" ? "\u00a0·\u00a0" + root.note : "")
             color: Theme.text2
             font.pixelSize: Theme.sizeCaption
             height: 24
@@ -36,7 +38,7 @@ Flow {
     }
     Text {
         objectName: "autoPickNote"
-        visible: text !== ""
+        visible: !root.canPick && text !== ""
         text: root.note
         color: Theme.text2
         wrapMode: Text.WrapAtWordBoundaryOrAnywhere

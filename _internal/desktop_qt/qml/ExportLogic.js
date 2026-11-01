@@ -93,7 +93,7 @@ function fileName(path) { const parts = String(path).replace(/[\\/]+$/, "").spli
 /** Studio từ xa: file xuất nằm trên máy tính, không về máy đang xem. `detail`: phần còn lại của dòng ("5 MB", "6 file"). */
 function exportedOnComputer(computer, name, detail) {
     const where = computer && computer !== "máy tính" ? "Đã xuất vào máy tính " + computer : "Đã xuất vào máy tính"
-    return [name ? where + ": " + name : where, detail || ""].filter(Boolean).join("\u00a0· ")
+    return [name ? where + ": " + name : where, detail || ""].filter(Boolean).join("\u00a0·\u00a0")
 }
 function spokenDuration(seconds) {
     const minutes = Math.round(seconds / 60)
@@ -167,7 +167,7 @@ function ffmpegPercent(status) { return status.total > 0 ? Math.min(100, Math.ro
 function finishedOf(kind, result, opts) {
     const lost = result.missingSources ? result.missingSources.length : 0
     const skippedNote = result.skipped && result.skipped.length ? "chưa có chương nào nên bỏ qua: " + result.skipped.map(function(part) { return "Phần " + part.part }).join(", ") : ""
-    const skipped = skippedNote ? "\u00a0· " + skippedNote : ""
+    const skipped = skippedNote ? "\u00a0·\u00a0" + skippedNote : ""
     const lostNote = lost ? lost + " file nguồn chương đã bị dời hay xoá nên không có trong gói" : ""
     // `file` chỉ có khi cả bộ (hay một phần) nằm trong MỘT file; cả bộ mỗi phần một file thì có `parts` mà không có `file`.
     const single = typeof result.file === "string"
@@ -176,12 +176,12 @@ function finishedOf(kind, result, opts) {
         : kind === "abook" ? "Đã xuất file sách" : "Đã gói dự án"
     const perPart = Boolean(result.parts && kind === "abook" && !single)
     const size = Size.formatSize(result.size || 0)
-    const placeText = perPart ? result.folder + "\u00a0· mỗi phần một file .abook riêng" : single ? result.file + "\u00a0· " + size : result.folder
+    const placeText = perPart ? result.folder + "\u00a0·\u00a0mỗi phần một file .abook riêng" : single ? result.file + "\u00a0·\u00a0" + size : result.folder
     const detail = (opts.remote
         ? exportedOnComputer(opts.computer, perPart ? "" : single ? fileName(result.file) : fileName(result.folder || ""),
-                             [perPart ? "mỗi phần một file .abook riêng" : "", single ? size : ""].filter(Boolean).join("\u00a0· "))
-        : placeText) + skipped + (lostNote ? "\u00a0· " + lostNote : "")
-    return {title: title, detail: detail, folder: result.folder || "", note: [skippedNote, lostNote].filter(Boolean).join("\u00a0· "), remoteTitle: exportedOnComputer(opts.computer, "")}
+                             [perPart ? "mỗi phần một file .abook riêng" : "", single ? size : ""].filter(Boolean).join("\u00a0·\u00a0"))
+        : placeText) + skipped + (lostNote ? "\u00a0·\u00a0" + lostNote : "")
+    return {title: title, detail: detail, folder: result.folder || "", note: [skippedNote, lostNote].filter(Boolean).join("\u00a0·\u00a0"), remoteTitle: exportedOnComputer(opts.computer, "")}
 }
 
 // ---- việc nền (MP3, M4B): bookFileExport.ts jobView ----
@@ -191,7 +191,7 @@ var M4B_COPY = {busy: "Đang làm file M4B…", done: "Đã xuất M4B", failed:
                 stopping: "Dừng ngay sau bước đang làm - không ghi file M4B nào."}
 function copyOf(kind) { return kind === "m4b" ? M4B_COPY : MP3_COPY }
 
-function packingText(chapters, elapsed) { return chapters + " chương\u00a0· đã " + Studio.formatClock(elapsed) }
+function packingText(chapters, elapsed) { return chapters + " chương\u00a0·\u00a0đã " + Studio.formatClock(elapsed) }
 /** Việc tự báo tiến độ: chữ + phần trăm 0-1; không báo thì null. */
 function reportedProgress(job) {
     if (job.phase === "music-fetch" && job.total) {
@@ -203,17 +203,17 @@ function reportedProgress(job) {
     if (job.phase === "reencode") return {fraction: 1, text: again}
     if (job.chapter === undefined || !job.chapters) return null
     const where = "Chương " + job.chapter + "/" + job.chapters
-    if (job.phase === "encode") return {fraction: 1, text: again ? again + "\u00a0· " + where : "Đang ghép file âm thanh\u00a0· " + where}
+    if (job.phase === "encode") return {fraction: 1, text: again ? again + "\u00a0·\u00a0" + where : "Đang ghép file âm thanh\u00a0·\u00a0" + where}
     if (job.phase === "chapters") return {fraction: (job.chapter - 1) / job.chapters, text: "Đang ghi chương " + job.chapter + "/" + job.chapters}
     if (job.phase === "music") {
         const text = "Đang trộn nhạc chương " + job.chapter + "/" + job.chapters
-        return {fraction: job.percent !== undefined ? job.percent / 100 : (job.chapter - 1) / job.chapters, text: again ? again + "\u00a0· " + text : text}
+        return {fraction: job.percent !== undefined ? job.percent / 100 : (job.chapter - 1) / job.chapters, text: again ? again + "\u00a0·\u00a0" + text : text}
     }
     const parts = [where, (job.percent || 0) + "%"]
     if (job.waiting === "listening") parts.push("nhường cho chương đang nghe")
     else if (job.waiting === "network") parts.push("Đang chờ mạng…")
     else if (job.secondsLeft !== undefined && job.secondsLeft !== null) parts.push("còn " + spokenDuration(job.secondsLeft))
-    return {fraction: (job.percent || 0) / 100, text: parts.join("\u00a0· ")}
+    return {fraction: (job.percent || 0) / 100, text: parts.join("\u00a0·\u00a0")}
 }
 function missingChaptersNote(result) {
     if (result.chapters === undefined || result.chaptersTotal === undefined || result.chapters >= result.chaptersTotal) return ""
@@ -240,8 +240,8 @@ function jobView(job, chapters, copy) {
         const lacks = [missingChaptersNote(job.result), musicMissingNote(job.result), job.result.coverBroken ? "ảnh bìa của sách bị hỏng nên dùng bìa vẽ từ tên" : ""].filter(Boolean)
         const details = [partsNote, !file && count ? count + " file" : "", skipped, job.result.size ? Size.formatSize(job.result.size) : ""].concat(lacks).filter(Boolean)
         const place = file || folder || ""
-        const view = {kind: "success", title: copy.done, description: [fileName(place)].concat(details).filter(Boolean).join("\u00a0· "), place: place, folder: folder || ""}
-        if (skipped || lacks.length) view.note = [skipped].concat(lacks).filter(Boolean).join("\u00a0· ")
+        const view = {kind: "success", title: copy.done, description: [fileName(place)].concat(details).filter(Boolean).join("\u00a0·\u00a0"), place: place, folder: folder || ""}
+        if (skipped || lacks.length) view.note = [skipped].concat(lacks).filter(Boolean).join("\u00a0·\u00a0")
         return view
     }
     if (job.state === "error") return {kind: "error", title: copy.failed, description: job.error || ""}

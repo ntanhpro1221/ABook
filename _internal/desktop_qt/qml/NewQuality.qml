@@ -1,6 +1,7 @@
 import QtQuick
 import ABook
 import "NewProjectLogic.js" as Logic
+import "TextWrap.js" as TextWrap
 
 // "Chất lượng" của trình tạo sách (QualityStep + AnalysisModelPicker): ba mức chọn một (radiogroup, mũi tên đổi mức), "Chi tiết" của mức đang chọn kèm thời gian tham khảo,
 // và "Bộ phân tích truyện" (chỉ khi máy có model khác mặc định). Số đo là của MỘT máy: máy khác / model khác chỉ được khoảng rộng, có nhãn tham khảo.
@@ -65,7 +66,7 @@ Column {
                     }
                     Text {
                         width: parent.width
-                        text: option.modelData.title
+                        text: TextWrap.keepDots(option.modelData.title)
                         color: option.selected ? Theme.accentText : Theme.text
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                         font.pixelSize: Theme.sizeBody

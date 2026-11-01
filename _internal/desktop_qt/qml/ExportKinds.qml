@@ -1,6 +1,7 @@
 import QtQuick
 import ABook
 import "ExportLogic.js" as Logic
+import "TextWrap.js" as TextWrap
 
 // "Kiểu bản xuất" của hộp Xuất (radiogroup chia vạch của ExportBook.tsx): mỗi hàng một biểu tượng + tên đậm + lời giải thích; hàng đang chọn mực nhấn và có gạch chân
 // hổ phách trượt giữa các hàng (SlidingIndicator "line"). Mũi tên lên / xuống đổi lựa chọn. Chữ xuống dòng, không bao giờ cắt.
@@ -58,7 +59,7 @@ Item {
                     width: parent.width - x
                     Text {
                         width: parent.width
-                        text: row.modelData.title
+                        text: TextWrap.keepDots(row.modelData.title)
                         color: row.selected ? Theme.accentText : Theme.text2
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                         font.pixelSize: Theme.sizeBodySmall

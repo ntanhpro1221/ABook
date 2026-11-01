@@ -1,6 +1,7 @@
 import QtQuick
 import ABook
 import "StudioLogic.js" as Logic
+import "TextWrap.js" as TextWrap
 
 // Khối sản xuất dưới đầu trang dự án khi sách chưa xong (ProductionPanel của studio/ProjectScreen.tsx): lời báo nhật ký không ghi được, rồi "Các bước"
 // gập / mở (nhớ theo cuốn, Fold storageKey project.<id>.steps) với ba bước Phân tích truyện / Phân vai / Thu âm và kiểm tra - vòng số / dấu xong / biểu
@@ -85,7 +86,7 @@ Column {
                             x: 28 + 10
                             width: parent.width - x - 20
                             anchors.verticalCenter: parent.verticalCenter
-                            text: step.title
+                            text: TextWrap.keepDots(step.title)
                             color: step.look === "pending" ? Theme.text3 : Theme.text
                             wrapMode: Text.Wrap
                             font.pixelSize: Theme.sizeBodySmall

@@ -17,7 +17,7 @@ Item {
     SignalSpy { id: spy }
     ListModel {
         id: textChapters
-        ListElement { chapterId: 7; title: "Chương 7"; subtitle: "Chưa thu"; fullTitle: "Chương 7\u00a0· Chưa thu"; length: ""; status: "Chưa có audio"; playable: false; done: false; current: false; progress: 0 }
+        ListElement { chapterId: 7; title: "Chương 7"; subtitle: "Chưa thu"; fullTitle: "Chương 7\u00a0·\u00a0Chưa thu"; length: ""; status: "Chưa có audio"; playable: false; done: false; current: false; progress: 0 }
     }
     TestCase {
         name: "PlayerParity"

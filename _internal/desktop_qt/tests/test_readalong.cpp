@@ -228,7 +228,7 @@ private slots:
 
         BookDetail resumed;
         resumed.setBookId(QStringLiteral("d"));
-        QCOMPARE(resumed.primaryText(), QStringLiteral("Nghe tiếp\u00a0· Chương 2"));
+        QCOMPARE(resumed.primaryText(), QStringLiteral("Nghe tiếp\u00a0·\u00a0Chương 2"));
         QVERIFY(resumed.started());
         QCOMPARE(resumed.point().value(QStringLiteral("chapterId")).toInt(), 2);
         QVERIFY(resumed.point().value(QStringLiteral("at")).toDouble() > 0);
@@ -239,7 +239,7 @@ private slots:
         QCOMPARE(resumed.primaryText(), QStringLiteral("Tạm dừng"));
         resumed.activate();
         QVERIFY(!rig.player->playing());
-        QCOMPARE(resumed.primaryText(), QStringLiteral("Nghe tiếp\u00a0· Chương 2"));
+        QCOMPARE(resumed.primaryText(), QStringLiteral("Nghe tiếp\u00a0·\u00a0Chương 2"));
     }
 
     void bookDetailTextOnlyBookSaysWhatIsMissing() {

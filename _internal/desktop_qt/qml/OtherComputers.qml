@@ -1,6 +1,7 @@
 import QtQuick
 import ABook
 import "DevicesLogic.js" as Logic
+import "TextWrap.js" as TextWrap
 
 // Khối "Máy tính khác" của Cài đặt › Thiết bị (desktop/OtherComputers.tsx, webui/remote_books.py): ghép bằng địa chỉ + mã 6 số đang hiện
 // trên máy kia - đúng mã điện thoại dùng - rồi thư viện của máy ấy hiện trong Thư viện của máy này ("Trên <máy>"). Không chung Wi-Fi thì
@@ -251,7 +252,7 @@ Column {
                                             x: 32
                                             y: (foundRow.height + (foundRow.index > 0 ? 1 : 0) - height) / 2
                                             width: parent.width - 32 - 12 - pick.width
-                                            Text { width: parent.width; text: modelData.name; color: Theme.text; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
+                                            Text { width: parent.width; text: TextWrap.keepDots(modelData.name); color: Theme.text; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
                                             Text { width: parent.width; text: modelData.host + ":" + modelData.port; color: Theme.text2; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeCaption }
                                         }
                                         Item {
@@ -357,7 +358,7 @@ Column {
                                         kind: "ghost"
                                         icon: "bluetooth"
                                         wrap: true
-                                        text: modelData.name + "\u00a0· " + Logic.deviceKindLabel(modelData.kind)
+                                        text: modelData.name + "\u00a0·\u00a0" + Logic.deviceKindLabel(modelData.kind)
                                         onClicked: root.choose(modelData.address)
                                     }
                                 }

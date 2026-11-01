@@ -1,5 +1,6 @@
 import QtQuick
 import ABook
+import "TextWrap.js" as TextWrap
 
 // Ô sách trong lưới (DESIGN.md mục 6, "Lưới bìa"): bìa 2:3 bo 12, tên và dòng phụ dưới bìa xuống dòng đủ (không bao giờ cắt chữ của
 // người dùng), nên ô cao theo chữ; hàng lưới (LibraryScreen) cao theo ô cao nhất của hàng.
@@ -95,7 +96,7 @@ Interactive {
         x: 0
         y: root.coverHeight + 12
         width: root.coverWidth
-        text: root.title
+        text: TextWrap.keepDots(root.title)
         color: Theme.text
         wrapMode: Text.Wrap
         lineHeight: 1.3
@@ -108,7 +109,7 @@ Interactive {
         x: 0
         y: titleText.y + titleText.implicitHeight + 4
         width: root.coverWidth
-        text: root.subtitle
+        text: TextWrap.keepDots(root.subtitle)
         color: Theme.text3
         wrapMode: Text.Wrap
         font.pixelSize: Theme.sizeCaption

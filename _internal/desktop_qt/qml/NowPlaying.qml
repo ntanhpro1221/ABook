@@ -1,6 +1,7 @@
 import QtQuick
 import ABook
 import "LibraryLogic.js" as LibraryLogic
+import "TextWrap.js" as TextWrap
 
 // Đang nghe: phủ kín khung nội dung (thanh bên vẫn ở đó). Mở bằng cách biến thanh phát: bìa nhỏ lớn dần thành bìa lớn theo đường thẳng, phần còn lại trượt lên;
 // đóng là đúng gương (Esc, Alt+Left, nút Back của chuột đều đóng). Chỉ một tiến độ p chạy 0..1, mọi thứ là hàm của p - không có mờ thuần.
@@ -250,7 +251,7 @@ Item {
                         objectName: "nowChapterTitle"
                         width: parent.width
                         horizontalAlignment: Text.AlignHCenter
-                        text: [Player.chapterTitle, Player.chapterSubtitle].filter(s => s !== "").join("\u00a0· ")
+                        text: TextWrap.keepDots([Player.chapterTitle, Player.chapterSubtitle].filter(s => s !== "").join("\u00a0·\u00a0"))
                         color: Theme.text
                         wrapMode: Text.Wrap
                         font.pixelSize: Theme.sizeSection
@@ -520,11 +521,11 @@ Item {
                     const p = LibraryLogic.progress(root.currentBook)
                     if (p.finished) return "Đã nghe hết cả cuốn"
                     const total = p.totalSeconds || root.currentBook.duration || 0, heard = Math.min(total, p.heardSeconds || 0)
-                    if (!total) return `Chưa nghe\u00a0· ${root.currentBook.chaptersTotal || 0} chương`
-                    if (!heard) return `Chưa nghe\u00a0· ${Player.lengthText(total)}`
+                    if (!total) return `Chưa nghe\u00a0·\u00a0${root.currentBook.chaptersTotal || 0} chương`
+                    if (!heard) return `Chưa nghe\u00a0·\u00a0${Player.lengthText(total)}`
                     const scope = root.currentBook.complete ? "cả cuốn" : "phần đã có"
                     const remaining = Player.rate === 1 ? "còn " + Player.lengthText(total - heard) : "còn khoảng " + Player.lengthText((total - heard) / Player.rate) + " ở tốc độ " + String(Player.rate).replace(".", ",") + "×"
-                    return `Đã nghe ${Math.round(heard / total * 100) + "%"} ${scope}\u00a0· ${remaining}`
+                    return `Đã nghe ${Math.round(heard / total * 100) + "%"} ${scope}\u00a0·\u00a0${remaining}`
                 }
             }
             VolumeControl { width: parent.width }

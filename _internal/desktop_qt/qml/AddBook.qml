@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Dialogs
 import ABook
 import "ImportQueue.js" as Queue
+import "TextWrap.js" as TextWrap
 
 // "Thêm sách từ file…" (listen/AddBook.tsx của bản web): EPUB / DOCX / PDF có chữ / TXT / thư mục TXT / file .abook thành sách trong thư viện. Ba bước trong một
 // hộp, đổi bước bằng Collapse (mở khép tại chỗ): chọn -> xem lại chương (và gợi ý của máy) -> thêm. Chọn nhiều file thì thành hàng xem trước, mỗi cuốn qua đúng bước
@@ -16,7 +17,7 @@ Modal {
         NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard }
     }
     panelWidth: expanded ? Math.min(width - 2 * Theme.margin, 1160) : 560
-    title: preview && queueName !== "" ? queueName + "\u00a0· Thêm sách" : "Thêm sách"
+    title: preview && queueName !== "" ? queueName + "\u00a0·\u00a0Thêm sách" : "Thêm sách"
     description: queue && !preview ? Queue.summaryText(Queue.summarize(queue))
                : preview ? "Xem lại chương trước khi thêm. Chữ của truyện giữ nguyên."
                : "EPUB, DOCX, PDF có chữ, TXT, thư mục TXT hay file .abook. Chọn được nhiều file."
@@ -667,7 +668,7 @@ Modal {
                         Text {
                             width: parent.width
                             topPadding: 6
-                            text: "Tác giả: " + (root.shownPreview && root.shownPreview.author ? root.shownPreview.author : "")
+                            text: TextWrap.keepDots("Tác giả: " + (root.shownPreview && root.shownPreview.author ? root.shownPreview.author : ""))
                             color: Theme.text2
                             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                             font.pixelSize: Theme.sizeBodySmall
@@ -852,7 +853,7 @@ Modal {
                                         spacing: 2
                                         Text {
                                             width: parent.width
-                                            text: noteBody.said.title + " - ABook không tự bỏ hay sửa chữ của truyện"
+                                            text: TextWrap.keepDots(noteBody.said.title + " - ABook không tự bỏ hay sửa chữ của truyện")
                                             color: Theme.text
                                             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                             font.pixelSize: Theme.sizeCaption
@@ -986,8 +987,8 @@ Modal {
                             width: parent.width
                             topPadding: 12 + 12
                             bottomPadding: 12
-                            text: root.existing ? "Cuốn này đã có trong thư viện: “" + root.existing.title + "”."
-                                : root.sameSource ? "Bạn đã thêm file này thành “" + root.sameSource.title + "” (" + root.sameSource.chapters + " chương)." : ""
+                            text: TextWrap.keepDots(root.existing ? "Cuốn này đã có trong thư viện: “" + root.existing.title + "”."
+                                : root.sameSource ? "Bạn đã thêm file này thành “" + root.sameSource.title + "” (" + root.sameSource.chapters + " chương)." : "")
                             color: Theme.accentText
                             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                             font.pixelSize: Theme.sizeBodySmall

@@ -1,6 +1,7 @@
 import QtQuick
 import ABook
 import "DevicesLogic.js" as Logic
+import "TextWrap.js" as TextWrap
 
 // Khung "Ghép thiết bị" của Cài đặt › Thiết bị (PairingPanel của desktop/PhoneSync.tsx): ba pha dùng chung một chỗ - mã 6 số đang hiện
 // (kèm hướng dẫn, đồng hồ đếm ngược, vân tay, "Huỷ mã"), "Mã bị khoá" sau 5 lần sai (+ "Tạo mã mới"), và nút "Ghép thiết bị mới".
@@ -44,7 +45,7 @@ Column {
                     Text {
                         id: instruction
                         width: parent.width
-                        text: "Trên máy kia: Cài đặt › Thiết bị › chọn " + (root.sync.name || "") + " › nhập mã."
+                        text: TextWrap.keepDots("Trên máy kia: Cài đặt › Thiết bị › chọn " + (root.sync.name || "") + " › nhập mã.")
                         color: Theme.text2
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                         font.pixelSize: 13

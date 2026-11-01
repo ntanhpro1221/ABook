@@ -18,8 +18,8 @@ Item {
     readonly property string line: {
         const dim = Qt.color(Theme.text2).toString()
         let html = Music.escapeHtml(item.title || "Bài nhạc")
-        if (item.creator) html += "<font color=\"" + dim + "\">&nbsp;· " + Music.escapeHtml(item.creator) + "</font>"
-        if (item.duration) html += "<font color=\"" + dim + "\">&nbsp;· " + Music.formatClock(item.duration) + "</font>"
+        if (item.creator) html += "<font color=\"" + dim + "\">&nbsp;·&nbsp;" + Music.escapeHtml(item.creator) + "</font>"
+        if (item.duration) html += "<font color=\"" + dim + "\">&nbsp;·&nbsp;" + Music.formatClock(item.duration) + "</font>"
         return html
     }
     implicitHeight: narrow ? words.height + 4 + buttons.height : Math.max(words.height, buttons.height)

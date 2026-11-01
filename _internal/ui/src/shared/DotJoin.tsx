@@ -13,8 +13,37 @@ export function DotJoin({ parts, className }: { parts: ReactNode[]; className?: 
   );
 }
 
-/** Chữ liền có sẵn dấu " · " (tên sách "Sương Mù · Tập 2" trong tiêu đề hộp thoại, thông báo): khoảng trắng hai bên dấu thành khoảng không
- * ngắt để dấu không đứng đầu hay cuối dòng. Chỉ đổi cách hiện, không đổi chữ của sách. */
-export function keepDots<T extends ReactNode>(text: T): T | string {
-  return typeof text === "string" ? text.replace(/ · /g, " · ") : text;
+// Khoảng trắng thường ngay trước hay ngay sau một dấu "·" có khoảng trắng (thường hay không ngắt) cả hai bên.
+const LOOSE_DOT = / (?=·[ \u00a0])|(?<=[ \u00a0]·) /g;
+// Chữ của sách ở mặt đọc giữ nguyên từng ký tự; ô nhập không có nút chữ để đổi.
+const UNTOUCHED = ".reading-surface, [contenteditable], textarea, script, style";
+
+function keepText(node: Node) {
+  const text = node.nodeValue;
+  if (!text || text.indexOf("·") < 0 || node.parentElement?.closest(UNTOUCHED)) return;
+  const kept = text.replace(LOOSE_DOT, "\u00a0");
+  if (kept !== text) node.nodeValue = kept;
+}
+
+function keepTree(node: Node) {
+  if (node.nodeType === Node.TEXT_NODE) return keepText(node);
+  if (node.nodeType !== Node.ELEMENT_NODE && node.nodeType !== Node.DOCUMENT_FRAGMENT_NODE) return;
+  const walker = node.ownerDocument!.createTreeWalker(node, NodeFilter.SHOW_TEXT);
+  for (let text = walker.nextNode(); text; text = walker.nextNode()) keepText(text);
+}
+
+/** Chữ liền có sẵn dấu " · " (tên sách "Thành Phố Sương Mù · Tập 2" ở thanh bên, tiêu đề hộp thoại, thông báo, chuỗi ghép bằng template):
+ * khoảng trắng hai bên dấu thành khoảng không ngắt, nên dấu không bao giờ đứng đầu hay cuối dòng (luật LINE BREAK của gallery_inspect).
+ * Một chỗ cho cả app như Android vẽ mọi chữ qua TextWrap.kt: mọi nút chữ có dấu, kể cả trong cổng hộp thoại / thông báo, được sửa khi vào
+ * trang hay đổi chữ. Cùng độ dài (khoảng trắng đổi lấy khoảng không ngắt), chỉ đổi cách hiện, không đổi chữ của sách. */
+export function installKeepDots(doc: Document = document): () => void {
+  const observer = new MutationObserver((records) => {
+    for (const record of records) {
+      if (record.type === "characterData") keepText(record.target);
+      else record.addedNodes.forEach(keepTree);
+    }
+  });
+  keepTree(doc.body);
+  observer.observe(doc.body, { subtree: true, childList: true, characterData: true });
+  return () => observer.disconnect();
 }

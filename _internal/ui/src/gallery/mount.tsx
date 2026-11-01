@@ -1,6 +1,7 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { installKeepDots } from "@/shared/DotJoin";
 import { installDetailsMotion } from "@/shared/motion";
 import { createAppQueryClient } from "@/shared/queryClient";
 import type { StateStory } from "./StateStories";
@@ -14,6 +15,7 @@ export async function mountApp(container: HTMLElement, showcase?: StateStory): P
   if (!motionInstalled) {
     motionInstalled = true;
     installDetailsMotion();
+    installKeepDots();
   }
   const client = createAppQueryClient();
   // Kịch bản lỗi chụp sau đủ lượt thử, không đứng ở khoảng nghỉ trước lần thử kế.

@@ -160,7 +160,7 @@ Item {
             compare(choices.length, 2)
             compare(choices[0].Accessible.name, "Lần nghe 1")
             verify(choices[0].Accessible.checked && !choices[1].Accessible.checked)
-            verify(all(choices[0], "recordChoiceLine")[0].text.indexOf("Chương 2\u00a0· 1:15\u00a0· nghe gần nhất ") === 0)
+            verify(all(choices[0], "recordChoiceLine")[0].text.indexOf("Chương 2\u00a0·\u00a01:15\u00a0·\u00a0nghe gần nhất ") === 0)
             compare(all(choices[1], "recordChoiceLine")[0].text, "chưa nghe")
             compare(findChild(scene(), "recordAction.create").text, "Hồ sơ mới")
             compare(findChild(scene(), "recordAction.rename").text, "Đổi tên hồ sơ này…")

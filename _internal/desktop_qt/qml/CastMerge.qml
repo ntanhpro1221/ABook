@@ -118,8 +118,8 @@ CastModal {
                                 width: parent.width - x - 8
                                 horizontalAlignment: Text.AlignRight
                                 text: Logic.voiceToUse(choice.modelData) + (choice.modelData.pendingVoice && choice.modelData.pendingVoice.preset ? " (chờ áp dụng)" : "")
-                                    + "\u00a0· " + Logic.formatNumber(choice.modelData.lines) + " câu"
-                                    + (root.twins[Logic.cleanName(choice.modelData.displayName).toLowerCase()] && choice.modelData.firstChapter ? "\u00a0· " + choice.modelData.firstChapter : "")
+                                    + "\u00a0·\u00a0" + Logic.formatNumber(choice.modelData.lines) + " câu"
+                                    + (root.twins[Logic.cleanName(choice.modelData.displayName).toLowerCase()] && choice.modelData.firstChapter ? "\u00a0·\u00a0" + choice.modelData.firstChapter : "")
                                 color: Theme.text3
                                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                 font.pixelSize: Theme.sizeCaption

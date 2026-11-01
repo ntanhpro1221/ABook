@@ -2,6 +2,7 @@ import QtQuick
 import ABook
 import "SizeFormat.js" as Size
 import "VoiceLogic.js" as VoiceLogic
+import "TextWrap.js" as TextWrap
 
 // Thẻ một mô-đun giọng trên máy trong Cài đặt › Giọng đọc (VieneuModuleCard.tsx: "Giọng VieNeu", "Giọng Supertonic"): chọn giọng muốn tải (có "Khuyên dùng"
 // theo máy), thấy đúng dung lượng còn thiếu, bấm mới tải; đang tải thì thanh tiến độ + "Huỷ" (phần đã tải giữ để làm tiếp); tải xong máy tự đo vài giây
@@ -113,7 +114,7 @@ Item {
         open: root.ready
         Text {
             width: parent.width
-            text: root.copy.title
+            text: TextWrap.keepDots(root.copy.title)
             color: Theme.text
             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
             font.pixelSize: Theme.sizeBodySmall

@@ -1,6 +1,7 @@
 import QtQuick
 import ABook
 import "PrecastLogic.js" as Precast
+import "TextWrap.js" as TextWrap
 
 Item {
     id: root
@@ -86,7 +87,7 @@ Item {
                 }
                 Column {
                     id: detail; x: Theme.s8 + 60; y: Theme.s8; width: parent.width - x - Theme.s8; spacing: Theme.s4
-                    Text { objectName: "sidebarTitle_" + entry.index; width: parent.width; text: row.modelData.title; wrapMode: Text.Wrap; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
+                    Text { objectName: "sidebarTitle_" + entry.index; width: parent.width; text: TextWrap.keepDots(row.modelData.title); wrapMode: Text.Wrap; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
                     Row {
                         width: parent.width; spacing: Theme.s8
                         Rectangle {

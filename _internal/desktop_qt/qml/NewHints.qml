@@ -2,6 +2,7 @@ import QtQuick
 import ABook
 import "NewProjectLogic.js" as Logic
 import "StudioLogic.js" as Studio
+import "TextWrap.js" as TextWrap
 
 // Lời nhắn dưới ô Tên sách của trình tạo (SourceStep): đang sửa thiết lập cuốn nào; truyện này đã có dự án; gợi ý tách một file cả truyện thành các chương;
 // trang phụ của file sách chưa tích. Máy chỉ ĐỀ XUẤT, không tự sửa nguồn (chủ sách 29-09). Mỗi khối mở / khép tại chỗ.
@@ -49,7 +50,7 @@ Column {
                     spacing: 8
                     Text {
                         width: Math.min(implicitWidth, parent.width)
-                        text: "“" + modelData.title + "”\u00a0· " + (modelData.shared === modelData.chapters ? "cả " + modelData.chapters + " chương" : "trùng " + modelData.shared + "/" + modelData.chapters + " chương") + "\u00a0· " + modelData.statusLabel
+                        text: TextWrap.keepDots("“" + modelData.title + "”\u00a0·\u00a0" + (modelData.shared === modelData.chapters ? "cả " + modelData.chapters + " chương" : "trùng " + modelData.shared + "/" + modelData.chapters + " chương") + "\u00a0·\u00a0" + modelData.statusLabel)
                         color: Theme.text
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                         font.pixelSize: Theme.sizeBodySmall

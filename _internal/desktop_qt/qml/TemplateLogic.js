@@ -54,7 +54,7 @@ function nameProblem(templates, raw, except) {
 function isFull(templates) { return templates.length >= MAX_TEMPLATES }
 function summaryOf(t) {
     return [t.narrator || "Giọng máy đề xuất", PROFILE_LABEL[t.profile], t.startNow ? "bắt đầu ngay" : "chờ bấm bắt đầu"]
-        .concat(t.precastWait ? ["chờ bạn duyệt trước khi thu"] : []).join("\u00a0· ")
+        .concat(t.precastWait ? ["chờ bạn duyệt trước khi thu"] : []).join("\u00a0·\u00a0")
 }
 
 /** Model của mẫu mà máy không còn: tên model, "" nếu dùng được. `available` = tên các model đang có (chưa biết thì không kết luận). */

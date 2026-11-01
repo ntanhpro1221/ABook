@@ -2,6 +2,7 @@ import QtQuick
 import ABook
 import "EditBookLogic.js" as Logic
 import "MyMusicText.js" as Music
+import "TextWrap.js" as TextWrap
 
 // "Đổi bài" của một đoạn nhạc (SwapTrack của listen/MyMusic.tsx): chọn một bài trong "Nhạc của tôi" thay bài người làm sách gắn. Mỗi lần mở
 // (`active`) hỏi lại `GET /api/books/<mã>/music/scenes/<khoá>/alternatives`. Đang tải: khung chờ; lỗi: câu + "Thử lại"; chưa có bài: một câu;
@@ -66,11 +67,11 @@ Column {
                     x: 12
                     y: 8
                     width: parent.width - 24 - pin.width - 12
-                    Text { width: parent.width; text: row.modelData.title; color: Theme.text; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeBodySmall }
+                    Text { width: parent.width; text: TextWrap.keepDots(row.modelData.title); color: Theme.text; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeBodySmall }
                     Text {
                         width: parent.width
                         visible: text !== ""
-                        text: [row.modelData.creator, row.modelData.duration ? Logic.formatClock(row.modelData.duration) : ""].filter(part => !!part).join("\u00a0· ")
+                        text: [row.modelData.creator, row.modelData.duration ? Logic.formatClock(row.modelData.duration) : ""].filter(part => !!part).join("\u00a0·\u00a0")
                         color: Theme.text2
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                         font.pixelSize: Theme.sizeCaption

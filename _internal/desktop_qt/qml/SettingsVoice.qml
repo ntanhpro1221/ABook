@@ -187,8 +187,8 @@ Column {
                                 width: parent.width
                                 storageKey: "voice.provider." + groupBlock.modelData.provider
                                 title: groupBlock.modelData.title
-                                summary: (groupBlock.modelData.detail ? groupBlock.modelData.detail + "\u00a0· " : "") + groupBlock.list.length + " giọng"
-                                         + (root.current && root.current.provider === groupBlock.modelData.provider ? "\u00a0· đang dùng" : "")
+                                summary: (groupBlock.modelData.detail ? groupBlock.modelData.detail + "\u00a0·\u00a0" : "") + groupBlock.list.length + " giọng"
+                                         + (root.current && root.current.provider === groupBlock.modelData.provider ? "\u00a0·\u00a0đang dùng" : "")
                                 // Chưa có giọng nào của nhóm (máy chưa cài giọng tiếng Việt của hệ điều hành)
                                 VoiceNote { width: parent.width; gap: 0; text: groupBlock.list.length === 0 ? VoiceLogic.DEVICE_HINT : ""; px: 13 }
                                 Column {

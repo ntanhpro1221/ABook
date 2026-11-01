@@ -3,6 +3,7 @@ import ABook
 import "NameLogic.js" as N
 import "StudioLogic.js" as Studio
 import "WorkLogic.js" as W
+import "TextWrap.js" as TextWrap
 
 // Hộp thư thay đổi từ điện thoại (PhoneEdits.tsx, docs/EDITING.md; webui/edits_inbox.py): điện thoại đã ghép gửi phần sửa của cuốn về máy tính. Tên sách, bìa, tên nhân vật, tên chương
 // và nhạc áp NGAY (không qua đây); còn những việc cần Studio - đổi giọng, cách đọc, người nói, thu lại - nằm đây chờ chủ máy "Áp dụng" hay "Bỏ qua" từng việc, từng thiết bị.
@@ -126,7 +127,7 @@ Item {
                     height: allApply.height
                     verticalAlignment: Text.AlignVCenter
                     textFormat: Text.RichText
-                    text: "<span style=\"font-weight:500\">" + W.esc(block.modelData.name) + "</span><span style=\"color:" + W.cssColor(Theme.text3) + "\">&nbsp;· gửi " + W.esc(Studio.formatWhen(block.modelData.at)) + "</span>"
+                    text: "<span style=\"font-weight:500\">" + W.esc(TextWrap.keepDots(block.modelData.name)) + "</span><span style=\"color:" + W.cssColor(Theme.text3) + "\">&nbsp;·&nbsp;gửi " + W.esc(Studio.formatWhen(block.modelData.at)) + "</span>"
                     color: Theme.text
                     wrapMode: Text.Wrap
                     font.pixelSize: Theme.sizeBodySmall
@@ -170,7 +171,7 @@ Item {
                             y: 8
                             width: parent.width - 28 - 72
                             textFormat: Text.RichText
-                            text: W.esc(row.modelData.label || "") + (row.modelData.chapter ? "<span style=\"color:" + W.cssColor(Theme.text3) + "\">&nbsp;· " + W.esc(row.modelData.chapter) + "</span>" : "")
+                            text: W.esc(row.modelData.label || "") + (row.modelData.chapter ? "<span style=\"color:" + W.cssColor(Theme.text3) + "\">&nbsp;·&nbsp;" + W.esc(row.modelData.chapter) + "</span>" : "")
                                 + (row.modelData.conflict ? "<br><span style=\"color:" + W.cssColor(Theme.warning) + "; font-size:12px\">" + W.esc(row.modelData.conflict) + "</span>" : "")
                             color: Theme.text
                             wrapMode: Text.Wrap
@@ -223,7 +224,7 @@ Item {
                     width: Math.max(160, parent.width - restoreAll.width - 8)
                     height: restoreAll.height
                     verticalAlignment: Text.AlignVCenter
-                    text: block.modelData.name
+                    text: TextWrap.keepDots(block.modelData.name)
                     color: Theme.text
                     wrapMode: Text.Wrap
                     font.pixelSize: Theme.sizeBodySmall
@@ -256,7 +257,7 @@ Item {
                             y: 8
                             width: parent.width - 40
                             textFormat: Text.RichText
-                            text: W.esc(row.modelData.label || "") + (row.modelData.chapter ? "<span style=\"color:" + W.cssColor(Theme.text3) + "\">&nbsp;· " + W.esc(row.modelData.chapter) + "</span>" : "")
+                            text: W.esc(row.modelData.label || "") + (row.modelData.chapter ? "<span style=\"color:" + W.cssColor(Theme.text3) + "\">&nbsp;·&nbsp;" + W.esc(row.modelData.chapter) + "</span>" : "")
                             color: Theme.text
                             wrapMode: Text.Wrap
                             font.pixelSize: Theme.sizeBodySmall

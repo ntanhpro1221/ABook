@@ -299,7 +299,7 @@ void Music::updateCredit(const QString &link) {
             if (!part.isEmpty())
                 label << part;
         if (!label.isEmpty()) {
-            credit = {{QStringLiteral("label"), label.join(QStringLiteral("\u00a0· "))},
+            credit = {{QStringLiteral("label"), label.join(QStringLiteral("\u00a0·\u00a0"))},
                       {QStringLiteral("text"), MusicText::creditText(c)},
                       {QStringLiteral("license"), c.license.isEmpty() ? QString() : MusicText::licenseLabel(c.license, c.licenseUrl)},
                       {QStringLiteral("licenseUrl"), c.licenseUrl},
