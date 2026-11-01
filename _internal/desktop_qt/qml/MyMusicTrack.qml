@@ -2,8 +2,8 @@ import QtQuick
 import ABook
 import "MyMusicText.js" as Music
 
-// Một bài trong "Nhạc của tôi" (hàng của MyMusicSection + AutoPickNote của bản web): nốt nhạc, "tên · nghệ sĩ · m:ss", dòng tự chọn (nhãn ngắn + công tắc
-// "Tự chọn"), và
+// Một bài trong "Nhạc của tôi" (hàng của MyMusicSection + AutoPickNote của bản web): nốt nhạc, "tên · nghệ sĩ · m:ss", dòng tự chọn (AutoPickLine: công tắc
+// "Tự chọn" rồi nhãn ngắn), và
 // "Xoá" -> "Xoá bài" / "Giữ lại" (hai bước). Hàng vào / ra bằng chiều cao (useListPresence): `leaving` khép hàng lại trước khi gỡ.
 Collapse {
     id: root
@@ -25,7 +25,6 @@ Collapse {
     open: entered && !leaving
     Component.onCompleted: Later.call(root, function() { root.entered = true })
 
-    readonly property string note: Music.trackNote(track)
     readonly property string line: {
         const dim = Qt.color(Theme.text2).toString()
         let html = Music.escapeHtml(track.title || "")
@@ -57,31 +56,12 @@ Collapse {
                     font.pixelSize: Theme.sizeBodySmall
                     font.features: {"tnum": 1}
                 }
-                Flow {
+                AutoPickLine {
                     width: parent.width
-                    topPadding: 2
-                    spacing: 8
-                    Text { id: noteText; visible: text !== ""; text: root.note; color: Theme.text2; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; width: Math.min(implicitWidth, parent.width); font.pixelSize: Theme.sizeCaption; height: 24; verticalAlignment: Text.AlignVCenter }
-                    Row {
-                        visible: root.canImport     // tự chọn là việc của máy chủ sách (AutoPickNote canOverride)
-                        spacing: 8
-                        Switch {
-                            id: autoSwitch
-                            objectName: "autoPick"
-                            label: Music.AUTO_PICK_LABEL + ": " + (root.track.title || "")
-                            checked: Music.autoOn(root.track)
-                            enabled: !root.picking
-                            onToggled: root.pick(Music.autoNext(root.track))
-                        }
-                        Text {
-                            text: Music.AUTO_PICK_LABEL
-                            color: Theme.text2
-                            font.pixelSize: Theme.sizeCaption
-                            height: 24
-                            verticalAlignment: Text.AlignVCenter
-                            TapHandler { enabled: autoSwitch.enabled; onTapped: autoSwitch.clicked() }
-                        }
-                    }
+                    track: root.track
+                    canPick: root.canImport
+                    busy: root.picking
+                    onPick: next => root.pick(next)
                 }
             }
             // Nút bên phải: "Xoá" co lại về 0 trong khi "Xoá bài" + "Giữ lại" mở ra (chiều ngang tween)

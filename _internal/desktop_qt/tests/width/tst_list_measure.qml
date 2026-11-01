@@ -51,8 +51,11 @@ Item {
             DesktopApi.responses = {
                 "/api/readings": {status: 200, data: {entries: [{surface: "Nasdell", spokenForm: "hên-cơ", from: "Rokujouma"},
                     {surface: "Aiya", spokenForm: "a-i-a"}]}},
+                // ba nhãn khác bề ngang ("", "Có lời", "Chưa phân tích"): công tắc Tự chọn phải cùng cột ở cả ba hàng
                 "/api/music/local": {status: 200, data: {tracks: [{link: "local:" + "a1".repeat(20), title: "Bản nhạc bên sông",
-                    creator: "Người kể chuyện", duration: 195, analysed: true}], module: null}}
+                    creator: "Người kể chuyện", duration: 195, analysed: true},
+                    {link: "local:" + "b2".repeat(20), title: "Bài hát có lời", creator: "Ca sĩ", duration: 201, analysed: true, vocalsLikely: true},
+                    {link: "local:" + "c3".repeat(20), title: "Bài mới thêm", duration: 88, analysed: false}], module: null}}
             }
         }
         function cleanup() { Theme.mode = "auto"; Theme.reduceMotion = false; Nav.layers = [] }
@@ -67,6 +70,33 @@ Item {
                 verify(item.paintedHeight <= item.height + 1, "clipped text height: " + item.text)
             }
             for (const child of item.children || []) check(child)
+        }
+        // Phần tử lặp ở các hàng anh em của một danh sách (cùng objectName: công tắc, nút, nhãn) phải đứng cùng một cột - một nhãn dài ngắn
+        // khác nhau đứng trước đẩy mỗi hàng một x (01-11: "Tự chọn" ở 444/486/541 trên ảnh 1440).
+        function sameColumn(list) {
+            const groups = {}
+            function walk(item) {
+                if (!item.visible || item.opacity === 0) return
+                if (item !== list && item.objectName) (groups[item.objectName] = groups[item.objectName] || []).push(item.mapToItem(list, 0, 0).x)
+                for (const child of item.children || []) walk(child)
+            }
+            walk(list)
+            let compared = 0
+            for (const name in groups) {
+                const xs = groups[name]
+                if (xs.length < 2) continue
+                ++compared
+                verify(Math.max(...xs) - Math.min(...xs) <= 0.5, list.objectName + ": '" + name + "' của các hàng lệch cột: " + xs.map(x => Math.round(x)).join("/"))
+            }
+            return compared
+        }
+        function findNamed(item, name) {
+            if (item.objectName === name) return item
+            for (const child of item.children || []) {
+                const found = findNamed(child, name)
+                if (found) return found
+            }
+            return null
         }
         function test_rows_data() {
             let rows = []
@@ -83,6 +113,17 @@ Item {
             verify(page !== null)
             VisualReady.render(this, host.Window.window, page, qtVisualReady)
             check(page)
+            sameColumn(d.scene === "chapter_list" ? page.contentItem : page) // mọi cảnh: phần tử lặp ở các hàng anh em cùng cột
+            if (d.scene === "music_lists")
+                for (const name of ["musicTrackList", "bookMusicList"]) {
+                    const list = findNamed(page, name)
+                    verify(list !== null, name)
+                    verify(sameColumn(list) > 0, name + ": không có phần tử lặp nào để so")
+                    let switches = 0
+                    const count = item => { if (item.objectName === "autoPick" && item.visible) ++switches; for (const c of item.children || []) count(c) }
+                    count(list)
+                    compare(switches, 3, name + ": ba hàng đều có công tắc")
+                }
             if (d.scene === "chapter_list") {
                 verify(page.count > 0)
                 for (const row of page.contentItem.children)
