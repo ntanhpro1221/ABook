@@ -1670,7 +1670,13 @@ object MusicBed {
             val iterator = fading.iterator()
             while (iterator.hasNext()) {
                 val bed = iterator.next()
-                if (holdOld && bed.player.isPlaying) {
+                // Bài cũ stream sắp hết phần đã tải (giữ chỗ quá chỗ thôi kêu của nó): thôi giữ, mờ hết trong underrunFadeMs - mờ thường dài hơn phần còn
+                // lại thì vẫn im phụt giữa chừng.
+                val player = bed.player
+                val low = bed.streamed && player.isPlaying && !StreamPace.whole(player.bufferedPosition, player.duration) &&
+                    player.bufferedPosition - player.currentPosition < MusicCues.mix.underrunLowMs
+                if (low) bed.fadeStep = maxOf(bed.fadeStep, maxOf(bed.volume, 0.01f) * STEP_MS / MusicCues.mix.underrunFadeMs)
+                if (holdOld && !low && bed.player.isPlaying) {
                     busy = true
                     continue
                 }

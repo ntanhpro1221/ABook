@@ -475,6 +475,11 @@ private slots:
         out->pos += 120;
         rig.bed->sync(130, true); // cùng bài ở đoạn kề: chỗ thôi kêu vẫn là hết mốc thứ hai
         QCOMPARE(out->until - out->pos, 240 + FADE_SECONDS - 130);
+        // Sang bài b: bài cũ có thể còn giữ chỗ quá chỗ thôi kêu của nó, nên đang tải dở thì phải tải kịp tới hết bài (keepsUp), không thì mờ ra.
+        out->pos += 110;
+        rig.bed->sync(240, true);
+        QVERIFY(out);
+        QVERIFY(std::isinf(out->until));
     }
 
     void fadedOutVoicesAreReleased() {

@@ -477,6 +477,35 @@ class MusicBedIntegrationTest {
         assertTrue("đã vào thì không hụt trong phần mốc dùng ($after)", after.none { it.first == "đứng" })
     }
 
+    @Test fun aHeldStreamedSongAboutToRunOutFadesOutInsteadOfStoppingAtFullLevel() {
+        // Web MSE 02-11 (11 KB/s): mốc mới chờ cổng nên bài cũ giữ chỗ quá chỗ thôi kêu của nó; nó cũng đang tải dở rồi đứt - đệm cạn ở đủ mức, 8 lần cụt.
+        // Bài cũ sắp hết đệm (dưới underrunLowMs) thì thôi giữ, mờ hết trong underrunFadeMs trước khi cạn. Như musicBed.ts / musicbed.cpp.
+        val old = FakePlayer().also { it.state = Player.STATE_READY; it.playWhenReady = true; it.position = 100_000; it.bufferedPosition = 107_000 }
+        val oldBed = streamedBed(old)
+        setLogical(oldBed, 0.1f)
+        old.volume = 0.1f
+        oldBed.javaClass.getDeclaredField("fadeStep").also { it.isAccessible = true }.setFloat(oldBed, 0.1f * 50 / MusicCues.mix.fadeMs)
+        @Suppress("UNCHECKED_CAST") (field("fading").get(MusicBed) as MutableList<Any>).add(oldBed)
+        val music = FakePlayer().also { it.state = Player.STATE_BUFFERING; it.playWhenReady = true; it.position = 0; it.bufferedPosition = 3_000 }
+        field("current").set(MusicBed, streamedBed(music))
+        field("playing").setBoolean(MusicBed, true)
+        invoke("startFade")
+        var dry: Float? = null
+        var held = -1f
+        repeat(240) { step ->
+            Handler.advance(50)
+            music.bufferedPosition += 5 // 0,1x: bài mới chờ cổng suốt lượt
+            if (old.released == 0) {
+                if (old.bufferedPosition - old.position >= 50) old.position += 50 else if (dry == null) dry = old.volume // bài cũ đứt tải: đệm cạn
+            }
+            if (step == 60) held = old.volume // còn ~4 s phía trước
+        }
+        assertEquals("còn đệm: vẫn giữ chỗ", 0.1f, held, 1e-6f)
+        assertTrue("mờ hết trước khi đệm cạn (âm lượng lúc cạn: $dry)", dry == null || dry!! < 0.001f)
+        assertEquals("bài cũ mờ hết thì nhả", 1, old.released)
+        assertEquals("bài mới vẫn chờ cổng", 0f, music.volume, 0f)
+    }
+
     @Test fun streamPaceFoldsTheFirstBurstAndNeedsASecondOfMeasurement() {
         val pace = StreamPace()
         pace.add(0, 0)
