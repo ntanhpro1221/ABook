@@ -320,15 +320,21 @@ fun SortMenu(ui: LibraryUiState, anchor: IntOffset, backEnabled: () -> Boolean =
 
 private val MenuWidth = 220.dp
 
-/** Chiều cao hàng bộ lọc + sắp xếp + tìm, và tiện ích gom lại: hàng bộ lọc chiếm phần còn lại. */
+/**
+ * Dưới tên trang: một hàng "N cuốn" + Xếp theo + Tìm (ô Tìm nở ra phủ cả hàng này), rồi hàng bộ lọc CHIẾM CẢ bề ngang. Trước đây Xếp theo và Tìm nằm cùng hàng bộ lọc nên ở 360 dp
+ * chỉ còn 232 dp cho bốn chữ (cần ~260): "Xong" bị cuộn khuất, chỉ còn một nét mờ.
+ */
 @Composable
-fun FilterBar(ui: LibraryUiState, onSortCoordinates: (LayoutCoordinates) -> Unit, modifier: Modifier = Modifier) {
-    Box(modifier.fillMaxWidth().height(Dim.s48)) {
-        Row(Modifier.fillMaxSize()) {
-            FilterRow(ui, Modifier.weight(1f))
-            SortButton(ui, onSortCoordinates)
-            Spacer(Modifier.width(Dim.touch))
+fun FilterBar(ui: LibraryUiState, count: Int, onSortCoordinates: (LayoutCoordinates) -> Unit, modifier: Modifier = Modifier) {
+    Column(modifier.fillMaxWidth()) {
+        Box(Modifier.fillMaxWidth().height(Dim.s48)) {
+            BasicText("$count cuốn", style = Abook.type.bodySmall, modifier = Modifier.align(Alignment.CenterStart).testTag("library_count"))
+            Row(Modifier.align(Alignment.CenterEnd)) {
+                SortButton(ui, onSortCoordinates)
+                Spacer(Modifier.width(Dim.touch))
+            }
+            SearchBox(ui, Modifier.align(Alignment.CenterEnd))
         }
-        SearchBox(ui, Modifier.align(Alignment.CenterEnd))
+        FilterRow(ui, Modifier.fillMaxWidth())
     }
 }

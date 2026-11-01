@@ -304,20 +304,20 @@ fun AppShell(
                                 is Destination.Book -> BookScreen(
                                     destination.book, library, playerState, player.clock, covers, books, shell.sheets, bookActions, music = settings.music, prepare = settings.prepare,
                                 )
-                                is Destination.Export -> if (exports != null) ExportScreen(destination.book, exports, nav::pop, destination.format)
+                                is Destination.Export -> if (exports != null) ExportScreen(destination.book, exports, nav::pop, destination.format) else Unavailable(destination, nav::pop)
                                 Destination.AddBook -> if (imports != null) AddBookRoute(imports, nav::pop,
                                     { nav.push(Destination.ImportReview(it)) }, { id ->
                                         (library as? LibraryState.Ready)?.books?.firstOrNull { it.id == id }?.let { nav.push(Destination.Book(it)) }
-                                    }, autoPick, active = nav.stack.top?.destination == Destination.AddBook && !nav.progress.isRunning)
-                                is Destination.ImportReview -> if (imports != null) ImportReviewRoute(imports, destination.itemId, nav::pop) { nav.push(Destination.ImportChapter(destination.itemId, it)) }
-                                is Destination.ImportChapter -> if (imports != null) ImportChapterRoute(imports, destination.index, nav::pop)
+                                    }, autoPick, active = nav.stack.top?.destination == Destination.AddBook && !nav.progress.isRunning) else Unavailable(destination, nav::pop)
+                                is Destination.ImportReview -> if (imports != null) ImportReviewRoute(imports, destination.itemId, nav::pop) { nav.push(Destination.ImportChapter(destination.itemId, it)) } else Unavailable(destination, nav::pop)
+                                is Destination.ImportChapter -> if (imports != null) ImportChapterRoute(imports, destination.index, nav::pop) else Unavailable(destination, nav::pop)
                                 is Destination.EditBook -> if (editors != null) EditBookRoute(editors.session(destination.book, demo), covers, shell.sheets, nav::pop,
                                     { nav.push(Destination.CropCover(destination.book, it)) }, { nav.push(Destination.EditChapter(destination.book, it)) },
-                                    findCover = { nav.push(Destination.CoverSearch(destination.book)) })
+                                    findCover = { nav.push(Destination.CoverSearch(destination.book)) }) else Unavailable(destination, nav::pop)
                                 is Destination.CoverSearch -> if (editors != null) CoverSearchRoute(editors.session(destination.book, demo), destination.book.title, nav::pop,
-                                    { nav.push(Destination.CropCover(destination.book, it)) }, active = nav.stack.top?.destination == destination && !nav.progress.isRunning)
-                                is Destination.EditChapter -> if (editors != null) EditChapterRoute(editors.session(destination.book, demo), destination.chapterId, nav::pop)
-                                is Destination.CropCover -> if (editors != null) CoverCropRoute(editors.session(destination.book, demo), destination.uri, nav::pop)
+                                    { nav.push(Destination.CropCover(destination.book, it)) }, active = nav.stack.top?.destination == destination && !nav.progress.isRunning) else Unavailable(destination, nav::pop)
+                                is Destination.EditChapter -> if (editors != null) EditChapterRoute(editors.session(destination.book, demo), destination.chapterId, nav::pop) else Unavailable(destination, nav::pop)
+                                is Destination.CropCover -> if (editors != null) CoverCropRoute(editors.session(destination.book, demo), destination.uri, nav::pop) else Unavailable(destination, nav::pop)
                                 is Destination.Settings -> SettingsGroupScreen(
                                     destination.group, settings, shell.sheets, onBack = nav::pop, openDevices = { nav.push(Destination.Devices(it)) },
                                     openVoice = { nav.push(Destination.Voice(it)) },
@@ -328,27 +328,27 @@ fun AppShell(
                                         DevicesPage.Share -> ShareScreen(devices, shell.sheets, nav::pop)
                                         DevicesPage.Storage -> StorageScreen(devices, shell.sheets, nav::pop)
                                     }
-                                }
+                                } ?: Unavailable(destination, nav::pop)
                                 is Destination.Voice -> settings.voice?.let { voice ->
                                     when (destination.page) {
                                         VoicePage.Keys -> KeysScreen(voice, shell.sheets, nav::pop)
                                         VoicePage.Music -> MyMusicScreen(voice, shell.sheets, nav::pop)
                                     }
-                                }
+                                } ?: Unavailable(destination, nav::pop)
                                 is Destination.Studio -> if (studio != null) StudioHomeRoute(studio, destination.computer, nav::pop,
                                     { nav.push(Destination.StudioProject(destination.computer, it)) },
                                     active = nav.stack.top?.destination == destination && !nav.progress.isRunning,
-                                    onNew = { nav.push(Destination.StudioNew(destination.computer)) })
+                                    onNew = { nav.push(Destination.StudioNew(destination.computer)) }) else Unavailable(destination, nav::pop)
                                 is Destination.StudioNew -> if (studio != null) StudioNewRoute(studio, destination.computer, nav::pop,
                                     { nav.replaceTop(Destination.StudioProject(destination.computer, it)) },
-                                    active = nav.stack.top?.destination == destination && !nav.progress.isRunning)
+                                    active = nav.stack.top?.destination == destination && !nav.progress.isRunning) else Unavailable(destination, nav::pop)
                                 is Destination.StudioProject -> if (studio != null) StudioProjectRoute(studio, destination.computer, destination.book, destination.tab,
                                     shell.sheets, nav::pop, listen = { nav.popToRoot(); shell.tabs.select(Tab.Library) },
                                     active = nav.stack.top?.destination == destination && !nav.progress.isRunning,
-                                    openSub = { nav.push(Destination.StudioSub(destination.computer, destination.book, it)) })
+                                    openSub = { nav.push(Destination.StudioSub(destination.computer, destination.book, it)) }) else Unavailable(destination, nav::pop)
                                 is Destination.StudioSub -> if (studio != null) StudioSubRoute(studio, destination.computer, destination.book, destination.kind,
                                     shell.sheets, nav::pop, openSub = { nav.push(Destination.StudioSub(destination.computer, destination.book, it)) },
-                                    active = nav.stack.top?.destination == destination && !nav.progress.isRunning)
+                                    active = nav.stack.top?.destination == destination && !nav.progress.isRunning) else Unavailable(destination, nav::pop)
                             }
                         },
                     )

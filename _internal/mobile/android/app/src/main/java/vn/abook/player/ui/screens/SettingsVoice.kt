@@ -128,7 +128,7 @@ fun VoiceSettings(env: SettingsEnv, sheets: SheetHost, openVoice: (VoicePage) ->
     val bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     val scroll = rememberLazyListState()
     LazyColumn(
-        modifier.fillMaxSize().testTag(SettingsGroup.Voice.screenTag).fadeEdges(scroll),
+        modifier.fillMaxSize().testTag(SettingsGroup.Voice.screenTag).fadeEdges(scroll, startInset = top),
         state = scroll,
         contentPadding = PaddingValues(top = top, start = Dim.margin, end = Dim.margin, bottom = bottom + Dim.s48),
     ) {

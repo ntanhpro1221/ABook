@@ -34,7 +34,7 @@ import androidx.compose.ui.unit.dp
 import vn.abook.player.StudioError
 import vn.abook.player.ui.addbook.BookForm
 import vn.abook.player.ui.components.CheckIcon
-import vn.abook.player.ui.components.ChoiceRow
+import vn.abook.player.ui.components.ScrollingTabs
 import vn.abook.player.ui.components.ClockLabel
 import vn.abook.player.ui.components.ConfirmPage
 import vn.abook.player.ui.components.DangerButton
@@ -164,8 +164,7 @@ private fun ProjectBody(page: StudioPage, kind: PrimaryKind?, state: StudioProje
         item("progress", "progress") { ProgressBlock(book) }
         item("tabs", "tabs") {
             Column(Modifier.fillMaxWidth().padding(top = Dim.s24)) {
-                ChoiceRow(StudioTab.entries, state.tab, { tab, _ -> state.tab = tab }, tag = "studio_tab")
-                RowLine()
+                ScrollingTabs(StudioTab.entries, state.tab, { state.tab = it }, label = { it.label }, tag = { "studio_tab_${it.key}" }, rowTag = "studio_tabs")
             }
         }
         item("undo", "undo") { DecisionStrip(state.decisions) }

@@ -52,7 +52,7 @@ fun MyMusicScreen(voice: VoiceState, sheets: SheetHost, onBack: () -> Unit, modi
     val colors = Abook.colors
     val list = rememberLazyListState()
     LazyColumn(
-        modifier.fillMaxSize().testTag("music_screen").fadeEdges(list),
+        modifier.fillMaxSize().testTag("music_screen").fadeEdges(list, startInset = top),
         state = list,
         contentPadding = PaddingValues(top = top, start = Dim.margin, end = Dim.margin, bottom = bottom + Dim.s48),
     ) {

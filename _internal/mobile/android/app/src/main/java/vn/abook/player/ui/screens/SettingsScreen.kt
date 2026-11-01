@@ -88,7 +88,7 @@ fun SettingsScreen(env: SettingsEnv, onOpen: (SettingsGroup) -> Unit, modifier: 
     val top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val scroll = rememberScrollState()
     Column(
-        modifier.fillMaxSize().testTag("settings_screen").fadeEdges(scroll).verticalScroll(scroll)
+        modifier.fillMaxSize().testTag("settings_screen").fadeEdges(scroll, startInset = top).verticalScroll(scroll)
             .padding(top = top, start = Dim.margin, end = Dim.margin, bottom = Dim.s24),
     ) {
         ScreenHeader("Cài đặt")

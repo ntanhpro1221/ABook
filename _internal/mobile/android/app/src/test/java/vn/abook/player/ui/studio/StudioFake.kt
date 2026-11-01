@@ -353,7 +353,7 @@ class FakeStudioSource(
     var createError: StudioError? = null
     val creates = ArrayList<JSONObject>()
 
-    override suspend fun uploadSource(computer: String, folder: String, name: String, input: () -> java.io.InputStream): UploadedSource {
+    override suspend fun uploadSource(computer: String, folder: String, name: String, size: Long, input: () -> java.io.InputStream): UploadedSource {
         val bytes = input().use { it.readBytes() }
         uploadGate?.await()
         uploadError?.let { throw it }

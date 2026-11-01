@@ -20,7 +20,7 @@ class StudioApi(private val transport: Transport, private val slow: Transport, p
     constructor(context: Context, computer: String) : this(
         Transport { method, path, body -> real(context, computer, method, path, body) },
         Transport { method, path, body -> real(context, computer, method, path, body) },
-        Uploader { path, write -> upload(context, computer, path, write) },
+        Uploader { path, body -> upload(context, computer, path, body) },
     )
 
     /** Một yêu cầu đã xong: trả nguyên văn lời đáp JSON (đối tượng hay mảng), hay ném lỗi của [SyncLink.request]. */
@@ -30,7 +30,7 @@ class StudioApi(private val transport: Transport, private val slow: Transport, p
 
     /** Gửi một thân JSON dài ghi thẳng ra kết nối (nguồn sách): máy tính từ chối vì quá lớn thì [StudioError.TooBig]. */
     fun interface Uploader {
-        fun call(path: String, write: (java.io.OutputStream) -> Unit): String
+        fun call(path: String, body: StreamBody): String
     }
 
     suspend fun getObject(path: String): JSONObject = call("GET", path, null) as? JSONObject ?: throw malformed()
@@ -50,9 +50,9 @@ class StudioApi(private val transport: Transport, private val slow: Transport, p
     suspend fun delete(path: String): JSONObject = call("DELETE", path, null) as? JSONObject ?: throw malformed()
 
     /** `POST` với thân do `write` ghi ra từng khúc; không khúc nào ghi được trong 30 giây (hay lời đáp im 30 giây) thì báo hết hạn, không gửi lại. */
-    suspend fun postStream(path: String, write: (java.io.OutputStream) -> Unit): JSONObject = withContext(Dispatchers.IO) {
+    suspend fun postStream(path: String, body: StreamBody): JSONObject = withContext(Dispatchers.IO) {
         val text = try {
-            uploader.call(path, write)
+            uploader.call(path, body)
         } catch (error: Throwable) {
             throw StudioErrors.of(error)
         }
@@ -85,9 +85,9 @@ class StudioApi(private val transport: Transport, private val slow: Transport, p
             return SyncLink.request(context, method, path, body, auth = false, root = link.base, token = link.token, connectTimeoutMs = 3000)
         }
 
-        fun upload(context: Context, computer: String, path: String, write: (java.io.OutputStream) -> Unit): String {
+        fun upload(context: Context, computer: String, path: String, body: StreamBody): String {
             val link = StudioLink.link(context, computer) ?: throw StudioError.Unauthorized()
-            return SyncLink.request(context, "POST", path, null, auth = false, root = link.base, token = link.token, connectTimeoutMs = 3000, stream = write)
+            return SyncLink.request(context, "POST", path, null, auth = false, root = link.base, token = link.token, connectTimeoutMs = 3000, stream = body)
         }
     }
 }
