@@ -177,6 +177,19 @@ class SceneBedTest {
     }
 
     @Test
+    fun the_same_cues_arriving_again_mid_paragraph_keep_music_from_the_chapter_start_but_new_ones_wait_for_the_next_paragraph() {
+        val clock = timing(0.0, 5.0, 12.0, 20.0, 31.0, total = 40.0)
+        val bed = SceneBed { clock }
+        bed.arrive(arrival(), 0.0) // mốc chương kế đã đọc sẵn, đặt lúc sang chương
+        bed.arrive(arrival(), 14.0) // lời hỏi lúc sang chương về muộn, cùng mốc ấy
+        assertEquals("cùng mốc: nhạc vẫn từ đầu chương", 0.0, bed.cues.first().start, 1e-9)
+        assertEquals(a, bed.cues.first().track)
+        val other = raw().map { it.copy(start = it.start + 1.0) }
+        bed.arrive(arrival(cues = other), 14.0)
+        assertEquals("mốc khác về giữa đoạn: chờ đoạn kế như thường", 20.0, bed.cues.first().start, 1e-9)
+    }
+
+    @Test
     fun cues_that_arrive_before_the_chapter_has_a_clock_are_placed_when_it_appears() {
         var clock: SceneAnchor.Timing? = null
         val bed = SceneBed { clock }

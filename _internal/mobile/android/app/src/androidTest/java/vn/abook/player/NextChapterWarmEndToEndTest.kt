@@ -356,6 +356,8 @@ class NextChapterWarmEndToEndTest {
                 val fastEnough = warmSize != null && partAt != null && cachedAt != null && warmSize * 1000.0 / (cachedAt!! - partAt!!) * (partLeft!! - 5) >= warmSize
                 if (fastEnough || kbps != null) assertTrue("(a) bài chương 2 không có trên máy trước ranh chương (nguồn ${kbps ?: "đủ nhanh"} KB/s)", before)
                 assertTrue("(c) trình phát không giật trong lúc tải sẵn", during == 0)
+                // Bài đã nằm trên máy và mốc chương 2 đã đọc sẵn (MusicBed.peekNextScene): nhạc vào ngay từ câu đầu, không đợi lời hỏi lúc sang chương rồi câu kế.
+                if (before) assertTrue("(b) nhạc chương 2 phải vào trong ${MIX_WITHIN_MS / 1000} s đầu chương", mixAt != null && mixAt!! - boundaryAt!! <= MIX_WITHIN_MS)
             } else {
                 assertFalse("mạng tính phí: không được tải sẵn trước ranh chương", before)
                 assertTrue("mạng tính phí: không được bắt đầu tải trước ranh chương", partAt == null || partAt!! >= boundaryAt!!)
@@ -376,5 +378,7 @@ class NextChapterWarmEndToEndTest {
         const val AFTER_BOUNDARY_MS = 120_000L
         /** Tải sẵn phải bắt đầu trong chừng này giây kể từ lúc phát (mốc chương kế đã dựng sẵn trước khi tua; một lần hỏi lại 15 s là cùng). */
         const val WARM_START_SECONDS = 20
+        /** (b) khi bài chương 2 đã có trước ranh chương: nhạc chương 2 chạy trong chừng này (đo 01-11 trước khi đọc sẵn mốc: 0,7 s khi nghe 150 s, 11 s khi nghe 300 s). */
+        const val MIX_WITHIN_MS = 2_000L
     }
 }

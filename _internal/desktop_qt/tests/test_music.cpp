@@ -878,6 +878,31 @@ private slots:
         QVERIFY(!rig.music->hasMusic());
     }
 
+    void theNextChapterOpensWithTheCuesAskedAheadWithoutWaitingForItsAnswer() {
+        // Mốc chương 2 đã hỏi sẵn (NextChapterWarm): sang chương 2 thì bài của nó vào ngay dù lời hỏi lúc sang chương còn treo; lời ấy về
+        // với cùng bài thì bài chơi tiếp, không mở phần tử mới.
+        BookRig rig;
+        rig.player->open(QStringLiteral("a"), -1, -1, true);
+        QCOMPARE(rig.warmed(), QStringList({QStringLiteral("https://x/2")}));
+        rig.net.hold = true;
+        rig.player->next();
+        QCOMPARE(rig.player->chapterId(), 2);
+        QCOMPARE(rig.music->bed()->activeLink(), QStringLiteral("https://x/2"));
+        QCOMPARE(rig.music->credit().value(QStringLiteral("label")).toString(), QStringLiteral("Bai2 · Kevin MacLeod"));
+        const qsizetype made = rig.voices.size();
+        rig.net.hold = false;
+        rig.net.releaseHeld();
+        QCOMPARE(rig.music->bed()->activeLink(), QStringLiteral("https://x/2"));
+        QCOMPARE(rig.voices.size(), made);
+        // chương 4 chưa được hỏi sẵn (chương 3 chưa mở): như cũ, chờ lời hỏi
+        rig.net.hold = true;
+        rig.player->jumpTo(4);
+        QCOMPARE(rig.music->bed()->activeLink(), QString());
+        rig.net.hold = false;
+        rig.net.releaseHeld();
+        QCOMPARE(rig.music->bed()->activeLink(), QStringLiteral("https://x/4"));
+    }
+
     void chapterEndHandsTheMusicOverWithoutACut() {
         // Hết chương 1 tự sang chương 2: bài chương 1 vẫn kêu và mờ dần trong lúc bài chương 2 vào, không bị dừng phụt cùng giọng.
         BookRig rig;

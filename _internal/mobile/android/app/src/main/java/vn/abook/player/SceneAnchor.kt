@@ -126,12 +126,14 @@ object SceneAnchor {
         /** Có mốc thô nào chưa (đã `arrive` với mốc). */
         val hasCues: Boolean get() = raw.isNotEmpty()
 
-        /** Mốc của chương vừa về lúc giọng đang ở giây `time`: nhạc vào ở đầu câu kế (không giữa câu). */
+        /** Mốc của chương vừa về lúc giọng đang ở giây `time`: nhạc vào ở đầu câu kế (không giữa câu). Đúng mốc đang giữ về lại (mốc chương kế đọc sẵn đã đặt ở giây 0,
+         *  lời hỏi lúc sang chương về sau): giữ chỗ nhạc được vào, không đẩy sang câu kế. */
         fun arrive(cues: List<Cue>, estSeconds: Double, time: Double): List<Cue>? {
+            val again = cues.isNotEmpty() && cues == raw && estSeconds == this.estSeconds
             raw = cues
             this.estSeconds = estSeconds
             val now = timing()
-            floor = if (now != null && time > 0.25) nextSegment(now, time) else 0
+            if (!again) floor = if (now != null && time > 0.25) nextSegment(now, time) else 0
             return push()
         }
 
