@@ -1228,6 +1228,31 @@ describe("độ sâu đọc trước theo tốc độ giọng trực tuyến", (
     }
   });
 
+  it("voiceAhead: giây giọng đã sẵn phía trước = phần còn lại của đoạn đang nghe + các đoạn liền sau đã có clip; hết chương đã sẵn thì Infinity (nhạc nền nhường giọng)", async () => {
+    const chapter = Array.from({ length: 24 }, (_, i) => `Đoạn ${i + 1} ${Array(22).fill("tiếng").join(" ")}.`).join("\n\n");
+    const s = setup({ chapter });
+    s.engine.load(s.trackInfo, 0, true);
+    await flush();
+    expect(s.engine.voiceAhead).toBe(0); // đoạn đang nghe chưa có clip
+    s.requests[1].resolve();
+    await flush();
+    expect(s.engine.voiceAhead).toBe(0); // đoạn sau có clip mà đoạn đang nghe chưa
+    s.requests[0].resolve();
+    await flush();
+    const two = s.engine.voiceAhead;
+    expect(two).toBeGreaterThan(0);
+    expect(Number.isFinite(two)).toBe(true);
+    s.requests[2].resolve();
+    await flush();
+    expect(s.engine.voiceAhead).toBeGreaterThan(two);
+    const short = setup({ chapter: "Một câu thôi.\n\nHai câu thôi." });
+    short.engine.load(short.trackInfo, 0, true);
+    await flush();
+    for (const request of short.requests.slice()) request.resolve();
+    await flush();
+    expect(short.engine.voiceAhead).toBe(Infinity);
+  });
+
   it("đoạn ngắn (đối thoại): giọng trực tuyến đọc sẵn đủ ~20 giây âm thanh chứ không chỉ 3 đoạn, kể cả khi chưa có số đo (bộ đệm: clip về tức thì) và vượt trần 8 đoạn", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     try {

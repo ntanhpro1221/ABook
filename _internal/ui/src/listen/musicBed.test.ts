@@ -5,8 +5,9 @@ import {
   FADE_SECONDS,
   LOOP_CROSSFADE_SECONDS,
   MusicBed,
-  NEXT_CHAPTER_WARM_SECONDS,
   NextChapterWarm,
+  NEXT_CHAPTER_LAST_CHANCE_SECONDS,
+  NEXT_CHAPTER_VOICE_SECONDS,
   RETRY_MS,
   SIBLING_FADE_SECONDS,
   STEP_RAMP_SECONDS,
@@ -1134,7 +1135,7 @@ describe("tải sẵn bài kế và mờ vào từ lúc có tiếng (musicwarm, 
   });
 });
 
-describe("tải sẵn bài đầu chương kế khi chương còn <= 120 giây (NextChapterWarm)", () => {
+describe("tải sẵn bài đầu chương kế (NextChapterWarm)", () => {
   const next = (link: string): MusicCues => ({
     cues: [{ start: 0, end: 50, link, key: "1:1", src: "/n" }, { start: 50, end: 90, link: "https://x/z.mp3", key: "1:2", src: "/z" }],
     levelDb: -20,
@@ -1155,16 +1156,15 @@ describe("tải sẵn bài đầu chương kế khi chương còn <= 120 giây (
     expect(warmed).toEqual([]);
   });
 
-  it("còn > 120 giây hay chưa biết độ dài thì chưa hỏi; tới ngưỡng thì xin bài MỐC ĐẦU của chương kế, một lần", async () => {
+  it("chưa biết độ dài thì chưa hỏi; biết rồi thì xin ngay bài MỐC ĐẦU của chương kế, dù chương còn dài, một lần", async () => {
     const asked: number[] = [];
     const warmed: string[] = [];
     const watch = new NextChapterWarm(async (id) => { asked.push(id); return next("https://x/n.mp3"); }, (link) => warmed.push(link));
-    watch.update("1:1", 2, NEXT_CHAPTER_WARM_SECONDS + 1);
     watch.update("1:1", 2, 0);
     watch.update("1:1", 2, -5);
     watch.update("1:1", null, 30);
     expect(asked).toEqual([]);
-    watch.update("1:1", 2, NEXT_CHAPTER_WARM_SECONDS);
+    watch.update("1:1", 2, 3600);
     await settle();
     expect(asked).toEqual([2]);
     expect(warmed).toEqual(["https://x/n.mp3"]);
@@ -1206,6 +1206,44 @@ describe("tải sẵn bài đầu chương kế khi chương còn <= 120 giây (
     await settle();
     expect(silentAsks).toBe(1);
     expect(warmed).toEqual(["https://x/n.mp3"]);
+  });
+
+  it("giọng chưa sẵn đủ 20 giây phía trước thì chưa hỏi, chưa xin; đủ rồi mới xin", async () => {
+    const asked: number[] = [];
+    const warmed: string[] = [];
+    const watch = new NextChapterWarm(async (id) => { asked.push(id); return next("https://x/n.mp3"); }, (link) => warmed.push(link));
+    watch.update("1:1", 2, 3600, 0);
+    watch.update("1:1", 2, 3600, NEXT_CHAPTER_VOICE_SECONDS - 0.5);
+    await settle();
+    expect(asked).toEqual([]);
+    watch.update("1:1", 2, 3590, NEXT_CHAPTER_VOICE_SECONDS);
+    await settle();
+    expect(asked).toEqual([2]);
+    expect(warmed).toEqual(["https://x/n.mp3"]);
+  });
+
+  it(`lưới cuối: ${NEXT_CHAPTER_LAST_CHANCE_SECONDS} giây cuối chương xin lại mỗi 15 giây (lần trước hỏng thì lần này tải), vẫn nhường giọng; trước đó không xin lại`, async () => {
+    let clock = 1_000;
+    const warmed: string[] = [];
+    let asks = 0;
+    const watch = new NextChapterWarm(async () => { asks += 1; return next("https://x/n.mp3"); }, (link) => warmed.push(link), () => clock);
+    watch.update("1:1", 2, 600);
+    await settle();
+    expect(warmed).toEqual(["https://x/n.mp3"]);
+    clock += 60_000;
+    watch.update("1:1", 2, 540);
+    expect(warmed.length).toBe(1); // còn dài: không xin lại
+    watch.update("1:1", 2, NEXT_CHAPTER_LAST_CHANCE_SECONDS);
+    expect(warmed.length).toBe(2);
+    clock += 5_000;
+    watch.update("1:1", 2, NEXT_CHAPTER_LAST_CHANCE_SECONDS - 5);
+    expect(warmed.length).toBe(2); // chưa tới nhịp 15 giây
+    clock += 10_000;
+    watch.update("1:1", 2, NEXT_CHAPTER_LAST_CHANCE_SECONDS - 15, NEXT_CHAPTER_VOICE_SECONDS - 1);
+    expect(warmed.length).toBe(2); // giọng đang thiếu: nhường
+    watch.update("1:1", 2, NEXT_CHAPTER_LAST_CHANCE_SECONDS - 15);
+    expect(warmed).toEqual(["https://x/n.mp3", "https://x/n.mp3", "https://x/n.mp3"]);
+    expect(asks).toBe(1); // mốc chương kế chỉ hỏi một lần
   });
 });
 

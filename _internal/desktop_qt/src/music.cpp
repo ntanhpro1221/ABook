@@ -21,15 +21,18 @@ constexpr int SCENE_RETRY_MS[] = {15000, 30000, 60000, 120000, 300000};
 /// Giọng nhảy quá chừng này giây giữa hai nhịp = người nghe vừa tua (player.tsx).
 constexpr double SEEK_JUMP_SECONDS = 3;
 
+/// Xin máy chủ tải sẵn một bài (máy chủ bỏ qua bài đã có / đang tải - server.py music_warm).
+void postWarm(PlayerNet *net, const QString &link) {
+    net->request("POST", QStringLiteral("/api/music/warm?link=") + QString::fromLatin1(QUrl::toPercentEncoding(link)), {},
+                 [](int, const QJsonObject &) {}, false);
+}
+
 } // namespace
 
 Music::Music(Player *player, PlayerNet *net, std::function<AudioOut *()> make, QObject *parent, std::function<qint64()> nowMs)
     : QObject(parent), m_player(player), m_net(net),
       m_bed(std::move(make), [net](const QString &src) { return net->mediaUrl(src); },
-            [net](const QString &link) {
-                net->request("POST", QStringLiteral("/api/music/warm?link=") + QString::fromLatin1(QUrl::toPercentEncoding(link)), {},
-                             [](int, const QJsonObject &) {}, false);
-            }),
+            [net](const QString &link) { postWarm(net, link); }),
       m_nextWarm(
           [this](int chapterId, NextChapterWarm::Answer done) {
               m_net->request("GET", QStringLiteral("/api/books/%1/music/chapters/%2").arg(m_bookId).arg(chapterId), {},
@@ -37,7 +40,7 @@ Music::Music(Player *player, PlayerNet *net, std::function<AudioOut *()> make, Q
                                  done(status == 200 ? std::optional<MusicCues>(cuesFromJson(body)) : std::nullopt);
                              }, false);
           },
-          [this](const QString &link) { m_bed.warmLink(link); }),
+          [net](const QString &link) { postWarm(net, link); }),
       m_now(nowMs ? std::move(nowMs) : [] { return QDateTime::currentMSecsSinceEpoch(); }) {
     m_tick.setInterval(int(SYNC_TICK_SECONDS * 1000));
     m_tick.setObjectName(QStringLiteral("music sync"));
@@ -263,7 +266,7 @@ void Music::sync() {
     const bool hushed = m_stall.update(m_now(), now, m_player->playing());
     m_bed.sync(now, m_player->playing() && !hushed, seeked, m_voiceEnded || hushed);
     const int next = PlayerLogic::availableAfter(m_player->book().chapters, m_player->chapterId(), 1);
-    m_nextWarm.update(key, next >= 0 ? std::optional<int>(next) : std::nullopt, m_player->duration() - now);
+    m_nextWarm.update(key, next >= 0 ? std::optional<int>(next) : std::nullopt, m_player->duration() - now, m_player->voiceAhead());
     m_last = now;
     updateTicking();
 }
@@ -273,8 +276,8 @@ void Music::updateTicking() {
     if (!m_player->playing() || m_cuesFor.isEmpty()) return;
     const double now = m_player->position();
     double delay = m_bed.nextSyncSeconds(now, m_player->rate());
-    const double warm = (m_player->duration() - now - NEXT_CHAPTER_WARM_SECONDS) / m_player->rate();
-    delay = std::min(delay, warm > 0.001 ? warm : double(NEXT_CHAPTER_RETRY_MS) / 1000);
+    if (m_nextWarm.waiting()) delay = std::min(delay, double(NEXT_CHAPTER_RETRY_MS) / 1000);
+    delay = std::min(delay, m_nextWarm.lastChanceIn() / std::max(m_player->rate(), 0.1));
     if (m_player->fading() || m_player->buffering()) delay = std::min(delay, SYNC_TICK_SECONDS);
     if (const auto stall = m_stall.remainingMs(m_now())) delay = std::min(delay, double(*stall) / 1000); // khựng thì không có nhịp vị trí
     if (std::isfinite(delay)) m_tick.start(int(std::clamp(std::ceil(delay * 1000), 1.0, double(INT_MAX))));

@@ -97,25 +97,50 @@ NextChapterWarm::NextChapterWarm(std::function<void(int, Answer)> ask, std::func
         m_now = [] { return QDateTime::currentMSecsSinceEpoch(); };
 }
 
-void NextChapterWarm::update(const QString &key, std::optional<int> next, double remaining) {
-    if (!next || !(remaining > 0) || remaining > NEXT_CHAPTER_WARM_SECONDS)
+void NextChapterWarm::update(const QString &key, std::optional<int> next, double remaining, double voiceAhead) {
+    m_waiting = false;
+    m_lastChanceIn = std::numeric_limits<double>::infinity();
+    if (!next || !(remaining > 0))
         return;
     const QString ticket = QStringLiteral("%1>%2").arg(key).arg(*next);
-    if (m_done.contains(ticket) || !m_asking.isEmpty() || m_retryAt.value(ticket, 0) > m_now())
+    step(ticket, *next, remaining, voiceAhead);
+    // Nhịp kế (lời đáp có thể đã về ngay trong `step`): chưa có lời đáp / đang trong lưới cuối thì quay lại sau NEXT_CHAPTER_RETRY_MS, không thì hẹn lúc lưới cuối mở.
+    const auto done = m_done.constFind(ticket);
+    if (done == m_done.constEnd())
+        m_waiting = true;
+    else if (!done->isEmpty() && remaining > NEXT_CHAPTER_LAST_CHANCE_SECONDS)
+        m_lastChanceIn = remaining - NEXT_CHAPTER_LAST_CHANCE_SECONDS;
+    else if (!done->isEmpty())
+        m_waiting = true;
+}
+
+void NextChapterWarm::step(const QString &ticket, int next, double remaining, double voiceAhead) {
+    const auto done = m_done.constFind(ticket);
+    if (done != m_done.constEnd() && (done->isEmpty() || remaining > NEXT_CHAPTER_LAST_CHANCE_SECONDS))
         return;
+    if (!(voiceAhead >= NEXT_CHAPTER_VOICE_SECONDS) || !m_asking.isEmpty() || m_retryAt.value(ticket, 0) > m_now())
+        return;
+    if (done != m_done.constEnd()) {
+        m_retryAt.insert(ticket, m_now() + NEXT_CHAPTER_RETRY_MS);
+        m_warm(*done);
+        return;
+    }
     m_asking = ticket;
-    m_ask(*next, [this, ticket](const std::optional<MusicCues> &result) {
+    m_ask(next, [this, ticket](const std::optional<MusicCues> &result) {
         if (m_asking == ticket)
             m_asking.clear();
         const MusicCue *first = result && !result->pending && !result->cues.isEmpty() ? &result->cues.first() : nullptr;
         if (first) {
-            m_done.insert(ticket);
-            if (!carriedByBook(*first))
-                m_warm(first->link);
+            const QString link = carriedByBook(*first) ? QString() : first->link;
+            m_done.insert(ticket, link);
+            if (!link.isEmpty()) {
+                m_retryAt.insert(ticket, m_now() + NEXT_CHAPTER_RETRY_MS); // lưới cuối không xin lại ngay sau lần đầu
+                m_warm(link);
+            }
         } else if (!result || result->pending || !result->unavailable.isEmpty()) {
             m_retryAt.insert(ticket, m_now() + NEXT_CHAPTER_RETRY_MS);
         } else {
-            m_done.insert(ticket); // chương kế không có nhạc
+            m_done.insert(ticket, QString()); // chương kế không có nhạc
         }
     });
 }

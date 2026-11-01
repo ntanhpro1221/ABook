@@ -5,6 +5,7 @@
 #include <QObject>
 #include <QUrl>
 #include <QtGlobal>
+#include <limits>
 
 class AudioOut : public QObject {
     Q_OBJECT
@@ -32,6 +33,8 @@ public:
     /// Giây; 0 khi chưa biết.
     virtual double duration() const = 0;
     virtual bool playing() const = 0;
+    /// Giây giọng đã sẵn phía trước người nghe (nhạc nền chỉ tải sẵn chương kế khi đủ - musicbed.h NextChapterWarm). Mặc định: vô hạn (nguồn audio, không có giọng phải nhường).
+    virtual double voiceAhead() const { return std::numeric_limits<double>::infinity(); }
 
 /// ABOOK_MUTE=1 (thử máy, đo): âm lượng luôn 0, dù ai gọi gì - chạy thử không bao giờ ra loa.
     static double effectiveVolume(double volume);

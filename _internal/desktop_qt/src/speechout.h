@@ -32,6 +32,8 @@ public:
     void setVolume(double volume) override { m_volume = volume; m_audio->setVolume(volume * (m_text && m_ready ? m_paragraphs[m_index].gain : 1)); }
     double position() const override;
     double duration() const override;
+    /// Phần còn lại của đoạn đang nghe + các đoạn liền sau đã có clip; đoạn đang nghe chưa có: 0; cả phần còn lại của chương đã sẵn: vô hạn (không còn gì để nhường).
+    double voiceAhead() const override;
     bool playing() const override { return m_text ? m_wants : m_audio->playing(); }
     Q_INVOKABLE void configure(const QVariantList &voices, const QStringList &allowed) { m_voices = voices; m_allowed = allowed; }
     Q_INVOKABLE void authorize(const QString &provider);
