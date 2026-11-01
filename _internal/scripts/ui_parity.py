@@ -1188,7 +1188,8 @@ COPY_SKIP_WEB = ("gallery/",)
 # Chuỗi của lõi native KHÔNG phải chữ giao diện (so khớp chữ trong truyện, mã giọng): đổi dấu thanh sẽ làm hỏng việc khớp.
 COPY_TONE_DATA = ("BookImport.kt:2241", "readaloud/VoiceGain.kt", "vieneu/VieneuUnits.kt")
 # components/TextWrap.kt: chỉ giữ biểu thức chính quy xuống dòng (danh sách đơn vị "chương|giờ|..."), không có chữ giao diện.
-COPY_SKIP_NATIVE = ("nowplaying/FakeNowPlayingModel.kt", "data/DemoLibrary.kt", "data/DemoPlayback.kt", "components/TextWrap.kt")
+COPY_SKIP_NATIVE = ("nowplaying/FakeNowPlayingModel.kt", "data/DemoLibrary.kt", "data/DemoPlayback.kt", "components/TextWrap.kt",
+                    "shell/Unavailable.kt")  # màn thay của bản thử: tên lặp lại tên màn thật (đã so ở cặp của nó) + một câu chỉ bản thử có
 NEW_TONE = re.compile(r"[òóỏõọ][ae]|[ùúủũụ]y|[ÒÓỎÕỌ][AEae]|[ÙÚỦŨỤ][Yy]")
 WEB_ROOT = "ui/src/"
 NATIVE_ROOT = "mobile/android/app/src/main/java/vn/abook/player/ui/"
