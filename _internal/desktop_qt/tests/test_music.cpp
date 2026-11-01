@@ -696,6 +696,26 @@ private slots:
         QVERIFY(near(rig.made[0]->volume, db(-10) * 0.8, 1e-4));
     }
 
+    void oldSongHoldsItsPlaceUntilTheNewOneSounds() {
+        Rig rig;
+        rig.bed->setCues({plain(0, 100, QStringLiteral("a")), plain(100, 200, QStringLiteral("b"))}, -20);
+        rig.bed->sync(10, true);
+        rig.settle();
+        rig.bed->tick(ticksFor(FADE_SECONDS) + 2);
+        const double level = rig.made[0]->volume;
+        QVERIFY(level > 0);
+        rig.bed->sync(110, true); // sang b: chưa có tiếng (đang tải, musicmixer chưa cho vào)
+        rig.bed->tick(ticksFor(FADE_SECONDS) * 3);
+        QCOMPARE(rig.made[0]->volume, level);
+        QCOMPARE(rig.made[1]->volume, 0.0);
+        rig.settle(); // b có tiếng: a mờ đi, b mờ vào
+        rig.bed->tick(ticksFor(FADE_SECONDS) + 2);
+        rig.settle();
+        QVERIFY(!rig.made[0]);
+        QVERIFY(near(rig.made[1]->volume, level, 1e-4));
+        rig.bed->stop();
+    }
+
     void warmsTheNextCatalogueSongOnce() {
         Rig rig;
         MusicCue a = plain(0, 100, QStringLiteral("https://x/a"));

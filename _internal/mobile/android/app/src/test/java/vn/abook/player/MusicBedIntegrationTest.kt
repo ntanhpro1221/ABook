@@ -23,6 +23,7 @@ class MusicBedIntegrationTest {
         var released = 0
         var buffered = ByteArray(8192)
         var position = 10_000L
+        var bufferedPosition = 0L
         var seeks = 0
         var item: MediaItem? = null
         val listeners = mutableListOf<Player.Listener>()
@@ -34,6 +35,7 @@ class MusicBedIntegrationTest {
                 "setVolume" -> { volume = args!![0] as Float; null }
                 "getDuration" -> 200_000L
                 "getCurrentPosition" -> position
+                "getBufferedPosition" -> bufferedPosition
                 "getCurrentMediaItem" -> item
                 "seekTo" -> { seeks++; position = args!!.last() as Long; null }
                 "isPlaying" -> playing
@@ -313,6 +315,131 @@ class MusicBedIntegrationTest {
         }
         playbackField("ticking").setBoolean(Playback, false)
         playbackField("bookId").set(Playback, "")
+    }
+
+    @Test fun theOldSongHoldsItsPlaceWhileTheNextSceneSongIsStillDownloading() {
+        // Soát nghe 02-11 (nguồn nhạc 11 KB/s): bài của mốc mới chưa có file thì bài trước mờ đi và cả cảnh câm suốt lúc tải (bài 29 MB ~45 phút).
+        // Bài đang kêu giữ chỗ ở mức của nó; bài mới vào khi có file. Như musicbed.cpp / musicBed.ts.
+        installContext()
+        val root = BookEditsFixtures.tempDir("music-hold-old")
+        val deviceCatalog = DeviceMusic::class.java.getDeclaredField("catalog").also { it.isAccessible = true }
+        try {
+            deviceCatalog.set(DeviceMusic, MusicCatalog(File(root, "catalog"), "file:///none"))
+            field("book").set(MusicBed, "hold-book")
+            field("closedBook").set(MusicBed, "")
+            field("playlist").set(MusicBed, null)
+            field("sceneMode").setBoolean(MusicBed, true)
+            field("chapter").setInt(MusicBed, 1)
+            field("lastSeconds").setDouble(MusicBed, 59.5)
+            val old = MusicCues.Cue(0.0, 50.0, "music/a.mp3", -20.0)
+            field("cues").set(MusicBed, listOf(old, MusicCues.Cue(50.0, 100.0, "music/b.mp3", -20.0)))
+            @Suppress("UNCHECKED_CAST") (field("downloading").get(MusicBed) as MutableSet<String>).add("music/b.mp3") // đang tải dở
+            val music = FakePlayer().also { it.state = Player.STATE_READY; it.playWhenReady = true }
+            val current = bed(music, old)
+            current.javaClass.getDeclaredField("entering").also { it.isAccessible = true }.setBoolean(current, false)
+            setLogical(current, 0.1f)
+            music.volume = 0.1f
+            field("current").set(MusicBed, current)
+            field("playing").setBoolean(MusicBed, true)
+            MusicBed.sync("hold-book", 1, 60.0, true)
+            assertSame("bài mới chưa có file: bài cũ giữ chỗ", current, field("current").get(MusicBed))
+            Handler.advance(MusicCues.mix.fadeMs + 500L)
+            assertTrue("không mờ, không dừng", music.playWhenReady)
+            assertEquals(0.1f, music.volume, 1e-6f)
+            assertEquals(0, music.released)
+        } finally {
+            deviceCatalog.set(DeviceMusic, null)
+            field("sceneMode").setBoolean(MusicBed, false)
+            (field("downloading").get(MusicBed) as MutableSet<*>).clear()
+            root.deleteRecursively()
+        }
+    }
+
+    /** ExoPlayer phát dần một bài stream: đệm tăng `rate` giây bài mỗi giây, hết đệm thì đứng (BUFFERING), đệm lại 5 s thì chạy tiếp. Trả các lần đứng / chạy lại kèm âm lượng lúc ấy. */
+    private fun stream(music: FakePlayer, ms: Long, rate: () -> Double): List<Pair<String, Float>> {
+        val out = mutableListOf<Pair<String, Float>>()
+        repeat((ms / 50).toInt()) {
+            Handler.advance(50)
+            music.bufferedPosition = minOf(200_000L, music.bufferedPosition + (rate() * 50).toLong())
+            val ahead = music.bufferedPosition - music.position
+            if (music.state == Player.STATE_READY) {
+                if (ahead < 50 && music.bufferedPosition < 200_000L) { music.state = Player.STATE_BUFFERING; music.playing = false; out += "đứng" to music.volume }
+                else music.position += minOf(50L, ahead)
+            } else if (ahead >= 5000 || music.bufferedPosition >= 200_000L) {
+                music.state = Player.STATE_READY; music.playing = true; out += "chạy" to music.volume
+            }
+        }
+        return out
+    }
+
+    private fun streamedBed(music: FakePlayer): Any = bed(music).also { b ->
+        b.javaClass.getDeclaredField("streamed").also { it.isAccessible = true }.setBoolean(b, true)
+    }
+
+    @Test fun aStreamedSongFallingBehindFadesOutBeforeItsBufferRunsDryAndBackInWhenTheDownloadKeepsUp() {
+        // Nhạc của sách nghe thẳng từ máy tính (http): ExoPlayer phát dần, mạng tụt giữa bài thì đệm cạn - trước đây tắt phụt ở đủ mức rồi bật phụt (như Qt
+        // NA1 01-11: 14 lần). Bản sửa: đệm trước < 1 s mà tải không kịp thì mờ ra trước khi cạn, im tới khi đệm lại đủ VÀ tải kịp, rồi mờ vào 0,3 s.
+        val music = FakePlayer().also { it.state = Player.STATE_READY; it.playWhenReady = true; it.bufferedPosition = it.position + 20_000 }
+        val current = streamedBed(music)
+        current.javaClass.getDeclaredField("entering").also { it.isAccessible = true }.setBoolean(current, false)
+        setLogical(current, 0.1f)
+        music.volume = 0.1f
+        field("current").set(MusicBed, current)
+        field("playing").setBoolean(MusicBed, true)
+        invoke("startFade")
+        var rate = 2.0
+        assertTrue("tải nhanh: không hụt", stream(music, 10_000) { rate }.isEmpty())
+        rate = 0.4 // mạng tụt
+        val fell = stream(music, 60_000) { rate }
+        val stalls = fell.filter { it.first == "đứng" }
+        assertTrue("đệm cạn ít nhất một lần (vị trí ${music.position}, đệm ${music.bufferedPosition}, ${music.state}, $fell)", stalls.isNotEmpty())
+        assertTrue("hụt: mờ ra trước khi đệm cạn, không tắt phụt ở đủ mức ($fell)", stalls.all { it.second < 0.001f })
+        assertTrue("tải chưa kịp: chạy lại vẫn im ($fell)", fell.filter { it.first == "chạy" }.all { it.second < 0.001f })
+        rate = 2.0 // mạng lại nhanh
+        stream(music, 9_000) { rate } // trung bình trượt 8 s mới thấy tốc độ mới
+        assertEquals("tải kịp lại: về đủ mức", 0.1f, music.volume, 1e-4f)
+        val back = mutableListOf<Float>()
+        rate = 0.4
+        stream(music, 30_000) { rate }
+        rate = 2.0
+        repeat(200) { stream(music, 50) { rate }; back += music.volume }
+        val firstSound = back.indexOfFirst { it > 0f }
+        assertTrue("vào lại mờ dần, không bật phụt ($back)", firstSound >= 0 && back[firstSound] < 0.05f)
+        val full = back.indexOfFirst { it >= 0.0999f }
+        assertTrue("mờ vào trong ~0,3 s (${(full - firstSound) * 50} ms)", full - firstSound in 4..8)
+    }
+
+    @Test fun aStreamedSongThatCannotKeepUpWaitsAndTheOldSongHoldsItsPlace() {
+        // Bài stream mới tải chậm hơn phát: chưa vào (bài trước giữ chỗ ở mức của nó) cho tới khi tải trọn - không vào rồi hụt giữa chừng.
+        val old = FakePlayer().also { it.state = Player.STATE_READY; it.playWhenReady = true }
+        val oldBed = bed(old)
+        setLogical(oldBed, 0.1f)
+        old.volume = 0.1f
+        oldBed.javaClass.getDeclaredField("fadeStep").also { it.isAccessible = true }.setFloat(oldBed, 0.1f * 50 / 2000)
+        @Suppress("UNCHECKED_CAST") (field("fading").get(MusicBed) as MutableList<Any>).add(oldBed)
+        val music = FakePlayer().also { it.state = Player.STATE_READY; it.playWhenReady = true; it.position = 0; it.bufferedPosition = 3_000 }
+        field("current").set(MusicBed, streamedBed(music))
+        field("playing").setBoolean(MusicBed, true)
+        invoke("startFade")
+        stream(music, 40_000) { 0.6 }
+        assertEquals("tải không kịp: bài mới chưa kêu", 0f, music.volume, 0f)
+        assertEquals("bài trước giữ chỗ", 0.1f, old.volume, 1e-6f)
+        assertEquals(0, old.released)
+        stream(music, 3_000) { 200.0 } // tải trọn
+        Handler.advance(MusicCues.mix.fadeMs + 500L)
+        assertEquals("tải trọn: bài mới vào đủ mức", 0.1f, music.volume, 1e-4f)
+        assertEquals("bài trước mờ đi rồi nhả", 1, old.released)
+    }
+
+    @Test fun streamPaceFoldsTheFirstBurstAndNeedsASecondOfMeasurement() {
+        val pace = StreamPace()
+        pace.add(0, 0)
+        pace.add(200, 30_000) // phần đã có sẵn dồn về một lèo: không phải tốc độ tải
+        assertNull(pace.rate(900))
+        for (t in 300L..3_000L step 100) pace.add(t, 30_000 + (t - 200) / 2) // mốc gốc là cuối đợt dồn
+        assertEquals(0.5, pace.rate(3_000)!!, 0.01)
+        assertFalse(pace.keepsUp(3_000, 31_400, 200_000))
+        assertTrue("tải trọn thì kịp", pace.keepsUp(3_000, 200_000, 200_000))
     }
 
     @Test fun smallSeeksThroughPlaybackDoNotSeekTheMusicOrRestartItsFade() {
