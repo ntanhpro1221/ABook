@@ -7,6 +7,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nhạc nền
+
+- Điện thoại: nhạc theo cảnh của chương kế được tải sẵn khi chương đang nghe còn hai phút, nên chương mới vào nhạc ngay thay vì đọc một quãng không nhạc chờ bài tải xong (máy tính và bản web đã làm vậy từ trước).
+- Nhạc của chương vừa mở vào sớm hơn tới 1,5 giây khi máy còn đang chọn bài: app hỏi lại sau 0,2 giây thay vì 1,5 giây. Máy tính, bản web và điện thoại.
+
 ## [0.4.157] - 2026-11-01
 
 ### Sửa lỗi
