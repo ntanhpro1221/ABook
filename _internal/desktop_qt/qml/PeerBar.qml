@@ -1,6 +1,7 @@
 import QtQuick
 import ABook
 import "PeerStudio.js" as Peer
+import "TextWrap.js" as TextWrap
 
 // Thanh trên cùng khi đang mở Studio của máy tính đã ghép (desktop/PeerBar.tsx): máy nào, máy ấy có trả lời không, và đường về máy này. Nền tràn
 // cả bề ngang (báo tin; máy im hay chỉ được nghe thì nền cảnh báo, màu nền đổi êm), nội dung thẳng lề trang bên dưới. Mở / khép theo chiều cao.
@@ -34,7 +35,7 @@ Collapse {
                 x: 28
                 y: (row.height - height) / 2
                 width: row.width - x - 12 - back.width
-                text: Peer.peerBarLine(root.name, root.silent, root.listenOnly)
+                text: TextWrap.keepDots(Peer.peerBarLine(root.name, root.silent, root.listenOnly))
                 color: Theme.text
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeBodySmall

@@ -145,7 +145,7 @@ Item {
             compare(spy.count, 1)
         }
         function test_wrappedButtonAndTallLinesKeepTheIconOnTheFirstLine() {
-            for (const text of ["Nghe tiếp", "Nghe tiếp\u00a0· Chương 12: một tên chương rất dài để gãy dòng"]) {
+            for (const text of ["Nghe tiếp", "Nghe tiếp\u00a0·\u00a0Chương 12: một tên chương rất dài để gãy dòng"]) {
                 const button = createTemporaryObject(wrapButton, host, {text: text})
                 waitForRendering(button)
                 compare(JSON.stringify(IconText.scan(button, qtVisualReady)), "[]", text)

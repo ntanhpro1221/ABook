@@ -85,7 +85,7 @@ function planNotice(plan) {
 function planFileCount(plan) { return plan.groups.reduce(function(sum, group) { return sum + group.files.length }, 0) }
 /** "Đang gửi 3/12 file · 1,2 MB / 4,5 MB". */
 function progressLabel(progress) {
-    return "Đang gửi " + progress.files + "/" + progress.totalFiles + " file\u00a0· " + Size.formatSize(progress.bytes) + " / " + Size.formatSize(progress.totalBytes)
+    return "Đang gửi " + progress.files + "/" + progress.totalFiles + " file\u00a0·\u00a0" + Size.formatSize(progress.bytes) + " / " + Size.formatSize(progress.totalBytes)
 }
 /** "Đã gửi 3/12 file, giữ lại; 9 file chưa gửi." - nói rõ gì đã tới máy tính khi dừng giữa chừng. */
 function sendSummary(result) {

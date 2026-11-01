@@ -1,6 +1,7 @@
 import QtQuick
 import ABook
 import "EditBookLogic.js" as Logic
+import "TextWrap.js" as TextWrap
 
 // "Tìm ảnh bìa" (CoverSearchPanel của shared/CoverSearch.tsx): hỏi iTunes, Open Library, Google Books theo tên bộ truyện; người dùng chọn một
 // ảnh thì `PUT /api/books/<mã>/cover {url}` (máy chủ tự tải, chỉ từ nguồn đã cho phép). Chỉ là gợi ý - không bao giờ tự đặt. Là MỘT BƯỚC của hộp
@@ -196,7 +197,7 @@ Item {
                                     id: caption
                                     x: 6; y: photo.y + photo.height + 6
                                     width: parent.width - 12
-                                    text: tile.modelData.title
+                                    text: TextWrap.keepDots(tile.modelData.title)
                                     color: Theme.text
                                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                     font.pixelSize: Theme.sizeCaption

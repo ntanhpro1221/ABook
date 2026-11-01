@@ -101,7 +101,7 @@ void BookDetail::recompute() {
                     caption = chapter.title;
         }
         if (!caption.isEmpty())
-            text += QStringLiteral("\u00a0· ") + caption;   // dấu ngăn dính mảnh trước: không bao giờ đứng đầu dòng
+            text += QStringLiteral("\u00a0·\u00a0") + caption;   // dấu ngăn dính mảnh trước: không bao giờ đứng đầu dòng
     }
     m_primaryText = text;
     m_primaryIcon = icon;

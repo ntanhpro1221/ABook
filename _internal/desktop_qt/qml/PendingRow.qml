@@ -49,7 +49,7 @@ Collapse {
             x: 28
             y: (root.first ? 0 : 1) + 8
             width: line.width - 28 - actions.width - 12
-            text: root.item.label + (root.item.chapter ? "\u00a0· " + root.item.chapter : "") + (root.item.from ? "\u00a0· từ " + root.item.from : "")
+            text: root.item.label + (root.item.chapter ? "\u00a0·\u00a0" + root.item.chapter : "") + (root.item.from ? "\u00a0·\u00a0từ " + root.item.from : "")
             color: Theme.text
             textFormat: Text.PlainText
             wrapMode: Text.WrapAtWordBoundaryOrAnywhere

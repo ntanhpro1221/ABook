@@ -46,7 +46,7 @@ function recordLine(book, record, now) {
     let where = ""
     if (record.last) {
         const found = (book.chapters || []).filter(chapter => chapter.id === record.last.chapterId)[0]
-        where = (found ? found.title : "Chương") + "\u00a0· " + History.formatClock(record.last.seconds) + "\u00a0· "
+        where = (found ? found.title : "Chương") + "\u00a0·\u00a0" + History.formatClock(record.last.seconds) + "\u00a0·\u00a0"
     }
     return where + (record.updatedAt ? "nghe gần nhất " + History.dayLabel(record.updatedAt, now).toLowerCase() : "chưa nghe")
 }

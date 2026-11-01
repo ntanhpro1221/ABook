@@ -1,5 +1,6 @@
 import QtQuick
 import ABook
+import "TextWrap.js" as TextWrap
 
 // Khối phẳng của một nhóm Cài đặt (SettingsBlock của shared/SettingsNav.tsx): cách 32 với thứ phía trên, tiêu đề mục 18/500 trong hàng cao 56,
 // các mục có vạch chia giữa nhau (SettingsItem / SettingRow tự vẽ). `fold` (khoá nhớ): khối ít dùng gập sau tiêu đề bấm được (DisclosureRow
@@ -16,7 +17,7 @@ Column {
         width: parent.width
         height: Math.max(56, implicitHeight)
         verticalAlignment: Text.AlignVCenter
-        text: root.title
+        text: TextWrap.keepDots(root.title)
         color: Theme.text
         wrapMode: Text.Wrap
         font.pixelSize: Theme.sizeSection

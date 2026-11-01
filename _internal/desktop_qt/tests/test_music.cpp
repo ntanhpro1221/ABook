@@ -812,7 +812,7 @@ private slots:
         QCOMPARE(rig.voices.size(), 1);
         QCOMPARE(rig.voices[0]->url, QUrl(QStringLiteral("/api/music/Bai1")));
         const QVariantMap credit = rig.music->credit();
-        QCOMPARE(credit.value(QStringLiteral("label")).toString(), QStringLiteral("Bai1\u00a0· Kevin MacLeod"));
+        QCOMPARE(credit.value(QStringLiteral("label")).toString(), QStringLiteral("Bai1\u00a0·\u00a0Kevin MacLeod"));
         QCOMPARE(credit.value(QStringLiteral("text")).toString(), QStringLiteral("Bai1 by Kevin MacLeod"));
         QCOMPARE(credit.value(QStringLiteral("license")).toString(), QStringLiteral("CC BY 4.0"));
         QVERIFY(credit.value(QStringLiteral("modified")).toBool());
@@ -821,7 +821,7 @@ private slots:
         rig.player->next();
         QCOMPARE(rig.player->chapterId(), 2);
         QCOMPARE(rig.music->bed()->activeLink(), QStringLiteral("https://x/2"));
-        QCOMPARE(rig.music->credit().value(QStringLiteral("label")).toString(), QStringLiteral("Bai2\u00a0· Kevin MacLeod"));
+        QCOMPARE(rig.music->credit().value(QStringLiteral("label")).toString(), QStringLiteral("Bai2\u00a0·\u00a0Kevin MacLeod"));
         rig.player->close();
         QCOMPARE(rig.music->bed()->activeLink(), QString());
         QVERIFY(!rig.music->hasMusic());

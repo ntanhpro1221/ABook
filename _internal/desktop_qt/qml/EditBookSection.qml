@@ -1,5 +1,6 @@
 import QtQuick
 import ABook
+import "TextWrap.js" as TextWrap
 
 // Một mục của hộp "Sửa sách" (Section / FoldedSection của EditBook.tsx): vạch trên + đệm 16 (mục gập: đệm 8), tên mục 18/500 trong hàng cao 56,
 // lời nhắc 12 mực phụ dưới tên, nội dung cách tên 8 khi không có lời nhắc. `fold` (khoá nhớ): mục ít dùng gập sau tên bấm được, mở rồi lần
@@ -33,7 +34,7 @@ Item {
                 id: heading
                 width: parent.width
                 anchors.verticalCenter: parent.verticalCenter
-                text: root.title
+                text: TextWrap.keepDots(root.title)
                 color: Theme.text
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeSection

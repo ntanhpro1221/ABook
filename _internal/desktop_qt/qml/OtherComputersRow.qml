@@ -85,7 +85,7 @@ Collapse {
                         width: parent.width
                         visible: !root.computer.waking
                         text: root.computer.error ? root.computer.error
-                            : Logic.connectionRoute(root.computer.connectedVia) + (root.computer.lastSeen ? "\u00a0· thấy " + Logic.formatRelative(root.computer.lastSeen, root.clock) : "")
+                            : Logic.connectionRoute(root.computer.connectedVia) + (root.computer.lastSeen ? "\u00a0·\u00a0thấy " + Logic.formatRelative(root.computer.lastSeen, root.clock) : "")
                         color: root.computer.error ? Theme.danger : Theme.text2
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                         font.pixelSize: Theme.sizeCaption

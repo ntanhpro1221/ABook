@@ -1,6 +1,7 @@
 import QtQuick
 import ABook
 import "StudioLogic.js" as Logic
+import "TextWrap.js" as TextWrap
 
 // Một hàng của bảng dự án (ProjectRow / BrokenRow của ProjectsScreen.tsx): bìa nhỏ · tên + dòng phụ · trạng thái · tiến độ · cập nhật, "…" hiện khi rê chuột /
 // có tiêu điểm / đang mở menu (màn hẹp: luôn hiện). Ba khổ như web: "wide" (4 cột), "mid" (3 cột + chỗ "…"), "stacked" (trạng thái và tiến độ xếp dưới tên).
@@ -76,7 +77,7 @@ Item {
             Text {
                 objectName: "projectName"
                 width: parent.width
-                text: root.book.title || ""
+                text: TextWrap.keepDots(root.book.title || "")
                 color: Theme.text
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeBodySmall
@@ -143,7 +144,7 @@ Item {
                     const needs = Logic.rowNeeds(root.book)
                     const detail = Logic.rowDetail(root.book)
                     // Sách "Hoàn tất" mà còn việc của mình: nói ngay trên dòng
-                    return root.done && needs.length ? detail + "<font color=\"" + Theme.warning + "\"><b>&nbsp;· " + needs.join("&nbsp;· ") + "</b></font>" : detail
+                    return root.done && needs.length ? detail + "<font color=\"" + Theme.warning + "\"><b>&nbsp;·&nbsp;" + needs.join("&nbsp;·&nbsp;") + "</b></font>" : detail
                 }
             }
         }
@@ -193,7 +194,7 @@ Item {
             Text {
                 objectName: "projectName"
                 width: parent.width
-                text: root.book.title || ""
+                text: TextWrap.keepDots(root.book.title || "")
                 color: Theme.text
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeBodySmall

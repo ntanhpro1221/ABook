@@ -471,7 +471,7 @@ Item {
                                 width: Math.min(implicitWidth, selectionFlow.width)
                                 height: Math.max(32, implicitHeight)
                                 verticalAlignment: Text.AlignVCenter
-                                text: "- phím số hay chọn người ở một câu trong nhóm gán cả " + root.selected.length + " câu\u00a0· Esc bỏ chọn"
+                                text: "- phím số hay chọn người ở một câu trong nhóm gán cả " + root.selected.length + " câu\u00a0·\u00a0Esc bỏ chọn"
                                 color: Theme.text2
                                 wrapMode: Text.Wrap
                                 font.pixelSize: 13
@@ -745,7 +745,7 @@ Item {
                     objectName: "scriptFilter"
                     label: "Hiện câu nào"
                     value: root.filter
-                    options: [{value: "all", label: "Cả chương"}, {value: "speech", label: "Chỉ lời nói"}, {value: "doubt", label: "Máy nghi\u00a0· " + root.doubts}]
+                    options: [{value: "all", label: "Cả chương"}, {value: "speech", label: "Chỉ lời nói"}, {value: "doubt", label: "Máy nghi\u00a0·\u00a0" + root.doubts}]
                     onPicked: value => root.setFilter(value)
                 }
             }

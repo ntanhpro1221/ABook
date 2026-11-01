@@ -1,6 +1,7 @@
 import QtQuick
 import ABook
 import "EditBookLogic.js" as Logic
+import "TextWrap.js" as TextWrap
 
 // Nhạc nền của cuốn nhập từ file (MusicSection của listen/EditBook.tsx): người làm sách đã gắn sẵn - người nghe bật / tắt, chỉnh mức, cho im lặng
 // từng đoạn, và đổi một đoạn sang bài trong "Nhạc của tôi" (bài ấy đi cùng file sách khi lưu). Một lệnh `PUT /api/books/<mã>/music` cho mọi thay
@@ -157,7 +158,7 @@ Column {
                                     Text {
                                         width: parent.width
                                         // Đoạn người nghe cho im: nói thẳng (như StudioMusicScene), không gạch ngang tên - gạch ngang đọc như lỗi
-                                        text: cue.modelData.silenced ? "Im lặng (bạn chọn)" : (cue.modelData.title || "Nhạc nền")
+                                        text: TextWrap.keepDots(cue.modelData.silenced ? "Im lặng (bạn chọn)" : (cue.modelData.title || "Nhạc nền"))
                                         color: cue.modelData.silenced ? Theme.text2 : Theme.text
                                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                         font.pixelSize: Theme.sizeBodySmall
@@ -168,8 +169,8 @@ Column {
                                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                         font.pixelSize: Theme.sizeCaption
                                         font.features: {"tnum": 1}
-                                        text: cue.modelData.chapter + "\u00a0· " + Logic.formatClock(cue.modelData.start) + " – " + Logic.formatClock(cue.modelData.end)
-                                              + (cue.modelData.creator ? "\u00a0· " + cue.modelData.creator : "") + (cue.modelData.pinned ? "\u00a0· bài của bạn" : "")
+                                        text: cue.modelData.chapter + "\u00a0·\u00a0" + Logic.formatClock(cue.modelData.start) + " – " + Logic.formatClock(cue.modelData.end)
+                                              + (cue.modelData.creator ? "\u00a0·\u00a0" + cue.modelData.creator : "") + (cue.modelData.pinned ? "\u00a0·\u00a0bài của bạn" : "")
                                     }
                                 }
                                 Row {

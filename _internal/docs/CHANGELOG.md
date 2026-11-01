@@ -10,6 +10,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Giao diện
 
 - Bản web: nút "Thêm nhạc của bạn" (Cài đặt) và các nút cuối hàng bài nhạc (tab Nhạc nền của Studio) thẳng mép chữ của cột như mọi nút đầu / cuối hàng khác.
+- Dấu "·" không còn treo cuối dòng hay mở đầu dòng ở bất cứ đâu, kể cả dấu có sẵn trong tên sách: thanh bên trước đây để "Thành Phố Sương Mù ·" ở dòng trên và "Tập 2" ở dòng dưới. Máy tính và bản web; điện thoại đã đúng từ trước.
+- Nhạc của tôi: nhãn sau công tắc đọc "Tự chọn · Có lời" thay vì "Tự chọn  Có lời" dính thành một cụm. Máy tính và bản web.
 
 ## [0.4.154] - 2026-11-01
 

@@ -172,10 +172,10 @@ Item {
             // chưa chọn mà máy có giọng VieNeu: giọng kể chuyện trung tính của VieNeu, không phải Edge
             compare(find(page, "voiceCurrent").text, "Đang dùng: Phạm Tuyên (VieNeu Turbo)")
             for (const text of ["Edge", "Azure Speech", "VieNeu", "Giọng của máy", "Bộ giọng", "Hiệu năng", "Khoá trực tuyến"]) verify(textItem(page, text) !== null, "thiếu " + text)
-            verify(hasText(page, "trực tuyến, miễn phí\u00a0· 2 giọng"))
-            verify(hasText(page, "dùng khoá của bạn\u00a0· 1 giọng"))
-            verify(hasText(page, "trên máy này, không cần mạng\u00a0· 4 giọng\u00a0· đang dùng"))
-            verify(hasText(page, "không cần mạng\u00a0· 1 giọng"))
+            verify(hasText(page, "trực tuyến, miễn phí\u00a0·\u00a02 giọng"))
+            verify(hasText(page, "dùng khoá của bạn\u00a0·\u00a01 giọng"))
+            verify(hasText(page, "trên máy này, không cần mạng\u00a0·\u00a04 giọng\u00a0·\u00a0đang dùng"))
+            verify(hasText(page, "không cần mạng\u00a0·\u00a01 giọng"))
             verify(hasText(page, "Giọng Edge gửi chữ của sách tới máy chủ Microsoft để đọc."))
             verify(hasText(page, "Giọng Azure Speech gửi chữ của sách tới Azure Speech bằng khoá của bạn - có thể bị tính tiền vào tài khoản của bạn."))
             verify(!hasText(page, "Cài giọng tiếng Việt tại Cài đặt Windows › Thời gian và ngôn ngữ › Giọng nói."))
@@ -188,7 +188,7 @@ Item {
             openAll()
             const page = make()
             verify(hasText(page, "Cài giọng tiếng Việt tại Cài đặt Windows › Thời gian và ngôn ngữ › Giọng nói."))
-            verify(hasText(page, "không cần mạng\u00a0· 0 giọng"))
+            verify(hasText(page, "không cần mạng\u00a0·\u00a00 giọng"))
         }
 
         function test_choosingDefaultVoice() {
@@ -202,7 +202,7 @@ Item {
             tryVerify(function() { return (last("PUT", "/api/preferences").body.readAloudVoice) === ("edge:vi-VN-NamMinhNeural") })
             tryVerify(function() { return target.selected })
             tryVerify(function() { return (find(page, "voiceCurrent").text) === ("Đang dùng: Nam Minh (Edge)") })
-            tryVerify(function() { return hasText(page, "trực tuyến, miễn phí\u00a0· 2 giọng\u00a0· đang dùng") })
+            tryVerify(function() { return hasText(page, "trực tuyến, miễn phí\u00a0·\u00a02 giọng\u00a0·\u00a0đang dùng") })
             tryCompare(Api, "voiceName", "Nam Minh")
             // chỉ giọng được chọn có "Mặc định"
             compare(findAll(page, node => node.text === "Mặc định" && node.visible).length, 1)
@@ -278,7 +278,7 @@ Item {
             // đã có khoá: gập mở sẵn; chưa có: gập
             compare(azure.open, true)
             compare(google.open, false)
-            verify(hasText(azure, "Dùng được\u00a0· 3 giọng"))
+            verify(hasText(azure, "Dùng được\u00a0·\u00a03 giọng"))
             verify(hasText(azure, "Miễn phí 500.000 ký tự mỗi tháng. Tô đúng từng chữ đang đọc."))
             // Lưu bị khoá khi chưa gõ gì
             const save = find(azure, "keySave")
@@ -300,7 +300,7 @@ Item {
             find(azure, "keyCheck").activated()
             tryVerify(function() { return (DesktopApi.requests.filter(r => r.method === "PUT").length) === (0) })
             tryVerify(function() { return last("POST", "/api/readaloud/online/azure/check") !== null })
-            tryVerify(function() { return (find(azure, "keyResult").text) === ("Dùng được\u00a0· 3 giọng tiếng Việt") })
+            tryVerify(function() { return (find(azure, "keyResult").text) === ("Dùng được\u00a0·\u00a03 giọng tiếng Việt") })
             // khoá bị từ chối: lời của dịch vụ
             DesktopApi.responses["POST /api/readaloud/online/azure/check"] = {status: 200, data: {ok: false, message: "Khoá bị từ chối.", provider: {voices: 0}}}
             find(azure, "keyCheck").activated()
@@ -355,7 +355,7 @@ Item {
             verify(hasText(card, "Đang tải giọng Supertonic (217 MB) 52%"))
             verify(find(card, "moduleBar").width > 0)
             // tóm tắt ở đầu "Bộ giọng"
-            verify(hasText(page, "Supertonic\u00a0· 52%"))
+            verify(hasText(page, "Supertonic\u00a0·\u00a052%"))
             // cỡ mỗi lựa chọn đứng yên, % không lùi
             const bar = find(card, "moduleBar").width
             supertonic = Object.assign({}, supertonic, {done: 60000000})

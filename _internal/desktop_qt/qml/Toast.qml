@@ -1,5 +1,6 @@
 import QtQuick
 import ABook
+import "TextWrap.js" as TextWrap
 
 // Lời báo của app (Toaster của desktop/App.tsx, sonner): thẻ mặt nổi ở góc trên bên phải, dòng đầu là tiêu đề, phần sau dòng đầu là mô tả mực phụ,
 // nút việc ("Hoàn tác", "Mở thư mục": nền hổ phách, chữ mực-trên-nhấn) và nút ✕ "Đóng thông báo". Tự khép sau `Api.noticeDuration` (mặc định
@@ -86,7 +87,7 @@ Item {
                     id: titleText
                     objectName: "toastTitle"
                     width: parent.width
-                    text: root.title
+                    text: TextWrap.keepDots(root.title)
                     color: Theme.text
                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                     font.pixelSize: 13

@@ -128,11 +128,11 @@ function exampleHtml(example, markBg, markInk) {
 }
 // Dòng nhỏ trên câu: "Chương 1 · câu 3 · máy gán: X · lời kể · sẽ đổi · chưa thu". `html`: ra HTML cho Text.RichText ("sẽ đổi" đậm màu `ink`).
 function exampleMeta(example, willChange, html, ink) {
-    const head = example.chapterTitle + "\u00a0· " + (example.seq === 0 ? "tiêu đề chương" : "câu " + example.seq)
-        + (example.speaker ? "\u00a0· máy gán: " + example.speaker : "")
-        + (example.narration ? "\u00a0· lời kể" : "")
-    const change = willChange ? (html ? "<span style=\"color:" + ink + "; font-weight:600\">&nbsp;· sẽ đổi</span>" : "&nbsp;· sẽ đổi") : ""
-    return (html ? esc(head) : head) + change + (!example.hasAudio ? "\u00a0· chưa thu" : "")
+    const head = example.chapterTitle + "\u00a0·\u00a0" + (example.seq === 0 ? "tiêu đề chương" : "câu " + example.seq)
+        + (example.speaker ? "\u00a0·\u00a0máy gán: " + example.speaker : "")
+        + (example.narration ? "\u00a0·\u00a0lời kể" : "")
+    const change = willChange ? (html ? "<span style=\"color:" + ink + "; font-weight:600\">&nbsp;·&nbsp;sẽ đổi</span>" : "&nbsp;·&nbsp;sẽ đổi") : ""
+    return (html ? esc(head) : head) + change + (!example.hasAudio ? "\u00a0·\u00a0chưa thu" : "")
 }
 
 // ---- minorGroups.ts ----
@@ -266,7 +266,7 @@ function groups(items, inPrecast, kind) {
     }
 }
 function decidedSummary(decided, waiting) {
-    return waiting === decided.length ? "Đã quyết, chờ áp dụng\u00a0· " + decided.length + " việc" : "Đã quyết\u00a0· " + decided.length + " việc (" + waiting + " thay đổi chờ áp dụng)"
+    return waiting === decided.length ? "Đã quyết, chờ áp dụng\u00a0·\u00a0" + decided.length + " việc" : "Đã quyết\u00a0·\u00a0" + decided.length + " việc (" + waiting + " thay đổi chờ áp dụng)"
 }
 function endLine(group, hint) {
     return group.later.length > 0
@@ -275,8 +275,8 @@ function endLine(group, hint) {
 }
 function precastLine(count) { return count + " việc của các chương đầu đang chờ ở “Duyệt trước khi thu”." }
 function filterOptions(group) {
-    const options = [{value: "all", label: "Tất cả\u00a0· " + group.open.length}]
-    for (const value of group.kinds) options.push({value: value, label: KIND_LABEL[value] + "\u00a0· " + group.counts[value]})
+    const options = [{value: "all", label: "Tất cả\u00a0·\u00a0" + group.open.length}]
+    for (const value of group.kinds) options.push({value: value, label: KIND_LABEL[value] + "\u00a0·\u00a0" + group.counts[value]})
     return options
 }
 function bulkKeepable(kind, items) {

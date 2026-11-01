@@ -10,7 +10,7 @@ Collapse {
         Row {
             width: parent.width; spacing: Theme.s8
             Icon { name: "moon"; size: 16 }
-            Text { objectName: "playerFadeText"; width: Math.max(0, parent.width - 24); text: `Sắp tắt\u00a0· chạm phím hoặc chuột để nghe thêm ${root.extend} phút`; wrapMode: Text.Wrap; color: Theme.accentText; font.pixelSize: Theme.sizeBodySmall }
+            Text { objectName: "playerFadeText"; width: Math.max(0, parent.width - 24); text: `Sắp tắt\u00a0·\u00a0chạm phím hoặc chuột để nghe thêm ${root.extend} phút`; wrapMode: Text.Wrap; color: Theme.accentText; font.pixelSize: Theme.sizeBodySmall }
         }
         Button { objectName: "playerFadeExtend"; text: `+${root.extend} phút`; kind: "ghost"; onClicked: Player.extendSleep() }
     }

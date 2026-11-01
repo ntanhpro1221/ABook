@@ -1,5 +1,6 @@
 import QtQuick
 import ABook
+import "TextWrap.js" as TextWrap
 
 // Khối "chưa có gì / chưa vào được" giữa màn (EmptyState của shared/ui.tsx): ô icon 56 bo bìa nền nhấn nhạt, tiêu đề 16 đậm, lời mực phụ tối đa
 // 448 px, nút việc bên dưới (đặt thẳng vào trong). Đổi chữ lúc đang hiện thì mờ qua tại chỗ, không đổi cứng.
@@ -26,7 +27,7 @@ Column {
         objectName: "emptyTitle"
         width: root.width
         horizontalAlignment: Text.AlignHCenter
-        text: root.title
+        text: TextWrap.keepDots(root.title)
         color: Theme.text
         wrapMode: Text.Wrap
         font.pixelSize: 16
