@@ -12,10 +12,14 @@ in 6 ms). The sudden-silence detector ("cut") came in with the fix, red on 0.4.1
 When the voice stalls (network gone mid-chapter) the music must hold for voiceStallFadeAfterSeconds, then fade out the
 chapter-end way, and come back when the voice moves again. The bench seeks into a range tools/stall_host makes the app's
 host hold for 25 s; the synthetic stall run below has the same shape.
+
+The position check splits lag = position / speed - clock into the drift (slope of the minimax line x segment length,
+DRIFT_MS) and the sawtooth (width of that band, SAW_MS): at x3 the two used to add up to 15-16 ms on a clean run.
 """
 import importlib.util
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1] / "desktop_qt"
@@ -38,9 +42,38 @@ def test_build_bat_gates_package_and_installer_on_the_ear():
     assert bat[gate:].index("if errorlevel 1 (") < bat[gate:].index("exit /b 1") < bat[gate:].index("rem build.bat package:")
 
 
-@pytest.mark.parametrize("speed", [1.0, 3.0])
+@pytest.mark.parametrize("speed", [1.0, 2.0, 3.0])
 def test_cursor_sawtooth_is_not_drift(speed):
-    assert kinds(sink.synthetic_run(speed, saw_ms=10.0)) == set()
+    assert kinds(sink.synthetic_run(speed, saw_ms=sink.ENGINE_PERIOD_MS)) == set()
+
+
+@pytest.mark.parametrize("speed", [1.0, 3.0])
+def test_a_sawtooth_of_two_engine_periods_is_red(speed):
+    assert kinds(sink.synthetic_run(speed, saw_ms=sink.STRENGTH_SAW_MS)) == {"saw"}
+
+
+def test_drift_adds_to_the_slope_and_leaves_the_sawtooth():
+    # what strength relies on to know an injected drift must be seen
+    t = np.arange(40) * 0.25
+    lag = -10.0 * ((t / 1.3) % 1.0)
+    lag[17] -= 12.0  # one tick stamped late, deeper than SAW_MS below the line
+    slope, saw, late = sink.lag_parts(t, lag)
+    slope2, saw2, late2 = sink.lag_parts(t, lag + 3.0 * t)
+    assert abs(slope2 - slope - 3.0) < 1e-6 and abs(saw2 - saw) < 1e-6 and saw <= 10.0 and late == late2 == 1
+
+
+@pytest.mark.parametrize("speed", [1.0, 3.0])
+def test_a_tick_stamped_late_is_not_a_sawtooth(speed):
+    # Bench::notePlayback reads the position, then the clock: a busy machine can preempt the GUI thread in between, and
+    # that one tick sits a scheduler quantum lower (01-11 gate on 0.4.157: -15.2 between -8.1 and -6.4)
+    data = sink.synthetic_run(speed, saw_ms=sink.ENGINE_PERIOD_MS)
+    rate = data["rate"]
+    # deep in the synthetic sawtooth (period 2.5 s), so that tick alone would cross SAW_MS
+    late = next(m for m in data["marks"] if m["tag"] == "tick" and m["frame"] > 30 * rate and m["frame"] / rate / 2.5 % 1 > 0.6)
+    data["marks"] = [dict(m, position=m["position"] - speed * 0.010) if m is late else m for m in data["marks"]]
+    report = sink.check(data)
+    assert {f["kind"] for f in report["findings"]} == set()
+    assert sum(d["late_ticks"] for d in report["drift"]) == 1
 
 
 @pytest.mark.parametrize("frac", [0.003, -0.005])
@@ -64,6 +97,14 @@ def test_strength_goes_red_with_a_deaf_drift_detector(monkeypatch):
     ok, results = sink.strength(data, stall=False)
     assert not ok
     assert all(r["ok"] for r in results if not r["case"].startswith("trôi"))
+
+
+def test_strength_goes_red_with_a_deaf_sawtooth_detector(monkeypatch):
+    data = sink.synthetic_run(3.0)
+    monkeypatch.setattr(sink, "SAW_MS", 1e9)
+    ok, results = sink.strength(data, stall=False)
+    assert not ok
+    assert all(r["ok"] for r in results if not r["case"].startswith("răng cưa"))
 
 
 @pytest.mark.parametrize("bump, red", [(0.01, True), (0.03, False)])

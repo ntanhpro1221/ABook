@@ -6,7 +6,8 @@ bốn tốc độ, tua xa, lùi, hết chương tự sang chương sau, bấm ch
 
   lỗ      chu kỳ engine kéo mà thiếu dữ liệu / luồng đang dừng (.gaps/.stops), chuỗi số 0 tuyệt đối, giọng mất hẳn so với nguồn
   tách    bậc nhảy mẫu-mẫu (sai phân bậc hai vượt xa nền quanh nó) mà nguồn ở cùng chỗ không có
-  trôi    vị trí app báo so với đồng hồ (sai số tích luỹ từng đoạn) và tiếng nghe thấy so với vị trí app báo (khớp dạng sóng)
+  trôi    vị trí app báo so với đồng hồ (dốc tích luỹ từng đoạn) và tiếng nghe thấy so với vị trí app báo (khớp dạng sóng)
+  r.cưa   vị trí app báo dao động quanh đường thật quá một chu kỳ engine (con trỏ nghe cập nhật thưa hơn padding)
   mức     tiếng ra so với nguồn ở cùng đoạn nội dung, theo từng tốc độ
   rò      còn tiếng sau lúc dừng
   đột im  đang có tiếng mà tắt phụt (> -45 dB xuống < -70 dB trong 20 ms) không do thao tác nào, ở chỗ nguồn không tự tắt
@@ -47,11 +48,21 @@ CLICK_FLOOR_SONIC = 0.03  # ... ở đoạn tốc độ khác 1 (Sonic chạy) t
                           # tới 0,0205 ở nơi nguồn chỉ 0,005 (01-11 lượt 5, 93,446 s; Sonic offline cùng mã: 0,011 nơi nguồn 0,004)
 DROPOUT_DB = 30.0       # tiếng ra thấp hơn nguồn chừng này dB trong 20 ms khi nguồn có tiếng = giọng mất
 LEVEL_TOL_DB = 1.0      # mức ở mỗi tốc độ lệch mức ở tốc độ 1 quá chừng này = lỗi
-# Trôi vị trí: vị trí app báo = con trỏ nghe của bộ trộn = khung đã ra theo padding của thiết bị, mà padding chỉ đổi theo
-# chu kỳ engine (10 ms). Nên vị trí luôn trễ sự thật 0..1 chu kỳ, pha đổi chậm theo nhịp thức của luồng trộn: răng cưa ≤ 10 ms
-# (đo 01-11, 5 lượt x 15 đoạn: tối đa 10,8 ms, tiếng ra vẫn đúng đồng hồ). Đoạn 4,5 s vì thế có dốc giả tới 0,24 %.
-# Trôi thật thì cộng dồn: sai số tích luỹ trong đoạn (thời gian người nghe) vượt chừng này mới là trôi.
+# Vị trí app báo so với đồng hồ tiếng ra, lag = vị trí / tốc độ - t (thời gian người nghe), tách hai phần:
+# - Răng cưa: vị trí = con trỏ nghe của bộ trộn = khung đã ghi - padding của thiết bị, đọc ở lần thức gần nhất rồi ngoại suy
+#   theo đồng hồ; padding chỉ đổi theo chu kỳ engine (WASAPI chia sẻ / FileSinkDevice: 10 ms). Nên vị trí luôn trễ sự thật
+#   0..1 chu kỳ, pha đổi theo nhịp thức của luồng trộn: lag là răng cưa một phía dưới đường thật, biên độ ENGINE_PERIOD_MS.
+#   Không chia cho tốc độ: nguồn luồng ghi vị trí nguồn theo khung thiết bị (mediaMixed += khung x tốc độ / rate), nên cỡ bộ
+#   đệm nguồn hay khối Sonic không vào vị trí báo, chỉ chu kỳ engine (thời gian thật) vào. Ngưỡng SAW_MS = chu kỳ + 4 ms.
+#   Số đo 01-11, 12 lượt (5 exe 0.4.151, 5 exe 0.4.157, 2 cổng lúc máy bận), răng cưa lớn nhất: x0,75 10,0 / x1 10,7 /
+#   x1,25 10,4 / x1,5 10,2 / x2 10,0 / x3 11,3 ms (máy bận; máy rảnh 10,1); trôi lớn nhất 10,0 ms (x1, đoạn "next" chỉ một
+#   sườn), ở x3 1,0 ms.
+# - Trôi: dốc của đường thẳng giữa dải răng cưa (lag_parts) x độ dài đoạn. Trôi thật thì cộng dồn: vượt DRIFT_MS (thời gian
+#   người nghe) trong đoạn là trôi.
+ENGINE_PERIOD_MS = 10.0
 DRIFT_MS = 15.0
+SAW_MS = 14.0
+LATE_TICKS_FRAC = 0.02  # tick đóng dấu muộn bỏ được mỗi đoạn (ít nhất một), xem lag_parts
 CLICK_SOURCE_S = 0.05   # tiếng tách mà nguồn cũng có trong chừng này giây NGƯỜI NGHE quanh vị trí báo thì là của nguồn
 CLICK_COPY = 0.5        # ... tức nguồn trong cửa sổ ấy có gai (|sai phân bậc hai|) ít nhất bằng chừng này lần gai tiếng ra
 OFFSET_SPREAD_MS = 30.0 # tiếng nghe thấy lệch vị trí app báo: dao động quá chừng này trong một đoạn = trôi / giật
@@ -215,6 +226,39 @@ def analyze(run_dir, source_path=None):
     report = check(load(run_dir, source_path), run_dir / "snippets")
     (run_dir / "report.json").write_text(json.dumps(report, ensure_ascii=False, indent=1), encoding="utf-8", newline="\n")
     return report
+
+
+def lag_parts(t, lag):
+    """Tách lag (ms) theo t (giây) của một đoạn thành (dốc ms/giây, răng cưa ms, số tick đóng dấu muộn): đường thẳng của dải
+    hẹp nhất chứa các điểm (khớp minimax; độ rộng dải lồi theo dốc nên tìm tam phân). Răng cưa = độ rộng dải; trôi = dốc x độ
+    dài đoạn. Cộng một trôi thẳng vào lag thì dốc cộng đúng chừng ấy, răng cưa giữ nguyên (tick bỏ chọn theo phần dư, cũng không
+    đổi) - kiểm lực vì thế biết chắc khi nào phải thấy. Đoạn chỉ có một sườn răng cưa (không lần nào con trỏ bắt kịp) không phân
+    biệt được với trôi: dốc giả tới một chu kỳ engine.
+    Tick đóng dấu muộn: Bench::notePlayback đọc vị trí rồi mới lấy đồng hồ; máy bận mà luồng giao diện bị giành CPU giữa hai lệnh
+    thì đúng một tick thụt sâu thêm (01-11 cổng trên exe 0.4.157 khi máy đang phân tích: -15,2 giữa -8,1 và -6,4, răng cưa 10 ms
+    đều quanh nó). Bỏ tối đa LATE_TICKS_FRAC số tick (ít nhất một), từng tick lẻ (hai bên vẫn giữ) mà riêng nó đã sâu quá SAW_MS
+    dưới đường bao; tick sâu hơn một chu kỳ mà dưới ngưỡng thì giữ (đáy răng cưa, dưới ngưỡng đằng nào cũng xanh). Con trỏ cập
+    nhật thưa thì sâu ở mọi chu kỳ nên vẫn đỏ."""
+    keep = np.ones(len(t), bool)
+
+    def fit():
+        tk, lk = t[keep], lag[keep]
+        width = lambda b: float(np.ptp(lk - b * tk))
+        lo, hi = -100.0, 100.0  # ms/giây: 10 % trôi
+        for _ in range(100):
+            m1, m2 = lo + (hi - lo) / 3, hi - (hi - lo) / 3
+            lo, hi = (lo, m2) if width(m1) < width(m2) else (m1, hi)
+        b = (lo + hi) / 2
+        return b, width(b), float(np.max(lk - b * tk))
+    b, w, top = fit()
+    for _ in range(max(1, int(LATE_TICKS_FRAC * len(t)))):
+        depth = np.where(keep, top + b * t - lag, -np.inf)
+        i = int(np.argmax(depth))
+        if depth[i] <= SAW_MS or 0 < i < len(t) - 1 and not (keep[i - 1] and keep[i + 1]):
+            break
+        keep[i] = False
+        b, w, top = fit()
+    return b, w, int((~keep).sum())
 
 
 def check(data, snippets=None):
@@ -432,18 +476,22 @@ def check(data, snippets=None):
             current = float(e["tag"].split(":")[1])
         rate_of[e["tag"]] = current
 
-    # 6. Trôi vị trí: sai số tích luỹ của vị trí báo so với đồng hồ tiếng ra x tốc độ đặt, trong từng đoạn (DRIFT_MS)
+    # 6. Vị trí so với đồng hồ tiếng ra x tốc độ đặt, từng đoạn: trôi tích luỹ (DRIFT_MS) và răng cưa (SAW_MS), xem lag_parts
     drift = []
     for s in segments:
         t = np.array([m["frame"] for m in s["ticks"]], dtype=np.float64) / rate
         p = np.array([m["position"] for m in s["ticks"]])
         speed = rate_of[s["tag"]]
         slope = float(np.polyfit(t, p, 1)[0])
-        lag = p / speed - t
-        spread = float(lag.max() - lag.min()) * 1000
-        drift.append(dict(segment=s["tag"], speed=speed, slope=round(slope, 5), error=round(slope / speed - 1, 5), spread_ms=round(spread, 1)))
-        if spread > DRIFT_MS:
-            snip("drift", s["frames"][0], f"{s['tag']}: vị trí lệch đồng hồ tích luỹ {spread:.1f} ms (dốc {slope:.4f} giây/giây, tốc độ {speed})")
+        lag = (p / speed - t) * 1000
+        trend, saw, late = lag_parts(t, lag)
+        drifted = abs(trend) * float(t[-1] - t[0])
+        drift.append(dict(segment=s["tag"], speed=speed, slope=round(slope, 5), error=round(slope / speed - 1, 5),
+                          spread_ms=round(float(lag.max() - lag.min()), 1), drift_ms=round(drifted, 1), saw_ms=round(saw, 1), late_ticks=late))
+        if drifted > DRIFT_MS:
+            snip("drift", s["frames"][0], f"{s['tag']}: vị trí trôi khỏi đồng hồ {drifted:.1f} ms trong {t[-1] - t[0]:.1f} s (tốc độ {speed})")
+        if saw > SAW_MS:
+            snip("saw", s["frames"][0], f"{s['tag']}: vị trí dao động {saw:.1f} ms quanh đường thật (tốc độ {speed})")
     # 7. Tiếng nghe thấy so với vị trí app báo: khớp dạng sóng với nguồn ở từng tick
     # Sonic chép nguyên từng chu kỳ cao độ: ở tốc độ cao cửa sổ ngắn lại (~2 chu kỳ) mới khớp được một đoạn nguồn liền.
     # Lệch đổi về thời gian người nghe (giây nguồn / tốc độ).
@@ -558,14 +606,17 @@ def run(label, exe):
 # ---------- kiểm lực trên lượt thật: lỗi cấy vào chính lượt ấy phải đỏ ----------
 
 STRENGTH_DRIFTS = (0.003, -0.003, 0.005, -0.005)
+STRENGTH_SAW_MS = SAW_MS + ENGINE_PERIOD_MS  # răng cưa bất thường: vị trí chỉ cập nhật mỗi hai chu kỳ engine trở lên
+STRENGTH_SAW_S = 1.0
 STRENGTH_STEP = 0.05
 STRENGTH_CUT_S = 0.3
 
 
 def strength(data, base=None, stall=True):
     """Lượt phải xanh, và từng lỗi cấy vào nó phải đỏ đúng loại, đúng chỗ:
-    - trôi ±0,3 % / ±0,5 % từ giữa đoạn: ở mọi đoạn mà phần cấy (thời gian người nghe) vượt DRIFT_MS + răng cưa sạch của
-      chính đoạn ấy, tức là chắc chắn phải thấy; phải có ít nhất một đoạn như thế;
+    - trôi ±0,3 % / ±0,5 % suốt đoạn: ở mọi đoạn mà phần cấy (thời gian người nghe) vượt DRIFT_MS + trôi sạch của chính
+      đoạn ấy, tức là chắc chắn phải thấy; mỗi tốc độ của lượt phải có ít nhất một đoạn như thế;
+    - răng cưa STRENGTH_SAW_MS (chu kỳ STRENGTH_SAW_S) ở đoạn dài nhất của mỗi tốc độ;
     - bậc 0,05 kéo 10 ms giữa một đoạn tốc độ >= 2,5 và một đoạn tốc độ 1, xa tiếng tách của nguồn và chỗ nguồn nhọn;
     - đột im: 0,3 s số 0 giữa một đoạn tốc độ 1, chỗ tiếng ra đang có tiếng và nguồn không tự tắt;
     - giọng khựng (stall=True; lượt giả không có cửa sổ khựng thì tắt): xem stall_strength.
@@ -574,18 +625,25 @@ def strength(data, base=None, stall=True):
     base = base or check(data)
     results = [dict(case="sạch", ok=base["ok"], counts=base["counts"])]
     segments = [dict(tag=tag, first=f0, last=f1, **d) for (tag, (f0, f1)), d in zip(base["segments"], base["drift"])]
+    speeds = sorted({s["speed"] for s in segments})
+
+    def shifted(s, shift):
+        return [dict(m, position=m["position"] - s["speed"] * shift((m["frame"] - s["first"]) / rate) / 1000)
+                if m["tag"] == "tick" and s["first"] <= m["frame"] <= s["last"] else m for m in data["marks"]]
+
+    def hit(marks, s, kind):
+        return any(f["kind"] == kind and f["t"] == round(s["first"] / rate, 3) for f in check(dict(data, marks=marks))["findings"])
     for frac in STRENGTH_DRIFTS:
-        must = [s for s in segments if abs(frac) * (s["last"] - s["first"]) / rate / 2 * 1000 > DRIFT_MS + s["spread_ms"]]
-        if not must:
-            results.append(dict(case=f"trôi {frac:+.1%}", ok=False, note="không đoạn nào đủ dài để chắc chắn thấy"))
-            continue
+        must = [s for s in segments if abs(frac) * (s["last"] - s["first"]) / rate * 1000 > DRIFT_MS + s["drift_ms"]]
+        for speed in speeds:
+            if not any(s["speed"] == speed for s in must):
+                results.append(dict(case=f"trôi {frac:+.1%} x{speed:g}", ok=False, note="không đoạn nào đủ dài để chắc chắn thấy"))
         for s in must:
-            mid = (s["first"] + s["last"]) / 2
-            marks = [dict(m, position=m["position"] + frac * s["speed"] * (m["frame"] - mid) / rate)
-                     if m["tag"] == "tick" and mid < m["frame"] <= s["last"] else m for m in data["marks"]]
-            got = check(dict(data, marks=marks))
-            hit = any(f["kind"] == "drift" and f["t"] == round(s["first"] / rate, 3) for f in got["findings"])
-            results.append(dict(case=f"trôi {frac:+.1%} {s['tag']}", ok=hit))
+            results.append(dict(case=f"trôi {frac:+.1%} {s['tag']}", ok=hit(shifted(s, lambda x: -frac * x * 1000), s, "drift")))
+    for speed in speeds:
+        s = max((s for s in segments if s["speed"] == speed), key=lambda s: s["last"] - s["first"])
+        saw = shifted(s, lambda x: STRENGTH_SAW_MS * (x / STRENGTH_SAW_S % 1.0))
+        results.append(dict(case=f"răng cưa {STRENGTH_SAW_MS:g} ms {s['tag']}", ok=hit(saw, s, "saw")))
     source = data["source"]
     source_clicks = np.array(clicks(source, rate) or [-10 ** 9], dtype=np.int64)
     sink_clicks = np.array(clicks(data["mono"], rate) or [-10 ** 9], dtype=np.int64)
@@ -685,7 +743,13 @@ def gate(exe, runs):
     labels = [f"{stamp}-{i + 1}" for i in range(runs)]
     reports = [run(label, exe) for label in labels]
     ok, results = strength(load(OUT / labels[0]), reports[0])
-    summary = dict(gate="audio_sink", exe=str(exe), runs=[dict(label=l, ok=r["ok"], counts=r["counts"], excused=r["excused"]) for l, r in zip(labels, reports)],
+    # trôi / răng cưa lớn nhất theo tốc độ: bằng chứng ngưỡng còn dư bao nhiêu, kể cả khi cổng xanh và WAV bị xoá
+    position = [{f"x{v:g}": dict(drift_ms=max(d["drift_ms"] for d in r["drift"] if d["speed"] == v),
+                                 saw_ms=max(d["saw_ms"] for d in r["drift"] if d["speed"] == v),
+                                 late_ticks=sum(d["late_ticks"] for d in r["drift"] if d["speed"] == v))
+                 for v in sorted({d["speed"] for d in r["drift"]})} for r in reports]
+    summary = dict(gate="audio_sink", exe=str(exe), runs=[dict(label=l, ok=r["ok"], counts=r["counts"], excused=r["excused"], position=q)
+                                                          for l, r, q in zip(labels, reports, position)],
                    strength=results, ok=ok and all(r["ok"] for r in reports))
     print(json.dumps(summary, ensure_ascii=False, indent=1))
     if summary["ok"]:
@@ -869,13 +933,21 @@ def selftest():
     gone = clean.copy(); gone[8 * rate: 8 * rate + 960] = music[8 * rate: 8 * rate + 960] * 0.001
     k = 8 * rate // 960
     expect("mất giọng: 20 ms", frame_db(gone, 960)[k] < frame_db(clean, 960)[k] - DROPOUT_DB)
-    # Lượt giả qua check(): răng cưa 10 ms của con trỏ nghe không phải trôi, trôi thật từ giữa đoạn là trôi
+    # Lượt giả qua check(): răng cưa một chu kỳ engine của con trỏ nghe không phải trôi cũng không phải răng cưa lỗi, ở mọi tốc
+    # độ; trôi thật từ giữa đoạn là trôi; răng cưa hai chu kỳ trở lên là răng cưa
     def kinds(data):
         return {f["kind"] for f in check(data)["findings"]}
-    for speed in (1.0, 3.0):
-        expect(f"lượt giả x{speed:g}: sạch", kinds(synthetic_run(speed)) == set())
+    for speed in (1.0, 2.0, 3.0):
+        expect(f"lượt giả x{speed:g}: sạch", kinds(synthetic_run(speed, saw_ms=ENGINE_PERIOD_MS)) == set())
+        expect(f"lượt giả x{speed:g}: răng cưa {STRENGTH_SAW_MS:g} ms", kinds(synthetic_run(speed, saw_ms=STRENGTH_SAW_MS)) == {"saw"})
     for frac in STRENGTH_DRIFTS:
         expect(f"lượt giả: trôi {frac:+.1%}", "drift" in kinds(synthetic_run(1.0, drift=frac)))
+    # Một tick đóng dấu muộn 10 ms (máy bận, luồng giao diện bị giành CPU) ở chỗ răng cưa sâu: bỏ đúng tick ấy, vẫn sạch
+    late = synthetic_run(3.0)
+    tick = next(m for m in late["marks"] if m["tag"] == "tick" and m["frame"] > 30 * rate and m["frame"] / rate / 2.5 % 1 > 0.6)
+    late["marks"] = [dict(m, position=m["position"] - 3.0 * 0.010) if m is tick else m for m in late["marks"]]
+    report = check(late)
+    expect("lượt giả: một tick đóng dấu muộn", not report["findings"] and sum(d["late_ticks"] for d in report["drift"]) == 1)
     # Tiếng bật của nguồn, tiếng nghe đi trước vị trí báo 22 ms: ở x3 là 66 ms nguồn mà vẫn là của nguồn; 66 ms ở x1 thì không
     fast = synthetic_run(3.0, lead_ms=22, source_step_at=60.0)
     expect("tách nguồn x3: tiếng ra có tách", any(abs(k - 37.3 * rate) < 0.1 * rate for k in clicks(fast["mono"], rate)))
@@ -896,12 +968,17 @@ def selftest():
     results = stall_strength(stalled, check(stalled))
     expect("kiểm lực khựng trên lượt giả: " + ", ".join(r["case"] for r in results if not r["ok"]), all(r["ok"] for r in results))
     # ... và kiểm lực phải đỏ khi máy dò bị nới (ngưỡng trôi to vô hạn): cổng không bao giờ xanh với bộ dò câm
-    global DRIFT_MS, CUT_TO_DB
+    global DRIFT_MS, SAW_MS, CUT_TO_DB
     saved, DRIFT_MS = DRIFT_MS, 1e9
     try:
         expect("kiểm lực đỏ khi máy dò trôi câm", not strength(synthetic_run(3.0), stall=False)[0])
     finally:
         DRIFT_MS = saved
+    saved, SAW_MS = SAW_MS, 1e9
+    try:
+        expect("kiểm lực đỏ khi máy dò răng cưa câm", not strength(synthetic_run(3.0), stall=False)[0])
+    finally:
+        SAW_MS = saved
     saved, CUT_TO_DB = CUT_TO_DB, -1e9
     try:
         expect("kiểm lực đỏ khi máy dò đột im câm", not strength(synthetic_run(3.0), stall=False)[0])
