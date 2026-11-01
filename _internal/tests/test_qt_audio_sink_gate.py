@@ -56,9 +56,24 @@ def test_drift_adds_to_the_slope_and_leaves_the_sawtooth():
     # what strength relies on to know an injected drift must be seen
     t = np.arange(40) * 0.25
     lag = -10.0 * ((t / 1.3) % 1.0)
-    slope, saw = sink.lag_parts(t, lag)
-    slope2, saw2 = sink.lag_parts(t, lag + 3.0 * t)
-    assert abs(slope2 - slope - 3.0) < 1e-6 and abs(saw2 - saw) < 1e-6 and saw <= 10.0
+    lag[17] -= 12.0  # one tick stamped late, deeper than SAW_MS below the line
+    slope, saw, late = sink.lag_parts(t, lag)
+    slope2, saw2, late2 = sink.lag_parts(t, lag + 3.0 * t)
+    assert abs(slope2 - slope - 3.0) < 1e-6 and abs(saw2 - saw) < 1e-6 and saw <= 10.0 and late == late2 == 1
+
+
+@pytest.mark.parametrize("speed", [1.0, 3.0])
+def test_a_tick_stamped_late_is_not_a_sawtooth(speed):
+    # Bench::notePlayback reads the position, then the clock: a busy machine can preempt the GUI thread in between, and
+    # that one tick sits a scheduler quantum lower (01-11 gate on 0.4.157: -15.2 between -8.1 and -6.4)
+    data = sink.synthetic_run(speed, saw_ms=sink.ENGINE_PERIOD_MS)
+    rate = data["rate"]
+    # deep in the synthetic sawtooth (period 2.5 s), so that tick alone would cross SAW_MS
+    late = next(m for m in data["marks"] if m["tag"] == "tick" and m["frame"] > 30 * rate and m["frame"] / rate / 2.5 % 1 > 0.6)
+    data["marks"] = [dict(m, position=m["position"] - speed * 0.010) if m is late else m for m in data["marks"]]
+    report = sink.check(data)
+    assert {f["kind"] for f in report["findings"]} == set()
+    assert sum(d["late_ticks"] for d in report["drift"]) == 1
 
 
 @pytest.mark.parametrize("frac", [0.003, -0.005])
