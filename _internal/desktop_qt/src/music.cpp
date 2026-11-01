@@ -35,9 +35,15 @@ Music::Music(Player *player, PlayerNet *net, std::function<AudioOut *()> make, Q
             [net](const QString &link) { postWarm(net, link); }),
       m_nextWarm(
           [this](int chapterId, NextChapterWarm::Answer done) {
+              const QString key = QStringLiteral("%1:%2").arg(m_bookId).arg(chapterId);
               m_net->request("GET", QStringLiteral("/api/books/%1/music/chapters/%2").arg(m_bookId).arg(chapterId), {},
-                             [done](int status, const QJsonObject &body) {
-                                 done(status == 200 ? std::optional<MusicCues>(cuesFromJson(body)) : std::nullopt);
+                             [this, done, key](int status, const QJsonObject &body) {
+                                 const std::optional<MusicCues> result = status == 200 ? std::optional<MusicCues>(cuesFromJson(body)) : std::nullopt;
+                                 if (result && !result->pending && result->unavailable.isEmpty()) {
+                                     m_aheadKey = key;
+                                     m_ahead = *result;
+                                 }
+                                 done(result);
                              }, false);
           },
           [net](const QString &link) { postWarm(net, link); }),
@@ -136,7 +142,14 @@ void Music::onChapter() {
         updateTicking();
         return;
     }
-    m_bed.setCues({}, std::nullopt, 0);
+    // Mốc đã hỏi sẵn của chương này: đặt ngay; lời hỏi vẫn đi, mốc ấy về lại thì bài đang kêu chơi tiếp (MusicBed::switchTo cùng bài).
+    if (key == m_aheadKey) {
+        m_credits = m_ahead.credits;
+        m_bed.setCues(m_ahead.cues, m_ahead.levelDb, 0);
+        updateCredit(m_bed.activeLink());
+    } else {
+        m_bed.setCues({}, std::nullopt, 0);
+    }
     askCues(0, 0);
     updateTicking();
 }
