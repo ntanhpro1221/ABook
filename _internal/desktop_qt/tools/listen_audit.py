@@ -23,6 +23,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 import urllib.request
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
@@ -361,8 +362,8 @@ def abrupt_drops(db: np.ndarray, quiet: np.ndarray, still: np.ndarray, low: floa
         w1 = min(len(db), i + int(CUT_MATCH_AFTER_S / hop_s), nxt)
         if w0 <= i < w1 and tracks:
             name, at, err, used = min(((name, *source_match(clamped[w0:w1], quiet[w0:w1], x)) for name, x in tracks.items()), key=lambda r: r[2])
-            if err <= CUT_MATCH_MAX_ERR_DB:
-                x, j = tracks[name], at + (i - w0)
+            x, j = tracks[name], at + (i - w0)
+            if err <= CUT_MATCH_MAX_ERR_DB and j + k < len(x):  # bài hết trước khi đủ CUT_S sau chỗ rơi: không đo được nguồn, vẫn là cụt
                 source_drop = float(x[j] - x[j + 1: j + k + 1].min())
                 cut.update(source=dict(track=name, at_s=round(j * hop_s, 2), err_db=round(err, 2), frames=used, drop_db=round(source_drop, 1)),
                            content=drop <= source_drop + CUT_SOURCE_SLACK_DB)
@@ -372,8 +373,17 @@ def abrupt_drops(db: np.ndarray, quiet: np.ndarray, still: np.ndarray, low: floa
 
 
 def source_tracks(run_dir: Path, rate: int, hop: int) -> dict[str, np.ndarray]:
-    """Mức theo khung của các bài đã tải trọn trong bộ đệm nhạc của lượt (music/files/*.mp3; .part bỏ qua)."""
-    return {p.stem[:8]: np.maximum(frame_db(decode(p, rate), hop), CUT_FLOOR_DB) for p in sorted((run_dir / "music" / "files").glob("*.mp3"))}
+    """Mức theo khung của các bài đã tải trọn trong bộ đệm nhạc của lượt (music/files/*.mp3; .part bỏ qua). Bài không giải mã được thì
+    bỏ: chỗ rơi trên nó không khớp được nguồn nào nên vẫn là cụt (bắt nhầm còn hơn bỏ lọt)."""
+    out = {}
+    for p in sorted((run_dir / "music" / "files").glob("*.mp3")):
+        try:
+            pcm = decode(p, rate)
+        except (OSError, subprocess.CalledProcessError):
+            continue
+        if len(pcm) >= hop:
+            out[p.stem] = np.maximum(frame_db(pcm, hop), CUT_FLOOR_DB)
+    return out
 
 
 def analyze(a_dir: Path, b_dir: Path, control: Path | None = None) -> dict:
@@ -625,6 +635,24 @@ def selftest() -> int:
     got6 = [c for c in abrupt_drops(onset, quiet_lag, quiet5, -32.0, full5, hop_s, [], {}) if v5 - 8 <= round(c["t"] / hop_s) <= v5]
     if len(got6) != 1:
         failures.append(f"nhạc tắt ngay trước tiếng giọng: chờ 1 chỗ, được {got6}")
+    # chỗ rơi sát dấu đổi bài: cửa sổ khớp dừng ở khung ngay sau chỗ rơi, bài chỉ dài bằng cửa sổ -> nguồn sau chỗ rơi không có, vẫn là cụt
+    c7 = next(j for j in range(400, n5 - 40) if quiet5[j - 12: j + 30].all() and (track[140 + j - 2: 140 + j + 8] == -10.0).all())
+    edge = natural.copy()
+    edge[c7: c7 + 20] = -90.0
+    first = abrupt_drops(edge, quiet5, quiet5, -32.0, full5, hop_s, [], {})
+    i7 = round(next(c["t"] for c in first if c7 - 8 <= round(c["t"] / hop_s) <= c7) / hop_s)
+    w7 = max(0, i7 - int(CUT_MATCH_BEFORE_S / hop_s))
+    got7 = [c for c in abrupt_drops(edge, quiet5, quiet5, -32.0, full5, hop_s, [i7 + 1], {"bai": track[140 + w7: 140 + i7 + 1]})
+            if round(c["t"] / hop_s) == i7]
+    if len(got7) != 1 or got7[0]["content"]:
+        failures.append(f"nhạc cụt sát dấu đổi bài: chờ 1 chỗ cụt, được {got7}")
+    # file bài hỏng (không giải mã được) bị bỏ qua, không làm hỏng lượt
+    with tempfile.TemporaryDirectory() as tmp:
+        (Path(tmp) / "music" / "files").mkdir(parents=True)
+        (Path(tmp) / "music" / "files" / "0123456789abcdef.mp3").write_bytes(b"not an mp3")
+        broken = source_tracks(Path(tmp), 8000, 400)
+    if broken:
+        failures.append(f"file bài hỏng: chờ bỏ qua, được {list(broken)}")
     print(json.dumps(dict(selftest="listen_audit", failures=failures), ensure_ascii=False))
     return 1 if failures else 0
 
