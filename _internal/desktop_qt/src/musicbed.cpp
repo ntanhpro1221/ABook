@@ -170,6 +170,14 @@ void MusicBed::setCues(const QVector<MusicCue> &cues, std::optional<double> leve
         m_gain = std::pow(10.0, *levelDb / 20);
     m_lastTime = seconds.value_or(m_lastTime);
     switchTo(playableAt(m_lastTime), m_lastTime);
+    tellPlayUntil(m_lastTime); // chuỗi mốc đổi (đổi chương, sửa mốc): chỗ thôi kêu đổi ngay, không đợi nhịp đồng bộ kế
+}
+
+// Bài đang tải dở chỉ cần tải kịp tới chỗ nó thôi kêu (playEnd), không phải tới hết bài; tính lại mỗi nhịp (giọng chậm / khựng / tua) và mỗi lần
+// chuỗi mốc đổi.
+void MusicBed::tellPlayUntil(double seconds) {
+    if (m_current)
+        m_current->audio->out->setPlayUntil(currentTime(m_current->audio) + playEnd(m_cues, m_current->cue) - seconds);
 }
 
 void MusicBed::setVolume(double volume) {
@@ -214,9 +222,7 @@ void MusicBed::sync(double seconds, bool playing, bool seeked, bool ended) {
     retarget(seeked);
     finishTail(seconds);
     crossLoop(seconds);
-    // Bài đang tải dở chỉ cần tải kịp tới chỗ nó thôi kêu (playEnd), không phải tới hết bài; tính lại mỗi nhịp vì giọng có thể chậm / khựng.
-    if (m_current)
-        m_current->audio->out->setPlayUntil(currentTime(m_current->audio) + playEnd(m_cues, m_current->cue) - seconds);
+    tellPlayUntil(seconds);
     // Chỉ bài đang kêu được chơi lại; bài đang mờ đi thì chỉ dừng cùng giọng.
     QVector<VoiceP> all = m_fading;
     if (m_current)
