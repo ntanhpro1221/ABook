@@ -713,12 +713,13 @@ export function PlayerProvider({
       bedCuesFor.current = bedChapter;
       scene?.reset();
       if (!playlistBed) bed.setCues([], undefined, 0);
-      // Mốc đã đọc sẵn của chương này: đặt ngay; lời hỏi dưới vẫn đi, mốc ấy về lại y hệt thì không dời chỗ nhạc vào.
+      // Mốc đã đọc sẵn của chương này: đặt ngay như ở giây 0 (đã có trước khi chương bắt đầu - nhịp đầu của chương có thể đã qua 0,25 s);
+      // lời hỏi dưới vẫn đi, mốc ấy về lại y hệt thì không dời chỗ nhạc vào.
       const ahead = aheadCues.current?.key === bedChapter ? aheadCues.current.result : null;
       if (ahead && scene && isSceneCues(ahead.cues)) {
         bedCredits.current = ahead.credits ?? {};
         sceneHeard.current = true;
-        scene.arrive(ahead.cues, ahead.estSeconds ?? 0, ahead.levelDb, engine.time);
+        scene.arrive(ahead.cues, ahead.estSeconds ?? 0, ahead.levelDb, 0);
       }
     }
     // Nhạc theo cảnh dựng nền: chương chưa xong thì máy chủ trả `pending` (giọng không chờ nhạc) - hỏi lại, xong thì nhạc vào ở đầu câu kế.

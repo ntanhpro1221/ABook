@@ -478,10 +478,11 @@ object MusicBed {
                 scene.reset()
                 cues = emptyList()
                 if (chapterId != null) {
-                    // Mốc đã đọc sẵn thì đặt ngay; lời hỏi vẫn đi (xếp dựng các chương kế, lý do chưa có nhạc), mốc ấy về lại y hệt thì không dời chỗ nhạc vào.
+                    // Mốc đã đọc sẵn thì đặt ngay như ở giây 0: đã có trước khi chương bắt đầu, nhịp đầu của chương có thể đã qua 0,25 s (đo 01-11: 0,297 s đẩy
+                    // nhạc sang câu thứ hai). Lời hỏi vẫn đi (xếp dựng các chương kế, lý do chưa có nhạc), mốc ấy về lại y hệt thì không dời chỗ nhạc vào.
                     aheadScene?.takeIf { it.first == "$book:$chapterId" }?.second?.let { arrival ->
                         infos = infos + arrival.infos
-                        if (scene.arrive(arrival, seconds)) cues = scene.cues
+                        if (scene.arrive(arrival, 0.0)) cues = scene.cues
                     }
                     askScene(appContext, chapterId, 0)
                 }
