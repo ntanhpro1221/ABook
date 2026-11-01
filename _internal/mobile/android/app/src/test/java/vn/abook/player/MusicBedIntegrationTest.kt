@@ -456,6 +456,27 @@ class MusicBedIntegrationTest {
         assertEquals("bài trước mờ đi rồi nhả", 1, old.released)
     }
 
+    @Test fun aStreamedSongOnlyNeedsToKeepUpUntilItsCueStopsUsingIt() {
+        // Cùng bài 200 s tải 0,6x, nhưng mốc chỉ dùng nó tới giây 60 (mốc khác bài vào ở 60, mờ ra fadeSeconds): chỉ cần tải kịp tới 62 s của bài -
+        // vào khi đã có ~33 s (62 - 0,6 x 62 / 1,3) thay vì ~108 s của bản tới-hết-bài (U30F 02-11: bài 863 s mà mốc dùng 342 s, nhạc vào ở 350 s thay vì 98 s).
+        val cue = MusicCues.Cue(0.0, 60.0, "music/a.mp3", null)
+        field("lastSeconds").setDouble(MusicBed, 0.0)
+        field("cues").set(MusicBed, listOf(cue, MusicCues.Cue(60.0, 300.0, "music/b.mp3", null)))
+        val music = FakePlayer().also { it.state = Player.STATE_BUFFERING; it.playWhenReady = true; it.position = 0; it.bufferedPosition = 3_000 }
+        field("current").set(MusicBed, bed(music, cue).also { b -> b.javaClass.getDeclaredField("streamed").also { it.isAccessible = true }.setBoolean(b, true) })
+        field("playing").setBoolean(MusicBed, true)
+        invoke("startFade")
+        var entered = -1L
+        val after = mutableListOf<Pair<String, Float>>()
+        repeat(2_000) {
+            val events = stream(music, 50) { 0.6 }
+            if (entered < 0 && music.volume > 0f) entered = music.bufferedPosition
+            if (entered >= 0 && music.position < 40_000) after += events
+        }
+        assertTrue("vào khi đã có ~33 s ($entered)", entered in 31_000L..37_000L)
+        assertTrue("đã vào thì không hụt trong phần mốc dùng ($after)", after.none { it.first == "đứng" })
+    }
+
     @Test fun streamPaceFoldsTheFirstBurstAndNeedsASecondOfMeasurement() {
         val pace = StreamPace()
         pace.add(0, 0)

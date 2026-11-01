@@ -1,46 +1,94 @@
-"""Cổng "phát được tới hết bài" của nhạc đang tải dở dùng cùng hằng số ở Qt, web và điện thoại.
+"""Cổng "phát được tới chỗ bài thôi kêu" của nhạc đang tải dở: Qt, web và điện thoại ĐỌC cùng các khoá underrun* của music_mix.json.
 
-Bài đang tải dở chỉ vào khi phần đã tải cùng tốc độ tải (trung bình trượt, gộp đợt dồn đầu, chia lề) đủ để phát từ chỗ vào tới hết bài,
-có sẵn một đoạn trước con trỏ; hụt giữa bài thì mờ ra / vào trong cùng một khoảng (musicmixer.cpp `keepsUp`, musicBed.ts `playsThrough`,
-StreamPace.kt `playsThrough`). Một bản lệch số là cùng một mạng mà nhạc vào sớm / muộn khác nhau giữa các máy.
+Bài đang tải dở chỉ vào khi phần đã tải cùng tốc độ tải (trung bình trượt, gộp đợt dồn đầu, chia lề) đủ để phát từ chỗ vào tới chỗ bài thôi kêu
+(hết chuỗi mốc liền nhau cùng bài + mờ ra - `playEnd`), có sẵn một đoạn trước con trỏ; hụt giữa bài thì mờ ra / vào trong cùng một khoảng
+(musicmixer.cpp `keepsUp`, musicBed.ts `playsThrough`, StreamPace.kt `playsThrough`). Một bản chép tay con số là cùng một mạng mà nhạc vào sớm / muộn
+khác nhau giữa các máy, nên test này hỏng khi một nền tảng không đọc từ file (Qt qua CMakeLists.txt -> ABOOK_MIX_*, web import, Android MusicMix).
 """
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
+MIX = ROOT / "abook" / "webui" / "assets" / "music_mix.json"
+CMAKE = ROOT / "desktop_qt" / "CMakeLists.txt"
 QT = ROOT / "desktop_qt" / "src" / "musicmixer.cpp"
+QT_LOGIC = ROOT / "desktop_qt" / "src" / "musiclogic.h"
 WEB = ROOT / "ui" / "src" / "listen" / "musicBed.ts"
-PHONE = ROOT / "mobile" / "android" / "app" / "src" / "main" / "java" / "vn" / "abook" / "player" / "StreamPace.kt"
+PHONE = ROOT / "mobile" / "android" / "app" / "src" / "main" / "java" / "vn" / "abook" / "player"
 
-# Tên hằng ở mỗi bản, quy về giây: (Qt, web, điện thoại tính bằng ms).
-NAMES = {
-    "window": ("RATE_WINDOW_S", "DOWNLOAD_WINDOW_SECONDS", "WINDOW_MS"),
-    "burst": ("BURST_S", "DOWNLOAD_BURST_SECONDS", "BURST_MS"),
-    "margin": ("DOWNLOAD_MARGIN", "DOWNLOAD_MARGIN", "MARGIN"),
-    "lead": ("DECODE_LEAD_S", "DOWNLOAD_LEAD_SECONDS", "LEAD_MS"),
-    "fade": ("UNDERRUN_FADE_S", "UNDERRUN_FADE_SECONDS", "FADE_MS"),
+# khoá json -> (hằng Qt hay None khi Qt không dùng, hằng web, thuộc tính MusicMix của Android)
+KEYS = {
+    "underrunRateWindowSeconds": ("RATE_WINDOW_S", "DOWNLOAD_WINDOW_SECONDS", "underrunRateWindowMs"),
+    "underrunBurstSeconds": ("BURST_S", "DOWNLOAD_BURST_SECONDS", "underrunBurstMs"),
+    "underrunMargin": ("DOWNLOAD_MARGIN", "DOWNLOAD_MARGIN", "underrunMargin"),
+    "underrunLeadSeconds": ("DECODE_LEAD_S", "DOWNLOAD_LEAD_SECONDS", "underrunLeadMs"),
+    "underrunFadeSeconds": ("UNDERRUN_FADE_S", "UNDERRUN_FADE_SECONDS", "underrunFadeMs"),
+    # Qt canh vòng PCM đã giải mã (UNDERRUN_LOW_S / RESUME_S riêng); web và điện thoại canh phần đã tải trước con trỏ.
+    "underrunLowSeconds": (None, "UNDERRUN_LOW_SECONDS", "underrunLowMs"),
 }
 
 
-def constant(path: Path, name: str) -> float:
-    text = path.read_text(encoding="utf-8")
-    found = re.search(rf"\b{name}\s*=\s*([\d_.]+)L?\b", text)
-    assert found, f"{path.name}: không thấy hằng {name}"
-    return float(found.group(1).replace("_", ""))
+def macro(key: str) -> str:
+    return "ABOOK_MIX_" + re.sub(r"(?<!^)(?=[A-Z])", "_", key).upper()
 
 
-@pytest.mark.parametrize("key", sorted(NAMES))
-def test_the_three_players_share_the_gate_constants(key):
-    qt, web, phone = NAMES[key]
-    scale = 1 if key == "margin" else 1000
-    values = {"qt": constant(QT, qt), "web": constant(WEB, web), "phone": constant(PHONE, phone) / scale}
-    assert len(set(values.values())) == 1, f"{key}: {values}"
+def read(path: Path) -> str:
+    return path.read_text(encoding="utf-8")
 
 
-def test_web_and_phone_start_fading_at_the_same_buffered_lead():
-    # Qt canh vòng PCM đã giải mã (UNDERRUN_LOW_S), web và điện thoại canh phần đã tải trước con trỏ: hai bản sau phải như nhau.
-    assert constant(WEB, "UNDERRUN_LOW_SECONDS") == constant(PHONE, "LOW_MS") / 1000
+def test_the_mix_file_carries_every_gate_constant():
+    values = json.loads(read(MIX))
+    for key in KEYS:
+        assert isinstance(values[key], (int, float)) and not isinstance(values[key], bool) and values[key] > 0, key
+
+
+@pytest.mark.parametrize("key", sorted(KEYS))
+def test_qt_compiles_the_constant_from_the_mix_file(key):
+    name = KEYS[key][0]
+    if name is None:
+        return
+    pairs = re.search(r"foreach\(pair ([^)]*)\)", read(CMAKE)).group(1).split()
+    assert f"{key}:{macro(key)[len('ABOOK_MIX_'):]}" in pairs, f"CMakeLists.txt không sinh {macro(key)} từ {key}"
+    found = re.search(rf"\bconstexpr double {name} = (.+?);", read(QT))
+    assert found, f"musicmixer.cpp: không thấy {name}"
+    assert found.group(1).strip() == f"double({macro(key)})", f"musicmixer.cpp chép tay {name} = {found.group(1)}"
+
+
+@pytest.mark.parametrize("key", sorted(KEYS))
+def test_web_reads_the_constant_from_the_mix_file(key):
+    name = KEYS[key][1]
+    found = re.search(rf"\bconst {name} = (.+?);", read(WEB))
+    assert found, f"musicBed.ts: không thấy {name}"
+    assert found.group(1).strip() == f"mix.{key}", f"musicBed.ts chép tay {name} = {found.group(1)}"
+
+
+@pytest.mark.parametrize("key", sorted(KEYS))
+def test_the_phone_reads_the_constant_from_the_mix_file(key):
+    name = KEYS[key][2]
+    reads = f'millis(json, "{key}")' if name.endswith("Ms") else f'json.getDouble("{key}")'
+    assert f"val {name} = {reads}" in read(PHONE / "MusicMix.kt"), f"MusicMix.kt không đọc {key} vào {name}"
+
+
+def test_the_phone_gate_keeps_no_copy_of_the_numbers():
+    pace = read(PHONE / "StreamPace.kt")
+    # Chỉ BUFFER_MS (đệm của ExoPlayer, riêng điện thoại) được là hằng trong code.
+    assert re.findall(r"const val (\w+)", pace) == ["BUFFER_MS"], re.findall(r"const val (\w+)", pace)
+    for name in ("underrunRateWindowMs", "underrunBurstMs", "underrunMargin", "underrunLeadMs"):
+        assert f"mix.{name}" in pace, f"StreamPace.kt không dùng mix.{name}"
+    bed = read(PHONE / "MusicBed.kt")
+    # Mờ ra khi hụt và mờ vào lại: cả hai nhịp đều theo underrunFadeMs, không nhịp nào chia cho một con số chép tay.
+    for name, uses in (("underrunFadeMs", 2), ("underrunLowMs", 1), ("underrunLeadMs", 1)):
+        assert bed.count(f"MusicCues.mix.{name}") >= uses, f"MusicBed.kt dùng MusicCues.mix.{name} ít hơn {uses} chỗ"
+    assert not re.search(r"STEP_MS / \d", bed), re.findall(r".*STEP_MS / \d.*", bed)
+
+
+def test_all_three_measure_the_horizon_to_where_the_track_stops_sounding():
+    # Chân trời = chỗ bài thôi kêu (playEnd), không phải hết bài: bài 863 s mà mốc dùng 342 s (U30F 02-11).
+    assert "inline double playEnd(" in read(QT_LOGIC) and "setPlayUntil(" in read(ROOT / "desktop_qt" / "src" / "musicbed.cpp")
+    assert "export function playEnd(" in read(WEB) and "playEnd(this.cues, playing.cue)" in read(WEB)
+    assert "fun playEnd(" in read(PHONE / "MusicCues.kt") and "MusicCues.playEnd(cues, it)" in read(PHONE / "MusicBed.kt")
