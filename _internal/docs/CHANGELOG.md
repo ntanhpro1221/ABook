@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Giao diện
+
+- Nhạc của tôi: công tắc "Tự chọn" đứng đầu dòng dưới tên bài, nhãn "Có lời" / "Chưa phân tích" theo sau - công tắc mọi bài thẳng một cột thay vì xô theo độ dài nhãn. Máy tính và bản web.
+
 ### Sửa lỗi
 
 - Điện thoại: nghe chương phát qua mạng từ máy khác, mỗi lần giọng khựng lại chờ tải thì nhạc theo cảnh không còn tắt phụt rồi vào lại - nhạc chạy tiếp như trên máy tính; chờ quá lâu mà vẫn không có tiếng thì nhạc mới dừng.
