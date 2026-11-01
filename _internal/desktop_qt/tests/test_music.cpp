@@ -851,6 +851,24 @@ private slots:
         QVERIFY(!rig.voices.last()->isPlaying);
     }
 
+    void voiceOpeningWhereItStandsLeavesTheMusicRunning() {
+        // Soát nghe §20: đầu chương bài đã kêu 0,6 s trong lúc giọng chờ clip đầu; bộ phát giọng mở nguồn đúng chỗ nó đứng (báo seeked) thì
+        // nhạc chạy tiếp, không bị kéo về đầu bài (0,6 s đầu nghe hai lần). Người nghe tua thật thì nhạc vẫn theo chỗ mới.
+        BookRig rig;
+        rig.player->open(QStringLiteral("a"), -1, -1, true);
+        QCOMPARE(rig.voices.size(), 1);
+        QCoreApplication::processEvents();
+        FakeOut *bed = rig.voices[0];
+        bed->pos = 0.6;
+        const qsizetype seeks = bed->log.count(QStringLiteral("seek"));
+        rig.out.seek(rig.out.pos);
+        QCOMPARE(bed->log.count(QStringLiteral("seek")), seeks);
+        QVERIFY(near(bed->pos, 0.6));
+        rig.player->seek(50);
+        QVERIFY2(bed->log.count(QStringLiteral("seek")) > seeks, "tua thật phải dời nhạc");
+        QVERIFY(bed->pos > 40);
+    }
+
     void voiceStallCountsOnlyAStillVoiceWhilePlaying() {
         VoiceStall stall(1000);
         QVERIFY(!stall.update(0, 5, true));

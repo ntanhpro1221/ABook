@@ -60,7 +60,9 @@ Music::Music(Player *player, PlayerNet *net, std::function<AudioOut *()> make, Q
     connect(m_player, &Player::rateChanged, this, &Music::sync);
     connect(m_player, &Player::volumeChanged, this, &Music::sync);
     connect(m_player, &Player::outputGainChanged, this, &Music::sync);
-    connect(m_player, &Player::audioSeeked, this, [this] { m_last = -INF; sync(); });
+    // Tua: đồng bộ ngay (nhịp sync thưa). Có phải tua hay không vẫn do vị trí nhảy > SEEK_JUMP_SECONDS như web / Android: bộ phát giọng cũng
+    // báo seeked khi mở nguồn tại chỗ nó đang đứng (clip đầu chương về sau lúc bài đã kêu), ép tua thì nhạc bị kéo về đầu bài (soát nghe §20).
+    connect(m_player, &Player::audioSeeked, this, &Music::sync);
     connect(m_player, &Player::bufferingChanged, this, &Music::sync);
     connect(m_player->clock(), &PlayerClock::positionChanged, this, &Music::sync);
     connect(&m_bed, &MusicBed::activeChanged, this, [this](const QString &link) {
