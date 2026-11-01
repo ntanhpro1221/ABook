@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.159] - 2026-11-02
+
 ### Nhạc nền
 
 - Bài nhạc mở đầu chương kế được tải sẵn ngay khi bạn bắt đầu nghe một chương, không đợi tới hai phút cuối, nên chương mới vào nhạc ngay cả khi nguồn nhạc chậm: trước đây bài 6 MB tải mất hơn ba phút thì đầu chương kế im chờ nhạc. Giọng đọc luôn được ưu tiên: app chỉ tải sẵn khi giọng đã đọc trước đủ 20 giây, và trên điện thoại lượt tải sẵn tạm dừng mỗi khi giọng tụt dưới mức ấy. Hai phút cuối chương, nếu bài vẫn chưa có thì app thử lại mỗi 15 giây. Điện thoại giờ cũng làm việc này như máy tính và bản web, nhưng không tải sẵn khi đang dùng dữ liệu di động tính phí.
