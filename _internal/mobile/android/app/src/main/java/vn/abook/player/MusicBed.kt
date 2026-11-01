@@ -256,6 +256,11 @@ object MusicBed {
     /** Giọng thiếu đệm mà bài đang tải sẵn chưa phải bài chương này cần: lượt tải sẵn đứng chờ ([MusicCatalog.download] `yields`). Luồng chính đặt mỗi nhịp, luồng tải đọc. */
     @Volatile private var warmYields = false
     private var sceneRetry: Runnable? = null
+    /** Mốc chương kế đã đọc sẵn ("cuốn:chương" -> mốc, [peekNextScene]): sang chương ấy thì nhạc đặt ngay ở giây 0, không chờ lời hỏi lúc sang chương (về sau
+     *  0,25 s thì nhạc phải đợi tới câu kế - đo 01-11: câu đầu chương 2 dài 11 s không có nhạc). Luồng chính. */
+    private var aheadScene: Pair<String, SceneBed.Arrival>? = null
+    private var aheadAsking: String? = null
+    private var aheadRetryAt = 0L
     private var sceneNotice = "" // lý do chưa có nhạc theo cảnh (danh mục chưa tải được) - lời `unavailable` của DeviceScenes; rỗng khi ổn
 
     // ---- danh sách phát ("Nghe ngay") ----
@@ -472,7 +477,15 @@ object MusicBed {
                 // Chương khác: bỏ mốc cũ ngay, rồi hỏi mốc chương mới (chương mới đã phát từ giây 0 thì không được chơi tiếp bài cuối của chương cũ).
                 scene.reset()
                 cues = emptyList()
-                if (chapterId != null) askScene(appContext, chapterId, 0)
+                if (chapterId != null) {
+                    // Mốc đã đọc sẵn thì đặt ngay như ở giây 0: đã có trước khi chương bắt đầu, nhịp đầu của chương có thể đã qua 0,25 s (đo 01-11: 0,297 s đẩy
+                    // nhạc sang câu thứ hai). Lời hỏi vẫn đi (xếp dựng các chương kế, lý do chưa có nhạc), mốc ấy về lại y hệt thì không dời chỗ nhạc vào.
+                    aheadScene?.takeIf { it.first == "$book:$chapterId" }?.second?.let { arrival ->
+                        infos = infos + arrival.infos
+                        if (scene.arrive(arrival, 0.0)) cues = scene.cues
+                    }
+                    askScene(appContext, chapterId, 0)
+                }
             } else {
                 cues = MusicCues.of(music, chapterId)
             }
@@ -1288,11 +1301,30 @@ object MusicBed {
     private fun warmNextChapter(appContext: Context, seconds: Double) {
         val voice = vn.abook.player.readaloud.ReadAloud.voiceAheadMs() / 1000.0
         warmYields = voice < NextChapterWarm.VOICE_SECONDS && warming?.let { link -> cues.none { it.track == link } } == true
-        if (meteredNow(appContext)) return
-        val total = sceneTiming()?.total ?: return
         val order = Playback.chapters
         val index = order.indexOfFirst { it.id == chapter }
-        nextWarm.update("$book:$chapter", order.getOrNull(index + 1)?.id?.takeIf { index >= 0 }, total - seconds, voice)
+        val next = order.getOrNull(index + 1)?.id?.takeIf { index >= 0 }
+        if (next != null && voice >= NextChapterWarm.VOICE_SECONDS) peekNextScene(appContext, next)
+        if (meteredNow(appContext)) return
+        val total = sceneTiming()?.total ?: return
+        nextWarm.update("$book:$chapter", next, total - seconds, voice)
+    }
+
+    /** Đọc sẵn mốc chương kế ([aheadScene]) - cả trên mạng tính phí (không tải bài nào, chỉ đọc bản đã dựng). Chưa dựng xong / hỏng thì đọc lại sau
+     *  [NextChapterWarm.RETRY_MS]. */
+    private fun peekNextScene(appContext: Context, next: Int) {
+        val key = "$book:$next"
+        if (aheadScene?.first == key || aheadAsking != null || SystemClock.elapsedRealtime() < aheadRetryAt) return
+        aheadAsking = key
+        val bookId = book
+        DeviceScenes.peek(appContext, bookId, next) { result, _ ->
+            val arrival = result?.takeUnless { it.optBoolean("pending", false) || it.optString("unavailable", "").isNotEmpty() }
+                ?.let { runCatching { arrivalOf(appContext, bookId, it) }.getOrNull() }
+            main.post {
+                if (aheadAsking == key) aheadAsking = null
+                if (arrival != null) aheadScene = key to arrival else aheadRetryAt = SystemClock.elapsedRealtime() + NextChapterWarm.RETRY_MS
+            }
+        }
     }
 
     /** Tải sẵn một bài cho chương kế ([nextWarm]) trên [warmWorker]: bài đã có / đang tải thì thôi; đứng nhường khi giọng thiếu đệm ([warmYields]). Hỏng thì im lặng - lưới cuối
