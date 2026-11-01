@@ -15,6 +15,11 @@ if not defined NINJA_BIN set NINJA_BIN=D:\Novels\native_desk_proto\qt\Tools\Ninj
 if not defined VCVARS set VCVARS=C:\Program Files\Microsoft Visual Studio\18\Community\VC\Auxiliary\Build\vcvars64.bat
 if not defined QWK_ROOT set QWK_ROOT=D:\Novels\native_desk_proto\qwk
 if not defined ABOOK_PYTHON set ABOOK_PYTHON=D:\Novels\ABook\_internal\runtime\.venv\Scripts\python.exe
+rem cmd returns from `call :label` by byte offset: with LF endings it resumes on the wrong line and silently skips steps
+rem (01-11: 5 of 15 Qt test suites never ran). .gitattributes keeps *.bat CRLF; an old checkout must be re-checked out.
+"%ABOOK_PYTHON%" -X utf8 -c "import sys; d=open(sys.argv[1],'rb').read(); sys.exit(0 if d.count(b'\n')==d.count(b'\r\n') else 'ERROR: build.bat has LF line endings, so cmd skips steps after call - delete it and git checkout it again (eol=crlf)')" "%~f0"
+if errorlevel 1 exit /b 1
+set TESTS_RUN=0
 
 if /i "%1"=="clean" (
   "%ABOOK_PYTHON%" -X utf8 -c "import pathlib,shutil,sys; root=pathlib.Path(sys.argv[1]).resolve(); targets=[root/name for name in ('build','dist')]; assert all(p.resolve().parent==root for p in targets); [shutil.rmtree(p) for p in targets if p.exists()]" "%HERE%."
@@ -128,6 +133,10 @@ call :test "%HERE%build\width_tests\WidthTests.exe" "%HERE%build\width-test.txt"
 if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
 
+rem Every `call :test` above must have run: a skipped suite fails nothing, so count them
+"%ABOOK_PYTHON%" -X utf8 -c "import re,sys; n=len(re.findall(r'^call :test ', open(sys.argv[1],encoding='ascii').read(), re.M)); sys.exit(0 if n==int(sys.argv[2]) else f'ERROR: ran {sys.argv[2]} of {n} Qt test suites')" "%~f0" %TESTS_RUN%
+if errorlevel 1 exit /b 1
+
 if not exist "%HERE%dist" mkdir "%HERE%dist"
 rem copyfile writes the packaged file now, so its timestamp proves this build reached packaging
 rem even when Ninja correctly leaves the unchanged executable alone on the second run.
@@ -196,6 +205,7 @@ exit /b 0
 
 rem Keep every QtTest result: GUI stderr alone can be empty even when tests fail.
 :test
+set /a TESTS_RUN+=1
 "%~1" -o "%~2",txt
 set TEST_EXIT=%errorlevel%
 type "%~2"
