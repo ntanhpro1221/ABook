@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.156] - 2026-11-01
+
 ### Sửa lỗi
 
 - Nhạc nền đầu chương không còn vấp: bài đã kêu trong lúc chờ câu đầu thì chạy tiếp, trước đây bị kéo về đầu bài nên nửa giây đầu nghe hai lần. Máy tính.
