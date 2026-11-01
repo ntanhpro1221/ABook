@@ -608,6 +608,21 @@ export class ReadAloudEngine implements AudioEngine {
     return last ? last.start + last.duration : 0;
   }
 
+  /** Giây giọng đã sẵn phía trước người nghe: phần còn lại của đoạn đang nghe + các đoạn liền sau đã có clip. Đoạn đang nghe chưa có clip: 0; cả phần còn lại của
+   *  chương đã sẵn: Infinity (không còn gì để nhường). */
+  get voiceAhead(): number {
+    const slot = this.slots[this.target.index];
+    if (!this.ready || !slot) return 0;
+    if (slot.speakable && !slot.clip) return 0;
+    let ahead = Math.max(0, slot.start + slot.duration - this.time);
+    for (let i = this.target.index + 1; i < this.slots.length; i += 1) {
+      const next = this.slots[i];
+      if (next.speakable && !next.clip) return ahead;
+      ahead += next.duration;
+    }
+    return Infinity;
+  }
+
   get readingAnchor(): ReadingAnchor | undefined {
     if (!this.ready) return undefined;
     const slot = this.slots[this.target.index];
@@ -2076,6 +2091,10 @@ export class RoutedEngine implements AudioEngine {
 
   get readingAnchor(): ReadingAnchor | undefined {
     return this.speechEngine?.readingAnchor;
+  }
+
+  get voiceAhead(): number | undefined {
+    return this.speechEngine?.voiceAhead;
   }
 
   play(): void {

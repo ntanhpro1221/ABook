@@ -986,6 +986,20 @@ object ReadAloud {
         return now + (leftMs / maxOf(exo.playbackParameters.speed, 0.1f) * 1_000_000).toLong()
     }
 
+    /**
+     * Mili-giây giọng đã sẵn phía trước người nghe: phần còn lại của mục đang phát + các mục đã nạp sau nó (hàng đợi nối sang chương kế). Nhạc nền chỉ tải sẵn chương kế khi số
+     * này đủ ([vn.abook.player.NextChapterWarm.VOICE_SECONDS]) và lượt tải sẵn đứng chờ khi nó tụt ([vn.abook.player.MusicBed]). 0 khi đang chờ đoạn; [Long.MAX_VALUE] khi không
+     * đọc to (chương audio: không có giọng phải nhường). Luồng chính.
+     */
+    fun voiceAheadMs(): Long {
+        val exo = Playback.player ?: return Long.MAX_VALUE
+        if (!active) return Long.MAX_VALUE
+        if (!listenerHasAudio(exo)) return 0L
+        val current = exo.currentMediaItem?.let(::aheadMs) ?: return 0L
+        val queued = ((exo.currentMediaItemIndex + 1) until exo.mediaItemCount).sumOf { aheadMs(exo.getMediaItemAt(it)) }
+        return (current - exo.currentPosition).coerceAtLeast(0) + queued
+    }
+
     /** Độ dài (ms) của một mục đã nạp phía trước; mục không phải đoạn đọc to (chương audio) tính là dài - đã đủ đệm. */
     private fun aheadMs(item: MediaItem): Long {
         val slot = item.localConfiguration?.tag as? Slot

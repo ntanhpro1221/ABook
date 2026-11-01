@@ -65,6 +65,9 @@ class MusicCatalog(
      *  tải được - người gọi không tính vào số lần bỏ bài, thử lại khi có mạng (như `network_only` của `music_track_file`). */
     class Offline(message: String = "không có mạng") : IOException(message)
 
+    /** Lượt tải đứng nhường ([download] `yields`) rồi đứt vì mạng (nguồn đóng kết nối nằm im lâu): bài và nguồn vẫn tốt - không tính vào sức khoẻ nguồn, lần xin sau tải lại. */
+    class Yielded : IOException("tải nhường chỗ rồi đứt")
+
     /** Kết quả [lookupPartial]: dữ liệu các link tìm được + các mảnh không tải được (mạng) - bài thuộc mảnh ấy chưa biết, chờ tải lại. */
     class Lookup(val found: Map<String, JSONObject>, val missingShards: Set<String>)
 
@@ -455,13 +458,14 @@ class MusicCatalog(
         return flagged
     }
 
-    /** Chép bài đang tải, dừng ([TrackTooBig]) khi quá [TRACK_MAX_BYTES]: Content-Length báo trước, hay đếm thật khi nguồn không báo. */
-    private fun copyCapped(input: InputStream, sink: OutputStream) {
+    /** Chép bài đang tải, dừng ([TrackTooBig]) khi quá [TRACK_MAX_BYTES]: Content-Length báo trước, hay đếm thật khi nguồn không báo. `gate`: gọi trước mỗi lần đọc (đứng nhường). */
+    private fun copyCapped(input: InputStream, sink: OutputStream, gate: () -> Unit = {}) {
         val length = (input as? Sized)?.length
         if (length != null && length > TRACK_MAX_BYTES) throw TrackTooBig(length)
         val buffer = ByteArray(1 shl 16)
         var copied = 0L
         while (true) {
+            gate()
             val read = input.read(buffer)
             if (read < 0) {
                 if (copied == 0L) throw Cut(0, maxOf(1L, length ?: 0L))
@@ -480,8 +484,9 @@ class MusicCatalog(
      * Tải bài `link` của danh mục về máy (đã có thì thôi): link gốc trước, hỏng thì bản sao trong `info.mirrors` - chỉ khi danh mục ghi
      * `sha1` của bản gốc, và bản sao phải khớp `sha1` (và `bytes`) mới dùng, không phát nhầm bài. Không lấy được thì null. Bài quá
      * [TRACK_MAX_MB] (danh mục, Content-Length hay đếm khi tải) thì ném [TrackTooBig] và ghi nhớ - [usable] từ đó trả false.
+     * `yields` (tải sẵn - giọng đọc trước): đúng thì ngừng đọc từ mạng tới khi sai; đứt vì mạng sau lúc đứng thì ném [Yielded].
      */
-    fun download(link: String, info: JSONObject?): File? {
+    fun download(link: String, info: JSONObject?, yields: (() -> Boolean)? = null): File? {
         if (!link.startsWith("https://")) return null
         val target = fileOf(link)
         val expected = info?.optString("sha1")?.lowercase()?.takeIf { SHA1.matches(it) }
@@ -503,8 +508,15 @@ class MusicCatalog(
             if (hostDown(url)) continue // nguồn này vừa hỏng vì mạng: khỏi chờ nó hết giờ lần nữa (nguồn khác vẫn thử)
             attempted += url
             val part = File(target.path + ".${System.nanoTime()}.part")
+            var stood = false
+            val gate = {
+                if (yields != null && yields()) {
+                    stood = true
+                    while (yields()) Thread.sleep(YIELD_POLL_MS)
+                }
+            }
             try {
-                open(url).use { input -> part.outputStream().use { copyCapped(input, it) } }
+                open(url).use { input -> part.outputStream().use { copyCapped(input, it, gate) } }
                 // Mọi nguồn (cả bản gốc) phải khớp `bytes` / `sha1` danh mục ghi: bài cụt hay bị đổi không được cất như bài tốt (bản sao thì bài không có `sha1` đã không được dùng).
                 if ((size != null && part.length() != size) || (expected != null && sha1(part) != expected)) {
                     throw LocalFailure(if (url == link) "bài tải về khác danh mục" else "bản sao khác bản gốc")
@@ -517,6 +529,7 @@ class MusicCatalog(
                 markTooBig(link, error.size)
                 throw error
             } catch (error: Exception) {
+                if (stood && isNetworkFailure(error)) throw Yielded()
                 // thử nguồn kế
                 networkOnly = networkOnly && isNetworkFailure(error)
                 if (error is HttpFailure) note(url, failed = false) // nguồn trả lời (404...): nối được, chỉ bài hỏng
@@ -542,6 +555,8 @@ class MusicCatalog(
         /** Bài nhạc nền lớn hơn thế (bản dài 30-50 phút, có bài 110 MB) máy này không dùng - cùng `MUSIC_TRACK_MAX_MB` của server.py. */
         const val TRACK_MAX_MB = 40
         const val TRACK_MAX_BYTES = TRACK_MAX_MB * 1024L * 1024
+        /** Lượt tải đang nhường ([download] `yields`) hỏi lại sau chừng này ms. */
+        const val YIELD_POLL_MS = 200L
         /** Trần thư mục bài đã tải: bằng bộ đệm đọc to (ClipCache, 300 MB) - chừng 40 bài cỡ thường (vài MB tới chục MB) đủ cho cả những cuốn nghe gần đây, nhạc theo cảnh lặp lại bài nhiều;
          *  hai bộ đệm cộng lại vẫn dưới nửa GB của `cacheDir`. */
         const val FILES_CAP_BYTES = 300L * 1024 * 1024
