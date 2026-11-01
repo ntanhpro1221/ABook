@@ -82,7 +82,9 @@ class MusicDownloadCheckTest {
             val first = runCatching { catalog.download(link, null) }
             assertTrue("$name: không nhận file hỏng", first.getOrNull() == null)
             assertNull("$name: cache không có bài hỏng", catalog.cached(link))
-            assertTrue("$name: không giữ file hay .part", File(root, "$name/files").listFiles().orEmpty().isEmpty())
+            // Đứt sau khi đã nhận byte: phần ấy nằm lại trong `.part` để tải tiếp (MusicDownloadResumeTest); không có byte nào thì không giữ gì.
+            assertEquals("$name: chỉ giữ .part của phần đã tải", if (name == "truncated") listOf(1000L) else emptyList<Long>(),
+                File(root, "$name/files").listFiles().orEmpty().map { it.length() })
             now += MusicCatalog.HOST_REST_MS + 1
             assertEquals("$name: tải lại đủ bài", good.size.toLong(), catalog.download(link, null)!!.length())
             assertEquals("$name: phải gọi nguồn lại", 2, calls)
