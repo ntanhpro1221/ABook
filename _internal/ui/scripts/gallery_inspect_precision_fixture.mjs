@@ -40,7 +40,7 @@ export const precisionCases = [
 async function main() {
   const args = parseArgs(process.argv.slice(2)), out = path.resolve(args.out);
   mkdirSync(path.join(out, "crops"), { recursive: true });
-  const local = await serve(args.dist), browser = await launch(findBrowser(args.browser), { preserveProfile: true });
+  const local = await serve(args.dist), browser = await launch(findBrowser(args.browser));
   const cdp = await connect(browser.endpoint), results = [];
   try {
     const viewport = { width: 1000, height: 650 };

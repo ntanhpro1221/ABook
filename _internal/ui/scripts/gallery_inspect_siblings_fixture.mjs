@@ -14,7 +14,7 @@ mkdirSync(path.join(out, "crops"), { recursive: true });
 let local, browser, cdp;
 try {
   local = await serve(args.dist);
-  browser = await launch(findBrowser(args.browser), { preserveProfile: true });
+  browser = await launch(findBrowser(args.browser));
   cdp = await connect(browser.endpoint);
   const viewport = { width: 1250, height: 650 };
   const page = await openPage(cdp, { ...viewport, scale: 1, mobile: false, theme: "light" });

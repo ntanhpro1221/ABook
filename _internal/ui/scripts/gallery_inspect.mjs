@@ -133,7 +133,7 @@ export async function main(argv = process.argv.slice(2)) {
     local = args.base ? null : await serve(args.dist);
     const base = args.base ?? local.base;
     const executable = findBrowser(args.browser);
-    browser = await launch(executable, { preserveProfile: true });
+    browser = await launch(executable);
     cdp = await connect(browser.endpoint);
     const index = await openPage(cdp, { width: 1280, height: 800, scale: 1, mobile: false, theme: "light" });
     await cdp.send("Page.navigate", { url: `${base}#/` }, index.sessionId);

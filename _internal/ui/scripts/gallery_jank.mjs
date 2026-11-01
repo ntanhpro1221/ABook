@@ -71,7 +71,7 @@ async function main() {
   const stacks=process.argv.includes('--stacks');
   const args=parseArgs(process.argv.slice(2).filter(arg=>arg!=='--stacks')); if(!args.out) throw Error('Cần --out');
   mkdirSync(args.out,{recursive:true});
-  const local=await serve(args.dist), executable=findBrowser(args.browser), browser=await launch(executable,{preserveProfile:true});
+  const local=await serve(args.dist), executable=findBrowser(args.browser), browser=await launch(executable);
   const cdp=await connect(browser.endpoint), tracing=await traceConnection(browser.endpoint,stacks), samples=[];
   const metadata={ browser:await cdp.send('Browser.getVersion'), gpu:(await cdp.send('SystemInfo.getInfo')).gpu, executable,stacks, width:412,height:915,dpr:2.625,cpu:6,windowMs:600,thresholdMs:20,
     assets:Object.fromEntries(readdirSync(path.join(args.dist,'assets')).filter(f=>/\.(js|css)$/.test(f)).map(f=>[f,createHash('sha256').update(readFileSync(path.join(args.dist,'assets',f))).digest('hex')])), started:new Date().toISOString() };
