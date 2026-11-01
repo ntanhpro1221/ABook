@@ -241,6 +241,19 @@ private slots:
         QCOMPARE(stepDbAt(cue, 200), 2.0);
     }
 
+    // Bài thôi kêu ở hết chuỗi mốc liền nhau cùng bài + mờ ra của mốc kế (anh em: mờ dài); mốc `tail` chơi tới hết bài (musicBed.ts, MusicCues.kt cùng luật).
+    void aTrackStopsSoundingAtTheEndOfItsRunPlusTheFade() {
+        const MusicCue a = plain(0, 100, QStringLiteral("a")), a2 = plain(100, 160, QStringLiteral("a"));
+        MusicCue b = plain(160, 300, QStringLiteral("b")), c = plain(310, 400, QStringLiteral("a"));
+        QCOMPARE(playEnd({a, a2, b, c}, a), 160 + FADE_SECONDS);
+        QCOMPARE(playEnd({a, a2, b, c}, a2), 160 + FADE_SECONDS);
+        QCOMPARE(playEnd({a, a2, b, c}, b), 300 + FADE_SECONDS); // mốc kế (c) cách 10 s: mờ ra thường
+        b.sibling = true;
+        QCOMPARE(playEnd({a, a2, b, c}, a), 160 + SIBLING_FADE_SECONDS);
+        MusicCue tail = a2; tail.tail = true;
+        QCOMPARE(playEnd({a, tail, b, c}, a), INF);
+    }
+
     // ---- dòng thời gian chung với máy chủ và Android (tests/fixtures/music_timeline) ----
     void sharedTimeline_data() {
         QTest::addColumn<QString>("name");
@@ -447,6 +460,21 @@ private slots:
         QCOMPARE(spy[0][0].toString(), QStringLiteral("a"));
         QCOMPARE(spy[1][0].toString(), QStringLiteral("b"));
         QCOMPARE(rig.made.size(), 2);
+    }
+
+    // Bài đang tải dở chỉ cần tải kịp tới chỗ nó thôi kêu: mỗi nhịp bed báo cho phần tử giây của bài ứng với hết chuỗi mốc cùng bài + mờ ra.
+    void tellsTheVoiceWhereItsTrackStopsSounding() {
+        Rig rig(400);
+        MusicCue second = plain(120, 240, QStringLiteral("a"));
+        second.key = QStringLiteral("1:9");
+        rig.bed->setCues({plain(0, 120, QStringLiteral("a")), second, plain(240, 300, QStringLiteral("b"))}, -20);
+        rig.bed->sync(10, true);
+        const QPointer<FakeOut> out = rig.made.value(0);
+        QVERIFY(out);
+        QCOMPARE(out->until - out->pos, 240 + FADE_SECONDS - 10);
+        out->pos += 120;
+        rig.bed->sync(130, true); // cùng bài ở đoạn kề: chỗ thôi kêu vẫn là hết mốc thứ hai
+        QCOMPARE(out->until - out->pos, 240 + FADE_SECONDS - 130);
     }
 
     void fadedOutVoicesAreReleased() {

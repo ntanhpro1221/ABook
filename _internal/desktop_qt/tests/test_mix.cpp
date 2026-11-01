@@ -122,7 +122,8 @@ public:
     void drip(qint64 bytesPerSecond) { perSecond = bytesPerSecond; dripper.start(50); }
     void hold() { dripper.stop(); }
     QUrl url() const { return QUrl(QStringLiteral("http://127.0.0.1:%1/music/track?link=held").arg(serverPort())); }
-    void send(qint64 upTo) { if (upTo <= sent) return; socket->write(bytes.mid(sent, upTo - sent)); socket->flush(); sent = upTo; }
+    // Chưa trả dòng tiêu đề (yêu cầu chưa tới) thì chưa gửi thân bài: gửi trước tiêu đề là hỏng cả phản hồi (bộ hẹn giờ của test bắn sớm).
+    void send(qint64 upTo) { if (upTo <= sent || !socket->property("answered").toBool()) return; socket->write(bytes.mid(sent, upTo - sent)); socket->flush(); sent = upTo; }
     void finish() { hold(); send(bytes.size()); socket->disconnectFromHost(); }
     void drop() { socket->abort(); }
 };
@@ -684,6 +685,24 @@ private slots:
         QCOMPARE(rig.mixer.decodingCount(), size_t(1));
         server.finish();
         QVERIFY(QTest::qWaitFor([&] { rig.mixer.service(0); rig.mixer.serviceReader(); return voice.duration() > 0; }, 5000));
+    }
+    // Cùng nguồn chậm, nhưng mốc chỉ dùng bài tới giây 2 (setPlayUntil - hết các mốc dùng bài + mờ ra): nửa bài đã có thừa cho phần ấy, vào ngay,
+    // không chờ tải xong cả bài (U30F 02-11: bài 863 s mà mốc dùng 342 s, nhạc chương 1 vào ở 350 s thay vì 98 s).
+    void aSlowTrackEntersOnceThePartItWillPlayIsIn() {
+        const QByteArray bytes = fixtureBytes(QStringLiteral("music_student/stereo_44k.mp3"));
+        HeldServer server(bytes, 1);
+        QTimer head; int step = 0;
+        connect(&head, &QTimer::timeout, &head, [&] {
+            if (!server.socket) return;
+            server.send(bytes.size() / 2 * ++step / 10);
+            if (step == 10) { head.stop(); server.drip(bytes.size() / 36); }
+        });
+        head.start(30);
+        MixerRig rig; MixVoice voice(&rig.mixer); voice.setVolume(1); voice.load(server.url(), 0); voice.setPlayUntil(2); voice.play();
+        QVERIFY(QTest::qWaitFor([&] { rig.mixer.service(0); rig.mixer.serviceReader(); return voice.duration() > 0; }, 3000));
+        QVERIFY(server.sent < bytes.size());
+        QCOMPARE(rig.mixer.decodingCount(), size_t(1));
+        server.finish();
     }
     // Tải tụt lại giữa bài (mạng đứng): nhạc mờ ra rồi im, không tắt phụt; tải xong thì mờ vào, không bật phụt (NA1 01-11: 14 lần).
     void aDownloadFallingBehindFadesTheMusicOutAndBackIn() {

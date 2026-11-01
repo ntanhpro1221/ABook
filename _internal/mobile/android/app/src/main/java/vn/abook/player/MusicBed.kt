@@ -115,7 +115,7 @@ object MusicBed {
         var volume = 0f // âm lượng LOGIC (mờ vào / mờ đi / bước âm lượng, dòng đo `vol`); ExoPlayer.volume = volume x [sleepFactor] - mọi chỗ đọc mức đọc từ đây, không đọc ngược player.volume
         // Bài stream từ máy kia (http): phát dần, có thể hụt giữa bài ([streamTick]). `awaiting` = tạm dừng ở chỗ vào, chưa qua cổng [StreamPace.playsThrough] (bài trước
         // giữ chỗ), `admitted` = đã qua cổng lần này, `starving` = đang mờ ra vì đệm sắp cạn mà tốc độ tụt, `recovering` = vào lại sau lần hụt: mờ vào trong
-        // [StreamPace.FADE_MS] thay vì fadeMs.
+        // [MusicMix.underrunFadeMs] thay vì fadeMs.
         var streamed = false
         val pace = StreamPace()
         var awaiting = false
@@ -1646,9 +1646,9 @@ object MusicBed {
                 val gate = !bed.streamed || streamTick(bed)
                 val ready = player.playbackState.let { it == Player.STATE_READY || it == Player.STATE_ENDED } && gate
                 if (bed.starving) {
-                    setVolume(bed, maxOf(0f, bed.volume - maxOf(bed.goal, 0.01f) * STEP_MS / StreamPace.FADE_MS))
+                    setVolume(bed, maxOf(0f, bed.volume - maxOf(bed.goal, 0.01f) * STEP_MS / MusicCues.mix.underrunFadeMs))
                     if (bed.volume <= 0f) {
-                        // Đã im: tạm dừng tại chỗ, chờ cổng như bài mới, rồi mờ vào trong FADE_MS.
+                        // Đã im: tạm dừng tại chỗ, chờ cổng như bài mới, rồi mờ vào trong underrunFadeMs.
                         bed.starving = false
                         bed.entering = true
                         bed.admitted = false
@@ -1658,7 +1658,7 @@ object MusicBed {
                     }
                     busy = true
                 } else {
-                    val step = if (bed.recovering) bed.goal * STEP_MS / StreamPace.FADE_MS else bed.perTick
+                    val step = if (bed.recovering) bed.goal * STEP_MS / MusicCues.mix.underrunFadeMs else bed.perTick
                     setVolume(bed, MusicCues.towardWhenReady(bed.volume, bed.goal, step, ready))
                     if (ready && abs(bed.volume - bed.goal) < 1e-4f) { bed.entering = false; bed.recovering = false } else busy = true
                 }
@@ -1687,9 +1687,9 @@ object MusicBed {
     }
 
     /**
-     * Bài stream (http) được kêu không. Chưa có tiếng: cổng [StreamPace.playsThrough] - phát được từ chỗ vào tới hết bài (hay trình phát đã ngừng tải vì đệm đầy
-     * [StreamPace.BUFFER_MS] mà có sẵn [StreamPace.LEAD_MS]); chưa qua thì TẠM DỪNG đứng yên ở chỗ vào (phát câm thì chỗ vào trôi đi 1 giây mỗi giây, tải chậm hơn 1x
-     * không bao giờ đuổi kịp), bài trước giữ chỗ / im lặng. Đã có tiếng mà đệm trước tụt dưới [StreamPace.LOW_MS] và không còn phát được tới hết bài: `starving` (mờ
+     * Bài stream (http) được kêu không. Chưa có tiếng: cổng [StreamPace.playsThrough] - phát được từ chỗ vào tới chỗ bài thôi kêu (hay trình phát đã ngừng tải vì đệm đầy
+     * [StreamPace.BUFFER_MS] mà có sẵn [MusicMix.underrunLeadMs]); chưa qua thì TẠM DỪNG đứng yên ở chỗ vào (phát câm thì chỗ vào trôi đi 1 giây mỗi giây, tải chậm hơn 1x
+     * không bao giờ đuổi kịp), bài trước giữ chỗ / im lặng. Đã có tiếng mà đệm trước tụt dưới [MusicMix.underrunLowMs] và không còn phát được tới chỗ thôi kêu: `starving` (mờ
      * ra trước khi đệm cạn, tới 0 thì tạm dừng và chờ cổng lại - [fadeTick]). Như `keepsUp` của musicmixer.cpp và `playsThrough` của musicBed.ts.
      */
     private fun streamTick(bed: Bed): Boolean {
@@ -1699,7 +1699,9 @@ object MusicBed {
         val position = player.currentPosition
         bed.pace.add(now, buffered)
         val ahead = buffered - position
-        val through = bed.pace.playsThrough(now, buffered, position, player.duration) || !player.isLoading && ahead >= StreamPace.LEAD_MS
+        // Chỉ cần tải kịp tới chỗ bài thôi kêu (tính lại mỗi nhịp: giọng chậm / khựng thì chỗ ấy dời theo).
+        val end = bed.cue?.let { minOf(player.duration.toDouble(), position + (MusicCues.playEnd(cues, it) - lastSeconds) * 1000) } ?: player.duration.toDouble()
+        val through = bed.pace.playsThrough(now, buffered, position, end.toLong()) || !player.isLoading && ahead >= MusicCues.mix.underrunLeadMs
         if (bed.entering && !bed.admitted && bed.volume == 0f) {
             bed.awaiting = !through
             if (bed.awaiting) {
@@ -1710,7 +1712,7 @@ object MusicBed {
             }
             return through
         }
-        if (!bed.starving && player.playWhenReady && bed.volume > 0f && ahead < StreamPace.LOW_MS && !through) bed.starving = true
+        if (!bed.starving && player.playWhenReady && bed.volume > 0f && ahead < MusicCues.mix.underrunLowMs && !through) bed.starving = true
         return !bed.starving
     }
 

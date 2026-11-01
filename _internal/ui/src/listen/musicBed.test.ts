@@ -18,6 +18,7 @@ import {
   loopBounds,
   loopDrift,
   loopDue,
+  mp3Seconds,
   loopHandoffDelay,
   loopPosition,
   loopSchedule,
@@ -27,6 +28,7 @@ import {
   type MusicCue,
   type MusicCues,
   DownloadPace,
+  playEnd,
   playsThrough,
 } from "./musicBed";
 
@@ -1157,6 +1159,45 @@ describe("tải sẵn bài kế và mờ vào từ lúc có tiếng (musicwarm, 
     sim.bed.stop();
   });
 
+  it("chân trời = chỗ bài thôi kêu: bài 600 s mà mốc chỉ dùng 200 s, tải 0,31x - vào khi đủ cho phần còn lại của mốc (tới-hết-bài thì không bao giờ vào), không cụt", () => {
+    vi.useFakeTimers();
+    const sim = slowBed(() => 0);
+    sim.bed.setCues([long[0], { ...long[1], end: 1200 }, { ...long[2], start: 1200 }], -20);
+    sim.bed.sync(0, true);
+    vi.advanceTimersByTime(3_000);
+    const a = sim.made[0].audio;
+    sim.bed.sync(1000, true);
+    const b = sim.made[1].audio;
+    b.duration = 600;
+    vi.advanceTimersByTime(1);
+    const loading = stream(b, () => 11 / 35);
+    let entered = -1;
+    for (let t = 0; t < 200; t += 0.5) {
+      sim.bed.sync(1000 + t, true);
+      vi.advanceTimersByTime(500);
+      if (entered < 0 && b.volume > 0) entered = t;
+      if (entered < 0) expect(a.volume).toBeCloseTo(GOAL, 3);
+    }
+    // (202 - t - 0,31 t) / 0,31 x 1,3 <= 202 - t  ->  t >= ~143; phần đã tải lúc ấy ~45 s / 600 s.
+    expect(entered).toBeGreaterThan(130);
+    expect(entered).toBeLessThan(160);
+    expect(loading.cuts).toBe(0);
+    expect(loading.sounding).toBeGreaterThan(40);
+    sim.bed.stop();
+  });
+
+  it("playEnd: hết chuỗi mốc liền nhau cùng bài + mờ ra của mốc kế (anh em: mờ dài); mốc tail chơi tới hết bài", () => {
+    const a = { start: 0, end: 100, link: "a", key: "1:1", src: "/a" };
+    const a2 = { ...a, start: 100, end: 160, key: "1:2" };
+    const b = { start: 160, end: 300, link: "b", key: "1:3", src: "/b" };
+    const c = { ...a, start: 310, end: 400, key: "1:4" };
+    expect(playEnd([a, a2, b, c], a)).toBe(160 + FADE_SECONDS);
+    expect(playEnd([a, a2, b, c], a2)).toBe(160 + FADE_SECONDS);
+    expect(playEnd([a, a2, b, c], b)).toBe(300 + FADE_SECONDS); // mốc kế (c) cách 10 s: mờ ra thường
+    expect(playEnd([a, a2, { ...b, sibling: true }, c], a)).toBe(160 + SIBLING_FADE_SECONDS);
+    expect(playEnd([a, { ...a2, tail: true }, b, c], a)).toBe(Infinity);
+  });
+
   it("tốc độ tụt giữa bài: mờ ra trong 0,3 s (không tắt phụt), tạm dừng tại chỗ; phát được tới hết bài thì mờ vào trong 0,3 s từ đúng chỗ ấy", () => {
     vi.useFakeTimers();
     const sim = slowBed(() => 0);
@@ -1427,13 +1468,14 @@ describe("bài mp3 phát qua MediaSource (loopfix)", () => {
     }
   }
 
-  function stubBrowser(options: { supported?: boolean; type?: string; quota?: boolean } = {}) {
-    const { supported = true, type = "audio/mpeg", quota = false } = options;
+  function stubBrowser(options: { supported?: boolean; type?: string; quota?: boolean; body?: () => BodyInit; size?: number } = {}) {
+    const { supported = true, type = "audio/mpeg", quota = false, body = () => new Uint8Array(64), size } = options;
     const made: { sources: FakeMediaSource[]; revoked: string[]; fetched: string[] } = { sources: [], revoked: [], fetched: [] };
     class FakeMediaSource extends EventTarget {
       static isTypeSupported(mime: string) { return supported && mime === "audio/mpeg"; }
       buffers: FakeSourceBuffer[] = [];
       ended = false;
+      duration = Number.NaN;
       constructor() { super(); made.sources.push(this); }
       addSourceBuffer(mime: string) {
         expect(mime).toBe("audio/mpeg");
@@ -1456,7 +1498,9 @@ describe("bài mp3 phát qua MediaSource (loopfix)", () => {
     });
     vi.stubGlobal("fetch", async (url: string) => {
       made.fetched.push(url);
-      return new Response(new Uint8Array(64), { headers: { "Content-Type": type } });
+      const headers: Record<string, string> = { "Content-Type": type };
+      if (size !== undefined) headers["Content-Length"] = String(size);
+      return new Response(body(), { headers });
     });
     return made;
   }
@@ -1465,7 +1509,7 @@ describe("bài mp3 phát qua MediaSource (loopfix)", () => {
     for (let step = 0; step < 10; step += 1) await new Promise((resolve) => setTimeout(resolve, 0));
   };
 
-  it("mp3: nạp cả file vào MediaSource, endOfStream; loadedmetadata và play() đợi tới khi xong", async () => {
+  it("đầu file không đọc ra độ dài: nạp cả file vào MediaSource, endOfStream; loadedmetadata và play() đợi tới khi xong", async () => {
     const made = stubBrowser();
     const audio = browserAudio("/api/music/track?link=x") as unknown as FakeAudio & { dispose(): void };
     const seen: string[] = [];
@@ -1484,6 +1528,96 @@ describe("bài mp3 phát qua MediaSource (loopfix)", () => {
     expect(audio.plays).toBe(1);
     audio.dispose();
     expect(made.revoked).toEqual(["blob:ms/1"]);
+  });
+
+  /** Khung đầu MPEG-1 Layer III 128 kbps 44,1 kHz stereo, kèm khung Xing có `frames` khung khi cho. */
+  function mp3Head(frames?: number): Uint8Array {
+    const head = new Uint8Array(417);
+    head.set([0xff, 0xfb, 0x90, 0x00]);
+    if (frames !== undefined) {
+      head.set([0x58, 0x69, 0x6e, 0x67, 0, 0, 0, 1], 36);
+      new DataView(head.buffer).setUint32(44, frames);
+    }
+    return head;
+  }
+
+  /** Thân phản hồi nhả từng khúc khi test gọi `next()`, `fail()` làm hỏng giữa chừng. */
+  function chunked(parts: Uint8Array[]) {
+    let control!: ReadableStreamDefaultController<Uint8Array>;
+    const stream = new ReadableStream<Uint8Array>({ start: (c) => { control = c; } });
+    return {
+      stream,
+      next() {
+        const part = parts.shift();
+        if (part) control.enqueue(part);
+        else control.close();
+      },
+      fail() { control.error(new Error("đứt mạng")); },
+    };
+  }
+
+  it("độ dài mp3 từ đầu file: CBR theo bitrate, Xing theo số khung, bỏ qua thẻ ID3; thiếu byte / không phải mp3 thì null", () => {
+    expect(mp3Seconds(mp3Head(), 1_600_000)).toBeCloseTo(100, 6);
+    expect(mp3Seconds(mp3Head(1000), 9_999_999)).toBeCloseTo((1000 * 1152) / 44100, 6);
+    const tagged = new Uint8Array(30 + 417);
+    tagged.set([0x49, 0x44, 0x33, 4, 0, 0, 0, 0, 0, 20]); // ID3v2.4, thân 20 byte
+    tagged.set(mp3Head(), 30);
+    expect(mp3Seconds(tagged, 1_600_030)).toBeCloseTo(100, 6);
+    expect(mp3Seconds(mp3Head().subarray(0, 20), 1_600_000)).toBeNull();
+    expect(mp3Seconds(new Uint8Array(400), 1_600_000)).toBeNull();
+    expect(mp3Seconds(tagged.subarray(0, 25), 1_600_030)).toBeNull(); // còn trong thẻ ID3
+  });
+
+  it("mp3 đang tải: nạp dần từng khúc, biết độ dài từ khúc đầu là báo loadedmetadata và phát (cổng của MusicBed quyết lúc kêu)", async () => {
+    const body = chunked([mp3Head(), new Uint8Array(1000), new Uint8Array(1000)]);
+    const made = stubBrowser({ body: () => body.stream, size: 1_600_000 });
+    const audio = browserAudio("/c.mp3") as unknown as FakeAudio;
+    const seen: string[] = [];
+    audio.addEventListener("loadedmetadata", () => seen.push("meta"));
+    void audio.play();
+    await flush();
+    expect(seen).toEqual([]);
+    expect(audio.plays).toBe(0);
+    body.next();
+    await flush();
+    const source = made.sources[0];
+    expect(source.buffers[0].appended).toHaveLength(1);
+    expect(source.duration).toBeCloseTo(100, 6);
+    expect(source.ended).toBe(false);
+    expect(seen).toEqual(["meta"]);
+    expect(audio.plays).toBe(1);
+    body.next();
+    body.next();
+    body.next();
+    await flush();
+    expect(source.buffers[0].appended).toHaveLength(3);
+    expect(source.ended).toBe(true);
+    expect(seen).toEqual(["meta"]);
+  });
+
+  it("đứt giữa chừng sau khi đã báo độ dài: MusicBed nhận error (thử lại sau), không lùi về <audio src>", async () => {
+    const body = chunked([mp3Head()]);
+    const made = stubBrowser({ body: () => body.stream, size: 1_600_000 });
+    const audio = browserAudio("/d.mp3") as unknown as FakeAudio;
+    const errors: number[] = [];
+    audio.addEventListener("error", () => errors.push(1));
+    body.next();
+    await flush();
+    body.fail();
+    await flush();
+    expect(errors).toEqual([1]);
+    expect(audio.src).toBe("blob:ms/1");
+    expect(made.sources[0].ended).toBe(false);
+  });
+
+  it("bài lớn hơn chỗ đệm của MediaSource (12 MB): <audio src> ngay, không MediaSource", async () => {
+    const made = stubBrowser({ size: 12 * 1024 * 1024 + 1 });
+    const audio = browserAudio("/e.mp3") as unknown as FakeAudio;
+    void audio.play();
+    await flush();
+    expect(made.sources).toHaveLength(0);
+    expect(audio.src).toBe("/e.mp3");
+    expect(audio.plays).toBe(1);
   });
 
   it("máy chủ trả không phải mp3 (ogg): <audio src> như cũ, không MediaSource", async () => {
