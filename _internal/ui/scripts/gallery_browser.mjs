@@ -92,11 +92,11 @@ export function readDevToolsPort(portFile, read = readFileSync) {
   }
 }
 
-/** Mở trình duyệt headless với cổng gỡ lỗi do nó tự chọn (đọc từ DevToolsActivePort trong thư mục hồ sơ tạm). */
-export async function launch(executable, { preserveProfile = false } = {}) {
+/** Mở trình duyệt headless với cổng gỡ lỗi do nó tự chọn (đọc từ DevToolsActivePort trong thư mục hồ sơ tạm). Đóng thì xoá hồ sơ (~12 MB):
+ *  01-11 mọi chỗ gọi từng giữ hồ sơ lại - 2611 thư mục / ~31 GB trong %TEMP% từ 24-10. Nơi cấm xoá (sandbox) thì chỉ cảnh báo. */
+export async function launch(executable) {
   const profile = mkdtempSync(path.join(tmpdir(), "abook-gallery-"));
   const cleanProfile = () => {
-    if (preserveProfile) return; // Inspector audits retain artifacts when deletion is forbidden.
     // Chỉ xoá hồ sơ vừa tạo, bằng Python và đường dẫn tuyệt đối; không đi theo junction/symlink.
     const cleaned = spawnSync(process.env.PYTHON ?? "python", ["-c", `
 import os, sys, tempfile, time
@@ -118,7 +118,7 @@ for attempt in range(60):
         time.sleep(0.2)
 else: raise RuntimeError('Hồ sơ trình duyệt vẫn bị khoá: ' + root)
 `, profile], { encoding: "utf8", windowsHide: true });
-    if (cleaned.status !== 0) throw new Error(cleaned.stderr || "Không xoá được hồ sơ trình duyệt");
+    if (cleaned.status !== 0) console.warn(`Không xoá được hồ sơ trình duyệt ${profile}: ${(cleaned.stderr || cleaned.error?.message || "").trim().slice(-300)}`);
   };
   const child = spawn(executable, [
     "--headless=new",
@@ -132,8 +132,9 @@ else: raise RuntimeError('Hồ sơ trình duyệt vẫn bị khoá: ' + root)
     "--remote-debugging-port=0",
     "--hide-scrollbars",
     "--mute-audio",
-    // Edge: hồ sơ mới tự đăng nhập tài khoản Microsoft và đồng bộ của máy - chụp ở cửa sổ riêng tư, tắt đồng bộ.
-    ...(/msedge/i.test(path.basename(executable)) ? ["--inprivate", "--disable-sync"] : []),
+    // Edge: hồ sơ mới tự đăng nhập tài khoản Microsoft và đồng bộ của máy - chụp ở cửa sổ riêng tư, tắt đồng bộ. Edge 156 còn tự khởi động lại
+    // chính nó ("compat layer relaunch"): tiến trình con thoát ngay trước khi ghi cổng, bản mới mồ côi giữ hồ sơ (01-11: mọi gallery_inspect đỏ).
+    ...(/msedge/i.test(path.basename(executable)) ? ["--inprivate", "--disable-sync", "--edge-skip-compat-layer-relaunch"] : []),
     // Chromium không chạy dưới root (máy ảo CI, container) nếu còn sandbox.
     ...(process.platform === "linux" && process.getuid?.() === 0 ? ["--no-sandbox"] : []),
     "about:blank",

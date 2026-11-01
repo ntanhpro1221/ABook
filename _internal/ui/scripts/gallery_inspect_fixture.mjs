@@ -13,7 +13,7 @@ mkdirSync(path.join(out, "crops"), { recursive: true });
 let local, browser, cdp;
 try {
   local = await serve(args.dist);
-  browser = await launch(findBrowser(args.browser), { preserveProfile: true });
+  browser = await launch(findBrowser(args.browser));
   cdp = await connect(browser.endpoint);
   const page = await openPage(cdp, { width: 1000, height: 400, scale: 1, mobile: false, theme: "light" });
   await cdp.send("Page.navigate", { url: local.base }, page.sessionId);
