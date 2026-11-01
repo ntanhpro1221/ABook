@@ -207,6 +207,10 @@ export const KEEP_BEHIND = 2;
  *  `MAX_BUFFER_SECONDS`. Số lượt gọi CÙNG LÚC không tăng theo (vẫn đọc trước + 1 như trước đây: Edge hạn chế khi dồn nhiều kết nối) - chỉ hàng đợi dài ra. Chương đã nằm trong bộ đệm (lấy về
  *  trong vài chục ms, không tính là số đo) và giọng chạy trên máy ([SpeechTrack.serial]) không đổi gì. */
 const MAX_READ_AHEAD = 8;
+/** `MIN_BUFFER_SECONDS` (hay `LOCAL_BUFFER_SECONDS`) đầu tiên thì luôn đọc sẵn đủ, kể cả lúc chưa có số đo và khi các đoạn đứng trước đều ngắn (trần [MAX_READ_AHEAD] chỉ chặn
+ *  phần thêm lúc giọng chậm), tới chừng này đoạn: sáu dòng thoại ngắn đứng trước một đoạn kể dài thì đoạn dài vẫn được xin khi còn ~20 giây phía trước, không phải khi còn
+ *  vài giây (soát nghe §20 máy tính: clip 22,2 s về sau ~10,7 s, giọng đứng 2,4 s; Qt SpeechOut, điện thoại ReadAheadPolicy cùng luật). Dòng ngắn rẻ: vài KB mỗi clip. */
+const MAX_FILL_AHEAD = 24;
 /** Rank lớn nhất của việc xin trước chương kế: máy chủ nhận 0-98 (99 trở lên là việc nền), nên đoạn xa mấy cũng vẫn đứng trước "Làm trước" / xuất sách nói. */
 export const MAX_WARM_RANK = 98;
 
@@ -400,26 +404,30 @@ type Handlers = Map<EngineEvent, Set<() => void>>;
 
 /** Số đoạn nên đọc trước sau đoạn đang nghe. `base`: số tối thiểu. `fetchSeconds`: thời gian lấy clip THẬT của vài clip gần nhất (giây). `aheadSeconds`: độ dài (thật hay ước) của
  *  các đoạn kế tiếp, theo thứ tự. Cần đọc sẵn max([MIN_BUFFER_SECONDS], [BUFFER_FACTOR] lần thời gian lấy clip ở phân vị 80) giây âm thanh (tối đa [MAX_BUFFER_SECONDS]): thêm đoạn vào cửa sổ cho tới khi đủ, tối
- *  đa [MAX_READ_AHEAD] đoạn. Chưa đủ số đo (< 2) hay clip về nhanh (cần ít hơn `base` đoạn) thì đúng `base` - hành vi cũ. */
-export function readAheadCount(base: number, fetchSeconds: number[], aheadSeconds: number[]): number {
-  if (fetchSeconds.length < 2) return base;
-  const sorted = [...fetchSeconds].sort((a, b) => a - b);
-  const p80 = sorted[Math.min(sorted.length - 1, Math.ceil(sorted.length * 0.8) - 1)];
-  const wanted = Math.min(MAX_BUFFER_SECONDS, Math.max(MIN_BUFFER_SECONDS, BUFFER_FACTOR * p80));
-  return fillCount(base, MAX_READ_AHEAD, wanted, aheadSeconds);
+ *  đa [MAX_READ_AHEAD] đoạn. `floor` giây đầu tiên thì luôn đủ, kể cả chưa có số đo (tới [MAX_FILL_AHEAD] đoạn): giữa chương [MIN_BUFFER_SECONDS]; xin trước chương kế 0 (chỉ khi
+ *  có số đo, như trước). Tối thiểu `base` đoạn. */
+export function readAheadCount(base: number, fetchSeconds: number[], aheadSeconds: number[], floor = MIN_BUFFER_SECONDS): number {
+  let wanted = 0;
+  if (fetchSeconds.length >= 2) {
+    const sorted = [...fetchSeconds].sort((a, b) => a - b);
+    const p80 = sorted[Math.min(sorted.length - 1, Math.ceil(sorted.length * 0.8) - 1)];
+    wanted = Math.min(MAX_BUFFER_SECONDS, Math.max(MIN_BUFFER_SECONDS, BUFFER_FACTOR * p80));
+  }
+  return fillCount(base, MAX_READ_AHEAD, floor, wanted, aheadSeconds);
 }
 
 /** Giọng chạy trên máy ([SpeechTrack.serial]): đọc trước đủ [LOCAL_BUFFER_SECONDS] giây âm thanh (tối thiểu `base` đoạn, tối đa [LOCAL_MAX_READ_AHEAD]) - không theo số đoạn: vài dòng ngắn liền nhau
  *  (hay lặp lại, lấy từ bộ đệm tức thì) đứng trước một đoạn dài thì đoạn dài bắt đầu đọc quá muộn (điện thoại a65: im 0,16-0,35 s; cùng luật ReadAheadPolicy.localNeedsMore). */
 export function localReadAheadCount(base: number, aheadSeconds: number[]): number {
-  return fillCount(base, LOCAL_MAX_READ_AHEAD, LOCAL_BUFFER_SECONDS, aheadSeconds);
+  return fillCount(base, LOCAL_MAX_READ_AHEAD, 0, LOCAL_BUFFER_SECONDS, aheadSeconds);
 }
 
-function fillCount(base: number, most: number, wanted: number, aheadSeconds: number[]): number {
+/** Thêm đoạn vào cửa sổ: tới `base` đoạn, tới `floor` giây (tối đa [MAX_FILL_AHEAD] đoạn), rồi tới `wanted` giây nhưng không quá `most` đoạn. */
+function fillCount(base: number, most: number, floor: number, wanted: number, aheadSeconds: number[]): number {
   const cap = Math.max(base, most);
   let count = 0;
   let seconds = 0;
-  while (count < cap && count < aheadSeconds.length && (count < base || seconds < wanted)) {
+  while (count < MAX_FILL_AHEAD && count < aheadSeconds.length && (count < base || seconds < floor || (seconds < wanted && count < cap))) {
     seconds += aheadSeconds[count];
     count += 1;
   }
@@ -918,8 +926,9 @@ export class ReadAloudEngine implements AudioEngine {
   }
 
   private depth(index: number): number {
-    if (this.speech?.serial?.()) return localReadAheadCount(this.readAhead, this.slots.slice(index + 1, index + 1 + LOCAL_MAX_READ_AHEAD).map((slot) => slot.duration));
-    return readAheadCount(this.readAhead, this.fetchMeasures(), this.slots.slice(index + 1, index + 1 + MAX_READ_AHEAD).map((slot) => slot.duration));
+    const ahead = this.slots.slice(index + 1, index + 1 + MAX_FILL_AHEAD).map((slot) => slot.duration);
+    if (this.speech?.serial?.()) return localReadAheadCount(this.readAhead, ahead);
+    return readAheadCount(this.readAhead, this.fetchMeasures(), ahead);
   }
 
   /** Số đo tốc độ giọng cho [readAheadCount]: giây lấy clip thật của vài clip gần nhất + tuổi của các lượt gọi đang chờ quá [STALL_SECONDS]. */
@@ -951,7 +960,7 @@ export class ReadAloudEngine implements AudioEngine {
         const speakable = texts.filter(isSpeakable);
         const serial = Boolean(speech.serial?.());
         // Cùng luật với đọc trước giữa chương ([readAheadCount]): giọng nhanh thì NEXT_CHAPTER_AHEAD clip, giọng chậm thì đủ số giây âm thanh (đoạn kế của chương sau không còn về trễ ~5 giây - soát a46).
-        const count = serial ? NEXT_CHAPTER_AHEAD : readAheadCount(NEXT_CHAPTER_AHEAD, this.fetchMeasures(), speakable.slice(0, MAX_READ_AHEAD).map(estimateSeconds));
+        const count = serial ? NEXT_CHAPTER_AHEAD : readAheadCount(NEXT_CHAPTER_AHEAD, this.fetchMeasures(), speakable.slice(0, MAX_READ_AHEAD).map(estimateSeconds), 0);
         const wanted = speakable.slice(0, count);
         const voice = speech.voice();
         // Mỗi clip kèm `rank` = số đoạn người nghe còn phải nghe trước nó (phần còn lại của chương này + vị trí trong chương kế, tối đa [MAX_WARM_RANK]): đứng sau mọi đoạn của chương
@@ -1014,7 +1023,11 @@ export class ReadAloudEngine implements AudioEngine {
       this.audioFor(index);
       return;
     }
-    if (slot.fetching) return;
+    // Đã xếp hàng (cửa sổ dài: nhiều đoạn chờ chỗ trong [SpeechTrack.parallel]) mà người nghe vừa tới nó: gửi ngay, không đợi một lượt khác xong ([pump]).
+    if (slot.fetching) {
+      this.pump();
+      return;
+    }
     // Người nghe tới một đoạn đã hỏng từ trước (hết lần thử lại lúc nó còn ở xa, hay dịch vụ vừa khoẻ lại): hỏi MỚI một lần trước khi báo lỗi - dịch vụ có thể đã dậy từ lâu (a46: Edge về sau 28 giây,
     // người nghe tới đoạn ấy lúc 39,5 giây mà bị dừng với "Thử lại", bấm là xong ngay).
     if (slot.failures > 0 && slot.ask === null && index === this.target.index) slot.ask = "fresh";

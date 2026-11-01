@@ -16,15 +16,20 @@ class ReadAheadTest {
     // ---- độ sâu -----------------------------------------------------------------------------------------------
 
     @Test
-    fun withoutEnoughMeasurementsItKeepsTheBaseDepthAndFastClipsStillKeepTheMinimumBuffer() {
+    fun theMinimumBufferHoldsWithoutMeasurementsAndForShortClips() {
         val policy = ReadAheadPolicy(2)
-        val short = List(10) { 1_500L }
+        val short = List(30) { 1_500L }
         val long = List(10) { 12_000L }
         assertTrue(policy.needMore(emptyList()))
         assertTrue(policy.needMore(listOf(1_500L)))
-        assertFalse(policy.needMore(short.take(2))) // đủ 2 đoạn, chưa có số đo
+        assertTrue("chưa có số đo vẫn đệm 20 s: 2 đoạn ngắn (3 s) chưa đủ", policy.needMore(short.take(2)))
+        assertFalse("chưa có số đo, đoạn dài: 2 đoạn đã đủ", policy.needMore(long.take(2)))
+        assertTrue("sáu dòng thoại (9 s): còn nạp, đoạn kể dài sau chúng được xin sớm", policy.needMore(short.take(6)))
+        assertTrue("đệm tối thiểu vượt trần MAX_AHEAD", policy.needMore(short.take(ReadAheadPolicy.MAX_AHEAD)))
+        assertFalse("đủ 20 s", policy.needMore(short.take(14)))
+        assertFalse("dòng rất ngắn: tối đa MAX_FILL_AHEAD đoạn", policy.needMore(List(ReadAheadPolicy.MAX_FILL_AHEAD) { 500L }))
         policy.record(20_000)
-        assertFalse("một số đo chưa đủ", policy.needMore(short.take(2)))
+        assertTrue("một số đo chưa đủ để đọc tốc độ, vẫn đệm 20 s", policy.needMore(short.take(2)))
         for (ms in listOf(800L, 1_100L, 900L, 1_200L, 1_000L, 900L, 1_100L, 1_000L)) policy.record(ms)
         assertEquals("Edge nhanh: vẫn đệm tối thiểu 20 s", ReadAheadPolicy.MIN_BUFFER_MS, policy.wantedMs())
         assertTrue("đoạn ngắn: 3 đoạn (4,5 s) chưa đủ 20 s", policy.needMore(short.take(3)))
@@ -35,14 +40,15 @@ class ReadAheadTest {
     @Test
     fun slowClipsGrowTheQueueUpToTheCapAndFastOnesShrinkItBack() {
         val policy = ReadAheadPolicy(2)
-        val short = List(10) { 1_500L } // đoạn đối thoại ngắn
+        val short = List(20) { 1_500L } // đoạn đối thoại ngắn
         for (ms in listOf(20_000L, 22_000L, 24_000L, 21_000L, 23_000L, 22_000L, 20_000L, 21_000L)) policy.record(ms)
         assertTrue(policy.slow())
         assertEquals(46_000L, policy.wantedMs()) // 2 x p80 (23 s)
         // 4 đoạn ngắn (6 s) chưa đủ -> còn nạp; chạm trần thì thôi
         assertTrue(policy.needMore(short.take(4)))
         assertTrue(policy.needMore(short.take(ReadAheadPolicy.MAX_AHEAD - 1)))
-        assertFalse(policy.needMore(short.take(ReadAheadPolicy.MAX_AHEAD)))
+        assertTrue("dưới 20 s: đệm tối thiểu", policy.needMore(short.take(ReadAheadPolicy.MAX_AHEAD)))
+        assertFalse("trên 20 s mà đã chạm trần MAX_AHEAD", policy.needMore(short.take(14)))
         // đoạn văn xuôi dài (12 s): 4 đoạn = 48 s là đủ
         val long = List(10) { 12_000L }
         assertTrue(policy.needMore(long.take(3)))
