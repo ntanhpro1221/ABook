@@ -248,6 +248,7 @@ object MusicBed {
     private var autoPicked = false // nhạc theo cảnh là do máy tự chọn (người nghe chưa chọn gì): dữ liệu di động chặn tải ([meteredNow])
     private var sceneMode = false // cuốn này theo cảnh: mốc của chương nằm ở `scene`, bài lấy từ danh mục
     private val scene = SceneBed { sceneTiming() }
+    private val nextWarm = NextChapterWarm(::askNextChapter, { link -> context?.let { uriOf(it, link) } }, SystemClock::elapsedRealtime)
     private var sceneRetry: Runnable? = null
     private var sceneNotice = "" // lý do chưa có nhạc theo cảnh (danh mục chưa tải được) - lời `unavailable` của DeviceScenes; rỗng khi ổn
 
@@ -472,7 +473,10 @@ object MusicBed {
         } else if (sceneMode && scene.tick(seconds, seeked)) {
             cues = scene.cues // clip về hay người nghe nhảy: mốc đặt lại theo đồng hồ đọc
         }
-        if (sceneMode) prefetchNext(appContext, seconds)
+        if (sceneMode) {
+            prefetchNext(appContext, seconds)
+            warmNextChapter(appContext, seconds)
+        }
         var cue = MusicCues.at(cues, seconds, failed)
         current?.takeIf { it.early }?.let { bed ->
             // Bài vào sớm giữ chỗ tới đầu mốc của nó; tua thì theo mốc tại chỗ tua như thường.
@@ -1271,6 +1275,28 @@ object MusicBed {
     private fun prefetchNext(appContext: Context, seconds: Double) {
         val sounding = MusicCues.at(cues, seconds, failed)?.track
         cues.firstOrNull { it.start > seconds && it.track != sounding }?.let { uriOf(appContext, it.track) }
+    }
+
+    /** Chương còn <= [NextChapterWarm.WARM_SECONDS] (theo đồng hồ đọc) thì tải sẵn bài mốc đầu của chương kế ([nextWarm]). Mạng di động tính phí thì không tải sẵn gì, kể cả
+     *  nhạc người nghe tự chọn (bài đang cần vẫn tải theo [fetch]); về Wi-Fi trong hai phút cuối thì hỏi như thường. */
+    private fun warmNextChapter(appContext: Context, seconds: Double) {
+        if (meteredNow(appContext)) return
+        val total = sceneTiming()?.total ?: return
+        val order = Playback.chapters
+        val index = order.indexOfFirst { it.id == chapter }
+        nextWarm.update("$book:$chapter", order.getOrNull(index + 1)?.id?.takeIf { index >= 0 }, total - seconds)
+    }
+
+    /** Mốc chương `chapterId` của cuốn đang nghe cho [nextWarm]: chỉ đọc bản đã dựng ([DeviceScenes.peek] - chương kế nằm trong hàng dựng trước từ lúc hỏi chương
+     *  này, không xếp thêm việc giành CPU với giọng); chưa dựng xong thì `pending`, hỏi lại sau. Trả lời trên luồng chính. */
+    private fun askNextChapter(chapterId: Int, answer: (NextChapterWarm.Answer?) -> Unit) {
+        val appContext = context ?: return answer(null)
+        DeviceScenes.peek(appContext, book, chapterId) { result, _ ->
+            val reply = result?.let {
+                NextChapterWarm.Answer(it.optBoolean("pending", false), it.optString("unavailable", "").isNotEmpty(), SceneAnchor.cuesOf(it).firstOrNull()?.link)
+            }
+            main.post { answer(reply) }
+        }
     }
 
     /** Hỏi mốc nhạc theo cảnh của chương `chapterId` (luồng nền: dựng nền có thể tới vài giây, danh mục cần mạng lần đầu). Chương chưa dựng xong ([DeviceScenes] trả `pending`)
