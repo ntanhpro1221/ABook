@@ -16,6 +16,12 @@ import javax.net.ssl.HttpsURLConnection
  * cho thư viện (tải sách, đồng bộ chỗ nghe) và điều khiển từ xa (Remote). Mọi đường là HTTPS với chứng chỉ đã
  * ghim lúc ghép ([Pin]); chứng chỉ đổi thì lỗi [Pin.CHANGED], không rơi về HTTP.
  */
+/**
+ * Thân gửi lên ghi từng khúc: `length` là số byte ĐÚNG sẽ ghi. Máy tính đọc thân bằng Content-Length (không hiểu `Transfer-Encoding: chunked`: thân chunked bị
+ * coi là rỗng và lời đáp là lỗi "thiếu tên file" dù tên có đuôi .txt - soát điện thoại thật 02-11), nên phải khai độ dài trước; ghi sai độ dài thì kết nối báo lỗi.
+ */
+class StreamBody(val length: Long, val write: (java.io.OutputStream) -> Unit)
+
 object SyncLink {
     fun prefs(context: Context): SharedPreferences = context.getSharedPreferences("sync", Context.MODE_PRIVATE)
 
@@ -136,7 +142,7 @@ object SyncLink {
         connectTimeoutMs: Int = 5000,
         token: String? = null,
         upload: File? = null,
-        stream: ((java.io.OutputStream) -> Unit)? = null,
+        stream: StreamBody? = null,
     ): String {
         // Choose before HTTP: never replay a POST/upload after an uncertain result.
         val credential = token ?: if (auth) SyncLink.token(context) else ""
@@ -209,7 +215,7 @@ object SyncLink {
         token: String?,
         firstUse: Array<String?>? = null,
         upload: File? = null,
-        stream: ((java.io.OutputStream) -> Unit)? = null,
+        stream: StreamBody? = null,
     ): String {
         Pin.install(context)
         return Pin.guard {
@@ -233,7 +239,7 @@ object SyncLink {
         token: String?,
         firstUse: Array<String?>?,
         upload: File? = null,
-        stream: ((java.io.OutputStream) -> Unit)? = null,
+        stream: StreamBody? = null,
     ): String {
         val idleMs = readTimeoutMs ?: HostWait.idleMs(path)
         return HostWait.call(resend = readTimeoutMs == null && upload == null && stream == null) {
@@ -253,7 +259,7 @@ object SyncLink {
         token: String?,
         firstUse: Array<String?>?,
         upload: File?,
-        stream: ((java.io.OutputStream) -> Unit)?,
+        stream: StreamBody?,
     ): String {
         fun connect(): HttpURLConnection {
             val connection = HostWait.open(root + path, connectTimeoutMs, idleMs)
@@ -275,11 +281,11 @@ object SyncLink {
                     upload.inputStream().use { input -> HostWait.counting(connection.outputStream, alive).use { input.copyTo(it, 256 * 1024) } }
                 }
             } else if (stream != null) {
-                // Thân JSON lớn (nguồn sách tới ~17 MiB mã base64): ghi thẳng ra kết nối theo từng khúc, không dựng cả chuỗi trong bộ nhớ.
+                // Thân JSON lớn (nguồn sách tới ~17 MiB mã base64): ghi thẳng ra kết nối theo từng khúc, không dựng cả chuỗi trong bộ nhớ; độ dài khai trước (xem StreamBody).
                 connection.doOutput = true
                 connection.setRequestProperty("Content-Type", "application/json; charset=utf-8")
-                connection.setChunkedStreamingMode(64 * 1024)
-                HostWait.writing(connection, idleMs) { alive -> HostWait.counting(connection.outputStream, alive).use { stream(it) } }
+                connection.setFixedLengthStreamingMode(stream.length)
+                HostWait.writing(connection, idleMs) { alive -> HostWait.counting(connection.outputStream, alive).use { stream.write(it) } }
             } else if (body != null) {
                 connection.doOutput = true
                 connection.setRequestProperty("Content-Type", "application/json; charset=utf-8")
