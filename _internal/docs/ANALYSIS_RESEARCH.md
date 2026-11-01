@@ -1721,6 +1721,56 @@ lẫn LoRA v2 ghi "CHỊ DẬU" / "ANH DẬU".
    trong `scripts/source_spellings.py` (gieo ở ranh giới lô) sửa cùng lúc - `test_source_spellings_agree` giữ hai bản
    khớp nhau.
 
+## ĐỌC LẠI 01-11 - "Fast and Accurate Quotation Attribution" (Michel, Attali, Epure; arXiv 2608.02359) so với ta
+
+Lead hỏi 01-11 (chủ sách: có ai công bố bench không). Đọc bài (bản HTML v1) + README repo ModernBookNLP_QA (repo KHÔNG license -
+chỉ đọc, không chép mã; ta đã tự viết lại theo bài ở B26, 11-10).
+
+**Bài làm gì.** Encoder ModernBERT-large (Longformer-base để so), cửa sổ T token trượt bước S (T=2000, S=512 tốt nhất). "Direct" =
+mỗi câu thoại một cửa sổ riêng; "joint" = MỘT lượt encoder cho mọi câu thoại trong cửa sổ, loss trung bình. Mỗi câu vẫn được chấm
+ĐỘC LẬP với mọi ứng viên (MLP trên cặp câu-mention): không CRF, không tự hồi quy, không dùng nhãn đã đoán của câu khác. PDNC 5 phần
+theo sách: joint (2000,512) **94,5 %** (tường minh 99,3, đại từ 95,5, ngầm 89,3); direct 92,6; Llama-3-8B 89,8. Nhanh: 0,43 s/sách
+trên A100 (9,2 GB đỉnh) so với 400-2.800 s của LLM 8B.
+
+**(a) Điều kiện PDNC khác ta.**
+| | PDNC (bài) | ABook |
+|---|---|---|
+| ranh câu thoại | cho sẵn (gold) | parser của app cho sẵn (kind), cùng loại |
+| ứng viên | mention từ đồng tham chiếu BookNLP, CHỈ giữ cụm khớp một nhân vật gold; nhân vật >= 10 lần nhắc | tự dò tên từ chữ; không danh sách nhân vật gold |
+| lớp đích | nhân vật có tên | + NARRATOR, nội tâm người kể ngôi 1, NPC vô danh (NPC↔TÊN 27 % khoảng cách của v2), câu cả đám |
+| ngôn ngữ / thể loại | tiểu thuyết Anh cổ điển, 22 cuốn, 35k câu | LN Nhật/Hàn dịch Việt, ngôi 1 nhiều (64,5 % câu), ~6k câu gold học |
+| thước | % câu đúng nhân vật | thước cả chuỗi: snap + credit theo bí danh/nửa điểm, trên chuỗi app (kind do model) |
+Hai chỗ lệch lớn nhất: danh sách nhân vật gold lọc ứng viên (ta không có - B26 trần trả lời được 87-94 %), và PDNC không có lớp
+người kể/NPC (E3 27-09: học trước PDNC cho người kể/NPC 0 %).
+
+**(b) Joint scoring có đánh lỗi dây chuyền/đảo pha của v2 không?** Theo CẤU TRÚC thì có: không dùng nhãn tự đoán nên không có
+exposure bias - đúng gốc 63,7 % khoảng cách v2->oracle (`errtax_next/speaker_v2_taxonomy.md`). Nhưng đổi lại nó MẤT tín hiệu lịch
+sử: trần thật của v2 khi lịch sử đúng là +8,76 điểm (90,12 vs 81,36, PLAN 01-11 02:0x), tức lịch sử ĐÚNG đáng giá rất lớn; encoder
+chỉ còn luân phiên ngầm trong chữ. Bài không phân tích riêng chuỗi luân phiên; câu "ngầm" (hay ở hội thoại) vẫn là loại khó nhất
+(89,3 % trên PDNC). Ở ta, B44 b1 (DAgger 100 % tự đoán) và B47-MASK (che nhãn lịch sử khi suy luận: 57,3 % vs 78,6 %) cho thấy bỏ
+tin lịch sử thì mất nhiều hơn được. B52-CHUỖI (đang học) nhắm cùng gốc nhưng GIỮ lịch sử: dạy model thoát lịch sử sai-mà-nhất-quán.
+
+**(c) Encoder đa ngữ vừa 8 GB cho tiếng Việt.** ModernBERT chỉ tiếng Anh. Đã kiểm ở B26: mmBERT-base (MIT, kiến trúc ModernBERT,
+8.192 token) 1,30 token/âm tiết, 0 âm tiết có dấu vỡ (XLM-R giải mã không khớp); khúc 2.000 token ~ 1.540 âm tiết; suy luận CPU
+nhà 6,3 s/chương. Lớn hơn: BGE-M3 (XLM-R-large 568M, 8.192, MIT; phải đóng băng bảng từ vựng để vừa 8 GB) - E10, chưa làm.
+gte-multilingual-base (305M, 8.192) là lựa chọn ngang mmBERT-base. Không có bản "large" đa ngữ ngữ cảnh dài nào nhỏ như ModernBERT-large.
+
+**(d) Ta đã thử chính hướng này hai lần - khác gì.**
+- E3 (27-09) bộ chấm độc lập mmBERT, học trước PDNC rồi gold: kiểm chứng chéo THEO TRUYỆN 58,3 % TB truyện; 10-10 dựng lại làm
+  bộ chấm ứng viên THUA log-prob B9 (chặt 57,0 vs 75,4; AUROC cờ nghi 0,665 vs 0,746).
+- B26 (11-10) đúng công thức joint của bài (mmBERT-base, khúc 2.000/512) làm bước XẾP LẠI sau LLM, chỉ đổi khi lề >= τ: lợi ròng dev
+  <= 0 -> KHÔNG TRIỂN KHAI; B27 (quyết pha bằng điểm encoder) THUA.
+- Khác bài: dữ liệu học ít hơn ~6 lần và khác miền (4,6k câu gold Việt + thẻ B7; PDNC tiếng Anh chỉ chuyển một phần), không có
+  danh sách nhân vật gold để lọc ứng viên, và phải phủ người kể/NPC/câu cả đám. Bài đạt 94,5 % nhờ cả ba điều kiện ta không có.
+
+**Kết luận + đề xuất.** Không mở lại encoder lúc này: hai lần đo của chính ta (E3, B26/B27) đã trả lời câu hỏi chuyển giao trong
+điều kiện của ta, và bài không thêm thành phần nào ta chưa thử (joint = chung lượt encoder, không giải mã chung). Giá trị còn lại:
+(1) tốc độ ~1.000x - đáng nhớ cho hướng "native, nhẹ" nếu một ngày độ đúng ngang LLM; (2) ý "không tự hồi quy = không exposure
+bias". Ý (2) chỉ mở thành thí nghiệm nếu B52 THUA mà câu kéo theo KHÔNG giảm: khi đó ứng viên là **B53-KHÔNG-NHÃN-LỊCH-SỬ** -
+LLM học + suy luận với lịch sử chỉ có chữ + loại (không người nói; như chế độ strip của DIAG 15-10 nhưng HỌC từ đầu như thế, khác
+B47-MASK vốn che nhãn trên model đã học có nhãn). Luật ghi trước khi đó (nháp): ĐẠT = Δ vs v2 >= +1,0 VÀ cận dưới KTC truyện > 0
+VÀ Δ19 >= 0; dự đoán THUA (Δ ~ −2 [−5; +1]) vì lịch sử đúng đáng +8,76; giá 3 hạt GPU ~21 h.
+
 ## Tài liệu
 
 Đã đọc (27-09):
