@@ -1343,7 +1343,9 @@ object MusicBed {
             main.post {
                 downloading.remove(link)
                 if (warming == link) warming = null
-                if (got.exceptionOrNull() is MusicCatalog.Yielded) nextWarm.again(link) // đứt vì nhường giọng: xin lại khi giọng đủ, không đợi lưới cuối
+                // đứt vì nhường giọng / đứt sau khi đã tải thêm (phần đã tải nằm lại): xin lại khi giọng đủ, tải tiếp, không đợi lưới cuối
+                val error = got.exceptionOrNull()
+                if (error is MusicCatalog.Yielded || error is MusicCatalog.Progressed) nextWarm.again(link)
             }
         }
     }

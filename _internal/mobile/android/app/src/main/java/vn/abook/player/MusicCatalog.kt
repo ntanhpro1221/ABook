@@ -6,6 +6,7 @@ import org.json.JSONObject
 import org.json.JSONTokener
 import java.io.File
 import java.io.FileNotFoundException
+import java.io.FileOutputStream
 import java.io.FilterInputStream
 import java.io.IOException
 import java.io.InputStream
@@ -25,25 +26,28 @@ import java.util.concurrent.Executors
  * phải khớp sha256 trong `files` của mục lục. Sai thì giữ danh mục đã cất, không bao giờ dùng link của bản lạ; mảnh lệch / không được
  * liệt kê coi như không có (ghi qua [log]). Cất cả byte gốc lẫn `.sig`, đọc lại bản cất cũng kiểm lại.
  *
- * `open(url)` mở một địa chỉ (http(s) hay đường dẫn thư mục cho test JVM) - chỉ đọc, không gửi gì ngoài User-Agent. Địa chỉ danh mục lấy
+ * `open(url)` mở một địa chỉ (http(s) hay đường dẫn thư mục cho test JVM) - chỉ đọc, không gửi gì ngoài User-Agent; `openFrom(url, byte)` mở
+ * phần còn lại của bài từ `byte` (Range) để tải tiếp `.part` dở - trả [Sized] có `from` = byte nguồn thật sự bắt đầu (0: nguồn trả cả bài). Địa chỉ danh mục lấy
  * qua `sourceOf` MỘT lần, ở lần cần mạng đầu tiên (luồng nền): nó đọc cấu hình từ xa ([RemoteConfig.musicCatalogs]) nên có thể chặn mạng.
  */
 class MusicCatalog(
     private val dir: File,
     sourceOf: () -> String,
-    private val open: (String) -> InputStream = ::openUrl,
+    private val open: (String) -> InputStream = OPEN_URL,
     private val clock: () -> Long = System::currentTimeMillis,
     private val publicKey: ByteArray = RemoteConfig.PUBLIC_KEY,
     private val log: (String) -> Unit = ::logWarning,
+    private val openFrom: (String, Long) -> InputStream = { url, from -> if (open === OPEN_URL) openUrl(url, from) else open(url) },
 ) {
     constructor(
         dir: File,
         source: String = DEFAULT_SOURCE,
-        open: (String) -> InputStream = ::openUrl,
+        open: (String) -> InputStream = OPEN_URL,
         clock: () -> Long = System::currentTimeMillis,
         publicKey: ByteArray = RemoteConfig.PUBLIC_KEY,
         log: (String) -> Unit = ::logWarning,
-    ) : this(dir, { source }, open, clock, publicKey, log)
+        openFrom: (String, Long) -> InputStream = { url, from -> if (open === OPEN_URL) openUrl(url, from) else open(url) },
+    ) : this(dir, { source }, open, clock, publicKey, log, openFrom)
 
     /** Danh mục không đọc được (mất mạng lần đầu, định dạng mới hơn app). Câu chữ để người dùng đọc - như `CatalogError` bên Python. */
     class CatalogError(message: String) : Exception(message)
@@ -63,20 +67,27 @@ class MusicCatalog(
 
     /** Mọi nguồn của bài hỏng vì MẠNG (không phân giải được tên, không nối được, hết giờ, đứt giữa chừng, bắt tay SSL): bài vẫn tốt, chỉ chưa
      *  tải được - người gọi không tính vào số lần bỏ bài, thử lại khi có mạng (như `network_only` của `music_track_file`). */
-    class Offline(message: String = "không có mạng") : IOException(message)
+    open class Offline(message: String = "không có mạng") : IOException(message)
 
-    /** Lượt tải đứng nhường ([download] `yields`) rồi đứt vì mạng (nguồn đóng kết nối nằm im lâu): bài và nguồn vẫn tốt - không tính vào sức khoẻ nguồn, lần xin sau tải lại. */
+    /** Lượt tải đứng nhường ([download] `yields`) rồi đứt vì mạng (nguồn đóng kết nối nằm im lâu): bài và nguồn vẫn tốt - không tính vào sức khoẻ nguồn, lần xin sau tải tiếp. */
     class Yielded : IOException("tải nhường chỗ rồi đứt")
+
+    /** Tải đứt vì mạng sau khi đã nhận thêm byte (nguồn chậm, Wi-Fi chập chờn): phần đã tải nằm lại trong `.part`, lần xin sau tải tiếp từ đó.
+     *  Nguồn vẫn trả lời nên KHÔNG bị cho nghỉ [HOST_REST_MS]; tải sẵn xin lại ngay như [Yielded]. */
+    class Progressed(kept: Long) : Offline("tải đứt, giữ $kept byte để tải tiếp")
 
     /** Kết quả [lookupPartial]: dữ liệu các link tìm được + các mảnh không tải được (mạng) - bài thuộc mảnh ấy chưa biết, chờ tải lại. */
     class Lookup(val found: Map<String, JSONObject>, val missingShards: Set<String>)
 
-    /** Luồng tải biết trước cỡ (Content-Length của [openUrl]; null = nguồn không báo) để bỏ bài quá lớn trước khi tải. */
-    class Sized(input: InputStream, val length: Long?) : FilterInputStream(input)
+    /** Luồng tải biết trước cỡ (Content-Length của [openUrl]; null = nguồn không báo) để bỏ bài quá lớn trước khi tải. `from`: byte của bài mà luồng
+     *  bắt đầu (tải tiếp bằng Range, nguồn trả 206); `length` là phần còn lại từ đó. */
+    class Sized(input: InputStream, val length: Long?, val from: Long = 0) : FilterInputStream(input)
 
     private val source by lazy { sourceOf().trimEnd('/') + "/" }
     private val remote get() = source.startsWith("http://") || source.startsWith("https://")
     private val lock = Any()
+    /** Tên `.part` đang có lượt [download] ghi vào: [prune] không xoá. */
+    private val downloading = HashSet<String>()
     private var manifest: JSONObject? = null
     /** Mảnh đã đọc: `tracks/` là JSONObject, `cells/` là JSONArray. */
     private val parts = HashMap<String, Any>()
@@ -360,11 +371,14 @@ class MusicCatalog(
     fun prune(keep: Collection<String> = emptyList(), capBytes: Long = FILES_CAP_BYTES) {
         val all = File(dir, "files").listFiles() ?: return
         val now = clock()
-        all.filter { it.name.endsWith(".part") && now - it.lastModified() > PART_STALE_MS }.forEach { it.delete() }
+        val protected = keep.map { fileOf(it).name }.toSet()
+        // `.part` dở là phần để tải tiếp: chỉ xoá khi đã cũ lắm, và không bao giờ khi đang có lượt tải ghi vào nó hay bài của nó đang cần.
+        val writing = synchronized(lock) { downloading.toSet() }
+        all.filter { it.name.endsWith(".part") && now - it.lastModified() > PART_STALE_MS && it.name !in writing && it.name.removeSuffix(".part") !in protected }
+            .forEach { it.delete() }
         val tracks = all.filter { it.name.endsWith(".mp3") }
         var total = tracks.sumOf { it.length() }
         if (total <= capBytes) return
-        val protected = keep.map { fileOf(it).name }.toSet()
         for (file in tracks.sortedBy { it.lastModified() }) {
             if (total <= capBytes) break
             if (file.name in protected) continue
@@ -458,12 +472,13 @@ class MusicCatalog(
         return flagged
     }
 
-    /** Chép bài đang tải, dừng ([TrackTooBig]) khi quá [TRACK_MAX_BYTES]: Content-Length báo trước, hay đếm thật khi nguồn không báo. `gate`: gọi trước mỗi lần đọc (đứng nhường). */
-    private fun copyCapped(input: InputStream, sink: OutputStream, gate: () -> Unit = {}) {
-        val length = (input as? Sized)?.length
+    /** Chép bài đang tải, dừng ([TrackTooBig]) khi quá [TRACK_MAX_BYTES]: Content-Length báo trước, hay đếm thật khi nguồn không báo. `gate`: gọi trước mỗi lần đọc (đứng nhường).
+     *  `start`: tải tiếp - file đã có bấy nhiêu byte đầu, Content-Length là phần còn lại. */
+    private fun copyCapped(input: InputStream, sink: OutputStream, gate: () -> Unit = {}, start: Long = 0) {
+        val length = (input as? Sized)?.length?.let { it + start }
         if (length != null && length > TRACK_MAX_BYTES) throw TrackTooBig(length)
         val buffer = ByteArray(1 shl 16)
-        var copied = 0L
+        var copied = start
         while (true) {
             gate()
             val read = input.read(buffer)
@@ -485,6 +500,8 @@ class MusicCatalog(
      * `sha1` của bản gốc, và bản sao phải khớp `sha1` (và `bytes`) mới dùng, không phát nhầm bài. Không lấy được thì null. Bài quá
      * [TRACK_MAX_MB] (danh mục, Content-Length hay đếm khi tải) thì ném [TrackTooBig] và ghi nhớ - [usable] từ đó trả false.
      * `yields` (tải sẵn - giọng đọc trước): đúng thì ngừng đọc từ mạng tới khi sai; đứt vì mạng sau lúc đứng thì ném [Yielded].
+     * Đứt vì mạng thì phần đã tải nằm lại trong `.part` (tên cố định theo bài - bản sao phải khớp sha1 nên cùng byte): lần sau tải tiếp bằng Range
+     * ([openFrom]); nguồn không trả đúng phần còn lại thì tải lại từ 0. Đã nhận thêm byte thì ném [Progressed], không cho nguồn nghỉ.
      */
     fun download(link: String, info: JSONObject?, yields: (() -> Boolean)? = null): File? {
         if (!link.startsWith("https://")) return null
@@ -503,45 +520,78 @@ class MusicCatalog(
         target.parentFile?.mkdirs()
         // Như `music_track_file`: mọi nguồn hỏng vì MẠNG thì bài vẫn tốt ([Offline], các nguồn ấy nghỉ [HOST_REST_MS]); còn lại: bài hỏng thật (null).
         var networkOnly = true
+        var gained = false
+        var lastError: Exception? = null
         val attempted = mutableListOf<String>()
-        for (url in listOf(link) + mirrors) {
-            if (hostDown(url)) continue // nguồn này vừa hỏng vì mạng: khỏi chờ nó hết giờ lần nữa (nguồn khác vẫn thử)
-            attempted += url
-            val part = File(target.path + ".${System.nanoTime()}.part")
-            var stood = false
-            val gate = {
-                if (yields != null && yields()) {
-                    stood = true
-                    while (yields()) Thread.sleep(YIELD_POLL_MS)
+        val part = File(target.path + ".part")
+        synchronized(lock) { downloading += part.name }
+        try {
+            for (url in listOf(link) + mirrors) {
+                if (hostDown(url)) continue // nguồn này vừa hỏng vì mạng: khỏi chờ nó hết giờ lần nữa (nguồn khác vẫn thử)
+                attempted += url
+                var again = true
+                while (again) {
+                    again = false
+                    var start = part.length()
+                    if (size != null && start >= size) { // dở mà đã đủ cỡ (lượt trước hỏng lúc kiểm): không còn gì để tải tiếp
+                        part.delete()
+                        start = 0
+                    }
+                    var stood = false
+                    var keep = false
+                    val gate = {
+                        if (yields != null && yields()) {
+                            stood = true
+                            while (yields()) Thread.sleep(YIELD_POLL_MS)
+                        }
+                    }
+                    try {
+                        (if (start > 0) openFrom(url, start) else open(url)).use { input ->
+                            if ((input as? Sized)?.from != start) start = 0 // nguồn bỏ qua Range (200 cả bài): ghi lại từ đầu
+                            FileOutputStream(part, start > 0).use { copyCapped(input, it, gate, start) }
+                        }
+                        // Mọi nguồn (cả bản gốc) phải khớp `bytes` / `sha1` danh mục ghi: bài cụt hay bị đổi không được cất như bài tốt (bản sao thì bài không có `sha1` đã không được dùng).
+                        if ((size != null && part.length() != size) || (expected != null && sha1(part) != expected)) {
+                            throw LocalFailure(if (url == link) "bài tải về khác danh mục" else "bản sao khác bản gốc")
+                        }
+                        if (!part.renameTo(target) && !target.isFile) throw LocalFailure("không ghi được")
+                        note(url, failed = false) // tải được = nguồn ấy có mạng
+                        return target
+                    } catch (error: TrackTooBig) { // bản sao cùng cỡ: khỏi thử
+                        note(url, failed = false)
+                        markTooBig(link, error.size)
+                        throw error
+                    } catch (error: Exception) {
+                        lastError = error
+                        val network = isNetworkFailure(error)
+                        keep = network && part.length() > 0
+                        if (network && part.length() > start) { // nguồn có trả byte rồi mới đứt: chậm / chập chờn, không phải mất mạng
+                            gained = true
+                            note(url, failed = false)
+                        }
+                        if (stood && network) throw Yielded()
+                        if (error is HttpFailure && error.code == 416 && start > 0) { // phần dở không khớp nguồn nữa: xoá (finally), tải lại từ 0
+                            again = true
+                        } else { // thử nguồn kế
+                            networkOnly = networkOnly && network
+                            if (error is HttpFailure) note(url, failed = false) // nguồn trả lời (404...): nối được, chỉ bài hỏng
+                        }
+                    } finally {
+                        if (!keep) part.delete()
+                    }
                 }
             }
-            try {
-                open(url).use { input -> part.outputStream().use { copyCapped(input, it, gate) } }
-                // Mọi nguồn (cả bản gốc) phải khớp `bytes` / `sha1` danh mục ghi: bài cụt hay bị đổi không được cất như bài tốt (bản sao thì bài không có `sha1` đã không được dùng).
-                if ((size != null && part.length() != size) || (expected != null && sha1(part) != expected)) {
-                    throw LocalFailure(if (url == link) "bài tải về khác danh mục" else "bản sao khác bản gốc")
-                }
-                if (!part.renameTo(target) && !target.isFile) throw LocalFailure("không ghi được")
-                note(url, failed = false) // tải được = nguồn ấy có mạng
-                return target
-            } catch (error: TrackTooBig) { // bản sao cùng cỡ: khỏi thử
-                note(url, failed = false)
-                markTooBig(link, error.size)
-                throw error
-            } catch (error: Exception) {
-                if (stood && isNetworkFailure(error)) throw Yielded()
-                // thử nguồn kế
-                networkOnly = networkOnly && isNetworkFailure(error)
-                if (error is HttpFailure) note(url, failed = false) // nguồn trả lời (404...): nối được, chỉ bài hỏng
-            } finally {
-                part.delete()
+            log("tải nhạc $link hỏng (${lastError?.javaClass?.simpleName}: ${lastError?.message}), " +
+                if (part.length() > 0) "giữ ${part.length()} byte để tải tiếp" else "không giữ gì")
+            if (networkOnly && gained) throw Progressed(part.length())
+            if (networkOnly) {
+                for (url in attempted) note(url, failed = true)
+                throw Offline()
             }
+            return null
+        } finally {
+            synchronized(lock) { downloading -= part.name }
         }
-        if (networkOnly) {
-            for (url in attempted) note(url, failed = true)
-            throw Offline()
-        }
-        return null
     }
 
     companion object {
@@ -561,7 +611,8 @@ class MusicCatalog(
          *  hai bộ đệm cộng lại vẫn dưới nửa GB của `cacheDir`. */
         const val FILES_CAP_BYTES = 300L * 1024 * 1024
         private const val TOUCH_MS = 3_600_000L
-        private const val PART_STALE_MS = 600_000L
+        /** `.part` dở (tải tiếp được) nằm lại chừng này - như `PART_MAX_AGE_SECONDS` của music_cache.py. */
+        private const val PART_STALE_MS = 7L * 24 * 3600 * 1000
         private const val SHARD_WORKERS = 8
         /** Nguồn tải hỏng vì mạng nghỉ chừng này (`MUSIC_OFFLINE_SECONDS`): bài của nó chờ, bài của nguồn khác vẫn chạy. */
         const val HOST_REST_MS = 300_000L
@@ -614,18 +665,30 @@ class MusicCatalog(
         /** `music_catalog.shard_of`: hai ký tự đầu sha1 của link. */
         fun shardOf(link: String): String = sha1(link.toByteArray(Charsets.UTF_8)).take(2)
 
-        /** http(s): GET kèm User-Agent, chờ có hạn; còn lại: một file trên đĩa (test). */
-        fun openUrl(url: String): InputStream {
-            if (!url.startsWith("http://") && !url.startsWith("https://")) return File(url.substringBefore('?')).inputStream()
+        /** Bộ mở mặc định ([openUrl]); [openFrom] mặc định chỉ xin Range khi `open` là chính nó. */
+        val OPEN_URL: (String) -> InputStream = { openUrl(it) }
+
+        /** http(s): GET kèm User-Agent, chờ có hạn; `from` > 0: xin phần còn lại từ byte ấy (Range) - [Sized.from] = byte nguồn thật sự bắt đầu
+         *  (206 + Content-Range khớp; 200 = cả bài, from 0). Còn lại: một file trên đĩa (test), từ byte `from`. */
+        fun openUrl(url: String, from: Long = 0): InputStream {
+            if (!url.startsWith("http://") && !url.startsWith("https://")) {
+                val file = File(url.substringBefore('?'))
+                return if (from > 0) Sized(file.inputStream().also { it.skip(from) }, maxOf(0L, file.length() - from), from) else file.inputStream()
+            }
             val connection = FastConnect.get(url, 15_000) {
                 it.readTimeout = 60_000
                 it.setRequestProperty("User-Agent", USER_AGENT)
+                if (from > 0) it.setRequestProperty("Range", "bytes=$from-")
             }
             if (connection.responseCode !in 200..299) {
                 connection.disconnect()
                 throw HttpFailure(connection.responseCode)
             }
-            return Sized(connection.inputStream, connection.contentLengthLong.takeIf { it >= 0 })
+            val resumed = from > 0 && connection.responseCode == 206 &&
+                RANGE_START.find(connection.getHeaderField("Content-Range").orEmpty())?.groupValues?.get(1)?.toLongOrNull() == from
+            return Sized(connection.inputStream, connection.contentLengthLong.takeIf { it >= 0 }, if (resumed) from else 0)
         }
+
+        private val RANGE_START = Regex("""bytes\s+(\d+)-""")
     }
 }

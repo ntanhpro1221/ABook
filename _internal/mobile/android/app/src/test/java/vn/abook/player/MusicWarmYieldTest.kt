@@ -71,14 +71,14 @@ class MusicWarmYieldTest {
         val error = runCatching { catalog.download(link, null) { ++asked == 1 } }.exceptionOrNull()
         assertTrue("đứt sau lúc đứng nhường: $error", error is MusicCatalog.Yielded)
         assertFalse("nguồn không bị coi là mất mạng", catalog.hostDown(link))
-        assertTrue("không để lại .part", File(root, "cache/files").listFiles().orEmpty().isEmpty())
+        assertEquals("phần đã tải nằm lại để tải tiếp", listOf(1000L), File(root, "cache/files").listFiles().orEmpty().map { it.length() })
     }
 
     @Test
     fun aDropWithoutStandingIsStillOffline() {
         val catalog = catalog({ MusicCatalog.Sized(ByteArrayInputStream(good.copyOf(1000)), good.size.toLong()) })
         val error = runCatching { catalog.download(link, null) { false } }.exceptionOrNull()
-        assertTrue("$error", error is MusicCatalog.Offline)
-        assertTrue(catalog.hostDown(link))
+        assertTrue("$error", error is MusicCatalog.Offline && error !is MusicCatalog.Yielded)
+        assertFalse("đứt sau khi đã nhận byte là nguồn chậm, không cho nghỉ", catalog.hostDown(link))
     }
 }
