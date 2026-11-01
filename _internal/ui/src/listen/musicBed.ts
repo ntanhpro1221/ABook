@@ -455,14 +455,20 @@ interface Playing {
 export class DownloadPace {
   private samples: [number, number][] = [];
   private began = -1;
+  private lastNow = 0;
+  private lastFrom = 0;
 
-  /** `have`: giây bài đã tải liền tới (tính từ đầu bài) lúc `now` (ms). Phần đã tải lùi (tua sang chỗ chưa tải): đo lại từ đầu. */
-  add(now: number, have: number): void {
+  /** `have`: giây bài đã tải liền tới (tính từ đầu bài), `from`: con trỏ phát, lúc `now` (ms). Phần đã tải lùi hay con trỏ nhảy (tua, dời chỗ vào): đo lại
+   *  từ đầu - không thì cú nhảy của phần đã tải bị tính là tải được (StreamPace.kt, emulator 02-11). */
+  add(now: number, have: number, from: number): void {
     const last = this.samples[this.samples.length - 1];
-    if (this.began < 0 || (last && have < last[1] - 0.05)) {
+    const jumped = this.began >= 0 && (from < this.lastFrom - 0.05 || from > this.lastFrom + (now - this.lastNow) / 1000 + 1);
+    if (this.began < 0 || jumped || (last && have < last[1] - 0.05)) {
       this.began = now;
       this.samples = [];
     }
+    this.lastNow = now;
+    this.lastFrom = from;
     if (now - this.began < DOWNLOAD_BURST_SECONDS * 1000) this.samples = [];
     this.samples.push([now, have]);
     // Giữ một mẫu ngay trước cửa sổ làm mốc đầu.
@@ -970,7 +976,7 @@ export class MusicBed {
           // Còn tải dở: đo tốc độ, chờ cổng / canh hụt mỗi nhịp.
           const now = Date.now();
           const pace = (playing.pace ??= new DownloadPace());
-          pace.add(now, audio.currentTime + ahead);
+          pace.add(now, audio.currentTime + ahead, audio.currentTime);
           // Chỉ cần tải kịp tới chỗ bài thôi kêu (tính lại mỗi nhịp: giọng chậm / khựng thì chỗ ấy dời theo).
           const end = Math.min(audio.duration, audio.currentTime + playEnd(this.cues, playing.cue) - this.lastTime);
           const through = playsThrough(audio.currentTime + ahead, audio.currentTime, end, pace.rate(now));

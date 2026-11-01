@@ -1319,18 +1319,31 @@ describe("tải sẵn bài kế và mờ vào từ lúc có tiếng (musicwarm, 
 
   it("DownloadPace: gộp đợt dồn 0,5 s đầu, chưa đủ 1 giây thì chưa biết, trung bình trượt 8 giây tụt dần khi nguồn đứng; playsThrough như ví dụ của Lead", () => {
     const pace = new DownloadPace();
-    pace.add(0, 10);
-    pace.add(300, 30); // phần bộ đệm đã có sẵn tới dồn trong 0,5 s đầu: không phải tốc độ tải
+    pace.add(0, 10, 0);
+    pace.add(300, 30, 0); // phần bộ đệm đã có sẵn tới dồn trong 0,5 s đầu: không phải tốc độ tải
     expect(pace.rate(300)).toBeNull();
-    pace.add(1000, 30.5);
+    pace.add(1000, 30.5, 0);
     expect(pace.rate(1000)).toBeNull(); // mốc gốc ở 300 ms: mới 0,7 giây
-    pace.add(1300, 31);
+    pace.add(1300, 31, 0);
     expect(pace.rate(1300)).toBeCloseTo(1, 6);
     expect(pace.rate(9300)!).toBeCloseTo(0.5 / 8.3, 6); // nguồn đứng 8 giây: tụt dần, không giữ số cũ
-    pace.add(20_000, 31);
+    pace.add(20_000, 31, 0);
     expect(pace.rate(20_000)).toBe(0);
-    pace.add(20_100, 5); // tua sang chỗ chưa tải: đo lại từ đầu
+    pace.add(20_100, 5, 0); // tua sang chỗ chưa tải: đo lại từ đầu
     expect(pace.rate(20_900)).toBeNull();
+    // Bài đang chờ bị dời chỗ vào tới giây của giọng: phần đã tải nhảy 2,4 -> 11 mà con trỏ cũng nhảy - không phải tải được 8,6 s.
+    const moved = new DownloadPace();
+    for (let t = 0; t <= 10_000; t += 500) moved.add(t, (t / 1000) * 0.3, 0);
+    expect(moved.rate(10_000)!).toBeCloseTo(0.3, 2);
+    moved.add(10_500, 11, 11);
+    for (let t = 11_000; t <= 12_000; t += 500) moved.add(t, 11 + ((t - 10_500) / 1000) * 0.3, 11);
+    expect(moved.rate(12_000) ?? 0).toBeLessThan(0.5);
+    for (let t = 12_500; t <= 20_000; t += 500) moved.add(t, 11 + ((t - 10_500) / 1000) * 0.3, 11);
+    expect(moved.rate(20_000)!).toBeCloseTo(0.3, 2);
+    // Đang phát 1x: con trỏ chạy đều không phải nhảy.
+    const playing = new DownloadPace();
+    for (let t = 0; t <= 10_000; t += 500) playing.add(t, 20 + (t / 1000) * 2, t / 1000);
+    expect(playing.rate(10_000)!).toBeCloseTo(2, 2);
     // 11 KB/s với bài 35 KB/s, bài 120 giây vào từ đầu: vào khi đã có ~3/4 bài.
     const rate = 11 / 35;
     let have = 0;
