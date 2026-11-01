@@ -5,7 +5,7 @@ import { launch, findBrowser, connect, openPage, evaluate, parseArgs } from "./g
 import { inspectionExpression, captureCrops } from "./gallery_inspect.mjs";
 
 export async function layoutFixtures({ browser: executable, out, fixture = "ink-rhythm.html" } = {}) {
-  const browser = await launch(findBrowser(executable), { preserveProfile: true });
+  const browser = await launch(findBrowser(executable));
   let cdp;
   const results = [];
   try {

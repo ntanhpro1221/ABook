@@ -52,7 +52,7 @@ describe("TAP REACH trên Edge thật", () => {
     expect(DEFAULT_FAIL_ON).toContain("TAP REACH");
   });
   it.skipIf(!browserAvailable)("đối chứng hai phía và từng ngoại lệ", async () => {
-    const browser = await launch(findBrowser(), { preserveProfile: true });
+    const browser = await launch(findBrowser());
     let cdp;
     const results = [];
     try {
