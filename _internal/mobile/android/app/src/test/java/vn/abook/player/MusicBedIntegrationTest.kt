@@ -477,6 +477,31 @@ class MusicBedIntegrationTest {
         assertTrue("đã vào thì không hụt trong phần mốc dùng ($after)", after.none { it.first == "đứng" })
     }
 
+    @Test fun whereTheStreamedSongStopsSoundingIsRecomputedWhenTheCuesChange() {
+        // Mốc dùng cả bài 200 s (tới-hết-bài: ~108 s mới vào); giữa lúc chờ, chuỗi mốc đổi (sửa mốc, đổi chương - sync đặt `cues` và `cue` của bài đang
+        // chờ, dòng "cùng bài sang mốc kề"): mốc chỉ còn tới giây 60 chương, giọng ở 20 -> cần tải kịp 42 + 2 s mờ ra: vào khi có ~24 s, không giữ số cũ.
+        val whole = MusicCues.Cue(0.0, 1000.0, "music/a.mp3", null)
+        field("lastSeconds").setDouble(MusicBed, 0.0)
+        field("cues").set(MusicBed, listOf(whole))
+        val music = FakePlayer().also { it.state = Player.STATE_BUFFERING; it.playWhenReady = true; it.position = 0; it.bufferedPosition = 3_000 }
+        val waiting = bed(music, whole).also { b -> b.javaClass.getDeclaredField("streamed").also { it.isAccessible = true }.setBoolean(b, true) }
+        field("current").set(MusicBed, waiting)
+        field("playing").setBoolean(MusicBed, true)
+        invoke("startFade")
+        stream(music, 20_000) { 0.6 }
+        assertEquals("mốc dùng cả bài: chưa vào", 0f, music.volume, 0f)
+        val short = MusicCues.Cue(0.0, 60.0, "music/a.mp3", null)
+        field("cues").set(MusicBed, listOf(short, MusicCues.Cue(60.0, 300.0, "music/b.mp3", null)))
+        waiting.javaClass.getDeclaredField("cue").also { it.isAccessible = true }.set(waiting, short)
+        field("lastSeconds").setDouble(MusicBed, 20.0)
+        var entered = -1L
+        repeat(600) {
+            stream(music, 50) { 0.6 }
+            if (entered < 0 && music.volume > 0f) entered = music.bufferedPosition
+        }
+        assertTrue("vào khi đã có ~24 s ($entered)", entered in 22_000L..27_000L)
+    }
+
     @Test fun aHeldStreamedSongAboutToRunOutFadesOutInsteadOfStoppingAtFullLevel() {
         // Web MSE 02-11 (11 KB/s): mốc mới chờ cổng nên bài cũ giữ chỗ quá chỗ thôi kêu của nó; nó cũng đang tải dở rồi đứt - đệm cạn ở đủ mức, 8 lần cụt.
         // Bài cũ sắp hết đệm (dưới underrunLowMs) thì thôi giữ, mờ hết trong underrunFadeMs trước khi cạn. Như musicBed.ts / musicbed.cpp.
