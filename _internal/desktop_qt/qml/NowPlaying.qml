@@ -6,13 +6,13 @@ import "TextWrap.js" as TextWrap
 // Đang nghe: phủ kín khung nội dung (thanh bên vẫn ở đó). Mở bằng cách biến thanh phát: bìa nhỏ lớn dần thành bìa lớn theo đường thẳng, phần còn lại trượt lên;
 // đóng là đúng gương (Esc, Alt+Left, nút Back của chuột đều đóng). Chỉ một tiến độ p chạy 0..1, mọi thứ là hàm của p - không có mờ thuần.
 //   Khổ large trở lên: cột trái = bìa, tên, thanh tua, nút phát, rồi Tốc độ / Hẹn giờ / Chương / Nhạc nền; cột phải = văn bản chạy theo giọng
-//   (sách chưa có mốc thì danh sách chương). Hẹp: một cột, công tắc "Bìa / Đọc theo" trượt theo thứ tự.
+//   (sách chưa có mốc thì danh sách chương). Hẹp: một cột, công tắc "Nghe / Đọc theo" trượt (cùng chữ với Android và web) theo thứ tự.
 Item {
     id: root
     property Item bar: null
     property bool open: false
     property real p: 0
-    property int page: 0                         // hẹp: 0 = Bìa, 1 = Chữ/Chương
+    property int page: 0                         // hẹp: 0 = Nghe (bìa), 1 = Chữ/Chương
     property int sidePage: 1
     signal settingsRequested(string group)
     readonly property var libraryBooks: {
@@ -233,7 +233,7 @@ Item {
                     enabled: !root.wide
                     x: Math.round((root.width - width) / 2)
                     y: Theme.s16 + 2
-                    labels: ["Bìa", ReadAlong.status === "ready" && !ReadAlong.timed ? "Chương" : "Đọc theo"]
+                    labels: ["Nghe", ReadAlong.status === "ready" && !ReadAlong.timed ? "Chương" : "Đọc theo"]
                     index: root.page
                     onPicked: (i) => root.page = i
                 }
