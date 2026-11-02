@@ -102,3 +102,19 @@ def test_all_three_measure_the_horizon_to_where_the_track_stops_sounding():
     assert "inline double playEnd(" in read(QT_LOGIC) and "setPlayUntil(" in read(ROOT / "desktop_qt" / "src" / "musicbed.cpp")
     assert "export function playEnd(" in read(WEB) and "playEnd(this.cues, playing.cue)" in read(WEB)
     assert "fun playEnd(" in read(PHONE / "MusicCues.kt") and "MusicCues.playEnd(cues, it)" in read(PHONE / "MusicBed.kt")
+
+
+def test_all_three_divide_by_the_measured_margin_capped_at_the_mix_file():
+    # Lề đo được (dự báo một cửa sổ trước / thực tế, lấy lần tệ nhất, trần underrunMargin; chưa đủ 2 cửa sổ thì trần) thay cho lề cố định - cùng luật ba
+    # nền (02-11: đường đều co về 1, 76 vết HSDPA thật chạm trần). Cổng phải chia cho lề ấy, không chia thẳng cho hằng.
+    forecast = read(ROOT / "desktop_qt" / "src" / "downloadforecast.h")
+    assert "m_window" in forecast and "2 * m_window" in forecast and "std::min(m_ceiling, m_worst)" in forecast
+    qt = read(QT)
+    assert "DownloadForecast m_forecast{RATE_WINDOW_S, DOWNLOAD_MARGIN};" in qt and "measured / job.bytes->margin() * left" in qt
+    assert "/ DOWNLOAD_MARGIN" not in qt
+    web = read(WEB)
+    assert "Math.min(DOWNLOAD_MARGIN, this.worst)" in web and "2 * window" in web and "pace.rate(now), pace.margin())" in web
+    assert "* DOWNLOAD_MARGIN <=" not in web
+    pace = read(PHONE / "StreamPace.kt")
+    assert "minOf(mix.underrunMargin, it)" in pace and "2 * window" in pace and "/ rate * margin() <=" in pace
+    assert "* mix.underrunMargin <=" not in pace
