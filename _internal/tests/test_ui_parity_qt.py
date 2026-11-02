@@ -120,3 +120,27 @@ def test_detector_catches_each_kind(tmp_path):
     tool.js_scan_file(js, scan)
     assert [i.text for i in scan.items] == ["Bỏ gộp {} vào {}"]
     assert tool.template_hit("Lùi 15 giây", ["Lùi {} giây"]) and not tool.template_hit("Lùi 15 giây", ["Tới {} giây"])
+
+
+def test_mode_switch_labels_agree_on_all_three_platforms():
+    tool = _tool()
+    found, problems = tool.mode_switch_findings()
+    assert problems == [], problems
+    assert found["Android"] == found["Web"] == [["Nghe"], ["Đọc theo"]]
+    assert found["Qt"][0] == ["Nghe"] and "Đọc theo" in found["Qt"][1]   # ô 2 của Qt đổi sang "Chương" khi sách chưa có mốc thời gian
+
+
+def test_mode_switch_rule_goes_red_when_one_platform_changes_a_word():
+    """Kiểm lực: chính lỗi "Bìa" -> "Nghe" của Qt (các mục a-c không bắt được) và cùng lỗi ở hai nền kia phải thành vấn đề."""
+    tool = _tool()
+    qt, android, web = (path.read_bytes().decode("utf-8") for path in (tool.QT_PLAYER, tool.ANDROID_PLAYER, tool.WEB_PLAYER))
+    assert 'labels: ["Nghe",' in qt and 'listOf("Nghe", "Đọc theo")' in android and '["Nghe", false]' in web
+    assert tool.mode_switch_findings()[1] == []
+    qt_bad = tool.mode_switch_findings(qt_src=qt.replace('labels: ["Nghe",', 'labels: ["Bìa",'))[1]
+    assert qt_bad and "Bìa" in qt_bad[0]
+    android_bad = tool.mode_switch_findings(android_src=android.replace('listOf("Nghe", "Đọc theo")', 'listOf("Nghe", "Đọc chữ")'))[1]
+    assert android_bad and "Đọc chữ" in android_bad[0]
+    web_bad = tool.mode_switch_findings(web_src=web.replace('["Đọc theo", true]', '["Theo chữ", true]'))[1]
+    assert web_bad
+    # Bộ đọc không tìm thấy công tắc (đổi tên hàm) cũng là đỏ, không phải im lặng.
+    assert tool.mode_switch_findings(web_src=web.replace("function PlayerModeSwitch", "function ModeSwitchRenamed"))[1]

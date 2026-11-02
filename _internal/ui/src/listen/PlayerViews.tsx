@@ -1690,7 +1690,7 @@ function ReadAlong({ edit }: { edit?: SentenceEditing }) {
   const client = useQueryClient();
   const current = queue.find((chapter) => chapter.id === track?.chapterId);
   const { data: book } = useListenBook(track?.bookId);
-  const { data: script, isLoading } = useChapterScript(track?.bookId, current);
+  const { data: script, isLoading, error } = useChapterScript(track?.bookId, current);
   const container = useRef<HTMLDivElement | null>(null);
   const active = usePlayingSentence(script, true);
   const follow = useFollowVoice(container, active, { resetKey: `${track?.bookId}:${track?.chapterId}`, smooth: playing });
@@ -1713,7 +1713,10 @@ function ReadAlong({ edit }: { edit?: SentenceEditing }) {
   }, [client, nearEnd, queue, source, track]);
 
   if (isLoading) return <MotionRegion as="div" className="animate-[fade-in_0.2s_0.3s_both] p-10 text-fg-2">Đang tải chữ</MotionRegion>;
-  if (!script) return <MotionRegion />;
+  // Cùng lời với điện thoại native (RepoNowPlayingModel): không tải được chữ khác với chương không có chữ.
+  if (!script) {
+    return <MotionRegion as="p" className="p-10 text-center text-sm text-fg-2">{error ? "Chưa tải được chữ. Bạn thử lại." : "Chương chưa có chữ. Bạn thử lại sau."}</MotionRegion>;
+  }
   return (
     <MotionRegion as="div" className="relative h-full">
       <div ref={container} onScroll={follow.onScroll} {...follow.input} className="reading-surface h-full overflow-y-auto px-[20px] py-8 sm:px-[31.5px]">
@@ -2002,6 +2005,32 @@ function CoverToggle({ title, image }: { title: string; image: ComponentProps<ty
   );
 }
 
+/** Công tắc hai chế độ của màn "Đang nghe" ở khổ điện thoại: "Nghe" / "Đọc theo". Đọc theo là một chế độ của chính màn này (thanh điều khiển và
+ *  Back ở lại trong nó), nên công tắc nằm ở thanh trên của màn - như Android (PlayerModeSwitch) và Qt (PageSwitch). Hai ô bằng nhau, viên chỉ
+ *  báo trượt từ ô này sang ô kia. */
+function PlayerModeSwitch({ reading, onSelect }: { reading: boolean; onSelect: (reading: boolean) => void }) {
+  return (
+    <div role="tablist" aria-label="Đang nghe" data-player-mode className="relative inline-grid h-9 grid-cols-2 rounded-full bg-sunken p-[3px]">
+      <span aria-hidden className="absolute inset-y-[3px] left-[3px] w-[calc((100%-6px)/2)] rounded-full bg-panel shadow-sm transition-transform duration-motion-medium"
+        style={{ transform: reading ? "translateX(100%)" : "translateX(0)" }} />
+      {([["Nghe", false], ["Đọc theo", true]] as const).map(([label, value]) => (
+        <button
+          key={label}
+          type="button"
+          role="tab"
+          data-mode={value ? "read" : "listen"}
+          aria-selected={reading === value}
+          onClick={() => onSelect(value)}
+          {...keepFocus}
+          className={cn("touch-hit relative px-4 text-sm font-medium transition-colors duration-motion-medium", reading === value ? "text-fg" : "text-fg-3")}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 /** Cột trái của màn "Đang nghe" (bìa, tên chương, thanh tua, nút). Tách + memo để mở / đóng màn (đổi `expanded`) không dựng lại cả cột ở khung chạm:
  *  chỉ trạng thái trình phát (usePlayer) và bảng đang chọn mới làm nó vẽ lại. `selected`: bảng đang hiện (null = đang hiện bìa). */
 const NowPlayingColumn = memo(function NowPlayingColumn({
@@ -2012,7 +2041,9 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
   selected,
   onCollapse,
   onToggle,
-  onReadAlong,
+  reading,
+  onReading,
+  edit,
 }: {
   /** Giá trị trình phát do NowPlaying đọc: đổi khi trạng thái phát đổi, KHÔNG đổi khi chỉ mở / đóng màn - nên memo giữ được. */
   player: PlayerValue;
@@ -2022,7 +2053,10 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
   selected: Panel | null;
   onCollapse: () => void;
   onToggle: (value: Panel) => void;
-  onReadAlong: () => void;
+  /** Điện thoại: màn đang ở chế độ "Đọc theo" (chữ thay bìa; thanh điều khiển đứng nguyên chỗ). */
+  reading: boolean;
+  onReading: (reading: boolean) => void;
+  edit?: SentenceEditing;
 }) {
   const scrollFade = useFadeScroller<HTMLElement>();
   const { track, sleep, fading, canGoBack, goBack } = player;
@@ -2042,7 +2076,7 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
           icon (glyph), mực "…" dừng 3/24 trước mép phải - mỗi đầu lùi ít hơn chừng ấy. */}
       <div className="slot-row [--g:clamp(1.125rem,0.75rlh,1.96875rem)] [--slot-end:calc(var(--g)*18/24)] [--slot-start:calc(var(--g)*14/24)]">
         <IconButton label={withShortcut("Thu nhỏ", "Esc")} icon={ChevronDown} className="touch-box" onClick={onCollapse} />
-        <span className="label-section text-fg-2">Đang nghe</span>
+        {mobile ? <PlayerModeSwitch reading={reading} onSelect={onReading} /> : <span className="label-section text-fg-2">Đang nghe</span>}
         <div>
           <MoreMenu scope="screen">
             <BookProgressLine className="mb-1 border-b border-line px-2 pb-2 pt-1" />
@@ -2057,22 +2091,36 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
           </MoreMenu>
         </div>
       </div>
-      {(
-        // Bìa vuông, to nhất 480px (điện thoại: cả bề ngang) nhưng co theo chỗ còn lại của khung (cả chiều cao): cqw/cqh là cỡ của chính khung này (container-type:size) -
-        // nút bìa không co theo chiều cao thì đè lên "ĐANG NGHE" khi cửa sổ thấp (soát UX 05-10).
-        <div key="cover" data-motion-content className="motion-reveal mt-4 flex min-h-16 min-w-0 flex-1 items-center justify-center [container-type:size]">
-          {/* Chạm bìa để phát/dừng (SABP): mục tiêu lớn nhất màn hình, dễ trúng khi đang nằm và mắt nhắm mắt mở. */}
-          <CoverToggle title={track.bookTitle} image={track.bookCover} />
+      {/* Giữa thanh đầu và thanh tua: chế độ Nghe = bìa to + tên; chế độ Đọc theo (điện thoại) = bìa thu về ô 48 px cạnh tên, chữ mở ra bên dưới.
+          Cùng một vùng co giãn trong cả hai chế độ nên thanh tua và hàng nút đứng đúng một chỗ (Android: readingModeKeepsTransportAtExactlyTheSameCoordinates). */}
+      <div data-np-stage data-reading={reading || undefined} className={cn("flex min-h-16 min-w-0 flex-1 flex-col", reading && "min-h-[16rem]")}>
+        <div className={cn("flex min-w-0", reading ? "mt-4 shrink-0 items-start gap-3" : "min-h-0 flex-1 flex-col")}>
+          {/* Bìa vuông, to nhất 480px (điện thoại: cả bề ngang) nhưng co theo chỗ còn lại của khung (cả chiều cao): cqw/cqh là cỡ của chính khung này (container-type:size) -
+              nút bìa không co theo chiều cao thì đè lên "ĐANG NGHE" khi cửa sổ thấp (soát UX 05-10). */}
+          {reading ? (
+            <button type="button" aria-label="Về chế độ nghe" onClick={() => onReading(false)} {...keepFocus} className="touch-hit motion-reveal size-12 shrink-0 rounded-control transition-transform press">
+              <BookCover title={track.bookTitle} image={track.bookCover} size="xs" className="size-12 rounded-control" />
+            </button>
+          ) : (
+            <div key="cover" data-motion-content className="motion-reveal mt-4 flex min-h-16 min-w-0 flex-1 items-center justify-center [container-type:size]">
+              {/* Chạm bìa để phát/dừng (SABP): mục tiêu lớn nhất màn hình, dễ trúng khi đang nằm và mắt nhắm mắt mở. */}
+              <CoverToggle title={track.bookTitle} image={track.bookCover} />
+            </div>
+          )}
+          <div className={cn("min-w-0", reading ? "flex-1" : "mt-6 w-full")}>
+            <h2 data-np="chapter" className={cn("break-words font-bold leading-snug", reading ? "line-clamp-2 text-base" : "text-xl")}>
+              <MotionRegion as="span" motionKey={[track.bookId, track.chapterId, track.chapterTitle]} className="block">{track.chapterTitle}</MotionRegion>
+            </h2>
+            <p data-np="book" className={cn("mt-0.5 break-words text-fg-2", reading ? "truncate text-xs" : "text-sm")}>
+              <TrackSubtitle />
+            </p>
+            {!reading && <MusicCreditLine />}
+          </div>
         </div>
-      )}
-      <div className="mt-6 w-full min-w-0">
-        <h2 data-np="chapter" className="break-words text-xl font-bold leading-snug">
-          <MotionRegion as="span" motionKey={[track.bookId, track.chapterId, track.chapterTitle]} className="block">{track.chapterTitle}</MotionRegion>
-        </h2>
-        <p data-np="book" className="mt-0.5 break-words text-sm text-fg-2">
-          <TrackSubtitle />
-        </p>
-        <MusicCreditLine />
+        {/* Chữ đọc theo: chỉ có ở điện thoại (máy tính: bảng bên phải), mở ra bằng mờ dần dưới tên. */}
+        {mobile && reading && (
+          <div data-read-along className="motion-reveal mt-3 min-h-0 flex-1 overflow-hidden rounded-cover"><ReadAlong edit={edit} /></div>
+        )}
       </div>
       <div className="mt-5 w-full">
         <SeekBar large />
@@ -2093,17 +2141,6 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
       <FadingNotice className="mt-3" />
       <PlayerAlert className="mt-3" overlay />
       <CaughtUpNotice />
-      {mobile && (
-        <button
-          type="button"
-          onClick={onReadAlong}
-          {...keepFocus}
-          className="touch-hit mt-5 flex min-h-12 w-full shrink-0 items-center justify-center gap-2 rounded-control bg-hover text-sm font-medium text-fg transition-[transform,color,background-color] duration-motion-fast hover:bg-line active:scale-[0.97]"
-        >
-          <Text className="size-4" />
-          Đọc theo
-        </button>
-      )}
     </aside>
   );
 });
@@ -2143,13 +2180,18 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
   const player = usePlayer();
   const { track } = player;
   const { expanded, setExpanded, plain } = useNowPlaying();
-  const navigate = useNavigate();
   const [panel, setPanelState] = useState<Panel>(initialPanel);
   const [showPanel, setShowPanelNow] = useState(!mobile);
+  // Điện thoại: "Đọc theo" là một CHẾ ĐỘ của chính màn này (như Android NowPlayingWindow.reading, Qt NowPlaying.page), không phải màn riêng: thanh điều khiển
+  // và Back ở lại trong cửa sổ. Mờ chéo qua View Transition như đổi bảng. Máy tính: bảng "Đọc theo" bên phải (panel).
+  const [reading, setReadingNow] = useState(false);
+  const setReading = (value: boolean) => withViewTransition(() => setReadingNow(value));
   // Bìa <-> bảng (Đọc theo / Chương) và đổi bảng: mờ chéo qua một View Transition (a120), không thay chỗ tức thì.
   const setShowPanel = (value: boolean) => withViewTransition(() => setShowPanelNow(value));
   const section = useRef<HTMLElement | null>(null);
   const opener = useRef<HTMLElement | null>(null);
+  const readingNow = useRef(false);
+  readingNow.current = reading;
   const open = expanded && Boolean(track);
   const presence = usePresence(open, MORPH.close);
   // Điện thoại (plain): mở = vỏ màn (nền + trượt/mờ chạy trên GPU) lên trước ở khung chạm, phần ruột (~120 thành phần, đo 100+ ms ở 6x chậm) dựng ở lượt render
@@ -2184,6 +2226,12 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
   }, [presence.mounted]);
   // Bảng điện thoại dùng Sheet (Radix tự đăng ký Back); màn Đang nghe nằm dưới.
   useBackLayer(mobile && open, () => setExpanded(false));
+  // Back từ "Đọc theo" về "Nghe" trước khi thu nhỏ màn (lớp đăng ký sau nên đứng trên lớp đóng màn).
+  useBackLayer(mobile && open && reading, () => setReading(false));
+  // Màn đã thu xuống hẳn: lần mở sau bắt đầu ở "Nghe", như Android.
+  useEffect(() => {
+    if (!presence.mounted) setReadingNow(false);
+  }, [presence.mounted]);
 
   const setPanel = (value: Panel) => {
     setPanelState(value);
@@ -2231,11 +2279,13 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
       if (target && ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)) return;
       if (document.querySelector("[role='dialog'], [role='menu'], [role='listbox']")) return;
       event.preventDefault();
-      setExpanded(false);
+      if (mobile && readingNow.current) setReading(false);
+      else setExpanded(false);
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [open, setExpanded]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, setExpanded, mobile]);
 
   // Tab theo mẫu WAI-ARIA: Tab vào đúng MỘT tab (tab đang chọn), ←/→ (Home/End) đổi sang tab bên cạnh; mỗi tab trỏ tới tabpanel của nó.
   const selectPanel = (value: Panel) => {
@@ -2296,13 +2346,6 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
     </MotionRegion>
   );
 
-  // Điện thoại: "Đọc theo" mở màn đọc của chương đang nghe - cả màn cho chữ, thanh điều khiển tự mờ khi cuộn đọc (L7). Máy tính: bảng bên phải.
-  const readAlong = () => {
-    if (!track) return;
-    if (!mobile) return selectPanel("text");
-    setExpanded(false);
-    navigate(`/book/${track.bookId}/read/${track.chapterId}`);
-  };
   // Điện thoại: bảng Chương thay chỗ bìa; bấm lại nút ấy (hay Back) là về bìa.
   const togglePanel = (value: Panel) => {
     if (mobile && showPanel && panel === value) setShowPanel(false);
@@ -2310,7 +2353,7 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
   };
   const collapse = useStable(() => setExpanded(false));
   const toggleStable = useStable(togglePanel);
-  const readAlongStable = useStable(readAlong);
+  const readingStable = useStable(setReading);
 
   if ((!open && !presence.mounted && !warming) || !track) return <MotionRegion />;
   // Mỗi cuốn một không khí: màu chủ đạo của bìa (máy chủ tính sẵn, đã lọc), không có thì màu của bìa vẽ từ tên - pha 6 % / 12 % vào nền
@@ -2339,7 +2382,7 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
       role="main"
       aria-label="Đang nghe"
     >
-      {fill && <NowPlayingColumn player={player} mobile={mobile} plain={Boolean(plain)} actions={actions} selected={showPanel ? panel : null} onCollapse={collapse} onToggle={toggleStable} onReadAlong={readAlongStable} />}
+      {fill && <NowPlayingColumn player={player} mobile={mobile} plain={Boolean(plain)} actions={actions} selected={showPanel ? panel : null} onCollapse={collapse} onToggle={toggleStable} reading={reading} onReading={readingStable} edit={edit} />}
       {fill && mobile && <Sheet open={open && showPanel} onOpenChange={setShowPanel} title="Chương" className={panel === "chapters" ? "chapter-sheet" : undefined}>
         <div className="h-[55dvh] min-h-0">{panelBody}</div>
       </Sheet>}

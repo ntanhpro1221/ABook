@@ -11,6 +11,15 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Trên đường tải đều (cáp, wifi ổn định), bài đang tải dở vào sớm hơn: app đo xem tốc độ tải có giữ đúng như dự báo không, và chỉ chừa phần dự phòng bằng mức sai lệch đã thấy. Trên mạng di động chập chờn, phần dự phòng giữ như cũ.
 
+### Web
+
+- Màn "Đang nghe" ở cửa sổ hẹp có hai chế độ ở thanh trên, "Nghe" và "Đọc theo", như trên điện thoại. "Đọc theo" không còn mở sang một màn khác: chữ hiện ngay trong màn đang nghe, thanh tua và các nút phát đứng yên đúng chỗ, và nút Back (hay phím Esc) về "Nghe" trước khi thu nhỏ màn. Bìa thu về ô nhỏ cạnh tên chương, chạm vào là về "Nghe". Chương chưa tải được chữ thì nói rõ thay vì để trống.
+- Trang sách ở cửa sổ rộng chia hai cột: bìa, thông tin và nút nghe bên trái, danh sách chương bên phải, mỗi bên cuộn riêng. Cửa sổ tính theo chỗ nội dung còn lại sau thanh bên: từ 840 px trở lên chia hai cột, hẹp hơn giữ một cột như cũ.
+
+### Máy tính
+
+- Công tắc ở màn "Đang nghe" cửa sổ hẹp ghi "Nghe" / "Đọc theo" (trước là "Bìa"), cùng chữ với điện thoại và web.
+
 ## [0.4.161] - 2026-11-02
 
 ### Nhạc nền

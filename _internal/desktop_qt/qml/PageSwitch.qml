@@ -1,7 +1,7 @@
 import QtQuick
 import ABook
 
-// Công tắc vài lựa chọn ("Bìa" / "Đọc theo"; "Chương" / "Lịch sử" / "Nhân vật" của trang sách): nền chìm, khối sáng trượt sang lựa chọn mới.
+// Công tắc vài lựa chọn ("Nghe" / "Đọc theo"; "Chương" / "Lịch sử" / "Nhân vật" của trang sách): nền chìm, khối sáng trượt sang lựa chọn mới.
 // Mỗi lựa chọn rộng theo chữ của nó (chữ đậm vừa, để chọn rồi không làm công tắc nhảy); hai hay ba nhãn đều dùng một công tắc.
 Item {
     id: root

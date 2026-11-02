@@ -6,7 +6,7 @@ import { AnimatedRows, LoadingCrossfade, MotionPresence } from "@/shared/MotionP
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRightLeft, AudioLines, BookOpen, BookOpenText, Check, CheckCheck, ChevronDown, CircleDashed, CloudDownload, FileDown, GitMerge, History, Hourglass, Laptop, Loader2, MoreHorizontal, Pause, Pencil, Play, Plus, RotateCcw, Save, Search, Share2, SlidersHorizontal, TextCursorInput, Trash2, UserRound } from "lucide-react";
-import { memo, useId, Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type ButtonHTMLAttributes, type Dispatch, type ReactNode, type SetStateAction } from "react";
+import { memo, useId, Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type ButtonHTMLAttributes, type CSSProperties, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "@/shared/toast";
 import { BookCover } from "@/shared/BookCover";
@@ -14,7 +14,10 @@ import { cn } from "@/shared/cn";
 import { SCREEN_TITLE, ScreenHeader } from "@/shared/ScreenHeader";
 import { syncsToComputer } from "@/shared/capabilities";
 import { usePageTitle } from "@/shared/title";
-import { reveal, scrollParent, useScrollMemory } from "@/shared/scrollMemory";
+import { reveal, saveScroll, scrollParent, useScrollMemory } from "@/shared/scrollMemory";
+import { chapterAnchor, placeChapterAnchor, type ChapterAnchor } from "./bookAnchor";
+import { useElementWidth } from "@/shared/elementWidth";
+import { useFadeScroller } from "@/shared/scrollFade";
 import { useListPresence } from "@/shared/motion";
 import { Windowed } from "@/shared/Windowed";
 import { formatClock, formatLength, formatNumber } from "@/shared/format";
@@ -41,6 +44,15 @@ import { moreMenuHasItems } from "./bookMenu";
 import { withFeedback } from "@/shared/feedback";
 import { ActionButton } from "./ActionButton";
 import { DotJoin } from "@/shared/DotJoin";
+
+/** Bề rộng NỘI DUNG (sau thanh bên) từ đó trang sách chia hai cột: bìa + thông tin một bên, danh sách chương một bên, cuộn riêng từng bên.
+ *  Cùng ngưỡng, cùng tỉ lệ với Qt (BookPage.qml: Theme.widthExpanded = 840, leftWidth, listMeasure). Hẹp hơn: một cột như cũ. */
+export const BOOK_SPLIT_WIDTH = 840;
+const BOOK_LIST_MEASURE = 640;
+/** Bề rộng cột trái (bìa + thông tin): 320 ở 840, rộng thêm 6 % phần dư, tối đa 380 (Qt BookPage.qml leftWidth). */
+export function bookLeftWidth(content: number): number {
+  return Math.min(380, 320 + Math.max(0, content - BOOK_SPLIT_WIDTH) * 0.06);
+}
 
 const MENU_ITEM = "flex h-9 cursor-default items-center gap-2 rounded-control px-2 text-sm outline-none data-[highlighted]:bg-hover";
 
@@ -275,14 +287,16 @@ function ChapterMenu({ chapter, done, renamable, actions }: { chapter: ListenCha
   );
 }
 
-export function ChapterGroups({ book, currentChapter, onDone, onRename, prepared }: {
+export function ChapterGroups({ book, currentChapter, onDone, onRename, prepared, layout }: {
   book: ListenBook; currentChapter?: number; onDone: (chapterId: number, done: boolean) => void;
   onRename?: (chapter: ListenChapter) => void; prepared?: Set<number>;
+  /** Bố cục của trang chứa danh sách (đổi thì khung cuộn đổi chỗ): Windowed quan sát lại khung mới. */
+  layout?: string;
 }) {
   const chapters = book.chapters ?? [];
   const groups = chaptersByPart(chapters, book.parts);
   const actions = useChapterActions(book, onDone, onRename);
-  const list = { book, actions, renamable: Boolean(onRename), prepared, currentChapter };
+  const list = { book, actions, renamable: Boolean(onRename), prepared, currentChapter, layout };
   // Sách không chia phần: một danh sách phẳng ngay dưới tab - không gấp trong một khối "Danh sách chương" lặp lại tên tab.
   if (groups.length === 1 && !groups[0].heading) {
     return <div className="mt-2"><ChapterGroupList {...list} chapters={groups[0].chapters} memory={`book.${book.id}.0`} /></div>;
@@ -299,9 +313,9 @@ export function ChapterGroups({ book, currentChapter, onDone, onRename, prepared
 
 /** Sách vài nghìn chương: chỉ dựng các chương gần màn hình (shared/Windowed); chương đang nghe luôn có sẵn. Chương mới về (sách đang
  *  thu) hay bị gỡ: hàng mở ra / khép lại tại chỗ (useListPresence, như kệ sách của thư viện), không nhảy cả danh sách. */
-function ChapterGroupList({ book, chapters, heading, memory, currentChapter, actions, renamable, prepared }: {
+function ChapterGroupList({ book, chapters, heading, memory, currentChapter, actions, renamable, prepared, layout }: {
   book: ListenBook; chapters: ListenChapter[]; heading?: string | null; memory: string; currentChapter?: number;
-  actions: ChapterActions; renamable: boolean; prepared?: Set<number>;
+  actions: ChapterActions; renamable: boolean; prepared?: Set<number>; layout?: string;
 }) {
   const player = usePlayer();
   const rows = useListPresence(chapters, (chapter) => String(chapter.id));
@@ -313,6 +327,7 @@ function ChapterGroupList({ book, chapters, heading, memory, currentChapter, act
         items={rows}
         estimate={54}
         memory={memory}
+        layout={layout}
         keep={rows.findIndex((row) => row.item.id === currentChapter)}
         row={({ key, item: chapter, state, ref }) => (
           <div key={key} ref={ref} role="listitem" aria-posinset={positions.get(chapter.id)} aria-setsize={chapters.length} data-chapter={chapter.id} className="motion-row" data-state={state} inert={state === "exit"}>
@@ -963,6 +978,13 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
   const [recordDialog, setRecordDialog] = useState<RecordDialog>(null);
   const [finding, setFinding] = useState(false);
   const { data: castView } = useCast(id);
+  // Bề rộng nội dung (không phải cửa sổ): từ BOOK_SPLIT_WIDTH thì chia hai cột. Chưa đo xong (null) thì một cột.
+  const frame = useRef<HTMLDivElement>(null);
+  const contentWidth = useElementWidth(frame);
+  const split = contentWidth !== null && contentWidth >= BOOK_SPLIT_WIDTH;
+  // Hai cột: mỗi cột tự cuộn nên mờ mép (DESIGN 4.5); một cột không cuộn riêng nên mặt nạ không bao giờ bật.
+  const infoFade = useFadeScroller<HTMLElement>();
+  const listFade = useFadeScroller<HTMLDivElement>();
   // Sách của máy khác đã tải về máy: dòng "Đã tải về máy" (desktop/RemoteDownload.tsx, cùng khoá truy vấn) đã nói đủ, bỏ dòng "Nghe thẳng"
   // đi cùng nó - hai dòng ngược nghĩa nhau (soát UX a11). Chỉ đọc bộ nhớ tạm, không tự hỏi máy chủ.
   const downloaded = useQuery<{ state?: string }>({ queryKey: ["listen", "download", id], enabled: false }).data?.state === "done";
@@ -985,10 +1007,30 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
   // Quay lại từ trình phát / màn đọc / Thư viện: về đúng chỗ đang xem trong danh sách chương; mở lần đầu trong phiên thì đưa chương
   // đang nghe vào khung (soát a30 L3 - sách 3000 chương luôn mở ở đầu).
   const chapterList = useRef<HTMLDivElement>(null);
-  useScrollMemory(book && tab === "chapters" ? `book.${book.id}` : null, chapterList, (scroller) => {
+  // Hai bố cục có hai khung cuộn khác nhau (cả trang / cột phải): mỗi bên nhớ chỗ cuộn riêng.
+  const memoryKey = book && tab === "chapters" ? `book.${book.id}${split ? ".split" : ""}` : null;
+  useScrollMemory(memoryKey, chapterList, (scroller) => {
     const row = point && chapterList.current?.querySelector(`[data-chapter="${CSS.escape(String(point.chapter.id))}"]`);
     if (row && !row.closest("[inert]")) reveal(scroller, row);
   });
+  // Đổi khổ qua ngưỡng 840 giữa chừng: chỗ đang xem trong danh sách chương đứng yên (DESIGN.md 5.5), không về chỗ đã nhớ của bố cục kia
+  // hay chương đang nghe. Đo ngay lúc dựng (DOM còn là bố cục cũ), đặt lại sau useScrollMemory (microtask xếp sau của nó, trước khi vẽ).
+  const measured = contentWidth !== null;
+  const laidOut = useRef<boolean | null>(null);
+  const anchor = useRef<ChapterAnchor | null>(null);
+  if (measured && laidOut.current !== null && laidOut.current !== split && !anchor.current && frame.current && chapterList.current) {
+    anchor.current = chapterAnchor(frame.current, chapterList.current, laidOut.current);
+  }
+  useLayoutEffect(() => {
+    const before = anchor.current;
+    anchor.current = null;
+    laidOut.current = measured ? split : null;
+    if (!before || !memoryKey) return;
+    queueMicrotask(() => {
+      if (!frame.current || !chapterList.current) return;
+      saveScroll(memoryKey, placeChapterAnchor(frame.current, chapterList.current, split, before));
+    });
+  }, [split, measured, memoryKey]);
 
   const placeholder = (
       <div className="page-x mx-auto max-w-[1180px]">
@@ -1076,14 +1118,22 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
   };
 
   return (
-    <div className="motion-reveal page-x mx-auto max-w-[1180px] pb-16">
+    <div
+      data-book-layout={split ? "split" : "stacked"}
+      // Khối nội dung rộng đúng cột trái + 32 + danh sách (tối đa 640), cộng hai lề 40, căn giữa - như Qt (compositionWidth).
+      style={split ? ({ "--book-left": `${bookLeftWidth(contentWidth)}px`, width: `min(100%, ${bookLeftWidth(contentWidth) + 32 + BOOK_LIST_MEASURE + 80}px)` } as CSSProperties) : undefined}
+      className={cn("motion-reveal page-x mx-auto", split ? "flex h-full flex-col pb-4" : "max-w-[1180px] pb-16")}
+    >
       {/* Nút ← chung của màn con (ScreenHeader) đứng riêng một hàng: tên sách nằm cạnh bìa bên dưới. */}
       <ScreenHeader back={{ label: "Về Thư viện", onClick: () => navigate("/") }} />
+      {/* Hai cột (nội dung từ 840 px): bìa + thông tin + nút bên trái, tab Chương / Lịch sử / Nhân vật bên phải, mỗi bên cuộn riêng như Qt. Một cột: `contents`
+          - hai khối nằm thẳng trong trang như trước. Cùng một cây ở cả hai bố cục nên đổi bố cục không dựng lại bìa. */}
+      <div className={split ? "grid min-h-0 flex-1 grid-cols-[var(--book-left)_minmax(0,1fr)] gap-x-8" : "contents"}>
       {/* Bìa · tên · tác giả · giọng · thời lượng · tiến độ mảnh; dưới là MỘT nút chính và một hàng nút phụ cùng kiểu (docs/DESIGN.md mục 7).
           Điện thoại: hàng nút trải hết bề ngang dưới bìa; máy tính: nằm dưới tên, cạnh bìa. */}
-      <header className="mt-5 grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-4 sm:gap-x-7">
-        <BookCover title={book.title} part={book.series?.part} size="lg" image={book.cover} playing={listening && player.playing} className="w-28 sm:row-span-2 sm:w-44" />
-        <div className="min-w-0">
+      <header ref={infoFade.ref} style={infoFade.style} className={cn("mt-5 grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-4 sm:gap-x-7", split && "-mx-1 min-h-0 grid-cols-1 content-start gap-x-0 overflow-y-auto px-1 pb-6 sm:gap-x-0")}>
+        <BookCover title={book.title} part={book.series?.part} size="lg" image={book.cover} playing={listening && player.playing} className={cn("w-28 sm:row-span-2 sm:w-44", split && "w-48 sm:row-span-1 sm:w-48")} />
+        <div className={cn("min-w-0", split && "mt-5")}>
           <h1 data-content-title="" className={cn(SCREEN_TITLE, "leading-tight")}>{displayTitle(book.title)}</h1>
           <p className="tabular mt-1.5 text-sm text-fg-2">
             <DotJoin
@@ -1153,7 +1203,7 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
         {/* Máy tính: cột rộng đúng bằng nút chính (ít nhất 16rem cho 4 nút phụ) - hàng nút phụ trải đúng bề ngang nút chính, hai đầu thẳng nhau.
             Cột nút là vùng chuyển cảnh riêng: phát / dừng đổi nhãn nút chính thì chỉ cột này so dấu, không phải cả trang (vùng cả trang từng
             chụp lại hơn nghìn nút DOM mỗi lần bấm phát trên sách 2500 chương rồi bỏ đi - docs/PERF_WEB.md). */}
-        <MotionRegion as="div" className="col-span-2 mt-6 flex max-w-md flex-col gap-3 sm:col-span-1 sm:col-start-2 sm:mt-5 sm:w-fit sm:min-w-[16rem]">
+        <MotionRegion as="div" className={cn("col-span-2 mt-6 flex max-w-md flex-col gap-3 sm:col-span-1 sm:col-start-2 sm:mt-5 sm:w-fit sm:min-w-[16rem]", split && "col-span-1 col-start-1 sm:col-start-1 sm:w-full")}>
           {caughtUp ? (
             <p className="text-sm text-fg-2">Đã nghe hết phần đã có. Chương mới sẽ hiện ở đây khi làm xong.</p>
           ) : (
@@ -1245,15 +1295,18 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
           {chapters.length > 0 && <FindInBook book={book} open={finding} onOpenChange={setFinding} />}
         </MotionRegion>
       </header>
-      <Tabs value={tab} onValueChange={(value) => setParams({ tab: value }, { replace: true })} className="mt-8">
+      {/* Đổi bố cục không dựng lại danh sách: Windowed (layout) và nhớ chỗ cuộn quan sát lại khung cuộn mới, chỗ đang xem được đặt lại (keepChapterPlace). */}
+      <Tabs value={tab} onValueChange={(value) => setParams({ tab: value }, { replace: true })} className={split ? "mt-5 flex min-h-0 flex-col" : "mt-8"}>
         <TabsList label="Mục của sách">
           <TabsTrigger value="chapters" count={chapters.length}>Chương</TabsTrigger>
           <TabsTrigger value="history">Lịch sử</TabsTrigger>
           {!textOnly && <TabsTrigger value="cast">Nhân vật</TabsTrigger>}
         </TabsList>
+        {/* Hai cột: hàng tab đứng yên ở đầu cột phải, chỉ phần bên dưới cuộn. */}
+        <div ref={listFade.ref} style={listFade.style} data-book-list className={split ? "min-h-0 flex-1 overflow-y-auto pb-6" : undefined}>
         <TabsPanels value={tab}>
         <TabsContent value="chapters" className="mt-2" ref={chapterList}>
-          <ChapterGroups book={book} currentChapter={point?.chapter.id} onDone={(chapterId, done) => mutations.chapterDone.mutate({ chapterId, done })} onRename={editable ? setRenamingChapter : undefined} prepared={prepared} />
+          <ChapterGroups book={book} currentChapter={point?.chapter.id} onDone={(chapterId, done) => mutations.chapterDone.mutate({ chapterId, done })} onRename={editable ? setRenamingChapter : undefined} prepared={prepared} layout={split ? "split" : "stacked"} />
         </TabsContent>
         <TabsContent value="history">
           <HistoryTab book={book} />
@@ -1269,7 +1322,9 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
           />
         </TabsContent>
         </TabsPanels>
+        </div>
       </Tabs>
+      </div>
       {editing !== false && editable && (
         <>
           <EditBookDialog book={book} open={editOpen} onOpenChange={setEditOpen} onOpenStudio={editing.onOpenStudio ? () => editing.onOpenStudio?.(book) : undefined} computer={editing.remote} />
@@ -1299,5 +1354,12 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
     </div>
   );
   };
-  return <LoadingCrossfade loading={isLoading} placeholder={placeholder}><MotionRegion>{content()}</MotionRegion></LoadingCrossfade>;
+  // Khung đo bề rộng nội dung: luôn có mặt (kể cả lúc đang nạp). Hai cột cần chiều cao cố định bằng vùng nội dung (mỗi cột tự cuộn) nên cả chuỗi bao h-full.
+  return (
+    <div ref={frame} data-book-frame className={split ? "h-full" : undefined}>
+      <LoadingCrossfade loading={isLoading} placeholder={placeholder} className={split ? "h-full grid-rows-[minmax(0,1fr)] [&>.motion-loading-content]:h-full" : undefined}>
+        <MotionRegion className={split ? "h-full" : undefined}>{content()}</MotionRegion>
+      </LoadingCrossfade>
+    </div>
+  );
 }
