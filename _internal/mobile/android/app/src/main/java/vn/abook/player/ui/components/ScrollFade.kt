@@ -69,7 +69,8 @@ private fun Modifier.fade(state: ScrollableState, edge: Dp, horizontal: Boolean,
         if (horizontal) clipRect(from, 0f, to, size.height) { this@onDrawWithContent.drawContent() }
         else clipRect(0f, from, size.width, to) { this@onDrawWithContent.drawContent() }
         if (start) {
-            val bounds = if (horizontal) Rect(0f, 0f, startBand, size.height) else Rect(0f, 0f, size.width, startBand)
+            // Lớp tạm chỉ cao đúng dải chuyển màu [insetPx, startBand]: phần chừa (0..insetPx) mặt nạ đã trong suốt nên KHÔNG vẽ gì, khỏi cấp kết cấu GPU to gấp ba cho nó (0.4.160 đo thêm ~12 MB đồ hoạ).
+            val bounds = if (horizontal) Rect(0f, 0f, startBand, size.height) else Rect(0f, insetPx, size.width, startBand)
             maskedBand(bounds, layerPaint, startMask) { this@onDrawWithContent.drawContent() }
         }
         if (end) {

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -32,6 +33,8 @@ import vn.abook.player.ui.data.BookSource
 import vn.abook.player.ui.data.Cast
 import vn.abook.player.ui.data.CastView
 import vn.abook.player.ui.data.CoverLoader
+import vn.abook.player.ui.data.DemoBookSource
+import vn.abook.player.ui.data.DemoLibrary
 import vn.abook.player.ui.data.LibraryState
 import vn.abook.player.ui.data.ListenBook
 import vn.abook.player.ui.data.PlayerClock
@@ -190,5 +193,36 @@ class BookTabsScreenTest {
         open("book_tab_cast")
         rule.waitUntil(5_000) { rule.onAllNodesWithTag("person_row").fetchSemanticsNodes().isNotEmpty() }
         snap("book_cast_dark")
+    }
+
+    /** Kho đọc xong mà không có trang (nguồn không có dữ liệu): "Lịch sử" kết thúc bằng câu "Chưa có lịch sử nghe", không khung chờ mãi (soát điện thoại 02-11). */
+    @Test
+    fun historyEndsAsAnEmptyNoteWhenTheSourceHasNoPage() {
+        val book = BookDetail.of(manifest(), null, { null }).book
+        show(null, others = listOf(book))
+        open("book_tab_history")
+        rule.onNodeWithTag("history_empty").assertIsDisplayed()
+        assertEquals("Lịch sử đọc xong thì không còn khung chờ", 0, rule.onAllNodesWithTag("skeleton").fetchSemanticsNodes().size)
+    }
+
+    /** Bản demo có chương thật: danh sách chương đầy, "Tìm" dùng được, "Lịch sử" không dừng ở khung chờ. */
+    @Test
+    fun theDemoBookPageHasChaptersAndAWorkingFindButton() {
+        val books = DemoLibrary.books(3)
+        val book = books.first()
+        rule.setContent {
+            AbookTheme(false) {
+                Box(Modifier.fillMaxSize().background(Abook.colors.bg)) {
+                    BookScreen(book, LibraryState.Ready(books), PlayerState.Empty, PlayerClock(), CoverLoader(1 shl 20), DemoBookSource { books }, sheets, actions)
+                    SheetLayer(sheets)
+                }
+            }
+        }
+        rule.waitForIdle()
+        rule.waitUntil(5_000) { rule.onAllNodesWithTag("chapter_row").fetchSemanticsNodes().isNotEmpty() }
+        rule.onNodeWithTag("book_find").assertIsEnabled()
+        open("book_tab_history")
+        rule.waitForIdle()
+        assertEquals("Lịch sử demo kết thúc, không còn khung chờ", 0, rule.onAllNodesWithTag("skeleton").fetchSemanticsNodes().size)
     }
 }

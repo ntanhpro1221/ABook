@@ -6,7 +6,13 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -20,7 +26,7 @@ import vn.abook.player.R
 /** Bảng màu "phòng nghe ấm" (DESIGN.md §5.1). Giá trị ở [LightPalette] / [DarkPalette] (sinh từ DESIGN.md). */
 @Immutable
 class AbookColors(
-    val bg: Color, val panel: Color, val bgSunken: Color, val line: Color,
+    val bg: Color, val panel: Color, val bgSunken: Color, val line: Color, val controlLine: Color,
     val text: Color, val text2: Color, val text3: Color, val fg3: Color,
     val accent: Color, val accentInk: Color, val accentText: Color, val accentSoft: Color,
     val success: Color, val danger: Color,
@@ -34,14 +40,14 @@ class AbookColors(
 val AbookColors.scrim: Color get() = if (dark) Color(0xFF060504).copy(alpha = 0.62f) else Color(0xFF14110D).copy(alpha = 0.45f)
 
 internal val LightColors = AbookColors(
-    Color(LightPalette.BG), Color(LightPalette.PANEL), Color(LightPalette.BG_SUNKEN), Color(LightPalette.LINE),
+    Color(LightPalette.BG), Color(LightPalette.PANEL), Color(LightPalette.BG_SUNKEN), Color(LightPalette.LINE), Color(LightPalette.CONTROL_LINE),
     Color(LightPalette.TEXT), Color(LightPalette.TEXT_2), Color(LightPalette.TEXT_3), Color(LightPalette.FG_3),
     Color(LightPalette.ACCENT), Color(LightPalette.ACCENT_INK), Color(LightPalette.ACCENT_TEXT), Color(LightPalette.ACCENT_SOFT),
     Color(LightPalette.SUCCESS), Color(LightPalette.DANGER), dark = false,
 )
 
 internal val DarkColors = AbookColors(
-    Color(DarkPalette.BG), Color(DarkPalette.PANEL), Color(DarkPalette.BG_SUNKEN), Color(DarkPalette.LINE),
+    Color(DarkPalette.BG), Color(DarkPalette.PANEL), Color(DarkPalette.BG_SUNKEN), Color(DarkPalette.LINE), Color(DarkPalette.CONTROL_LINE),
     Color(DarkPalette.TEXT), Color(DarkPalette.TEXT_2), Color(DarkPalette.TEXT_3), Color(DarkPalette.FG_3),
     Color(DarkPalette.ACCENT), Color(DarkPalette.ACCENT_INK), Color(DarkPalette.ACCENT_TEXT), Color(DarkPalette.ACCENT_SOFT),
     Color(DarkPalette.SUCCESS), Color(DarkPalette.DANGER), dark = true,
@@ -120,3 +126,11 @@ fun AbookTheme(dark: Boolean = isSystemInDarkTheme(), content: @Composable () ->
     val type = androidx.compose.runtime.remember(dark) { typeFor(colors) }
     CompositionLocalProvider(LocalColors provides colors, LocalType provides type, content = content)
 }
+
+/**
+ * MẶT CHÌM có viền: ô nhập, thẻ câu mẫu, nút phụ. Ở chế độ tối mặt chìm (#0c0b0a) còn tối hơn nền (#121110) một bậc, không viền thì bờ ô gần như biến mất
+ * (soát điện thoại thật 02-11); viền là [AbookColors.controlLine] (DESIGN.md §5.1, ≥ 3:1 trên nền - cùng token viền ô nhập của web và Qt). MỌI mặt chìm của ô / thẻ / nút
+ * đi qua đây, không nơi nào tự `background(bgSunken)` (máy dò `InsetSurfaceRulesTest`); rãnh tiến độ, khung chờ, ảnh bìa trống là hình, không phải điều khiển, nên vẫn tô nền thường.
+ */
+fun Modifier.insetSurface(colors: AbookColors, shape: Shape = RoundedCornerShape(Dim.radiusControl)): Modifier =
+    this.clip(shape).background(colors.bgSunken).border(1.dp, colors.controlLine, shape)

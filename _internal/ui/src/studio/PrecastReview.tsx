@@ -162,8 +162,8 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
   const range = chapterRange(view.upcoming);
   const counts: Record<PrecastStep, string> = {
     cast: castCards.length ? `${castCards.length} việc` : `${people.length} người`,
-    names: nameCards.length ? `${nameCards.length} tên` : "ổn",
-    lines: lineCards.length ? `${lineCount(lineCards)} câu` : "ổn",
+    names: nameCards.length ? `${nameCards.length} tên` : "Tên nào cũng ổn",
+    lines: lineCards.length ? `${lineCount(lineCards)} câu` : "Không câu nào nghi",
     done: "",
   };
   lists.current = { open: (step === "cast" ? castCards : step === "names" ? nameCards : step === "lines" ? lineCards : []).map((item) => item.key), decided: [] };

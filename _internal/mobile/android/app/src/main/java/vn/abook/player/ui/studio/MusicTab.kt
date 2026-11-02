@@ -125,7 +125,7 @@ internal fun LazyListScope.musicTab(music: StudioMusicState, data: MusicData, ch
         val byChapter = view.scenes.groupBy { it.chapterId }
         items(byChapter.entries.toList(), key = { "music_chapter_${it.key}" }, contentType = { "music_chapter" }) { (chapterId, scenes) ->
             val title = chapters.firstOrNull { it.id == chapterId }?.title ?: "Chương $chapterId"
-            Fold(title, "studio_music_chapter_$chapterId", Modifier.then(slide).padding(top = Dim.s12), summary = "${scenes.size}") {
+            Fold(title, "studio_music_chapter_$chapterId", Modifier.then(slide).padding(top = Dim.s12), summary = StudioMusicText.sceneCount(scenes.size)) {
                 scenes.forEachIndexed { index, scene -> SceneRow(music, view, scenes, index, data.clip, sheets) }
             }
         }

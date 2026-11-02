@@ -268,6 +268,8 @@ object StudioMusicText {
     const val SAVING = "Đang lưu lựa chọn"
     const val CANCEL_DOWNLOAD = "Huỷ tải"
     const val CANCELLED = "Đã dừng tải nhạc nền"
+    /** Nhãn đếm đoạn nhạc của một chương (cùng chữ với MusicTab.tsx); số trơ trọi không nói nó đếm gì. */
+    fun sceneCount(n: Int) = "$n đoạn"
     const val NO_SCENES = "Chưa có đoạn nào - nhạc nền dựng sau khi sách đã phân tích."
     const val OFF_NOTE = "Nhạc nền đang tắt - các đoạn dưới đây sẽ không phát."
     const val CONTINUED = "↳ tiếp bài của đoạn trên"

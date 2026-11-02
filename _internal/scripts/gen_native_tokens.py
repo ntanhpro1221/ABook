@@ -23,7 +23,7 @@ OUT_CSS = ROOT / "ui" / "src" / "shared" / "tokens.generated.css"
 # Tên token trong DESIGN.md -> tên hằng Kotlin.
 COLOR_NAMES = {
     "bg": "BG", "panel": "PANEL", "bg-sunken": "BG_SUNKEN", "line": "LINE", "text": "TEXT", "text-2": "TEXT_2",
-    "text-3": "TEXT_3", "fg-3": "FG_3", "accent": "ACCENT", "accent-ink": "ACCENT_INK", "accent-text": "ACCENT_TEXT",
+    "text-3": "TEXT_3", "fg-3": "FG_3", "control-line": "CONTROL_LINE", "accent": "ACCENT", "accent-ink": "ACCENT_INK", "accent-text": "ACCENT_TEXT",
     "accent-soft": "ACCENT_SOFT", "success": "SUCCESS", "danger": "DANGER",
 }
 
