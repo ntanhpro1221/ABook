@@ -50,7 +50,12 @@ RATE_MIN_SPAN_SECONDS = 180
 SHUTDOWN_DELAY_SECONDS = 180
 
 # Việc GPU của máy này là CÂY tiến trình mọc từ các gốc này: hàng GPU và ranh giới (bash chạy rời), dây chuyền sản xuất.
-JOB_ROOTS = re.compile(r"gpu_queue_|boundary\.sh|run_book_job\.py|narrator_ab|train_\w+\.py|eval_models\.py")
+# Tên script chỉ là lớp thứ nhất: việc nào đang giữ GPU (gpu_compute_pids) cũng bị treo dù tên không có ở đây.
+# serve_lora.py + llama.cpp (convert/quantize): gộp LoRA thành GGUF ăn hết các nhân CPU ~1,5 phút sau mỗi lượt huấn luyện.
+JOB_ROOTS = re.compile(r"gpu_queue_|boundary\.sh|run_book_job\.py|narrator_ab|train_\w+\.py|eval_models\.py"
+                       r"|serve_lora\.py|convert_hf_to_gguf|llama-quantize"
+                       r"|synth_omni_\w+\.py|score_drop\.py|score_freeze\.py|pick_freeze_refs\.py|build_b11\.py"
+                       r"|gen_student\.py|prompt_mood\.py")
 
 
 @dataclass
@@ -155,6 +160,8 @@ def log_event(kind: str, detail: str = "") -> None:
 
 
 APP_SUPERVISOR = re.compile(r"abook\.background_runner\S*\s+supervise")
+# Mọi tiến trình sách của app (supervisor và worker): app tự tạm dừng ở ranh giới lô khi rút sạc, người gác không treo chúng.
+APP_PROCESS = re.compile(r"abook\.background_runner")
 
 
 def suspend_servers(commands: list[str]) -> bool:
@@ -163,6 +170,23 @@ def suspend_servers(commands: list[str]) -> bool:
     treo máy chủ giữa một lô phân tích thì yêu cầu đang bay hết hạn chờ (90 giây), lô ấy chạy khác lượt liền mạch (soát QA
     29-09)."""
     return not any(APP_SUPERVISOR.search(command) for command in commands)
+
+
+def gpu_compute_pids() -> set[int]:
+    """Tiến trình đang giữ GPU theo nvidia-smi. Danh sách tên script (JOB_ROOTS) luôn sót việc mới: 02-11 19:58 run_t2.py không khớp
+    tên nào nên vẫn chạy GPU 41 % trên pin tới khi Model tự tạm dừng. nvidia-smi trên Windows kể cả app đồ hoạ (explorer, WebView...),
+    nên chỉ lấy python ở chỗ gọi."""
+    try:
+        out = subprocess.run(["nvidia-smi", "--query-compute-apps=pid", "--format=csv,noheader,nounits"], capture_output=True, text=True,
+                             timeout=10, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0), check=False).stdout
+    except (OSError, subprocess.SubprocessError):
+        return set()
+    return {int(word) for word in out.split() if word.isdigit()}
+
+
+def is_job(command: str, name: str, on_gpu: bool) -> bool:
+    """Việc phát triển cần treo khi chạy pin: tên khớp JOB_ROOTS, hay python đang giữ GPU mà không phải sách của app."""
+    return bool(JOB_ROOTS.search(command)) or (on_gpu and name.startswith("python") and not APP_PROCESS.search(command))
 
 
 def job_processes():
@@ -181,13 +205,14 @@ def job_processes():
         except (psutil.Error, TypeError):
             continue
     servers_too = suspend_servers([command for _process, command, _name in listed])
+    on_gpu = gpu_compute_pids()
     for process, command, name in listed:
         if process.info["pid"] == me or "power_guard.py" in command:
             continue
         server = name == "llama-server.exe" or (name == "ollama.exe" and " serve" in command)
         if server and not servers_too:
             continue
-        if not server and not JOB_ROOTS.search(command):
+        if not server and not is_job(command, name, process.info["pid"] in on_gpu):
             continue
         found[process.pid] = process
         try:
