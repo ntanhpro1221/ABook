@@ -94,3 +94,15 @@ def test_the_guard_leaves_ollama_alone_while_an_app_book_runs() -> None:
     app = "C:/ABook/Studio/runtime/pythonw.exe -m abook.background_runner supervise --project-root D:/sach"
     assert suspend_servers([job, "ollama.exe serve"]) is True
     assert suspend_servers([job, app, "ollama.exe serve"]) is False
+
+
+def test_any_python_holding_the_gpu_is_a_job_even_when_its_name_is_not_listed_but_app_books_are_not() -> None:
+    """02-11 19:58: run_t2.py không có trong JOB_ROOTS nên chạy GPU 41 % trên pin. Python đang giữ GPU là việc; app thì tự tạm dừng."""
+    from power_guard import is_job
+
+    t2 = "python.exe D:/Novels/LLM_Train/errtax_next/run_t2.py --device cuda"
+    assert is_job(t2, "python.exe", on_gpu=True)
+    assert not is_job(t2, "python.exe", on_gpu=False)
+    assert not is_job("C:/Windows/explorer.exe", "explorer.exe", on_gpu=True)
+    assert not is_job("C:/ABook/Studio/runtime/pythonw.exe -m abook.background_runner worker --project D:/sach", "pythonw.exe", on_gpu=True)
+    assert is_job("bash gpu_queue_02_11.sh", "bash.exe", on_gpu=False)
