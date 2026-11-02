@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.162] - 2026-11-02
+
 ### Nhạc nền
 
 - Trên đường tải đều (cáp, wifi ổn định), bài đang tải dở vào sớm hơn: app đo xem tốc độ tải có giữ đúng như dự báo không, và chỉ chừa phần dự phòng bằng mức sai lệch đã thấy. Trên mạng di động chập chờn, phần dự phòng giữ như cũ.
