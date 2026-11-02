@@ -17,7 +17,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Điện thoại
 
-- Cửa sổ mini (cửa sổ nhỏ khi rời app) giờ ghi tên sách và tên chương ở đáy bìa, giống cửa sổ mini trên máy tính; cửa sổ rất nhỏ chỉ còn tên chương.
+- Sách mới → Dán chữ: khi bàn phím mở và chữ dán dài nhiều dòng, nút "Thêm chữ này" không còn bị chân trang (Tiếp) che; màn tự cuộn để nút luôn thấy và bấm được.
+- Chế độ tối: ô nhập, thẻ câu ở Studio từ xa và nút phụ có viền rõ, không còn chìm vào nền.
+- Không còn khung chờ quay mãi: chỗ nào đang tải mà không có dữ liệu thì hiện chữ "chưa có" hay báo lỗi. Trang sách ở bản thử có đủ danh sách chương.
+- Chữ gọn hơn ở Studio từ xa: tab Nhạc nền ghi rõ số đoạn thay vì một con số trơ; ô tìm ở Cách đọc tên có gợi ý ngắn; bước cuối của Duyệt trước khi thu không lặp chữ "Xong"; dấu "·" không còn rơi mất ở chỗ xuống dòng; hàng người kể ở Kịch bản thoáng như hàng thoại. Các chữ này giống hệt trên bản web.
+- Dải mờ ở mép trên các màn cuộn nhẹ hơn, và app nạp sẵn thêm phần mã của hàng lọc và trang sách: khởi động với thư viện 60 cuốn nhanh hơn khoảng 4 % và dùng ít bộ nhớ hơn khoảng 6 % so với 0.4.155 (đo trên máy thật).
+- Cửa sổ mini (cửa sổ nhỏ khi rời app) giờ ghi tên sách và tên chương ở đáy bìa, giống cửa sổ mini trên máy tính; cửa sổ rất nhỏ, hay sách không có ảnh bìa (bìa tự vẽ đã in tên sách), chỉ còn tên chương.
 
 ## [0.4.160] - 2026-11-02
 
