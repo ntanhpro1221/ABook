@@ -53,6 +53,8 @@ public:
     double duration() const override;
     bool atEnd() const override;
     QString error() const override;
+    // Byte offset of the first audio frame once open: an ID3 tag (cover art can be 1.4 MB) and the Xing/Info frame come before it.
+    qint64 audioStart() const;
 private:
     struct Impl;
     std::unique_ptr<Impl> d;

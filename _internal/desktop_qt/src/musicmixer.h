@@ -113,6 +113,7 @@ public:
     void setVolume(double volume) override;
     void preload() override;
     void setLoop(bool loop) override;
+    void setPlayUntil(double seconds) override;
     double position() const override;
     double duration() const override;
     bool playing() const override;
