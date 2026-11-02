@@ -241,6 +241,19 @@ private slots:
         QCOMPARE(stepDbAt(cue, 200), 2.0);
     }
 
+    // Bài thôi kêu ở hết chuỗi mốc liền nhau cùng bài + mờ ra của mốc kế (anh em: mờ dài); mốc `tail` chơi tới hết bài (musicBed.ts, MusicCues.kt cùng luật).
+    void aTrackStopsSoundingAtTheEndOfItsRunPlusTheFade() {
+        const MusicCue a = plain(0, 100, QStringLiteral("a")), a2 = plain(100, 160, QStringLiteral("a"));
+        MusicCue b = plain(160, 300, QStringLiteral("b")), c = plain(310, 400, QStringLiteral("a"));
+        QCOMPARE(playEnd({a, a2, b, c}, a), 160 + FADE_SECONDS);
+        QCOMPARE(playEnd({a, a2, b, c}, a2), 160 + FADE_SECONDS);
+        QCOMPARE(playEnd({a, a2, b, c}, b), 300 + FADE_SECONDS); // mốc kế (c) cách 10 s: mờ ra thường
+        b.sibling = true;
+        QCOMPARE(playEnd({a, a2, b, c}, a), 160 + SIBLING_FADE_SECONDS);
+        MusicCue tail = a2; tail.tail = true;
+        QCOMPARE(playEnd({a, tail, b, c}, a), INF);
+    }
+
     // ---- dòng thời gian chung với máy chủ và Android (tests/fixtures/music_timeline) ----
     void sharedTimeline_data() {
         QTest::addColumn<QString>("name");
@@ -447,6 +460,44 @@ private slots:
         QCOMPARE(spy[0][0].toString(), QStringLiteral("a"));
         QCOMPARE(spy[1][0].toString(), QStringLiteral("b"));
         QCOMPARE(rig.made.size(), 2);
+    }
+
+    // Bài đang tải dở chỉ cần tải kịp tới chỗ nó thôi kêu: mỗi nhịp bed báo cho phần tử giây của bài ứng với hết chuỗi mốc cùng bài + mờ ra.
+    void tellsTheVoiceWhereItsTrackStopsSounding() {
+        Rig rig(400);
+        MusicCue second = plain(120, 240, QStringLiteral("a"));
+        second.key = QStringLiteral("1:9");
+        rig.bed->setCues({plain(0, 120, QStringLiteral("a")), second, plain(240, 300, QStringLiteral("b"))}, -20);
+        rig.bed->sync(10, true);
+        const QPointer<FakeOut> out = rig.made.value(0);
+        QVERIFY(out);
+        QCOMPARE(out->until - out->pos, 240 + FADE_SECONDS - 10);
+        out->pos += 120;
+        rig.bed->sync(130, true); // cùng bài ở đoạn kề: chỗ thôi kêu vẫn là hết mốc thứ hai
+        QCOMPARE(out->until - out->pos, 240 + FADE_SECONDS - 130);
+        // Sang bài b: bài cũ có thể còn giữ chỗ quá chỗ thôi kêu của nó, nên đang tải dở thì phải tải kịp tới hết bài (keepsUp), không thì mờ ra.
+        out->pos += 110;
+        rig.bed->sync(240, true);
+        QVERIFY(out);
+        QVERIFY(std::isinf(out->until));
+    }
+
+    // Chuỗi mốc đổi giữa chừng (đổi chương, sửa mốc) hay người nghe tua: chỗ thôi kêu tính lại ngay, không giữ số cũ tới nhịp đồng bộ kế.
+    void retellsWhereTheTrackStopsWhenTheCuesChangeOrTheListenerSeeks() {
+        Rig rig(400);
+        rig.bed->setCues({plain(0, 240, QStringLiteral("a")), plain(240, 300, QStringLiteral("b"))}, -20);
+        rig.bed->sync(10, true);
+        const QPointer<FakeOut> out = rig.made.value(0);
+        QVERIFY(out);
+        QCOMPARE(out->until - out->pos, 240 + FADE_SECONDS - 10);
+        rig.bed->setCues({plain(0, 150, QStringLiteral("a")), plain(150, 300, QStringLiteral("b"))}, -20);
+        QVERIFY(out);
+        QCOMPARE(out->until - out->pos, 150 + FADE_SECONDS - 10);
+        out->pos = 100;
+        rig.bed->sync(100, true, true);
+        const QPointer<FakeOut> now = rig.made.value(rig.made.size() - 1);
+        QVERIFY(now);
+        QCOMPARE(now->until - now->pos, 150 + FADE_SECONDS - 100);
     }
 
     void fadedOutVoicesAreReleased() {
@@ -694,6 +745,26 @@ private slots:
         QVERIFY(rig.made[0]->volume > 0 && rig.made[0]->volume < db(-10) * 0.8);
         rig.bed->tick(ticksFor(FADE_SECONDS));
         QVERIFY(near(rig.made[0]->volume, db(-10) * 0.8, 1e-4));
+    }
+
+    void oldSongHoldsItsPlaceUntilTheNewOneSounds() {
+        Rig rig;
+        rig.bed->setCues({plain(0, 100, QStringLiteral("a")), plain(100, 200, QStringLiteral("b"))}, -20);
+        rig.bed->sync(10, true);
+        rig.settle();
+        rig.bed->tick(ticksFor(FADE_SECONDS) + 2);
+        const double level = rig.made[0]->volume;
+        QVERIFY(level > 0);
+        rig.bed->sync(110, true); // sang b: chưa có tiếng (đang tải, musicmixer chưa cho vào)
+        rig.bed->tick(ticksFor(FADE_SECONDS) * 3);
+        QCOMPARE(rig.made[0]->volume, level);
+        QCOMPARE(rig.made[1]->volume, 0.0);
+        rig.settle(); // b có tiếng: a mờ đi, b mờ vào
+        rig.bed->tick(ticksFor(FADE_SECONDS) + 2);
+        rig.settle();
+        QVERIFY(!rig.made[0]);
+        QVERIFY(near(rig.made[1]->volume, level, 1e-4));
+        rig.bed->stop();
     }
 
     void warmsTheNextCatalogueSongOnce() {

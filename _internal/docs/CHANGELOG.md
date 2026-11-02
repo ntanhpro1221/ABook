@@ -7,6 +7,18 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nhạc nền
+
+- Nhạc không còn tắt phụt rồi bật phụt khi nguồn nhạc tải chậm hơn tốc độ bài. Bài đang tải dở được vào khi phần đã tải cùng tốc độ tải đo được đủ để phát không hụt tới chỗ bài thôi kêu (hết đoạn truyện dùng bài ấy, không phải hết cả bài): nguồn chậm hơn bài thì bài vào muộn hơn chứ không phải đợi tải xong, bài dài mà đoạn chỉ dùng một phần thì không phải chờ tải gần hết bài, và trong lúc chờ bài cũ vẫn kêu. Nếu mạng tụt giữa bài, nhạc mờ dần ra, chờ đủ dữ liệu rồi mờ dần vào lại. Khi tua, hay khi bài nhảy tới đúng chỗ giọng đang đọc, app không còn tưởng mạng nhanh hơn thật mà cho bài vào sớm rồi hụt. Đổi chương hay tua thì chỗ bài thôi kêu được tính lại ngay. Trước đây, khi nguồn chậm (khoảng 11-30 KB/s), một chương có thể bị cắt nhạc đột ngột hơn chục lần. Máy tính, bản web, và điện thoại khi nghe nhạc của sách thẳng từ máy tính.
+- Trên Chrome, Edge và Firefox, bài nhạc mp3 đang tải dở cũng được vào theo cách trên (đủ để phát không hụt là vào), không còn phải đợi tải trọn cả file: với nguồn chậm, trước đây cảnh có thể im hàng phút chờ một bài 6 MB. Bản web.
+- Khi bài của cảnh mới chưa tải xong, bài đang phát tiếp tục giữ chỗ thay vì mờ đi để cả cảnh im lặng. Bài mới vào ngay khi tải xong. Nếu chính bài đang giữ chỗ cũng tải dở và sắp hết phần đã tải, nó mờ dần ra thay vì tắt phụt. Máy tính, bản web và điện thoại.
+- Bài đang tải dở không còn chớp lên một tiếng rồi tắt khi chỉ còn vài giây tới chỗ bài thôi kêu: còn ít hơn phần cần đệm trước, cộng ngưỡng hụt và một lần mờ vào, mờ ra, thì bài giữ im. Trên máy tính, phép xét tải có kịp không giờ làm ở chỗ bài sẽ thực sự phát (sau khi bài nhảy tới đúng chỗ giọng đang đọc, thường là giữa bài), không phải ở đầu bài: trước đây bài có thể vào ngay mép phần đã tải rồi hụt, hay chờ hàng trăm giây rồi bị nhảy quá phần đã tải. Máy tính, bản web và điện thoại.
+- Bài nhạc có ảnh bìa lớn gắn trong file (vài trăm KB tới hơn 1 MB trước phần nhạc) không còn làm app tưởng đã tải được nhiều nhạc hơn thật: trên máy tính bài ấy từng được vào sớm rồi đứng lắp bắp từng nửa giây khi nguồn chậm; trên bản web (Chrome, Edge, Firefox), ảnh bìa trên 1 MB làm app đợi tải trọn bài mới phát. Máy tính và bản web.
+
+### Điện thoại
+
+- Cửa sổ mini (cửa sổ nhỏ khi rời app) giờ ghi tên sách và tên chương ở đáy bìa, giống cửa sổ mini trên máy tính; cửa sổ rất nhỏ chỉ còn tên chương.
+
 ## [0.4.160] - 2026-11-02
 
 ### Nhạc nền

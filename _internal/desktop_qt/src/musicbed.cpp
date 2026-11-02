@@ -170,6 +170,14 @@ void MusicBed::setCues(const QVector<MusicCue> &cues, std::optional<double> leve
         m_gain = std::pow(10.0, *levelDb / 20);
     m_lastTime = seconds.value_or(m_lastTime);
     switchTo(playableAt(m_lastTime), m_lastTime);
+    tellPlayUntil(m_lastTime); // chuỗi mốc đổi (đổi chương, sửa mốc): chỗ thôi kêu đổi ngay, không đợi nhịp đồng bộ kế
+}
+
+// Bài đang tải dở chỉ cần tải kịp tới chỗ nó thôi kêu (playEnd), không phải tới hết bài; tính lại mỗi nhịp (giọng chậm / khựng / tua) và mỗi lần
+// chuỗi mốc đổi.
+void MusicBed::tellPlayUntil(double seconds) {
+    if (m_current)
+        m_current->audio->out->setPlayUntil(currentTime(m_current->audio) + playEnd(m_cues, m_current->cue) - seconds);
 }
 
 void MusicBed::setVolume(double volume) {
@@ -183,7 +191,8 @@ void MusicBed::setVolume(double volume) {
         setVolumeOf(m_current->audio, m_current->goal);
 }
 
-/// Bài mới còn đang chờ tải (chưa có tiếng, hay đang chờ dữ liệu): chưa được nhích âm lượng lên - bài cũ mờ đi, im lặng bằng thời gian tải.
+/// Bài mới còn đang chờ tải (chưa có tiếng - musicmixer chỉ cho vào khi tải kịp tới hết bài -, hay đang chờ dữ liệu): chưa được nhích âm
+/// lượng lên - bài cũ đứng ở mức đang có ([fadeTick]), không để cảnh câm suốt thời gian tải.
 bool MusicBed::awaitingSound(const Playing &playing) const {
     return playing.entering && (!playing.audio->sounded || playing.audio->waiting);
 }
@@ -213,6 +222,7 @@ void MusicBed::sync(double seconds, bool playing, bool seeked, bool ended) {
     retarget(seeked);
     finishTail(seconds);
     crossLoop(seconds);
+    tellPlayUntil(seconds);
     // Chỉ bài đang kêu được chơi lại; bài đang mờ đi thì chỉ dừng cùng giọng.
     QVector<VoiceP> all = m_fading;
     if (m_current)
@@ -381,6 +391,7 @@ void MusicBed::crossLoop(double seconds, bool fromTimer) {
     }
     const VoiceP old = playing.audio;
     old->fadeStep = (std::max(old->volume, 0.01) * STEP_MS) / 1000 / LOOP_CROSSFADE_SECONDS;
+    old->out->setPlayUntil(std::numeric_limits<double>::infinity()); // xem chỗ đổi mốc trong sync
     m_fading.append(old);
     std::optional<Standby> ready;
     if (m_standby && m_standby->owner == old)
@@ -554,6 +565,9 @@ void MusicBed::switchTo(std::optional<MusicCue> cue, double seconds, bool seeked
                 fade = siblingFadeSeconds(loopBounds(m_current->cue, duration(old)), currentTime(old));
         }
         old->fadeStep = (std::max(old->volume, 0.01) * STEP_MS) / 1000 / fade;
+        // Bài cũ có thể còn kêu quá chỗ thôi kêu của nó (giữ chỗ khi bài mới chưa tải xong): chân trời không còn biết, nên đang tải dở thì phải tải kịp
+        // tới hết bài, không thì vòng đệm cạn là mờ ra (keepsUp) thay vì im phụt.
+        old->out->setPlayUntil(std::numeric_limits<double>::infinity());
         m_fading.append(old);
         m_current.reset();
     }
@@ -625,7 +639,14 @@ void MusicBed::fadeTick() {
         }
     }
     QVector<VoiceP> still;
+    // Bài mới còn chờ tải: bài cũ đứng ở mức đang có; bài mới có tiếng thì mờ tiếp.
+    const bool holdOld = m_current && m_current->audio->wantPlay && awaitingSound(*m_current);
     for (const VoiceP &audio : std::as_const(m_fading)) {
+        if (holdOld && audio->wantPlay && !audio->ended) {
+            busy = true;
+            still.append(audio);
+            continue;
+        }
         const double step = audio->fadeStep >= 0 ? audio->fadeStep : (0.1 * STEP_MS) / 1000 / FADE_SECONDS;
         setVolumeOf(audio, std::max(0.0, audio->volume - step));
         if (audio->volume <= 0.001) {
