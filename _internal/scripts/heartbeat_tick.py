@@ -266,6 +266,21 @@ def power_line() -> str | None:
     return f"!!! NGUỒN: ĐANG CHẠY PIN ({percent}) - GPU bị hạ xung, phân tích chậm ~15 lần; 2% thì Windows ngủ đông"
 
 
+GUARDS = (("gác pin", "power_guard.py"), ("giữ êm quạt", "quiet_keeper.py"))
+
+
+def guards_line(procs: list[tuple[int, int, str]]) -> str | None:
+    """Người gác chết thì nói to; còn sống thì im.
+
+    Ca thật 02-11: gác pin chết từ một lần khởi động lại, không dòng nào nói; 08:06 rút sạc thì hàng GPU vẫn chạy
+    cho tới khi tôi thả lại nó bằng tay. Hai người gác là việc rời sống suốt đời máy, không ai reo khi chúng mất.
+    """
+    missing = [name for name, marker in GUARDS if not any(marker in cmd for _, _, cmd in procs)]
+    if not missing:
+        return None
+    return f"!!! NGƯỜI GÁC KHÔNG CHẠY: {', '.join(missing)} - thả lại theo abook-wake bước 3.1"
+
+
 UPSTREAM_AUDIT = ROOT / "runtime" / "dependency_audit.json"
 UPSTREAM_STALE_HOURS = 24.0
 
@@ -300,6 +315,9 @@ def main() -> int:
         say(power)
     say(describe())
     procs = processes()
+    guards = guards_line(procs)
+    if guards:
+        say(guards)
     roots = tree_roots(procs, r"boundary\.sh \d")
     say(f"tiến trình boundary.sh (gốc thật): {len(roots)}")
     say(bells.describe())

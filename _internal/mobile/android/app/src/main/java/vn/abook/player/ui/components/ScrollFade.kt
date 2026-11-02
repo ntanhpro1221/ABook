@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import vn.abook.player.ui.theme.Dim
 import kotlin.math.ceil
 import kotlin.math.max
@@ -23,17 +24,18 @@ val ScrollFadeEdge: Dp = Dim.s24
 /**
  * Mép mờ của vùng cuộn dọc (DESIGN.md §4.5: không gì cụt cứng): nội dung chạy dưới tiêu đề, tay nắm bảng trượt, thanh nút hay thanh phát thì mờ dần [edge]
  * thay vì bị cắt ngang. Chỉ mờ ở phía còn cuộn được - đầu danh sách không mờ mép trên, cuối danh sách không mờ mép dưới. Nhận mọi [ScrollableState]
- * (`LazyListState`, `LazyGridState`, `ScrollState`).
+ * (`LazyListState`, `LazyGridState`, `ScrollState`). `startInset`: màn toàn khung mang chỗ chừa thanh trạng thái làm đệm TRONG vùng cuộn thì truyền chỗ chừa ấy - nội dung cuộn
+ * lên sẽ khuất hẳn dưới thanh trạng thái (không đè đồng hồ, soát điện thoại thật 02-11) rồi mới mờ dần; lúc đứng yên (đầu danh sách) không mờ gì.
  *
  * Đặt TRƯỚC `verticalScroll(state)` trong chuỗi modifier (để mặt nạ theo khung nhìn, không theo nội dung). Vị trí cuộn chỉ đọc trong pha vẽ; khi không có gì
  * để cuộn thì không dựng lớp vẽ riêng. Máy dò `ScrollFadeRulesTest` bắt vùng cuộn nào quên nó.
  */
-fun Modifier.fadeEdges(state: ScrollableState, edge: Dp = ScrollFadeEdge): Modifier = fade(state, edge, horizontal = false)
+fun Modifier.fadeEdges(state: ScrollableState, edge: Dp = ScrollFadeEdge, startInset: Dp = 0.dp): Modifier = fade(state, edge, horizontal = false, startInset = startInset)
 
 /**
  * Cùng mép mờ cho hàng cuộn NGANG (chip, tab): mờ ở đầu / cuối còn cuộn được, như `useRowFade` bên web. Đặt TRƯỚC `horizontalScroll(state)` trong chuỗi modifier.
  */
-fun Modifier.fadeEdgesHorizontal(state: ScrollableState, edge: Dp = ScrollFadeEdge): Modifier = fade(state, edge, horizontal = true)
+fun Modifier.fadeEdgesHorizontal(state: ScrollableState, edge: Dp = ScrollFadeEdge): Modifier = fade(state, edge, horizontal = true, startInset = 0.dp)
 
 /**
  * Mép mờ không dùng lớp ngoài màn nguyên khung nhìn (trước đây `CompositingStrategy.Offscreen` + mặt nạ DstIn: một kết cấu GPU bằng cả vùng cuộn, ~7 MB cho lưới Thư viện,
@@ -41,14 +43,17 @@ fun Modifier.fadeEdgesHorizontal(state: ScrollableState, edge: Dp = ScrollFadeEd
  * cho phần giữa không mặt nạ, và một lần cho mỗi dải mép bằng lớp tạm chỉ cao đúng [edge]: dải đó nhân mặt nạ DstIn y như trước. Điểm ảnh ra giống hệt: dải và phần giữa
  * khớp nhau ở biên nguyên điểm ảnh, mặt nạ ngoài đoạn chuyển màu là đặc (đen) nên phần giữa không cần mặt nạ.
  */
-private fun Modifier.fade(state: ScrollableState, edge: Dp, horizontal: Boolean): Modifier = drawWithCache {
+private fun Modifier.fade(state: ScrollableState, edge: Dp, horizontal: Boolean, startInset: Dp): Modifier = drawWithCache {
     val length = if (horizontal) size.width else size.height
     val edgePx = min(edge.toPx(), length / 2f)
+    // Chỗ chừa đầu vùng (thanh trạng thái của máy): nội dung cuộn lên tới đó thì biến mất hẳn (không đè đồng hồ), rồi mờ dần trong edgePx kế.
+    val insetPx = min(startInset.toPx(), length / 2f)
     val band = ceil(edgePx)
-    val lower = max(length - band, band) // hai dải không bao giờ chồng nhau
-    // Mặt nạ: trong suốt ở mép ngoài -> đặc sau edgePx; dải cuối là ảnh phản chiếu của dải đầu.
+    val startBand = ceil(insetPx + edgePx)
+    val lower = max(length - band, startBand) // hai dải không bao giờ chồng nhau
+    // Mặt nạ: trong suốt ở mép ngoài (và hết chỗ chừa) -> đặc sau edgePx; dải cuối là ảnh phản chiếu của dải đầu.
     val startMask = if (horizontal) Brush.horizontalGradient(0f to Color.Transparent, 1f to Color.Black, startX = 0f, endX = edgePx)
-    else Brush.verticalGradient(0f to Color.Transparent, 1f to Color.Black, startY = 0f, endY = edgePx)
+    else Brush.verticalGradient(0f to Color.Transparent, 1f to Color.Black, startY = insetPx, endY = insetPx + edgePx)
     val endMask = if (horizontal) Brush.horizontalGradient(0f to Color.Black, 1f to Color.Transparent, startX = length - edgePx, endX = length)
     else Brush.verticalGradient(0f to Color.Black, 1f to Color.Transparent, startY = length - edgePx, endY = length)
     val layerPaint = Paint()
@@ -59,12 +64,12 @@ private fun Modifier.fade(state: ScrollableState, edge: Dp, horizontal: Boolean)
             drawContent()
             return@onDrawWithContent
         }
-        val from = if (start) band else 0f
+        val from = if (start) startBand else 0f
         val to = if (end) lower else length
         if (horizontal) clipRect(from, 0f, to, size.height) { this@onDrawWithContent.drawContent() }
         else clipRect(0f, from, size.width, to) { this@onDrawWithContent.drawContent() }
         if (start) {
-            val bounds = if (horizontal) Rect(0f, 0f, band, size.height) else Rect(0f, 0f, size.width, band)
+            val bounds = if (horizontal) Rect(0f, 0f, startBand, size.height) else Rect(0f, 0f, size.width, startBand)
             maskedBand(bounds, layerPaint, startMask) { this@onDrawWithContent.drawContent() }
         }
         if (end) {

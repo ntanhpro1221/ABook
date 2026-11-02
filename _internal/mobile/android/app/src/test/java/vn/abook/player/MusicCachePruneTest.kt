@@ -59,12 +59,12 @@ class MusicCachePruneTest {
         val catalog = catalog()
         val one = track(catalog, "https://a/one.mp3", 100, ago = 99_000_000)
         val staleDir = File(root, "cache/files")
-        val stale = File(staleDir, "x.123.part").apply { writeBytes(ByteArray(10)); setLastModified(now - 700_000) }
-        val live = File(staleDir, "y.456.part").apply { writeBytes(ByteArray(10)); setLastModified(now - 1_000) }
+        val stale = File(staleDir, "x.mp3.part").apply { writeBytes(ByteArray(10)); setLastModified(now - 8L * 24 * 3600 * 1000) }
+        val resumable = File(staleDir, "y.mp3.part").apply { writeBytes(ByteArray(10)); setLastModified(now - 700_000) }
         catalog.prune(capBytes = 10_000)
         assertTrue("dưới trần: bài lâu không nghe vẫn giữ", one.exists())
-        assertFalse("tải dở quá 10 phút: xoá", stale.exists())
-        assertTrue("tải dở đang chạy: giữ", live.exists())
+        assertFalse("tải dở bỏ quá 7 ngày: xoá", stale.exists())
+        assertTrue("tải dở vài phút trước: giữ để tải tiếp (MusicDownloadResumeTest)", resumable.exists())
     }
 
     @Test

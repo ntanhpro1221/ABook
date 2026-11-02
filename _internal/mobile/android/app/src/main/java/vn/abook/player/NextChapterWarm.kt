@@ -49,7 +49,7 @@ internal class NextChapterWarm(
         }
     }
 
-    /** Lượt tải `link` đứt vì đứng nhường giọng ([MusicCatalog.Yielded]): quên lời đáp để sau [RETRY_MS] hỏi + tải lại (vẫn qua cổng giọng) thay vì chờ lưới cuối. */
+    /** Lượt tải `link` đứt vì đứng nhường giọng ([MusicCatalog.Yielded]) hay đứt sau khi đã tải thêm ([MusicCatalog.Progressed]): quên lời đáp để sau [RETRY_MS] hỏi + tải lại (vẫn qua cổng giọng) thay vì chờ lưới cuối. */
     fun again(link: String) {
         for (ticket in done.filterValues { it == link }.keys) {
             done.remove(ticket)

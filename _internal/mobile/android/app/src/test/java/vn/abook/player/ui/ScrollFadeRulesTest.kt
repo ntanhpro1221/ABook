@@ -66,6 +66,29 @@ class ScrollFadeRulesTest {
         assertTrue("Vùng cuộn bị cắt cứng ở mép (dùng Modifier.fadeEdges của ui/components/ScrollFade.kt): $offenders", offenders.isEmpty())
     }
 
+    /**
+     * Màn toàn khung tự chừa chỗ thanh trạng thái bằng đệm TRONG vùng cuộn thì nội dung cuộn lên đè đồng hồ (soát điện thoại thật 02-11: Cài đặt > Nâng cao).
+     * Mọi `fadeEdges` trong file có `WindowInsets.statusBars` phải mang `startInset` (ui/components/ScrollFade.kt). Ngoại lệ: trang sách - nút ← cố định nằm
+     * TRÊN danh sách (chỗ chừa nằm ngoài vùng cuộn).
+     */
+    private fun statusBarOffences(path: String, source: String): List<String> {
+        val text = code(source)
+        if ("WindowInsets.statusBars" !in text || path == "screens/BookScreen.kt") return emptyList()
+        return Regex("""\.fadeEdges\(([^)]*)\)""").findAll(text).filter { "startInset" !in it.groupValues[1] }
+            .map { "$path dòng ${text.substring(0, it.range.first).count { c -> c == '\n' } + 1}: ${it.value}" }.toList()
+    }
+
+    @Test
+    fun scrollAreasUnderTheStatusBarFadeBelowIt() {
+        val offenders = sources().flatMap { (path, text) -> statusBarOffences(path, text) }.toList()
+        assertTrue("Vùng cuộn chạy dưới thanh trạng thái không có startInset (nội dung đè đồng hồ): $offenders", offenders.isEmpty())
+        val users = sources().filter { (path, text) -> "startInset" in code(text) && path != "components/ScrollFade.kt" }.count()
+        assertTrue("máy dò quét sai chỗ? chỉ $users file dùng startInset", users >= 6)
+        assertEquals(1, statusBarOffences("x.kt", "val top = WindowInsets.statusBars\nColumn(Modifier.fadeEdges(scroll).verticalScroll(scroll))").size)
+        assertEquals(0, statusBarOffences("x.kt", "val top = WindowInsets.statusBars\nColumn(Modifier.fadeEdges(scroll, startInset = top).verticalScroll(scroll))").size)
+        assertEquals(0, statusBarOffences("x.kt", "LazyColumn(Modifier.fadeEdges(list))").size)
+    }
+
     @Test
     fun theSharedFadeIsUsedEverywhere() {
         // Một thành phần chung: không ai tự vẽ lại mặt nạ mép bằng BlendMode.DstIn ngoài ScrollFade.kt.

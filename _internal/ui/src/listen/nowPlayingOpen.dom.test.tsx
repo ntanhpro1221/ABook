@@ -87,6 +87,69 @@ const render = async (node: ReactNode) => {
 const screen = () => host.querySelector<HTMLElement>("section[role=main]");
 const css = readFileSync(`${cwd()}/src/styles.css`, "utf8");
 
+const sheetCases = [
+  { button: "Tốc độ", title: "Tốc độ đọc" },
+  { button: "Hẹn giờ", title: "Hẹn giờ ngủ" },
+  { button: "Chương", title: "Chương" },
+];
+async function openSheet(button: string) {
+  vi.spyOn(window, "matchMedia").mockImplementation((query) => ({
+    matches: query === "(max-width: 640px)", media: query,
+    addEventListener() {}, removeEventListener() {},
+  }) as unknown as MediaQueryList);
+  state.expanded = true;
+  await render(<NowPlaying mobile />);
+  const scroller = screen()!.querySelector<HTMLElement>(".player-controls-scroll")!;
+  expect(scroller).not.toBeNull();
+  const trigger = [...scroller.querySelectorAll<HTMLButtonElement>("[data-player-secondary] button")]
+    .find((node) => node.textContent?.includes(button))!;
+  expect(trigger).toBeDefined();
+  return { scroller, trigger };
+}
+
+it.each(sheetCases)("$title: tấm qua Portal và fixed, nằm ngoài cây bố cục Đang nghe", async ({ button, title }) => {
+  const { trigger } = await openSheet(button);
+  await act(() => trigger.click());
+  const sheet = document.querySelector<HTMLElement>('[role="dialog"][data-state="open"]')!;
+  expect(sheet).not.toBeNull();
+  expect(document.getElementById(sheet.getAttribute("aria-labelledby")!)?.textContent).toBe(title);
+  expect(host.contains(sheet)).toBe(false); // Radix Portal phải thoát khỏi root React của màn nghe.
+  expect(document.body.contains(sheet)).toBe(true);
+  expect(sheet.classList.contains("fixed")).toBe(true);
+  expect(sheet.classList.contains("sheet-surface")).toBe(true);
+});
+
+it.each(sheetCases)("$title: mở rồi đóng tấm giữ nguyên padding/margin và lớp bố cục của vùng cuộn", async ({ button }) => {
+  const { scroller, trigger } = await openSheet(button);
+  const page = screen()!;
+  const ancestors: HTMLElement[] = [];
+  for (let node: HTMLElement | null = scroller; node; node = node.parentElement) {
+    ancestors.push(node);
+    if (node === page) break;
+  }
+  const spacing = () => ancestors.map((node) => ({
+    classes: node.className,
+    inline: node.getAttribute("style"),
+    spacing: ["paddingTop", "paddingRight", "paddingBottom", "paddingLeft", "marginTop", "marginRight", "marginBottom", "marginLeft"]
+      .map((key) => getComputedStyle(node)[key as keyof CSSStyleDeclaration]),
+  }));
+  const before = spacing();
+  await act(() => trigger.click());
+  expect(document.querySelector('[role="dialog"][data-state="open"]')).not.toBeNull();
+  expect(spacing()).toEqual(before);
+  // Luật CSS theo trạng thái tấm cũng không được lén bù khoảng trống cho màn/vùng cuộn.
+  // DOM giả không tính layout hay chạy Tailwind, nên so thêm nguồn CSS của các luật điều kiện.
+  for (const rule of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    if (/now-playing|player-controls-scroll/.test(rule[1]) && /:has\(|data-state|data-sheet/.test(rule[1]))
+      expect(rule[2]).not.toMatch(/(?:^|;)\s*(?:padding|margin)(?:-[\w-]+)?\s*:/);
+  }
+  const close = document.querySelector<HTMLButtonElement>('[role="dialog"][data-state="open"] [data-sheet-handle]')!;
+  await act(() => close.click());
+  expect(document.querySelector('[role="dialog"][data-state="open"]')).toBeNull();
+  expect(screen()).toBe(page);
+  expect(spacing()).toEqual(before);
+});
+
 it("điện thoại: mở màn Đang nghe dựng đủ ruột (sau lượt render hoãn), đóng thì xuống trạng thái closed rồi gỡ", async () => {
   state.expanded = false;
   await render(<NowPlaying mobile />);

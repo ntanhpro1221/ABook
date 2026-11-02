@@ -15,6 +15,22 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Bài đang tải dở không còn chớp lên một tiếng rồi tắt khi chỉ còn vài giây tới chỗ bài thôi kêu: còn ít hơn phần cần đệm trước, cộng ngưỡng hụt và một lần mờ vào, mờ ra, thì bài giữ im. Trên máy tính, phép xét tải có kịp không giờ làm ở chỗ bài sẽ thực sự phát (sau khi bài nhảy tới đúng chỗ giọng đang đọc, thường là giữa bài), không phải ở đầu bài: trước đây bài có thể vào ngay mép phần đã tải rồi hụt, hay chờ hàng trăm giây rồi bị nhảy quá phần đã tải. Máy tính, bản web và điện thoại.
 - Bài nhạc có ảnh bìa lớn gắn trong file (vài trăm KB tới hơn 1 MB trước phần nhạc) không còn làm app tưởng đã tải được nhiều nhạc hơn thật: trên máy tính bài ấy từng được vào sớm rồi đứng lắp bắp từng nửa giây khi nguồn chậm; trên bản web (Chrome, Edge, Firefox), ảnh bìa trên 1 MB làm app đợi tải trọn bài mới phát. Máy tính và bản web.
 
+## [0.4.160] - 2026-11-02
+
+### Nhạc nền
+
+- Bài nhạc tải đứt giữa chừng (mạng chậm hay chập chờn) không phải tải lại từ đầu: phần đã tải được giữ, lần sau app tải tiếp từ đúng chỗ đứt. Trước đây một bài 13 MB đứt gần cuối là mất trắng, chương sau tải lại từ 0 và cả chương không có nhạc. Đứt sau khi đã nhận được dữ liệu cũng không còn bị coi là mất mạng, nên nguồn nhạc không bị bỏ qua 5 phút và bài vẫn nằm trong hàng tải sẵn. Máy tính, bản web và điện thoại.
+
+### Điện thoại
+
+- Gửi file truyện từ điện thoại lên máy tính (Studio → Sách mới) chạy lại: trước đây mọi file đều bị từ chối "không phải TXT, EPUB, DOCX hay PDF" dù đúng đuôi .txt.
+- Hàng thẻ của dự án Studio không còn xuống hai dòng trên màn hẹp, giờ cuộn ngang; hàng lọc thư viện có dòng riêng nên chữ "Xong" không còn bị cắt.
+- Bàn phím mở không còn che chữ phía trên nút Tiếp; nội dung cuộn mờ dần dưới thanh trạng thái thay vì chạy dưới đồng hồ; nhãn "Giãn dòng" thoáng hơn.
+
+### Kết nối giữa các máy
+
+- Máy tính nhận yêu cầu gửi theo kiểu không báo trước độ dài (Studio từ xa, đồng bộ, giao diện trên máy) giờ trả lời rõ là thiếu độ dài rồi đóng kết nối. Trước đây nó đọc thành yêu cầu rỗng, báo một lỗi không liên quan, và phần dữ liệu còn sót lại có thể làm hỏng yêu cầu kế tiếp trên cùng kết nối.
+
 ## [0.4.159] - 2026-11-02
 
 ### Nhạc nền
