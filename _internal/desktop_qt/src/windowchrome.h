@@ -2,9 +2,9 @@
 
 #include <QObject>
 #include <QtQml/qqmlregistration.h>
+#include <QtQuick/QQuickItem>       // đầy đủ, không khai trước: moc của Q_INVOKABLE nhận QQuickItem* cần kiểu đã định nghĩa (bộ thử dựng riêng)
+#include <QtQuick/QQuickWindow>
 
-class QQuickItem;
-class QQuickWindow;
 namespace QWK { class QuickWindowAgent; }
 
 // Khung cửa sổ tự vẽ: bỏ thanh tiêu đề hệ thống nhưng giữ hành vi gốc của Windows (kéo, nhấp đúp phóng to, Aero Snap, Snap Layouts của

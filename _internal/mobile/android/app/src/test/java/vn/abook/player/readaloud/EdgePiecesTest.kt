@@ -74,12 +74,17 @@ class EdgePiecesTest {
             val live = AtomicInteger(0)
             val peak = AtomicInteger(0)
             val sent = AtomicInteger(0)
+            // Mỗi mảnh giữ chỗ cho tới khi đủ `expected` mảnh cùng mở (hàng rào, không phải giấc ngủ cố định): máy bận làm luồng mảnh sau
+            // trễ hơn một giấc ngủ 250 ms thì các mảnh đầu đã nhả chỗ, đỉnh đo được thấp hơn trần mà trần không hề sai. Trần thấp hơn `expected`
+            // thì hàng rào không bao giờ đủ người, mảnh nào cũng hết 10 giây rồi đi tiếp - đỉnh vẫn thấp hơn và bài thử vẫn đỏ.
+            val gathered = CountDownLatch(expected)
             val connector = EdgeTts.Connector { _, _ ->
                 val out = ByteArrayOutputStream()
                 sent.incrementAndGet()
                 peak.accumulateAndGet(live.incrementAndGet(), { a, b -> maxOf(a, b) })
                 WebSocket({ live.decrementAndGet() }, Reply(out) { bytes ->
-                    Thread.sleep(250) // mỗi mảnh giữ chỗ đủ lâu để các mảnh khác kịp mở cùng lúc
+                    gathered.countDown()
+                    gathered.await(10, TimeUnit.SECONDS)
                     val words = spokenIn(bytes).split(" ")
                     var reply = ByteArray(0)
                     words.forEachIndexed { i, word -> reply += metadata(i * 1_000_000L, 800_000, word) }
@@ -389,16 +394,35 @@ class EdgePiecesTest {
     @Test
     fun aFailingPieceFailsTheClipAtOnceAndClosesTheSocketsOfTheOthers() {
         // Mảnh đầu (đứng trước) im lìm; mảnh khác nhận tin hỏng ngay: cả clip hỏng ngay (không đợi mảnh đầu), và ổ cắm mảnh đầu đóng - không giữ chỗ tới hết lượt.
+        // Đếm ổ cắm đã MỞ chứ không đoán theo số mảnh: mảnh chưa kịp mở ổ cắm thì bị huỷ trước khi mở (đúng), và không có gì để đóng. Đoán theo số mảnh
+        // làm bài thử đỏ mỗi khi máy bận (luồng mảnh sau chạy trễ hơn lúc mảnh kia hỏng). Phần "mảnh đầu đã mở và bị đóng" thì chốt bằng hàng rào:
+        // mảnh hỏng chỉ trả tin hỏng sau khi mảnh đầu đã gửi yêu cầu và đang chờ, nên ổ cắm cần đóng chắc chắn có mặt.
         val total = EdgePieces.split(sentences).size
+        val opened = AtomicInteger(0)
         val closed = AtomicInteger(0)
+        val firstWaiting = CountDownLatch(1)
+        val firstClosed = CountDownLatch(1)
         val connector = EdgeTts.Connector { _, _ ->
             val sent = ByteArrayOutputStream()
             val gate = CountDownLatch(1)
-            WebSocket({ closed.incrementAndGet(); gate.countDown() }, Reply(sent) { bytes ->
+            opened.incrementAndGet()
+            // Ổ cắm nào đóng cũng đếm; ổ của mảnh đầu đóng thì báo riêng ngay trong lúc đóng (luồng của nó có thể bị ngắt trước khi kịp thấy cổng mở).
+            WebSocket({
+                closed.incrementAndGet()
+                if (spokenIn(sent.toByteArray()).startsWith("Trời")) firstClosed.countDown()
+                gate.countDown()
+            }, Reply(sent) { bytes ->
                 if (spokenIn(bytes).startsWith("Trời")) {
-                    gate.await(10, TimeUnit.SECONDS)
+                    firstWaiting.countDown()
+                    // Đọc ổ cắm thật không bị Thread.interrupt đánh thức, chỉ đóng ổ cắm mới thả nó: chờ cổng mà nuốt ngắt, để bài thử chỉ xanh khi ổ cắm bị đóng thật
+                    // (ngắt luồng một mình, vẫn xảy ra khi clip hỏng, không đủ).
+                    val end = System.nanoTime() + TimeUnit.SECONDS.toNanos(10)
+                    while (gate.count > 0 && System.nanoTime() < end) {
+                        try { gate.await(end - System.nanoTime(), TimeUnit.NANOSECONDS) } catch (_: InterruptedException) { }
+                    }
                     throw java.net.SocketException("Socket closed")
                 }
+                firstWaiting.await(10, TimeUnit.SECONDS)
                 frame(WebSocket.OP_BINARY, byteArrayOf(0, 99, 1)) // độ dài header vượt tin: hỏng
             }, sent)
         }
@@ -410,7 +434,9 @@ class EdgePiecesTest {
             assertTrue(error.message, error.message!!.contains("tin hỏng"))
         }
         assertTrue("không được đợi mảnh đứng trước", (System.nanoTime() - began) < 5_000_000_000L)
-        waitUntil("mọi ổ cắm đã đóng") { closed.get() == total }
+        val firstDone = firstClosed.await(5, TimeUnit.SECONDS)
+        assertTrue("ổ cắm của mảnh đứng trước phải đóng ngay, không đợi hết lượt (mảnh $total, mở ${opened.get()}, đóng ${closed.get()})", firstDone)
+        waitUntil("mọi ổ cắm đã mở đều đóng") { opened.get() >= 2 && closed.get() == opened.get() }
         waitUntil("chỗ kết nối nhả hết") { EdgeTts.connections.availablePermits() == EdgePieces.EDGE_CONNECTIONS }
     }
 
