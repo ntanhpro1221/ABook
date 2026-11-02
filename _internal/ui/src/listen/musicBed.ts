@@ -104,18 +104,22 @@ export function browserAudio(src: string): BedAudio {
 /** Chỗ đệm tiếng mặc định của một SourceBuffer ở Chromium (12 MB): bài lớn hơn thì nạp tới đó là QuotaExceededError khi phần tử còn đứng ở
  *  chỗ vào (chưa có phần đã phát để trình duyệt dọn), nên đi thẳng <audio src> thay vì tải phí một phần rồi mới lùi. */
 const MSE_AUDIO_BYTES = 12 * 1024 * 1024;
-/** Phần đầu file giữ lại để đọc độ dài ([mp3Seconds]); thẻ ID3 (ảnh bìa) dài hơn thế thì đợi tải xong mới biết độ dài. */
+/** Phần đầu file (sau thẻ ID3) giữ lại để đọc độ dài ([mp3Seconds]). */
 const MP3_HEAD_BYTES = 1024 * 1024;
+
+/** Cỡ thẻ ID3v2 đầu file (0 = không có), null = chưa đủ 10 byte. Thẻ chứa ảnh bìa có thể dài hơn mọi phần đầu giữ lại (dc28: 1,42 MB). */
+export function id3Length(head: Uint8Array): number | null {
+  if (head.length < 10) return null;
+  if (head[0] !== 0x49 || head[1] !== 0x44 || head[2] !== 0x33) return 0;
+  return 10 + (((head[6] & 0x7f) << 21) | ((head[7] & 0x7f) << 14) | ((head[8] & 0x7f) << 7) | (head[9] & 0x7f)) + (head[5] & 0x10 ? 10 : 0);
+}
 
 /** Độ dài (giây) của bài mp3 dài `total` byte, đọc từ phần đầu file `head`: khung Xing/Info có số khung thì đúng số khung, không có thì theo
  *  bitrate của khung đầu (đúng với CBR - bài danh mục incompetech không có Xing). null = chưa đủ byte hay không phải mp3 Layer III. MediaSource
  *  chỉ biết độ dài khi đã nạp hết, mà MusicBed cần nó ngay để căn chỗ vào và tính cổng [playsThrough]. */
 export function mp3Seconds(head: Uint8Array, total: number): number | null {
-  let at = 0;
-  if (head.length < 10) return null;
-  if (head[0] === 0x49 && head[1] === 0x44 && head[2] === 0x33) {
-    at = 10 + (((head[6] & 0x7f) << 21) | ((head[7] & 0x7f) << 14) | ((head[8] & 0x7f) << 7) | (head[9] & 0x7f)) + (head[5] & 0x10 ? 10 : 0);
-  }
+  let at = id3Length(head);
+  if (at === null) return null;
   for (; at + 4 <= head.length; at += 1) {
     if (head[at] !== 0xff || (head[at + 1] & 0xe0) !== 0xe0) continue;
     const version = (head[at + 1] >> 3) & 3; // 3 = MPEG-1, 2 = MPEG-2, 0 = MPEG-2.5
@@ -201,15 +205,30 @@ function mseAudio(audio: HTMLAudioElement, src: string): BedAudio {
         });
       const reader = response.body?.getReader();
       if (!reader) throw new Error("body");
+      // Phần đầu để đọc độ dài bắt đầu ở byte `headAt` của file: biết cỡ thẻ ID3 thì bỏ cả thẻ, chỉ giữ từ khung đầu.
       let head = new Uint8Array(0);
+      let headAt = 0;
+      let read = 0;
       for (let part = await reader.read(); !part.done; part = await reader.read()) {
         await append(part.value);
+        const from = read;
+        read += part.value.length;
         if (settled || !(total > 0) || head.length >= MP3_HEAD_BYTES) continue;
-        const grown = new Uint8Array(head.length + part.value.length);
+        const fresh = part.value.subarray(Math.max(0, headAt + head.length - from));
+        if (!fresh.length) continue;
+        const grown = new Uint8Array(head.length + fresh.length);
         grown.set(head);
-        grown.set(part.value, head.length);
+        grown.set(fresh, head.length);
         head = grown;
-        const seconds = mp3Seconds(head, total);
+        if (headAt === 0) {
+          const tag = id3Length(head);
+          if (tag === null) continue;
+          if (tag > 0) {
+            headAt = tag;
+            head = head.slice(Math.min(tag, head.length));
+          }
+        }
+        const seconds = mp3Seconds(head, total - headAt);
         if (seconds === null) continue;
         source.duration = seconds;
         settle(false);

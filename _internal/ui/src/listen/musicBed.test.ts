@@ -1671,6 +1671,26 @@ describe("bài mp3 phát qua MediaSource (loopfix)", () => {
     expect(seen).toEqual(["meta"]);
   });
 
+  it("ảnh bìa (thẻ ID3) dài hơn phần đầu giữ lại: vẫn biết độ dài ngay khi khung đầu tới, không chờ tải trọn bài", async () => {
+    const tag = new Uint8Array(1_500_000);
+    tag.set([0x49, 0x44, 0x33, 3, 0, 0, 0, 0x7a, 0x09, 0x00]); // ID3v2.3, thân 2.000.000 byte
+    const body = chunked([tag, new Uint8Array(500_010), mp3Head(), new Uint8Array(1000)]);
+    const made = stubBrowser({ body: () => body.stream, size: 2_000_010 + 1_600_000 });
+    const audio = browserAudio("/cover.mp3") as unknown as FakeAudio;
+    const seen: string[] = [];
+    audio.addEventListener("loadedmetadata", () => seen.push("meta"));
+    body.next();
+    body.next();
+    await flush();
+    expect(seen).toEqual([]);
+    body.next();
+    await flush();
+    const source = made.sources[0];
+    expect(source.duration).toBeCloseTo(100, 6);
+    expect(source.ended).toBe(false);
+    expect(seen).toEqual(["meta"]);
+  });
+
   it("đứt giữa chừng sau khi đã báo độ dài: MusicBed nhận error (thử lại sau), không lùi về <audio src>", async () => {
     const body = chunked([mp3Head()]);
     const made = stubBrowser({ body: () => body.stream, size: 1_600_000 });
