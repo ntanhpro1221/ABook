@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.160] - 2026-11-02
+
 ### Nhạc nền
 
 - Bài nhạc tải đứt giữa chừng (mạng chậm hay chập chờn) không phải tải lại từ đầu: phần đã tải được giữ, lần sau app tải tiếp từ đúng chỗ đứt. Trước đây một bài 13 MB đứt gần cuối là mất trắng, chương sau tải lại từ 0 và cả chương không có nhạc. Đứt sau khi đã nhận được dữ liệu cũng không còn bị coi là mất mạng, nên nguồn nhạc không bị bỏ qua 5 phút và bài vẫn nằm trong hàng tải sẵn. Máy tính, bản web và điện thoại.
