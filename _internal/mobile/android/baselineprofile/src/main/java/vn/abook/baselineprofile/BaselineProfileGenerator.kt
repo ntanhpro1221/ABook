@@ -32,6 +32,10 @@ class BaselineProfileGenerator {
             for (tag in listOf("tab_studio", "tab_settings", "tab_library", "tab_settings", "tab_studio", "tab_library")) tapTab(tag)
         }
         scrollLibrary()
+        // Hàng lọc (Tất cả / Nghe dở / Chưa nghe / Xong) + đếm sách: hàng mới sau lần sinh profile cuối, đi qua mỗi lần mở Thư viện.
+        for (tag in listOf("filter_listening", "filter_new", "filter_finished", "filter_all")) tapTab(tag)
+        scrollLibrary()
+        openBookTabs()
         openAndBack("book_cell", "book_screen")
         openAndBack("series_cell", "series_sheet")
         openAndBack("sort_button", "sort_menu")
@@ -45,6 +49,17 @@ class BaselineProfileGenerator {
         device.findObject(By.res(tag))?.click()
         device.waitForIdle()
         // Hoạt ảnh trượt 220 ms: đợi nó chạy hết (waitForIdle không chờ hoạt ảnh Compose).
+        Thread.sleep(400)
+    }
+
+    /** Trang sách và ba mục của nó (Chương / Lịch sử / Nhân vật): đường ScrollingTabs + danh sách chương mới, trước đây không nằm trong profile. */
+    private fun MacrobenchmarkScope.openBookTabs() {
+        device.findObject(By.res("book_cell"))?.click() ?: return
+        device.wait(Until.hasObject(By.res("book_screen")), 2_000)
+        Thread.sleep(400)
+        for (tag in listOf("book_tab_history", "book_tab_cast", "book_tab_chapters")) tapTab(tag)
+        device.pressBack()
+        device.waitForIdle()
         Thread.sleep(400)
     }
 

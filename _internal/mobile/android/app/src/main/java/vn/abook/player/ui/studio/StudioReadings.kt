@@ -205,7 +205,9 @@ object ReadingsLogic {
 object ReadingsText {
     const val TITLE = "Cách đọc tên"
     const val LEAD = "Nghe và sửa cách đọc tên; câu đã thu có tên ấy sẽ thu lại."
-    const val SEARCH = "Tìm tên, hoặc gõ một chữ để thêm cách đọc"
+    /** Gợi ý trong ô tìm (cùng chữ với NameReadings.tsx): ngắn, vừa một dòng; gõ chữ chưa có thì ô vẫn thêm được. */
+    const val SEARCH = "Tìm hoặc thêm tên"
+    const val SEARCH_NAME = "Tìm tên"
     const val LOADING = "Đang tải cách đọc tên"
     const val EMPTY = "Cuốn này chưa có tên nào cần chốt cách đọc."
     const val EDIT = "Sửa"
@@ -219,6 +221,7 @@ object ReadingsText {
     const val MORE = "Xem thêm"
     const val NO_MATCH = "Không khớp; gõ một chữ liền để thêm cách đọc."
     const val SHARED_NONE = "Không có trong danh sách - máy đọc theo chữ"
+    fun lineCount(n: Int) = "$n dòng"
     const val SUGGEST_TITLE = "Dòng nên bỏ khỏi phần đọc"
     const val SUGGEST_LEAD = "Máy thấy vài dòng ghi công hay xin ủng hộ. Chữ của truyện giữ nguyên; chọn dòng nào thì phần đọc bỏ qua dòng ấy."
     const val SUGGEST_SKIP = "Bỏ đọc dòng"

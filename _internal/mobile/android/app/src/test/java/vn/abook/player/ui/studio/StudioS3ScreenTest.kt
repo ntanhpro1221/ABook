@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
@@ -148,4 +149,39 @@ class StudioS3ScreenTest {
         rule.waitForIdle()
         tag("studio_precast_step").assertTextEquals("Bước 2/4")
     }
+
+    /** Hàng người kể (không sửa được) có cùng nhịp với hàng thoại: nhãn cùng chiều cao tối thiểu, chữ cách đầu hàng như nhau, và có chỗ trống dưới chữ (soát điện thoại thật 02-11: chật). */
+    @Test fun theNarratorRowKeepsTheSameRhythmAsADialogueRow() {
+        script()
+        fun head(id: String) = tag("studio_line_text_$id").getUnclippedBoundsInRoot().top - tag("studio_line_$id").getUnclippedBoundsInRoot().top
+        assertEquals("chữ cách đầu hàng như nhau", head("d1").value, head("n1").value, 0.5f)
+        val tail = tag("studio_line_n1").getUnclippedBoundsInRoot().bottom - tag("studio_line_text_n1").getUnclippedBoundsInRoot().bottom
+        assertTrue("dưới chữ người kể còn $tail, cần >= 16dp", tail.value >= 16f)
+    }
+
+    /** Ô tìm tên: gợi ý ngắn (<= 4 chữ), một dòng, đúng chữ bản web ("Tìm hoặc thêm tên"). */
+    @Test fun theNamesSearchPlaceholderIsShortAndSameAsTheWeb() {
+        assertEquals("Tìm hoặc thêm tên", ReadingsText.SEARCH)
+        assertTrue(ReadingsText.SEARCH.split(" ").size <= 4)
+    }
+
+    /** Bước 4 của Duyệt trước khi thu: "Xong lượt duyệt" là tiêu đề duy nhất (không thêm tiêu đề "Xong" ngay trên); trạng thái "ổn" viết hoa, đủ câu. */
+    @Test fun theLastReviewStepHasOneTitleAndTheFineStatusesStartWithACapital() {
+        assertTrue(PrecastText.NAMES_FINE.first().isUpperCase())
+        assertTrue(PrecastText.LINES_FINE.first().isUpperCase())
+        source.books = listOf(studioBook(running = true, segmentsAnalyzed = 40, castLocked = true))
+        val state = StudioProjectState(hub.session(""), "b1", StudioTab.Chapters, never)
+        show { PrecastScreen(state, sheets, {}, {}, true) }
+        repeat(4) {
+            if (rule.onAllNodesWithTag("studio_precast_skip").fetchSemanticsNodes().isNotEmpty() && !stepIsLast()) {
+                tag("studio_precast_skip").performScrollTo().performClick()
+                rule.waitForIdle()
+            }
+        }
+        tag("studio_precast_step").assertTextEquals("Bước 4/4")
+        absent("studio_precast_step_title")
+        assertTrue(rule.onAllNodesWithTag("studio_precast_done").fetchSemanticsNodes().isNotEmpty())
+    }
+
+    private fun stepIsLast() = runCatching { tag("studio_precast_step").assertTextEquals("Bước 4/4") }.isSuccess
 }

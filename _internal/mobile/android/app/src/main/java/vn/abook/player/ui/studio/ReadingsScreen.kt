@@ -27,6 +27,7 @@ import kotlinx.coroutines.launch
 import vn.abook.player.ClipState
 import vn.abook.player.StudioError
 import vn.abook.player.ui.addbook.BookField
+import vn.abook.player.ui.addbook.FieldGroup
 import vn.abook.player.ui.addbook.BookForm
 import vn.abook.player.ui.components.Caption
 import vn.abook.player.ui.components.Fold
@@ -100,7 +101,7 @@ private fun ReadingsList(state: StudioReadingsState, data: NameReadings, clip: C
         }
         item("search", "search") {
             Column(Modifier.fillMaxWidth().padding(top = Dim.s8, bottom = Dim.s8)) {
-                BookField(null, state.query, state::search, "studio_readings_search", description = ReadingsText.SEARCH, placeholder = ReadingsText.SEARCH)
+                BookField(null, state.query, state::search, "studio_readings_search", description = ReadingsText.SEARCH_NAME, placeholder = ReadingsText.SEARCH)
             }
         }
         items(found.take(state.limit), key = { "reading_${it.surface}" }, contentType = { "reading" }) { item ->
@@ -211,7 +212,7 @@ private fun ReadingEditor(state: StudioReadingsState, item: NameReading, fresh: 
         }
     }
 
-    Column(Modifier.fillMaxWidth().padding(top = Dim.s8, bottom = Dim.s12).testTag("studio_reading_editor")) {
+    FieldGroup(Modifier.fillMaxWidth().padding(top = Dim.s8, bottom = Dim.s12).testTag("studio_reading_editor")) {
         BookField(
             null, value, { value = it; clear() }, "studio_reading_field",
             description = ReadingsText.FIELD, placeholder = "vd ${item.spoken.ifEmpty { "Hên-khơ" }}",
@@ -235,7 +236,7 @@ private fun ReadingEditor(state: StudioReadingsState, item: NameReading, fresh: 
 /** Mục riêng cuối màn: dòng ghi công / xin ủng hộ máy gợi ý bỏ khỏi phần đọc. MẶC ĐỊNH KHÔNG ÁP; chữ của truyện không bao giờ bị sửa. */
 @Composable
 private fun Credits(state: StudioReadingsState) {
-    Fold(ReadingsText.SUGGEST_TITLE, "studio_readings_credits", Modifier.padding(top = Dim.s24), summary = "${state.credits.size}") {
+    Fold(ReadingsText.SUGGEST_TITLE, "studio_readings_credits", Modifier.padding(top = Dim.s24), summary = ReadingsText.lineCount(state.credits.size)) {
         RowHint(ReadingsText.SUGGEST_LEAD, Modifier.padding(bottom = Dim.s8))
         for ((index, group) in state.credits.withIndex()) {
             SwitchRow(

@@ -34,6 +34,7 @@ import kotlinx.coroutines.launch
 import vn.abook.player.ClipState
 import vn.abook.player.StudioErrors
 import vn.abook.player.ui.addbook.BookField
+import vn.abook.player.ui.addbook.FieldGroup
 import vn.abook.player.ui.components.Caption
 import vn.abook.player.ui.components.ChoiceRow
 import vn.abook.player.ui.components.ClockLabel
@@ -389,17 +390,19 @@ private fun ReadingAnswers(item: WorkItem, state: StudioProjectState) {
 
     AnswerButton(WorkText.readingKeep(item.current), { work.decide(WorkDecisions.pronunciation(item, item.current)) }, "studio_reading_keep", primary = true)
     RowHint(WorkText.READING_OR, Modifier.padding(top = Dim.s4))
-    BookField(
-        null, value, { value = it; problem = ""; suggestion = ""; heard = "" }, "studio_reading_field",
-        description = WorkText.readingField(item.surface.orEmpty()), placeholder = "vd ${item.current}",
-    )
-    InlineProblem(problem, null, "studio_reading_problem")
-    if (suggestion.isNotEmpty()) {
-        TextAction(WorkText.readingUse(suggestion), { value = suggestion; save(suggestion) }, "studio_reading_suggestion", align = Alignment.CenterStart)
+    FieldGroup(Modifier.fillMaxWidth(), Arrangement.spacedBy(Dim.s8)) {
+        BookField(
+            null, value, { value = it; problem = ""; suggestion = ""; heard = "" }, "studio_reading_field",
+            description = WorkText.readingField(item.surface.orEmpty()), placeholder = "vd ${item.current}",
+        )
+        InlineProblem(problem, null, "studio_reading_problem")
+        if (suggestion.isNotEmpty()) {
+            TextAction(WorkText.readingUse(suggestion), { value = suggestion; save(suggestion) }, "studio_reading_suggestion", align = Alignment.CenterStart)
+        }
+        if (heard.isNotEmpty()) RowHint(heard, Modifier.testTag("studio_reading_heard"))
+        AnswerButton(WorkText.READING_TRY, ::tryIt, "studio_reading_try", enabled = !busy && typed.isNotEmpty())
+        AnswerButton(WorkText.READING_SAVE, { save(typed) }, "studio_reading_save", primary = true, enabled = !busy && typed.isNotEmpty() && typed != item.current)
     }
-    if (heard.isNotEmpty()) RowHint(heard, Modifier.testTag("studio_reading_heard"))
-    AnswerButton(WorkText.READING_TRY, ::tryIt, "studio_reading_try", enabled = !busy && typed.isNotEmpty())
-    AnswerButton(WorkText.READING_SAVE, { save(typed) }, "studio_reading_save", primary = true, enabled = !busy && typed.isNotEmpty() && typed != item.current)
 }
 
 // ---- thẻ giọng / giới ----

@@ -34,9 +34,17 @@ private val unitToken = Regex("""(\d) ($UNITS)(?!\p{L})""")
  * trước). Khoảng trắng TRƯỚC dấu thành NBSP nên dấu dính vào chữ đứng trước; nếu chỗ ngắt đẹp nhất vẫn rơi sau dấu thì dấu ở CUỐI dòng và [separatorsAtLineEnd] báo để vẽ
  * trong suốt (chỉ để vẽ - chữ vẫn nguyên, bố cục không đổi).
  */
-fun tieSeparators(text: String): String = if (text.indexOf(' ') < 0) text else separatorToken.replace(text, "\u00A0")
+fun tieSeparators(text: String): String = if (text.indexOf(' ') < 0) text else tieDotAfter(separatorToken.replace(text,"\u00A0"))
 
 private val separatorToken = Regex("""(?<=\S) (?=[·\-–|/](?: |$))""")
+
+/**
+ * Dấu "·" dính cả chữ đứng SAU (soát 02-11: "Chương 1 · Chuyến tàu đêm" xuống dòng ở chấm thì chấm bị ẩn, tên đứt đôi mà không thấy dấu nối): ngắt ở đâu thì chấm cũng không
+ * mở và không đóng dòng, nên không còn chấm nào phải ẩn. Chỉ "·" (dấu nối hai nửa của một cụm); "-", "|", "/" giữ cách cũ.
+ */
+private fun tieDotAfter(text: String): String = dotAfterToken.replace(text, "\u00A0")
+
+private val dotAfterToken = Regex("""(?<=(?:^|[ \u00A0])·) (?=\S)""")
 
 /** Các ký tự dấu ngăn đứng riêng (bị khoảng trắng hai bên, hoặc đầu/cuối chuỗi, kẹp lại). */
 private const val SEPARATORS = "·-–|/"

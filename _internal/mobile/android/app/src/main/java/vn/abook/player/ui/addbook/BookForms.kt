@@ -1,7 +1,19 @@
 package vn.abook.player.ui.addbook
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.shape.RoundedCornerShape
 import vn.abook.player.ui.components.BasicText
 import androidx.compose.foundation.text.BasicTextField
@@ -22,6 +34,7 @@ import vn.abook.player.ui.components.PageHeader
 import vn.abook.player.ui.components.TextAction
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.theme.insetSurface
 
 /**
  * Khung chung của các màn Thêm sách / Sửa sách: đầu màn con như Cài đặt ([PageHeader]), nội dung chiếm phần còn lại, chân cố định (nút chính) ở đáy. Tên màn nhận
@@ -46,6 +59,23 @@ fun BookForm(
     }
 }
 
+/** [FieldGroup] đang bao quanh: ô nhập gọi nó mỗi khi đang gõ để cả nhóm (ô + việc dưới ô) cuộn lên khỏi bàn phím và chân trang ghim. */
+private val LocalFieldGroup = staticCompositionLocalOf<BringIntoViewRequester?> { null }
+
+/**
+ * Một ô nhập cùng NÚT/DÒNG nằm dưới nó ("Thêm chữ này", "Lưu", "Nghe thử"). Khi bàn phím mở, vùng nội dung chỉ còn thấp bằng vài dòng; ô nhập tự cuộn con trỏ vào
+ * thấy, nhưng việc dưới ô thì không ai cuộn tới - chân trang ghim che nó (soát điện thoại thật 02-11: "Thêm chữ này" mất dưới "Tiếp"). Mọi ô có việc dưới nó đứng
+ * trong nhóm này: đang gõ (hay bàn phím đang trượt lên) thì cả nhóm được đưa vào vùng thấy, trên chân trang.
+ */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun FieldGroup(modifier: Modifier = Modifier, verticalArrangement: Arrangement.Vertical = Arrangement.Top, content: @Composable ColumnScope.() -> Unit) {
+    val into = remember { BringIntoViewRequester() }
+    CompositionLocalProvider(LocalFieldGroup provides into) {
+        Column(modifier.bringIntoViewRequester(into), verticalArrangement, content = content)
+    }
+}
+
 /**
  * Ô nhập một dòng trên mặt chìm (cao ≥ 48, chữ dài thì ô cao thêm, không cuộn ngang). `label` = nhãn nhỏ phía trên; null = ô đứng một mình (tên màn đã nói nó là gì,
  * `description` cho trợ năng).
@@ -57,6 +87,10 @@ fun BookField(
     /** Chấm thay chữ (khoá, mật khẩu); `trailing` là việc ở cuối ô ("Hiện" / "Ẩn"). */
     masked: Boolean = false, trailing: (@Composable () -> Unit)? = null,
 ) {
+    val group = LocalFieldGroup.current
+    var focused by remember { mutableStateOf(false) }
+    val keyboardHeight = WindowInsets.ime.getBottom(LocalDensity.current)
+    if (group != null) LaunchedEffect(value, focused, keyboardHeight) { if (focused) group.bringIntoView() }
     Column(Modifier.fillMaxWidth()) {
         if (label != null) {
             BasicText(label, style = Abook.type.bodySmall)
@@ -67,8 +101,9 @@ fun BookField(
             cursorBrush = SolidColor(Abook.colors.accentText),
             keyboardOptions = if (masked) KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false) else KeyboardOptions(keyboardType = keyboard),
             visualTransformation = if (masked) PasswordVisualTransformation() else VisualTransformation.None,
-            modifier = Modifier.fillMaxWidth().heightIn(min = Dim.s48).clip(RoundedCornerShape(Dim.radiusControl))
-                .background(Abook.colors.bgSunken)
+            modifier = Modifier.fillMaxWidth().heightIn(min = Dim.s48)
+                .insetSurface(Abook.colors)
+                .onFocusChanged { focused = it.hasFocus }
                 .then(if (trailing != null) Modifier.padding(start = Dim.s12) else Modifier.padding(Dim.s12)).semantics { contentDescription = description }.testTag(tag),
             decorationBox = { inner ->
                 val text: @Composable (Modifier) -> Unit = { box ->

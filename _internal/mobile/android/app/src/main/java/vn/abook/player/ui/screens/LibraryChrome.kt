@@ -39,6 +39,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
@@ -225,7 +226,15 @@ fun SearchBox(ui: LibraryUiState, modifier: Modifier = Modifier) {
             }
             .clip(CircleShape)
             .drawBehind {
-                if (ui.search.value > 0f) drawRoundRect(colors.bgSunken, cornerRadius = CornerRadius(size.height / 2))
+                if (ui.search.value > 0f) {
+                    drawRoundRect(colors.bgSunken, cornerRadius = CornerRadius(size.height / 2))
+                    // Viền điều khiển như mọi mặt chìm ([insetSurface]); hiện dần cùng ô.
+                    val stroke = 1.dp.toPx()
+                    drawRoundRect(
+                        colors.controlLine.copy(alpha = ui.search.value), Offset(stroke / 2, stroke / 2), Size(size.width - stroke, size.height - stroke),
+                        CornerRadius((size.height - stroke) / 2), style = Stroke(stroke),
+                    )
+                }
             },
         verticalAlignment = Alignment.CenterVertically,
     ) {

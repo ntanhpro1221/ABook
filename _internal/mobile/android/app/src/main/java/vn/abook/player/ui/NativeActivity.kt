@@ -194,8 +194,12 @@ class NativeActivity : ComponentActivity() {
                         library.state.map { (it as? vn.abook.player.ui.data.LibraryState.Ready)?.books.orEmpty() }
                             .stateIn(scope, kotlinx.coroutines.flow.SharingStarted.Eagerly, emptyList())
                     }
+                    // Bản thử không có kho: trang sách đọc từ chính các cuốn giả (nếu không, trang chương trống và Lịch sử chờ mãi).
+                    val bookSource = remember(library) {
+                        if (demo) vn.abook.player.ui.data.DemoBookSource { (library.state.value as? vn.abook.player.ui.data.LibraryState.Ready)?.books.orEmpty() } else library
+                    }
                     AppShell(
-                        shell, state, player, covers, env, onFirstContent = ::onFirstContent, books = library, deletions = library.deletions, companion = if (demo) null else app.companion,
+                        shell, state, player, covers, env, onFirstContent = ::onFirstContent, books = bookSource, deletions = library.deletions, companion = if (demo) null else app.companion,
                         nowPlaying = rememberRepoNowPlaying(player, readAlong, env.music, env.voice, bookList, env.prepare, env.night),
                         imports = app.imports, editors = app.editors, exports = if (demo) null else app.exports, demo = demo, askNotifications = deviceLinks.askNotifications, autoPick = !demo,
                         pip = pip, studio = if (demo) null else app.studio,

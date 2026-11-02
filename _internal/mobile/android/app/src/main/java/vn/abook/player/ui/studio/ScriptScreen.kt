@@ -2,12 +2,14 @@ package vn.abook.player.ui.studio
 
 import vn.abook.player.ui.data.dotJoined
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -30,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import vn.abook.player.ClipState
 import vn.abook.player.StudioError
 import vn.abook.player.ui.addbook.BookField
+import vn.abook.player.ui.addbook.FieldGroup
 import vn.abook.player.ui.addbook.BookForm
 import vn.abook.player.ui.components.Caption
 import vn.abook.player.ui.components.DisclosureRow
@@ -128,7 +131,10 @@ private fun LineRow(state: StudioScriptState, script: ChapterScript, row: ShownL
                 if (line.editable && !row.context) {
                     TextAction(label, { sheets.show { dismiss -> PeopleSheet(state, script, line, dismiss) } }, "studio_line_who_${line.stableId}", align = Alignment.CenterStart)
                 } else {
-                    BasicText(label, style = Abook.type.label, modifier = Modifier.testTag("studio_line_who_${line.stableId}"))
+                    // Cùng chiều cao với nhãn có nút (TextAction: [Dim.s48]): hàng người kể (không sửa được) không chật hơn hàng thoại.
+                    Box(Modifier.heightIn(min = Dim.s48), contentAlignment = Alignment.CenterStart) {
+                        BasicText(label, style = Abook.type.label, modifier = Modifier.testTag("studio_line_who_${line.stableId}"))
+                    }
                 }
                 val pending = line.wish?.state == "pending"
                 Caption(listOfNotNull(ScriptText.line(line.seq), ScriptText.PENDING.takeIf { pending }, ScriptText.CONTEXT.takeIf { row.context }).dotJoined())
@@ -144,6 +150,7 @@ private fun LineRow(state: StudioScriptState, script: ChapterScript, row: ShownL
         if (hint != null && !row.context) RowHint(ScriptText.suggest(hint.note, hint.suggest), Modifier.padding(top = Dim.s4).testTag("studio_line_hint_${line.stableId}"), Abook.colors.accentText)
         if (editing) SpokenEditor(state, line) { onEdit(false) }
         else if (line.editable && !row.context) TextAction(ScriptText.SPOKEN, { onEdit(true) }, "studio_line_edit_${line.stableId}", align = Alignment.CenterStart)
+        else Spacer(Modifier.height(Dim.s16))  // hàng không có nút "Chữ đem đọc" vẫn chừa chỗ cuối như hàng có nút
         RowLine()
     }
 }
@@ -153,7 +160,7 @@ private fun LineRow(state: StudioScriptState, script: ChapterScript, row: ShownL
 private fun SpokenEditor(state: StudioScriptState, line: ScriptLine, onDone: () -> Unit) {
     val start = (line.lineWish?.spoken ?: line.spoken).orEmpty().ifEmpty { line.text }
     var value by remember(line.stableId) { mutableStateOf(start) }
-    Column(Modifier.fillMaxWidth().padding(top = Dim.s8, bottom = Dim.s12).testTag("studio_line_editor")) {
+    FieldGroup(Modifier.fillMaxWidth().padding(top = Dim.s8, bottom = Dim.s12).testTag("studio_line_editor")) {
         BookField(null, value, { value = it }, "studio_line_field", description = ScriptText.SPOKEN)
         RowHint(ScriptText.SPOKEN_HINT, Modifier.padding(top = Dim.s4))
         Column(Modifier.fillMaxWidth().padding(top = Dim.s8), verticalArrangement = Arrangement.spacedBy(Dim.s8)) {

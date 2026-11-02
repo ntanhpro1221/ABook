@@ -30,6 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import vn.abook.player.StudioError
 import vn.abook.player.ui.addbook.BookField
+import vn.abook.player.ui.addbook.FieldGroup
 import vn.abook.player.ui.addbook.BookForm
 import vn.abook.player.ui.components.Caption
 import vn.abook.player.ui.components.ChoiceRow
@@ -150,8 +151,10 @@ private fun SourceStep(state: StudioNewState, pick: () -> Unit) {
         }
         item("paste", "paste") {
             Fold(StudioNewText.PASTE, "studio_new_paste", Modifier.padding(top = Dim.s8)) {
-                BookField(null, pasted, { pasted = it }, "studio_new_paste_field", description = StudioNewText.PASTE_HINT, placeholder = StudioNewText.PASTE_HINT)
-                TextAction(StudioNewText.PASTE_ADD, { state.addText(pasted); pasted = "" }, "studio_new_paste_add", Modifier.fillMaxWidth())
+                FieldGroup {
+                    BookField(null, pasted, { pasted = it }, "studio_new_paste_field", description = StudioNewText.PASTE_HINT, placeholder = StudioNewText.PASTE_HINT)
+                    TextAction(StudioNewText.PASTE_ADD, { state.addText(pasted); pasted = "" }, "studio_new_paste_add", Modifier.fillMaxWidth())
+                }
             }
         }
         if (state.rows.isNotEmpty()) {

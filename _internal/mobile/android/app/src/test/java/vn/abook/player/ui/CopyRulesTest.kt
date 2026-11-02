@@ -88,4 +88,29 @@ class CopyRulesTest {
         assertEquals(1, cutSentences(listOf("""BasicText("Lỗi.\nKhông đọc được file ảnh")""")).size)
         assertEquals(0, cutSentences(listOf("""BasicText("Chưa mở được sách")""", """BasicText("Không có sách")""", """// "Không mở được" cũ""", """AppLog.w("Không mở được")""")).size)
     }
+
+    // ---- Lời lập trình viên trong chữ giao diện (soát 02-11: "Bản thử chưa có màn này.") ----
+
+    private val developerWords = Regex("""[Bb]ản thử|[Bb]ản demo|\bstub\b|chưa cài đặt|chưa triển khai""")
+
+    private fun developerText(lines: List<String>): List<String> = lines.flatMapIndexed { index, raw ->
+        val trimmed = raw.trimStart()
+        if (trimmed.startsWith("//") || trimmed.startsWith("*") || trimmed.startsWith("/*") || "AppLog." in raw) emptyList()
+        else literal.findAll(raw.substringBefore(" // ")).map { it.value.trim('"') }.filter { developerWords.containsMatchIn(it) }.map { "dòng ${index + 1}: $it" }.toList()
+    }
+
+    @Test
+    fun noUiStringSpeaksLikeADeveloper() {
+        val offenders = root.walkTopDown().filter { it.isFile && it.extension == "kt" }
+            .filter { it.relativeTo(root).invariantSeparatorsPath !in sampleText }
+            .flatMap { file -> developerText(file.readLines()).map { "${file.name} $it" } }.toList()
+        assertTrue("Chữ giao diện nói như lập trình viên (nói điều người nghe thấy: 'chưa mở được ở đây'): $offenders", offenders.isEmpty())
+    }
+
+    @Test
+    fun theDeveloperWordRuleCatchesAndLetsThrough() {
+        assertEquals(1, developerText(listOf("""BasicText("Bản thử chưa có màn này.")""")).size)
+        assertEquals(1, developerText(listOf("""BasicText("Đây là bản demo")""")).size)
+        assertEquals(0, developerText(listOf("""BasicText("Màn này chưa mở được ở đây.")""", """// Bản thử trong chú thích""")).size)
+    }
 }

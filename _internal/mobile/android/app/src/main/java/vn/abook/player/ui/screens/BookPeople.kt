@@ -61,6 +61,7 @@ import vn.abook.player.ui.data.CastMember
 import vn.abook.player.ui.data.Gender
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.theme.insetSurface
 
 /*
  * Việc làm với MỘT người ở tab Nhân vật: "Gộp vào người khác", "Đổi tên", "Đổi giới tính" - viết lại từ studio/CastEdits.tsx + studio/MergePeople.tsx,
@@ -278,7 +279,7 @@ internal fun SheetField(
         }
     }
     Row(
-        modifier.fillMaxWidth().heightIn(min = Dim.s48).clip(RoundedCornerShape(Dim.radiusControl)).background(colors.bgSunken).padding(horizontal = Dim.s12),
+        modifier.fillMaxWidth().heightIn(min = Dim.s48).insetSurface(colors).padding(horizontal = Dim.s12),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (leading != null) {

@@ -709,7 +709,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
         <p className="text-sm text-fg-2">Chưa có đoạn nào - nhạc nền dựng sau khi sách đã phân tích.</p>
       ) : (
         [...byChapter.entries()].map(([chapterId, scenes]) => (
-          <Fold key={chapterId} storageKey={`studio.music.${bookId}.${chapterId}`} title={chapterTitle(chapterId)} summary={`${scenes.length}`} heading="h3" className={overrides.enabled ? undefined : "opacity-50"}>
+          <Fold key={chapterId} storageKey={`studio.music.${bookId}.${chapterId}`} title={chapterTitle(chapterId)} summary={`${scenes.length} đoạn`} heading="h3" className={overrides.enabled ? undefined : "opacity-50"}>
             <ul className="divide-y divide-line">
               {scenes.map((scene, index) => {
                 const track = scene.link ? plan.tracks[scene.link] : undefined;

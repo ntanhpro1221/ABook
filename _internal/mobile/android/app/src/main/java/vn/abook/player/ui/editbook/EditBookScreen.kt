@@ -29,6 +29,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import vn.abook.player.ui.addbook.BookField
 import vn.abook.player.ui.addbook.BookForm
+import vn.abook.player.ui.addbook.FieldGroup
 import vn.abook.player.ui.addbook.RevertName
 import vn.abook.player.ui.components.ActionRow
 import vn.abook.player.ui.components.BookCover
@@ -223,19 +224,21 @@ fun EditChapterRoute(editor: BookEditor, chapterId: Long, onBack: () -> Unit) {
         if (row != null) Column(Modifier.fillMaxWidth().padding(top = Dim.s16)) {
             val textOnly = state.saved?.textOnly == true
             // Sách chữ: một tên. Sách nói: nhãn ("Chương 3") và tên riêng.
-            BookField(if (textOnly) null else "Nhãn", row.title, { value ->
-                editor.change { it.copy(chapters = it.chapters.map { chapter -> if (chapter.id == chapterId) chapter.copy(title = value) else chapter }) }
-            }, "chapter_title", description = if (textOnly) "Tên chương" else "Nhãn")
-            if (!textOnly) {
-                Spacer(Modifier.height(Dim.s16))
-                BookField("Tên", row.subtitle, { value ->
-                    editor.change { it.copy(chapters = it.chapters.map { chapter -> if (chapter.id == chapterId) chapter.copy(subtitle = value) else chapter }) }
-                }, "chapter_subtitle")
-            }
-            InlineProblem(state.problem, editor::retry, "chapter_problem")
-            if (row.renamed) {
-                Spacer(Modifier.height(Dim.s16))
-                RevertName(row.original, { editor.revertChapter(chapterId) })
+            FieldGroup {
+                BookField(if (textOnly) null else "Nhãn", row.title, { value ->
+                    editor.change { it.copy(chapters = it.chapters.map { chapter -> if (chapter.id == chapterId) chapter.copy(title = value) else chapter }) }
+                }, "chapter_title", description = if (textOnly) "Tên chương" else "Nhãn")
+                if (!textOnly) {
+                    Spacer(Modifier.height(Dim.s16))
+                    BookField("Tên", row.subtitle, { value ->
+                        editor.change { it.copy(chapters = it.chapters.map { chapter -> if (chapter.id == chapterId) chapter.copy(subtitle = value) else chapter }) }
+                    }, "chapter_subtitle")
+                }
+                InlineProblem(state.problem, editor::retry, "chapter_problem")
+                if (row.renamed) {
+                    Spacer(Modifier.height(Dim.s16))
+                    RevertName(row.original, { editor.revertChapter(chapterId) })
+                }
             }
         }
     }
@@ -336,10 +339,12 @@ private fun ReadingForm(surface: String, current: String, saving: Boolean, onSav
     var value by remember(surface, current) { mutableStateOf(current) }
     Column(Modifier.fillMaxWidth().padding(bottom = Dim.s16).testTag("reading_form")) {
         RowHint("“$surface” đọc là", Modifier.padding(bottom = Dim.s8))
-        BookField(null, value, { value = it }, "reading_field", !saving, description = "Cách đọc cho $surface", placeholder = "vd Ha-ru-tô")
-        Spacer(Modifier.height(Dim.s12))
-        PrimaryButton("Lưu cho cả cuốn", { onSave(value) }, Modifier.fillMaxWidth().testTag("reading_save"),
-            enabled = !saving && ReadingText.canSave(surface, current, value))
-        if (current.isNotEmpty()) TextAction("Đọc như trong sách", { if (!saving) onSave("") }, "reading_plain", Modifier.fillMaxWidth(), align = Alignment.Center)
+        FieldGroup {
+            BookField(null, value, { value = it }, "reading_field", !saving, description = "Cách đọc cho $surface", placeholder = "vd Ha-ru-tô")
+            Spacer(Modifier.height(Dim.s12))
+            PrimaryButton("Lưu cho cả cuốn", { onSave(value) }, Modifier.fillMaxWidth().testTag("reading_save"),
+                enabled = !saving && ReadingText.canSave(surface, current, value))
+            if (current.isNotEmpty()) TextAction("Đọc như trong sách", { if (!saving) onSave("") }, "reading_plain", Modifier.fillMaxWidth(), align = Alignment.Center)
+        }
     }
 }

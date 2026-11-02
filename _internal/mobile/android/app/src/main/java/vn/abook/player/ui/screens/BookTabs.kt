@@ -180,17 +180,20 @@ fun EmptyNote(title: String, body: String, modifier: Modifier = Modifier, tag: S
 
 /**
  * Mục "Lịch sử": lượt nghe của hồ sơ đang dùng, mới nhất trước, gom theo ngày (mỗi ngày một phần gập, tóm tắt "3 lượt nghe"); bấm "Nghe tiếp từ …" nghe tiếp từ CUỐI lượt ấy.
- * `detail` null = trang chưa đọc xong: ba khung chờ (không phải "Chưa có lịch sử nghe" rồi mới đổi).
+ * `detail` null và chưa `loaded` = trang chưa đọc xong: ba khung chờ (không phải "Chưa có lịch sử nghe" rồi mới đổi); đã `loaded` mà vẫn null (kho không đọc được) = "Chưa có lịch sử nghe" như web, không chờ mãi.
  */
-fun LazyListScope.historyItems(detail: BookDetail?, fade: () -> Float, onResume: (ListenSession) -> Unit) {
+fun LazyListScope.historyItems(detail: BookDetail?, loaded: Boolean, fade: () -> Float, onResume: (ListenSession) -> Unit) {
     if (detail == null) {
-        items(HISTORY_SKELETON, key = { "history_skeleton_$it" }, contentType = { "skeleton" }) { SkeletonLine(fade) }
+        if (!loaded) {
+            items(HISTORY_SKELETON, key = { "history_skeleton_$it" }, contentType = { "skeleton" }) { SkeletonLine(fade) }
+            return
+        }
+        // Đọc xong mà kho không trả trang: như web, nói "Chưa có lịch sử nghe" (không bao giờ khung chờ mãi).
+        item(key = "history_empty", contentType = "empty") { HistoryEmpty(fade) }
         return
     }
     if (detail.sessions.isEmpty()) {
-        item(key = "history_empty", contentType = "empty") {
-            EmptyNote("Chưa có lịch sử nghe", "Mỗi lượt nghe lưu lại chỗ bạn dừng.", Modifier.fade(fade), "history_empty", icon = { ink -> HistoryIcon(ink, size = 28.dp) })
-        }
+        item(key = "history_empty", contentType = "empty") { HistoryEmpty(fade) }
         return
     }
     val titles = detail.chapters.associate { it.id to it.title }
@@ -213,6 +216,10 @@ fun LazyListScope.historyItems(detail: BookDetail?, fade: () -> Float, onResume:
 }
 
 private const val HISTORY_SKELETON = 3
+
+@Composable
+private fun HistoryEmpty(fade: () -> Float) =
+    EmptyNote("Chưa có lịch sử nghe", "Mỗi lượt nghe lưu lại chỗ bạn dừng.", Modifier.fade(fade), "history_empty", icon = { ink -> HistoryIcon(ink, size = 28.dp) })
 
 /** "7 ngày qua: **2 giờ** nghe cuốn này." - phần thời gian đậm màu mực. */
 private fun weekText(seconds: Double): AnnotatedString {
@@ -425,7 +432,7 @@ private fun Avatar(initials: String, hue: Int) {
 @Composable
 private fun SkeletonLine(fade: () -> Float) {
     val sunken = Abook.colors.bgSunken
-    Column(Modifier.fade(fade).fillMaxWidth().height(64.dp).padding(vertical = Dim.s12), verticalArrangement = Arrangement.Center) {
+    Column(Modifier.fade(fade).fillMaxWidth().height(64.dp).padding(vertical = Dim.s12).testTag("skeleton"), verticalArrangement = Arrangement.Center) {
         Box(Modifier.fillMaxWidth(0.6f).height(14.dp).clip(RoundedCornerShape(Dim.radiusControl)).background(sunken))
         Spacer(Modifier.height(Dim.s8))
         Box(Modifier.fillMaxWidth(0.3f).height(10.dp).clip(RoundedCornerShape(Dim.radiusControl)).background(sunken))

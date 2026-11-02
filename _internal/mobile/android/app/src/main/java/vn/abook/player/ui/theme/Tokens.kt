@@ -12,6 +12,7 @@ internal object LightPalette {
     const val TEXT_2 = 0xFF4F4A43L
     const val TEXT_3 = 0xFF67615AL
     const val FG_3 = 0xFF8A8478L
+    const val CONTROL_LINE = 0xFF857E72L
     const val ACCENT = 0xFFD4912BL
     const val ACCENT_INK = 0xFF1D1304L
     const val ACCENT_TEXT = 0xFF8A5309L
@@ -30,6 +31,7 @@ internal object DarkPalette {
     const val TEXT_2 = 0xFFBAB3A8L
     const val TEXT_3 = 0xFFA0998EL
     const val FG_3 = 0xFF7A746AL
+    const val CONTROL_LINE = 0xFF75706AL
     const val ACCENT = 0xFFE9A945L
     const val ACCENT_INK = 0xFF1B1204L
     const val ACCENT_TEXT = 0xFFF0B961L

@@ -96,6 +96,7 @@ import vn.abook.player.ui.music.MusicText
 import vn.abook.player.ui.music.PlayerMusic
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.theme.insetSurface
 import java.util.concurrent.ConcurrentHashMap
 import vn.abook.player.ui.components.fadeEdges
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -376,7 +377,7 @@ fun FindInBookSheet(detail: BookDetail, source: BookSource, onPick: (FindHit) ->
         RowHint(detail.book.title)
         Spacer(Modifier.height(Dim.s12))
         Row(
-            Modifier.fillMaxWidth().heightIn(min = Dim.s48).clip(RoundedCornerShape(Dim.radiusControl)).background(colors.bgSunken)
+            Modifier.fillMaxWidth().heightIn(min = Dim.s48).insetSurface(colors)
                 .padding(horizontal = Dim.s12),
             verticalAlignment = Alignment.CenterVertically,
         ) {

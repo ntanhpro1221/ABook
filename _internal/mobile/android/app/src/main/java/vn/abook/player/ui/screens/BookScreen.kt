@@ -321,7 +321,7 @@ fun BookScreen(
                             }
                         }
                     }
-                    BookTab.History -> historyItems(detail, { fade.value }) { session -> actions.playChapter(shown.id, session.toChapter, session.toSeconds) }
+                    BookTab.History -> historyItems(detail, ui.loaded, { fade.value }) { session -> actions.playChapter(shown.id, session.toChapter, session.toSeconds) }
                     BookTab.Cast -> castItems(
                         ui.cast, ui.castLoaded, reached, later, { later = !later }, samples,
                         onMore = { person ->
@@ -667,7 +667,7 @@ private fun PreparedMark() {
 @Composable
 private fun SkeletonRow() {
     val sunken = Abook.colors.bgSunken
-    Row(Modifier.fillMaxWidth().height(64.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.fillMaxWidth().height(64.dp).testTag("skeleton"), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size(Dim.s24))
         Spacer(Modifier.width(Dim.s12))
         Column(Modifier.weight(1f)) {

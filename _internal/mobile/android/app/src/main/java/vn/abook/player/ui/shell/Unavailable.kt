@@ -29,7 +29,7 @@ import vn.abook.player.ui.voice.VoicePage
 @Composable
 internal fun Unavailable(destination: Destination, onBack: () -> Unit) {
     BookForm(unavailableTitle(destination), onBack, "unavailable_screen") {
-        BasicText("Bản thử chưa có màn này.", style = Abook.type.body.copy(color = Abook.colors.text2), modifier = Modifier.fillMaxWidth().padding(top = Dim.s8))
+        BasicText(UNAVAILABLE_LINE, style = Abook.type.body.copy(color = Abook.colors.text2), modifier = Modifier.fillMaxWidth().padding(top = Dim.s8))
     }
 }
 
@@ -63,3 +63,6 @@ internal fun unavailableTitle(destination: Destination): String = when (destinat
         StudioSubKind.Cover -> StudioCoverText.TITLE
     }
 }
+
+/** Câu duy nhất của màn trống, bằng lời người nghe ("ở đây" như web: "Ở đây chưa mở được file sách"), không nói về "bản thử" hay cách dựng app. */
+internal const val UNAVAILABLE_LINE = "Màn này chưa mở được ở đây."

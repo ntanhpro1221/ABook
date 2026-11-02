@@ -60,7 +60,9 @@ class TextWrapRulesTest {
 
     @Test
     fun separatorsAreTiedToTheWordBeforeThem() {
-        assertEquals("Tác giả · 3 chương", tieSeparators("Tác giả · 3 chương"))
+        // "·" dính cả chữ trước lẫn chữ sau (không đóng, không mở dòng); "-", "–", "|", "/" chỉ dính chữ trước.
+        assertEquals("Tác giả · 3 chương", tieSeparators("Tác giả · 3 chương"))
+        assertEquals("Chương 1 · Chuyến tàu đêm → Chương 3 · Buổi sáng", tieSeparators("Chương 1 · Chuyến tàu đêm → Chương 3 · Buổi sáng"))
         assertEquals("a - b – c | d / e", tieSeparators("a - b – c | d / e"))
         // Gạch nối trong từ, đường dẫn, ngày: không phải dấu ngăn đứng riêng.
         assertEquals("Spider-Man 12/05 a/b", tieSeparators("Spider-Man 12/05 a/b"))
@@ -95,7 +97,7 @@ class TextWrapRulesTest {
         assertEquals("lúc 1:40", keepNumbersTogether("lúc 1:40"))
         assertEquals("rộng 2,0 lần", keepNumbersTogether("rộng 2,0 lần"))
         assertEquals("năm 2026", keepNumbersTogether("năm 2026"))
-        assertEquals("a 1 · b 2", shapeForWrap("a 1 · b 2"))
+        assertEquals("a 1 · b 2", shapeForWrap("a 1 · b 2"))
     }
 
     @Test
@@ -202,7 +204,8 @@ class TextWrapRulesTest {
     private fun assertTransparentAtLineEnd(color: Boolean) {
         var found = false
         for (width in 100..300 step 6) {
-            val layout = lay("Tác giả · hai", width, color)
+            // Dấu "·" nay dính cả chữ sau nên không bao giờ rơi cuối dòng; dùng "-" (vẫn có thể rơi cuối dòng, vẽ trong suốt).
+            val layout = lay("Tác giả - hai", width, color)
             val hidden = separatorsAtLineEnd(layout.layoutInput.text.text, (0 until layout.lineCount).map { layout.getLineEnd(it) })
             if (hidden.isEmpty()) continue
             found = true

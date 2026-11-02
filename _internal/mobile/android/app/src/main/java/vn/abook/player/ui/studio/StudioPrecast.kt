@@ -118,8 +118,8 @@ object PrecastLogic {
     /** Số việc mỗi bước, ngắn (dòng phụ của bước). */
     fun count(step: PrecastStep, cast: List<WorkItem>, names: List<WorkItem>, lines: List<WorkItem>, people: Int): String = when (step) {
         PrecastStep.Cast -> if (cast.isNotEmpty()) "${cast.size} việc" else "$people người"
-        PrecastStep.Names -> if (names.isNotEmpty()) "${names.size} tên" else "ổn"
-        PrecastStep.Lines -> if (lines.isNotEmpty()) "${lineCount(lines)} câu" else "ổn"
+        PrecastStep.Names -> if (names.isNotEmpty()) "${names.size} tên" else PrecastText.NAMES_FINE
+        PrecastStep.Lines -> if (lines.isNotEmpty()) "${lineCount(lines)} câu" else PrecastText.LINES_FINE
         PrecastStep.Done -> ""
     }
 
@@ -140,6 +140,9 @@ object PrecastText {
     const val CAST_UNSURE = "Máy chưa chắc"
     const val NAMES_ALL = "Xem và sửa cách đọc từng tên ở danh sách riêng."
     const val NAMES_OPEN = "Cách đọc tên"
+    /** Dòng phụ của bước khi không có gì cần xem (cùng chữ với PrecastReview.tsx): một câu đủ nghĩa, không phải chữ "ổn" lẻ loi. */
+    const val NAMES_FINE = "Tên nào cũng ổn"
+    const val LINES_FINE = "Không câu nào nghi"
     const val SKIP = "Bỏ qua bước này"
     const val NEXT = "Tiếp tục"
     const val DONE_TITLE = "Xong lượt duyệt"

@@ -133,7 +133,7 @@ export function NameReadings({ bookId, focus = false, name = "" }: { bookId: str
             setQuery(event.target.value);
             setLimit(PAGE);
           }}
-          placeholder="Tìm tên, hoặc gõ một chữ để thêm cách đọc"
+          placeholder="Tìm hoặc thêm tên"
           aria-label="Tìm tên"
           autoComplete="off"
           spellCheck={false}

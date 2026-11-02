@@ -22,6 +22,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import vn.abook.player.ui.addbook.BookField
+import vn.abook.player.ui.addbook.FieldGroup
 import vn.abook.player.ui.components.UnplugIcon
 import vn.abook.player.ui.components.Caption
 import vn.abook.player.ui.components.ConfirmPage
@@ -152,23 +153,25 @@ fun RenameSheet(current: String, state: DevicesState, dismiss: () -> Unit) {
         Spacer(Modifier.height(Dim.s8))
         Caption("Tên hiện ở danh sách thiết bị đã ghép của máy này.")
         Spacer(Modifier.height(Dim.s16))
-        BookField(null, name, { name = it; problem = "" }, "rename_field", !working, "Tên thiết bị")
-        if (problem.isNotEmpty()) {
-            Spacer(Modifier.height(Dim.s8))
-            BasicText(problem, style = Abook.type.bodySmall.copy(color = Abook.colors.danger), modifier = Modifier.testTag("rename_problem"))
-        }
-        Spacer(Modifier.height(Dim.s24))
-        PrimaryButton(if (working) "Đang lưu" else "Lưu", {
-            if (working || name.isBlank()) return@PrimaryButton
-            working = true
-            scope.launch {
-                val error = state.rename(name.trim())
-                working = false
-                problem = error.orEmpty()
-                if (error == null) dismiss()
+        FieldGroup {
+            BookField(null, name, { name = it; problem = "" }, "rename_field", !working, "Tên thiết bị")
+            if (problem.isNotEmpty()) {
+                Spacer(Modifier.height(Dim.s8))
+                BasicText(problem, style = Abook.type.bodySmall.copy(color = Abook.colors.danger), modifier = Modifier.testTag("rename_problem"))
             }
-        }, Modifier.fillMaxWidth().testTag("rename_save"), enabled = !working && name.isNotBlank())
-        QuietButton("Để nguyên", dismiss, "rename_cancel")
+            Spacer(Modifier.height(Dim.s24))
+            PrimaryButton(if (working) "Đang lưu" else "Lưu", {
+                if (working || name.isBlank()) return@PrimaryButton
+                working = true
+                scope.launch {
+                    val error = state.rename(name.trim())
+                    working = false
+                    problem = error.orEmpty()
+                    if (error == null) dismiss()
+                }
+            }, Modifier.fillMaxWidth().testTag("rename_save"), enabled = !working && name.isNotBlank())
+            QuietButton("Để nguyên", dismiss, "rename_cancel")
+        }
     }
 }
 

@@ -51,6 +51,7 @@ import vn.abook.player.ui.data.Choice
 import vn.abook.player.ui.motion.Motion
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.theme.insetSurface
 import vn.abook.player.ui.theme.MotionMs
 
 /*
@@ -384,10 +385,10 @@ fun InlineProblem(message: String, onRetry: (() -> Unit)? = null, tag: String = 
     }
 }
 
-/** Câu dẫn lại nguyên văn trên mặt chìm (ví dụ một lời chú): bo 8, đệm 12, chữ phụ - không viền, không khung. */
+/** Câu dẫn lại nguyên văn trên mặt chìm (ví dụ một lời chú): bo 8, đệm 12, chữ phụ, viền điều khiển ([insetSurface]). */
 @Composable
 fun QuoteSample(text: String, modifier: Modifier = Modifier) {
-    Box(modifier.fillMaxWidth().clip(RoundedCornerShape(Dim.radiusControl)).background(Abook.colors.bgSunken).padding(Dim.s12)) {
+    Box(modifier.fillMaxWidth().insetSurface(Abook.colors).padding(Dim.s12)) {
         BasicText(text, style = Abook.type.bodySmall)
     }
 }
