@@ -713,15 +713,15 @@ private slots:
         QCOMPARE(rig.mixer.decodingCount(), size_t(1));
         server.finish();
     }
-    // Sát chỗ thôi kêu (còn dưới DECODE_LEAD_S + UNDERRUN_LOW_S + mờ vào + mờ ra = 3,1 s) thì bài đang tải dở giữ im dù đã tải đủ - kêu chừng ấy
+    // Sát chỗ thôi kêu (còn dưới DECODE_LEAD_S + UNDERRUN_LOW_S + mờ vào + mờ ra = 3,6 s, như web / Android) thì bài đang tải dở giữ im dù đã tải đủ - kêu chừng ấy
     // chỉ là một tiếng chớp (web 80->12 02-11: vào lại ở 119,5 s, đổi mốc 120 s, mờ ra 121,5 s); còn đủ chỗ thì vào.
     void aTrackNearWhereItStopsSoundingStaysSilent() {
         const QByteArray bytes = fixtureBytes(QStringLiteral("music_student/stereo_44k.mp3"));
-        for (const double until : {2.5, 4.0}) {
+        for (const double until : {2.5, 5.0}) {
             HeldServer server(bytes, bytes.size() * 6 / 10);
             server.drip(bytes.size() / 8);
             MixerRig rig; MixVoice voice(&rig.mixer); voice.setVolume(1); voice.load(server.url(), 0); voice.setPlayUntil(until); voice.play();
-            QCOMPARE(QTest::qWaitFor([&] { return sounds(rig); }, 2000), until > 3.1);
+            QCOMPARE(QTest::qWaitFor([&] { return sounds(rig); }, 2000), until > 3.6);
             QVERIFY(server.sent < bytes.size());
             server.finish();
         }

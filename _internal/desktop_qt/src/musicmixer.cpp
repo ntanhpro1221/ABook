@@ -49,8 +49,9 @@ constexpr double RATE_WINDOW_S = double(ABOOK_MIX_UNDERRUN_RATE_WINDOW_SECONDS);
 constexpr double BURST_S = double(ABOOK_MIX_UNDERRUN_BURST_SECONDS); // byte tới trong chừng này đầu lượt tải là phần máy chủ đã có sẵn, không phải tốc độ tải
 constexpr double DOWNLOAD_MARGIN = double(ABOOK_MIX_UNDERRUN_MARGIN);
 constexpr double UNDERRUN_FADE_S = double(ABOOK_MIX_UNDERRUN_FADE_SECONDS);
-constexpr double UNDERRUN_LOW_S = 0.5;    // vòng đệm còn dưới chừng này mà bộ giải mã đã cạn byte và tải không kịp: bắt đầu mờ ra
-constexpr double UNDERRUN_RESUME_S = 1.0; // giữ im tới khi vòng đệm có lại chừng này VÀ tải kịp (hay bài đã tải xong)
+// Phần đã tải trước con trỏ còn dưới chừng này mà tải không kịp: bắt đầu mờ ra; giữ im tới khi có lại chừng này VÀ mayEnter. Qt xét trên vòng PCM chỉ
+// khi bộ giải mã đã tới mép tải (at >= job->frames) - lúc ấy vòng chứa đúng mọi thứ đã tải trước con trỏ, cùng đại lượng web / Android đo, nên cùng số.
+constexpr double UNDERRUN_LOW_S = double(ABOOK_MIX_UNDERRUN_LOW_SECONDS);
 constexpr double DECODE_LEAD_S = double(ABOOK_MIX_UNDERRUN_LEAD_SECONDS); // phần phải có sẵn trước con trỏ đọc lúc vào (giải mã đi sau byte tải về một lượt)
 enum class Format { Unknown, Mp3, Mf };
 Format formatOf(const QByteArray &data) {
@@ -909,7 +910,7 @@ void MusicMixer::serviceReader() {
             s->ring->clear(); s->mixed = s->heard = 0; s->spans.clear(); s->eof = false; s->reposition = false; s->joining = true; d->joinSoon = true;
             s->starving = s->hold = false; s->fadeOutLeft = s->fadeOutLen = s->fadeInLen = 0;
             // Tới chỗ mà tải không kịp hay sát chỗ thôi kêu (lúc vào, lúc bed căn bài theo mốc, lúc tua): giữ im ngay như lúc hụt - báo buffering,
-            // bài cũ giữ chỗ - rồi mờ vào khi vòng đệm có lại UNDERRUN_RESUME_S và mayEnter. Lúc vào và lúc vào lại cùng một phép xét.
+            // bài cũ giữ chỗ - rồi mờ vào khi vòng đệm có lại UNDERRUN_LOW_S và mayEnter. Lúc vào và lúc vào lại cùng một phép xét.
             if (s->job && !mayEnter(*s->job, s->origin, s->origin, s->until)) s->starving = s->hold = true;
             if (s->seeking) postSeeked(s);
         }
@@ -951,7 +952,7 @@ void MusicMixer::serviceReader() {
             }
             s->ring->write(block.data(), block.size());
         }
-        if (s->starving && (!s->job || (s->ring->readable() >= size_t(UNDERRUN_RESUME_S * s->rate) * 2
+        if (s->starving && (!s->job || (s->ring->readable() >= size_t(UNDERRUN_LOW_S * s->rate) * 2
                                         && mayEnter(*s->job, s->origin + s->mixed, quint64((s->file->pos() - HEADER) / 4), s->until))))
             s->starving = false; // tải đã kịp (hay bài đã tải xong): render mờ vào
     }
