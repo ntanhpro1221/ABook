@@ -1303,7 +1303,9 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
           {!textOnly && <TabsTrigger value="cast">Nhân vật</TabsTrigger>}
         </TabsList>
         {/* Hai cột: hàng tab đứng yên ở đầu cột phải, chỉ phần bên dưới cuộn. */}
-        <div ref={listFade.ref} style={listFade.style} data-book-list className={split ? "min-h-0 flex-1 overflow-y-auto pb-6" : undefined}>
+        {/* -mx-4 px-4 pt-1: khung cuộn cắt mọi thứ tràn ra ngoài nó - nền rê chuột (-inset-x-3) và vòng tiêu điểm (4) của hàng mở/gập và của chính
+            ngăn tab ở mép sát khung; lề cho chúng chỗ. */}
+        <div ref={listFade.ref} style={listFade.style} data-book-list className={split ? "-mx-4 min-h-0 flex-1 overflow-y-auto px-4 pt-1 pb-6" : undefined}>
         <TabsPanels value={tab}>
         <TabsContent value="chapters" className="mt-2" ref={chapterList}>
           <ChapterGroups book={book} currentChapter={point?.chapter.id} onDone={(chapterId, done) => mutations.chapterDone.mutate({ chapterId, done })} onRename={editable ? setRenamingChapter : undefined} prepared={prepared} layout={split ? "split" : "stacked"} />
