@@ -48,6 +48,12 @@ class FastConnectTest {
     private val live = InetAddress.getByName("127.0.0.1")
     private val closeables = mutableListOf<AutoCloseable>()
 
+    // Địa chỉ mù treo tới hết hạn nối của cuộc gọi. Các bài "không chờ địa chỉ mù" cho hạn này RẤT dài và chỉ đòi xong trong QUICK_MS (vẫn là một phần
+    // sáu hạn): chờ nhầm địa chỉ mù thì mất đủ HANG_MS và bài đỏ rõ ràng, còn máy bận làm luồng chạy trễ vài giây thì không đỏ oan. (Hạn 5 giây với mốc
+    // 1 giây trước đây: 128 luồng ngốn CPU trên máy 32 lõi đủ để một lượt nối thật mất hơn 1 giây.)
+    private val HANG_MS = 60_000
+    private val QUICK_MS = 10_000L
+
     @After fun cleanUp() { closeables.reversed().forEach { runCatching { it.close() } } }
 
     private fun <T : AutoCloseable> T.track(): T = also { closeables += it }
@@ -83,6 +89,14 @@ class FastConnectTest {
 
     private fun server() = ServerSocket(0, 50, live).track()
 
+    private fun waitUntil(what: String, condition: () -> Boolean) {
+        val end = System.nanoTime() + TimeUnit.SECONDS.toNanos(10)
+        while (!condition()) {
+            assertTrue("hết 10 giây mà chưa $what", System.nanoTime() < end)
+            Thread.sleep(5)
+        }
+    }
+
     private inline fun <T> timed(block: () -> T): Pair<T, Long> {
         val start = System.nanoTime()
         val result = block()
@@ -95,13 +109,17 @@ class FastConnectTest {
         val server = server()
         val net = Net(server.localPort, dead = setOf(blackhole))
         val fast = FastConnect(resolver(blackhole, live), net).track()
-        val (socket, ms) = timed { fast.connect("abook.test", 443, 5000) }
-        assertTrue("mất $ms ms", ms < 1000)
+        val (socket, ms) = timed { fast.connect("abook.test", 443, HANG_MS) }
+        assertTrue("mất $ms ms", ms < QUICK_MS)
         assertTrue(socket.isConnected && !socket.isClosed)
-        assertEquals(listOf(blackhole, live), net.started)
+        // Cuộc đua trả về ngay khi địa chỉ sống thắng, còn luồng thử địa chỉ mù có thể ghi nhận lần thử của nó sau đó, và máy bận thì có thể ghi nhận
+        // TRƯỚC (bước so le chỉ cho biết lúc luồng được giao việc, không phải lúc nó chạy): chờ cả hai rồi so như tập. Thứ tự thử là việc của
+        // familiesAreInterleavedFirstChoiceFirst (mọi địa chỉ hỏng ngay nên thứ tự là tất định).
+        waitUntil("cả hai địa chỉ của cuộc đua đã ghi nhận") { net.started.size == 2 && net.sockets.size == 2 }
+        assertEquals(setOf(blackhole, live), net.started.toSet())
         server.accept().close()
-        // Cuộc thử mù bị đóng, không để rò socket.
-        assertTrue(net.sockets[0].isClosed)
+        // Cuộc thử mù bị đóng, không để rò socket (socket nào trong danh sách ghi nhận trước cũng không nói được nó là cuộc thử nào: lấy cái không phải người thắng).
+        assertTrue(net.sockets.single { it !== socket }.isClosed)
         socket.close()
     }
 
@@ -110,7 +128,7 @@ class FastConnectTest {
         val net = Net(server.localPort, refused = setOf(blackhole))
         val fast = FastConnect(resolver(blackhole, live), net, staggerMs = 60_000).track()
         val (socket, ms) = timed { fast.connect("abook.test", 443, 5000) }
-        assertTrue("mất $ms ms", ms < 1000)
+        assertTrue("mất $ms ms", ms < QUICK_MS) // bước so le 60 giây: chờ bước ấy thì mất đủ 60 giây
         socket.close()
     }
 
@@ -121,14 +139,16 @@ class FastConnectTest {
         assertEquals(listOf(c6, a4, d6), FastConnect.interleave(listOf(c6, d6, a4)))
         assertEquals(listOf(a4, b4), FastConnect.interleave(listOf(a4, b4, a4)))
         val net = Net(1, refused = setOf(a4, b4, c6, d6))
-        val fast = FastConnect(resolver(a4, b4, c6, d6), net).track()
+        // Mọi địa chỉ hỏng ngay: địa chỉ kế đi theo lỗi của địa chỉ trước, không theo đồng hồ. Bước so le dài để máy bận (luồng báo lỗi chạy trễ quá bước)
+        // không làm hai địa chỉ chạy chồng nhau và thứ tự ghi nhận đảo.
+        val fast = FastConnect(resolver(a4, b4, c6, d6), net, staggerMs = 60_000).track()
         try { fast.connect("abook.test", 443, 5000); fail() } catch (_: ConnectException) { }
         assertEquals(listOf(a4, c6, b4, d6), net.started)
     }
 
     @Test fun whenEveryAddressFailsTheLastErrorIsRaised() {
         val net = Net(1, refused = setOf(blackhole, blackhole2, live))
-        val fast = FastConnect(resolver(blackhole, blackhole2, live), net).track()
+        val fast = FastConnect(resolver(blackhole, blackhole2, live), net, staggerMs = 60_000).track() // nối tiếp theo lỗi, không theo đồng hồ (như bài trên)
         try {
             fast.connect("abook.test", 443, 5000)
             fail("phải hỏng")
@@ -144,7 +164,12 @@ class FastConnectTest {
         val fast = FastConnect(resolver(blackhole, blackhole2), net, staggerMs = 100).track()
         val (error, ms) = timed { try { fast.connect("abook.test", 443, 600); null } catch (e: SocketTimeoutException) { e } }
         assertNotNull("phải hết hạn", error)
-        assertTrue("hạn chung 600 ms, mất $ms", ms in 550..1500)
+        assertTrue("hạn chung 600 ms, mất $ms", ms >= 550)
+        assertTrue("mất $ms", ms < QUICK_MS)
+        // "Chung" đo bằng hạn mỗi cuộc thử được trao, không bằng đồng hồ tường (máy bận kéo giãn đồng hồ): cuộc thử sau xuất phát sau bước so le nên chỉ
+        // còn phần dư của CÙNG hạn; hạn riêng cho từng cuộc thử thì hai hạn bằng nhau.
+        waitUntil("cả hai cuộc thử đã ghi nhận") { net.budgets.size == 2 } // luồng của cuộc thử sau có thể chưa kịp chạy khi hạn đã hết (máy bận)
+        assertTrue("hạn trao cho các cuộc thử: ${net.budgets}", net.budgets.max() - net.budgets.min() >= 50)
         assertEquals(2, net.sockets.size)
         assertTrue(net.sockets.all { it.isClosed })
     }
@@ -180,6 +205,9 @@ class FastConnectTest {
         fast.connect("abook.test", 443, 5000).close()
         assertEquals(live, fast.warm("ABook.test"))
         // Địa chỉ nhớ vẫn nối được: không đua lại (chỉ thêm một lần thử).
+        // Cuộc đua trả về ngay khi địa chỉ sống thắng; luồng thử địa chỉ mù (đã bị đóng) có thể ghi nhận lần thử của nó SAU đó - chờ nó xong rồi mới đếm,
+        // không thì lần ghi trễ ấy bị tính nhầm vào "lần thử thêm" của đường nhớ.
+        waitUntil("cả hai địa chỉ của cuộc đua đã ghi nhận") { net.started.size == 2 }
         val before = net.started.size
         fast.connectWarm("abook.test", 443, 5000).close()
         assertEquals(before + 1, net.started.size)
@@ -249,12 +277,12 @@ class FastConnectTest {
         val net = Net(http.port, dead = setOf(blackhole))
         val fast = FastConnect(resolver(blackhole, live), net, staggerMs = 100).track()
         val (body, ms) = timed {
-            val connection = fast.open("http://abook.test:${http.port}/path?q=1", 5000)
+            val connection = fast.open("http://abook.test:${http.port}/path?q=1", HANG_MS)
             connection.readTimeout = 5000
             connection.inputStream.use { String(it.readBytes()) }
         }
         assertEquals("ok", body)
-        assertTrue("mất $ms ms", ms < 1500)
+        assertTrue("mất $ms ms", ms < QUICK_MS)
         assertEquals("abook.test:${http.port}", http.requests.single()["host"])
         assertEquals("GET /path?q=1 HTTP/1.1", http.requests.single()["request-line"]) // proxy đổi dạng tuyệt đối về dạng thường
     }
@@ -263,7 +291,9 @@ class FastConnectTest {
         val http = Http().track()
         val net = Net(http.port, dead = setOf(blackhole))
         // "localhost" tra được bằng DNS thật: đường thẳng để HttpURLConnection tự nối.
-        val fast = FastConnect(resolver(live, blackhole), net, staggerMs = 100).track()
+        // Bước so le dài: bài thử này nói "địa chỉ đầu thắng thì địa chỉ mù KHÔNG được thử". Với 100 ms, máy bận làm luồng của địa chỉ đầu chạy trễ hơn thế
+        // thì địa chỉ mù được thử thật (và thứ tự ghi nhận đảo) - hành vi đúng của cuộc đua, nhưng không phải điều bài thử này đo.
+        val fast = FastConnect(resolver(live, blackhole), net, staggerMs = 60_000).track()
         fun fetch(): String {
             val connection = fast.open("http://localhost:${http.port}/direct", 5000)
             connection.readTimeout = 5000
@@ -288,17 +318,17 @@ class FastConnectTest {
         val net = Net(http.port, dead = setOf(blackhole))
         val fast = FastConnect(resolver(blackhole, live), net, staggerMs = 100).track()
         fun fetch(host: String): Long = timed {
-            val connection = fast.open("http://$host:${http.port}/p", 5000)
+            val connection = fast.open("http://$host:${http.port}/p", HANG_MS)
             connection.readTimeout = 5000
             assertEquals("ok", connection.inputStream.use { String(it.readBytes()) })
         }.second
         val first = fetch("abook.test")
-        assertTrue("mất $first ms", first < 1000)
+        assertTrue("mất $first ms", first < QUICK_MS)
         assertEquals(1, fast.tunnelAccepted)
         // Host khác: họ IPv6 đã biết là chết -> nối họ sống TRƯỚC, không chờ 100 ms của địa chỉ mù.
         net.started.clear()
         val second = fetch("other.test")
-        assertTrue("mất $second ms", second < 1000)
+        assertTrue("mất $second ms", second < QUICK_MS)
         assertEquals(live, net.started.first())
         assertEquals(2, fast.tunnelAccepted)
     }
@@ -376,13 +406,13 @@ class FastConnectTest {
         val net = Net(http.port, dead = setOf(blackhole))
         val fast = FastConnect(resolver(blackhole, live), net, staggerMs = 100).track()
         val (body, ms) = timed {
-            val connection = fast.open("https://abook.test:${http.port}/hello", 5000) as HttpsURLConnection
+            val connection = fast.open("https://abook.test:${http.port}/hello", HANG_MS) as HttpsURLConnection
             connection.sslSocketFactory = pki.client.socketFactory
             connection.readTimeout = 5000
             connection.inputStream.use { String(it.readBytes()) }
         }
         assertEquals("ok", body)
-        assertTrue("mất $ms ms", ms < 2500)
+        assertTrue("mất $ms ms", ms < QUICK_MS)
         assertEquals(listOf("abook.test"), http.serverNames.toList()) // SNI là tên gốc, không phải 127.0.0.1
         assertEquals("abook.test:${http.port}", http.requests.single()["host"])
         // Không còn socket mồ côi trong kênh sau khi dùng: socket thắng đã được trao cho kênh (chỉ hai cuộc thử: mù + thắng).
@@ -411,7 +441,7 @@ class FastConnectTest {
         // Cả hai địa chỉ mù: cuộc đua ở open() báo hết hạn đúng loại, không chờ tới lúc đọc.
         val (error, ms) = timed { try { fast.open("https://abook.test/", 500); null } catch (e: SocketTimeoutException) { e } }
         assertNotNull(error)
-        assertTrue("mất $ms ms", ms < 1500)
+        assertTrue("mất $ms ms", ms < QUICK_MS)
     }
 
     @Test fun theTunnelServesOnlyTargetsThatWereRegistered() {

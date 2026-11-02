@@ -124,6 +124,10 @@ rem Win32 tray: menu, tooltip limit, chosen command, explorer restart, on a fake
 call :test "%HERE%build\TrayTests.exe" "%HERE%build\tray-test.txt"
 if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
+rem Own title bar glue (src\windowchrome.cpp on QWindowKit): drag strip, system buttons, clickable items, mini, cursor; offscreen, hidden window
+call :test "%HERE%build\WindowChromeTests.exe" "%HERE%build\windowchrome-test.txt"
+if errorlevel 1 exit /b 1
+if not errorlevel 0 exit /b 1
 rem Sidebar collapse / expand / hover overlay (QtQuickTest with a stubbed Platform)
 call :test "%HERE%build\sidebar_tests\SidebarTests.exe" "%HERE%build\sidebar-test.txt"
 if errorlevel 1 exit /b 1

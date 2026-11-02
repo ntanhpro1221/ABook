@@ -1,5 +1,11 @@
 # Test report
 
+## 02-11-2026 — thanh tiêu đề Windows và hai test Android chập chờn (dev/m1-chrome)
+
+- `tst_titlebar.qml` (WidthTests, Main.qml thật + WindowChrome giả có nhớ lời gọi): dải cao 40, sát mép trên và rộng bằng cửa sổ, không nền riêng (điểm ảnh trên thanh bên, nội dung và ngay dưới dải cùng màu), ba nút 46 x 40 sát nhau ở mép phải, nét tự vẽ ở giữa nút (gạch Thu nhỏ đúng 10 cột, 1 hàng, Shape chứ không chữ/ảnh), nút thu / mở thanh bên lọt trong dải, nền Đóng #C42B1C rê / #A82419 nhấn và chữ trắng, nền hai nút kia 6 % / 10 % màu chữ, cửa sổ mất tiêu điểm thì nét nhạt, phóng to đổi nét. 15 phép phá (mut1.json) đều đỏ.
+- `test_windowchrome.cpp` (`WindowChromeTests`, vào `build.bat`): dải là vùng kéo, ba nút là nút hệ thống, chỉ mục khai bằng `keepClickable` bấm được, mini bỏ vùng kéo và trả lại, `cursorInside` đo con trỏ ảo (offscreen) theo toạ độ màn hình. 7 phép phá đều đỏ.
+- `FastConnectTest` / `EdgePiecesTest` chập chờn khi máy bận: gốc là giả định thời gian trong test (bước so le 50-250 ms so với độ trễ chạy luồng, giấc ngủ 250 ms để các mảnh "kịp mở cùng lúc", đếm ổ cắm theo số mảnh dù mảnh chưa kịp mở ổ cắm), không phải mã app. Lặp riêng từng lớp trong JVM mới dưới 64 luồng ngốn CPU + 8 JVM song song: trước 22/48 và 43/48 lượt hỏng, sau 0/48 và 0/48; ở 128 luồng ngốn CPU + 12 JVM sau là 0/96 và 0/96.
+
 ## 02-11-2026 — parity trong build và hình học Đang nghe (dev/m1-gates)
 
 - `desktop_qt/tools/qt_pytests.py` đưa máy dò Android–web `tests/test_ui_parity.py` vào PARITY; test mới kiểm danh sách, đầu vào pytest thực tế và lời gọi từ `build.bat`. Nhóm pytest parity/build/fixed-waits: 50 passed, 0 failed.
