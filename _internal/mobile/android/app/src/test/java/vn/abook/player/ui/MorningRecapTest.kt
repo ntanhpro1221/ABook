@@ -15,6 +15,8 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeUp
 import com.github.takahirom.roborazzi.captureRoboImage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -119,6 +121,9 @@ class MorningRecapTest {
         rule.onNodeWithText("Tìm đúng câu").performClick()
         rule.onNodeWithText("Chọn câu cuối cùng còn nhớ:").assertIsDisplayed()
         rule.onRoot().captureRoboImage("src/test/snapshots/recap_scrub_dark.png")
+        // Hàng lọc nay có dòng riêng nên danh sách câu nằm sát đáy màn: kéo trang lên rồi mới chạm (chạm ngoài màn thì không tới).
+        rule.onNodeWithTag("library_grid").performTouchInput { swipeUp() }
+        rule.waitForIdle()
         rule.onNodeWithTag("recap_line_4_1").performClick()
         assertEquals(listOf("b1/4/1000.0"), played)
     }

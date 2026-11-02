@@ -145,7 +145,7 @@ Item {
 
     // ---- khung vẽ: mép trên đi từ mép trên thanh phát lên tới đỉnh ----
     Item {
-        id: panel
+        id: panel; objectName: "nowMorphPanel"
         y: root.barTop * (1 - root.g)
         width: root.width
         height: root.height - y
@@ -182,7 +182,7 @@ Item {
                 width: parent.width
                 height: parent.height
                 CoverView {
-                    id: bigCover
+                    id: bigCover; objectName: "nowCover"
                     width: root.coverW
                     height: root.coverH
                     x: root.thumbFrom.x + (root.coverX - root.thumbFrom.x) * root.g
@@ -272,7 +272,7 @@ Item {
 
                 // ---- điều khiển ----
                 Column {
-                    id: controls
+                    id: controls; objectName: "nowControls"
                     parent: columnScroll.contentItem
                     x: root.colX
                     y: root.controlsY - root.topH + (1 - root.g) * (28 + columnScroll.contentY)
@@ -489,8 +489,8 @@ Item {
     }
 
     // ---- bảng nổi ----
-    SpeedPopover { id: speed; anchorItem: speedChip }
-    SleepPopover { id: sleep; anchorItem: sleepChip }
+    SpeedPopover { id: speed; objectName: "nowSpeedSheet"; anchorItem: speedChip }
+    SleepPopover { id: sleep; objectName: "nowSleepSheet"; anchorItem: sleepChip }
     ChaptersPopover { id: chapters; anchorItem: chaptersChip; onReadRequested: chapterId => reader.begin(Player.bookId, chapterId) }
     MusicPopover { id: music; anchorItem: moreButton }
     ChapterReader { id: reader }

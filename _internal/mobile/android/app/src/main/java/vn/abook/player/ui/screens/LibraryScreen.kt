@@ -159,7 +159,7 @@ private fun LibraryGrid(
     LazyVerticalGrid(
         columns = GridCells.Fixed(columns),
         state = grid,
-        modifier = Modifier.fillMaxSize().testTag("library_grid").fadeEdges(grid),
+        modifier = Modifier.fillMaxSize().testTag("library_grid").fadeEdges(grid, startInset = top),
         contentPadding = PaddingValues(start = Dim.margin, end = Dim.margin, top = top, bottom = Dim.s24),
         horizontalArrangement = Arrangement.spacedBy(Dim.s12),
         verticalArrangement = Arrangement.spacedBy(Dim.s16),
@@ -167,8 +167,9 @@ private fun LibraryGrid(
         // Đầu trang + hàng lọc là MỘT ô: khoảng cách lưới (16) không cộng thêm vào lề dưới của đầu trang thành một khoảng trống lớn trên hàng lọc.
         item(key = "header", span = { GridItemSpan(maxLineSpan) }, contentType = "header") {
             Column {
-                ScreenHeader("Thư viện", subtitle = if (books.isEmpty()) null else "${books.size} cuốn", trailing = { AddBookButton(actions.addBook) })
-                vn.abook.player.ui.components.Reveal(books.isNotEmpty()) { FilterBar(ui, onSortCoordinates) }
+                // Số cuốn + Xếp theo + Tìm nằm ở hàng dưới tên, bộ lọc có CẢ bề ngang (360 dp: bốn chữ vừa một hàng, không chữ nào bị cuộn khuất - soát điện thoại thật 02-11).
+                ScreenHeader("Thư viện", trailing = { AddBookButton(actions.addBook) }, bottomGap = if (books.isEmpty()) Dim.s16 else 0.dp)
+                vn.abook.player.ui.components.Reveal(books.isNotEmpty()) { FilterBar(ui, books.size, onSortCoordinates) }
             }
         }
         if (recap != null) item(key = "recap", span = { GridItemSpan(maxLineSpan) }, contentType = "recap") { recap(books) }

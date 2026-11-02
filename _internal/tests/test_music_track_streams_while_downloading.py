@@ -103,7 +103,8 @@ def test_two_players_asking_at_once_share_one_download(studio, tmp_path: Path, m
 @pytest.mark.parametrize("broken", ["cut", "wrong_sha1"])
 def test_a_broken_download_reaches_the_player_as_an_error_and_leaves_no_cache(studio, tmp_path: Path, monkeypatch,  # noqa: F811
                                                                              broken: str) -> None:
-    """Nguồn ngắt giữa bài, hay gửi đủ byte mà sai sha1 danh mục: kết nối bị cắt trước byte cuối, không file bộ đệm, không file dở."""
+    """Nguồn ngắt giữa bài, hay gửi đủ byte mà sai sha1 danh mục: kết nối bị cắt trước byte cuối, không file bộ đệm. Ngắt giữa bài thì
+    phần đã tải nằm lại trong `.part` để tải tiếp (test_music_download_resumes.py); sai sha1 thì không giữ gì."""
     _paths, app, server, _runner = studio
     _with_catalog(app, tmp_path)
     release, _calls = _serve(app, monkeypatch, cut=broken == "cut",
@@ -113,7 +114,8 @@ def test_a_broken_download_reaches_the_player_as_an_error_and_leaves_no_cache(st
     release.set()
     with pytest.raises(http.client.IncompleteRead):
         response.read()
-    assert _cache_files(app) == []
-    with pytest.raises(http.client.IncompleteRead):  # lần sau tải lại từ đầu, lại hỏng: lại là lỗi, không phải bài cụt
+    kept = [app._music_part(app._music_file(LINK))] if broken == "cut" else []
+    assert _cache_files(app) == kept
+    with pytest.raises(http.client.IncompleteRead):  # lần sau (nguồn này không tải tiếp được: lại từ đầu) lại hỏng: lại là lỗi, không phải bài cụt
         _get(server.port).read()
-    assert _cache_files(app) == []
+    assert _cache_files(app) == kept

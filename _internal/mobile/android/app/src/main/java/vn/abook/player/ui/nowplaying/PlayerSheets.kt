@@ -286,7 +286,8 @@ private fun LookPage(window: NowPlayingWindowState) {
     Row(Modifier.fillMaxWidth()) {
         for (size in ReadLook.SIZES) ChoiceCell("$size", size == look.size, Modifier.weight(1f), "Cỡ chữ $size") { window.changeLook(look.sized(size)) }
     }
-    RowHint("Giãn dòng")
+    // Nhãn của hàng dưới: cách hàng cỡ chữ phía trên rộng hơn cách hàng nó gọi tên (s16 trên, s4 dưới) - không kẹp đều giữa hai hàng (soát điện thoại thật 02-11).
+    RowHint("Giãn dòng", Modifier.padding(top = Dim.s16, bottom = Dim.s4))
     Row(Modifier.fillMaxWidth()) {
         for (leading in ReadLook.LEADINGS) ChoiceCell(ReadLook.leadingLabel(leading), leading == look.leading, Modifier.weight(1f),
             "Giãn dòng " + ReadLook.leadingLabel(leading)) { window.changeLook(look.spaced(leading)) }

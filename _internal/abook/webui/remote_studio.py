@@ -301,9 +301,24 @@ FORWARD_HEADERS = ("Content-Type", "Range", "If-None-Match", "If-Modified-Since"
 RELAY_HEADERS = ("Content-Type", "Content-Length", "Content-Range", "Accept-Ranges", "Cache-Control", "ETag", "Last-Modified")
 
 
+LENGTH_REQUIRED = "Thiếu Content-Length - máy gửi phải khai độ dài thân"
+
+
+def lacks_length(handler: Any) -> bool:
+    """Yêu cầu khai `Transfer-Encoding` (chunked): mọi nơi đọc thân ở đây chỉ biết `Content-Length`, đọc theo đó thì thân thành RỖNG và
+    các khúc chunked nằm lại trong kết nối giữ sống. Không giải mã chunked: người gọi trả 411 (`LENGTH_REQUIRED`), kết nối đóng sau câu trả lời."""
+    if handler.headers.get("Transfer-Encoding") is None:
+        return False
+    handler.close_connection = True
+    return True
+
+
 def read_body(handler: Any) -> tuple[bool, bytes | None]:
-    """Thân yêu cầu sẽ chuyển tiếp: (được nhận không, thân hay None). Không được thì đã trả lời lỗi: quá lớn, Content-Length hỏng,
-    hay không phải JSON - trang lạ trong trình duyệt không gửi được JSON sang máy khác mà không qua CORS."""
+    """Thân yêu cầu sẽ chuyển tiếp: (được nhận không, thân hay None). Không được thì đã trả lời lỗi: quá lớn, Content-Length hỏng
+    hay thiếu (chunked), hay không phải JSON - trang lạ trong trình duyệt không gửi được JSON sang máy khác mà không qua CORS."""
+    if lacks_length(handler):
+        _json(handler, HTTPStatus.LENGTH_REQUIRED, {"error": LENGTH_REQUIRED})
+        return False, None
     try:
         length = int(handler.headers.get("Content-Length") or 0)
     except ValueError:

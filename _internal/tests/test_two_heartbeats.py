@@ -182,3 +182,13 @@ def test_the_tick_line_says_when_no_bell_is_watching(tmp_path, monkeypatch) -> N
     monkeypatch.setattr(bells, "EVENT_STATE", tmp_path / "a.json")
     monkeypatch.setattr(bells, "TIMEOUT_STATE", tmp_path / "b.json")
     assert bells.describe() == "chuông: A KHÔNG CHẠY | B KHÔNG CHẠY"
+
+
+def test_the_tick_names_a_guard_that_is_not_running() -> None:
+    import scripts.heartbeat_tick as tick
+
+    both = [(1, 0, "pythonw.exe runtime/power_guard.py"), (2, 0, "pythonw.exe runtime/quiet_keeper.py")]
+    assert tick.guards_line(both) is None
+    line = tick.guards_line(both[1:])
+    assert line is not None and "gác pin" in line and "NGƯỜI GÁC" in line and "giữ êm quạt" not in line
+    assert "gác pin, giữ êm quạt" in (tick.guards_line([]) or "")

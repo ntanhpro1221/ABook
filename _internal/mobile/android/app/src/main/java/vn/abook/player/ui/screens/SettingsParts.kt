@@ -74,7 +74,7 @@ fun SettingsPage(title: String, onBack: () -> Unit, tag: String, modifier: Modif
     val bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     val scroll = rememberScrollState()
     Column(
-        modifier.fillMaxSize().testTag(tag).fadeEdges(scroll).verticalScroll(scroll)
+        modifier.fillMaxSize().testTag(tag).fadeEdges(scroll, startInset = top).verticalScroll(scroll)
             .padding(top = top, start = Dim.margin, end = Dim.margin, bottom = bottom + Dim.s48),
     ) {
         PageHeader(title, onBack)

@@ -50,7 +50,7 @@ class StudioS4StateTest {
 
     private fun uploadBody(bytes: ByteArray): JSONObject {
         val out = ByteArrayOutputStream()
-        StudioUpload.writer("Tải lên", "a \"b\".txt", ByteArrayInputStream(bytes))(out)
+        StudioUpload.writer("Tải lên", "a \"b\".txt", bytes.size.toLong()) { ByteArrayInputStream(bytes) }(out)
         return JSONObject(out.toString(Charsets.UTF_8))
     }
 

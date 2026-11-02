@@ -67,6 +67,7 @@ import vn.abook.player.ui.components.PrimaryButton
 import vn.abook.player.ui.components.Reveal
 import vn.abook.player.ui.components.RowHint
 import vn.abook.player.ui.components.RowLine
+import vn.abook.player.ui.components.ScrollingTabs
 import vn.abook.player.ui.components.StopIcon
 import vn.abook.player.ui.components.VoiceIcon
 import vn.abook.player.ui.components.HistoryIcon
@@ -105,82 +106,19 @@ enum class BookTab(val label: String, val tag: String) {
 
 /**
  * Thanh mục (web: TabsList): chữ nằm ngang, gạch chân hổ phách TRƯỢT sang mục mới (cùng chuyển động với bộ lọc), mục "Chương" kèm số chương. Mỗi mục cao 48; chữ đang
- * chọn đậm màu mực, mục khác mực phụ.
+ * chọn đậm màu mực, mục khác mực phụ. Là [ScrollingTabs] (một thành phần chung cho mọi thanh mục).
  */
 @Composable
 fun BookTabs(tabs: List<BookTab>, selected: BookTab, chapterCount: Int, onPick: (BookTab) -> Unit, modifier: Modifier = Modifier) {
-    val colors = Abook.colors
-    val index = tabs.indexOf(selected).coerceAtLeast(0)
-    val position = remember { Animatable(index.toFloat()) }
-    LaunchedEffect(index) { position.animateTo(index.toFloat(), Motion.TabSlide) }
-    val lefts = remember(tabs.size) { FloatArray(tabs.size) }
-    val widths = remember(tabs.size) { FloatArray(tabs.size) }
-    // Số lần dàn trang đổi vị trí: gạch chân đọc nó nên vẽ lại khi các mục dịch chỗ.
-    var layouts by remember { mutableIntStateOf(0) }
-    val viewport = remember { intArrayOf(0) }
-    val scroll = rememberScrollState()
-    // Đường kẻ chân nằm ở khung ngoài (trải cả bề rộng); gạch chân hổ phách ở hàng trong, trôi cùng chữ khi hàng cuộn (chữ hệ thống to / màn 320 dp: thiếu chỗ thì
-    // cuộn ngang với mép mờ, không cắt chữ). Mục đang chọn tự cuộn vào khung.
-    LaunchedEffect(index) {
-        val left = lefts[index].toInt()
-        val right = left + widths[index].toInt()
-        val view = viewport[0]
-        val target = when {
-            view <= 0 -> scroll.value
-            left < scroll.value -> left
-            right > scroll.value + view -> right - view
-            else -> scroll.value
-        }
-        if (target != scroll.value) scroll.animateScrollTo(target.coerceIn(0, scroll.maxValue), Motion.TabSlide)
-    }
-    Box(
-        modifier.fillMaxWidth().testTag("book_tabs").onSizeChanged { viewport[0] = it.width }.drawBehind {
-            drawRect(colors.line, Offset(0f, size.height - 1.dp.toPx()), Size(size.width, 1.dp.toPx()))
-        },
-    ) {
-    Row(
-        Modifier.fadeEdgesHorizontal(scroll).horizontalScroll(scroll).drawBehind {
-            if (layouts < 0) return@drawBehind // chỉ để vẽ lại khi các mục dịch chỗ
-            val thick = 3.dp.toPx()
-            if (tabs.isEmpty()) return@drawBehind
-            val p = position.value
-            val low = floor(p).toInt().coerceIn(0, tabs.size - 1)
-            val high = ceil(p).toInt().coerceIn(0, tabs.size - 1)
-            val t = p - low
-            val left = lefts[low] + (lefts[high] - lefts[low]) * t
-            val width = widths[low] + (widths[high] - widths[low]) * t
-            drawRect(colors.accent, Offset(left, size.height - thick), Size(width, thick))
-        },
-        horizontalArrangement = Arrangement.spacedBy(Dim.s24),
-    ) {
-        for ((i, tab) in tabs.withIndex()) {
-            Row(
-                Modifier.heightIn(min = Dim.s48).pressable(Role.Tab) { onPick(tab) }.semantics { this.selected = tab == selected }
-                    .onGloballyPositioned {
-                        val x = it.positionInParent().x
-                        val w = it.size.width.toFloat()
-                        if (lefts[i] != x || widths[i] != w) {
-                            lefts[i] = x
-                            widths[i] = w
-                            layouts += 1
-                        }
-                    }
-                    .testTag(tab.tag),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                BasicText(
-                    tab.label,
-                    style = Abook.type.tab,
-                    color = { lerp(colors.text2, colors.text, (1f - kotlin.math.abs(position.value - i)).coerceIn(0f, 1f)) },
-                )
-                if (tab == BookTab.Chapters) {
-                    Spacer(Modifier.width(Dim.s8))
-                    BasicText("$chapterCount", style = Abook.type.caption.copy(color = colors.text2))
-                }
+    ScrollingTabs(
+        tabs, selected, onPick, label = { it.label }, tag = { it.tag }, rowTag = "book_tabs", modifier = modifier,
+        suffix = { tab ->
+            if (tab == BookTab.Chapters) {
+                Spacer(Modifier.width(Dim.s8))
+                BasicText("$chapterCount", style = Abook.type.caption.copy(color = Abook.colors.text2))
             }
-        }
-    }
-    }
+        },
+    )
 }
 
 /** Chip "Hồ sơ nghe: <tên> ⌄" dưới tiến độ (chỉ khi cuốn có từ hai hồ sơ): chạm mở bảng chọn hồ sơ. Cao 44 để chạm, viền mảnh bo tròn. */

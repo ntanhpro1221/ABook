@@ -44,6 +44,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import vn.abook.player.ui.motion.Motion
 import vn.abook.player.ui.theme.Abook
@@ -124,8 +125,8 @@ private class PressScaleNode : Modifier.Node(), DrawModifierNode, PointerInputMo
 
 /** Đầu màn gốc: tiêu đề 24 + dòng phụ ngay dưới (DESIGN.md §6 "Đầu màn"). */
 @Composable
-fun ScreenHeader(title: String, modifier: Modifier = Modifier, subtitle: String? = null, trailing: (@Composable () -> Unit)? = null) {
-    Column(modifier.padding(top = Dim.s12, bottom = Dim.s16)) {
+fun ScreenHeader(title: String, modifier: Modifier = Modifier, subtitle: String? = null, trailing: (@Composable () -> Unit)? = null, bottomGap: Dp = Dim.s16) {
+    Column(modifier.padding(top = Dim.s12, bottom = bottomGap)) {
         Box(Modifier.fillMaxWidth().height(Dim.s48), contentAlignment = Alignment.CenterStart) {
             BasicText(title, style = Abook.type.screenTitle)
             if (trailing != null) Box(Modifier.align(Alignment.CenterEnd)) { trailing() }

@@ -21,7 +21,7 @@ class RemoteConfig(
     private val dir: File,
     private val sources: List<String> = BOOTSTRAP,
     private val publicKey: ByteArray = PUBLIC_KEY,
-    private val open: (String) -> InputStream = MusicCatalog.Companion::openUrl,
+    private val open: (String) -> InputStream = MusicCatalog.OPEN_URL,
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
     private val lock = Any()
