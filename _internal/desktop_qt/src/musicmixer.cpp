@@ -191,17 +191,20 @@ struct DecodeJob {
 // Bài đang tải dở phát được từ khung `from` tới giây `until` của bài (chỗ bài thôi kêu - MixVoice::setPlayUntil; vô cực / quá độ dài = hết
 // bài) mà không hụt, nếu tốc độ tải giữ ở trung bình trượt chia DOWNLOAD_MARGIN: tải được have + r·t byte, phát tới khung from + R·t cần
 // (from + R·t)·p byte (+ DECODE_LEAD_S giây đi trước) - cả hai tuyến tính theo t, nên chỉ cần đúng ở bây giờ và ở lúc tới `until`. Đã có đủ
-// byte tới `until` thì qua luôn. Chưa biết cỡ bài / độ dài hay chưa đo được tốc độ: chưa chắc, coi như không.
+// byte tới `until` thì qua luôn. Chưa biết cỡ bài / độ dài hay chưa đo được tốc độ: chưa chắc, coi như không. Byte mỗi khung chỉ tính
+// phần nhạc, từ khung đầu (audioStart): thẻ ID3 đứng trước - ảnh bìa dc28 1,42 MB = 44 s nhạc 256 kbps; chia đều cho mọi khung thì tưởng đã
+// có thêm chừng ấy giây, bài phát tiếp tới khi bộ giải mã cạn rồi đứng lắp bắp 0,5 s một lần, không mờ ra (U80H 02-11: 26 lần).
 bool keepsUp(const DecodeJob &job, quint64 from, double until) {
     if (job.done) return true;
     const double size = double(job.bytes->size()), have = double(job.bytes->received()), measured = job.bytes->rate();
-    if (size <= 0 || !job.total) return false;
-    const double perFrame = size / double(job.total), lead = DECODE_LEAD_S * job.rate * perFrame;
-    const double end = std::clamp(until * job.rate, double(from), double(job.total)), need = std::min(size, end * perFrame);
+    const double start = double(job.decoder.audioStart());
+    if (size <= start || !job.total) return false;
+    const double perFrame = (size - start) / double(job.total), lead = DECODE_LEAD_S * job.rate * perFrame;
+    const double end = std::clamp(until * job.rate, double(from), double(job.total)), need = std::min(size, start + end * perFrame);
     if (have >= need) return true;
     if (measured < 0) return false;
     const double left = (end - double(std::min<quint64>(from, job.total))) / job.rate;
-    return have >= std::min(need, double(from) * perFrame + lead) && have + measured / DOWNLOAD_MARGIN * left >= need;
+    return have >= std::min(need, start + double(from) * perFrame + lead) && have + measured / DOWNLOAD_MARGIN * left >= need;
 }
 
 // Callback không giữ con trỏ chủ: Unregister có thể đụng một callback còn đang chạy.

@@ -704,6 +704,31 @@ private slots:
         QCOMPARE(rig.mixer.decodingCount(), size_t(1));
         server.finish();
     }
+    // Ảnh bìa (thẻ ID3) đứng trước khung đầu không phải nhạc: bài có thẻ to bằng phần nhạc, đã tới thẻ + 30 % nhạc, mốc dùng tới 60 % bài,
+    // tải tiếp 1/3 tốc độ phát -> chưa vào. Chia cỡ cả file cho số khung thì tưởng đã có 65 % bài, vào rồi đứng lắp bắp (U80H 02-11, dc28
+    // có ảnh bìa 1,42 MB).
+    void aCoverArtTagDoesNotCountAsMusic() {
+        QByteArray audio = fixtureBytes(QStringLiteral("music_student/stereo_44k.mp3"));
+        if (audio.startsWith("ID3")) audio.remove(0, 10 + ((quint8(audio[6]) << 21) | (quint8(audio[7]) << 14) | (quint8(audio[8]) << 7) | quint8(audio[9])));
+        const qint64 tag = audio.size();
+        QByteArray bytes("ID3\x03\x00\x00", 6);
+        for (const int shift : {21, 14, 7, 0}) bytes.append(char((tag >> shift) & 0x7f));
+        bytes.append(QByteArray(tag, '\0')).append(audio);
+        HeldServer server(bytes, 1);
+        QTimer head; int step = 0;
+        connect(&head, &QTimer::timeout, &head, [&] {
+            if (!server.socket) return;
+            server.send(10 + tag + audio.size() * 3 / 10 * ++step / 10);
+            if (step == 10) { head.stop(); server.drip(audio.size() / 36); }
+        });
+        head.start(30);
+        Mp3Source source(48000); QVERIFY(source.open(audio));
+        MixerRig rig; MixVoice voice(&rig.mixer); voice.setVolume(1); voice.load(server.url(), 0); voice.setPlayUntil(source.duration() * 0.6); voice.play();
+        QVERIFY(!QTest::qWaitFor([&] { rig.mixer.service(0); rig.mixer.serviceReader(); return voice.duration() > 0; }, 3000));
+        QCOMPARE(rig.mixer.decodingCount(), size_t(1));
+        server.finish();
+        QVERIFY(QTest::qWaitFor([&] { rig.mixer.service(0); rig.mixer.serviceReader(); return voice.duration() > 0; }, 5000));
+    }
     // Tải tụt lại giữa bài (mạng đứng): nhạc mờ ra rồi im, không tắt phụt; tải xong thì mờ vào, không bật phụt (NA1 01-11: 14 lần).
     void aDownloadFallingBehindFadesTheMusicOutAndBackIn() {
         const QByteArray bytes = fixtureBytes(QStringLiteral("music_student/stereo_44k.mp3"));
