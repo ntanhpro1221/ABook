@@ -493,6 +493,34 @@ class MusicBedIntegrationTest {
         assertTrue("đã vào thì không hụt trong phần mốc dùng ($after)", after.none { it.first == "đứng" })
     }
 
+    /** Bài stream của mốc dài `cueSeconds` (giọng ở 0, mốc khác bài vào ngay sau, mờ ra fadeSeconds), tải nhanh 2x: âm lượng lớn nhất trong 3 s. */
+    private fun loudestNear(cueSeconds: Double): Float {
+        val cue = MusicCues.Cue(0.0, cueSeconds, "music/a.mp3", null)
+        field("lastSeconds").setDouble(MusicBed, 0.0)
+        field("cues").set(MusicBed, listOf(cue, MusicCues.Cue(cueSeconds, 300.0, "music/b.mp3", null)))
+        val music = FakePlayer().also { it.state = Player.STATE_BUFFERING; it.playWhenReady = true; it.position = 0; it.bufferedPosition = 3_000 }
+        field("current").set(MusicBed, bed(music, cue).also { b -> b.javaClass.getDeclaredField("streamed").also { it.isAccessible = true }.setBoolean(b, true) })
+        field("playing").setBoolean(MusicBed, true)
+        invoke("startFade")
+        var loudest = 0f
+        repeat(60) {
+            stream(music, 50) { 2.0 }
+            loudest = maxOf(loudest, music.volume)
+            if (loudest == 0f) assertFalse("chưa vào thì đứng yên ở chỗ vào", music.playWhenReady)
+        }
+        return loudest
+    }
+
+    @Test fun aStreamedSongNearWhereItStopsSoundingStaysSilentInsteadOfBlipping() {
+        // web/Android 80->12 02-11: bài vào lại ở 119,5 s, đổi mốc 120 s, mờ ra 121,5 s - một tiếng chớp 2 s. Còn dưới underrunMinEntryMs (lead + low + mờ vào +
+        // mờ ra = 3,6 s) tới chỗ thôi kêu thì không vào, dù đã đệm đủ.
+        assertEquals("mốc 1 s + mờ ra: còn 3 s", 0f, loudestNear(1.0), 0f)
+    }
+
+    @Test fun aStreamedSongWithRoomBeforeItStopsSoundingEnters() {
+        assertTrue("mốc 4 s + mờ ra: còn 6 s", loudestNear(4.0) > 0f)
+    }
+
     @Test fun whereTheStreamedSongStopsSoundingIsRecomputedWhenTheCuesChange() {
         // Mốc dùng cả bài 200 s (tới-hết-bài: ~108 s mới vào); giữa lúc chờ, chuỗi mốc đổi (sửa mốc, đổi chương - sync đặt `cues` và `cue` của bài đang
         // chờ, dòng "cùng bài sang mốc kề"): mốc chỉ còn tới giây 60 chương, giọng ở 20 -> cần tải kịp 42 + 2 s mờ ra: vào khi có ~24 s, không giữ số cũ.
