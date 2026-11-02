@@ -26,6 +26,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import vn.abook.player.ui.addbook.BookField
+import vn.abook.player.ui.addbook.FieldGroup
 import vn.abook.player.ui.components.Caption
 import vn.abook.player.ui.components.ConfirmPage
 import vn.abook.player.ui.components.DangerButton
@@ -213,42 +214,44 @@ fun KeySheet(initial: KeyProvider, voice: VoiceState, dismiss: () -> Unit) {
                     vn.abook.player.ui.components.MoreInfo("Nhận khoá", VoiceText.keyHelp(provider.id), "key_help")
                     Caption(if (provider.timings == "exact") "Tô đúng từng chữ đang đọc." else "Tô từng chữ đang đọc theo ước lượng.")
                     Spacer(Modifier.height(Dim.s16))
-                    BookField(
-                        null, key, { key = it; problem = ""; verdict = "" }, "key_field", work == KeyWork.None, "Khoá ${provider.name}",
-                        placeholder = if (provider.hasKey) "Đã lưu ${provider.masked} - dán khoá mới để thay" else "Dán khoá của bạn",
-                        masked = !revealed,
-                        trailing = { TextAction(if (revealed) "Ẩn" else "Hiện", { revealed = !revealed }, "key_reveal") },
-                    )
-                    if (provider.region) {
+                    FieldGroup {
+                        BookField(
+                            null, key, { key = it; problem = ""; verdict = "" }, "key_field", work == KeyWork.None, "Khoá ${provider.name}",
+                            placeholder = if (provider.hasKey) "Đã lưu ${provider.masked} - dán khoá mới để thay" else "Dán khoá của bạn",
+                            masked = !revealed,
+                            trailing = { TextAction(if (revealed) "Ẩn" else "Hiện", { revealed = !revealed }, "key_reveal") },
+                        )
+                        if (provider.region) {
+                            Spacer(Modifier.height(Dim.s8))
+                            BookField(null, region, { region = it; problem = ""; verdict = "" }, "key_region", work == KeyWork.None, "Vùng", placeholder = "Vùng, ví dụ southeastasia")
+                        }
+                        Reveal(work == KeyWork.Checking) {
+                            Column(Modifier.fillMaxWidth().padding(top = Dim.s12).testTag("key_checking")) {
+                                Caption("Đang kiểm tra")
+                                CreepProgress()
+                            }
+                        }
+                        InlineProblem(problem, null, "key_problem")
+                        Reveal(verdict.isNotEmpty()) {
+                            BasicText(verdict, style = Abook.type.bodySmall.copy(color = Abook.colors.success), modifier = Modifier.padding(top = Dim.s8).testTag("key_verdict"))
+                        }
+                        Spacer(Modifier.height(Dim.s24))
+                        PrimaryButton(
+                            if (work == KeyWork.Saving) "Đang lưu" else "Lưu", ::save, Modifier.fillMaxWidth().testTag("key_save"),
+                            enabled = work == KeyWork.None && (key.isNotBlank() || (provider.region && region.trim() != provider.regionValue)),
+                        )
                         Spacer(Modifier.height(Dim.s8))
-                        BookField(null, region, { region = it; problem = ""; verdict = "" }, "key_region", work == KeyWork.None, "Vùng", placeholder = "Vùng, ví dụ southeastasia")
+                        QuietButton("Kiểm tra", {
+                            if (work != KeyWork.None) return@QuietButton
+                            if (key.isBlank() && !provider.hasKey) {
+                                problem = "Dán khoá trước đã."
+                            } else if (voice.allowed(provider.id)) {
+                                check()
+                            } else {
+                                page = KeyPage.Consent
+                            }
+                        }, "key_check")
                     }
-                    Reveal(work == KeyWork.Checking) {
-                        Column(Modifier.fillMaxWidth().padding(top = Dim.s12).testTag("key_checking")) {
-                            Caption("Đang kiểm tra")
-                            CreepProgress()
-                        }
-                    }
-                    InlineProblem(problem, null, "key_problem")
-                    Reveal(verdict.isNotEmpty()) {
-                        BasicText(verdict, style = Abook.type.bodySmall.copy(color = Abook.colors.success), modifier = Modifier.padding(top = Dim.s8).testTag("key_verdict"))
-                    }
-                    Spacer(Modifier.height(Dim.s24))
-                    PrimaryButton(
-                        if (work == KeyWork.Saving) "Đang lưu" else "Lưu", ::save, Modifier.fillMaxWidth().testTag("key_save"),
-                        enabled = work == KeyWork.None && (key.isNotBlank() || (provider.region && region.trim() != provider.regionValue)),
-                    )
-                    Spacer(Modifier.height(Dim.s8))
-                    QuietButton("Kiểm tra", {
-                        if (work != KeyWork.None) return@QuietButton
-                        if (key.isBlank() && !provider.hasKey) {
-                            problem = "Dán khoá trước đã."
-                        } else if (voice.allowed(provider.id)) {
-                            check()
-                        } else {
-                            page = KeyPage.Consent
-                        }
-                    }, "key_check")
                     if (provider.hasKey) {
                         Box(Modifier.fillMaxWidth().padding(vertical = Dim.s8).height(1.dp).background(Abook.colors.line))
                         MenuRow("Xoá khoá", "key_remove", danger = true, onClick = { page = KeyPage.Remove }) { ink -> TrashIcon(ink) }

@@ -48,6 +48,7 @@ import vn.abook.player.ui.studio.WorkLogic
 import vn.abook.player.ui.studio.WorkText
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.theme.insetSurface
 
 /** Trạng thái nghe của một tab (không có trình phát: đang thử trên màn không nối máy → luôn "không phát gì"). */
 @Composable
@@ -83,7 +84,7 @@ fun ClipButton(clipId: String, clip: ClipState, onClick: () -> Unit, tag: String
 @Composable
 fun UndoStrip(message: String, onUndo: (() -> Unit)?, onClose: (() -> Unit)?, tag: String, modifier: Modifier = Modifier) {
     Row(
-        modifier.fillMaxWidth().clip(RoundedCornerShape(Dim.radiusControl)).background(Abook.colors.bgSunken).heightIn(min = Dim.s48).padding(start = Dim.s12).testTag(tag),
+        modifier.fillMaxWidth().insetSurface(Abook.colors).heightIn(min = Dim.s48).padding(start = Dim.s12).testTag(tag),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         BasicText(message, style = Abook.type.bodySmall, modifier = Modifier.weight(1f).padding(vertical = Dim.s12).testTag("${tag}_text"))
@@ -119,7 +120,7 @@ fun AnswerButton(label: String, onClick: () -> Unit, tag: String, modifier: Modi
             Box(
                 Modifier.fillMaxWidth().heightIn(min = Dim.s48)
                     .then(if (enabled) Modifier.pressable(onClick = onClick) else Modifier.semantics { disabled() })
-                    .clip(RoundedCornerShape(Dim.radiusControl)).background(Abook.colors.bgSunken)
+                    .insetSurface(Abook.colors)
                     .padding(horizontal = Dim.s16, vertical = Dim.s12).testTag(tag),
                 contentAlignment = Alignment.Center,
             ) {
@@ -135,7 +136,7 @@ fun AnswerButton(label: String, onClick: () -> Unit, tag: String, modifier: Modi
 fun LineSample(example: WorkExample, clip: ClipState, clipId: String, onPlay: (() -> Unit)?, tag: String, modifier: Modifier = Modifier) {
     val colors = Abook.colors
     Row(
-        modifier.fillMaxWidth().clip(RoundedCornerShape(Dim.radiusControl)).background(colors.bgSunken).padding(start = Dim.s12, top = Dim.s8, bottom = Dim.s8).testTag(tag),
+        modifier.fillMaxWidth().insetSurface(colors).padding(start = Dim.s12, top = Dim.s8, bottom = Dim.s8).testTag(tag),
         verticalAlignment = Alignment.Top,
     ) {
         Column(Modifier.weight(1f).padding(vertical = Dim.s4)) {
