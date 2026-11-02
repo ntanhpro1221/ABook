@@ -95,6 +95,13 @@ struct MixerRig {
     }
 };
 
+// Phát thêm 50 ms (bỏ phần ra cũ) và cho biết đã có tiếng chưa: bài đang tải dở có thể đã vào (biết độ dài) mà còn giữ im chờ tải.
+bool sounds(MixerRig &rig) {
+    rig.device->output.clear();
+    rig.serve(size_t(rig.mixer.rate()) / 20);
+    return std::any_of(rig.device->output.begin(), rig.device->output.end(), [](float x) { return std::abs(x) > 1e-4f; });
+}
+
 // Gửi phần đầu bài rồi giữ kết nối, như một máy chủ còn đang tải bài về; drip = tải tiếp đều đặn (giữ lại byte cuối tới finish).
 class HeldServer : public QTcpServer {
 public:
@@ -583,7 +590,8 @@ private slots:
         server.drip(bytes.size() / 8); // 1,5 lần tốc độ bài: tải kịp, được vào trước khi tải xong
         MixerRig rig; MixVoice voice(&rig.mixer); voice.setVolume(1); voice.load(server.url(), 0);
         QSignalSpy failed(&voice, &AudioOut::failed);
-        QVERIFY(QTest::qWaitFor([&] { rig.mixer.service(0); rig.mixer.serviceReader(); return voice.duration() > 0; }, 5000));
+        // Biết độ dài là vào, nhưng tải có kịp không còn tuỳ tốc độ đo được: chờ tải chạy một lúc (đã đo được tốc độ tải - vào là phát).
+        QVERIFY(QTest::qWaitFor([&] { rig.mixer.service(0); rig.mixer.serviceReader(); return voice.duration() > 0 && server.sent >= bytes.size() * 3 / 4; }, 5000));
         QCoreApplication::processEvents();
         QVERIFY(server.sent < bytes.size());
         const QString path = rig.mixer.cachePath(server.url());
@@ -648,7 +656,8 @@ private slots:
         server.drip(bytes.size() / 8);
         MixerRig rig; MixVoice voice(&rig.mixer); voice.setVolume(1); voice.load(server.url(), 0);
         QSignalSpy failed(&voice, &AudioOut::failed);
-        QVERIFY(QTest::qWaitFor([&] { rig.mixer.service(0); rig.mixer.serviceReader(); return voice.duration() > 0; }, 5000));
+        // Biết độ dài là vào, nhưng tải có kịp không còn tuỳ tốc độ đo được: chờ tải chạy một lúc (đã đo được tốc độ tải - vào là phát).
+        QVERIFY(QTest::qWaitFor([&] { rig.mixer.service(0); rig.mixer.serviceReader(); return voice.duration() > 0 && server.sent >= bytes.size() * 3 / 4; }, 5000));
         QCoreApplication::processEvents();
         QVERIFY(server.sent < bytes.size());
         Mp3Source source(rig.mixer.rate()); QVERIFY(source.open(bytes));
@@ -681,12 +690,12 @@ private slots:
         });
         head.start(30);
         MixerRig rig; MixVoice voice(&rig.mixer); voice.setVolume(1); voice.load(server.url(), 0); voice.play();
-        QVERIFY(!QTest::qWaitFor([&] { rig.mixer.service(0); rig.mixer.serviceReader(); return voice.duration() > 0; }, 3000));
+        QVERIFY(!QTest::qWaitFor([&] { return sounds(rig); }, 3000));
         QCOMPARE(rig.mixer.decodingCount(), size_t(1));
         server.finish();
-        QVERIFY(QTest::qWaitFor([&] { rig.mixer.service(0); rig.mixer.serviceReader(); return voice.duration() > 0; }, 5000));
+        QVERIFY(QTest::qWaitFor([&] { return sounds(rig); }, 5000));
     }
-    // Cùng nguồn chậm, nhưng mốc chỉ dùng bài tới giây 2 (setPlayUntil - hết các mốc dùng bài + mờ ra): nửa bài đã có thừa cho phần ấy, vào ngay,
+    // Cùng nguồn chậm, nhưng mốc chỉ dùng bài tới giây 4 (setPlayUntil - hết các mốc dùng bài + mờ ra): nửa bài đã có thừa cho phần ấy, vào ngay,
     // không chờ tải xong cả bài (U30F 02-11: bài 863 s mà mốc dùng 342 s, nhạc chương 1 vào ở 350 s thay vì 98 s).
     void aSlowTrackEntersOnceThePartItWillPlayIsIn() {
         const QByteArray bytes = fixtureBytes(QStringLiteral("music_student/stereo_44k.mp3"));
@@ -698,11 +707,24 @@ private slots:
             if (step == 10) { head.stop(); server.drip(bytes.size() / 36); }
         });
         head.start(30);
-        MixerRig rig; MixVoice voice(&rig.mixer); voice.setVolume(1); voice.load(server.url(), 0); voice.setPlayUntil(2); voice.play();
-        QVERIFY(QTest::qWaitFor([&] { rig.mixer.service(0); rig.mixer.serviceReader(); return voice.duration() > 0; }, 3000));
+        MixerRig rig; MixVoice voice(&rig.mixer); voice.setVolume(1); voice.load(server.url(), 0); voice.setPlayUntil(4); voice.play();
+        QVERIFY(QTest::qWaitFor([&] { return sounds(rig); }, 3000));
         QVERIFY(server.sent < bytes.size());
         QCOMPARE(rig.mixer.decodingCount(), size_t(1));
         server.finish();
+    }
+    // Sát chỗ thôi kêu (còn dưới DECODE_LEAD_S + UNDERRUN_LOW_S + mờ vào + mờ ra = 3,1 s) thì bài đang tải dở giữ im dù đã tải đủ - kêu chừng ấy
+    // chỉ là một tiếng chớp (web 80->12 02-11: vào lại ở 119,5 s, đổi mốc 120 s, mờ ra 121,5 s); còn đủ chỗ thì vào.
+    void aTrackNearWhereItStopsSoundingStaysSilent() {
+        const QByteArray bytes = fixtureBytes(QStringLiteral("music_student/stereo_44k.mp3"));
+        for (const double until : {2.5, 4.0}) {
+            HeldServer server(bytes, bytes.size() * 6 / 10);
+            server.drip(bytes.size() / 8);
+            MixerRig rig; MixVoice voice(&rig.mixer); voice.setVolume(1); voice.load(server.url(), 0); voice.setPlayUntil(until); voice.play();
+            QCOMPARE(QTest::qWaitFor([&] { return sounds(rig); }, 2000), until > 3.1);
+            QVERIFY(server.sent < bytes.size());
+            server.finish();
+        }
     }
     // Ảnh bìa (thẻ ID3) đứng trước khung đầu không phải nhạc: bài có thẻ to bằng phần nhạc, đã tới thẻ + 30 % nhạc, mốc dùng tới 60 % bài,
     // tải tiếp 1/3 tốc độ phát -> chưa vào. Chia cỡ cả file cho số khung thì tưởng đã có 65 % bài, vào rồi đứng lắp bắp (U80H 02-11, dc28
@@ -724,10 +746,41 @@ private slots:
         head.start(30);
         Mp3Source source(48000); QVERIFY(source.open(audio));
         MixerRig rig; MixVoice voice(&rig.mixer); voice.setVolume(1); voice.load(server.url(), 0); voice.setPlayUntil(source.duration() * 0.6); voice.play();
-        QVERIFY(!QTest::qWaitFor([&] { rig.mixer.service(0); rig.mixer.serviceReader(); return voice.duration() > 0; }, 3000));
+        QVERIFY(!QTest::qWaitFor([&] { return sounds(rig); }, 3000));
         QCOMPARE(rig.mixer.decodingCount(), size_t(1));
         server.finish();
+        QVERIFY(QTest::qWaitFor([&] { return sounds(rig); }, 5000));
+    }
+    // Bed căn bài theo mốc khi biết độ dài - thường tới giữa bài: chỗ ấy tải chưa kịp thì giữ im (buffering - bài cũ giữ chỗ), không kêu
+    // nửa giây ở mép tải rồi cạn (U30I 02-11: xét tải kịp từ giây 0, căn tới 107,7 s, kêu 0,5 s rồi im 41 s); tải tới thì mờ vào.
+    void aTrackAlignedPastTheDownloadWaitsSilently() {
+        const QByteArray bytes = fixtureBytes(QStringLiteral("music_student/stereo_44k.mp3"));
+        HeldServer server(bytes, bytes.size() * 6 / 10);
+        server.drip(bytes.size() / 24); // nửa tốc độ bài
+        MixerRig rig; MixVoice voice(&rig.mixer); voice.setVolume(1); voice.load(server.url(), 0);
+        QSignalSpy buffering(&voice, &AudioOut::buffering);
         QVERIFY(QTest::qWaitFor([&] { rig.mixer.service(0); rig.mixer.serviceReader(); return voice.duration() > 0; }, 5000));
+        const double place = voice.duration() * 0.7;
+        voice.seek(place); voice.setPlayUntil(place + 2); voice.play();
+        // Tải đã qua chỗ căn chừng một giây nhạc - chưa đủ tới chỗ thôi kêu: vẫn im.
+        bool heard = false;
+        QVERIFY(QTest::qWaitFor([&] { heard |= sounds(rig); return server.sent >= bytes.size() * 8 / 10; }, 10000));
+        QVERIFY(!heard);
+        QVERIFY(!buffering.isEmpty() && buffering.last().at(0).toBool());
+        server.finish();
+        QVERIFY(QTest::qWaitFor([&] { return sounds(rig); }, 5000));
+        rig.serve(size_t(rig.mixer.rate()) * 3 / 10);
+        const auto &x = rig.device->output;
+        const size_t window = size_t(rig.mixer.rate()) / 200;
+        size_t onset = 0;
+        while (onset < x.size() / 2 && std::abs(x[onset * 2]) <= 1e-4f) ++onset;
+        const auto peak = [&](size_t from, size_t to) {
+            float p = 0;
+            for (size_t i = from; i < to && i * 2 < x.size(); ++i) p = std::max(p, std::abs(x[i * 2]));
+            return p;
+        };
+        const float first = peak(onset, onset + window), later = peak(onset + 30 * window, onset + 50 * window);
+        QVERIFY2(later > 0.01f && first < 0.2f * later, qPrintable(QStringLiteral("%1 / %2").arg(first).arg(later)));
     }
     // Tải tụt lại giữa bài (mạng đứng): nhạc mờ ra rồi im, không tắt phụt; tải xong thì mờ vào, không bật phụt (NA1 01-11: 14 lần).
     void aDownloadFallingBehindFadesTheMusicOutAndBackIn() {
@@ -735,7 +788,8 @@ private slots:
         HeldServer server(bytes, bytes.size() / 4);
         server.drip(bytes.size() / 6);
         MixerRig rig; MixVoice voice(&rig.mixer); voice.setVolume(1); voice.load(server.url(), 0); voice.play();
-        QVERIFY(QTest::qWaitFor([&] { rig.mixer.service(0); rig.mixer.serviceReader(); return voice.duration() > 0; }, 5000));
+        // Biết độ dài là vào, nhưng tải có kịp không còn tuỳ tốc độ đo được: chờ tải chạy một lúc (đã đo được tốc độ tải - vào là phát).
+        QVERIFY(QTest::qWaitFor([&] { rig.mixer.service(0); rig.mixer.serviceReader(); return voice.duration() > 0 && server.sent >= bytes.size() / 2; }, 5000));
         server.hold();
         const size_t second = size_t(rig.mixer.rate()), window = second / 200;
         rig.device->output.clear();

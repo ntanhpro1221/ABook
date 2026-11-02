@@ -279,6 +279,10 @@ const DOWNLOAD_LEAD_SECONDS = mix.underrunLeadSeconds;
  *  kêu thì mờ vào cũng trong chừng ấy - không tắt / bật phụt (NA1 01-11: nhạc im phụt 14 lần khi bài đang tải dở). */
 const UNDERRUN_LOW_SECONDS = mix.underrunLowSeconds;
 const UNDERRUN_FADE_SECONDS = mix.underrunFadeSeconds;
+/** Lần vào (cả vào lại sau hụt) phải còn ít nhất chừng này tới chỗ bài thôi kêu: [DOWNLOAD_LEAD_SECONDS] đã tải, hụt lại ở [UNDERRUN_LOW_SECONDS], mờ vào
+ *  rồi mờ ra mỗi lần [UNDERRUN_FADE_SECONDS] - ngắn hơn chỉ là một tiếng chớp (web 80->12 02-11: vào lại ở 119,5 s, đổi mốc 120 s, mờ ra 121,5 s). Suy từ
+ *  các số trên, không phải số để chỉnh; cùng luật với musicmixer.cpp và MusicBed.kt. */
+const MIN_ENTRY_SECONDS = DOWNLOAD_LEAD_SECONDS + UNDERRUN_LOW_SECONDS + 2 * UNDERRUN_FADE_SECONDS;
 /** Bài tải hỏng (mất mạng): đoạn của nó im lặng, chừng ấy sau mới thử lại - như MusicFailures.RETRY_MS của Android. */
 export const RETRY_MS = 5 * 60_000;
 /** Mốc đầu chương kế chưa dựng xong (`pending`) hay hỏi hỏng: chừng ấy ms sau mới hỏi lại; cũng là nhịp xin lại trong [NEXT_CHAPTER_LAST_CHANCE_SECONDS]. */
@@ -1001,10 +1005,12 @@ export class MusicBed {
           const through = playsThrough(audio.currentTime + ahead, audio.currentTime, end, pace.rate(now));
           if (this.playing) busy = true;
           if (playing.entering && playing.gate !== "open" && audio.volume <= 0) {
-            // Chưa có tiếng: đứng yên ở chỗ vào (phát câm thì chỗ vào trôi đi 1 giây mỗi giây, tải chậm hơn 1x không bao giờ đuổi kịp).
-            playing.gate = through ? "open" : "wait";
-            if (!through && !audio.paused) audio.pause();
-            else if (through && this.playing && audio.paused && !audio.ended) void audio.play().catch(() => undefined);
+            // Chưa có tiếng: đứng yên ở chỗ vào (phát câm thì chỗ vào trôi đi 1 giây mỗi giây, tải chậm hơn 1x không bao giờ đuổi kịp). Sát chỗ thôi kêu
+            // thì giữ im luôn ([MIN_ENTRY_SECONDS]).
+            const enter = through && end - audio.currentTime >= MIN_ENTRY_SECONDS;
+            playing.gate = enter ? "open" : "wait";
+            if (!enter && !audio.paused) audio.pause();
+            else if (enter && this.playing && audio.paused && !audio.ended) void audio.play().catch(() => undefined);
           } else if (!playing.starving && !audio.paused && audio.volume > 0 && ahead < UNDERRUN_LOW_SECONDS && !through) {
             playing.starving = true;
           }

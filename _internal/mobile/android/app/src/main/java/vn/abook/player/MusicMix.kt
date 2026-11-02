@@ -39,6 +39,10 @@ class MusicMix(json: JSONObject) {
     val underrunFadeMs = millis(json, "underrunFadeSeconds")
     /** Phần đệm trước còn dưới chừng này mà tốc độ tụt: bắt đầu mờ ra, tới 0 thì tạm dừng tại chỗ. */
     val underrunLowMs = millis(json, "underrunLowSeconds")
+    /** Lần vào (cả vào lại sau hụt) của bài stream phải còn ít nhất chừng này tới chỗ thôi kêu: [underrunLeadMs] đã đệm, hụt lại ở [underrunLowMs], mờ vào rồi
+     *  mờ ra mỗi lần [underrunFadeMs] - ngắn hơn chỉ là một tiếng chớp (web/Android 80->12 02-11). Suy từ các số trên, không phải số để chỉnh; cùng luật với
+     *  musicmixer.cpp và musicBed.ts. */
+    val underrunMinEntryMs = underrunLeadMs + underrunLowMs + 2 * underrunFadeMs
 
     companion object {
         const val FILE = "music_mix.json"

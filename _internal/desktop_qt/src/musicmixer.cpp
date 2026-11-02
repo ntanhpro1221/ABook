@@ -207,6 +207,15 @@ bool keepsUp(const DecodeJob &job, quint64 from, double until) {
     return have >= std::min(need, start + double(from) * perFrame + lead) && have + measured / DOWNLOAD_MARGIN * left >= need;
 }
 
+// Lần vào (cả vào lại sau hụt) phải còn ít nhất chừng này tới chỗ thôi kêu: DECODE_LEAD_S đã tải, hụt lại ở UNDERRUN_LOW_S, mờ vào rồi mờ ra mỗi lần
+// UNDERRUN_FADE_S - ngắn hơn chỉ là một tiếng chớp (web/Android 80->12 02-11: vào lại ở 119,5 s, đổi mốc 120 s, mờ ra 121,5 s). Suy từ các số ấy, không
+// phải số để chỉnh; cùng luật với musicBed.ts và MusicBed.kt.
+constexpr double MIN_ENTRY_S = DECODE_LEAD_S + UNDERRUN_LOW_S + 2 * UNDERRUN_FADE_S;
+// Được vào ở khung `heard` (chỗ sẽ nghe) khi bộ giải mã đã tới khung `decoded`: còn đủ chỗ trước `until` và tải kịp từ `decoded`.
+bool mayEnter(const DecodeJob &job, quint64 heard, quint64 decoded, double until) {
+    return std::min(until, double(job.total) / job.rate) - double(heard) / job.rate >= MIN_ENTRY_S && keepsUp(job, decoded, until);
+}
+
 // Callback không giữ con trỏ chủ: Unregister có thể đụng một callback còn đang chạy.
 struct DeviceNotice final : IMMNotificationClient {
     std::atomic<ULONG> refs{1};
@@ -852,9 +861,10 @@ void MusicMixer::serviceReader() {
                 { Guard guard(s->mutex); if (s->generation != generation) continue; s->job = job; }
                 if (!job->error.isEmpty()) error = job->error;
                 else if (job->fallback) { Guard guard(s->mutex); if (s->generation == generation) s->job.reset(); continue; }
-                // Vào khi đã có ba giây (hay cả bài ngắn hơn) và tải kịp tới hết bài từ chỗ vào (keepsUp); không kịp thì chưa vào - bài cũ
-                // giữ chỗ hay im lặng tới khi tải đủ, không vào rồi hụt giữa chừng.
-                else if (!job->opened || (!job->done && (job->frames < std::min(job->total, quint64(outRate) * 3) || !keepsUp(*job, [&] { Guard guard(s->mutex); return quint64(std::llround(std::max(0.0, s->target) * outRate)); }(), [&] { Guard guard(s->mutex); return s->until; }())))) continue;
+                // Vào khi đã có ba giây (hay cả bài ngắn hơn): biết độ dài để bed căn bài theo mốc. Tải có kịp không xét ở lần tua (reposition)
+                // - chỗ bài thực sự phát, thường giữa bài -, không phải ở giây nạp: xét từ 0 rồi bed căn tới 107 s thì vào ngay mép tải, kêu
+                // 0,5 s rồi cạn (U30I 02-11), hay chờ hàng trăm giây rồi bị căn quá mép tải (U80I: 51 s nhạc thay vì 158 s).
+                else if (!job->opened || (!job->done && job->frames < std::min(job->total, quint64(outRate) * 3))) continue;
                 else if (job->done) {
                     frames = job->frames;
                     if (!file->open(QIODevice::ReadOnly) || readHeader(*file, outRate) != frames) error = QStringLiteral("Bộ đệm nhạc bị thiếu dữ liệu.");
@@ -898,6 +908,9 @@ void MusicMixer::serviceReader() {
             s->file->seek(HEADER + qint64(s->origin) * 4);
             s->ring->clear(); s->mixed = s->heard = 0; s->spans.clear(); s->eof = false; s->reposition = false; s->joining = true; d->joinSoon = true;
             s->starving = s->hold = false; s->fadeOutLeft = s->fadeOutLen = s->fadeInLen = 0;
+            // Tới chỗ mà tải không kịp hay sát chỗ thôi kêu (lúc vào, lúc bed căn bài theo mốc, lúc tua): giữ im ngay như lúc hụt - báo buffering,
+            // bài cũ giữ chỗ - rồi mờ vào khi vòng đệm có lại UNDERRUN_RESUME_S và mayEnter. Lúc vào và lúc vào lại cùng một phép xét.
+            if (s->job && !mayEnter(*s->job, s->origin, s->origin, s->until)) s->starving = s->hold = true;
             if (s->seeking) postSeeked(s);
         }
         // Đọc trước hai giây; việc lấp vòng đệm không đánh thức giao diện.
@@ -939,7 +952,7 @@ void MusicMixer::serviceReader() {
             s->ring->write(block.data(), block.size());
         }
         if (s->starving && (!s->job || (s->ring->readable() >= size_t(UNDERRUN_RESUME_S * s->rate) * 2
-                                        && keepsUp(*s->job, quint64((s->file->pos() - HEADER) / 4), s->until))))
+                                        && mayEnter(*s->job, s->origin + s->mixed, quint64((s->file->pos() - HEADER) / 4), s->until))))
             s->starving = false; // tải đã kịp (hay bài đã tải xong): render mờ vào
     }
     d->decoding = d->jobs.size();

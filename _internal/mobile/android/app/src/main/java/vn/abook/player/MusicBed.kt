@@ -1709,14 +1709,16 @@ object MusicBed {
         val end = bed.cue?.let { minOf(player.duration.toDouble(), position + (MusicCues.playEnd(cues, it) - lastSeconds) * 1000) } ?: player.duration.toDouble()
         val through = bed.pace.playsThrough(now, buffered, position, end.toLong()) || StreamPace.full(ahead)
         if (bed.entering && !bed.admitted && bed.volume == 0f) {
-            bed.awaiting = !through
+            // Sát chỗ thôi kêu thì giữ im luôn ([MusicMix.underrunMinEntryMs]).
+            val enter = through && end - position >= MusicCues.mix.underrunMinEntryMs
+            bed.awaiting = !enter
             if (bed.awaiting) {
                 if (player.playWhenReady) player.pause()
             } else {
                 bed.admitted = true
                 if (playing && !player.playWhenReady) player.play()
             }
-            return through
+            return enter
         }
         if (!bed.starving && player.playWhenReady && bed.volume > 0f && ahead < MusicCues.mix.underrunLowMs && !through) bed.starving = true
         return !bed.starving
