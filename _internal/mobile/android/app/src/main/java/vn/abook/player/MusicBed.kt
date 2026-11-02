@@ -113,6 +113,15 @@ object MusicBed {
         var testK = 0 // số thứ tự trình phát trong kịch bản đo ([testPlayerSeq]); chỉ cho dòng testEvents
         var trackRef: TrackRef? = null // AudioTrack mới nhất + mốc của nó (cờ P3 bật / đang đo): P3 thật sự ra loa, pha P3 - a87 ([stepHandover])
         var volume = 0f // âm lượng LOGIC (mờ vào / mờ đi / bước âm lượng, dòng đo `vol`); ExoPlayer.volume = volume x [sleepFactor] - mọi chỗ đọc mức đọc từ đây, không đọc ngược player.volume
+        // Bài stream từ máy kia (http): phát dần, có thể hụt giữa bài ([streamTick]). `awaiting` = tạm dừng ở chỗ vào, chưa qua cổng [StreamPace.playsThrough] (bài trước
+        // giữ chỗ), `admitted` = đã qua cổng lần này, `starving` = đang mờ ra vì đệm sắp cạn mà tốc độ tụt, `recovering` = vào lại sau lần hụt: mờ vào trong
+        // [MusicMix.underrunFadeMs] thay vì fadeMs.
+        var streamed = false
+        val pace = StreamPace()
+        var awaiting = false
+        var admitted = false
+        var starving = false
+        var recovering = false
     }
 
     /**
@@ -504,8 +513,10 @@ object MusicBed {
         }
         val sameSeam = current?.built?.let { built -> cue != null && SeamPicker.compatible(built, cue) } ?: true // bài P3 sang mốc kề có vòng khác (hay `tail`): mở lại bằng đường chọn lại
         if ((!MusicCues.continues(current?.track, cue, newChapter) || !sameSeam) && (cue != null || current != null)) {
-            // Bài của mốc chưa có file (danh mục đang tải): bài trước mờ đi, bài này vào ngay khi có file - lần `sync` sau.
-            if (cue == null || !startCue(appContext, cue, seconds, seconds - cue.start)) switchTo(null, gain, 0.0)
+            // Bài của mốc chưa có file (danh mục đang tải): bài đang kêu giữ chỗ - không để cảnh câm suốt thời gian tải (11 KB/s: bài 29 MB
+            // mất ~45 phút) -, bài này vào ngay khi có file, lần `sync` sau. Như musicbed.cpp / musicBed.ts.
+            if (cue == null) switchTo(null, gain, 0.0)
+            else if (!startCue(appContext, cue, seconds, seconds - cue.start) && current == null) switchTo(null, gain, 0.0)
         } else if (cue != null) {
             current?.cue = cue // cùng bài sang mốc kề: chơi tiếp, bước âm lượng theo mốc mới
             // Vừa tua trong cùng bài: dời nhạc theo chỗ mới, không chơi tiếp từ chỗ cũ (soát a26 L8).
@@ -526,6 +537,7 @@ object MusicBed {
         emit { current?.takeIf { it.built != null && it.cue != null }?.let { SeamEvents.pos(it.testK, positionOf(it), MusicCues.alignedPosition(it.cue!!, seconds, it.built!!.bounds)) } }
         loopHandoff.check()
         applyPlaying()
+        if (playing && current?.streamed == true) startFade() // canh hụt của bài stream (đã tắt khi mờ vào xong thì bật lại)
     }
 
     /** Mở bài của mốc `cue` (bắt đầu `offsetSeconds` giây trong mốc), chọn đường P3 hay a87 ([seamPicker]); false khi chưa mở được (chưa có file: bài trước mờ đi, lần `sync` sau thử lại).
@@ -1010,7 +1022,7 @@ object MusicBed {
     private fun applyPlaying() {
         // Chỉ bài đang kêu được chơi lại; bài đang mờ đi thì chỉ dừng cùng giọng (như `MusicBed.sync` của trình phát web).
         for (bed in listOfNotNull(current) + fading) {
-            if (playing && !bed.player.isPlaying && bed === current) bed.player.play()
+            if (playing && !bed.player.isPlaying && bed === current && !bed.awaiting) bed.player.play() // bài stream chờ cổng: đứng yên ở chỗ vào
             // Bài đang đệm có playWhenReady = true mà isPlaying = false: không pause thì đệm xong nó tự kêu riêng sau khi giọng đã dừng (soát a77 #1).
             if (!playing && (bed.player.isPlaying || bed.player.playWhenReady)) bed.player.pause()
         }
@@ -1457,7 +1469,9 @@ object MusicBed {
             hookedRenderers(appContext, k, seam = built != null, trackRef) { loopSink = it }
         }
         val sourceFactory = Streaming.mediaSourceFactory(appContext, exactMp3Seek = true)
+        val streamed = uri.scheme == "http" || uri.scheme == "https"
         val player = ExoPlayer.Builder(appContext, renderers)
+            .apply { if (streamed) setLoadControl(StreamPace.loadControl()) }
             .setAudioAttributes(
                 AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).build(),
                 false,
@@ -1471,6 +1485,7 @@ object MusicBed {
         player.volume = 0f
         val offsetMs = (offsetSeconds.coerceAtLeast(0.0) * 1000).toLong()
         val bed = Bed(track, player, targetGain, targetGain * STEP_MS / fadeMs, cue, fadeMs)
+        bed.streamed = streamed
         bed.built = built
         bed.sink = loopSink
         bed.trackRef = trackRef
@@ -1628,14 +1643,45 @@ object MusicBed {
             var busy = false
             current?.let { bed ->
                 val player = bed.player
-                // Bài còn tải / đệm thì chưa mờ vào: để lúc có tiếng mới nhích từ 0 lên, không nhảy thẳng tới mức (soát B3).
-                val ready = player.playbackState.let { it == Player.STATE_READY || it == Player.STATE_ENDED }
-                setVolume(bed, MusicCues.towardWhenReady(bed.volume, bed.goal, bed.perTick, ready))
-                if (ready && abs(bed.volume - bed.goal) < 1e-4f) bed.entering = false else busy = true
+                // Bài còn tải / đệm thì chưa mờ vào: để lúc có tiếng mới nhích từ 0 lên, không nhảy thẳng tới mức (soát B3). Bài stream còn qua cổng tốc độ tải
+                // (đo mỗi nhịp, cả lúc đang đệm).
+                val gate = !bed.streamed || streamTick(bed)
+                val ready = player.playbackState.let { it == Player.STATE_READY || it == Player.STATE_ENDED } && gate
+                if (bed.starving) {
+                    setVolume(bed, maxOf(0f, bed.volume - maxOf(bed.goal, 0.01f) * STEP_MS / MusicCues.mix.underrunFadeMs))
+                    if (bed.volume <= 0f) {
+                        // Đã im: tạm dừng tại chỗ, chờ cổng như bài mới, rồi mờ vào trong underrunFadeMs.
+                        bed.starving = false
+                        bed.entering = true
+                        bed.admitted = false
+                        bed.awaiting = true
+                        bed.recovering = true
+                        player.pause()
+                    }
+                    busy = true
+                } else {
+                    val step = if (bed.recovering) bed.goal * STEP_MS / MusicCues.mix.underrunFadeMs else bed.perTick
+                    setVolume(bed, MusicCues.towardWhenReady(bed.volume, bed.goal, step, ready))
+                    if (ready && abs(bed.volume - bed.goal) < 1e-4f) { bed.entering = false; bed.recovering = false } else busy = true
+                }
+                // Bài stream chưa tải trọn (hay đang chờ cổng): nhịp mờ đo tốc độ / canh hụt suốt lúc giọng chạy.
+                if (bed.streamed && playing && (bed.awaiting || !StreamPace.whole(player.bufferedPosition, player.duration))) busy = true
             }
+            // Bài mới chưa qua cổng tốc độ tải: bài trước giữ chỗ ở mức đang có, không mờ đi để cả cảnh câm suốt lúc tải (như musicbed.cpp / musicBed.ts).
+            val holdOld = current?.awaiting == true
             val iterator = fading.iterator()
             while (iterator.hasNext()) {
                 val bed = iterator.next()
+                // Bài cũ stream sắp hết phần đã tải (giữ chỗ quá chỗ thôi kêu của nó): thôi giữ, mờ hết trong underrunFadeMs - mờ thường dài hơn phần còn
+                // lại thì vẫn im phụt giữa chừng.
+                val player = bed.player
+                val low = bed.streamed && player.isPlaying && !StreamPace.whole(player.bufferedPosition, player.duration) &&
+                    player.bufferedPosition - player.currentPosition < MusicCues.mix.underrunLowMs
+                if (low) bed.fadeStep = maxOf(bed.fadeStep, maxOf(bed.volume, 0.01f) * STEP_MS / MusicCues.mix.underrunFadeMs)
+                if (holdOld && !low && bed.player.isPlaying) {
+                    busy = true
+                    continue
+                }
                 setVolume(bed, maxOf(0f, bed.volume - bed.fadeStep))
                 if (bed.volume <= 0.001f) {
                     release(bed)
@@ -1646,6 +1692,38 @@ object MusicBed {
             }
             if (busy) main.postDelayed(this, STEP_MS) else fadingTicker = false
         }
+    }
+
+    /**
+     * Bài stream (http) được kêu không. Chưa có tiếng: cổng [StreamPace.playsThrough] - phát được từ chỗ vào tới chỗ bài thôi kêu (hay đệm phía trước đã đầy
+     * [StreamPace.BUFFER_MS] - [StreamPace.full]; không suy từ `isLoading` = false); chưa qua thì TẠM DỪNG đứng yên ở chỗ vào (phát câm thì chỗ vào trôi đi 1 giây mỗi giây, tải chậm hơn 1x
+     * không bao giờ đuổi kịp), bài trước giữ chỗ / im lặng. Đã có tiếng mà đệm trước tụt dưới [MusicMix.underrunLowMs] và không còn phát được tới chỗ thôi kêu: `starving` (mờ
+     * ra trước khi đệm cạn, tới 0 thì tạm dừng và chờ cổng lại - [fadeTick]). Như `keepsUp` của musicmixer.cpp và `playsThrough` của musicBed.ts.
+     */
+    private fun streamTick(bed: Bed): Boolean {
+        val player = bed.player
+        val now = SystemClock.elapsedRealtime()
+        val buffered = player.bufferedPosition
+        val position = player.currentPosition
+        bed.pace.add(now, buffered, position)
+        val ahead = buffered - position
+        // Chỉ cần tải kịp tới chỗ bài thôi kêu (tính lại mỗi nhịp: giọng chậm / khựng thì chỗ ấy dời theo).
+        val end = bed.cue?.let { minOf(player.duration.toDouble(), position + (MusicCues.playEnd(cues, it) - lastSeconds) * 1000) } ?: player.duration.toDouble()
+        val through = bed.pace.playsThrough(now, buffered, position, end.toLong()) || StreamPace.full(ahead)
+        if (bed.entering && !bed.admitted && bed.volume == 0f) {
+            // Sát chỗ thôi kêu thì giữ im luôn ([MusicMix.underrunMinEntryMs]).
+            val enter = through && end - position >= MusicCues.mix.underrunMinEntryMs
+            bed.awaiting = !enter
+            if (bed.awaiting) {
+                if (player.playWhenReady) player.pause()
+            } else {
+                bed.admitted = true
+                if (playing && !player.playWhenReady) player.play()
+            }
+            return enter
+        }
+        if (!bed.starving && player.playWhenReady && bed.volume > 0f && ahead < MusicCues.mix.underrunLowMs && !through) bed.starving = true
+        return !bed.starving
     }
 
     private fun startFade() {

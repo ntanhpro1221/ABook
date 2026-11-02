@@ -198,6 +198,18 @@ def host_tree_private_mb(parent_pid: int) -> float:
     return total
 
 
+# Tải thật của máy dùng chung mà lượt đo phải nhường: app / bộ thử Qt, công cụ dựng C++, và một lệnh gradle đang chạy (client gradlew + tiến trình
+# chạy test / biên dịch của nó). Không chờ theo tên java.exe: daemon gradle của Android Studio và Unity, daemon Kotlin sống hàng giờ khi rảnh.
+BUILD_TOOLS = {"cl.exe", "link.exe", "ninja.exe", "cmake.exe", "qmlcachegen.exe", "qmltyperegistrar.exe"}
+GRADLE_RUN_MARKS = ("gradle-wrapper.jar", "org.gradle.wrapper.gradlewrappermain", "gradleworkermain")  # gradlew 8.x chạy -jar gradle-wrapper.jar
+
+
+def foreign_load(name: str, command: str) -> bool:
+    """`name` tên exe viết thường, `command` dòng lệnh viết thường."""
+    return (name == "abookdesk.exe" or name.endswith("tests.exe") or name in BUILD_TOOLS or
+            (name == "java.exe" and any(mark in command for mark in GRADLE_RUN_MARKS)))
+
+
 def launch(exe: Path, env_extra: dict, offscreen: bool = True, timeout_seconds: float = 120, require_ac: bool = True) -> dict:
     """Chạy app một lượt, lấy mẫu RAM riêng + CPU mỗi 250 ms và trạng thái cửa sổ; trả về mọi thứ thô cho phần phân tích."""
     import psutil
@@ -215,9 +227,7 @@ def launch(exe: Path, env_extra: dict, offscreen: bool = True, timeout_seconds: 
                 command = " ".join(process.info["cmdline"] or []).replace("\\", "/").lower()
                 measuring = name.startswith("python") and any(f"/{script}.py" in command for script in ("measure", "ramrun", "hidden_suite", "private_worker"))
                 foreign = str(HERE).replace("\\", "/").lower() not in command
-                if (name == "abookdesk.exe" or name.endswith("tests.exe") or
-                    name in {"cl.exe", "link.exe", "ninja.exe", "cmake.exe", "qmlcachegen.exe", "qmltyperegistrar.exe"} or
-                    (measuring and foreign and process.pid != os.getpid())):
+                if foreign_load(name, command) or (measuring and foreign and process.pid != os.getpid()):
                     others.append(process.pid)
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 pass
@@ -400,9 +410,8 @@ def launch(exe: Path, env_extra: dict, offscreen: bool = True, timeout_seconds: 
                 if env.get("ABOOK_CAPTURE_MODULES") == "1" and len(thread_samples) % 60 == 0:
                     module_samples.append((time.time() * 1000, sample_modules(p.pid)))
                 if len(thread_samples) % 4 == 0:
-                    busy = [q.info for q in psutil.process_iter(["pid", "name", "exe"])
-                            if q.pid != p.pid and ((q.info["name"] or "").lower().endswith("tests.exe") or
-                            (q.info["name"] or "").lower() in {"abookdesk.exe", "cl.exe", "link.exe", "ninja.exe", "cmake.exe", "qmlcachegen.exe", "qmltyperegistrar.exe"})]
+                    busy = [{k: q.info[k] for k in ("pid", "name", "exe")} for q in psutil.process_iter(["pid", "name", "exe", "cmdline"])
+                            if q.pid != p.pid and foreign_load((q.info["name"] or "").lower(), " ".join(q.info["cmdline"] or []).lower())]
                     if busy: shared_busy.append((time.time() * 1000, busy))
                 current_power = PowerStatus()
                 power_samples.append((time.time() * 1000, int(current_power.ac) if k32.GetSystemPowerStatus(ctypes.byref(current_power)) else -1))

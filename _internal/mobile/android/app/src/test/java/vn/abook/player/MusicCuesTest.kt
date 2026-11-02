@@ -40,6 +40,21 @@ class MusicCuesTest {
     }
 
     @Test
+    fun a_track_stops_sounding_at_the_end_of_its_run_plus_the_fade() {
+        // Hết chuỗi mốc liền nhau cùng bài + mờ ra của mốc kế (anh em: mờ dài); mốc tail chơi tới hết bài (musiclogic.h, musicBed.ts cùng luật).
+        val a = MusicCues.Cue(0.0, 100.0, "a", null)
+        val a2 = MusicCues.Cue(100.0, 160.0, "a", null)
+        val b = MusicCues.Cue(160.0, 300.0, "b", null)
+        val c = MusicCues.Cue(310.0, 400.0, "a", null)
+        val fade = MusicCues.mix.fadeSeconds
+        assertEquals(160 + fade, MusicCues.playEnd(listOf(a, a2, b, c), a), 0.0)
+        assertEquals(160 + fade, MusicCues.playEnd(listOf(a, a2, b, c), a2), 0.0)
+        assertEquals(300 + fade, MusicCues.playEnd(listOf(a, a2, b, c), b), 0.0) // mốc kế (c) cách 10 s: mờ ra thường
+        assertEquals(160 + MusicCues.mix.siblingFadeSeconds, MusicCues.playEnd(listOf(a, a2, b.copy(sibling = true), c), a), 0.0)
+        assertEquals(Double.POSITIVE_INFINITY, MusicCues.playEnd(listOf(a, a2.copy(tail = true), b, c), a), 0.0)
+    }
+
+    @Test
     fun the_step_in_force_is_the_last_one_reached() {
         val cue = MusicCues.of(music, 3)[0]
         assertEquals(0.0, MusicCues.stepDbAt(cue, 100.0), 0.0)

@@ -77,8 +77,10 @@ export const MUSIC_CHANGED_ALL = "*";
 type BedAudio = Pick<HTMLAudioElement, "play" | "pause" | "paused" | "volume" | "loop" | "currentTime" | "duration"> & {
   /** `error`: bài không tải được (mất mạng, máy chủ không phát được). `playing`: bài THẬT SỰ đang kêu (đã có dữ liệu để phát, không còn chờ tải). */
   addEventListener(type: "loadedmetadata" | "error" | "playing", listener: () => void, options?: { once?: boolean }): void;
-  /** HAVE_FUTURE_DATA (3) trở lên = phát được. Phần tử không khai báo (bản giả) thì không chờ tiếng: mờ vào như cũ. */
+  /** HAVE_ENOUGH_DATA (4) = trình duyệt ước tải kịp tới hết bài: mới cho vào. Phần tử không khai báo (bản giả) thì không chờ tiếng: mờ vào như cũ. */
   readonly readyState?: number;
+  /** Phần đã tải của <audio src> (trình duyệt không có MediaSource, như Safari iPhone): bài đang tải dở sắp hụt thì mờ ra thay vì tắt phụt. */
+  readonly buffered?: Pick<TimeRanges, "length" | "start" | "end">;
   /** Bài không lặp (bài cũ khi nối bài anh em) đã chơi hết: không phát lại. */
   readonly ended?: boolean;
   /** [release]: bỏ nguồn rồi nạp lại để trình duyệt đóng kết nối tải bài. */
@@ -99,15 +101,58 @@ export function browserAudio(src: string): BedAudio {
   return audio;
 }
 
-/** Bài mp3 có khung Xing kèm mục lục: <audio src> tua theo mục lục ấy, phần tử lặp vào từ loopStart lệch tới 2,2 s (loopfix). Nạp CẢ
- *  file vào MediaSource ("audio/mpeg") rồi endOfStream thì trình duyệt tua theo dấu thời gian từng khung (lệch <= 14 ms đo trên 40
- *  bài). Trong lúc nạp, `loadedmetadata` (độ dài lúc ấy vô hạn) và `error` của phần tử bị giữ lại, `play()` hoãn tới khi xong: MusicBed
- *  chỉ thấy một phần tử đã đủ cả bài. Máy chủ trả không phải mp3 (ogg, wav), tải hỏng, hết chỗ đệm (QuotaExceededError) hay giải mã
- *  hỏng: lùi về <audio src> như cũ - lỗi của đường cũ mới tới MusicBed. */
+/** Chỗ đệm tiếng mặc định của một SourceBuffer ở Chromium (12 MB): bài lớn hơn thì nạp tới đó là QuotaExceededError khi phần tử còn đứng ở
+ *  chỗ vào (chưa có phần đã phát để trình duyệt dọn), nên đi thẳng <audio src> thay vì tải phí một phần rồi mới lùi. */
+const MSE_AUDIO_BYTES = 12 * 1024 * 1024;
+/** Phần đầu file (sau thẻ ID3) giữ lại để đọc độ dài ([mp3Seconds]). */
+const MP3_HEAD_BYTES = 1024 * 1024;
+
+/** Cỡ thẻ ID3v2 đầu file (0 = không có), null = chưa đủ 10 byte. Thẻ chứa ảnh bìa có thể dài hơn mọi phần đầu giữ lại (dc28: 1,42 MB). */
+export function id3Length(head: Uint8Array): number | null {
+  if (head.length < 10) return null;
+  if (head[0] !== 0x49 || head[1] !== 0x44 || head[2] !== 0x33) return 0;
+  return 10 + (((head[6] & 0x7f) << 21) | ((head[7] & 0x7f) << 14) | ((head[8] & 0x7f) << 7) | (head[9] & 0x7f)) + (head[5] & 0x10 ? 10 : 0);
+}
+
+/** Độ dài (giây) của bài mp3 dài `total` byte, đọc từ phần đầu file `head`: khung Xing/Info có số khung thì đúng số khung, không có thì theo
+ *  bitrate của khung đầu (đúng với CBR - bài danh mục incompetech không có Xing). null = chưa đủ byte hay không phải mp3 Layer III. MediaSource
+ *  chỉ biết độ dài khi đã nạp hết, mà MusicBed cần nó ngay để căn chỗ vào và tính cổng [playsThrough]. */
+export function mp3Seconds(head: Uint8Array, total: number): number | null {
+  let at = id3Length(head);
+  if (at === null) return null;
+  for (; at + 4 <= head.length; at += 1) {
+    if (head[at] !== 0xff || (head[at + 1] & 0xe0) !== 0xe0) continue;
+    const version = (head[at + 1] >> 3) & 3; // 3 = MPEG-1, 2 = MPEG-2, 0 = MPEG-2.5
+    const bitrate = head[at + 2] >> 4;
+    const rate = (head[at + 2] >> 2) & 3;
+    if (version === 1 || ((head[at + 1] >> 1) & 3) !== 1 || bitrate === 0 || bitrate === 15 || rate === 3) continue;
+    const mpeg1 = version === 3;
+    const kbps = (mpeg1 ? [0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320] : [0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160])[bitrate];
+    const hz = [44100, 48000, 32000][rate] / (mpeg1 ? 1 : version === 2 ? 2 : 4);
+    const mono = head[at + 3] >> 6 === 3;
+    const tag = at + 4 + (mpeg1 ? (mono ? 17 : 32) : mono ? 9 : 17);
+    if (tag + 12 > head.length) return null;
+    const id = String.fromCharCode(head[tag], head[tag + 1], head[tag + 2], head[tag + 3]);
+    if ((id === "Xing" || id === "Info") && head[tag + 7] & 1) {
+      const frames = ((head[tag + 8] << 24) | (head[tag + 9] << 16) | (head[tag + 10] << 8) | head[tag + 11]) >>> 0;
+      return (frames * (mpeg1 ? 1152 : 576)) / hz;
+    }
+    return ((total - at) * 8) / (kbps * 1000);
+  }
+  return null;
+}
+
+/** Bài mp3 có khung Xing kèm mục lục: <audio src> tua theo mục lục ấy, phần tử lặp vào từ loopStart lệch tới 2,2 s (loopfix). Nạp file vào
+ *  MediaSource ("audio/mpeg") thì trình duyệt tua theo dấu thời gian từng khung (lệch <= 14 ms đo trên 40 bài). Nạp DẦN từng khúc đang tải về
+ *  (không đợi cả file - nguồn chậm 11-30 KB/s thì đợi trọn bài là im hàng phút): biết độ dài từ đầu file ([mp3Seconds]) là báo `loadedmetadata`
+ *  cho MusicBed, phần đã nạp là `buffered` của phần tử, cổng [playsThrough] quyết lúc vào như bài <audio src> đang tải dở; trình duyệt không ngừng
+ *  tải khi phần tử tạm dừng (<audio src> của Chrome ngừng ở ~3,5 MB phía trước, đo 02-11). Trước lúc ấy `loadedmetadata` / `error` của phần
+ *  tử bị giữ lại, `play()` hoãn. Máy chủ trả không phải mp3 (ogg, wav), bài lớn hơn [MSE_AUDIO_BYTES], tải hỏng / hết chỗ đệm / giải mã hỏng
+ *  trước lúc ấy: lùi về <audio src> như cũ - lỗi của đường cũ mới tới MusicBed; hỏng sau lúc ấy: báo `error` (bài hỏng, thử lại sau). */
 function mseAudio(audio: HTMLAudioElement, src: string): BedAudio {
   const abort = new AbortController();
   let url = "";
-  let settled = false; // đã nạp xong qua MediaSource hay đã lùi về <audio src>: từ đây sự kiện đi thẳng tới MusicBed
+  let settled = false; // đã biết độ dài (nạp dần qua MediaSource) hay đã lùi về <audio src>: từ đây sự kiện đi thẳng tới MusicBed
   let wantPlay = false;
   const play = audio.play.bind(audio);
   const pause = audio.pause.bind(audio);
@@ -141,21 +186,59 @@ function mseAudio(audio: HTMLAudioElement, src: string): BedAudio {
         settle(true);
         return;
       }
-      const data = await response.arrayBuffer();
+      const total = Number(response.headers.get("Content-Length") ?? Number.NaN);
+      if (total > MSE_AUDIO_BYTES) {
+        abort.abort();
+        settle(true);
+        return;
+      }
       const source = new MediaSource();
       url = URL.createObjectURL(source);
       audio.src = url;
       await new Promise<void>((resolve) => source.addEventListener("sourceopen", () => resolve(), { once: true }));
       const buffer = source.addSourceBuffer("audio/mpeg");
-      await new Promise<void>((resolve, reject) => {
-        buffer.addEventListener("updateend", () => resolve(), { once: true });
-        buffer.addEventListener("error", () => reject(new Error("appendBuffer")), { once: true });
-        buffer.appendBuffer(data); // QuotaExceededError ném ngay ở đây
-      });
-      source.endOfStream();
+      const append = (data: BufferSource) =>
+        new Promise<void>((resolve, reject) => {
+          buffer.addEventListener("updateend", () => resolve(), { once: true });
+          buffer.addEventListener("error", () => reject(new Error("appendBuffer")), { once: true });
+          buffer.appendBuffer(data); // QuotaExceededError ném ngay ở đây
+        });
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error("body");
+      // Phần đầu để đọc độ dài bắt đầu ở byte `headAt` của file: biết cỡ thẻ ID3 thì bỏ cả thẻ, chỉ giữ từ khung đầu.
+      let head = new Uint8Array(0);
+      let headAt = 0;
+      let read = 0;
+      for (let part = await reader.read(); !part.done; part = await reader.read()) {
+        await append(part.value);
+        const from = read;
+        read += part.value.length;
+        if (settled || !(total > 0) || head.length >= MP3_HEAD_BYTES) continue;
+        const fresh = part.value.subarray(Math.max(0, headAt + head.length - from));
+        if (!fresh.length) continue;
+        const grown = new Uint8Array(head.length + fresh.length);
+        grown.set(head);
+        grown.set(fresh, head.length);
+        head = grown;
+        if (headAt === 0) {
+          const tag = id3Length(head);
+          if (tag === null) continue;
+          if (tag > 0) {
+            headAt = tag;
+            head = head.slice(Math.min(tag, head.length));
+          }
+        }
+        const seconds = mp3Seconds(head, total - headAt);
+        if (seconds === null) continue;
+        source.duration = seconds;
+        settle(false);
+      }
+      source.endOfStream(); // độ dài thành đúng số khung đã nạp
       settle(false);
     } catch {
-      if (!abort.signal.aborted) settle(true);
+      if (abort.signal.aborted) return;
+      if (!settled) settle(true);
+      else audio.dispatchEvent(new Event("error"));
     }
   })();
   return Object.assign(audio, {
@@ -183,6 +266,23 @@ export const LOOP_CROSSFADE_SECONDS = mix.loopCrossfadeSeconds;
 /** Chu kỳ ngắn nhất (giây) để điểm vòng của danh mục được dùng (music_mix.loop_bounds). */
 const LOOP_MIN_PERIOD_SECONDS = mix.loopMinPeriodSeconds;
 const STEP_MS = 50;
+/** Bài đang tải dở (<audio src>, hay mp3 đang nạp dần vào MediaSource) chỉ vào - và vào lại sau hụt - khi phát được tới chỗ bài thôi kêu ([playsThrough],
+ *  [playEnd]): cùng công thức, cùng hằng số (music_mix.json, khoá underrun*) với `keepsUp` của bản máy tính (musicmixer.cpp) và StreamPace.kt của
+ *  Android. Tốc độ tải đo bằng trung bình trượt [DOWNLOAD_WINDOW_SECONDS] giây của phần đã tải (giây bài mỗi giây đồng hồ), gộp đợt dồn
+ *  [DOWNLOAD_BURST_SECONDS] đầu (phần bộ đệm đã có sẵn). */
+const DOWNLOAD_WINDOW_SECONDS = mix.underrunRateWindowSeconds;
+const DOWNLOAD_BURST_SECONDS = mix.underrunBurstSeconds;
+const DOWNLOAD_MARGIN = mix.underrunMargin;
+/** Phần phải có sẵn trước con trỏ lúc vào. */
+const DOWNLOAD_LEAD_SECONDS = mix.underrunLeadSeconds;
+/** Tốc độ tụt giữa bài mà phần đã tải trước con trỏ còn dưới chừng này: mờ ra trong [UNDERRUN_FADE_SECONDS], tạm dừng tại chỗ, phát được tới chỗ thôi
+ *  kêu thì mờ vào cũng trong chừng ấy - không tắt / bật phụt (NA1 01-11: nhạc im phụt 14 lần khi bài đang tải dở). */
+const UNDERRUN_LOW_SECONDS = mix.underrunLowSeconds;
+const UNDERRUN_FADE_SECONDS = mix.underrunFadeSeconds;
+/** Lần vào (cả vào lại sau hụt) phải còn ít nhất chừng này tới chỗ bài thôi kêu: [DOWNLOAD_LEAD_SECONDS] đã tải, hụt lại ở [UNDERRUN_LOW_SECONDS], mờ vào
+ *  rồi mờ ra mỗi lần [UNDERRUN_FADE_SECONDS] - ngắn hơn chỉ là một tiếng chớp (web 80->12 02-11: vào lại ở 119,5 s, đổi mốc 120 s, mờ ra 121,5 s). Suy từ
+ *  các số trên, không phải số để chỉnh; cùng luật với musicmixer.cpp và MusicBed.kt. */
+const MIN_ENTRY_SECONDS = DOWNLOAD_LEAD_SECONDS + UNDERRUN_LOW_SECONDS + 2 * UNDERRUN_FADE_SECONDS;
 /** Bài tải hỏng (mất mạng): đoạn của nó im lặng, chừng ấy sau mới thử lại - như MusicFailures.RETRY_MS của Android. */
 export const RETRY_MS = 5 * 60_000;
 /** Mốc đầu chương kế chưa dựng xong (`pending`) hay hỏi hỏng: chừng ấy ms sau mới hỏi lại; cũng là nhịp xin lại trong [NEXT_CHAPTER_LAST_CHANCE_SECONDS]. */
@@ -194,6 +294,27 @@ export const NEXT_CHAPTER_LAST_CHANCE_SECONDS = 120;
 
 function cueAt(cues: MusicCue[], seconds: number): MusicCue | null {
   return cues.find((cue) => seconds >= cue.start && seconds < cue.end) ?? null;
+}
+
+/** Giây chương mà bài của mốc `cue` thôi kêu: hết chuỗi mốc liền nhau cùng bài (bài chơi tiếp qua các mốc ấy, không bắt đầu lại) + thời gian mờ ra
+ *  khi mốc kế vào (mốc anh em: [SIBLING_FADE_SECONDS], không thì [FADE_SECONDS]). Mốc `tail` chơi tới hết bài: vô cực. Bài đang tải dở chỉ cần tải
+ *  kịp tới chỗ ấy mới vào - bài 863 s mà mốc chỉ dùng 342 s thì không phải chờ tải gần hết bài (musiclogic.h, MusicCues.kt cùng luật). */
+export function playEnd(cues: MusicCue[], cue: MusicCue): number {
+  let end = cue.end;
+  let tail = cue.tail === true;
+  for (let grew = true; grew; ) {
+    grew = false;
+    for (const other of cues) {
+      if (other.link === cue.link && other.start <= end + 1e-6 && other.end > end) {
+        end = other.end;
+        tail ||= other.tail === true;
+        grew = true;
+      }
+    }
+  }
+  if (tail) return Infinity;
+  const next = cues.find((other) => other.link !== cue.link && Math.abs(other.start - end) <= 1e-6);
+  return end + (next?.sibling ? SIBLING_FADE_SECONDS : FADE_SECONDS);
 }
 
 /** Mức bước (dB) của mốc tại giây `seconds` của chương: bước cuối cùng đã tới, chưa tới bước nào thì 0. */
@@ -346,6 +467,66 @@ interface Playing {
   early?: boolean;
   /** Vòng cuối của mốc `tail`: không mở phần tử lặp nữa, bài chơi tới E là hết. */
   final?: boolean;
+  /** Bài đang tải dở sắp hụt ([bufferedAhead] < [UNDERRUN_LOW_SECONDS]): đang mờ ra, tới 0 thì tạm dừng tại chỗ, chờ cổng như bài mới. */
+  starving?: boolean;
+  /** Cổng của bài đang tải dở: "wait" = tạm dừng ở chỗ vào, chờ phát được tới chỗ bài thôi kêu ([playsThrough]); "open" = đã qua. */
+  gate?: "wait" | "open";
+  pace?: DownloadPace;
+}
+
+/** Tốc độ tải (giây bài mỗi giây đồng hồ) của một bài đang tải dở - như StreamPace.kt của Android và DownloadRate của musicmixer.cpp. */
+export class DownloadPace {
+  private samples: [number, number][] = [];
+  private began = -1;
+  private lastNow = 0;
+  private lastFrom = 0;
+
+  /** `have`: giây bài đã tải liền tới (tính từ đầu bài), `from`: con trỏ phát, lúc `now` (ms). Phần đã tải lùi hay con trỏ nhảy (tua, dời chỗ vào): đo lại
+   *  từ đầu - không thì cú nhảy của phần đã tải bị tính là tải được (StreamPace.kt, emulator 02-11). */
+  add(now: number, have: number, from: number): void {
+    const last = this.samples[this.samples.length - 1];
+    const jumped = this.began >= 0 && (from < this.lastFrom - 0.05 || from > this.lastFrom + (now - this.lastNow) / 1000 + 1);
+    if (this.began < 0 || jumped || (last && have < last[1] - 0.05)) {
+      this.began = now;
+      this.samples = [];
+    }
+    this.lastNow = now;
+    this.lastFrom = from;
+    if (now - this.began < DOWNLOAD_BURST_SECONDS * 1000) this.samples = [];
+    this.samples.push([now, have]);
+    // Giữ một mẫu ngay trước cửa sổ làm mốc đầu.
+    while (this.samples.length > 2 && now - this.samples[1][0] > DOWNLOAD_WINDOW_SECONDS * 1000) this.samples.shift();
+  }
+
+  /** Trung bình trượt tính tới `now` (nguồn đứng thì tụt dần về 0); null khi chưa đo đủ 1 giây. */
+  rate(now: number): number | null {
+    let first = this.samples[0];
+    for (const sample of this.samples) if (now - sample[0] > DOWNLOAD_WINDOW_SECONDS * 1000) first = sample;
+    if (!first) return null;
+    const span = now - first[0];
+    if (span < 1000) return null;
+    return ((this.samples[this.samples.length - 1][1] - first[1]) * 1000) / span;
+  }
+}
+
+/** Phát từ giây `from` tới giây `end` của bài (chỗ bài thôi kêu: min(độ dài, [playEnd])) mà không hụt, nếu tốc độ tải giữ ở `rate` chia lề: đã tải
+ *  `have` + rate/lề·t, phát tới from + t - cả hai tuyến tính theo t, nên chỉ cần đúng bây giờ (có sẵn [DOWNLOAD_LEAD_SECONDS]) và lúc tới `end`. Đã tải
+ *  tới `end` thì qua luôn. Chưa đo được tốc độ: chưa chắc, coi như không. */
+export function playsThrough(have: number, from: number, end: number, rate: number | null): boolean {
+  if (have >= end - 0.05) return true;
+  return have - from >= DOWNLOAD_LEAD_SECONDS && rate !== null && rate > 0 && ((end - have) / rate) * DOWNLOAD_MARGIN <= end - from;
+}
+
+/** Giây đã tải trước con trỏ phát của bài đang tải dở (<audio src>, hay phần đã nạp vào MediaSource); null = đã tải trọn, hay phần tử không cho biết (bản giả). */
+function bufferedAhead(audio: BedAudio): number | null {
+  const ranges = audio.buffered;
+  if (!ranges || !Number.isFinite(audio.duration) || audio.duration <= 0) return null;
+  for (let i = 0; i < ranges.length; i += 1) {
+    if (ranges.start(i) <= audio.currentTime + 0.05 && audio.currentTime <= ranges.end(i)) {
+      return ranges.end(i) >= audio.duration - 0.05 ? null : ranges.end(i) - audio.currentTime;
+    }
+  }
+  return 0;
 }
 
 /** Bài nằm sẵn trong sách: cuốn mở từ file `.abook` mang bài trong gói, máy chủ đưa qua `/music/files/` (server.py music_cues) - không có gì để xin
@@ -469,12 +650,14 @@ export class MusicBed {
     else playing.audio.volume = playing.goal;
   }
 
-  /** Bài mới còn đang chờ tải (chưa có sự kiện `playing`, hay `readyState` < 3): chưa được nhích âm lượng lên - bài cũ mờ đi, im lặng bằng thời gian tải
-   *  thay vì bài mới "vào đột ngột" ở đủ mức ngay khi tải xong. */
+  /** Bài mới còn đang chờ tải (chưa có sự kiện `playing`, `readyState` < 4 - trình duyệt chưa ước tải kịp tới hết bài, hay bài đang tải dở chưa qua
+   *  cổng [playsThrough] - đã qua thì readyState 3 là đủ): chưa được nhích âm lượng lên - bài cũ đứng ở mức đang có ([startFade]), thay vì bài mới
+   *  vào rồi hụt giữa chừng hay "vào đột ngột" ở đủ mức ngay khi tải xong. */
   private awaitingSound(playing: Playing): boolean {
     const { audio } = playing;
     if (!playing.entering || typeof audio.readyState !== "number") return false;
-    return !(this.sounded.has(audio) && audio.readyState >= 3);
+    if (playing.gate === "wait") return true;
+    return !(this.sounded.has(audio) && (audio.readyState >= 4 || (playing.gate === "open" && audio.readyState >= 3)));
   }
 
   /** Gọi mỗi khi thời gian giọng đọc đổi (`seeked` = người nghe vừa tua). `ended`: giọng dừng vì tự hết chương / hết cuốn chứ không phải
@@ -503,10 +686,12 @@ export class MusicBed {
     this.retarget(seeked);
     this.finishTail(seconds);
     this.crossLoop(seconds);
+    // Bài đang tải dở: đồng hồ mờ canh hụt mỗi nhịp (đã tắt khi bài vào xong thì bật lại).
+    if (playing && this.current && bufferedAhead(this.current.audio) !== null) this.startFade();
     // Chỉ bài đang kêu được chơi lại; bài đang mờ đi (đổi cuốn / chương lúc đã tạm dừng) thì chỉ dừng cùng giọng - chơi lại nó là mở một bài đã bỏ (soát a45).
     for (const audio of [this.current?.audio, ...this.fading]) {
       if (!audio) continue;
-      if (playing && audio.paused && !audio.ended && audio === this.current?.audio) void audio.play().catch(() => undefined);
+      if (playing && audio.paused && !audio.ended && audio === this.current?.audio && this.current.gate !== "wait") void audio.play().catch(() => undefined);
       // Luôn pause, kể cả phần tử đang `paused` (bài còn đang tải qua mseAudio giữ ý định phát: pause() mới huỷ nó, không thì tải xong nhạc tự kêu khi giọng đã dừng).
       if (!playing) audio.pause();
     }
@@ -735,6 +920,7 @@ export class MusicBed {
       if (!place) this.align(audio, cue, this.current?.audio === audio ? this.lastTime : seconds);
       else if (Math.abs(audio.currentTime - place.at) > 0.25) audio.currentTime = place.at;
       for (const listener of [...this.loadListeners]) listener(cue.link, true);
+      if (this.current?.audio === audio && bufferedAhead(audio) !== null) this.startFade(); // tải dở: cổng [playsThrough] tạm dừng nó ngay ở chỗ vào
     }, { once: true });
     audio.addEventListener("error", () => {
       if (this.released.has(audio)) return;
@@ -808,7 +994,43 @@ export class MusicBed {
       if (playing) {
         const { audio, goal } = playing;
         const move = Math.max(playing.perTick, 1e-5);
-        if (audio.volume < goal && this.awaitingSound(playing)) {
+        const ahead = bufferedAhead(audio);
+        if (ahead !== null) {
+          // Còn tải dở: đo tốc độ, chờ cổng / canh hụt mỗi nhịp.
+          const now = Date.now();
+          const pace = (playing.pace ??= new DownloadPace());
+          pace.add(now, audio.currentTime + ahead, audio.currentTime);
+          // Chỉ cần tải kịp tới chỗ bài thôi kêu (tính lại mỗi nhịp: giọng chậm / khựng thì chỗ ấy dời theo).
+          const end = Math.min(audio.duration, audio.currentTime + playEnd(this.cues, playing.cue) - this.lastTime);
+          const through = playsThrough(audio.currentTime + ahead, audio.currentTime, end, pace.rate(now));
+          if (this.playing) busy = true;
+          if (playing.entering && playing.gate !== "open" && audio.volume <= 0) {
+            // Chưa có tiếng: đứng yên ở chỗ vào (phát câm thì chỗ vào trôi đi 1 giây mỗi giây, tải chậm hơn 1x không bao giờ đuổi kịp). Sát chỗ thôi kêu
+            // thì giữ im luôn ([MIN_ENTRY_SECONDS]).
+            const enter = through && end - audio.currentTime >= MIN_ENTRY_SECONDS;
+            playing.gate = enter ? "open" : "wait";
+            if (!enter && !audio.paused) audio.pause();
+            else if (enter && this.playing && audio.paused && !audio.ended) void audio.play().catch(() => undefined);
+          } else if (!playing.starving && !audio.paused && audio.volume > 0 && ahead < UNDERRUN_LOW_SECONDS && !through) {
+            playing.starving = true;
+          }
+        } else if (playing.gate === "wait") {
+          playing.gate = "open"; // vừa tải trọn
+          if (this.playing && audio.paused && !audio.ended) void audio.play().catch(() => undefined);
+        }
+        if (playing.starving) {
+          audio.volume = Math.max(0, audio.volume - (Math.max(goal, 0.01) * STEP_MS) / 1000 / UNDERRUN_FADE_SECONDS);
+          if (audio.volume <= 0) {
+            // Đã im: tạm dừng tại chỗ, chờ cổng như bài mới, rồi mờ vào trong UNDERRUN_FADE_SECONDS.
+            playing.starving = false;
+            playing.entering = true;
+            playing.gate = "wait";
+            playing.fadeSeconds = UNDERRUN_FADE_SECONDS;
+            playing.perTick = (goal * STEP_MS) / 1000 / UNDERRUN_FADE_SECONDS;
+            audio.pause();
+          }
+          busy = true;
+        } else if (audio.volume < goal && this.awaitingSound(playing)) {
           // Bài chưa có tiếng: giữ 0. Đang chạy mà chưa đủ dữ liệu thì canh tiếp; còn tạm dừng thì chờ `playing` gọi lại (khỏi giữ đồng hồ chạy không).
           if (!audio.paused) busy = true;
         } else {
@@ -818,7 +1040,18 @@ export class MusicBed {
           else busy = true;
         }
       }
+      // Bài mới còn chờ tải: bài cũ đứng ở mức đang có, không để cảnh câm suốt thời gian tải; bài mới có tiếng thì mờ tiếp.
+      const holdOld = playing !== null && this.playing && this.awaitingSound(playing);
       this.fading = this.fading.filter((audio) => {
+        // Bài cũ đang tải dở sắp hết phần đã tải (giữ chỗ quá chỗ thôi kêu của nó): thôi giữ, mờ hết trong UNDERRUN_FADE_SECONDS - mờ thường dài hơn
+        // phần còn lại thì vẫn im phụt giữa chừng.
+        const ahead = bufferedAhead(audio);
+        const low = ahead !== null && ahead < UNDERRUN_LOW_SECONDS && !audio.paused;
+        if (low) this.fadeStep.set(audio, Math.max(this.fadeStep.get(audio) ?? 0, (Math.max(audio.volume, 0.01) * STEP_MS) / 1000 / UNDERRUN_FADE_SECONDS));
+        if (holdOld && !low && !audio.ended && !audio.paused) {
+          busy = true;
+          return true;
+        }
         audio.volume = Math.max(0, audio.volume - (this.fadeStep.get(audio) ?? (0.1 * STEP_MS) / 1000 / FADE_SECONDS));
         if (audio.volume <= 0.001) {
           this.release(audio);
