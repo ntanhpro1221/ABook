@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.161] - 2026-11-02
+
 ### Nhạc nền
 
 - Nhạc không còn tắt phụt rồi bật phụt khi nguồn nhạc tải chậm hơn tốc độ bài. Bài đang tải dở được vào khi phần đã tải cùng tốc độ tải đo được đủ để phát không hụt tới chỗ bài thôi kêu (hết đoạn truyện dùng bài ấy, không phải hết cả bài): nguồn chậm hơn bài thì bài vào muộn hơn chứ không phải đợi tải xong, bài dài mà đoạn chỉ dùng một phần thì không phải chờ tải gần hết bài, và trong lúc chờ bài cũ vẫn kêu. Nếu mạng tụt giữa bài, nhạc mờ dần ra, chờ đủ dữ liệu rồi mờ dần vào lại. Khi tua, hay khi bài nhảy tới đúng chỗ giọng đang đọc, app không còn tưởng mạng nhanh hơn thật mà cho bài vào sớm rồi hụt. Đổi chương hay tua thì chỗ bài thôi kêu được tính lại ngay. Trước đây, khi nguồn chậm (khoảng 11-30 KB/s), một chương có thể bị cắt nhạc đột ngột hơn chục lần. Máy tính, bản web, và điện thoại khi nghe nhạc của sách thẳng từ máy tính.
