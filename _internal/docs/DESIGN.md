@@ -186,8 +186,19 @@ giống app hệ thống; không tự chế chuỗi rung dài.
 
 #### Khổ cửa sổ
 
-Qt dùng bề ngang **nội dung sau thanh bên**: compact < 600, medium < 840,
-expanded < 1200, large < 1600, extra large từ 1600 px (Theme.widthClass).
+Cả ba nền tảng tính khổ theo bề ngang **nội dung sau thanh bên** (dp / px), năm khổ,
+MỘT bảng này là nguồn (`scripts/gen_native_tokens.py` sinh `WidthClass` cho điện thoại
+và `shared/widthClass.generated.ts` cho web; `desktop_qt/tools/gen_theme.py` sinh
+`Theme.widthClass`). Không viết tay số 600 / 840 / 1200 / 1600 để quyết bố cục.
+
+| Khổ | Từ |
+|---|---|
+| `compact` | 0 |
+| `medium` | 600 |
+| `expanded` | 840 |
+| `large` | 1200 |
+| `extraLarge` | 1600 |
+
 Không suy khổ từ độ phân giải màn hình. Lưới sách tăng số cột, bìa tối đa
 200 px; trang sách từ expanded đặt bìa và thông tin cạnh danh sách chương,
 cả khối tối đa 1360 px. Đang nghe từ large đặt điều khiển cạnh mặt đọc;

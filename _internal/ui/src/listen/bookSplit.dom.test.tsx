@@ -27,7 +27,8 @@ vi.mock("./source", async (original) => ({
   useCast: () => ({ data: undefined, isLoading: false }),
 }));
 
-import { BookScreen, bookLeftWidth, BOOK_SPLIT_WIDTH } from "./BookScreen";
+import { BookScreen, bookLeftWidth } from "./BookScreen";
+import { WIDTH_FROM } from "@/shared/widthClass.generated";
 
 type Watcher = { callback: (entries: unknown[]) => void; targets: Set<Element> };
 const watchers: Watcher[] = [];
@@ -88,7 +89,7 @@ const list = () => layout().querySelector<HTMLElement>("[data-book-list]")!; // 
 const scrolls = (element: Element) => element.className.split(/\s+/).includes("overflow-y-auto");
 
 it("cột trái của trang sách theo đúng công thức của Qt: 320 ở 840, rộng thêm 6 % phần dư, tối đa 380", () => {
-  expect(BOOK_SPLIT_WIDTH).toBe(840);
+  expect(WIDTH_FROM.expanded).toBe(840);
   expect(bookLeftWidth(840)).toBe(320);
   expect(bookLeftWidth(700)).toBe(320);
   expect(bookLeftWidth(1630)).toBeCloseTo(367.4, 5);

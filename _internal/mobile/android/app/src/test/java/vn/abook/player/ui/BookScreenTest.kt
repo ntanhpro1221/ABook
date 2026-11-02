@@ -5,6 +5,10 @@ import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.width
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -550,5 +554,117 @@ class BookScreenTest {
         shot("book_find_light")
         rule.onAllNodesWithTag("find_hit")[1].performClick()
         assertEquals(listOf("chapter b1 4 130.0"), played)
+    }
+
+    // ---- khổ cửa sổ (DESIGN.md §5.5): một cột dưới expanded, hai cột từ expanded ----
+
+    private fun bounds(tag: String) = rule.onNodeWithTag(tag).getUnclippedBoundsInRoot()
+
+    @Test
+    fun phoneWidthIsOneColumn() {
+        show(detail(listening()))
+        rule.onNodeWithTag("book_split").assertDoesNotExist()
+        rule.onNodeWithTag("book_info").assertDoesNotExist()
+        assertEquals(bounds("book_head").left.value, 20f, 0.5f)
+        assertEquals(bounds("book_head").width.value, bounds("book_list").width.value - 40f, 0.5f)
+    }
+
+    @Test
+    @Config(qualifiers = "w700dp-h900dp-xxhdpi")
+    fun mediumWidthStaysOneColumn() {
+        show(detail(listening()))
+        rule.onNodeWithTag("book_split").assertDoesNotExist()
+        assertTrue("danh sách chương chiếm cả bề ngang", bounds("book_list").width.value > 690f)
+    }
+
+    @Test
+    @Config(qualifiers = "w900dp-h780dp-xxhdpi")
+    fun expandedWidthPutsCoverAndInfoBesideTheChapterList() {
+        show(detail(listening()))
+        val info = bounds("book_info")
+        val list = bounds("book_list")
+        val tabs = bounds("book_tabs")
+        assertEquals("cột trái theo công thức của Qt", 323.6f, info.width.value, 0.1f)
+        assertEquals("khối căn giữa, trừ hai lề", 20f, info.left.value, 0.5f)
+        assertTrue("danh sách chương bên phải cột trái: ${info.right} / ${list.left}", list.left >= info.right)
+        assertEquals("khe giữa hai cột 32", 32f, (list.left - info.right).value, 0.5f)
+        assertEquals("hết cột phải ở lề phải", 880f, list.right.value, 0.5f)
+        assertTrue("thanh mục nằm đầu cột phải", tabs.left >= list.left - 0.5.dp && tabs.bottom <= list.top + 0.5.dp)
+        assertTrue("nút chính ở cột trái", bounds("book_primary").right <= info.right)
+        assertEquals("bìa lớn 192", 192f, bounds("book_cover").width.value, 0.5f)
+        assertTrue("chương ở cột phải", bounds("chapter_1").left >= list.left - 0.5.dp)
+        rule.onNodeWithTag("book_back").assertIsDisplayed()
+        shot("book_expanded_light")
+    }
+
+    @Test
+    @Config(qualifiers = "w1300dp-h780dp-xxhdpi")
+    fun largeWidthKeepsTheBlockBoundedAndCentered() {
+        show(detail(listening()), dark = true)
+        val split = bounds("book_split")
+        val info = bounds("book_info")
+        val list = bounds("book_list")
+        assertEquals(1300f, split.width.value, 0.5f)
+        val block = list.right.value - info.left.value
+        assertEquals("cột trái + 32 + cột chương 640", 347.6f + 32f + 640f, block, 0.5f)
+        assertEquals("căn giữa", (1300f - block) / 2, info.left.value, 0.5f)
+        assertEquals(640f, list.width.value, 0.5f)
+        shot("book_large_dark")
+    }
+
+    @Test
+    @Config(qualifiers = "w900dp-h560dp-xxhdpi")
+    fun theTwoColumnsScrollOnTheirOwn() {
+        source = FakeSource(BookDetail.of(manifest(chapters = 30), listening(), { null }, canShare = true))
+        val book = source.detail!!.book
+        rule.setContent {
+            AbookTheme(false) {
+                Box(Modifier.fillMaxSize().background(Abook.colors.bg)) {
+                    BookScreen(book, LibraryState.Ready(listOf(book)), PlayerState.Empty, PlayerClock(), CoverLoader(1 shl 20), source, sheets, actions)
+                }
+            }
+        }
+        rule.waitForIdle()
+        rule.onNodeWithTag("book_list").performScrollToNode(hasTestTag("chapter_25"))
+        rule.waitForIdle()
+        rule.onNodeWithTag("chapter_25").assertIsDisplayed()
+        // Cột trái đứng yên: tên và nút chính vẫn đó dù danh sách chương đã cuộn rất xa.
+        rule.onNodeWithTag("book_title").assertIsDisplayed()
+        rule.onNodeWithTag("book_primary").assertIsDisplayed()
+        rule.onNodeWithTag("book_tabs").assertIsDisplayed()
+    }
+
+    /** Đổi khổ qua mốc expanded giữa chừng (xoay máy, chia màn hình): mục đang xem và chương ở mép trên danh sách đứng yên, không về đầu. */
+    @Test
+    @Config(qualifiers = "w1000dp-h780dp-xxhdpi")
+    fun crossingTheThresholdKeepsTheChapterThatWasAtTheTop() {
+        source = FakeSource(BookDetail.of(manifest(chapters = 40), listening(), { null }, canShare = true))
+        val book = source.detail!!.book
+        var wide by mutableStateOf(false)
+        rule.setContent {
+            AbookTheme(false) {
+                Box(Modifier.width(if (wide) 900.dp else 700.dp).fillMaxHeight().background(Abook.colors.bg)) {
+                    BookScreen(book, LibraryState.Ready(listOf(book)), PlayerState.Empty, PlayerClock(), CoverLoader(1 shl 20), source, sheets, actions)
+                }
+            }
+        }
+        rule.waitForIdle()
+        rule.onNodeWithTag("book_split").assertDoesNotExist()
+        rule.onNodeWithTag("book_list").performScrollToNode(hasTestTag("chapter_30"))
+        rule.waitForIdle()
+        rule.onNodeWithTag("chapter_1").assertDoesNotExist()
+        wide = true
+        rule.waitForIdle()
+        rule.onNodeWithTag("book_split").assertExists()
+        rule.onNodeWithTag("chapter_30").assertIsDisplayed()
+        rule.onNodeWithTag("chapter_1").assertDoesNotExist()
+        val rowTop = bounds("chapter_30").top
+        val listTop = bounds("book_list").top
+        assertTrue("chương vừa ở mép trên vẫn gần mép trên: ${rowTop - listTop}", (rowTop - listTop).value in -2f..260f)
+        wide = false
+        rule.waitForIdle()
+        rule.onNodeWithTag("book_split").assertDoesNotExist()
+        rule.onNodeWithTag("chapter_30").assertIsDisplayed()
+        rule.onNodeWithTag("chapter_1").assertDoesNotExist()
     }
 }

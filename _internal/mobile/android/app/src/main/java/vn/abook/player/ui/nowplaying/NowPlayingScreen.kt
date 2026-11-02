@@ -41,19 +41,45 @@ import vn.abook.player.ui.components.pressable
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.theme.MotionMs
+import vn.abook.player.ui.theme.WidthClass
+import vn.abook.player.ui.theme.widthClass
+import vn.abook.player.ui.motion.Motion
 
+/**
+ * Cửa sổ Đang nghe. Từ khổ large của bề ngang nội dung (DESIGN.md §5.5 "Khổ cửa sổ", như Qt NowPlaying.qml) và khi sách có chữ để đọc theo: cột trái giữ bìa, tên và
+ * điều khiển như khổ hẹp, mặt đọc theo luôn mở ở cột phải (chữ tối đa 640 dp) - không còn công tắc Nghe / Đọc theo vì cả hai cùng thấy. Cột phải mở ra / thu lại
+ * bằng chính bề ngang của nó (hình học, theo [MotionMs.MEDIUM]). Hẹp hơn large: một cột như cũ.
+ */
 @Composable
 fun NowPlayingScreen(
     state: NowPlayingState, model: NowPlayingModel, window: NowPlayingWindowState,
     parts: SharedPlayerParts, windowProgress: State<Float>, modifier: Modifier = Modifier,
 ) {
+    BoxWithConstraints(modifier) {
+        NowPlayingBody(state, model, window, parts, windowProgress, Modifier.fillMaxSize(), widthClass(maxWidth.value) >= WidthClass.LARGE && state.readAlongAvailable)
+    }
+}
+
+/** Mặt đọc theo ở cột phải của hai cột: tối đa 640 dp (như `textMax` của Qt ReadAlongView). */
+private val ReadColumnMax = 640.dp
+
+/** Cột trái (bìa, tên, điều khiển) của hai cột. */
+private val SideColumnWidth = 440.dp
+
+@Composable
+private fun NowPlayingBody(
+    state: NowPlayingState, model: NowPlayingModel, window: NowPlayingWindowState,
+    parts: SharedPlayerParts, windowProgress: State<Float>, modifier: Modifier, split: Boolean,
+) {
     val background = rememberPlayerBackground(state.cover)
     val scope = rememberCoroutineScope()
-    val mode = animateFloatAsState(if (window.reading) 1f else 0f, tween(MotionMs.SLOW), label = "reading-mode")
+    // Hai cột: mặt đọc luôn mở ở cột phải nên chế độ "Đọc theo" của cột trái không còn nghĩa (mode luôn 0).
+    val readingHere = window.reading && !split
+    val mode = animateFloatAsState(if (readingHere) 1f else 0f, tween(MotionMs.SLOW), label = "reading-mode")
     var controlsDimmed by remember { mutableStateOf(false) }
-    val dim = animateFloatAsState(if (controlsDimmed && window.reading) 0.42f else 1f, tween(MotionMs.FAST), label = "controls-visibility")
+    val dim = animateFloatAsState(if (controlsDimmed && readingHere) 0.42f else 1f, tween(MotionMs.FAST), label = "controls-visibility")
     // Cửa sổ đỗ sẵn trong cây (WindowFlight.parked) thì không đọc theo: chỉ tính là đang đọc khi cửa sổ mở (nằm trong cây, `shown` chỉ được đọc khi đang ở chế độ đọc).
-    val live = window.reading && window.shown
+    val live = (window.reading || split) && window.shown
     LaunchedEffect(live, state.bookId, state.chapterId) {
         if (live) model.loadReadAlong()
     }
@@ -84,14 +110,14 @@ fun NowPlayingScreen(
     // whose recorded drawing stays untouched while the window moves.
     Box(modifier.drawBehind { drawRect(lerp(panel, background.value, windowProgress.value)) }) {
       Box(Modifier.fillMaxSize().graphicsLayer {}) {
-        Column(Modifier.fillMaxSize().systemBarsPadding().padding(horizontal = 20.dp).padding(bottom = 12.dp)) {
+        val playerColumn: @Composable ColumnScope.() -> Unit = {
             val setReading = { on: Boolean -> if (on != window.reading) { window.reading = on; controlsDimmed = false } }
             Row(Modifier.fillMaxWidth().height(56.dp).playerReveal(windowProgress)
-                .dismissPlayerOnDrag(window, window.reading && !window.sheetOpen),
+                .dismissPlayerOnDrag(window, readingHere && !window.sheetOpen),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                 GlyphButton("Thu nhỏ", "⌄", window::close, Modifier.testTag("collapse_player"))
                 // Đọc theo là một chế độ của chính cửa sổ này, nên công tắc chế độ nằm ở thanh trên của cửa sổ - không phải một nút hành động ở đáy.
-                if (state.readAlongAvailable) PlayerModeSwitch(mode, setReading)
+                if (state.readAlongAvailable && !split) PlayerModeSwitch(mode, setReading)
                 else BasicText("ĐANG NGHE", style = Abook.type.caption)
                 GlyphButton("Thêm tuỳ chọn", "⋯", { window.openSheet(PlayerSheet.More) }, Modifier.testTag("player_more"))
             }
@@ -102,16 +128,8 @@ fun NowPlayingScreen(
             val textShown by remember { derivedStateOf { mode.value > 0f } }
             Layout(modifier = Modifier.weight(1f).fillMaxWidth(), content = {
                 Box(Modifier.fillMaxSize()) {
-                  if ((window.reading || textShown) && window.shown) {
-                    val reading by model.readAlong.collectAsState()
-                    val hint = ReadHint.of(state.speaking, state.voices.isNotEmpty(), reading.paragraphs.any { it.timed }, window.look.tapped)
-                    val nextTitle = if (state.hasNext) state.chapters.getOrNull(state.chapters.indexOfFirst { it.id == state.chapterId } + 1)?.title else null
-                    ReadAlongPane(reading, model.position, Modifier.fillMaxSize(),
-                        onManualScroll = { controlsDimmed = true }, onTap = { controlsDimmed = false },
-                        onRetry = { controlsDimmed = false; scope.launch { model.loadReadAlong() } },
-                        look = window.look, hint = hint,
-                        onListen = { ms -> window.changeLook(window.look.copy(tapped = true)); model.listenFrom(ms) },
-                        nextTitle = nextTitle, onNext = model::next)
+                  if (!split && (window.reading || textShown) && window.shown) {
+                    ReadAlongHost(state, model, window, Modifier.fillMaxSize()) { controlsDimmed = it }
                   }
                 }
                 // Chạm bìa cũng đổi chế độ: bìa lớn -> đọc theo, bìa nhỏ -> về nghe. Bìa là phần tử chung (bay bằng lớp vẽ, xem SharedPlayerParts);
@@ -121,14 +139,14 @@ fun NowPlayingScreen(
                 PlayerCover(state.cover, state.bookTitle, parts.element(NowPlayingPart.Cover, Modifier
                     .graphicsLayer { if (window.sheetOpen) compositingStrategy = CompositingStrategy.Offscreen }
                     .testTag("player_cover")
-                    .then(if (state.readAlongAvailable && !window.reading) Modifier.pressable { setReading(true) } else Modifier)))
+                    .then(if (state.readAlongAvailable && !window.reading && !split) Modifier.pressable { setReading(true) } else Modifier)))
                 Column(Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
                     RollingLabel(state.chapterTitle, parts.element(NowPlayingPart.Chapter),
                         Abook.type.bodyStrong.copy(fontSize = 20.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold))
                     Spacer(Modifier.height(4.dp))
                     RollingLabel(subtitle, parts.element(NowPlayingPart.Book), Abook.type.bodySmall)
                 }
-                Box(Modifier.testTag("player_cover_small").then(if (window.reading) Modifier
+                Box(Modifier.testTag("player_cover_small").then(if (readingHere) Modifier
                     .pressable { setReading(false) }.semantics { contentDescription = "Về chế độ nghe" } else Modifier))
             }) { measurables, constraints ->
                 val width = constraints.maxWidth
@@ -219,9 +237,52 @@ fun NowPlayingScreen(
             var dismissed by remember(state.error, errorOpen) { mutableStateOf(false) }
             if (state.error.isNotBlank() && !dismissed) PlayerAlert(state, model, window, Modifier.playerReveal(windowProgress), onDismiss = { dismissed = true })
         }
+        // Cột phải mở bằng bề ngang: 0 -> (cả phần còn lại sau cột trái và khe 32 dp). Đọc ở pha đo, không recompose theo từng khung.
+        val sideT = animateFloatAsState(if (split) 1f else 0f, tween(MotionMs.MEDIUM, easing = Motion.Standard), label = "now-playing-split")
+        val rightComposed by remember { derivedStateOf { split || sideT.value > 0f } }
+        Layout(
+            modifier = Modifier.fillMaxSize().systemBarsPadding().padding(horizontal = 20.dp).padding(bottom = 12.dp),
+            content = {
+                Column(Modifier.fillMaxSize(), content = playerColumn)
+                Box(Modifier.fillMaxSize().testTag("player_read_side").padding(top = 56.dp), contentAlignment = Alignment.TopCenter) {
+                    if (rightComposed && window.shown) ReadAlongHost(state, model, window, Modifier.widthIn(max = ReadColumnMax).fillMaxSize()) {}
+                }
+            },
+        ) { measurables, constraints ->
+            val full = constraints.maxWidth
+            val gap = 32.dp.roundToPx()
+            val t = sideT.value
+            val room = (full - SideColumnWidth.roundToPx() - gap).coerceAtLeast(0)
+            val right = (room * t).toInt()
+            val left = full - right - (gap * t).toInt()
+            val leftPlaceable = measurables[0].measure(Constraints.fixed(left, constraints.maxHeight))
+            val rightPlaceable = measurables[1].measure(Constraints.fixed(right, constraints.maxHeight))
+            layout(full, constraints.maxHeight) {
+                leftPlaceable.place(0, 0)
+                if (right > 0) rightPlaceable.place(left + (gap * t).toInt(), 0)
+            }
+        }
         PlayerSheets(state, model, window)
       }
     }
+}
+
+/**
+ * Mặt đọc theo của cửa sổ: nạp từ mô hình, gợi ý theo giọng / thời điểm, "nghe từ đây" và chương kế. `onDim(true)` khi người dùng cuộn tay (điều khiển mờ đi), `false` khi
+ * chạm hay thử lại. Dùng chung cho chế độ "Đọc theo" của một cột và cột phải của hai cột.
+ */
+@Composable
+private fun ReadAlongHost(state: NowPlayingState, model: NowPlayingModel, window: NowPlayingWindowState, modifier: Modifier, onDim: (Boolean) -> Unit) {
+    val scope = rememberCoroutineScope()
+    val reading by model.readAlong.collectAsState()
+    val hint = ReadHint.of(state.speaking, state.voices.isNotEmpty(), reading.paragraphs.any { it.timed }, window.look.tapped)
+    val nextTitle = if (state.hasNext) state.chapters.getOrNull(state.chapters.indexOfFirst { it.id == state.chapterId } + 1)?.title else null
+    ReadAlongPane(reading, model.position, modifier,
+        onManualScroll = { onDim(true) }, onTap = { onDim(false) },
+        onRetry = { onDim(false); scope.launch { model.loadReadAlong() } },
+        look = window.look, hint = hint,
+        onListen = { ms -> window.changeLook(window.look.copy(tapped = true)); model.listenFrom(ms) },
+        nextTitle = nextTitle, onNext = model::next)
 }
 
 @Composable

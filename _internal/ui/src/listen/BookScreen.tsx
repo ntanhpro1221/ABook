@@ -44,14 +44,14 @@ import { moreMenuHasItems } from "./bookMenu";
 import { withFeedback } from "@/shared/feedback";
 import { ActionButton } from "./ActionButton";
 import { DotJoin } from "@/shared/DotJoin";
+import { WIDTH_FROM, widthAtLeast } from "@/shared/widthClass.generated";
 
-/** Bề rộng NỘI DUNG (sau thanh bên) từ đó trang sách chia hai cột: bìa + thông tin một bên, danh sách chương một bên, cuộn riêng từng bên.
- *  Cùng ngưỡng, cùng tỉ lệ với Qt (BookPage.qml: Theme.widthExpanded = 840, leftWidth, listMeasure). Hẹp hơn: một cột như cũ. */
-export const BOOK_SPLIT_WIDTH = 840;
+/** Trang sách chia hai cột từ khổ expanded của bề rộng NỘI DUNG (sau thanh bên): bìa + thông tin một bên, danh sách chương một bên, cuộn riêng từng bên.
+ *  Cùng ngưỡng, cùng tỉ lệ với Qt (BookPage.qml: Theme.widthExpanded, leftWidth, listMeasure). Hẹp hơn: một cột như cũ. */
 const BOOK_LIST_MEASURE = 640;
 /** Bề rộng cột trái (bìa + thông tin): 320 ở 840, rộng thêm 6 % phần dư, tối đa 380 (Qt BookPage.qml leftWidth). */
 export function bookLeftWidth(content: number): number {
-  return Math.min(380, 320 + Math.max(0, content - BOOK_SPLIT_WIDTH) * 0.06);
+  return Math.min(380, 320 + Math.max(0, content - WIDTH_FROM.expanded) * 0.06);
 }
 
 const MENU_ITEM = "flex h-9 cursor-default items-center gap-2 rounded-control px-2 text-sm outline-none data-[highlighted]:bg-hover";
@@ -978,10 +978,10 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
   const [recordDialog, setRecordDialog] = useState<RecordDialog>(null);
   const [finding, setFinding] = useState(false);
   const { data: castView } = useCast(id);
-  // Bề rộng nội dung (không phải cửa sổ): từ BOOK_SPLIT_WIDTH thì chia hai cột. Chưa đo xong (null) thì một cột.
+  // Bề rộng nội dung (không phải cửa sổ): từ khổ expanded thì chia hai cột. Chưa đo xong (null) thì một cột.
   const frame = useRef<HTMLDivElement>(null);
   const contentWidth = useElementWidth(frame);
-  const split = contentWidth !== null && contentWidth >= BOOK_SPLIT_WIDTH;
+  const split = contentWidth !== null && widthAtLeast(contentWidth, "expanded");
   // Hai cột: mỗi cột tự cuộn nên mờ mép (DESIGN 4.5); một cột không cuộn riêng nên mặt nạ không bao giờ bật.
   const infoFade = useFadeScroller<HTMLElement>();
   const listFade = useFadeScroller<HTMLDivElement>();
