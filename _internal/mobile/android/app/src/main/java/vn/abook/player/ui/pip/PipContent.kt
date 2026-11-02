@@ -48,8 +48,9 @@ import vn.abook.player.ui.theme.Dim
  * tiến độ chỉ để xem. Chữ của người dùng không bao giờ bị cắt: chữ dài XUỐNG DÒNG như `MiniPlayer.qml`, không "…", không maxLines.
  *
  * Dòng nào hiện là do ĐO, không đoán bằng số ký tự ([planPipText]): dàn từng tên ở bề rộng thật của khung (trừ hai lề) rồi cộng lề trên (chỗ nền mờ dần), khe giữa hai dòng,
- * lề dưới và dải tiến độ. (1) Tên sách + tên chương vừa chiều cao khung: hiện cả hai. (2) Không vừa: chỉ hiện tên chương - tên sách đã nằm trên bìa tự vẽ. (3) Tên chương
+ * lề dưới và dải tiến độ. (1) Tên sách + tên chương vừa chiều cao khung: hiện cả hai. (2) Không vừa: chỉ hiện tên chương - tên sách vẫn đọc được trên bìa và ở Đang nghe. (3) Tên chương
  * một mình vẫn không vừa: nền tối dần mọc lên hết chiều cao bìa (lề trên thu về [Dim.s8]), chữ vẫn đủ và dồn xuống đáy; không bao giờ để chữ tràn khỏi khung.
+ * Bìa tự vẽ ([GeneratedCover], sách không có ảnh bìa) đã in tên sách to ở đầu bìa, nên khi ấy dòng tên sách ở đáy không hiện - một khung không ghi một tên hai lần.
  * Không có tên chương thì tên sách luôn hiện (không còn gì khác để nhường chỗ). `position`: vị trí trong chương (ms), chỉ đọc trong pha vẽ của dải tiến độ.
  */
 @Composable
@@ -64,8 +65,9 @@ fun PipContent(player: PlayerState, position: () -> Long, covers: CoverLoader, m
             .semantics { contentDescription = player.bookTitle },
     ) {
         PipCover(player, covers, maxWidthPx = with(LocalDensity.current) { maxWidth.roundToPx() }, Modifier.fillMaxSize())
-        val plan = remember(player.bookTitle, player.chapterTitle, titleStyle, chapterStyle, density, constraints.maxWidth, constraints.maxHeight) {
-            planPipText(player.bookTitle, player.chapterTitle, titleStyle, chapterStyle, measurer, density, constraints.maxWidth, constraints.maxHeight)
+        val coverShowsTitle = player.cover == null
+        val plan = remember(player.bookTitle, player.chapterTitle, coverShowsTitle, titleStyle, chapterStyle, density, constraints.maxWidth, constraints.maxHeight) {
+            planPipText(player.bookTitle, player.chapterTitle, coverShowsTitle, titleStyle, chapterStyle, measurer, density, constraints.maxWidth, constraints.maxHeight)
         }
         if (plan.showBook || plan.showChapter) {
             Column(
@@ -92,7 +94,7 @@ internal data class PipTextPlan(val showBook: Boolean, val showChapter: Boolean,
 
 /** Đo thật bằng chính kiểu chữ và chính chữ đã chỉnh xuống dòng ([shapeForWrap]) mà [BasicText] sẽ vẽ; `widthPx` / `heightPx` là khung PiP. */
 internal fun planPipText(
-    book: String, chapter: String, titleStyle: TextStyle, chapterStyle: TextStyle,
+    book: String, chapter: String, coverShowsTitle: Boolean, titleStyle: TextStyle, chapterStyle: TextStyle,
     measurer: TextMeasurer, density: Density, widthPx: Int, heightPx: Int,
 ): PipTextPlan = with(density) {
     val textWidth = (widthPx - 2 * Dim.s12.roundToPx()).coerceAtLeast(0)
@@ -104,7 +106,7 @@ internal fun planPipText(
     val bookHeight = height(book, titleStyle)
     val chapterHeight = height(chapter, chapterStyle)
     val both = book.isNotEmpty() && chapter.isNotEmpty()
-    val showBook = book.isNotEmpty() && (chapter.isEmpty() || fade + below + bookHeight + gap + chapterHeight <= heightPx)
+    val showBook = book.isNotEmpty() && (chapter.isEmpty() || !coverShowsTitle && fade + below + bookHeight + gap + chapterHeight <= heightPx)
     val shown = (if (showBook) bookHeight else 0) + chapterHeight + (if (showBook && both) gap else 0)
     PipTextPlan(showBook, chapter.isNotEmpty(), full = fade + below + shown > heightPx)
 }
