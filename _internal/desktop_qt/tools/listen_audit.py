@@ -71,6 +71,9 @@ CUT_MATCH_BEFORE_S, CUT_MATCH_AFTER_S = 12.0, 8.0
 CUT_SWITCH_S = 2.5            # mờ chéo đổi bài (music_mix.json fadeSeconds 2) + lề: khung trong quãng này lẫn hai bài
 CUT_MATCH_MIN_FRAMES = 20     # khớp cần ít nhất chừng này khung chỉ nhạc
 CUT_MATCH_MAX_ERR_DB = 3.0    # sai số trung bình (dB, sau khi trừ độ lệch mức) lớn hơn = không biết bài nào, chỗ rơi vẫn là cụt
+# ... trừ khi chỗ khớp tốt nhất trùng vị trí bài app ghi (mix_pos) lúc rơi, lệch không quá một nhịp ghi: hai bằng chứng độc lập cùng chỉ một
+# chỗ (02-11: U30M 410,95 / U11M 371,45 s khớp đúng giây 63,2 / 23,6 của Pyro Flow nhưng sai số 3,06 / 3,32 dB vì tiếng trống ngắt)
+CUT_POS_AGREE_S = 0.25
 CUT_SOURCE_SLACK_DB = 8.0     # tha khi tiếng ra rơi không quá bài nguồn rơi + chừng này (cả hai kẹp ở CUT_FLOOR_DB)
 CUT_FLOOR_DB = -70.0
 STALL_S = 10.0          # (0) chờ quá lâu: đang phát mà vị trí đứng yên chừng này (giữa hai đoạn giọng thường dưới 2 s)
@@ -192,7 +195,8 @@ def load(stage: Path) -> dict:
     marks = parse_marks(bench["events"], float(epoch_ms), rate)
     hop = int(HOP_S * rate)
     mixes = [int(round((t - float(epoch_ms)) * rate / 1000)) for t, name in bench["events"] if name == "mix_playing"]
-    return dict(rate=rate, hop=hop, db=frame_db(mono, hop), marks=marks, mixes=mixes, gaps=read_pairs(str(stage / "sink.wav") + ".gaps"),
+    return dict(rate=rate, hop=hop, db=frame_db(mono, hop), marks=marks, mixes=mixes, heard=song_positions(bench["events"], float(epoch_ms)),
+                gaps=read_pairs(str(stage / "sink.wav") + ".gaps"),
                 stops=read_pairs(str(stage / "sink.wav") + ".stops"),
                 done=any(name == "done" for _, name in bench["events"]), timeout=any(name == "timeout" for _, name in bench["events"]),
                 problems=run_problems(bench["events"]), music_stalls=music_stalls(bench["events"]))
@@ -257,6 +261,28 @@ def music_stalls(events: list) -> list[dict]:
             if began and before[0] - began[0] >= MUSIC_STALL_S - 0.01:
                 out.append(dict(t=round(began[0] - t0 / 1000, 1), seconds=round(before[0] - began[0], 2), position=began[1]))
     return out
+
+
+def song_positions(events: list, epoch_ms: float) -> list[tuple[float, float, float, float]]:
+    """Các đoạn (giờ bản thu đầu, vị trí bài đầu, giờ cuối, vị trí cuối) giữa hai mốc mix_pos liền của cùng một phần tử nhạc (cách nhau
+    <= MUSIC_POS_GAP_S, không tua giữa chừng): trong đoạn ấy biết phần tử đang ở giây nào của bài nó."""
+    out, last = [], {}
+    for t, name in events:
+        if name.startswith("mix_seeked:"):
+            last.pop(name.split(":")[1], None)
+        elif name.startswith("mix_pos:"):
+            _, voice, position = name.split(":")
+            here = ((t - epoch_ms) / 1000, float(position))
+            before = last.get(voice)
+            last[voice] = here
+            if before and here[0] - before[0] <= MUSIC_POS_GAP_S and here[1] >= before[1]:
+                out.append((*before, *here))
+    return out
+
+
+def heard_at(spans: list[tuple[float, float, float, float]], t: float) -> list[float]:
+    """Giây của bài mỗi phần tử nhạc đang ở lúc `t` (giờ bản thu), nội suy giữa hai mốc mix_pos."""
+    return [p0 + (p1 - p0) * (t - t0) / (t1 - t0) if t1 > t0 else p0 for t0, p0, t1, p1 in spans if t0 <= t <= t1]
 
 
 def voice_holes(run: dict) -> list[dict]:
@@ -373,12 +399,13 @@ def source_match(seg: np.ndarray, quiet: np.ndarray, track: np.ndarray) -> tuple
 
 
 def abrupt_drops(db: np.ndarray, quiet: np.ndarray, still: np.ndarray, low: float, full: float, hop_s: float, switches: list[int],
-                 tracks: dict[str, np.ndarray]) -> list[dict]:
+                 tracks: dict[str, np.ndarray], heard: list[tuple[float, float, float, float]] = ()) -> list[dict]:
     """Chỗ nhạc rơi quá CUT_DB trong < CUT_S sau ít nhất 0,5 s chỉ có nhạc (`quiet`: lượt B lặng quanh cùng chỗ giọng, hay chính khung đã
     dưới `low` - nhạc tắt ngay sau đuôi câu) từ gần mức nhạc thường (`full`, không phải đuôi một lần mờ); cả đường rơi tới đáy phải là
     khung B lặng ĐÚNG chỗ khớp (`still`, không lề: nhạc tắt ngay trước tiếng giọng đầu vẫn được xét, còn chỗ ngắt giữa hai âm khi khớp hai
     lượt lệch vài khung thì không). Mỗi chỗ kèm bài nguồn khớp được (`tracks`: tên -> mức theo khung, kẹp CUT_FLOOR_DB) và `content` =
-    chính bài rơi tương ứng (không phải cụt). `switches`: khung các dấu music:."""
+    chính bài rơi tương ứng (không phải cụt). `switches`: khung các dấu music:. `heard`: song_positions của lượt (giờ bản thu khớp khung
+    0 của `db`) - chỗ khớp tốt nhất trùng giây bài app ghi thì nhận dù sai số quá CUT_MATCH_MAX_ERR_DB."""
     band = (quiet | (db < low)) & (db > SILENT_DB)
     k, before = int(CUT_S / hop_s), int(0.5 / hop_s)
     steady = np.convolve(band, np.ones(before + 1), mode="full")[: len(db)] >= before + 1  # khung i và `before` khung trước đều chỉ nhạc
@@ -398,9 +425,11 @@ def abrupt_drops(db: np.ndarray, quiet: np.ndarray, still: np.ndarray, low: floa
         if w0 <= i < w1 and tracks:
             name, at, err, used = min(((name, *source_match(clamped[w0:w1], quiet[w0:w1], x)) for name, x in tracks.items()), key=lambda r: r[2])
             x, j = tracks[name], at + (i - w0)
-            if err <= CUT_MATCH_MAX_ERR_DB and j + k < len(x):  # bài hết trước khi đủ CUT_S sau chỗ rơi: không đo được nguồn, vẫn là cụt
+            pinned = at >= 0 and any(abs(j * hop_s - p) <= CUT_POS_AGREE_S for p in heard_at(heard, i * hop_s))
+            if (err <= CUT_MATCH_MAX_ERR_DB or pinned) and j + k < len(x):  # bài hết trước khi đủ CUT_S sau chỗ rơi: không đo được nguồn, vẫn là cụt
                 source_drop = float(x[j] - x[j + 1: j + k + 1].min())
-                cut.update(source=dict(track=name, at_s=round(j * hop_s, 2), err_db=round(err, 2), frames=used, drop_db=round(source_drop, 1)),
+                cut.update(source=dict(track=name, at_s=round(j * hop_s, 2), err_db=round(err, 2), frames=used, drop_db=round(source_drop, 1),
+                                       pinned=pinned),
                            content=drop <= source_drop + CUT_SOURCE_SLACK_DB)
         out.append(cut)
         i += k if cut["content"] else int(2 / hop_s)  # nốt của bài: chỗ rơi kế (cả một lần cụt ngay sau) vẫn phải được xét
@@ -521,7 +550,7 @@ def analyze(a_dir: Path, b_dir: Path, control: Path | None = None) -> dict:
     switches = [m["frame"] // A["hop"] for m in A["marks"] if m["tag"].startswith("music:")]
     low = voice_db - LOW_BELOW_DB
     still_a = (at_b >= 0) & (B["db"][np.maximum(at_b, 0)] < voice_db - QUIET_BELOW_DB)
-    drops = abrupt_drops(A["db"], quiet_a, still_a, low, full, hop_s, switches, source_tracks(a_dir, A["rate"], A["hop"]))
+    drops = abrupt_drops(A["db"], quiet_a, still_a, low, full, hop_s, switches, source_tracks(a_dir, A["rate"], A["hop"]), A["heard"])
     quiet_b, _ = lifted(B["db"], B["db"], np.arange(len(B["db"])), voice_db)
     control = abrupt_drops(B["db"], quiet_b, B["db"] < voice_db - QUIET_BELOW_DB, low, full, hop_s, [], {})
     ach = chapters(A)
@@ -646,6 +675,23 @@ def selftest() -> int:
         got = (bool(drops) and (not tracks5 or all(c["source"] for c in drops)), len(cuts5) if want[1] is not None else None)
         if not drops or (want[1] is None and len(cuts5) != len(drops)) or (want[1] is not None and got != want):
             failures.append(f"nhạc cụt {name}: chờ {want}, được {got} ({len(drops)} chỗ rơi)")
+    # bài trống ngắt (U30M/U11M 02-11): tiếng ra lệch bài ±4 dB từng khung (trừ khung nghỉ sát mức im, để chỗ chỉ-nhạc vẫn liền) -> chỗ khớp
+    # tốt nhất vẫn đúng nhưng sai số > CUT_MATCH_MAX_ERR_DB. mix_pos chỉ đúng giây bài (khung 0 = giây 7) thì tha; không có mix_pos, hay mix_pos
+    # chỉ chỗ khác, thì vẫn cụt; cắt giả giữa nốt vẫn bắt
+    jitter = np.where(quiet5 & (natural > SILENT_DB + 4), natural + np.where(np.arange(n5) % 2 == 0, 4.0, -4.0), natural)
+    jitter_cut = jitter.copy()
+    jitter_cut[ringing[0]: ringing[0] + 40] = -90.0
+    def ticks(shift_s):
+        return [(t, 7 + shift_s + t, t + 0.25, 7.25 + shift_s + t) for t in np.arange(0, n5 * hop_s, 0.25)]
+    plain = len([c for c in abrupt_drops(jitter, quiet5, quiet5, -32.0, full5, hop_s, [], {"bai": track}) if not c["content"]])
+    for name, db5, heard5, want in (("không mix_pos: vẫn cụt", jitter, (), plain),
+                                    ("mix_pos đúng giây bài: tha hết", jitter, ticks(0), 0),
+                                    ("mix_pos đúng giây bài, cắt giả giữa nốt: bắt", jitter_cut, ticks(0), 1),
+                                    ("mix_pos chỉ chỗ khác 5 s: vẫn cụt", jitter, ticks(5), plain)):
+        drops = abrupt_drops(db5, quiet5, quiet5, -32.0, full5, hop_s, [], {"bai": track}, heard5)
+        got = len([c for c in drops if not c["content"]])
+        if not plain or got != want:
+            failures.append(f"nhạc cụt bài trống ngắt {name}: chờ {want} chỗ cụt, được {got} (không mix_pos: {plain})")
     # khớp hai lượt lệch: mặt nạ chỉ-nhạc có lề lấn 3 khung vào câu (mặt nạ đúng khung thì không), giọng có chỗ ngắt -60 dB ngay đó -> không phải chỗ rơi của nhạc (nhạc phẳng
     # 3 s trước đó: không file bài thì nốt nào cũng là chỗ rơi, bước 2 s sau nó sẽ nhảy qua chỗ thử)
     s5 = next(j for j in range(400, n5) if quiet5[j - 1] and not quiet5[j])
