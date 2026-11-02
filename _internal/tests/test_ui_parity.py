@@ -85,6 +85,31 @@ def test_copy_rules_catch_what_they_promise():
         assert not tool.ELLIPSIS_END.search(good), good
 
 
+def test_web_scanner_skips_code_strings_but_keeps_labels(monkeypatch, tmp_path):
+    tool = _tool()
+    monkeypatch.setattr(tool, "ROOT", tmp_path)
+    code = ('const id = tag();\nif (id === "Xing" || "Info" !== id) skip();\nconst n = Number(response.headers.get("Content-Length"));\n'
+            'headers?.set("Accept Language", "vi");\nconst a = ok ? "Đang tải" : "Tải xong";\nconst b = lookup("Nhạc nền");\n')
+    for name in ("logic.ts", "View.tsx"):
+        path = tmp_path / name
+        path.write_text(code + ("export const V = () => <b>{id === \"Chờ\" ? \"Đang chờ\" : null}</b>;\n" if name.endswith("x") else ""),
+                        encoding="utf-8", newline="\n")
+        scan = tool.Scan()
+        tool.web_scan_file(path, scan)
+        found = {i.text for i in scan.items}
+        assert not found & {"Xing", "Info", "Content-Length", "Accept Language", "Chờ"}, (name, found)
+        assert {"Đang tải", "Tải xong", "Nhạc nền"} <= found, (name, found)
+        if name.endswith("x"):
+            assert "Đang chờ" in found, found
+    path = tmp_path / "Logic.kt"
+    path.write_text('fun mark(label: String) = if (label == "Mất file audio" || "Đã xong" != label) BasicText(text = "Cần làm lại") else Caption("Đang tải")\n',
+                    encoding="utf-8", newline="\n")
+    scan = tool.Scan()
+    tool.kt_scan_file(path, scan, {}, {})
+    found = {i.text for i in scan.items}
+    assert not found & {"Mất file audio", "Đã xong"} and {"Cần làm lại", "Đang tải"} <= found, found
+
+
 def test_icon_table_flags_a_wrong_icon():
     tool = _tool()
     table = dict(tool.icon_table())

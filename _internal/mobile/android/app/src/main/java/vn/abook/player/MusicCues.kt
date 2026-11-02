@@ -258,6 +258,25 @@ object MusicCues {
      *  quãng lặng (bài kết sớm ở `stopAt`). */
     fun nextAfter(cues: List<Cue>, cue: Cue): Cue? = cues.firstOrNull { it.start == cue.end }
 
+    /** Giây chương mà bài của mốc `cue` thôi kêu: hết chuỗi mốc liền nhau cùng bài (bài chơi tiếp qua các mốc ấy, không bắt đầu lại) + thời gian mờ ra
+     *  khi mốc kế vào (mốc anh em: siblingFadeSeconds, không thì fadeSeconds). Mốc `tail` chơi tới hết bài: vô cực. Bài stream đang tải dở chỉ cần tải
+     *  kịp tới chỗ ấy mới vào ([StreamPace.playsThrough]) - bài 863 s mà mốc chỉ dùng 342 s thì không phải chờ tải gần hết bài (musiclogic.h, musicBed.ts
+     *  cùng luật). */
+    fun playEnd(cues: List<Cue>, cue: Cue): Double {
+        var end = cue.end
+        var tail = cue.tail
+        var grew = true
+        while (grew) {
+            grew = false
+            for (other in cues) if (other.track == cue.track && other.start <= end + 1e-6 && other.end > end) {
+                end = other.end; tail = tail || other.tail; grew = true
+            }
+        }
+        if (tail) return Double.POSITIVE_INFINITY
+        val next = cues.firstOrNull { it.track != cue.track && abs(it.start - end) <= 1e-6 }
+        return end + if (next?.sibling == true) mix.siblingFadeSeconds else mix.fadeSeconds
+    }
+
     /** Một nhịp dịch âm lượng `volume` về phía `goal`, mỗi nhịp tối đa `perTick`. */
     fun toward(volume: Float, goal: Float, perTick: Float): Float {
         val move = maxOf(perTick, 1e-5f)
