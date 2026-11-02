@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -101,7 +102,8 @@ fun SheetLayer(host: SheetHost) {
             .pointerInput(Unit) { detectTapGestures { host.dismiss() } },
     ) {
         Column(
-            Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+            // imePadding ở đây (một chỗ cho MỌI bảng): bàn phím mở thì cả bảng - ô nhập lẫn nút - nằm trên bàn phím, không bảng nào phải tự nhớ.
+            Modifier.align(Alignment.BottomCenter).fillMaxWidth().imePadding()
                 .graphicsLayer { translationY = (1f - progress.value) * size.height + drag.value }
                 .clip(RoundedCornerShape(topStart = Dim.radiusSheet, topEnd = Dim.radiusSheet))
                 .background(colors.panel)

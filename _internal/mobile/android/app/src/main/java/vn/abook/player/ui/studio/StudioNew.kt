@@ -14,6 +14,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import vn.abook.player.StudioError
 import vn.abook.player.StudioErrors
+import vn.abook.player.StreamBody
 import vn.abook.player.formatSize
 import vn.abook.player.readaloud.WebSocket
 import vn.abook.player.ui.data.Choice
@@ -147,27 +148,58 @@ internal object StudioNewJson {
 /**
  * Thân JSON của `POST /api/sources/upload` ghi từng khúc: `{"folder":...,"name":...,"data":"<base64>"}`. Không dựng cả chuỗi trong bộ nhớ (file tới ~17 MiB, base64 hơn 23 MiB);
  * khúc đọc là bội của 3 byte nên các khúc base64 nối lại đúng, chỉ khúc cuối có đệm `=`.
+ *
+ * Độ dài thân khai TRƯỚC (Content-Length): máy tính không đọc được thân chunked (coi như rỗng - mọi file gửi từ điện thoại bị từ chối "không phải TXT/EPUB/DOCX/PDF", soát
+ * điện thoại thật 02-11). Cỡ file đã khai thì tính ra độ dài ngay và luồng chỉ mở khi gửi; chưa biết cỡ thì đọc hết vào bộ nhớ (tối đa [StudioNewLogic.UPLOAD_LIMIT]).
  */
 object StudioUpload {
     private const val CHUNK = 48 * 1024
 
-    fun writer(folder: String, name: String, input: InputStream): (OutputStream) -> Unit = { out ->
-        out.write("""{"folder":${JSONObject.quote(folder)},"name":${JSONObject.quote(name)},"data":"""".toByteArray(Charsets.UTF_8))
-        input.use { source ->
+    private fun head(folder: String, name: String) = """{"folder":${JSONObject.quote(folder)},"name":${JSONObject.quote(name)},"data":"""".toByteArray(Charsets.UTF_8)
+
+    private val TAIL = "\"}".toByteArray(Charsets.US_ASCII)
+
+    /** Số byte của thân khi file có `size` byte: phần đầu + base64 (4 ký tự cho mỗi 3 byte, làm tròn lên) + phần cuối. */
+    fun length(folder: String, name: String, size: Long): Long = head(folder, name).size + (size + 2) / 3 * 4 + TAIL.size
+
+    /** Thân gửi đi của file `size` byte (<= 0: chưa biết, đọc hết `open()` ngay trong lời gọi này - gọi ở luồng IO). Ném [StudioError.TooBig] khi file chưa biết cỡ lại vượt giới hạn gửi. */
+    fun body(folder: String, name: String, size: Long, open: () -> InputStream): StreamBody {
+        if (size > 0) return StreamBody(length(folder, name, size), writer(folder, name, size, open))
+        val bytes = open().use { source ->
+            val out = java.io.ByteArrayOutputStream()
             val buffer = ByteArray(CHUNK)
             while (true) {
+                val read = source.read(buffer)
+                if (read < 0) break
+                out.write(buffer, 0, read)
+                if (out.size() > StudioNewLogic.UPLOAD_LIMIT) throw StudioError.TooBig()
+            }
+            out.toByteArray()
+        }
+        return StreamBody(length(folder, name, bytes.size.toLong()), writer(folder, name, bytes.size.toLong()) { bytes.inputStream() })
+    }
+
+    /** Ghi thân đúng `size` byte dữ liệu; file ngắn hơn hay dài hơn đã khai (đổi cỡ giữa chừng) thì ném, không để kết nối lệch độ dài. */
+    fun writer(folder: String, name: String, size: Long, open: () -> InputStream): (OutputStream) -> Unit = { out ->
+        out.write(head(folder, name))
+        open().use { source ->
+            val buffer = ByteArray(CHUNK)
+            var left = size
+            while (left > 0) {
                 var filled = 0
-                while (filled < CHUNK) {
-                    val read = source.read(buffer, filled, CHUNK - filled)
+                val want = minOf(left, CHUNK.toLong()).toInt()
+                while (filled < want) {
+                    val read = source.read(buffer, filled, want - filled)
                     if (read < 0) break
                     filled += read
                 }
-                if (filled == 0) break
+                if (filled < want) throw IOException("File ngắn hơn đã khai")
                 out.write(WebSocket.base64(if (filled == CHUNK) buffer else buffer.copyOf(filled)).toByteArray(Charsets.US_ASCII))
-                if (filled < CHUNK) break
+                left -= filled
             }
+            if (source.read() >= 0) throw IOException("File dài hơn đã khai")
         }
-        out.write("\"}".toByteArray(Charsets.US_ASCII))
+        out.write(TAIL)
     }
 }
 
@@ -458,7 +490,7 @@ class StudioNewState(
         sendingBytes = 0
         sendingId = row.id
         try {
-            val uploaded = session.source.uploadSource(session.computer, batch, row.name) {
+            val uploaded = session.source.uploadSource(session.computer, batch, row.name, row.size) {
                 Counting(file.open(), { aborted.contains(row.id) }) { total -> sendingBytes = total }
             }
             if (aborted.contains(row.id)) drop(row.id) else update(row.id) { it.copy(status = UploadStatus.Sent, path = uploaded.path) }

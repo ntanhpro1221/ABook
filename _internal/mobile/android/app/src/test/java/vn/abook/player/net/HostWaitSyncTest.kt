@@ -13,6 +13,7 @@ import org.robolectric.annotation.Config
 import vn.abook.player.NetErrors
 import vn.abook.player.StudioError
 import vn.abook.player.StudioErrors
+import vn.abook.player.StreamBody
 import vn.abook.player.SyncLink
 import java.io.File
 
@@ -103,7 +104,7 @@ class HostWaitSyncTest {
             val started = System.nanoTime()
             val error = runCatching {
                 SyncLink.request(context, "POST", "/api/sources/upload", auth = false, root = host.base, token = "t", connectTimeoutMs = 1000,
-                    stream = { out -> val chunk = ByteArray(64 * 1024); repeat(4096) { out.write(chunk) } })
+                    stream = StreamBody(4096L * 64 * 1024) { out -> val chunk = ByteArray(64 * 1024); repeat(4096) { out.write(chunk) } })
             }.exceptionOrNull()
             assertTrue("$error", error is HostWait.Timeout)
             assertEquals(1, host.connections)

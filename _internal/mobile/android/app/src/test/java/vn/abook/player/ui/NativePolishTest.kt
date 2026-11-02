@@ -18,6 +18,7 @@ import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
+import com.github.takahirom.roborazzi.captureRoboImage
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
@@ -91,7 +92,7 @@ class NativePolishTest {
                 val scope = rememberCoroutineScope()
                 val state = remember { LibraryUiState(scope, LibrarySort.Recent) }
                 Box(Modifier.fillMaxSize().background(Abook.colors.bg)) {
-                    Box(Modifier.width(widthDp.dp)) { FilterBar(state, {}, Modifier.fillMaxWidth()) }
+                    Box(Modifier.width(widthDp.dp)) { FilterBar(state, 60, {}, Modifier.fillMaxWidth()) }
                 }
             }
         }
@@ -103,7 +104,7 @@ class NativePolishTest {
         val tags = listOf("filter_all", "filter_listening", "filter_new", "filter_finished")
         val row = rule.onNodeWithTag("filter_row").getUnclippedBoundsInRoot()
         val sort = rule.onNodeWithTag("sort_button").getUnclippedBoundsInRoot()
-        assertTrue("hàng lọc ($widthDp dp) không đè nút Xếp theo: ${row.right} > ${sort.left}", row.right <= sort.left + 0.5.dp)
+        assertTrue("hàng lọc ($widthDp dp) nằm DƯỚI nút Xếp theo, không đè nó: ${row.top} < ${sort.bottom}", row.top >= sort.bottom - 0.5.dp)
         val chips = tags.map { rule.onNodeWithTag(it).getUnclippedBoundsInRoot() }
         // Mỗi chữ có lề chạm 6 dp hai bên (ô chồng lên nhau 12 dp khi khe = 0): khe giữa CHỮ = khoảng giữa hai ô + 12 dp.
         for ((a, b) in chips.zipWithNext()) {
@@ -111,6 +112,33 @@ class NativePolishTest {
             assertTrue("khe giữa hai chữ bộ lọc ở $widthDp dp là $gap, dưới 16 dp", gap >= 15.5.dp)
         }
     }
+
+    /** Mọi chữ lọc (kể cả "Xong") nằm TRỌN trong hàng ngay khi mở, không cần cuộn (soát điện thoại thật 02-11: "Xong" bị khuất ở 360 dp). */
+    private fun assertEveryFilterIsFullyVisible(widthDp: Int, dark: Boolean) {
+        rule.setContent {
+            AbookTheme(dark) {
+                val scope = rememberCoroutineScope()
+                val state = remember { LibraryUiState(scope, LibrarySort.Recent) }
+                Box(Modifier.fillMaxSize().background(Abook.colors.bg)) {
+                    Box(Modifier.width(widthDp.dp)) { FilterBar(state, 60, {}, Modifier.fillMaxWidth()) }
+                }
+            }
+        }
+        rule.waitForIdle()
+        val row = rule.onNodeWithTag("filter_row").getUnclippedBoundsInRoot()
+        for (tag in listOf("filter_all", "filter_listening", "filter_new", "filter_finished")) {
+            val chip = rule.onNodeWithTag(tag).getUnclippedBoundsInRoot()
+            assertTrue("$tag ($chip) ra ngoài hàng lọc ($row) ở $widthDp dp", chip.left + 6.dp >= row.left - 0.5.dp && chip.right - 6.dp <= row.right + 0.5.dp)
+        }
+        rule.onRoot().captureRoboImage("src/test/snapshots/filters_${widthDp}_${if (dark) "dark" else "light"}.png")
+    }
+
+    @Test fun everyFilterIsFullyVisibleAt360Light() = assertEveryFilterIsFullyVisible(360, dark = false)
+
+    @Test fun everyFilterIsFullyVisibleAt360Dark() = assertEveryFilterIsFullyVisible(360, dark = true)
+
+    @Test @Config(sdk = [35], qualifiers = "w360dp-h780dp-xxhdpi", fontScale = 1.3f)
+    fun everyFilterIsFullyVisibleAt360WithBigSystemText() = assertEveryFilterIsFullyVisible(360, dark = true)
 
     @Test fun filterRowIsRoomyAt320() = assertFilterRowIsRoomy(320)
 

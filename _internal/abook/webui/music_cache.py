@@ -27,6 +27,7 @@ from . import music_plan
 CAP_BYTES = 2 * 1024 ** 3  # ~300 bài 4-10 MB: hàng chục cuốn nghe liền, còn xa mới đầy ổ; điện thoại 300 MB vì bộ nhớ nhỏ hơn
 LOW_WATER = 0.9  # dọn xuống 90% trần: không dọn lại ở mỗi bài mới tải
 RECENT_SECONDS = 24 * 3600  # bài nghe trong ngày qua (đang kêu, chương đang nghe, vừa tải sẵn) không xoá dù đã quá trần
+PART_MAX_AGE_SECONDS = 7 * 24 * 3600  # file dở (`<bài>.part`, giữ để tải tiếp bằng Range) không ai tải tiếp trong bấy lâu thì xoá
 TOUCH_SECONDS = 600  # ghi lại lần nghe nhiều nhất mỗi 10 phút một bài (đỡ ghi đĩa ở mỗi lượt phát)
 OWNED_VERSION = 1
 _TRACK = re.compile(music_plan.TRACK_NAME)
@@ -90,10 +91,19 @@ class MusicCache:
                         found.append((path, info.st_size, info.st_mtime))
         return found
 
+    def _sweep_parts(self) -> None:
+        stale = self.clock() - PART_MAX_AGE_SECONDS
+        with contextlib.suppress(OSError):
+            for path in self.folder.glob("*.part"):
+                with contextlib.suppress(OSError):
+                    if path.stat().st_mtime < stale:
+                        path.unlink()
+
     def prune(self, protected: Callable[[], set[str]] | None = None, keep: Iterable[Path] = ()) -> list[Path]:
         """Quá trần thì xoá bài lâu không nghe nhất cho tới LOW_WATER của trần. `protected`: tên file các bài người nghe ghim (hỏi lúc cần dọn, không mỗi lần gọi);
         `keep`: file không được xoá (bài vừa tải). Trả các file đã xoá."""
         with self._lock:
+            self._sweep_parts()
             tracks = self._tracks()
             total = sum(size for _path, size, _mtime in tracks)
             if total <= self.cap_bytes:
