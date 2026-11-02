@@ -11,6 +11,8 @@ Luật đạt ghi trước ở Corpus research/music/PLAN_lx.md mục 19.
                                                                  > VOICE_HOLE_S giữa chương vì chờ clip
   --slow-clips 200:12 (run): máy chủ chờ thêm 12 s trước mỗi clip mới của đoạn từ 200 ký tự (tools/stall_host) - kiểm lực đọc trước
   --fake-voice 0.5:0.45 (run): giọng Edge thay bằng giọng giả không ra mạng, clip về sau 0,5 s + 0,45 x độ dài (tools/stall_host)
+  --slow-music 11:<A1>/music/files (run): bài nhạc không gieo sẵn mà "tải" từ các file ấy với tốc độ trần 11 KB/s (tools/stall_host) - phép thử
+    nhạc phát khi bài còn đang tải dở: luật (5) phải ra 0 chỗ cụt (NA1 01-11, nguồn thật ~11 KB/s: 14 chỗ)
   --music-files <A1>/music/files (run): gieo sẵn các bài nhạc đã tải trọn của một lượt trước - lượt nhạc bật không còn phụ thuộc tốc độ
     tải của nguồn nhạc (01-11 trưa incompetech ~11-200 KB/s: bài chương 1 sau 23 phút mới được nửa, nhạc vắng gần cả lượt)
   python -X utf8 tools/listen_audit.py selftest                 (build.bat)
@@ -74,6 +76,8 @@ CUT_FLOOR_DB = -70.0
 STALL_S = 10.0          # (0) chờ quá lâu: đang phát mà vị trí đứng yên chừng này (giữa hai đoạn giọng thường dưới 2 s)
 VOICE_HOLE_S = 3.0      # (0) giọng lặng vì chờ clip: luồng giọng dừng (.stops) giữa chương, cả quãng im quanh nó (đuôi / đầu clip) quá chừng này
 HOLE_MIN_STOP_S = 0.5   # ... chỉ xét lần dừng từ chừng này (chỗ nối hai clip liền nhau chỉ 10-30 ms)
+MUSIC_STALL_S = 0.5     # (6) nhạc đứng giữa bài: vị trí bài (mix_pos, mỗi 0,25 s) không tiến chừng này rồi lại tiến - hụt bài đang tải
+MUSIC_POS_GAP_S = 0.4   # ... hai mốc mix_pos cách nhau hơn chừng này là đã ngắt quãng (tạm dừng, đổi bài): chuỗi mới
 
 
 # ---------- dựng cuốn thử ----------
@@ -141,7 +145,7 @@ def prepare(stage: Path, texts: list[Path], music: bool) -> str:
 
 
 def run(out: Path, label: str, texts: list[Path], music: bool, exe: Path, slow: str | None = None, fake: str | None = None,
-        music_files: Path | None = None) -> None:
+        music_files: Path | None = None, slow_music: str | None = None) -> None:
     import measure
     stage = out / label
     if (stage / "bench.json").exists():
@@ -157,14 +161,16 @@ def run(out: Path, label: str, texts: list[Path], music: bool, exe: Path, slow: 
                ABOOK_BENCH_BOOK=book, ABOOK_AUDIO_SINK=str(sink), ABOOK_SMTC="1", QT_SCALE_FACTOR="1", QT_QPA_PLATFORM="offscreen",
                QT_QUICK_BACKEND="software", ABOOK_BENCH_HIDDEN_DESKTOP="1", QT_QPA_FONTDIR=str(ROOT / "fonts"),
                QT_QPA_PLATFORM_PLUGIN_PATH=str(QT / "plugins/platforms"), PATH=str(QT / "bin") + os.pathsep + os.environ["PATH"])
-    hooks = {name: value for name, value in (("ABOOK_TEST_SLOW_CLIPS", slow), ("ABOOK_TEST_FAKE_VOICE", fake)) if value}
+    hooks = {name: value for name, value in (("ABOOK_TEST_SLOW_CLIPS", slow), ("ABOOK_TEST_FAKE_VOICE", fake), ("ABOOK_TEST_SLOW_MUSIC", slow_music)) if value}
     if hooks:  # máy chủ con thừa hưởng môi trường, nạp tools/stall_host/sitecustomize.py
         env.update(PYTHONPATH=str(ROOT / "tools/stall_host"), **hooks)
     got = measure.launch(exe.resolve(), env, True, timeout_seconds=3700, require_ac=False)
     if got.get("app_log"):
         shutil.copyfile(got["app_log"], stage / "app.log")
-    (stage / "run.json").write_text(json.dumps(dict(ok=bool(got.get("ok")), why=got.get("why"), exe=str(exe), music=music, slow=slow, fake=fake, music_files=str(music_files) if music_files else None,
-                                                    exit_code=got.get("exit_code"), forced=got.get("forced_termination")), ensure_ascii=False),
+    (stage / "run.json").write_text(json.dumps(dict(ok=bool(got.get("ok")), why=got.get("why"), exe=str(exe), music=music, slow=slow, fake=fake, music_files=str(music_files) if music_files else None, slow_music=slow_music,
+                                                    exit_code=got.get("exit_code"), forced=got.get("forced_termination"),
+                                                    # tải lạ (bộ thử, dựng, gradle) chen vào giữa lượt: số giây thời gian thực có thể lệch
+                                                    shared_busy=sorted({b["name"] for _, busy in got.get("shared_busy", []) for b in busy})), ensure_ascii=False),
                                     encoding="utf-8", newline="\n")
     if not got.get("ok"):
         raise SystemExit(f"app không chạy xong: {got.get('why')}")
@@ -189,7 +195,7 @@ def load(stage: Path) -> dict:
     return dict(rate=rate, hop=hop, db=frame_db(mono, hop), marks=marks, mixes=mixes, gaps=read_pairs(str(stage / "sink.wav") + ".gaps"),
                 stops=read_pairs(str(stage / "sink.wav") + ".stops"),
                 done=any(name == "done" for _, name in bench["events"]), timeout=any(name == "timeout" for _, name in bench["events"]),
-                problems=run_problems(bench["events"]))
+                problems=run_problems(bench["events"]), music_stalls=music_stalls(bench["events"]))
 
 
 def run_problems(events: list) -> list[dict]:
@@ -221,6 +227,35 @@ def run_problems(events: list) -> list[dict]:
         since, last = (here if playing == "1" else None), None
     if since and last and (last[0] - since[0]) / 1000 >= STALL_S:
         out.append(dict(kind="stall", t=round((since[0] - t0) / 1000, 1), seconds=round((last[0] - since[0]) / 1000, 1), position=since[1]))
+    return out
+
+
+def music_stalls(events: list) -> list[dict]:
+    """Nhạc đứng giữa bài (soát nghe 02-11, nguồn nhạc 11 KB/s: 483 lần): vị trí một phần tử nhạc (mix_pos:<phần tử>:<giây>) đứng yên trong
+    >= MUSIC_STALL_S đồng hồ rồi lại tiến - bài vào khi chưa tải kịp và hụt. Chỉ tính chuỗi mốc liền (cách nhau <= MUSIC_POS_GAP_S): tạm dừng
+    sách không phát mốc nào nên không phải lần đứng; đứng ở cuối rồi thôi (bài hết, bị thay) cũng không. Luật 5 không thấy lỗi này dưới giọng."""
+    t0 = events[0][0] if events else 0
+    out, last, flat = [], {}, {}  # phần tử -> (giờ, vị trí) mốc trước / (giờ, vị trí) mốc đầu chuỗi đứng yên
+    for t, name in events:
+        if name.startswith("mix_seeked:"):
+            voice = name.split(":")[1]
+            last.pop(voice, None)
+            flat.pop(voice, None)
+            continue
+        if not name.startswith("mix_pos:"):
+            continue
+        _, voice, position = name.split(":")
+        here = (t / 1000, float(position))
+        before = last.get(voice)
+        last[voice] = here
+        if not before or here[0] - before[0] > MUSIC_POS_GAP_S:
+            flat.pop(voice, None)
+        elif here[1] - before[1] < 1e-3:
+            flat.setdefault(voice, before)
+        else:
+            began = flat.pop(voice, None)
+            if began and before[0] - began[0] >= MUSIC_STALL_S - 0.01:
+                out.append(dict(t=round(began[0] - t0 / 1000, 1), seconds=round(before[0] - began[0], 2), position=began[1]))
     return out
 
 
@@ -497,6 +532,10 @@ def analyze(a_dir: Path, b_dir: Path, control: Path | None = None) -> dict:
     rules["5_cut"] = dict(joins=len(ach) - 1, abrupt=cuts, excused=[c for c in drops if c["content"]], control_B=len(control),
                           ok=not cuts and not control)
 
+    # (6) nhạc không đứng giữa bài: bài chỉ vào khi tải kịp (trung bình trượt, lề 1,3x); bản sửa còn hụt thì mờ ra/vào nhưng vẫn đếm ở đây
+    stalls = A["music_stalls"]
+    rules["6_music_stall"] = dict(count=len(stalls), stalled_s=round(sum(x["seconds"] for x in stalls), 1), first=stalls[:8], ok=not stalls)
+
     # chỉ báo
     played = []
     for ch in ach:
@@ -653,6 +692,18 @@ def selftest() -> int:
         broken = source_tracks(Path(tmp), 8000, 400)
     if broken:
         failures.append(f"file bài hỏng: chờ bỏ qua, được {list(broken)}")
+    # nhạc đứng giữa bài: đứng 1 s rồi tiến là một lần; tạm dừng (mốc cách xa) không phải; đứng ở cuối không phải; tua thì chuỗi mới
+    def pos(start_s, positions, voice="a"):
+        return [[(start_s + i * 0.25) * 1000.0, f"mix_pos:{voice}:{p:.3f}"] for i, p in enumerate(positions)]
+    for name, events, want in (("trôi đều", pos(0, [i * 0.25 for i in range(40)]), 0),
+                               ("hụt 1 s", pos(0, [0.0, 0.25, 0.5] + [0.75] * 5 + [1.0, 1.25]), 1),
+                               ("tạm dừng sách", pos(0, [0.0, 0.25, 0.5]) + pos(10, [0.5, 0.75, 1.0]), 0),
+                               ("đứng ở cuối", pos(0, [0.0, 0.25] + [0.5] * 10), 0),
+                               ("tua", pos(0, [0.0, 0.25, 0.5, 0.5, 0.5]) + [[1100.0, "mix_seeked:a:0.500"]] + pos(1.25, [0.5, 0.5, 0.75]), 0),
+                               ("hai phần tử", pos(0, [0.0] + [0.25] * 4 + [0.5], "a") + pos(0.1, [3.0] + [3.25] * 4 + [3.5], "b"), 2)):
+        got = len(music_stalls(sorted([[0.0, "main"]] + events)))
+        if got != want:
+            failures.append(f"nhạc đứng {name}: chờ {want}, được {got}")
     print(json.dumps(dict(selftest="listen_audit", failures=failures), ensure_ascii=False))
     return 1 if failures else 0
 
@@ -666,8 +717,9 @@ def main() -> int:
     r.add_argument("--exe", type=Path, default=ROOT / "dist/ABookDesk.exe")
     r.add_argument("--host-app", type=Path, default=INTERNAL, help="thư mục _internal của máy chủ Python (mặc định: cây của app)")
     r.add_argument("--slow-clips", help="<số ký tự>:<giây> - máy chủ chờ thêm trước mỗi clip mới của đoạn dài (tools/stall_host)")
-    r.add_argument("--fake-voice", help="<trễ>:<giây mỗi giây clip> - giọng giả không ra mạng thay Edge (tools/stall_host)")
+    r.add_argument("--fake-voice", help="<trễ>:<giây mỗi giây clip>[:<âm lượng>] - giọng giả không ra mạng thay Edge; âm lượng 0 = lượt chỉ nhạc (tools/stall_host)")
     r.add_argument("--music-files", type=Path, help="thư mục music/files của một lượt trước: gieo sẵn các bài đã tải trọn")
+    r.add_argument("--slow-music", help="<KB/s>[/<KB/s sau>@<giây>]:<thư mục music/files của một lượt trước> - bài nhạc tải từ các file ấy với tốc độ trần (tools/stall_host)")
     a = sub.add_parser("analyze"); a.add_argument("a", type=Path); a.add_argument("b", type=Path)
     a.add_argument("--control", type=Path, help="lượt nhạc tắt thứ hai: so với B không được thấy nhạc ở đâu (kiểm thước luật 1)")
     c = sub.add_parser("check"); c.add_argument("dir", type=Path)
@@ -675,7 +727,7 @@ def main() -> int:
     args = ap.parse_args()
     if args.cmd == "run":
         INTERNAL = args.host_app.resolve()
-        run(args.out.resolve(), args.label, args.text, args.music == "on", args.exe, args.slow_clips, args.fake_voice, args.music_files)
+        run(args.out.resolve(), args.label, args.text, args.music == "on", args.exe, args.slow_clips, args.fake_voice, args.music_files, args.slow_music)
     elif args.cmd == "check":
         loaded = load(args.dir)
         problems = loaded["problems"] + [dict(kind="voice_hole", **hole) for hole in voice_holes(loaded)]

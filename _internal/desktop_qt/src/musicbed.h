@@ -118,6 +118,7 @@ private:
     double target(const MusicLogic::MusicCue *cue) const;
     double target() const;
     void retarget(bool seeked);
+    void tellPlayUntil(double seconds);
     void finishTail(double seconds);
     void crossLoop(double seconds, bool fromTimer = false);
     void prepareStandby(const Playing &playing, const MusicLogic::LoopBounds &bounds);
