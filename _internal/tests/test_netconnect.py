@@ -30,14 +30,15 @@ class FakeSocket:
         self.family = family
         self.closed = False
         self.connected_to = None
-        self._near, self._far = socket.socketpair()
-        self._near.setblocking(False)
         if behaviour == "hang":
-            try:
-                while True:
-                    self._near.send(b"x" * 65536)
-            except (BlockingIOError, InterruptedError):
-                pass
+            # Ổ đang nghe không bao giờ ghi-được (cả Windows lẫn Linux). Đừng dùng socketpair đầy bộ đệm: loopback Windows tự nới bộ đệm nên ổ ấy
+            # thành ghi-được sau vài trăm ms và "treo" lại thắng cuộc đua.
+            self._near, self._far = REAL_SOCKET(V4, socket.SOCK_STREAM), None
+            self._near.bind(("127.0.0.1", 0))
+            self._near.listen(1)
+        else:
+            self._near, self._far = socket.socketpair()
+        self._near.setblocking(False)
 
     def fileno(self) -> int:
         return self._near.fileno()
@@ -66,7 +67,8 @@ class FakeSocket:
     def close(self) -> None:
         self.closed = True
         self._near.close()
-        self._far.close()
+        if self._far is not None:
+            self._far.close()
 
 
 def info(family: int, address: str, port: int = 80) -> tuple:
