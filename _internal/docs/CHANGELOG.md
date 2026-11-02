@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Điện thoại
+
+- Cửa sổ mini (cửa sổ nhỏ khi rời app) giờ ghi tên sách và tên chương ở đáy bìa, giống cửa sổ mini trên máy tính; cửa sổ rất nhỏ chỉ còn tên chương.
+
 ## [0.4.160] - 2026-11-02
 
 ### Nhạc nền
