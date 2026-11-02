@@ -266,7 +266,10 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
     if (!box || !ink || box.width > 64 || inkTexts.some((t) => el.contains(t.element))) continue;
     for (let parent = el.parentElement; parent && parent !== el.closest("main"); parent = parent.parentElement) {
       const s = css(parent), b = rect(parent.getBoundingClientRect());
-      if (b.width < 300 || !parent.querySelector("h1") || !/flex|grid/.test(s.display) || s.flexDirection.startsWith("column")) continue;
+      if (b.width < 300 || !/flex|grid/.test(s.display) || s.flexDirection.startsWith("column")) continue;
+      // Hàng rộng đầu tiên chứa nút mà không có h1 = nút thuộc một hàng danh sách, không phải đầu trang: dừng. Leo tiếp thì gặp lưới hai cột của trang
+      // sách (h1 ở cột trái) và nút cuối hàng ở cột phải bị đo như nút đầu trang chỉ vì trùng độ cao với tên sách.
+      if (!parent.querySelector("h1")) break;
       const heading = parent.querySelector("h1").getBoundingClientRect();
       if (Math.min(heading.bottom, box.y + box.height) <= Math.max(heading.y, box.y)) continue;
       const end = right(b) - Number.parseFloat(s.paddingRight) - Number.parseFloat(s.borderRightWidth);
