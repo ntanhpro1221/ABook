@@ -30,8 +30,7 @@ def wait_for_machine():
             args = info.get("cmdline") or []
             scripts = {Path(a).name.lower() for a in args if a.endswith(".py")}
             name = (info.get("name") or "").lower()
-            if (name == "abookdesk.exe" or name.endswith("tests.exe") or
-                name in {"cl.exe", "link.exe", "ninja.exe", "cmake.exe", "qmlcachegen.exe", "qmltyperegistrar.exe"} or
+            if (measure.foreign_load(name, " ".join(args).lower()) or
                 scripts & {"measure.py", "ramrun.py", "measure_mini.py", "hidden_suite.py", "private_worker.py", "voice_ab.py", "voice_validate.py", "idle_ab.py", "idle_hidden.py", "idle2_stage.py", "idle2_profile.py", "build_hidden.py"} or
                 any("measure" in s for s in scripts)):
                 busy.append(info)

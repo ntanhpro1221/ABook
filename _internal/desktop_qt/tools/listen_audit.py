@@ -168,7 +168,9 @@ def run(out: Path, label: str, texts: list[Path], music: bool, exe: Path, slow: 
     if got.get("app_log"):
         shutil.copyfile(got["app_log"], stage / "app.log")
     (stage / "run.json").write_text(json.dumps(dict(ok=bool(got.get("ok")), why=got.get("why"), exe=str(exe), music=music, slow=slow, fake=fake, music_files=str(music_files) if music_files else None, slow_music=slow_music,
-                                                    exit_code=got.get("exit_code"), forced=got.get("forced_termination")), ensure_ascii=False),
+                                                    exit_code=got.get("exit_code"), forced=got.get("forced_termination"),
+                                                    # tải lạ (bộ thử, dựng, gradle) chen vào giữa lượt: số giây thời gian thực có thể lệch
+                                                    shared_busy=sorted({b["name"] for _, busy in got.get("shared_busy", []) for b in busy})), ensure_ascii=False),
                                     encoding="utf-8", newline="\n")
     if not got.get("ok"):
         raise SystemExit(f"app không chạy xong: {got.get('why')}")
