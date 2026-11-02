@@ -1,12 +1,13 @@
 """Sinh hằng số token của giao diện native (Kotlin) từ docs/DESIGN.md - MỘT nguồn (docs/NATIVE_PHONE_UI.md §2).
 
 Đọc: §5.1 bảng màu (sáng / tối), §5.5 khoảng cách, chữ, bo góc, vùng chạm, §5.2 thời lượng chuyển động; đường cong lấy từ
-ui/src/shared/motion.ts (EASE - DESIGN.md chỉ gọi tên "Material 3"). Ghi ra HAI file từ cùng một lần đọc:
-mobile/android/app/src/main/java/vn/abook/player/ui/theme/Tokens.kt (native) và ui/src/shared/tokens.generated.css (web: bo góc thành
-`rounded-control` / `rounded-cover` / `rounded-sheet` của Tailwind, thay hẳn thang bo góc mặc định).
+ui/src/shared/motion.ts (EASE - DESIGN.md chỉ gọi tên "Material 3"). Ghi ra BA file từ cùng một lần đọc:
+mobile/android/app/src/main/java/vn/abook/player/ui/theme/Tokens.kt (native), ui/src/shared/tokens.generated.css (web: bo góc thành
+`rounded-control` / `rounded-cover` / `rounded-sheet` của Tailwind, thay hẳn thang bo góc mặc định). §5.5 "Khổ cửa sổ" (năm khổ theo bề ngang nội dung)
+đi vào cả Tokens.kt (`WidthClass`) và ui/src/shared/widthClass.generated.ts; desktop_qt/tools/gen_theme.py đọc cùng bảng qua `width_classes`.
 
-    python -X utf8 scripts/gen_native_tokens.py          # ghi lại Tokens.kt và tokens.generated.css
-    python -X utf8 scripts/gen_native_tokens.py --check  # thoát 1 nếu một trong hai file lệch DESIGN.md (tests/test_native_tokens.py)
+    python -X utf8 scripts/gen_native_tokens.py          # ghi lại Tokens.kt, tokens.generated.css, widthClass.generated.ts
+    python -X utf8 scripts/gen_native_tokens.py --check  # thoát 1 nếu một trong ba file lệch DESIGN.md (tests/test_native_tokens.py)
 """
 from __future__ import annotations
 
@@ -19,6 +20,7 @@ DESIGN = ROOT / "docs" / "DESIGN.md"
 MOTION_TS = ROOT / "ui" / "src" / "shared" / "motion.ts"
 OUT = ROOT / "mobile" / "android" / "app" / "src" / "main" / "java" / "vn" / "abook" / "player" / "ui" / "theme" / "Tokens.kt"
 OUT_CSS = ROOT / "ui" / "src" / "shared" / "tokens.generated.css"
+OUT_TS = ROOT / "ui" / "src" / "shared" / "widthClass.generated.ts"
 
 # Tên token trong DESIGN.md -> tên hằng Kotlin.
 COLOR_NAMES = {
@@ -92,6 +94,20 @@ def sizes(design: str) -> dict[str, object]:
     out["RADIUS"] = [int(radius.group(i)) for i in (1, 2, 3)]
     out["TOUCH_PHONE"] = int(re.search(r"Vùng chạm\*\*: tối thiểu (\d+)×\d+ \(điện thoại\)", s).group(1))
     return out
+
+
+def width_classes(design: str) -> list[tuple[str, int]]:
+    """Bảng "Khổ cửa sổ" của §5.5: [(tên, từ bao nhiêu px)] tăng dần, khổ đầu bắt đầu từ 0. Tên là định danh camelCase trong bảng."""
+    s = section(design, "#### Khổ cửa sổ", "- **Khoảng cách**")
+    rows = [(m.group(1), int(m.group(2))) for m in re.finditer(r"^\| `([A-Za-z]+)` \| (\d+) \|$", s, re.M)]
+    assert [name for name, _ in rows] == ["compact", "medium", "expanded", "large", "extraLarge"], "DESIGN.md §5.5 Khổ cửa sổ: bảng phải đủ năm khổ theo thứ tự"
+    froms = [px for _, px in rows]
+    assert froms[0] == 0 and froms == sorted(set(froms)), "DESIGN.md §5.5 Khổ cửa sổ: khổ đầu từ 0, các mốc tăng dần"
+    return rows
+
+
+def snake(camel: str) -> str:
+    return re.sub(r"(?<!^)([A-Z])", r"_\1", camel).upper()
 
 
 def motion(design: str) -> list[int]:
@@ -173,7 +189,56 @@ def render() -> str:
     for name, v in ease.items():
         for suffix, value in zip(("X1", "Y1", "X2", "Y2"), v):
             lines.append(f"    const val {name.upper()}_{suffix} = {number(value)}")
-    lines += ["}", ""]
+    lines += [
+        "}",
+        "",
+        "/** Khổ cửa sổ theo bề ngang NỘI DUNG (dp), DESIGN.md §5.5: mỗi khổ bắt đầu từ `fromDp`; so khổ bằng `>=` (thứ tự khai báo). */",
+        "internal enum class WidthClass(val fromDp: Int) {",
+    ]
+    classes = width_classes(design)
+    for i, (name, px) in enumerate(classes):
+        lines.append(f"    {snake(name)}({px}){',' if i < len(classes) - 1 else ';'}")
+    lines += [
+        "}",
+        "",
+        "/** Khổ của một bề ngang nội dung (dp): khổ lớn nhất có `fromDp` không vượt quá nó. */",
+        "internal fun widthClass(dp: Float): WidthClass = WidthClass.entries.last { dp >= it.fromDp }",
+        "",
+    ]
+    return "\n".join(lines)
+
+
+def render_ts() -> str:
+    """Khổ cửa sổ cho web: cùng bảng với WidthClass của Tokens.kt và Theme.widthClass của Qt."""
+    classes = width_classes(DESIGN.read_text(encoding="utf-8"))
+    names = ", ".join(f'"{n}"' for n, _ in classes)
+    lines = [
+        "// SINH TỰ ĐỘNG bởi scripts/gen_native_tokens.py từ docs/DESIGN.md §5.5 (Khổ cửa sổ). KHÔNG sửa tay: sửa DESIGN.md rồi chạy lại script",
+        "// (tests/test_native_tokens.py bắt lệch). Cùng một nguồn với WidthClass của Tokens.kt (điện thoại) và Theme.widthClass (Qt).",
+        "",
+        f"export const WIDTH_CLASSES = [{names}] as const;",
+        "export type WidthClass = (typeof WIDTH_CLASSES)[number];",
+        "",
+        "/** Bề ngang nội dung (px) mà mỗi khổ bắt đầu. */",
+        "export const WIDTH_FROM: Record<WidthClass, number> = {",
+    ]
+    lines += [f"  {n}: {px}," for n, px in classes]
+    lines += [
+        "};",
+        "",
+        "/** Khổ của một bề ngang nội dung (px): khổ lớn nhất có mốc không vượt quá nó. */",
+        "export function widthClass(px: number): WidthClass {",
+        "  let found: WidthClass = WIDTH_CLASSES[0];",
+        "  for (const name of WIDTH_CLASSES) if (px >= WIDTH_FROM[name]) found = name;",
+        "  return found;",
+        "}",
+        "",
+        "/** `px` đạt ít nhất khổ `name`. */",
+        "export function widthAtLeast(px: number, name: WidthClass): boolean {",
+        "  return px >= WIDTH_FROM[name];",
+        "}",
+        "",
+    ]
     return "\n".join(lines)
 
 
@@ -194,7 +259,7 @@ def render_css() -> str:
     ])
 
 
-OUTPUTS = ((OUT, render), (OUT_CSS, render_css))
+OUTPUTS = ((OUT, render), (OUT_CSS, render_css), (OUT_TS, render_ts))
 
 
 def main(argv: list[str]) -> int:

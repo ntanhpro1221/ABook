@@ -20,6 +20,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Công tắc ở màn "Đang nghe" cửa sổ hẹp ghi "Nghe" / "Đọc theo" (trước là "Bìa"), cùng chữ với điện thoại và web.
 
+### Điện thoại
+
+- Máy ngang, máy tính bảng và cửa sổ chia màn hình giờ dùng chỗ rộng như trên máy tính. Trang sách từ 840 dp bề ngang chia hai cột: bìa lớn, thông tin và nút nghe bên trái, thanh Chương / Lịch sử / Nhân vật cùng danh sách chương bên phải, mỗi bên cuộn riêng. Xoay máy hay kéo cửa sổ qua mốc này giữa chừng thì chương đang xem và mục đang mở đứng yên, không nhảy về đầu.
+- Màn "Đang nghe" từ 1200 dp bề ngang, khi sách có chữ: điều khiển ở bên trái, chữ đọc theo luôn mở bên phải (rộng tối đa 640 dp), không phải bấm đổi giữa Nghe và Đọc theo.
+- Cài đặt từ 840 dp bề ngang: danh sách nhóm bên trái, nội dung nhóm đang chọn bên phải (tối đa 1180 dp); chọn nhóm khác không đẩy thêm màn nào, nút Back vẫn chỉ rời tab Cài đặt.
+- Đổi bố cục khi xoay máy hay đổi cỡ cửa sổ có chuyển động trượt ngắn, không đổi cái rụp.
+
 ## [0.4.161] - 2026-11-02
 
 ### Nhạc nền

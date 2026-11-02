@@ -513,6 +513,9 @@ private fun RootTabs(
                     settings,
                     onOpen = { group -> shell.nav.push(Destination.Settings(group)) },
                     shown = { tabs.selected == Tab.Settings.ordinal },
+                    sheets = shell.sheets,
+                    openDevices = { shell.nav.push(Destination.Devices(it)) },
+                    openVoice = { shell.nav.push(Destination.Voice(it)) },
                 )
             }
         }
