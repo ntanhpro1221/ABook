@@ -1,5 +1,6 @@
 #include "musicmixer.h"
 
+#include "downloadforecast.h"
 #include "mixcore.h"
 #include "mp3source.h"
 #include "mfsource.h"
@@ -94,12 +95,13 @@ public:
         Guard guard(m_mutex); m_data += data;
         if (!m_done && size >= 0) m_size = size;
         const auto now = Clock::now();
-        if (m_samples.empty()) m_began = now;
+        if (m_samples.empty()) { m_began = now; m_forecast.reset(); }
         // Đợt dồn đầu (máy chủ gửi một lèo phần đã tải sẵn) gộp vào mốc gốc: chỉ đo tốc độ tải tiếp sau đó.
         if (now - m_began < std::chrono::duration<double>(BURST_S)) m_samples.clear();
         m_samples.push_back({now, m_data.size()});
         // Giữ một mẫu ngay trước cửa sổ làm mốc đầu.
         while (m_samples.size() > 2 && now - m_samples[1].first > std::chrono::duration<double>(RATE_WINDOW_S)) m_samples.pop_front();
+        if (now - m_began >= std::chrono::duration<double>(BURST_S)) m_forecast.add(std::chrono::duration<double>(now - m_began).count(), double(m_data.size()));
     }
     qint64 received() const { Guard guard(m_mutex); return m_data.size(); }
     // Byte/giây tải về trong RATE_WINDOW_S giây vừa qua, tính tới bây giờ (nguồn đứng thì tụt dần về 0); chưa đo được (< 1 s) thì -1.
@@ -113,6 +115,8 @@ public:
         if (seconds < 1.0) return -1;
         return double(m_data.size() - first.second) / seconds;
     }
+    // Lề chia tốc độ đo được (keepsUp), trần DOWNLOAD_MARGIN: xem DownloadForecast.
+    double margin() const { Guard guard(m_mutex); return m_forecast.margin(); }
     void finish(const QString &error) { Guard guard(m_mutex); m_done = true; m_error = error; m_size = m_data.size(); }
     QByteArray read(qint64 offset, qint64 count) override {
         Guard guard(m_mutex);
@@ -129,6 +133,7 @@ private:
     QByteArray m_data;
     std::deque<std::pair<Clock::time_point, qint64>> m_samples;
     Clock::time_point m_began;
+    DownloadForecast m_forecast{RATE_WINDOW_S, DOWNLOAD_MARGIN};
     qint64 m_size = -1;
     bool m_done = false;
     QString m_error;
@@ -190,7 +195,7 @@ struct DecodeJob {
 };
 
 // Bài đang tải dở phát được từ khung `from` tới giây `until` của bài (chỗ bài thôi kêu - MixVoice::setPlayUntil; vô cực / quá độ dài = hết
-// bài) mà không hụt, nếu tốc độ tải giữ ở trung bình trượt chia DOWNLOAD_MARGIN: tải được have + r·t byte, phát tới khung from + R·t cần
+// bài) mà không hụt, nếu tốc độ tải giữ ở trung bình trượt chia lề (GrowingBytes::margin, trần DOWNLOAD_MARGIN): tải được have + r·t byte, phát tới khung from + R·t cần
 // (from + R·t)·p byte (+ DECODE_LEAD_S giây đi trước) - cả hai tuyến tính theo t, nên chỉ cần đúng ở bây giờ và ở lúc tới `until`. Đã có đủ
 // byte tới `until` thì qua luôn. Chưa biết cỡ bài / độ dài hay chưa đo được tốc độ: chưa chắc, coi như không. Byte mỗi khung chỉ tính
 // phần nhạc, từ khung đầu (audioStart): thẻ ID3 đứng trước - ảnh bìa dc28 1,42 MB = 44 s nhạc 256 kbps; chia đều cho mọi khung thì tưởng đã
@@ -205,7 +210,7 @@ bool keepsUp(const DecodeJob &job, quint64 from, double until) {
     if (have >= need) return true;
     if (measured < 0) return false;
     const double left = (end - double(std::min<quint64>(from, job.total))) / job.rate;
-    return have >= std::min(need, start + double(from) * perFrame + lead) && have + measured / DOWNLOAD_MARGIN * left >= need;
+    return have >= std::min(need, start + double(from) * perFrame + lead) && have + measured / job.bytes->margin() * left >= need;
 }
 
 // Lần vào (cả vào lại sau hụt) phải còn ít nhất chừng này tới chỗ thôi kêu: DECODE_LEAD_S đã tải, hụt lại ở UNDERRUN_LOW_S, mờ vào rồi mờ ra mỗi lần
