@@ -142,6 +142,7 @@ export function Windowed<T>({
   className,
   memory,
   alwaysBlocks = false,
+  layout,
 }: {
   items: readonly T[];
   /** Một hàng; `index` là vị trí trong cả danh sách (cho aria-rowindex / aria-posinset). */
@@ -157,6 +158,8 @@ export function Windowed<T>({
   memory?: string;
   /** Giữ cùng các khối DOM khi danh sách đi qua ngưỡng ảo hoá. */
   alwaysBlocks?: boolean;
+  /** Đổi khi KHUNG CUỘN của danh sách đổi chỗ (trang sách đổi từ một cột sang hai cột): dựng lại quan sát theo khung mới, không dựng lại các hàng. */
+  layout?: string;
 }) {
   const total = items.length;
   const count = Math.ceil(total / block);
@@ -257,7 +260,7 @@ export function Windowed<T>({
       view.current = null;
       pending.current = null;
     };
-  }, [windowed, count, memoryKey]);
+  }, [windowed, count, memoryKey, layout]);
 
   // Sau mỗi lần dựng: khối phía trên khung nhìn đổi chiều cao thì bù scrollTop đúng phần chênh - nội dung đang thấy đứng yên.
   useLayoutEffect(() => {

@@ -11,7 +11,8 @@ Hai phía, đọc nguồn, không chạy app, không mạng:
 Ghép theo màn (bảng MÀN dưới): mỗi màn là vài file QML và vài file / hàm web. Ghi phần SINH TỰ ĐỘNG của docs/UI_PARITY_QT.md (giữa hai dấu
 <!-- ui_parity_qt:begin/end -->; phần ngoài dấu là chữ tay, gồm bảng cũ -> mới của các lần sửa):
   a. cùng việc khác chữ; b. cùng nhãn khác icon / cùng icon khác nhãn; c. nhãn chỉ có một bên (theo màn); d. bo góc QML không theo token;
-  e. dấu thanh kiểu mới (òa / óa / úy ...) và "…" / "..." cuối nhãn; f. phím tắt trong chú thích khác web.
+  e. dấu thanh kiểu mới (òa / óa / úy ...) và "…" / "..." cuối nhãn; f. phím tắt trong chú thích khác web;
+  g. công tắc chế độ Đang nghe ("Nghe" / "Đọc theo") của CẢ BA nền, so từng chữ - luật CỨNG (thoát 1, tests/test_ui_parity_qt.py).
 
     python -X utf8 scripts/ui_parity_qt.py          # ghi lại phần sinh tự động của docs/UI_PARITY_QT.md
     python -X utf8 scripts/ui_parity_qt.py --check  # thoát 1 nếu docs/UI_PARITY_QT.md không còn khớp mã nguồn (tests/test_ui_parity_qt.py)
@@ -714,6 +715,7 @@ def render_report(web: Scan, qt: QtScan) -> str:
     out += section_d(qt.radii)
     out += section_e(q_items, w_by)
     out += section_f(qt.shortcuts, qt.spaced)
+    out += section_g(*mode_switch_findings())
     out += ["", END, ""]
     return "\n".join(out)
 
@@ -926,6 +928,106 @@ def section_f(shortcuts, spaced) -> list[str]:
 
 
 # ---------------------------------------------------------------------------------------------------------------------------------------
+# g. Công tắc chế độ Đang nghe: ba nền, từng chữ
+#
+# Sao a-c không bắt được: chúng ghép nhãn Qt với nhãn web CÙNG MÀN theo độ GIỐNG chữ ("Bìa" với "Nghe" không giống nên không thành cặp), còn nhãn
+# chỉ có một bên (mục c) chỉ được LIỆT KÊ - "Bìa" nằm chung 19 nhãn chỉ-Qt hợp lệ khác. Và Qt chưa từng được so với Android. Công tắc hai chế độ là
+# nhãn người nghe thấy ngay khi mở Đang nghe, nên nó có luật riêng: cả ba nền phải ra đúng cùng hai chữ, lệch là đỏ.
+
+ANDROID_PLAYER = ROOT / "mobile" / "android" / "app" / "src" / "main" / "java" / "vn" / "abook" / "player" / "ui" / "nowplaying" / "NowPlayingScreen.kt"
+WEB_PLAYER = WEB / "listen" / "PlayerViews.tsx"
+QT_PLAYER = QML / "NowPlaying.qml"
+SWITCH_SLOTS = 2
+
+
+def split_top(expr: str) -> list[str]:
+    """Phần tử mức trên cùng của một mảng `[a, b ? c : d]` (không tách trong ngoặc hay chuỗi)."""
+    inner = expr.strip()
+    if inner.startswith("[") and inner.endswith("]"):
+        inner = inner[1:-1]
+    parts, depth, start, i = [], 0, 0, 0
+    while i < len(inner):
+        c = inner[i]
+        if c in "\"'":
+            i = up.skip_string(inner, i)
+            continue
+        if c in "([{":
+            depth += 1
+        elif c in ")]}":
+            depth -= 1
+        elif c == "," and depth == 0:
+            parts.append(inner[start:i])
+            start = i + 1
+        i += 1
+    parts.append(inner[start:])
+    return [p.strip() for p in parts if p.strip()]
+
+
+def qt_mode_slots(src: str) -> list[list[str]]:
+    """Mỗi ô của công tắc hẹp ở NowPlaying.qml (PageSwitch có `index: root.page`): các chữ có thể hiện ở ô ấy (nhánh `?:` = trạng thái khác)."""
+    for obj in walk(parse_qml(src)):
+        if obj.type == "PageSwitch" and obj.props.get("index", ("", 0))[0].strip() == "root.page" and "labels" in obj.props:
+            return [options(part) for part in split_top(obj.props["labels"][0])]
+    return []
+
+
+def kotlin_mode_slots(src: str) -> list[list[str]]:
+    """`for ((index, label) in listOf("Nghe", "Đọc theo").withIndex())` trong PlayerModeSwitch."""
+    at = src.find("fun PlayerModeSwitch")
+    m = re.search(r'listOf\(((?:\s*"[^"]*"\s*,?)+)\)\s*\.withIndex\(\)', src[at:]) if at >= 0 else None
+    return [[x] for x in re.findall(r'"([^"]*)"', m.group(1))] if m else []
+
+
+def web_mode_slots(src: str) -> list[list[str]]:
+    """`[["Nghe", false], ["Đọc theo", true]]` trong PlayerModeSwitch của PlayerViews.tsx."""
+    at = src.find("function PlayerModeSwitch")
+    if at < 0:
+        return []
+    end = src.find("\nfunction ", at + 10)
+    return [[x] for x in re.findall(r'\["([^"]*)",\s*(?:true|false)\]', src[at:end if end > 0 else len(src)])]
+
+
+def mode_switch_findings(qt_src: str | None = None, android_src: str | None = None, web_src: str | None = None) -> tuple[dict[str, list[list[str]]], list[str]]:
+    """(chữ từng nền theo ô, các chỗ lệch). Tham số để bài kiểm lực đưa vào mã nguồn đã đổi một chữ."""
+    def read(path: Path) -> str:
+        return path.read_bytes().decode("utf-8")
+
+    found = {
+        "Qt": qt_mode_slots(qt_src if qt_src is not None else read(QT_PLAYER)),
+        "Android": kotlin_mode_slots(android_src if android_src is not None else read(ANDROID_PLAYER)),
+        "Web": web_mode_slots(web_src if web_src is not None else read(WEB_PLAYER)),
+    }
+    problems = []
+    for name, slots in found.items():
+        if len(slots) != SWITCH_SLOTS or not all(slots):
+            problems.append(f"{name}: không đọc được đúng {SWITCH_SLOTS} ô của công tắc chế độ (đọc được {slots}) - bộ đọc cần chỉnh theo mã nguồn mới")
+    if problems:
+        return found, problems
+    android, web, qt = found["Android"], found["Web"], found["Qt"]
+    if android != web:
+        problems.append(f"Android {[x[0] for x in android]} khác web {[x[0] for x in web]}")
+    for i, (a, options_here) in enumerate(zip(android, qt)):
+        if a[0] not in options_here:
+            problems.append(f'ô {i + 1}: Android ghi "{a[0]}", Qt ghi ' + " / ".join(f'"{x}"' for x in options_here))
+        elif i == 0 and options_here != a:
+            problems.append(f'ô 1: Qt còn nhánh khác "{a[0]}" ({" / ".join(x for x in options_here if x != a[0])}); ô đầu không có trạng thái thay chữ')
+    return found, problems
+
+
+def section_g(found, problems) -> list[str]:
+    out = ["## g. Công tắc chế độ Đang nghe (luật cứng, từng chữ, ba nền)", "",
+           "Mục a-c chỉ ghép nhãn GIỐNG nhau cùng màn và chỉ liệt kê nhãn một bên, nên một công tắc đổi chữ ở một nền không đỏ; riêng công tắc hai "
+           "chế độ ở đầu Đang nghe (hẹp) so thẳng: Android `PlayerModeSwitch` (`NowPlayingScreen.kt`) = web `PlayerModeSwitch` (`PlayerViews.tsx`), còn Qt "
+           "`PageSwitch` (`NowPlaying.qml`, `index: root.page`) phải có đúng chữ ấy ở từng ô. Ô 2 của Qt đổi sang `Chương` khi sách chưa có mốc thời gian "
+           "(không có gì để đọc theo) - nhánh trạng thái, không phải chữ khác.", "",
+           "| nền | ô 1 | ô 2 |", "|---|---|---|"]
+    for name in ("Android", "Web", "Qt"):
+        out.append(f"| {name} | " + " | ".join(" / ".join(f"`{x}`" for x in slot) for slot in found.get(name, [])) + " |")
+    out += ["", "Lệch: " + ("; ".join(problems) if problems else "(không có)"), ""]
+    return out
+
+
+# ---------------------------------------------------------------------------------------------------------------------------------------
 
 
 HEAD = """# Lệch chữ, icon và bo góc giữa web máy tính và bản Qt
@@ -950,15 +1052,18 @@ def render_doc(current: str | None) -> str:
 def main(argv: list[str]) -> int:
     current = DOC.read_bytes().decode("utf-8") if DOC.is_file() else None
     text = render_doc(current)
+    problems = mode_switch_findings()[1]
+    for problem in problems:
+        print(f"công tắc chế độ Đang nghe lệch giữa các nền: {problem}", file=sys.stderr)
     if "--check" in argv:
         if current != text:
             print(f"{DOC} không còn khớp mã nguồn - chạy scripts/ui_parity_qt.py", file=sys.stderr)
             return 1
-        return 0
+        return 1 if problems else 0
     DOC.parent.mkdir(parents=True, exist_ok=True)
     DOC.write_bytes(text.encode("utf-8"))  # LF
     print(f"đã ghi {DOC}")
-    return 0
+    return 1 if problems else 0
 
 
 if __name__ == "__main__":
