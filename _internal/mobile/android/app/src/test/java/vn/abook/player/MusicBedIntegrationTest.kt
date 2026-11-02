@@ -425,7 +425,7 @@ class MusicBedIntegrationTest {
 
     @Test fun aStreamedSongThatCannotKeepUpWaitsPausedAndEntersOnceItCanPlayThrough() {
         // Bài stream mới tải chậm hơn phát (0,6x): đứng yên ở chỗ vào (bài trước giữ chỗ ở mức của nó) cho tới khi phát được tới hết bài - không vào rồi hụt
-        // giữa chừng, cũng không chờ tải trọn: vào khi đã có ~54 % (200 - 0,6 x 200 / 1,3 giây).
+        // giữa chừng, cũng không chờ tải trọn: vào khi đã có ~40 % (200 - 0,6 x 200 giây - tải đều nên lề đo được ~1, StreamPace.margin; lề trần 1,3 thì ~54 %).
         val old = FakePlayer().also { it.state = Player.STATE_READY; it.playWhenReady = true }
         val oldBed = bed(old)
         setLogical(oldBed, 0.1f)
@@ -449,7 +449,7 @@ class MusicBedIntegrationTest {
             if (entered < 0 && music.volume > 0f) entered = music.bufferedPosition
             if (entered >= 0) after += events
         }
-        assertTrue("vào khi đã có ~54 % bài ($entered)", entered in 104_000L..112_000L)
+        assertTrue("vào khi đã có ~40 % bài ($entered)", entered in 78_000L..84_000L)
         assertTrue("đã vào thì không hụt lần nào ($after)", after.none { it.first == "đứng" })
         Handler.advance(MusicCues.mix.fadeMs + 500L)
         assertEquals("bài mới đủ mức", 0.1f, music.volume, 1e-4f)
@@ -474,7 +474,7 @@ class MusicBedIntegrationTest {
 
     @Test fun aStreamedSongOnlyNeedsToKeepUpUntilItsCueStopsUsingIt() {
         // Cùng bài 200 s tải 0,6x, nhưng mốc chỉ dùng nó tới giây 60 (mốc khác bài vào ở 60, mờ ra fadeSeconds): chỉ cần tải kịp tới 62 s của bài -
-        // vào khi đã có ~33 s (62 - 0,6 x 62 / 1,3) thay vì ~108 s của bản tới-hết-bài (U30F 02-11: bài 863 s mà mốc dùng 342 s, nhạc vào ở 350 s thay vì 98 s).
+        // vào khi đã có ~25 s (62 - 0,6 x 62, lề đo được ~1) thay vì ~80 s của bản tới-hết-bài (U30F 02-11: bài 863 s mà mốc dùng 342 s, nhạc vào ở 350 s thay vì 98 s).
         val cue = MusicCues.Cue(0.0, 60.0, "music/a.mp3", null)
         field("lastSeconds").setDouble(MusicBed, 0.0)
         field("cues").set(MusicBed, listOf(cue, MusicCues.Cue(60.0, 300.0, "music/b.mp3", null)))
@@ -489,7 +489,7 @@ class MusicBedIntegrationTest {
             if (entered < 0 && music.volume > 0f) entered = music.bufferedPosition
             if (entered >= 0 && music.position < 40_000) after += events
         }
-        assertTrue("vào khi đã có ~33 s ($entered)", entered in 31_000L..37_000L)
+        assertTrue("vào khi đã có ~25 s ($entered)", entered in 23_000L..28_000L)
         assertTrue("đã vào thì không hụt trong phần mốc dùng ($after)", after.none { it.first == "đứng" })
     }
 
@@ -522,8 +522,9 @@ class MusicBedIntegrationTest {
     }
 
     @Test fun whereTheStreamedSongStopsSoundingIsRecomputedWhenTheCuesChange() {
-        // Mốc dùng cả bài 200 s (tới-hết-bài: ~108 s mới vào); giữa lúc chờ, chuỗi mốc đổi (sửa mốc, đổi chương - sync đặt `cues` và `cue` của bài đang
-        // chờ, dòng "cùng bài sang mốc kề"): mốc chỉ còn tới giây 60 chương, giọng ở 20 -> cần tải kịp 42 + 2 s mờ ra: vào khi có ~24 s, không giữ số cũ.
+        // Mốc dùng cả bài 200 s (tới-hết-bài: ~80 s mới vào); giữa lúc chờ, chuỗi mốc đổi (sửa mốc, đổi chương - sync đặt `cues` và `cue` của bài đang
+        // chờ, dòng "cùng bài sang mốc kề"): mốc chỉ còn tới giây 60 chương, giọng ở 20 -> cần tải kịp 42 + 2 s mờ ra: vào khi có ~18 s (44 - 0,6 x 44, lề
+        // đo được ~1), không giữ số cũ.
         val whole = MusicCues.Cue(0.0, 1000.0, "music/a.mp3", null)
         field("lastSeconds").setDouble(MusicBed, 0.0)
         field("cues").set(MusicBed, listOf(whole))
@@ -543,7 +544,7 @@ class MusicBedIntegrationTest {
             stream(music, 50) { 0.6 }
             if (entered < 0 && music.volume > 0f) entered = music.bufferedPosition
         }
-        assertTrue("vào khi đã có ~24 s ($entered)", entered in 22_000L..27_000L)
+        assertTrue("vào khi đã có ~18 s ($entered)", entered in 16_500L..20_000L)
     }
 
     @Test fun aHeldStreamedSongAboutToRunOutFadesOutInsteadOfStoppingAtFullLevel() {
@@ -606,6 +607,29 @@ class MusicBedIntegrationTest {
         val playing = StreamPace()
         for (t in 0L..10_000L step 500) playing.add(t, 20_000 + t * 2, t)
         assertEquals(2.0, playing.rate(10_000)!!, 0.01)
+    }
+
+    @Test fun streamPaceMarginShrinksOnASteadyDownloadAndStaysAtTheCeilingOnASwingingOne() {
+        val steady = StreamPace()
+        for (t in 0L..15_500L step 250) steady.add(t, t * 9 / 10, 0)
+        assertEquals("chưa đo đủ 2 cửa sổ: lề trần", 1.3, steady.margin(), 1e-9)
+        for (t in 15_750L..30_000L step 250) steady.add(t, t * 9 / 10, 0)
+        assertEquals("đường đều: dự báo không hụt", 1.0, steady.margin(), 0.01)
+        // 0,9x, phải phát 100 giây từ 3 s, đã đệm tới 30 s: lề trần cần 73 / 0,9 x 1,3 = 105 s, lề đo được 81 s.
+        val fixed = StreamPace()
+        for (t in 0L..2_000L step 250) fixed.add(t, t * 9 / 10, 0)
+        assertFalse(fixed.playsThrough(2_000, 30_000, 3_000, 103_000))
+        assertTrue(steady.playsThrough(30_000, 30_000, 3_000, 103_000))
+        // 8 giây 1,5x rồi 8 giây 0,5x (trung bình như nhau): dự báo hụt gấp ba - lề trần, không hơn.
+        val swinging = StreamPace()
+        var buffered = 0L
+        for (t in 250L..60_000L step 250) {
+            buffered += if ((t / 8_000) % 2 == 1L) 125 else 375
+            swinging.add(t, buffered, 0)
+        }
+        assertEquals(1.3, swinging.margin(), 1e-9)
+        steady.add(30_250, 1_000, 0) // tua: đo lại
+        assertEquals(1.3, steady.margin(), 1e-9)
     }
 
     @Test fun smallSeeksThroughPlaybackDoNotSeekTheMusicOrRestartItsFade() {

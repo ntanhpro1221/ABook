@@ -15,19 +15,37 @@ internal class StreamPace {
     private var began = -1L
     private var lastNow = 0L
     private var lastPosition = 0L
+    /** Dự báo / thực tế lớn nhất đã thấy ở tầm một cửa sổ; null khi chưa đo đủ 2 cửa sổ. */
+    private var worst: Double? = null
 
     /** `bufferedMs`: đã đệm tới (ms của bài), `positionMs`: con trỏ phát lúc `nowMs`. */
     fun add(nowMs: Long, bufferedMs: Long, positionMs: Long) {
         // Phần đã đệm lùi, hay con trỏ nhảy (tua; lần READY đầu dời bài đang chờ tới giây của giọng - emulator 02-11: đã đệm nhảy 2,4 -> 11 s trong tích tắc,
         // trung bình trượt coi là tải được 8,5 s, bài 11 KB/s qua cổng với 2 s đệm rồi mờ ra ngay): đo lại từ đầu.
         val jumped = began >= 0 && (positionMs < lastPosition - 50 || positionMs > lastPosition + (nowMs - lastNow) + 1000)
-        if (began < 0 || jumped || samples.lastOrNull()?.let { bufferedMs < it.second - 50 } == true) { began = nowMs; samples.clear() }
+        if (began < 0 || jumped || samples.lastOrNull()?.let { bufferedMs < it.second - 50 } == true) { began = nowMs; samples.clear(); worst = null }
         lastNow = nowMs
         lastPosition = positionMs
         if (nowMs - began < mix.underrunBurstMs) samples.clear()
         samples.addLast(nowMs to bufferedMs)
-        while (samples.size > 2 && nowMs - samples[1].first > mix.underrunRateWindowMs) samples.removeFirst() // giữ một mẫu ngay trước cửa sổ làm mốc đầu
+        // Giữ hai cửa sổ (một mẫu ngay trước làm mốc đầu): cửa sổ trước là dự báo, cửa sổ sau là thực tế của dự báo ấy.
+        val window = mix.underrunRateWindowMs
+        while (samples.size > 2 && nowMs - samples[1].first > 2 * window) samples.removeFirst()
+        if (samples.first().first <= nowMs - 2 * window) {
+            fun at(t: Long) = samples.lastOrNull { it.first <= t }?.second ?: samples.first().second
+            val forecast = at(nowMs - window) - at(nowMs - 2 * window)
+            val real = bufferedMs - at(nowMs - window)
+            val ratio = if (real > 0) forecast.toDouble() / real else if (forecast > 0) Double.POSITIVE_INFINITY else 1.0
+            worst = maxOf(worst ?: 1.0, ratio)
+        }
     }
+
+    /**
+     * Lề chia tốc độ đo được ([playsThrough]): dự báo theo trung bình trượt từng hụt tới đâu so với cái đã tới thật một cửa sổ sau, lấy lần tệ nhất, không quá
+     * [MusicMix.underrunMargin]. Chưa đo đủ 2 cửa sổ thì là [MusicMix.underrunMargin]. Đường đều co về ~1: bài vào sớm hơn; đường dao động mạnh giữ đúng lề trần -
+     * 76 vết HSDPA thật (Riiser 2013) mô phỏng đều chạm trần, nghe và hụt y như lề cố định (02-11). Cùng luật với musicBed.ts `DownloadPace.margin` và musicmixer.cpp.
+     */
+    fun margin(): Double = worst?.let { minOf(mix.underrunMargin, it) } ?: mix.underrunMargin
 
     /** Giây bài tải được mỗi giây đồng hồ trong [MusicMix.underrunRateWindowMs] vừa qua, tính tới bây giờ (nguồn đứng thì tụt dần về 0); null khi chưa đo đủ 1 giây. */
     fun rate(nowMs: Long): Double? {
@@ -39,13 +57,13 @@ internal class StreamPace {
 
     /**
      * Phát từ `fromMs` tới `endMs` của bài (chỗ bài thôi kêu: min(độ dài, [MusicCues.playEnd])) mà không hụt, nếu tốc độ tải giữ ở trung bình trượt chia
-     * [MusicMix.underrunMargin]: đã đệm `bufferedMs` + rate/lề·t, phát tới from + t - cả hai tuyến tính theo t, nên chỉ cần đúng bây giờ (có sẵn
+     * [margin] (lề đo được, trần [MusicMix.underrunMargin]): đã đệm `bufferedMs` + rate/lề·t, phát tới from + t - cả hai tuyến tính theo t, nên chỉ cần đúng bây giờ (có sẵn
      * [MusicMix.underrunLeadMs] trước con trỏ) và lúc tới `endMs`. Đã đệm tới `endMs` thì qua luôn. Chưa đo được tốc độ: chưa chắc, coi như không.
      */
     fun playsThrough(nowMs: Long, bufferedMs: Long, fromMs: Long, endMs: Long): Boolean {
         if (whole(bufferedMs, endMs)) return true
         val rate = rate(nowMs) ?: return false
-        return endMs > 0 && bufferedMs - fromMs >= mix.underrunLeadMs && rate > 0 && (endMs - bufferedMs) / rate * mix.underrunMargin <= endMs - fromMs
+        return endMs > 0 && bufferedMs - fromMs >= mix.underrunLeadMs && rate > 0 && (endMs - bufferedMs) / rate * margin() <= endMs - fromMs
     }
 
     companion object {

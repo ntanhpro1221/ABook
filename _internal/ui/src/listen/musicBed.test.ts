@@ -1123,7 +1123,7 @@ describe("tải sẵn bài kế và mờ vào từ lúc có tiếng (musicwarm, 
 
   const long: MusicCue[] = slow.map((cue, i) => ({ ...cue, start: i * 1000, end: (i + 1) * 1000 }));
 
-  it("cổng phát-được-tới-hết-bài: tải 0,31x (11 KB/s, bài 35 KB/s) thì bài mới đứng yên ở chỗ vào, bài cũ giữ chỗ; vào khi đã có ~3/4 bài, không cụt lần nào", () => {
+  it("cổng phát-được-tới-hết-bài: tải 0,31x (11 KB/s, bài 35 KB/s) thì bài mới đứng yên ở chỗ vào, bài cũ giữ chỗ; vào khi đã có ~2/3 bài (đường đều: lề đo được ~1), không cụt lần nào", () => {
     vi.useFakeTimers();
     const sim = slowBed(() => 0);
     sim.bed.setCues(long, -20);
@@ -1148,8 +1148,9 @@ describe("tải sẵn bài kế và mờ vào từ lúc có tiếng (musicwarm, 
         expect(a.volume).toBeCloseTo(GOAL, 3);
       }
     }
-    expect(entered).toBeGreaterThan(0.7);
-    expect(entered).toBeLessThan(0.8);
+    // Tải đều nên lề co về 1 (DownloadPace.margin): (120 - h) / 0,314 <= 120 -> h >= 82,3 s = 0,686 bài; lề trần 1,3 thì phải ~3/4.
+    expect(entered).toBeGreaterThan(0.68);
+    expect(entered).toBeLessThan(0.72);
     for (let t = 0; t < 120; t += 0.5) {
       sim.bed.sync(1400 + t, true);
       vi.advanceTimersByTime(500);
@@ -1378,6 +1379,28 @@ describe("tải sẵn bài kế và mờ vào từ lúc có tiếng (musicwarm, 
     expect(playsThrough(119.97, 100, 120, null)).toBe(true); // tải trọn
     expect(playsThrough(101.5, 100, 120, 10)).toBe(false); // chưa có đủ 2 giây trước con trỏ
     expect(playsThrough(102, 100, 120, null)).toBe(false); // chưa đo được tốc độ
+  });
+
+  it("DownloadPace.margin: lề trần tới khi đo đủ 2 cửa sổ; đường đều co về 1 và vào sớm hơn; đường dao động giữ lề trần", () => {
+    const steady = new DownloadPace();
+    for (let t = 0; t <= 15_500; t += 250) steady.add(t, (t / 1000) * 0.9, 0);
+    expect(steady.margin()).toBeCloseTo(1.3, 6); // mới 15,5 s: chưa có dự báo nào để đối chiếu
+    for (let t = 15_750; t <= 30_000; t += 250) steady.add(t, (t / 1000) * 0.9, 0);
+    expect(steady.margin()).toBeCloseTo(1, 2);
+    // Cùng tốc độ 0,9x, bài phải phát 100 giây: lề trần đòi chờ thêm, lề đo được thì vào ngay.
+    expect(playsThrough(30, 3, 103, 0.9)).toBe(false); // 73 / 0,9 x 1,3 = 105 s > 100 s
+    expect(playsThrough(30, 3, 103, 0.9, steady.margin())).toBe(true); // 73 / 0,9 = 81 s
+    // 8 giây nhanh, 8 giây chậm (1,5x / 0,5x, trung bình như nhau): dự báo hụt gấp ba - lề trần, không hơn.
+    const swinging = new DownloadPace();
+    let have = 0;
+    for (let t = 250; t <= 60_000; t += 250) {
+      have += (Math.floor(t / 8000) % 2 ? 0.5 : 1.5) * 0.25;
+      swinging.add(t, have, 0);
+    }
+    expect(swinging.margin()).toBeCloseTo(1.3, 6);
+    // Tua / dời chỗ vào: đo lại, lề về trần.
+    steady.add(30_250, 1, 0);
+    expect(steady.margin()).toBeCloseTo(1.3, 6);
   });
 
   it("trễ tải 16 giây: không lần vào nào đột ngột (J = 0); bản giả không khai báo trạng thái (hành vi cũ) thì có - bài thử đủ chặt", () => {

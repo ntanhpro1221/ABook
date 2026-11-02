@@ -18,6 +18,9 @@ App._music_file - music/files của một lượt trước) được "tải" t�
 Content-Range). Nguồn nhạc thật lúc nhanh lúc chậm (01-11: incompetech ~11-200 KB/s, NA1 nhạc im phụt 14 lần khi bài đang tải dở) - phép thử hụt đệm
 cần tốc độ cố định. "/<KB/s sau>@<giây>": mỗi lượt tải đổi sang tốc độ sau từ giây ấy - nguồn nhanh lúc đầu rồi tụt (bài vào rồi mới hụt).
 Bài không có trong thư mục thì đi mạng như thường (ghi một dòng).
+ABOOK_TEST_SLOW_MUSIC_TRACE = "<file vết>" (listen_audit.py run --slow-trace): tốc độ không đều mà theo một vết băng thông thật, co giãn cho trung bình
+cả vết = <KB/s> của ABOOK_TEST_SLOW_MUSIC. Vết = log HSDPA của Riiser 2013 (datasets.simula.no/hsdpa: mỗi dòng một giây, cột 5 byte, cột 6 ms).
+Vết chạy theo đồng hồ của tiến trình (mọi lượt tải cùng thấy mạng lúc ấy), hết thì quay lại đầu - phép thử lề theo dao động tốc độ tải.
 Không có biến thì không bọc gì: đường thường không đổi.
 """
 import importlib.abc
@@ -33,12 +36,46 @@ SLOW = os.environ.get("ABOOK_TEST_SLOW_CLIPS", "")
 FAKE = os.environ.get("ABOOK_TEST_FAKE_VOICE", "")
 FAKE_CHARS_PER_SECOND = 14
 MUSIC = os.environ.get("ABOOK_TEST_SLOW_MUSIC", "")
+TRACE = os.environ.get("ABOOK_TEST_SLOW_MUSIC_TRACE", "")
+
+
+class _Trace:
+    """Byte tải được tính từ lúc tiến trình nạp móc, theo vết từng giây (co cho trung bình = `rate` byte/giây), quay vòng."""
+
+    def __init__(self, path, rate):
+        rows = []
+        for line in open(path, encoding="utf-8", errors="replace"):
+            parts = line.split()
+            if len(parts) >= 6:
+                rows.append(max(0.0, float(parts[4]) * 1000.0 / max(1.0, float(parts[5]))))
+        scale = rate / (sum(rows) / len(rows))
+        self.cum = [0.0]
+        for r in rows:
+            self.cum.append(self.cum[-1] + r * scale)
+        self.origin = time.monotonic()
+
+    def bytes_at(self, t):
+        period, total = len(self.cum) - 1, self.cum[-1]
+        laps, rest = divmod(t - self.origin, period)
+        i = int(rest)
+        return laps * total + self.cum[i] + (self.cum[i + 1] - self.cum[i]) * (rest - i)
+
+    def time_for(self, target):
+        """Thời điểm (đồng hồ monotonic) mà bytes_at đạt `target`."""
+        import bisect
+        period, total = len(self.cum) - 1, self.cum[-1]
+        laps, rest = divmod(target, total)
+        i = min(bisect.bisect_left(self.cum, rest), period)
+        if i == 0:
+            return self.origin + laps * period
+        step = self.cum[i] - self.cum[i - 1]
+        return self.origin + laps * period + i - 1 + ((rest - self.cum[i - 1]) / step if step > 0 else 1.0)
 
 
 class _SlowTrack:
     """Câu trả lời giả của urlopen cho một bài: đọc từ file, không quá `rate` byte/giây kể từ lúc mở."""
 
-    def __init__(self, path, rate, start, after=None):
+    def __init__(self, path, rate, start, after=None, trace=None):
         self.file = open(path, "rb")
         self.file.seek(start)
         size = os.path.getsize(path)
@@ -48,10 +85,17 @@ class _SlowTrack:
             self.headers["Content-Range"] = f"bytes {start}-{size - 1}/{size}"
         self.rate, self.sent, self.began = rate, 0, time.monotonic()
         self.after = after  # (giây, byte/giây sau mốc ấy) hay None
+        self.trace = trace  # _Trace hay None
+        self.base = trace.bytes_at(self.began) if trace else 0.0
 
     def read(self, n=-1):
         chunk = self.file.read(min(n if n and n > 0 else 1 << 16, 8192))
         self.sent += len(chunk)
+        if self.trace:
+            wait = self.trace.time_for(self.base + self.sent) - time.monotonic()
+            if wait > 0:
+                time.sleep(wait)
+            return chunk
         due = self.sent / self.rate
         if self.after and due > self.after[0]:
             due = self.after[0] + (self.sent - self.after[0] * self.rate) / self.after[1]
@@ -83,6 +127,7 @@ def _music(server):
         later, at = later.split("@", 1)
         after = (float(at), float(later) * 1024)
     rate = float(kbps) * 1024
+    trace = _Trace(TRACE, rate) if TRACE else None
     original = urllib.request.urlopen
 
     def urlopen(request, *args, **kwargs):
@@ -97,7 +142,10 @@ def _music(server):
         match = re.match(r"bytes=(\d+)-", header or "")
         start = int(match.group(1)) if match else 0
         sys.stderr.write(f"ABOOK_TEST_SLOW_MUSIC: {url} từ byte {start}, {kbps} KB/s\n")
-        return _SlowTrack(path, rate, start, after)
+        track = _SlowTrack(path, rate, start, after, trace)
+        if trace:
+            sys.stderr.write(f"ABOOK_TEST_SLOW_MUSIC_TRACE: {os.path.basename(TRACE)} giây {(track.began - trace.origin) % (len(trace.cum) - 1):.0f}, trung bình {kbps} KB/s\n")
+        return track
 
     urllib.request.urlopen = urlopen
 
