@@ -1,5 +1,12 @@
 # Test report
 
+## 02-11-2026 — parity trong build và hình học Đang nghe (dev/m1-gates)
+
+- `desktop_qt/tools/qt_pytests.py` đưa máy dò Android–web `tests/test_ui_parity.py` vào PARITY; test mới kiểm danh sách, đầu vào pytest thực tế và lời gọi từ `build.bat`. Nhóm pytest parity/build/fixed-waits: 50 passed, 0 failed.
+- `tst_nowplaying_geometry.qml`: đo khung mở đầu từ PlayerBar thật (sai số 2 px), khung kết thúc, vị trí/cỡ bìa và hàng điều khiển khi mở/đóng tốc độ, hẹn giờ, ở khổ 792 và 1200 px. Chạy riêng bằng WidthTests.exe có sẵn của ABook_qtsink, nhập QML từ cây này, offscreen/phần mềm/BelowNormal: 8 passed (6 ca dữ liệu + init/cleanup), 0 failed.
+- Web `nowPlayingOpen.dom.test.tsx`: thêm 6 ca cấu trúc cho tốc độ/hẹn giờ/chương, kiểm Portal ngoài root, `fixed`, lớp/style/khoảng cách của vùng cuộn và luật CSS theo trạng thái. Cả file 10 passed; TypeScript noEmit thành công. DOM giả không chứng minh hình học trình duyệt thật.
+- Kiểm lực trên mã thật rồi khôi phục: bỏ mục PARITY; đổi điểm đầu/cuối hiệu ứng; dịch/co bìa và hàng điều khiển; bỏ Portal/đổi fixed; thêm padding/margin theo trạng thái tấm. Mọi ca tương ứng đều đỏ. Không chạy build.bat, GPU, Ollama, emulator hoặc adb; không sửa `_internal/abook/`, không commit.
+
 ## 27-10-2026 - Qt desktop integration (dev/desk-qt-int)
 
 - Integrate hidden -> cpu -> smtc without commits. Keep WASAPI-only music, MF voice retirement/event filtering, vblank default, tray/mini and Windows media card. All-window music scheduling covers both the reused main/mini window and a late separate mini.
