@@ -24,6 +24,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import vn.abook.player.ui.data.CoverLoader
+import vn.abook.player.ui.data.CoverRef
 import vn.abook.player.ui.data.PlayerState
 import vn.abook.player.ui.theme.AbookTheme
 
@@ -38,8 +39,8 @@ class PipContentTest {
     @get:Rule
     val rule = createAndroidComposeRule<ComponentActivity>()
 
-    private fun show(width: Dp, book: String = "Tắt đèn", chapter: String = "Chương 1") {
-        val state = PlayerState(bookId = "b1", bookTitle = book, chapterId = 1, chapterTitle = chapter, playing = true, durationMs = 600_000)
+    private fun show(width: Dp, book: String = "Tắt đèn", chapter: String = "Chương 1", cover: CoverRef? = CoverRef("/books/b1/cover.jpg", 1)) {
+        val state = PlayerState(bookId = "b1", bookTitle = book, chapterId = 1, chapterTitle = chapter, playing = true, durationMs = 600_000, cover = cover)
         rule.setContent {
             AbookTheme(false) {
                 Box(Modifier.size(width, width * 3 / 2)) { PipContent(state, { 150_000L }, CoverLoader(1 shl 20)) }
@@ -82,6 +83,13 @@ class PipContentTest {
         assertTrue("tên chương trên dải tiến độ", chapter.bottom <= progress.top)
         assertWholeAndInside("pip_book_title", "Tắt đèn")
         assertWholeAndInside("pip_chapter_title", "Chương 1")
+    }
+
+    @Test
+    fun aDrawnCoverAlreadyShowsTheBookTitleSoTheBottomLineIsOnlyTheChapter() {
+        show(240.dp, cover = null)
+        assertEquals(0, count("pip_book_title"))
+        rule.onNodeWithTag("pip_chapter_title").assertTextEquals("Chương 1")
     }
 
     @Test
