@@ -17,6 +17,7 @@ The position check splits lag = position / speed - clock into the drift (slope o
 DRIFT_MS) and the sawtooth (width of that band, SAW_MS): at x3 the two used to add up to 15-16 ms on a clean run.
 """
 import importlib.util
+import re
 from pathlib import Path
 
 import numpy as np
@@ -201,3 +202,12 @@ def test_stall_hook_is_inert_without_its_variable():
                (("SPEC", "ABOOK_TEST_VOICE_STALL"), ("SLOW", "ABOOK_TEST_SLOW_CLIPS"), ("FAKE", "ABOOK_TEST_FAKE_VOICE"),
                                                                        ("MUSIC", "ABOOK_TEST_SLOW_MUSIC"))) and hook.rstrip().endswith("if SPEC or SLOW or FAKE or MUSIC:\n    sys.meta_path.insert(0, _After())")
     assert "stall_host" not in (ROOT / "build.bat").read_text(encoding="ascii")  # never shipped
+
+
+def test_every_hook_the_audit_checks_announces_itself_in_the_host_log():
+    # listen_audit.py run tìm tên từng móc đã bật trong host.log để biết móc có chạy; móc không ghi tên mình thì lượt đo hỏng oan
+    # (02-11: --slow-trace chạy đủ mà bị exit 1).
+    audit = (ROOT / "tools/listen_audit.py").read_text(encoding="utf-8")
+    hook = (ROOT / "tools/stall_host/sitecustomize.py").read_text(encoding="utf-8")
+    names = re.findall(r'\("(ABOOK_TEST_[A-Z_]+)", ', next(line for line in audit.splitlines() if line.lstrip().startswith("hooks = ")))
+    assert len(names) == 4 and [name for name in names if f'sys.stderr.write(f"{name}: ' not in hook] == []

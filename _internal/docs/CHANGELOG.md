@@ -14,6 +14,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Khi bài của cảnh mới chưa tải xong, bài đang phát tiếp tục giữ chỗ thay vì mờ đi để cả cảnh im lặng. Bài mới vào ngay khi tải xong. Nếu chính bài đang giữ chỗ cũng tải dở và sắp hết phần đã tải, nó mờ dần ra thay vì tắt phụt. Máy tính, bản web và điện thoại.
 - Bài đang tải dở không còn chớp lên một tiếng rồi tắt khi chỉ còn vài giây tới chỗ bài thôi kêu: còn ít hơn phần cần đệm trước, cộng ngưỡng hụt và một lần mờ vào, mờ ra, thì bài giữ im. Trên máy tính, phép xét tải có kịp không giờ làm ở chỗ bài sẽ thực sự phát (sau khi bài nhảy tới đúng chỗ giọng đang đọc, thường là giữa bài), không phải ở đầu bài: trước đây bài có thể vào ngay mép phần đã tải rồi hụt, hay chờ hàng trăm giây rồi bị nhảy quá phần đã tải. Máy tính, bản web và điện thoại.
 - Bài nhạc có ảnh bìa lớn gắn trong file (vài trăm KB tới hơn 1 MB trước phần nhạc) không còn làm app tưởng đã tải được nhiều nhạc hơn thật: trên máy tính bài ấy từng được vào sớm rồi đứng lắp bắp từng nửa giây khi nguồn chậm; trên bản web (Chrome, Edge, Firefox), ảnh bìa trên 1 MB làm app đợi tải trọn bài mới phát. Máy tính và bản web.
+- Trên đường tải đều (cáp, wifi ổn định), bài đang tải dở vào sớm hơn: app đo xem tốc độ tải có giữ đúng như dự báo không, và chỉ chừa phần dự phòng bằng mức sai lệch đã thấy. Trên mạng di động chập chờn, phần dự phòng giữ như cũ.
 
 ### Điện thoại
 
