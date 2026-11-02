@@ -185,7 +185,10 @@ def test_tracks_imported_before_the_analyzer_existed_are_analysed_later(tmp_path
 
 # ---- máy chủ: nhập, ghim, phát -----------------------------------------------------------------------------------------
 def _import(server, *paths: Path) -> dict:
-    status, data = _call(server, "POST", "/api/music/local/import", {"paths": [str(path) for path in paths]})
+    # Nhập đo độ to bằng ffmpeg ngay trong lệnh (vài giây mỗi bài 62 s): chờ 10 s mặc định của _request hết giờ khi máy bận (lượt pytest 0.4.160).
+    status, data, _ = _request(server.port, "POST", "/api/music/local/import", headers={"X-Ebook-Token": "t"},
+                               body={"paths": [str(path) for path in paths]}, timeout=60)
+    data = json.loads(data or b"{}")
     assert status == 200, data
     return data
 
