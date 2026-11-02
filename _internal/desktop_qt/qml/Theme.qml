@@ -11,7 +11,6 @@ QtObject {
     property bool reduceMotion: false
 
     // ---- Khổ cửa sổ: CONTENT width, after the sidebar ----
-    // Temporary single block until DESIGN.md has Khổ cửa sổ; move values to its parser then.
     readonly property int widthMedium: 600
     readonly property int widthExpanded: 840
     readonly property int widthLarge: 1200

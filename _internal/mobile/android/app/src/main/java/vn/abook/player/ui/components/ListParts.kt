@@ -65,13 +65,17 @@ data class Option<V>(val value: V, override val label: String) : Choice {
 }
 
 
+/** Màn con đang nằm trong cột nội dung bên phải của một bố cục hai cột (Cài đặt từ khổ expanded): không có nút ← vì nhóm đã chọn ở cột trái, đầu màn chỉ còn tên. */
+val LocalEmbeddedPane = androidx.compose.runtime.compositionLocalOf { false }
+
 /** Đầu màn con: đệm trên 12, hàng cao 48 - nút ← rồi tiêu đề, chân chữ trùng tiêu đề màn gốc (ScreenHeader). */
 @Composable
 fun PageHeader(title: String, onBack: () -> Unit, modifier: Modifier = Modifier, trailing: (@Composable () -> Unit)? = null) {
+    val embedded = LocalEmbeddedPane.current
     Row(modifier.fillMaxWidth().padding(top = Dim.s12).heightIn(min = Dim.s48), verticalAlignment = Alignment.CenterVertically) {
-        BackButton(onBack)
+        if (!embedded) BackButton(onBack)
         // Mũi tên 24 nằm đầu ô chạm 48: kéo tiêu đề lùi vào nửa trống của ô để nó "sát sau" nét mũi tên (DESIGN.md §6 "Đầu màn").
-        BasicText(title, style = Abook.type.screenTitle, modifier = Modifier.weight(1f).offset(x = -Dim.s12))
+        BasicText(title, style = Abook.type.screenTitle, modifier = Modifier.weight(1f).offset(x = if (embedded) 0.dp else -Dim.s12))
         if (trailing != null) trailing()
     }
 }
@@ -198,10 +202,11 @@ fun DisclosureRow(
     summary: String? = null,
     icon: (@Composable () -> Unit)? = null,
     hintColor: Color = Abook.colors.text2,
+    chevron: Boolean = true,
 ) {
     ListItem(
         title, modifier, onClick, tag, hint = summary?.takeIf { it.isNotEmpty() }, hintColor = hintColor,
-        leading = icon, leadingWidth = IconSlot, leadingGap = IconGap, chevron = true, titleStyle = Abook.type.bodyStrong,
+        leading = icon, leadingWidth = IconSlot, leadingGap = IconGap, chevron = chevron, titleStyle = Abook.type.bodyStrong,
     )
 }
 

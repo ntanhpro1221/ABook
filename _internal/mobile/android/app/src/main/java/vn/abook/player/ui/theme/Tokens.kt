@@ -95,3 +95,15 @@ internal object Bezier {
     const val ACCELERATE_X2 = 0.8f
     const val ACCELERATE_Y2 = 0.15f
 }
+
+/** Khổ cửa sổ theo bề ngang NỘI DUNG (dp), DESIGN.md §5.5: mỗi khổ bắt đầu từ `fromDp`; so khổ bằng `>=` (thứ tự khai báo). */
+internal enum class WidthClass(val fromDp: Int) {
+    COMPACT(0),
+    MEDIUM(600),
+    EXPANDED(840),
+    LARGE(1200),
+    EXTRA_LARGE(1600);
+}
+
+/** Khổ của một bề ngang nội dung (dp): khổ lớn nhất có `fromDp` không vượt quá nó. */
+internal fun widthClass(dp: Float): WidthClass = WidthClass.entries.last { dp >= it.fromDp }

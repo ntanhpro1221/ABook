@@ -27,7 +27,7 @@ Column {
     signal preview(string link)
     signal stopPreview()
 
-    readonly property bool wide: width >= 600
+    readonly property bool wide: width >= Theme.widthMedium
     readonly property bool follows: Logic.isContinuation(scene)
     readonly property var swap: Logic.swapButton(scene)
     readonly property var track: scene.link && plan ? (plan.tracks || {})[scene.link] : undefined

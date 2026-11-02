@@ -1,5 +1,11 @@
 package vn.abook.player.ui.motion
 
+import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.Easing
 import androidx.compose.animation.core.FiniteAnimationSpec
@@ -33,6 +39,19 @@ object Motion {
     /** Ô tìm nở ra / thu lại, thanh phát nhỏ hiện lên: vừa (220 ms vào, 150 ms ra). */
     val Expand: FiniteAnimationSpec<Float> = tween(MotionMs.MEDIUM, easing = Standard)
     val Collapse: FiniteAnimationSpec<Float> = tween(MotionMs.MEDIUM_OUT, easing = Standard)
+
+    /**
+     * Đổi khổ cửa sổ (một cột <-> hai cột, DESIGN.md §5.5): bố cục mới trượt vào một quãng ngắn từ phía của nó, bố cục cũ trượt đi ngược lại. Luôn có
+     * dịch chuyển (không mờ chéo thuần); vừa (220 ms) vào giảm tốc, ra tăng tốc. Giữ nguyên chỗ cuộn và mục đang chọn do chính màn lo.
+     */
+    fun layoutSwitch(toWide: Boolean): ContentTransform {
+        val drift = if (toWide) 1 else -1
+        val enter = slideInHorizontally(tween(MotionMs.MEDIUM, easing = Decelerate)) { drift * it / 12 } +
+            fadeIn(tween(MotionMs.MEDIUM, easing = Decelerate))
+        val exit = slideOutHorizontally(tween(MotionMs.MEDIUM_OUT, easing = Accelerate)) { -drift * it / 12 } +
+            fadeOut(tween(MotionMs.MEDIUM_OUT, easing = Accelerate))
+        return enter togetherWith exit
+    }
 
     /** Bảng trượt từ đáy: vào 300 ms giảm tốc, ra 200 ms tăng tốc. */
     val SheetIn: FiniteAnimationSpec<Float> = tween(MotionMs.SLOW, easing = Decelerate)

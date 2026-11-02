@@ -14,12 +14,15 @@ import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.width
+import vn.abook.player.ui.screens.screenTag
 import com.github.takahirom.roborazzi.captureRoboImage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -312,5 +315,51 @@ class SettingsScreenTest {
         rule.onNodeWithText("Phông chữ").assertIsDisplayed()
         rule.onNodeWithText("không hiện").assertDoesNotExist()
         shot("settings_third_party_dark")
+    }
+
+    // ---- khổ cửa sổ (DESIGN.md §5.5): từ expanded nhóm bên trái, nội dung bên phải ----
+
+    private fun bounds(tag: String) = rule.onNodeWithTag(tag).getUnclippedBoundsInRoot()
+
+    @Test
+    @Config(qualifiers = "w700dp-h900dp-xxhdpi")
+    fun mediumWidthKeepsTheSingleColumnList() {
+        showRoot()
+        rule.onNodeWithTag("settings_split").assertDoesNotExist()
+        rule.onNodeWithTag("settings_pane").assertDoesNotExist()
+        assertTrue(bounds("settings_screen").width.value > 690f)
+    }
+
+    @Test
+    @Config(qualifiers = "w900dp-h780dp-xxhdpi")
+    fun expandedWidthShowsGroupsOnTheLeftAndTheChosenGroupOnTheRight() {
+        showRoot()
+        val list = bounds("settings_screen")
+        val pane = bounds("settings_pane")
+        assertEquals("cột nhóm 260", 260f, list.width.value, 0.5f)
+        assertTrue("nội dung bên phải nhóm: ${list.right} / ${pane.left}", pane.left >= list.right - 0.5.dp)
+        assertEquals(900f, pane.right.value, 0.5f)
+        // Nhóm đầu mở sẵn ở cột phải; không có nút ← vì không có gì để lùi ra.
+        rule.onNodeWithTag(SettingsGroup.Voice.screenTag).assertIsDisplayed()
+        rule.onNodeWithContentDescription("Quay lại").assertDoesNotExist()
+        for (group in SettingsGroup.entries) rule.onNodeWithTag(group.tag).assertIsDisplayed()
+        shot("settings_expanded_light")
+        // Chọn nhóm khác: đổi cột phải, KHÔNG đẩy màn lên ngăn xếp.
+        rule.onNodeWithTag("settings_sleep").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag(SettingsGroup.Sleep.screenTag).assertIsDisplayed()
+        rule.onNodeWithTag(SettingsGroup.Voice.screenTag).assertDoesNotExist()
+        assertEquals("Back vẫn chỉ rời tab, không có màn con mới", null, opened)
+    }
+
+    @Test
+    @Config(qualifiers = "w1300dp-h780dp-xxhdpi")
+    fun largeWidthCapsBothColumnsAt1180AndCentersThem() {
+        showRoot(dark = true)
+        val list = bounds("settings_screen")
+        val pane = bounds("settings_pane")
+        assertEquals("tổng 1180", 1180f, (pane.right - list.left).value, 0.5f)
+        assertEquals("căn giữa", (1300f - 1180f) / 2, list.left.value, 0.5f)
+        shot("settings_large_dark")
     }
 }

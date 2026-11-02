@@ -41,7 +41,7 @@ Item {
     property string openedLine: ""
     property real stick: 0
     property var rowById: ({})
-    readonly property bool narrow: width < 600
+    readonly property bool narrow: width < Theme.widthMedium
     readonly property alias scriptStore: scripts
 
     ScriptStore {

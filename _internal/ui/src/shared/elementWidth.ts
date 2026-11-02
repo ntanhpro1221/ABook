@@ -1,7 +1,7 @@
 import { useLayoutEffect, useState, type RefObject } from "react";
 
 /** Bề rộng bố cục (px, làm tròn) của một phần tử, theo dõi khi nó đổi cỡ; null cho tới lần đo đầu (trước khung vẽ đầu tiên).
- *  Dùng cho luật theo bề rộng NỘI DUNG chứ không theo cửa sổ (thanh bên chiếm chỗ): trang sách tách hai cột từ 840 (BOOK_SPLIT_WIDTH),
+ *  Dùng cho luật theo bề rộng NỘI DUNG chứ không theo cửa sổ (thanh bên chiếm chỗ): trang sách tách hai cột từ khổ expanded (shared/widthClass.generated),
  *  cùng ngưỡng với Qt (BookPage.qml: Theme.widthExpanded). clientWidth không chịu ảnh hưởng của phép biến đổi (trang đang trượt vào). */
 export function useElementWidth(ref: RefObject<HTMLElement | null>): number | null {
   const [width, setWidth] = useState<number | null>(null);

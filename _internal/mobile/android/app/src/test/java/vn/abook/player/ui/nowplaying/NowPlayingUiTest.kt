@@ -618,6 +618,51 @@ class NowPlayingUiTest {
         rule.onNodeWithTag("prepare_block").assertDoesNotExist()
     }
 
+    // ---- khổ cửa sổ (DESIGN.md §5.5): hai cột từ large khi sách có chữ để đọc theo ----
+
+    @Test
+    @Config(qualifiers = "w900dp-h780dp-xxhdpi")
+    fun expandedButBelowLargeStaysOneColumn() {
+        show()
+        rule.onNodeWithTag("read_along_text").assertDoesNotExist()
+        assertTrue("cột phải chưa mở", rule.onNodeWithTag("player_read_side").getUnclippedBoundsInRoot().width.value.let { it.isNaN() || it < 0.5f })
+        rule.onNodeWithTag("player_mode").assertIsDisplayed()
+        assertEquals("điều khiển chiếm cả bề ngang trừ hai lề 20", 860f, bounds("transport").width.value, 0.5f)
+    }
+
+    @Test
+    @Config(qualifiers = "w1300dp-h780dp-xxhdpi")
+    fun largeWidthPutsTheControlsBesideTheReadFace() {
+        show()
+        val transport = bounds("transport")
+        val side = bounds("player_read_side")
+        val text = bounds("read_along_text")
+        assertEquals("cột trái giữ chiều rộng cố định", 440f, transport.width.value, 0.5f)
+        assertTrue("mặt đọc theo bên phải điều khiển: $transport / $text", text.left >= transport.right + 32.dp - 0.5.dp)
+        assertEquals("chữ đọc tối đa 640", 640f, text.width.value, 0.5f)
+        assertTrue("cột phải trọn trong khung: $side", side.right.value <= 1300f - 20f + 0.5f)
+        // Cả hai cùng thấy nên không còn công tắc Nghe / Đọc theo và bìa không đổi chế độ.
+        rule.onNodeWithTag("player_mode").assertDoesNotExist()
+        rule.onNodeWithTag("player_cover").assertIsDisplayed()
+        shot("large_light")
+    }
+
+    @Test
+    @Config(qualifiers = "w1300dp-h780dp-xxhdpi")
+    fun largeWidthWithoutTextKeepsOneColumn() {
+        show(base = FakeNowPlayingModel.demoState().copy(readAlongAvailable = false))
+        assertTrue("không có chữ thì không mở cột phải", rule.onNodeWithTag("player_read_side").getUnclippedBoundsInRoot().width.value.let { it.isNaN() || it < 0.5f })
+        rule.onNodeWithTag("read_along_text").assertDoesNotExist()
+    }
+
+    @Test
+    @Config(qualifiers = "w1300dp-h780dp-xxhdpi")
+    fun largeWidthDarkWithLongTitles() {
+        show(dark = true, longTitles = true, playing = true)
+        rule.onNode(inWindow(hasText(LONG_CHAPTER))).assertIsDisplayed()
+        shot("large_dark")
+    }
+
     companion object {
         const val LONG_CHAPTER = "Chương mười hai · Người lữ khách trở về qua những con đường mùa thu"
         const val LONG_BOOK = "Những ngày gió hát bên kia ngọn đồi và câu chuyện chưa kể"

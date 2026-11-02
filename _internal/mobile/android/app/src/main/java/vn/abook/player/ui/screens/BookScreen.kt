@@ -12,7 +12,17 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.rememberUpdatedState
+import vn.abook.player.ui.theme.WidthClass
+import vn.abook.player.ui.theme.widthClass
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -180,6 +190,9 @@ class BookUiState(val bookId: String, private val source: BookSource) {
  *
  * Danh sách là MỘT LazyColumn (đầu trang là các mục đầu của nó), mọi mục có `key` + `contentType`. Vạch tiến độ của chương đang phát đọc đồng hồ phát
  * trong pha vẽ ([PlayerClock]) - mỗi nhịp không dựng lại hàng nào.
+ *
+ * Từ khổ expanded của bề ngang nội dung (DESIGN.md §5.5 "Khổ cửa sổ", như Qt BookPage.qml và trang sách web): bìa + thông tin + nút ở cột trái, thanh mục và
+ * danh sách chương ở cột phải, mỗi cột cuộn riêng, cả khối tối đa 1360 dp. Đổi khổ giữa chừng giữ mục đang xem và chương đang ở mép trên danh sách.
  */
 @Composable
 fun BookScreen(
@@ -195,6 +208,35 @@ fun BookScreen(
     music: MusicState? = null,
     prepare: vn.abook.player.ui.data.PrepareState? = null,
 ) {
+    BoxWithConstraints(modifier.fillMaxSize()) {
+        BookScreenBody(book, library, player, clock, covers, source, sheets, actions, Modifier.fillMaxSize(), music, prepare, maxWidth)
+    }
+}
+
+/** Cột trái (bìa + thông tin) rộng 320 dp ở khổ expanded, thêm 6 % phần dư, tối đa 380 (Qt BookPage.qml `leftWidth`; web `bookLeftWidth`). */
+internal fun bookLeftWidth(contentDp: Float): Float = minOf(380f, 320f + maxOf(0f, contentDp - WidthClass.EXPANDED.fromDp) * 0.06f)
+
+/** Bề ngang cả khối hai cột: không quá bề ngang trừ hai lề, 1360, cột trái + khe 32 + danh sách chương 640 (Qt `compositionWidth`). */
+internal fun bookCompositionWidth(contentDp: Float): Float = minOf(contentDp - 2 * Dim.margin.value, 1360f, bookLeftWidth(contentDp) + Dim.s32.value + BOOK_LIST_MEASURE)
+
+private const val BOOK_LIST_MEASURE = 640f
+
+@Composable
+private fun BookScreenBody(
+    book: ListenBook,
+    library: LibraryState,
+    player: PlayerState,
+    clock: PlayerClock,
+    covers: CoverLoader,
+    source: BookSource,
+    sheets: SheetHost,
+    actions: BookScreenActions,
+    modifier: Modifier,
+    music: MusicState?,
+    prepare: vn.abook.player.ui.data.PrepareState?,
+    width: androidx.compose.ui.unit.Dp,
+) {
+    val wide = widthClass(width.value) >= WidthClass.EXPANDED
     val ui = remember(book.id, source) { BookUiState(book.id, source) }
     // Chương đã "Làm trước" (dấu "Đã làm sẵn"): lắng nghe lõi chỉ khi trang đang hiện.
     androidx.compose.runtime.DisposableEffect(prepare) {
@@ -210,7 +252,13 @@ fun BookScreen(
     val shown = detail?.book ?: others?.firstOrNull { it.id == book.id } ?: book
     val top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-    val list = rememberLazyListState()
+    // Mỗi bố cục có khung cuộn riêng (cả trang / cột phải): mỗi bên nhớ chỗ cuộn của mình, chỗ đang xem được mang sang khi đổi khổ (xem `LaunchedEffect(wide)`).
+    val listNarrow = rememberLazyListState()
+    val listWide = rememberLazyListState()
+    val infoScroll = rememberScrollState()
+    val list = if (wide) listWide else listNarrow
+    val headItems = if (wide) WIDE_HEAD_ITEMS else HEAD_ITEMS
+    val tabsItem = if (wide) 0 else TABS_ITEM
     val current = BookPage.currentChapter(shown, player)
     val chapters = detail?.chapters
     val scope = rememberCoroutineScope()
@@ -223,23 +271,39 @@ fun BookScreen(
     // Đổi mục thì nội dung mờ vào (đọc trong pha vẽ); lần dựng đầu không mờ.
     val fade = remember { Animatable(1f) }
     val firstTab = remember { booleanArrayOf(true) }
+    val activeList by rememberUpdatedState(list)
+    val activeTabsItem by rememberUpdatedState(tabsItem)
     LaunchedEffect(shownTab) {
         if (firstTab[0]) {
             firstTab[0] = false
             return@LaunchedEffect
         }
-        if (list.firstVisibleItemIndex > TABS_ITEM) list.scrollToItem(TABS_ITEM)
+        if (activeList.firstVisibleItemIndex > activeTabsItem) activeList.scrollToItem(activeTabsItem)
         fade.snapTo(0f)
         fade.animateTo(1f, tween(MotionMs.MEDIUM, easing = Motion.Decelerate))
+    }
+    // Đổi khổ qua ngưỡng expanded giữa chừng: chương đang ở mép trên danh sách đứng yên (DESIGN.md §5.5), không về đầu hay chương đang nghe. Khung cuộn cũ
+    // vẫn giữ lần đo cuối của nó nên đọc được hàng đầu thấy; chỉ làm khi người nghe đã cuộn danh sách chương tới mép trên (đang ở đầu trang thì bố cục mới cũng ở đầu).
+    val laidOutWide = remember { booleanArrayOf(wide) }
+    LaunchedEffect(wide) {
+        if (laidOutWide[0] == wide) return@LaunchedEffect
+        laidOutWide[0] = wide
+        val from = if (wide) listNarrow else listWide
+        val to = if (wide) listWide else listNarrow
+        if (shownTab != BookTab.Chapters || chapters == null) return@LaunchedEffect
+        if (!wide && from.firstVisibleItemIndex == 0 && from.firstVisibleItemScrollOffset == 0) return@LaunchedEffect
+        val anchor = from.layoutInfo.visibleItemsInfo.firstOrNull { it.key is Int && it.offset <= 0 } ?: return@LaunchedEffect
+        val index = chapters.indexOfFirst { it.id == anchor.key }
+        if (index >= 0) to.scrollToItem(index + if (wide) WIDE_HEAD_ITEMS else HEAD_ITEMS, (-anchor.offset).coerceAtLeast(0))
     }
     LaunchedEffect(ui, shownTab == BookTab.Cast) { if (shownTab == BookTab.Cast) ui.wantCast() }
     val samples = remember(book.id) { CastSamples(book.id, source, AndroidSamplePlayer(context), scope) }
     DisposableEffect(samples) { onDispose { samples.stop() } }
     LaunchedEffect(shownTab) { if (shownTab != BookTab.Cast) samples.stop() }
     val reached = remember(chapters, current) { chapters?.let { Cast.reachedTitles(it, current) } }
-    val currentItem = if (shownTab == BookTab.Chapters) chapters?.indexOfFirst { it.id == current }?.takeIf { it >= 0 }?.plus(HEAD_ITEMS) else null
+    val currentItem = if (shownTab == BookTab.Chapters) chapters?.indexOfFirst { it.id == current }?.takeIf { it >= 0 }?.plus(headItems) else null
     // Chương đang nghe nằm khuất BÊN DƯỚI: lối "Tới chỗ đang nghe" dưới thanh mục. Trang không tự cuộn - đầu trang + nút "Nghe tiếp" (đã ghi tên chương) luôn là thứ thấy đầu tiên.
-    val below by remember(currentItem) {
+    val below by remember(currentItem, list) {
         derivedStateOf { currentItem != null && (list.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: Int.MAX_VALUE) < currentItem }
     }
     // Cuốn không còn trên máy (bị chuyển thư mục / xoá ở nơi khác): trang nói rõ, nút về Thư viện.
@@ -268,67 +332,100 @@ fun BookScreen(
         withFrameNanos { }
         built = true
     }
+    // Nội dung của mục đang chọn (từ lối "Tới chỗ đang nghe" trở đi): dùng chung cho hai bố cục.
+    val tabContent: LazyListScope.() -> Unit = {
+        when (shownTab) {
+            BookTab.Chapters -> {
+                // Đã đọc xong mà sách không có chương: câu ở chỗ nút chính đã nói điều ấy - không thêm gì ở đây.
+                val noChapters = ui.loaded && chapters.isNullOrEmpty()
+                if (!noChapters) item(key = "chapters_jump", contentType = "jump") {
+                    ChapterJump(below) { currentItem?.let { scope.launch { list.animateScrollToItem((it - 1).coerceAtLeast(0)) } } }
+                }
+                when {
+                    chapters == null && !ui.loaded -> items(SKELETON_ROWS, key = { "skeleton_$it" }, contentType = { "skeleton" }) { SkeletonRow() }
+                    chapters.isNullOrEmpty() -> Unit
+                    else -> items(chapters.orEmpty(), key = { it.id }, contentType = { "chapter" }) { chapter ->
+                        val here = chapter.id == current
+                        val live = here && player.bookId == shown.id
+                        Box(Modifier.fade { fade.value }) {
+                            ChapterRow(
+                                chapter = chapter,
+                                current = here,
+                                playing = live && player.playing,
+                                livePosition = if (live) clock else null,
+                                durationMs = if (live) player.durationMs else 0L,
+                                prepared = chapter.id in preparedIds,
+                                producing = shown.producing,
+                                onPlay = {
+                                    if (live) actions.toggle() else actions.playChapter(shown.id, chapter.id, chapter.resumeAt)
+                                },
+                                onMore = {
+                                    sheets.show { dismiss ->
+                                        ChapterSheet(shown, chapter, source, onListenFromStart = { actions.playChapter(shown.id, chapter.id, 0.0) }, dismiss = dismiss, notes = notes)
+                                    }
+                                },
+                            )
+                        }
+                    }
+                }
+            }
+            BookTab.History -> historyItems(detail, ui.loaded, { fade.value }) { session -> actions.playChapter(shown.id, session.toChapter, session.toSeconds) }
+            BookTab.Cast -> castItems(
+                ui.cast, ui.castLoaded, reached, later, { later = !later }, samples,
+                onMore = { person ->
+                    sheets.show { dismiss -> PersonSheet(shown.id, person, ui.cast?.characters.orEmpty(), source, notes, dismiss) }
+                },
+                fade = { fade.value },
+            )
+        }
+    }
+    val composition = bookCompositionWidth(width.value)
+    val gutter = if (wide) ((width - composition.dp) / 2).coerceAtLeast(Dim.margin) else Dim.margin
     Column(modifier.fillMaxSize().testTag("book_screen")) {
-        Box(Modifier.padding(top = top, start = Dim.margin, end = Dim.margin).fillMaxWidth().height(Dim.s48)) {
+        Box(Modifier.padding(top = top, start = gutter, end = Dim.margin).fillMaxWidth().height(Dim.s48)) {
             BackButton(actions.back, Modifier.testTag("book_back"))
         }
-        LazyColumn(
-            state = list,
-            modifier = Modifier.weight(1f).fillMaxWidth().fadeEdges(list).testTag("book_list"),
-            contentPadding = PaddingValues(start = Dim.margin, end = Dim.margin, top = Dim.s12, bottom = bottom + Dim.s32),
-        ) {
-            item(key = "head", contentType = "head") { BookHead(shown, covers, detail?.records.orEmpty(), player.bookId == shown.id && player.hasTrack, player.error.isNotEmpty()) { openRecords(null) } }
-            // Trang vào qua hai khung chờ dựng của Nav.push: khung đầu chỉ dựng đầu trang, khung sau phần còn lại (chưa ai thấy) - khung nặng nhất nhẹ đi gần nửa.
-            if (built) {
-                item(key = "actions", contentType = "actions") {
-                    BookButtons(shown, detail, player, sheets, source, actions, music, notes, openRecords)
-                }
-                item(key = "tabs", contentType = "tabs") {
-                    BookTabs(tabs, shownTab, chapters?.size ?: shown.chaptersTotal, { tab = it }, Modifier.padding(top = Dim.sectionGap, bottom = Dim.s8))
-                }
-                when (shownTab) {
-                    BookTab.Chapters -> {
-                        // Đã đọc xong mà sách không có chương: câu ở chỗ nút chính đã nói điều ấy - không thêm gì ở đây.
-                        val noChapters = ui.loaded && chapters.isNullOrEmpty()
-                        if (!noChapters) item(key = "chapters_jump", contentType = "jump") {
-                            ChapterJump(below) { currentItem?.let { scope.launch { list.animateScrollToItem((it - 1).coerceAtLeast(0)) } } }
+        AnimatedContent(wide, Modifier.weight(1f).fillMaxWidth(), transitionSpec = { Motion.layoutSwitch(targetState) }, label = "book-layout") { twoColumns ->
+            if (twoColumns) {
+                Box(Modifier.fillMaxSize().testTag("book_split"), contentAlignment = Alignment.TopCenter) {
+                    Row(Modifier.width(composition.dp).fillMaxHeight()) {
+                        Column(
+                            Modifier.width(bookLeftWidth(width.value).dp).fillMaxHeight().testTag("book_info").fadeEdges(infoScroll).verticalScroll(infoScroll)
+                                .padding(top = Dim.s12, bottom = bottom + Dim.s32),
+                        ) {
+                            BookHead(shown, covers, detail?.records.orEmpty(), player.bookId == shown.id && player.hasTrack, player.error.isNotEmpty(), stacked = true) { openRecords(null) }
+                            if (built) BookButtons(shown, detail, player, sheets, source, actions, music, notes, openRecords)
                         }
-                        when {
-                            chapters == null && !ui.loaded -> items(SKELETON_ROWS, key = { "skeleton_$it" }, contentType = { "skeleton" }) { SkeletonRow() }
-                            chapters.isNullOrEmpty() -> Unit
-                            else -> items(chapters.orEmpty(), key = { it.id }, contentType = { "chapter" }) { chapter ->
-                                val here = chapter.id == current
-                                val live = here && player.bookId == shown.id
-                                Box(Modifier.fade { fade.value }) {
-                                    ChapterRow(
-                                        chapter = chapter,
-                                        current = here,
-                                        playing = live && player.playing,
-                                        livePosition = if (live) clock else null,
-                                        durationMs = if (live) player.durationMs else 0L,
-                                        prepared = chapter.id in preparedIds,
-                                        producing = shown.producing,
-                                        onPlay = {
-                                            if (live) actions.toggle() else actions.playChapter(shown.id, chapter.id, chapter.resumeAt)
-                                        },
-                                        onMore = {
-                                            sheets.show { dismiss ->
-                                                ChapterSheet(shown, chapter, source, onListenFromStart = { actions.playChapter(shown.id, chapter.id, 0.0) }, dismiss = dismiss, notes = notes)
-                                            }
-                                        },
-                                    )
-                                }
+                        Spacer(Modifier.width(Dim.s32))
+                        Column(Modifier.weight(1f).fillMaxHeight()) {
+                            if (built) BookTabs(tabs, shownTab, chapters?.size ?: shown.chaptersTotal, { tab = it }, Modifier.padding(top = Dim.s12, bottom = Dim.s8))
+                            LazyColumn(
+                                state = listWide,
+                                modifier = Modifier.weight(1f).fillMaxWidth().fadeEdges(listWide).testTag("book_list"),
+                                contentPadding = PaddingValues(bottom = bottom + Dim.s32),
+                            ) {
+                                if (built) tabContent()
                             }
                         }
                     }
-                    BookTab.History -> historyItems(detail, ui.loaded, { fade.value }) { session -> actions.playChapter(shown.id, session.toChapter, session.toSeconds) }
-                    BookTab.Cast -> castItems(
-                        ui.cast, ui.castLoaded, reached, later, { later = !later }, samples,
-                        onMore = { person ->
-                            sheets.show { dismiss -> PersonSheet(shown.id, person, ui.cast?.characters.orEmpty(), source, notes, dismiss) }
-                        },
-                        fade = { fade.value },
-                    )
+                }
+            } else {
+                LazyColumn(
+                    state = listNarrow,
+                    modifier = Modifier.fillMaxSize().fadeEdges(listNarrow).testTag("book_list"),
+                    contentPadding = PaddingValues(start = Dim.margin, end = Dim.margin, top = Dim.s12, bottom = bottom + Dim.s32),
+                ) {
+                    item(key = "head", contentType = "head") { BookHead(shown, covers, detail?.records.orEmpty(), player.bookId == shown.id && player.hasTrack, player.error.isNotEmpty()) { openRecords(null) } }
+                    // Trang vào qua hai khung chờ dựng của Nav.push: khung đầu chỉ dựng đầu trang, khung sau phần còn lại (chưa ai thấy) - khung nặng nhất nhẹ đi gần nửa.
+                    if (built) {
+                        item(key = "actions", contentType = "actions") {
+                            BookButtons(shown, detail, player, sheets, source, actions, music, notes, openRecords)
+                        }
+                        item(key = "tabs", contentType = "tabs") {
+                            BookTabs(tabs, shownTab, chapters?.size ?: shown.chaptersTotal, { tab = it }, Modifier.padding(top = Dim.sectionGap, bottom = Dim.s8))
+                        }
+                        tabContent()
+                    }
                 }
             }
         }
@@ -341,30 +438,43 @@ private const val SKELETON_ROWS = 6
 /** Số mục đứng trước chương đầu trong danh sách: đầu trang, hàng nút, thanh mục, lối "Tới chỗ đang nghe". */
 private const val HEAD_ITEMS = 4
 
+/** Hai cột: danh sách chương ở cột phải chỉ còn lối "Tới chỗ đang nghe" đứng trước chương đầu. */
+private const val WIDE_HEAD_ITEMS = 1
+
 /** Vị trí thanh mục trong danh sách: đổi mục thì cuộn tới đây nếu trang đang ở sâu hơn. */
 private const val TABS_ITEM = 2
 
 /** Bìa · (tập / bộ) · tên · tác giả · giọng · số chương · thời lượng · dòng tình trạng · tiến độ mảnh. Tên dài xuống dòng, không cắt. */
 @Composable
-private fun BookHead(book: ListenBook, covers: CoverLoader, records: List<ListenRecord>, listening: Boolean, failed: Boolean, onRecords: () -> Unit) {
+private fun BookHead(
+    book: ListenBook, covers: CoverLoader, records: List<ListenRecord>, listening: Boolean, failed: Boolean, stacked: Boolean = false, onRecords: () -> Unit,
+) {
     val colors = Abook.colors
     val (main, sub) = remember(book.title, book.part) { CoverArt.splitTitle(book.title, book.part) }
+    val info: @Composable ColumnScope.() -> Unit = {
+        if (sub.isNotEmpty()) {
+            BasicText(sub, style = Abook.type.caption.copy(color = colors.accentText, fontWeight = FontWeight.Medium))
+            Spacer(Modifier.height(Dim.s4))
+        }
+        BasicText(main, style = Abook.type.screenTitle, modifier = Modifier.testTag("book_title"))
+        Spacer(Modifier.height(Dim.s8))
+        ClockLabel(keepUnitsTogether(BookPage.metaLine(book)), style = Abook.type.bodySmall)
+        BookPage.statusLine(book)?.let { line ->
+            Spacer(Modifier.height(Dim.s8))
+            ClockLabel(line, style = Abook.type.bodySmall.copy(color = if (book.complete) colors.text2 else colors.accentText))
+        }
+    }
     Column(Modifier.fillMaxWidth().testTag("book_head")) {
-        Row(Modifier.fillMaxWidth()) {
-            BookCover(book.cover, book.title, book.part, covers, CoverWidth, Modifier.width(CoverWidth).testTag("book_cover"))
-            Spacer(Modifier.width(Dim.s16))
-            Column(Modifier.weight(1f)) {
-                if (sub.isNotEmpty()) {
-                    BasicText(sub, style = Abook.type.caption.copy(color = colors.accentText, fontWeight = FontWeight.Medium))
-                    Spacer(Modifier.height(Dim.s4))
-                }
-                BasicText(main, style = Abook.type.screenTitle, modifier = Modifier.testTag("book_title"))
-                Spacer(Modifier.height(Dim.s8))
-                ClockLabel(keepUnitsTogether(BookPage.metaLine(book)), style = Abook.type.bodySmall)
-                BookPage.statusLine(book)?.let { line ->
-                    Spacer(Modifier.height(Dim.s8))
-                    ClockLabel(line, style = Abook.type.bodySmall.copy(color = if (book.complete) colors.text2 else colors.accentText))
-                }
+        if (stacked) {
+            // Cột trái của hai cột: bìa lớn trên, tên và thông tin dưới (web: bìa w-48 xếp dọc).
+            BookCover(book.cover, book.title, book.part, covers, StackedCoverWidth, Modifier.width(StackedCoverWidth).testTag("book_cover"))
+            Spacer(Modifier.height(Dim.s16))
+            Column(Modifier.fillMaxWidth(), content = info)
+        } else {
+            Row(Modifier.fillMaxWidth()) {
+                BookCover(book.cover, book.title, book.part, covers, CoverWidth, Modifier.width(CoverWidth).testTag("book_cover"))
+                Spacer(Modifier.width(Dim.s16))
+                Column(Modifier.weight(1f), content = info)
             }
         }
         if (!book.textOnly) {
@@ -390,6 +500,9 @@ private fun BookHead(book: ListenBook, covers: CoverLoader, records: List<Listen
 }
 
 private val CoverWidth = 112.dp
+
+/** Bìa ở cột trái của hai cột (web `w-48`). */
+private val StackedCoverWidth = 192.dp
 
 /** Nút chính + hàng phụ. Sách đã nghe hết phần đã có (đang làm dở): một dòng chữ thay cho nút chính, hàng phụ giữ nguyên chỗ. */
 @Composable

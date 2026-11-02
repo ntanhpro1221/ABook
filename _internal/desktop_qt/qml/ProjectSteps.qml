@@ -12,7 +12,7 @@ Column {
     readonly property var states: book ? Logic.stepStates(book) : ["pending", "pending", "pending"]
     readonly property var details: book ? Logic.stepDetails(book) : ["", "", ""]
     readonly property var progress: book && book.progress ? [book.progress.analysis, undefined, book.progress.synthesis] : [undefined, undefined, undefined]
-    readonly property bool side: width >= 600
+    readonly property bool side: width >= Theme.widthMedium
     spacing: Theme.s12
 
     Row {

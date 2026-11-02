@@ -12,6 +12,7 @@ Thiếu một token mong đợi thì dừng ngay với lời nói rõ thiếu g�
 """
 from __future__ import annotations
 
+import importlib.util
 import re
 import sys
 from pathlib import Path
@@ -24,6 +25,7 @@ MOTION_TS = INTERNAL / "ui" / "src" / "shared" / "motion.ts"
 COVER_TS = INTERNAL / "ui" / "src" / "shared" / "cover.ts"
 STYLES_CSS = INTERNAL / "ui" / "src" / "styles.css"
 OUT = ROOT / "qml" / "Theme.qml"
+NATIVE_TOKENS = INTERNAL / "scripts" / "gen_native_tokens.py"
 
 # Tên token DESIGN.md -> tên thuộc tính QML (camelCase). Chỉ là đặt tên; giá trị luôn đọc từ DESIGN.md.
 COLOR_NAMES = {
@@ -41,6 +43,14 @@ TYPE_NAMES = {
 }
 EASE_NAMES = {"standard": "Standard", "decelerate": "Decelerate", "accelerate": "Accelerate"}
 MOTION_NAMES = {"fast": "Fast", "fastOut": "FastOut", "medium": "Medium", "mediumOut": "MediumOut", "slow": "Slow", "slowOut": "SlowOut"}
+
+
+def width_classes(design: str) -> list[tuple[str, int]]:
+    """Bảng "Khổ cửa sổ" của DESIGN.md 5.5 - cùng một bộ đọc với Tokens.kt và widthClass.generated.ts (scripts/gen_native_tokens.py)."""
+    spec = importlib.util.spec_from_file_location("gen_native_tokens", NATIVE_TOKENS)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.width_classes(design)
 
 
 class Missing(SystemExit):
@@ -237,12 +247,14 @@ def render() -> str:
     a("    property bool reduceMotion: false")
     a("")
     a("    // ---- Khổ cửa sổ: CONTENT width, after the sidebar ----")
-    a("    // Temporary single block until DESIGN.md has Khổ cửa sổ; move values to its parser then.")
-    a("    readonly property int widthMedium: 600")
-    a("    readonly property int widthExpanded: 840")
-    a("    readonly property int widthLarge: 1200")
-    a("    readonly property int widthExtraLarge: 1600")
-    a("    function widthClass(w) { return w < widthMedium ? 0 : w < widthExpanded ? 1 : w < widthLarge ? 2 : w < widthExtraLarge ? 3 : 4 }")
+    classes = width_classes(design)
+    prop = [f"width{name[0].upper()}{name[1:]}" for name, _ in classes]  # compact không có mốc riêng (bắt đầu từ 0)
+    for name, (_, px) in zip(prop[1:], classes[1:]):
+        a(f"    readonly property int {name}: {px}")
+    ladder = str(len(prop) - 1)
+    for i in range(len(prop) - 2, -1, -1):
+        ladder = f"w < {prop[i + 1]} ? {i} : {ladder}"
+    a(f"    function widthClass(w) {{ return {ladder} }}")
     measure = re.search(r"giữ cả hàng rộng tối đa (\d+) px", design)
     if not measure:
         raise Missing("khổ hàng danh sách")

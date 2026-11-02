@@ -4,7 +4,30 @@ import vn.abook.player.ui.components.RowLine
 import vn.abook.player.ui.components.DisclosureRow
 import vn.abook.player.ui.components.IconSlot
 import vn.abook.player.ui.components.IconGap
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
+import vn.abook.player.ui.components.LocalEmbeddedPane
+import vn.abook.player.ui.motion.Motion
+import vn.abook.player.ui.theme.WidthClass
+import vn.abook.player.ui.theme.widthClass
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -73,11 +96,17 @@ class SettingsEnv(
  * Tab Cài đặt (cấp một): danh sách phẳng sáu nhóm - biểu tượng + tên + một dòng giá trị hiện tại (DESIGN.md §7 "Cài đặt"); chạm một nhóm thì màn con của nó
  * trượt vào ([onOpen] đẩy lên ngăn xếp), Back trượt ra đúng đường ấy. Không có cấp ba.
  *
+ * Từ khổ expanded của bề ngang nội dung (DESIGN.md §5.5 "Khổ cửa sổ", như Qt): nhóm ở cột trái (260 dp), màn con của nhóm đang chọn ở cột phải, tối đa
+ * 1180 dp cả hai. Chọn nhóm KHÔNG đẩy màn lên ngăn xếp (Back vẫn chỉ rời tab); việc mở tiếp từ trong nhóm ([openDevices], [openVoice]) vẫn là màn riêng.
+ *
  * `shown`: tab đang được thấy (đọc ngoài composition): danh sách giọng (cho dòng "Giọng đọc") chỉ hỏi lõi khi bạn mở tab lần đầu, không lúc tab được dựng
  * trước lúc rảnh.
  */
 @Composable
-fun SettingsScreen(env: SettingsEnv, onOpen: (SettingsGroup) -> Unit, modifier: Modifier = Modifier, shown: () -> Boolean = { true }) {
+fun SettingsScreen(
+    env: SettingsEnv, onOpen: (SettingsGroup) -> Unit, modifier: Modifier = Modifier, shown: () -> Boolean = { true },
+    sheets: SheetHost = SheetHost(), openDevices: (DevicesPage) -> Unit = {}, openVoice: (VoicePage) -> Unit = {},
+) {
     val repo = env.repo
     val settings by repo.state.collectAsState()
     val voices by repo.voices.collectAsState()
@@ -85,22 +114,69 @@ fun SettingsScreen(env: SettingsEnv, onOpen: (SettingsGroup) -> Unit, modifier: 
         snapshotFlow(shown).first { it }
         if (repo.voices.value is VoiceList.Loading) repo.loadVoices()
     }
+    // Nhóm đang mở ở cột phải: nhớ qua xoay máy và qua lúc cửa sổ hẹp lại rồi rộng ra.
+    var selected by rememberSaveable { mutableStateOf(SettingsGroup.entries.first()) }
+    BoxWithConstraints(modifier.fillMaxSize()) {
+        val wide = widthClass(maxWidth.value) >= WidthClass.EXPANDED
+        AnimatedContent(wide, Modifier.fillMaxSize(), transitionSpec = { Motion.layoutSwitch(targetState) }, label = "settings-layout") { twoColumns ->
+            if (twoColumns) {
+                Box(Modifier.fillMaxSize().testTag("settings_split"), contentAlignment = Alignment.TopCenter) {
+                    Row(Modifier.widthIn(max = SettingsMaxWidth).fillMaxSize()) {
+                        GroupList(settings, voices, repo.version, selected, { selected = it }, Modifier.width(GroupColumnWidth))
+                        // Đổi nhóm thì màn con trượt như đổi khổ; mỗi màn con tự cuộn.
+                        AnimatedContent(selected, Modifier.weight(1f).fillMaxHeight().testTag("settings_pane"), transitionSpec = { Motion.layoutSwitch(true) }, label = "settings-pane") { group ->
+                            CompositionLocalProvider(LocalEmbeddedPane provides true) {
+                                SettingsGroupScreen(group, env, sheets, onBack = {}, openDevices = openDevices, openVoice = openVoice)
+                            }
+                        }
+                    }
+                }
+            } else {
+                GroupList(settings, voices, repo.version, null, onOpen, Modifier.fillMaxSize())
+            }
+        }
+    }
+}
+
+/** Bề ngang cột nhóm ở bố cục hai cột (như Qt SettingsScreen.qml) và trần cả hai cột (DESIGN.md §5.5). */
+private val GroupColumnWidth = 260.dp
+private val SettingsMaxWidth = 1180.dp
+
+/** Danh sách nhóm. `selected` == null: danh sách một cột (chạm mở màn con); khác null: cột trái của hai cột, nhóm đang mở nền trung tính nhạt + chữ đậm. */
+@Composable
+private fun GroupList(
+    settings: AppSettings, voices: VoiceList, version: String, selected: SettingsGroup?, onPick: (SettingsGroup) -> Unit, modifier: Modifier,
+) {
+    val split = selected != null
     val top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val scroll = rememberScrollState()
     Column(
-        modifier.fillMaxSize().testTag("settings_screen").fadeEdges(scroll, startInset = top).verticalScroll(scroll)
-            .padding(top = top, start = Dim.margin, end = Dim.margin, bottom = Dim.s24),
+        modifier.testTag("settings_screen").fadeEdges(scroll, startInset = top).verticalScroll(scroll)
+            .padding(top = top, start = if (split) Dim.margin - Dim.s8 else Dim.margin, end = if (split) Dim.s8 else Dim.margin, bottom = Dim.s24),
     ) {
-        ScreenHeader("Cài đặt")
+        Box(Modifier.padding(horizontal = if (split) Dim.s8 else 0.dp)) { ScreenHeader("Cài đặt") }
         for ((index, group) in SettingsGroup.entries.withIndex()) {
-            if (index > 0) RowLine(start = IconSlot + IconGap)
-            DisclosureRow(
-                group.label,
-                onClick = { onOpen(group) },
-                tag = group.tag,
-                summary = summary(group, settings, voices, repo.version),
-                icon = { GroupIcon(group, Abook.colors.text2) },
-            )
+            if (!split && index > 0) RowLine(start = IconSlot + IconGap)
+            val here = group == selected
+            val row: @Composable () -> Unit = {
+                DisclosureRow(
+                    group.label,
+                    onClick = { onPick(group) },
+                    tag = group.tag,
+                    summary = summary(group, settings, voices, version),
+                    icon = { GroupIcon(group, if (here) Abook.colors.text else Abook.colors.text2) },
+                    chevron = !split,
+                )
+            }
+            if (split) {
+                Box(
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(Dim.radiusControl))
+                        .then(if (here) Modifier.background(Abook.colors.accentSoft) else Modifier)
+                        .padding(horizontal = Dim.s8).semantics { this.selected = here },
+                ) { row() }
+            } else {
+                row()
+            }
         }
     }
 }
