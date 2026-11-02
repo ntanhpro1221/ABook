@@ -1,5 +1,6 @@
 // Lõi trộn của đường âm thanh WASAPI (mixcore.h, mp3source.h): vòng đệm, âm lượng trượt, đổi tần số, giải mã mp3 - thử trên số và
 // trên fixture mp3 chung, không cần thiết bị âm thanh.
+#include "downloadforecast.h"
 #include "mixcore.h"
 #include "mp3source.h"
 #include "mfsource.h"
@@ -725,6 +726,22 @@ private slots:
             QVERIFY(server.sent < bytes.size());
             server.finish();
         }
+    }
+    // Lề chia tốc độ tải: lề trần (underrunMargin) tới khi đo đủ 2 cửa sổ; tải đều co về 1 (máy đo bóp tốc độ: bài vào sớm hơn); 8 giây nhanh rồi 8 giây
+    // chậm (trung bình như nhau) thì dự báo hụt gấp ba - giữ lề trần, không hơn; đo lại thì về trần. Cùng ca với musicBed.test.ts / Android.
+    void theDownloadMarginShrinksOnlyOnASteadyDownload() {
+        const double window = double(ABOOK_MIX_UNDERRUN_RATE_WINDOW_SECONDS), ceiling = double(ABOOK_MIX_UNDERRUN_MARGIN);
+        DownloadForecast steady(window, ceiling);
+        for (double t = 0; t <= 15.5; t += 0.25) steady.add(t, t * 0.9);
+        QCOMPARE(steady.margin(), ceiling);
+        for (double t = 15.75; t <= 30; t += 0.25) steady.add(t, t * 0.9);
+        QVERIFY2(std::abs(steady.margin() - 1.0) < 0.01, qPrintable(QString::number(steady.margin())));
+        DownloadForecast swinging(window, ceiling);
+        double got = 0;
+        for (double t = 0.25; t <= 60; t += 0.25) { got += (int(t / 8) % 2 ? 0.5 : 1.5) * 0.25; swinging.add(t, got); }
+        QCOMPARE(swinging.margin(), ceiling);
+        steady.reset();
+        QCOMPARE(steady.margin(), ceiling);
     }
     // Ảnh bìa (thẻ ID3) đứng trước khung đầu không phải nhạc: bài có thẻ to bằng phần nhạc, đã tới thẻ + 30 % nhạc, mốc dùng tới 60 % bài,
     // tải tiếp 1/3 tốc độ phát -> chưa vào. Chia cỡ cả file cho số khung thì tưởng đã có 65 % bài, vào rồi đứng lắp bắp (U80H 02-11, dc28
