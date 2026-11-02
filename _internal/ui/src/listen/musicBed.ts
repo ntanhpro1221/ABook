@@ -272,6 +272,7 @@ const STEP_MS = 50;
  *  [DOWNLOAD_BURST_SECONDS] đầu (phần bộ đệm đã có sẵn). */
 const DOWNLOAD_WINDOW_SECONDS = mix.underrunRateWindowSeconds;
 const DOWNLOAD_BURST_SECONDS = mix.underrunBurstSeconds;
+/** Lề trần: dùng khi chưa đo đủ 2 cửa sổ, và trên mọi đường mà dự báo từng hụt quá chừng ấy ([DownloadPace.margin]). */
 const DOWNLOAD_MARGIN = mix.underrunMargin;
 /** Phần phải có sẵn trước con trỏ lúc vào. */
 const DOWNLOAD_LEAD_SECONDS = mix.underrunLeadSeconds;
@@ -480,6 +481,8 @@ export class DownloadPace {
   private began = -1;
   private lastNow = 0;
   private lastFrom = 0;
+  /** Dự báo / thực tế lớn nhất đã thấy ở tầm một cửa sổ; null khi chưa đo đủ 2 cửa sổ. */
+  private worst: number | null = null;
 
   /** `have`: giây bài đã tải liền tới (tính từ đầu bài), `from`: con trỏ phát, lúc `now` (ms). Phần đã tải lùi hay con trỏ nhảy (tua, dời chỗ vào): đo lại
    *  từ đầu - không thì cú nhảy của phần đã tải bị tính là tải được (StreamPace.kt, emulator 02-11). */
@@ -489,13 +492,29 @@ export class DownloadPace {
     if (this.began < 0 || jumped || (last && have < last[1] - 0.05)) {
       this.began = now;
       this.samples = [];
+      this.worst = null;
     }
     this.lastNow = now;
     this.lastFrom = from;
     if (now - this.began < DOWNLOAD_BURST_SECONDS * 1000) this.samples = [];
     this.samples.push([now, have]);
-    // Giữ một mẫu ngay trước cửa sổ làm mốc đầu.
-    while (this.samples.length > 2 && now - this.samples[1][0] > DOWNLOAD_WINDOW_SECONDS * 1000) this.samples.shift();
+    // Giữ hai cửa sổ (một mẫu ngay trước làm mốc đầu): cửa sổ trước là dự báo, cửa sổ sau là thực tế của dự báo ấy.
+    const window = DOWNLOAD_WINDOW_SECONDS * 1000;
+    while (this.samples.length > 2 && now - this.samples[1][0] > 2 * window) this.samples.shift();
+    if (this.samples[0][0] <= now - 2 * window) {
+      const at = (t: number) => this.samples.reduce((got, sample) => (sample[0] <= t ? sample[1] : got), this.samples[0][1]);
+      const forecast = at(now - window) - at(now - 2 * window);
+      const real = have - at(now - window);
+      const ratio = real > 0 ? forecast / real : forecast > 0 ? Infinity : 1;
+      this.worst = Math.max(this.worst ?? 1, ratio);
+    }
+  }
+
+  /** Lề chia tốc độ đo được ([playsThrough]): dự báo theo trung bình trượt từng hụt tới đâu so với cái đã tới thật một cửa sổ sau, lấy lần tệ nhất, không
+   *  quá [DOWNLOAD_MARGIN]. Chưa đo đủ 2 cửa sổ thì là [DOWNLOAD_MARGIN]. Đường đều (máy đo bóp tốc độ, cáp) co về ~1: bài vào sớm hơn; đường dao động
+   *  mạnh giữ đúng [DOWNLOAD_MARGIN] - 76 vết HSDPA thật (Riiser 2013) mô phỏng đều chạm trần, nghe và hụt y như lề cố định (02-11). */
+  margin(): number {
+    return this.worst === null ? DOWNLOAD_MARGIN : Math.min(DOWNLOAD_MARGIN, this.worst);
   }
 
   /** Trung bình trượt tính tới `now` (nguồn đứng thì tụt dần về 0); null khi chưa đo đủ 1 giây. */
@@ -509,12 +528,12 @@ export class DownloadPace {
   }
 }
 
-/** Phát từ giây `from` tới giây `end` của bài (chỗ bài thôi kêu: min(độ dài, [playEnd])) mà không hụt, nếu tốc độ tải giữ ở `rate` chia lề: đã tải
- *  `have` + rate/lề·t, phát tới from + t - cả hai tuyến tính theo t, nên chỉ cần đúng bây giờ (có sẵn [DOWNLOAD_LEAD_SECONDS]) và lúc tới `end`. Đã tải
+/** Phát từ giây `from` tới giây `end` của bài (chỗ bài thôi kêu: min(độ dài, [playEnd])) mà không hụt, nếu tốc độ tải giữ ở `rate` chia `margin`
+ *  ([DownloadPace.margin]; không biết thì lề trần): đã tải `have` + rate/lề·t, phát tới from + t - cả hai tuyến tính theo t, nên chỉ cần đúng bây giờ (có sẵn [DOWNLOAD_LEAD_SECONDS]) và lúc tới `end`. Đã tải
  *  tới `end` thì qua luôn. Chưa đo được tốc độ: chưa chắc, coi như không. */
-export function playsThrough(have: number, from: number, end: number, rate: number | null): boolean {
+export function playsThrough(have: number, from: number, end: number, rate: number | null, margin = DOWNLOAD_MARGIN): boolean {
   if (have >= end - 0.05) return true;
-  return have - from >= DOWNLOAD_LEAD_SECONDS && rate !== null && rate > 0 && ((end - have) / rate) * DOWNLOAD_MARGIN <= end - from;
+  return have - from >= DOWNLOAD_LEAD_SECONDS && rate !== null && rate > 0 && ((end - have) / rate) * margin <= end - from;
 }
 
 /** Giây đã tải trước con trỏ phát của bài đang tải dở (<audio src>, hay phần đã nạp vào MediaSource); null = đã tải trọn, hay phần tử không cho biết (bản giả). */
@@ -1002,7 +1021,7 @@ export class MusicBed {
           pace.add(now, audio.currentTime + ahead, audio.currentTime);
           // Chỉ cần tải kịp tới chỗ bài thôi kêu (tính lại mỗi nhịp: giọng chậm / khựng thì chỗ ấy dời theo).
           const end = Math.min(audio.duration, audio.currentTime + playEnd(this.cues, playing.cue) - this.lastTime);
-          const through = playsThrough(audio.currentTime + ahead, audio.currentTime, end, pace.rate(now));
+          const through = playsThrough(audio.currentTime + ahead, audio.currentTime, end, pace.rate(now), pace.margin());
           if (this.playing) busy = true;
           if (playing.entering && playing.gate !== "open" && audio.volume <= 0) {
             // Chưa có tiếng: đứng yên ở chỗ vào (phát câm thì chỗ vào trôi đi 1 giây mỗi giây, tải chậm hơn 1x không bao giờ đuổi kịp). Sát chỗ thôi kêu

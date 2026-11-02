@@ -59,7 +59,7 @@ set(ABOOK_MUSIC_SOURCES
     src/musiclogic.h
     src/musictext.h
 )
-set(ABOOK_MIXER_SOURCES src/musicmixer.cpp src/musicmixer.h src/mixcore.h src/mp3source.cpp src/mp3source.h src/mfsource.cpp src/mfsource.h
+set(ABOOK_MIXER_SOURCES src/musicmixer.cpp src/musicmixer.h src/downloadforecast.h src/mixcore.h src/mp3source.cpp src/mp3source.h src/mfsource.cpp src/mfsource.h
     src/streamsource.cpp src/streamsource.h src/timestretch.cpp src/timestretch.h third_party/sonic/sonic.c)
 
 if(WIN32)

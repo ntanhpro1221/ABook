@@ -145,7 +145,7 @@ def prepare(stage: Path, texts: list[Path], music: bool) -> str:
 
 
 def run(out: Path, label: str, texts: list[Path], music: bool, exe: Path, slow: str | None = None, fake: str | None = None,
-        music_files: Path | None = None, slow_music: str | None = None) -> None:
+        music_files: Path | None = None, slow_music: str | None = None, slow_trace: Path | None = None) -> None:
     import measure
     stage = out / label
     if (stage / "bench.json").exists():
@@ -161,13 +161,13 @@ def run(out: Path, label: str, texts: list[Path], music: bool, exe: Path, slow: 
                ABOOK_BENCH_BOOK=book, ABOOK_AUDIO_SINK=str(sink), ABOOK_SMTC="1", QT_SCALE_FACTOR="1", QT_QPA_PLATFORM="offscreen",
                QT_QUICK_BACKEND="software", ABOOK_BENCH_HIDDEN_DESKTOP="1", QT_QPA_FONTDIR=str(ROOT / "fonts"),
                QT_QPA_PLATFORM_PLUGIN_PATH=str(QT / "plugins/platforms"), PATH=str(QT / "bin") + os.pathsep + os.environ["PATH"])
-    hooks = {name: value for name, value in (("ABOOK_TEST_SLOW_CLIPS", slow), ("ABOOK_TEST_FAKE_VOICE", fake), ("ABOOK_TEST_SLOW_MUSIC", slow_music)) if value}
+    hooks = {name: value for name, value in (("ABOOK_TEST_SLOW_CLIPS", slow), ("ABOOK_TEST_FAKE_VOICE", fake), ("ABOOK_TEST_SLOW_MUSIC", slow_music), ("ABOOK_TEST_SLOW_MUSIC_TRACE", str(slow_trace) if slow_trace else None)) if value}
     if hooks:  # máy chủ con thừa hưởng môi trường, nạp tools/stall_host/sitecustomize.py
         env.update(PYTHONPATH=str(ROOT / "tools/stall_host"), **hooks)
     got = measure.launch(exe.resolve(), env, True, timeout_seconds=3700, require_ac=False)
     if got.get("app_log"):
         shutil.copyfile(got["app_log"], stage / "app.log")
-    (stage / "run.json").write_text(json.dumps(dict(ok=bool(got.get("ok")), why=got.get("why"), exe=str(exe), music=music, slow=slow, fake=fake, music_files=str(music_files) if music_files else None, slow_music=slow_music,
+    (stage / "run.json").write_text(json.dumps(dict(ok=bool(got.get("ok")), why=got.get("why"), exe=str(exe), music=music, slow=slow, fake=fake, music_files=str(music_files) if music_files else None, slow_music=slow_music, slow_trace=str(slow_trace) if slow_trace else None,
                                                     exit_code=got.get("exit_code"), forced=got.get("forced_termination"),
                                                     # tải lạ (bộ thử, dựng, gradle) chen vào giữa lượt: số giây thời gian thực có thể lệch
                                                     shared_busy=sorted({b["name"] for _, busy in got.get("shared_busy", []) for b in busy})), ensure_ascii=False),
@@ -719,6 +719,7 @@ def main() -> int:
     r.add_argument("--slow-clips", help="<số ký tự>:<giây> - máy chủ chờ thêm trước mỗi clip mới của đoạn dài (tools/stall_host)")
     r.add_argument("--fake-voice", help="<trễ>:<giây mỗi giây clip>[:<âm lượng>] - giọng giả không ra mạng thay Edge; âm lượng 0 = lượt chỉ nhạc (tools/stall_host)")
     r.add_argument("--music-files", type=Path, help="thư mục music/files của một lượt trước: gieo sẵn các bài đã tải trọn")
+    r.add_argument("--slow-trace", type=Path, help="log HSDPA (datasets.simula.no/hsdpa): tốc độ của --slow-music theo vết thật, co cho trung bình = <KB/s>")
     r.add_argument("--slow-music", help="<KB/s>[/<KB/s sau>@<giây>]:<thư mục music/files của một lượt trước> - bài nhạc tải từ các file ấy với tốc độ trần (tools/stall_host)")
     a = sub.add_parser("analyze"); a.add_argument("a", type=Path); a.add_argument("b", type=Path)
     a.add_argument("--control", type=Path, help="lượt nhạc tắt thứ hai: so với B không được thấy nhạc ở đâu (kiểm thước luật 1)")
@@ -727,7 +728,7 @@ def main() -> int:
     args = ap.parse_args()
     if args.cmd == "run":
         INTERNAL = args.host_app.resolve()
-        run(args.out.resolve(), args.label, args.text, args.music == "on", args.exe, args.slow_clips, args.fake_voice, args.music_files, args.slow_music)
+        run(args.out.resolve(), args.label, args.text, args.music == "on", args.exe, args.slow_clips, args.fake_voice, args.music_files, args.slow_music, args.slow_trace)
     elif args.cmd == "check":
         loaded = load(args.dir)
         problems = loaded["problems"] + [dict(kind="voice_hole", **hole) for hole in voice_holes(loaded)]
