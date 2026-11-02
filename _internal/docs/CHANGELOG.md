@@ -17,6 +17,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Hàng thẻ của dự án Studio không còn xuống hai dòng trên màn hẹp, giờ cuộn ngang; hàng lọc thư viện có dòng riêng nên chữ "Xong" không còn bị cắt.
 - Bàn phím mở không còn che chữ phía trên nút Tiếp; nội dung cuộn mờ dần dưới thanh trạng thái thay vì chạy dưới đồng hồ; nhãn "Giãn dòng" thoáng hơn.
 
+### Kết nối giữa các máy
+
+- Máy tính nhận yêu cầu gửi theo kiểu không báo trước độ dài (Studio từ xa, đồng bộ, giao diện trên máy) giờ trả lời rõ là thiếu độ dài rồi đóng kết nối. Trước đây nó đọc thành yêu cầu rỗng, báo một lỗi không liên quan, và phần dữ liệu còn sót lại có thể làm hỏng yêu cầu kế tiếp trên cùng kết nối.
+
 ## [0.4.159] - 2026-11-02
 
 ### Nhạc nền
