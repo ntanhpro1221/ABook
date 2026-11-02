@@ -28,8 +28,8 @@ KEYS = {
     "underrunMargin": ("DOWNLOAD_MARGIN", "DOWNLOAD_MARGIN", "underrunMargin"),
     "underrunLeadSeconds": ("DECODE_LEAD_S", "DOWNLOAD_LEAD_SECONDS", "underrunLeadMs"),
     "underrunFadeSeconds": ("UNDERRUN_FADE_S", "UNDERRUN_FADE_SECONDS", "underrunFadeMs"),
-    # Qt canh vòng PCM đã giải mã (UNDERRUN_LOW_S / RESUME_S riêng); web và điện thoại canh phần đã tải trước con trỏ.
-    "underrunLowSeconds": (None, "UNDERRUN_LOW_SECONDS", "underrunLowMs"),
+    # Qt canh vòng PCM chỉ khi bộ giải mã đã tới mép tải: lúc ấy vòng = phần đã tải trước con trỏ, cùng đại lượng web / điện thoại canh.
+    "underrunLowSeconds": ("UNDERRUN_LOW_S", "UNDERRUN_LOW_SECONDS", "underrunLowMs"),
 }
 
 
@@ -82,9 +82,19 @@ def test_the_phone_gate_keeps_no_copy_of_the_numbers():
         assert f"mix.{name}" in pace, f"StreamPace.kt không dùng mix.{name}"
     bed = read(PHONE / "MusicBed.kt")
     # Mờ ra khi hụt và mờ vào lại: cả hai nhịp đều theo underrunFadeMs, không nhịp nào chia cho một con số chép tay.
-    for name, uses in (("underrunFadeMs", 2), ("underrunLowMs", 1), ("underrunLeadMs", 1)):
+    # Phần đệm trước khi vào (underrunLeadMs) đi qua StreamPace (ở trên) và qua ngưỡng không chớp underrunMinEntryMs.
+    for name, uses in (("underrunFadeMs", 2), ("underrunLowMs", 1), ("underrunMinEntryMs", 1)):
         assert bed.count(f"MusicCues.mix.{name}") >= uses, f"MusicBed.kt dùng MusicCues.mix.{name} ít hơn {uses} chỗ"
     assert not re.search(r"STEP_MS / \d", bed), re.findall(r".*STEP_MS / \d.*", bed)
+
+
+def test_all_three_derive_the_no_blip_threshold_from_the_same_constants():
+    # Lần vào (cả vào lại sau hụt) phải còn tới chỗ thôi kêu ít nhất lead + low + mờ vào + mờ ra: cùng công thức trên các hằng đã đọc từ file,
+    # không con số riêng nào (Lead 02-11: luật đồng nhất giữa nền tảng; trước đó Qt chép tay low = 0,5 nên ngưỡng 3,1 s thay vì 3,6 s).
+    assert "constexpr double MIN_ENTRY_S = DECODE_LEAD_S + UNDERRUN_LOW_S + 2 * UNDERRUN_FADE_S;" in read(QT)
+    assert "const MIN_ENTRY_SECONDS = DOWNLOAD_LEAD_SECONDS + UNDERRUN_LOW_SECONDS + 2 * UNDERRUN_FADE_SECONDS;" in read(WEB)
+    assert "val underrunMinEntryMs = underrunLeadMs + underrunLowMs + 2 * underrunFadeMs" in read(PHONE / "MusicMix.kt")
+    assert "UNDERRUN_RESUME_S" not in read(QT), "Qt vào lại theo một mức riêng, không phải UNDERRUN_LOW_S như web / điện thoại"
 
 
 def test_all_three_measure_the_horizon_to_where_the_track_stops_sounding():
