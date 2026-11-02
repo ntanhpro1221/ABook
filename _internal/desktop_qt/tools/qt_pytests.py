@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 
 TESTS = Path(__file__).resolve().parents[2] / "tests"
-PARITY = ("test_ui_parity_qt.py", "test_moreinfo_parity.py", "test_host_wait_parity.py")
+PARITY = ("test_ui_parity.py", "test_ui_parity_qt.py", "test_moreinfo_parity.py", "test_host_wait_parity.py")
 
 
 def files() -> list[str]:
