@@ -198,5 +198,6 @@ def test_stall_strength_goes_red_with_a_deaf_fade_detector(monkeypatch):
 def test_stall_hook_is_inert_without_its_variable():
     hook = (ROOT / "tools/stall_host/sitecustomize.py").read_text(encoding="utf-8")
     assert all(f'{name} = os.environ.get("{variable}", "")' in hook for name, variable in
-               (("SPEC", "ABOOK_TEST_VOICE_STALL"), ("SLOW", "ABOOK_TEST_SLOW_CLIPS"), ("FAKE", "ABOOK_TEST_FAKE_VOICE"))) and hook.rstrip().endswith("if SPEC or SLOW or FAKE:\n    sys.meta_path.insert(0, _After())")
+               (("SPEC", "ABOOK_TEST_VOICE_STALL"), ("SLOW", "ABOOK_TEST_SLOW_CLIPS"), ("FAKE", "ABOOK_TEST_FAKE_VOICE"),
+                                                                       ("MUSIC", "ABOOK_TEST_SLOW_MUSIC"))) and hook.rstrip().endswith("if SPEC or SLOW or FAKE or MUSIC:\n    sys.meta_path.insert(0, _After())")
     assert "stall_host" not in (ROOT / "build.bat").read_text(encoding="ascii")  # never shipped

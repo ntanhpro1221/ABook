@@ -29,6 +29,20 @@ class MusicMix(json: JSONObject) {
     val tailMinSeconds = json.getDouble("tailMinSeconds")
     /** Hai mảnh liền nhau cùng bài hở nhau ít hơn chừng này thì chung một mốc nhạc (`music_select.CUE_MERGE_GAP_SECONDS`). */
     val cueMergeGapSeconds = json.getDouble("cueMergeGapSeconds")
+    /** Bài stream đang tải dở ([StreamPace]; cùng số với musicmixer.cpp `keepsUp` và musicBed.ts `playsThrough`): tốc độ tải = trung bình trượt chừng này
+     *  của phần đã đệm, đợt dồn [underrunBurstMs] đầu gộp vào mốc gốc, chia lề [underrunMargin]; lúc vào phải có sẵn [underrunLeadMs] trước con trỏ. */
+    val underrunRateWindowMs = millis(json, "underrunRateWindowSeconds")
+    val underrunBurstMs = millis(json, "underrunBurstSeconds")
+    val underrunMargin = json.getDouble("underrunMargin")
+    val underrunLeadMs = millis(json, "underrunLeadSeconds")
+    /** Hụt thì mờ ra / phát được tới chỗ thôi kêu lại thì mờ vào trong chừng này, không tắt / bật phụt. */
+    val underrunFadeMs = millis(json, "underrunFadeSeconds")
+    /** Phần đệm trước còn dưới chừng này mà tốc độ tụt: bắt đầu mờ ra, tới 0 thì tạm dừng tại chỗ. */
+    val underrunLowMs = millis(json, "underrunLowSeconds")
+    /** Lần vào (cả vào lại sau hụt) của bài stream phải còn ít nhất chừng này tới chỗ thôi kêu: [underrunLeadMs] đã đệm, hụt lại ở [underrunLowMs], mờ vào rồi
+     *  mờ ra mỗi lần [underrunFadeMs] - ngắn hơn chỉ là một tiếng chớp (web/Android 80->12 02-11). Suy từ các số trên, không phải số để chỉnh; cùng luật với
+     *  musicmixer.cpp và musicBed.ts. */
+    val underrunMinEntryMs = underrunLeadMs + underrunLowMs + 2 * underrunFadeMs
 
     companion object {
         const val FILE = "music_mix.json"

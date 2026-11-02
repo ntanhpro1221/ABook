@@ -154,7 +154,7 @@ Một việc - một cách viết, cho web (máy tính + điện thoại), nativ
 
 <!-- ui_parity:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity.py - không sửa tay, chạy lại script) -->
 
-Quét: web 5266 chữ (3028 khác nhau), 334 cặp nhãn-icon; native 1890 chữ (1453 khác nhau), 74 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
+Quét: web 5244 chữ (3026 khác nhau), 334 cặp nhãn-icon; native 1882 chữ (1451 khác nhau), 74 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
 
 ## a. Cùng việc, khác chữ
 
@@ -306,7 +306,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `native/voice/VoiceModel.kt` (2): Supertonic nhanh hơn (`229`); Có bản mới · {} (`303`)
 - `native/voice/VoiceSheets.kt` (7): Đang đo tốc độ (`86`); Đang xoá (`105`); Dữ liệu di động (`123`); Vẫn tải (`124`); Đang lưu (`137`); Đồng ý (`137`); Xoá bài này? (`302`)
 
-### c2. Chỉ có ở web phía điện thoại - listen/, shared/ (241 nhãn)
+### c2. Chỉ có ở web phía điện thoại - listen/, shared/ (239 nhãn)
 
 - `listen/AddBook.tsx` (4): Chưa mở được file sách này. (`296`); Chọn lại (`548`); Đường dẫn file hay thư mục (`651`); Chưa đọc được (`814`)
 - `listen/BookScreen.tsx` (19): Tạm dừng {} (`151`); Đọc {} (chưa có audio) (`170`); Đọc chương này (`259`); Danh sách chương (`291`); Bỏ gộp {} vào {} (`441`); Bỏ gộp (`446`); Đổi giọng {} (`461`); Chờ áp dụng: giọng (`555`); Nghe giọng {} (`561`); Đổi giọng người kể (`562`); 7 ngày qua: (`655`); Nghe tiếp từ (`677`); Chuyển sang cuốn (`723`); Đang mở thư viện (`723`); Đọc (`1055`); Đọc tiếp (`1055`); Đã nghe {} (`1146`); Việc với sách (`1175`); Mục của sách (`1249`)
@@ -336,7 +336,6 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `listen/liveClip.ts` (2): Đã bỏ đoạn này. (`156`); Giọng đọc không phản hồi. (`192`)
 - `listen/liveTestKit.ts` (1): QuotaExceeded (`12`)
 - `listen/model.ts` (2): Phần {} · {} (`364`); Đã nhập (`497`)
-- `listen/musicBed.ts` (1): Content-Type (`139`)
 - `listen/onlineConsent.ts` (1): Microsoft (`14`)
 - `listen/player.tsx` (6): Đã tới câu chọn (`578`); Đã tới {} (`578`); Chưa tải được nhạc (`646`); Đọc chương ấy (`1201`); Nghe thêm {} phút (`1294`); Vẫn đang nghe (`1778`)
 - `listen/playlistBed.ts` (1): Đã thêm {} bài (`368`)
@@ -360,7 +359,6 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `shared/diagnostics.ts` (16): Tải sách (`50`); Việc nền (`58`); Việc {} (`59`); Pha: {} (`61`); Bản ABook (`103`); Điện thoại (`107`); Giờ trên máy (`111`); Pin (`115`); Mạng (`119`); Wi-Fi (`122`); Chỗ trống (`125`); Chạy nền (`130`); Cho máy khác nghe thư viện (`146`); Lần tắt gần nhất (`150`); Lần văng (`154`); Phục hồi dữ liệu (`155`)
 - `shared/editsKept.ts` (1): Đã gộp {} sửa từ file (`12`)
 - `shared/hostWait.ts` (1): Máy chưa trả lời kịp. (`44`)
-- `shared/latestRequest.ts` (1): AbortError (`20`)
 - `shared/musicLevels.ts` (1): Rất nhỏ (`10`)
 - `shared/peerStudio.ts` (1): Đang mở Studio của {} (`52`)
 - `shared/trashUndo.ts` (1): Chưa mang theo chỗ nghe. (`24`)
@@ -371,7 +369,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 | thư mục | nhãn |
 |---|---|
 | desktop/ | 169 |
-| studio/ | 516 |
+| studio/ | 515 |
 
 ## d. Chữ hoa, dấu câu, `…` và `...`, dấu thanh, số
 
@@ -416,23 +414,23 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 
 | kiểu | web | native |
 |---|---|---|
-| dấu ba chấm ASCII `...` | 8 / 5266 | 0 / 1890 |
-| dấu ba chấm `…` | 36 / 5266 | 0 / 1890 |
-| kết thúc bằng dấu chấm `.` | 891 / 5266 | 387 / 1890 |
-| kết thúc bằng `!` | 0 / 5266 | 0 / 1890 |
-| kết thúc bằng `:` | 52 / 5266 | 3 / 1890 |
-| dấu thanh kiểu cũ `oà oá uý` | 387 / 5266 | 173 / 1890 |
-| dấu thanh kiểu mới `òa óa úy` | 1 / 5266 | 0 / 1890 |
-| số thập phân dấu phẩy `1,5` | 1 / 5266 | 0 / 1890 |
-| số thập phân dấu chấm `1.5` | 0 / 5266 | 0 / 1890 |
-| nhân bằng `×` | 0 / 5266 | 0 / 1890 |
-| nhân bằng `x` sau số | 0 / 5266 | 0 / 1890 |
-| ngăn cách `·` | 120 / 5266 | 34 / 1890 |
-| ngăn cách ` - ` | 257 / 5266 | 79 / 1890 |
-| gạch dài `—`/`–` | 10 / 5266 | 1 / 1890 |
-| giờ `1:30` hay `1 giờ 30` | 0 / 5266 | 2 / 1890 |
-| dấu `%` dính số | 0 / 5266 | 1 / 1890 |
-| dấu `%` cách số | 0 / 5266 | 0 / 1890 |
+| dấu ba chấm ASCII `...` | 8 / 5244 | 0 / 1882 |
+| dấu ba chấm `…` | 36 / 5244 | 0 / 1882 |
+| kết thúc bằng dấu chấm `.` | 890 / 5244 | 387 / 1882 |
+| kết thúc bằng `!` | 0 / 5244 | 0 / 1882 |
+| kết thúc bằng `:` | 52 / 5244 | 3 / 1882 |
+| dấu thanh kiểu cũ `oà oá uý` | 387 / 5244 | 172 / 1882 |
+| dấu thanh kiểu mới `òa óa úy` | 1 / 5244 | 0 / 1882 |
+| số thập phân dấu phẩy `1,5` | 1 / 5244 | 0 / 1882 |
+| số thập phân dấu chấm `1.5` | 0 / 5244 | 0 / 1882 |
+| nhân bằng `×` | 0 / 5244 | 0 / 1882 |
+| nhân bằng `x` sau số | 0 / 5244 | 0 / 1882 |
+| ngăn cách `·` | 120 / 5244 | 34 / 1882 |
+| ngăn cách ` - ` | 257 / 5244 | 79 / 1882 |
+| gạch dài `—`/`–` | 10 / 5244 | 1 / 1882 |
+| giờ `1:30` hay `1 giờ 30` | 0 / 5244 | 2 / 1882 |
+| dấu `%` dính số | 0 / 5244 | 1 / 1882 |
+| dấu `%` cách số | 0 / 5244 | 0 / 1882 |
 
 **d3. Nhãn ngắn bắt đầu bằng chữ thường** (web 147, native 0); 15 đầu mỗi phía:
 
@@ -486,15 +484,15 @@ Trong một cặp, mỗi nhãn ngắn phải có ở cả hai phía (khoá lỏn
 | cặp | nhãn web | nhãn native | lệch web | lệch native | cho phép | thiếu thật | chờ Lead |
 |---|---|---|---|---|---|---|---|
 | now-playing | 101 | 102 | 0 | 0 | 31 | 8 | 0 |
-| shared-labels | 30 | 1270 | 0 | 0 | 7 | 0 | 0 |
+| shared-labels | 30 | 1269 | 0 | 0 | 7 | 0 | 0 |
 | library-book | 203 | 211 | 0 | 0 | 66 | 10 | 0 |
 | settings | 122 | 142 | 0 | 0 | 22 | 84 | 0 |
 | devices | 143 | 168 | 0 | 0 | 18 | 167 | 0 |
 | voice | 133 | 122 | 0 | 0 | 28 | 20 | 0 |
 | add-edit-book | 164 | 138 | 0 | 0 | 60 | 4 | 0 |
-| studio | 2103 | 423 | 0 | 0 | 59 | 90 | 0 |
+| studio | 2102 | 422 | 0 | 0 | 59 | 90 | 0 |
 | export | 78 | 81 | 0 | 0 | 28 | 43 | 0 |
-| music | 34 | 49 | 0 | 0 | 11 | 8 | 0 |
+| music | 33 | 49 | 0 | 0 | 10 | 8 | 0 |
 
 Thiếu thật ở native - `now-playing`: Đổi luôn trong Studio.
 

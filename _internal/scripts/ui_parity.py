@@ -54,6 +54,12 @@ KT_SKIP_CALLEE = {"testTag", "Regex", "Log", "File", "Uri", "println", "error", 
                   "removeSuffix", "equals", "format", "assert", "Pair", "to", "storageKey", "route", "key", "id", "tag", "name", "optBoolean",
                   "optInt", "optLong", "optDouble", "getBoolean", "getInt", "getLong", "getDouble", "getString", "joinToString", "indexOf", "w", "e", "d", "i"}
 KT_SKIP_NAMED = {"tag", "key", "route", "id", "storageKey", "testTag", "name", "action_id", "channel", "mime", "type", "scheme"}
+# Chuỗi là mã chứ không phải chữ người nghe, cả hai phía: một vế của phép so sánh (`id === "Xing"`, `label == "Mất file audio"`). Web thêm,
+# cùng ý KT_SKIP_CALLEE: đối số của lệnh đọc / ghi header HTTP (`response.headers.get("Content-Length")`). Xem ts_code_literal.
+COMPARE_BEFORE = re.compile(r"[!=]==?\s*$")
+COMPARE_AFTER = re.compile(r"\s*[!=]==?")
+TS_SKIP_CALLEE = ("headers.get", "headers.has", "headers.set", "headers.append", "headers.delete", "getResponseHeader", "setRequestHeader")
+TS_CALLEE_BEFORE = re.compile(r"([\w$.?]+)\s*\(\s*$")
 
 VI_LETTERS = "àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ"
 HAS_VI = re.compile(f"[{VI_LETTERS}{VI_LETTERS.upper()}]")
@@ -193,6 +199,21 @@ def literal_text(raw: str) -> str:
         out.append(c)
         i += 1
     return re.sub(r"\s+", " ", "".join(out)).strip()
+
+
+def compared_literal(src: str, start: int, end: int) -> bool:
+    """Chuỗi `src[start:end]` là một vế của `===` / `!==` / `==` / `!=` (TS lẫn Kotlin)."""
+    return bool(COMPARE_BEFORE.search(src[max(0, start - 120):start]) or COMPARE_AFTER.match(src, end))
+
+
+def ts_code_literal(src: str, start: int) -> bool:
+    """Chuỗi mở ở `start` của mã TS là mã, không phải chữ: một vế so sánh (compared_literal), hay đối số đầu của lệnh trong TS_SKIP_CALLEE."""
+    before = src[max(0, start - 120):start]
+    if compared_literal(src, start, skip_string(src, start)):
+        return True
+    m = TS_CALLEE_BEFORE.search(before)
+    chain = re.sub(r"\s+", "", m.group(1)).replace("?.", ".") if m else ""
+    return any(chain == c or chain.endswith("." + c) for c in TS_SKIP_CALLEE)
 
 
 def literals_in(src: str) -> list[tuple[int, str]]:
@@ -398,7 +419,7 @@ def scan_container(src: str, i: int, stop: int, parent: Element) -> None:
         if c in "\"'`":
             end = skip_string(src, i)
             text = literal_text(src[i:end])
-            if looks_ui(text):
+            if looks_ui(text) and not ts_code_literal(src, i):
                 line = line_of(src, i) if not strings else line
                 strings.append(text)
             i = end
@@ -487,7 +508,7 @@ def lucide_imports(src: str) -> dict[str, str]:
 
 
 def attr_texts(raw: str) -> list[str]:
-    return [t for _, t in literals_in(raw) if looks_ui(t)]
+    return [t for pos, t in literals_in(raw) if looks_ui(t) and not ts_code_literal(raw, pos)]
 
 
 def element_label(el: Element) -> list[str]:
@@ -536,8 +557,9 @@ def web_scan_file(path: Path, scan: Scan) -> None:
     file = rel(path)
     if path.suffix == ".ts":
         # File logic: mọi chuỗi có dạng chữ giao diện (hoa đầu / có dấu tiếng Việt), kể cả chuỗi trả về từ hàm nhãn.
-        for pos, text in literals_in(strip_ts_comments(src)):
-            if looks_ui(text, strict=True):
+        plain = strip_ts_comments(src)
+        for pos, text in literals_in(plain):
+            if looks_ui(text, strict=True) and not ts_code_literal(plain, pos):
                 scan.items.append(Item("web", file, line_of(src, pos), text, "ts"))
         return
     icons = lucide_imports(src)
@@ -600,11 +622,11 @@ def web_scan_file(path: Path, scan: Scan) -> None:
     plain = strip_ts_comments(src)
     # Chuỗi chữ trả về từ hàm / gán biến trong .tsx (`return "Đang tìm"`, `const title = ok ? "A" : "B"`) cũng là chữ giao diện, như bên .ts.
     for pos, text in literals_in(plain):
-        if looks_ui(text, strict=True) and len(text) <= 300 and "=>" not in text and (" " in text.strip() or re.search(r"[À-ỹ]", text)) and not re.match(r"^[A-Z]\d", text):
+        if looks_ui(text, strict=True) and not ts_code_literal(plain, pos) and len(text) <= 300 and "=>" not in text and (" " in text.strip() or re.search(r"[À-ỹ]", text)) and not re.match(r"^[A-Z]\d", text):
             scan.items.append(Item("web", file, line_of(plain, pos), text, "tsx-literal"))
     for m in PROP_LITERAL.finditer(plain):
         for start, text in value_literals(plain, m.end()):
-            if looks_ui(text, strict=True):
+            if looks_ui(text, strict=True) and not ts_code_literal(plain, start):
                 scan.items.append(Item("web", file, line_of(plain, start), text, f"prop:{m.group(1)}"))
 
 
@@ -797,11 +819,12 @@ def kt_scan_file(path: Path, scan: Scan, wrappers: dict[str, str], glyphs: dict[
             i += 1
             continue
         j = skip_string(src, i)
+        start = i
         text = literal_text(src[i:j])
         callee, named = kt_callee_before(src, i)
         line = line_of(src, i)
         i = j
-        if src[:i - len(text) - 2].rstrip().endswith("import") or callee in KT_SKIP_CALLEE or (named in KT_SKIP_NAMED):
+        if src[:i - len(text) - 2].rstrip().endswith("import") or callee in KT_SKIP_CALLEE or (named in KT_SKIP_NAMED) or compared_literal(src, start, i):
             continue
         if re.match(r"^(?:.*Exception|.*Error)$", callee):
             continue

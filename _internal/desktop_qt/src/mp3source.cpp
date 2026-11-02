@@ -168,6 +168,7 @@ StreamMp3::~StreamMp3() = default;
 QString StreamMp3::error() const { return !d->failure.isEmpty() ? d->failure : d->bytes->error(); }
 double StreamMp3::duration() const { return d->hz ? double(d->totalSamples) / d->hz : 0; }
 bool StreamMp3::atEnd() const { return d->done && d->pendingAt == d->pending.size(); }
+qint64 StreamMp3::audioStart() const { return d->first; }
 bool StreamMp3::open() {
     if (d->opened) return true;
     if (!error().isEmpty()) return false;
