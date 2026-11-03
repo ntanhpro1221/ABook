@@ -56,11 +56,20 @@ const playerOpen = async () => {
   // Màn mở qua View Transition dựng ruột sau một nhịp: các bước sau tìm trong nó, chờ nó có mặt (lỗi chạy chập chờn 25-10).
   await waitFor(() => document.querySelector(".now-playing"), "màn Đang nghe");
 };
+// Compact player bars expose their secondary controls inside Now Playing.
+const compactPlayerOpen = async () => {
+  if (window.matchMedia("(max-width: 640px)").matches) await playerOpen();
+};
+const playerMore = async () => {
+  await compactPlayerOpen();
+  await click("Thêm tuỳ chọn");
+};
 // Máy tính: sách chữ giọng Edge hỏi đồng ý gửi chữ ra ngoài trước lần nghe đầu.
 const desktopTextMore = async () => {
   await click(/^Nghe/, document.querySelector("main")!);
-  await click("Nghe", document.querySelector('[role="dialog"]')!);
-  await click("Thêm tuỳ chọn");
+  const consent = await waitFor(() => document.querySelector('[role="dialog"]'), "hộp đồng ý giọng đọc");
+  await click("Nghe", consent);
+  await playerMore();
 };
 const DESKTOP: Omit<Entry, "platform">[] = [
   { id: "desktop/titlebar", group: "Cửa sổ", title: "Thanh cửa sổ", route: "/", chrome: true },
@@ -88,20 +97,23 @@ const DESKTOP: Omit<Entry, "platform">[] = [
   { id: "desktop/player-playing", group: "Trình phát", title: "Thanh phát đang phát", route: "/", act: () => click("Phát").then(() => undefined) },
   { id: "desktop/player-full", group: "Trình phát", title: "Màn Đang nghe (toàn màn)", route: "/", act: playerOpen },
   { id: "desktop/player-full-chapters", group: "Trình phát", title: "Màn Đang nghe · tab Chương", route: "/", act: async () => {
-    await playerOpen(); await click(/^Chương$/, document.querySelector('[role="tablist"]')!);
+    await playerOpen(); await click(/^Chương$/, document.querySelector('.now-playing')!);
   } },
   { id: "desktop/player-sleep", group: "Trình phát", title: "Hẹn giờ ngủ", route: "/", act: async () => {
-    await click("Thêm tuỳ chọn");
+    if (window.matchMedia("(max-width: 640px)").matches) await playerOpen();
+    else await playerMore();
     await click(/^Hẹn giờ ngủ/);
   } },
-  { id: "desktop/player-more", group: "Trình phát", title: "Menu “…” của thanh phát", route: "/", act: () => click("Thêm tuỳ chọn").then(() => undefined) },
+  { id: "desktop/player-more", group: "Trình phát", title: "Menu “…” của thanh phát", route: "/", act: playerMore },
   { id: "desktop/player-devices", group: "Trình phát", title: "Menu thiết bị phát", route: "/", act: async () => {
-    await click("Thêm tuỳ chọn"); await click("Phát trên thiết bị khác");
+    await playerMore(); await click("Phát trên thiết bị khác");
   } },
   { id: "desktop/book-record-move", group: "Trang sách", title: "Chuyển hồ sơ", route: "/book/suong-mu-2", act: async () => {
     await clickFirst("Thêm tuỳ chọn"); await click("Chuyển hồ sơ");
   } },
-  { id: "desktop/player-speed", group: "Trình phát", title: "Tốc độ đọc", route: "/", act: () => click(/^Tốc độ đọc/).then(() => undefined) },
+  { id: "desktop/player-speed", group: "Trình phát", title: "Tốc độ đọc", route: "/", act: async () => {
+    await compactPlayerOpen(); await click(/^Tốc độ đọc/);
+  } },
   { id: "desktop/player-voice", group: "Trình phát", title: "Hộp giọng đọc", route: "/book/gac-xep", act: async () => {
     await desktopTextMore(); await click(/^Giọng đọc:/);
   } },

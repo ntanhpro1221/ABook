@@ -1406,15 +1406,13 @@ details[open]:not([data-motion="closing"]) > summary .fold-chevron {
 }
 /* group-has qua :is của Tailwind làm đổi data-state ở bất cứ đâu cũng tính lại cả BODY; neo :has vào đúng hàng. */
 .project-row:has([data-state="open"]) .project-updated { opacity: 0; }
-.page-motion:has(.settings-page, [data-reader-scroll]),
-body:has([role="dialog"][data-state="open"]) .page-motion {
+.page-motion:has(.settings-page, [data-reader-scroll]) {
+  /* Background pages do not need a new focus gutter when a dialog opens: keep their scroll boxes unchanged. */
   /* Chỉ nới ngang về trái: tràn mép phải viewport làm Radix tính nhầm bề rộng scrollbar khi khoá nền. */
   margin: -8px 0 0 -8px;
   padding: 8px 0 0 8px;
   scroll-padding-block: 8px 0;
 }
-/* Nền bị dialog khoá có thể đã tự cuộn nút mở tới sát đáy; nới đáy lúc ấy, không nới vùng chạm xuống dưới thanh phát của trang thường. */
-body:has([role="dialog"][data-state="open"]) .page-motion { margin-bottom: -8px; padding-bottom: 8px; scroll-padding-bottom: 8px; }
 /* Điện thoại: trang bị màn Đang nghe phủ kín (android/App.tsx MobileShell, HIDES_PAGE) - bỏ qua hẳn thay cho inert. */
 .page-motion[data-covered] {
   content-visibility: hidden;

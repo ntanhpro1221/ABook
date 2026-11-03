@@ -2224,8 +2224,8 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
     morph.current = null;
     if (section.current) delete section.current.dataset.morph;
   }, [presence.mounted]);
-  // Bảng điện thoại dùng Sheet (Radix tự đăng ký Back); màn Đang nghe nằm dưới.
-  useBackLayer(mobile && open, () => setExpanded(false));
+  // Register the overlay on desktop too, above any open state layer in the underlying page.
+  useBackLayer(open, () => setExpanded(false), section);
   // Back từ "Đọc theo" về "Nghe" trước khi thu nhỏ màn (lớp đăng ký sau nên đứng trên lớp đóng màn).
   useBackLayer(mobile && open && reading, () => setReading(false));
   // Màn đã thu xuống hẳn: lần mở sau bắt đầu ở "Nghe", như Android.
@@ -2261,11 +2261,11 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
     opener.current = document.activeElement as HTMLElement | null;
     const timer = window.setTimeout(() => {
       if (document.activeElement?.closest("[data-radix-popper-content-wrapper], [role='dialog']")) return;
-      section.current?.querySelector<HTMLElement>("[data-player-toggle]")?.focus();
+      section.current?.querySelector<HTMLElement>("[data-player-toggle]")?.focus({ preventScroll: true });
     }, 30);
     return () => {
       window.clearTimeout(timer);
-      opener.current?.focus?.();
+      opener.current?.focus?.({ preventScroll: true });
     };
   }, [open]);
 
