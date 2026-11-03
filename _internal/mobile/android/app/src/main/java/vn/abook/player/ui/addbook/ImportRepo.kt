@@ -56,7 +56,8 @@ class ImportRepo(private val context: Context) : ImportSource {
             val result = BookFileImport.import(context, uri)
             if (result.how in setOf("older", "conflict")) return@withContext PreparedImport(null, shown,
                 packageReview = PackageReview(result.id, result.title, result.incomingTitle, result.how))
-            val notice = if (result.incomingTitle.isNotBlank() && result.incomingTitle != result.title) "Tên trong file là “${result.incomingTitle}”, khác tên đang dùng." else "Đã thêm “${result.title}”"
+            val notice = if (result.incomingTitle.isNotBlank() && result.incomingTitle != result.title) "Tên trong file là “${result.incomingTitle}”, khác tên đang dùng."
+                else if (result.how == "updated") "Đã cập nhật “${result.title}”" else "Đã thêm “${result.title}”"
             return@withContext PreparedImport(null, shown, bookId = result.id, existing = result.how == "existing", notice = notice)
         }
         val staged = if (item.folder) stageFolder(uri) else TextImports.stageFile(incoming ?: shown) {
