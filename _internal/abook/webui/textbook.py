@@ -193,7 +193,8 @@ def add_to_library(source: Path, title: str | None, library_root: Path, projects
         book.title = title
     with tempfile.TemporaryDirectory(prefix="abook-text-") as scratch:
         packed = build(book, Path(scratch) / bookfile.default_name(book.title))
-        folder, how = packages.import_file(packed, library_root, projects, fingerprints, separate=separate)
+        # Repeating EPUB/TXT selection keeps the existing book; opening an exported .abook refreshes its base layer.
+        folder, how = packages.import_file(packed, library_root, projects, fingerprints, separate=separate, refresh_base=False)
     if how == "new":
         remember_source(folder, digest)
     return folder, how, book
