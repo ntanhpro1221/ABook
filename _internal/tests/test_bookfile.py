@@ -24,6 +24,87 @@ def _pack(tmp_path: Path) -> tuple[Path, Path]:
     return project, bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}")
 
 
+@pytest.mark.parametrize("listener_cover", [False, True])
+def test_reimport_refreshes_the_base_layer_with_unchanged_audio(tmp_path, monkeypatch, listener_cover):
+    from abook.webui import book_edits, packages
+    from abook.webui.fingerprints import Fingerprints
+    from tests.book_edits_fixtures import tiny_cover
+
+    audio = b"same chapter audio"
+    def packed(name, image=None, label="Base", width=12, script="Base"):
+        book = {"title": label, "author": label, "description": f"description {label}",
+                "chaptersTotal": 1, "chaptersAvailable": 1,
+                "chapters": [{"id": 1, "available": True, "file": "chapters/1.mp3"}]}
+        files = {"chapters/1.mp3": audio, "scripts/1.json": bookfile.json_bytes({"text": script})}
+        if image is not None:
+            book["cover"] = {"file": "cover.jpg", "color": "#112233", "width": width, "height": 24}
+            files["cover.jpg"] = image
+        return bookfile.seal(book, files, tmp_path / f"{name}.abook", producer="test", version=1)
+
+    library, prints = tmp_path / "library", Fingerprints(tmp_path / "prints.json")
+    first = packed("first")
+    folder, how = packages.import_file(first, library, [], prints)
+    assert how == "new"
+    chapter = folder / "chapters/1.mp3"
+    stamp = chapter.stat().st_mtime_ns
+    book_edits.set_title(folder, "Listener title")
+    if listener_cover:
+        book_edits.set_cover(folder, tiny_cover())
+    edits = book_edits.load(folder)
+    own_cover = (folder / book_edits.EDITS_COVER).read_bytes() if listener_cover else None
+
+    # A base update must not open a chapter for writing.
+    original_open = Path.open
+    def no_audio_write(path, mode="r", *args, **kwargs):
+        assert not (path.suffix == ".mp3" and any(c in mode for c in "wax+")), "audio was re-extracted"
+        return original_open(path, mode, *args, **kwargs)
+    monkeypatch.setattr(Path, "open", no_audio_write)
+
+    for name, image, label, width in [("added", b"cover one", "Base", 12), ("changed", b"cover two", "Base", 12),
+                                      ("meta", b"cover two", "Base", 36), ("removed", None, "Base", 12),
+                                      ("description", None, "Refreshed", 12), ("script", None, "Refreshed", 12)]:
+        script = "ScriptOnly" if name == "script" else "Base"
+        file = packed(name, image, label, width, script)
+        assert packages.import_file(file, library, [], prints) == (folder, "updated")
+        raw = packages.manifest(folder)
+        assert (raw["title"], raw["author"], raw["description"]) == (label, label, f"description {label}")
+        assert json.loads((folder / "scripts/1.json").read_bytes()) == {"text": script}
+        assert (folder / "cover.jpg").exists() == (image is not None)
+        assert (folder / "cover.json").exists() == (image is not None)
+        if image is not None:
+            assert (folder / "cover.jpg").read_bytes() == image
+            assert raw["cover"]["width"] == width
+            assert json.loads((folder / "cover.json").read_bytes())["width"] == width
+            assert packages.edited_manifest(folder)["cover"]["file"] == ("edits/cover.jpg" if listener_cover else "cover.jpg")
+        else:
+            assert "cover" not in raw
+            assert ("cover" in packages.edited_manifest(folder)) == listener_cover
+        assert book_edits.load(folder) == edits
+        assert packages.edited_manifest(folder)["title"] == "Listener title"
+        if listener_cover:
+            assert (folder / book_edits.EDITS_COVER).read_bytes() == own_cover
+        assert chapter.read_bytes() == audio and chapter.stat().st_mtime_ns == stamp
+        assert packages.import_file(file, library, [], prints) == (folder, "existing")
+
+
+def test_bad_reimport_leaves_the_entire_local_book_untouched(tmp_path):
+    from abook.webui import packages
+    from abook.webui.fingerprints import Fingerprints
+
+    book = {"title": "Old", "chapters": [{"id": 1, "file": "chapters/1.mp3", "available": True}]}
+    good = bookfile.seal(book, {"chapters/1.mp3": b"audio"}, tmp_path / "good.abook", producer="test", version=1)
+    library, prints = tmp_path / "library", Fingerprints(tmp_path / "prints.json")
+    folder, _ = packages.import_file(good, library, [], prints)
+    before = {p.relative_to(folder): p.read_bytes() for p in folder.rglob("*") if p.is_file()}
+    new = bookfile.seal({**book, "title": "New"}, {"chapters/1.mp3": b"audio", "cover.jpg": b"cover"},
+                        tmp_path / "new.abook", producer="test", version=1)
+    damaged = _rewrite(new, tmp_path / "bad.abook", lambda name, data: b"wrong" if name == "cover.jpg" else data)
+    with pytest.raises(BookFileError):
+        packages.import_file(damaged, library, [], prints)
+    assert {p.relative_to(folder): p.read_bytes() for p in folder.rglob("*") if p.is_file()} == before
+    assert not list(folder.parent.glob("*.part"))
+
+
 def test_one_file_carries_the_whole_book_and_the_phone_layout(tmp_path: Path) -> None:
     project, path = _pack(tmp_path)
 
