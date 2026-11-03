@@ -424,6 +424,12 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
       const equalWidths = boxes.every((b) => Math.abs(b.width - boxes[0].width) <= 1);
       if (sameLine && !equalWidths) {
         const inks = words.map(controlInk);
+        // A clipped button sliver can be visible while its glyphs are outside the scroll viewport.
+        // Comparing those partial glyphs fabricates unequal gaps in rows scrolled past the top.
+        if (inks.some((ink, index) => {
+          const shown = visible(words[index], ink, true);
+          return !shown || shown.width < ink.width - 0.5 || shown.height < ink.height - 0.5;
+        })) continue;
         const spans = inks.slice(1).map((ink, i) => ({ element: words[i + 1], previous: words[i], value: ink.x - right(inks[i]), rect: ink, previousRect: inks[i] }));
         const sorted = spans.map((s) => s.value).sort((a, b) => a - b), median = sorted[Math.floor((sorted.length - 1) / 2)];
         const worst = [...spans].sort((a, b) => Math.abs(b.value - median) - Math.abs(a.value - median))[0];

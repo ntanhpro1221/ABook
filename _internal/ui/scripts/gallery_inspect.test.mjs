@@ -111,6 +111,29 @@ describe("glyph và data-overlay trong DOM", () => {
 });
 
 describe("phần tử không được vẽ", () => {
+  it("Now Playing text belongs to its own layer; collisions within that layer still count", () => {
+    document.body.innerHTML = '<main><span id="underlay">A</span></main><section class="now-playing" data-state="open"><span id="player">B</span><span id="collision">C</span></section>';
+    const box = { x: 10, y: 10, width: 20, height: 20 };
+    for (const el of document.body.querySelectorAll("*")) vi.spyOn(el, "getBoundingClientRect").mockReturnValue(box);
+    vi.spyOn(Range.prototype, "getClientRects").mockImplementation(function () {
+      return this.startContainer.parentElement?.matches("span") ? [box] : [];
+    });
+    // During modal pointer locking hit-testing may reach an ancestor of both text layers.
+    vi.spyOn(document, "elementFromPoint").mockReturnValue(document.body);
+    const computed = { display: "block", visibility: "visible", opacity: "1", overflowX: "visible", overflowY: "visible", backgroundImage: "none", backgroundColor: "white", color: "black", fontSize: "14px", fontWeight: "400", transform: "none", scale: "none", content: "none" };
+    vi.stubGlobal("getComputedStyle", () => computed);
+    vi.stubGlobal("DOMMatrix", class { c = 0; d = 1; });
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({
+      clearRect() {}, fillRect() {}, save() {}, restore() {}, setTransform() {}, fillText() {},
+      measureText: () => ({ width: 10, fontBoundingBoxAscent: 16, fontBoundingBoxDescent: 4, actualBoundingBoxAscent: 14, actualBoundingBoxDescent: 4 }),
+      getImageData: () => ({ data: new Uint8ClampedArray(64 * 4).fill(255) }),
+    });
+    Object.defineProperty(document, "fonts", { configurable: true, value: [] });
+    Object.defineProperty(document, "getAnimations", { configurable: true, value: () => [] });
+    let result;
+    try { result = inspectPage({}, h); } finally { Reflect.deleteProperty(document, "fonts"); Reflect.deleteProperty(document, "getAnimations"); }
+    expect(result.findings.filter(f => f.rule === "TEXT-OVER-TEXT").map(f => [f.selector, f.otherSelector])).toEqual([["#player", "#collision"]]);
+  });
   it("bỏ qua con cháu của content-visibility: hidden (trang dưới màn Đang nghe), vẫn bắt chữ bị cắt ở nơi được vẽ", () => {
     document.body.innerHTML = '<div id="covered"><p class="clip">Chương 7 · Giọng đọc của máy</p></div><div id="open"><p class="clip">Chương 7 · Giọng đọc của máy</p></div>';
     const covered = document.querySelector("#covered");
@@ -333,6 +356,7 @@ it("tên quy tắc cho --fail-on dùng được tên, dấu gạch và rule1..22
   expect(normalizeRule("rule22")).toBe("NAV ACCENT");
   expect(normalizeRule("rule23")).toBe("NESTED CARD");
   expect(normalizeRule("rule24")).toBe("CROSS CENTER");
-  expect(() => normalizeRule("rule25")).toThrow("Quy tắc lạ");
+  expect(normalizeRule("rule25")).toBe("SHEET GEOMETRY");
+  expect(() => normalizeRule("rule26")).toThrow("Quy tắc lạ");
   expect(() => normalizeRule("typo")).toThrow("Quy tắc lạ");
 });

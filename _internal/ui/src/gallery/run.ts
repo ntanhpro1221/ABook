@@ -28,7 +28,12 @@ function watchErrors(): void {
     else galleryState.errors.push(text);
     original(...args);
   };
-  window.addEventListener("error", (event) => galleryState.errors.push(`error: ${event.message}`));
+  window.addEventListener("error", (event) => {
+    // Browser notification: ResizeObserver defers an initial size change to the next frame (e.g. Radix popper placement).
+    // Retain it as evidence; geometry still has to settle and every measured delta is checked independently.
+    if (event.message === "ResizeObserver loop completed with undelivered notifications.") galleryState.known.add(`browser: ${event.message}`);
+    else galleryState.errors.push(`error: ${event.message}`);
+  });
   window.addEventListener("unhandledrejection", (event) => galleryState.errors.push(`unhandledrejection: ${String((event.reason as Error)?.stack ?? event.reason)}`));
 }
 
