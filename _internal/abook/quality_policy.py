@@ -44,6 +44,7 @@ ANALYSIS_CASTING_IMPLEMENTATION_FILES = (
     "speaker_pass.py",
     "voice_balance.py",
     "assets/voice_balance.json",
+    "assets/voice_rank.json",
     "voice_catalog.py",
 )
 QUALITY_IMPLEMENTATION_FILES = (
@@ -84,6 +85,7 @@ QUALITY_IMPLEMENTATION_FILES = (
     "tts_contract.py",
     "voice_balance.py",
     "assets/voice_balance.json",
+    "assets/voice_rank.json",
     "voice_catalog.py",
     "vietnamese_syllable.py",
     "../pyproject.toml",
