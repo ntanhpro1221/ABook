@@ -31,7 +31,6 @@ class SettingsDataTest {
         assertEquals(2, d.safetyStopHours)
         assertTrue(d.shakeToExtend && d.headsetSkips && d.autoRewind && d.autoMusic && d.touchSounds && d.haptics)
         assertFalse(d.flipToPause)
-        assertEquals(ShakeAction.Extend, d.shakeAction)
         assertEquals(ShakeSensitivity.Normal, d.shakeSensitivity)
         assertNull(d.schedule)
         assertEquals(0L, d.stamp)
@@ -58,13 +57,12 @@ class SettingsDataTest {
         val before = AppSettings.Default
         val after = before.copy(
             theme = ThemeMode.Dark, readingSurface = ReadingSurface.Night, touchSounds = false, haptics = false, autoRewind = false, headsetSkips = false,
-            safetyStopHours = 0, schedule = SleepSchedule("23:00", "05:45", 60), shakeToExtend = false, shakeAction = ShakeAction.Reset,
+            safetyStopHours = 0, schedule = SleepSchedule("23:00", "05:45", 60), shakeToExtend = false,
             shakeSensitivity = ShakeSensitivity.Firm, flipToPause = true, sleepExtendMinutes = 15, sleepFadeSeconds = 60,
         )
         val changes = after.changesFrom(before)
         assertEquals("dark", changes.getString("theme"))
         assertEquals("night", changes.getString("readingSurface"))
-        assertEquals("reset", changes.getString("shakeAction"))
         assertEquals("firm", changes.getString("shakeSensitivity"))
         assertEquals("23:00", changes.getJSONObject("schedule").getString("from"))
         // ListenPrefs.clean đưa về miền giá trị: thứ Cài đặt native ghi phải đi qua nguyên vẹn (cùng khoá, cùng giá trị).

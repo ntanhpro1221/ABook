@@ -34,6 +34,7 @@ import java.io.File
 import java.security.MessageDigest
 import vn.abook.player.readaloud.ReadAloud
 import vn.abook.player.ui.NativeActivity
+import vn.abook.player.ui.nowplaying.SleepText
 
 /**
  * Dịch vụ phát nền: giữ ExoPlayer sống khi tắt màn hình, hiện điều khiển ở thanh thông báo và màn hình khoá,
@@ -161,7 +162,7 @@ class PlaybackService : MediaLibraryService() {
         )
         if (SleepTimer.mode != SleepTimer.Mode.OFF) {
             list += CommandButton.Builder(CommandButton.ICON_PLUS)
-                .setSessionCommand(SLEEP_PLUS).setDisplayName("Nghe thêm ${SleepTimer.extendMinutes} phút").setSlots(CommandButton.SLOT_OVERFLOW).build()
+                .setSessionCommand(SLEEP_PLUS).setDisplayName(SleepText.extendLabel(SleepTimer.extendTarget())).setSlots(CommandButton.SLOT_OVERFLOW).build()
         }
         list += listOf(
             CommandButton.Builder(CommandButton.ICON_PREVIOUS)
