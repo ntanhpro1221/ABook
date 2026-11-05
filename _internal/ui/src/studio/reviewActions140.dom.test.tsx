@@ -5,8 +5,9 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { ReviewQueue } from "./ReviewQueue";
 import { WorkCards, type WorkItem } from "./WorkInbox";
 import type { BookSummary } from "./api";
+import { TooltipProvider } from "@/shared/ui";
 
-const mocks = vi.hoisted(() => ({ mutate: vi.fn() }));
+const mocks = vi.hoisted(() => ({ mutate: vi.fn(), toggle: vi.fn() }));
 vi.mock("@tanstack/react-query", () => ({
   useQueryClient: () => ({}), useQuery: () => ({}),
   useMutation: () => ({ mutate: mocks.mutate }),
@@ -15,16 +16,31 @@ vi.mock("@tanstack/react-query", () => ({
     pendingSpoken: null, text: "Câu cần nghe", textSha256: "text-sha", kind: "failed", playable: true, reason: "Cần kiểm tra",
   }] }] } }),
 }));
-vi.mock("@/listen/clip", () => ({ useClip: () => ({ current: null, toggle: vi.fn() }) }));
+vi.mock("@/listen/clip", () => ({ useClip: () => ({ current: null, toggle: mocks.toggle }) }));
 vi.mock("./data", () => ({ useCachedBook: () => ({}) }));
 vi.mock("./liveRefresh", () => ({ useProducingRefetch: () => false }));
 let root: Root, host: HTMLDivElement;
 beforeEach(() => {
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-  mocks.mutate.mockClear(); host = document.createElement("div"); document.body.append(host); root = createRoot(host);
+  mocks.mutate.mockClear(); mocks.toggle.mockClear(); host = document.createElement("div"); document.body.append(host); root = createRoot(host);
 });
 afterEach(async () => { await act(() => root.unmount()); document.body.replaceChildren(); });
 const buttons = () => [...host.querySelectorAll<HTMLButtonElement>("button")];
+
+it("thẻ gọi hay nói: nghe ứng viên dùng clip riêng, chọn người dùng đường sửa có sẵn", async () => {
+  const item: WorkItem = { kind: "vocative", key: "vocative:1", title: "Tên người nghe", problem: "Câu này gọi Minh", affected: 1,
+    current: "Minh", currentValue: "MINH", options: [], doubt: .95, score: 1,
+    examples: [], lines: [{ stableId: "line", textSha256: "sha" }],
+    choices: [{ value: "LAN", label: "Lan", sampleId: 41 }, { value: "NARRATOR", label: "Người kể", samplePreset: "narrator" }] };
+  await act(() => root.render(<TooltipProvider><WorkCards book={{ id: "book" } as BookSummary} items={[item]} onOpenReview={vi.fn()} /></TooltipProvider>));
+  await act(() => host.querySelector<HTMLButtonElement>('[aria-label="Nghe Lan nói"]')!.click());
+  expect(mocks.toggle).toHaveBeenCalledWith("work-voice-41", expect.stringContaining("/41"));
+  expect(mocks.mutate).not.toHaveBeenCalled();
+  await act(() => host.querySelector<HTMLButtonElement>('[aria-label="Nghe Người kể nói"]')!.click());
+  expect(mocks.toggle).toHaveBeenCalledWith("work-voice-narrator", expect.stringContaining("/media/voices/narrator"));
+  await act(() => buttons().find(button => button.textContent === "Lan")!.click());
+  expect(mocks.mutate).toHaveBeenCalledWith({ speaker: "LAN" });
+});
 
 it("Cần nghe lại: phán quyết là nút có icon; liên kết mở ngữ cảnh dùng mực phụ", async () => {
   const script = vi.fn();
