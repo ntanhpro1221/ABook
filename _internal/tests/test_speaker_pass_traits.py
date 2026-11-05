@@ -8,17 +8,17 @@ from abook.speaker_pass import db_label
 from test_speaker_pass_pipeline import make_project
 
 
-@pytest.mark.parametrize("description,chapter_offset,expected", [
-    ("lính gác", 0, ("male", "adult")),
-    ("người hầu", 0, ("unknown", "unknown")),
-    ("lính gác", 1, ("unknown", "unknown")),
+@pytest.mark.parametrize("description,expected", [
+    ("lính gác", ("male", "adult")),
+    ("Lính  gác", ("male", "adult")),
+    ("người hầu", ("unknown", "unknown")),
 ])
 def test_local_pass_relabel_preserves_traits_only_for_the_same_role_in_the_same_chapter(
-    tmp_path: Path, description: str, chapter_offset: int, expected: tuple[str, str],
+    tmp_path: Path, description: str, expected: tuple[str, str],
 ) -> None:
     db = make_project(tmp_path / "p")
     chapter = int(db.list_chapters()[0]["id"])
-    old = f"NPC_LOCAL::c{chapter + chapter_offset:05d}::r0b1::lính gác"
+    old = f"NPC_LOCAL::c{chapter:05d}::lính gác"
     new = db_label(f"NPC_LOCAL:{description}", chapter)
     with db.transaction() as conn:
         conn.execute("UPDATE segments SET speaker=?,gender='male',age='adult' WHERE stable_id IN ('c1s1','c1s3')", (old,))

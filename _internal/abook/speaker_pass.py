@@ -409,12 +409,12 @@ def parse_pq(content: str) -> str:
 
 
 def db_label(label: str, chapter_id: int) -> str:
-    """Nhãn cục bộ của lượt này dùng cùng định dạng lưu với analysis, phạm vi cả chương."""
+    """Nhãn cục bộ của lượt này dùng cùng ID lưu với analysis (một người = một ID trong chương), nên nhãn cũ và mới của cùng người trùng nhau."""
     if label.startswith("NPC_LOCAL:"):
         from .analysis import _scope_local_speaker  # noqa: PLC0415
 
         description = label.rsplit("::", 1)[-1] if label.startswith("NPC_LOCAL::") else label[len("NPC_LOCAL:"):]
-        return _scope_local_speaker("NPC_LOCAL:" + description, {"chapter_id": chapter_id}, "speaker_pass")
+        return _scope_local_speaker("NPC_LOCAL:" + description, {"chapter_id": chapter_id})
     return label
 
 
