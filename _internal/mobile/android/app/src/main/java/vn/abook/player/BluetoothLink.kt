@@ -34,7 +34,7 @@ import java.util.concurrent.Executors
  * rồi mới tới mã 6 số của app.
  */
 object BluetoothLink {
-    val SERVICE: UUID = UUID.fromString("a1f667fe-352a-49b7-9b91-a5463677cac0")
+    val SERVICE: UUID = UUID.fromString(BuildConfig.STUDIO_SERVICE_UUID)
     private val gateways = HashMap<String, Gateway>()
 
     fun permitted(context: Context): Boolean =
@@ -116,7 +116,7 @@ private class Gateway(private val context: Context, private val address: String)
 
     /** Cổng ổn định theo địa chỉ: trình phát giữ URL qua các lần mở lại đường hầm. Bận thì để hệ thống chọn. */
     private fun bind(): ServerSocket {
-        val stable = 47670 + (address.hashCode() and 31)
+        val stable = BuildConfig.TUNNEL_FIRST_PORT + (address.hashCode() and 31)
         return runCatching { ServerSocket(stable, 50, InetAddress.getByName("127.0.0.1")) }
             .getOrElse { ServerSocket(0, 50, InetAddress.getByName("127.0.0.1")) }
     }
@@ -261,7 +261,7 @@ object BluetoothShare {
             return
         }
         val socket = try {
-            adapter.listenUsingRfcommWithServiceRecord("ABook", BluetoothLink.SERVICE)
+            adapter.listenUsingRfcommWithServiceRecord(if (BuildConfig.DEBUG) "ABook .dev" else "ABook", UUID.fromString(BuildConfig.LIBRARY_SERVICE_UUID))
         } catch (error: IOException) {
             status = "Chưa mở được Bluetooth: ${error.message}"
             return

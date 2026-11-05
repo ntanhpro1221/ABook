@@ -599,14 +599,21 @@ def seed_casting(source: sqlite3.Connection, target: ProjectDB, folded_source: s
     """Giọng từng nhân vật (ghim `locked_voice_key` + chép hồ sơ giọng - hồ sơ là tất định nên chép là tái tạo đúng
     tiếng), nhân vật đã biết (KHÔNG khoá: máy nói cho máy, sách nói khác thì model vẫn được sửa), ghim của người nghe
     (khoá vĩnh viễn), rồi sổ cộng dồn."""
-    from .character_registry import canonical_key
+    from .character_registry import canonical_key, character_preset_allowed
+    from .listener_overrides import narrated_voices
 
     lines = {name: count for name, (count, _parts) in exposure.items()}
     presence: dict[str, bool] = {}  # tên nào có trong sách - hai lượt gộp tên hỏi chung phần lớn các tên
     already = set(target.locked_character_voices())
+    with target.connect() as conn:
+        voices_cfg = narrated_voices(conn, json.loads(target.book()["settings_json"]).get("voices", {}))
+    excluded = {str(voices_cfg.get("narrator_voice") or ""), *map(str, voices_cfg.get("other_narrators", ()))}
     voices = 0
     for name, voice_key, profile in _casting(source, folded_source, lines, log, presence):
         if canonical_key(name) in already:
+            continue
+        if not character_preset_allowed(str(profile["preset_name"]), excluded):
+            log(f"  bỏ ghim của {name}: trùng giọng người kể; phân vai lại theo giới tính")
             continue
         target.upsert_voice_profile({
             "voice_key": voice_key,

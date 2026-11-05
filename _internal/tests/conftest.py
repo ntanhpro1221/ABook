@@ -225,18 +225,18 @@ def _no_real_bluetooth(monkeypatch: pytest.MonkeyPatch) -> None:
 
     real_paired, real_connect, real_find = bluetooth.paired_devices, bluetooth.connect_rfcomm, bluetooth.find_channel
 
-    def paired_devices(*, dll: object = None) -> list:
-        return real_paired(dll=dll) if dll is not None else []
+    def paired_devices(*, dll: object = None, ws2: object = None) -> list:
+        return real_paired(dll=dll, ws2=ws2) if dll is not None else []
 
-    def connect_rfcomm(address: str, *, ws2: object = None):  # noqa: ANN202
+    def connect_rfcomm(address: str, *, ws2: object = None, service_uuid=bluetooth.SERVICE_UUID):  # noqa: ANN202
         if ws2 is None:
             raise OSError("Bài thử không được nối Bluetooth thật")
-        return real_connect(address, ws2=ws2)
+        return real_connect(address, ws2=ws2, service_uuid=service_uuid)
 
-    def find_channel(address: str, *, ws2: object = None) -> int:
+    def find_channel(address: str, *, ws2: object = None, service_uuid=bluetooth.SERVICE_UUID) -> int:
         if ws2 is None:
             raise OSError("Bài thử không được tra SDP thật")
-        return real_find(address, ws2=ws2)
+        return real_find(address, ws2=ws2, service_uuid=service_uuid)
 
     monkeypatch.setattr(bluetooth, "paired_devices", paired_devices)
     monkeypatch.setattr(bluetooth, "connect_rfcomm", connect_rfcomm)
