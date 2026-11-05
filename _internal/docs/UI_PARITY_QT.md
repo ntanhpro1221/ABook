@@ -7,7 +7,7 @@ icon `LucidePaths.js` sinh bởi `scripts/gen_lucide_icons.py --qml`. Bảng dư
 
 <!-- ui_parity_qt:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity_qt.py - không sửa tay, chạy lại script) -->
 
-Quét: web máy tính 4874 chữ (2788 khác nhau), 319 cặp nhãn-icon; Qt 3413 chữ (2558 khác nhau), 275 cặp nhãn-icon (icon dùng ở 386 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
+Quét: web máy tính 4877 chữ (2791 khác nhau), 319 cặp nhãn-icon; Qt 3417 chữ (2562 khác nhau), 275 cặp nhãn-icon (icon dùng ở 386 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
 
 ## a. Cùng việc, khác chữ
 
@@ -53,10 +53,10 @@ Nhãn ngắn Qt không có nguyên văn (khoá lỏng) ở web máy tính mà gi
 | Studio việc duyệt | Nghe liền {} câu | Nghe liền | 0.82 | `qt/ReviewQueue.qml:253` ~ `studio/ReviewQueue.tsx:474` |
 | Studio việc duyệt | Xem {} câu | Sửa {} câu | 0.57 | `qt/WorkSpeaker.qml:144` ~ `studio/reviewText.ts:20` |
 | Studio xuất và áp dụng | Bỏ cách đọc “{} | Bỏ cách đọc “{}” | 1.00 | `qt/ExportLogic.js:275` ~ `studio/ApplyChanges.tsx:55` |
-| Studio xuất và áp dụng | Cỡ ước tính: khoảng {} | Cỡ ước tính: khoảng | 1.00 | `qt/ExportBook.qml:220` ~ `studio/ExportBook.tsx:518` |
-| Studio xuất và áp dụng | Xuất “ | Xuất “{}” | 1.00 | `qt/ExportBook.qml:49` ~ `studio/ExportBook.tsx:387` |
+| Studio xuất và áp dụng | Cỡ ước tính: khoảng {} | Cỡ ước tính: khoảng | 1.00 | `qt/ExportBook.qml:221` ~ `studio/ExportBook.tsx:520` |
+| Studio xuất và áp dụng | Xuất “ | Xuất “{}” | 1.00 | `qt/ExportBook.qml:50` ~ `studio/ExportBook.tsx:389` |
 | Studio xuất và áp dụng | Đang thêm chữ sáng… | Đang thêm chữ sáng… {}% | 1.00 | `qt/ExportLogic.js:257` ~ `studio/WordTimings.tsx:42` |
-| Studio xuất và áp dụng | Đã xuất | Xuất “{}” | 0.73 | `qt/ExportLogic.js:111` ~ `studio/ExportBook.tsx:387` |
+| Studio xuất và áp dụng | Đã xuất | Xuất “{}” | 0.73 | `qt/ExportLogic.js:111` ~ `studio/ExportBook.tsx:389` |
 | Thanh phát | Nghe bằng giọng đọc. | Nghe bằng giọng đọc.{} | 1.00 | `qt/PlayerLabels.js:9` ~ `listen/labels.ts:142` |
 | Trang sách | Lần nghe | Lần nghe {} | 1.00 | `qt/RecordLogic.js:9` ~ `listen/BookScreen.tsx:716` |
 | Trang sách | Tạo và nghe từ đầu | Tạo và nghe | 0.76 | `qt/RecordLogic.js:74` ~ `listen/BookScreen.tsx:866` |
@@ -224,8 +224,8 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 
 ### Studio xuất và áp dụng
 
-- chỉ Qt (28): Xuất “ (`qt/ExportBook.qml:49`); Kèm nhạc nền* (`qt/ExportBook.qml:207`); Cỡ ước tính: khoảng {} (`qt/ExportBook.qml:220`); Xuất {} chương đổi (`qt/ExportBook.qml:303`); Đang đóng gói* (`qt/ExportLogic.js:50`); Đã xuất vào máy tính* (`qt/ExportLogic.js:95`); Đã xuất vào máy tính {}* (`qt/ExportLogic.js:95`); Đã xuất (`qt/ExportLogic.js:111`); Phần {}* (`qt/ExportLogic.js:169`); Đã xuất MP3* (`qt/ExportLogic.js:188`); Đã xuất M4B* (`qt/ExportLogic.js:190`); Đang tải nhạc nền {}/{} bài* (`qt/ExportLogic.js:199`); Đang kiểm đỉnh âm…* (`qt/ExportLogic.js:201`); Chương {}/{}* (`qt/ExportLogic.js:205`); Đang ghép file âm thanh ·{}* (`qt/ExportLogic.js:206`); Đang ghi chương {}/{}* (`qt/ExportLogic.js:207`); Đang trộn nhạc chương {}/{}* (`qt/ExportLogic.js:209`); Đang chờ mạng…* (`qt/ExportLogic.js:214`); Đang thêm chữ sáng… (`qt/ExportLogic.js:257`); Bỏ cách đọc “{} (`qt/ExportLogic.js:275`); Công cụ ghép âm thanh* (`qt/FfmpegNeeded.qml:24`); Cập nhật công cụ* (`qt/FfmpegNeeded.qml:29`); Thiếu công cụ ghép* (`qt/FfmpegNeeded.qml:29`); Dừng* (`qt/FfmpegNeeded.qml:49`); Tải công cụ ghép âm thanh* (`qt/FfmpegNeeded.qml:75`); Thử lại* (`qt/FfmpegNeeded.qml:96`); Tải công cụ* (`qt/FfmpegNeeded.qml:96`); Nghe thử* (`qt/PendingRow.qml:81`)
-- chỉ web (6): Bỏ cách đọc “{}” (`55`); Thu lại (`197`); File .abook (`54`); Xuất “{}” (`356`); Cỡ ước tính: khoảng (`518`); Đang thêm chữ sáng… {}% (`42`)
+- chỉ Qt (28): Xuất “ (`qt/ExportBook.qml:50`); Kèm nhạc nền* (`qt/ExportBook.qml:208`); Cỡ ước tính: khoảng {} (`qt/ExportBook.qml:221`); Xuất {} chương đổi (`qt/ExportBook.qml:304`); Đang đóng gói* (`qt/ExportLogic.js:50`); Đã xuất vào máy tính* (`qt/ExportLogic.js:95`); Đã xuất vào máy tính {}* (`qt/ExportLogic.js:95`); Đã xuất (`qt/ExportLogic.js:111`); Phần {}* (`qt/ExportLogic.js:169`); Đã xuất MP3* (`qt/ExportLogic.js:188`); Đã xuất M4B* (`qt/ExportLogic.js:190`); Đang tải nhạc nền {}/{} bài* (`qt/ExportLogic.js:199`); Đang kiểm đỉnh âm…* (`qt/ExportLogic.js:201`); Chương {}/{}* (`qt/ExportLogic.js:205`); Đang ghép file âm thanh ·{}* (`qt/ExportLogic.js:206`); Đang ghi chương {}/{}* (`qt/ExportLogic.js:207`); Đang trộn nhạc chương {}/{}* (`qt/ExportLogic.js:209`); Đang chờ mạng…* (`qt/ExportLogic.js:214`); Đang thêm chữ sáng… (`qt/ExportLogic.js:257`); Bỏ cách đọc “{} (`qt/ExportLogic.js:275`); Công cụ ghép âm thanh* (`qt/FfmpegNeeded.qml:24`); Cập nhật công cụ* (`qt/FfmpegNeeded.qml:29`); Thiếu công cụ ghép* (`qt/FfmpegNeeded.qml:29`); Dừng* (`qt/FfmpegNeeded.qml:49`); Tải công cụ ghép âm thanh* (`qt/FfmpegNeeded.qml:75`); Thử lại* (`qt/FfmpegNeeded.qml:96`); Tải công cụ* (`qt/FfmpegNeeded.qml:96`); Nghe thử* (`qt/PendingRow.qml:81`)
+- chỉ web (6): Bỏ cách đọc “{}” (`55`); Thu lại (`197`); File .abook (`54`); Xuất “{}” (`358`); Cỡ ước tính: khoảng (`520`); Đang thêm chữ sáng… {}% (`42`)
 
 ### Studio máy khác
 
@@ -307,7 +307,7 @@ Hợp lệ: `Theme.radiusControl / radiusCover / radiusSheet` (DESIGN.md 5.5, `d
 - Đang dừng… (`qt/NewDrop.qml:128`) - web: `Đang dừng`, `Đang dừng…`
 - Đang dừng… (`qt/StudioLogic.js:332`) - web: `Đang dừng`, `Đang dừng…`
 - Đang gỡ… (`qt/StudioSettings.qml:123`) - web: `Đang gỡ`
-- Đang huỷ… (`qt/ExportLogic.js:344`) - web: `Đang huỷ…`
+- Đang huỷ… (`qt/ExportLogic.js:345`) - web: `Đang huỷ…`
 - Đang kiểm tra… (`qt/AdvancedUpdate.qml:116`) - web: `Đang kiểm tra`, `đang kiểm tra`
 - Đang kiểm đỉnh âm… (`qt/ExportLogic.js:201`) - web: `Đang kiểm đỉnh âm`, `Đang kiểm đỉnh âm…`
 - Đang làm file M4B… (`qt/ExportLogic.js:190`) - web: `Đang làm file M4B…`
@@ -321,7 +321,7 @@ Hợp lệ: `Theme.radiusControl / radiusCover / radiusSheet` (DESIGN.md 5.5, `d
 - Đang tìm… (`qt/FindLogic.js:131`) - web: `Đang tìm`
 - Đang tải bản mới… (`qt/AdvancedUpdate.qml:94`) - web: `Đang tải bản mới`
 - Đang tải chương… (`qt/ChapterReader.qml:86`) - web: (không có)
-- Đang tải nhạc nền ({}/{})… (`qt/ExportLogic.js:343`) - web: `Đang tải nhạc nền ({}/{})…`
+- Đang tải nhạc nền ({}/{})… (`qt/ExportLogic.js:344`) - web: `Đang tải nhạc nền ({}/{})…`
 - Đang tải âm thanh… (`qt/PlayButton.qml:13`) - web: `Đang tải âm thanh`
 - Đang tải… (`qt/ReviewLogic.js:59`) - web: `Đang tải`, `đang tải`
 - Đang tải… (`qt/WorkCard.qml:351`) - web: `Đang tải`, `đang tải`

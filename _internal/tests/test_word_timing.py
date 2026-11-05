@@ -180,6 +180,9 @@ def _chapter_project(tmp_path: Path) -> tuple[Path, list[float]]:
     rows = [(10 + i, 1, i + 1, 0, int(BREAK * 1000), TRUTH[i]["text"], "narration", "NARRATOR", 1, "verified", "", "x", len(piece) / rate, now)
             for i, piece in enumerate(pieces)]
     database.executemany("INSERT INTO segments VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", rows)
+    from abook.io_utils import sha256_file
+    database.execute("UPDATE artifacts SET sha256=?,size_bytes=? WHERE artifact_key='chapter_mp3:1'",
+                     (sha256_file(audio), audio.stat().st_size))
     database.commit()
     database.close()
     return project, [len(piece) / rate for piece in pieces]
@@ -275,7 +278,7 @@ def test_a_stamp_from_other_audio_is_not_trusted(tmp_path: Path) -> None:
 def test_the_words_round_trip_through_the_book_file_and_reading_tolerates_their_absence(tmp_path: Path, model: Path,
                                                                                          monkeypatch: pytest.MonkeyPatch) -> None:
     project, _ = _chapter_project(tmp_path)
-    packed = bookfile.pack(project, tmp_path / "co_chu.abook")  # đóng gói tự căn
+    packed = bookfile.pack(project, tmp_path / "co_chu.abook", partial=True)  # đóng gói tự căn
     with BookFile(packed) as book:
         book.verify()
         script = json.loads(book.read("scripts/1.json"))
@@ -286,7 +289,7 @@ def test_the_words_round_trip_through_the_book_file_and_reading_tolerates_their_
     assert how == "new" and packages.script(folder, 1)["segments"] == script["segments"], "người nghe đọc đúng `words` trong file"
 
     monkeypatch.setenv(word_timing.ENV_SWITCH, "0")  # không căn được (hay sách làm trước khi có tính năng này): file vẫn mở, không `words`
-    bare = bookfile.pack(make_project(tmp_path / "khac"), tmp_path / "khong_chu.abook")
+    bare = bookfile.pack(make_project(tmp_path / "khac"), tmp_path / "khong_chu.abook", partial=True)
     with BookFile(bare) as book:
         book.verify()
         assert all("words" not in segment for segment in json.loads(book.read("scripts/1.json"))["segments"])
@@ -300,7 +303,7 @@ def test_packing_never_fails_because_the_words_could_not_be_aligned(tmp_path: Pa
     project = make_project(tmp_path)
     summary = word_timing.prepare(project)
     assert "hỏng giữa chừng" in summary["error"]
-    path = bookfile.pack(project, tmp_path / "sach.abook")
+    path = bookfile.pack(project, tmp_path / "sach.abook", partial=True)
     with zipfile.ZipFile(path) as archive:
         assert "scripts/1.json" in archive.namelist()
 
@@ -449,6 +452,6 @@ def test_the_phone_library_lists_the_same_words_stamp_as_the_manifest_and_the_bo
     listed = app.library_view()[0]["wordsVersion"]
     assert listed and listed == _book_version(project, tmp_path)[1]["wordsVersion"] == word_timing.stamp(project)
 
-    packed = bookfile.pack(project, tmp_path / "sach.abook")
+    packed = bookfile.pack(project, tmp_path / "sach.abook", partial=True)
     with BookFile(packed) as book:
         assert "wordsVersion" not in json.loads(book.read("book.json")), "file sách không mang dấu của máy làm ra nó"

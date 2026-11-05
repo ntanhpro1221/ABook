@@ -13,6 +13,16 @@
 - Corpus chỉ đọc: 349 chương / 186 cuốn, 61.678 đoạn / 1.423.904 chữ. Cách đọc khác chữ gốc trước/sau: 6.138 / 9.756 đoạn; 4.175 đoạn đổi trực tiếp. 4.458/105.700 khoảng câu gốc đổi; theo lớp: ngập ngừng 2.714, mở đầu 1.674, kéo giọng 104, nghìn mơ hồ 1 (có giao nhau). Đọc tay 40/40 đạt theo luật; chưa tổng hợp hay chấm audio. Phương pháp và phân tầng ở `TEXT_NORMALIZATION.md` mục 4; không đưa chữ truyện vào repo.
 - Cache luật đọc Python/Kotlin tăng 4 → 5, cập nhật fixture khoá cache. Không đổi chữ truyện / giao diện; không cần chạy `ui_parity.py`. Kiểm thử CPU, BelowNormal, offscreen; không dùng GPU, Ollama, adb, phone hay emulator; không commit / push.
 - Hash trước task: `f10085f96acd7f9fe6a066f2bf5a74338b0a351bea3d98f58f6d2807912cbfff`; trước continuation: `6ce5ef4db5001e0acca1c686abb303f28e4c37a7de0220d15522111036f9ef52`; sau: `596c6b95d593a6200fb5fc56e3213135596f0d112995f6b589ed5222056ef476`. Các thay đổi vẫn ở nhánh dev, chưa tích hợp vào run đang thu.
+## 06-11-2026 — keepline (dev/keep-line, chưa commit)
+
+- Lời đọc được chuẩn bị một lần cùng span; test sinh bảng phát âm kiểm idempotence của hàng đã chuẩn bị và ranh giới chia câu.
+- Giữ take có tiếng qua từ chối mềm, writer thật từ chối trước khi ghi, crash/retry và nhánh normal; im lặng/NaN/audio không giải mã được không thay lời đọc.
+- Detector xuyên SQLite/WAV/MP3: dòng failed vẫn có chương cảnh báo, thiếu audio chỉ rõ dòng; phá bảng chương/băm/phụ đề/giải mã/nhãn QA phải bị bắt. Đưa file detector vào cổng phát hành trong `RELEASING.md`.
+- Xuất mặc định cần đủ chương; partial ghi N/M và tên thiếu trong manifest/CLI/UI web và Qt. Fixture đóng gói dùng MP3 thật và checkpoint băm tương ứng; fixture sách dở yêu cầu partial rõ ràng.
+- TypeScript typecheck và 16 test UI nhập các module đổi qua; parity web/Qt `--check` qua. Qt Studio5 offscreen/software: 67 kiểm tra qua; test partial mới 3/3 gồm init/cleanup.
+- Bộ Python rộng 248 file `-q -rf --tb=short` và các lượt sửa/rerun được ghi log/XML tại thư mục task; kết quả cuối và số `FAILED` thực ghi trong `report.md`/`keepline_test_summary.json`.
+- Lượt rộng: 4.981 testcase, 19 FAILED raw; sau sửa và chạy lại chung chín file từng lỗi: 221/221 passed, 0 FAILED. Detector cuối 29/29; tổng hợp kết quả testcase mới nhất 4.976 passed, 6 skipped, 1 xfailed, 0 failed. Ba test inspect được chạy lại nguyên file sau khi số dòng code ổn định, không nới assertion.
+- Pace chỉ đo trên hai SQLite đã sao chép, không mở gốc/đổi ngưỡng. Sàn kép chạm 0/3.691 dòng plain, 0/736 foreign-name, 0/61 number-heavy đủ điều kiện; chỉ đánh giá take còn lưu.
 
 ## 03-11-2026 — unchanged-audio cover re-import (dev/cover-reimport)
 

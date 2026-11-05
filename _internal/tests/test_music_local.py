@@ -303,6 +303,8 @@ def test_removing_a_track_makes_its_pin_unavailable_and_the_scene_chooses_anothe
 
 # ---- đi theo sách và đồng bộ ---------------------------------------------------------------------------------------------
 def _local_plan(project: Path, *links: str) -> None:
+    from tests.test_webui_listen_and_sync import write_chapter_audio
+    write_chapter_audio(project, 100.0)
     """Rãnh nhạc của `project` (chương 1) dùng lần lượt các bài `links` - bài của "Nhạc của tôi" với thông tin như plan thật."""
     scenes = [{"chapterId": 1, "start": i * 30.0, "end": i * 30.0 + 30.0, "link": link, "key": f"1:{i + 1}", "pinned": True}
               for i, link in enumerate(links)]
@@ -318,7 +320,7 @@ def test_a_pinned_local_track_is_embedded_in_the_book_file_and_plays_on_another_
     unused = app.my_music.import_file(songs["ogg"])[0]["link"]
     _local_plan(project, mine)
     digest = music_plan.local_hash(mine)
-    out = bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}", music_track=app.music_export_source())
+    out = bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}", music_track=app.music_export_source(), partial=True)
     name = f"music/{digest}.flac"
     with zipfile.ZipFile(out) as archive:
         assert archive.getinfo(name).compress_type == zipfile.ZIP_STORED, "nhạc phát thẳng trong gói"
@@ -349,7 +351,7 @@ def test_a_local_track_that_is_gone_is_left_out_of_the_book_and_leaves_silence(s
     _local_plan(project, mine)
     app.my_music.remove(music_plan.local_hash(mine))
     assert app.music_track_for_export(mine) is None and app.music_track_available(mine) is False
-    out = bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}", music_track=app.music_export_source())
+    out = bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}", music_track=app.music_export_source(), partial=True)
     with zipfile.ZipFile(out) as archive:
         assert not any(entry.startswith("music/") for entry in archive.namelist())
 

@@ -66,6 +66,11 @@ Pytest có summary thật và `--durations=30`; deadline 7200 giây. Qt offscree
   cuối (chữ ký, packaged smoke, audio sink, cài/cập nhật/gỡ), mapping R8 và bằng chứng đăng. Gate nguồn không khởi động
   GPU, Ollama, adb, điện thoại hay emulator. Các kiểm artifact trong bước đóng gói dưới đây vẫn bắt buộc.
 
+- `python -m pytest` toàn bộ, `npm run typecheck` và `npm test` (vitest, logic thuần của giao diện) của `ui/` đều qua; kiểm tra tay trên máy ảo Android (`docs/UI.md`).
+- Cổng đủ chương: `python -m pytest tests/test_one_line_never_removes_a_chapter.py -q -rf` phải qua. Detector dùng audio/SQLite thật, chủ động làm mất chương, băm, phụ đề và nhãn QA; một dòng chưa đạt không được làm mất chương đủ lời đọc hoặc giả thành đã đạt.
+- Bắt buộc trước publish: dựng UI của cây phát hành (`node node_modules/vite/bin/vite.js build` trong `ui/`), rồi từ `_internal` chạy `python scripts/tap_audit/run.py`: phải PASS mọi kịch bản (21/21 từ khi gỡ dấu trang), exit 0; `tests/test_tap_audit_targets.py` chặn kịch bản trỏ tới nhãn không còn trong giao diện.
+  Chạy tiếp `python scripts/tap_audit/run.py --inject-fault`: phải FAIL, exit 1 (đối chứng âm).
+  Kiểm chạm chuột/touch thật để bắt lỗi hộp thoại không chạm được như 0.4.134; pytest/vitest logic không phát hiện được lỗi này.
 - Không có gì bị cấm lọt vào gói: khoá ký (Android keystore, khoá updater), audio, dữ liệu cá nhân (`listening.json`,
   `devices.json`, `computers.json` - mã thiết bị máy tính khác cấp, `reviews.json`, tuỳ chọn), token, văn bản truyện (kho nghiên cứu ở repo riêng tư, clone vào `Corpus/`
   - thư mục này bị bỏ qua; một thông báo DMCA sẽ khoá cả repo công khai lẫn trang tải bản phát hành).
