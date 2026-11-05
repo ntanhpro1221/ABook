@@ -59,7 +59,7 @@ def test_narrator_gender_selects_a_safe_default_voice() -> None:
     settings = build_settings(overrides={"voices": {"narrator_gender": "female"}})
 
     assert settings["voices"]["narrator_gender"] == "female"
-    assert settings["voices"]["narrator_voice"] == "Ngọc Linh"
+    assert settings["voices"]["narrator_voice"] == "Mai Anh"
 
 
 def test_unknown_narrator_gender_is_rejected_cleanly() -> None:
@@ -68,7 +68,7 @@ def test_unknown_narrator_gender_is_rejected_cleanly() -> None:
 
 
 def test_news_presets_are_rejected_but_regional_narrators_are_allowed() -> None:
-    with pytest.raises(ValueError, match="cannot use a news voice"):
+    with pytest.raises(ValueError, match="Unsupported narrator voice"):
         build_settings(overrides={"voices": {"narrator_voice": "Minh Đức"}})
 
     settings = build_settings(overrides={"voices": {"narrator_voice": "Ngọc Trân"}})

@@ -25,12 +25,10 @@ from .database import (
 from .io_utils import slugify, stable_int
 from .voice_balance import formant_key as balance_formant_key
 from .voice_catalog import (
-    CASTING_REGIONS,
     GENDER_FEMALE,
     AGE_PITCH_RANK_BUCKET,
-    EXCLUDED_PRESETS,
     LAST_RESORT_PRESETS,
-    STYLE_NEWS,
+    preset_eligible,
     VIENEU_PRESETS,
     casting_preset_priority,
     casting_presets,
@@ -1818,9 +1816,7 @@ class PresetAllocator:
                 preset
                 for preset in VIENEU_PRESETS
                 if preset["name"] not in self.not_for_characters
-                and preset["style"] != STYLE_NEWS
-                and preset["region"] in CASTING_REGIONS
-                and preset["name"] not in EXCLUDED_PRESETS
+                and preset_eligible(preset, "character")
             ]
         pool = "npc" if npc else "named"
         usage = self.pool_usage[pool]
