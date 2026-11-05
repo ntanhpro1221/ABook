@@ -70,7 +70,10 @@ def test_turning_it_on_after_confirming_applies_it_and_turning_it_off_gives_the_
     status, view = _call(server, "PUT", _url(paths), {"mode": "narrator"})
 
     assert status == 200 and view["mode"] == "narrator" and view["applied"] is False
-    assert _speakers(db)["c1s0"] == "NARRATOR" and _speakers(db)["c1s2"] == "MAI", "nội tâm A+ không tự về giọng dẫn khi đã có bản thu"
+    assert _speakers(db)["c1s0"] == _speakers(db)["c1s2"] == "NARRATOR"
+    with db.connect() as conn:
+        own = conn.execute("SELECT voice_profile_id FROM segments WHERE stable_id='c1s1'").fetchone()[0]
+        assert {r[0] for r in conn.execute("SELECT voice_profile_id FROM segments WHERE stable_id IN ('c1s0','c1s2')")} == {own}
 
 
 def test_a_running_book_is_refused_and_nothing_is_written(studio) -> None:

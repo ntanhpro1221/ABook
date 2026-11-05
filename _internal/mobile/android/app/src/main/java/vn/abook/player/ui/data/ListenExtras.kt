@@ -206,7 +206,7 @@ data class CastMember(
 )
 
 @Immutable
-data class Narrator(val voice: String, val lines: Int, val seconds: Double, val pendingVoice: PendingVoice?, val redo: Int)
+data class Narrator(val voice: String, val lines: Int, val seconds: Double, val pendingVoice: PendingVoice?, val redo: Int, val chapterVoices: List<String> = emptyList())
 
 @Immutable
 class CastView(val narrator: Narrator, val characters: List<CastMember>, val extras: List<CastMember>) {
@@ -227,6 +227,7 @@ object Cast {
             Narrator(
                 narrator?.optString("voice").orEmpty().cleanNull(), narrator?.optInt("lines") ?: 0, narrator?.optDouble("seconds", 0.0) ?: 0.0,
                 pending(narrator?.optJSONObject("pendingVoice")), narrator?.optInt("redo") ?: 0,
+                narrator?.optJSONArray("chapterVoices").let { list -> (0 until (list?.length() ?: 0)).map { list!!.optString(it) } },
             ),
             people(json.optJSONArray("characters")), people(json.optJSONArray("extras")),
         )
