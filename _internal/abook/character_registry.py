@@ -33,7 +33,7 @@ from .voice_catalog import (
     VIENEU_PRESETS,
     casting_preset_priority,
     casting_presets,
-    child_voice_preference,
+    listener_rank,
     preset_by_name,
     base_pitch_for_preset,
     formant_ratio_for_age,
@@ -1775,7 +1775,6 @@ class PresetAllocator:
         *,
         npc: bool,
         age: str = "unknown",
-        prominent: bool = False,
         who: str = "",
     ) -> tuple[dict[str, str], float, int]:
         """Pick a preset, the formant warp it needs, and the F0 offset its age implies.
@@ -1844,17 +1843,20 @@ class PresetAllocator:
                 # the chapter.
                 name in LAST_RESORT_PRESETS,
                 usage[name],
+                # A listener's own ranking of the voices they have heard, for this role
+                # (child or adult, by gender), comes before either computed proxy. Reach
+                # and shift only estimate how good the result will sound; this is a
+                # verdict on the result, and the estimates have already been caught
+                # disagreeing with it. It sits after usage, so variety still comes
+                # first: the character with the most lines is cast first and takes the
+                # best ranked voice nobody has, the next takes the next one down.
+                listener_rank(name, age, gender),
                 # A preset that cannot reach this age is a worse fit however available it
                 # is: an adult male tract stops 0.8 cm short of an eight-year-old even
                 # warped to its limit, while the shortest presets land exactly on it.
                 # Bucketed to half a centimetre: two presets that both land near the
                 # target are the same fit to a listener, and a 0.1 cm edge must not
                 # outrank a voice being hard to follow.
-                # A listener's own ranking of the voices they have heard as children
-                # comes before either computed proxy. Reach and shift only estimate how
-                # good the result will sound; this is a verdict on the result, and the
-                # estimates have already been caught disagreeing with it.
-                child_voice_preference(name, age, gender),
                 round(preset_age_reach(name, age, gender) * 2.0) / 2.0,
                 # Then the dearer of the two warps. Measured on four presets reading the
                 # same line, the age pitch shift costs about 0.85 MOS against the formant
@@ -1870,6 +1872,8 @@ class PresetAllocator:
                 # Bucketed at four semitones so a one-semitone edge cannot outweigh
                 # anything ranked above it.
                 abs(age_pitch_semitones(age, gender, name)) // AGE_PITCH_RANK_BUCKET,
+                # Last: the arbitrary fixed order (`CAST_ORDER`), which only separates
+                # voices the listener has not ranked. It says nothing about quality.
                 *casting_preset_priority(preset),
             )
 
@@ -3038,7 +3042,6 @@ def build_registry_and_cast(
                 gender,
                 npc=local,
                 age=age,
-                prominent=importance == "main",
                 who=canonical,
             )
             profile_id = _profile_for_preset(
