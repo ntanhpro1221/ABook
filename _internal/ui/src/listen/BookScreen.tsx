@@ -566,6 +566,7 @@ export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onUnmer
         <div className="min-w-0 flex-1">
           <div className="label-section text-fg-2">Người kể chuyện</div>
           <div className="mt-0.5 font-semibold">{cast.narrator.voice || "Mặc định"}</div>
+          {cast.narrator.chapterVoices?.map(line => <div key={line} className="mt-0.5 text-xs text-fg-2">{line}</div>)}
           {onPickNarrator && cast.narrator.pendingVoice?.preset && (
             <div className="mt-0.5 truncate text-xs font-medium text-accent-text">Chờ áp dụng: giọng {voiceName(cast.narrator.pendingVoice)}</div>
           )}

@@ -15,6 +15,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Giọng đọc
 
 - Giọng kể chuyện nữ mặc định là Đoan Trang; nhân vật nữ ưu tiên Ngọc Linh rồi Đoan Trang. Mai Anh giữ preset tin tức, không chọn để kể chuyện hay phân vai.
+- Chương có người kể “tôi” khác giới giọng dẫn dùng giọng nhân vật ấy cho lời kể và nội tâm của chính họ.
 - Sửa lỗi cao độ bị áp hai lần: giọng được chỉnh trầm hay cao (vd. hạ 2 nửa cung) nay phát đúng mức đã chỉnh, không còn gấp đôi khi ghép vào sách. Giọng trẻ con trước đây bị đẩy cao gần gấp đôi dự định.
 - Phân vai theo bảng xếp hạng giọng của người nghe, chia theo vai (kể chuyện / nhân vật) và theo bậc, thay cho thứ tự tên giọng. Giọng kể chuyện nam mặc định là Đức Trí.
 - Trẻ con (trai hay gái) đọc bằng giọng nữ nguyên bản, không còn bóp cao độ hay âm sắc.

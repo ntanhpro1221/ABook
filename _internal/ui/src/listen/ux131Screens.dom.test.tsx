@@ -50,6 +50,13 @@ const chapter = (id: number) => ({ id, index: id - 1, subtitle: "", title: `Chư
 const book = (id = "book", title = "Truyện thử", count = 8) => ({ id, title, narrator: "Giọng thử", duration: 60 * count, chaptersTotal: count, chaptersAvailable: count, complete: true, producing: false, updatedAt: null,
   state: { chapters: {} }, progress: { heardSeconds: 0, totalSeconds: 60 * count, fraction: 0, chaptersDone: 0, finished: false }, chapters: Array.from({ length: count }, (_, i) => chapter(i + 1)) }) as ListenBook;
 
+it("shows chapter narrator exceptions beside the book narrator", async () => {
+  state.cast = { narrator: { voice: "Đức Trí", lines: 10, seconds: 0, chapterVoices: ["Chương 8: Đoan Trang"] }, characters: [{ name: "TOUKA", displayName: "Touka", lines: 1, seconds: 0, firstChapter: "now" }], extras: [] };
+  await render(<CastList bookId="b" reached={new Set()} onPickVoice={() => {}} />);
+  expect(host.textContent).toContain("Đức Trí");
+  expect(host.textContent).toContain("Chương 8: Đoan Trang");
+});
+
 for (const photo of [false, true]) it(`huy hiệu bìa vào/ra có ảnh cũ inert, ảnh thật=${photo}`, async () => {
   const cover = (playing: boolean) => <BookCover title="Sách" playing={playing} image={photo ? { url: "/cover.jpg", width: 100, height: 100 } : undefined} />;
   await render(cover(false)); await render(cover(true)); expect(host.querySelector(".vu")).not.toBeNull();
