@@ -13,6 +13,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Phân vai theo bảng xếp hạng giọng của người nghe, chia theo vai (kể chuyện / nhân vật) và theo bậc, thay cho thứ tự tên giọng. Giọng kể chuyện nam mặc định là Đức Trí.
 - Trẻ con (trai hay gái) đọc bằng giọng nữ nguyên bản, không còn bóp cao độ hay âm sắc.
 
+### Studio
+
+- Thẻ "Gọi hay nói" bắt thêm những câu gán nhầm cho chính người được gọi: gọi kèm danh xưng ("Đừng lo, anh Minh."), gọi tên giữa lời thoại, và câu đáp lại nhắc đúng người vừa được gọi. Thẻ đề xuất ba người đang nói chuyện với người ấy, cạnh mỗi người có nút nghe giọng; thẻ "Ai nói câu này" cũng có nút nghe ấy.
+
 ### Điện thoại
 
 - Bản cài thử không còn chiếm chỗ app thật. Nếu máy đang cài bản thử, mục Cập nhật nói rõ "Bản cài thử" thay vì tải một bản không cài được.

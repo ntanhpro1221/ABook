@@ -1812,6 +1812,25 @@ def speaker_key(name: str) -> str:
     return " ".join(name.strip().casefold().split()).upper()
 
 
+def voice_samples(connection: sqlite3.Connection) -> dict[str, int]:
+    """{người nói: mã một câu thoại đã thu của họ} - câu nghe thử giọng (dài gần 4 giây nhất, đã kiểm). Tab Nhân vật và nút nghe
+    thử cạnh mỗi người được đề xuất trên thẻ "Ai nói câu này" dùng chung một câu. Sổ chưa có cột thu âm: không ai có câu."""
+    columns = {str(row[1]) for row in connection.execute("PRAGMA table_info(segments)")}
+    if not {"wav_path", "wav_duration", "status"} <= columns:
+        return {}
+    return {
+        str(row[0]): int(row[1])
+        for row in connection.execute(
+            "SELECT speaker, id FROM ("
+            "  SELECT speaker, id, ROW_NUMBER() OVER ("
+            "    PARTITION BY speaker ORDER BY ABS(COALESCE(wav_duration, 0) - 4.0), id) AS rank"
+            "  FROM segments WHERE kind = 'dialogue' AND status IN ('verified', 'warning')"
+            "   AND wav_path IS NOT NULL AND wav_path != '' AND COALESCE(wav_duration, 0) >= 1.5"
+            ") WHERE rank = 1"
+        )
+    }
+
+
 def cast(project_root: Path) -> dict[str, Any]:
     return _remembered("cast", project_root, (), lambda: _cast(project_root))
 
@@ -1834,17 +1853,7 @@ def _cast(project_root: Path) -> dict[str, Any]:
             " SUM(wav_path IS NOT NULL AND wav_path != '') AS recorded"
             " FROM segments GROUP BY speaker, kind, voice_profile_id"
         ).fetchall()
-        samples = {
-            str(row["speaker"]): int(row["id"])
-            for row in connection.execute(
-                "SELECT speaker, id FROM ("
-                "  SELECT speaker, id, ROW_NUMBER() OVER ("
-                "    PARTITION BY speaker ORDER BY ABS(COALESCE(wav_duration, 0) - 4.0), id) AS rank"
-                "  FROM segments WHERE kind = 'dialogue' AND status IN ('verified', 'warning')"
-                "   AND wav_path IS NOT NULL AND wav_path != '' AND COALESCE(wav_duration, 0) >= 1.5"
-                ") WHERE rank = 1"
-            )
-        }
+        samples = voice_samples(connection)
         chapter_numbers = {chapter_id: item["name"] for chapter_id, item in chapter_names(connection, project_root).items()}
         book_row = connection.execute("SELECT updated_at FROM book WHERE id=1").fetchone()
         narrator_now = narrator_voice_in(connection, voices)

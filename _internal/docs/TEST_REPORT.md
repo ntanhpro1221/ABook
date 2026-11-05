@@ -1,5 +1,13 @@
 # Test report
 
+## 06-11-2026 — Studio: Gọi hay nói (dev/caller-card)
+
+- Pure vocative detector uses character names/aliases, titles, call particles and reply pairs; synthetic fixtures only. The card offers up to three alternative named speakers plus narrator/unnamed, plays existing recorded/preset samples, uses the existing speaker override path and appears in precast step (c).
+- Read-only gold measurement: 95 chapters, 40 book folders; precision 498/503, conditional mention-pair recall 498/1007. These are development-set results using gold identities, not deployed-model precision or independent held-out results.
+- Pytest: 94 files, 1,731 passed / 3 skipped / 1,734 cases; 0 FAILED lines, 0 F, 0 E in real `-q -rf` output, matched against per-file XML. Includes all 68 test files with direct imports of changed Python modules; caller detector/card 36, existing self-addressed card 4, work_items 32, work_items_at_scale 9, work_items_speaker_suggestions 10, UI parity 17 and Qt parity 11.
+- Studio + motion vitest: 374/374 passed across 70 files, 0 failures. Earlier whole-UI run had 26 environment failures from the junction's missing lucide EighthNote export in music/gallery. Gradle: WorkLogicTest 25 and StudioWorkScreenTest 13, 0 failures/errors; XML newer than the saved run start. Both parity scripts `--check` and `git diff --check` passed. No screenshot or visual verification.
+- Locked list read from code: 42 entries; before/after hash `f10085f96acd7f9fe6a066f2bf5a74338b0a351bea3d98f58f6d2807912cbfff`. CUDA disabled, Qt offscreen, CPU checks BelowNormal; no Ollama, device/emulator, commit or push. Per-file counts, raw logs/XML and measurement script are in the caller task scratchpad.
+
 ## 03-11-2026 — unchanged-audio cover re-import (dev/cover-reimport)
 
 - Android and desktop `.abook` imports now compare the base book layer even when audio is identical, then stage and swap changed metadata/assets while reusing unchanged audio. Cover addition, replacement, metadata-only updates and removal preserve listener title/cover precedence. Local sidecars/workshop survive listening-package refreshes. Desktop cover metadata is staged with the image. Repeating an EPUB/TXT selection retains its existing behavior.

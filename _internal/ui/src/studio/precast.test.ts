@@ -49,6 +49,11 @@ describe("chọn thẻ cho từng bước", () => {
     expect(lineCount(lines)).toBe(4);
     expect(lineItems(items, [])).toEqual([]);
   });
+
+  it("bước c giữ thẻ gọi hay nói trong ba chương sắp thu", () => {
+    const calls = [item("vocative", "near", { chapters: [2] }), item("vocative", "late", { chapters: [8] })];
+    expect(lineItems(calls, [1, 2, 3]).map(entry => entry.key)).toEqual(["near"]);
+  });
 });
 
 describe("lời trên màn", () => {

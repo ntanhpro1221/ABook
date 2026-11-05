@@ -7,7 +7,7 @@ icon `LucidePaths.js` sinh bởi `scripts/gen_lucide_icons.py --qml`. Bảng dư
 
 <!-- ui_parity_qt:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity_qt.py - không sửa tay, chạy lại script) -->
 
-Quét: web máy tính 4874 chữ (2788 khác nhau), 319 cặp nhãn-icon; Qt 3413 chữ (2558 khác nhau), 275 cặp nhãn-icon (icon dùng ở 386 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
+Quét: web máy tính 4882 chữ (2788 khác nhau), 319 cặp nhãn-icon; Qt 3413 chữ (2558 khác nhau), 275 cặp nhãn-icon (icon dùng ở 386 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
 
 ## a. Cùng việc, khác chữ
 
@@ -44,10 +44,10 @@ Nhãn ngắn Qt không có nguyên văn (khoá lỏng) ở web máy tính mà gi
 | Studio việc duyệt | Bỏ qua mọi việc từ | Bỏ qua mọi việc từ {}? | 1.00 | `qt/PhoneEdits.qml:153` ~ `studio/PhoneEdits.tsx:255` |
 | Studio việc duyệt | Dùng “{}” | Dùng “ | 1.00 | `qt/ReadingProblem.qml:39` ~ `studio/ReadingProblem.tsx:26` |
 | Studio việc duyệt | Máy nghe ra: “{}” | Máy nghe ra: “ | 1.00 | `qt/ReviewLogic.js:41` ~ `studio/ReviewQueue.tsx:231` |
-| Studio việc duyệt | Mọi việc đã có quyết định | Mọi việc đã có quyết định{}. | 1.00 | `qt/WorkLogic.js:274` ~ `studio/WorkInbox.tsx:1300` |
+| Studio việc duyệt | Mọi việc đã có quyết định | Mọi việc đã có quyết định{}. | 1.00 | `qt/WorkLogic.js:274` ~ `studio/WorkInbox.tsx:1322` |
 | Studio việc duyệt | Sẽ đọc là “{}” | Sẽ đọc là “ | 1.00 | `qt/ReviewLogic.js:46` ~ `studio/ReviewQueue.tsx:241` |
 | Studio việc duyệt | Đã dùng | Dùng “ | 1.00 | `qt/WorkStore.qml:323` ~ `studio/ReadingProblem.tsx:26` |
-| Studio việc duyệt | Đúng rồi, giữ “{}” | Đúng rồi, giữ “ | 1.00 | `qt/WorkPronunciation.qml:34` ~ `studio/WorkInbox.tsx:356` |
+| Studio việc duyệt | Đúng rồi, giữ “{}” | Đúng rồi, giữ “ | 1.00 | `qt/WorkPronunciation.qml:34` ~ `studio/WorkInbox.tsx:376` |
 | Studio việc duyệt | Đoạn này do | Đoạn này do {} kể | 0.88 | `qt/WorkLogic.js:47` ~ `studio/workText.ts:22` |
 | Studio việc duyệt | Tải tiếp · còn | Tải tiếp · còn {} câu | 0.86 | `qt/ReviewLogic.js:59` ~ `studio/ReviewQueue.tsx:524` |
 | Studio việc duyệt | Nghe liền {} câu | Nghe liền | 0.82 | `qt/ReviewQueue.qml:253` ~ `studio/ReviewQueue.tsx:474` |
@@ -210,7 +210,7 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 ### Studio việc duyệt
 
 - chỉ Qt (33): Đã hoàn tác (`qt/DecisionLogic.js:31`); Đã hoàn tác. {} (`qt/DecisionLogic.js:31`); Trước đó chưa ai quyết khác (`qt/DecisionLogic.js:39`); Trước đó đang là {} (`qt/DecisionLogic.js:39`); Xem thêm {} tên (`qt/NameLogic.js:33`); Thêm* (`qt/NameLogic.js:45`); Đã bỏ qua ({}) (`qt/PhoneEdits.qml:83`); Bỏ qua mọi việc từ (`qt/PhoneEdits.qml:153`); Dùng “{}” (`qt/ReadingProblem.qml:39`); Máy nghe ra: “{}” (`qt/ReviewLogic.js:41`); Sẽ đọc là “{}” (`qt/ReviewLogic.js:46`); Tải tiếp · còn (`qt/ReviewLogic.js:59`); Nghe liền {} câu (`qt/ReviewQueue.qml:253`); Nghe câu: (`qt/ReviewRow.qml:82`); Đang đọc là: <span style="color:{}">{} (`qt/ReviewRow.qml:211`); Máy đọc câu này thành (`qt/ReviewSpoken.qml:41`); Ảnh hưởng <b><span style="color:{}">{} (`qt/WorkCard.qml:149`); Đang mở* (`qt/WorkCard.qml:339`); Đang đóng (`qt/WorkCard.qml:339`); Xem thêm {} việc (`qt/WorkInbox.qml:218`); Đoạn này do (`qt/WorkLogic.js:47`); Đang chọn cả {} câu* (`qt/WorkLogic.js:152`); Đang chọn {}/{} câu* (`qt/WorkLogic.js:154`); Xem thêm (đang hiện {}/{} câu)* (`qt/WorkLogic.js:163`); Giọng nam* (`qt/WorkLogic.js:219`); Giọng nữ* (`qt/WorkLogic.js:219`); Mọi việc đã có quyết định (`qt/WorkLogic.js:274`); Đúng rồi, giữ “{}” (`qt/WorkPronunciation.qml:34`); Cả chuỗi (`qt/WorkSpeaker.qml:60`); Xem {} câu (`qt/WorkSpeaker.qml:144`); Chưa hoàn tác được* (`qt/WorkStore.qml:87`); Mới hoàn tác được {}/{} việc (`qt/WorkStore.qml:87`); Đã dùng (`qt/WorkStore.qml:323`)
-- chỉ web (21): Tìm hoặc thêm tên (`128`); Không khớp “ (`166`); Bỏ qua mọi việc từ {}? (`237`); Dùng “ (`26`); Máy nghe ra: “ (`231`); Sẽ đọc là “ (`241`); Đang đọc là: (`246`); Nghe liền (`474`); Tải tiếp · còn {} câu (`524`); Nghe thử {} đọc là {} (`99`); Chưa nghe thử được: (`146`); Đúng rồi, giữ “ (`356`); Xem (`596`); Nam (`625`); Ảnh hưởng (`930`); ...
+- chỉ web (21): Tìm hoặc thêm tên (`128`); Không khớp “ (`166`); Bỏ qua mọi việc từ {}? (`237`); Dùng “ (`26`); Máy nghe ra: “ (`231`); Sẽ đọc là “ (`241`); Đang đọc là: (`246`); Nghe liền (`474`); Tải tiếp · còn {} câu (`524`); Nghe thử {} đọc là {} (`99`); Chưa nghe thử được: (`146`); Đúng rồi, giữ “ (`376`); Xem (`618`); Nam (`647`); Ảnh hưởng (`952`); ...
 
 ### Studio nhân vật
 
