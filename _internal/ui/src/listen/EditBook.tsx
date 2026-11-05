@@ -14,9 +14,10 @@ import { SectionHeading } from "@/shared/SectionHeading";
 import { COVER_SEARCH_NOTE, COVER_SEARCH_TITLE, CoverSearchPanel } from "@/shared/CoverSearch";
 import { canEditLayer, editBlockedNote, studioNeed, syncsToComputer } from "@/shared/capabilities";
 import { formatClock } from "@/shared/format";
-import { levelOptions, levelText } from "@/shared/musicLevels";
+import { MusicLevelSlider } from "@/shared/MusicLevelSlider";
+import { LEVEL_TITLE } from "@/shared/musicLevels";
 import { Switch } from "@/desktop/Switch";
-import { DialogActions, Select, Button, Dialog, ChoiceRow, ContentSkeleton, InlineError } from "@/shared/ui";
+import { DialogActions, Button, Dialog, ChoiceRow, ContentSkeleton, InlineError } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { MUSIC_CHANGED_EVENT } from "./musicBed";
 import { MyMusicSection, SwapTrack } from "./MyMusic";
@@ -186,20 +187,10 @@ export function MusicSection({ book }: { book: ListenBook }) {
           <Switch id={`music-enabled-${book.id}`} label="Nhạc nền" checked={data.enabled} disabled={change.isPending} onCheckedChange={(enabled) => change.mutate({ enabled })} />
           <label htmlFor={`music-enabled-${book.id}`}>{data.enabled ? "Bật" : "Tắt"}</label>
         </div>
-        <label className="text-sm">
-          <span className="block text-fg-2">Mức nhạc nền</span>
-          <Select
-            value={String(data.levelDb)}
-            onChange={(event) => change.mutate({ levelDb: Number(event.target.value) })}
-            className="mt-1"
-          >
-            {levelOptions(data.levelDb).map(([value, label]) => (
-              <option key={value} value={String(value)}>
-                {levelText(value, label)}
-              </option>
-            ))}
-          </Select>
-        </label>
+        <div className="w-full max-w-72 text-sm">
+          <span className="block text-fg-2">{LEVEL_TITLE}</span>
+          <MusicLevelSlider value={data.levelDb} saving={change.isPending} onChange={(levelDb) => change.mutate({ levelDb })} className="mt-1" />
+        </div>
       </div>
       <ul ref={scrollFade.ref} style={scrollFade.style} className={cn("max-h-72 divide-y divide-line overflow-y-auto", !data.enabled && "opacity-50")}>
         {data.cues.map((cue) => (

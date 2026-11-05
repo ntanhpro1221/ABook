@@ -153,27 +153,23 @@ object MusicJson {
 
 /** Mức nhạc dưới giọng đọc (shared/musicLevels.ts): dB nhỏ hơn giọng bấy nhiêu. */
 object MusicLevels {
-    const val DEFAULT_DB = -20.0
-
-    /** Cùng chữ với web (shared/musicLevels.ts MUSIC_LEVELS, đã kèm lời levelText): -28 là mức nhạc khó che lời đọc nhất (MIX_QA mục 7.1). */
-    val levels: List<Pair<Double, String>> = listOf(
-        -14.0 to "To", -17.0 to "Hơi to", -20.0 to "Vừa (mặc định)", -24.0 to "Nhỏ", -28.0 to "Rất nhỏ (rõ lời)",
-    )
-
-    /** Tên ô chọn mức của web: "Mức nhạc nền" (MusicTab, EditBook, menu Nhạc nền). */
+    const val DEFAULT_DB = vn.abook.player.BuildConfig.levelDefaultDb
+    const val MIN_DB = vn.abook.player.BuildConfig.levelMinDb
+    const val MAX_DB = vn.abook.player.BuildConfig.levelMaxDb
+    const val STEP_DB = vn.abook.player.BuildConfig.levelStepDb
     const val TITLE = "Mức nhạc nền"
-
-    /** Các mức: có sẵn, thêm mức của sách (sách đóng gói ở -18 dB, "-18 dB (của sách)" như levelOptions) nếu không trùng mức nào - xếp từ to tới nhỏ. */
-    fun options(current: Double): List<Pair<Double, String>> =
-        if (levels.any { it.first == current }) levels
-        else (levels + (current to "${decibels(current)} dB (của sách)")).sortedByDescending { it.first }
-
-    /** Như `String(current).replace(".", ",")` của web: -18 -> "-18", -18.5 -> "-18,5". */
+    const val RESET = "Về mặc định"
+    fun clamp(value: Double): Double = value.coerceIn(MIN_DB, MAX_DB)
+    fun label(value: Double): String = when {
+        value >= -15.5 -> "To"
+        value >= -18.5 -> "Hơi to"
+        value >= -21.5 -> "Vừa"
+        value >= -25.5 -> "Nhỏ"
+        else -> "Rất nhỏ (rõ lời)"
+    }
     private fun decibels(value: Double): String =
         if (value == Math.rint(value)) value.toLong().toString() else value.toString().replace('.', ',')
-
-    /** Chữ của mức đang chọn. */
-    fun label(current: Double): String = options(current).firstOrNull { it.first == current }?.second.orEmpty()
+    fun number(value: Double): String = "${decibels(value)} dB" + if (value == DEFAULT_DB) " (mặc định)" else ""
 }
 
 /** Chữ của nhạc nền trên điện thoại (cùng luật với playlistBed.ts, nhãn ngắn). */

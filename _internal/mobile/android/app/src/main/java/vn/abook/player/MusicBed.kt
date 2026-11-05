@@ -458,8 +458,8 @@ object MusicBed {
             failed.clear()
             book = bookId
             music = if (bookId.isEmpty()) null else Store.playableManifest(bookId)?.optJSONObject("music")
-            val level = music?.optDouble("levelDb", -20.0) ?: -20.0
-            gain = 10.0.pow(level.coerceIn(-40.0, -6.0) / 20.0).toFloat()
+            val level = music?.optDouble("levelDb", BuildConfig.levelDefaultDb) ?: BuildConfig.levelDefaultDb
+            gain = 10.0.pow(level.coerceIn(BuildConfig.levelMinDb, BuildConfig.levelMaxDb) / 20.0).toFloat()
             chapter = Int.MIN_VALUE
             if (music == null && bookId.isNotEmpty()) openPlaylist(appContext, bookId)
         }
@@ -1047,7 +1047,7 @@ object MusicBed {
         }
         val stored = choice.takeIf { it != Playlists.SCENE }.orEmpty() // "scene" mà không phải sách chữ / sách có nhạc của người làm sách: như chưa chọn gì
         if (stored.isEmpty() || stored == Playlists.OFF) return
-        val levelDb = changes.optDouble("levelDb", -20.0).takeIf { it.isFinite() } ?: -20.0
+        val levelDb = changes.optDouble("levelDb", BuildConfig.levelDefaultDb).takeIf { it.isFinite() } ?: BuildConfig.levelDefaultDb
         playlist = stored
         clockSeconds = prefs(appContext).getFloat(clockKey(), 0f).toDouble()
         val ticket = generation

@@ -7,7 +7,7 @@ icon `LucidePaths.js` sinh bởi `scripts/gen_lucide_icons.py --qml`. Bảng dư
 
 <!-- ui_parity_qt:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity_qt.py - không sửa tay, chạy lại script) -->
 
-Quét: web máy tính 4874 chữ (2788 khác nhau), 319 cặp nhãn-icon; Qt 3413 chữ (2558 khác nhau), 275 cặp nhãn-icon (icon dùng ở 386 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
+Quét: web máy tính 4873 chữ (2787 khác nhau), 319 cặp nhãn-icon; Qt 3402 chữ (2553 khác nhau), 275 cặp nhãn-icon (icon dùng ở 385 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
 
 ## a. Cùng việc, khác chữ
 
@@ -61,7 +61,7 @@ Nhãn ngắn Qt không có nguyên văn (khoá lỏng) ở web máy tính mà gi
 | Trang sách | Lần nghe | Lần nghe {} | 1.00 | `qt/RecordLogic.js:9` ~ `listen/BookScreen.tsx:716` |
 | Trang sách | Tạo và nghe từ đầu | Tạo và nghe | 0.76 | `qt/RecordLogic.js:74` ~ `listen/BookScreen.tsx:866` |
 | Trang sách | Hồ sơ nghe: {} | Đã nghe {} | 0.59 | `qt/RecordChip.qml:13` ~ `listen/BookScreen.tsx:1196` |
-| Đang nghe | Hẹn giờ tắt | Hẹn giờ đã tắt tiếng lúc | 0.63 | `qt/NowPlaying.qml:410` ~ `listen/PlayerViews.tsx:997` |
+| Đang nghe | Hẹn giờ tắt | Hẹn giờ đã tắt tiếng lúc | 0.63 | `qt/NowPlaying.qml:410` ~ `listen/PlayerViews.tsx:978` |
 
 ## b. Cùng nhãn khác icon, cùng icon khác nhãn
 
@@ -160,17 +160,17 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 ### Thanh phát
 
 - chỉ Qt (8): Không có mạng - (`qt/PlayerAlert.qml:9`); Giọng {} đang không dùng được.* (`qt/PlayerAlert.qml:24`); Cửa sổ mini (`qt/PlayerBar.qml:112`); Hẹn giờ* (`qt/PlayerBar.qml:140`); Nhạc nền* (`qt/PlayerBar.qml:143`); Giọng đọc* (`qt/PlayerBar.qml:144`); Nghe bằng giọng đọc. (`qt/PlayerLabels.js:9`); Thêm giọng…* (`qt/PlayerVoicePopover.qml:30`)
-- chỉ web (7): Shift+← (`264`); Sắp tắt · (`1268`); Nghe tiếp · {} (`81`); Shift+→ (`99`); Chưa có audio (`109`); Chạm (`120`); Nghe bằng giọng đọc.{} (`142`)
+- chỉ web (7): Shift+← (`265`); Sắp tắt · (`1249`); Nghe tiếp · {} (`81`); Shift+→ (`99`); Chưa có audio (`109`); Chạm (`120`); Nghe bằng giọng đọc.{} (`142`)
 
 ### Đang nghe
 
 - chỉ Qt (18): Tạm dừng {}* (`qt/ChapterList.qml:26`); Đọc {} (chưa có audio)* (`qt/ChapterList.qml:26`); Đọc chương này* (`qt/ChapterList.qml:45`); Đọc* (`qt/ChapterReader.qml:14`); Chưa có chương để đọc. (`qt/ChapterReader.qml:33`); Đang tải chương… (`qt/ChapterReader.qml:86`); Đã nghe* (`qt/ChapterRow.qml:50`); Tuỳ chọn {}* (`qt/ChapterRow.qml:102`); Thêm tuỳ chọn* (`qt/NowPlaying.qml:213`); Giọng {}* (`qt/NowPlaying.qml:265`); Thử lại* (`qt/NowPlaying.qml:308`); Hẹn giờ tắt (`qt/NowPlaying.qml:410`); Danh sách chương* (`qt/NowPlaying.qml:425`); Nhạc nền* (`qt/NowPlaying.qml:436`); Cửa sổ mini (`qt/NowPlaying.qml:539`); Gợi ý cho phần đọc* (`qt/ReadingSuggestions.qml:8`); Bỏ dòng (`qt/ReadingSuggestions.qml:56`); Đóng* (`qt/ReadingSuggestions.qml:79`)
-- chỉ web (16): Shift+← (`264`); Đã chọn tốc độ đọc {} (`465`); Phím (`480`); Đã chọn giọng {} (`765`); Hẹn giờ đã tắt tiếng lúc (`997`); Bật lại (`1006`); Tiếng nhỏ dần (`1014`); Hẹn giờ ngủ trên {} (`1080`); Về chế độ nghe (`2101`); Nghe tiếp · {} (`81`); Shift+→ (`99`); Chưa có audio (`109`); Chạm (`120`); Nghe bằng giọng đọc.{} (`142`); Hẹn giờ ngủ: còn {} giây (`84`); ...
+- chỉ web (16): Shift+← (`265`); Đã chọn tốc độ đọc {} (`466`); Phím (`481`); Đã chọn giọng {} (`746`); Hẹn giờ đã tắt tiếng lúc (`978`); Bật lại (`987`); Tiếng nhỏ dần (`995`); Hẹn giờ ngủ trên {} (`1061`); Về chế độ nghe (`2082`); Nghe tiếp · {} (`81`); Shift+→ (`99`); Chưa có audio (`109`); Chạm (`120`); Nghe bằng giọng đọc.{} (`142`); Hẹn giờ ngủ: còn {} giây (`84`); ...
 
 ### Đọc theo
 
 - chỉ Qt (1): Đang mở văn bản chương… (`qt/ReadAlongView.qml:330`)
-- chỉ web (3): Đang tải chữ (`1715`); Nghe từ “{}” (`55`); Shift F10: sửa cách đọc. (`339`)
+- chỉ web (3): Đang tải chữ (`1696`); Nghe từ “{}” (`55`); Shift F10: sửa cách đọc. (`339`)
 
 ### Trang sách
 
@@ -189,8 +189,8 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 
 ### Sửa sách
 
-- chỉ Qt (45): Chưa đọc được file ảnh* (`qt/EditBook.qml:405`); Lưu thay đổi* (`qt/EditBookItems.qml:70`); Hơi to* (`qt/EditBookLogic.js:49`); Nhỏ* (`qt/EditBookLogic.js:49`); Rất nhỏ* (`qt/EditBookLogic.js:49`); Vừa (mặc định)* (`qt/EditBookLogic.js:49`); Chưa nối được {} (`qt/EditBookLogic.js:79`); Đang thêm nhạc thì dừng* (`qt/EditBookMyMusic.qml:68`); Chưa xoá được bài này* (`qt/EditBookMyMusic.qml:81`); Đã xoá khỏi Nhạc của tôi* (`qt/EditBookMyMusic.qml:81`); Chọn nhạc của bạn (`qt/EditBookMyMusic.qml:114`); Nhạc của tôi* (`qt/EditBookMyMusic.qml:123`); Chưa có bài nào* (`qt/EditBookMyMusic.qml:124`); Thêm nhạc của bạn* (`qt/EditBookMyMusic.qml:133`); Đang thêm {}/{}* (`qt/EditBookMyMusic.qml:133`); Nhạc riêng* (`qt/EditBookMyMusic.qml:145`); Phân tích nhạc (`qt/EditBookMyMusic.qml:157`); Huỷ* (`qt/EditBookMyMusic.qml:173`); Cập nhật ({})* (`qt/EditBookMyMusic.qml:181`); Phân tích {} bài (`qt/EditBookMyMusic.qml:181`); Thử lại* (`qt/EditBookMyMusic.qml:181`); Tải ({})* (`qt/EditBookMyMusic.qml:181`); Tải lại ({}) (`qt/EditBookMyMusic.qml:181`); Đang tải nhạc riêng* (`qt/EditBookMyMusic.qml:193`); Xoá* (`qt/EditBookMyMusic.qml:288`); Xoá: {}* (`qt/EditBookMyMusic.qml:289`); Xoá bài* (`qt/EditBookMyMusic.qml:302`); Xoá bài: {}* (`qt/EditBookMyMusic.qml:304`); Giữ lại* (`qt/EditBookMyMusic.qml:309`); Giữ lại: {}* (`qt/EditBookMyMusic.qml:311`); Chưa bỏ được cách đọc* (`qt/EditBookReadings.qml:27`); Chưa lưu được cách đọc* (`qt/EditBookReadings.qml:27`); Đang tải cách đọc* (`qt/EditBookReadings.qml:67`); Sửa cách đọc {}* (`qt/EditBookReadings.qml:112`); Bỏ cách đọc {}* (`qt/EditBookReadings.qml:122`); Cách đọc cho {}* (`qt/EditBookReadings.qml:141`); Lưu cho cả cuốn* (`qt/EditBookReadings.qml:152`); Đọc như chữ trong sách (`qt/EditBookReadings.qml:160`); Đổi tên chương* (`qt/EditBookRename.qml:18`); Số chương hay nhãn (`qt/EditBookRename.qml:43`); Tên chương (có thể để trống) (`qt/EditBookRename.qml:43`); Chọn nơi lưu* (`qt/EditBookSaveAs.qml:51`); Đang tải* (`qt/EditBookSkeleton.qml:10`); Đang tải bài nhạc* (`qt/EditBookSwap.qml:38`); Chọn* (`qt/EditBookSwap.qml:93`)
-- chỉ web (6): Bỏ mọi thay đổi ({}) (`491`); Nhãn (`577`); Tên (`588`); Chưa chia sẻ được sách (`644`); Google Books (`12`); Open Library (`12`)
+- chỉ Qt (42): Mức nhạc nền* (`qt/BookMusicSettings.qml:112`); Chưa đọc được file ảnh* (`qt/EditBook.qml:405`); Lưu thay đổi* (`qt/EditBookItems.qml:70`); Chưa nối được {} (`qt/EditBookLogic.js:67`); Đang thêm nhạc thì dừng* (`qt/EditBookMyMusic.qml:68`); Chưa xoá được bài này* (`qt/EditBookMyMusic.qml:81`); Đã xoá khỏi Nhạc của tôi* (`qt/EditBookMyMusic.qml:81`); Chọn nhạc của bạn (`qt/EditBookMyMusic.qml:114`); Nhạc của tôi* (`qt/EditBookMyMusic.qml:123`); Chưa có bài nào* (`qt/EditBookMyMusic.qml:124`); Thêm nhạc của bạn* (`qt/EditBookMyMusic.qml:133`); Đang thêm {}/{}* (`qt/EditBookMyMusic.qml:133`); Nhạc riêng* (`qt/EditBookMyMusic.qml:145`); Phân tích nhạc (`qt/EditBookMyMusic.qml:157`); Huỷ* (`qt/EditBookMyMusic.qml:173`); Cập nhật ({})* (`qt/EditBookMyMusic.qml:181`); Phân tích {} bài (`qt/EditBookMyMusic.qml:181`); Thử lại* (`qt/EditBookMyMusic.qml:181`); Tải ({})* (`qt/EditBookMyMusic.qml:181`); Tải lại ({}) (`qt/EditBookMyMusic.qml:181`); Đang tải nhạc riêng* (`qt/EditBookMyMusic.qml:193`); Xoá* (`qt/EditBookMyMusic.qml:288`); Xoá: {}* (`qt/EditBookMyMusic.qml:289`); Xoá bài* (`qt/EditBookMyMusic.qml:302`); Xoá bài: {}* (`qt/EditBookMyMusic.qml:304`); Giữ lại* (`qt/EditBookMyMusic.qml:309`); Giữ lại: {}* (`qt/EditBookMyMusic.qml:311`); Chưa bỏ được cách đọc* (`qt/EditBookReadings.qml:27`); Chưa lưu được cách đọc* (`qt/EditBookReadings.qml:27`); Đang tải cách đọc* (`qt/EditBookReadings.qml:67`); Sửa cách đọc {}* (`qt/EditBookReadings.qml:112`); Bỏ cách đọc {}* (`qt/EditBookReadings.qml:122`); Cách đọc cho {}* (`qt/EditBookReadings.qml:141`); Lưu cho cả cuốn* (`qt/EditBookReadings.qml:152`); Đọc như chữ trong sách (`qt/EditBookReadings.qml:160`); Đổi tên chương* (`qt/EditBookRename.qml:18`); Số chương hay nhãn (`qt/EditBookRename.qml:43`); Tên chương (có thể để trống) (`qt/EditBookRename.qml:43`); Chọn nơi lưu* (`qt/EditBookSaveAs.qml:51`); Đang tải* (`qt/EditBookSkeleton.qml:10`); Đang tải bài nhạc* (`qt/EditBookSwap.qml:38`); Chọn* (`qt/EditBookSwap.qml:93`)
+- chỉ web (6): Bỏ mọi thay đổi ({}) (`482`); Nhãn (`568`); Tên (`579`); Chưa chia sẻ được sách (`635`); Google Books (`12`); Open Library (`12`)
 
 ### Thanh bên
 
@@ -242,7 +242,7 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 - chỉ Qt (2): Chưa làm được lúc này. (`qt/Api.qml:46`); Quay lại* (`qt/ScreenHeader.qml:13`)
 - chỉ web (4): Đang tải điều hướng (`599`); Thông báo (Alt+T) (`715`); Xem các tab trước (`515`); Xem các tab sau (`520`)
 
-File QML chưa xếp màn (thêm vào SCREENS): `desktop_qt/qml/BookLogic.js`, `desktop_qt/qml/CastLogic.js`, `desktop_qt/qml/FindInBook.qml`, `desktop_qt/qml/FindLogic.js`, `desktop_qt/qml/MusicCredit.qml`, `desktop_qt/qml/MusicPopover.qml`, `desktop_qt/qml/PeerStudio.js`, `desktop_qt/qml/PlayerConsent.qml`, `desktop_qt/qml/ProjectSteps.qml`, `desktop_qt/qml/StudioChapterHead.qml`, `desktop_qt/qml/StudioMusic.qml`, `desktop_qt/qml/StudioMusicLogic.js`, `desktop_qt/qml/StudioMusicMoods.qml`, `desktop_qt/qml/StudioMusicScene.qml`, `desktop_qt/qml/StudioMusicSwap.qml`, `desktop_qt/qml/StudioMusicTrackRow.qml`, `desktop_qt/qml/StudioMyMusic.qml`.
+File QML chưa xếp màn (thêm vào SCREENS): `desktop_qt/qml/BookLogic.js`, `desktop_qt/qml/CastLogic.js`, `desktop_qt/qml/FindInBook.qml`, `desktop_qt/qml/FindLogic.js`, `desktop_qt/qml/MusicCredit.qml`, `desktop_qt/qml/MusicLevelSlider.qml`, `desktop_qt/qml/MusicPopover.qml`, `desktop_qt/qml/PeerStudio.js`, `desktop_qt/qml/PlayerConsent.qml`, `desktop_qt/qml/ProjectSteps.qml`, `desktop_qt/qml/StudioChapterHead.qml`, `desktop_qt/qml/StudioMusic.qml`, `desktop_qt/qml/StudioMusicLogic.js`, `desktop_qt/qml/StudioMusicMoods.qml`, `desktop_qt/qml/StudioMusicScene.qml`, `desktop_qt/qml/StudioMusicSwap.qml`, `desktop_qt/qml/StudioMusicTrackRow.qml`, `desktop_qt/qml/StudioMyMusic.qml`.
 
 ## d. Bo góc QML không theo token
 

@@ -23,6 +23,10 @@ export interface Scenario {
   pickCancelled?: boolean;
   /** Nhạc của tôi có ba bài với nhãn dài ngắn khác nhau (không nhãn, "Có lời", "Chưa phân tích"): công tắc Tự chọn các hàng phải cùng cột. */
   myMusic?: boolean;
+  /** Cuốn đang có nhạc nền (theo cảnh, mức -18 dB): menu Nhạc nền hiện thanh trượt "Mức nhạc nền" ở một mức khác mặc định. */
+  music?: boolean;
+  /** Cuốn audio nhập từ file, có nhạc người làm sách gắn. */
+  packagedMusic?: boolean;
 }
 
 export const DEFAULT_SCENARIO: Scenario = { library: "full", paired: true, remoteBooks: false, night: false, playing: true, projects: "full" };

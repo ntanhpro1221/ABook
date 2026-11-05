@@ -13,6 +13,8 @@ if (releaseSigningFile.isFile()) {
     releaseSigningFile.withInputStream { releaseSigning.load(it) }
 }
 
+def musicLevelRange = new groovy.json.JsonSlurper().parse(file("../../../abook/webui/assets/music_mix.json"))
+
 android {
     namespace = "vn.abook.player"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -26,6 +28,9 @@ android {
         // Chế độ sách giả cho đo đạc (NativeActivity.DEMO_BOOKS) chỉ có ở bản thử dưới gói riêng: Activity mở app nhận Intent của mọi app khác,
         // nên bản phát hành không bao giờ nghe extra ấy.
         buildConfigField "boolean", "DEMO", "${project.hasProperty("benchAppId")}"
+        ["levelMinDb", "levelMaxDb", "levelStepDb", "levelDefaultDb"].each { key ->
+            buildConfigField "double", key, "${musicLevelRange[key]}d"
+        }
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 164

@@ -280,7 +280,10 @@ const ROUTES: [string, RegExp, Handler][] = [
   ["GET", /^\/api\/preferences$/, () => preferences()],
   ["PUT", /^\/api\/preferences$/, (_, body) => ({ ...preferences(), ...body })],
   ["GET", /^\/api\/listen\/library$/, () => listenLibrary()],
-  ["GET", /^\/api\/listen\/books\/([^/]+)$/, (match) => listenBook(book(match[1]), true)],
+  ["GET", /^\/api\/listen\/books\/([^/]+)$/, (match) => {
+    const view = listenBook(book(match[1]), true);
+    return galleryState.scenario.packagedMusic ? { ...view, studioProject: null, capabilities: { ...view.capabilities, workshop: false } } : view;
+  }],
   ["GET", /^\/api\/listen\/books\/([^/]+)\/chapters\/(\d+)\/text$/, (match) => ({ text: chapterText(book(match[1]), Number(match[2])) })],
   ["GET", /^\/api\/listen\/books\/([^/]+)\/search-texts$/, (match, _, query) => ({ chapters: (query.get("chapters") ?? "").split(",").filter(Boolean).map(Number).map(id =>
     (query.get("text") ?? "").split(",").includes(String(id)) ? { id, text: chapterText(book(match[1]), id) } : { id, segments: chapterScript(book(match[1]), id).segments }) })],
@@ -321,6 +324,8 @@ const ROUTES: [string, RegExp, Handler][] = [
     bannedTracks: {},
     moods: { running: false, error: "" },
     levelDb: -20,
+    // Sách chữ đang có nhạc theo cảnh ở mức khác mặc định (scenario.music): menu Nhạc nền hiện thanh trượt mức.
+    ...(galleryState.scenario.music ? { playlist: "scene", hasMusic: true, enabled: true, cues: [], levelDb: -18 } : {}),
   })],
   ["GET", /^\/api\/books\/([^/]+)\/music\/chapters\/(\d+)$/, () => ({ cues: [], levelDb: -20 })],
   ["GET", /^\/api\/books\/([^/]+)\/music\/playlist$/, () => ({ playlist: null, tracks: [], levelDb: -20 })],

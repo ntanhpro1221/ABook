@@ -187,9 +187,8 @@ private fun LevelSheet(music: StudioMusicState, view: MusicView, dismiss: () -> 
     Column(Modifier.fillMaxWidth().testTag("studio_music_level_sheet")) {
         BasicText(StudioMusicText.LEVEL, style = Abook.type.sectionTitle)
         RowHint(StudioMusicText.LEVEL_HINT, Modifier.padding(top = Dim.s4, bottom = Dim.s8))
-        for ((db, name) in MusicLevels.options(view.levelDb)) {
-            PickRow(name, null, db == view.levelDb, { dismiss(); music.change(MusicLogic.level(db)) }, "studio_level_${db.toInt()}")
-        }
+        vn.abook.player.ui.music.LevelMeter(view.levelDb, enabled = music.busy.isEmpty(), showTitle = false,
+            onPick = { db -> music.change(MusicLogic.level(db)) })
     }
 }
 

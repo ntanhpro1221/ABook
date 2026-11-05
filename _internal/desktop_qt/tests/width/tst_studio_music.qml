@@ -173,7 +173,8 @@ Item {
                                 "Chọn lại nhạc", "Nhạc theo ngữ cảnh", "Nhạc của tôi", "Chương 1", "Chương 2"])
                 tryVerify(function() { return hasText(tab, line) }, 2000, line)
             compare(one(tab, "musicGenre").options.map(o => o.label), ["Chưa chọn", "Tiên hiệp", "Dị giới / kỳ ảo phương Tây (kiếm, phép, rồng, hiệp sĩ)"])
-            compare(one(tab, "musicLevel").options.map(o => o.label), ["To", "Hơi to", "Vừa (mặc định)", "Nhỏ", "Rất nhỏ (rõ lời)"])
+            compare(one(one(tab, "musicLevel"), "musicLevelSlider").from, -40)
+            compare(one(one(tab, "musicLevel"), "musicLevelSlider").to, -6)
             compare(one(tab, "musicLevel").value, -20)
             // khối chương: tên chương + số đoạn
             const folds = all(tab, "musicChapter")

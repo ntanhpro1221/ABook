@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { cwd } from "node:process";
 import { expect, it } from "vitest";
-import { LevelButtons } from "./PlayerViews";
+import { MusicLevelRow } from "./PlayerViews";
 import { PlaylistOptionLabel } from "./PlaylistChoice";
 
 const root = `${cwd()}/src`;
@@ -17,17 +17,12 @@ const sources = (dir = root): string[] => readdirSync(dir).flatMap((name) => {
   return /\.tsx$/.test(name) && !/\.test\./.test(name) ? [path] : [];
 });
 
-it("V2 mức nhạc: mọi dòng là dòng lựa chọn của bảng (data-sheet-choice) với dấu ✓ là con trực tiếp, cùng cấu trúc danh sách nhạc", () => {
-  const html = renderToStaticMarkup(<LevelButtons level={-12} disabled={false} onChange={() => undefined} />);
+it("V2 mức nhạc: thanh trượt liên tục thay cho nút từng mức", () => {
+  const html = renderToStaticMarkup(<MusicLevelRow level={-12} disabled={false} onChange={() => undefined} />);
   const host = document.createElement("div");
   host.innerHTML = html;
-  const rows = [...host.querySelectorAll("button")];
-  expect(rows.length).toBeGreaterThan(1);
-  for (const row of rows) {
-    expect(row.hasAttribute("data-sheet-choice")).toBe(true);
-    expect(row.firstElementChild?.tagName.toLowerCase()).toBe("svg"); // [data-sheet-choice] > svg: icon 20 px / khoảng 12 px của bảng trượt
-    expect(row.className).toContain("min-h-9"); // cùng chiều cao tối thiểu với dòng danh sách nhạc
-  }
+  expect(host.querySelector('[role="slider"]')?.getAttribute("aria-valuetext")).toBe("To, -12 dB");
+  expect(host.querySelectorAll("[data-sheet-choice]")).toHaveLength(0);
 });
 
 it("V3 danh sách nhạc: mô tả luôn chừa hai dòng theo đơn vị lh (không cắt chữ), nên dòng mô tả ngắn / dài cao bằng nhau", () => {
