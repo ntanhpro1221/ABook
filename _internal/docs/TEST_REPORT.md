@@ -1,5 +1,13 @@
 # Test report
 
+## 05-11-2026 — TN tầng 5 và vá tầng 2 (dev/tn-tier25)
+
+- Fixture chung `tests/fixtures/readaloud/spoken/reading_forms.json`: 100 ca, gồm 39 ca bảo vệ cách đọc / không đoán thêm (25 chuỗi giữ nguyên). Python kiểm Nghe ngay, Studio và Edge; vitest gọi backend Python thật, không thêm bộ luật TypeScript; JVM kiểm VieNeu và Edge.
+- Pytest `-q -rf`: 24 file nhập các mô-đun đổi và phần Studio / cache liên quan, 954 passed, 3 skipped, 0 FAILED / errors; đếm trực tiếp 954 dấu chấm, 3 `s`, 0 `F` / `E`, khớp JUnit XML. Vitest: 100 passed, 0 failed. Android `:app:testDebugUnitTest --tests <class>`: 15 lớp, 133 tests (132 passed, 1 skipped), 0 failures / errors; chỉ đếm XML mới hơn lúc bắt đầu Gradle.
+- Corpus chỉ đọc: 349 chương / 186 cuốn, 61.678 đoạn / 1.423.904 chữ. Cách đọc khác chữ gốc trước/sau: 6.138 / 9.756 đoạn; 4.175 đoạn đổi trực tiếp. 4.458/105.700 khoảng câu gốc đổi; theo lớp: ngập ngừng 2.714, mở đầu 1.674, kéo giọng 104, nghìn mơ hồ 1 (có giao nhau). Đọc tay 40/40 đạt theo luật; chưa tổng hợp hay chấm audio. Phương pháp và phân tầng ở `TEXT_NORMALIZATION.md` mục 4; không đưa chữ truyện vào repo.
+- Cache luật đọc Python/Kotlin tăng 4 → 5, cập nhật fixture khoá cache. Không đổi chữ truyện / giao diện; không cần chạy `ui_parity.py`. Kiểm thử CPU, BelowNormal, offscreen; không dùng GPU, Ollama, adb, phone hay emulator; không commit / push.
+- Hash trước task: `f10085f96acd7f9fe6a066f2bf5a74338b0a351bea3d98f58f6d2807912cbfff`; trước continuation: `6ce5ef4db5001e0acca1c686abb303f28e4c37a7de0220d15522111036f9ef52`; sau: `596c6b95d593a6200fb5fc56e3213135596f0d112995f6b589ed5222056ef476`. Các thay đổi vẫn ở nhánh dev, chưa tích hợp vào run đang thu.
+
 ## 03-11-2026 — unchanged-audio cover re-import (dev/cover-reimport)
 
 - Android and desktop `.abook` imports now compare the base book layer even when audio is identical, then stage and swap changed metadata/assets while reusing unchanged audio. Cover addition, replacement, metadata-only updates and removal preserve listener title/cover precedence. Local sidecars/workshop survive listening-package refreshes. Desktop cover metadata is staged with the image. Repeating an EPUB/TXT selection retains its existing behavior.

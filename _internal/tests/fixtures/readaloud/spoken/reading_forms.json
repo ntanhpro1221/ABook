@@ -1,0 +1,505 @@
+{
+ "note": "Chữ hiện -> chữ đem đọc (trước engine) của Nghe ngay và Studio: tầng 5 (nhịp: …, ~, ?!, gạch dài, khung) và tầng 2 vá (nghìn kiểu Anh, x2, Lv, La Mã) - docs/TEXT_NORMALIZATION.md. `said` = các câu của `vieneu.units(text, 256)` nối bằng một dấu cách; Studio (`studio_tn`) và Edge (`spoken.layout`) phải ra đúng chuỗi này. Ca *_keep: phải giữ nguyên cách đọc cũ. Câu bịa, không có chữ truyện.",
+ "cases": [
+  {
+   "id": "ellipsis_pause-1",
+   "text": "Tôi... tôi không biết.",
+   "said": "Tôi, tôi không biết."
+  },
+  {
+   "id": "ellipsis_pause-2",
+   "text": "Cái... cái gì...! Anh nói gì?",
+   "said": "Cái, cái gì...! Anh nói gì?"
+  },
+  {
+   "id": "ellipsis_pause-3",
+   "text": "Ừm… vâng, tôi đi đây.",
+   "said": "Ừm, vâng, tôi đi đây."
+  },
+  {
+   "id": "ellipsis_pause-4",
+   "text": "Ừm…vâng, tôi đi đây.",
+   "said": "Ừm, vâng, tôi đi đây."
+  },
+  {
+   "id": "ellipsis_pause-5",
+   "text": "Nhưng mà… thôi bỏ đi.",
+   "said": "Nhưng mà, thôi bỏ đi."
+  },
+  {
+   "id": "ellipsis_pause-6",
+   "text": "Em…… em xin lỗi.",
+   "said": "Em, em xin lỗi."
+  },
+  {
+   "id": "ellipsis_pause-7",
+   "text": "Hắn ta.... đã chết rồi sao?",
+   "said": "Hắn ta, đã chết rồi sao?"
+  },
+  {
+   "id": "ellipsis_pause-8",
+   "text": "“Tôi...” cô ngập ngừng.",
+   "said": "“Tôi,” cô ngập ngừng."
+  },
+  {
+   "id": "ellipsis_pause-9",
+   "text": "Có lẽ... “không” đâu.",
+   "said": "Có lẽ, “không” đâu."
+  },
+  {
+   "id": "ellipsis_pause-10",
+   "text": "Ummm… tôi nghĩ là được.",
+   "said": "ừm, tôi nghĩ là được."
+  },
+  {
+   "id": "ellipsis_pause-11",
+   "text": "Đẹp quá…thật đấy.",
+   "said": "Đẹp quá, thật đấy."
+  },
+  {
+   "id": "ellipsis_keep-1",
+   "text": "Ừm… Vâng, tôi đi đây.",
+   "said": "Ừm… Vâng, tôi đi đây."
+  },
+  {
+   "id": "ellipsis_keep-2",
+   "text": "Nhưng mà…",
+   "said": "Nhưng mà…"
+  },
+  {
+   "id": "ellipsis_keep-3",
+   "text": "Hả...? Anh nói gì cơ?",
+   "said": "Hả...? Anh nói gì cơ?"
+  },
+  {
+   "id": "ellipsis_keep-4",
+   "text": "Đi thôi!... nhanh lên.",
+   "said": "Đi thôi!... nhanh lên."
+  },
+  {
+   "id": "ellipsis_keep-5",
+   "text": "Có... 3 người đến.",
+   "said": "Có... 3 người đến."
+  },
+  {
+   "id": "ellipsis_keep-6",
+   "text": "Ừm…Vâng, được.",
+   "said": "Ừm…Vâng, được."
+  },
+  {
+   "id": "ellipsis_keep-7",
+   "text": "rồi…Senpai.",
+   "said": "rồi…xen-pai."
+  },
+  {
+   "id": "ellipsis_keep-8",
+   "text": "T- tôi không biết.",
+   "said": "tờ… tôi không biết."
+  },
+  {
+   "id": "ellipsis_keep-9",
+   "text": "Anh ấy đi rồi... Tôi ở lại.",
+   "said": "Anh ấy đi rồi... Tôi ở lại."
+  },
+  {
+   "id": "ellipsis_keep-10",
+   "text": "3.14 và 1.000 người.",
+   "said": "3.14 và 1.000 người."
+  },
+  {
+   "id": "ellipsis_lead-1",
+   "text": "...Không, tôi không đi.",
+   "said": "Không, tôi không đi."
+  },
+  {
+   "id": "ellipsis_lead-2",
+   "text": "“...Không, tôi không đi.”",
+   "said": "“Không, tôi không đi.”"
+  },
+  {
+   "id": "ellipsis_lead-3",
+   "text": "Hắn nói “…Không.” rồi đi.",
+   "said": "Hắn nói “Không.” rồi đi."
+  },
+  {
+   "id": "ellipsis_lead-4",
+   "text": "... và rồi hắn đi.",
+   "said": "và rồi hắn đi."
+  },
+  {
+   "id": "ellipsis_lead-5",
+   "text": "(...Thật ra) tôi biết.",
+   "said": "(Thật ra) tôi biết."
+  },
+  {
+   "id": "ellipsis_lead-6",
+   "text": "Anh ... đi đâu?",
+   "said": "Anh ... đi đâu?"
+  },
+  {
+   "id": "ellipsis_lead-7",
+   "text": "…",
+   "said": "…"
+  },
+  {
+   "id": "tilde_pause-1",
+   "text": "Hmm~ để xem nào.",
+   "said": "hừm, để xem nào."
+  },
+  {
+   "id": "tilde_pause-2",
+   "text": "Ồ~~~ đẹp quá~ ăn nữa đi~",
+   "said": "Ồ, đẹp quá, ăn nữa đi"
+  },
+  {
+   "id": "tilde_pause-3",
+   "text": "Hự ~ đau quá.",
+   "said": "Hự, đau quá."
+  },
+  {
+   "id": "tilde_pause-4",
+   "text": "Anh~ đi đâu thế?",
+   "said": "Anh, đi đâu thế?"
+  },
+  {
+   "id": "tilde_pause-5",
+   "text": "Chờ đã~ Đừng đi mà.",
+   "said": "Chờ đã, Đừng đi mà."
+  },
+  {
+   "id": "tilde_keep-1",
+   "text": "Hmm~ Har~kun?",
+   "said": "hừm, Har kun?"
+  },
+  {
+   "id": "tilde_keep-2",
+   "text": "Ô ~, vậy sao.",
+   "said": "Ô, vậy sao."
+  },
+  {
+   "id": "tilde_keep-3",
+   "text": "Đi thôi~!",
+   "said": "Đi thôi!"
+  },
+  {
+   "id": "tilde_keep-4",
+   "text": "Từ 10,000 ~ 15,000 đồng và 3~5 người.",
+   "said": "Từ 10000 đến 15000 đồng và 3 đến 5 người."
+  },
+  {
+   "id": "tilde_keep-5",
+   "text": "Khoảng ~50 người.",
+   "said": "Khoảng ~50 người."
+  },
+  {
+   "id": "tilde_keep-6",
+   "text": "Ngon quá~",
+   "said": "Ngon quá"
+  },
+  {
+   "id": "question_runs-1",
+   "text": "Cái gì?! Thật sao!? Hả?? Không!!!",
+   "said": "Cái gì? Thật sao? Hả? Không!!!"
+  },
+  {
+   "id": "question_runs-2",
+   "text": "Anh nói gì vậy!?!?",
+   "said": "Anh nói gì vậy?"
+  },
+  {
+   "id": "dash_pause-1",
+   "text": "Anh ta—người đó—đi rồi.",
+   "said": "Anh ta, người đó, đi rồi."
+  },
+  {
+   "id": "dash_pause-2",
+   "text": "Phải— phải không?",
+   "said": "Phải, phải không?"
+  },
+  {
+   "id": "dash_keep-1",
+   "text": "Anh ta – người đó – đi rồi.",
+   "said": "Anh ta – người đó – đi rồi."
+  },
+  {
+   "id": "dash_keep-2",
+   "text": "— Không!",
+   "said": "— Không!"
+  },
+  {
+   "id": "frame_pause-1",
+   "text": "Tên là【Song Kiếm Thuật】rất mạnh.",
+   "said": "Tên là,【Song Kiếm Thuật】,rất mạnh."
+  },
+  {
+   "id": "frame_pause-2",
+   "text": "Nhận được 【Kỹ năng】 mới.",
+   "said": "Nhận được, 【Kỹ năng】, mới."
+  },
+  {
+   "id": "frame_keep-1",
+   "text": "Xem chú thích [1] nhé.",
+   "said": "Xem chú thích [1] nhé."
+  },
+  {
+   "id": "thousands-1",
+   "text": "Nhận 1,500 vàng.",
+   "said": "Nhận 1500 vàng."
+  },
+  {
+   "id": "thousands-2",
+   "text": "Giá 1,500,000 xu.",
+   "said": "Giá 1500000 xu."
+  },
+  {
+   "id": "thousands-3",
+   "text": "Có 12,000 điểm kinh nghiệm.",
+   "said": "Có 12000 điểm kinh nghiệm."
+  },
+  {
+   "id": "thousands_keep-1",
+   "text": "Nặng 1,5 kg và 3,25 lít.",
+   "said": "Nặng 1,5 kg và 3,25 lít."
+  },
+  {
+   "id": "thousands_keep-2",
+   "text": "Số 12,3456 và 1,234.5 nhé.",
+   "said": "Số 12,3456 và 1,234.5 nhé."
+  },
+  {
+   "id": "thousands_keep-3",
+   "text": "Năm 1.500 và 9.389.700 đồng.",
+   "said": "Năm 1.500 và 9.389.700 đồng."
+  },
+  {
+   "id": "multiplier-1",
+   "text": "Sát thương x2 và x10.",
+   "said": "Sát thương nhân 2 và nhân 10."
+  },
+  {
+   "id": "multiplier-2",
+   "text": "Gấp X3 lần.",
+   "said": "Gấp nhân 3 lần."
+  },
+  {
+   "id": "multiplier-3",
+   "text": "Combo ×5 rồi.",
+   "said": "Combo nhân 5 rồi."
+  },
+  {
+   "id": "multiplier-4",
+   "text": "Tốc độ x1.5 khi chạy.",
+   "said": "Tốc độ nhân 1,5 khi chạy."
+  },
+  {
+   "id": "multiplier-5",
+   "text": "Hệ số x0.75 thôi.",
+   "said": "Hệ số nhân 0,75 thôi."
+  },
+  {
+   "id": "multiplier-6",
+   "text": "Gia tốc 1.5x nhé.",
+   "said": "Gia tốc 1,5 lần nhé."
+  },
+  {
+   "id": "multiplier_keep-1",
+   "text": "Mã X0 và X68K.",
+   "said": "Mã ích 0 và ích 68K."
+  },
+  {
+   "id": "multiplier_keep-2",
+   "text": "Phép tính 3 x 2 bằng 6.",
+   "said": "Phép tính 3 nhân 2 bằng 6."
+  },
+  {
+   "id": "multiplier_keep-3",
+   "text": "Tỉ lệ x1.000 lần.",
+   "said": "Tỉ lệ nhân 1.000 lần."
+  },
+  {
+   "id": "level-1",
+   "text": "Lv.5 rồi, Lv5 nữa.",
+   "said": "level 5 rồi, level 5 nữa."
+  },
+  {
+   "id": "level-2",
+   "text": "Đạt LV 10 và Lv. 7.",
+   "said": "Đạt level 10 và level 7."
+  },
+  {
+   "id": "stats-1",
+   "text": "STR 10, AGI 15.",
+   "said": "ét tê e-rờ 10, a giê i 15."
+  },
+  {
+   "id": "stats-2",
+   "text": "HP 200/300 và MP 50.",
+   "said": "hát pê 200 trên 300 và em pê 50."
+  },
+  {
+   "id": "roman-1",
+   "text": "Chương XII: Trở về.",
+   "said": "Chương mười hai: Trở về."
+  },
+  {
+   "id": "roman-2",
+   "text": "Quyển III bắt đầu.",
+   "said": "Quyển ba bắt đầu."
+  },
+  {
+   "id": "roman-3",
+   "text": "Thế kỷ XXI rồi.",
+   "said": "Thế kỷ hai mươi mốt rồi."
+  },
+  {
+   "id": "roman-4",
+   "text": "Vua Louis XIV và Henry VIII.",
+   "said": "Vua Louis mười bốn và Henry tám."
+  },
+  {
+   "id": "roman-5",
+   "text": "Tempest XIV đến rồi.",
+   "said": "Tempest mười bốn đến rồi."
+  },
+  {
+   "id": "roman-6",
+   "text": "Đạt cấp XL rồi.",
+   "said": "Đạt cấp bốn mươi rồi."
+  },
+  {
+   "id": "roman-7",
+   "text": "Chương XLV: Trở về.",
+   "said": "Chương bốn mươi lăm: Trở về."
+  },
+  {
+   "id": "roman-8",
+   "text": "Tầng LXXX và tầng XC.",
+   "said": "Tầng tám mươi và tầng chín mươi."
+  },
+  {
+   "id": "roman-9",
+   "text": "Chương CV mở đầu.",
+   "said": "Chương một trăm lẻ năm mở đầu."
+  },
+  {
+   "id": "roman-10",
+   "text": "Quyển CXV và chương CCCXCIX.",
+   "said": "Quyển một trăm mười lăm và chương ba trăm chín mươi chín."
+  },
+  {
+   "id": "roman-11",
+   "text": "Chương LI nói gì?",
+   "said": "Chương năm mươi mốt nói gì?"
+  },
+  {
+   "id": "roman_keep-1",
+   "text": "I think so. I am Tom.",
+   "said": "I think so. I am Tom."
+  },
+  {
+   "id": "roman_keep-2",
+   "text": "Vitamin C và điểm V.",
+   "said": "Vitamin C và điểm V."
+  },
+  {
+   "id": "roman_keep-3",
+   "text": "Áo size XL và XXL.",
+   "said": "Áo size ích e-lờ và ích ích e-lờ."
+  },
+  {
+   "id": "roman_keep-4",
+   "text": "Hạng C và hạng L.",
+   "said": "Hạng C và hạng L."
+  },
+  {
+   "id": "roman_keep-5",
+   "text": "Tập L mở đầu.",
+   "said": "Tập L mở đầu."
+  },
+  {
+   "id": "roman_keep-6",
+   "text": "Louis XL đến.",
+   "said": "Louis ích e-lờ đến."
+  },
+  {
+   "id": "roman_keep-7",
+   "text": "Chương MMXX đây.",
+   "said": "Chương em em ích ích đây."
+  },
+  {
+   "id": "roman_keep-8",
+   "text": "XL. Mở đầu.",
+   "said": "ích e-lờ. Mở đầu."
+  },
+  {
+   "id": "roman_keep-9",
+   "text": "Chương XLX đây.",
+   "said": "Chương ích e-lờ ích đây."
+  },
+  {
+   "id": "tilde_phrase-1",
+   "text": "Không~ chịu~ đâu~",
+   "said": "Không chịu đâu"
+  },
+  {
+   "id": "tilde_phrase-2",
+   "text": "Không~ chịu~ đâu~ anh ơi.",
+   "said": "Không chịu đâu, anh ơi."
+  },
+  {
+   "id": "thousands_keep-4",
+   "text": "Số 1,500 thôi.",
+   "said": "Số 1,500 thôi."
+  },
+  {
+   "id": "thousands_keep-5",
+   "text": "Nặng 1,500 kg.",
+   "said": "Nặng 1,500 kg."
+  },
+  {
+   "id": "thousands_keep-6",
+   "text": "Mã A1,500B.",
+   "said": "Mã A1,500B."
+  },
+  {
+   "id": "thousands-4",
+   "text": "HP 1,500.",
+   "said": "hát pê 1500."
+  },
+  {
+   "id": "frame_pause-3",
+   "text": "Nhận [Kỹ năng] mới.",
+   "said": "Nhận, [Kỹ năng], mới."
+  },
+  {
+   "id": "dash_pause-3",
+   "text": "Anh ta–người đó–đi rồi.",
+   "said": "Anh ta, người đó, đi rồi."
+  },
+  {
+   "id": "level_keep-1",
+   "text": "Lv là mã.",
+   "said": "lờ vê là mã."
+  },
+  {
+   "id": "roman_keep-10",
+   "text": "V for victory.",
+   "said": "V for victory."
+  },
+  {
+   "id": "thousands-5",
+   "text": "Có 1,700 goblin.",
+   "said": "Có 1700 goblin."
+  },
+  {
+   "id": "thousands-6",
+   "text": "Có 1,800 kobold.",
+   "said": "Có 1800 kobold."
+  },
+  {
+   "id": "thousands-7",
+   "text": "Giá 5,000pt.",
+   "said": "Giá 5000pt."
+  }
+ ]
+}

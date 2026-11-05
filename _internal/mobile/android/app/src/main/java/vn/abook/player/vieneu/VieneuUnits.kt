@@ -76,9 +76,11 @@ object VieneuUnits {
     private val GLUED = Regex("""(?:\.{2,}|[…—–])+|(?<=\p{L})\((?=\p{L})""")
     /** English thousands: 1,500 is "một nghìn năm trăm"; Vietnamese decimals ("1,5") do not match. */
     private val THOUSANDS = Regex("(?<![0-9.,])[0-9]{1,3}(?:,[0-9]{3})+(?![0-9]|[.,][0-9])")
-    /** I..XXXIX (the empty string matches too and is rejected apart). */
-    private val ROMAN = Regex("X{0,3}(?:IX|IV|V?I{0,3})")
-    private val ROMAN_VALUE = mapOf('I' to 1, 'V' to 5, 'X' to 10)
+    /** I..CCCXCIX (the empty string matches too and is rejected apart). */
+    private val ROMAN = Regex("C{0,3}(?:XC|XL|L?X{0,3})(?:IX|IV|V?I{0,3})")
+    private val ROMAN_VALUE = mapOf('I' to 1, 'V' to 5, 'X' to 10, 'L' to 50, 'C' to 100)
+    /** From 40 (with L / C: "XL", "size XL", "hạng C") a numeral counts only right after a numbered noun and with two letters or more - `ROMAN_PLAIN`. */
+    private const val ROMAN_PLAIN = 39
     /** One-letter numerals (I, V, X) are often just letters ("ông X", "tia X"): they count only after a numbered noun (`NUMBERED_NOUNS` of vieneu.py). */
     private val NUMBERED_NOUNS = setOf("chương", "phần", "tập", "quyển", "hồi", "mục", "khoá", "khóa", "lớp", "cấp", "hạng", "bậc", "đệ", "đời", "kỳ", "kì",
         "số", "bài", "điều", "khoản", "chặng", "vòng", "màn", "cảnh", "tầng").map { Normalizer.normalize(it, Normalizer.Form.NFC) }.toSet()
@@ -92,7 +94,7 @@ object VieneuUnits {
 
     fun tokens(text: String): List<String> = WordTokens.tokens(text).map { text.substring(it.first, it.last + 1) }
 
-    /** Value of an upper-case Roman numeral I..XXXIX (strict: no IIII, VX...), null when [core] is not one - `roman_value` of vieneu.py. */
+    /** Value of an upper-case Roman numeral I..CCCXCIX (strict: no IIII, VX, XLX...), null when [core] is not one - `roman_value` of vieneu.py. */
     fun romanValue(core: String): Int? {
         if (core.isEmpty() || !ROMAN.matches(core)) return null
         var total = 0
@@ -103,8 +105,11 @@ object VieneuUnits {
         return total
     }
 
-    /** 1..39 in words: mười bốn, mười lăm, hai mươi mốt, hai mươi lăm, ba mươi (`vietnamese_number`). */
+    /** 1..399 in words: mười bốn, mười lăm, hai mươi mốt, hai mươi lăm, ba mươi, bốn mươi lăm, một trăm lẻ năm (as sea-g2p reads numbers) - `vietnamese_number`. */
     fun vietnameseNumber(value: Int): String {
+        val hundreds = value / 100
+        val rest = value % 100
+        if (hundreds > 0) return "${DIGITS[hundreds]} trăm" + when { rest == 0 -> ""; rest < 10 -> " lẻ ${DIGITS[rest]}"; else -> " ${vietnameseNumber(rest)}" }
         val tens = value / 10
         val ones = value % 10
         val head = when (tens) { 0 -> ""; 1 -> "mười"; else -> "${DIGITS[tens]} mươi" }
@@ -116,13 +121,13 @@ object VieneuUnits {
 
     private fun capitalised(word: String): Boolean = word.isNotEmpty() && word.all { it.isLetter() } && word[0].isUpperCase()
 
-    /** Can the word before `toks[index]` be numbered: a numbered noun ("chương", "thế kỷ"...) or two capitalised names in a row ("Louis X") - `numbered_by`. */
-    fun numberedBy(toks: List<String>, index: Int): Boolean {
+    /** Can the word before `toks[index]` be numbered: a numbered noun ("chương", "thế kỷ"...) or ([byName]) two capitalised names in a row ("Louis X") - `numbered_by`. */
+    fun numberedBy(toks: List<String>, index: Int, byName: Boolean = true): Boolean {
         val before = if (index >= 1) word(toks[index - 1]) else ""
         if (before.lowercase() in NUMBERED_NOUNS) return true
         val earlier = if (index >= 2) word(toks[index - 2]) else ""
         if ("$earlier $before".lowercase() in NUMBERED_PAIRS) return true
-        return capitalised(before) && capitalised(earlier)
+        return byName && capitalised(before) && capitalised(earlier)
     }
 
     /**
@@ -139,30 +144,37 @@ object VieneuUnits {
 
     private fun digit(char: Char?): Boolean = char != null && char in '0'..'9'
 
-    private fun tilde(token: String): String = TILDES.replace(token) { match ->
+    private fun tilde(token: String, wordAfter: Boolean = false): String = TILDES.replace(token) { match ->
         val left = token.getOrNull(match.range.first - 1)
         val right = token.getOrNull(match.range.last + 1)
         when {
             digit(left) && digit(right) -> " đến "
             digit(right) && !(left != null && left.isLetterOrDigit()) -> match.value // "~50 người": sea-g2p reads "khoảng"
+            left != null && left.isLetter() && right == null && wordAfter -> "," // "Hmm~ để xem", "quá~ ăn nữa": stretched, then the talk goes on - a pause
             left != null && left.isLetter() && right != null && right.isLetter() -> " " // "Har~kun"
             else -> "" // "Hmm~"
         }
     }
 
-    /** "~" stretching a voice ("Hmm~") goes, between numbers ("3~5", "10,000 ~ 15,000") it is "đến", before a number ("~50") sea-g2p reads "khoảng" - `_tildes` of vieneu.py. */
+    /**
+     * "~" stretching a voice ("Hmm~") goes - with more talk after it ("Hmm~ để xem", "Hự ~ đau") it becomes a comma, a pause; between numbers ("3~5", "10,000 ~ 15,000") it is "đến",
+     * before a number ("~50") sea-g2p reads "khoảng" - `_tildes` of vieneu.py.
+     */
     private fun tildes(out: MutableList<String>) {
         for (index in out.indices) {
             val token = out[index]
             if ('~' !in token) continue
+            val after = if (index + 1 < out.size) out[index + 1].trimStart { it in OPENERS } else ""
+            // A phrase stretched word by word pauses only at its end: "Không~ chịu~ đâu~".
+            val wordAfter = after.firstOrNull()?.isLetter() == true && !after.trimEnd { it in CLOSERS || it in PUNCT_MARKS }.endsWith("~")
             if (token.trim { it in OPENERS || it in CLOSERS || it in PUNCT_MARKS }.trim('~').isNotEmpty()) { // other text in the word: look inside it
-                out[index] = tilde(token)
+                out[index] = tilde(token, wordAfter)
                 continue
             }
-            val before = if (index > 0) out[index - 1].trimEnd { it in CLOSERS } else ""
-            val after = if (index + 1 < out.size) out[index + 1].trimStart { it in OPENERS } else "" // a lone "~": look at the neighbours
+            val before = if (index > 0) out[index - 1].trimEnd { it in CLOSERS } else "" // a lone "~": look at the neighbours
             val numberAfter = digit(after.firstOrNull())
-            var said = TILDES.replace(token, if (numberAfter && digit(before.lastOrNull())) "đến" else if (numberAfter) "~" else "")
+            val pause = if (token.trim('~').isEmpty() && before.lastOrNull()?.isLetter() == true && wordAfter) "," else ""
+            var said = TILDES.replace(token, if (numberAfter && digit(before.lastOrNull())) "đến" else if (numberAfter) "~" else pause)
             if (index > 0 && said.trim { it in CLOSERS || it in PUNCT_MARKS }.isEmpty()) { // "Ô ~," -> "Ô,"
                 out[index - 1] = out[index - 1] + said
                 said = ""
@@ -399,6 +411,34 @@ object VieneuUnits {
     }
 
     private val QUESTION_BANG = Regex("[?!]{2,}")
+    private val ELLIPSIS_END = Regex("""(?<=\p{L})(?:\.{2,}|…)+(?=["'”’)\]»]*$)""")
+    private val ELLIPSIS_GLUED = Regex("""(?<=\p{L})(?:\.{2,}|…)+(?=\p{L})""")
+    private val ELLIPSIS_LEAD = Regex("""^(["'“‘(\[«]*)(?:\.{2,}|…)+""")
+
+    /**
+     * "…" / "..." where the sentence goes on in lower case ("Tôi... tôi không biết", "Cái…cái gì") is a hesitation inside the sentence: a comma - sea-g2p reads every "…" as a full stop
+     * (falling end-of-sentence tone, the next words like a new sentence). Followed by a capital / the end of the paragraph it still ends the sentence and stays. "…" opening the paragraph or
+     * right after an opening bracket ("...Không", "“…Vâng") has nothing to pause after (sea-g2p leaves a bare full stop): it goes. Only a "…" in the shown word ([toks]) counts: one an
+     * earlier step added ("hừm…", "tờ… tôi", "đờ…") stays - `_ellipses` of vieneu.py.
+     */
+    private fun ellipses(out: MutableList<String>, toks: List<String>? = null) {
+        val plain = if (toks != null && toks.size == out.size) toks else out
+        for (index in out.indices) {
+            var token = out[index]
+            if ('…' !in token && ".." !in token) continue
+            if (token == plain[index] && ELLIPSIS_GLUED.containsMatchIn(token)) { // a word an earlier step changed ("rồi…Senpai" -> "rồi…xen-pai") no longer shows its case: left alone
+                val glued = token
+                token = ELLIPSIS_GLUED.replace(glued) { if (glued[it.range.last + 1].isLowerCase()) ", " else it.value }
+            }
+            if (index + 1 < out.size && plain[index + 1].trimStart { it in OPENERS }.firstOrNull()?.isLowerCase() == true && ELLIPSIS_END.containsMatchIn(plain[index]))
+                token = ELLIPSIS_END.replace(token, ",")
+            val lead = ELLIPSIS_LEAD.find(token)
+            if (lead != null && ELLIPSIS_LEAD.containsMatchIn(plain[index]) && (index == 0 || lead.groupValues[1].isNotEmpty()) &&
+                (token.getOrNull(lead.range.last + 1)?.isLetter() == true || (lead.range.last + 1 == token.length && index + 1 < out.size)))
+                token = lead.groupValues[1] + token.substring(lead.range.last + 1)
+            out[index] = token
+        }
+    }
 
     /** A run of "?!" / "!?" / "??" with a question mark becomes one "?": sea-g2p keeps only the FIRST mark of a run ("!?" becomes "!", the question tone is lost). "!!!" stays - `_question_runs`. */
     private fun questionRuns(out: MutableList<String>) {
@@ -508,6 +548,7 @@ object VieneuUnits {
         for ((index, token) in toks.withIndex()) {
             val core = token.trimStart { it in OPENERS || it in FRAMES_OPEN }.trimEnd { it in CLOSERS || it in FRAMES_CLOSE || it in ".,;:!?…" }
             val value = romanValue(core) ?: continue
+            if (value > ROMAN_PLAIN && (core.length < 2 || index == 0 || !numberedBy(toks, index, byName = false))) continue // "Chương XLV", "tầng LX"; not "size XL", "hạng C", "Louis XL"
             if (index == 0) {
                 if (toks.size < 2 || token.trimStart { it in OPENERS }.substring(core.length) !in listOf(".", ")")) continue
             } else {
@@ -563,6 +604,30 @@ object VieneuUnits {
         for (index in toks.indices) out[index] = rebuilt[index]
     }
 
+    private val COUNTED_THOUSANDS = "vàng xu yên yen đồng đô usd vnd người con cái chiếc viên điểm chương trang quân lính lần exp xp hp mp sp goblin kobold orc quái".split(" ").toSet()
+    private val THOUSANDS_LABELS = "giá tổng hp mp sp exp xp str agi vit int dex luk atk def".split(" ").toSet()
+
+    /** Only counted quantities, stat labels or multiple thousands groups lose their commas. Bare numbers, codes and "1,500 kg" stay ambiguous - `_thousands`. */
+    private fun thousands(out: MutableList<String>, toks: List<String>? = null) {
+        val plain = if (toks != null && toks.size == out.size) toks else out.toList()
+        fun context(index: Int): Boolean {
+            fun clean(word: String) = word.trim { it in OPENERS || it in CLOSERS || it in PUNCT_MARKS }.lowercase()
+            val before = if (index > 0) clean(plain[index - 1]) else ""
+            val after = if (index + 1 < plain.size) clean(plain[index + 1]) else ""
+            if (before in THOUSANDS_LABELS || after in COUNTED_THOUSANDS) return true
+            if (after in setOf("~", "-", "–", "đến", "/") && index + 2 < plain.size && THOUSANDS.containsMatchIn(plain[index + 2]))
+                return after == "/" || context(index + 2)
+            return before == "/" && index >= 2 && THOUSANDS.containsMatchIn(plain[index - 2])
+        }
+        for ((index, token) in out.withIndex()) out[index] = THOUSANDS.replace(token) { match ->
+            val right = token.substring(match.range.last + 1)
+            val suffix = when { right.startsWith("G") -> 1; right.startsWith("pt") -> 2; else -> 0 }
+            val gold = suffix > 0 && right.drop(suffix).all { it in CLOSERS || it in PUNCT_MARKS }
+            val bounded = token.getOrNull(match.range.first - 1)?.isLetterOrDigit() != true && (token.getOrNull(match.range.last + 1)?.isLetterOrDigit() != true || gold)
+            if (bounded && (gold || match.value.count { it == ',' } > 1 || context(index))) match.value.replace(",", "") else match.value
+        }
+    }
+
     /** Marks sea-g2p reads wrongly as words ("~" is "khoảng", "500,000" is "năm trăm"), fixed in place without changing the word count - `reading_marks`. */
     fun readingMarks(out: MutableList<String>, toks: List<String>? = null) {
         fullwidth(out)
@@ -570,7 +635,8 @@ object VieneuUnits {
         emoticons(out)
         arrows(out, toks)
         tildes(out)
-        for (index in out.indices) out[index] = THOUSANDS.replace(out[index]) { it.value.replace(",", "") }
+        ellipses(out, toks)
+        thousands(out, toks)
         numbers(out, toks)
         angle(out)
         Symbols.readSymbols(toks, out)
@@ -618,11 +684,12 @@ object VieneuUnits {
         return core.isNotEmpty() && core.last() in marks
     }
 
-    internal fun groups(toks: List<String>, first: Int, last: Int, marks: String): List<IntArray> {
+    /** Spans of shown words ending at a word with [marks]. [said] (the spoken words): a shown sentence end whose spoken word became a comma ("Tôi..." before "tôi không biết", `ellipses`) does not cut - `_groups`. */
+    internal fun groups(toks: List<String>, first: Int, last: Int, marks: String, said: List<String>? = null): List<IntArray> {
         val out = ArrayList<IntArray>()
         var start = first
         for (index in first..last) {
-            if (ends(toks[index], marks) || index == last) {
+            if ((ends(toks[index], marks) && !(said != null && said[index].trimEnd { it in CLOSERS }.endsWith(","))) || index == last) {
                 out.add(intArrayOf(start, index))
                 start = index + 1
             }
@@ -649,7 +716,7 @@ object VieneuUnits {
         if (toks.isEmpty()) return toks to emptyList()
         val said = spokenTokens(toks, origin, readings)
         val pieces = ArrayList<IntArray>()
-        for (sentence in groups(toks, 0, toks.size - 1, SENTENCE_END)) {
+        for (sentence in groups(toks, 0, toks.size - 1, SENTENCE_END, said)) {
             if (length(toks, sentence[0], sentence[1]) <= maxChars) {
                 pieces.add(sentence)
                 continue

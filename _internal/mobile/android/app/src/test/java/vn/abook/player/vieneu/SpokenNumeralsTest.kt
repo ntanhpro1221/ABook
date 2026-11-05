@@ -45,7 +45,7 @@ class SpokenNumeralsTest {
         assertEquals(listOf("một", "bốn", "năm", "mười", "mười một", "mười bốn", "mười lăm", "hai mươi", "hai mươi mốt", "hai mươi bốn", "hai mươi lăm",
             "ba mươi", "ba mươi mốt", "ba mươi lăm", "ba mươi chín"),
             listOf(1, 4, 5, 10, 11, 14, 15, 20, 21, 24, 25, 30, 31, 35, 39).map(VieneuUnits::vietnameseNumber))
-        assertEquals(listOf(1, 4, 9, 14, 39, null, null, null, null), listOf("I", "IV", "IX", "XIV", "XXXIX", "XL", "IIII", "VX", "").map(VieneuUnits::romanValue))
+        assertEquals(listOf(1, 4, 9, 14, 39, 40, 99, 399, null, null, null, null, null), listOf("I", "IV", "IX", "XIV", "XXXIX", "XL", "XCIX", "CCCXCIX", "IIII", "VX", "XLX", "CCCC", "").map(VieneuUnits::romanValue))
     }
 
     /** tn9: a hyphenated name before a numeral, and a lone "I" before a non-English capitalised word (same cases as test_readaloud_vieneu.py). */

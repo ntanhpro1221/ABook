@@ -71,7 +71,7 @@ object SupertonicText {
         if (parts.isEmpty()) return toks to parts
         val at = openingBoundary(toks, parts[0].first, parts[0].last) ?: return toks to parts
         val said = VieneuUnits.spokenTokens(toks, origin, readings)
-        fun half(first: Int, last: Int) = VieneuUnits.Unit(first, last, VieneuUnits.groups(toks, first, last, VieneuUnits.SENTENCE_END)
+        fun half(first: Int, last: Int) = VieneuUnits.Unit(first, last, VieneuUnits.groups(toks, first, last, VieneuUnits.SENTENCE_END, said)
             .map { said.subList(it[0], it[1] + 1).filter { word -> word.isNotEmpty() }.joinToString(" ") }.toMutableList())
         return toks to listOf(half(parts[0].first, at), half(at + 1, parts[0].last)) + parts.drop(1)
     }

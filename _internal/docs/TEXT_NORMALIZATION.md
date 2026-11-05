@@ -265,6 +265,32 @@ word và cho ra dạng normalized của word").
 **Lộ trình** (xếp theo lợi / công):
 1. Bộ thử + đo đường cơ sở hiện tại (sea-g2p) theo lớp.
 2. Tầng 5 (… — ~ !?) và tầng 2 vá (nghìn kiểu Anh, x2, Lv, La Mã cho Studio): nhỏ, chắc thắng.
+   **Xong (05-11, dev/tn-tier25).** Phần lớn đã có sẵn trong `readaloud/vieneu.spoken_tokens` từ trước (bảng mục 1 là số
+   04-10): nghìn kiểu Anh, "x2", "Lv.5", "?!", gạch dài dính chữ, khung 【】/[ ], La Mã I..XXXIX; Studio dùng chung qua
+   `studio_tn`. Lượt này thêm (Python + Kotlin, bộ ví dụ chung `tests/fixtures/readaloud/spoken/reading_forms.json`, 100 ca,
+   39 ca bảo vệ cách đọc cũ / không đoán thêm, trong đó 25 ca giữ nguyên cả chuỗi; pytest, vitest gọi backend Python thật và JVM cùng dùng file):
+   - "…" / "..." cuối chữ mà câu nói tiếp bằng chữ thường, hay dính giữa hai chữ ("Ừm…vâng") → dấu phẩy: sea-g2p đọc mọi "…"
+     là dấu chấm (giọng xuống, chữ sau như câu mới). Câu của Nghe ngay / Supertonic không cắt ở chỗ ấy nữa (`_groups`).
+     Theo sau là chữ hoa hay hết đoạn: giữ.
+   - "…" mở đầu đoạn hay ngay sau ngoặc mở ("...Không", "“…Vâng") → bỏ (sea-g2p để lại một dấu chấm trơ).
+   - "~" sau chữ mà còn chữ nói tiếp ("Hmm~ để xem", "Hự ~ đau") → dấu phẩy (trước đây bỏ, dính liền).
+     Cụm kéo giọng từng chữ ("Không~ chịu~ đâu~") chỉ ngắt ở cuối cụm, không chen dấu phẩy giữa từng chữ.
+   - Nghìn kiểu Anh chỉ bỏ dấu phẩy khi có danh từ đếm / nhãn chỉ số, nhiều nhóm nghìn, hay hậu tố tiền / điểm G, pt.
+     "1,500 kg", mã "A1,500B" và số trơ thiếu ngữ cảnh giữ nguyên; không đoán thập phân thành số nguyên.
+   - La Mã 40..399 (có L / C, hai chữ trở lên) chỉ ngay sau danh từ đánh số ("Chương XLV", "tầng LX"); "size XL",
+     "hạng C", "Louis XL" giữ.
+   - "x1.5" → "nhân 1,5" (sea-g2p đọc "một chấm năm").
+
+   Tăng phiên bản cache đọc từ 4 lên 5 ở cả hai nền để clip cũ / đã ghim được làm lại theo luật mới.
+
+   Đo trên 349 chương / 186 cuốn bốc phân tầng (truyen 70 cuốn / 131 chương, ai-dich 70/139, sang-tac 40/67, khac 6/12;
+   hạt 20261105; mỗi cuốn tối đa hai chương; 61.678 đoạn, 1.423.904 chữ, Unicode NFC từng dòng). Đoạn có cách đọc khác chữ gốc:
+   trước 6.138, sau 9.756; so trực tiếp trước/sau có 4.175 đoạn đổi (6,77 %).
+   Trên 105.700 khoảng câu theo bộ cắt TRƯỚC vá (kể cả "…" chốt khoảng), 4.458 khoảng đổi: "…" giữa câu 2.714,
+   "…" mở đầu 1.674, "~" / "～" 104, nghìn mơ hồ giữ lại 1 (các lớp có giao nhau). Theo đoạn tương ứng: 2.479 / 1.672 / 102 / 1.
+   Gạch dài, !?, khung trạng thái, x2, Lv, viết tắt và La Mã nhỏ giữ luật cũ; La Mã từ 40 và "x1.5" không gặp lần đổi nào (chỉ có fixture).
+   Đọc tay 40 đoạn đổi phân tầng (22 giữa câu, 10 mở đầu, 7 kéo giọng, 1 số mơ hồ): 40/40 đúng theo luật, kể cả quyết định giữ số khi thiếu ngữ cảnh.
+   Chưa đo bằng tai: dấu phẩy ngừng ngắn hơn chỗ ngập ngừng tác giả muốn; cần lượt nghe thử VieNeu trước khi phát hành.
 3. Tầng 3 từ điển viết tắt + từ mượn + kính ngữ: dựng bằng LLM ngoại tuyến, kiểm âm tiết + ASR, vào cả Studio lẫn Nghe ngay.
 4. Tầng 4 phiên âm romaji / Hàn theo luật cho Nghe ngay (máy tính + điện thoại), và tầng 4b model phiên âm từ riêng (Model
    train, sau cân bằng giọng; kế hoạch 1 trang trước khi train).
@@ -272,4 +298,5 @@ word và cho ra dạng normalized của word").
 
 Ràng buộc:
 - Studio đụng file khoá (`tts.py`, `text_processing.py`) nên làm ở nhánh dev, kèm sự kiện phiên bản.
-- Nghe ngay (`abook/readaloud`) không khoá: làm trước để kiểm cách làm.
+- Nghe ngay cũng có file khoá (`readaloud/symbols.py`, `readaloud/vieneu.py`...): đọc `QUALITY_IMPLEMENTATION_FILES` từ code,
+  đo `quality_implementation_hash()` trước/sau; thay đổi hash chỉ nằm ở nhánh dev và chờ hết run trước khi tích hợp.
