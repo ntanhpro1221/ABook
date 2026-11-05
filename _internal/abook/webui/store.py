@@ -1636,6 +1636,16 @@ def _sentence_timeline(project_root: Path, chapter: Any,
             elapsed += float(row["break_ms"] or 0) / 1000.0
     mp3 = chapter_mp3(project_root, chapter["output_mp3"]) if timed else None
     real = audio_duration(mp3) if mp3 else None
+    if mp3:
+        # Bản ghép mới lưu mốc SAU cắt lặng, khóa với đúng byte MP3. Không dùng mốc cũ.
+        try:
+            measured = json.loads(mp3.with_suffix(mp3.suffix+'.levels.json').read_text(encoding='utf-8'))
+            if measured['audio_sha256'] == word_timing.audio_sha256(mp3):
+                spans = [tuple(measured['spans'][str(row['id'])]) for row in rows]
+                if all(0 <= a <= b <= (real or elapsed)+.01 for a, b in spans):
+                    return timed, spans, mp3, real if real else elapsed
+        except (OSError, ValueError, KeyError, TypeError):
+            pass
     scale = (real / elapsed) if (real and elapsed) else 1.0
     spans = [(start * scale, (start + float(row["wav_duration"] or 0.0)) * scale) for start, row in zip(starts, rows)]
     return timed, spans, mp3, real if real else elapsed

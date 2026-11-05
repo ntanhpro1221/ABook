@@ -390,15 +390,18 @@ def test_segment_leveling_applies_one_constant_gain_and_preserves_loud_intent() 
     }
     narrator = {**neutral, "kind": "narration", "speaker": "NARRATOR"}
     loud = {**neutral, "volume": "loud", "emotion": "angry", "intensity": 3}
+    soft = {**neutral, "volume": "soft", "emotion": "sad", "intensity": 3}
 
     quiet_normalized = normalize_segment_level(quiet, sample_rate, neutral, settings)
     strong_normalized = normalize_segment_level(strong, sample_rate, neutral, settings)
     narrator_normalized = normalize_segment_level(quiet, sample_rate, narrator, settings)
     loud_normalized = normalize_segment_level(quiet, sample_rate, loud, settings)
+    soft_normalized = normalize_segment_level(quiet, sample_rate, soft, settings)
     quiet_lufs = integrated_loudness_lufs(quiet_normalized, sample_rate)
     strong_lufs = integrated_loudness_lufs(strong_normalized, sample_rate)
     narrator_lufs = integrated_loudness_lufs(narrator_normalized, sample_rate)
     loud_lufs = integrated_loudness_lufs(loud_normalized, sample_rate)
+    soft_lufs = integrated_loudness_lufs(soft_normalized, sample_rate)
     source_lufs = integrated_loudness_lufs(quiet, sample_rate)
     strong_source_lufs = integrated_loudness_lufs(strong, sample_rate)
 
@@ -411,6 +414,10 @@ def test_segment_leveling_applies_one_constant_gain_and_preserves_loud_intent() 
     assert strong_lufs - strong_source_lufs == pytest.approx(neutral_gain, abs=0.05)
     assert strong_lufs - quiet_lufs == pytest.approx(strong_source_lufs - source_lufs, abs=0.05)
     assert narrator_lufs - quiet_lufs == pytest.approx(narrator_offset, abs=0.05)
+    # A speaker change must not add the old 3.5 LU step on top of the take's
+    # already quiet delivery. Soft remains quieter, without stacking emotion gain.
+    assert quiet_lufs - soft_lufs == pytest.approx(1.0, abs=0.05)
+    assert narrator_lufs - soft_lufs <= 1.55
     assert loud_lufs - quiet_lufs == pytest.approx(
         float(targets["loud"]) - float(targets["normal"]) , abs=0.05
     )
@@ -418,9 +425,8 @@ def test_segment_leveling_applies_one_constant_gain_and_preserves_loud_intent() 
     assert loud_lufs > narrator_lufs > quiet_lufs
 
 
-def test_lufs_leveling_gives_voices_with_different_raw_levels_one_output_level() -> None:
-    # Lý do sửa: hai giọng thô cùng một mức đo (ref_lufs) ra cùng mức đích nhờ gain riêng của giọng, thay vì
-    # nhờ đo từng câu. Phổ khác nhau (100 Hz và 260 Hz) không còn là thứ quyết định gain.
+def test_voice_gain_is_independent_of_the_clips_spectrum() -> None:
+    # Gain của một giọng gồm cả o_db; phổ của từng câu không quyết định lại gain.
     settings = build_settings()
     sample_rate = 48_000
     timeline = np.arange(sample_rate, dtype=np.float32) / sample_rate
@@ -432,7 +438,7 @@ def test_lufs_leveling_gives_voices_with_different_raw_levels_one_output_level()
         "intensity": 1,
         VOICE_BALANCE_FIELD: "vieneu@3.8.3/Phạm Tuyên/f100",
     }
-    ref_lufs = voice_balance.constants_for_key(segment[VOICE_BALANCE_FIELD]).ref_lufs
+    constants = voice_balance.constants_for_key(segment[VOICE_BALANCE_FIELD])
     low_voice = 0.03 * np.sin(2 * np.pi * 100 * timeline)
     bright_voice = 0.03 * np.sin(2 * np.pi * 260 * timeline)
 
@@ -441,7 +447,7 @@ def test_lufs_leveling_gives_voices_with_different_raw_levels_one_output_level()
 
     for source, normalized in ((low_voice, low_normalized), (bright_voice, bright_normalized)):
         gained = integrated_loudness_lufs(normalized, sample_rate) - integrated_loudness_lufs(source, sample_rate)
-        assert gained == pytest.approx(voice_balance.level_lufs() - ref_lufs, abs=0.05)
+        assert gained == pytest.approx(voice_balance.level_lufs() + constants.o_db - constants.ref_lufs, abs=0.05)
 
 
 def test_segment_rate_validation_warns_for_mild_outlier_and_rejects_extreme() -> None:

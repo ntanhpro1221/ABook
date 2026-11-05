@@ -65,6 +65,7 @@ from .asr_contract import (
     LOCKED_NAME_ANCHOR_UNMATCHED_STATUSES,
 )
 from .character_registry import build_registry_and_cast
+from .chapter_loudness import chapter_level_plan, level_source_signature
 from .database import _asr_only_failure_codes
 from .database import (
     GENERATION_STRATEGY_DIRECT,
@@ -333,6 +334,10 @@ TTS_SIGNAL_PROVENANCE_FIELDS = (
     SPLIT_STRATEGY_FIELD,
     SPLIT_MAX_CHARS_FIELD,
     "split_parts",
+    "applied_level_offset_db",
+    "level_speech_seconds",
+    "level_gain_db",
+    "peak_limited_db",
     *HA_VOCALIZATION_PROVENANCE_FIELDS,
 )
 SEGMENTATION_CHECKPOINT_FIELDS = (
@@ -802,18 +807,44 @@ class BookPipeline:
         transformed = 0
         faded_edges = 0
         ordered = list(rows)
+        pauses = [narrative_break_ms(int(row['break_ms']), self._delivery_context(row),
+            self._delivery_context(ordered[i-1]) if i else None,
+            self._delivery_context(ordered[i+1]) if i+1 < len(ordered) else None)
+            for i, row in enumerate(ordered)]
+        # Vòng bù chỉ đổi gain. Giữ bản âm sắc/cảm xúc trong cùng lượt chạy để không
+        # tính lại Praat; khóa theo toàn bộ câu, hồ sơ và settings, kiểm byte trước dùng.
+        base_fields = ('wav_path', 'wav_sha256', 'seq', 'voice_profile_id', 'kind',
+                       'emotion', 'intensity', 'text', 'scene_break', 'break_ms')
+        used_profiles = {int(r['voice_profile_id'] or 0) for r in ordered}
+        base_signature = hashlib.sha256(json.dumps(
+            [[{k: dict(r).get(k) for k in base_fields} for r in ordered],
+             sorted((i, float(p['formant_ratio'])) for i, p in profiles.items() if i in used_profiles), self.settings],
+            sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+        cache = getattr(self, '_delivery_base_cache', {})
+        cached = cache.get(int(chapter['id']))
+        cache_path = delivery_root/'base_cache.json'
+        if cached is None:
+            try:
+                saved = json.loads(cache_path.read_text(encoding='utf-8'))
+                if saved['sequences'] == [int(r['seq']) for r in ordered]:
+                    cached = (saved['signature'],
+                        [(Path(e['path']), int(e['pause'])) for e in saved['entries']],
+                        [(Path(e['path']), str(e['sha256'])) for e in saved['entries']])
+            except (OSError, ValueError, KeyError, TypeError, IndexError):
+                pass
+        if cached and cached[0] == base_signature and all(
+                p.is_file() and sha256_file(p) == checksum for p, checksum in cached[2]) and (
+                len(cached[1]) == len(ordered) and [pause for _, pause in cached[1]] == pauses
+                and all(p.resolve() in {Path(str(r['wav_path'])).resolve(),
+                    (delivery_root/f"{int(r['seq']):07d}.wav").resolve()} for r, (p, _) in zip(ordered, cached[1]))):
+            cache[int(chapter['id'])] = cached
+            self._delivery_base_cache = cache
+            return self._apply_book_level_gains(chapter, ordered, cached[1], profiles)
         for index, row in enumerate(ordered):
             source = Path(str(row["wav_path"]))
             # The structural pause comes from punctuation; this layers the story's shape
             # over it, so a line that carries feeling is arrived at and allowed to land.
-            break_ms = narrative_break_ms(
-                int(row["break_ms"]),
-                self._delivery_context(row),
-                self._delivery_context(ordered[index - 1]) if index else None,
-                self._delivery_context(ordered[index + 1])
-                if index + 1 < len(ordered)
-                else None,
-            )
+            break_ms = pauses[index]
             profile = profiles.get(int(row["voice_profile_id"] or 0))
             formant_ratio = (
                 float(profile["formant_ratio"]) if profile is not None else 1.0
@@ -876,6 +907,34 @@ class BookPipeline:
                 f"{chapter['chapter_index']}: mép không ở 0 thành bước nhảy ở chỗ nối "
                 "sau khi master kéo mức lên."
             )
+        cache[int(chapter['id'])] = (base_signature, rendered, [(p, sha256_file(p)) for p, _ in rendered])
+        self._delivery_base_cache = cache
+        delivery_root.mkdir(parents=True, exist_ok=True)
+        export_json_atomic(cache_path, {'signature': base_signature,
+            'sequences': [int(r['seq']) for r in ordered],
+            'entries': [{'path': str(p), 'pause': pause, 'sha256': checksum}
+                        for (p, pause), (_, checksum) in zip(rendered, cache[int(chapter['id'])][2])]})
+        return self._apply_book_level_gains(chapter, ordered, rendered, profiles)
+
+    def _apply_book_level_gains(self, chapter: Any, ordered: list[Any],
+                               rendered: list[tuple[Path, int]], profiles: dict[int, Any]) -> list[tuple[Path, int]]:
+        """Bù mức trên bản giao, sau âm sắc/cảm xúc; WAV và bằng chứng QA gốc bất biến."""
+        from .voice_balance import voice_key_for_profile
+        delivery_root = self.paths.work / 'delivery' / f"chapter_{int(chapter['chapter_index']):05d}"
+        deltas = getattr(self, '_book_level_corrections', {}).get('voices', {})
+        if deltas:
+            adjusted = []
+            for row, (path, pause) in zip(ordered, rendered):
+                profile = profiles.get(int(row['voice_profile_id'] or 0))
+                delta = float(deltas.get(voice_key_for_profile(profile), 0)) if profile is not None else 0.0
+                if abs(delta) < 1e-6:
+                    adjusted.append((path, pause))
+                    continue
+                from .audio_io import delivery_gain_copy
+                destination = delivery_root / f"level_{int(row['seq']):07d}.wav"
+                delivery_gain_copy(path, destination, delta, self.settings)
+                adjusted.append((destination, pause))
+            rendered = adjusted
         return rendered
 
     def _validate_chapter_source(self, chapter: Any) -> None:
@@ -891,6 +950,7 @@ class BookPipeline:
 
     def _recover(self) -> None:
         self._validate_resume_stage_fingerprints()
+        self._recover_book_level_publication()
         self.db.set_current_quality_policy(
             policy_hash=self.quality_policy_hash,
             policy_version=QUALITY_POLICY_VERSION,
@@ -906,6 +966,11 @@ class BookPipeline:
             spoken_text_drifted=self._spoken_text_drifted,
         )
         self._completed_noop = report.completed_verified
+        if self._completed_noop:
+            self._compute_chapter_levels()
+            chapters = self.db.list_chapters()
+            self._completed_noop = (self._book_level_manifest_is_current(chapters)
+                                    or all(self._chapter_level_is_current(ch) for ch in chapters))
         if (
             report.reset_in_progress
             or report.reset_missing_or_corrupt
@@ -1025,6 +1090,7 @@ class BookPipeline:
         if not recovery_already_run:
             self._recover()
         if self._completed_noop:
+            self._check_finished_book_levels(self.db.list_chapters())
             self._safe_export_reports(incremental=False)
             self._export_book_file(only_if_missing=True)
             self._state("completed", "Project đã hoàn tất; artifact đã được xác minh.")
@@ -1161,18 +1227,28 @@ class BookPipeline:
             if (str(book["status"]) != BookStatus.COMPLETED.value
                     and str(_segment_value(book, "stage", "")) != "completed_with_errors"):
                 return
-            from .webui.bookfile import default_name, pack
+            from .webui.bookfile import BookFile, default_name, pack
 
             target = self.paths.output / default_name(str(book["title"]))
             if only_if_missing and target.exists():
-                from .webui.bookfile import BookFile, BookFileError
+                from .webui.bookfile import BookFileError
                 from .webui.audio_coverage import expected_source
+                levels = getattr(self, '_book_levels', None)
+                # Có thể bị ngắt sau bù mức nhưng trước đóng gói: file đang có phải mang đúng MP3,
+                # báo cáo và độ phủ hiện hành, không chỉ đúng tên.
                 try:
                     with BookFile(target) as existing:
                         existing.verify()
-                        if existing.book.get("audioCoverage", {}).get("expected") == expected_source(self.paths.root):
+                        covered = existing.book.get("audioCoverage", {}).get("expected") == expected_source(self.paths.root)
+                        current = True
+                        if levels is not None:
+                            prints = existing.chapter_prints
+                            packaged = {str(ch['id']): prints[ch['file']]['sha256']
+                                        for ch in existing.book['chapters'] if ch.get('file')}
+                            current = packaged == levels.get('audio_sha256') and existing.book.get('levelQa') == levels
+                        if covered and current:
                             return
-                except BookFileError:
+                except (BookFileError, KeyError):
                     self.log("File sách cũ không đủ bằng chứng; đóng gói lại từ dự án.")
             path = pack(self.paths.root, target)
             self.log(f"Đã xuất file sách: {path}")
@@ -1219,6 +1295,64 @@ class BookPipeline:
             # chương bị đặt lại thu lại ở vòng sau - sách không chốt hoàn tất khi còn yêu cầu đã nằm đó chưa áp.
             revisit |= self._apply_listener_overrides()
             chapters = [row for row in self.db.list_chapters() if int(row["id"]) in revisit]
+
+        # Chỉ lúc này mới biết đúng số giây và trần đỉnh của CẢ sách. Chương đã nghe được
+        # trong lúc thu được master lại nếu đích đổi; giữ WAV và mọi bằng chứng câu.
+        self._compute_chapter_levels()
+        self._level_plan_pass = True
+        for chapter in self.db.list_chapters():
+            if (chapter["status"] == ChapterStatus.COMPLETED.value and self._chapter_level(chapter)
+                    and not self._chapter_level_is_current(chapter)):
+                self._wait_pause_or_stop()
+                try:
+                    self._publish_verified_chapter(chapter)
+                except Exception as exc:  # noqa: BLE001 - chỉ lần master lại chương đã hoàn tất
+                    # Chương đã nghe được vẫn giữ nguyên khi đích chốt không master được.
+                    self.db.event('warning', 'CHAPTER_LEVEL_MASTER_FAILED',
+                        'Giữ MP3 hiện tại khi master lại theo mức sách thất bại',
+                        {'chapter_id': int(chapter['id']), 'error': str(exc)})
+
+        self._level_plan_pass = False
+
+    def _compute_chapter_levels(self) -> None:
+        rows, profiles = self.db.list_segments(), self.db.list_voice_profiles()
+        self._level_source_signature = level_source_signature(rows, profiles, self.settings)
+        corrections = {}
+        try:
+            saved = json.loads((self.paths.reports / 'book_levels.json').read_text(encoding='utf-8'))
+            if saved.get('source_signature') == self._level_source_signature:
+                corrections = saved.get('corrections', {})
+        except (OSError, ValueError, AttributeError):
+            pass
+        self._book_level_corrections = corrections
+        self._chapter_levels = chapter_level_plan(rows, profiles, self.settings, corrections)
+
+    def _chapter_level(self, chapter: Any) -> dict[str, Any]:
+        if not hasattr(self, '_chapter_levels'):
+            self._compute_chapter_levels()
+        return self._chapter_levels.get(int(chapter['id']), {})
+
+    def _chapter_level_is_current(self, chapter: Any) -> bool:
+        artifact = self.db.artifact_by_key(f"chapter_mp3:{chapter['chapter_index']}")
+        if artifact is None:
+            return False
+        try:
+            metadata = json.loads(str(artifact["metadata_json"] or "{}"))
+        except (ValueError, TypeError):
+            return False
+        plan = self._chapter_level(chapter)
+        return (bool(plan) and isinstance(metadata, dict)
+                and metadata.get("chapter_level", {}).get("signature") == plan["signature"])
+
+    def _book_level_manifest_is_current(self, chapters: list[Any]) -> bool:
+        from .book_levels import BALANCE_ALGORITHM
+        try:
+            state = json.loads((self.paths.reports/'book_levels.json').read_text(encoding='utf-8'))
+            return (state.get('algorithm') == BALANCE_ALGORITHM and state.get('complete') is True
+                    and state.get('source_signature') == self._level_source_signature
+                    and state.get('audio_sha256') == {str(ch['id']): sha256_file(Path(str(ch['output_mp3']))) for ch in chapters})
+        except (OSError, ValueError, AttributeError, KeyError):
+            return False
 
     def _apply_listener_overrides(self) -> set[int]:
         """Áp những gì người nghe sửa trong Studio (`overrides.json`, xem listener_overrides.py): cách đọc tên, ai nói câu
@@ -3155,6 +3289,7 @@ class BookPipeline:
         completed = [row for row in self.db.list_chapters() if row["status"] == ChapterStatus.COMPLETED.value]
         all_chapters = self.db.list_chapters()
         if completed and len(completed) == len(all_chapters):
+            self._check_finished_book_levels(completed)
             chapter_files = [Path(str(row["output_mp3"])) for row in completed]
             if self.settings["audio"].get("create_m3u8", True):
                 write_playlist_atomic(chapter_files, self.paths.output / "playlist.m3u8")
@@ -3192,6 +3327,158 @@ class BookPipeline:
                     self.paths.root,
                     "kết thúc pipeline",
                 )
+
+    def _check_finished_book_levels(self, chapters: list[Any]) -> None:
+        """Đo–bù trên MP3 cuối, tối đa hai vòng; chỉ nhận vòng tốt hơn, lỗi chỉ cảnh báo."""
+        from .book_levels import balance_finished_book
+        from .webui.store import chapter_script
+        from .voice_balance import voice_key_for_profile
+        import shutil
+        import tempfile
+
+        path = self.paths.reports / 'book_levels.json'
+        try:
+            self._compute_chapter_levels()
+            profiles = {int(p['id']): voice_key_for_profile(p) for p in self.db.list_voice_profiles()}
+            rows = {int(r['id']): r for r in self.db.list_segments()}
+            inputs = []
+            for chapter in chapters:
+                script = chapter_script(self.paths.root, int(chapter['id']))
+                if not script or not script.get('timed'):
+                    raise ValueError('Không có mốc câu của MP3 cuối')
+                segments = []
+                for segment in script['segments']:
+                    row = rows[int(segment['id'])]
+                    segments.append({'voice': profiles.get(int(row['voice_profile_id'] or 0)),
+                        'stable_id': row['stable_id'], 'start': segment['start'], 'end': segment['end'],
+                        'volume': row['volume'] or 'normal', 'row_id': int(row['id'])})
+                inputs.append({'id': int(chapter['id']), 'file': Path(str(chapter['output_mp3'])), 'segments': segments})
+            previous = None
+            try:
+                saved = json.loads(path.read_text(encoding='utf-8'))
+                if saved.get('source_signature') == self._level_source_signature:
+                    previous = saved
+            except (OSError, ValueError):
+                pass
+
+            def checkpoint(state):
+                state['source_signature'] = self._level_source_signature
+                export_json_atomic(path, state)
+                self._recover_book_level_publication()
+
+            # Mỗi vòng ở thư mục riêng: master/meter hỏng không đụng MP3 đang nghe.
+            self.paths.work.mkdir(parents=True, exist_ok=True)
+            with tempfile.TemporaryDirectory(prefix='book_levels_', dir=self.paths.work) as temporary:
+                def render(corrections, round_no):
+                    self._book_level_corrections = corrections
+                    plan = chapter_level_plan(list(rows.values()), self.db.list_voice_profiles(), self.settings, corrections)
+                    trial, receipt = [], []
+                    for chapter, original in zip(chapters, inputs):
+                        chapter_id = int(chapter['id'])
+                        old = self._chapter_level(chapter)
+                        if old.get('signature') == plan.get(chapter_id, {}).get('signature'):
+                            trial.append(original)
+                            continue
+                        self._wait_pause_or_stop()
+                        rr = [r for r in rows.values() if int(r['chapter_id']) == chapter_id]
+                        if (not self.db.chapter_is_publishable(chapter_id)
+                                or self._high_quality_blocking_segment_warnings(rr)
+                                or not self._chapter_has_current_segment_audio_qa(chapter_id)):
+                            raise ValueError('Chương thiếu QA hiện hành, giữ audio đang nghe')
+                        self._validate_chapter_source(chapter)
+                        wavs = self._chapter_delivery_wavs(chapter, rr)
+                        self._resource_gate(f"FFmpeg bù mức chapter {chapter['chapter_index']}", require_cpu_io=True)
+                        destination = Path(temporary)/str(round_no)/Path(str(chapter['output_mp3'])).name
+                        assembly = assemble_chapter_atomic_with_metrics(wavs, destination, self.settings,
+                            title=str(chapter['title']), book_title=str(self.db.book()['title']),
+                            track=int(chapter['chapter_index']), work_dir=Path(temporary)/'silence'/str(chapter_id),
+                            target_lufs=plan[chapter_id]['target_lufs'])
+                        if len(assembly.timeline) != len(rr):
+                            raise ValueError('Mốc câu không khớp bản master mới')
+                        spans = {int(r['id']): span for r, span in zip(rr, assembly.timeline)}
+                        trial.append({**original, 'file': destination, 'segments': [
+                            {**g, 'start': spans[g['row_id']][0], 'end': spans[g['row_id']][1]}
+                            for g in original['segments']]})
+                        receipt.append((chapter, destination, assembly, plan[chapter_id], rr))
+                    return trial, receipt
+
+                def accept(receipt):
+                    backup_root = self.paths.work/'book_level_publish'
+                    backup_root.mkdir(parents=True, exist_ok=True)
+                    journal = []
+                    for chapter, source, assembly, level, rr in receipt:
+                        target = Path(str(chapter['output_mp3']))
+                        sidecar = target.with_suffix(target.suffix+'.levels.json')
+                        backup = backup_root/str(chapter['id'])
+                        shutil.copyfile(target, backup)
+                        if sidecar.exists():
+                            shutil.copyfile(sidecar, backup.with_suffix('.json'))
+                        journal.append({'target': str(target), 'backup': str(backup),
+                            'sidecar': sidecar.exists(), 'chapter_id': int(chapter['id']),
+                            'artifact': dict(self.db.artifact_by_key(f"chapter_mp3:{chapter['chapter_index']}"))})
+                    export_json_atomic(self.paths.work/'book_level_publish.json', journal)
+                    try:
+                        for chapter, source, assembly, level, rr in receipt:
+                            target = Path(str(chapter['output_mp3']))
+                            part = target.with_suffix('.levels.part.mp3')
+                            shutil.copyfile(source, part)
+                            os.replace(part, target)
+                            self._register_chapter_assembly(chapter, assembly, level, rr)
+                            self._chapter_levels[int(chapter['id'])] = level
+                    except Exception:
+                        self._recover_book_level_publication(force_rollback=True)
+                        raise
+
+                result = balance_finished_book(inputs, render=render, accept=accept,
+                                                previous=previous, checkpoint=checkpoint)
+                self._book_level_corrections = result.get('corrections', {})
+        except Exception as exc:  # noqa: BLE001 - không chặn sách đã hoàn tất
+            result = {'verdict': 'warning', 'flags': ['BOOK_LEVEL_MEASUREMENT_FAILED'], 'error': str(exc)}
+        self._book_levels = result
+        try:
+            export_json_atomic(path, result)
+            self.db.register_artifact(artifact_key='book_levels', kind='book_qa', path=path,
+                sha256=sha256_file(path), verified=True, metadata={'verdict': result['verdict']})
+            self.db.event('info' if result['verdict'] == 'pass' else 'warning', 'BOOK_LEVEL_QA',
+                'Kiểm và bù mức nghe trên MP3 cuối', result)
+        except Exception as exc:  # noqa: BLE001 - lưu báo cáo cũng không chặn sách
+            self.log(f'Không lưu được kiểm mức nghe của sách: {exc}')
+
+    def _recover_book_level_publication(self, *, force_rollback: bool = False) -> None:
+        """Khôi phục cả vòng nếu bị ngắt lúc công bố, trước recovery kiểm artifact."""
+        import shutil
+        journal_path = self.paths.work/'book_level_publish.json'
+        if not journal_path.exists():
+            return
+        journal = json.loads(journal_path.read_text(encoding='utf-8'))
+        try:
+            saved = json.loads((self.paths.reports/'book_levels.json').read_text(encoding='utf-8'))
+        except (OSError, ValueError):
+            saved = {}
+        committed = not force_rollback and all(
+            saved.get('audio_sha256', {}).get(str(entry['chapter_id'])) == sha256_file(Path(entry['target']))
+            for entry in journal)
+        for entry in journal:
+            target, backup = Path(entry['target']), Path(entry['backup'])
+            if not target.resolve().is_relative_to(self.paths.root.resolve()) or not backup.resolve().is_relative_to(self.paths.work.resolve()):
+                raise ValueError('Journal công bố mức sách vượt thư mục dự án')
+            if not committed:
+                part = target.with_suffix('.levels.part.mp3')
+                shutil.copyfile(backup, part)
+                os.replace(part, target)
+                sidecar = target.with_suffix(target.suffix+'.levels.json')
+                if entry['sidecar']:
+                    shutil.copyfile(backup.with_suffix('.json'), sidecar)
+                else:
+                    sidecar.unlink(missing_ok=True)
+                artifact = entry['artifact']
+                self.db.register_artifact(artifact_key=artifact['artifact_key'], kind=artifact['kind'],
+                    path=target, sha256=artifact['sha256'], verified=bool(artifact['verified']),
+                    metadata=json.loads(artifact['metadata_json'] or '{}'))
+        journal_path.unlink()
+        backup_root = self.paths.work/'book_level_publish'
+        if backup_root.resolve().is_relative_to(self.paths.work.resolve()):
+            shutil.rmtree(backup_root)
 
     def _inspect_existing_segment(self, row: Any) -> tuple[bool, dict[str, float]]:
         wav_text = str(row["wav_path"] or "")
@@ -3259,7 +3546,7 @@ class BookPipeline:
                 int(chapter["chapter_index"])
             )
             segment_quality_verified = self._chapter_has_current_segment_audio_qa(chapter_id)
-            if valid and quality_verified and segment_quality_verified:
+            if valid and quality_verified and segment_quality_verified and self._chapter_level_is_current(chapter):
                 self.log(f"Bỏ qua chapter đã hoàn tất: {chapter['title']}")
                 return
             self.log(
@@ -3424,14 +3711,10 @@ class BookPipeline:
                 "Thiếu audio dòng: " + ", ".join(missing_audio or ["chương rỗng"]),
             )
             return
-        blocking_warnings = self._high_quality_blocking_segment_warnings(rows)
-        failed_lines = [str(row["stable_id"]) for row in rows if row["status"] == SegmentStatus.FAILED.value]
-        needs_review = bool(blocking_warnings or failed_lines
-                            or not self._chapter_has_current_segment_audio_qa(chapter_id)
-                            or not self.db.chapter_is_publishable(chapter_id))
-
         self._validate_chapter_source(chapter)
 
+        if not getattr(self, '_level_plan_pass', False):
+            self._compute_chapter_levels()
         wavs = self._chapter_delivery_wavs(chapter, rows)
         self._resource_gate(
             f"FFmpeg chapter {chapter['chapter_index']}",
@@ -3439,6 +3722,7 @@ class BookPipeline:
         )
         assembly_label = f"Ghép và kiểm tra MP3 chapter {chapter['chapter_index']}"
         self._progress(assembly_label)
+        chapter_level = self._chapter_level(chapter)
         assembly = assemble_chapter_atomic_with_metrics(
             wavs,
             output,
@@ -3448,7 +3732,25 @@ class BookPipeline:
             track=int(chapter["chapter_index"]),
             work_dir=self.paths.work / "silence",
             retain_for_review=True,
+            target_lufs=chapter_level["target_lufs"],
         )
+        self._register_chapter_assembly(chapter, assembly, chapter_level, rows)
+
+    def _register_chapter_assembly(self, chapter: Any, assembly: Any,
+                                   chapter_level: dict[str, Any], rows: list[Any]) -> None:
+        chapter_id = int(chapter['id'])
+        output = Path(str(chapter['output_mp3']))
+        assembly_label = f"Ghép và kiểm tra MP3 chapter {chapter['chapter_index']}"
+        blocking_warnings = self._high_quality_blocking_segment_warnings(rows)
+        failed_lines = [str(row["stable_id"]) for row in rows if row["status"] == SegmentStatus.FAILED.value]
+        needs_review = bool(blocking_warnings or failed_lines
+                            or not self._chapter_has_current_segment_audio_qa(chapter_id)
+                            or not self.db.chapter_is_publishable(chapter_id))
+        if assembly.timeline:
+            export_json_atomic(output.with_suffix(output.suffix+'.levels.json'), {
+                'audio_sha256': assembly.checksum,
+                'spans': {str(r['id']): list(span) for r, span in zip(rows, assembly.timeline)},
+            })
         checksum = assembly.checksum
         quality_metrics = assembly.quality.to_dict()
         needs_review = needs_review or bool(assembly.quality.hard_failures or
@@ -3479,6 +3781,7 @@ class BookPipeline:
                 "title": str(chapter["title"]),
                 "quality": quality_metadata,
                 "quality_metrics": quality_metrics,
+                "chapter_level": chapter_level,
             },
         )
         if assembly.quality.review_flags or assembly.quality.hard_failures:
@@ -4326,6 +4629,9 @@ class BookPipeline:
                 GENERATION_ENDPOINT_ACTIVE_METRIC,
             ):
                 metrics[field] = source_signal.get(field, 0.0)
+            if "applied_level_offset_db" in source_signal:
+                metrics["applied_level_offset_db"] = source_signal["applied_level_offset_db"]
+                metrics["level_speech_seconds"] = max(0.0, float(metrics["duration"])-float(metrics.get("measured_silence_seconds", 0)))
             metrics.update(transform_metrics)
             metrics.update(
                 {
@@ -5517,6 +5823,8 @@ class BookPipeline:
                     {
                         "index": index,
                         "source_spans": part_anchors,
+                        "applied_level_offset_db": part_metrics.get("applied_level_offset_db"),
+                        "level_speech_seconds": part_metrics.get("level_speech_seconds"),
                         "generation_seed": part_seed,
                         "spoken_text_sha256": part_metrics.get("spoken_text_sha256"),
                         "pronunciation_delivery_variant": part_metrics.get(
@@ -6797,6 +7105,12 @@ class BookPipeline:
         reporter._export_reports(incremental=True)
 
     def _export_reports(self, *, incremental: bool = False) -> None:
+        book_levels = getattr(self, "_book_levels", None)
+        if book_levels is None:
+            try:
+                book_levels = json.loads((self.paths.reports / "book_levels.json").read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                pass
         segments = [dict(row) for row in self.db.list_segments()]
         chapters = self.db.list_chapters()
         segments_by_chapter: dict[int, list[dict[str, Any]]] = {}
@@ -7215,6 +7529,7 @@ class BookPipeline:
                 "segment_perceptual_evidence": perceptual_evidence,
                 "segment_repair_candidates": repair_candidate_evidence,
                 "chapters": chapter_quality,
+                "book_levels": book_levels,
             },
         )
         export_json_atomic(

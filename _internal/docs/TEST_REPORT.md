@@ -1161,3 +1161,6 @@ Final unique pytest results across 106 files: 2544 passed, 5 skipped, 0 FAILED/e
 Preserved Your Story snapshot copy: 672 narration profiles changed in chapters 8-10 to Touka's existing Doan Trang profile; 670 recorded rows reset (146/263/261), 2 already unrecorded; 2871 other rows unchanged; repeat ensure changed zero rows. Source books queried using SQLite mode=ro only. Current live narration generation provenance already matches character profiles in all 672 Your Story and 619 Pain Pain Go Away affected rows; exact SELECT queries/IDs are in scratchpad/codex/teller3.
 
 Quality hash: f10085f96acd7f9fe6a066f2bf5a74338b0a351bea3d98f58f6d2807912cbfff -> 2ae1ce6e982077c17fa49a61ce1c561bac9bd237f031358650aa7159c7d31a35 (42 locked entries read from code). Dev branch only; merge waits for current book runs.
+## chaplevel2 (dev/voice-loudness)
+
+Kiểm vòng kín trên giọng tổng hợp qua FFmpeg thật: chương một giọng nhỏ theo phon, giới hạn cuối, lần chạy thứ hai dùng lại, lỗi meter/master giữ audio, loại vòng xấu, holdout không trùng câu fit. Mốc câu được đối chiếu độ dài MP3 sau cắt lặng; cache words cũ không đính kèm audio mới. Kết quả importer suite và đo hai sách thật ghi trong report.md của thư mục tác vụ; chưa phải bằng chứng phát hành.
