@@ -34,7 +34,7 @@ không phải một con số tự đặt:
   dựng ở lần gọi đầu).
 
 Không đo được bằng máy, và cố ý không giả vờ: tai người nghe. Những luật đang có từ tai người nghe
-(`EXCLUDED_PRESETS`, `LAST_RESORT_PRESETS`, `CHILD_VOICE_PREFERENCE`) giữ nguyên.
+(`EXCLUDED_PRESETS`, `LAST_RESORT_PRESETS`, `assets/voice_rank.json`) giữ nguyên.
 """
 from __future__ import annotations
 
