@@ -154,7 +154,7 @@ Một việc - một cách viết, cho web (máy tính + điện thoại), nativ
 
 <!-- ui_parity:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity.py - không sửa tay, chạy lại script) -->
 
-Quét: web 5257 chữ (3032 khác nhau), 333 cặp nhãn-icon; native 1890 chữ (1457 khác nhau), 74 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
+Quét: web 5258 chữ (3033 khác nhau), 334 cặp nhãn-icon; native 1890 chữ (1457 khác nhau), 74 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
 
 ## a. Cùng việc, khác chữ
 
@@ -226,7 +226,7 @@ Cặp nhãn ngắn (<= 6 chữ) mà phía kia KHÔNG có nguyên văn nhưng có
 | share-2 | Chia sẻ | Đang đóng file sách |
 | upload | Chọn file, Nhập nhạc, Thêm file, Thêm nhạc của bạn | Đang thêm {}/{} |
 
-Phủ của bộ ghép: icon dùng ở 149 chỗ trong mã native, ghép được với nhãn chữ ở 72; web 481 chỗ, ghép được 289. Phần còn lại là icon không đi cùng nhãn chữ (nút chỉ icon, chỉ báo) hay nhãn dựng từ model (vd tên nhóm Cài đặt), nên KHÔNG có trong bảng.
+Phủ của bộ ghép: icon dùng ở 149 chỗ trong mã native, ghép được với nhãn chữ ở 72; web 482 chỗ, ghép được 289. Phần còn lại là icon không đi cùng nhãn chữ (nút chỉ icon, chỉ báo) hay nhãn dựng từ model (vd tên nhóm Cài đặt), nên KHÔNG có trong bảng.
 Icon native chưa quy về lucide (3): `native:ChevronIcon`, `native:OtherPlayerIcon`, `native:PlayerGlyph`.
 Số cặp: web 289, native 72; icon lucide dùng: web 93, native 39.
 
@@ -257,7 +257,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `native/devices/DeviceParts.kt` (3): Nhập mã này trên máy kia (`132`); Dùng được đến {} (`135`); Phần đã tải, chưa thành sách (`150`)
 - `native/devices/DeviceSheets.kt` (4): Đang mở Studio (`77`); Ghép lại (`91`); Đang bỏ ghép (`138`); Đang lưu (`163`)
 - `native/devices/DevicesJson.kt` (1): Sách tải dở (`59`)
-- `native/devices/DevicesModel.kt` (11): Tải (`119`); Cập nhật bản thu (`121`); Cập nhật bìa (`122`); Cập nhật tên (`123`); Cập nhật chữ (`124`); Nhập địa chỉ (`179`); Chưa vào mạng Wi-Fi nào (`224`); Bluetooth: {} máy đang nối (`233`); Chưa ghép với máy tính nào (`276`); Chưa thấy (`312`); Thấy {} (`312`)
+- `native/devices/DevicesModel.kt` (11): Tải (`120`); Cập nhật bản thu (`122`); Cập nhật bìa (`123`); Cập nhật tên (`124`); Cập nhật chữ (`125`); Nhập địa chỉ (`180`); Chưa vào mạng Wi-Fi nào (`225`); Bluetooth: {} máy đang nối (`234`); Chưa ghép với máy tính nào (`277`); Chưa thấy (`313`); Thấy {} (`313`)
 - `native/devices/DevicesRepo.kt` (4): Chưa dùng được Bluetooth (`58`); Chưa kết nối được (`65`); Chưa nối được máy kia. (`80`); Chưa mở được Studio (`146`)
 - `native/devices/DevicesState.kt` (4): Chưa nối (`69`); Đã nối {} (`69`); Đang bật · {} máy (`71`); Chưa huỷ được (`384`)
 - `native/devices/PairScreen.kt` (23): Nối máy tính (`80`); Thêm thiết bị (`95`); Máy đã nối (`114`); Nghe khi ra ngoài (`130`); Sách trên {} (`139`); Thiết bị khác (`156`); Cách lấy mã (`163`); Ghép Bluetooth (`169`); Cách nối (`171`); Địa chỉ máy tính (`178`); Địa chỉ, ví dụ 192.168.1.20:47630 (`178`); Mã ghép nối (`185`); Đang nối {} (`195`); Máy tính tìm thấy (`205`); Quyền Bluetooth (`216`); Cần quyền Thiết bị ở gần (`224`); Mở cài đặt (`225`); Máy tính đã ghép Bluetooth (`235`); Cài trên máy tính (`267`); Studio máy tính (`269`); Tải ABook Windows (`274`); Đã chép địa chỉ (`275`); Chép địa chỉ (`277`)
@@ -414,23 +414,23 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 
 | kiểu | web | native |
 |---|---|---|
-| dấu ba chấm ASCII `...` | 8 / 5257 | 0 / 1890 |
-| dấu ba chấm `…` | 36 / 5257 | 0 / 1890 |
-| kết thúc bằng dấu chấm `.` | 894 / 5257 | 388 / 1890 |
-| kết thúc bằng `!` | 0 / 5257 | 0 / 1890 |
-| kết thúc bằng `:` | 52 / 5257 | 3 / 1890 |
-| dấu thanh kiểu cũ `oà oá uý` | 389 / 5257 | 172 / 1890 |
-| dấu thanh kiểu mới `òa óa úy` | 1 / 5257 | 0 / 1890 |
-| số thập phân dấu phẩy `1,5` | 1 / 5257 | 0 / 1890 |
-| số thập phân dấu chấm `1.5` | 0 / 5257 | 0 / 1890 |
-| nhân bằng `×` | 0 / 5257 | 0 / 1890 |
-| nhân bằng `x` sau số | 0 / 5257 | 0 / 1890 |
-| ngăn cách `·` | 120 / 5257 | 34 / 1890 |
-| ngăn cách ` - ` | 257 / 5257 | 80 / 1890 |
-| gạch dài `—`/`–` | 10 / 5257 | 1 / 1890 |
-| giờ `1:30` hay `1 giờ 30` | 0 / 5257 | 2 / 1890 |
-| dấu `%` dính số | 0 / 5257 | 1 / 1890 |
-| dấu `%` cách số | 0 / 5257 | 0 / 1890 |
+| dấu ba chấm ASCII `...` | 8 / 5258 | 0 / 1890 |
+| dấu ba chấm `…` | 36 / 5258 | 0 / 1890 |
+| kết thúc bằng dấu chấm `.` | 894 / 5258 | 388 / 1890 |
+| kết thúc bằng `!` | 0 / 5258 | 0 / 1890 |
+| kết thúc bằng `:` | 52 / 5258 | 3 / 1890 |
+| dấu thanh kiểu cũ `oà oá uý` | 389 / 5258 | 172 / 1890 |
+| dấu thanh kiểu mới `òa óa úy` | 1 / 5258 | 0 / 1890 |
+| số thập phân dấu phẩy `1,5` | 1 / 5258 | 0 / 1890 |
+| số thập phân dấu chấm `1.5` | 0 / 5258 | 0 / 1890 |
+| nhân bằng `×` | 0 / 5258 | 0 / 1890 |
+| nhân bằng `x` sau số | 0 / 5258 | 0 / 1890 |
+| ngăn cách `·` | 121 / 5258 | 34 / 1890 |
+| ngăn cách ` - ` | 257 / 5258 | 80 / 1890 |
+| gạch dài `—`/`–` | 10 / 5258 | 1 / 1890 |
+| giờ `1:30` hay `1 giờ 30` | 0 / 5258 | 2 / 1890 |
+| dấu `%` dính số | 0 / 5258 | 1 / 1890 |
+| dấu `%` cách số | 0 / 5258 | 0 / 1890 |
 
 **d3. Nhãn ngắn bắt đầu bằng chữ thường** (web 147, native 0); 15 đầu mỗi phía:
 
@@ -448,10 +448,10 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `Ai nói câu này` | `Ai nói câu này?` (`listen/LineWishes.tsx:399`, `listen/LineWishes.tsx:461` (+4))
 - `Buồn` | `buồn` (`studio/ScriptTab.tsx:184`, `studio/musicScenes.ts:29` (+1))
 - `Bắt đầu` | `bắt đầu` | `bắt đầu.` (`desktop/AudiobookDialog.tsx:216`, `studio/NewProjectScreen.tsx:2041` (+3))
-- `Bỏ ghép {}` | `Bỏ ghép {}?` (`desktop/OtherComputers.tsx:232`, `desktop/OtherComputers.tsx:233` (+3))
+- `Bỏ ghép {}` | `Bỏ ghép {}?` (`desktop/OtherComputers.tsx:233`, `desktop/OtherComputers.tsx:234` (+3))
 - `Chưa cài` | `Chưa cài.` | `chưa cài` (`desktop/SettingsScreen.tsx:516`, `studio/ProjectScreen.tsx:819` (+1))
 - `Chưa có bài nào` | `chưa có bài nào` (`listen/MyMusic.tsx:143`, `listen/MyMusic.tsx:156` (+1))
-- `Chưa ghép được` | `Chưa ghép được:` (`desktop/OtherComputers.tsx:101`, `desktop/OtherComputers.tsx:317`)
+- `Chưa ghép được` | `Chưa ghép được:` (`desktop/OtherComputers.tsx:101`, `desktop/OtherComputers.tsx:318`)
 - `Chưa gói được dự án` | `Chưa gói được dự án.` (`desktop/bookFileExport.ts:57`, `studio/ExportBook.tsx:75` (+2))
 - `Chưa nghe` | `chưa nghe` (`listen/BookScreen.tsx:1196`, `listen/BookScreen.tsx:276` (+2))
 - `Chưa nghe thử được` | `Chưa nghe thử được:` (`listen/clip.tsx:92`, `studio/TryReading.tsx:146`)

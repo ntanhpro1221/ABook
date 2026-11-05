@@ -61,7 +61,8 @@ def _speak(db: ProjectDB, chapter: str, lines: list[tuple[str, str]], status: st
         character_id = db.upsert_character(canonical_name=speaker, display_name=speaker.title(), gender="female"
                                            if voice_key == VOICE_B else "male", age="adult", personality="",
                                            mentions=0, importance="main", confidence=0.9)
-        profile_id = db.upsert_voice_profile({"voice_key": voice_key, "engine": "vieneu", "preset_name": "Đức Trí",
+        preset = {VOICE_A: "Thanh Bình", VOICE_B: "Ngọc Linh", VOICE_C: "Thái Sơn"}[voice_key]
+        profile_id = db.upsert_voice_profile({"voice_key": voice_key, "engine": "vieneu", "preset_name": preset,
                                               "description": "", "seed": 7, "pitch_semitones": 0, "formant_ratio": 1.0,
                                               "status": "ready"})
         with db.transaction() as conn:
