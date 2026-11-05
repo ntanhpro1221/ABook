@@ -20,13 +20,11 @@ object Devices {
     /** Công tắc "Cho máy khác nghe thư viện này" (SharedPreferences "sync"). */
     const val SHARE_KEY = ShareService.SHARE_KEY
 
-    private const val DISCOVERY_PORT = 47631
-
     /** Máy tính chính: đã ghép chưa, địa chỉ, tên, đường nối đang thông, địa chỉ ghép lần trước và tên điện thoại này. */
     fun connection(context: Context): JSONObject {
         val prefs = SyncLink.prefs(context)
         val paired = !prefs.getString("token", "").isNullOrBlank()
-        return JSONObject().put("paired", paired).put("host", prefs.getString("host", "")).put("port", prefs.getInt("port", 47630))
+        return JSONObject().put("paired", paired).put("host", prefs.getString("host", "")).put("port", prefs.getInt("port", BuildConfig.DEFAULT_PEER_PORT))
             .put("name", prefs.getString("name", "")).put("fingerprint", prefs.getString("fingerprint", "") ?: "")
             .put("connectedVia", prefs.getString("connectedVia", ""))
             .put("lastAddress", context.getSharedPreferences("abook_self", Context.MODE_PRIVATE).getString("lastAddress", "") ?: "")
@@ -46,7 +44,9 @@ object Devices {
             var sent = 0
             while (System.currentTimeMillis() < deadline) {
                 if (sent < 3) {
-                    runCatching { socket.send(DatagramPacket(probe, probe.size, InetAddress.getByName("255.255.255.255"), DISCOVERY_PORT)) }
+                    for (port in listOf(BuildConfig.RELEASE_DISCOVERY_PORT, BuildConfig.DEBUG_DISCOVERY_PORT)) {
+                        runCatching { socket.send(DatagramPacket(probe, probe.size, InetAddress.getByName("255.255.255.255"), port)) }
+                    }
                     sent += 1
                 }
                 val buffer = ByteArray(4096)
@@ -77,7 +77,7 @@ object Devices {
     fun pair(context: Context, host: String, port: Int, code: String, device: String? = null): String {
         SyncLink.refuseSelf(host, port)
         val prefs = SyncLink.prefs(context)
-        val body = JSONObject().put("code", code).put("device", device ?: DeviceName.of(context))
+        val body = JSONObject().put("code", code).put("device", device ?: DeviceName.shared(context))
         val (reply, fingerprint) = SyncLink.pair(context, "https://${PeerAddresses.endpoint(host, port)}", body)
         SyncLink.saveRoutes(prefs.edit().putString("host", host).putInt("port", port).putString("token", reply.getString("token"))
             .putString("fingerprint", fingerprint).putString("name", reply.optString("name")), reply, host, port, fingerprint,
@@ -91,7 +91,7 @@ object Devices {
     /** Ghép máy tính chính QUA BLUETOOTH: cùng mã 6 số, cùng /sync/v1/pair - đi qua đường hầm. */
     fun pairBluetooth(context: Context, address: String, code: String, device: String? = null): String {
         val prefs = SyncLink.prefs(context)
-        val body = JSONObject().put("code", code).put("device", device ?: DeviceName.of(context))
+        val body = JSONObject().put("code", code).put("device", device ?: DeviceName.shared(context))
         val root = BluetoothLink.base(context, address)
         val (reply, fingerprint) = try {
             SyncLink.pair(context, root, body)

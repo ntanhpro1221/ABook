@@ -4,6 +4,7 @@ from __future__ import annotations
 import ipaddress
 import math
 from typing import Any
+from .peer_endpoints import RELEASE
 
 LIMIT = 8
 
@@ -63,7 +64,7 @@ def migrate(entry: dict[str, Any]) -> bool:
     old = entry.get("addresses")
     if missing:
         host = entry.get("host")
-        address = discovery_endpoint(host, entry.get("port", 47630), advertised=False) if isinstance(host, str) and not host.startswith("bt:") else None
+        address = discovery_endpoint(host, entry.get("port", RELEASE["port"]), advertised=False) if isinstance(host, str) and not host.startswith("bt:") else None
         old = [{"address": address, "lastSuccess": 0}] if address else []
     clean = records(old)
     changed = missing or entry["addresses"] != clean

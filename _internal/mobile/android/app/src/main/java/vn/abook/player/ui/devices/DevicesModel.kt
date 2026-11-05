@@ -1,6 +1,7 @@
 package vn.abook.player.ui.devices
 
 import vn.abook.player.formatSize
+import vn.abook.player.BuildConfig
 
 import androidx.compose.runtime.Immutable
 import vn.abook.player.ui.data.Choice
@@ -20,7 +21,7 @@ enum class DeviceKind { Computer, Phone }
 const val MAIN_KEY = ""
 
 /** Cổng mặc định của máy tính khi người dùng gõ địa chỉ không kèm cổng. */
-const val DEFAULT_PORT = 47630
+const val DEFAULT_PORT = BuildConfig.DEFAULT_PEER_PORT
 
 /** Một máy tìm thấy để ghép: trong Wi-Fi (`address` = host:cổng) hay đã ghép Bluetooth với điện thoại (`address` = bt:địa chỉ). */
 @Immutable

@@ -1,0 +1,14 @@
+{
+  "release": {
+    "port": 47630,
+    "discoveryPort": 47631,
+    "serviceUuid": "a1f667fe-352a-49b7-9b91-a5463677cac0",
+    "tunnelFirstPort": 47670
+  },
+  "debug": {
+    "port": 47640,
+    "discoveryPort": 47641,
+    "serviceUuid": "b2e7780f-463b-5ac8-ac02-b6574788dbd1",
+    "tunnelFirstPort": 47702
+  }
+}

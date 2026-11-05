@@ -75,7 +75,7 @@ export function OtherComputers() {
   }, [waking, client]);
   const [address, setAddress] = useState("");
   const [code, setCode] = useState("");
-  // Thiết bị Bluetooth đã ghép ở Windows: chỉ đọc danh sách của hệ điều hành; lỗi hay rỗng thì thôi, không chặn gì.
+  // Thiết bị đã ghép ở Windows và dịch vụ ABook qua SDP; lỗi hay rỗng thì thôi, không chặn gì.
   const paired = useQuery({
     queryKey: ["computers", "bluetooth"],
     queryFn: () => api<{ devices: PairedDevice[] }>("/api/computers/bluetooth"),
@@ -152,7 +152,8 @@ export function OtherComputers() {
   if (isLoading || !data) return <MotionRegion fadeThrough><ContentSkeleton count={2} label="Đang tải thiết bị" /></MotionRegion>;
   // Đã ghép rồi thì không mời ghép lại.
   const pairedAddresses = new Set(data.computers.filter((computer) => isBluetoothHost(computer.host)).map((computer) => bluetoothAddress(computer)));
-  const unpaired = devices.filter((device) => !pairedAddresses.has(device.address));
+  const unpaired = devices.filter((device) => device.services?.includes("release") && !pairedAddresses.has(device.address));
+  const unpairedDev = devices.filter((device) => device.services?.includes("dev") && !pairedAddresses.has(`${device.address}@dev`.toUpperCase()));
   return (
     <MotionRegion as="div" className="motion-reveal space-y-4">
       <MotionPresence open={Boolean(data.broken)}>
@@ -332,6 +333,12 @@ export function OtherComputers() {
           </ul>
         </div>
       )}
+      {unpairedDev.map((device) => (
+        <Button key={`${device.address}@dev`} size="sm" variant="ghost" icon={Bluetooth}
+          onClick={() => { setAddress(`${device.address}@dev`); codeInput.current?.focus(); }}>
+          {device.name} · bản thử
+        </Button>
+      ))}
       <p className="text-xs text-fg-2">Máy kia: Cài đặt → Thiết bị → bật “{SYNC_SWITCH_LABEL}” để lấy mã; ghép một chiều để nghe thư viện của máy ấy.</p>
       </Fold>
       {unpair.dialog}

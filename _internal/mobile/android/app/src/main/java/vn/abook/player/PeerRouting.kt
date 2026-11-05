@@ -47,7 +47,7 @@ internal object PeerRouting {
 
     @Synchronized fun mainPrefs(prefs: android.content.SharedPreferences): JSONObject {
         val values = prefs.all
-        val peer = JSONObject().put("host", values["host"] as? String ?: "").put("port", values["port"] ?: 47630)
+        val peer = JSONObject().put("host", values["host"] as? String ?: "").put("port", values["port"] ?: BuildConfig.DEFAULT_PEER_PORT)
             .put("fingerprint", values["fingerprint"] as? String ?: "").put("token", values["token"] as? String ?: "")
             .put("bt", values["bt"] as? String ?: "")
         val hasAddresses = values.containsKey("addresses")
@@ -60,7 +60,7 @@ internal object PeerRouting {
             (!hasAddresses && peer.optString("token").isNotBlank() && PeerAddresses.ordered(peer).isEmpty() && bluetooth(peer).isBlank())
         if (damaged) preserve(prefs, "routes", JSONObject(values).toString())
         if (!hasAddresses || values["addresses"] != clean || damaged) {
-            val port = values["port"]?.toString()?.toIntOrNull()?.takeIf { it in 1..65535 } ?: 47630
+            val port = values["port"]?.toString()?.toIntOrNull()?.takeIf { it in 1..65535 } ?: BuildConfig.DEFAULT_PEER_PORT
             check(prefs.edit().putString("addresses", clean).putInt("port", port).commit()) { "Chưa lưu được địa chỉ máy đã ghép" }
         }
         return peer

@@ -13,7 +13,7 @@ import pytest
 from abook.webui import bluetooth, remote_books
 from abook.webui.remote_books import Computers, RemoteError
 from tests.test_bluetooth_desktop_client import (  # noqa: F401 - fixture + bộ giả dùng chung
-    PHONE, FakePhone, _clean_routes, _eventually, _free_port, _sync)
+    PHONE, FakePhone, FakeWs2, _clean_routes, _eventually, _free_port, _sync)
 from tests.test_webui_listen_and_sync import library  # noqa: F401
 
 
@@ -55,12 +55,37 @@ def test_paired_devices_are_listed_from_the_structures_windows_fills_in() -> Non
     fake = FakeBthprops([("Galaxy của An", 0xAABBCCDDEEFF, PHONE_CLASS), ("Tai nghe", 0x112233445566, HEADSET_CLASS),
                          ("Máy bàn", 0x665544332211, COMPUTER_CLASS)])
     devices = bluetooth.paired_devices(dll=fake)
-    assert devices == [{"name": "Galaxy của An", "address": PHONE, "kind": "phone"},
-                       {"name": "Máy bàn", "address": "66:55:44:33:22:11", "kind": "computer"}], "bỏ tai nghe, loa"
+    assert devices == [{"name": "Galaxy của An", "address": PHONE, "kind": "phone", "services": []},
+                       {"name": "Máy bàn", "address": "66:55:44:33:22:11", "kind": "computer", "services": []}], "bỏ tai nghe, loa"
     assert fake.closed == 1, "luôn đóng lượt tìm"
     assert fake.params.fReturnAuthenticated and fake.params.fReturnRemembered and not fake.params.fIssueInquiry, \
         "chỉ đọc danh sách đã ghép, không dò sóng"
     assert bluetooth.paired_devices(dll=FakeBthprops([])) == [], "chưa ghép gì / không có card"
+
+
+@pytest.mark.parametrize("services", [["release"], ["dev"], ["release", "dev"], []])
+def test_listing_reports_only_the_services_advertised_by_each_device(services: list[str]) -> None:
+    class ServicesWs2(FakeWs2):
+        def WSALookupServiceBeginW(self, query, flags, handle):  # noqa: N802
+            service = bytes(query._obj.lpServiceClassId.contents)
+            self.queries.append((query._obj.lpszContext, service))
+            offered = {bluetooth.SERVICE_UUID.bytes_le: "release", bluetooth.DEV_SERVICE_UUID.bytes_le: "dev"}
+            # Máy thứ hai chỉ có bản phát hành: không để kết quả máy trước lọt sang.
+            available = services if query._obj.lpszContext == f"({PHONE})" else ["release"]
+            self.script = [[(bluetooth.AF_BTH, 7)]] if offered[service] in available else []
+            return super().WSALookupServiceBeginW(query, flags, handle)
+
+    sdp = ServicesWs2([])
+    sdp.queries = []
+    devices = bluetooth.paired_devices(dll=FakeBthprops([
+        ("Pixel", 0xAABBCCDDEEFF, PHONE_CLASS), ("Galaxy", 0x112233445566, PHONE_CLASS),
+        ("Tai nghe", 0x665544332211, HEADSET_CLASS)]), ws2=sdp.ws2())
+    assert devices == [
+        {"name": "Pixel", "address": PHONE, "kind": "phone", "services": services},
+        {"name": "Galaxy", "address": "11:22:33:44:55:66", "kind": "phone", "services": ["release"]}]
+    assert sdp.queries == [(f"({address})", service.bytes_le) for address in (PHONE, "11:22:33:44:55:66")
+                           for service in (bluetooth.SERVICE_UUID, bluetooth.DEV_SERVICE_UUID)]
+    assert sdp.ended == 4, "đóng đủ mọi lượt SDP, kể cả khi không tìm thấy dịch vụ"
 
 
 def test_a_phone_is_matched_by_its_name_and_never_guessed() -> None:

@@ -8898,6 +8898,16 @@ class ProjectDB:
             raise ValueError("canonical_name and voice_key are both required")
         now = time.time()
         with self.transaction() as conn:
+            from .character_registry import character_preset_allowed
+            from .listener_overrides import narrated_voices
+
+            profile = conn.execute("SELECT preset_name FROM voice_profiles WHERE voice_key=?", (key,)).fetchone()
+            book = conn.execute("SELECT settings_json FROM book LIMIT 1").fetchone()
+            settings = json.loads(book[0]) if book is not None else {}
+            voices = narrated_voices(conn, settings.get("voices", {}))
+            excluded = {str(voices.get("narrator_voice") or ""), *map(str, voices.get("other_narrators", ()))}
+            if profile is not None and not character_preset_allowed(str(profile[0]), excluded):
+                raise ValueError("Giọng đã ghim trùng giọng người kể")
             updated = conn.execute(
                 "UPDATE characters SET locked_voice_key=?, updated_at=? WHERE canonical_name=?",
                 (key, now, name),
@@ -9440,6 +9450,55 @@ class ProjectDB:
             )
         return details
 
+    def _set_narrator_preset_conn(
+        self, conn: sqlite3.Connection, preset: str, voices: dict[str, Any], now: float,
+        *, description: str | None = None,
+    ) -> dict[str, Any]:
+        """Set narration and re-cast its character holders atomically, including silent pins."""
+        from .character_registry import character_preset_allowed, listener_voice_choice
+
+        conn.execute("UPDATE voice_profiles SET preset_name=?, description=COALESCE(?, description), updated_at=? "
+                     "WHERE voice_key='narrator' COLLATE NOCASE", (preset, description, now))
+        effective = {**voices, "narrator_voice": preset}
+        excluded = {preset, *map(str, voices.get("other_narrators", ()))}
+        holders = conn.execute(
+            "SELECT DISTINCT c.* FROM characters c LEFT JOIN segments s ON s.canonical_character_id=c.id "
+            "LEFT JOIN voice_profiles v ON v.id=s.voice_profile_id "
+            "LEFT JOIN voice_profiles p ON p.voice_key=c.locked_voice_key "
+            "WHERE c.canonical_name <> 'NARRATOR' AND (v.preset_name=? OR p.preset_name=?) "
+            "ORDER BY c.canonical_name", (preset, preset)).fetchall()
+        reset: list[int] = []
+        chapters: set[int] = set()
+        reason = "Đổi giọng nhân vật trùng giọng người kể: thu lại bằng giọng mới"
+        done = {"signal_passed", "asr_passed", "verified", "warning", "failed"}
+        for character in holders:
+            profile = listener_voice_choice(conn, effective, str(character["canonical_name"]),
+                                            gender=str(character["gender"]), age=str(character["age"] or "unknown"))
+            assert character_preset_allowed(profile["preset_name"], excluded)
+            conn.execute(
+                "INSERT INTO voice_profiles(voice_key,engine,preset_name,description,seed,pitch_semitones,"
+                "formant_ratio,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?) ON CONFLICT(voice_key) DO NOTHING",
+                (profile["voice_key"], profile["engine"], profile["preset_name"], profile["description"], profile["seed"],
+                 profile["pitch_semitones"], profile["formant_ratio"], profile["status"], now, now))
+            profile_id = conn.execute("SELECT id FROM voice_profiles WHERE voice_key=?", (profile["voice_key"],)).fetchone()[0]
+            rows = conn.execute("SELECT id, chapter_id, status FROM segments WHERE canonical_character_id=?",
+                                (character["id"],)).fetchall()
+            conn.execute("UPDATE segments SET voice_profile_id=?, updated_at=? WHERE canonical_character_id=?",
+                         (profile_id, now, character["id"]))
+            if character["locked_voice_key"]:
+                conn.execute("UPDATE characters SET locked_voice_key=?, updated_at=? WHERE id=?",
+                             (profile["voice_key"], now, character["id"]))
+            for row in rows:
+                if str(row["status"]) in done:
+                    self._reset_segment_pending_conn(conn, int(row["id"]), reason, now)
+                    reset.append(int(row["id"]))
+                    chapters.add(int(row["chapter_id"]))
+        for chapter_id in sorted(chapters):
+            self._refresh_chapter_counts_conn(conn, chapter_id)
+            conn.execute("UPDATE chapters SET status='warning', last_error=? WHERE id=? AND status='completed'",
+                         (LISTENER_REDO + reason, chapter_id))
+        return {"characters": [str(row["canonical_name"]) for row in holders], "reset": reset, "chapters": chapters}
+
     def apply_listener_voice(
         self,
         *,
@@ -9503,8 +9562,9 @@ class ProjectDB:
 
                     # Khoá hồ sơ giữ nguyên: câu kể, nội tâm không rõ ai nghĩ (tra hồ sơ bằng khoá) đọc giọng mới cùng lúc.
                     profile_id = int(profile["id"])
-                    conn.execute("UPDATE voice_profiles SET preset_name=?, updated_at=? WHERE id=?",
-                                 (voice_key, now, profile_id))
+                    recast = self._set_narrator_preset_conn(conn, voice_key, voices, now)
+                    reset.extend(recast["reset"])
+                    chapters.update(recast["chapters"])
                     rows = [row for row in conn.execute(
                         "SELECT id, chapter_id, status, kind, speaker, voice_profile_id FROM segments ORDER BY id"
                     ) if narrator_voiced(row, profile_id)]
