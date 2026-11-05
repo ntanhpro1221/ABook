@@ -188,7 +188,7 @@ def test_a_word_stretched_in_several_places_is_collected_when_it_makes_one_sylla
     ("Ng-ngài và K-Không và Đ-Điều", "ngờ… ngài và khờ… Không và đờ… Điều"),
     ("E-em muốn A-anh", "e… em muốn a… anh"),
     ("[Kh- Không phải", "[khờ… Không phải"),
-    ("“……T-, tức là", "“……tờ, tức là"),
+    ("“……T-, tức là", "“tờ, tức là"),  # "……" mở đầu đoạn: không có gì để ngừng trước nó, bỏ (`vieneu._ellipses`)
     ("Hà-Hà đến, X-quang, E-mail", "Hà-Hà đến, X-quang, E-mail"),  # âm tiết đầy đủ hay không phải phần đầu của chữ sau: không phải nói lắp
 ])
 def test_a_stutter_is_read_as_the_sound_it_starts(text: str, said: str) -> None:
