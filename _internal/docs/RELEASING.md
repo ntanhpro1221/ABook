@@ -28,10 +28,44 @@ tiếp tục được. Chỉ đổi khi không có sách nào cần tiếp tục
 
 ## Kiểm tra trước khi phát hành
 
-- `python -m pytest` toàn bộ, `npm run typecheck` và `npm test` (vitest, logic thuần của giao diện) của `ui/` đều qua; kiểm tra tay trên máy ảo Android (`docs/UI.md`).
-- Bắt buộc trước publish: dựng UI của cây phát hành (`node node_modules/vite/bin/vite.js build` trong `ui/`), rồi từ `_internal` chạy `python scripts/tap_audit/run.py`: phải PASS mọi kịch bản (21/21 từ khi gỡ dấu trang), exit 0; `tests/test_tap_audit_targets.py` chặn kịch bản trỏ tới nhãn không còn trong giao diện.
-  Chạy tiếp `python scripts/tap_audit/run.py --inject-fault`: phải FAIL, exit 1 (đối chứng âm).
-  Kiểm chạm chuột/touch thật để bắt lỗi hộp thoại không chạm được như 0.4.134; pytest/vitest logic không phát hiện được lỗi này.
+Từ `_internal`, chạy **`runtime/.venv/Scripts/python.exe -X utf8 scripts/release_gate.py`; lệnh phải exit 0**.
+Nếu worktree dùng runtime chung, gọi đường dẫn interpreter tường minh của runtime ấy. `--list` liệt kê check/timeout;
+`--only <tên>` (lặp cờ hoặc phân cách bằng dấu phẩy) dùng để chẩn đoán, tự chạy cả điều kiện trước và **không chứng nhận
+phát hành**. `--inject-failure <tên>` cấy một check đỏ để kiểm cổng, không dùng cho bản phát hành.
+
+Gate in một bảng và lưu JSON cùng log/bằng chứng ở `runtime/release_gate/<version>-<timestamp>.json`. Thiếu công cụ,
+timeout, không thu được test hay thiếu summary/XML đều FAIL. Chưa hoàn tất mục MANUAL cũng exit khác 0; không coi
+chạy được các check tự động là đủ quyền đăng. Người duyệt dùng `--confirm manual-ui="ghi chú bằng chứng"` (lặp cờ cho
+từng hàng MANUAL đã thực sự duyệt). Hàng được ký ghi CONFIRMED, note, UTC, HEAD và SHA-256 cây nguồn trong JSON;
+chưa ký vẫn MANUAL và chặn exit 0. Xác nhận chỉ áp dụng lần gọi này, không đọc lại báo cáo cũ, mất hiệu lực nếu
+commit/cây nguồn đổi trong lúc chạy. Không dùng `--only` để chứng nhận phát hành. `release.py publish` nhận cùng cờ
+`--confirm` và chuyển trực tiếp tới full gate trước mọi thao tác đăng, rồi kiểm cây đã kiểm khớp commit sẽ gắn tag.
+
+Gate cài UI dependency gồm devDependencies bằng `npm ci --include=dev` vào `runtime/release_gate/dependencies/<hash>`
+theo package + lock hiện tại, tái sử dụng khi đủ phiên bản khóa. Kiểm UI chạy trên bản sao nguồn mới riêng mỗi lượt;
+junction node_modules dùng chung không đổi. Thiếu npm/module hoặc cài thất bại là FAIL có log, không bỏ kiểm.
+Pytest có summary thật và `--durations=30`; deadline 7200 giây. Qt offscreen/phần mềm: WidthTests có deadline riêng
+1800 giây, các suite khác 360 giây; mọi subprocess gate chạy BELOW_NORMAL trên Windows.
+
+Ý nghĩa các bằng chứng (lệnh cụ thể xem `--list`):
+
+- Python: compile, toàn bộ pytest (`-q -rf`, số passed/failed/error từ summary); UI: typecheck và Vitest (đọc dòng Tests).
+  Số file DOM không được giảm so HEAD và từng file phải thực sự có trong log Vitest. Android unit test đọc XML mới,
+  không tin dòng BUILD SUCCESSFUL hoặc XML còn lại từ lần trước. Qt dựng các target test, chạy offscreen, đối chiếu đủ
+  suite từ `build.bat`, kiểm Totals và lỗi glyph/binding/chữ rò; không cần mở app hay thiết bị.
+- Parity web/Android và web/Qt kiểm tài liệu sinh khớp nguồn cùng các luật cứng. Gallery dựng từ cây hiện tại rồi soi
+  cả sáng/tối, gồm pointer `elementFromPoint` và hình học sheet; lỗi chạy và luật chặn mặc định phải sạch. Contrast kiểm
+  các cặp màu. Tap audit chạy mọi kịch bản (số lượng đọc từ scenarios.json), chuột/touch thật, rồi chạy đối chứng âm:
+  phải exit 1 vì lỗi pointer được cấy, không phải vì thiếu browser/server. `tests/test_tap_audit_targets.py` chặn đích mất.
+  Những kiểm này bắt hộp thoại không chạm được như 0.4.134 mà pytest/vitest logic không phát hiện.
+- Nguồn: ghi quality_implementation_hash và toàn bộ danh sách file khoá từ code để Lead duyệt tác động tới sách đang làm;
+  CHANGELOG `[Chưa phát hành]` phải có nội dung; số phiên bản/lock/Android versionCode/nguồn version Qt khớp; giấy phép
+  hiện diện; `.bat`/`.cmd` có CRLF; quét diff (cả staged, unstaged và file mới) tìm dữ liệu riêng/khoá/audio cùng từ chỉ mã
+  chuyển đổi cũ. Máy quét chỉ phát hiện dấu hiệu: nguồn truyện, README, thành phần đóng gói và ảnh vẫn phải có người duyệt.
+- MANUAL: kiểm Android trên thiết bị/máy ảo (`docs/UI.md`), duyệt ảnh/nội dung/giấy phép/hash/dependency; kiểm artifact
+  cuối (chữ ký, packaged smoke, audio sink, cài/cập nhật/gỡ), mapping R8 và bằng chứng đăng. Gate nguồn không khởi động
+  GPU, Ollama, adb, điện thoại hay emulator. Các kiểm artifact trong bước đóng gói dưới đây vẫn bắt buộc.
+
 - Không có gì bị cấm lọt vào gói: khoá ký (Android keystore, khoá updater), audio, dữ liệu cá nhân (`listening.json`,
   `devices.json`, `computers.json` - mã thiết bị máy tính khác cấp, `reviews.json`, tuỳ chọn), token, văn bản truyện (kho nghiên cứu ở repo riêng tư, clone vào `Corpus/`
   - thư mục này bị bỏ qua; một thông báo DMCA sẽ khoá cả repo công khai lẫn trang tải bản phát hành).

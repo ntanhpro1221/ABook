@@ -251,8 +251,19 @@ def build(version: str, out: Path) -> None:
     print(f"đủ {len(artifacts(version))} file ở {out}")
 
 
-def publish(version: str, commit: str, out: Path) -> None:
+def publish(version: str, commit: str, out: Path, confirmations: list[str] | None = None) -> None:
     """Tag v<version> ở commit phát hành, tua nhanh main tới đó, GitHub Release 6 file (--latest), rồi kiểm latest.json."""
+    # Cổng chạy trước mọi ghi chú/tag/fetch/push; MANUAL hay thiếu công cụ cũng chặn đăng.
+    gate_command = [sys.executable, "-X", "utf8", str(ROOT / "scripts/release_gate.py")]
+    if confirmations:
+        head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=REPO, capture_output=True, text=True,
+                              check=True).stdout.strip()
+        assert head == commit, "xác nhận MANUAL chỉ áp dụng đúng HEAD sẽ phát hành"
+    for confirmation in confirmations or []:
+        gate_command += ["--confirm", confirmation]
+    _run(gate_command, ROOT)
+    # Bằng chứng vừa kiểm phải thuộc đúng cây được gắn tag, kể cả thay đổi chưa commit.
+    _run(["git", "diff", "--quiet", commit, "--"], REPO)
     missing = [name for name in artifacts(version) if not (out / name).is_file()]
     assert not missing, f"thiếu {missing} ở {out} (chạy build trước)"
     notes = out / "notes.md"
@@ -301,7 +312,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("version")
     parser.add_argument("--commit", nargs="?", const="HEAD", help="bump: commit luôn; publish: commit phát hành (mặc định HEAD)")
     parser.add_argument("--out", type=Path, help="thư mục file phát hành (mặc định: thư mục tạm/abook-release/<bản>)")
+    parser.add_argument("--confirm", action="append", default=[], metavar="MANUAL-NAME=NOTE",
+                        help="publish: xác nhận tay cho commit hiện tại, chuyển trực tiếp tới full gate")
     args = parser.parse_args(argv)
+    if args.confirm and args.step != "publish":
+        parser.error("--confirm chỉ dùng cho publish")
     assert VERSION.match(args.version), f"số phiên bản lạ: {args.version}"
     out = args.out or Path(tempfile.gettempdir()) / "abook-release" / args.version
     sys.path.insert(0, str(ROOT))
@@ -324,7 +339,7 @@ def main(argv: list[str] | None = None) -> int:
     else:
         commit = subprocess.run(["git", "rev-parse", args.commit or "HEAD"], cwd=REPO, capture_output=True, text=True,
                                 check=True).stdout.strip()
-        publish(args.version, commit, out)
+        publish(args.version, commit, out, args.confirm)
     return 0
 
 
