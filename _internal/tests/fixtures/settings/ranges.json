@@ -20,5 +20,27 @@
   "schedule": {
     "minutes": [15, 30, 45, 60],
     "clock": "^([01]\\d|2[0-3]):[0-5]\\d$"
+  },
+  "musicLevel": {
+    "_": "Thanh trượt \"Mức nhạc nền\": miền, bước, mặc định ở abook/webui/assets/music_mix.json (levelMinDb, levelMaxDb, levelStepDb, levelDefaultDb). Đây là chữ người nghe thấy ở từng mức [dB, tên mức, số] và chỗ kẹp [vào, ra] - web (shared/musicLevels.ts), Android (MusicLevels), Qt (musictext.h) đều phải ra đúng bảng này.",
+    "labels": [
+      [-6, "To", "-6 dB"],
+      [-14, "To", "-14 dB"],
+      [-15, "To", "-15 dB"],
+      [-15.5, "To", "-15,5 dB"],
+      [-16, "Hơi to", "-16 dB"],
+      [-17, "Hơi to", "-17 dB"],
+      [-18.5, "Hơi to", "-18,5 dB"],
+      [-19, "Vừa", "-19 dB"],
+      [-20, "Vừa", "-20 dB (mặc định)"],
+      [-21.5, "Vừa", "-21,5 dB"],
+      [-22, "Nhỏ", "-22 dB"],
+      [-24, "Nhỏ", "-24 dB"],
+      [-25.5, "Nhỏ", "-25,5 dB"],
+      [-26, "Rất nhỏ (rõ lời)", "-26 dB"],
+      [-28, "Rất nhỏ (rõ lời)", "-28 dB"],
+      [-40, "Rất nhỏ (rõ lời)", "-40 dB"]
+    ],
+    "clamped": [[-100, -40], [-41, -40], [-40, -40], [-6, -6], [-5, -6], [0, -6], [12, -6]]
   }
 }

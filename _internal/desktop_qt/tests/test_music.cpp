@@ -787,18 +787,22 @@ private slots:
 
     // ---- chữ (trùng từng chữ với bản web) ----
 
-    void levelOptionsAddTheBookLevel() {
-        QStringList names;
-        for (const MusicText::Level &level : MusicText::levelOptions(-20))
-            names << level.name;
-        QCOMPARE(names, QStringList({QStringLiteral("To"), QStringLiteral("Hơi to"), QStringLiteral("Vừa (mặc định)"), QStringLiteral("Nhỏ"),
-                                     QStringLiteral("Rất nhỏ")}));
-        const QVector<MusicText::Level> book = MusicText::levelOptions(-18.5);
-        QCOMPARE(book.size(), 6);
-        QCOMPARE(book[2].name, QStringLiteral("-18,5 dB (của sách)"));
-        QCOMPARE(book[2].value, -18.5);
-        QCOMPARE(MusicText::levelNote(-28), QStringLiteral("rõ lời"));
-        QCOMPARE(MusicText::levelNote(-24), QString());
+    void sliderRangeLabelsAndClamps() {
+        const QJsonObject mix = readJson(QStringLiteral(MUSIC_MIX_JSON));
+        QCOMPARE(MusicText::LEVEL_MIN_DB, mix.value(QStringLiteral("levelMinDb")).toDouble());
+        QCOMPARE(MusicText::LEVEL_MAX_DB, mix.value(QStringLiteral("levelMaxDb")).toDouble());
+        QCOMPARE(MusicText::LEVEL_STEP_DB, mix.value(QStringLiteral("levelStepDb")).toDouble());
+        QCOMPARE(MusicText::DEFAULT_LEVEL_DB, mix.value(QStringLiteral("levelDefaultDb")).toDouble());
+        const QJsonObject range = fixture(QStringLiteral("settings/ranges")).value(QStringLiteral("musicLevel")).toObject();
+        for (const QJsonValue &item : range.value(QStringLiteral("labels")).toArray()) {
+            const QJsonArray row = item.toArray();
+            QCOMPARE(MusicText::levelLabel(row[0].toDouble()), row[1].toString());
+            QCOMPARE(MusicText::levelNumber(row[0].toDouble()), row[2].toString());
+        }
+        for (const QJsonValue &item : range.value(QStringLiteral("clamped")).toArray()) {
+            const QJsonArray row = item.toArray();
+            QCOMPARE(MusicText::clampLevel(row[0].toDouble()), row[1].toDouble());
+        }
     }
 
     void licenseAndCreditText() {
@@ -929,7 +933,7 @@ private slots:
         QVERIFY(rig.music->enabled());
         QVERIFY(!rig.music->project());
         QCOMPARE(rig.music->levelDb(), -18.0);
-        QCOMPARE(rig.music->levels().size(), 6);
+        QCOMPARE(rig.music->levelLabel(-18), QStringLiteral("Hơi to"));
         QCOMPARE(rig.music->bed()->activeLink(), QStringLiteral("https://x/1"));
         QCOMPARE(rig.voices.size(), 1);
         QCOMPARE(rig.voices[0]->url, QUrl(QStringLiteral("/api/music/Bai1")));

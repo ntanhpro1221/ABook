@@ -25,7 +25,7 @@ Column {
     readonly property bool changing: pending !== null
     readonly property var plan: view ? view.plan : null
     // Trường nào câu trả lời không mang thì lấy mặc định: binding đọc thẳng overrides.banned.length...
-    readonly property var overrides: Object.assign({enabled: true, levelDb: -20, genre: null, pins: {}, silenced: [], banned: []}, view ? view.overrides : null)
+    readonly property var overrides: Object.assign({enabled: true, levelDb: Music.levelDefault, genre: null, pins: {}, silenced: [], banned: []}, view ? view.overrides : null)
     readonly property var taxonomy: view ? view.taxonomy || ({}) : ({})
     readonly property var scenes: plan ? plan.scenes || [] : []
     readonly property var groups: Logic.chapterGroups(scenes)
@@ -202,19 +202,19 @@ Column {
                     onPicked: value => root.change({genre: value || null})
                 }
             }
-            SettingRow {
+            Column {
                 width: parent.width
-                label: "Mức nhạc nền"
-                hint: "Nhỏ hơn giọng đọc bấy nhiêu; máy tự bù bài to hay nhỏ"
-                Select {
-                    objectName: "musicLevel"
-                    implicitWidth: 200
-                    width: 200
+                SettingRow {
+                    width: parent.width
                     label: "Mức nhạc nền"
-                    options: Logic.levelOptions()
+                    hint: "Nhỏ hơn giọng đọc bấy nhiêu; máy tự bù bài to hay nhỏ"
+                }
+                MusicLevelSlider {
+                    objectName: "musicLevel"
+                    width: Math.min(448, parent.width)
                     value: root.overrides.levelDb
                     enabled: !root.changing && !root.rebuilding
-                    onPicked: value => root.change({levelDb: Number(value)})
+                    onPicked: value => root.change({levelDb: value})
                 }
             }
             SettingRow {

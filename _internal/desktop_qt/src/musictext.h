@@ -12,33 +12,21 @@
 
 namespace MusicText {
 
-struct Level {
-    double value = 0;
-    QString name;
-};
-
-/// Mức nhạc nền dưới giọng đọc (dB) người nghe chọn được; -20 là mặc định của máy (music_plan.DEFAULT_LEVEL_DB).
-inline QVector<Level> musicLevels() {
-    return {{-14, QStringLiteral("To")},
-            {-17, QStringLiteral("Hơi to")},
-            {-20, QStringLiteral("Vừa (mặc định)")},
-            {-24, QStringLiteral("Nhỏ")},
-            {-28, QStringLiteral("Rất nhỏ")}};
+inline constexpr double LEVEL_MIN_DB = double(ABOOK_MIX_LEVEL_MIN_DB);
+inline constexpr double LEVEL_MAX_DB = double(ABOOK_MIX_LEVEL_MAX_DB);
+inline constexpr double LEVEL_STEP_DB = double(ABOOK_MIX_LEVEL_STEP_DB);
+inline constexpr double DEFAULT_LEVEL_DB = double(ABOOK_MIX_LEVEL_DEFAULT_DB);
+inline double clampLevel(double value) { return std::clamp(value, LEVEL_MIN_DB, LEVEL_MAX_DB); }
+inline QString levelLabel(double value) {
+    if (value >= -15.5) return QStringLiteral("To");
+    if (value >= -18.5) return QStringLiteral("Hơi to");
+    if (value >= -21.5) return QStringLiteral("Vừa");
+    if (value >= -25.5) return QStringLiteral("Nhỏ");
+    return QStringLiteral("Rất nhỏ (rõ lời)");
 }
-
-/// Lời kèm vài mức: -28 là mức nhạc khó che lời đọc nhất (MIX_QA mục 7.1).
-inline QString levelNote(double value) {
-    return value == -28 ? QStringLiteral("rõ lời") : QString();
-}
-
-/// Các mức có sẵn, thêm mức hiện tại của sách nếu nó không trùng mức nào (sách đóng gói ở -18 dB).
-inline QVector<Level> levelOptions(double current) {
-    QVector<Level> levels = musicLevels();
-    if (std::any_of(levels.begin(), levels.end(), [current](const Level &level) { return level.value == current; }))
-        return levels;
-    levels.append({current, QString::number(current, 'g', 15).replace(QLatin1Char('.'), QLatin1Char(',')) + QStringLiteral(" dB (của sách)")});
-    std::sort(levels.begin(), levels.end(), [](const Level &a, const Level &b) { return a.value > b.value; });
-    return levels;
+inline QString levelNumber(double value) {
+    return QString::number(value, 'g', 15).replace(QLatin1Char('.'), QLatin1Char(',')) + QStringLiteral(" dB")
+        + (value == DEFAULT_LEVEL_DB ? QStringLiteral(" (mặc định)") : QString());
 }
 
 /// Giấy phép đọc được: "CC BY 4.0", "CC BY-SA 4.0", "CC0 1.0". Phiên bản lấy từ liên kết giấy phép nếu có, mã lạ thì giữ nguyên.

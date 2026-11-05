@@ -1,5 +1,15 @@
 # Test report
 
+## 05-11-2026 — thanh trượt mức nhạc nền (dev/music-slider)
+
+- Shared `music_mix.json`: −40..−6 dB, step 1, default −20; Python, TypeScript, generated Android BuildConfig and Qt CMake read one source. Zone/number/clamp tests read the shared settings fixture.
+- Python core: settings ranges 4, music plan 19, music mix 25, book edits 231 passed. Final parity: 28 dots, F=0, E=0; both parity scripts `--check` passed. Initial three stale-doc/radius failures resolved.
+- Vitest: musicLevels 6, MusicLevelSlider DOM 2, sheetRows 7, projectMusicMenu 4, playerMusic 9, musicBed 97 = 125 passed / 0 failed; browser-port helper 6 passed. Typecheck passed with read-only rel437 dependencies (the existing node_modules junction lacks Vitest and has stale icons).
+- Android XML newer than 20:22:35 +07: BookEdits 24, MusicModel 8, MusicScreen 11, NowPlayingUi 59, MusicBedIntegration 25, SceneMusic 13 = 140 passed / 0 failures/errors. No device/emulator.
+- Chromium software rendering: six real page/theme cases pass thumb `elementFromPoint`, drag to −6 with no save until release, exactly one save on release and ArrowLeft to −7. Six full screenshots + six crops viewed at native 2×; six Android Robolectric snapshots refreshed, level crops viewed at native 3×; no overlap.
+- Qt build/test validation is in progress; final counts follow here.
+- Quality implementation hash unchanged: `f10085f96acd7f9fe6a066f2bf5a74338b0a351bea3d98f58f6d2807912cbfff` (42 entries read from code). No commit/push, GPU, Ollama, phone or emulator.
+
 ## 03-11-2026 — unchanged-audio cover re-import (dev/cover-reimport)
 
 - Android and desktop `.abook` imports now compare the base book layer even when audio is identical, then stage and swap changed metadata/assets while reusing unchanged audio. Cover addition, replacement, metadata-only updates and removal preserve listener title/cover precedence. Local sidecars/workshop survive listening-package refreshes. Desktop cover metadata is staged with the image. Repeating an EPUB/TXT selection retains its existing behavior.

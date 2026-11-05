@@ -16,11 +16,6 @@ var CONTINUED_NOTE = "tiếp bài của đoạn trên"
 /** Lời "đã chỉnh sửa" đi kèm ghi công nhạc CC BY; cùng câu với bản xuất MP3 / M4B (`music_export.MODIFIED_NOTE`). */
 var MODIFIED_NOTE = "Đã chỉnh sửa: các bài nhạc được cắt vòng, trộn nhỏ dưới giọng đọc và chỉnh âm lượng cho vừa sách."
 
-var LEVELS = [[-14, "To"], [-17, "Hơi to"], [-20, "Vừa (mặc định)"], [-24, "Nhỏ"], [-28, "Rất nhỏ"]]
-var LEVEL_NOTES = {"-28": "rõ lời"}
-function levelText(value, name) { const note = LEVEL_NOTES[String(value)]; return note ? name + " (" + note + ")" : name }
-/** Ô "Mức nhạc nền" của Studio: đúng các mức có sẵn. */
-function levelOptions() { return LEVELS.map(function(level) { return {value: level[0], label: levelText(level[0], level[1])} }) }
 /** Ô "Thể loại truyện": "Chưa chọn" rồi các thể loại theo thứ tự danh mục gửi. */
 function genreOptions(taxonomy) {
     const out = [{value: "", label: "Chưa chọn"}]

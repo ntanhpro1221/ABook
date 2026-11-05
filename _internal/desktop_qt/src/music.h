@@ -10,6 +10,7 @@
 
 #include "musicbed.h"
 #include "musiclogic.h"
+#include "musictext.h"
 
 #include <QJSEngine>
 #include <QObject>
@@ -37,8 +38,10 @@ class Music : public QObject {
     Q_PROPERTY(bool project READ project NOTIFY viewChanged)
     /// Lỗi máy chủ trả kèm (danh mục chưa tải được...), "" khi ổn.
     Q_PROPERTY(QString problem READ problem NOTIFY viewChanged)
-    /// [{value, name, note}] - mức có sẵn + mức của sách nếu lệch.
-    Q_PROPERTY(QVariantList levels READ levels NOTIFY viewChanged)
+    Q_PROPERTY(double levelMin READ levelMin CONSTANT)
+    Q_PROPERTY(double levelMax READ levelMax CONSTANT)
+    Q_PROPERTY(double levelStep READ levelStep CONSTANT)
+    Q_PROPERTY(double levelDefault READ levelDefault CONSTANT)
     /// Đang gửi một lần đổi.
     Q_PROPERTY(bool busy READ busy NOTIFY busyChanged)
     /// Có bài của chương này không phát được (đoạn ấy im lặng, chờ thử lại).
@@ -60,7 +63,12 @@ public:
     double levelDb() const { return m_levelDb; }
     bool project() const { return m_project; }
     QString problem() const { return m_problem; }
-    QVariantList levels() const;
+    double levelMin() const { return MusicText::LEVEL_MIN_DB; }
+    double levelMax() const { return MusicText::LEVEL_MAX_DB; }
+    double levelStep() const { return MusicText::LEVEL_STEP_DB; }
+    double levelDefault() const { return MusicText::DEFAULT_LEVEL_DB; }
+    Q_INVOKABLE QString levelLabel(double value) const { return MusicText::levelLabel(value); }
+    Q_INVOKABLE QString levelNumber(double value) const { return MusicText::levelNumber(value); }
     bool busy() const { return m_busy; }
     bool broken() const { return m_broken; }
     QVariantMap credit() const { return m_credit; }
@@ -119,7 +127,7 @@ private:
 
     bool m_hasMusic = false;
     bool m_enabled = false;
-    double m_levelDb = -20;
+    double m_levelDb = MusicText::DEFAULT_LEVEL_DB;
     bool m_project = false;
     QString m_problem;
     bool m_busy = false;
