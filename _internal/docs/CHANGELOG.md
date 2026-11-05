@@ -27,6 +27,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Một người phụ không tên nói nhiều đoạn trong cùng một chương nay luôn giữ một giọng, không còn đổi giọng giữa cảnh khi lời của họ rơi vào hai lượt phân tích khác nhau.
 - Mục "Giọng theo máy" trên máy tính và điện thoại thử các bộ giọng đã tải bằng cùng vài câu, hiện tốc độ và RAM đỉnh (thêm độ rõ, tự nhiên khi có bộ chấm), chọn mặc định theo số đo và cho bạn chọn tay; VieNeu, Supertonic và ZeroTTS dùng chung khung trên máy tính, không tải runtime khi chưa bấm cài.
 
+### Studio
+
+- Thẻ "Gọi hay nói" bắt thêm những câu gán nhầm cho chính người được gọi: gọi kèm danh xưng ("Đừng lo, anh Minh."), gọi tên giữa lời thoại, và câu đáp lại nhắc đúng người vừa được gọi. Thẻ đề xuất ba người đang nói chuyện với người ấy, cạnh mỗi người có nút nghe giọng; thẻ "Ai nói câu này" cũng có nút nghe ấy.
+
 ### Điện thoại
 
 - Bản ABook .dev dùng cổng và dịch vụ Bluetooth riêng, tìm và ghép được đồng thời với bản phát hành. Máy tính chỉ hiện lựa chọn “bản thử” khi điện thoại đang quảng bá dịch vụ ấy.

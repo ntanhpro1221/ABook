@@ -221,6 +221,18 @@ class WorkLogicTest {
         assertTrue(item.suggested)
     }
 
+    @Test fun aChoiceWithARecordedLineCarriesItsSampleSoTheCardCanPlayTheVoice() {
+        val json = JSONObject(
+            """{"items":[{"kind":"vocative","key":"v","title":"Tên người nghe","lines":[{"stableId":"s1","textSha256":"h"}],
+              "choices":[{"label":"Kati","value":"KATI","sampleId":41},{"label":"Người kể","value":"NARRATOR","samplePreset":"narrator"}],"currentValue":"NOAH"}]}""",
+        )
+        val choices = StudioWorkJson.view(json).items.single().choices!!
+        assertEquals(listOf(41, null), choices.map { it.sampleId })
+        assertEquals("work-voice-41", StudioWorkState.clipId(choices[0]))
+        assertEquals("narrator", choices[1].samplePreset)
+        assertEquals("work-voice-narrator", StudioWorkState.clipId(choices[1]))
+    }
+
     @Test fun reviewJsonReadsTheClipWindowAndTheVerdict() {
         val page = StudioReviewJson.page(
             JSONObject(
