@@ -9,6 +9,8 @@ import { ShortcutsHost } from "@/listen/Shortcuts";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
 import { useMediaQuery } from "@/shared/media";
+import { useElementWidth } from "@/shared/elementWidth";
+import { widthAtLeast } from "@/shared/widthClass.generated";
 import { pageFocusKey, useLayoutChangeFade, usePageEnter, usePageFocus } from "@/shared/motion";
 import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
 import { MotionRegion } from "@/shared/MotionRegion";
@@ -230,6 +232,9 @@ export function Shell({ children }: { children: ReactNode }) {
   // Dưới md (768px) là bố cục điện thoại: thanh tab dưới đáy, màn "Đang nghe" xếp dọc. Thanh phát đầy đủ cần ~1024px.
   const phoneWidth = useMediaQuery("(max-width: 767px)");
   const compactBar = useMediaQuery("(max-width: 1023px)");
+  const content = useRef<HTMLDivElement>(null);
+  const contentWidth = useElementWidth(content);
+  const stackedPlayer = contentWidth === null || !widthAtLeast(contentWidth, "large");
   usePageEnter(main, pathname);
   usePageFocus(main, pageFocusKey(pathname));
   // Kéo cửa sổ qua mốc bố cục (thanh bên <-> tab dưới, thanh phát đầy đủ <-> gọn): bố cục mới hiện dần thay vì nhảy một cú.
@@ -257,7 +262,7 @@ export function Shell({ children }: { children: ReactNode }) {
       <TitleBar toggle={<IconButton size="sm" label={collapsed ? "Mở rộng  (Ctrl+B)" : "Thu gọn  (Ctrl+B)"} icon={collapsed ? PanelLeftOpen : PanelLeftClose} onClick={toggleSidebar} />} />
       <ShortcutsHost remote={remote} />
       <DesktopSidebar listenOnly={listenOnly} collapsed={Boolean(chrome && collapsed)} />
-      <div className="desktop-content relative flex min-w-0 flex-1 flex-col">
+      <div ref={content} className="desktop-content relative flex min-w-0 flex-1 flex-col">
         <OfflineStrip />
         <PeerBar />
         <main ref={main} tabIndex={-1} className="page-motion min-h-0 flex-1 overflow-y-auto outline-none" inert={expanded}>
@@ -287,7 +292,7 @@ export function Shell({ children }: { children: ReactNode }) {
           </TabItem>
         </nav>
         {/* Cùng nút "Phát trên thiết bị khác" như thanh dưới: cửa sổ hẹp dùng thanh gọn không có nó (soát UX 05-10). */}
-        <NowPlaying mobile={phoneWidth} actions={remote ? undefined : <HandOffButton className="max-sm:size-11" />} edit={readerEditing(info)} />
+        <NowPlaying mobile={phoneWidth} stacked={stackedPlayer} actions={remote ? undefined : <HandOffButton className="max-sm:size-11" />} edit={readerEditing(info)} />
       </div>
     </div>
   );
