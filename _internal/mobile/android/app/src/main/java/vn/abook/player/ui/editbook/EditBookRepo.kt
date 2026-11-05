@@ -10,6 +10,7 @@ import org.json.JSONObject
 import vn.abook.player.AndroidCoverCodec
 import vn.abook.player.BookActions
 import vn.abook.player.BookEdits
+import vn.abook.player.BookFiles
 import vn.abook.player.CoverSearch
 import vn.abook.player.LocalStudio
 import vn.abook.player.BookDownloads
@@ -108,6 +109,7 @@ class EditBookRepo(private val context: Context, private val library: LibraryRep
 
     private suspend fun changed(id: String): EditSnapshot {
         ReadAloud.readingsChanged(id)
+        BookFiles.edited(id) // tên chương mới hiện ở hàng chương của trình phát nếu cuốn đang nạp
         EditsSync.schedule(context, id)
         library.refresh()
         return load(id)

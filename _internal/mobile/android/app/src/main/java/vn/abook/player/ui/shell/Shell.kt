@@ -584,7 +584,7 @@ fun TabHost(tabs: TabState, modifier: Modifier = Modifier, content: @Composable 
 @Composable
 fun TabBar(tabs: TabState, modifier: Modifier = Modifier) {
     val colors = Abook.colors
-    // Vạch hổ phách nằm đáy hàng tab: chừa ít nhất 8 dp dưới nó kể cả khi máy báo inset đáy 0 (components/Insets.kt).
+    // Vạch hổ phách nằm đáy hàng tab: chừa ít nhất 24 dp (vạch cử chỉ) dưới nó kể cả khi máy báo inset đáy 0 (components/Insets.kt).
     val clearance = navigationClearance()
     Column(modifier.fillMaxWidth().background(colors.panel)) {
         Box(Modifier.fillMaxWidth().height(1.dp).background(colors.line))
