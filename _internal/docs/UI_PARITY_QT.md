@@ -7,7 +7,7 @@ icon `LucidePaths.js` sinh bởi `scripts/gen_lucide_icons.py --qml`. Bảng dư
 
 <!-- ui_parity_qt:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity_qt.py - không sửa tay, chạy lại script) -->
 
-Quét: web máy tính 4873 chữ (2788 khác nhau), 319 cặp nhãn-icon; Qt 3413 chữ (2558 khác nhau), 275 cặp nhãn-icon (icon dùng ở 386 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
+Quét: web máy tính 4874 chữ (2789 khác nhau), 319 cặp nhãn-icon; Qt 3413 chữ (2558 khác nhau), 275 cặp nhãn-icon (icon dùng ở 386 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
 
 ## a. Cùng việc, khác chữ
 
@@ -240,7 +240,7 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 ### Chung
 
 - chỉ Qt (2): Chưa làm được lúc này. (`qt/Api.qml:46`); Quay lại* (`qt/ScreenHeader.qml:13`)
-- chỉ web (4): Đang tải điều hướng (`598`); Thông báo (Alt+T) (`714`); Xem các tab trước (`515`); Xem các tab sau (`520`)
+- chỉ web (4): Đang tải điều hướng (`599`); Thông báo (Alt+T) (`715`); Xem các tab trước (`515`); Xem các tab sau (`520`)
 
 File QML chưa xếp màn (thêm vào SCREENS): `desktop_qt/qml/BookLogic.js`, `desktop_qt/qml/CastLogic.js`, `desktop_qt/qml/FindInBook.qml`, `desktop_qt/qml/FindLogic.js`, `desktop_qt/qml/MusicCredit.qml`, `desktop_qt/qml/MusicPopover.qml`, `desktop_qt/qml/PeerStudio.js`, `desktop_qt/qml/PlayerConsent.qml`, `desktop_qt/qml/ProjectSteps.qml`, `desktop_qt/qml/StudioChapterHead.qml`, `desktop_qt/qml/StudioMusic.qml`, `desktop_qt/qml/StudioMusicLogic.js`, `desktop_qt/qml/StudioMusicMoods.qml`, `desktop_qt/qml/StudioMusicScene.qml`, `desktop_qt/qml/StudioMusicSwap.qml`, `desktop_qt/qml/StudioMusicTrackRow.qml`, `desktop_qt/qml/StudioMyMusic.qml`.
 
