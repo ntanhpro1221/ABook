@@ -603,7 +603,23 @@ object VieneuUnits {
         readWords(toks, out, origin)
         Readings.applyTokens(toks, out, readings)
         readingMarks(out, toks)
-        return out
+        return out.map(::separateDigitQuotes)
+    }
+
+    /** Same voice-only guard as studio_tn.separate_digit_quotes: adjacent primes are spoken as units by sea-g2p. */
+    internal fun separateDigitQuotes(text: String): String {
+        val marks = text.codePoints().toArray().filter { cp ->
+            val type = Character.getType(cp)
+            val name = Character.getName(cp).orEmpty()
+            type == Character.INITIAL_QUOTE_PUNCTUATION.toInt() || type == Character.FINAL_QUOTE_PUNCTUATION.toInt() ||
+                listOf("QUOTATION MARK", "PRIME", "APOSTROPHE", "DITTO MARK").any { it in name } ||
+                String(Character.toChars(cp)) in "\"'`´ʹʺʻʼʽʾʿˈˊˋˮ′″‴‵‶‷⁗＂＇「」『』〝〞〟"
+        }.distinct()
+        if (marks.isEmpty()) return text
+        val group = "[" + Regex.escape(String(marks.toIntArray(), 0, marks.size)) + "]+"
+        return Regex("(?<=\\p{Nd})$group|$group(?=\\p{Nd})").replace(text) {
+            " ".repeat(it.value.codePointCount(0, it.value.length))
+        }
     }
 
     /** `VieneuProvider.reading_tag`: the [origin] when it makes this paragraph sound different (some name read by the rules), else "" - part of the clip cache key. */

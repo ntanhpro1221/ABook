@@ -226,6 +226,13 @@ SHORT_UTTERANCE_MAX_SPEAKABLE_CHARS = 8
 SHORT_UTTERANCE_MIN_GENERATION_FRAMES = 12
 SHORT_UTTERANCE_MAX_GENERATION_FRAMES = 24
 SEGMENT_ENDPOINT_WINDOW_SECONDS = 0.020
+# A zero boundary sample can hide an abrupt take (e.g. a prior 1 ms fade).
+# Measured on 3,283 verified takes: 5 ms head/tail RMS p99.9 = .00153/.02295;
+# .05 flags four takes (.122%), including the .17955 onset that broke a join.
+SEGMENT_EDGE_WINDOW_SECONDS = 0.005
+SEGMENT_EDGE_MAX_RMS = 0.05
+TTS_ACTIVE_ONSET = "TTS_ACTIVE_ONSET"
+TTS_ACTIVE_OFFSET = "TTS_ACTIVE_OFFSET"
 
 # What one pause costs, fitted on committed segments rather than chosen. Regressing
 # duration on (speakable characters, pause groups) over 4095 of them gives 0.060 s per
@@ -641,6 +648,8 @@ def signal_metrics(audio: np.ndarray, sample_rate: int) -> dict[str, float]:
             "peak": 0.0,
             "clipping_fraction": 0.0,
             "trailing_rms": 0.0,
+            "onset_rms": 0.0,
+            "offset_rms": 0.0,
             "onset_click_ratio": 0.0,
             "onset_click_width_ms": 0.0,
         }
@@ -649,6 +658,9 @@ def signal_metrics(audio: np.ndarray, sample_rate: int) -> dict[str, float]:
         max(1, int(round(sample_rate * SEGMENT_ENDPOINT_WINDOW_SECONDS))),
     )
     trailing = array[-endpoint_samples:].astype(np.float64)
+    edge_samples = min(array.size, max(1, int(round(sample_rate * SEGMENT_EDGE_WINDOW_SECONDS))))
+    head = array[:edge_samples].astype(np.float64)
+    tail = array[-edge_samples:].astype(np.float64)
     onset_ratio, onset_width = onset_click_metrics(array, sample_rate)
     return {
         "duration": float(array.size / sample_rate),
@@ -656,6 +668,8 @@ def signal_metrics(audio: np.ndarray, sample_rate: int) -> dict[str, float]:
         "peak": float(np.max(np.abs(array))),
         "clipping_fraction": float(np.mean(np.abs(array) >= 0.999)),
         "trailing_rms": float(math.sqrt(float(np.mean(np.square(trailing))))),
+        "onset_rms": float(np.sqrt(np.mean(head ** 2))),
+        "offset_rms": float(np.sqrt(np.mean(tail ** 2))),
         "onset_click_ratio": onset_ratio,
         "onset_click_width_ms": onset_width,
     }
@@ -803,6 +817,8 @@ def validate_audio_array(
     settings: dict[str, Any],
     sample_rate: int,
     segment: Any | None = None,
+    *,
+    check_edges: bool = True,
 ) -> tuple[np.ndarray, dict[str, float]]:
     if sample_rate <= 0:
         raise AudioQualityError(f"invalid sample rate: {sample_rate}")
@@ -835,6 +851,12 @@ def validate_audio_array(
         raise AudioQualityError(f"audio RMS too low: {metrics['rms']:.6f}")
     if metrics["clipping_fraction"] > float(settings["tts"]["max_clipping_fraction"]):
         raise AudioQualityError(f"audio clipping: {metrics['clipping_fraction']:.4%}")
+    for metric, code in (("onset_rms", TTS_ACTIVE_ONSET), ("offset_rms", TTS_ACTIVE_OFFSET)):
+        if check_edges and metrics[metric] > SEGMENT_EDGE_MAX_RMS:
+            raise AudioQualityError(
+                f"{code}: first/last {SEGMENT_EDGE_WINDOW_SECONDS * 1000:g} ms "
+                f"RMS {metrics[metric]:.6f} > {SEGMENT_EDGE_MAX_RMS:g}"
+            )
     speakable_chars = spoken_speakable_chars(text)
     if (
         segment is not None
@@ -1006,7 +1028,11 @@ def atomic_write_wav(
     path.parent.mkdir(parents=True, exist_ok=True)
     temp = path.with_name(path.stem + ".part" + path.suffix)
     temp.unlink(missing_ok=True)
-    array, _ = validate_audio_array(audio, text, settings, sample_rate, segment=segment)
+    # Edge thresholds were measured on stored (leveled) takes. Check format,
+    # clipping and duration first; judge boundary amplitude after the locked gain.
+    array, _ = validate_audio_array(
+        audio, text, settings, sample_rate, segment=segment, check_edges=False,
+    )
     level_info: dict[str, float] = {}
     if segment is not None:
         array, level_info = level_segment(

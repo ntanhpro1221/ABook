@@ -34,8 +34,8 @@ def test_a_near_miss_on_an_ordinary_word_is_not_made_worse() -> None:
 
 
 def test_only_a_bare_digit_folds() -> None:
-    """"2026" and "3a" have no single-word reading to fold to."""
-    assert "2026" in normalize_transcript("năm 2026")
+    """Whole counts fold; an alphanumeric identifier is preserved."""
+    assert normalize_transcript("năm 2026") == normalize_transcript("năm hai nghìn không trăm hai mươi sáu")
     assert "3a" in normalize_transcript("phòng 3a")
 
 

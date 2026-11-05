@@ -18,6 +18,13 @@ import java.util.Base64
  * ids, numpy's random streams, edge trimming / joins / babble check / WAV bytes. Everything here must be bit-identical.
  */
 class VieneuParityTest {
+    @Test
+    fun digitQuotesAreRemovedOnlyInVoiceText() {
+        for (mark in listOf("\"", "”", "’", "′", "″", "❞", "〃", "🙶")) {
+            assertEquals(" 420000 ", VieneuUnits.separateDigitQuotes("${mark}420000${mark}"))
+        }
+        assertEquals("“bốn” 42", VieneuUnits.separateDigitQuotes("“bốn” 42"))
+    }
     private val dir = File("../../../tests/fixtures/vieneu/android")
 
     private fun json(name: String) = JSONObject(File(dir, name).readText(Charsets.UTF_8))

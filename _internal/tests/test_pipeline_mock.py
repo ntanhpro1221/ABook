@@ -8,6 +8,8 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
+from tests.audio_fixtures import quiet_edges
+
 import abook.pipeline as pipeline_module
 from abook.asr_contract import ASR_LOCKED_NAME_ANCHOR_REVIEW
 from abook.asr import (
@@ -185,6 +187,7 @@ class FakeTTS:
         audio = np.sin(
             np.linspace(phase, 50 + phase, 96000, dtype=np.float32)
         ) * 0.12
+        audio = quiet_edges(audio)
         spoken_text = self.spoken_text(row)
         checksum, metrics = atomic_write_wav(
             output,
@@ -299,6 +302,7 @@ class LockedNameVariantFakeTTS(FakeTTS):
         audio = np.sin(
             np.linspace(phase, 50 + phase, 96_000, dtype=np.float32)
         ) * 0.12
+        audio = quiet_edges(audio)
         spoken_text = self.spoken_text(
             row,
             pronunciation_delivery_variant=pronunciation_delivery_variant,
@@ -419,6 +423,7 @@ class ScriptedShortTTS:
         sample_rate = int(self.settings["tts"]["sample_rate"])
         sample_count = max(1, round(duration * sample_rate))
         audio = np.sin(np.linspace(0, 50, sample_count, dtype=np.float32)) * 0.12
+        audio = quiet_edges(audio)
         checksum, metrics = atomic_write_wav(
             output,
             audio,
@@ -578,6 +583,7 @@ def _checkpoint_short_ceiling_incumbent(
     audio = np.sin(
         np.linspace(0, 50, round(duration * sample_rate), dtype=np.float32)
     ) * 0.12
+    audio = quiet_edges(audio)
     checksum, metrics = atomic_write_wav(
         output,
         audio,
@@ -655,6 +661,7 @@ def _asr_signal_pipeline(tmp_path: Path, *, repair_rounds: int):
     row = db.list_segments(chapter_id=int(chapter["id"]))[0]
     wav = pipeline._chunk_path(row)
     audio = np.sin(np.linspace(0, 50, 96_000, dtype=np.float32)) * 0.12
+    audio = quiet_edges(audio)
     checksum, metrics = atomic_write_wav(
         wav,
         audio,
@@ -1968,6 +1975,7 @@ def _locked_name_variant_pipeline(
     audio = np.sin(
         np.linspace(0, 50, round(_plausible_duration(canonical_text) * 48_000), dtype=np.float32)
     ) * 0.12
+    audio = quiet_edges(audio)
     incumbent_sha256, incumbent_metrics = atomic_write_wav(
         incumbent_path,
         audio,
@@ -3640,6 +3648,7 @@ def test_successful_confirmation_decode_clears_initial_asr_false_negative(
     row = db.list_segments(chapter_id=int(chapter["id"]))[0]
     wav = pipeline._chunk_path(row)
     audio = np.sin(np.linspace(0, 50, 96_000, dtype=np.float32)) * 0.12
+    audio = quiet_edges(audio)
     checksum, metrics = atomic_write_wav(
         wav,
         audio,

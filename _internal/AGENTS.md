@@ -102,6 +102,10 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
 - Xuất `.abook` phải đối chiếu checksum của byte thực ghi trước khi công bố gói; nguồn đổi giữa băm và ghi thì báo lỗi và dọn
   file dở. Xuất cả bộ dùng cùng job nền có tiến độ/huỷ/nối lại như một cuốn; huỷ M4B phải thu hồi FFmpeg trước khi dọn file dở.
 - WAV/MP3 luôn ghi `.part`, validate + checksum rồi atomic replace.
+- Tín hiệu câu phải có mép yên: đo RMS cửa sổ đầu/cuối theo `SEGMENT_EDGE_WINDOW_SECONDS` và
+  `SEGMENT_EDGE_MAX_RMS` trong `audio_io.py`, sau gain khóa của bản thu. Lỗi `TTS_ACTIVE_ONSET` /
+  `TTS_ACTIVE_OFFSET` đi qua vòng seed retry có sẵn trước khi signal-passed; không vuốt/cắt mép
+  của audio thật để lách gate. Tone giả trong bài thử/preview phải tự sinh có envelope yên.
 - MP3 phải được FFmpeg decode toàn bộ trước khi commit.
 - TTS retry theo thứ tự: seed VieNeu khác → chia nhỏ an toàn nếu câu đủ dài → `failed`; câu cảm thán
   ngắn không được split vì sẽ làm sai nội dung.
@@ -169,6 +173,11 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   đổi từ `failed` thành publish kèm `ASR_LOCKED_NAME_ANCHOR_REVIEW`. Caller không truyền ngưỡng canonical thì giữ
   nguyên hành vi hard-fail cũ.
 - ASR repair phải giữ nguyên speaker, voice profile, pitch và `spoken_text`; chế độ `clarity` chỉ hạ sampling variance.
+  Mọi cách đọc khóa (kể cả nguồn analysis/listener) và phép TN đổi chữ mang thêm alias theo occurrence:
+  spelling nguồn, cách đọc khóa và chuỗi thực gửi giọng. Alias mới không hạ một pass theo luật cũ;
+  chỉ cứu mismatch khi các token thường còn nguyên, không dùng việc khớp tên để tha lỗi từ khác.
+  Alias chỉ truy vết, không tự bảo vệ chữ khỏi TN và làm thay đổi chuỗi nói cũ. Luật anchor tiếng Anh
+  bắt buộc và quyền review khi không khớp vẫn giữ nguyên.
   WAV clarity chỉ được commit `verified` khi beam và greedy đều `pass`. Repair round phải nằm trong signal checkpoint
   để crash/resume không bỏ qua lượt xác nhận kép hoặc vượt quá `asr.repair_rounds`.
 - Mỗi WAV clarity phải được ghi vào candidate path bất biến riêng; không được thay file hoặc con trỏ SQLite của artifact
