@@ -154,7 +154,7 @@ Một việc - một cách viết, cho web (máy tính + điện thoại), nativ
 
 <!-- ui_parity:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity.py - không sửa tay, chạy lại script) -->
 
-Quét: web 5256 chữ (3032 khác nhau), 333 cặp nhãn-icon; native 1886 chữ (1454 khác nhau), 74 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
+Quét: web 5257 chữ (3033 khác nhau), 333 cặp nhãn-icon; native 1887 chữ (1455 khác nhau), 74 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
 
 ## a. Cùng việc, khác chữ
 
@@ -240,7 +240,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `native/addbook/BookForms.kt` (1): Tên gốc: {} (`132`)
 - `native/addbook/ImportModel.kt` (2): Chưa mở được file (`86`); File không có sách nào. (`87`)
 - `native/addbook/ImportQueue.kt` (1): Bạn hãy thử lại. (`149`)
-- `native/addbook/ImportRepo.kt` (1): Bạn hãy nhập tên sách. (`97`)
+- `native/addbook/ImportRepo.kt` (1): Bạn hãy nhập tên sách. (`98`)
 - `native/addbook/PackageReviewScreen.kt` (1): Mở sách (`15`)
 - `native/components/Confirm.kt` (2): Xoá phần đã tải của “{}”? (`93`); Đang xoá (`94`)
 - `native/data/AndroidSettingsCore.kt` (1): Accept (`58`)
@@ -414,23 +414,23 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 
 | kiểu | web | native |
 |---|---|---|
-| dấu ba chấm ASCII `...` | 8 / 5256 | 0 / 1886 |
-| dấu ba chấm `…` | 36 / 5256 | 0 / 1886 |
-| kết thúc bằng dấu chấm `.` | 894 / 5256 | 387 / 1886 |
-| kết thúc bằng `!` | 0 / 5256 | 0 / 1886 |
-| kết thúc bằng `:` | 52 / 5256 | 3 / 1886 |
-| dấu thanh kiểu cũ `oà oá uý` | 389 / 5256 | 172 / 1886 |
-| dấu thanh kiểu mới `òa óa úy` | 1 / 5256 | 0 / 1886 |
-| số thập phân dấu phẩy `1,5` | 1 / 5256 | 0 / 1886 |
-| số thập phân dấu chấm `1.5` | 0 / 5256 | 0 / 1886 |
-| nhân bằng `×` | 0 / 5256 | 0 / 1886 |
-| nhân bằng `x` sau số | 0 / 5256 | 0 / 1886 |
-| ngăn cách `·` | 120 / 5256 | 34 / 1886 |
-| ngăn cách ` - ` | 257 / 5256 | 79 / 1886 |
-| gạch dài `—`/`–` | 10 / 5256 | 1 / 1886 |
-| giờ `1:30` hay `1 giờ 30` | 0 / 5256 | 2 / 1886 |
-| dấu `%` dính số | 0 / 5256 | 1 / 1886 |
-| dấu `%` cách số | 0 / 5256 | 0 / 1886 |
+| dấu ba chấm ASCII `...` | 8 / 5257 | 0 / 1887 |
+| dấu ba chấm `…` | 36 / 5257 | 0 / 1887 |
+| kết thúc bằng dấu chấm `.` | 894 / 5257 | 387 / 1887 |
+| kết thúc bằng `!` | 0 / 5257 | 0 / 1887 |
+| kết thúc bằng `:` | 52 / 5257 | 3 / 1887 |
+| dấu thanh kiểu cũ `oà oá uý` | 389 / 5257 | 172 / 1887 |
+| dấu thanh kiểu mới `òa óa úy` | 1 / 5257 | 0 / 1887 |
+| số thập phân dấu phẩy `1,5` | 1 / 5257 | 0 / 1887 |
+| số thập phân dấu chấm `1.5` | 0 / 5257 | 0 / 1887 |
+| nhân bằng `×` | 0 / 5257 | 0 / 1887 |
+| nhân bằng `x` sau số | 0 / 5257 | 0 / 1887 |
+| ngăn cách `·` | 120 / 5257 | 34 / 1887 |
+| ngăn cách ` - ` | 257 / 5257 | 79 / 1887 |
+| gạch dài `—`/`–` | 10 / 5257 | 1 / 1887 |
+| giờ `1:30` hay `1 giờ 30` | 0 / 5257 | 2 / 1887 |
+| dấu `%` dính số | 0 / 5257 | 1 / 1887 |
+| dấu `%` cách số | 0 / 5257 | 0 / 1887 |
 
 **d3. Nhãn ngắn bắt đầu bằng chữ thường** (web 147, native 0); 15 đầu mỗi phía:
 
@@ -484,13 +484,13 @@ Trong một cặp, mỗi nhãn ngắn phải có ở cả hai phía (khoá lỏn
 | cặp | nhãn web | nhãn native | lệch web | lệch native | cho phép | thiếu thật | chờ Lead |
 |---|---|---|---|---|---|---|---|
 | now-playing | 105 | 102 | 0 | 0 | 31 | 5 | 0 |
-| shared-labels | 30 | 1273 | 0 | 0 | 7 | 0 | 0 |
+| shared-labels | 30 | 1274 | 0 | 0 | 7 | 0 | 0 |
 | library-book | 203 | 211 | 0 | 0 | 66 | 10 | 0 |
 | settings | 122 | 142 | 0 | 0 | 22 | 84 | 0 |
 | devices | 143 | 168 | 0 | 0 | 18 | 167 | 0 |
 | voice | 133 | 122 | 0 | 0 | 28 | 20 | 0 |
-| add-edit-book | 164 | 138 | 0 | 0 | 60 | 4 | 0 |
-| studio | 2108 | 426 | 0 | 0 | 59 | 90 | 0 |
+| add-edit-book | 164 | 139 | 0 | 0 | 60 | 4 | 0 |
+| studio | 2109 | 426 | 0 | 0 | 59 | 90 | 0 |
 | export | 78 | 81 | 0 | 0 | 28 | 43 | 0 |
 | music | 33 | 49 | 0 | 0 | 10 | 8 | 0 |
 
