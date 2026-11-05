@@ -419,9 +419,11 @@ object ReadAloud {
         list.addAll(SupertonicVoices.voices(ctx)) // giọng Supertonic: như vậy
         list.addAll(OnlineVoices.voices(ctx)) // giọng dùng khoá của người dùng: chỉ khi khoá đã kiểm tra được
         list.addAll(DeviceTts.voices(ctx))
+        val picked = AndroidVoicePick.of(ctx).status().chosen
         return list.map {
             JSONObject().put("id", it.id).put("name", it.name).put("provider", it.provider).put("online", it.online)
                 .put("default", it.default).put("gender", it.gender).put("gainDb", VoiceGain.db(it.id))
+                .apply { if (picked != null && it.provider in setOf("vieneu", "supertonic")) put("pick", MachineVoicePick.engineOf(it.id) == picked) }
         }
     }
 
@@ -472,7 +474,11 @@ object ReadAloud {
     /** Giọng VieNeu kể chuyện trung tính ([NarratorVoice]; không có giọng ưu tiên thì cùng giới với giọng mặc định) nếu máy đã tải mô-đun, không thì
      *  null. Chữ của người nghe chưa chọn giọng không nên rời máy khi máy đã có giọng chạy trên máy. */
     internal var localVoice: () -> String? = {
-        context?.let { ctx -> NarratorVoice.pick(VieneuVoices.voices(ctx).map { it.id to it.gender }, DEFAULT_VOICE_GENDER) }
+        context?.let { ctx ->
+            val picked = AndroidVoicePick.of(ctx).status().chosen
+            val voices = VieneuVoices.voices(ctx) + SupertonicVoices.voices(ctx)
+            NarratorVoice.pick(voices.filter { MachineVoicePick.engineOf(it.id) == picked }.map { it.id to it.gender }, DEFAULT_VOICE_GENDER)
+        }
     }
 
     /** Giọng khi người nghe CHƯA chọn: giọng VieNeu kể chuyện trung tính nếu máy có, không thì giọng mặc định - đúng luật `resolveVoice` của giao diện

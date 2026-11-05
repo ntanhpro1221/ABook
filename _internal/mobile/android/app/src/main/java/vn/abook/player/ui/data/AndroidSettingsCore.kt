@@ -103,7 +103,8 @@ class AndroidSettingsCore(context: Context) : SettingsCore {
     override fun voices(): List<VoiceOption> {
         ready()
         return ReadAloud.voices(app).map {
-            VoiceOption(it.optString("id"), it.optString("name"), it.optString("provider"), it.optBoolean("default"), it.optString("gender"))
+            VoiceOption(it.optString("id"), it.optString("name"), it.optString("provider"), it.optBoolean("default"), it.optString("gender"),
+                if (it.has("pick")) it.optBoolean("pick") else null)
         }
     }
 
