@@ -294,10 +294,11 @@ function useOpenedBook() {
       // Việc đã gộp / giữ nằm ngay trong câu; tên khác hay nhạc hỏng (mở được nhưng thiếu gì đó) là cảnh báo cùng dòng ấy.
       const title = workshopMergeNote(result.workshop) ?? keptEditsTitle(result.merge?.kept) ?? mergedTitle(result) ?? OPENED_SAID[result.how ?? "new"];
       const notes = [otherTitleNote(result.otherTitle), brokenMusicNote(result.brokenMusic)].filter(Boolean).join(" ") || undefined;
-      if (result.how === "new" && title === OPENED_SAID.new) {
-        // Cuốn mới: nói tên sách như bên điện thoại (“Đã thêm “tên””); tên chưa đọc được thì còn “Đã thêm”.
+      if ((result.how === "new" && title === OPENED_SAID.new) || (result.how === "updated" && title === OPENED_SAID.updated)) {
+        // Cuốn mới / cuốn vừa cập nhật: nói tên sách như bên điện thoại (“Đã thêm “tên””, “Đã cập nhật “tên””); tên chưa đọc được thì còn câu trơn.
+        const named = (name: string) => (result.how === "updated" ? `Đã cập nhật “${name}”` : `Đã thêm “${name}”`);
         void api<{ title?: string }>(`/api/listen/books/${result.id}`).then((book) => book.title, () => undefined)
-          .then((name) => toastDone(name ? `Đã thêm “${name}”` : title, notes));
+          .then((name) => toastDone(name ? named(name) : title, notes));
       } else toastDone(title, notes);
       if (result.how === "project" && result.edits) offerFold(client, result.id, result.edits);
       return true;
