@@ -122,6 +122,8 @@ else: raise RuntimeError('Hồ sơ trình duyệt vẫn bị khoá: ' + root)
   };
   const child = spawn(executable, [
     "--headless=new",
+    // Cổng phát hành chạy CPU, không chiếm GPU đang làm sách.
+    ...(process.env.CUDA_VISIBLE_DEVICES === "-1" ? ["--disable-gpu"] : []),
     "--no-first-run",
     "--no-default-browser-check",
     `--user-data-dir=${profile}`,
