@@ -7,7 +7,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-/** Soát a77 #10: nút "Nghe thêm" của thông báo không phụ thuộc giao diện còn sống, và bấm nút cũ sau khi hẹn giờ đã hết thì không dựng hẹn giờ ngoài ý. */
+/** Soát a77 #10: nút "Hẹn lại" của thông báo không phụ thuộc giao diện còn sống, và bấm nút cũ sau khi hẹn giờ đã hết thì không dựng hẹn giờ ngoài ý. */
 class SleepButtonTest {
     private val voice = FakeExo()
     private fun field(name: String) = SleepTimer::class.java.getDeclaredField(name).also { it.isAccessible = true }
@@ -27,19 +27,20 @@ class SleepButtonTest {
 
     @Test fun extendingAfterTheTimerEndedDoesNotStartANewOne() {
         assertEquals(SleepTimer.Mode.OFF, SleepTimer.mode)
-        SleepTimer.extend() // nút "+10 phút" cũ còn trên thông báo
+        SleepTimer.extend() // nút "Hẹn lại" cũ còn trên thông báo
         assertEquals(SleepTimer.Mode.OFF, SleepTimer.mode)
         assertEquals("off", SleepTimer.describe().getString("mode"))
     }
 
-    @Test fun extendingARunningTimerStillAddsTime() {
-        // Đặt thẳng trạng thái "đang hẹn 5 phút" (setMinutes đụng cảm biến / nhật ký đêm - cần Android thật).
+    @Test fun extendingARunningTimerPutsItBackToWhatWasPickedNeverMore() {
+        // Đặt thẳng trạng thái "đang hẹn 5 phút" (setMinutes đụng cảm biến / nhật ký đêm - cần Android thật); còn 2 phút thì hẹn lại về 5, không phải 15.
         field("mode").set(SleepTimer, SleepTimer.Mode.MINUTES)
-        field("remainingMs").setLong(SleepTimer, 5 * 60_000L)
+        field("remainingMs").setLong(SleepTimer, 2 * 60_000L)
         field("minutes").setInt(SleepTimer, 5)
-        SleepTimer.extend(10)
+        SleepTimer.extend()
         assertEquals(SleepTimer.Mode.MINUTES, SleepTimer.mode)
-        assertEquals(15 * 60.0, SleepTimer.describe().getDouble("remaining"), 1.0)
+        assertEquals(5 * 60.0, SleepTimer.describe().getDouble("remaining"), 1.0)
+        assertEquals(5, SleepTimer.describe().getInt("minutes"))
     }
 
     @Test fun theServiceOwnsTheListenerThatKeepsTheNotificationButtonsInStep() {

@@ -92,7 +92,7 @@ export interface NativeEngine extends AudioEngine {
   /** `word`: chữ bấm trong chương đọc to (đoạn + thứ tự chữ) - lõi native tự vào đúng mốc chữ. */
   jumpTo(chapterId: number, seconds: number, word?: { segment: number; word: number }): void;
   setSleep(request: SleepRequest): void;
-  extendSleep(minutes?: number): void;
+  extendSleep(): void;
   readonly sleep: SleepMode;
   readonly bookId: string;
   readonly bookTitle: string;
