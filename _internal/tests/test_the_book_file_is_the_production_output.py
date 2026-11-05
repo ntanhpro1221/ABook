@@ -40,8 +40,21 @@ def _output(project: Path) -> Path:
     return project / "output" / bookfile.default_name("Sách thử · Tập 1")
 
 
-def test_a_finished_book_leaves_its_book_file_in_output(tmp_path: Path) -> None:
+def _finished_project(tmp_path: Path) -> Path:
+    import shutil
+    import sqlite3
     project = make_project(tmp_path)
+    second = project / "output" / "chapters" / "00002_646.mp3"
+    shutil.copyfile(project / "output" / "chapters" / "00001_645.mp3", second)
+    with sqlite3.connect(project / "project.sqlite3") as connection:
+        connection.execute("UPDATE chapters SET status='completed',output_mp3=? WHERE id=2", (str(second),))
+        connection.execute("UPDATE segments SET status='verified',wav_duration=3 WHERE id=5")
+        connection.execute("INSERT INTO artifacts SELECT 'chapter_mp3:2',kind,?,sha256,size_bytes,verified,metadata_json,created_at,updated_at FROM artifacts WHERE artifact_key='chapter_mp3:1'", (str(second),))
+    return project
+
+
+def test_a_finished_book_leaves_its_book_file_in_output(tmp_path: Path) -> None:
+    project = _finished_project(tmp_path)
     pipeline = _Pipeline(project, "completed")
 
     pipeline._export_book_file()
@@ -71,7 +84,7 @@ def test_a_packing_failure_is_an_event_not_a_broken_book(tmp_path: Path, monkeyp
 
 
 def test_an_already_finished_book_gets_its_file_once(tmp_path: Path) -> None:
-    project = make_project(tmp_path)
+    project = _finished_project(tmp_path)
     pipeline = _Pipeline(project, "completed")
     pipeline._export_book_file(only_if_missing=True)
     first = _output(project).stat().st_mtime_ns
@@ -79,3 +92,11 @@ def test_an_already_finished_book_gets_its_file_once(tmp_path: Path) -> None:
     pipeline._export_book_file(only_if_missing=True)
 
     assert _output(project).stat().st_mtime_ns == first, "đường tắt của sách đã xong không đóng gói lại mỗi lần"
+
+
+def test_completed_status_does_not_hide_a_missing_chapter(tmp_path: Path) -> None:
+    project = make_project(tmp_path)
+    pipeline = _Pipeline(project, "completed")
+    pipeline._export_book_file()
+    assert not _output(project).exists()
+    assert ("warning", "BOOK_FILE_EXPORT_FAILED") in pipeline.db.events

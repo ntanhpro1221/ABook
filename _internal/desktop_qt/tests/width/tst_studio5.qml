@@ -413,7 +413,7 @@ Item {
             for (const kind of ["mp3", "abook", "m4b", "abookproj"]) verify(has(dlg, "exportKind_" + kind), kind)
             verify(hasText(dlg, "Thư mục MP3") && hasText(dlg, "File .abook") && hasText(dlg, "Sách nói M4B") && hasText(dlg, "Cả dự án (.abookproj)"))
             verify(hasText(dlg, "Bấm nút bên dưới rồi chọn thư mục để lưu."))
-            tryVerify(function() { return hasPart(dlg, "2/4 chương chưa có audio (1 chương mất file) - không có trong bản xuất.") }, 3000)
+            tryVerify(function() { return hasPart(dlg, "2/4 chương có audio (1 chương mất file) - không có trong bản xuất.") }, 3000)
             compare(one(dlg, "confirm_go").text, "Lưu và xuất")
             verify(one(dlg, "confirm_go").enabled)
             verify(has(dlg, "exportKindLine"))
@@ -500,6 +500,22 @@ Item {
             tryCompare(dlg, "phase", "finished", 4000)
             compare(one(dlg, "exportDoneTitle").text, "Đã xuất file sách")
             compare(one(dlg, "exportDoneDetail").text, "D:\\Đã xuất\\Cuốn a.abook\u00a0·\u00a04,8 MB")
+        }
+        function test_partialBookExportSendsTheChoiceAndShowsMissingChapterNames() {
+            serve()
+            const page = openExport()
+            const dlg = exportDlg(page)
+            pickKind(dlg, "abook")
+            tryVerify(function() { return hasText(dlg, "Xuất một phần") }, 3000)
+            compare(dlg.partial, false)
+            dlg.partial = true
+            goExport(dlg)
+            tryVerify(function() { return calls("POST", base + "/bookfile-job").length === 1 }, 3000)
+            compare(calls("POST", base + "/bookfile-job")[0].body.partial, true)
+            stepJob("bookfile-job", {state: "done", result: {file: "D:/Cuốn a.abook", folder: "D:/", size: 10,
+                coverage: "2/3 chương · Lá xanh: thiếu audio"}})
+            tryCompare(dlg, "phase", "finished", 4000)
+            verify(one(dlg, "exportDoneDetail").text.indexOf("2/3 chương · Lá xanh") >= 0)
         }
         function test_projectExportSendsOnlyTheTargetAndAFailureSaysItInWords() {
             serve()

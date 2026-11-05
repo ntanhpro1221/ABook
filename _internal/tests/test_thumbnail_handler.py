@@ -110,7 +110,7 @@ def test_a_real_book_file_shows_its_cover(handler, tmp_path: Path) -> None:
     """File do chính bookfile.pack ghi: bìa người dùng đặt cho sách hiện ra ở Explorer."""
     project = make_project(tmp_path)
     covers.save_cover_bytes(project, _cover())
-    file = bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}")
+    file = bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}", partial=True)
     result = _probe(handler, file, 256, tmp_path / "thumb.png")
     assert result.returncode == 0, result.stdout + result.stderr
     image = Image.open(tmp_path / "thumb.png")

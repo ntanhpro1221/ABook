@@ -18,6 +18,7 @@ StudioConfirm {
     property string scope: "part"
     property string layout: "single"
     property bool changedOnly: false
+    property bool partial: false
     property var parts: []
     property var history: []
     property var estimate: null
@@ -73,7 +74,7 @@ StudioConfirm {
         if (job.bookId !== data.id) { job.reset(); finished = null }
         snapshot = data
         job.bookId = data.id
-        scope = "part"; layout = "single"; changedOnly = false; chosenMusic = null
+        scope = "part"; layout = "single"; changedOnly = false; partial = false; chosenMusic = null
         parts = []; history = []; estimate = null; musicState = null; ffmpeg = null; askedSize = ""; askedMusic = ""
         kind = job.running ? job.kind : "mp3"
         show()
@@ -118,7 +119,7 @@ StudioConfirm {
         job.chapters = plan.wholeSeries ? 0 : plan.selectedCount
         job.countText = plan.countText
         finished = null
-        job.start(kind, Logic.startBody(kind, {target: target, mixes: mixes, wholeSeries: plan.wholeSeries, changedOnly: changedOnly, changedIds: changedIds, layout: layout}), false)
+        job.start(kind, Logic.startBody(kind, {target: target, mixes: mixes, wholeSeries: plan.wholeSeries, changedOnly: changedOnly, changedIds: changedIds, layout: layout, partial: partial}), false)
     }
     function jobEnded(error, result) {
         const made = job.kind
@@ -303,6 +304,16 @@ StudioConfirm {
                 label: "Xuất " + root.changedIds.length + " chương đổi"
                 checked: root.changedOnly
                 onToggled: value => root.changedOnly = value
+            }
+        }
+        Collapse {
+            width: parent.width
+            open: root.kind === "abook"
+            ImportCheck {
+                width: parent.width
+                label: "Xuất một phần"
+                checked: root.partial
+                onToggled: value => root.partial = value
             }
         }
         Collapse {

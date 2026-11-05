@@ -1,5 +1,16 @@
 # Test report
 
+## 06-11-2026 — keepline (dev/keep-line, chưa commit)
+
+- Lời đọc được chuẩn bị một lần cùng span; test sinh bảng phát âm kiểm idempotence của hàng đã chuẩn bị và ranh giới chia câu.
+- Giữ take có tiếng qua từ chối mềm, writer thật từ chối trước khi ghi, crash/retry và nhánh normal; im lặng/NaN/audio không giải mã được không thay lời đọc.
+- Detector xuyên SQLite/WAV/MP3: dòng failed vẫn có chương cảnh báo, thiếu audio chỉ rõ dòng; phá bảng chương/băm/phụ đề/giải mã/nhãn QA phải bị bắt. Đưa file detector vào cổng phát hành trong `RELEASING.md`.
+- Xuất mặc định cần đủ chương; partial ghi N/M và tên thiếu trong manifest/CLI/UI web và Qt. Fixture đóng gói dùng MP3 thật và checkpoint băm tương ứng; fixture sách dở yêu cầu partial rõ ràng.
+- TypeScript typecheck và 16 test UI nhập các module đổi qua; parity web/Qt `--check` qua. Qt Studio5 offscreen/software: 67 kiểm tra qua; test partial mới 3/3 gồm init/cleanup.
+- Bộ Python rộng 248 file `-q -rf --tb=short` và các lượt sửa/rerun được ghi log/XML tại thư mục task; kết quả cuối và số `FAILED` thực ghi trong `report.md`/`keepline_test_summary.json`.
+- Lượt rộng: 4.981 testcase, 19 FAILED raw; sau sửa và chạy lại chung chín file từng lỗi: 221/221 passed, 0 FAILED. Detector cuối 29/29; tổng hợp kết quả testcase mới nhất 4.976 passed, 6 skipped, 1 xfailed, 0 failed. Ba test inspect được chạy lại nguyên file sau khi số dòng code ổn định, không nới assertion.
+- Pace chỉ đo trên hai SQLite đã sao chép, không mở gốc/đổi ngưỡng. Sàn kép chạm 0/3.691 dòng plain, 0/736 foreign-name, 0/61 number-heavy đủ điều kiện; chỉ đánh giá take còn lưu.
+
 ## 03-11-2026 — unchanged-audio cover re-import (dev/cover-reimport)
 
 - Android and desktop `.abook` imports now compare the base book layer even when audio is identical, then stage and swap changed metadata/assets while reusing unchanged audio. Cover addition, replacement, metadata-only updates and removal preserve listener title/cover precedence. Local sidecars/workshop survive listening-package refreshes. Desktop cover metadata is staged with the image. Repeating an EPUB/TXT selection retains its existing behavior.

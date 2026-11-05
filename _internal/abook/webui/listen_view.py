@@ -61,14 +61,19 @@ def _chapters(project_root: Path) -> list[dict[str, Any]]:
     out = []
     for chapter in store.chapters(project_root):
         duration = chapter["seconds"] if chapter["playable"] else 0.0
+        subtitle = chapter["subtitle"]
+        if chapter["statusLabel"] == "Cần nghe lại":
+            subtitle = " · ".join(value for value in (subtitle, "Cần nghe lại") if value)
         out.append({
             "id": chapter["id"],
             "index": chapter["index"],
             "title": chapter["displayTitle"],
-            "subtitle": chapter["subtitle"],
+            "subtitle": subtitle,
             "fullTitle": chapter["fullTitle"],
             "duration": round(float(duration), 1),
             "available": bool(chapter["playable"]),
+            "qualityPassed": chapter["status"] == "completed" and chapter["segments"]["failed"] == 0,
+            "qualityWarning": chapter["lastError"],
             "audioVersion": str(chapter["completedAt"] or ""),
         })
     return out

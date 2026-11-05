@@ -66,7 +66,7 @@ from pathlib import Path
 from typing import Any, Callable, Self, Sequence
 
 from .. import continuation
-from . import book_edits, covers, music_plan, store, sync, word_timing
+from . import audio_coverage, book_edits, covers, music_plan, store, sync, word_timing
 from .fingerprints import content_key, identity_prints
 from .library import book_id
 
@@ -215,7 +215,7 @@ def listening_layer(project_root: Path, music_track: Callable[[str], Path | None
 
 def pack(project_root: Path, out: Path | None = None, *, producer: str = "ABook",
          music_track: Callable[[str], Path | None] | None = None,
-         progress: Callable[[str, int, int], None] | None = None) -> Path:
+         progress: Callable[[str, int, int], None] | None = None, partial: bool = False) -> Path:
     """Gói một cuốn thành một file; ghi file tạm cạnh đích rồi thay nguyên tử. Trả đường dẫn file.
 
     `music_track(link)` -> file của một bài nhạc nền (bộ đệm của máy, tải khi cần); có thì gói kèm rãnh nhạc.
@@ -224,6 +224,13 @@ def pack(project_root: Path, out: Path | None = None, *, producer: str = "ABook"
     if progress is not None:
         progress("prepare", 0, 0)
     book, files = listening_layer(project_root, music_track, progress)
+    with contextlib.closing(store.connect(project_root)) as connection:
+        recorded = connection.execute("SELECT COUNT(*) FROM segments WHERE status NOT IN ('pending','analyzed') OR COALESCE(wav_sha256,'')<>''").fetchone()[0]
+    if recorded or any(c.get("file") for c in book["chapters"]) or store.summarize(project_root).get("phase") == "done":
+        try:
+            audio_coverage.project(project_root, book, files, partial=partial)
+        except ValueError as exc:
+            raise BookFileError(str(exc)) from exc
     out = Path(out) if out is not None else project_root / "output" / default_name(book["title"])
     sealed = seal(book, files, out, producer=producer, version=package_version(book), progress=progress)
     from .export_jobs import remember_export
@@ -297,10 +304,10 @@ def package_version(book: dict[str, Any]) -> int:
 
 def pack_series(parts: Sequence[tuple[int, Path] | Path], out: Path, *, producer: str = "ABook",
                 music_track: Callable[[str], Path | None] | None = None,
-                progress: Callable[[str, int, int], None] | None = None) -> Path:
+                progress: Callable[[str, int, int], None] | None = None, partial: bool = False) -> Path:
     """Cả bộ nhiều phần ("Làm tiếp cuốn này") trong MỘT file, phiên bản 3. `parts`: (số phần, thư mục dự án) theo thứ tự
     - hay chỉ thư mục, số phần là vị trí từ 1. Số phần là số của bộ nên phần bị bỏ qua không làm các phần sau đổi mã.
-    Phần chưa có chương nào nghe được không vào file (người gọi nói tên chúng với người dùng: export.series_split)."""
+    Xuất một phần vẫn mang danh sách mọi chương nguồn, kể cả phần chưa có audio."""
     books: list[tuple[int, Path, dict[str, Any]]] = []
     musics: list[tuple[int, dict[str, Any]]] = []
     files: dict[str, Path | bytes] = {}
@@ -310,12 +317,19 @@ def pack_series(parts: Sequence[tuple[int, Path] | Path], out: Path, *, producer
         if progress is not None:
             progress("listen", len(books), len(parts))
         book = _packaged_book(root)
+        local_files: dict[str, Path | bytes] = {}
+        _add_chapters(root, book, local_files)
+        try:
+            coverage = audio_coverage.project(root, book, local_files, partial=partial)
+        except ValueError as exc:
+            raise BookFileError(str(exc)) from exc
         playable = [chapter["id"] for chapter in book["chapters"] if chapter.get("file")]
-        if not playable:
-            continue
         packed = music_plan.package(root, playable, music_track) if music_track is not None else None
         _add_chapters(root, book, files, part=number, tick=None if progress is None else
                       lambda done, total: progress("listen", done, total))
+        for item in coverage["expected"] + coverage["missing"]:
+            item["id"] += number * PART_SPAN
+            item["title"] = f"Phần {number}: {item['title']}"
         books.append((number, root, book))
         if packed is not None:
             musics.append((number, packed[0]))
@@ -347,6 +361,11 @@ def pack_series(parts: Sequence[tuple[int, Path] | Path], out: Path, *, producer
                    "chapters": [book["chapters"][0]["id"], book["chapters"][-1]["id"]],
                    "duration": round(float(book["duration"]), 1), "narrator": book["narrator"]}
                   for number, _, book in books],
+        "audioCoverage": {
+            "expected": [c for _, _, b in books for c in b["audioCoverage"]["expected"]],
+            "missing": [c for _, _, b in books for c in b["audioCoverage"]["missing"]],
+            "partial": bool(partial),
+        },
     }
     music = _merge_music(musics)
     if music is not None:
@@ -437,7 +456,9 @@ def seal(book: dict[str, Any], files: dict[str, Path | bytes], out: Path, *, pro
     `edits`: lớp sửa của người nghe - `manifest.json` (Readium, cho app khác) mang tên sách / tên chương đã sửa.
     `progress("write", byte đã ghi, tổng byte)` trước mỗi mục và giữa file lớn (ném thì dừng, file tạm bị xoá); byte ra y hệt."""
     if not any(name.startswith(("chapters/", "texts/")) for name in files):
-        raise BookFileError("Sách chưa có chương nào nghe được hay đọc được để xuất.")
+        coverage = book.get("audioCoverage")
+        raise BookFileError("Sách chưa có chương nào nghe được hay đọc được để xuất."
+                            + (" " + audio_coverage.summary(coverage) if coverage else ""))
     known = known or {}
     described_files = {}
     total_hash = sum(source.stat().st_size if isinstance(source, Path) else len(source) for source in files.values())
@@ -639,6 +660,33 @@ class BookFile:
                     size += len(chunk)
             if size != expected["size"] or digest.hexdigest() != expected["sha256"]:
                 raise BookFileError(f"File sách bị hỏng hoặc bị sửa ({name}). Hãy chép lại file từ nguồn.")
+        if "audioCoverage" in self.book:
+            self.verify_audio_coverage()
+
+    def verify_audio_coverage(self) -> None:
+        # Giải mã toàn bộ vào thư mục tạm riêng, không dựa vào đuôi hay header MP3.
+        import tempfile
+        import soundfile as sf
+        from ..audio_io import verify_mp3
+        from ..io_utils import sha256_file
+        with tempfile.TemporaryDirectory(prefix="abook-verify-") as folder:
+            hashes: dict[str, str] = {}
+            durations: dict[str, float] = {}
+            def decode(name: str) -> bool:
+                if name in hashes:
+                    return True
+                path = Path(folder) / "chapter.mp3"
+                with self._zip.open(name) as source, path.open("wb") as target:
+                    shutil.copyfileobj(source, target)
+                if not verify_mp3(path)[0]:
+                    return False
+                hashes[name] = sha256_file(path)
+                durations[name] = float(sf.info(path).duration)
+                return True
+            try:
+                audio_coverage.verify(self.book, self._zip.read, decode, audio_hash=hashes.__getitem__, audio_duration=durations.__getitem__)
+            except (ValueError, KeyError, TypeError, RuntimeError, OSError) as exc:
+                raise BookFileError(str(exc)) from exc
 
     def extract(self, library: Path, folder: str | None = None) -> Path:
         with refuse_unreadable(BookFileError, UNSUPPORTED_ZIP):
@@ -1069,6 +1117,7 @@ def main(argv: list[str] | None = None) -> int:
     pack_command = commands.add_parser("pack", help="gói một cuốn sách thành một file")
     pack_command.add_argument("project", type=Path)
     pack_command.add_argument("-o", "--out", type=Path, default=None)
+    pack_command.add_argument("--partial", action="store_true", help="xuất một phần, ghi rõ chương thiếu")
     repack_command = commands.add_parser("repack", help="đóng lại một cuốn đã nhập (kèm phần sửa của người nghe)")
     repack_command.add_argument("folder", type=Path)
     repack_command.add_argument("-o", "--out", type=Path, required=True)
@@ -1077,7 +1126,11 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         if args.command == "pack":
-            print(pack(args.project, args.out))
+            path = pack(args.project, args.out, partial=args.partial)
+            print(path)
+            with BookFile(path) as opened:
+                if "audioCoverage" in opened.book:
+                    print(audio_coverage.summary(opened.book["audioCoverage"]))
             return 0
         if args.command == "repack":
             print(repack(args.folder, args.out))
@@ -1085,9 +1138,13 @@ def main(argv: list[str] | None = None) -> int:
         with BookFile(args.file) as book:
             if args.command == "verify":
                 book.verify()
+                if any(name.startswith("chapters/") for name in book.content) and "audioCoverage" not in book.book:
+                    book.verify_audio_coverage()
             chapters = book.book.get("chapters") or []
             print(f"{book.book['title']} · {book.content_key} · {sum(1 for c in chapters if c.get('file'))}/{len(chapters)}"
                   f" chương có audio · {len(book.content)} file{' · mã băm khớp' if args.command == 'verify' else ''}")
+            if "audioCoverage" in book.book:
+                print(audio_coverage.summary(book.book["audioCoverage"]))
         return 0
     except BookFileError as exc:
         print(exc, file=sys.stderr)

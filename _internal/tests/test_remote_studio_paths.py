@@ -105,7 +105,7 @@ def test_no_remote_get_answers_with_an_absolute_path(studio, tmp_path: Path) -> 
     app.preferences.update({"libraryRootSeen": str(library)})
     private = [str(library), str(project), str(tmp_path)]
     # Một lượt xuất đã xong: kết quả của nó (file, folder) cũng là lời đáp GET.
-    status, _data, _ = _sync_request(port, "POST", f"/api/books/{identifier}/bookfile-job", headers=cookie, body={})
+    status, _data, _ = _sync_request(port, "POST", f"/api/books/{identifier}/bookfile-job", headers=cookie, body={"partial": True})
     assert status == 202
     deadline = time.time() + 20
     while time.time() < deadline:
@@ -155,7 +155,7 @@ def test_a_finished_export_tells_a_remote_device_only_the_file_name(studio) -> N
     cookie = _cookie_with_studio(app)
     port = app.sync_server.port
     identifier = book_id(project)
-    status, data, _ = _sync_request(port, "POST", f"/api/books/{identifier}/bookfile-job", headers=cookie, body={"target": str(project)})
+    status, data, _ = _sync_request(port, "POST", f"/api/books/{identifier}/bookfile-job", headers=cookie, body={"target": str(project), "partial": True})
     assert status == 202
     deadline = time.time() + 20
     while time.time() < deadline:

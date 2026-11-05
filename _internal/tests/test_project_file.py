@@ -161,7 +161,7 @@ def test_a_newer_format_asks_to_update_the_app(tmp_path: Path) -> None:
 def test_a_book_file_is_not_a_project_file(tmp_path: Path) -> None:
     from abook.webui import bookfile
 
-    book = bookfile.pack(_project(tmp_path), tmp_path / "sach.abook")
+    book = bookfile.pack(_project(tmp_path), tmp_path / "sach.abook", partial=True)
     with pytest.raises(ProjectFileError, match="không phải file dự án"):
         ProjectFile(book)
 

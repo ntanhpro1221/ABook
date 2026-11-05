@@ -167,8 +167,13 @@ def _imported_audio_book(tmp_path):
     with sqlite3.connect(project / "project.sqlite3") as db:
         db.execute("UPDATE chapters SET status='completed', output_mp3=? WHERE id=2", (str(project / "output/chapters/00002_646.mp3"),))
         db.execute("UPDATE segments SET status='verified', wav_duration=0.2 WHERE chapter_id=2")
+        from abook.io_utils import sha256_file
+        for index, name in enumerate(('00001_645.mp3', '00002_646.mp3'), 1):
+            audio = project / 'output' / 'chapters' / name
+            db.execute("INSERT OR REPLACE INTO artifacts VALUES (?, 'chapter_mp3', ?, ?, ?, 1, NULL, 0, 0)",
+                       (f'chapter_mp3:{index}', str(audio), sha256_file(audio), audio.stat().st_size))
     covers.save_cover_bytes(project, image_bytes("red"))
-    packed = bookfile.pack(project, tmp_path / "gửi.abook")
+    packed = bookfile.pack(project, tmp_path / "gửi.abook", partial=True)
     target, how = packages.import_file(packed, tmp_path / "recipient", [], Fingerprints(tmp_path / "fingerprints.json"))
     assert how == "new"
     return target
@@ -246,7 +251,7 @@ def test_the_abook_size_estimate_counts_voice_samples_cover_scripts_and_cast(tmp
     sample.write_bytes(b"RIFF" + bytes(range(256)) * 4096)  # ~1 MiB câu mẫu của nhân vật
     covers.save_cover_bytes(project, image_bytes("red"))
     estimated, _pending = export.audio_bytes([project])
-    packed = bookfile.pack(project, tmp_path / "full.abook")
+    packed = bookfile.pack(project, tmp_path / "full.abook", partial=True)
     actual = packed.stat().st_size
     assert estimated >= sample.stat().st_size, "câu mẫu WAV phải nằm trong số ước"
     assert actual * 0.9 <= estimated <= actual * 1.5, (estimated, actual)
