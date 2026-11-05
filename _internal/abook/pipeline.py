@@ -814,7 +814,6 @@ class BookPipeline:
                 else None,
             )
             profile = profiles.get(int(row["voice_profile_id"] or 0))
-            pitch_steps = int(profile["pitch_semitones"]) if profile is not None else 0
             formant_ratio = (
                 float(profile["formant_ratio"]) if profile is not None else 1.0
             )
@@ -822,11 +821,7 @@ class BookPipeline:
             intensity = int(row["intensity"] or 0)
             kind = str(row["kind"] or "narration")
             expressive = emotion != "neutral" and intensity > 0
-            if (
-                pitch_steps == 0
-                and abs(formant_ratio - 1.0) <= 1e-6
-                and not expressive
-            ):
+            if abs(formant_ratio - 1.0) <= 1e-6 and not expressive:
                 # Đường tắt cũ dùng thẳng file gốc. Vẫn dùng thẳng - trừ khi mép của nó đủ
                 # lớn để thành một bước nhảy sau khi master kéo mức lên. Đo trên lô 1: đúng
                 # một đoạn trong 121 rơi vào diện này.
@@ -847,9 +842,8 @@ class BookPipeline:
             delivery_root.mkdir(parents=True, exist_ok=True)
             destination = delivery_root / f"{int(row['seq']):07d}.wav"
             audio, sample_rate = sf.read(source, dtype="float32", always_2d=False)
-            # Formant only here: the register goes through the same PSOLA pass as the
-            # expression below, because two resyntheses of one contour cost twice and
-            # buy nothing.
+            # Formant only here: the register was applied once, at synthesis, and is already
+            # in the verified take. Re-applying it would deliver a pitch nobody checked.
             shifted = apply_voice_variant(
                 np.asarray(audio, dtype=np.float32).reshape(-1),
                 int(sample_rate),
@@ -857,10 +851,10 @@ class BookPipeline:
                 formant_ratio,
             )
             # Expression rides the same last step as identity: after every gate, on a copy,
-            # never on the verified take. It cannot change a word, and a segment with
-            # neither a register nor an affect is passed through untouched.
+            # never on the verified take. It cannot change a word, and a segment with no
+            # affect is passed through untouched.
             shifted, _target = shape_segment(
-                shifted, int(sample_rate), emotion, intensity, kind, pitch_steps
+                shifted, int(sample_rate), emotion, intensity, kind
             )
             # Biến đổi âm sắc cũng có thể để lại mép không ở 0, nên vuốt ở đây luôn. Rẻ:
             # bản sao đã được ghi ra rồi.
