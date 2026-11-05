@@ -33,7 +33,7 @@ import zipfile
 from pathlib import Path
 from typing import Any, Callable
 
-from ..readaloud import vieneu_gguf
+from ..readaloud import engine_pick, vieneu_gguf
 from ..readaloud.vieneu import Installed
 from . import music_module, studio_setup, voice_module, word_timing
 from .music_module import Component
@@ -46,7 +46,7 @@ LIB_NEXT = "lib.next"  # sea-g2p mới khi bản cũ đã nạp vào tiến trì
 VOICES_FOLDER = "voices"
 ALIGNER_FOLDER = "wordalign"
 ENV_DOWNLOAD = "ABOOK_VIENEU_DOWNLOAD"  # "0" = không bao giờ tải (bộ kiểm đặt sẵn)
-SLOW_RTF = 0.8  # trên mức này giọng khó theo kịp người nghe ở tốc độ 1x (còn phải đọc trước, nghe nhanh hơn)
+SLOW_RTF = engine_pick.LIVE_RTF  # trên mức này giọng khó theo kịp người nghe ở tốc độ 1x (còn phải đọc trước, nghe nhanh hơn)
 
 # Nâng: đổi URL + SHA-256 + cỡ (PyPI: https://pypi.org/pypi/<tên>/<số>/json; Hugging Face: /api/models/<repo>/tree/<commit>), chạy lại bài so
 # với gói vieneu (tests/test_readaloud_vieneu.py) và đo lại độ to (loudness.py).

@@ -22,6 +22,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Trẻ con (trai hay gái) đọc bằng giọng nữ nguyên bản, không còn bóp cao độ hay âm sắc.
 - Ngập ngừng giữa câu ("Tôi... tôi không biết") và tiếng kéo dài ("Hmm~ để xem") nay ngừng một nhịp rồi đọc tiếp, không còn nghe như hết câu hay dính liền; "..." mở đầu lời thoại không còn tạo khoảng lặng thừa; "Chương XLV", "tầng LX" đọc thành số; "x1.5" đọc "nhân một phẩy năm"; số ngăn nghìn mơ hồ giữ nguyên. Cả Studio, Nghe ngay trên máy tính và điện thoại.
 - Một người phụ không tên nói nhiều đoạn trong cùng một chương nay luôn giữ một giọng, không còn đổi giọng giữa cảnh khi lời của họ rơi vào hai lượt phân tích khác nhau.
+- Mục "Giọng theo máy" trên máy tính và điện thoại thử các bộ giọng đã tải bằng cùng vài câu, hiện tốc độ và RAM đỉnh (thêm độ rõ, tự nhiên khi có bộ chấm), chọn mặc định theo số đo và cho bạn chọn tay; VieNeu, Supertonic và ZeroTTS dùng chung khung trên máy tính, không tải runtime khi chưa bấm cài.
 
 ### Điện thoại
 

@@ -937,6 +937,8 @@
         "listen/VoiceSettings.tsx",
         "listen/VoiceSpeedSetting.tsx",
         "listen/VieneuModuleCard.tsx",
+        "listen/VoicePickCard.tsx",
+        "listen/voicePick.ts",
         "listen/VieneuDownload.tsx",
         "listen/OnlineVoicePrompt.tsx",
         "listen/voiceGroups.ts",
@@ -1050,6 +1052,26 @@
           "side": "native",
           "match": "^(phần đã tải dở sẽ bị xoá khỏi máy này)$",
           "reason": "web Remove dialog for a half-downloaded voice: native confirms 'Phần đã tải dở…' first"
+        },
+        {
+          "side": "web",
+          "label": "Giọng ZeroTTS",
+          "reason": "ZeroTTS chỉ có trên máy tính; điện thoại có VieNeu và Supertonic."
+        },
+        {
+          "side": "web",
+          "label": "Cùng vài câu cho mọi giọng; {}; {}. Chọn: đọc rõ, kịp đọc trực tiếp, rồi tự nhiên nhất.",
+          "reason": "Điện thoại chưa có ASR/UTMOS; dùng câu riêng nói rõ chưa đo và luật tốc độ."
+        },
+        {
+          "side": "web",
+          "label": "Đang nghe lại và chấm",
+          "reason": "Điện thoại chưa có ASR/UTMOS."
+        },
+        {
+          "side": "web",
+          "label": "Đang thử {} ({}/{})",
+          "reason": "Điện thoại hiện trạng thái Đang thử các giọng; desktop có thêm tiến độ từng engine."
         }
       ],
       "deferred": [],
