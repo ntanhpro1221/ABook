@@ -38,7 +38,7 @@ def _gender(root: Path, name: str) -> tuple[str, int]:
 def test_no_chosen_voice_and_a_known_gender_sets_the_matching_narrator_and_marks_it_the_machines(tmp_path: Path) -> None:
     root = actions.create_book(tmp_path / "lib", [str(_source(tmp_path))], "Thử", "balanced", "", "Mai", first_person_gender="female")
 
-    assert _settings(root)["voices"]["narrator_voice"] == "Ngọc Linh"
+    assert _settings(root)["voices"]["narrator_voice"] == "Đoan Trang"
     assert teller_voice.read(root)["narratorAuto"] is True
     assert _gender(root, "MAI") == ("female", 1), "giới ghim như người nghe ghim"
 

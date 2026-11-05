@@ -10,7 +10,7 @@ import java.text.Normalizer
  */
 object NarratorVoice {
     val PREFERRED = mapOf(
-        "turbo" to listOf("Đức Trí", "Ngọc Linh", "Thanh Bình"),
+        "turbo" to listOf("Đức Trí", "Đoan Trang", "Thanh Bình"),
         "nano" to listOf("Ái Hân", "Mỹ Duyên", "Đức Trí"),
     )
 

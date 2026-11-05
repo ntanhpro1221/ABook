@@ -120,10 +120,11 @@ def test_engine_voices_have_balance_keys_and_a_missing_one_is_an_error() -> None
 # rồi Đức Trí/Thiền Tâm Đức/Phạm Tuyên, rồi Thái Sơn/Adam; nữ: Ngọc Linh, Đoan Trang, rồi nhóm ổn; thứ tự giọng dẫn theo bậc kể chuyện), Thái Sơn và
 # Thục Đoan ra khỏi LAST_RESORT_PRESETS, trẻ con đi bằng preset nữ nguyên giọng (cao độ 0, formant 1,0).
 # Bản trước đó: 2bffd9a02889d1cb634048d7236bdb6f470b872a43c3dac8441a706cd7339339.
-ALLOCATOR_ON_MAIN = "c97f8c1a34cd53e0e52a18eee69029ee8806da8017da0648c77c0705824e4c67"
+# 06-11: Mai Anh withdrawn; narrator female starts with Đoan Trang, character female with Ngọc Linh.
+ALLOCATOR_APPROVED = "136258871e0ca8626309ce49dfaafc877edfe46b0190e7671182babf8a38f3ec"
 
 
-def test_automatic_casting_is_exactly_what_it_was() -> None:
+def test_automatic_casting_stays_on_the_approved_vieneu_pool() -> None:
     allocator = PresetAllocator("Phạm Tuyên", 2, other_narrators=("Đức Trí",))
     genders = ("male", "female", "unknown")
     ages = ("adult", "child", "teen", "elderly", "unknown", "adult")
@@ -136,7 +137,7 @@ def test_automatic_casting_is_exactly_what_it_was() -> None:
     pools = {gender: [preset["name"] for preset in casting_presets(gender)] for gender in ("male", "female")}
     narrators = [preset["name"] for preset in narrator_presets()]
     data = json.dumps({"picks": picks, "pools": pools, "narrators": narrators}, ensure_ascii=False, sort_keys=True)
-    assert hashlib.sha256(data.encode()).hexdigest() == ALLOCATOR_ON_MAIN
+    assert hashlib.sha256(data.encode()).hexdigest() == ALLOCATOR_APPROVED
     engine_names = {voice["name"] for voice in ENGINE_VOICES}
     assert not engine_names & {name for name, _ratio, _pitch in picks}
 

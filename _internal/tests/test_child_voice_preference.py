@@ -75,7 +75,7 @@ def test_teen_and_elderly_are_still_carried_toward_their_age() -> None:
 
 
 def test_several_children_and_female_leads_get_distinct_voices_while_any_are_free() -> None:
-    """Eight female presets are available to a book with a male narrator (seven with a female one)."""
+    """Tám preset nữ dùng được khi người kể là nam (bảy khi người kể là nữ)."""
     pool = len(casting_presets("female"))
     assert pool == 8
     allocator = PresetAllocator("Đức Trí", 2)

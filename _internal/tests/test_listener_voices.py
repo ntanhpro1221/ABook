@@ -110,6 +110,16 @@ def _apply(db: ProjectDB, character: str, **request: str):
     return db.apply_listener_voice(character=character, voices=VOICES, **request)
 
 
+def test_the_listener_cannot_choose_news_presets(tmp_path: Path) -> None:
+    _paths, db = _book(tmp_path)
+    with db.connect() as conn:
+        from abook.listener_overrides import voice_target
+
+        for name in ("Mai Anh", "Thùy Dung", "Minh Đức", "Minh Triết"):
+            target, problem = voice_target(conn, VOICES, character="NATASHA", preset=name)
+            assert target is None and problem == UNKNOWN_PRESET
+
+
 def test_a_listener_says_the_character_is_a_girl_and_every_line_moves_to_a_female_voice(tmp_path: Path) -> None:
     _paths, db = _book(tmp_path)
     before = _voice(db, "NOAH")

@@ -341,7 +341,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `listen/playlistBed.ts` (1): Đã thêm {} bài (`368`)
 - `listen/prepareAhead.ts` (1): Chưa lưu bản đọc nào. (`73`)
 - `listen/readAloud.ts` (4): Chưa tải được đoạn giọng đọc. (`59`); ReadAloudEngine cần track.speech (`494`); Chưa phát được clip giọng đọc. (`1801`); Giọng đọc không phản hồi. (`1972`)
-- `listen/readAloudVoice.ts` (5): Ngọc Linh (`204`); Thanh Bình (`204`); Đức Trí (`204`); Mỹ Duyên (`205`); Ái Hân (`205`)
+- `listen/readAloudVoice.ts` (5): Thanh Bình (`204`); Đoan Trang (`204`); Đức Trí (`204`); Mỹ Duyên (`205`); Ái Hân (`205`)
 - `listen/readings.ts` (1): Chưa nghe thử được lúc này. (`161`)
 - `listen/saveFailure.ts` (1): Chưa lưu được chỗ đang nghe (`16`)
 - `listen/sleep.ts` (2): Hẹn giờ ngủ: còn {} giây (`84`); Hẹn giờ ngủ: còn {} phút (`84`)
