@@ -32,10 +32,8 @@ def test_it_reaches_as_far_as_the_speller_does() -> None:
         assert _same(str(value), vietnamese_number_words(value)), value
 
 
-def test_a_year_is_left_as_it_was_written() -> None:
-    """Above the speller's range there is no settled spoken form to fold to, and inventing
-    one would make two different things compare equal."""
-    assert normalize_transcript("năm 2026") == "năm 2026"
+def test_counts_fold_only_within_the_supported_range() -> None:
+    assert normalize_transcript("năm 2026") == normalize_transcript("năm hai nghìn không trăm hai mươi sáu")
     assert normalize_transcript(str(NUMBER_FOLD_CEILING + 1)) == str(NUMBER_FOLD_CEILING + 1)
 
 

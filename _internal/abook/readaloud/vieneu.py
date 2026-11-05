@@ -558,7 +558,9 @@ def spoken_tokens(toks: list[str], origin: str | None = None, speaks_english: bo
     _read_words(toks, out, origin, speaks_english)
     book_readings.apply_tokens(toks, out, readings)
     reading_marks(out, toks)
-    return out
+    from .studio_tn import separate_digit_quotes
+
+    return [separate_digit_quotes(word) for word in out]
 
 
 def _roman_numbers(toks: list[str], out: list[str]) -> None:

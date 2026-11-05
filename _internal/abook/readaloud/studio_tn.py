@@ -4,10 +4,36 @@ của cuốn được GIỮ NGUYÊN (bảng của cuốn thắng, như `readings
 độ dài."""
 from __future__ import annotations
 
+import re
+import unicodedata
 from typing import Sequence
 
 from ..text_processing import STRETCHED_SIGH_PATTERN, VOCAL_CUE_PATTERN
 from . import vieneu
+
+
+def separate_digit_quotes(text: str) -> str:
+    """Keep quote/prime marks away from numbers in voice text only.
+
+    sea-g2p interprets adjacent quotes as seconds/inches. Spaces preserve offsets
+    (including protected pronunciation spans) and never change the number reading.
+    Unicode initial/final quotation punctuation covers curly, angle and CJK quotes;
+    modifier primes, straight/fullwidth quotes and accent lookalikes need listing.
+    """
+    def quote(character: str) -> bool:
+        name = unicodedata.name(character, "")
+        return (unicodedata.category(character) in {"Pi", "Pf"}
+                or any(kind in name for kind in ("QUOTATION MARK", "PRIME", "APOSTROPHE", "DITTO MARK"))
+                or character in (
+            "\"'`´ʹʺʻʼʽʾʿˈˊˋˮ′″‴‵‶‷⁗＂＇「」『』〝〞〟"
+        ))
+
+    marks = "".join({character for character in text if quote(character)})
+    if not marks:
+        return text
+    group = "[" + re.escape(marks) + "]+"
+    return re.sub(r"(?<=\d)" + group + "|" + group + r"(?=\d)",
+                  lambda match: " " * len(match.group()), text)
 
 
 def studio_tn(text: str, origin: str | None, speaks_english: bool,
@@ -20,14 +46,14 @@ def studio_tn(text: str, origin: str | None, speaks_english: bool,
     matches = list(_TOKEN.finditer(text))
     identity = list(range(len(text) + 1))
     if not matches:
-        return text, identity
+        return separate_digit_quotes(text), identity
     toks = [match.group() for match in matches]
     said = [w if w == t else w.replace("_", "") for t, w in zip(toks, vieneu.spoken_tokens(toks, origin, speaks_english))]  # "o_": dấu giữ chữ "o" lẻ riêng của Nghe ngay (vieneu_engine.keep_lone_o), Studio không dùng
     for index, match in enumerate(matches):
         if any(match.start() < end and match.end() > start for start, end in protected_spans):
             said[index] = toks[index]
     if said == toks:
-        return text, identity
+        return separate_digit_quotes(text), identity
     # Cả chuỗi cũ thành các đoạn liền nhau [bắt đầu, kết thúc, chữ mới]: khoảng đầu, từng chữ, khoảng giữa, khoảng cuối.
     pieces: list[list] = []
     cursor = 0
@@ -49,16 +75,34 @@ def studio_tn(text: str, origin: str | None, speaks_english: bool,
     mapping = [0] * (len(text) + 1)
     new_length = 0
     for start, end, new in pieces:
+        old = text[start:end]
+        prefix = 0
+        while prefix < min(len(old), len(new)) and old[prefix] == new[prefix]:
+            prefix += 1
+        suffix = 0
+        while (suffix < min(len(old), len(new)) - prefix
+               and old[-suffix - 1] == new[-suffix - 1]):
+            suffix += 1
         for position in range(start, end):
-            mapping[position] = new_length + (position - start if end - start == len(new) else 0)
+            offset = position - start
+            if len(old) == len(new) or offset < prefix:
+                mapped = offset
+            elif suffix and offset >= len(old) - suffix:
+                mapped = len(new) - (len(old) - offset)
+            else:
+                mapped = prefix
+            mapping[position] = new_length + mapped
         parts.append(new)
         new_length += len(new)
     mapping[len(text)] = new_length
-    return "".join(parts), mapping
+    return separate_digit_quotes("".join(parts)), mapping
 
 
 def studio_tn_tagged(text: str, anchor_tags: list[frozenset[int]], origin: str | None,
-                     speaks_english: bool) -> tuple[str, list[frozenset[int]]]:
+                     speaks_english: bool, *,
+                     changed_words: list[tuple[int, int, int, int]] | None = None,
+                     unprotected_anchors: frozenset[int] = frozenset(),
+                     ) -> tuple[str, list[frozenset[int]]]:
     """`studio_tn` cho chuỗi Studio đang mang dấu anchor theo từng ký tự (`anchor_tags[i]`: các anchor có ký tự `i` là cách đọc của bảng phát âm). Khoảng của mỗi
     anchor là chữ được giữ nguyên; trả chuỗi mới cùng dấu anchor đã dịch theo để các bước sau (`_normalize_with_anchor_spans`) vẫn tìm đúng khoảng của anchor."""
     bounds: dict[int, list[int]] = {}
@@ -69,7 +113,20 @@ def studio_tn_tagged(text: str, anchor_tags: list[frozenset[int]], origin: str |
     # Những gì `normalize_vocalizations_for_tts` (chạy sau) đã có luật riêng của Studio thì để nó lo: hiệu lệnh "[thở dài]" (bước theo chữ không được đụng vào ngoặc của nó)
     # và "Haizzz" (Studio đọc "Hầy", sách chữ đọc "hai").
     cues = [match.span() for pattern in (VOCAL_CUE_PATTERN, STRETCHED_SIGH_PATTERN) for match in pattern.finditer(text)]
-    new_text, mapping = studio_tn(text, origin, speaks_english, [*bounds.values(), *cues])
+    protected = [span for index, span in bounds.items() if index not in unprotected_anchors]
+    new_text, mapping = studio_tn(text, origin, speaks_english, [*protected, *cues])
+    if changed_words is not None:
+        from ..webui.word_timing import _TOKEN
+
+        for match in _TOKEN.finditer(text):
+            start, end = match.span()
+            before, after = match.group(), new_text[mapping[start]:mapping[end]]
+            if (before != after and any(c.isalpha() for c in before)
+                    and not any(c.isdigit() for c in before)
+                    and any(c.isalpha() for c in after)
+                    and not any(anchor_tags[start:end])
+                    and not any(start < b and end > a for a, b in cues)):
+                changed_words.append((start, end, mapping[start], mapping[end]))
     if new_text == text:
         return text, anchor_tags
     marks: list[set[int]] = [set() for _character in new_text]

@@ -70,7 +70,6 @@ def test_a_genuinely_slow_take_is_still_caught() -> None:
     assert pace_is_outlier(8.0, syllables / speech_seconds, "normal", NORMAL)
 
 
-def test_the_transcript_fold_still_leaves_a_year_as_written() -> None:
-    """ASR không đổi: gộp số trong bản ghi vẫn dừng ở trần cũ."""
-    assert NUMBER_FOLD_CEILING == 999
-    assert normalize_transcript("năm 2026") == "năm 2026"
+def test_the_transcript_fold_covers_large_counts_without_changing_voice_text() -> None:
+    assert NUMBER_FOLD_CEILING == 999_999_999_999
+    assert normalize_transcript("giá 420000") == normalize_transcript("giá bốn trăm hai mươi nghìn")
