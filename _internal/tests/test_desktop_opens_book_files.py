@@ -17,7 +17,7 @@ from abook.webui.actions import FakeRunner
 from abook.webui.library import Preferences, book_id
 from abook.webui.listening import Listening
 from abook.webui.server import ApiError, App, Server
-from tests.test_webui_listen_and_sync import _request, make_project
+from tests.test_webui_listen_and_sync import _request, make_project, write_chapter_audio
 
 TOKEN = {"X-Ebook-Token": "t"}
 
@@ -33,15 +33,20 @@ def _produced(tmp_path: Path) -> tuple[Path, Path]:
     producer = tmp_path / "may_san_xuat"
     producer.mkdir()
     project = make_project(producer)
-    return project, bookfile.pack(project, tmp_path / "sach.abook")
+    return project, bookfile.pack(project, tmp_path / "sach.abook", partial=True)
 
 
 def _finish_second_chapter(project: Path) -> None:
     mp3 = project / "output" / "chapters" / "00002_646.mp3"
-    mp3.write_bytes(b"ID3" + bytes(range(255, -1, -1)) * 40)
+    import numpy as np
+    import soundfile as sf
+    from abook.io_utils import sha256_file
+    sf.write(mp3, .1 * np.sin(np.arange(24000 * 6) * .08), 24000, format='MP3')
     db = sqlite3.connect(project / "project.sqlite3")
     db.execute("UPDATE chapters SET status='completed', output_mp3=?, completed_at=? WHERE id=2", (str(mp3), time.time()))
     db.execute("UPDATE segments SET status='verified', wav_duration=3.0 WHERE id=5")
+    db.execute("INSERT INTO artifacts VALUES ('chapter_mp3:2','chapter_mp3',?,?,?,1,NULL,0,0)",
+               (str(mp3), sha256_file(mp3), mp3.stat().st_size))
     db.commit()
     db.close()
 
@@ -121,7 +126,7 @@ def test_a_fuller_file_of_the_same_book_replaces_it_and_keeps_the_listening(tmp_
     first = app.open_book_file(str(file))
     app.listening.progress(first["id"], 1, 7.0, 10.0)
     _finish_second_chapter(project)
-    fuller = bookfile.pack(project, tmp_path / "sach_du.abook")
+    fuller = bookfile.pack(project, tmp_path / "sach_du.abook", partial=True)
 
     updated = app.open_book_file(str(fuller))
 
@@ -217,14 +222,14 @@ def _produced_series(tmp_path: Path, *, parts: int = 2) -> tuple[Path, list[Path
         title = "Truyện X" if number == 1 else f"Truyện X · Phần {number}"
         projects.append(_part(tmp_path, library, f"p{number}", title, projects[-1] if projects else None))
         mp3 = projects[-1] / "output" / "chapters" / "00001_645.mp3"
-        mp3.write_bytes(b"ID3" + bytes([number]) * 300)  # mỗi phần một audio riêng
+        write_chapter_audio(projects[-1], 9.7, phase_step=.04 + number * .01)
     return library, projects
 
 
 def test_a_series_file_from_this_computer_opens_the_first_part_project(tmp_path: Path) -> None:
     """File cả bộ do chính Studio máy này xuất ra chung chương với MỌI phần: mở phần đầu, không chép thêm một bản."""
     library, projects = _produced_series(tmp_path)
-    file = bookfile.pack_series(projects, tmp_path / "bo.abook")
+    file = bookfile.pack_series(projects, tmp_path / "bo.abook", partial=True)
     app = _app(tmp_path, library)
 
     opened = app.open_book_file(str(file))
@@ -238,7 +243,7 @@ def test_a_series_file_from_this_computer_opens_the_first_part_project(tmp_path:
 
 def test_a_series_file_plays_on_another_computer_part_by_part(tmp_path: Path) -> None:
     _library, projects = _produced_series(tmp_path)
-    file = bookfile.pack_series(projects, tmp_path / "bo.abook")
+    file = bookfile.pack_series(projects, tmp_path / "bo.abook", partial=True)
     elsewhere = tmp_path / "thu_vien_nguoi_nghe"
     elsewhere.mkdir()
     app = _app(tmp_path, elsewhere)
@@ -276,14 +281,14 @@ def test_a_longer_series_file_replaces_the_book_and_the_listening_survives(tmp_p
     from tests.test_export_series import _part
 
     library, projects = _produced_series(tmp_path)
-    short = bookfile.pack_series(projects, tmp_path / "bo2.abook")
+    short = bookfile.pack_series(projects, tmp_path / "bo2.abook", partial=True)
     app = _app(tmp_path, tmp_path / "thu_vien_nguoi_nghe")
     first = app.open_book_file(str(short))
     app.listening.progress(first["id"], 200001, 7.0, 10.0)
     app.listening.set_chapter_done(first["id"], 100001, True)
     third = _part(tmp_path, library, "p3", "Truyện X · Phần 3", projects[1])
-    (third / "output" / "chapters" / "00001_645.mp3").write_bytes(b"ID3" + b"\3" * 300)
-    longer = bookfile.pack_series([*projects, third], tmp_path / "bo3.abook")
+    write_chapter_audio(third, 9.7, phase_step=.09)
+    longer = bookfile.pack_series([*projects, third], tmp_path / "bo3.abook", partial=True)
 
     updated = app.open_book_file(str(longer))
 
@@ -299,9 +304,9 @@ def test_a_series_file_is_the_same_book_as_a_single_part_file_of_it(tmp_path: Pa
     """Đã nhập file phần 1 (phiên bản 1) rồi nhận file cả bộ: cùng audio (dù khác thư mục trong gói) nên là một cuốn."""
     _library, projects = _produced_series(tmp_path)
     app = _app(tmp_path, tmp_path / "thu_vien_nguoi_nghe")
-    first = app.open_book_file(str(bookfile.pack(projects[0], tmp_path / "phan1.abook")))
+    first = app.open_book_file(str(bookfile.pack(projects[0], tmp_path / "phan1.abook", partial=True)))
 
-    again = app.open_book_file(str(bookfile.pack_series(projects, tmp_path / "bo.abook")))
+    again = app.open_book_file(str(bookfile.pack_series(projects, tmp_path / "bo.abook", partial=True)))
 
     assert (again["id"], again["how"]) == (first["id"], "updated")
     assert len(app.listen_library()) == 1

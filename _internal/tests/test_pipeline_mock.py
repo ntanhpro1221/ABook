@@ -7,6 +7,7 @@ from types import SimpleNamespace
 
 import numpy as np
 import pytest
+import soundfile as sf
 
 from tests.audio_fixtures import quiet_edges
 
@@ -2746,26 +2747,10 @@ def test_recheckpoint_preserves_clarity_provenance_after_partial_asr_commit(
     assert [part["generation_seed"] for part in evidence["split_parts"]] == [121, 123]
 
 
-def test_crash_before_clarity_wav_commit_resumes_the_same_round(
+def test_crash_before_clarity_wav_commit_keeps_the_incumbent(
     tmp_path: Path,
 ) -> None:
     pipeline, chapter, row, _expected = _asr_signal_pipeline(tmp_path, repair_rounds=1)
-    profile_id = pipeline.db.upsert_voice_profile(
-        {
-            "voice_key": "resume_voice",
-            "engine": "vieneu",
-            "preset_name": "Xuân Vĩnh",
-            "description": "Resume voice",
-            "seed": 1,
-            "pitch_semitones": 0,
-            "status": "ready",
-        }
-    )
-    with pipeline.db.connect() as conn:
-        conn.execute(
-            "UPDATE segments SET voice_profile_id=? WHERE id=?",
-            (profile_id, int(row["id"])),
-        )
     pipeline.db.mark_generating(
         int(row["id"]),
         seed=123,
@@ -2773,10 +2758,11 @@ def test_crash_before_clarity_wav_commit_resumes_the_same_round(
         repair_round=0,
         policy_hash=pipeline.quality_policy_hash,
     )
-    assert pipeline.db.reset_in_progress_segments("simulated worker crash") == 1
+    assert pipeline.db.reset_in_progress_segments("simulated worker crash") == 0
     recovered = pipeline.db.get_segment(int(row["id"]))
-    assert recovered["status"] == "analyzed"
-    assert recovered["generation_repair_round"] == 0
+    assert recovered["status"] == "signal_passed"
+    assert recovered["wav_sha256"] == row["wav_sha256"]
+    assert recovered["generation_seed"] == row["generation_seed"]
     pipeline._verify_chapter_audio = lambda *_args, **_kwargs: (_ for _ in ()).throw(
         RuntimeError("stop after synthesis")
     )
@@ -2785,13 +2771,13 @@ def test_crash_before_clarity_wav_commit_resumes_the_same_round(
         pipeline._process_chapter(chapter, SimpleNamespace(unload=lambda: None))
 
     fresh = pipeline.db.get_segment(int(row["id"]))
-    assert pipeline.tts.delivery_modes == ["clarity"]
-    assert pipeline.tts.seed_salts == ["asr_clarity_repair_0_0"]
+    assert pipeline.tts.delivery_modes == []
+    assert pipeline.tts.seed_salts == []
     assert fresh["status"] == "signal_passed"
-    assert fresh["generation_delivery_mode"] == "clarity"
-    assert fresh["generation_repair_round"] == 0
+    assert fresh["generation_delivery_mode"] == row["generation_delivery_mode"]
+    assert fresh["generation_repair_round"] == row["generation_repair_round"]
     signal = json.loads(str(fresh["signal_json"]))
-    assert signal["asr_clarity_repair_round"] == 0
+    assert signal == json.loads(str(row["signal_json"]))
 
 
 def test_same_policy_final_asr_failure_is_not_regenerated_on_resume(
@@ -2830,7 +2816,7 @@ def test_same_policy_final_asr_failure_is_not_regenerated_on_resume(
     assert pipeline.tts.synthesize_calls == 0
     fresh = pipeline.db.get_segment(int(row["id"]))
     assert fresh["status"] == "failed"
-    assert fresh["generation_repair_round"] == 0
+    assert fresh["generation_repair_round"] == row["generation_repair_round"]
 
 
 def test_previous_policy_asr_failure_does_not_freeze_current_policy_resume(
@@ -3133,6 +3119,8 @@ def test_non_short_tts_failure_keeps_existing_split_recovery(
     split_calls: list[tuple[str, str]] = []
 
     def fake_split(item, _output, **kwargs):
+        _output.parent.mkdir(parents=True, exist_ok=True)
+        sf.write(_output, .1 * np.sin(np.arange(48000) / 30), 24000)
         split_calls.append(
             (str(item["stable_id"]), str(kwargs["split_strategy"]))
         )
@@ -3322,6 +3310,8 @@ def test_split_fallback_aggregates_later_part_pitch_and_ceiling_failures(
     )
 
     def fake_split(_item, _output, **_kwargs):
+        _output.parent.mkdir(parents=True, exist_ok=True)
+        sf.write(_output, .1 * np.sin(np.arange(48000) / 30), 24000)
         return [
             {
                 "voice_profile_id": 7,
@@ -3757,6 +3747,7 @@ def test_mock_pipeline_completes_without_interactive_prompt(tmp_path: Path, monk
         output.write_bytes(b"ID3" + b"x" * 5000)
         quality = SimpleNamespace(
             to_dict=lambda: {"hard_failures": [], "review_flags": []},
+            hard_failures=(),
             review_flags=(),
         )
         return SimpleNamespace(checksum="chapterhash", quality=quality)

@@ -49,7 +49,7 @@ def test_progress_counts_the_tracks_that_had_to_be_downloaded(studio, tmp_path: 
     assert app.music_export_status(key) == {"active": False, "done": 0, "total": 0}
     with app.music_exporting(key, [project]) as music:
         assert app.music_export_status(key) == {"active": True, "done": 0, "total": 2}
-        out = bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}", music_track=music)
+        out = bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}", music_track=music, partial=True)
         assert app.music_export_status(key) == {"active": True, "done": 2, "total": 2}
     assert out.is_file() and sorted(fetched) == sorted([CALM, BATTLE])
     assert app.music_export_status(key)["active"] is False, "xuất xong: không còn báo đang tải"
@@ -68,7 +68,7 @@ def test_cancel_stops_before_the_next_download_and_writes_no_book_file(studio, t
     def pack() -> None:
         try:
             with app.music_exporting(key, [project]) as music:
-                bookfile.pack(project, target, music_track=music)
+                bookfile.pack(project, target, music_track=music, partial=True)
         except BaseException as error:  # noqa: BLE001 - kiểm đúng loại lỗi bên dưới
             outcome.append(error)
 

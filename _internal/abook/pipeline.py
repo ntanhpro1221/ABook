@@ -43,6 +43,7 @@ from .audio_io import (
     _segment_value,
     ChapterQualityError,
     assemble_chapter_atomic_with_metrics,
+    chapter_review_flags_that_block,
     export_json_atomic,
     inspect_wav,
     is_short_utterance,
@@ -1157,13 +1158,22 @@ class BookPipeline:
         chạy kế tiếp (`only_if_missing`, đường tắt của sách đã xong)."""
         try:
             book = self.db.book()
-            if str(book["status"]) != BookStatus.COMPLETED.value:
+            if (str(book["status"]) != BookStatus.COMPLETED.value
+                    and str(_segment_value(book, "stage", "")) != "completed_with_errors"):
                 return
             from .webui.bookfile import default_name, pack
 
             target = self.paths.output / default_name(str(book["title"]))
             if only_if_missing and target.exists():
-                return
+                from .webui.bookfile import BookFile, BookFileError
+                from .webui.audio_coverage import expected_source
+                try:
+                    with BookFile(target) as existing:
+                        existing.verify()
+                        if existing.book.get("audioCoverage", {}).get("expected") == expected_source(self.paths.root):
+                            return
+                except BookFileError:
+                    self.log("File sách cũ không đủ bằng chứng; đóng gói lại từ dự án.")
             path = pack(self.paths.root, target)
             self.log(f"Đã xuất file sách: {path}")
             self.db.event(
@@ -1799,6 +1809,8 @@ class BookPipeline:
         return bool(accepted.get((str(row["stable_id"]), artifact_sha256)))
 
     def _segment_has_current_asr_failure(self, row: Any) -> bool:
+        if str(row["status"]) in {SegmentStatus.ANALYZED.value, SegmentStatus.PENDING.value}:
+            return False
         artifact_sha256 = str(row["wav_sha256"] or "").strip()
         if not artifact_sha256:
             return False
@@ -3155,11 +3167,16 @@ class BookPipeline:
             )
         else:
             failed = len([row for row in all_chapters if row["status"] == ChapterStatus.FAILED.value])
-            error_text = f"Đã xử lý xong nhưng còn {failed} chapter lỗi."
+            review = [row for row in all_chapters if str(row["status"]) == "warning"
+                      and str(row["last_error"] or "").startswith("Cần nghe lại:")]
+            missing = len(all_chapters) - len(completed) - len(review)
+            error_text = f"Đã xử lý xong: {len(review)} chương cần nghe lại; {missing} chương thiếu audio."
+            if not missing and self.settings["audio"].get("create_m3u8", True):
+                write_playlist_atomic([Path(str(row["output_mp3"])) for row in all_chapters], self.paths.output / "playlist.m3u8")
             self.db.update_book(
                 status=BookStatus.ERROR.value,
                 stage="completed_with_errors",
-                error=f"{failed} chapter chưa thể xuất MP3",
+                error=error_text,
             )
             self.db.event(
                 "error",
@@ -3268,6 +3285,10 @@ class BookPipeline:
         for index, row in enumerate(current_rows, 1):
             self._progress(tts_label, index - 1, len(current_rows))
             status = str(row["status"])
+            if (status == SegmentStatus.FAILED.value
+                    and self._segment_signal_provenance(dict(row)).get("quality_pending")
+                    and self._has_real_audio(row)):
+                continue
             signal_valid, signal_metrics = self._inspect_existing_segment(row)
             if signal_valid and self._segment_has_current_asr_failure(row):
                 if status != SegmentStatus.FAILED.value:
@@ -3396,34 +3417,18 @@ class BookPipeline:
         self._grant_machine_acceptances(chapter)
 
         rows = self.db.list_segments(chapter_id=chapter_id)
-        blocking_warnings = self._high_quality_blocking_segment_warnings(rows)
-        if blocking_warnings:
-            raise ChapterQualityError(
-                "High-quality policy requires repair or review for segment warnings: "
-                + "; ".join(
-                    f"{item['stable_id']}={','.join(item['warning_codes'])}"
-                    for item in blocking_warnings
-                ),
-                metrics={"blocking_segment_warnings": blocking_warnings},
-                failure_codes=("SEGMENT_QA_REVIEW_REQUIRED",),
-                review_required=True,
-            )
-        if not self._chapter_has_current_segment_audio_qa(chapter_id):
-            raise ChapterQualityError(
-                "Current policy requires passing ASR and perceptual evidence for every segment",
-                metrics={"chapter_id": chapter_id},
-                failure_codes=("SEGMENT_QA_EVIDENCE_MISSING",),
-                review_required=True,
-            )
-        if not self.db.chapter_is_publishable(chapter_id):
-            failed = [row for row in rows if row["status"] == SegmentStatus.FAILED.value]
+        missing_audio = [str(row["stable_id"]) for row in rows if not self._has_real_audio(row)]
+        if missing_audio or not rows:
             self.db.update_chapter_status(
-                chapter_id,
-                ChapterStatus.FAILED.value,
-                f"{len(failed)} segment failed; chapter MP3 intentionally not published",
+                chapter_id, ChapterStatus.FAILED.value,
+                "Thiếu audio dòng: " + ", ".join(missing_audio or ["chương rỗng"]),
             )
-            self.log(f"Không xuất MP3 chapter {chapter['title']}: còn {len(failed)} segment lỗi.")
             return
+        blocking_warnings = self._high_quality_blocking_segment_warnings(rows)
+        failed_lines = [str(row["stable_id"]) for row in rows if row["status"] == SegmentStatus.FAILED.value]
+        needs_review = bool(blocking_warnings or failed_lines
+                            or not self._chapter_has_current_segment_audio_qa(chapter_id)
+                            or not self.db.chapter_is_publishable(chapter_id))
 
         self._validate_chapter_source(chapter)
 
@@ -3442,9 +3447,15 @@ class BookPipeline:
             book_title=str(self.db.book()["title"]),
             track=int(chapter["chapter_index"]),
             work_dir=self.paths.work / "silence",
+            retain_for_review=True,
         )
         checksum = assembly.checksum
         quality_metrics = assembly.quality.to_dict()
+        needs_review = needs_review or bool(assembly.quality.hard_failures or
+                                            chapter_review_flags_that_block(assembly.quality.review_flags))
+        quality_metrics["failed_lines"] = failed_lines
+        quality_metrics["blocking_segment_warnings"] = blocking_warnings
+        quality_metrics["review_required"] = needs_review
         quality_metadata = self.db.quality_metadata_for_current_policy()
         self.db.record_quality_check(
             scope=QUALITY_SCOPE_CHAPTER,
@@ -3453,7 +3464,7 @@ class BookPipeline:
             artifact_sha256=checksum,
             policy_hash=self.quality_policy_hash,
             policy_version=QUALITY_POLICY_VERSION,
-            verdict=QUALITY_VERDICT_PASS,
+            verdict=QUALITY_VERDICT_FAIL if needs_review else QUALITY_VERDICT_PASS,
             metrics=quality_metrics,
             attempt=self._next_chapter_quality_attempt(chapter_id),
         )
@@ -3470,18 +3481,25 @@ class BookPipeline:
                 "quality_metrics": quality_metrics,
             },
         )
-        if assembly.quality.review_flags:
+        if assembly.quality.review_flags or assembly.quality.hard_failures:
             self.db.event(
                 "warning",
                 "CHAPTER_QA_REVIEW_FLAGS",
-                f"Chapter {chapter['title']} passed hard QA with review flags",
+                f"Chapter {chapter['title']} retained with quality warnings",
                 {
                     "chapter_id": chapter_id,
                     "flags": list(assembly.quality.review_flags),
                     "metrics": quality_metrics,
                 },
             )
-        self.db.update_chapter_status(chapter_id, ChapterStatus.COMPLETED.value)
+        self.db.update_chapter_status(
+            chapter_id, "warning" if needs_review else ChapterStatus.COMPLETED.value,
+            ("Cần nghe lại: " + ", ".join(failed_lines or [item["stable_id"] for item in blocking_warnings]
+                                             or ["QA chương"])
+             + ("; " + "; ".join(assembly.quality.hard_failures + assembly.quality.review_flags)
+                if assembly.quality.hard_failures or assembly.quality.review_flags else "")
+             + "; audio đầy đủ") if needs_review else None,
+        )
         self._progress(assembly_label, 1, 1)
         self.log(f"Chapter MP3 đã hoàn tất và giải mã kiểm tra thành công: {output.name}")
         self.emit(
@@ -4419,6 +4437,7 @@ class BookPipeline:
                     )
                 if int(seed) != expected_seed:
                     raise RuntimeError("TTS returned a seed that differs from the candidate ledger")
+                self._archive_usable_take(row, output, checksum, metrics, seed)
                 if (
                     self.settings.get("quality_profile") == "high_quality"
                     and metrics.get("pace_outlier")
@@ -4602,6 +4621,8 @@ class BookPipeline:
         prefetch that disagreed with the loop about this would synthesize a primary take for
         a segment the loop then repairs, wasting the work and leaving a stray WAV.
         """
+        if status == SegmentStatus.ANALYZED.value and _segment_value(row, "wav_path", None):
+            return False
         return (
             str(row["generation_delivery_mode"] or "") == DELIVERY_CLARITY
             and str(row["generation_policy_hash"] or "") == self.quality_policy_hash
@@ -4624,6 +4645,9 @@ class BookPipeline:
         in the cautious direction costs a prefetch that goes unused; being wrong the other
         way would leave a stray WAV beside a segment the loop decided to treat differently.
         """
+        # Bể thu ghi đường chuẩn; câu từng có bản thu phải đi đường file thử riêng.
+        if str(_segment_value(row, "wav_path", "") or ""):
+            return False
         signal_valid, _metrics = self._inspect_existing_segment(row)
         if signal_valid:
             return False
@@ -4938,13 +4962,16 @@ class BookPipeline:
         asr_repair_round: int | None = None,
         prefetched: dict[str, Any] | None = None,
     ) -> None:
-        output = self._chunk_path(row)
+        base_output = self._chunk_path(row)
+        output = base_output
         last_error = ""
         retries = int(self.settings["tts"]["max_retries"])
         for attempt in range(retries):
             self._wait_pause_or_stop()
             try:
                 seed_salt = f"{seed_salt_prefix}_{attempt}"
+                # Mỗi lần thử ghi file riêng: crash không được ghi đè bản đang có trong sổ.
+                output = base_output.with_name(base_output.stem + f".{seed_salt}.{time.time_ns()}.wav")
                 self.db.mark_generating(
                     int(row["id"]),
                     self.tts.generation_seed(row, seed_salt),
@@ -4955,11 +4982,12 @@ class BookPipeline:
                 claimed = self._claim_prefetched_segment(
                     prefetched if attempt == 0 else None,
                     row,
-                    output,
+                    base_output,
                     seed_salt,
                 )
                 if claimed is not None:
                     checksum, metrics, seed = claimed
+                    output = base_output
                 else:
                     checksum, metrics, seed = self.tts.synthesize_atomic(
                         row,
@@ -4971,6 +4999,7 @@ class BookPipeline:
                 metrics["tts_delivery_mode"] = delivery_mode
                 if asr_repair_round is not None:
                     metrics[ASR_CLARITY_REPAIR_ROUND_METRIC] = int(asr_repair_round)
+                self._keep_usable_take(row, output, checksum, metrics, seed)
                 if self.settings.get("quality_profile") == "high_quality":
                     retry_reasons = []
                     if metrics.get("pace_outlier"):
@@ -4991,15 +5020,7 @@ class BookPipeline:
                         raise AudioQualityError(
                             "high-quality TTS retry required: " + "; ".join(retry_reasons)
                         )
-                self.db.mark_signal_passed(
-                    int(row["id"]),
-                    wav_path=output,
-                    wav_sha256=checksum,
-                    duration=float(metrics["duration"]),
-                    signal=metrics,
-                    generation_seed=seed,
-                    warning_codes=self._signal_warning_codes(metrics),
-                )
+                self._accept_retained_take(row)
                 self._reset_tts_failure_streak()
                 if metrics.get("pace_outlier"):
                     self.log(
@@ -5023,11 +5044,13 @@ class BookPipeline:
                 # attempt again - the retry loop is bounded, and so is the wait, so this
                 # cannot spin. Only when the wait runs out does it fall through to the
                 # fatal path it used to take immediately.
+                self._retain_rejected_output(row, output, str(exc), seed_salt, delivery_mode, asr_repair_round)
                 if is_transient_tts_memory_error(exc) and self._recover_from_memory_pressure(
                     f"tổng hợp {row['stable_id']}", str(exc)
                 ):
                     continue
                 if is_fatal_tts_error(exc):
+                    self.db.mark_failed(int(row["id"]), f"Fatal TTS engine failure: {exc}")
                     raise RuntimeError(f"Fatal TTS engine failure: {exc}") from exc
                 last_error = str(exc)
                 if isinstance(exc, AudioQualityError):
@@ -5060,6 +5083,7 @@ class BookPipeline:
                     split_strategy,
                 )
                 split_seed_salt = f"{seed_salt_prefix}_split"
+                output = base_output.with_name(base_output.stem + f".{split_seed_salt}.{time.time_ns()}.wav")
                 split_seed = self.tts.generation_seed(row, split_seed_salt)
                 self.db.mark_generating(
                     int(row["id"]),
@@ -5125,23 +5149,22 @@ class BookPipeline:
                         )
                     )
                 checksum = sha256_file(output)
-                self.db.mark_signal_passed(
-                    int(row["id"]), wav_path=output, wav_sha256=checksum,
-                    duration=float(metrics["duration"]), signal=metrics, generation_seed=split_seed,
-                    warning_codes=self._signal_warning_codes(
-                        metrics,
-                        split_recovery=True,
-                    ),
-                )
+                self._keep_usable_take(row, output, checksum, metrics, split_seed)
+                if self.settings.get("quality_profile") == "high_quality" and (
+                    metrics.get("pace_outlier") or float(metrics.get(REPEATED_UTTERANCE_METRIC, 0.0) or 0.0) > REPEATED_UTTERANCE_THRESHOLD
+                ):
+                    raise AudioQualityError("split take still requires quality review")
+                self._accept_retained_take(row)
                 self._reset_tts_failure_streak()
                 self.log(f"Đã cứu TTS segment {row['stable_id']} bằng cách chia nhỏ.")
                 return
             except Exception as exc:  # noqa: BLE001
+                self._retain_rejected_output(row, output, str(exc), f"{seed_salt_prefix}_split", delivery_mode, asr_repair_round)
                 last_error = f"{last_error}; split={exc}"
 
         relaxed_error = self._retry_in_normal_pace_band(
             row,
-            output,
+            base_output,
             delivery_mode=delivery_mode,
             seed_salt_prefix=seed_salt_prefix,
             repair_short_utterance=repair_short_utterance,
@@ -5160,12 +5183,140 @@ class BookPipeline:
             f"Segment {row['stable_id']} failed after all non-silent strategies",
             {"error": last_error, "chapter": str(chapter["title"]), "text": str(row["text"])},
         )
+        retained = self.db.get_segment(int(row["id"]))
+        if retained["wav_path"] and retained["wav_sha256"]:
+            # Còn lời đọc để ghép và nghe lại: không mở cầu dao vì một cờ chất lượng mềm.
+            self._reset_tts_failure_streak()
+            return
         failure_streak = self._record_tts_failure(last_error)
         failure_limit = int(self.settings["tts"].get("fatal_failure_streak", 3))
         if failure_streak >= failure_limit:
             raise RuntimeError(
                 f"TTS circuit breaker opened after {failure_limit} identical failures: {last_error}"
             )
+
+    @staticmethod
+    def _has_real_audio(row: Any) -> bool:
+        try:
+            path = Path(str(row["wav_path"] or ""))
+            audio, rate = sf.read(path, dtype="float32", always_2d=True)
+            return bool(audio.size and rate > 0 and np.isfinite(audio).all() and np.any(audio)
+                        and row["wav_sha256"] and sha256_file(path) == row["wav_sha256"])
+        except (OSError, RuntimeError, ValueError):
+            return False
+
+    @staticmethod
+    def _usable_take_rank(metrics: dict[str, Any], *, qa_failed: bool = False) -> tuple[int, float]:
+        """Bản tốt nhất có ít cờ tín hiệu/QA đã biết hơn, rồi ít lặp hơn; bằng nhau giữ bản trước."""
+        repeated = float(metrics.get(REPEATED_UTTERANCE_METRIC, 0.0) or 0.0)
+        flags = sum(bool(metrics.get(key)) for key in (
+            "pace_outlier", "pitch_variant_skipped", GENERATION_CEILING_METRIC, "signal_rejected",
+        )) + int(repeated > REPEATED_UTTERANCE_THRESHOLD) + int(qa_failed)
+        return flags, repeated
+
+    def _archive_usable_take(self, row: Any, output: Path, checksum: str,
+                             metrics: dict[str, Any], seed: int) -> None:
+        # Đường ứng viên có thể được thử lại; bản giữ riêng không bị lượt sau ghi đè.
+        import shutil
+        key = f"usable_take:{int(row['id'])}"
+        old = self.db.artifact_by_key(key)
+        if old:
+            metadata = json.loads(str(old["metadata_json"] or "{}"))
+            if (Path(str(old["path"])).is_file()
+                    and sha256_file(Path(str(old["path"]))) == old["sha256"]
+                    and all(metadata["signal"].get(field) == metrics.get(field) for field in (
+                        "spoken_text_sha256", "voice_profile_id", "pronunciation_delivery_variant"))
+                    and self._usable_take_rank(metadata["signal"]) <= self._usable_take_rank(metrics)):
+                return
+        kept = output.with_name(output.stem + f".retained.{checksum[:16]}.wav")
+        staged = kept.with_name(kept.name + f".{time.time_ns()}.part")
+        shutil.copyfile(output, staged)
+        with staged.open("rb+") as handle:
+            os.fsync(handle.fileno())
+        if sha256_file(staged) != checksum:
+            raise AudioQualityError("retained candidate checksum mismatch")
+        os.replace(staged, kept)
+        self.db.register_artifact(
+            artifact_key=key, kind="usable_take", path=kept, sha256=checksum, verified=False,
+            metadata={"signal": metrics, "generation_seed": seed, "quality_passed": False},
+        )
+
+    def _keep_usable_take(self, row: Any, output: Path, checksum: str,
+                          metrics: dict[str, Any], seed: int) -> bool:
+        # Phải có mẫu âm thật, hữu hạn và băm đúng; không lấy im lặng thay lời bị mất.
+        audio, rate = sf.read(output, dtype="float32", always_2d=True)
+        if rate <= 0 or not audio.size or not np.isfinite(audio).all() or not np.any(audio):
+            raise AudioQualityError("take has no finite audible samples")
+        if sha256_file(output) != checksum:
+            raise AudioQualityError("usable take checksum mismatch")
+        metrics["generation_policy_hash"] = self.quality_policy_hash
+        current = self.db.get_segment(int(row["id"]))
+        previous = Path(str(current["wav_path"] or ""))
+        if current["wav_sha256"] and previous.is_file() and sha256_file(previous) == current["wav_sha256"]:
+            try:
+                old_metrics = json.loads(str(current["signal_json"] or "{}"))
+            except (ValueError, TypeError):
+                old_metrics = None
+            check = self.db.latest_quality_check(
+                scope=QUALITY_SCOPE_SEGMENT, stage=SEGMENT_AUDIO_QUALITY_STAGE, segment_id=int(row["id"]),
+            )
+            qa_failed = bool(check and str(check["artifact_sha256"]) == current["wav_sha256"]
+                             and str(check["policy_hash"]) == self.quality_policy_hash
+                             and str(check["verdict"]) != QUALITY_VERDICT_PASS)
+            if (isinstance(old_metrics, dict) and all(old_metrics.get(key) == metrics.get(key) for key in (
+                    "spoken_text_sha256", "voice_profile_id", "pronunciation_delivery_variant"))
+                    and self._usable_take_rank(old_metrics, qa_failed=qa_failed) <= self._usable_take_rank(
+                        metrics, qa_failed=qa_failed and checksum == current["wav_sha256"])):
+                return False
+        self.db.checkpoint_usable_take(
+            int(row["id"]), wav_path=output, wav_sha256=checksum,
+            duration=float(metrics["duration"]), signal=metrics, generation_seed=seed,
+            warning_codes=self._signal_warning_codes(metrics, split_recovery=SPLIT_STRATEGY_FIELD in metrics),
+        )
+        return True
+
+    def _accept_retained_take(self, row: Any) -> None:
+        current = self.db.get_segment(int(row["id"]))
+        signal = json.loads(str(current["signal_json"]))
+        signal.pop("quality_pending", None)
+        checkpoint = dict(wav_path=Path(str(current["wav_path"])), wav_sha256=str(current["wav_sha256"]),
+                          duration=float(current["wav_duration"]), generation_seed=current["generation_seed"])
+        try:
+            self.db.mark_signal_passed(
+                int(row["id"]), **checkpoint, signal=signal,
+                warning_codes=self._signal_warning_codes(signal, split_recovery=SPLIT_STRATEGY_FIELD in signal),
+            )
+        except Exception as exc:
+            signal.update(signal_rejected=True, rejection_reason=str(exc))
+            self.db.checkpoint_usable_take(int(row["id"]), **checkpoint, signal=signal,
+                                           warning_codes=("TTS_SIGNAL_REJECTED",))
+            raise
+
+    def _retain_rejected_output(self, row: Any, output: Path, reason: str, salt: str,
+                                delivery: str, repair_round: int | None) -> None:
+        # Provider có thể đã ghi WAV rồi mới từ chối. Giữ file đó, không cấp phép QA cho nó.
+        if not output.is_file():
+            return
+        try:
+            audio, rate = sf.read(output, dtype="float32", always_2d=True)
+            if not audio.size or rate <= 0 or not np.isfinite(audio).all() or not np.any(audio):
+                return
+            checksum = sha256_file(output)
+            if self.db.get_segment(int(row["id"]))["wav_sha256"] == checksum:
+                return
+            text = self.tts.spoken_text(row)
+            metrics: dict[str, Any] = {
+                "duration": len(audio) / rate, "signal_rejected": True, "rejection_reason": reason,
+                "tts_delivery_mode": delivery, "pitch_variant_skipped": True,
+                "spoken_text_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
+                "voice_profile_id": _segment_value(row, "voice_profile_id", None),
+                "pronunciation_delivery_variant": PRONUNCIATION_DELIVERY_LOCKED,
+            }
+            if repair_round is not None:
+                metrics[ASR_CLARITY_REPAIR_ROUND_METRIC] = repair_round
+            self._keep_usable_take(row, output, checksum, metrics, self.tts.generation_seed(row, salt))
+        except (OSError, RuntimeError, ValueError, KeyError, TypeError) as exc:
+            self.log(f"Không giữ được WAV chưa đạt của {row['stable_id']}: {exc}")
 
     def _retry_in_normal_pace_band(
         self,
@@ -5208,9 +5359,11 @@ class BookPipeline:
         )
         attempts = min(PACE_BAND_RELAX_ATTEMPTS, int(self.settings["tts"]["max_retries"]))
         last: str = "pace_band=no take reached the normal floor either"
+        base_output = output
         for attempt in range(attempts):
             self._wait_pause_or_stop()
             seed_salt = f"{seed_salt_prefix}_{attempt}"
+            output = base_output.with_name(base_output.stem + f".normal.{attempt}.{time.time_ns()}.wav")
             try:
                 self.db.mark_generating(
                     int(row["id"]),
@@ -5227,17 +5380,25 @@ class BookPipeline:
                     delivery_mode=delivery_mode,
                 )
             except Exception as exc:  # noqa: BLE001
+                self._retain_rejected_output(row, output, str(exc), seed_salt, delivery_mode, asr_repair_round)
                 last = f"pace_band={exc}"
                 continue
-            if metrics.get("pace_outlier"):
+            metrics["tts_delivery_mode"] = delivery_mode
+            if asr_repair_round is not None:
+                metrics[ASR_CLARITY_REPAIR_ROUND_METRIC] = int(asr_repair_round)
+            if (metrics.get("pace_outlier")
+                    or float(metrics.get(REPEATED_UTTERANCE_METRIC, 0.0) or 0.0) > REPEATED_UTTERANCE_THRESHOLD):
+                try:
+                    self._keep_usable_take(row, output, checksum, metrics, seed)
+                except Exception as exc:  # noqa: BLE001
+                    self._retain_rejected_output(row, output, str(exc), seed_salt, delivery_mode, asr_repair_round)
+                    last = f"pace_band={exc}"
+                    continue
                 last = (
                     "pace_band=still outside the normal band at "
                     f"{metrics.get('chars_per_second', 0.0):.2f} chars/s"
                 )
                 continue
-            metrics["tts_delivery_mode"] = delivery_mode
-            if asr_repair_round is not None:
-                metrics[ASR_CLARITY_REPAIR_ROUND_METRIC] = int(asr_repair_round)
             # The listener is told, because the delivery is not what analysis asked for.
             # This warning is deliberately NOT in HIGH_QUALITY_ALLOWED_SEGMENT_WARNINGS:
             # flattening a reading is a trade a person should hear before it ships. It
@@ -5245,15 +5406,13 @@ class BookPipeline:
             # which is the strictly better of the two.
             metrics[PACE_BAND_RELAXED_METRIC] = 1.0
             metrics["pace_band_requested"] = pace
-            self.db.mark_signal_passed(
-                int(row["id"]),
-                wav_path=output,
-                wav_sha256=checksum,
-                duration=float(metrics["duration"]),
-                signal=metrics,
-                generation_seed=seed,
-                warning_codes=self._signal_warning_codes(metrics),
-            )
+            try:
+                self._keep_usable_take(row, output, checksum, metrics, seed)
+                self._accept_retained_take(row)
+            except Exception as exc:  # noqa: BLE001
+                self._retain_rejected_output(row, output, str(exc), seed_salt, delivery_mode, asr_repair_round)
+                last = f"pace_band={exc}"
+                continue
             self._reset_tts_failure_streak()
             self.log(
                 f"Đã cứu TTS segment {row['stable_id']} bằng cách hạ dải nhịp "
@@ -5273,7 +5432,7 @@ class BookPipeline:
         pronunciation_delivery_variant: str = PRONUNCIATION_DELIVERY_LOCKED,
         split_strategy: str = SENTENCE_SPLIT_STRATEGY,
     ) -> list[dict[str, Any]]:
-        text, _anchors = self._spoken_text_with_pronunciation_variant(
+        text, anchors = self._spoken_text_with_pronunciation_variant(
             row,
             pronunciation_delivery_variant,
         )
@@ -5284,23 +5443,36 @@ class BookPipeline:
             raise AudioQualityError("split produced fewer than two pieces")
         if " ".join(pieces) != text:
             raise RuntimeError("configured split changed the spoken text")
+        # Ranh giới tự nhiên chỉ hợp lệ khi không cắt đôi span phát âm nguồn.
+        mapped: list[tuple[str, int, int]] = []
+        start = 0
+        for piece in pieces:
+            end = start + len(piece)
+            if mapped and any(int(a["spoken_start"]) < start < int(a["spoken_end"]) for a in anchors):
+                previous, previous_start, _previous_end = mapped.pop()
+                mapped.append((previous + " " + piece, previous_start, end))
+            else:
+                mapped.append((piece, start, end))
+            start = end + 1
+        if len(mapped) < 2:
+            raise AudioQualityError("no natural boundary outside pronunciation spans")
         part_paths: list[Path] = []
         part_provenance: list[dict[str, Any]] = []
         try:
-            for index, piece in enumerate(pieces):
+            for index, (piece, start, end) in enumerate(mapped):
                 part_row = dict(row)
                 part_row["text"] = piece
                 part_row["stable_id"] = f"{row['stable_id']}_part{index:02d}"
-                expected_part_text, _part_anchors = (
-                    self._spoken_text_with_pronunciation_variant(
-                        part_row,
-                        pronunciation_delivery_variant,
-                    )
+                part_anchors = [
+                    {**a, "spoken_start": int(a["spoken_start"]) - start,
+                     "spoken_end": int(a["spoken_end"]) - start}
+                    for a in anchors
+                    if start <= int(a["spoken_start"]) and int(a["spoken_end"]) <= end
+                ]
+                part_row["_materialized_spoken"] = (
+                    pronunciation_delivery_variant, piece, part_anchors,
                 )
-                if expected_part_text != piece:
-                    raise RuntimeError(
-                        "split part pronunciation materialization changed its boundary text"
-                    )
+                expected_part_text = piece
                 expected_part_sha256 = hashlib.sha256(
                     expected_part_text.encode("utf-8")
                 ).hexdigest()
@@ -5344,6 +5516,7 @@ class BookPipeline:
                 part_provenance.append(
                     {
                         "index": index,
+                        "source_spans": part_anchors,
                         "generation_seed": part_seed,
                         "spoken_text_sha256": part_metrics.get("spoken_text_sha256"),
                         "pronunciation_delivery_variant": part_metrics.get(

@@ -154,7 +154,7 @@ Một việc - một cách viết, cho web (máy tính + điện thoại), nativ
 
 <!-- ui_parity:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity.py - không sửa tay, chạy lại script) -->
 
-Quét: web 5257 chữ (3032 khác nhau), 333 cặp nhãn-icon; native 1890 chữ (1457 khác nhau), 74 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
+Quét: web 5260 chữ (3035 khác nhau), 333 cặp nhãn-icon; native 1890 chữ (1457 khác nhau), 74 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
 
 ## a. Cùng việc, khác chữ
 
@@ -164,7 +164,7 @@ Cặp nhãn ngắn (<= 6 chữ) mà phía kia KHÔNG có nguyên văn nhưng có
 |---|---|---|---|
 | Chưa có chương nghe được | Chưa có chương nghe được{} | 1.00 | `native/data/Production.kt:64` ~ `listen/LibraryScreen.tsx:336` |
 | Chọn giọng | Chọn một giọng | 1.00 | `native/nowplaying/PlayerSheets.kt:201` ~ `studio/NewProjectScreen.tsx:1273` |
-| Cỡ ước tính: khoảng {}{}. | Cỡ ước tính: khoảng | 1.00 | `native/studio/StudioExport.kt:243` ~ `studio/ExportBook.tsx:518` |
+| Cỡ ước tính: khoảng {}{}. | Cỡ ước tính: khoảng | 1.00 | `native/studio/StudioExport.kt:243` ~ `studio/ExportBook.tsx:520` |
 | Dùng “{}” | Dùng “ | 1.00 | `native/studio/WorkText.kt:78` ~ `studio/ReadingProblem.tsx:26` |
 | Dùng “{}” | Đúng là {} | 1.00 | `native/studio/WorkText.kt:78` ~ `studio/ScriptTab.tsx:836` |
 | Không có ai khớp “{}”. | Không có ai khớp “ | 1.00 | `native/screens/BookPeople.kt:225` ~ `studio/MergePeople.tsx:127` |
@@ -369,7 +369,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 | thư mục | nhãn |
 |---|---|
 | desktop/ | 169 |
-| studio/ | 514 |
+| studio/ | 515 |
 
 ## d. Chữ hoa, dấu câu, `…` và `...`, dấu thanh, số
 
@@ -414,23 +414,23 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 
 | kiểu | web | native |
 |---|---|---|
-| dấu ba chấm ASCII `...` | 8 / 5257 | 0 / 1890 |
-| dấu ba chấm `…` | 36 / 5257 | 0 / 1890 |
-| kết thúc bằng dấu chấm `.` | 894 / 5257 | 388 / 1890 |
-| kết thúc bằng `!` | 0 / 5257 | 0 / 1890 |
-| kết thúc bằng `:` | 52 / 5257 | 3 / 1890 |
-| dấu thanh kiểu cũ `oà oá uý` | 389 / 5257 | 172 / 1890 |
-| dấu thanh kiểu mới `òa óa úy` | 1 / 5257 | 0 / 1890 |
-| số thập phân dấu phẩy `1,5` | 1 / 5257 | 0 / 1890 |
-| số thập phân dấu chấm `1.5` | 0 / 5257 | 0 / 1890 |
-| nhân bằng `×` | 0 / 5257 | 0 / 1890 |
-| nhân bằng `x` sau số | 0 / 5257 | 0 / 1890 |
-| ngăn cách `·` | 120 / 5257 | 34 / 1890 |
-| ngăn cách ` - ` | 257 / 5257 | 80 / 1890 |
-| gạch dài `—`/`–` | 10 / 5257 | 1 / 1890 |
-| giờ `1:30` hay `1 giờ 30` | 0 / 5257 | 2 / 1890 |
-| dấu `%` dính số | 0 / 5257 | 1 / 1890 |
-| dấu `%` cách số | 0 / 5257 | 0 / 1890 |
+| dấu ba chấm ASCII `...` | 8 / 5260 | 0 / 1890 |
+| dấu ba chấm `…` | 36 / 5260 | 0 / 1890 |
+| kết thúc bằng dấu chấm `.` | 895 / 5260 | 388 / 1890 |
+| kết thúc bằng `!` | 0 / 5260 | 0 / 1890 |
+| kết thúc bằng `:` | 52 / 5260 | 3 / 1890 |
+| dấu thanh kiểu cũ `oà oá uý` | 389 / 5260 | 172 / 1890 |
+| dấu thanh kiểu mới `òa óa úy` | 1 / 5260 | 0 / 1890 |
+| số thập phân dấu phẩy `1,5` | 1 / 5260 | 0 / 1890 |
+| số thập phân dấu chấm `1.5` | 0 / 5260 | 0 / 1890 |
+| nhân bằng `×` | 0 / 5260 | 0 / 1890 |
+| nhân bằng `x` sau số | 0 / 5260 | 0 / 1890 |
+| ngăn cách `·` | 120 / 5260 | 34 / 1890 |
+| ngăn cách ` - ` | 256 / 5260 | 80 / 1890 |
+| gạch dài `—`/`–` | 10 / 5260 | 1 / 1890 |
+| giờ `1:30` hay `1 giờ 30` | 0 / 5260 | 2 / 1890 |
+| dấu `%` dính số | 0 / 5260 | 1 / 1890 |
+| dấu `%` cách số | 0 / 5260 | 0 / 1890 |
 
 **d3. Nhãn ngắn bắt đầu bằng chữ thường** (web 147, native 0); 15 đầu mỗi phía:
 
@@ -490,7 +490,7 @@ Trong một cặp, mỗi nhãn ngắn phải có ở cả hai phía (khoá lỏn
 | devices | 143 | 168 | 0 | 0 | 18 | 167 | 0 |
 | voice | 132 | 122 | 0 | 0 | 27 | 20 | 0 |
 | add-edit-book | 164 | 139 | 0 | 0 | 60 | 4 | 0 |
-| studio | 2108 | 426 | 0 | 0 | 59 | 90 | 0 |
+| studio | 2111 | 426 | 0 | 0 | 59 | 90 | 0 |
 | export | 78 | 81 | 0 | 0 | 28 | 43 | 0 |
 | music | 33 | 49 | 0 | 0 | 10 | 8 | 0 |
 

@@ -437,7 +437,7 @@ def test_opening_the_same_book_again_keeps_the_listeners_edits(tmp_path: Path) -
     producer = tmp_path / "may_san_xuat"
     producer.mkdir()
     project = make_project(producer)
-    first = bookfile.pack(project, tmp_path / "v1.abook")
+    first = bookfile.pack(project, tmp_path / "v1.abook", partial=True)
     app = _app(tmp_path, tmp_path / "thu_vien")
     opened = app.open_book_file(str(first))
     folder = app.library.resolve_listenable(opened["id"])
@@ -450,7 +450,7 @@ def test_opening_the_same_book_again_keeps_the_listeners_edits(tmp_path: Path) -
     db.execute("UPDATE chapters SET status='completed', output_mp3=?, completed_at=1 WHERE id=2", (str(mp3),))
     db.commit()
     db.close()
-    fuller = bookfile.pack(project, tmp_path / "v2.abook")
+    fuller = bookfile.pack(project, tmp_path / "v2.abook", partial=True)
     again = app.open_book_file(str(fuller))
     assert again["how"] == "updated" and again["id"] == opened["id"]
     assert book_edits.load(folder) == {"format": "abook-edits", "version": 1, "title": "Tên của tôi", "characters": {"LUCIEN": "Mine"}}
@@ -753,7 +753,7 @@ def _producer_with_a_file_of_edits(tmp_path: Path):
     producer.mkdir()
     project = shared.make_base_project(producer)
     _plan(project)
-    packed = bookfile.pack(project, tmp_path / "v1.abook", music_track=_tracks(tmp_path))
+    packed = bookfile.pack(project, tmp_path / "v1.abook", music_track=_tracks(tmp_path), partial=True)
     listener = tmp_path / "nguoi_nghe"
     listener.mkdir()
     folder = BookFile(packed).extract(listener / "thu_vien", "b")
@@ -819,7 +819,7 @@ def test_a_project_script_carries_the_stable_id_and_text_hash(tmp_path: Path) ->
     project = shared.make_base_project(producer)
     segments = store.chapter_script(project, 1)["segments"]
     assert all(segment["stableId"].startswith("c1_s") and len(segment["textSha256"]) == 64 for segment in segments)
-    packed = bookfile.pack(project, tmp_path / "s.abook")
+    packed = bookfile.pack(project, tmp_path / "s.abook", partial=True)
     with BookFile(packed) as opened:
         assert json.loads(opened.read("scripts/1.json"))["segments"][0]["stableId"] == segments[0]["stableId"]
     (tmp_path / "q").mkdir()
@@ -844,7 +844,7 @@ def test_odd_request_bodies_are_refused_or_ignored_not_crashes(imported) -> None
 
 def test_a_pin_in_an_edited_file_reaches_the_producers_store_through_the_open_and_fold(tmp_path: Path) -> None:
     project = _producer_project(tmp_path)
-    packed = bookfile.pack(project, tmp_path / "v1.abook", music_track=_tracks(tmp_path))
+    packed = bookfile.pack(project, tmp_path / "v1.abook", music_track=_tracks(tmp_path), partial=True)
     listener = tmp_path / "nguoi_nghe"
     listener.mkdir()
     folder = BookFile(packed).extract(listener / "thu_vien", "b")
