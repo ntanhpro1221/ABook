@@ -29,3 +29,18 @@ data class AppRelease(val version: String, val page: String, val apk: String?) {
         }
     }
 }
+
+/**
+ * Khoá ký bản phát hành (docs/RELEASING.md). Bản cài thử ký bằng khoá khác (debug) thì Android từ chối mọi bản cập nhật tải từ GitHub:
+ * app biết trước và nói thẳng, thay vì mời tải một bản sẽ hỏng.
+ */
+object ReleaseSigning {
+    /** SHA-256 của chứng chỉ ký bản phát hành (CN=ABook), chữ thường, không dấu hai chấm. */
+    const val RELEASE_SHA256 = "e0aeae7e8407ec636b01f634af915beda289ceb25c9ab038351823aefcd3a226"
+
+    fun sha256Hex(cert: ByteArray): String =
+        java.security.MessageDigest.getInstance("SHA-256").digest(cert).joinToString("") { "%02x".format(it) }
+
+    /** Mọi chứng chỉ ký app đều là của bản phát hành (và có ít nhất một). */
+    fun isRelease(certs: List<ByteArray>, expected: String = RELEASE_SHA256): Boolean = certs.isNotEmpty() && certs.all { sha256Hex(it) == expected }
+}

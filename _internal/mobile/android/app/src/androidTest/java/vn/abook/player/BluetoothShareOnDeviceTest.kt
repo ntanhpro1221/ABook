@@ -20,12 +20,12 @@ import java.io.File
  * `bt_real` - bài thử thường bỏ qua:
  *
  *     adb shell am instrument -w -e bt_real 1 [-e bt_seconds 360] -e class vn.abook.player.BluetoothShareOnDeviceTest \
- *         com.ngdtuanh.abook.test/androidx.test.runner.AndroidJUnitRunner
+ *         com.ngdtuanh.abook.dev.test/androidx.test.runner.AndroidJUnitRunner
  *
  * Thêm `-e bt_pair 1` (in mã ghép 6 số ra logcat) và `-e bt_seed_mb 4` (dựng cuốn thử 4 MB để đo tải sách).
  * Không có dịch vụ nền thì ColorOS đóng băng tiến trình này khoảng 30 giây sau khi bắt đầu (app không ở trước màn hình); có nó thì
  * phải nối được suốt thời gian giữ sống - `-e bt_seconds 200` rồi gọi vào sau hơn 2 phút.
- * Dừng sớm: tạo file `files/bt_real.done` (adb shell run-as com.ngdtuanh.abook touch files/bt_real.done). Nhật ký ở logcat, tag `BtReal`.
+ * Dừng sớm: tạo file `files/bt_real.done` (adb shell run-as com.ngdtuanh.abook.dev touch files/bt_real.done). Nhật ký ở logcat, tag `BtReal`.
  */
 @RunWith(AndroidJUnit4::class)
 class BluetoothShareOnDeviceTest {
