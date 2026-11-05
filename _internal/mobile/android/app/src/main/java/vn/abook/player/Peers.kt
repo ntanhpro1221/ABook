@@ -69,7 +69,7 @@ object Peers {
 
     /** Ghép thiết bị đã ghép Bluetooth với điện thoại này (không chung Wi-Fi): cùng mã 6 số, đi qua đường hầm. */
     fun pairBluetooth(context: Context, address: String, code: String): JSONObject {
-        val device = DeviceName.of(context)
+        val device = DeviceName.shared(context)
         val body = JSONObject().put("code", code.filter { it.isDigit() }).put("device", device)
         val root = BluetoothLink.base(context, address)
         val (reply, fingerprint) = try {
@@ -147,7 +147,7 @@ object Peers {
      *  chứng chỉ, hay cùng địa chỉ) thì thay chỗ cũ - sách đã tải và chỗ nghe giữ nguyên. */
     fun pair(context: Context, host: String, port: Int, code: String): JSONObject {
         SyncLink.refuseSelf(host, port)
-        val device = DeviceName.of(context)
+        val device = DeviceName.shared(context)
         val body = JSONObject().put("code", code.filter { it.isDigit() }).put("device", device)
         val (reply, fingerprint) = SyncLink.pair(context, "https://${PeerAddresses.endpoint(host, port)}", body)
         val peers = all(context)

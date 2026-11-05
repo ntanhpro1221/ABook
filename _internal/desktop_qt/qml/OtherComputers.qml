@@ -33,7 +33,8 @@ Column {
     readonly property string waking: computers.filter(computer => computer.waking).map(computer => computer.id).join(",")
     readonly property string syncLabel: "Kết nối Wi-Fi"
     readonly property var pairedAddresses: computers.filter(computer => Logic.isBluetoothHost(computer.host)).map(computer => Logic.bluetoothAddress(computer))
-    readonly property var unpairedDevices: bluetoothDevices.filter(device => pairedAddresses.indexOf(String(device.address).toUpperCase()) < 0)
+    readonly property var unpairedDevices: bluetoothDevices.filter(device => (device.services || []).indexOf("release") >= 0 && pairedAddresses.indexOf(String(device.address).toUpperCase()) < 0)
+    readonly property var unpairedDevDevices: bluetoothDevices.filter(device => (device.services || []).indexOf("dev") >= 0 && pairedAddresses.indexOf((device.address + "@dev").toUpperCase()) < 0)
     readonly property bool canPair: address.trim() !== "" && code.replace(/\D/g, "").length === 6
     signal openStudio(string id)
 
@@ -56,7 +57,7 @@ Column {
         })
     }
     function loadBluetooth() {
-        // Thiết bị Bluetooth đã ghép ở Windows: chỉ đọc danh sách của hệ điều hành; lỗi hay rỗng thì thôi, không chặn gì.
+        // Thiết bị đã ghép ở Windows và dịch vụ ABook qua SDP; lỗi hay rỗng thì thôi, không chặn gì.
         quiet("GET", "/api/computers/bluetooth", null, function(result, error) { if (!error) root.bluetoothDevices = result.devices || [] })
     }
     function pair() {
@@ -363,6 +364,17 @@ Column {
                                     }
                                 }
                             }
+                        }
+                    }
+                    Repeater {
+                        model: root.unpairedDevDevices
+                        Button {
+                            required property var modelData
+                            size: "sm"
+                            kind: "ghost"
+                            icon: "bluetooth"
+                            text: modelData.name + " · bản thử"
+                            onClicked: root.choose(modelData.address + "@dev")
                         }
                     }
                     HintText { width: parent.width; text: "Máy kia: Cài đặt › Thiết bị › bật “" + root.syncLabel + "” để lấy mã; ghép một chiều để nghe thư viện của máy ấy." }

@@ -39,6 +39,7 @@ from urllib.parse import quote
 
 from ..io_utils import _replace_with_retry, atomic_write_bytes, atomic_write_json
 from . import bluetooth, book_edits, covers, route, tls, peer_addresses, peer_routing
+from .peer_endpoints import RELEASE, DEBUG
 
 REMOTE_FOLDER = "Trên máy khác"
 MANIFEST = "book.json"
@@ -46,7 +47,7 @@ TIMEOUT = 4
 FILE_TIMEOUT = 60
 PAIR_BLUETOOTH_TIMEOUT = 45  # ghép qua Bluetooth: tra SDP + nối RFCOMM + bắt tay TLS, người dùng đang chờ ở một yêu cầu riêng
 REVOKE_TIMEOUT = 3  # báo thôi ghép ở nền: máy kia tắt thì thôi, lần hỏi thư viện sau báo lại
-LIBRARY_PORT = 47630  # cổng đồng bộ mặc định (điện thoại: LibraryServer.PORT); máy ghép bằng Bluetooth không dùng nhưng entry có cổng
+LIBRARY_PORT = RELEASE["port"]
 _COMPUTERS: "Computers | None" = None
 _ROUTE_POOL = ThreadPoolExecutor(max_workers=2, thread_name_prefix="peer-discovery")
 _ROUTES = peer_routing.Resolver()
@@ -193,16 +194,18 @@ class Computers:
         Bluetooth của máy đã ghép trong Cài đặt Windows - không cần chung Wi-Fi) bằng mã 6 số đang hiện trên máy ấy.
         `own_port`: cổng đồng bộ của CHÍNH máy này - địa chỉ của máy này kèm cổng ấy là ghép với chính mình (thư viện nhân đôi)."""
         digits = re.sub(r"\D", "", code or "")
-        by_bluetooth = bluetooth.normalize_address(re.sub(r"(?i)^\s*bt:", "", address or ""))
+        dev = (address or "").strip().lower().endswith("@dev")
+        raw_address = (address or "").strip()[:-4] if dev else address
+        by_bluetooth = bluetooth.normalize_address(re.sub(r"(?i)^\s*bt:", "", raw_address or ""))
         match = None if by_bluetooth or re.match(r"(?i)\s*bt:", address or "") else re.fullmatch(
             r"\s*\[?([A-Za-z0-9.\-:]+?)\]?(?::(\d{2,5}))?\s*", address or "")  # "bt:..." hỏng không phải tên máy
         if (not match and not by_bluetooth) or len(digits) != 6:
             raise RemoteError("Bạn nhập địa chỉ Wi-Fi hoặc Bluetooth và mã 6 số trên máy kia.")
-        host, port = (f"bt:{by_bluetooth}", LIBRARY_PORT) if by_bluetooth else (match.group(1), int(match.group(2) or LIBRARY_PORT))
+        host, port = (f"bt:{by_bluetooth}", DEBUG["port"] if dev else LIBRARY_PORT) if by_bluetooth else (match.group(1), int(match.group(2) or LIBRARY_PORT))
         if not by_bluetooth and own_port is not None and port == own_port and is_own_host(host):
             raise RemoteError("Đây là địa chỉ của chính máy này - nhập địa chỉ máy kia")
         # Lần ghép đầu: chưa có vân tay để đối chiếu (None) - ghi lại chứng chỉ máy kia đưa ra, sau khi nó tự xưng cùng vân tay.
-        first = _tunnel(by_bluetooth, None) if by_bluetooth else Endpoint(host, port, None)
+        first = _tunnel(by_bluetooth + ("@dev" if dev else ""), None) if by_bluetooth else Endpoint(host, port, None)
         reply, seen = _exchange(first, "POST", "/sync/v1/pair", "", {"code": digits, "device": device_name or "Máy tính", "id": self.own_id()},
                                 PAIR_BLUETOOTH_TIMEOUT if by_bluetooth else TIMEOUT)
         try:
@@ -263,7 +266,7 @@ class Computers:
                 entry.pop("bt", None)
             self._write(data)
         if old and old != clean:
-            _release_bluetooth({"bt": old}, data["computers"].values())
+            _release_bluetooth({"bt": old, "port": entry.get("port")}, data["computers"].values())
 
     def forget(self, computer: str, library_root: Path, *, discard: bool = False) -> None:
         """Thôi ghép: bỏ mã thiết bị và thư mục đệm của máy ấy (tải lại được khi ghép lại). Thư mục đệm mang cả phần sửa chưa gửi của
@@ -429,10 +432,11 @@ def discover(*, timeout: float = 1.5, exclude_port: int | None = None, targets: 
         probe.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         probe.settimeout(0.2)
         for target in targets:
-            try:
-                probe.sendto(DISCOVERY_PROBE, (target, port or DISCOVERY_PORT))
-            except OSError:
-                continue  # card mạng không có đường tới địa chỉ này
+            for discovery_port in ([port] if port is not None else [DISCOVERY_PORT, DEBUG["discoveryPort"]]):
+                try:
+                    probe.sendto(DISCOVERY_PROBE, (target, discovery_port))
+                except OSError:
+                    continue  # card mạng không có đường tới địa chỉ này
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
             try:
@@ -566,9 +570,12 @@ def _cut(endpoint: Endpoint) -> str:
 def _tunnel(address: str, fingerprint: str | None, computer: str = "") -> Endpoint:
     """Gốc https của máy ở địa chỉ Bluetooth `address`: cổng cục bộ của đường hầm (mở RFCOMM ở nền nếu chưa mở). Vân tay giữ
     nguyên - TLS đi hết đường hầm tới máy kia, nên chứng chỉ vẫn phải khớp."""
+    entry = _COMPUTERS.get(computer) if computer and _COMPUTERS is not None else None
+    if entry is not None and entry.get("port") == DEBUG["port"] and not address.endswith("@dev"):
+        address += "@dev"
     link = bluetooth.gateway(address)
     link.warm()
-    return Endpoint("127.0.0.1", link.port, fingerprint, bluetooth=bluetooth.normalize_address(address), computer=computer)
+    return Endpoint("127.0.0.1", link.port, fingerprint, bluetooth=address, computer=computer)
 
 
 # ---- điện thoại đang ngủ ---------------------------------------------------------------------------------------------------
@@ -966,7 +973,8 @@ def _request(endpoint: Endpoint, method: str, path: str, token: str, body: dict[
 def _bluetooth_of(entry: dict[str, Any]) -> str:
     """Địa chỉ Bluetooth của máy đã ghép: host "bt:<địa chỉ>" (ghép qua Bluetooth) hay trường `bt` (máy kia báo lúc ghép Wi-Fi)."""
     host = str(entry.get("host") or "")
-    return bluetooth.normalize_address(host.removeprefix("bt:") if host.startswith("bt:") else str(entry.get("bt") or ""))
+    address = bluetooth.normalize_address(host.removeprefix("bt:") if host.startswith("bt:") else str(entry.get("bt") or ""))
+    return address + ("@dev" if entry.get("port") == DEBUG["port"] else "") if address else ""
 
 
 def _bluetooth_name(reply: Any) -> str:

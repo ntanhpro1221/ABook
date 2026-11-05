@@ -44,8 +44,8 @@ import java.util.concurrent.TimeUnit
  * đi nguyên vẹn từ máy kia tới đây.
  */
 object LibraryServer {
-    const val PORT = 47630
-    const val DISCOVERY_PORT = 47631
+    const val PORT = BuildConfig.LIBRARY_PORT
+    const val DISCOVERY_PORT = BuildConfig.LIBRARY_DISCOVERY_PORT
     private const val PAIRING_MILLIS = 5 * 60 * 1000L
     private const val PAIRING_ATTEMPTS = 5
     private const val MAX_HEADER_BYTES = 16 * 1024
@@ -130,7 +130,7 @@ object LibraryServer {
         return JSONObject().put("running", running()).put("pairedDevices", devices.length()).put("lastError", lastError)
     }
 
-    fun name(): String = appContext?.let(DeviceName::of) ?: "Điện thoại"
+    fun name(): String = appContext?.let(DeviceName::shared) ?: if (BuildConfig.DEBUG) "Điện thoại (ABook .dev)" else "Điện thoại"
 
     /**
      * Tên máy kèm tên Bluetooth (`bluetoothName`) trong lời chào / ghép / thư viện: máy tính lưu tên Bluetooth người dùng đặt,

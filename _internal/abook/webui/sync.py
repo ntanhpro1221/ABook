@@ -53,11 +53,12 @@ from .library import Library, book_id
 from .listening import RECORD_ID, SYNC_KEYS, Listening
 from .remote_studio import LENGTH_REQUIRED, StudioGate, lacks_length
 from .reviews import Reviews
+from .peer_endpoints import RELEASE
 
 log = logging.getLogger(__name__)
 
-SYNC_PORT = 47630
-DISCOVERY_PORT = 47631
+SYNC_PORT = RELEASE["port"]
+DISCOVERY_PORT = RELEASE["discoveryPort"]
 DISCOVERY_PROBE = b"ABOOK_DISCOVER"
 PAIRING_SECONDS = 300
 PAIRING_ATTEMPTS = 5

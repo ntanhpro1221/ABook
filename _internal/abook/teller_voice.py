@@ -407,8 +407,7 @@ def _align_narrator(db: Any, settings: dict[str, Any], wanted: dict[str, Any]) -
                                  {"voices": {"narrator_voice": preset}})["voices"]["narrator_description"]
     now = time.time()
     with db.transaction() as conn:
-        conn.execute("UPDATE voice_profiles SET preset_name=?, description=?, updated_at=? WHERE voice_key='narrator' COLLATE NOCASE",
-                     (preset, description, now))
+        db._set_narrator_preset_conn(conn, preset, settings["voices"], now, description=description)
         conn.execute("UPDATE characters SET gender=?, updated_at=? WHERE canonical_name=?", (wanted["gender"], now, NARRATOR))
     db.event("info", "NARRATOR_ALIGNED_TO_TELLER",
              f"narration voice {wanted['reading']} -> {preset} to match the first-person narrator's gender",
