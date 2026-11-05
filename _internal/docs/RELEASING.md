@@ -31,6 +31,12 @@ tiếp tục được. Chỉ đổi khi không có sách nào cần tiếp tục
 - `python -m pytest` toàn bộ, `npm run typecheck` và `npm test` (vitest, logic thuần của giao diện) của `ui/` đều qua; kiểm tra tay trên máy ảo Android (`docs/UI.md`).
 - Bắt buộc trước publish: dựng UI của cây phát hành (`node node_modules/vite/bin/vite.js build` trong `ui/`), rồi từ `_internal` chạy `python scripts/tap_audit/run.py`: phải PASS mọi kịch bản (21/21 từ khi gỡ dấu trang), exit 0; `tests/test_tap_audit_targets.py` chặn kịch bản trỏ tới nhãn không còn trong giao diện.
   Chạy tiếp `python scripts/tap_audit/run.py --inject-fault`: phải FAIL, exit 1 (đối chứng âm).
+  Kiểm hình học player trên app thật trong gallery (Edge headless, CPU): từ root chạy
+  `D:/Novels/ABook/_internal/runtime/.venv/Scripts/python.exe -X utf8 _internal/scripts/tap_audit/run_sheetgeo.py`:
+  phải PASS cả năm khổ nội dung §5.5 ở sáu cửa sổ 390/840/1080/1280/1440/1840×900.
+  Chạy lại thêm `--inject-fault --no-build`: phải FAIL, exit 1 vì sheet đẩy nội dung 32 px.
+  Pytest: cùng interpreter, `-X utf8 -m pytest -q -rf _internal/scripts/tap_audit/test_sheetgeo.py`
+  (bỏ qua khi thiếu Edge). JSON giữ rect từng frame, opacity, trusted input và lỗi; xem README của tap_audit.
   Kiểm chạm chuột/touch thật để bắt lỗi hộp thoại không chạm được như 0.4.134; pytest/vitest logic không phát hiện được lỗi này.
 - Không có gì bị cấm lọt vào gói: khoá ký (Android keystore, khoá updater), audio, dữ liệu cá nhân (`listening.json`,
   `devices.json`, `computers.json` - mã thiết bị máy tính khác cấp, `reviews.json`, tuỳ chọn), token, văn bản truyện (kho nghiên cứu ở repo riêng tư, clone vào `Corpus/`

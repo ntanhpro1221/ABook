@@ -2176,12 +2176,15 @@ function useStable<A extends unknown[], R>(fn: (...args: A) => R): (...args: A) 
   return useCallback((...args: A) => latest.current(...args), []);
 }
 
-export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean; actions?: ReactNode; edit?: SentenceEditing }) {
+export function NowPlaying({ mobile = false, stacked = mobile, actions, edit }: { mobile?: boolean; stacked?: boolean; actions?: ReactNode; edit?: SentenceEditing }) {
   const player = usePlayer();
   const { track } = player;
   const { expanded, setExpanded, plain } = useNowPlaying();
   const [panel, setPanelState] = useState<Panel>(initialPanel);
-  const [showPanel, setShowPanelNow] = useState(!mobile);
+  const [showPanel, setShowPanelNow] = useState(!stacked);
+  // The shell measures content after the sidebar before paint. A class change moves
+  // the existing panel between the side column and the chapter sheet.
+  useEffect(() => setShowPanelNow(!stacked), [stacked]);
   // Điện thoại: "Đọc theo" là một CHẾ ĐỘ của chính màn này (như Android NowPlayingWindow.reading, Qt NowPlaying.page), không phải màn riêng: thanh điều khiển
   // và Back ở lại trong cửa sổ. Mờ chéo qua View Transition như đổi bảng. Máy tính: bảng "Đọc theo" bên phải (panel).
   const [reading, setReadingNow] = useState(false);
@@ -2227,7 +2230,7 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
   // Register the overlay on desktop too, above any open state layer in the underlying page.
   useBackLayer(open, () => setExpanded(false), section);
   // Back từ "Đọc theo" về "Nghe" trước khi thu nhỏ màn (lớp đăng ký sau nên đứng trên lớp đóng màn).
-  useBackLayer(mobile && open && reading, () => setReading(false));
+  useBackLayer(stacked && open && reading, () => setReading(false));
   // Màn đã thu xuống hẳn: lần mở sau bắt đầu ở "Nghe", như Android.
   useEffect(() => {
     if (!presence.mounted) setReadingNow(false);
@@ -2279,13 +2282,13 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
       if (target && ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)) return;
       if (document.querySelector("[role='dialog'], [role='menu'], [role='listbox']")) return;
       event.preventDefault();
-      if (mobile && readingNow.current) setReading(false);
+      if (stacked && readingNow.current) setReading(false);
       else setExpanded(false);
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, setExpanded, mobile]);
+  }, [open, setExpanded, stacked]);
 
   // Tab theo mẫu WAI-ARIA: Tab vào đúng MỘT tab (tab đang chọn), ←/→ (Home/End) đổi sang tab bên cạnh; mỗi tab trỏ tới tabpanel của nó.
   const selectPanel = (value: Panel) => {
@@ -2320,7 +2323,7 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
             aria-controls={selected ? `now-panel-${item.value}` : undefined}
             tabIndex={panel === item.value ? 0 : -1}
             onClick={() => {
-              if (mobile && selected) setShowPanel(false);
+              if (stacked && selected) setShowPanel(false);
               else selectPanel(item.value);
             }}
             className={cn(
@@ -2348,7 +2351,7 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
 
   // Điện thoại: bảng Chương thay chỗ bìa; bấm lại nút ấy (hay Back) là về bìa.
   const togglePanel = (value: Panel) => {
-    if (mobile && showPanel && panel === value) setShowPanel(false);
+    if (stacked && showPanel && panel === value) setShowPanel(false);
     else selectPanel(value);
   };
   const collapse = useStable(() => setExpanded(false));
@@ -2374,7 +2377,7 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
       // tiến độ, lời báo...) có MotionRegion riêng. Chỉ đổi cuốn thì cả màn mờ chéo sang cuốn mới.
       motionKey={track.bookId}
       // Màn điện thoại thuộc viewport: gutter cuộn không được làm document rộng ra rồi khiến Radix bù scrollbar giả.
-      className={cn("now-playing now-playing-tint inset-0 z-30 flex", SAFE_FRAME, SAFE_BOTTOM, mobile ? "fixed flex-col" : "absolute")}
+      className={cn("now-playing now-playing-tint inset-0 z-30 flex", SAFE_FRAME, SAFE_BOTTOM, mobile ? "fixed" : "absolute", stacked && "flex-col")}
       // Bảng trượt (tốc độ, hẹn giờ, thêm tuỳ chọn...) phủ LÊN màn này; màn bên dưới đứng yên, không co bìa để chừa chỗ (chủ sách 26-10).
       style={tint}
       // Mở ra thì đây là nội dung chính: <main> của trang nằm dưới đã khoá (inert) và ra khỏi cây trợ năng - phím "tới vùng chính" của
@@ -2382,11 +2385,11 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
       role="main"
       aria-label="Đang nghe"
     >
-      {fill && <NowPlayingColumn player={player} mobile={mobile} plain={Boolean(plain)} actions={actions} selected={showPanel ? panel : null} onCollapse={collapse} onToggle={toggleStable} reading={reading} onReading={readingStable} edit={edit} />}
-      {fill && mobile && <Sheet open={open && showPanel} onOpenChange={setShowPanel} title="Chương" className={panel === "chapters" ? "chapter-sheet" : undefined}>
+      {fill && <NowPlayingColumn player={player} mobile={stacked} plain={Boolean(plain)} actions={actions} selected={showPanel ? panel : null} onCollapse={collapse} onToggle={toggleStable} reading={reading} onReading={readingStable} edit={edit} />}
+      {fill && stacked && <Sheet open={open && showPanel} onOpenChange={setShowPanel} title="Chương" className={panel === "chapters" ? "chapter-sheet" : undefined}>
         <div className="h-[55dvh] min-h-0">{panelBody}</div>
       </Sheet>}
-      {fill && !mobile && (
+      {fill && !stacked && (
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="@container flex h-14 shrink-0 items-center overflow-hidden border-b border-line px-3 sm:px-6">{panelTabs}</div>
           <div className="min-h-0 flex-1">{panelBody}</div>
