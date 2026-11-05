@@ -93,6 +93,10 @@ def configure(folder: Path | str | None) -> None:
     _core.configure(folder, None, None)
 
 
+def model_mark() -> str:
+    return pin((CODE, *MODEL_FILES))
+
+
 def locate() -> Installed | None:
     """Cho Studio (tiến trình dây chuyền không gọi `configure`): mô-đun ở chỗ server đặt, hay chỗ đã cấu hình."""
     _core.ensure_folder(FOLDER)

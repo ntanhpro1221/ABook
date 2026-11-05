@@ -13,10 +13,12 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any, Callable, Iterator, Mapping, Protocol
 
-from . import azure, edge, fpt, google, local_stream, loudness, names, readings as book_readings, spoken, supertonic, vieneu, viettel, windows
+from . import azure, edge, engine_pick, fpt, google, local_stream, loudness, names, readings as book_readings, spoken, supertonic, vieneu, viettel, windows
 from .byok import KeyedProvider
 from .cache import ClipBooks, ClipCache, clip_key
 from .keys import KeyStore
+from .local_engine import LocalEngine, ProviderEngine
+from .zerotts import ZeroTTSProvider
 from .mapping import Boundary, fold, map_boundaries, tokens
 from .model import Synthesis, Voice, VoiceError, cancellable, hearing
 from .prepare import SHARE as PREPARE_SHARE
@@ -35,6 +37,19 @@ class Provider(Protocol):
     def voices(self) -> list[Voice]: ...
 
     def synthesize(self, text: str, native_voice: str) -> Synthesis: ...
+
+
+class LocalProvider(Provider, Protocol):
+    """Nhà cung cấp chạy model ngay trên máy (VieNeu, Supertonic, máy đọc cắm thêm sau này): ngoài `Provider` còn nhả được model (`forget`, nạp lại ở
+    lần dùng sau) và báo từng khúc vừa đọc qua `model.unit_made` (phát luồng; engine_pick.measure đo tốc độ trên chính các khúc ấy). Cần bao nhiêu RAM,
+    nhanh chậm, rõ hay nhoè không khai ra ở đây mà ĐO trên máy người dùng (engine_pick.py). Mã giọng "<nhà cung cấp>:<tầng>/<tên>" hay
+    "<nhà cung cấp>:<tên>": phần trước "/" (hay nhà cung cấp) là máy đọc (engine_pick.engine_of)."""
+
+    def forget(self) -> None: ...
+
+
+def is_local(provider: object) -> bool:
+    return callable(getattr(provider, "forget", None))
 
 
 class StreamListener(Protocol):
@@ -194,7 +209,8 @@ class ReadAloud:
     "" = bậc chất lượng); khi khác rỗng, clip đọc bằng nhà cung cấp thứ hai của giọng ấy - `supertonic_fast_locate` (supertonic_module.installed_fast) - và dấu
     ấy vào khoá bộ đệm.
     `model_mark(giọng, dấu bậc)`: dấu model của giọng trên máy (8 hex: ghim các file model đang dùng + lịch đọc - supertonic_module / vieneu_module.model_mark),
-    vào khoá bộ đệm của giọng có `reading_tag`: cập nhật model hay đổi lịch đọc thì clip cũ không trúng nữa, đoạn được đọc lại một lần."""
+    vào khoá bộ đệm của giọng có `reading_tag`: cập nhật model hay đổi lịch đọc thì clip cũ không trúng nữa, đoạn được đọc lại một lần.
+    `machine_pick()`: máy đọc mặc định theo số đo của máy này (webui/voice_pick.py) - đánh dấu `pick` trong `voices()`."""
 
     def __init__(self, folder: Path | str, providers: list[Provider] | None = None, *, limit: int | None = None,
                  keys: KeyStore | None = None, vieneu_locate: Callable[[], vieneu.Installed | None] | None = None,
@@ -204,13 +220,16 @@ class ReadAloud:
                  speed: Callable[[str], str] = lambda _voice: "",
                  supertonic_fast_locate: Callable[[], supertonic.Installed | None] | None = None,
                  model_mark: Callable[[str, str], str] = lambda _voice, _tier: "", clock: Callable[[], float] = time.monotonic,
-                 spare: Callable[[], bool] = lambda: True) -> None:
+                 spare: Callable[[], bool] = lambda: True, machine_pick: Callable[[], str | None] = lambda: None,
+                 zerotts_locate: Callable[[], Any] | None = None) -> None:
         self.folder = Path(folder)
         kwargs = {} if limit is None else {"limit": limit}
         self.cache = ClipCache(self.folder, pin_file=self.folder.with_name(self.folder.name + "-clip-pins.txt"), **kwargs)
         if providers is None:
             providers = [EdgeProvider(), *(keyed_providers(keys) if keys is not None else []), DeviceProvider(self.folder / "tools")]
         self.providers: dict[str, Provider] = {provider.id: provider for provider in providers}
+        if zerotts_locate is not None:
+            self.providers["zerotts"] = ZeroTTSProvider(zerotts_locate)
         # giọng trên máy báo từng khúc vừa đọc (phát luồng, local_stream.py); bộ căn chữ nhớ phần đã căn lúc phát luồng cho clip cuối
         self.vieneu = (vieneu.VieneuProvider(vieneu_locate, engines=local_stream.reporting(vieneu_engines), aligner=local_stream.remembering_aligner)
                        if vieneu_locate is not None else None)
@@ -243,6 +262,8 @@ class ReadAloud:
         self._idle_timer: threading.Timer | None = None
         self._spare = spare  # máy còn dư để nạp sẵn model chưa ai bấm nghe ([preload]): không chạy pin yếu, không thiếu RAM
         self._preloading: set[str] = set()
+        # Máy đọc mặc định trên máy này (webui/voice_pick.chosen): mã máy đọc, "" = đã đo mà không máy đọc nào đủ điều kiện, None = chưa đo.
+        self._machine_pick = machine_pick
 
     @property
     def live(self) -> int:
@@ -267,14 +288,14 @@ class ReadAloud:
     def forget(self, provider_id: str) -> None:
         """Mô-đun giọng `provider_id` vừa cập nhật / gỡ (hay lâu không dùng, [release_idle]): nạp lại engine của cả hai bậc ở lần dùng sau."""
         for provider in (self.providers.get(provider_id), self.fast.get(provider_id)):
-            if provider is not None and hasattr(provider, "forget"):
+            if provider is not None and is_local(provider):
                 provider.forget()
 
     # ---- nhả model của giọng trên máy khi thôi dùng -------------------------------------------------------------------------------
 
     def _engine_use(self, provider_id: str, step: int) -> None:
         """Giọng có engine (`forget`) vừa được dùng: `step` +1 lúc bắt đầu một việc dùng nó, -1 lúc xong. Hẹn lần soát nhả model nếu chưa hẹn."""
-        if not hasattr(self.providers.get(provider_id), "forget"):
+        if not is_local(self.providers.get(provider_id)):
             return
         with self._idle_guard:
             self._used[provider_id] = self._clock()
@@ -373,13 +394,49 @@ class ReadAloud:
             self._engine_use(provider_id, -1)
 
     def voices(self) -> list[dict[str, Any]]:
+        """`pick` (chỉ giọng trên máy, chỉ khi máy đã đo - `machine_pick`): giọng này thuộc máy đọc làm mặc định trên máy này (engine_pick.choose / chọn tay)."""
+        chosen = self._machine_pick()
         listed = []
         for provider in self.providers.values():
+            local = is_local(provider)
             for voice in provider.voices():
                 listed.append({"id": voice.id, "name": voice.name, "provider": voice.provider, "online": voice.online,
                                "default": voice.default, "language": voice.language, "gender": voice.gender,
-                               "gain_db": loudness.gain_db(voice.id)})
+                               "gain_db": loudness.gain_db(voice.id),
+                               **({"pick": engine_pick.engine_of(voice.id) == chosen} if local and chosen is not None else {})})
         return listed
+
+    # ---- máy đọc trên máy (engine_pick.py) ----------------------------------------------------------------------------------------
+
+    def local_engines(self) -> dict[str, list[str]]:
+        """Máy đọc trên máy đã tải (nhà cung cấp có engine - `forget`): mã máy đọc (engine_pick.engine_of) -> mã các giọng của nó, theo thứ tự danh sách."""
+        return {engine.id: [voice.id for voice in engine.voices()] for engine in self.local_engine_adapters()}
+
+    def local_engine_adapters(self) -> list[LocalEngine]:
+        engines: list[LocalEngine] = []
+        for provider in self.providers.values():
+            if is_local(provider):
+                grouped: dict[str, list[Voice]] = {}
+                for voice in provider.voices():
+                    grouped.setdefault(engine_pick.engine_of(voice.id), []).append(voice)
+                engines.extend(ProviderEngine(key, provider, voices) for key, voices in grouped.items())
+        return engines
+
+    def measure_engine(self, voice_id: str, sentences: tuple[str, ...] = engine_pick.SENTENCES) -> tuple[dict[str, Any], list[engine_pick.Take]]:
+        """Đo máy đọc của `voice_id` bằng chính giọng ấy (engine_pick.measure): bỏ model trước để RAM và thời gian nạp tính từ đầu, bỏ lại sau đó
+        (lần nghe kế nạp lại như thường). Trong lúc đo model không bị nhả giữa chừng."""
+        provider, native = self._resolve(voice_id)
+        adapter = next((engine for engine in self.local_engine_adapters() if engine.id == engine_pick.engine_of(voice_id)), None)
+        if adapter is None:
+            raise ValueError("Giọng này không có máy đọc trên máy")
+        self.forget(provider.id)
+        self._engine_use(provider.id, 1)
+        try:
+            with cancellable(None):
+                return engine_pick.measure(lambda text: adapter.synthesize(text, voice_id), sentences)
+        finally:
+            self._engine_use(provider.id, -1)
+            self.forget(provider.id)
 
     def _resolve(self, voice_id: str) -> tuple[Provider, str]:
         name, _, native = voice_id.partition(":")

@@ -249,7 +249,7 @@ export function vieneuPercent(status: Pick<VieneuStatus, "done" | "total">): num
   return status.total > 0 ? Math.min(100, Math.floor((status.done / status.total) * 100)) : 0;
 }
 
-function seconds(value: number): string {
+export function seconds(value: number): string {
   return value.toFixed(1).replace(".", ",");
 }
 

@@ -14,7 +14,7 @@ import org.json.JSONObject
 
 /** Một giọng "Nghe ngay" của máy ([vn.abook.player.readaloud.ReadAloud.voices]). */
 @Immutable
-data class VoiceOption(val id: String, val name: String, val provider: String, val isDefault: Boolean, val gender: String = "")
+data class VoiceOption(val id: String, val name: String, val provider: String, val isDefault: Boolean, val gender: String = "", val pick: Boolean? = null)
 
 /** Một nhóm giọng theo nơi đọc (Edge, khoá của bạn, VieNeu, Supertonic, giọng của máy) - theo thứ tự hiện trên màn. */
 @Immutable
@@ -290,7 +290,12 @@ object Voices {
     /** Giọng đang dùng: giọng đã chọn nếu máy còn nó, không thì giọng mặc định của lõi, không nữa thì giọng đầu. */
     fun resolve(groups: List<VoiceGroup>, chosen: String): String {
         val all = groups.flatMap { it.voices }
-        return (all.firstOrNull { it.id == chosen } ?: all.firstOrNull { it.isDefault } ?: all.firstOrNull())?.id.orEmpty()
+        all.firstOrNull { it.id == chosen }?.let { return it.id }
+        val fallback = all.firstOrNull { it.isDefault } ?: all.firstOrNull()
+        if (chosen.isEmpty()) {
+            vn.abook.player.readaloud.NarratorVoice.pick(all.filter { it.pick == true }.map { it.id to it.gender }, fallback?.gender)?.let { return it }
+        }
+        return fallback?.id.orEmpty()
     }
 }
 

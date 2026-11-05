@@ -28,6 +28,8 @@ export interface ReadAloudVoice {
   gender?: string;
   /** Chỉnh độ to lúc phát (dB, <= 0) cho các giọng khác nhau về độ to - abook/readaloud/loudness.py. */
   gainDb?: number;
+  /** Chỉ giọng trên máy, chỉ khi máy đã đo các giọng ("Giọng theo máy", abook/webui/voice_pick.py): giọng này thuộc bộ giọng làm mặc định trên máy này. */
+  pick?: boolean;
 }
 
 export interface ReadAloudClip {

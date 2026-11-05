@@ -288,8 +288,8 @@ describe("giọng chạy trên máy để đỡ khi mất mạng", () => {
 
 describe("giọng mặc định khi chưa chọn", () => {
   const nano = [
-    { id: "vieneu:nano/adam", name: "Adam (VieNeu Nano)", provider: "vieneu", online: false, gender: "male" },
-    { id: "vieneu:nano/aihan", name: "Ái Hân (VieNeu Nano)", provider: "vieneu", online: false, gender: "female" },
+    { id: "vieneu:nano/adam", name: "Adam (VieNeu Nano)", provider: "vieneu", online: false, gender: "male", pick: true },
+    { id: "vieneu:nano/aihan", name: "Ái Hân (VieNeu Nano)", provider: "vieneu", online: false, gender: "female", pick: true },
   ] as ReadAloudVoice[];
 
   it("defaults to a VieNeu voice of the default voice's gender, never the first one (Adam), when no preferred voice is there", async () => {
@@ -302,8 +302,8 @@ describe("giọng mặc định khi chưa chọn", () => {
     const { module } = await fresh();
     const voices = [
       ...VOICES,
-      { id: "vieneu:turbo/Adam bựa", name: "Adam bựa (VieNeu)", provider: "vieneu", online: false, gender: "male" },
-      { id: "vieneu:turbo/Ngọc Linh", name: "Ngọc Linh (VieNeu)", provider: "vieneu", online: false, gender: "female" },
+      { id: "vieneu:turbo/Adam bựa", name: "Adam bựa (VieNeu)", provider: "vieneu", online: false, gender: "male", pick: true },
+      { id: "vieneu:turbo/Ngọc Linh", name: "Ngọc Linh (VieNeu)", provider: "vieneu", online: false, gender: "female", pick: true },
     ] as ReadAloudVoice[];
     expect(module.resolveVoice(voices, "")?.id).toBe("vieneu:turbo/Ngọc Linh");
     expect(module.resolveVoice(voices, "vieneu:turbo/Adam bựa")?.id).toBe("vieneu:turbo/Adam bựa"); // đã chọn thì giữ
@@ -317,9 +317,33 @@ describe("giọng mặc định khi chưa chọn", () => {
     };
     expect(module.NARRATOR_VOICES).toEqual(shared.preferred);
     for (const item of shared.cases) {
-      const voices = item.voices.map(([id, gender]) => ({ id, name: id, provider: "vieneu", online: false, gender })) as ReadAloudVoice[];
+      const voices = item.voices.map(([id, gender]) => ({ id, name: id, provider: "vieneu", online: false, gender, pick: true })) as ReadAloudVoice[];
       expect(module.narratorVoice(voices, item.gender ?? undefined)?.id ?? null, item.name).toBe(item.expect);
     }
+  });
+
+  it("never assumes VieNeu wins before this machine measures it", async () => {
+    const { module } = await fresh();
+    const unmeasured = nano.map(({ pick: _pick, ...voice }) => voice);
+    expect(module.resolveVoice([...VOICES, ...unmeasured], "")?.id).toBe("edge:vi-VN-HoaiMyNeural");
+    expect(module.resolveVoice([...VOICES, ...unmeasured], unmeasured[0].id)?.id).toBe(unmeasured[0].id);
+  });
+
+  it("once the machine has measured its voices, the default comes from the measured pick, not from the VieNeu name", async () => {
+    const { module } = await fresh();
+    const supertonic = [
+      { id: "supertonic:M1", name: "Supertonic M1", provider: "supertonic", online: false, gender: "male", pick: true },
+      { id: "supertonic:F1", name: "Supertonic F1", provider: "supertonic", online: false, gender: "female", pick: true },
+    ] as ReadAloudVoice[];
+    const turbo = [{ id: "vieneu:turbo/Đức Trí", name: "Đức Trí", provider: "vieneu", online: false, gender: "male", pick: false }] as ReadAloudVoice[];
+    expect(module.resolveVoice([...VOICES, ...turbo, ...supertonic], "")?.id).toBe("supertonic:F1"); // cùng giới giọng mặc định của máy
+    // máy chọn VieNeu: giọng kể chuyện ưu tiên của bản ấy như trước
+    const vieneuPicked = [...turbo.map((voice) => ({ ...voice, pick: true })), ...supertonic.map((voice) => ({ ...voice, pick: false }))];
+    expect(module.resolveVoice([...VOICES, ...vieneuPicked], "")?.id).toBe("vieneu:turbo/Đức Trí");
+    // đã đo mà không bộ nào đạt: không có giọng trên máy mặc định, giọng mặc định của máy
+    const none = [...turbo, ...supertonic.map((voice) => ({ ...voice, pick: false }))];
+    expect(module.resolveVoice([...VOICES, ...none], "")?.id).toBe("edge:vi-VN-HoaiMyNeural");
+    expect(module.resolveVoice([...VOICES, ...none], "supertonic:M1")?.id).toBe("supertonic:M1"); // người nghe chọn thì vẫn giữ
   });
 
   it("keeps a voice the listener chose, and falls back to the machine default when no VieNeu voice exists", async () => {
