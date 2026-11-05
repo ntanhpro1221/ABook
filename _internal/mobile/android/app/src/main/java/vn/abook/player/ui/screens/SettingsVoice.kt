@@ -206,6 +206,7 @@ fun VoiceSettings(env: SettingsEnv, sheets: SheetHost, openVoice: (VoicePage) ->
                 }
             }
             for (kind in ModuleKind.entries) moduleItems(kind, modules[kind] ?: ModuleUi(), voice, sheets)
+            item(key = "voice_pick", contentType = "voice_pick") { vn.abook.player.ui.voice.VoicePickCard(voice) }
             item(key = "keys", contentType = "keys") {
                 ListSection {
                     DisclosureRow("Khoá trực tuyến", { openVoice(VoicePage.Keys) }, "voice_keys", summary = summary.keys)
