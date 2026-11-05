@@ -169,7 +169,7 @@ def chapter_names(file_title: str, heading: str | None) -> tuple[str, str]:
 def person_name(name: str) -> str:
     """Tên chuẩn hoá của sổ nhân vật viết HOA HẾT ("VIỄN CỔ MỘC NÃI Y"); người đọc thấy "Viễn Cổ Mộc Nãi Y".
     Tên đã có chữ thường thì để nguyên - người viết sách đã chọn cách viết ấy. Vai phụ cục bộ mang nhãn nội bộ
-    "NPC_LOCAL::c00006::r0b2…::người lùn": người đọc chỉ thấy "người lùn"; gạch dưới thành dấu cách."""
+    "NPC_LOCAL::c00006::người lùn": người đọc chỉ thấy "người lùn"; gạch dưới thành dấu cách."""
     if "::" in name:
         name = name.rsplit("::", 1)[-1]
     name = name.replace("_", " ").strip()

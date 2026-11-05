@@ -446,17 +446,19 @@ def merged_turns(connection: Any, chapter_id: int | None = None, project_root: P
 
 
 def role_key(speaker: str) -> str:
-    """Nhãn vai của một vai phụ cục bộ ("NPC_LOCAL::c00006::r0b2…::Lính gác 1" -> "lính gác 1"), hạ chữ, gộp dấu cách;
-    "" với mọi người nói khác."""
+    """Nhãn vai của một vai phụ cục bộ ("NPC_LOCAL::c00006::lính gác 1" -> "lính gác 1"), chuẩn hoá như lúc máy đặt ID
+    (`analysis.normalize_local_label`); "" với mọi người nói khác."""
     if not speaker.startswith("NPC_LOCAL"):
         return ""
-    return " ".join(speaker.rsplit("::", 1)[-1].casefold().split())
+    from ..analysis import normalize_local_label  # nặng: chỉ nạp khi dựng hộp việc
+
+    return normalize_local_label(speaker.rsplit("::", 1)[-1])
 
 
 def minor_role_groups(lines_by_speaker: dict[str, list[Any]], decided: set[str]) -> dict[str, dict[str, list[Any]]]:
     """{nhãn vai: {vai cục bộ: các câu CHƯA quyết}} cho mỗi nhãn mà máy chia thành từ hai vai cục bộ trở lên trong cuốn.
 
-    Máy đặt mỗi vai phụ không tên trong phạm vi một chương/cảnh, nên "lính gác 1" ở bốn chương là bốn vai, bốn giọng. Nhãn
+    Máy đặt mỗi vai phụ không tên trong phạm vi một chương, nên "lính gác 1" ở bốn chương là bốn vai, bốn giọng. Nhãn
     vai là thứ duy nhất sổ có chung giữa các chỗ ấy: không có cột người nghe ("nói với X"), còn "UNKNOWN" không mang nhãn
     nào. Câu đã có quyết định của người nghe (`decided`, mã câu) ra khỏi nhóm - thẻ của vai ấy nói chuyện đã quyết."""
     groups: dict[str, dict[str, list[Any]]] = defaultdict(dict)
