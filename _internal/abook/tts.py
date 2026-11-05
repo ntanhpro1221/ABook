@@ -11,6 +11,7 @@ from typing import Any, Callable
 
 import numpy as np
 import pyworld
+import soundfile as sf
 
 from .audio_io import (
     VIENEU_V3_FRAME_SECONDS,
@@ -1262,6 +1263,15 @@ class TTSCoordinator:
             output_origins.extend(origins[cursor : match.start()])
             output_anchor_tags.extend(anchor_tags[cursor : match.start()])
             matched_text = match.group(0)
+            source_start, source_end = self._source_span(origins, match.start(), match.end())
+            if (any(anchor_tags[match.start():match.end()])
+                    or source_text[source_start:source_end] != matched_text):
+                # Kết quả luật chính xác không trở thành đầu vào của luật không phân biệt hoa.
+                output_parts.append(matched_text)
+                output_origins.extend(origins[match.start():match.end()])
+                output_anchor_tags.extend(anchor_tags[match.start():match.end()])
+                cursor = match.end()
+                continue
             key = (
                 matched_text
                 if case_sensitive
@@ -1438,6 +1448,13 @@ class TTSCoordinator:
         normalized_variant = str(pronunciation_delivery_variant).strip().casefold()
         if normalized_variant not in PRONUNCIATION_DELIVERY_VARIANTS:
             raise ValueError("Unsupported pronunciation delivery variant")
+        # Chỉ sống trong lượt chia câu; không ghi vào SQLite hay nhận từ kịch bản.
+        prepared = _row_value(row, "_materialized_spoken", None)
+        if prepared is not None:
+            variant, text, anchors = prepared
+            if variant != normalized_variant:
+                raise ValueError("Materialized speech belongs to another pronunciation variant")
+            return str(text), [dict(anchor) for anchor in anchors]
         self._load_pronunciations()
         # Before anything else, so every downstream consumer sees the same string: the
         # voice, the transcript comparison that has to match what the voice was given, and
@@ -1565,9 +1582,13 @@ class TTSCoordinator:
         pronunciation_delivery_variant: str = PRONUNCIATION_DELIVERY_LOCKED,
     ) -> dict[str, Any]:
         result = dict(row)
-        result["text"] = self.spoken_text(
+        text, anchors = self.spoken_text_with_anchors(
             row,
             pronunciation_delivery_variant=pronunciation_delivery_variant,
+        )
+        result["text"] = text
+        result["_materialized_spoken"] = (
+            str(pronunciation_delivery_variant).strip().casefold(), text, anchors,
         )
         if self._thought_reads_as_narrator(row):
             narrator_profile = self.db.voice_profile_by_key("narrator")
@@ -1733,14 +1754,27 @@ class TTSCoordinator:
                         HA_VOCALIZATION_FINAL_SAMPLES_FIELD: final_samples,
                     }
                 )
-            checksum, metrics = atomic_write_wav(
-                output,
-                audio,
-                self.sample_rate,
-                str(spoken_row["text"]),
-                self.settings,
-                segment=spoken_row,
-            )
+            try:
+                checksum, metrics = atomic_write_wav(
+                    output,
+                    audio,
+                    self.sample_rate,
+                    str(spoken_row["text"]),
+                    self.settings,
+                    segment=spoken_row,
+                )
+            except AudioQualityError:
+                # Cổng tín hiệu có thể chặn trước khi ghi WAV. Giữ lời thật để nghe lại,
+                # nhưng vẫn ném lỗi để pipeline không cấp phép tín hiệu cho bản này.
+                samples = np.asarray(audio, dtype=np.float32)
+                if samples.size and np.isfinite(samples).all() and np.any(samples):
+                    output.parent.mkdir(parents=True, exist_ok=True)
+                    rejected = output.with_name(output.stem + ".rejected.part.wav")
+                    sf.write(rejected, samples, self.sample_rate, subtype="FLOAT")
+                    with rejected.open("rb+") as handle:
+                        os.fsync(handle.fileno())
+                    os.replace(rejected, output)
+                raise
             metrics["pitch_variant_skipped"] = float(pitch_variant_skipped)
             metrics["pitch_variant_mixed"] = 0.0
             metrics["tts_delivery_mode"] = str(delivery_mode).strip().casefold()

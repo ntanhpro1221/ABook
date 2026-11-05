@@ -825,7 +825,7 @@ def build_base(work: Path) -> Path:
     project = make_base_project(work)
     _plan(project)
     covers.save_cover_bytes(project, tiny_cover())
-    packed = bookfile.pack(project, work / "base.abook", music_track=_tracks(work))
+    packed = bookfile.pack(project, work / "base.abook", music_track=_tracks(work), partial=True)
     with bookfile.BookFile(packed) as book:
         folder = book.extract(work / "library", "base")
     (folder / covers.META_FILE).write_text(json.dumps(

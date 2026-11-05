@@ -74,7 +74,7 @@ def test_the_manifest_of_a_package_has_the_shape_of_a_projects(library, tmp_path
     assert set(book) - {"music", "wordsVersion", "author"} == set(project_book) - {"music", "wordsVersion"}
     assert book["id"] == key and "package" not in book
     chapter = next(chapter for chapter in book["chapters"] if chapter["available"])
-    assert set(chapter) >= set(next(item for item in project_book["chapters"] if item["available"]))
+    assert set(chapter) >= set(next(item for item in project_book["chapters"] if item["available"])) - {'qualityPassed', 'qualityWarning'}
     assert chapter["file"].startswith("chapters/") and chapter["size"] == (folder / chapter["file"]).stat().st_size
     assert chapter["script"] == f"scripts/{chapter['id']}.json"
     assert book["cast"] == "cast.json" and book["samples"] == ["samples/3.wav"]

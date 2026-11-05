@@ -1688,6 +1688,7 @@ def assemble_chapter_atomic_with_metrics(
     book_title: str,
     track: int,
     work_dir: Path | None = None,
+    retain_for_review: bool = False,
 ) -> ChapterAssemblyResult:
     entries: list[tuple[Path, int]] = []
     for item in wavs:
@@ -1788,7 +1789,8 @@ def assemble_chapter_atomic_with_metrics(
             mastering_input,
             mastered_output,
         )
-        if quality.hard_failures:
+        # Pipeline giữ chương giải mã được để nghe lại; phán quyết lỗi vẫn đi cùng metrics.
+        if quality.hard_failures and not retain_for_review:
             raise ChapterQualityError(
                 "temporary MP3 failed chapter QA: " + "; ".join(quality.hard_failures),
                 artifact_sha256=candidate_checksum,
@@ -1811,7 +1813,7 @@ def assemble_chapter_atomic_with_metrics(
                 ),
             )
         blocking_review_flags = chapter_review_flags_that_block(quality.review_flags)
-        if settings.get("quality_profile") == "high_quality" and blocking_review_flags:
+        if settings.get("quality_profile") == "high_quality" and blocking_review_flags and not retain_for_review:
             raise ChapterQualityError(
                 "temporary MP3 requires review under high-quality policy: "
                 + "; ".join(blocking_review_flags),

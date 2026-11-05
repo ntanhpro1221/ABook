@@ -33,7 +33,13 @@ def make_project(root: Path, title: str = "Sách thử · Tập 1") -> Path:
         json.dumps({"quality_profile": "high_quality", "voices": {"narrator_voice": "Đức Trí"}}), encoding="utf-8"
     )
     mp3 = project / "output" / "chapters" / "00001_645.mp3"
-    mp3.write_bytes(b"ID3" + bytes(range(256)) * 40)
+    # Audio thật: cổng xuất kiểm giải mã, không coi header ID3 là bằng chứng có lời đọc.
+    import io
+    import numpy as np
+    import soundfile as sf
+    encoded = io.BytesIO()
+    sf.write(encoded, .1 * np.sin(np.arange(232800) * .05), 24000, format="MP3")
+    mp3.write_bytes(encoded.getvalue())
     sample = project / "work" / "s3.wav"
     sample.write_bytes(b"RIFF" + b"\0" * 400)
     db = sqlite3.connect(project / "project.sqlite3")
@@ -52,6 +58,8 @@ def make_project(root: Path, title: str = "Sách thử · Tập 1") -> Path:
         CREATE TABLE voice_profiles (id INTEGER PRIMARY KEY, voice_key TEXT, preset_name TEXT,
                                      pitch_semitones REAL, formant_ratio REAL);
         CREATE TABLE runtime_events (id INTEGER PRIMARY KEY, timestamp REAL, level TEXT, code TEXT, message TEXT, details_json TEXT);
+        CREATE TABLE artifacts (artifact_key TEXT PRIMARY KEY, kind TEXT, path TEXT, sha256 TEXT,
+                                size_bytes INTEGER, verified INTEGER, metadata_json TEXT, created_at REAL, updated_at REAL);
         """
     )
     now = time.time()
@@ -69,9 +77,24 @@ def make_project(root: Path, title: str = "Sách thử · Tập 1") -> Path:
         (5, 2, 2, 1, 0, "Chưa thu.", "narration", "NARRATOR", 1, "analyzed", "", "", None, now),
     ]
     db.executemany("INSERT INTO segments VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", rows)
+    import hashlib
+    db.execute("INSERT INTO artifacts VALUES ('chapter_mp3:1','chapter_mp3',?,?,?,1,NULL,?,?)",
+               (str(mp3), hashlib.sha256(mp3.read_bytes()).hexdigest(), mp3.stat().st_size, now, now))
     db.commit()
     db.close()
     return project
+
+
+def write_chapter_audio(project: Path, seconds: float, *, phase_step: float = .05) -> None:
+    """Fixture nhạc có mốc dài cần audio thật dài tương ứng, cùng checkpoint băm."""
+    import hashlib
+    import numpy as np
+    import soundfile as sf
+    path = project / "output" / "chapters" / "00001_645.mp3"
+    sf.write(path, .1 * np.sin(np.arange(round(seconds * 24000)) * phase_step), 24000, format="MP3")
+    with sqlite3.connect(project / "project.sqlite3") as connection:
+        connection.execute("UPDATE artifacts SET sha256=?,size_bytes=? WHERE artifact_key='chapter_mp3:1'",
+                           (hashlib.sha256(path.read_bytes()).hexdigest(), path.stat().st_size))
 
 
 @pytest.fixture()

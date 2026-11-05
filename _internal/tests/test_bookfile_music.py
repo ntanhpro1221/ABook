@@ -17,6 +17,8 @@ CALM, BATTLE = "https://x/calm.mp3", "https://x/battle.mp3"
 
 
 def _plan(project: Path, *, enabled: bool = True) -> None:
+    from tests.test_webui_listen_and_sync import write_chapter_audio
+    write_chapter_audio(project, 100.0)
     scenes = [{"chapterId": 1, "start": 0.0, "end": 30.0, "link": CALM, "key": "1:1"},
               {"chapterId": 1, "start": 30.0, "end": 60.0, "link": CALM, "key": "1:5"},
               {"chapterId": 1, "start": 60.0, "end": 90.0, "link": BATTLE, "key": "1:9"}]
@@ -45,7 +47,7 @@ def _tracks(tmp_path: Path, *, missing: tuple[str, ...] = ()):
 def test_the_book_file_carries_the_producers_music(tmp_path: Path) -> None:
     project = make_project(tmp_path)
     _plan(project)
-    path = bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}", music_track=_tracks(tmp_path))
+    path = bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}", music_track=_tracks(tmp_path), partial=True)
     calm, battle = music_plan.track_name(CALM), music_plan.track_name(BATTLE)
     with zipfile.ZipFile(path) as archive:
         assert archive.getinfo(calm).compress_type == zipfile.ZIP_STORED, "nhạc phát thẳng trong gói như audio chương"
@@ -66,7 +68,7 @@ def test_the_book_file_carries_the_producers_music(tmp_path: Path) -> None:
 def test_a_book_without_music_keeps_the_old_format_so_older_apps_open_it(tmp_path: Path) -> None:
     project = make_project(tmp_path)
     _plan(project, enabled=False)
-    path = bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}", music_track=_tracks(tmp_path))
+    path = bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}", music_track=_tracks(tmp_path), partial=True)
     with BookFile(path) as book:
         manifest = json.loads(book.read("book.json"))
     assert manifest["package"]["version"] == 1 and "music" not in manifest
@@ -76,7 +78,7 @@ def test_a_book_without_music_keeps_the_old_format_so_older_apps_open_it(tmp_pat
 def test_a_track_that_cannot_be_fetched_leaves_silence_not_a_failed_export(tmp_path: Path) -> None:
     project = make_project(tmp_path)
     _plan(project)
-    path = bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}", music_track=_tracks(tmp_path, missing=(BATTLE,)))
+    path = bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}", music_track=_tracks(tmp_path, missing=(BATTLE,)), partial=True)
     with BookFile(path) as book:
         music = json.loads(book.read("book.json"))["music"]
     assert [cue["track"] for cue in music["chapters"]["1"]] == [music_plan.track_name(CALM)]
@@ -85,7 +87,7 @@ def test_a_track_that_cannot_be_fetched_leaves_silence_not_a_failed_export(tmp_p
 def test_a_music_entry_without_its_file_is_refused(tmp_path: Path) -> None:
     project = make_project(tmp_path)
     _plan(project)
-    path = bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}", music_track=_tracks(tmp_path))
+    path = bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}", music_track=_tracks(tmp_path), partial=True)
     gone = music_plan.track_name(BATTLE)
     broken = tmp_path / f"thieu{bookfile.EXTENSION}"
 
@@ -122,7 +124,7 @@ def test_a_broken_music_track_leaves_silence_not_an_unopenable_book(studio, tmp_
     _paths, app, server, _runner = studio
     project = make_project(tmp_path / "may_khac")
     _plan(project)
-    path = bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}", music_track=_tracks(tmp_path))
+    path = bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}", music_track=_tracks(tmp_path), partial=True)
     battle = music_plan.track_name(BATTLE)
     with zipfile.ZipFile(path) as archive:
         size = archive.getinfo(battle).file_size
@@ -142,7 +144,7 @@ def test_a_broken_chapter_audio_still_refuses_the_book(tmp_path: Path) -> None:
     """Chỉ nhạc nền được bỏ qua: audio chương hỏng thì cuốn sách hỏng thật - từ chối như cũ."""
     project = make_project(tmp_path)
     _plan(project)
-    path = bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}", music_track=_tracks(tmp_path))
+    path = bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}", music_track=_tracks(tmp_path), partial=True)
     with zipfile.ZipFile(path) as archive:
         chapter = next(name for name in archive.namelist() if name.startswith("chapters/"))
         size = archive.getinfo(chapter).file_size
@@ -159,7 +161,7 @@ def test_a_book_opened_from_a_file_plays_its_packaged_music(studio, tmp_path: Pa
     _paths, app, server, _runner = studio
     project = make_project(tmp_path / "may_khac")
     _plan(project)
-    path = bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}", music_track=_tracks(tmp_path))
+    path = bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}", music_track=_tracks(tmp_path), partial=True)
     opened = app.open_book_file(str(path))
     book = opened["id"]
     folder = app.library.resolve_listenable(book)
@@ -181,7 +183,7 @@ def test_the_music_credits_ride_along_with_the_cues_of_a_packaged_book(studio, t
     _paths, app, server, _runner = studio
     project = make_project(tmp_path / "may_khac")
     _plan(project)
-    path = bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}", music_track=_tracks(tmp_path))
+    path = bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}", music_track=_tracks(tmp_path), partial=True)
     book = app.open_book_file(str(path))["id"]
     status, cues = _call(server, "GET", f"/api/books/{book}/music/chapters/1")
     assert status == 200
@@ -246,7 +248,7 @@ def test_a_series_stores_a_shared_track_once_and_keys_the_cues_by_global_chapter
     plan = json.loads((two / music_plan.PLAN_FILE).read_text(encoding="utf-8"))
     plan["scenes"] = [scene for scene in plan["scenes"] if scene["link"] == CALM]  # phần 2 chỉ dùng CALM
     (two / music_plan.PLAN_FILE).write_text(json.dumps(plan), encoding="utf-8")
-    path = bookfile.pack_series([one, two], tmp_path / f"bo{bookfile.EXTENSION}", music_track=_tracks(tmp_path))
+    path = bookfile.pack_series([one, two], tmp_path / f"bo{bookfile.EXTENSION}", music_track=_tracks(tmp_path), partial=True)
 
     calm, battle = music_plan.track_name(CALM), music_plan.track_name(BATTLE)
     with zipfile.ZipFile(path) as archive:
@@ -273,7 +275,7 @@ def test_a_series_book_plays_the_music_of_its_second_part(studio, tmp_path: Path
     one = _part(tmp_path, library, "p1", "Truyện X")
     two = _part(tmp_path, library, "p2", "Truyện X · Phần 2", one)
     _plan(two)
-    path = bookfile.pack_series([one, two], tmp_path / f"bo{bookfile.EXTENSION}", music_track=_tracks(tmp_path))
+    path = bookfile.pack_series([one, two], tmp_path / f"bo{bookfile.EXTENSION}", music_track=_tracks(tmp_path), partial=True)
     book = app.open_book_file(str(path))["id"]
 
     status, cues = _call(server, "GET", f"/api/books/{book}/music/chapters/200001")

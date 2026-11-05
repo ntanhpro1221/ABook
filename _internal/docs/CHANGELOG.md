@@ -7,6 +7,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Giữ bản thu tốt nhất khi một câu hết lượt thử; lỗi tốc độ hay đọc lặp không còn làm mất audio đã có.
+- Chương đủ lời đọc vẫn được ghép khi còn câu lỗi và ghi rõ cần nghe lại; thiếu audio thật thì báo đúng dòng bị thiếu.
+- File sách đối chiếu đủ chương, mã băm và phụ đề trước khi xuất và khi kiểm tra. Xuất một phần phải chọn rõ, kèm số chương và tên chương thiếu.
+- Chia câu dùng lời đọc đã chuẩn bị một lần, không áp lại cách phát âm lên tên đã thay.
+
 ### Giọng đọc
 
 - Sửa lỗi cao độ bị áp hai lần: giọng được chỉnh trầm hay cao (vd. hạ 2 nửa cung) nay phát đúng mức đã chỉnh, không còn gấp đôi khi ghép vào sách. Giọng trẻ con trước đây bị đẩy cao gần gấp đôi dự định.

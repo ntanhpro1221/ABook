@@ -101,6 +101,8 @@ export function ExportDialog({
   const [scope, setScope] = useMotionState<Scope>("part");
   const [layout, setLayout] = useMotionState<Layout>("single");
   const [changedOnly, setChangedOnly] = useState(false);
+  const [partial, setPartial] = useState(false);
+  useEffect(() => setPartial(false), [book.id, open]);
   const history = useQuery({
     queryKey: ["export-history", book.id], enabled: open,
     queryFn: () => api<ExportHistory[]>(`/api/books/${book.id}/export-history`),
@@ -241,13 +243,13 @@ export function ExportDialog({
     setFinished(null);
     setPackJob(null);
     try {
-      type Packed = { folder: string; file: string; size: number; missingSources?: string[] } & Partial<SeriesResult>;
+      type Packed = { folder: string; file: string; size: number; missingSources?: string[]; coverage?: string } & Partial<SeriesResult>;
       const result =
         kind === "abookproj"
           ? await (attach ? Promise.resolve() : api(`/api/books/${book.id}/projectfile-job`, { method: "POST", body: { target } })).then(
               () => followPacking() as Promise<Packed>,
             )
-          : await packBookFile(book.id, { target, series: wholeSeries, ...(wholeSeries ? { single: layout === "single" } : {}) },
+          : await packBookFile(book.id, { target, series: wholeSeries, partial, ...(wholeSeries ? { single: layout === "single" } : {}) },
                                () => followPacking("bookfile") as Promise<Packed>, attach);
       const lost = "missingSources" in result ? (result.missingSources?.length ?? 0) : 0;
       const skippedNote = result.skipped?.length ? `chưa có chương nào nên bỏ qua: ${result.skipped.map((part) => `Phần ${part.part}`).join(", ")}` : "";
@@ -270,14 +272,14 @@ export function ExportDialog({
           ? exportedOnComputer(computer, perPart ? "" : single ? fileName(result.file as string) : fileName(result.folder ?? ""), [perPart ? "mỗi phần một file .abook riêng" : "", single ? formatSize(result.size ?? 0) : ""].filter(Boolean).join(" · "))
           : placeText) +
         skipped +
-        (lostNote ? ` · ${lostNote}` : "");
+        (lostNote ? ` · ${lostNote}` : "") + (result.coverage ? ` · ${result.coverage}` : "");
       const pending = loadingToast.current;
       loadingToast.current = null;
       if (openRef.current) {
         setFinished({ title, detail, folder: result.folder });
       } else {
         // MỘT dòng + nút “Mở thư mục” (chỗ file nằm); thiếu gì (phần bỏ qua, nguồn chương) thì cảnh báo với đúng phần thiếu. Studio từ xa: file nằm ở máy tính.
-        toastDone(info?.remote ? exportedOnComputer(computer, "") : title, [skippedNote, lostNote].filter(Boolean).join(" · ") || undefined, {
+        toastDone(info?.remote ? exportedOnComputer(computer, "") : title, [skippedNote, lostNote, result.coverage].filter(Boolean).join(" · ") || undefined, {
           id: pending ?? undefined,
           action: info?.remote ? undefined : { label: "Mở thư mục", onClick: () => revealFolder(result.folder) },
         });
@@ -338,9 +340,9 @@ export function ExportDialog({
       ? [book.running && "Dự án đang chạy - gói khi nó đã chạy xong hoặc đã dừng."]
       : [
           textOnly && `Chưa chương nào có audio: file .abook chỉ mang chữ của ${formatNumber(total)} chương (đọc được, chưa nghe được). Có audio rồi thì xuất lại.`,
-          !wholeSeries && !textOnly && ready < total && `${formatNumber(total - ready)}/${formatNumber(total)} chương chưa có audio${missing ? ` (${missing} chương mất file)` : ""} - không có trong bản xuất.`,
-          wholeSeries && "Phần nào chưa có chương xong sẽ bị bỏ qua; phần đang chạy chỉ có các chương đã xong tới lúc này.",
-          !wholeSeries && book.running && "Sách đang chạy - bản xuất chỉ gồm các chương đã xong tới lúc này.",
+          !wholeSeries && !textOnly && ready < total && `${formatNumber(ready)}/${formatNumber(total)} chương có audio${missing ? ` (${missing} chương mất file)` : ""}${kind === "abook" ? ". Chọn “Xuất một phần” để xuất khi thiếu chương." : " - không có trong bản xuất."}`,
+          wholeSeries && (kind === "abook" ? "File sách cần đủ chương. Chọn “Xuất một phần” để ghi rõ những chương thiếu." : "Phần nào chưa có chương xong sẽ bị bỏ qua; phần đang chạy chỉ có các chương đã xong tới lúc này."),
+          !wholeSeries && book.running && (kind === "abook" ? "Sách đang chạy. File sách cần đủ chương hoặc chọn “Xuất một phần”." : "Sách đang chạy - bản xuất chỉ gồm các chương đã xong tới lúc này."),
           !wholeSeries && redoExportNote(book.chapters.redo ?? 0, kind === "abook"),
           oneFile &&
             bytes > FAT32_LIMIT &&
@@ -556,6 +558,10 @@ export function ExportDialog({
         </div>
       </div>
       </MotionPresence>
+      {kind === "abook" && <label className="mt-3 flex items-center gap-2 text-sm">
+        <input type="checkbox" checked={partial} onChange={(event) => setPartial(event.target.checked)} />
+        Xuất một phần
+      </label>}
       {kind === "mp3" && !wholeSeries && changedChapters.length > 0 && <label className="mt-3 flex items-center gap-2 text-sm">
         <input type="checkbox" checked={changedOnly} onChange={(event) => setChangedOnly(event.target.checked)} />
         Xuất {changedChapters.length} chương đổi

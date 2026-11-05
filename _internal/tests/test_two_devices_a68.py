@@ -92,7 +92,7 @@ def test_over_the_wire_the_phone_renames_itself_and_a_foreign_place_is_refused(l
         book = json.loads(data)["books"][0]
         # Điện thoại tải cả kịch bản, dàn nhân vật, câu mẫu, bìa (manifest) - cỡ báo trước là audio + phần ấy (soát a99 T1).
         extras = export.packed_extras_bytes(project, [chapter["id"] for chapter in export._listenable(project)])
-        assert extras > 0 and book["bytes"] == 3 + 256 * 40 + extras, "cỡ khi tải về, trước khi bấm Tải"
+        assert extras > 0 and book["bytes"] == (project / 'output/chapters/00001_645.mp3').stat().st_size + extras, "cỡ khi tải về, trước khi bấm Tải"
         assert book["producing"] is False, "không chạy Studio thì không phải đang làm, dù cuốn chưa xong"
 
         identifier = book["id"]

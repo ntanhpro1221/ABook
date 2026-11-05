@@ -24,7 +24,7 @@ def test_cancel_endpoint_stops_packaging_and_removes_partial(tmp_path, monkeypat
     monkeypatch.setattr(bookfile, "write_entries", slow)
     target = tmp_path / "out"
     try:
-        assert _post(server, project, "bookfile-job", {"target": str(target)})[0] == 202
+        assert _post(server, project, "bookfile-job", {"target": str(target), "partial": True})[0] == 202
         assert entered.wait(10)
         assert _post(server, project, "bookfile-job/cancel", {})[0] == 200
         release.set()

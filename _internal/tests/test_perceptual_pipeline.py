@@ -173,7 +173,7 @@ def _pipeline_with_asr_evidence(tmp_path: Path) -> tuple[BookPipeline, object, o
         )
     wav = paths.chunks / "chapter_00001" / "0000000.wav"
     wav.parent.mkdir(parents=True, exist_ok=True)
-    sf.write(wav, np.zeros(16_000, dtype=np.float32), 16_000)
+    sf.write(wav, .02 * np.sin(np.arange(48_000) / 30), 48_000)
     checksum = sha256_file(wav)
     db.mark_signal_passed(
         int(row["id"]),
@@ -236,7 +236,7 @@ def _install_fake_repair_synthesis(
         wav.parent.mkdir(parents=True, exist_ok=True)
         if candidate_audio_bytes is None:
             amplitude = 0.02 + (0.01 * len(seed_salts))
-            sf.write(wav, np.full(16_000, amplitude, dtype=np.float32), 16_000)
+            sf.write(wav, amplitude * np.sin(np.arange(48_000) / 30), 48_000)
         else:
             wav.write_bytes(candidate_audio_bytes)
         profile = pipeline.db.voice_profile(int(row["voice_profile_id"]))
@@ -633,8 +633,8 @@ def test_persistent_perceptual_review_uses_bounded_repairs_then_blocks(
         monkeypatch,
     )
 
-    with pytest.raises(ChapterQualityError, match="requires repair or review"):
-        pipeline._process_chapter(chapter, verifier)  # type: ignore[arg-type]
+    pipeline._process_chapter(chapter, verifier)  # type: ignore[arg-type]
+    assert pipeline.db.list_chapters()[0]['status'] == 'warning'
 
     fresh = pipeline.db.get_segment(int(row["id"]))
     latest = pipeline.db.latest_quality_check(
@@ -666,8 +666,8 @@ def test_persistent_perceptual_review_uses_bounded_repairs_then_blocks(
 
     synthesis_count = len(seed_salts)
     decode_count = verifier.verify_calls
-    with pytest.raises(ChapterQualityError, match="requires repair or review"):
-        pipeline._process_chapter(chapter, verifier)  # type: ignore[arg-type]
+    pipeline._process_chapter(chapter, verifier)  # type: ignore[arg-type]
+    assert pipeline.db.list_chapters()[0]['status'] == 'warning'
     assert len(seed_salts) == synthesis_count
     assert verifier.verify_calls == decode_count
     assert pipeline.perceptual_qa.verify_calls == 4
@@ -722,8 +722,8 @@ def test_naturalness_repair_short_audio_exemption_is_terminal(
     incumbent_bytes = incumbent_path.read_bytes()
     seed_salts, _statuses = _install_fake_repair_synthesis(pipeline, monkeypatch)
 
-    with pytest.raises(ChapterQualityError, match="requires repair or review"):
-        pipeline._process_chapter(chapter, verifier)  # type: ignore[arg-type]
+    pipeline._process_chapter(chapter, verifier)  # type: ignore[arg-type]
+    assert pipeline.db.list_chapters()[0]['status'] == 'warning'
 
     fresh = pipeline.db.get_segment(int(row["id"]))
     attempts = pipeline.db.segment_candidate_attempt_summary(
@@ -784,8 +784,8 @@ def test_perceptual_inconclusive_does_not_trigger_regeneration(
     verifier = PassingWhisperVerifier()
     seed_salts, _statuses = _install_fake_repair_synthesis(pipeline, monkeypatch)
 
-    with pytest.raises(ChapterQualityError, match="requires repair or review"):
-        pipeline._process_chapter(chapter, verifier)  # type: ignore[arg-type]
+    pipeline._process_chapter(chapter, verifier)  # type: ignore[arg-type]
+    assert pipeline.db.list_chapters()[0]['status'] == 'warning'
 
     assert seed_salts == []
     assert verifier.verify_calls == 0

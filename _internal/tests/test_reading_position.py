@@ -42,6 +42,7 @@ def test_reading_http_passes_anchor_timestamp_and_profile_without_socket():
 def test_script_versions_follow_audio_and_word_timings(tmp_path, monkeypatch):
     from abook.webui import listen_view
     chapter = dict(id=1, index=0, displayTitle='Một', subtitle='', fullTitle='Một', seconds=100, playable=True, completedAt=123)
+    chapter.update(statusLabel='Hoàn thành', status='completed', segments={'failed': 0}, lastError='')
     monkeypatch.setattr(listen_view.store, 'chapters', lambda root: [chapter])
     monkeypatch.setattr(listen_view.word_timing, 'stamp', lambda root: 'w1')
     first = listen_view.chapters(tmp_path)

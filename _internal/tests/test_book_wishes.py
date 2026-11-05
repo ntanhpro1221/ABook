@@ -426,7 +426,7 @@ def test_a_file_of_wishes_is_offered_to_the_producer_and_the_fold_route_reports_
     producer = tmp_path / "may_san_xuat"
     producer.mkdir()
     project = shared.make_base_project(producer)
-    packed = bookfile.pack(project, tmp_path / "v1.abook")
+    packed = bookfile.pack(project, tmp_path / "v1.abook", partial=True)
     listener = tmp_path / "nguoi_nghe"
     listener.mkdir()
     folder = BookFile(packed).extract(listener / "thu_vien", "b")

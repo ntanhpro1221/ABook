@@ -24,7 +24,7 @@ def test_source_replaced_between_hash_and_write_never_publishes_broken_package(t
 
     monkeypatch.setattr(bookfile, "write_entries", replace_source)
     try:
-        bookfile.pack(project, out, progress=(lambda *args: None) if progress else None)
+        bookfile.pack(project, out, progress=(lambda *args: None) if progress else None, partial=True)
     except bookfile.BookFileError as error:
         assert "thay đổi" in str(error) and "xuất lại" in str(error)
         assert not out.exists() and not list(tmp_path.glob("*.part"))

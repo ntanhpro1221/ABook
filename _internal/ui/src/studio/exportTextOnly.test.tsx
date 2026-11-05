@@ -55,3 +55,11 @@ it("MP3 stays blocked while no chapter has audio", () => {
   state.kind = "mp3";
   expect(render(textOnly(2))).toMatch(/<button[^>]*disabled=""[^>]*>Lưu và xuất<\/button>/);
 });
+
+it("a partial book requires an unchecked choice and shows the audio count", () => {
+  state.kind = "abook";
+  const html = render({ ...textOnly(2), chapters: { total: 2, completed: 1, missingAudio: 0 } });
+  expect(html).toContain("1/2 chương có audio");
+  expect(html).toContain("Xuất một phần");
+  expect(html).toMatch(/<input type="checkbox"\/>/);
+});

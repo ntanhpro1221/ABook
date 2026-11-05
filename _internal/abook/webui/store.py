@@ -1378,7 +1378,7 @@ def _summarize(project_root: Path, *, running: bool = False, lease_after: float 
             "total": chapter_total,
             # "Nghe được": chương xong, cả chương chờ thu lại theo sửa của người nghe (MP3 cũ còn) - `redo` đếm riêng những chương ấy.
             "completed": chapters.get("completed", 0) + len(redo_chapters),
-            "redo": len(redo_chapters),
+            "redo": sum(not str(row["last_error"] or "").startswith("Cần nghe lại:") for row in redo_chapters),
             "missingAudio": missing_audio,
             "failed": chapters.get("failed", 0),
             "working": chapters.get("synthesizing", 0) + chapters.get("verifying", 0),
@@ -1433,7 +1433,8 @@ def _chapters(project_root: Path) -> list[dict[str, Any]]:
         counts = per_chapter.get(int(row["id"]))
         status = str(row["status"])
         heard = heard_chapter(status, row["last_error"])
-        redo = heard and status != "completed"
+        review = status == "warning" and str(row["last_error"] or "").startswith("Cần nghe lại:")
+        redo = heard and status != "completed" and not review
         mp3 = chapter_mp3(project_root, row["output_mp3"]) if heard else None
         out.append({
             "id": int(row["id"]),
@@ -1444,7 +1445,7 @@ def _chapters(project_root: Path) -> list[dict[str, Any]]:
             "fullTitle": names[int(row["id"])]["full"],
             "status": status,
             "statusLabel": "Mất file audio" if heard and mp3 is None
-            else REDO_LABEL if redo else humanize.chapter_status_label(status),
+            else "Cần nghe lại" if review else REDO_LABEL if redo else humanize.chapter_status_label(status),
             # Chờ thu lại các câu người nghe vừa sửa - không phải lỗi; MP3 cũ nghe được tới khi có bản mới (soát UX a24, A3).
             "redo": redo,
             "segments": {
@@ -1473,7 +1474,7 @@ def heard_chapter(status: Any, last_error: Any) -> bool:
     lại những câu ấy (`database.LISTENER_REDO`) - MP3 cũ vẫn là bản nghe được tới khi có bản mới, không phải "có lỗi" (soát UX a24, A3)."""
     from ..database import LISTENER_REDO
 
-    return str(status) == "completed" or (str(status) == "warning" and str(last_error or "").startswith(LISTENER_REDO))
+    return str(status) == "completed" or (str(status) == "warning" and str(last_error or "").startswith((LISTENER_REDO, "Cần nghe lại:")))
 
 
 _DURATION_CACHE: dict[tuple[str, float], float] = {}
@@ -1625,7 +1626,7 @@ def _sentence_timeline(project_root: Path, chapter: Any,
                        rows: list[Any]) -> tuple[bool, list[tuple[float, float]], Path | None, float]:
     """(có mốc không, (đầu, cuối) của từng câu trong MP3 chương, file MP3, độ dài chương) - xem `chapter_script`. `chapter`
     cần `status`, `output_mp3`; `rows` (theo `seq`) cần `wav_duration`, `break_ms`."""
-    timed = str(chapter["status"]) == "completed" and all(row["wav_duration"] for row in rows)
+    timed = heard_chapter(chapter["status"], chapter["last_error"]) and all(row["wav_duration"] for row in rows)
     starts: list[float] = []
     elapsed = 0.0
     for index, row in enumerate(rows):

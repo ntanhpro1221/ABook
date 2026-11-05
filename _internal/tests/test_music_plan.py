@@ -242,8 +242,8 @@ def test_the_chapter_length_ends_the_last_cue_before_the_voice_does_and_drops_an
 def test_the_book_package_carries_the_tail_and_the_clamped_last_cue(tmp_path: Path) -> None:
     project = make_project(tmp_path)
     chapter = 1
-    # Chương 12 s thật (file của make_project chỉ là byte giả: không đọc được độ dài thì mốc không bị kẹp).
-    assert music_plan.chapter_seconds(project, chapter) is None
+    # Fixture có audio thật; thay bằng chương 12 giây để kiểm mốc kẹp.
+    assert music_plan.chapter_seconds(project, chapter) == 9.7
     soundfile.write(store.chapter_audio_path(project, chapter), np.zeros(8000 * 12, dtype="float32"), 8000, format="WAV")
     length = music_plan.chapter_seconds(project, chapter)
     assert length == 12.0
