@@ -17,7 +17,7 @@ tên. Kết quả và cái bẫy trong nó:
     đổi tuổi giữa các chương      5 tên, 3 trong đó đổi cả giọng
 
 **Luật giọng trẻ con là có thật và có chủ ý** (`voice_catalog.AGE_TARGET_PITCH_HZ`,
-`child_voice_preference`): preset nam không với tới được ống âm của một đứa trẻ — chúng dừng
+`listener_rank`): preset nam không với tới được ống âm của một đứa trẻ — chúng dừng
 cách 0,8 cm — nên một đứa trẻ trai được đọc bằng preset **nữ** kéo cao formant và pitch. Vậy
 "nam đọc bằng giọng nữ" chỉ là lỗi khi `age` không phải `child`. Một công cụ không biết luật ấy
 sẽ báo EVERAN (nam, `child`, 36 câu) là lỗi và làm người đọc báo cáo mất niềm tin vào chín con
