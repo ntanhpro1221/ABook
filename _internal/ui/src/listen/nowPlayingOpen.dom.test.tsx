@@ -50,6 +50,8 @@ vi.mock("./SentenceMenu", async (original) => ({
 }));
 
 import { NowPlaying } from "./PlayerViews";
+import { pushBackLayer, topBackLayer } from "@/shared/backStack";
+import { dismissTopLayer } from "@/shared/backLayers";
 
 let root: Root, host: HTMLDivElement, client: QueryClient, clock: Clock;
 let animate: ReturnType<typeof vi.spyOn>;
@@ -86,6 +88,33 @@ const render = async (node: ReactNode) => {
 };
 const screen = () => host.querySelector<HTMLElement>("section[role=main]");
 const css = readFileSync(`${cwd()}/src/styles.css`, "utf8");
+
+it("opening Now Playing focuses Play without scrolling the underlying document", async () => {
+  const focus = vi.spyOn(HTMLElement.prototype, "focus");
+  state.expanded = true;
+  await render(<NowPlaying />);
+  await act(async () => { await new Promise(resolve => setTimeout(resolve, 60)); });
+  const calls = focus.mock.calls.filter((_call, index) => {
+    const target = focus.mock.contexts[index];
+    return target instanceof HTMLElement && target.matches("[data-player-toggle]");
+  });
+  expect(calls).toEqual([[{ preventScroll: true }]]);
+});
+
+it("desktop Now Playing closes before an underlying page layer on Escape", async () => {
+  const underlying = vi.fn();
+  const remove = pushBackLayer(underlying);
+  const expanded = vi.fn();
+  state.setExpanded = expanded;
+  state.expanded = true;
+  try {
+    await render(<NowPlaying />);
+    expect(topBackLayer()?.element()).toBe(screen());
+    await act(() => { expect(dismissTopLayer()).toBe(true); });
+    expect(expanded).toHaveBeenCalledWith(false);
+    expect(underlying).not.toHaveBeenCalled();
+  } finally { remove(); }
+});
 
 const sheetCases = [
   { button: "Tốc độ", title: "Tốc độ đọc" },

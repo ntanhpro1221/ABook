@@ -28,6 +28,7 @@ class StudioLinkTest {
     fun differentVersionsAreRefusedButASourceBuildIsNot() {
         assertTrue(StudioLink.mismatched("0.4.50", "0.4.51"))
         assertFalse(StudioLink.mismatched("0.4.51", "0.4.51"))
+        assertFalse(StudioLink.mismatched("0.4.51", "0.4.51-dev"))
         assertFalse(StudioLink.mismatched("", "0.4.51"))
         assertFalse(StudioLink.mismatched("dev", "0.4.51"))
     }

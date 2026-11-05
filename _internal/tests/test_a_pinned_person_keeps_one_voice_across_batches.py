@@ -44,8 +44,9 @@ CAMIL_BOOK = (
 def test_the_rule_is_the_same_as_casting() -> None:
     assert voice_contradicts_a_person(MALE, "female", None) is True
     assert voice_contradicts_a_person(FEMALE_A, "female", None) is False
-    assert voice_contradicts_a_person(CHILD, "female", "adult") is True, "pitch trẻ con cho người lớn"
-    assert voice_contradicts_a_person(CHILD, "male", "child") is False, "trẻ con đọc bằng preset nữ kéo cao"
+    assert voice_contradicts_a_person(CHILD, "female", "adult") is False, "trẻ con không còn pitch riêng (05-11)"
+    assert voice_contradicts_a_person(CHILD, "male", "child") is False, "trẻ con đọc bằng preset nữ"
+    assert voice_contradicts_a_person(MALE, "female", "adult") is True
     assert voice_contradicts_a_person(MALE, None, None) is False, "không ai ghim thì không kết tội"
 
 
@@ -71,16 +72,16 @@ def test_a_pin_that_contradicts_the_person_is_replaced_by_the_best_accepted_voic
 
 
 def test_one_accepted_chapter_is_enough_when_the_current_pin_is_wrong() -> None:
-    """KAELYN: chỉ 1 chương giọng hợp lệ, dưới `min_chapters` - nhưng để nguyên ghim trẻ con thì phân
+    """KAELYN: chỉ 1 chương giọng hợp lệ, dưới `min_chapters` - nhưng để nguyên ghim sai phái thì phân
     vai chắc chắn bỏ nó và rút thăm lại, nên một chương hợp lệ vẫn tốt hơn."""
-    book = _rows("KAELYN", CHILD, range(200, 204)) + _rows("KAELYN", ADULT_F, range(150, 151))
+    book = _rows("KAELYN", MALE, range(200, 204)) + _rows("KAELYN", ADULT_F, range(150, 151))
     locked = {"KAELYN": ("female", "adult")}
     accepted = rows_the_listener_would_accept(book, locked, canonical=canonical)
     drifted, _notes = pins_that_drifted(
-        {"KAELYN": CHILD}, accepted, {"534"}, canonical=canonical, min_chapters=2, presence=book,
+        {"KAELYN": MALE}, accepted, {"534"}, canonical=canonical, min_chapters=2, presence=book,
         rejects=lambda key, voice: voice_contradicts_a_person(voice, *locked.get(key, (None, None))),
     )
-    assert drifted["KAELYN"][:2] == (CHILD, ADULT_F)
+    assert drifted["KAELYN"][:2] == (MALE, ADULT_F)
 
 
 def test_without_rejects_the_old_narrow_rule_still_holds() -> None:

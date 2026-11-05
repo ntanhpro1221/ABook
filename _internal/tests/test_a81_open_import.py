@@ -318,7 +318,8 @@ def test_project_entries_that_land_on_the_same_windows_file_are_refused(tmp_path
 
 # ---- 15. cùng âm thanh, đổi tiêu đề --------------------------------------------------------------------------------
 
-def test_the_same_audio_under_a_new_title_says_the_title_was_not_taken(tmp_path: Path) -> None:
+def test_the_same_audio_under_a_new_title_takes_the_new_base_title(tmp_path: Path) -> None:
+    # The base layer (title, cover) follows the newest export of the same audio; a listener's own rename lives in the edit layer and wins.
     library = tmp_path / "lib"
     library.mkdir()
     app = app_in(tmp_path, library)
@@ -328,9 +329,9 @@ def test_the_same_audio_under_a_new_title_says_the_title_was_not_taken(tmp_path:
 
     again = app.open_book_file(str(build(tmp_path / "b.abook", entries, renamed)))
 
-    assert again["how"] == "existing" and again["otherTitle"] == "Tên mới trong file"
-    same = app.open_book_file(str(tmp_path / "a.abook"))
-    assert same["how"] == "existing" and "otherTitle" not in same, "cùng tên thì không có gì để nói"
+    assert again["how"] == "updated"
+    same = app.open_book_file(str(tmp_path / "b.abook"))
+    assert same["how"] == "existing" and "otherTitle" not in same, "cùng file thì không có gì để nói"
 
 
 # ---- 13. một bộ file vàng cho cả hai nền ---------------------------------------------------------------------------------

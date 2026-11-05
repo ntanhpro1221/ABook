@@ -40,6 +40,20 @@ class Gap3MaintenanceTest {
             repo.loadMaintenance(); assertEquals(release, repo.update.value)
         } finally { scope.cancel() }
     }
+    @Test fun aTrialBuildIsToldSoAndIsNeverOfferedADownload() = runBlocking {
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        var asked = 0
+        val core = object : SettingsCore by FakeSettingsCore() {
+            override fun release(): AppRelease { asked++; return AppRelease("0.4.150", "page", "apk") }
+            override fun releaseSigned() = false
+        }
+        try {
+            val repo = SettingsRepo(core, scope, Dispatchers.Unconfined)
+            repo.loadMaintenance()
+            assertTrue(repo.trialBuild.value); assertNull(repo.update.value); assertEquals(0, asked)
+            assertTrue(repo.notice.value.isEmpty())
+        } finally { scope.cancel() }
+    }
     @Test fun noticesRetainTheToggleAndExplainFailure() = runBlocking {
         val core = object : CompanionCore by FakeCompanionCore() {
             override suspend fun setNotices(enabled: Boolean): StudioNoticeState = error("Máy tính đang tắt")

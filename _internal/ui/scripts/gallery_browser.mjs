@@ -94,11 +94,11 @@ export function readDevToolsPort(portFile, read = readFileSync) {
 
 /** Mở trình duyệt headless với cổng gỡ lỗi do nó tự chọn (đọc từ DevToolsActivePort trong thư mục hồ sơ tạm). Đóng thì xoá hồ sơ (~12 MB):
  *  01-11 mọi chỗ gọi từng giữ hồ sơ lại - 2611 thư mục / ~31 GB trong %TEMP% từ 24-10. Nơi cấm xoá (sandbox) thì chỉ cảnh báo. */
-export async function launch(executable) {
+export async function launch(executable, { hideScrollbars = true } = {}) {
   const profile = mkdtempSync(path.join(tmpdir(), "abook-gallery-"));
   const cleanProfile = () => {
     // Chỉ xoá hồ sơ vừa tạo, bằng Python và đường dẫn tuyệt đối; không đi theo junction/symlink.
-    const cleaned = spawnSync(process.env.PYTHON ?? "python", ["-c", `
+    const cleaned = spawnSync(process.env.PYTHON ?? "python", ["-X", "utf8", "-c", `
 import os, sys, tempfile, time
 root = os.path.abspath(sys.argv[1])
 assert os.path.dirname(root) == os.path.abspath(tempfile.gettempdir())
@@ -128,9 +128,12 @@ else: raise RuntimeError('Hồ sơ trình duyệt vẫn bị khoá: ' + root)
     "--disable-extensions",
     "--disable-background-networking",
     "--disable-component-update",
+    "--disable-background-timer-throttling",
+    "--disable-renderer-backgrounding",
+    "--disable-backgrounding-occluded-windows",
     "--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE localhost, EXCLUDE 127.0.0.1",
     "--remote-debugging-port=0",
-    "--hide-scrollbars",
+    ...(hideScrollbars ? ["--hide-scrollbars"] : ["--disable-features=OverlayScrollbar"]),
     "--mute-audio",
     // Edge: hồ sơ mới tự đăng nhập tài khoản Microsoft và đồng bộ của máy - chụp ở cửa sổ riêng tư, tắt đồng bộ. Edge 156 còn tự khởi động lại
     // chính nó ("compat layer relaunch"): tiến trình con thoát ngay trước khi ghi cổng, bản mới mồ côi giữ hồ sơ (01-11: mọi gallery_inspect đỏ).
@@ -243,8 +246,9 @@ export async function waitUntil(cdp, session, expression, timeout, what) {
 }
 
 /** Mở một trang mới trong cùng trình duyệt, trả phiên (đã bật Page + Runtime). */
-export async function openPage(cdp, { width, height, scale, mobile, theme }) {
-  const { targetId } = await cdp.send("Target.createTarget", { url: "about:blank" });
+export async function openPage(cdp, { width, height, scale, mobile, theme, newWindow = false, isolated = false }) {
+  const browserContextId = isolated ? (await cdp.send("Target.createBrowserContext")).browserContextId : undefined;
+  const { targetId } = await cdp.send("Target.createTarget", { url: "about:blank", ...(newWindow ? { newWindow: true } : {}), ...(browserContextId ? { browserContextId } : {}) });
   const { sessionId } = await cdp.send("Target.attachToTarget", { targetId, flatten: true });
   await cdp.send("Page.enable", {}, sessionId);
   await cdp.send("Runtime.enable", {}, sessionId);
@@ -254,7 +258,7 @@ export async function openPage(cdp, { width, height, scale, mobile, theme }) {
   await cdp.send("Emulation.setTimezoneOverride", { timezoneId: "Asia/Ho_Chi_Minh" }, sessionId);
   await cdp.send("Emulation.setLocaleOverride", { locale: "vi-VN" }, sessionId).catch(() => undefined);
   await cdp.send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-color-scheme", value: theme }, { name: "prefers-reduced-motion", value: "no-preference" }] }, sessionId);
-  return { targetId, sessionId };
+  return { targetId, sessionId, browserContextId };
 }
 
 export const STILL = `new Promise((resolve) => {
@@ -265,4 +269,3 @@ export const STILL = `new Promise((resolve) => {
 })`;
 
 export const escapeHtml = (text) => String(text).replace(/[&<>"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[char]);
-

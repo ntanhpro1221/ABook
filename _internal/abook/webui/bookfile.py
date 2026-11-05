@@ -695,10 +695,15 @@ class BookFile:
                 chapter["size"] = meta.get("size", 0)
             self.book["audioVersion"] = audio_version(self.book.get("chapters", []))
             staging.joinpath(MANIFEST).write_bytes(json_bytes(self.book))
+            keep_local_files(target, staging)
             self.last_merge = self._keep_local_edits(target, staging) if target.exists() else None
             history = target / "export_history.json"
             if history.is_file():
                 shutil.copy2(history, staging / history.name)
+            # Publish cover metadata in the same swap as the image and book.json.
+            cover = self.book.get("cover")
+            if isinstance(cover, dict) and (staging / covers.COVER_FILE).is_file():
+                (staging / covers.META_FILE).write_bytes(json_bytes(covers.stored_meta(cover)))
             swap_in(staging, target)
         except BaseException:
             shutil.rmtree(staging, ignore_errors=True)
@@ -927,6 +932,37 @@ def swap_in(staging: Path, target: Path) -> None:
         os.replace(retired, target)  # bản mới không vào được: trả bản cũ về chỗ cũ
         raise
     shutil.rmtree(retired, ignore_errors=True)
+
+
+def base_layer(book: dict[str, Any], edits: dict[str, Any]) -> dict[str, Any]:
+    """Compare the book layer, ignoring packaging timestamps, listener edits and locally derived audio fields."""
+    base = json.loads(json.dumps(book))
+    package = base.pop("package", {})
+    for key in ("id", "audioVersion", "chaptersAvailable"):
+        base.pop(key, None)
+    for chapter in base.get("chapters", []):
+        for key in ("sha256", "size"):
+            chapter.pop(key, None)
+    listener_files = {book_edits.EDITS_FILE, book_edits.EDITS_COVER}
+    listener_files.update(set(book_edits.pinned_files(edits)) - set((base.get("music") or {}).get("tracks", {})))
+    base["package"] = {"files": {name: meta for name, meta in package.get("files", {}).items() if name not in listener_files}}
+    return base
+
+
+def keep_local_files(target: Path, staging: Path) -> None:
+    """Keep local sidecars/workshop when refreshing a listening package; old package members must disappear."""
+    if not (target / MANIFEST).is_file():
+        return
+    old = json.loads((target / MANIFEST).read_bytes())
+    members = set((old.get("package") or {}).get("files", {}))
+    members.update((MANIFEST, READIUM_MANIFEST, covers.COVER_FILE, covers.META_FILE,
+                    book_edits.EDITS_FILE, book_edits.EDITS_COVER))
+    for source in target.rglob("*"):
+        name = source.relative_to(target).as_posix()
+        destination = staging / name
+        if source.is_file() and name not in members and not destination.exists():
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, destination)
 
 
 def keep_local_edits(target: Path, staging: Path, incoming: dict[str, Any]) -> dict[str, Any] | None:
