@@ -354,7 +354,6 @@ def test_casting_prioritizes_natural_north_then_natural_south() -> None:
     assert female_order == [
         *[(REGION_NORTH, STYLE_NATURAL)] * 3,
         *[(REGION_NORTH, STYLE_STORY)] * 2,
-        (REGION_NORTH, preset_by_name("Mai Anh")["style"]),
         *[(REGION_SOUTH, STYLE_STORY)] * 3,
     ]
     assert REGION_CENTRAL not in {region for region, _style in male_order + female_order}
@@ -1036,7 +1035,6 @@ def test_pitch_ranges_follow_measured_preset_depth() -> None:
     }
     assert set(PRESET_PREVIEW_MEDIAN_PITCH_HZ) == supported_names
     assert PRESET_MIN_PITCH_SEMITONES == {
-        "Mai Anh": -2,
         "Phạm Tuyên": 0,
         "Xuân Vĩnh": -1,
         "Thái Sơn": -1,

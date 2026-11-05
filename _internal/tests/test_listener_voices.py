@@ -110,20 +110,14 @@ def _apply(db: ProjectDB, character: str, **request: str):
     return db.apply_listener_voice(character=character, voices=VOICES, **request)
 
 
-def test_the_listener_can_choose_ranked_news_but_not_unranked_news(tmp_path: Path) -> None:
+def test_the_listener_cannot_choose_news_presets(tmp_path: Path) -> None:
     _paths, db = _book(tmp_path)
     with db.connect() as conn:
         from abook.listener_overrides import voice_target
 
-        target, problem = voice_target(conn, VOICES, character="NATASHA", preset="Mai Anh")
-        assert problem is None and target is not None
-        for name in ("Thùy Dung", "Minh Đức", "Minh Triết"):
+        for name in ("Mai Anh", "Thùy Dung", "Minh Đức", "Minh Triết"):
             target, problem = voice_target(conn, VOICES, character="NATASHA", preset=name)
             assert target is None and problem == UNKNOWN_PRESET
-    result = _apply(db, "NATASHA", preset="Mai Anh")
-    assert result is not None
-    with db.connect() as conn:
-        assert conn.execute("SELECT preset_name FROM voice_profiles WHERE voice_key=?", (result["voice_key"],)).fetchone()[0] == "Mai Anh"
 
 
 def test_a_listener_says_the_character_is_a_girl_and_every_line_moves_to_a_female_voice(tmp_path: Path) -> None:
