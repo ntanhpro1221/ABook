@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import json
 import math
 
+from pathlib import Path
 from typing import Any
 
 from .voice_balance import preset_pitch_st
@@ -323,8 +325,9 @@ VIENEU_PRESETS: tuple[dict[str, str], ...] = (
     },
 )
 
-# Chỗ phân xử cuối của thứ tự giọng (`preset_priority`, `casting_preset_priority`): một thứ tự CỐ ĐỊNH, không theo tên hiển
-# thị - VieNeu đổi tên giọng (3.8.2: Anh Khôi -> Thiện Minh...) thì sửa tên tại chỗ, giữ vị trí, phân vai không đổi. Đặt
+# Chỗ phân xử cuối giữa những giọng người nghe CHƯA xếp hạng (`assets/voice_rank.json`, `listener_rank`): một thứ tự CỐ
+# ĐỊNH tuỳ ý, KHÔNG phải phán quyết chất lượng - đứng ở đây không có nghĩa giọng ấy tốt hơn. Không theo tên hiển thị -
+# VieNeu đổi tên giọng (3.8.2: Anh Khôi -> Thiện Minh...) thì sửa tên tại chỗ, giữ vị trí, phân vai không đổi. Đặt
 # 04-10 bằng đúng thứ tự tên (casefold) sau lần đổi tên 3.8.2. Giọng mới thêm vào cuối.
 CAST_ORDER: tuple[str, ...] = (
     "Adam", "Adam bựa", "Hải Đăng", "Kim Thanh", "Mai Anh", "Minh Triết", "Minh Đức", "Mỹ Duyên", "Ngọc Huyền", "Ngọc Linh",
@@ -558,11 +561,12 @@ LAST_RESORT_PRESETS = frozenset({"Thái Sơn", "Thanh Bình", "Thục Đoan"})
 # enough that the gap between a +2 preset and a +11 one still decides.
 AGE_PITCH_RANK_BUCKET = 4
 
-# A listener's ranking of the presets they have actually heard in a child register,
-# best first. This outranks tract reach and pitch distance because those are proxies for
-# how good the result sounds and this is the thing itself - and the proxies have been
-# wrong here before: reach and shift between them put Ngọc Linh last of the three girl
-# voices, which is exactly backwards.
+# A listener's ranking of the presets they have actually heard, best first, per role
+# (`assets/voice_rank.json`: adult/child x male/female). This outranks tract reach and
+# pitch distance because those are proxies for how good the result sounds and this is the
+# thing itself - and the proxies have been wrong here before: reach and shift between them
+# put Ngọc Linh last of the three girl voices, which is exactly backwards. An adult list
+# that is empty ranks nothing, so casting falls through to the arbitrary `CAST_ORDER`.
 #
 # Only what was actually judged goes in. A preset absent from a list is unheard rather
 # than rejected, and sorts after every ranked one, so the theory still decides among the
@@ -574,17 +578,33 @@ AGE_PITCH_RANK_BUCKET = 4
 # need +1 - and the listener put it first anyway, with the female presets keeping their
 # girl order behind it. Casting is cross-gender either way; what changed is that being
 # closest on paper stopped deciding.
-CHILD_VOICE_PREFERENCE: dict[str, tuple[str, ...]] = {
-    "female": ("Ngọc Linh", "Đoan Trang", "Trúc Ly"),
-    "male": ("Phạm Tuyên", "Ngọc Linh", "Đoan Trang", "Trúc Ly"),
-}
+VOICE_RANK_PATH = Path(__file__).resolve().parent / "assets" / "voice_rank.json"
 
 
-def child_voice_preference(preset_name: str, age: str, gender: str) -> int:
-    """Rank a preset by a listener's verdict on it as a child voice; unheard sorts last."""
-    if str(age) != "child":
-        return 0
-    order = CHILD_VOICE_PREFERENCE.get(str(gender), ())
+def load_voice_rank(path: Path = VOICE_RANK_PATH) -> dict[str, dict[str, tuple[str, ...]]]:
+    """Read and check the listener's ranking; a name the catalog does not know fails here, not in a book."""
+    data = json.loads(path.read_text(encoding="utf-8"))
+    known = {str(preset["name"]) for preset in VIENEU_PRESETS}
+    table: dict[str, dict[str, tuple[str, ...]]] = {}
+    for role in ("adult", "child"):
+        table[role] = {}
+        for gender in (GENDER_MALE, GENDER_FEMALE):
+            names = tuple(data[role][gender])
+            unknown = [name for name in names if name not in known]
+            if unknown:
+                raise ValueError(f"{path.name}: {role}.{gender} names no such VieNeu preset: {unknown}")
+            if len(set(names)) != len(names):
+                raise ValueError(f"{path.name}: {role}.{gender} lists a preset twice")
+            table[role][gender] = names
+    return table
+
+
+VOICE_RANK = load_voice_rank()
+
+
+def listener_rank(preset_name: str, age: str, gender: str) -> int:
+    """Where the listener put a preset for this role (0 = best); unranked sorts after every ranked one."""
+    order = VOICE_RANK["child" if str(age) == "child" else "adult"].get(str(gender), ())
     name = str(preset_name)
     return order.index(name) if name in order else len(order)
 

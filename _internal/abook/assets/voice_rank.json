@@ -1,0 +1,4 @@
+{
+  "adult": {"male": [], "female": []},
+  "child": {"male": ["Phạm Tuyên", "Ngọc Linh", "Đoan Trang", "Trúc Ly"], "female": ["Ngọc Linh", "Đoan Trang", "Trúc Ly"]}
+}
