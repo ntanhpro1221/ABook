@@ -691,7 +691,7 @@ def integrated_loudness_lufs(audio: np.ndarray, sample_rate: int) -> float | Non
 def segment_offsets_db(segment: Any, settings: dict[str, Any]) -> float:
     """Độ lệch TƯƠNG ĐỐI của câu so với mức chung L, dB: volume + cảm xúc + người kể.
 
-    - volume: `segment_target_lufs[volume] - segment_target_lufs["normal"]` (soft -3,0 / normal 0 /
+    - volume: `segment_target_lufs[volume] - segment_target_lufs["normal"]` (soft -1,0 / normal 0 /
       loud +1,2 với cấu hình mặc định). Chỉ lấy HIỆU giữa các neo; mức tuyệt đối của `normal`
       là `L` của bảng cân bằng giọng, không phải số trong cấu hình;
     - cảm xúc: `LOUDNESS_EMOTION_OFFSETS_DB[emotion] * intensity / 3`, chỉ khi volume là normal;

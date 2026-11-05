@@ -42,12 +42,21 @@ sửa bảng đổi hash chất lượng, nên chỉ sửa ở nhánh dev khi kh
 
 Không bao giờ nhân giá trị dB hay bán cung với nhau.
 
+**Hiệu chỉnh cảm nhận trên nhánh dev (05-11).** LUFS bằng nhau không chứng minh các giọng nghe to bằng nhau.
+`o_db` được đo độc lập bằng ISO 532-1 theo thời gian (trung bình loudness rồi đổi sang phon), đối chiếu
+ISO 532-1 tĩnh, N5 và ECMA-418-2. ECMA dùng sone HMS, không gọi số log của nó là phon ISO.
+WAV của bộ 40 câu gốc không còn: dùng cùng tối đa tám câu thật volume=normal cho mọi bậc formant của
+từng preset, ưu tiên neutral; hoàn tác gain đã ghi rồi áp gain trung tính và formant của đúng khoá.
+Giữa các preset vẫn khác câu. CI bootstrap giữ chung lượt lấy mẫu của các bậc cùng preset; chỉ nhập
+khoá có ít nhất sáu take độc lập. Khoá thiếu audio/thiếu mẫu giữ giá trị cũ, không có nghĩa đã được xác nhận
+cân bằng; Mai Anh không đo. Số đo, CI, độ phủ và lệnh xuất bản nghe dẫn xuất nằm trong scratch `codex/loud3`.
+
 - **Tốc độ.** `tempo` áp bằng WSOLA tương quan chuẩn hoá (`tts.apply_speed_change`, từ 04-10; trước đó WORLD), khoảng cho phép
   `SPEED_FACTOR_MIN = 0,70` đến `SPEED_FACTOR_MAX = 1,50` (bảng bị từ chối nếu `x · r` ra ngoài). Mặc định
   `x = 1`.
 - **Độ to.** `audio_io.segment_gain_db` cho gain hằng số áp lên bản thô; không đo LUFS của câu.
-  `offsets(câu)` = volume (`segment_target_lufs[volume] − segment_target_lufs["normal"]`: soft −3,0 /
-  normal 0 / loud +1,2) + cảm xúc (`LOUDNESS_EMOTION_OFFSETS_DB[cảm xúc] · cường độ / 3`, chỉ khi volume
+  `offsets(câu)` = volume (`segment_target_lufs[volume] − segment_target_lufs["normal"]`: soft −1,0 /
+  normal 0 / loud +1,2; từ 05-11 soft −1,0 thay cho −3,0) + cảm xúc (`LOUDNESS_EMOTION_OFFSETS_DB[cảm xúc] · cường độ / 3`, chỉ khi volume
   là normal) + người kể (`segment_narrator_offset_db`). Hai câu cùng giọng, một to một nhỏ, ra cùng
   gain. Trần đỉnh `segment_peak_dbfs` (−2 dBFS) giữ làm chốt: đỉnh vượt thì hạ cho vừa, phần hạ ghi ở
   metric `peak_limited_db`; gain đã áp ghi ở `level_gain_db`. Bản ghép từ các phần đã áp gain
