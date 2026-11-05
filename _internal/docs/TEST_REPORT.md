@@ -1089,3 +1089,7 @@ Bắt buộc smoke test một chapter 2.000–5.000 từ trước khi chạy boo
 - Final full native debug unit/build: 2862 tests total, 2855 passed, 0 failures/errors, 7 skipped; XML saved in shots/test-results-native.zip. Parity pytest: 8 passed, 0 failures/skipped. One additional bulk failure/explicit-choice test was added after the full run and is reported separately in report.md.
 - Native APK uses -PnativeUi -PbenchAppId=com.ngdtuanh.abook.dev. Headless ebook_pixel, ports 5584/5585, adb server 5038 only; emulator killed on completion. No physical phone app was operated, no adb server killed, no online voice/module downloaded, no commit.
 - Quality hash before/after c95fac04433a97e3b6a8c701514891b85718df8829d73313b7cd742dfb5fc9b8; no abook/ or desktop_qt/ source changes. Physical paired-Studio/Cast/Bluetooth network behavior was not exercised; endpoint shape and dispatch paths were source/JVM-verified.
+
+## chaplevel2 (dev/voice-loudness)
+
+Kiểm vòng kín trên giọng tổng hợp qua FFmpeg thật: chương một giọng nhỏ theo phon, giới hạn cuối, lần chạy thứ hai dùng lại, lỗi meter/master giữ audio, loại vòng xấu, holdout không trùng câu fit. Mốc câu được đối chiếu độ dài MP3 sau cắt lặng; cache words cũ không đính kèm audio mới. Kết quả importer suite và đo hai sách thật ghi trong report.md của thư mục tác vụ; chưa phải bằng chứng phát hành.

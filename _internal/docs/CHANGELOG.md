@@ -9,6 +9,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Giọng đọc
 
+- Tự đo và bù độ to giữa giọng/chương trên MP3 cuối sách, tối đa hai vòng; chỉ giữ bản đo tốt hơn, không thu lại câu. Lưu số bù và lịch sử để sách đã xong không bị master lại khi mở tiếp.
 - Giảm khoảng tụt âm lượng của câu nói nhỏ khi chuyển từ lời kể sang hội thoại, giúp các đoạn đọc liền nhau đều mức hơn.
 - Bù độ to cảm nhận cho các giọng có đủ mẫu đo, đối chiếu nhiều thước đo thay vì chỉ cân theo LUFS.
 - Sửa lỗi cao độ bị áp hai lần: giọng được chỉnh trầm hay cao (vd. hạ 2 nửa cung) nay phát đúng mức đã chỉnh, không còn gấp đôi khi ghép vào sách. Giọng trẻ con trước đây bị đẩy cao gần gấp đôi dự định.

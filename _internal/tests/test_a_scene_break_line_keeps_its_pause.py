@@ -15,6 +15,7 @@ import soundfile as sf
 
 from abook.audio_io import _source_timeline
 from abook.database import ProjectDB
+from abook.config import build_settings
 from abook.expression import PAUSE_CEILING_MS, narrative_break_ms
 from abook.pipeline import SEGMENTATION_CHECKPOINT_FIELDS, BookPipeline
 from abook.text_processing import SCENE_BREAK_MS, is_scene_break_line, segment_chapter_text
@@ -130,7 +131,8 @@ def test_the_pause_reaches_the_audio_concat_entries(tmp_path: Path) -> None:
     pipeline.db = _Db()
     pipeline.paths = type("Paths", (), {"work": tmp_path / "work"})()
     pipeline.log = lambda *_args, **_kwargs: None
-    entries = pipeline._chapter_delivery_wavs({"chapter_index": 1}, db_rows)
+    pipeline.settings = build_settings()
+    entries = pipeline._chapter_delivery_wavs({"id": 1, "chapter_index": 1}, db_rows)
     assert [ms for _path, ms in entries] == [SCENE_BREAK_MS, 0]
     _elapsed, break_ranges, _joins = _source_timeline(entries, 24000)
     assert [round(end - start, 3) for start, end in break_ranges] == [1.5]

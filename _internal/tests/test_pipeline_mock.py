@@ -3750,7 +3750,7 @@ def test_mock_pipeline_completes_without_interactive_prompt(tmp_path: Path, monk
             to_dict=lambda: {"hard_failures": [], "review_flags": []},
             review_flags=(),
         )
-        return SimpleNamespace(checksum="chapterhash", quality=quality)
+        return SimpleNamespace(checksum="chapterhash", quality=quality, timeline=())
 
     monkeypatch.setattr("abook.pipeline.assemble_chapter_atomic_with_metrics", fake_chapter)
     monkeypatch.setattr("abook.pipeline.verify_mp3", lambda path: (path.exists(), "ok"))
