@@ -25,7 +25,7 @@ import java.security.MessageDigest
  *   and with the first Turbo voice when Turbo is staged (int8 kernels differ on ARM: same length within 15%, same loudness range, no NaN);
  * - the self-benchmark of each staged tier runs and its numbers are printed (`VIENEU_ON_DEVICE` in logcat, also files/vieneu-on-device.txt).
  *
- *     adb shell am instrument -w -e class vn.abook.player.VieneuOnDeviceTest com.ngdtuanh.abook.test/androidx.test.runner.AndroidJUnitRunner
+ *     adb shell am instrument -w -e class vn.abook.player.VieneuOnDeviceTest com.ngdtuanh.abook.dev.test/androidx.test.runner.AndroidJUnitRunner
  */
 @RunWith(AndroidJUnit4::class)
 class VieneuOnDeviceTest {

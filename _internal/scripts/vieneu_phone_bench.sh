@@ -7,7 +7,7 @@
 #
 # Needs: JAVA_HOME (Android Studio jbr), adb on PATH or in %LOCALAPPDATA%/Android/Sdk/platform-tools, BENCH (the export folder),
 # ORT_JNI (folder with <abi>/libonnxruntime*.so from the onnxruntime-android AAR, default D:/Novels/LLM_Train/ort_build/maven/aar/jni).
-# Touches only the test APK (com.ngdtuanh.abook + .test) and /data/local/tmp/vneu; `clean` uninstalls both and removes the pushed files.
+# Touches only the test APK (com.ngdtuanh.abook.dev + .test, never the real com.ngdtuanh.abook) and /data/local/tmp/vneu; `clean` uninstalls both and removes the pushed files.
 # Extra arguments become `-e name value` pairs for the speed run, e.g.  threads 1,2,4,0  models turbo  passes 1  cooldown 60  headThreads 1
 set -euo pipefail
 SERIAL=${1:?usage: $0 <adb serial> all|build|install|push|check|speed|results|clean [name value ...]}
@@ -18,7 +18,7 @@ ANDROID_DIR=$(cd "$HERE/../mobile/android" && (pwd -W 2>/dev/null || pwd))   # a
 ADB=${ADB:-$(command -v adb || echo "$LOCALAPPDATA/Android/Sdk/platform-tools/adb.exe")}
 BENCH=${BENCH:?set BENCH to the export folder}
 ORT_JNI=${ORT_JNI:-D:/Novels/LLM_Train/ort_build/maven/aar/jni}
-PKG=com.ngdtuanh.abook
+PKG=com.ngdtuanh.abook.dev   # the debug build's own id (app/build.gradle applicationIdSuffix): never the real app, whose release key differs and which `clean` would uninstall
 REMOTE=/data/local/tmp/vneu   # the app copies it into its own files/ (it cannot load a .so from here); `clean` removes it
 adb() { MSYS_NO_PATHCONV=1 "$ADB" -s "$SERIAL" "$@"; }
 

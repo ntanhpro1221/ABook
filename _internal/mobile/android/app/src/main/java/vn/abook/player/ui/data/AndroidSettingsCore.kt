@@ -48,6 +48,19 @@ class AndroidSettingsCore(context: Context) : SettingsCore {
         val sink = app.contentResolver.openOutputStream(android.net.Uri.parse(uri), "wt") ?: error("Chưa mở được file để ghi")
         sink.use { vn.abook.player.OldSaves.copyTo(vn.abook.player.OldSaves.dir(app.filesDir), name, it) }
     }
+    override fun releaseSigned(): Boolean = signedByRelease
+    private val signedByRelease: Boolean by lazy {
+        runCatching {
+            val certs = if (Build.VERSION.SDK_INT >= 28) {
+                val info = app.packageManager.getPackageInfo(app.packageName, PackageManager.GET_SIGNING_CERTIFICATES).signingInfo!!
+                info.apkContentsSigners.toList()
+            } else {
+                @Suppress("DEPRECATION")
+                app.packageManager.getPackageInfo(app.packageName, PackageManager.GET_SIGNATURES).signatures!!.toList()
+            }
+            ReleaseSigning.isRelease(certs.map { it.toByteArray() })
+        }.getOrDefault(true) // không đọc được thì không dám kết luận bản thử: giữ hành vi cũ
+    }
     override fun release(): AppRelease? {
         val prefs = app.getSharedPreferences("app-release", Context.MODE_PRIVATE)
         val cached = runCatching { JSONObject(prefs.getString("json", "")!!) }.getOrNull()
