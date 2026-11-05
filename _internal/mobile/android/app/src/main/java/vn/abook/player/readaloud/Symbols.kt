@@ -586,7 +586,13 @@ object Symbols {
                 val end = run(token, pos, "×")
                 return Found(end, timesSign(spot(end)))
             }
-            if (afterChar?.isDigit() == true && !wordChar(before)) return Found(pos + 1, timesPre(spot(pos + 1), char))
+            if (afterChar?.isDigit() == true && !wordChar(before)) {
+                val said = timesPre(spot(pos + 1), char)
+                val decimal = if (said.text == "nhân") match("""\d+\.\d{1,2}(?![\d.,])""", token.substring(pos + 1)) else null
+                // "x1.5": an English decimal multiplier, sea-g2p reads "1.5" as "một chấm năm"
+                if (decimal != null) return Found(pos + 1 + decimal.value.length, say("nhân " + decimal.value.replace(".", ",")))
+                return Found(pos + 1, said)
+            }
             val masked = if (before?.isDigit() == true) match("""[xX×]{2,}(?![$W])""", token.substring(pos)) else null
             if (masked != null) return Found(pos + masked.value.length, say(List(masked.value.length) { "ích" }.joinToString(" "))) // "19××", "0 0××": chữ số bị che, giữ số và đọc từng "ích"
             if (before?.isDigit() == true && afterChar?.isDigit() != true && !(afterChar?.isLetter() == true || afterChar == '_')) {
