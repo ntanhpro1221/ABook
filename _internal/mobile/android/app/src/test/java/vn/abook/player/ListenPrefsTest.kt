@@ -25,7 +25,6 @@ class ListenPrefsTest {
         SleepTimer.extendMinutes = 10
         SleepTimer.fadeMs = 30_000L
         SleepTimer.shakeEnabled = true
-        SleepTimer.shakeResets = false
         SleepTimer.shakeThresholdG = 2.2
         SleepTimer.safetyStopHours = 2.0
         SleepTimer.schedule = null
@@ -48,7 +47,7 @@ class ListenPrefsTest {
     }
 
     private fun chosen() = JSONObject(
-        """{"headsetSkips":false,"autoRewind":false,"sleepExtendMinutes":15,"sleepFadeSeconds":10,"shakeToExtend":false,"shakeAction":"reset",
+        """{"headsetSkips":false,"autoRewind":false,"sleepExtendMinutes":15,"sleepFadeSeconds":10,"shakeToExtend":false,
             "shakeSensitivity":"firm","flipToPause":false,"safetyStopHours":3.0,"schedule":{"from":"23:00","to":"06:30","minutes":45},"readAloudVoice":"edge:x"}""",
     )
 
@@ -64,7 +63,6 @@ class ListenPrefsTest {
         assertEquals(15, SleepTimer.extendMinutes)
         assertEquals(10_000L, SleepTimer.fadeMs)
         assertFalse(SleepTimer.shakeEnabled)
-        assertTrue(SleepTimer.shakeResets)
         assertEquals(2.8, SleepTimer.shakeThresholdG, 0.0)
         assertEquals(3.0, SleepTimer.safetyStopHours, 0.0)
         assertEquals(Triple(23 * 60, 6 * 60 + 30, 45), SleepTimer.schedule)

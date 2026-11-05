@@ -99,6 +99,7 @@ class Player : public QObject {
     Q_PROPERTY(QString sleepKind READ sleepKind NOTIFY sleepChanged)    // "off" | "minutes" | "chapter"
     Q_PROPERTY(int sleepMinutes READ sleepMinutes NOTIFY sleepChanged)
     Q_PROPERTY(int lastSleepMinutes READ lastSleepMinutes NOTIFY sleepChanged)
+    Q_PROPERTY(int sleepExtendMinutes READ sleepExtendMinutes NOTIFY sleepChanged) // N của nút "Hẹn lại N phút"
     Q_PROPERTY(QString sleepStoppedText READ sleepStoppedText NOTIFY sleepChanged) // "23:42" khi hẹn giờ vừa tắt tiếng, không thì ""
     Q_PROPERTY(bool fading READ fading NOTIFY fadingChanged)
     Q_PROPERTY(QString error READ error NOTIFY errorChanged)
@@ -150,6 +151,7 @@ public:
     QString sleepKind() const;
     int sleepMinutes() const { return m_sleep.minutes; }
     int lastSleepMinutes() const { return m_lastSleepMinutes; }
+    int sleepExtendMinutes() const;
     QString sleepStoppedText() const;
     bool fading() const { return m_fading; }
     QString error() const { return m_error; }
@@ -190,7 +192,8 @@ public:
     /// Phím M (player.tsx): đang có tiếng thì nhớ mức rồi tắt; đang tắt thì về mức đã nhớ (chưa nhớ gì: 0,9).
     Q_INVOKABLE void toggleMute();
     Q_INVOKABLE void setSleep(const QString &kind, int minutes = 0);
-    Q_INVOKABLE void extendSleep(int minutes = 0);
+    /// Hẹn lại: đồng hồ về số phút đã hẹn (hết chương: "Mỗi lần nghe thêm"), không cộng thêm.
+    Q_INVOKABLE void extendSleep();
     Q_INVOKABLE void configure(const QVariantMap &preferences);
     Q_INVOKABLE void retry();
     Q_INVOKABLE void dismissError();
@@ -230,7 +233,7 @@ public:
     double outputVolume() const { return m_volume * (m_fading ? m_gain : 1.0); }
     /// Lời nhắn ngắn ở thanh phát (nhạc nền: "Chưa chỉnh được nhạc nền").
     void showNotice(const QString &notice) { setNotice(notice); }
-    /// Theo dõi phím / chuột của cả app: bằng chứng "còn thức" cho lưới an toàn ngủ quên, và "lắc máy" nghe thêm lúc đang nhỏ dần.
+    /// Theo dõi phím / chuột của cả app: bằng chứng "còn thức" cho lưới an toàn ngủ quên, và "lắc máy" hẹn lại lúc đang nhỏ dần.
     void watchInput();
 
 signals:

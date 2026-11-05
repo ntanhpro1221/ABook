@@ -232,16 +232,16 @@ class SettingsScreenTest {
     @Test
     fun shakeOptionsCollapseWithTheSwitch() {
         showGroup(SettingsGroup.Sleep)
-        rule.onNodeWithTag("shake_action").assertIsDisplayed()
+        rule.onNodeWithTag("shake_sensitivity").assertIsDisplayed()
         rule.mainClock.autoAdvance = false
         rule.onNodeWithTag("shake").performScrollTo().performClick()
         rule.mainClock.advanceTimeBy(80)
         // Giữa chừng: khối đang khép (cao dần về 0), chưa biến mất cứng.
-        val mid = rule.onNodeWithTag("shake_action").getUnclippedBoundsInRoot()
+        val mid = rule.onNodeWithTag("shake_sensitivity").getUnclippedBoundsInRoot()
         assertTrue("khối phải còn đang khép, bounds=$mid", mid.bottom - mid.top > 0.dp)
         rule.mainClock.autoAdvance = true
         rule.waitForIdle()
-        rule.onNodeWithTag("shake_action").assertDoesNotExist()
+        rule.onNodeWithTag("shake_sensitivity").assertDoesNotExist()
         assertFalse(core.saved.last().getBoolean("shakeToExtend"))
     }
 

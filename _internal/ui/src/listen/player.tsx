@@ -21,8 +21,11 @@ import {
   cleanSleepSchedule,
   fadeGain,
   rewindAfter,
+  sleepExtendMinutes,
+  sleepExtendLabel,
   sleepExtended,
   sleepFrom,
+  sleepSafetyNet,
   type SleepMode,
   type SleepRequest,
   type SleepSchedule,
@@ -173,7 +176,8 @@ interface PlayerActions {
   setRate: (rate: number) => void;
   setVolume: (volume: number) => void;
   setSleep: (request: SleepRequest) => void;
-  extendSleep: (minutes?: number) => void;
+  /** Hẹn lại: đồng hồ về số phút đã hẹn (hết chương: "Mỗi lần nghe thêm"), không cộng thêm - bản điện thoại: SleepTimer.extend. */
+  extendSleep: () => void;
   close: () => void;
   /** Đổi hồ sơ nghe của một cuốn (`change` gọi máy chủ); cuốn đang nạp thì trình phát theo sang hồ sơ mới.
    *  `startOver`: xong thì phát từ chương đầu (nghe lại từ đầu bằng hồ sơ mới). */
@@ -1282,16 +1286,17 @@ export function PlayerProvider({
   const setSleepRef = useRef(setSleep);
   setSleepRef.current = setSleep;
 
-  const extendSleep = useCallback((minutes = options.extendMinutes) => {
+  const extendSleep = useCallback(() => {
     if (native) {
-      native.extendSleep(minutes);
+      native.extendSleep();
       return;
     }
     if (refs.current.sleep.kind === "off") return;
+    const minutes = sleepExtendMinutes(refs.current.sleep, options.extendMinutes);
     endFade();
-    applySleep(sleepExtended(refs.current.sleep, minutes, refs.current.audible && !engine.paused, Date.now()));
+    applySleep(sleepExtended(refs.current.sleep, options.extendMinutes, refs.current.audible && !engine.paused, Date.now()));
     night.extend(minutes, position());
-    toast.success(`Nghe thêm ${minutes} phút`, { id: "sleep-extend", duration: 2500 });
+    toast.success(sleepExtendLabel(minutes), { id: "sleep-extend", duration: 2500 });
   }, [applySleep, endFade, engine, native, night, options.extendMinutes, position]);
 
   const close = useCallback(() => {
@@ -1771,7 +1776,7 @@ export function PlayerProvider({
         const before = refs.current.lastActivityPosition;
         if (before) night.touchAt(refs.current.lastActivity, "last-activity", before);
       }
-      applySleep(sleepFrom({ kind: "minutes", minutes: 1 }, true, Date.now()));
+      applySleep(sleepSafetyNet(true, Date.now()));
       toast(`Không thấy ai chạm máy suốt ${options.safetyStopHours} giờ - sẽ tắt sau 1 phút`, {
         id: "safety-stop",
         duration: 60_000,

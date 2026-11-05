@@ -4,7 +4,8 @@
 //  - thời gian chỉ trôi khi ĐANG PHÁT: tự tạm dừng rồi quay lại không bị tắt ngay lập tức, và con số trên nút
 //    không bao giờ treo ở "1′" sau khi hết giờ;
 //  - nhỏ dần theo thang dB (tai nghe âm lượng theo logarit): giảm đều theo biên độ thì mấy bậc cuối tụt như bị cắt;
-//  - nghe thêm được bằng một thao tác (trên điện thoại là lắc máy; trên máy tính là chạm phím/chuột lúc đang nhỏ dần).
+//  - nghe thêm được bằng một thao tác (trên điện thoại là lắc máy; trên máy tính là chạm phím/chuột lúc đang nhỏ dần) và KHÔNG cộng dồn: đồng hồ chỉ về lại
+//    số phút đã hẹn.
 
 export type SleepRequest = { kind: "off" } | { kind: "minutes"; minutes: number } | { kind: "chapter" };
 
@@ -24,6 +25,12 @@ export function sleepFrom(request: SleepRequest, playing: boolean, now: number):
   return { kind: "minutes", minutes: request.minutes, leftMs: request.minutes * 60_000, since: playing ? now : null };
 }
 
+/** Hẹn giờ của lưới an toàn (không ai chạm máy suốt N giờ): đếm 1 phút rồi tắt, nhưng KHÔNG ai chọn số phút nên `minutes: 0` - "Hẹn lại" về mức
+ *  "Mỗi lần nghe thêm" ([sleepExtendMinutes]) chứ không về 1 phút. Điện thoại: SleepTimer.setMinutes(1, "safety"). */
+export function sleepSafetyNet(playing: boolean, now: number): SleepMode {
+  return { kind: "minutes", minutes: 0, leftMs: 60_000, since: playing ? now : null };
+}
+
 export function sleepLeftMs(mode: SleepMode, now: number): number | null {
   if (mode.kind !== "minutes") return null;
   return Math.max(0, mode.since === null ? mode.leftMs : mode.leftMs - Math.max(0, now - mode.since));
@@ -40,13 +47,26 @@ export function sleepResumed(mode: SleepMode, now: number): SleepMode {
   return { ...mode, since: now };
 }
 
-/** Nghe thêm: cộng vào thời gian còn lại. Đang "hết chương" thì chuyển thành đếm phút kể từ bây giờ. */
-export function sleepExtended(mode: SleepMode, minutes: number, playing: boolean, now: number): SleepMode {
+/** Số phút "Hẹn lại": hẹn phút thì đúng số người nghe đã chọn (`minutes: 0` = không ai chọn, như lưới an toàn), hết chương thì `fallback` ("Mỗi lần nghe thêm" của Cài đặt). MỘT hàm cho nhãn nút và
+ *  [sleepExtended]. Điện thoại: SleepText.extendMinutes (Kotlin). */
+export function sleepExtendMinutes(mode: SleepMode, fallback: number): number {
+  return mode.kind === "minutes" && mode.minutes > 0 ? mode.minutes : fallback;
+}
+
+/** Nhãn nút nghe thêm: đồng hồ về lại N phút, không cộng thêm. Điện thoại: SleepText.extendLabel. */
+export function sleepExtendLabel(minutes: number): string {
+  return `Hẹn lại ${minutes} phút`;
+}
+
+/** Nghe thêm = hẹn lại: đồng hồ về đúng [sleepExtendMinutes] phút, không bao giờ hơn (bấm nhiều lần không cộng dồn); còn lại đã nhiều hơn thì giữ nguyên.
+ *  Đang "hết chương" thì chuyển thành đếm `fallback` phút kể từ bây giờ. */
+export function sleepExtended(mode: SleepMode, fallback: number, playing: boolean, now: number): SleepMode {
   if (mode.kind === "minutes") {
+    const picked = sleepExtendMinutes(mode, fallback);
     const left = sleepLeftMs(mode, now) ?? 0;
-    return { kind: "minutes", minutes: mode.minutes, leftMs: left + minutes * 60_000, since: playing ? now : null };
+    return { kind: "minutes", minutes: picked, leftMs: Math.max(left, picked * 60_000), since: playing ? now : null };
   }
-  return sleepFrom({ kind: "minutes", minutes }, playing, now);
+  return sleepFrom({ kind: "minutes", minutes: fallback }, playing, now);
 }
 
 /** Hệ số âm lượng khi còn `leftMs` trong đoạn nhỏ dần dài `fadeMs`: tuyến tính theo dB từ 0 xuống -40 dB. */

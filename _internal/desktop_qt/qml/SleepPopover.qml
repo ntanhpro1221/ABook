@@ -1,13 +1,14 @@
 import QtQuick
 import ABook
 
-// Hẹn giờ tắt: tắt sau N phút (giờ chỉ chạy khi có tiếng thật, dừng thì đứng) hay hết chương này. Đang hẹn: tắt sau bao lâu, +10 phút, tắt hẹn giờ. Chữ như bản web (SleepPicker).
+// Hẹn giờ tắt: tắt sau N phút (giờ chỉ chạy khi có tiếng thật, dừng thì đứng) hay hết chương này. Đang hẹn: tắt sau bao lâu, hẹn lại N phút (về số đã chọn, không cộng thêm), tắt hẹn giờ. Chữ như bản web (SleepPicker).
 Popover {
     id: root
     panelWidth: 296
     maxHeight: Math.max(280, Math.min(600, height - 32))
     readonly property int fadeSeconds: Math.max(10, Math.min(60, Number(Api.preferences.sleepFadeSeconds || 30)))
-    readonly property int extendMinutes: Math.max(5, Math.min(15, Number(Api.preferences.sleepExtendMinutes || 10)))
+    // N của nút "Hẹn lại N phút": số đã chọn khi hẹn phút, "Mỗi lần nghe thêm" khi hẹn theo chương (một nơi: Player::sleepExtendMinutes)
+    readonly property int extendMinutes: Player.sleepExtendMinutes
 
     ClockUser { wanted: root.visible }
 
@@ -90,7 +91,7 @@ Popover {
             Button {
                 objectName: "sleepExtend"
                 kind: "text"
-                text: "+" + root.extendMinutes + " phút"
+                text: "Hẹn lại " + root.extendMinutes + " phút"
                 visible: Player.sleepKind === "minutes"
                 onClicked: Player.extendSleep()
             }
@@ -104,7 +105,7 @@ Popover {
         }
         Text {
             width: parent.width
-            text: "Tiếng nhỏ dần " + root.fadeSeconds + " giây trước khi dừng. Lúc đó chạm phím hoặc chuột để nghe thêm " + root.extendMinutes + " phút."
+            text: "Tiếng nhỏ dần " + root.fadeSeconds + " giây trước khi dừng. Lúc đó chạm phím hoặc chuột để hẹn lại từ đầu."
             wrapMode: Text.Wrap; color: Theme.text2; font.pixelSize: Theme.sizeCaption
         }
     }

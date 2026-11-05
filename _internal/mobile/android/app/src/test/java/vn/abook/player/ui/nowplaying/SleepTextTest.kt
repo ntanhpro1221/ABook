@@ -19,9 +19,9 @@ class SleepTextTest {
     }
 
     @Test
-    fun `note names fade seconds and extend minutes, and the morning card only for a listener who has one`() {
+    fun `note names fade seconds and promises a fresh start, and the morning card only for a listener who has one`() {
         val options = SleepOptions(fadeSeconds = 60, extendMinutes = 5)
-        assertEquals("Tiếng nhỏ dần 60 giây trước khi dừng. Lúc đó lắc máy hoặc bấm “Nghe thêm” trên thông báo để nghe thêm 5 phút.", SleepText.note(options, false))
+        assertEquals("Tiếng nhỏ dần 60 giây trước khi dừng. Lúc đó lắc máy hoặc bấm nút trên thông báo để hẹn lại từ đầu.", SleepText.note(options, false))
         assertTrue(SleepText.note(options, true).endsWith("Sáng hôm sau, thẻ “Tối qua” giúp tìm lại đoạn còn nhớ."))
     }
 
@@ -54,8 +54,17 @@ class SleepTextTest {
     }
 
     @Test
-    fun `fading line promises the extend gesture and the minutes`() {
-        assertEquals("Sắp tắt · lắc máy hoặc bấm “Nghe thêm” trên thông báo để nghe thêm 10 phút", SleepText.fadingLine(SleepOptions(30, 10)))
-        assertEquals("+10 phút", SleepText.extendLabel(10))
+    fun `fading line promises the extend gesture and the minutes it goes back to`() {
+        assertEquals("Sắp tắt · lắc máy hoặc bấm nút trên thông báo để hẹn lại 10 phút", SleepText.fadingLine(10))
+        assertEquals("Hẹn lại 10 phút", SleepText.extendLabel(10))
+    }
+
+    @Test
+    fun `again is the minutes the listener picked, or the Settings step for chapter mode and after a stop`() {
+        val options = SleepOptions(30, 10)
+        assertEquals(30, SleepText.extendMinutes(PlayerSleep(SleepKind.Minutes, 30), options))
+        assertEquals(10, SleepText.extendMinutes(PlayerSleep(SleepKind.Chapter), options))
+        assertEquals(10, SleepText.extendMinutes(PlayerSleep(SleepKind.Off, stoppedAtMs = 5), options))
+        assertEquals("a Minutes sleep without a number falls back", 10, SleepText.extendMinutes(PlayerSleep(SleepKind.Minutes, 0), options))
     }
 }
