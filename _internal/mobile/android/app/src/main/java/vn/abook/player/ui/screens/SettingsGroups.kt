@@ -47,7 +47,6 @@ import vn.abook.player.ui.data.Quarters
 import vn.abook.player.ui.data.ReadingSurface
 import vn.abook.player.ui.data.SettingsGroup
 import vn.abook.player.ui.data.SettingsRepo
-import vn.abook.player.ui.data.ShakeAction
 import vn.abook.player.ui.data.ShakeSensitivity
 import vn.abook.player.ui.data.SleepSchedule
 import vn.abook.player.ui.data.ThemeMode
@@ -72,8 +71,7 @@ private object GroupCopy {
     const val FLIP = "Lật lên trong 10 phút là nghe tiếp."
     const val SOUNDS = "Tiếng khẽ khi bạn chọn. Im khi đang nghe."
     const val SCHEDULE = "Nghe trong khung giờ này thì tự hẹn giờ."
-    const val SHAKE = "Đang hẹn giờ, lắc nhẹ hai lần để thêm giờ."
-    const val SHAKE_ACTION = "Đặt lại: hẹn giờ quay về từ đầu."
+    const val SHAKE = "Đang hẹn giờ, lắc nhẹ hai lần để hẹn lại từ đầu."
     const val SURFACE = "Nền của chữ khi đọc theo."
     const val HAPTICS = "Rung nhẹ khi bạn chọn hay giữ."
     const val AUTO_PIP = "Rời app khi có sách mở thì sách thu vào cửa sổ mini."
@@ -167,11 +165,6 @@ fun SleepSettings(repo: SettingsRepo, sheets: SheetHost, onBack: () -> Unit, mod
             SwitchRow("Lắc để nghe thêm", settings.shakeToExtend, { on -> repo.change { it.copy(shakeToExtend = on) } }, "shake", GroupCopy.SHAKE)
             Reveal(settings.shakeToExtend) {
                 Column {
-                    RowLine()
-                    ChoiceSetting(
-                        "Khi lắc", ShakeAction.entries, settings.shakeAction,
-                        { action, _ -> repo.change { it.copy(shakeAction = action) } }, "shake_action", GroupCopy.SHAKE_ACTION,
-                    )
                     RowLine()
                     ChoiceSetting(
                         "Độ nhạy", ShakeSensitivity.entries, settings.shakeSensitivity,

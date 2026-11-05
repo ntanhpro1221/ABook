@@ -36,7 +36,6 @@ class ListenPrefsRangesTest {
         SleepTimer.extendMinutes = 10
         SleepTimer.fadeMs = 30_000L
         SleepTimer.shakeEnabled = true
-        SleepTimer.shakeResets = false
         SleepTimer.shakeThresholdG = 2.2
         SleepTimer.safetyStopHours = 2.0
         SleepTimer.schedule = null
@@ -48,7 +47,6 @@ class ListenPrefsRangesTest {
         "sleepFadeSeconds" -> SleepTimer.fadeMs / 1000.0
         "sleepExtendMinutes" -> SleepTimer.extendMinutes.toDouble()
         "safetyStopHours" -> SleepTimer.safetyStopHours
-        "shakeAction" -> if (SleepTimer.shakeResets) "reset" else "extend"
         "shakeSensitivity" -> when (SleepTimer.shakeThresholdG) { 1.6 -> "gentle"; 2.8 -> "firm"; 2.2 -> "normal"; else -> "?${SleepTimer.shakeThresholdG}" }
         else -> error(key)
     }
@@ -159,7 +157,7 @@ class ListenPrefsRangesTest {
     }
 
     @Test fun whatNativeRemembersAndHandsBackIsAlreadyInsideTheTable() {
-        ListenPrefs.apply(JSONObject("""{"sleepExtendMinutes":999,"sleepFadeSeconds":15,"safetyStopHours":"x","shakeAction":"spin","shakeSensitivity":7,"shakeToExtend":"no",
+        ListenPrefs.apply(JSONObject("""{"sleepExtendMinutes":999,"sleepFadeSeconds":15,"safetyStopHours":"x","shakeSensitivity":7,"shakeToExtend":"no",
             "schedule":{"from":"99:00","to":"06:00","minutes":30},"settingsStamp":"later"}"""))
         val stored = ListenPrefs.stored()
         for (key in natively()) assertEquals("$key đã nhớ", default(key), expected(stored.get(key)))

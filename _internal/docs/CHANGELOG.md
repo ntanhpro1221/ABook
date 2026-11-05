@@ -32,11 +32,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Bản ABook .dev dùng cổng và dịch vụ Bluetooth riêng, tìm và ghép được đồng thời với bản phát hành. Máy tính chỉ hiện lựa chọn “bản thử” khi điện thoại đang quảng bá dịch vụ ấy.
 
 - Bản cài thử không còn chiếm chỗ app thật. Nếu máy đang cài bản thử, mục Cập nhật nói rõ "Bản cài thử" thay vì tải một bản không cài được.
+- Hẹn giờ ngủ: "nghe thêm" (lắc máy hay nút trên thông báo) đưa đồng hồ về lại đúng số phút bạn đã hẹn, không cộng dồn thêm mỗi lần lắc. Nút đổi thành "Hẹn lại N phút"; hẹn theo chương hay vừa tự dừng thì về mức "Mỗi lần nghe thêm". Bỏ mục "Khi lắc" khỏi Cài đặt.
 
 ### Máy tính
 
 - Mở file sách để cập nhật một cuốn đã có thì thông báo nói tên cuốn ấy, như trên điện thoại.
 - Chặn phát hành khi thiếu bằng chứng kiểm tra: một lệnh chạy toàn bộ cổng phát hành, ghi số bài thử thật và báo rõ mục còn cần duyệt tay.
+- Hẹn giờ ngủ: khi sắp tắt, chạm phím hay chuột (hay nút "Hẹn lại N phút") đưa đồng hồ về lại đúng số phút bạn đã hẹn, không cộng dồn thêm.
 
 ## [0.4.162] - 2026-11-02
 

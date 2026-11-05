@@ -55,7 +55,7 @@ import { openShortcuts } from "./Shortcuts";
 import { useBookMusic } from "./EditBook";
 import { canPlay, continuingPart, newerElsewhere, otherBooksToHear, partToContinue, seriesOf, type ListenChapter, type Script } from "./model";
 import { SKIP_SECONDS, SPEEDS, useNowPlaying, usePlayer, type PlayerValue } from "./player";
-import { SLEEP_CHOICES, sleepButtonLabel, sleepExtended, sleepLabel, sleepLeftMs, sleepSpoken, type SleepMode, type SleepRequest } from "./sleep";
+import { SLEEP_CHOICES, sleepButtonLabel, sleepExtendLabel, sleepExtendMinutes, sleepExtended, sleepLabel, sleepLeftMs, sleepSpoken, type SleepMode, type SleepRequest } from "./sleep";
 import { useVoiceSample } from "./VoiceSettings";
 import { genderLabel, groupedVoices, groupLabel, voiceSections } from "./voiceGroups";
 import { revealVoiceSettings } from "./voiceSettingsLink";
@@ -993,7 +993,7 @@ export function SleepMenu({ look = "chip" }: { look?: MenuLook }) {
       }
       note={
         <>
-          Tiếng nhỏ dần {options.fadeSeconds} giây trước khi dừng. Lúc đó {EXTEND_GESTURE} để nghe thêm {options.extendMinutes} phút.
+          Tiếng nhỏ dần {options.fadeSeconds} giây trước khi dừng. Lúc đó {EXTEND_GESTURE} để hẹn lại từ đầu.
           {hadNight && " Sáng hôm sau, thẻ “Tối qua” giúp tìm lại đoạn còn nhớ."}
         </>
       }
@@ -1015,8 +1015,9 @@ export function RemoteSleepMenu({ sleep, name, onSet }: { sleep: SleepMode; name
       name={name}
       extendMinutes={options.extendMinutes}
       onExtend={() => {
+        // Loa / TV giữ số phút đã hẹn: hẹn lại là gửi lại đúng số ấy (không gửi phần còn lại), và chỉ khi nó dài hơn phần còn lại.
         const longer = sleepExtended(sleep, options.extendMinutes, sleep.kind === "minutes" && sleep.since !== null, now);
-        if (longer.kind === "minutes") onSet({ kind: "minutes", minutes: (sleepLeftMs(longer, now) ?? 0) / 60_000 });
+        if (longer.kind === "minutes" && (sleepLeftMs(longer, now) ?? 0) > (sleepLeftMs(sleep, now) ?? 0)) onSet({ kind: "minutes", minutes: longer.minutes });
       }}
       onSet={onSet}
       note={`Hết giờ thì ${name} tạm dừng, chỗ đang nghe được lưu.`}
@@ -1092,7 +1093,7 @@ function SleepPicker({
                 onClick={onExtend}
                 className="h-9 flex-1 rounded-control text-sm font-semibold text-accent-text hover:brightness-95"
               >
-                +{extendMinutes} phút
+                {sleepExtendLabel(sleepExtendMinutes(sleep, extendMinutes))}
               </button>
             </Popover.Close>
             <Popover.Close asChild>
@@ -1238,17 +1239,18 @@ function SleepRing({ fraction, children }: { fraction: number | null; children: 
   );
 }
 
-/** Đang nhỏ dần trước khi tắt: nói rõ và cho nghe thêm bằng một chạm. */
+/** Đang nhỏ dần trước khi tắt: nói rõ và cho hẹn lại bằng một chạm. */
 function FadingNotice({ className }: { className?: string }) {
-  const { fading, extendSleep, options } = usePlayer();
+  const { fading, extendSleep, options, sleep } = usePlayer();
+  const again = sleepExtendMinutes(sleep, options.extendMinutes);
   const content = () => {
   if (!fading) return null;
   return (
     <div className={cn("motion-appear flex items-center gap-3 rounded-cover px-3 py-2 text-sm text-accent-text", className)} role="status">
       <Moon className="size-4 shrink-0" />
-      <span className="min-w-0 flex-1">Sắp tắt · {EXTEND_GESTURE} để nghe thêm {options.extendMinutes} phút</span>
+      <span className="min-w-0 flex-1">Sắp tắt · {EXTEND_GESTURE} để hẹn lại {again} phút</span>
       <button type="button" onClick={() => extendSleep()} className="shrink-0 rounded-control bg-accent px-2.5 py-1 text-xs font-semibold text-accent-ink">
-        +{options.extendMinutes} phút
+        {sleepExtendLabel(again)}
       </button>
     </div>
   );
