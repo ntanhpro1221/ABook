@@ -835,13 +835,20 @@ def _command_create(args: argparse.Namespace) -> CommandResult:
         return CommandResult(data=preview)
 
     paths, db, used_settings = create_or_open_project(files, output_root, settings, args.title)
-    if args.settings_file is None and not db.casting_is_finalized():
+    if not db.casting_is_finalized():
         # Người kể "tôi" mà không chọn --narrator: giọng dẫn là mặc định máy, máy chọn cùng giới người ấy sau phân vai.
         from . import teller_voice
 
-        if teller_voice.auto_for_new_book(str(getattr(args, "first_person", "") or ""),
-                                          _chapter_narrators(getattr(args, "first_person_chapter", None)),
-                                          str(getattr(args, "narrator", "") or "")):
+        explicit_narrator = str(getattr(args, "narrator", "") or "")
+        if args.settings_file is not None:
+            raw = json.loads(Path(args.settings_file).read_text(encoding="utf-8"))
+            configured = str((raw.get("voices") or {}).get("narrator_voice") or "")
+            # Settings files include the default preset even without an owner choice.
+            # narratorAuto=false can explicitly retain that preset as the owner's choice.
+            auto = raw.get("narratorAuto", configured == build_settings()["voices"]["narrator_voice"])
+            explicit_narrator = "" if auto is True else configured
+        if teller_voice.auto_for_new_book(str(voices.get("first_person_identity") or ""),
+                                          voices.get("first_person_chapters"), explicit_narrator):
             teller_voice.mark_auto(paths.root)
     if getattr(args, "teller_mode", False):
         from . import teller_voice

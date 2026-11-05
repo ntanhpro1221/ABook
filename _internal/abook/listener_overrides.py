@@ -341,7 +341,8 @@ def narrator_voiced(row: Any, narrator_profile_id: int) -> bool:
     (`database.thought_reads_as_narrator`). Đổi giọng người kể thì đúng những câu này (đã thu) phải thu lại."""
     from .database import thought_reads_as_narrator
 
-    return (row["voice_profile_id"] is not None and int(row["voice_profile_id"]) == int(narrator_profile_id)) or (
+    return (str(row["speaker"] or "").upper() == "NARRATOR" and row["kind"] in ("narration", "thought")) or (
+        row["voice_profile_id"] is not None and int(row["voice_profile_id"]) == int(narrator_profile_id)) or (
         thought_reads_as_narrator(row["kind"], row["speaker"], row["voice_profile_id"]))
 
 
@@ -394,7 +395,10 @@ def _narrator_target(conn: sqlite3.Connection, *, preset: str, gender: str,
     if preset and preset not in choices:
         return None, UNKNOWN_PRESET
     now_reading = str(current["preset_name"] or "")
-    changing = bool(preset) and preset != now_reading
+    chapter_voice = conn.execute(
+        "SELECT 1 FROM segments WHERE UPPER(speaker)='NARRATOR' AND kind IN ('narration','thought')"
+        " AND voice_profile_id<>? LIMIT 1", (int(current["id"]),)).fetchone()
+    changing = bool(preset) and (preset != now_reading or chapter_voice is not None)
     if changing and preset in character_presets(conn):
         return None, VOICE_TAKEN
     return {

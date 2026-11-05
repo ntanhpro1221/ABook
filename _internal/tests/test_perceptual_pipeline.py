@@ -335,15 +335,15 @@ def test_ok_perceptual_result_records_separate_passing_evidence(tmp_path: Path) 
     assert pipeline._chapter_has_current_segment_audio_qa(int(chapter["id"])) is True
 
 
-@pytest.mark.parametrize("thinker_named", [True, False])
-def test_perceptual_qa_grades_a_thought_against_the_thinker(tmp_path: Path, thinker_named: bool) -> None:
+@pytest.mark.parametrize("speaker,explicit_profile", [("Lucien", True), ("NARRATOR", True), ("UNKNOWN", False)])
+def test_perceptual_qa_grades_a_thought_against_the_thinker(tmp_path: Path, speaker: str, explicit_profile: bool) -> None:
     """Inner monologue is read in the thinking character's voice, so it is graded there.
 
     Every thought used to be reassigned to the narrator, in the analysis, in the database
     and here - a character's inner voice came out as someone else entirely. It now keeps
     the thinker, which means the baseline must be the thinker's preview: grading against
     the narrator would compare a character to a reference that never spoke the line.
-    Only a thought nobody could be named for (speaker NARRATOR) is graded against the narrator.
+    Unknown thoughts fall back to the narrator; explicit chapter narrator profiles are preserved.
     """
     pipeline, chapter, row = _pipeline_with_asr_evidence(tmp_path)
     presets = list(VOICE_PREVIEW_FILENAMES)
@@ -362,7 +362,7 @@ def test_perceptual_qa_grades_a_thought_against_the_thinker(tmp_path: Path, thin
     with pipeline.db.connect() as conn:
         conn.execute(
             "UPDATE segments SET kind='thought', speaker=? WHERE id=?",
-            ("Lucien" if thinker_named else "NARRATOR", int(row["id"])),
+            (speaker, int(row["id"])),
         )
     verifier = RecordingPerceptualVerifier(
         {
@@ -385,7 +385,7 @@ def test_perceptual_qa_grades_a_thought_against_the_thinker(tmp_path: Path, thin
     # reference and manufacture a difference that is not in the audio.
     segment_profile = pipeline.db.voice_profile(int(row["voice_profile_id"]))
     assert str(segment_profile["preset_name"]) != narrator_preset
-    expected = segment_profile["preset_name"] if thinker_named else narrator_preset
+    expected = segment_profile["preset_name"] if explicit_profile else narrator_preset
     assert verifier.calls == [(str(expected), 0)]
 
 

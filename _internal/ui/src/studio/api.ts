@@ -147,7 +147,7 @@ export interface CastMember {
 }
 
 export interface Cast {
-  narrator: { voice: string; lines: number; seconds: number; profile: VoiceProfile | null; pendingVoice?: { preset: string; label?: string; gender: string } | null };
+  narrator: { chapterVoices?: string[]; voice: string; lines: number; seconds: number; profile: VoiceProfile | null; pendingVoice?: { preset: string; label?: string; gender: string } | null };
   characters: CastMember[];
   extras: CastMember[];
 }

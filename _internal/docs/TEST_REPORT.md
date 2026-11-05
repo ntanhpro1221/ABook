@@ -1089,3 +1089,14 @@ Bắt buộc smoke test một chapter 2.000–5.000 từ trước khi chạy boo
 - Final full native debug unit/build: 2862 tests total, 2855 passed, 0 failures/errors, 7 skipped; XML saved in shots/test-results-native.zip. Parity pytest: 8 passed, 0 failures/skipped. One additional bulk failure/explicit-choice test was added after the full run and is reported separately in report.md.
 - Native APK uses -PnativeUi -PbenchAppId=com.ngdtuanh.abook.dev. Headless ebook_pixel, ports 5584/5585, adb server 5038 only; emulator killed on completion. No physical phone app was operated, no adb server killed, no online voice/module downloaded, no commit.
 - Quality hash before/after c95fac04433a97e3b6a8c701514891b85718df8829d73313b7cd742dfb5fc9b8; no abook/ or desktop_qt/ source changes. Physical paired-Studio/Cast/Bluetooth network behavior was not exercised; endpoint shape and dispatch paths were source/JVM-verified.
+
+
+### 2026-11-06 - dev/teller-per-chapter (uncommitted)
+
+A+ chapter narrators reuse a differing-gender teller's character profile, including their own thoughts. Explicit narrator wishes/applied listener choices win globally; a missing auto flag alone is not a choice. No schema or preset additions.
+
+Final unique pytest results across 106 files: 2544 passed, 5 skipped, 0 FAILED/errors (105 direct-import files plus UI parity; corrected complete-file reruns replace earlier results). Chapter cases include TTS/preview/QA/candidate profile consistency, CLI settings-file auto selection, idempotence and transaction rollback/reopen. Initial failures and per-file JUnit counts are retained in scratchpad/codex/teller3/tests-per-file.md. Vitest: 34 passed; TypeScript: exit 0 in an isolated scratch copy because the shared dependency junction lacks Vitest. Kotlin targeted JVM suites: 45 passed, 0 failures/errors; parity checks passed. No live app, synthesis, GPU or devices.
+
+Preserved Your Story snapshot copy: 672 narration profiles changed in chapters 8-10 to Touka's existing Doan Trang profile; 670 recorded rows reset (146/263/261), 2 already unrecorded; 2871 other rows unchanged; repeat ensure changed zero rows. Source books queried using SQLite mode=ro only. Current live narration generation provenance already matches character profiles in all 672 Your Story and 619 Pain Pain Go Away affected rows; exact SELECT queries/IDs are in scratchpad/codex/teller3.
+
+Quality hash: f10085f96acd7f9fe6a066f2bf5a74338b0a351bea3d98f58f6d2807912cbfff -> 2ae1ce6e982077c17fa49a61ce1c561bac9bd237f031358650aa7159c7d31a35 (42 locked entries read from code). Dev branch only; merge waits for current book runs.

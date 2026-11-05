@@ -906,8 +906,8 @@ def test_a_thought_uses_its_thinkers_profile_and_only_an_unattributed_one_the_na
 
     spoken_row = generated["row"]
     profile = generated["profile"]
-    if speaker == "Lucien":
-        assert spoken_row["speaker"] == "Lucien"
+    if speaker in ("Lucien", "NARRATOR"):
+        assert spoken_row["speaker"] == speaker
         assert int(spoken_row["voice_profile_id"]) == character_profile_id
         assert str(profile["voice_key"]) == "lucien"
     else:

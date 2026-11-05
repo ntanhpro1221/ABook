@@ -2,14 +2,14 @@
 chính "tôi" đọc bằng giọng dẫn (lời "tôi" nói ra vẫn là giọng nhân vật; nội tâm của mọi người khác và mọi sách ngôi ba giữ nguyên
 quyết định 20-09 - `database.thought_reads_as_narrator`).
 
-MỘT chỗ đặt luật. Không sửa file khoá: kết quả ghi bằng đúng những đường người nghe đã dùng để đổi giọng dẫn / gán một câu nội tâm
+MỘT chỗ đặt luật. Chương khác giới giọng dẫn dùng giọng nhân vật của người kể. Kết quả ghi bằng những đường đổi giọng / gán nội tâm
 cho Người kể (`ProjectDB.apply_listener_speaker`, đổi preset của hồ sơ `narrator`), nên tts, kiểm bản thu, ứng viên chấm lại,
 `narrator_voiced`... chỉ đọc cột giọng như mọi khi và tự theo.
 
 - `Tellers`: "người kể 'tôi' của đoạn này" (đoạn người dùng đã nhận > chương > cả cuốn; "" = ngôi ba) - dùng chung với tab Kịch bản và
   hộp Việc cần duyệt (`webui/work_items.first_person_lookup`).
 - `ensure`: gọi từ worker ngay sau khi phân vai khoá và trước mỗi lần chạy (resume). Chỉ tự áp khi sách CHƯA thu câu nào; có âm thanh
-  rồi thì để hai thẻ trong hộp Việc cần duyệt (mặc định không áp).
+  rồi thì để hai thẻ trong hộp Việc cần duyệt; ngoại lệ khác giới theo chương vẫn tự áp và đặt lại đúng câu đổi giọng.
 - Sổ `studio_narrator.json` cạnh dự án (như `studio_precast.json`, chỉ Studio/worker ghi, không theo file .abook): `narratorAuto` = giọng
   dẫn là mặc định máy (người dùng không chọn) nên máy được chọn theo giới; `applied` = những gì máy đã làm (để không làm hai lần và
   không giẫm lên người nghe đã đổi lại); `mode` = ý người dùng ("narrator" mặc định, "teller" = B).
@@ -239,7 +239,7 @@ def ensure(project_root: Path | str, db: Any, settings: dict[str, Any], log: Cal
     ghi sự kiện cảnh báo, không bao giờ làm hỏng lượt chạy (người gọi bọc).
     - `mode == "teller"` (B, người dùng đã bật và đã xác nhận cái giá): áp B, kể cả sách đã có bản thu.
     - B đang áp mà người dùng đã tắt: trả về đúng như trước, rồi A+ chạy như thường.
-    - A+ (mặc định): chỉ tự áp khi sách CHƯA thu câu nào; có âm thanh rồi thì chỉ có hai thẻ trong hộp Việc cần duyệt."""
+    - A+ (mặc định): căn giọng cả cuốn khi chưa thu; ngoại lệ theo chương áp cả sách đã thu, đặt lại đúng câu đổi giọng."""
     if not db.casting_is_finalized():
         return {"skipped": "not_cast"}
     record = read(project_root)
@@ -255,6 +255,7 @@ def ensure(project_root: Path | str, db: Any, settings: dict[str, Any], log: Cal
         result.update(_enable_teller(project_root, db, tellers, log))
         return result
     result.update(_ensure_narrator_mode(project_root, db, settings, tellers, record, log))
+    result.update(_ensure_chapter_tellers(project_root, db, tellers))
     return result
 
 
@@ -269,7 +270,7 @@ def _ensure_narrator_mode(project_root: Path | str, db: Any, settings: dict[str,
         # (1) giọng dẫn cùng giới: chỉ khi máy chọn giọng dẫn (mặc định), người nghe chưa đổi nó (preset đang đọc còn là giọng của
         #     cài đặt), và máy chưa làm việc này.
         wanted: dict[str, Any] | None = None
-        if record["narratorAuto"] and "narrator" not in applied:
+        if record["narratorAuto"] and "narrator" not in applied and not _narrator_chosen(connection, project_root):
             from .listener_overrides import narrator_profile
 
             profile = narrator_profile(connection)
@@ -289,6 +290,18 @@ def _ensure_narrator_mode(project_root: Path | str, db: Any, settings: dict[str,
         applied["narrator"] = {"from": wanted["reading"], "to": wanted["preset"], "gender": wanted["gender"], "at": time.time()}
         result["narrator"] = applied["narrator"]
         log(f"Người kể xưng “tôi” là {'nữ' if wanted['gender'] == 'female' else 'nam'}: giọng dẫn đổi {wanted['reading']} -> {wanted['preset']}.")
+    if thoughts:
+        from .listener_overrides import narrator_profile
+
+        # Preserve a differing-gender teller's own profile before the book-wide
+        # thought rule can replace it; this also works for a thought-only character.
+        with db.connect() as connection:
+            base = narrator_profile(connection)
+            own = {name for name in {tellers.row_narrator(row) for row in thoughts}
+                   if base is not None and teller_gender(connection, name) not in ("", preset_gender(str(base["preset_name"])))
+                   and _teller_target(connection, name, int(base["id"])) is not None
+                   and not _narrator_chosen(connection, project_root)}
+        thoughts = [row for row in thoughts if tellers.row_narrator(row) not in own]
     if thoughts:
         wishes = _wishes(project_root)
         moved: dict[str, str] = dict(applied.get("thoughts") or {})
@@ -310,6 +323,71 @@ def _ensure_narrator_mode(project_root: Path | str, db: Any, settings: dict[str,
     if result:
         _save(project_root, applied=applied)
     return result
+
+
+def _narrator_chosen(connection: sqlite3.Connection, project_root: Path | str) -> bool:
+    """Only an explicit narrator wish/applied listener choice suppresses chapter voices.
+
+    narratorAuto=False is NOT evidence of a deliberate choice (CLI-created books also have it).
+    """
+    from .listener_overrides import read_overrides
+
+    entries = read_overrides(Path(project_root)).get("voices")
+    entry = entries.get(NARRATOR) if isinstance(entries, dict) else None
+    if isinstance(entry, dict) and str(entry.get("preset") or "").strip():
+        return True
+    return any(json.loads(row[0]).get("character") == NARRATOR for row in connection.execute(
+        "SELECT details_json FROM runtime_events WHERE code='VOICE_SET_BY_LISTENER'"))
+
+
+def _ensure_chapter_tellers(project_root: Path | str, db: Any, tellers: Tellers) -> dict[str, Any]:
+    """A+: differing-gender tellers narrate in their own character voice, including thoughts.
+
+    Keep NARRATOR as the narration label, and retain the teller's character id so a later
+    character voice change also reaches these lines. Existing per-line listener wishes win.
+    No profiles, presets or settings are created. Recorded changes use the normal reset path.
+    """
+    from .listener_overrides import narrator_profile
+
+    applied = read(project_root)["applied"]
+    wishes = _wishes(project_root)
+    groups: dict[tuple[int, int], list[Any]] = {}
+    with db.connect() as conn:
+        base = narrator_profile(conn)
+        if base is None or _narrator_chosen(conn, project_root):
+            return {}
+        gender = preset_gender(str(base["preset_name"] or ""))
+        if not gender:
+            return {}
+        targets = {}
+        previous_thoughts = applied.get("thoughts") or {}
+        for row in conn.execute("SELECT * FROM segments WHERE kind IN ('narration','thought') ORDER BY chapter_id,seq"):
+            stable = str(row["stable_id"])
+            if stable in wishes:
+                continue
+            name = tellers.row_narrator(row)
+            if name not in targets:
+                targets[name] = (_teller_target(conn, name, int(base["id"]))
+                                 if teller_gender(conn, name) not in ("", gender) else None)
+            target = targets[name]
+            if target is None:
+                continue
+            character, profile, _speaker = target
+            if row["kind"] == "narration":
+                eligible = str(row["speaker"]).upper() == NARRATOR
+            else:
+                eligible = row["canonical_character_id"] == character or (
+                    stable in previous_thoughts and previous_thoughts[stable] and
+                    character in character_ids(conn, str(previous_thoughts[stable])))
+            if eligible and (row["voice_profile_id"] != profile or row["canonical_character_id"] != character
+                             or str(row["speaker"]).upper() != NARRATOR):
+                groups.setdefault((character, profile), []).append(row)
+    changed = redo = 0
+    for (character, profile), rows in groups.items():
+        redo += _move_lines(db, rows, NARRATOR, character, profile,
+                            "Giọng kể theo chương: thu lại bằng giọng người kể")
+        changed += len(rows)
+    return {"chapterNarrator": {"lines": changed, "redo": redo}} if changed else {}
 
 
 def _wishes(project_root: Path | str) -> set[str]:

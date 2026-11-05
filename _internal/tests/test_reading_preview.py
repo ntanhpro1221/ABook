@@ -133,13 +133,13 @@ def test_the_preview_reads_the_new_name_in_the_speakers_own_voice(tmp_path: Path
     assert kwargs["style"] == "tu_nhien"
 
 
-@pytest.mark.parametrize("thinker_named, voice, style", [(True, "v_lucien", "tu_nhien"), (False, "narrator", "doc_truyen")])
-def test_a_thought_is_read_like_the_real_take(tmp_path: Path, monkeypatch, thinker_named: bool, voice: str, style: str) -> None:
+@pytest.mark.parametrize("speaker, voice, style", [("Lucien", "v_lucien", "tu_nhien"), ("NARRATOR", "v_lucien", "doc_truyen"), ("UNKNOWN", "narrator", "doc_truyen")])
+def test_a_thought_is_read_like_the_real_take(tmp_path: Path, monkeypatch, speaker: str, voice: str, style: str) -> None:
     """Người nghĩ có tên thì đọc bằng giọng họ; chỉ câu nội tâm không rõ ai nghĩ mới về người kể."""
     paths, db = _book_with_names(tmp_path)
     with db.connect() as conn:
         conn.execute("UPDATE segments SET kind='thought', speaker=? WHERE stable_id='c1s1'",
-                     ("Lucien" if thinker_named else "NARRATOR",))
+                     (speaker,))
     runtime = FakeVieNeuRuntime()
     _voices(runtime, monkeypatch)
 

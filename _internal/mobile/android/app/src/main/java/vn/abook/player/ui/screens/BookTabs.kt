@@ -366,6 +366,7 @@ private fun NarratorRow(cast: CastView, modifier: Modifier) {
         Column(Modifier.weight(1f)) {
             BasicText("Người kể chuyện", style = Abook.type.caption.copy(color = colors.text2))
             BasicText(Cast.narratorName(cast.narrator), style = Abook.type.bodyStrong, modifier = Modifier.padding(top = 2.dp))
+            cast.narrator.chapterVoices.forEach { RowHint(it) }
             RowHint(Cast.narratorCountLine(cast.narrator))
         }
     }
