@@ -5,6 +5,9 @@ package vn.abook.player.ui.voice
  * luồng nền; lỗi ném [VoiceFailure] (hay [IllegalStateException]) với câu đã sẵn cho người nghe. Không hàm nào trả hay ghi khoá thật: khoá đi xuống lõi một chiều.
  */
 interface VoiceSource {
+    suspend fun pick(): vn.abook.player.readaloud.EnginePickStatus = vn.abook.player.readaloud.EnginePickStatus()
+    suspend fun measurePick(): vn.abook.player.readaloud.EnginePickStatus = pick()
+    suspend fun choosePick(engine: String): vn.abook.player.readaloud.EnginePickStatus = pick()
     // ---- giọng tải về máy (VoiceModule) ----
 
     suspend fun module(kind: ModuleKind): ModuleStatus

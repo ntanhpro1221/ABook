@@ -23,6 +23,20 @@ import vn.abook.player.vieneu.VoiceModule
 class VoiceRepo(context: Context) : VoiceSource {
     private val app = context.applicationContext
 
+    override suspend fun pick() = io { vn.abook.player.readaloud.AndroidVoicePick.of(app).status() }
+
+    override suspend fun measurePick() = io {
+        android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND)
+        try {
+            check(!ReadAloud.active) { "Bạn hãy tạm dừng đọc trước khi thử giọng" }
+            vn.abook.player.readaloud.AndroidVoicePick.of(app).apply { measure() }.status()
+        } finally { android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_DEFAULT) }
+    }
+
+    override suspend fun choosePick(engine: String) = io {
+        vn.abook.player.readaloud.AndroidVoicePick.of(app).apply { setOverride(engine) }.status()
+    }
+
     private suspend fun <T> io(block: () -> T): T = withContext(Dispatchers.IO) {
         Playback.init(app)
         block()

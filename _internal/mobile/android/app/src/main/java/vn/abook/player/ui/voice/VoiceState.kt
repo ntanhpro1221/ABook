@@ -67,6 +67,8 @@ class VoiceState(
     private val moduleFlow = MutableStateFlow(ModuleKind.entries.associateWith { ModuleUi() })
     private val progresses = ModuleKind.entries.associateWith { MutableStateFlow(0f) }
     private val keyFlow = MutableStateFlow(KeysUi())
+    private val pickFlow = MutableStateFlow(vn.abook.player.readaloud.EnginePickStatus())
+    val pick: StateFlow<vn.abook.player.readaloud.EnginePickStatus> = pickFlow
     private val consentFlow = MutableStateFlow<Set<String>>(emptySet())
     private val sampleFlow = MutableStateFlow(SampleUi())
     private val musicFlow = MutableStateFlow(MusicUi())
@@ -132,6 +134,7 @@ class VoiceState(
     /** Mở màn Giọng đọc: đọc trạng thái hai mô-đun, các khoá, và những nhà cung cấp bạn đã đồng ý gửi chữ tới (nền, không chặn). */
     fun openVoice() {
         visible = true
+        refreshPick()
         for (kind in ModuleKind.entries) scope.launch { refresh(kind) }
         loadKeys()
         loadConsents()
@@ -162,6 +165,7 @@ class VoiceState(
         if (status.working) watch(kind)
         if (before?.working == true && !status.working) {
             voicesChanged()
+            refreshPick()
             for (other in ModuleKind.entries.filter { it != kind }) scope.launch { refresh(other) }
         }
     }
@@ -202,12 +206,38 @@ class VoiceState(
         scope.launch { attempt { source.measure(kind) }.onSuccess { apply(kind, it) } }
     }
 
+    fun measurePick() {
+        if (pickFlow.value.measuring) return
+        pickFlow.update { it.copy(measuring = true, error = "") }
+        scope.launch {
+            attempt { source.measurePick() }.onSuccess { pickFlow.value = it; voicesChanged() }
+                .onFailure { e -> pickFlow.update { it.copy(measuring = false, error = message(e, "Thử không được")) } }
+        }
+    }
+
+    private fun refreshPick() {
+        scope.launch {
+            attempt { source.pick() }.onSuccess { status ->
+                pickFlow.value = status
+                if (!status.measuring && status.installed.any { id -> status.engines.none { it.engine == id } }) measurePick()
+            }
+        }
+    }
+
+    fun choosePick(engine: String) {
+        scope.launch {
+            attempt { source.choosePick(engine) }.onSuccess { pickFlow.value = it; voicesChanged() }
+                .onFailure { e -> pickFlow.update { it.copy(error = message(e, "Chưa đổi được")) } }
+        }
+    }
+
     /** Gỡ một lựa chọn khỏi máy. Null = xong, khác null = câu lỗi. */
     suspend fun remove(kind: ModuleKind, choice: String): String? {
         val result = attempt { source.remove(kind, choice) }
         result.onSuccess { status ->
             apply(kind, status)
             voicesChanged()
+            refreshPick()
             for (other in ModuleKind.entries.filter { it != kind }) refresh(other)
         }
         return result.exceptionOrNull()?.let { message(it, "Chưa gỡ được ${kind.title}") }

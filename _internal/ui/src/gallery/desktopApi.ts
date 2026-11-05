@@ -338,6 +338,8 @@ const ROUTES: [string, RegExp, Handler][] = [
   // Cài đặt.
   ["GET", /^\/api\/readaloud\/(vieneu|supertonic)$/, () => moduleStatus()],
   ["GET", /^\/api\/readaloud\/voice-speed$/, () => ({ choice: "auto", voices: [] })],
+  // "Giọng theo máy": như hai thẻ tải ở trên, máy chưa có giọng nào để thử.
+  ["GET", /^\/api\/readaloud\/voice-pick$/, () => ({ state: "empty", engines: [], auto: null, override: "", chosen: null })],
   ["GET", /^\/api\/readaloud\/online$/, () => [
     { id: "azure", name: "Microsoft Azure", limits: { max_chars: 3000, free: "500.000 ký tự / tháng", timings: "exact", region: true }, hasKey: false, masked: "", region: "", valid: false, voices: 0 },
   ]],
