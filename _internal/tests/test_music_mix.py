@@ -244,6 +244,8 @@ ORIGINAL, SUBSTITUTE = "https://x/original.mp3", "https://x/substitute.mp3"
 def test_a_substitute_track_in_the_book_package_drops_the_tail_and_carries_its_own_audible_part(tmp_path: Path) -> None:
     # Cờ `tail` chỉ đúng cho bài đã lập lịch (kết đúng ở `stopAt`): bài thay dài ngắn khác thì không được thôi lặp / vào sớm theo nó.
     project = make_project(tmp_path)
+    from tests.test_webui_listen_and_sync import write_chapter_audio
+    write_chapter_audio(project, 310)
     plan = {"version": music_plan.PLAN_VERSION, "enabled": True, "levelDb": -20.0,
             "tracks": {ORIGINAL: {"lufs": -20.0}}, "scenes": [
                 {"chapterId": 1, "key": "1:1", "start": 0.0, "end": 300.0, "stopAt": 200.0, "link": ORIGINAL}]}

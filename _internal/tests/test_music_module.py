@@ -402,7 +402,7 @@ def test_packing_a_pinned_track_into_a_book_file_and_playing_it_need_no_ffmpeg(s
     assert all("lufs" not in track and not track["analysed"] for track in imported)
     mine = imported[0]["link"]
     _local_plan(project, mine)
-    out = bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}", music_track=app.music_export_source())
+    out = bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}", music_track=app.music_export_source(), partial=True)
     digest = music_plan.local_hash(mine)
     with zipfile.ZipFile(out) as archive:
         assert archive.read(f"music/{digest}.flac") == songs["flac"].read_bytes()
