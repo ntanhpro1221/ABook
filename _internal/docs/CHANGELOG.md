@@ -20,6 +20,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Máy tính
 
 - Mở file sách để cập nhật một cuốn đã có thì thông báo nói tên cuốn ấy, như trên điện thoại.
+- Chặn phát hành khi thiếu bằng chứng kiểm tra: một lệnh chạy toàn bộ cổng phát hành, ghi số bài thử thật và báo rõ mục còn cần duyệt tay.
 
 ## [0.4.162] - 2026-11-02
 

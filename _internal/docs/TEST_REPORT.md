@@ -1,5 +1,12 @@
 # Test report
 
+## 05-11-2026 — release gate, milestone 2 (dev/release-gate)
+
+- `scripts/release_gate.py` chạy các cổng nguồn với timeout, đọc summary pytest/Vitest, XML Gradle mới và đủ suite Qt offscreen; lưu bảng/JSON/log tại `runtime/release_gate`. Kiểm tra cần người/thiết bị hiện MANUAL và chặn exit 0. `release.py publish` gọi cổng trước mọi thao tác đăng.
+- Tự kiểm: fake runner exit 0 nhưng có failed/error, output rỗng, timeout, all-pass exit 0, thiếu công cụ, dependency đỏ, XML sai, từ cấm, CRLF và dữ liệu riêng; publish không được đi tiếp khi gate đỏ. Fixture summary pytest chạy thật tại worktree này và dòng Vitest từ báo cáo a90a có ghi nguồn.
+- Kết quả tự kiểm, bảng chạy thật toàn bộ và fault injection được ghi đầy đủ ở `result.md` của task; không sửa lỗi nền, không commit, không dùng GPU/Ollama/adb/thiết bị. Hash file khoá đọc từ code, trước sửa `f10085f96acd7f9fe6a066f2bf5a74338b0a351bea3d98f58f6d2807912cbfff`.
+- Kết quả cuối: 50 bài tự kiểm passed; full gate exit 1 (14 PASS, 10 FAIL, 5 MANUAL). Android: 3303 passed/7 skipped, 377 suite, 0 failed/error. Qt sau sửa harness: 523 passed/0 failed từ 15 suite, QML lint qua; WidthTests timeout 360 giây/thiếu summary. Full pytest timeout 2400 giây trước summary; Vitest thiếu module, UI/gallery build thiếu export EighthNote từ dependency ở junction. Cheap checks exit 0; fault injection exit 1. Hash sau kiểm vẫn bằng trước sửa.
+
 ## 03-11-2026 — unchanged-audio cover re-import (dev/cover-reimport)
 
 - Android and desktop `.abook` imports now compare the base book layer even when audio is identical, then stage and swap changed metadata/assets while reusing unchanged audio. Cover addition, replacement, metadata-only updates and removal preserve listener title/cover precedence. Local sidecars/workshop survive listening-package refreshes. Desktop cover metadata is staged with the image. Repeating an EPUB/TXT selection retains its existing behavior.
