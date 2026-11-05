@@ -166,7 +166,7 @@ interface PlaybackCore {
     /** Hẹn giờ ngủ: `mode` = "off" | "minutes" | "chapter". */
     fun setSleep(mode: String, minutes: Int)
 
-    /** "+N phút": nghe thêm khi hẹn giờ sắp tắt (mức N là mức "Mỗi lần nghe thêm" của Cài đặt). Mặc định: không làm gì (lõi giả). */
+    /** "Hẹn lại N phút": đồng hồ về N phút (số đã chọn; hết chương thì mức "Mỗi lần nghe thêm" của Cài đặt), không cộng thêm. Mặc định: không làm gì (lõi giả). */
     fun extendSleep() = Unit
 
     /** Giọng đọc máy của cuốn đang nạp. */

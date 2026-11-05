@@ -12,12 +12,13 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import org.json.JSONObject
+import vn.abook.player.ui.nowplaying.SleepText
 import java.util.Calendar
 import kotlin.math.pow
 import kotlin.math.sqrt
 
 /**
- * Hẹn giờ ngủ: tắt sau N phút hoặc hết chương, tiếng nhỏ dần trước khi dừng, lắc máy để nghe thêm.
+ * Hẹn giờ ngủ: tắt sau N phút hoặc hết chương, tiếng nhỏ dần trước khi dừng, lắc máy để hẹn lại (đồng hồ về N phút, không cộng dồn).
  *
  * Lắc được cả khi đang nhỏ dần và trong 2 phút sau khi đã tự dừng (người nghe vẫn còn thức, lắc để nghe tiếp).
  * Máy rung nhẹ để xác nhận mà không phải mở mắt nhìn màn hình.
@@ -35,6 +36,7 @@ object SleepTimer {
     /** Thời gian còn lại tính tới mốc runningSinceMs; runningSinceMs = 0 nghĩa là đồng hồ đang đứng (đang dừng). */
     private var remainingMs = 0L
     private var runningSinceMs = 0L
+    /** Số phút người nghe CHỌN lúc hẹn giờ này (không phải thời gian còn lại): "Hẹn lại" đưa đồng hồ về đúng số này, không bao giờ hơn. Ghi cùng hẹn giờ ([persist]). 0 = không ai chọn (lưới an toàn ngủ quên): "Hẹn lại" dùng "Mỗi lần nghe thêm". */
     private var minutes = 0
     var safetyStopHours = 2.0
     /** Lịch đêm: (từ phút-trong-ngày, đến phút-trong-ngày, số phút hẹn) hoặc null. */
@@ -42,10 +44,9 @@ object SleepTimer {
     private var scheduleOffFor = ""
     private var stoppedAtMs = 0L
     var fadeMs = 30_000L
+    /** "Mỗi lần nghe thêm" của Cài đặt: số phút "Hẹn lại" khi hẹn theo chương hay vừa tự dừng (hẹn phút thì là số đã chọn, [extendTarget]). */
     var extendMinutes = 10
     var shakeEnabled = true
-    /** Lắc = đặt lại từ đầu khoảng đã hẹn (như Smart AudioBook Player), thay vì cộng thêm `extendMinutes`. */
-    var shakeResets = false
     /** Ngưỡng một cú lắc, tính bằng g: nhỏ = nhẹ tay cũng tính (Cài đặt: nhẹ tay 1,6 / vừa 2,2 / mạnh tay 2,8). */
     var shakeThresholdG = 2.2
     private var ticking = false
@@ -117,7 +118,7 @@ object SleepTimer {
 
     fun setMinutes(value: Int, reason: String? = null) {
         mode = Mode.MINUTES
-        minutes = value
+        minutes = if (reason == "safety") 0 else value // lưới an toàn đếm 1 phút nhưng không ai chọn số phút: 0 = "Hẹn lại" về "Mỗi lần nghe thêm" ([SleepText.extendMinutes])
         remainingMs = value * 60_000L
         runningSinceMs = if (playing()) System.currentTimeMillis() else 0L
         stoppedAtMs = 0
@@ -153,18 +154,25 @@ object SleepTimer {
         Playback.emit("sleep")
     }
 
-    /** Thêm giờ: đang hẹn phút thì cộng thêm; đang hẹn hết chương thì chuyển thành N phút kể từ bây giờ. */
-    fun extend(extra: Int = extendMinutes) {
-        // Hẹn giờ đã hết (hay đã tắt): nút "Nghe thêm" cũ còn trên thông báo không được dựng hẹn giờ mới ngoài ý bạn - như máy tính (extendSleep: kind off thì bỏ qua). Lắc sau khi vừa tự dừng có đường riêng ([onShake]).
+    /** Số phút "Hẹn lại" của hẹn giờ hiện tại: hẹn phút thì số người nghe đã chọn, hết chương thì [extendMinutes] (một hàm với nhãn nút: [SleepText.extendMinutes]). */
+    fun extendTarget(): Int = SleepText.extendMinutes(mode == Mode.MINUTES, minutes, extendMinutes)
+
+    /**
+     * Nghe thêm = hẹn lại: đồng hồ về đúng [extendTarget] phút, không bao giờ hơn (lắc nhiều lần không cộng dồn). Còn lại đã >= số ấy thì giữ nguyên, chỉ trả tiếng.
+     * Đang hẹn hết chương thì chuyển thành N phút kể từ bây giờ.
+     */
+    fun extend() {
+        // Hẹn giờ đã hết (hay đã tắt): nút "Hẹn lại" cũ còn trên thông báo không được dựng hẹn giờ mới ngoài ý bạn - như máy tính (extendSleep: kind off thì bỏ qua). Lắc sau khi vừa tự dừng có đường riêng ([onShake]).
         if (mode == Mode.OFF) return
         val now = System.currentTimeMillis()
-        remainingMs = (if (mode == Mode.MINUTES) leftMs(now) else 0L) + extra * 60_000L
+        val target = extendTarget()
+        remainingMs = maxOf(if (mode == Mode.MINUTES) leftMs(now) else 0L, target * 60_000L)
         runningSinceMs = if (playing()) now else 0L
         if (mode != Mode.MINUTES) {
             mode = Mode.MINUTES
             Playback.player?.pauseAtEndOfMediaItems = false
         }
-        minutes = (remainingMs / 60_000L).toInt()
+        minutes = target
         restoreVolume()
         tick()
         persist()
@@ -174,23 +182,24 @@ object SleepTimer {
     /** Vừa tự dừng chưa tới 2 phút: cảm biến còn nghe để "lắc để nghe tiếp". */
     fun stoppedRecently(now: Long = System.currentTimeMillis()) = stoppedAtMs > 0 && now - stoppedAtMs < 125_000L
 
-    /** Lắc máy: đang hẹn giờ thì nghe thêm; vừa tự dừng (< 2 phút) thì phát tiếp và hẹn lại. */
+    /** Lắc máy: đang hẹn giờ thì hẹn lại ([extend]); vừa tự dừng (< 2 phút) thì phát tiếp và hẹn [extendMinutes] phút. */
     fun onShake() {
         if (!shakeEnabled) return
-        val now = System.currentTimeMillis()
-        when {
-            mode != Mode.OFF -> {
-                if (shakeResets && mode == Mode.MINUTES && minutes > 0) setMinutes(minutes) else extend()
-                Bedtime.event("shake")
-                buzz(longArrayOf(0, 60, 80, 60))
-            }
-            stoppedAtMs > 0 && now - stoppedAtMs < 120_000L -> {
-                Playback.play()
-                setMinutes(extendMinutes)
-                Bedtime.event("shake")
-                buzz(longArrayOf(0, 60, 80, 60))
-            }
+        if (applyShake(System.currentTimeMillis())) {
+            Bedtime.event("shake")
+            buzz(longArrayOf(0, 60, 80, 60))
         }
+    }
+
+    /** Phần đổi hẹn giờ của cú lắc (tách khỏi rung / nhật ký để thử trên JVM): true khi có việc đã làm. */
+    internal fun applyShake(now: Long): Boolean = when {
+        mode != Mode.OFF -> { extend(); true }
+        stoppedAtMs > 0 && now - stoppedAtMs < 120_000L -> {
+            Playback.play()
+            setMinutes(extendMinutes)
+            true
+        }
+        else -> false
     }
 
     fun onChapterChanged() {

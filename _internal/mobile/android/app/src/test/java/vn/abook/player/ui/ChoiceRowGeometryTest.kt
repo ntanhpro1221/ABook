@@ -28,7 +28,6 @@ import org.robolectric.annotation.GraphicsMode
 import vn.abook.player.ui.components.ChoiceRow
 import vn.abook.player.ui.data.Choice
 import vn.abook.player.ui.data.ReadingSurface
-import vn.abook.player.ui.data.ShakeAction
 import vn.abook.player.ui.data.ShakeSensitivity
 import vn.abook.player.ui.data.ThemeMode
 import vn.abook.player.ui.data.VoiceSpeedChoice
@@ -83,7 +82,6 @@ class ChoiceRowGeometryTest {
         "PairMethod" to PairMethod.entries,
         "ThemeMode" to ThemeMode.entries,
         "ReadingSurface" to ReadingSurface.entries,
-        "ShakeAction" to ShakeAction.entries,
         "ShakeSensitivity" to ShakeSensitivity.entries,
         "VoiceSpeedChoice" to VoiceSpeedChoice.entries,
         "ExportFormat" to ExportFormat.entries,

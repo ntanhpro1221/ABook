@@ -55,11 +55,12 @@ Item {
         function test_sleep_choices_and_extend() {
             const menu = createTemporaryObject(sleep, host, {width: host.width, height: host.height})
             menu.show(); tryCompare(menu, "fadeSeconds", 45); tryCompare(menu, "extendMinutes", 15)
-            clickReady(findChild(menu, "sleepChoice_15")); compare(Player.sleepKind, "minutes"); verify(!menu.open)
+            clickReady(findChild(menu, "sleepChoice_30")); compare(Player.sleepKind, "minutes"); verify(!menu.open)
             menu.show(); tryCompare(menu, "open", true); ready()
-            const before = Player.clock.sleepLeft
+            // Hẹn lại về số đã chọn (30), không phải "Mỗi lần nghe thêm" (15) và không cộng thêm.
+            compare(findChild(menu, "sleepExtend").text, "Hẹn lại 30 phút")
             clickReady(findChild(menu, "sleepExtend"))
-            fuzzyCompare(Player.clock.sleepLeft, before + 900, 1)
+            fuzzyCompare(Player.clock.sleepLeft, 1800, 1)
             clickReady(findChild(menu, "sleepOff")); compare(Player.sleepKind, "off")
             menu.show(); tryCompare(menu, "open", true); ready(); clickReady(findChild(menu, "sleepChapter")); compare(Player.sleepKind, "chapter")
         }

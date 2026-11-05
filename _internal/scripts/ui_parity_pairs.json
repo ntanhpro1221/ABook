@@ -542,7 +542,7 @@
         },
         {
           "side": "native",
-          "match": "^(bật:\\ nút\\ trước/sau\\ lùi/tới\\ \\{\\}\\ giây\\.\\ tắt:\\ chuyển\\ chương|nút\\ tai\\ nghe\\ lùi/tới|cử\\ chỉ|khi\\ lắc|lật\\ lên\\ trong\\ \\{\\}\\ phút\\ là\\ nghe\\ tiếp|lắc\\ để\\ nghe\\ thêm|úp\\ máy\\ để\\ dừng|đang\\ hẹn\\ giờ,\\ lắc\\ nhẹ\\ hai\\ lần\\ để\\ thêm\\ giờ|đặt\\ lại:\\ hẹn\\ giờ\\ quay\\ về\\ từ\\ đầu|độ\\ nhạy|cộng\\ thêm|nhẹ\\ tay|vừa|mạnh\\ tay|rung|rung\\ nhẹ\\ khi\\ bạn\\ chọn\\ hay\\ giữ)$",
+          "match": "^(bật:\\ nút\\ trước/sau\\ lùi/tới\\ \\{\\}\\ giây\\.\\ tắt:\\ chuyển\\ chương|nút\\ tai\\ nghe\\ lùi/tới|cử\\ chỉ|lật\\ lên\\ trong\\ \\{\\}\\ phút\\ là\\ nghe\\ tiếp|lắc\\ để\\ nghe\\ thêm|úp\\ máy\\ để\\ dừng|đang\\ hẹn\\ giờ,\\ lắc\\ nhẹ\\ hai\\ lần\\ để\\ hẹn\\ lại\\ từ\\ đầu|độ\\ nhạy|nhẹ\\ tay|vừa|mạnh\\ tay|rung|rung\\ nhẹ\\ khi\\ bạn\\ chọn\\ hay\\ giữ)$",
           "reason": "phone sensors, headset buttons and vibration: a computer has no shake / flip / haptic / headset-button settings"
         },
         {

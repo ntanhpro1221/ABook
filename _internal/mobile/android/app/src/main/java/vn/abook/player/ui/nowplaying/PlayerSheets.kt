@@ -138,7 +138,7 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                             RowHint(SleepText.heading(state.sleep.kind))
                             SleepClock(state.sleep, model.position)
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Dim.s16)) {
-                                TextAction(SleepText.extendLabel(options.extendMinutes), { model.extendSleep(); window.closeSheet() }, "sleep_extend", align = Alignment.CenterStart)
+                                TextAction(SleepText.extendLabel(SleepText.extendMinutes(state.sleep, options)), { model.extendSleep(); window.closeSheet() }, "sleep_extend", align = Alignment.CenterStart)
                                 TextAction("Tắt hẹn giờ", { model.setSleep(SleepKind.Off); window.closeSheet() }, "sleep_off", align = Alignment.CenterStart)
                             }
                         } else {

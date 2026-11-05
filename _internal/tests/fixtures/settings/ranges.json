@@ -6,7 +6,6 @@
     "sleepFadeSeconds": { "values": [10, 30, 60], "default": 30 },
     "sleepExtendMinutes": { "values": [5, 10, 15], "default": 10 },
     "safetyStopHours": { "values": [0, 1, 2, 3], "default": 2 },
-    "shakeAction": { "values": ["extend", "reset"], "default": "extend" },
     "shakeSensitivity": { "values": ["gentle", "normal", "firm"], "default": "normal" }
   },
   "booleans": {
