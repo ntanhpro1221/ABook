@@ -78,6 +78,15 @@ android {
         }
     }
     buildTypes {
+        debug {
+            // Bản debug ký bằng khoá debug, khác khoá bản phát hành: nếu mang đúng gói của app thật thì nó chiếm chỗ app thật và Android từ chối
+            // mọi bản cập nhật (05-11: máy chủ sách kẹt ở 0.4.147). Nên bản debug luôn cài dưới gói riêng ".dev"; -PbenchAppId (bài đo) đặt
+            // gói khác và thắng.
+            if (!project.hasProperty("benchAppId")) {
+                applicationIdSuffix ".dev"
+            }
+            versionNameSuffix "-dev"
+        }
         release {
             // R8: thu nhỏ mã + tài nguyên (APK nhỏ hơn). Luật giữ ở proguard-rules.pro; mapping.txt phải cất lại sau mỗi bản
             // phát hành (docs/RELEASING.md), không có nó thì stack trace của bản thu nhỏ không đọc được.

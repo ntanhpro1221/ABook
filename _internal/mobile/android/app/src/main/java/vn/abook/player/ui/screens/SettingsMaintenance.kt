@@ -19,6 +19,7 @@ fun MaintenanceSections(env: SettingsEnv, sheets: SheetHost) {
     val repo = env.repo
     val old by repo.oldSaves.collectAsState()
     val update by repo.update.collectAsState()
+    val trial by repo.trialBuild.collectAsState()
     val problem by repo.problem.collectAsState()
     val notice by repo.notice.collectAsState()
     LaunchedEffect(repo) { repo.loadMaintenance() }
@@ -48,6 +49,11 @@ fun MaintenanceSections(env: SettingsEnv, sheets: SheetHost) {
             ListSection("Cập nhật") {
                 ActionRow("Có bản mới ${release.version}", "Tải", { env.links.openRelease(release.apk ?: release.page) }, "update_download", "Cài đè; sách và chỗ đang nghe giữ nguyên.")
             }
+        }
+    }
+    Reveal(trial) {
+        ListSection("Cập nhật") {
+            ListRow("Bản cài thử", Modifier.testTag("update_trial"), "Bản cài thử, không cập nhật được bằng nút này - cài bản phát hành từ GitHub.")
         }
     }
     Reveal(problem.isNotBlank()) { Caption(problem, Modifier.testTag("maintenance_problem")) }

@@ -65,6 +65,8 @@ interface SettingsCore {
     fun deleteOldSave(name: String) {}
     fun exportOldSave(name: String, uri: String) {}
     fun release(): AppRelease? = null
+    /** Bản đang chạy ký bằng khoá bản phát hành ([ReleaseSigning]); false = bản cài thử, không nhận được bản cập nhật tải từ GitHub. */
+    fun releaseSigned(): Boolean = true
     fun tellRelease(version: String): Boolean = false
     /** Tuỳ chọn đã nhớ ở kho native, dạng `ListenPrefs.stored()` + `autoMusic`. */
     fun load(): JSONObject
@@ -116,6 +118,8 @@ class SettingsRepo(private val core: SettingsCore, private val scope: CoroutineS
     }
     val oldSaves = MutableStateFlow<List<OldSave>>(emptyList())
     val update = MutableStateFlow<AppRelease?>(null)
+    /** Bản cài thử (khác khoá phát hành): hàng "Cập nhật" nói thẳng thay vì mời tải bản sẽ bị từ chối. */
+    val trialBuild = MutableStateFlow(false)
     val notice = MutableStateFlow("")
     val problem = MutableStateFlow("")
     val maintenanceBusy = MutableStateFlow(false)
@@ -125,6 +129,8 @@ class SettingsRepo(private val core: SettingsCore, private val scope: CoroutineS
             oldSaves.value = withContext(io) { core.oldSaves() }
             if (withContext(io) { core.freshOldSaves(oldSaves.value.map { it.name }) })
                 notes.say("Có ${oldSaves.value.size} bản lưu cũ chưa trả lại được - mở trong Cài đặt", "Mở Cài đặt") { openAdvanced() }
+            trialBuild.value = !withContext(io) { core.releaseSigned() }
+            if (trialBuild.value) { update.value = null; return@launch }
             val release = withContext(io) { core.release() }
             update.value = release?.takeIf { AppRelease.newer(it.version, version) }
             update.value?.let { if (withContext(io) { core.tellRelease(it.version) }) {
