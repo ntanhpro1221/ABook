@@ -117,14 +117,11 @@ def test_engine_voices_have_balance_keys_and_a_missing_one_is_an_error() -> None
 # (trước là "Anh Khôi") nay đứng sau "Thiền Tâm Đức" - 2 nhân vật đổi chỗ hai giọng ấy, 1 nhân vật đổi bậc cao độ (2 -> 3).
 # Bản trên main 14b4f06a: fe9c6cbd4189b73cded4eb2f79cbd9559b15b04d6182821d5272e2820ff70fb9.
 # 05-11 (dev/cast-rank) đổi CÓ CHỦ ĐÍCH: phán quyết giọng nam của chủ sách vào `assets/voice_rank.json` (nhân vật nam: Xuân Vĩnh trước,
-# rồi Đức Trí/Thiền Tâm Đức/Phạm Tuyên, rồi Thái Sơn/Adam; nữ: Đoan Trang, Ngọc Linh, rồi nhóm ổn; thứ tự giọng dẫn theo bậc kể chuyện), Thái Sơn và
+# rồi Đức Trí/Thiền Tâm Đức/Phạm Tuyên, rồi Thái Sơn/Adam; nữ: Ngọc Linh, Đoan Trang, rồi nhóm ổn; thứ tự giọng dẫn theo bậc kể chuyện), Thái Sơn và
 # Thục Đoan ra khỏi LAST_RESORT_PRESETS, trẻ con đi bằng preset nữ nguyên giọng (cao độ 0, formant 1,0).
 # Bản trước đó: 2bffd9a02889d1cb634048d7236bdb6f470b872a43c3dac8441a706cd7339339.
-# 05-11 Mai Anh: mở đúng vai chủ sách xếp hạng, thêm vào pool nữ và đầu bảng narrator nữ.
-# Bản trước khi mở Mai Anh: c97f8c1a34cd53e0e52a18eee69029ee8806da8017da0648c77c0705824e4c67.
-# 05-11 tối, chủ sách đổi ý: Đoan Trang tự nhiên hơn Ngọc Linh -> Đoan Trang đứng trên ở cả bậc kể chuyện lẫn nhân vật nữ.
-# Bản trước đó: 682f81519f9fa1c3be1e684f755b1be583e33ae105ddbd533a1e863316980dd1.
-ALLOCATOR_APPROVED = "6f39abe9a234499a2a0d31c236a36f192b9a7d2f903653be679ab2d052e40049"
+# 06-11: Mai Anh withdrawn; narrator female starts with Đoan Trang, character female with Ngọc Linh.
+ALLOCATOR_APPROVED = "136258871e0ca8626309ce49dfaafc877edfe46b0190e7671182babf8a38f3ec"
 
 
 def test_automatic_casting_stays_on_the_approved_vieneu_pool() -> None:

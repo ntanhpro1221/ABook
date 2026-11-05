@@ -3,26 +3,6 @@
 Cùng một câu, các giọng khác nhau về tốc độ và độ to vì mỗi giọng thu riêng, không có mốc chung. Cách chữa:
 mỗi giọng có MỘT bản ghi hằng số đo trước; lúc thu máy tự áp, không đo-rồi-kéo từng câu.
 
-## Mai Anh bổ sung 05-11
-
-Chủ sách xếp Mai Anh đầu bảng kể chuyện nữ; nhãn tin tức trong catalog không còn chặn vai được xếp hạng.
-Đo bổ sung nhỏ trên CPU PyTorch fp32, VieNeu 3.8.3, hai luồng, năm câu dò trung tính của
-`scripts/compare_voice_regions.py`, hạt 20260831 và 20260832: 10 bản Mai Anh và 10 bản Phạm Tuyên.
-Bộ 40 câu của phép đo 04-10 không có trong worktree này; không coi đây là tái lập nguyên bộ ấy.
-
-Tốc độ chuẩn hoá bằng trung bình log tỉ lệ cùng câu/cùng hạt với Phạm Tuyên (r = 1), không dời mốc cũ:
-`r = 1.0803`. VAD khung 10 ms, ngưỡng dưới đỉnh 35 dB, bỏ lặng mép và quãng lặng ít nhất 150 ms.
-Bootstrap theo năm cụm câu cho khoảng 95% `[1.0591, 1.1007]`; chưa có tập kiểm độc lập.
-LUFS đo sau WSOLA và từng bậc formant Praat, trung bình 10 bản: f100 = −19,81; các bậc còn lại
-f087 −20,28 / f092 −20,03 / f093 −20,01 / f095 −19,94 / f097 −19,92 / f099 −19,94 /
-f104 −20,34 / f108 −20,67 / f112 −20,97. Mọi bậc giữ `o_db = 0`, `pitch_st = 0`.
-
-Preview hai câu chuẩn cho F0 trung vị 203,8 Hz, F3 trung bình 3059,9 Hz, chiều dài ống thanh 14,3 cm,
-đo cùng `audition_presets.acoustics` như các giọng trước. Cache CPU mang revision 61b85e3d..., nhưng cả
-năm file `VOICE_MODEL_FILES` khớp kích thước và SHA-256 với pin 8b7e9cff...; không sửa refs/cache.
-Không suy ra waveform CPU bằng GPU từng byte. Số thô, WAV, script và hash nằm trong
-`measurements/` ở gốc tác vụ Mai Anh; nhập 10 khóa bằng `voice_balance_import.py --create`.
-
 ## Cách áp trong app
 
 ### Khoá giọng và bảng
