@@ -193,15 +193,15 @@ export const SAMPLE_TEXT = "Xin chào, tôi sẽ đọc sách cho bạn nghe. B�
 /** Giọng VieNeu kể chuyện TRUNG TÍNH của từng bản (mô-đun tải riêng), theo thứ tự ưu tiên - giọng cho người nghe chưa chọn gì. Không bao giờ lấy
  *  giọng đầu danh sách: ở cả hai bản đó là "Adam bựa" / "Adam" (giọng nam có cá tính, không hợp một lời kể đầu tiên - soát a66: tải Nano xong mọi
  *  cuốn chưa chọn lặng lẽ thành Adam).
- *  - Turbo, chọn từ danh sách giọng của Studio (abook/voice_catalog.py): "Phạm Tuyên" là giọng dẫn truyện mặc định của Studio cho giọng nam (Nam ·
- *    Bắc · Tự nhiên, giọng chuẩn ít vùng miền nhất), "Ngọc Linh" là giọng dẫn truyện mặc định cho giọng nữ (Nữ · Bắc · Kể chuyện), "Thanh Bình"
+ *  - Turbo, chọn từ danh sách giọng của Studio (abook/voice_catalog.py): "Đức Trí" là giọng dẫn truyện mặc định của Studio cho giọng nam (Nam ·
+ *    Nam · Kể chuyện, giọng đứng đầu nhóm kể chuyện tốt theo chủ sách 05-11), "Ngọc Linh" là giọng dẫn truyện mặc định cho giọng nữ (Nữ · Bắc · Kể chuyện), "Thanh Bình"
  *    (Nam · Bắc · Kể chuyện) là giọng kể chuyện chủ sách đã chỉnh trầm xuống cho êm.
  *  - Nano không có giọng nào ở trên: "Ái Hân" (nữ) - cùng giới với giọng mặc định trước khi tải (Edge Hoài My) nên người nghe không thấy đổi giới,
  *    là giọng app đã mời khi mất mạng ("Đọc bằng Ái Hân", localVoiceFor) và giọng đo tốc độ đọc của Nano (abook/readaloud/prepare.py); rồi "Mỹ
  *    Duyên" (nữ, chủ sách giữ nguyên tốc độ khi chấm giọng Studio), "Đức Trí" (nam, giọng dẫn truyện chủ sách chọn ở Studio).
  *  Cùng danh sách ở bản Android (readaloud/NarratorVoice.kt); bộ ví dụ chung tests/fixtures/default_voice. */
 export const NARRATOR_VOICES: Record<string, readonly string[]> = {
-  turbo: ["Phạm Tuyên", "Ngọc Linh", "Thanh Bình"],
+  turbo: ["Đức Trí", "Ngọc Linh", "Thanh Bình"],
   nano: ["Ái Hân", "Mỹ Duyên", "Đức Trí"],
 };
 
