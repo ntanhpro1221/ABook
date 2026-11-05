@@ -52,6 +52,7 @@ import vn.abook.player.ui.components.fadeEdges
 import vn.abook.player.ui.motion.Motion
 import vn.abook.player.ui.screens.PickRow
 import vn.abook.player.ui.studio.parts.AnswerButton
+import vn.abook.player.ui.studio.parts.ClipButton
 import vn.abook.player.ui.studio.parts.ClipProblem
 import vn.abook.player.ui.studio.parts.LineSample
 import vn.abook.player.ui.studio.parts.SideBySide
@@ -147,7 +148,7 @@ internal fun WorkCard(item: WorkItem, deckSize: Int, state: StudioProjectState, 
         }
         Column(Modifier.fillMaxWidth().padding(top = Dim.s16), verticalArrangement = Arrangement.spacedBy(Dim.s8)) {
             when (template) {
-                CardTemplate.Choose -> if (item.narratorSection != null) NarratorAnswers(item, state, sheets) else SpeakerAnswers(item, state, sheets)
+                CardTemplate.Choose -> if (item.narratorSection != null) NarratorAnswers(item, state, sheets) else SpeakerAnswers(item, state, sheets, clip)
                 CardTemplate.Reading -> ReadingAnswers(item, state)
                 CardTemplate.Voice -> VoiceAnswers(item, state, sheets)
                 CardTemplate.Listen -> {
@@ -170,7 +171,7 @@ private fun scopeOptions(item: WorkItem): List<Option<WorkScope>> = listOf(
 )
 
 @Composable
-private fun SpeakerAnswers(item: WorkItem, state: StudioProjectState, sheets: SheetHost) {
+private fun SpeakerAnswers(item: WorkItem, state: StudioProjectState, sheets: SheetHost, clip: ClipState) {
     val work = state.work
     var scope by rememberSaveable(item.key) { mutableStateOf(WorkScope.Alternate) }
     val left = remember(item.key) { mutableStateOf(emptySet<String>()) }
@@ -196,10 +197,16 @@ private fun SpeakerAnswers(item: WorkItem, state: StudioProjectState, sheets: Sh
         RowLine()
     }
     shown.forEachIndexed { index, choice ->
-        AnswerButton(
-            choice.label, { pick(choice.value) }, "studio_choice_$index",
-            primary = index == 0 && item.kind != WorkKind.Unnamed && item.suggested, enabled = !none,
-        )
+        val primary = index == 0 && item.kind != WorkKind.Unnamed && item.suggested
+        if (choice.sampleId == null && choice.samplePreset == null) {
+            AnswerButton(choice.label, { pick(choice.value) }, "studio_choice_$index", primary = primary, enabled = !none)
+        } else {
+            // Nghe giọng người ấy ngay cạnh nút chọn (một câu đã thu của họ, như tab Nhân vật).
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                AnswerButton(choice.label, { pick(choice.value) }, "studio_choice_$index", Modifier.weight(1f), primary = primary, enabled = !none)
+                ClipButton(StudioWorkState.clipId(choice), clip, { work.playChoice(choice) }, "studio_choice_play_$index")
+            }
+        }
     }
     item.currentValue?.let { current -> AnswerButton(WorkText.keepName(item), { pick(current) }, "studio_keep", enabled = !none) }
     item.newPerson?.let { name -> AnswerButton(item.newPersonLabel ?: "Tạo nhân vật", { pick(name, "unknown") }, "studio_new_person", enabled = !none) }

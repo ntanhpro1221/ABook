@@ -17,7 +17,7 @@ import sqlite3
 from collections import Counter, defaultdict
 from contextlib import closing
 from pathlib import Path
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any, Callable
 
 from .. import aliases as alias_book
 from .. import names as renames
@@ -32,6 +32,9 @@ from .address_cues import address_doubts, split_doubts
 from .humanize import person_name, shown_reading
 from .reviews import awaiting, review_items
 from .reviews import speaker_label as _speaker_label
+
+if TYPE_CHECKING:
+    from .vocatives import Call
 
 # Độ chói tai khi máy sai ở khía cạnh ấy (1 = người nghe nhận ra ngay: giọng sai người, sai giới).
 SEVERITY = {
@@ -57,8 +60,13 @@ EXAMPLES = 3
 # hỏi khi phép đổi chạm từ ngần này câu: dưới đó, giọng sai ở vài câu chưa đáng một lần bấm (Diễn biến vẫn ghi mọi phép đổi).
 # Các phép đổi thật đo trên cổng 11-10 là 5-61 câu, nên 5 vẫn hỏi mọi ca đã thấy.
 SNAP_MIN_LINES = 5
-# Thẻ "gọi tên chính người nói": tối đa ngần này người nói quanh câu làm ứng viên đầu tiên.
-NEARBY_CHOICES = 4
+# Thẻ "gọi tên chính người nói" (vocatives.py): ngần này người có tên làm ứng viên (cộng người kể, vai phụ không tên), và khả
+# năng máy sai. Đo 05-11 trên đáp án (95 chương, cặp "câu x người được gọi" mà người ấy không phải người nói): lời gọi 498/503
+# sai nếu gán cho người được gọi (luật gốc riêng 391/395; 09-10 trên nhãn thật của model 30/30); cặp lời gọi 6/6 - mẫu nhỏ, nên
+# hỏi nhẹ hơn.
+CALL_CHOICES = 3
+CALL_DOUBT = 0.95
+REPLY_DOUBT = 0.7
 # Thẻ "Ai nói câu này" theo logprob (speaker_logprobs.py): câu mà token đầu của tên người nói có p_first dưới ngưỡng là câu
 # đáng ngờ (19 chương cổng 09-10: duyệt 20% câu p_first thấp nhất -> 54% câu duyệt là câu sai, đúng chặt 75,4 -> 86,2), và chỉ hỏi
 # tối đa ngần này phần số câu thoại có số đo của sách.
@@ -131,15 +139,24 @@ def _example(row: Any, names: dict[int, dict[str, Any]], label: Callable[[str], 
 
 
 def _refine_speaker_cards(project_root: Path, items: list[dict[str, Any]]) -> None:
-    """Hai việc cho thẻ gán người nói cho MỘT câu (“Ai nói câu này”), cả hai chỉ làm thẻ dễ quyết hơn:
+    """Ba việc cho thẻ gán người nói cho MỘT câu (“Ai nói câu này”, “Gọi hay nói”), cả ba chỉ làm thẻ dễ quyết hơn:
     - gắn câu liền trước và liền sau (mọi người nói) vào câu ví dụ - `before` / `after`: không thấy ai vừa nói, ai được nhắc tới thì không quyết được;
     - bỏ khỏi lựa chọn người CHƯA có giọng trong sách (chưa nói câu nào): bấm vào chỉ ra lỗi "chưa gán được" (`listener_overrides.speaker_target`
-      cùng phép thử với lúc ghi yêu cầu, nên chip còn lại luôn bấm được)."""
-    cards = [item for item in items if item["kind"] == "speaker" and len(item["examples"]) == 1]
+      cùng phép thử với lúc ghi yêu cầu, nên chip còn lại luôn bấm được);
+    - gắn `sampleId` (một câu đã thu của người ấy, như tab Nhân vật - `store.voice_samples`) cho mỗi người được đề xuất: nghe giọng
+      trước khi chọn."""
+    cards = [item for item in items if item["kind"] in ("speaker", "vocative") and len(item["examples"]) == 1]
     if not cards:
         return
     with closing(store.connect(project_root)) as connection:
         voiced: set[str] | None = None
+        samples = store.voice_samples(connection)
+        from .voice_picker import preview_file
+        presets = {int(row[0]): str(row[1]) for row in connection.execute("SELECT id, preset_name FROM voice_profiles")} \
+            if "voice_profiles" in store._table_names(connection) else {}
+        previews = {preset for preset in set(presets.values()) if preview_file(preset) is not None}
+        people_profiles = {str(row[0]): int(row[1]) for row in connection.execute(
+            "SELECT speaker, MIN(voice_profile_id) FROM segments WHERE voice_profile_id IS NOT NULL GROUP BY speaker")} if previews else {}
         for item in cards:
             example = item["examples"][0]
             rows = connection.execute("SELECT seq, text FROM segments WHERE chapter_id = ? AND seq IN (?, ?)",
@@ -148,6 +165,19 @@ def _refine_speaker_cards(project_root: Path, items: list[dict[str, Any]]) -> No
             for key, seq in (("before", example["seq"] - 1), ("after", example["seq"] + 1)):
                 if around.get(seq, "").strip():
                     example[key] = around[seq]
+            for choice in item.get("choices") or []:
+                if choice["value"] in samples:
+                    choice["sampleId"] = samples[choice["value"]]
+                elif previews:
+                    profile_id = people_profiles.get(choice["value"])
+                    if profile_id is None and item.get("lines"):
+                        line = item["lines"][0]
+                        target, _reason = speaker_target(connection, stable_id=line["stableId"],
+                                                        text_sha256=line["textSha256"], speaker=choice["value"])
+                        profile_id = target["voice_profile_id"] if target else None
+                    preset = presets.get(profile_id, "")
+                    if preset in previews:
+                        choice["samplePreset"] = preset
             lines = item.get("lines") or []
             if len(lines) != 1 or not item.get("choices"):
                 continue
@@ -469,17 +499,24 @@ def minor_role_groups(lines_by_speaker: dict[str, list[Any]], decided: set[str])
 
 
 def self_addressed(connection: Any, chapter_id: int | None = None, project_root: Path | None = None) -> dict[int, list[str]]:
-    """segments.id -> những người có tên nói quanh câu (gần nhất trước), cho câu thoại gán cho người mà chính câu ấy GỌI
-    ("Lucien, ..." / "..., Satomi-san." / "Karin-nim"): không ai gọi tên chính mình - gần như chắc sai (100% theo đáp án,
-    `first_person.addressed_names`). Luật tự sửa của dây chuyền (`_repair_dialogue_turns_by_address`) chỉ sửa khi chắc; câu
-    nó để nguyên rơi vào đây, nên hộp việc hỏi đúng những câu ấy. Tính lúc xem từ SQLite - không có dấu nào lưu. Người
-    nói KHÔNG bị đổi. Thêm câu nghĩ thầm gọi người được gán kèm kính ngữ (`_self_honorific_thoughts`). `chapter_id`: chỉ xét câu của chương ấy (người có tên và cách gọi vẫn tính trên cả cuốn).
-    `project_root` (cả cuốn): nhớ theo chữ ký sổ như `merged_turns`."""
-    from ..character_registry import self_addressed as registry_self_addressed  # nặng: chỉ nạp khi dựng hộp việc
+    """segments.id -> những người có tên nên được hỏi trước (`calls_of`), cho câu gán cho người mà chính câu ấy GỌI."""
+    return {key: call.people for key, call in calls_of(connection, chapter_id, project_root).items()}
+
+
+def calls_of(connection: Any, chapter_id: int | None = None, project_root: Path | None = None) -> dict[int, Call]:
+    """segments.id -> `vocatives.Call` (người nên được hỏi trước, người vừa gọi ở câu trước) cho câu thoại gán cho người mà
+    chính câu ấy GỌI ("Lucien, ..." / "..., Satomi-san." / "Đừng lo, anh Rowan."): không ai gọi tên chính mình - gần như chắc sai
+    (luật gốc `first_person.addressed_names` đo 05-11 391/395; cả bộ của `vocatives.caller_doubts` 498/503). Luật tự
+    sửa của dây chuyền (`_repair_dialogue_turns_by_address`) chỉ dùng luật gốc và chỉ sửa khi chắc; câu nó để nguyên và các lời
+    gọi chỉ hộp việc bắt rơi vào đây, nên hộp việc hỏi đúng những câu ấy. Tính lúc xem từ SQLite - không có dấu nào lưu. Người
+    nói KHÔNG bị đổi. Thêm câu nghĩ thầm gọi người được gán kèm kính ngữ (`_self_honorific_thoughts`). `chapter_id`: chỉ xét câu
+    của chương ấy (người có tên và cách gọi vẫn tính trên cả cuốn). `project_root` (cả cuốn): nhớ theo chữ ký sổ như
+    `merged_turns`."""
+    from .vocatives import Call, caller_doubts  # nặng: chỉ nạp khi dựng hộp việc
 
     if chapter_id is None and project_root is not None:
-        return listing_cache.cached(("self_addressed", str(project_root)), store.db_signature(project_root),
-                                    lambda: self_addressed(connection))
+        return listing_cache.cached(("calls_of", str(project_root)), store.db_signature(project_root),
+                                    lambda: calls_of(connection))
 
     tables = store._table_names(connection)
     columns = {str(row[1]) for row in connection.execute("PRAGMA table_info(segments)")}
@@ -503,8 +540,8 @@ def self_addressed(connection: Any, chapter_id: int | None = None, project_root:
         return chapter_id is None or int(row["chapter_id"]) == chapter_id
 
     return {
-        **_self_honorific_thoughts(rows, aliases, in_scope),
-        **registry_self_addressed(rows, aliases, in_scope),
+        **{key: Call(people) for key, people in _self_honorific_thoughts(rows, aliases, in_scope).items()},
+        **caller_doubts(rows, aliases, in_scope),
     }
 
 
@@ -936,7 +973,7 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
             for row in connection.execute("SELECT id, voice_key, preset_name FROM voice_profiles")
         } if "voice_profiles" in store._table_names(connection) else {}
         turns = merged_turns(connection, project_root=project_root)
-        self_addressed_ids = self_addressed(connection, project_root=project_root)
+        calls = calls_of(connection, project_root=project_root)
         name_pairs, anonymous_cards, anonymous_evidence = speaker_suggestions(connection, project_root)
         pronunciations = connection.execute(
             "SELECT surface, spoken_form, confidence, locked FROM pronunciations WHERE confidence < 0.9"
@@ -1141,28 +1178,33 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
             "requested": {"male": "Nam", "female": "Nữ"}.get(wish["gender"]) if wish is not None else None,
         })
 
-    # 2. Người nói lại chính là người được GỌI ("Lucien, ..." / "..., Satomi-san." mà nhãn là LUCIEN/SATOMI): không ai gọi tên
-    #    chính mình - sai 100% theo đáp án (self_addressed). Ứng viên: người có tên nói trong 6 đoạn quanh đó (gần nhất trước),
-    #    rồi người nói nhiều nhất chương; đây chính là những câu luật tự sửa của dây chuyền không chắc nên để nguyên.
+    # 2. Người nói lại chính là người được GỌI ("Lucien, ..." / "..., Satomi-san." / "Đừng lo, anh Rowan." mà nhãn là LUCIEN/SATOMI/ROWAN):
+    #    không ai gọi tên chính mình (calls_of, vocatives.py). Ứng viên: tối đa ba người - người vừa gọi người ấy ở câu trước,
+    #    người đang trò chuyện với họ, người có tên nói gần nhất, rồi người nói nhiều nhất chương - cộng người kể và vai phụ không tên.
+    #    Đây chính là những câu luật tự sửa của dây chuyền không chắc nên để nguyên, cộng những lời gọi chỉ hộp việc bắt.
     for row in spoken:
-        if int(row["id"]) not in self_addressed_ids:
+        call = calls.get(int(row["id"]))
+        if call is None:
             continue
         speaker = str(row["speaker"])
         name = speaker_label(speaker)
-        nearby = [{"label": speaker_label(person), "value": person} for person in self_addressed_ids[int(row["id"])]]
-        choices = nearby[:NEARBY_CHOICES]
-        choices += _cast_choices(spoken, {int(row["chapter_id"])}, {speaker.casefold()}, speaker_label)[:max(0, 4 - len(choices))]
+        choices = [{"label": speaker_label(person), "value": person} for person in call.people[:CALL_CHOICES]]
+        known = {speaker.casefold()} | {person.casefold() for person in call.people}
+        choices += _cast_choices(spoken, {int(row["chapter_id"])}, known, speaker_label)
+        choices = list({choice["value"]: choice for choice in choices}.values())[:CALL_CHOICES]
         choices += [{"label": "Người kể", "value": NARRATOR}, {"label": "Vai phụ không tên", "value": UNNAMED}]
         fix = _speaker_fix([row], choices, speaker, speaker_wishes, speaker_label)
         if fix is None:
             continue
+        caller = speaker_label(call.caller) if call.caller else ""
         items.append({
             "kind": "vocative",
             "key": f"vocative:{row['id']}",
             "title": "Tên người nghe",
-            "problem": f"Câu nhắc tên {name} có thể nói với hoặc nói về họ — bạn kiểm tra người nói.",
+            "problem": (f"Câu trước {caller} gọi {name}; câu này lại nhắc {name} — có thể vẫn là {caller} nói." if caller
+                        else f"Câu nhắc tên {name} có thể nói với hoặc nói về họ — bạn kiểm tra người nói."),
             "affected": 1,
-            "doubt": 0.7,
+            "doubt": REPLY_DOUBT if call.caller else CALL_DOUBT,
             "options": ["Chọn người nói khác", "Giữ nguyên"],
             "current": name,
             "examples": [_example(row, names, speaker_label, audio)],

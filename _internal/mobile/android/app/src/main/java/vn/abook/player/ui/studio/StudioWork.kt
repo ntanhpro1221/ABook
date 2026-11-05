@@ -56,9 +56,10 @@ data class WorkExample(
     val names: List<String>,
 )
 
-/** Nút trả lời của thẻ chọn người nói; `name` là tên người khi nhãn không phải tên ("Gộp vào Kati"). */
+/** Nút trả lời của thẻ chọn người nói; `name` là tên người khi nhãn không phải tên ("Gộp vào Kati"); `sampleId`: một câu đã
+ *  thu của người ấy - nghe giọng ngay cạnh nút (như tab Nhân vật). */
 @Immutable
-data class WorkChoice(val label: String, val value: String, val name: String?)
+data class WorkChoice(val label: String, val value: String, val name: String?, val sampleId: Int? = null, val samplePreset: String? = null)
 
 /** Nút trả lời của thẻ giọng / giới (web `VoiceChoice`); các trường `null` thì không gửi. */
 @Immutable
@@ -171,7 +172,11 @@ internal object StudioWorkJson {
         names = json.optJSONArray("names").strings(),
     )
 
-    private fun choice(json: JSONObject) = WorkChoice(json.text("label"), json.text("value"), json.textOrNull("name")?.takeIf { it.isNotEmpty() })
+    private fun choice(json: JSONObject) = WorkChoice(
+        json.text("label"), json.text("value"), json.textOrNull("name")?.takeIf { it.isNotEmpty() },
+        if (json.has("sampleId") && !json.isNull("sampleId")) json.optInt("sampleId") else null,
+        json.textOrNull("samplePreset")?.takeIf { it.isNotEmpty() },
+    )
 
     private fun voiceOption(json: JSONObject) = VoiceOption(
         label = json.text("label"),
