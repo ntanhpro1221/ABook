@@ -21,6 +21,7 @@ from pathlib import Path
 import numpy as np
 
 from abook.audio_io import atomic_write_wav
+from tests.audio_fixtures import quiet_edges
 from abook.pipeline import SPOKEN_TEXT_DRIFT_MESSAGE, BookPipeline
 from abook.recovery import recover_project
 from tests.test_recovery import setup_db
@@ -53,6 +54,7 @@ def _recorded(paths, db, settings, row):
     """Một đoạn có bản thu hợp lệ: đúng lối `test_recovery` dựng."""
     wav = paths.chunks / "c.wav"
     audio = np.sin(np.linspace(0, 30, 48000, dtype=np.float32)) * 0.1
+    audio = quiet_edges(audio)
     checksum, metrics = atomic_write_wav(wav, audio, 48000, row["text"], settings)
     db.mark_signal_passed(
         int(row["id"]),

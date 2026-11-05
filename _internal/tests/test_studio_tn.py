@@ -68,7 +68,7 @@ def test_an_anchor_after_a_changed_word_points_at_its_name_in_the_new_string(tmp
     _pronounce(db, "Michael", "Mai-cồ")
     text, anchors = coordinator.spoken_text_with_anchors({"text": "Chương IV: gặp HP, rồi Michael đã đi."})
     assert text == "Chương bốn: gặp hát pê, rồi Mai-cồ đã đi."
-    assert [text[anchor["spoken_start"]:anchor["spoken_end"]] for anchor in anchors] == ["Mai-cồ"]
+    assert [text[anchor["spoken_start"]:anchor["spoken_end"]] for anchor in anchors if not anchor.get("asr_alias_only")] == ["Mai-cồ"]
 
 
 def test_the_books_pronunciation_table_beats_the_word_rules(tmp_path: Path) -> None:
@@ -76,7 +76,7 @@ def test_the_books_pronunciation_table_beats_the_word_rules(tmp_path: Path) -> N
     _pronounce(db, "HP", "ách pi")
     text, anchors = coordinator.spoken_text_with_anchors({"text": "Chương IV: HP của Michael."})
     assert text == "Chương bốn: ách pi của Michael."
-    assert [text[anchor["spoken_start"]:anchor["spoken_end"]] for anchor in anchors] == ["ách pi"]
+    assert [text[anchor["spoken_start"]:anchor["spoken_end"]] for anchor in anchors if not anchor.get("asr_alias_only")] == ["ách pi"]
 
 
 def test_a_cue_still_becomes_a_breath_and_the_anchor_after_it_holds(tmp_path: Path) -> None:
@@ -84,7 +84,7 @@ def test_a_cue_still_becomes_a_breath_and_the_anchor_after_it_holds(tmp_path: Pa
     _pronounce(db, "Michael", "Mai-cồ")
     text, anchors = coordinator.spoken_text_with_anchors({"text": "[thở dài] Aaaa, Michael đã đi."})
     assert text.startswith("Hầy...")
-    assert [text[anchor["spoken_start"]:anchor["spoken_end"]] for anchor in anchors] == ["Mai-cồ"]
+    assert [text[anchor["spoken_start"]:anchor["spoken_end"]] for anchor in anchors if not anchor.get("asr_alias_only")] == ["Mai-cồ"]
 
 
 def test_the_book_origin_is_guessed_once(tmp_path: Path, monkeypatch) -> None:

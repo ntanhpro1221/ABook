@@ -13,6 +13,7 @@ from abook.audio_io import (
     validate_audio_array,
 )
 from abook.config import build_settings
+from tests.audio_fixtures import quiet_edges
 
 NORMAL = (12.5, 24.5)
 RATE = 48_000
@@ -24,7 +25,7 @@ LINE = "Người kể chuyện đọc thật chậm rãi từng chữ một tron
 
 def _tone(seconds: float) -> np.ndarray:
     count = int(round(RATE * seconds))
-    return (0.3 * np.sin(np.linspace(0.0, 2 * np.pi * 180 * seconds, count))).astype(np.float32)
+    return quiet_edges(0.3 * np.sin(np.linspace(0.0, 2 * np.pi * 180 * seconds, count)), RATE)
 
 
 def test_the_floor_moves_with_the_scale() -> None:

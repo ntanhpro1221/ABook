@@ -8,6 +8,7 @@ import pytest
 import soundfile as sf
 
 from abook.audio_io import atomic_write_wav
+from tests.audio_fixtures import quiet_edges
 from abook.background_runner import BACKGROUND_DIRECTORY
 from abook.config import build_settings, settings_hash
 from abook.database import (
@@ -83,6 +84,7 @@ def test_recovery_never_deletes_background_control_part_files(tmp_path: Path) ->
 def complete_project_with_current_qa(paths, settings, db, row):
     wav = paths.chunks / "chapter_00001" / "0000000.wav"
     audio = np.sin(np.linspace(0, 30, 48_000, dtype=np.float32)) * 0.1
+    audio = quiet_edges(audio)
     wav_checksum, metrics = atomic_write_wav(wav, audio, 48_000, row["text"], settings)
     db.mark_signal_passed(
         int(row["id"]),
@@ -147,6 +149,7 @@ def test_recovery_preserves_valid_committed_wav_and_removes_part(tmp_path: Path)
     paths, settings, db, row = setup_db(tmp_path)
     wav = paths.chunks / "c.wav"
     audio = np.sin(np.linspace(0, 30, 48000, dtype=np.float32)) * 0.1
+    audio = quiet_edges(audio)
     checksum, metrics = atomic_write_wav(wav, audio, 48000, row["text"], settings)
     db.mark_signal_passed(
         int(row["id"]), wav_path=wav, wav_sha256=checksum,
@@ -208,6 +211,7 @@ def test_recovery_does_not_trust_wav_replaced_before_sqlite_commit(tmp_path: Pat
     paths, settings, db, row = setup_db(tmp_path)
     wav = paths.chunks / "chapter_00001" / "0000000.wav"
     audio = np.sin(np.linspace(0, 30, 48000, dtype=np.float32)) * 0.1
+    audio = quiet_edges(audio)
     db.mark_generating(int(row["id"]), seed=5678)
     atomic_write_wav(wav, audio, 48000, row["text"], settings)
 
@@ -315,6 +319,7 @@ def test_completed_project_without_current_quality_metadata_is_not_fast_pathed(
     paths, settings, db, row = setup_db(tmp_path)
     wav = paths.chunks / "chapter_00001" / "0000000.wav"
     audio = np.sin(np.linspace(0, 30, 48_000, dtype=np.float32)) * 0.1
+    audio = quiet_edges(audio)
     checksum, metrics = atomic_write_wav(wav, audio, 48_000, row["text"], settings)
     db.mark_signal_passed(
         int(row["id"]),
@@ -385,6 +390,7 @@ def test_recovery_requeues_legacy_verified_wav_for_asr_without_resetting_audio(
     paths, settings, db, row = setup_db(tmp_path)
     wav = paths.chunks / "chapter_00001" / "0000000.wav"
     audio = np.sin(np.linspace(0, 30, 48_000, dtype=np.float32)) * 0.1
+    audio = quiet_edges(audio)
     checksum, metrics = atomic_write_wav(wav, audio, 48_000, row["text"], settings)
     db.mark_signal_passed(
         int(row["id"]),
@@ -451,6 +457,7 @@ def test_recovery_preserves_incumbent_and_exposes_candidate_resume_plan(tmp_path
         )
     wav = paths.chunks / "chapter_00001" / "0000000.wav"
     audio = np.sin(np.linspace(0, 30, 48_000, dtype=np.float32)) * 0.1
+    audio = quiet_edges(audio)
     wav_sha256, metrics = atomic_write_wav(wav, audio, 48_000, row["text"], settings)
     spoken_text_sha256 = hashlib.sha256(str(row["text"]).encode("utf-8")).hexdigest()
     metrics.update(
@@ -537,6 +544,7 @@ def test_recovery_invalidates_corrupt_candidate_and_advances_round(tmp_path: Pat
         )
     incumbent = paths.chunks / "chapter_00001" / "0000000.wav"
     audio = np.sin(np.linspace(0, 30, 48_000, dtype=np.float32)) * 0.1
+    audio = quiet_edges(audio)
     incumbent_sha256, incumbent_metrics = atomic_write_wav(
         incumbent,
         audio,

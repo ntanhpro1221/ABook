@@ -329,6 +329,8 @@ def test_the_pace_floor_follows_the_shared_knob_and_x(monkeypatch) -> None:
     settings = build_settings("high_quality")
     t = np.arange(int(RATE * 3.0)) / RATE
     audio = (0.3 * np.sin(2 * np.pi * 180 * t)).astype(np.float32)
+    from tests.audio_fixtures import quiet_edges
+    audio = quiet_edges(audio, RATE)
     text = "Người kể chuyện đọc thật chậm rãi từng chữ một trong đêm dài"
     _, metrics = audio_io.validate_audio_array(
         audio, text, settings, RATE, {"pace": "normal", "kind": "narration"}
