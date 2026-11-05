@@ -138,7 +138,7 @@ def cut(text: str, origin: str | None = None, speaks_english: bool = True, readi
     said = spoken_tokens(toks, origin, speaks_english, readings)
 
     def half(first: int, last: int) -> Unit:
-        return Unit(first, last, [" ".join(word for word in said[start:stop + 1] if word) for start, stop in _groups(toks, first, last, SENTENCE_END)])
+        return Unit(first, last, [" ".join(word for word in said[start:stop + 1] if word) for start, stop in _groups(toks, first, last, SENTENCE_END, said)])
 
     return toks, [half(parts[0].first, at), half(at + 1, parts[0].last), *parts[1:]]
 

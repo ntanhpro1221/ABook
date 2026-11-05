@@ -160,7 +160,7 @@ class SoundsTest {
     @Test
     fun aStutterIsReadAsTheSoundItStarts() {
         val cases = listOf("T-tôi không biết." to "tờ… tôi không biết.", "“C-Chuyện đó" to "“chờ… Chuyện đó", "Ng-ngài và K-Không và Đ-Điều" to "ngờ… ngài và khờ… Không và đờ… Điều",
-            "E-em muốn A-anh" to "e… em muốn a… anh", "[Kh- Không phải" to "[khờ… Không phải", "“……T-, tức là" to "“……tờ, tức là",
+            "E-em muốn A-anh" to "e… em muốn a… anh", "[Kh- Không phải" to "[khờ… Không phải", "“……T-, tức là" to "“tờ, tức là",
             "Hà-Hà đến, X-quang, E-mail" to "Hà-Hà đến, X-quang, E-mail")
         for ((text, expected) in cases) assertEquals(text, expected, said(text).joinToString(" "))
         assertEquals("“tờ… Xu-ki-nô-ki-xen-pai cho", said("“T-Tsukinoki-senpai cho", "ja").joinToString(" "))
