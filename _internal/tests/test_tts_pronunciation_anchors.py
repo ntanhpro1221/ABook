@@ -19,7 +19,7 @@ def _coordinator(tmp_path: Path) -> tuple[ProjectDB, TTSCoordinator]:
     return db, TTSCoordinator(build_settings(), db, lambda _message: None)
 
 
-def test_spoken_text_traces_only_applied_locked_english_name_pronunciations(
+def test_spoken_text_traces_all_applied_locked_pronunciations(
     tmp_path: Path,
 ) -> None:
     db, coordinator = _coordinator(tmp_path)
@@ -58,6 +58,9 @@ def test_spoken_text_traces_only_applied_locked_english_name_pronunciations(
     source_text = "Lucien gặp May; lucien, may, Edelweiss và Gary."
 
     spoken_text, anchors = coordinator.spoken_text_with_anchors({"text": source_text})
+    aliases = [anchor for anchor in anchors if anchor.get("asr_alias_only")]
+    assert [anchor["matched_surface"] for anchor in aliases] == ["Edelweiss"]
+    anchors = [anchor for anchor in anchors if not anchor.get("asr_alias_only")]
 
     assert spoken_text == "Lu-si-en gặp Mây; Lu-si-en, may, Ê đen vai và Ga-ri."
     assert coordinator.spoken_text({"text": source_text}) == spoken_text
@@ -163,6 +166,8 @@ def test_source_spelling_variant_preserves_every_locked_name_occurrence_and_anch
     )
 
     assert spoken_text == "Tracy gọi Tracy, Ga-ri và Ê đen vai."
+    assert [anchor["matched_surface"] for anchor in anchors if anchor.get("asr_alias_only")] == ["Edelweiss"]
+    anchors = [anchor for anchor in anchors if not anchor.get("asr_alias_only")]
     assert [anchor["matched_surface"] for anchor in anchors] == ["Tracy", "Tracy"]
     assert [anchor["spoken_form"] for anchor in anchors] == ["Tracy", "Tracy"]
     assert [anchor["canonical_spoken_form"] for anchor in anchors] == [

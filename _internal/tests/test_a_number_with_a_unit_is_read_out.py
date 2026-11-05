@@ -88,7 +88,7 @@ def test_a_year_or_a_chapter_number_is_left_alone() -> None:
     assert fold_number_units("Ch\u01b0\u01a1ng 100") == "Ch\u01b0\u01a1ng 100"
     # `normalize_transcript` hạ hoa-thường và đổi `đ`→`d`, **không** bỏ dấu: bản đầu của bài này
     # đòi "nam 2026" và đỏ ngay, vì tôi lẫn nó với phép gộp dấu ở chỗ khác.
-    assert normalize_transcript("N\u0103m 2026") == "n\u0103m 2026"
+    assert normalize_transcript("N\u0103m 2026") == normalize_transcript("năm hai nghìn không trăm hai mươi sáu")
 
 
 def test_two_identical_sides_still_score_one() -> None:

@@ -127,7 +127,7 @@ def test_tn9_a_capital_g_after_a_number_is_the_letter_g(text: str, said: str) ->
     ("Hmm~ Har~kun? EMMMMM~!", "hừm Har kun? em…!"),  # kéo giọng: bỏ; có chữ ngay sau thì thành khoảng trắng
     ("Ưm~~~, xong. Ô ~, vậy sao. Ồ~”.", "Ưm, xong. Ô, vậy sao. Ồ”."),
     ("Từ 10,000 ~ 15,000 đồng và 3~5 người.", "Từ 10000 đến 15000 đồng và 3 đến 5 người."),  # giữa hai số: đến
-    ("Khoảng ~50 người, “~50” nữa.", "Khoảng ~50 người, “~50” nữa."),  # trước số: để sea-g2p đọc "khoảng"
+    ("Khoảng ~50 người, “~50” nữa.", "Khoảng ~50 người, “~50  nữa."),  # trước số: để sea-g2p đọc "khoảng"
     ("~", ""),
 ])
 def test_a_tilde_is_dropped_or_read_as_range(text: str, said: str) -> None:

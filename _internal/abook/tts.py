@@ -1281,6 +1281,9 @@ class TTSCoordinator:
                 and str(_row_value(metadata, "source", ""))
                 in LOCKED_ENGLISH_NAME_PRONUNCIATION_SOURCES
             )
+            locked_pronunciation = bool(
+                metadata is not None and int(_row_value(metadata, "locked", 0)) == 1
+            )
             replacement = (
                 matched_text
                 if pronunciation_delivery_variant == PRONUNCIATION_DELIVERY_SOURCE
@@ -1295,7 +1298,7 @@ class TTSCoordinator:
             replacement_anchor_tags = set().union(*anchor_tags[match.start() : match.end()])
             if (
                 not replacement_anchor_tags
-                and locked_english_pronunciation
+                and locked_pronunciation
                 # Both delivery variants must anchor the same occurrences, because the
                 # candidate allocator refuses a source-spelling take whose anchors do not
                 # match the locked ones - and rightly so, since that comparison is what
@@ -1324,6 +1327,7 @@ class TTSCoordinator:
                         "canonical_spoken_form": str(metadata["spoken_form"]),
                         "pronunciation_delivery_variant": pronunciation_delivery_variant,
                         "source": str(metadata["source"]),
+                        "asr_alias_only": not locked_english_pronunciation,
                         "source_start": source_start,
                         "source_end": source_end,
                         "_anchor_index": anchor_index,
@@ -1483,8 +1487,47 @@ class TTSCoordinator:
         )
         # Cùng bộ chuẩn hoá theo chữ với Nghe ngay (số La Mã, viết tắt, thán từ kéo dài, kính ngữ...), TRƯỚC `normalize_vocalizations_for_tts` (nó
         # đổi "III" thành "I. I" và "Aaaa" thành "A... a" trước khi luật theo chữ kịp nhận ra); chữ của bảng phát âm giữ nguyên.
-        text, anchor_tags = studio_tn_tagged(text, anchor_tags, self._origin_of_book(), speaks_english)
+        before_tn = text
+        changed_words: list[tuple[int, int, int, int]] = []
+        text, anchor_tags = studio_tn_tagged(
+            text, anchor_tags, self._origin_of_book(), speaks_english,
+            changed_words=changed_words,
+            unprotected_anchors=frozenset(
+                int(anchor["_anchor_index"]) for anchor in anchors if anchor.get("asr_alias_only")
+            ),
+        )
+        present = set().union(*anchor_tags) if anchor_tags else set()
+        anchors[:] = [
+            anchor for anchor in anchors
+            if not anchor.get("asr_alias_only") or int(anchor["_anchor_index"]) in present
+        ]
+        # TN also transliterates words without a pronunciation-table entry. Trace
+        # each actual substitution so Whisper may use source OR voice spelling at
+        # that occurrence, including mixed English/Vietnamese sentences.
+        for start, end, spoken_start, spoken_end in changed_words:
+            source_start, source_end = self._source_span(_origins, start, end)
+            index = max((int(anchor["_anchor_index"]) for anchor in anchors), default=-1) + 1
+            surface = before_tn[start:end]
+            spoken = text[spoken_start:spoken_end]
+            anchors.append({
+                "pronunciation_id": -(source_start + 1),
+                "surface": surface,
+                "normalized_surface": surface.casefold(),
+                "matched_surface": source_text[source_start:source_end],
+                "spoken_form": spoken,
+                "canonical_spoken_form": spoken,
+                "pronunciation_delivery_variant": normalized_variant,
+                "source": "studio_tn",
+                "asr_alias_only": True,
+                "source_start": source_start, "source_end": source_end,
+                "_anchor_index": index, "_execution_order": index,
+            })
+            for position in range(spoken_start, spoken_end):
+                anchor_tags[position] = anchor_tags[position] | frozenset({index})
         text = self._normalize_with_anchor_spans(text, anchor_tags, anchors)
+        for anchor in anchors:
+            if anchor.get("asr_alias_only"):
+                anchor["spoken_form"] = text[anchor["spoken_start"]:anchor["spoken_end"]]
         anchors.sort(
             key=lambda item: (
                 int(item["source_start"]),

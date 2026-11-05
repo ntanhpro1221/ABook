@@ -47,6 +47,7 @@ from abook.audio_transform_contract import (
 )
 from abook.config import build_settings
 from abook.io_utils import sha256_file
+from tests.audio_fixtures import quiet_edges
 
 
 def _write_test_tone(
@@ -57,7 +58,7 @@ def _write_test_tone(
 ) -> None:
     sample_rate = int(settings["tts"]["sample_rate"])
     timeline = np.arange(int(sample_rate * seconds), dtype=np.float32) / sample_rate
-    audio = 0.12 * np.sin(2 * np.pi * frequency * timeline)
+    audio = quiet_edges(0.12 * np.sin(2 * np.pi * frequency * timeline), sample_rate)
     atomic_write_wav(
         path,
         audio,
@@ -449,6 +450,8 @@ def test_segment_rate_validation_warns_for_mild_outlier_and_rejects_extreme() ->
     # Sàn chung của cổng nhịp là 12,5 · pace_floor_scale · x = 10 kt/s: 7 giây cho 60 ký tự là 8,6 kt/s.
     mildly_slow = np.sin(np.linspace(0, 200, 48_000 * 7, dtype=np.float32)) * 0.12
     extremely_slow = np.sin(np.linspace(0, 200, 48_000 * 12, dtype=np.float32)) * 0.12
+    mildly_slow = quiet_edges(mildly_slow)
+    extremely_slow = quiet_edges(extremely_slow)
 
     _, metrics = validate_audio_array(
         mildly_slow,
@@ -475,6 +478,7 @@ def test_vieneu_frame_budget_cannot_exceed_the_shared_validation_limit() -> None
     policy = segment_duration_policy("“Ha…”", settings, segment)
     generated_samples = policy.generation_max_frames * VIENEU_V3_CODEC_SAMPLES_PER_FRAME
     audio = np.sin(np.linspace(0, 500, generated_samples, dtype=np.float32)) * 0.12
+    audio = quiet_edges(audio)
 
     _, metrics = validate_audio_array(audio, "“Ha…”", settings, 48_000, segment=segment)
 
@@ -625,7 +629,7 @@ def test_a_failed_chapter_still_reports_the_edges_it_trimmed(
     sample_rate = int(settings["tts"]["sample_rate"])
     source = tmp_path / "source.wav"
     timeline = np.arange(int(sample_rate * 1.0), dtype=np.float32) / sample_rate
-    tone = 0.12 * np.sin(2 * np.pi * 220 * timeline)
+    tone = quiet_edges(0.12 * np.sin(2 * np.pi * 220 * timeline), sample_rate)
     lead_in = np.zeros(int(sample_rate * 0.9), dtype=np.float32)
     atomic_write_wav(
         source,

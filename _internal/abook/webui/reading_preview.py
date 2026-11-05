@@ -137,7 +137,14 @@ def fake_voice(db, settings):
 
         def infer(self, text, **kwargs):
             moments = np.arange(int(min(6.0, 0.5 + 0.07 * len(text)) * self.sample_rate)) / self.sample_rate
-            return (0.2 * np.sin(2 * np.pi * 220 * moments)).astype(np.float32)
+            wave = (0.2 * np.sin(2 * np.pi * 220 * moments)).astype(np.float32)
+            # A valid synthetic take needs quiet boundaries just like model output.
+            edge = min(len(wave) // 2, round(self.sample_rate * 0.02))
+            if edge:
+                ramp = np.linspace(0.0, 1.0, edge, dtype=np.float32)
+                wave[:edge] *= ramp
+                wave[-edge:] *= ramp[::-1]
+            return wave
 
     module = types.ModuleType("vieneu")
     module.Vieneu = lambda **kwargs: Runtime()

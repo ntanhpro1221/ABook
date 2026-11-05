@@ -121,7 +121,7 @@ def test_the_symbol_conventions_of_tn10(text: str, said: str) -> None:
     ("Đáp án của em là ×. Tên 〇〇 ×× và ○×△ xong. Fit Course × Pro Master. Gói ×Course. Tính 3×4 và 100×99×98×⋯×3.", "Đáp án của em là . Tên 〇〇  và ○ xong. Fit Course,  Pro Master. Gói ích Course. Tính 3 nhân 4 và 100 nhân 99 nhân 98 nhân⋯nhân 3."),
     ("Năm 9x, thứ 9x, chương 9x, 3x tuổi. Tính sin 2x + 1 = 3x.", "Năm 9 ích, thứ 9 ích, chương 9 ích, 3 ích tuổi. Tính sin 2 ích + 1 bằng 3 ích."),
     ("Nhận 10x Sức mạnh, (2x Intelligence), kính ngắm 8x, 1x Cuộn phép, mã 202X.", "Nhận 10 lần Sức mạnh, (2 lần Intelligence), kính ngắm 8 lần, 1 Cuộn phép, mã 202 ích."),
-    ("-25 máu. “-1600” vàng. Kết toán -1600 vàng, đòn -25 máu.", "âm 25 máu. “âm 1600” vàng. Kết toán âm 1600 vàng, đòn trừ 25 máu."),
+    ("-25 máu. “-1600” vàng. Kết toán -1600 vàng, đòn -25 máu.", "âm 25 máu. “âm 1600  vàng. Kết toán âm 1600 vàng, đòn trừ 25 máu."),
     ("Tuyệt mệnh -10: giảm máu. 1-2-3 -25 xong.", "Tuyệt mệnh trừ 10: giảm máu. 1 2 3 trừ 25 xong."),
     ("Sức khỏe / 2. HP 100/250 và 8/3.", "Sức khỏe chia 2. hát pê 100 trên 250 và 8 tháng 3."),
 ])

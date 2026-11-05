@@ -255,9 +255,9 @@ DIGIT_NUMBER_WORDS = {
 }
 
 
-# Above this, a number has no settled spoken form to fold to: a year is read as its own
-# kind of thing and vietnamese_number_words does not claim to cover it either.
-NUMBER_FOLD_CEILING = 999
+# Counts up to the largest value supported by vietnamese_number_words. This is
+# comparison normalization only; the voice still receives its original digits.
+NUMBER_FOLD_CEILING = 999_999_999_999
 
 
 def _fold_number_digits(text: str) -> str:
@@ -278,9 +278,8 @@ def _fold_number_digits(text: str) -> str:
     năm" - so this defers to it instead of keeping a second, shorter answer to the same
     question.
 
-    Only a token that is entirely digits changes, and only within range: "2026" and "3a"
-    are left alone, and so is anything with a leading zero, which is a designation rather
-    than a count.
+    Only an all-digit token within range changes. Leading-zero designations and
+    alphanumeric identifiers are left alone.
     """
     folded = []
     for token in text.split():
@@ -341,6 +340,13 @@ def fold_number_units(text: str) -> str:
 
 
 def normalize_transcript(text: str) -> str:
+    # Consume complete thousands groups BEFORE punctuation is discarded. Otherwise
+    # 300,000 becomes two numbers (300 and 000). A decimal such as 3,14 is not grouped.
+    text = re.sub(
+        r"(?<!\w)(?<!\d[.,])([1-9][0-9]{0,2})([.,\u00a0\u202f\u2009 ])\d{3}(?:\2\d{3})*(?!\w|[.,]\d)",
+        lambda match: re.sub(r"\D", "", match.group()),
+        text,
+    )
     text = text.casefold().replace("đ", "d")
     text = re.sub(r"[^0-9a-zà-ỹ\s]", " ", text)
     text = re.sub(r"\s+", " ", text).strip()
@@ -406,6 +412,9 @@ def _locked_name_anchor_forms(
             ANCHOR_COMPARISON_VIETNAMESE_PHONEME_EXACT,
         ),
     ]
+    canonical = str(anchor.get("canonical_spoken_form", ""))
+    if anchor.get("asr_alias_only") and canonical and canonical != str(anchor.get("spoken_form", "")):
+        candidates.extend(_locked_name_anchor_forms({"surface": "", "spoken_form": canonical}))
     forms: list[tuple[str, tuple[str, ...], str]] = []
     seen: set[tuple[tuple[str, ...], str]] = set()
     for kind, tokens, comparison_mode in candidates:
@@ -891,6 +900,8 @@ def _canonical_locked_name_metrics(
     transcript_tokens: list[str],
     anchor_count: int,
     rescued_spans: dict[tuple[int, int], tuple[int, int]] | None = None,
+    *,
+    fold_tone: bool = True,
 ) -> tuple[float, float, float]:
     """Sentence metrics with each locked name folded into one placeholder on both sides.
 
@@ -981,6 +992,8 @@ def _canonical_locked_name_metrics(
         expected_tokens,
         actual_tokens,
     )
+    if not fold_tone:
+        return similarity, character_error_rate, word_error_rate
     folded_similarity, folded_cer, folded_wer = _sequence_metrics(
         _tone_folded_words(expected_tokens),
         _tone_folded_words(actual_tokens),
@@ -1024,6 +1037,38 @@ def _passes_asr_content_thresholds(
 
 
 def adjudicate_locked_name_anchors(
+    expected_spoken_text: str,
+    asr_result: dict[str, Any],
+    anchors: Sequence[Mapping[str, Any]],
+    repeat_count: int = 1,
+    *,
+    min_similarity: float | None = None,
+    max_wer: float | None = None,
+) -> dict[str, Any]:
+    """Apply mandatory name rules and optional source/voice spelling alternatives.
+
+    New aliases cannot revoke a pass under the existing name policy. A rescue
+    through them must leave every ordinary token intact: remapping a name must
+    not also forgive a wrong word elsewhere in the sentence.
+    """
+    result = _adjudicate_locked_name_anchors(
+        expected_spoken_text, asr_result, anchors, repeat_count,
+        min_similarity=min_similarity, max_wer=max_wer,
+    )
+    if any(anchor.get("asr_alias_only") for anchor in anchors):
+        required = [anchor for anchor in anchors if not anchor.get("asr_alias_only")]
+        original = _adjudicate_locked_name_anchors(
+            expected_spoken_text, asr_result, required, repeat_count,
+            min_similarity=min_similarity, max_wer=max_wer,
+        )
+        if original.get("verdict") == ASR_PASS and result.get("verdict") != ASR_PASS:
+            evidence = result.get(LOCKED_NAME_ANCHOR_METRICS_KEY)
+            result = dict(original)
+            result["spelling_alias_evidence"] = evidence
+    return result
+
+
+def _adjudicate_locked_name_anchors(
     expected_spoken_text: str,
     asr_result: dict[str, Any],
     anchors: Sequence[Mapping[str, Any]],
@@ -1275,6 +1320,12 @@ def adjudicate_locked_name_anchors(
             min_similarity=float(min_similarity),
             max_wer=float(max_wer),
         )
+        if any(anchor.get("asr_alias_only") for anchor in safe_anchors):
+            _plain_sim, _plain_cer, plain_wer = _canonical_locked_name_metrics(
+                units, operations, transcript_tokens, len(safe_anchors), rescued_spans,
+                fold_tone=False,
+            )
+            canonical_threshold_passed = bool(canonical_threshold_passed and plain_wer == 0.0)
         if anchors_passed:
             canonical_promoted = bool(
                 canonical_threshold_passed
