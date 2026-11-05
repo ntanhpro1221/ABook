@@ -22,7 +22,7 @@ def test_unattended_safety_defaults() -> None:
     assert "combine_full_book" not in settings["audio"]
     assert "keep_verified_wav" not in settings["audio"]
     assert settings["voices"]["narrator_gender"] == "male"
-    assert settings["voices"]["narrator_voice"] == "Phạm Tuyên"
+    assert settings["voices"]["narrator_voice"] == "Đức Trí"
     assert settings["voices"]["max_character_pitch_semitones"] == 2
     assert settings["asr"]["enabled"] is True
     assert settings["asr"]["required"] is True

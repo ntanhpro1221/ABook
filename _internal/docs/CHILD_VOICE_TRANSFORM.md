@@ -1,5 +1,7 @@
 # Giọng trẻ em: phép biến đổi mất gần 1,0 MOS
 
+> **05-11: phép biến đổi đã bỏ.** Chủ sách: "trẻ con thì dùng giọng của nữ đi, đừng bóp nữa, bóp đem đến âm thanh quá tệ". Trẻ con (trai hay gái) nay được phân vai bằng preset nữ theo bậc `character` nữ trong `assets/voice_rank.json`, cao độ +0 và formant 1,0. Teen và người già vẫn theo `AGE_TARGET_PITCH_HZ` / `VOCAL_TRACT_CM_BY_AGE`. Phần dưới là lịch sử đo.
+
 ## Phát hiện
 
 Người nghe đã báo **rè** ở gần như *mọi* giọng trẻ em — Ngọc Linh, Thái Sơn, Thanh Bình,

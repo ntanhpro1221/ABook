@@ -39,7 +39,15 @@ export function findText(target: string | RegExp, within: ParentNode = document)
   return typeof target === "string" ? text.includes(target) : target.test(text);
 }
 
-function press(element: HTMLElement): void {
+declare global {
+  interface Window {
+    /** Headless geometry runner: pause catalog actions until CDP supplies real pointer input. */
+    __galleryPointer?: (element: HTMLElement) => Promise<void>;
+  }
+}
+
+async function press(element: HTMLElement): Promise<void> {
+  if (window.__galleryPointer) return window.__galleryPointer(element);
   const init = { bubbles: true, cancelable: true, composed: true, button: 0, buttons: 1, pointerId: 1, pointerType: "mouse", isPrimary: true };
   const Pointer = typeof PointerEvent === "function" ? PointerEvent : MouseEvent;
   element.dispatchEvent(new Pointer("pointerdown", init));
@@ -56,7 +64,7 @@ export async function clickFirst(target: string | RegExp): Promise<HTMLElement> 
     () => [...document.querySelectorAll<HTMLElement>(CLICKABLE)].find((candidate) => matches(candidate, target) && visible(candidate)) ?? null,
     `nút “${String(target)}”`,
   );
-  press(element);
+  await press(element);
   await settle();
   return element;
 }
@@ -64,7 +72,7 @@ export async function clickFirst(target: string | RegExp): Promise<HTMLElement> 
 /** Chờ phần tử hiện rồi bấm. */
 export async function click(target: string | RegExp, within?: ParentNode): Promise<HTMLElement> {
   const element = await waitFor(() => find(target, within), `nút “${String(target)}”`);
-  press(element);
+  await press(element);
   await settle();
   return element;
 }

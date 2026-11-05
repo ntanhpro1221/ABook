@@ -84,6 +84,7 @@ describe.skipIf(!browserAvailable)("fixture HTML trên Edge, hai theme và hai k
       expect(at(result, "words", "horizontal-ink-gap")[0].values).toHaveLength(3);
       expect(at(result, "words-pass", "horizontal-ink-gap")).toHaveLength(0);
       expect(at(result, "words-even", "horizontal-ink-gap")).toHaveLength(0);
+      expect(at(result, "words-clipped", "horizontal-ink-gap")).toHaveLength(0);
     }
   });
   it("vạch chia trong khối lề âm thò ra ngoài cột khung chứa thì báo; thụt lại thì không", () => {

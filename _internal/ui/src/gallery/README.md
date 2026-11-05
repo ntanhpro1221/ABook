@@ -74,6 +74,49 @@ không checkout/sửa component sản phẩm. Có unit test hình học và DOM 
 
 ## Trợ năng và bàn phím (máy tính, trong `npm test`)
 
+### Real sheet geometry (release rule 25)
+
+`npm run -s gallery:build` then `node scripts/gallery_inspect.mjs --out <dir> --theme both`
+also runs `scripts/gallery_inspect_sheet.mjs`. `SHEET GEOMETRY` is in the default release gate;
+unexpected app errors, missing open/close controls and animation timeouts fail the run too.
+
+Discovery uses every `window.__galleryEntries` entry. Its `act` clicks pause in `actions.ts` while
+CDP supplies native mouse movement/down/up at the control's center. Every transition to a dialog
+or `.now-playing[data-state="open"]` becomes a test target, including intermediate dialogs.
+The final screen also supplies closed `aria-haspopup="dialog"` triggers and the Now Playing opener.
+At phone width, menu triggers are probed too: only menus which actually open a Sheet become targets.
+There is no screen-ID allowlist. New dialog flows should have a gallery `act` or a semantic dialog trigger.
+Player journeys use the compact player's Now Playing controls at phone width. Every navigation waits
+for a new document probe ID before replay, so pending clicks and ready flags cannot leak across visits.
+
+Each target runs at 1440×900 and 400×900, in both selected themes, at the top and middle of the
+underlying scroll boxes, with Escape and separately its close button (desktop non-modal popovers use
+their toggle trigger). An offscreen opener is brought into view before recording the baseline.
+Only containers that permit user scrolling are positioned; a CSS-hidden document is kept still.
+Scroll-triggered controls settle before pointer hit-testing. A temporary toast may clear for up to
+8s before the baseline/click; persistent obstruction remains an error, and clicks never pass through it.
+Non-scrollable pages naturally remain at scrollTop 0; `sheetGeometry.middleWithScroll` counts trials
+with an actual nonzero starting scroll position. The real measured positions are retained.
+
+Snapshots in `findings.json` retain the same page heading, first three children of each list, main
+scroll containers, semantic data anchors, body/html computed spacing and overflow, document and
+nested scroll offsets, and native document scrollbar width. Transient menus, dialogs, tooltips,
+toasts, animation ghosts and non-open Now Playing trees are excluded from underlying-page anchors; open Now Playing content is
+included when another layer opens over it. Every x/y/width/height or spacing delta above 0.5px,
+any scroll offset change, a missing anchor, or scrollbar-width change produces a finding.
+Scroll locking itself is permitted while open; computed overflow must return after dismissal.
+
+The open/close boxes must remain identical for three animation frames with finite animations
+finished and closed surfaces unmounted, with a hard 2s deadline. Four independent headless windows run concurrently, each with an
+isolated browser context so consent/settings in localStorage cannot affect other stories. This preserves
+animation frames without using the visible desktop. Geometry uses a separate browser with native
+scrollbars; existing raster detectors retain their original hidden-scrollbar environment.
+
+`gallery_inspect_sheet.test.mjs` tests the comparator and a real-browser fixture (storage isolation,
+native scrollbar, trusted pointer events, clean/broken geometry) in Vitest. The browser's exact
+`ResizeObserver loop completed with undelivered notifications.` deferred-delivery notification is
+retained in `known` diagnostics; it does not suppress geometry findings or settle deadlines.
+
 Hai bài thử chạy mọi mục máy tính trên jsdom (`jsdomShim.ts`: vá API thiếu, CSS ẩn / hiện theo mốc màn của Tailwind):
 
 - `a11yAxe.desktop.dom.test.tsx`: axe-core, mọi luật WCAG 2.x A / AA + "thực hành tốt"; không giữ vi phạm nào. Tương phản màu để cho

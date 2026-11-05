@@ -674,7 +674,7 @@ export function Dialog({
             opener.current = null;
             if (!target) return;
             event.preventDefault();
-            target.focus();
+            target.focus({ preventScroll: true });
           }}
           onEscapeKeyDown={escapeLocal}
           onOpenAutoFocus={(event) => {
@@ -808,7 +808,7 @@ export function Sheet({
             if (keepNewLayerFocus(event)) return;
             if (!trigger) {
               const target = focusReturnTarget(opener.current, document.body);
-              if (target) { event.preventDefault(); target.focus(); }
+              if (target) { event.preventDefault(); target.focus({ preventScroll: true }); }
             }
           }}
           onOpenAutoFocus={(event) => {
@@ -827,7 +827,10 @@ export function Sheet({
             onPointerDown={(event) => {
               if (event.target instanceof Element && event.target.closest("button:not([data-sheet-handle])")) return;
               dragged.current = false;
-              start.current = event.clientY; event.currentTarget.setPointerCapture?.(event.pointerId);
+              start.current = event.clientY;
+              // Keep handle clicks targeted at the Close button while capturing drags. Capturing on the grip retargets the click to its div.
+              const capture = (event.target as Element).closest<HTMLElement>("button[data-sheet-handle]") ?? event.currentTarget;
+              capture.setPointerCapture?.(event.pointerId);
             }}
             onPointerMove={(event) => { if (start.current !== null) { dragged.current ||= Math.abs(event.clientY - start.current) > 4; setDrag(Math.max(0, event.clientY - start.current)); } }}
             onPointerUp={(event) => {

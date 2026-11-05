@@ -265,7 +265,8 @@ object TextImports {
         try {
             packed.outputStream().use { TextBook.build(book, it, codec) }
             val before = Store.books().map { it.optString("id") }.toSet()
-            val imported = BookFileImport.importFile(packed, separate = separate)
+            // Repeating an EPUB/TXT pick keeps the existing book; opening an exported .abook refreshes its base layer.
+            val imported = BookFileImport.importFile(packed, separate = separate, refreshBase = false)
             if (imported.id !in before) Store.rememberSource(imported.id, sourceDigest(staged(ref)))
             discard(ref)
             return Created(imported.id, if (imported.id in before) "existing" else "new", book.chapters.size)

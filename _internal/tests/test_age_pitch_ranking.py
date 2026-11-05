@@ -1,8 +1,8 @@
-"""Casting prefers the preset that needs the smallest age pitch shift.
+"""Casting prefers the preset that needs the smallest age pitch shift (teen, elderly).
 
 The age warp costs about 0.85 MOS on the pitch axis against 0.50 on the formant axis, and
 the damage tracks the size of the shift (docs/CHILD_VOICE_TRANSFORM.md). Ranking used to
-weigh tract reach and ignore the shift entirely.
+weigh tract reach and ignore the shift entirely. Children carry no age shift since 05-11.
 """
 
 from __future__ import annotations
@@ -35,14 +35,17 @@ def test_a_large_shift_outranks_a_small_one_only_across_a_bucket() -> None:
     assert 2 // AGE_PITCH_RANK_BUCKET < 11 // AGE_PITCH_RANK_BUCKET
 
 
-def test_child_casting_has_presets_that_differ_in_shift() -> None:
+def test_aged_casting_has_presets_that_differ_in_shift() -> None:
     """If every candidate needed the same shift the ranking term would be inert."""
     for gender in ("male", "female"):
-        shifts = {
-            abs(age_pitch_semitones("child", gender, name)) // AGE_PITCH_RANK_BUCKET
-            for name in _eligible("child", gender)
+        buckets = {
+            age: {
+                abs(age_pitch_semitones(age, gender, name)) // AGE_PITCH_RANK_BUCKET
+                for name in _eligible(age, gender)
+            }
+            for age in ("teen", "elderly")
         }
-        assert len(shifts) > 1, f"{gender}: pitch ranking cannot discriminate"
+        assert any(len(found) > 1 for found in buckets.values()), f"{gender}: pitch ranking cannot discriminate"
 
 
 def test_reach_still_outranks_shift() -> None:
@@ -59,12 +62,12 @@ def test_reach_still_outranks_shift() -> None:
 
 def test_demoted_and_excluded_presets_are_unaffected_by_the_new_term() -> None:
     for gender in ("male", "female"):
-        names = _eligible("child", gender)
+        names = _eligible("teen", gender)
         assert not (set(names) & EXCLUDED_PRESETS)
         assert LAST_RESORT_PRESETS.isdisjoint(names[:1]) or len(names) == 1
 
 
 def test_reach_is_still_measured_for_every_eligible_preset() -> None:
     for gender in ("male", "female"):
-        for name in _eligible("child", gender):
-            assert preset_age_reach(name, "child", gender) >= 0.0
+        for name in _eligible("teen", gender):
+            assert preset_age_reach(name, "teen", gender) >= 0.0

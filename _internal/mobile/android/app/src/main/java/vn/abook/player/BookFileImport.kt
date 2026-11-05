@@ -240,7 +240,7 @@ object BookFileImport {
 
 
     /** `separate`: người dùng chọn "Thêm bản riêng" dù cuốn đã có - không tìm cuốn trùng, luôn là cuốn mới với mã riêng. */
-    fun importFile(file: File, separate: Boolean = false, allowOlder: Boolean = false, freeSpace: (File) -> Long = { it.usableSpace }): Imported {
+    fun importFile(file: File, separate: Boolean = false, allowOlder: Boolean = false, refreshBase: Boolean = true, freeSpace: (File) -> Long = { it.usableSpace }): Imported {
         val zip = try {
             ZipFile(file)
         } catch (error: Exception) {
@@ -334,7 +334,8 @@ object BookFileImport {
             val keptEdits = if (existing != null) BookEdits.count(BookEdits.load(Store.bookDir(target))) else 0
             // Cuốn chỉ có chữ: tìm thấy nghĩa là CÙNG bộ chữ (Store.findByChapters) - không có bản "nhiều chương hơn" để thay, giữ bản trên máy.
             val gainsWorkshop = layout != null && !File(Store.bookDir(target), ProjectDocument.MANIFEST).isFile
-            if (current != null && disposition == "existing" && !gainsWorkshop) {
+            val changed = refreshBase && current != null && !StrictJson.equal(baseLayer(current, BookEdits.load(Store.bookDir(target))), baseLayer(book, incoming.edits))
+            if (current != null && disposition == "existing" && !gainsWorkshop && !changed) {
                 // Giữ bản trên máy, nhưng phần sửa trong file vẫn được hợp vào (bên máy này thắng) - không mất công của ai.
                 if (editable && BookEdits.count(incoming.edits) > 0) {
                     BookEdits.adopt(Store.bookDir(target), incoming.edits, incoming.cover) { name, destination -> extract(zip, resolve(name), destination) }
@@ -372,6 +373,7 @@ object BookFileImport {
                 }
                 if (brokenMusic.isNotEmpty()) dropTracks(book, brokenMusic)
                 if (layout != null) File(staging, ProjectDocument.MANIFEST).writeBytes(layout.manifestBytes)
+                if (layout == null && current != null) keepLocalFiles(Store.bookDir(target), staging, current)
                 // Bản trên máy bị thay: sửa trong xưởng của nó gộp vào bản mới, không mất theo thư mục cũ.
                 if (layout != null && existing != null && ProjectDocument.kept(staging)?.workshop == ProjectDocument.PRESENT) {
                     mergeWorkshop(staging, Store.bookDir(target)) { name -> File(staging, "project/$name").takeIf { it.isFile }?.readBytes() }
@@ -394,7 +396,41 @@ object BookFileImport {
             }
             Store.rememberChapters(target, chapters, imported = existing == null || Store.isImported(existing))
             if (existing == null) BookEdits.markSaved(Store.bookDir(target)) // edits that came inside the file are not "unsaved" (a70)
-            return Imported(target, Store.manifest(target)?.optString("title") ?: book.optString("title"), keptEdits, brokenMusic.size, if (existing == null) "new" else "updated")
+            return Imported(target, Store.manifest(target)?.optString("title") ?: book.optString("title"), keptEdits, brokenMusic.size,
+                if (existing == null) "new" else "updated", if (existing == null) "" else book.optString("title"))
+        }
+    }
+
+    /** Compare the base book, excluding packaging timestamps, listener edits and locally derived audio fields. */
+    private fun baseLayer(book: JSONObject, edits: JSONObject): JSONObject {
+        val base = JSONObject(book.toString())
+        val files = base.optJSONObject("package")?.optJSONObject("files") ?: JSONObject()
+        files.remove(BookEdits.EDITS_FILE)
+        files.remove(BookEdits.EDITS_COVER)
+        val baseTracks = base.optJSONObject("music")?.optJSONObject("tracks")
+        for (name in BookEdits.pinnedFiles(edits)) if (baseTracks?.has(name) != true) files.remove(name)
+        base.put("package", JSONObject().put("files", files))
+        base.remove("id")
+        base.remove("audioVersion")
+        base.remove("chaptersAvailable")
+        val chapters = base.optJSONArray("chapters")
+        for (index in 0 until (chapters?.length() ?: 0)) {
+            chapters!!.getJSONObject(index).apply { remove("sha256"); remove("size") }
+        }
+        return base
+    }
+
+    /** A listening package replaces its members, while local sidecars and a retained workshop survive the swap. */
+    private fun keepLocalFiles(old: File, staging: File, current: JSONObject) {
+        val members = current.optJSONObject("package")?.optJSONObject("files")?.keys()?.asSequence()?.toSet().orEmpty() +
+            setOf("book.json", "manifest.json", "cover.jpg", "cover.json", BookEdits.EDITS_FILE, BookEdits.EDITS_COVER)
+        for (source in old.walkTopDown().filter { it.isFile }) {
+            val name = source.relativeTo(old).invariantSeparatorsPath
+            val destination = File(staging, name)
+            if (name !in members && !destination.exists()) {
+                destination.parentFile?.mkdirs()
+                source.copyTo(destination)
+            }
         }
     }
 
