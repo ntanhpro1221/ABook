@@ -3712,9 +3712,15 @@ class BookPipeline:
                 source_anchors_are_bound = all(
                     str(anchor.get("pronunciation_delivery_variant") or "")
                     == PRONUNCIATION_DELIVERY_SOURCE
-                    and str(anchor.get("spoken_form") or "")
-                    == str(anchor.get("matched_surface") or "")
-                    for anchor in source_anchors
+                    and (
+                        str(anchor.get("spoken_form") or "")
+                        == str(
+                            locked_anchor.get("spoken_form")
+                            if anchor.get("asr_alias_only")
+                            else anchor.get("matched_surface")
+                        )
+                    )
+                    for locked_anchor, anchor in zip(locked_anchors, source_anchors)
                 )
                 if (
                     source_identity != locked_identity
