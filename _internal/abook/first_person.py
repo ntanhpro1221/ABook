@@ -73,8 +73,9 @@ def _names(text: str) -> list[str]:
 _NAME_SUFFIX = r"(?:-[a-z]+)?(?![\w-])"
 _CALL_BEFORE = "“\"‘'«(-–—,.!?…~:["
 _CALL_AFTER = ",.!?…~;:”\"’')]»"
-_CALL_TITLE = re.compile(r"(?<!\w)(?:ngài|anh|chị|cậu|em|cô|ông|bà|thầy|tiểu thư|công chúa|hoàng tử|điện hạ|đại nhân|sư phụ)$",
-                         re.IGNORECASE)
+CALL_TITLES = ("ngài", "anh", "chị", "cậu", "em", "cô", "ông", "bà", "thầy", "tiểu thư", "công chúa", "hoàng tử", "điện hạ",
+               "đại nhân", "sư phụ")
+_CALL_TITLE = re.compile(rf"(?<!\w)(?:{'|'.join(CALL_TITLES)})$", re.IGNORECASE)
 # "tên tôi là X", "tôi là X", "gọi tôi là X": tự giới thiệu.
 _SELF_INTRO = re.compile(
     rf"(?i:tên (?:của )?(?:tôi|mình|tớ) là|(?:tôi|tớ|mình)(?: tên)? là|gọi (?:tôi|tớ|mình) là|(?:tôi|tớ|mình) tên)"

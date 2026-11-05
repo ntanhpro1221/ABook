@@ -20,9 +20,14 @@ def _registered(root: Path, lines: list[tuple[int, str, str, str, str]]) -> tupl
     db = _project(root, lines)
     _repair(db)
     for speaker in {str(row["speaker"]) for row in db.list_segments() if str(row["speaker"]) != "NARRATOR"}:
-        character = db.upsert_character(canonical_name=speaker.casefold(), display_name=speaker, gender="unknown", age="adult",
+        character = db.upsert_character(canonical_name=speaker, display_name=speaker, gender="unknown", age="adult",
                                         personality="", mentions=1, importance="main", confidence=1.0)
         db.set_character_for_speaker(speaker, character)
+        # Đã phân vai: mỗi người một giọng - thẻ chỉ đề xuất người gán được (`_refine_speaker_cards`).
+        profile = db.upsert_voice_profile({"voice_key": speaker.casefold(), "engine": "vieneu", "preset_name": "Thanh Bình",
+                                           "description": speaker, "seed": 1, "pitch_semitones": 0, "status": "ready"})
+        with db.transaction() as conn:
+            conn.execute("UPDATE segments SET voice_profile_id=? WHERE speaker=?", (profile, speaker))
     return db, root
 
 

@@ -8,7 +8,7 @@ import { toast } from "@/shared/toast";
 import { useClip } from "@/listen/clip";
 import { cn } from "@/shared/cn";
 import { formatNumber } from "@/shared/format";
-import { DialogActions, DecisionButton, Button, ContentSkeleton, Dialog, EmptyState, FilterRow, InlineError, Kbd, ChoiceRow } from "@/shared/ui";
+import { DialogActions, DecisionButton, Button, ContentSkeleton, Dialog, EmptyState, FilterRow, InlineError, Kbd, ChoiceRow, Tooltip } from "@/shared/ui";
 import { api, suggestionOf, urls, type BookSummary } from "./api";
 import { ReadingProblem } from "./ReadingProblem";
 import { retryUnlessGone } from "./polling";
@@ -74,8 +74,9 @@ export interface WorkItem {
   allLines?: { stableId: string; textSha256: string }[];
   /** Nhãn hai phạm vi khi khác "Câu xen kẽ / Cả chuỗi" (thẻ 『』: "Chương này / Cả cuốn"). */
   scopeLabels?: [string, string];
-  /** `name`: tên người khi nhãn nút không phải là tên ("Gộp vào Kati"). */
-  choices?: { label: string; value: string; name?: string }[];
+  /** `name`: tên người khi nhãn nút không phải là tên ("Gộp vào Kati"). `sampleId`: một câu đã thu của người ấy - nghe giọng
+   *  ngay cạnh nút trước khi chọn (như tab Nhân vật). */
+  choices?: { label: string; value: string; name?: string; sampleId?: number; samplePreset?: string }[];
   currentValue?: string;
   /** Người đang được ghi cho từng câu khi thẻ được dựng ("" = chưa ai quyết): gửi lại làm `seen` (soát a27 lỗi 4). */
   seen?: Record<string, string>;
@@ -262,6 +263,25 @@ function Example({ bookId, example, picked, onPick }: { bookId: string; example:
         {example.after && <p className="line-clamp-2 text-fg-3"><span className="sr-only">Câu liền sau: </span>{example.after}</p>}
       </div>
     </li>
+  );
+}
+
+/** Nghe giọng một người được đề xuất (một câu đã thu của họ, như tab Nhân vật) - ngay cạnh nút chọn người ấy. */
+function VoiceSample({ bookId, sampleId, samplePreset, name }: { bookId: string; sampleId?: number; samplePreset?: string; name: string }) {
+  const clip = useClip();
+  const id = `work-voice-${sampleId ?? samplePreset}`;
+  const playing = clip.current === id;
+  return (
+    <Tooltip label={playing ? "Dừng" : `Nghe ${name} nói`}>
+      <button
+        type="button"
+        onClick={() => clip.toggle(id, sampleId ? urls.sample(bookId, sampleId) : urls.voice(samplePreset!))}
+        aria-label={playing ? "Dừng nghe thử" : `Nghe ${name} nói`}
+        className="touch-hit grid size-[32px] shrink-0 place-items-center rounded-full text-fg-2 transition-colors hover:bg-hover hover:text-fg"
+      >
+        <MotionRegion as="span" className="grid size-3.5 place-items-center">{playing ? <Pause className="size-3.5" fill="currentColor" strokeWidth={0} /> : <Play className="size-3.5 translate-x-[1px]" fill="currentColor" strokeWidth={0} />}</MotionRegion>
+      </button>
+    </Tooltip>
   );
 }
 
@@ -549,18 +569,20 @@ function SpeakerFix({
       )}
       <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={`${KIND_LABEL[item.kind]}: ${decidedTitle(item) ?? item.title}`}>
         {shownChoices.map((choice, index) => (
-          <DecisionButton data-choice
-            key={choice.value}
-            size="sm"
-            // Gạch chân lựa chọn, để nút thực hiện vẫn là điểm nhấn duy nhất.
-            variant="ghost"
-            className={cn("border-b-2 rounded-none transition-colors", (item.requested ? [choice.name, choice.label].includes(item.requested) : index === 0 && item.kind !== "unnamed" && item.suggested !== false) ? "border-accent" : "border-transparent")}
-            aria-pressed={item.requested ? [choice.name, choice.label].includes(item.requested) : undefined}
-            disabled={busy || none}
-            onClick={() => save.mutate({ speaker: choice.value })}
-          >
-            {choice.label}
-          </DecisionButton>
+          <span key={choice.value} className="inline-flex items-center">
+            <DecisionButton data-choice
+              size="sm"
+              // Gạch chân lựa chọn, để nút thực hiện vẫn là điểm nhấn duy nhất.
+              variant="ghost"
+              className={cn("border-b-2 rounded-none transition-colors", (item.requested ? [choice.name, choice.label].includes(item.requested) : index === 0 && item.kind !== "unnamed" && item.suggested !== false) ? "border-accent" : "border-transparent")}
+              aria-pressed={item.requested ? [choice.name, choice.label].includes(item.requested) : undefined}
+              disabled={busy || none}
+              onClick={() => save.mutate({ speaker: choice.value })}
+            >
+              {choice.label}
+            </DecisionButton>
+            {choice.sampleId || choice.samplePreset ? <VoiceSample bookId={bookId} sampleId={choice.sampleId} samplePreset={choice.samplePreset} name={choice.name ?? choice.label} /> : null}
+          </span>
         ))}
         {item.currentValue && (
           <DecisionButton data-choice size="sm" variant="ghost" disabled={busy} onClick={() => save.mutate({ speaker: item.currentValue! })}>

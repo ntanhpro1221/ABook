@@ -58,6 +58,13 @@ class StudioWorkState(private val project: StudioProjectState, pause: suspend (L
         session.clips?.toggle(clipId(example), ClipSpec(session.computer, StudioPaths.sample(project.bookId, example.segmentId)))
     }
 
+    /** Nghe giọng một người được đề xuất trên thẻ (một câu đã thu của họ); bấm lại để dừng. */
+    fun playChoice(choice: WorkChoice) {
+        val path = choice.sampleId?.let { StudioPaths.sample(project.bookId, it) }
+            ?: choice.samplePreset?.let { StudioPaths.voiceSample(it) } ?: return
+        session.clips?.toggle(clipId(choice), ClipSpec(session.computer, path))
+    }
+
     /** Rời tab: dừng tiếng. */
     fun release() {
         session.clips?.stop()
@@ -101,6 +108,7 @@ class StudioWorkState(private val project: StudioProjectState, pause: suspend (L
 
     companion object {
         fun clipId(example: WorkExample) = "work-${example.segmentId}"
+        fun clipId(choice: WorkChoice) = "work-voice-${choice.sampleId ?: choice.samplePreset}"
 
         /** Nhịp hỏi lại danh sách khi sách đang chạy (`liveRefresh.ts PRODUCING_REFRESH_MS`). */
         const val PRODUCING_REFRESH_MS = 15_000L

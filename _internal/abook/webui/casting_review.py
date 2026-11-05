@@ -26,7 +26,7 @@ from ..listener_overrides import (
 from . import listing_cache, store
 from .reviews import speaker_label
 from .address_cues import _same_person, address_doubts
-from .work_items import first_person_lookup, merged_turns, self_addressed, unsure_speaker_lines
+from .work_items import calls_of, first_person_lookup, merged_turns, unsure_speaker_lines
 from .. import speaker_logprobs
 
 # Người có tên trong cả cuốn đưa vào ô "người khác": sách dài có hàng trăm vai, ô tìm lọc tại chỗ.
@@ -75,13 +75,17 @@ def _hints(connection: Any, rows: list[Any], chapter_id: int | None,
     speech = [row for row in rows if str(row["kind"]) != "narration"]
     if project_root is not None:
         _weak_hints(connection, speech, chapter_id, display, project_root, hints)
-    calling = self_addressed(connection, chapter_id, project_root)
+    calling = calls_of(connection, chapter_id, project_root)
     for row in speech:
-        if int(row["id"]) in calling:
+        call = calling.get(int(row["id"]))
+        if call is not None:
             name = label(str(row["speaker"]), display)
             hints[str(row["stable_id"])] = {
                 "kind": "vocative",
-                "note": f"Câu này gọi tên {name} - người được gọi thường là người nghe, không phải người nói.",
+                "note": (f"Câu trước {label(call.caller, display)} gọi {name}; câu này lại nhắc {name} - có thể vẫn là"
+                         f" {label(call.caller, display)} nói." if call.caller
+                         else f"Câu này gọi tên {name} - người được gọi thường là người nghe, không phải người nói."),
+                **({"suggest": call.caller} if call.caller else {}),
             }
     order = {str(row["stable_id"]): index for index, row in enumerate(speech)}
     for first, second in merged_turns(connection, chapter_id, project_root):
