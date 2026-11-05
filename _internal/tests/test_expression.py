@@ -102,8 +102,8 @@ def test_shaping_is_deterministic() -> None:
     """
     audio = _speechlike(2.0)
 
-    first, target = shape_segment(audio, 48_000, "angry", 3, "dialogue", -4)
-    second, _ = shape_segment(audio, 48_000, "angry", 3, "dialogue", -4)
+    first, target = shape_segment(audio, 48_000, "angry", 3, "dialogue")
+    second, _ = shape_segment(audio, 48_000, "angry", 3, "dialogue")
 
     assert np.array_equal(first, second)
     assert target is not None and target["tempo_applied"] is False
@@ -159,30 +159,14 @@ def test_no_pause_runs_away_however_the_story_stacks_up() -> None:
     assert worst == PAUSE_CEILING_MS
 
 
-def test_a_register_alone_still_goes_through_one_pass() -> None:
-    """A voice with a calibrated register and no affect is shifted, not passed through."""
-    audio = _speechlike(2.0)
-
-    shifted, target = shape_segment(audio, 48_000, "neutral", 0, "narration", -4)
-
-    assert target is None
-    assert len(shifted) == len(audio)
-    assert not np.array_equal(shifted, audio)
-
-
-def test_register_and_affect_share_a_single_resynthesis() -> None:
-    """Two passes over one contour cost twice and buy nothing.
-
-    Applying the register separately from the expression meant a line carrying both went
-    through two resyntheses on top of the formant warp. They are the same operation on the
-    same pitch contour, so they are applied together.
-    """
+def test_shaping_carries_the_affect_only_never_a_register() -> None:
+    """The voice's register is in the take already; delivery adds the affect target and nothing else."""
     audio = _speechlike(3.0)
     target = prosody_targets("angry", 3, seconds=3.0)
 
-    combined, _ = shape_segment(audio, 48_000, "angry", 3, "dialogue", -4)
+    combined, _ = shape_segment(audio, 48_000, "angry", 3, "dialogue")
     direct = apply_gain(
-        shape_f0(audio, 48_000, target["pitch_semitones"] - 4, target["range_ratio"]),
+        shape_f0(audio, 48_000, target["pitch_semitones"], target["range_ratio"]),
         target["gain_db"],
     )
 
