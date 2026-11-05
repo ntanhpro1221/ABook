@@ -1849,6 +1849,13 @@ def _cast(project_root: Path) -> dict[str, Any]:
         chapter_numbers = {chapter_id: item["name"] for chapter_id, item in chapter_names(connection, project_root).items()}
         book_row = connection.execute("SELECT updated_at FROM book WHERE id=1").fetchone()
         narrator_now = narrator_voice_in(connection, voices)
+        narrator_base = next((p for p in profiles.values() if str(p["voice_key"]).casefold() == "narrator"), None)
+        chapter_voices = [f"Chương {row['chapter_index']}: {row['preset_name']}" for row in connection.execute(
+            "SELECT DISTINCT c.chapter_index, v.preset_name FROM segments s"
+            " JOIN chapters c ON c.id=s.chapter_id JOIN voice_profiles v ON v.id=s.voice_profile_id"
+            " WHERE s.kind='narration' AND UPPER(s.speaker)='NARRATOR' AND v.voice_key<>'narrator' COLLATE NOCASE"
+            " ORDER BY c.chapter_index, v.preset_name")]
+
         # Câu kể của chương đã nghe được mà sửa của người nghe (đổi giọng kể) đặt lại - chờ thu lại bằng giọng mới (soát UX a24).
         narrator_redo = int(connection.execute(
             "SELECT COUNT(*) FROM segments s JOIN chapters c ON c.id = s.chapter_id WHERE s.speaker = 'NARRATOR'"
@@ -1880,9 +1887,10 @@ def _cast(project_root: Path) -> dict[str, Any]:
 
     narrator = {
         "voice": narrator_now,
+        "chapterVoices": chapter_voices,
         "lines": lines.get("NARRATOR", 0),
         "seconds": round(seconds.get("NARRATOR", 0.0), 1),
-        "profile": voice_of("NARRATOR"),
+        "profile": _voice_view(narrator_base) or voice_of("NARRATOR"),
         # Đổi giọng người kể (tab Nhân vật, hộp "Đổi giọng") chưa vào sách.
         "pendingVoice": pending.get("NARRATOR"),
         "redo": narrator_redo,

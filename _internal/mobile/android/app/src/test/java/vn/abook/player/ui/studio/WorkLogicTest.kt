@@ -240,12 +240,13 @@ class WorkLogicTest {
     @Test fun castAndVoicesJsonRead() {
         val cast = StudioCastJson.cast(
             JSONObject(
-                """{"narrator":{"voice":"Giọng A","lines":3,"profile":{"key":"k","preset":"p","label":"Giọng A"}},
+                """{"narrator":{"voice":"Giọng A","lines":3,"chapterVoices":["Chương 8: Đoan Trang"],"profile":{"key":"k","preset":"p","label":"Giọng A"}},
                 "characters":[{"name":"kati","displayName":"Kati","lines":4,"sampleId":7,"voice":{"key":"k","preset":"p","label":"Giọng B"},"pendingVoice":{"preset":"q","label":"Giọng C","gender":"female"}}],
                 "extras":[],"carried":[]}""",
             ),
         )
         assertEquals("Giọng A", cast.narrator.profile?.label)
+        assertEquals(listOf("Chương 8: Đoan Trang"), cast.narrator.chapterVoices)
         val kati = cast.characters.single()
         assertEquals(7, kati.sampleId)
         assertEquals("Giọng C", kati.pendingVoice?.label)

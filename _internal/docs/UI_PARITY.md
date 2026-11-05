@@ -172,7 +172,7 @@ Cặp nhãn ngắn (<= 6 chữ) mà phía kia KHÔNG có nguyên văn nhưng có
 | Máy đang dùng: {} | Máy đang dùng | 1.00 | `native/studio/WorkText.kt:36` ~ `studio/WorkInbox.tsx:934` |
 | Mã ghép nối | Mã ghép nối: {} | 1.00 | `native/devices/PairScreen.kt:185` ~ `desktop/PhoneSync.tsx:161` (+1) |
 | Nghe một câu | Nghe từ câu này | 1.00 | `native/studio/WorkText.kt:151` ~ `listen/SentenceMenu.tsx:141` |
-| Nghe tiếp từ {} | Nghe tiếp từ | 1.00 | `native/data/ListenExtras.kt:98` ~ `listen/BookScreen.tsx:692` |
+| Nghe tiếp từ {} | Nghe tiếp từ | 1.00 | `native/data/ListenExtras.kt:98` ~ `listen/BookScreen.tsx:693` |
 | Nghe tiếp từ {} | Nghe tiếp · {} | 1.00 | `native/data/ListenExtras.kt:98` ~ `listen/labels.ts:81` |
 | Sẽ đọc là “{}” | Sẽ đọc là “ | 1.00 | `native/studio/ReviewTab.kt:163` ~ `studio/ReviewQueue.tsx:241` |
 | Sẽ đọc là “{}” | Đọc {} | 1.00 | `native/studio/ReviewTab.kt:163` ~ `listen/LibraryScreen.tsx:201` (+1) |
@@ -309,7 +309,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 ### c2. Chỉ có ở web phía điện thoại - listen/, shared/ (238 nhãn)
 
 - `listen/AddBook.tsx` (4): Chưa mở được file sách này. (`296`); Chọn lại (`548`); Đường dẫn file hay thư mục (`651`); Chưa đọc được (`814`)
-- `listen/BookScreen.tsx` (19): Tạm dừng {} (`163`); Đọc {} (chưa có audio) (`182`); Đọc chương này (`271`); Danh sách chương (`305`); Bỏ gộp {} vào {} (`456`); Bỏ gộp (`461`); Đổi giọng {} (`476`); Chờ áp dụng: giọng (`570`); Nghe giọng {} (`576`); Đổi giọng người kể (`577`); 7 ngày qua: (`670`); Nghe tiếp từ (`692`); Chuyển sang cuốn (`738`); Đang mở thư viện (`738`); Đọc (`1097`); Đọc tiếp (`1097`); Đã nghe {} (`1196`); Việc với sách (`1225`); Mục của sách (`1300`)
+- `listen/BookScreen.tsx` (19): Tạm dừng {} (`163`); Đọc {} (chưa có audio) (`182`); Đọc chương này (`271`); Danh sách chương (`305`); Bỏ gộp {} vào {} (`456`); Bỏ gộp (`461`); Đổi giọng {} (`476`); Chờ áp dụng: giọng (`571`); Nghe giọng {} (`577`); Đổi giọng người kể (`578`); 7 ngày qua: (`671`); Nghe tiếp từ (`693`); Chuyển sang cuốn (`739`); Đang mở thư viện (`739`); Đọc (`1098`); Đọc tiếp (`1098`); Đã nghe {} (`1197`); Việc với sách (`1226`); Mục của sách (`1301`)
 - `listen/DropToAdd.tsx` (1): Thả để thêm sách (`36`)
 - `listen/EditBook.tsx` (11): Chưa chỉnh được nhạc nền (`160`); Đã đổi tên sách (`335`); Đã bỏ tên tác giả (`340`); Đã đổi tác giả (`340`); Đã đặt ảnh bìa (`345`); Lưu tên (`413`); Lưu tác giả (`436`); Mở tab Nhạc nền (`471`); Tên riêng (`481`); Chọn thư mục (`714`); Mặc định: thư mục Đã xuất (`717`)
 - `listen/LibraryScreen.tsx` (13): Mở {} (`198`); Nghe ngay {} (`201`); Tạm dừng {} (`201`); Đọc {} (`201`); Thêm {} (`241`); Đang tạm dừng{} (`334`); Chưa có chương nghe được{} (`336`); Sách (`373`); Mở bộ {} (`415`); Lọc sách (`574`); Nghe xong (`576`); Xếp theo: {} (`584`); Gõ không dấu cũng được (`602`)
@@ -434,7 +434,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 
 **d3. Nhãn ngắn bắt đầu bằng chữ thường** (web 147, native 0); 15 đầu mỗi phía:
 
-- web: bạn đã chọn · (`listen/ProjectFileItems.tsx:292`); bắt đầu (`studio/NewProjectScreen.tsx:701`); bắt đầu ngay (`desktop/BookTemplates.tsx:107`); bắt đầu. (`studio/NewProjectScreen.tsx:708`); bỏ chọn (`studio/WorkInbox.tsx:1281`); chưa cài (`studio/ProjectScreen.tsx:819`); chưa nghe (`listen/BookScreen.tsx:835`); chưa phân tích tới (`studio/NameReadings.tsx:289`); chưa thu - không tốn gì (`studio/ApplyChanges.tsx:93`); chương (`listen/AddBook.tsx:700`); chương (`studio/NewProjectScreen.tsx:643`); chương (`studio/NewProjectScreen.tsx:895`); chương (`studio/NewProjectScreen.tsx:910`); chương (`studio/ProjectScreen.tsx:788`); chương (`studio/VolumeSplit.tsx:173`)
+- web: bạn đã chọn · (`listen/ProjectFileItems.tsx:292`); bắt đầu (`studio/NewProjectScreen.tsx:701`); bắt đầu ngay (`desktop/BookTemplates.tsx:107`); bắt đầu. (`studio/NewProjectScreen.tsx:708`); bỏ chọn (`studio/WorkInbox.tsx:1281`); chưa cài (`studio/ProjectScreen.tsx:819`); chưa nghe (`listen/BookScreen.tsx:836`); chưa phân tích tới (`studio/NameReadings.tsx:289`); chưa thu - không tốn gì (`studio/ApplyChanges.tsx:93`); chương (`listen/AddBook.tsx:700`); chương (`studio/NewProjectScreen.tsx:643`); chương (`studio/NewProjectScreen.tsx:895`); chương (`studio/NewProjectScreen.tsx:910`); chương (`studio/ProjectScreen.tsx:788`); chương (`studio/VolumeSplit.tsx:173`)
 - native: (không có)
 
 **d3b. Chữ dùng dấu thanh kiểu mới (`òa óa úy`) - kiểu thiểu số** (DESIGN.md chưa chọn kiểu nào); 12 đầu mỗi phía:
@@ -453,7 +453,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `Chưa có bài nào` | `chưa có bài nào` (`listen/MyMusic.tsx:143`, `listen/MyMusic.tsx:156` (+1))
 - `Chưa ghép được` | `Chưa ghép được:` (`desktop/OtherComputers.tsx:101`, `desktop/OtherComputers.tsx:317`)
 - `Chưa gói được dự án` | `Chưa gói được dự án.` (`desktop/bookFileExport.ts:57`, `studio/ExportBook.tsx:75` (+2))
-- `Chưa nghe` | `chưa nghe` (`listen/BookScreen.tsx:1196`, `listen/BookScreen.tsx:276` (+2))
+- `Chưa nghe` | `chưa nghe` (`listen/BookScreen.tsx:1197`, `listen/BookScreen.tsx:276` (+2))
 - `Chưa nghe thử được` | `Chưa nghe thử được:` (`listen/clip.tsx:92`, `studio/TryReading.tsx:146`)
 - `Chưa thêm được chữ sáng` | `Chưa thêm được chữ sáng.` (`studio/WordTimings.tsx:34`, `studio/WordTimings.tsx:43`)
 - `Chưa đọc được` | `Chưa đọc được:` (`listen/AddBook.tsx:814`, `studio/ProjectsScreen.tsx:70`)
@@ -470,7 +470,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `Hồ sơ nghe` | `Hồ sơ nghe:` (`native/screens/BookRecords.kt:101`, `native/screens/BookTabs.kt:135`)
 - `Lùi 15 giây` | `Lùi {} giây` (`native/nowplaying/NowPlayingScreen.kt:217`, `native/pip/PipParams.kt:47`)
 - `Mở Cài đặt` | `Mở cài đặt` (`native/data/SettingsRepo.kt:131`, `native/devices/CompanionSurfaces.kt:139` (+2))
-- `Nữ` | `nữ` (`native/data/ListenExtras.kt:361`, `native/data/ListenExtras.kt:407` (+3))
+- `Nữ` | `nữ` (`native/data/ListenExtras.kt:362`, `native/data/ListenExtras.kt:408` (+3))
 - `Tới 15 giây` | `Tới {} giây` (`native/nowplaying/NowPlayingScreen.kt:219`, `native/pip/PipParams.kt:49`)
 - `Xoá khoá` | `Xoá khoá?` (`native/voice/VoiceSheets.kt:257`, `native/voice/VoiceSheets.kt:281` (+1))
 - `Xoá nhật ký` | `Xoá nhật ký?` (`native/screens/SettingsAdvanced.kt:132`, `native/screens/SettingsAdvanced.kt:99`)

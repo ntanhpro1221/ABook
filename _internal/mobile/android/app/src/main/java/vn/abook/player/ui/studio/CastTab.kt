@@ -104,6 +104,7 @@ internal fun LazyListScope.castTab(cast: StudioCastState, data: CastData, state:
                 hint = narrator.pendingVoice?.let { WorkText.pendingVoice(it.label) } ?: WorkText.castLines(narrator.lines),
                 hintColor = Abook.colors.text2, chevron = true,
             )
+            narrator.chapterVoices.forEach { RowHint(it) }
             RowLine()
         }
     }

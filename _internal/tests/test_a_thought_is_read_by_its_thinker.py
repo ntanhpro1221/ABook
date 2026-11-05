@@ -21,8 +21,9 @@ from abook.tts import TTSCoordinator
     [
         ("thought", "Lucien", 7, False),
         ("thought", "lucien", 7, False),
-        ("thought", "NARRATOR", 7, True),
-        ("thought", "narrator", 7, True),
+            ("thought", "NARRATOR", 7, False),
+            ("thought", "narrator", 7, False),
+            ("thought", "NARRATOR", None, True),
         ("thought", "UNKNOWN", 7, True),
         ("thought", "", 7, True),
         ("thought", None, 7, True),

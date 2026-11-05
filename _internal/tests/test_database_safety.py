@@ -11387,7 +11387,8 @@ def test_promoted_candidate_resume_revalidates_the_entire_committed_ledger(
         db.segment_candidate_attempt_summary(segment_id, "candidate-policy-v1")
 
 
-def test_candidate_requires_locked_casting_and_thought_uses_narrator(tmp_path: Path) -> None:
+@pytest.mark.parametrize("speaker,uses_narrator", [("NARRATOR", False), ("UNKNOWN", True)])
+def test_candidate_requires_locked_casting_and_honors_thought_profile(tmp_path: Path, speaker: str, uses_narrator: bool) -> None:
     db, segment_id = _segment_db(tmp_path)
     incumbent_sha256 = "a" * 64
     db.mark_signal_passed(
@@ -11439,8 +11440,8 @@ def test_candidate_requires_locked_casting_and_thought_uses_narrator(tmp_path: P
     )
     with db.connect() as conn:
         conn.execute(
-            "UPDATE segments SET kind='thought',voice_profile_id=? WHERE id=?",
-            (character_profile, segment_id),
+            "UPDATE segments SET kind='thought',speaker=?,voice_profile_id=? WHERE id=?",
+            (speaker, character_profile, segment_id),
         )
     candidate = db.allocate_segment_candidate(
         segment_id=segment_id,
@@ -11452,8 +11453,8 @@ def test_candidate_requires_locked_casting_and_thought_uses_narrator(tmp_path: P
         wav_path=tmp_path / "candidates" / "thought.wav",
         candidates_root=tmp_path / "candidates",
     )
-    assert int(candidate["expected_voice_profile_id"]) == narrator_profile
-    assert int(candidate["expected_pitch_semitones"]) == -1
+    assert int(candidate["expected_voice_profile_id"]) == (narrator_profile if uses_narrator else character_profile)
+    assert int(candidate["expected_pitch_semitones"]) == (-1 if uses_narrator else 0)
 
 
 def test_candidate_rejects_casting_change_after_allocation(tmp_path: Path) -> None:
