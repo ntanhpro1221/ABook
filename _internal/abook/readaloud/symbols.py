@@ -705,7 +705,11 @@ def _dispatch(token: str, pos: int, spot) -> tuple | None:
             end = _run(token, pos, "×")
             return end, _times_sign(spot(end))
         if after_char.isdigit() and not _word_char(before):
-            return pos + 1, _times_pre(spot(pos + 1), char)
+            said = _times_pre(spot(pos + 1), char)
+            decimal = re.match(r"\d+\.\d{1,2}(?![\d.,])", token[pos + 1:]) if said[0] == "nhân" else None
+            if decimal:
+                return pos + 1 + len(decimal.group()), ("nhân " + decimal.group().replace(".", ","), False)  # "x1.5": hệ số thập phân kiểu Anh, sea-g2p đọc "1.5" là "một chấm năm"
+            return pos + 1, said
         masked = re.match(r"[xX×]{2,}(?![\w])", token[pos:]) if before.isdigit() else None
         if masked:
             return pos + len(masked.group()), (" ".join(["ích"] * len(masked.group())), False)  # "19××", "0 0××": chữ số bị che, giữ số và đọc từng "ích"

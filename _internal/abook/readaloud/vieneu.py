@@ -38,8 +38,9 @@ SENTENCE_END = ".!?…"
 PHRASE_END = ",;:"
 CLOSERS = "\"'”’)]»"
 OPENERS = "\"'“‘([«"
-ROMAN = re.compile(r"X{0,3}(?:IX|IV|V?I{0,3})")  # I..XXXIX (chuỗi rỗng khớp, bị loại riêng)
-_ROMAN_VALUE = {"I": 1, "V": 5, "X": 10}
+ROMAN = re.compile(r"C{0,3}(?:XC|XL|L?X{0,3})(?:IX|IV|V?I{0,3})")  # I..CCCXCIX (chuỗi rỗng khớp, bị loại riêng)
+_ROMAN_VALUE = {"I": 1, "V": 5, "X": 10, "L": 50, "C": 100}
+ROMAN_PLAIN = 39  # từ 40 (có L / C: "XL", "size XL", "hạng C") chỉ là số ngay sau danh từ đánh số và có hai chữ trở lên
 _DIGITS = ("", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín")
 # Dấu bộ chuẩn hoá của sea-g2p đọc sai: "~" luôn là "khoảng", "500,000" là "năm trăm", "<Tên>" là "nhỏ hơn ... lớn hơn", "a / b" là "a trên b".
 TILDES = re.compile(r"~+")
@@ -103,7 +104,7 @@ class Unit:
 
 
 def roman_value(core: str) -> int | None:
-    """Số La Mã viết HOA hợp lệ I..XXXIX (đúng chuẩn: không IIII, VX...), None nếu `core` không phải."""
+    """Số La Mã viết HOA hợp lệ I..CCCXCIX (đúng chuẩn: không IIII, VX, XLX...), None nếu `core` không phải."""
     if not core or not ROMAN.fullmatch(core):
         return None
     total = 0
@@ -114,7 +115,10 @@ def roman_value(core: str) -> int | None:
 
 
 def vietnamese_number(value: int) -> str:
-    """1..39 thành chữ: mười bốn, mười lăm, hai mươi mốt, hai mươi lăm, ba mươi."""
+    """1..399 thành chữ: mười bốn, mười lăm, hai mươi mốt, hai mươi lăm, ba mươi, bốn mươi lăm, một trăm lẻ năm (như sea-g2p đọc số)."""
+    hundreds, rest = divmod(value, 100)
+    if hundreds:
+        return f"{_DIGITS[hundreds]} trăm" + ("" if not rest else f" lẻ {_DIGITS[rest]}" if rest < 10 else f" {vietnamese_number(rest)}")
     tens, ones = divmod(value, 10)
     head = "" if tens == 0 else "mười" if tens == 1 else f"{_DIGITS[tens]} mươi"
     tail = "" if ones == 0 else "lăm" if ones == 5 and tens else "mốt" if ones == 1 and tens > 1 else _DIGITS[ones]
@@ -129,15 +133,15 @@ def _capitalised(word: str) -> bool:
     return word.isalpha() and word[0].isupper()
 
 
-def numbered_by(toks: list[str], index: int) -> bool:
-    """Từ đứng trước `toks[index]` có đánh số được không: danh từ đánh số ("chương", "thế kỷ"...) hay hai tên riêng viết hoa liền nhau ("Louis X")."""
+def numbered_by(toks: list[str], index: int, by_name: bool = True) -> bool:
+    """Từ đứng trước `toks[index]` có đánh số được không: danh từ đánh số ("chương", "thế kỷ"...) hay (`by_name`) hai tên riêng viết hoa liền nhau ("Louis X")."""
     before = _word(toks[index - 1]) if index >= 1 else ""
     if before.lower() in NUMBERED_NOUNS:
         return True
     earlier = _word(toks[index - 2]) if index >= 2 else ""
     if f"{earlier} {before}".lower() in NUMBERED_PAIRS:
         return True
-    return _capitalised(before) and _capitalised(earlier)
+    return by_name and _capitalised(before) and _capitalised(earlier)
 
 
 def ordinal_one(toks: list[str], index: int, token: str) -> bool:
@@ -155,7 +159,7 @@ def _digit(char: str) -> bool:
     return "0" <= char <= "9" and len(char) == 1
 
 
-def _tilde(token: str) -> str:
+def _tilde(token: str, word_after: bool = False) -> str:
     def replace(match: re.Match) -> str:
         left = token[match.start() - 1] if match.start() else ""
         right = token[match.end()] if match.end() < len(token) else ""
@@ -163,22 +167,28 @@ def _tilde(token: str) -> str:
             return " đến "
         if _digit(right) and not left.isalnum():
             return match.group()  # "~50 người": để sea-g2p đọc "khoảng"
+        if left.isalpha() and not right and word_after:
+            return ","  # "Hmm~ để xem", "quá~ ăn nữa": kéo dài rồi mới nói tiếp - một nhịp ngắt, không dính liền
         return " " if left.isalpha() and right.isalpha() else ""  # "Hmm~", "Har~kun"
     return TILDES.sub(replace, token)
 
 
 def _tildes(out: list[str]) -> None:
-    """"~" kéo dài giọng ("Hmm~") thì bỏ, giữa hai số ("3~5", "10,000 ~ 15,000") là "đến", trước số ("~50") là "khoảng" (sea-g2p đọc)."""
+    """"~" kéo dài giọng ("Hmm~") thì bỏ - còn chữ nói tiếp sau nó ("Hmm~ để xem", "Hự ~ đau") thì thành dấu phẩy, một nhịp ngắt; giữa hai số ("3~5", "10,000 ~ 15,000") là "đến",
+    trước số ("~50") là "khoảng" (sea-g2p đọc)."""
     for index, token in enumerate(out):
         if "~" not in token:
             continue
+        after = out[index + 1].lstrip(OPENERS) if index + 1 < len(out) else ""
+        # Một cụm kéo giọng từng chữ chỉ ngắt ở cuối cụm: "Không~ chịu~ đâu~".
+        word_after = after[:1].isalpha() and not after.rstrip(CLOSERS + PUNCT_MARKS).endswith("~")
         if token.strip(OPENERS + CLOSERS + PUNCT_MARKS).strip("~"):  # còn chữ khác: xét trong chính chữ này
-            out[index] = _tilde(token)
+            out[index] = _tilde(token, word_after)
             continue
         before = out[index - 1].rstrip(CLOSERS) if index else ""  # "~" đứng riêng: nhìn chữ kề hai bên
-        after = out[index + 1].lstrip(OPENERS) if index + 1 < len(out) else ""
         number_after = bool(after) and _digit(after[0])
-        said = TILDES.sub("đến" if number_after and bool(before) and _digit(before[-1]) else "~" if number_after else "", token)
+        pause = "," if not token.strip("~") and before[-1:].isalpha() and word_after else ""
+        said = TILDES.sub("đến" if number_after and bool(before) and _digit(before[-1]) else "~" if number_after else pause, token)
         if index and not said.strip(CLOSERS + PUNCT_MARKS):  # "Ô ~," -> "Ô,": dấu câu còn lại dính vào chữ trước
             out[index - 1] += said
             said = ""
@@ -420,6 +430,27 @@ def _stars(out: list[str]) -> None:
 
 
 _QUESTION_BANG = re.compile(r"[?!]{2,}")
+_ELLIPSIS_END = re.compile(r"(?<=[^\W\d_])(?:\.{2,}|…)+(?=[" + re.escape(CLOSERS) + r"]*$)")
+_ELLIPSIS_GLUED = re.compile(r"(?<=[^\W\d_])(?:\.{2,}|…)+(?=[^\W\d_])")
+_ELLIPSIS_LEAD = re.compile(r"^([" + re.escape(OPENERS) + r"]*)(?:\.{2,}|…)+")
+
+
+def _ellipses(out: list[str], toks: list[str] | None = None) -> None:
+    """"…" / "..." mà câu còn nói tiếp bằng chữ thường ("Tôi... tôi không biết", "Cái…cái gì") là chỗ ngập ngừng giữa câu: thành dấu phẩy - sea-g2p đọc mọi "…" là dấu chấm (giọng xuống hết câu,
+    chữ sau như câu mới). Theo sau là chữ hoa / hết đoạn thì vẫn là hết câu, để nguyên. "…" mở đầu đoạn hay ngay sau ngoặc mở ("...Không", "“…Vâng") không có gì để ngừng trước nó (sea-g2p để lại
+    một dấu chấm trơ): bỏ. Chỉ xét "…" có trong chữ hiện (`toks`): "…" do bước trước thêm vào ("hừm…", "tờ… tôi", "đờ…") giữ nguyên."""
+    plain = toks if toks is not None and len(toks) == len(out) else out
+    for index, token in enumerate(out):
+        if "…" not in token and ".." not in token:
+            continue
+        if token == plain[index] and _ELLIPSIS_GLUED.search(token):  # chữ đã đổi ở bước trước ("rồi…Senpai" -> "rồi…xen-pai") thì chữ hoa / thường không còn đúng: để nguyên
+            token = _ELLIPSIS_GLUED.sub(lambda match: ", " if match.string[match.end()].islower() else match.group(), token)
+        if index + 1 < len(out) and plain[index + 1].lstrip(OPENERS)[:1].islower() and _ELLIPSIS_END.search(plain[index]):
+            token = _ELLIPSIS_END.sub(",", token)
+        lead = _ELLIPSIS_LEAD.match(token)
+        if lead and _ELLIPSIS_LEAD.match(plain[index]) and (index == 0 or lead.group(1)) and (token[lead.end():][:1].isalpha() or (lead.end() == len(token) and index + 1 < len(out))):
+            token = lead.group(1) + token[lead.end():]
+        out[index] = token
 
 
 def _question_runs(out: list[str]) -> None:
@@ -522,6 +553,33 @@ def _frames(out: list[str]) -> None:
         out[index] = token
 
 
+_COUNTED_THOUSANDS = frozenset("vàng xu yên yen đồng đô usd vnd người con cái chiếc viên điểm chương trang quân lính lần exp xp hp mp sp goblin kobold orc quái".split())
+_THOUSANDS_LABELS = frozenset("giá tổng hp mp sp exp xp str agi vit int dex luk atk def".split())
+
+
+def _thousands(out: list[str], toks: list[str] | None = None) -> None:
+    """Chỉ bỏ dấu ngăn nghìn khi có ngữ cảnh đếm / chỉ số hay nhiều nhóm nghìn.
+    "1,500 kg", mã và số đứng riêng có thể là thập phân: giữ nguyên. Xét chữ hiện
+    vì nhãn "HP" đã được đánh vần trong `out`. Khoảng và tỉ số dùng ngữ cảnh ở đầu kia.
+    """
+    plain = toks if toks is not None and len(toks) == len(out) else list(out)
+    def context(index: int) -> bool:
+        before = plain[index - 1].strip(OPENERS + CLOSERS + PUNCT_MARKS).lower() if index else ""
+        after = plain[index + 1].strip(OPENERS + CLOSERS + PUNCT_MARKS).lower() if index + 1 < len(plain) else ""
+        if before in _THOUSANDS_LABELS or after in _COUNTED_THOUSANDS:
+            return True
+        if after in ("~", "-", "–", "đến", "/") and index + 2 < len(plain) and THOUSANDS.search(plain[index + 2]):
+            return after == "/" or context(index + 2)
+        return before == "/" and index >= 2 and bool(THOUSANDS.search(plain[index - 2]))
+    for index, token in enumerate(out):
+        def replace(match: re.Match) -> str:
+            left, right = token[:match.start()], token[match.end():]
+            gold = bool(re.fullmatch(r"(?:G|pt)[" + re.escape(CLOSERS + PUNCT_MARKS) + r"]*", right))
+            bounded = not left[-1:].isalnum() and (not right[:1].isalnum() or gold)
+            return match.group().replace(",", "") if bounded and (gold or match.group().count(",") > 1 or context(index)) else match.group()
+        out[index] = THOUSANDS.sub(replace, token)
+
+
 def reading_marks(out: list[str], toks: list[str] | None = None) -> None:
     """Dấu câu / ký hiệu mà sea-g2p đọc sai thành lời (nó đọc "~" là "khoảng", "500,000" là "năm trăm"): sửa tại chỗ, số chữ không đổi. `toks` là chữ hiện tương ứng với `out` (cho `_arrows` xét ngữ cảnh)."""
     _fullwidth(out)
@@ -529,8 +587,8 @@ def reading_marks(out: list[str], toks: list[str] | None = None) -> None:
     _emoticons(out)
     _arrows(out, toks)
     _tildes(out)
-    for index, token in enumerate(out):
-        out[index] = THOUSANDS.sub(lambda match: match.group().replace(",", ""), token)
+    _ellipses(out, toks)
+    _thousands(out, toks)
     _numbers(out, toks)
     _angle(out)
     symbols.read_symbols(toks, out)
@@ -566,8 +624,8 @@ def _roman_numbers(toks: list[str], out: list[str]) -> None:
     for index, token in enumerate(toks):
         core = token.lstrip(OPENERS + FRAMES_OPEN).rstrip(CLOSERS + FRAMES_CLOSE + ".,;:!?…")
         value = roman_value(core)
-        if value is None:
-            continue
+        if value is None or (value > ROMAN_PLAIN and (len(core) < 2 or index == 0 or not numbered_by(toks, index, by_name=False))):
+            continue  # "Chương XLV", "tầng LX" là số; "size XL", "hạng C", "Louis XL" thì không
         if index == 0:  # đề mục "I. Mở đầu": số có dấu chấm / ngoặc ngay sau và còn chữ theo sau
             if len(toks) < 2 or token.lstrip(OPENERS)[len(core):] not in (".", ")"):
                 continue
@@ -610,10 +668,11 @@ def _ends(token: str, marks: str) -> bool:
     return bool(core) and core[-1] in marks
 
 
-def _groups(toks: list[str], first: int, last: int, marks: str) -> list[tuple[int, int]]:
+def _groups(toks: list[str], first: int, last: int, marks: str, said: list[str] | None = None) -> list[tuple[int, int]]:
+    """Các khoảng chữ hiện kết thúc ở chữ có dấu `marks`. `said` (chữ đem đọc): chữ hiện hết câu mà chữ đọc đã thành dấu phẩy ("Tôi..." trước "tôi không biết", `_ellipses`) không cắt câu."""
     out, start = [], first
     for index in range(first, last + 1):
-        if _ends(toks[index], marks) or index == last:
+        if (_ends(toks[index], marks) and not (said is not None and said[index].rstrip(CLOSERS).endswith(","))) or index == last:
             out.append((start, index))
             start = index + 1
     return out
@@ -645,7 +704,7 @@ def units(text: str, max_chars: int, origin: str | None = None, speaks_english: 
         return toks, []
     said = spoken_tokens(toks, origin, speaks_english, readings)
     pieces: list[tuple[int, int]] = []
-    for first, last in _groups(toks, 0, len(toks) - 1, SENTENCE_END):
+    for first, last in _groups(toks, 0, len(toks) - 1, SENTENCE_END, said):
         if _length(toks, first, last) <= max_chars:
             pieces.append((first, last))
             continue
