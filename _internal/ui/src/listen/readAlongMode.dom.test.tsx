@@ -87,8 +87,9 @@ const mode = (value: "listen" | "read") => screen().querySelector<HTMLButtonElem
 const where = () => host.querySelector("[data-where]")!.textContent;
 const sentences = () => screen().querySelectorAll("[data-read-along] [data-sentence]").length;
 
-it("điện thoại: bấm Đọc theo thì chữ hiện TRONG Đang nghe, thanh điều khiển còn nguyên, đường dẫn không đổi", async () => {
-  await render(<NowPlaying mobile />);
+it.each([{ mobile: true, stacked: true }, { mobile: false, stacked: true }])("khổ hẹp (mobile=$mobile): Đọc theo nằm TRONG Đang nghe, giữ điều khiển và đường dẫn", async (layout) => {
+  await render(<NowPlaying {...layout} />);
+  expect(screen().classList.contains("fixed")).toBe(layout.mobile);
   expect(mode("listen").getAttribute("aria-selected")).toBe("true");
   expect(sentences()).toBe(0);
   const transport = screen().querySelector("[data-player-transport]")!;
