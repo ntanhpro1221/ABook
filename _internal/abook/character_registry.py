@@ -26,6 +26,7 @@ from .io_utils import slugify, stable_int
 from .voice_balance import formant_key as balance_formant_key
 from .voice_catalog import (
     CASTING_REGIONS,
+    GENDER_FEMALE,
     AGE_PITCH_RANK_BUCKET,
     EXCLUDED_PRESETS,
     LAST_RESORT_PRESETS,
@@ -1779,12 +1780,18 @@ class PresetAllocator:
     ) -> tuple[dict[str, str], float, int]:
         """Pick a preset, the formant warp it needs, and the F0 offset its age implies.
 
-        `age` used to be analysed, stored and then ignored here, so a child was read by
-        whichever adult voice came next in the rotation and a listener described the boy
-        as sounding like an old uncle. Age enters twice, because it is two different
-        acoustic facts: a shorter vocal tract, which the formant warp reaches, and a
-        higher or lower F0, which the register does.
+        A teen or an elderly character enters twice, because age is two different acoustic
+        facts: a shorter or longer vocal tract, which the formant warp reaches, and a higher
+        or lower F0, which the register does.
+
+        A child enters neither: the owner heard the warped child voices and said "đừng bóp
+        nữa, bóp đem đến âm thanh quá tệ" (05-11). A child, boy or girl, is cast from the
+        female presets, ranked by the female character tiers, and gets the voice untouched:
+        age pitch 0 and the preset's own formant (1.0 unless a shared preset needs a ladder
+        step to stay distinct from whoever already holds it, as for any character).
         """
+        if str(age) == "child":
+            gender = GENDER_FEMALE
         # A character never shares the narrator's preset. Excluding it by name excludes
         # every variant of it too, which is the point: a pitch-shifted or formant-warped
         # narrator is still the narrator's voice to a listener, not a second character.
@@ -1794,8 +1801,8 @@ class PresetAllocator:
             if preset["name"] not in self.not_for_characters
         ]
         # A preset whose pitch cannot reach the age is not a candidate for it. Warping the
-        # tract to a child's size while the pitch stays adult makes a combination no throat
-        # can produce, and a listener hears it as a defect rather than as a child.
+        # tract to the age while the pitch stays put makes a combination no throat can
+        # produce, and a listener hears it as a defect rather than as that age.
         reachable = [
             preset
             for preset in candidates
@@ -1803,22 +1810,6 @@ class PresetAllocator:
         ]
         if reachable:
             candidates = reachable
-        if str(age) == "child":
-            # Before puberty the sexes barely differ: an eight-year-old boy and girl are
-            # about 13.0 and 12.7 cm of vocal tract. Restricting a boy to the male presets
-            # therefore restricts him to the *longest* tracts in the catalog, which cannot
-            # reach a child even warped to their limit - they stop 0.8 cm short and sound
-            # strained getting there. The short presets land on the target exactly, so the
-            # pool widens across gender here and only here.
-            candidates = [
-                preset
-                for preset in VIENEU_PRESETS
-                if preset["name"] not in self.not_for_characters
-                and preset["style"] != STYLE_NEWS
-                and preset["region"] in CASTING_REGIONS
-                and preset["name"] not in EXCLUDED_PRESETS
-                and preset_reaches_age_pitch(str(preset["name"]), age, gender)
-            ]
         if not candidates:
             # Nothing of this gender is left, so widen across gender - but never across
             # the region allowlist. A fallback that reached the whole catalog would put
@@ -1843,14 +1834,14 @@ class PresetAllocator:
                 # the chapter.
                 name in LAST_RESORT_PRESETS,
                 usage[name],
-                # A listener's own ranking of the voices they have heard, for this role
-                # (child or adult, by gender), comes before either computed proxy. Reach
+                # A listener's own ranking of the voices they have heard, as a character
+                # (by gender; a child is ranked as female), comes before either computed proxy. Reach
                 # and shift only estimate how good the result will sound; this is a
                 # verdict on the result, and the estimates have already been caught
                 # disagreeing with it. It sits after usage, so variety still comes
                 # first: the character with the most lines is cast first and takes the
                 # best ranked voice nobody has, the next takes the next one down.
-                listener_rank(name, age, gender),
+                listener_rank(name, gender),
                 # A preset that cannot reach this age is a worse fit however available it
                 # is: an adult male tract stops 0.8 cm short of an eight-year-old even
                 # warped to its limit, while the shortest presets land exactly on it.
@@ -1864,10 +1855,9 @@ class PresetAllocator:
                 # lost 0.69 MOS, +11 lost 1.24. Ranking on tract reach alone was
                 # optimising the cheaper axis and ignoring the dearer one.
                 #
-                # It still sorts below reach. Reach decides whether the result is a child
-                # at all - a listener rejected an otherwise clean take with "giọng của
-                # cậu bé nghe vẫn ra giọng của một ông chú" - and a clean voice that
-                # sounds like the wrong person is not the cheaper option.
+                # It still sorts below reach. Reach decides whether the result reads as the
+                # age at all, and a clean voice that sounds like the wrong person is not the
+                # cheaper option.
                 #
                 # Bucketed at four semitones so a one-semitone edge cannot outweigh
                 # anything ranked above it.
@@ -1879,11 +1869,13 @@ class PresetAllocator:
 
         ranked_presets = sorted(candidates, key=rank)
         selected = ranked_presets[0]
-        if who and abs(formant_ratio_for_age(str(selected["name"]), age, gender) - 1.0) > 1e-6:
-            # Tuổi ấn định bậc formant, nên với trẻ con preset là trục đa dạng DUY NHẤT — và
-            # `usage` đếm theo pool (có tên / NPC), nên một đứa trẻ có tên và một NPC trẻ con
-            # cùng chương đều thấy Ngọc Linh "chưa ai dùng". Lô 7, chương 186: AEREN (3 câu)
-            # và NPC CON TRAI (1 câu) cùng `ngoc_linh_f107_p+02` - người nghe lẫn. Cùng lớp với
+        is_child = str(age) == "child"
+        if who and (is_child or abs(formant_ratio_for_age(str(selected["name"]), age, gender) - 1.0) > 1e-6):
+            # Tuổi ấn định bậc formant (teen, già) hoặc cấm mọi bậc (trẻ con: nguyên giọng, bậc
+            # 1,00, không thang), nên preset là trục đa dạng DUY NHẤT — và `usage` đếm theo
+            # pool (có tên / NPC), nên một đứa trẻ có tên và một NPC trẻ con cùng chương đều
+            # thấy Ngọc Linh "chưa ai dùng". Lô 7, chương 186: AEREN (3 câu) và NPC CON TRAI
+            # (1 câu) cùng `ngoc_linh_f107_p+02` - người nghe lẫn. Cùng lớp với
             # CÔNG TƯỚC/ÔNG LÃO ở alpha.55: hai sổ, một giọng. Ở đây hỏi thẳng sổ người giữ -
             # cùng sổ mà `_first_free_variant` hỏi: preset hạng đầu mà bậc-theo-tuổi của nó đã
             # có người CÙNG CHƯƠNG giữ thì lấy preset kế tiếp; không preset nào rảnh thì về
@@ -1901,9 +1893,11 @@ class PresetAllocator:
         # Formant, not pitch, is what makes a reused preset sound like a different
         # person. The ladder starts at 1.00 so a preset's first casting is the untouched
         # voice and pays no vocoder cost at all - but an age target overrides the ladder,
-        # because reading a child at an adult tract length is not a variation, it is wrong.
+        # because reading a teen at an adult tract length is not a variation, it is wrong.
+        # A child overrides it too, the other way: always the untouched voice (1.0), never a
+        # rung - a shared preset is told apart by choosing another preset above, not by warping.
         age_ratio = formant_ratio_for_age(name, age, gender)
-        if abs(age_ratio - 1.0) > 1e-6:
+        if is_child or abs(age_ratio - 1.0) > 1e-6:
             formant_ratio = age_ratio
         else:
             variants = formant_variants_for_preset(name)
@@ -2113,8 +2107,7 @@ def voice_profile_spec(preset: dict[str, str], formant_ratio: float, *, age_pitc
         # Thang formant và cao độ theo tuổi là của VieNeu; giọng máy khác chỉ có bậc gốc (voice_catalog.ENGINE_VOICES).
         raise ValueError(f"{engine} voice {name!r} has no formant or age-pitch variants")
     # The preset's calibrated reading register, plus whatever the character's age asks
-    # for: children speak about three semitones above an adult, and ageing moves men up
-    # while it moves women down.
+    # for: ageing moves men up while it moves women down (a child asks for nothing).
     base_pitch = base_pitch_for_preset(name, engine) + int(age_pitch)
     formant_key = balance_formant_key(formant_ratio)
     pitch_key = f"p{int(base_pitch):+03d}"
@@ -2607,27 +2600,6 @@ def _drop_pins_that_share_a_chapter(
 VOICE_KEY_SUFFIX_PATTERN = re.compile(r"^preset_(?P<body>.+)_f(?P<formant>\d+)_p(?P<pitch>[+-]\d+)$")
 
 
-def voice_is_child_pitched(voice_key: str) -> bool:
-    """Giọng này có mang đúng PITCH TRẺ CON của preset nó dùng không?
-
-    Chỉ đọc pitch, cố ý không đọc formant: đo trên 117 `voice_key` của cuốn 2 thì 87 formant không khớp phép
-    biến đổi tuổi nào - bộ cấp giọng dùng formant để TÁCH hai người chung preset - còn 108 pitch thì khớp.
-    Và pitch trẻ con là dấu sắc nhất: đúng 1 trong 266 giọng ghim mang nó.
-    """
-    match = VOICE_KEY_SUFFIX_PATTERN.match(str(voice_key))
-    if match is None:
-        return False
-    pitch = int(match.group("pitch"))
-    for preset in VIENEU_PRESETS:
-        if _preset_slug(str(preset["name"])) != match.group("body"):
-            continue
-        gender = str(preset["gender"])
-        child = age_pitch_semitones("child", gender, str(preset["name"]))
-        adult = age_pitch_semitones("adult", gender, str(preset["name"]))
-        return pitch == child != adult
-    return False
-
-
 def _drop_pins_that_contradict_a_person(
     db: Any,
     locked_voices: dict[str, str],
@@ -2643,8 +2615,8 @@ def _drop_pins_that_contradict_a_person(
     kéo cao, và mang nó sang mọi lô sau (17 câu ở chương 062).
 
     MỘT luật, và là luật duy nhất dữ liệu chứng minh được: **preset phải đúng phái, trừ trẻ
-    con.** Trẻ con được đọc bằng preset nữ kéo cao dù là con trai (`AGE_TARGET_PITCH_HZ`), nên
-    ở đó lệch phái là đúng. Không bịa luật thứ hai kiểu "giọng trẻ con cho người lớn": nhìn
+    con.** Trẻ con được đọc bằng preset nữ (nguyên giọng, không bóp) dù là con trai, nên ở đó
+    lệch phái là đúng. Không bịa luật thứ hai kiểu "giọng trẻ con cho người lớn": nhìn
     `voice_key` không phân biệt được preset nữ dành cho một đứa trẻ với preset nữ dành cho một
     phụ nữ trưởng thành, và đoán chính là thứ đã tạo ra cả lớp lỗi này.
     """
@@ -2656,20 +2628,10 @@ def _drop_pins_that_contradict_a_person(
         contradicts = bool(
             gender and preset and preset != gender and (age or "") != "child"
         )
-        # Luật THỨ HAI, thêm 20-09 và hẹp bằng một phép đo: giọng mang đúng pitch TRẺ CON của preset nó
-        # dùng, trong khi người nghe đã ghim một tuổi KHÁC trẻ con. Không có nó thì ghim `--age adult` của
-        # KAELYN không làm gì cả - preset nữ khớp nhãn nữ nên luật phái im lặng, và bà vẫn được đọc bằng
-        # giọng bé gái. Chỉ đọc PITCH: formant là bước tách giọng (87/117 không khớp tuổi nào).
-        child_pitched = bool(age and age != "child" and voice_is_child_pitched(voice_key))
-        contradicts = contradicts or child_pitched
         if not contradicts:
             kept[key] = voice_key
             continue
-        reason = (
-            f"mang pitch trẻ con mà người nghe đã ghim tuổi {age}"
-            if child_pitched
-            else f"là preset {preset}, còn người nghe đã ghim {gender}" + (f"/{age}" if age else "")
-        )
+        reason = f"là preset {preset}, còn người nghe đã ghim {gender}" + (f"/{age}" if age else "")
         log(f"Bỏ giọng ghim của {key}: {voice_key} {reason} - cấp lại giọng.")
         db.event(
             "warning",
@@ -3172,7 +3134,8 @@ def listener_voice_choice(
     if preset_name:
         preset = preset_by_name(preset_name)
         ratio = formant_ratio_for_age(preset_name, age, gender)
-        if abs(ratio - 1.0) <= 1e-6:
+        # A child is never warped, not even by a ladder step: the preset the listener picked, untouched.
+        if str(age) != "child" and abs(ratio - 1.0) <= 1e-6:
             ratio = allocator._first_free_variant(
                 preset_name, formant_variants_for_preset(preset_name), who=character
             )

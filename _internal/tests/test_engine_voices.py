@@ -116,7 +116,11 @@ def test_engine_voices_have_balance_keys_and_a_missing_one_is_an_error() -> None
 # VieNeu 3.8.2 (dev/upgrades-1004): tên là chỗ phân xử cuối của thứ tự bể giọng (`casting_preset_priority`), nên "Thiện Minh"
 # (trước là "Anh Khôi") nay đứng sau "Thiền Tâm Đức" - 2 nhân vật đổi chỗ hai giọng ấy, 1 nhân vật đổi bậc cao độ (2 -> 3).
 # Bản trên main 14b4f06a: fe9c6cbd4189b73cded4eb2f79cbd9559b15b04d6182821d5272e2820ff70fb9.
-ALLOCATOR_ON_MAIN = "2bffd9a02889d1cb634048d7236bdb6f470b872a43c3dac8441a706cd7339339"
+# 05-11 (dev/cast-rank) đổi CÓ CHỦ ĐÍCH: phán quyết giọng nam của chủ sách vào `assets/voice_rank.json` (nhân vật nam: Xuân Vĩnh trước,
+# rồi Đức Trí/Thiền Tâm Đức/Phạm Tuyên, rồi Thái Sơn/Adam; nữ: Ngọc Linh, Đoan Trang, rồi nhóm ổn; thứ tự giọng dẫn theo bậc kể chuyện), Thái Sơn và
+# Thục Đoan ra khỏi LAST_RESORT_PRESETS, trẻ con đi bằng preset nữ nguyên giọng (cao độ 0, formant 1,0).
+# Bản trước đó: 2bffd9a02889d1cb634048d7236bdb6f470b872a43c3dac8441a706cd7339339.
+ALLOCATOR_ON_MAIN = "c97f8c1a34cd53e0e52a18eee69029ee8806da8017da0648c77c0705824e4c67"
 
 
 def test_automatic_casting_is_exactly_what_it_was() -> None:
@@ -160,6 +164,23 @@ def test_renaming_a_voice_keeps_its_place_in_casting(old: str, monkeypatch: pyte
             patch.setattr(voice_catalog, "VIENEU_PRESETS", presets)
             patch.setattr(voice_catalog, "CAST_ORDER", cast)
             patch.setattr(voice_catalog, "_CAST_RANK", {name: rank for rank, name in enumerate(cast)})
+            # Tên cũng nằm ở bảng xếp hạng của người nghe và ở giọng dẫn mặc định: đổi tên thì sửa tại chỗ ở cả hai.
+            patch.setattr(
+                voice_catalog,
+                "VOICE_RANK",
+                {
+                    role: {
+                        gender: tuple(tuple(new if name == old else name for name in tier) for tier in tiers)
+                        for gender, tiers in genders.items()
+                    }
+                    for role, genders in voice_catalog.VOICE_RANK.items()
+                },
+            )
+            patch.setattr(
+                voice_catalog,
+                "DEFAULT_NARRATOR_BY_GENDER",
+                {gender: new if name == old else name for gender, name in voice_catalog.DEFAULT_NARRATOR_BY_GENDER.items()},
+            )
             after = [[old if name == new else name for name in names] for names in order()]
         assert after == before, new
 
