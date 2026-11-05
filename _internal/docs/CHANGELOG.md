@@ -7,6 +7,20 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Giọng đọc
+
+- Sửa lỗi cao độ bị áp hai lần: giọng được chỉnh trầm hay cao (vd. hạ 2 nửa cung) nay phát đúng mức đã chỉnh, không còn gấp đôi khi ghép vào sách. Giọng trẻ con trước đây bị đẩy cao gần gấp đôi dự định.
+- Phân vai theo bảng xếp hạng giọng của người nghe, chia theo vai (kể chuyện / nhân vật) và theo bậc, thay cho thứ tự tên giọng. Giọng kể chuyện nam mặc định là Đức Trí.
+- Trẻ con (trai hay gái) đọc bằng giọng nữ nguyên bản, không còn bóp cao độ hay âm sắc.
+
+### Điện thoại
+
+- Bản cài thử không còn chiếm chỗ app thật. Nếu máy đang cài bản thử, mục Cập nhật nói rõ "Bản cài thử" thay vì tải một bản không cài được.
+
+### Máy tính
+
+- Mở file sách để cập nhật một cuốn đã có thì thông báo nói tên cuốn ấy, như trên điện thoại.
+
 ## [0.4.162] - 2026-11-02
 
 ### Nhạc nền

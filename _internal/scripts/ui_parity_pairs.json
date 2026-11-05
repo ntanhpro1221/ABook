@@ -522,6 +522,11 @@
           "side": "native",
           "match": "^gồm thông tin máy, nhật ký gần nhất và tên sách; .*kết nối wi-fi.*$",
           "reason": "phone log bundle includes book names and paired devices can read it while 'Kết nối Wi-Fi' (Chia sẻ thư viện screen) is on - a true platform difference, not wording drift"
+        },
+        {
+          "side": "native",
+          "match": "^bản cài thử(, không cập nhật được bằng nút này - cài bản phát hành từ github\\.?)?$",
+          "reason": "Android only: an APK signed with a key other than the release key cannot install a release over itself; desktop has no signing-key concept"
         }
       ],
       "missing": [
