@@ -245,8 +245,8 @@ def preset_pitch_st(preset: str, engine: str = DEFAULT_ENGINE) -> int:
 def balanced_preset_names() -> list[str]:
     """Các preset VieNeu PHẢI có số trong bảng: phân vai được ∪ chọn được làm người kể.
 
-    Quang Sơn, Ngọc Trân (miền Trung) không phân vai nhưng vẫn là người kể chọn được; giọng Tin tức thì không ở đâu chọn được
-    nên không có bản ghi. Khi casting mở thêm giọng, giọng ấy phải được đo rồi mới vào bảng (test độ phủ sẽ đòi).
+    Quang Sơn, Ngọc Trân (miền Trung) không phân vai nhưng vẫn là người kể chọn được; giọng tin tức được chủ sách xếp hạng
+    theo vai cũng phải có số đo. Khi mở thêm giọng, giọng ấy phải được đo rồi mới vào bảng (test độ phủ sẽ đòi).
     """
     from .voice_catalog import casting_presets, narrator_presets
 

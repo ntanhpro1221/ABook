@@ -34,7 +34,7 @@ from abook.voice_catalog import (
     REGION_NORTH,
     REGION_SOUTH,
     STYLE_NATURAL,
-    STYLE_NEWS,
+    preset_eligible,
     STYLE_STORY,
     VIENEU_PRESETS,
     casting_presets,
@@ -263,7 +263,7 @@ def test_casting_reuses_presets_with_formant_variants_and_never_casts_central(
     build_registry_and_cast(db, build_settings(), lambda _message: None)
 
     profiles = db.list_voice_profiles()
-    assert all(preset_by_name(str(profile["preset_name"]))["style"] != STYLE_NEWS for profile in profiles)
+    assert all(preset_eligible(preset_by_name(str(profile["preset_name"])), "character") for profile in profiles)
     # Pitch is no longer a diversity axis - it reads as the same person in a different
     # state, not as a different person - so every profile of a preset carries exactly that
     # preset's calibrated reading register. That register comes from listening, and is
@@ -1031,7 +1031,7 @@ def test_pitch_ranges_follow_measured_preset_depth() -> None:
     supported_names = {
         preset["name"]
         for preset in VIENEU_PRESETS
-        if preset["style"] != STYLE_NEWS
+        if preset_eligible(preset, "narrator")
     }
     assert set(PRESET_PREVIEW_MEDIAN_PITCH_HZ) == supported_names
     assert PRESET_MIN_PITCH_SEMITONES == {

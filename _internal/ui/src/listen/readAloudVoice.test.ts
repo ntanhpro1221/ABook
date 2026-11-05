@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { runInNewContext } from "node:vm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ReadAloudError, type ReadAloudClip, type ReadAloudVoice } from "./readAloud";
 import type { ListenSource } from "./source";
@@ -316,9 +317,18 @@ describe("giọng mặc định khi chưa chọn", () => {
       cases: { name: string; gender: string | null; voices: [string, string][]; expect: string | null }[];
     };
     expect(module.NARRATOR_VOICES).toEqual(shared.preferred);
+    // Qt chạy cùng bộ ví dụ: ba danh sách không được lệch khi thêm giọng kể chuyện.
+    const qtSource = readFileSync(new URL("../../../desktop_qt/qml/VoiceLogic.js", import.meta.url), "utf8")
+      .replace(/^\.(pragma|import).*$/gm, "");
+    const qt = runInNewContext(qtSource + "\n({ preferred: NARRATOR, pick: narratorVoice })") as {
+      preferred: Record<string, string[]>;
+      pick: (voices: ReadAloudVoice[], gender?: string) => ReadAloudVoice | undefined;
+    };
+    expect(qt.preferred).toEqual(shared.preferred);
     for (const item of shared.cases) {
       const voices = item.voices.map(([id, gender]) => ({ id, name: id, provider: "vieneu", online: false, gender })) as ReadAloudVoice[];
       expect(module.narratorVoice(voices, item.gender ?? undefined)?.id ?? null, item.name).toBe(item.expect);
+      expect(qt.pick(voices, item.gender ?? undefined)?.id ?? null, `Qt: ${item.name}`).toBe(item.expect);
     }
   });
 
