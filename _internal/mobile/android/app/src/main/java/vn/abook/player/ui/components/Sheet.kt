@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
@@ -123,7 +122,7 @@ fun SheetLayer(host: SheetHost) {
             ) {
                 Box(Modifier.width(36.dp).height(4.dp).clip(CircleShape).background(colors.line))
             }
-            Box(Modifier.navigationBarsPadding().padding(horizontal = Dim.margin).padding(bottom = Dim.s16)) {
+            Box(Modifier.gestureBarPadding().padding(horizontal = Dim.margin).padding(bottom = Dim.s16)) {
                 sheet.content { host.dismiss() }
             }
         }

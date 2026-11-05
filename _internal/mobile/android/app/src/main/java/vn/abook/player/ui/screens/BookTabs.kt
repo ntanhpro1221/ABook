@@ -1,5 +1,6 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.ui.components.gestureBarPadding
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -13,7 +14,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -147,7 +147,7 @@ fun NotesBar(notes: BookNotes) {
     val visible by notes.visible.collectAsState()
     Reveal(visible) {
         Row(
-            Modifier.fillMaxWidth().background(Abook.colors.panel).navigationBarsPadding().heightIn(min = Dim.s48).padding(horizontal = Dim.margin).testTag("book_note"),
+            Modifier.fillMaxWidth().background(Abook.colors.panel).gestureBarPadding().heightIn(min = Dim.s48).padding(horizontal = Dim.margin).testTag("book_note"),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             BasicText(note.text, style = Abook.type.bodySmall, modifier = Modifier.weight(1f).padding(vertical = Dim.s12))

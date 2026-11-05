@@ -194,6 +194,7 @@ object Streaming {
         StreamRefresh.invalidateCover(Store.bookDir(id), previous, manifest)
         StreamRefresh.invalidateScripts(Store.bookDir(id), previous, manifest)
         Store.writeAtomic(File(Store.bookDir(id), "stream.json"), manifest.toString())
+        if (previous == null || !StrictJson.equal(previous, manifest)) BookFiles.changed(id)
         return manifest
     }
 

@@ -1,5 +1,6 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.ui.components.navigationClearance
 import vn.abook.player.ui.components.PageHeader
 import vn.abook.player.ui.components.ListRow
 import vn.abook.player.ui.components.Reveal
@@ -71,7 +72,7 @@ import vn.abook.player.ui.components.fadeEdges
 @Composable
 fun SettingsPage(title: String, onBack: () -> Unit, tag: String, modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
     val top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    val bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val bottom = navigationClearance()
     val scroll = rememberScrollState()
     Column(
         modifier.fillMaxSize().testTag(tag).fadeEdges(scroll, startInset = top).verticalScroll(scroll)

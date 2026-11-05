@@ -27,7 +27,7 @@ fun UndoBar(deletions: UndoDelete, backEnabled: Boolean = true, aboveNavigation:
     val shown = last[0]
     BackHandler(enabled = backEnabled && visible) { deletions.dismiss() }
     Reveal(visible) {
-        Row(Modifier.fillMaxWidth().background(Abook.colors.panel).then(if (aboveNavigation) Modifier else Modifier.navigationBarsPadding()).heightIn(min = Dim.s48).padding(horizontal = Dim.margin).testTag("undo_bar"), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth().background(Abook.colors.panel).then(if (aboveNavigation) Modifier else Modifier.gestureBarPadding()).heightIn(min = Dim.s48).padding(horizontal = Dim.margin).testTag("undo_bar"), verticalAlignment = Alignment.CenterVertically) {
             BasicText(shown, style = Abook.type.bodySmall, modifier = Modifier.weight(1f).padding(vertical = Dim.s12))
             if (showing && ids.isNotEmpty()) {
                 Spacer(Modifier.width(Dim.s16))
