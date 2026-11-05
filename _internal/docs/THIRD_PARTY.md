@@ -14,6 +14,7 @@ phần ấy.
 - PyTorch và torchaudio (BSD).
 - PyWORLD và WORLD vocoder; Praat qua parselmouth.
 - pyloudnorm; NumPy, SciPy, SoundFile, psutil, requests, huggingface-hub.
+- MoSQITo 1.2.1, tập con ISO 532-1 stationary được chép vào `abook/_vendor/zwicker/` (Apache-2.0, MoSQITo Developers). Giữ `LICENSE` và `NOTICE.md` với đường dẫn, SHA-256 nguồn; chỉ đổi import sang tương đối, dùng NumPy/SciPy đã có, không mang pyuff hay meter biến thiên.
 - pypdf 6.16.2 (BSD-3-Clause, thuần Python) - đọc chữ của PDF có lớp chữ khi nhập sách (`abook/importers.py`). Chép nguyên vào
   `abook/vendor/pypdf/` (kèm LICENSE và băm wheel nguồn), không phụ thuộc pyproject/uv.lock hay gói cài sẵn. Nhập EPUB và DOCX chỉ
   dùng thư viện chuẩn của Python (zipfile, xml, html.parser).

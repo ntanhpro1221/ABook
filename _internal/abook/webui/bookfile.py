@@ -191,6 +191,10 @@ def listening_layer(project_root: Path, music_track: Callable[[str], Path | None
     with store.held_open(project_root):
         book = _packaged_book(project_root)
         files: dict[str, Path | bytes] = {"cast.json": json_bytes(book_edits.shared_cast(store.recorded_cast(project_root)))}
+        # Bằng chứng máy chỉ gồm số đo trên MP3; đi theo cuốn, không thêm bước người nghe.
+        level_report = Path(project_root) / "output" / "reports" / "book_levels.json"
+        if level_report.is_file():
+            book["levelQa"] = json.loads(level_report.read_text(encoding="utf-8"))
         cover = covers.cover_file(project_root)
         if cover is not None:
             files[covers.COVER_FILE] = cover

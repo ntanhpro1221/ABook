@@ -24,6 +24,17 @@ def _pack(tmp_path: Path) -> tuple[Path, Path]:
     return project, bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}", partial=True)
 
 
+def test_finished_level_qa_travels_with_the_book(tmp_path):
+    project = make_project(tmp_path)
+    report = project / "output" / "reports" / "book_levels.json"
+    report.parent.mkdir(parents=True, exist_ok=True)
+    payload = b'{"verdict":"warning","flags":["VOICE_LEVEL_SPREAD"]}\n'
+    report.write_bytes(payload)
+    package = bookfile.pack(project, tmp_path / "synthetic.abook")
+    with zipfile.ZipFile(package) as archive:
+        assert json.loads(archive.read("book.json"))["levelQa"] == json.loads(payload)
+
+
 @pytest.mark.parametrize("listener_cover", [False, True])
 def test_reimport_refreshes_the_base_layer_with_unchanged_audio(tmp_path, monkeypatch, listener_cover):
     from abook.webui import book_edits, packages

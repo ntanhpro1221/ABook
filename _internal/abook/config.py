@@ -198,7 +198,10 @@ DEFAULT_SETTINGS: dict[str, Any] = {
         # anchor exactly. UTMOSv2 is level-invariant (mean MOS delta -0.006 at -6 dB),
         # so this costs nothing perceptually and needs no compression.
         "segment_target_lufs": {
-            "soft": -28.0,
+            # A 3 dB soft drop plus the narrator's 0.5 dB anchor made speaker
+            # changes too abrupt on real book audio. Keep soft expressive without
+            # stacking that large step on the take's own quiet delivery.
+            "soft": -26.0,
             "normal": -25.0,
             "loud": -23.8,
         },

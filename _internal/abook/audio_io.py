@@ -164,6 +164,20 @@ class ChapterQualityMetrics:
 class ChapterAssemblyResult:
     checksum: str
     quality: ChapterQualityMetrics
+    timeline: tuple[tuple[float, float], ...] = ()
+
+
+def delivery_gain_copy(source: Path, destination: Path, delta_db: float, settings: dict[str, Any]) -> float:
+    """Bù mức trên bản giao, giữ số mẫu và trần đỉnh; không sửa bản thu đã QA."""
+    audio, rate = sf.read(source, dtype="float32")
+    peak = float(np.max(np.abs(audio)))
+    safe = float(settings["audio"].get("segment_peak_dbfs", -2))-20*np.log10(max(peak, 1e-12))
+    gain = min(delta_db, max(0.0, safe))
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    temp = destination.with_suffix(".part.wav")
+    sf.write(temp, audio*10**(gain/20), rate, subtype="PCM_16")
+    os.replace(temp, destination)
+    return gain
 
 
 EMOTION_LEVEL_OFFSETS_DB = {
@@ -705,7 +719,7 @@ def integrated_loudness_lufs(audio: np.ndarray, sample_rate: int) -> float | Non
 def segment_offsets_db(segment: Any, settings: dict[str, Any]) -> float:
     """Độ lệch TƯƠNG ĐỐI của câu so với mức chung L, dB: volume + cảm xúc + người kể.
 
-    - volume: `segment_target_lufs[volume] - segment_target_lufs["normal"]` (soft -3,0 / normal 0 /
+    - volume: `segment_target_lufs[volume] - segment_target_lufs["normal"]` (soft -1,0 / normal 0 /
       loud +1,2 với cấu hình mặc định). Chỉ lấy HIỆU giữa các neo; mức tuyệt đối của `normal`
       là `L` của bảng cân bằng giọng, không phải số trong cấu hình;
     - cảm xúc: `LOUDNESS_EMOTION_OFFSETS_DB[emotion] * intensity / 3`, chỉ khi volume là normal;
@@ -799,6 +813,14 @@ def level_segment(
     gain_db = min(desired_db, peak_safe_db)
     info["level_gain_db"] = float(gain_db)
     info["peak_limited_db"] = float(max(0.0, desired_db - peak_safe_db))
+    if isinstance(lufs_targets, dict) and "normal" in lufs_targets and not already_leveled:
+        constants = voice_balance.constants_for_key(_voice_balance_key(segment))
+        info["applied_level_offset_db"] = (
+            constants.o_db + segment_offsets_db(segment, settings) - info["peak_limited_db"]
+        )
+        info["level_speech_seconds"] = max(
+            0.0, len(array) / sample_rate - measured_silence_seconds(array, sample_rate)
+        )
     return np.asarray(array * (10 ** (gain_db / 20.0)), dtype=np.float32), info
 
 
@@ -1689,6 +1711,7 @@ def assemble_chapter_atomic_with_metrics(
     track: int,
     work_dir: Path | None = None,
     retain_for_review: bool = False,
+    target_lufs: float | None = None,
 ) -> ChapterAssemblyResult:
     entries: list[tuple[Path, int]] = []
     for item in wavs:
@@ -1716,7 +1739,12 @@ def assemble_chapter_atomic_with_metrics(
     temp.unlink(missing_ok=True)
     decoded_temp.unlink(missing_ok=True)
     candidate_checksum: str | None = None
-    audio = settings["audio"]
+    # Cùng một đích cho cả hai lượt master và cổng QA; không sửa settings đã khoá.
+    audio = dict(settings["audio"])
+    if target_lufs is not None:
+        if not math.isfinite(target_lufs) or not -70 <= target_lufs <= -5:
+            raise AudioQualityError("chapter loudness target outside FFmpeg range")
+        audio["loudness_lufs"] = float(target_lufs)
     ffmpeg = ffmpeg_executable()
     concat_input = ["-f", "concat", "-safe", "0", "-i", str(concat)]
     try:
@@ -1825,7 +1853,16 @@ def assemble_chapter_atomic_with_metrics(
         with temp.open("rb+") as handle:
             os.fsync(handle.fileno())
         os.replace(temp, output)
-        return ChapterAssemblyResult(checksum=candidate_checksum, quality=quality)
+        # Mốc lấy SAU cắt lặng, theo đúng thứ tự file được master; gain không đổi số mẫu.
+        spans = []
+        at = 0.0
+        for index, (path, pause) in enumerate(entries):
+            duration = sf.info(path).duration
+            spans.append((at, at+duration))
+            at += duration + (pause/1000 if index+1 < len(entries) else 0)
+        scale = quality.decoded_duration_seconds/at if at else 1.0
+        return ChapterAssemblyResult(checksum=candidate_checksum, quality=quality,
+                                    timeline=tuple((a*scale, b*scale) for a, b in spans))
     except ChapterQualityError:
         raise
     except AudioQualityError as exc:
