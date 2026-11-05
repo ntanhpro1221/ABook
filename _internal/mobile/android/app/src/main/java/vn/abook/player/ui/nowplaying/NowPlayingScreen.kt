@@ -1,5 +1,9 @@
 package vn.abook.player.ui.nowplaying
 
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.WindowInsets
+import vn.abook.player.ui.components.gestureSafe
 import vn.abook.player.ui.components.ClockLabel
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -241,7 +245,7 @@ private fun NowPlayingBody(
         val sideT = animateFloatAsState(if (split) 1f else 0f, tween(MotionMs.MEDIUM, easing = Motion.Standard), label = "now-playing-split")
         val rightComposed by remember { derivedStateOf { split || sideT.value > 0f } }
         Layout(
-            modifier = Modifier.fillMaxSize().systemBarsPadding().padding(horizontal = 20.dp).padding(bottom = 12.dp),
+            modifier = Modifier.fillMaxSize().windowInsetsPadding(gestureSafe(WindowInsets.systemBars)).padding(horizontal = 20.dp).padding(bottom = 12.dp),
             content = {
                 Column(Modifier.fillMaxSize(), content = playerColumn)
                 Box(Modifier.fillMaxSize().testTag("player_read_side").padding(top = 56.dp), contentAlignment = Alignment.TopCenter) {

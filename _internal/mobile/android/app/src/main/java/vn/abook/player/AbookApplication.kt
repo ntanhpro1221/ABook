@@ -26,10 +26,17 @@ class AbookApplication : Application() {
         val editors = vn.abook.player.ui.editbook.EditBooks(repository, uiScope)
         EditsSync.refresh = repository::refreshFromHolder
         EditsSync.changed = { id -> uiScope.launch { editors.refresh(id); library.refresh() } }
+        // File của cuốn đổi trên đĩa (nhập file thay, tải bản mới): màn sửa đang mở của cuốn ấy đọc lại tên chương.
+        BookFiles.listen { id -> uiScope.launch { editors.refresh(id) } }
         editors
     }
     // Giao diện native (vn.abook.player.ui): dựng tay, lười - tiến trình chỉ chạy việc nền thì không tốn gì.
-    val library by lazy { LibraryRepo(this, uiScope) { id -> player.bookRemoved(id) } }
+    val library by lazy {
+        LibraryRepo(this, uiScope) { id -> player.bookRemoved(id) }.also { repo ->
+            // Mọi chỗ ghi file sách (BookFiles.changed) làm Thư viện đọc lại - không chỗ ghi nào phải nhớ tự gọi.
+            BookFiles.listen { uiScope.launch { repo.refresh() } }
+        }
+    }
     val companion by lazy { vn.abook.player.ui.devices.CompanionRepo(vn.abook.player.ui.devices.AndroidCompanionCore(this)) }
     val covers by lazy { CoverLoader() }
 

@@ -18,6 +18,9 @@ class FakeExo {
     var duration = 0L
     var speed = 1f
     var item: MediaItem? = null
+    /** Hàng đợi nhiều mục (sau setMediaItems); rỗng thì chỉ có `item` như trước. */
+    var items: List<MediaItem> = emptyList()
+    var index = 0
     var volume = 1f
     val calls = mutableListOf<String>()
     val listeners = mutableListOf<Player.Listener>()
@@ -33,9 +36,24 @@ class FakeExo {
             "getPlaybackState" -> state
             "getCurrentPosition" -> position
             "getDuration" -> if (duration > 0) duration else androidx.media3.common.C.TIME_UNSET
-            "getCurrentMediaItem" -> item
-            "getMediaItemCount" -> if (item == null) 0 else 1
-            "clearMediaItems" -> { item = null; null }
+            "getCurrentMediaItem" -> if (items.isNotEmpty()) items[index] else item
+            "getMediaItemCount" -> if (items.isNotEmpty()) items.size else if (item == null) 0 else 1
+            "getMediaItemAt" -> items[args!![0] as Int]
+            "getCurrentMediaItemIndex" -> index
+            "clearMediaItems" -> { item = null; items = emptyList(); null }
+            "setMediaItems" -> {
+                @Suppress("UNCHECKED_CAST")
+                items = args!![0] as List<MediaItem>
+                if (args.size == 3) { index = args[1] as Int; position = args[2] as Long } else { index = 0; position = 0 }
+                item = items.getOrNull(index)
+                null
+            }
+            "replaceMediaItems" -> {
+                @Suppress("UNCHECKED_CAST")
+                items = items.take(args!![0] as Int) + (args[2] as List<MediaItem>) + items.drop(args[1] as Int)
+                index = items.indexOfFirst { it.mediaId == item?.mediaId }.coerceAtLeast(0)
+                null
+            }
             "seekTo" -> { position = args!!.last() as Long; null }
             "getPlaybackParameters" -> PlaybackParameters(speed)
             "setPlaybackParameters" -> { speed = (args!![0] as PlaybackParameters).speed; null }

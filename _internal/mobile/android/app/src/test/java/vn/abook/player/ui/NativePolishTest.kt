@@ -1,5 +1,6 @@
 package vn.abook.player.ui
 
+import vn.abook.player.ui.components.GestureBar
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -183,9 +184,10 @@ class NativePolishTest {
 
     @Test
     fun bottomClearanceNeverDropsBelowTheFloor() {
-        assertEquals(Dim.s8, bottomClearance(0.dp))
-        assertEquals(Dim.s8, bottomClearance(3.dp))
+        assertEquals(GestureBar, bottomClearance(0.dp))
+        assertEquals(GestureBar, bottomClearance(3.dp))
         assertEquals(24.dp, bottomClearance(24.dp))
+        assertEquals(30.dp, bottomClearance(30.dp))
     }
 
     @Test
@@ -204,7 +206,7 @@ class NativePolishTest {
         val root = rule.onRoot().getUnclippedBoundsInRoot()
         val indicator = rule.onNodeWithTag("tab_indicator").getUnclippedBoundsInRoot()
         // Robolectric không có thanh điều hướng (inset 0) = đúng ca của ColorOS giấu vạch cử chỉ.
-        assertTrue("vạch tab cách mép dưới ${root.bottom - indicator.bottom}, cần >= 8 dp", root.bottom - indicator.bottom >= Dim.s8 - 0.5.dp)
+        assertTrue("vạch tab cách mép dưới ${root.bottom - indicator.bottom}, cần >= 24 dp", root.bottom - indicator.bottom >= GestureBar - 0.5.dp)
         rule.onNodeWithTag(Tab.Library.tag).getUnclippedBoundsInRoot()
     }
 

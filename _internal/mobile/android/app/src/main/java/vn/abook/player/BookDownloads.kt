@@ -360,6 +360,7 @@ object BookDownloads {
         }
         Store.writeAtomic(File(Store.bookDir(id), "book.json"), manifest.toString())
         File(Store.bookDir(id), "stream.json").delete() // từng nghe thẳng: nay đã tải hẳn
+        BookFiles.changed(id) // chương thu lại / chương mới tải về: trình phát và Thư viện đọc lại
         StateSync.pushNow(context, id)
         if (announce) emit(JSONObject().put("bookId", id).put("finished", true))
     }

@@ -337,15 +337,19 @@ object BookFileImport {
             val changed = refreshBase && current != null && !StrictJson.equal(baseLayer(current, BookEdits.load(Store.bookDir(target))), baseLayer(book, incoming.edits))
             if (current != null && disposition == "existing" && !gainsWorkshop && !changed) {
                 // Giữ bản trên máy, nhưng phần sửa trong file vẫn được hợp vào (bên máy này thắng) - không mất công của ai.
+                var merged = false
                 if (editable && BookEdits.count(incoming.edits) > 0) {
                     BookEdits.adopt(Store.bookDir(target), incoming.edits, incoming.cover) { name, destination -> extract(zip, resolve(name), destination) }
+                    merged = true
                 }
                 // Xưởng của file (máy kia sửa thêm cách đọc, người nói, phán quyết...): gộp vào xưởng trên máy, không bỏ im lặng.
                 if (layout != null && layout.files.has("project/project.sqlite3")) {
                     mergeWorkshop(Store.bookDir(target), Store.bookDir(target)) { name ->
                         if (layout.files.has("project/$name")) zip.getEntry(resolve("project/$name"))?.let { readLimited(zip, it, MAX_JSON_BYTES.toInt()) } else null
                     }
+                    merged = true
                 }
+                if (merged) BookFiles.changed(target)
                 return Imported(target, Store.manifest(target)?.optString("title") ?: current.optString("title"), keptEdits, how = "existing", incomingTitle = book.optString("title"))
             }
             val books = File(Store.root, "books").apply { mkdirs() }
@@ -396,6 +400,7 @@ object BookFileImport {
             }
             Store.rememberChapters(target, chapters, imported = existing == null || Store.isImported(existing))
             if (existing == null) BookEdits.markSaved(Store.bookDir(target)) // edits that came inside the file are not "unsaved" (a70)
+            BookFiles.changed(target) // thay cuốn đang ở trình phát: độ dài, file, tên chương của nó đổi theo ngay
             return Imported(target, Store.manifest(target)?.optString("title") ?: book.optString("title"), keptEdits, brokenMusic.size,
                 if (existing == null) "new" else "updated", if (existing == null) "" else book.optString("title"))
         }
