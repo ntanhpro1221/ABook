@@ -155,7 +155,7 @@ def test_the_pass_replaces_speakers_chapter_by_chapter_and_keeps_the_analysis_la
 
     assert made == 3 and not speaker_pass.pending()
     assert speakers(db) == [
-        ["NARRATOR", "Minh", "NARRATOR", "Lan", "Lan", "NPC_LOCAL::c00001::speaker_pass::người gác"],
+        ["NARRATOR", "Minh", "NARRATOR", "Lan", "Lan", "NPC_LOCAL::c00001::người gác"],
         ["NARRATOR", "Minh", "Lan"],
         ["NARRATOR"],
     ]
@@ -164,7 +164,7 @@ def test_the_pass_replaces_speakers_chapter_by_chapter_and_keeps_the_analysis_la
     with db.connect() as conn:
         saved = {str(r["analysis_speaker"]): str(r["pass_speaker"]) for r in conn.execute("SELECT * FROM speaker_pass_labels")}
         chapters = [dict(r) for r in conn.execute("SELECT * FROM speaker_pass_chapters ORDER BY chapter_id")]
-    assert saved == {"SAI_1": "Minh", "SAI_2": "Lan", "SAI_3": "Lan", "NPC_LOCAL::gốc": "NPC_LOCAL::c00001::speaker_pass::người gác", "SAI_4": "Minh",
+    assert saved == {"SAI_1": "Minh", "SAI_2": "Lan", "SAI_3": "Lan", "NPC_LOCAL::gốc": "NPC_LOCAL::c00001::người gác", "SAI_4": "Minh",
                      "SAI_5": "Lan"}, "nhãn gốc giữ để so"
     assert [c["spoken_lines"] for c in chapters] == [4, 2, 0] and [c["changed_lines"] for c in chapters] == [4, 2, 0]
     assert progress[0] == (0, 3, 0, 0) and progress[-1] == (3, 3, 0, 0)
@@ -236,7 +236,7 @@ def test_a_crash_inside_a_chapter_resumes_that_chapter_from_its_start(tmp_path: 
     with pytest.raises(Crash):
         make_pass(db, first, monkeypatch).run(lambda: False)
     assert db.speaker_pass_done_chapters() == {int(db.list_chapters()[0]["id"])}, "chương dở không có dòng kết quả"
-    assert speakers(db)[0] == ["NARRATOR", "Minh", "NARRATOR", "Lan", "Lan", "NPC_LOCAL::c00001::speaker_pass::người gác"]
+    assert speakers(db)[0] == ["NARRATOR", "Minh", "NARRATOR", "Lan", "Lan", "NPC_LOCAL::c00001::người gác"]
     assert speakers(db)[1] == ["NARRATOR", "SAI_4", "SAI_5"], "chương dở còn nguyên nhãn gốc: không ghi nửa chương"
 
     reopened = make_project(root)               # mở lại sổ như tiến trình mới
@@ -374,8 +374,8 @@ def test_an_empty_answer_is_asked_twice_then_unknown() -> None:
 
 
 def test_local_labels_are_stored_in_the_books_form() -> None:
-    assert sp.db_label("NPC_LOCAL:lính gác 1", 7) == "NPC_LOCAL::c00007::speaker_pass::lính gác 1"
-    assert sp.db_label("NPC_LOCAL::đã đúng dạng", 7) == "NPC_LOCAL::c00007::speaker_pass::đã đúng dạng"
+    assert sp.db_label("NPC_LOCAL:lính gác 1", 7) == "NPC_LOCAL::c00007::lính gác 1"
+    assert sp.db_label("NPC_LOCAL::đã đúng dạng", 7) == "NPC_LOCAL::c00007::đã đúng dạng"
     assert sp.db_label("Lan", 7) == "Lan" and sp.db_label("UNKNOWN", 7) == "UNKNOWN"
 
 

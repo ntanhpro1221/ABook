@@ -27,16 +27,16 @@ describe("chọn câu trên thẻ vai phụ cả cuốn", () => {
 
 describe("giữ nguyên", () => {
   it("thẻ thường giữ người đang nói cho mọi câu", () => {
-    expect(keepRequests({ lines: [line("a")], currentValue: "NPC_LOCAL::c1::r1::lính gác" })).toEqual([
-      { lines: [line("a")], speaker: "NPC_LOCAL::c1::r1::lính gác" },
+    expect(keepRequests({ lines: [line("a")], currentValue: "NPC_LOCAL::c1::lính gác" })).toEqual([
+      { lines: [line("a")], speaker: "NPC_LOCAL::c1::lính gác" },
     ]);
   });
 
   it("thẻ nhóm giữ người của từng vai, bỏ vai không còn câu", () => {
     const keepGroups = [
-      { speaker: "NPC_LOCAL::c1::r1::lính gác", lines: [line("b"), line("d")] },
-      { speaker: "NPC_LOCAL::c2::r7::lính gác", lines: [line("e")] },
-      { speaker: "NPC_LOCAL::c2::r9::lính gác", lines: [] },
+      { speaker: "NPC_LOCAL::c1::lính gác", lines: [line("b"), line("d")] },
+      { speaker: "NPC_LOCAL::c2::lính gác", lines: [line("e")] },
+      { speaker: "NPC_LOCAL::c3::lính gác", lines: [] },
     ];
     expect(keepRequests({ lines: [line("b"), line("d"), line("e")], keepGroups })).toEqual(keepGroups.slice(0, 2));
   });

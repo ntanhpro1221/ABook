@@ -45,7 +45,7 @@ UNNAMED_LABEL = "Vai phụ không tên"
 
 
 def speaker_label(raw: str) -> str:
-    """Tên người nói cho người đọc: vai phụ cục bộ "NPC_LOCAL::c00006::r0b2…::người lùn" -> "người lùn"."""
+    """Tên người nói cho người đọc: vai phụ cục bộ "NPC_LOCAL::c00006::người lùn" -> "người lùn"."""
     if not raw:
         return ""
     if raw.upper() == "NARRATOR":

@@ -113,7 +113,6 @@ BATCH_ID_PREFIX = "S"
 BATCH_ID_WIDTH = 3
 LOCAL_SPEAKER_REQUEST_PREFIX = "NPC_LOCAL:"
 LOCAL_SPEAKER_STORED_PREFIX = "NPC_LOCAL::"
-LOCAL_SCOPE_HASH_LENGTH = 16
 ANALYSIS_OUTPUT_BASE_TOKENS = 512
 ANALYSIS_OUTPUT_TOKENS_PER_SEGMENT = 192
 ANALYSIS_OUTPUT_MIN_TOKENS = 1024
@@ -1054,7 +1053,7 @@ Quy tắc:
    và không chèn dấu câu vào giữa tên. Phải giữ đúng gender đã biết của cùng tên qua mọi batch.
    Nếu nhân vật không có tên nhưng phân biệt được cục bộ trong đoạn hội thoại, dùng
    speaker=NPC_LOCAL:<nhãn ngắn>, ví dụ NPC_LOCAL:áo xanh hoặc NPC_LOCAL:lính gác 1.
-   Giữ cùng nhãn cho cùng người trong các đoạn liên tiếp của batch; dùng nhãn khác cho người khác.
+   Giữ cùng nhãn cho cùng người trong cả chương (kể cả đoạn nằm ngoài batch); dùng nhãn khác cho người khác.
    Chỉ dùng UNKNOWN khi hoàn toàn không có dấu hiệu phân biệt người nói.
    Speaker là người phát ra câu, không phải người được gọi trong câu. Tên đứng sau cách xưng hô như
    “anh Lucien”, “chị Alisa”, hoặc tên ở đầu câu theo sau bởi dấu phẩy như “Iven, ...” thường là người
@@ -1116,7 +1115,7 @@ Khóa kind=dialogue chỉ xác nhận ranh giới lời nói, không xác nhận
 lời dẫn và mạch hội thoại. Không được đổi speaker thành NARRATOR chỉ vì bạn bất đồng với kind đã khóa.
 Speaker là identity source-bound: chỉ được chọn đúng một giá trị trong allowed_speakers do host gửi cho request.
 Danh sách đó gồm các identity đã xuất hiện trong candidate của batch cùng NARRATOR và UNKNOWN. Mọi NPC_LOCAL:: là
-opaque host ID, phải sao chép byte-for-byte; không sửa scope, hash hay nhãn, không trả dạng NPC_LOCAL:<nhãn> và không
+opaque host ID, phải sao chép byte-for-byte; không sửa chương hay nhãn, không trả dạng NPC_LOCAL:<nhãn> và không
 tự tạo local ID hoặc tên riêng mới. Nếu candidate dùng sai một identity chưa có trong allowed_speakers, trả UNKNOWN
 để generator phân tích lại từ nguồn; không bịa chuỗi speaker ngoài enum.
 Câu kể ngôi ba có chủ thể cùng động từ nhận thức hoặc ý muốn, như “cậu biết... muốn...”, chỉ báo cáo trạng thái
@@ -1262,16 +1261,42 @@ def _canonical_local_request(speaker: str, gender: str) -> str:
     return f"{LOCAL_SPEAKER_REQUEST_PREFIX}{_canonical_local_label(label, gender)}"
 
 
-def _scope_local_speaker(speaker: str, row: Any, local_scope: str) -> str:
+LOCAL_LABEL_MAX_LENGTH = 60
+LOCAL_LABEL_EDGE_PUNCTUATION = " .,;!?…-–—\"'“”‘’()[]{}"
+
+
+def normalize_local_label(label: Any) -> str:
+    """Khoá của một vai phụ không tên: cùng khoá trong một chương = cùng một người.
+
+    NFC, bỏ `:`/`|`/xuống dòng (nhãn nằm trong ID `a::b::nhãn`), gộp dấu cách, bỏ dấu câu ở hai đầu, hạ chữ - TRỪ chữ riêng
+    đứng sau từ đầu ("tiểu thư Clara", "người gọi Lucien"): `character_registry._honorific_target` nhận ra tên người nhờ chữ
+    hoa đầu, hạ hết thì nhãn "tiểu thư Clara" không còn dẫn tới Clara. Nhãn viết HOA hết thì hạ hết. KHÔNG bỏ dấu tiếng Việt
+    (má/ma/mà là ba người khác nhau) và không bỏ số ("lính gác 1" khác "lính gác 2")."""
+    text = unicodedata.normalize("NFC", str(label or ""))
+    text = re.sub(r"[\r\n:|]+", " ", text)
+    words = text.strip(LOCAL_LABEL_EDGE_PUNCTUATION).split()
+    if not words:
+        return ""
+    shouting = " ".join(words).isupper()
+    kept = [
+        word if index and not shouting and word[:1].isupper() and not (len(word) > 1 and word.isupper()) else word.casefold()
+        for index, word in enumerate(words)
+    ]
+    return " ".join(kept)[:LOCAL_LABEL_MAX_LENGTH].strip()
+
+
+def local_speaker_id(chapter_id: int, label: Any) -> str:
+    """ID lưu của một vai phụ không tên: MỘT danh tính cho (chương, nhãn đã chuẩn hoá). Nhãn rỗng -> UNKNOWN."""
+    key = normalize_local_label(label)
+    if not key:
+        return "UNKNOWN"
+    return f"{LOCAL_SPEAKER_STORED_PREFIX}c{int(chapter_id):05d}::{key}"
+
+
+def _scope_local_speaker(speaker: str, row: Any) -> str:
     if not speaker.casefold().startswith(LOCAL_SPEAKER_REQUEST_PREFIX.casefold()):
         return speaker
-    label = speaker[len(LOCAL_SPEAKER_REQUEST_PREFIX) :]
-    label = re.sub(r"[\r\n:|]+", " ", label)
-    label = re.sub(r"\s+", " ", label).strip()[:60]
-    if not label:
-        return "UNKNOWN"
-    chapter_id = int(row["chapter_id"])
-    return f"{LOCAL_SPEAKER_STORED_PREFIX}c{chapter_id:05d}::{local_scope}::{label}"
+    return local_speaker_id(int(row["chapter_id"]), speaker[len(LOCAL_SPEAKER_REQUEST_PREFIX) :])
 
 
 CHARACTER_NAME_IN_TEXT_PATTERN = re.compile(
@@ -1316,15 +1341,6 @@ def _generic_speaker_attribution(text: str, *, prefer_last: bool) -> str | None:
     if prefer_last:
         return max(matches, key=lambda item: (item[0], len(item[1])))[1]
     return min(matches, key=lambda item: (item[0], -len(item[1])))[1]
-
-
-def _local_scope_for_group(group: list[Any]) -> str:
-    if not group:
-        raise ValueError("Cannot create a local speaker scope for an empty analysis group")
-    first_id = str(group[0]["stable_id"])
-    last_id = str(group[-1]["stable_id"])
-    digest = sha256_text(f"{first_id}\0{last_id}")[:LOCAL_SCOPE_HASH_LENGTH]
-    return f"r{digest}"
 
 
 def _dialogue_quote_state_after(text: str, closing_mark: str | None) -> str | None:
@@ -1662,7 +1678,6 @@ def _explicit_speaker_attribution(
 def _repair_explicit_attribution(
     group: list[Any],
     result: dict[str, dict[str, Any]],
-    local_scope: str,
     original_context: dict[str, dict[str, Any]] | None = None,
 ) -> None:
     for index, row in enumerate(group):
@@ -1678,7 +1693,7 @@ def _repair_explicit_attribution(
         if attributed_speaker.casefold().startswith(LOCAL_SPEAKER_REQUEST_PREFIX.casefold()):
             label = attributed_speaker[len(LOCAL_SPEAKER_REQUEST_PREFIX) :]
             attributed_traits = GENERIC_SPEAKER_TRAITS.get(label, attributed_traits)
-            attributed_speaker = _scope_local_speaker(attributed_speaker, row, local_scope)
+            attributed_speaker = _scope_local_speaker(attributed_speaker, row)
         else:
             # Tên chép từ câu kể giữ cả kính ngữ ("Yuzuki-chan bước vào..."): không bỏ thì đè "Yuzuki" của model bằng
             # một nhân vật mới chưa rõ giới, và tên ấy lọt vào danh sách "Nhân vật đã biết" của mọi lô sau.
@@ -1727,7 +1742,6 @@ def _strong_majority_value(
 def _repair_addressee_speakers(
     group: list[Any],
     result: dict[str, dict[str, Any]],
-    local_scope: str,
 ) -> None:
     rows_by_id = {str(row["stable_id"]): row for row in group}
     direct_replacements: dict[str, str] = {}
@@ -1753,7 +1767,6 @@ def _repair_addressee_speakers(
         replacement = _scope_local_speaker(
             f"{LOCAL_SPEAKER_REQUEST_PREFIX}người gọi {label}",
             row,
-            local_scope,
         )
         direct_replacements[seg_id] = replacement
 
@@ -2051,7 +2064,6 @@ def _heuristic(row: Any) -> dict[str, Any]:
 def _validate(
     group: list[Any],
     payload: dict[str, Any],
-    local_scope: str = "b0000",
     *,
     original_context: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, dict[str, Any]]:
@@ -2092,7 +2104,7 @@ def _validate(
             age = "unknown"
         else:
             speaker = _canonical_local_request(speaker, gender)
-            speaker = _scope_local_speaker(speaker, rows_by_id[seg_id], local_scope)
+            speaker = _scope_local_speaker(speaker, rows_by_id[seg_id])
         emotion = _safe_choice(item.get("emotion"), ALLOWED_EMOTIONS, "neutral")
         result[seg_id] = {
             "kind": kind,
@@ -2112,8 +2124,8 @@ def _validate(
             "personality_hint": "",
             "notes": "",
         }
-    _repair_explicit_attribution(group, result, local_scope, original_context)
-    _repair_addressee_speakers(group, result, local_scope)
+    _repair_explicit_attribution(group, result, original_context)
+    _repair_addressee_speakers(group, result)
     _repair_same_paragraph_speakers(group, result, original_context)
     _repair_continued_dialogue_speakers(group, result)
     # CUỐI chuỗi sửa: hai khoá trên (đoạn văn, thoại nối tiếp) sẽ ghi đè nếu chạy sau.
@@ -7628,9 +7640,9 @@ class OllamaBookAnalyzer:
     def _resume_analysis_state(
         self,
         all_rows: list[Any],
-        groups: list[tuple[list[Any], str]],
+        groups: list[list[Any]],
     ) -> tuple[
-        list[tuple[list[Any], str]],
+        list[list[Any]],
         dict[tuple[str, ...], tuple[AnalysisFeedbackIssue, ...]],
         int,
     ]:
@@ -7644,7 +7656,7 @@ class OllamaBookAnalyzer:
         """
         resent = frozenset(
             str(row["stable_id"])
-            for group, _scope in groups
+            for group in groups
             for row in group
             if str(row["status"]) != "pending"
         )
@@ -7669,7 +7681,7 @@ class OllamaBookAnalyzer:
                     {"problem": problem or "missing"},
                 )
             return groups, {}, 0
-        queue_ids = [str(stable_id) for ids, _scope in state["queue"] for stable_id in ids]
+        queue_ids = [str(stable_id) for ids in state["queue"] for stable_id in ids]
         if state["policy_fingerprint"] != self.analysis_policy_fingerprint:
             problem = "policy fingerprint differs"
         elif queue_ids != pending_ids:
@@ -7684,8 +7696,8 @@ class OllamaBookAnalyzer:
             return groups, {}, int(state["committed_batches"])
         rows_by_id = {str(row["stable_id"]): row for row in all_rows}
         restored_groups = [
-            ([rows_by_id[str(stable_id)] for stable_id in ids], str(scope))
-            for ids, scope in state["queue"]
+            [rows_by_id[str(stable_id)] for stable_id in ids]
+            for ids in state["queue"]
         ]
         carried = {
             tuple(str(stable_id) for stable_id in ids): tuple(
@@ -8899,17 +8911,15 @@ class OllamaBookAnalyzer:
             chars += unit_chars
         if current:
             stable_groups.append(current)
-        groups: list[tuple[list[Any], str]] = []
+        groups: list[list[Any]] = []
         for stable_group in stable_groups:
-            local_scope = _local_scope_for_group(stable_group)
             pending_runs = _group_rows_to_analyse(stable_group)
             for pending_group in pending_runs:
                 if self.quality_profile != "high_quality":
-                    groups.append((pending_group, local_scope))
+                    groups.append(pending_group)
                     continue
                 groups.extend(
-                    (packed_group, local_scope)
-                    for packed_group in _pack_source_cohesive_analysis_groups(
+                    _pack_source_cohesive_analysis_groups(
                         pending_group,
                         max_segments,
                     )
@@ -8925,15 +8935,12 @@ class OllamaBookAnalyzer:
 
         def queue_analysis_split(
             offset: int,
-            scope: str,
             first_half: list[Any],
             second_half: list[Any],
             feedback: tuple[AnalysisFeedbackIssue, ...],
         ) -> None:
             children = (first_half, second_half)
-            groups[offset : offset + 1] = [
-                (child, scope) for child in children
-            ]
+            groups[offset : offset + 1] = list(children)
             for child in children:
                 child_feedback = _structured_feedback_issues(
                     feedback,
@@ -8975,8 +8982,8 @@ class OllamaBookAnalyzer:
                     for key, issues in carried_feedback_by_group.items()
                 ],
                 "queue": [
-                    [list(group_feedback_key(rows)), scope]
-                    for rows, scope in groups[committed_offset + 1 :]
+                    list(group_feedback_key(rows))
+                    for rows in groups[committed_offset + 1 :]
                 ],
             }
 
@@ -9000,7 +9007,7 @@ class OllamaBookAnalyzer:
         group_offset = 0
         while group_offset < len(groups):
             group_index = group_offset + 1
-            group, local_scope = groups[group_offset]
+            group = groups[group_offset]
             if stop_requested():
                 return
             if before_batch is not None:
@@ -9129,7 +9136,6 @@ class OllamaBookAnalyzer:
                         validated = _validate(
                             group,
                             payload,
-                            local_scope=local_scope,
                             original_context=original_context,
                         )
                         source_kind_issues = _source_kind_feedback_issues(
@@ -9674,7 +9680,6 @@ class OllamaBookAnalyzer:
                                 first_half, second_half = split_result
                                 queue_analysis_split(
                                     group_offset,
-                                    local_scope,
                                     first_half,
                                     second_half,
                                     validation_feedback,
@@ -9723,7 +9728,6 @@ class OllamaBookAnalyzer:
                 first_half, second_half = split_result
                 queue_analysis_split(
                     group_offset,
-                    local_scope,
                     first_half,
                     second_half,
                     validation_feedback,
@@ -9741,7 +9745,6 @@ class OllamaBookAnalyzer:
                 first_half, second_half = split_result
                 queue_analysis_split(
                     group_offset,
-                    local_scope,
                     first_half,
                     second_half,
                     validation_feedback,
@@ -9761,7 +9764,6 @@ class OllamaBookAnalyzer:
                 first_half, second_half = split_result
                 queue_analysis_split(
                     group_offset,
-                    local_scope,
                     first_half,
                     second_half,
                     validation_feedback,
@@ -9780,7 +9782,6 @@ class OllamaBookAnalyzer:
                 first_half, second_half = split_result
                 queue_analysis_split(
                     group_offset,
-                    local_scope,
                     first_half,
                     second_half,
                     validation_feedback,
@@ -9799,7 +9800,6 @@ class OllamaBookAnalyzer:
                 first_half, second_half = split_result
                 queue_analysis_split(
                     group_offset,
-                    local_scope,
                     first_half,
                     second_half,
                     validation_feedback,

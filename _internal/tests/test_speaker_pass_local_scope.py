@@ -15,6 +15,6 @@ def test_pass_local_speakers_have_chapter_scope_without_changing_prompts(tmp_pat
     assert first[3] != second[1]
     chapters = db.list_chapters()
     for label, chapter in ((first[3], chapters[0]), (second[1], chapters[1])):
-        assert label == _scope_local_speaker("NPC_LOCAL:lính gác", {"chapter_id": chapter["id"]}, "speaker_pass")
+        assert label == _scope_local_speaker("NPC_LOCAL:lính gác", {"chapter_id": chapter["id"]})
     assert any("NPC_LOCAL:lính gác" in prompt for prompt in ollama.prompts)
     assert all("NPC_LOCAL::" not in prompt and "speaker_pass::" not in prompt for prompt in ollama.prompts)
