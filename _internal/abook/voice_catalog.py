@@ -130,7 +130,7 @@ def voice_variant_deviation(preset_name: str) -> tuple[float, float]:
 # pays no processing at all. Each step is clamped into the preset's own usable range.
 CHARACTER_FORMANT_STEPS = (1.00, 0.93, 1.08, 0.87, 1.16, 0.97, 1.04)
 DEFAULT_NARRATOR_BY_GENDER = {
-    GENDER_MALE: "Phạm Tuyên",
+    GENDER_MALE: "Đức Trí",
     GENDER_FEMALE: "Ngọc Linh",
 }
 PRESET_PREVIEW_MEDIAN_PITCH_HZ = {
@@ -490,24 +490,22 @@ REGISTER_FORMANT_TRADE_PER_SEMITONE = 0.01
 
 # --- age ---------------------------------------------------------------------------
 #
-# A character's age was analysed, stored, and then thrown away at casting time, so a
-# child was read by whichever adult preset came next in the rotation. A listener put it
-# plainly: the boy sounded like an old uncle.
+# A teenager or an elderly character is carried toward their age by two separate acoustic
+# facts, and they need different machinery: the vocal tract length, which sets the formants
+# and so the apparent size of the speaker, and the speaking F0.
 #
-# Age is two separate acoustic facts and they need different machinery.
+# Children are NOT here. They were, first as a formant warp to a child's tract (12.3 cm at
+# six years, 13.0 at eight, Vorperian et al., PMC5966313) and an F0 lift to about 250 Hz,
+# and the owner's verdict of 05-11 was "đừng bóp nữa, bóp đem đến âm thanh quá tệ": the
+# warp ruined the voice. A child is now cast from the female presets, untouched - see
+# `PresetAllocator.choose`. With no "child" entry in either table below, `age_pitch_semitones`
+# is 0, `formant_ratio_for_age` is 1.0 and `preset_age_reach` is 0 for a child, with nothing
+# special-cased.
 #
-# Vocal tract length, which sets the formants and therefore the apparent size of the
-# speaker. From an anatomic MRI-based age model (Vorperian et al., PMC5966313): 12.3 cm
-# at six years, 13.0 at eight, 13.8 at ten, 14.5 at twelve, against 17.6 for an adult man
-# and 15.6 for an adult woman. Two things follow. Before puberty the sexes barely differ,
-# so a boy must be cast from the *shortest* presets - the female ones at 13.9-15.5 cm -
-# rather than from a male preset that would need a 1.29 warp to reach a child and would
-# sound ruined long before it got there. And adult ageing does almost nothing here:
-# "formant frequencies change little if at all across several decades of adult life"
-# (PMC5832520), so an elderly character is not a formant problem at all.
+# Adult ageing does almost nothing to formants ("formant frequencies change little if at
+# all across several decades of adult life", PMC5832520), so an elderly character is not a
+# formant problem at all.
 VOCAL_TRACT_CM_BY_AGE: dict[str, dict[str, float]] = {
-    # roughly eight years old, where a child speaking role usually sits
-    "child": {GENDER_MALE: 13.0, GENDER_FEMALE: 12.7, GENDER_UNKNOWN: 12.9},
     # roughly fourteen: the male pharynx has begun its growth, the female has nearly
     # finished, which is where the sexes start to separate
     "teen": {GENDER_MALE: 15.5, GENDER_FEMALE: 14.5, GENDER_UNKNOWN: 15.0},
@@ -515,32 +513,27 @@ VOCAL_TRACT_CM_BY_AGE: dict[str, dict[str, float]] = {
 
 # Speaking F0 for an age, as an absolute target in hertz rather than an offset.
 #
-# It was an offset first - "+3 semitones, because a child speaks around 250 Hz against an
-# adult woman's 205" - and that was wrong in a way a listener heard immediately. Applied to
-# a male preset sitting at 120 Hz, +3 semitones lands at 143 Hz, nowhere near a child. The
-# result was a 13.8 cm vocal tract speaking at 143 Hz: a combination no human throat can
-# produce, and the ear rejects it as a fault rather than as a young voice. The listener
-# described exactly that - the male presets "rè", crackly, "nghe như lỗi" - while the two
-# presets that already sit at 246 Hz were called simply good.
+# It was an offset first - "+3 semitones" - and that was wrong in a way a listener heard
+# immediately: applied to a preset sitting at 120 Hz it lands nowhere near the target, and
+# a vocal tract of one size speaking at the F0 of another is a combination no human throat
+# can produce, which the ear rejects as a fault rather than as a different age. So each
+# preset is carried from its own F0 to the target for the age.
 #
-# Children aged six to ten speak at 245-262 Hz with no significant difference between boys
-# and girls. Ageing is not symmetric and the common intuition is half wrong: measured
-# across cohorts (PMC5832520), women fall from about 205 Hz to 170 while men *rise* from
-# 108 to about 125, so an elderly man reads higher than his younger self.
-# Boys sit below girls even before puberty - a study of six-to-ten-year-olds measured
-# about 262 Hz for boys against 281 for girls - and a listener heard the same thing from
-# the other direction: a male preset carried to a single shared target read as a child but
-# not as a *boy*, and asked for it slightly deeper. Both agree, so the target splits.
+# Ageing is not symmetric and the common intuition is half wrong: measured across cohorts
+# (PMC5832520), women fall from about 205 Hz to 170 while men *rise* from 108 to about 125,
+# so an elderly man reads higher than his younger self.
 AGE_TARGET_PITCH_HZ: dict[str, dict[str, float]] = {
-    "child": {GENDER_MALE: 240.0, GENDER_FEMALE: 258.0, GENDER_UNKNOWN: 248.0},
     "teen": {GENDER_MALE: 190.0, GENDER_FEMALE: 220.0, GENDER_UNKNOWN: 205.0},
     "elderly": {GENDER_MALE: 125.0, GENDER_FEMALE: 170.0, GENDER_UNKNOWN: 145.0},
 }
 
 # Usable, but only once everything else is taken. A listener judged each good enough to
-# keep and not good enough to reach for: a crackle in two of them, a maturity the age warp
-# cannot undo in the third. Unlike EXCLUDED_PRESETS this is a demotion, not a bar - a book
+# keep and not good enough to reach for. Unlike EXCLUDED_PRESETS this is a demotion, not a bar - a book
 # with more characters than clean voices should still cast them rather than run out.
+#
+# Thái Sơn and Thục Đoan left the set on 05-11 by the owner's verdict: Thái Sơn "rất ổn",
+# just under the good voices; Thục Đoan "ổn". Those are ranks in `voice_rank.json`, not
+# demotions.
 #
 # Thanh Bình joined the set after a click swallowed a word in its child register and every
 # attempt to cure that failed: a detector built for it was rejected by ear, UTMOSv2 ranked
@@ -553,7 +546,7 @@ AGE_TARGET_PITCH_HZ: dict[str, dict[str, float]] = {
 # character in a chapter, and that is not what "bottom of the list" means. The members are
 # joint last: nothing ranks one demoted preset above another, and the terms below only
 # break ties so the choice stays deterministic.
-LAST_RESORT_PRESETS = frozenset({"Thái Sơn", "Thanh Bình", "Thục Đoan"})
+LAST_RESORT_PRESETS = frozenset({"Thanh Bình"})
 
 # Casting prefers the preset needing the smallest age pitch shift, bucketed this wide.
 # Four semitones is roughly 0.2 MOS by the measurements in docs/CHILD_VOICE_TRANSFORM.md -
@@ -561,60 +554,87 @@ LAST_RESORT_PRESETS = frozenset({"Thái Sơn", "Thanh Bình", "Thục Đoan"})
 # enough that the gap between a +2 preset and a +11 one still decides.
 AGE_PITCH_RANK_BUCKET = 4
 
-# A listener's ranking of the presets they have actually heard, best first, per role
-# (`assets/voice_rank.json`: adult/child x male/female). This outranks tract reach and
-# pitch distance because those are proxies for how good the result sounds and this is the
-# thing itself - and the proxies have been wrong here before: reach and shift between them
-# put Ngọc Linh last of the three girl voices, which is exactly backwards. An adult list
-# that is empty ranks nothing, so casting falls through to the arbitrary `CAST_ORDER`.
+# A listener's ranking of the presets they have actually heard, per role
+# (`assets/voice_rank.json`: narrator / character, each male and female), as a list
+# of TIERS, best first; each tier is a list of presets the listener rates equal, so a tie
+# inside a tier falls through to the computed proxies and then to `CAST_ORDER`. This
+# outranks tract reach and pitch distance because those are proxies for how good the
+# result sounds and this is the thing itself - and the proxies have been wrong here
+# before: reach and shift between them put Ngọc Linh last of the three girl voices, which
+# is exactly backwards. An empty list ranks nothing, so casting falls through to the
+# arbitrary `CAST_ORDER`.
+#
+# Male verdict, 05-11: quality first ("tốt" above "rất ổn"), then fit for the role inside
+# a quality level. Good as a narrator: Đức Trí, Thiền Tâm Đức. Good as a natural voice:
+# Xuân Vĩnh. Good: Phạm Tuyên. "Rất ổn", just under good: Thái Sơn, Adam. "Narrates well"
+# does not mean "not natural" or the reverse - it only fits better - and a voice outside
+# the narrator group is no match for one inside it when it narrates (Phạm Tuyên is good,
+# yet narrates worse than the two named narrators). Hence narrator = [Đức Trí, Thiền Tâm
+# Đức] > [Phạm Tuyên, Xuân Vĩnh] > [Thái Sơn, Adam], character = [Xuân Vĩnh] > [Đức Trí,
+# Thiền Tâm Đức, Phạm Tuyên] > [Thái Sơn, Adam]; any other male preset (Adam bựa included)
+# is unranked, below every tier.
+#
+# Female verdict, 05-11 ("kim thanh ổn / mai anh kể chuyện tốt / mỹ duyên: ổn / ngọc linh
+# tự nhiên tốt / quỳnh trang: ổn / thục đoan: ổn / đoan trang tự nhiên tốt (dưới ngọc
+# linh)"; "quỳnh trang" read as Quỳnh Anh): narrator = [Mai Anh] > [Ngọc Linh] > [Đoan
+# Trang] > [Kim Thanh, Mỹ Duyên, Quỳnh Anh, Thục Đoan], character = [Ngọc Linh] > [Đoan
+# Trang] > [Mai Anh] > [Kim Thanh, Mỹ Duyên, Quỳnh Anh, Thục Đoan]; Trúc Ly, Ngọc Trân,
+# Thùy Dung and Ngọc Huyền are unranked. Mai Anh is a news preset (`STYLE_NEWS`): it has no
+# balance numbers and is neither castable nor selectable as a narrator, so its tiers are
+# dormant until a measurement opens it; the female default narrator is therefore the best
+# SELECTABLE narrator, Ngọc Linh.
+#
+# Children are cast from the female presets by the female `character` tiers: there is no
+# child role.
 #
 # Only what was actually judged goes in. A preset absent from a list is unheard rather
 # than rejected, and sorts after every ranked one, so the theory still decides among the
 # unheard.
-#
-# The boy list is the sharper example of why the verdict has to come first. By theory
-# Phạm Tuyên is the worst boy voice available - it falls 0.8 cm short of a child's tract
-# and needs +15 semitones, against female presets that land on the target exactly and
-# need +1 - and the listener put it first anyway, with the female presets keeping their
-# girl order behind it. Casting is cross-gender either way; what changed is that being
-# closest on paper stopped deciding.
 VOICE_RANK_PATH = Path(__file__).resolve().parent / "assets" / "voice_rank.json"
 
 
-def load_voice_rank(path: Path = VOICE_RANK_PATH) -> dict[str, dict[str, tuple[str, ...]]]:
-    """Read and check the listener's ranking; a name the catalog does not know fails here, not in a book."""
+VOICE_RANK_ROLES = ("narrator", "character")
+
+VoiceRank = dict[str, dict[str, tuple[tuple[str, ...], ...]]]
+
+
+def load_voice_rank(path: Path = VOICE_RANK_PATH) -> VoiceRank:
+    """Read and check the listener's ranking; a bad name or tier fails here, not in a book."""
     data = json.loads(path.read_text(encoding="utf-8"))
     known = {str(preset["name"]) for preset in VIENEU_PRESETS}
-    table: dict[str, dict[str, tuple[str, ...]]] = {}
-    for role in ("adult", "child"):
+    table: VoiceRank = {}
+    for role in VOICE_RANK_ROLES:
         table[role] = {}
         for gender in (GENDER_MALE, GENDER_FEMALE):
-            names = tuple(data[role][gender])
+            tiers = tuple(tuple(str(name) for name in tier) for tier in data[role][gender])
+            where = f"{path.name}: {role}.{gender}"
+            if not all(tiers):
+                raise ValueError(f"{where} has an empty tier")
+            names = [name for tier in tiers for name in tier]
             unknown = [name for name in names if name not in known]
             if unknown:
-                raise ValueError(f"{path.name}: {role}.{gender} names no such VieNeu preset: {unknown}")
+                raise ValueError(f"{where} names no such VieNeu preset: {unknown}")
             if len(set(names)) != len(names):
-                raise ValueError(f"{path.name}: {role}.{gender} lists a preset twice")
-            table[role][gender] = names
+                raise ValueError(f"{where} lists a preset twice")
+            table[role][gender] = tiers
     return table
 
 
 VOICE_RANK = load_voice_rank()
 
 
-def listener_rank(preset_name: str, age: str, gender: str) -> int:
-    """Where the listener put a preset for this role (0 = best); unranked sorts after every ranked one."""
-    order = VOICE_RANK["child" if str(age) == "child" else "adult"].get(str(gender), ())
-    name = str(preset_name)
-    return order.index(name) if name in order else len(order)
+def listener_rank(preset_name: str, gender: str, role: str = "character") -> int:
+    """The listener's tier for a preset in this role (0 = best); unranked = the number of tiers, after every ranked one.
 
-# How far a preset's own F0 may be carried toward an age target.
-#
-# This was 6, invented rather than measured, and it was wrong: it barred all three male
-# presets from the child pool, one of them by 2.3 semitones. Asked to judge them carried
-# the whole way instead - +8.3, +12.6 and +15.8 - a listener called every one of them
-# childlike, the deepest shift among the best. So the limit is set where the presets
-# actually stop working rather than where a round number sat.
+    A child is ranked by the caller as female (`PresetAllocator.choose` casts children from the female presets).
+    """
+    tiers = VOICE_RANK[role].get(str(gender), ())
+    name = str(preset_name)
+    return next((index for index, tier in enumerate(tiers) if name in tier), len(tiers))
+
+# How far a preset's own F0 may be carried toward an age target (teen, elderly). Set where
+# the presets actually stop working, judged by ear carried the whole way, rather than at a
+# round number.
 AGE_PITCH_MAX_SEMITONES = 16.0
 
 
@@ -775,6 +795,10 @@ def narrator_presets(
         candidates,
         key=lambda preset: (
             preferred_order.get(preset["name"], len(preferred_order)),
+            # The owner's narrator tiers, by the preset's own gender (this list spans both),
+            # ahead of the arbitrary order - so the fallback after the default narrator is
+            # the next best narrator rather than the next alphabetical one.
+            listener_rank(preset["name"], preset["gender"], role="narrator"),
             *preset_priority(preset),
         ),
     )
