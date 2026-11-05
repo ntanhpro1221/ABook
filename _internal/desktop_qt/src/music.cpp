@@ -96,13 +96,7 @@ Music *Music::create(QQmlEngine *, QJSEngine *) {
     return g_instance;
 }
 
-QVariantList Music::levels() const {
-    QVariantList list;
-    for (const MusicText::Level &level : MusicText::levelOptions(m_levelDb))
-        list << QVariantMap{{QStringLiteral("value"), level.value}, {QStringLiteral("name"), level.name},
-                            {QStringLiteral("note"), MusicText::levelNote(level.value)}};
-    return list;
-}
+
 
 QString Music::chapterKey() const {
     return m_player->bookId().isEmpty() ? QString() : QStringLiteral("%1:%2").arg(m_player->bookId()).arg(m_player->chapterId());
@@ -198,7 +192,7 @@ void Music::applyView(const QJsonObject &raw) {
         m_project = raw.value(QLatin1String("project")).toBool();
         m_hasMusic = raw.value(QLatin1String("hasMusic")).toBool();
         m_enabled = raw.value(QLatin1String("enabled")).toBool();
-        m_levelDb = raw.value(QLatin1String("levelDb")).toDouble(-20);
+        m_levelDb = raw.value(QLatin1String("levelDb")).toDouble(MusicText::DEFAULT_LEVEL_DB);
     } else {
         const QJsonObject plan = raw.value(QLatin1String("plan")).toObject();
         const QJsonObject overrides = raw.value(QLatin1String("overrides")).toObject();
@@ -206,7 +200,7 @@ void Music::applyView(const QJsonObject &raw) {
         m_hasMusic = !plan.value(QLatin1String("scenes")).toArray().isEmpty();
         m_enabled = overrides.value(QLatin1String("enabled")).toBool(true);
         m_levelDb = overrides.contains(QLatin1String("levelDb")) ? overrides.value(QLatin1String("levelDb")).toDouble()
-                                                                 : plan.value(QLatin1String("levelDb")).toDouble(-20);
+                                                                 : plan.value(QLatin1String("levelDb")).toDouble(MusicText::DEFAULT_LEVEL_DB);
     }
     m_problem = raw.value(QLatin1String("error")).toString();
     emit viewChanged();
@@ -217,7 +211,7 @@ void Music::setEnabled(bool enabled) {
 }
 
 void Music::setLevel(double levelDb) {
-    change({{QStringLiteral("levelDb"), levelDb}});
+    change({{QStringLiteral("levelDb"), MusicText::clampLevel(levelDb)}});
 }
 
 /// Một lệnh PUT (chung với hộp "Sửa sách"): xong thì hỏi lại mốc của chương đang nghe - nhạc theo lựa chọn mới ngay.

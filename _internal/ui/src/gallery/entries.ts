@@ -120,6 +120,13 @@ const DESKTOP: Omit<Entry, "platform">[] = [
   { id: "desktop/player-music", group: "Trình phát", title: "Hộp nhạc nền", route: "/book/gac-xep", act: async () => {
     await desktopTextMore(); await click("Nhạc nền");
   } },
+  { id: "desktop/book-edit-music-level", group: "Trang sách", title: "Sửa sách · mức nhạc nền", route: "/book/suong-mu-2", scenario: { music: true, packagedMusic: true }, act: async () => {
+    await clickFirst("Thêm tuỳ chọn"); await click("Sửa thông tin");
+    await click("Nhạc nền", document.querySelector('[role="dialog"]')!);
+  } },
+  { id: "desktop/player-music-level", group: "Trình phát", title: "Hộp nhạc nền · thanh trượt mức", route: "/book/gac-xep", scenario: { music: true }, act: async () => {
+    await desktopTextMore(); await click("Nhạc nền");
+  } },
   { id: "desktop/player-full-speed", group: "Trình phát", title: "Tốc độ ở màn nghe", route: "/", act: async () => {
     await playerOpen(); await click(/^Tốc độ đọc/, document.querySelector('.now-playing')!);
   } },

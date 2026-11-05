@@ -94,7 +94,7 @@ export function readDevToolsPort(portFile, read = readFileSync) {
 
 /** Mở trình duyệt headless với cổng gỡ lỗi do nó tự chọn (đọc từ DevToolsActivePort trong thư mục hồ sơ tạm). Đóng thì xoá hồ sơ (~12 MB):
  *  01-11 mọi chỗ gọi từng giữ hồ sơ lại - 2611 thư mục / ~31 GB trong %TEMP% từ 24-10. Nơi cấm xoá (sandbox) thì chỉ cảnh báo. */
-export async function launch(executable, { hideScrollbars = true } = {}) {
+export async function launch(executable, { hideScrollbars = true, softwareRendering = false } = {}) {
   const profile = mkdtempSync(path.join(tmpdir(), "abook-gallery-"));
   const cleanProfile = () => {
     // Chỉ xoá hồ sơ vừa tạo, bằng Python và đường dẫn tuyệt đối; không đi theo junction/symlink.
@@ -123,7 +123,7 @@ else: raise RuntimeError('Hồ sơ trình duyệt vẫn bị khoá: ' + root)
   const child = spawn(executable, [
     "--headless=new",
     // Cổng phát hành chạy CPU, không chiếm GPU đang làm sách.
-    ...(process.env.CUDA_VISIBLE_DEVICES === "-1" ? ["--disable-gpu"] : []),
+    ...(softwareRendering || process.env.CUDA_VISIBLE_DEVICES === "-1" ? ["--disable-gpu", "--use-angle=swiftshader"] : []),
     "--no-first-run",
     "--no-default-browser-check",
     `--user-data-dir=${profile}`,

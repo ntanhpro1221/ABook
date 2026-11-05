@@ -11,6 +11,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Chương đủ lời đọc vẫn được ghép khi còn câu lỗi và ghi rõ cần nghe lại; thiếu audio thật thì báo đúng dòng bị thiếu.
 - File sách đối chiếu đủ chương, mã băm và phụ đề trước khi xuất và khi kiểm tra. Xuất một phần phải chọn rõ, kèm số chương và tên chương thiếu.
 - Chia câu dùng lời đọc đã chuẩn bị một lần, không áp lại cách phát âm lên tên đã thay.
+### Nhạc nền
+
+- Kéo mức nhạc nền tự do từ −40 đến −6 dB thay cho năm mốc, thấy tên mức và số dB, dễ về mặc định trên máy tính và điện thoại.
 
 ### Giọng đọc
 
