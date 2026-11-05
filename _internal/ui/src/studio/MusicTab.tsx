@@ -16,7 +16,8 @@ import { MUSIC_CHANGED_EVENT } from "@/listen/musicBed";
 import { cn } from "@/shared/cn";
 import { MUSIC_MODIFIED_NOTE, formatClock, musicCreditText, musicNeedsModifiedNote } from "@/shared/format";
 import { spokenProgress } from "@/shared/progressSpeech";
-import { MUSIC_LEVELS as LEVELS, levelText } from "@/shared/musicLevels";
+import { MusicLevelSlider } from "@/shared/MusicLevelSlider";
+import { LEVEL_TITLE } from "@/shared/musicLevels";
 import { Select, Button, IconButton, LiveText, Progress, ContentSkeleton, InlineError, EmptyState } from "@/shared/ui";
 import { api, mediaUrl } from "./api";
 import { useAppInfo } from "./data";
@@ -636,20 +637,11 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
               ))}
             </Select>
           </SettingsRow>
-          <SettingsRow label={<label htmlFor="music-level">Mức nhạc nền</label>} hint="Nhỏ hơn giọng đọc bấy nhiêu; máy tự bù bài to hay nhỏ">
-            <Select
-              id="music-level"
-              value={String(overrides.levelDb)}
-              onChange={(event) => change.mutate({ levelDb: Number(event.target.value) })}
-
-            >
-              {LEVELS.map(([value, label]) => (
-                <option key={value} value={String(value)}>
-                  {levelText(value, label)}
-                </option>
-              ))}
-            </Select>
-          </SettingsRow>
+          {/* Thanh trượt nằm dưới tên hàng, không bên phải: chữ mức của nó không đứng cạnh tên hàng (hai dòng chữ cạnh nhau phải cùng đường chân chữ). */}
+          <div>
+            <SettingsRow label={LEVEL_TITLE} hint="Nhỏ hơn giọng đọc bấy nhiêu; máy tự bù bài to hay nhỏ" />
+            <MusicLevelSlider value={overrides.levelDb} saving={change.isPending} onChange={(levelDb) => change.mutate({ levelDb })} className="max-w-md pb-2" />
+          </div>
           <SettingsRow label="Bài cho từng đoạn" hint="Máy chọn lại theo thể loại và mức nhạc ở trên.">
             <Button variant="ghost" icon={RefreshCw} loading={rebuild.isPending} onClick={() => rebuild.mutate()} className="-mr-3.5">
               {rebuild.isPending ? "Đang chọn lại" : "Chọn lại nhạc"}
