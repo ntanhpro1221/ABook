@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="vn.abook.player.AutoRewindTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-11-05T00:00:00.000Z" hostname="fixture" time="0.001">
+  <properties/>
+  <testcase name="everySharedCaseGivesTheSameAnswer" classname="vn.abook.player.AutoRewindTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
