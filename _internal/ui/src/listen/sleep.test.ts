@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { remoteSleepAfter, remoteSleepCommand, remoteSleepMode, rewindAfter, sleepButtonLabel, sleepLabel, sleepSpoken } from "./sleep";
+import { remoteSleepAfter, remoteSleepCommand, remoteSleepMode, rewindAfter, sleepButtonLabel, sleepExtendLabel, sleepExtendMinutes, sleepExtended, sleepFrom, sleepLabel, sleepLeftMs, sleepSafetyNet, sleepSpoken } from "./sleep";
 
 describe("hẹn giờ tắt của loa / TV", () => {
   it("đọc lời máy giữ phiên phát như hẹn giờ ở đây: chỉ trôi khi thiết bị đang phát", () => {
@@ -59,5 +59,60 @@ describe("tự lùi khi nghe lại", () => {
       cases: [number, number][];
     };
     for (const [pausedMs, seconds] of shared.cases) expect(rewindAfter(pausedMs), `tạm dừng ${pausedMs} ms`).toBe(seconds);
+  });
+});
+
+describe("nghe thêm là hẹn lại, không cộng dồn", () => {
+  const at = 5_000_000;
+  const minutesLeft = (mode: ReturnType<typeof sleepFrom>, now: number) => (sleepLeftMs(mode, now) ?? 0) / 60_000;
+
+  it("hẹn 10 phút, còn 7 phút, bấm ba lần: còn 10 phút chứ không phải 37", () => {
+    let mode = sleepFrom({ kind: "minutes", minutes: 10 }, true, at);
+    const later = at + 3 * 60_000;
+    for (let i = 0; i < 3; ++i) mode = sleepExtended(mode, 10, true, later);
+    expect(minutesLeft(mode, later)).toBeCloseTo(10, 5);
+    expect(mode).toMatchObject({ kind: "minutes", minutes: 10 });
+  });
+
+  it("còn nguyên 10 phút thì bấm vẫn 10 phút", () => {
+    const mode = sleepFrom({ kind: "minutes", minutes: 10 }, true, at);
+    expect(minutesLeft(sleepExtended(mode, 10, true, at), at)).toBeCloseTo(10, 5);
+  });
+
+  it("số đã chọn thắng \"Mỗi lần nghe thêm\": hẹn 30 phút, bước 5 phút vẫn về 30", () => {
+    const mode = sleepFrom({ kind: "minutes", minutes: 30 }, false, at);
+    const longer = sleepExtended(mode, 5, false, at);
+    expect(minutesLeft(longer, at)).toBeCloseTo(30, 5);
+    expect(sleepExtendMinutes(mode, 5)).toBe(30);
+    expect(sleepExtendLabel(sleepExtendMinutes(mode, 5))).toBe("Hẹn lại 30 phút");
+  });
+
+  it("đồng hồ đang dừng vẫn về đúng số đã hẹn và vẫn dừng", () => {
+    const paused = { kind: "minutes" as const, minutes: 15, leftMs: 4 * 60_000, since: null };
+    const again = sleepExtended(paused, 10, false, at);
+    expect(again).toEqual({ kind: "minutes", minutes: 15, leftMs: 15 * 60_000, since: null });
+  });
+
+  it("hết chương: đếm \"Mỗi lần nghe thêm\" từ bây giờ, bấm tiếp vẫn không cộng dồn", () => {
+    const first = sleepExtended({ kind: "chapter" }, 15, true, at);
+    expect(first).toEqual({ kind: "minutes", minutes: 15, leftMs: 15 * 60_000, since: at });
+    expect(minutesLeft(sleepExtended(first, 15, true, at + 60_000), at + 60_000)).toBeCloseTo(15, 5);
+    expect(sleepExtendMinutes({ kind: "chapter" }, 15)).toBe(15);
+    expect(sleepExtendMinutes({ kind: "off" }, 15)).toBe(15);
+  });
+
+  it("lưới an toàn đếm 1 phút nhưng hẹn lại về \"Mỗi lần nghe thêm\", không về 1 phút", () => {
+    const net = sleepSafetyNet(true, at);
+    expect(minutesLeft(net, at)).toBeCloseTo(1, 5);
+    expect(sleepExtendMinutes(net, 15)).toBe(15);
+    expect(sleepExtendLabel(sleepExtendMinutes(net, 15))).toBe("Hẹn lại 15 phút");
+    const again = sleepExtended(net, 15, true, at + 10_000);
+    expect(minutesLeft(again, at + 10_000)).toBeCloseTo(15, 5);
+    expect(again).toMatchObject({ kind: "minutes", minutes: 15 });
+    expect(minutesLeft(sleepExtended(again, 15, true, at + 10_000), at + 10_000)).toBeCloseTo(15, 5);
+  });
+
+  it("nhãn nút chung một chữ cho mọi nơi", () => {
+    expect(sleepExtendLabel(10)).toBe("Hẹn lại 10 phút");
   });
 });

@@ -160,7 +160,7 @@ bool Player::eventFilter(QObject *, QEvent *event) {
     case QEvent::Wheel:
     case QEvent::TouchBegin:
         m_lastActivity = m_now();
-        // Máy tính: chạm phím / chuột lúc đang nhỏ dần = "lắc máy" - nghe thêm. Phím ấy không làm gì khác.
+        // Máy tính: chạm phím / chuột lúc đang nhỏ dần = "lắc máy" - hẹn lại. Phím ấy không làm gì khác.
         if (m_fading) {
             extendSleep();
             return event->type() == QEvent::KeyPress;
@@ -370,7 +370,11 @@ void Player::configure(const QVariantMap &p) {
     m_autoRewind = p.value(QStringLiteral("autoRewind"), true).toBool();
     m_safetyHours = std::clamp(p.value(QStringLiteral("safetyStopHours"), 2).toInt(), 0, 3);
     m_fadeSeconds = std::clamp(p.value(QStringLiteral("sleepFadeSeconds"), 30).toInt(), 10, 60);
-    m_extendMinutes = std::clamp(p.value(QStringLiteral("sleepExtendMinutes"), 10).toInt(), 5, 15);
+    const int extendMinutes = std::clamp(p.value(QStringLiteral("sleepExtendMinutes"), 10).toInt(), 5, 15);
+    if (extendMinutes != m_extendMinutes) {
+        m_extendMinutes = extendMinutes;
+        emit sleepChanged(); // nhãn nút "Hẹn lại N phút" đọc số này khi hẹn theo chương
+    }
     // Lịch sai cấu trúc coi như chưa có lịch (cleanSleepSchedule của listen/sleep.ts): "HH:mm" hai đầu, số phút trong các mức giao diện đưa ra.
     const QVariantMap given = p.value(QStringLiteral("sleepSchedule")).toMap();
     static const QRegularExpression clock(QStringLiteral("^([01]\\d|2[0-3]):[0-5]\\d$"));
@@ -955,16 +959,21 @@ void Player::setSleep(const QString &kind, int minutes) {
     }
 }
 
-void Player::extendSleep(int minutes) {
-    if (minutes <= 0)
-        minutes = m_extendMinutes;
+int Player::sleepExtendMinutes() const {
+    // Hẹn phút thì đúng số người nghe đã chọn; hết chương thì "Mỗi lần nghe thêm" (sleep.ts sleepExtendMinutes, SleepText.extendMinutes bên điện thoại).
+    return m_sleep.kind == Sleep::Minutes && m_sleep.minutes > 0 ? m_sleep.minutes : m_extendMinutes;
+}
+
+// Nghe thêm = hẹn lại: đồng hồ về đúng sleepExtendMinutes() phút, không bao giờ hơn (bấm nhiều lần không cộng dồn); còn lại đã nhiều hơn thì giữ nguyên.
+void Player::extendSleep() {
     if (m_sleep.kind == Sleep::Off)
         return;
+    const int minutes = sleepExtendMinutes();
     endFade();
     const double left = m_sleep.kind == Sleep::Minutes ? m_sleep.leftMs : 0;
     resetSleepMark();
-    applySleepState(Sleep::Minutes, m_sleep.kind == Sleep::Minutes ? m_sleep.minutes : minutes, left + minutes * 60'000.0);
-    setNotice(QStringLiteral("Nghe thêm %1 phút").arg(minutes));
+    applySleepState(Sleep::Minutes, minutes, std::max(left, minutes * 60'000.0));
+    setNotice(QStringLiteral("Hẹn lại %1 phút").arg(minutes));
 }
 
 void Player::endFade() {
@@ -1289,6 +1298,8 @@ void Player::tick() {
         const int lastMinutes = m_lastSleepMinutes; // lưới an toàn không đổi "lần hẹn gần nhất" của nút hẹn giờ (bản web không gọi setLastSleepMinutes)
         setSleep(QStringLiteral("minutes"), 1);
         m_lastSleepMinutes = lastMinutes;
+        m_sleep.minutes = 0; // đếm 1 phút nhưng không ai chọn số phút: "Hẹn lại" về "Mỗi lần nghe thêm" (sleepExtendMinutes), như sleep.ts sleepSafetyNet
+        emit sleepChanged();
         setNotice(QStringLiteral("Không thấy ai chạm máy suốt %1 giờ - sẽ tắt sau 1 phút").arg(m_safetyHours), QStringLiteral("Vẫn đang nghe"), QStringLiteral("stay"));
     }
     updateTicker();

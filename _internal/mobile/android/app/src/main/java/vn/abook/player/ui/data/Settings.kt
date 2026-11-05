@@ -43,11 +43,6 @@ enum class ReadingSurface(override val key: String, override val label: String) 
     Night("night", "Đêm"),
 }
 
-enum class ShakeAction(override val key: String, override val label: String) : Choice {
-    Extend("extend", "Cộng thêm"),
-    Reset("reset", "Đặt lại"),
-}
-
 enum class ShakeSensitivity(override val key: String, override val label: String) : Choice {
     Gentle("gentle", "Nhẹ tay"),
     Normal("normal", "Vừa"),
@@ -79,7 +74,6 @@ data class AppSettings(
     val safetyStopHours: Int = 2,
     val schedule: SleepSchedule? = null,
     val shakeToExtend: Boolean = true,
-    val shakeAction: ShakeAction = ShakeAction.Extend,
     val shakeSensitivity: ShakeSensitivity = ShakeSensitivity.Normal,
     val flipToPause: Boolean = false,
     val sleepExtendMinutes: Int = 10,
@@ -129,7 +123,6 @@ data class AppSettings(
             safetyStopHours = pick(json, "safetyStopHours", SAFETY_HOURS, Default.safetyStopHours),
             schedule = schedule(json.opt("schedule")),
             shakeToExtend = flag(json, "shakeToExtend", Default.shakeToExtend),
-            shakeAction = word(json, "shakeAction", Default.shakeAction),
             shakeSensitivity = word(json, "shakeSensitivity", Default.shakeSensitivity),
             flipToPause = flag(json, "flipToPause", Default.flipToPause),
             sleepExtendMinutes = pick(json, "sleepExtendMinutes", EXTEND_MINUTES, Default.sleepExtendMinutes),
@@ -157,7 +150,6 @@ data class AppSettings(
             out.put("schedule", schedule?.let { JSONObject().put("from", it.from).put("to", it.to).put("minutes", it.minutes) } ?: JSONObject.NULL)
         }
         if (shakeToExtend != before.shakeToExtend) out.put("shakeToExtend", shakeToExtend)
-        if (shakeAction != before.shakeAction) out.put("shakeAction", shakeAction.key)
         if (shakeSensitivity != before.shakeSensitivity) out.put("shakeSensitivity", shakeSensitivity.key)
         if (flipToPause != before.flipToPause) out.put("flipToPause", flipToPause)
         if (sleepExtendMinutes != before.sleepExtendMinutes) out.put("sleepExtendMinutes", sleepExtendMinutes)

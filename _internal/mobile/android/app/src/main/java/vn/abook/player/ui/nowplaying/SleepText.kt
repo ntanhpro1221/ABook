@@ -2,7 +2,7 @@ package vn.abook.player.ui.nowplaying
 
 import java.util.Calendar
 
-/** Mức hẹn giờ người nghe đặt trong Cài đặt: bao lâu tiếng nhỏ dần trước khi dừng, và mỗi lần "nghe thêm" cộng bao nhiêu phút. */
+/** Mức hẹn giờ người nghe đặt trong Cài đặt: bao lâu tiếng nhỏ dần trước khi dừng, và "Mỗi lần nghe thêm" hẹn lại bao nhiêu phút (khi hẹn theo chương hay vừa tự dừng). */
 data class SleepOptions(val fadeSeconds: Int = 30, val extendMinutes: Int = 10)
 
 /**
@@ -11,7 +11,7 @@ data class SleepOptions(val fadeSeconds: Int = 30, val extendMinutes: Int = 10)
  */
 object SleepText {
     /** Cách nghe thêm trên điện thoại: cú lắc (SleepTimer.kt) hay nút trên thông báo (web: extendGesture.ts, nhánh native). */
-    const val GESTURE = "lắc máy hoặc bấm “Nghe thêm” trên thông báo"
+    const val GESTURE = "lắc máy hoặc bấm nút trên thông báo"
 
     /** Hẹn giờ vừa tắt tiếng mà chưa quá chừng này thì tấm Hẹn giờ còn mời bật lại (web: 30 phút). */
     const val RECENT_STOP_MS = 30 * 60_000L
@@ -25,12 +25,18 @@ object SleepText {
     /** Đầu lưới mức hẹn: đang hẹn thì "Đặt lại", chưa thì "Dừng phát sau". */
     fun gridHeading(active: Boolean): String = if (active) "Đặt lại" else "Dừng phát sau"
 
-    fun extendLabel(minutes: Int): String = "+$minutes phút"
+    /** Số phút "Hẹn lại": hẹn phút thì đúng số người nghe đã chọn (`picked` = 0: không ai chọn, như lưới an toàn ngủ quên), hết chương thì "Mỗi lần nghe thêm" (`fallback`). MỘT hàm cho [vn.abook.player.SleepTimer.extend], nút thông báo và nhãn nút. Web: sleep.ts `sleepExtendMinutes`. */
+    fun extendMinutes(minutesMode: Boolean, picked: Int, fallback: Int): Int = if (minutesMode && picked > 0) picked else fallback
+
+    fun extendMinutes(sleep: PlayerSleep, options: SleepOptions): Int = extendMinutes(sleep.kind == SleepKind.Minutes, sleep.minutes, options.extendMinutes)
+
+    /** Nhãn nút nghe thêm: đồng hồ về lại N phút, không cộng thêm (web: sleep.ts `sleepExtendLabel`). */
+    fun extendLabel(minutes: Int): String = "Hẹn lại $minutes phút"
 
     /** Dòng ghi chú cuối tấm. `hadNight`: người nghe đã có một đêm được ghi lại thì nhắc thẻ "Tối qua". */
     fun note(options: SleepOptions, hadNight: Boolean): String =
         // Ghép từ các mảnh như web ghép quanh các giá trị (nhãn đối chiếu với web cắt đúng ở chỗ chèn giá trị).
-        "Tiếng nhỏ dần " + options.fadeSeconds + " giây trước khi dừng. Lúc đó " + GESTURE + " để nghe thêm " + options.extendMinutes + " phút." +
+        "Tiếng nhỏ dần " + options.fadeSeconds + " giây trước khi dừng. Lúc đó " + GESTURE + " để hẹn lại từ đầu." +
             if (hadNight) " Sáng hôm sau, thẻ “Tối qua” giúp tìm lại đoạn còn nhớ." else ""
 
     /** Tắt tiếng chưa quá [RECENT_STOP_MS]: tấm Hẹn giờ mời bật lại. */
@@ -50,7 +56,7 @@ object SleepText {
         sleep.kind != SleepKind.Off && playing && remainingMs > 0 && remainingMs < options.fadeSeconds * 1000L &&
             (sleep.kind == SleepKind.Chapter || sleep.counting)
 
-    fun fadingLine(options: SleepOptions): String = "Sắp tắt · " + GESTURE + " để nghe thêm " + options.extendMinutes + " phút"
+    fun fadingLine(minutes: Int): String = "Sắp tắt · " + GESTURE + " để hẹn lại " + minutes + " phút"
 
     const val UNTIL_CHAPTER_END = "Sẽ dừng khi hết chương này."
 }

@@ -19,7 +19,7 @@ def test_the_choice_tables_match_the_shared_fixture() -> None:
         elif key in library.CHOICES:
             assert list(library.CHOICES[key]) == spec["values"], key
         else:
-            assert key in ("shakeAction", "shakeSensitivity"), f"{key} không có ở Python mà cũng không phải khoá riêng của điện thoại"
+            assert key == "shakeSensitivity", f"{key} không có ở Python mà cũng không phải khoá riêng của điện thoại"
 
 
 def test_the_python_defaults_are_the_fixture_defaults() -> None:

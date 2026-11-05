@@ -183,7 +183,7 @@ private slots:
         QCOMPARE(warned.size(), 1);
         rig.run(5);
         QCOMPARE(warned.size(), 1); // một lần
-        rig.player->extendSleep(1); // thêm giờ quá mốc (còn ~80 giây): báo lại được
+        rig.player->extendSleep(); // hẹn lại về 1 phút (còn ~25 giây): báo lại được
         rig.run(1);
         QCOMPARE(warned.size(), 1);
         rig.run(55);
@@ -240,13 +240,30 @@ private slots:
         QCOMPARE(saves.last().body.value(QStringLiteral("seconds")).toDouble(), 0.0);
     }
 
-    void extendSleepAddsMinutes() {
+    void extendSleepPutsTheClockBackAndNeverAdds() {
         Rig rig;
         rig.player->open(QStringLiteral("a"), -1, -1, true);
         rig.player->setSleep(QStringLiteral("minutes"), 5);
+        rig.run(30);                        // còn ~4,5 phút
+        QVERIFY(rig.player->sleepLeftSeconds() < 290.0);
+        for (int i = 0; i < 3; ++i)
+            rig.player->extendSleep();      // bấm ba lần: về 5 phút, không phải 5 + 3 x 10
+        QCOMPARE(rig.player->clock()->sleepLeft(), 300.0);
+        QCOMPARE(rig.player->sleepMinutes(), 5);
+        QCOMPARE(rig.player->sleepExtendMinutes(), 5);
+        QCOMPARE(rig.player->notice(), QStringLiteral("Hẹn lại 5 phút"));
+    }
+
+    void extendSleepInChapterModeCountsTheSettingsStep() {
+        Rig rig;
+        rig.player->open(QStringLiteral("a"), -1, -1, true);
+        rig.player->setSleep(QStringLiteral("chapter"));
+        QCOMPARE(rig.player->sleepExtendMinutes(), 10);
         rig.player->extendSleep();
-        QCOMPARE(rig.player->clock()->sleepLeft(), 900.0);
-        QCOMPARE(rig.player->notice(), QStringLiteral("Nghe thêm 10 phút"));
+        QCOMPARE(rig.player->sleepKind(), QStringLiteral("minutes"));
+        QCOMPARE(rig.player->clock()->sleepLeft(), 600.0);
+        rig.player->extendSleep();
+        QCOMPARE(rig.player->clock()->sleepLeft(), 600.0);
     }
 
     // ---- Lịch đêm, lưới an toàn, tuỳ chọn Nghe / Hẹn giờ ngủ nạp từ Cài đặt (configure) ----
@@ -326,6 +343,24 @@ private slots:
         QCOMPARE(rig.player->lastSleepMinutes(), 45); // nút hẹn giờ vẫn nhớ lần hẹn của người nghe
     }
 
+    void extendAfterTheSafetyStopMeansTheSettingsStepNotOneMinute() {
+        Rig rig;
+        rig.player->configure({{QStringLiteral("safetyStopHours"), 1}, {QStringLiteral("sleepExtendMinutes"), 15}});
+        rig.player->open(QStringLiteral("a"), -1, -1, true);
+        rig.run(1);
+        g_now += 61 * 60'000;
+        rig.player->tick();
+        QCOMPARE(rig.player->sleepKind(), QStringLiteral("minutes"));
+        QVERIFY(rig.player->sleepLeftSeconds() <= 60.0);   // vẫn đếm ngược 1 phút
+        QCOMPARE(rig.player->sleepMinutes(), 0);           // nhưng không ai chọn số phút
+        QCOMPARE(rig.player->sleepExtendMinutes(), 15);
+        rig.player->extendSleep();
+        rig.player->extendSleep();
+        QCOMPARE(rig.player->sleepLeftSeconds(), 900.0);   // người thức bấm "Hẹn lại" thì không bị tắt sau 1 phút
+        QCOMPARE(rig.player->sleepMinutes(), 15);
+        QCOMPARE(rig.player->notice(), QStringLiteral("Hẹn lại 15 phút"));
+    }
+
     void safetyStopOffNeverArms() {
         Rig rig;
         rig.player->configure({{QStringLiteral("safetyStopHours"), 0}});
@@ -340,10 +375,10 @@ private slots:
         Rig rig;
         rig.player->configure({{QStringLiteral("sleepExtendMinutes"), 15}, {QStringLiteral("autoRewind"), false}});
         rig.player->open(QStringLiteral("a"), 1, 0, true);
-        rig.player->setSleep(QStringLiteral("minutes"), 5);
+        rig.player->setSleep(QStringLiteral("chapter"));
         rig.player->extendSleep();
-        QCOMPARE(rig.player->clock()->sleepLeft(), 1200.0);
-        QCOMPARE(rig.player->notice(), QStringLiteral("Nghe thêm 15 phút"));
+        QCOMPARE(rig.player->clock()->sleepLeft(), 900.0); // hết chương: về "Mỗi lần nghe thêm"
+        QCOMPARE(rig.player->notice(), QStringLiteral("Hẹn lại 15 phút"));
         rig.run(60);
         rig.player->pause();
         const double stopped = rig.out.pos;
@@ -352,9 +387,9 @@ private slots:
         QCOMPARE(rig.out.pos, stopped); // tắt Tự lùi: nghỉ 5 phút cũng không lùi
         // Giá trị ngoài các mức giao diện đưa ra bị kẹp vào khoảng hợp lệ.
         rig.player->configure({{QStringLiteral("sleepExtendMinutes"), 99}});
-        rig.player->setSleep(QStringLiteral("minutes"), 5);
+        rig.player->setSleep(QStringLiteral("chapter"));
         rig.player->extendSleep();
-        QCOMPARE(rig.player->clock()->sleepLeft(), 1200.0);
+        QCOMPARE(rig.player->clock()->sleepLeft(), 900.0);
     }
 
     void rateIsPerBook() {

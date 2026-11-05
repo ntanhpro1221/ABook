@@ -34,6 +34,7 @@ import vn.abook.player.ui.theme.Dim
 @Composable
 fun SleepNotice(state: NowPlayingState, model: NowPlayingModel, modifier: Modifier = Modifier) {
     val options = model.sleepOptions
+    val again = SleepText.extendMinutes(state.sleep, options)
     var fading by remember { mutableStateOf(false) }
     LaunchedEffect(state.sleep, state.playing, options) {
         snapshotFlow { SleepText.fading(state.sleep, model.position.sleepRemainingMs.value, state.playing, options) }
@@ -44,8 +45,8 @@ fun SleepNotice(state: NowPlayingState, model: NowPlayingModel, modifier: Modifi
             Row(Modifier.fillMaxWidth().padding(top = Dim.s8).testTag("sleep_fading"), verticalAlignment = Alignment.CenterVertically) {
                 SleepIcon(Abook.colors.accentText)
                 Spacer(Modifier.width(Dim.s12))
-                BasicText(SleepText.fadingLine(options), Modifier.weight(1f), style = Abook.type.bodySmall.copy(color = Abook.colors.accentText))
-                TextAction(SleepText.extendLabel(options.extendMinutes), model::extendSleep, "sleep_extend_now")
+                BasicText(SleepText.fadingLine(again), Modifier.weight(1f), style = Abook.type.bodySmall.copy(color = Abook.colors.accentText))
+                TextAction(SleepText.extendLabel(again), model::extendSleep, "sleep_extend_now")
             }
         }
         Reveal(state.sleep.kind == SleepKind.Chapter && !fading) {

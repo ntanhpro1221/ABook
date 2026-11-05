@@ -12,7 +12,7 @@ import java.io.File
 object ListenPrefs {
     private const val FILE = "listen-prefs.json"
     private val KEYS = listOf(
-        "sleepExtendMinutes", "sleepFadeSeconds", "shakeToExtend", "shakeAction", "shakeSensitivity", "flipToPause",
+        "sleepExtendMinutes", "sleepFadeSeconds", "shakeToExtend", "shakeSensitivity", "flipToPause",
         "headsetSkips", "autoRewind", "safetyStopHours", "schedule", "theme",
         // Tiếng chạm, rung, nền đọc: do giao diện áp; lõi chỉ nhớ để trả lại (như theme).
         "touchSounds", "haptics", "readingSurface",
@@ -31,7 +31,6 @@ object ListenPrefs {
     private val EXTEND_MINUTES = listOf(5, 10, 15)
     private val SAFETY_HOURS = listOf(0, 1, 2, 3)
     private val SCHEDULE_MINUTES = listOf(15, 30, 45, 60)
-    private val SHAKE_ACTIONS = listOf("extend", "reset")
     private val SHAKE_SENSITIVITIES = listOf("gentle", "normal", "firm")
     private val THEMES = listOf("system", "light", "dark")
     private val READING_SURFACES = listOf("auto", "paper", "ivory", "night")
@@ -68,7 +67,6 @@ object ListenPrefs {
         if (json.has("sleepExtendMinutes")) out.put("sleepExtendMinutes", choiceOr(json, "sleepExtendMinutes", EXTEND_MINUTES, 10))
         if (json.has("sleepFadeSeconds")) out.put("sleepFadeSeconds", choiceOr(json, "sleepFadeSeconds", FADE_SECONDS, 30))
         if (json.has("safetyStopHours")) out.put("safetyStopHours", choiceOr(json, "safetyStopHours", SAFETY_HOURS, 2))
-        if (json.has("shakeAction")) out.put("shakeAction", wordOr(json, "shakeAction", SHAKE_ACTIONS, "extend"))
         if (json.has("shakeSensitivity")) out.put("shakeSensitivity", wordOr(json, "shakeSensitivity", SHAKE_SENSITIVITIES, "normal"))
         // Giao diện sáng/tối do giao diện áp; lõi chỉ nhớ để trả lại lúc mở app ([stored]).
         if (json.has("theme")) out.put("theme", wordOr(json, "theme", THEMES, "system"))
@@ -88,7 +86,6 @@ object ListenPrefs {
         if (json.has("sleepExtendMinutes")) SleepTimer.extendMinutes = json.getInt("sleepExtendMinutes")
         if (json.has("sleepFadeSeconds")) SleepTimer.fadeMs = json.getInt("sleepFadeSeconds") * 1000L
         if (json.has("shakeToExtend")) SleepTimer.shakeEnabled = json.getBoolean("shakeToExtend")
-        if (json.has("shakeAction")) SleepTimer.shakeResets = json.getString("shakeAction") == "reset"
         if (json.has("headsetSkips")) Playback.headsetSkips = json.getBoolean("headsetSkips")
         if (json.has("flipToPause")) {
             Motion.flipEnabled = json.getBoolean("flipToPause")
