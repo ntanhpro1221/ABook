@@ -151,8 +151,8 @@ def test_a_listener_who_already_changed_the_narration_voice_is_left_alone(tmp_pa
     assert _narrator_preset(db) == other and "narrator" not in result
 
 
-def test_a_book_with_recorded_lines_is_not_touched_automatically(tmp_path: Path) -> None:
-    paths, db, settings = _book(tmp_path, recorded=True)
+def test_a_same_gender_book_with_recorded_lines_is_not_touched_automatically(tmp_path: Path) -> None:
+    paths, db, settings = _book(tmp_path, recorded=True, mai_gender="male")
     before = (_narrator_preset(db), _speakers(db))
 
     assert teller_voice.ensure(paths.root, db, settings) == {"skipped": "recorded"}
