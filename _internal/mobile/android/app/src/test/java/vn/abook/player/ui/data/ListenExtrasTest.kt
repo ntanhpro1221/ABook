@@ -168,6 +168,12 @@ class ListenExtrasTest {
     }
 
     @Test
+    fun `chapter narrator voices survive cast parsing`() {
+        val view = Cast.parse("""{"narrator":{"chapterVoices":["Chương 8: Đoan Trang"]}}""")!!
+        assertEquals(listOf("Chương 8: Đoan Trang"), view.narrator.chapterVoices)
+    }
+
+    @Test
     fun `a person without a voice says so`() {
         val view = Cast.parse(cast(listOf(person("Ẩn danh", voice = null))))!!
         assertEquals("Chưa có giọng", Cast.voiceLine(view.characters[0]))

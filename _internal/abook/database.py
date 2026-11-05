@@ -2343,14 +2343,15 @@ def thought_reads_as_narrator(kind: Any, speaker: Any, voice_profile_id: Any) ->
     """The one rule for whose voice an inner thought gets (owner decision 20-09).
 
     A thought is read in the voice of the person thinking it. Only an unattributed one -
-    speaker NARRATOR/UNKNOWN/empty, or no voice profile of its own - falls back to the
+    speaker UNKNOWN/empty, or no voice profile of its own - falls back to the
     narrator. Narration and dialogue are never affected (always False). Synthesis, the
     perceptual baseline, the candidate voice-lock check and the reading preview all ask
     this, so they cannot disagree about which profile a thought uses.
+    An explicit NARRATOR profile can be the chapter teller's voice and is preserved.
     """
     if str(kind or "").strip().casefold() != "thought":
         return False
-    return voice_profile_id is None or str(speaker or "").strip().casefold() in {"", "narrator", "unknown"}
+    return voice_profile_id is None or str(speaker or "").strip().casefold() in {"", "unknown"}
 
 
 def _character_key(name: str) -> str:
@@ -9529,9 +9530,12 @@ class ProjectDB:
                         (character_id,),
                     ).fetchall() if row["voice_profile_id"] != profile_id]
                 for row in rows:
-                    if not narrator:
+                    if not narrator or row["voice_profile_id"] != profile_id:
                         conn.execute("UPDATE segments SET voice_profile_id=?, updated_at=? WHERE id=?",
                                      (profile_id, now, int(row["id"])))
+                        if narrator and str(row["speaker"] or "").upper() == "NARRATOR":
+                            conn.execute("UPDATE segments SET canonical_character_id=? WHERE id=?",
+                                         (character_id, int(row["id"])))
                     if str(row["status"]) in done:
                         self._reset_segment_pending_conn(conn, int(row["id"]), reason, now)
                         reset.append(int(row["id"]))

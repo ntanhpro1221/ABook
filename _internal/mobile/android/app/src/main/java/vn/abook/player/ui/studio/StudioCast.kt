@@ -34,7 +34,7 @@ data class CastMember(
 
 /** Người kể: giọng đang dùng và lựa chọn đang chờ. */
 @Immutable
-data class CastNarrator(val voice: String, val lines: Int, val seconds: Double, val profile: VoiceProfile?, val pendingVoice: PendingVoice?, val redo: Int)
+data class CastNarrator(val voice: String, val lines: Int, val seconds: Double, val profile: VoiceProfile?, val pendingVoice: PendingVoice?, val redo: Int, val chapterVoices: List<String> = emptyList())
 
 /** Lời đáp của `GET /api/books/<id>/cast`: người kể, nhân vật chính, vai phụ, và dàn mang từ phần trước. */
 @Immutable
@@ -135,6 +135,7 @@ internal object StudioCastJson {
                 profile = profile(narrator.optJSONObject("profile")),
                 pendingVoice = pendingVoice(narrator.optJSONObject("pendingVoice")),
                 redo = narrator.optInt("redo"),
+                chapterVoices = narrator.optJSONArray("chapterVoices").let { list -> (0 until (list?.length() ?: 0)).map { list!!.optString(it) } },
             ),
             characters = json.optJSONArray("characters").objects().map(::member),
             extras = json.optJSONArray("extras").objects().map(::member),
