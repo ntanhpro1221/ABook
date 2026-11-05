@@ -1,5 +1,6 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.ui.components.navigationClearance
 import vn.abook.player.ui.data.dotJoined
 import vn.abook.player.ui.components.PageHeader
 import vn.abook.player.ui.components.ListSection
@@ -125,7 +126,7 @@ fun VoiceSettings(env: SettingsEnv, sheets: SheetHost, openVoice: (VoicePage) ->
     }
 
     val top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    val bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val bottom = navigationClearance()
     val scroll = rememberLazyListState()
     LazyColumn(
         modifier.fillMaxSize().testTag(SettingsGroup.Voice.screenTag).fadeEdges(scroll, startInset = top),

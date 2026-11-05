@@ -33,6 +33,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Bản cài thử không còn chiếm chỗ app thật. Nếu máy đang cài bản thử, mục Cập nhật nói rõ "Bản cài thử" thay vì tải một bản không cài được.
 - Hẹn giờ ngủ: "nghe thêm" (lắc máy hay nút trên thông báo) đưa đồng hồ về lại đúng số phút bạn đã hẹn, không cộng dồn thêm mỗi lần lắc. Nút đổi thành "Hẹn lại N phút"; hẹn theo chương hay vừa tự dừng thì về mức "Mỗi lần nghe thêm". Bỏ mục "Khi lắc" khỏi Cài đặt.
+- Thay bằng file mới: trình phát và danh sách chương hiện ngay độ dài mới, giữ nguyên chương và chỗ đang nghe, không phải tắt mở lại app.
+- Nút sát đáy ("Thay bằng file này", nhãn các tab) nằm trên vạch cử chỉ nên bấm được ở máy ẩn vạch; ô nhập tên sách và nút phát nhỏ cũng bấm trúng cả vùng vẽ.
 
 ### Máy tính
 
