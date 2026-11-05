@@ -110,13 +110,12 @@ Column {
                 width: Math.min(260, parent.width)
                 spacing: 4
                 Text { width: parent.width; text: "Mức nhạc nền"; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
-                Select {
+                MusicLevelSlider {
                     objectName: "musicLevel"
                     width: parent.width
-                    label: "Mức nhạc nền"
-                    options: root.view ? Logic.levelOptions(root.view.levelDb) : []
-                    value: root.view ? root.view.levelDb : -20
-                    onPicked: value => root.change({levelDb: Number(value)})
+                    value: root.view ? root.view.levelDb : Music.levelDefault
+                    enabled: !root.changing
+                    onPicked: value => root.change({levelDb: value})
                 }
             }
         }

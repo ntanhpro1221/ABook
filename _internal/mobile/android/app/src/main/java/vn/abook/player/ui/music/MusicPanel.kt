@@ -63,6 +63,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import vn.abook.player.MusicImport
+import vn.abook.player.ui.components.TextAction
 import vn.abook.player.ui.components.ActionRow
 import vn.abook.player.ui.components.Caption
 import vn.abook.player.ui.components.CheckIcon
@@ -365,46 +366,25 @@ private fun OptionRow(option: MusicOption, chosen: Boolean, enabled: Boolean, on
     )
 }
 
-/**
- * "Mức nhạc nền" (chữ của web): một hàng vạch to dần từ nhỏ tới to như thanh âm lượng - năm, sáu mức nằm vừa một hàng ở 360dp kể cả chữ 1.3
- * (lưới ba cột để lại ô trống cuối). Vạch tới mức đang chọn tô hổ phách, chữ của mức hiện dưới tên (cùng chữ với ô chọn của web).
- */
+/** Thanh trượt dùng cùng nét vẽ và vùng chạm 44dp của PlayerSeekBar. */
 @Composable
-private fun LevelMeter(level: Double, enabled: Boolean, onPick: (Double) -> Unit) {
-    val colors = Abook.colors
-    val options = MusicLevels.options(level).reversed()
-    val chosen = options.indexOfFirst { it.first == level }
+fun LevelMeter(level: Double, enabled: Boolean = true, onPick: (Double) -> Unit, showTitle: Boolean = true) {
+    var moving by remember(level) { mutableStateOf<Double?>(null) }
+    LaunchedEffect(enabled, level) { if (enabled) moving = null }
+    val shown = moving ?: MusicLevels.clamp(level)
     Column(Modifier.fillMaxWidth().padding(top = Dim.s16).testTag("music_levels")) {
-        BasicText(MusicLevels.TITLE, style = Abook.type.bodyStrong)
-        AnimatedContent(
-            targetState = MusicLevels.label(level),
-            transitionSpec = {
-                (slideInVertically(tween(MotionMs.MEDIUM, easing = Motion.Decelerate)) { it / 2 } + fadeIn(tween(MotionMs.MEDIUM)))
-                    .togetherWith(slideOutVertically(tween(MotionMs.FAST_OUT, easing = Motion.Accelerate)) { -it / 2 } + fadeOut(tween(MotionMs.FAST_OUT)))
-                    .using(SizeTransform(clip = false))
-            },
-            label = "level-label",
-            modifier = Modifier.padding(top = Dim.s4).testTag("music_level_value"),
-        ) { label -> BasicText(label, style = Abook.type.bodySmall.copy(color = colors.accentText)) }
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
-            options.forEachIndexed { index, (value, label) ->
-                val fill by animateColorAsState(if (index <= chosen) colors.accent else colors.fg3, tween(MotionMs.FAST), label = "level-bar")
-                val step = index.toFloat() / (options.size - 1).coerceAtLeast(1)
-                val tall = 20.dp + (48.dp - 20.dp) * step
-                // Vạch đầu sát mép trái, vạch cuối sát mép phải (cùng mép với chữ), các vạch cách đều; cả ô vẫn là chỗ chạm.
-                Box(
-                    Modifier.weight(1f).height(64.dp)
-                        .then(if (enabled) Modifier.pressable(Role.RadioButton) { onPick(value) } else Modifier)
-                        .semantics {
-                            selected = value == level
-                            contentDescription = label
-                        }
-                        .testTag("music_level_${value.toInt()}"),
-                    contentAlignment = BiasAlignment(-1f + 2f * step, 1f),
-                ) {
-                    Box(Modifier.padding(bottom = Dim.s8).size(Dim.s16, tall).clip(RoundedCornerShape(Dim.radiusControl)).background(fill))
-                }
-            }
+        if (showTitle) BasicText(MusicLevels.TITLE, style = Abook.type.bodyStrong)
+        AnimatedContent(targetState = MusicLevels.label(shown), label = "music-level-zone") { label ->
+            BasicText(label, style = Abook.type.bodySmall.copy(color = Abook.colors.accentText))
+        }
+        vn.abook.player.ui.components.ClockLabel(MusicLevels.number(shown), style = Abook.type.caption, modifier = Modifier.testTag("music_level_value"))
+        vn.abook.player.ui.components.RangeSlider(
+            shown, MusicLevels.MIN_DB, MusicLevels.MAX_DB, MusicLevels.STEP_DB, MusicLevels.DEFAULT_DB,
+            MusicLevels.TITLE, "${MusicLevels.label(shown)}, ${MusicLevels.number(shown)}", enabled,
+            { moving = it }, { moving = it; onPick(it) }, Modifier.testTag("music_level_slider"),
+        )
+        Reveal(shown != MusicLevels.DEFAULT_DB && enabled) {
+            TextAction(MusicLevels.RESET, { moving = MusicLevels.DEFAULT_DB; onPick(MusicLevels.DEFAULT_DB) }, "music_level_reset")
         }
     }
 }

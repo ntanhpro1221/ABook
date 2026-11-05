@@ -48,6 +48,7 @@ SkipButton 1.0 ../../../../qml/SkipButton.qml
 SkipGlyph 1.0 ../../../../qml/SkipGlyph.qml
 PlayButton 1.0 ../../../../qml/PlayButton.qml
 ControlChip 1.0 ../../../../qml/ControlChip.qml
+MusicLevelSlider 1.0 ../../../../qml/MusicLevelSlider.qml
 MusicCredit 1.0 ../../../../qml/MusicCredit.qml
 SpeedPopover 1.0 ../../../../qml/SpeedPopover.qml
 SleepPopover 1.0 ../../../../qml/SleepPopover.qml

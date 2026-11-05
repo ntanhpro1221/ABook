@@ -79,6 +79,6 @@ class SceneBed(private val timingOf: () -> SceneAnchor.Timing?) {
 
     companion object {
         /** Mức nhạc dưới giọng (dB) khi lớp sửa của cuốn không nói (`music_plan.DEFAULT_LEVEL_DB`). */
-        const val DEFAULT_LEVEL_DB = -20.0
+        const val DEFAULT_LEVEL_DB = BuildConfig.levelDefaultDb
     }
 }

@@ -35,7 +35,12 @@ PLAN_VERSION = 1
 # Chỉ đếm và báo (`switches_per_hour`), không đổi hành vi.
 SWITCH_CAP_PER_HOUR = 22.0
 # `levelDb` = nhạc nền thấp hơn GIỌNG bao nhiêu LU (Pha 4, docs/MUSIC_RESEARCH.md: -20 + bù theo bài -> 94% cặp ESTOI >= 0,9).
-DEFAULT_LEVEL_DB = -20.0
+# Miền, bước và mặc định của thanh trượt "Mức nhạc nền" nằm trong music_mix.json - một nguồn cho máy chủ, web, Android và Qt.
+# Trần -6: `cue_gain_db` không bao giờ vượt 0 dB (âm lượng trình phát <= 1) và chặn `s95` giữ đoạn to nhất của bài dưới giọng
+# SHORT_TERM_FLOOR_LU. Giữ trần hiện có -6: chưa có limiter chung cho tổng giọng + nhạc của mọi trình phát.
+DEFAULT_LEVEL_DB = music_mix.MIX["levelDefaultDb"]
+LEVEL_MIN_DB = music_mix.MIX["levelMinDb"]
+LEVEL_MAX_DB = music_mix.MIX["levelMaxDb"]
 VOICE_LUFS = float(DEFAULT_SETTINGS["audio"]["loudness_lufs"])  # giọng mọi chương được chuẩn hoá về mức này
 # Chương giọng đọc là file MỘT kênh, chuẩn hoá về VOICE_LUFS đo một kênh; phát ra hai loa / tai nghe thì BS.1770 cộng hai
 # kênh giống nhau -> to hơn 3,01 dB. Nhạc đo đúng như lúc phát (hai kênh, `stereo_lufs`), nên mốc giọng cũng tính như lúc phát.
@@ -74,6 +79,11 @@ def read_overrides(project_root: Path) -> dict[str, Any]:
     }
 
 
+def clamp_level(level_db: float) -> float:
+    """Mức nhạc kẹp vào miền thanh trượt (LEVEL_MIN_DB..LEVEL_MAX_DB): mọi chỗ ghi `levelDb` đi qua đây."""
+    return max(LEVEL_MIN_DB, min(LEVEL_MAX_DB, level_db))
+
+
 def write_overrides(project_root: Path, changes: dict[str, Any]) -> dict[str, Any]:
     """Gộp thay đổi của người dùng vào music_overrides.json. `pins`: {khoá đoạn: link hay None (bỏ ghim)};
     `silence`: {khoá đoạn: True/False}; `ban` / `unban`: link."""
@@ -85,7 +95,7 @@ def write_overrides(project_root: Path, changes: dict[str, Any]) -> dict[str, An
     if "genre" in changes:
         current["genre"] = str(changes["genre"])[:40] if changes.get("genre") else None
     if "levelDb" in changes:
-        current["levelDb"] = max(-40.0, min(-6.0, float(changes["levelDb"])))
+        current["levelDb"] = clamp_level(float(changes["levelDb"]))
     for key, link in (changes.get("pins") or {}).items():
         if link:
             current["pins"][str(key)] = str(link)

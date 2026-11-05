@@ -75,7 +75,7 @@ TRACK_TEXT_MAX = 200  # tên bài / nghệ sĩ trong thẻ file nhạc (music_lo
 MAX_READINGS = 2000  # cách đọc riêng của một cuốn
 READING_WORD_MAX = NAME_MAX  # chữ hiện của một cách đọc (một từ)
 READING_SPOKEN_MAX = 200  # chữ đọc
-LEVEL_RANGE = (-40.0, -6.0)
+LEVEL_RANGE = (music_plan.LEVEL_MIN_DB, music_plan.LEVEL_MAX_DB)  # miền thanh trượt "Mức nhạc nền" (music_mix.json)
 _TOP_KEYS = {"format", "version", "title", "author", "cover", "characters", "chapters", "skip", "readings", "music", "wishes"}
 _COVER_KEYS = {"color", "width", "height", "version"}
 _MUSIC_KEYS = {"enabled", "levelDb", "silenced", "pins", "tracks", "playlist", "mine"}
@@ -1145,7 +1145,7 @@ def _drop_unused(folder: Path, book: dict[str, Any], names: Iterable[str]) -> No
 def set_music(folder: Path, body: dict[str, Any],
               track: Callable[[str], tuple[dict[str, Any], Path] | None] | None = None,
               mine: Callable[[], list[tuple[dict[str, Any], Path]]] | None = None) -> dict[str, Any]:
-    """Sửa nhạc nền của sách đóng gói: `enabled`, `levelDb` (kẹp -40..-6 như `music_plan.write_overrides`), `silence`
+    """Sửa nhạc nền của sách đóng gói: `enabled`, `levelDb` (kẹp vào miền thanh trượt, `music_plan.clamp_level`), `silence`
     {khoá mốc: True/False}, `pins` {khoá mốc: "local:<sha1>" | null} (đổi bài một mốc sang bài trong "Nhạc của tôi", null = về
     bài người làm sách gắn), `playlist` (mã danh sách phát, "mine", "off" = tắt, hay null = bỏ lựa chọn để máy tự chọn - sách không
     có nhạc của người làm sách).
@@ -1169,7 +1169,7 @@ def set_music(folder: Path, body: dict[str, Any],
         if "levelDb" in body:
             if not _number(body["levelDb"]):
                 raise EditsError("Mức nhạc nền không hợp lệ")
-            level = max(LEVEL_RANGE[0], min(LEVEL_RANGE[1], float(body["levelDb"])))
+            level = music_plan.clamp_level(float(body["levelDb"]))
             if level == base_level:
                 music.pop("levelDb", None)
             else:
