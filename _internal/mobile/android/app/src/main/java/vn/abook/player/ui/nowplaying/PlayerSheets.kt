@@ -1,5 +1,6 @@
 package vn.abook.player.ui.nowplaying
 
+import vn.abook.player.ui.components.gestureBarPadding
 import vn.abook.player.ui.components.ClockLabel
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateFloat
@@ -92,7 +93,7 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                 .graphicsLayer { translationY = drag.value }
                 .clip(RoundedCornerShape(topStart = Dim.radiusSheet, topEnd = Dim.radiusSheet)).background(Abook.colors.panel)
                 .then(if (Abook.colors.dark) Modifier.sheetEdge(Abook.colors.line) else Modifier)
-                .navigationBarsPadding().padding(horizontal = 20.dp).padding(top = 12.dp, bottom = 20.dp)
+                .gestureBarPadding().padding(horizontal = 20.dp).padding(top = 12.dp, bottom = 20.dp)
                 .testTag("player_sheet_${window.sheet.name.lowercase()}").semantics { paneTitle = sheetTitle(window.sheet) }) {
                 // Đầu tấm (vạch + tên) là chỗ kéo; danh sách bên dưới vẫn cuộn bình thường. Đóng bằng kéo, chạm nền tối hay Back - không nút đóng riêng.
                 Column(Modifier.fillMaxWidth().testTag("player_sheet_grip").pointerInput(Unit) {

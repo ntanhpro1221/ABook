@@ -17,6 +17,7 @@ object BookActions {
     /** Sau một lần sửa thành công (khác GET) qua [LocalStudio]: nhạc đang phát đọc lại lớp sửa, cuốn tải từ máy tính gửi phần sửa về sau vài giây. */
     fun edited(context: Context, id: String) {
         MusicBed.invalidate(id)
+        BookFiles.edited(id) // tên chương mới hiện ở hàng chương của trình phát nếu cuốn đang nạp
         EditsSync.schedule(context, id)
     }
 

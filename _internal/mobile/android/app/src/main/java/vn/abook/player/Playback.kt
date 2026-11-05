@@ -50,9 +50,10 @@ internal fun labelsChanged(title: String, narrator: String, chapters: List<Playb
                            shownArtwork: ByteArray?, artwork: ByteArray): Boolean =
     title != newTitle || narrator != newNarrator || chapters != renamed || (shownArtwork != null && !shownArtwork.contentEquals(artwork))
 
-internal fun refreshedChapters(old: List<Playback.Chapter>, fresh: List<Playback.Chapter>, currentId: Int?): List<Playback.Chapter> {
+/** `adoptCurrent`: file của chương đang nghe đã bị thay trên đĩa - lấy luôn bản mới của nó (nguồn, độ dài), không giữ nguồn cũ. */
+internal fun refreshedChapters(old: List<Playback.Chapter>, fresh: List<Playback.Chapter>, currentId: Int?, adoptCurrent: Boolean = false): List<Playback.Chapter> {
     val current = old.firstOrNull { it.id == currentId }
-    val result = fresh.map { if (it.id == currentId && current != null) current.copy(title = it.title) else it }.toMutableList()
+    val result = fresh.map { if (it.id == currentId && current != null && !adoptCurrent) current.copy(title = it.title) else it }.toMutableList()
     if (current != null && result.none { it.id == current.id }) result.add(old.indexOf(current).coerceAtMost(result.size), current)
     return result
 }
@@ -71,29 +72,64 @@ object Playback {
     /** Bước nút "Lùi / Tới ... giây" (trình phát, widget, cửa sổ nhỏ PiP): một chỗ để mọi nút nói cùng một số. */
     const val SKIP_SECONDS = 15
 
-    /** Thêm chương vừa có audio; mục đang nghe giữ nguyên nguồn và vị trí. */
+    /** Dấu của file chương trên máy (đường dẫn + cỡ + giờ sửa); rỗng khi chương chưa có file ở đây (nghe thẳng, chỉ có chữ). */
+    internal fun fileStamp(id: String, file: String): String {
+        if (file.isBlank()) return ""
+        val local = runCatching { Store.file(id, file) }.getOrNull()?.takeIf { it.isFile } ?: return ""
+        return "$file:${local.length()}:${local.lastModified()}"
+    }
+
+    /** Mục `mediaId` vừa được nạp lại tại chỗ ([refreshQueue]): chuyển mục do việc ấy gây ra không phải người nghe sang chương khác. */
+    private var reloadedChapter: String? = null
+
+    /**
+     * File của sách đang nạp vừa đổi trên đĩa (nhập file thay, tải bản mới, thu lại chương: [BookFiles.changed]): đọc lại hàng chương từ Store rồi [refreshQueue].
+     * Sách khác, hay chưa nạp gì, thì thôi. Chạy ở luồng chính.
+     */
+    fun refreshFromDisk(id: String) {
+        if (id != bookId || id.isEmpty()) return
+        val manifest = runCatching { Store.playableManifest(id) }.getOrNull() ?: return
+        refreshQueue(id, chaptersOf(manifest))
+    }
+
+    /**
+     * Thêm chương vừa có audio / lấy độ dài, tên mới của chương. Mục đang nghe giữ nguyên nguồn và vị trí, TRỪ khi file của nó đã bị thay trên đĩa (dấu file khác dấu lúc nạp):
+     * khi ấy nạp lại hàng đợi với file mới, cùng chương, cùng chỗ, giữ nguyên đang phát hay đang dừng - ExoPlayer còn giữ file cũ đã mở nên không tự biết.
+     */
     @androidx.annotation.OptIn(UnstableApi::class)
     fun refreshQueue(id: String, fresh: List<Chapter>) {
         if (id != bookId || fresh.isEmpty()) return
         val current = currentChapter
-        val updated = refreshedChapters(chapters, fresh, current?.id).let { items ->
+        val exo = player
+        val loaded = (exo?.currentMediaItem?.localConfiguration?.tag as? BookTag)?.stamp.orEmpty()
+        val replaced = current != null && loaded.isNotEmpty() && fresh.firstOrNull { it.id == current.id }
+            ?.let { fileStamp(id, it.file) != loaded } == true
+        val updated = refreshedChapters(chapters, fresh, current?.id, adoptCurrent = replaced).let { items ->
             if (ReadAloud.active) items + chapters.filter { old -> items.none { it.id == old.id } } else items
         }
-        if (updated == chapters) return
+        if (updated == chapters && !replaced) return
         val old = chapters
         if (ReadAloud.active) {
             ReadAloud.remapChapters(old, updated)
             chapters = updated
             return
         }
-        val exo = player
         chapters = updated
         if (exo != null && current != null && exo.currentMediaItem != null) {
             val items = mediaItems(id, bookTitle, narrator, updated)
             val index = updated.indexOfFirst { it.id == current.id }
-            // Thay hai phía của mục đang phát, không nạp/tua lại mục ấy.
-            exo.replaceMediaItems(exo.currentMediaItemIndex + 1, exo.mediaItemCount, items.drop(index + 1))
-            exo.replaceMediaItems(0, exo.currentMediaItemIndex, items.take(index))
+            if (replaced) {
+                // Mục đang phát đổi file: dựng lại cả hàng đợi, đứng đúng chương và giây đang nghe (đang phát thì phát tiếp, đang dừng thì vẫn dừng).
+                val at = exo.currentPosition
+                reloadedChapter = current.id.toString()
+                exo.setMediaItems(items, index, at)
+                exo.prepare()
+                main.post { reloadedChapter = null }
+            } else {
+                // Thay hai phía của mục đang phát, không nạp/tua lại mục ấy.
+                exo.replaceMediaItems(exo.currentMediaItemIndex + 1, exo.mediaItemCount, items.drop(index + 1))
+                exo.replaceMediaItems(0, exo.currentMediaItemIndex, items.take(index))
+            }
         }
         emit("metadata")
     }
@@ -268,7 +304,7 @@ object Playback {
     }
 
     /** Cuốn của một mục audio trong hàng đợi ([mediaItems]): mục còn lại của cuốn trước không bao giờ được đọc thành chỗ nghe của cuốn đang nạp (soát a68 lỗi 2). */
-    data class BookTag(val id: String)
+    data class BookTag(val id: String, val stamp: String = "")
 
     /** Mục ExoPlayer đang đứng là của cuốn khác cuốn đang nạp (hàng đợi chưa kịp thay). Mục không gắn cuốn (xe hơi đặt hàng đợi - [adopt]) thì coi là của cuốn này. */
     private fun foreignItem(): Boolean = (player?.currentMediaItem?.localConfiguration?.tag as? BookTag)?.let { it.id != bookId } == true
@@ -429,7 +465,7 @@ object Playback {
         return items.map { chapter ->
             MediaItem.Builder()
                 .setMediaId(chapter.id.toString())
-                .setTag(BookTag(id))
+                .setTag(BookTag(id, fileStamp(id, chapter.file)))
                 .setUri(Streaming.chapterUri(appContext, id, chapter.file))
                 .setCustomCacheKey(Streaming.cacheKey(id, chapter.file))
                 .setMediaMetadata(
@@ -774,6 +810,11 @@ object Playback {
     fun onMediaTransition(item: MediaItem?) {
         if (item == null) return // hàng đợi vừa được xoá (ReadAloud bắt đầu lại ở chỗ khác): chưa có mục nào để báo
         val slot = item?.localConfiguration?.tag as? ReadAloud.Slot
+        if (slot == null && item.mediaId == reloadedChapter) {
+            // Cùng chương vừa được nạp lại với file mới ([refreshQueue]): không phải người nghe sang chương khác (hẹn giờ "hết chương" không tính).
+            applyVolume()
+            return
+        }
         if (slot == null || slot.segment < 0) {
             lastClipChapter = -1
             ReadAloud.onClipChanged()

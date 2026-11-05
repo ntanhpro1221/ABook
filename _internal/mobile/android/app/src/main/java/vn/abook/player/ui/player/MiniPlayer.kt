@@ -108,12 +108,9 @@ fun MiniPlayer(
                 BasicText(state.bookTitle, sharedModifier(NowPlayingPart.Book), Abook.type.caption)
             }
         }
-        Box(Modifier.padding(horizontal = Dim.s12)) {
-            Box(
-                sharedModifier(NowPlayingPart.Play).size(Dim.touch).pressable { onToggle() }.clip(CircleShape).background(colors.accent)
-                    .semantics { contentDescription = if (state.playing) "Tạm dừng" else "Phát" }.testTag("mini_play"),
-                contentAlignment = Alignment.Center,
-            ) {
+        // Hộp chạm 48 dp ôm vòng vẽ 44 dp (máy dò hộp chạm BottomTouchBoxTest: nút bấm được nào cũng >= 48 dp); chỗ chuyển phần tử chung vẫn là vòng 44 dp.
+        Box(Modifier.padding(horizontal = Dim.s12 - 2.dp).size(Dim.s48).pressable { onToggle() }.semantics { contentDescription = if (state.playing) "Tạm dừng" else "Phát" }.testTag("mini_play"), contentAlignment = Alignment.Center) {
+            Box(sharedModifier(NowPlayingPart.Play).size(Dim.touch).clip(CircleShape).background(colors.accent), contentAlignment = Alignment.Center) {
                 PlayPauseGlyph(state.playing, colors.accentInk, 22.dp)
             }
         }

@@ -1,5 +1,6 @@
 package vn.abook.player.ui.voice
 
+import vn.abook.player.ui.components.navigationClearance
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -48,7 +49,7 @@ fun MyMusicScreen(voice: VoiceState, sheets: SheetHost, onBack: () -> Unit, modi
     LaunchedEffect(voice) { voice.loadMusic() }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris -> voice.importMusic(uris.map(Uri::toString)) }
     val top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    val bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val bottom = navigationClearance()
     val colors = Abook.colors
     val list = rememberLazyListState()
     LazyColumn(

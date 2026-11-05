@@ -1,5 +1,6 @@
 package vn.abook.player.ui.addbook
 
+import vn.abook.player.ui.components.gestureSafe
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -50,7 +51,7 @@ fun BookForm(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Column(
-        Modifier.fillMaxSize().background(Abook.colors.bg).windowInsetsPadding(WindowInsets.safeDrawing)
+        Modifier.fillMaxSize().background(Abook.colors.bg).windowInsetsPadding(gestureSafe(WindowInsets.safeDrawing))
             .imePadding().padding(horizontal = Dim.margin).testTag(tag),
     ) {
         PageHeader(title, onBack, trailing = trailing)
@@ -101,10 +102,11 @@ fun BookField(
             cursorBrush = SolidColor(Abook.colors.accentText),
             keyboardOptions = if (masked) KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false) else KeyboardOptions(keyboardType = keyboard),
             visualTransformation = if (masked) PasswordVisualTransformation() else VisualTransformation.None,
+            // Đệm nằm TRONG decorationBox: để ngoài, hộp chạm của ô co còn phần chữ (24 dp trong ô vẽ 48 dp), chạm vào đệm không vào ô - cùng loại lỗi với "Thay bằng file này".
             modifier = Modifier.fillMaxWidth().heightIn(min = Dim.s48)
                 .insetSurface(Abook.colors)
                 .onFocusChanged { focused = it.hasFocus }
-                .then(if (trailing != null) Modifier.padding(start = Dim.s12) else Modifier.padding(Dim.s12)).semantics { contentDescription = description }.testTag(tag),
+                .semantics { contentDescription = description }.testTag(tag),
             decorationBox = { inner ->
                 val text: @Composable (Modifier) -> Unit = { box ->
                     Box(box) {
@@ -113,9 +115,9 @@ fun BookField(
                     }
                 }
                 if (trailing == null) {
-                    text(Modifier)
+                    text(Modifier.fillMaxWidth().heightIn(min = Dim.s48).padding(Dim.s12))
                 } else {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(Modifier.fillMaxWidth().heightIn(min = Dim.s48).padding(start = Dim.s12), verticalAlignment = Alignment.CenterVertically) {
                         text(Modifier.weight(1f).padding(vertical = Dim.s12))
                         Box(Modifier.padding(end = Dim.s12)) { trailing() }
                     }

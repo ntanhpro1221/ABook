@@ -1,5 +1,6 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.ui.components.navigationClearance
 import vn.abook.player.ui.components.ClockLabel
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -251,7 +252,7 @@ private fun BookScreenBody(
     val others = (library as? LibraryState.Ready)?.books
     val shown = detail?.book ?: others?.firstOrNull { it.id == book.id } ?: book
     val top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    val bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val bottom = navigationClearance()
     // Mỗi bố cục có khung cuộn riêng (cả trang / cột phải): mỗi bên nhớ chỗ cuộn của mình, chỗ đang xem được mang sang khi đổi khổ (xem `LaunchedEffect(wide)`).
     val listNarrow = rememberLazyListState()
     val listWide = rememberLazyListState()
