@@ -61,7 +61,7 @@ import java.util.concurrent.atomic.AtomicReference
  * Mp3 của mục 2-3 là khung tổng hợp (MPEG-2 lớp III 48 kbps 24 kHz đơn kênh, thân khung toàn số 0 = im lặng, hợp lệ cho bộ giải mã): đủ để kiểm đường dữ liệu / tách / tua / hết luồng.
  * Kết quả: logcat (thẻ `ABOOK_LIVE`), `INSTRUMENTATION_STATUS` của am instrument và `files/live-stream/result.json` của app để `adb pull`.
  *
- *   adb shell am instrument -w -e class vn.abook.player.LiveStreamOnDeviceTest com.ngdtuanh.abook.test/androidx.test.runner.AndroidJUnitRunner
+ *   adb shell am instrument -w -e class vn.abook.player.LiveStreamOnDeviceTest com.ngdtuanh.abook.dev.test/androidx.test.runner.AndroidJUnitRunner
  */
 @OptIn(UnstableApi::class)
 @RunWith(AndroidJUnit4::class)

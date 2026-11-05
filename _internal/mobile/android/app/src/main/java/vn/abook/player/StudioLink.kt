@@ -37,8 +37,9 @@ object StudioLink {
      */
     fun listenOnly(appJson: String): Boolean = runCatching { JSONObject(appJson).optBoolean("listenOnly", false) }.getOrDefault(false)
 
-    /** Máy ấy trả lời `/api/app` với bản `theirs`: lệch bản của điện thoại thì không mở. Bản chạy từ mã nguồn ("" / "dev") không so được. */
-    fun mismatched(theirs: String, ours: String): Boolean = theirs.isNotBlank() && theirs != "dev" && theirs != ours
+    /** Máy ấy trả lời `/api/app` với bản `theirs`: lệch bản của điện thoại thì không mở. Bản chạy từ mã nguồn ("" / "dev") không so được;
+     *  bản debug của điện thoại ("0.4.162-dev", build.gradle) tính là số bản của nó. */
+    fun mismatched(theirs: String, ours: String): Boolean = theirs.isNotBlank() && theirs != "dev" && theirs != ours.removeSuffix("-dev")
 
     /** "Máy <tên>" - tên đã mở đầu bằng "Máy" thì không thêm (như remote_books._called). */
     fun called(name: String): String =

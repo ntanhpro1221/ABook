@@ -7,7 +7,7 @@ wheel and the pinned ONNX Runtime libraries of "Gói nhạc". The phone checks e
 
     runtime/.venv/Scripts/python.exe scripts/vieneu_phone_module_stage.py --abi arm64-v8a --out D:/tmp/vieneu_module [--tiers nano,turbo]
     adb push D:/tmp/vieneu_module/. /data/local/tmp/vieneu
-    adb shell am instrument -w -e class vn.abook.player.VieneuOnDeviceTest com.ngdtuanh.abook.test/androidx.test.runner.AndroidJUnitRunner
+    adb shell am instrument -w -e class vn.abook.player.VieneuOnDeviceTest com.ngdtuanh.abook.dev.test/androidx.test.runner.AndroidJUnitRunner
 """
 from __future__ import annotations
 
