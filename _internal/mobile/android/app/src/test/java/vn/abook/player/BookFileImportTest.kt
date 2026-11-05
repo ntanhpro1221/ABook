@@ -119,32 +119,8 @@ class BookFileImportTest {
     }
 
     /** Dựng một file .abook: `content` là {tên mục -> byte}; `book` là phần còn lại của book.json. */
-    private fun abook(name: String, version: Int, content: Map<String, ByteArray>, book: JSONObject = JSONObject(), at: String? = null): File {
-        val files = JSONObject()
-        for ((entry, bytes) in content) files.put(entry, JSONObject().put("size", bytes.size).put("sha256", sha256(bytes)))
-        book.put("package", JSONObject().put("format", "abook").put("version", version).put("files", files))
-        at?.let { book.getJSONObject("package").put("createdAt", it) }
-        val target = File(work, name)
-        ZipOutputStream(target.outputStream()).use { zip ->
-            fun put(entry: String, bytes: ByteArray, stored: Boolean) {
-                val item = ZipEntry(entry)
-                if (stored) {
-                    item.method = ZipEntry.STORED
-                    item.size = bytes.size.toLong()
-                    item.compressedSize = bytes.size.toLong()
-                    item.crc = CRC32().also { it.update(bytes) }.value
-                }
-                zip.putNextEntry(item)
-                zip.write(bytes)
-                zip.closeEntry()
-            }
-            put("mimetype", BookFileImport.MIMETYPE.toByteArray(), stored = true)
-            put("book.json", book.toString().toByteArray(), stored = false)
-            put("manifest.json", "{}".toByteArray(), stored = false)
-            for ((entry, bytes) in content) put(entry, bytes, stored = true)
-        }
-        return target
-    }
+    private fun abook(name: String, version: Int, content: Map<String, ByteArray>, book: JSONObject = JSONObject(), at: String? = null): File =
+        PackageFixtures.abook(work, name, version, content, book, at)
 
     @Test
     fun a_retake_with_the_same_chapter_count_updates_but_an_older_file_asks_first() {
@@ -210,9 +186,7 @@ class BookFileImportTest {
         assertFalse(File(root, "books").listFiles()?.isNotEmpty() ?: false)
     }
 
-    private fun chapter(id: Int, part: Int, file: String) = JSONObject().put("id", id).put("part", part)
-        .put("title", "Chương $id").put("fullTitle", "Chương $id").put("available", true).put("file", file)
-        .put("script", "scripts/$id.json").put("duration", 60.0)
+    private fun chapter(id: Int, part: Int, file: String) = PackageFixtures.chapter(id, part, file)
 
     private fun seriesFile(name: String = "bo.abook", version: Int = 3): File {
         val content = mapOf(
