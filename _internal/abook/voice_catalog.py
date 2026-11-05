@@ -131,7 +131,7 @@ def voice_variant_deviation(preset_name: str) -> tuple[float, float]:
 CHARACTER_FORMANT_STEPS = (1.00, 0.93, 1.08, 0.87, 1.16, 0.97, 1.04)
 DEFAULT_NARRATOR_BY_GENDER = {
     GENDER_MALE: "Đức Trí",
-    GENDER_FEMALE: "Ngọc Linh",
+    GENDER_FEMALE: "Đoan Trang",
 }
 PRESET_PREVIEW_MEDIAN_PITCH_HZ = {
     "Phạm Tuyên": 100.6,
@@ -574,15 +574,11 @@ AGE_PITCH_RANK_BUCKET = 4
 # Thiền Tâm Đức, Phạm Tuyên] > [Thái Sơn, Adam]; any other male preset (Adam bựa included)
 # is unranked, below every tier.
 #
-# Female verdict, 05-11 ("kim thanh ổn / mai anh kể chuyện tốt / mỹ duyên: ổn / ngọc linh
-# tự nhiên tốt / quỳnh trang: ổn / thục đoan: ổn / đoan trang tự nhiên tốt (dưới ngọc
-# linh)"; "quỳnh trang" read as Quỳnh Anh): narrator = [Mai Anh] > [Ngọc Linh] > [Đoan
-# Trang] > [Kim Thanh, Mỹ Duyên, Quỳnh Anh, Thục Đoan], character = [Ngọc Linh] > [Đoan
-# Trang] > [Mai Anh] > [Kim Thanh, Mỹ Duyên, Quỳnh Anh, Thục Đoan]; Trúc Ly, Ngọc Trân,
-# Thùy Dung and Ngọc Huyền are unranked. Mai Anh is a news preset (`STYLE_NEWS`): it has no
-# balance numbers and is neither castable nor selectable as a narrator, so its tiers are
-# dormant until a measurement opens it; the female default narrator is therefore the best
-# SELECTABLE narrator, Ngọc Linh.
+# Female verdict, updated 06-11 ("quỳnh trang" read as Quỳnh Anh):
+# narrator = [Đoan Trang] > [Ngọc Linh] > [Kim Thanh, Mỹ Duyên, Quỳnh Anh, Thục Đoan];
+# character = [Ngọc Linh] > [Đoan Trang] > [Kim Thanh, Mỹ Duyên, Quỳnh Anh, Thục Đoan].
+# Mai Anh remains a news preset, unranked, not castable or selectable, without balance entries.
+# The default female narrator is Đoan Trang.
 #
 # Children are cast from the female presets by the female `character` tiers: there is no
 # child role.
@@ -631,6 +627,20 @@ def listener_rank(preset_name: str, gender: str, role: str = "character") -> int
     tiers = VOICE_RANK[role].get(str(gender), ())
     name = str(preset_name)
     return next((index for index, tier in enumerate(tiers) if name in tier), len(tiers))
+
+
+def preset_eligible(preset: dict[str, Any], role: str) -> bool:
+    """Quyền dùng theo vai: phán quyết chủ sách mở cả giọng tin tức, chỉ cho vai đã xếp hạng.
+
+    Giọng chưa nghe giữ luật catalog cũ. Vùng miền và lệnh cấm phân vai vẫn có hiệu lực.
+    """
+    tiers = VOICE_RANK[role].get(str(preset["gender"]), ())
+    ranked = any(preset["name"] in tier for tier in tiers)
+    if preset["style"] == STYLE_NEWS and not ranked:
+        return False
+    return role != "character" or (
+        preset["region"] in CASTING_REGIONS and preset["name"] not in EXCLUDED_PRESETS
+    )
 
 # How far a preset's own F0 may be carried toward an age target (teen, elderly). Set where
 # the presets actually stop working, judged by ear carried the whole way, rather than at a
@@ -783,7 +793,7 @@ def narrator_presets(
     candidates = [
         preset
         for preset in VIENEU_PRESETS
-        if preset["style"] != STYLE_NEWS
+        if preset_eligible(preset, "narrator")
         and (not gender or preset["gender"] == gender)
         and (not region or preset["region"] == region)
     ]
@@ -815,8 +825,6 @@ def casting_presets(gender: str) -> list[dict[str, str]]:
         preset
         for preset in VIENEU_PRESETS
         if preset["gender"] == gender
-        and preset["style"] != STYLE_NEWS
-        and preset["region"] in CASTING_REGIONS
-        and preset["name"] not in EXCLUDED_PRESETS
+        and preset_eligible(preset, "character")
     ]
     return sorted(candidates, key=casting_preset_priority)

@@ -35,6 +35,7 @@ from abook.voice_catalog import (
     casting_presets,
     narrator_presets,
     preset_by_name,
+    preset_eligible,
 )
 
 RATE = 48_000
@@ -98,12 +99,12 @@ def test_the_table_holds_no_stray_voices() -> None:
 
 
 def test_the_table_covers_exactly_the_castable_and_narrator_voices() -> None:
-    # Phân vai được ∪ người kể chọn được: giọng miền Trung không phân vai nhưng vẫn kể chuyện được nên phải có số; giọng Tin tức
-    # không ở đâu chọn được nên không có bản ghi (khi casting mở chúng thì đo rồi mới thêm).
+    # Phân vai được ∪ người kể chọn được: giọng miền Trung kể chuyện được; tin tức chỉ mở theo vai đã xếp hạng.
     names = set(voice_balance.balanced_preset_names())
     assert {"Quang Sơn", "Ngọc Trân"} <= names
     news = {preset["name"] for preset in VIENEU_PRESETS if preset["style"] == STYLE_NEWS}
     assert news and not news & names
+    assert all(not preset_eligible(preset_by_name(name), "narrator") for name in news - names)
     in_table = {key.split("/")[1] for key in voice_balance.load_table()["voices"] if key.startswith("vieneu@")}
     assert in_table == names
     # Máy đọc khác: đúng các giọng trong danh mục (chọn tay được hay chưa), mỗi giọng một bậc gốc.
