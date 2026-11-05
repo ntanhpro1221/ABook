@@ -8169,7 +8169,8 @@ class ProjectDB:
             if normalized_delivery is None:
                 conn.execute(
                     """
-                    UPDATE segments SET status=?,attempt_count=attempt_count+1,generation_seed=?,
+                    UPDATE segments SET status=?,attempt_count=attempt_count+1,
+                        generation_seed=CASE WHEN wav_sha256 IS NULL THEN ? ELSE generation_seed END,
                         asr_text=NULL,asr_similarity=NULL,asr_wer=NULL,
                         warning_code=?,error=NULL,updated_at=? WHERE id=?
                     """,
@@ -8184,9 +8185,12 @@ class ProjectDB:
             else:
                 conn.execute(
                     """
-                    UPDATE segments SET status=?,attempt_count=attempt_count+1,generation_seed=?,
-                        generation_delivery_mode=?,generation_repair_round=?,
-                        generation_policy_hash=?,asr_text=NULL,asr_similarity=NULL,asr_wer=NULL,
+                    UPDATE segments SET status=?,attempt_count=attempt_count+1,
+                        generation_seed=CASE WHEN wav_sha256 IS NULL THEN ? ELSE generation_seed END,
+                        generation_delivery_mode=CASE WHEN wav_sha256 IS NULL THEN ? ELSE generation_delivery_mode END,
+                        generation_repair_round=CASE WHEN wav_sha256 IS NULL THEN ? ELSE generation_repair_round END,
+                        generation_policy_hash=CASE WHEN wav_sha256 IS NULL THEN ? ELSE generation_policy_hash END,
+                        asr_text=NULL,asr_similarity=NULL,asr_wer=NULL,
                         warning_code=?,error=NULL,updated_at=? WHERE id=?
                     """,
                     (
@@ -8201,6 +8205,32 @@ class ProjectDB:
                     ),
                 )
             self._refresh_chapter_counts_conn(conn, int(row["chapter_id"]))
+
+    def checkpoint_usable_take(
+        self, segment_id: int, *, wav_path: Path, wav_sha256: str, duration: float,
+        signal: dict[str, Any], generation_seed: int | None, warning_codes: Sequence[str] = (),
+    ) -> None:
+        """Giữ audio trước cổng chất lượng; checkpoint này chưa cấp phép tín hiệu hay nội dung."""
+        require_all("usable take", ("signal metadata is not a dictionary", not isinstance(signal, dict)),
+                    ("duration is not finite", not math.isfinite(float(duration))),
+                    ("duration is not positive", duration <= 0), _error=ValueError)
+        payload = {**signal, "quality_pending": True}
+        with self.transaction() as conn:
+            row = conn.execute("SELECT warning_code FROM segments WHERE id=?", (segment_id,)).fetchone()
+            if row is None:
+                raise KeyError(f"Unknown segment id: {segment_id}")
+            warning = str(row["warning_code"] or "") or None
+            for code in warning_codes:
+                warning = self._merge_warning_codes(warning, code)
+            conn.execute(
+                """UPDATE segments SET status='generating',wav_path=?,wav_sha256=?,wav_duration=?,signal_json=?,
+                    generation_seed=?,generation_delivery_mode=COALESCE(?,generation_delivery_mode),
+                    generation_repair_round=CASE WHEN ? IS NULL THEN generation_repair_round ELSE ? END,
+                    generation_policy_hash=COALESCE(?,generation_policy_hash),warning_code=?,updated_at=? WHERE id=?""",
+                (str(wav_path.resolve()), wav_sha256, duration, json.dumps(payload, ensure_ascii=False),
+                 generation_seed, signal.get("tts_delivery_mode"), signal.get("tts_delivery_mode"),
+                 signal.get("asr_clarity_repair_round"), signal.get("generation_policy_hash"), warning, time.time(), segment_id),
+            )
 
     def mark_signal_passed(
         self,
@@ -8240,6 +8270,9 @@ class ProjectDB:
                 """
                 UPDATE segments SET status=?,wav_path=?,wav_sha256=?,wav_duration=?,signal_json=?,
                     generation_seed=COALESCE(?,generation_seed),warning_code=?,error=NULL,
+                    generation_delivery_mode=COALESCE(?,generation_delivery_mode),
+                    generation_repair_round=CASE WHEN ? IS NULL THEN generation_repair_round ELSE ? END,
+                    generation_policy_hash=COALESCE(?,generation_policy_hash),
                     updated_at=? WHERE id=?
                 """,
                 (
@@ -8250,6 +8283,10 @@ class ProjectDB:
                     json.dumps(signal, ensure_ascii=False),
                     generation_seed,
                     merged_warning,
+                    signal.get("tts_delivery_mode"),
+                    signal.get("tts_delivery_mode"),
+                    signal.get("asr_clarity_repair_round"),
+                    signal.get("generation_policy_hash"),
                     time.time(),
                     segment_id,
                 ),
@@ -8453,7 +8490,17 @@ class ProjectDB:
         reset: list[str] = []
         chapters: set[int] = set()
         for row in rows:
-            self.reset_segment_pending(int(row["id"]), reason)
+            # Thử lại cùng chữ và giọng: giữ bản thu, chỉ mở lại lịch thử và phán quyết ASR.
+            with self.transaction() as conn:
+                conn.execute(
+                    """UPDATE segments SET status=CASE
+                        WHEN voice_profile_id IS NOT NULL AND kind IS NOT NULL AND speaker IS NOT NULL
+                        THEN 'analyzed' ELSE 'pending' END,
+                        asr_text=NULL,asr_similarity=NULL,asr_wer=NULL,warning_code=NULL,
+                        error=?,updated_at=? WHERE id=?""",
+                    (reason[-2000:], time.time(), int(row["id"])),
+                )
+                conn.execute("DELETE FROM segment_candidates WHERE segment_id=?", (int(row["id"]),))
             reset.append(str(row["stable_id"]))
             chapters.add(int(row["chapter_id"]))
         for chapter_id in sorted(chapters):
@@ -9821,22 +9868,16 @@ class ProjectDB:
                     "SELECT DISTINCT chapter_id FROM segments WHERE status IN ('generating','asr_passed')"
                 )
             ]
-            # Candidate generation owns a separate immutable path. If legacy orchestration happened
-            # to mark the segment itself as generating, restore the retained incumbent checkpoint
-            # instead of deleting it. Phase-2 orchestration never mutates the segment during clarity.
+            # Lượt thử chết trước checkpoint: phục hồi bản thu đã giữ, không xoá theo trạng thái generating.
             conn.execute(
                 """
-                UPDATE segments SET status='signal_passed',
+                UPDATE segments SET status=CASE WHEN json_valid(signal_json)
+                    THEN CASE WHEN json_extract(signal_json,'$.quality_pending')=1
+                              THEN 'failed' ELSE 'signal_passed' END ELSE 'failed' END,
                     asr_text=NULL,asr_similarity=NULL,asr_wer=NULL,error=?,updated_at=?
                 WHERE status='generating'
                   AND wav_path IS NOT NULL AND wav_sha256 IS NOT NULL
                   AND wav_duration IS NOT NULL AND signal_json IS NOT NULL
-                  AND EXISTS(
-                      SELECT 1 FROM segment_candidates
-                      WHERE segment_candidates.segment_id=segments.id
-                        AND segment_candidates.incumbent_sha256=segments.wav_sha256
-                        AND segment_candidates.state<>'promoted'
-                  )
                 """,
                 (reason, time.time()),
             )

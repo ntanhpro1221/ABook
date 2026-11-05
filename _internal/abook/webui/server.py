@@ -4838,24 +4838,54 @@ class Handler(BaseHTTPRequestHandler):
         root = self._export_root(body)
         parts = self._series_parts(value, body)
         single = bool(body.get("single"))
+        partial = body.get("partial") is True
         app = self.app
 
         def run() -> dict[str, Any]:
             try:
+                series_coverage = []
+                if parts:
+                    # Soát đủ bộ trước khi ghi file phần đầu, không để sót một bản xuất ngầm.
+                    for part in parts:
+                        checked_book, checked_files = bookfile.listening_layer(part)
+                        series_coverage.append(bookfile.audio_coverage.project(part, checked_book, checked_files, partial=partial))
                 with app.music_exporting(app.music_key(project), parts or [project]) as music:
                     def pack(part: Path, folder: Path, name: str) -> dict[str, Any]:
                         path = bookfile.pack(part, free_path(folder / bookfile.default_name(name)), music_track=music,
-                                             progress=progress)
-                        return {"file": str(path), "size": path.stat().st_size}
+                                             progress=progress, partial=partial)
+                        with bookfile.BookFile(path) as opened:
+                            coverage = opened.book.get("audioCoverage")
+                            available, total = opened.book["chaptersAvailable"], opened.book["chaptersTotal"]
+                        return {"file": str(path), "size": path.stat().st_size,
+                                "chaptersAvailable": available, "chaptersTotal": total,
+                                "coverage": bookfile.audio_coverage.summary(coverage) if coverage else ""}
 
                     if parts is None:
                         path = pack(project, root, store.summarize(project)["title"] or project.name)
                         result = {**path, "folder": str(Path(path["file"]).parent)}
                     elif single:
-                        result = export_series_file(parts, root, lambda listed, file: bookfile.pack_series(
-                            listed, file, music_track=music, progress=progress))
+                        listed = [(index, part) for index, part in enumerate(parts, 1)]
+                        path = bookfile.pack_series(listed, free_path(root / bookfile.default_name(bookfile.continuation.base_title(store.summarize(project)["title"]))),
+                                                    music_track=music, progress=progress, partial=partial)
+                        with bookfile.BookFile(path) as opened:
+                            coverage = opened.book["audioCoverage"]
+                        result = {"file": str(path), "folder": str(path.parent), "size": path.stat().st_size,
+                                  "coverage": bookfile.audio_coverage.summary(coverage), "partsTotal": len(parts), "skipped": [],
+                                  "parts": [{"part": index, "title": store.summarize(part)["title"]}
+                                            for index, part in enumerate(parts, 1)]}
                     else:
-                        result = export_series(parts, root, pack)
+                        folder = free_path(root / bookfile.default_name(bookfile.continuation.base_title(store.summarize(project)["title"])).removesuffix(".abook"))
+                        done = [{"part": index, **pack(part, folder, f"Phần {index} - {bookfile.continuation.base_title(store.summarize(part)['title'])}")}
+                                for index, part in enumerate(parts, 1)
+                                if len(series_coverage[index - 1]['expected']) > len(series_coverage[index - 1]['missing'])]
+                        if not done:
+                            raise ValueError("Chưa phần nào có audio. " + "; ".join(
+                                bookfile.audio_coverage.summary(c) for c in series_coverage))
+                        result = {"folder": str(folder), "parts": done, "partsTotal": len(parts),
+                                  "skipped": [{"part": index, "title": store.summarize(part)['title']}
+                                              for index, part in enumerate(parts, 1) if not any(p['part'] == index for p in done)],
+                                  "coverage": f"{sum(len(c['expected']) - len(c['missing']) for c in series_coverage)}/{sum(len(c['expected']) for c in series_coverage)} chương · "
+                                              + "; ".join(f"Phần {index}: {bookfile.audio_coverage.summary(c)}" for index, c in enumerate(series_coverage, 1))}
                         result["size"] = sum(part["size"] for part in result["parts"])
             except export_jobs.Cancelled as error:
                 raise ApiError(HTTPStatus.CONFLICT, "Đã huỷ xuất.", reason="cancelled") from error

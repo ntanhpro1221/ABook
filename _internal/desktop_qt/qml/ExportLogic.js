@@ -133,9 +133,9 @@ function plan(book, ctx) {
         ? [book.running && "Dự án đang chạy - gói khi nó đã chạy xong hoặc đã dừng."]
         : [
             textOnly && "Chưa chương nào có audio: file .abook chỉ mang chữ của " + Studio.formatNumber(total) + " chương (đọc được, chưa nghe được). Có audio rồi thì xuất lại.",
-            !wholeSeries && !textOnly && ready < total && Studio.formatNumber(total - ready) + "/" + Studio.formatNumber(total) + " chương chưa có audio" + (missing ? " (" + missing + " chương mất file)" : "") + " - không có trong bản xuất.",
-            wholeSeries && "Phần nào chưa có chương xong sẽ bị bỏ qua; phần đang chạy chỉ có các chương đã xong tới lúc này.",
-            !wholeSeries && book.running && "Sách đang chạy - bản xuất chỉ gồm các chương đã xong tới lúc này.",
+            !wholeSeries && !textOnly && ready < total && Studio.formatNumber(ready) + "/" + Studio.formatNumber(total) + " chương có audio" + (missing ? " (" + missing + " chương mất file)" : "") + (ctx.kind === "abook" ? ". Chọn “Xuất một phần” để xuất khi thiếu chương." : " - không có trong bản xuất."),
+            wholeSeries && (ctx.kind === "abook" ? "File sách cần đủ chương. Chọn “Xuất một phần” để ghi rõ những chương thiếu." : "Phần nào chưa có chương xong sẽ bị bỏ qua; phần đang chạy chỉ có các chương đã xong tới lúc này."),
+            !wholeSeries && book.running && (ctx.kind === "abook" ? "Sách đang chạy. File sách cần đủ chương hoặc chọn “Xuất một phần”." : "Sách đang chạy - bản xuất chỉ gồm các chương đã xong tới lúc này."),
             !wholeSeries && redoExportNote(chapters.redo || 0, ctx.kind === "abook"),
             oneFile && bytes > FAT32_LIMIT && "File này sẽ lớn hơn 4 GB - thẻ nhớ hay USB định dạng FAT32 không chứa nổi." + (wholeSeries ? " Chọn “Mỗi phần một file” nếu định chép vào đó." : "")
         ]).filter(Boolean)
@@ -180,8 +180,8 @@ function finishedOf(kind, result, opts) {
     const detail = (opts.remote
         ? exportedOnComputer(opts.computer, perPart ? "" : single ? fileName(result.file) : fileName(result.folder || ""),
                              [perPart ? "mỗi phần một file .abook riêng" : "", single ? size : ""].filter(Boolean).join("\u00a0·\u00a0"))
-        : placeText) + skipped + (lostNote ? "\u00a0·\u00a0" + lostNote : "")
-    return {title: title, detail: detail, folder: result.folder || "", note: [skippedNote, lostNote].filter(Boolean).join("\u00a0·\u00a0"), remoteTitle: exportedOnComputer(opts.computer, "")}
+        : placeText) + skipped + (lostNote ? "\u00a0·\u00a0" + lostNote : "") + (result.coverage ? " · " + result.coverage : "")
+    return {title: title, detail: detail, folder: result.folder || "", note: [skippedNote, lostNote, result.coverage].filter(Boolean).join("\u00a0·\u00a0"), remoteTitle: exportedOnComputer(opts.computer, "")}
 }
 
 // ---- việc nền (MP3, M4B): bookFileExport.ts jobView ----
@@ -316,6 +316,7 @@ function startBody(kind, ctx) {
         if (kind === "mp3" && ctx.wholeSeries) body.series = true
         if (kind === "mp3" && !ctx.wholeSeries && ctx.changedOnly && ctx.changedIds.length) body.chapterIds = ctx.changedIds
     } else if (kind === "abook") {
+        if (ctx.partial) body.partial = true
         body.series = Boolean(ctx.wholeSeries)
         if (ctx.wholeSeries) body.single = ctx.layout === "single"
     }

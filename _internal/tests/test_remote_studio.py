@@ -341,7 +341,7 @@ def test_a_series_export_reconnects_after_the_forward_deadline(studio, tmp_path,
     monkeypatch.setattr(bookfile, "write_entries", slow)
     monkeypatch.setattr(remote_studio, "FORWARD_SECONDS", 0.5)
     try:
-        status, raw, _ = _sync_request(app.sync_server.port, "POST", url, headers=cookie, body={"series": True, "single": single})
+        status, raw, _ = _sync_request(app.sync_server.port, "POST", url, headers=cookie, body={"series": True, "single": single, "partial": True})
         started = json.loads(raw)
         assert status == 202 and started["id"] and reached.wait(10)
         time.sleep(0.6)  # lượt đóng gói dài hơn hạn của một yêu cầu chuyển tiếp

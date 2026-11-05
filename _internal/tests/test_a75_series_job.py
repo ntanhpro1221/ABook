@@ -18,7 +18,7 @@ def test_series_pack_has_progress_and_can_stop_before_publishing(series, tmp_pat
             raise Cancelled()
 
     with pytest.raises(Cancelled):
-        bookfile.pack_series(parts, tmp_path / "out.abook", progress=progress)
+        bookfile.pack_series(parts, tmp_path / "out.abook", progress=progress, partial=True)
     assert {"prepare", "listen", "hash", "write"} <= set(seen)
     assert not list(tmp_path.glob("*.abook")) and not list(tmp_path.glob("*.part"))
 
@@ -38,7 +38,7 @@ def test_series_job_reconnects_with_same_id_and_progress(series, tmp_path, monke
 
     monkeypatch.setattr(bookfile, "seal", slow)
     try:
-        status, started = _post(server, parts[0], "bookfile-job", {"target": str(tmp_path / "out"), "series": True, "single": True})
+        status, started = _post(server, parts[0], "bookfile-job", {"target": str(tmp_path / "out"), "series": True, "single": True, "partial": True})
         assert status == 202 and started["id"] and reached.wait(10)
         current = _get(server, parts[0], "bookfile-job")[1]
         assert current["id"] == started["id"] and current.get("phase") == "hash"

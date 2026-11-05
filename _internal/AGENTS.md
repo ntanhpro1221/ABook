@@ -150,7 +150,13 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   dùng 3.840 sample/frame ở 48 kHz. Mọi tổ hợp kind/pace/độ dài phải có headroom validation được test.
 - Chỉ có `narration`/`dialogue`/`thought`; từ tượng thanh và cụm cảm thán giữ nguyên trong câu đọc bình thường.
   Không audio nào được cắt để lách validation; kết quả quá dài phải retry hoặc `failed`.
-- Chapter còn segment `failed` không được publish.
+- Chương còn dòng `failed` nhưng đủ WAV thật vẫn được ghép, giữ trạng thái `warning`, ghi rõ dòng lỗi và không ghi QA `pass`.
+  Dòng thiếu audio giải mã được hay sai băm thì chặn chương, nêu đúng dòng; không chèn im lặng thay lời đọc.
+- Retry cùng chữ/giọng giữ bản thu tốt nhất trong SQLite và trên đĩa đến khi bản tốt hơn checkpoint. Lượt thử ghi file riêng;
+  hết lượt vẫn `failed` kèm lý do và bản thu đã giữ. Đổi chữ/cách đọc/giọng là vô hiệu bản thu, không phải retry.
+- Chia câu chỉ dùng lời đọc đã materialize cùng span nguồn/lời đọc; không áp phát âm lại lên kết quả thay thế.
+- Xuất `.abook` âm thanh so toàn bộ chương nguồn, giải mã, băm và đủ dòng phụ đề. Thiếu chương phải từ chối trừ khi chọn
+  `partial` rõ ràng; manifest, CLI và kết quả UI cùng ghi N/M và tên chương thiếu. `bookfile verify` kiểm lại giao ước này.
 - ASR mismatch dài bất thường chỉ được dùng để kết tội TTS khi transcript có thể tồn tại trong thời lượng WAV;
   transcript vượt tốc độ từ vật lý phải được đánh dấu là Whisper hallucination và không kích hoạt repair TTS.
 - Mỗi lượt Whisper trực tiếp, lặp-ngắn, beam và greedy phải ghi evidence riêng theo đúng checksum WAV/policy.

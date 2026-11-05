@@ -391,7 +391,7 @@ def test_an_imported_book_without_snapshots_answers_404_not_an_error(tmp_path: P
 
 def _pending_file(tmp_path: Path) -> Path:
     """Một file .abook được mở trên "điện thoại" (sửa tên sách), rồi lưu thành .abookproj: không có xưởng."""
-    abook = bookfile.pack(_project(tmp_path), tmp_path / "sach.abook")
+    abook = bookfile.pack(_project(tmp_path), tmp_path / "sach.abook", partial=True)
     phone = _app(tmp_path / "dien_thoai", tmp_path / "thu_vien_dien_thoai")
     folder = phone.library.resolve_listenable(phone.open_book_file(str(abook))["id"])
     book_edits.set_title(folder, "Tên mới")
@@ -470,7 +470,7 @@ def test_building_needs_the_studio_and_a_pending_book(tmp_path: Path, monkeypatc
     with pytest.raises(ApiError, match="Cần cài Studio"):
         studio.build_workshop(opened["id"])
     plain = _app(tmp_path / "may_khac", tmp_path / "thu_vien_khac")
-    book = plain.open_book_file(str(bookfile.pack(_project(tmp_path / "y"), tmp_path / "y.abook")))
+    book = plain.open_book_file(str(bookfile.pack(_project(tmp_path / "y"), tmp_path / "y.abook", partial=True)))
     with pytest.raises(ApiError, match="không chờ dựng xưởng"):
         plain.build_workshop(book["id"])
 
@@ -478,7 +478,7 @@ def test_building_needs_the_studio_and_a_pending_book(tmp_path: Path, monkeypatc
 def test_wishes_that_still_make_sense_become_requests_in_the_new_workshop(tmp_path: Path) -> None:
     from abook.webui import book_wishes
 
-    abook = bookfile.pack(_project(tmp_path), tmp_path / "sach.abook")
+    abook = bookfile.pack(_project(tmp_path), tmp_path / "sach.abook", partial=True)
     phone = _app(tmp_path / "dien_thoai", tmp_path / "thu_vien_dien_thoai")
     folder = phone.library.resolve_listenable(phone.open_book_file(str(abook))["id"])
     book_wishes.request_pronunciation(folder, "Hailkes", "Hên-khơ", now=1759400001.5)

@@ -40,7 +40,7 @@ def test_starting_an_export_returns_at_once_and_the_status_ends_with_the_file(tm
     book = _part(tmp_path, library, "p1", "Truyện X")
     app, server = _studio(tmp_path, library)
     try:
-        status, started = _post(server, book, "bookfile-job", {"target": str(tmp_path / "xuat")})
+        status, started = _post(server, book, "bookfile-job", {"target": str(tmp_path / "xuat"), "partial": True})
         done = _wait(server, book)
         again = _get(server, book, "bookfile-job")[1]  # "tải lại trang": hỏi lại vẫn thấy lần xuất vừa xong
     finally:
@@ -66,11 +66,11 @@ def test_a_failing_pack_ends_as_an_error_the_listener_can_read(tmp_path: Path, m
     monkeypatch.setattr(bookfile, "pack", refuse)
     app, server = _studio(tmp_path, library)
     try:
-        status, _ = _post(server, book, "bookfile-job", {"target": str(tmp_path / "xuat")})
+        status, _ = _post(server, book, "bookfile-job", {"target": str(tmp_path / "xuat"), "partial": True})
         failed = _wait(server, book, "error")
         # lỗi không chặn lần xuất sau
         monkeypatch.undo()
-        _post(server, book, "bookfile-job", {"target": str(tmp_path / "xuat")})
+        _post(server, book, "bookfile-job", {"target": str(tmp_path / "xuat"), "partial": True})
         retried = _wait(server, book)
     finally:
         server.stop()
@@ -85,7 +85,7 @@ def test_the_job_refuses_a_request_the_plain_export_would_refuse(tmp_path: Path)
     lone = _part(tmp_path, library, "p1", "Cuốn lẻ")
     app, server = _studio(tmp_path, library)
     try:
-        status, result = _post(server, lone, "bookfile-job", {"target": str(tmp_path / "xuat"), "series": True})
+        status, result = _post(server, lone, "bookfile-job", {"target": str(tmp_path / "xuat"), "series": True, "partial": True})
         idle = _get(server, lone, "bookfile-job")[1]
     finally:
         server.stop()
@@ -140,7 +140,7 @@ def test_the_server_lists_the_exports_still_running_whatever_page_the_app_opens_
 
     try:
         assert listing() == {"bookfile": [], "m4b": [], "mp3": [], "audiobook": [], "projectfile": []}
-        _post(server, book, "bookfile-job", {"target": str(tmp_path / "xuat")})
+        _post(server, book, "bookfile-job", {"target": str(tmp_path / "xuat"), "partial": True})
         running = listing()
         assert running["m4b"] == [] and running["mp3"] == [] and running["audiobook"] == []
         assert [(job["bookId"], job["state"]) for job in running["bookfile"]] == [(book_id(book), "running")]

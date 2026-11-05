@@ -606,7 +606,7 @@ def test_a_project_with_no_audio_yet_packs_its_sources_as_a_text_only_book(tmp_p
         ("text", "texts/1.txt"), ("text", "texts/2.txt")]
     assert all("file" not in chapter for chapter in layer_book["chapters"]), "không khoá null cho audio (Android đọc ra chữ \"null\")"
     assert all(chapter["script"] in files for chapter in layer_book["chapters"] if "script" in chapter), "kịch bản chỉ khi có file"
-    path = bookfile.pack(project, tmp_path / "chua_co_tieng.abook")
+    path = bookfile.pack(project, tmp_path / "chua_co_tieng.abook", partial=True)
     with BookFile(path) as opened:
         opened.verify()
         assert opened.book["package"]["version"] == 5 and opened.content_key.startswith("f-")
