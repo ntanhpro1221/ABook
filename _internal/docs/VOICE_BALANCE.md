@@ -447,3 +447,77 @@ Hạ cao độ cũng làm valence tăng 2–4 điểm, tức "dễ chịu" hơn.
 - *Ghi chú, giả thuyết chưa kiểm:* theo máy, hạ cao độ chỉ làm giảm hưng phấn một phần. Còn cảm giác "bình tĩnh, truyền cảm hơn" mà tai chủ sách nghe ra có thể đến từ valence tăng (+2–4) và giọng trầm hơn, thứ model dạng chiều này không gọi là arousal.
 
 Số và mã: Corpus/claude/model_lane/voice_balance (emo_check.*, utmos_check.*, tempo_alt.*, arousal.*).
+
+## Master chương và kiểm mức nghe cuối sách
+
+Đích chương là `audio.loudness_lufs + mean_chapter(offset) - mean_book(offset)`.
+Trọng số là số giây có tiếng của bản thu được chọn, không tính break và khoảng lặng đo được.
+Offset gồm `o_db`, volume, cảm xúc, người kể, trừ phần hạ thực tế do trần đỉnh câu;
+không dùng toàn bộ gain chứa `ref_lufs` (neo của bản thô). Các phần tách câu được cộng
+theo số giây có tiếng riêng. Cả hai lượt ffmpeg loudnorm và QA MP3 dùng cùng đích này.
+Trung bình đích theo thời lượng bằng mức gốc; đây là trung bình số học LUFS, không hứa
+LUFS tích phân của file ghép cả sách bằng đúng số ấy.
+
+Chương nghe được trong lúc thu có đích tạm theo các bản thu đã có. Cuối lượt tổng hợp,
+đường ống chốt lại theo cả sách, chỉ ghép lại chương đổi chữ ký: thuật toán, đích,
+thời lượng/offset thực áp và checksum WAV của chương. Không thu lại hay chấm lại câu.
+Đổi phân bố thời lượng cả sách có thể đổi đích nhiều chương; chương có chữ ký trùng
+được dùng lại. Không đổi SQLite schema hay settings đã khoá.
+
+`book_levels.measure_finished_book` đọc MP3 cuối và mốc câu; mỗi giọng chọn tối đa
+60 câu, mỗi chương 40 câu bằng SHA256, chỉ volume normal, dài ít nhất 1,5 giây.
+Giữ khung có tiếng 20 ms trên RMS đỉnh −30 dB, tối đa 8 giây có tiếng; cần 12 câu
+để kết luận một nhóm. Meter là ISO 532-1 stationary, neo phát lại cố định, **không**
+phải SPL đo tại tai hay phép đo N5 biến thiên. Báo trung bình và CI 95% bootstrap
+2.000 lượt theo câu; CI chưa mô hình hoá tương quan câu trong cùng chương.
+
+Ngưỡng cảnh báo: trải giọng >2,5 phon hoặc chương lệch trung vị chương >2,5 phon.
+Đo trên 2 tác phẩm, mỗi tác phẩm một bản cũ và một bản đã sửa: trải giọng
+4,98 / 2,41 phon ở bản cũ, 0,74 / 0,91 phon ở bản mới; bản cũ thứ hai được bắt
+thêm qua chương −2,66 / −2,89 phon. Ngưỡng chỉ là chẩn đoán với **n = 2 sách**,
+không phải chuẩn phổ quát hay kiểm chứng độc lập. Không đủ mẫu thì ghi
+`insufficient_data`, không tuyên bố đạt.
+
+RMS, K-weighted và A-weighted đã đo nhưng không phân biệt đủ cả bốn gói.
+Phần ISO stationary từ MoSQITo 1.2.1 được giữ nguyên thuật toán, chỉ đổi import:
+37.407 byte Python, 50.948 byte kèm giấy phép và nguồn gốc (Apache-2.0), dùng
+numpy/scipy đã có. Không thêm MoSQITo/pyuff hay runtime tuỳ chọn. Chi tiết và số
+đo trong `report_chaplevel.md` ở thư mục tác vụ.
+
+Khi toàn bộ chương hoàn tất, vòng kín dùng **chính meter trên MP3 cuối**:
+
+1. Vòng đầu: `delta_v = mean_book_phon - mean_voice_phon`, chỉ giọng đo được ≥12 câu.
+   Trung bình sách là trung bình theo số câu của các giọng đủ mẫu; giọng ít mẫu ghi rõ số câu,
+   không suy số bù. Gain cộng ở bản WAV giao sau âm sắc/cảm xúc và đi vào trung bình offset
+   của `chapter_level_plan`, nên loudnorm chương giữ được phần bù ấy.
+2. Đo lại. Vòng thứ hai bù phần dư từng chương: âm của độ lệch so với trung vị chương.
+   Mỗi loại số bù bị chặn ±4 dB: dữ liệu sách thật cần tới +3,01 dB, còn gần 1 dB dự phòng.
+   Không nới trần đỉnh câu/chương hay QA; đạt trần mà không thể đạt đích thì giữ bản hiện tại.
+3. Dừng sớm khi trải giọng ≤1,5 phon và mọi chương lệch ≤1,0 phon; tối đa hai vòng sửa.
+   Điểm so vòng là max(trải giọng / 1,5; lệch chương lớn nhất / 1,0), rồi tổng hai tỷ lệ nếu bằng nhau.
+   Vòng đạt đủ hai giới hạn luôn tốt hơn bản chưa đạt; nếu chưa đạt thì điểm tệ nhất phải giảm
+   hơn 0,01, hoặc bằng trong 0,000001 và tổng giảm hơn 0,01. Không nhận vòng làm mất nhóm đủ mẫu.
+   Vòng không cải thiện bị bỏ và dừng, giữ bản có điểm tốt nhất.
+
+Master và đo thử ở thư mục riêng. Meter/master lỗi chỉ sinh cảnh báo và giữ MP3 hiện tại.
+Không gọi TTS/Whisper, sửa chữ, WAV đã xác minh, hay bằng chứng QA câu. Số bù, history,
+hash nguồn và hash MP3 nằm ở `output/reports/book_levels.json`; số bù và history nằm
+trong chữ ký master. Bản delivery trước gain được cache trong RAM và `base_cache.json`,
+khóa theo đầu vào âm thanh/hồ sơ/settings và kiểm hash byte trước khi dùng lại, kể cả
+tiến trình mới; metadata QA và bộ đếm dùng giọng không gây dựng lại. Không lặp Praat ở
+mỗi vòng bù. Kế hoạch cả sách được tính một lần cho mỗi lượt kiểm, thay vì parse
+lại toàn bộ câu cho từng chương. Mở tiếp sách hoàn tất có hash và chữ ký trùng dùng lại
+kết quả; checkpoint sau mỗi vòng được nhận cho phép tiếp tục vòng còn thiếu.
+
+Assembler trả mốc từng câu sau cắt lặng, khóa với SHA-256 MP3 trong `.mp3.levels.json`;
+script dùng đúng mốc ấy. Cache từng chữ chỉ đính kèm khi cỡ/mốc sửa audio và khoảng câu
+còn khớp, nên MP3 mới không mang words của MP3 cũ. Không chạy Whisper để sửa mốc.
+Artifact `book_levels`, báo cáo QA và `book.json.levelQa` mang số đo cùng sách. Không
+thêm bước người dùng. CLI chỉ đọc: `scripts/check_book_levels.py <file.abook>`.
+Đường tắt của sách đã xong chỉ giữ `.abook` có checksum MP3 và `levelQa` trùng hiện tại;
+bị ngắt sau master nhưng trước đóng gói thì mở tiếp tự thay gói cũ, không master lại.
+
+Đánh giá độc lập dùng seed SHA256 khác và loại toàn bộ ID đã đo trong các vòng fit,
+kể cả câu chỉ dùng kiểm chương. CI 95% bootstrap theo câu (2.000 lượt), chưa tính
+tương quan giữa câu trong cùng chương; không gọi là đánh giá tai người hay CI theo sách.
+Số đo fit/holdout thực tế, thời gian và giới hạn nằm trong `report.md` của tác vụ chaplevel2.
