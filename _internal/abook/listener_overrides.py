@@ -264,7 +264,7 @@ def voice_target(
     một yêu cầu đã áp không đổi gì, và máy không đổi giọng một người chỉ vì người khác vừa đổi. Giọng mới luôn là hồ sơ
     bước phân vai sẽ tạo (`character_registry.listener_voice_choice`), nên "một người một giọng" vẫn đúng.
     """
-    from .character_registry import listener_voice_choice
+    from .character_registry import character_preset_allowed, listener_voice_choice
     from .voice_catalog import (
         VIENEU_PRESETS,
         castable_engine_voices,
@@ -298,13 +298,16 @@ def voice_target(
     }
     # Giọng máy đọc khác: chỉ người nghe chọn tay (phân vai tự động không bao giờ tới), và chỉ những giọng có số cân bằng.
     castable.update({str(item["name"]): item for item in castable_engine_voices()})
+    excluded = {str(voices.get("narrator_voice") or ""), *map(str, voices.get("other_narrators", ()))}
+    castable = {name: item for name, item in castable.items() if character_preset_allowed(name, excluded)}
     if preset and preset not in castable:
         return None, UNKNOWN_PRESET
     current_gender = str(row["gender"] or "unknown")
     final_gender = gender or current_gender
     current_preset = castable.get(str(current["preset_name"] or ""))
     satisfied = (
-        (not preset or preset == str(current["preset_name"]))
+        character_preset_allowed(str(current["preset_name"]), excluded)
+        and (not preset or preset == str(current["preset_name"]))
         and (not avoid or avoid != str(current["voice_key"]))
         and (not gender or (current_preset is not None and current_preset["gender"] == gender))
     )

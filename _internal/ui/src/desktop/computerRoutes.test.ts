@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { bluetoothAddress, deviceName, isBluetoothHost, routeLine, wakingLine, type PairedDevice } from "./computerRoutes";
 
 const devices: PairedDevice[] = [
-  { name: "Galaxy của An", address: "AA:BB:CC:DD:EE:FF", kind: "phone" },
-  { name: "Máy bàn", address: "66:55:44:33:22:11", kind: "computer" },
+  { name: "Galaxy của An", address: "AA:BB:CC:DD:EE:FF", kind: "phone", services: ["release"] },
+  { name: "Máy bàn", address: "66:55:44:33:22:11", kind: "computer", services: ["release"] },
 ];
 
 describe("máy đã ghép đi đường nào", () => {

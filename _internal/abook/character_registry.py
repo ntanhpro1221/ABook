@@ -2012,6 +2012,11 @@ class PresetAllocator:
                 self.holders.setdefault(name, {}).setdefault(step, set()).add(str(who))
 
 
+def character_preset_allowed(preset: str, excluded: Any) -> bool:
+    """Every character voice, including a pin, excludes the narration presets."""
+    return str(preset) not in excluded
+
+
 def _pinned_profile_id(
     db: ProjectDB,
     locked_voices: dict[str, str],
@@ -2040,11 +2045,13 @@ def _pinned_profile_id(
     except KeyError:
         log(f"Giọng đã ghim {voice_key!r} cho {canonical!r} không có trong project; cấp phát lại.")
         return None
+    if not character_preset_allowed(str(row["preset_name"]), allocator.not_for_characters):
+        log(f"Giọng đã ghim của {canonical!r} trùng giọng người kể; cấp phát lại.")
+        return None
     # No reserve() here: reserve_pinned_voices has already counted every pinned preset once,
     # before any casting began. Counting again for the characters that happen to speak would
     # make their voices look more used than the pinned voices of silent characters, which is
     # the ranking reading a difference that does not exist.
-    del allocator
     return int(row["id"])
 
 
@@ -2085,6 +2092,9 @@ def reserve_pinned_voices(
             continue
         # `row` là cả dòng voice_profiles, nên bậc formant có sẵn ở đây. Bản đầu chỉ truyền
         # tên preset đi và vứt nó, đó chính là chỗ hỏng.
+        if not character_preset_allowed(str(row["preset_name"]), allocator.not_for_characters):
+            log(f"Không giữ chỗ giọng đã ghim của {canonical!r}: trùng giọng người kể.")
+            continue
         allocator.reserve(str(row["preset_name"]), float(row["formant_ratio"]), who=canonical)
         reserved += 1
     return reserved
@@ -2523,7 +2533,7 @@ def _drop_pins_that_share_a_chapter(
 ) -> dict[str, str]:
     """Bỏ pin của người ít câu hơn khi hai người CÙNG GHIM một giọng và CÙNG NÓI một chương.
 
-    `_pinned_profile_id` tôn trọng pin vô điều kiện, và điều đó đúng cho tới khi pin được phép
+    `_pinned_profile_id` giữ pin hợp lệ với giọng người kể; còn khi pin được phép
     dùng chung: từ 11:00 ngày 2026-09-15 `pin_the_book_cast` cho hai người **chưa từng cùng
     chương** chia một giọng (đúng luật holder của bộ cấp giọng). Ở lô sau họ có thể gặp nhau, và
     lô 3 cuốn 2 gặp ngay: **5 va chạm cùng chương, cả 5 là pin gặp pin** — Verdi + Christopher ở
@@ -3121,6 +3131,8 @@ def listener_voice_choice(
     yet, so without this the allocator would not know whose voice to stay clear of.
     """
     allocator = book_allocator(conn, voices, leave_out=character)
+    if preset_name and not character_preset_allowed(preset_name, allocator.not_for_characters):
+        raise ValueError("Giọng nhân vật trùng giọng người kể")
     if chapters:
         allocator.note_chapters(character, set(chapters))
     other_engine = engine_voice(preset_name) if preset_name else None

@@ -43,7 +43,10 @@ import uuid
 from collections import deque
 from typing import Callable, Iterator
 
-SERVICE_UUID = uuid.UUID("a1f667fe-352a-49b7-9b91-a5463677cac0")  # dịch vụ ABook (điện thoại dùng đúng UUID này)
+from .peer_endpoints import RELEASE, DEBUG
+
+SERVICE_UUID = uuid.UUID(RELEASE["serviceUuid"])
+DEV_SERVICE_UUID = uuid.UUID(DEBUG["serviceUuid"])
 SERVICE_NAME = "ABook"
 OPEN, DATA, CLOSE, WINDOW, RESET, ACK = 1, 2, 3, 4, 5, 6
 HEADER = struct.Struct(">BII")
@@ -759,7 +762,7 @@ BLUETOOTH_OFF = (10050, 10047, 10051)  # mạng/địa chỉ không dùng đư�
 CONNECT_SECONDS = 15  # hạn RFCOMM connect; tra SDP nằm ngoài hạn này (Windows tự hết hạn)
 GATEWAY_RETRY_SECONDS = 10  # vừa hỏng (ngoài tầm, điện thoại tắt Bluetooth): trả lỗi ngay, không quay số lại (như Android)
 GATEWAY_IDLE_SECONDS = 60  # không luồng nào mở ngần này thì đóng RFCOMM - mở lại khi cần
-FIRST_PORT, PORT_SPAN = 47670, 32  # cổng cục bộ ổn định theo địa chỉ, cùng dải với BluetoothLink.kt: 47670 + (hash & 31)
+FIRST_PORT, PORT_SPAN = RELEASE["tunnelFirstPort"], 32
 SOCKADDR_BTH_SIZE = ctypes.sizeof(_SOCKADDR_BTH)
 
 _ADDRESS = re.compile(r"(?:[0-9A-F]{2}:){5}[0-9A-F]{2}")
@@ -787,8 +790,8 @@ class ServiceNotFound(OSError):
 class _ServiceQuery:
     """WSAQUERYSETW hỏi "máy `address` có dịch vụ SERVICE_UUID không, ở kênh nào". Giữ mọi cấu trúc sống cùng đối tượng."""
 
-    def __init__(self, address: str) -> None:
-        self.guid = _GUID.of(SERVICE_UUID)
+    def __init__(self, address: str, service_uuid: uuid.UUID = SERVICE_UUID) -> None:
+        self.guid = _GUID.of(service_uuid)
         self.query = _WSAQUERYSETW()
         self.query.dwSize = ctypes.sizeof(self.query)
         self.query.lpServiceClassId = ctypes.pointer(self.guid)
@@ -847,9 +850,9 @@ class _Ws2:
             self.dll.WSALookupServiceEnd(handle)
 
 
-def find_channel(address: str, *, ws2: _Ws2 | None = None) -> int:
+def find_channel(address: str, *, ws2: _Ws2 | None = None, service_uuid: uuid.UUID = SERVICE_UUID) -> int:
     """Kênh RFCOMM của dịch vụ ABook trên máy `address`; `ServiceNotFound` nếu máy ấy không có."""
-    query = _ServiceQuery(address)
+    query = _ServiceQuery(address, service_uuid)
     try:
         for buffer in (ws2 or _Ws2()).lookup(query.query):
             channels = channels_of(_WSAQUERYSETW.from_buffer(buffer))
@@ -861,13 +864,13 @@ def find_channel(address: str, *, ws2: _Ws2 | None = None) -> int:
     raise ServiceNotFound("Không thấy ABook — bạn mở app, bật Bluetooth và chia sẻ ở máy gần đó.")
 
 
-def connect_rfcomm(address: str, *, ws2: _Ws2 | None = None) -> socket.socket:
+def connect_rfcomm(address: str, *, ws2: _Ws2 | None = None, service_uuid: uuid.UUID = SERVICE_UUID) -> socket.socket:
     """Một kết nối RFCOMM tới dịch vụ ABook của `address` (đã ghép Bluetooth trong Cài đặt Windows). CHẶN tới vài chục giây
     khi máy kia ngoài tầm - chỉ gọi từ luồng nền (Gateway)."""
     if os.name != "nt" or not hasattr(socket, "AF_BLUETOOTH"):
         raise OSError("Máy này chưa hỗ trợ Bluetooth cho ABook")
     try:
-        channel = find_channel(address, ws2=ws2)
+        channel = find_channel(address, ws2=ws2, service_uuid=service_uuid)
         link = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
     except ServiceNotFound:
         raise
@@ -898,8 +901,10 @@ class Gateway:
     ngay trong GATEWAY_RETRY_SECONDS."""
 
     def __init__(self, address: str, *, connect: Callable[[str], socket.socket] | None = None,
+                 service_uuid: uuid.UUID = SERVICE_UUID,
                  retry_seconds: float = GATEWAY_RETRY_SECONDS, idle_seconds: float = GATEWAY_IDLE_SECONDS) -> None:
         self.address = address
+        self.service_uuid = service_uuid
         self.connect = connect
         self.retry_seconds = retry_seconds
         self.idle_seconds = idle_seconds
@@ -912,7 +917,8 @@ class Gateway:
         self._lock = threading.Lock()
         self._stopped = threading.Event()
         try:
-            self.local = LocalPort(self, stable_port(address))
+            offset = DEBUG["tunnelFirstPort"] - FIRST_PORT if service_uuid == DEV_SERVICE_UUID else 0
+            self.local = LocalPort(self, stable_port(address) + offset)
         except OSError:
             self.local = LocalPort(self, 0)  # cổng ổn định đang bận: để hệ thống chọn
         self.port = self.local.port
@@ -962,7 +968,7 @@ class Gateway:
             if self._failed_at is not None and time.monotonic() - self._failed_at < self.retry_seconds:
                 raise OSError(self.last_error or "Không kết nối được qua Bluetooth")
             try:
-                link = (self.connect or connect_rfcomm)(self.address)
+                link = self.connect(self.address) if self.connect else connect_rfcomm(self.address, service_uuid=self.service_uuid)
             except OSError as error:
                 self._failed_at, self.last_error = time.monotonic(), str(error) or "Không kết nối được qua Bluetooth"
                 raise
@@ -1009,18 +1015,20 @@ _gateways_lock = threading.Lock()
 def gateway(address: str, *, connect: Callable[[str], socket.socket] | None = None) -> Gateway:
     """Đường hầm tới máy `address` ("AA:BB:..." hay "bt:AA:BB:..."; một cho mỗi địa chỉ, dựng lần đầu cần). Địa chỉ hỏng:
     ValueError."""
-    clean = normalize_address(address.removeprefix("bt:"))
+    dev = address.lower().endswith("@dev")
+    clean = normalize_address((address[:-4] if dev else address).removeprefix("bt:"))
     if not clean:
         raise ValueError(f"Địa chỉ Bluetooth không hợp lệ: {address}")
     with _gateways_lock:
-        found = _gateways.get(clean)
+        key = clean + ("@dev" if dev else "")
+        found = _gateways.get(key)
         if found is None or found.closed:
-            found = _gateways[clean] = Gateway(clean, connect=connect)
+            found = _gateways[key] = Gateway(clean, connect=connect, service_uuid=DEV_SERVICE_UUID if dev else SERVICE_UUID)
         return found
 
 
 def last_error(address: str) -> str:
-    clean = normalize_address(address.removeprefix("bt:"))
+    clean = normalize_address(address.removeprefix("bt:").removesuffix("@dev")) + ("@dev" if address.endswith("@dev") else "")
     with _gateways_lock:
         found = _gateways.get(clean)
     return found.last_error if found is not None else ""
@@ -1028,7 +1036,7 @@ def last_error(address: str) -> str:
 
 def forget(address: str) -> None:
     """Thôi ghép máy `address`: đóng cổng cục bộ và kết nối RFCOMM của nó."""
-    clean = normalize_address(address.removeprefix("bt:"))
+    clean = normalize_address(address.removeprefix("bt:").removesuffix("@dev")) + ("@dev" if address.endswith("@dev") else "")
     with _gateways_lock:
         found = _gateways.pop(clean, None)
     if found is not None:
@@ -1037,8 +1045,8 @@ def forget(address: str) -> None:
 
 # ---- Windows: thiết bị Bluetooth đã ghép với máy tính ---------------------------------------------------------------------
 # Android 8+ không cho app đọc địa chỉ Bluetooth của chính nó (trả 02:00:00:00:00:00), nên điện thoại KHÔNG báo được địa chỉ lúc
-# ghép Wi-Fi. Máy tính tự tìm: liệt kê thiết bị đã ghép trong Cài đặt Windows (bthprops.cpl, chỉ đọc danh sách của hệ điều hành -
-# không dò sóng, không nối thiết bị nào) rồi chọn cái trùng tên điện thoại, hay để người dùng chọn một lần.
+# ghép Wi-Fi. Máy tính tự tìm: liệt kê thiết bị đã ghép trong Cài đặt Windows (bthprops.cpl), tra SDP cho hai dịch vụ ABook,
+# rồi chọn cái trùng tên điện thoại, hay để người dùng chọn một lần. Không mở kết nối RFCOMM khi liệt kê.
 
 MAJOR_COMPUTER, MAJOR_PHONE = 1, 2  # lớp thiết bị Bluetooth (bit 8-12 của ulClassofDevice)
 
@@ -1071,9 +1079,9 @@ def paired_device(info: _BLUETOOTH_DEVICE_INFO) -> dict[str, object]:
             "kind": "phone" if major == MAJOR_PHONE else "computer" if major == MAJOR_COMPUTER else "other"}
 
 
-def paired_devices(*, dll: object = None) -> list[dict[str, object]]:
-    """Thiết bị đã ghép (hay được nhớ) trong Cài đặt Windows, mỗi cái {"name", "address", "kind"}; bỏ tai nghe, loa... không phải
-    điện thoại / máy tính. Không có Bluetooth hay không phải Windows: danh sách rỗng. `dll` thay được để bài thử không chạm hệ thống."""
+def paired_devices(*, dll: object = None, ws2: _Ws2 | None = None) -> list[dict[str, object]]:
+    """Thiết bị đã ghép trong Windows, kèm `services` (release / dev) thực sự tìm thấy qua SDP; bỏ tai nghe, loa.
+    Không có Bluetooth hay không phải Windows: danh sách rỗng. `dll` / `ws2` thay được để bài thử không chạm hệ thống."""
     if dll is None:
         if os.name != "nt":
             return []
@@ -1105,6 +1113,15 @@ def paired_devices(*, dll: object = None) -> list[dict[str, object]]:
                 break
     finally:
         dll.BluetoothFindDeviceClose(handle)
+    for device in found:
+        services = []
+        for name, service_uuid in (("release", SERVICE_UUID), ("dev", DEV_SERVICE_UUID)):
+            try:
+                find_channel(str(device["address"]), ws2=ws2, service_uuid=service_uuid)
+            except OSError:
+                continue  # máy ngoài tầm / chưa bật chia sẻ: không đoán là có dịch vụ
+            services.append(name)
+        device["services"] = services
     return found
 
 
