@@ -36,6 +36,15 @@
 - Android release keeps TCP 47630, UDP 47631 and UUID a1f667fe-352a-49b7-9b91-a5463677cac0. Debug uses TCP 47640, UDP 47641 and UUID b2e7780f-463b-5ac8-ac02-b6574788dbd1, generated from the same JSON source Python reads. Discovery probes both; labelled desktop Bluetooth dev pairing and separate gateway identity retain the selected app through fallback and diagnostics.
 - Final validation: 1255 pytest passed, 3 skipped, 0 FAILED across 119 files; final focused routing/pin reruns passed (94 / 8 tests). JVM: 46 tests passed (PeerEndpointsTest, StudioLinkTest, LibraryServerBluetoothNameTest, LibraryServerDiagnosticsTest, PeerAddressesTest, DevicesLogicTest); generated release BuildConfig inspected. TypeScript typecheck and 5 computerRoutes vitests passed. Evidence is in the task's `result.md` and `measurements/`.
 - No phone/adb or commit. Quality implementation list read from code (42 entries); policy hash changes, confined to the uncommitted dev worktree. Test fixtures were corrected to use matching voice presets and to forward the selected service UUID without permitting real Bluetooth.
+## 05-11-2026 — thanh trượt mức nhạc nền (dev/music-slider)
+
+- Shared `music_mix.json`: −40..−6 dB, step 1, default −20; Python, TypeScript, generated Android BuildConfig and Qt CMake read one source. Zone/number/clamp tests read the shared settings fixture.
+- Python core: settings ranges 4, music plan 19, music mix 25, book edits 231 passed. Final parity: 28 dots, F=0, E=0; both parity scripts `--check` passed. Initial three stale-doc/radius failures resolved.
+- Vitest: musicLevels 6, MusicLevelSlider DOM 2, sheetRows 7, projectMusicMenu 4, playerMusic 9, musicBed 97 = 125 passed / 0 failed; browser-port helper 6 passed. Typecheck passed with read-only rel437 dependencies (the existing node_modules junction lacks Vitest and has stale icons).
+- Android XML newer than 20:22:35 +07: BookEdits 24, MusicModel 8, MusicScreen 11, NowPlayingUi 59, MusicBedIntegration 25, SceneMusic 13 = 140 passed / 0 failures/errors. No device/emulator.
+- Chromium software rendering: six real page/theme cases pass thumb `elementFromPoint`, drag to −6 with no save until release, exactly one save on release and ArrowLeft to −7. Six full screenshots + six crops viewed at native 2×; six Android Robolectric snapshots refreshed, level crops viewed at native 3×; no overlap.
+- Qt build/test validation is in progress; final counts follow here.
+- Quality implementation hash unchanged: `f10085f96acd7f9fe6a066f2bf5a74338b0a351bea3d98f58f6d2807912cbfff` (42 entries read from code). No commit/push, GPU, Ollama, phone or emulator.
 
 ## 03-11-2026 — unchanged-audio cover re-import (dev/cover-reimport)
 

@@ -57,23 +57,12 @@ Popover {
                 font.pixelSize: Theme.sizeCaption
                 font.weight: Theme.weightMedium
             }
-            Column {
-                width: parent.width
-                topPadding: Theme.s4
-                bottomPadding: Theme.s4
-                spacing: 2
-                Repeater {
-                    model: Music.levels
-                    LevelRow {
-                        required property var modelData
-                        width: parent ? parent.width : 0
-                        name: modelData.name
-                        note: modelData.note
-                        selected: Math.abs(modelData.value - Music.levelDb) < 0.001
-                        enabled: Music.enabled && !Music.busy
-                        onClicked: Music.setLevel(modelData.value)
-                    }
-                }
+            MusicLevelSlider {
+                x: Theme.s8
+                width: parent.width - 2 * Theme.s8
+                value: Music.levelDb
+                enabled: Music.enabled && !Music.busy
+                onPicked: value => Music.setLevel(value)
             }
         }
         Text {
@@ -111,54 +100,4 @@ Popover {
         }
     }
 
-    // Một mức (CHOICE_ROW của bản web): cao tối thiểu 36, dấu ✓ + tên + ghi chú nhỏ; mức đang chọn đậm, màu nhấn.
-    component LevelRow: Interactive {
-        id: row
-        property string name: ""
-        property string note: ""
-        property bool selected: false
-        implicitHeight: Math.max(36, content.implicitHeight + 2 * Theme.s4)
-        pressScaling: enabled
-
-        Rectangle {
-            anchors.fill: parent
-            radius: Theme.radiusControl
-            color: Theme.text
-            opacity: row.enabled ? (row.pressed ? 0.10 : (row.hovered ? 0.05 : 0)) : 0
-            Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
-        }
-        Row {
-            id: content
-            x: Theme.s8
-            width: row.width - 2 * Theme.s8
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: Theme.s8
-            Icon {
-                name: "check"
-                size: 16
-                color: Theme.accentText
-                opacity: row.selected ? 1 : 0
-                anchors.verticalCenter: parent.verticalCenter
-                Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
-            }
-            Text {
-                id: label
-                text: row.name
-                color: row.selected ? Theme.accentText : Theme.text
-                font.pixelSize: Theme.sizeBodySmall
-                font.weight: row.selected ? Font.DemiBold : Theme.weightRegular
-                anchors.verticalCenter: parent.verticalCenter
-                Behavior on color { ColorAnimation { duration: Theme.motionFast } }
-            }
-            Text {
-                visible: row.note !== ""
-                width: Math.min(implicitWidth, content.width - 16 - label.implicitWidth - 2 * Theme.s8)
-                text: row.note
-                color: Theme.text2
-                wrapMode: Text.Wrap
-                font.pixelSize: Theme.sizeCaption
-                anchors.verticalCenter: parent.verticalCenter
-            }
-        }
-    }
 }

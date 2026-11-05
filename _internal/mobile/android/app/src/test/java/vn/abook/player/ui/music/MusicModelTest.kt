@@ -56,14 +56,22 @@ class MusicModelTest {
     }
 
     @Test
-    fun `levels keep the book's own level and run loud to quiet`() {
-        assertEquals(MusicLevels.levels, MusicLevels.options(-20.0))
-        val packaged = MusicLevels.options(-18.0)
-        assertEquals(listOf(-14.0, -17.0, -18.0, -20.0, -24.0, -28.0), packaged.map { it.first })
-        assertEquals("-18 dB (của sách)", packaged[2].second)
-        assertEquals("Vừa (mặc định)", MusicLevels.label(-20.0))
-        assertEquals("Rất nhỏ (rõ lời)", MusicLevels.label(-28.0))
-        assertEquals("-18,5 dB (của sách)", MusicLevels.label(-18.5))
+    fun `slider range labels and clamping match shared JSON`() {
+        val mix = JSONObject(java.io.File("../../../abook/webui/assets/music_mix.json").readText(Charsets.UTF_8))
+        assertEquals(listOf(mix.getDouble("levelMinDb"), mix.getDouble("levelMaxDb"), mix.getDouble("levelStepDb"), mix.getDouble("levelDefaultDb")),
+            listOf(MusicLevels.MIN_DB, MusicLevels.MAX_DB, MusicLevels.STEP_DB, MusicLevels.DEFAULT_DB))
+        val fixture = JSONObject(vn.abook.player.BookEditsFixtures.file("../settings/ranges.json").readText(Charsets.UTF_8)).getJSONObject("musicLevel")
+        val labels = fixture.getJSONArray("labels")
+        for (i in 0 until labels.length()) {
+            val row = labels.getJSONArray(i)
+            assertEquals(row.getString(1), MusicLevels.label(row.getDouble(0)))
+            assertEquals(row.getString(2), MusicLevels.number(row.getDouble(0)))
+        }
+        val clamps = fixture.getJSONArray("clamped")
+        for (i in 0 until clamps.length()) {
+            val row = clamps.getJSONArray(i)
+            assertEquals(row.getDouble(1), MusicLevels.clamp(row.getDouble(0)), 0.0)
+        }
     }
 
     @Test

@@ -48,9 +48,9 @@ object BookEdits {
     const val MAX_READINGS = 2000 // cách đọc riêng của một cuốn
     private const val READING_WORD_MAX = NAME_MAX // chữ hiện của một cách đọc (một từ)
     private const val READING_SPOKEN_MAX = 200 // chữ đọc
-    private const val LEVEL_MIN = -40.0
-    private const val LEVEL_MAX = -6.0
-    internal const val DEFAULT_LEVEL_DB = -20.0 // music_plan.DEFAULT_LEVEL_DB
+    private const val LEVEL_MIN = BuildConfig.levelMinDb
+    private const val LEVEL_MAX = BuildConfig.levelMaxDb
+    internal const val DEFAULT_LEVEL_DB = BuildConfig.levelDefaultDb // music_plan.DEFAULT_LEVEL_DB
     private val TOP_KEYS = setOf("format", "version", "title", "author", "cover", "characters", "chapters", "skip", "readings", "music", "wishes")
     const val TOO_BIG = "Quá nhiều sửa đổi đang chờ — bạn lưu và áp bớt vào dự án rồi làm tiếp."
     private val COVER_KEYS = setOf("color", "width", "height", "version")

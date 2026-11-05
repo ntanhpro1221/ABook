@@ -45,18 +45,6 @@ function formatClock(seconds) {
     return (hours ? hours + ":" : "") + mm + ":" + String(secs).padStart(2, "0")
 }
 
-// ---- musicLevels.ts ----
-var MUSIC_LEVELS = [[-14, "To"], [-17, "Hơi to"], [-20, "Vừa (mặc định)"], [-24, "Nhỏ"], [-28, "Rất nhỏ"]]
-var LEVEL_NOTES = {"-28": "rõ lời"}
-function levelText(value, name) { const note = LEVEL_NOTES[String(value)]; return note ? name + " (" + note + ")" : name }
-// [{value, label}] cho ô chọn: các mức có sẵn, thêm mức hiện tại của sách nếu nó không trùng mức nào
-function levelOptions(current) {
-    let list = MUSIC_LEVELS.slice()
-    if (!list.some(function(item) { return item[0] === current }))
-        list = list.concat([[current, String(current).replace(".", ",") + " dB (của sách)"]]).sort(function(a, b) { return b[0] - a[0] })
-    return list.map(function(item) { return {value: item[0], label: levelText(item[0], item[1])} })
-}
-
 // ---- EditBook.tsx musicEditView: sách đóng gói giữ nguyên, dự án Studio đọc plan / overrides ----
 function musicEditView(raw) {
     if (!raw) return null

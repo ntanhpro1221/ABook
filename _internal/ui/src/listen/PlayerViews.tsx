@@ -46,7 +46,8 @@ import { useMediaQuery } from "@/shared/media";
 import { MUSIC_MODIFIED_NOTE, formatClock, licenseLabel, musicCreditText, musicNeedsModifiedNote } from "@/shared/format";
 import { SelectionMark, announce, busyClick, heardBarProps, IconButton, menuArrowKeys, Sheet, Tooltip, useFocusFollows, Vu } from "@/shared/ui";
 import { Switch } from "@/desktop/Switch";
-import { LEVEL_NOTES, levelOptions } from "@/shared/musicLevels";
+import { MusicLevelSlider } from "@/shared/MusicLevelSlider";
+import { LEVEL_TITLE } from "@/shared/musicLevels";
 import { useClock, useClockReader, useDuration, usePlaybackSecond } from "./clock";
 import { usePlayListenBook, useNextVolume } from "./LibraryScreen";
 import { COARSE, EXTEND_GESTURE } from "./extendGesture";
@@ -501,34 +502,14 @@ export function MusicMenu({ look = "chip" }: { look?: MenuLook }) {
   );
 }
 
-/** "Mức nhạc nền": các mức (shared/musicLevels.ts), mức hiện tại có dấu, lời kèm mức (nếu có) chữ nhỏ cạnh tên. Chung cho nhạc
- *  người làm sách gắn và nhạc nền của sách chữ. */
-export function LevelButtons({ level, disabled, onChange }: { level: number; disabled: boolean; onChange: (levelDb: number) => void }) {
+/** "Mức nhạc nền": thanh trượt chung (shared/MusicLevelSlider.tsx) dưới tên mục. Chung cho nhạc người làm sách gắn và nhạc nền của sách chữ;
+ *  menu không đóng khi kéo, đang lưu vẫn kéo tiếp được. */
+export function MusicLevelRow({ level, disabled, saving = false, onChange }: { level: number; disabled: boolean; saving?: boolean; onChange: (levelDb: number) => void }) {
   return (
-    <>
-      <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">Mức nhạc nền</div>
-      <div className={cn("flex flex-col gap-0.5", MENU_LIST)}>
-        {levelOptions(level).map(([value, name]) => (
-          <button
-            key={value}
-            type="button"
-            disabled={disabled}
-            aria-pressed={value === level}
-            data-sheet-choice
-            onClick={() => onChange(value)}
-            className={cn(
-              CHOICE_ROW, "disabled:hover:bg-transparent",
-              value === level ? "font-semibold text-accent-text" : "text-fg",
-            )}
-          >
-            {/* Menu không đóng khi chọn mức: dấu ✓ mờ qua, nền đổi dần - không nhảy cứng. */}
-            <SelectionMark selected={value === level} />
-            {name}
-            {LEVEL_NOTES[value] && <span className="text-xs font-normal text-fg-2">{LEVEL_NOTES[value]}</span>}
-          </button>
-        ))}
-      </div>
-    </>
+    <div className="px-2 pb-1 pt-1">
+      <div className="pb-1 text-xs font-medium text-fg-2">{LEVEL_TITLE}</div>
+      <MusicLevelSlider value={level} disabled={disabled} saving={saving} onChange={onChange} />
+    </div>
   );
 }
 
@@ -565,7 +546,7 @@ function PackagedMusicMenu({ bookId, look }: { bookId: string; look: MenuLook })
       {music.enabled && broken && <p className="px-2 pb-1 text-xs text-warning">Bài nhạc chương này không phát được.</p>}
       {music.error && <p className="px-2 pb-1 text-xs text-warning">{music.error}</p>}
       <div className={cn("transition-opacity", !music.enabled && "opacity-50")}>
-        <LevelButtons level={music.levelDb} disabled={!music.enabled || change.isPending} onChange={(levelDb) => change.mutate({ levelDb })} />
+        <MusicLevelRow level={music.levelDb} disabled={!music.enabled} saving={change.isPending} onChange={(levelDb) => change.mutate({ levelDb })} />
       </div>
       <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{music.project ? "Đổi luôn trong Studio." : "Chỉ đổi trên máy này."}</p>
     </MotionRegion></MenuShell>}</MotionRegion>
@@ -621,7 +602,7 @@ function MusicMenuFor({ bookId, look }: { bookId: string; look: MenuLook }) {
         {loading && <p className="px-2 py-1.5 text-xs text-fg-2">Đang tải các danh sách nhạc</p>}
       </div>
       {/* Chỉ khi cuốn đang có nhạc: tắt nhạc thì chỉnh mức chẳng nghe thấy gì. */}
-      {playing && <LevelButtons level={levelDb} disabled={levelBusy} onChange={setLevel} />}
+      {playing && <MusicLevelRow level={levelDb} disabled={false} saving={levelBusy} onChange={setLevel} />}
       {playing && scene && musicBroken && <p className="px-2 pb-1 text-xs text-warning">Có bài nhạc chưa phát được, máy sẽ thử lại sau.</p>}
       {(error || musicOffline) && <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{error || musicOffline}</p>}
     </MotionRegion></MenuShell>

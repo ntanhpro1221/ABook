@@ -14,6 +14,8 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import com.github.takahirom.roborazzi.captureRoboImage
@@ -160,8 +162,8 @@ class MusicScreenTest {
         rule.waitForIdle()
         rule.onNodeWithTag("music_option_night_rain").performClick()
         rule.waitForIdle()
-        rule.onNodeWithTag("music_panel").performScrollToNode(hasTestTag("music_level_-24"))
-        rule.onNodeWithTag("music_level_-24").performClick()
+        rule.onNodeWithTag("music_panel").performScrollToNode(hasTestTag("music_level_slider"))
+        rule.onNodeWithTag("music_level_slider").performSemanticsAction(SemanticsActions.SetProgress) { it(-24f) }
         rule.waitForIdle()
         assertEquals(listOf("choose $demo night_rain", "level $demo -24.0"), source.calls)
         back()
@@ -188,7 +190,7 @@ class MusicScreenTest {
         rule.onNodeWithTag("menu_music").performClick()
         rule.waitForIdle()
         rule.onNodeWithTag("music_enabled").assertIsDisplayed()
-        rule.onNodeWithText("-18 dB (của sách)").assertIsDisplayed()
+        rule.onNodeWithText("-18 dB").assertIsDisplayed()
         shot("book_page_${if (dark) "dark" else "light"}")
     }
 

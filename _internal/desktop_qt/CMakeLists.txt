@@ -15,7 +15,8 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_
 foreach(pair fadeSeconds:FADE_SECONDS siblingFadeSeconds:SIBLING_FADE_SECONDS stepRampSeconds:STEP_RAMP_SECONDS
         loopCrossfadeSeconds:LOOP_CROSSFADE_SECONDS loopMinPeriodSeconds:LOOP_MIN_PERIOD_SECONDS voiceStallFadeAfterSeconds:VOICE_STALL_FADE_AFTER_SECONDS
         underrunRateWindowSeconds:UNDERRUN_RATE_WINDOW_SECONDS underrunBurstSeconds:UNDERRUN_BURST_SECONDS underrunMargin:UNDERRUN_MARGIN
-        underrunLeadSeconds:UNDERRUN_LEAD_SECONDS underrunFadeSeconds:UNDERRUN_FADE_SECONDS underrunLowSeconds:UNDERRUN_LOW_SECONDS)
+        underrunLeadSeconds:UNDERRUN_LEAD_SECONDS underrunFadeSeconds:UNDERRUN_FADE_SECONDS underrunLowSeconds:UNDERRUN_LOW_SECONDS
+        levelMinDb:LEVEL_MIN_DB levelMaxDb:LEVEL_MAX_DB levelStepDb:LEVEL_STEP_DB levelDefaultDb:LEVEL_DEFAULT_DB)
     string(REPLACE ":" ";" pair "${pair}")
     list(GET pair 0 key)
     list(GET pair 1 name)
@@ -150,6 +151,7 @@ qt_add_qml_module(ABookDesk
         qml/ActionButton.qml
         qml/BookLogic.js
         qml/VolumeControl.qml
+        qml/MusicLevelSlider.qml
         qml/ReadingSuggestions.qml
         qml/BookCell.qml
         qml/CoverView.qml

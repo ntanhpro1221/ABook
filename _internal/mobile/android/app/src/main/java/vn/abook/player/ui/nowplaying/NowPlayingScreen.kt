@@ -307,7 +307,6 @@ private fun SleepAction(sleep: PlayerSleep, position: PlayerPosition, onClick: (
 
 @Composable
 fun PlayerSeekBar(durationMs: Long, position: PlayerPosition, onSeek: (Long) -> Unit, modifier: Modifier = Modifier, center: @Composable () -> Unit = {}) {
-    val colors = Abook.colors
     val dragging = remember { mutableStateOf(false) }
     val dragged = remember { mutableLongStateOf(0L) }
     val view = LocalView.current
@@ -316,36 +315,20 @@ fun PlayerSeekBar(durationMs: Long, position: PlayerPosition, onSeek: (Long) -> 
     LaunchedEffect(position) { snapshotFlow { position.milliseconds.value / 1000 }.distinctUntilChanged().collect { seconds = it } }
     Column(modifier.fillMaxWidth()) {
         // Thanh tua có lớp riêng: đang phát thì mỗi khung nó vẽ lại, và nếu không có lớp riêng thì cả lớp trong của cửa sổ (chữ, nút) ghi lại theo (~3 ms luồng giao diện mỗi khung trên OPPO).
-        Canvas(Modifier.fillMaxWidth().height(44.dp).graphicsLayer {}.testTag("player_seek")
-            .semantics {
-                contentDescription = "Vị trí trong chương"
-                progressBarRangeInfo = ProgressBarRangeInfo((seconds * 1000).toFloat(), 0f..durationMs.coerceAtLeast(1).toFloat())
-                setProgress { value -> onSeek(value.toLong().coerceIn(0, durationMs)); true }
-            }
-            .pointerInput(durationMs) {
-                fun seekAt(x: Float): Long = ((x / size.width).coerceIn(0f, 1f) * durationMs).toLong()
-                detectTapGestures { onSeek(seekAt(it.x)) }
-            }
-            .pointerInput(durationMs) {
-                detectDragGestures(
-                    onDragStart = { dragging.value = true; dragged.longValue = ((it.x / size.width).coerceIn(0f, 1f) * durationMs).toLong() },
-                    onDrag = { change, _ ->
-                        change.consume()
-                        dragged.longValue = ((change.position.x / size.width).coerceIn(0f, 1f) * durationMs).toLong()
-                        val tick = dragged.longValue / 15_000
-                        if (tick != lastTick) { lastTick = tick; view.performHapticFeedback(android.view.HapticFeedbackConstants.CLOCK_TICK) }
-                    },
-                    onDragEnd = { onSeek(dragged.longValue); dragging.value = false },
-                    onDragCancel = { dragging.value = false },
-                )
-            }) {
-            val ms = if (dragging.value) dragged.longValue else position.milliseconds.value
-            val fraction = if (durationMs > 0) (ms.toFloat() / durationMs).coerceIn(0f, 1f) else 0f
-            val y = size.height / 2
-            drawLine(colors.line, Offset(0f, y), Offset(size.width, y), 3.dp.toPx(), StrokeCap.Round)
-            drawLine(colors.accent, Offset(0f, y), Offset(size.width * fraction, y), 3.dp.toPx(), StrokeCap.Round)
-            drawCircle(colors.accent, 5.dp.toPx(), Offset(size.width * fraction, y))
-        }
+        vn.abook.player.ui.components.RangeSlider(
+            value = (seconds * 1000).toDouble(), min = 0.0, max = durationMs.coerceAtLeast(1).toDouble(), step = 1.0,
+            default = null, title = "Vị trí trong chương", description = PlayerLabels.time(seconds * 1000), enabled = durationMs > 0,
+            onMove = { value ->
+                dragging.value = true
+                dragged.longValue = value.toLong()
+                val tick = dragged.longValue / 15_000
+                if (tick != lastTick) { lastTick = tick; view.performHapticFeedback(android.view.HapticFeedbackConstants.CLOCK_TICK) }
+            },
+            onCommit = { onSeek(it.toLong()); dragging.value = false },
+            modifier = Modifier.graphicsLayer {}.testTag("player_seek"),
+            readValue = { (if (dragging.value) dragged.longValue else position.milliseconds.value).toDouble() },
+            onCancel = { dragging.value = false },
+        )
         // Isolated second-resolution labels. The frame clock never recomposes the transport or chapter.
         // Hàng giờ cao cố định: chip ở giữa hiện / ẩn không bao giờ đẩy hàng nút phát.
         Box(Modifier.fillMaxWidth().height(32.dp)) {
