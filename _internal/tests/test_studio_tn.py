@@ -20,7 +20,7 @@ from abook.tts import TTSCoordinator
     ("Aaaa! Đau quá", "a… a! Đau quá"),
     ("Ariel-sama đến rồi", "Ariel-xa-ma đến rồi"),
     ("Giá 1,000 người", "Giá 1000 người"),
-    ("a ~ b", "a b"),
+    ("a ~ b", "a, b"),
     ("  Chương IV  ", "  Chương bốn  "),
 ])
 def test_a_word_is_read_as_read_aloud_reads_it(text: str, said: str) -> None:

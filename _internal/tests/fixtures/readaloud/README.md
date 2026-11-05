@@ -43,6 +43,10 @@ Thêm ca mới: viết file `*.json` với `words` tính tay (đừng chép kế
 và `spoken/words.json` (mốc Edge báo trên chuỗi đọc -> `words` của từng chữ hiện, tính tay). Python `abook/readaloud/spoken.py` (`tests/test_readaloud_spoken.py`) và Kotlin `SpokenText.kt`
 (`SpokenTextTest`) đọc cùng hai file này. 21 ca layout là ca đo a39 (Whisper: âm tiết sai 29% chữ thô -> 12% chữ chuẩn hoá).
 
+`spoken/reading_forms.json` (`{note, cases: [{id, text, said}]}`): nhịp và vá số (docs/TEXT_NORMALIZATION.md tầng 5 + tầng 2). `said` = các câu của
+`vieneu.units(text, 256)` nối bằng một dấu cách; Studio (`studio_tn`) và Edge (`spoken.layout`) phải ra đúng chuỗi ấy. Ca `*_keep` phải giữ cách đọc cũ.
+Python `tests/test_readaloud_reading_forms.py`, vitest `ui/src/listen/readingForms.test.ts` (g?i b? chu?n ho? Python th?t; ??t `ABOOK_TEST_PYTHON` n?u runtime n?m ngo?i worktree), Kotlin `ReadingFormsTest` (VieNeu + Edge).
+
 ## `edge/pieces.json` - cắt mảnh đọc song song của Edge
 
 `{cases: [{note, rank?, text, pieces}]}`: chữ vào (bịa) -> các mảnh gửi Edge cùng lúc cho một đoạn. `rank` (vắng = việc nền): 0 là đoạn người nghe đang đứng chờ, cắt tới `TARGET_PIECES` (6) mảnh; mọi rank khác tối đa `PIECE_PARALLEL` (3). Python `abook/readaloud/edge.py` `speech_pieces` (`tests/test_readaloud_edge_pieces.py`) và Kotlin `EdgePieces.split`

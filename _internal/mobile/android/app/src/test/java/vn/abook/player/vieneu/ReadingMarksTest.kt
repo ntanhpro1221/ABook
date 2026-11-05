@@ -17,7 +17,7 @@ class ReadingMarksTest {
 
     @Test
     fun aTildeIsDroppedOrReadAsARange() = check(
-        "Hmm~ Har~kun? EMMMMM~!" to "hừm Har kun? em…!",
+        "Hmm~ Har~kun? EMMMMM~!" to "hừm, Har kun? em…!",
         "Ưm~~~, xong. Ô ~, vậy sao. Ồ~”." to "Ưm, xong. Ô, vậy sao. Ồ”.",
         "Từ 10,000 ~ 15,000 đồng và 3~5 người." to "Từ 10000 đến 15000 đồng và 3 đến 5 người.",
         "Khoảng ~50 người, “~50” nữa." to "Khoảng ~50 người, “~50” nữa.",
@@ -78,7 +78,7 @@ class ReadingMarksTest {
 
     @Test
     fun longNumericOrUnclosedAngleBrackets() = check(
-        "<mình vẫn ổn mà, chỉ hơi mệt sau một ngày dài…thôi kệ> hết" to "mình vẫn ổn mà, chỉ hơi mệt sau một ngày dài…thôi kệ, hết",
+        "<mình vẫn ổn mà, chỉ hơi mệt sau một ngày dài…thôi kệ> hết" to "mình vẫn ổn mà, chỉ hơi mệt sau một ngày dài, thôi kệ, hết",
         "Tên <game> <50/50>. < Thật Tuyệt vời. Còn x < y." to "Tên game 50 trên 50. Thật Tuyệt vời. Còn x < y.",
     )
 

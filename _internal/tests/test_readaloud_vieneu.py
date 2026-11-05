@@ -124,7 +124,7 @@ def test_tn9_a_capital_g_after_a_number_is_the_letter_g(text: str, said: str) ->
 
 # ---- dấu sea-g2p đọc sai thành lời (vieneu.reading_marks): "~", nghìn kiểu Anh, <ngoặc nhọn>, " / " ---------------------------------------
 @pytest.mark.parametrize("text, said", [
-    ("Hmm~ Har~kun? EMMMMM~!", "hừm Har kun? em…!"),  # kéo giọng: bỏ; có chữ ngay sau thì thành khoảng trắng
+    ("Hmm~ Har~kun? EMMMMM~!", "hừm, Har kun? em…!"),  # kéo giọng: bỏ, còn chữ nói tiếp thì thành dấu phẩy; có chữ dính ngay sau thì thành khoảng trắng
     ("Ưm~~~, xong. Ô ~, vậy sao. Ồ~”.", "Ưm, xong. Ô, vậy sao. Ồ”."),
     ("Từ 10,000 ~ 15,000 đồng và 3~5 người.", "Từ 10000 đến 15000 đồng và 3 đến 5 người."),  # giữa hai số: đến
     ("Khoảng ~50 người, “~50” nữa.", "Khoảng ~50 người, “~50  nữa."),  # trước số: để sea-g2p đọc "khoảng"
@@ -183,7 +183,7 @@ def test_roman_numbers_read_as_vietnamese() -> None:
     assert [vieneu.vietnamese_number(n) for n in (1, 4, 5, 10, 11, 14, 15, 20, 21, 24, 25, 30, 31, 35, 39)] == [
         "một", "bốn", "năm", "mười", "mười một", "mười bốn", "mười lăm", "hai mươi", "hai mươi mốt", "hai mươi bốn", "hai mươi lăm",
         "ba mươi", "ba mươi mốt", "ba mươi lăm", "ba mươi chín"]
-    assert [vieneu.roman_value(r) for r in ("I", "IV", "IX", "XIV", "XXXIX", "XL", "IIII", "VX", "")] == [1, 4, 9, 14, 39, None, None, None, None]
+    assert [vieneu.roman_value(r) for r in ("I", "IV", "IX", "XIV", "XXXIX", "XL", "XCIX", "CCCXCIX", "IIII", "VX", "XLX", "CCCC", "")] == [1, 4, 9, 14, 39, 40, 99, 399, None, None, None, None, None]
 
 
 def test_resample_keeps_length_and_a_low_tone() -> None:
@@ -683,7 +683,7 @@ def test_smileys_stars_dashes_and_cjk_punctuation(text: str, said: str) -> None:
 @pytest.mark.parametrize("text, said", [
     ("Gì vậy!? Thật sao?!", "Gì vậy? Thật sao?"),  # sea-g2p chỉ giữ dấu ĐẦU của dãy: "!?" mất dấu hỏi nếu để nguyên
     ("Cái gì??? Không!!!", "Cái gì? Không!!!"),
-    ("Hả?! Ừ... thật à?", "Hả? Ừ... thật à?"),
+    ("Hả?! Ừ... thật à?", "Hả? Ừ, thật à?"),
 ])
 def test_a_run_of_question_and_exclamation_marks_with_a_question_is_one_question_mark(text: str, said: str) -> None:
     assert _said(text) == said
@@ -723,5 +723,5 @@ def test_a_system_frame_glued_to_words_gets_a_pause_at_both_ends(text: str, said
 
 def test_long_or_numeric_or_unclosed_angle_brackets() -> None:
     long_thought = "<mình vẫn ổn mà, chỉ hơi mệt sau một ngày dài…thôi kệ> hết"
-    assert _said(long_thought) == "mình vẫn ổn mà, chỉ hơi mệt sau một ngày dài…thôi kệ, hết"
+    assert _said(long_thought) == "mình vẫn ổn mà, chỉ hơi mệt sau một ngày dài, thôi kệ, hết"
     assert _said("Tên <game> <50/50>. < Thật Tuyệt vời. Còn x < y.") == "Tên game 50 trên 50. Thật Tuyệt vời. Còn x < y."
