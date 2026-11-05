@@ -20,6 +20,15 @@ DOWNLOADS = "dl"
 APP_MODELS = "https://huggingface.co/NGDtuanh/abook-music-student/resolve/b784077fa29764e6eff0b093721627e1f53add93/"
 
 
+# Ai cần biết một mô-đun giọng vừa tự đo xong (sau khi tải / cập nhật / "Đo lại"): voice_pick đo lại cả các máy đọc nếu số đo của nó đã cũ.
+_measured: list[Callable[[], None]] = []
+
+
+def on_measured(listener: Callable[[], None]) -> None:
+    if listener not in _measured:
+        _measured.append(listener)
+
+
 def pin(files: tuple[studio_setup.Download, ...]) -> str:
     return hashlib.sha256("\n".join(f"{item.name} {item.sha256}" for item in files).encode()).hexdigest()
 
@@ -202,7 +211,10 @@ class ModuleCore:
     # ---- đo -----------------------------------------------------------------------------------------------------------------------
     def measure(self, tiers: list[str]) -> None:
         """Tự đo các giọng vừa tải (vài giây mỗi giọng); lỗi đo không làm hỏng lần tải."""
-        if self._bench is None or not self.usable():
+        if not self.usable():
+            return
+        if self._bench is None:
+            self._notify_measured()
             return
         with self.lock:
             self.state["benchmarking"] = True
@@ -219,6 +231,15 @@ class ModuleCore:
         finally:
             with self.lock:
                 self.state["benchmarking"] = False
+        self._notify_measured()
+
+    @staticmethod
+    def _notify_measured() -> None:
+        for listener in list(_measured):
+            try:
+                listener()
+            except Exception:  # noqa: BLE001 - người nghe hỏng không làm hỏng lần đo
+                pass
 
     def remove(self, directory: Path, part: str, tier: str) -> None:
         """Gỡ một phần đã tải để lấy lại chỗ: bỏ engine đang nạp (giữ file), xoá `directory`, quên ghim của `part` và kết quả đo của `tier`."""

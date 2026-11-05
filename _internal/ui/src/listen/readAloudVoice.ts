@@ -205,12 +205,14 @@ export const NARRATOR_VOICES: Record<string, readonly string[]> = {
   nano: ["Ái Hân", "Mỹ Duyên", "Đức Trí"],
 };
 
-/** Giọng VieNeu mặc định trong `voices` (mã "vieneu:<bản>/<tên>"): giọng ưu tiên của bản ấy, xét theo bậc (bậc 1 của mọi bản rồi mới tới bậc 2;
- *  cùng bậc thì giọng đứng trước trong danh sách); không có thì giọng VieNeu đầu tiên cùng giới `gender` (giới của giọng đang dùng khi chưa có
- *  giọng trên máy - giọng mặc định của máy); không biết giới mới lấy giọng VieNeu đầu danh sách. */
+/** Giọng trên máy mặc định trong `voices`. Máy đã đo các giọng ("Giọng theo máy": mỗi giọng trên máy có `pick`) thì chỉ xét các giọng của bộ giọng
+ *  máy chọn theo số đo (hay người dùng chọn tay) - chưa đo hoặc không bộ nào đạt thì chưa có giọng trên máy mặc định.
+ *  Trong các giọng ấy: giọng ưu tiên của bản ấy (mã "vieneu:<bản>/<tên>"), xét theo bậc (bậc 1 của mọi bản rồi mới tới bậc 2; cùng bậc thì giọng
+ *  đứng trước trong danh sách); không có thì giọng đầu tiên cùng giới `gender` (giới của giọng đang dùng khi chưa có giọng trên máy - giọng mặc định
+ *  của máy); không biết giới mới lấy giọng đầu danh sách. */
 export function narratorVoice(voices: ReadAloudVoice[], gender?: string): ReadAloudVoice | undefined {
-  const local = voices.filter((voice) => voice.provider === "vieneu");
-  const tierOf = (voice: ReadAloudVoice) => voice.id.slice(voice.id.indexOf(":") + 1, voice.id.indexOf("/"));
+  const local = voices.filter((voice) => voice.pick === true);
+  const tierOf = (voice: ReadAloudVoice) => (voice.id.includes("/") ? voice.id.slice(voice.id.indexOf(":") + 1, voice.id.indexOf("/")) : "");
   const nameOf = (voice: ReadAloudVoice) => voice.id.slice(voice.id.indexOf("/") + 1).normalize("NFC");
   const ranks = Math.max(0, ...Object.values(NARRATOR_VOICES).map((list) => list.length));
   for (let rank = 0; rank < ranks; rank++) {
@@ -220,8 +222,7 @@ export function narratorVoice(voices: ReadAloudVoice[], gender?: string): ReadAl
   return local.find((voice) => gender && voice.gender === gender) ?? local[0];
 }
 
-/** Giọng dùng thật: giọng đã chọn nếu còn trong danh sách, không thì giọng mặc định, không thì giọng đầu tiên. Người nghe CHƯA tự chọn giọng nào mà máy đã có
- *  giọng VieNeu thì mặc định là giọng kể chuyện trung tính của VieNeu (`narratorVoice`; đọc ngay trên máy, chữ không rời máy) chứ không phải giọng Edge gửi chữ tới Microsoft (soát UX a15). */
+/** Giọng dùng thật: giữ lựa chọn của người nghe; chưa chọn thì dùng bộ giọng máy chọn theo số đo (`pick`), rồi giọng mặc định của hệ thống. */
 export function resolveVoice(voices: ReadAloudVoice[], chosen: string): ReadAloudVoice | undefined {
   const exact = voices.find((voice) => voice.id === chosen);
   if (exact) return exact;

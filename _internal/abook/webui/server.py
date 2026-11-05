@@ -47,7 +47,7 @@ from ..readaloud.model import VoiceError
 from ..voice_catalog import engine_voice
 from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers, diagnostics, edits_inbox, export_jobs, export_leftovers, ffmpeg_setup, humanize, listen_view,
                listen_export, music_bounds, music_catalog, music_export, music_cache, music_local, music_module, music_moods, music_nnlite, music_nnscene, music_plan, music_playlist, music_select, music_student, music_valence, notices, package_share, packages, project_views,
-               projectfile, reading_preview, remote_config, shared_readings, store, supertonic_module, textbook, trash_pending, vieneu_module, voice_speed, volumes, word_timing, workshop, zerotts_module)
+               projectfile, reading_preview, remote_config, shared_readings, store, supertonic_module, textbook, trash_pending, vieneu_module, voice_module, voice_pick, voice_speed, volumes, word_timing, workshop, zerotts_module)
 from .fingerprints import Fingerprints
 from .library import (NUMBER_RANGES, READING_SURFACES, SLEEP_CHOICES, BookTemplateError, Library, Preferences, apply_book_template_op, book_id, clean_sleep_schedule)
 from .listening import HEAVY_KEYS, RECORD_ID, Listening, RecordGone, StalePlayback
@@ -549,6 +549,9 @@ class App:
         # "Nghe ngay" (abook/readaloud): giọng máy đọc chương chỉ-có-chữ; clip đã đọc nằm trong bộ đệm dưới thư mục dữ liệu của app.
         # Giọng trực tuyến dùng khoá của người dùng (readaloud/byok.py): khoá nằm trong file riêng cạnh file tuỳ chọn, giao diện chỉ thấy bản che.
         # Giọng VieNeu (vieneu_module.py): mô-đun tải khi người dùng bấm; tải rồi thì giọng của nó vào danh sách, tải xong tự đo vài giây.
+        def model_mark(voice: str, tier: str) -> str:
+            return (zerotts_module.model_mark() if voice.startswith("zerotts:") else "") or supertonic_module.model_mark(voice, tier) or vieneu_module.model_mark(voice)
+
         self.readaloud = readaloud.ReadAloud(preferences.path.with_name("readaloud-cache"),
                                              keys=readaloud_keys.KeyStore(preferences.path.with_name(readaloud_keys.FILE_NAME)),
                                              vieneu_locate=vieneu_module.installed, supertonic_locate=supertonic_module.installed, vieneu_engines=vieneu_module.make_engine,
@@ -556,9 +559,11 @@ class App:
                                              # "Tốc độ giọng trên máy" (voice_speed.py): bậc "Nhanh hơn" của Supertonic khi nghe trực tiếp
                                              speed=voice_speed.live_tag, supertonic_fast_locate=supertonic_module.installed_fast,
                                              # dấu model trong khoá bộ đệm: cập nhật model / đổi lịch đọc thì đoạn đã đọc sẵn được đọc lại
-                                             model_mark=lambda voice, tier: supertonic_module.model_mark(voice, tier) or vieneu_module.model_mark(voice),
+                                             model_mark=model_mark,
                                              # nạp sẵn model lúc mở trang sách ([ReadAloud.preload]): không khi chạy pin yếu hay thiếu RAM
-                                             spare=power_source.spare_for_preload)
+                                             spare=power_source.spare_for_preload,
+                                             # giọng mặc định trên máy theo số đo của máy này (voice_pick.py)
+                                             machine_pick=voice_pick.chosen, zerotts_locate=zerotts_module.installed)
         voice_speed.configure(preferences.path.with_name(voice_speed.FILE))
         vieneu_module.configure(preferences.path.with_name(vieneu_module.FOLDER), benchmark=lambda tier: self.readaloud.benchmark("vieneu", tier),
                                 after_install=lambda: self.readaloud.forget("vieneu"))
@@ -567,6 +572,9 @@ class App:
                                     after_install=lambda: self.readaloud.forget("supertonic"))
         # Giọng ZeroTTS (zerotts_module.py): máy đọc khác cho Studio, người nghe chọn tay ở "Đổi giọng"; tải khi bấm.
         zerotts_module.configure(preferences.path.with_name(zerotts_module.FOLDER))
+        # "Giọng theo máy" (voice_pick.py): đo mọi máy đọc đã tải trên cùng bộ câu, chọn mặc định theo số đo; tự đo lại khi một mô-đun giọng vừa tải xong.
+        voice_pick.configure(preferences.path.with_name(voice_pick.FILE), self.readaloud, marks=lambda voice: model_mark(voice, ""), studio=lambda: self.studio)
+        voice_module.on_measured(voice_pick.module_measured)
         if not (isinstance(runner, actions.FakeRunner) or os.environ.get("ABOOK_FAKE_RUNNER") == "1"):
             self.readaloud.warm()
         # Mốc từng chữ khi nghe (word_timing.py): app đóng gói không có numpy nên giao việc căn cho Python của Studio.
@@ -6544,6 +6552,27 @@ class Handler(BaseHTTPRequestHandler):
     def post_readaloud_supertonic(self, _query: dict[str, list[str]]) -> None:
         self._start_voice_module(supertonic_module)
 
+    def get_readaloud_voice_pick(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, voice_pick.status())
+
+    def post_readaloud_voice_pick_measure(self, _query: dict[str, list[str]]) -> None:
+        # "Đo": đo lại mọi giọng trên máy ở luồng nền (voice_pick.start).
+        self.app._mutating()
+        voice_pick.start()
+        self._send_json(HTTPStatus.OK, voice_pick.status())
+
+    def post_readaloud_voice_pick_choose(self, _query: dict[str, list[str]]) -> None:
+        # Người dùng chọn tay giọng mặc định trên máy (`engine` "" = theo số đo).
+        self.app._mutating()
+        engine = self._body().get("engine")
+        if not isinstance(engine, str):
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu engine")
+        try:
+            voice_pick.set_override(engine)
+        except ValueError as error:
+            raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
+        self._send_json(HTTPStatus.OK, voice_pick.status())
+
     def get_readaloud_voice_speed(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, voice_speed.status())
 
@@ -6912,6 +6941,9 @@ ROUTES: list[Route] = [
     ("POST", re.compile(r"/api/readaloud/vieneu/accelerate"), Handler.post_readaloud_vieneu_accelerate),
     ("GET", re.compile(r"/api/readaloud/supertonic"), Handler.get_readaloud_supertonic),
     ("GET", re.compile(r"/api/readaloud/voice-speed"), Handler.get_readaloud_voice_speed),
+    ("GET", re.compile(r"/api/readaloud/voice-pick"), Handler.get_readaloud_voice_pick),
+    ("POST", re.compile(r"/api/readaloud/voice-pick/measure"), Handler.post_readaloud_voice_pick_measure),
+    ("POST", re.compile(r"/api/readaloud/voice-pick/choose"), Handler.post_readaloud_voice_pick_choose),
     ("POST", re.compile(r"/api/readaloud/voice-speed"), Handler.post_readaloud_voice_speed),
     ("POST", re.compile(r"/api/readaloud/supertonic"), Handler.post_readaloud_supertonic),
     ("POST", re.compile(r"/api/readaloud/supertonic/measure"), Handler.post_readaloud_supertonic_measure),

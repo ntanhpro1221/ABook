@@ -10,6 +10,7 @@ import { api } from "@/studio/api";
 import { formatSize } from "@/shared/format";
 import { forgetVoices, switchVoices, watchVoiceModule } from "./readAloudVoice";
 import type { ReadAloudVoice } from "./readAloud";
+import { desktopVoicePick, VoicePickCard, type VoicePickBackend } from "./VoicePickCard";
 import {
   acceleratedNote,
   fastUnsupportedNote,
@@ -75,12 +76,14 @@ export const desktopSupertonic: VieneuBackend = {
 };
 
 /** Hai thẻ giọng trên máy của Cài đặt (máy tính và điện thoại) + một dòng khuyên tải cái nào (moduleAdvice): chỉ thẻ được khuyên đánh dấu sẵn.
- *  `vieneuSlot`: mã để nút "Tải giọng VieNeu" ở khối báo mất mạng của trình phát cuộn tới đúng thẻ VieNeu (PlayerViews.PlayerAlert). */
+ *  `vieneuSlot`: mã để nút "Tải giọng VieNeu" ở khối báo mất mạng của trình phát cuộn tới đúng thẻ VieNeu (PlayerViews.PlayerAlert).
+ *  `pick`: thẻ "Giọng theo máy" (máy đo các giọng đã tải, chọn giọng mặc định). */
 export function LocalVoiceModules({
   vieneu = desktopVieneu,
   supertonic = desktopSupertonic,
+  pick = desktopVoicePick,
   onChanged,
-}: { vieneu?: VieneuBackend; supertonic?: VieneuBackend; onChanged?: () => void }) {
+}: { vieneu?: VieneuBackend; supertonic?: VieneuBackend; pick?: VoicePickBackend; onChanged?: () => void }) {
   // Cùng khoá truy vấn với thẻ (useModuleStatus): không hỏi thêm lần nào.
   const { data: vieneuStatus } = useQuery({ queryKey: ["readaloud", VIENEU_COPY.key], queryFn: () => vieneu.status() });
   const { data: supertonicStatus } = useQuery({ queryKey: ["readaloud", SUPERTONIC_COPY.key], queryFn: () => supertonic.status() });
@@ -92,14 +95,17 @@ export function LocalVoiceModules({
         <VieneuModuleCard backend={vieneu} onChanged={onChanged} />
       </div>
       <VieneuModuleCard backend={supertonic} copy={SUPERTONIC_COPY} onChanged={onChanged} preselect={preselectSupertonic} />
+      <VoicePickCard backend={pick} modulesBusy={moduleActivity(vieneuStatus, supertonicStatus) !== MODULES_IDLE} />
     </Fold>
   );
 }
 
 export function moduleActivity(vieneu?: VieneuStatus, supertonic?: VieneuStatus): string {
   const active = [["VieNeu", vieneu], ["Supertonic", supertonic]] as const;
-  return active.flatMap(([name, status]) => status?.state === "downloading" ? [`${name} · ${vieneuPercent(status)}%`] : status?.benchmarking ? [`${name} · đang đo`] : []).join(" · ") || "Tải, đo và quản lý";
+  return active.flatMap(([name, status]) => status?.state === "downloading" ? [`${name} · ${vieneuPercent(status)}%`] : status?.benchmarking ? [`${name} · đang đo`] : []).join(" · ") || MODULES_IDLE;
 }
+
+const MODULES_IDLE = "Tải, đo và quản lý";
 
 /** Trạng thái mô-đun giọng + nhịp hỏi lại khi đang tải / đo (mỗi giây); tải / đo xong thì danh sách giọng của trình phát hỏi lại để giọng mới hiện ngay.
  *  Thẻ trong Cài đặt và khối lỗi của trình phát (VieneuDownload) dùng chung - cùng khoá truy vấn nên hai nơi thấy cùng một lần tải. */
