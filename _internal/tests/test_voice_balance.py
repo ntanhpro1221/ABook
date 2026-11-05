@@ -103,9 +103,8 @@ def test_the_table_covers_exactly_the_castable_and_narrator_voices() -> None:
     names = set(voice_balance.balanced_preset_names())
     assert {"Quang Sơn", "Ngọc Trân"} <= names
     news = {preset["name"] for preset in VIENEU_PRESETS if preset["style"] == STYLE_NEWS}
-    assert news & names == {"Mai Anh"}
+    assert news and not news & names
     assert all(not preset_eligible(preset_by_name(name), "narrator") for name in news - names)
-    assert voice_balance.constants_for("vieneu", voice_balance.engine_version(), "Mai Anh", 1.0).pitch_st == 0
     in_table = {key.split("/")[1] for key in voice_balance.load_table()["voices"] if key.startswith("vieneu@")}
     assert in_table == names
     # Máy đọc khác: đúng các giọng trong danh mục (chọn tay được hay chưa), mỗi giọng một bậc gốc.
@@ -167,8 +166,7 @@ def test_the_measured_table_puts_every_voice_on_one_axis() -> None:
     for key, record in table["voices"].items():
         by_preset.setdefault(key.split("/")[1], set()).add(record["r"])
     assert all(len(rates) == 1 for rates in by_preset.values()), by_preset
-    # Mai Anh đo bổ sung trên cùng trục, không tính lại trung vị của 19 giọng đã chốt mốc 04-10.
-    castable = [preset["name"] for gender in ("male", "female") for preset in casting_presets(gender) if preset["name"] != "Mai Anh"]
+    castable = [preset["name"] for gender in ("male", "female") for preset in casting_presets(gender)]
     assert len(castable) == 19
     middle = sorted(next(iter(by_preset[name])) for name in castable)[len(castable) // 2]
     assert middle == pytest.approx(1.0, abs=0.005)

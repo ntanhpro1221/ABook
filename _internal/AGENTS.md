@@ -257,7 +257,7 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   bảng hạng người nghe đi trước các thước đo; giọng ngang bậc hoặc chưa xếp mới phân xử theo các thước đo và thứ tự cũ.
 - `voice_catalog.preset_eligible` là cửa dùng giọng theo vai: preset được chủ sách xếp trong `assets/voice_rank.json`
   được dùng cho đúng vai ấy bất kể style catalog; tin tức chưa được xếp vẫn bị loại. Vùng miền và lệnh cấm phân vai
-  vẫn giữ nguyên. Bảng hạng ưu tiên hơn các thước đo; mặc định nữ là Mai Anh, nam là Đức Trí.
+  vẫn giữ nguyên. Bảng hạng ưu tiên hơn các thước đo; mặc định nữ là Đoan Trang, nam là Đức Trí.
 - Pitch âm phải theo giới hạn từng preset đo trên preview: Phạm Tuyên không hạ; Xuân Vĩnh, Thái Sơn,
   Ngọc Trân tối đa `-1`; các preset không tin tức còn lại tối đa `-2`; pitch dương tối đa `+2`.
 - NPC có nhãn cục bộ được giữ identity riêng trong phạm vi chapter/batch; NPC không phân biệt được

@@ -38,7 +38,7 @@ def test_a_child_gets_a_female_preset_with_no_pitch_shift_and_no_formant_warp(ge
 
 
 def test_the_first_child_takes_the_best_ranked_female_character_voice() -> None:
-    assert _child("male")[0] == _child("female")[0] == "Đoan Trang"
+    assert _child("male")[0] == _child("female")[0] == "Ngọc Linh"
 
 
 def test_children_follow_the_female_character_tiers(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -75,11 +75,11 @@ def test_teen_and_elderly_are_still_carried_toward_their_age() -> None:
 
 
 def test_several_children_and_female_leads_get_distinct_voices_while_any_are_free() -> None:
-    """Chín preset nữ dùng được khi người kể là nam (tám khi người kể là nữ)."""
+    """Tám preset nữ dùng được khi người kể là nam (bảy khi người kể là nữ)."""
     pool = len(casting_presets("female"))
-    assert pool == 9
+    assert pool == 8
     allocator = PresetAllocator("Đức Trí", 2)
-    ages = ["adult", "adult", "child", "adult", "child", "child", "adult", "child", "adult"]
+    ages = ["adult", "adult", "child", "adult", "child", "child", "adult", "child"]
     people = [f"P{index}" for index in range(len(ages))]
     for person in people:
         allocator.note_chapters(person, {1})

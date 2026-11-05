@@ -87,7 +87,7 @@ function onlineNotice(voice) {
 
 // Giọng VieNeu kể chuyện trung tính của từng bản, theo thứ tự ưu tiên (readAloudVoice.ts NARRATOR_VOICES)
 var NARRATOR = {
-    turbo: ["Đức Trí", "Mai Anh", "Thanh Bình"],
+    turbo: ["Đức Trí", "Đoan Trang", "Thanh Bình"],
     nano: ["Ái Hân", "Mỹ Duyên", "Đức Trí"]
 }
 

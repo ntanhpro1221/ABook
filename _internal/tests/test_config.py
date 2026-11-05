@@ -59,7 +59,7 @@ def test_narrator_gender_selects_a_safe_default_voice() -> None:
     settings = build_settings(overrides={"voices": {"narrator_gender": "female"}})
 
     assert settings["voices"]["narrator_gender"] == "female"
-    assert settings["voices"]["narrator_voice"] == "Mai Anh"
+    assert settings["voices"]["narrator_voice"] == "Đoan Trang"
 
 
 def test_unknown_narrator_gender_is_rejected_cleanly() -> None:
