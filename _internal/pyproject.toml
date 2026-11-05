@@ -78,6 +78,8 @@ include = ["abook*"]
 
 [tool.setuptools.package-data]
 abook = [
+  "_vendor/zwicker/LICENSE",
+  "_vendor/zwicker/NOTICE.md",
   "assets/*.ico",
   "assets/*.png",
   "assets/*.dict",
