@@ -1061,7 +1061,7 @@
         },
         {
           "side": "web",
-          "match": "^(microsoft|mỹ duyên|ngọc linh|phạm tuyên|thanh bình|ái hân|đức trí)$",
+          "match": "^(microsoft|mai anh|mỹ duyên|ngọc linh|phạm tuyên|thanh bình|ái hân|đức trí)$",
           "reason": "voice and company names are data (native gets them from the core's voice list), not interface words"
         },
         {

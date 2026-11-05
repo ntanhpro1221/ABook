@@ -82,8 +82,9 @@ def test_gui_has_compact_header_nested_splitters_and_one_stop(tmp_path: Path) ->
         window.narrator_voice_combo.itemData(index)
         for index in range(window.narrator_voice_combo.count())
     }
-    assert len(available_narrators) == 21
-    assert {"Minh Đức", "Minh Triết", "Mai Anh", "Thùy Dung"}.isdisjoint(available_narrators)
+    assert len(available_narrators) == 22
+    assert "Mai Anh" in available_narrators
+    assert {"Minh Đức", "Minh Triết", "Thùy Dung"}.isdisjoint(available_narrators)
     assert all(
         window.narrator_voice_combo.itemText(index)
         == window.narrator_voice_combo.itemData(index)
@@ -234,8 +235,8 @@ def test_selecting_narrator_autoplays_preview_and_button_replays(tmp_path: Path)
 
 
 def test_every_selectable_narrator_has_a_packaged_preview() -> None:
-    # 21 preset VieNeu + 5 giọng ZeroTTS + 4 giọng Supertonic chọn tay được (voice_catalog.ENGINE_VOICES).
-    assert len(VOICE_PREVIEW_FILENAMES) == 30
+    # 22 preset VieNeu (thêm Mai Anh) + 5 giọng ZeroTTS + 4 giọng Supertonic chọn tay được.
+    assert len(VOICE_PREVIEW_FILENAMES) == 31
     assert all((VOICE_PREVIEW_DIR / filename).is_file() for filename in VOICE_PREVIEW_FILENAMES.values())
 
 
@@ -594,7 +595,7 @@ def test_startup_opens_the_last_selected_project(tmp_path: Path) -> None:
     window.close()
 
 
-def test_narrator_filters_offer_every_non_news_voice_and_build_matching_settings(tmp_path: Path) -> None:
+def test_narrator_filters_offer_eligible_voices_and_build_matching_settings(tmp_path: Path) -> None:
     _app, window, _store = _window(tmp_path)
     female_index = window.narrator_gender_combo.findData("female")
 
@@ -604,11 +605,11 @@ def test_narrator_filters_offer_every_non_news_voice_and_build_matching_settings
         window.narrator_voice_combo.itemData(index)
         for index in range(window.narrator_voice_combo.count())
     }
-    assert window.narrator_voice_combo.currentData() == "Ngọc Linh"
-    assert window.narrator_voice_combo.itemData(0) == "Ngọc Linh"
+    assert window.narrator_voice_combo.currentData() == "Mai Anh"
+    assert window.narrator_voice_combo.itemData(0) == "Mai Anh"
     assert available == {
         "Trúc Ly", "Đoan Trang", "Ngọc Linh", "Thục Đoan", "Ngọc Trân",
-        "Kim Thanh", "Mỹ Duyên", "Ngọc Huyền", "Quỳnh Anh",
+        "Kim Thanh", "Mỹ Duyên", "Ngọc Huyền", "Quỳnh Anh", "Mai Anh",
     }
 
     central_index = window.narrator_region_combo.findData("Trung")
@@ -623,9 +624,9 @@ def test_narrator_filters_offer_every_non_news_voice_and_build_matching_settings
         for index in range(window.narrator_voice_combo.count())
     ]
     all_available = set(all_available_ordered)
-    assert len(all_available) == 21
-    assert all_available_ordered[:2] == ["Đức Trí", "Ngọc Linh"]
-    assert {"Minh Đức", "Minh Triết", "Mai Anh", "Thùy Dung"}.isdisjoint(all_available)
+    assert len(all_available) == 22
+    assert all_available_ordered[:2] == ["Đức Trí", "Mai Anh"]
+    assert {"Minh Đức", "Minh Triết", "Thùy Dung"}.isdisjoint(all_available)
 
     window.narrator_gender_combo.setCurrentIndex(female_index)
     settings = window._build_settings()

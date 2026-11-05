@@ -28,7 +28,7 @@ def test_a_recorded_book_gets_both_cards_with_the_existing_wishes_as_the_choices
     (thought,) = _cards(root, "teller-thought")
 
     (choice,) = voice["voiceChoices"]
-    assert choice["character"] == "NARRATOR" and choice["preset"] == "Ngọc Linh" and voice["keepCharacters"] == ["NARRATOR"]
+    assert choice["character"] == "NARRATOR" and choice["preset"] == "Mai Anh" and voice["keepCharacters"] == ["NARRATOR"]
     assert voice["title"] == "Giọng lời dẫn" and "nữ" in voice["problem"]
     assert thought["key"] == "teller-thought:MAI" and thought["affected"] == 2
     assert [option["value"] for option in thought["choices"]] == ["NARRATOR"]

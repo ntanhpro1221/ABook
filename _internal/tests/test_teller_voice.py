@@ -19,7 +19,7 @@ from abook.models import ProjectPaths
 from abook.voice_catalog import casting_presets, preset_by_name
 
 NARRATOR_VOICE = str(build_settings()["voices"]["narrator_voice"])
-FEMALE_NARRATOR = "Ngọc Linh"
+FEMALE_NARRATOR = "Mai Anh"
 # Chương 1: kể, lời của Mai, nội tâm của Mai, nội tâm của Bảo, kể. Chương 2: nội tâm của Mai, nội tâm của Bảo, kể.
 LINES = [
     (1, "c1s0", "narration", "NARRATOR", "Một câu kể."),
@@ -275,7 +275,7 @@ def test_the_technical_log_says_what_the_machine_did_in_one_line(tmp_path: Path)
     lines = [item["text"] for item in store.activity(paths.root, technical=True)]
     assert not any("Người nghe gán" in line for line in lines), lines
     assert "Máy chuyển 2 câu nghĩ thầm của Mai sang giọng dẫn" in lines
-    assert any(line.startswith("Máy đổi giọng dẫn từ ") and "Ngọc Linh" in line for line in lines)
+    assert any(line.startswith("Máy đổi giọng dẫn từ ") and "Mai Anh" in line for line in lines)
     assert not any("inner thoughts" in line or "narration voice" in line for line in lines), "không còn mã thô tiếng Anh"
     story = [item["text"] for item in store.activity(paths.root)]
     assert "Máy chuyển 2 câu nghĩ thầm của người kể “tôi” sang giọng dẫn" in story

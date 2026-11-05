@@ -68,6 +68,7 @@ SPEED_FACTOR_MAX = 1.50
 # 13.9-15.5 cm, which is why one shared warp range is wrong in both directions - a male
 # voice has little room left to go deeper and a female voice little room to go brighter.
 PRESET_VOCAL_TRACT_CM = {
+    "Mai Anh": 14.3,
     "Phạm Tuyên": 16.5,
     "Thanh Bình": 16.9,
     # Xuân Vĩnh re-measured from its VieNeu 3.8.1 preview (was 16.6). Trúc Ly measures 14.4 on
@@ -131,9 +132,10 @@ def voice_variant_deviation(preset_name: str) -> tuple[float, float]:
 CHARACTER_FORMANT_STEPS = (1.00, 0.93, 1.08, 0.87, 1.16, 0.97, 1.04)
 DEFAULT_NARRATOR_BY_GENDER = {
     GENDER_MALE: "Đức Trí",
-    GENDER_FEMALE: "Ngọc Linh",
+    GENDER_FEMALE: "Mai Anh",
 }
 PRESET_PREVIEW_MEDIAN_PITCH_HZ = {
+    "Mai Anh": 203.8,
     "Phạm Tuyên": 100.6,
     # Re-measured from the 3.8.1 preview (was 116.2), like Trúc Ly below (was 213.7).
     "Xuân Vĩnh": 103.2,
@@ -158,6 +160,7 @@ PRESET_PREVIEW_MEDIAN_PITCH_HZ = {
     "Thiền Tâm Đức": 104.4,
 }
 PRESET_MIN_PITCH_SEMITONES = {
+    "Mai Anh": -2,
     # Set when Phạm Tuyên was the lowest measured male preset, since lowering the lowest voice
     # costs intelligibility. Adam (87.1 Hz) and Đức Trí (98.2 Hz) are lower now; it stays 0
     # because it never plays a character in book 2 and moving it would move book 1's ladders.
@@ -187,6 +190,7 @@ PRESET_MIN_PITCH_SEMITONES = {
     "Thiền Tâm Đức": -1,
 }
 VOICE_PREVIEW_FILENAMES = {
+    "Mai Anh": "mai_anh.wav",
     "Phạm Tuyên": "pham_tuyen.wav",
     "Thanh Bình": "thanh_binh.wav",
     "Xuân Vĩnh": "xuan_vinh.wav",
@@ -579,10 +583,8 @@ AGE_PITCH_RANK_BUCKET = 4
 # linh)"; "quỳnh trang" read as Quỳnh Anh): narrator = [Mai Anh] > [Ngọc Linh] > [Đoan
 # Trang] > [Kim Thanh, Mỹ Duyên, Quỳnh Anh, Thục Đoan], character = [Ngọc Linh] > [Đoan
 # Trang] > [Mai Anh] > [Kim Thanh, Mỹ Duyên, Quỳnh Anh, Thục Đoan]; Trúc Ly, Ngọc Trân,
-# Thùy Dung and Ngọc Huyền are unranked. Mai Anh is a news preset (`STYLE_NEWS`): it has no
-# balance numbers and is neither castable nor selectable as a narrator, so its tiers are
-# dormant until a measurement opens it; the female default narrator is therefore the best
-# SELECTABLE narrator, Ngọc Linh.
+# Thùy Dung và Ngọc Huyền chưa được xếp hạng. Mai Anh vẫn mang metadata tin tức của catalog;
+# quyền kể chuyện / đóng nhân vật theo đúng vai chủ sách đã xếp trong bảng, không theo nhãn style.
 #
 # Children are cast from the female presets by the female `character` tiers: there is no
 # child role.
@@ -631,6 +633,20 @@ def listener_rank(preset_name: str, gender: str, role: str = "character") -> int
     tiers = VOICE_RANK[role].get(str(gender), ())
     name = str(preset_name)
     return next((index for index, tier in enumerate(tiers) if name in tier), len(tiers))
+
+
+def preset_eligible(preset: dict[str, Any], role: str) -> bool:
+    """Quyền dùng theo vai: phán quyết chủ sách mở cả giọng tin tức, chỉ cho vai đã xếp hạng.
+
+    Giọng chưa nghe giữ luật catalog cũ. Vùng miền và lệnh cấm phân vai vẫn có hiệu lực.
+    """
+    tiers = VOICE_RANK[role].get(str(preset["gender"]), ())
+    ranked = any(preset["name"] in tier for tier in tiers)
+    if preset["style"] == STYLE_NEWS and not ranked:
+        return False
+    return role != "character" or (
+        preset["region"] in CASTING_REGIONS and preset["name"] not in EXCLUDED_PRESETS
+    )
 
 # How far a preset's own F0 may be carried toward an age target (teen, elderly). Set where
 # the presets actually stop working, judged by ear carried the whole way, rather than at a
@@ -783,7 +799,7 @@ def narrator_presets(
     candidates = [
         preset
         for preset in VIENEU_PRESETS
-        if preset["style"] != STYLE_NEWS
+        if preset_eligible(preset, "narrator")
         and (not gender or preset["gender"] == gender)
         and (not region or preset["region"] == region)
     ]
@@ -815,8 +831,6 @@ def casting_presets(gender: str) -> list[dict[str, str]]:
         preset
         for preset in VIENEU_PRESETS
         if preset["gender"] == gender
-        and preset["style"] != STYLE_NEWS
-        and preset["region"] in CASTING_REGIONS
-        and preset["name"] not in EXCLUDED_PRESETS
+        and preset_eligible(preset, "character")
     ]
     return sorted(candidates, key=casting_preset_priority)

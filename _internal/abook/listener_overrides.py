@@ -266,11 +266,9 @@ def voice_target(
     """
     from .character_registry import listener_voice_choice
     from .voice_catalog import (
-        CASTING_REGIONS,
-        EXCLUDED_PRESETS,
-        STYLE_NEWS,
         VIENEU_PRESETS,
         castable_engine_voices,
+        preset_eligible,
     )
 
     if gender not in ("", "male", "female"):
@@ -295,7 +293,7 @@ def voice_target(
         return None, NO_VOICE
     castable = {
         str(item["name"]): item for item in VIENEU_PRESETS
-        if item["style"] != STYLE_NEWS and item["region"] in CASTING_REGIONS and item["name"] not in EXCLUDED_PRESETS
+        if preset_eligible(item, "character")
         and item["name"] not in {str(voices.get("narrator_voice") or ""), *map(str, voices.get("other_narrators", ()))}
     }
     # Giọng máy đọc khác: chỉ người nghe chọn tay (phân vai tự động không bao giờ tới), và chỉ những giọng có số cân bằng.
