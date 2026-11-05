@@ -65,3 +65,11 @@ _internal/shell/src-tauri/gen/
 _internal/shell/src-tauri/resources/
 !_internal/tests/fixtures/**/*.mp3
 !_internal/tests/fixtures/**/*.wav
+
+# Local Edge geometry audit evidence and isolated dependency/profile directories
+/.sheetgeo-deps/
+/.sheetgeo-testdeps/
+/.sheetgeo-npm-cache/
+/.sheetgeo-temp/
+/abook-gallery-*/
+/sheetgeo*.json

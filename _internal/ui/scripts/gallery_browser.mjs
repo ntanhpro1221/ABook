@@ -94,14 +94,23 @@ export function readDevToolsPort(portFile, read = readFileSync) {
 
 /** Mở trình duyệt headless với cổng gỡ lỗi do nó tự chọn (đọc từ DevToolsActivePort trong thư mục hồ sơ tạm). Đóng thì xoá hồ sơ (~12 MB):
  *  01-11 mọi chỗ gọi từng giữ hồ sơ lại - 2611 thư mục / ~31 GB trong %TEMP% từ 24-10. Nơi cấm xoá (sandbox) thì chỉ cảnh báo. */
-export async function launch(executable, { hideScrollbars = true, softwareRendering = false } = {}) {
-  const profile = mkdtempSync(path.join(tmpdir(), "abook-gallery-"));
+export async function launch(executable, { hideScrollbars = true, softwareRendering = false, profileParent = tmpdir(), disableGpu = process.env.CUDA_VISIBLE_DEVICES === '-1' } = {}) {
+  const profile = mkdtempSync(path.join(path.resolve(profileParent), "abook-gallery-"));
+  // Match the unique profile marker even if Edge relaunches itself. Never kill by image name.
+  const killOwned = () => {
+    if (process.platform === "win32") {
+      const marker = profile.replaceAll("'", "''");
+      const result = spawnSync("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command",
+        `Get-CimInstance Win32_Process | Where-Object { $_.Name -match '^(msedge|chrome|chromium)\\.exe$' -and $_.CommandLine -and $_.CommandLine.Contains('${marker}') } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`], { windowsHide: true });
+      if (result.status !== 0) throw new Error("Cannot clean browser processes matching " + profile);
+    } else if (child.exitCode === null) child.kill("SIGKILL");
+  };
   const cleanProfile = () => {
     // Chỉ xoá hồ sơ vừa tạo, bằng Python và đường dẫn tuyệt đối; không đi theo junction/symlink.
     const cleaned = spawnSync(process.env.PYTHON ?? "python", ["-X", "utf8", "-c", `
-import os, sys, tempfile, time
+import os, sys, time
 root = os.path.abspath(sys.argv[1])
-assert os.path.dirname(root) == os.path.abspath(tempfile.gettempdir())
+assert os.path.dirname(root) == os.path.abspath(sys.argv[2])
 assert os.path.basename(root).startswith('abook-gallery-') and not os.path.islink(root)
 for attempt in range(60):
     try:
@@ -117,17 +126,18 @@ for attempt in range(60):
     except PermissionError:
         time.sleep(0.2)
 else: raise RuntimeError('Hồ sơ trình duyệt vẫn bị khoá: ' + root)
-`, profile], { encoding: "utf8", windowsHide: true });
+`, profile, path.resolve(profileParent)], { encoding: "utf8", windowsHide: true });
     if (cleaned.status !== 0) console.warn(`Không xoá được hồ sơ trình duyệt ${profile}: ${(cleaned.stderr || cleaned.error?.message || "").trim().slice(-300)}`);
   };
   const child = spawn(executable, [
     "--headless=new",
-    // Cổng phát hành chạy CPU, không chiếm GPU đang làm sách.
-    ...(softwareRendering || process.env.CUDA_VISIBLE_DEVICES === "-1" ? ["--disable-gpu", "--use-angle=swiftshader"] : []),
     "--no-first-run",
     "--no-default-browser-check",
     `--user-data-dir=${profile}`,
     "--disable-extensions",
+    // Cổng phát hành chạy CPU, không chiếm GPU đang làm sách.
+    ...(softwareRendering ? ["--disable-gpu", "--use-angle=swiftshader"]
+      : disableGpu ? ["--disable-gpu", "--disable-software-rasterizer", "--renderer-process-limit=2", "--num-raster-threads=1"] : []),
     "--disable-background-networking",
     "--disable-component-update",
     "--disable-background-timer-throttling",
@@ -166,6 +176,7 @@ else: raise RuntimeError('Hồ sơ trình duyệt vẫn bị khoá: ' + root)
     const endpoint = `ws://127.0.0.1:${lines[0].trim()}${lines[1].trim()}`;
     return {
       endpoint,
+      profile,
       close: async () => {
         let control;
         try {
@@ -177,18 +188,14 @@ else: raise RuntimeError('Hồ sơ trình duyệt vẫn bị khoá: ' + root)
           control?.close();
         }
         for (let i = 0; child.exitCode === null && i < 50; i++) await sleep(100);
-        if (child.exitCode === null) {
-          if (process.platform === "win32") spawnSync("taskkill", ["/PID", String(child.pid), "/T", "/F"], { windowsHide: true });
-          else child.kill("SIGKILL");
-          await sleep(300);
-        }
+        killOwned();
+        await sleep(300);
         cleanProfile();
       },
     };
   } catch (error) {
     if (child.pid && child.exitCode === null) {
-      if (process.platform === "win32") spawnSync("taskkill", ["/PID", String(child.pid), "/T", "/F"], { windowsHide: true });
-      else child.kill("SIGKILL");
+      killOwned();
     }
     cleanProfile();
     throw error;

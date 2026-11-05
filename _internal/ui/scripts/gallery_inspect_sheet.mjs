@@ -102,25 +102,29 @@ export function installGeometryProbe() {
       return { scrollTop: document.scrollingElement.scrollTop, scrollbarWidth: innerWidth - document.documentElement.clientWidth, styles,
         anchors: window.__sheetProbe.anchors.map(({ el, selector }) => ({ selector, rect: el.isConnected ? box(el) : null, scrollTop: el.scrollTop, scrollLeft: el.scrollLeft })) };
     },
-    stable: () => new Promise(resolve => {
+    stable: ({ tolerance = 0, geometryOnly = false } = {}) => new Promise(resolve => {
       const start = performance.now();
-      let previous = '', frames = 0, done = false;
+      let previous = [], frames = 0, done = false;
       const finish = stable => {
         if (done) return;
         done = true;
         clearTimeout(timer);
-        resolve({ stable, elapsed: performance.now() - start, visibility: document.visibilityState,
+        resolve({ stable, elapsed: performance.now() - start, visibility: document.visibilityState, tolerance,
+          exiting: stable ? [] : [...document.querySelectorAll('[role="dialog"][data-state="closed"], .now-playing[data-state="closed"]')].map(el => ({ tag: el.tagName, rect: box(el), html: el.outerHTML.slice(0, 200) })),
           moving: stable ? [] : document.getAnimations().filter(a => a.playState === 'running').map(a => ({ name: a.animationName || a.id, end: a.effect?.getComputedTiming().endTime })) });
       };
       const timer = setTimeout(() => finish(false), 2000);
       const tick = () => {
         if (done) return;
-        const current = JSON.stringify(surfaces().map(el => box(el)));
-        const moving = document.getAnimations().some(a => a.playState === 'running' && a.effect?.getComputedTiming().endTime !== Infinity);
+        const measured = surfaces();
+        const current = measured.map(el => box(el));
+        const same = current.length === previous.length && current.every((r, i) => ['x', 'y', 'width', 'height'].every(k => Math.abs(r[k] - previous[i][k]) <= tolerance));
+        const moving = document.getAnimations().some(a => a.playState === 'running' && a.effect?.getComputedTiming().endTime !== Infinity
+          && (!geometryOnly || measured.includes(a.effect?.target) || a.effect?.pseudoElement?.startsWith('::view-transition')));
         // WAAPI morphs finish before React's exit fallback removes their closed surface.
         // A still-mounted exit can briefly enlarge document overflow; it is not a closed-page baseline.
         const exiting = document.querySelector('[role="dialog"][data-state="closed"], .now-playing[data-state="closed"]');
-        frames = current === previous && !moving && !exiting ? frames + 1 : 0;
+        frames = same && !moving && !exiting ? frames + 1 : 0;
         if (frames >= 3) return finish(true);
         previous = current;
         requestAnimationFrame(tick);
@@ -163,13 +167,20 @@ export async function pointerClick(cdp, session, selector) {
   await cdp.send("Input.dispatchMouseEvent", { type: "mouseReleased", ...point, button: "left", buttons: 0, clickCount: 1 }, session);
 }
 
-async function stable(cdp, session) {
-  const result = await probe(cdp, session, "stable()");
+/** Same hit-test as mouse input, with native touch for phone fixture journeys. */
+export async function pointerTouch(cdp, session, selector) {
+  const point = await pointerCenter(cdp, session, selector);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ ...point, id: 1 }] }, session);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }, session);
+}
+
+export async function stable(cdp, session, options = {}) {
+  const result = await probe(cdp, session, `stable(${JSON.stringify(options)})`);
   if (!result.stable) throw new Error(`Sheet geometry did not settle within 2 s (3 frames required): ${JSON.stringify(result)}`);
 }
 
 /** Replay catalog actions through CDP, pausing before a selected opener when requested. */
-async function visit(cdp, session, url, timeout, onClick) {
+export async function visit(cdp, session, url, timeout, onClick) {
   const previousDocument = await evaluate(cdp, session, "window.__sheetProbe?.documentId ?? null");
   await cdp.send("Page.navigate", { url }, session);
   // Page.navigate can return before commit: never replay a pending click or ready flag from the old document.
