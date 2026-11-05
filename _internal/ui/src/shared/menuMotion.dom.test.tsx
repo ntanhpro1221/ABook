@@ -26,7 +26,7 @@ beforeEach(() => {
 afterEach(async () => { await act(() => root.unmount()); document.body.replaceChildren(); document.head.replaceChildren(); vi.restoreAllMocks(); });
 
 it.each(["desktop", "bluetooth"])("V4 %s: kết quả đổi bên trong Portal, ảnh cũ trên menu và inert", async (kind) => {
-  let devices: { address: string; name: string; kind: "computer" | "phone" }[] = [];
+  let devices: { address: string; name: string; kind: "computer" | "phone"; services: ("release" | "dev")[] }[] = [];
   const render = () => act(() => root.render(<Tooltip.Provider>{kind === "desktop" ? <HandOffButton /> : <BluetoothFallback computer={{ name: "Máy A", host: "192.168.1.1" } as Parameters<typeof BluetoothFallback>[0]["computer"]} devices={devices} busy={false} onChoose={() => {}} />}</Tooltip.Provider>));
   await render();
   await act(() => document.querySelector<HTMLButtonElement>("button")!.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true })));
@@ -35,7 +35,7 @@ it.each(["desktop", "bluetooth"])("V4 %s: kết quả đổi bên trong Portal, 
   animate.mockClear();
   h.players = [{ device: "cast:a", via: "cast", kind: "speaker", name: "Loa A" }, { device: "cast:b", via: "cast", kind: "speaker", name: "Loa B" }];
   h.phones = h.players;
-  devices = [{ address: "aa", name: "Loa A", kind: "computer" }];
+  devices = [{ address: "aa", name: "Loa A", kind: "computer", services: ["release"] }];
   await render();
   const region = menu.querySelector<HTMLElement>("[data-motion-region]");
   expect(region).not.toBeNull();

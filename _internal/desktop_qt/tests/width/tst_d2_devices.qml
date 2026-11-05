@@ -41,7 +41,7 @@ Item {
         }
         // Máy chủ giả: giữ trạng thái, đáp đúng hình dạng của webui/server.py
         function install(sync, computers) {
-            server = {sync: sync, computers: computers || [], unsent: {books: [], changes: 0, sendable: true}, bluetooth: [{name: "Tai nghe của bạn", address: "AA:BB:CC:DD:EE:01", kind: "phone"}]}
+            server = {sync: sync, computers: computers || [], unsent: {books: [], changes: 0, sendable: true}, bluetooth: [{name: "Tai nghe của bạn", address: "AA:BB:CC:DD:EE:01", kind: "phone", services: ["release"]}]}
             DesktopApi.responses = {
                 "GET /api/sync": function() { return {status: 200, data: server.sync} },
                 "POST /api/sync": function(body) { server.sync = Object.assign({}, server.sync, {enabled: body.enabled, wanted: body.enabled, devices: body.enabled ? server.sync.devices : []}); return {status: 200, data: server.sync} },
@@ -301,6 +301,31 @@ Item {
                 verify(item.height > 20)
                 verify(item.contentWidth <= item.width + 1)
                 verify(item.mapToItem(page, item.width, 0).x <= page.width + 1)
+            }
+        }
+        function test_bluetoothServices_data() {
+            return [
+                {tag: "release", services: ["release"], release: true, dev: false},
+                {tag: "dev", services: ["dev"], release: false, dev: true},
+                {tag: "both", services: ["release", "dev"], release: true, dev: true},
+                {tag: "none", services: [], release: false, dev: false}
+            ]
+        }
+        function test_bluetoothServices(data) {
+            install(baseSync(), [])
+            server.bluetooth = [{name: "Pixel", address: "AA:BB:CC:DD:EE:01", kind: "phone", services: data.services}]
+            Platform.setSetting("fold.other-computers.pair", "1")
+            const page = make()
+            tryVerify(function() { return shown(page, "Ghép máy") })
+            compare(shown(page, "Pixel\u00a0·\u00a0điện thoại"), data.release)
+            compare(shown(page, "Pixel · bản thử"), data.dev)
+            if (data.dev) {
+                byText(page, "Pixel · bản thử").clicked()
+                compare(byName(page, "addressField").text, "AA:BB:CC:DD:EE:01@dev")
+            }
+            if (data.release) {
+                byText(page, "Pixel\u00a0·\u00a0điện thoại").clicked()
+                compare(byName(page, "addressField").text, "AA:BB:CC:DD:EE:01")
             }
         }
         function test_otherComputersPairAndForget() {

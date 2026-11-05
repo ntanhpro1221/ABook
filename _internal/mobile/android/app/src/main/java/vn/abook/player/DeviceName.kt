@@ -14,6 +14,8 @@ object DeviceName {
     private const val KEY = "name"
     const val MAX_LENGTH = 60
 
+    fun shared(context: Context): String = of(context) + if (BuildConfig.DEBUG) " (ABook .dev)" else ""
+
     /** Phần thuần (test được): tên mặc định từ tên máy người dùng đặt (`userSet`, Settings.Global DEVICE_NAME - nhiều máy để nguyên đời máy thô
      *  ở đó), hay hãng + đời máy. Máy ảo của Android Studio ("sdk_gphone64_x86_64") thành "(máy ảo)". */
     fun fallback(userSet: String?, manufacturer: String, model: String): String {

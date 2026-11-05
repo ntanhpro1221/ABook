@@ -60,7 +60,7 @@ internal object PeerAddresses {
         if (missing) {
             val host = peer.opt("host") as? String ?: ""
             val address = if (host.startsWith("bt:")) null else {
-                val port = (if (peer.has("port")) peer.opt("port") else 47630)?.toString()?.toIntOrNull()
+                val port = (if (peer.has("port")) peer.opt("port") else BuildConfig.DEFAULT_PEER_PORT)?.toString()?.toIntOrNull()
                 port?.let { valid(endpoint(host, it)) }
             }
             peer.put("addresses", JSONArray().apply { if (address != null) put(JSONObject().put("address", address).put("lastSuccess", 0)) })

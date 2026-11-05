@@ -7,6 +7,8 @@ export interface PairedDevice {
   name: string;
   address: string;
   kind: "phone" | "computer";
+  /** Dịch vụ ABook tìm thấy qua SDP trên chính thiết bị này. */
+  services: ("release" | "dev")[];
 }
 
 export interface RoutedComputer {
