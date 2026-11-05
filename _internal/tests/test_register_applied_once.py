@@ -17,6 +17,7 @@ import soundfile as sf
 
 from abook import expression, pipeline as pipeline_module
 from abook.expression import prosody_targets
+from abook.config import build_settings
 from abook.pipeline import BookPipeline
 from abook.tts import apply_pitch_variant
 
@@ -64,9 +65,10 @@ def _deliver(tmp_path: Path, profile: dict | None, emotion: str, intensity: int,
 
     pipeline = BookPipeline.__new__(BookPipeline)
     pipeline.db = _Db()
+    pipeline.settings = build_settings()
     pipeline.paths = type("Paths", (), {"work": tmp_path / "work"})()
     pipeline.log = lambda *_args, **_kwargs: None
-    (delivered, _ms), = pipeline._chapter_delivery_wavs({"chapter_index": 1}, [row])
+    (delivered, _ms), = pipeline._chapter_delivery_wavs({"id": 1, "chapter_index": 1}, [row])
     audio, rate = sf.read(delivered, dtype="float32")
     assert rate == RATE
     return audio

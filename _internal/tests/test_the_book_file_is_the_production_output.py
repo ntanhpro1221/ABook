@@ -6,11 +6,13 @@ Không gọi `BookPipeline.__init__`: chỉ bước xuất là thật; sách là
 from __future__ import annotations
 
 from pathlib import Path
+import json
 from typing import Any
 
 from abook.models import ProjectPaths
 from abook.pipeline import BookPipeline
 from abook.webui import bookfile
+from abook.io_utils import sha256_file
 from tests.test_webui_listen_and_sync import make_project
 
 
@@ -100,3 +102,29 @@ def test_completed_status_does_not_hide_a_missing_chapter(tmp_path: Path) -> Non
     pipeline._export_book_file()
     assert not _output(project).exists()
     assert ("warning", "BOOK_FILE_EXPORT_FAILED") in pipeline.db.events
+
+
+def test_completed_resume_replaces_a_package_with_older_mastered_audio(tmp_path: Path) -> None:
+    project=make_project(tmp_path)
+    pipeline=_Pipeline(project,'completed')
+    book,files=bookfile.listening_layer(project)
+    chapters=[ch for ch in book['chapters'] if ch.get('file')]
+    levels={'verdict':'pass','audio_sha256':{str(ch['id']):sha256_file(files[ch['file']]) for ch in chapters}}
+    pipeline._book_levels=levels
+    report=project/'output'/'reports'/'book_levels.json'
+    report.parent.mkdir(parents=True,exist_ok=True)
+    report.write_text(json.dumps(levels),encoding='utf8',newline='\n')
+    pipeline._export_book_file()
+    changed=chapters[0]
+    audio=files[changed['file']]
+    audio.write_bytes(audio.read_bytes()+b'new synthetic master')
+    levels['audio_sha256'][str(changed['id'])]=sha256_file(audio)
+    report.write_text(json.dumps(levels),encoding='utf8',newline='\n')
+    pipeline._export_book_file(only_if_missing=True)
+    with bookfile.BookFile(_output(project)) as opened:
+        opened.verify()
+        assert opened.chapter_prints[changed['file']]['sha256']==levels['audio_sha256'][str(changed['id'])]
+        assert opened.book['levelQa']==levels
+    latest=_output(project).stat().st_mtime_ns
+    pipeline._export_book_file(only_if_missing=True)
+    assert _output(project).stat().st_mtime_ns==latest

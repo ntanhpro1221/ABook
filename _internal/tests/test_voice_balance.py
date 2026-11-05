@@ -208,7 +208,9 @@ def test_gain_is_constant_whatever_the_clip_loudness() -> None:
     loud_out, loud_info = level_segment(loud, RATE, _segment(), settings)
     assert quiet_info["level_gain_db"] == pytest.approx(loud_info["level_gain_db"])
     expected = (
-        voice_balance.level_lufs() + 0.0 - voice_balance.constants_for_key(KEY).ref_lufs
+        voice_balance.level_lufs()
+        + voice_balance.constants_for_key(KEY).o_db
+        - voice_balance.constants_for_key(KEY).ref_lufs
     )
     assert quiet_info["level_gain_db"] == pytest.approx(expected)
     assert quiet_info["peak_limited_db"] == 0.0 == loud_info["peak_limited_db"]
@@ -221,7 +223,7 @@ def test_the_voice_trim_adds_in_db(monkeypatch) -> None:
     settings = build_settings()
     base = segment_gain_db(_segment(), settings)
     table = _with_table(monkeypatch)
-    table["voices"][KEY]["o_db"] = 1.5
+    table["voices"][KEY]["o_db"] += 1.5
     assert segment_gain_db(_segment(), settings) == pytest.approx(base + 1.5)
     table["voices"][KEY]["ref_lufs"] = table["voices"][KEY]["ref_lufs"] - 2.0
     assert segment_gain_db(_segment(), settings) == pytest.approx(base + 3.5)
@@ -240,7 +242,7 @@ def test_offsets_add_on_top_of_the_voice_gain() -> None:
     loud = segment_gain_db(_segment(volume="loud"), settings)
     assert soft - normal == pytest.approx(float(targets["soft"]) - float(targets["normal"]))
     assert loud - normal == pytest.approx(float(targets["loud"]) - float(targets["normal"]))
-    assert soft - normal == pytest.approx(-3.0) and loud - normal == pytest.approx(1.2)
+    assert soft - normal == pytest.approx(-1.0) and loud - normal == pytest.approx(1.2)
     narrator = segment_gain_db(_segment(speaker="NARRATOR"), settings)
     assert narrator - normal == pytest.approx(float(audio_cfg["segment_narrator_offset_db"]))
     angry = segment_gain_db(_segment(emotion="angry", intensity=3), settings)
@@ -251,14 +253,15 @@ def test_offsets_add_on_top_of_the_voice_gain() -> None:
     assert segment_offsets_db(_segment(volume="loud", emotion="angry", intensity=3), settings) == pytest.approx(1.2)
 
 
-def test_voices_meet_on_one_axis() -> None:
-    # Hai giọng có LUFS thô khác nhau (ref_lufs) ra cùng mức sau gain: đó là mục đích của bảng.
+def test_reference_levels_include_perceptual_voice_offsets() -> None:
+    # Mốc LUFS gặp nhau trước o_db; độ bù cảm nhận riêng không cần bằng nhau theo LUFS.
     settings = build_settings()
     table = voice_balance.load_table()
     ref_a, ref_b = table["voices"][KEY]["ref_lufs"], table["voices"][OTHER_KEY]["ref_lufs"]
     gain_a = segment_gain_db(_segment(), settings)
     gain_b = segment_gain_db(_segment(**{VOICE_BALANCE_FIELD: OTHER_KEY}), settings)
-    assert ref_a + gain_a == pytest.approx(ref_b + gain_b)
+    assert ref_a + gain_a == pytest.approx(table["L_lufs"] + table["voices"][KEY]["o_db"])
+    assert ref_b + gain_b == pytest.approx(table["L_lufs"] + table["voices"][OTHER_KEY]["o_db"])
 
 
 def test_the_peak_ceiling_still_holds_and_is_reported() -> None:
