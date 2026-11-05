@@ -75,6 +75,24 @@ class Gap3UiTest {
             rule.onNodeWithTag("old_delete_yes").performClick(); rule.waitForIdle(); assertEquals(1, deletes)
         } finally { scope.cancel() }
     }
+    @Test fun trialBuildSaysSoInsteadOfOfferingADownloadThatWouldFail() {
+        val core = object : SettingsCore by FakeSettingsCore() {
+            override fun release() = AppRelease("0.4.150", "page", "apk")
+            override fun releaseSigned() = false
+        }
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        val repo = SettingsRepo(core, scope, Dispatchers.Unconfined)
+        try {
+            show(false) {
+                val theme = ThemeReveal(rememberCoroutineScope())
+                Column(Modifier.fillMaxSize().padding(Dim.margin)) { MaintenanceSections(SettingsEnv(repo, theme, SettingsLinks()), SheetHost()) }
+            }
+            rule.mainClock.advanceTimeBy(400); rule.waitForIdle()
+            rule.onNodeWithText("Bản cài thử").assertIsDisplayed()
+            rule.onNodeWithText("Bản cài thử, không cập nhật được bằng nút này - cài bản phát hành từ GitHub.").assertIsDisplayed()
+            rule.onNodeWithTag("update_download").assertDoesNotExist()
+        } finally { scope.cancel() }
+    }
     @Test fun packageLight() = packageReview(false)
     @Test fun packageDark() = packageReview(true)
     private fun packageReview(dark: Boolean) {
