@@ -28,6 +28,6 @@ def test_the_repair_keeps_the_speaker_of_a_self_introduction() -> None:
     group = [{"stable_id": "a", "chapter_id": 1, "paragraph_index": 3, "seq": 3,
               "text": "“Borak, con trai của Gerud. Vào trận đi.”"}]
     result = {"a": {"kind": "dialogue", "speaker": "Borak", "personality_hint": "", "notes": ""}}
-    _repair_addressee_speakers(group, result, "b0000")
+    _repair_addressee_speakers(group, result)
     assert result["a"]["speaker"] == "Borak"
     assert "_host_note_markers" not in result["a"]

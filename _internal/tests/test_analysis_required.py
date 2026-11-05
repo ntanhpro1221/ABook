@@ -71,7 +71,6 @@ from abook.analysis import (
     _apply_host_structural_locks,
     _host_affect_adjudication,
     _is_explicit_chapter_heading,
-    _local_scope_for_group,
     _low_confidence_feedback_issues,
     _merge_feedback_issues,
     _local_name_fallback,
@@ -3798,33 +3797,23 @@ def test_high_confidence_contextual_short_name_can_be_locked(monkeypatch) -> Non
     assert db.pronunciations[0]["spoken_form"] == "Uôn"
 
 
-def test_local_npc_labels_are_distinct_and_scoped_to_batch() -> None:
+def test_local_npc_labels_are_distinct_and_scoped_to_chapter() -> None:
     group = [{**row, "kind_hint": "dialogue"} for row in analysis_group()]
     first = analysis_item(group[0]["stable_id"])
     first.update({"kind": "dialogue", "speaker": "NPC_LOCAL:áo xanh", "gender": "male"})
     second = analysis_item(group[1]["stable_id"])
     second.update({"kind": "dialogue", "speaker": "NPC_LOCAL:áo đỏ", "gender": "male"})
 
-    validated = _validate(group, {"segments": [first, second]}, local_scope="b0007")
+    validated = _validate(group, {"segments": [first, second]})
     speakers = [validated[row["stable_id"]]["speaker"] for row in group]
 
     assert speakers[0] != speakers[1]
     assert all(is_local_speaker(speaker) for speaker in speakers)
-    assert "c00001::b0007" in speakers[0]
+    assert speakers[0] == "NPC_LOCAL::c00001::áo xanh"
     assert local_speaker_display(speakers[0]) == "NPC áo xanh"
 
 
-def test_local_scope_is_derived_from_stable_range_boundaries() -> None:
-    group = analysis_group()
-
-    scope = _local_scope_for_group(group)
-
-    assert scope.startswith("r")
-    assert scope == _local_scope_for_group(list(group))
-    assert scope != _local_scope_for_group(group[:1])
-
-
-def test_resume_uses_scope_from_original_full_book_partition(monkeypatch) -> None:
+def test_resume_keeps_the_chapter_scope_across_batches(monkeypatch) -> None:
     db = FakeDB()
     db.rows = [
         {
@@ -3860,7 +3849,7 @@ def test_resume_uses_scope_from_original_full_book_partition(monkeypatch) -> Non
 
     speakers = {data["speaker"] for _segment_id, data, _threshold in db.updated}
     assert len(speakers) == 1
-    assert _local_scope_for_group(db.rows[2:]) in next(iter(speakers))
+    assert next(iter(speakers)) == "NPC_LOCAL::c00001::lính gác"
 
 
 def test_addressee_name_cannot_become_the_local_speaker_identity() -> None:
@@ -3890,7 +3879,7 @@ def test_addressee_name_cannot_become_the_local_speaker_identity() -> None:
         )
         items.append(item)
 
-    validated = _validate(group, {"segments": items}, local_scope="b0002")
+    validated = _validate(group, {"segments": items})
     speakers = [validated[row["stable_id"]]["speaker"] for row in group]
 
     assert len(set(speakers)) == 1
@@ -3994,7 +3983,7 @@ def test_generic_speech_attribution_locks_bishop_descriptions() -> None:
     items[2].update({"kind": "narration", "speaker": "NARRATOR"})
     items[3].update({"kind": "dialogue", "speaker": "NPC_LOCAL:giam muc", "gender": "male"})
 
-    validated = _validate(group, {"segments": items}, local_scope="scene")
+    validated = _validate(group, {"segments": items})
 
     assert local_speaker_display(validated["d1"]["speaker"]) == "NPC người đàn ông trung niên"
     assert validated["d1"]["gender"] == "male"
@@ -4067,7 +4056,6 @@ def test_bare_name_vocative_is_repaired_but_self_introduction_is_not() -> None:
     validated = _validate(
         [addressed, self_intro],
         {"segments": [addressed_item, self_intro_item]},
-        local_scope="b0003",
     )
 
     assert local_speaker_display(validated[addressed["stable_id"]]["speaker"]) == "NPC người gọi Iven"
@@ -4090,7 +4078,7 @@ def test_titled_addressee_does_not_replace_an_established_local_identity() -> No
         }
     )
 
-    validated = _validate([row], {"segments": [item]}, local_scope="stable")
+    validated = _validate([row], {"segments": [item]})
     data = validated[row["stable_id"]]
 
     assert local_speaker_display(data["speaker"]) == "NPC trẻ em bụi bẩn"
@@ -4127,7 +4115,7 @@ def test_generic_same_paragraph_attribution_locks_one_child_voice() -> None:
     )
     items[2].update({"kind": "dialogue", "speaker": "Lucien", "gender": "male"})
 
-    validated = _validate(group, {"segments": items}, local_scope="stable")
+    validated = _validate(group, {"segments": items})
 
     first = validated["d1"]
     second = validated["d2"]
@@ -4171,7 +4159,7 @@ def test_multiline_dialogue_keeps_previous_speaker_and_normalizes_child_label() 
         {"kind": "dialogue", "speaker": "NPC_LOCAL:người khác", "gender": "male"}
     )
 
-    validated = _validate(group, {"segments": items}, local_scope="stable")
+    validated = _validate(group, {"segments": items})
 
     assert validated["d1"]["speaker"] == validated["d2"]["speaker"]
     assert local_speaker_display(validated["d1"]["speaker"]) == "NPC cậu bé"
@@ -4225,7 +4213,6 @@ def test_v32_source_cohesive_batch_keeps_seq42_44_and_repairs_child_speaker() ->
     validated = _validate(
         target_rows,
         {"segments": items},
-        local_scope="v32-source-unit",
     )
 
     seq43 = validated[str(target_rows[1]["stable_id"])]
@@ -11375,7 +11362,7 @@ def test_wall_timeout_splits_twenty_segment_batch_immediately_and_preserves_scop
     assert request_sizes == [20, 10, 10]
     speakers = {data["speaker"] for _segment_id, data, _threshold in db.updated}
     assert len(speakers) == 1
-    assert _local_scope_for_group(db.rows) in next(iter(speakers))
+    assert next(iter(speakers)) == "NPC_LOCAL::c00001::lính gác"
     assert any("vượt giới hạn thời gian 1; tự chia thành 10 + 10 segment" in log for log in logs)
 
 
@@ -11496,7 +11483,7 @@ def test_resume_hole_sends_the_whole_group_and_keeps_original_neighbor_context_a
     assert context_seen["resume-hole-3"]["previous_text"] == db.rows[1]["text"]
     speakers = {data["speaker"] for _segment_id, data, _threshold in db.updated}
     assert len(speakers) == 1
-    assert _local_scope_for_group(db.rows) in next(iter(speakers))
+    assert next(iter(speakers)) == "NPC_LOCAL::c00001::lính gác"
 
 
 def test_wall_timeout_single_segment_uses_bounded_retries_without_split(monkeypatch) -> None:
@@ -11634,7 +11621,7 @@ def test_split_batches_keep_one_stable_local_identity_scope(monkeypatch) -> None
 
     speakers = {data["speaker"] for _segment_id, data, _threshold in db.updated}
     assert len(speakers) == 1
-    assert _local_scope_for_group(db.rows) in next(iter(speakers))
+    assert next(iter(speakers)) == "NPC_LOCAL::c00001::lính gác"
 
 
 def test_incomplete_id_response_splits_batch_after_retries(monkeypatch) -> None:
