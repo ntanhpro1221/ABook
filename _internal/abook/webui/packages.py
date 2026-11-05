@@ -542,7 +542,8 @@ def _free_folder(parent: Path, name: str) -> str:
 
 
 def import_file(source: Path, library_root: Path, projects: Iterable[Path],
-                fingerprints: Fingerprints, report: dict[str, Any] | None = None, *, separate: bool = False, allow_older: bool = False) -> tuple[Path, str]:
+                fingerprints: Fingerprints, report: dict[str, Any] | None = None, *, separate: bool = False, allow_older: bool = False,
+                refresh_base: bool = True) -> tuple[Path, str]:
     """Nhập một file `.abook` (hay `.abookproj` mà máy chỉ nhập như một cuốn sách - xem `import_opened`). File hỏng, bị sửa hay
     không phải sách: `bookfile.BookFileError` / `projectfile.ProjectFileError`."""
     from . import bookfile, projectfile
@@ -550,7 +551,7 @@ def import_file(source: Path, library_root: Path, projects: Iterable[Path],
     opened = (projectfile.ProjectFile(Path(source)) if str(source).lower().endswith(projectfile.EXTENSION)
               else bookfile.BookFile(Path(source)))
     with opened:
-        return import_opened(opened, library_root, projects, fingerprints, report, separate=separate, allow_older=allow_older)
+        return import_opened(opened, library_root, projects, fingerprints, report, separate=separate, allow_older=allow_older, refresh_base=refresh_base)
 
 
 _IMPORTING_GUARD = threading.Lock()
@@ -558,7 +559,8 @@ _IMPORTING: dict[str, threading.Lock] = {}
 
 
 def import_opened(opened: Any, library_root: Path, projects: Iterable[Path], fingerprints: Fingerprints,
-                  report: dict[str, Any] | None = None, *, separate: bool = False, allow_older: bool = False) -> tuple[Path, str]:
+                  report: dict[str, Any] | None = None, *, separate: bool = False, allow_older: bool = False,
+                  refresh_base: bool = True) -> tuple[Path, str]:
     """Nhập một file đã mở, MỘT lần cho mỗi cuốn: mở cùng file hai lần liền (đúp chuột hai lần, hai bản gửi cùng lúc) thì lượt sau chờ lượt
     trước xong rồi thấy cuốn đã có ("existing") thay vì tranh nhau cùng một thư mục (`_import_opened` nói rõ các kết quả)."""
     if getattr(opened, "book", True) is None:  # file dự án đang làm dở: chưa có chương nào xong thì chưa có gì để nghe
@@ -568,11 +570,12 @@ def import_opened(opened: Any, library_root: Path, projects: Iterable[Path], fin
     with _IMPORTING_GUARD:
         lock = _IMPORTING.setdefault(f"{Path(library_root).expanduser()}|{opened.content_key}", threading.Lock())
     with lock:
-        return _import_opened(opened, library_root, projects, fingerprints, report, separate=separate, allow_older=allow_older)
+        return _import_opened(opened, library_root, projects, fingerprints, report, separate=separate, allow_older=allow_older, refresh_base=refresh_base)
 
 
 def _import_opened(opened: Any, library_root: Path, projects: Iterable[Path], fingerprints: Fingerprints,
-                   report: dict[str, Any] | None = None, *, separate: bool = False, allow_older: bool = False) -> tuple[Path, str]:
+                   report: dict[str, Any] | None = None, *, separate: bool = False, allow_older: bool = False,
+                   refresh_base: bool = True) -> tuple[Path, str]:
     """Nhập một file đã mở (`bookfile.BookFile` hay `projectfile.ProjectFile`: cùng giao diện - chapter_prints, edits,
     extract...). Trả (thư mục cuốn trong thư viện, cách): "project" - file do chính máy này xuất, mở
     dự án ấy; "existing" - đã nhập rồi, bản đã có đủ chương bằng hoặc hơn; "updated" - đã nhập rồi, bản mới nhiều
@@ -608,7 +611,9 @@ def _import_opened(opened: Any, library_root: Path, projects: Iterable[Path], fi
             # Cuốn trên máy mất / hỏng file mà file này đủ chương: giải nén lại tại chỗ (phần sửa của người nghe được giữ) - mở lại đúng file
             # sách là cách sửa (soát a28 lỗi 9: trước đây "đã có trong thư viện" và chương mất file mất luôn).
             repair = len(prints) >= len(theirs) and not _remote(existing) and bool(damaged_files(existing))
-            if not repair and disposition == "existing" and not gains_workshop:
+            from .bookfile import base_layer
+            changed = refresh_base and base_layer(current, book_edits.load(existing)) != base_layer(opened.book, opened.edits)
+            if not repair and disposition == "existing" and not gains_workshop and not changed:
                 if report["edits"]:
                     report["merge"] = book_edits.adopt(existing, opened.edits, opened.edits_cover(), opened.copy_member)
                 elif not book_edits.is_empty(local := book_edits.load(existing)):

@@ -12,6 +12,7 @@ from urllib.parse import urlparse
 
 from .database import ANALYSIS_CRITIC_CONFIDENCE_MAX
 from .speaker_pass import paired_speaker_model
+from .voice_catalog import DEFAULT_NARRATOR_BY_GENDER
 
 
 DEFAULT_SETTINGS: dict[str, Any] = {
@@ -42,7 +43,7 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     },
     "voices": {
         "narrator_gender": "male",
-        "narrator_voice": "Phạm Tuyên",
+        "narrator_voice": DEFAULT_NARRATOR_BY_GENDER["male"],
         "minimum_named_character_mentions": 3,
         "max_character_pitch_semitones": 2,
         "narrator_description": (
@@ -433,7 +434,7 @@ def build_settings(profile: str = "high_quality", overrides: dict[str, Any] | No
     # = không có cặp, không chạy lượt). Người gọi tắt bằng overrides analysis.speaker_model = "". Sách tạo trước không có khoá này.
     if "speaker_model" not in settings["analysis"]:
         settings["analysis"]["speaker_model"] = paired_speaker_model(str(settings["analysis"].get("model", "")))
-    from .voice_catalog import DEFAULT_NARRATOR_BY_GENDER, preset_by_name
+    from .voice_catalog import preset_by_name
 
     voice_overrides = overrides.get("voices", {}) if overrides else {}
     if "narrator_gender" in voice_overrides and "narrator_voice" not in voice_overrides:

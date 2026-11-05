@@ -243,27 +243,22 @@ def shape_segment(
     emotion: str,
     intensity: int,
     kind: str,
-    register_semitones: int = 0,
 ) -> tuple[np.ndarray, dict[str, float] | None]:
     """Shape a line, at full weight for a speaker and reduced weight for the narrator.
 
-    `register_semitones` is the voice's own calibrated offset, folded into the same pass.
-    Doing it separately meant a line with both a register and an affect went through two
-    resyntheses on top of the formant warp, and every pass costs something; one pass
-    applies both because they are the same operation on the same contour.
+    Only the affect lives here. The voice's own register is already in the take (synthesis
+    shifts it once, and the gates graded that pitch), so shifting it again at delivery
+    would put the listener a second offset away from the voice that was verified.
     """
-    register = int(register_semitones)
     if emotion == "neutral" or int(intensity) == 0:
-        if register == 0:
-            return np.asarray(audio, dtype=np.float32).reshape(-1), None
-        return shape_f0(audio, rate, float(register), 1.0), None
+        return np.asarray(audio, dtype=np.float32).reshape(-1), None
     weight = NARRATION_AFFECT_WEIGHT if kind == "narration" else 1.0
     seconds = len(np.asarray(audio).reshape(-1)) / float(rate) if rate else 10.0
     target = prosody_targets(emotion, intensity, weight=weight, seconds=seconds)
     shaped = shape_f0(
         audio,
         rate,
-        target["pitch_semitones"] + register,
+        target["pitch_semitones"],
         target["range_ratio"],
     )
     return apply_gain(shaped, target["gain_db"]), target

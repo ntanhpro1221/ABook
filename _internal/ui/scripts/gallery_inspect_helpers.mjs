@@ -72,7 +72,7 @@ export function inspectPage({ phone = false } = {}, h, layoutInspector) {
     }
     return parts.join(" > ");
   }
-  const surface = (el) => el.closest('[role="dialog"],[role="alertdialog"],[role="menu"],[role="listbox"],[role="tooltip"],[data-sonner-toast]');
+  const surface = (el) => el.closest('[role="dialog"],[role="alertdialog"],[role="menu"],[role="listbox"],[role="tooltip"],[data-sonner-toast],.now-playing[data-state="open"]');
   function hidden(el) {
     for (let p = el; p; p = p.parentElement) {
       const s = css(p);

@@ -198,7 +198,7 @@ lời chào UDP, lời đáp ghép và lời đáp thư viện. Máy tính lưu 
 Bluetooth, khớp thiết bị đã ghép theo tên Bluetooth ấy trước, tên máy sau (`remote_books._match_paired`).
 
 Chạy lại: `adb shell am instrument -w -e bt_real 1 [-e bt_pair 1] [-e bt_seed_mb 3] -e class vn.abook.player.BluetoothShareOnDeviceTest
-com.ngdtuanh.abook.test/androidx.test.runner.AndroidJUnitRunner` (mã 6 số và sha1 cuốn thử in ra logcat, tag `BtReal`), rồi gọi
+com.ngdtuanh.abook.dev.test/androidx.test.runner.AndroidJUnitRunner` (mã 6 số và sha1 cuốn thử in ra logcat, tag `BtReal`), rồi gọi
 từ máy tính (từ 08-10 trưa gọi vào lúc nào cũng được, không cần trong 30 giây đầu - xem trên).
 
 - **Tra SDP** (`bluetooth.py`, `find_channel`): `WSALookupServiceBeginW/NextW/End` qua ctypes (`ws2_32`), `lpServiceClassId` =

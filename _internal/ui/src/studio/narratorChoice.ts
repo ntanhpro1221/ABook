@@ -23,7 +23,7 @@ export function narratorIsAuto(draft: NarratorDraft, preferred: string | undefin
   return !(preferred && voices?.some((voice) => voice.name === preferred));
 }
 
-/** Giọng kể chuyện máy đề xuất cho một giới (nam: Phạm Tuyên, nữ: Ngọc Linh). */
+/** Giọng kể chuyện máy đề xuất cho một giới (nam: Đức Trí, nữ: Ngọc Linh). */
 export function recommendedFor(voices: readonly Voice[] | undefined, gender: TellerGender | undefined): string | undefined {
   if (!gender) return undefined;
   return voices?.find((voice) => voice.recommended && voice.gender === VOICE_GENDER[gender])?.name;

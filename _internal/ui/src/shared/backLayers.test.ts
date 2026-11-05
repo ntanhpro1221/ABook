@@ -171,7 +171,7 @@ describe("Back khi không còn lớp: trang trước -> trang cha -> thu nhỏ �
 describe("Mọi lớp tự dựng đã đăng ký vào ngăn xếp Back", () => {
   const source = (path: string) => readFileSync(new URL(path, import.meta.url), "utf8");
   it.each([
-    ["../listen/PlayerViews.tsx", /useBackLayer\(mobile && open,[\s\S]*<Sheet open=\{open && showPanel\}/],
+    ["../listen/PlayerViews.tsx", /useBackLayer\(open,[^\n]+section\)[\s\S]*<Sheet open=\{open && showPanel\}/],
     ["../listen/LineWishes.tsx", /useBackLayer\(view !== "menu"/],
   ])("%s", (path, pattern) => {
     expect(source(path)).toMatch(pattern);

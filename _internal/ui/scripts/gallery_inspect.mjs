@@ -14,10 +14,11 @@ import { inspectAlignment } from "./gallery_inspect_alignment.mjs";
 import { inspectTapReach } from "./gallery_inspect_tap.mjs";
 import { inspectEdges } from "./gallery_inspect_edges.mjs";
 import { inspectFrames } from "./gallery_inspect_frames.mjs";
+import { inspectSheets, SHEET_RULE } from "./gallery_inspect_sheet.mjs";
 
-export const RULES = ["TEXT-OVER-GRAPHIC", "TEXT-OVER-TEXT", "CLIPPED TEXT", "SMALL TEXT", "TOUCH TARGET", "CONTRAST", "ICON SIZE MISMATCH", "SIBLING CONSISTENCY", "OPTICAL SIZE CONSISTENCY", "INK EDGE", "RHYTHM", "BASELINE", "CONTROL HEIGHT", "FILL INSET", "TAP REACH", "FOCUS RING CLIPPED", "CORNER MISMATCH", "LINE BREAK", "COVERED TEXT", "REPEATED LABEL", "STACKED LAYERS", "NAV ACCENT", "NESTED CARD", "CROSS CENTER"];
+export const RULES = ["TEXT-OVER-GRAPHIC", "TEXT-OVER-TEXT", "CLIPPED TEXT", "SMALL TEXT", "TOUCH TARGET", "CONTRAST", "ICON SIZE MISMATCH", "SIBLING CONSISTENCY", "OPTICAL SIZE CONSISTENCY", "INK EDGE", "RHYTHM", "BASELINE", "CONTROL HEIGHT", "FILL INSET", "TAP REACH", "FOCUS RING CLIPPED", "CORNER MISMATCH", "LINE BREAK", "COVERED TEXT", "REPEATED LABEL", "STACKED LAYERS", "NAV ACCENT", "NESTED CARD", "CROSS CENTER", SHEET_RULE];
 // Gate đã có fixture hai phía; quy tắc 16–17 dùng cả đối chứng gallery gốc (rules144).
-export const DEFAULT_FAIL_ON = ["SMALL TEXT", "TOUCH TARGET", "CONTRAST", "SIBLING CONSISTENCY", "INK EDGE", "RHYTHM", "BASELINE", "CONTROL HEIGHT", "TAP REACH", "FOCUS RING CLIPPED", "CORNER MISMATCH", "LINE BREAK", "COVERED TEXT", "REPEATED LABEL", "STACKED LAYERS", "NAV ACCENT", "NESTED CARD", "CROSS CENTER"];
+export const DEFAULT_FAIL_ON = ["SMALL TEXT", "TOUCH TARGET", "CONTRAST", "SIBLING CONSISTENCY", "INK EDGE", "RHYTHM", "BASELINE", "CONTROL HEIGHT", "TAP REACH", "FOCUS RING CLIPPED", "CORNER MISMATCH", "LINE BREAK", "COVERED TEXT", "REPEATED LABEL", "STACKED LAYERS", "NAV ACCENT", "NESTED CARD", "CROSS CENTER", SHEET_RULE];
 export function gateRules(value) {
   return value === undefined ? [...DEFAULT_FAIL_ON] : value.length === 1 && value[0].toUpperCase() === "NONE" ? [] : value.map(normalizeRule);
 }
@@ -106,12 +107,23 @@ function writeSheet(out, story) {
 const num = (value) => (Number.isFinite(value) ? value.toFixed(3) : "–");
 
 export function writeOutputs(out, report) {
+  const geometry = report.stories.flatMap(s => s.sheetGeometry ? [s.sheetGeometry] : []);
+  const trials = geometry.flatMap(g => g.trials);
+  report.sheetGeometry = {
+    screensDiscovered: new Set(geometry.map(g => g.story)).size,
+    screensWithOpeners: new Set(geometry.filter(g => g.widths.some(w => w.targets.length)).map(g => g.story)).size,
+    screenWidthThemes: geometry.flatMap(g => g.widths).length,
+    openers: geometry.flatMap(g => g.widths).reduce((n, w) => n + w.targets.length, 0),
+    trials: trials.length, completed: trials.filter(t => t.closed && !t.error).length,
+    middleWithScroll: trials.filter(t => t.position === "middle" && t.before && (t.before.scrollTop > 0 || t.before.anchors.some(a => a.scrollTop > 0))).length,
+    findings: geometry.reduce((n, g) => n + g.findings.length, 0), errors: geometry.reduce((n, g) => n + g.errors.length, 0),
+  };
   writeFileSync(path.join(out, "findings.json"), JSON.stringify(report, null, 2));
   if (report.distinctDefects) writeFileSync(path.join(out, "distinct-defects.json"), JSON.stringify(report.distinctDefects, null, 2));
   const list = RULES.map((rule) => {
     const findings = report.findings.filter((f) => f.rule === rule);
     const groups = [...new Set(findings.map((f) => f.story))];
-    return `<section><h2>${esc(rule)} (${findings.length})</h2>${groups.map((id) => `<details><summary>${esc(id)} (${findings.filter((f) => f.story === id).length})</summary><div class="grid">${findings.filter((f) => f.story === id).map((f) => `<figure id="${f.id}"><a href="${f.crop}"><img loading="lazy" src="${f.crop}" alt="${esc(f.text)}"></a><figcaption><b>${f.id} · ${f.theme}</b><br>${esc(f.text)}<br><code>${esc(f.selector)}</code>${f.rule === "TAP REACH" ? `<br>pe: ${esc(f.pointerEvents)} · trúng: <code>${esc(f.hitSelector ?? "null")}</code> · ${esc(f.hitText ?? "")}` : ""}${f.otherSelector || f.referenceSelector ? `<br>↔ <code>${esc(f.otherSelector ?? f.referenceSelector)}</code>` : ""}${f.fontSizes ? `<br>Cỡ chữ: ${f.fontSizes.join(" / ")} px` : ""}${f.topDelta !== undefined ? `<br>Δ trên / dưới: ${num(f.topDelta)} / ${num(f.bottomDelta)} px` : ""}${f.referenceValue !== undefined ? `<br>${f.rowIndex !== undefined ? `Hàng ${f.rowIndex} / mốc ${f.referenceRowIndex} · ` : ""}${esc(f.metric)}: ${num(f.value)} / ${num(f.referenceValue)} px · Δ ${num(f.delta)} px` : f.metric ? `<br>${esc(f.metric)}: ${num(f.value)} px` : ""}${f.referenceStory ? `<br>Mốc: <a href="${esc(f.referenceCrop)}">${esc(f.referenceStory)}</a>` : ""}${f.ratio ? `<br>Tương phản ${f.ratio}:1 / ${f.threshold}:1` : ""}<br><a href="${report.stories.find((s) => s.id === id && s.theme === f.theme)?.sheet}">Bảng chi tiết</a></figcaption></figure>`).join("")}</div></details>`).join("")}</section>`;
+    return `<section><h2>${esc(rule)} (${findings.length})</h2>${groups.map((id) => `<details><summary>${esc(id)} (${findings.filter((f) => f.story === id).length})</summary><div class="grid">${findings.filter((f) => f.story === id).map((f) => `<figure id="${f.id}">${f.crop ? `<a href="${f.crop}"><img loading="lazy" src="${f.crop}" alt="${esc(f.text)}"></a>` : ""}<figcaption><b>${f.id} · ${f.theme}</b><br>${esc(f.text)}<br><code>${esc(f.selector)}</code>${f.rule === "TAP REACH" ? `<br>pe: ${esc(f.pointerEvents)} · trúng: <code>${esc(f.hitSelector ?? "null")}</code> · ${esc(f.hitText ?? "")}` : ""}${f.otherSelector || f.referenceSelector ? `<br>↔ <code>${esc(f.otherSelector ?? f.referenceSelector)}</code>` : ""}${f.fontSizes ? `<br>Cỡ chữ: ${f.fontSizes.join(" / ")} px` : ""}${f.topDelta !== undefined ? `<br>Δ trên / dưới: ${num(f.topDelta)} / ${num(f.bottomDelta)} px` : ""}${f.referenceValue !== undefined ? `<br>${f.rowIndex !== undefined ? `Hàng ${f.rowIndex} / mốc ${f.referenceRowIndex} · ` : ""}${esc(f.metric)}: ${num(f.value)} / ${num(f.referenceValue)} px · Δ ${num(f.delta)} px` : f.metric ? `<br>${esc(f.metric)}: ${num(f.value)} px` : ""}${f.referenceStory ? `<br>Mốc: <a href="${esc(f.referenceCrop)}">${esc(f.referenceStory)}</a>` : ""}${f.ratio ? `<br>Tương phản ${f.ratio}:1 / ${f.threshold}:1` : ""}<br><a href="${report.stories.find((s) => s.id === id && s.theme === f.theme)?.sheet}">Bảng chi tiết</a></figcaption></figure>`).join("")}</div></details>`).join("")}</section>`;
   }).join("");
   writeFileSync(path.join(out, "index.html"), html("ABook · soi chi tiết gallery", `<h1>ABook · soi chi tiết gallery</h1><p>${report.stories.length} lượt · ${report.findings.length} phát hiện · ${report.errors.length} lỗi chạy · ${esc(report.created)}</p><p>Ảnh cắt lề 8 CSS px: quy tắc cũ dùng CDP scale:4; INK EDGE/RHYTHM/BASELINE/CONTROL HEIGHT/FILL INSET phóng 4× nearest-neighbour từ raster CSS. Bấm ảnh để xem nguyên cỡ; phát hiện hình học cần được duyệt qua ảnh.</p><p>${RULES.map((r) => `${esc(r)}: ${report.counts[r]}`).join(" · ")}</p><details><summary>Bảng điều khiển / biểu tượng (${report.stories.length})</summary><ul>${report.stories.map((s) => `<li><a href="${s.sheet}">${esc(s.id)} · ${s.theme}</a> (${s.contacts.length})${s.error ? ` · ${esc(s.error)}` : ""}</li>`).join("")}</ul></details>${report.errors.length ? `<pre>${esc(JSON.stringify(report.errors, null, 2))}</pre>` : ""}${list}`));
 }
@@ -119,7 +131,7 @@ export function writeOutputs(out, report) {
 export async function main(argv = process.argv.slice(2)) {
   const args = parseArgs(["--theme", "both", ...argv]);
   if (args.help || !args.out) {
-    console.log("node scripts/gallery_inspect.mjs --out DIR [--browser PATH] [--only A,B] [--theme light|dark|both] [--base URL] [--dist DIR] [--fail-on none|rule1,rule2,...,rule24]\nDefault --fail-on: rule4,rule5,rule6,rule8,rule10,rule11,rule12,rule13,rule15,rule16,rule17,rule18,rule19,rule20,rule21,rule22,rule23,rule24 (rules142/report.md; Studio included)\nrule10 INK EDGE: 2..20 px edges; >1 px icon/text gaps. rule11 RHYTHM: >2 px sibling gaps; >1 px first-block tops. rule12 BASELINE: >1 px alphabetic baseline delta. rule13 CONTROL HEIGHT: >1 px visible height/top/bottom or same-role menu-row delta. rule14 FILL INSET: <6 px ink padding, or selected fill ends >8 px before its row control. rule15 TAP REACH: enabled visible controls in the last leaf layer/main must restore pointer events and hit inside that layer. rule16 FOCUS RING CLIPPED: 4 px outline extent, 0.5 px tolerance; skip partially scrolled controls and honor overflow-clip-margin. rule17 CORNER MISMATCH: coincident corners within 1 px, CSS-scaled radius deficit >1 px, unless rounded ancestor clips. rule18 LINE BREAK: a middle-dot separator that ends or begins a line (half a font size of vertical offset). rule19 COVERED TEXT: a solid absolutely placed layer painted over text of the same frame, aria-hidden text included. rule20 REPEATED LABEL: a heading inside a tab panel that repeats the selected tab label, or the same figure twice in one card or row. rule21 STACKED LAYERS: a dialog over another dialog, or any layer over a menu, overlapping by more than 8 px. rule22 NAV ACCENT: the current navigation item (aria-current=page) draws text in the accent colour. rule23 NESTED CARD: a bordered card nested inside a card or dialog. rule24 CROSS CENTER: a child of a vertically centred flex row whose margin box centre is >1 px off the row centre. Use --fail-on none for advisory output.");
+    console.log("node scripts/gallery_inspect.mjs --out DIR [--browser PATH] [--only A,B] [--theme light|dark|both] [--base URL] [--dist DIR] [--fail-on none|rule1,rule2,...,rule24,rule25]\nDefault --fail-on: rule4,rule5,rule6,rule8,rule10,rule11,rule12,rule13,rule15,rule16,rule17,rule18,rule19,rule20,rule21,rule22,rule23,rule24,rule25 (rules142/report.md; Studio included)\nrule10 INK EDGE: 2..20 px edges; >1 px icon/text gaps. rule11 RHYTHM: >2 px sibling gaps; >1 px first-block tops. rule12 BASELINE: >1 px alphabetic baseline delta. rule13 CONTROL HEIGHT: >1 px visible height/top/bottom or same-role menu-row delta. rule14 FILL INSET: <6 px ink padding, or selected fill ends >8 px before its row control. rule15 TAP REACH: enabled visible controls in the last leaf layer/main must restore pointer events and hit inside that layer. rule16 FOCUS RING CLIPPED: 4 px outline extent, 0.5 px tolerance; skip partially scrolled controls and honor overflow-clip-margin. rule17 CORNER MISMATCH: coincident corners within 1 px, CSS-scaled radius deficit >1 px, unless rounded ancestor clips. rule18 LINE BREAK: a middle-dot separator that ends or begins a line (half a font size of vertical offset). rule19 COVERED TEXT: a solid absolutely placed layer painted over text of the same frame, aria-hidden text included. rule20 REPEATED LABEL: a heading inside a tab panel that repeats the selected tab label, or the same figure twice in one card or row. rule21 STACKED LAYERS: a dialog over another dialog, or any layer over a menu, overlapping by more than 8 px. rule22 NAV ACCENT: the current navigation item (aria-current=page) draws text in the accent colour. rule23 NESTED CARD: a bordered card nested inside a card or dialog. rule24 CROSS CENTER: a child of a vertically centred flex row whose margin box centre is >1 px off the row centre. rule25 SHEET GEOMETRY: catalog and DOM-discovered sheet/dialog/Now Playing open/close cycles at 1440px and 400px, top/middle, Escape/control; >0.5px geometry or any scroll change. Use --fail-on none for advisory output.");
     return !args.help ? 2 : 0;
   }
   if (!["light", "dark", "both"].includes(args.theme)) throw new Error("--theme phải là light, dark hoặc both");
@@ -128,7 +140,7 @@ export async function main(argv = process.argv.slice(2)) {
   const out = path.resolve(args.out);
   for (const dir of [out, path.join(out, "crops"), path.join(out, "contacts")]) mkdirSync(dir, { recursive: true });
   const report = { created: new Date().toISOString(), rules: RULES, counts: {}, settings: { phone: "412x915 @2x", desktop: "1440x900 @1x", cropScale: 4, themes: args.theme }, stories: [], findings: [], errors: [] };
-  let local, browser, cdp;
+  let local, browser, cdp, geometryBrowser, geometryCdp;
   try {
     local = args.base ? null : await serve(args.dist);
     const base = args.base ?? local.base;
@@ -143,10 +155,10 @@ export async function main(argv = process.argv.slice(2)) {
     await cdp.send("Target.closeTarget", { targetId: index.targetId });
     const themes = args.theme === "both" ? ["light", "dark"] : [args.theme];
     console.log(`${entries.length} mục × ${themes.length} chủ đề · ${executable}`);
-    for (const entry of entries) for (const theme of themes) {
+    const inspectStatic = async (entry, theme) => {
       const mobile = entry.platform === "phone";
       const width = mobile ? 412 : 1440, height = mobile ? 915 : 900;
-      const page = await openPage(cdp, { width, height, scale: mobile ? 2 : 1, mobile, theme });
+      const page = await openPage(cdp, { width, height, scale: mobile ? 2 : 1, mobile, theme, newWindow: true, isolated: true });
       const stem = `${entry.id.replaceAll("/", "__")}-${theme}`;
       const story = { ...entry, theme, sheet: `contacts/${stem}.html`, contacts: [], overlays: [] };
       const started = performance.now();
@@ -155,6 +167,7 @@ export async function main(argv = process.argv.slice(2)) {
         await waitUntil(cdp, page.sessionId, "Boolean(window.__gallery?.ready)", args.timeout, entry.id);
         await settle(cdp, page.sessionId, args.timeout);
         const gallery = await evaluate(cdp, page.sessionId, "window.__gallery");
+        story.known = gallery.known;
         if (gallery.errors.length || gallery.missing.length) throw new Error(JSON.stringify(gallery));
         let result;
         for (let attempt = 0; attempt < 3; attempt++) {
@@ -188,14 +201,47 @@ export async function main(argv = process.argv.slice(2)) {
         report.errors.push({ story: entry.id, theme, error: error.message });
         console.error(`!! ${entry.id} (${theme}): ${error.message}`);
       } finally {
-        await cdp.send("Target.closeTarget", { targetId: page.targetId }).catch(() => undefined);
+        await cdp.send("Target.disposeBrowserContext", { browserContextId: page.browserContextId }).catch(() => undefined);
         report.stories.push(story);
         writeSheet(out, story);
         report.counts = Object.fromEntries(RULES.map((r) => [r, report.findings.filter((f) => f.rule === r).length]));
         writeOutputs(out, report);
       }
     }
+    const staticQueue = entries.flatMap(entry => themes.map(theme => ({ entry, theme })));
+    await Promise.all(Array.from({ length: 4 }, async () => {
+      for (;;) {
+        const job = staticQueue.shift();
+        if (!job) return;
+        await inspectStatic(job.entry, job.theme);
+      }
+    }));
+    report.stories.sort((a, b) => entries.findIndex(e => e.id === a.id) - entries.findIndex(e => e.id === b.id) || themes.indexOf(a.theme) - themes.indexOf(b.theme));
+    // Preserve the existing raster detector environment; only geometry needs native scrollbar gutters.
+    geometryBrowser = await launch(executable, { hideScrollbars: false });
+    geometryCdp = await connect(geometryBrowser.endpoint);
+    // Independent headless pages; bounded concurrency keeps the full release matrix practical.
+    const queue = report.stories.filter(s => !s.error);
+    await Promise.all(Array.from({ length: 4 }, async () => {
+      for (;;) {
+        const story = queue.shift();
+        if (!story) return;
+        const entry = entries.find(e => e.id === story.id);
+        story.sheetGeometry = await inspectSheets(geometryCdp, { base, entry, theme: story.theme, timeout: args.timeout });
+        for (const finding of story.sheetGeometry.findings) {
+          finding.id = `F${String(report.findings.length + 1).padStart(5, "0")}`;
+          report.findings.push(finding);
+        }
+        report.errors.push(...story.sheetGeometry.errors);
+        story.findingCount += story.sheetGeometry.findings.length;
+        console.log(`geometry ${story.id} (${story.theme}) | ${story.sheetGeometry.trials.length} trials | ${story.sheetGeometry.findings.length} findings | ${story.sheetGeometry.errors.length} errors`);
+        report.counts = Object.fromEntries(RULES.map(r => [r, report.findings.filter(f => f.rule === r).length]));
+        writeOutputs(out, report);
+      }
+    }));
   } finally {
+    geometryCdp?.close();
+    await geometryBrowser?.close();
     cdp?.close();
     try { await browser?.close(); } finally { local?.server.close(); }
   }

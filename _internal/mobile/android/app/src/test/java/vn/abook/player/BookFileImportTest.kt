@@ -35,6 +35,89 @@ class BookFileImportTest {
     private fun sha256(bytes: ByteArray) =
         MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
 
+    @Test
+    fun identical_audio_still_refreshes_base_cover_and_metadata_and_preserves_listener_edits() {
+        for (listenerCover in listOf(false, true)) {
+            setUp()
+            fun packed(name: String, image: ByteArray? = null, label: String = "Base", width: Int = 12, script: String = "Base"): File {
+                val book = JSONObject().put("title", label).put("author", label).put("description", "description $label")
+                    .put("chaptersAvailable", 1).put("chaptersTotal", 1)
+                    .put("chapters", JSONArray().put(chapter(1, 0, "chapters/1.mp3")))
+                val content = mutableMapOf("chapters/1.mp3" to "same audio".toByteArray(), "scripts/1.json" to "{\"text\":\"$script\"}".toByteArray())
+                if (image != null) {
+                    content["cover.jpg"] = image
+                    book.put("cover", JSONObject().put("file", "cover.jpg").put("color", "#112233").put("width", width).put("height", 24))
+                }
+                return abook("$name.abook", 1, content, book)
+            }
+            val first = BookFileImport.importFile(packed("first"))
+            val folder = Store.bookDir(first.id)
+            val audio = File(folder, "chapters/1.mp3")
+            audio.setLastModified(1_700_000_000_000L)
+            val stamp = audio.lastModified()
+            BookEdits.setTitle(folder, "Listener title")
+            if (listenerCover) BookEdits.setCover(folder, otherJpeg, FakeCodec("#aabbcc"))
+            val edits = BookEdits.load(folder).toString()
+            for ((name, image) in listOf("added" to jpeg, "changed" to otherJpeg, "meta" to otherJpeg, "removed" to null, "description" to null, "script" to null)) {
+                val label = if (name in setOf("description", "script")) "Refreshed" else "Base"
+                val width = if (name == "meta") 36 else 12
+                val script = if (name == "script") "ScriptOnly" else "Base"
+                val file = packed(name, image, label, width, script)
+                val updated = BookFileImport.importFile(file)
+                assertEquals(first.id, updated.id)
+                assertEquals("updated", updated.how)
+                val raw = Store.rawManifest(first.id)!!
+                assertEquals(label, raw.getString("title"))
+                assertEquals(label, raw.getString("author"))
+                assertEquals("description $label", raw.getString("description"))
+                assertEquals(script, JSONObject(File(folder, "scripts/1.json").readText()).getString("text"))
+                assertEquals(image != null, File(folder, "cover.jpg").exists())
+                if (image != null) {
+                    assertTrue(File(folder, "cover.jpg").readBytes().contentEquals(image))
+                    assertEquals(width, raw.getJSONObject("cover").getInt("width"))
+                    assertEquals(if (listenerCover) "edits/cover.jpg" else "cover.jpg", Store.manifest(first.id)!!.getJSONObject("cover").getString("file"))
+                } else {
+                    assertFalse(raw.has("cover"))
+                    assertEquals(listenerCover, Store.manifest(first.id)!!.has("cover"))
+                }
+                assertEquals(edits, BookEdits.load(folder).toString())
+                assertEquals("Listener title", Store.manifest(first.id)!!.getString("title"))
+                if (listenerCover) assertTrue(File(folder, "edits/cover.jpg").readBytes().contentEquals(otherJpeg))
+                assertEquals("same audio", audio.readText())
+                assertEquals(stamp, audio.lastModified())
+                assertEquals("existing", BookFileImport.importFile(file).how)
+            }
+        }
+    }
+
+    @Test
+    fun a_corrupt_base_update_leaves_the_existing_book_untouched() {
+        fun book(title: String) = JSONObject().put("title", title).put("chapters", JSONArray().put(chapter(1, 0, "chapters/1.mp3")))
+        val first = BookFileImport.importFile(abook("first.abook", 1, mapOf("chapters/1.mp3" to "audio".toByteArray()), book("Old")))
+        val folder = Store.bookDir(first.id)
+        val before = folder.walkTopDown().filter { it.isFile }.associate { it.relativeTo(folder).path to it.readBytes().toList() }
+        val bad = abook("bad.abook", 1, mapOf("chapters/1.mp3" to "audio".toByteArray(), "cover.jpg" to jpeg), book("New"))
+        val entries = java.util.zip.ZipFile(bad).use { zip -> zip.entries().toList().map { it.name to zip.getInputStream(it).use { input -> input.readBytes() } } }
+        ZipOutputStream(bad.outputStream()).use { zip ->
+            for ((name, original) in entries) {
+                val bytes = if (name == "cover.jpg") original.copyOf().also { it[it.lastIndex] = (it.last() + 1).toByte() } else original
+                val entry = ZipEntry(name)
+                if (name == "mimetype") {
+                    entry.method = ZipEntry.STORED
+                    entry.size = bytes.size.toLong()
+                    entry.compressedSize = bytes.size.toLong()
+                    entry.crc = CRC32().also { it.update(bytes) }.value
+                }
+                zip.putNextEntry(entry)
+                zip.write(bytes)
+                zip.closeEntry()
+            }
+        }
+        assertTrue(refusal { BookFileImport.importFile(bad) }.contains("cover.jpg"))
+        assertEquals(before, folder.walkTopDown().filter { it.isFile }.associate { it.relativeTo(folder).path to it.readBytes().toList() })
+        assertFalse(folder.parentFile!!.listFiles()!!.any { it.name.endsWith(".part") })
+    }
+
     /** Dựng một file .abook: `content` là {tên mục -> byte}; `book` là phần còn lại của book.json. */
     private fun abook(name: String, version: Int, content: Map<String, ByteArray>, book: JSONObject = JSONObject(), at: String? = null): File {
         val files = JSONObject()

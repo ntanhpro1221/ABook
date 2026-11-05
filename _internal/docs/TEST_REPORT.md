@@ -1,5 +1,11 @@
 # Test report
 
+## 03-11-2026 — unchanged-audio cover re-import (dev/cover-reimport)
+
+- Android and desktop `.abook` imports now compare the base book layer even when audio is identical, then stage and swap changed metadata/assets while reusing unchanged audio. Cover addition, replacement, metadata-only updates and removal preserve listener title/cover precedence. Local sidecars/workshop survive listening-package refreshes. Desktop cover metadata is staged with the image. Repeating an EPUB/TXT selection retains its existing behavior.
+- Regression tests exercise cover-only changes, book.json-only changes, scripts, cover removal with/without a listener cover, audio reuse and corrupt-update rollback. Android `BookFileImportTest`: 38 tests, 0 failures. Python bookfile/import/edits/text/project suites: 421 tests, 0 failures/errors/skips. Explicitly restore production files to HEAD with the regression tests retained: Android 38 tests / 2 failures; Python 3 tests / 3 failures. Restore fixes: pass.
+- Locked-file list read from code: 41 entries. Hash before/after: `c95fac04433a97e3b6a8c701514891b85718df8829d73313b7cd742dfb5fc9b8`. No phone/emulator, commit, push or process termination.
+
 ## 02-11-2026 — thanh tiêu đề Windows và hai test Android chập chờn (dev/m1-chrome)
 
 - `tst_titlebar.qml` (WidthTests, Main.qml thật + WindowChrome giả có nhớ lời gọi): dải cao 40, sát mép trên và rộng bằng cửa sổ, không nền riêng (điểm ảnh trên thanh bên, nội dung và ngay dưới dải cùng màu), ba nút 46 x 40 sát nhau ở mép phải, nét tự vẽ ở giữa nút (gạch Thu nhỏ đúng 10 cột, 1 hàng, Shape chứ không chữ/ảnh), nút thu / mở thanh bên lọt trong dải, nền Đóng #C42B1C rê / #A82419 nhấn và chữ trắng, nền hai nút kia 6 % / 10 % màu chữ, cửa sổ mất tiêu điểm thì nét nhạt, phóng to đổi nét. 15 phép phá (mut1.json) đều đỏ.

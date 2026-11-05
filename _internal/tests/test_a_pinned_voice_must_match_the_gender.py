@@ -1,7 +1,11 @@
-"""Giọng mang pitch trẻ con bị bỏ khi người nghe đã ghim một tuổi khác trẻ con."""
+"""A pinned voice survives unless its preset is the wrong gender for the person (a child excepted).
+
+This file used to hold a second rule, "a voice carrying the child pitch is dropped for a pinned adult". Children are no
+longer pitch-shifted (05-11), so no voice carries that pitch and the rule is gone; what is left is the gender rule.
+"""
 from __future__ import annotations
 
-from abook.character_registry import _drop_pins_that_contradict_a_person, voice_is_child_pitched
+from abook.character_registry import _drop_pins_that_contradict_a_person
 
 
 class _Events:
@@ -12,40 +16,30 @@ class _Events:
         self.rows.append((level, code, message, detail))
 
 
-def test_the_child_pitch_is_read_from_the_voice_key() -> None:
-    assert voice_is_child_pitched("preset_ngoc_linh_f109_p+04") is True
-    assert voice_is_child_pitched("preset_ngoc_linh_f100_p+00") is False
-    # Formant khác mà pitch vẫn là pitch trẻ con -> vẫn là giọng trẻ con: formant là bước TÁCH giọng.
-    assert voice_is_child_pitched("preset_ngoc_linh_f093_p+04") is True
-    assert voice_is_child_pitched("narrator") is False
-    assert voice_is_child_pitched("preset_khong_co_that_f100_p+00") is False
-
-
-def test_a_pinned_adult_loses_a_child_pitched_voice() -> None:
+def test_a_pinned_man_loses_a_womans_voice() -> None:
     events = _Events()
     logs: list[str] = []
     kept = _drop_pins_that_contradict_a_person(
         events,
-        {"KAELYN": "preset_ngoc_linh_f109_p+04"},
-        {"KAELYN": "female"},
-        {"KAELYN": "adult"},
+        {"IVAN": "preset_ngoc_linh_f100_p+00"},
+        {"IVAN": "male"},
+        {"IVAN": "adult"},
         logs.append,
     )
     assert kept == {}
-    assert "pitch trẻ con" in logs[0]
     assert events.rows and events.rows[0][1] == "CASTING_PIN_CONTRADICTS_A_PERSON"
 
 
-def test_a_pinned_child_keeps_it() -> None:
+def test_a_pinned_child_keeps_a_female_preset_even_as_a_boy() -> None:
     logs: list[str] = []
     kept = _drop_pins_that_contradict_a_person(
         _Events(),
-        {"EVERAN": "preset_ngoc_linh_f109_p+04"},
+        {"EVERAN": "preset_ngoc_linh_f100_p+00"},
         {"EVERAN": "male"},
         {"EVERAN": "child"},
         logs.append,
     )
-    assert kept == {"EVERAN": "preset_ngoc_linh_f109_p+04"}, "trẻ con đọc bằng preset nữ kéo cao là có chủ ý"
+    assert kept == {"EVERAN": "preset_ngoc_linh_f100_p+00"}, "trẻ con đọc bằng preset nữ là có chủ ý"
     assert logs == []
 
 
