@@ -1,5 +1,12 @@
 # Test report
 
+## 07-11-2026 — Qt startup (dev/perfaudit, chưa commit)
+
+- Năm nhóm hộp thao tác sách chỉ được dựng đồng bộ ở lần dùng đầu; giữ instance và request sau khi đóng. Thư viện toàn sách đủ audio không liệt kê giọng; sách chữ, sách có chương chỉ-chữ/thiếu audio, trang sách mở trực tiếp và Cài đặt vẫn tải danh sách, giữ giọng mặc định và gộp request đang tải.
+- QML liên quan: 55 hàm test, 61 mục JUnit gồm init/cleanup (Main 12, Voice 27, Settings 22), 0 failures/errors/skips. Test mới kiểm nạp hộp, mở lại cùng instance, lưu nhanh, không hỏi giọng ở thư viện audio, hỏi giọng cho sách chữ/Cài đặt và giữ lựa chọn giọng. Các cửa sổ dùng offscreen trên desktop riêng; guard 0 foreground events.
+- Python startup/host: 8 passed, 0 failures/errors/skips. Không full release gate, không model/GPU, không đổi Android. Kết quả benchmark và protocol được ghi riêng trong report của task.
+- Hash khoá trước/sau lượt này giữ `88cef8f94e9e98907298d8252ccba68e253956bdbc2a503617686673abdb0d94` (53 mục đọc từ code); nhánh đã có thay đổi file khoá ở đợt tối ưu import trước đó, chỉ dùng ở dev.
+
 ## 06-11-2026 — tnbig (dev/tn-bigint, chưa commit)
 
 - Python/Kotlin nhóm số liền từ 7 chữ số có ngữ cảnh lượng; sửa gốc luật nghìn kiểu Anh để không sinh số dài liền, kèm dấu ~ và dấu chấm cuối câu. Cache 5 → 6; cập nhật 19 khoá fixture cache. Fixture chung 146 ca: thêm 46 câu bịa, đổi 1 ca cũ `thousands-2`; 99 ca cũ giữ nguyên. Hai kỳ vọng trùng của số sinh từ bỏ phẩy trong test Python/Kotlin được đổi tương ứng.
