@@ -15,9 +15,9 @@ import pytest
 from abook import continuation
 from abook.database import LISTENER_PRONUNCIATION_SOURCE, ProjectDB
 
-VOICE_A = "preset_thanh_binh_f100_p-04"
-VOICE_B = "preset_ngoc_linh_f107_p+02"
-VOICE_C = "preset_thai_son_f100_p+00"
+VOICE_A = "vieneu@3.8.3/Thanh Bình"
+VOICE_B = "vieneu@3.8.3/Ngọc Linh"
+VOICE_C = "vieneu@3.8.3/Thái Sơn"
 TEXT = {
     "001.txt": "Selene nhìn Marcus. Theosbane im lặng.",
     "002.txt": "Marcus gọi Selene. Arthur Doyle đứng xa.",
@@ -63,7 +63,7 @@ def _speak(db: ProjectDB, chapter: str, lines: list[tuple[str, str]], status: st
                                            mentions=0, importance="main", confidence=0.9)
         preset = {VOICE_A: "Thanh Bình", VOICE_B: "Ngọc Linh", VOICE_C: "Thái Sơn"}[voice_key]
         profile_id = db.upsert_voice_profile({"voice_key": voice_key, "engine": "vieneu", "preset_name": preset,
-                                              "description": "", "seed": 7, "pitch_semitones": 0, "formant_ratio": 1.0,
+                                              "description": "", "seed": 7,
                                               "status": "ready"})
         with db.transaction() as conn:
             conn.execute("UPDATE segments SET kind='dialogue', speaker=?, canonical_character_id=?, voice_profile_id=?,"

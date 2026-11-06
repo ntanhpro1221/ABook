@@ -52,7 +52,6 @@ QUALITY_IMPLEMENTATION_FILES = (
     "asr.py",
     "asr_contract.py",
     "audio_io.py",
-    "chapter_loudness.py",
     "book_levels.py",
     "_vendor/zwicker/loudness_zwst.py",
     "_vendor/zwicker/_main_loudness.py",
@@ -69,7 +68,6 @@ QUALITY_IMPLEMENTATION_FILES = (
     "config.py",
     "database.py",
     "english_vi.py",
-    "expression.py",
     "listener_overrides.py",
     "models.py",
     "name_snap.py",
@@ -195,7 +193,7 @@ def build_quality_policy(settings: dict[str, Any]) -> dict[str, Any]:
             "perceptual_naturalness": (
                 "utmosv2_relative_voice_baseline_candidate_requirement_v2"
             ),
-            "chapter_mastering": "two_pass_loudnorm_full_decode_v1",
+            "chapter_mastering": "constant_5db_oversampled_true_peak_limiter_full_decode_v1",
         },
         "settings": {
             "quality_profile": settings["quality_profile"],

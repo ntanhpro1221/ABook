@@ -7,6 +7,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Nhãn nhịp chậm/nhanh chỉ còn trong phân tích; mọi câu dùng chung dải kiểm nhịp bình thường, bỏ tham số nghỉ và lượt thu lại riêng theo nhãn.
+- Master mọi chương dùng cùng +5 dB từ hiệu chuẩn và limiter chỉ hạ đỉnh; gỡ vòng bù mức sách sau kiểm định hai sách đạt, lưu số đo và chỉ cảnh báo.
+- Giữ nguyên giọng preset, bỏ chỉnh cao độ, âm sắc, độ to và khoảng nghỉ theo cảm xúc; cân bằng tốc độ và độ to bằng hằng số từng giọng, chỉ giữ khoảng nghỉ cấu trúc.
 - Giữ bản thu tốt nhất khi một câu hết lượt thử; lỗi tốc độ hay đọc lặp không còn làm mất audio đã có.
 - Chương đủ lời đọc vẫn được ghép khi còn câu lỗi và ghi rõ cần nghe lại; thiếu audio thật thì báo đúng dòng bị thiếu.
 - File sách đối chiếu đủ chương, mã băm và phụ đề trước khi xuất và khi kiểm tra. Xuất một phần phải chọn rõ, kèm số chương và tên chương thiếu.

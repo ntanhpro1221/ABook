@@ -245,14 +245,6 @@ class _Pipeline(BookPipeline):
     def _safe_export_reports(self, incremental: bool = False) -> None:
         pass
 
-    def _chapter_level(self, chapter):
-        # Bộ giả không có WAV/thời lượng; kiểm master nằm ở test_chapter_loudness.
-        return {}
-
-    def _compute_chapter_levels(self):
-        # Cùng đường giả trên: không dựng kế hoạch audio khi chỉ thử sửa cách đọc.
-        pass
-
     def _process_chapter(self, chapter, verifier) -> None:
         index = int(chapter["chapter_index"])
         self.processed.append(index)

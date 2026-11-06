@@ -492,7 +492,9 @@ def _cached(repo: str, revision: str, patterns: list[str]) -> Path | None:
             found = Path(snapshot_download(repo, revision=revision, allow_patterns=patterns, local_files_only=True, cache_dir=cache))
         except Exception:  # noqa: BLE001 - không có ở chỗ này: thử chỗ kế
             continue
-        if any(path.is_file() for path in found.rglob("*.onnx")):  # bộ đệm dở (chỉ có refs) trả về thư mục rỗng
+        if all(any(path.is_file() for path in found.glob(pattern)) for pattern in patterns):
+            if repo.endswith("VieNeu-TTS-v3-Turbo") and not (found / "onnx_int8/config.json").is_file():
+                continue
             return found
     return None
 

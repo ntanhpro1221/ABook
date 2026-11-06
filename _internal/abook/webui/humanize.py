@@ -201,19 +201,6 @@ def _caps_glitch(word: str) -> bool:
     return 2 <= run < len(letters) and all(ch.islower() for ch in letters[run:])
 
 
-def voice_tone(formant: float, pitch: float) -> str:
-    """Một chữ mô tả biến thể của giọng gốc, như người nghe nhận ra nó."""
-    if formant <= 0.9 or pitch <= -2.5:
-        return "trầm hẳn"
-    if formant <= 0.96 or pitch <= -1.5:
-        return "hơi trầm"
-    if formant >= 1.1 or pitch >= 2.5:
-        return "sáng hẳn"
-    if formant >= 1.04 or pitch >= 1.5:
-        return "hơi sáng"
-    return ""
-
-
 def error_text(error: str) -> str:
     text = error.strip().splitlines()[0] if error.strip() else ""
     return text[:240]

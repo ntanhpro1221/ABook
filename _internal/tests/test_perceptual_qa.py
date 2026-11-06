@@ -148,60 +148,6 @@ def test_voice_preview_baseline_is_scored_once_and_predict_contract_is_bounded(t
         assert kwargs["verbose"] is False
 
 
-def test_pitch_matched_baselines_use_distinct_cache_keys_and_cleanup_temp_wav(
-    tmp_path: Path,
-    monkeypatch,
-) -> None:
-    checkpoint = tmp_path / "utmos.pth"
-    checkpoint.touch()
-    preview_name = VOICE_PREVIEW_FILENAMES[PRESET_NAME]
-    preview_path = tmp_path / preview_name
-    _write_wav(preview_path, 2.0)
-    generated = tmp_path / "generated.wav"
-    _write_wav(generated)
-    shift_calls: list[tuple[int, int]] = []
-    temporary_paths: list[Path] = []
-
-    def shift(audio, sample_rate: int, pitch_semitones: int):
-        shift_calls.append((sample_rate, pitch_semitones))
-        return np.asarray(audio, dtype=np.float32)
-
-    class PitchAwareModel:
-        def predict(self, *, input_path: Path, **_kwargs):
-            if input_path == generated:
-                return 3.1
-            if input_path == preview_path:
-                return 3.0
-            temporary_paths.append(input_path)
-            assert input_path.is_file()
-            return 2.8
-
-    monkeypatch.setattr(perceptual_module, "apply_pitch_variant", shift)
-    verifier = UTMOSNaturalnessVerifier(
-        _settings(checkpoint),
-        lambda _message: None,
-        model_factory=lambda **_kwargs: PitchAwareModel(),
-        preview_root=tmp_path,
-    )
-
-    shifted_first = verifier.verify(generated, PRESET_NAME, pitch_semitones=-1)
-    shifted_second = verifier.verify(generated, PRESET_NAME, pitch_semitones=-1)
-    original = verifier.verify(generated, PRESET_NAME, pitch_semitones=0)
-
-    assert shifted_first["baseline_score"] == pytest.approx(2.8)
-    assert shifted_second["baseline_score"] == pytest.approx(2.8)
-    assert shifted_first["baseline_pitch_semitones"] == -1
-    assert original["baseline_score"] == pytest.approx(3.0)
-    assert original["baseline_pitch_semitones"] == 0
-    assert shift_calls == [(16_000, -1)]
-    assert len(temporary_paths) == 1
-    assert temporary_paths[0].exists() is False
-    assert verifier._baseline_scores == {
-        (PRESET_NAME, -1): pytest.approx(2.8),
-        (PRESET_NAME, 0): pytest.approx(3.0),
-    }
-
-
 def test_short_audio_is_policy_exempt_without_loading_or_scoring_model(tmp_path: Path) -> None:
     preview_name = VOICE_PREVIEW_FILENAMES[PRESET_NAME]
     verifier, model, generated = _configured_verifier(
@@ -459,7 +405,7 @@ def test_unload_preserves_voice_baselines_and_trims_working_set(tmp_path: Path, 
     verifier.unload()
 
     assert verifier.model is None
-    assert verifier._baseline_scores == {(PRESET_NAME, 0): pytest.approx(3.0)}
+    assert verifier._baseline_scores == {PRESET_NAME: pytest.approx(3.0)}
     assert trims == [True]
 
 

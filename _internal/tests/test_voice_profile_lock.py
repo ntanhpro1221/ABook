@@ -16,22 +16,7 @@ from abook.audio_io import (
 )
 from abook.config import build_settings
 from abook.database import ProjectDB
-from abook.tts import (
-    CLARITY_MAX_TEMPERATURE,
-    CLARITY_MAX_TOP_P,
-    DELIVERY_CLARITY,
-    GENERATION_TEMPERATURE,
-    GENERATION_TOP_P,
-    HA_VOCALIZATION_MAX_TEMPERATURE,
-    SHORT_UTTERANCE_MAX_TEMPERATURE,
-    SHORT_UTTERANCE_MAX_TOP_P,
-    TTSCoordinator,
-    VieNeuEngine,
-    apply_pitch_variant,
-    is_fatal_tts_error,
-    is_transient_tts_memory_error,
-    vieneu_sampling_for_segment,
-)
+from abook.tts import CLARITY_MAX_TEMPERATURE, CLARITY_MAX_TOP_P, DELIVERY_CLARITY, GENERATION_TEMPERATURE, GENERATION_TOP_P, HA_VOCALIZATION_MAX_TEMPERATURE, SHORT_UTTERANCE_MAX_TEMPERATURE, SHORT_UTTERANCE_MAX_TOP_P, TTSCoordinator, VieNeuEngine, is_fatal_tts_error, is_transient_tts_memory_error, vieneu_sampling_for_segment
 from abook.tts_contract import (
     HA_VOCALIZATION_DELIVERY_PROFILE,
     HA_VOCALIZATION_FINAL_SAMPLES_FIELD,
@@ -82,7 +67,7 @@ def test_voice_profile_resume_preserves_locked_vieneu_preset(tmp_path: Path) -> 
     assert same_id == profile_id
     assert fresh["engine"] == "vieneu"
     assert fresh["preset_name"] == "Ngọc Linh"
-    assert fresh["pitch_semitones"] == 0
+    assert "pitch_semitones" not in fresh.keys()
     assert fresh["status"] == "ready"
 
 
@@ -145,11 +130,11 @@ def test_emotion_and_intensity_no_longer_reach_sampling(monkeypatch) -> None:
         == vieneu_sampling_for_segment(neutral)["temperature"]
         == pytest.approx(GENERATION_TEMPERATURE)
     )
-    # pace still shapes silence, which is a real effect on the audio rather than a
-    # relabelling of randomness, so it keeps its influence.
-    assert vieneu_sampling_for_segment({**neutral, "pace": "slow"})["silence_p"] > (
-        vieneu_sampling_for_segment({**neutral, "pace": "fast"})["silence_p"]
+    assert vieneu_sampling_for_segment({**neutral, "pace": "slow"}) == (
+        vieneu_sampling_for_segment({**neutral, "pace": "fast"})
     )
+    assert "silence_p" not in vieneu_sampling_for_segment(neutral)
+
 
 
 def test_short_utterance_uses_conservative_sampling() -> None:
@@ -228,76 +213,6 @@ def test_clarity_delivery_only_lowers_sampling_variance() -> None:
 
     with pytest.raises(ValueError, match="Unsupported TTS delivery mode"):
         vieneu_sampling_for_segment(row, delivery_mode="unknown")
-
-
-def test_clarity_delivery_preserves_locked_voice_pitch_and_spoken_text(
-    tmp_path: Path,
-    monkeypatch,
-) -> None:
-    db = ProjectDB(tmp_path / "project.sqlite3")
-    profile_id = db.upsert_voice_profile(
-        {
-            "voice_key": "crowd",
-            "engine": "vieneu",
-            "preset_name": "Xuân Vĩnh",
-            "description": "Đám đông",
-            "seed": 1234,
-            "pitch_semitones": -1,
-            "status": "ready",
-        }
-    )
-    coordinator = TTSCoordinator(build_settings(), db, lambda _message: None)
-    row = {
-        "voice_profile_id": profile_id,
-        "stable_id": "clarity_1",
-        "text": "Thiêu chết ả!",
-        "kind": "dialogue",
-        "speaker": "Đám đông",
-        "emotion": "angry",
-        "intensity": 3,
-        "pace": "normal",
-    }
-    generated: list[tuple[dict, dict, dict]] = []
-    pitch_steps: list[int] = []
-
-    def generate_one(spoken_row, profile, _seed, *, sampling):
-        generated.append((dict(spoken_row), dict(profile), dict(sampling)))
-        return np.asarray([0.1, -0.1], dtype=np.float32)
-
-    def apply_pitch(audio, _sample_rate, steps):
-        pitch_steps.append(int(steps))
-        return audio
-
-    monkeypatch.setattr(coordinator.vieneu, "generate_one", generate_one)
-    monkeypatch.setattr(coordinator, "generation_seed", lambda _row, _salt="": 1)
-    monkeypatch.setattr(tts_module, "apply_pitch_variant", apply_pitch)
-    monkeypatch.setattr(
-        tts_module,
-        "atomic_write_wav",
-        lambda *_args, **_kwargs: ("checksum", {"duration": 1.0}),
-    )
-
-    _checksum, primary_metrics, _seed = coordinator.synthesize_atomic(
-        row,
-        tmp_path / "primary.wav",
-    )
-    _checksum, clarity_metrics, _seed = coordinator.synthesize_atomic(
-        row,
-        tmp_path / "clarity.wav",
-        delivery_mode=DELIVERY_CLARITY,
-    )
-
-    assert generated[0][0] == generated[1][0]
-    assert generated[0][1]["id"] == generated[1][1]["id"] == profile_id
-    assert generated[0][2]["temperature"] > generated[1][2]["temperature"]
-    assert generated[0][2]["top_p"] > generated[1][2]["top_p"]
-    assert pitch_steps == [-1, -1]
-    assert primary_metrics["spoken_text_sha256"] == clarity_metrics["spoken_text_sha256"]
-    assert primary_metrics["voice_profile_id"] == clarity_metrics["voice_profile_id"]
-    assert primary_metrics["pitch_semitones"] == clarity_metrics["pitch_semitones"] == -1
-    assert clarity_metrics["pitch_variant_skipped"] == 0.0
-    assert clarity_metrics["pitch_variant_mixed"] == 0.0
-    assert clarity_metrics["tts_delivery_mode"] == DELIVERY_CLARITY
 
 
 def test_short_utterance_repair_halves_a_persisted_generation_ceiling() -> None:
@@ -408,113 +323,7 @@ def test_an_allocation_failure_is_no_longer_fatal() -> None:
     assert is_transient_tts_memory_error(RuntimeError(message))
 
 
-def test_pitch_variant_preserves_duration_and_changes_waveform() -> None:
-    sample_rate = 16_000
-    time_axis = np.arange(sample_rate, dtype=np.float32) / sample_rate
-    audio = sum(
-        (1 / harmonic) * np.sin(2 * np.pi * 220 * harmonic * time_axis)
-        for harmonic in range(1, 7)
-    )
-    audio = np.asarray(0.2 * audio / np.max(np.abs(audio)), dtype=np.float32)
-
-    shifted = apply_pitch_variant(audio, sample_rate, 1)
-
-    assert shifted.shape == audio.shape
-    assert np.allclose(apply_pitch_variant(audio, sample_rate, 0), audio)
-    assert not np.allclose(shifted, audio)
-    input_peak = np.fft.rfftfreq(audio.size, 1 / sample_rate)[np.argmax(np.abs(np.fft.rfft(audio)))]
-    shifted_peak = np.fft.rfftfreq(shifted.size, 1 / sample_rate)[
-        np.argmax(np.abs(np.fft.rfft(shifted)))
-    ]
-    assert input_peak == pytest.approx(220.0, abs=2.0)
-    assert shifted_peak == pytest.approx(220.0 * 2 ** (1 / 12), abs=2.0)
-
-
-def test_world_pitch_variant_changes_f0_but_reuses_voice_envelopes(monkeypatch) -> None:
-    source_f0 = np.asarray([0.0, 100.0, 110.0, 120.0, 0.0], dtype=np.float64)
-    time_axis = np.arange(source_f0.size, dtype=np.float64) * 0.005
-    spectral_envelope = np.full((source_f0.size, 4), 2.0, dtype=np.float64)
-    aperiodicity = np.full((source_f0.size, 4), 3.0, dtype=np.float64)
-    synthesized: dict[str, np.ndarray] = {}
-
-    monkeypatch.setattr(
-        tts_module.pyworld,
-        "harvest",
-        lambda *_args, **_kwargs: (source_f0.copy(), time_axis),
-    )
-    monkeypatch.setattr(
-        tts_module.pyworld,
-        "stonemask",
-        lambda _audio, f0, _time_axis, _sample_rate: f0,
-    )
-    monkeypatch.setattr(
-        tts_module.pyworld,
-        "cheaptrick",
-        lambda *_args, **_kwargs: spectral_envelope,
-    )
-    monkeypatch.setattr(
-        tts_module.pyworld,
-        "d4c",
-        lambda *_args, **_kwargs: aperiodicity,
-    )
-
-    def synthesize(f0, envelope, periodicity, *_args, **_kwargs):
-        synthesized["f0"] = f0
-        synthesized["envelope"] = envelope
-        synthesized["aperiodicity"] = periodicity
-        return np.ones(800, dtype=np.float64)
-
-    monkeypatch.setattr(tts_module.pyworld, "synthesize", synthesize)
-
-    shifted = apply_pitch_variant(np.ones(800, dtype=np.float32), 16_000, -1)
-
-    assert shifted.shape == (800,)
-    assert synthesized["f0"][[0, 4]].tolist() == [0.0, 0.0]
-    assert synthesized["f0"][1:4] == pytest.approx(source_f0[1:4] * 2 ** (-1 / 12))
-    assert synthesized["envelope"] is spectral_envelope
-    assert synthesized["aperiodicity"] is aperiodicity
-
-
-def test_world_pitch_variant_strict_mode_rejects_zero_padding(monkeypatch) -> None:
-    source_f0 = np.asarray([100.0, 105.0, 110.0], dtype=np.float64)
-    time_axis = np.arange(source_f0.size, dtype=np.float64) * 0.005
-    monkeypatch.setattr(
-        tts_module.pyworld,
-        "harvest",
-        lambda *_args, **_kwargs: (source_f0.copy(), time_axis),
-    )
-    monkeypatch.setattr(
-        tts_module.pyworld,
-        "stonemask",
-        lambda _audio, f0, _time_axis, _sample_rate: f0,
-    )
-    monkeypatch.setattr(
-        tts_module.pyworld,
-        "cheaptrick",
-        lambda *_args, **_kwargs: np.ones((3, 4), dtype=np.float64),
-    )
-    monkeypatch.setattr(
-        tts_module.pyworld,
-        "d4c",
-        lambda *_args, **_kwargs: np.ones((3, 4), dtype=np.float64),
-    )
-    monkeypatch.setattr(
-        tts_module.pyworld,
-        "synthesize",
-        lambda *_args, **_kwargs: np.ones(399, dtype=np.float64),
-    )
-    # 400 mẫu = 25 ms: trên WORLD_MIN_SECONDS (bản ngắn hơn đi qua nguyên vẹn, không vào WORLD).
-    audio = np.ones(400, dtype=np.float32)
-
-    with pytest.raises(ValueError, match="no-padding"):
-        apply_pitch_variant(audio, 16_000, 1, allow_padding=False)
-
-    padded = apply_pitch_variant(audio, 16_000, 1)
-    assert padded.shape == audio.shape
-    assert padded[-1] == 0.0
-
-
-def test_standalone_gasp_preserves_raw_audio_after_pitch_with_exact_provenance(
+def test_standalone_gasp_preserves_raw_audio_with_exact_provenance(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
@@ -525,7 +334,7 @@ def test_standalone_gasp_preserves_raw_audio_after_pitch_with_exact_provenance(
         "preset_name": "Xuân Vĩnh",
         "description": "Gasp test voice",
         "seed": 1234,
-        "pitch_semitones": 1,
+
         "status": "ready",
     })
     settings = build_settings("high_quality")
@@ -538,19 +347,6 @@ def test_standalone_gasp_preserves_raw_audio_after_pitch_with_exact_provenance(
         captured["spoken_text"] = spoken_row["text"]
         captured["sampling"] = dict(sampling)
         return np.full(original_samples, 0.05, dtype=np.float32)
-
-    def apply_pitch(
-        audio,
-        received_sample_rate,
-        pitch_steps,
-        *,
-        allow_padding=True,
-    ):
-        captured["pitch_input_samples"] = np.asarray(audio).size
-        captured["pitch_steps"] = pitch_steps
-        captured["allow_padding"] = allow_padding
-        assert received_sample_rate == sample_rate
-        return np.asarray(audio, dtype=np.float32) * 2.0
 
     def write_wav(_output, audio, received_sample_rate, text, _settings, *, segment):
         array = np.asarray(audio, dtype=np.float32)
@@ -565,7 +361,6 @@ def test_standalone_gasp_preserves_raw_audio_after_pitch_with_exact_provenance(
 
     monkeypatch.setattr(coordinator, "generation_seed", lambda _row, _salt="": 44963260)
     monkeypatch.setattr(coordinator.vieneu, "generate_one", generate_one)
-    monkeypatch.setattr(tts_module, "apply_pitch_variant", apply_pitch)
     monkeypatch.setattr(tts_module, "atomic_write_wav", write_wav)
 
     _checksum, metrics, seed = coordinator.synthesize_atomic(
@@ -587,14 +382,11 @@ def test_standalone_gasp_preserves_raw_audio_after_pitch_with_exact_provenance(
     assert seed == 44963260
     assert captured["spoken_text"] == "“Ha ha.”"
     assert captured["written_text"] == "“Ha ha.”"
-    assert captured["pitch_input_samples"] == original_samples
-    assert captured["pitch_steps"] == 1
-    assert captured["allow_padding"] is False
     assert sampling["temperature"] == pytest.approx(0.55)
     assert sampling["top_p"] == pytest.approx(0.82)
     assert sampling["max_new_frames"] == HA_VOCALIZATION_MAX_NEW_FRAMES
     assert written_audio.size == original_samples
-    assert np.allclose(written_audio, 0.10)
+    assert np.allclose(written_audio, 0.05)
     assert metrics[HA_VOCALIZATION_PROFILE_FIELD] == (
         HA_VOCALIZATION_DELIVERY_PROFILE
     )
@@ -612,67 +404,6 @@ def test_standalone_gasp_preserves_raw_audio_after_pitch_with_exact_provenance(
     assert metrics["generation_endpoint_active"] == 0.0
 
 
-def test_standalone_gasp_discards_a_shortened_pitch_variant(
-    tmp_path: Path,
-    monkeypatch,
-) -> None:
-    db = ProjectDB(tmp_path / "project.sqlite3")
-    profile_id = db.upsert_voice_profile({
-        "voice_key": "gasp-short-pitch",
-        "engine": "vieneu",
-        "preset_name": "Xuân Vĩnh",
-        "description": "Short pitch fallback voice",
-        "seed": 4321,
-        "pitch_semitones": 1,
-        "status": "ready",
-    })
-    logs: list[str] = []
-    coordinator = TTSCoordinator(build_settings("high_quality"), db, logs.append)
-    raw_audio = np.full(2_400, 0.05, dtype=np.float32)
-    captured: dict[str, object] = {}
-
-    monkeypatch.setattr(coordinator, "generation_seed", lambda _row, _salt="": 17)
-    monkeypatch.setattr(
-        coordinator.vieneu,
-        "generate_one",
-        lambda *_args, **_kwargs: raw_audio.copy(),
-    )
-
-    def shorten_pitch(audio, _sample_rate, _steps, *, allow_padding=True):
-        captured["allow_padding"] = allow_padding
-        return np.asarray(audio, dtype=np.float32)[:-1]
-
-    def write_wav(_output, audio, *_args, **_kwargs):
-        captured["written_audio"] = np.asarray(audio, dtype=np.float32).copy()
-        return "checksum", {"duration": 0.05, "trailing_rms": 0.0}
-
-    monkeypatch.setattr(tts_module, "apply_pitch_variant", shorten_pitch)
-    monkeypatch.setattr(tts_module, "atomic_write_wav", write_wav)
-
-    _checksum, metrics, _seed = coordinator.synthesize_atomic(
-        {
-            "voice_profile_id": profile_id,
-            "stable_id": "standalone_gasp_short_pitch",
-            "text": "“Ha…”",
-            "kind": "dialogue",
-            "speaker": "Nhân vật",
-        },
-        tmp_path / "gasp-short-pitch.wav",
-    )
-
-    written_audio = captured["written_audio"]
-    assert isinstance(written_audio, np.ndarray)
-    assert captured["allow_padding"] is False
-    assert np.array_equal(written_audio, raw_audio)
-    assert metrics["pitch_variant_skipped"] == 1.0
-    assert metrics["effective_pitch_semitones"] == 0
-    assert metrics[HA_VOCALIZATION_ORIGINAL_SAMPLES_FIELD] == raw_audio.size
-    assert metrics[HA_VOCALIZATION_TARGET_SAMPLES_FIELD] == raw_audio.size
-    assert metrics[HA_VOCALIZATION_PADDING_SAMPLES_FIELD] == 0
-    assert metrics[HA_VOCALIZATION_FINAL_SAMPLES_FIELD] == raw_audio.size
-    assert any("Bỏ biến thể cao độ" in message for message in logs)
-
-
 def test_coordinator_releases_inference_cache_after_success_and_failure(
     tmp_path: Path,
     monkeypatch,
@@ -684,7 +415,7 @@ def test_coordinator_releases_inference_cache_after_success_and_failure(
         "preset_name": "Thái Sơn",
         "description": "Nam · Nam · Kể chuyện",
         "seed": 1234,
-        "pitch_semitones": 1,
+
         "status": "ready",
     })
     logs: list[str] = []
@@ -708,7 +439,6 @@ def test_coordinator_releases_inference_cache_after_success_and_failure(
         "generate_one",
         lambda _row, _profile, _seed, **_kwargs: np.asarray([0.1, -0.1], dtype=np.float32),
     )
-    monkeypatch.setattr(tts_module, "apply_pitch_variant", lambda audio, *_args: audio)
     monkeypatch.setattr(
         tts_module,
         "atomic_write_wav",
@@ -725,25 +455,7 @@ def test_coordinator_releases_inference_cache_after_success_and_failure(
         row["text"].encode("utf-8")
     ).hexdigest()
     assert primary_metrics["voice_profile_id"] == profile_id
-    assert primary_metrics["pitch_semitones"] == 1
-    assert primary_metrics["pitch_variant_skipped"] == 0.0
-    assert primary_metrics["pitch_variant_mixed"] == 0.0
-
-    monkeypatch.setattr(
-        tts_module,
-        "apply_pitch_variant",
-        lambda *_args, **_kwargs: (_ for _ in ()).throw(
-            MemoryError("pitch allocation failed")
-        ),
-    )
-    _checksum, fallback_metrics, _seed = coordinator.synthesize_atomic(
-        row,
-        tmp_path / "segment.wav",
-    )
-    assert fallback_metrics["pitch_variant_skipped"] == 1.0
-    assert fallback_metrics["pitch_variant_mixed"] == 0.0
-    assert any("Bỏ biến thể cao độ" in message for message in logs)
-    assert release_calls == 2
+    assert release_calls == 1
 
     def fail_generation(*_args, **_kwargs) -> np.ndarray:
         raise AudioQualityError("inference failed")
@@ -751,7 +463,7 @@ def test_coordinator_releases_inference_cache_after_success_and_failure(
     monkeypatch.setattr(coordinator.vieneu, "generate_one", fail_generation)
     with pytest.raises(AudioQualityError, match="inference failed"):
         coordinator.synthesize_atomic(row, tmp_path / "segment.wav")
-    assert release_calls == 3
+    assert release_calls == 2
 
     ceiling_row = {**row, "text": "“Ha…”"}
     spoken_text = coordinator.spoken_text(ceiling_row)
@@ -769,7 +481,7 @@ def test_coordinator_releases_inference_cache_after_success_and_failure(
         tmp_path / "segment.wav",
     )
     assert ceiling_metrics["generation_ceiling_hit"] == 1.0
-    assert release_calls == 4
+    assert release_calls == 3
 
 
 def test_vieneu_unload_trims_process_working_set(monkeypatch) -> None:
@@ -811,7 +523,7 @@ def test_repair_uses_effective_frame_cap_for_inference_and_ceiling_detection(
         "preset_name": "Thái Sơn",
         "description": "Nam · Nam · Kể chuyện",
         "seed": 1234,
-        "pitch_semitones": 0,
+
         "status": "ready",
     })
     coordinator = TTSCoordinator(build_settings(), db, lambda _message: None)
@@ -833,7 +545,6 @@ def test_repair_uses_effective_frame_cap_for_inference_and_ceiling_detection(
         )
 
     monkeypatch.setattr(coordinator.vieneu, "generate_one", generate_one)
-    monkeypatch.setattr(tts_module, "apply_pitch_variant", lambda audio, *_args: audio)
     monkeypatch.setattr(
         tts_module,
         "atomic_write_wav",
@@ -867,7 +578,7 @@ def test_a_thought_uses_its_thinkers_profile_and_only_an_unattributed_one_the_na
         "preset_name": "Phạm Tuyên",
         "description": "Người kể",
         "seed": 1,
-        "pitch_semitones": 0,
+
         "status": "ready",
     })
     character_profile_id = db.upsert_voice_profile({
@@ -876,7 +587,7 @@ def test_a_thought_uses_its_thinkers_profile_and_only_an_unattributed_one_the_na
         "preset_name": "Thanh Bình",
         "description": "Lucien",
         "seed": 2,
-        "pitch_semitones": 0,
+
         "status": "ready",
     })
     coordinator = TTSCoordinator(build_settings(), db, lambda _message: None)
@@ -895,7 +606,6 @@ def test_a_thought_uses_its_thinkers_profile_and_only_an_unattributed_one_the_na
         return np.asarray([0.1, -0.1], dtype=np.float32)
 
     monkeypatch.setattr(coordinator.vieneu, "generate_one", generate)
-    monkeypatch.setattr(tts_module, "apply_pitch_variant", lambda audio, *_args: audio)
     monkeypatch.setattr(
         tts_module,
         "atomic_write_wav",

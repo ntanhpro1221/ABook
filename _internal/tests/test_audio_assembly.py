@@ -201,7 +201,7 @@ def test_real_ffmpeg_chapter_assembly_is_atomic_and_decodable(tmp_path: Path) ->
     assert result.quality.channels == 1
     assert result.quality.duration_error_seconds == pytest.approx(0.0, abs=0.05)
     assert result.quality.integrated_loudness_lufs == pytest.approx(
-        settings["audio"]["loudness_lufs"],
+        result.quality.mastering_input_lufs + audio_io.MASTER_GAIN_DB,
         abs=0.3,
     )
     assert result.quality.true_peak_db <= settings["audio"]["true_peak_db"] + 0.15
@@ -340,7 +340,8 @@ def test_chapter_qa_separates_review_indicators_from_hard_gates() -> None:
         hard_measurement,
     )
 
-    assert any("integrated loudness" in failure for failure in hard_quality.hard_failures)
+    assert not any("integrated loudness" in failure for failure in hard_quality.hard_failures)
+    assert any(flag.startswith("loudness delta") for flag in hard_quality.review_flags)
 
 
 def test_stereo_audio_is_rejected_instead_of_flattened() -> None:
@@ -386,7 +387,7 @@ def test_segment_leveling_applies_one_constant_gain_and_preserves_loud_intent() 
         "volume": "normal",
         "emotion": "neutral",
         "intensity": 1,
-        VOICE_BALANCE_FIELD: "vieneu@3.8.3/Phạm Tuyên/f100",
+        VOICE_BALANCE_FIELD: "vieneu@3.8.3/Phạm Tuyên",
     }
     narrator = {**neutral, "kind": "narration", "speaker": "NARRATOR"}
     loud = {**neutral, "volume": "loud", "emotion": "angry", "intensity": 3}
@@ -405,24 +406,17 @@ def test_segment_leveling_applies_one_constant_gain_and_preserves_loud_intent() 
     source_lufs = integrated_loudness_lufs(quiet, sample_rate)
     strong_source_lufs = integrated_loudness_lufs(strong, sample_rate)
 
-    targets = settings["audio"]["segment_target_lufs"]
-    narrator_offset = float(settings["audio"]["segment_narrator_offset_db"])
     neutral_gain = segment_gain_db(neutral, settings)
 
     # Cùng một gain cho hai câu cùng giọng: chênh lệch giữa chúng không bị xoá.
     assert quiet_lufs - source_lufs == pytest.approx(neutral_gain, abs=0.05)
     assert strong_lufs - strong_source_lufs == pytest.approx(neutral_gain, abs=0.05)
     assert strong_lufs - quiet_lufs == pytest.approx(strong_source_lufs - source_lufs, abs=0.05)
-    assert narrator_lufs - quiet_lufs == pytest.approx(narrator_offset, abs=0.05)
+    assert narrator_lufs == pytest.approx(quiet_lufs, abs=0.05)
     # A speaker change must not add the old 3.5 LU step on top of the take's
     # already quiet delivery. Soft remains quieter, without stacking emotion gain.
-    assert quiet_lufs - soft_lufs == pytest.approx(1.0, abs=0.05)
-    assert narrator_lufs - soft_lufs <= 1.55
-    assert loud_lufs - quiet_lufs == pytest.approx(
-        float(targets["loud"]) - float(targets["normal"]) , abs=0.05
-    )
-    # The whole point of the anchors: the director's intent has to survive levelling.
-    assert loud_lufs > narrator_lufs > quiet_lufs
+    assert soft_lufs == pytest.approx(quiet_lufs, abs=0.05)
+    assert loud_lufs == pytest.approx(quiet_lufs, abs=0.05)
 
 
 def test_voice_gain_is_independent_of_the_clips_spectrum() -> None:
@@ -436,7 +430,7 @@ def test_voice_gain_is_independent_of_the_clips_spectrum() -> None:
         "volume": "normal",
         "emotion": "neutral",
         "intensity": 1,
-        VOICE_BALANCE_FIELD: "vieneu@3.8.3/Phạm Tuyên/f100",
+        VOICE_BALANCE_FIELD: "vieneu@3.8.3/Phạm Tuyên",
     }
     constants = voice_balance.constants_for_key(segment[VOICE_BALANCE_FIELD])
     low_voice = 0.03 * np.sin(2 * np.pi * 100 * timeline)
@@ -468,7 +462,7 @@ def test_segment_rate_validation_warns_for_mild_outlier_and_rejects_extreme() ->
     )
 
     assert metrics["pace_outlier"] == 1.0
-    with pytest.raises(AudioQualityError, match="far outside normal safety range"):
+    with pytest.raises(AudioQualityError, match="far outside safety range"):
         validate_audio_array(
             extremely_slow,
             text,
@@ -591,13 +585,9 @@ def test_loudness_targets_stay_inside_the_peak_ceiling_speech_allows() -> None:
     audio = settings["audio"]
     segment_ceiling = float(audio["segment_peak_dbfs"])
     chapter_ceiling = float(audio["true_peak_db"])
-    narrator_offset = float(audio["segment_narrator_offset_db"])
-    targets = audio["segment_target_lufs"]
     measured_worst_segment_crest_db = 20.6
     measured_chapter_crest_db = 17.9
 
-    highest_segment_target = max(float(value) for value in targets.values()) + narrator_offset
-    assert highest_segment_target <= segment_ceiling - measured_worst_segment_crest_db
 
     assert float(audio["loudness_lufs"]) <= chapter_ceiling - measured_chapter_crest_db
 
@@ -611,7 +601,8 @@ def test_endpoint_floor_tracks_the_loudness_anchors() -> None:
     """
     audio = build_settings()["audio"]
     endpoint_floor = float(audio["segment_endpoint_floor_dbfs"])
-    normal_target = float(audio["segment_target_lufs"]["normal"])
+    from abook.voice_balance import level_lufs
+    normal_target = level_lufs()
 
     assert endpoint_floor < normal_target
     assert normal_target - endpoint_floor == pytest.approx(26.0, abs=1.0)

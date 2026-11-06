@@ -45,11 +45,11 @@ def _book(tmp_path: Path) -> tuple[ProjectDB, int, int]:
     db = ProjectDB(tmp_path / "project.sqlite3")
     narrator = db.upsert_voice_profile({
         "voice_key": "narrator", "engine": "vieneu", "preset_name": "Phạm Tuyên",
-        "description": "Người kể", "seed": 1, "pitch_semitones": 0, "status": "ready",
+        "description": "Người kể", "seed": 1,  "status": "ready",
     })
     lucien = db.upsert_voice_profile({
         "voice_key": "lucien", "engine": "vieneu", "preset_name": "Thanh Bình",
-        "description": "Lucien", "seed": 2, "pitch_semitones": 0, "status": "ready",
+        "description": "Lucien", "seed": 2,  "status": "ready",
     })
     return db, narrator, lucien
 

@@ -148,12 +148,12 @@ class ClipLiftTest {
     }
 
     @Test
-    fun theVoiceGainTableStillGivesTheOldGains() {
+    fun theVoiceGainTableUsesIsoConstantsAndKeepsUnmeasuredVoices() {
         assertEquals(-1.7, VoiceGain.db("edge:vi-VN-HoaiMyNeural"), 0.0)
-        assertEquals(-0.9, VoiceGain.db("vieneu:turbo/Adam bựa"), 0.0)
-        assertEquals(-2.3, VoiceGain.db("vieneu:nano/Minh Quân"), 0.0)
+        assertEquals(-8.5656387, VoiceGain.db("vieneu:turbo/Adam bựa"), 0.0)
+        assertEquals(-9.2682724, VoiceGain.db("vieneu:nano/Minh Quân"), 0.0)
         assertEquals(0.0, VoiceGain.db("vieneu:turbo/Mai Anh"), 0.0)
-        assertEquals(0.0, VoiceGain.db("vieneu:turbo/Phạm Tuyên"), 0.0)
+        assertEquals(-5.0953902, VoiceGain.db("vieneu:turbo/Phạm Tuyên"), 0.0)
         assertEquals(0.0, VoiceGain.db("device:vi-vn-x-gft-local"), 0.0)
         for (voice in listOf("F1", "F2", "F3", "F4", "F5", "M1", "M2", "M3", "M4", "M5")) assertEquals(voice, 0.0, VoiceGain.db("supertonic:$voice"), 0.0) // every level <= -20 LUFS: only the clip lift changes
     }

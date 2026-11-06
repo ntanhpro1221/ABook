@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { groupByEngine, moduleNote, plainGroupLabels, sharedText, takenText, type EngineModuleStatus, type EngineVoice } from "./voiceEngines";
 
 const voice = (over: Partial<EngineVoice> = {}): EngineVoice => ({
-  name: "Ngọc Linh", engine: "vieneu", engineLabel: "VieNeu", installed: true, oneStep: false, sharedWith: [], otherUsers: 0, ...over,
+  name: "Ngọc Linh", engine: "vieneu", engineLabel: "VieNeu", installed: true, sharedWith: [], otherUsers: 0, ...over,
 });
 const status = (over: Partial<EngineModuleStatus> = {}): EngineModuleStatus => ({
   state: "missing", done: 0, total: 0, bytes: 903_000_000, error: "", ...over,
@@ -12,9 +12,9 @@ describe("voices grouped by the machine that reads them", () => {
   it("keeps the server's order: VieNeu first, then the other machine, voices in order", () => {
     const groups = groupByEngine([
       voice({ name: "Ngọc Linh" }),
-      voice({ name: "Bảo Trang", engine: "zerotts", engineLabel: "ZeroTTS", installed: false, oneStep: true }),
+      voice({ name: "Bảo Trang", engine: "zerotts", engineLabel: "ZeroTTS", installed: false, }),
       voice({ name: "Trúc Ly" }),
-      voice({ name: "Kim Oanh", engine: "zerotts", engineLabel: "ZeroTTS", installed: false, oneStep: true }),
+      voice({ name: "Kim Oanh", engine: "zerotts", engineLabel: "ZeroTTS", installed: false, }),
     ]);
     expect(groups.map((group) => [group.label, group.installed, group.voices.map((item) => item.name)])).toEqual([
       ["VieNeu", true, ["Ngọc Linh", "Trúc Ly"]],
@@ -24,8 +24,8 @@ describe("voices grouped by the machine that reads them", () => {
 
   it("says plainly that two people sharing a one-tone voice will sound the same", () => {
     const shared = { sharedWith: [{ label: "Lucien", chapters: 3 }] };
-    expect(sharedText(voice(shared))).toContain("máy lấy bậc âm sắc khác");
-    expect(sharedText(voice({ ...shared, oneStep: true }))).toContain("nghe giống hệt nhau");
+    expect(sharedText(voice(shared))).toContain("hai người sẽ nghe giống hệt nhau");
+    expect(sharedText(voice({ ...shared, }))).toContain("nghe giống hệt nhau");
     expect(sharedText(voice())).toBe("Chưa ai dùng");
   });
 

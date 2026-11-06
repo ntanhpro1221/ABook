@@ -57,7 +57,7 @@ def test_only_a_name_warning_is_called_a_name() -> None:
     from abook.webui.reviews import MINOR_KINDS, _kind
 
     assert _kind("warning", "ASR_LOCKED_NAME_ANCHOR_REVIEW", 0.6) == "name-low"
-    assert _kind("warning", "TTS_PACE_BAND_RELAXED|ASR_LOCKED_NAME_ANCHOR_MISMATCH", 0.9) == "name"
+    assert _kind("warning", "ASR_LOCKED_NAME_ANCHOR_MISMATCH", 0.9) == "name"
     assert _kind("warning", "ASR_MISMATCH_UNRESOLVED", 0.6) == "text-low"
     assert _kind("warning", "ASR_MISMATCH_UNRESOLVED", 0.9) == "text"
     assert {"name", "text"} == set(MINOR_KINDS)

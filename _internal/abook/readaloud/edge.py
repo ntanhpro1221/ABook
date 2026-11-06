@@ -265,7 +265,7 @@ def trim_join_tail(audio: bytes, piece: str, boundaries: list[Boundary]) -> byte
 def build_ssml(voice: str, text: str) -> str:
     return (
         "<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='vi-VN'>"
-        f"<voice name='{voice}'><prosody pitch='+0Hz' rate='+0%' volume='+0%'>{escape(clean(text))}</prosody></voice></speak>"
+        f"<voice name='{voice}'><prosody rate='+0%' volume='+0%'>{escape(clean(text))}</prosody></voice></speak>"
     )
 
 

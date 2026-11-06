@@ -1,523 +1,87 @@
 # Cân bằng giọng
 
-Cùng một câu, các giọng khác nhau về tốc độ và độ to vì mỗi giọng thu riêng, không có mốc chung. Cách chữa:
-mỗi giọng có MỘT bản ghi hằng số đo trước; lúc thu máy tự áp, không đo-rồi-kéo từng câu.
-
-## Cách áp trong app
-
-### Khoá giọng và bảng
-
-Một giọng là `(engine, phiên bản engine, preset, bậc formant)`, khoá bằng chuỗi ổn định
-`vieneu@3.8.3/<preset>/f100` (`voice_balance.voice_key`; `f100` là bậc formant 1,00, `f093` là 0,93).
-Bảng nằm ở `abook/assets/voice_balance.json`:
-
-| trường | ý nghĩa |
-|---|---|
-| `version` | phiên bản định dạng bảng (mã từ chối số khác) |
-| `engine_versions` | phiên bản engine mà bảng được đo cho; phải khớp bản ghim ở `runtime_contract` |
-| `x` | núm tốc độ chung của cả sách |
-| `L_lufs` | mức độ to chung (LUFS) |
-| `pace_floor_scale` | hệ số chung nhân vào sàn của cổng nhịp |
-| `voices[khoá].r` | hệ số tốc độ riêng của giọng (nhân) |
-| `voices[khoá].o_db` | lệch độ to riêng của giọng, dB (cộng), đo ở x = 1 |
-| `voices[khoá].ref_lufs` | LUFS trung bình đã đo của bản thô của giọng (sau cao độ và tempo) |
-| `voices[khoá].pitch_st` | màu giọng nền, bán cung (cộng); không đo, không đề xuất |
-| `voices[khoá].engine_speed` | chỉ máy tự đọc theo tốc độ (Supertonic): tham số `speed` của máy, biên riêng `ENGINE_SPEED_RANGE`; khi có thì `r` = 1 |
-| `engine_pace_floor` | sàn cổng nhịp riêng theo máy đọc, nhân thêm vào `pace_floor_scale · x` (Supertonic 0,9) |
-
-Đổi phiên bản engine thì khoá đổi theo, nên bảng cũ không áp nhầm cho bản mới: giọng thiếu trong bảng là
-LỖI (`VoiceBalanceError`) ngay lúc phân vai hoặc lúc thu, không bao giờ lặng lẽ dùng 1,0. Test
-`test_voice_balance.py` bảo đảm mọi giọng mà phân vai có thể tạo ra (thang formant + formant theo tuổi, của
-mọi preset trong `VIENEU_PRESETS`) có bản ghi. `voice_balance.py` và file json nằm trong
-`QUALITY_IMPLEMENTATION_FILES` (và `ANALYSIS_CASTING_IMPLEMENTATION_FILES`, vì `pitch_st` đi vào hồ sơ giọng):
-sửa bảng đổi hash chất lượng, nên chỉ sửa ở nhánh dev khi không có lượt sản xuất nào đang chạy.
-
-### Công thức và đơn vị
-
-| đại lượng | thang | cách ghép | công thức |
-|---|---|---|---|
-| tốc độ | tỉ lệ (có số 0 thật) | NHÂN | `tempo = x · r_v` |
-| độ to | dB/LUFS (mốc 0 là quy ước) | CỘNG dB | `gain_dB = L + o_v + offsets(câu) − ref_lufs_v` |
-| màu giọng | bán cung (log tần số) | CỘNG | `pitch = pitch_st + độ lệch theo tuổi` |
-
-Không bao giờ nhân giá trị dB hay bán cung với nhau.
-
-**Hiệu chỉnh cảm nhận trên nhánh dev (05-11).** LUFS bằng nhau không chứng minh các giọng nghe to bằng nhau.
-`o_db` được đo độc lập bằng ISO 532-1 theo thời gian (trung bình loudness rồi đổi sang phon), đối chiếu
-ISO 532-1 tĩnh, N5 và ECMA-418-2. ECMA dùng sone HMS, không gọi số log của nó là phon ISO.
-WAV của bộ 40 câu gốc không còn: dùng cùng tối đa tám câu thật volume=normal cho mọi bậc formant của
-từng preset, ưu tiên neutral; hoàn tác gain đã ghi rồi áp gain trung tính và formant của đúng khoá.
-Giữa các preset vẫn khác câu. CI bootstrap giữ chung lượt lấy mẫu của các bậc cùng preset; chỉ nhập
-khoá có ít nhất sáu take độc lập. Khoá thiếu audio/thiếu mẫu giữ giá trị cũ, không có nghĩa đã được xác nhận
-cân bằng; Mai Anh không đo. Số đo, CI, độ phủ và lệnh xuất bản nghe dẫn xuất nằm trong scratch `codex/loud3`.
-
-- **Tốc độ.** `tempo` áp bằng WSOLA tương quan chuẩn hoá (`tts.apply_speed_change`, từ 04-10; trước đó WORLD), khoảng cho phép
-  `SPEED_FACTOR_MIN = 0,70` đến `SPEED_FACTOR_MAX = 1,50` (bảng bị từ chối nếu `x · r` ra ngoài). Mặc định
-  `x = 1`.
-- **Độ to.** `audio_io.segment_gain_db` cho gain hằng số áp lên bản thô; không đo LUFS của câu.
-  `offsets(câu)` = volume (`segment_target_lufs[volume] − segment_target_lufs["normal"]`: soft −1,0 /
-  normal 0 / loud +1,2; từ 05-11 soft −1,0 thay cho −3,0) + cảm xúc (`LOUDNESS_EMOTION_OFFSETS_DB[cảm xúc] · cường độ / 3`, chỉ khi volume
-  là normal) + người kể (`segment_narrator_offset_db`). Hai câu cùng giọng, một to một nhỏ, ra cùng
-  gain. Trần đỉnh `segment_peak_dbfs` (−2 dBFS) giữ làm chốt: đỉnh vượt thì hạ cho vừa, phần hạ ghi ở
-  metric `peak_limited_db`; gain đã áp ghi ở `level_gain_db`. Bản ghép từ các phần đã áp gain
-  (`merge_wav_parts_atomic`) chỉ còn trần đỉnh, không áp gain lần hai. Sách khoá từ trước thời LUFS giữ
-  chính sách RMS cũ.
-- **Cổng nhịp.** Sàn (ký tự và âm tiết) nhân với `pace_floor_scale · x`; cận trên không đổi. Ngân sách
-  sinh của bản thô chia thêm cho tempo của giọng, tức là nhân `pace_floor_scale / r_v` (`x` triệt tiêu).
-  Cổng chỉ còn bắt lỗi hỏng, không dùng để kéo tốc độ.
-
-### Thứ tự áp
-
-cao độ → tempo → gain. `o_v` phải đo SAU khi áp `r_v` (WORLD làm đổi độ to tới 2 dB tuỳ giọng; WSOLA chuẩn hoá ≤ 0,2 dB, vẫn đo
-sau cho chắc). Trong `tts.py`
-cao độ và tempo chạy trước `atomic_write_wav`, nơi gain được áp; formant nhân vật áp sau cùng, lúc ghép chương.
-
-### Hai núm chung
-
-- `x`: nhanh/chậm cả sách. 0,85 chậm 15% cho mọi giọng như nhau.
-- `L_lufs`: to/nhỏ cả sách, dB. +1 dB làm mọi giọng to lên 1 dB như nhau.
-
-Sửa hai số này trong file json (mọi giọng đi theo), không sửa từng giọng.
-
-### Nhập số đo mới
-
-Số thật do bộ đo sinh ra hai file; thả vào bảng bằng
-
-```
-cd _internal
-runtime/.venv/Scripts/python.exe scripts/voice_balance_import.py rates.json gains.json [--create] [--dry-run]
-```
-
-Định dạng vào ghi ở docstring của script (`rates.json`: `r` hoặc `syll_per_s` cùng `median_syll_per_s`;
-`gains.json`: `lufs` và tuỳ chọn `o_db`). Script chỉ đổi `r`, `ref_lufs`, `o_db`; không đụng `pitch_st`. Khoá
-chưa có trong bảng là lỗi, trừ khi `--create`. Bảng được kiểm trước khi ghi (số hỏng thì file giữ nguyên) và
-ghi lại bằng LF. Sau khi thả: chạy `tests/test_voice_balance.py`, ghi hash chất lượng mới.
-
-## Số đo (phiên Model, 04-10)
-
-Đo trên máy, không phải tai. Mã đo và số thô: Corpus/claude/model_lane/voice_balance (bản sao scratchpad phiên Model).
-
-### Cách đo
-
-- **Câu:** 40 câu trung tính, cố định, chọn tất định.
-  - Lô 18 của sách 2: 11 câu kể, 9 câu thoại, 6 câu 1–3 tiếng, 4 câu dài ≥250 ký tự.
-  - Thêm 10 câu LN Nhật trong Corpus/_full.
-  - Chữ đưa cho giọng = `TTSCoordinator.spoken_text`; tham số lấy mẫu = `vieneu_sampling_for_segment`.
-  - Mỗi giọng 2 hạt ở bậc f100, 1 hạt ở các bậc khác.
-  - Nửa hiệu chỉnh 22 câu, nửa kiểm 18 câu.
-- **Tốc độ:** âm tiết / giây nói. Giây nói = thời lượng trừ lặng mép và mọi quãng lặng ≥150 ms (VAD khung 10 ms).
-  - Độ lệch của giọng = trung bình theo câu của log tốc độ, trừ trung bình CÙNG câu qua mốc. Cách này bỏ được hiệu ứng câu.
-  - CI 95 % tính theo câu.
-- **Độ to:** LUFS tích hợp của app (`integrated_loudness_lufs`), đo trên bản thô SAU cao độ (`pitch_st`) và SAU `r_v`.
-  - WORLD kéo tốc độ làm đổi độ to, không đều giữa giọng: Thanh Bình ở tempo 0,76 lệch −3,7 dB so với dự kiến. Bảng hiện tại đo
-    với WSOLA chuẩn hoá (mục "Cách kéo tốc độ" dưới).
-- **Mốc tốc độ:** trung vị tốc độ GỐC (không hệ số tay) của 19 preset phân vai, bậc f100 = **4.56 âm tiết/giây**.
-  - 2 người kể miền Trung và các model khác so với cùng mốc, không kéo mốc đi.
-- **Núm x = 1,00** (chủ sách chốt 04-10). Để so: 4 giọng kể chuyện chủ sách chọn tốc độ bằng tai ngày 18-09 đọc ở 3.87 âm tiết/giây.
-  - Tương đương x = 0.848.
-  - Từ nay 4 giọng ấy đọc nhanh hơn mức đã chọn; muốn chậm cả sách thì vặn x, không sửa r_v.
-
-### Theo preset (bậc f100)
-
-| preset | tốc độ gốc (âm tiết/s) | lệch mốc % ±CI | r_v | log2(r_v) | hệ số tay cũ | ref_lufs (sau cao độ + r_v) | o_v dB ±CI | gain ở L = −25 | gain qua các bậc formant |
-|---|---|---|---|---|---|---|---|---|---|
-| Trúc Ly | 5.12 | +11.7 ±0.8 | 0.890 | -0.169 | 1 | -19.95 | +0.46 ±0.22 | -5.05 | -5.15 … -4.12 (12 bậc) |
-| Thanh Bình | 5.09 | +11.1 ±3.8 | 0.895 | -0.160 | 1 | -19.36 | +1.05 ±0.33 | -5.64 | -5.64 … -4.14 (11 bậc) |
-| Xuân Vĩnh | 4.99 | +9.1 ±2.5 | 0.913 | -0.131 | 1 | -21.58 | -1.17 ±0.23 | -3.42 | -3.48 … -2.03 (11 bậc) |
-| Hải Đăng | 4.97 | +8.6 ±1.2 | 0.917 | -0.124 | 1 | -21.47 | -1.06 ±0.31 | -3.53 | -3.53 … -1.91 (11 bậc) |
-| Thiện Minh | 4.77 | +4.5 ±1.3 | 0.956 | -0.065 | 1 | -20.90 | -0.49 ±0.26 | -4.10 | -4.10 … -2.70 (11 bậc) |
-| Ngọc Huyền | 4.76 | +4.4 ±3.3 | 0.957 | -0.063 | 1 | -19.63 | +0.78 ±0.19 | -5.37 | -5.46 … -4.59 (12 bậc) |
-| Quốc Tuấn | 4.73 | +3.8 ±0.9 | 0.963 | -0.054 | 1 | -19.07 | +1.34 ±0.14 | -5.93 | -5.93 … -4.46 (11 bậc) |
-| Adam | 4.67 | +2.4 ±1.0 | 0.976 | -0.035 | 1 | -20.13 | +0.28 ±0.38 | -4.87 | -5.18 … -2.45 (10 bậc) |
-| Quang Sơn | 4.64 | +1.8 ±1.6 | 0.982 | -0.026 | 1 | -20.26 | +0.15 ±0.23 | -4.74 | -4.74 … -3.02 (11 bậc) |
-| Đoan Trang | 4.62 | +1.3 ±1.3 | 0.987 | -0.019 | 1 | -20.07 | +0.34 ±0.18 | -4.93 | -5.20 … -3.88 (12 bậc) |
-| Phạm Tuyên | 4.56 | +0.0 ±1.2 | 1.000 | +0.000 | 1 | -20.23 | +0.18 ±0.19 | -4.77 | -4.77 … -3.40 (11 bậc) |
-| Thục Đoan | 4.53 | -0.6 ±2.1 | 1.006 | +0.009 | 1 | -20.34 | +0.06 ±0.25 | -4.66 | -4.66 … -3.38 (8 bậc) |
-| Ngọc Linh | 4.36 | -4.4 ±1.2 | 1.045 | +0.063 | 1 | -19.98 | +0.43 ±0.26 | -5.02 | -5.16 … -4.57 (10 bậc) |
-| Thái Sơn | 4.35 | -4.8 ±3.1 | 1.049 | +0.069 | 1 | -21.97 | -1.56 ±0.27 | -3.03 | -3.03 … -1.52 (10 bậc) |
-| Adam bựa | 4.33 | -5.1 ±1.3 | 1.053 | +0.074 | 1 | -18.87 | +1.54 ±0.29 | -6.13 | -6.13 … -5.25 (11 bậc) |
-| Ngọc Trân | 4.17 | -8.8 ±1.6 | 1.092 | +0.127 | 1 | -20.25 | +0.15 ±0.23 | -4.75 | -4.75 … -3.24 (9 bậc) |
-| Quỳnh Anh | 4.16 | -9.2 ±1.4 | 1.097 | +0.133 | 1 | -20.88 | -0.47 ±0.28 | -4.12 | -4.12 … -3.51 (10 bậc) |
-| Thiền Tâm Đức | 3.75 | -19.4 ±1.3 | 1.215 | +0.281 | 1.05 | -20.72 | -0.31 ±0.32 | -4.28 | -4.36 … -2.69 (10 bậc) |
-| Đức Trí | 3.61 | -23.4 ±1.6 | 1.264 | +0.338 | 1.1 | -21.79 | -1.39 ±0.22 | -3.21 | -3.21 … -1.90 (11 bậc) |
-| Mỹ Duyên | 3.49 | -26.7 ±2.2 | 1.306 | +0.385 | 1 | -20.31 | +0.09 ±0.26 | -4.69 | -4.93 … -3.81 (11 bậc) |
-| Kim Thanh | 3.45 | -27.9 ±1.9 | 1.322 | +0.403 | 1.1 | -20.51 | -0.10 ±0.18 | -4.49 | -4.49 … -4.03 (10 bậc) |
-
-- **Bảng:** 223 khoá VieNeu (21 preset × thang 7 bậc + bậc theo tuổi), đúng tập `castable_keys()`.
-  - r_v dùng chung cho mọi bậc của một preset: bậc formant đổi tốc độ ±0,5 %.
-- **Nhịp đo thật sau r_v:** |lệch mốc| lớn nhất 2.9 %.
-- **CI 95 % của o_v:** trung vị ±0.31 dB, lớn nhất ±0.73.
-- **Câu trung tính chạm trần −2 dBFS khi chỉ áp gain:** 0 % ở mọi giọng.
-
-### Kiểm chéo (hằng số từ 22 câu hiệu chỉnh, áp lên 18 câu kiểm)
-
-| thước | SD giữa giọng trước → sau | khoảng trước → sau | trong ngưỡng |
-|---|---|---|---|
-| tốc độ (19 preset + 2 người kể + Supertonic/ZeroTTS) | 15.2 → 2.3 % | 63.1 → 9.0 % | 38/39 trong ±5 % |
-| độ to (mọi giọng, mọi bậc) | 1.36 → 0.33 dB | 7.09 → 2.00 dB | 240/241 trong ±1 dB |
-
-- **Trượt:** chỉ Supertonic: F5 về tốc độ (+6,0 %), M2 về độ to (−1,08 dB).
-- Mọi giọng VieNeu (21 preset, mọi bậc) và ZeroTTS đều trong ngưỡng. VieNeu lệch tốc độ lớn nhất 2,9 %; lệch độ to lớn nhất 0,93 dB (Quang Sơn f087).
-
-### Cổng nhịp
-
-`pace_floor_scale` = **0.990**, là giá trị ở x = 1; app dùng sàn = `pace_floor_scale · x`.
-Cách tính: trung vị chữ/giây (đúng công thức `pace_is_outlier`) của VieNeu bậc f100 sau r_v, chia 15,64.
-15,64 là trung vị 7 preset mà dải cổng được khớp năm 18-09.
-
-% câu trung tính bị gọi CHẬM, trung bình 21 preset:
-- (a) Studio hiện tại (hệ số tay + PRESET_PACE_SCALE cũ): 2.5 %
-- (b) sau r_v, PRESET_PACE_SCALE cũ: 2.4 %
-- (c) sau r_v, sàn chung: 2.0 %
-
-Giọng cao nhất ở (c): Quang Sơn 6 %, Thanh Bình 6 %, Thục Đoan 4 %.
-
-### Ngoài bảng: Supertonic 3 và ZeroTTS (Nghe ngay / máy khác, chưa vào voice_balance.json)
-
-| giọng | r_v | speed áp | nhịp sau r_v lệch mốc % ±CI | o_v dB | gain ở L = −25 |
-|---|---|---|---|---|---|
-| supertonic:F1 | 1.415 | 1.49 (tham số gốc) | -6.3 ±12.9 | -4.92 | +0.33 |
-| supertonic:F2 | 1.359 | 1.43 (tham số gốc) | -6.5 ±9.1 | -5.20 | +0.60 |
-| supertonic:F3 | 1.668 | 1.75 (tham số gốc) | +1.8 ±9.3 | -5.48 | +0.89 |
-| supertonic:F4 | 1.264 | 1.33 (tham số gốc) | -5.1 ±7.5 | -4.47 | -0.12 |
-| supertonic:F5 | 1.352 | 1.42 (tham số gốc) | -9.3 ±7.5 | -4.72 | +0.13 |
-| supertonic:M1 | 1.235 | 1.30 (tham số gốc) | -17.3 ±6.3 | -5.29 | +0.70 |
-| supertonic:M2 | 1.282 | 1.35 (tham số gốc) | -6.9 ±10.6 | -4.39 | -0.21 |
-| supertonic:M3 | 1.230 | 1.29 (tham số gốc) | -3.7 ±6.6 | -4.28 | -0.32 |
-| supertonic:M4 | 1.317 | 1.38 (tham số gốc) | -8.5 ±7.2 | -5.12 | +0.53 |
-| supertonic:M5 | 1.505 | 1.58 (tham số gốc) | -2.8 ±8.7 | -4.54 | -0.05 |
-| zerotts:baotrang | 1.043 | 1.043 (WORLD) | +1.0 ±2.5 | -2.88 | -1.71 |
-| zerotts:giahuy | 1.093 | 1.093 (WORLD) | -1.4 ±1.8 | -1.76 | -2.83 |
-| zerotts:hamy | 1.231 | 1.231 (WORLD) | -0.0 ±3.0 | -2.35 | -2.24 |
-| zerotts:huuduc | 1.098 | 1.098 (WORLD) | -0.6 ±1.6 | +0.84 | -5.43 |
-| zerotts:kimoanh | 1.171 | 1.171 (WORLD) | +0.4 ±2.0 | -1.48 | -3.11 |
-| zerotts:maichi | 1.019 | 1.019 (WORLD) | -0.5 ±2.3 | +1.60 | -6.19 |
-| zerotts:quangminh | 0.911 | 0.911 (WORLD) | +0.9 ±1.8 | +0.17 | -4.76 |
-| zerotts:tiendat | 0.980 | 0.980 (WORLD) | -0.3 ±1.9 | -0.91 | -3.68 |
-
-- **ZeroTTS:** đạt; nhịp sau r_v trong mốc.
-  - 04-10, Studio bước A: năm giọng chủ sách chọn (baotrang, giahuy, huuduc, kimoanh, quangminh) vào bảng, khoá `zerotts@0.1.5/<giọng>/f100`,
-    chỉ bậc gốc, `o_db` = 0 như mọi bản ghi VieNeu. Số trong bảng là số đo lại sau WSOLA chuẩn hoá (mục "ZeroTTS với WSOLA chuẩn hoá" bên
-    dưới, r 4 chữ số từ `zerotts_constants.json`), không phải bảng WORLD này.
-  - Phiên bản: bộ đo ghi "zerotts 0.1.2" là chuỗi `__version__` cũ nằm TRONG gói 0.1.5 (dist-info 0.1.5). Mã gói bộ đo dùng
-    (LLM_Train/tts_bench/venv_cpu) và wheel 0.1.5 PyPI mà mô-đun ghim giống nhau từng byte (so 04-10), model cùng commit c2bfbd67 - nên số ấy
-    là số của khoá `zerotts@0.1.5`.
-- **Supertonic TRƯỢT tốc độ:** tham số `speed` không tỉ lệ thuận với nhịp. Sau một lần chỉnh vẫn chậm, M1 −17 %.
-  - Cần chỉnh lặp (r mới = r cũ × lệch đo được) trước khi dùng.
-  - M5 cần speed 1,58, F1 1,49: chạm vùng ≥1,54 từng làm câu ngắn bị nuốt.
-- **Supertonic theo cổng chữ/giây của Studio:** vẫn ~46 % câu bị gọi chậm. Nó chèn lặng dài hơn ngân sách dấu câu của cổng.
-  - Nghe ngay không qua cổng này; ghi ra để biết nếu sau này Studio dùng Supertonic.
-
-Hash chất lượng nhánh dev: trước `fddc4182` (5813112a) → sau `b1333192` (db537cf5: bỏ 4 giọng Tin tức, tập phủ = phân vai ∪ người kể, thả số, chốt WORLD_MIN_SECONDS trong tts.py). pytest toàn bộ: 4511 qua, 2 bỏ qua, 0 hỏng.
-
-#### ZeroTTS với WSOLA chuẩn hoá (04-10, cho casting nhiều máy; 5 giọng chủ sách chọn)
-
-Cùng 40 câu trung tính, kéo bằng `tts.apply_speed_change` của main a84e30b4 (WSOLA chuẩn hoá), x = 1, L = −25; engine
-`zerotts 0.1.2 c2bfbd67`. `ref_lufs` = LUFS trung bình bản thô sau r_v (gain = L − ref_lufs). Bảng cũ phía trên đo khi tốc
-độ còn kéo bằng WORLD - WORLD làm ZeroTTS nhỏ đi tới 2,3 dB tuỳ giọng, nên dùng số dưới đây.
-
-| giọng | r_v | ref_lufs | (bảng WORLD cũ) | nhịp sau r_v so với mốc (kiểm chéo 18 câu) |
-|---|---|---|---|---|
-| baotrang | 1,043 | −22,56 | −23,29 | −0,7 ±2,7 % |
-| giahuy | 1,093 | −20,39 | −22,17 | −1,2 ±1,8 % |
-| huuduc | 1,098 | −17,32 | −19,57 | −0,8 ±1,5 % |
-| kimoanh | 1,171 | −22,10 | −21,89 | −1,0 ±1,9 % |
-| quangminh | 0,911 | −18,70 | −20,24 | +0,8 ±1,9 % |
-
-Số máy đọc: scratchpad phiên Model `balance/zerotts_constants.json`.
-
-#### Supertonic chỉnh lặp + luật câu ngắn + ZeroTTS chia đoạn (04-10, đề xuất cho casting nhiều máy)
-
-**Tốc độ Supertonic.** `r` của Supertonic là tham số `speed` của engine (tổng hợp lại), KHÔNG phải hệ số WSOLA, nên
-không chung trần với VieNeu. Chỉnh lặp (r mới = r cũ × nhịp đo / mốc) chỉ trên câu ≥ 8 âm tiết (34/40 câu; câu ngắn bị
-nuốt nên kéo nhịp lên giả). Dừng khi lệch mốc trong ±3 % ở cả nửa hiệu chỉnh lẫn nửa kiểm:
-
-| giọng | speed_v | lệch hiệu chỉnh / kiểm % | ref_lufs | gain ở L = −25 |
-|---|---|---|---|---|
-| F1 | 1,820 | −2,6 / +2,3 | −25,11 | +0,11 |
-| F2 | 1,669 | −2,6 / −1,0 | −25,42 | +0,42 |
-| F3 | 1,938 | −0,8 / +0,1 | −26,03 | +1,03 |
-| F4 | 1,552 | −2,3 / +2,0 | −24,60 | −0,40 |
-| F5 | 1,752 | −2,7 / +1,1 | −24,93 | −0,07 |
-| M1 | 1,806 | −1,5 / +2,9 | −25,52 | +0,52 |
-| M2 | 1,719 | −1,2 / +2,0 | −24,13 | −0,87 |
-| M3 | 1,468 | −1,2 / −0,2 | −24,65 | −0,35 |
-| M4 | 1,700 | −2,6 / +1,4 | −25,29 | +0,29 |
-| M5 | 1,794 | −2,5 / −0,5 | −24,88 | −0,12 |
-
-- Bảng "Ngoài bảng" phía trên (r 1,23–1,67) là lần chỉnh một bước, còn chậm tới 17 %; dùng bảng này.
-- 8/10 giọng vượt `R_RANGE = (0,5; 1,6)` của `voice_balance._validate`: nới biên theo engine hoặc tách trường
-  `engine_speed` riêng (WSOLA dư = 1). Kiểm chéo độ to: lệch ≤ 0,35 dB.
-- Hạt thứ hai trên F1/F3/M4/M5 vẫn trong ±5,1 %. Mốc ±3 % sát giới hạn đo (19 câu mỗi nửa).
-
-**Câu ngắn.** speed_v phẳng làm 53–79 % câu ngắn bị nuốt (< 0,12 s có tiếng mỗi âm tiết; bình thường 0,22), CER ASR 53 %.
-Đề xuất `speed = min(speed_v, 1,28 + 0,06·max(0, n − 2))`, n = số âm tiết:
-
-| luật | % nuốt | CER ASR (72 clip) |
-|---|---|---|
-| speed_v phẳng | 53–79 % | 53,0 % |
-| luật Nghe ngay hiện có (1,05 → trần 1,54) | 0 % | 7,7 % |
-| luật đề xuất | 1,7 % (2,5 % trên 30 câu giữ ngoài) | 9,7 % |
-
-Chênh CER 7,7 / 9,7 % nằm trong nhiễu 72 clip. Luật cũ có trần 1,54 cố định nên câu dài chậm hơn mốc 13–25 %; luật mới
-nối liền vào speed_v từng giọng. Đo trên F1/F3/M4/M5, 80 câu mỗi giọng.
-
-**Cổng nhịp chữ/giây của Studio.** Supertonic bị gọi chậm vì speed thấp, không phải vì lặng:
-
-| | % câu bị gọi chậm (TB 10 giọng) |
-|---|---|
-| speed cũ | 51,5 % |
-| speed_v | 9,1 % |
-| speed_v + rút lặng giữa câu còn 0,3 s | 8,8 % |
-| speed_v + sàn cổng riêng ×0,9 | 2,9 % |
-| VieNeu (so) | 2,0 % |
-
-Đề xuất: không rút lặng; sàn cổng riêng cho Supertonic ≈ 0,9. Câu còn trượt (2–4 câu mỗi giọng) là tên Nhật, năm viết
-thành chữ, từ tiếng Anh.
-
-**ZeroTTS: RAM theo độ dài một lần gọi.** Model nạp xong 1,06 GB; phần thêm tăng theo bình phương độ dài.
-
-| một lần gọi | RAM đỉnh |
-|---|---|
-| 100 ký tự | 1,3 GB |
-| 200 ký tự | 2,0 GB (đoạn 197 ký tự chạm 2,52 GB) |
-| 400 ký tự | 4,5 GB |
-| 800 ký tự | 14,5 GB, ASR sai 50 %; lần thứ hai ONNX Runtime hết bộ nhớ |
-| chia ≤ 160 ký tự | 1,6–1,8 GB, CER 1–3 % không đổi, 800 ký tự tổng hợp nhanh gấp đôi |
-
-Đề xuất cho Studio: mỗi lần gọi tối đa **170 ký tự** (≈ 9 s tiếng). Cắt ở hết câu, gộp câu liền kề tới 170; câu dài hơn
-thì cắt ở dấu phẩy, rồi ở từ. Giá: UTMOS thấp hơn 0,15–0,4 so với gọi một lần (3 đoạn, nhiễu ±0,15), do mối nối hiện là
-0,2 s lặng cứng.
-
-Số máy đọc: scratchpad phiên Model `balance/multi_engine/` (`import_rates_multi.json`, `import_gains_multi.json`,
-`b_rules.json`, `gate_eval.json`, `ram_*.jsonl`). Khoá: `supertonic@3-724fb5ab/<giọng>/f100`,
-`zerotts@0.1.2-c2bfbd67/<giọng>/f100`.
-
-Đã áp trong app (nhánh dev/multi-engine, 04-10):
-- Supertonic: cả 10 giọng vào bảng, khoá `supertonic@3-724fb5ab/<giọng>/f100`, `engine_speed` = speed_v, `r` = 1, `ref_lufs` theo bảng,
-  `o_db` = 0; F1/F3/M4/M5 chọn tay được, sáu giọng còn lại đóng. Câu ngắn: `tts.supertonic_speed`. Sàn cổng: `engine_pace_floor` 0,9.
-- ZeroTTS: khoá giữ `zerotts@0.1.5/<giọng>/f100` (cùng mã với "0.1.2", xem trên). Mỗi lần gọi ≤ 170 ký tự (`ZeroTTSEngine.MAX_CHUNK_CHARS`),
-  nối bằng 0,2 s lặng (`tts.join_chunks`, một chỗ để thay khi có mối nối tốt hơn).
-
-### Kiểm cảm xúc sau hằng số (emo_check)
-
-Mẫu kiểm:
-- 9 giọng: 5 VieNeu ở f100 (Đức Trí, Thanh Bình, Quốc Tuấn, Ngọc Huyền, Trúc Ly), Supertonic F1, M4, ZeroTTS baotrang, giahuy;
-- 6 câu cảm xúc (giận ×2, thì thầm ×2, vui ×2) và 40 câu trung tính; 2 hạt.
-
-Ba cách được so:
-- **thô**: màu giọng + tốc độ tay cũ, chưa chỉnh mức;
-- **hiện tại**: chuẩn hoá từng câu (`normalize_segment_level`);
-- **mới**: r_v, rồi gain_db + offset tương đối (soft/loud, cảm xúc × cường độ), KHÔNG chuẩn hoá từng câu; trần −2 dBFS giữ làm chốt.
-
-**Khoảng cách cảm xúc trong giọng** = câu cảm xúc trừ trung bình câu trung tính của chính giọng ấy, trung bình qua 9 giọng:
-
-| cảm xúc | thước | thô | hiện tại | mới |
-|---|---|---|---|---|
-| giận | dB | +0,63 | +1,20 | +1,94 |
-| giận | tốc độ % | +7,3 | +7,3 | +8,2 |
-| thì thầm | dB | −0,01 | −1,83 | −2,04 |
-| thì thầm | tốc độ % | +11,2 | +11,2 | +12,7 |
-| vui | dB | −0,23 | 0,00 | −0,07 |
-
-- Cách mới giữ khoảng cách cảm xúc. Độ to theo cảm xúc nay = dao động tự nhiên CỘNG offset của app; cách hiện tại thì chỉ còn offset.
-- Lệch theo từng giọng (±6–9 % tốc độ) chủ yếu ở Supertonic. Supertonic được tổng hợp LẠI ở speed mới nên ra bản thu khác, không phải sai số của phép đo.
-
-**Giữa giọng trên CÙNG câu** (SD qua 9 giọng):
-
-| câu | thô | hiện tại | mới |
-|---|---|---|---|
-| trung tính, độ to dB | 2,60 | 0,00 | 0,79 |
-| trung tính, tốc độ % | 18,2 | 18,2 | 11,2 |
-| giận, độ to / tốc độ | 2,73 / 15,4 | 0,00 / 15,4 | 1,27 / 5,6 |
-| thì thầm, độ to / tốc độ | 2,41 / 10,4 | 0,00 / 10,4 | 0,62 / 7,4 |
-
-- Tốc độ giữa giọng gần lại rõ. Phần còn lại phần lớn do Supertonic chưa đạt tốc độ, xem trên.
-- Độ to: cách hiện tại ép mọi câu về một mức (SD 0). Cách mới để lại dao động thật của câu.
-
-**Dao động độ to câu–câu TRONG giọng** (câu trung tính, SD dB):
-- thô 0,37–1,63;
-- hiện tại 0;
-- mới 0,57–1,84. Cách mới giữ lại dao động tự nhiên; Thanh Bình 0,66 → 1,46 do WORLD (r 0,895) cộng cao độ −4.
-- Câu chạm trần −2 dBFS với cách mới: 0/92 ở VieNeu và Supertonic; 1 câu ở mỗi giọng ZeroTTS (1/92, 1/91).
-
-### Tự nhiên sau khi kéo tốc độ (UTMOSv2, 40 câu trung tính, cùng màu giọng, cùng −25 LUFS)
-
-| giọng | hệ số cũ → r_v | gốc (không kéo) | hiện tại | mới (WORLD r_v) | mới − hiện tại | mới − gốc |
-|---|---|---|---|---|---|---|
-| Kim Thanh | 1,10 → 1,322 | 2,90 | 2,45 | 2,41 | −0,05 ±0,07 | −0,50 ±0,08 |
-| Mỹ Duyên | 1,00 → 1,306 | 3,12 | 3,17 | 2,10 | **−1,07 ±0,10** | −1,02 ±0,10 |
-| Đức Trí | 1,10 → 1,264 | 2,90 | 2,64 | 2,64 | +0,00 ±0,06 | −0,25 ±0,08 |
-| Thiền Tâm Đức | 1,05 → 1,215 | 2,48 | 2,12 | 2,16 | +0,04 ±0,06 | −0,31 ±0,08 |
-| Trúc Ly | 1,00 → 0,890 | 2,63 | 2,67 | 2,05 | **−0,62 ±0,09** | −0,58 ±0,09 |
-| Thanh Bình | 1,00 → 0,895 | 2,70 | 2,68 | 2,45 | −0,23 ±0,09 | −0,25 ±0,10 |
-
-- WORLD kéo tốc độ làm GIẢM độ tự nhiên theo máy, kể cả ở hệ số tay cũ: Kim Thanh ×1,10 đã mất 0,45.
-- Giọng mới bị kéo (Mỹ Duyên, Trúc Ly) mất nhiều nhất.
-- VieNeu Turbo không có tham số tốc độ gốc (chỉ Nano có), nên đã thử cách co giãn khác, xem mục kế.
-
-### Cách kéo tốc độ: WORLD → WSOLA → WSOLA tương quan chuẩn hoá (04-10, main a84e30b4, hash 598d3c84)
-
-UTMOSv2 như trên; chênh so với "không kéo" theo cặp câu, ±CI 95 %. Mã đo: scratchpad phiên Model `balance/tempo_alt.py`,
-`tempo_sweep.py`, `tempo_near.py`, `wsola_var.py`, `tempo_ncc.py`, `tempo_options.py` (bản sao trong Corpus `claude/model_lane/voice_balance`).
-
-**Ở chính r_v của giọng (40 câu trung tính):**
-
-| giọng | r_v | gốc | WORLD | PSOLA (Praat) | WSOLA audiotsm | WSOLA tay, tương quan thô |
-|---|---|---|---|---|---|---|
-| Mỹ Duyên | 1,306 | 3,14 | −1,03 ±0,10 | −0,46 ±0,08 | −0,32 ±0,08 | −0,30 ±0,07 |
-| Kim Thanh | 1,322 | 2,92 | −0,48 ±0,09 | −0,39 ±0,09 | −0,14 ±0,08 | −0,19 ±0,08 |
-| Trúc Ly | 0,890 | 2,65 | −0,63 ±0,09 | −0,34 ±0,09 | −0,32 ±0,08 | −0,33 ±0,08 |
-
-**Theo r (Mỹ Duyên, Trúc Ly, Phạm Tuyên × 22 câu hiệu chỉnh, gộp):**
-
-| r | WORLD | PSOLA | WSOLA audiotsm | WSOLA tương quan thô | **WSOLA tương quan chuẩn hoá (app)** |
-|---|---|---|---|---|---|
-| 0,85 | −0,71 | −0,30 | −0,34 | −0,32 | **−0,15** |
-| 0,9 | −0,67 | −0,30 | −0,28 | −0,27 | **−0,10** |
-| 0,95 | | | | −0,23 | **−0,04** |
-| 0,975 / 1,025 | | | | −0,19 / −0,16 | |
-| 1,05 | | | | −0,16 | **−0,04** |
-| 1,1 | −0,63 | −0,29 | −0,19 | −0,16 | **−0,10** |
-| 1,2 | −0,62 | −0,41 | −0,20 | −0,26 | **−0,22** |
-| 1,3 | −0,70 | −0,49 | −0,29 | −0,27 | **−0,36** |
-
-CI gộp ±0,05–0,07. Theo giọng ở 1,3 (bản chuẩn hoá): Mỹ Duyên −0,31, Phạm Tuyên −0,19, Trúc Ly −0,59. Trúc Ly có r_v 0,89 nên
-không bao giờ bị kéo nhanh.
-
-- **WSOLA tương quan thô có PHÍ CỐ ĐỊNH:** kéo 2,5 % mất gần bằng kéo 30 %. Lý do: tương quan thô chọn điểm nối nghiêng về
-  đoạn TO thay vì đoạn khớp dạng sóng; nó cũng nâng độ to +0,4..0,6 dB.
-- **Chia cho năng lượng vùng ứng viên** (tương quan chuẩn hoá) xoá phí ấy:
-  - ở r 1,05 (2 giọng × 22 câu): thô −0,17, chồng khung 75 % −0,18, chuẩn hoá −0,00 ±0,05;
-  - chồng 75 % + chuẩn hoá −0,04; khung 60 ms −0,05;
-  - độ to lệch ≤ 0,2 dB, độ dài đúng 1/r, cao độ lệch ≤ 0,05 bán cung, RTF 0,05–0,07.
-  - Ở r ≥ 1,2 bản chuẩn hoá không hơn bản thô; mất mát ở đó là của chính việc nói nhanh hơn 20–30 %.
-- **WORLD** tổng hợp lại toàn bộ nên đổi độ to TUỲ GIỌNG kể cả khi r gần 1: Xuân Vĩnh ×0,913 −2,03 dB, Thái Sơn ×1,049
-  −1,88 dB, Thục Đoan ×1,006 +0,06 dB. Gain trong bảng WORLD cũ vì thế bù sai cho các giọng ấy. Bảng nay đo lại với WSOLA
-  chuẩn hoá.
-
-**Trần |log r|: KHÔNG đặt** (chọn (a), Lead 04-10, theo lệnh chủ sách "tốc độ chung lấy từ trung bình"). Mất UTMOS nội suy
-từ đường trên cho 21 preset:
-
-| phương án | mất TB / giọng | mất lớn nhất | lệch tốc độ còn lại |
-|---|---|---|---|
-| **(a) kéo như bảng** | −0,101 | −0,36 | 0 % |
-| (b) bỏ kéo khi lệch < 5 % (10 giọng) | −0,090 | −0,36 | ≤ 4,6 % |
-| (c) trần ±20 % | −0,081 | −0,22 | Kim Thanh −9,2 %, Mỹ Duyên −8,1 %, Đức Trí −5,1 % |
-| (c) trần ±10 % | −0,058 | −0,10 | 4 giọng chậm 9–17 % |
-
-Mất dồn vào 4 giọng có r_v > 1,2 (Thiền Tâm Đức, Đức Trí, Mỹ Duyên, Kim Thanh): −0,2 tới −0,36. Trần thì đổi lấy đúng cái lỗi
-chủ sách gọi tên ("cùng câu mà giọng nhanh / chậm khác nhau"). Dự phòng nếu chủ sách nghe thấy 4 giọng ấy méo: (c) ±20 %.
-
-### Trục thứ ba: cao độ nền = độ hưng phấn mặc định? (CHỈ ĐO)
-
-Cách đo:
-- Model cảm xúc dạng chiều audeering/wav2vec2-large-robust-12-ft-emotion-msp-dim. Học trên tiếng ANH (MSP-Podcast), nên có thể lẫn với thanh điệu tiếng Việt.
-- 40 câu trung tính × 2 hạt; tốc độ gốc; chỉ đổi cao độ (`apply_voice_variant`).
-- Arousal ×100, lệch so với trung bình cùng câu qua 19 preset ở cao độ 0; trung vị 19 preset = +0,2.
-
-**Ở cao độ 0, xếp theo arousal:**
-- Thanh Bình +17,4 (hạng 1);
-- Adam bựa +10,6 (2);
-- Hải Đăng +9,6, Trúc Ly +9,4, Quỳnh Anh +7,5;
-- Quốc Tuấn +7,4 (6);
-- … Thiền Tâm Đức −9,4, Xuân Vĩnh −19,7, Đức Trí −21,1 (thấp nhất).
-- CI ±0,6–1,5.
-- F0 không giải thích thứ hạng: Kim Thanh F0 +6,3 st, arousal +0,2; Trúc Ly F0 +8,3 st, arousal +9,4.
-
-**Theo bán cung:**
-
-| giọng | 0 | −2 | −4 | −6 | độ dốc / bán cung |
-|---|---|---|---|---|---|
-| Thanh Bình | +17,4 | +15,9 | **+12,7** | +9,8 | 1,29 (R² 0,98) |
-| Adam bựa | +10,6 | **+10,4** | +7,6 | | 0,74 (R² 0,80) |
-| Quốc Tuấn | +7,4 | **+5,9** | +3,0 | | 1,09 (R² 0,97) |
-
-Hạ cao độ cũng làm valence tăng 2–4 điểm, tức "dễ chịu" hơn.
-
-**Trả lời ba câu hỏi:**
-- (1) ĐÚNG: ở cao độ 0, 3 giọng chủ sách đã hạ đứng hạng 1, 2, 6 về arousal.
-- (2) SAI theo máy: mức chủ sách chọn KHÔNG đưa chúng về gần trung vị. Thanh Bình −4 còn +12,7; Adam bựa −2 còn +10,4; Quốc Tuấn −2 còn +5,9.
-- (3) ĐÚNG: giảm gần thẳng, ~1,1 điểm mỗi bán cung.
-
-**Kết luận:**
-- Vì (2) sai, KHÔNG đề xuất số bán cung cho giọng khác.
-- Muốn về trung vị bằng cao độ thì cần −6 tới −9 (giọng cao) và +7 tới +20 (Đức Trí, Xuân Vĩnh). Như vậy là quá xa vùng an toàn của WORLD và màu giọng.
-- Bán cung của 3 giọng GIỮ NGUYÊN: Thanh Bình −4, Adam bựa −2, Quốc Tuấn −2, chủ sách đã chốt bằng tai.
-- *Ghi chú, giả thuyết chưa kiểm:* theo máy, hạ cao độ chỉ làm giảm hưng phấn một phần. Còn cảm giác "bình tĩnh, truyền cảm hơn" mà tai chủ sách nghe ra có thể đến từ valence tăng (+2–4) và giọng trầm hơn, thứ model dạng chiều này không gọi là arousal.
-
-Số và mã: Corpus/claude/model_lane/voice_balance (emo_check.*, utmos_check.*, tempo_alt.*, arousal.*).
-
-## Master chương và kiểm mức nghe cuối sách
-
-Đích chương là `audio.loudness_lufs + mean_chapter(offset) - mean_book(offset)`.
-Trọng số là số giây có tiếng của bản thu được chọn, không tính break và khoảng lặng đo được.
-Offset gồm `o_db`, volume, cảm xúc, người kể, trừ phần hạ thực tế do trần đỉnh câu;
-không dùng toàn bộ gain chứa `ref_lufs` (neo của bản thô). Các phần tách câu được cộng
-theo số giây có tiếng riêng. Cả hai lượt ffmpeg loudnorm và QA MP3 dùng cùng đích này.
-Trung bình đích theo thời lượng bằng mức gốc; đây là trung bình số học LUFS, không hứa
-LUFS tích phân của file ghép cả sách bằng đúng số ấy.
-
-Chương nghe được trong lúc thu có đích tạm theo các bản thu đã có. Cuối lượt tổng hợp,
-đường ống chốt lại theo cả sách, chỉ ghép lại chương đổi chữ ký: thuật toán, đích,
-thời lượng/offset thực áp và checksum WAV của chương. Không thu lại hay chấm lại câu.
-Đổi phân bố thời lượng cả sách có thể đổi đích nhiều chương; chương có chữ ký trùng
-được dùng lại. Không đổi SQLite schema hay settings đã khoá.
-
-`book_levels.measure_finished_book` đọc MP3 cuối và mốc câu; mỗi giọng chọn tối đa
-60 câu, mỗi chương 40 câu bằng SHA256, chỉ volume normal, dài ít nhất 1,5 giây.
-Giữ khung có tiếng 20 ms trên RMS đỉnh −30 dB, tối đa 8 giây có tiếng; cần 12 câu
-để kết luận một nhóm. Meter là ISO 532-1 stationary, neo phát lại cố định, **không**
-phải SPL đo tại tai hay phép đo N5 biến thiên. Báo trung bình và CI 95% bootstrap
-2.000 lượt theo câu; CI chưa mô hình hoá tương quan câu trong cùng chương.
-
-Ngưỡng cảnh báo: trải giọng >2,5 phon hoặc chương lệch trung vị chương >2,5 phon.
-Đo trên 2 tác phẩm, mỗi tác phẩm một bản cũ và một bản đã sửa: trải giọng
-4,98 / 2,41 phon ở bản cũ, 0,74 / 0,91 phon ở bản mới; bản cũ thứ hai được bắt
-thêm qua chương −2,66 / −2,89 phon. Ngưỡng chỉ là chẩn đoán với **n = 2 sách**,
-không phải chuẩn phổ quát hay kiểm chứng độc lập. Không đủ mẫu thì ghi
-`insufficient_data`, không tuyên bố đạt.
-
-RMS, K-weighted và A-weighted đã đo nhưng không phân biệt đủ cả bốn gói.
-Phần ISO stationary từ MoSQITo 1.2.1 được giữ nguyên thuật toán, chỉ đổi import:
-37.407 byte Python, 50.948 byte kèm giấy phép và nguồn gốc (Apache-2.0), dùng
-numpy/scipy đã có. Không thêm MoSQITo/pyuff hay runtime tuỳ chọn. Chi tiết và số
-đo trong `report_chaplevel.md` ở thư mục tác vụ.
-
-Khi toàn bộ chương hoàn tất, vòng kín dùng **chính meter trên MP3 cuối**:
-
-1. Vòng đầu: `delta_v = mean_book_phon - mean_voice_phon`, chỉ giọng đo được ≥12 câu.
-   Trung bình sách là trung bình theo số câu của các giọng đủ mẫu; giọng ít mẫu ghi rõ số câu,
-   không suy số bù. Gain cộng ở bản WAV giao sau âm sắc/cảm xúc và đi vào trung bình offset
-   của `chapter_level_plan`, nên loudnorm chương giữ được phần bù ấy.
-2. Đo lại. Vòng thứ hai bù phần dư từng chương: âm của độ lệch so với trung vị chương.
-   Mỗi loại số bù bị chặn ±4 dB: dữ liệu sách thật cần tới +3,01 dB, còn gần 1 dB dự phòng.
-   Không nới trần đỉnh câu/chương hay QA; đạt trần mà không thể đạt đích thì giữ bản hiện tại.
-3. Dừng sớm khi trải giọng ≤1,5 phon và mọi chương lệch ≤1,0 phon; tối đa hai vòng sửa.
-   Điểm so vòng là max(trải giọng / 1,5; lệch chương lớn nhất / 1,0), rồi tổng hai tỷ lệ nếu bằng nhau.
-   Vòng đạt đủ hai giới hạn luôn tốt hơn bản chưa đạt; nếu chưa đạt thì điểm tệ nhất phải giảm
-   hơn 0,01, hoặc bằng trong 0,000001 và tổng giảm hơn 0,01. Không nhận vòng làm mất nhóm đủ mẫu.
-   Vòng không cải thiện bị bỏ và dừng, giữ bản có điểm tốt nhất.
-
-Master và đo thử ở thư mục riêng. Meter/master lỗi chỉ sinh cảnh báo và giữ MP3 hiện tại.
-Không gọi TTS/Whisper, sửa chữ, WAV đã xác minh, hay bằng chứng QA câu. Số bù, history,
-hash nguồn và hash MP3 nằm ở `output/reports/book_levels.json`; số bù và history nằm
-trong chữ ký master. Bản delivery trước gain được cache trong RAM và `base_cache.json`,
-khóa theo đầu vào âm thanh/hồ sơ/settings và kiểm hash byte trước khi dùng lại, kể cả
-tiến trình mới; metadata QA và bộ đếm dùng giọng không gây dựng lại. Không lặp Praat ở
-mỗi vòng bù. Kế hoạch cả sách được tính một lần cho mỗi lượt kiểm, thay vì parse
-lại toàn bộ câu cho từng chương. Mở tiếp sách hoàn tất có hash và chữ ký trùng dùng lại
-kết quả; checkpoint sau mỗi vòng được nhận cho phép tiếp tục vòng còn thiếu.
-
-Assembler trả mốc từng câu sau cắt lặng, khóa với SHA-256 MP3 trong `.mp3.levels.json`;
-script dùng đúng mốc ấy. Cache từng chữ chỉ đính kèm khi cỡ/mốc sửa audio và khoảng câu
-còn khớp, nên MP3 mới không mang words của MP3 cũ. Không chạy Whisper để sửa mốc.
-Artifact `book_levels`, báo cáo QA và `book.json.levelQa` mang số đo cùng sách. Không
-thêm bước người dùng. CLI chỉ đọc: `scripts/check_book_levels.py <file.abook>`.
-Đường tắt của sách đã xong chỉ giữ `.abook` có checksum MP3 và `levelQa` trùng hiện tại;
-bị ngắt sau master nhưng trước đóng gói thì mở tiếp tự thay gói cũ, không master lại.
-
-Đánh giá độc lập dùng seed SHA256 khác và loại toàn bộ ID đã đo trong các vòng fit,
-kể cả câu chỉ dùng kiểm chương. CI 95% bootstrap theo câu (2.000 lượt), chưa tính
-tương quan giữa câu trong cùng chương; không gọi là đánh giá tai người hay CI theo sách.
-Số đo fit/holdout thực tế, thời gian và giới hạn nằm trong `report.md` của tác vụ chaplevel2.
+Quyết định chủ sách 06-11: “bỏ hết trừ cân bằng tốc độ”. Mỗi preset là một giọng nguyên bản.
+Không đổi cao độ, formant, quãng giọng hay biên độ theo cảm xúc, tuổi hoặc vai người kể.
+Hai nhân vật chung preset có cùng chất giọng. Chỉ giữ khoảng nghỉ cấu trúc: thoại 170 ms, nội tâm 210 ms, kể 230 ms, cuối đoạn 380 ms, đổi cảnh 1500 ms, cuối chương 0 ms. Không bù theo cảm xúc/cường độ/lời dẫn thoại; không thu lại câu. Trần im lặng mép 0,35 s và nội bộ 0,65 s giữ nguyên.
+
+## Hằng số
+
+Nguồn duy nhất: `abook/assets/voice_balance.json`, hợp đồng version 2.
+Khoá là `<engine>@<version>/<preset>`, ví dụ `vieneu@3.8.3/Ngọc Linh`.
+Mỗi bản ghi VieNeu chỉ có `r`, `o_db`, `ref_lufs`.
+Supertonic thêm `engine_speed` vì máy đọc tự điều khiển tốc độ; `r = 1`.
+Khoá thiếu, khoá có hậu tố biến thể hoặc trường ngoài hợp đồng đều là lỗi.
+Không có chuyển đổi dữ liệu hoặc hỗ trợ khoá cũ. Dự án cần được tạo sạch sau khi đổi policy hash.
+
+Tốc độ WSOLA = `x * r`. Không thay số `r` trong lượt cân bằng độ to này.
+WSOLA giữ nguyên thuật toán và biên tốc độ; tiếng bật hơi chuyên biệt giữ hợp đồng số mẫu riêng.
+
+Gain câu (dB) = `L_lufs + o_db - ref_lufs`.
+Không đo câu để đổi gain, không phụ thuộc chương hay sách, không có line offset.
+Nhãn soft/normal/loud, cảm xúc, cường độ và người kể không làm đổi gain.
+Trần đỉnh câu vẫn có quyền hạ cả câu để tránh quá mức; phần hạ được ghi trong `peak_limited_db`.
+Ghép các phần đã áp gain không áp lại gain lần nữa.
+
+`ref_lufs` là mức trung bình bản thô sau tempo. Nó là neo kỹ thuật, không phải đích cảm nhận.
+`o_db` được khớp bằng ISO 532-1 stationary, cùng meter được vendored trong `abook/_vendor/zwicker`.
+RMS, K-weighted và A-weighted chỉ là số tham khảo trong báo cáo; không tham gia fit.
+
+## Phân vai
+
+Phân tích cả sách xong mới phân vai. Khi ấy đã biết số câu và chương xuất hiện của từng người.
+Nhân vật có tên và NPC cục bộ được xếp theo số câu giảm dần, rồi tên để phân xử bằng nhau.
+Preset chưa dùng được cấp trước preset đã dùng; trong nhóm còn trống dùng phái và hạng do chủ sách
+ghi trong `voice_rank.json`. Không dùng tuổi để biến đổi hoặc chọn bậc âm thanh.
+Giọng người kể và các người kể khác được giữ riêng. Giọng đã ghim được giữ chỗ trước lượt phân vai.
+Khi hết preset, giảm trùng người cùng chương và cân số người đang dùng preset.
+Nhóm vô danh được phân sau các nhân vật có danh tính; không biết số câu của từng cá nhân bên trong nhóm.
+Một người mới được thêm sau khi đã khoá sách chỉ dùng phần còn trống, không tự phân lại cả dàn vai.
+Mai Anh không phân vai và không có hạng hay số đo mới trong lượt này.
+
+## Bộ đo trung tính
+
+`scripts/calibrate_voice_table.py:sentences()` dựng đúng 40 câu trung tính từ câu đo trong repo,
+không lấy chữ của sách kiểm định. Mỗi câu có hai seed cố định 730001 và 730002.
+Mọi giọng dùng cùng câu, ghép cặp theo câu. Model phải đúng revision và hash đã ghim.
+
+WAV thô là kết quả preset nguyên bản từ `generate_one`, chưa qua tempo/gain của Studio.
+Bộ fit áp WSOLA đúng một lần theo `r`, không thay phổ hoặc cao độ.
+`scripts/fit_voice_constants.py` tìm gain đạt trung bình 73 phon và đo lại waveform sau khi nhân gain.
+Sai số giữa phép tìm nghiệm và phép đo lại phải dưới 0,002 phon.
+Khoảng tin cậy 95% lấy 2.000 bootstrap theo 40 câu; hai seed của một câu luôn đi cùng nhau.
+SHA-256 của mọi take, danh sách câu, model và protocol nằm ngoài repo cùng bằng chứng fit.
+`scripts/export_voice_constants.py` từ chối xuất nếu chưa đủ 80 take cho một khoá.
+Sách tuyệt đối không được dùng để fit hằng số.
+
+## Kiểm định sách và vòng hiệu chỉnh
+
+Chỉ đọc SQLite nguồn với URI `mode=ro`; kiểm hash WAV trước và sau.
+Bản kiểm định và sản phẩm dùng gain bảng và master cố định +5 dB cho mọi chương/mọi sách.
+Mức này chọn từ bộ hiệu chuẩn 73 phon, dự đoán sau master khoảng 77,8 phon, trước khi đo sách.
+Limiter true-peak FFmpeg `alimiter` chạy ở 4 lần sample rate, `level=false`, bù latency,
+trần lấy từ `true_peak_db`; chỉ envelope quanh đỉnh được hạ, không hạ gain cả chương.
+Kênh đồng hồ gain hằng nhỏ đi qua limiter liên kết để đo phần thời gian bị hạ và mức hạ lớn nhất;
+kênh này bỏ trước mã hóa MP3. Báo cáo đếm giảm trên 0,001 dB (dung sai float/resample).
+Không dùng loudnorm để đưa từng chương về cùng LUFS. Mốc câu và từ phải theo đúng MP3 đã xuất.
+Độ lệch LUFS chương chỉ cảnh báo; các gate peak, clipping, dropout và mối nối vẫn giữ.
+
+PASS cần độ trải trung bình giữa các giọng đủ ít nhất 12 câu <= 1,5 phon ở MỖI sách,
+và mọi chương cách trung vị chương của sách <= 1,0 phon. Báo cáo CI 95%, giọng thưa,
+độ trải chương, số dự đoán so với đo thật và thời gian detector. Không nới ngưỡng hay fit lại theo sách.
+
+Hai sách đã PASS sau khi thay phép cân peak riêng từng chương bằng master cố định +5 dB:
+Your Story trải giọng 0,414 phon / trải chương 0,481; Pain 0,876 / 0,826.
+Đã gỡ kế hoạch target chương, bù giọng/chương theo sách, các vòng master lại, cache bản nền và journal công bố.
+Sản phẩm chỉ đo MP3 cuối một lần, lưu `output/reports/levelQa.json`, cảnh báo và không sửa audio.
+Checksum MP3 và mốc câu/giọng khóa phép đo; resume giữ cùng nguồn dùng lại báo cáo.
+Receipt `.mp3.levels.json` chỉ lưu hash và mốc câu của MP3 cuối, cần cho chữ đọc theo; không chứa bù mức.
+Nhãn volume vẫn nằm trong schema, prompt, ledger phân tích và kịch bản xuất để giữ dữ liệu huấn luyện/gold.
+Detector không lọc bỏ câu chỉ vì nhãn volume: nhãn này không còn tác động âm thanh.
+
+## Các nền tảng
+
+Web, Qt và Android chỉ hiện tên preset; khi hai người chung giọng, giao diện nói họ sẽ nghe giống nhau.
+Không còn nhãn hay điều khiển chỉnh trầm/sáng. Tài liệu parity sinh từ `scripts/ui_parity.py`
+và `scripts/ui_parity_qt.py`.
+Nghe ngay dùng bảng riêng tại `readaloud/loudness.py` và `readaloud/VoiceGain.kt`;
+đã đo 34 giọng Turbo/Nano (trừ Mai Anh), mỗi giọng 40 câu × hai seed sau bước bù câu ngắn, cùng meter ISO và đích 73 phon. Hai nền tảng dùng cùng gain ISO, không làm tròn 0,1 dB như bảng LUFS cũ. Bảng LUFS vẫn là mốc bù clip và mức phát cho giọng chưa đo ISO. Không lấy mức Studio thay số đo của Turbo/Nano.

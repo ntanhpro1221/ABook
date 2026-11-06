@@ -259,7 +259,7 @@ class FakeEdge:
         if self.silent:
             time.sleep(1.5)
             return
-        spoken = ssml.split("<prosody pitch='+0Hz' rate='+0%' volume='+0%'>")[1].split("</prosody>")[0]
+        spoken = ssml.split("<prosody rate='+0%' volume='+0%'>")[1].split("</prosody>")[0]
         self._reply(conn, spoken)
 
     def _reply(self, conn: socket.socket, spoken: str) -> None:

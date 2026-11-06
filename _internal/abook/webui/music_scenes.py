@@ -62,7 +62,6 @@ LINE_EMOTIONS: dict[str, dict[str, float]] = {
 }
 EMOTION_SCALE = 0.25           # cường độ lớp = 1 - exp(-phần của đoạn / EMOTION_SCALE); giá trị khởi đầu, sẽ học
 PACE_AROUSAL = {"slow": -0.2, "normal": 0.0, "fast": 0.2}
-VOLUME_AROUSAL = {"soft": -0.15, "normal": 0.0, "loud": 0.15}
 NEUTRAL_WEIGHT = 0.35          # câu trung tính đóng góp ít vào không khí
 SMOOTH_SECONDS = 45.0          # cửa sổ không khí trượt
 SHIFT_DISTANCE = 0.5           # khoảng cách (trên mặt phẳng VA) coi là "đổi không khí"
@@ -246,7 +245,6 @@ def line_point(segment: dict[str, Any]) -> tuple[float, float, float, bool]:
     scale = 0.4 + 0.2 * intensity  # cường độ 0..3 -> kéo điểm từ 40% tới 100% về phía cảm xúc
     valence, arousal = valence * scale, arousal * scale
     arousal += PACE_AROUSAL.get(str(segment.get("pace") or "normal"), 0.0)
-    arousal += VOLUME_AROUSAL.get(str(segment.get("volume") or "normal"), 0.0)
     affective = emotion != "neutral"
     weight = (0.5 + intensity / 3.0) * (1.0 if affective else NEUTRAL_WEIGHT)
     return max(-1.0, min(1.0, valence)), max(-1.0, min(1.0, arousal)), weight, affective

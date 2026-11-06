@@ -265,8 +265,6 @@ def keep(target: Path, *, apply: bool, versions: Path = VERSIONS) -> int:
                 "preset_name": profile["preset_name"],
                 "description": profile["description"],
                 "seed": profile["seed"],
-                "pitch_semitones": profile["pitch_semitones"],
-                "formant_ratio": profile["formant_ratio"],
                 "status": "ready",
             }
         )

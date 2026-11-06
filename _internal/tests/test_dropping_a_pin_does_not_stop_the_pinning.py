@@ -23,8 +23,8 @@ PROFILE = {
     "preset_name": "thai_son",
     "description": "test",
     "seed": 7,
-    "pitch_semitones": 0,
-    "formant_ratio": 1.0,
+
+
 }
 
 
@@ -33,16 +33,16 @@ def project(tmp_path: Path) -> Path:
     target = tmp_path / "lo03r_105_test"
     target.mkdir()
     database = ProjectDB(target / "project.sqlite3")
-    database.set_locked_character_voice("GIEDON", "preset_thanh_binh_f108_p-07")
-    database.set_locked_character_voice("NARRATOR", "preset_pham_tuyen_f100_p+00")
+    database.set_locked_character_voice("GIEDON", "vieneu@3.8.3/Thanh Bình")
+    database.set_locked_character_voice("NARRATOR", "vieneu@3.8.3/Phạm Tuyên")
     return target
 
 
 def _book(monkeypatch: pytest.MonkeyPatch) -> None:
     rows = [
-        {"chapter": "101", "name": "LOTT", "voice": "preset_thanh_binh_f104_p-04", "lines": 3},
-        {"chapter": "102", "name": "LOTT", "voice": "preset_thanh_binh_f104_p-04", "lines": 2},
-        {"chapter": "103", "name": "LOTT", "voice": "preset_thanh_binh_f104_p-04", "lines": 4},
+        {"chapter": "101", "name": "LOTT", "voice": "vieneu@3.8.3/Thanh Bình", "lines": 3},
+        {"chapter": "102", "name": "LOTT", "voice": "vieneu@3.8.3/Thanh Bình", "lines": 2},
+        {"chapter": "103", "name": "LOTT", "voice": "vieneu@3.8.3/Thanh Bình", "lines": 4},
     ]
     monkeypatch.setattr(cast, "shipped_rows", lambda **_kw: rows)
     monkeypatch.setattr(cast, "fold_names", lambda found: found)
@@ -73,6 +73,6 @@ def test_apply_drops_the_absent_label_and_still_pins_the_majority(
     pins = {key.upper(): voice for key, voice in database.locked_character_voices().items()}
     assert pinned == 1
     assert not any("GIEDON" in key for key in pins), "nhãn không có trong nguồn vẫn giữ pin"
-    assert any("LOTT" in key and voice == "preset_thanh_binh_f104_p-04" for key, voice in pins.items()), (
+    assert any("LOTT" in key and voice == "vieneu@3.8.3/Thanh Bình" for key, voice in pins.items()), (
         f"vòng ghim giọng đa số không chạy tới: {pins}"
     )

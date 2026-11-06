@@ -42,7 +42,6 @@ import json
 import re
 import sqlite3
 import sys
-import unicodedata
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -53,8 +52,6 @@ try:
     from scripts.book_paths import BOOK, VERSIONS  # noqa: E402
 except ImportError:  # chạy trực tiếp: python scripts/x.py
     from book_paths import BOOK, VERSIONS  # noqa: E402
-
-_PRESET_GENDER_BY_SLUG: dict[str, str] | None = None
 
 VOICES_SQL = """
 SELECT ch.title AS chapter, c.canonical_name AS name, v.voice_key AS voice_key,
@@ -182,32 +179,9 @@ def shipped_voices(book: Path = BOOK, versions: Path = VERSIONS) -> list[tuple[s
 
 
 def preset_gender_of_voice(voice_key: str) -> str:
-    """`preset_ngoc_linh_f093_p+00` -> `female`. Không nhận ra thì trả `unknown`.
-
-    Slug trong `voice_key` là tên preset bỏ dấu, hạ hoa-thường, khoảng trắng thành gạch dưới.
-    """
-    global _PRESET_GENDER_BY_SLUG
-    if _PRESET_GENDER_BY_SLUG is None:
-        try:
-            import abook.voice_catalog as catalogue
-        except ImportError:
-            _PRESET_GENDER_BY_SLUG = {}
-        else:
-            table: dict[str, str] = {}
-            for preset in catalogue.VIENEU_PRESETS:
-                name = str(preset.get("name") or "")
-                decomposed = unicodedata.normalize("NFD", name.casefold().replace("đ", "d"))
-                slug = "".join(ch for ch in decomposed if not unicodedata.combining(ch))
-                table["_".join(slug.split())] = str(preset.get("gender") or "unknown")
-            _PRESET_GENDER_BY_SLUG = table
-    text = str(voice_key)
-    if not text.startswith("preset_"):
-        return "unknown"
-    body = text[len("preset_") :]
-    for slug, gender in _PRESET_GENDER_BY_SLUG.items():
-        if body.startswith(f"{slug}_"):
-            return gender
-    return "unknown"
+    """Phái preset của khoá hiện hành; không nhận ra thì trả unknown."""
+    from scripts.voice_matches_the_person import preset_gender
+    return preset_gender(voice_key) or 'unknown'
 
 
 def folds_that_cross_a_gender(

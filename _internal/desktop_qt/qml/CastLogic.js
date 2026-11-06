@@ -34,13 +34,6 @@ function formatLength(seconds) {
     return rest ? hours + " giờ " + rest + " phút" : hours + " giờ"
 }
 
-// Nhãn âm sắc ("trầm hẳn") là SO VỚI GIỌNG GỐC mà máy chỉnh để hai người cùng giọng khác nhau (listen/voiceTone.ts)
-const FROM_BASE = ["trầm hẳn", "hơi trầm", "sáng hẳn", "hơi sáng"]
-function toneLabel(tone) {
-    const text = String(tone || "").trim()
-    return FROM_BASE.indexOf(text) >= 0 ? "chỉnh " + text + " so với giọng gốc" : text
-}
-
 // ---- Ô tròn chữ cái (.avatar của styles.css: oklch(L 0.03 hue) nền, oklch(L 0.085 hue) chữ) -----------------------------------
 function hueOf(text) {
     let value = 0
@@ -68,7 +61,7 @@ function avatarInk(hue, dark) { return oklch(dark ? 0.84 : 0.43, 0.085, hue) }
 // ---- Dòng chữ của một người -------------------------------------------------------------------------------------------------
 function voiceLine(person) {
     if (!person.voice) return "Chưa có giọng"
-    return voiceName(person.voice) + (person.voice.tone ? "\u00a0·\u00a0" + toneLabel(person.voice.tone) : "")
+    return voiceName(person.voice)
 }
 // "Chờ áp dụng" (dự án) / "Đang chờ máy làm sách" (cuốn không có xưởng)
 function waitPrefix(waiting) { return waiting ? "Đang chờ máy làm sách" : "Chờ áp dụng" }
@@ -171,7 +164,7 @@ function sharedText(voice, current) {
     const sharedWith = voice.sharedWith || []
     if (!sharedWith.length) return others || (current ? "Giọng đang đọc cho người này" : "Chưa ai dùng")
     const people = sharedWith.map(person => person.label + " (" + person.chapters + " chương)").join(", ")
-    const after = voice.oneStep ? "hai người sẽ nghe giống hệt nhau" : "máy lấy bậc âm sắc khác"
+    const after = "hai người sẽ nghe giống hệt nhau"
     return "Cùng chương với " + people + " - " + after + (others ? "\u00a0·\u00a0" + others : "")
 }
 // Hộp của người kể: giọng nhân vật đang giữ không chọn được - nói của ai (tối đa ba tên)

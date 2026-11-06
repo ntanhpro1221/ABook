@@ -109,43 +109,16 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
 - MP3 phải được FFmpeg decode toàn bộ trước khi commit.
 - TTS retry theo thứ tự: seed VieNeu khác → chia nhỏ an toàn nếu câu đủ dài → `failed`; câu cảm thán
   ngắn không được split vì sẽ làm sai nội dung.
-- **Ba tầng biến đổi giọng, đừng trộn lẫn.** Người nghe tiếng Việt so cùng một câu từ `-6` đến `+6` bán âm
-  (F0 từ 106 Hz lên 206 Hz) và nghe ra **cùng một người**, chỉ khác trạng thái — điềm tĩnh, gấp gáp. Dịch F0
-  là **cách thể hiện**, không phải danh tính. Nhận diện người nói nằm ở **formant**.
-  - *Danh tính nhân vật* ← `formant_ratio`, khoá theo nhân vật cả sách. Dải **riêng cho từng preset**,
-    suy từ chiều dài khoang miệng đo bằng Praat trên chính preview của nó (`L = 5c / 4F3`). Warp hệ số `r`
-    đọc ra thành khoang miệng dài `L/r`, nên dải hợp lệ là phần giữ `L/r` trong khoảng người lớn
-    `12,8`–`19,7` cm. Preset nam đo được `16,4`–`16,9` cm, nữ `13,9`–`15,5` cm — nên nam **còn ít chỗ đi
-    trầm, nhiều chỗ đi sáng**, nữ thì ngược lại. Một dải chung là sai theo hai hướng ngược nhau. Cận trên
-    tái lập đúng giới hạn người nghe tìm ra bằng tai: Thanh Bình `0,82` nghe tù bí (khoang `20,6` cm),
-    `0,86` chấp nhận được (`19,7` cm). **Phải giao với ràng buộc thứ hai, độc lập với giải phẫu:** phép
-    biến đổi tự nó xuống cấp khi hệ số rời xa `1,0`, bất kể giọng gốc là gì. Mốc này **bất đối xứng và
-    đảo chiều theo giới**: giọng nam chịu được sáng hơn nhiều hơn là trầm đi (`-0,15 / +0,20`), giọng nữ
-    ngược lại (`-0,20 / +0,15`). Hai ràng buộc chặn **hai đầu ngược nhau** tuỳ giọng: giọng nam khoang dài bị giải phẫu chặn
-    phía trầm và thuật toán chặn phía sáng, giọng nữ khoang ngắn thì đảo lại. Kiểm chứng: giao của hai
-    ràng buộc cho Thanh Bình ra đúng `[0,86, 1,20]` — chính là dải người nghe chốt bằng tai trước khi đo
-    bất cứ thứ gì.
-  - **Hai tác vụ độc lập, hai engine khác nhau, mỗi cái là cái được duyệt bằng tai cho đúng việc đó.**
-    Chất giọng nền là đổi **F0** → dùng **WORLD** (`apply_pitch_variant`), vì nó giữ nguyên envelope nên
-    kết quả luôn là cấu hình khoang miệng có thật, và vòng round-trip của nó chỉ tốn `-0,015` MOS.
-    Danh tính nhân vật là đổi **formant** → dùng **Praat**. Gộp cả hai vào một lệnh Praat sẽ biến phần
-    chỉnh F0 thành PSOLA — không phải thứ đã được duyệt cho nó.
-  - Phép biến đổi formant dùng **Praat "Change gender"** qua parselmouth, không dùng WORLD warp hay PARCOR. Praat
-    resample để dời formant rồi PSOLA khôi phục cao độ — **không bao giờ ước lượng hay dựng lại phổ**.
-    So bằng tai: PARCOR tệ rõ rệt, WORLD không phân biệt được với Praat. UTMOSv2 xếp ngược lại nhưng nó đã
-    ba lần mâu thuẫn với người nghe ở đúng vùng này, nên không dùng nó để chọn.
-  - *Cách thể hiện* ← F0 và sampling, theo từng câu, do đạo diễn quyết.
-  - *Chất giọng nền của preset* ← `pitch_st` trong `abook/assets/voice_balance.json` (xem `docs/VOICE_BALANCE.md`), hiệu chỉnh một lần bằng tai cho mỗi preset.
-    Giá trị này **không** bị chặn bởi `PRESET_MIN_PITCH_SEMITONES` — giới hạn đó suy từ baseline UTMOSv2,
-    mà UTMOSv2 đã hai lần mâu thuẫn với tai người nghe ở đúng vùng này.
-- Biến đổi giọng là lớp trang trí **sau inference và sau toàn bộ thẩm định**: áp ở bước ghép chương, không
-  áp lúc sinh audio. Segment WAV đã verify là bất biến; mọi gate chấm bản gốc. Vòng WORLD tính thuế phẳng
-  `~0,27` MOS và `~0,06` WER bất kể dịch nhiều hay ít — chấm bản đã dịch chỉ là đo chính phép biến đổi, và
-  đó là thứ từng làm segment bị dịch fail gấp 3,4 lần một cách vô cớ.
-- Dùng WORLD vocoder: scale F0 và warp spectral envelope theo trục tần số; không dùng phase-vocoder hay
-  `torchaudio.functional.pitch_shift`. Đo thực tế: rubberband (có sẵn trong FFmpeg của project, chế độ giữ
-  formant) tệ hơn WORLD `0,2`–`0,3` MOS ở cả hai chiều. Lỗi pitch hoặc không đủ voiced frame phải giữ
-  waveform gốc, ghi warning và không retry TTS.
+- **Một preset là một giọng nguyên bản** (chủ sách 06-11: “bỏ hết trừ cân bằng tốc độ”). Không đổi F0,
+  formant, register hay gain theo tuổi/cảm xúc/volume/vai người kể. Chỉ giữ WSOLA và khoảng nghỉ cấu trúc, không bù nghỉ theo cảm xúc hay lời dẫn thoại.
+- Khoá bảng `engine@version/preset`; VieNeu chỉ có `r`, `o_db`, `ref_lufs`. Gain câu = `L + o_db - ref_lufs`,
+  thêm trần đỉnh an toàn; không line offset, không RMS/LUFS đo từng câu để đặt gain. Không đổi `r` khi fit độ to.
+- Sau phân tích toàn sách, cấp preset chưa dùng cho vai nhiều câu trước vai ít câu. Chọn bằng phái và hạng
+  chủ sách; mọi tuổi theo cùng luật. Hết preset thì dùng chung và nghe cùng giọng; không tạo thang bậc phụ.
+- Schema và prompt phân tích vẫn giữ emotion/intensity/volume để giữ gold và dữ liệu huấn luyện.
+  Mọi số độ to phải fit bằng bộ 40 câu trung tính × hai seed, ISO 532-1 stationary; sách chỉ là dữ liệu test.
+- Chỉ gỡ vòng hiệu chỉnh sách sau khi cả hai sách kiểm định đạt đúng 1,5 phon giữa giọng và ±1,0 phon
+  giữa chương với trung vị sách. Nếu không đạt, giữ vòng cũ, không tune trên sách hay nới ngưỡng.
 - Ngân sách frame VieNeu và giới hạn validation phải lấy từ cùng `segment_duration_policy`; codec VieNeu v3
   dùng 3.840 sample/frame ở 48 kHz. Mọi tổ hợp kind/pace/độ dài phải có headroom validation được test.
 - Chỉ có `narration`/`dialogue`/`thought`; từ tượng thanh và cụm cảm thán giữ nguyên trong câu đọc bình thường.
@@ -178,7 +151,7 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   quyền hard-fail, vì bỏ tên khỏi "Anh Lucy" là không còn gì để kiểm. Repair vẫn chạy đủ vòng; chỉ trạng thái cuối
   đổi từ `failed` thành publish kèm `ASR_LOCKED_NAME_ANCHOR_REVIEW`. Caller không truyền ngưỡng canonical thì giữ
   nguyên hành vi hard-fail cũ.
-- ASR repair phải giữ nguyên speaker, voice profile, pitch và `spoken_text`; chế độ `clarity` chỉ hạ sampling variance.
+- ASR repair phải giữ nguyên speaker, voice profile và `spoken_text`; chế độ `clarity` chỉ hạ sampling variance.
   Mọi cách đọc khóa (kể cả nguồn analysis/listener) và phép TN đổi chữ mang thêm alias theo occurrence:
   spelling nguồn, cách đọc khóa và chuỗi thực gửi giọng. Alias mới không hạ một pass theo luật cũ;
   chỉ cứu mismatch khi các token thường còn nguyên, không dùng việc khớp tên để tha lỗi từ khác.
@@ -240,8 +213,8 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   sách -> cách của sách ("HOANG CAI" -> "HOÀNG CÁI"). Luật gom mới phải qua `voice_identity.py --gold-check`: không được
   nhập hai người của đáp án làm một. Văn bản cả cuốn không bao giờ `unicodedata.normalize` một lần - CPython chậm vượt
   tuyến tính trên chuỗi dài (21 giây cho 11 triệu ký tự); chuẩn hoá từng dòng hay từng ký tự khác nhau.
-- Cảm xúc chỉ thay đổi sampling, pace và mức âm lượng mục tiêu trên cùng preset. Không dùng cue phi ngôn ngữ thử nghiệm
-  của VieNeu và không thay identity giọng để giả lập cảm xúc.
+- Không dùng cue phi ngôn ngữ thử nghiệm của VieNeu và không thay identity giọng để giả lập cảm xúc.
+  Cảm xúc không đổi waveform hay khoảng nghỉ; ghép theo break_ms cấu trúc.
 - Chuẩn hóa các cách viết như `haizzzzz`, `hừmmmm` hoặc `[thở dài]` chỉ được áp dụng lên `spoken_text` dùng chung cho
   TTS và expected ASR; văn bản nguồn, hash và segment đã checkpoint không được sửa.
 - **Biến thể pitch là nguyên nhân hỏng chất lượng lớn nhất đo được, không phải preset hay vùng miền.**
@@ -249,8 +222,7 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   **9,4%** với WER trung vị `0,154` — tệ hơn 3,4× và 3×. UTMOSv2 nói cùng một điều một cách độc lập: dịch
   `-1` bán âm làm mất `0,33`–`1,17` MOS tuỳ preset. Người nghe tiếng Việt còn **không nhận ra đó là giọng
   của preset gốc nữa**, nên pitch không chỉ hạ độ tự nhiên mà đổi luôn nhận diện giọng.
-  `PRESET_MIN_PITCH_SEMITONES` hiện giới hạn theo **khả năng dịch cao độ** đo trên preview, chứ không theo
-  **cái giá phải trả**. Đừng đổ lỗi cho một preset khi số liệu chỉ vào biến thể pitch của nó: `Xuân Vĩnh`
+  Đừng đổ lỗi cho một preset khi số liệu chỉ vào biến thể pitch của nó: `Xuân Vĩnh`
   ở `pitch 0` fail **0/13**, còn các biến thể `-1/+1/+2` của chính nó fail 25–33%.
 - Whisper sai **thanh điệu** tiếng Việt ở mọi segment, cả đạt lẫn fail — verified median `0,000` nhưng p99
   `0,362`, so với median `0,296` của segment fail, và có segment đạt với tỉ lệ `1,000`. Hai phân bố không
@@ -273,25 +245,20 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
 - `voice_catalog.preset_eligible` là cửa dùng giọng theo vai: preset được chủ sách xếp trong `assets/voice_rank.json`
   được dùng cho đúng vai ấy bất kể style catalog; tin tức chưa được xếp vẫn bị loại. Vùng miền và lệnh cấm phân vai
   vẫn giữ nguyên. Bảng hạng ưu tiên hơn các thước đo; mặc định nữ là Đoan Trang, nam là Đức Trí.
-- Pitch âm phải theo giới hạn từng preset đo trên preview: Phạm Tuyên không hạ; Xuân Vĩnh, Thái Sơn,
-  Ngọc Trân tối đa `-1`; các preset không tin tức còn lại tối đa `-2`; pitch dương tối đa `+2`.
 - NPC có nhãn cục bộ được giữ identity riêng trong phạm vi chapter/batch; NPC không phân biệt được
   ít nhất phải tách pool nam, nữ và chưa rõ giới tính.
 - Nhãn NPC cục bộ trùng chính xác với tên nhân vật trong cùng chapter phải được hợp nhất trước khi
-  phân vai, tránh cùng một người bị khóa hai giọng hoặc hai pitch khác nhau.
+  phân vai, tránh cùng một người bị khóa hai giọng khác nhau.
 - Tên trong lời gọi trực tiếp như `Anh Lucien!` hoặc `Iven, ...` là addressee, không phải bằng chứng về speaker.
   Nếu analysis vẫn gán tên đó làm người nói, validation phải tách thành NPC cục bộ `người gọi <tên>`, áp dụng
   nhất quán cho cùng local speaker trong batch. Repair marker chỉ được dùng tạm trong validation; projection speaker
   đã sửa mới là dữ liệu được candidate ledger và critic khóa.
-- Segment mới được cân theo K-weighted LUFS; giọng kể có anchor nhỉnh hơn hội thoại trung tính và
-  chênh lệch `loud` phải tiết chế. Sample peak cap vẫn bắt buộc sau khi áp gain.
-- **Mọi target loudness phải nằm trong khả năng vật lý của trần peak.** Cân mức là
-  `min(loudness_gain, peak_safe_gain)` và master chương cũng không vượt được trần true-peak, nên target cao hơn
-  `trần − crest factor` chỉ có thể trượt. Giọng nói TTS tiếng Việt đo được crest median 17,6 dB, xấu nhất 20,6 dB
-  ở segment và 17,9 dB trên cả chương. Vì chương được master về một target chung ở cuối nên **chỉ tương quan giữa
-  các segment mới quan trọng**: hạ đều anchor cho tới khi peak cap không còn chạm là cách sửa đúng, không dùng
-  nén động hay limiter. UTMOSv2 bất biến với mức âm lượng (lệch MOS trung bình `-0,006` ở `-6 dB`) nên hạ anchor
-  không mất điểm tự nhiên. `test_loudness_targets_stay_inside_the_peak_ceiling_speech_allows` khóa ràng buộc này.
+- Segment mới dùng gain hằng số của preset, không có chênh lệch theo vai hay nhãn volume.
+  Sample peak cap vẫn bắt buộc sau khi áp gain.
+- Cân mức câu giữ `min(loudness_gain, peak_safe_gain)`. Master chương dùng đúng +5 dB từ hiệu chuẩn
+  cho mọi chương/mọi sách, không lấy LUFS hay peak chương để chọn gain. Limiter true-peak oversample 4 lần,
+  không auto-level, chỉ hạ envelope quanh đỉnh theo `true_peak_db`; báo cáo phần thời gian và mức hạ lớn nhất.
+  LUFS chương là chẩn đoán, không hard-fail theo một target chung.
 - `segment_endpoint_floor_dbfs` đo trên WAV **đã cân mức** nên phải dịch theo anchor loudness; còn
   `segment_active_floor_dbfs` đo trên waveform **trước gain** nên phải giữ nguyên. Trộn hai cái này lại sẽ âm thầm
   làm gate "endpoint còn hoạt động ở trần frame" mất độ nhạy.
@@ -491,7 +458,7 @@ Module chính:
   (`tests/fixtures/speaker_pass`). Khoá model + digest + tokenizer theo sách (`speaker_pass_state`), commit theo chương
   (`speaker_pass_chapters`), nhãn gốc của model phân tích giữ ở `speaker_pass_labels`.
 - `character_registry.py`: canonical speaker name và voice mapping; không hợp nhất identity khác tên.
-- `tts.py`: VieNeu preset adapter, emotion delivery và deterministic retry.
+- `tts.py`: VieNeu preset adapter, tempo và deterministic retry.
 - `asr.py`: Whisper và transcript metrics.
 - `audio_io.py`: validation, atomic audio, playlist.
 - `resource_manager.py`: resource snapshot/decision.
@@ -585,12 +552,12 @@ là bước kiểm read-only chạy mỗi phiên bản (nó không bao giờ t�
   - Cách kiểm chứng job vẫn còn nguyên vẹn: tính lại `quality_policy_hash(build_quality_policy(settings))`
     từ `settings_json` của project và so với `generation_policy_hash` trong bảng `segments`.
 - Chỉ nâng khi có lý do. `numpy`, `librosa`, `transformers`, `huggingface-hub`, `torch*` và `timm` ràng buộc
-  với UTMOSv2/Whisper và với cache revision đã khóa; `pyworld` quyết định pitch; `vieneu` quyết định audio.
+  với UTMOSv2/Whisper và với cache revision đã khóa; `vieneu` quyết định audio. WORLD/Praat đã bỏ khỏi sản phẩm.
 - `vieneu` 3.3.0 chuyển engine mặc định sang ONNX Runtime và đẩy torch xuống extra `legacy`; tham số `style`
   cũng đã bị deprecate. Mọi ngân sách frame hiện tại được đo trên engine torch cũ, nên đây là migration
   thật sự chứ không phải bump pin.
 - Thư viện Python của VieNeu **không có** tham số tốc độ đọc (tính năng 0.5–3.0 chỉ có trong desktop app).
-  Cách đúng để hiện thực hóa `pace` là hậu xử lý giữ nguyên cao độ bằng FFmpeg `atempo`.
+  Nhãn `pace` chỉ là metadata phân tích; không đổi tham số sinh, ngân sách frame hay QA. Mọi câu dùng band normal chung và sàn âm tiết chung; WSOLA chỉ theo `x * r` của bảng giọng.
 
 ## Đánh giá chất lượng audio
 
@@ -600,7 +567,7 @@ và báo cáo các trục mà tai người nghe thật sự nhận ra, ngoài c�
 - tốc độ đọc (âm tiết/giây) theo từng segment, và độ lệch giữa các segment trong cùng một chương;
 - khoảng lặng thực tế tại mối nối so với `break_ms` dự kiến, gồm cả phần câm mà TTS tự sinh ở đầu/cuối segment;
 - độ đồng đều loudness giữa các segment và giữa narration với dialogue;
-- phân bố pitch/preset theo nhân vật để phát hiện nhân vật bị trộn giọng.
+- phân bố preset theo nhân vật để phát hiện nhân vật bị trộn giọng.
 
 Ngưỡng review của công cụ này là *chẩn đoán*, không phải gate publish. Muốn biến một phát hiện thành gate thì
 phải thêm vào đúng module (`audio_io.py` cho tín hiệu chương, `pipeline.py` cho vòng repair) kèm test.

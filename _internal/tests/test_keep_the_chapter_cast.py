@@ -117,8 +117,8 @@ def recast(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
             "preset_name": key,
             "description": "test",
             "seed": 3,
-            "pitch_semitones": 0,
-            "formant_ratio": 1.0,
+
+
         },
     )
     return target

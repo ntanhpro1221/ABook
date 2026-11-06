@@ -446,7 +446,7 @@ def test_recovery_preserves_incumbent_and_exposes_candidate_resume_plan(tmp_path
             "preset_name": "Recovery Candidate",
             "description": "Recovery candidate test voice",
             "seed": 9,
-            "pitch_semitones": 0,
+
             "status": "ready",
         }
     )
@@ -533,7 +533,7 @@ def test_recovery_invalidates_corrupt_candidate_and_advances_round(tmp_path: Pat
             "preset_name": "Recovery Candidate",
             "description": "Recovery corrupt candidate test voice",
             "seed": 10,
-            "pitch_semitones": 0,
+
             "status": "ready",
         }
     )
@@ -599,10 +599,8 @@ def test_recovery_invalidates_corrupt_candidate_and_advances_round(tmp_path: Pat
             "spoken_text_sha256": spoken_text_sha256,
             "pronunciation_delivery_variant": "locked_spoken_v1",
             "voice_profile_id": profile_id,
-            "pitch_semitones": 0,
-            "effective_pitch_semitones": 0,
-            "pitch_variant_skipped": False,
-            "pitch_variant_mixed": False,
+
+
         },
     )
     candidate_path.write_bytes(b"candidate-after-corruption")

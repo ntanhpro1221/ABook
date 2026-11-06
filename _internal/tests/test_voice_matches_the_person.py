@@ -97,19 +97,19 @@ def _book(root: Path, entries: list[tuple[str, str, str]]) -> Path:
     return book
 
 
-def test_a_child_on_a_womans_voice_is_the_rule_not_a_fault(tmp_path: Path) -> None:
-    """EVERAN: nam, `child`, đọc bằng Ngọc Linh kéo cao - đúng cách dự án đọc trẻ con."""
+def test_a_child_uses_the_same_gender_rule_as_an_adult(tmp_path: Path) -> None:
+    """Mọi tuổi dùng cùng phái preset nguyên bản, không ngoại lệ giọng trẻ con."""
     project = _project(
         tmp_path,
         "lo04_x",
-        [("096", "EVERAN", "male", "child", "preset_ngoc_linh_f107_p+02", 13)],
+        [("096", "EVERAN", "male", "child", "vieneu@3.8.3/Ngọc Linh", 13)],
     )
 
     rows = read_rows(project)
 
     assert len(rows) == 1 and rows[0]["lines"] == 13
-    assert preset_gender("preset_ngoc_linh_f107_p+02") == "female"
-    assert wrong_gender(rows) == []
+    assert preset_gender("vieneu@3.8.3/Ngọc Linh") == "female"
+    assert [(r["name"], r["lines"]) for r in wrong_gender(rows)] == [("EVERAN", 13)]
 
 
 def test_an_adult_man_on_a_womans_voice_is_reported(tmp_path: Path) -> None:
@@ -118,9 +118,9 @@ def test_an_adult_man_on_a_womans_voice_is_reported(tmp_path: Path) -> None:
         tmp_path,
         "lo03r_062_x",
         [
-            ("062", "IVAN", "male", "unknown", "preset_ngoc_linh_f107_p+02", 17),
-            ("062", "WILL", "male", "unknown", "preset_thai_son_f100_p+00", 5),
-            ("062", "IRINA", "female", "adult", "preset_truc_ly_f100_p+00", 4),
+            ("062", "IVAN", "male", "unknown", "vieneu@3.8.3/Ngọc Linh", 17),
+            ("062", "WILL", "male", "unknown", "vieneu@3.8.3/Thái Sơn", 5),
+            ("062", "IRINA", "female", "adult", "vieneu@3.8.3/Trúc Ly", 4),
         ],
     )
 
@@ -130,20 +130,25 @@ def test_an_adult_man_on_a_womans_voice_is_reported(tmp_path: Path) -> None:
 
 
 def test_an_unknown_gender_is_not_accused(tmp_path: Path) -> None:
-    """Không biết phái thì không kết tội: `unknown` được miễn, như `child`."""
+    """Không biết phái thì không kết tội."""
     project = _project(
-        tmp_path, "lo02_x", [("031", "NGƯỜI LẠ", "unknown", "unknown", "preset_ngoc_linh_f108_p+00", 9)]
+        tmp_path, "lo02_x", [("031", "NGƯỜI LẠ", "unknown", "unknown", "vieneu@3.8.3/Ngọc Linh", 9)]
     )
 
     assert wrong_gender(read_rows(project)) == []
 
 
-def test_the_preset_behind_a_voice_key_is_read_longest_prefix_first() -> None:
-    assert preset_gender("preset_thanh_binh_f100_p-04") == "male"
-    assert preset_gender("preset_doan_trang_f115_p+00") == "female"
-    assert preset_gender("preset_thai_son_f087_p+00") == "male"
+def test_the_preset_behind_a_voice_key_is_matched_exactly() -> None:
+    assert preset_gender("vieneu@3.8.3/Thanh Bình") == "male"
+    assert preset_gender("vieneu@3.8.3/Đoan Trang") == "female"
+    assert preset_gender("vieneu@3.8.3/Thái Sơn") == "male"
     assert preset_gender("narrator") is None
     assert preset_gender("preset_khong_co_giong_nay_f100_p+00") is None
+    assert preset_gender("preset_ngoc_linh_f100_p+00") is None
+    assert preset_gender("vieneu@3.8.3/Ngọc Linh/f100") is None
+    assert preset_gender("vieneu@3.8.3/Thanh") is None
+    assert preset_gender("supertonic@3-724fb5ab/F1") == "female"
+    assert preset_gender("zerotts@0.1.5/giahuy") == "male"
 
 
 def test_age_drift_says_whether_the_voice_moved_with_it(tmp_path: Path) -> None:
@@ -157,17 +162,17 @@ def test_age_drift_says_whether_the_voice_moved_with_it(tmp_path: Path) -> None:
         tmp_path,
         "lo03_x",
         [
-            ("072", "IVAN", "male", "child", "preset_ngoc_linh_f107_p+02", 2),
-            ("080", "MICHAEL", "male", "teen", "preset_thanh_binh_f100_p-04", 6),
-            ("082", "LONE", "male", "adult", "preset_thanh_binh_f093_p-04", 2),
+            ("072", "IVAN", "male", "child", "vieneu@3.8.3/Ngọc Linh", 2),
+            ("080", "MICHAEL", "male", "teen", "vieneu@3.8.3/Thanh Bình", 6),
+            ("082", "LONE", "male", "adult", "vieneu@3.8.3/Thanh Bình", 2),
         ],
     )
     recast = _project(
         tmp_path,
         "lo03r_060_x",
         [
-            ("060", "IVAN", "male", "unknown", "preset_thai_son_f100_p+00", 3),
-            ("081", "MICHAEL", "male", "unknown", "preset_thanh_binh_f100_p-04", 4),
+            ("060", "IVAN", "male", "unknown", "vieneu@3.8.3/Thái Sơn", 3),
+            ("081", "MICHAEL", "male", "unknown", "vieneu@3.8.3/Thanh Bình", 4),
         ],
     )
 
@@ -184,8 +189,8 @@ def test_the_two_spellings_are_folded_before_comparing(tmp_path: Path) -> None:
         tmp_path,
         "lo02_x",
         [
-            ("031", "NGUOI TRA LOI", "female", "young", "preset_ngoc_linh_f108_p+00", 3),
-            ("032", "NGƯỜI TRẢ LỜI", "female", "unknown", "preset_doan_trang_f100_p+00", 4),
+            ("031", "NGUOI TRA LOI", "female", "young", "vieneu@3.8.3/Ngọc Linh", 3),
+            ("032", "NGƯỜI TRẢ LỜI", "female", "unknown", "vieneu@3.8.3/Đoan Trang", 4),
         ],
     )
 
@@ -199,14 +204,14 @@ def test_the_book_is_read_through_the_manifest_and_recast_names_the_batch(tmp_pa
     _project(
         versions / "v0.2.0-lo03r",
         "lo03r_062_x",
-        [("062", "IVAN", "male", "unknown", "preset_ngoc_linh_f107_p+02", 17)],
+        [("062", "IVAN", "male", "unknown", "vieneu@3.8.3/Ngọc Linh", 17)],
     )
     _project(
         versions / "v0.2.0-lo03",
         "lo03_x",
         [
-            ("062", "IVAN", "male", "unknown", "preset_thai_son_f100_p+00", 17),
-            ("072", "WILL", "male", "unknown", "preset_thai_son_f100_p+00", 5),
+            ("062", "IVAN", "male", "unknown", "vieneu@3.8.3/Thái Sơn", 17),
+            ("072", "WILL", "male", "unknown", "vieneu@3.8.3/Thái Sơn", 5),
         ],
     )
     book = _book(tmp_path, [("062", "v0.2.0-lo03r", "lo03r_062_x"), ("072", "v0.2.0-lo03", "lo03_x")])

@@ -452,8 +452,8 @@ def test_the_studio_offers_to_build_the_workshop_and_seeds_it_from_the_book(tmp_
     assert store.summarize(project, running=False)["title"] == "Tên mới", "tên người nghe đặt"
     with sqlite3.connect(project / store.DB_NAME) as db:
         assert db.execute("SELECT canonical_name, locked_voice_key FROM characters").fetchall() == [
-            ("LUCIEN", "preset_thanh_binh_f087_p+00")], "giọng nhân vật được ghim theo khoá trong cast.json"
-        assert db.execute("SELECT preset_name FROM voice_profiles WHERE voice_key = 'preset_thanh_binh_f087_p+00'").fetchone() == ("Thanh Bình",)
+            ("LUCIEN", "vieneu@3.8.3/Thanh Bình")], "giọng nhân vật được ghim theo khoá trong cast.json"
+        assert db.execute("SELECT preset_name FROM voice_profiles WHERE voice_key = 'vieneu@3.8.3/Thanh Bình'").fetchone() == ("Thanh Bình",)
     source = sorted((studio.library.root / workshop.SOURCE_FOLDER).rglob("*.txt"))
     assert [path.name for path in source] == ["00001.txt", "00002.txt"]
     first = source[0].read_text(encoding="utf-8")

@@ -6,7 +6,7 @@ from pathlib import Path
 
 from abook.character_registry import _book_exposure, _drop_pins_that_share_a_chapter
 
-VOICE = "preset_thai_son_f100_p+00"
+VOICE = "vieneu@3.8.3/Thái Sơn"
 
 
 def _rows() -> list[dict]:

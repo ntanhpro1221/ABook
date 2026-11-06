@@ -7,8 +7,8 @@ Chạy từ thư mục `_internal`. Định dạng vào (GIẢ ĐỊNH - đổi 
 rates.json - tốc độ đo ở tốc độ gốc của giọng (chưa áp tempo), trên câu trung tính:
 
     {"median_syll_per_s": 4.56,
-     "voices": {"vieneu@3.8.3/Đức Trí/f100": {"syll_per_s": 4.15},
-                "vieneu@3.8.3/Mỹ Duyên/f100": {"r": 1.0}}}
+     "voices": {"vieneu@3.8.3/Đức Trí": {"syll_per_s": 4.15},
+                "vieneu@3.8.3/Mỹ Duyên": {"r": 1.0}}}
 
   `r = median_syll_per_s / syll_per_s`. Giọng có sẵn `r` thì dùng thẳng `r` (để ghim hằng số chủ sách
   đã chọn bằng tai, không cho số đo ghi đè). `median_syll_per_s` là trung vị của các giọng trên một
@@ -16,13 +16,12 @@ rates.json - tốc độ đo ở tốc độ gốc của giọng (chưa áp temp
 
 gains.json - độ to đo trên bản thô SAU cao độ và tempo (WORLD kéo tốc độ làm đổi độ to):
 
-    {"voices": {"vieneu@3.8.3/Đức Trí/f100": {"lufs": -19.4, "o_db": 0.0}}}
+    {"voices": {"vieneu@3.8.3/Đức Trí": {"lufs": -19.4, "o_db": 0.0}}}
 
   `lufs` -> `ref_lufs` (LUFS trung bình của bản thô, bắt buộc); `o_db` là độ lệch riêng thêm vào, tuỳ
   chọn (không ghi thì giữ giá trị hiện có).
 
 Khoá là `voice_balance.voice_key(...)`. Một khoá chưa có trong bảng là LỖI, trừ khi có `--create`
-(giọng mới: khi đó `pitch_st` lấy 0 cho tới khi ai đó đặt). `pitch_st` không bao giờ được đo hay đề xuất
 ở đây. Các núm chung `x`, `L_lufs`, `pace_floor_scale`, `engine_pace_floor` và trường `engine_speed` của máy tự đọc theo tốc độ
 (Supertonic) sửa tay trong file json; script giữ nguyên chúng.
 
@@ -66,7 +65,7 @@ def merge(
             return voices[key]
         if not create:
             raise SystemExit(f"{key}: chưa có trong bảng (thêm --create nếu đây là giọng mới)")
-        voices[key] = {"r": 1.0, "o_db": 0.0, "ref_lufs": -19.8, "pitch_st": 0}
+        voices[key] = {"r": 1.0, "o_db": 0.0, "ref_lufs": -19.8}
         return voices[key]
 
     for key, item in rates["voices"].items():
@@ -92,23 +91,7 @@ def merge(
 
 
 def render(table: dict[str, Any]) -> bytes:
-    """Cùng dạng với file gốc: núm chung ở đầu, mỗi giọng một dòng, khoá xếp theo thứ tự."""
-    head = [
-        f'  "version": {json.dumps(table["version"])}',
-        f'  "engine_versions": {json.dumps(table["engine_versions"], ensure_ascii=False)}',
-        f'  "x": {json.dumps(table["x"])}',
-        f'  "L_lufs": {json.dumps(table["L_lufs"])}',
-        f'  "pace_floor_scale": {json.dumps(table["pace_floor_scale"])}',
-    ]
-    if "engine_pace_floor" in table:
-        head.append(f'  "engine_pace_floor": {json.dumps(table["engine_pace_floor"], ensure_ascii=False)}')
-    lines = [
-        f"    {json.dumps(key, ensure_ascii=False)}: "
-        + json.dumps(table["voices"][key], ensure_ascii=False)
-        for key in sorted(table["voices"])
-    ]
-    text = "{\n" + ",\n".join(head) + ',\n  "voices": {\n' + ",\n".join(lines) + "\n  }\n}\n"
-    return text.encode("utf-8")  # LF, không đi qua write_text (Windows ghi CRLF)
+    return (json.dumps(table, ensure_ascii=False, indent=2, allow_nan=False) + "\n").encode("utf-8")
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -1,4 +1,4 @@
-"""Đo và bù mức nghe trên MP3 cuối; bản thu và bằng chứng QA câu bất biến."""
+"""Đo mức nghe trên MP3 cuối, chỉ cảnh báo; bản thu và bằng chứng QA câu bất biến."""
 from __future__ import annotations
 
 import hashlib
@@ -17,26 +17,15 @@ from scipy.signal import resample_poly
 from ._vendor.zwicker.loudness_zwst import loudness_zwst
 
 METER = "active_ISO532_1_stationary_v1"
-VOICE_SPREAD_PHON = 2.5
-CHAPTER_DELTA_PHON = 2.5
+VOICE_SPREAD_PHON = 1.5
+CHAPTER_DELTA_PHON = 1.0
 MIN_LINES = 12
-CORRECTION_LIMIT_DB = 4.0  # Sách thật cần tới +3,01 dB; chừa gần 1 dB, vẫn giữ trần đỉnh và QA.
-BALANCE_ALGORITHM = "finished_book_closed_loop_v1"
 
 
 def balance_limits(result: dict[str, Any]) -> tuple[float, float]:
-    """Hai sai số giữ riêng trong lịch sử và so với giới hạn tương ứng."""
+    """Độ trải giọng và độ lệch chương lớn nhất, giữ riêng hai điều kiện PASS."""
     return (float(result.get("voice_spread_phon") or 0),
             max((abs(r["delta_phon"]) for r in result.get("chapters", {}).values()), default=0))
-
-
-def balance_score(result: dict[str, Any]) -> tuple[float, float]:
-    """Độ lệch tệ nhất theo giới hạn; tổng làm tiêu chí phụ khi bằng nhau.
-
-    Chương từ 0,4 lên 0,6 phon vẫn đạt: không vì thế bỏ vòng đưa giọng từ 3 xuống 1.
-    """
-    voice, chapter = balance_limits(result)
-    return max(voice/1.5, chapter), voice/1.5+chapter
 
 
 def balance_satisfied(result: dict[str, Any]) -> bool:
@@ -45,97 +34,6 @@ def balance_satisfied(result: dict[str, Any]) -> bool:
     return (bool(result.get("voices") and result.get("chapters"))
             and coverage.get("measured_chapters") == coverage.get("total_chapters")
             and voice <= 1.5 and chapter <= 1.0)
-
-
-def correction_proposal(result: dict[str, Any], current: dict[str, Any], round_no: int) -> dict[str, Any]:
-    """Vòng 1 bù giọng đo đủ câu; vòng 2 bù phần dư của chương."""
-    proposal = json.loads(json.dumps(current))
-    def bounded(x):
-        return round(max(-CORRECTION_LIMIT_DB, min(CORRECTION_LIMIT_DB, x)), 6)
-    if round_no == 1:
-        ref = result.get("book_mean_phon")
-        if ref is None:
-            return proposal
-        proposal["voices"] = {k: bounded(float(current.get("voices", {}).get(k, 0))+ref-r["mean_phon"])
-                              for k, r in result["voices"].items() if r["n"] >= MIN_LINES}
-    else:
-        proposal["chapters"] = {k: bounded(float(current.get("chapters", {}).get(k, 0))-r["delta_phon"])
-                                for k, r in result["chapters"].items() if r["n"] >= MIN_LINES}
-    return proposal
-
-
-def balance_finished_book(chapters: list[dict[str, Any]], *, render: Callable,
-                          accept: Callable, measure: Callable = None,
-                          previous: dict[str, Any] | None = None,
-                          checkpoint: Callable = lambda state: None) -> dict[str, Any]:
-    """Dựng thử ngoài bản đang nghe; chỉ công bố sau khi đo tốt hơn. Không gọi model.
-
-    render nhận (corrections, round), trả (inputs MP3 thử, receipt). accept công bố receipt.
-    Receipt phải giữ bản tốt nhất khi lỗi. Checkpoint lưu cả hash MP3 và lịch sử để resume.
-    """
-    measure = measure or measure_finished_book
-    from .io_utils import sha256_file
-    hashes = lambda inputs: {str(ch["id"]): sha256_file(Path(ch["file"])) for ch in inputs}
-    identity = hashes(chapters)
-    if (previous and previous.get("algorithm") == BALANCE_ALGORITHM
-            and previous.get("complete") and previous.get("audio_sha256") == identity):
-        return previous
-    state = {"algorithm": BALANCE_ALGORITHM, "clamp_db": CORRECTION_LIMIT_DB,
-             "thresholds": {"voice_spread_phon": 1.5, "chapter_delta_phon": 1.0},
-             "objective": "lexicographic max(voice_spread/1.5, chapter_abs_delta), then sum",
-             "corrections": {}, "rounds": [], "complete": False}
-    if previous and previous.get("algorithm") == BALANCE_ALGORITHM and previous.get("audio_sha256") == identity:
-        state = json.loads(json.dumps(previous))
-        state["complete"] = False
-    try:
-        best = measure(chapters)
-        state.update(best=best, audio_sha256=identity)
-        if not state["rounds"]:
-            state["rounds"].append({"round": 0, "accepted": True, "measurement": best})
-        first_round = 1+max(r["round"] for r in state["rounds"])
-        for round_no in range(first_round, 3):
-            if balance_satisfied(best):
-                break
-            if round_no == 1 and balance_limits(best)[0] <= 1.5:
-                # Giọng đã đều (kể cả sách một giọng): sang phần dư chương, không
-                # master một vòng gain vô ích rồi dừng vì nó không cải thiện.
-                state['rounds'].append({'round': 1, 'accepted': False, 'skipped': 'voices_within_limit',
-                                        'measurement': best})
-                continue
-            proposal = correction_proposal(best, state["corrections"], round_no)
-            changed = any(abs(value-float(state['corrections'].get(scope, {}).get(key, 0))) > 1e-6
-                          for scope in ('voices', 'chapters') for key, value in proposal.get(scope, {}).items())
-            if not changed:
-                break
-            proposal["history"] = [{"round": r["round"], "limits": list(balance_limits(r["measurement"]))}
-                                   for r in state["rounds"] if r["accepted"]]
-            trial, receipt = render(proposal, round_no)
-            measured = measure(trial)
-            a, b = balance_score(best), balance_score(measured)
-            coverage_kept = (set(best.get('voices', {})) <= set(measured.get('voices', {}))
-                             and set(best.get('chapters', {})) <= set(measured.get('chapters', {})))
-            improved = (bool(measured.get("voices")) and bool(measured.get("chapters")) and coverage_kept
-                        and (balance_satisfied(measured) or b[0] < a[0]-0.01
-                             or (abs(b[0]-a[0]) <= 1e-6 and b[1] < a[1]-0.01)))
-            state["rounds"].append({"round": round_no, "accepted": False,
-                                     "corrections": proposal, "score": list(b), "measurement": measured})
-            if not improved:
-                break
-            accept(receipt)
-            state['rounds'][-1]['accepted'] = True
-            chapters, best = trial, measured
-            state["corrections"] = proposal
-            state.update(best=best, audio_sha256=hashes(chapters))
-            checkpoint(state)
-        state.update(best=best, verdict=best["verdict"], audio_sha256=hashes(chapters), complete=True)
-        if not balance_satisfied(best):
-            state["warning"] = "BOOK_LEVEL_LIMITS_NOT_REACHED"
-            state["verdict"] = "warning"
-    except Exception as exc:  # noqa: BLE001 - bản đang nghe không bị thay bởi bản thử lỗi
-        state.update(verdict="warning", warning="BOOK_LEVEL_CORRECTION_FAILED", error=str(exc), complete=True)
-        state["audio_sha256"] = identity if not state.get("audio_sha256") else state["audio_sha256"]
-    checkpoint(state)
-    return state
 
 
 def active_audio(audio: np.ndarray, rate: int) -> np.ndarray:
@@ -175,7 +73,7 @@ def measure_finished_book(
 ) -> dict[str, Any]:
     """Đọc các MP3 + mốc câu cuối. Mỗi giọng 60 câu, mỗi chương 40 câu; chọn bằng SHA256.
 
-    `segments`: voice, stable_id, start, end, volume. Không trả chữ hay âm thanh.
+    `segments`: voice, stable_id, start, end. Không trả chữ hay âm thanh.
     Khoảng tin cậy bootstrap theo câu, chưa tính tương quan giữa câu cùng chương.
     """
     voices: dict[str, list[tuple[int, dict[str, Any]]]] = defaultdict(list)
@@ -185,7 +83,7 @@ def measure_finished_book(
         for segment in chapter["segments"]:
             if str(segment["stable_id"]) in (exclude or set()):
                 continue
-            if segment.get("volume", "normal") != "normal" or not segment.get("voice"):
+            if not segment.get("voice"):
                 continue
             start, end = float(segment["start"]), float(segment["end"])
             if not (math.isfinite(start) and math.isfinite(end) and start >= 0 and end-start >= 1.5):
@@ -228,6 +126,8 @@ def measure_finished_book(
     result["measured_ids"] = sorted(set(measured_ids))
     result["insufficient_voices"] = {k: len(values["voices"].get(k, [])) for k in sorted(known_voices)
                                      if len(values["voices"].get(k, [])) < MIN_LINES}
+    result["sparse_voices"] = {k: _summary(xs) for k, xs in sorted(values["voices"].items())
+                              if 0 < len(xs) < MIN_LINES}
     for scope, groups in values.items():
         result[scope] = {k: _summary(v) for k, v in sorted(groups.items()) if len(v) >= MIN_LINES}
     v = [r["mean_phon"] for r in result["voices"].values()]
@@ -265,7 +165,7 @@ def measure_package(path: Path, *, seed: str = "fit-v1", exclude: set[str] | Non
         book = json.loads(archive.read("book.json"))
         cast = json.loads(archive.read("cast.json"))
         def key(v):
-            return v if isinstance(v, str) else str(v.get("preset") or v.get("key") or "")+str(v.get("tone") or "")
+            return v if isinstance(v, str) else str(v.get("preset") or v.get("key") or "")
         narrator = key(cast["narrator"]["voice"])
         mapping = {r["name"]: key(r["voice"]) for r in cast["characters"]+cast["extras"]}
         mapping.update({"NARRATOR": narrator, "": narrator})
@@ -274,6 +174,6 @@ def measure_package(path: Path, *, seed: str = "fit-v1", exclude: set[str] | Non
             segments = []
             for g in json.loads(archive.read(ch["script"]))["segments"]:
                 segments.append({"voice": mapping.get(g["speaker"], narrator if g["kind"] in ("narration", "heading") else None),
-                    "stable_id": g["stableId"], "start": g["start"], "end": g["end"], "volume": g.get("volume", "normal")})
+                    "stable_id": g["stableId"], "start": g["start"], "end": g["end"]})
             chapters.append({"id": ch["index"], "file": ch["file"], "segments": segments})
         return measure_finished_book(chapters, lambda name: sf.SoundFile(io.BytesIO(archive.read(name))), seed=seed, exclude=exclude)
