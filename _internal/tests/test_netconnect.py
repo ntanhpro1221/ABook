@@ -10,8 +10,8 @@ import errno
 import socket
 import subprocess
 import sys
-import time
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -30,6 +30,7 @@ class FakeSocket:
         self.family = family
         self.closed = False
         self.connected_to = None
+        self.timeout = None
         if behaviour == "hang":
             # Ổ đang nghe không bao giờ ghi-được (cả Windows lẫn Linux). Đừng dùng socketpair đầy bộ đệm: loopback Windows tự nới bộ đệm nên ổ ấy
             # thành ghi-được sau vài trăm ms và "treo" lại thắng cuộc đua.
@@ -47,7 +48,10 @@ class FakeSocket:
         pass
 
     def settimeout(self, value) -> None:
-        pass
+        self.timeout = value
+
+    def gettimeout(self):
+        return self.timeout
 
     def setsockopt(self, *args) -> None:
         pass
@@ -57,6 +61,8 @@ class FakeSocket:
 
     def connect(self, address) -> None:
         self.connected_to = address
+        if self.behaviour == "ok":
+            return
         if self.behaviour == "unreachable":
             raise OSError(errno.ENETUNREACH, "network unreachable")
         raise BlockingIOError(errno.EWOULDBLOCK, "in progress")
@@ -91,14 +97,14 @@ def listener():
     server.close()
 
 
-def script(monkeypatch, infos: list[tuple], fakes: dict[int, list[str]]):
+def script(monkeypatch, infos: list[tuple], fakes: dict[int, list[str]], *, simulated=False):
     """getaddrinfo -> `infos`; ổ của họ có trong `fakes` là ổ giả (lần lượt theo kịch bản), họ còn lại là ổ thật. Trả danh sách ổ giả đã tạo."""
     created: list[FakeSocket] = []
-    prepared = {family: [FakeSocket(behaviour, family) for behaviour in behaviours] for family, behaviours in fakes.items()}  # tạo TRƯỚC khi thay socket.socket
+    prepared = {family: list(behaviours) for family, behaviours in fakes.items()}
 
     def factory(family, kind, proto=0):
         if prepared.get(family):
-            fake = prepared[family].pop(0)
+            fake = FakeSocket(prepared[family].pop(0), family)
             created.append(fake)
             return fake
         return REAL_SOCKET(family, kind, proto)
@@ -111,6 +117,35 @@ def script(monkeypatch, infos: list[tuple], fakes: dict[int, list[str]]):
             return getattr(socket, name)
 
     monkeypatch.setattr(netconnect, "socket", Namespace())
+    if simulated:
+        now = [0.0]
+
+        class Selector:
+            def __init__(self):
+                self.pending = {}
+
+            def register(self, sock, events):
+                self.pending[sock] = SimpleNamespace(fileobj=sock)
+
+            def unregister(self, sock):
+                return self.pending.pop(sock)
+
+            def select(self, timeout):
+                ready = [(key, 2) for sock, key in self.pending.items() if sock.behaviour != "hang"]
+                if not ready:
+                    assert timeout is not None and timeout >= 0
+                    now[0] += timeout
+                return ready
+
+            def close(self):
+                self.pending.clear()
+
+        def advance(seconds):
+            now[0] += seconds
+
+        # Patch only this module; other threads keep their real clock and selector.
+        monkeypatch.setattr(netconnect, "time", SimpleNamespace(monotonic=lambda: now[0], advance=advance))
+        monkeypatch.setattr(netconnect, "selectors", SimpleNamespace(DefaultSelector=Selector, EVENT_WRITE=2))
     return created
 
 
@@ -118,11 +153,8 @@ def test_blackholed_ipv6_does_not_delay_a_working_ipv4(monkeypatch, listener):
     port = listener.getsockname()[1]
     infos = [info(V6, "2001:db8::1", port), info(V6, "2001:db8::2", port), info(V4, "127.0.0.1", port), info(V4, "127.0.0.1", port)]
     created = script(monkeypatch, infos, {V6: ["hang", "hang"]})
-    started = time.monotonic()
     sock = netconnect.create_connection(("fake.example", port), timeout=8)
-    elapsed = time.monotonic() - started
     try:
-        assert elapsed < 1.0
         assert sock.family == V4 and sock.gettimeout() == 8  # ổ chặn kèm hạn của người gọi, như stdlib
         accepted, _ = listener.accept()
         accepted.sendall(b"ok")
@@ -131,6 +163,18 @@ def test_blackholed_ipv6_does_not_delay_a_working_ipv4(monkeypatch, listener):
     finally:
         sock.close()
     assert created and all(fake.closed for fake in created)  # lần đang treo bị đóng khi có người thắng
+
+
+def test_blackhole_stagger_uses_less_than_one_second_of_the_connection_budget(monkeypatch):
+    created = script(monkeypatch, [info(V6, "::1"), info(V4, "127.0.0.1")],
+                     {V6: ["hang"], V4: ["ok"]}, simulated=True)
+    sock = netconnect.create_connection(("fake.example", 80), timeout=8)
+    try:
+        assert netconnect.time.monotonic() < 1.0
+        assert sock.family == V4 and sock.gettimeout() == 8
+    finally:
+        sock.close()
+    assert all(fake.closed for fake in created)
 
 
 def test_default_timeout_is_applied_like_stdlib(monkeypatch, listener):
@@ -156,11 +200,11 @@ def test_families_are_interleaved():
 def test_attempts_start_in_interleaved_order_and_failure_starts_the_next_at_once(monkeypatch):
     monkeypatch.setattr(netconnect, "STAGGER_SECONDS", 30.0)  # nếu "hỏng thì thử liền" sai, bài này treo tới hết hạn
     infos = [info(V6, "::1"), info(V6, "::2"), info(V4, "1.1.1.1"), info(V4, "2.2.2.2")]
-    created = script(monkeypatch, infos, {V6: ["unreachable", "refuse"], V4: ["refuse", "refuse"]})
-    started = time.monotonic()
+    created = script(monkeypatch, infos, {V6: ["unreachable", "refuse"], V4: ["refuse", "refuse"]}, simulated=True)
+    started = netconnect.time.monotonic()
     with pytest.raises(OSError) as raised:
         netconnect.create_connection(("fake.example", 80), timeout=10)
-    assert time.monotonic() - started < 2.0
+    assert netconnect.time.monotonic() - started == 0.0
     assert [fake.connected_to[0] for fake in created] == ["::1", "1.1.1.1", "::2", "2.2.2.2"]
     assert raised.value.errno == errno.ECONNREFUSED  # lỗi cuối, như stdlib
     assert all(fake.closed for fake in created)
@@ -176,32 +220,32 @@ def test_all_errors_gives_an_exception_group(monkeypatch):
 
 def test_overall_timeout_covers_all_attempts_together(monkeypatch):
     infos = [info(V6, "::1"), info(V6, "::2"), info(V4, "1.1.1.1"), info(V4, "2.2.2.2")]
-    created = script(monkeypatch, infos, {V6: ["hang", "hang"], V4: ["hang", "hang"]})
-    started = time.monotonic()
+    created = script(monkeypatch, infos, {V6: ["hang", "hang"], V4: ["hang", "hang"]}, simulated=True)
+    started = netconnect.time.monotonic()
     with pytest.raises(TimeoutError):
         netconnect.create_connection(("fake.example", 80), timeout=1.0)
-    elapsed = time.monotonic() - started
-    assert 0.9 <= elapsed < 2.0  # không phải 4 x 1,0
+    elapsed = netconnect.time.monotonic() - started
+    assert elapsed == pytest.approx(1.0)  # one overall budget, not four
     assert len(created) == 4 and all(fake.closed for fake in created)
 
 
 def test_slow_dns_counts_against_the_overall_timeout(monkeypatch):
     infos = [info(V6, "::1"), info(V4, "1.1.1.1")]
-    script(monkeypatch, infos, {V6: ["hang"], V4: ["hang"]})
+    script(monkeypatch, infos, {V6: ["hang"], V4: ["hang"]}, simulated=True)
     real = netconnect.socket.getaddrinfo
 
     def slow(*args, **kwargs):
-        time.sleep(0.6)
+        netconnect.time.advance(0.6)
         return real(*args, **kwargs)
 
     monkeypatch.setattr(netconnect.socket, "getaddrinfo", slow)
-    started = time.monotonic()
+    started = netconnect.time.monotonic()
     with pytest.raises(TimeoutError):
         netconnect.create_connection(("fake.example", 80), timeout=1.0)
-    assert time.monotonic() - started < 1.35  # 0,6 DNS + 0,4 còn lại, không phải 0,6 + 1,0
+    assert netconnect.time.monotonic() - started == pytest.approx(1.0)
 
 
-def test_literal_address_behaves_like_before(listener):
+def test_literal_address_behaves_like_before(listener, refused_tcp_port):
     port = listener.getsockname()[1]
     sock = netconnect.create_connection(("127.0.0.1", port), timeout=2, source_address=("127.0.0.1", 0))
     try:
@@ -209,12 +253,8 @@ def test_literal_address_behaves_like_before(listener):
         assert sock.getsockname()[0] == "127.0.0.1"
     finally:
         sock.close()
-    closed = REAL_SOCKET(V4, socket.SOCK_STREAM)
-    closed.bind(("127.0.0.1", 0))
-    free_port = closed.getsockname()[1]
-    closed.close()
     with pytest.raises(ConnectionRefusedError):
-        netconnect.create_connection(("127.0.0.1", free_port), timeout=10)  # Windows báo "từ chối" sau ~2 giây (SYN thử lại)
+        netconnect.create_connection(("127.0.0.1", refused_tcp_port), timeout=10)
 
 
 def test_unresolvable_host_raises_gaierror(monkeypatch):

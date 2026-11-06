@@ -15,6 +15,7 @@ from typing import Any
 
 import pytest
 
+from tests.async_wait import wait_for
 from abook.webui import cast
 from abook.webui.actions import FakeRunner
 from abook.webui.cast import CastError, CastMedia, CastPlayers
@@ -32,13 +33,10 @@ OPENER = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
 
 def _until(check: Callable[[], Any], seconds: float = 8.0) -> Any:
-    deadline = time.time() + seconds
-    while time.time() < deadline:
-        value = check()
-        if value:
-            return value
-        time.sleep(0.05)
-    raise AssertionError("hết giờ chờ")
+    value = wait_for(check, timeout=seconds, interval=0.05)
+    if not value:
+        raise AssertionError("hết giờ chờ")
+    return value
 
 
 @contextmanager

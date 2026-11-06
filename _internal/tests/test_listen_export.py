@@ -19,6 +19,7 @@ from typing import Any
 
 import pytest
 
+from tests.async_wait import wait_for
 from abook.io_utils import ffmpeg_available
 from abook.readaloud.mapping import Boundary
 from abook.readaloud.model import Synthesis, Voice, VoiceError
@@ -273,13 +274,14 @@ def test_the_plan_counts_the_book_and_knows_what_is_ready(tmp_path: Path) -> Non
 
 
 def _wait(port: int, book_id: str, states: tuple[str, ...]) -> dict[str, Any]:
-    deadline = time.time() + 60
-    while time.time() < deadline:
+    def completed():
         job = json.loads(_request(port, "GET", f"/api/listen/books/{book_id}/audiobook", headers=TOKEN)[1])
-        if job["state"] in states:
-            return job
-        time.sleep(0.1)
-    raise AssertionError("việc xuất không xong")
+        return job if job["state"] in states else None
+
+    job = wait_for(completed, timeout=60, interval=0.1)
+    if not job:
+        raise AssertionError("việc xuất không xong")
+    return job
 
 
 def test_the_server_exports_a_text_book_in_the_background_and_reports_progress(tmp_path: Path) -> None:

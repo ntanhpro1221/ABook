@@ -15,6 +15,7 @@ from pathlib import Path
 
 import pytest
 
+from tests.async_wait import wait_until
 from abook.webui import humanize, listen_view, store, tls
 from abook.webui import sync as sync_module
 from abook.webui.library import Library, Preferences, book_id
@@ -373,12 +374,8 @@ def test_the_ui_server_rejects_other_hosts_and_missing_tokens(library, tmp_path:
 
 
 def _waiting(remote: Remote) -> bool:
-    """Chờ tới khi luồng "điện thoại" đã vào hỏi dài. `view()` lấy cùng khoá mà `report()` chỉ nhả khi đã vào
-    `wait()`, nên thấy được điện thoại tức là nó đang chờ."""
-    deadline = time.monotonic() + 5
-    while not remote.view() and time.monotonic() < deadline:
-        time.sleep(0.01)
-    return bool(remote.view())
+    # view() takes the lock report() releases only after entering its long poll.
+    return wait_until(remote.view, timeout=5)
 
 
 def test_a_command_reaches_a_waiting_phone_at_once() -> None:

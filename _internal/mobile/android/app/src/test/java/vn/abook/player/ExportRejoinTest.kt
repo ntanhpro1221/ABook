@@ -7,6 +7,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Test
 import java.util.UUID
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -89,30 +92,58 @@ class ExportRejoinTest {
         val inside = AtomicInteger()
         val most = AtomicInteger()
         val gate = BookDownloads.Gate()
-        val threads = (1..3).map {
-            Thread {
-                BookDownloads.inTurn(gate) {
-                    most.accumulateAndGet(inside.incrementAndGet()) { a, b -> maxOf(a, b) }
-                    Thread.sleep(40)
-                    inside.decrementAndGet()
-                }
-            }.apply { start() }
+        val entered = CountDownLatch(1)
+        val queued = CountDownLatch(2)
+        val release = CountDownLatch(1)
+        val pool = Executors.newFixedThreadPool(3)
+        fun work() {
+            most.accumulateAndGet(inside.incrementAndGet()) { a, b -> maxOf(a, b) }
+            entered.countDown()
+            try { assertTrue(release.await(5, TimeUnit.SECONDS)) }
+            finally { inside.decrementAndGet() }
         }
-        threads.forEach { it.join() }
-        assertEquals(1, most.get())
-
-        // Việc đứng chờ tới lượt mà bị dừng (Huỷ, hay hệ thống dừng) thì thôi chờ ngay, không chạy.
-        val stop = java.util.concurrent.atomic.AtomicBoolean(false)
-        val holder = Thread { BookDownloads.inTurn(gate) { Thread.sleep(900) } }.apply { start() }
-        Thread.sleep(100)
-        val waiting = BookDownloads.Gate("w") { stop.get() }
-        stop.set(true)
         try {
-            BookDownloads.inTurn(waiting) { fail("không được chạy khi đã bị dừng") }
-            fail("phải ném")
-        } catch (expected: BookDownloads.Interrupted) {
+            val holder = pool.submit { BookDownloads.inTurn(gate) { work() } }
+            val waiters = try {
+                assertTrue(entered.await(5, TimeUnit.SECONDS))
+                (1..2).map { index ->
+                    val reported = java.util.concurrent.atomic.AtomicBoolean(false)
+                    val waiting = BookDownloads.Gate("serial-$index") {
+                        if (reported.compareAndSet(false, true)) queued.countDown()
+                        false
+                    }
+                    pool.submit { BookDownloads.inTurn(waiting) { work() } }
+                }.also {
+                    assertTrue("both contenders reached the locked gate", queued.await(5, TimeUnit.SECONDS))
+                    assertEquals(1, inside.get())
+                }
+            } finally { release.countDown() }
+            (listOf(holder) + waiters).forEach { it.get(5, TimeUnit.SECONDS) }
+            assertEquals(1, most.get())
+
+            val stop = java.util.concurrent.atomic.AtomicBoolean(false)
+            val held = CountDownLatch(1)
+            val free = CountDownLatch(1)
+            val owner = pool.submit { BookDownloads.inTurn(gate) {
+                held.countDown()
+                assertTrue(free.await(5, TimeUnit.SECONDS))
+            } }
+            try {
+                assertTrue(held.await(5, TimeUnit.SECONDS))
+                val waiting = BookDownloads.Gate("w") { stop.get() }
+                stop.set(true)
+                try {
+                    BookDownloads.inTurn(waiting) { fail("must not run after cancellation") }
+                    fail("must throw")
+                } catch (expected: BookDownloads.Interrupted) {
+                }
+            } finally { free.countDown() }
+            owner.get(5, TimeUnit.SECONDS)
+        } finally {
+            release.countDown()
+            pool.shutdownNow()
+            assertTrue(pool.awaitTermination(5, TimeUnit.SECONDS))
         }
-        holder.join()
     }
 
     @Test

@@ -12,6 +12,7 @@ from pathlib import Path
 
 import pytest
 
+from tests.async_wait import wait_until
 from abook.webui import bookfile, export_jobs, export_leftovers, projectfile
 from abook.webui.library import book_id
 from tests.test_a_music_export_shows_progress_and_can_be_cancelled import _slow_app
@@ -21,12 +22,7 @@ from tests.test_webui_listen_and_sync import make_project
 
 
 def _wait(predicate, seconds: float = 15.0) -> bool:
-    deadline = time.time() + seconds
-    while time.time() < deadline:
-        if predicate():
-            return True
-        time.sleep(0.03)
-    return False
+    return wait_until(predicate, timeout=seconds, interval=0.03)
 
 
 # ---------------------------------------------------------------- 2. khoá nhạc theo kiểu xuất

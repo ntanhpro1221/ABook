@@ -19,6 +19,7 @@ from abook.webui import bluetooth, tls
 from abook.webui.bluetooth import HEADER, BluetoothServer, LocalPort, Mux
 from abook.webui.sync import Devices, SyncApp, SyncServer
 from tests.test_webui_listen_and_sync import library  # noqa: F401 - fixture dùng chung
+from tests.async_wait import wait_until
 
 BIG = bytes(range(256)) * 16 * 1024  # 4 MB, lớn hơn nhiều lần cửa sổ 256 KB
 
@@ -30,8 +31,6 @@ class Files(BaseHTTPRequestHandler):
         pass
 
     def do_GET(self) -> None:  # noqa: N802
-        if self.path == "/cham":
-            time.sleep(1.5)  # như hỏi dài 25 giây của điều khiển từ xa, thu nhỏ
         body = BIG if self.path == "/big" else b"nho"
         self.send_response(HTTPStatus.OK)
         self.send_header("Content-Length", str(len(body)))
@@ -98,18 +97,25 @@ def test_the_sync_protocol_runs_unchanged_through_the_tunnel(library, tmp_path: 
 def test_many_streams_share_one_link_and_a_stalled_one_blocks_nobody(files: int) -> None:
     """Trình phát ngừng đọc khi bộ đệm đầy: luồng ấy hết tín dụng và đứng, nhưng lời gọi đồng bộ bên cạnh vẫn về ngay."""
     client, server, local = _tunnel(files)
+    stalled = socket.socket()
     try:
-        stalled = socket.create_connection(("127.0.0.1", local.port))
+        stalled.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 65536)
+        stalled.connect(("127.0.0.1", local.port))
         stalled.sendall(b"GET /big HTTP/1.1\r\nHost: x\r\n\r\n")
-        time.sleep(0.5)  # để luồng lớn dồn tới trần tín dụng
-        started = time.time()
-        results: list[tuple[int, bytes]] = []
-        workers = [threading.Thread(target=lambda: results.append(_get(local.port, "/nho"))) for _ in range(8)]
-        for worker in workers:
-            worker.start()
-        for worker in workers:
-            worker.join(10)
-        assert [status for status, _body in results] == [200] * 8 and time.time() - started < 5
+        def out_of_credit():
+            with server.lock:
+                streams = list(server.streams.values())
+            return any(stream.credit == 0 for stream in streams)
+
+        assert wait_until(out_of_credit), "the large stream never reached its credit ceiling"
+        from concurrent.futures import ThreadPoolExecutor, wait
+
+        with ThreadPoolExecutor(max_workers=8) as pool:
+            workers = [pool.submit(_get, local.port, "/nho") for _ in range(8)]
+            done, pending = wait(workers, timeout=5)
+            assert not pending, "a stream without credit must not block the other eight"
+            results = [worker.result() for worker in workers]
+        assert [status for status, _body in results] == [200] * 8
         assert all(body == b"nho" for _status, body in results)
 
         # Luồng lớn đọc tiếp là nhận đủ, đúng từng byte - tín dụng được trả dần, không mất gì.
@@ -125,6 +131,7 @@ def test_many_streams_share_one_link_and_a_stalled_one_blocks_nobody(files: int)
         assert body == BIG
         stalled.close()
     finally:
+        stalled.close()
         client.shutdown()
         server.shutdown()
 
@@ -146,7 +153,7 @@ def test_half_close_keeps_the_answer_coming(files: int) -> None:
         server.shutdown()
 
 
-def test_a_broken_link_closes_every_stream_and_a_dead_port_refuses_the_stream(files: int) -> None:
+def test_a_broken_link_closes_every_stream_and_a_dead_port_refuses_the_stream(files: int, refused_tcp_port) -> None:
     client, server, local = _tunnel(files)
     caller = socket.create_connection(("127.0.0.1", local.port))
     caller.sendall(b"GET /big HTTP/1.1\r\nHost: x\r\n\r\n")
@@ -157,11 +164,7 @@ def test_a_broken_link_closes_every_stream_and_a_dead_port_refuses_the_stream(fi
     assert _eventually(lambda: not client.alive), "đầu bên này cũng biết đường hầm đã đứt"
 
     # Máy tính tắt cổng đồng bộ: luồng mở ra bị đóng ngay, bên gọi thấy EOF chứ không treo.
-    dead = socket.socket()
-    dead.bind(("127.0.0.1", 0))
-    port = dead.getsockname()[1]
-    dead.close()
-    client2, server2, local2 = _tunnel(port)
+    client2, server2, local2 = _tunnel(refused_tcp_port)
     try:
         orphan = socket.create_connection(("127.0.0.1", local2.port))
         orphan.settimeout(10)
@@ -184,12 +187,7 @@ def _drain(sock: socket.socket) -> None:
 
 
 def _eventually(check, timeout: float = 5.0) -> bool:
-    deadline = time.time() + timeout
-    while time.time() < deadline:
-        if check():
-            return True
-        time.sleep(0.05)
-    return check()
+    return wait_until(check, timeout)
 
 
 def test_the_sdp_record_is_laid_out_like_ws2bth() -> None:
@@ -202,9 +200,19 @@ def test_the_sdp_record_is_laid_out_like_ws2bth() -> None:
 def test_a_slow_answer_is_not_cut_at_the_dial_timeout(files: int, monkeypatch) -> None:
     """Nối cổng đồng bộ có hạn giờ; đọc thì không: hỏi dài 25 giây qua Bluetooth từng bị cắt thành EOF sau 10 giây."""
     monkeypatch.setattr(bluetooth, "DIAL_SECONDS", 0.5)
+    observed = []
+    real_dial = BluetoothServer._dial
+
+    def dial(self):
+        sock = real_dial(self)
+        observed.append(sock.gettimeout())
+        return sock
+
+    monkeypatch.setattr(BluetoothServer, "_dial", dial)
     client, server, local = _tunnel(files)
     try:
         assert _get(local.port, "/cham") == (200, b"nho")
+        assert observed == [None], "the connected socket must not keep the dial deadline"
     finally:
         client.shutdown()
         server.shutdown()
@@ -278,6 +286,16 @@ def test_the_server_comes_back_when_bluetooth_does(monkeypatch) -> None:
         return radio
 
     monkeypatch.setattr(server, "_listen", listen)
+    finished = threading.Event()
+    supervise = server._supervise
+
+    def run(initial):
+        try:
+            supervise(initial)
+        finally:
+            finished.set()
+
+    monkeypatch.setattr(server, "_supervise", run)
     server.start()
     try:
         assert server.view()["running"] is False and "tắt" in server.view()["error"]
@@ -289,10 +307,7 @@ def test_the_server_comes_back_when_bluetooth_does(monkeypatch) -> None:
     finally:
         server.stop()
         radio_off.set()
-    time.sleep(0.2)
-    tried = len(attempts)
-    time.sleep(0.3)
-    assert len(attempts) == tried, "đã dừng mà vẫn thử mở"
+    assert finished.wait(5), "the supervisor must exit after stop, with no retries left alive"
 
 
 def test_bluetooth_without_authentication_does_not_listen(monkeypatch) -> None:

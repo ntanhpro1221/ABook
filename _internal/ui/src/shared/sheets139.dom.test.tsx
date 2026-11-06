@@ -9,12 +9,13 @@ import { ActionMenu } from "./ActionMenu";
 
 let root: Root;
 beforeEach(() => {
+  vi.useFakeTimers();
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   const host = document.createElement("div"); document.body.append(host); root = createRoot(host);
   vi.stubGlobal("matchMedia", (query: string) => ({ matches: query.includes("max-width"), addEventListener() {}, removeEventListener() {} }));
 });
-afterEach(async () => { await act(() => root.unmount()); document.body.replaceChildren(); vi.unstubAllGlobals(); });
-const wait = () => act(() => new Promise(resolve => setTimeout(resolve, 40)));
+afterEach(async () => { await act(() => root.unmount()); document.body.replaceChildren(); vi.clearAllTimers(); vi.useRealTimers(); vi.unstubAllGlobals(); });
+const wait = () => act(() => vi.advanceTimersByTimeAsync(40));
 function Example() {
   const [open, setOpen] = useState(false);
   return <Sheet open={open} onOpenChange={setOpen} title="Hẹn giờ" trigger={<button>Mở</button>} footer={<button>Đặt giờ</button>}><p>Chọn số phút.</p></Sheet>;
@@ -75,4 +76,3 @@ it("vuốt nội dung chỉ đóng khi vùng cuộn đã ở đầu", async () =
   await act(() => { touch("touchstart", 0); touch("touchmove", 90); touch("touchend", 90); }); await wait();
   expect(dialog()).toBeNull();
 });
-
