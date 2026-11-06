@@ -188,7 +188,7 @@ Cặp nhãn ngắn (<= 6 chữ) mà phía kia KHÔNG có nguyên văn nhưng có
 | Đang tạo sách | Đã tạo sách | 0.92 | `native/studio/StudioNew.kt:324` ~ `studio/NewProjectScreen.tsx:1857` |
 | Cắt ảnh bìa | Đặt ảnh bìa | 0.91 | `native/editbook/CoverCrop.kt:108` (+1) ~ `studio/CoverEditor.tsx:112` (+1) |
 | Máy tính không còn đoạn này. | Máy tính không có cuốn này | 0.91 | `native/studio/WorkText.kt:23` ~ `desktop/RemotePhone.tsx:603` |
-| Chưa gửi được nhật ký | Chưa lưu được nhật ký | 0.91 | `native/NativeActivity.kt:345` ~ `desktop/PhoneDiagnostics.tsx:64` |
+| Chưa gửi được nhật ký | Chưa lưu được nhật ký | 0.91 | `native/NativeActivity.kt:349` ~ `desktop/PhoneDiagnostics.tsx:64` |
 | Dung lượng | Dựng xưởng | 0.90 | `native/devices/StorageScreen.kt:48` (+2) ~ `listen/ProjectFileItems.tsx:143` (+1) |
 | Đổi chương | Lỗi chương | 0.90 | `native/studio/StudioScript.kt:241` ~ `studio/ChapterError.tsx:17` |
 | Chưa kiểm được | Chưa tìm được | 0.89 | `native/studio/WorkText.kt:134` ~ `desktop/OtherComputers.tsx:136` |
@@ -236,7 +236,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 
 ### c1. Chỉ có ở native (241 nhãn)
 
-- `native/NativeActivity.kt` (2): Chưa mở được trình duyệt (`333`); Chưa gửi được nhật ký (`345`)
+- `native/NativeActivity.kt` (2): Chưa mở được trình duyệt (`337`); Chưa gửi được nhật ký (`349`)
 - `native/addbook/BookForms.kt` (1): Tên gốc: {} (`134`)
 - `native/addbook/ImportModel.kt` (2): Chưa mở được file (`86`); File không có sách nào. (`87`)
 - `native/addbook/ImportQueue.kt` (1): Bạn hãy thử lại. (`149`)
@@ -259,7 +259,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `native/devices/DevicesJson.kt` (1): Sách tải dở (`59`)
 - `native/devices/DevicesModel.kt` (11): Tải (`120`); Cập nhật bản thu (`122`); Cập nhật bìa (`123`); Cập nhật tên (`124`); Cập nhật chữ (`125`); Nhập địa chỉ (`180`); Chưa vào mạng Wi-Fi nào (`225`); Bluetooth: {} máy đang nối (`234`); Chưa ghép với máy tính nào (`277`); Chưa thấy (`313`); Thấy {} (`313`)
 - `native/devices/DevicesRepo.kt` (4): Chưa dùng được Bluetooth (`58`); Chưa kết nối được (`65`); Chưa nối được máy kia. (`80`); Chưa mở được Studio (`146`)
-- `native/devices/DevicesState.kt` (4): Chưa nối (`69`); Đã nối {} (`69`); Đang bật · {} máy (`71`); Chưa huỷ được (`384`)
+- `native/devices/DevicesState.kt` (4): Chưa nối (`69`); Đã nối {} (`69`); Đang bật · {} máy (`71`); Chưa huỷ được (`385`)
 - `native/devices/PairScreen.kt` (23): Nối máy tính (`80`); Thêm thiết bị (`95`); Máy đã nối (`114`); Nghe khi ra ngoài (`130`); Sách trên {} (`139`); Thiết bị khác (`156`); Cách lấy mã (`163`); Ghép Bluetooth (`169`); Cách nối (`171`); Địa chỉ máy tính (`178`); Địa chỉ, ví dụ 192.168.1.20:47630 (`178`); Mã ghép nối (`185`); Đang nối {} (`195`); Máy tính tìm thấy (`205`); Quyền Bluetooth (`216`); Cần quyền Thiết bị ở gần (`224`); Mở cài đặt (`225`); Máy tính đã ghép Bluetooth (`235`); Cài trên máy tính (`267`); Studio máy tính (`269`); Tải ABook Windows (`274`); Đã chép địa chỉ (`275`); Chép địa chỉ (`277`)
 - `native/devices/ShareScreen.kt` (4): Chia sẻ thư viện (`58`); Cần quyền Thiết bị ở gần (`97`); Mở cài đặt (`98`); Cho ABook chạy nền (`103`)
 - `native/devices/StorageScreen.kt` (3): Dung lượng (`48`); Còn trống {} (`54`); Chưa có gì trên máy (`58`)
