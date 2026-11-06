@@ -144,16 +144,24 @@ object VieneuUnits {
 
     private fun digit(char: Char?): Boolean = char != null && char in '0'..'9'
 
-    private fun tilde(token: String, wordAfter: Boolean = false): String = TILDES.replace(token) { match ->
-        val left = token.getOrNull(match.range.first - 1)
-        val right = token.getOrNull(match.range.last + 1)
-        when {
-            digit(left) && digit(right) -> " đến "
-            digit(right) && !(left != null && left.isLetterOrDigit()) -> match.value // "~50 người": sea-g2p reads "khoảng"
-            left != null && left.isLetter() && right == null && wordAfter -> "," // "Hmm~ để xem", "quá~ ăn nữa": stretched, then the talk goes on - a pause
-            left != null && left.isLetter() && right != null && right.isLetter() -> " " // "Har~kun"
-            else -> "" // "Hmm~"
+    private fun groupLongDigits(text: String): String = Regex("""(?<![$W.,])[1-9][0-9]{6,}(?![$W]|[.,][0-9])""").replace(text) { match ->
+        match.value.reversed().chunked(3).joinToString(".").reversed() +
+            (if (text.substring(match.range.last + 1).startsWith(".")) " " else "")
+    }
+
+    private fun tilde(token: String, wordAfter: Boolean = false): String {
+        val result = TILDES.replace(token) { match ->
+            val left = token.getOrNull(match.range.first - 1)
+            val right = token.getOrNull(match.range.last + 1)
+            when {
+                digit(left) && digit(right) -> " đến "
+                digit(right) && !(left != null && left.isLetterOrDigit()) -> match.value // "~50 người": sea-g2p reads "khoảng"
+                left != null && left.isLetter() && right == null && wordAfter -> "," // "Hmm~ để xem", "quá~ ăn nữa": stretched, then the talk goes on - a pause
+                left != null && left.isLetter() && right != null && right.isLetter() -> " " // "Har~kun"
+                else -> "" // "Hmm~"
+            }
         }
+        return if (Regex("(?:^|[0-9])~+[0-9]").containsMatchIn(token)) groupLongDigits(result) else result
     }
 
     /**
@@ -607,6 +615,32 @@ object VieneuUnits {
     private val COUNTED_THOUSANDS = "vàng xu yên yen đồng đô usd vnd người con cái chiếc viên điểm chương trang quân lính lần exp xp hp mp sp goblin kobold orc quái".split(" ").toSet()
     private val THOUSANDS_LABELS = "giá tổng hp mp sp exp xp str agi vit int dex luk atk def".split(" ").toSet()
 
+    private val BIGINT_COUNTED = COUNTED_THOUSANDS + "dân"
+    private val BIGINT_CUES = "khoảng gần hơn tổng có".split(" ").toSet()
+    private val BIGINT = Regex("[1-9][0-9]{6,}")
+    private val BIGINT_ID = Regex("""(?<![$W])(?:mã|số điện thoại|điện thoại|tài khoản|id|serial)(?![$W])""", RegexOption.IGNORE_CASE)
+
+    /** Group long counted integers; preserve codes, ranges and leading zeroes (Python `_big_integers`). */
+    private fun bigIntegers(out: MutableList<String>, toks: List<String>? = null) {
+        val plain = if (toks != null && toks.size == out.size) toks else out.toList()
+        val trim = OPENERS + CLOSERS + PUNCT_MARKS
+        for ((index, token) in out.withIndex()) {
+            val core = token.trimStart { it in OPENERS }.trimEnd { it in CLOSERS || it in PUNCT_MARKS }
+            if (!BIGINT.matches(core)) continue
+            val prefix = plain.subList(maxOf(0, index - 6), index).joinToString(" ").lowercase()
+                .split(Regex("[.!?;]")).last().trim { it in trim || it == ' ' }
+            val before = prefix.split(Regex("\\s+")).lastOrNull() ?: ""
+            val after = plain.getOrNull(index + 1)?.trim { it in trim }?.lowercase() ?: ""
+            if (BIGINT_ID.containsMatchIn(prefix) || before in setOf("thứ", "hạng", "năm", "-", "–", "/") || after in setOf("-", "–", "/", "id", "serial", "mã")) continue
+            if (after in BIGINT_COUNTED || before in BIGINT_CUES || listOf("dân số", "tổng cộng", "lên tới").any { prefix.endsWith(it) }) {
+                val grouped = core.reversed().chunked(3).joinToString(".").reversed()
+                val start = token.length - token.trimStart { it in OPENERS }.length
+                val suffix = token.drop(start + core.length)
+                out[index] = token.take(start) + grouped + (if (suffix.startsWith(".")) " " else "") + suffix
+            }
+        }
+    }
+
     /** Only counted quantities, stat labels or multiple thousands groups lose their commas. Bare numbers, codes and "1,500 kg" stay ambiguous - `_thousands`. */
     private fun thousands(out: MutableList<String>, toks: List<String>? = null) {
         val plain = if (toks != null && toks.size == out.size) toks else out.toList()
@@ -624,7 +658,10 @@ object VieneuUnits {
             val suffix = when { right.startsWith("G") -> 1; right.startsWith("pt") -> 2; else -> 0 }
             val gold = suffix > 0 && right.drop(suffix).all { it in CLOSERS || it in PUNCT_MARKS }
             val bounded = token.getOrNull(match.range.first - 1)?.isLetterOrDigit() != true && (token.getOrNull(match.range.last + 1)?.isLetterOrDigit() != true || gold)
-            if (bounded && (gold || match.value.count { it == ',' } > 1 || context(index))) match.value.replace(",", "") else match.value
+            if (bounded && (gold || match.value.count { it == ',' } > 1 || context(index))) {
+                val digits = match.value.replace(",", "")
+                if (digits.length >= 7) match.value.replace(",", ".") + (if (right.startsWith(".")) " " else "") else digits
+            } else match.value
         }
     }
 
@@ -636,6 +673,7 @@ object VieneuUnits {
         arrows(out, toks)
         tildes(out)
         ellipses(out, toks)
+        bigIntegers(out, toks)
         thousands(out, toks)
         numbers(out, toks)
         angle(out)
