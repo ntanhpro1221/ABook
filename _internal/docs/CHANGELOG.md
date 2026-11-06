@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Mở lại file cùng sách có bìa, thông tin, kịch bản hoặc nhạc nền mới sẽ cập nhật sách, giữ nguyên chỗ nghe, tiến độ và chỉnh sửa của bạn trên điện thoại và máy tính.
+
 ## [0.4.163] - 2026-11-06
 
 ### Âm thanh
