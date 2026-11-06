@@ -214,14 +214,15 @@ class EdgePiecesTest {
     }
 
     /** Mảnh có `w` chữ trả `w` x 600 byte (100 ms một chữ) mp3 điền byte `w`, mỗi chữ một mốc 100 ms; mảnh đứng đầu chậm hơn. */
-    private fun connectorBySpokenWords(live: AtomicInteger? = null, peak: AtomicInteger? = null, failOn: (String) -> Boolean = { false }) = EdgeTts.Connector { _, _ ->
+    private fun connectorBySpokenWords(live: AtomicInteger? = null, peak: AtomicInteger? = null,
+                                      beforeReply: (String) -> Unit = {}, afterClose: (String) -> Unit = {}) = EdgeTts.Connector { _, _ ->
         val sent = ByteArrayOutputStream()
+        var spoken = ""
         live?.let { peak?.accumulateAndGet(it.incrementAndGet(), { a, b -> maxOf(a, b) }) }
-        WebSocket({ live?.decrementAndGet() }, Reply(sent) { bytes ->
-            val spoken = spokenIn(bytes)
-            if (failOn(spoken)) throw java.io.IOException("hỏng")
+        WebSocket({ live?.decrementAndGet(); afterClose(spoken) }, Reply(sent) { bytes ->
+            spoken = spokenIn(bytes)
+            beforeReply(spoken)
             val words = spoken.split(" ")
-            Thread.sleep(if (spoken.startsWith("Trời")) 250 else 30) // mảnh đầu xong SAU các mảnh khác
             var reply = ByteArray(0)
             words.forEachIndexed { i, word -> reply += metadata(i * 1_000_000L, 800_000, word) }
             reply + audio(words.size * 600, words.size.toByte()) + text("turn.end")
@@ -233,7 +234,17 @@ class EdgePiecesTest {
         val pieces = EdgePieces.split(sentences)
         assertTrue(pieces.size >= 2)
         val out = File(dir, "a.mp3")
-        val clip = EdgeTts("v", connectorBySpokenWords()).synthesize(sentences, out)
+        val othersClosed = CountDownLatch(pieces.size - 1)
+        val completed = java.util.concurrent.CopyOnWriteArrayList<String>()
+        val connector = connectorBySpokenWords(beforeReply = { spoken ->
+            if (spoken == pieces.first()) assertTrue(othersClosed.await(5, TimeUnit.SECONDS))
+        }, afterClose = { spoken ->
+            completed.add(spoken)
+            if (spoken != pieces.first()) othersClosed.countDown()
+        })
+        val clip = EdgeTts("v", connector).synthesize(sentences, out)
+        assertEquals(pieces.first(), completed.last())
+        assertEquals(pieces.size, completed.size)
         val bytes = out.readBytes()
         var at = 0
         for (piece in pieces) { // mp3 ghép đúng thứ tự đọc: mỗi mảnh điền byte = số chữ của mảnh ấy
@@ -293,9 +304,19 @@ class EdgePiecesTest {
         EdgeTts.connections = ConnectionSlots(2)
         val live = AtomicInteger(0)
         val peak = AtomicInteger(0)
-        val voices = List(2) { EdgeTts("v", connectorBySpokenWords(live, peak)) }
-        val clips = voices.mapIndexed { i, voice -> Thread { voice.synthesize(sentences, File(dir, "cap$i.mp3")) }.also { it.start() } }
-        clips.forEach { it.join(20_000) }
+        val bothOpen = CountDownLatch(2)
+        val voices = List(2) { EdgeTts("v", connectorBySpokenWords(live, peak, beforeReply = {
+            bothOpen.countDown()
+            assertTrue(bothOpen.await(5, TimeUnit.SECONDS))
+        })) }
+        val pool = java.util.concurrent.Executors.newFixedThreadPool(2)
+        try {
+            val clips = voices.mapIndexed { i, voice -> pool.submit { voice.synthesize(sentences, File(dir, "cap$i.mp3")) } }
+            clips.forEach { it.get(20, TimeUnit.SECONDS) }
+        } finally {
+            pool.shutdownNow()
+            assertTrue(pool.awaitTermination(5, TimeUnit.SECONDS))
+        }
         assertEquals(0, live.get())
         assertEquals(2, peak.get()) // trần 2 giữ được, và có song song thật
     }
@@ -340,16 +361,18 @@ class EdgePiecesTest {
         val everyoneRefused = CountDownLatch(3)
         val accepted = AtomicInteger(0)
         val refusals = AtomicInteger(0)
+        val firstAccepted = CountDownLatch(1)
         val connector = EdgeTts.Connector { url, _ ->
             val server = System.currentTimeMillis() / 1000.0 + ahead
             val onServerTime = listOf(-300.0, 0.0, 300.0).any { url.contains("Sec-MS-GEC=" + EdgeProtocol.secMsGec(server + it)) }
             if (!onServerTime) {
                 everyoneRefused.countDown()
-                everyoneRefused.await(5, TimeUnit.SECONDS) // cả ba cùng tính giờ bằng độ lệch cũ rồi mới nhận 403...
-                if (refusals.incrementAndGet() > 1) Thread.sleep(300) // ...mảnh đầu học độ lệch và nối lại xong TRƯỚC khi hai mảnh kia nhận 403 (cộng dồn thì chúng cộng chồng lên)
+                assertTrue(everyoneRefused.await(5, TimeUnit.SECONDS))
+                if (refusals.incrementAndGet() > 1) assertTrue(firstAccepted.await(5, TimeUnit.SECONDS))
                 throw HandshakeException(403, mapOf("date" to httpDate(server)))
             }
             accepted.incrementAndGet()
+            firstAccepted.countDown()
             val sent = ByteArrayOutputStream()
             WebSocket({ }, Reply(sent) { audio(600, 1) + text("turn.end") }, sent)
         }
@@ -490,14 +513,10 @@ class EdgePiecesTest {
         assertFalse(slots.tryAcquire(50, 1)) // rank >= 1 không được vượt trần
         assertFalse(slots.tryAcquire(50))
         repeat(EdgePieces.TARGET_PIECES) {
-            val began = System.nanoTime()
-            assertTrue(slots.tryAcquire(5_000, 0))
-            assertTrue("rank 0 không được đợi", (System.nanoTime() - began) < 200_000_000L)
+            assertTrue(slots.tryAcquire(0, 0))
         }
         assertEquals(-EdgePieces.TARGET_PIECES, slots.availablePermits())
-        val began = System.nanoTime()
-        assertFalse(slots.tryAcquire(100, 0)) // trần cứng size + TARGET_PIECES
-        assertTrue((System.nanoTime() - began) >= 90_000_000L)
+        assertFalse(slots.tryAcquire(0, 0)) // strict nonblocking check of the hard ceiling
         assertEquals(0, slots.waiting())
     }
 

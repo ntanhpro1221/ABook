@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import http.server
-import socket
 import threading
 from pathlib import Path
 
@@ -27,13 +26,9 @@ def test_a_port_that_is_not_abooks_says_so_not_that_the_machine_is_off(tmp_path:
         plain.server_close()
 
 
-def test_nothing_listening_on_the_port_says_abook_is_not_open_there(tmp_path: Path) -> None:
-    probe = socket.socket()
-    probe.bind(("127.0.0.1", 0))
-    free = probe.getsockname()[1]
-    probe.close()
+def test_nothing_listening_on_the_port_says_abook_is_not_open_there(tmp_path: Path, refused_tcp_port) -> None:
     with pytest.raises(ApiError) as caught:
-        _this_computer(tmp_path).pair_computer(f"127.0.0.1:{free}", "123456")
+        _this_computer(tmp_path).pair_computer(f"127.0.0.1:{refused_tcp_port}", "123456")
     assert str(caught.value) == remote_books.REFUSED, caught.value
 
 

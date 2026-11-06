@@ -11,6 +11,7 @@ from types import SimpleNamespace
 import pytest
 from PIL import Image
 
+from tests.async_wait import wait_for
 from abook.webui import book_edits, bookfile, covers, export, packages, projectfile
 from abook.webui.server import Handler
 from tests.test_webui_listen_and_sync import make_project
@@ -213,17 +214,16 @@ def test_an_imported_book_exports_m4b_with_chapter_marks(tmp_path, limited_ffmpe
 
 
 def _wait_job(server, folder, route, seconds=60.0):
-    import time
-
     from tests.test_export_series import _get
 
-    deadline = time.monotonic() + seconds
-    while time.monotonic() < deadline:
+    def completed():
         job = _get(server, folder, route)[1]
-        if job["state"] != "running":
-            return job
-        time.sleep(0.05)
-    raise AssertionError("việc xuất không kết thúc")
+        return job if job["state"] != "running" else None
+
+    job = wait_for(completed, timeout=seconds, interval=0.05)
+    if not job:
+        raise AssertionError("việc xuất không kết thúc")
+    return job
 
 
 def test_the_server_exports_an_imported_book_as_mp3_and_m4b_in_the_background(tmp_path, limited_ffmpeg):

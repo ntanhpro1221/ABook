@@ -5,10 +5,12 @@ import json
 import socket
 import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
 
+from tests.async_wait import wait_until
 from abook.readaloud import edge
 from abook.readaloud.mapping import Boundary
 from tests.test_readaloud import FakeEdge, fake_edge  # noqa: F401 - fixture dùng chung
@@ -39,14 +41,15 @@ def test_only_the_paragraph_being_waited_for_is_cut_into_up_to_six_pieces() -> N
 
 
 class _PeakFake(edge.EdgeClient):
-    """Ghi lại số mảnh chạy cùng lúc (mỗi mảnh giữ chỗ 0,2 giây) và số mảnh đã gửi."""
+    """Keep every piece live until all workers have entered, independent of scheduling."""
 
-    def __init__(self) -> None:
+    def __init__(self, pieces: int) -> None:
         super().__init__()
         self.live = 0
         self.peak = 0
         self.sent = 0
         self.lock = threading.Lock()
+        self.entered = threading.Barrier(pieces, timeout=5)
 
     def _speak_one(self, voice, text, compensation_ticks, deadline, *, clip=None, rank=edge.RANK_BACKGROUND):  # noqa: ANN001, ANN202
         with self.lock:
@@ -54,17 +57,20 @@ class _PeakFake(edge.EdgeClient):
             self.sent += 1
             self.peak = max(self.peak, self.live)
         try:
-            time.sleep(0.2)
-            return b"x" * 6000, [Boundary(word, 100 * i, 100 * i + 50) for i, word in enumerate(text.split())]
+            self.entered.wait()
+            return self._piece(text)
         finally:
             with self.lock:
                 self.live -= 1
+
+    def _piece(self, text):
+        return b"x" * 6000, [Boundary(word, 100 * i, 100 * i + 50) for i, word in enumerate(text.split())]
 
 
 def test_a_rank_zero_clip_runs_six_pieces_at_once_and_other_ranks_three() -> None:
     text = next(case["text"] for case in CASES if case.get("rank") == 0 and len(case["pieces"]) == 6)
     for rank, expected in ((0, 6), (1, 3), (edge.RANK_BACKGROUND, 3)):
-        client = _PeakFake()
+        client = _PeakFake(expected)
         client.synthesize(text, edge.DEFAULT_VOICE, rank=rank)
         assert (client.sent, client.peak) == (expected, expected), rank
 
@@ -188,40 +194,54 @@ def test_boundaries_after_joining_follow_the_audio_of_the_earlier_pieces(fake_ed
     assert [b.text for b in result.boundaries] == SENTENCES.split()
 
 
-class _SlowFake(edge.EdgeClient):
-    """Mỗi mảnh xong sau một độ trễ riêng (mảnh đầu chậm nhất) để thử thứ tự ghép; ghi lại số kết nối cùng lúc."""
+class _SlowFake(_PeakFake):
+    """Use explicit completion order or hold the first piece until the caller releases it."""
 
-    def __init__(self, delays: dict[int, float] | None = None, fail: dict[int, Exception] | None = None) -> None:
-        super().__init__()
-        self.delays = delays or {}
+    def __init__(self, *, reverse: bool = False, hold_first: bool = False, fail: dict[int, Exception] | None = None) -> None:
+        super().__init__(len(edge.speech_pieces(SENTENCES)))
+        self.reverse = reverse
+        self.hold_first = hold_first
         self.fail = fail or {}
-        self.live = 0
-        self.peak = 0
-        self.lock = threading.Lock()
+        self.release_first = threading.Event()
+        self.finished: list[int] = []
+        self.submitted = threading.Event()
+        self.futures = []
+
+    def _gather(self, futures, *args, **kwargs):
+        self.futures = futures
+        self.submitted.set()
+        return super()._gather(futures, *args, **kwargs)
 
     def _connect(self):  # noqa: ANN202
         raise AssertionError("không nối mạng thật")
 
-    def _speak_one(self, voice, text, compensation_ticks, deadline, *, clip=None, rank=edge.RANK_BACKGROUND):  # noqa: ANN001, ANN202
+    def _piece(self, text):
         order = edge.speech_pieces(SENTENCES).index(text)
+        if self.hold_first and order == 0:
+            assert self.release_first.wait(5), "test did not release the held piece"
+        if self.reverse:
+            assert self.submitted.wait(5), "piece futures were not submitted"
+            # Wait for publication of the next Future's result, not just a mark
+            # inside its worker: a descheduled worker has not finished yet.
+            if order + 1 < len(self.futures):
+                self.futures[order + 1].result(timeout=5)
         with self.lock:
-            self.live += 1
-            self.peak = max(self.peak, self.live)
-        try:
-            time.sleep(self.delays.get(order, 0.0))
-            if order in self.fail:
-                raise self.fail[order]
-            words = text.split()
-            return bytes([order + 1]) * 6000, [Boundary(word, 100 * i, 100 * i + 50) for i, word in enumerate(words)]
-        finally:
-            with self.lock:
-                self.live -= 1
+            self.finished.append(order)
+        if order in self.fail:
+            raise self.fail[order]
+        words = text.split()
+        return bytes([order + 1]) * 6000, [Boundary(word, 100 * i, 100 * i + 50) for i, word in enumerate(words)]
+
+    def release(self):
+        self.release_first.set()
+        assert wait_until(lambda: self.live == 0), "piece worker leaked after the clip finished"
 
 
 def test_pieces_finishing_out_of_order_are_joined_in_reading_order() -> None:
     pieces = edge.speech_pieces(SENTENCES)
-    client = _SlowFake(delays={0: 0.3, 1: 0.1, 2: 0.0})
+    client = _SlowFake(reverse=True)
     result = client.synthesize(SENTENCES, edge.DEFAULT_VOICE)
+    assert client.finished == list(reversed(range(len(pieces))))
     assert client.peak == min(len(pieces), edge.PIECE_PARALLEL)  # đúng là chạy cùng lúc
     expected = b"".join(bytes([n + 1]) * 6000 for n in range(len(pieces)))
     assert result.audio == expected
@@ -234,15 +254,21 @@ def test_pieces_finishing_out_of_order_are_joined_in_reading_order() -> None:
 
 
 def test_a_failing_piece_fails_the_clip_with_the_same_exception() -> None:
-    client = _SlowFake(delays={0: 0.1}, fail={1: edge.EdgeRejected("từ chối")})
-    with pytest.raises(edge.EdgeRejected):
-        client.synthesize(SENTENCES, edge.DEFAULT_VOICE)
+    client = _SlowFake(hold_first=True, fail={1: edge.EdgeRejected("từ chối")})
+    try:
+        with pytest.raises(edge.EdgeRejected):
+            client.synthesize(SENTENCES, edge.DEFAULT_VOICE)
+    finally:
+        client.release()
     # Mảnh hỏng TRƯỚC theo thời gian quyết, không đợi mảnh đứng trước nó trong câu chữ đọc xong.
-    client = _SlowFake(delays={0: 1.0}, fail={0: edge.EdgeOffline("mất mạng"), 1: edge.EdgeRejected("từ chối")})
-    started = time.monotonic()
-    with pytest.raises(edge.EdgeRejected):
-        client.synthesize(SENTENCES, edge.DEFAULT_VOICE)
-    assert time.monotonic() - started < 0.8
+    client = _SlowFake(hold_first=True, fail={0: edge.EdgeOffline("mất mạng"), 1: edge.EdgeRejected("từ chối")})
+    try:
+        started = time.monotonic()
+        with pytest.raises(edge.EdgeRejected):
+            client.synthesize(SENTENCES, edge.DEFAULT_VOICE)
+        assert time.monotonic() - started < 0.8
+    finally:
+        client.release()
 
 
 def test_a_failing_piece_cuts_the_sockets_of_the_pieces_still_reading(monkeypatch) -> None:
@@ -252,6 +278,7 @@ def test_a_failing_piece_cuts_the_sockets_of_the_pieces_still_reading(monkeypatc
     connects: list[str] = []
     aborted: list[str] = []
     lock = threading.Lock()
+    entered = threading.Barrier(len(pieces), timeout=2)
 
     class _Connection:
         def __init__(self) -> None:
@@ -278,8 +305,8 @@ def test_a_failing_piece_cuts_the_sockets_of_the_pieces_still_reading(monkeypatc
             return connection
 
     def fake_turn(connection, _compensation, deadline, **_options):  # noqa: ANN001, ANN202
+        entered.wait()
         if connection.text == pieces[1]:
-            time.sleep(0.2)  # để mọi mảnh kịp mở kết nối
             raise edge.EdgeRejected("từ chối")
         if not connection.cut.wait(max(0.0, deadline - time.monotonic())):
             return b"x" * 6000, []
@@ -290,10 +317,7 @@ def test_a_failing_piece_cuts_the_sockets_of_the_pieces_still_reading(monkeypatc
     with pytest.raises(edge.EdgeRejected):
         _Client().synthesize(SENTENCES, edge.DEFAULT_VOICE)
     assert time.monotonic() - started < 2.0
-    for _ in range(40):  # luồng mảnh thoát sau khi bị cắt
-        if edge._connections.free == edge.EDGE_CONNECTIONS:  # noqa: SLF001
-            break
-        time.sleep(0.05)
+    assert wait_until(lambda: edge._connections.free == edge.EDGE_CONNECTIONS, timeout=2, interval=0.05)
     assert edge._connections.free == edge.EDGE_CONNECTIONS  # noqa: SLF001 - mọi chỗ đã trả
     assert sorted(aborted) == sorted(piece for n, piece in enumerate(pieces) if n != 1)
     assert len(connects) == len(pieces)  # mảnh bị cắt không thử lại
@@ -341,6 +365,7 @@ def test_the_process_wide_cap_limits_open_connections(monkeypatch) -> None:
     live = [0]
     peak = [0]
     lock = threading.Lock()
+    entered = threading.Barrier(2, timeout=5)
 
     class _Connection:
         def send_text(self, _text: str) -> None:
@@ -358,16 +383,15 @@ def test_the_process_wide_cap_limits_open_connections(monkeypatch) -> None:
             return _Connection()
 
     def fake_turn(_connection, _compensation, _deadline, **_options):  # noqa: ANN001, ANN202
-        time.sleep(0.05)
+        entered.wait()
         return b"x" * 6000, []
 
     monkeypatch.setattr(edge, "read_turn", fake_turn)
     clients = [_Client(), _Client()]
-    threads = [threading.Thread(target=client.synthesize, args=(SENTENCES, edge.DEFAULT_VOICE)) for client in clients]
-    for thread in threads:
-        thread.start()
-    for thread in threads:
-        thread.join(10)
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        futures = [pool.submit(client.synthesize, SENTENCES, edge.DEFAULT_VOICE) for client in clients]
+        for future in futures:
+            future.result(timeout=10)
     assert live[0] == 0 and 1 <= peak[0] <= 2
     assert peak[0] == 2  # và đúng là có song song, không phải nối tiếp
 
@@ -384,12 +408,7 @@ def test_waiting_for_a_connection_slot_past_the_deadline_is_a_timeout(monkeypatc
 
 
 def _wait_for(condition, seconds: float = 2.0) -> bool:
-    end = time.monotonic() + seconds
-    while time.monotonic() < end:
-        if condition():
-            return True
-        time.sleep(0.005)
-    return condition()
+    return wait_until(condition, timeout=seconds, interval=0.005)
 
 
 def _queue_waiters(slots: edge.ConnectionSlots, specs: list[tuple[str, int]]) -> list[str]:
@@ -413,9 +432,9 @@ def _queue_waiters(slots: edge.ConnectionSlots, specs: list[tuple[str, int]]) ->
     for expected in range(len(specs)):
         slots.release()
         assert _wait_for(lambda: len(granted) == expected + 1)
-        time.sleep(0.02)
     for thread in threads:
         thread.join(2)
+        assert not thread.is_alive()
     return granted
 
 
