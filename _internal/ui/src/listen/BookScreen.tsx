@@ -21,7 +21,6 @@ import { useFadeScroller } from "@/shared/scrollFade";
 import { useListPresence } from "@/shared/motion";
 import { Windowed } from "@/shared/Windowed";
 import { formatClock, formatLength, formatNumber } from "@/shared/format";
-import { toneLabel } from "./voiceTone";
 import { DialogActions, Select, SelectionMark, Button, Dialog, EmptyState, heardBarProps, IconButton, Progress, Skeleton, Tabs, TabsContent, TabsList, TabsPanels, TabsTrigger, Tooltip, Vu } from "@/shared/ui";
 import { GenderDialog, RenamePersonDialog } from "@/studio/CastEdits";
 import { MergeDialog } from "@/studio/MergePeople";
@@ -438,7 +437,7 @@ export function PersonRow({
         {person.originalName && <div className="break-words text-xs text-fg-3">(tên gốc: {cleanName(person.originalName)})</div>}
         <div className="mt-0.5 break-words text-xs text-fg-2">
           <AudioLines className="mr-1 inline size-3.5 -translate-y-px text-fg-3" />
-          {person.voice ? `${voiceName(person.voice)}${person.voice.tone ? ` · ${toneLabel(person.voice.tone)}` : ""}` : "Chưa có giọng"}
+          {person.voice ? voiceName(person.voice) : "Chưa có giọng"}
         </div>
         {/* Việc của Studio (giọng người nghe đã chọn, chưa áp) - trang nghe không cần (soát UX 29-09). */}
         {person.pendingVoice && (onPickVoice || waiting) && (

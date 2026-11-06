@@ -25,7 +25,7 @@ def _registered(root: Path, lines: list[tuple[int, str, str, str, str]]) -> tupl
         db.set_character_for_speaker(speaker, character)
         # Đã phân vai: mỗi người một giọng - thẻ chỉ đề xuất người gán được (`_refine_speaker_cards`).
         profile = db.upsert_voice_profile({"voice_key": speaker.casefold(), "engine": "vieneu", "preset_name": "Thanh Bình",
-                                           "description": speaker, "seed": 1, "pitch_semitones": 0, "status": "ready"})
+                                           "description": speaker, "seed": 1,  "status": "ready"})
         with db.transaction() as conn:
             conn.execute("UPDATE segments SET voice_profile_id=? WHERE speaker=?", (profile, speaker))
     return db, root

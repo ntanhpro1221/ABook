@@ -8,10 +8,10 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-import pyworld
+from scipy.signal import correlate, find_peaks
 
 from abook.audio_io import integrated_loudness_lufs
-from abook.tts import WORLD_MIN_SECONDS, WSOLA_FRAME_SECONDS, apply_speed_change
+from abook.tts import WSOLA_FRAME_SECONDS, apply_speed_change
 from abook import voice_balance
 from abook.voice_catalog import SPEED_FACTOR_MAX, SPEED_FACTOR_MIN
 
@@ -26,8 +26,11 @@ def voiced(seconds: float = 1.2, f0: float = 150.0) -> np.ndarray:
 
 
 def median_f0(audio: np.ndarray) -> float:
-    f0, _ = pyworld.harvest(audio.astype(np.float64), RATE, f0_floor=55.0, f0_ceil=600.0)
-    return float(np.median(f0[f0 > 0]))
+    middle = audio[len(audio)//4:3*len(audio)//4].astype(float)
+    ac = correlate(middle, middle, mode="full", method="fft")[len(middle)-1:]
+    peaks, _ = find_peaks(ac)
+    peaks = peaks[(peaks >= RATE/600) & (peaks <= RATE/55)]
+    return float(RATE / peaks[np.argmax(ac[peaks])])
 
 
 @pytest.mark.parametrize("speed", [0.76, 0.89, 1.20, 1.27, 1.35])
@@ -57,7 +60,7 @@ def test_stretching_keeps_the_loudness(speed: float) -> None:
 def test_a_take_shorter_than_one_frame_still_gets_its_length() -> None:
     # Giữa WORLD_MIN_SECONDS (đi qua nguyên vẹn) và một khung WSOLA: vẫn co giãn, không văng.
     audio = voiced(seconds=WSOLA_FRAME_SECONDS / 2)
-    assert audio.size >= WORLD_MIN_SECONDS * RATE
+    assert audio.size >= 0.010 * RATE
     faster = apply_speed_change(audio, RATE, 1.30)
     assert faster.size == round(audio.size / 1.30)
     assert np.all(np.isfinite(faster))
@@ -107,16 +110,3 @@ def test_every_tabulated_tempo_is_inside_the_range() -> None:
     table = voice_balance.load_table()
     for key, record in table["voices"].items():
         assert SPEED_FACTOR_MIN <= table["x"] * record["r"] <= SPEED_FACTOR_MAX, key
-
-
-def test_the_speed_step_runs_after_pitch_and_skips_the_laugh() -> None:
-    # Hàm cao độ cắt/đệm về độ dài gốc, nên tốc độ PHẢI chạy sau nó; và tiếng cười "ha" có bất
-    # biến số mẫu thô nên không được đổi tốc độ. Soi thẳng mã, vì dựng cả engine TTS cho một thứ
-    # tự hai dòng là quá nặng.
-    from pathlib import Path
-
-    source = (Path(__file__).resolve().parent.parent / "abook" / "tts.py").read_text(encoding="utf-8")
-    pitch_at = source.index("pitched_audio = apply_pitch_variant(\n                        audio,\n                        self.sample_rate,\n                        pitch_steps,\n                    )")
-    speed_at = source.index("audio = apply_speed_change(audio, self.sample_rate, speed_factor)")
-    assert pitch_at < speed_at
-    assert "vocalization_delivery_profile != HA_VOCALIZATION_DELIVERY_PROFILE" in source[pitch_at:speed_at]

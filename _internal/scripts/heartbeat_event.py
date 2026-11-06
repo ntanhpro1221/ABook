@@ -27,6 +27,7 @@ from __future__ import annotations
 import argparse
 import os
 import re
+import shutil
 import sys
 import time
 from pathlib import Path
@@ -40,6 +41,7 @@ import heartbeat_tick as tick  # noqa: E402
 
 DETACHED_LOG = bells.RUNTIME / "detached_runs.log"
 BOUNDARY = r"boundary\.sh \d"
+DISK_LOW_GB = 50
 
 
 def processes() -> list[tuple[int, int, str]] | None:
@@ -75,6 +77,14 @@ def finished_runs(log: Path = DETACHED_LOG) -> list[str]:
     return [line for line in text.splitlines() if "xong (mã" in line]
 
 
+def disk_is_low(root: Path = bells.RUNTIME, free_gb: float = DISK_LOW_GB) -> bool:
+    """06-11 chủ sách phải nhắc ổ D đầy: ổ chứa dự án dưới ngưỡng này là tin phải reo. Đọc hỏng thì coi như chưa đầy."""
+    try:
+        return shutil.disk_usage(root.anchor).free < free_gb * 1024**3
+    except OSError:
+        return False
+
+
 def snapshot() -> dict:
     done = finished_runs()
     return {
@@ -84,6 +94,7 @@ def snapshot() -> dict:
         # "CHẾT lo18_x: error|..." -> "CHẾT lo18_x": đổi từ ĐỨNG IM sang CHẾT cũng là tin mới.
         "problems": sorted(line.split(":", 1)[0] for line in tick.stopped()),
         "battery": tick.power_line() is not None,
+        "disk_low": disk_is_low(),
     }
 
 
@@ -96,6 +107,7 @@ class Watch:
         self.done = int(first["done"])
         self.problems = set(first["problems"])
         self.battery = bool(first["battery"])
+        self.disk_low = False  # đã đầy từ lúc thả chuông vẫn là tin phải reo; reo xong chỉ reo lại khi đã có chỗ rồi đầy lại
         self.suspect: set[str] = set()  # thay đổi thấy ở lần dò trước, chưa đủ hai lần
 
     def observe(self, now: dict) -> list[str]:
@@ -132,6 +144,11 @@ class Watch:
                 ring.append("máy chuyển sang chạy PIN")
         elif not now["battery"]:
             self.battery = False  # cắm sạc lại: lần rút sau lại là tin mới
+        if now.get("disk_low") and not self.disk_low:
+            self.disk_low = True
+            ring.append(f"ổ dự án còn dưới {DISK_LOW_GB} GB - dọn đồ phát triển ngay")
+        elif not now.get("disk_low"):
+            self.disk_low = False
         self.suspect = seen
         return ring
 

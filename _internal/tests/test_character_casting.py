@@ -16,31 +16,7 @@ from abook.database import (
     ProjectDB,
     canonical_analysis_note,
 )
-from abook.voice_catalog import (
-    EXCLUDED_PRESETS,
-    voice_variant_deviation,
-    formant_variants_for_preset,
-    formant_ratio_bounds_for_preset,
-    VOCAL_TRACT_MIN_CM,
-    VOCAL_TRACT_MAX_CM,
-    PRESET_VOCAL_TRACT_CM,
-    REGISTER_FORMANT_TRADE_PER_SEMITONE,
-    base_pitch_for_preset,
-    GENDER_FEMALE,
-    GENDER_MALE,
-    PRESET_PREVIEW_MEDIAN_PITCH_HZ,
-    PRESET_MIN_PITCH_SEMITONES,
-    REGION_CENTRAL,
-    REGION_NORTH,
-    REGION_SOUTH,
-    STYLE_NATURAL,
-    preset_eligible,
-    STYLE_STORY,
-    VIENEU_PRESETS,
-    casting_presets,
-    pitch_variants_for_preset,
-    preset_by_name,
-)
+from abook.voice_catalog import EXCLUDED_PRESETS, GENDER_FEMALE, GENDER_MALE, REGION_CENTRAL, REGION_NORTH, REGION_SOUTH, STYLE_NATURAL, preset_eligible, STYLE_STORY, VIENEU_PRESETS, casting_presets, preset_by_name
 
 
 def _casting_db(tmp_path: Path) -> ProjectDB:
@@ -253,84 +229,6 @@ def _reconciliation_db(tmp_path: Path) -> ProjectDB:
         ],
     )
     return db
-
-
-def test_casting_reuses_presets_with_formant_variants_and_never_casts_central(
-    tmp_path: Path,
-) -> None:
-    db = _casting_db(tmp_path)
-
-    build_registry_and_cast(db, build_settings(), lambda _message: None)
-
-    profiles = db.list_voice_profiles()
-    assert all(preset_eligible(preset_by_name(str(profile["preset_name"])), "character") for profile in profiles)
-    # Pitch is no longer a diversity axis - it reads as the same person in a different
-    # state, not as a different person - so every profile of a preset carries exactly that
-    # preset's calibrated reading register. That register comes from listening, and is
-    # deliberately not bounded by PRESET_MIN_PITCH_SEMITONES, which bounded the old
-    # variant ladder using a UTMOSv2 baseline that disagreed with the listener twice.
-    assert all(
-        int(profile["pitch_semitones"])
-        == base_pitch_for_preset(str(profile["preset_name"]))
-        for profile in profiles
-    )
-    rows = db.list_segments()
-    local_rows = [row for row in rows if str(row["speaker"]).startswith("NPC_LOCAL::")]
-    assert len({int(row["canonical_character_id"]) for row in local_rows}) == 4
-    assert len({int(row["voice_profile_id"]) for row in local_rows}) == 4
-
-    profile_by_id = {int(profile["id"]): profile for profile in profiles}
-    named_rows = [
-        row for row in rows
-        if str(row["speaker"]) not in {"NARRATOR", "UNKNOWN"}
-        and not str(row["speaker"]).startswith("NPC_LOCAL::")
-    ]
-    named_presets = [
-        preset_by_name(str(profile_by_id[int(row["voice_profile_id"])]["preset_name"]))
-        for row in named_rows
-    ]
-    assert {preset["region"] for preset in named_presets} <= {REGION_NORTH, REGION_SOUTH}
-
-    local_presets = [
-        preset_by_name(str(profile_by_id[int(row["voice_profile_id"])]["preset_name"]))
-        for row in local_rows
-    ]
-    # NPCs used to reach a wider pool that added the Central presets. Those voices are
-    # excluded from casting entirely now, so the wider pool has to be gone for NPCs too -
-    # including through the "nothing left of this gender" fallback.
-    assert {preset["region"] for preset in local_presets} <= {REGION_NORTH, REGION_SOUTH}
-    assert local_presets
-
-    named_male_profiles = [
-        profile_by_id[int(row["voice_profile_id"])]
-        for row in named_rows
-        if str(row["gender"]) == "male"
-    ]
-    # A reused preset must come back as a different-sounding person. Formant is the axis
-    # that achieves that; pitch alone does not, because speaker identity lives in the
-    # formants - a listener comparing -6 to +6 semitones heard the same person throughout.
-    formants_by_preset: dict[str, set[float]] = {}
-    for profile in named_male_profiles:
-        formants_by_preset.setdefault(str(profile["preset_name"]), set()).add(
-            round(float(profile["formant_ratio"]), 4)
-        )
-    assert any(len(formants) > 1 for formants in formants_by_preset.values())
-    # The first casting of a preset must be its untouched voice, so it pays no vocoder cost.
-    assert any(
-        1.0 in formants for formants in formants_by_preset.values()
-    )
-
-    anonymous = [row for row in rows if str(row["speaker"]) == "UNKNOWN"]
-    assert len({int(row["canonical_character_id"]) for row in anonymous}) == 2
-    assert {
-        preset_by_name(str(profile_by_id[int(row["voice_profile_id"])]["preset_name"]))["gender"]
-        for row in anonymous
-    } == {"male", "female"}
-
-    bishop_rows = [row for row in rows if str(row["speaker"]) == "Giám mục"]
-    assert len(bishop_rows) == 2
-    assert len({int(row["canonical_character_id"]) for row in bishop_rows}) == 1
-    assert len({int(row["voice_profile_id"]) for row in bishop_rows}) == 1
 
 
 def test_casting_prioritizes_natural_north_then_natural_south() -> None:
@@ -896,7 +794,7 @@ def test_existing_voice_identity_instability_fails_before_recasting(tmp_path: Pa
             "preset_name": "Thái Sơn",
             "description": "one",
             "seed": 1,
-            "pitch_semitones": 0,
+
             "status": "ready",
         }
     )
@@ -907,7 +805,7 @@ def test_existing_voice_identity_instability_fails_before_recasting(tmp_path: Pa
             "preset_name": "Quang Sơn",
             "description": "two",
             "seed": 2,
-            "pitch_semitones": 0,
+
             "status": "ready",
         }
     )
@@ -1027,43 +925,6 @@ def test_same_lucien_name_locks_one_voice_across_chapters_without_identity_mergi
     }
 
 
-def test_pitch_ranges_follow_measured_preset_depth() -> None:
-    supported_names = {
-        preset["name"]
-        for preset in VIENEU_PRESETS
-        if preset_eligible(preset, "narrator")
-    }
-    assert set(PRESET_PREVIEW_MEDIAN_PITCH_HZ) == supported_names
-    assert PRESET_MIN_PITCH_SEMITONES == {
-        "Phạm Tuyên": 0,
-        "Xuân Vĩnh": -1,
-        "Thái Sơn": -1,
-        "Quang Sơn": -2,
-        "Thanh Bình": -2,
-        "Ngọc Trân": -1,
-        "Ngọc Linh": -2,
-        "Trúc Ly": -2,
-        "Đoan Trang": -2,
-        "Thục Đoan": -2,
-        "Adam": 0,
-        "Adam bựa": -2,
-        "Thiện Minh": -2,
-        "Đức Trí": -1,
-        "Kim Thanh": -2,
-        "Quốc Tuấn": -2,
-        "Hải Đăng": -2,
-        "Mỹ Duyên": -2,
-        "Ngọc Huyền": -2,
-        "Quỳnh Anh": -2,
-        "Thiền Tâm Đức": -1,
-    }
-    assert pitch_variants_for_preset("Phạm Tuyên", 2) == (0, 1, 2)
-    assert pitch_variants_for_preset("Xuân Vĩnh", 2) == (0, -1, 1, 2)
-    assert pitch_variants_for_preset("Thái Sơn", 2) == (0, -1, 1, 2)
-    assert pitch_variants_for_preset("Thanh Bình", 2) == (0, -1, 1, -2, 2)
-    assert pitch_variants_for_preset("Ngọc Trân", 2) == (0, -1, 1, 2)
-
-
 def test_central_presets_are_never_cast_through_any_path() -> None:
     """Removing a region is only real if every path that reaches presets respects it.
 
@@ -1081,95 +942,6 @@ def test_central_presets_are_never_cast_through_any_path() -> None:
     for preset in central:
         # Still resolvable, so a book that locked one before the change keeps working.
         assert preset_by_name(str(preset["name"]))["region"] == REGION_CENTRAL
-
-
-def test_formant_range_follows_each_preset_vocal_tract() -> None:
-    """One shared warp range is wrong, and wrong in opposite directions per voice.
-
-    A warp by ratio r reads as a vocal tract of length L/r. The male presets measure
-    16.4-16.9 cm and the female ones 13.9-15.5 cm, so a male voice has little room left to
-    go deeper while a female voice has little room to go brighter. The upper bound
-    reproduces what a Vietnamese listener found by ear: Thanh Bình sounded muffled at 0.82,
-    which is a 20.6 cm tract, and acceptable at 0.86, which is 19.7 cm.
-    """
-    for name, length in PRESET_VOCAL_TRACT_CM.items():
-        lower, upper = formant_ratio_bounds_for_preset(name)
-        # Anatomy: the warped tract stays inside the adult range. A preset whose register
-        # was lowered stops short of the anatomical floor, never past it.
-        assert VOCAL_TRACT_MIN_CM - 0.05 <= length / upper
-        assert length / lower <= VOCAL_TRACT_MAX_CM + 0.05
-        # The algorithm has its own limit regardless of anatomy, and it is asymmetric and
-        # mirrored between the genders: a male voice tolerates being brightened further
-        # than deepened, a female voice the reverse. The usable range is the intersection,
-        # so neither constraint alone may be exceeded.
-        down, up = voice_variant_deviation(name)
-        assert lower >= 1.0 - down - 1e-6
-        assert upper <= 1.0 + up + 1e-6
-        for ratio in formant_variants_for_preset(name):
-            assert lower - 1e-6 <= ratio <= upper + 1e-6
-
-    # The two constraints bind opposite ends for the two genders: a long male tract is
-    # held back by anatomy going deeper and by the algorithm going brighter, and a short
-    # female tract the other way round. Read on a preset with no register shift, so the
-    # anatomical bound is the only thing setting the floor.
-    assert base_pitch_for_preset("Thái Sơn") == 0
-    male_length = PRESET_VOCAL_TRACT_CM["Thái Sơn"]
-    male_low, male_high = formant_ratio_bounds_for_preset("Thái Sơn")
-    assert male_low == pytest.approx(male_length / VOCAL_TRACT_MAX_CM, abs=0.005)
-    assert male_high == pytest.approx(1.0 + voice_variant_deviation("Thái Sơn")[1], abs=0.005)
-    female_length = PRESET_VOCAL_TRACT_CM["Ngọc Linh"]
-    female_low, female_high = formant_ratio_bounds_for_preset("Ngọc Linh")
-    assert female_low == pytest.approx(1.0 - voice_variant_deviation("Ngọc Linh")[0], abs=0.005)
-    assert female_high == pytest.approx(female_length / VOCAL_TRACT_MIN_CM, abs=0.005)
-
-    # A long male tract cannot go as deep as a short female one, and vice versa.
-    male_low, male_high = formant_ratio_bounds_for_preset("Thái Sơn")
-    female_low, female_high = formant_ratio_bounds_for_preset("Ngọc Linh")
-    assert male_low > female_low
-    assert male_high > female_high
-
-    # The two genders get mirrored allowances, which is the whole point of splitting them.
-    assert voice_variant_deviation("Thái Sơn") == (0.15, 0.20)
-    assert voice_variant_deviation("Ngọc Linh") == (0.20, 0.15)
-
-    # Every preset keeps its untouched voice as the first casting.
-    for name in PRESET_VOCAL_TRACT_CM:
-        assert formant_variants_for_preset(name)[0] == 1.0
-
-
-def test_a_lowered_register_spends_part_of_the_formant_range() -> None:
-    """F0 and formants both make a speaker sound large, so they draw on one budget.
-
-    Anatomy cannot see this. Lowering F0 leaves the spectral envelope alone, so the
-    estimated vocal tract after a register shift is exactly what it was before - yet the
-    voice is heard as deeper and has less room left to be deepened further. A Vietnamese
-    listener put Thanh Bình's floor at 0.86 on the raw preview and at 0.90 once the -4
-    semitone register was applied, which is the rate this encodes.
-    """
-    shifted = "Thanh Bình"
-    assert base_pitch_for_preset(shifted) == -4
-    lower, upper = formant_ratio_bounds_for_preset(shifted)
-    length = PRESET_VOCAL_TRACT_CM[shifted]
-    spent = 4 * REGISTER_FORMANT_TRADE_PER_SEMITONE
-
-    # The floor sits above the anatomical one by exactly what the register spent.
-    assert lower == pytest.approx(length / VOCAL_TRACT_MAX_CM + spent, abs=1e-6)
-    assert lower == pytest.approx(0.90, abs=0.005)
-    # The window moved, so the deepest reachable tract is shorter than anatomy alone allows.
-    assert length / lower < VOCAL_TRACT_MAX_CM
-    # The transform's own limit still caps the top; a moved window may not exceed it.
-    assert upper == pytest.approx(1.0 + voice_variant_deviation(shifted)[1], abs=1e-6)
-    for ratio in formant_variants_for_preset(shifted):
-        assert lower - 1e-6 <= ratio <= upper + 1e-6
-
-    # A preset at its native register is untouched by the rule.
-    for name in PRESET_VOCAL_TRACT_CM:
-        if base_pitch_for_preset(name):
-            continue
-        native_low, _ = formant_ratio_bounds_for_preset(name)
-        anatomical = PRESET_VOCAL_TRACT_CM[name] / VOCAL_TRACT_MAX_CM
-        algorithmic = 1.0 - voice_variant_deviation(name)[0]
-        assert native_low == pytest.approx(max(anatomical, algorithmic), abs=1e-6)
 
 
 def test_one_character_cannot_hold_two_voices_through_different_labels(tmp_path: Path) -> None:
@@ -1225,12 +997,12 @@ def test_an_excluded_preset_is_unreachable_through_every_path() -> None:
 
     chosen: set[str] = set()
     for narrator in ("Phạm Tuyên", "Thanh Bình"):
-        allocator = PresetAllocator(narrator, 2)
+        allocator = PresetAllocator(narrator)
         # Deep enough to exhaust every pool and force both fallback branches.
         for round_index in range(30):
             for gender in ("male", "female", "unknown"):
                 for age in ("child", "teen", "adult", "elderly", "unknown"):
-                    preset, _ratio, _pitch = allocator.choose(
+                    preset = allocator.choose(
                         gender, npc=round_index % 2 == 0, age=age
                     )
                     chosen.add(str(preset["name"]))

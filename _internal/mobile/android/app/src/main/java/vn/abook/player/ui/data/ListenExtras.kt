@@ -180,7 +180,7 @@ object Records {
 // ---- dàn nhân vật -----------------------------------------------------------------------------------------------------
 
 @Immutable
-data class CastVoice(val key: String, val preset: String, val label: String, val tone: String) {
+data class CastVoice(val key: String, val preset: String, val label: String) {
     /** Tên người nghe thấy ("Bảo Trang"), không phải khoá. */
     val shown: String get() = label.ifEmpty { preset }
 }
@@ -245,7 +245,7 @@ object Cast {
             val item = list.optJSONObject(index) ?: continue
             val name = item.optString("name").cleanNull()
             if (name.isEmpty()) continue
-            val voice = item.optJSONObject("voice")?.let { CastVoice(it.optString("key").cleanNull(), it.optString("preset").cleanNull(), it.optString("label").cleanNull(), it.optString("tone").cleanNull()) }
+            val voice = item.optJSONObject("voice")?.let { CastVoice(it.optString("key").cleanNull(), it.optString("preset").cleanNull(), it.optString("label").cleanNull()) }
             out += CastMember(
                 name = name,
                 displayName = item.optString("displayName").cleanNull().ifEmpty { name },
@@ -284,19 +284,7 @@ object Cast {
         return value
     }
 
-    private val FROM_BASE = setOf("trầm hẳn", "hơi trầm", "sáng hẳn", "hơi sáng")
-
-    /** "trầm hẳn" -> "chỉnh trầm hẳn so với giọng gốc" (voiceTone.ts); nhãn lạ giữ nguyên. */
-    fun toneLabel(tone: String): String {
-        val text = tone.trim()
-        return if (text in FROM_BASE) "chỉnh $text so với giọng gốc" else text
-    }
-
-    /** Dòng giọng của một người: "Bảo Trang · chỉnh trầm hẳn so với giọng gốc" / "Chưa có giọng". */
-    fun voiceLine(person: CastMember): String {
-        val voice = person.voice ?: return "Chưa có giọng"
-        return voice.shown + if (voice.tone.isNotEmpty()) " · ${toneLabel(voice.tone)}" else ""
-    }
+    fun voiceLine(person: CastMember): String = person.voice?.shown ?: "Chưa có giọng"
 
     /** Điện thoại không có xưởng: thay đổi người nghe ghi chỉ chờ máy làm sách (PersonRow `waiting`). */
     const val WAITING = "Đang chờ máy làm sách"

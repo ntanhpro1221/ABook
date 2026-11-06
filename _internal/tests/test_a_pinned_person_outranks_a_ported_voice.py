@@ -70,8 +70,8 @@ def test_pinning_before_analysis_creates_the_row(tmp_path: Path) -> None:
 
 
 def test_the_preset_behind_a_voice_key_is_read_longest_prefix_first() -> None:
-    assert preset_gender_of_voice_key("preset_ngoc_linh_f107_p+02") == "female"
-    assert preset_gender_of_voice_key("preset_thanh_binh_f100_p-04") == "male"
+    assert preset_gender_of_voice_key("vieneu@3.8.3/Ngọc Linh") == "female"
+    assert preset_gender_of_voice_key("vieneu@3.8.3/Thanh Bình") == "male"
     assert preset_gender_of_voice_key("narrator") is None
 
 
@@ -83,33 +83,33 @@ def test_a_pinned_person_outranks_a_ported_voice(tmp_path: Path) -> None:
 
     kept = _drop_pins_that_contradict_a_person(
         db,
-        {"IVAN": "preset_ngoc_linh_f107_p+02", "WILL": "preset_thai_son_f100_p+00"},
+        {"IVAN": "vieneu@3.8.3/Ngọc Linh", "WILL": "vieneu@3.8.3/Thái Sơn"},
         {"IVAN": "male", "WILL": "male"},
         {"IVAN": "adult"},
         sink.log,
     )
 
-    assert kept == {"WILL": "preset_thai_son_f100_p+00"}
+    assert kept == {"WILL": "vieneu@3.8.3/Thái Sơn"}
     assert [e[1] for e in sink.events] == ["CASTING_PIN_CONTRADICTS_A_PERSON"]
     assert "IVAN" in sink.said[0] and "cấp lại" in sink.said[0]
 
 
-def test_a_child_keeps_a_cross_gender_voice(tmp_path: Path) -> None:
-    """EVERAN là trẻ con thật: preset nữ kéo cao là ĐÚNG cách dự án đọc trẻ con, giữ pin."""
+def test_a_child_uses_the_same_gender_pin_rule_as_an_adult(tmp_path: Path) -> None:
+    """Tuổi không tạo ngoại lệ chọn preset sai phái."""
     db = ProjectDB(tmp_path / "project.sqlite3")
     sink = _Events()
     db.event = sink.event  # type: ignore[method-assign]
 
     kept = _drop_pins_that_contradict_a_person(
         db,
-        {"EVERAN": "preset_ngoc_linh_f107_p+02"},
+        {"EVERAN": "vieneu@3.8.3/Ngọc Linh"},
         {"EVERAN": "male"},
         {"EVERAN": "child"},
         sink.log,
     )
 
-    assert kept == {"EVERAN": "preset_ngoc_linh_f107_p+02"}
-    assert sink.events == []
+    assert kept == {}
+    assert [e[1] for e in sink.events] == ["CASTING_PIN_CONTRADICTS_A_PERSON"]
 
 
 def test_a_pin_nobody_ruled_on_is_left_alone(tmp_path: Path) -> None:
@@ -119,10 +119,10 @@ def test_a_pin_nobody_ruled_on_is_left_alone(tmp_path: Path) -> None:
     db.event = sink.event  # type: ignore[method-assign]
 
     kept = _drop_pins_that_contradict_a_person(
-        db, {"IVAN": "preset_ngoc_linh_f107_p+02"}, {}, {"IVAN": "adult"}, sink.log
+        db, {"IVAN": "vieneu@3.8.3/Ngọc Linh"}, {}, {"IVAN": "adult"}, sink.log
     )
 
-    assert kept == {"IVAN": "preset_ngoc_linh_f107_p+02"}
+    assert kept == {"IVAN": "vieneu@3.8.3/Ngọc Linh"}
     assert sink.events == []
 
 

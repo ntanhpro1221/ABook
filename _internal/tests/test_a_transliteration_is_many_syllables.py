@@ -31,8 +31,8 @@ def test_the_lost_line_of_chapter_084_reads_at_a_normal_pace() -> None:
 
     speech_seconds = speakable / 12.20
     rate = syllables / speech_seconds
-    assert rate > PACE_SYLLABLES_PER_SECOND_FLOOR["normal"]
-    assert not pace_is_outlier(12.20, rate, "normal", NORMAL), (
+    assert rate > PACE_SYLLABLES_PER_SECOND_FLOOR
+    assert not pace_is_outlier(12.20, rate, NORMAL), (
         "đọc 4,88 âm tiết/giây là bình thường; sàn chỉ nên bắt bản thu thật sự chậm"
     )
 
@@ -41,7 +41,7 @@ def test_a_genuinely_slow_take_is_still_caught() -> None:
     """Không phải nới sàn: cùng câu ấy đọc chậm thật thì vẫn bị bắt."""
     syllables = spoken_syllables(LOST_LINE_084)
     speech_seconds = spoken_speakable_chars(LOST_LINE_084) / 8.0
-    assert pace_is_outlier(8.0, syllables / speech_seconds, "normal", NORMAL)
+    assert pace_is_outlier(8.0, syllables / speech_seconds, NORMAL)
 
 
 def test_plain_vietnamese_counts_exactly_as_before() -> None:

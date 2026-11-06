@@ -1388,7 +1388,7 @@ def _candidate_db(
             "preset_name": "Candidate Voice",
             "description": "Candidate test voice",
             "seed": 7,
-            "pitch_semitones": 0,
+
             "status": "ready",
         }
     )
@@ -1442,10 +1442,8 @@ def _checkpoint_candidate_signal(
             candidate["pronunciation_delivery_variant"]
         ),
         "voice_profile_id": int(candidate["expected_voice_profile_id"]),
-        "pitch_semitones": 0,
-        "effective_pitch_semitones": 0,
-        "pitch_variant_skipped": 0.0,
-        "pitch_variant_mixed": 0.0,
+
+
     }
     signal.update(signal_overrides or {})
     db.checkpoint_segment_candidate_signal(
@@ -1581,10 +1579,8 @@ def _candidate_decode_check(
             candidate["pronunciation_delivery_variant"]
         ),
         "voice_profile_id": int(segment["voice_profile_id"]),
-        "pitch_semitones": 0,
-        "effective_pitch_semitones": 0,
-        "pitch_variant_skipped": False,
-        "pitch_variant_mixed": False,
+
+
         "transcript": "Text",
         "similarity": 1.0 if verdict == "pass" else 0.2,
         "wer": 0.0 if verdict == "pass" else 1.0,
@@ -1638,7 +1634,7 @@ def _candidate_perceptual_check(
         "score": 3.8,
         "baseline_score": 4.0,
         "baseline_delta": -0.2,
-        "baseline_pitch_semitones": baseline_pitch_semitones,
+
         "candidate_repair_requirement": candidate_repair_requirement,
     }
     metrics.update(metrics_overrides or {})
@@ -2139,7 +2135,7 @@ def test_signal_checkpoint_commits_derived_warnings_atomically(tmp_path: Path) -
         wav_path=wav_path,
         wav_sha256="a" * 64,
         duration=1.0,
-        signal={"pitch_variant_skipped": 1.0},
+        signal={},
         generation_seed=17,
         warning_codes=(
             "TTS_SPLIT_RECOVERY",
@@ -10266,7 +10262,7 @@ def test_audio_reset_keeps_locked_analysis_and_casting(tmp_path: Path) -> None:
         "preset_name": "Xuân Vĩnh",
         "description": "Lucien",
         "seed": 1,
-        "pitch_semitones": 0,
+
         "status": "ready",
     })
     with db.connect() as conn:
@@ -10710,7 +10706,6 @@ def test_schema_v4_migrates_candidate_ledger_with_versioned_backup(tmp_path: Pat
         "policy_hash",
         "repair_round",
         "expected_voice_profile_id",
-        "expected_pitch_semitones",
         "state",
         "final_check_id",
     } <= columns
@@ -10743,7 +10738,6 @@ def test_schema_v5_migrates_existing_candidate_perceptual_ledger(tmp_path: Path)
                 repair_round INTEGER NOT NULL CHECK (repair_round >= 0),
                 incumbent_sha256 TEXT NOT NULL,
                 expected_voice_profile_id INTEGER NOT NULL REFERENCES voice_profiles(id),
-                expected_pitch_semitones INTEGER NOT NULL,
                 state TEXT NOT NULL,
                 tts_attempt INTEGER NOT NULL DEFAULT 0 CHECK (tts_attempt >= 0),
                 generation_seed INTEGER NOT NULL,
@@ -10768,14 +10762,14 @@ def test_schema_v5_migrates_existing_candidate_perceptual_ledger(tmp_path: Path)
             """
             INSERT INTO segment_candidates(
                 id,segment_id,policy_hash,repair_round,incumbent_sha256,
-                expected_voice_profile_id,expected_pitch_semitones,state,
+                expected_voice_profile_id,state,
                 tts_attempt,generation_seed,wav_path,wav_sha256,wav_duration,
                 signal_json,beam_result_json,greedy_result_json,beam_check_id,
                 greedy_check_id,final_check_id,failure_reason,created_at,updated_at,promoted_at
             )
             SELECT
                 id,segment_id,policy_hash,repair_round,incumbent_sha256,
-                expected_voice_profile_id,expected_pitch_semitones,state,
+                expected_voice_profile_id,state,
                 tts_attempt,generation_seed,wav_path,wav_sha256,wav_duration,
                 signal_json,beam_result_json,greedy_result_json,beam_check_id,
                 greedy_check_id,final_check_id,failure_reason,created_at,updated_at,promoted_at
@@ -11423,7 +11417,7 @@ def test_candidate_requires_locked_casting_and_honors_thought_profile(tmp_path: 
             "preset_name": "Character",
             "description": "Character voice",
             "seed": 2,
-            "pitch_semitones": 0,
+
             "status": "ready",
         }
     )
@@ -11434,7 +11428,7 @@ def test_candidate_requires_locked_casting_and_honors_thought_profile(tmp_path: 
             "preset_name": "Narrator",
             "description": "Narrator voice",
             "seed": 3,
-            "pitch_semitones": -1,
+
             "status": "ready",
         }
     )
@@ -11454,7 +11448,7 @@ def test_candidate_requires_locked_casting_and_honors_thought_profile(tmp_path: 
         candidates_root=tmp_path / "candidates",
     )
     assert int(candidate["expected_voice_profile_id"]) == (narrator_profile if uses_narrator else character_profile)
-    assert int(candidate["expected_pitch_semitones"]) == (-1 if uses_narrator else 0)
+    assert "expected_pitch_semitones" not in candidate.keys()
 
 
 def test_candidate_rejects_casting_change_after_allocation(tmp_path: Path) -> None:
@@ -11478,7 +11472,7 @@ def test_candidate_rejects_casting_change_after_allocation(tmp_path: Path) -> No
             "preset_name": "Replacement",
             "description": "Replacement voice",
             "seed": 4,
-            "pitch_semitones": 0,
+
             "status": "ready",
         }
     )
@@ -11812,22 +11806,6 @@ def test_candidate_perceptual_review_is_terminal_and_advances_same_budget(
         perceptual_required=True,
     )
     candidate_id = int(candidate["id"])
-    wrong_pitch_check = _candidate_perceptual_check(
-        db,
-        segment_id=segment_id,
-        artifact_sha256=candidate_sha256,
-        verdict="pass",
-        perceptual_verdict="ok",
-        reason="PERCEPTUAL_OK",
-        review_required=False,
-        baseline_pitch_semitones=1,
-    )
-    with pytest.raises(RuntimeError, match="baseline pitch"):
-        db.checkpoint_segment_candidate_perceptual(
-            candidate_id,
-            quality_check_id=wrong_pitch_check,
-        )
-
     review_check = _candidate_perceptual_check(
         db,
         segment_id=segment_id,
@@ -12829,10 +12807,8 @@ def test_candidate_decode_and_promotion_reject_tampered_locked_provenance(
             "spoken_text_sha256": "2" * 64,
             "pronunciation_delivery_variant": "locked_spoken_v1",
             "voice_profile_id": 99,
-            "pitch_semitones": 0,
-            "effective_pitch_semitones": 0,
-            "pitch_variant_skipped": False,
-            "pitch_variant_mixed": False,
+
+
         },
     )
     with pytest.raises(RuntimeError, match="locked provenance"):
@@ -13078,16 +13054,6 @@ def test_candidate_promotion_invalidates_missing_or_tampered_artifact(
 @pytest.mark.parametrize(
     ("blocking_flag", "signal_overrides", "decode_overrides"),
     [
-        (
-            "pitch_variant_skipped",
-            {"pitch_variant_skipped": 1.0},
-            {"pitch_variant_skipped": True},
-        ),
-        (
-            "pitch_variant_mixed",
-            {"pitch_variant_mixed": 1.0, "effective_pitch_semitones": None},
-            {"pitch_variant_mixed": True, "effective_pitch_semitones": None},
-        ),
         ("generation_endpoint_active", {"generation_endpoint_active": 1.0}, {}),
         ("pace_outlier", {"pace_outlier": 1.0}, {}),
     ],

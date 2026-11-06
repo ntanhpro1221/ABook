@@ -26,7 +26,7 @@ from abook.character_registry import PresetAllocator, reserve_pinned_voices
 from abook.config import build_settings
 from abook.project import create_or_open_project
 
-KEY = "preset_thanh_binh_f109_p-01"
+KEY = "vieneu@3.8.3/Thanh Bình"
 
 
 def _project(tmp_path: Path):
@@ -77,9 +77,9 @@ def test_a_pin_needs_both_a_name_and_a_voice(tmp_path) -> None:
 def test_repinning_replaces_rather_than_accumulates(tmp_path) -> None:
     db = _project(tmp_path)
     db.set_locked_character_voice("Noah", KEY)
-    db.set_locked_character_voice("Noah", "preset_thai_son_f100_p+00")
+    db.set_locked_character_voice("Noah", "vieneu@3.8.3/Thái Sơn")
 
-    assert db.locked_character_voices() == {"NOAH": "preset_thai_son_f100_p+00"}
+    assert db.locked_character_voices() == {"NOAH": "vieneu@3.8.3/Thái Sơn"}
 
 
 def test_a_reserved_preset_is_taken_in_both_pools(tmp_path: Path) -> None:
@@ -90,19 +90,19 @@ def test_a_reserved_preset_is_taken_in_both_pools(tmp_path: Path) -> None:
 
     A voice that belongs to somebody is taken everywhere, not taken in one ledger.
     """
-    baseline = PresetAllocator("Phạm Tuyên", 2)
-    npc_first, _r, _p = baseline.choose("male", npc=True)
+    baseline = PresetAllocator("Phạm Tuyên")
+    npc_first = baseline.choose("male", npc=True)
 
-    allocator = PresetAllocator("Phạm Tuyên", 2)
+    allocator = PresetAllocator("Phạm Tuyên")
     allocator.reserve(str(npc_first["name"]))
-    npc_after, _r2, _p2 = allocator.choose("male", npc=True)
-    named_after, _r3, _p3 = PresetAllocator("Phạm Tuyên", 2).choose("male", npc=False)
+    npc_after = allocator.choose("male", npc=True)
+    named_after = PresetAllocator("Phạm Tuyên").choose("male", npc=False)
 
     assert str(npc_after["name"]) != str(npc_first["name"]), "NPC pool must see the reservation"
 
-    named = PresetAllocator("Phạm Tuyên", 2)
+    named = PresetAllocator("Phạm Tuyên")
     named.reserve(str(named_after["name"]))
-    npc_side, _r4, _p4 = named.choose("male", npc=True)
+    npc_side = named.choose("male", npc=True)
 
     assert str(npc_side["name"]) != str(named_after["name"]), (
         "a voice reserved for a named character must not be handed to an NPC"
@@ -114,25 +114,23 @@ def test_reserving_a_preset_stops_the_next_character_being_handed_it() -> None:
     it is counted, and an unused preset always sorts first - so the very next character
     would be given the voice somebody had just pinned to someone else. Two people, one
     voice, and the invariant in verify_casting checks the opposite direction."""
-    allocator = PresetAllocator("Phạm Tuyên", 2)
-    first, _ratio, _pitch = allocator.choose("male", npc=False)
+    allocator = PresetAllocator("Phạm Tuyên")
+    first = allocator.choose("male", npc=False)
 
-    allocator_two = PresetAllocator("Phạm Tuyên", 2)
+    allocator_two = PresetAllocator("Phạm Tuyên")
     allocator_two.reserve(str(first["name"]))
-    after_reserve, _ratio2, _pitch2 = allocator_two.choose("male", npc=False)
+    after_reserve = allocator_two.choose("male", npc=False)
 
     assert str(after_reserve["name"]) != str(first["name"])
 
 
-def test_the_pools_stay_separate_for_ordinary_allocation() -> None:
-    """Reserving crosses the pools on purpose, but ordinary casting does not: a named
-    character using a preset should not push NPCs off it, which is what the two counters are
-    for."""
-    allocator = PresetAllocator("Phạm Tuyên", 2)
-    named, _r, _p = allocator.choose("male", npc=False)
-    npc, _r2, _p2 = allocator.choose("male", npc=True)
+def test_named_and_minor_roles_use_one_pool_of_presets() -> None:
+    """Vai ít lời không lấy lại preset vừa cấp cho vai nhiều lời khi vẫn còn preset trống."""
+    allocator = PresetAllocator("Phạm Tuyên")
+    named = allocator.choose("male", npc=False)
+    npc = allocator.choose("male", npc=True)
 
-    assert str(npc["name"]) == str(named["name"])
+    assert str(npc["name"]) != str(named["name"])
 
 
 # The carry itself. It copies the voice profiles as well as the mapping, because a pinned
@@ -158,8 +156,8 @@ def _cast_project(tmp_path: Path, *, name: str, voice_key: str):
             "preset_name": "Thanh Bình",
             "description": "Nam · Bắc · Kể chuyện",
             "seed": 1191426086,
-            "pitch_semitones": -1,
-            "formant_ratio": 1.09,
+
+
             "status": "ready",
         }
     )
@@ -279,8 +277,8 @@ def test_two_characters_on_one_voice_is_reported(tmp_path: Path) -> None:
             "preset_name": "Thanh Bình",
             "description": "d",
             "seed": 1,
-            "pitch_semitones": 0,
-            "formant_ratio": 1.0,
+
+
             "status": "ready",
         }
     )
@@ -327,8 +325,8 @@ def _silent_pin(db, *, name: str, voice_key: str, preset: str = "Ngọc Linh") -
             "preset_name": preset,
             "description": "",
             "seed": 5,
-            "pitch_semitones": 0,
-            "formant_ratio": 1.0,
+
+
             "status": "ready",
         }
     )
@@ -344,14 +342,14 @@ def test_the_carry_keeps_a_pin_whose_character_never_spoke(tmp_path: Path) -> No
     whose reading the owner chose personally. The next batch would simply have recast it.
     """
     source_db = _cast_project(tmp_path / "old", name="NOAH", voice_key=KEY)
-    _silent_pin(source_db, name="THEOSBANE", voice_key="preset_ngoc_linh_f100_p+00")
+    _silent_pin(source_db, name="THEOSBANE", voice_key="vieneu@3.8.3/Ngọc Linh")
     target = _project(tmp_path / "new")
 
     porter.port(source_db.project_root, target.project_root)
 
     carried = target.locked_character_voices()
     assert carried.get("NOAH") == KEY, "người có nói vẫn phải mang sang"
-    assert carried.get("THEOSBANE") == "preset_ngoc_linh_f100_p+00", (
+    assert carried.get("THEOSBANE") == "vieneu@3.8.3/Ngọc Linh", (
         "người đã ghim mà im lặng cũng phải mang sang"
     )
 
@@ -439,7 +437,7 @@ def test_an_even_collision_still_drops_both(tmp_path: Path) -> None:
     được chúng. Giữ lại nhánh ấy chứ không ép một người thắng, vì ép nghĩa là đổi giọng một
     người **trên không có bằng chứng nào** - đúng cái mà luật cũ cảnh báo và vẫn đúng ở đây.
     """
-    source_db = _cast_project(tmp_path / "old", name="NOAH", voice_key="preset_thai_son_f100_p+00")
+    source_db = _cast_project(tmp_path / "old", name="NOAH", voice_key="vieneu@3.8.3/Thái Sơn")
     source_db.set_locked_character_voice("SAMAEL", KEY)
     source_db.set_locked_character_voice("THEOSBANE", KEY)
     target = _project(tmp_path / "new")
@@ -476,7 +474,7 @@ def test_a_pin_is_reserved_even_when_its_character_says_nothing(tmp_path: Path) 
     character who is pinned and silent in this batch reserved nothing.
 
     THEOSBANE said nothing across chapters 010-018. Its pin was therefore never counted,
-    preset_thanh_binh_f093_p-04 still looked free, and the allocator gave it to SAMAEL.
+    vieneu@3.8.3/Thanh Bình still looked free, and the allocator gave it to SAMAEL.
     alpha.55, where every pinned character spoke, had no collisions at all. THEOSBANE is in
     156 of the book's 478 chapters, so the two would have shared a voice for a third of it.
     """
@@ -488,20 +486,20 @@ def test_a_pin_is_reserved_even_when_its_character_says_nothing(tmp_path: Path) 
             "preset_name": "Thanh Bình",
             "description": "",
             "seed": 7,
-            "pitch_semitones": -1,
-            "formant_ratio": 1.09,
+
+
             "status": "ready",
         }
     )
     # Pinned, and deliberately never given a segment: this character is silent here.
     db.set_locked_character_voice("THEOSBANE", KEY)
 
-    allocator = PresetAllocator("Phạm Tuyên", 2)
+    allocator = PresetAllocator("Phạm Tuyên")
     said: list[str] = []
     reserved = reserve_pinned_voices(db, db.locked_character_voices(), allocator, said.append)
 
     assert reserved == 1
-    chosen, _ratio, _pitch = allocator.choose("female", npc=False)
+    chosen = allocator.choose("female", npc=False)
     assert str(chosen["name"]) != "Thanh Bình", (
         "giọng của một nhân vật im lặng vẫn là giọng của nó"
     )
@@ -512,7 +510,7 @@ def test_a_stale_pin_is_skipped_out_loud_rather_than_killing_the_run(tmp_path: P
     db = _project(tmp_path)
     db.set_locked_character_voice("AI ĐÓ", "preset_khong_ton_tai_f100_p+00")
 
-    allocator = PresetAllocator("Phạm Tuyên", 2)
+    allocator = PresetAllocator("Phạm Tuyên")
     said: list[str] = []
     reserved = reserve_pinned_voices(db, db.locked_character_voices(), allocator, said.append)
 

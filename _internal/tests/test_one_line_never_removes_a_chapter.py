@@ -84,7 +84,7 @@ def test_soft_rejections_keep_best_audio_and_failure_after_reopen(tmp_path, monk
 
 def test_take_order_and_crash_keep_incumbent_until_better_checkpoint(tmp_path):
     pipeline, _, row = _short_tts_pipeline(tmp_path)
-    for index, flags in enumerate([{'pace_outlier': 1, 'pitch_variant_skipped': 1}, {'pace_outlier': 1}, {'pace_outlier': 1, 'pitch_variant_skipped': 1}, {}]):
+    for index, flags in enumerate([{'pace_outlier': 1, 'generation_ceiling_hit': 1}, {'pace_outlier': 1}, {'pace_outlier': 1, 'generation_ceiling_hit': 1}, {}]):
         path = tmp_path / f'take{index}.wav'
         sf.write(path, np.sin(np.arange(24000) / 30) * .1, 24000)
         metrics = {'duration': 1.0, **flags}
@@ -290,9 +290,9 @@ def test_partial_manifest_requires_explicit_choice_and_names_missing_chapter(tmp
 
 
 def test_normal_pace_floor_requires_both_measures():
-    assert pace_is_outlier(12, 3, 'normal', (12.5, 24.5))
-    assert not pace_is_outlier(12, 5, 'normal', (12.5, 24.5))
-    assert not pace_is_outlier(13, 3, 'normal', (12.5, 24.5))
+    assert pace_is_outlier(12, 3, (12.5, 24.5))
+    assert not pace_is_outlier(12, 5, (12.5, 24.5))
+    assert not pace_is_outlier(13, 3, (12.5, 24.5))
 
 
 @pytest.mark.parametrize('signal', ['active_edge', 'silence', 'nonfinite'])
@@ -310,7 +310,6 @@ def test_real_writer_rejection_keeps_only_decodable_non_silent_speech(tmp_path, 
     engine = coordinator.engine_for_profile(coordinator._voice_profile_for_row(row))
     engine.sample_rate = rate
     monkeypatch.setattr(engine, 'generate_one', lambda *a, **k: samples)
-    monkeypatch.setattr(tts_module, 'apply_pitch_variant', lambda audio, *a, **k: audio)
     monkeypatch.setattr(tts_module, 'apply_speed_change', lambda audio, *a, **k: audio)
     monkeypatch.setattr(coordinator, 'release_inference_cache', lambda: None)
     monkeypatch.setattr(pipeline_module.time, 'sleep', lambda _: None)
@@ -337,25 +336,25 @@ def test_explicit_retry_keeps_audio_until_new_checkpoint(tmp_path):
     assert sha256_file(Path(current['wav_path'])) == current['wav_sha256']
 
 
-def test_normal_band_signal_rejection_exhausts_as_failed_with_real_audio(tmp_path, monkeypatch):
+def test_signal_rejection_exhausts_as_failed_with_real_audio(tmp_path, monkeypatch):
     pipeline, chapter, row = _short_tts_pipeline(tmp_path, source_text='Một câu ngắn.')
     row = dict(row)
     row['pace'] = 'fast'
-    pipeline.tts = ScriptedShortTTS([{'pace_outlier': 1}] * 4 + [{}] * 4).bind(pipeline.settings, pipeline.db)
+    pipeline.tts = ScriptedShortTTS([{}] * 4).bind(pipeline.settings, pipeline.db)
     monkeypatch.setattr(pipeline_module.time, 'sleep', lambda _: None)
     def reject(*args, **kwargs):
-        raise AudioQualityError('normal-band signal rejected')
+        raise AudioQualityError('signal rejected')
     monkeypatch.setattr(pipeline.db, 'mark_signal_passed', reject)
     pipeline._process_single_segment(row, chapter)
     current = pipeline.db.get_segment(row['id'])
-    assert current['status'] == 'failed' and 'normal-band signal rejected' in current['error']
+    assert current['status'] == 'failed' and 'signal rejected' in current['error']
     assert pipeline._has_real_audio(current)
 
 
 def test_candidate_archive_is_durable_and_keeps_the_best_without_claiming_pass(tmp_path):
     pipeline, _, row = _short_tts_pipeline(tmp_path)
     kept = None
-    for index, flags in enumerate([{'pace_outlier': 1}, {'pace_outlier': 1, 'pitch_variant_skipped': 1}, {}]):
+    for index, flags in enumerate([{'pace_outlier': 1}, {'pace_outlier': 1}, {}]):
         path = tmp_path / f'candidate{index}.wav'
         sf.write(path, .1 * np.sin(np.arange(24000) / (30 + index)), 24000)
         pipeline._archive_usable_take(row, path, sha256_file(path), {'duration': 1, **flags}, index)

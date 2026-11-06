@@ -14,8 +14,8 @@ from __future__ import annotations
 
 from abook.character_registry import _drop_pins_that_share_a_chapter
 
-VOICE = "preset_thanh_binh_f090_p-04"
-OTHER = "preset_thai_son_f100_p+00"
+VOICE = "vieneu@3.8.3/Thanh Bình"
+OTHER = "vieneu@3.8.3/Thái Sơn"
 
 
 def _row(chapter: int, speaker: str):

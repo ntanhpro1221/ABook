@@ -68,7 +68,7 @@ try:
 except ImportError:  # chạy trực tiếp
     from book_paths import VERSIONS  # noqa: E402
 
-DEFAULT_BANDS = {"slow": (7.0, 19.0), "normal": (12.5, 24.5), "fast": (14.0, 30.0)}
+DEFAULT_BAND = (12.5, 24.5)
 FRAME_SECONDS = 0.010
 MIN_GAP_SECONDS = 0.05
 # tts.rate_check_min_chars: dưới ngưỡng này phép kiểm nhịp không chạy, nên cũng không đếm.
@@ -119,7 +119,6 @@ def silence_seconds(
 def verdict(
     text: str,
     duration: float,
-    pace: str,
     bounds: tuple[float, float],
     silence: float | None = None,
 ) -> tuple[bool, bool, float, float]:
@@ -132,20 +131,16 @@ def verdict(
     rate = chars / speech
     syllable_rate = spoken_syllables(text) / speech
     hard = rate < bounds[0] * RATE_HARD_MIN_FACTOR or rate > bounds[1] * RATE_HARD_MAX_FACTOR
-    return pace_is_outlier(rate, syllable_rate, pace, bounds), hard, rate, budget
+    return pace_is_outlier(rate, syllable_rate, bounds), hard, rate, budget
 
 
-def _bands(root: Path) -> dict[str, tuple[float, float]]:
+def _band(root: Path) -> tuple[float, float]:
     settings = root / "book_settings.json"
     if not settings.is_file():
-        return dict(DEFAULT_BANDS)
-    try:
-        raw = json.loads(settings.read_text(encoding="utf-8"))
-        ranges = raw.get("tts", {}).get("pace_chars_per_second", {})
-        got = {key: (float(value[0]), float(value[1])) for key, value in ranges.items()}
-        return got or dict(DEFAULT_BANDS)
-    except Exception:  # noqa: BLE001
-        return dict(DEFAULT_BANDS)
+        return DEFAULT_BAND
+    raw = json.loads(settings.read_text(encoding="utf-8"))
+    lower, upper = raw["tts"]["pace_chars_per_second"]
+    return float(lower), float(upper)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -167,7 +162,7 @@ def main(argv: list[str] | None = None) -> int:
         if seen >= args.limit:
             break
         root = Path(database).parent
-        bands = _bands(root)
+        bounds = _band(root)
         connection = sqlite3.connect(f"file:{Path(database).as_posix()}?mode=ro", uri=True)
         connection.row_factory = sqlite3.Row
         try:
@@ -197,16 +192,15 @@ def main(argv: list[str] | None = None) -> int:
                 array = array.mean(axis=1)
             array = np.asarray(array, dtype=np.float32)
             pace = str(row["pace"] or "normal")
-            bounds = bands.get(pace, bands.get("normal", DEFAULT_BANDS["normal"]))
             duration = float(row["wav_duration"])
-            was_outlier, was_hard, rate_now, budget_now = verdict(text, duration, pace, bounds)
+            was_outlier, was_hard, rate_now, budget_now = verdict(text, duration, bounds)
             seen += 1
             for floor in floors:
                 quiet = silence_seconds(
                     array, int(sample_rate), floor_below_peak=floor, min_gap=args.min_gap
                 )
                 now_outlier, now_hard, rate_new, budget_new = verdict(
-                    text, duration, pace, bounds, silence=quiet
+                    text, duration, bounds, silence=quiet
                 )
                 cell = tally[floor]
                 if budget_new < budget_now - 1e-9:

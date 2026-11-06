@@ -40,7 +40,7 @@ def test_the_segment_that_blocked_a_chapter_now_passes() -> None:
     text = "Rare (Hiếm - B): Mạnh hơn / khó tìm hơn."
     speakable = sum(char.isalnum() for char in text)
     duration = speakable / 9.77  # what it actually measured, below the old 10.5 floor
-    bounds = build_settings("high_quality")["tts"]["pace_chars_per_second"]["normal"]
+    bounds = build_settings("high_quality")["tts"]["pace_chars_per_second"]
     assert speakable / duration < 10.5, "the raw metric rejected it"
     assert float(bounds[0]) <= _rate(text, duration) <= float(bounds[1])
 
@@ -58,17 +58,14 @@ def test_punctuation_no_longer_decides_the_verdict() -> None:
 def test_bounds_moved_with_the_metric() -> None:
     """Compensation shifts the corpus median from 14.50 to 16.90; the old 22.0 upper bound
     never fired before and would start firing at the 98th percentile if left alone."""
-    normal = build_settings("high_quality")["tts"]["pace_chars_per_second"]["normal"]
+    normal = build_settings("high_quality")["tts"]["pace_chars_per_second"]
     assert float(normal[0]) > 10.5
     assert float(normal[1]) > 22.0
 
 
-def test_every_pace_keeps_increasing_bounds() -> None:
-    paces = build_settings("high_quality")["tts"]["pace_chars_per_second"]
-    for name in ("slow", "normal", "fast"):
-        lower, upper = (float(value) for value in paces[name])
-        assert 0 < lower < upper, name
-    assert float(paces["slow"][0]) < float(paces["normal"][0]) < float(paces["fast"][0])
+def test_the_single_band_keeps_increasing_bounds() -> None:
+    lower, upper = build_settings("high_quality")["tts"]["pace_chars_per_second"]
+    assert (lower, upper) == (12.5, 24.5)
 
 
 def test_a_pause_budget_can_never_consume_the_whole_duration() -> None:
@@ -97,7 +94,7 @@ def test_a_spaced_dash_is_still_a_pause() -> None:
 def test_the_transliterated_segment_that_failed_now_passes() -> None:
     text = "Kẻ hùng mạnh nhất trong hàng ngũ những Kẻ Ô Uế (Đê-phi-lê-ô-nêt)."
     speakable = sum(character.isalnum() for character in text)
-    bounds = build_settings("high_quality")["tts"]["pace_chars_per_second"]["normal"]
+    bounds = build_settings("high_quality")["tts"]["pace_chars_per_second"]
     # Four seconds is a plausible reading of this sentence; it measured 26.80 before.
     assert float(bounds[0]) <= _rate(text, 4.0) <= float(bounds[1])
     assert speakable > 24, "short enough to skip the rate check would prove nothing"

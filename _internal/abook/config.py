@@ -45,7 +45,6 @@ DEFAULT_SETTINGS: dict[str, Any] = {
         "narrator_gender": "male",
         "narrator_voice": DEFAULT_NARRATOR_BY_GENDER["male"],
         "minimum_named_character_mentions": 3,
-        "max_character_pitch_semitones": 2,
         "narrator_description": (
             "Giọng nam Việt Nam trưởng thành, trầm ấm, rõ chữ, giàu cảm xúc nhưng tiết chế, "
             "nhịp kể tự nhiên như audiobook chuyên nghiệp, phát âm chuẩn tiếng Việt"
@@ -80,14 +79,10 @@ DEFAULT_SETTINGS: dict[str, Any] = {
         #
         # These are no more permissive than before, only better aimed: 10.5 sat at the 2nd
         # percentile of the uncompensated distribution and 12.5 sits at the 2nd percentile
-        # of the compensated one. Slow and fast are scaled by the same ratios, having too
-        # few samples of their own to fit. Like the old numbers these are outlier bounds
+        # of the compensated one. Every analysis pace label uses the same band.
+        # Like the old numbers these are outlier bounds
         # drawn from what the system produces, not perceptual limits a listener set.
-        "pace_chars_per_second": {
-            "slow": [7.0, 19.0],
-            "normal": [12.5, 24.5],
-            "fast": [14.0, 30.0],
-        },
+        "pace_chars_per_second": [12.5, 24.5],
         "rate_check_min_chars": 24,
         "failure_policy": "retry_split_fail",
         "allow_silent_replacement": False,
@@ -183,29 +178,6 @@ DEFAULT_SETTINGS: dict[str, Any] = {
         # has to track the loudness anchors below. Keep the two 26.5 dB apart, as they
         # were when the anchors sat 6 dB higher, or the gate quietly loses sensitivity.
         "segment_endpoint_floor_dbfs": -51.0,
-        "segment_target_dbfs": {
-            "soft": -22.0,
-            "normal": -19.0,
-            "loud": -16.5,
-        },
-        # Levelling is `min(loudness_gain, peak_safe_gain)`, so anchors close to the
-        # -2 dBFS peak ceiling are simply unreachable for speech: 77% of a measured
-        # chapter's segments hit the ceiling instead of their target, missing by 1.22 dB
-        # on average and 4.09 dB at worst. That inverted the intent - `loud` segments
-        # came out quieter than `normal` ones and the narrator anchor vanished. Only the
-        # relative levels matter, because the chapter is mastered to one target
-        # afterwards, so the whole set sits 6 dB lower and every segment now reaches its
-        # anchor exactly. UTMOSv2 is level-invariant (mean MOS delta -0.006 at -6 dB),
-        # so this costs nothing perceptually and needs no compression.
-        "segment_target_lufs": {
-            # A 3 dB soft drop plus the narrator's 0.5 dB anchor made speaker
-            # changes too abrupt on real book audio. Keep soft expressive without
-            # stacking that large step on the take's own quiet delivery.
-            "soft": -26.0,
-            "normal": -25.0,
-            "loud": -23.8,
-        },
-        "segment_narrator_offset_db": 0.5,
         "create_m3u8": True,
         "export_metadata": True,
     },
@@ -595,9 +567,6 @@ def validate_settings(settings: dict[str, Any]) -> None:
         str(key).strip().lstrip("-").isdigit() and isinstance(name, str) for key, name in chapter_narrators.items()
     ):
         raise ValueError("voices.first_person_chapters must map chapter numbers to narrator names")
-    max_pitch_shift = int(voices.get("max_character_pitch_semitones", -1))
-    if not 0 <= max_pitch_shift <= 2:
-        raise ValueError("voices.max_character_pitch_semitones must be between 0 and 2")
 
     tts = settings.get("tts", {})
     if int(tts.get("sample_rate", 0)) < 8_000:
@@ -622,11 +591,9 @@ def validate_settings(settings: dict[str, Any]) -> None:
             "TTS duration bounds must satisfy 0 < min_seconds_per_100_chars "
             "< max_seconds_per_100_chars"
         )
-    pace_ranges = tts.get("pace_chars_per_second", {})
-    for pace in ("slow", "normal", "fast"):
-        bounds = pace_ranges.get(pace, [])
-        if len(bounds) != 2 or float(bounds[0]) <= 0 or float(bounds[0]) >= float(bounds[1]):
-            raise ValueError(f"tts.pace_chars_per_second.{pace} must contain increasing bounds")
+    bounds = tts.get("pace_chars_per_second", [])
+    if len(bounds) != 2 or float(bounds[0]) <= 0 or float(bounds[0]) >= float(bounds[1]):
+        raise ValueError("tts.pace_chars_per_second must contain increasing bounds")
     if int(tts.get("rate_check_min_chars", 0)) < 1:
         raise ValueError("tts.rate_check_min_chars must be positive")
 
@@ -703,25 +670,6 @@ def validate_settings(settings: dict[str, Any]) -> None:
         if safety.get(key) is not True:
             raise ValueError(f"safety.{key} must remain true")
     audio = settings.get("audio", {})
-    targets = audio.get("segment_target_dbfs", {})
-    if not (
-        float(targets.get("soft", 0))
-        < float(targets.get("normal", 0))
-        < float(targets.get("loud", 0))
-        < float(audio.get("segment_peak_dbfs", 0))
-    ):
-        raise ValueError("Segment dBFS targets must satisfy soft < normal < loud < peak")
-    loudness_targets = audio.get("segment_target_lufs", {})
-    if loudness_targets and not (
-        float(loudness_targets.get("soft", 0))
-        < float(loudness_targets.get("normal", 0))
-        < float(loudness_targets.get("loud", 0))
-        < 0.0
-    ):
-        raise ValueError("Segment LUFS targets must satisfy soft < normal < loud < 0")
-    narrator_offset = float(audio.get("segment_narrator_offset_db", 0.0))
-    if not math.isfinite(narrator_offset) or not 0.0 <= narrator_offset <= 2.0:
-        raise ValueError("segment_narrator_offset_db must be between 0 and 2 dB")
     resources = settings.get("resources", {})
     max_temp = int(resources.get("max_gpu_temp_c", 86))
     resume_temp = int(resources.get("resume_gpu_temp_c", 80))

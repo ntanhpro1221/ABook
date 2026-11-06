@@ -23,8 +23,8 @@ import { useFadeScroller } from "@/shared/scrollFade";
 
 // "Đổi giọng" một nhân vật (webui/voice_picker.py): mọi giọng dùng được cho nhân vật, nghe thử từng giọng, giọng đang dùng,
 // giọng máy gợi ý cho từng giới, và ai đang dùng giọng ấy cùng mấy chương. Chọn xong đi đúng đường của thẻ "Nam hay nữ"
-// (POST /voice): dây chuyền áp ở ranh giới chương kế tiếp, bậc âm sắc do bộ cấp giọng của bước phân vai quyết (không trùng
-// người cùng chương), câu đã thu của người ấy được thu lại. Không phải dừng sách. Giọng nhóm theo máy đọc: VieNeu (mọi giọng phân vai
+// (POST /voice): dây chuyền áp ở ranh giới chương kế tiếp; hai người chung preset nghe cùng giọng,
+// câu đã thu của người ấy được thu lại. Không phải dừng sách. Giọng nhóm theo máy đọc: VieNeu (mọi giọng phân vai
 // tự động) rồi máy khác chỉ chọn tay (ZeroTTS, Supertonic - tải thêm một lần, nút tải ngay trong hộp). Soát UX Studio mục 13:
 // mỗi giọng nghe được cả câu mẫu chung (▶) lẫn một câu của chính nhân vật đọc bằng giọng ấy (VoiceTry.tsx), lọc Nam / Nữ / Tất
 // cả, và hộp nói trước đổi giọng sẽ thu lại bao nhiêu câu, hết chừng bao lâu. Người kể dùng chính hộp này (soát UX a23, B21:

@@ -3,6 +3,13 @@
 File này là trách nhiệm thường trực của người dev project, không phải một lần rà soát. Mỗi phiên bản
 phải kiểm lại bảng dưới và ghi kết quả vào `VERSIONS.md`.
 
+## 06-11 — bỏ DSP biến đổi giọng
+
+Đã bỏ `pyworld==0.3.5` và `praat-parselmouth==0.4.7` khỏi dependency sản phẩm, lock và danh sách cài Studio.
+QA/perceptual không còn nhập hai gói này. Không gỡ chúng khỏi runtime đang sản xuất. Lock còn 109 package thay vì 111.
+Payload Windows của hai gói giảm 33.540.936 byte; wheel cp311 giảm 9.179.835 byte. Chưa dựng lại bộ cài đầy đủ,
+nên đây là chênh lệch thành phần, không phải số đo file installer hoàn chỉnh. Các mục có ngày cũ bên dưới là lịch sử.
+
 ## Kiểm 2026-11-01 — chuông báo 16 dòng, nâng ba gói phía app trên `dev/deps-0452`
 
 Chuông `upstream_daily` báo 16 dòng "outdated", tức 15 gói vì `setuptools` bị đếm hai lần. Bảng dưới đọc release notes

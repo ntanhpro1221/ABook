@@ -1,5 +1,19 @@
 # Test report
 
+## 06-11-2026 — master cố định, kiểm lại hai sách (dev/merge-163, chưa commit)
+
+- Bỏ loudnorm lượt hai và giới hạn gain riêng từng chương trong harness. Mọi chương/mọi sách nhận +5 dB chọn từ hiệu chuẩn (median danh định -20,574 LUFS), sau đó alimiter true-peak oversample 4 lần, không auto-level. Báo cáo phần thời gian envelope bị hạ và mức hạ lớn nhất. LUFS chương chỉ chẩn đoán; giữ gate peak/clipping/dropout/mối nối.
+- Dựng lại 23/23 MP3, script và word timing tại `D:/Novels/LLM_Train/ys_redo/novar/<project>_master/`; giữ WAV nguồn và hash DB/settings/WAV khớp trước/sau. Your Story PASS: trải giọng 0,414311 phon (CI 0,253059..0,879232), trải chương 0,481324 (CI 0,382023..0,933303). Pain PASS: 0,876323 (CI 0,564354..1,361752), trải chương 0,825747 (CI 0,579211..1,270285). Không chương nào vượt +/-1 phon; ngưỡng giọng đủ >=12 câu vẫn <=1,5 phon. Đây là đo lại MP3, không trừ số học từ kết quả cũ, không fit bằng sách.
+- Sau cả hai PASS: gỡ kế hoạch target chương, bù mức theo sách, vòng master lại, cache nền, journal công bố và test của vòng kín. Một detector ghi `output/reports/levelQa.json`, chỉ cảnh báo; checksum MP3 và mốc câu/giọng giữ phép đo khi resume. Receipt `.mp3.levels.json` chỉ giữ hash và mốc câu, không chứa gain bù.
+- Pytest `-q -rf`: ban đầu 343 file, 6169 passed / 0 failed / 9 skipped; sau gỡ vòng kín 144 file, 3004 passed / 0 failed / 6 skipped; chạy mới 14 importer quality_policy sau cập nhật nhãn thuật toán: 909 passed / 0 failed / 0 skipped. Hồi quy tập trung sau gỡ: 98 passed. Kết quả toàn file mới nhất, không cộng trùng rerun, bỏ file test đã gỡ: 6489 passed / 0 failed / 10 skipped. Log/XML và bảng từng chương/giọng ở task vtable4. Compileall, git diff --check và grep symbol vòng kín qua. Không đổi bảng/r; không tổng hợp/GPU/build trong lượt này.
+- Đọc danh sách khoá từ code: 54 -> 53 mục (gỡ chapter_loudness.py). Hash trước: `5fa8bf6da65f57e16d3799e5ed35dbf30fdc2609b9538141cbe58396c59ca985`; sau: `26e20236a163a25a0761a043f8b76c8225a158591f5d3578fba936a9647bd0ad`. Mọi sửa còn ở dev, chưa commit; không chạm production hay dừng guard/pause.
+
+## 06-11-2026 — cân bằng preset, bỏ biến đổi giọng (dev/merge-163, chưa commit)
+
+- Mỗi preset một giọng; bỏ pitch/formant, gain theo tuổi/cảm xúc/volume/người kể và bù nghỉ cảm xúc/lời dẫn thoại. Giữ WSOLA, nghỉ cấu trúc và các trần an toàn. Hằng số ISO từ 36 giọng × 40 câu trung tính × hai seed; Nghe ngay 34 giọng Turbo/Nano dùng cùng số Python/Kotlin, không đo Mai Anh.
+- Importer `-q -rf`: lượt rộng 6.109 passed / 11 failed / 9 skipped; sửa và chạy lại toàn file. Kết quả mới nhất theo module: 6.145 passed / 9 skipped / 0 failed; lượt hồi quy cuối 252 passed, kiểm bảng cuối 147 passed / 3 skipped. Log/XML và quy tắc gộp nằm trong task vtable3, không cộng trùng rerun. Android biên dịch production/test Kotlin qua; 19 test gain/clip/WAV passed, 0 failure/error. Compileall và git diff --check qua.
+- Sách chỉ là dữ liệu kiểm định, đang chờ novar/DONE; chưa có PASS/FAIL sách, chưa gỡ vòng hiệu chỉnh. Gain không được fit bằng sách. Hash trước lần tiếp nhận bỏ nghỉ: 53c26fe9862a5999262b26741c2882c4b653c4c148ecef25da7a0d06aa2334a6; sau: 5fa8bf6da65f57e16d3799e5ed35dbf30fdc2609b9538141cbe58396c59ca985. Mọi sửa ở nhánh dev; không chạm runtime sản xuất.
+
 ## 05-11-2026 — release gate, milestone 2 (dev/release-gate)
 
 - `scripts/release_gate.py` chạy các cổng nguồn với timeout, đọc summary pytest/Vitest, XML Gradle mới và đủ suite Qt offscreen; lưu bảng/JSON/log tại `runtime/release_gate`. Kiểm tra cần người/thiết bị hiện MANUAL và chặn exit 0. `release.py publish` gọi cổng trước mọi thao tác đăng.
@@ -1164,3 +1178,10 @@ Quality hash: f10085f96acd7f9fe6a066f2bf5a74338b0a351bea3d98f58f6d2807912cbfff -
 ## chaplevel2 (dev/voice-loudness)
 
 Kiểm vòng kín trên giọng tổng hợp qua FFmpeg thật: chương một giọng nhỏ theo phon, giới hạn cuối, lần chạy thứ hai dùng lại, lỗi meter/master giữ audio, loại vòng xấu, holdout không trùng câu fit. Mốc câu được đối chiếu độ dài MP3 sau cắt lặng; cache words cũ không đính kèm audio mới. Kết quả importer suite và đo hai sách thật ghi trong report.md của thư mục tác vụ; chưa phải bằng chứng phát hành.
+# pacetag — 06-11-2026
+
+Nhãn pace không đổi âm thanh hoặc QA: cùng bản thu, band `[12.5, 24.5]` sau bù dấu câu và sàn âm tiết `3.75`, nhân sàn bằng `pace_floor_scale * x` và hệ số engine hiện có. Đây là band normal đang có trong config, không phải sàn 10.5 của phép đo cũ. Ngân sách frame cũng dùng band chung, vẫn chia theo `r` cho bản thô. Không đổi bảng giọng, gain, WSOLA, trần im lặng hoặc nghỉ cấu trúc. Schema/prompt phân tích giữ nguyên. VieNeu cho phép bỏ `silence_p` (mặc định 0.15); Studio không gửi tham số này nữa. Gỡ vòng nới band, metric và warning riêng, không có migration.
+
+Test `test_pace_label_is_metadata.py` kiểm cùng take dưới slow/normal/fast/unknown, gồm nhận, cảnh báo và lỗi safety, hai hệ số sàn; đối chiếu cả metrics, ngân sách frame và tham số sinh. Kết quả importer thực và audit chỉ đọc hai sách, gồm stable ID không kèm nội dung, nằm trong `scratchpad/codex/pacetag/report.md` của phiên làm việc.
+
+Kiểm `-q -rf`: lượt đầu 123 module có 2862 đạt, 3 lỗi, 5 bỏ qua; sau sửa fixture/assertion, chạy lại trọn 12 module được 239 đạt, 0 lỗi. Kết quả mới nhất từng module: 2865 đạt, 0 lỗi, 5 bỏ qua (không cộng trùng lượt chạy). Lượt rộng có 8 cảnh báo thread đọc stdout không giải mã được UTF-8; lượt chạy lại không có. Compileall và diff check đạt. Audit: slow trượt band chung 0/715 và 2/642; fast có bằng chứng ít nhất 2 và 12 lượt retry riêng do band fast. Hash `26e20236…` → `6e1970d0…`; chưa commit.

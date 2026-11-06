@@ -21,7 +21,7 @@ của bà ấy (`scripts/measure_did_the_recast_help.py`: tốt hơn 9, xấu h�
 
 Chữa xong (dựng lại sổ với `--chain-all`, 25 project) thì `port_casting` nói ngược lại:
 
-    BO QUA CHELY (duoc nhac 9 lan): NATASHA (duoc nhac 389 lan) giu preset_ngoc_linh_f093_p+00
+    BO QUA CHELY (duoc nhac 9 lan): NATASHA (duoc nhac 389 lan) giu vieneu@3.8.3/Ngọc Linh
 
 **Luật xếp hạng của `port_casting` không sai** — nó cân bằng đúng thứ đáng cân (người nghe đã
 nghe ai nhiều hơn). Sai là **đầu vào**: một phép đo cộng dồn bị thu lại còn một lô.

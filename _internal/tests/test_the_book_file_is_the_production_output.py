@@ -105,13 +105,13 @@ def test_completed_status_does_not_hide_a_missing_chapter(tmp_path: Path) -> Non
 
 
 def test_completed_resume_replaces_a_package_with_older_mastered_audio(tmp_path: Path) -> None:
-    project=make_project(tmp_path)
+    project=_finished_project(tmp_path)
     pipeline=_Pipeline(project,'completed')
     book,files=bookfile.listening_layer(project)
     chapters=[ch for ch in book['chapters'] if ch.get('file')]
     levels={'verdict':'pass','audio_sha256':{str(ch['id']):sha256_file(files[ch['file']]) for ch in chapters}}
     pipeline._book_levels=levels
-    report=project/'output'/'reports'/'book_levels.json'
+    report=project/'output'/'reports'/'levelQa.json'
     report.parent.mkdir(parents=True,exist_ok=True)
     report.write_text(json.dumps(levels),encoding='utf8',newline='\n')
     pipeline._export_book_file()
@@ -119,6 +119,11 @@ def test_completed_resume_replaces_a_package_with_older_mastered_audio(tmp_path:
     audio=files[changed['file']]
     audio.write_bytes(audio.read_bytes()+b'new synthetic master')
     levels['audio_sha256'][str(changed['id'])]=sha256_file(audio)
+    # Một master đã công bố phải có receipt hiện hành trong SQLite trước khi đóng gói.
+    import sqlite3
+    with sqlite3.connect(project / 'project.sqlite3') as connection:
+        connection.execute('UPDATE artifacts SET sha256=?,size_bytes=? WHERE path=?',
+                           (sha256_file(audio), audio.stat().st_size, str(audio)))
     report.write_text(json.dumps(levels),encoding='utf8',newline='\n')
     pipeline._export_book_file(only_if_missing=True)
     with bookfile.BookFile(_output(project)) as opened:

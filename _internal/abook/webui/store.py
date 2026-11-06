@@ -1790,12 +1790,9 @@ def _heard_mp3(project_root: Path, row: Any) -> Path | None:
 def _voice_view(profile: sqlite3.Row | None) -> dict[str, Any] | None:
     if profile is None:
         return None
-    formant = float(profile["formant_ratio"] or 1.0)
-    pitch = float(profile["pitch_semitones"] or 0.0)
     return humanize.labelled_voice({
         "key": str(profile["voice_key"]),
         "preset": str(profile["preset_name"]),
-        "tone": humanize.voice_tone(formant, pitch),
     })
 
 

@@ -9,8 +9,7 @@ export interface EngineVoice {
   engine: string;
   engineLabel: string;
   installed: boolean;
-  /** Giọng chỉ có một âm sắc (máy khác VieNeu): hai người chung giọng nghe như một. */
-  oneStep: boolean;
+  /** Người chung preset sẽ nghe cùng giọng. */
   sharedWith: { label: string; chapters: number }[];
   otherUsers: number;
 }
@@ -64,7 +63,7 @@ export function sharedText(voice: EngineVoice, current = false): string {
   const others = voice.otherUsers ? `${voice.otherUsers} người khác dùng, không cùng chương` : "";
   if (!voice.sharedWith.length) return others || (current ? "Giọng đang đọc cho người này" : "Chưa ai dùng");
   const people = voice.sharedWith.map((person) => `${person.label} (${person.chapters} chương)`).join(", ");
-  const after = voice.oneStep ? "hai người sẽ nghe giống hệt nhau" : "máy lấy bậc âm sắc khác";
+  const after = "hai người sẽ nghe giống hệt nhau";
   return `Cùng chương với ${people} - ${after}${others ? ` · ${others}` : ""}`;
 }
 

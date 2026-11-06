@@ -17,8 +17,8 @@ from __future__ import annotations
 
 from scripts.one_person_one_voice import recast_arguments, voice_holders
 
-F090 = "preset_thanh_binh_f090_p-04"
-F104 = "preset_thai_son_f104_p+00"
+F090 = "vieneu@3.8.3/Thanh Bình"
+F104 = "vieneu@3.8.3/Thái Sơn"
 BATCHES = {"110": 3, "112": 3, "114": 3, "047": 1}
 
 
@@ -57,15 +57,15 @@ def test_without_the_holder_map_the_old_behaviour_stands() -> None:
 def test_a_chapter_survives_when_someone_else_there_can_be_fixed() -> None:
     """Chương 047 thật: HERODOTUS và OTHELLO đều không sửa được, nhưng ATHY thì được."""
     shipped = [
-        ("047", "OTHELLO", "preset_thanh_binh_f108_p-04", 9),
-        ("047", "HERODOTUS", "preset_thanh_binh_f093_p-04", 4),
-        ("047", "ATHY", "preset_thanh_binh_f097_p-04", 3),
+        ("047", "OTHELLO", "vieneu@3.8.3/Thanh Bình", 9),
+        ("047", "HERODOTUS", "vieneu@3.8.3/Thanh Bình", 4),
+        ("047", "ATHY", "vieneu@3.8.3/Thanh Bình", 3),
     ]
     minority = {
         # HERODOTUS muốn f108 mà OTHELLO đang dùng ở 047 -> không sửa được
-        "HERODOTUS": ("preset_thanh_binh_f108_p-04", {"preset_thanh_binh_f093_p-04": {"047"}}),
-        # ATHY muốn f090, không ai ở 047 dùng -> sửa được
-        "ATHY": (F090, {"preset_thanh_binh_f097_p-04": {"047"}}),
+        "HERODOTUS": ("vieneu@3.8.3/Thanh Bình", {"vieneu@3.8.3/Thanh Bình": {"047"}}),
+        # ATHY muốn preset khác, không ai ở 047 dùng -> sửa được
+        "ATHY": (F104, {F090: {"047"}}),
     }
     skipped: list[str] = []
 

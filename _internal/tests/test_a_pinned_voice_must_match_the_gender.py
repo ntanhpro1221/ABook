@@ -21,7 +21,7 @@ def test_a_pinned_man_loses_a_womans_voice() -> None:
     logs: list[str] = []
     kept = _drop_pins_that_contradict_a_person(
         events,
-        {"IVAN": "preset_ngoc_linh_f100_p+00"},
+        {"IVAN": "vieneu@3.8.3/Ngọc Linh"},
         {"IVAN": "male"},
         {"IVAN": "adult"},
         logs.append,
@@ -34,32 +34,32 @@ def test_a_pinned_child_keeps_a_female_preset_even_as_a_boy() -> None:
     logs: list[str] = []
     kept = _drop_pins_that_contradict_a_person(
         _Events(),
-        {"EVERAN": "preset_ngoc_linh_f100_p+00"},
+        {"EVERAN": "vieneu@3.8.3/Ngọc Linh"},
         {"EVERAN": "male"},
         {"EVERAN": "child"},
         logs.append,
     )
-    assert kept == {"EVERAN": "preset_ngoc_linh_f100_p+00"}, "trẻ con đọc bằng preset nữ là có chủ ý"
-    assert logs == []
+    assert kept == {}, "tuổi không tạo ngoại lệ chọn preset khác phái"
+    assert logs
 
 
 def test_an_adult_voice_for_a_pinned_adult_is_untouched() -> None:
     kept = _drop_pins_that_contradict_a_person(
         _Events(),
-        {"NATASHA": "preset_ngoc_linh_f100_p+00"},
+        {"NATASHA": "vieneu@3.8.3/Ngọc Linh"},
         {"NATASHA": "female"},
         {"NATASHA": "adult"},
         lambda line: None,
     )
-    assert kept == {"NATASHA": "preset_ngoc_linh_f100_p+00"}
+    assert kept == {"NATASHA": "vieneu@3.8.3/Ngọc Linh"}
 
 
 def test_nobody_pinned_an_age_so_nothing_is_dropped() -> None:
     kept = _drop_pins_that_contradict_a_person(
         _Events(),
-        {"AI": "preset_ngoc_linh_f109_p+04"},
+        {"AI": "vieneu@3.8.3/Ngọc Linh"},
         {},
         {},
         lambda line: None,
     )
-    assert kept == {"AI": "preset_ngoc_linh_f109_p+04"}, "không ai ghim thì không kết tội"
+    assert kept == {"AI": "vieneu@3.8.3/Ngọc Linh"}, "không ai ghim thì không kết tội"

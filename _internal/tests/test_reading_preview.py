@@ -66,7 +66,7 @@ def _voices(runtime: FakeVieNeuRuntime, monkeypatch) -> None:
     # Tên giọng của sách mẫu là giả, không có bản ghi đo trong bảng cân bằng: cho chúng hằng số trung tính.
     monkeypatch.setattr(voice_balance, "_NEUTRAL", {})
     voice_balance.register_neutral_voices(
-        {"engine": "vieneu", "preset_name": name, "formant_ratio": 1.0}
+        {"engine": "vieneu", "preset_name": name}
         for name in ("narrator", "v_lucien", "v_natasha", "v_anon_m")
     )
     module = ModuleType("vieneu")

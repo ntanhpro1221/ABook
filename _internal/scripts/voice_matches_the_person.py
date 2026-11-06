@@ -1,116 +1,8 @@
-"""Giọng có đúng là giọng của người ấy không — phái, và tuổi, trên cả cuốn sách đã ghép.
+"""So phái của preset nguyên bản với nhân vật trên sách đã ghép.
 
-    python scripts/voice_matches_the_person.py                 # báo cáo
-    python scripts/voice_matches_the_person.py --recast         # in `B:NNN` cho boundary.sh
-    python scripts/voice_matches_the_person.py <project>        # một project
-
-Hai công cụ đã có đều hỏi về **tính nhất quán**: `voice_pool_pressure` hỏi "hai người có chung
-một giọng không", `one_person_one_voice --across` hỏi "một người có hai giọng không". Không ai
-hỏi câu đơn giản hơn: *giọng ấy có đúng không*. Một cuốn sách hoàn toàn nhất quán vẫn có thể đọc
-một người đàn ông bằng giọng con gái ở mọi chương.
-
-Đo lần đầu 23:00 ngày 2026-09-11 trên sách 116 chương: 451 dòng (chương × nhân vật × giọng), 61
-tên. Kết quả và cái bẫy trong nó:
-
-    lệch phái, thô               11 dòng / 5 tên
-    trừ luật giọng trẻ con        1 dòng / 1 tên   <- con số thật
-    đổi tuổi giữa các chương      5 tên, 3 trong đó đổi cả giọng
-
-**Luật giọng trẻ con là có thật và có chủ ý** (`voice_catalog.AGE_TARGET_PITCH_HZ`,
-`listener_rank`): preset nam không với tới được ống âm của một đứa trẻ — chúng dừng
-cách 0,8 cm — nên một đứa trẻ trai được đọc bằng preset **nữ** kéo cao formant và pitch. Vậy
-"nam đọc bằng giọng nữ" chỉ là lỗi khi `age` không phải `child`. Một công cụ không biết luật ấy
-sẽ báo EVERAN (nam, `child`, 36 câu) là lỗi và làm người đọc báo cáo mất niềm tin vào chín con
-số còn lại.
-
-Đo lần hai, 2026-09-20 12:3x, trên **cuốn 2** đã ghép (417 chương, 2.304 dòng, 446 tên): 13 dòng giọng sai phái,
-8 tên, 37 câu. Nhưng cột bằng chứng văn bản (thêm cùng ngày) cho thấy con số 37 ấy gộp BA thứ khác nhau, và cách
-sửa của chúng ngược nhau:
-
-| tên | câu | sổ ghi | giọng | văn bản | ai sai |
-|---|---|---|---|---|---|
-| HATHAWAY | 12 | male | nữ | "bà" x42, "cô" x48, không một "ngài/ông" nào | **SỔ sai** - giọng đúng |
-| CHRISTOPHER | 8 | male | nữ | "ngài" x29, "thầy" x12 | **GIỌNG sai** - và là ca rối nhất, xem dưới |
-| AMELTON | 6 | male | nữ | "cô" x6 so với "ngài" x1 | **SỔ sai** - giọng đúng |
-| ARTHUR DOYLE | 5 | female | nam | "ngài" x1 + "ông" x2 | **SỔ sai** - giọng đúng |
-| SALA | 2 | female | nam | không danh xưng nào | **chưa rõ** - giữ trong danh sách đúc lại |
-| MAG | 1 | female | nam | không danh xưng nào | **chưa rõ** - giữ trong danh sách đúc lại |
-| LAUREN | 2 | male | nữ | "ngài" x15 | **GIỌNG sai** |
-| DONA | 1 | male (lúc thu) | nữ | không danh xưng nào | **chưa rõ** - giữ trong danh sách |
-
-Tức trong 37 câu bị gắn cờ: **23 câu** danh xưng nói SỔ mới là bên sai (HATHAWAY, AMELTON, ARTHUR DOYLE - giọng
-đang ĐÚNG, đúc lại là phá), **10 câu** là GIỌNG sai (CHRISTOPHER 8, LAUREN 2), và **4 câu** không danh xưng nào nên
-chưa phán xử được (SALA, MAG, DONA). Ba cái tên "sổ sai" đã ghim lại bằng `cli cast --gender` ngay giữa lô 10 (dữ
-liệu, không phải mã; nhịp tim pipeline không hụt giây nào) nên nhãn nay thuận với giọng - và **không phải đúc lại
-gì cả**. `--recast` nay tự lọc: **13 chương -> 7 chương** (5 chắc + 2 chưa phán xử được). Chưa phán xử được thì
-GIỮ LẠI chứ không bỏ: một danh sách rỗng im lặng nói "không có việc gì" trong khi có.
-
-**CHRISTOPHER là ca rối nhất và CHƯA sửa được** - đọc lịch sử giọng của anh ta thì thấy đúng cái bẫy IVAN, nhưng
-nặng hơn:
-
-    chương 094        age=unknown  ngoc_linh_f107_p+02   3 câu   <- giọng trẻ/nữ
-    chương 095-097    age=unknown  thanh_binh_f090_p-04  5 câu   <- giọng nam
-    chương 109-149    age=unknown  thai_son / thanh_binh 22 câu  <- giọng nam
-    chương 284-296    age=CHILD    ngoc_linh_f107_p+02   31 câu  <- luật trẻ con, có chủ ý
-    chương 305-306    age=unknown  ngoc_linh_f107_p+02   5 câu   <- giọng trẻ NẰM LẠI sau khi hết `child`
-
-Năm cách đọc cho một cái tên. **Đã đọc truyện và phân xử xong (20-09 13:3x): MỘT người, và là người lớn tuổi.**
-Ông là chủ tịch Hiệp hội Nhạc sĩ - "ngài Chủ tịch Christopher", "bậc thầy Christopher", "bậc tiền bối", đã có
-"buổi hòa nhạc cuối cùng trong sự nghiệp" (chương 109) rồi chuyển sang chủ tịch danh dự (chương 284). Không có
-Christopher trẻ con nào; nhãn `age=child` ở 284-296 là model gán sai cho một ông già.
-
-Đã ghim `cli cast --character CHRISTOPHER --gender male --age elderly`. Không cần bản vá nào: luật
-`_drop_pins_that_contradict_a_person` trong `character_registry.py` đã bỏ giọng ghim khi nó trái với thứ NGƯỜI đã
-ghim (trừ `age=child`, và nay age đã là `elderly`), nên giọng `ngoc_linh_f107_p+02` sẽ bị bỏ và ông được cấp lại
-giọng nam lớn tuổi ở lượt phân vai kế. 39 câu ĐÃ THU vẫn giữ giọng cũ cho tới một lượt đúc lại thật.
-
-Bài học về công cụ: cái thiếu không phải một luật mới mà là **một ghim của người nghe**, và báo cáo này chính là
-thứ chỉ ra ai cần được ghim. Chạy nó sau mỗi vài lô.
-
-## Trục TUỔI: soát nhãn `age=child` bằng văn bản (thêm 20-09 14:0x)
-
-Báo cáo nay có thêm một mục. Vì sao nó phải có: **tuổi chọn HỌ GIỌNG** (trẻ con đọc bằng preset nữ kéo cao), mà
-đáp án chuẩn chấm bảy trục và **tuổi không có trong đó** - nên một nhãn tuổi sai không có thước nào bắt, ngoài chỗ
-này. Đo trên cuốn 2: bốn tên từng mang `age=child`, và ba trong bốn là SAI:
-
-| tên | câu | danh xưng người lớn trong nguồn | chữ trẻ con | phán xử |
-|---|---|---|---|---|
-| CHRISTOPHER | 31 | ngài 29, thầy 12, chủ tịch 6, ông 3 | 0 | **sai** - chủ tịch Hiệp hội Nhạc sĩ, đã ghim `elderly` |
-| KAELYN | 23 | phu nhân 3 | 2 | **sai** - "vợ của quản gia", "thưa phu nhân"; đã ghim `adult` |
-| LUCIEN | 11 | ngài 88, thầy 2, giáo sư 2 | 39 | **sai** nhưng VÔ HẠI: giọng anh ta đã ghim từ trước nên nhãn không đổi được giọng nào |
-| SPRINT | 6 | ngài 1 | 3 | chưa rõ - để lại |
-
-Hai người bị đọc bằng giọng trẻ con **54 câu** vì một nhãn tuổi. Cả hai đã ghim bằng `cli cast --gender ... --age ...`
-giữa lô 10, và `_drop_pins_that_contradict_a_person` sẽ bỏ giọng ghim trái ghim của người nghe ở lượt phân vai kế.
-
-Chốt đọc bảng này: **danh xưng + tên là tín hiệu mạnh, chữ trẻ con quanh tên là tín hiệu yếu** - y như trục giới
-tính. Chữ quanh tên nhiễm cả người khác cùng cảnh: hai chữ "trẻ con" cạnh KAELYN nói về Lena, cô em họ bà ấy tới
-đón, chứ không nói về bà.
-
-Con số thật: **IVAN**, `male`, `age=unknown`, 17 câu ở chương 062 đọc bằng `ngoc_linh_f107_p+02`
-— giọng nữ kéo cao dành cho trẻ con. Đường đi của lỗi ấy, đọc từ dữ liệu:
-
-    lô 3, chương 072   registry nói `age=child`  (mọi `segments.age` của anh ta: `unknown`)
-    lô 3, chương 062   `age=unknown`, nhưng giọng ghim đã là giọng trẻ con -> 17 câu giọng nữ
-    lô 3, chương 060   `age=unknown`, 3 câu, `thai_son_f100_p+00` — giọng nam, đúng
-    lô 4               `age=unknown`, `locked_voice_key=ngoc_linh_f107_p+02` — port mang theo
-
-Thoại của IVAN đọc như một thanh niên hay lắp: *"T-Tôi tên là Ivan,"*, *"cậu đã m-mượn một ít
-t-tiền của bọn tôi…"*, *"Khỏe không, người anh em?"*. Một lần phân loại sai `child` ở lô 3 đã
-theo anh ta sang mọi lô sau, vì `port_casting` mang `locked_voice_key` đi cùng danh tính — đúng
-cơ chế giữ nhất quán, và nó giữ nguyên cả cái sai.
-
-**ĐÃ CÓ cách sửa** (đoạn này viết lại 20-09 13:4x; bản cũ ghi "chưa có" và "không có `--age`" - sai
-từ lúc `--age` được thêm, và một câu lỗi thời thì chặn đúng người định đi sửa). Nay:
-
-    cli cast <project> --character IVAN --gender male --age young
-
-ghim được CẢ tuổi, và `_drop_pins_that_contradict_a_person` (`character_registry.py`) tự bỏ giọng ghim
-khi nó trái với thứ người nghe đã ghim - trừ `age=child`, đúng chỗ luật giọng trẻ con cần. Nên thứ tự
-đúng vẫn là **ghim trước, đúc lại sau**: đúc lại mà port vẫn mang giọng cũ thì chỉ tốn GPU.
-
-IVAN thuộc **cuốn 1** (đang dừng ở 253/478), nên ghim cho nó chỉ có nghĩa khi cuốn 1 chạy lại - lúc ấy
-`source scripts/book1.env` rồi ghim vào project của cuốn 1, không phải project cuốn 2.
+Khoá giọng là engine@version/preset, không thang biến thể hay ngoại lệ tuổi.
+Bằng chứng danh xưng và nhãn tuổi vẫn được báo riêng để người đọc phân xử sổ nhân vật.
+Sách chỉ được mở đọc; không tự đổi giọng hay ghi lại bản thu.
 """
 from __future__ import annotations
 
@@ -120,12 +12,11 @@ import json
 import re
 import sqlite3
 import sys
-import unicodedata
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from abook.voice_catalog import VIENEU_PRESETS  # noqa: E402
+from abook.voice_catalog import VIENEU_PRESETS, engine_voice  # noqa: E402
 from scripts.name_marks import fold_dropped_marks  # noqa: E402
 
 try:
@@ -154,27 +45,17 @@ def _say(line: str) -> None:
         sys.stdout.buffer.write(line.encode("utf-8", "replace") + b"\n")
 
 
-def _slug(name: str) -> str:
-    plain = unicodedata.normalize("NFD", str(name))
-    plain = "".join(ch for ch in plain if not unicodedata.combining(ch))
-    return "_".join(plain.replace("Đ", "D").replace("đ", "d").lower().split())
-
-
-PRESET_GENDER: dict[str, str] = {_slug(p["name"]): str(p["gender"]) for p in VIENEU_PRESETS}
-
-
 def preset_gender(voice_key: str) -> str | None:
-    """Phái của preset đứng sau một `voice_key`, hoặc None nếu không tra được.
-
-    `voice_key` là `preset_<slug>_f<formant>_p<pitch>`; so tiền tố dài trước để `thanh_binh`
-    không bị `thanh` (nếu có ngày thêm preset ấy) nhận nhầm.
-    """
-    key = str(voice_key)
-    key = key[len("preset_") :] if key.startswith("preset_") else key
-    for slug, gender in sorted(PRESET_GENDER.items(), key=lambda kv: -len(kv[0])):
-        if key.startswith(slug):
-            return gender
-    return None
+    """Tra đúng tên preset trong khoá engine@version/preset; không đoán tiền tố."""
+    head, separator, name = str(voice_key).partition('/')
+    engine, marker, version = head.partition('@')
+    if not separator or not marker or not version or '/' in name:
+        return None
+    if engine == 'vieneu':
+        preset = next((p for p in VIENEU_PRESETS if p['name'] == name), None)
+    else:
+        preset = engine_voice(name, engine)
+    return str(preset['gender']) if preset is not None else None
 
 
 def read_rows(project: Path) -> list[dict]:
@@ -232,16 +113,11 @@ def fold_names(rows: list[dict]) -> list[dict]:
 
 
 def wrong_gender(rows: list[dict]) -> list[dict]:
-    """Dòng có giọng khác phái mà **luật giọng trẻ con không giải thích**.
-
-    `age == "child"` được miễn: đó là cách dự án đọc trẻ con, có đo và có xếp hạng của người
-    nghe (`voice_catalog`). Phái `unknown` cũng được miễn - không biết thì không kết tội.
-    """
+    """Dòng có giọng khác phái; mọi tuổi cùng luật, unknown không bị kết tội."""
     return [
         r
         for r in rows
         if r["gender"] in ("male", "female")
-        and r["age"] != "child"
         and preset_gender(r["voice"]) is not None
         and preset_gender(r["voice"]) != r["gender"]
     ]

@@ -108,8 +108,8 @@ def test_the_lost_line_is_no_longer_called_too_fast() -> None:
     assert budget == pytest.approx(1.296), "ngân sách chạm trần MAX_PAUSE_FRACTION"
     assert charged == pytest.approx(30.09, rel=0.001), "con số đã kết tội bản thu"
     assert heard == pytest.approx(15.29, rel=0.001), "nhịp thật, giữa dải 12,5-24,5"
-    assert pace_is_outlier(charged, syllables, "normal", NORMAL), "thước cũ vẫn kết tội"
-    assert not pace_is_outlier(charged, syllables, "normal", NORMAL, fast_rate=heard)
+    assert pace_is_outlier(charged, syllables, NORMAL), "thước cũ vẫn kết tội"
+    assert not pace_is_outlier(charged, syllables, NORMAL, fast_rate=heard)
 
 
 def test_a_take_that_really_is_rushed_is_still_rejected() -> None:
@@ -122,7 +122,7 @@ def test_a_take_that_really_is_rushed_is_still_rejected() -> None:
     syllables = spoken_syllables(LOST_LINE) / max(duration - budget, MIN_SPEECH_SECONDS)
 
     assert heard > float(NORMAL[1]), heard
-    assert pace_is_outlier(charged, syllables, "normal", NORMAL, fast_rate=heard)
+    assert pace_is_outlier(charged, syllables, NORMAL, fast_rate=heard)
 
 
 def test_with_no_silence_at_all_the_rate_is_characters_over_duration() -> None:
@@ -139,9 +139,9 @@ def test_with_no_silence_at_all_the_rate_is_characters_over_duration() -> None:
 
 def test_the_second_ruler_can_only_remove_a_verdict() -> None:
     """Thước mới không được thêm một lời kết tội nào - `fast_rate` luôn <= `rate`."""
-    assert not pace_is_outlier(30.0, 7.0, "normal", NORMAL, fast_rate=20.0)
-    assert pace_is_outlier(30.0, 7.0, "normal", NORMAL, fast_rate=26.0)
-    assert pace_is_outlier(30.0, 7.0, "normal", NORMAL)
+    assert not pace_is_outlier(30.0, 7.0, NORMAL, fast_rate=20.0)
+    assert pace_is_outlier(30.0, 7.0, NORMAL, fast_rate=26.0)
+    assert pace_is_outlier(30.0, 7.0, NORMAL)
 
 
 def test_the_slow_side_keeps_the_old_ruler() -> None:
@@ -158,7 +158,7 @@ def test_the_slow_side_keeps_the_old_ruler() -> None:
 
     assert charged == pytest.approx(13.75, rel=0.001)
     assert heard < float(NORMAL[0]), "nhịp với khoảng lặng thật nằm dưới sàn"
-    assert not pace_is_outlier(charged, syllables, "normal", NORMAL, fast_rate=heard)
+    assert not pace_is_outlier(charged, syllables, NORMAL, fast_rate=heard)
 
 
 def test_the_gate_reads_the_measured_silence_from_the_waveform() -> None:

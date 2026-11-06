@@ -621,8 +621,8 @@ def seed_casting(source: sqlite3.Connection, target: ProjectDB, folded_source: s
             "preset_name": profile["preset_name"],
             "description": profile["description"],
             "seed": profile["seed"],
-            "pitch_semitones": profile["pitch_semitones"],
-            "formant_ratio": profile["formant_ratio"],
+
+
             "status": "ready",
         })
         target.set_locked_character_voice(name, voice_key)

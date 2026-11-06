@@ -170,7 +170,7 @@ class StudioWorkScreenTest {
 
     @Test fun theCastListsTheNarratorAndTheCharactersAndATapOpensTheirVoices() {
         source.cast = Cast(
-            CastNarrator("Giọng A", 3, 10.0, VoiceProfile("k", "p", "Giọng A", ""), null, 0),
+            CastNarrator("Giọng A", 3, 10.0, VoiceProfile("k", "p", "Giọng A"), null, 0),
             listOf(castMember("kati", "Kati")), listOf(castMember("lính", "Lính gác")), emptyList(),
         )
         source.voiceChoicesFor["kati"] = voiceChoices("kati", "female", listOf(voiceEntry("v1", "Ngọc Huyền", gender = "female")))

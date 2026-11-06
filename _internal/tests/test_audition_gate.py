@@ -12,7 +12,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import os  # noqa: E402
 
-from abook.voice_catalog import VOCAL_TRACT_MAX_CM, VOCAL_TRACT_MIN_CM  # noqa: E402
 
 # `audition_presets` ép offline NGAY KHI NẠP (có lý do: SDK VieNeu mới từng tự tải `main` và dời
 # `refs/main` của cache). Nạp nó trong bộ test thì hai biến ấy rò sang mọi bài chạy sau - và ranh
@@ -79,11 +78,6 @@ def test_a_rejection_beside_an_unresolved_margin_still_rejects() -> None:
     assert result["verdict"] == "khong"
     assert result["reasons"][0] == "WER te hon gioi te nhat trong pool"
     assert any("do them cau roi phan" in reason for reason in result["reasons"])
-
-
-def test_a_vocal_tract_outside_the_formant_model_rejects() -> None:
-    for tract in (VOCAL_TRACT_MIN_CM - 0.5, VOCAL_TRACT_MAX_CM + 0.5, float("nan")):
-        assert judge(measured(vocal_tract_cm=tract), WORST)["verdict"] == "khong"
 
 
 def test_an_empty_pool_leaves_nothing_to_compare_against() -> None:

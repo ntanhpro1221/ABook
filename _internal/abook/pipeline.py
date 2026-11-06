@@ -65,7 +65,6 @@ from .asr_contract import (
     LOCKED_NAME_ANCHOR_UNMATCHED_STATUSES,
 )
 from .character_registry import build_registry_and_cast
-from .chapter_loudness import chapter_level_plan, level_source_signature
 from .database import _asr_only_failure_codes
 from .database import (
     GENERATION_STRATEGY_DIRECT,
@@ -100,7 +99,6 @@ from .listener_overrides import (
 )
 from .models import BookStatus, ChapterStatus, ProjectPaths, ResourceLevel, SegmentStatus
 from .notifier import WindowsNotifier
-from .expression import narrative_break_ms, shape_segment
 from .perceptual_qa import (
     DEFAULT_PERCEPTUAL_WORKER_THREADS,
     PERCEPTUAL_INCONCLUSIVE,
@@ -112,7 +110,6 @@ from .perceptual_qa import (
     UTMOSNaturalnessVerifier,
 )
 from .perceptual_contract import (
-    PERCEPTUAL_BASELINE_PITCH_SEMITONES,
     NATURALNESS_IMPROVEMENT_REQUIREMENT,
     NATURALNESS_REPAIR_ACTION,
     PERCEPTUAL_NATURALNESS_REVIEW_CODE,
@@ -141,7 +138,6 @@ from .quality_policy import (
 )
 from .tts import (
     DELIVERY_CLARITY,
-    apply_voice_variant,
     DELIVERY_PRIMARY,
     GENERATION_CEILING_METRIC,
     GENERATION_CEILING_WARNING,
@@ -172,8 +168,6 @@ CRITICAL_RAM_RECOVERY_WAIT_SECONDS = 2.0
 CRITICAL_RAM_WAIT_TIMEOUT_SECONDS = 1800.0
 CRITICAL_RAM_WAIT_POLL_SECONDS = 15.0
 CRITICAL_RAM_WAIT_LOG_SECONDS = 120.0
-PACE_BAND_RELAXED_METRIC = "pace_band_relaxed"
-PACE_BAND_RELAX_ATTEMPTS = 4
 """Four takes at the relaxed band, not the full budget.
 
 The seed does not depend on pace, so these replay the same takes the direct attempts already
@@ -182,7 +176,6 @@ it, the ones after will not either for a different reason - they are the same au
 so a doomed segment cannot spend the whole raised max_retries twice.
 """
 
-PACE_BAND_RELAXED_WARNING = "TTS_PACE_BAND_RELAXED"
 
 HIGH_QUALITY_ALLOWED_SEGMENT_WARNINGS = frozenset(
     {
@@ -222,7 +215,6 @@ MACHINE_ACCEPTABLE_SEGMENT_WARNINGS = frozenset(
         ASR_UNVERIFIABLE_SHORT_TEXT,
         ASR_TRANSCRIPT_TIMELINE_IMPOSSIBLE,
         ASR_TRANSCRIPT_RATE_IMPOSSIBLE,
-        PACE_BAND_RELAXED_WARNING,
     }
 )
 """Mã cảnh báo mà **không phép kiểm nào nói bản thu HỎNG**, nên máy được phép tự cho qua.
@@ -243,21 +235,6 @@ Cố ý **không** có ở đây: `PERCEPTUAL_NATURALNESS_REVIEW` (một máy ch
 ASR), `TTS_PACE_OUTLIER` (đo trên chính sóng âm), `SEGMENT_FAILED` (không có bản thu để
 ship), và `TTS_GENERATION_CEILING_REACHED` (bộ sinh tự khai nó chạy hết khung).
 
-`TTS_PACE_BAND_RELAXED` là mã duy nhất ở đây **không** thuộc họ ASR, và nó buộc phải phát
-biểu lại nguyên tắc cho chính xác. Nguyên tắc **không** phải "chỉ đè lên ASR" mà là: **máy
-chỉ được đè lên một phép kiểm không nói rằng bản thu HỎNG.**
-
-Khác biệt ấy là thật. `TTS_PACE_OUTLIER` nghĩa là bản thu nằm ngoài **mọi** băng nhịp — một
-khuyết tật. `TTS_PACE_BAND_RELAXED` nghĩa là bản thu nằm **trong** băng `normal` nhưng ngoài
-băng mà phân tích đã xin: bản thu tốt, chỉ là diễn xuất nhạt hơn chỉ đạo. Người viết
-`_retry_in_normal_pace_band` gọi đúng tên nó: *"đánh mất một sắc thái diễn còn hơn đánh mất
-cả câu"* — một **đánh đổi**, không phải một lỗi.
-
-Và người ấy cố ý để nó chặn, với lý lẽ ghi trong test: *"một cái đánh đổi thì nên có người
-nghe trước khi nó lên sách"*. Lý lẽ ấy đúng, và nó giả định **có** một người. Chủ sách đã bỏ
-giả định ấy (2026-09-07: *"tôi không muốn phải tự nghe"*), nên cách giữ trọn cả hai là cho
-máy tự cho qua **có ghi sổ** — chứ không phải đưa vào `HIGH_QUALITY_ALLOWED_SEGMENT_WARNINGS`,
-vì làm thế là biến nó thành im lặng và vứt mất đúng cái tín hiệu người kia muốn giữ.
 """
 EDGE_FADE_SECONDS = 0.001
 EDGE_FADE_MIN_AMPLITUDE = 0.001
@@ -309,7 +286,6 @@ CHAPTER_AUDIO_PIPELINE_FAILURE_CODE = "CHAPTER_AUDIO_PIPELINE_FAILED"
 CHAPTER_QUALITY_REPAIR_ACTION = "retry_after_quality_or_policy_change"
 ACTIVE_CEILING_ENDPOINT_REPAIR_REASON = "TTS_ACTIVE_ENDPOINT_AT_FRAME_CEILING"
 ASR_CLARITY_REPAIR_ROUND_METRIC = "asr_clarity_repair_round"
-PITCH_VARIANT_SKIPPED_WARNING = "TTS_PITCH_VARIANT_SKIPPED"
 QUALITY_VERDICT_REPAIR = "repair"
 # Một cái tên cho lời của phép kiểm chuỗi nói, vì hai chỗ khác phải NHẬN RA nó: `_spoken_text_drifted`
 # ở dưới, và `scripts/resync_spoken_text.py`. Một bản sao chuỗi ký tự ở mỗi chỗ là ba chỗ để lệch.
@@ -323,10 +299,8 @@ TTS_SIGNAL_PROVENANCE_FIELDS = (
     "spoken_text_sha256",
     "pronunciation_delivery_variant",
     "voice_profile_id",
-    "pitch_semitones",
-    "effective_pitch_semitones",
-    "pitch_variant_skipped",
-    "pitch_variant_mixed",
+
+
     GENERATION_CEILING_METRIC,
     GENERATION_ENDPOINT_ACTIVE_METRIC,
     "split_checkpoint_seed",
@@ -774,167 +748,24 @@ class BookPipeline:
             self.log(f"Đã chia {chapter['title']} thành {len(rows):,} segment và checkpoint vào SQLite.")
             self._progress("Chuẩn bị và chia văn bản", index, len(chapters))
 
-    @staticmethod
-    def _delivery_context(row: Any) -> dict[str, Any]:
-        """The few fields the pause rules read, lifted out of a database row."""
-        return {
-            "kind": str(row["kind"] or "narration"),
-            "emotion": str(row["emotion"] or "neutral"),
-            "intensity": int(row["intensity"] or 0),
-            "text": str(row["text"] or ""),
-            "scene_break": bool(row["scene_break"]),
-        }
-
     def _chapter_delivery_wavs(
-        self,
-        chapter: Any,
-        rows: list[Any],
+        self, chapter: Any, rows: list[Any],
     ) -> list[tuple[Path, int]]:
-        """Apply each segment's locked voice variant on the way into the chapter.
-
-        The verified segment WAV is never touched. Every gate graded the raw take, and
-        the variant is deterministic post-processing that cannot change a single word, so
-        grading its output would only measure the transform: the WORLD round trip costs
-        about 0.27 MOS and 0.06 WER flat, whether it shifts by six semitones or by
-        nothing at all. Keeping it out here is what stops that tax from failing segments
-        whose audio is fine.
-        """
-        profiles = {
-            int(profile["id"]): profile for profile in self.db.list_voice_profiles()
-        }
+        """Bản giao chỉ vuốt mép, giữ gain preset và khoảng nghỉ cấu trúc."""
         delivery_root = self.paths.work / "delivery" / f"chapter_{int(chapter['chapter_index']):05d}"
-        rendered: list[tuple[Path, int]] = []
-        transformed = 0
-        faded_edges = 0
-        ordered = list(rows)
-        pauses = [narrative_break_ms(int(row['break_ms']), self._delivery_context(row),
-            self._delivery_context(ordered[i-1]) if i else None,
-            self._delivery_context(ordered[i+1]) if i+1 < len(ordered) else None)
-            for i, row in enumerate(ordered)]
-        # Vòng bù chỉ đổi gain. Giữ bản âm sắc/cảm xúc trong cùng lượt chạy để không
-        # tính lại Praat; khóa theo toàn bộ câu, hồ sơ và settings, kiểm byte trước dùng.
-        base_fields = ('wav_path', 'wav_sha256', 'seq', 'voice_profile_id', 'kind',
-                       'emotion', 'intensity', 'text', 'scene_break', 'break_ms')
-        used_profiles = {int(r['voice_profile_id'] or 0) for r in ordered}
-        base_signature = hashlib.sha256(json.dumps(
-            [[{k: dict(r).get(k) for k in base_fields} for r in ordered],
-             sorted((i, float(p['formant_ratio'])) for i, p in profiles.items() if i in used_profiles), self.settings],
-            sort_keys=True, ensure_ascii=False).encode()).hexdigest()
-        cache = getattr(self, '_delivery_base_cache', {})
-        cached = cache.get(int(chapter['id']))
-        cache_path = delivery_root/'base_cache.json'
-        if cached is None:
-            try:
-                saved = json.loads(cache_path.read_text(encoding='utf-8'))
-                if saved['sequences'] == [int(r['seq']) for r in ordered]:
-                    cached = (saved['signature'],
-                        [(Path(e['path']), int(e['pause'])) for e in saved['entries']],
-                        [(Path(e['path']), str(e['sha256'])) for e in saved['entries']])
-            except (OSError, ValueError, KeyError, TypeError, IndexError):
-                pass
-        if cached and cached[0] == base_signature and all(
-                p.is_file() and sha256_file(p) == checksum for p, checksum in cached[2]) and (
-                len(cached[1]) == len(ordered) and [pause for _, pause in cached[1]] == pauses
-                and all(p.resolve() in {Path(str(r['wav_path'])).resolve(),
-                    (delivery_root/f"{int(r['seq']):07d}.wav").resolve()} for r, (p, _) in zip(ordered, cached[1]))):
-            cache[int(chapter['id'])] = cached
-            self._delivery_base_cache = cache
-            return self._apply_book_level_gains(chapter, ordered, cached[1], profiles)
-        for index, row in enumerate(ordered):
-            source = Path(str(row["wav_path"]))
-            # The structural pause comes from punctuation; this layers the story's shape
-            # over it, so a line that carries feeling is arrived at and allowed to land.
-            break_ms = pauses[index]
-            profile = profiles.get(int(row["voice_profile_id"] or 0))
-            formant_ratio = (
-                float(profile["formant_ratio"]) if profile is not None else 1.0
-            )
-            emotion = str(row["emotion"] or "neutral")
-            intensity = int(row["intensity"] or 0)
-            kind = str(row["kind"] or "narration")
-            expressive = emotion != "neutral" and intensity > 0
-            if abs(formant_ratio - 1.0) <= 1e-6 and not expressive:
-                # Đường tắt cũ dùng thẳng file gốc. Vẫn dùng thẳng - trừ khi mép của nó đủ
-                # lớn để thành một bước nhảy sau khi master kéo mức lên. Đo trên lô 1: đúng
-                # một đoạn trong 121 rơi vào diện này.
-                probe, probe_rate = sf.read(source, dtype="float32", always_2d=False)
-                probe = np.asarray(probe, dtype=np.float32).reshape(-1)
-                if edge_amplitude(probe) <= EDGE_FADE_MIN_AMPLITUDE:
-                    rendered.append((source, break_ms))
-                    continue
+        rendered = []
+        for row in rows:
+            source = Path(str(row['wav_path']))
+            audio, rate = sf.read(source, dtype='float32', always_2d=False)
+            audio = np.asarray(audio, dtype=np.float32).reshape(-1)
+            if edge_amplitude(audio) > EDGE_FADE_MIN_AMPLITUDE:
                 delivery_root.mkdir(parents=True, exist_ok=True)
                 destination = delivery_root / f"{int(row['seq']):07d}.wav"
-                faded = fade_edges(probe.copy(), int(probe_rate))
-                temp = destination.with_suffix(".part.wav")
-                sf.write(temp, faded, int(probe_rate), subtype="PCM_16")
+                temp = destination.with_suffix('.part.wav')
+                sf.write(temp, fade_edges(audio, int(rate)), int(rate), subtype='PCM_16')
                 os.replace(temp, destination)
-                rendered.append((destination, break_ms))
-                faded_edges += 1
-                continue
-            delivery_root.mkdir(parents=True, exist_ok=True)
-            destination = delivery_root / f"{int(row['seq']):07d}.wav"
-            audio, sample_rate = sf.read(source, dtype="float32", always_2d=False)
-            # Formant only here: the register was applied once, at synthesis, and is already
-            # in the verified take. Re-applying it would deliver a pitch nobody checked.
-            shifted = apply_voice_variant(
-                np.asarray(audio, dtype=np.float32).reshape(-1),
-                int(sample_rate),
-                0,
-                formant_ratio,
-            )
-            # Expression rides the same last step as identity: after every gate, on a copy,
-            # never on the verified take. It cannot change a word, and a segment with no
-            # affect is passed through untouched.
-            shifted, _target = shape_segment(
-                shifted, int(sample_rate), emotion, intensity, kind
-            )
-            # Biến đổi âm sắc cũng có thể để lại mép không ở 0, nên vuốt ở đây luôn. Rẻ:
-            # bản sao đã được ghi ra rồi.
-            shifted = fade_edges(np.asarray(shifted, dtype=np.float32).reshape(-1), int(sample_rate))
-            temp = destination.with_suffix(".part.wav")
-            sf.write(temp, shifted, int(sample_rate), subtype="PCM_16")
-            os.replace(temp, destination)
-            rendered.append((destination, break_ms))
-            transformed += 1
-        if transformed:
-            self.log(
-                f"Áp âm sắc nhân vật cho {transformed}/{len(rows)} segment của chapter "
-                f"{chapter['chapter_index']} trước khi ghép."
-            )
-        if faded_edges:
-            self.log(
-                f"Vuốt mép {faded_edges}/{len(rows)} segment của chapter "
-                f"{chapter['chapter_index']}: mép không ở 0 thành bước nhảy ở chỗ nối "
-                "sau khi master kéo mức lên."
-            )
-        cache[int(chapter['id'])] = (base_signature, rendered, [(p, sha256_file(p)) for p, _ in rendered])
-        self._delivery_base_cache = cache
-        delivery_root.mkdir(parents=True, exist_ok=True)
-        export_json_atomic(cache_path, {'signature': base_signature,
-            'sequences': [int(r['seq']) for r in ordered],
-            'entries': [{'path': str(p), 'pause': pause, 'sha256': checksum}
-                        for (p, pause), (_, checksum) in zip(rendered, cache[int(chapter['id'])][2])]})
-        return self._apply_book_level_gains(chapter, ordered, rendered, profiles)
-
-    def _apply_book_level_gains(self, chapter: Any, ordered: list[Any],
-                               rendered: list[tuple[Path, int]], profiles: dict[int, Any]) -> list[tuple[Path, int]]:
-        """Bù mức trên bản giao, sau âm sắc/cảm xúc; WAV và bằng chứng QA gốc bất biến."""
-        from .voice_balance import voice_key_for_profile
-        delivery_root = self.paths.work / 'delivery' / f"chapter_{int(chapter['chapter_index']):05d}"
-        deltas = getattr(self, '_book_level_corrections', {}).get('voices', {})
-        if deltas:
-            adjusted = []
-            for row, (path, pause) in zip(ordered, rendered):
-                profile = profiles.get(int(row['voice_profile_id'] or 0))
-                delta = float(deltas.get(voice_key_for_profile(profile), 0)) if profile is not None else 0.0
-                if abs(delta) < 1e-6:
-                    adjusted.append((path, pause))
-                    continue
-                from .audio_io import delivery_gain_copy
-                destination = delivery_root / f"level_{int(row['seq']):07d}.wav"
-                delivery_gain_copy(path, destination, delta, self.settings)
-                adjusted.append((destination, pause))
-            rendered = adjusted
+                source = destination
+            rendered.append((source, int(row['break_ms'])))
         return rendered
 
     def _validate_chapter_source(self, chapter: Any) -> None:
@@ -950,7 +781,6 @@ class BookPipeline:
 
     def _recover(self) -> None:
         self._validate_resume_stage_fingerprints()
-        self._recover_book_level_publication()
         self.db.set_current_quality_policy(
             policy_hash=self.quality_policy_hash,
             policy_version=QUALITY_POLICY_VERSION,
@@ -966,11 +796,6 @@ class BookPipeline:
             spoken_text_drifted=self._spoken_text_drifted,
         )
         self._completed_noop = report.completed_verified
-        if self._completed_noop:
-            self._compute_chapter_levels()
-            chapters = self.db.list_chapters()
-            self._completed_noop = (self._book_level_manifest_is_current(chapters)
-                                    or all(self._chapter_level_is_current(ch) for ch in chapters))
         if (
             report.reset_in_progress
             or report.reset_missing_or_corrupt
@@ -1234,7 +1059,7 @@ class BookPipeline:
                 from .webui.bookfile import BookFileError
                 from .webui.audio_coverage import expected_source
                 levels = getattr(self, '_book_levels', None)
-                # Có thể bị ngắt sau bù mức nhưng trước đóng gói: file đang có phải mang đúng MP3,
+                # Có thể bị ngắt sau xuất MP3 nhưng trước đóng gói: file đang có phải mang đúng MP3,
                 # báo cáo và độ phủ hiện hành, không chỉ đúng tên.
                 try:
                     with BookFile(target) as existing:
@@ -1295,64 +1120,6 @@ class BookPipeline:
             # chương bị đặt lại thu lại ở vòng sau - sách không chốt hoàn tất khi còn yêu cầu đã nằm đó chưa áp.
             revisit |= self._apply_listener_overrides()
             chapters = [row for row in self.db.list_chapters() if int(row["id"]) in revisit]
-
-        # Chỉ lúc này mới biết đúng số giây và trần đỉnh của CẢ sách. Chương đã nghe được
-        # trong lúc thu được master lại nếu đích đổi; giữ WAV và mọi bằng chứng câu.
-        self._compute_chapter_levels()
-        self._level_plan_pass = True
-        for chapter in self.db.list_chapters():
-            if (chapter["status"] == ChapterStatus.COMPLETED.value and self._chapter_level(chapter)
-                    and not self._chapter_level_is_current(chapter)):
-                self._wait_pause_or_stop()
-                try:
-                    self._publish_verified_chapter(chapter)
-                except Exception as exc:  # noqa: BLE001 - chỉ lần master lại chương đã hoàn tất
-                    # Chương đã nghe được vẫn giữ nguyên khi đích chốt không master được.
-                    self.db.event('warning', 'CHAPTER_LEVEL_MASTER_FAILED',
-                        'Giữ MP3 hiện tại khi master lại theo mức sách thất bại',
-                        {'chapter_id': int(chapter['id']), 'error': str(exc)})
-
-        self._level_plan_pass = False
-
-    def _compute_chapter_levels(self) -> None:
-        rows, profiles = self.db.list_segments(), self.db.list_voice_profiles()
-        self._level_source_signature = level_source_signature(rows, profiles, self.settings)
-        corrections = {}
-        try:
-            saved = json.loads((self.paths.reports / 'book_levels.json').read_text(encoding='utf-8'))
-            if saved.get('source_signature') == self._level_source_signature:
-                corrections = saved.get('corrections', {})
-        except (OSError, ValueError, AttributeError):
-            pass
-        self._book_level_corrections = corrections
-        self._chapter_levels = chapter_level_plan(rows, profiles, self.settings, corrections)
-
-    def _chapter_level(self, chapter: Any) -> dict[str, Any]:
-        if not hasattr(self, '_chapter_levels'):
-            self._compute_chapter_levels()
-        return self._chapter_levels.get(int(chapter['id']), {})
-
-    def _chapter_level_is_current(self, chapter: Any) -> bool:
-        artifact = self.db.artifact_by_key(f"chapter_mp3:{chapter['chapter_index']}")
-        if artifact is None:
-            return False
-        try:
-            metadata = json.loads(str(artifact["metadata_json"] or "{}"))
-        except (ValueError, TypeError):
-            return False
-        plan = self._chapter_level(chapter)
-        return (bool(plan) and isinstance(metadata, dict)
-                and metadata.get("chapter_level", {}).get("signature") == plan["signature"])
-
-    def _book_level_manifest_is_current(self, chapters: list[Any]) -> bool:
-        from .book_levels import BALANCE_ALGORITHM
-        try:
-            state = json.loads((self.paths.reports/'book_levels.json').read_text(encoding='utf-8'))
-            return (state.get('algorithm') == BALANCE_ALGORITHM and state.get('complete') is True
-                    and state.get('source_signature') == self._level_source_signature
-                    and state.get('audio_sha256') == {str(ch['id']): sha256_file(Path(str(ch['output_mp3']))) for ch in chapters})
-        except (OSError, ValueError, AttributeError, KeyError):
-            return False
 
     def _apply_listener_overrides(self) -> set[int]:
         """Áp những gì người nghe sửa trong Studio (`overrides.json`, xem listener_overrides.py): cách đọc tên, ai nói câu
@@ -1618,10 +1385,6 @@ class BookPipeline:
             warnings.append("TTS_SPLIT_RECOVERY")
         if signal.get("pace_outlier"):
             warnings.append("TTS_PACE_OUTLIER")
-        if signal.get(PACE_BAND_RELAXED_METRIC):
-            warnings.append(PACE_BAND_RELAXED_WARNING)
-        if signal.get("pitch_variant_skipped") or signal.get("pitch_variant_mixed"):
-            warnings.append(PITCH_VARIANT_SKIPPED_WARNING)
         if signal.get(GENERATION_CEILING_METRIC):
             warnings.append(GENERATION_CEILING_WARNING)
         return tuple(warnings)
@@ -1682,21 +1445,8 @@ class BookPipeline:
             if callable(voice_provider)
             else {
                 "voice_profile_id": item.get("voice_profile_id"),
-                "pitch_semitones": None,
+
             }
-        )
-        warning_codes = set(str(item.get("warning_code") or "").split("|"))
-        pitch_variant_skipped = bool(
-            signal.get("pitch_variant_skipped", False)
-            or PITCH_VARIANT_SKIPPED_WARNING in warning_codes
-        )
-        configured_pitch = signal.get(
-            "pitch_semitones",
-            locked_voice.get("pitch_semitones"),
-        )
-        effective_pitch = signal.get(
-            "effective_pitch_semitones",
-            0 if pitch_variant_skipped else configured_pitch,
         )
         spoken_text_sha256 = str(signal.get("spoken_text_sha256") or "")
         pronunciation_delivery_variant = str(
@@ -1760,10 +1510,8 @@ class BookPipeline:
                 "voice_profile_id",
                 locked_voice.get("voice_profile_id"),
             ),
-            "pitch_semitones": configured_pitch,
-            "effective_pitch_semitones": effective_pitch,
-            "pitch_variant_skipped": pitch_variant_skipped,
-            "pitch_variant_mixed": bool(signal.get("pitch_variant_mixed", False)),
+
+
             GENERATION_CEILING_METRIC: signal.get(GENERATION_CEILING_METRIC),
             GENERATION_ENDPOINT_ACTIVE_METRIC: signal.get(
                 GENERATION_ENDPOINT_ACTIVE_METRIC
@@ -2009,7 +1757,7 @@ class BookPipeline:
             ),
         )
 
-    def _effective_perceptual_profile(self, row: Any) -> tuple[Any, int]:
+    def _effective_perceptual_profile(self, row: Any) -> Any:
         # A thought is read in the thinker's own voice, so its baseline is that voice's
         # preview - taking the narrator's would compare a character against a reference
         # that never spoke the line. Only an unattributed thought reads as the narrator.
@@ -2018,9 +1766,8 @@ class BookPipeline:
         else:
             profile = self.db.voice_profile(int(row["voice_profile_id"]))
         # The graded artifact is always the raw take, so the baseline is the preset's own
-        # untouched preview. Named in perceptual_contract because the database validator
-        # has to agree with this choice and used to contradict it.
-        return profile, PERCEPTUAL_BASELINE_PITCH_SEMITONES
+        # untouched preview.
+        return profile
 
     def _evaluate_perceptual_audio_item(
         self,
@@ -2036,12 +1783,12 @@ class BookPipeline:
             require_gpu=perceptual_uses_gpu,
             require_cpu_io=not perceptual_uses_gpu,
         )
-        profile, baseline_pitch_semitones = self._effective_perceptual_profile(row)
+        profile = self._effective_perceptual_profile(row)
         preset_name = str(profile["preset_name"] or "").strip()
         result = self.perceptual_qa.verify(
             Path(str(row["wav_path"])),
             preset_name,
-            pitch_semitones=baseline_pitch_semitones,
+
             prefetched_score=prefetched_score,
         )
         perceptual_verdict = str(result.get("verdict", PERCEPTUAL_INCONCLUSIVE))
@@ -2052,7 +1799,7 @@ class BookPipeline:
         )
         return {
             **result,
-            "baseline_pitch_semitones": baseline_pitch_semitones,
+
             "policy_exemption": "short_audio" if short_audio_exemption else None,
         }
 
@@ -2096,7 +1843,6 @@ class BookPipeline:
         candidate_signal = json.loads(str(candidate["signal_json"] or "{}"))
         if not isinstance(candidate_signal, dict):
             raise RuntimeError("candidate perceptual signal provenance is invalid")
-        baseline_pitch_semitones = 0
         try:
             result = self._evaluate_perceptual_audio_item(
                 candidate_item,
@@ -2117,17 +1863,11 @@ class BookPipeline:
                 if isinstance(exc, PerceptualQAUnavailable)
                 else "PERCEPTUAL_EVIDENCE_ERROR"
             )
-            try:
-                _profile, baseline_pitch_semitones = self._effective_perceptual_profile(
-                    candidate_item
-                )
-            except (KeyError, TypeError, ValueError):
-                baseline_pitch_semitones = 0
             result = {
                 "verdict": PERCEPTUAL_INCONCLUSIVE,
                 "reason": reason,
                 "review_required": True,
-                "baseline_pitch_semitones": baseline_pitch_semitones,
+
                 "candidate_repair_requirement": candidate_repair_requirement,
                 "error": str(exc),
             }
@@ -2443,7 +2183,6 @@ class BookPipeline:
                     failure_codes=("PERCEPTUAL_ASR_EVIDENCE_MISSING",),
                     review_required=True,
                 )
-            baseline_pitch_semitones = 0
             try:
                 result = self._evaluate_perceptual_audio_item(
                     row,
@@ -2451,9 +2190,6 @@ class BookPipeline:
                         f"UTMOSv2 chapter {chapter['chapter_index']} segment {row['seq']}"
                     ),
                     prefetched_score=prefetched_scores.get(str(row["wav_sha256"] or "")),
-                )
-                baseline_pitch_semitones = int(
-                    result.get("baseline_pitch_semitones", 0)
                 )
             except (PerceptualQAUnavailable, KeyError, TypeError, ValueError) as exc:
                 reason = (
@@ -2465,7 +2201,7 @@ class BookPipeline:
                     "verdict": PERCEPTUAL_INCONCLUSIVE,
                     "reason": reason,
                     "review_required": True,
-                    "baseline_pitch_semitones": baseline_pitch_semitones,
+
                     "error": str(exc),
                 }
                 self._record_segment_perceptual_evidence(
@@ -3329,16 +3065,14 @@ class BookPipeline:
                 )
 
     def _check_finished_book_levels(self, chapters: list[Any]) -> None:
-        """Đo–bù trên MP3 cuối, tối đa hai vòng; chỉ nhận vòng tốt hơn, lỗi chỉ cảnh báo."""
-        from .book_levels import balance_finished_book
+        """Đo MP3 cuối một lần, chỉ cảnh báo; không sửa audio hay gọi model."""
+        from .book_levels import METER, measure_finished_book
         from .webui.store import chapter_script
         from .voice_balance import voice_key_for_profile
-        import shutil
-        import tempfile
+        import time
 
-        path = self.paths.reports / 'book_levels.json'
+        path = self.paths.reports / 'levelQa.json'
         try:
-            self._compute_chapter_levels()
             profiles = {int(p['id']): voice_key_for_profile(p) for p in self.db.list_voice_profiles()}
             rows = {int(r['id']): r for r in self.db.list_segments()}
             inputs = []
@@ -3350,135 +3084,35 @@ class BookPipeline:
                 for segment in script['segments']:
                     row = rows[int(segment['id'])]
                     segments.append({'voice': profiles.get(int(row['voice_profile_id'] or 0)),
-                        'stable_id': row['stable_id'], 'start': segment['start'], 'end': segment['end'],
-                        'volume': row['volume'] or 'normal', 'row_id': int(row['id'])})
+                        'stable_id': row['stable_id'], 'start': segment['start'], 'end': segment['end']})
                 inputs.append({'id': int(chapter['id']), 'file': Path(str(chapter['output_mp3'])), 'segments': segments})
-            previous = None
+            identity = {str(ch['id']): sha256_file(ch['file']) for ch in inputs}
+            sampling = hashlib.sha256(json.dumps([ch['segments'] for ch in inputs],
+                sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+            saved = {}
             try:
-                saved = json.loads(path.read_text(encoding='utf-8'))
-                if saved.get('source_signature') == self._level_source_signature:
-                    previous = saved
+                saved = json.loads(path.read_text(encoding='utf8'))
             except (OSError, ValueError):
                 pass
-
-            def checkpoint(state):
-                state['source_signature'] = self._level_source_signature
-                export_json_atomic(path, state)
-                self._recover_book_level_publication()
-
-            # Mỗi vòng ở thư mục riêng: master/meter hỏng không đụng MP3 đang nghe.
-            self.paths.work.mkdir(parents=True, exist_ok=True)
-            with tempfile.TemporaryDirectory(prefix='book_levels_', dir=self.paths.work) as temporary:
-                def render(corrections, round_no):
-                    self._book_level_corrections = corrections
-                    plan = chapter_level_plan(list(rows.values()), self.db.list_voice_profiles(), self.settings, corrections)
-                    trial, receipt = [], []
-                    for chapter, original in zip(chapters, inputs):
-                        chapter_id = int(chapter['id'])
-                        old = self._chapter_level(chapter)
-                        if old.get('signature') == plan.get(chapter_id, {}).get('signature'):
-                            trial.append(original)
-                            continue
-                        self._wait_pause_or_stop()
-                        rr = [r for r in rows.values() if int(r['chapter_id']) == chapter_id]
-                        if (not self.db.chapter_is_publishable(chapter_id)
-                                or self._high_quality_blocking_segment_warnings(rr)
-                                or not self._chapter_has_current_segment_audio_qa(chapter_id)):
-                            raise ValueError('Chương thiếu QA hiện hành, giữ audio đang nghe')
-                        self._validate_chapter_source(chapter)
-                        wavs = self._chapter_delivery_wavs(chapter, rr)
-                        self._resource_gate(f"FFmpeg bù mức chapter {chapter['chapter_index']}", require_cpu_io=True)
-                        destination = Path(temporary)/str(round_no)/Path(str(chapter['output_mp3'])).name
-                        assembly = assemble_chapter_atomic_with_metrics(wavs, destination, self.settings,
-                            title=str(chapter['title']), book_title=str(self.db.book()['title']),
-                            track=int(chapter['chapter_index']), work_dir=Path(temporary)/'silence'/str(chapter_id),
-                            target_lufs=plan[chapter_id]['target_lufs'])
-                        if len(assembly.timeline) != len(rr):
-                            raise ValueError('Mốc câu không khớp bản master mới')
-                        spans = {int(r['id']): span for r, span in zip(rr, assembly.timeline)}
-                        trial.append({**original, 'file': destination, 'segments': [
-                            {**g, 'start': spans[g['row_id']][0], 'end': spans[g['row_id']][1]}
-                            for g in original['segments']]})
-                        receipt.append((chapter, destination, assembly, plan[chapter_id], rr))
-                    return trial, receipt
-
-                def accept(receipt):
-                    backup_root = self.paths.work/'book_level_publish'
-                    backup_root.mkdir(parents=True, exist_ok=True)
-                    journal = []
-                    for chapter, source, assembly, level, rr in receipt:
-                        target = Path(str(chapter['output_mp3']))
-                        sidecar = target.with_suffix(target.suffix+'.levels.json')
-                        backup = backup_root/str(chapter['id'])
-                        shutil.copyfile(target, backup)
-                        if sidecar.exists():
-                            shutil.copyfile(sidecar, backup.with_suffix('.json'))
-                        journal.append({'target': str(target), 'backup': str(backup),
-                            'sidecar': sidecar.exists(), 'chapter_id': int(chapter['id']),
-                            'artifact': dict(self.db.artifact_by_key(f"chapter_mp3:{chapter['chapter_index']}"))})
-                    export_json_atomic(self.paths.work/'book_level_publish.json', journal)
-                    try:
-                        for chapter, source, assembly, level, rr in receipt:
-                            target = Path(str(chapter['output_mp3']))
-                            part = target.with_suffix('.levels.part.mp3')
-                            shutil.copyfile(source, part)
-                            os.replace(part, target)
-                            self._register_chapter_assembly(chapter, assembly, level, rr)
-                            self._chapter_levels[int(chapter['id'])] = level
-                    except Exception:
-                        self._recover_book_level_publication(force_rollback=True)
-                        raise
-
-                result = balance_finished_book(inputs, render=render, accept=accept,
-                                                previous=previous, checkpoint=checkpoint)
-                self._book_level_corrections = result.get('corrections', {})
-        except Exception as exc:  # noqa: BLE001 - không chặn sách đã hoàn tất
+            if (saved.get('algorithm') == 'finished_book_detector_v1' and saved.get('meter') == METER
+                    and saved.get('audio_sha256') == identity and saved.get('sampling_sha256') == sampling):
+                result = saved
+            else:
+                started = time.perf_counter()
+                result = measure_finished_book(inputs)
+                result.update(algorithm='finished_book_detector_v1', audio_sha256=identity,
+                              sampling_sha256=sampling, detector_seconds=time.perf_counter()-started)
+        except Exception as exc:  # noqa: BLE001 - phép đo không chặn sách đã hoàn tất
             result = {'verdict': 'warning', 'flags': ['BOOK_LEVEL_MEASUREMENT_FAILED'], 'error': str(exc)}
         self._book_levels = result
         try:
             export_json_atomic(path, result)
-            self.db.register_artifact(artifact_key='book_levels', kind='book_qa', path=path,
+            self.db.register_artifact(artifact_key='level_qa', kind='book_qa', path=path,
                 sha256=sha256_file(path), verified=True, metadata={'verdict': result['verdict']})
             self.db.event('info' if result['verdict'] == 'pass' else 'warning', 'BOOK_LEVEL_QA',
-                'Kiểm và bù mức nghe trên MP3 cuối', result)
-        except Exception as exc:  # noqa: BLE001 - lưu báo cáo cũng không chặn sách
+                'Kiểm mức nghe trên MP3 cuối; chỉ cảnh báo', result)
+        except Exception as exc:  # noqa: BLE001 - báo cáo lỗi cũng không chặn sách
             self.log(f'Không lưu được kiểm mức nghe của sách: {exc}')
-
-    def _recover_book_level_publication(self, *, force_rollback: bool = False) -> None:
-        """Khôi phục cả vòng nếu bị ngắt lúc công bố, trước recovery kiểm artifact."""
-        import shutil
-        journal_path = self.paths.work/'book_level_publish.json'
-        if not journal_path.exists():
-            return
-        journal = json.loads(journal_path.read_text(encoding='utf-8'))
-        try:
-            saved = json.loads((self.paths.reports/'book_levels.json').read_text(encoding='utf-8'))
-        except (OSError, ValueError):
-            saved = {}
-        committed = not force_rollback and all(
-            saved.get('audio_sha256', {}).get(str(entry['chapter_id'])) == sha256_file(Path(entry['target']))
-            for entry in journal)
-        for entry in journal:
-            target, backup = Path(entry['target']), Path(entry['backup'])
-            if not target.resolve().is_relative_to(self.paths.root.resolve()) or not backup.resolve().is_relative_to(self.paths.work.resolve()):
-                raise ValueError('Journal công bố mức sách vượt thư mục dự án')
-            if not committed:
-                part = target.with_suffix('.levels.part.mp3')
-                shutil.copyfile(backup, part)
-                os.replace(part, target)
-                sidecar = target.with_suffix(target.suffix+'.levels.json')
-                if entry['sidecar']:
-                    shutil.copyfile(backup.with_suffix('.json'), sidecar)
-                else:
-                    sidecar.unlink(missing_ok=True)
-                artifact = entry['artifact']
-                self.db.register_artifact(artifact_key=artifact['artifact_key'], kind=artifact['kind'],
-                    path=target, sha256=artifact['sha256'], verified=bool(artifact['verified']),
-                    metadata=json.loads(artifact['metadata_json'] or '{}'))
-        journal_path.unlink()
-        backup_root = self.paths.work/'book_level_publish'
-        if backup_root.resolve().is_relative_to(self.paths.work.resolve()):
-            shutil.rmtree(backup_root)
 
     def _inspect_existing_segment(self, row: Any) -> tuple[bool, dict[str, float]]:
         wav_text = str(row["wav_path"] or "")
@@ -3546,7 +3180,7 @@ class BookPipeline:
                 int(chapter["chapter_index"])
             )
             segment_quality_verified = self._chapter_has_current_segment_audio_qa(chapter_id)
-            if valid and quality_verified and segment_quality_verified and self._chapter_level_is_current(chapter):
+            if valid and quality_verified and segment_quality_verified:
                 self.log(f"Bỏ qua chapter đã hoàn tất: {chapter['title']}")
                 return
             self.log(
@@ -3713,8 +3347,6 @@ class BookPipeline:
             return
         self._validate_chapter_source(chapter)
 
-        if not getattr(self, '_level_plan_pass', False):
-            self._compute_chapter_levels()
         wavs = self._chapter_delivery_wavs(chapter, rows)
         self._resource_gate(
             f"FFmpeg chapter {chapter['chapter_index']}",
@@ -3722,7 +3354,6 @@ class BookPipeline:
         )
         assembly_label = f"Ghép và kiểm tra MP3 chapter {chapter['chapter_index']}"
         self._progress(assembly_label)
-        chapter_level = self._chapter_level(chapter)
         assembly = assemble_chapter_atomic_with_metrics(
             wavs,
             output,
@@ -3732,12 +3363,11 @@ class BookPipeline:
             track=int(chapter["chapter_index"]),
             work_dir=self.paths.work / "silence",
             retain_for_review=True,
-            target_lufs=chapter_level["target_lufs"],
         )
-        self._register_chapter_assembly(chapter, assembly, chapter_level, rows)
+        self._register_chapter_assembly(chapter, assembly, rows)
 
     def _register_chapter_assembly(self, chapter: Any, assembly: Any,
-                                   chapter_level: dict[str, Any], rows: list[Any]) -> None:
+                                   rows: list[Any]) -> None:
         chapter_id = int(chapter['id'])
         output = Path(str(chapter['output_mp3']))
         assembly_label = f"Ghép và kiểm tra MP3 chapter {chapter['chapter_index']}"
@@ -3781,7 +3411,6 @@ class BookPipeline:
                 "title": str(chapter["title"]),
                 "quality": quality_metadata,
                 "quality_metrics": quality_metrics,
-                "chapter_level": chapter_level,
             },
         )
         if assembly.quality.review_flags or assembly.quality.hard_failures:
@@ -4614,10 +4243,8 @@ class BookPipeline:
                 "spoken_text_sha256",
                 "pronunciation_delivery_variant",
                 "voice_profile_id",
-                "pitch_semitones",
-                "effective_pitch_semitones",
-                "pitch_variant_skipped",
-                "pitch_variant_mixed",
+
+
             ):
                 if field not in source_signal:
                     raise RuntimeError(
@@ -4856,20 +4483,6 @@ class BookPipeline:
                 if split_provenance:
                     first_part = split_provenance[0]
                     metrics["voice_profile_id"] = first_part.get("voice_profile_id")
-                    metrics["pitch_semitones"] = first_part.get("pitch_semitones")
-                    effective_pitches = {
-                        part.get("effective_pitch_semitones")
-                        for part in split_provenance
-                    }
-                    metrics["effective_pitch_semitones"] = (
-                        next(iter(effective_pitches))
-                        if len(effective_pitches) == 1
-                        else None
-                    )
-                    metrics["pitch_variant_mixed"] = float(len(effective_pitches) > 1)
-                    metrics["pitch_variant_skipped"] = float(
-                        any(part.get("pitch_variant_skipped") for part in split_provenance)
-                    )
                     metrics[GENERATION_CEILING_METRIC] = float(
                         any(part.get(GENERATION_CEILING_METRIC) for part in split_provenance)
                     )
@@ -5334,11 +4947,6 @@ class BookPipeline:
                         f"({metrics['chars_per_second']:.2f} chars/s) nhưng vẫn trong giới hạn an toàn; "
                         "chuyển sang Whisper kiểm tra."
                     )
-                if metrics.get("pitch_variant_skipped"):
-                    self.log(
-                        f"TTS segment {row['stable_id']} không thể áp dụng pitch đã khóa; "
-                        "giữ waveform để QA chặn xuất bản high-quality."
-                    )
                 if metrics.get(GENERATION_CEILING_METRIC):
                     self.log(
                         f"TTS segment {row['stable_id']} dùng hết ngân sách frame; "
@@ -5430,20 +5038,6 @@ class BookPipeline:
                 if split_provenance:
                     first_part = split_provenance[0]
                     metrics["voice_profile_id"] = first_part.get("voice_profile_id")
-                    metrics["pitch_semitones"] = first_part.get("pitch_semitones")
-                    effective_pitches = {
-                        part.get("effective_pitch_semitones")
-                        for part in split_provenance
-                    }
-                    metrics["effective_pitch_semitones"] = (
-                        next(iter(effective_pitches))
-                        if len(effective_pitches) == 1
-                        else None
-                    )
-                    metrics["pitch_variant_mixed"] = float(len(effective_pitches) > 1)
-                    metrics["pitch_variant_skipped"] = float(
-                        any(part.get("pitch_variant_skipped") for part in split_provenance)
-                    )
                     metrics[GENERATION_CEILING_METRIC] = float(
                         any(part.get(GENERATION_CEILING_METRIC) for part in split_provenance)
                     )
@@ -5467,19 +5061,6 @@ class BookPipeline:
             except Exception as exc:  # noqa: BLE001
                 self._retain_rejected_output(row, output, str(exc), f"{seed_salt_prefix}_split", delivery_mode, asr_repair_round)
                 last_error = f"{last_error}; split={exc}"
-
-        relaxed_error = self._retry_in_normal_pace_band(
-            row,
-            base_output,
-            delivery_mode=delivery_mode,
-            seed_salt_prefix=seed_salt_prefix,
-            repair_short_utterance=repair_short_utterance,
-            asr_repair_round=asr_repair_round,
-        )
-        if relaxed_error is None:
-            return
-        if relaxed_error:
-            last_error = f"{last_error}; {relaxed_error}"
 
         self.db.mark_failed(int(row["id"]), last_error)
         self.log(f"TTS segment {row['stable_id']} thất bại hoàn toàn: {last_error}")
@@ -5516,7 +5097,7 @@ class BookPipeline:
         """Bản tốt nhất có ít cờ tín hiệu/QA đã biết hơn, rồi ít lặp hơn; bằng nhau giữ bản trước."""
         repeated = float(metrics.get(REPEATED_UTTERANCE_METRIC, 0.0) or 0.0)
         flags = sum(bool(metrics.get(key)) for key in (
-            "pace_outlier", "pitch_variant_skipped", GENERATION_CEILING_METRIC, "signal_rejected",
+            "pace_outlier",  GENERATION_CEILING_METRIC, "signal_rejected",
         )) + int(repeated > REPEATED_UTTERANCE_THRESHOLD) + int(qa_failed)
         return flags, repeated
 
@@ -5613,7 +5194,7 @@ class BookPipeline:
             text = self.tts.spoken_text(row)
             metrics: dict[str, Any] = {
                 "duration": len(audio) / rate, "signal_rejected": True, "rejection_reason": reason,
-                "tts_delivery_mode": delivery, "pitch_variant_skipped": True,
+                "tts_delivery_mode": delivery,
                 "spoken_text_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
                 "voice_profile_id": _segment_value(row, "voice_profile_id", None),
                 "pronunciation_delivery_variant": PRONUNCIATION_DELIVERY_LOCKED,
@@ -5623,110 +5204,6 @@ class BookPipeline:
             self._keep_usable_take(row, output, checksum, metrics, self.tts.generation_seed(row, salt))
         except (OSError, RuntimeError, ValueError, KeyError, TypeError) as exc:
             self.log(f"Không giữ được WAV chưa đạt của {row['stable_id']}: {exc}")
-
-    def _retry_in_normal_pace_band(
-        self,
-        row: Any,
-        output: Path,
-        *,
-        delivery_mode: str,
-        seed_salt_prefix: str,
-        repair_short_utterance: bool,
-        asr_repair_round: int | None,
-    ) -> str | None:
-        """Last resort before the sentence is lost: read it at the `normal` pace band.
-
-        tts.pace_chars_per_second has three bands and analysis assigns one per segment.
-        `fast` raises the *lower* bound to 14.0, so a directive meaning "say this faster"
-        becomes "this take is too slow" - and alpha.43 lost c00007_s0000074 that way, with
-        four takes at 12.70, 12.26, 12.26 and 12.70 against a floor of 14.0. alpha.32 had
-        passed the identical 12.70 take when the same line was `normal`. Only the acting
-        directive changed; the voice did not.
-
-        So the same salts are replayed with the band relaxed. The seed does not depend on
-        pace, and the evidence that this works is that both runs produced exactly 12.70:
-        the take is the same, only the floor it is judged against moves.
-
-        Returns None when a take was accepted, otherwise a reason to append to the caller's
-        error. Costs nothing on the common path - a `normal` segment returns immediately.
-        """
-        pace = str(_segment_value(row, "pace", "normal"))
-        if pace == "normal":
-            return "pace_band=already normal"
-        try:
-            relaxed = {key: row[key] for key in row.keys()}
-        except AttributeError:
-            relaxed = dict(row)
-        relaxed["pace"] = "normal"
-
-        self.log(
-            f"TTS segment {row['stable_id']} không đạt nhịp ở dải '{pace}'; "
-            "thử lại ở dải 'normal' trước khi bỏ cuộc."
-        )
-        attempts = min(PACE_BAND_RELAX_ATTEMPTS, int(self.settings["tts"]["max_retries"]))
-        last: str = "pace_band=no take reached the normal floor either"
-        base_output = output
-        for attempt in range(attempts):
-            self._wait_pause_or_stop()
-            seed_salt = f"{seed_salt_prefix}_{attempt}"
-            output = base_output.with_name(base_output.stem + f".normal.{attempt}.{time.time_ns()}.wav")
-            try:
-                self.db.mark_generating(
-                    int(row["id"]),
-                    self.tts.generation_seed(row, seed_salt),
-                    delivery_mode=delivery_mode,
-                    repair_round=asr_repair_round,
-                    policy_hash=self.quality_policy_hash,
-                )
-                checksum, metrics, seed = self.tts.synthesize_atomic(
-                    relaxed,
-                    output,
-                    seed_salt=seed_salt,
-                    repair_short_utterance=repair_short_utterance,
-                    delivery_mode=delivery_mode,
-                )
-            except Exception as exc:  # noqa: BLE001
-                self._retain_rejected_output(row, output, str(exc), seed_salt, delivery_mode, asr_repair_round)
-                last = f"pace_band={exc}"
-                continue
-            metrics["tts_delivery_mode"] = delivery_mode
-            if asr_repair_round is not None:
-                metrics[ASR_CLARITY_REPAIR_ROUND_METRIC] = int(asr_repair_round)
-            if (metrics.get("pace_outlier")
-                    or float(metrics.get(REPEATED_UTTERANCE_METRIC, 0.0) or 0.0) > REPEATED_UTTERANCE_THRESHOLD):
-                try:
-                    self._keep_usable_take(row, output, checksum, metrics, seed)
-                except Exception as exc:  # noqa: BLE001
-                    self._retain_rejected_output(row, output, str(exc), seed_salt, delivery_mode, asr_repair_round)
-                    last = f"pace_band={exc}"
-                    continue
-                last = (
-                    "pace_band=still outside the normal band at "
-                    f"{metrics.get('chars_per_second', 0.0):.2f} chars/s"
-                )
-                continue
-            # The listener is told, because the delivery is not what analysis asked for.
-            # This warning is deliberately NOT in HIGH_QUALITY_ALLOWED_SEGMENT_WARNINGS:
-            # flattening a reading is a trade a person should hear before it ships. It
-            # trades "no audio at all, nothing to listen to" for "audio plus a decision",
-            # which is the strictly better of the two.
-            metrics[PACE_BAND_RELAXED_METRIC] = 1.0
-            metrics["pace_band_requested"] = pace
-            try:
-                self._keep_usable_take(row, output, checksum, metrics, seed)
-                self._accept_retained_take(row)
-            except Exception as exc:  # noqa: BLE001
-                self._retain_rejected_output(row, output, str(exc), seed_salt, delivery_mode, asr_repair_round)
-                last = f"pace_band={exc}"
-                continue
-            self._reset_tts_failure_streak()
-            self.log(
-                f"Đã cứu TTS segment {row['stable_id']} bằng cách hạ dải nhịp "
-                f"'{pace}' → 'normal' ({metrics.get('chars_per_second', 0.0):.2f} chars/s). "
-                "Sắc thái diễn xuất bị làm phẳng - đã gắn cảnh báo để người nghe quyết."
-            )
-            return None
-        return last
 
     def _synthesize_split(
         self,
@@ -5832,14 +5309,8 @@ class BookPipeline:
                             pronunciation_delivery_variant,
                         ),
                         "voice_profile_id": part_metrics.get("voice_profile_id"),
-                        "pitch_semitones": part_metrics.get("pitch_semitones"),
-                        "effective_pitch_semitones": part_metrics.get(
-                            "effective_pitch_semitones"
-                        ),
-                        "pitch_variant_skipped": part_metrics.get(
-                            "pitch_variant_skipped",
-                            0.0,
-                        ),
+
+
                         GENERATION_CEILING_METRIC: part_metrics.get(
                             GENERATION_CEILING_METRIC,
                             0.0,
@@ -7108,7 +6579,7 @@ class BookPipeline:
         book_levels = getattr(self, "_book_levels", None)
         if book_levels is None:
             try:
-                book_levels = json.loads((self.paths.reports / "book_levels.json").read_text(encoding="utf-8"))
+                book_levels = json.loads((self.paths.reports / "levelQa.json").read_text(encoding="utf-8"))
             except (OSError, ValueError):
                 pass
         segments = [dict(row) for row in self.db.list_segments()]
@@ -7366,9 +6837,7 @@ class BookPipeline:
                         "score": metrics.get("score"),
                         "baseline_score": metrics.get("baseline_score"),
                         "baseline_delta": metrics.get("baseline_delta"),
-                        "baseline_pitch_semitones": metrics.get(
-                            "baseline_pitch_semitones"
-                        ),
+
                         "duration_seconds": metrics.get("duration_seconds"),
                         "policy_exemption": metrics.get("policy_exemption"),
                         "review_required": bool(metrics.get("review_required", False)),

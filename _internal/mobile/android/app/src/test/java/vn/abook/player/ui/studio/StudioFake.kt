@@ -107,11 +107,11 @@ fun emptyReview(items: List<ReviewItem> = emptyList(), next: String? = null, pen
 
 fun castMember(name: String, display: String = name, voice: String? = "Giọng A", sampleId: Int? = null, lines: Int = 5) = CastMember(
     name = name, displayName = display, originalName = null, gender = "male", age = "", lines = lines, seconds = 10.0, recorded = lines,
-    voice = voice?.let { VoiceProfile("k", "p", it, "") }, sampleId = sampleId, firstChapter = "Chương 1", pendingVoice = null, mergedInto = null,
+    voice = voice?.let { VoiceProfile("k", "p", it) }, sampleId = sampleId, firstChapter = "Chương 1", pendingVoice = null, mergedInto = null,
 )
 
 fun voiceEntry(key: String, name: String = key, gender: String = "male", current: Boolean = false, preview: Boolean = true, engine: String = "vieneu") = VoiceEntry(
-    key = key, name = name, engine = engine, engineLabel = engine, installed = true, oneStep = true, sharedWith = emptyList(), otherUsers = 0, gender = gender,
+    key = key, name = name, engine = engine, engineLabel = engine, installed = true, sharedWith = emptyList(), otherUsers = 0, gender = gender,
     genderLabel = if (gender == "female") "Nữ" else "Nam", region = "", style = "", preview = preview, current = current, pending = false, suggested = false,
     description = "", takenBy = emptyList(), takenNote = null,
 )

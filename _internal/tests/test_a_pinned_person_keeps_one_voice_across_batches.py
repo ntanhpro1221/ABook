@@ -19,11 +19,11 @@ from scripts.pin_the_book_cast import (
     voice_contradicts_a_person,
 )
 
-MALE = "preset_thai_son_f093_p+00"
-FEMALE_A = "preset_ngoc_huyen_f100_p+00"
-FEMALE_B = "preset_quynh_anh_f108_p+00"
-CHILD = "preset_ngoc_linh_f109_p+04"
-ADULT_F = "preset_ngoc_linh_f093_p+00"
+MALE = "vieneu@3.8.3/Thái Sơn"
+FEMALE_A = "vieneu@3.8.3/Ngọc Huyền"
+FEMALE_B = "vieneu@3.8.3/Quỳnh Anh"
+CHILD = "vieneu@3.8.3/Ngọc Linh"
+ADULT_F = "vieneu@3.8.3/Ngọc Linh"
 
 
 def canonical(name: str) -> str:
@@ -45,7 +45,7 @@ def test_the_rule_is_the_same_as_casting() -> None:
     assert voice_contradicts_a_person(MALE, "female", None) is True
     assert voice_contradicts_a_person(FEMALE_A, "female", None) is False
     assert voice_contradicts_a_person(CHILD, "female", "adult") is False, "trẻ con không còn pitch riêng (05-11)"
-    assert voice_contradicts_a_person(CHILD, "male", "child") is False, "trẻ con đọc bằng preset nữ"
+    assert voice_contradicts_a_person(CHILD, "male", "child") is True, "mọi tuổi đều chọn preset đúng phái"
     assert voice_contradicts_a_person(MALE, "female", "adult") is True
     assert voice_contradicts_a_person(MALE, None, None) is False, "không ai ghim thì không kết tội"
 

@@ -71,16 +71,16 @@ def test_the_two_spellings_are_folded_before_comparing() -> None:
     Không gộp thì đây là hai người, mỗi người một giọng, và mọi cổng đều xanh.
     """
     rows = [
-        ("060", "THU LÃNH", "preset_thanh_binh_f090_p-04", 7),
-        ("060", "THỦ LÃNH", "preset_thanh_binh_f100_p-07", 5),
+        ("060", "THU LÃNH", "vieneu@3.8.3/Thanh Bình", 7),
+        ("060", "THỦ LÃNH", "vieneu@3.8.3/Thái Sơn", 5),
     ]
 
     inside, across = split_voices(rows)
 
     assert list(inside) == ["060"]
     assert inside["060"]["THỦ LÃNH"] == {
-        "preset_thanh_binh_f090_p-04": 7,
-        "preset_thanh_binh_f100_p-07": 5,
+        "vieneu@3.8.3/Thanh Bình": 7,
+        "vieneu@3.8.3/Thái Sơn": 5,
     }
     assert list(across) == ["THỦ LÃNH"]
 
@@ -88,8 +88,8 @@ def test_the_two_spellings_are_folded_before_comparing() -> None:
 def test_two_people_sharing_one_voice_is_not_this_tool_s_business() -> None:
     """Đó là câu của `voice_pool_pressure`; ở đây nó phải im."""
     rows = [
-        ("066", "KANG", "preset_thanh_binh_f093_p-04", 3),
-        ("066", "SAMAEL", "preset_thanh_binh_f093_p-04", 2),
+        ("066", "KANG", "vieneu@3.8.3/Thanh Bình", 3),
+        ("066", "SAMAEL", "vieneu@3.8.3/Thanh Bình", 2),
     ]
 
     inside, across = split_voices(rows)
@@ -98,22 +98,22 @@ def test_two_people_sharing_one_voice_is_not_this_tool_s_business() -> None:
 
 
 def test_a_voice_change_between_chapters_is_reported_apart(tmp_path: Path) -> None:
-    """KANG: giọng f093 ở sáu chương, f100 ở chương 071 vì lô đúc lại bỏ pin của nó.
+    """KANG: Thanh Bình ở sáu chương, Thái Sơn ở chương 071 vì lô đúc lại bỏ pin của nó.
 
     Không nằm trong `inside` (không chương nào có hai giọng cùng lúc) nhưng vẫn phải hiện ra:
     người theo dõi nhân vật vẫn nghe nó đổi giọng.
     """
     rows = [
-        ("065", "KANG", "preset_thanh_binh_f093_p-04", 3),
-        ("066", "KANG", "preset_thanh_binh_f093_p-04", 3),
-        ("071", "KANG", "preset_thanh_binh_f100_p-04", 1),
+        ("065", "KANG", "vieneu@3.8.3/Thanh Bình", 3),
+        ("066", "KANG", "vieneu@3.8.3/Thanh Bình", 3),
+        ("071", "KANG", "vieneu@3.8.3/Thái Sơn", 1),
     ]
 
     inside, across = split_voices(rows)
 
     assert inside == {}
-    assert across["KANG"]["preset_thanh_binh_f100_p-04"] == {"071"}
-    assert across["KANG"]["preset_thanh_binh_f093_p-04"] == {"065", "066"}
+    assert across["KANG"]["vieneu@3.8.3/Thái Sơn"] == {"071"}
+    assert across["KANG"]["vieneu@3.8.3/Thanh Bình"] == {"065", "066"}
 
 
 def test_narrator_and_npcs_are_left_out(tmp_path: Path) -> None:

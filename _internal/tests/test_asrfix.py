@@ -15,11 +15,11 @@ from abook.tts import TTSCoordinator
 
 @pytest.mark.parametrize("mark", list('“”\"‘’\'′″‴‵‶‷⁗＂＇「」『』〝〞〟ʹʺʻʼʽʾʿˈˊˋˮ`´«»'))
 def test_digit_quotes_removed_on_both_sides(mark):
-    source = f'{mark}420,000{mark}'
+    source = f'{mark}420000{mark}'
     voice, mapping = studio_tn(source, None, True)
     assert voice.strip() == '420000'
     assert mapping[-1] == len(voice)
-    assert source == f'{mark}420,000{mark}'
+    assert source == f'{mark}420000{mark}'
 
 
 def test_quotes_around_words_and_ordinary_numbers_are_preserved():
@@ -201,8 +201,16 @@ def test_real_cpu_phonemizer_matches_the_unquoted_number(quoted):
     assert p.phonemize_text(heard_now) == p.phonemize_text(digits)
 
 
-def test_real_phonemizer_thousands_are_kept_after_quote_fix():
+def test_real_phonemizer_counted_thousands_are_kept_after_quote_fix():
     p = pytest.importorskip('vieneu_utils.phonemize_text')
-    voice, _ = studio_tn('“420,000”', None, True)
-    assert p.phonemize_text(voice) == p.phonemize_text('420000')
-    assert p.phonemize_text('420,000') != p.phonemize_text(voice)
+    source = '“420,000” đồng'
+    voice, _ = studio_tn(source, None, True)
+    assert p.phonemize_text(voice) == p.phonemize_text('420000 đồng')
+    assert p.phonemize_text('420,000 đồng') != p.phonemize_text(voice)
+
+
+def test_unqualified_single_group_number_keeps_its_separator():
+    # A single group without counting context is intentionally ambiguous.
+    voice, mapping = studio_tn('"420,000"', None, True)
+    assert voice.strip() == '420,000'
+    assert mapping[-1] == len(voice)

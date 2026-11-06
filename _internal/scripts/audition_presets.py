@@ -64,12 +64,7 @@ from abook.asr import WhisperVerifier, normalize_transcript, transcript_metrics 
 from abook.audio_io import atomic_write_wav  # noqa: E402
 from abook.config import build_settings  # noqa: E402
 from abook.tts import VieNeuEngine  # noqa: E402
-from abook.voice_catalog import (  # noqa: E402
-    EXCLUDED_PRESETS,
-    VOCAL_TRACT_MAX_CM,
-    VOCAL_TRACT_MIN_CM,
-    casting_presets,
-)
+from abook.voice_catalog import EXCLUDED_PRESETS, casting_presets
 from scripts.book_paths import SOURCE_DIR  # noqa: E402
 from scripts.compare_voice_regions import PROBE_SENTENCES, SEED, tone_error_rate  # noqa: E402
 
@@ -165,52 +160,6 @@ def eligible(meta: dict[str, str], name: str) -> tuple[bool, str]:
     return True, ""
 
 
-def acoustics(wavs: list[Path], gender: str) -> dict[str, float]:
-    """F0 trung vị trên khung hữu thanh, F3 **trung bình cả clip** - cùng thang với `voice_catalog`.
-
-    F3 phải đo đúng cách đã đo các giọng đang dùng, vì số này bị so với
-    `[VOCAL_TRACT_MIN_CM, VOCAL_TRACT_MAX_CM]` - hai hằng số lấy từ chính thang ấy. Không còn script
-    gốc nào, nên 18-09 tôi dò ngược: chạy một lưới thiết lập Praat trên đúng 10 preview đang ship và
-    so với 10 số trong `PRESET_VOCAL_TRACT_CM`.
-
-        cach do F3                      lech trung binh   lech lon nhat
-        "Get mean" ca clip, 5 formant         0,20%           0,31%   <- cach da dung
-        "Get quantile 0.5" ca clip            2,03%           6,76%
-        trung vi tren khung huu thanh         4,51%           9,75%   <- cach nay tung dung, SAI thang
-        tran 5000 cho ca hai gioi             6,47%          17,83%
-
-    Bản đầu của hàm này lấy trung vị trên khung hữu thanh, tức lệch ~4,5% so với thang của catalog -
-    đủ để một giọng nằm sát biên bị gọi là ngoài biên hoặc ngược lại. Trần formant theo giới (5000 Hz
-    cho nam, 5500 cho nữ) là phần quan trọng thứ hai: dùng một trần cho cả hai giới lệch 6,5%.
-
-    F0 thì cách cũ đã đúng họ: trung vị trên khung hữu thanh lệch trung bình 1,2% (lớn nhất 3,2%),
-    còn trung bình cả clip lệch 6,2% - nên giữ trung vị.
-    """
-    import parselmouth
-    import soundfile as sf
-    from parselmouth.praat import call
-
-    f0s: list[float] = []
-    f3s: list[float] = []
-    ceiling = 5000.0 if gender == "male" else 5500.0
-    for path in wavs:
-        audio, rate = sf.read(str(path), dtype="float64", always_2d=False)
-        sound = parselmouth.Sound(np.asarray(audio).reshape(-1), sampling_frequency=float(rate))
-        pitch = sound.to_pitch(pitch_floor=60.0, pitch_ceiling=500.0)
-        formant = sound.to_formant_burg(max_number_of_formants=5, maximum_formant=ceiling)
-        for index in range(pitch.get_number_of_frames()):
-            f0 = pitch.get_value_in_frame(index + 1)
-            if np.isfinite(f0) and f0 > 0:
-                f0s.append(float(f0))
-        mean_f3 = call(formant, "Get mean", 3, 0, 0, "hertz")
-        if np.isfinite(mean_f3) and mean_f3 > 0:
-            f3s.append(float(mean_f3))
-    f0 = float(np.median(f0s)) if f0s else float("nan")
-    f3 = float(np.mean(f3s)) if f3s else float("nan")
-    tract = 5.0 * SPEED_OF_SOUND_CM_PER_S / (4.0 * f3) if f3 == f3 and f3 > 0 else float("nan")
-    return {"f0_median_hz": round(f0, 1), "f3_median_hz": round(f3, 1), "vocal_tract_cm": round(tract, 2)}
-
-
 UNDECIDED = "CHUA KET LUAN"
 
 
@@ -249,9 +198,6 @@ def judge(measured: dict[str, Any], worst: dict[str, Any]) -> dict[str, Any]:
                              f"- do them cau roi phan")
         else:
             reasons.append(worse)
-    tract = measured["vocal_tract_cm"]
-    if not (tract == tract and VOCAL_TRACT_MIN_CM <= tract <= VOCAL_TRACT_MAX_CM):
-        reasons.append(f"thanh quan {tract} cm ngoai [{VOCAL_TRACT_MIN_CM}, {VOCAL_TRACT_MAX_CM}]")
     verdict = "khong" if reasons else UNDECIDED if undecided else "VAO POOL DUOC"
     return {"verdict": verdict, "reasons": reasons + undecided}
 
@@ -352,7 +298,6 @@ def main() -> int:
                               if len(mine) > 1 and all("utmos" in r for r in mine) else None),
                 "seconds_per_100_chars": round(100.0 * info["gen_seconds"] / max(info["chars"], 1), 3),
                 "real_time_factor": round(info["gen_seconds"] / max(info["audio_seconds"], 1e-9), 3),
-                **acoustics([Path(str(r["wav"])) for r in mine], info["gender"]),
             }
         )
 
@@ -368,12 +313,12 @@ def main() -> int:
 
     print(f"\nvieneu {version} | nguong = gioi TE NHAT dang o pool: {worst}")
     print(f"{'giong':15s} {'gioi':6s} {'vung':4s} {'pool':4s} {'WER':>6s} {'thanh':>6s} {'UTMOS':>6s} "
-          f"{'F0':>6s} {'tract':>6s} {'s/100':>6s}  ket luan")
+          f"{'s/100':>6s}  ket luan")
     for info in sorted(measured, key=lambda i: (i["gender"], not i["in_pool"], i["wer"])):
         name = next(n for n, v in per_preset.items() if v is info)
         print(f"{name:15s} {info['gender']:6s} {info['region']:4s} {'co' if info['in_pool'] else '':4s} "
               f"{info['wer']:6.3f} {info['tone_error_rate']:6.3f} {info['utmos'] if info['utmos'] is not None else float('nan'):6.3f} "
-              f"{info['f0_median_hz']:6.1f} {info['vocal_tract_cm']:6.2f} {info['seconds_per_100_chars']:6.2f}  "
+              f"{info['seconds_per_100_chars']:6.2f}  "
               f"{info['verdict']}{' - ' + '; '.join(info['reasons']) if info['reasons'] else ''}")
     if args.json_out:
         args.json_out.write_text(json.dumps({"sdk": version, "worst_in_pool": worst, "presets": per_preset,

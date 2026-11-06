@@ -1,12 +1,9 @@
 from __future__ import annotations
 
 import json
-import math
 
 from pathlib import Path
 from typing import Any
-
-from .voice_balance import preset_pitch_st
 
 
 GENDER_MALE = "male"
@@ -36,155 +33,11 @@ STYLE_PRIORITY = {
 # listeners, not only for ASR. The presets stay in the catalog because VieNeu offers them
 # and older books may have locked them; they are simply never cast.
 CASTING_REGIONS = frozenset({REGION_NORTH, REGION_SOUTH})
-CHARACTER_PITCH_VARIANTS = (0, -1, 1, -2, 2)
-# Formant warping is the axis that actually makes two characters sound like different
-# people. Pitch does not: a listener compared the same sentence from -6 to +6 semitones,
-# F0 from 106 Hz to 206 Hz, and heard the same person throughout. Both limits were set by
-# ear - 0.82 sounds muffled, 1.30 starts to strain - and 1.00 comes first so a preset's
-# first casting needs no transform at all, and therefore pays no vocoder cost.
-# Base register, reading speed and level of every voice are no longer written here: they live in
-# one measured table per voice (`abook/assets/voice_balance.json`, read through `voice_balance`).
-# The history that used to sit on these constants, kept because the numbers still came from it:
-#
-# - Register (`pitch_st`): shifting F0 reads as the same person in a different state (calm,
-#   hurried), not as a different person, so it is calibration rather than a diversity mechanism.
-#   A Vietnamese listener went through every preset and found only Thanh Bình wanted correcting:
-#   at -4 semitones it reads calmer and more suited to storytelling. Two of the VieNeu 3.8.1
-#   voices wanted the same correction (2026-09-18): the listener heard Adam bựa and Quốc Tuấn (then Mạnh Dũng) at
-#   -1..-4 and chose -2 for both.
-# - Speed (`r`): WORLD resynthesises on the same time axis and `apply_pitch_variant` trims or pads
-#   back to the original length, so register cannot change speed and a slow preset needs its own
-#   knob. Measured 2026-09-18, the storytelling presets of VieNeu 3.8.1 read at 10.9-12.7 chars/s
-#   against a normal band that starts at 12.5. The owner chose Đức Trí 1.10, Thiền Tâm Đức 1.05,
-#   Kim Thanh 1.10 by ear, in steps of 0.05; Mỹ Duyên was kept at its own speed.
-#
-# The tempo actually applied is `x * r` (x is the book-wide knob), so it may fall below 1.0:
-# x ~ 0.85 times r ~ 0.89 is 0.76.
 SPEED_FACTOR_MIN = 0.70
 SPEED_FACTOR_MAX = 1.50
-# Vocal tract length per preset, in centimetres, estimated from the third formant of its
-# own preview clip with the odd-quarter-wavelength tube model L = 5c / (4*F3). Measured
-# with Praat: the male presets cluster tightly at 16.4-16.9 cm and the female ones at
-# 13.9-15.5 cm, which is why one shared warp range is wrong in both directions - a male
-# voice has little room left to go deeper and a female voice little room to go brighter.
-PRESET_VOCAL_TRACT_CM = {
-    "Phạm Tuyên": 16.5,
-    "Thanh Bình": 16.9,
-    # Xuân Vĩnh re-measured from its VieNeu 3.8.1 preview (was 16.6). Trúc Ly measures 14.4 on
-    # its 3.8.1 preview but stays at 14.7 on purpose: the length sets its formant ladder, and
-    # 14.4 would move its brightest step from 1.148 to 1.125 while book 2 has a character
-    # pinned at 1.148 (24 projects) - the next one cast at 1.125 would sound like a twin.
-    "Xuân Vĩnh": 16.3,
-    "Thái Sơn": 16.7,
-    "Quang Sơn": 16.4,
-    "Trúc Ly": 14.7,
-    "Đoan Trang": 14.7,
-    "Ngọc Linh": 13.9,
-    "Thục Đoan": 15.0,
-    "Ngọc Trân": 15.5,
-    "Adam": 16.7,
-    "Adam bựa": 16.4,
-    "Thiện Minh": 16.5,
-    "Đức Trí": 16.6,
-    "Kim Thanh": 13.6,
-    "Quốc Tuấn": 16.6,
-    "Hải Đăng": 16.6,
-    "Mỹ Duyên": 14.8,
-    "Ngọc Huyền": 14.2,
-    "Quỳnh Anh": 14.1,
-    "Thiền Tâm Đức": 16.2,
-}
-# A warp by ratio r reads as a vocal tract of length L/r, so the usable range is whatever
-# keeps that inside a plausible adult tract. The upper bound reproduces the limit a
-# Vietnamese listener found by ear: Thanh Bình at 16.9 cm sounded muffled at 0.82, which
-# is a 20.6 cm tract, and acceptable at 0.86, which is 19.7 cm.
-VOCAL_TRACT_MIN_CM = 12.8
-VOCAL_TRACT_MAX_CM = 19.7
-# The transform has its own limit, independent of anatomy: PSOLA resampling degrades once
-# the ratio moves far from unity, whatever the voice started as. The listener found that
-# limit asymmetric, and mirrored between the genders - a male voice tolerates being
-# brightened further than it tolerates being deepened, and a female voice the reverse.
-# The usable range is the intersection of the two constraints: anatomy says how far this
-# particular voice may be stretched, the algorithm says how far anything may be.
-VOICE_VARIANT_DEVIATION_BY_GENDER = {
-    GENDER_MALE: (0.15, 0.20),
-    GENDER_FEMALE: (0.20, 0.15),
-}
-FORMANT_RATIO_MIN = 1.0 - 0.20
-FORMANT_RATIO_MAX = 1.0 + 0.20
-
-
-def voice_variant_deviation(preset_name: str) -> tuple[float, float]:
-    """How far down and up the transform may take this preset, before anatomy applies."""
-    for preset in VIENEU_PRESETS:
-        if preset["name"] == preset_name:
-            gender = str(preset["gender"])
-            break
-    else:
-        gender = GENDER_MALE
-    return VOICE_VARIANT_DEVIATION_BY_GENDER.get(
-        gender,
-        VOICE_VARIANT_DEVIATION_BY_GENDER[GENDER_MALE],
-    )
-# Ladder of relative steps, natural first so a preset's first casting is untouched and
-# pays no processing at all. Each step is clamped into the preset's own usable range.
-CHARACTER_FORMANT_STEPS = (1.00, 0.93, 1.08, 0.87, 1.16, 0.97, 1.04)
 DEFAULT_NARRATOR_BY_GENDER = {
     GENDER_MALE: "Đức Trí",
     GENDER_FEMALE: "Đoan Trang",
-}
-PRESET_PREVIEW_MEDIAN_PITCH_HZ = {
-    "Phạm Tuyên": 100.6,
-    # Re-measured from the 3.8.1 preview (was 116.2), like Trúc Ly below (was 213.7).
-    "Xuân Vĩnh": 103.2,
-    "Thái Sơn": 120.7,
-    "Quang Sơn": 138.2,
-    "Thanh Bình": 155.1,
-    "Ngọc Trân": 181.3,
-    "Ngọc Linh": 204.7,
-    "Trúc Ly": 240.0,
-    "Đoan Trang": 225.8,
-    "Thục Đoan": 246.2,
-    "Adam": 87.1,
-    "Adam bựa": 146.9,
-    "Thiện Minh": 109.6,
-    "Đức Trí": 98.2,
-    "Kim Thanh": 230.6,
-    "Quốc Tuấn": 145.6,
-    "Hải Đăng": 151.7,
-    "Mỹ Duyên": 232.4,
-    "Ngọc Huyền": 207.7,
-    "Quỳnh Anh": 212.9,
-    "Thiền Tâm Đức": 104.4,
-}
-PRESET_MIN_PITCH_SEMITONES = {
-    # Set when Phạm Tuyên was the lowest measured male preset, since lowering the lowest voice
-    # costs intelligibility. Adam (87.1 Hz) and Đức Trí (98.2 Hz) are lower now; it stays 0
-    # because it never plays a character in book 2 and moving it would move book 1's ladders.
-    "Phạm Tuyên": 0,
-    "Xuân Vĩnh": -1,
-    "Thái Sơn": -1,
-    "Quang Sơn": -2,
-    "Thanh Bình": -2,
-    # Ngọc Trân is the lowest measured female preset, so keep its downward variant conservative.
-    "Ngọc Trân": -1,
-    "Ngọc Linh": -2,
-    "Trúc Ly": -2,
-    "Đoan Trang": -2,
-    "Thục Đoan": -2,
-    # Same rule, applied by `scripts/propose_a_new_voice.py`: the lowest male voice 0, a male
-    # voice within 3.5 semitones of it -1, everything else -2.
-    "Adam": 0,
-    "Adam bựa": -2,
-    "Thiện Minh": -2,
-    "Đức Trí": -1,
-    "Kim Thanh": -2,
-    "Quốc Tuấn": -2,
-    "Hải Đăng": -2,
-    "Mỹ Duyên": -2,
-    "Ngọc Huyền": -2,
-    "Quỳnh Anh": -2,
-    "Thiền Tâm Đức": -1,
 }
 VOICE_PREVIEW_FILENAMES = {
     "Phạm Tuyên": "pham_tuyen.wav",
@@ -349,8 +202,7 @@ ENGINE_SUPERTONIC = "supertonic"
 ENGINE_LABELS = {ENGINE_VIENEU: "VieNeu", ENGINE_ZEROTTS: "ZeroTTS", ENGINE_SUPERTONIC: "Supertonic"}
 
 # Giọng của các máy đọc khác VieNeu. `name` là tên giọng của chính máy ấy (khoá trong DB, trong bảng cân bằng
-# `<engine>@<phiên bản>/<name>/f100`), `label` là tên người nghe thấy. Chỉ bậc formant 1,00, không cao độ riêng:
-# thang formant và màu giọng là của VieNeu, chưa ai nghe thử chúng trên máy khác.
+# `<engine>@<phiên bản>/<name>`), `label` là tên người nghe thấy. Mỗi preset là một giọng.
 #
 # Phân vai TỰ ĐỘNG không chạm tới những giọng này (casting_presets chỉ đọc VIENEU_PRESETS): chúng chỉ đến tay một
 # nhân vật khi người nghe chọn trong "Đổi giọng". `castable` = chọn tay được: cần chủ sách nghe đạt VÀ có số cân bằng
@@ -473,92 +325,11 @@ def casting_preset_priority(preset: dict[str, Any]) -> tuple[int, int, int, int,
     )
 
 
-def base_pitch_for_preset(preset_name: str, engine: str = ENGINE_VIENEU) -> int:
-    """The calibrated reading register for this preset, in semitones (from the balance table)."""
-    return preset_pitch_st(preset_name, engine)
-
-
-# F0 and formants both feed the impression of a large speaker, so a preset whose register
-# was lowered has already spent part of that budget and has less room left to be deepened
-# further. Anatomy alone cannot see this: lowering F0 leaves the formants, and therefore
-# the estimated vocal tract, exactly where they were. The rate comes from listening -
-# Thanh Bình dropped 4 semitones needed its floor raised from 0.86 to 0.90, so a semitone
-# is worth 0.01 of formant ratio. The whole perceptual window moves; the algorithmic limit
-# still caps it.
-REGISTER_FORMANT_TRADE_PER_SEMITONE = 0.01
-
-
-# --- age ---------------------------------------------------------------------------
-#
-# A teenager or an elderly character is carried toward their age by two separate acoustic
-# facts, and they need different machinery: the vocal tract length, which sets the formants
-# and so the apparent size of the speaker, and the speaking F0.
-#
-# Children are NOT here. They were, first as a formant warp to a child's tract (12.3 cm at
-# six years, 13.0 at eight, Vorperian et al., PMC5966313) and an F0 lift to about 250 Hz,
-# and the owner's verdict of 05-11 was "đừng bóp nữa, bóp đem đến âm thanh quá tệ": the
-# warp ruined the voice. A child is now cast from the female presets, untouched - see
-# `PresetAllocator.choose`. With no "child" entry in either table below, `age_pitch_semitones`
-# is 0, `formant_ratio_for_age` is 1.0 and `preset_age_reach` is 0 for a child, with nothing
-# special-cased.
-#
-# Adult ageing does almost nothing to formants ("formant frequencies change little if at
-# all across several decades of adult life", PMC5832520), so an elderly character is not a
-# formant problem at all.
-VOCAL_TRACT_CM_BY_AGE: dict[str, dict[str, float]] = {
-    # roughly fourteen: the male pharynx has begun its growth, the female has nearly
-    # finished, which is where the sexes start to separate
-    "teen": {GENDER_MALE: 15.5, GENDER_FEMALE: 14.5, GENDER_UNKNOWN: 15.0},
-}
-
-# Speaking F0 for an age, as an absolute target in hertz rather than an offset.
-#
-# It was an offset first - "+3 semitones" - and that was wrong in a way a listener heard
-# immediately: applied to a preset sitting at 120 Hz it lands nowhere near the target, and
-# a vocal tract of one size speaking at the F0 of another is a combination no human throat
-# can produce, which the ear rejects as a fault rather than as a different age. So each
-# preset is carried from its own F0 to the target for the age.
-#
-# Ageing is not symmetric and the common intuition is half wrong: measured across cohorts
-# (PMC5832520), women fall from about 205 Hz to 170 while men *rise* from 108 to about 125,
-# so an elderly man reads higher than his younger self.
-AGE_TARGET_PITCH_HZ: dict[str, dict[str, float]] = {
-    "teen": {GENDER_MALE: 190.0, GENDER_FEMALE: 220.0, GENDER_UNKNOWN: 205.0},
-    "elderly": {GENDER_MALE: 125.0, GENDER_FEMALE: 170.0, GENDER_UNKNOWN: 145.0},
-}
-
-# Usable, but only once everything else is taken. A listener judged each good enough to
-# keep and not good enough to reach for. Unlike EXCLUDED_PRESETS this is a demotion, not a bar - a book
-# with more characters than clean voices should still cast them rather than run out.
-#
-# Thái Sơn and Thục Đoan left the set on 05-11 by the owner's verdict: Thái Sơn "rất ổn",
-# just under the good voices; Thục Đoan "ổn". Those are ranks in `voice_rank.json`, not
-# demotions.
-#
-# Thanh Bình joined the set after a click swallowed a word in its child register and every
-# attempt to cure that failed: a detector built for it was rejected by ear, UTMOSv2 ranked
-# the takes backwards, and folding the two resynthesis passes into one made the audio
-# worse. Nothing here fixes the voice - it stops the casting from reaching for it while the
-# defect stands. See docs/ONSET_CLICK.md.
-#
-# It sorts ahead of usage count deliberately. A gentler weighting would let a demoted
-# preset win as soon as the clean ones had each been used once, which is the second
-# character in a chapter, and that is not what "bottom of the list" means. The members are
-# joint last: nothing ranks one demoted preset above another, and the terms below only
-# break ties so the choice stays deterministic.
-LAST_RESORT_PRESETS = frozenset({"Thanh Bình"})
-
-# Casting prefers the preset needing the smallest age pitch shift, bucketed this wide.
-# Four semitones is roughly 0.2 MOS by the measurements in docs/CHILD_VOICE_TRANSFORM.md -
-# wide enough that a one-semitone edge cannot outrank voice diversity or tract fit, narrow
-# enough that the gap between a +2 preset and a +11 one still decides.
-AGE_PITCH_RANK_BUCKET = 4
-
 # A listener's ranking of the presets they have actually heard, per role
 # (`assets/voice_rank.json`: narrator / character, each male and female), as a list
 # of TIERS, best first; each tier is a list of presets the listener rates equal, so a tie
 # inside a tier falls through to the computed proxies and then to `CAST_ORDER`. This
-# outranks tract reach and pitch distance because those are proxies for how good the
+# outranks measured voice features because those are proxies for how good the
 # result sounds and this is the thing itself - and the proxies have been wrong here
 # before: reach and shift between them put Ngọc Linh last of the three girl voices, which
 # is exactly backwards. An empty list ranks nothing, so casting falls through to the
@@ -645,7 +416,6 @@ def preset_eligible(preset: dict[str, Any], role: str) -> bool:
 # How far a preset's own F0 may be carried toward an age target (teen, elderly). Set where
 # the presets actually stop working, judged by ear carried the whole way, rather than at a
 # round number.
-AGE_PITCH_MAX_SEMITONES = 16.0
 
 
 # Presets barred from every role, for the same kind of reason the Central region is barred:
@@ -658,132 +428,6 @@ AGE_PITCH_MAX_SEMITONES = 16.0
 # it had become a natural Northern male voice, "very good", and reopened it. The set stays
 # so the next such verdict has somewhere to go.
 EXCLUDED_PRESETS: frozenset[str] = frozenset()
-
-
-def vocal_tract_target_cm(age: str, gender: str) -> float | None:
-    """The tract length a character of this age should read as, or None for an adult."""
-    by_gender = VOCAL_TRACT_CM_BY_AGE.get(str(age))
-    if by_gender is None:
-        return None
-    return by_gender.get(str(gender), by_gender[GENDER_UNKNOWN])
-
-
-def age_pitch_semitones(age: str, gender: str, preset_name: str = "") -> int:
-    """The shift that carries this preset's own F0 to the target for this age.
-
-    Computed per preset rather than fixed, because presets start 150 Hz apart: the same
-    offset that lands one voice in a child's range leaves another at half of it.
-    """
-    by_gender = AGE_TARGET_PITCH_HZ.get(str(age))
-    if by_gender is None:
-        return 0
-    target = float(by_gender.get(str(gender), by_gender[GENDER_UNKNOWN]))
-    source = PRESET_PREVIEW_MEDIAN_PITCH_HZ.get(preset_name)
-    if not source:
-        return 0
-    steps = 12.0 * math.log2(target / float(source))
-    steps = max(-AGE_PITCH_MAX_SEMITONES, min(AGE_PITCH_MAX_SEMITONES, steps))
-    # Rounded toward the preset's own pitch, never past the target. The shift is stored in
-    # whole semitones, and rounding to the nearest one overshot: Thái Sơn needed 11.9 to
-    # reach a boy's 240 Hz, took 12, and landed at 252 - the highest of the three male
-    # presets, which a listener heard at once as "thanh mảnh hơn cả mấy giọng nam khác".
-    # Falling short leaves a voice a little closer to its own register, which is the safer
-    # side of a target that is itself a range.
-    return int(math.floor(steps) if steps > 0 else math.ceil(steps))
-
-
-def preset_reaches_age_pitch(preset_name: str, age: str, gender: str) -> bool:
-    """Whether this preset can reach the age's F0 without an implausible shift.
-
-    A voice that cannot is not a candidate for the age at all. Warping its vocal tract to
-    a child's size while its pitch stays adult produces a combination no throat can make,
-    and it is heard as a defect rather than as a child.
-    """
-    by_gender = AGE_TARGET_PITCH_HZ.get(str(age))
-    source = PRESET_PREVIEW_MEDIAN_PITCH_HZ.get(preset_name)
-    if by_gender is None or not source:
-        return True
-    target = float(by_gender.get(str(gender), by_gender[GENDER_UNKNOWN]))
-    return abs(12.0 * math.log2(target / float(source))) <= AGE_PITCH_MAX_SEMITONES
-
-
-def formant_ratio_for_age(preset_name: str, age: str, gender: str) -> float:
-    """The warp that brings this preset to the target length, within what it can do.
-
-    Clamped to the preset's own usable range rather than reaching for the target at any
-    cost: a warp that lands the arithmetic but wrecks the voice is not an improvement.
-    """
-    target = vocal_tract_target_cm(age, gender)
-    length = PRESET_VOCAL_TRACT_CM.get(preset_name)
-    if target is None or length is None:
-        return 1.0
-    lower, upper = formant_ratio_bounds_for_preset(preset_name)
-    return max(lower, min(upper, length / target))
-
-
-def preset_age_reach(preset_name: str, age: str, gender: str) -> float:
-    """How far this preset falls short of the target length, in cm. Lower is better."""
-    target = vocal_tract_target_cm(age, gender)
-    length = PRESET_VOCAL_TRACT_CM.get(preset_name)
-    if target is None or length is None:
-        return 0.0
-    return abs(length / formant_ratio_for_age(preset_name, age, gender) - target)
-
-
-def formant_ratio_bounds_for_preset(preset_name: str) -> tuple[float, float]:
-    """The warp range that keeps this preset inside a plausible adult vocal tract.
-
-    Three independent constraints intersect: anatomy bounds how far this particular tract
-    may be stretched, the register shift moves that window because F0 already changed the
-    perceived size, and the transform's own limit caps how far anything may be warped.
-    """
-    down, up = voice_variant_deviation(preset_name)
-    algorithmic_low, algorithmic_high = 1.0 - down, 1.0 + up
-    length = PRESET_VOCAL_TRACT_CM.get(preset_name)
-    if length is None:
-        return algorithmic_low, algorithmic_high
-    register_offset = (
-        -base_pitch_for_preset(preset_name) * REGISTER_FORMANT_TRADE_PER_SEMITONE
-    )
-    anatomical_low = length / VOCAL_TRACT_MAX_CM + register_offset
-    anatomical_high = length / VOCAL_TRACT_MIN_CM + register_offset
-    lower = max(algorithmic_low, anatomical_low)
-    upper = min(algorithmic_high, anatomical_high)
-    return (lower, upper) if lower < upper else (1.0, 1.0)
-
-
-def formant_variants_for_preset(preset_name: str) -> tuple[float, ...]:
-    """Formant ratios this preset may be cast with, natural first, no duplicates.
-
-    The ladder is relative, but the bounds are not: a preset already at the long end of
-    the human range has little room left to go deeper, and one at the short end little
-    room to go brighter. Clamping rather than sharing one range is the difference between
-    a voice that sounds like a different person and one that sounds like no person at all.
-    """
-    lower, upper = formant_ratio_bounds_for_preset(preset_name)
-    variants: list[float] = []
-    for step in CHARACTER_FORMANT_STEPS:
-        ratio = round(min(max(step, lower), upper), 3)
-        # Rounding can step just outside a bound that is not a round number - Quỳnh Anh's
-        # ceiling is 14.1 / 12.8 = 1.1015625, which rounds to 1.102. Step back inside.
-        if ratio > upper + 1e-6:
-            ratio = round(ratio - 0.001, 3)
-        elif ratio < lower - 1e-6:
-            ratio = round(ratio + 0.001, 3)
-        if all(abs(ratio - existing) > 0.01 for existing in variants):
-            variants.append(ratio)
-    return tuple(variants) or (1.0,)
-
-
-def pitch_variants_for_preset(preset_name: str, max_abs_semitones: int) -> tuple[int, ...]:
-    maximum = max(0, int(max_abs_semitones))
-    minimum = max(-maximum, int(PRESET_MIN_PITCH_SEMITONES.get(preset_name, -maximum)))
-    variants = tuple(
-        steps
-        for steps in CHARACTER_PITCH_VARIANTS
-        if minimum <= steps <= maximum
-    )
-    return variants or (0,)
 
 
 def narrator_presets(

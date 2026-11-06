@@ -49,11 +49,11 @@ def test_existing_conflicting_pin_is_recast_by_the_full_casting_path(tmp_path):
 @pytest.mark.parametrize("name", ["LUCIEN", "ANONYMOUS_MALE", "NPC_C1_1"])
 def test_existing_pins_are_checked_in_both_reservation_and_acceptance(tmp_path, name):
     _paths, db = _book(tmp_path)
-    allocator = PresetAllocator(NARRATOR_VOICE, 2)
+    allocator = PresetAllocator(NARRATOR_VOICE)
     pins = {name: "narrator"}
     assert reserve_pinned_voices(db, pins, allocator, lambda _: None) == 0
     assert _pinned_profile_id(db, pins, name, allocator, True, lambda _: None) is None
-    preset, _ratio, _pitch = allocator.choose("male", npc=True, who=name)
+    preset = allocator.choose("male", npc=True, who=name)
     assert preset["name"] != NARRATOR_VOICE and preset["gender"] == "male"
 
 
@@ -68,7 +68,7 @@ def test_ordinary_pin_is_untouched(tmp_path):
     _paths, db = _book(tmp_path)
     key, = _voice(db, "LUCIEN")
     db.set_locked_character_voice("LUCIEN", key)
-    allocator = PresetAllocator(NARRATOR_VOICE, 2)
+    allocator = PresetAllocator(NARRATOR_VOICE)
     assert reserve_pinned_voices(db, {"LUCIEN": key}, allocator, lambda _: None) == 1
     assert _pinned_profile_id(db, {"LUCIEN": key}, "LUCIEN", allocator, False, lambda _: None) == db.voice_profile_by_key(key)["id"]
     assert db.locked_character_voices()["LUCIEN"] == key

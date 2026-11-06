@@ -66,7 +66,7 @@ def _book(tmp_path: Path, *, mai_gender: str = "female", settings: dict[str, Any
                                         "description": "kể", "seed": 1, "status": "ready"})
     cast = {"MAI": ("female", next(p for p in casting_presets("female") if p["name"] not in (NARRATOR_VOICE, FEMALE_NARRATOR))),
             "BAO": ("male", next(p for p in casting_presets("male") if p["name"] != NARRATOR_VOICE))}
-    profiles = {"NARRATOR": narrator, **{key: db.upsert_voice_profile(voice_profile_spec(preset, 1.0)) for key, (_g, preset) in cast.items()}}
+    profiles = {"NARRATOR": narrator, **{key: db.upsert_voice_profile(voice_profile_spec(preset)) for key, (_g, preset) in cast.items()}}
     with db.connect() as conn:
         for key, gender in [("NARRATOR", "male"), ("MAI", mai_gender), ("BAO", "male")]:
             conn.execute("INSERT INTO characters(canonical_name,display_name,gender,age,personality,importance,"

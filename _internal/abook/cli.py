@@ -1335,7 +1335,6 @@ def _command_doctor(args: argparse.Namespace) -> CommandResult:
         "scipy",
         "soundfile",
         "pyloudnorm",
-        "pyworld",
         "imageio_ffmpeg",
         "whisper",
         "vieneu",

@@ -59,15 +59,15 @@ def test_the_lost_line_of_chapter_106_reads_at_a_normal_pace() -> None:
     speech_seconds = 70 / 12.35
     rate = speakable / speech_seconds
     syllable_rate = syllables / speech_seconds
-    assert rate > NORMAL[0] and syllable_rate > PACE_SYLLABLES_PER_SECOND_FLOOR["normal"]
-    assert not pace_is_outlier(rate, syllable_rate, "normal", NORMAL)
+    assert rate > NORMAL[0] and syllable_rate > PACE_SYLLABLES_PER_SECOND_FLOOR
+    assert not pace_is_outlier(rate, syllable_rate, NORMAL)
 
 
 def test_a_genuinely_slow_take_is_still_caught() -> None:
     speakable = spoken_speakable_chars(LOST_LINE_106)
     syllables = spoken_syllables(LOST_LINE_106)
     speech_seconds = speakable / 8.0
-    assert pace_is_outlier(8.0, syllables / speech_seconds, "normal", NORMAL)
+    assert pace_is_outlier(8.0, syllables / speech_seconds, NORMAL)
 
 
 def test_the_transcript_fold_covers_large_counts_without_changing_voice_text() -> None:

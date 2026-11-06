@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Any, Callable
 
 import numpy as np
-import pyworld
 import soundfile as sf
 
 from .audio_io import (
@@ -49,8 +48,6 @@ from .text_processing import (
 from . import voice_balance
 from .readaloud.studio_tn import studio_tn_tagged
 from .voice_catalog import (
-    FORMANT_RATIO_MAX,
-    FORMANT_RATIO_MIN,
     SPEED_FACTOR_MAX,
     SPEED_FACTOR_MIN,
 )
@@ -131,27 +128,15 @@ GENERATION_TOP_P = 0.92
 # silence_p 0.05, 0.15, 0.30 and 0.50 - a tenfold range - came back identical in duration
 # and in every internal gap. VieNeu accepts the argument and ignores it.
 #
-# It is left in place because the engine's signature takes it and a future version may
-# honour it, but nothing may be built on the belief that it works. Pause length between
-# segments is controlled where it can be: at chapter assembly, in expression.py. Pause
+# Studio omits it; the engine signature supplies its own default. Pause length between
+# segments is controlled where it can be: at chapter assembly from structural break_ms. Pause
 # length *inside* a segment is currently not controllable at all.
 #
 # This is the fourth parameter this project set carefully while it did nothing - after
 # emotion, which only chose a sampling temperature; pace, which nudged that temperature;
 # and the clarity cap, which sat above the value it was meant to clamp. A number that is
 # read and discarded looks exactly like a number that works.
-PACE_SILENCE_PROPORTIONS = {"slow": 0.20, "normal": 0.15, "fast": 0.08}
-WORLD_FRAME_PERIOD_MS = 5.0
-WORLD_F0_FLOOR_HZ = 55.0
-WORLD_F0_CEIL_HZ = 600.0
-WORLD_MIN_VOICED_FRAMES = 3
-# pyworld.harvest trên vài mẫu làm hỏng heap native và GIẾT cả tiến trình (Windows 0xc0000374), không ném lỗi: đo 04-10, 2 mẫu
-# sập, 50 mẫu chạy. Không câu nói thật nào ngắn hơn 10 ms; bản ngắn thế để nguyên cho cổng "audio too short" loại.
-WORLD_MIN_SECONDS = 0.010
 WSOLA_FRAME_SECONDS = 0.040
-VOICE_VARIANT_PITCH_FLOOR_HZ = 60.0
-VOICE_VARIANT_PITCH_CEILING_HZ = 600.0
-VOICE_VARIANT_PEAK_CEILING = 0.98
 SHORT_UTTERANCE_MAX_TEMPERATURE = 0.72
 SHORT_UTTERANCE_MAX_TOP_P = 0.90
 SHORT_UTTERANCE_REPAIR_MAX_FRAMES = 12
@@ -223,86 +208,6 @@ def _row_value(row: Any, key: str, default: Any) -> Any:
     return default if value is None else value
 
 
-def apply_pitch_variant(
-    audio: Any,
-    sample_rate: int,
-    pitch_semitones: int,
-    *,
-    formant_ratio: float = 1.0,
-    allow_padding: bool = True,
-) -> np.ndarray:
-    """Scale F0 by semitones and optionally warp the spectral envelope.
-
-    Pitch alone cannot make two characters sound like different people: speaker identity
-    lives in the formants, so scaling F0 while holding the envelope fixed only ever
-    produces the same voice higher or lower. A listener comparing the same sentence from
-    -6 to +6 semitones - F0 from 106 Hz to 206 Hz - heard no change of person at all.
-
-    Warping the envelope along the frequency axis is what changes the perceived speaker:
-    below 1 the vocal tract reads larger and the voice deeper, above 1 smaller and
-    brighter. The usable range was found by ear; 0.82 already sounds muffled.
-    """
-    array = np.asarray(audio, dtype=np.float32).reshape(-1)
-    steps = int(pitch_semitones)
-    ratio = float(formant_ratio)
-    if (steps == 0 and abs(ratio - 1.0) <= 1e-6) or array.size < WORLD_MIN_SECONDS * sample_rate:
-        return array
-    if not FORMANT_RATIO_MIN <= ratio <= FORMANT_RATIO_MAX:
-        raise ValueError(
-            f"formant ratio {ratio} is outside the audible range "
-            f"[{FORMANT_RATIO_MIN}, {FORMANT_RATIO_MAX}]"
-        )
-    if sample_rate < 8_000:
-        raise ValueError(f"WORLD pitch shifting requires at least 8000 Hz, got {sample_rate}")
-    waveform = np.asarray(array, dtype=np.float64)
-    f0, time_axis = pyworld.harvest(
-        waveform,
-        sample_rate,
-        f0_floor=WORLD_F0_FLOOR_HZ,
-        f0_ceil=WORLD_F0_CEIL_HZ,
-        frame_period=WORLD_FRAME_PERIOD_MS,
-    )
-    f0 = pyworld.stonemask(waveform, f0, time_axis, sample_rate)
-    voiced = f0 > 0.0
-    if int(np.count_nonzero(voiced)) < WORLD_MIN_VOICED_FRAMES:
-        raise ValueError("WORLD could not find enough voiced frames for formant-preserving pitch shift")
-    spectral_envelope = pyworld.cheaptrick(waveform, f0, time_axis, sample_rate)
-    aperiodicity = pyworld.d4c(waveform, f0, time_axis, sample_rate)
-    if abs(ratio - 1.0) > 1e-6:
-        bins = spectral_envelope.shape[1]
-        source_bins = np.arange(bins, dtype=np.float64)
-        query_bins = source_bins / ratio
-        spectral_envelope = np.stack(
-            [
-                np.interp(
-                    query_bins,
-                    source_bins,
-                    frame,
-                    left=frame[0],
-                    right=frame[-1],
-                )
-                for frame in spectral_envelope
-            ]
-        )
-    shifted_f0 = f0.copy()
-    if steps:
-        shifted_f0[voiced] *= 2.0 ** (float(steps) / 12.0)
-    shifted = pyworld.synthesize(
-        shifted_f0,
-        spectral_envelope,
-        aperiodicity,
-        sample_rate,
-        frame_period=WORLD_FRAME_PERIOD_MS,
-    ).astype(np.float32, copy=False)
-    if shifted.size >= array.size:
-        return shifted[: array.size]
-    if not allow_padding:
-        raise ValueError(
-            "WORLD pitch shift shortened a strict no-padding waveform"
-        )
-    return np.pad(shifted, (0, array.size - shifted.size)).astype(np.float32, copy=False)
-
-
 def apply_speed_change(audio: Any, sample_rate: int, speed: float) -> np.ndarray:
     """Read the same line `speed` times faster, keeping pitch and spectrum.
 
@@ -320,7 +225,7 @@ def apply_speed_change(audio: Any, sample_rate: int, speed: float) -> np.ndarray
     """
     array = np.asarray(audio, dtype=np.float32).reshape(-1)
     speed = float(speed)
-    if abs(speed - 1.0) <= 1e-6 or array.size < WORLD_MIN_SECONDS * sample_rate:
+    if abs(speed - 1.0) <= 1e-6 or array.size < 0.010 * sample_rate:
         return array
     if not SPEED_FACTOR_MIN <= speed <= SPEED_FACTOR_MAX:
         raise ValueError(f"speed factor {speed} is outside [{SPEED_FACTOR_MIN}, {SPEED_FACTOR_MAX}]")
@@ -355,125 +260,6 @@ def apply_speed_change(audio: Any, sample_rate: int, speed: float) -> np.ndarray
     peak = float(np.max(np.abs(waveform))) or 1.0
     faster_peak = float(np.max(np.abs(faster))) or 1.0
     return np.asarray(faster * min(1.0, peak / faster_peak), dtype=np.float32)
-
-
-def apply_voice_variant(
-    audio: Any,
-    sample_rate: int,
-    pitch_semitones: int,
-    formant_ratio: float,
-) -> np.ndarray:
-    """Apply a preset's reading register and a character's formant, independently.
-
-    These are two different jobs and they use two different engines, each the one that
-    was judged better for that job by ear:
-
-    - Register is an F0 change. WORLD scales F0 while holding the spectral envelope, which
-      keeps the result a configuration a real vocal tract can produce, and the listener
-      preferred it. Its analysis-resynthesis round trip measured -0.015 MOS.
-    - Identity is a formant change. Praat resamples to move the formants and restores
-      pitch with PSOLA, never estimating or resynthesising a spectrum. A PARCOR
-      area-function reshape was clearly worst by ear, and WORLD's envelope warp was
-      indistinguishable from Praat, so Praat wins on not rebuilding the spectrum at all.
-
-    Doing both in a single Praat call would make the register change PSOLA-based too,
-    which is not what was approved for it.
-    """
-    array = np.asarray(audio, dtype=np.float32).reshape(-1)
-    steps = int(pitch_semitones)
-    ratio = float(formant_ratio)
-    if array.size == 0:
-        return array
-    if steps:
-        array = apply_pitch_variant(array, int(sample_rate), steps)
-    if abs(ratio - 1.0) <= 1e-6:
-        return np.asarray(array, dtype=np.float32).reshape(-1)
-    if not FORMANT_RATIO_MIN <= ratio <= FORMANT_RATIO_MAX:
-        raise ValueError(
-            f"formant ratio {ratio} is outside the audible range "
-            f"[{FORMANT_RATIO_MIN}, {FORMANT_RATIO_MAX}]"
-        )
-    return _praat_formant_shift(array, int(sample_rate), ratio)
-
-
-def praat_pitch_window(
-    audio: "np.ndarray",
-    sample_rate: int,
-    floor_hz: float,
-    ceiling_hz: float,
-) -> tuple[float, float]:
-    """Narrow the pitch search to the range this recording actually uses.
-
-    Praat's pitch tracker is given a floor and a ceiling, and a window far wider than the
-    voice invites the classic halving error: a frame is scored as an octave below where it
-    belongs, and every PSOLA operation downstream then places its pulses wrong. It shows up
-    on low-pitched words, because those sit closest to the floor - which is exactly where a
-    listener located it, on "mẹ" in one voice and on "những từ trầm trong câu" in another.
-    A fixed 60-600 Hz window is ten times wider than a female preset needs.
-
-    The range is measured from the audio rather than configured, so it follows whatever the
-    register and age shifts have already done to the voice. Praat's own guidance is a floor
-    somewhat below the lowest real pitch and a ceiling somewhat above the highest; the
-    margins here are that, and they fall back to the wide window when a clip is too short
-    or too unvoiced to measure.
-    """
-    import parselmouth
-
-    try:
-        pitch = parselmouth.Sound(
-            np.asarray(audio, dtype=np.float64).reshape(-1),
-            sampling_frequency=int(sample_rate),
-        ).to_pitch(pitch_floor=floor_hz, pitch_ceiling=ceiling_hz)
-        values = np.asarray(pitch.selected_array["frequency"])
-        voiced = values[values > 0.0]
-    except Exception:  # noqa: BLE001
-        return floor_hz, ceiling_hz
-    if voiced.size < 20:
-        return floor_hz, ceiling_hz
-    low = float(np.percentile(voiced, 2)) * 0.75
-    high = float(np.percentile(voiced, 98)) * 1.35
-    return max(floor_hz, low), min(ceiling_hz, max(high, low * 2.0))
-
-
-def _praat_formant_shift(
-    array: np.ndarray,
-    sample_rate: int,
-    formant_ratio: float,
-) -> np.ndarray:
-    import parselmouth
-    from parselmouth.praat import call
-
-    source = np.asarray(array, dtype=np.float32).reshape(-1)
-    sound = parselmouth.Sound(
-        source.astype(np.float64),
-        sampling_frequency=int(sample_rate),
-    )
-    floor_hz, ceiling_hz = praat_pitch_window(
-        source, int(sample_rate), VOICE_VARIANT_PITCH_FLOOR_HZ, VOICE_VARIANT_PITCH_CEILING_HZ
-    )
-    shifted = call(
-        sound,
-        "Change gender",
-        floor_hz,
-        ceiling_hz,
-        float(formant_ratio),
-        0.0,  # keep the pitch median exactly as the register step left it
-        1.0,
-        1.0,
-    )
-    result = np.asarray(shifted.values, dtype=np.float32).reshape(-1)
-    if result.size == 0:
-        raise ValueError("Praat formant shift produced no samples")
-    if not np.isfinite(result).all():
-        raise ValueError("Praat formant shift produced non-finite samples")
-    # PSOLA can overshoot the input peak. The chapter is mastered afterwards, so a small
-    # uniform trim costs nothing and keeps the delivery WAV inside PCM range.
-    peak = float(np.max(np.abs(result)))
-    if peak > VOICE_VARIANT_PEAK_CEILING:
-        result = result * (VOICE_VARIANT_PEAK_CEILING / peak)
-    if result.size >= source.size:
-        return result[: source.size].astype(np.float32, copy=False)
-    return np.pad(result, (0, source.size - result.size)).astype(np.float32, copy=False)
 
 
 def short_utterance_repair_frame_cap(text: str) -> int | None:
@@ -521,7 +307,6 @@ def vieneu_sampling_for_segment(
             f"Unsupported TTS vocalization delivery profile: {vocalization_delivery_profile}"
         )
     text = str(_row_value(row, "text", ""))
-    pace = str(_row_value(row, "pace", "normal"))
     temperature = GENERATION_TEMPERATURE
     top_p = GENERATION_TOP_P
     if normalized_delivery == DELIVERY_CLARITY:
@@ -550,7 +335,6 @@ def vieneu_sampling_for_segment(
         "top_k": 25,
         "top_p": top_p,
         "repetition_penalty": 1.2,
-        "silence_p": PACE_SILENCE_PROPORTIONS.get(pace, PACE_SILENCE_PROPORTIONS["normal"]),
         "max_new_frames": max_new_frames,
     }
 
@@ -1167,7 +951,6 @@ class TTSCoordinator:
         profile = self._voice_profile_for_row(row)
         return {
             "voice_profile_id": int(profile["id"]),
-            "pitch_semitones": int(profile["pitch_semitones"] or 0),
         }
 
     def forget_pronunciations(self) -> None:
@@ -1674,44 +1457,6 @@ class TTSCoordinator:
                 and is_short_utterance(str(spoken_row["text"]))
                 and vieneu_generation_reached_frame_ceiling(audio, effective_generation_policy)
             )
-            pitch_steps = int(_row_value(profile, "pitch_semitones", 0))
-            pitch_variant_skipped = False
-            try:
-                if (
-                    vocalization_delivery_profile
-                    == HA_VOCALIZATION_DELIVERY_PROFILE
-                ):
-                    pitched_audio = apply_pitch_variant(
-                        audio,
-                        self.sample_rate,
-                        pitch_steps,
-                        allow_padding=False,
-                    )
-                    if (
-                        int(np.asarray(pitched_audio).reshape(-1).size)
-                        != raw_vocalization_samples
-                    ):
-                        raise ValueError(
-                            "Ha vocalization pitch variant changed the raw sample count"
-                        )
-                else:
-                    pitched_audio = apply_pitch_variant(
-                        audio,
-                        self.sample_rate,
-                        pitch_steps,
-                    )
-                audio = pitched_audio
-            except Exception as exc:  # noqa: BLE001
-                # Pitch is optional voice diversification. The original waveform still contains
-                # every spoken word, so preserve it instead of failing or retrying the whole TTS.
-                pitch_variant_skipped = True
-                self.log(
-                    f"Bỏ biến thể cao độ {pitch_steps:+d} cho segment {row['stable_id']} "
-                    f"vì xử lý pitch lỗi: {exc}"
-                )
-            # Tempo = x * r_v (bảng cân bằng giọng), sau cao độ vì hàm cao độ giữ nguyên độ dài, và
-            # trước độ to (WSOLA chồng cửa sổ nâng độ to vài phần mười dB, nên o_v đo sau bước này). Bỏ qua tiếng
-            # cười "ha": đường ấy có bất biến số mẫu thô.
             speed_change_skipped = False
             if (
                 abs(speed_factor - 1.0) > 1e-6
@@ -1775,18 +1520,12 @@ class TTSCoordinator:
                         os.fsync(handle.fileno())
                     os.replace(rejected, output)
                 raise
-            metrics["pitch_variant_skipped"] = float(pitch_variant_skipped)
-            metrics["pitch_variant_mixed"] = 0.0
             metrics["tts_delivery_mode"] = str(delivery_mode).strip().casefold()
             metrics["pronunciation_delivery_variant"] = normalized_pronunciation_variant
             metrics["spoken_text_sha256"] = hashlib.sha256(
                 str(spoken_row["text"]).encode("utf-8")
             ).hexdigest()
             metrics["voice_profile_id"] = int(profile["id"])
-            metrics["pitch_semitones"] = pitch_steps
-            metrics["effective_pitch_semitones"] = (
-                0 if pitch_variant_skipped else pitch_steps
-            )
             metrics["speed_factor"] = float(speed_factor)
             metrics["effective_speed_factor"] = 1.0 if speed_change_skipped else float(speed_factor)
             metrics.update(vocalization_provenance)

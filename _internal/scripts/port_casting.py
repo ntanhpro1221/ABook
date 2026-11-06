@@ -472,8 +472,6 @@ def port(source: Path, target: Path, *, dry_run: bool = False) -> tuple[int, int
                 "preset_name": profile["preset_name"],
                 "description": profile["description"],
                 "seed": profile["seed"],
-                "pitch_semitones": profile["pitch_semitones"],
-                "formant_ratio": profile["formant_ratio"],
                 "status": "ready",
             }
         )

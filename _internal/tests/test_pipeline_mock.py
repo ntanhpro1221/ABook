@@ -133,7 +133,7 @@ def _voiced(db, row):
     if row["voice_profile_id"]:
         key = voice_balance.constants_for_profile(db.voice_profile(int(row["voice_profile_id"]))).key
     else:  # test dựng tay, hàng chưa phân vai: giọng người kể mặc định
-        key = voice_balance.voice_key("vieneu", voice_balance.engine_version("vieneu"), "Phạm Tuyên", 1.0)
+        key = voice_balance.voice_key("vieneu", voice_balance.engine_version("vieneu"), "Phạm Tuyên")
     return {**dict(row), VOICE_BALANCE_FIELD: key}
 
 
@@ -199,7 +199,7 @@ class FakeTTS:
             segment=_voiced(self.db, row),
         )
         profile = self.db.voice_profile(int(row["voice_profile_id"]))
-        pitch_semitones = int(profile["pitch_semitones"] or 0)
+        pitch_semitones = int(0 or 0)
         metrics.update(
             {
                 "tts_delivery_mode": str(delivery_mode).strip().casefold(),
@@ -210,10 +210,8 @@ class FakeTTS:
                     pronunciation_delivery_variant
                 ),
                 "voice_profile_id": int(profile["id"]),
-                "pitch_semitones": pitch_semitones,
-                "effective_pitch_semitones": pitch_semitones,
-                "pitch_variant_skipped": 0.0,
-                "pitch_variant_mixed": 0.0,
+
+
             }
         )
         return checksum, metrics, seed
@@ -317,7 +315,7 @@ class LockedNameVariantFakeTTS(FakeTTS):
             segment=_voiced(self.db, row),
         )
         profile = self.db.voice_profile(int(row["voice_profile_id"]))
-        pitch_semitones = int(profile["pitch_semitones"] or 0)
+        pitch_semitones = int(0 or 0)
         metrics.update(
             {
                 "tts_delivery_mode": str(delivery_mode).strip().casefold(),
@@ -328,10 +326,8 @@ class LockedNameVariantFakeTTS(FakeTTS):
                     pronunciation_delivery_variant
                 ),
                 "voice_profile_id": int(profile["id"]),
-                "pitch_semitones": pitch_semitones,
-                "effective_pitch_semitones": pitch_semitones,
-                "pitch_variant_skipped": 0.0,
-                "pitch_variant_mixed": 0.0,
+
+
             }
         )
         return checksum, metrics, seed
@@ -350,7 +346,7 @@ class PassPerceptualVerifier:
             "score": 4.0,
             "baseline_score": 4.0,
             "baseline_delta": 0.0,
-            "baseline_pitch_semitones": pitch_semitones,
+
             "review_required": False,
             "duration_seconds": 2.0,
         }
@@ -435,7 +431,7 @@ class ScriptedShortTTS:
         )
         metrics.update(dict(outcome))
         profile = self.db.voice_profile(int(row["voice_profile_id"]))
-        pitch_semitones = int(profile["pitch_semitones"] or 0)
+        pitch_semitones = int(0 or 0)
         metrics.update(
             {
                 "tts_delivery_mode": str(delivery_mode).strip().casefold(),
@@ -443,10 +439,8 @@ class ScriptedShortTTS:
                     str(row["text"]).encode("utf-8")
                 ).hexdigest(),
                 "voice_profile_id": int(profile["id"]),
-                "pitch_semitones": pitch_semitones,
-                "effective_pitch_semitones": pitch_semitones,
-                "pitch_variant_skipped": 0.0,
-                "pitch_variant_mixed": 0.0,
+
+
             }
         )
         return checksum, metrics, seed
@@ -506,7 +500,7 @@ def _assign_locked_test_narrator(db) -> int:
             "preset_name": "Xuân Vĩnh",
             "description": "Locked test narrator",
             "seed": 1,
-            "pitch_semitones": 0,
+
             "status": "ready",
         }
     )
@@ -594,7 +588,7 @@ def _checkpoint_short_ceiling_incumbent(
         segment=_voiced(pipeline.db, row),
     )
     profile = pipeline.db.voice_profile(int(row["voice_profile_id"]))
-    pitch_semitones = int(profile["pitch_semitones"] or 0)
+    pitch_semitones = int(0 or 0)
     metrics.update(
         {
             "generation_ceiling_hit": 1.0,
@@ -605,10 +599,8 @@ def _checkpoint_short_ceiling_incumbent(
                 str(row["text"]).encode("utf-8")
             ).hexdigest(),
             "voice_profile_id": int(profile["id"]),
-            "pitch_semitones": pitch_semitones,
-            "effective_pitch_semitones": pitch_semitones,
-            "pitch_variant_skipped": 0.0,
-            "pitch_variant_mixed": 0.0,
+
+
         }
     )
     pipeline.db.mark_signal_passed(
@@ -635,7 +627,7 @@ def _asr_signal_pipeline(tmp_path: Path, *, repair_rounds: int):
             "perceptual_qa": {"enabled": True},
             "tts": {
                 "min_seconds_per_100_chars": 0.2,
-                "pace_chars_per_second": {"normal": [1.0, 100.0]},
+                "pace_chars_per_second": [1.0, 100.0],
             },
         }
     )
@@ -1946,7 +1938,7 @@ def _locked_name_variant_pipeline(
             "perceptual_qa": {"enabled": True},
             "tts": {
                 "min_seconds_per_100_chars": 0.2,
-                "pace_chars_per_second": {"normal": [1.0, 100.0]},
+                "pace_chars_per_second": [1.0, 100.0],
             },
         }
     )
@@ -1986,7 +1978,7 @@ def _locked_name_variant_pipeline(
         segment=_voiced(db, row),
     )
     profile = db.voice_profile(int(db.get_segment(int(row["id"]))["voice_profile_id"]))
-    pitch_semitones = int(profile["pitch_semitones"] or 0)
+    pitch_semitones = int(0 or 0)
     incumbent_metrics.update(
         {
             "spoken_text_sha256": hashlib.sha256(
@@ -1994,10 +1986,8 @@ def _locked_name_variant_pipeline(
             ).hexdigest(),
             "pronunciation_delivery_variant": PRONUNCIATION_DELIVERY_LOCKED,
             "voice_profile_id": int(profile["id"]),
-            "pitch_semitones": pitch_semitones,
-            "effective_pitch_semitones": pitch_semitones,
-            "pitch_variant_skipped": 0.0,
-            "pitch_variant_mixed": 0.0,
+
+
         }
     )
     db.mark_signal_passed(
@@ -2338,7 +2328,7 @@ def test_asr_candidate_with_perceptual_review_never_replaces_incumbent(
                 "score": 1.8,
                 "baseline_score": 3.0,
                 "baseline_delta": -1.2,
-                "baseline_pitch_semitones": pitch_semitones,
+
                 "review_required": True,
                 "duration_seconds": 2.0,
             }
@@ -2668,10 +2658,8 @@ def test_recheckpoint_preserves_clarity_provenance_after_partial_asr_commit(
             "asr_clarity_repair_round": 0,
             "spoken_text_sha256": "e" * 64,
             "voice_profile_id": 17,
-            "pitch_semitones": -1,
-            "effective_pitch_semitones": None,
-            "pitch_variant_skipped": 1.0,
-            "pitch_variant_mixed": 1.0,
+
+
             "generation_ceiling_hit": 1.0,
             "generation_endpoint_active": 1.0,
             "split_checkpoint_seed": 122,
@@ -2679,13 +2667,13 @@ def test_recheckpoint_preserves_clarity_provenance_after_partial_asr_commit(
             "split_parts": [
                 {
                     "generation_seed": 121,
-                    "effective_pitch_semitones": -1,
-                    "pitch_variant_skipped": 0.0,
+
+
                 },
                 {
                     "generation_seed": 123,
-                    "effective_pitch_semitones": 0,
-                    "pitch_variant_skipped": 1.0,
+
+
                 },
             ],
         }
@@ -2719,10 +2707,6 @@ def test_recheckpoint_preserves_clarity_provenance_after_partial_asr_commit(
     assert signal["asr_clarity_repair_round"] == 0
     assert signal["spoken_text_sha256"] == "e" * 64
     assert signal["voice_profile_id"] == 17
-    assert signal["pitch_semitones"] == -1
-    assert signal["effective_pitch_semitones"] is None
-    assert signal["pitch_variant_skipped"] == 1.0
-    assert signal["pitch_variant_mixed"] == 1.0
     assert signal["generation_ceiling_hit"] == 1.0
     assert signal["generation_endpoint_active"] == 1.0
     assert signal["split_checkpoint_seed"] == 122
@@ -2730,7 +2714,6 @@ def test_recheckpoint_preserves_clarity_provenance_after_partial_asr_commit(
     assert [part["generation_seed"] for part in signal["split_parts"]] == [121, 123]
     assert set(str(fresh["warning_code"]).split("|")) == {
         "TTS_SPLIT_RECOVERY",
-        "TTS_PITCH_VARIANT_SKIPPED",
         "TTS_GENERATION_CEILING_REACHED",
     }
     evidence = pipeline._record_segment_asr_decode_evidence(
@@ -3315,17 +3298,15 @@ def test_split_fallback_aggregates_later_part_pitch_and_ceiling_failures(
         return [
             {
                 "voice_profile_id": 7,
-                "pitch_semitones": -1,
-                "effective_pitch_semitones": -1,
-                "pitch_variant_skipped": 0.0,
+
+
                 "generation_ceiling_hit": 0.0,
                 "generation_endpoint_active": 0.0,
             },
             {
                 "voice_profile_id": 7,
-                "pitch_semitones": -1,
-                "effective_pitch_semitones": 0,
-                "pitch_variant_skipped": 1.0,
+
+
                 "generation_ceiling_hit": 1.0,
                 "generation_endpoint_active": 1.0,
             },
@@ -3348,12 +3329,8 @@ def test_split_fallback_aggregates_later_part_pitch_and_ceiling_failures(
     signal = json.loads(str(fresh["signal_json"]))
     assert warning_codes == {
         "TTS_SPLIT_RECOVERY",
-        "TTS_PITCH_VARIANT_SKIPPED",
         "TTS_GENERATION_CEILING_REACHED",
     }
-    assert signal["pitch_variant_mixed"] == 1.0
-    assert signal["pitch_variant_skipped"] == 1.0
-    assert signal["effective_pitch_semitones"] is None
     assert signal["generation_ceiling_hit"] == 1.0
     assert signal["generation_endpoint_active"] == 1.0
 

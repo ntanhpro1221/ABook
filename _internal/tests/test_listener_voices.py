@@ -73,7 +73,7 @@ def _book(tmp_path: Path) -> tuple[ProjectPaths, ProjectDB]:
                                         "description": "kể", "seed": 1, "status": "ready"})
     profiles = {"NARRATOR": narrator}
     for key, (_gender, preset, ratio) in CAST.items():
-        profiles[key] = db.upsert_voice_profile(voice_profile_spec(preset, ratio))
+        profiles[key] = db.upsert_voice_profile(voice_profile_spec(preset))
     with db.connect() as conn:
         for key, gender in [("NARRATOR", "male"), *[(key, spec[0]) for key, spec in CAST.items()]]:
             conn.execute("INSERT INTO characters(canonical_name,display_name,gender,age,personality,importance,"
@@ -173,9 +173,8 @@ def test_two_people_sharing_a_voice_in_one_chapter_are_pulled_apart(tmp_path: Pa
     assert _apply(db, "RHINE", avoid=shared) is None, "đã khác giọng Lucien: không đổi nữa"
 
 
-def test_a_picked_voice_takes_a_formant_step_nobody_in_the_chapter_holds(tmp_path: Path) -> None:
-    """Người nghe chọn đúng preset Lucien đang dùng cho Noah (cùng chương): cùng preset, KHÁC bậc formant - như bước phân
-    vai vẫn làm - chứ không thành hai người một giọng."""
+def test_a_picked_shared_preset_is_exactly_the_same_voice(tmp_path: Path) -> None:
+    """Chọn chung preset là chọn cùng giọng, không sinh thêm bậc âm thanh."""
     _paths, db = _book(tmp_path)
     lucien_preset = CAST["LUCIEN"][1]["name"]
 
@@ -183,10 +182,10 @@ def test_a_picked_voice_takes_a_formant_step_nobody_in_the_chapter_holds(tmp_pat
 
     (voice,) = _voice(db, "NOAH")
     with db.connect() as conn:
-        preset, ratio = conn.execute(
-            "SELECT preset_name, formant_ratio FROM voice_profiles WHERE voice_key=?", (voice,)).fetchone()
-    assert preset == lucien_preset and abs(float(ratio) - 1.0) > 1e-6
-    assert voice not in _voice(db, "LUCIEN")
+        preset = conn.execute(
+            "SELECT preset_name FROM voice_profiles WHERE voice_key=?", (voice,)).fetchone()[0]
+    assert preset == lucien_preset
+    assert _voice(db, "LUCIEN") == {voice}
     assert _character(db, "NOAH")["gender"] == "male", "giới theo preset đã chọn"
     assert_voice_stability(db)
 

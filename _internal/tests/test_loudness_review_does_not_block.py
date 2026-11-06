@@ -11,7 +11,6 @@ thấy được và vẫn chặn.
 from __future__ import annotations
 
 from abook.audio_io import (
-    CHAPTER_LOUDNESS_HARD_TOLERANCE_LU,
     CHAPTER_LOUDNESS_REVIEW_TOLERANCE_LU,
     chapter_review_flags_that_block,
 )
@@ -42,11 +41,6 @@ def test_a_mixed_chapter_still_blocks_on_the_audible_one() -> None:
     assert chapter_review_flags_that_block(flags) == ["unexpected silence 1.02s"]
 
 
-def test_the_hard_line_is_what_makes_this_safe() -> None:
-    """Ranh giới không phải do ai bịa: chính dự án đặt vạch cứng ở 0,75.
-
-    Cờ review chỉ tồn tại trong khoảng giữa hai vạch; vượt vạch cứng là `hard_failures`, và
-    đường đó không đi qua hàm này.
-    """
-    assert CHAPTER_LOUDNESS_REVIEW_TOLERANCE_LU < CHAPTER_LOUDNESS_HARD_TOLERANCE_LU
-    assert CHAPTER_LOUDNESS_HARD_TOLERANCE_LU == 0.75
+def test_large_lufs_difference_is_also_diagnostic() -> None:
+    assert chapter_review_flags_that_block(['loudness delta 6.00 LU']) == []
+    assert CHAPTER_LOUDNESS_REVIEW_TOLERANCE_LU == .30

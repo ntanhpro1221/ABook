@@ -19,9 +19,9 @@ from pathlib import Path
 from abook.character_registry import canonical_key
 from scripts.pin_the_book_cast import chapters_by_voice, pins_that_drifted, project_chapters
 
-F090 = "preset_thanh_binh_f090_p-04"
-F104 = "preset_thai_son_f104_p+00"
-OTHER = "preset_truc_ly_f100_p+00"
+F090 = "vieneu@3.8.3/Thanh Bình"
+F104 = "vieneu@3.8.3/Thái Sơn"
+OTHER = "vieneu@3.8.3/Trúc Ly"
 
 
 def _rows() -> list[dict]:
@@ -106,18 +106,18 @@ def test_a_majority_voice_nobody_holds_is_free_to_take_back() -> None:
         {"name": "SHARON", "voice": OTHER, "chapter": chapter}
         for chapter in ("105", "107", "109", "111")
     ] + [
-        {"name": "SHARON", "voice": "preset_ngoc_linh_f087_p+00", "chapter": chapter}
+        {"name": "SHARON", "voice": "vieneu@3.8.3/Ngọc Linh", "chapter": chapter}
         for chapter in ("112", "114")
     ]
 
     drifted, _notes = pins_that_drifted(
-        {canonical_key("SHARON"): "preset_ngoc_linh_f087_p+00"},
+        {canonical_key("SHARON"): "vieneu@3.8.3/Ngọc Linh"},
         rows,
         {"140"},
         canonical=canonical_key,
     )
 
-    assert drifted["SHARON"][:2] == ("preset_ngoc_linh_f087_p+00", OTHER)
+    assert drifted["SHARON"][:2] == ("vieneu@3.8.3/Ngọc Linh", OTHER)
 
 
 def test_an_unpinned_person_is_not_this_pass_s_business() -> None:
