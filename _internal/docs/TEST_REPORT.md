@@ -63,6 +63,13 @@
 - QML liên quan: 55 hàm test, 61 mục JUnit gồm init/cleanup (Main 12, Voice 27, Settings 22), 0 failures/errors/skips. Test mới kiểm nạp hộp, mở lại cùng instance, lưu nhanh, không hỏi giọng ở thư viện audio, hỏi giọng cho sách chữ/Cài đặt và giữ lựa chọn giọng. Các cửa sổ dùng offscreen trên desktop riêng; guard 0 foreground events.
 - Python startup/host: 8 passed, 0 failures/errors/skips. Không full release gate, không model/GPU, không đổi Android. Kết quả benchmark và protocol được ghi riêng trong report của task.
 - Hash khoá trước/sau lượt này giữ `88cef8f94e9e98907298d8252ccba68e253956bdbc2a503617686673abdb0d94` (53 mục đọc từ code); nhánh đã có thay đổi file khoá ở đợt tối ưu import trước đó, chỉ dùng ở dev.
+## 07-11-2026 — Android startup (dev/perfandroid, chưa commit)
+
+- WorkManager khởi tạo khi `getInstance(context)` đầu tiên thay cho ContentProvider; giữ cấu hình mặc định và các initializer khác. Worker thật kiểm trên AVD riêng không mở Activity: 1 test / 0 failure / 0 error.
+- Đồng bộ catalogue không đọc Thư viện thêm lần nữa sau khi nguồn đã công bố; lỗi nguồn vẫn làm mới phần đã ghi. Polling thiết bị/Studio đợi callback first-content hiện có. Không sửa UI, thang hoạt ảnh, điều kiện splash hoặc mốc reportFullyDrawn.
+- JVM/Robolectric đích: 105 tests / 0 failures / 0 errors / 0 skipped, gồm LibraryMembership, DevicesState, NativeActivityLinks, LibraryScreen, ShellRoutes, SettingsData, PlayerRepo, NativeDevicesFlow, TabHost, MotionScan. Hai hồi quy DevicesState kiểm nguồn tự công bố và lỗi giữa chừng/giữ một lượt đồng bộ.
+- Macrobenchmark cold startup: >=10 Perfetto trace mỗi APK/thay đổi trên cùng AVD 2 vCPU/1536 MiB, SwiftShader CPU, không cửa sổ, adb riêng cổng 5038, package com.ngdtuanh.abook.perfaudit. Profile bổ sung graph startup thật, hợp với coverage UI cũ; generator 1/1 pass. Số startup từng lượt, RAM PSS sau thư viện/phát MP3 60 s, đối chứng APK gốc và thử nghiệm loại bỏ: D:/Novels/ABook_perfandroid/report.md cùng perfandroid_evidence. Không suy số emulator thành điện thoại thật.
+- Không release gate đầy đủ, không GPU host, không chạm điện thoại thật/package sản phẩm hoặc `_internal/abook/`.
 
 ## 06-11-2026 — tnbig (dev/tn-bigint, chưa commit)
 

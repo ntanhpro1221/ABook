@@ -205,8 +205,9 @@ class DevicesState(
         streaming = true
         scope.launch {
             try {
-                attempt { source.streamable() }
-                attempt { changed() }
+                // The source already publishes a successful catalogue. On failure it may
+                // have persisted part of an update, so retain the recovery refresh.
+                if (attempt { source.streamable() }.isFailure) attempt { changed() }
             } finally {
                 streaming = false
             }
