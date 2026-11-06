@@ -1859,6 +1859,13 @@ CREATE TABLE IF NOT EXISTS segments (
     UNIQUE(chapter_id, seq)
 );
 
+CREATE TABLE IF NOT EXISTS wav_signal_metrics (
+    wav_sha256 TEXT NOT NULL,
+    measurement_version TEXT NOT NULL,
+    metrics_json TEXT NOT NULL,
+    PRIMARY KEY (wav_sha256, measurement_version)
+);
+
 CREATE TABLE IF NOT EXISTS characters (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     canonical_name TEXT NOT NULL UNIQUE,
@@ -3098,6 +3105,27 @@ class ProjectDB:
             except Exception:
                 conn.execute("ROLLBACK")
                 raise
+
+    def load_wav_signal_metrics(self, measurement_version: str) -> dict[str, dict[str, float]]:
+        with self.connect() as conn:
+            rows = conn.execute(
+                "SELECT wav_sha256, metrics_json FROM wav_signal_metrics WHERE measurement_version=?",
+                (measurement_version,),
+            ).fetchall()
+        return {str(row["wav_sha256"]): json.loads(row["metrics_json"]) for row in rows}
+
+    def store_wav_signal_metrics(
+        self, wav_sha256: str, measurement_version: str, metrics: dict[str, float],
+    ) -> None:
+        # Each measurement is durable independently; an interrupted scan reuses completed
+        # entries after reopening and measures only the remaining content.
+        with self.transaction() as conn:
+            conn.execute(
+                """INSERT INTO wav_signal_metrics (wav_sha256, measurement_version, metrics_json)
+                   VALUES (?, ?, ?) ON CONFLICT (wav_sha256, measurement_version)
+                   DO UPDATE SET metrics_json=excluded.metrics_json""",
+                (wav_sha256, measurement_version, json.dumps(metrics, allow_nan=False)),
+            )
 
     def initialize_book(
         self,

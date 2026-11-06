@@ -6,6 +6,13 @@
 - Test đích `tests/test_dev_setup_marker.py tests/test_runtime_contract.py`, chạy từ `_internal` với `-q -rf`: 32 passed, 0 failed, 0 errors, 0 skipped (XML thật). Runtime giả dùng file nhỏ, kiểm SHA-256 thật và dependency giả; không dùng GPU.
 - Dry-run thật trên `D:/Novels/ABook/_internal/runtime`: exit 0, tất cả phép kiểm đạt; marker cũ giữ nguyên SHA-256 và mtime. Không nạp model/chạy suy luận, không chạy release gate đầy đủ.
 - Hash file khoá trước/sau cùng `3818e7751fec8680b70e3f148d1f0a63ede8de1a6599fad3ab043ff632c5467b`. Chi tiết và một lần gọi pytest sai cwd đã sửa: `D:/Novels/ABook_setupmark/report.md`.
+## 07-11-2026 — recovcache (dev/recovery-cache, chưa commit)
+
+- Cache số đo waveform theo SHA-256 WAV và version (hash audio_io, hằng số đo, NumPy/soundfile/libsndfile) trong SQLite project. Mỗi miss commit độc lập; không lưu verdict, không bỏ kiểm băm, validation chữ/settings/drift hay QA. Không thêm migration.
+- Bản sao Your Story sugaru_v6: 3.543 dòng, nhánh quét sâu dùng cấu hình hiện hành chung. Trước: lần 1 668,362081 s / mở lại 603,897911 s; sau: cache trống 658,541211 s / cache ấm 104,683375 s. Onset lượt mở lại 3.504 -> 0; số kiểm băm/inspection giữ nguyên. Các lượt chạy nối tiếp, không đồng thời pytest; đây là thời gian recover_project, không phải toàn bộ Pipeline/model startup.
+- 0 khác biệt RecoveryReport, 3.510/3.504 inspection, các trạng thái DB ở cả hai lượt và 4.692 runtime events (bỏ thời điểm ghi). Hai model-path mặc định khác do package đối chứng không được recovery dùng; phần settings còn lại bằng nhau. Sách nguồn chỉ đọc; lượt raw settings cũ bị lỗi pace giữ riêng, không dùng để kết luận warm-cache.
+- Pytest -q -rf: 33 file đầy đủ, 667 passed / 0 FAILED / 0 errors / 5 skipped, đếm XML; cache mới 15/15 qua, gồm ngắt/reopen. Có 12 warning UnicodeDecodeError ở luồng đọc subprocess; đối chứng HEAD cùng loại trên test_perceptual_prefetch_concurrency: 10/10 qua, 4 warning. Cửa sổ offscreen. Log/XML, lệnh tái hiện, comparison.json và report.md nằm trong scratchpad/codex/recovcache của task.
+- Hash trước `3818e7751fec8680b70e3f148d1f0a63ede8de1a6599fad3ab043ff632c5467b`, sau `8944f563a6bd23d845c1eb5dbcb5e7ffdb30e22bc674d1f3a8569ad08892ec9e` (53 file đọc trực tiếp từ code). Hash đổi; chỉ ở nhánh dev, chờ hết run cần hash cũ trước khi tích hợp. Không commit/push.
 
 ## 06-11-2026 — tnbig (dev/tn-bigint, chưa commit)
 
