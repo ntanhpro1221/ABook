@@ -27,7 +27,7 @@ class ReadingMarksTest {
     @Test
     fun englishThousandsLoseTheirCommas() = check(
         "Có 500,000 đồng, 100,000 yen và 1,419 / 3,419." to "Có 500000 đồng, 100000 yên và 1419 trên 3419.",
-        "Trả 2,000,000, xong." to "Trả 2000000, xong.",
+        "Trả 2,000,000, xong." to "Trả 2.000.000, xong.",
         "Giá 1,500 và 1,5 và 3,25 và 12,3456." to "Giá 1500 và 1,5 và 3,25 và 12,3456.",
         "Số 1.234,567 và 9.389.700 và 1,234.5 và 1,234,5." to "Số 1.234,567 và 9.389.700 và 1,234.5 và 1,234,5.",
     )
