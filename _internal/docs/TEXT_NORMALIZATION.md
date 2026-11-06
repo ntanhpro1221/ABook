@@ -307,6 +307,36 @@ word và cho ra dạng normalized của word").
    Fixture chung 146 ca: thêm 46 câu bịa, đổi duy nhất ca cũ `thousands-2`; kiểm thứ / hạng với cả 5 và 6 chữ số đọc đúng, giữ nguyên.
    Chưa tổng hợp hay chấm audio; phép kiểm này xác nhận văn bản đọc và Normalizer trên CPU.
 
+   **tnnext (06-11, dev/tnnext; chưa phát hành):** nhãn `Chap`/`Chap.` và `Vol`/`Vol.` ngay trước số Ả Rập,
+   hoặc dính số (`Chap.12`, `Vol.5`), đọc thành “chương” / “tập”. Không đoán số phức hợp, mã chữ-số, URL,
+   từ đứng riêng hay token ngay sau nhãn mã/id/serial. Python và Kotlin cùng áp trước bước đọc từ; Studio và Edge
+   dùng đường chung. Cách đọc riêng của cuốn vẫn thắng, số chữ hiện và mốc sáng chữ giữ nguyên. Cache đọc 6 → 7.
+   Fixture chung 190 ca: giữ nguyên 146 ca cũ, thêm 44 câu tự viết (20 đổi, 24 bảo vệ cách đọc hiện hành).
+   Đo chỉ đọc 637 file của 30 LN Nhật trong các thư mục curated của Corpus: 174.217 dòng không rỗng, 3.722.710 chữ
+   tách theo khoảng trắng, gồm cả tiêu đề. `Chap`+số: 547 lượt / 5 cuốn; `Vol`+số: 19 / 2 cuốn; 566 dòng đổi cách đọc.
+   Đây là mẫu cố định, không ngẫu nhiên: riêng một cuốn chiếm 542/547 lượt Chap. Không suy rộng mức lợi cho mọi LN.
+   Chỉ kiểm văn bản/Normalizer CPU; chưa tổng hợp hay chấm audio.
+
+   **tnnext2 (07-11, cùng dev/tnnext; chưa phát hành):** thêm hai khoảng trống tầng 3 có luật nhỏ, xác định:
+   - `v.v.` / `v.v` (kể cả chữ V đầu câu) → `vân vân`, giữ dấu chấm cuối nếu có. Không mở `V.V.`, `v.v.v.`,
+     chữ cái đầu có chấm khác, URL/mã hay nhãn mã/id/serial. Các đường đều nhận cùng chữ đọc trước engine,
+     thay vì phụ thuộc từ điển riêng của sea-g2p trên máy tính.
+   - Gạch U+2010/U+2011/U+2012/U+2013 dính với hậu tố Nhật san/kun/chan/sama/senpai/sensei/dono dùng lại
+     cách đọc gạch ASCII đã có, kể cả sau dấu ngập ngừng dính chữ. Chỉ khi cả lõi hợp lệ theo luật kính ngữ cũ;
+     không đặt thêm cách đọc tên/từ mượn. Em dash, gạch rời, mã dính số và hậu tố chưa nhận giữ luật cũ.
+   Sửa kiểm Chap/Vol trước khi tách dấu: `Chap.12..5`, `Vol.1...2` không còn bị nhận nhầm thành nhãn + số nguyên.
+   Python/Kotlin cùng thứ tự; Edge/Nghe ngay và Studio dùng đường chung. Cách đọc riêng vẫn thắng, chữ nguồn và
+   mốc chữ giữ nguyên. Cache 7 → 8; fixture chung 190 → 227 ca tự viết, giữ nguyên 190 ca trước.
+
+   Đo thêm Hako `_full`, không cộng lặp mẫu curated: hạt 20261107, chọn ngẫu nhiên 200 cuốn truyen, 70 ai-dich,
+   6 khac (tất cả khac có TXT), tối đa 2 chương/cuốn: **534 file / 276 cuốn / 89.197 dòng / 1.881.652 chữ**.
+   NFC từng dòng, tính cả tiêu đề; nhóm nguồn không đồng nghĩa quốc tịch. `v.v.` 7 lượt/7 cuốn;
+   gạch Unicode kính ngữ 5 lượt/1 cuốn. Số thập phân dấu chấm 49 lượt/24 cuốn nhưng nhiều số chương,
+   nên hoãn luật rộng; số+k có 2 lượt, cả hai là độ phân giải 4K. Viết tắt có chấm 14 lượt, trong đó 7 là v.v.;
+   7 lượt còn lại (V.L., B.F.) và 4 lượt vs chưa tự quyết cách đọc. Hai luật được chọn vì công nhỏ và tái dùng
+   cách đọc đã biết; không khẳng định lợi ích audio cao hay phổ biến trên mọi LN. Chỉ đếm xuất hiện và đổi văn bản;
+   chưa tổng hợp/chấm audio.
+
 3. Tầng 3 từ điển viết tắt + từ mượn + kính ngữ: dựng bằng LLM ngoại tuyến, kiểm âm tiết + ASR, vào cả Studio lẫn Nghe ngay.
 4. Tầng 4 phiên âm romaji / Hàn theo luật cho Nghe ngay (máy tính + điện thoại), và tầng 4b model phiên âm từ riêng (Model
    train, sau cân bằng giọng; kế hoạch 1 trang trước khi train).

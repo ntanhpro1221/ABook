@@ -730,6 +730,411 @@
    "id": "generated_bigint-7",
    "text": "Có 12345678901-23456789012 người.",
    "said": "Có 12345678901-23456789012 người."
+  },
+  {
+   "id": "book_label-1",
+   "text": "Đọc Chap 12 nhé.",
+   "said": "Đọc chương 12 nhé."
+  },
+  {
+   "id": "book_label-2",
+   "text": "Mở Chap. 2 nào.",
+   "said": "Mở chương 2 nào."
+  },
+  {
+   "id": "book_label-3",
+   "text": "Chap.3: Khởi hành.",
+   "said": "chương 3: Khởi hành."
+  },
+  {
+   "id": "book_label-4",
+   "text": "Xem chap4 nhé.",
+   "said": "Xem chương 4 nhé."
+  },
+  {
+   "id": "book_label-5",
+   "text": "CHAP 7 bắt đầu.",
+   "said": "chương 7 bắt đầu."
+  },
+  {
+   "id": "book_label-6",
+   "text": "CHAP.8: Gặp lại.",
+   "said": "chương 8: Gặp lại."
+  },
+  {
+   "id": "book_label-7",
+   "text": "Mở Vol 5 nhé.",
+   "said": "Mở tập 5 nhé."
+  },
+  {
+   "id": "book_label-8",
+   "text": "Xem Vol. 6 nào.",
+   "said": "Xem tập 6 nào."
+  },
+  {
+   "id": "book_label-9",
+   "text": "Vol.7: Bến mới.",
+   "said": "tập 7: Bến mới."
+  },
+  {
+   "id": "book_label-10",
+   "text": "Mở vol8 nhé.",
+   "said": "Mở tập 8 nhé."
+  },
+  {
+   "id": "book_label-11",
+   "text": "VOL 9 bắt đầu.",
+   "said": "tập 9 bắt đầu."
+  },
+  {
+   "id": "book_label-12",
+   "text": "VOL.10: Về nhà.",
+   "said": "tập 10: Về nhà."
+  },
+  {
+   "id": "book_label-13",
+   "text": "“Chap.12,” cô nói.",
+   "said": "“chương 12,” cô nói."
+  },
+  {
+   "id": "book_label-14",
+   "text": "“Vol.2,” cậu đáp.",
+   "said": "“tập 2,” cậu đáp."
+  },
+  {
+   "id": "book_label-15",
+   "text": "(Chap.4) rồi (Vol.3).",
+   "said": "(chương 4) rồi (tập 3)."
+  },
+  {
+   "id": "book_label-16",
+   "text": "Xem chap. 12, rồi vol. 3.",
+   "said": "Xem chương 12, rồi tập 3."
+  },
+  {
+   "id": "book_label-17",
+   "text": "Chap 001: Bắt đầu.",
+   "said": "chương 001: Bắt đầu."
+  },
+  {
+   "id": "book_label-18",
+   "text": "Vol.20",
+   "said": "tập 20"
+  },
+  {
+   "id": "book_label-19",
+   "text": "Đọc Chap. 12. Xong.",
+   "said": "Đọc chương 12. Xong."
+  },
+  {
+   "id": "book_label-20",
+   "text": "Chap 5 và Vol.2.",
+   "said": "chương 5 và tập 2."
+  },
+  {
+   "id": "book_label_keep-1",
+   "text": "Chap đứng cạnh tôi.",
+   "said": "Chap đứng cạnh tôi."
+  },
+  {
+   "id": "book_label_keep-2",
+   "text": "Vol vẫn nằm đó.",
+   "said": "Vol vẫn nằm đó."
+  },
+  {
+   "id": "book_label_keep-3",
+   "text": "Đọc chapter 12 nhé.",
+   "said": "Đọc chapter 12 nhé."
+  },
+  {
+   "id": "book_label_keep-4",
+   "text": "Dùng volume 5 nhé.",
+   "said": "Dùng volume 5 nhé."
+  },
+  {
+   "id": "book_label_keep-5",
+   "text": "Mã AChap12B còn đó.",
+   "said": "Mã AChap12B còn đó."
+  },
+  {
+   "id": "book_label_keep-6",
+   "text": "Mã Vol12B còn đó.",
+   "said": "Mã Vol12B còn đó."
+  },
+  {
+   "id": "book_label_keep-7",
+   "text": "Đọc Chap.2a nhé.",
+   "said": "Đọc Chap.2a nhé."
+  },
+  {
+   "id": "book_label_keep-8",
+   "text": "Xem Chap 12a nhé.",
+   "said": "Xem Chap 12a nhé."
+  },
+  {
+   "id": "book_label_keep-9",
+   "text": "Dùng Vol.1.2.3 nhé.",
+   "said": "Dùng Vol.1.2.3 nhé."
+  },
+  {
+   "id": "book_label_keep-10",
+   "text": "Xem Chap 1.5 nhé.",
+   "said": "Xem Chap 1.5 nhé."
+  },
+  {
+   "id": "book_label_keep-11",
+   "text": "Chọn Vol 2,5 nhé.",
+   "said": "Chọn Vol 2,5 nhé."
+  },
+  {
+   "id": "book_label_keep-12",
+   "text": "Mở https://example.org/Vol.2 nhé.",
+   "said": "Mở đường dẫn nhé."
+  },
+  {
+   "id": "book_label_keep-13",
+   "text": "Xem file/Chap.2 nhé.",
+   "said": "Xem file, Chap.2 nhé."
+  },
+  {
+   "id": "book_label_keep-14",
+   "text": "Vol., 5 cuốn.",
+   "said": "Vol., 5 cuốn."
+  },
+  {
+   "id": "book_label_keep-15",
+   "text": "Chap. chưa có số.",
+   "said": "Chap. chưa có số."
+  },
+  {
+   "id": "book_label_keep-16",
+   "text": "Xem Chap -2 nhé.",
+   "said": "Xem Chap 2 nhé."
+  },
+  {
+   "id": "book_label_keep-17",
+   "text": "Xem Vol +3 nhé.",
+   "said": "Xem Vol +3 nhé."
+  },
+  {
+   "id": "book_label_keep-18",
+   "text": "Dùng volt 5 nhé.",
+   "said": "Dùng volt 5 nhé."
+  },
+  {
+   "id": "book_label_keep-19",
+   "text": "Lưu Chap_12 nhé.",
+   "said": "Lưu Chap_12 nhé."
+  },
+  {
+   "id": "book_label_keep-20",
+   "text": "Xem Chap １２ nhé.",
+   "said": "Xem Chap 12 nhé."
+  },
+  {
+   "id": "book_label_keep-21",
+   "text": "Mã Chap12 còn đó.",
+   "said": "Mã Chap12 còn đó."
+  },
+  {
+   "id": "book_label_keep-22",
+   "text": "ID Vol.2 còn đó.",
+   "said": "ai-đi Vol.2 còn đó."
+  },
+  {
+   "id": "book_label_keep-23",
+   "text": "Serial Chap 12 còn đó.",
+   "said": "Serial Chap 12 còn đó."
+  },
+  {
+   "id": "book_label_keep-24",
+   "text": "Mã: Vol. 3 còn đó.",
+   "said": "Mã: Vol. 3 còn đó."
+  },
+  {
+   "id": "enumeration-1",
+   "text": "Bút, giấy, v.v.",
+   "said": "Bút, giấy, vân vân."
+  },
+  {
+   "id": "enumeration-2",
+   "text": "Bút, giấy, v.v",
+   "said": "Bút, giấy, vân vân"
+  },
+  {
+   "id": "enumeration-3",
+   "text": "V.v.",
+   "said": "vân vân."
+  },
+  {
+   "id": "enumeration-4",
+   "text": "Thêm (v.v.), nhé.",
+   "said": "Thêm (vân vân.), nhé."
+  },
+  {
+   "id": "enumeration-5",
+   "text": "Kể cả “v.v.” nhé.",
+   "said": "Kể cả “vân vân.” nhé."
+  },
+  {
+   "id": "enumeration_keep-1",
+   "text": "Mã v.v. giữ lại.",
+   "said": "Mã v.v. giữ lại."
+  },
+  {
+   "id": "enumeration_keep-2",
+   "text": "Dùng av.vb nhé.",
+   "said": "Dùng av.vb nhé."
+  },
+  {
+   "id": "enumeration_keep-3",
+   "text": "Dùng v.v.v. nhé.",
+   "said": "Dùng v.v.v. nhé."
+  },
+  {
+   "id": "enumeration_keep-4",
+   "text": "Dùng V.V. nhé.",
+   "said": "Dùng V.V. nhé."
+  },
+  {
+   "id": "enumeration_keep-5",
+   "text": "Dùng v.v2 nhé.",
+   "said": "Dùng v.v2 nhé."
+  },
+  {
+   "id": "enumeration_keep-6",
+   "text": "Dùng x/v.v. nhé.",
+   "said": "Dùng x, v.v. nhé."
+  },
+  {
+   "id": "enumeration_keep-7",
+   "text": "Dùng B.F. nhé.",
+   "said": "Dùng B.F. nhé."
+  },
+  {
+   "id": "enumeration_keep-8",
+   "text": "Dùng V.L. nhé.",
+   "said": "Dùng V.L. nhé."
+  },
+  {
+   "id": "honorific_hyphen-1",
+   "text": "Gọi Himuro–kun nhé.",
+   "said": "Gọi Hi-mu-rô-cun nhé."
+  },
+  {
+   "id": "honorific_hyphen-2",
+   "text": "Gọi jii–chan nhé.",
+   "said": "Gọi gi-chan nhé."
+  },
+  {
+   "id": "honorific_hyphen-3",
+   "text": "Gọi Aria–chan nhé.",
+   "said": "Gọi Aria-chan nhé."
+  },
+  {
+   "id": "honorific_hyphen-4",
+   "text": "Gọi Haruto‐san nhé.",
+   "said": "Gọi Ha-ru-tô-xan nhé."
+  },
+  {
+   "id": "honorific_hyphen-5",
+   "text": "Gọi Haruto‑san nhé.",
+   "said": "Gọi Ha-ru-tô-xan nhé."
+  },
+  {
+   "id": "honorific_hyphen-6",
+   "text": "Gọi Haruto‒san nhé.",
+   "said": "Gọi Ha-ru-tô-xan nhé."
+  },
+  {
+   "id": "honorific_hyphen-7",
+   "text": "“Himuro–kun,” cô gọi.",
+   "said": "“Hi-mu-rô-cun,” cô gọi."
+  },
+  {
+   "id": "honorific_hyphen_keep-1",
+   "text": "Himuro – kun gọi.",
+   "said": "Himuro – kun gọi."
+  },
+  {
+   "id": "honorific_hyphen_keep-2",
+   "text": "Himuro–đứng đó.",
+   "said": "Himuro, đứng đó."
+  },
+  {
+   "id": "honorific_hyphen_keep-3",
+   "text": "Dùng abc‑xyz nhé.",
+   "said": "Dùng abc‑xyz nhé."
+  },
+  {
+   "id": "honorific_hyphen_keep-4",
+   "text": "Dùng Haruto‑san2 nhé.",
+   "said": "Dùng Haruto‑san2 nhé."
+  },
+  {
+   "id": "book_label_keep-25",
+   "text": "Chap.12..5",
+   "said": "Chap.12..5"
+  },
+  {
+   "id": "book_label_keep-26",
+   "text": "Vol.1...2",
+   "said": "Vol.1...2"
+  },
+  {
+   "id": "book_label_keep-27",
+   "text": "Chap 12..5",
+   "said": "Chap 12..5"
+  },
+  {
+   "id": "book_label_keep-28",
+   "text": "Mã…Vol.5",
+   "said": "Mã…Vol.5"
+  },
+  {
+   "id": "honorific_hyphen_keep-5",
+   "text": "Himuro—kun gọi.",
+   "said": "Himuro, kun gọi."
+  },
+  {
+   "id": "honorific_hyphen_keep-6",
+   "text": "Dùng 2Haruto‑san nhé.",
+   "said": "Dùng 2Haruto‑san nhé."
+  },
+  {
+   "id": "enumeration_keep-9",
+   "text": "Dùng v.v.com nhé.",
+   "said": "Dùng v.v.com nhé."
+  },
+  {
+   "id": "honorific_hyphen-8",
+   "text": "Gọi…Himuro–kun nhé.",
+   "said": "Gọi…Hi-mu-rô-cun nhé."
+  },
+  {
+   "id": "honorific_hyphen-9",
+   "text": "Gọi...Himuro–kun nhé.",
+   "said": "Gọi...Hi-mu-rô-cun nhé."
+  },
+  {
+   "id": "honorific_hyphen-10",
+   "text": "Gọi(Himuro–kun) nhé.",
+   "said": "Gọi(Hi-mu-rô-cun) nhé."
+  },
+  {
+   "id": "enumeration_keep-10",
+   "text": "Mã…v.v.",
+   "said": "Mã, v.v."
+  },
+  {
+   "id": "enumeration-6",
+   "text": "Bút, giấy, v.v.., nhé.",
+   "said": "Bút, giấy, vân vân.., nhé."
+  },
+  {
+   "id": "enumeration-7",
+   "text": "Bút, giấy, “v.v...”",
+   "said": "Bút, giấy, “vân vân...”"
   }
  ]
 }
