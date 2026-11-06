@@ -125,6 +125,10 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   Không audio nào được cắt để lách validation; kết quả quá dài phải retry hoặc `failed`.
 - Chương còn dòng `failed` nhưng đủ WAV thật vẫn được ghép, giữ trạng thái `warning`, ghi rõ dòng lỗi và không ghi QA `pass`.
   Dòng thiếu audio giải mã được hay sai băm thì chặn chương, nêu đúng dòng; không chèn im lặng thay lời đọc.
+- Chương có MP3 nghe được, kể cả `warning/Cần nghe lại`, phải giữ kịch bản có mốc gắn checksum MP3 trước khi đặt lại câu.
+  Mọi đường sửa dùng chung `database.heard_chapter` và `_mark_listener_redo_conn`; MP3 mới không được dùng bản chụp của MP3 cũ.
+- Ngoại lệ giọng người kể theo chương/đoạn lưu xuất xứ câu trong `chapter_teller_lines` cùng transaction đổi giọng/đặt lại câu.
+  Hoàn tác hoặc chọn người kể khác phải đối chiếu lại cả những câu đã áp, giữ người nghĩ ban đầu và ưu tiên sửa từng câu của người nghe.
 - Retry cùng chữ/giọng giữ bản thu tốt nhất trong SQLite và trên đĩa đến khi bản tốt hơn checkpoint. Lượt thử ghi file riêng;
   hết lượt vẫn `failed` kèm lý do và bản thu đã giữ. Đổi chữ/cách đọc/giọng là vô hiệu bản thu, không phải retry.
 - Chia câu chỉ dùng lời đọc đã materialize cùng span nguồn/lời đọc; không áp phát âm lại lên kết quả thay thế.
