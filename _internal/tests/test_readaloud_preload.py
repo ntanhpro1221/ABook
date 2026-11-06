@@ -7,6 +7,7 @@ from pathlib import Path
 
 import numpy as np
 
+from tests.async_wait import wait_until
 from abook import power_source
 from tests.test_a_project_can_be_renamed_or_deleted import _call, studio  # noqa: F401 - fixture dùng chung
 from abook.readaloud import service as readaloud_service
@@ -44,12 +45,7 @@ def _service(tmp_path: Path, spare=lambda: True) -> tuple[ReadAloud, list[_Engin
 
 
 def _until(condition, seconds: float = 5.0) -> bool:
-    end = time.monotonic() + seconds
-    while time.monotonic() < end:
-        if condition():
-            return True
-        time.sleep(0.01)
-    return condition()
+    return wait_until(condition, timeout=seconds, interval=0.01)
 
 
 def test_opening_a_book_loads_the_engine_before_anyone_presses_play(tmp_path: Path) -> None:
