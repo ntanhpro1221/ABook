@@ -315,3 +315,18 @@ def test_publish_without_a_changelog_section_stops_before_the_gate(tmp_path, mon
     with pytest.raises(AssertionError, match="CHANGELOG"):
         release.publish("9.9.9", "HEAD", tmp_path)
     assert calls == []
+
+
+def test_changelog_accepts_unreleased_entries_or_the_bumped_version_section(tmp_path, monkeypatch):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    monkeypatch.setattr(gate, "ROOT", tmp_path)
+    monkeypatch.setattr(gate, "version", lambda: "9.9.9")
+    log = docs / "CHANGELOG.md"
+    log.write_text("# Log\n\n## [Chưa phát hành]\n\n- Mới\n\n## [9.9.8] - 2026-01-01\n\n- Cũ\n", encoding="utf-8")
+    assert gate.worker("changelog")["counts"] == {"entries": 1, "released": 0}
+    log.write_text("# Log\n\n## [Chưa phát hành]\n\n## [9.9.9] - 2026-01-02\n\n- Mới\n- Hai\n\n## [9.9.8]\n\n- Cũ\n", encoding="utf-8")
+    assert gate.worker("changelog")["counts"] == {"entries": 2, "released": 1}
+    log.write_text("# Log\n\n## [Chưa phát hành]\n\n## [9.9.8]\n\n- Cũ\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="CHANGELOG"):
+        gate.worker("changelog")
