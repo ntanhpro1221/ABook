@@ -18,6 +18,8 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -30,11 +32,25 @@ import androidx.compose.ui.unit.dp
 import vn.abook.player.ui.data.Choice
 import vn.abook.player.ui.motion.Motion
 import vn.abook.player.ui.theme.Abook
+import vn.abook.player.ui.theme.AbookColors
 import vn.abook.player.ui.theme.Dim
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.max
+
+/** Continuous control geometry shares the control renderer; no hand-drawn icons at call sites. */
+internal fun DrawScope.drawRangeTrack(value: Double, min: Double, max: Double, default: Double?, colors: AbookColors) {
+    val y = size.height / 2
+    val x = ((value - min) / (max - min)).toFloat().coerceIn(0f, 1f) * size.width
+    drawLine(colors.line, Offset(0f, y), Offset(size.width, y), 3.dp.toPx(), StrokeCap.Round)
+    drawLine(colors.accent, Offset(0f, y), Offset(x, y), 3.dp.toPx(), StrokeCap.Round)
+    if (default != null) {
+        val mark = ((default - min) / (max - min)).toFloat() * size.width
+        drawLine(colors.text2, Offset(mark, y - 5.dp.toPx()), Offset(mark, y + 5.dp.toPx()), 2.dp.toPx())
+    }
+    drawCircle(colors.accent, 5.dp.toPx(), Offset(x, y))
+}
 
 /**
  * Công tắc (vẽ tay, 48 x 28): núm TRƯỢT sang phải khi bật, rãnh đổi từ mực mờ sang mực theo cùng tiến trình - đọc trong pha vẽ. Không hổ phách: màn Cài đặt

@@ -14,7 +14,6 @@ from pathlib import Path
 
 import pytest
 
-from abook.cli import _open_project
 from abook.database import (
     KEEP_LOCKED_READING_ACTION,
     SEGMENT_CANDIDATE_PROMOTED,
@@ -97,7 +96,13 @@ def test_the_cut_off_substitution_swallows_its_own_failures(tmp_path: Path) -> N
     from scripts.keep_the_locked_reading import bare_pipeline
 
     root = _copy(tmp_path)
-    paths, db, settings = _open_project(root)
+    from abook.config import build_settings
+    from abook.models import ProjectPaths
+
+    # Keep historical candidate evidence; exercise the hook with current settings.
+    paths = ProjectPaths.build(root)
+    db = ProjectDB(paths.db)
+    settings = build_settings()
     pipeline = bare_pipeline(paths, db, settings)
     with db.connect() as conn:
         segment = conn.execute(

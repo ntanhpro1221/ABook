@@ -373,7 +373,7 @@ Column {
                             size: "sm"
                             kind: "ghost"
                             icon: "bluetooth"
-                            text: modelData.name + " · bản thử"
+                            text: modelData.name + "\u00a0·\u00a0bản thử"
                             onClicked: root.choose(modelData.address + "@dev")
                         }
                     }

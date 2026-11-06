@@ -1,8 +1,12 @@
 // @vitest-environment happy-dom
 import { act } from "react";
 import { createRoot } from "react-dom/client";
-import { expect, it, vi } from "vitest";
+import { beforeEach, afterEach, expect, it, vi } from "vitest";
 import { MusicLevelSlider } from "./MusicLevelSlider";
+
+// Value tests use a controllable animation; real motion has its own browser tests.
+beforeEach(() => { vi.spyOn(HTMLElement.prototype, "animate").mockImplementation(() => ({ cancel() {}, onfinish: null, finished: Promise.resolve() }) as unknown as Animation); });
+afterEach(() => vi.restoreAllMocks());
 
 it("reset saves the default once, including a book's fractional level", async () => {
   const host = document.createElement("div");

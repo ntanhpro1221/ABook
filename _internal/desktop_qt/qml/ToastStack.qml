@@ -5,6 +5,8 @@ import ABook
 // nó ở dưới. Hai lời có đồng hồ, nút việc và hiệu ứng đóng/mở độc lập.
 Column {
     objectName: "toastStack"
+    // Toast stays below every open surface, including while either one is moving.
+    z: 45
     width: 356
     spacing: 12
     Toast { objectName: "successToast" }

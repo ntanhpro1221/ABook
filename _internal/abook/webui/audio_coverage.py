@@ -3,13 +3,35 @@ from __future__ import annotations
 
 import math
 import hashlib
+import subprocess
 from contextlib import closing
 from pathlib import Path
 from typing import Any, Callable
 
-from ..audio_io import verify_mp3
-from ..io_utils import sha256_file
+from ..io_utils import ffmpeg_executable, run_hidden, sha256_file
 from . import store
+
+
+def inspect_audio(path: Path) -> tuple[bool, str, float | None]:
+    """Decode every audio frame and measure its duration without Studio dependencies."""
+    try:
+        if not path.is_file() or path.stat().st_size < 4096:
+            return False, "MP3 missing or too small", None
+        result = run_hidden(
+            [ffmpeg_executable(), "-hide_banner", "-loglevel", "error", "-xerror", "-i", str(path),
+             "-map", "0:a:0", "-vn", "-progress", "pipe:1", "-nostats", "-f", "null", "-"],
+            timeout=3600, check=False,
+        )
+        if result.returncode:
+            return False, result.stderr[-3000:], None
+        times = [int(value) for line in result.stdout.splitlines()
+                 if line.startswith("out_time_us=") and (value := line.partition("=")[2]).lstrip("-").isdigit()]
+        duration = times[-1] / 1_000_000 if times else 0.0
+        if not math.isfinite(duration) or duration <= 0:
+            return False, "Audio duration missing or invalid", None
+        return True, "ok", duration
+    except (OSError, RuntimeError, ValueError, subprocess.SubprocessError) as exc:
+        return False, str(exc), None
 
 
 def script_error(script: Any, expected: list[dict[str, Any]]) -> str:
@@ -87,9 +109,9 @@ def project(project_root: Path, book: dict[str, Any], files: dict[str, Any], *, 
             stat = path.stat()
             key = (path, stat.st_size, stat.st_mtime_ns)
             if key not in inspected:
-                valid, diagnostic = verify_mp3(path)
+                valid, diagnostic, duration = inspect_audio(path)
                 inspected[key] = (valid, diagnostic, sha256_file(path) if valid else "",
-                                  store.audio_duration(path) if valid else None)
+                                  duration)
             valid, reason, checksum, duration = inspected[key]
             if not valid:
                 reason = 'không giải mã được audio'

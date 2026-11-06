@@ -211,8 +211,6 @@ def test_a_drifted_spoken_text_checksum_is_skipped_not_raised(tmp_path: Path) ->
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
     from scripts.keep_the_locked_reading import bare_pipeline
 
-    from abook.cli import _open_project
-
     shutil.copyfile(REAL / "project.sqlite3", tmp_path / "project.sqlite3")
     shutil.copyfile(REAL / "book_settings.json", tmp_path / "book_settings.json")
     with sqlite3.connect(str(tmp_path / "project.sqlite3")) as conn:
@@ -225,7 +223,13 @@ def test_a_drifted_spoken_text_checksum_is_skipped_not_raised(tmp_path: Path) ->
             "WHERE segment_id=? AND pronunciation_delivery_variant=?",
             ("0" * 64, int(segment["id"]), PRONUNCIATION_DELIVERY_LOCKED),
         )
-    paths, db, settings = _open_project(tmp_path)
+    from abook.config import build_settings
+    from abook.models import ProjectPaths
+
+    # Keep historical candidate evidence; exercise the hook with current settings.
+    paths = ProjectPaths.build(tmp_path)
+    db = ProjectDB(paths.db)
+    settings = build_settings()
     pipeline = bare_pipeline(paths, db, settings)
 
     assert pipeline._keep_the_locked_reading(dict(db.get_segment(int(segment["id"])))) is False

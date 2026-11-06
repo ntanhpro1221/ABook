@@ -180,7 +180,7 @@ function finishedOf(kind, result, opts) {
     const detail = (opts.remote
         ? exportedOnComputer(opts.computer, perPart ? "" : single ? fileName(result.file) : fileName(result.folder || ""),
                              [perPart ? "mỗi phần một file .abook riêng" : "", single ? size : ""].filter(Boolean).join("\u00a0·\u00a0"))
-        : placeText) + skipped + (lostNote ? "\u00a0·\u00a0" + lostNote : "") + (result.coverage ? " · " + result.coverage : "")
+        : placeText) + skipped + (lostNote ? "\u00a0·\u00a0" + lostNote : "") + (result.coverage ? "\u00a0·\u00a0" + result.coverage : "")
     return {title: title, detail: detail, folder: result.folder || "", note: [skippedNote, lostNote, result.coverage].filter(Boolean).join("\u00a0·\u00a0"), remoteTitle: exportedOnComputer(opts.computer, "")}
 }
 
