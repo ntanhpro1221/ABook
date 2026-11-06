@@ -6,7 +6,7 @@ annotated-types==0.8.0
 anyio==4.14.2
 audioread==3.1.0
 av==18.1.0
-brotli==1.2.0
+brotli==1.2.1
 certifi==2026.7.22
 cffi==2.1.0
 charset-normalizer==3.4.9
