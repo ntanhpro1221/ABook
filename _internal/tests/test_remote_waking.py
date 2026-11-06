@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pytest
 
+from tests.async_wait import wait_until
 from abook.webui import bluetooth, remote_books, route
 from abook.webui.remote_books import Computers, RemoteError
 from tests.test_bluetooth_desktop_client import PHONE, FakePhone, _clean_routes, _sync  # noqa: F401 - fixture dùng chung
@@ -74,12 +75,7 @@ def _quick(monkeypatch):
 
 
 def _eventually(check, timeout: float = 5.0) -> bool:
-    deadline = time.time() + timeout
-    while time.time() < deadline:
-        if check():
-            return True
-        time.sleep(0.03)
-    return check()
+    return wait_until(check, timeout=timeout, interval=0.03)
 
 
 def _view(computers: Computers, computer: str) -> dict:
