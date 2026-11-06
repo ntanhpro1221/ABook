@@ -20,6 +20,14 @@
 - Đối chứng mã HEAD riêng bằng git archive, 6 lượt/nhóm, 3 test process đồng thời + 2 worker CPU: updater 3/6 hỏng (cả ba sleep-off), Bluetooth 5/6 hỏng, Edge silent 3/6 hỏng. Trash startup còn có bằng chứng 2/6 ở lượt khám phá all-sleep-off. Số stress cũ trong lịch sử không gộp vào lượt này.
 - Vòng cuối: pytest 6 × (323 passed / 1 skipped / 0 failed / 0 errors), XML thật và `-rf`; JVM 6 × 85 passed; vitest cache-off/shuffle 6 × 5 passed. Đảo thứ tự file/lớp ở nửa sau; lane Python ngủ thật dùng biến không tồn tại, lane bỏ ngủ đặt 1 (chuỗi 0 cũng bật chế độ bỏ ngủ). Gradle offline chỉ chạy 4 lớp sửa: 64 passed, actual exit 0. Không full release gate/GPU/emulator/GUI; không commit/push.
 - Danh sách khoá đọc từ code có 53 mục; hash trước/sau `3818e7751fec8680b70e3f148d1f0a63ede8de1a6599fad3ab043ff632c5467b` không đổi. Chi tiết file:dòng, luật, log/XML, giới hạn và số trước/sau: [report.md](../../report.md).
+## 07-11-2026 — rev163fix (dev/rev163fix, chưa commit)
+
+- Đọc trọn review163/report.md và hai probe. Trước sửa: pytest `-rf` có 9 FAILED thật (6 ca warning/bản chụp MP3, 3 ca hoàn tác người kể); slider DOM có 2 failed/2 passed. Test hàng đợi với hook thật cũng đỏ 1 ca khi bỏ serialization.
+- Chương warning nghe được dùng chung predicate và đường đánh dấu thu lại với chương completed; bản chụp kịch bản gắn checksum MP3. Xuất xứ đổi giọng người kể nằm trong SQLite cùng transaction đổi câu/reset, hoàn tác giữ người nghĩ ban đầu và sửa từng câu của người nghe.
+- React so với ý định vừa gửi, giữ mức cuối qua ACK cũ; các lệnh sửa nhạc cùng cuốn chạy tuần tự ở trình phát, hộp sửa sách và Studio. Qt/Android khóa thanh khi lưu, không có phép so với giá trị đã xác nhận làm nuốt reset; giữ nguyên hành vi này.
+- Test đích Python: 200 passed/0 failed; sau bổ sung ca MP3 tổng hợp thật, chạy lại hai file trọng tâm: 30 passed/0 failed (201 test khác nhau giữa hai lượt, không cộng trùng). Ca MP3 kiểm reopen trước khi ghép lại, checksum giữ nguyên và `audio_coverage.project` decode/xuất đủ chương. Có test rollback và retry sau reopen cho cả áp và hoàn tác giọng.
+- Vitest đích: 22 passed/0 failed trong 6 file; TypeScript typecheck qua. Android headless/offline, một worker Gradle: 18 tests/0 failures/0 errors/0 skipped trong XML (LevelMeterSaveTest 1, MusicStateTest 9, MusicModelTest 8). Qt offscreen/software: 4 ca control pass, cộng init/cleanup thành 6 passed/0 failed; dùng QML thật, Music singleton chỉ giả hằng số/nhãn, không chạy backend C++.
+- Không chạy release gate đầy đủ, model, GPU, emulator hay adb. File sửa đều LF; git diff --check qua; không commit/push. Hash quality trước `3818e7751fec8680b70e3f148d1f0a63ede8de1a6599fad3ab043ff632c5467b`, sau `cf657dee9b3e384188b5d4b4b3992d2e924c066542200ad9e2f9f33113e2b8a2` (53 mục đọc từ code; file khóa đổi: database.py, webui/store.py). Chỉ tích hợp nhánh dev sau khi hết run.
 
 ## 06-11-2026 — tnbig (dev/tn-bigint, chưa commit)
 

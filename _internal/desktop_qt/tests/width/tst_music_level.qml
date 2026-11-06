@@ -40,5 +40,20 @@ Item {
             mouseClick(slider, slider.width - 1, slider.height / 2)
             compare(saves.count, 0)
         }
+        function test_save_blocks_input_then_reset_sends_old_value() {
+            const slider = findChild(level, "musicLevelSlider")
+            level.value = -20
+            slider.value = -19
+            slider.moved()
+            compare(saves.count, 1)
+            level.enabled = false
+            mouseClick(findChild(level, "musicLevelReset"))
+            compare(saves.count, 1)
+            level.value = -19
+            level.enabled = true
+            mouseClick(findChild(level, "musicLevelReset"))
+            compare(saves.count, 2)
+            compare(saves.signalArguments[1][0], -20)
+        }
     }
 }
