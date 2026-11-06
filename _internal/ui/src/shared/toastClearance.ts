@@ -59,6 +59,10 @@ export function useToastClearance(): void {
         if (toaster.dataset.toastObscured !== String(hidden)) toaster.dataset.toastObscured = String(hidden);
         toaster.inert = hidden;
       }
+      // Re-measure moving toast/surface bounds until their animations finish. Layer order
+      // keeps controls safe on every intermediate frame, before clearance has settled.
+      if ([...layers, ...toasters].some(el => (el.getAnimations?.({ subtree: true }) ?? []).some(a =>
+        a.playState === "running" && a.effect?.getComputedTiming().iterations !== Infinity))) schedule();
     };
     const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
     const observer = new MutationObserver(schedule);

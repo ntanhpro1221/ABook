@@ -27,7 +27,7 @@ Item {
             {id: "edge:vi-VN-HoaiMyNeural", name: "Hoài My (Edge)", provider: "edge", gender: "female", online: true, default: true},
             {id: "edge:vi-VN-NamMinhNeural", name: "Nam Minh (Edge)", provider: "edge", gender: "male", online: true},
             {id: "azure:vi-VN-HoaiMyNeural", name: "Hoài My (Azure Speech)", provider: "azure", gender: "female", online: true},
-            {id: "vieneu:turbo/Phạm Tuyên", name: "Phạm Tuyên (VieNeu Turbo)", provider: "vieneu", gender: "male", online: false},
+            {id: "vieneu:turbo/Đức Trí", name: "Đức Trí (VieNeu Turbo)", provider: "vieneu", gender: "male", online: false},
             {id: "vieneu:turbo/Ngọc Linh", name: "Ngọc Linh (VieNeu Turbo)", provider: "vieneu", gender: "female", online: false},
             {id: "vieneu:nano/Ái Hân", name: "Ái Hân (VieNeu Nano)", provider: "vieneu", gender: "female", online: false},
             {id: "vieneu:nano/Đức Trí", name: "Đức Trí (VieNeu Nano)", provider: "vieneu", gender: "male", online: false},
@@ -170,7 +170,7 @@ Item {
             verify(last("GET", "/api/readaloud/supertonic") !== null)
             verify(last("GET", "/api/readaloud/voice-speed") !== null)
             // chưa chọn mà máy có giọng VieNeu: giọng kể chuyện trung tính của VieNeu, không phải Edge
-            compare(find(page, "voiceCurrent").text, "Đang dùng: Phạm Tuyên (VieNeu Turbo)")
+            compare(find(page, "voiceCurrent").text, "Đang dùng: Đức Trí (VieNeu Turbo)")
             for (const text of ["Edge", "Azure Speech", "VieNeu", "Giọng của máy", "Bộ giọng", "Hiệu năng", "Khoá trực tuyến"]) verify(textItem(page, text) !== null, "thiếu " + text)
             verify(hasText(page, "trực tuyến, miễn phí\u00a0·\u00a02 giọng"))
             verify(hasText(page, "dùng khoá của bạn\u00a0·\u00a01 giọng"))
@@ -179,7 +179,7 @@ Item {
             verify(hasText(page, "Giọng Edge gửi chữ của sách tới máy chủ Microsoft để đọc."))
             verify(hasText(page, "Giọng Azure Speech gửi chữ của sách tới Azure Speech bằng khoá của bạn - có thể bị tính tiền vào tài khoản của bạn."))
             verify(!hasText(page, "Cài giọng tiếng Việt tại Cài đặt Windows › Thời gian và ngôn ngữ › Giọng nói."))
-            compare(Api.voiceName, "Phạm Tuyên")
+            compare(Api.voiceName, "Đức Trí")
             verify(lacksOverflow(page))
         }
 

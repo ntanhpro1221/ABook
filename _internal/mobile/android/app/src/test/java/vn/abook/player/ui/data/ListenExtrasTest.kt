@@ -154,7 +154,8 @@ class ListenExtrasTest {
         assertEquals(1, view.extras.size)
         assertFalse(view.isEmpty)
         val first = view.characters[0]
-        assertEquals("Bảo Trang · chỉnh trầm hẳn so với giọng gốc", Cast.voiceLine(first))
+        // Presets keep their original voice; tone metadata must not alter the label.
+        assertEquals("Bảo Trang", Cast.voiceLine(first))
         assertEquals("12 câu · 2 phút · từ Chương 1", Cast.countLine(first))
         assertEquals(3, first.sampleId)
     }

@@ -11,6 +11,8 @@ import vn.abook.player.ui.components.Caption
 import vn.abook.player.ui.components.ListSection
 import vn.abook.player.ui.components.ListRow
 import vn.abook.player.ui.components.TextAction
+import vn.abook.player.ui.data.dotJoin
+import vn.abook.player.ui.data.dotJoined
 import java.util.Locale
 
 @Composable
@@ -30,7 +32,7 @@ fun VoicePickCard(voice: VoiceState) {
                 else -> ""
             }
             val numbers = EnginePickText.numbers(row)
-            ListRow(listOf(MachineVoicePick.name(engine), badge).filter { it.isNotEmpty() }.joinToString(" · "), hint = numbers) {
+            ListRow(dotJoin(MachineVoicePick.name(engine), badge), hint = numbers) {
                 if (!chosen && !status.measuring) TextAction("Dùng giọng này", { voice.choosePick(engine) }, "voice_pick_$engine")
             }
         }
@@ -64,6 +66,6 @@ object EnginePickText {
         val speed = row.rtf?.let {
             if (it >= MachineVoicePick.LIVE_RTF) "Chậm: ${number(it)} giây cho mỗi giây nghe" else "Nhanh gấp ${number(1 / maxOf(it, 0.01))} lần"
         }
-        return listOfNotNull(clarity, natural, speed, row.ramMb?.let { "RAM đỉnh $it MB" }).joinToString(" · ")
+        return listOfNotNull(clarity, natural, speed, row.ramMb?.let { "RAM đỉnh $it MB" }).dotJoined()
     }
 }

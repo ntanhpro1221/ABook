@@ -5,6 +5,9 @@ Fixture: cuốn hai chương của test đồng bộ (`make_project`) - chương
 from __future__ import annotations
 
 import json
+import hashlib
+import subprocess
+import sys
 import time
 import zipfile
 from pathlib import Path
@@ -22,6 +25,44 @@ from tests.test_webui_listen_and_sync import make_project
 def _pack(tmp_path: Path) -> tuple[Path, Path]:
     project = make_project(tmp_path)
     return project, bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}", partial=True)
+
+
+def test_player_verifies_covered_audio_without_studio_dependencies(tmp_path: Path) -> None:
+    from abook.io_utils import ffmpeg_available, ffmpeg_executable, run_hidden
+
+    if not ffmpeg_available():
+        pytest.skip("requires ffmpeg")
+    audio = tmp_path / "chapter.mp3"
+    run_hidden([ffmpeg_executable(), "-hide_banner", "-loglevel", "error", "-f", "lavfi", "-i",
+                "sine=frequency=220:duration=1", "-c:a", "libmp3lame", "-b:a", "96k", str(audio)])
+    checksum = hashlib.sha256(audio.read_bytes()).hexdigest()
+    text = "A synthetic sentence."
+    script = {"timed": True, "duration": 1.0,
+              "segments": [{"id": 1, "text": text, "start": 0.0, "end": 1.0}]}
+    chapter = {"id": 1, "title": "Synthetic", "file": "chapters/1.mp3", "available": True,
+               "script": "scripts/1.json", "sha256": checksum}
+    manifest = {"title": "Synthetic", "chapters": [chapter], "chaptersTotal": 1,
+                "chaptersAvailable": 1, "complete": True,
+                "audioCoverage": {"expected": [{"id": 1, "title": "Synthetic", "audioSha256": checksum,
+                    "segments": [{"id": 1, "textSha256": hashlib.sha256(text.encode()).hexdigest()}]}],
+                    "missing": [], "partial": False}}
+    package = bookfile.seal(manifest, {"chapters/1.mp3": audio, "scripts/1.json": bookfile.json_bytes(script)},
+                            tmp_path / "synthetic.abook", producer="test", version=1)
+    script = """
+import sys
+class BlockStudio:
+    def find_spec(self, name, path=None, target=None):
+        if name.split('.')[0] in {'numpy', 'soundfile'}:
+            raise ImportError('Studio dependency blocked: ' + name)
+sys.meta_path.insert(0, BlockStudio())
+from abook.webui import server
+from abook.webui.bookfile import BookFile
+with BookFile(sys.argv[1]) as book:
+    book.verify()
+"""
+    result = subprocess.run([sys.executable, "-X", "utf8", "-c", script, str(package)],
+                            cwd=Path(bookfile.__file__).parents[2], capture_output=True, encoding="utf-8")
+    assert result.returncode == 0, result.stderr
 
 
 def test_finished_level_qa_travels_with_the_book(tmp_path):

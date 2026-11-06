@@ -374,7 +374,10 @@ fun LevelMeter(level: Double, enabled: Boolean = true, onPick: (Double) -> Unit,
     val shown = moving ?: MusicLevels.clamp(level)
     Column(Modifier.fillMaxWidth().padding(top = Dim.s16).testTag("music_levels")) {
         if (showTitle) BasicText(MusicLevels.TITLE, style = Abook.type.bodyStrong)
-        AnimatedContent(targetState = MusicLevels.label(shown), label = "music-level-zone") { label ->
+        AnimatedContent(targetState = MusicLevels.label(shown), transitionSpec = {
+            (slideInVertically(tween(MotionMs.MEDIUM, easing = Motion.Decelerate)) { it / 8 } + fadeIn(tween(MotionMs.MEDIUM)))
+                .togetherWith(slideOutVertically(tween(MotionMs.FAST_OUT, easing = Motion.Accelerate)) { -it / 8 } + fadeOut(tween(MotionMs.FAST_OUT)))
+        }, label = "music-level-zone") { label ->
             BasicText(label, style = Abook.type.bodySmall.copy(color = Abook.colors.accentText))
         }
         vn.abook.player.ui.components.ClockLabel(MusicLevels.number(shown), style = Abook.type.caption, modifier = Modifier.testTag("music_level_value"))

@@ -12,8 +12,16 @@ declare module "node:path" {
   export const delimiter: string;
   export function basename(path: string): string;
   export function join(...parts: string[]): string;
+  export function resolve(...parts: string[]): string;
 }
-declare const process: { env: Record<string, string | undefined> };
+declare const process: { env: Record<string, string | undefined>; platform: string };
+interface ImportMeta { readonly dirname: string; }
+declare module "node:vm" { export function runInNewContext(code: string): unknown; }
+declare module "node:child_process" {
+  export function execFileSync(file: string, args: string[], options: {
+    cwd?: string; input?: string; encoding: "utf8"; env?: Record<string, string | undefined>;
+  }): string;
+}
 declare module "node:process" { export function cwd(): string; }
 declare module "node:module" {
   export function createRequire(url: string | URL): { resolve(id: string): string };

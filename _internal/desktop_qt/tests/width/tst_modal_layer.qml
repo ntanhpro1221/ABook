@@ -91,6 +91,7 @@ Item {
     Component { id: tellerMode; TellerMode {} }
     Component { id: workBulkKeep; WorkBulkKeep {} }
     Component { id: phoneEdits; PhoneEdits {} }
+    Component { id: toastStack; ToastStack {} }
 
     TestCase {
         id: test
@@ -132,17 +133,26 @@ Item {
         // Mở từng lớp, chờ mở hẳn, hỏi máy dò; trả danh sách lỗi
         function covered(layers) {
             const out = []
+            Api.noticeDuration = 60000
+            Api.notice = "Đã ghi"
+            const toast = createTemporaryObject(toastStack, root(), {})
+            verify(toast !== null)
             for (const layer of layers) {
                 layer.show()
                 waitShown(layer, 1)
                 const panel = ModalLayer.panelOf(layer)
                 verify(panel !== undefined && panel.width > 0 && panel.height > 0, "an open layer must have a panel with a size")
+                const point = panel.mapToItem(root(), 8, 8)
+                toast.x = point.x
+                toast.y = point.y
+                verify(toast.z < layer.z, "shared toast must stay below every Modal / Popover")
                 host.Window.window.update()
                 waitForRendering(host)
                 out.push.apply(out, ModalLayer.violations(root()))
                 layer.close()
                 waitShown(layer, 0)
             }
+            Api.notice = ""
             return out
         }
 

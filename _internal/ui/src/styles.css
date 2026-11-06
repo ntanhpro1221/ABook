@@ -518,6 +518,8 @@ select[class~="border-line"] {
 }
 /* Thêm thuộc tính vị trí để thắng stylesheet Sonner chèn sau lúc mount (nó chỉ tween transform). */
 [data-sonner-toaster][data-y-position] {
+  /* Toast stays below every open surface, including while either one is moving. */
+  z-index: 45;
   translate: 0 var(--toast-shift, 0px);
   transition: bottom var(--motion-medium) var(--ease-standard), top var(--motion-medium) var(--ease-standard), translate var(--motion-medium) var(--ease-standard), opacity var(--motion-fast) linear;
   --width: min(22.25rem, calc(100vw - 2rem)) !important;

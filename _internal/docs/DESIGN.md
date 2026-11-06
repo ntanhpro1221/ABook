@@ -273,6 +273,7 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
 - **Thanh phát thu nhỏ**: điện thoại = bìa · tên chương / tên sách · phát. Máy tính = trái bìa+tên; giữa lùi 15 · phát ·
   tới 15 + thanh tiến độ; phải tốc độ · âm lượng · "…" (hẹn giờ, phát trên thiết bị khác, nhạc nền, giọng...).
 - **Toast**: một dòng + tối đa một hành động, tự tắt, Back đóng.
+  Thông báo luôn nằm dưới mặt điều khiển của mọi bảng / hộp / menu đang mở, kể cả trong chuyển động mở, đóng và đổi vị trí; không được che nút. Web dịch toast ra khoảng trống ngoài hộp, thiếu chỗ thì mờ dần; Android giữ lời báo trong dòng chảy dưới lớp nổi; Qt đặt toast dưới Modal / Popover. Giữ chuyển động ở mọi nền tảng, kể cả khi giảm chuyển động.
 
 ## 7. Từng màn (đích)
 

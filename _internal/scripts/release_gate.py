@@ -105,6 +105,7 @@ def safe_env() -> dict[str, str]:
                PYTHON=sys.executable, ABOOK_PYTHON=sys.executable, NO_COLOR="1", CI="1")
     # Import app luôn từ worktree này, không từ bản editable của runtime dùng chung.
     env["PYTHONPATH"] = str(ROOT)
+    env["ABOOK_TEST_PYTHON"] = sys.executable
     env["JAVA_HOME"] = os.environ.get("JAVA_HOME") or "C:/Program Files/Android/Android Studio/jbr"
     return env
 
@@ -556,7 +557,7 @@ def prepare_ui(directory: Path, runner=run_process) -> tuple[Path, dict]:
     shutil.copytree(ui, mirror, ignore=shutil.ignore_patterns("node_modules", "dist", ".vite", ".cache"))
     directory_link(mirror / "node_modules", install / "node_modules")
     # Relative source/test fixture imports and the UI build destination keep their real layout.
-    for name in ("abook", "docs", "tests", "mobile"):
+    for name in ("abook", "docs", "tests", "mobile", "desktop_qt"):
         directory_link(private_root / name, ROOT / name)
     return mirror, {"install": str(install), "lock_sha256": digest, "source": str(ui), "mirror": str(mirror)}
 
@@ -602,6 +603,11 @@ def run_gate(selected: list[Check], directory: Path, runner=run_process, inject:
         elif check.parser == "gallery":
             command = [shutil.which("node") or "node", "scripts/gallery_inspect.mjs", "--theme", "both", "--out", str(directory / "gallery")]
             artifact = directory / "gallery/findings.json"
+        # Build frontend artifacts outside the protected audio source tree.
+        if check.name == "ui-build":
+            command = [*command, "--outDir", str(directory / "ui-static")]
+        if check.parser.startswith("tap"):
+            command += ["--static-dir", str(directory / "ui-static")]
         row["command"] = command
         try:
             if inject == check.name:

@@ -18,6 +18,12 @@ export function inspectTapReach({ css, rect, selector, add }) {
   const layer = layers.filter((el) => !layers.some((other) => el !== other && el.contains(other))).at(-1)
     ?? [...document.querySelectorAll('main,[role="main"]')].filter((el) => shown(el) && inView(el)).at(-1);
   const toasts = [...document.querySelectorAll('[data-sonner-toast]:not([data-removed="true"]):not([data-visible="false"])')].filter((el) => shown(el) && inView(el));
+  // Check the shared plane even when no toast happens to be visible in this story.
+  // Every dialog/menu/listbox in the gallery must stay above its toaster.
+  for (const surface of layers) for (const toaster of document.querySelectorAll('[data-sonner-toaster]')) {
+    const plane = el => { for (let p = el; p; p = p.parentElement) if (css(p).zIndex !== 'auto' && Number.isFinite(Number(css(p).zIndex))) return Number(css(p).zIndex); return 0; };
+    if (plane(toaster) >= plane(surface)) add('TAP REACH', surface, 'Toast layer must stay below the open surface', [rect(surface.getBoundingClientRect())], { toasterZ: plane(toaster), surfaceZ: plane(surface) });
+  }
   const tapToastOcclusions = [];
   // Toast là lớp phụ độc lập: nút đóng / Hoàn tác vẫn phải nhận chạm trong chính toast.
   for (const scope of [layer, ...toasts].filter(Boolean)) for (const el of scope.querySelectorAll(`${controls},[tabindex]`)) {

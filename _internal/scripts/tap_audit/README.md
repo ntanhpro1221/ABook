@@ -74,6 +74,11 @@ Exit 2 nghĩa là không tìm thấy Edge/Chrome; có thể truyền `--edge PAT
 `--only "Add book"` lọc theo tên (không khớp thì FAIL), `--json` chỉ in JSON,
 `--output report.json` lưu bằng chứng đầy đủ; `--static-dir PATH` đè bản UI.
 
+Mỗi bước mở lớp tạo toast thật qua sự kiện `abook-update-failed` của vỏ, xác nhận toast đã mount,
+rồi hit-test điều khiển của lớp trên từng khung chuyển động. `toast never covers a layer control during motion`
+phải PASS; không đóng toast để né lỗi. Luật TAP REACH của gallery còn kiểm toaster luôn nằm dưới mọi
+dialog / alertdialog / menu / listbox, kể cả story không có thông báo đang hiện.
+
 Server fixture dùng backend của cây chứa script, cổng hệ điều hành cấp và FakeRunner.
 Sách/SQLite/preferences giả nằm trong thư mục tạm mới; không chạy model hay tạo audio.
 Edge/Chrome headless có profile tạm mới và các cờ riêng tư; kết thúc chỉ thu hồi cây PID

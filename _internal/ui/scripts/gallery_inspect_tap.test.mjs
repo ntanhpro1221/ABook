@@ -7,6 +7,10 @@ import { inspectTapReach } from "./gallery_inspect_tap.mjs";
 import { normalizeRule, DEFAULT_FAIL_ON } from "./gallery_inspect.mjs";
 
 const cases = [
+  ...['dialog', 'alertdialog', 'menu', 'listbox'].flatMap(role => [
+    [`empty toaster above ${role} fails the class rule`, `<ol data-sonner-toaster style="position:fixed;z-index:90"></ol><div role="${role}" style="position:relative;z-index:50"><button>Chọn</button></div>`, 1],
+    [`empty toaster below ${role} is safe`, `<ol data-sonner-toaster style="position:fixed;z-index:45"></ol><div role="${role}" style="position:relative;z-index:50"><button>Chọn</button></div>`, 0],
+  ]),
   ["lớp tốt", '<div role="dialog"><button>Tốt</button></div>', 0],
   ["menu mất chạm trong dialog", '<div role="dialog"><button>Nền</button><div role="menu" style="pointer-events:none"><button role="menuitem">Sửa thông tin</button></div></div>', 1],
   ["nút dưới scrim", '<main><button>Bị che</button></main><div style="position:fixed;inset:0;background:#888"></div>', 1],

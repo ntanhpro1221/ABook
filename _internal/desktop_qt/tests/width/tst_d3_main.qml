@@ -3,7 +3,7 @@ import QtTest
 import ABook
 
 // D3 trong cửa sổ thật (qml/Main.qml, WindowChrome giả): phím "?" mở hộp Phím tắt, "Phím tắt chữ" tắt thì "?" và M không làm gì, M tắt / bật
-// tiếng, tuỳ chọn "Âm thanh chạm" và "Nền đọc" có hiệu lực ngay, sự kiện "abook-update" của host đọc lại /api/app, lời báo có nút nằm trên cùng.
+// tiếng, tuỳ chọn "Âm thanh chạm" và "Nền đọc" có hiệu lực ngay, sự kiện "abook-update" của host đọc lại /api/app, lời báo nằm dưới mặt hộp.
 TestCase {
     id: test
     name: "D3Main"
@@ -81,7 +81,7 @@ TestCase {
         compare(Api.notice, "Chưa tải được bản mới\nĐường tải bản mới đứng yên quá lâu.")
         Api.notice = ""
     }
-    function test_5_toastSitsTopRightAboveDialogs() {
+    function test_5_toastSitsTopRightBelowDialogs() {
         const stack = all(win.contentItem, "toastStack")[0]
         const toast = all(stack, "successToast")[0]
         Api.toast("Đã lưu file sách", {action: {label: "Mở thư mục", run: function() {}}})
@@ -89,7 +89,7 @@ TestCase {
         const p = toast.mapToItem(win.contentItem, 0, 0)
         fuzzyCompare(p.x + toast.width, win.width - 16, 0.5)
         verify(p.y >= 40 + 16 - 0.5)
-        verify(stack.z > dialog().z)
+        verify(stack.z < dialog().z)
         Api.notice = ""
     }
     function test_6_minimizeStopsMotionAndRestoreShowsShell() {

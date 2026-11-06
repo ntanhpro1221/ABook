@@ -1,5 +1,22 @@
 # Test report
 
+## 06-11-2026 — sửa cổng phát hành 0.4.163 (gatefix, dev/merge-163, chưa commit)
+
+- Bản chỉ nghe không kéo thư viện Studio khi khởi động hoặc kiểm file sách: kiểm audio coverage dùng giải mã FFmpeg toàn bộ, lấy thời lượng từ byte đã giải mã, giữ đối chiếu mã băm/phụ đề. Bài hồi quy gói MP3 thật chạy trong tiến trình chặn cả NumPy và soundfile PASS; 90 bài bookfile/export/coverage hiện có PASS. Không sửa file thuộc `QUALITY_IMPLEMENTATION_FILES`; hash trước/sau cùng `6e1970d021c22a6d1ece64cc582bde90c7a15369c18de09d09c74598a9abd198`.
+- Hai bài kiểm ngoại lệ của ứng viên giữ DB bằng chứng thật và dùng settings harness hiện hành, không mở settings pace cũ qua bộ nạp project mới. Danh sách pin startup khớp việc gỡ WORLD/Praat; fixture trang giọng Qt dùng người kể Đức Trí hiện hành. Startup/gate unit: 49 PASS; Qt D2Voice offscreen: 27 PASS.
+- Android: nét slider qua bộ vẽ control chung, giữ nguyên luật/danh sách kiểm icon; nhãn mức nhạc chuyển cả hình và độ mờ; mô tả đo giọng dùng bộ nối dấu chấm chung. Kỳ vọng đọc dấu ngoặc sau số khớp chuẩn Python; nhãn preset không mang thông tin chỉnh giọng đã bỏ. Sáu nhóm lỗi Android ban đầu: 59 PASS; nhóm vẽ/chuyển động/xuống dòng PASS lại sau khi gom nét slider. FastConnect riêng: 21 PASS.
+- Gate dùng interpreter đang chạy cho bài hợp đồng Python trong bản sao UI; giữ đầu vào QML tương đối và khai báo Node của tác vụ toast. Bài chuyển cảnh thư viện điều khiển thời gian thoát hàng trước khi kiểm ảnh inert, giữ nguyên assertion. Gate UI mới: typecheck PASS, Vitest 2656 PASS/0 lỗi/0 bỏ qua, DOM inventory 75/75. Chạy lại hai script parity sau khi tác vụ toast hoàn tất.
+- Khôi phục toàn bộ ghi chú 0.4.163 về `[Chưa phát hành]` trước bước cắt phát hành. Lượt full chẩn đoán `runtime/release_gate/0.4.163-20261106T074235093633Z` có 10.127 pytest PASS, một fixture nối chữ rác vào MP3 bị bộ giải mã từ chối. Fixture nay tạo master MP3 thật có tín hiệu đổi, giữ nguyên kiểm checksum/gói cập nhật; 97 bài đóng gói/coverage/export PASS. Lượt full cuối và kết quả từng check được ghi riêng trong `report.md` của task gatefix. Không commit, không chạy model/điện thoại.
+
+## 06-11-2026 — toast không che lớp nổi (toastcover, dev/merge-163, chưa commit)
+
+- Cả 7 gate yêu cầu và 2 bước build phụ thuộc PASS trong `runtime/release_gate/0.4.163-20261106T065613508294Z.json`: tap 21/21, đối chứng âm bắt đủ 21 lỗi cấy, gallery 188 trạng thái sáng/tối, 3.232/3.232 lượt hình học trên 94 màn, 0 vi phạm/lỗi. Audit toast đo 2.501 khung chuyển động, không che điều khiển lần nào.
+- Web và Qt đặt toast dưới mặt điều khiển của mọi lớp nổi, giữ nguyên chuyển động; web tiếp tục dịch ra vùng trống và mờ dần khi thiếu chỗ. Android đã giữ lời báo trong dòng chảy, dưới SheetLayer; không sửa production Android.
+- Tap audit tạo toast thật trước mỗi bước mở lớp và kiểm chạm từng khung; gallery kiểm thứ tự lớp ngay cả khi toaster rỗng. Danh sách đầy đủ nơi dùng nằm trong `report.md` của task toastcover; DESIGN và hai tài liệu UI_PARITY đã cập nhật/sinh lại.
+- Typecheck PASS; Vitest 2.656 passed, 0 failed/skipped; hai gate parity PASS. Python audit/release-gate: 61 passed. Qt ModalLayer 140 + D3Main 9 passed (145 bài thử + 4 init/cleanup), 0 failed/skipped; cửa sổ offscreen. Android liên quan: 72 passed trong 5 suite (NowPlayingUi, BookNotes, ScrimRules, InsetSurfaceRules, BottomInsetScan), 0 failed/skipped.
+- Lượt Android toàn bộ bổ sung: 3.335 passed, 8 failed, 7 skipped; lỗi ngoài phạm vi ở FastConnect (2), Symbols, ListenExtras, IconRules, MotionScan, TextWrapRules, ReadingMarks. Lượt UI rộng: 1.367 passed, 4 lỗi nền tương ứng, không gộp vào số 72 của lượt liên quan.
+- Hash audio trước/sau giữ `6e1970d021c22a6d1ece64cc582bde90c7a15369c18de09d09c74598a9abd198`; không sửa `_internal/abook/`, không commit. Build web của gate ghi vào thư mục riêng; workspace gate có nguồn Qt để test đọc được VoiceLogic.
+
 ## 06-11-2026 — master cố định, kiểm lại hai sách (dev/merge-163, chưa commit)
 
 - Bỏ loudnorm lượt hai và giới hạn gain riêng từng chương trong harness. Mọi chương/mọi sách nhận +5 dB chọn từ hiệu chuẩn (median danh định -20,574 LUFS), sau đó alimiter true-peak oversample 4 lần, không auto-level. Báo cáo phần thời gian envelope bị hạ và mức hạ lớn nhất. LUFS chương chỉ chẩn đoán; giữ gate peak/clipping/dropout/mối nối.

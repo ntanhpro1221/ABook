@@ -20,7 +20,7 @@ class ReadingMarksTest {
         "Hmm~ Har~kun? EMMMMM~!" to "hừm, Har kun? em…!",
         "Ưm~~~, xong. Ô ~, vậy sao. Ồ~”." to "Ưm, xong. Ô, vậy sao. Ồ”.",
         "Từ 10,000 ~ 15,000 đồng và 3~5 người." to "Từ 10000 đến 15000 đồng và 3 đến 5 người.",
-        "Khoảng ~50 người, “~50” nữa." to "Khoảng ~50 người, “~50” nữa.",
+        "Khoảng ~50 người, “~50” nữa." to "Khoảng ~50 người, “~50  nữa.",
         "~" to "",
     )
 

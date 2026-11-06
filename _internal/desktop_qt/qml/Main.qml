@@ -284,9 +284,8 @@ Window {
             else if (name === "abook-update-failed") Api.notice = "Chưa tải được bản mới" + (detail ? "\n" + detail : "")
         }
     }
-    // Lời báo của app (Toaster của web): góc trên bên phải, cách dải tiêu đề và mép phải 16 px; trên cả hộp thoại
+    // Lời báo của app: góc trên bên phải, cách dải tiêu đề và mép phải 16 px; dưới mặt hộp / bảng.
     ToastStack {
-        z: 90
         visible: !windowMode.mini && win.uiVisible
         anchors.right: parent.right
         anchors.rightMargin: 16

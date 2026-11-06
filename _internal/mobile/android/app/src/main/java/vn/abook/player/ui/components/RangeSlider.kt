@@ -7,8 +7,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.unit.dp
@@ -45,14 +43,6 @@ fun RangeSlider(value: Double, min: Double, max: Double, step: Double, default: 
                 onDragCancel = { move(value); onCancel() },
             )
         }) {
-        val y = size.height / 2
-        val x = ((readValue() - min) / (max - min)).toFloat().coerceIn(0f, 1f) * size.width
-        drawLine(colors.line, Offset(0f, y), Offset(size.width, y), 3.dp.toPx(), StrokeCap.Round)
-        drawLine(colors.accent, Offset(0f, y), Offset(x, y), 3.dp.toPx(), StrokeCap.Round)
-        if (default != null) {
-            val mark = ((default - min) / (max - min)).toFloat() * size.width
-            drawLine(colors.text2, Offset(mark, y - 5.dp.toPx()), Offset(mark, y + 5.dp.toPx()), 2.dp.toPx())
-        }
-        drawCircle(colors.accent, 5.dp.toPx(), Offset(x, y))
+        drawRangeTrack(readValue(), min, max, default, colors)
     }
 }
