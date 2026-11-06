@@ -81,6 +81,29 @@ Pytest có summary thật và `--durations=30`; deadline 7200 giây. Qt offscree
   `devices.json`, `computers.json` - mã thiết bị máy tính khác cấp, `reviews.json`, tuỳ chọn), token, văn bản truyện (kho nghiên cứu ở repo riêng tư, clone vào `Corpus/`
   - thư mục này bị bỏ qua; một thông báo DMCA sẽ khoá cả repo công khai lẫn trang tải bản phát hành).
 
+## Runtime dev cài tay: xác minh rồi ghi marker
+
+Từ root checkout, dùng interpreter của chính runtime cần kiểm:
+
+```powershell
+& 'D:/Novels/ABook/_internal/runtime/.venv/Scripts/python.exe' -X utf8 _internal/scripts/dev_setup_marker.py --runtime D:/Novels/ABook/_internal/runtime --dry-run
+```
+
+Bỏ `--dry-run` để ghi `runtime/.setup_complete`. Lệnh gọi trực tiếp các phép kiểm trong
+`abook.runtime_contract`: dependency (phiên bản, import, nguồn Git UTMOS và khả năng truy cập CUDA),
+cache perceptual (marker, revision, kích thước, SHA-256) và model giọng (revision, kích thước, SHA-256).
+Chỉ yêu cầu marker setup được bỏ ở bước trước khi tạo chính marker đó; không bỏ kiểm nào khác của
+`runtime_contract_errors(runtime)` khi không truyền settings. Đây là chứng nhận runtime, không kiểm
+settings riêng của từng sách hay thay thế release gate/doctor đầy đủ.
+
+Lệnh từ chối nếu interpreter không thuộc `.venv` trong `--runtime`; luôn dùng hợp đồng của checkout
+chứa script, kể cả venv đang cài editable từ checkout khác. Không cài/tải dependency, không gọi Ollama,
+không nạp model hoặc chạy suy luận. Kiểm CUDA là truy vấn availability (ưu tiên NVML), không chạy GPU workload.
+Thiếu/sai thành phần: in `[FAIL]`, exit 1, giữ nguyên marker cũ nếu có. `--dry-run` chạy cùng phép kiểm,
+in JSON dự kiến khi đạt và không ghi marker. Thành công: exit 0; marker schema lấy từ code
+(hiện là 2), `installed_by=dev-check`, thời điểm UTC, đường dẫn Python/checkout và phiên bản/provenance
+các dependency đã kiểm. Ghi file tạm riêng, flush/fsync rồi atomic replace. Lệnh không sửa dữ liệu sách.
+
 ## Đóng gói và đăng
 
 Từ 01-10 cả bốn bước dưới đây là một script (`scripts/release.py`, chạy bằng `runtime/.venv`, từ worktree có commit phát
