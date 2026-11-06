@@ -15,6 +15,9 @@ Reo khi, so với những gì chuông đã thấy:
    thì không reo, chỉ thêm vào danh sách canh.
 3. một project mới CHẾT / ĐỨNG IM (`heartbeat_tick.stopped`).
 4. máy chuyển sang chạy PIN - 24-09 sạc rút lúc 22:50 mà tới 00:07 mới biết, pin còn 5%.
+5. có thư mới trong `runtime/lead_inbox/` - phiên Model/Music hết lượt nhắn (app chặn sau 10 tin tới phiên khác kể từ
+   lần chủ sách gõ vào phiên ấy; chủ sách 27-10: "nó không nhắn lại được cho bạn thì làm việc kiểu gì được"). Phiên con
+   ghi một file `.md` vào đó; Lead đọc xong thì chuyển nó vào `lead_inbox/read/`. Reo ngay, không đợi hai lần dò.
 
 Sườn, không mức: một thứ đã sai từ trước khi chuông canh thì không reo lại mãi - chuông B và nhịp tim đầy đủ lo phần
 ấy. Mọi thay đổi trừ (1) phải đứng qua HAI lần dò liền nhau mới reo: ngay sau khi thả một ranh giới, phép đếm tiến
@@ -40,6 +43,7 @@ import bells  # noqa: E402
 import heartbeat_tick as tick  # noqa: E402
 
 DETACHED_LOG = bells.RUNTIME / "detached_runs.log"
+INBOX = bells.RUNTIME / "lead_inbox"
 BOUNDARY = r"boundary\.sh \d"
 DISK_LOW_GB = 50
 
@@ -85,9 +89,17 @@ def disk_is_low(root: Path = bells.RUNTIME, free_gb: float = DISK_LOW_GB) -> boo
         return False
 
 
+def letters(inbox: Path = INBOX) -> list[str]:
+    try:
+        return sorted(entry.name for entry in inbox.iterdir() if entry.is_file())
+    except OSError:
+        return []
+
+
 def snapshot() -> dict:
     done = finished_runs()
     return {
+        "letters": letters(),
         "roots": boundary_roots(processes()),
         "done": len(done),
         "last_done": done[-5:],
@@ -108,6 +120,7 @@ class Watch:
         self.problems = set(first["problems"])
         self.battery = bool(first["battery"])
         self.disk_low = False  # đã đầy từ lúc thả chuông vẫn là tin phải reo; reo xong chỉ reo lại khi đã có chỗ rồi đầy lại
+        self.letters: set[str] = set()  # thư chưa đọc từ trước khi canh cũng reo (tới trong lúc chuông nghỉ)
         self.suspect: set[str] = set()  # thay đổi thấy ở lần dò trước, chưa đủ hai lần
 
     def observe(self, now: dict) -> list[str]:
@@ -121,6 +134,10 @@ class Watch:
             fresh = [line for line in fresh if not ("(mã 0)" in line and any(part in line for part in self.quiet))]
             if fresh:
                 ring.append("việc rời xong: " + " | ".join(line.strip() for line in fresh))
+        fresh_letters = sorted(set(now.get("letters", [])) - self.letters)
+        if fresh_letters:
+            self.letters |= set(fresh_letters)
+            ring.append("thư mới ở runtime/lead_inbox: " + ", ".join(fresh_letters))
         if now["roots"] is not None:
             current = set(now["roots"])
             for root in sorted(self.roots - current):
