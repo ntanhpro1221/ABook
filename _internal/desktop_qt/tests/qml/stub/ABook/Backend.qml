@@ -11,6 +11,7 @@ QtObject {
     property string message: "Bạn thử mở lại ABook."
     // Kênh của vỏ (Backend C++ đọc dòng JSON của host): bộ thử phát tay
     signal hostEvent(string name, var detail)
+    signal libraryFetched(var books)
     signal updateChecked(var detail)
     function refreshLibrary() {}
     property QtObject library: QtObject {
