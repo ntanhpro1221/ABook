@@ -23,6 +23,14 @@ OPENED_EVENT = "abook-opened"
 UPDATE_EVENT = "abook-update"
 
 
+def _studio_analysis_model() -> str:
+    """Select the Studio model without constructing analysis context windows."""
+    from ..config import DEFAULT_SETTINGS, PROFILE_OVERRIDES
+
+    analysis = PROFILE_OVERRIDES[DEFAULT_SETTINGS["quality_profile"]].get("analysis", {})
+    return str(analysis.get("model", DEFAULT_SETTINGS["analysis"]["model"]))
+
+
 class Channel:
     """Ống hai chiều với vỏ: `send` ghi một dòng JSON (có khoá - nhiều luồng cùng gửi), `serve` đọc từng dòng cho tới khi
     vỏ đóng ống hay gửi `quit`."""
@@ -130,12 +138,11 @@ def run(reader: TextIO, writer: TextIO, argv: list[str] | None = None) -> int:
     fake = args.fake_runner or os.environ.get("ABOOK_FAKE_RUNNER") == "1"
     studio = None
     if args.studio:
-        from ..config import build_settings
         from .actions import StudioRunner
         from .studio_setup import StudioSetup
 
         studio = StudioSetup(Path(args.studio), Path(__file__).resolve().parents[2],
-                             analysis_model=str(build_settings()["analysis"]["model"]))
+                             analysis_model=_studio_analysis_model())
         try:
             studio.ensure_assets()  # app vừa cập nhật: dữ liệu của Studio (giọng nghe thử...) đặt lại vào mã mới
         except Exception:  # noqa: BLE001 - chỉ mất "Nghe thử giọng"; sách vẫn nghe được, lần bắt đầu một cuốn sẽ báo rõ

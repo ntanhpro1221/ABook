@@ -24,7 +24,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Mapping
 
-from ..analysis import is_vietnamese_syllable
 from . import abbreviations, names, readings as book_readings, shouts, symbols
 from .model import Synthesis, Voice, VoiceError
 
@@ -147,6 +146,8 @@ def numbered_by(toks: list[str], index: int, by_name: bool = True) -> bool:
 def ordinal_one(toks: list[str], index: int, token: str) -> bool:
     """Chữ "I" một mình là số một ("Toán I,", "Julianus I sẽ") khi từ trước là một chữ viết hoa không phải từ tiếng Anh và "I" khép cụm (dấu câu theo sau, hay hết đoạn) hay chữ sau là tiếng Việt;
     còn "But I never", "Tom I think" (chữ trước hay chữ sau là tiếng Anh) là đại từ."""
+    from ..analysis import is_vietnamese_syllable
+
     before = _word(toks[index - 1])
     if not (before.isalpha() and before[0].isupper() and before.lower() not in names.english_words()):
         return False
