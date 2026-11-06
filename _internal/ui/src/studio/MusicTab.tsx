@@ -544,6 +544,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
     downloading.current = active;
   }, [data?.download?.active, data?.error]);
   const change = useMutation({
+    scope: { id: `book-music:${bookId}` },
     mutationFn: (body: Record<string, unknown>) => api<MusicView>(`/api/books/${bookId}/music`, { method: "PUT", body }),
     onSuccess: (result) => {
       client.setQueryData(key, result);

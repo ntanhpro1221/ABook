@@ -91,6 +91,14 @@ LISTENER_PRONUNCIATION_SOURCE = "listener_choice"
 # chờ thu lại những câu ấy, KHÔNG phải lỗi - Studio nói "chờ thu lại theo sửa của bạn" và MP3 cũ vẫn nghe được tới khi có bản
 # mới (webui/store.py). Dây chuyền xoá nó khi bắt đầu làm lại chương như mọi lý do khác.
 LISTENER_REDO = "listener_redo: "
+
+
+def heard_chapter(status: Any, last_error: Any = "") -> bool:
+    """A published chapter whose incumbent MP3 remains available during corrections."""
+    return str(status) == "completed" or (str(status) == "warning" and
+           str(last_error or "").startswith((LISTENER_REDO, "Cần nghe lại:")))
+
+
 SEGMENT_AUDIO_QUALITY_STAGE = "segment_audio_v1"
 SEGMENT_ASR_DECODE_QUALITY_STAGE = "segment_asr_decode_v1"
 SEGMENT_PERCEPTUAL_QUALITY_STAGE = "segment_perceptual_v1"
@@ -1857,6 +1865,15 @@ CREATE TABLE IF NOT EXISTS segments (
     error TEXT,
     updated_at REAL NOT NULL,
     UNIQUE(chapter_id, seq)
+);
+
+CREATE TABLE IF NOT EXISTS chapter_teller_lines (
+    segment_id INTEGER PRIMARY KEY REFERENCES segments(id) ON DELETE CASCADE,
+    original_speaker TEXT NOT NULL,
+    original_character_id INTEGER,
+    original_profile_id INTEGER NOT NULL,
+    applied_character_id INTEGER NOT NULL,
+    applied_profile_id INTEGER NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS characters (
@@ -9149,10 +9166,7 @@ class ProjectDB:
             chapters = sorted({int(row["chapter_id"]) for row in affected})
             for chapter_id in chapters:
                 self._refresh_chapter_counts_conn(conn, chapter_id)
-                conn.execute(
-                    "UPDATE chapters SET status='warning', last_error=? WHERE id=? AND status=?",
-                    (LISTENER_REDO + reason, chapter_id, ChapterStatus.COMPLETED.value),
-                )
+                self._mark_listener_redo_conn(conn, chapter_id, reason)
             details = {
                 "surface": surface,
                 "spoken_form": spoken_form,
@@ -9243,10 +9257,7 @@ class ProjectDB:
             if revoice:
                 self._reset_segment_pending_conn(conn, int(line["id"]), reason, now)
                 self._refresh_chapter_counts_conn(conn, chapter_id)
-                conn.execute(
-                    "UPDATE chapters SET status='warning', last_error=? WHERE id=? AND status=?",
-                    (LISTENER_REDO + reason, chapter_id, ChapterStatus.COMPLETED.value),
-                )
+                self._mark_listener_redo_conn(conn, chapter_id, reason)
             details = {
                 "stable_id": stable_id,
                 "speaker": target["speaker"],
@@ -9320,6 +9331,12 @@ class ProjectDB:
         )
         return {**target, "character_id": int(character_id), "voice_profile_id": profile_id}
 
+    @staticmethod
+    def _mark_listener_redo_conn(conn: sqlite3.Connection, chapter_id: int, reason: str) -> None:
+        chapter = conn.execute("SELECT status,last_error FROM chapters WHERE id=?", (chapter_id,)).fetchone()
+        if chapter is not None and heard_chapter(chapter["status"], chapter["last_error"]):
+            conn.execute("UPDATE chapters SET status='warning',last_error=? WHERE id=?", (LISTENER_REDO + reason, chapter_id))
+
     def apply_listener_retake(self, *, stable_id: str, text_sha256: str, requested_at: float) -> dict[str, Any] | None:
         """THU LẠI nguyên một câu theo ý người nghe (bản thu méo, nuốt chữ, lệch giọng): tăng `listener_retakes` - hạt
         giống của câu đổi theo số ấy (tts.generation_seed), nên bản thu mới khác bản cũ - và đặt lại câu nếu đã thu, một
@@ -9358,10 +9375,7 @@ class ProjectDB:
             if reset:
                 self._reset_segment_pending_conn(conn, int(line["id"]), reason, now)
                 self._refresh_chapter_counts_conn(conn, chapter_id)
-                conn.execute(
-                    "UPDATE chapters SET status='warning', last_error=? WHERE id=? AND status=?",
-                    (LISTENER_REDO + reason, chapter_id, ChapterStatus.COMPLETED.value),
-                )
+                self._mark_listener_redo_conn(conn, chapter_id, reason)
             return {"stable_id": stable_id, "chapter_id": chapter_id, "retakes": retakes, "reset": reset}
 
     def listener_receipts(self) -> dict[tuple[str, str], tuple[float, str]]:
@@ -9447,10 +9461,7 @@ class ProjectDB:
             if reset:
                 self._reset_segment_pending_conn(conn, int(line["id"]), reason, now)
                 self._refresh_chapter_counts_conn(conn, chapter_id)
-                conn.execute(
-                    "UPDATE chapters SET status='warning', last_error=? WHERE id=? AND status=?",
-                    (LISTENER_REDO + reason, chapter_id, ChapterStatus.COMPLETED.value),
-                )
+                self._mark_listener_redo_conn(conn, chapter_id, reason)
             details = {
                 "stable_id": stable_id,
                 "kind": target["kind"],
@@ -9520,8 +9531,7 @@ class ProjectDB:
                     chapters.add(int(row["chapter_id"]))
         for chapter_id in sorted(chapters):
             self._refresh_chapter_counts_conn(conn, chapter_id)
-            conn.execute("UPDATE chapters SET status='warning', last_error=? WHERE id=? AND status='completed'",
-                         (LISTENER_REDO + reason, chapter_id))
+            self._mark_listener_redo_conn(conn, chapter_id, reason)
         return {"characters": [str(row["canonical_name"]) for row in holders], "reset": reset, "chapters": chapters}
 
     def apply_listener_voice(
@@ -9626,10 +9636,7 @@ class ProjectDB:
                         chapters.add(int(row["chapter_id"]))
                 for chapter_id in sorted(chapters):
                     self._refresh_chapter_counts_conn(conn, chapter_id)
-                    conn.execute(
-                        "UPDATE chapters SET status='warning', last_error=? WHERE id=? AND status=?",
-                        (LISTENER_REDO + reason, chapter_id, ChapterStatus.COMPLETED.value),
-                    )
+                    self._mark_listener_redo_conn(conn, chapter_id, reason)
             if target["lock_gender"]:
                 conn.execute(
                     "UPDATE segments SET gender=? WHERE canonical_character_id=? AND kind IN ('dialogue','thought')",

@@ -151,6 +151,7 @@ export function useBookMusic(bookId: string, onChanged?: () => void) {
   const key = musicQuery(bookId).queryKey;
   const view = useQuery({ ...musicQuery(bookId), select: musicEditView });
   const change = useMutation({
+    scope: { id: `book-music:${bookId}` },
     mutationFn: (body: MusicChange) => api<MusicEditView | ProjectMusicView>(`/api/books/${bookId}/music`, { method: "PUT", body }),
     onSuccess: (next) => {
       client.setQueryData(key, next);
