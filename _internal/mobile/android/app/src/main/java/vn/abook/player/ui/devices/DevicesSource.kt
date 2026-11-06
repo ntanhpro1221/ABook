@@ -56,7 +56,7 @@ interface DevicesSource {
     suspend fun unsent(key: String): Unsent
     suspend fun forget(key: String, choice: ForgetChoice)
 
-    /** Gom sách nghe thẳng của các máy đã ghép vào Thư viện (gói sách, bìa). */
+    /** Refresh the authoritative streamed catalogue and publish it to the library. */
     suspend fun streamable()
     suspend fun download(book: RemoteBook)
     suspend fun cancelDownload(id: String)

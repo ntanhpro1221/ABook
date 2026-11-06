@@ -19,7 +19,11 @@ import vn.abook.player.ui.data.UiPrefs
  * được dựng lại chỉ để chạy một việc nền (WorkManager, Media3 sau nút tai nghe). Ghi một dòng "khởi động" kèm phiên bản để đọc nhật ký biết ngay
  * các lần tiến trình mới sinh ra.
  */
-class AbookApplication : Application() {
+class AbookApplication : Application(), androidx.work.Configuration.Provider {
+    // Keep the default configuration, but allocate it only for the first WorkManager client.
+    override val workManagerConfiguration: androidx.work.Configuration
+        get() = androidx.work.Configuration.Builder().build()
+
     val imports by lazy { vn.abook.player.ui.addbook.ImportQueue(vn.abook.player.ui.addbook.ImportRepo(this), uiScope) { library.refresh() } }
     val editors by lazy {
         val repository = vn.abook.player.ui.editbook.EditBookRepo(this, library)

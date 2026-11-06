@@ -18,6 +18,16 @@ class BaselineProfileGenerator {
     @get:Rule
     val rule = BaselineProfileRule()
 
+    /** Cover the real startup graph as well as the demo-only navigation scenarios. */
+    @Test
+    fun diskStartup() = rule.collect(packageName = BuildConfig.TARGET_PACKAGE, includeInStartupProfile = true) {
+        pressHome()
+        startActivityAndWait()
+        check(device.wait(Until.hasObject(By.res("tab_library")), 8_000))
+        device.waitForIdle()
+        Thread.sleep(1_500)
+    }
+
     @Test
     fun generate() = rule.collect(packageName = BuildConfig.TARGET_PACKAGE, includeInStartupProfile = true) {
         pressHome()

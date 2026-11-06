@@ -45,6 +45,38 @@ class DevicesStateTest {
     // ---- ghép ----
 
     @Test
+    fun `streamed catalogue owns its library update without a second invalidation`() {
+        val devices = state()
+        devices.syncStreamed()
+        assertEquals(1, source.streamables)
+        assertEquals(0, changed)
+        devices.syncStreamed()
+        assertEquals(2, source.streamables)
+        assertEquals(0, changed)
+    }
+
+    @Test
+    fun `a failed catalogue refreshes partial writes and releases the single flight guard`() {
+        val gate = CompletableDeferred<Unit>()
+        val failing = object : DevicesSource by source {
+            override suspend fun streamable() {
+                source.streamable()
+                gate.await()
+                error("catalogue interrupted after a partial write")
+            }
+        }
+        val devices = DevicesState(failing, CoroutineScope(Dispatchers.Unconfined), changed = { changed++ })
+        devices.syncStreamed()
+        devices.syncStreamed()
+        assertEquals(1, source.streamables)
+        gate.complete(Unit)
+        assertEquals(1, changed)
+        devices.syncStreamed()
+        assertEquals(2, source.streamables)
+        assertEquals(2, changed)
+    }
+
+    @Test
     fun `an unpaired phone looks for computers and picks the only one it finds`() {
         source.found = listOf(computer)
         val devices = state()

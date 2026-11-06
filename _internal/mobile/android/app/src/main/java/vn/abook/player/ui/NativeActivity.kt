@@ -74,6 +74,7 @@ class NativeActivity : ComponentActivity() {
     private val app get() = application as AbookApplication
     private var started = false
     private var contentReady = false
+    private val firstContent = kotlinx.coroutines.CompletableDeferred<Unit>()
     private var demo = false
     private lateinit var player: PlayerRepo
     private lateinit var pip: PipControl
@@ -147,6 +148,9 @@ class NativeActivity : ComponentActivity() {
         }
         if (!demo) lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
+                // The cached library is enough for the first frame. Network catalogues
+                // publish their updates afterwards, without competing with its disk read.
+                firstContent.await()
                 vn.abook.player.StudioAlerts.checkSoon(this@NativeActivity)
                 launch {
                     while (true) {
@@ -363,6 +367,7 @@ class NativeActivity : ComponentActivity() {
             app.settings.loadMaintenance()
             lifecycleScope.launch(Dispatchers.IO) { vn.abook.player.AppStartup.run(applicationContext) }
         }
+        firstContent.complete(Unit)
     }
 
     /** Vào cửa sổ nhỏ (PiP) ngay: nút "Cửa sổ mini" của Đang nghe, và [onUserLeaveHint] trên Android 8-11. */
