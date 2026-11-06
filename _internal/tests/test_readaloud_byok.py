@@ -466,14 +466,10 @@ def test_a_redirect_is_not_followed_so_the_key_never_reaches_another_host(tmp_pa
     assert caught.value.reason == "rejected" and elsewhere.seen == []
 
 
-def test_a_closed_port_is_offline() -> None:
-    probe = socket.socket()
-    probe.bind(("127.0.0.1", 0))
-    port = probe.getsockname()[1]
-    probe.close()
+def test_a_closed_port_is_offline(refused_tcp_port) -> None:
     with pytest.raises(VoiceError) as caught:
         # Windows thử lại SYN tới cổng đóng ~2 giây rồi mới báo "bị từ chối": cho dư hạn để thấy lời từ chối, không phải "quá giờ".
-        byok.request("GET", f"http://127.0.0.1:{port}/", {}, name="Giả", timeout=5)
+        byok.request("GET", f"http://127.0.0.1:{refused_tcp_port}/", {}, name="Giả", timeout=5)
     assert caught.value.reason == "offline"
 
 

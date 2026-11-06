@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 from abook.webui import packages, remote_books
 from abook.webui.library import Preferences, book_id
@@ -16,6 +17,7 @@ from abook.webui.remote_books import REMOTE_FOLDER
 from abook.webui.server import App
 from abook.webui.sync import Devices, SyncApp, SyncServer
 from tests.test_webui_listen_and_sync import FakeRunner, library  # noqa: F401 - fixture dùng chung
+from tests.async_wait import wait_until
 
 
 def test_this_computer_listens_to_a_book_on_another_computer(library, tmp_path: Path) -> None:  # noqa: F811
@@ -61,10 +63,14 @@ def test_this_computer_listens_to_a_book_on_another_computer(library, tmp_path: 
     assert not any(item.get("remote") for item in app.listen_library())
 
 
-def test_the_place_you_are_listening_travels_both_ways_between_computers(library, tmp_path: Path) -> None:  # noqa: F811
+def test_the_place_you_are_listening_travels_both_ways_between_computers(library, tmp_path: Path, monkeypatch) -> None:  # noqa: F811
     """Như điện thoại với máy tính: nghe ở máy này thì máy kia biết, nghe ở máy kia thì mở sách ở máy này thấy - gộp theo
     mốc thời gian từng phần, bên mới hơn thắng."""
     import time
+    from abook.webui import listening as listening_module
+
+    now = [time.time()]
+    monkeypatch.setattr(listening_module, "time", SimpleNamespace(time=lambda: now[0]))
 
     other_library, project, other_listening = library
     devices = Devices(tmp_path / "kia" / "devices.json")
@@ -83,7 +89,7 @@ def test_the_place_you_are_listening_travels_both_ways_between_computers(library
         app.sync_remote_state(book["id"], wait=True)
         assert other_listening.get(remote_id)["last"]["seconds"] == 4.0, "máy kia biết máy này nghe tới đâu"
 
-        time.sleep(0.05)
+        now[0] += 1
         other_listening.progress(remote_id, chapter, 7.0, 9.7)
         view = app.listen_book(book["id"])
         assert view["state"]["last"]["seconds"] == 7.0, "mở sách ở máy này thấy chỗ vừa nghe ở máy kia"
@@ -155,11 +161,8 @@ def test_a_computer_finds_other_computers_on_the_network_like_phones_do(monkeypa
     bind = socket.socket.bind
     monkeypatch.setattr(socket.socket, "bind", lambda client, address:
                         bind(client, ("127.0.0.1", address[1]) if address[0] == "0.0.0.0" else address))
-    free = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    free.bind(("127.0.0.1", 0))
-    port = free.getsockname()[1]
-    free.close()
-    other = Discovery("Máy kia", 47700, discovery_port=port)
+    other = Discovery("Máy kia", 47700, discovery_port=0)
+    port = other.socket.getsockname()[1]
     other.start()
     try:
         found = remote_books.discover(timeout=1.0, targets=["127.0.0.1"], port=port)
@@ -203,7 +206,6 @@ def test_this_computer_sees_and_controls_the_player_of_another_computer(library,
     """Mạng trạm bước 4, máy tính <-> máy tính: máy kia đang phát (giao diện của nó báo lên host) thì thanh "Đang phát
     trên Máy kia" hiện ở máy này, kèm cuốn ảo tương ứng để "Nghe trên máy này"; lệnh dừng tới máy kia; "Phát trên Máy
     kia" gửi đúng mã cuốn CỦA MÁY KIA. Cuốn máy kia không có thì từ chối rõ ràng, không gửi bừa."""
-    import time
 
     import pytest
 
@@ -226,10 +228,14 @@ def test_this_computer_sees_and_controls_the_player_of_another_computer(library,
                  "position": 42.0, "duration": 600.0, "playing": True, "rate": 1.25}
         other_player.report(LOCAL_PLAYER, "Máy kia", {"state": state})
 
-        deadline = time.time() + 5
-        while not (peers := [phone for phone in app.remote_view()["phones"] if phone["via"] == "peer"]):
-            assert time.time() < deadline, "máy này phải thấy trình phát máy kia sau một vòng hỏi nền"
-            time.sleep(0.1)
+        peers = []
+
+        def ready():
+            nonlocal peers
+            peers = [phone for phone in app.remote_view()["phones"] if phone["via"] == "peer"]
+            return bool(peers)
+
+        assert wait_until(ready), "máy này phải thấy trình phát máy kia sau một vòng hỏi nền"
         (peer,) = peers
         assert (peer["name"], peer["kind"], peer["playing"], peer["position"]) == ("Máy kia", "computer", True, 42.0)
         assert peer["known"] and peer["localBookId"] == local["id"], "Nghe trên máy này = mở đúng cuốn ảo"

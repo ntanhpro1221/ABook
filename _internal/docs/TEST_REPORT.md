@@ -1,5 +1,13 @@
 # Test report
 
+## 07-11-2026 — flakyhunt (dev/flakyhunt, chưa commit)
+
+- Quét 1.395 file test gốc / 1.398 file sau sửa (pytest, Kotlin JVM, vitest, Qt QML/C++). Bỏ 82 vị trí phụ thuộc thời gian/tài nguyên; helper điều kiện thêm hai lời monotonic có chủ đích. Ratchet theo từng site/call, không dùng ngân sách tổng để đổi chỗ cũ lấy chỗ mới. Cổng listener cố định và cổng bị thả trước khi dùng: máy dò còn 0; 756 ứng viên thời gian khác vẫn được ghi rõ, chưa kết luận cả cây hết flaky.
+- Sửa clock/selector giả cho ngân sách mạng; birth time và mtime xác định; handshake bằng event/latch/Future; fake server treo giữ bằng event tới teardown; cổng từ OS giữ suốt test; Gateway cô lập cổng; timer vitest giả và dọn sau mỗi ca. Giữ deadline socket updater 0,5 s, kiểm slot tức thì bằng timeout 0; không nới ngưỡng.
+- Đối chứng mã HEAD riêng bằng git archive, 6 lượt/nhóm, 3 test process đồng thời + 2 worker CPU: updater 3/6 hỏng (cả ba sleep-off), Bluetooth 5/6 hỏng, Edge silent 3/6 hỏng. Trash startup còn có bằng chứng 2/6 ở lượt khám phá all-sleep-off. Số stress cũ trong lịch sử không gộp vào lượt này.
+- Vòng cuối: pytest 6 × (323 passed / 1 skipped / 0 failed / 0 errors), XML thật và `-rf`; JVM 6 × 85 passed; vitest cache-off/shuffle 6 × 5 passed. Đảo thứ tự file/lớp ở nửa sau; lane Python ngủ thật dùng biến không tồn tại, lane bỏ ngủ đặt 1 (chuỗi 0 cũng bật chế độ bỏ ngủ). Gradle offline chỉ chạy 4 lớp sửa: 64 passed, actual exit 0. Không full release gate/GPU/emulator/GUI; không commit/push.
+- Danh sách khoá đọc từ code có 53 mục; hash trước/sau `3818e7751fec8680b70e3f148d1f0a63ede8de1a6599fad3ab043ff632c5467b` không đổi. Chi tiết file:dòng, luật, log/XML, giới hạn và số trước/sau: [report.md](../../report.md).
+
 ## 06-11-2026 — tnbig (dev/tn-bigint, chưa commit)
 
 - Python/Kotlin nhóm số liền từ 7 chữ số có ngữ cảnh lượng; sửa gốc luật nghìn kiểu Anh để không sinh số dài liền, kèm dấu ~ và dấu chấm cuối câu. Cache 5 → 6; cập nhật 19 khoá fixture cache. Fixture chung 146 ca: thêm 46 câu bịa, đổi 1 ca cũ `thousands-2`; 99 ca cũ giữ nguyên. Hai kỳ vọng trùng của số sinh từ bỏ phẩy trong test Python/Kotlin được đổi tương ứng.
