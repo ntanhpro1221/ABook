@@ -569,10 +569,10 @@ object VieneuUnits {
         }
     }
 
-    private fun splitGlued(token: String): List<String> {
+    private fun splitGlued(token: String, pattern: Regex = GLUED): List<String> {
         val parts = ArrayList<String>()
         var last = 0
-        for (m in GLUED.findAll(token)) {
+        for (m in pattern.findAll(token)) {
             parts.add(token.substring(last, m.range.first))
             parts.add(m.value)
             last = m.range.last + 1
@@ -586,12 +586,16 @@ object VieneuUnits {
      * apart for a moment so each word is judged alone, then put back; a word an earlier step changed stays as it is - `_read_words`.
      */
     private fun readWords(toks: List<String>, out: MutableList<String>, origin: String?) {
+        // Check complete source tokens before splitGlued can hide a numeric tail.
+        bookLabels(toks, out)
+        enumerationAbbreviations(toks, out)
         val pieces = ArrayList<String>()
         val said = ArrayList<String>()
         val owner = ArrayList<Int>()
         for ((index, token) in toks.withIndex()) {
             val unchanged = out[index] == token
-            for (part in if (unchanged) splitGlued(token) else listOf(token)) {
+            val word = typographicHonorific(token, origin)
+            for (part in if (unchanged) splitGlued(word) else listOf(token)) {
                 pieces.add(part)
                 said.add(if (unchanged) part else out[index])
                 owner.add(index)
@@ -614,6 +618,56 @@ object VieneuUnits {
 
     private val COUNTED_THOUSANDS = "vàng xu yên yen đồng đô usd vnd người con cái chiếc viên điểm chương trang quân lính lần exp xp hp mp sp goblin kobold orc quái".split(" ").toSet()
     private val THOUSANDS_LABELS = "giá tổng hp mp sp exp xp str agi vit int dex luk atk def".split(" ").toSet()
+
+    private val BOOK_LABELS = mapOf("chap" to "chương", "vol" to "tập")
+    private const val HONORIFIC_HYPHENS = "‐‑‒–"
+    private val HONORIFIC_BOUNDARIES = Regex("""(?:\.{2,}|[…—])+|(?<=\p{L})\((?=\p{L})""")
+    private val JA_HYPHEN_SUFFIX = Regex(".+[$HONORIFIC_HYPHENS](?:san|kun|chan|sama|senpai|sensei|dono)$")
+    private val ENUMERATION = Regex("([" + Regex.escape(OPENERS + FRAMES_OPEN) + "]*)([vV]\\.v)(\\.*[" + Regex.escape(CLOSERS + FRAMES_CLOSE + ",;:!?…") + "]*)")
+
+    /** Reuse ASCII honorific readings, only for complete joined Japanese suffixes. */
+    private fun typographicHonorific(token: String, origin: String?): String {
+        if (token.none { it in HONORIFIC_HYPHENS }) return token
+        val parts = splitGlued(token, HONORIFIC_BOUNDARIES)
+        if (parts.size > 1) return parts.joinToString("") { typographicHonorific(it, origin) }
+        val (before, core, after) = Names.splitToken(token)
+        if (!JA_HYPHEN_SUFFIX.matches(core) || before.any { it !in OPENERS && it !in FRAMES_OPEN } ||
+            after.any { it !in CLOSERS && it !in FRAMES_CLOSE && it !in PUNCT_MARKS }) return token
+        val plain = core.map { if (it in HONORIFIC_HYPHENS) '-' else it }.joinToString("")
+        return if (Names.honorificReading(plain, origin) != null) before + plain + after else token
+    }
+
+    private fun enumerationAbbreviations(toks: List<String>, out: MutableList<String>) {
+        for ((index, token) in toks.withIndex()) {
+            if (out[index] != token) continue
+            if (index > 0 && core(toks[index - 1]).lowercase(Locale.ROOT) in setOf("mã", "id", "serial")) continue
+            val match = ENUMERATION.matchEntire(token) ?: continue
+            val (before, _, after) = match.destructured
+            out[index] = before + "vân vân" + after
+        }
+    }
+    private val BOOK_NUMBER = Regex("[0-9]+[" + Regex.escape(CLOSERS + FRAMES_CLOSE + PUNCT_MARKS) + "]*")
+    private val BOOK_LABEL = Regex("(chap|vol)\\.?(.*)", RegexOption.IGNORE_CASE)
+
+    /** Chapter/volume abbreviations need a bounded Arabic integer; Python `_book_labels`. */
+    private fun bookLabels(toks: List<String>, out: MutableList<String>) {
+        for ((index, token) in toks.withIndex()) {
+            if (out[index] != token) continue
+            if (index > 0 && core(toks[index - 1]).lowercase(Locale.ROOT) in setOf("mã", "id", "serial")) continue
+            val core = token.trimStart { it in OPENERS || it in FRAMES_OPEN }
+            val match = BOOK_LABEL.matchEntire(core) ?: continue
+            val (label, number) = match.destructured
+            val tail = if (number.isNotEmpty()) {
+                if (!BOOK_NUMBER.matches(number)) continue
+                " " + number
+            } else {
+                val following = toks.getOrNull(index + 1).orEmpty().trimStart { it in OPENERS || it in FRAMES_OPEN }
+                if (!BOOK_NUMBER.matches(following)) continue
+                ""
+            }
+            out[index] = token.take(token.length - core.length) + BOOK_LABELS.getValue(label.lowercase(Locale.ROOT)) + tail
+        }
+    }
 
     private val BIGINT_COUNTED = COUNTED_THOUSANDS + "dân"
     private val BIGINT_CUES = "khoảng gần hơn tổng có".split(" ").toSet()
