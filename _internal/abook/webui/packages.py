@@ -550,7 +550,8 @@ def import_file(source: Path, library_root: Path, projects: Iterable[Path],
                 fingerprints: Fingerprints, report: dict[str, Any] | None = None, *, separate: bool = False, allow_older: bool = False,
                 refresh_base: bool = True) -> tuple[Path, str]:
     """Nhập một file `.abook` (hay `.abookproj` mà máy chỉ nhập như một cuốn sách - xem `import_opened`). File hỏng, bị sửa hay
-    không phải sách: `bookfile.BookFileError` / `projectfile.ProjectFileError`."""
+    không phải sách: `bookfile.BookFileError` / `projectfile.ProjectFileError`.
+    `refresh_base=False` chỉ giữ lớp nền của chữ nhập lại từ EPUB/TXT; gói có audio luôn so và cập nhật lớp nền."""
     from . import bookfile, projectfile
 
     opened = (projectfile.ProjectFile(Path(source)) if str(source).lower().endswith(projectfile.EXTENSION)
@@ -617,7 +618,10 @@ def _import_opened(opened: Any, library_root: Path, projects: Iterable[Path], fi
             # sách là cách sửa (soát a28 lỗi 9: trước đây "đã có trong thư viện" và chương mất file mất luôn).
             repair = len(prints) >= len(theirs) and not _remote(existing) and bool(damaged_files(existing))
             from .bookfile import base_layer
-            changed = refresh_base and base_layer(current, book_edits.load(existing)) != base_layer(opened.book, opened.edits)
+            # Only generated text imports may retain the old base. Audio equality identifies a book,
+            # not its cover, metadata, cast, scripts or music.
+            refresh = refresh_base or any(name.startswith("chapters/") for name in prints)
+            changed = refresh and base_layer(current, book_edits.load(existing)) != base_layer(opened.book, opened.edits)
             if not repair and disposition == "existing" and not gains_workshop and not changed:
                 if report["edits"]:
                     report["merge"] = book_edits.adopt(existing, opened.edits, opened.edits_cover(), opened.copy_member)

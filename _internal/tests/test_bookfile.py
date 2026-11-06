@@ -36,7 +36,8 @@ def test_finished_level_qa_travels_with_the_book(tmp_path):
 
 
 @pytest.mark.parametrize("listener_cover", [False, True])
-def test_reimport_refreshes_the_base_layer_with_unchanged_audio(tmp_path, monkeypatch, listener_cover):
+@pytest.mark.parametrize("refresh_base", [False, True])
+def test_reimport_refreshes_the_base_layer_with_unchanged_audio(tmp_path, monkeypatch, listener_cover, refresh_base):
     from abook.webui import book_edits, packages
     from abook.webui.fingerprints import Fingerprints
     from tests.book_edits_fixtures import tiny_cover
@@ -58,6 +59,12 @@ def test_reimport_refreshes_the_base_layer_with_unchanged_audio(tmp_path, monkey
     assert how == "new"
     chapter = folder / "chapters/1.mp3"
     stamp = chapter.stat().st_mtime_ns
+    listening = Listening(tmp_path / "listening.json")
+    identifier = book_id(folder)
+    listening.progress(identifier, 1, 23.5, 120.0)
+    listening.set_rate(identifier, 1.25)
+    listening.set_chapter_done(identifier, 1, True)
+    state = json.loads(json.dumps(listening.get(identifier)))
     book_edits.set_title(folder, "Listener title")
     if listener_cover:
         book_edits.set_cover(folder, tiny_cover())
@@ -76,7 +83,7 @@ def test_reimport_refreshes_the_base_layer_with_unchanged_audio(tmp_path, monkey
                                       ("description", None, "Refreshed", 12), ("script", None, "Refreshed", 12)]:
         script = "ScriptOnly" if name == "script" else "Base"
         file = packed(name, image, label, width, script)
-        assert packages.import_file(file, library, [], prints) == (folder, "updated")
+        assert packages.import_file(file, library, [], prints, refresh_base=refresh_base) == (folder, "updated")
         raw = packages.manifest(folder)
         assert (raw["title"], raw["author"], raw["description"]) == (label, label, f"description {label}")
         assert json.loads((folder / "scripts/1.json").read_bytes()) == {"text": script}
@@ -91,11 +98,13 @@ def test_reimport_refreshes_the_base_layer_with_unchanged_audio(tmp_path, monkey
             assert "cover" not in raw
             assert ("cover" in packages.edited_manifest(folder)) == listener_cover
         assert book_edits.load(folder) == edits
+        assert book_id(folder) == identifier
+        assert Listening(tmp_path / "listening.json").get(identifier) == state
         assert packages.edited_manifest(folder)["title"] == "Listener title"
         if listener_cover:
             assert (folder / book_edits.EDITS_COVER).read_bytes() == own_cover
         assert chapter.read_bytes() == audio and chapter.stat().st_mtime_ns == stamp
-        assert packages.import_file(file, library, [], prints) == (folder, "existing")
+        assert packages.import_file(file, library, [], prints, refresh_base=refresh_base) == (folder, "existing")
 
 
 def test_bad_reimport_leaves_the_entire_local_book_untouched(tmp_path):
