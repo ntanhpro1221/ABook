@@ -6,6 +6,18 @@ chỉ là danh sách commit.
 
 ## Quy ước
 
+### 06-11-2026 — rà upstream trên `dev/upstream` (chưa phát hành)
+
+Nâng PySide6 6.11.2 → 6.11.3, pytest 9.1.1 → 9.2.0, ruff 0.16.10 → 0.17.4;
+ghim Brotli 1.2.1 thay 1.2.0 để vá CVE-2026-111497, đồng bộ lock và danh sách Studio.
+UI nâng React Query 5.104.5 → 5.106.1, Vite 8.3.5 → 8.3.6, Tailwind và plugin Vite 4.3.3 → 4.3.5.
+Gradle wrapper nâng 8.14.3 → 8.14.6 để nhận các bản vá bảo mật trong cùng dòng 8.14.
+
+Đây là ghim trên nhánh dev; không cài vào runtime sản xuất, không commit/push, không chạy GPU hoặc release gate.
+Stack model, AGP/Kotlin/Compose và Qt C++ giữ nguyên. Mọi book mới dùng ghim này phải tạo từ đầu;
+không dùng hash mới để resume book cũ. Bằng chứng, test đích và giới hạn kiểm nằm trong `../../report.md`
+và `../../upstream-evidence/`; không có số đo tốc độ/RAM hay chất lượng audio mới.
+
 - Tag: `v<major>.<minor>.<patch>-alpha.<n>`, khớp với `version` trong `_internal/pyproject.toml`
   (pyproject luôn mang số của phiên bản **đang phát triển**, tag mang số của phiên bản **đã phát hành**).
 - Output của từng phiên bản nằm ngoài repo, tại `D:\Novels\Audiobooks\_versions\<tag>\`.
