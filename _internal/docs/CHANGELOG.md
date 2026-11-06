@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Đọc “v.v.” thành “vân vân” và nhận gạch Unicode nối kính ngữ Nhật như “Himuro–kun” trên Studio, điện thoại và Nghe ngay; không đổi chữ hiển thị. Giữ Chap/Vol khi số phức hợp có nhiều dấu chấm.
+- Đọc nhãn Chap/Vol đi với số thành “chương”/“tập” trên Studio và Nghe ngay, cả điện thoại lẫn máy tính; giữ nguyên chữ hiển thị.
 - Thanh tiến độ và nhãn trên bìa trong thư viện điện thoại nằm gọn theo góc bo của bìa.
 - Đọc số lượng nguyên từ 7 chữ số liền thành số đầy đủ khi có ngữ cảnh đếm, giữ nguyên mã và số điện thoại.
 
