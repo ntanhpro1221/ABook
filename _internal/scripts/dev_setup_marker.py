@@ -79,6 +79,8 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     runtime = args.runtime.expanduser().resolve()
     # Imports and cache checks stay offline; no model construction or inference.
+    environment_keys = ("HF_HUB_OFFLINE", "TRANSFORMERS_OFFLINE", "HF_HOME", "PYTORCH_NVML_BASED_CUDA_CHECK")
+    previous_environment = {key: os.environ.get(key) for key in environment_keys}
     os.environ["HF_HUB_OFFLINE"] = "1"
     os.environ["TRANSFORMERS_OFFLINE"] = "1"
     os.environ["HF_HOME"] = str(runtime / "models" / "huggingface")
@@ -100,6 +102,12 @@ def main(argv: list[str] | None = None) -> int:
     except Exception as exc:  # Fail closed, including import, filesystem and metadata errors.
         print(f"[FAIL] {type(exc).__name__}: {exc}; marker was not written.", file=sys.stderr)
         return 1
+    finally:
+        for key, value in previous_environment.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
     return 0
 
 

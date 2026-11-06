@@ -1,11 +1,14 @@
 # Test report
 
-## 06-11-2026 — setupmark (dev/setupmark, chưa commit)
+## 07-11-2026 — gate164b: hồi quy trên cây tích hợp (dev/integ164)
 
-- Thêm `scripts/dev_setup_marker.py`: kiểm trực tiếp dependency/provenance, cache perceptual và model giọng từ runtime contract trước khi ghi marker schema 2, `installed_by=dev-check`. Bắt buộc interpreter thuộc runtime đích; ghi atomic, có `--dry-run`.
-- Test đích `tests/test_dev_setup_marker.py tests/test_runtime_contract.py`, chạy từ `_internal` với `-q -rf`: 32 passed, 0 failed, 0 errors, 0 skipped (XML thật). Runtime giả dùng file nhỏ, kiểm SHA-256 thật và dependency giả; không dùng GPU.
-- Dry-run thật trên `D:/Novels/ABook/_internal/runtime`: exit 0, tất cả phép kiểm đạt; marker cũ giữ nguyên SHA-256 và mtime. Không nạp model/chạy suy luận, không chạy release gate đầy đủ.
-- Hash file khoá trước/sau cùng `3818e7751fec8680b70e3f148d1f0a63ede8de1a6599fad3ab043ff632c5467b`. Chi tiết và một lần gọi pytest sai cwd đã sửa: `D:/Novels/ABook_setupmark/report.md`.
+- Soát phần gộp hợp: hai bảng `wav_signal_metrics` và `chapter_teller_lines` tồn tại ở DB mới và sau reopen; integrity/foreign-key check qua, không sửa schema. Sắp các mục báo cáo mới theo ngày, giữ nguyên nội dung bằng chứng; CHANGELOG không có mục trùng hay câu bị cắt. Tái sinh cả hai tài liệu parity từ nguồn tích hợp.
+- Lượt pytest đầu: 10.380 passed, 5 failed, 14 skipped, 2 xfailed; giữ log gốc. Thẻ local của vai chưa có nhân vật được thẻ gom cả cuốn thay thế; vai có nhân vật vẫn giữ thẻ local để đổi giọng đúng chương. Sửa khôi phục môi trường của caller sau kiểm setup marker, cập nhật kỳ vọng pin PySide6 đúng `pyproject.toml` hiện hành và cô lập phép quan sát sleep của test tải vào đúng luồng. Không đổi dependency, phiên bản hay ngưỡng.
+- Bảy file test đích đầy đủ: 125 passed, 0 failed/error (141,19 s); thêm sáu ca hồi quy môi trường có/không có biến cho thành công, dry-run và lỗi kiểm contract. Test tải riêng trước và sau: mỗi bên 3/3 PASS; đối chứng chèn sleep từ luồng khác làm test cũ đỏ, bản sửa qua, giữ nguyên kiểm Range/checksum/part/retry.
+- Lượt full sau sửa: 10.386 passed, 5 failed (HITL), 14 skipped, 2 xfailed. Bản sửa đầu bỏ cả thẻ local có quyền đổi giọng; sửa lại theo ranh giới nhân vật/giọng và thêm ca tích hợp hai phạm vi. Dừng riêng cây tiến trình gate đã bị thay thế, giữ log lỗi, rồi chạy full gate mới từ đầu.
+- Gallery phát hiện tám lỗi INK EDGE ở ba story Studio mới. Bù đệm nút đầu hàng bằng utility dùng chung; kiểm lại ba story sáng/tối: 6 lượt, 0 findings, 0 errors; đã xem crop nút liên quan. Không nới luật hoặc miễn story.
+- Danh sách khóa đọc trực tiếp từ code: 53 mục; hash trước/sau sửa `a6d8883d7586a7bb93ba4b726022b860ed6f1af3b94699f1b6424177d4006ebf`. Bằng chứng cổng đầy đủ trước/sau sửa, các mục MANUAL chưa ký và giới hạn nằm trong task `scratchpad/codex/gate164b/report.md`; không GPU, thiết bị, commit hay push.
+
 ## 07-11-2026 — recovcache (dev/recovery-cache, chưa commit)
 
 - Cache số đo waveform theo SHA-256 WAV và version (hash audio_io, hằng số đo, NumPy/soundfile/libsndfile) trong SQLite project. Mỗi miss commit độc lập; không lưu verdict, không bỏ kiểm băm, validation chữ/settings/drift hay QA. Không thêm migration.
@@ -13,6 +16,7 @@
 - 0 khác biệt RecoveryReport, 3.510/3.504 inspection, các trạng thái DB ở cả hai lượt và 4.692 runtime events (bỏ thời điểm ghi). Hai model-path mặc định khác do package đối chứng không được recovery dùng; phần settings còn lại bằng nhau. Sách nguồn chỉ đọc; lượt raw settings cũ bị lỗi pace giữ riêng, không dùng để kết luận warm-cache.
 - Pytest -q -rf: 33 file đầy đủ, 667 passed / 0 FAILED / 0 errors / 5 skipped, đếm XML; cache mới 15/15 qua, gồm ngắt/reopen. Có 12 warning UnicodeDecodeError ở luồng đọc subprocess; đối chứng HEAD cùng loại trên test_perceptual_prefetch_concurrency: 10/10 qua, 4 warning. Cửa sổ offscreen. Log/XML, lệnh tái hiện, comparison.json và report.md nằm trong scratchpad/codex/recovcache của task.
 - Hash trước `3818e7751fec8680b70e3f148d1f0a63ede8de1a6599fad3ab043ff632c5467b`, sau `8944f563a6bd23d845c1eb5dbcb5e7ffdb30e22bc674d1f3a8569ad08892ec9e` (53 file đọc trực tiếp từ code). Hash đổi; chỉ ở nhánh dev, chờ hết run cần hash cũ trước khi tích hợp. Không commit/push.
+
 ## 07-11-2026 — flakyhunt (dev/flakyhunt, chưa commit)
 
 - Quét 1.395 file test gốc / 1.398 file sau sửa (pytest, Kotlin JVM, vitest, Qt QML/C++). Bỏ 82 vị trí phụ thuộc thời gian/tài nguyên; helper điều kiện thêm hai lời monotonic có chủ đích. Ratchet theo từng site/call, không dùng ngân sách tổng để đổi chỗ cũ lấy chỗ mới. Cổng listener cố định và cổng bị thả trước khi dùng: máy dò còn 0; 756 ứng viên thời gian khác vẫn được ghi rõ, chưa kết luận cả cây hết flaky.
@@ -20,6 +24,7 @@
 - Đối chứng mã HEAD riêng bằng git archive, 6 lượt/nhóm, 3 test process đồng thời + 2 worker CPU: updater 3/6 hỏng (cả ba sleep-off), Bluetooth 5/6 hỏng, Edge silent 3/6 hỏng. Trash startup còn có bằng chứng 2/6 ở lượt khám phá all-sleep-off. Số stress cũ trong lịch sử không gộp vào lượt này.
 - Vòng cuối: pytest 6 × (323 passed / 1 skipped / 0 failed / 0 errors), XML thật và `-rf`; JVM 6 × 85 passed; vitest cache-off/shuffle 6 × 5 passed. Đảo thứ tự file/lớp ở nửa sau; lane Python ngủ thật dùng biến không tồn tại, lane bỏ ngủ đặt 1 (chuỗi 0 cũng bật chế độ bỏ ngủ). Gradle offline chỉ chạy 4 lớp sửa: 64 passed, actual exit 0. Không full release gate/GPU/emulator/GUI; không commit/push.
 - Danh sách khoá đọc từ code có 53 mục; hash trước/sau `3818e7751fec8680b70e3f148d1f0a63ede8de1a6599fad3ab043ff632c5467b` không đổi. Chi tiết file:dòng, luật, log/XML, giới hạn và số trước/sau: [report.md](../../report.md).
+
 ## 07-11-2026 — rev163fix (dev/rev163fix, chưa commit)
 
 - Đọc trọn review163/report.md và hai probe. Trước sửa: pytest `-rf` có 9 FAILED thật (6 ca warning/bản chụp MP3, 3 ca hoàn tác người kể); slider DOM có 2 failed/2 passed. Test hàng đợi với hook thật cũng đỏ 1 ca khi bỏ serialization.
@@ -28,6 +33,7 @@
 - Test đích Python: 200 passed/0 failed; sau bổ sung ca MP3 tổng hợp thật, chạy lại hai file trọng tâm: 30 passed/0 failed (201 test khác nhau giữa hai lượt, không cộng trùng). Ca MP3 kiểm reopen trước khi ghép lại, checksum giữ nguyên và `audio_coverage.project` decode/xuất đủ chương. Có test rollback và retry sau reopen cho cả áp và hoàn tác giọng.
 - Vitest đích: 22 passed/0 failed trong 6 file; TypeScript typecheck qua. Android headless/offline, một worker Gradle: 18 tests/0 failures/0 errors/0 skipped trong XML (LevelMeterSaveTest 1, MusicStateTest 9, MusicModelTest 8). Qt offscreen/software: 4 ca control pass, cộng init/cleanup thành 6 passed/0 failed; dùng QML thật, Music singleton chỉ giả hằng số/nhãn, không chạy backend C++.
 - Không chạy release gate đầy đủ, model, GPU, emulator hay adb. File sửa đều LF; git diff --check qua; không commit/push. Hash quality trước `3818e7751fec8680b70e3f148d1f0a63ede8de1a6599fad3ab043ff632c5467b`, sau `cf657dee9b3e384188b5d4b4b3992d2e924c066542200ad9e2f9f33113e2b8a2` (53 mục đọc từ code; file khóa đổi: database.py, webui/store.py). Chỉ tích hợp nhánh dev sau khi hết run.
+
 ## 07-11-2026 — tnnext2 (cùng dev/tnnext, chưa phát hành)
 
 - Thêm `v.v.`/`v.v` → vân vân và gạch Unicode U+2010..U+2013 nối hậu tố Nhật, tái dùng luật ASCII; không chọn cách đọc tên mới. Python/Kotlin cùng luật; Studio và Edge/Nghe ngay dùng đường chung. Cách đọc riêng của cuốn và protected span vẫn thắng, chữ hiện và mốc Edge giữ nguyên.
@@ -36,6 +42,13 @@
 - Kiểm cuối: pytest **408/408** (27,45 giây), JVM **27/27 methods** (ReadingFormsTest duyệt cả 227 ca), vitest **227/227** gọi backend Python thật; failures/errors/skipped đều 0. Chỉ test đích, không full release gate/GPU, chưa tổng hợp/chấm audio. Tất cả 11 file trong manifest dùng LF, `git diff --check` qua.
 - Mẫu Hako `_full` hạt 20261107: 534 file / 276 cuốn / 89.197 dòng / 1.881.652 chữ; truyen 200 cuốn, ai-dich 70, khac 6, tối đa 2 chương/cuốn. `v.v.` 7 lượt/7 cuốn, kính ngữ Unicode 5 lượt/1 cuốn; bật/tắt riêng hai luật đổi tương ứng 7/7 và 5/5 dòng ứng viên. Không cộng với curated vì có thể trùng tác phẩm. 49 lượt dấu chấm số phần lớn lẫn số chương; không dùng tần suất regex làm số lỗi audio. Chữ nguồn được băm lại sau đo, không đổi.
 - Hash đầu tnnext2 `3125a1944a0b173d85cc477e273a368a33f33dea007215c74f3f4dded66704f5`, cuối `2afa92af11e76d1f59ec109f33ed89256ee100587c6f26a5b96243b0c297c878`. Đọc danh sách trực tiếp từ code: 53 mục; file khoá đổi là `readaloud/vieneu.py`. Chỉ giữ nhánh dev, chờ hết run trước tích hợp.
+
+## 06-11-2026 — setupmark (dev/setupmark, chưa commit)
+
+- Thêm `scripts/dev_setup_marker.py`: kiểm trực tiếp dependency/provenance, cache perceptual và model giọng từ runtime contract trước khi ghi marker schema 2, `installed_by=dev-check`. Bắt buộc interpreter thuộc runtime đích; ghi atomic, có `--dry-run`.
+- Test đích `tests/test_dev_setup_marker.py tests/test_runtime_contract.py`, chạy từ `_internal` với `-q -rf`: 32 passed, 0 failed, 0 errors, 0 skipped (XML thật). Runtime giả dùng file nhỏ, kiểm SHA-256 thật và dependency giả; không dùng GPU.
+- Dry-run thật trên `D:/Novels/ABook/_internal/runtime`: exit 0, tất cả phép kiểm đạt; marker cũ giữ nguyên SHA-256 và mtime. Không nạp model/chạy suy luận, không chạy release gate đầy đủ.
+- Hash file khoá trước/sau cùng `3818e7751fec8680b70e3f148d1f0a63ede8de1a6599fad3ab043ff632c5467b`. Chi tiết và một lần gọi pytest sai cwd đã sửa: `D:/Novels/ABook_setupmark/report.md`.
 
 ## 06-11-2026 — tnnext (dev/tnnext, chưa commit)
 
@@ -91,19 +104,6 @@
 - Importer `-q -rf`: lượt rộng 6.109 passed / 11 failed / 9 skipped; sửa và chạy lại toàn file. Kết quả mới nhất theo module: 6.145 passed / 9 skipped / 0 failed; lượt hồi quy cuối 252 passed, kiểm bảng cuối 147 passed / 3 skipped. Log/XML và quy tắc gộp nằm trong task vtable3, không cộng trùng rerun. Android biên dịch production/test Kotlin qua; 19 test gain/clip/WAV passed, 0 failure/error. Compileall và git diff --check qua.
 - Sách chỉ là dữ liệu kiểm định, đang chờ novar/DONE; chưa có PASS/FAIL sách, chưa gỡ vòng hiệu chỉnh. Gain không được fit bằng sách. Hash trước lần tiếp nhận bỏ nghỉ: 53c26fe9862a5999262b26741c2882c4b653c4c148ecef25da7a0d06aa2334a6; sau: 5fa8bf6da65f57e16d3799e5ed35dbf30fdc2609b9538141cbe58396c59ca985. Mọi sửa ở nhánh dev; không chạm runtime sản xuất.
 
-## 05-11-2026 — release gate, milestone 2 (dev/release-gate)
-
-- `scripts/release_gate.py` chạy các cổng nguồn với timeout, đọc summary pytest/Vitest, XML Gradle mới và đủ suite Qt offscreen; lưu bảng/JSON/log tại `runtime/release_gate`. Kiểm tra cần người/thiết bị hiện MANUAL và chặn exit 0. `release.py publish` gọi cổng trước mọi thao tác đăng.
-- Tự kiểm: fake runner exit 0 nhưng có failed/error, output rỗng, timeout, all-pass exit 0, thiếu công cụ, dependency đỏ, XML sai, từ cấm, CRLF và dữ liệu riêng; publish không được đi tiếp khi gate đỏ. Fixture summary pytest chạy thật tại worktree này và dòng Vitest từ báo cáo a90a có ghi nguồn.
-- Kết quả tự kiểm, bảng chạy thật toàn bộ và fault injection được ghi đầy đủ ở `result.md` của task; không sửa lỗi nền, không commit, không dùng GPU/Ollama/adb/thiết bị. Hash file khoá đọc từ code, trước sửa `f10085f96acd7f9fe6a066f2bf5a74338b0a351bea3d98f58f6d2807912cbfff`.
-- Kết quả cuối: 50 bài tự kiểm passed; full gate exit 1 (14 PASS, 10 FAIL, 5 MANUAL). Android: 3303 passed/7 skipped, 377 suite, 0 failed/error. Qt sau sửa harness: 523 passed/0 failed từ 15 suite, QML lint qua; WidthTests timeout 360 giây/thiếu summary. Full pytest timeout 2400 giây trước summary; Vitest thiếu module, UI/gallery build thiếu export EighthNote từ dependency ở junction. Cheap checks exit 0; fault injection exit 1. Hash sau kiểm vẫn bằng trước sửa.
-## 05-11-2026 — TN tầng 5 và vá tầng 2 (dev/tn-tier25)
-
-- Fixture chung `tests/fixtures/readaloud/spoken/reading_forms.json`: 100 ca, gồm 39 ca bảo vệ cách đọc / không đoán thêm (25 chuỗi giữ nguyên). Python kiểm Nghe ngay, Studio và Edge; vitest gọi backend Python thật, không thêm bộ luật TypeScript; JVM kiểm VieNeu và Edge.
-- Pytest `-q -rf`: 24 file nhập các mô-đun đổi và phần Studio / cache liên quan, 954 passed, 3 skipped, 0 FAILED / errors; đếm trực tiếp 954 dấu chấm, 3 `s`, 0 `F` / `E`, khớp JUnit XML. Vitest: 100 passed, 0 failed. Android `:app:testDebugUnitTest --tests <class>`: 15 lớp, 133 tests (132 passed, 1 skipped), 0 failures / errors; chỉ đếm XML mới hơn lúc bắt đầu Gradle.
-- Corpus chỉ đọc: 349 chương / 186 cuốn, 61.678 đoạn / 1.423.904 chữ. Cách đọc khác chữ gốc trước/sau: 6.138 / 9.756 đoạn; 4.175 đoạn đổi trực tiếp. 4.458/105.700 khoảng câu gốc đổi; theo lớp: ngập ngừng 2.714, mở đầu 1.674, kéo giọng 104, nghìn mơ hồ 1 (có giao nhau). Đọc tay 40/40 đạt theo luật; chưa tổng hợp hay chấm audio. Phương pháp và phân tầng ở `TEXT_NORMALIZATION.md` mục 4; không đưa chữ truyện vào repo.
-- Cache luật đọc Python/Kotlin tăng 4 → 5, cập nhật fixture khoá cache. Không đổi chữ truyện / giao diện; không cần chạy `ui_parity.py`. Kiểm thử CPU, BelowNormal, offscreen; không dùng GPU, Ollama, adb, phone hay emulator; không commit / push.
-- Hash trước task: `f10085f96acd7f9fe6a066f2bf5a74338b0a351bea3d98f58f6d2807912cbfff`; trước continuation: `6ce5ef4db5001e0acca1c686abb303f28e4c37a7de0220d15522111036f9ef52`; sau: `596c6b95d593a6200fb5fc56e3213135596f0d112995f6b589ed5222056ef476`. Các thay đổi vẫn ở nhánh dev, chưa tích hợp vào run đang thu.
 ## 06-11-2026 — keepline (dev/keep-line, chưa commit)
 
 - Lời đọc được chuẩn bị một lần cùng span; test sinh bảng phát âm kiểm idempotence của hàng đã chuẩn bị và ranh giới chia câu.
@@ -114,6 +114,30 @@
 - Bộ Python rộng 248 file `-q -rf --tb=short` và các lượt sửa/rerun được ghi log/XML tại thư mục task; kết quả cuối và số `FAILED` thực ghi trong `report.md`/`keepline_test_summary.json`.
 - Lượt rộng: 4.981 testcase, 19 FAILED raw; sau sửa và chạy lại chung chín file từng lỗi: 221/221 passed, 0 FAILED. Detector cuối 29/29; tổng hợp kết quả testcase mới nhất 4.976 passed, 6 skipped, 1 xfailed, 0 failed. Ba test inspect được chạy lại nguyên file sau khi số dòng code ổn định, không nới assertion.
 - Pace chỉ đo trên hai SQLite đã sao chép, không mở gốc/đổi ngưỡng. Sàn kép chạm 0/3.691 dòng plain, 0/736 foreign-name, 0/61 number-heavy đủ điều kiện; chỉ đánh giá take còn lưu.
+
+## 06-11-2026 — Studio: Gọi hay nói (dev/caller-card)
+
+- Pure vocative detector uses character names/aliases, titles, call particles and reply pairs; synthetic fixtures only. The card offers up to three alternative named speakers plus narrator/unnamed, plays existing recorded/preset samples, uses the existing speaker override path and appears in precast step (c).
+- Read-only gold measurement: 95 chapters, 40 book folders; precision 498/503, conditional mention-pair recall 498/1007. These are development-set results using gold identities, not deployed-model precision or independent held-out results.
+- Pytest: 94 files, 1,731 passed / 3 skipped / 1,734 cases; 0 FAILED lines, 0 F, 0 E in real `-q -rf` output, matched against per-file XML. Includes all 68 test files with direct imports of changed Python modules; caller detector/card 36, existing self-addressed card 4, work_items 32, work_items_at_scale 9, work_items_speaker_suggestions 10, UI parity 17 and Qt parity 11.
+- Studio + motion vitest: 374/374 passed across 70 files, 0 failures. Earlier whole-UI run had 26 environment failures from the junction's missing lucide EighthNote export in music/gallery. Gradle: WorkLogicTest 25 and StudioWorkScreenTest 13, 0 failures/errors; XML newer than the saved run start. Both parity scripts `--check` and `git diff --check` passed. No screenshot or visual verification.
+- Locked list read from code: 42 entries; before/after hash `f10085f96acd7f9fe6a066f2bf5a74338b0a351bea3d98f58f6d2807912cbfff`. CUDA disabled, Qt offscreen, CPU checks BelowNormal; no Ollama, device/emulator, commit or push. Per-file counts, raw logs/XML and measurement script are in the caller task scratchpad.
+
+## 05-11-2026 — release gate, milestone 2 (dev/release-gate)
+
+- `scripts/release_gate.py` chạy các cổng nguồn với timeout, đọc summary pytest/Vitest, XML Gradle mới và đủ suite Qt offscreen; lưu bảng/JSON/log tại `runtime/release_gate`. Kiểm tra cần người/thiết bị hiện MANUAL và chặn exit 0. `release.py publish` gọi cổng trước mọi thao tác đăng.
+- Tự kiểm: fake runner exit 0 nhưng có failed/error, output rỗng, timeout, all-pass exit 0, thiếu công cụ, dependency đỏ, XML sai, từ cấm, CRLF và dữ liệu riêng; publish không được đi tiếp khi gate đỏ. Fixture summary pytest chạy thật tại worktree này và dòng Vitest từ báo cáo a90a có ghi nguồn.
+- Kết quả tự kiểm, bảng chạy thật toàn bộ và fault injection được ghi đầy đủ ở `result.md` của task; không sửa lỗi nền, không commit, không dùng GPU/Ollama/adb/thiết bị. Hash file khoá đọc từ code, trước sửa `f10085f96acd7f9fe6a066f2bf5a74338b0a351bea3d98f58f6d2807912cbfff`.
+- Kết quả cuối: 50 bài tự kiểm passed; full gate exit 1 (14 PASS, 10 FAIL, 5 MANUAL). Android: 3303 passed/7 skipped, 377 suite, 0 failed/error. Qt sau sửa harness: 523 passed/0 failed từ 15 suite, QML lint qua; WidthTests timeout 360 giây/thiếu summary. Full pytest timeout 2400 giây trước summary; Vitest thiếu module, UI/gallery build thiếu export EighthNote từ dependency ở junction. Cheap checks exit 0; fault injection exit 1. Hash sau kiểm vẫn bằng trước sửa.
+
+## 05-11-2026 — TN tầng 5 và vá tầng 2 (dev/tn-tier25)
+
+- Fixture chung `tests/fixtures/readaloud/spoken/reading_forms.json`: 100 ca, gồm 39 ca bảo vệ cách đọc / không đoán thêm (25 chuỗi giữ nguyên). Python kiểm Nghe ngay, Studio và Edge; vitest gọi backend Python thật, không thêm bộ luật TypeScript; JVM kiểm VieNeu và Edge.
+- Pytest `-q -rf`: 24 file nhập các mô-đun đổi và phần Studio / cache liên quan, 954 passed, 3 skipped, 0 FAILED / errors; đếm trực tiếp 954 dấu chấm, 3 `s`, 0 `F` / `E`, khớp JUnit XML. Vitest: 100 passed, 0 failed. Android `:app:testDebugUnitTest --tests <class>`: 15 lớp, 133 tests (132 passed, 1 skipped), 0 failures / errors; chỉ đếm XML mới hơn lúc bắt đầu Gradle.
+- Corpus chỉ đọc: 349 chương / 186 cuốn, 61.678 đoạn / 1.423.904 chữ. Cách đọc khác chữ gốc trước/sau: 6.138 / 9.756 đoạn; 4.175 đoạn đổi trực tiếp. 4.458/105.700 khoảng câu gốc đổi; theo lớp: ngập ngừng 2.714, mở đầu 1.674, kéo giọng 104, nghìn mơ hồ 1 (có giao nhau). Đọc tay 40/40 đạt theo luật; chưa tổng hợp hay chấm audio. Phương pháp và phân tầng ở `TEXT_NORMALIZATION.md` mục 4; không đưa chữ truyện vào repo.
+- Cache luật đọc Python/Kotlin tăng 4 → 5, cập nhật fixture khoá cache. Không đổi chữ truyện / giao diện; không cần chạy `ui_parity.py`. Kiểm thử CPU, BelowNormal, offscreen; không dùng GPU, Ollama, adb, phone hay emulator; không commit / push.
+- Hash trước task: `f10085f96acd7f9fe6a066f2bf5a74338b0a351bea3d98f58f6d2807912cbfff`; trước continuation: `6ce5ef4db5001e0acca1c686abb303f28e4c37a7de0220d15522111036f9ef52`; sau: `596c6b95d593a6200fb5fc56e3213135596f0d112995f6b589ed5222056ef476`. Các thay đổi vẫn ở nhánh dev, chưa tích hợp vào run đang thu.
+
 ## 05-11-2026 — pinfix2: Bluetooth choices follow advertised services
 
 - `paired_devices` now queries both ABook UUIDs through the existing SDP path and returns per-device `services` (release/dev). Both desktop UIs keep the ordinary release choice and show `<name> · bản thử` only when the corresponding service is actually advertised; dev-only phones have no release pairing choice. Fixture-only listing, React component and existing Qt D2Devices tests cover release-only, dev-only, both and neither.
@@ -127,6 +151,7 @@
 - Android release keeps TCP 47630, UDP 47631 and UUID a1f667fe-352a-49b7-9b91-a5463677cac0. Debug uses TCP 47640, UDP 47641 and UUID b2e7780f-463b-5ac8-ac02-b6574788dbd1, generated from the same JSON source Python reads. Discovery probes both; labelled desktop Bluetooth dev pairing and separate gateway identity retain the selected app through fallback and diagnostics.
 - Final validation: 1255 pytest passed, 3 skipped, 0 FAILED across 119 files; final focused routing/pin reruns passed (94 / 8 tests). JVM: 46 tests passed (PeerEndpointsTest, StudioLinkTest, LibraryServerBluetoothNameTest, LibraryServerDiagnosticsTest, PeerAddressesTest, DevicesLogicTest); generated release BuildConfig inspected. TypeScript typecheck and 5 computerRoutes vitests passed. Evidence is in the task's `result.md` and `measurements/`.
 - No phone/adb or commit. Quality implementation list read from code (42 entries); policy hash changes, confined to the uncommitted dev worktree. Test fixtures were corrected to use matching voice presets and to forward the selected service UUID without permitting real Bluetooth.
+
 ## 05-11-2026 — thanh trượt mức nhạc nền (dev/music-slider)
 
 - Shared `music_mix.json`: −40..−6 dB, step 1, default −20; Python, TypeScript, generated Android BuildConfig and Qt CMake read one source. Zone/number/clamp tests read the shared settings fixture.
@@ -136,13 +161,6 @@
 - Chromium software rendering: six real page/theme cases pass thumb `elementFromPoint`, drag to −6 with no save until release, exactly one save on release and ArrowLeft to −7. Six full screenshots + six crops viewed at native 2×; six Android Robolectric snapshots refreshed, level crops viewed at native 3×; no overlap.
 - Qt build/test validation is in progress; final counts follow here.
 - Quality implementation hash unchanged: `f10085f96acd7f9fe6a066f2bf5a74338b0a351bea3d98f58f6d2807912cbfff` (42 entries read from code). No commit/push, GPU, Ollama, phone or emulator.
-## 06-11-2026 — Studio: Gọi hay nói (dev/caller-card)
-
-- Pure vocative detector uses character names/aliases, titles, call particles and reply pairs; synthetic fixtures only. The card offers up to three alternative named speakers plus narrator/unnamed, plays existing recorded/preset samples, uses the existing speaker override path and appears in precast step (c).
-- Read-only gold measurement: 95 chapters, 40 book folders; precision 498/503, conditional mention-pair recall 498/1007. These are development-set results using gold identities, not deployed-model precision or independent held-out results.
-- Pytest: 94 files, 1,731 passed / 3 skipped / 1,734 cases; 0 FAILED lines, 0 F, 0 E in real `-q -rf` output, matched against per-file XML. Includes all 68 test files with direct imports of changed Python modules; caller detector/card 36, existing self-addressed card 4, work_items 32, work_items_at_scale 9, work_items_speaker_suggestions 10, UI parity 17 and Qt parity 11.
-- Studio + motion vitest: 374/374 passed across 70 files, 0 failures. Earlier whole-UI run had 26 environment failures from the junction's missing lucide EighthNote export in music/gallery. Gradle: WorkLogicTest 25 and StudioWorkScreenTest 13, 0 failures/errors; XML newer than the saved run start. Both parity scripts `--check` and `git diff --check` passed. No screenshot or visual verification.
-- Locked list read from code: 42 entries; before/after hash `f10085f96acd7f9fe6a066f2bf5a74338b0a351bea3d98f58f6d2807912cbfff`. CUDA disabled, Qt offscreen, CPU checks BelowNormal; no Ollama, device/emulator, commit or push. Per-file counts, raw logs/XML and measurement script are in the caller task scratchpad.
 
 ## 03-11-2026 — unchanged-audio cover re-import (dev/cover-reimport)
 

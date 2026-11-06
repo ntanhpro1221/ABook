@@ -310,13 +310,13 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `listen/AddBook.tsx` (4): Chưa mở được file sách này. (`296`); Chọn lại (`548`); Đường dẫn file hay thư mục (`651`); Chưa đọc được (`814`)
 - `listen/BookScreen.tsx` (19): Tạm dừng {} (`162`); Đọc {} (chưa có audio) (`181`); Đọc chương này (`270`); Danh sách chương (`304`); Bỏ gộp {} vào {} (`455`); Bỏ gộp (`460`); Đổi giọng {} (`475`); Chờ áp dụng: giọng (`570`); Nghe giọng {} (`576`); Đổi giọng người kể (`577`); 7 ngày qua: (`670`); Nghe tiếp từ (`692`); Chuyển sang cuốn (`738`); Đang mở thư viện (`738`); Đọc (`1097`); Đọc tiếp (`1097`); Đã nghe {} (`1196`); Việc với sách (`1225`); Mục của sách (`1300`)
 - `listen/DropToAdd.tsx` (1): Thả để thêm sách (`36`)
-- `listen/EditBook.tsx` (11): Chưa chỉnh được nhạc nền (`161`); Đã đổi tên sách (`326`); Đã bỏ tên tác giả (`331`); Đã đổi tác giả (`331`); Đã đặt ảnh bìa (`336`); Lưu tên (`404`); Lưu tác giả (`427`); Mở tab Nhạc nền (`462`); Tên riêng (`472`); Chọn thư mục (`705`); Mặc định: thư mục Đã xuất (`708`)
+- `listen/EditBook.tsx` (11): Chưa chỉnh được nhạc nền (`162`); Đã đổi tên sách (`327`); Đã bỏ tên tác giả (`332`); Đã đổi tác giả (`332`); Đã đặt ảnh bìa (`337`); Lưu tên (`405`); Lưu tác giả (`428`); Mở tab Nhạc nền (`463`); Tên riêng (`473`); Chọn thư mục (`706`); Mặc định: thư mục Đã xuất (`709`)
 - `listen/LibraryScreen.tsx` (13): Mở {} (`198`); Nghe ngay {} (`201`); Tạm dừng {} (`201`); Đọc {} (`201`); Thêm {} (`241`); Đang tạm dừng{} (`334`); Chưa có chương nghe được{} (`336`); Sách (`373`); Mở bộ {} (`415`); Lọc sách (`574`); Nghe xong (`576`); Xếp theo: {} (`584`); Gõ không dấu cũng được (`602`)
 - `listen/LineWishes.tsx` (22): Người nói: {} (`98`); Cách đọc câu - {} (`101`); Thu lại câu này (`103`); Các từ trong câu (`162`); Bỏ cách đọc “{}” (`194`); Chưa ghi được người nói (`321`); Chưa lấy lại được (`334`); Đã ghi cách đọc câu này (`337`); Chưa ghi được (`343`); Đã ghi: thu lại câu này (`362`); Chưa bỏ được thay đổi này (`388`); Cách đọc “{}”: “{}” (`397`); Ai nghĩ câu này? (`399`); Cách đọc câu này (`399`); Sửa câu này (`399`); Đọc từ này là (`399`); Sửa cách đọc “{}” (`426`); Bỏ: {} (`441`); Đang chờ máy làm sách: {} (`470`); Hiện là {} (`471`); Cách đọc câu (`476`); Sửa cách đọc một từ (`483`)
 - `listen/MorningRecap.tsx` (1): Lần cuối dùng máy (`73`)
 - `listen/MyMusic.tsx` (7): Đang tải bài nhạc (`71`); Đang thêm nhạc thì dừng (`120`); Đã xoá khỏi Nhạc của tôi (`136`); Đang tải nhạc riêng (`156`); Xoá bài: {} (`172`); Giữ lại: {} (`175`); Xoá: {} (`180`)
 - `listen/PlayerViews.tsx` (24): Tốc độ đọc: {} (`93`); Giọng đọc: {} (`96`); Shift+← (`265`); Đã chọn tốc độ đọc {} (`466`); Phím (`481`); Đổi luôn trong Studio. (`551`); Đang chuẩn bị nhạc nền (`562`); Danh sách nhạc nền (`576`); Đang tải các danh sách nhạc (`602`); Đã chọn giọng {} (`746`); Chưa xoá được bản đọc (`929`); Xoá bản đọc (`940`); Hẹn giờ ngủ trên {} (`1062`); Âm lượng (`1166`); Âm lượng {}% (`1168`); Bật tiếng (`1178`); Tắt tiếng (`1178`); Nghe kiểm (`1321`); Đóng trình phát (`1654`); Esc (`2061`); Phím tắt (`2071`); Gợi ý đọc (`2072`); Điều khiển phụ (`2117`); Bảng (`2294`)
-- `listen/PlaylistChoice.tsx` (9): Nhạc nền: {} (`67`); Nhạc nền: để máy chọn{} (`67`); Đã lưu lựa chọn (`74`); Chưa chỉnh được mức nhạc (`92`); Đang thêm nhạc (`100`); Đang thêm nhạc {}/{} (`100`); Đang thêm nhạc thì dừng (`113`); Chưa mở được hộp chọn file (`115`); Đang tải danh sách (`200`)
+- `listen/PlaylistChoice.tsx` (9): Nhạc nền: {} (`68`); Nhạc nền: để máy chọn{} (`68`); Đã lưu lựa chọn (`75`); Chưa chỉnh được mức nhạc (`94`); Đang thêm nhạc (`102`); Đang thêm nhạc {}/{} (`102`); Đang thêm nhạc thì dừng (`115`); Chưa mở được hộp chọn file (`117`); Đang tải danh sách (`202`)
 - `listen/ProjectFileItems.tsx` (14): Mở dự án (`41`); Chưa dựng được xưởng (`44`); Cần cài Studio (card NVIDIA) - (`82`); Cần cập nhật Studio - (`82`); Studio cần sửa - (`82`); Mở dự án Studio (`103`); Tạo sách nói (`107`); Việc của xưởng (`135`); Mở xưởng đã dựng (`140`); Dựng xưởng (`143`); Màn (`216`); Đang tải việc xưởng (`219`); Không còn việc nào cần quyết. (`257`); Ngoài ra: (`259`)
 - `listen/ReadAlongText.tsx` (2): Nghe từ “{}” (`55`); Shift F10: sửa cách đọc. (`339`)
 - `listen/ReaderScreen.tsx` (3): Chưa mở được chương này (`264`); Về trang sách (`264`); Điều khiển đọc (`342`)
@@ -377,14 +377,14 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 | web | native | khác ở | nơi |
 |---|---|---|---|
 | bắt đầu ngay | Bắt đầu ngay | chữ hoa | `desktop/BookTemplates.tsx:107` (+2) ~ `native/studio/StudioNew.kt:321` |
-| Chưa bỏ được ảnh bìa | Chưa bỏ được ảnh bìa. | dấu câu cuối | `listen/EditBook.tsx:342` (+1) ~ `native/editbook/BookEditor.kt:85` |
+| Chưa bỏ được ảnh bìa | Chưa bỏ được ảnh bìa. | dấu câu cuối | `listen/EditBook.tsx:343` (+1) ~ `native/editbook/BookEditor.kt:85` |
 | Chưa gửi được về {} | Chưa gửi được về {}. | dấu câu cuối | `listen/SendEdits.tsx:43` ~ `native/editbook/BookEditor.kt:104` |
 | Chưa làm trước được | Chưa làm trước được. | dấu câu cuối | `listen/PlayerViews.tsx:868` ~ `native/nowplaying/PrepareBlock.kt:64` |
 | Chưa thêm được sách | Chưa thêm được sách. | dấu câu cuối | `listen/AddBook.tsx:481` ~ `native/addbook/ImportQueue.kt:86` (+1) |
-| Chưa đặt được ảnh bìa | Chưa đặt được ảnh bìa. | dấu câu cuối | `listen/EditBook.tsx:337` (+1) ~ `native/editbook/BookEditor.kt:85` |
+| Chưa đặt được ảnh bìa | Chưa đặt được ảnh bìa. | dấu câu cuối | `listen/EditBook.tsx:338` (+1) ~ `native/editbook/BookEditor.kt:85` |
 | Chưa đọc lại được file | Chưa đọc lại được file. | dấu câu cuối | `listen/AddBook.tsx:388` ~ `native/addbook/ImportQueue.kt:60` |
-| Chưa đổi được tác giả | Chưa đổi được tác giả. | dấu câu cuối | `listen/EditBook.tsx:332` ~ `native/editbook/EditModel.kt:67` |
-| Chưa đổi được tên sách | Chưa đổi được tên sách. | dấu câu cuối | `listen/EditBook.tsx:327` ~ `native/editbook/EditModel.kt:66` |
+| Chưa đổi được tác giả | Chưa đổi được tác giả. | dấu câu cuối | `listen/EditBook.tsx:333` ~ `native/editbook/EditModel.kt:67` |
+| Chưa đổi được tên sách | Chưa đổi được tên sách. | dấu câu cuối | `listen/EditBook.tsx:328` ~ `native/editbook/EditModel.kt:66` |
 | Chờ áp dụng | chờ áp dụng | chữ hoa | `listen/BookScreen.tsx:445` (+2) ~ `native/studio/StudioScript.kt:253` |
 | Chữ của cả cuốn được gửi tới {} để đọc, bằn… | Chữ của cả cuốn được gửi tới {} để đọc, bằn… | dấu thanh / ký tự | `desktop/listenExport.ts:85` ~ `native/export/ExportModel.kt:198` |
 | cả cuốn | Cả cuốn | chữ hoa | `listen/labels.ts:28` ~ `native/export/ExportScreen.kt:152` |

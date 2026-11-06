@@ -167,3 +167,22 @@ def test_atomic_publish_failure_preserves_marker(runtime, monkeypatch):
     monkeypatch.setattr(command.os, "replace", fail_replace)
     assert command.main(["--runtime", str(runtime)]) == 1
     assert snapshot(runtime) == before
+
+
+@pytest.mark.parametrize("existing", [False, True])
+@pytest.mark.parametrize("mode", ["write", "dry-run", "failure"])
+def test_runtime_check_restores_the_callers_environment(runtime, monkeypatch, existing, mode):
+    keys = ("HF_HUB_OFFLINE", "TRANSFORMERS_OFFLINE", "HF_HOME", "PYTORCH_NVML_BASED_CUDA_CHECK")
+    for key in keys:
+        if existing:
+            monkeypatch.setenv(key, "caller-" + key)
+        else:
+            monkeypatch.delenv(key, raising=False)
+    before = dict(command.os.environ)
+    args = ["--runtime", str(runtime)]
+    if mode == "dry-run":
+        args.append("--dry-run")
+    elif mode == "failure":
+        monkeypatch.setattr(command, "checked_payload", lambda root: ({}, ["test failure"]))
+    assert command.main(args) == (1 if mode == "failure" else 0)
+    assert dict(command.os.environ) == before
