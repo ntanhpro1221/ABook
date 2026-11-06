@@ -53,6 +53,7 @@ Item {
     }
     // Cuốn đầy đủ (quyền sửa, số thay đổi...): nạp lúc mở trang và sau mỗi lần sửa
     property var fullBook: ({})
+    onFullBookChanged: if (Api.needsVoiceList(fullBook)) Api.ensureVoiceName()
     function loadFull() {
         const id = root.book.bookId
         if (!id) return

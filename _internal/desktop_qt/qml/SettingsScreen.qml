@@ -52,6 +52,7 @@ FocusScope {
     Component.onCompleted: {
         Api.bind(DesktopApi, Theme)
         if (!Api.loaded) Api.load()
+        Api.ensureVoiceName()
         Api.call("GET", "/api/sync", null, function(data, error) { if (!error) root.sync = data })
     }
 

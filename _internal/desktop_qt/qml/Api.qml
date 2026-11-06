@@ -39,6 +39,8 @@ QtObject {
     property string voiceName: ""          // tên giọng đọc mặc định (dòng tóm tắt "Giọng đọc", useDefaultVoiceName của web)
     property string defaultVoice: ""       // mã giọng mặc định ("" = chưa chọn): localStorage "abook-readaloud-voice" của web + tuỳ chọn readAloudVoice (App.tsx)
     property var voiceList: []             // danh sách giọng lần hỏi gần nhất (GET /api/readaloud/voices)
+    property bool voicesLoaded: false
+    property bool voicesLoading: false
     property var transport: null
     property var themeObject: null
     function bind(bridge, theme) { transport = bridge; themeObject = theme }
@@ -72,7 +74,6 @@ QtObject {
             if (themeObject) themeObject.mode = data.theme === "system" ? "auto" : (data.theme || "auto")
         })
         call("GET", "/api/app", null, function(data, error) { if (!error) info = data })
-        loadVoiceName()
     }
     function update(changes, done) {
         if (saving) return
@@ -103,7 +104,19 @@ QtObject {
         voiceName = voice ? VoiceLogic.spokenVoiceName(voice.name) : ""
     }
     function loadVoiceName() {
-        call("GET", "/api/readaloud/voices", null, function(data, error) { if (!error && Array.isArray(data)) { voiceList = data; refreshVoiceName() } })
+        if (!transport || voicesLoading) return
+        voicesLoading = true
+        call("GET", "/api/readaloud/voices", null, function(data, error) {
+            voicesLoading = false
+            if (!error && Array.isArray(data)) { voicesLoaded = true; voiceList = data; refreshVoiceName() }
+        })
+    }
+    // Saved audio needs no speech providers; text books and voice settings do.
+    function ensureVoiceName() { if (!voicesLoaded && voiceList.length === 0) loadVoiceName() }
+    function needsVoiceList(book) {
+        // A partly recorded book may contain text-only chapters as well.
+        return book.stage === "text" || Number(book.chaptersAvailable) < Number(book.chaptersTotal)
+            || (book.chapters || []).some(chapter => chapter.state === "text")
     }
     // Đặt giọng mặc định từ Cài đặt (chooseDefaultVoice + App.tsx: lưu tuỳ chọn readAloudVoice, lỗi thì báo cách thử lại)
     function chooseDefaultVoice(id) {

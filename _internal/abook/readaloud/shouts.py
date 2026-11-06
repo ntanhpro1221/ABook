@@ -14,7 +14,6 @@ import re
 import unicodedata
 from functools import lru_cache
 
-from ..analysis import is_vietnamese_syllable
 from ..romanization import romanized_reading
 from . import names
 from .names import split_token
@@ -89,6 +88,8 @@ def _runs(chars: list[str]) -> list[tuple[int, int]]:
 @lru_cache(maxsize=4096)
 def stretch_reading(core: str) -> str | None:
     """Cách đọc của `core` (chữ cái đầu tới cuối, không dấu câu) khi nó là thán từ Latin hay tiếng kêu kéo dài; None khi để nguyên."""
+    from ..analysis import is_vietnamese_syllable
+
     chars = _letters(core)
     if not chars or (core.isupper() and ROMAN_LETTERS.issuperset(chars) and len(chars) >= MIN_RUN):  # "III", "XXX": số La Mã / chữ X, không phải tiếng kéo
         return None
@@ -137,6 +138,8 @@ def stretch_reading(core: str) -> str | None:
 def _collapsed(chars: list[str], runs: list[tuple[int, int]]) -> str | None:
     """Chữ có NHIỀU chỗ kéo ("Cccchhhhàaaaaaoooo" -> "chào… ò"): gộp mỗi chỗ kéo thành một chữ (giữ dấu thanh ở chữ đầu của chỗ ấy); chỉ đọc khi gộp ra đúng một âm tiết tiếng Việt.
     Chỗ kéo cuối là nguyên âm đứng riêng thì nhắc lại nó một lần sau "…", mang thanh của âm tiết."""
+    from ..analysis import is_vietnamese_syllable
+
     if len(runs) < 2:
         return None
     keep = [True] * len(chars)
