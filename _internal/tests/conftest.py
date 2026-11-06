@@ -55,6 +55,18 @@ _BY_TEST: dict[str, float] = {}
 _CURRENT_TEST = ""
 
 
+@pytest.fixture
+def refused_tcp_port():
+    """An OS-assigned TCP port kept bound but unlistening throughout the test."""
+    import socket
+
+    with socket.socket() as reserved:
+        if os.name == "nt":
+            reserved.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+        reserved.bind(("127.0.0.1", 0))
+        yield reserved.getsockname()[1]
+
+
 def _tally(seconds: float) -> None:
     global _TOTAL_SECONDS, _CALLS
     _TOTAL_SECONDS += float(seconds)

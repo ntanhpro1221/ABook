@@ -178,6 +178,7 @@ class FakeEdge:
         self.silent = silent
         self.hang = hang  # số kết nối đầu bị treo lúc bắt tay: nhận kết nối rồi không bao giờ trả lời (như a51: bắt tay treo ~10 giây)
         self.hung: list[socket.socket] = []
+        self.stopped = threading.Event()
         self.requests: list[str] = []
         self.messages: list[str] = []
         self.listener = socket.socket()
@@ -188,6 +189,7 @@ class FakeEdge:
         self.thread.start()
 
     def close(self) -> None:
+        self.stopped.set()
         self.listener.close()
         for conn in self.hung:
             conn.close()
@@ -257,7 +259,7 @@ class FakeEdge:
             conn.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, struct.pack('ii', 1, 0))  # đóng bằng RST
             return
         if self.silent:
-            time.sleep(1.5)
+            self.stopped.wait()
             return
         spoken = ssml.split("<prosody rate='+0%' volume='+0%'>")[1].split("</prosody>")[0]
         self._reply(conn, spoken)
@@ -372,14 +374,10 @@ def test_a_403_teaches_the_clock_skew_and_retries_once(fake_edge) -> None:
         edge._clock_skew = saved
 
 
-def test_a_closed_port_is_offline_with_a_clear_reason() -> None:
-    listener = socket.socket()
-    listener.bind(("127.0.0.1", 0))
-    port = listener.getsockname()[1]
-    listener.close()
+def test_a_closed_port_is_offline_with_a_clear_reason(refused_tcp_port) -> None:
     # Windows thử lại SYN tới cổng đóng ~2 giây rồi mới báo "bị từ chối": hạn 2 giây ra "quá giờ" (dịch vụ không trả lời), nên cho dư hạn để thấy đúng lời từ chối.
     with pytest.raises(edge.EdgeOffline) as caught:
-        edge.EdgeClient(host="127.0.0.1", port=port, secure=False, connect_timeout=5).synthesize("Xin chào", edge.DEFAULT_VOICE)
+        edge.EdgeClient(host="127.0.0.1", port=refused_tcp_port, secure=False, connect_timeout=5).synthesize("Xin chào", edge.DEFAULT_VOICE)
     assert caught.value.reason == "offline"
 
 
@@ -430,12 +428,13 @@ def test_the_cache_stores_reads_and_trims_the_least_recently_used(tmp_path: Path
     keys = [clip_cache.clip_key("edge", "v", f"đoạn {n}") for n in range(3)]
     assert len(set(keys)) == 3 and all(len(key) == 64 for key in keys)
     store.put(keys[0], b"a" * 1000, "mp3", 800, [[0, 400], [400, 800]])
-    time.sleep(0.02)
+    first_meta = store.folder / f"{keys[0]}.json"
+    os.utime(first_meta, (1000, 1000))
     store.put(keys[1], b"b" * 1000, "mp3", 900, [[0, 900]])
-    time.sleep(0.02)
+    os.utime(store.folder / f"{keys[1]}.json", (1001, 1001))
     hit = store.get(keys[0])  # dùng lại clip 0: nó không còn là "lâu không dùng nhất"
     assert hit is not None and hit.words == [[0, 400], [400, 800]] and hit.duration_ms == 800
-    time.sleep(0.02)
+    assert first_meta.stat().st_mtime > 1001, "a cache hit must refresh its access timestamp"
     store.put(keys[2], b"c" * 1000, "wav", 700, [[0, 700]])
     assert store.get(keys[1]) is None, "clip lâu không dùng nhất bị bỏ"
     assert store.get(keys[0]) is not None and store.get(keys[2]) is not None
