@@ -17,6 +17,19 @@
         <!-- Cho phép đo hiệu năng bản release bằng shell (perfetto, simpleperf, Macrobenchmark) mà không cần bản debuggable. -->
         <profileable android:shell="true" />
 
+        <!-- WorkManager starts on first getInstance(context), including job/service process restarts.
+             Keep the other App Startup initializers (lifecycle, emoji and baseline profiles). -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
+
         <!-- Màn mở app (Compose) và nơi nhận "Mở bằng" / chia sẻ file: ui/NativeActivity.kt. -->
         <activity
             android:name=".ui.NativeActivity"
