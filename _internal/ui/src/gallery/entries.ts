@@ -161,6 +161,8 @@ const DESKTOP: Omit<Entry, "platform">[] = [
   { id: "desktop/studio-cast", group: "Studio", title: "Nhân vật và giọng", route: "/studio/dong-ho-cat?tab=cast" },
   { id: "desktop/studio-voice-picker", group: "Studio", title: "Chọn giọng cho nhân vật", route: "/studio/dong-ho-cat?tab=cast", act: () => click(/^Đổi giọng|^Chọn giọng/).then(() => undefined) },
   { id: "desktop/studio-work", group: "Studio", title: "Việc cần duyệt", route: "/studio/dong-ho-cat?tab=work" },
+  { id: "desktop/studio-work-role", group: "Studio", title: "Vai phụ trong chương · đặt tên", route: "/studio/dong-ho-cat?tab=work&kind=unnamed", act: () => click("Đặt tên").then(() => undefined) },
+  { id: "desktop/studio-work-caller", group: "Studio", title: "Người gọi / ngoài khung", route: "/studio/dong-ho-cat?tab=work&kind=caller" },
   { id: "desktop/studio-review", group: "Studio", title: "Cần nghe lại", route: "/studio/dong-ho-cat?tab=review" },
   { id: "desktop/studio-precast", group: "Studio", title: "Duyệt trước khi thu", route: "/studio/dong-ho-cat?tab=precast" },
   { id: "desktop/studio-script", group: "Studio", title: "Kịch bản chương", route: "/studio/dong-ho-cat?tab=script" },

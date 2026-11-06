@@ -295,6 +295,22 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
   trước khi thu, Kịch bản, Nhật ký) vào "Thêm" - tab đang chọn nằm trong "Thêm" thì nút ấy mang tên tab.
 - **Cài đặt**: danh sách nhóm phẳng (Giọng đọc · Nghe · Hẹn giờ ngủ · Giao diện · Thiết bị · Nâng cao), máy tính hai cột.
 
+### Việc cần duyệt: vai phụ và người gọi (HITL mốc 2)
+
+- Vai `NPC_LOCAL` có ít nhất hai câu có thẻ theo **chương + danh tính vai**, không tự nhập vai cùng nhãn ở chương khác.
+  `Đặt tên` mở tên máy đề xuất (nhãn vai + chương, sửa được); bấm giới là ghi cả nhóm câu qua `/speaker`.
+  `Giới / giọng` mở bộ chọn giọng hiện có, giữ giới/giọng đang dùng làm mặc định và nghe thử được.
+  Câu đã quyết riêng ra khỏi nhóm đang hỏi; vai đã tách hết cho nhiều người không được mở lại thành một nhóm chưa quyết.
+- Loại `caller` mang cùng nhãn **Người gọi / ngoài khung** trên web, Qt, Android. Bằng chứng là lời kể ngay cạnh câu thoại
+  nhắc đầu dây, điện thoại, bộ đàm, loa hoặc giọng bên ngoài; lời thoại chỉ nhắc điện thoại không tự sinh thẻ.
+  Hỏi ai nói, hiển thị ngữ cảnh; `Giữ … (máy đề xuất)` giữ người máy đã gán. Chưa có hiệu ứng điện thoại nên không mời lọc giọng.
+- Các thẻ mốc 2 xếp theo số câu ảnh hưởng; ứng viên tên chỉ là gợi ý, không tự đổi người nói. Thẻ NPC đã có gợi ý người thật
+  được bổ sung đặt tên/giọng tại chỗ, không hỏi hai lần. Thẻ gộp vai cả cuốn là một quyết định khác, không phải mặc định của thẻ chương.
+- `Đặt tên`, `Người khác` trên thẻ caller và `Giới / giọng` dùng nút chữ, không thêm icon, giống nhau trên ba nền tảng.
+  Badge loại việc không có icon riêng. Các lựa chọn trả lời và hoàn tác dùng điều khiển sẵn có.
+- Đọc SQLite chỉ đọc; UI ghi trạng thái mong muốn. Worker áp qua recovery ở ranh giới an toàn, chỉ thu lại câu bị đổi;
+  không chờ người duyệt, không sửa văn bản truyện. Hai story gallery: `desktop/studio-work-role`, `desktop/studio-work-caller`.
+
 ## 8. Kiểm trước khi gộp một thay đổi giao diện
 
 1. Ảnh `gallery:shots` trước/sau các mục bị ảnh hưởng, cả sáng và tối, điện thoại và máy tính.

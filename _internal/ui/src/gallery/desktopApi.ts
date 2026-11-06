@@ -200,6 +200,16 @@ const example = (item: GalleryBook, seq: number, extra: Record<string, unknown> 
 /** "Việc cần duyệt" (studio/WorkInbox.tsx): ba thẻ quen thuộc - ai nói câu này, cách đọc một tên, nam hay nữ. */
 function workItems(item: GalleryBook) {
   return [
+    { kind: "unnamed", key: "local-role:4:guard", title: "“người gác” trong chương này", problem: "Vai phụ nói 12 câu trong chương này. Đặt tên hoặc chọn người đã có; giới / giọng áp cho cả vai.", affected: 12, doubt: .5, score: 1.8,
+      options: [], current: "người gác", currentValue: "NPC_LOCAL::c00004::người gác", suggested: false,
+      suggestedName: "Người gác chương 4", pickVoice: { name: "NPC_LOCAL::c00004::người gác", displayName: "người gác" },
+      choices: [{ label: "Ông Tư", value: "ÔNG TƯ" }, { label: "Bảo", value: "BẢO" }],
+      lines: Array.from({ length: 12 }, (_, n) => ({ stableId: `${item.id}-4-${n + 1}`, textSha256: `role-${n}` })),
+      keepLabel: "Giữ người gác (máy đề xuất)", examples: [example(item, 5), example(item, 6)] },
+    { kind: "caller", key: "caller:4-17", title: "Ai nói từ xa?", problem: "Lời kể gợi giọng qua điện thoại: “Đầu dây bên kia có tiếng đáp.” — bạn kiểm tra người nói.", affected: 1, doubt: .6, score: .6,
+      options: [], current: "Minh Khuê", currentValue: "MINH KHUÊ", suggested: false, keepLabel: "Giữ Minh Khuê (máy đề xuất)",
+      choices: [{ label: "Ông Tư", value: "ÔNG TƯ" }, { label: "Bảo", value: "BẢO" }],
+      lines: [{ stableId: `${item.id}-4-17`, textSha256: "caller-17" }], examples: [example(item, 17, { before: "Đầu dây bên kia có tiếng đáp." })] },
     { kind: "speaker", key: "speaker:4-16", title: "Ai nói câu “Thế là bắt đầu rồi.”?", problem: "Máy chưa chắc ai nói câu này.", affected: 1, doubt: 0.62, score: 0.9,
       options: ["Ông Tư", "Minh Khuê", "Bảo"], current: "Ông Tư", examples: [example(item, 17, { before: "Cả ba cùng nhìn qua ô cửa kính mờ.", after: "Ông nói khẽ, giọng như thể đã chờ khoảnh khắc ấy cả một đời." })],
       lines: [{ stableId: `${item.id}-4-17`, textSha256: "a1" }] },
@@ -359,7 +369,7 @@ const ROUTES: [string, RegExp, Handler][] = [
   ["GET", /^\/api\/computers$/, () => ({ name: "Máy tính phòng khách", computers: [] })],
   ["GET", /^\/api\/computers\/bluetooth$/, () => ({ devices: [] })],
   // Studio: trang dự án.
-  ["GET", /^\/api\/books\/([^/]+)\/work$/, (match, _body, query) => (query.get("count") ? { count: workItems(book(match[1])).length } : { items: workItems(book(match[1])), counts: { speaker: 1, pronunciation: 1, gender: 1 } })],
+  ["GET", /^\/api\/books\/([^/]+)\/work$/, (match, _body, query) => (query.get("count") ? { count: workItems(book(match[1])).length } : { items: workItems(book(match[1])), counts: { unnamed: 1, caller: 1, speaker: 1, pronunciation: 1, gender: 1 } })],
   ["GET", /^\/api\/books\/([^/]+)\/review$/, (match) => reviewView(book(match[1]))],
   ["GET", /^\/api\/books\/([^/]+)\/edits-inbox$/, () => ({ devices: [], waiting: 0, recent: [], skipped: [] })],
   ["GET", /^\/api\/books\/([^/]+)\/parts$/, () => ({ parts: [] })],

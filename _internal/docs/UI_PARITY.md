@@ -154,7 +154,7 @@ Một việc - một cách viết, cho web (máy tính + điện thoại), nativ
 
 <!-- ui_parity:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity.py - không sửa tay, chạy lại script) -->
 
-Quét: web 5300 chữ (3063 khác nhau), 334 cặp nhãn-icon; native 1917 chữ (1479 khác nhau), 74 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
+Quét: web 5305 chữ (3066 khác nhau), 334 cặp nhãn-icon; native 1920 chữ (1482 khác nhau), 74 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
 
 ## a. Cùng việc, khác chữ
 
@@ -169,7 +169,7 @@ Cặp nhãn ngắn (<= 6 chữ) mà phía kia KHÔNG có nguyên văn nhưng có
 | Dùng “{}” | Đúng là {} | 1.00 | `native/studio/WorkText.kt:78` ~ `studio/ScriptTab.tsx:836` |
 | Không có ai khớp “{}”. | Không có ai khớp “ | 1.00 | `native/screens/BookPeople.kt:225` ~ `studio/MergePeople.tsx:127` |
 | Máy nghe ra | Máy nghe ra: “ | 1.00 | `native/studio/WorkText.kt:106` ~ `studio/ReviewQueue.tsx:231` |
-| Máy đang dùng: {} | Máy đang dùng | 1.00 | `native/studio/WorkText.kt:36` ~ `studio/WorkInbox.tsx:956` |
+| Máy đang dùng: {} | Máy đang dùng | 1.00 | `native/studio/WorkText.kt:36` ~ `studio/WorkInbox.tsx:958` |
 | Mã ghép nối | Mã ghép nối: {} | 1.00 | `native/devices/PairScreen.kt:185` ~ `desktop/PhoneSync.tsx:161` (+1) |
 | Nghe một câu | Nghe từ câu này | 1.00 | `native/studio/WorkText.kt:151` ~ `listen/SentenceMenu.tsx:141` |
 | Nghe tiếp từ {} | Nghe tiếp từ | 1.00 | `native/data/ListenExtras.kt:98` ~ `listen/BookScreen.tsx:692` |
@@ -180,7 +180,7 @@ Cặp nhãn ngắn (<= 6 chữ) mà phía kia KHÔNG có nguyên văn nhưng có
 | Tên gốc: {} | Tên gốc: | 1.00 | `native/addbook/BookForms.kt:134` (+3) ~ `studio/CastEdits.tsx:88` |
 | Đang tải phần đọc không khí{} | Đang tải phần đọc không khí | 1.00 | `native/studio/StudioMusic.kt:307` ~ `studio/MusicTab.tsx:454` |
 | Đang tải {}% | Đang tải {} | 1.00 | `native/screens/RemoteBookSheet.kt:38` ~ `listen/VieneuModuleCard.tsx:243` (+1) |
-| Đúng rồi, giữ “{}” | Đúng rồi, giữ “ | 1.00 | `native/studio/WorkText.kt:74` ~ `studio/WorkInbox.tsx:376` |
+| Đúng rồi, giữ “{}” | Đúng rồi, giữ “ | 1.00 | `native/studio/WorkText.kt:74` ~ `studio/WorkInbox.tsx:378` |
 | Chưa mở được Studio | Chưa gỡ được Studio | 0.95 | `native/devices/DevicesRepo.kt:146` ~ `studio/StudioSetup.tsx:360` |
 | Còn lại | Chọn lại | 0.93 | `native/studio/StudioText.kt:56` ~ `listen/AddBook.tsx:548` (+1) |
 | Đang đo. | Đang đổi | 0.93 | `native/screens/SettingsAdvanced.kt:64` ~ `studio/MusicTab.tsx:231` |
@@ -192,7 +192,7 @@ Cặp nhãn ngắn (<= 6 chữ) mà phía kia KHÔNG có nguyên văn nhưng có
 | Dung lượng | Dựng xưởng | 0.90 | `native/devices/StorageScreen.kt:48` (+2) ~ `listen/ProjectFileItems.tsx:143` (+1) |
 | Đổi chương | Lỗi chương | 0.90 | `native/studio/StudioScript.kt:241` ~ `studio/ChapterError.tsx:17` |
 | Chưa kiểm được | Chưa tìm được | 0.89 | `native/studio/WorkText.kt:134` ~ `desktop/OtherComputers.tsx:136` |
-| Ghép lại | Nghe lại | 0.88 | `native/devices/DeviceSheets.kt:91` ~ `studio/WorkInbox.tsx:961` |
+| Ghép lại | Nghe lại | 0.88 | `native/devices/DeviceSheets.kt:91` ~ `studio/WorkInbox.tsx:963` |
 | Đang mở Studio | Đang mở Studio của {} | 0.88 | `native/devices/DeviceSheets.kt:77` (+1) ~ `shared/peerStudio.ts:52` |
 | Đang nối {} | Đang đổi | 0.88 | `native/devices/PairScreen.kt:195` ~ `studio/MusicTab.tsx:231` |
 | Đang tải {}% | Đang cài. | 0.88 | `native/screens/RemoteBookSheet.kt:38` ~ `studio/StudioSetup.tsx:327` |
@@ -280,7 +280,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `native/screens/BookSaveUi.kt` (1): Đang lưu (`133`)
 - `native/screens/BookScreen.kt` (1): Tới chỗ đang nghe (`686`)
 - `native/screens/BookSheets.kt` (4): Đang lưu (`187`); Đang đóng file sách (`192`); Chiếm {} (`251`); Chương này chưa có audio. (`289`)
-- `native/screens/LibraryScreen.kt` (1): Nối máy (`181`)
+- `native/screens/LibraryScreen.kt` (1): Nối máy (`182`)
 - `native/screens/OtherScreens.kt` (5): Tạo sách nói từ xa (`36`); Mở Studio của máy nào? (`52`); Studio trên máy tính (`62`); Chưa ghép với máy tính nào (`64`); Nối máy tính (`65`)
 - `native/screens/RemoteBookSheet.kt` (1): Đang tải {}% (`38`)
 - `native/screens/SettingsAdvanced.kt` (8): Đã xoá nhật ký. (`58`); Đang đo. (`64`); Gửi (`95`); Xoá nhật ký (`99`); Phiên bản (`104`); Chưa đọc được nhật ký (`148`); Nhật ký của ABook (`152`); Đang đọc nhật ký. (`161`)
@@ -389,8 +389,8 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 | Chữ của cả cuốn được gửi tới {} để đọc, bằn… | Chữ của cả cuốn được gửi tới {} để đọc, bằn… | dấu thanh / ký tự | `desktop/listenExport.ts:85` ~ `native/export/ExportModel.kt:198` |
 | cả cuốn | Cả cuốn | chữ hoa | `listen/labels.ts:28` ~ `native/export/ExportScreen.kt:152` |
 | Giấy phép: | Giấy phép | dấu câu cuối | `listen/PlayerViews.tsx:1285` ~ `native/music/MusicPanel.kt:428` (+1) |
-| Giới (bấm để lưu): | Giới (bấm để lưu) | dấu câu cuối | `studio/WorkInbox.tsx:644` ~ `native/studio/WorkText.kt:45` |
-| hay đặt tên một người mới: | hay đặt tên một người mới | dấu câu cuối | `studio/WorkInbox.tsx:632` ~ `native/studio/WorkText.kt:43` |
+| Giới (bấm để lưu): | Giới (bấm để lưu) | dấu câu cuối | `studio/WorkInbox.tsx:646` ~ `native/studio/WorkText.kt:45` |
+| hay đặt tên một người mới: | hay đặt tên một người mới | dấu câu cuối | `studio/WorkInbox.tsx:634` ~ `native/studio/WorkText.kt:43` |
 | Kể bằng “tôi”? | Kể bằng “tôi” | dấu câu cuối | `studio/NewProjectScreen.tsx:1110` ~ `native/studio/StudioNew.kt:309` |
 | Làm sách trên pin chậm và hao pin. Bấm “Tiế… | Làm sách trên pin chậm và hao pin. Bấm “Tiế… | dấu câu cuối | `studio/ProjectScreen.tsx:832` ~ `native/studio/StudioText.kt:119` |
 | Lùi {} giây trên {} | Lùi 15 giây trên {} | dấu thanh / ký tự | `desktop/RemotePhone.tsx:246` ~ `native/devices/CompanionSurfaces.kt:80` |
@@ -413,27 +413,27 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 
 | kiểu | web | native |
 |---|---|---|
-| dấu ba chấm ASCII `...` | 8 / 5300 | 0 / 1917 |
-| dấu ba chấm `…` | 36 / 5300 | 0 / 1917 |
-| kết thúc bằng dấu chấm `.` | 904 / 5300 | 394 / 1917 |
-| kết thúc bằng `!` | 0 / 5300 | 0 / 1917 |
-| kết thúc bằng `:` | 52 / 5300 | 3 / 1917 |
-| dấu thanh kiểu cũ `oà oá uý` | 389 / 5300 | 172 / 1917 |
-| dấu thanh kiểu mới `òa óa úy` | 1 / 5300 | 0 / 1917 |
-| số thập phân dấu phẩy `1,5` | 1 / 5300 | 0 / 1917 |
-| số thập phân dấu chấm `1.5` | 0 / 5300 | 0 / 1917 |
-| nhân bằng `×` | 0 / 5300 | 0 / 1917 |
-| nhân bằng `x` sau số | 0 / 5300 | 0 / 1917 |
-| ngăn cách `·` | 121 / 5300 | 34 / 1917 |
-| ngăn cách ` - ` | 258 / 5300 | 81 / 1917 |
-| gạch dài `—`/`–` | 10 / 5300 | 1 / 1917 |
-| giờ `1:30` hay `1 giờ 30` | 0 / 5300 | 2 / 1917 |
-| dấu `%` dính số | 0 / 5300 | 1 / 1917 |
-| dấu `%` cách số | 0 / 5300 | 0 / 1917 |
+| dấu ba chấm ASCII `...` | 8 / 5305 | 0 / 1920 |
+| dấu ba chấm `…` | 36 / 5305 | 0 / 1920 |
+| kết thúc bằng dấu chấm `.` | 904 / 5305 | 394 / 1920 |
+| kết thúc bằng `!` | 0 / 5305 | 0 / 1920 |
+| kết thúc bằng `:` | 52 / 5305 | 3 / 1920 |
+| dấu thanh kiểu cũ `oà oá uý` | 390 / 5305 | 173 / 1920 |
+| dấu thanh kiểu mới `òa óa úy` | 1 / 5305 | 0 / 1920 |
+| số thập phân dấu phẩy `1,5` | 1 / 5305 | 0 / 1920 |
+| số thập phân dấu chấm `1.5` | 0 / 5305 | 0 / 1920 |
+| nhân bằng `×` | 0 / 5305 | 0 / 1920 |
+| nhân bằng `x` sau số | 0 / 5305 | 0 / 1920 |
+| ngăn cách `·` | 121 / 5305 | 34 / 1920 |
+| ngăn cách ` - ` | 258 / 5305 | 81 / 1920 |
+| gạch dài `—`/`–` | 10 / 5305 | 1 / 1920 |
+| giờ `1:30` hay `1 giờ 30` | 0 / 5305 | 2 / 1920 |
+| dấu `%` dính số | 0 / 5305 | 1 / 1920 |
+| dấu `%` cách số | 0 / 5305 | 0 / 1920 |
 
 **d3. Nhãn ngắn bắt đầu bằng chữ thường** (web 144, native 0); 15 đầu mỗi phía:
 
-- web: bạn đã chọn · (`listen/ProjectFileItems.tsx:292`); bắt đầu (`studio/NewProjectScreen.tsx:701`); bắt đầu ngay (`desktop/BookTemplates.tsx:107`); bắt đầu. (`studio/NewProjectScreen.tsx:708`); bỏ chọn (`studio/WorkInbox.tsx:1303`); chưa cài (`studio/ProjectScreen.tsx:819`); chưa nghe (`listen/BookScreen.tsx:835`); chưa phân tích tới (`studio/NameReadings.tsx:289`); chưa thu - không tốn gì (`studio/ApplyChanges.tsx:93`); chương (`listen/AddBook.tsx:700`); chương (`studio/NewProjectScreen.tsx:643`); chương (`studio/NewProjectScreen.tsx:895`); chương (`studio/NewProjectScreen.tsx:910`); chương (`studio/ProjectScreen.tsx:788`); chương (`studio/VolumeSplit.tsx:173`)
+- web: bạn đã chọn · (`listen/ProjectFileItems.tsx:292`); bắt đầu (`studio/NewProjectScreen.tsx:701`); bắt đầu ngay (`desktop/BookTemplates.tsx:107`); bắt đầu. (`studio/NewProjectScreen.tsx:708`); bỏ chọn (`studio/WorkInbox.tsx:1310`); chưa cài (`studio/ProjectScreen.tsx:819`); chưa nghe (`listen/BookScreen.tsx:835`); chưa phân tích tới (`studio/NameReadings.tsx:289`); chưa thu - không tốn gì (`studio/ApplyChanges.tsx:93`); chương (`listen/AddBook.tsx:700`); chương (`studio/NewProjectScreen.tsx:643`); chương (`studio/NewProjectScreen.tsx:895`); chương (`studio/NewProjectScreen.tsx:910`); chương (`studio/ProjectScreen.tsx:788`); chương (`studio/VolumeSplit.tsx:173`)
 - native: (không có)
 
 **d3b. Chữ dùng dấu thanh kiểu mới (`òa óa úy`) - kiểu thiểu số** (DESIGN.md chưa chọn kiểu nào); 12 đầu mỗi phía:
@@ -483,13 +483,13 @@ Trong một cặp, mỗi nhãn ngắn phải có ở cả hai phía (khoá lỏn
 | cặp | nhãn web | nhãn native | lệch web | lệch native | cho phép | thiếu thật | chờ Lead |
 |---|---|---|---|---|---|---|---|
 | now-playing | 104 | 103 | 0 | 0 | 31 | 5 | 0 |
-| shared-labels | 31 | 1297 | 0 | 0 | 7 | 0 | 0 |
+| shared-labels | 31 | 1300 | 0 | 0 | 7 | 0 | 0 |
 | library-book | 203 | 211 | 0 | 0 | 66 | 10 | 0 |
 | settings | 122 | 140 | 0 | 0 | 24 | 81 | 0 |
 | devices | 143 | 168 | 0 | 0 | 18 | 167 | 0 |
 | voice | 162 | 148 | 0 | 0 | 27 | 24 | 0 |
 | add-edit-book | 163 | 139 | 0 | 0 | 60 | 4 | 0 |
-| studio | 2137 | 426 | 0 | 0 | 59 | 90 | 0 |
+| studio | 2140 | 429 | 0 | 0 | 59 | 90 | 0 |
 | export | 78 | 81 | 0 | 0 | 28 | 43 | 0 |
 | music | 33 | 50 | 0 | 0 | 9 | 8 | 0 |
 
