@@ -684,14 +684,85 @@ def _roman_numbers(toks: list[str], out: list[str]) -> None:
         out[index] = token.replace(core, vietnamese_number(value), 1)
 
 
+_BOOK_LABELS = {"chap": "chương", "vol": "tập"}
+_BOOK_NUMBER = re.compile(r"[0-9]+[" + re.escape(CLOSERS + FRAMES_CLOSE + PUNCT_MARKS) + r"]*")
+_BOOK_LABEL = re.compile(r"(chap|vol)\.?(.*)", re.IGNORECASE)
+
+
+def _book_labels(toks: list[str], out: list[str]) -> None:
+    """Expand chapter/volume abbreviations only with a bounded Arabic integer.
+    Keep the displayed token count and surrounding punctuation. Bare words,
+    identifiers, decimals and URLs do not establish a chapter/volume label.
+    """
+    for index, token in enumerate(toks):
+        if out[index] != token:
+            continue
+        if index and _core(toks[index - 1]).lower() in {"mã", "id", "serial"}:
+            continue
+        core = token.lstrip(OPENERS + FRAMES_OPEN)
+        match = _BOOK_LABEL.fullmatch(core)
+        if not match:
+            continue
+        label, number = match.groups()
+        if number:
+            if not _BOOK_NUMBER.fullmatch(number):
+                continue
+            tail = " " + number
+        else:
+            following = toks[index + 1] if index + 1 < len(toks) else ""
+            if not _BOOK_NUMBER.fullmatch(following.lstrip(OPENERS + FRAMES_OPEN)):
+                continue
+            tail = ""
+        out[index] = token[:len(token) - len(core)] + _BOOK_LABELS[label.lower()] + tail
+
+
+_HONORIFIC_HYPHENS = "‐‑‒–"  # Hyphen, nonbreaking hyphen, figure dash, en dash; em dash stays a pause.
+_HONORIFIC_BOUNDARIES = re.compile(r"((?:\.{2,}|[…—])+|(?<=[^\W\d_])\((?=[^\W\d_]))")
+_JA_HYPHEN_SUFFIX = re.compile(r".+[" + _HONORIFIC_HYPHENS + r"](?:san|kun|chan|sama|senpai|sensei|dono)$")
+_ENUMERATION = re.compile(r"([" + re.escape(OPENERS + FRAMES_OPEN) + r"]*)([vV]\.v)(\.*[" + re.escape(CLOSERS + FRAMES_CLOSE + ",;:!?…") + r"]*)")
+
+
+def _typographic_honorific(token: str, origin: str | None) -> str:
+    """Reuse the established ASCII reading, only for a complete joined Japanese suffix."""
+    if not any(c in token for c in _HONORIFIC_HYPHENS):
+        return token
+    parts = _HONORIFIC_BOUNDARIES.split(token)
+    if len(parts) > 1:
+        return "".join(_typographic_honorific(part, origin) for part in parts)
+    before, core, after = names.split_token(token)
+    if (not _JA_HYPHEN_SUFFIX.fullmatch(core)
+            or any(c not in OPENERS + FRAMES_OPEN for c in before)
+            or any(c not in CLOSERS + FRAMES_CLOSE + PUNCT_MARKS for c in after)):
+        return token
+    plain = core.translate(str.maketrans(_HONORIFIC_HYPHENS, "-" * len(_HONORIFIC_HYPHENS)))
+    return before + plain + after if names.honorific_reading(plain, origin) else token
+
+
+def _enumeration_abbreviations(toks: list[str], out: list[str]) -> None:
+    """The Vietnamese enumeration abbreviation; never guess dotted initials or identifiers."""
+    for index, token in enumerate(toks):
+        if out[index] != token:
+            continue
+        if index and _core(toks[index - 1]).lower() in {"mã", "id", "serial"}:
+            continue
+        match = _ENUMERATION.fullmatch(token)
+        if match:
+            before, _, after = match.groups()
+            out[index] = before + "vân vân" + after
+
+
 def _read_words(toks: list[str], out: list[str], origin: str | None, speaks_english: bool) -> None:
     """Các bước đọc từng chữ (cấp độ, viết tắt, tên, từ mượn). Chữ dính liền hai từ qua "…" hay "—" ("rồi…Senpai", "Babi—người", "Jigen(trong", "DP?”…Tốn") được tách tạm thành từng mảnh để mỗi từ được xét riêng
     rồi ghép lại; chữ đã bị đổi ở bước trước giữ nguyên."""
+    # Validate the complete source token before GLUED can hide a numeric tail.
+    _book_labels(toks, out)
+    _enumeration_abbreviations(toks, out)
     pieces: list[str] = []
     said: list[str] = []
     owner: list[int] = []
     for index, token in enumerate(toks):
-        parts = GLUED.split(token) if out[index] == token else [token]
+        word = _typographic_honorific(token, origin)
+        parts = GLUED.split(word) if out[index] == token else [token]
         for part in parts:
             pieces.append(part)
             said.append(part if out[index] == token else out[index])
