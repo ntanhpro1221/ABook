@@ -249,7 +249,7 @@
   {
    "id": "thousands-2",
    "text": "Giá 1,500,000 xu.",
-   "said": "Giá 1500000 xu."
+   "said": "Giá 1.500.000 xu."
   },
   {
    "id": "thousands-3",
@@ -500,6 +500,236 @@
    "id": "thousands-7",
    "text": "Giá 5,000pt.",
    "said": "Giá 5000pt."
+  },
+  {
+   "id": "bigint-1",
+   "text": "Có 1234567 người.",
+   "said": "Có 1.234.567 người."
+  },
+  {
+   "id": "bigint-2",
+   "text": "Dân số 98000000.",
+   "said": "Dân số 98.000.000 ."
+  },
+  {
+   "id": "bigint-3",
+   "text": "Khoảng 12345678 dân.",
+   "said": "Khoảng 12.345.678 dân."
+  },
+  {
+   "id": "bigint-4",
+   "text": "Gần 1234567 đồng.",
+   "said": "Gần 1.234.567 đồng."
+  },
+  {
+   "id": "bigint-5",
+   "text": "Hơn 1234567 người.",
+   "said": "Hơn 1.234.567 người."
+  },
+  {
+   "id": "bigint-6",
+   "text": "Tổng cộng 1234567.",
+   "said": "Tổng cộng 1.234.567 ."
+  },
+  {
+   "id": "bigint-7",
+   "text": "Lên tới 1234567.",
+   "said": "Lên tới 1.234.567 ."
+  },
+  {
+   "id": "bigint-8",
+   "text": "Có 1234567890123 chiếc.",
+   "said": "Có 1.234.567.890.123 chiếc."
+  },
+  {
+   "id": "bigint-9",
+   "text": "Tổng 1234567 xu.",
+   "said": "Tổng 1.234.567 xu."
+  },
+  {
+   "id": "bigint_keep-1",
+   "text": "1234567",
+   "said": "1234567"
+  },
+  {
+   "id": "bigint_keep-2",
+   "text": "Mã 1234567 người.",
+   "said": "Mã 1234567 người."
+  },
+  {
+   "id": "bigint_keep-3",
+   "text": "Có mã 1234567.",
+   "said": "Có mã 1234567."
+  },
+  {
+   "id": "bigint_keep-4",
+   "text": "Số điện thoại 123456789.",
+   "said": "Số điện thoại 123456789."
+  },
+  {
+   "id": "bigint_keep-5",
+   "text": "Có số điện thoại 123456789.",
+   "said": "Có số điện thoại 123456789."
+  },
+  {
+   "id": "bigint_keep-6",
+   "text": "Tài khoản 123456789.",
+   "said": "Tài khoản 123456789."
+  },
+  {
+   "id": "bigint_keep-7",
+   "text": "ID 1234567.",
+   "said": "ai-đi 1234567."
+  },
+  {
+   "id": "bigint_keep-8",
+   "text": "Serial 1234567.",
+   "said": "Serial 1234567."
+  },
+  {
+   "id": "bigint_keep-9",
+   "text": "Có 01234567 người.",
+   "said": "Có 01234567 người."
+  },
+  {
+   "id": "bigint_keep-10",
+   "text": "A1234567 người.",
+   "said": "A1234567 người."
+  },
+  {
+   "id": "bigint_keep-11",
+   "text": "1234567B người.",
+   "said": "1234567B người."
+  },
+  {
+   "id": "bigint_keep-12",
+   "text": "Có 1234567-1234568 người.",
+   "said": "Có 1234567-1234568 người."
+  },
+  {
+   "id": "bigint_keep-13",
+   "text": "Năm 1234567.",
+   "said": "Năm 1234567."
+  },
+  {
+   "id": "bigint_keep-14",
+   "text": "Thứ 12345.",
+   "said": "Thứ 12345."
+  },
+  {
+   "id": "bigint_keep-15",
+   "text": "Hạng 123456.",
+   "said": "Hạng 123456."
+  },
+  {
+   "id": "bigint_keep-16",
+   "text": "Có 123456 người.",
+   "said": "Có 123456 người."
+  },
+  {
+   "id": "bigint_keep-17",
+   "text": "Có 1.234.567 người.",
+   "said": "Có 1.234.567 người."
+  },
+  {
+   "id": "bigint_keep-18",
+   "text": "Có 1,234567 người.",
+   "said": "Có 1,234567 người."
+  },
+  {
+   "id": "bigint_keep-19",
+   "text": "Có 1.1234567 người.",
+   "said": "Có 1.1234567 người."
+  },
+  {
+   "id": "bigint_keep-20",
+   "text": "Có 1234567.5 người.",
+   "said": "Có 1234567.5 người."
+  },
+  {
+   "id": "bigint_keep-21",
+   "text": "Có .1234567 người.",
+   "said": "Có .1234567 người."
+  },
+  {
+   "id": "bigint_keep-22",
+   "text": "Có 1234567 ID.",
+   "said": "Có 1234567 ai-đi."
+  },
+  {
+   "id": "bigint_keep-23",
+   "text": "Mã: 1234567 người.",
+   "said": "Mã: 1234567 người."
+  },
+  {
+   "id": "bigint_keep-24",
+   "text": "Có 1234567/7654321 người.",
+   "said": "Có 1234567 trên 7654321 người."
+  },
+  {
+   "id": "bigint_keep-25",
+   "text": "Có 1234567 - 7654321 người.",
+   "said": "Có 1234567 trừ 7654321 người."
+  },
+  {
+   "id": "generated_bigint-1",
+   "text": "Có 144,126,071 người.",
+   "said": "Có 144.126.071 người."
+  },
+  {
+   "id": "generated_bigint-2",
+   "text": "Tổng 1,234,567.",
+   "said": "Tổng 1.234.567 ."
+  },
+  {
+   "id": "generated_bigint-3",
+   "text": "Có 1,234,567 ~ 2,345,678 người.",
+   "said": "Có 1.234.567 đến 2.345.678 người."
+  },
+  {
+   "id": "generated_bigint-4",
+   "text": "Có 1234567-2345678 người.",
+   "said": "Có 1234567-2345678 người."
+  },
+  {
+   "id": "generated_bigint-5",
+   "text": "Có 1234567~2345678 người.",
+   "said": "Có 1.234.567 đến 2.345.678 người."
+  },
+  {
+   "id": "generated_bigint-6",
+   "text": "~1234567 người.",
+   "said": "~1.234.567 người."
+  },
+  {
+   "id": "generated_bigint_keep-1",
+   "text": "Có 144 126 071 người.",
+   "said": "Có 144 126 071 người."
+  },
+  {
+   "id": "generated_bigint_keep-2",
+   "text": "Có 144.126.071 người.",
+   "said": "Có 144.126.071 người."
+  },
+  {
+   "id": "generated_bigint_keep-3",
+   "text": "Có 123,456 người.",
+   "said": "Có 123456 người."
+  },
+  {
+   "id": "generated_bigint_keep-4",
+   "text": "Mã 1234567-2345678.",
+   "said": "Mã 1234567-2345678."
+  },
+  {
+   "id": "generated_bigint_keep-5",
+   "text": "Có 01234567 người.",
+   "said": "Có 01234567 người."
+  },
+  {
+   "id": "generated_bigint-7",
+   "text": "Có 12345678901-23456789012 người.",
+   "said": "Có 12345678901-23456789012 người."
   }
  ]
 }

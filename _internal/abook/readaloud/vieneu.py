@@ -159,6 +159,13 @@ def _digit(char: str) -> bool:
     return "0" <= char <= "9" and len(char) == 1
 
 
+def _group_long_digits(text: str) -> str:
+    """Keep generated long quantities out of sea-g2p's digit-by-digit class."""
+    def group(match: re.Match) -> str:
+        return re.sub(r"(?<=\d)(?=(?:\d{3})+$)", ".", match.group()) + (" " if text[match.end():].startswith(".") else "")
+    return re.sub(r"(?<![\w.,])[1-9][0-9]{6,}(?![\w]|[.,][0-9])", group, text)
+
+
 def _tilde(token: str, word_after: bool = False) -> str:
     def replace(match: re.Match) -> str:
         left = token[match.start() - 1] if match.start() else ""
@@ -170,7 +177,8 @@ def _tilde(token: str, word_after: bool = False) -> str:
         if left.isalpha() and not right and word_after:
             return ","  # "Hmm~ để xem", "quá~ ăn nữa": kéo dài rồi mới nói tiếp - một nhịp ngắt, không dính liền
         return " " if left.isalpha() and right.isalpha() else ""  # "Hmm~", "Har~kun"
-    return TILDES.sub(replace, token)
+    result = TILDES.sub(replace, token)
+    return _group_long_digits(result) if re.search(r"(?:^|[0-9])~+[0-9]", token) else result
 
 
 def _tildes(out: list[str]) -> None:
@@ -557,6 +565,37 @@ _COUNTED_THOUSANDS = frozenset("vàng xu yên yen đồng đô usd vnd người 
 _THOUSANDS_LABELS = frozenset("giá tổng hp mp sp exp xp str agi vit int dex luk atk def".split())
 
 
+# Existing counted vocabulary plus population evidence from the measured Sugaru case.
+_BIGINT_COUNTED = _COUNTED_THOUSANDS | {"dân"}
+_BIGINT_CUES = frozenset("khoảng gần hơn tổng có".split())
+_BIGINT = re.compile(r"[1-9][0-9]{6,}")
+_BIGINT_ID = re.compile(r"\b(?:mã|số điện thoại|điện thoại|tài khoản|id|serial)\b", re.I)
+
+
+def _big_integers(out: list[str], toks: list[str] | None = None) -> None:
+    """Group long counted integers for sea-g2p; never infer a number from a code.
+    Sentence punctuation ends evidence; leading zeroes, ranges and compound tokens stay.
+    """
+    plain = toks if toks is not None and len(toks) == len(out) else list(out)
+    trim = OPENERS + CLOSERS + PUNCT_MARKS
+    for index, token in enumerate(out):
+        core = token.lstrip(OPENERS).rstrip(CLOSERS + PUNCT_MARKS)
+        if not _BIGINT.fullmatch(core):
+            continue
+        prefix = " ".join(plain[max(0, index - 6):index]).lower()
+        prefix = re.split(r"[.!?;]", prefix)[-1].strip(trim + " ")
+        before = prefix.split()[-1] if prefix.split() else ""
+        after = plain[index + 1].strip(trim).lower() if index + 1 < len(plain) else ""
+        if _BIGINT_ID.search(prefix) or before in {"thứ", "hạng", "năm", "-", "–", "/"} or after in {"-", "–", "/", "id", "serial", "mã"}:
+            continue
+        if after in _BIGINT_COUNTED or before in _BIGINT_CUES or prefix.endswith(("dân số", "tổng cộng", "lên tới")):
+            grouped = re.sub(r"(?<=\d)(?=(?:\d{3})+$)", ".", core)
+            start = len(token) - len(token.lstrip(OPENERS))
+            suffix = token[start + len(core):]
+            # A sentence dot glued to a grouped integer defeats sea-g2p's number matcher.
+            out[index] = token[:start] + grouped + (" " if suffix.startswith(".") else "") + suffix
+
+
 def _thousands(out: list[str], toks: list[str] | None = None) -> None:
     """Chỉ bỏ dấu ngăn nghìn khi có ngữ cảnh đếm / chỉ số hay nhiều nhóm nghìn.
     "1,500 kg", mã và số đứng riêng có thể là thập phân: giữ nguyên. Xét chữ hiện
@@ -576,7 +615,12 @@ def _thousands(out: list[str], toks: list[str] | None = None) -> None:
             left, right = token[:match.start()], token[match.end():]
             gold = bool(re.fullmatch(r"(?:G|pt)[" + re.escape(CLOSERS + PUNCT_MARKS) + r"]*", right))
             bounded = not left[-1:].isalnum() and (not right[:1].isalnum() or gold)
-            return match.group().replace(",", "") if bounded and (gold or match.group().count(",") > 1 or context(index)) else match.group()
+            if not bounded or not (gold or match.group().count(",") > 1 or context(index)):
+                return match.group()
+            digits = match.group().replace(",", "")
+            if len(digits) >= 7:
+                return match.group().replace(",", ".") + (" " if right.startswith(".") else "")
+            return digits
         out[index] = THOUSANDS.sub(replace, token)
 
 
@@ -588,6 +632,7 @@ def reading_marks(out: list[str], toks: list[str] | None = None) -> None:
     _arrows(out, toks)
     _tildes(out)
     _ellipses(out, toks)
+    _big_integers(out, toks)
     _thousands(out, toks)
     _numbers(out, toks)
     _angle(out)

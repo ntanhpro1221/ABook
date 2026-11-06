@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Đọc số lượng nguyên từ 7 chữ số liền thành số đầy đủ khi có ngữ cảnh đếm, giữ nguyên mã và số điện thoại.
+
 ## [0.4.163] - 2026-11-06
 
 ### Âm thanh

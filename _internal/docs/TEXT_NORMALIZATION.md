@@ -291,6 +291,22 @@ word và cho ra dạng normalized của word").
    Gạch dài, !?, khung trạng thái, x2, Lv, viết tắt và La Mã nhỏ giữ luật cũ; La Mã từ 40 và "x1.5" không gặp lần đổi nào (chỉ có fixture).
    Đọc tay 40 đoạn đổi phân tầng (22 giữa câu, 10 mở đầu, 7 kéo giọng, 1 số mơ hồ): 40/40 đúng theo luật, kể cả quyết định giữ số khi thiếu ngữ cảnh.
    Chưa đo bằng tai: dấu phẩy ngừng ngắn hơn chỗ ngập ngừng tác giả muốn; cần lượt nghe thử VieNeu trước khi phát hành.
+
+   **tnbig (06-11, dev/tn-bigint; chưa tích hợp):** thêm nhóm dấu chấm cho số nguyên liền từ 7 chữ số,
+   không có số 0 đầu, khi có danh từ đếm hoặc từ gợi lượng; Python và Kotlin cùng fixture. Cache đọc 5 → 6.
+   Kiểm lại bản lưu riêng của đúng mẫu tn-tier25: 349 chương / 186 cuốn / 61.678 đoạn, **0** số liền từ 7 chữ số
+   (lượng / mã / khoảng năm / khác đều 0; đổi 0, giữ 0). Không dùng mẫu này để suy rộng danh sách từ gợi lượng.
+   Đối chiếu từ gợi lượng trước số liền 1–6 chữ số trong cùng mẫu: có 42, khoảng 34, hơn 26, gần 11,
+   tổng cộng 5, lên tới 3, tổng 1 (đếm lượt xuất hiện, chưa phải độ chính xác trên số dài).
+   Kiểm trực tiếp hai bộ nguồn Sugaru: 11 + 12 chương, 3.016 + 2.592 dòng nội dung không rỗng (bỏ dòng tên chương);
+   23/23 file khớp SHA-256 trong SQLite. Số nguyên liền từ 7 chữ số trong toàn bộ file nguồn (kể cả tên chương): **0 + 0**;
+   lượng / mã / khoảng năm / khác đều 0. Có **1** số lượng 9 chữ số do luật bỏ phẩy tạo ra ở cuốn thứ nhất, cuốn thứ hai 0.
+   Sửa ngay luật nghìn kiểu Anh: kết quả từ 7 chữ số giữ nhóm bằng dấu chấm, 4–6 chữ số giữ cách đọc cũ.
+   Sau sửa: số dài liền sinh ra **1 → 0**, đổi **1 + 0** dòng; đọc kiểm riêng **1/1** dòng đổi và sea-g2p 0.9.1 đọc đúng hàng triệu.
+   Dấu ~ sinh khoảng số dài cũng giữ nhóm; dấu cách / dấu chấm không bị nối thành số liền, khoảng gạch nối chỉ nhận tối đa 4 chữ số mỗi vế.
+   Fixture chung 146 ca: thêm 46 câu bịa, đổi duy nhất ca cũ `thousands-2`; kiểm thứ / hạng với cả 5 và 6 chữ số đọc đúng, giữ nguyên.
+   Chưa tổng hợp hay chấm audio; phép kiểm này xác nhận văn bản đọc và Normalizer trên CPU.
+
 3. Tầng 3 từ điển viết tắt + từ mượn + kính ngữ: dựng bằng LLM ngoại tuyến, kiểm âm tiết + ASR, vào cả Studio lẫn Nghe ngay.
 4. Tầng 4 phiên âm romaji / Hàn theo luật cho Nghe ngay (máy tính + điện thoại), và tầng 4b model phiên âm từ riêng (Model
    train, sau cân bằng giọng; kế hoạch 1 trang trước khi train).

@@ -1,5 +1,13 @@
 # Test report
 
+## 06-11-2026 — tnbig (dev/tn-bigint, chưa commit)
+
+- Python/Kotlin nhóm số liền từ 7 chữ số có ngữ cảnh lượng; sửa gốc luật nghìn kiểu Anh để không sinh số dài liền, kèm dấu ~ và dấu chấm cuối câu. Cache 5 → 6; cập nhật 19 khoá fixture cache. Fixture chung 146 ca: thêm 46 câu bịa, đổi 1 ca cũ `thousands-2`; 99 ca cũ giữ nguyên. Hai kỳ vọng trùng của số sinh từ bỏ phẩy trong test Python/Kotlin được đổi tương ứng.
+- Pytest -q -rf một lượt đầy đủ mới, 55 file importer/consumer: 2226 passed / 8 skipped / 0 failed / 0 errors, đếm XML thật; có 1 cảnh báo thread máy chủ test timeout. Vitest reading forms: 146 passed. Android tập trung lượt cuối: 45 passed / 0 failed, gồm 22 test bắt buộc, kiểm regex Android, ca bỏ phẩy và 21 test FastConnect.
+- JVM đầy đủ lượt cuối: 3.350 tests = 3.335 passed / 8 failed / 7 skipped. Sáu lỗi nền đã được Lead cho bỏ qua (đã sửa ở dev/merge-163, 92d489163); hai lỗi TLS/SNI của FastConnect không tái hiện trong lượt chạy riêng cả lớp (21/21 qua). Không khẳng định full suite xanh.
+- Mẫu riêng đúng tn-tier25: 349 chương / 186 cuốn / 61.678 đoạn, 0 số liền từ 7 chữ số, 0 dòng đổi. Đọc trực tiếp 11 + 12 file nguồn Sugaru, khớp SHA-256 23/23; 3.016 + 2.592 dòng nội dung, 0 số dài liền thô. Một số lượng 9 chữ số do bỏ phẩy sinh ra đã sửa; đọc kiểm riêng 1/1 dòng đổi, sea-g2p 0.9.1 xác nhận cách đọc hàng triệu. Không tổng hợp hay chấm audio.
+- compileall và git diff --check qua. Hash trước task `6e1970d021c22a6d1ece64cc582bde90c7a15369c18de09d09c74598a9abd198`, sau `0cf564b70ce299b3777f7c5285a07237042cbb88da91145509fd886509c9d8e2`: thay đổi, chỉ nhánh dev, chờ hết run trước khi tích hợp.
+
 ## 06-11-2026 — master cố định, kiểm lại hai sách (dev/merge-163, chưa commit)
 
 - Bỏ loudnorm lượt hai và giới hạn gain riêng từng chương trong harness. Mọi chương/mọi sách nhận +5 dB chọn từ hiệu chuẩn (median danh định -20,574 LUFS), sau đó alimiter true-peak oversample 4 lần, không auto-level. Báo cáo phần thời gian envelope bị hạ và mức hạ lớn nhất. LUFS chương chỉ chẩn đoán; giữ gate peak/clipping/dropout/mối nối.
