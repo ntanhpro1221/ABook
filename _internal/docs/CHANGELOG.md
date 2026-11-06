@@ -7,6 +7,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.163] - 2026-11-06
+
+### Âm thanh
+
+- Các giọng và các chương nghe to đều nhau: mỗi giọng có một hằng số tốc độ và độ to đo sẵn, mọi chương cùng một mức master. Đo trên hai cuốn: giọng lệch nhau dưới 0,9 phon, chương dưới 0,9 phon.
 - Nhãn nhịp chậm/nhanh chỉ còn trong phân tích; mọi câu dùng chung dải kiểm nhịp bình thường, bỏ tham số nghỉ và lượt thu lại riêng theo nhãn.
 - Master mọi chương dùng cùng +5 dB từ hiệu chuẩn và limiter chỉ hạ đỉnh; gỡ vòng bù mức sách sau kiểm định hai sách đạt, lưu số đo và chỉ cảnh báo.
 - Giữ nguyên giọng preset, bỏ chỉnh cao độ, âm sắc, độ to và khoảng nghỉ theo cảm xúc; cân bằng tốc độ và độ to bằng hằng số từng giọng, chỉ giữ khoảng nghỉ cấu trúc.
@@ -14,6 +19,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Chương đủ lời đọc vẫn được ghép khi còn câu lỗi và ghi rõ cần nghe lại; thiếu audio thật thì báo đúng dòng bị thiếu.
 - File sách đối chiếu đủ chương, mã băm và phụ đề trước khi xuất và khi kiểm tra. Xuất một phần phải chọn rõ, kèm số chương và tên chương thiếu.
 - Chia câu dùng lời đọc đã chuẩn bị một lần, không áp lại cách phát âm lên tên đã thay.
+
 ### Nhạc nền
 
 - Kéo mức nhạc nền tự do từ −40 đến −6 dB thay cho năm mốc, thấy tên mức và số dB, dễ về mặc định trên máy tính và điện thoại.
@@ -23,10 +29,6 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Giọng kể chuyện nữ mặc định là Đoan Trang; nhân vật nữ ưu tiên Ngọc Linh rồi Đoan Trang. Mai Anh giữ preset tin tức, không chọn để kể chuyện hay phân vai.
 - Chương có người kể “tôi” khác giới giọng dẫn dùng giọng nhân vật ấy cho lời kể và nội tâm của chính họ.
 - Giọng nhân vật đã ghim hoặc mang từ phần trước không được trùng người kể; đổi người kể sẽ cấp lại giọng nhân vật bị trùng.
-- Tự đo và bù độ to giữa giọng/chương trên MP3 cuối sách, tối đa hai vòng; chỉ giữ bản đo tốt hơn, không thu lại câu. Lưu số bù và lịch sử để sách đã xong không bị master lại khi mở tiếp.
-- Giảm khoảng tụt âm lượng của câu nói nhỏ khi chuyển từ lời kể sang hội thoại, giúp các đoạn đọc liền nhau đều mức hơn.
-- Bù độ to cảm nhận cho các giọng có đủ mẫu đo, đối chiếu nhiều thước đo thay vì chỉ cân theo LUFS.
-- Sửa lỗi cao độ bị áp hai lần: giọng được chỉnh trầm hay cao (vd. hạ 2 nửa cung) nay phát đúng mức đã chỉnh, không còn gấp đôi khi ghép vào sách. Giọng trẻ con trước đây bị đẩy cao gần gấp đôi dự định.
 - Phân vai theo bảng xếp hạng giọng của người nghe, chia theo vai (kể chuyện / nhân vật) và theo bậc, thay cho thứ tự tên giọng. Giọng kể chuyện nam mặc định là Đức Trí.
 - Trẻ con (trai hay gái) đọc bằng giọng nữ nguyên bản, không còn bóp cao độ hay âm sắc.
 - Ngập ngừng giữa câu ("Tôi... tôi không biết") và tiếng kéo dài ("Hmm~ để xem") nay ngừng một nhịp rồi đọc tiếp, không còn nghe như hết câu hay dính liền; "..." mở đầu lời thoại không còn tạo khoảng lặng thừa; "Chương XLV", "tầng LX" đọc thành số; "x1.5" đọc "nhân một phẩy năm"; số ngăn nghìn mơ hồ giữ nguyên. Cả Studio, Nghe ngay trên máy tính và điện thoại.
@@ -40,7 +42,6 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Điện thoại
 
 - Bản ABook .dev dùng cổng và dịch vụ Bluetooth riêng, tìm và ghép được đồng thời với bản phát hành. Máy tính chỉ hiện lựa chọn “bản thử” khi điện thoại đang quảng bá dịch vụ ấy.
-
 - Bản cài thử không còn chiếm chỗ app thật. Nếu máy đang cài bản thử, mục Cập nhật nói rõ "Bản cài thử" thay vì tải một bản không cài được.
 - Hẹn giờ ngủ: "nghe thêm" (lắc máy hay nút trên thông báo) đưa đồng hồ về lại đúng số phút bạn đã hẹn, không cộng dồn thêm mỗi lần lắc. Nút đổi thành "Hẹn lại N phút"; hẹn theo chương hay vừa tự dừng thì về mức "Mỗi lần nghe thêm". Bỏ mục "Khi lắc" khỏi Cài đặt.
 - Thay bằng file mới: trình phát và danh sách chương hiện ngay độ dài mới, giữ nguyên chương và chỗ đang nghe, không phải tắt mở lại app.
