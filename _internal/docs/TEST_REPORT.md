@@ -1,5 +1,13 @@
 # Test report
 
+## 07-11-2026 — recovcache (dev/recovery-cache, chưa commit)
+
+- Cache số đo waveform theo SHA-256 WAV và version (hash audio_io, hằng số đo, NumPy/soundfile/libsndfile) trong SQLite project. Mỗi miss commit độc lập; không lưu verdict, không bỏ kiểm băm, validation chữ/settings/drift hay QA. Không thêm migration.
+- Bản sao Your Story sugaru_v6: 3.543 dòng, nhánh quét sâu dùng cấu hình hiện hành chung. Trước: lần 1 668,362081 s / mở lại 603,897911 s; sau: cache trống 658,541211 s / cache ấm 104,683375 s. Onset lượt mở lại 3.504 -> 0; số kiểm băm/inspection giữ nguyên. Các lượt chạy nối tiếp, không đồng thời pytest; đây là thời gian recover_project, không phải toàn bộ Pipeline/model startup.
+- 0 khác biệt RecoveryReport, 3.510/3.504 inspection, các trạng thái DB ở cả hai lượt và 4.692 runtime events (bỏ thời điểm ghi). Hai model-path mặc định khác do package đối chứng không được recovery dùng; phần settings còn lại bằng nhau. Sách nguồn chỉ đọc; lượt raw settings cũ bị lỗi pace giữ riêng, không dùng để kết luận warm-cache.
+- Pytest -q -rf: 33 file đầy đủ, 667 passed / 0 FAILED / 0 errors / 5 skipped, đếm XML; cache mới 15/15 qua, gồm ngắt/reopen. Có 12 warning UnicodeDecodeError ở luồng đọc subprocess; đối chứng HEAD cùng loại trên test_perceptual_prefetch_concurrency: 10/10 qua, 4 warning. Cửa sổ offscreen. Log/XML, lệnh tái hiện, comparison.json và report.md nằm trong scratchpad/codex/recovcache của task.
+- Hash trước `3818e7751fec8680b70e3f148d1f0a63ede8de1a6599fad3ab043ff632c5467b`, sau `8944f563a6bd23d845c1eb5dbcb5e7ffdb30e22bc674d1f3a8569ad08892ec9e` (53 file đọc trực tiếp từ code). Hash đổi; chỉ ở nhánh dev, chờ hết run cần hash cũ trước khi tích hợp. Không commit/push.
+
 ## 06-11-2026 — tnbig (dev/tn-bigint, chưa commit)
 
 - Python/Kotlin nhóm số liền từ 7 chữ số có ngữ cảnh lượng; sửa gốc luật nghìn kiểu Anh để không sinh số dài liền, kèm dấu ~ và dấu chấm cuối câu. Cache 5 → 6; cập nhật 19 khoá fixture cache. Fixture chung 146 ca: thêm 46 câu bịa, đổi 1 ca cũ `thousands-2`; 99 ca cũ giữ nguyên. Hai kỳ vọng trùng của số sinh từ bỏ phẩy trong test Python/Kotlin được đổi tương ứng.

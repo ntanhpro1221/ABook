@@ -7,6 +7,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Mở lại hoặc chạy tiếp sách đã thu nhanh hơn, không đo lại tín hiệu của những câu có audio không đổi.
 - Thanh tiến độ và nhãn trên bìa trong thư viện điện thoại nằm gọn theo góc bo của bìa.
 - Đọc số lượng nguyên từ 7 chữ số liền thành số đầy đủ khi có ngữ cảnh đếm, giữ nguyên mã và số điện thoại.
 

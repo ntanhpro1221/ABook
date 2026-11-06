@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 import os
@@ -613,6 +614,25 @@ def onset_click_metrics(audio: np.ndarray, sample_rate: int) -> tuple[float, flo
     return (ratio, 1000.0 * float(right - left) / sample_rate)
 
 
+# Increment when the stored measurement format changes. The implementation digest and
+# measurement constants also invalidate entries automatically when the algorithm changes.
+SIGNAL_METRICS_CACHE_VERSION = 1
+
+
+def signal_metrics_cache_version() -> str:
+    parameters = {
+        name: value for name, value in globals().items()
+        if name.startswith("SEGMENT_ONSET_CLICK_")
+        or name in {"SEGMENT_ENDPOINT_WINDOW_SECONDS", "SEGMENT_EDGE_WINDOW_SECONDS"}
+    }
+    payload = json.dumps(
+        [SIGNAL_METRICS_CACHE_VERSION, sha256_file(Path(__file__)), parameters,
+         np.__version__, sf.__version__, sf.__libsndfile_version__],
+        sort_keys=True,
+    )
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
 def signal_metrics(audio: np.ndarray, sample_rate: int) -> dict[str, float]:
     array = np.asarray(audio, dtype=np.float32)
     if array.ndim == 2 and 1 in array.shape:
@@ -769,6 +789,7 @@ def validate_audio_array(
     segment: Any | None = None,
     *,
     check_edges: bool = True,
+    signal_measurements: dict[str, float] | None = None,
 ) -> tuple[np.ndarray, dict[str, float]]:
     if sample_rate <= 0:
         raise AudioQualityError(f"invalid sample rate: {sample_rate}")
@@ -786,7 +807,14 @@ def validate_audio_array(
         raise AudioQualityError("model returned empty audio")
     if not np.isfinite(array).all():
         raise AudioQualityError("audio contains NaN or infinity")
-    metrics = signal_metrics(array, sample_rate)
+    # The optional dictionary contains only waveform measurements, never a verdict or
+    # text/voice-dependent metrics. Populate it even if a later validation gate fails.
+    if signal_measurements is not None:
+        if not signal_measurements:
+            signal_measurements.update(signal_metrics(array, sample_rate))
+        metrics = dict(signal_measurements)
+    else:
+        metrics = signal_metrics(array, sample_rate)
     loudness = integrated_loudness_lufs(array, sample_rate)
     if loudness is not None:
         metrics["loudness_lufs"] = loudness
@@ -952,10 +980,20 @@ def inspect_wav(
     text: str,
     settings: dict[str, Any],
     segment: Any | None = None,
+    *,
+    signal_measurements: dict[str, float] | None = None,
 ) -> tuple[bool, dict[str, float], str]:
+    """Decode and validate a take against the current text and policy.
+
+    An optional measurement dictionary is filled on a miss. Its owner must bind it to
+    the WAV content hash and signal_metrics_cache_version before reusing it.
+    """
     try:
         audio, sample_rate = sf.read(path, dtype="float32", always_2d=False)
-        _, metrics = validate_audio_array(audio, text, settings, sample_rate, segment=segment)
+        _, metrics = validate_audio_array(
+            audio, text, settings, sample_rate, segment=segment,
+            signal_measurements=signal_measurements,
+        )
         return True, metrics, "ok"
     except Exception as exc:  # noqa: BLE001
         return False, {}, str(exc)

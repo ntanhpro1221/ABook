@@ -4,7 +4,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .audio_io import inspect_wav, verify_mp3
+from .audio_io import inspect_wav, signal_metrics_cache_version, verify_mp3
 from .background_runner import BACKGROUND_DIRECTORY
 from .database import (
     SEGMENT_AUDIO_QUALITY_STAGE,
@@ -190,16 +190,28 @@ def recover_project(
             return report
 
     accepted_takes = _listener_accepted_takes(db)
+    measurement_version = signal_metrics_cache_version()
+    signal_cache = db.load_wav_signal_metrics(measurement_version)
     for row in db.list_segments(statuses=("signal_passed", "verified", "warning")):
         wav_text = str(row["wav_path"] or "")
         wav = Path(wav_text) if wav_text else None
         valid = False
         if wav and wav.exists() and wav.stat().st_size > 1024:
             checksum_required = bool(settings.get("safety", {}).get("verify_checksums", True))
-            checksum_ok = bool(row["wav_sha256"]) and sha256_file(wav) == str(row["wav_sha256"])
+            # Reuse the integrity scan's content hash. Metadata or a DB checksum alone
+            # cannot detect a file replaced outside the app, even at the same size/mtime.
+            checksum = sha256_file(wav)
+            checksum_ok = bool(row["wav_sha256"]) and checksum == str(row["wav_sha256"])
             if not checksum_required:
                 checksum_ok = True
-            signal_ok, _, _ = inspect_wav(wav, str(row["text"]), settings, segment=row)
+            measurements = signal_cache.get(checksum, {})
+            signal_ok, _, _ = inspect_wav(
+                wav, str(row["text"]), settings, segment=row,
+                signal_measurements=measurements,
+            )
+            if measurements and checksum not in signal_cache:
+                db.store_wav_signal_metrics(checksum, measurement_version, measurements)
+                signal_cache[checksum] = measurements
             valid = checksum_ok and signal_ok
         if valid and spoken_text_drifted is not None and spoken_text_drifted(row):
             # Bản thu còn nguyên, checksum còn khớp - nhưng nó được làm từ một CHUỖI NÓI khác
