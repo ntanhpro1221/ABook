@@ -1,5 +1,22 @@
 # Test report
 
+## 07-11-2026 — tnnext2 (cùng dev/tnnext, chưa phát hành)
+
+- Thêm `v.v.`/`v.v` → vân vân và gạch Unicode U+2010..U+2013 nối hậu tố Nhật, tái dùng luật ASCII; không chọn cách đọc tên mới. Python/Kotlin cùng luật; Studio và Edge/Nghe ngay dùng đường chung. Cách đọc riêng của cuốn và protected span vẫn thắng, chữ hiện và mốc Edge giữ nguyên.
+- Soát Chap/Vol: kiểm nguyên token trước bước tách dấu, tránh nhận nhầm `Chap.12..5` và `Vol.1...2`; thêm ca mã dính dấu ngập ngừng. Mẫu curated cũ vẫn 547 Chap + 19 Vol, 566 dòng đổi; SHA-256 nguồn khớp báo cáo tnnext.
+- Fixture chung 190 → 227 ca, giữ toàn bộ 190 ca trước: thêm 17 ca đổi và 20 ca bảo vệ. Cache 7 → 8 trên cả hai nền; fixture cách đọc riêng chỉ đổi 19 key, các trường khác giữ nguyên.
+- Kiểm cuối: pytest **408/408** (27,45 giây), JVM **27/27 methods** (ReadingFormsTest duyệt cả 227 ca), vitest **227/227** gọi backend Python thật; failures/errors/skipped đều 0. Chỉ test đích, không full release gate/GPU, chưa tổng hợp/chấm audio. Tất cả 11 file trong manifest dùng LF, `git diff --check` qua.
+- Mẫu Hako `_full` hạt 20261107: 534 file / 276 cuốn / 89.197 dòng / 1.881.652 chữ; truyen 200 cuốn, ai-dich 70, khac 6, tối đa 2 chương/cuốn. `v.v.` 7 lượt/7 cuốn, kính ngữ Unicode 5 lượt/1 cuốn; bật/tắt riêng hai luật đổi tương ứng 7/7 và 5/5 dòng ứng viên. Không cộng với curated vì có thể trùng tác phẩm. 49 lượt dấu chấm số phần lớn lẫn số chương; không dùng tần suất regex làm số lỗi audio. Chữ nguồn được băm lại sau đo, không đổi.
+- Hash đầu tnnext2 `3125a1944a0b173d85cc477e273a368a33f33dea007215c74f3f4dded66704f5`, cuối `2afa92af11e76d1f59ec109f33ed89256ee100587c6f26a5b96243b0c297c878`. Đọc danh sách trực tiếp từ code: 53 mục; file khoá đổi là `readaloud/vieneu.py`. Chỉ giữ nhánh dev, chờ hết run trước tích hợp.
+
+## 06-11-2026 — tnnext (dev/tnnext, chưa commit)
+
+- Chuẩn hoá nhãn Chap/Vol đi với số thành chương/tập, dùng chung Studio, VieNeu và Edge; Python/Kotlin cùng luật, giữ nguồn và mốc chữ. Cache 6 → 7; chỉ cập nhật 19 key trong fixture cách đọc riêng.
+- Fixture chung reading_forms.json 146 → 190 ca tự viết, giữ nguyên 146 ca cũ. Có 20 ca đổi và 24 ca bảo vệ mới; kiểm listener readings thắng và ánh xạ một chữ hiện thành hai chữ đọc.
+- Chỉ chạy test đích: pytest `-rf` 368/368, FAILED/errors/skipped = 0; JVM 25/25 methods trong ReadingFormsTest/ReadingMarksTest/SpokenTextTest/ReadingsTest (ReadingFormsTest còn duyệt cả 190 ca); vitest readingForms.test.ts 190/190 gọi backend Python thật. Không full suite/release gate/GPU.
+- Corpus chỉ đọc: 637 file / 30 LN Nhật / 174.217 dòng / 3.722.710 chữ; Chap+số 547 lượt, Vol+số 19, 566 dòng đổi. Mẫu cố định không cân bằng, 542 lượt Chap ở một cuốn; không suy rộng tỉ lệ lỗi/audio. Normalizer CPU xác nhận hai câu tự viết; chưa tổng hợp hay chấm audio.
+- Đọc danh sách khoá từ code: 53 mục. Hash trước `3818e7751fec8680b70e3f148d1f0a63ede8de1a6599fad3ab043ff632c5467b`, sau `3125a1944a0b173d85cc477e273a368a33f33dea007215c74f3f4dded66704f5`. Chỉ nhánh dev, chờ hết run trước tích hợp. Lệnh, số đếm, lỗi trung gian đã sửa và giới hạn nằm ở `D:/Novels/ABook_tnnext/report.md`.
+
 ## 06-11-2026 — tnbig (dev/tn-bigint, chưa commit)
 
 - Python/Kotlin nhóm số liền từ 7 chữ số có ngữ cảnh lượng; sửa gốc luật nghìn kiểu Anh để không sinh số dài liền, kèm dấu ~ và dấu chấm cuối câu. Cache 5 → 6; cập nhật 19 khoá fixture cache. Fixture chung 146 ca: thêm 46 câu bịa, đổi 1 ca cũ `thousands-2`; 99 ca cũ giữ nguyên. Hai kỳ vọng trùng của số sinh từ bỏ phẩy trong test Python/Kotlin được đổi tương ứng.
