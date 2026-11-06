@@ -6,6 +6,7 @@ import org.json.JSONObject
 /** 16 kiểu thẻ "Việc cần duyệt" (web `WorkKind`); `label` là nhãn nhỏ trên thẻ (`KIND_LABEL` của WorkInbox.tsx). */
 enum class WorkKind(val key: String, val label: String) {
     Speaker("speaker", "Ai nói câu này"),
+    Caller("caller", "Người gọi / ngoài khung"),
     Turn("turn", "Lượt đối đáp"),
     Pronunciation("pronunciation", "Cách đọc tên"),
     Gender("gender", "Nam hay nữ"),
@@ -140,6 +141,7 @@ data class WorkItem(
     val keepGroups: List<SpeakerRequest>,
     val newPerson: String?,
     val newPersonLabel: String?,
+    val suggestedName: String = "",
     val narratorSection: NarratorSection?,
 )
 
@@ -239,6 +241,7 @@ internal object StudioWorkJson {
             keepGroups = json.optJSONArray("keepGroups").objects().map { SpeakerRequest(lines(it.optJSONArray("lines")), it.text("speaker")) },
             newPerson = json.textOrNull("newPerson")?.takeIf { it.isNotEmpty() },
             newPersonLabel = json.textOrNull("newPersonLabel")?.takeIf { it.isNotEmpty() },
+            suggestedName = json.optString("suggestedName"),
             narratorSection = json.optJSONObject("narratorSection")?.let(::narrator),
         )
     }

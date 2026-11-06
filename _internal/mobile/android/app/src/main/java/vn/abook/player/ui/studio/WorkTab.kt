@@ -212,14 +212,17 @@ private fun SpeakerAnswers(item: WorkItem, state: StudioProjectState, sheets: Sh
     item.newPerson?.let { name -> AnswerButton(item.newPersonLabel ?: "Tạo nhân vật", { pick(name, "unknown") }, "studio_new_person", enabled = !none) }
     if (item.keepGroups.isNotEmpty()) AnswerButton(item.keepLabel ?: "Giữ nguyên", { WorkDecisions.keepAll(item)?.let(work::decide) }, "studio_keep_all")
     if (item.kind != WorkKind.Alias) {
-        TextAction(WorkText.OTHER_PERSON, { sheets.show { dismiss -> OtherPersonSheet(more, none) { speaker, gender -> dismiss(); pick(speaker, gender) } } }, "studio_other", align = Alignment.CenterStart)
+        TextAction(if (item.suggestedName.isNotEmpty()) "Đặt tên" else WorkText.OTHER_PERSON, { sheets.show { dismiss -> OtherPersonSheet(more, none, item.suggestedName) { speaker, gender -> dismiss(); pick(speaker, gender) } } }, "studio_other", align = Alignment.CenterStart)
+    }
+    if (item.kind == WorkKind.Unnamed) item.pickVoice?.let { person ->
+        TextAction("Giới / giọng", { openVoiceSheet(state, sheets, person.name, person.displayName) }, "studio_role_voice", align = Alignment.CenterStart)
     }
 }
 
 /** "Người khác": những người không nằm trên thẻ, hay đặt tên một người mới kèm giới (bấm giới là lưu). */
 @Composable
-private fun OtherPersonSheet(more: List<WorkChoice>, none: Boolean, choose: (speaker: String, gender: String?) -> Unit) {
-    var name by remember { mutableStateOf("") }
+private fun OtherPersonSheet(more: List<WorkChoice>, none: Boolean, suggestedName: String, choose: (speaker: String, gender: String?) -> Unit) {
+    var name by remember { mutableStateOf(suggestedName) }
     val typed = name.trim()
     val list = rememberLazyListState()
     Column(Modifier.fillMaxWidth().testTag("studio_other_sheet")) {

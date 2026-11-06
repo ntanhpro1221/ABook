@@ -6,9 +6,10 @@
 // nhóm, bộ lọc, phân trang, "Giữ cả nhóm", tiêu điểm sau khi quyết. Chữ chép từng chữ của bản web; ở đây không có gì dính tới giao diện.
 
 // Thứ tự loại việc = thứ tự khoá của KIND_LABEL bản web (thanh lọc liệt kê theo thứ tự này)
-var KINDS = ["speaker", "turn", "pronunciation", "gender", "vocative", "alias", "bracket", "shared-voice", "unnamed", "audio", "narrator", "voice-wish", "snap", "teller-voice", "teller-thought", "refused"]
+var KINDS = ["speaker", "caller", "turn", "pronunciation", "gender", "vocative", "alias", "bracket", "shared-voice", "unnamed", "audio", "narrator", "voice-wish", "snap", "teller-voice", "teller-thought", "refused"]
 var KIND_LABEL = {
     "speaker": "Ai nói câu này",
+    "caller": "Người gọi / ngoài khung",
     "turn": "Lượt đối đáp",
     "pronunciation": "Cách đọc tên",
     "gender": "Nam hay nữ",
@@ -34,7 +35,7 @@ var GENERIC_PEOPLE = ["Người kể", "Người kể đọc tất cả", "Vai p
 var PICK_PREVIEW = 3
 var PICK_PAGE = 100
 // "Giữ như máy đang làm" cho cả loại thẻ đang lọc chỉ có ở các loại này
-var BULK_KINDS = ["pronunciation", "speaker", "turn", "vocative", "unnamed"]
+var BULK_KINDS = ["pronunciation", "speaker", "caller", "turn", "vocative", "unnamed"]
 
 // Việc còn chờ người duyệt: chưa quyết, và quyết thì có tác dụng ngay (precast.isOpenWork, cùng phép đếm với work_items.open_count)
 function isOpenWork(item) { return !item.requested && !item.redoOnly }
