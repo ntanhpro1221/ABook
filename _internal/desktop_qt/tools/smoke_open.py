@@ -34,9 +34,18 @@ HANDOFF_S = 10.0            # lần mở thứ hai chỉ nối ống, gửi mộ
 
 
 def books(library: Path) -> set[str]:
-    """Tên thư mục các cuốn đã nhập vào `library`."""
+    """Published book directories, excluding an import's staging/retired names.
+
+    BookFile.extract writes book.json inside .<name>.<nonce>.part before the
+    atomic swap. Counting that directory can release the first-launch wait
+    early and record a temporary name as the book that must survive launch B.
+    Keep the same publication boundary as the Library: a non-hidden folder
+    containing book.json. The two-book count and first-book retention checks
+    below still apply to the published books.
+    """
     folder = library / IMPORTED
-    return {p.name for p in folder.iterdir() if p.is_dir()} if folder.is_dir() else set()
+    return {p.name for p in folder.iterdir()
+            if not p.name.startswith(".") and p.is_dir() and (p / "book.json").is_file()} if folder.is_dir() else set()
 
 
 def wait_for(predicate, seconds: float, alive=None) -> bool:
