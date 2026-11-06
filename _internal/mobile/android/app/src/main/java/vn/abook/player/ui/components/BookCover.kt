@@ -46,7 +46,8 @@ import vn.abook.player.ui.theme.BeVietnamPro
 import vn.abook.player.ui.theme.Dim
 import kotlin.math.max
 
-private val CoverShape = RoundedCornerShape(Dim.radiusCover)
+/** Hình bìa dùng chung cho ảnh và mọi lớp phủ trong cùng khung. */
+val BookCoverShape = RoundedCornerShape(Dim.radiusCover)
 private val SmallShape = RoundedCornerShape(Dim.radiusControl)
 
 /**
@@ -74,7 +75,7 @@ fun BookCover(
     if (key != null && path != null && image.value == null) {
         LaunchedEffect(key) { image.value = covers.load(key, path, widthPx, heightPx) }
     }
-    val shape = if (small) SmallShape else CoverShape
+    val shape = if (small) SmallShape else BookCoverShape
     val sunken = Abook.colors.bgSunken
     if (path != null) {
         Box(modifier.aspectRatio(2f / 3f).clip(shape).background(sunken).drawBehind { image.value?.let { drawCover(it) } })
