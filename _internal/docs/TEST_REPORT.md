@@ -1,5 +1,12 @@
 # Test report
 
+## 06-11-2026 — metaupd (dev/metaupd, chưa commit)
+
+- Gói có audio luôn đối chiếu lớp nền khi nhập lại, kể cả caller truyền cờ giữ nền; Android và bộ nhập Python dùng chung cho web/Qt cùng luật. Giữ nguyên hồ sơ nghe và lớp sửa; file giống hệt vẫn là existing.
+- Android tập trung: 67/67 pass. Toàn bộ: 3351 test trong 385 XML suite, 3338 pass / 6 fail / 7 skip, 0 error. Sáu lỗi nằm ở ký hiệu đọc, nhãn phân vai và luật icon/chuyển cảnh/dấu chấm; không tuyên bố toàn bộ xanh.
+- Python: 253/255 pass, chỉ 2 tài liệu parity lệch sẵn (render HEAD bằng render sau sửa); thêm 5/5 ca API lớp nền pass. Web import + reading forms: 105/105 pass khi chỉ định đúng Python. Full Vitest còn 3 AbortError của MusicLevelSlider; typecheck có 5 lỗi ở test không đổi.
+- Bằng chứng, lệnh chạy, XML đầy đủ và giới hạn: D:/Novels/ABook_metaupd/report.md. Quality implementation hash trước/sau không đổi.
+
 ## 06-11-2026 — sửa cổng phát hành 0.4.163 (gatefix, dev/merge-163, chưa commit)
 
 - Bản chỉ nghe không kéo thư viện Studio khi khởi động hoặc kiểm file sách: kiểm audio coverage dùng giải mã FFmpeg toàn bộ, lấy thời lượng từ byte đã giải mã, giữ đối chiếu mã băm/phụ đề. Bài hồi quy gói MP3 thật chạy trong tiến trình chặn cả NumPy và soundfile PASS; 90 bài bookfile/export/coverage hiện có PASS. Không sửa file thuộc `QUALITY_IMPLEMENTATION_FILES`; hash trước/sau cùng `6e1970d021c22a6d1ece64cc582bde90c7a15369c18de09d09c74598a9abd198`.

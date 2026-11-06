@@ -239,7 +239,8 @@ object BookFileImport {
     }
 
 
-    /** `separate`: người dùng chọn "Thêm bản riêng" dù cuốn đã có - không tìm cuốn trùng, luôn là cuốn mới với mã riêng. */
+    /** `separate`: người dùng chọn "Thêm bản riêng" dù cuốn đã có - không tìm cuốn trùng, luôn là cuốn mới với mã riêng.
+     *  `refreshBase = false` chỉ giữ lớp nền khi nhập lại chữ từ EPUB/TXT; gói có audio luôn so và cập nhật lớp nền. */
     fun importFile(file: File, separate: Boolean = false, allowOlder: Boolean = false, refreshBase: Boolean = true, freeSpace: (File) -> Long = { it.usableSpace }): Imported {
         val zip = try {
             ZipFile(file)
@@ -334,7 +335,10 @@ object BookFileImport {
             val keptEdits = if (existing != null) BookEdits.count(BookEdits.load(Store.bookDir(target))) else 0
             // Cuốn chỉ có chữ: tìm thấy nghĩa là CÙNG bộ chữ (Store.findByChapters) - không có bản "nhiều chương hơn" để thay, giữ bản trên máy.
             val gainsWorkshop = layout != null && !File(Store.bookDir(target), ProjectDocument.MANIFEST).isFile
-            val changed = refreshBase && current != null && !StrictJson.equal(baseLayer(current, BookEdits.load(Store.bookDir(target))), baseLayer(book, incoming.edits))
+            // Only generated text imports may keep the old base. Matching chapter audio identifies the book,
+            // not its cover, metadata, cast, scripts or music; those must still be compared on every audio import.
+            val refresh = refreshBase || chapters.keys().asSequence().any { it.startsWith("chapters/") }
+            val changed = refresh && current != null && !StrictJson.equal(baseLayer(current, BookEdits.load(Store.bookDir(target))), baseLayer(book, incoming.edits))
             if (current != null && disposition == "existing" && !gainsWorkshop && !changed) {
                 // Giữ bản trên máy, nhưng phần sửa trong file vẫn được hợp vào (bên máy này thắng) - không mất công của ai.
                 var merged = false
