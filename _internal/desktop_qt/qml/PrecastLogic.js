@@ -9,7 +9,7 @@ var STEPS = ["cast", "names", "lines", "done"]
 // Những người nói nhiều nhất: giọng của họ nghe suốt cuốn
 var TOP_PEOPLE = 6
 var CAST_KINDS = ["gender", "alias", "shared-voice"]
-var LINE_KINDS = ["speaker", "turn", "vocative", "bracket", "unnamed"]
+var LINE_KINDS = ["speaker", "caller", "turn", "vocative", "bracket", "unnamed"]
 var TITLE = {cast: "Nhân vật và giọng", names: "Cách đọc tên", lines: "Ai nói câu này", done: "Xong"}
 var ICON = {cast: "users", names: "spell-check", lines: "message-square-quote", done: "clipboard-check"}
 

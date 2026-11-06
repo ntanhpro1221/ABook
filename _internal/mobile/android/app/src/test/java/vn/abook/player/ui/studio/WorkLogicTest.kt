@@ -14,6 +14,22 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
 class WorkLogicTest {
+    @Test fun callerAndChapterRoleUseTheSpeakerContractAndKeepMachineUntilClicked() {
+        val caller = StudioWorkJson.item(JSONObject("""{"kind":"caller","key":"caller:s1","current":"Kati","currentValue":"kati","suggested":false,"lines":[{"stableId":"s1","textSha256":"sha-s1"}],"choices":[]}"""))!!
+        assertEquals(WorkKind.Caller, caller.kind)
+        assertEquals("Người gọi / ngoài khung", caller.kind.label)
+        assertEquals(CardTemplate.Choose, WorkLogic.template(caller))
+        val kept = WorkDecisions.speaker(caller, "kati", WorkScope.Alternate, null)
+        assertEquals("speaker", kept.steps.single().endpoint)
+        assertEquals("kati", kept.steps.single().body.getString("speaker"))
+        val role = StudioWorkJson.item(JSONObject("""{"kind":"unnamed","key":"role:1","suggestedName":"Người gác chương 1","pickVoice":{"name":"NPC_LOCAL::c1::người gác","displayName":"người gác"},"lines":[{"stableId":"a","textSha256":"sha-a"},{"stableId":"b","textSha256":"sha-b"}],"choices":[]}"""))!!
+        assertEquals("Người gác chương 1", role.suggestedName)
+        assertEquals("người gác", role.pickVoice!!.displayName)
+        val named = WorkDecisions.speaker(role, role.suggestedName, WorkScope.Alternate, null, "female")
+        assertEquals(2, named.steps.single().body.getJSONArray("lines").length())
+        assertEquals("female", named.steps.single().body.getString("newGender"))
+    }
+
     // ---- bộ bài ----
 
     @Test fun theDeckKeepsOpenCardsInServerOrderAndPutsSkippedOnesLast() {

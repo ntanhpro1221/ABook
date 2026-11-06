@@ -1210,6 +1210,14 @@ Quality hash: f10085f96acd7f9fe6a066f2bf5a74338b0a351bea3d98f58f6d2807912cbfff -
 ## chaplevel2 (dev/voice-loudness)
 
 Kiểm vòng kín trên giọng tổng hợp qua FFmpeg thật: chương một giọng nhỏ theo phon, giới hạn cuối, lần chạy thứ hai dùng lại, lỗi meter/master giữ audio, loại vòng xấu, holdout không trùng câu fit. Mốc câu được đối chiếu độ dài MP3 sau cắt lặng; cache words cũ không đính kèm audio mới. Kết quả importer suite và đo hai sách thật ghi trong report.md của thư mục tác vụ; chưa phải bằng chứng phát hành.
+# HITL mốc 2 — 07-11-2026
+
+Thẻ vai phụ nhiều câu theo chương có đề xuất tên, đặt giới theo nhóm và mở bộ chọn giọng; thẻ `caller` hỏi người nói qua điện thoại/ngoài khung theo bằng chứng lời kể cạnh câu. UI vẫn ghi ý muốn qua speaker/voice, worker áp ở ranh giới an toàn và chỉ đặt lại audio bị đổi. Đồng bộ React/Qt/Android, DESIGN và parity; không thêm hiệu ứng điện thoại.
+
+Lượt triển khai: pytest `-rf` 9 file, **121 passed, 0 FAILED**; vitest Studio **29 passed** và gallery **3 passed** (chỉ story liên quan); Qt Quick offscreen/software **6 passed** gồm init/cleanup; Android 2 lớp **40 tests, 0 failures/errors**, đối chiếu XML. TypeScript và hai máy dò parity `--check` đạt. Story web chỉ kiểm DOM, chưa kiểm hình browser.
+
+Soát chéo rev164b: hai test mới tái hiện việc mở lại câu đã quyết riêng / vai đã tách hết, đỏ trước sửa và xanh sau sửa. Thẻ chương chỉ lấy câu chưa quyết khi còn câu mở. Pytest đích sau sửa **47 passed**; Qt render không còn ghi vào thư mục báo cáo ngoài commit. Trên cổng `score_bd` 23 chương (`b9lps1234`), regex caller không khớp câu nào: 0 thẻ / 1.849 câu có gold người nói; precision không xác định, recall đối với 404 lỗi người nói là 0%. Gold không có nhãn kênh điện thoại, nên không suy ra precision/recall nhận diện người nói từ xa. Hash đọc từ 53 file khóa giữ nguyên `3818e7751fec8680b70e3f148d1f0a63ede8de1a6599fad3ab043ff632c5467b`. Không GPU hoặc release gate đầy đủ.
+
 # pacetag — 06-11-2026
 
 Nhãn pace không đổi âm thanh hoặc QA: cùng bản thu, band `[12.5, 24.5]` sau bù dấu câu và sàn âm tiết `3.75`, nhân sàn bằng `pace_floor_scale * x` và hệ số engine hiện có. Đây là band normal đang có trong config, không phải sàn 10.5 của phép đo cũ. Ngân sách frame cũng dùng band chung, vẫn chia theo `r` cho bản thô. Không đổi bảng giọng, gain, WSOLA, trần im lặng hoặc nghỉ cấu trúc. Schema/prompt phân tích giữ nguyên. VieNeu cho phép bỏ `silence_p` (mặc định 0.15); Studio không gửi tham số này nữa. Gỡ vòng nới band, metric và warning riêng, không có migration.

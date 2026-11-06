@@ -7,7 +7,7 @@ icon `LucidePaths.js` sinh bởi `scripts/gen_lucide_icons.py --qml`. Bảng dư
 
 <!-- ui_parity_qt:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity_qt.py - không sửa tay, chạy lại script) -->
 
-Quét: web máy tính 4919 chữ (2820 khác nhau), 320 cặp nhãn-icon; Qt 3401 chữ (2551 khác nhau), 276 cặp nhãn-icon (icon dùng ở 386 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
+Quét: web máy tính 4924 chữ (2823 khác nhau), 320 cặp nhãn-icon; Qt 3404 chữ (2554 khác nhau), 277 cặp nhãn-icon (icon dùng ở 386 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
 
 ## a. Cùng việc, khác chữ
 
@@ -44,14 +44,14 @@ Nhãn ngắn Qt không có nguyên văn (khoá lỏng) ở web máy tính mà gi
 | Studio việc duyệt | Bỏ qua mọi việc từ | Bỏ qua mọi việc từ {}? | 1.00 | `qt/PhoneEdits.qml:153` ~ `studio/PhoneEdits.tsx:255` |
 | Studio việc duyệt | Dùng “{}” | Dùng “ | 1.00 | `qt/ReadingProblem.qml:39` ~ `studio/ReadingProblem.tsx:26` |
 | Studio việc duyệt | Máy nghe ra: “{}” | Máy nghe ra: “ | 1.00 | `qt/ReviewLogic.js:41` ~ `studio/ReviewQueue.tsx:231` |
-| Studio việc duyệt | Mọi việc đã có quyết định | Mọi việc đã có quyết định{}. | 1.00 | `qt/WorkLogic.js:274` ~ `studio/WorkInbox.tsx:1322` |
+| Studio việc duyệt | Mọi việc đã có quyết định | Mọi việc đã có quyết định{}. | 1.00 | `qt/WorkLogic.js:275` ~ `studio/WorkInbox.tsx:1329` |
 | Studio việc duyệt | Sẽ đọc là “{}” | Sẽ đọc là “ | 1.00 | `qt/ReviewLogic.js:46` ~ `studio/ReviewQueue.tsx:241` |
 | Studio việc duyệt | Đã dùng | Dùng “ | 1.00 | `qt/WorkStore.qml:323` ~ `studio/ReadingProblem.tsx:26` |
-| Studio việc duyệt | Đúng rồi, giữ “{}” | Đúng rồi, giữ “ | 1.00 | `qt/WorkPronunciation.qml:34` ~ `studio/WorkInbox.tsx:376` |
-| Studio việc duyệt | Đoạn này do | Đoạn này do {} kể | 0.88 | `qt/WorkLogic.js:47` ~ `studio/workText.ts:22` |
+| Studio việc duyệt | Đúng rồi, giữ “{}” | Đúng rồi, giữ “ | 1.00 | `qt/WorkPronunciation.qml:34` ~ `studio/WorkInbox.tsx:378` |
+| Studio việc duyệt | Đoạn này do | Đoạn này do {} kể | 0.88 | `qt/WorkLogic.js:48` ~ `studio/workText.ts:22` |
 | Studio việc duyệt | Tải tiếp · còn | Tải tiếp · còn {} câu | 0.86 | `qt/ReviewLogic.js:59` ~ `studio/ReviewQueue.tsx:524` |
 | Studio việc duyệt | Nghe liền {} câu | Nghe liền | 0.82 | `qt/ReviewQueue.qml:253` ~ `studio/ReviewQueue.tsx:474` |
-| Studio việc duyệt | Xem {} câu | Sửa {} câu | 0.57 | `qt/WorkSpeaker.qml:144` ~ `studio/reviewText.ts:20` |
+| Studio việc duyệt | Xem {} câu | Sửa {} câu | 0.57 | `qt/WorkSpeaker.qml:154` ~ `studio/reviewText.ts:20` |
 | Studio xuất và áp dụng | Bỏ cách đọc “{} | Bỏ cách đọc “{}” | 1.00 | `qt/ExportLogic.js:275` ~ `studio/ApplyChanges.tsx:55` |
 | Studio xuất và áp dụng | Cỡ ước tính: khoảng {} | Cỡ ước tính: khoảng | 1.00 | `qt/ExportBook.qml:221` ~ `studio/ExportBook.tsx:520` |
 | Studio xuất và áp dụng | Xuất “ | Xuất “{}” | 1.00 | `qt/ExportBook.qml:50` ~ `studio/ExportBook.tsx:389` |
@@ -74,7 +74,7 @@ Nhãn ngắn Qt không có nguyên văn (khoá lỏng) ở web máy tính mà gi
 | Quay lại | chevron-left | arrow-left | `qt/ScreenHeader.qml:13` ~ `listen/LineWishes.tsx:223` (+2) |
 | Tạm dừng {} | check, circle-dashed, play | pause | `qt/BookCell.qml:78` ~ `listen/BookScreen.tsx:172` (+2) |
 
-**Cùng icon, khác nhãn** (62 cặp Qt; web cùng màn dùng cùng icon với nhãn khác):
+**Cùng icon, khác nhãn** (64 cặp Qt; web cùng màn dùng cùng icon với nhãn khác):
 
 | màn | icon | Qt | web cùng màn | nơi |
 |---|---|---|---|---|
@@ -139,9 +139,11 @@ Nhãn ngắn Qt không có nguyên văn (khoá lỏng) ở web máy tính mà gi
 | Studio việc duyệt | volume-2 | Nghe thử | Dừng / Nghe thử | `qt/TryButton.qml:11` |
 | Cài đặt | play | Thử giọng | Dừng / Nghe thử | `qt/VoiceRow.qml:105` |
 | Studio việc duyệt | check | Giữ {} thẻ… | Giữ cả thẻ, Giữ thẻ, Giữ “{}” - không cần áp dụng. / Đã ghi “{}”… | `qt/WorkBulkKeep.qml:25` |
-| Studio việc duyệt | search | Xem {} câu | Tìm người khác, Xem câu | `qt/WorkSpeaker.qml:143` |
+| Studio việc duyệt | user-plus | Người khác | Người kể khác, Đặt tên / Người khác | `qt/WorkSpeaker.qml:132` |
+| Studio việc duyệt | user-plus | Đặt tên | Người kể khác, Đặt tên / Người khác | `qt/WorkSpeaker.qml:132` |
+| Studio việc duyệt | search | Xem {} câu | Tìm người khác, Xem câu | `qt/WorkSpeaker.qml:153` |
 
-Số cặp: web máy tính 278, Qt 239. Nhãn Qt có icon (187): `Bài nhạc`, `Bấm để cập nhật`, `Bấm để đổi tên chương`, `Bật tiếng`, `Bắt đầu`, `Bỏ chương này`, `Bỏ cách đọc {}`, `Bỏ ghép`, `Bỏ qua tất cả`, `Bỏ qua việc này`, `Bỏ ảnh bìa`, `Bỏ “{}” khỏi cách đọc chung`, `Chi tiết`, `Chia thành nhiều phần`, `Chưa có bản thu`, `Chưa có cuốn nào nghe xong.`, `Chưa khởi động được: {}`, `Chưa nghe`, `Chưa nghe xong`, `Chương`, `Chương sau`, `Chương sau chưa có audio`, `Chương trước`, `Chẩn đoán`, `Chọn`, `Chọn file`, `Chọn file sách`, `Chọn lại nhạc`, `Chọn thư mục`, `Chọn thư mục TXT`, `Chọn từng file`, `Chọn {} tập`, `Chọn ảnh bìa…`, `Cài Studio`, `Cài đặt`, `Có ABook`, `Có sách trên máy khác`, `Cần thu lại`, `Cập nhật ABook`, `Cửa sổ mini`, `Duyệt {} câu`, `Dùng Bluetooth`, `Dùng {} cách đọc chung`, `Dừng`, `Dừng nghe`, `Dừng nghe liền`, `Dự án mới`, `Ghim trên cùng`, `Ghép thiết bị mới`, `Giọng {} đang không dùng được.`, `Giọng đọc`, `Giữ {} thẻ…`, `Gộp`, `Gộp vào người khác…`, `Gộp vào phần trước`, `Gỡ Studio`, `Gợi ý đọc`, `Gửi nhật ký`, `Hoàn tác`, `Huỷ tải`, `Hẹn giờ`, `Hết chương`, `Hỏi lại thư viện`, `Khôi phục tất cả`, `Khôi phục việc này`, `Không có mạng -`, `Khởi động lại`, `Kiểm tra`, `Làm mới`, `Lưu`, `Lưu nhật ký`, `Lưu thay đổi`, `Lưu thành…`, `Lưu thành mẫu…`, `Mở cuốn đó`, `Mở file sách`, `Mở Kịch bản`, `Mở màn hình đang nghe`, `Mở rộng`, `Mở Studio`, `Mở tab Nhạc nền`, `Mở thư mục`, `Mở thư mục nhật ký`, `Nghe liền {} câu`, `Nghe lại`, `Nghe ngay {}`, `Nghe thử`, `Nghe tiếp`, `Nghe từ đầu chương`, `Nghe {}`, `Người khác…`, `Người kể khác…`, `Nhạc nền`, `Nhập nhạc`, `Nên dùng`, `Phát`, `Phím tắt`, `Phần`, `Quay lại`, `Studio`, `Sửa cách đọc {}`, `Sửa sách`, `Sửa thông tin`, `Thiết bị phát`, `Thu gọn`, `Thu lại câu này`, `Thu lại {} câu`, `Thu nhỏ`, `Thêm`, `Thêm bản riêng`, `Thêm cách đọc`, `Thêm file`, `Thêm giọng…`, `Thêm nhạc của bạn`, `Thêm sách`, `Thêm tuỳ chọn`, `Thêm tuỳ chọn cho {}`, `Thêm vào thư viện`, `Thư viện`, `Thả để thêm sách`, `Thử giọng`, `Thử lại`, `Trên {}`, `Tuỳ chọn dự án`, `Tuỳ chọn Studio`, `Tách thành {} chương`, `Tìm`, `Tìm bìa…`, `Tìm người khác…`, `Tìm sách`, `Tìm ảnh bìa trên mạng`, `Tạm dừng`, `Tạm dừng {}`, `Tạo sách nói`, `Tạo trên {}`, `Tải thêm (3,2 GB)`, `Tắt tiếng`, `Tới câu đang nghe`, `Tự tìm`, `Vẫn cài`, `Vẫn thêm bản mới`, `Về chỗ vừa nghe`, `Về Cài đặt`, `Về màn trước`, `Về Studio`, `Về Thư viện`, `Xem tất cả`, `Xem {} câu`, `Xoá`, `Xoá bài`, `Xoá khoá`, `Xoá ô tìm`, `Xác nhận gỡ`, `Xếp theo`, `Áp dụng trước`, `Áp dụng tất cả`, `Áp dụng việc này`, `Đang chuẩn bị giọng đọc…`, `Đang chọn lại`, `Đang gỡ…`, `Đang mở…`, `Đang thêm {}/{}`, `Đang tải bản mới…`, `Đang tải âm thanh…`, `Đang đọc…`, `Đang đọc không khí`, `Đang đổi`, `Đây là chương cuối`, `Đã nghe xong`, `Đóng`, `Đóng lời báo`, `Đóng trình phát`, `Đóng ô tìm`, `Đặt bìa`, `Đặt ảnh bìa`, `Đọc chương này`, `Đọc lại ngữ cảnh`, `Đọc {}`, `Đổi bài`, `Đổi bìa`, `Đổi giọng người kể`, `Đổi giọng {}`, `Đổi giới tính`, `Đổi tên`, `Đổi tên chương…`, `Đổi ảnh bìa`, `Ổn`.
+Số cặp: web máy tính 278, Qt 240. Nhãn Qt có icon (188): `Bài nhạc`, `Bấm để cập nhật`, `Bấm để đổi tên chương`, `Bật tiếng`, `Bắt đầu`, `Bỏ chương này`, `Bỏ cách đọc {}`, `Bỏ ghép`, `Bỏ qua tất cả`, `Bỏ qua việc này`, `Bỏ ảnh bìa`, `Bỏ “{}” khỏi cách đọc chung`, `Chi tiết`, `Chia thành nhiều phần`, `Chưa có bản thu`, `Chưa có cuốn nào nghe xong.`, `Chưa khởi động được: {}`, `Chưa nghe`, `Chưa nghe xong`, `Chương`, `Chương sau`, `Chương sau chưa có audio`, `Chương trước`, `Chẩn đoán`, `Chọn`, `Chọn file`, `Chọn file sách`, `Chọn lại nhạc`, `Chọn thư mục`, `Chọn thư mục TXT`, `Chọn từng file`, `Chọn {} tập`, `Chọn ảnh bìa…`, `Cài Studio`, `Cài đặt`, `Có ABook`, `Có sách trên máy khác`, `Cần thu lại`, `Cập nhật ABook`, `Cửa sổ mini`, `Duyệt {} câu`, `Dùng Bluetooth`, `Dùng {} cách đọc chung`, `Dừng`, `Dừng nghe`, `Dừng nghe liền`, `Dự án mới`, `Ghim trên cùng`, `Ghép thiết bị mới`, `Giọng {} đang không dùng được.`, `Giọng đọc`, `Giữ {} thẻ…`, `Gộp`, `Gộp vào người khác…`, `Gộp vào phần trước`, `Gỡ Studio`, `Gợi ý đọc`, `Gửi nhật ký`, `Hoàn tác`, `Huỷ tải`, `Hẹn giờ`, `Hết chương`, `Hỏi lại thư viện`, `Khôi phục tất cả`, `Khôi phục việc này`, `Không có mạng -`, `Khởi động lại`, `Kiểm tra`, `Làm mới`, `Lưu`, `Lưu nhật ký`, `Lưu thay đổi`, `Lưu thành…`, `Lưu thành mẫu…`, `Mở cuốn đó`, `Mở file sách`, `Mở Kịch bản`, `Mở màn hình đang nghe`, `Mở rộng`, `Mở Studio`, `Mở tab Nhạc nền`, `Mở thư mục`, `Mở thư mục nhật ký`, `Nghe liền {} câu`, `Nghe lại`, `Nghe ngay {}`, `Nghe thử`, `Nghe tiếp`, `Nghe từ đầu chương`, `Nghe {}`, `Người khác`, `Người kể khác…`, `Nhạc nền`, `Nhập nhạc`, `Nên dùng`, `Phát`, `Phím tắt`, `Phần`, `Quay lại`, `Studio`, `Sửa cách đọc {}`, `Sửa sách`, `Sửa thông tin`, `Thiết bị phát`, `Thu gọn`, `Thu lại câu này`, `Thu lại {} câu`, `Thu nhỏ`, `Thêm`, `Thêm bản riêng`, `Thêm cách đọc`, `Thêm file`, `Thêm giọng…`, `Thêm nhạc của bạn`, `Thêm sách`, `Thêm tuỳ chọn`, `Thêm tuỳ chọn cho {}`, `Thêm vào thư viện`, `Thư viện`, `Thả để thêm sách`, `Thử giọng`, `Thử lại`, `Trên {}`, `Tuỳ chọn dự án`, `Tuỳ chọn Studio`, `Tách thành {} chương`, `Tìm`, `Tìm bìa…`, `Tìm người khác…`, `Tìm sách`, `Tìm ảnh bìa trên mạng`, `Tạm dừng`, `Tạm dừng {}`, `Tạo sách nói`, `Tạo trên {}`, `Tải thêm (3,2 GB)`, `Tắt tiếng`, `Tới câu đang nghe`, `Tự tìm`, `Vẫn cài`, `Vẫn thêm bản mới`, `Về chỗ vừa nghe`, `Về Cài đặt`, `Về màn trước`, `Về Studio`, `Về Thư viện`, `Xem tất cả`, `Xem {} câu`, `Xoá`, `Xoá bài`, `Xoá khoá`, `Xoá ô tìm`, `Xác nhận gỡ`, `Xếp theo`, `Áp dụng trước`, `Áp dụng tất cả`, `Áp dụng việc này`, `Đang chuẩn bị giọng đọc…`, `Đang chọn lại`, `Đang gỡ…`, `Đang mở…`, `Đang thêm {}/{}`, `Đang tải bản mới…`, `Đang tải âm thanh…`, `Đang đọc…`, `Đang đọc không khí`, `Đang đổi`, `Đây là chương cuối`, `Đã nghe xong`, `Đóng`, `Đóng lời báo`, `Đóng trình phát`, `Đóng ô tìm`, `Đặt bìa`, `Đặt tên`, `Đặt ảnh bìa`, `Đọc chương này`, `Đọc lại ngữ cảnh`, `Đọc {}`, `Đổi bài`, `Đổi bìa`, `Đổi giọng người kể`, `Đổi giọng {}`, `Đổi giới tính`, `Đổi tên`, `Đổi tên chương…`, `Đổi ảnh bìa`, `Ổn`.
 
 ## c. Nhãn chỉ có một bên, theo màn
 
@@ -209,8 +211,8 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 
 ### Studio việc duyệt
 
-- chỉ Qt (33): Đã hoàn tác (`qt/DecisionLogic.js:31`); Đã hoàn tác. {} (`qt/DecisionLogic.js:31`); Trước đó chưa ai quyết khác (`qt/DecisionLogic.js:39`); Trước đó đang là {} (`qt/DecisionLogic.js:39`); Xem thêm {} tên (`qt/NameLogic.js:33`); Thêm* (`qt/NameLogic.js:45`); Đã bỏ qua ({}) (`qt/PhoneEdits.qml:83`); Bỏ qua mọi việc từ (`qt/PhoneEdits.qml:153`); Dùng “{}” (`qt/ReadingProblem.qml:39`); Máy nghe ra: “{}” (`qt/ReviewLogic.js:41`); Sẽ đọc là “{}” (`qt/ReviewLogic.js:46`); Tải tiếp · còn (`qt/ReviewLogic.js:59`); Nghe liền {} câu (`qt/ReviewQueue.qml:253`); Nghe câu: (`qt/ReviewRow.qml:82`); Đang đọc là: <span style="color:{}">{} (`qt/ReviewRow.qml:211`); Máy đọc câu này thành (`qt/ReviewSpoken.qml:41`); Ảnh hưởng <b><span style="color:{}">{} (`qt/WorkCard.qml:149`); Đang mở* (`qt/WorkCard.qml:339`); Đang đóng (`qt/WorkCard.qml:339`); Xem thêm {} việc (`qt/WorkInbox.qml:218`); Đoạn này do (`qt/WorkLogic.js:47`); Đang chọn cả {} câu* (`qt/WorkLogic.js:152`); Đang chọn {}/{} câu* (`qt/WorkLogic.js:154`); Xem thêm (đang hiện {}/{} câu)* (`qt/WorkLogic.js:163`); Giọng nam* (`qt/WorkLogic.js:219`); Giọng nữ* (`qt/WorkLogic.js:219`); Mọi việc đã có quyết định (`qt/WorkLogic.js:274`); Đúng rồi, giữ “{}” (`qt/WorkPronunciation.qml:34`); Cả chuỗi (`qt/WorkSpeaker.qml:60`); Xem {} câu (`qt/WorkSpeaker.qml:144`); Chưa hoàn tác được* (`qt/WorkStore.qml:87`); Mới hoàn tác được {}/{} việc (`qt/WorkStore.qml:87`); Đã dùng (`qt/WorkStore.qml:323`)
-- chỉ web (21): Tìm hoặc thêm tên (`128`); Không khớp “ (`166`); Bỏ qua mọi việc từ {}? (`237`); Dùng “ (`26`); Máy nghe ra: “ (`231`); Sẽ đọc là “ (`241`); Đang đọc là: (`246`); Nghe liền (`474`); Tải tiếp · còn {} câu (`524`); Nghe thử {} đọc là {} (`99`); Chưa nghe thử được: (`146`); Đúng rồi, giữ “ (`376`); Xem (`618`); Nam (`647`); Ảnh hưởng (`952`); ...
+- chỉ Qt (33): Đã hoàn tác (`qt/DecisionLogic.js:31`); Đã hoàn tác. {} (`qt/DecisionLogic.js:31`); Trước đó chưa ai quyết khác (`qt/DecisionLogic.js:39`); Trước đó đang là {} (`qt/DecisionLogic.js:39`); Xem thêm {} tên (`qt/NameLogic.js:33`); Thêm* (`qt/NameLogic.js:45`); Đã bỏ qua ({}) (`qt/PhoneEdits.qml:83`); Bỏ qua mọi việc từ (`qt/PhoneEdits.qml:153`); Dùng “{}” (`qt/ReadingProblem.qml:39`); Máy nghe ra: “{}” (`qt/ReviewLogic.js:41`); Sẽ đọc là “{}” (`qt/ReviewLogic.js:46`); Tải tiếp · còn (`qt/ReviewLogic.js:59`); Nghe liền {} câu (`qt/ReviewQueue.qml:253`); Nghe câu: (`qt/ReviewRow.qml:82`); Đang đọc là: <span style="color:{}">{} (`qt/ReviewRow.qml:211`); Máy đọc câu này thành (`qt/ReviewSpoken.qml:41`); Ảnh hưởng <b><span style="color:{}">{} (`qt/WorkCard.qml:149`); Đang mở* (`qt/WorkCard.qml:341`); Đang đóng (`qt/WorkCard.qml:341`); Xem thêm {} việc (`qt/WorkInbox.qml:218`); Đoạn này do (`qt/WorkLogic.js:48`); Đang chọn cả {} câu* (`qt/WorkLogic.js:153`); Đang chọn {}/{} câu* (`qt/WorkLogic.js:155`); Xem thêm (đang hiện {}/{} câu)* (`qt/WorkLogic.js:164`); Giọng nam* (`qt/WorkLogic.js:220`); Giọng nữ* (`qt/WorkLogic.js:220`); Mọi việc đã có quyết định (`qt/WorkLogic.js:275`); Đúng rồi, giữ “{}” (`qt/WorkPronunciation.qml:34`); Cả chuỗi (`qt/WorkSpeaker.qml:62`); Xem {} câu (`qt/WorkSpeaker.qml:154`); Chưa hoàn tác được* (`qt/WorkStore.qml:87`); Mới hoàn tác được {}/{} việc (`qt/WorkStore.qml:87`); Đã dùng (`qt/WorkStore.qml:323`)
+- chỉ web (21): Tìm hoặc thêm tên (`128`); Không khớp “ (`166`); Bỏ qua mọi việc từ {}? (`237`); Dùng “ (`26`); Máy nghe ra: “ (`231`); Sẽ đọc là “ (`241`); Đang đọc là: (`246`); Nghe liền (`474`); Tải tiếp · còn {} câu (`524`); Nghe thử {} đọc là {} (`99`); Chưa nghe thử được: (`146`); Đúng rồi, giữ “ (`378`); Xem (`620`); Nam (`649`); Ảnh hưởng (`954`); ...
 
 ### Studio nhân vật
 
@@ -258,7 +260,7 @@ Hợp lệ: `Theme.radiusControl / radiusCover / radiusSheet` (DESIGN.md 5.5, `d
 
 - (không có)
 
-**Nhãn kết thúc bằng `…` / `...`** (81): DESIGN.md chỉ cho `…` ở chữ đang chờ ("Đang mở…"), không cho nhãn nút.
+**Nhãn kết thúc bằng `…` / `...`** (80): DESIGN.md chỉ cho `…` ở chữ đang chờ ("Đang mở…"), không cho nhãn nút.
 
 - Bỏ mọi thay đổi… (`qt/EditBook.qml:338`) - web: `Bỏ mọi thay đổi`
 - Chuyển sang cuốn khác… (`qt/RecordLogic.js:39`) - web: `Chuyển sang cuốn khác`
@@ -282,7 +284,6 @@ Hợp lệ: `Theme.radiusControl / radiusCover / radiusSheet` (DESIGN.md 5.5, `d
 - Mất kết nối tới ABook, đang thử lại… (`qt/StudioLogic.js:565`) - web: `Mất kết nối tới ABook, đang thử lại`
 - Mọi cách đọc tên… (`qt/WorkPronunciation.qml:75`) - web: `Mọi cách đọc tên`
 - Mở dự án có sẵn… (`qt/ProjectsScreen.qml:256`) - web: (không có)
-- Người khác… (`qt/WorkSpeaker.qml:123`) - web: `Người khác`
 - Người kể khác… (`qt/WorkNarrator.qml:65`) - web: `Người kể khác`
 - Thu lại cả chương… (`qt/ProjectScreen.qml:243`) - web: `Thu lại cả chương`
 - Thêm giọng… (`qt/NowPlaying.qml:537`) - web: `Thêm giọng`
@@ -290,7 +291,7 @@ Hợp lệ: `Theme.radiusControl / radiusCover / radiusSheet` (DESIGN.md 5.5, `d
 - Tìm bìa… (`qt/EditBook.qml:247`) - web: `Tìm bìa`
 - Tìm chữ trong chương… (`qt/ScriptTab.qml:719`) - web: `Tìm chữ trong chương`
 - Tìm người khác trong truyện… (`qt/ScriptSpeakerMenu.qml:29`) - web: `Tìm người khác trong truyện`
-- Tìm người khác… (`qt/WorkSpeaker.qml:134`) - web: `Tìm người khác`
+- Tìm người khác… (`qt/WorkSpeaker.qml:144`) - web: `Tìm người khác`
 - Tìm người trong truyện… (`qt/CastMerge.qml:50`) - web: `Tìm người trong truyện`
 - Tìm người trong truyện… (`qt/CastMerge.qml:51`) - web: `Tìm người trong truyện`
 - Tìm tên… (`qt/SharedReadingsSettings.qml:60`) - web: `Tìm tên`
@@ -324,7 +325,7 @@ Hợp lệ: `Theme.radiusControl / radiusCover / radiusSheet` (DESIGN.md 5.5, `d
 - Đang tải nhạc nền ({}/{})… (`qt/ExportLogic.js:344`) - web: `Đang tải nhạc nền ({}/{})…`
 - Đang tải âm thanh… (`qt/PlayButton.qml:13`) - web: `Đang tải âm thanh`
 - Đang tải… (`qt/ReviewLogic.js:59`) - web: `Đang tải`, `đang tải`
-- Đang tải… (`qt/WorkCard.qml:351`) - web: `Đang tải`, `đang tải`
+- Đang tải… (`qt/WorkCard.qml:353`) - web: `Đang tải`, `đang tải`
 - Đang xem cuốn nào còn dùng giọng này… (`qt/VoiceModule.qml:402`) - web: `Đang xem cuốn nào còn dùng giọng này`
 - Đang xem các thay đổi… (`qt/ApplyChanges.qml:69`) - web: `Đang xem các thay đổi`
 - Đang xuất MP3… (`qt/ExportLogic.js:188`) - web: `Đang xuất MP3`, `Đang xuất MP3…`

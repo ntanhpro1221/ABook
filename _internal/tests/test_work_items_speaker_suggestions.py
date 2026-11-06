@@ -138,9 +138,9 @@ def test_an_unnamed_speaker_beside_named_people_asks_which_of_them_it_is(tmp_pat
     assert texts == ["Mira bước vào phòng, theo sau là Lena.", "“Chào mọi người.”", "Mira lắc đầu.", "“Bắt đầu thôi.”"]
     narration = [example for example in card["examples"] if example.get("narration")]
     assert len(narration) == 2 and all(example["speaker"] == "" and "mira" in example["names"] for example in narration)
-    # Điểm cao hơn thẻ hai tên mà vẫn đứng sau: sau mọi thẻ áp được ngay.
+    # M2 chapter roles are ordered by affected lines, including roles with candidate hints.
     assert card["score"] > _card(project, "alias:ARYA|ARIA")["score"]
-    assert items[-1]["key"] == card["key"]
+    assert not card.get("askLast") and card["score"] == card["affected"]
 
 
 def test_a_candidate_without_a_voice_is_not_offered(tmp_path: Path) -> None:
