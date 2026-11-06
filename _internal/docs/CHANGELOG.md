@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.164] - 2026-11-07
+
+- App máy tính mở thư viện nhanh hơn (khoảng 1,0 thay vì 1,25 giây) và tốn ít RAM hơn khi nghe; khung hình đầu hiện sớm hơn.
+- App điện thoại mở nhanh hơn khoảng 0,5 giây và dùng ít RAM hơn ở thư viện.
 - Mở lại hoặc chạy tiếp sách đã thu nhanh hơn, không đo lại tín hiệu của những câu có audio không đổi.
 - Thu lại hoặc sửa câu trong chương “Cần nghe lại” vẫn giữ mốc đọc theo và xuất được MP3 đang nghe, đồng thời hiện đúng trạng thái chờ thu lại.
 - Hoàn tác người kể của một đoạn hoặc chọn lại người kể cùng giới giọng dẫn sẽ trả các câu về đúng giọng, giữ nguyên chỉnh sửa từng câu của bạn.

@@ -1,7 +1,7 @@
 {
   "name": "abook-ui",
   "private": true,
-  "version": "0.4.163",
+  "version": "0.4.164",
   "type": "module",
   "scripts": {
     "dev": "vite",
