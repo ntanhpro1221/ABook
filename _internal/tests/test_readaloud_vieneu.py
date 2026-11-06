@@ -136,7 +136,7 @@ def test_a_tilde_is_dropped_or_read_as_range(text: str, said: str) -> None:
 
 @pytest.mark.parametrize("text, said", [
     ("Có 500,000 đồng, 100,000 yen và 1,419 / 3,419.", "Có 500000 đồng, 100000 yên và 1419 trên 3419."),
-    ("Trả 2,000,000, xong.", "Trả 2000000, xong."),
+    ("Trả 2,000,000, xong.", "Trả 2.000.000, xong."),
     # "1,500" (đúng 3 chữ số sau phẩy) được coi là nghìn: truyện dịch dùng kiểu Anh, thập phân Việt có 1-2 chữ số
     ("Giá 1,500 và 1,5 và 3,25 và 12,3456.", "Giá 1500 và 1,5 và 3,25 và 12,3456."),
     ("Số 1.234,567 và 9.389.700 và 1,234.5 và 1,234,5.", "Số 1.234,567 và 9.389.700 và 1,234.5 và 1,234,5."),
