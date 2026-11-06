@@ -301,3 +301,18 @@ def test_publish_stops_before_any_external_mutation_on_gate_failure(tmp_path, mo
         release.publish("9.9.9", "HEAD", tmp_path)
     assert len(calls) == 1 and calls[0][-1].endswith("release_gate.py")
     assert not (tmp_path / "notes.md").exists()
+
+
+def test_changelog_accepts_unreleased_entries_or_the_bumped_version_section(tmp_path, monkeypatch):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    monkeypatch.setattr(gate, "ROOT", tmp_path)
+    monkeypatch.setattr(gate, "version", lambda: "9.9.9")
+    log = docs / "CHANGELOG.md"
+    log.write_text("# Log\n\n## [Chưa phát hành]\n\n- Mới\n\n## [9.9.8] - 2026-01-01\n\n- Cũ\n", encoding="utf-8")
+    assert gate.worker("changelog")["counts"] == {"entries": 1, "released": 0}
+    log.write_text("# Log\n\n## [Chưa phát hành]\n\n## [9.9.9] - 2026-01-02\n\n- Mới\n- Hai\n\n## [9.9.8]\n\n- Cũ\n", encoding="utf-8")
+    assert gate.worker("changelog")["counts"] == {"entries": 2, "released": 1}
+    log.write_text("# Log\n\n## [Chưa phát hành]\n\n## [9.9.8]\n\n- Cũ\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="CHANGELOG"):
+        gate.worker("changelog")
