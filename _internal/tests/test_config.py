@@ -23,7 +23,7 @@ def test_unattended_safety_defaults() -> None:
     assert "keep_verified_wav" not in settings["audio"]
     assert settings["voices"]["narrator_gender"] == "male"
     assert settings["voices"]["narrator_voice"] == "Đức Trí"
-    assert settings["voices"]["max_character_pitch_semitones"] == 2
+    assert "max_character_pitch_semitones" not in settings["voices"]
     assert settings["asr"]["enabled"] is True
     assert settings["asr"]["required"] is True
     assert settings["asr"]["failure_policy"] == "fail"

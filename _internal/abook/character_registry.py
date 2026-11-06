@@ -23,23 +23,14 @@ from .database import (
     ProjectDB,
 )
 from .io_utils import slugify, stable_int
-from .voice_balance import formant_key as balance_formant_key
 from .voice_catalog import (
     GENDER_FEMALE,
-    AGE_PITCH_RANK_BUCKET,
-    LAST_RESORT_PRESETS,
     preset_eligible,
     VIENEU_PRESETS,
     casting_preset_priority,
     casting_presets,
     listener_rank,
     preset_by_name,
-    base_pitch_for_preset,
-    formant_ratio_for_age,
-    formant_variants_for_preset,
-    age_pitch_semitones,
-    preset_reaches_age_pitch,
-    preset_age_reach,
     ENGINE_VIENEU,
     ENGINE_VOICES,
     engine_voice,
@@ -1680,36 +1671,14 @@ def _majority(rows: list[Any], column: str, default: str = "unknown") -> str:
     return ranked[0][0]
 
 
-def preset_gender_of_voice_key(voice_key: str) -> str | None:
-    """Phái của preset đứng sau một `voice_key`, hoặc None nếu không tra được.
-
-    `voice_key` là `preset_<slug>_f<formant>_p<pitch>` (VieNeu) hay `<máy đọc>_<slug>_f100_p+00` (máy khác,
-    `voice_profile_spec`). So tiền tố DÀI trước, để một preset có tên là tiền tố của preset khác không nhận
-    nhầm. Cùng phép tra với `scripts/voice_matches_the_person.py` - công cụ ấy báo đúng thứ luật này cấm.
-    """
-    key = str(voice_key)
-    prefixes = [(f"preset_{_preset_slug(str(preset['name']))}", str(preset["gender"])) for preset in VIENEU_PRESETS]
-    prefixes += [(_voice_key_stem(voice), str(voice["gender"])) for voice in ENGINE_VOICES]
-    for prefix, gender in sorted(prefixes, key=lambda item: -len(item[0])):
-        if key.startswith(prefix):
-            return gender
-    # Khoá cũ ghi thiếu tiền tố "preset_" vẫn tra theo VieNeu.
-    for preset in sorted(VIENEU_PRESETS, key=lambda p: -len(_preset_slug(str(p["name"])))):
-        if key.startswith(_preset_slug(str(preset["name"]))):
+def preset_gender_of_voice_key(voice_key_value: str) -> str | None:
+    """Phái của preset trong khoá bảng, không suy tuổi từ giọng."""
+    from .voice_balance import voice_key, engine_version
+    for preset in (*VIENEU_PRESETS, *ENGINE_VOICES):
+        engine = str(preset.get("engine", ENGINE_VIENEU))
+        if voice_key(engine, engine_version(engine), str(preset["name"])) == str(voice_key_value):
             return str(preset["gender"])
     return None
-
-
-def _voice_key_stem(preset: dict[str, Any]) -> str:
-    """Đầu khoá `voice_key` của một giọng: `preset_<slug>` cho VieNeu, `<máy đọc>_<slug>` cho máy khác."""
-    engine = str(preset.get("engine", ENGINE_VIENEU))
-    return f"{'preset' if engine == ENGINE_VIENEU else engine}_{slugify(str(preset['name']))}"
-
-
-def _preset_slug(name: str) -> str:
-    plain = unicodedata.normalize("NFD", str(name))
-    plain = "".join(char for char in plain if not unicodedata.combining(char))
-    return "_".join(plain.replace("Đ", "D").replace("đ", "d").lower().split())
 
 
 def _preset_by_name(name: str) -> dict[str, str]:
@@ -1720,296 +1689,35 @@ def _preset_by_name(name: str) -> dict[str, str]:
 
 
 class PresetAllocator:
-    def __init__(
-        self,
-        narrator_voice: str,
-        max_pitch_shift: int,
-        other_narrators: Iterable[str] = (),
-    ) -> None:
+    """Một preset là một giọng; ưu tiên giọng chưa ai giữ trong cả hai nhóm vai."""
+    def __init__(self, narrator_voice: str, other_narrators: Iterable[str] = ()) -> None:
         self.narrator_voice = narrator_voice
-        # Every voice that has narrated this book, not only the one narrating this project. A
-        # book that changes narrator part-way (book 2: Phạm Tuyên for 000..303, Đức Trí from
-        # 304) has taught the listener that the old voice IS the narration; a character who
-        # speaks in it later sounds like the narrator cutting into the dialogue. Empty unless
-        # `voices.other_narrators` says otherwise, so the set is `{narrator_voice}` as before.
-        self.not_for_characters = frozenset(
-            {str(narrator_voice), *(str(name) for name in other_narrators)}
-        )
-        self.max_pitch_shift = max(0, int(max_pitch_shift))
-        self.pool_usage: dict[str, Counter[str]] = {
-            "named": Counter(),
-            "npc": Counter(),
-        }
-        self.variant_usage: Counter[str] = Counter()
-        # Bậc formant nào của preset nào đã có chủ. `variant_usage` đếm *bao nhiêu lần*, cái
-        # này nhớ *bậc nào* - và chỉ cái sau mới trả lời được "bậc này còn trống không".
-        #
-        # Không gộp hai cái làm một: `variant_usage` vẫn cần cho đường quay vòng khi thang đã
-        # cạn thật, và lúc ấy hành vi phải y hệt trước.
-        self.taken_variants: dict[str, set[float]] = {}
-        # Ai đang giữ bậc nào, và ai có mặt ở chương nào. `taken_variants` trả lời "bậc này còn
-        # trống không"; hai cái này trả lời câu hỏi kế tiếp, chỉ đặt ra khi không còn bậc trống:
-        # "dùng chung với ai thì ít hại nhất". Người nghe nghe từng chương một, nên hại đo bằng
-        # số chương hai người cùng có mặt.
-        # Bậc -> **mọi** người đang giữ nó, không chỉ người đầu tiên. Bản đầu là
-        # `dict[float, str]` ghi bằng `setdefault`, và lô đúc lại của lô 3 trả giá: sau khi
-        # KANG vào bậc 1,00 của Thanh Bình, `holders[1.0]` vẫn là VIKTOR, nên NPC kế tiếp đọc
-        # bậc ấy thành "người lạ đang giữ" và xếp vào đúng chỗ vừa bị chiếm - trong khi KANG,
-        # kẻ đang ở cùng chương với nó, vô hình.
-        self.holders: dict[str, dict[float, set[str]]] = {}
+        self.not_for_characters = frozenset({str(narrator_voice), *map(str, other_narrators)})
+        self.usage: Counter[str] = Counter()
+        self.holders: dict[str, set[str]] = {}
         self.chapters_of: dict[str, set[int]] = {}
 
     def note_chapters(self, who: str, chapters: set[int]) -> None:
-        """Ghi lại nhân vật này nói ở những chương nào. Gọi cho mọi người TRƯỚC lần chọn đầu.
+        self.chapters_of[str(who)] = set(chapters)
 
-        Một nhân vật đã ghim từ lô trước mà im lặng ở lô này thì không được ghi gì - tập rỗng -
-        và như thế là đúng: người ấy không cùng chương với ai, nên là người lý tưởng để dùng
-        chung giọng nếu buộc phải dùng chung.
-        """
-        self.chapters_of[str(who)] = set(int(c) for c in chapters)
-
-    def choose(
-        self,
-        gender: str,
-        *,
-        npc: bool,
-        age: str = "unknown",
-        who: str = "",
-    ) -> tuple[dict[str, str], float, int]:
-        """Pick a preset, the formant warp it needs, and the F0 offset its age implies.
-
-        A teen or an elderly character enters twice, because age is two different acoustic
-        facts: a shorter or longer vocal tract, which the formant warp reaches, and a higher
-        or lower F0, which the register does.
-
-        A child enters neither: the owner heard the warped child voices and said "đừng bóp
-        nữa, bóp đem đến âm thanh quá tệ" (05-11). A child, boy or girl, is cast from the
-        female presets, ranked by the female character tiers, and gets the voice untouched:
-        age pitch 0 and the preset's own formant (1.0 unless a shared preset needs a ladder
-        step to stay distinct from whoever already holds it, as for any character).
-        """
-        if str(age) == "child":
-            gender = GENDER_FEMALE
-        # A character never shares the narrator's preset. Excluding it by name excludes
-        # every variant of it too, which is the point: a pitch-shifted or formant-warped
-        # narrator is still the narrator's voice to a listener, not a second character.
-        candidates = [
-            preset
-            for preset in casting_presets(gender)
-            if preset["name"] not in self.not_for_characters
-        ]
-        # A preset whose pitch cannot reach the age is not a candidate for it. Warping the
-        # tract to the age while the pitch stays put makes a combination no throat can
-        # produce, and a listener hears it as a defect rather than as that age.
-        reachable = [
-            preset
-            for preset in candidates
-            if preset_reaches_age_pitch(str(preset["name"]), age, gender)
-        ]
-        if reachable:
-            candidates = reachable
+    def choose(self, gender: str, *, npc: bool, age: str = "unknown", who: str = "") -> dict[str, str]:
+        candidates = [p for p in casting_presets(gender) if p["name"] not in self.not_for_characters]
         if not candidates:
-            # Nothing of this gender is left, so widen across gender - but never across
-            # the region allowlist. A fallback that reached the whole catalog would put
-            # the excluded Central presets straight back into the book.
-            candidates = [
-                preset
-                for preset in VIENEU_PRESETS
-                if preset["name"] not in self.not_for_characters
-                and preset_eligible(preset, "character")
-            ]
-        pool = "npc" if npc else "named"
-        usage = self.pool_usage[pool]
-
+            candidates = [p for p in VIENEU_PRESETS if p["name"] not in self.not_for_characters and preset_eligible(p, "character")]
+        mine = self.chapters_of.get(who, set())
         def rank(preset: dict[str, Any]) -> tuple[Any, ...]:
             name = str(preset["name"])
-            return (
-                # Demoted voices sort below every clean one, ahead of usage count rather
-                # than blended into it: a gentler weighting would let them win as soon as
-                # each clean preset had been used once, which is the second character in
-                # the chapter.
-                name in LAST_RESORT_PRESETS,
-                usage[name],
-                # A listener's own ranking of the voices they have heard, as a character
-                # (by gender; a child is ranked as female), comes before either computed proxy. Reach
-                # and shift only estimate how good the result will sound; this is a
-                # verdict on the result, and the estimates have already been caught
-                # disagreeing with it. It sits after usage, so variety still comes
-                # first: the character with the most lines is cast first and takes the
-                # best ranked voice nobody has, the next takes the next one down.
-                listener_rank(name, gender),
-                # A preset that cannot reach this age is a worse fit however available it
-                # is: an adult male tract stops 0.8 cm short of an eight-year-old even
-                # warped to its limit, while the shortest presets land exactly on it.
-                # Bucketed to half a centimetre: two presets that both land near the
-                # target are the same fit to a listener, and a 0.1 cm edge must not
-                # outrank a voice being hard to follow.
-                round(preset_age_reach(name, age, gender) * 2.0) / 2.0,
-                # Then the dearer of the two warps. Measured on four presets reading the
-                # same line, the age pitch shift costs about 0.85 MOS against the formant
-                # shift's 0.50, and the damage tracks the size of the shift: +2 semitones
-                # lost 0.69 MOS, +11 lost 1.24. Ranking on tract reach alone was
-                # optimising the cheaper axis and ignoring the dearer one.
-                #
-                # It still sorts below reach. Reach decides whether the result reads as the
-                # age at all, and a clean voice that sounds like the wrong person is not the
-                # cheaper option.
-                #
-                # Bucketed at four semitones so a one-semitone edge cannot outweigh
-                # anything ranked above it.
-                abs(age_pitch_semitones(age, gender, name)) // AGE_PITCH_RANK_BUCKET,
-                # Last: the arbitrary fixed order (`CAST_ORDER`), which only separates
-                # voices the listener has not ranked. It says nothing about quality.
-                *casting_preset_priority(preset),
-            )
+            occupied = set().union(*(self.chapters_of.get(h, set()) for h in self.holders.get(name, ())))
+            return (self.usage[name] > 0, len(mine & occupied), self.usage[name],
+                    listener_rank(name, gender), *casting_preset_priority(preset))
+        selected = min(candidates, key=rank)
+        self.reserve(str(selected["name"]), who=who)
+        return selected
 
-        ranked_presets = sorted(candidates, key=rank)
-        selected = ranked_presets[0]
-        is_child = str(age) == "child"
-        if who and (is_child or abs(formant_ratio_for_age(str(selected["name"]), age, gender) - 1.0) > 1e-6):
-            # Tuổi ấn định bậc formant (teen, già) hoặc cấm mọi bậc (trẻ con: nguyên giọng, bậc
-            # 1,00, không thang), nên preset là trục đa dạng DUY NHẤT — và `usage` đếm theo
-            # pool (có tên / NPC), nên một đứa trẻ có tên và một NPC trẻ con cùng chương đều
-            # thấy Ngọc Linh "chưa ai dùng". Lô 7, chương 186: AEREN (3 câu) và NPC CON TRAI
-            # (1 câu) cùng `ngoc_linh_f107_p+02` - người nghe lẫn. Cùng lớp với
-            # CÔNG TƯỚC/ÔNG LÃO ở alpha.55: hai sổ, một giọng. Ở đây hỏi thẳng sổ người giữ -
-            # cùng sổ mà `_first_free_variant` hỏi: preset hạng đầu mà bậc-theo-tuổi của nó đã
-            # có người CÙNG CHƯƠNG giữ thì lấy preset kế tiếp; không preset nào rảnh thì về
-            # hạng đầu như cũ. Đứa trẻ đầu tiên vẫn nhận đúng giọng người nghe ưa thích.
-            mine = self.chapters_of.get(str(who), set())
-            for preset in ranked_presets:
-                preset_name = str(preset["name"])
-                step = round(float(formant_ratio_for_age(preset_name, age, gender)), 3)
-                held = self.holders.get(preset_name, {}).get(step, set())
-                if not any(self.chapters_of.get(holder, set()) & mine for holder in held):
-                    selected = preset
-                    break
-        name = str(selected["name"])
-        usage[name] += 1
-        # Formant, not pitch, is what makes a reused preset sound like a different
-        # person. The ladder starts at 1.00 so a preset's first casting is the untouched
-        # voice and pays no vocoder cost at all - but an age target overrides the ladder,
-        # because reading a teen at an adult tract length is not a variation, it is wrong.
-        # A child overrides it too, the other way: always the untouched voice (1.0), never a
-        # rung - a shared preset is told apart by choosing another preset above, not by warping.
-        age_ratio = formant_ratio_for_age(name, age, gender)
-        if is_child or abs(age_ratio - 1.0) > 1e-6:
-            formant_ratio = age_ratio
-        else:
-            variants = formant_variants_for_preset(name)
-            # Bậc còn trống đầu tiên theo thứ tự thang, chứ không phải bậc mà bộ đếm đang
-            # chỉ vào. Hai cách chỉ khác nhau khi có bậc bị nhảy qua - và đúng chỗ ấy lô 1
-            # mất một giọng: Thanh Bình nhận 7 người trên 7 bậc mà chỉ ra 6 giọng, bậc 0,898
-            # bỏ phí trong khi f104 phát cho cả CHA lẫn SỐ BA.
-            #
-            # Thang bắt đầu ở 1,00 nên lần đúc đầu của một preset vẫn là giọng gốc không qua
-            # vocoder; thứ tự thang không đổi, chỉ có việc bỏ qua bậc đã có chủ là mới.
-            formant_ratio = self._first_free_variant(name, variants, who=who)
-        self.variant_usage[name] += 1
-        step = round(float(formant_ratio), 3)
-        self.taken_variants.setdefault(name, set()).add(step)
+    def reserve(self, preset_name: str, who: str | None = None) -> None:
+        self.usage[str(preset_name)] += 1
         if who:
-            self.holders.setdefault(name, {}).setdefault(step, set()).add(str(who))
-        return selected, formant_ratio, age_pitch_semitones(age, gender, name)
-
-    def _first_free_variant(
-        self,
-        preset_name: str,
-        variants: tuple[float, ...],
-        who: str = "",
-    ) -> float:
-        """Bậc chưa ai giữ, theo thứ tự thang; cạn thật thì quay vòng như cũ.
-
-        Đường quay vòng giữ nguyên `variant_usage[name] % len(variants)` **có chủ ý**: khi mọi
-        bậc đã có chủ thì dùng lại là không tránh được, và lúc ấy đổi cách chọn chỉ đổi *ai*
-        trùng với ai mà không giảm số lần trùng. Câu hỏi ấy cần đồ thị đồng hiện và là một
-        thay đổi khác.
-
-        So sánh có dung sai vì bậc đi qua `round(..., 3)` và qua cột REAL của SQLite; 0,005 là
-        một nửa dung sai 0,01 mà chính `formant_variants_for_preset` dùng để khử trùng lặp.
-        """
-        taken = self.taken_variants.get(preset_name, set())
-        for ratio in variants:
-            if all(abs(ratio - held) > 0.005 for held in taken):
-                return ratio
-        # Không còn bậc trống: PHẢI dùng chung. Đây là chỗ bản trước quay vòng mù -
-        # `variants[variant_usage % len]` - và lô 3 trả giá: 3 trong 7 va chạm nằm cùng chương,
-        # trong đó IGOR + THU LÃNH ở chương 062 (3 + 23 câu) đã vào audio trước khi ai kịp thấy.
-        #
-        # Chọn bậc mà người đang giữ nó có ÍT chương chung nhất với người sắp được cast; hoà
-        # thì bậc ÍT người giữ hơn, rồi mới tới bậc thấp hơn trên thang (tất định, tái lập
-        # được). Không biết gì về người sắp cast
-        # (không có `who`) hay không biết ai giữ bậc nào thì lùi về quay vòng cũ, để hành vi
-        # ngoài đường ống chính không đổi.
-        mine = self.chapters_of.get(str(who), set()) if who else None
-        holders = self.holders.get(preset_name, {})
-        if mine is None or not holders:
-            return variants[self.variant_usage[preset_name] % len(variants)]
-        def shared_chapters(ratio: float) -> int:
-            """Bao nhiêu chương của tôi có **một người nào đó** đang giữ bậc này cũng có mặt.
-
-            Hợp của mọi người giữ bậc, không phải người đầu tiên: một bậc đã bị dùng chung thì
-            người thứ ba phải thấy cả hai người kia. Đo trên lô đúc lại của lô 3 - THẰNG ĐIÊN
-            xếp vào đúng bậc KANG vừa chiếm vì bậc ấy vẫn khai tên VIKTOR.
-            """
-            occupied: set[int] = set()
-            for holder in holders.get(round(ratio, 3), set()):
-                occupied |= self.chapters_of.get(holder, set())
-            return len(mine & occupied)
-
-        def crowd(ratio: float) -> int:
-            return len(holders.get(round(ratio, 3), ()))
-
-        # Hoà về chương chung (thường là 0: người mới chưa gặp ai) thì chọn bậc ÍT người giữ
-        # hơn, rồi mới tới thứ tự thang. Bản trước hoà là lấy bậc thấp nhất, nên lô 6 xếp sáu
-        # nhân vật phụ (KAIN REICHARDT, ERWIN, DAMIAN, LEON, GÃ, DORON) chồng lên đúng một bậc
-        # thai_son_f100 trong khi bốn bậc khác cùng 0 chương chung chỉ có một người giữ. Không
-        # ai cùng chương nên người nghe không lẫn trong lô ấy, nhưng sáu người một giọng là
-        # mười lăm cặp có thể gặp nhau ở lô sau, và cảnh báo "nhiều nhân vật dùng chung một
-        # giọng" đã bật. Đo 2026-09-12 15:27 trên lo06_99a908b8f8.
-        ranked = sorted(
-            enumerate(variants),
-            key=lambda pair: (shared_chapters(pair[1]), crowd(pair[1]), pair[0]),
-        )
-        return ranked[0][1]
-
-    def reserve(
-        self,
-        preset_name: str,
-        formant_ratio: float | None = None,
-        who: str | None = None,
-    ) -> None:
-        """Record that a preset is taken, for a character this allocator never chose.
-
-        A pinned voice is invisible to the ranking unless it is counted here, and an unused
-        preset always sorts first - so the very next character would be handed the voice
-        somebody had just pinned to someone else. Two people, one voice, and nothing catches
-        it: the invariant in `verify_casting` checks that one speaker resolves to one
-        profile, which is the opposite direction.
-
-        **Both pools, not the character's own.** The first version took an `npc` flag and
-        counted only that side, and alpha.55 showed what that costs: CÔNG TƯỚC was pinned to
-        `preset_thai_son_f087_p+00` from the named pool, and ÔNG LÃO - an NPC, so a different
-        counter - was handed the identical voice_key. alpha.54 cast the same book with no
-        pinning and had no collisions at all, so this was introduced by the carry. A voice
-        that belongs to somebody is taken everywhere, not taken in one ledger.
-        """
-        name = str(preset_name)
-        for pool in self.pool_usage.values():
-            pool[name] += 1
-        self.variant_usage[name] += 1
-        # Và đánh dấu **đúng** bậc đang bị giữ. Không có nó, `variant_usage` nhích lên một
-        # tức nhảy qua một bậc *bất kỳ*: bậc bị nhảy qua thành bỏ phí, còn bậc thật sự có chủ
-        # vẫn nằm trong vòng quay và được phát lại. Đo trên lô 1: đúng một va chạm sinh ra
-        # như thế (CHA và SỐ BA), và nó tránh được mà không cần thêm giọng nào.
-        #
-        # `formant_ratio` để mặc định None cho những chỗ gọi cũ không biết bậc; khi ấy hành vi
-        # y hệt trước bản vá này, tức chỉ nhích bộ đếm.
-        if formant_ratio is not None:
-            step = round(float(formant_ratio), 3)
-            self.taken_variants.setdefault(name, set()).add(step)
-            if who:
-                self.holders.setdefault(name, {}).setdefault(step, set()).add(str(who))
+            self.holders.setdefault(str(preset_name), set()).add(str(who))
 
 
 def character_preset_allowed(preset: str, excluded: Any) -> bool:
@@ -2090,62 +1798,29 @@ def reserve_pinned_voices(
                 " bỏ qua khi giữ chỗ."
             )
             continue
-        # `row` là cả dòng voice_profiles, nên bậc formant có sẵn ở đây. Bản đầu chỉ truyền
-        # tên preset đi và vứt nó, đó chính là chỗ hỏng.
+        # Mỗi preset là một giọng; pin giữ chỗ trước lượt phân vai theo số câu.
         if not character_preset_allowed(str(row["preset_name"]), allocator.not_for_characters):
             log(f"Không giữ chỗ giọng đã ghim của {canonical!r}: trùng giọng người kể.")
             continue
-        allocator.reserve(str(row["preset_name"]), float(row["formant_ratio"]), who=canonical)
+        allocator.reserve(str(row["preset_name"]), who=canonical)
         reserved += 1
     return reserved
 
 
-def voice_profile_spec(preset: dict[str, str], formant_ratio: float, *, age_pitch: int = 0) -> dict[str, Any]:
-    """The voice profile a preset becomes at one formant step: key, description, seed, pitch.
-
-    Split out of `_profile_for_preset` so that a voice a listener picks in the Studio
-    (`ProjectDB.apply_listener_voice`) is exactly the profile casting would have created, written
-    inside that apply's own transaction.
-    """
-    name = preset["name"]
+def voice_profile_spec(preset: dict[str, str]) -> dict[str, Any]:
+    """Khoá và seed thuộc preset; hai người dùng chung giọng nghe giống nhau."""
+    name = str(preset["name"])
     engine = str(preset.get("engine", ENGINE_VIENEU))
-    if engine != ENGINE_VIENEU and (abs(float(formant_ratio) - 1.0) > 1e-6 or int(age_pitch)):
-        # Thang formant và cao độ theo tuổi là của VieNeu; giọng máy khác chỉ có bậc gốc (voice_catalog.ENGINE_VOICES).
-        raise ValueError(f"{engine} voice {name!r} has no formant or age-pitch variants")
-    # The preset's calibrated reading register, plus whatever the character's age asks
-    # for: ageing moves men up while it moves women down (a child asks for nothing).
-    base_pitch = base_pitch_for_preset(name, engine) + int(age_pitch)
-    formant_key = balance_formant_key(formant_ratio)
-    pitch_key = f"p{int(base_pitch):+03d}"
-    if abs(float(formant_ratio) - 1.0) <= 1e-6:
-        description = "âm sắc gốc"
-    elif float(formant_ratio) < 1.0:
-        description = f"âm sắc trầm hơn ({formant_ratio:.2f})"
-    else:
-        description = f"âm sắc sáng hơn ({formant_ratio:.2f})"
-    return {
-        "voice_key": f"{_voice_key_stem(preset)}_{formant_key}_{pitch_key}",
-        "engine": engine,
-        "preset_name": name,
-        "description": f"{preset['description']} · {description}",
-        "seed": stable_int(f"voice::{engine}::{name}::{formant_key}::{pitch_key}"),
-        "pitch_semitones": base_pitch,
-        "formant_ratio": float(formant_ratio),
-        "status": "ready",
-    }
+    from .voice_balance import voice_key, engine_version
+    key = voice_key(engine, engine_version(engine), name)
+    from .voice_balance import constants_for_key
+    constants_for_key(key)
+    return {"voice_key": key, "engine": engine, "preset_name": name,
+            "description": preset["description"], "seed": stable_int(f"voice::{key}"), "status": "ready"}
 
 
-def _profile_for_preset(
-    db: ProjectDB,
-    preset: dict[str, str],
-    formant_ratio: float,
-    cache: dict[str, int],
-    *,
-    age_pitch: int = 0,
-) -> int:
-    spec = voice_profile_spec(preset, formant_ratio, age_pitch=age_pitch)
-    # The voice key encodes preset, formant step and pitch - the three things the cache was
-    # keyed on - so it keys the cache as well.
+def _profile_for_preset(db: ProjectDB, preset: dict[str, str], cache: dict[str, int]) -> int:
+    spec = voice_profile_spec(preset)
     if spec["voice_key"] not in cache:
         cache[spec["voice_key"]] = db.upsert_voice_profile(spec)
     return cache[spec["voice_key"]]
@@ -2481,7 +2156,7 @@ def assert_voice_stability(db: ProjectDB, log: Callable[[str], None] = lambda _m
     # every segment is verified, every chapter publishes, and only a listener finds it.
     #
     # It is reported rather than raised because at some book size sharing becomes
-    # unavoidable - there are only so many presets times formant variants - and killing a
+    # unavoidable - there are only so many presets - and killing a
     # run over an inevitability would be worse than saying so. alpha.54 cast 23 characters
     # into 23 distinct voices, so at this scale a collision means something is wrong, not
     # that the catalogue ran out.
@@ -2603,9 +2278,6 @@ def _drop_pins_that_share_a_chapter(
     return {name: voice for name, voice in locked_voices.items() if name not in dropped}
 
 
-VOICE_KEY_SUFFIX_PATTERN = re.compile(r"^preset_(?P<body>.+)_f(?P<formant>\d+)_p(?P<pitch>[+-]\d+)$")
-
-
 def _drop_pins_that_contradict_a_person(
     db: Any,
     locked_voices: dict[str, str],
@@ -2613,26 +2285,14 @@ def _drop_pins_that_contradict_a_person(
     locked_ages: dict[str, str],
     log: Any,
 ) -> dict[str, str]:
-    """Bỏ giọng đã ghim khi nó trái với thứ NGƯỜI đã ghim. Trả về bản đã lọc.
-
-    Đây là chỗ duy nhất "nhất quán" phải nhường "đúng". `port_casting` mang `locked_voice_key`
-    đi theo danh tính để người nghe không mất nhân vật giữa các lô - đúng, và nó cũng mang
-    nguyên một lần đoán sai đi mãi: IVAN bị gọi là `child` một lần ở lô 3, được cấp giọng nữ
-    kéo cao, và mang nó sang mọi lô sau (17 câu ở chương 062).
-
-    MỘT luật, và là luật duy nhất dữ liệu chứng minh được: **preset phải đúng phái, trừ trẻ
-    con.** Trẻ con được đọc bằng preset nữ (nguyên giọng, không bóp) dù là con trai, nên ở đó
-    lệch phái là đúng. Không bịa luật thứ hai kiểu "giọng trẻ con cho người lớn": nhìn
-    `voice_key` không phân biệt được preset nữ dành cho một đứa trẻ với preset nữ dành cho một
-    phụ nữ trưởng thành, và đoán chính là thứ đã tạo ra cả lớp lỗi này.
-    """
+    """Giữ preset đúng phái người nghe đã ghim, áp cùng luật cho mọi tuổi."""
     kept: dict[str, str] = {}
     for key, voice_key in locked_voices.items():
         gender = locked_genders.get(key)
         age = locked_ages.get(key)
         preset = preset_gender_of_voice_key(voice_key)
         contradicts = bool(
-            gender and preset and preset != gender and (age or "") != "child"
+            gender and preset and preset != gender
         )
         if not contradicts:
             kept[key] = voice_key
@@ -2918,7 +2578,6 @@ def build_registry_and_cast(
     narrator_preset = _preset_by_name(narrator_voice)
     allocator = PresetAllocator(
         narrator_voice,
-        int(voice_cfg.get("max_character_pitch_semitones", 2)),
         other_narrators=tuple(voice_cfg.get("other_narrators", ())),
     )
     # Before anyone is cast: a voice that belongs to somebody is taken, whether or not that
@@ -2939,18 +2598,12 @@ def build_registry_and_cast(
         importance="narrator",
         confidence=1.0,
     )
-    narrator_profile = db.upsert_voice_profile(
-        {
-            "voice_key": "narrator",
-            "engine": "vieneu",
-            "preset_name": narrator_voice,
-            "description": str(voice_cfg["narrator_description"]),
-            "seed": stable_int("voice::narrator"),
-            "pitch_semitones": 0,
-            "status": "ready",
-        }
-    )
-    profile_cache[f"{narrator_voice}::p0"] = narrator_profile
+    narrator_profile = db.upsert_voice_profile({
+        "voice_key": "narrator", "engine": "vieneu", "preset_name": narrator_voice,
+        "description": str(voice_cfg["narrator_description"]),
+        "seed": stable_int("voice::narrator"), "status": "ready",
+    })
+    profile_cache[narrator_voice] = narrator_profile
     db.set_character_for_speaker("NARRATOR", narrator_character_id)
     db.set_voice_for_character_segments(narrator_character_id, narrator_profile)
 
@@ -3006,14 +2659,14 @@ def build_registry_and_cast(
         db.set_character_for_speaker(speaker, character_id)
         profile_id = _pinned_profile_id(db, locked_voices, canonical, allocator, local, log)
         if profile_id is None:
-            preset, formant_ratio, age_pitch = allocator.choose(
+            preset = allocator.choose(
                 gender,
                 npc=local,
                 age=age,
                 who=canonical,
             )
             profile_id = _profile_for_preset(
-                db, preset, formant_ratio, profile_cache, age_pitch=age_pitch
+                db, preset, profile_cache
             )
         db.set_voice_for_character_segments(character_id, profile_id)
         local_count += int(local)
@@ -3049,14 +2702,14 @@ def build_registry_and_cast(
             db, locked_voices, anonymous_canonical, allocator, True, log
         )
         if profile_id is None:
-            preset, formant_ratio, age_pitch = allocator.choose(
+            preset = allocator.choose(
                 gender,
                 npc=True,
                 age=_majority(anonymous_rows, "age"),
                 who=anonymous_canonical,
             )
             profile_id = _profile_for_preset(
-                db, preset, formant_ratio, profile_cache, age_pitch=age_pitch
+                db, preset, profile_cache
             )
         db.set_character_and_voice_for_segments(
             [int(row["id"]) for row in anonymous_rows],
@@ -3070,30 +2723,22 @@ def build_registry_and_cast(
     assert_voice_stability(db, log)
     log(
         f"Đã khóa voice casting VieNeu: dùng {used_voices}/{len(VIENEU_PRESETS)} preset; "
-        f"{voice_variants} biến thể giọng; "
+        f"{voice_variants} giọng; "
         f"{local_count} NPC có danh tính cục bộ, {anonymous_count} nhóm NPC generic theo giới tính."
     )
 
 
 def book_allocator(conn: Any, voices: dict[str, Any], *, leave_out: str) -> PresetAllocator:
-    """An allocator carrying the book as it stands: every character but `leave_out` holds its
-    current voice step, and everyone - `leave_out` included - is known by the chapters they speak in.
-
-    Re-voicing ONE character after casting (a listener says the boy is a girl, or two people
-    share a voice) has to ask the question casting asked - which voice, at which formant step,
-    clashes least with whoever shares my chapters - without moving anyone else. Rebuilding the
-    ledger from the segments is what lets `choose()` answer it unchanged.
-    """
+    """Giữ các preset của sách, trừ nhân vật đang đổi giọng; biết ai cùng chương để giảm trùng."""
     allocator = PresetAllocator(
         str(voices["narrator_voice"]),
-        int(voices.get("max_character_pitch_semitones", 2)),
         other_narrators=tuple(voices.get("other_narrators", ())),
     )
     chapters: dict[str, set[int]] = defaultdict(set)
-    held: dict[str, set[tuple[str, float]]] = defaultdict(set)
+    held: dict[str, set[str]] = defaultdict(set)
     for row in conn.execute(
         """
-        SELECT c.canonical_name, s.chapter_id, v.preset_name, v.formant_ratio FROM segments s
+        SELECT c.canonical_name, s.chapter_id, v.preset_name FROM segments s
         JOIN characters c ON c.id = s.canonical_character_id
         JOIN voice_profiles v ON v.id = s.voice_profile_id
         WHERE c.canonical_name <> 'NARRATOR'
@@ -3102,12 +2747,12 @@ def book_allocator(conn: Any, voices: dict[str, Any], *, leave_out: str) -> Pres
         who = str(row["canonical_name"])
         chapters[who].add(int(row["chapter_id"]))
         if who != leave_out and row["preset_name"]:
-            held[who].add((str(row["preset_name"]), round(float(row["formant_ratio"] or 1.0), 3)))
+            held[who].add(str(row["preset_name"]))
     for who in sorted(chapters):
         allocator.note_chapters(who, chapters[who])
     for who in sorted(held):
-        for preset_name, ratio in sorted(held[who]):
-            allocator.reserve(preset_name, ratio, who=who)
+        for preset_name in sorted(held[who]):
+            allocator.reserve(preset_name, who=who)
     return allocator
 
 
@@ -3122,10 +2767,7 @@ def listener_voice_choice(
     chapters: set[int] | None = None,
 ) -> dict[str, Any]:
     """The voice profile `character` should have: the preset a listener picked, or - with no
-    preset - the one casting picks for this gender and age with everybody else in place.
-
-    A picked preset still gets its formant step the way casting would give it: the step age
-    demands, else the first step nobody who shares a chapter with this character holds.
+    preset - the one casting picks for this gender with everybody else in place.
 
     `chapters`: where a character a listener just CREATED will speak - they have no segments
     yet, so without this the allocator would not know whose voice to stay clear of.
@@ -3138,18 +2780,9 @@ def listener_voice_choice(
     other_engine = engine_voice(preset_name) if preset_name else None
     if other_engine is not None:
         # Giọng máy khác: một bậc duy nhất, không kéo theo tuổi (voice_profile_spec).
-        return voice_profile_spec(other_engine, 1.0)
+        return voice_profile_spec(other_engine)
     if preset_name:
         preset = preset_by_name(preset_name)
-        ratio = formant_ratio_for_age(preset_name, age, gender)
-        # A child is never warped, not even by a ladder step: the preset the listener picked, untouched.
-        if str(age) != "child" and abs(ratio - 1.0) <= 1e-6:
-            ratio = allocator._first_free_variant(
-                preset_name, formant_variants_for_preset(preset_name), who=character
-            )
-        age_pitch = age_pitch_semitones(age, gender, preset_name)
     else:
-        preset, ratio, age_pitch = allocator.choose(
-            gender, npc=is_local_speaker(character), age=age, who=character
-        )
-    return voice_profile_spec(preset, ratio, age_pitch=age_pitch)
+        preset = allocator.choose(gender, npc=is_local_speaker(character), age=age, who=character)
+    return voice_profile_spec(preset)

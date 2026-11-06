@@ -1,8 +1,8 @@
 """Độ to của từng giọng đọc: chỉnh lúc PHÁT (âm lượng của phần tử audio), không mã hoá lại clip (bộ nhớ đệm dùng chung mọi mức) - trừ phần bù theo clip
 của giọng VieNeu và Supertonic ở cuối file (câu ngắn nhỏ hơn mức giọng được nâng lên ngay lúc làm clip).
 
-Đo bằng BS.1770 (LUFS tích hợp) trên 60 câu, phiên Nhạc (docs/MUSIC_RESEARCH.md): giọng Studio nằm quanh -20,3 LUFS, đích -20 LUFS.
-`gain_db` = đích - đo, luôn <= 0 (phần tử audio chỉ giảm được, không khuếch đại). Giọng chưa đo: 0 dB.
+Turbo/Nano (trừ Mai Anh) dùng gain ISO 532-1 stationary từ 40 câu trung tính × hai seed, đo sau bước bù câu ngắn.
+Bảng LUFS còn là mốc bù clip và gain phát cho các giọng chưa đo ISO. Gain luôn <= 0 (phần tử audio chỉ giảm được).
 """
 from __future__ import annotations
 
@@ -66,7 +66,49 @@ MEASURED_LUFS = {
 }
 
 
+# BEGIN ISO_GAIN_DB
+ISO_GAIN_DB = {
+    "vieneu:nano/Adam": -7.1749299,
+    "vieneu:nano/Anh Khôi": -5.6875576,
+    "vieneu:nano/Hữu Quân": -6.4627331,
+    "vieneu:nano/Minh Quân": -9.2682724,
+    "vieneu:nano/Mạnh Dũng": -6.969697,
+    "vieneu:nano/Mỹ Duyên": -5.7483092,
+    "vieneu:nano/Trúc Ly": -5.8490925,
+    "vieneu:nano/Xuân Tiên": -6.4397812,
+    "vieneu:nano/Ái Hân": -7.6493777,
+    "vieneu:nano/Đức Trí": -5.7351194,
+    "vieneu:turbo/Adam": -5.823589,
+    "vieneu:turbo/Adam bựa": -8.5656387,
+    "vieneu:turbo/Hải Đăng": -7.4689457,
+    "vieneu:turbo/Kim Thanh": -6.1783833,
+    "vieneu:turbo/Minh Triết": -5.0567296,
+    "vieneu:turbo/Minh Đức": -4.1024272,
+    "vieneu:turbo/Mỹ Duyên": -5.2095427,
+    "vieneu:turbo/Ngọc Huyền": -5.6594003,
+    "vieneu:turbo/Ngọc Linh": -3.0590848,
+    "vieneu:turbo/Ngọc Trân": -5.1148725,
+    "vieneu:turbo/Phạm Tuyên": -5.0953902,
+    "vieneu:turbo/Quang Sơn": -6.5561637,
+    "vieneu:turbo/Quốc Tuấn": -5.8438354,
+    "vieneu:turbo/Quỳnh Anh": -6.9844304,
+    "vieneu:turbo/Thanh Bình": -7.4990731,
+    "vieneu:turbo/Thiền Tâm Đức": -5.1438573,
+    "vieneu:turbo/Thiện Minh": -4.675821,
+    "vieneu:turbo/Thái Sơn": -5.8174993,
+    "vieneu:turbo/Thùy Dung": -5.7658618,
+    "vieneu:turbo/Thục Đoan": -6.3053222,
+    "vieneu:turbo/Trúc Ly": -7.1000357,
+    "vieneu:turbo/Xuân Vĩnh": -5.0309771,
+    "vieneu:turbo/Đoan Trang": -5.6663398,
+    "vieneu:turbo/Đức Trí": -4.9689108
+}
+# END ISO_GAIN_DB
+
+
 def gain_db(voice_id: str) -> float:
+    if voice_id in ISO_GAIN_DB:
+        return ISO_GAIN_DB[voice_id]
     measured = MEASURED_LUFS.get(voice_id)
     return 0.0 if measured is None else round(min(0.0, TARGET_LUFS - measured), 1)
 

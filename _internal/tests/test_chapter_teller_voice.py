@@ -40,6 +40,7 @@ def test_chapter_narration_and_own_thought_share_character_voice_and_reopen(tmp_
     assert "chapterNarrator" not in teller_voice.ensure(paths.root, db, settings)
     tts = object.__new__(TTSCoordinator)
     tts.db = db
+    tts.spoken_text_with_anchors = lambda row, **kw: (row["text"], [])
     tts.spoken_text = lambda row, **kw: row["text"]
     assert tts._voice_profile_for_row(after["c2s0"])["id"] == own_voice
     assert tts._spoken_row(after["c2s0"])["voice_profile_id"] == own_voice

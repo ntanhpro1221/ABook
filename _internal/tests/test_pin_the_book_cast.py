@@ -19,12 +19,12 @@ def _rows(*triples: tuple[str, str, str]) -> list[dict]:
 
 def test_the_majority_voice_is_the_one_with_the_most_chapters() -> None:
     rows = _rows(
-        ("065", "KANG", "preset_thanh_binh_f100_p-04"),
-        ("071", "KANG", "preset_thanh_binh_f100_p-04"),
-        ("066", "KANG", "preset_thanh_binh_f093_p-04"),
+        ("065", "KANG", "vieneu@3.8.3/Thanh Bình"),
+        ("071", "KANG", "vieneu@3.8.3/Thái Sơn"),
+        ("066", "KANG", "vieneu@3.8.3/Thanh Bình"),
     )
 
-    assert majority_voices(rows) == {"KANG": ("preset_thanh_binh_f100_p-04", 2, 3)}
+    assert majority_voices(rows) == {"KANG": ("vieneu@3.8.3/Thanh Bình", 2, 3)}
 
 
 def test_a_tie_goes_to_the_alphabetically_first_voice() -> None:
@@ -50,10 +50,10 @@ def test_an_existing_pin_is_never_overturned() -> None:
     vi cũ: pin đã có không bao giờ bị lật.
     """
     wanted = {
-        "KANG": ("preset_thanh_binh_f100_p-04", 8, 13),
-        "LYLE": ("preset_thai_son_f100_p+00", 3, 3),
+        "KANG": ("vieneu@3.8.3/Thanh Bình", 8, 13),
+        "LYLE": ("vieneu@3.8.3/Thái Sơn", 3, 3),
     }
-    owned = {"preset_thanh_binh_f100_p-04": "BOWDEN"}
+    owned = {"vieneu@3.8.3/Thanh Bình": "BOWDEN"}
 
     kept, dropped = resolve_collisions(wanted, owned)
 
@@ -69,8 +69,8 @@ def test_two_people_who_never_meet_may_share_one_pinned_voice() -> None:
     người được ghim, 21 lời "slot đã thuộc …" — tức tiếp tục đúng cái vòng đã đưa cuốn 1 từ 11
     lên 21 người mang hai giọng.
     """
-    wanted = {"KANG": ("preset_thanh_binh_f100_p-04", 8, 13)}
-    owned = {"preset_thanh_binh_f100_p-04": "BOWDEN"}
+    wanted = {"KANG": ("vieneu@3.8.3/Thanh Bình", 8, 13)}
+    owned = {"vieneu@3.8.3/Thanh Bình": "BOWDEN"}
     chapters_of = {"KANG": {"010", "011"}, "BOWDEN": {"200", "201"}}
 
     kept, dropped = resolve_collisions(wanted, owned, chapters_of)
@@ -81,8 +81,8 @@ def test_two_people_who_never_meet_may_share_one_pinned_voice() -> None:
 
 
 def test_sharing_is_refused_when_the_two_do_meet() -> None:
-    wanted = {"KANG": ("preset_thanh_binh_f100_p-04", 8, 13)}
-    owned = {"preset_thanh_binh_f100_p-04": "BOWDEN"}
+    wanted = {"KANG": ("vieneu@3.8.3/Thanh Bình", 8, 13)}
+    owned = {"vieneu@3.8.3/Thanh Bình": "BOWDEN"}
     chapters_of = {"KANG": {"010", "011"}, "BOWDEN": {"011", "200"}}
 
     kept, dropped = resolve_collisions(wanted, owned, chapters_of)
@@ -94,8 +94,8 @@ def test_sharing_is_refused_when_the_two_do_meet() -> None:
 def test_two_new_proposals_that_never_meet_are_both_pinned() -> None:
     """Cùng luật ấy áp cho hai đề nghị mới đấu nhau, không chỉ cho đề nghị đấu với pin cũ."""
     wanted = {
-        "KANG": ("preset_thanh_binh_f100_p-04", 8, 13),
-        "LYLE": ("preset_thanh_binh_f100_p-04", 3, 3),
+        "KANG": ("vieneu@3.8.3/Thanh Bình", 8, 13),
+        "LYLE": ("vieneu@3.8.3/Thanh Bình", 3, 3),
     }
     chapters_of = {"KANG": {"010", "011"}, "LYLE": {"300"}}
 

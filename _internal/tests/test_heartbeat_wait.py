@@ -62,3 +62,14 @@ def test_a_silent_daemon_is_reported_with_the_command_to_restart_it(tmp_path, mo
     assert hw.daemon_warning(now=fresh + 60) == ""
     warning = hw.daemon_warning(now=fresh + hw.DAEMON_SILENT_SECONDS + 60)
     assert "im" in warning and "Start-Process" in warning and "heartbeat_daemon.py" in warning
+
+
+def test_a_low_disk_rings_once_until_there_is_room_again() -> None:
+    import scripts.heartbeat_event as event
+
+    state = {"roots": [], "done": 0, "last_done": [], "problems": [], "battery": False}
+    watch = event.Watch({**state, "disk_low": False})
+    assert watch.observe({**state, "disk_low": True}) == [f"ổ dự án còn dưới {event.DISK_LOW_GB} GB - dọn đồ phát triển ngay"]
+    assert watch.observe({**state, "disk_low": True}) == []
+    assert watch.observe({**state, "disk_low": False}) == []
+    assert len(watch.observe({**state, "disk_low": True})) == 1

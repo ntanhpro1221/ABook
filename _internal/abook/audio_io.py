@@ -48,36 +48,17 @@ class ChapterQualityError(AudioQualityError):
 
 
 CHAPTER_DURATION_HARD_TOLERANCE_SECONDS = 0.10
-CHAPTER_LOUDNESS_HARD_TOLERANCE_LU = 0.75
+# Chọn từ bộ câu hiệu chuẩn 73 phon, trước phép thử sách: +5 dB cho khoảng 77,8 phon.
+MASTER_GAIN_DB = 5.0
 CHAPTER_LOUDNESS_REVIEW_TOLERANCE_LU = 0.30
 LOUDNESS_REVIEW_FLAG_PREFIX = "loudness delta"
 
 
 def chapter_review_flags_that_block(review_flags) -> list:
-    """Cờ review nào thật sự phải chặn chương, khi không có ai để hỏi.
+    """LUFS chỉ chẩn đoán; lỗi khoảng lặng, mối nối và đỉnh vẫn chặn như cũ.
 
-    Trước 2026-09-09 mọi cờ review đều chặn dưới `high_quality`, và chương đầu tiên của lượt
-    sản xuất chết vì `loudness delta 0.62 LU`. Nghĩa đen của một cờ review là *"có thể đáng
-    nghe, hỏi một người"* — mà lệnh của chủ sách là **không phải nghe**
-    (docs/SHIPPING_WITHOUT_A_LISTENER.md).
-
-    **CHỌN HẸP, và đây là lý do.** Đếm trên mọi project đã lưu, chỉ ba loại cờ review tầng
-    chương từng xuất hiện:
-
-        4 lần   unexpected silence   vd 1,02s     <- NGHE THẤY, vẫn chặn
-        2 lần   join discontinuity   vd 0,183     <- NGHE THẤY, vẫn chặn
-        2 lần   loudness delta       vd 0,62 LU   <- không nghe thấy, cho qua
-
-    Một công tắc gộp sẽ đẩy cả **một giây mất tiếng** vào sách, và sẽ vô hiệu hoá
-    `join discontinuity` — phép kiểm mà chính dự án đã đo là hiệu chỉnh đúng (nổ 1/107 lần,
-    đúng vào cực đại thật). Chỉ mình độ to là đại lượng có ngưỡng nghe được rõ ràng, và
-    `CHAPTER_LOUDNESS_HARD_TOLERANCE_LU = 0.75` đã là vạch mà chính dự án đặt ra cho "quá mức
-    này thì chắc chắn có vấn đề". Một cờ độ to nằm dưới vạch ấy là phép kiểm tự nhận nó chưa
-    chắc — cùng lý lẽ với *"ASR là nhân chứng duy nhất"*, chỉ khác là nhân chứng thứ hai ở đây
-    là ngưỡng cứng của chính nó.
-
-    Chương vẫn đi tiếp **và vẫn kêu**: `pipeline` đã có sẵn sự kiện `CHAPTER_QA_REVIEW_FLAGS`
-    ghi mọi cờ, kể cả cờ được cho qua ở đây.
+    Các preset cân bằng phon có LUFS khác nhau. Không ép chương về cùng LUFS;
+    pipeline vẫn ghi mọi cờ trong CHAPTER_QA_REVIEW_FLAGS.
     """
     return [
         flag
@@ -155,6 +136,10 @@ class ChapterQualityMetrics:
     # every chapter. Recorded because silently altering delivered audio and leaving no trace
     # is how a defect becomes a mystery three versions later.
     trimmed_segment_edges: tuple[str, ...] = ()
+    master_gain_db: float = MASTER_GAIN_DB
+    limiter_reduced_fraction: float = 0.0
+    limiter_reduced_seconds: float = 0.0
+    limiter_max_reduction_db: float = 0.0
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -180,30 +165,14 @@ def delivery_gain_copy(source: Path, destination: Path, delta_db: float, setting
     return gain
 
 
-EMOTION_LEVEL_OFFSETS_DB = {
-    "angry": 1.5,
-    "excited": 1.0,
-    "surprised": 0.7,
-    "whispering": -2.5,
-    "tired": -1.0,
-    "tender": -0.5,
-}
-LOUDNESS_EMOTION_OFFSETS_DB = {
-    "angry": 0.8,
-    "excited": 0.6,
-    "surprised": 0.4,
-    "whispering": -2.0,
-    "tired": -0.7,
-    "tender": -0.3,
-}
 LOUDNESS_BLOCK_SECONDS = 0.4
 RATE_HARD_MIN_FACTOR = 0.55
 RATE_HARD_MAX_FACTOR = 1.50
 # Sàn nhịp theo ÂM TIẾT mỗi giây (từ = âm tiết), đo trên 8.301 bản thu đã qua của lô 1–3
 # (2026-09-10): p0.5 3,22 · p1 3,51 · p2 3,76 · p50 4,67 · p98 6,07. Lấy p2, cùng cách chọn
-# sàn 12,5 chars/s; slow/fast tỉ lệ theo dải chữ như cũ (7/12,5 và 14/12,5). Xem
+# sàn 12,5 chars/s; mọi nhãn pace dùng chung sàn normal. Xem
 # `pace_is_outlier` cho lý do có hai thước.
-PACE_SYLLABLES_PER_SECOND_FLOOR = {"slow": 2.1, "normal": 3.75, "fast": 4.2}
+PACE_SYLLABLES_PER_SECOND_FLOOR = 3.75
 VIENEU_V3_CODEC_SAMPLE_RATE = 48_000
 VIENEU_V3_CODEC_SAMPLES_PER_FRAME = 3_840
 VIENEU_V3_FRAME_SECONDS = VIENEU_V3_CODEC_SAMPLES_PER_FRAME / VIENEU_V3_CODEC_SAMPLE_RATE
@@ -213,7 +182,7 @@ GENERATION_PADDING_SECONDS = 2.0
 MIN_GENERATION_SECONDS = 3.0
 MIN_VALIDATION_SECONDS = 5.0
 VALIDATION_PADDING_SECONDS = 8.0
-DEFAULT_PACE_LOWER_BOUNDS = {"slow": 6.0, "normal": 10.5, "fast": 12.0}
+DEFAULT_PACE_LOWER_BOUND = 10.5
 # Khoá bảng cân bằng giọng của giọng đọc đoạn này (`voice_balance.voice_key`), ghi vào hàng đoạn
 # trước ngân sách sinh và trước độ to (`synthesize_atomic`). Hàng trong DB chỉ mang
 # `voice_profile_id`; vắng trường này thì không biết giọng nào, và độ to hằng số không áp được.
@@ -481,7 +450,6 @@ def spoken_syllables(text: str) -> int:
 def pace_is_outlier(
     rate: float,
     syllable_rate: float,
-    pace: str,
     bounds: "tuple[float, float] | list[float]",
     fast_rate: float | None = None,
     *,
@@ -504,9 +472,7 @@ def pace_is_outlier(
     """
     lower_bound = float(bounds[0]) * float(floor_scale)
     upper_bound = float(bounds[1])
-    syllable_floor = PACE_SYLLABLES_PER_SECOND_FLOOR.get(
-        pace, PACE_SYLLABLES_PER_SECOND_FLOOR["normal"]
-    ) * float(floor_scale)
+    syllable_floor = PACE_SYLLABLES_PER_SECOND_FLOOR * float(floor_scale)
     too_slow = rate < lower_bound and syllable_rate < syllable_floor
     # Cận trên xét bằng nhịp đo với khoảng lặng CÓ THẬT khi chỗ gọi đưa nó tới. Cùng một hình
     # với phép đếm âm tiết ở trên: thước thứ hai chỉ được bớt lời kết tội, không được thêm -
@@ -552,10 +518,8 @@ def segment_duration_policy(
     segment: Any | None = None,
 ) -> SegmentDurationPolicy:
     tts = (settings or {}).get("tts", {})
-    pace = str(_segment_value(segment, "pace", "normal")) if segment is not None else "normal"
-    configured_bounds = tts.get("pace_chars_per_second", {})
-    configured = configured_bounds.get(pace, DEFAULT_PACE_LOWER_BOUNDS.get(pace, 10.5))
-    lower_bound = float(configured[0] if isinstance(configured, (list, tuple)) else configured)
+    bounds = tts.get("pace_chars_per_second", (DEFAULT_PACE_LOWER_BOUND,))
+    lower_bound = float(bounds[0])
     # Sàn của NHỊP THÔ: tốc độ của giọng (`tempo = x * r_v`) chỉ được áp SAU khi sinh, nên bản thu
     # thô chậm hơn bản nghe `tempo` lần. Cấp khung theo sàn chung thì câu dài của Đức Trí (11,39
     # kt/s thô) chạm trần và bị cắt cụt. Sàn cổng là `pace_floor_scale * x`, chia cho tempo còn
@@ -716,35 +680,13 @@ def integrated_loudness_lufs(audio: np.ndarray, sample_rate: int) -> float | Non
     return loudness if math.isfinite(loudness) else None
 
 
-def segment_offsets_db(segment: Any, settings: dict[str, Any]) -> float:
-    """Độ lệch TƯƠNG ĐỐI của câu so với mức chung L, dB: volume + cảm xúc + người kể.
-
-    - volume: `segment_target_lufs[volume] - segment_target_lufs["normal"]` (soft -1,0 / normal 0 /
-      loud +1,2 với cấu hình mặc định). Chỉ lấy HIỆU giữa các neo; mức tuyệt đối của `normal`
-      là `L` của bảng cân bằng giọng, không phải số trong cấu hình;
-    - cảm xúc: `LOUDNESS_EMOTION_OFFSETS_DB[emotion] * intensity / 3`, chỉ khi volume là normal;
-    - người kể: `segment_narrator_offset_db` khi speaker là NARRATOR.
-    """
-    audio_cfg = settings["audio"]
-    targets = audio_cfg["segment_target_lufs"]
-    volume = str(_segment_value(segment, "volume", "normal"))
-    offset = float(targets.get(volume, targets["normal"])) - float(targets["normal"])
-    if str(_segment_value(segment, "speaker", "")) == "NARRATOR":
-        offset += float(audio_cfg.get("segment_narrator_offset_db", 0.0))
-    if volume == "normal":
-        emotion = str(_segment_value(segment, "emotion", "neutral"))
-        intensity = max(0, min(3, int(_segment_value(segment, "intensity", 0))))
-        offset += LOUDNESS_EMOTION_OFFSETS_DB.get(emotion, 0.0) * intensity / 3.0
-    return offset
-
-
 def segment_gain_db(segment: Any, settings: dict[str, Any]) -> float:
     """Gain HẰNG SỐ (dB) áp lên bản thô của giọng, không đo gì ở câu này.
 
-        gain_dB = L + o_v + offsets(câu) - ref_lufs_v
+        gain_dB = L + o_v - ref_lufs_v
 
-    `L` là mức chung, `o_v` là độ lệch riêng của giọng (đo ở x = 1, sau cao độ và tempo),
-    `offsets` là `segment_offsets_db`, và `ref_lufs_v` là LUFS trung bình đã đo của bản thô của
+    `L` là mức chung, `o_v` là độ lệch riêng của giọng (đo ở x = 1, sau tempo),
+    và `ref_lufs_v` là LUFS trung bình đã đo của bản thô của
     giọng: bản thô trung bình được kéo về `L + o_v`, các giọng gặp nhau ở một trục. Hai câu cùng giọng
     ra cùng gain bất kể câu nào to nhỏ hơn - dao động trong một giọng là của cảm xúc, không phải
     của phép đo.
@@ -760,7 +702,6 @@ def segment_gain_db(segment: Any, settings: dict[str, Any]) -> float:
     return (
         voice_balance.level_lufs()
         + constants.o_db
-        + segment_offsets_db(segment, settings)
         - constants.ref_lufs
     )
 
@@ -775,12 +716,11 @@ def level_segment(
 ) -> tuple[np.ndarray, dict[str, float]]:
     """Đưa bản thu về mức của giọng. Trả (âm thanh, số đo): `level_gain_db` đã áp và `peak_limited_db`.
 
-    Với sách mới (có `segment_target_lufs`) đây là `segment_gain_db`, hằng số; không còn đo LUFS câu rồi
+    Gain là `segment_gain_db`, hằng số; không đo LUFS câu rồi
     kéo về đích. Trần đỉnh `segment_peak_dbfs` giữ làm chốt an toàn: đỉnh vượt thì hạ cho vừa, phần hạ
     thêm ghi ở `peak_limited_db` (dB, >= 0). `already_leveled` dành cho bản ghép từ các phần đã áp gain:
     áp lần nữa là gấp đôi gain, nên chỉ còn trần đỉnh.
 
-    Sách khoá từ trước thời LUFS (chỉ có `segment_target_dbfs`) giữ nguyên chính sách RMS đo từng câu.
     """
     array = np.asarray(audio, dtype=np.float32).reshape(-1)
     info = {"level_gain_db": 0.0, "peak_limited_db": 0.0}
@@ -794,29 +734,17 @@ def level_segment(
     )
     if active_rms <= 0:
         return array, info
-    lufs_targets = audio_cfg.get("segment_target_lufs")
-    if isinstance(lufs_targets, dict) and "normal" in lufs_targets:
-        desired_db = 0.0 if already_leveled else segment_gain_db(segment, settings)
-    else:
-        # Locked books created before LUFS leveling retain their original RMS policy.
-        volume = str(_segment_value(segment, "volume", "normal"))
-        targets = audio_cfg["segment_target_dbfs"]
-        target_level = float(targets.get(volume, targets["normal"]))
-        if volume == "normal":
-            emotion = str(_segment_value(segment, "emotion", "neutral"))
-            intensity = max(0, min(3, int(_segment_value(segment, "intensity", 0))))
-            target_level += EMOTION_LEVEL_OFFSETS_DB.get(emotion, 0.0) * intensity / 3.0
-        desired_db = target_level - 20.0 * math.log10(active_rms)
+    desired_db = 0.0 if already_leveled else segment_gain_db(segment, settings)
     peak = float(np.max(np.abs(array)))
     peak_limit_db = float(audio_cfg.get("segment_peak_dbfs", -2.0))
     peak_safe_db = peak_limit_db - 20.0 * math.log10(peak)
     gain_db = min(desired_db, peak_safe_db)
     info["level_gain_db"] = float(gain_db)
     info["peak_limited_db"] = float(max(0.0, desired_db - peak_safe_db))
-    if isinstance(lufs_targets, dict) and "normal" in lufs_targets and not already_leveled:
+    if not already_leveled:
         constants = voice_balance.constants_for_key(_voice_balance_key(segment))
         info["applied_level_offset_db"] = (
-            constants.o_db + segment_offsets_db(segment, settings) - info["peak_limited_db"]
+            constants.o_db - info["peak_limited_db"]
         )
         info["level_speech_seconds"] = max(
             0.0, len(array) / sample_rate - measured_silence_seconds(array, sample_rate)
@@ -884,11 +812,7 @@ def validate_audio_array(
         segment is not None
         and speakable_chars >= int(settings["tts"].get("rate_check_min_chars", 24))
     ):
-        pace = str(_segment_value(segment, "pace", "normal"))
-        bounds = settings["tts"]["pace_chars_per_second"].get(
-            pace,
-            settings["tts"]["pace_chars_per_second"]["normal"],
-        )
+        bounds = settings["tts"]["pace_chars_per_second"]
         # Charge the pauses punctuation forces to the pauses, not to the speaker. Dividing
         # characters by wall-clock time measures punctuation density as much as speed: over
         # 3781 real segments the two correlate at -0.62, and a segment in the densest tenth
@@ -921,7 +845,7 @@ def validate_audio_array(
         hard_upper = upper_bound * RATE_HARD_MAX_FACTOR
         if rate < hard_lower or heard_rate > hard_upper:
             raise AudioQualityError(
-                f"speech rate far outside {pace} safety range: {rate:.2f} chars/s "
+                f"speech rate far outside safety range: {rate:.2f} chars/s "
                 f"({heard_rate:.2f} với khoảng lặng đo được) not in "
                 f"[{hard_lower:.2f}, {hard_upper:.2f}]"
             )
@@ -935,7 +859,6 @@ def validate_audio_array(
             pace_is_outlier(
                 rate,
                 syllable_rate,
-                pace,
                 bounds,
                 fast_rate=heard_rate,
                 floor_scale=pace_scale,
@@ -1304,24 +1227,33 @@ def _measure_loudness(
     return _parse_loudnorm_metrics(result.stderr)
 
 
-def _second_pass_loudnorm_filter(
-    audio_cfg: dict[str, Any],
-    measured: dict[str, float],
-) -> str:
-    return "loudnorm=" + ":".join(
-        (
-            f"I={_ffmpeg_number(float(audio_cfg['loudness_lufs']))}",
-            f"TP={_ffmpeg_number(float(audio_cfg['true_peak_db']))}",
-            f"LRA={_ffmpeg_number(float(audio_cfg['lra']))}",
-            f"measured_I={_ffmpeg_number(measured['input_i'])}",
-            f"measured_TP={_ffmpeg_number(measured['input_tp'])}",
-            f"measured_LRA={_ffmpeg_number(measured['input_lra'])}",
-            f"measured_thresh={_ffmpeg_number(measured['input_thresh'])}",
-            f"offset={_ffmpeg_number(measured['target_offset'])}",
-            "linear=true",
-            "print_format=summary",
-        )
-    )
+def _master_chapter_pcm(concat_input: list[str], destination: Path,
+                        audio_cfg: dict[str, Any], sample_rate: int) -> dict[str, float]:
+    """Kênh hằng nhỏ đo chính envelope limiter, không suy gain từ MP3 mất dữ liệu."""
+    ceiling = 10 ** (float(audio_cfg['true_peak_db']) / 20)
+    # Limiter liên kết hai kênh; kênh 0 là audio, kênh 1 chỉ là đồng hồ gain.
+    carrier = min(0.001, ceiling / 100)
+    filters = (f"volume={MASTER_GAIN_DB}dB,aresample={sample_rate * 4},"
+               f"aeval=exprs='val(0)|{carrier:.12g}':channel_layout=stereo,"
+               f"alimiter=limit={ceiling:.12f}:level=false:latency=true,"
+               f"aresample={sample_rate}")
+    result = run_hidden([ffmpeg_executable(), '-hide_banner', '-nostats', '-loglevel', 'error',
+                         '-nostdin', '-y', *concat_input, '-af', filters,
+                         '-c:a', 'pcm_f32le', str(destination)], timeout=7200, check=False)
+    if result.returncode:
+        raise AudioQualityError(f"FFmpeg peak limiter failed: {result.stderr[-3000:]}")
+    count = reduced = 0
+    minimum = 1.0
+    with sf.SoundFile(destination) as stream:
+        for block in stream.blocks(blocksize=sample_rate, dtype='float64', always_2d=True):
+            gain = block[:, 1] / carrier
+            count += len(gain)
+            # Sai số float/resample dưới 0,001 dB không được tính là limiter hoạt động.
+            reduced += int(np.count_nonzero(gain < 1 - 1e-4))
+            minimum = min(minimum, float(np.min(gain)))
+    return {'limiter_reduced_fraction': reduced / count if count else 0.0,
+            'limiter_reduced_seconds': reduced / sample_rate,
+            'limiter_max_reduction_db': -20 * math.log10(max(minimum, 1e-12))}
 
 
 def _source_timeline(
@@ -1639,8 +1571,7 @@ def _evaluate_chapter_quality(
         hard_failures.append(f"duration error {duration_error:+.3f}s")
     if raw_metrics["rms"] < CHAPTER_MIN_RMS:
         hard_failures.append(f"RMS too low: {raw_metrics['rms']:.6f}")
-    if loudness_delta > CHAPTER_LOUDNESS_HARD_TOLERANCE_LU:
-        hard_failures.append(f"integrated loudness off target by {loudness_delta:.2f} LU")
+    # LUFS là chẩn đoán: các giọng cân bằng phon không có cùng LUFS.
     if output_peak > target_peak + CHAPTER_TRUE_PEAK_HARD_MARGIN_DB:
         hard_failures.append(f"true peak too high: {output_peak:.2f} dBTP")
     if raw_metrics["clipping_fraction"] > CHAPTER_CLIPPING_HARD_FRACTION:
@@ -1711,7 +1642,6 @@ def assemble_chapter_atomic_with_metrics(
     track: int,
     work_dir: Path | None = None,
     retain_for_review: bool = False,
-    target_lufs: float | None = None,
 ) -> ChapterAssemblyResult:
     entries: list[tuple[Path, int]] = []
     for item in wavs:
@@ -1730,6 +1660,7 @@ def assemble_chapter_atomic_with_metrics(
     concat = output.with_suffix(".concat.part.txt")
     temp = output.with_name(output.stem + ".part" + output.suffix)
     decoded_temp = output.with_name(output.stem + ".qa.part.wav")
+    limited_temp = output.with_name(output.stem + ".limited.part.wav")
     sample_rate = int(settings["tts"]["sample_rate"])
     silence_dir = work_dir or output.parent / ".silence_cache"
     # Cap dead air at the take's edges before the timeline is measured, so the expected
@@ -1739,12 +1670,8 @@ def assemble_chapter_atomic_with_metrics(
     temp.unlink(missing_ok=True)
     decoded_temp.unlink(missing_ok=True)
     candidate_checksum: str | None = None
-    # Cùng một đích cho cả hai lượt master và cổng QA; không sửa settings đã khoá.
-    audio = dict(settings["audio"])
-    if target_lufs is not None:
-        if not math.isfinite(target_lufs) or not -70 <= target_lufs <= -5:
-            raise AudioQualityError("chapter loudness target outside FFmpeg range")
-        audio["loudness_lufs"] = float(target_lufs)
+    # Gain master cố định; LUFS chỉ chẩn đoán theo settings đã khóa.
+    audio = dict(settings['audio'])
     ffmpeg = ffmpeg_executable()
     concat_input = ["-f", "concat", "-safe", "0", "-i", str(concat)]
     try:
@@ -1756,6 +1683,7 @@ def assemble_chapter_atomic_with_metrics(
         atomic_write_text(concat, "\n".join(_concat_line(path) for path in concat_paths) + "\n")
 
         mastering_input = _measure_loudness(concat_input, audio)
+        limiter_metrics = _master_chapter_pcm(concat_input, limited_temp, audio, sample_rate)
         command = [
             ffmpeg,
             "-hide_banner",
@@ -1764,11 +1692,11 @@ def assemble_chapter_atomic_with_metrics(
             "error",
             "-nostdin",
             "-y",
-            *concat_input,
+            '-i', str(limited_temp),
             "-map",
             "0:a:0",
             "-af",
-            _second_pass_loudnorm_filter(audio, mastering_input),
+            'pan=mono|c0=c0',
             "-ar",
             str(sample_rate),
             "-ac",
@@ -1817,6 +1745,7 @@ def assemble_chapter_atomic_with_metrics(
             mastering_input,
             mastered_output,
         )
+        quality = replace(quality, **limiter_metrics)
         # Pipeline giữ chương giải mã được để nghe lại; phán quyết lỗi vẫn đi cùng metrics.
         if quality.hard_failures and not retain_for_review:
             raise ChapterQualityError(
@@ -1875,6 +1804,7 @@ def assemble_chapter_atomic_with_metrics(
     finally:
         concat.unlink(missing_ok=True)
         decoded_temp.unlink(missing_ok=True)
+        limited_temp.unlink(missing_ok=True)
         if temp.exists() and temp != output:
             temp.unlink(missing_ok=True)
 

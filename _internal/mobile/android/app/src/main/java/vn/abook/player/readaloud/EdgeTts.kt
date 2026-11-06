@@ -89,7 +89,7 @@ object EdgeProtocol {
     fun ssml(voiceName: String, escapedText: String, requestId: String, timestamp: String): String =
         "X-RequestId:$requestId\r\nContent-Type:application/ssml+xml\r\nX-Timestamp:${timestamp}Z\r\nPath:ssml\r\n\r\n" +
             "<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'><voice name='$voiceName'>" +
-            "<prosody pitch='+0Hz' rate='+0%' volume='+0%'>$escapedText</prosody></voice></speak>"
+            "<prosody rate='+0%' volume='+0%'>$escapedText</prosody></voice></speak>"
 
     /** Header "Khoá:giá trị" của một tin (chữ hay nhị phân) thành bảng; tên khoá giữ nguyên hoa/thường như dịch vụ gửi. */
     fun headers(block: String): Map<String, String> =

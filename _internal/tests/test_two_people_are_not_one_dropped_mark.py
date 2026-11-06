@@ -31,9 +31,9 @@ from scripts.one_person_one_voice import (
     split_voices,
 )
 
-MALE_A = "preset_thai_son_f093_p+00"
-MALE_B = "preset_thanh_binh_f108_p-04"
-FEMALE = "preset_ngoc_linh_f093_p+00"
+MALE_A = "vieneu@3.8.3/Thái Sơn"
+MALE_B = "vieneu@3.8.3/Thanh Bình"
+FEMALE = "vieneu@3.8.3/Ngọc Linh"
 
 
 def test_the_preset_name_says_which_gender_reads_it() -> None:

@@ -67,7 +67,7 @@ def make_project(root: Path, title: str = "Sách thử · Tập 1") -> Path:
     db.execute("INSERT INTO chapters VALUES (1, 1, '645', 'a.txt', 'completed', 3, ?, ?, ?, '')", (str(mp3), now - 80, now - 60))
     db.execute("INSERT INTO chapters VALUES (2, 2, '646', 'b.txt', 'synthesizing', 2, '', ?, NULL, '')", (now - 50,))
     db.execute("INSERT INTO voice_profiles VALUES (1, 'narrator', 'Đức Trí', 0, 1.0)")
-    db.execute("INSERT INTO voice_profiles VALUES (2, 'preset_thanh_binh_f087_p+00', 'Thanh Bình', 0, 0.87)")
+    db.execute("INSERT INTO voice_profiles VALUES (2, 'vieneu@3.8.3/Thanh Bình', 'Thanh Bình', 0, 0.87)")
     db.execute("INSERT INTO characters VALUES (1, 'LUCIEN', 'LUCIEN', 'male', 'young', 'main', 30, '')")
     rows = [
         (1, 1, 1, 0, 400, "Chương 646 - Trở về (1)", "narration", "NARRATOR", 1, "verified", "", "x", 2.0, now),

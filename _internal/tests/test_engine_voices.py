@@ -2,7 +2,7 @@
 
 - Điều phối viên giữ mỗi máy một adapter theo `voice_profiles.engine`, đổi bản thu về tần số dự án, tempo bằng WSOLA trừ máy tự
   đọc theo tốc độ (`native_tempo`: Supertonic, `engine_speed` của bảng, luật câu ngắn).
-- Khoá cân bằng của máy khác: `<engine>@<phiên bản>/<giọng>/f100`; thiếu khoá là lỗi rõ, không thu bằng 1,0.
+- Khoá cân bằng của máy khác: `<engine>@<phiên bản>/<giọng>`; thiếu khoá là lỗi rõ, không thu bằng 1,0.
 - Phân vai tự động KHÔNG đổi: cùng kịch bản chọn giọng ra đúng kết quả của main (14b4f06a).
 - Người nghe chọn giọng ZeroTTS cho một nhân vật: hồ sơ ZeroTTS, mọi câu sang; giọng chủ sách chưa chọn (Supertonic F2) bị từ chối.
 - Có mô-đun ZeroTTS trên máy (ABOOK_PREFERENCES trỏ tới thư mục có `zerotts/`): đúc ba câu thật trên CPU.
@@ -70,46 +70,6 @@ def test_the_owner_approved_voices_are_in_the_catalog() -> None:
     assert not {voice["name"] for voice in ENGINE_VOICES} & {preset["name"] for preset in VIENEU_PRESETS}
 
 
-def test_an_engine_voice_profile_is_one_step_with_its_own_key() -> None:
-    spec = voice_profile_spec(ZEROTTS, 1.0)
-    assert spec["voice_key"] == "zerotts_baotrang_f100_p+00"
-    assert (spec["engine"], spec["preset_name"], spec["pitch_semitones"], spec["formant_ratio"]) == ("zerotts", "baotrang", 0, 1.0)
-    assert preset_gender_of_voice_key(spec["voice_key"]) == "female"
-    assert preset_gender_of_voice_key(voice_profile_spec(engine_voice("giahuy"), 1.0)["voice_key"]) == "male"
-    # VieNeu tra như trước.
-    assert preset_gender_of_voice_key("preset_ngoc_linh_f093_p+00") == "female"
-    assert preset_gender_of_voice_key("preset_pham_tuyen_f100_p+00") == "male"
-    # Thang formant và cao độ theo tuổi là của VieNeu.
-    with pytest.raises(ValueError):
-        voice_profile_spec(ZEROTTS, 0.93)
-    with pytest.raises(ValueError):
-        voice_profile_spec(ZEROTTS, 1.0, age_pitch=3)
-
-
-def test_engine_voices_have_balance_keys_and_a_missing_one_is_an_error() -> None:
-    key = voice_balance.voice_key_for_profile({"engine": "zerotts", "preset_name": "baotrang", "formant_ratio": 1.0})
-    assert key == "zerotts@0.1.5/baotrang/f100"
-    constants = voice_balance.constants_for_key(key)
-    assert constants.r == pytest.approx(1.0427) and constants.ref_lufs == pytest.approx(-22.56) and constants.pitch_st == 0
-    for voice in castable_engine_voices():
-        voice_balance.constants_for_profile({"engine": voice["engine"], "preset_name": voice["name"], "formant_ratio": 1.0})
-    # Supertonic: tốc độ là tham số của máy (`engine_speed`), WSOLA không kéo thêm (r = 1).
-    f3 = voice_balance.constants_for_profile({"engine": "supertonic", "preset_name": "F3", "formant_ratio": 1.0})
-    assert (f3.key, f3.r, f3.engine_speed, f3.ref_lufs) == ("supertonic@3-724fb5ab/F3/f100", 1.0, pytest.approx(1.938), -26.03)
-    assert voice_balance.engine_speed(f3) == pytest.approx(1.938)
-    assert voice_balance.engine_speed(constants) is None
-    # Sàn cổng nhịp riêng của Supertonic (x 0,9), các máy khác như cũ.
-    assert voice_balance.pace_gate_scale(f3.key) == pytest.approx(voice_balance.pace_gate_scale() * 0.9)
-    assert voice_balance.pace_gate_scale(key) == pytest.approx(voice_balance.pace_gate_scale())
-    # Giọng chưa đo: lỗi rõ, không bao giờ 1,0.
-    with pytest.raises(VoiceBalanceError, match="chưa có"):
-        voice_balance.constants_for_profile({"engine": "zerotts", "preset_name": "maichi", "formant_ratio": 1.0})
-    with pytest.raises(VoiceBalanceError):
-        voice_balance.constants_for_profile({"engine": "zerotts", "preset_name": "baotrang", "formant_ratio": 0.93})
-    with pytest.raises(VoiceBalanceError):
-        voice_balance.engine_version("máy lạ")
-
-
 # --- phân vai tự động không đổi -----------------------------------------------------------------
 
 # sha256 của kịch bản dưới đây chạy trên main 14b4f06a (trước khung nhiều máy đọc), sau khi đổi tên ba giọng Turbo theo
@@ -122,24 +82,6 @@ def test_engine_voices_have_balance_keys_and_a_missing_one_is_an_error() -> None
 # Bản trước đó: 2bffd9a02889d1cb634048d7236bdb6f470b872a43c3dac8441a706cd7339339.
 # 06-11: Mai Anh withdrawn; narrator female starts with Đoan Trang, character female with Ngọc Linh.
 ALLOCATOR_APPROVED = "136258871e0ca8626309ce49dfaafc877edfe46b0190e7671182babf8a38f3ec"
-
-
-def test_automatic_casting_stays_on_the_approved_vieneu_pool() -> None:
-    allocator = PresetAllocator("Phạm Tuyên", 2, other_narrators=("Đức Trí",))
-    genders = ("male", "female", "unknown")
-    ages = ("adult", "child", "teen", "elderly", "unknown", "adult")
-    for index in range(36):
-        allocator.note_chapters(f"P{index}", {index % 5, (index * 3) % 7})
-    picks = []
-    for index in range(36):
-        preset, ratio, pitch = allocator.choose(genders[index % 3], npc=index % 4 == 3, age=ages[index % 6], who=f"P{index}")
-        picks.append([preset["name"], round(ratio, 3), pitch])
-    pools = {gender: [preset["name"] for preset in casting_presets(gender)] for gender in ("male", "female")}
-    narrators = [preset["name"] for preset in narrator_presets()]
-    data = json.dumps({"picks": picks, "pools": pools, "narrators": narrators}, ensure_ascii=False, sort_keys=True)
-    assert hashlib.sha256(data.encode()).hexdigest() == ALLOCATOR_APPROVED
-    engine_names = {voice["name"] for voice in ENGINE_VOICES}
-    assert not engine_names & {name for name, _ratio, _pitch in picks}
 
 
 def test_every_vieneu_voice_has_one_fixed_cast_rank() -> None:
@@ -194,14 +136,14 @@ def test_a_listener_picks_a_zerotts_voice_and_every_line_moves(tmp_path: Path) -
 
     result = _apply(db, "Lucien", preset="giahuy")
 
-    assert result is not None and result["voice_key"] == "zerotts_giahuy_f100_p+00"
-    assert _voice(db, "LUCIEN") == {"zerotts_giahuy_f100_p+00"}
-    profile = db.voice_profile_by_key("zerotts_giahuy_f100_p+00")
-    assert (profile["engine"], profile["preset_name"], profile["formant_ratio"]) == ("zerotts", "giahuy", 1.0)
+    assert result is not None and result["voice_key"] == "zerotts@0.1.5/giahuy"
+    assert _voice(db, "LUCIEN") == {"zerotts@0.1.5/giahuy"}
+    profile = db.voice_profile_by_key("zerotts@0.1.5/giahuy")
+    assert (profile["engine"], profile["preset_name"]) == ("zerotts", "giahuy")
     assert _statuses(db, "LUCIEN") == {"analyzed"}, "câu đã thu phải thu lại bằng giọng mới"
     assert _statuses(db, "NATASHA") == {"verified"}
     lucien = _character(db, "LUCIEN")
-    assert (lucien["gender"], lucien["locked_voice_key"]) == ("male", "zerotts_giahuy_f100_p+00")
+    assert (lucien["gender"], lucien["locked_voice_key"]) == ("male", "zerotts@0.1.5/giahuy")
     assert_voice_stability(db)
     assert _apply(db, "LUCIEN", preset="giahuy") is None, "áp lại yêu cầu đã áp: không đổi gì"
     # Chọn giọng nữ của ZeroTTS: giới đi theo giọng, như với VieNeu.
@@ -245,7 +187,7 @@ def _row(db: ProjectDB, spec: dict, text: str = "Trời vừa sáng, cha đã nh
 def test_another_engine_is_resampled_and_balanced_like_vieneu(tmp_path: Path, monkeypatch) -> None:
     db = ProjectDB(tmp_path / "p.sqlite3")
     coordinator = TTSCoordinator(build_settings(), db, lambda _message: None)
-    row = _row(db, voice_profile_spec(ZEROTTS, 1.0))
+    row = _row(db, voice_profile_spec(ZEROTTS))
     zerotts = coordinator.engine("zerotts")
     zerotts.sample_rate = 24_000
     calls: list[dict] = []
@@ -269,7 +211,7 @@ def test_another_engine_is_resampled_and_balanced_like_vieneu(tmp_path: Path, mo
 
     assert calls and calls[0]["engine"] == "zerotts" and calls[0]["seed"] == seed
     # 24 kHz của máy -> 48 kHz của dự án, trước tempo và độ to.
-    assert written == [(48_000, 48_000, "zerotts@0.1.5/baotrang/f100")]
+    assert written == [(48_000, 48_000, "zerotts@0.1.5/baotrang")]
     assert speeds == [(48_000, pytest.approx(1.0427))], "tempo x*r_v bằng WSOLA như VieNeu"
     assert metrics["effective_speed_factor"] == pytest.approx(1.0427)
     assert coordinator.vieneu.tts is None, "câu của giọng ZeroTTS không nạp VieNeu"
@@ -278,7 +220,7 @@ def test_another_engine_is_resampled_and_balanced_like_vieneu(tmp_path: Path, mo
 def test_an_engine_with_its_own_tempo_is_not_stretched_twice(tmp_path: Path, monkeypatch) -> None:
     db = ProjectDB(tmp_path / "p.sqlite3")
     coordinator = TTSCoordinator(build_settings(), db, lambda _message: None)
-    row = _row(db, voice_profile_spec(engine_voice("M4"), 1.0))
+    row = _row(db, voice_profile_spec(engine_voice("M4")))
     supertonic = coordinator.engine("supertonic")
     given: list[float] = []
     stretched: list[float] = []
@@ -314,9 +256,9 @@ def test_a_kept_english_name_is_vietnamized_only_for_an_engine_that_cannot_speak
     assert said and said != "Kate"
     assert VieNeuEngine.speaks_english and ZeroTTSEngine.speaks_english and SupertonicEngine.speaks_english
 
-    vieneu_row = _row(db, voice_profile_spec(VIENEU_PRESETS[0], 1.0), "Kate gật đầu.")
-    zerotts_row = _row(db, voice_profile_spec(ZEROTTS, 1.0), "Kate gật đầu.")
-    supertonic_row = _row(db, voice_profile_spec(SUPERTONIC, 1.0), "Kate gật đầu.")
+    vieneu_row = _row(db, voice_profile_spec(VIENEU_PRESETS[0]), "Kate gật đầu.")
+    zerotts_row = _row(db, voice_profile_spec(ZEROTTS), "Kate gật đầu.")
+    supertonic_row = _row(db, voice_profile_spec(SUPERTONIC), "Kate gật đầu.")
     for row in (vieneu_row, zerotts_row, supertonic_row):
         assert coordinator.spoken_text(row) == "Kate gật đầu."
 
@@ -381,9 +323,9 @@ def _engine_on_this_machine(engine: str) -> bool:
 @pytest.mark.parametrize(
     ("engine", "voice", "preset"),
     [
-        pytest.param("zerotts", "zerotts_huuduc_f100_p+00", "huuduc", marks=pytest.mark.skipif(
+        pytest.param("zerotts", "zerotts@0.1.5/huuduc", "huuduc", marks=pytest.mark.skipif(
             not _engine_on_this_machine("zerotts"), reason="máy này chưa tải giọng ZeroTTS")),
-        pytest.param("supertonic", "supertonic_m4_f100_p+00", "M4", marks=pytest.mark.skipif(
+        pytest.param("supertonic", "supertonic@3-724fb5ab/M4", "M4", marks=pytest.mark.skipif(
             not _engine_on_this_machine("supertonic"), reason="máy này chưa tải giọng Supertonic")),
     ],
 )
@@ -430,7 +372,7 @@ def test_zerotts_reads_the_same_bytes_after_its_session_is_rebuilt(monkeypatch) 
     monkeypatch.setattr(zerotts_module._core, "folder", zerotts_module._core.folder)  # adapter gọi locate(): trả lại sau bài
     monkeypatch.setattr(ZeroTTSEngine, "RECYCLE_AFTER_CALLS", 1)  # nạp lại trước MỌI câu sau câu đầu
     engine = ZeroTTSEngine(build_settings(), lambda _message: None)
-    profile = {"engine": "zerotts", "preset_name": "huuduc", "voice_key": "zerotts_huuduc_f100_p+00"}
+    profile = {"engine": "zerotts", "preset_name": "huuduc", "voice_key": "zerotts@0.1.5/huuduc"}
     row = {"text": "Con cứ coi như không nghe thấy gì là được.", "speaker": "A", "pace": "normal"}
     try:
         first = engine.generate_one(row, profile, 7, sampling={"max_new_frames": 300})
@@ -440,3 +382,28 @@ def test_zerotts_reads_the_same_bytes_after_its_session_is_rebuilt(monkeypatch) 
         assert first.tobytes() == again.tobytes(), "cùng câu, giọng, hạt giống: cùng byte trước và sau khi nạp lại"
     finally:
         engine.unload()
+
+def test_engine_profile_is_a_preset_without_dsp_fields():
+    spec = voice_profile_spec(ZEROTTS)
+    assert spec['voice_key'] == 'zerotts@0.1.5/baotrang'
+    assert spec['engine'] == 'zerotts' and spec['preset_name'] == 'baotrang'
+    assert 'pitch_semitones' not in spec and 'formant_ratio' not in spec
+    assert preset_gender_of_voice_key(spec['voice_key']) == 'female'
+
+
+def test_engine_constants_keep_native_tempo_and_missing_key_errors():
+    for voice in castable_engine_voices():
+        constants = voice_balance.constants_for_profile({'engine': voice['engine'], 'preset_name': voice['name']})
+        assert constants.r > 0
+    f3 = voice_balance.constants_for_profile({'engine': 'supertonic', 'preset_name': 'F3'})
+    assert f3.r == 1.0 and f3.engine_speed == pytest.approx(1.938)
+    with pytest.raises(VoiceBalanceError):
+        voice_balance.constants_for_profile({'engine': 'zerotts', 'preset_name': 'missing'})
+
+
+def test_automatic_casting_uses_only_vieneu_presets_without_variants():
+    allocator = PresetAllocator('Phạm Tuyên', other_narrators=('Đức Trí',))
+    picks = [allocator.choose(gender, npc=False, age=age)['name']
+             for gender in ('male','female','unknown') for age in ('child','teen','adult','elderly')]
+    assert set(picks) <= {p['name'] for p in VIENEU_PRESETS}
+    assert not set(picks) & {'Phạm Tuyên','Đức Trí'}

@@ -203,7 +203,7 @@ def test_the_pair_count_reads_npcs_the_shared_reader_leaves_out(tmp_path: Path) 
                                voice_profile_id INT, kind TEXT);
         INSERT INTO chapters VALUES (1, '228', 'completed');
         INSERT INTO characters VALUES (1, 'LUCIEN'), (2, 'NPC_LOCAL::C00010::R2401::ÔNG GIÀ'), (3, 'NARRATOR');
-        INSERT INTO voice_profiles VALUES (1, 'preset_thanh_binh_f100_p-04'), (2, 'narrator');
+        INSERT INTO voice_profiles VALUES (1, 'vieneu@3.8.3/Thanh Bình'), (2, 'narrator');
         INSERT INTO segments VALUES (1, 1, 1, 1, 'dialogue'), (2, 1, 2, 1, 'dialogue'), (3, 1, 3, 2, 'narration');
         """
     )

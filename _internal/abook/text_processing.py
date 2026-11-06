@@ -184,7 +184,7 @@ PUNCTUATION_BREAK_MS = {
 }
 # Dòng chỉ gồm ký hiệu ngăn cảnh ("***", "◆", "———") không có chữ để đọc nên không thành câu; nó để lại một quãng nghỉ dài sau
 # câu đứng trước. Sách nói thường nghỉ ~1,5-2 giây ở chỗ đổi cảnh (dài hơn hẳn dấu chấm 230-320 ms), người nghe nhờ đó biết
-# cảnh đã đổi. Quãng nghỉ này không bị `expression.narrative_break_ms` hay trần PAUSE_CEILING_MS bào ngắn.
+# cảnh đã đổi. Giữ nguyên quãng nghỉ cấu trúc này khi ghép chương.
 SCENE_BREAK_MS = 1500
 # Ký hiệu kiểu đường kẻ: một dấu đơn lẻ có thể là dấu câu / gạch thoại / tiêu đề markdown, nên cần >= SCENE_BREAK_MIN_RULE_GLYPHS dấu.
 SCENE_BREAK_RULE_GLYPHS = frozenset("*~-=_#+·•‧・—–―‒─━═┄┈╌")

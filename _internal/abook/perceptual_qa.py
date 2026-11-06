@@ -15,7 +15,6 @@ import soundfile as sf
 from .io_utils import sha256_file
 from .runtime_contract import relocated_model_path
 from .resource_manager import trim_process_working_set
-from .tts import apply_pitch_variant
 from .voice_catalog import VOICE_PREVIEW_FILENAMES
 
 
@@ -150,29 +149,6 @@ def _create_utmosv2_model(**kwargs: Any) -> Any:
     return create_model(**kwargs)
 
 
-@contextmanager
-def _pitch_matched_preview(preview_path: Path, pitch_semitones: int) -> Iterator[Path]:
-    pitch_steps = int(pitch_semitones)
-    if pitch_steps == 0:
-        yield preview_path
-        return
-
-    temporary = tempfile.NamedTemporaryFile(
-        prefix="abook_pitch_preview_",
-        suffix=".wav",
-        delete=False,
-    )
-    temporary_path = Path(temporary.name)
-    temporary.close()
-    try:
-        audio, sample_rate = sf.read(preview_path, dtype="float32", always_2d=False)
-        shifted = apply_pitch_variant(audio, int(sample_rate), pitch_steps)
-        sf.write(temporary_path, shifted, int(sample_rate), subtype="PCM_16")
-        yield temporary_path
-    finally:
-        temporary_path.unlink(missing_ok=True)
-
-
 class UTMOSNaturalnessVerifier:
     """Relative, per-voice naturalness evidence backed by UTMOSv2.
 
@@ -224,7 +200,7 @@ class UTMOSNaturalnessVerifier:
         self.model_factory = model_factory or _create_utmosv2_model
         self.preview_root = preview_root or Path(__file__).resolve().parent / "assets" / "voice_previews"
         self.model: Any | None = None
-        self._baseline_scores: dict[tuple[str, int], float] = {}
+        self._baseline_scores: dict[str, float] = {}
         self._unavailable_reason = "PERCEPTUAL_MODEL_NOT_LOADED"
         self._unavailable_message = "UTMOSv2 has not been loaded"
         self._unavailable_latched = False
@@ -377,10 +353,8 @@ class UTMOSNaturalnessVerifier:
     def baseline_for_preset(
         self,
         preset_name: str,
-        pitch_semitones: int = 0,
     ) -> float | None:
-        pitch_steps = int(pitch_semitones)
-        baseline_key = (preset_name, pitch_steps)
+        baseline_key = preset_name
         if baseline_key in self._baseline_scores:
             return self._baseline_scores[baseline_key]
         preview_filename = VOICE_PREVIEW_FILENAMES.get(preset_name)
@@ -400,14 +374,12 @@ class UTMOSNaturalnessVerifier:
             )
             return None
         try:
-            with _pitch_matched_preview(preview_path, pitch_steps) as matched_preview:
-                score = self._score(matched_preview)
+            score = self._score(preview_path)
         except Exception as exc:  # noqa: BLE001
             self._unavailable(
                 "PERCEPTUAL_BASELINE_ERROR",
                 (
-                    f"Cannot score locked preview {preview_filename} at "
-                    f"{pitch_steps:+d} semitones: {exc}"
+                    f"Cannot score locked preview {preview_filename}: {exc}"
                 ),
                 cause=exc,
                 latch=True,
@@ -424,7 +396,6 @@ class UTMOSNaturalnessVerifier:
         score: float | None = None,
         baseline_score: float | None = None,
         baseline_delta: float | None = None,
-        baseline_pitch_semitones: int = 0,
     ) -> dict[str, Any]:
         return {
             "verdict": PERCEPTUAL_INCONCLUSIVE,
@@ -432,7 +403,6 @@ class UTMOSNaturalnessVerifier:
             "score": score,
             "baseline_score": baseline_score,
             "baseline_delta": baseline_delta,
-            "baseline_pitch_semitones": int(baseline_pitch_semitones),
             "review_required": False,
             "duration_seconds": duration_seconds,
         }
@@ -442,18 +412,15 @@ class UTMOSNaturalnessVerifier:
         wav_path: Path,
         preset_name: str,
         *,
-        pitch_semitones: int = 0,
         prefetched_score: float | None = None,
     ) -> dict[str, Any]:
         """Judge one take. `prefetched_score` is this file's UTMOSv2 score if a worker
         already computed it - the number only, never a verdict. Every gate below still
         runs here: a prefetched score changes who did the arithmetic, not what it means.
         """
-        pitch_steps = int(pitch_semitones)
         if not self.enabled:
             return self._inconclusive_result(
                 "PERCEPTUAL_QA_DISABLED",
-                baseline_pitch_semitones=pitch_steps,
             )
         try:
             duration_seconds = float(sf.info(wav_path).duration)
@@ -466,28 +433,24 @@ class UTMOSNaturalnessVerifier:
                 raise AssertionError("unreachable")
             return self._inconclusive_result(
                 "PERCEPTUAL_AUDIO_INVALID",
-                baseline_pitch_semitones=pitch_steps,
             )
 
         if duration_seconds < self.minimum_duration_seconds:
             return self._inconclusive_result(
                 "PERCEPTUAL_SHORT_AUDIO",
                 duration_seconds=duration_seconds,
-                baseline_pitch_semitones=pitch_steps,
             )
         if not self.load():
             return self._inconclusive_result(
                 self._unavailable_reason,
                 duration_seconds=duration_seconds,
-                baseline_pitch_semitones=pitch_steps,
             )
 
-        baseline_score = self.baseline_for_preset(preset_name, pitch_steps)
+        baseline_score = self.baseline_for_preset(preset_name)
         if baseline_score is None:
             return self._inconclusive_result(
                 self._unavailable_reason,
                 duration_seconds=duration_seconds,
-                baseline_pitch_semitones=pitch_steps,
             )
         try:
             score = (
@@ -508,7 +471,6 @@ class UTMOSNaturalnessVerifier:
                 "PERCEPTUAL_SCORE_ERROR",
                 duration_seconds=duration_seconds,
                 baseline_score=baseline_score,
-                baseline_pitch_semitones=pitch_steps,
             )
         baseline_delta = score - baseline_score
         review_required = baseline_delta < self.review_delta or math.isclose(
@@ -527,7 +489,6 @@ class UTMOSNaturalnessVerifier:
             "score": score,
             "baseline_score": baseline_score,
             "baseline_delta": baseline_delta,
-            "baseline_pitch_semitones": pitch_steps,
             "review_required": review_required,
             "duration_seconds": duration_seconds,
         }

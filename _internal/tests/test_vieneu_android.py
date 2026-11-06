@@ -80,9 +80,19 @@ def test_the_jni_library_is_pinned_for_every_abi_the_build_script_makes():
 
 def test_the_phone_plays_each_voice_at_the_computers_loudness():
     source = _kotlin("readaloud/VoiceGain.kt")
-    table = {voice: float(level) for voice, level in re.findall(r'"([^"]+)" to (-?[\d.]+),', source)}
+    measured = source.split('private val measured = mapOf(', 1)[1].split('\n    )', 1)[0]
+    table = {voice: float(level) for voice, level in re.findall(r'"([^"]+)" to (-?[\d.]+),', measured)}
     assert table == loudness.MEASURED_LUFS
     assert f"const val TARGET_LUFS = {loudness.TARGET_LUFS}" in source
+    iso = source.split('// BEGIN ISO_GAIN_DB', 1)[1].split('// END ISO_GAIN_DB', 1)[0]
+    gains = {voice: float(gain) for voice, gain in re.findall(r'"([^"]+)" to (-?[\d.]+),', iso)}
+    assert gains == loudness.ISO_GAIN_DB
+    expected = {key for key in loudness.MEASURED_LUFS if key.startswith('vieneu:') and not key.endswith('/Mai Anh')}
+    assert set(gains) == expected
+    assert len(gains) == 34
+    for voice, gain in gains.items():
+        assert gain <= 0
+        assert loudness.gain_db(voice) == gain
 
 
 def test_the_phone_lifts_quiet_clips_with_the_computers_constants():

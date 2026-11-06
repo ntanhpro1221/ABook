@@ -22,7 +22,7 @@ const choices = {
   modules: {},
 };
 function voice(key: string, name: string, engine: string) {
-  return { key, name, engine, engineLabel: engine, installed: true, oneStep: engine !== "vieneu", description: "", gender: "male",
+  return { key, name, engine, engineLabel: engine, installed: true, description: "", gender: "male",
     genderLabel: "Nam", region: "", style: "", preview: true, current: false, pending: false, suggested: false, sharedWith: [], otherUsers: 0 };
 }
 vi.mock("@tanstack/react-query", () => ({

@@ -6,7 +6,7 @@ import org.json.JSONObject
 
 /** Giọng đang đọc một người (web `VoiceProfile`): `preset` là khoá gửi lại máy, `label` là tên để hiện. */
 @Immutable
-data class VoiceProfile(val key: String, val preset: String, val label: String, val tone: String)
+data class VoiceProfile(val key: String, val preset: String, val label: String)
 
 /** Giọng / giới người nghe đã chọn mà chưa vào sách. */
 @Immutable
@@ -56,7 +56,6 @@ data class VoiceEntry(
     val engine: String,
     val engineLabel: String,
     val installed: Boolean,
-    val oneStep: Boolean,
     val sharedWith: List<VoiceShare>,
     val otherUsers: Int,
     /** "male" | "female". */
@@ -104,7 +103,7 @@ data class VoicePreview(val url: String, val segmentId: Int, val text: String, v
 
 internal object StudioCastJson {
     private fun profile(json: JSONObject?): VoiceProfile? =
-        json?.let { VoiceProfile(it.text("key"), it.text("preset"), it.text("label").ifEmpty { it.text("preset") }, it.text("tone")) }
+        json?.let { VoiceProfile(it.text("key"), it.text("preset"), it.text("label").ifEmpty { it.text("preset") }) }
 
     private fun pendingVoice(json: JSONObject?): PendingVoice? =
         json?.let { PendingVoice(it.text("preset"), it.text("label").ifEmpty { it.text("preset") }, it.text("gender")) }
@@ -149,7 +148,6 @@ internal object StudioCastJson {
         engine = json.text("engine"),
         engineLabel = json.text("engineLabel"),
         installed = json.optBoolean("installed", true),
-        oneStep = json.optBoolean("oneStep"),
         sharedWith = json.optJSONArray("sharedWith").objects().map { VoiceShare(it.text("label"), it.optInt("chapters")) },
         otherUsers = json.optInt("otherUsers"),
         gender = json.text("gender"),
@@ -219,7 +217,7 @@ object VoiceLogic {
         val others = if (voice.otherUsers > 0) "${voice.otherUsers} người khác dùng, không cùng chương" else ""
         if (voice.sharedWith.isEmpty()) return others.ifEmpty { if (current) "Giọng đang đọc cho người này" else "Chưa ai dùng" }
         val people = voice.sharedWith.joinToString(", ") { "${it.label} (${it.chapters} chương)" }
-        val after = if (voice.oneStep) "hai người sẽ nghe giống hệt nhau" else "máy lấy bậc âm sắc khác"
+        val after = "hai người sẽ nghe giống hệt nhau"
         return "Cùng chương với $people - $after${if (others.isNotEmpty()) " · $others" else ""}"
     }
 

@@ -236,7 +236,7 @@ function voiceChoices(item: GalleryBook, character: string) {
     pending: null,
     tryLine: { segmentId: 4003, text: "“Ông Tư ơi, ông còn thức không?”" },
     voices: VOICES.map((voice) => ({
-      name: voice.name, key: voice.name, engine: "vieneu", engineLabel: "VieNeu", installed: true, oneStep: false, sharedWith: [], otherUsers: 0,
+      name: voice.name, key: voice.name, engine: "vieneu", engineLabel: "VieNeu", installed: true, sharedWith: [], otherUsers: 0,
       gender: voice.gender, genderLabel: voice.gender === "female" ? "Nữ" : "Nam", region: voice.region, style: voice.style, preview: true,
       current: voice.name === current, pending: false, suggested: voice.recommended, description: "",
       takenBy: voice.name === item.narrator ? ["Người kể"] : undefined,

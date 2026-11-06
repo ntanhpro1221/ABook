@@ -33,7 +33,7 @@ from .library import book_id
 
 SOURCE_FOLDER = "Nguồn dựng xưởng"
 BUILT_FILE = "workshop_built.json"
-_VOICE_KEY = re.compile(r"preset_.+_f(?P<formant>\d{3})_p(?P<pitch>[+-]\d+)")
+_VOICE_KEY = re.compile(r"vieneu@[^/]+/.+")
 
 
 class WorkshopError(ValueError):
@@ -112,7 +112,7 @@ def _seed_voices(project: Path, cast: dict[str, Any]) -> int:
     thì bỏ qua người ấy - bộ cấp giọng chọn lại, không ai bị ghim vào giọng sai. Trả số nhân vật đã ghim."""
     from ..character_registry import voice_profile_spec
     from ..database import ProjectDB
-    from ..voice_catalog import base_pitch_for_preset, preset_by_name
+    from ..voice_catalog import preset_by_name
     from . import store
 
     database = ProjectDB(project / store.DB_NAME)
@@ -126,8 +126,7 @@ def _seed_voices(project: Path, cast: dict[str, Any]) -> int:
             continue
         try:
             preset = str(voice.get("preset") or "")
-            spec = voice_profile_spec(preset_by_name(preset), int(match["formant"]) / 100,
-                                      age_pitch=int(match["pitch"]) - base_pitch_for_preset(preset))
+            spec = voice_profile_spec(preset_by_name(preset))
         except ValueError:
             continue
         if spec["voice_key"] != key:

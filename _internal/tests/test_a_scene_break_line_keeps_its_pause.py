@@ -16,7 +16,6 @@ import soundfile as sf
 from abook.audio_io import _source_timeline
 from abook.database import ProjectDB
 from abook.config import build_settings
-from abook.expression import PAUSE_CEILING_MS, narrative_break_ms
 from abook.pipeline import SEGMENTATION_CHECKPOINT_FIELDS, BookPipeline
 from abook.text_processing import SCENE_BREAK_MS, is_scene_break_line, segment_chapter_text
 from abook.webui.music_scenes import chapter_scenes, hard_break
@@ -103,15 +102,6 @@ def test_a_database_made_before_the_flag_gains_the_column(tmp_path: Path) -> Non
     ProjectDB(path).initialize_book(title="Book", project_root=tmp_path, settings={}, settings_hash="s", input_manifest_hash="m")
     with sqlite3.connect(path) as conn:
         assert "scene_break" in {row[1] for row in conn.execute("PRAGMA table_info(segments)")}
-
-
-def test_the_pause_survives_the_expression_rules_and_their_ceiling() -> None:
-    assert SCENE_BREAK_MS > PAUSE_CEILING_MS, "this is the case the ceiling would clip"
-    feeling = {"kind": "dialogue", "emotion": "angry", "intensity": 3, "text": "Đi đi!", "scene_break": True}
-    following = {"kind": "dialogue", "emotion": "afraid", "intensity": 3, "text": "Không!"}
-    assert narrative_break_ms(SCENE_BREAK_MS, feeling, None, following) == SCENE_BREAK_MS
-    ordinary = dict(feeling, scene_break=False)
-    assert narrative_break_ms(380, ordinary, None, following) <= PAUSE_CEILING_MS
 
 
 def test_the_pause_reaches_the_audio_concat_entries(tmp_path: Path) -> None:

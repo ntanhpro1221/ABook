@@ -57,8 +57,8 @@ def _book(tmp_path: Path) -> tuple[ProjectPaths, ProjectDB]:
     ])
     with db.connect() as conn:
         for key, voice in VOICES.items():
-            conn.execute("INSERT INTO voice_profiles(voice_key,engine,preset_name,description,seed,pitch_semitones,"
-                         "status,locked,created_at,updated_at) VALUES(?,?,?,?,?,0,'ready',1,0,0)",
+            conn.execute("INSERT INTO voice_profiles(voice_key,engine,preset_name,description,seed,"
+                         "status,locked,created_at,updated_at) VALUES(?,?,?,?,?,'ready',1,0,0)",
                          (voice, "vieneu", voice, voice, 1))
             gender = {"LUCIEN": "male", "NATASHA": "female", "ANONYMOUS_MALE": "male"}.get(key, "unknown")
             conn.execute("INSERT INTO characters(canonical_name,display_name,gender,age,personality,importance,"

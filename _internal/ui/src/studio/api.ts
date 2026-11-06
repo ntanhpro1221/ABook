@@ -131,7 +131,6 @@ export interface VoiceProfile {
   preset: string;
   /** Tên giọng để hiện (khoá `preset` gửi lại máy chủ). */
   label?: string;
-  tone: string;
 }
 
 export interface CastMember {

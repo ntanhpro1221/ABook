@@ -17,8 +17,8 @@ from tests.audio_fixtures import quiet_edges
 
 NORMAL = (12.5, 24.5)
 RATE = 48_000
-SLOW_VOICE_KEY = "vieneu@3.8.3/Đức Trí/f100"
-FAST_VOICE_KEY = "vieneu@3.8.3/Phạm Tuyên/f100"
+SLOW_VOICE_KEY = "vieneu@3.8.3/Đức Trí"
+FAST_VOICE_KEY = "vieneu@3.8.3/Phạm Tuyên"
 # Không dấu câu nên không có ngân sách nghỉ: nhịp = ký tự đọc được / thời lượng.
 LINE = "Người kể chuyện đọc thật chậm rãi từng chữ một trong đêm dài"
 
@@ -30,13 +30,13 @@ def _tone(seconds: float) -> np.ndarray:
 
 def test_the_floor_moves_with_the_scale() -> None:
     # 11 kt/s, 3,3 âm tiết/s: chậm theo băng chung, bình thường với sàn nhân 0,81.
-    assert pace_is_outlier(11.0, 3.3, "normal", NORMAL)
-    assert not pace_is_outlier(11.0, 3.3, "normal", NORMAL, floor_scale=0.81)
+    assert pace_is_outlier(11.0, 3.3, NORMAL)
+    assert not pace_is_outlier(11.0, 3.3, NORMAL, floor_scale=0.81)
 
 
 def test_the_ceiling_does_not() -> None:
-    assert pace_is_outlier(26.0, 7.0, "normal", NORMAL, floor_scale=0.81)
-    assert not pace_is_outlier(20.0, 6.0, "normal", NORMAL, floor_scale=0.81)
+    assert pace_is_outlier(26.0, 7.0, NORMAL, floor_scale=0.81)
+    assert not pace_is_outlier(20.0, 6.0, NORMAL, floor_scale=0.81)
 
 
 def test_the_gate_scale_is_the_shared_floor_times_x(monkeypatch) -> None:

@@ -14,13 +14,7 @@ import pytest
 
 from abook import config, voice_catalog
 from abook.character_registry import PresetAllocator
-from abook.voice_catalog import (
-    DEFAULT_NARRATOR_BY_GENDER,
-    LAST_RESORT_PRESETS,
-    casting_presets,
-    listener_rank,
-    narrator_presets,
-)
+from abook.voice_catalog import DEFAULT_NARRATOR_BY_GENDER, casting_presets, listener_rank, narrator_presets
 
 NARRATOR = "Phạm Tuyên"
 
@@ -48,9 +42,9 @@ def _rank(
 
 def _picks(gender: str, count: int, *, age: str = "adult", narrator: str = NARRATOR) -> list[str]:
     """Casting order is line-count order, so the n-th call is the n-th most-speaking character."""
-    allocator = PresetAllocator(narrator, 2)
+    allocator = PresetAllocator(narrator)
     return [
-        str(allocator.choose(gender, npc=False, age=age, who=f"P{index}")[0]["name"])
+        str(allocator.choose(gender, npc=False, age=age, who=f"P{index}")["name"])
         for index in range(count)
     ]
 
@@ -195,10 +189,6 @@ def test_the_shipped_male_verdict_decides_who_the_characters_get() -> None:
     assert "Adam bựa" not in picks
 
 
-def test_only_thanh_binh_is_still_a_last_resort() -> None:
-    assert LAST_RESORT_PRESETS == {"Thanh Bình"}
-
-
 def test_the_shipped_female_verdict_decides_who_the_characters_get() -> None:
     picks = _picks("female", 8, narrator="Mỹ Duyên")
     assert picks[:2] == ["Ngọc Linh", "Đoan Trang"]
@@ -208,19 +198,19 @@ def test_the_shipped_female_verdict_decides_who_the_characters_get() -> None:
 
 def test_the_cross_gender_fallback_uses_the_same_news_eligibility(monkeypatch) -> None:
     _rank(monkeypatch, female=[["Thùy Dung"]])
-    allocator = PresetAllocator(NARRATOR, 2)
+    allocator = PresetAllocator(NARRATOR)
     allocator.not_for_characters = frozenset(p["name"] for p in voice_catalog.VIENEU_PRESETS
                                             if p["name"] not in {"Mai Anh", "Thùy Dung", "Minh Đức", "Minh Triết"})
-    assert allocator.choose("male", npc=False, age="adult", who="P")[0]["name"] == "Thùy Dung"
+    assert allocator.choose("male", npc=False, age="adult", who="P")["name"] == "Thùy Dung"
     _rank(monkeypatch)
     allocator.not_for_characters -= {"Ngọc Linh"}
-    assert allocator.choose("male", npc=True, age="adult", who="Q")[0]["name"] == "Ngọc Linh"
+    assert allocator.choose("male", npc=True, age="adult", who="Q")["name"] == "Ngọc Linh"
 
 
 def test_empty_lists_leave_casting_exactly_as_it_was(monkeypatch: pytest.MonkeyPatch) -> None:
     """With nothing ranked the change is neutral: the old order, voice for voice."""
     _rank(monkeypatch)
-    assert _picks("male", 6) == ["Adam bựa", "Hải Đăng", "Quốc Tuấn", "Xuân Vĩnh", "Adam", "Thiền Tâm Đức"]
+    assert _picks("male", 6) == ["Adam bựa", "Hải Đăng", "Quốc Tuấn", "Xuân Vĩnh", "Adam", "Thanh Bình"]
     assert _picks("female", 6) == ["Ngọc Huyền", "Trúc Ly", "Đoan Trang", "Ngọc Linh", "Quỳnh Anh", "Kim Thanh"]
 
 
@@ -234,7 +224,7 @@ def test_no_arbitrary_order_sits_ahead_of_the_listeners_ranking(monkeypatch: pyt
     pool = [
         str(preset["name"])
         for preset in casting_presets(gender)
-        if preset["name"] != NARRATOR and preset["name"] not in LAST_RESORT_PRESETS
+        if preset["name"] != NARRATOR
     ]
     ranking = [[name] for name in reversed(pool)]
     _rank(monkeypatch, **{gender: ranking})

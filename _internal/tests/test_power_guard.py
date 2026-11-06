@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 
-from power_guard import Reading, State, decide, remaining_minutes  # noqa: E402
+from power_guard import Reading, State, decide, pause_latecomers, remaining_minutes  # noqa: E402
 
 
 def run(readings: list[Reading]) -> tuple[State, list[list[str]]]:
@@ -106,3 +106,19 @@ def test_any_python_holding_the_gpu_is_a_job_even_when_its_name_is_not_listed_bu
     assert not is_job("C:/Windows/explorer.exe", "explorer.exe", on_gpu=True)
     assert not is_job("C:/ABook/Studio/runtime/pythonw.exe -m abook.background_runner worker --project D:/sach", "pythonw.exe", on_gpu=True)
     assert is_job("bash gpu_queue_02_11.sh", "bash.exe", on_gpu=False)
+
+
+def test_a_job_started_after_the_pause_is_paused_too_and_only_once() -> None:
+    class Job:
+        def __init__(self, pid: int) -> None:
+            self.pid, self.suspended = pid, 0
+
+        def suspend(self) -> None:
+            self.suspended += 1
+
+    old, late = Job(1), Job(2)
+    paused = [old]
+    assert pause_latecomers(paused, [old, late]) == [late]
+    assert pause_latecomers(paused, [old, late]) == []
+    assert paused == [old, late]
+    assert (old.suspended, late.suspended) == (0, 1)

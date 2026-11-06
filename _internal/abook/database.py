@@ -43,7 +43,6 @@ from .models import (
     SegmentStatus,
 )
 from .perceptual_contract import (
-    PERCEPTUAL_BASELINE_PITCH_SEMITONES,
     NATURALNESS_IMPROVEMENT_REQUIREMENT,
     NATURALNESS_REPAIR_ACTION,
     PERCEPTUAL_NATURALNESS_REVIEW_CODE,
@@ -1872,7 +1871,7 @@ CREATE TABLE IF NOT EXISTS characters (
     confidence REAL NOT NULL DEFAULT 0.5,
     locked INTEGER NOT NULL DEFAULT 0,
     -- The voice this character keeps across versions, as a `voice_profiles.voice_key`
-    -- (preset::formant::pitch). Empty means the allocator decides, which is every character
+    -- (engine@version/preset). Empty means the allocator decides, which is every character
     -- until somebody pins one.
     locked_voice_key TEXT NOT NULL DEFAULT '',
     -- Tuổi người nghe đã ghim, rỗng nghĩa là chưa ai nói gì. Cột RIÊNG, không dùng `locked`:
@@ -1948,12 +1947,6 @@ CREATE TABLE IF NOT EXISTS voice_profiles (
     preset_name TEXT,
     description TEXT NOT NULL DEFAULT '',
     seed INTEGER NOT NULL,
-    pitch_semitones INTEGER NOT NULL DEFAULT 0,
-    -- Frequency-axis scale for the spectral envelope. Below 1 enlarges the apparent
-    -- vocal tract and reads deeper; above 1 shrinks it and reads brighter. This is what
-    -- makes two characters sound like different people - pitch alone does not, because
-    -- speaker identity lives in the formants.
-    formant_ratio REAL NOT NULL DEFAULT 1.0,
     status TEXT NOT NULL DEFAULT 'planned',
     locked INTEGER NOT NULL DEFAULT 1,
     created_at REAL NOT NULL,
@@ -2011,7 +2004,6 @@ CREATE TABLE IF NOT EXISTS segment_candidates (
     repair_budget INTEGER NOT NULL CHECK (repair_budget >= 1),
     incumbent_sha256 TEXT NOT NULL,
     expected_voice_profile_id INTEGER NOT NULL REFERENCES voice_profiles(id),
-    expected_pitch_semitones INTEGER NOT NULL,
     pronunciation_delivery_variant TEXT NOT NULL,
     expected_spoken_text_sha256 TEXT NOT NULL,
     state TEXT NOT NULL CHECK (
@@ -2477,13 +2469,6 @@ class ProjectDB:
             # ranh giới - mốc này làm một yêu cầu chỉ thu lại câu đúng một lần.
             conn.execute("ALTER TABLE segments ADD COLUMN listener_retake_at REAL NOT NULL DEFAULT 0")
 
-        voice_columns = {
-            str(row[1]) for row in conn.execute("PRAGMA table_info(voice_profiles)")
-        }
-        if "formant_ratio" not in voice_columns:
-            conn.execute(
-                "ALTER TABLE voice_profiles ADD COLUMN formant_ratio REAL NOT NULL DEFAULT 1.0"
-            )
         character_columns = {
             str(row[1]) for row in conn.execute("PRAGMA table_info(characters)")
         }
@@ -2974,7 +2959,7 @@ class ProjectDB:
             "repair_budget",
             "incumbent_sha256",
             "expected_voice_profile_id",
-            "expected_pitch_semitones",
+
             "pronunciation_delivery_variant",
             "expected_spoken_text_sha256",
             "state",
@@ -8913,11 +8898,7 @@ class ProjectDB:
     def locked_character_voices(self) -> dict[str, str]:
         """Every voice pinned to a character, keyed the way casting keys characters.
 
-        The value is a `voice_profiles.voice_key` - preset, formant and pitch together -
-        because all three decide what the character sounds like. Carrying the preset name
-        alone would not be enough: the formant warp comes from the allocator's variant
-        counter, so it depends on the order characters happened to be cast in, and the same
-        pinned preset could come back with a different timbre in the next run.
+        The value is a `voice_profiles.voice_key`: engine, version and preset.
         """
         with self.connect() as conn:
             rows = conn.execute(
@@ -9319,12 +9300,12 @@ class ProjectDB:
         else:
             profile_id = int(conn.execute(
                 """
-                INSERT INTO voice_profiles(voice_key,engine,preset_name,description,seed,pitch_semitones,
-                    formant_ratio,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)
+                INSERT INTO voice_profiles(voice_key,engine,preset_name,description,seed,
+                    status,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)
                 """,
                 (
                     voice_key, profile["engine"], profile["preset_name"], profile["description"],
-                    int(profile["seed"]), int(profile["pitch_semitones"]), float(profile["formant_ratio"]),
+                    int(profile["seed"]),
                     profile["status"], now, now,
                 ),
             ).lastrowid)
@@ -9509,7 +9490,7 @@ class ProjectDB:
             "SELECT DISTINCT c.* FROM characters c LEFT JOIN segments s ON s.canonical_character_id=c.id "
             "LEFT JOIN voice_profiles v ON v.id=s.voice_profile_id "
             "LEFT JOIN voice_profiles p ON p.voice_key=c.locked_voice_key "
-            "WHERE c.canonical_name <> 'NARRATOR' AND (v.preset_name=? OR p.preset_name=?) "
+            "WHERE c.canonical_name <> 'NARRATOR' AND ((v.preset_name=? AND v.voice_key <> 'narrator') OR p.preset_name=?) "
             "ORDER BY c.canonical_name", (preset, preset)).fetchall()
         reset: list[int] = []
         chapters: set[int] = set()
@@ -9520,10 +9501,10 @@ class ProjectDB:
                                             gender=str(character["gender"]), age=str(character["age"] or "unknown"))
             assert character_preset_allowed(profile["preset_name"], excluded)
             conn.execute(
-                "INSERT INTO voice_profiles(voice_key,engine,preset_name,description,seed,pitch_semitones,"
-                "formant_ratio,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?) ON CONFLICT(voice_key) DO NOTHING",
+                "INSERT INTO voice_profiles(voice_key,engine,preset_name,description,seed,"
+                "status,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(voice_key) DO NOTHING",
                 (profile["voice_key"], profile["engine"], profile["preset_name"], profile["description"], profile["seed"],
-                 profile["pitch_semitones"], profile["formant_ratio"], profile["status"], now, now))
+                 profile["status"], now, now))
             profile_id = conn.execute("SELECT id FROM voice_profiles WHERE voice_key=?", (profile["voice_key"],)).fetchone()[0]
             rows = conn.execute("SELECT id, chapter_id, status FROM segments WHERE canonical_character_id=?",
                                 (character["id"],)).fetchall()
@@ -9619,12 +9600,12 @@ class ProjectDB:
                     else:
                         profile_id = int(conn.execute(
                             """
-                            INSERT INTO voice_profiles(voice_key,engine,preset_name,description,seed,pitch_semitones,
-                                formant_ratio,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)
+                            INSERT INTO voice_profiles(voice_key,engine,preset_name,description,seed,
+                                status,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)
                             """,
                             (
                                 voice_key, profile["engine"], profile["preset_name"], profile["description"],
-                                int(profile["seed"]), int(profile["pitch_semitones"]), float(profile["formant_ratio"]),
+                                int(profile["seed"]),
                                 profile["status"], now, now,
                             ),
                         ).lastrowid)
@@ -9810,8 +9791,6 @@ class ProjectDB:
                 data.get("preset_name"),
                 data.get("description", ""),
                 int(data.get("seed", 1)),
-                int(data.get("pitch_semitones", 0)),
-                float(data.get("formant_ratio", 1.0)),
                 data.get("status", "planned"),
             )
             if row:
@@ -9824,12 +9803,6 @@ class ProjectDB:
                     existing["engine"] != data["engine"]
                     or existing["description"] != data.get("description", "")
                     or int(existing["seed"]) != int(data.get("seed", 1))
-                    or int(existing["pitch_semitones"]) != int(data.get("pitch_semitones", 0))
-                    or abs(
-                        float(existing["formant_ratio"])
-                        - float(data.get("formant_ratio", 1.0))
-                    )
-                    > 1e-6
                 )
                 requested_preset = data.get("preset_name")
                 preset_changed = bool(
@@ -9844,9 +9817,9 @@ class ProjectDB:
             cursor = conn.execute(
                 """
                 INSERT INTO voice_profiles(
-                    voice_key,engine,preset_name,description,seed,pitch_semitones,formant_ratio,
+                    voice_key,engine,preset_name,description,seed,
                     status,created_at,updated_at
-                ) VALUES(?,?,?,?,?,?,?,?,?,?)
+                ) VALUES(?,?,?,?,?,?,?,?)
                 """,
                 (data["voice_key"], *values, now, now),
             )
@@ -10198,10 +10171,8 @@ class ProjectDB:
             "spoken_text_sha256",
             "pronunciation_delivery_variant",
             "voice_profile_id",
-            "pitch_semitones",
-            "effective_pitch_semitones",
-            "pitch_variant_skipped",
-            "pitch_variant_mixed",
+
+
         }
         missing = required_fields - signal.keys()
         if missing:
@@ -10220,36 +10191,16 @@ class ProjectDB:
         )
         try:
             voice_profile_id = int(signal["voice_profile_id"])
-            pitch_semitones = int(signal["pitch_semitones"])
         except (TypeError, ValueError) as exc:
-            raise ValueError("segment candidate voice and pitch provenance must be integers") from exc
+            raise ValueError("segment candidate voice provenance must be integers") from exc
         if voice_profile_id <= 0:
             raise ValueError("segment candidate voice profile id must be positive")
-        for field in ("pitch_variant_skipped", "pitch_variant_mixed"):
-            if signal[field] not in (False, True, 0, 1, 0.0, 1.0):
-                raise ValueError(f"segment candidate {field} must be boolean")
-        pitch_skipped = bool(signal["pitch_variant_skipped"])
-        pitch_mixed = bool(signal["pitch_variant_mixed"])
-        effective_value = signal["effective_pitch_semitones"]
-        if pitch_mixed:
-            if effective_value is not None:
-                raise ValueError("mixed candidate pitch provenance requires a null effective pitch")
-            effective_pitch = None
-        else:
-            try:
-                effective_pitch = int(effective_value)
-            except (TypeError, ValueError) as exc:
-                raise ValueError("candidate effective pitch provenance must be an integer") from exc
-        if pitch_skipped and effective_pitch != 0:
-            raise ValueError("a skipped pitch transform must retain effective pitch zero")
         return {
             "spoken_text_sha256": spoken_text_sha256,
             "pronunciation_delivery_variant": pronunciation_delivery_variant,
             "voice_profile_id": voice_profile_id,
-            "pitch_semitones": pitch_semitones,
-            "effective_pitch_semitones": effective_pitch,
-            "pitch_variant_skipped": pitch_skipped,
-            "pitch_variant_mixed": pitch_mixed,
+
+
         }
 
     @staticmethod
@@ -10273,12 +10224,8 @@ class ProjectDB:
             "spoken_text_sha256": signal.get("spoken_text_sha256"),
             "pronunciation_delivery_variant": pronunciation_variant,
             "voice_profile_id": signal.get("voice_profile_id"),
-            "pitch_semitones": signal.get("pitch_semitones"),
-            "effective_pitch_semitones": signal.get(
-                "effective_pitch_semitones"
-            ),
-            "pitch_variant_skipped": signal.get("pitch_variant_skipped"),
-            "pitch_variant_mixed": signal.get("pitch_variant_mixed"),
+
+
             "generation_ceiling_hit": signal.get("generation_ceiling_hit"),
             "generation_endpoint_active": signal.get(
                 "generation_endpoint_active"
@@ -10919,7 +10866,7 @@ class ProjectDB:
         )
         for field in (
             "expected_voice_profile_id",
-            "expected_pitch_semitones",
+
             "pronunciation_delivery_variant",
             "expected_spoken_text_sha256",
             "generation_strategy",
@@ -10990,8 +10937,8 @@ class ProjectDB:
         blocking_flags: list[str] = []
         for field in (
             "pace_outlier",
-            "pitch_variant_skipped",
-            "pitch_variant_mixed",
+
+
             "generation_endpoint_active",
         ):
             value = signal.get(field, False)
@@ -11361,8 +11308,6 @@ class ProjectDB:
         profile = cls._expected_segment_voice_profile_conn(conn, segment)
         if (
             int(candidate["expected_voice_profile_id"]) != int(profile["id"])
-            or int(candidate["expected_pitch_semitones"])
-            != int(profile["pitch_semitones"] or 0)
         ):
             raise RuntimeError("segment candidate voice casting changed after allocation")
         return profile
@@ -11436,7 +11381,7 @@ class ProjectDB:
             ),
             "incumbent_sha256": str(row["incumbent_sha256"]),
             "expected_voice_profile_id": int(row["expected_voice_profile_id"]),
-            "expected_pitch_semitones": int(row["expected_pitch_semitones"]),
+
             "pronunciation_delivery_variant": str(
                 row["pronunciation_delivery_variant"]
             ),
@@ -11641,7 +11586,6 @@ class ProjectDB:
                 )
             expected_profile = self._expected_segment_voice_profile_conn(conn, segment)
             expected_voice_profile_id = int(expected_profile["id"])
-            expected_pitch_semitones = int(expected_profile["pitch_semitones"] or 0)
 
             rows = list(
                 conn.execute(
@@ -11680,7 +11624,6 @@ class ProjectDB:
                     "candidate resume metadata differs from its durable checkpoint",
                     ("incumbent_sha256", str(existing["incumbent_sha256"]) != normalized_incumbent),
                     ("voice_profile_id", int(existing["expected_voice_profile_id"]) != expected_voice_profile_id),
-                    ("pitch_semitones", int(existing["expected_pitch_semitones"]) != expected_pitch_semitones),
                     ("pronunciation_variant", str(existing["pronunciation_delivery_variant"])
                      != normalized_pronunciation_variant),
                     ("spoken_text_sha256", str(existing["expected_spoken_text_sha256"])
@@ -11813,8 +11756,6 @@ class ProjectDB:
                     "tempo candidate allocation differs from its source provenance",
                     ("voice_profile_id", int(source["expected_voice_profile_id"])
                      != expected_voice_profile_id),
-                    ("pitch_semitones", int(source["expected_pitch_semitones"])
-                     != expected_pitch_semitones),
                     ("pronunciation_variant",
                      str(source["pronunciation_delivery_variant"])
                      != normalized_pronunciation_variant),
@@ -11866,7 +11807,7 @@ class ProjectDB:
                     """
                     INSERT INTO segment_candidates(
                         segment_id,policy_hash,repair_round,repair_budget,incumbent_sha256,
-                        expected_voice_profile_id,expected_pitch_semitones,
+                        expected_voice_profile_id,
                         pronunciation_delivery_variant,expected_spoken_text_sha256,state,
                         generation_strategy,postprocess_profile,
                         postprocess_source_candidate_id,postprocess_source_sha256,
@@ -11874,7 +11815,7 @@ class ProjectDB:
                         perceptual_required,
                         candidate_repair_requirement,repair_trigger_check_id,
                         created_at,updated_at
-                    ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                    ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                     """,
                     (
                         int(segment_id),
@@ -11883,7 +11824,7 @@ class ProjectDB:
                         normalized_max,
                         normalized_incumbent,
                         expected_voice_profile_id,
-                        expected_pitch_semitones,
+
                         normalized_pronunciation_variant,
                         normalized_expected_spoken_sha256,
                         SEGMENT_CANDIDATE_GENERATING,
@@ -12024,17 +11965,8 @@ class ProjectDB:
             if (
                 signal_provenance["voice_profile_id"]
                 != int(candidate["expected_voice_profile_id"])
-                or signal_provenance["pitch_semitones"]
-                != int(candidate["expected_pitch_semitones"])
             ):
                 raise ValueError("candidate signal voice provenance differs from locked casting")
-            if (
-                not signal_provenance["pitch_variant_skipped"]
-                and not signal_provenance["pitch_variant_mixed"]
-                and signal_provenance["effective_pitch_semitones"]
-                != int(candidate["expected_pitch_semitones"])
-            ):
-                raise ValueError("candidate signal effective pitch differs from locked casting")
             if int(candidate["repair_round"]) != signal_round:
                 raise ValueError("segment candidate signal repair round does not match its ledger row")
             if int(candidate["generation_seed"]) != int(expected_generation_seed):
@@ -12132,7 +12064,7 @@ class ProjectDB:
         try:
             decode_provenance = cls._candidate_signal_provenance(metrics)
         except ValueError as exc:
-            raise RuntimeError("candidate ASR decode lacks locked voice or pitch provenance") from exc
+            raise RuntimeError("candidate ASR decode lacks locked voice provenance") from exc
         if decode_provenance != signal_provenance:
             raise RuntimeError("candidate ASR locked provenance differs from its signal checkpoint")
         if cls._candidate_signal_immutable_projection(
@@ -12744,25 +12676,6 @@ class ProjectDB:
                 raise RuntimeError(
                     "tempo candidate perceptual provenance differs from its signal checkpoint"
                 )
-        try:
-            baseline_pitch = int(metrics["baseline_pitch_semitones"])
-        except (KeyError, TypeError, ValueError) as exc:
-            raise RuntimeError(
-                "candidate perceptual evidence lacks baseline pitch provenance"
-            ) from exc
-        # Against the grading policy, not against the take. The perceptual score is
-        # measured on the raw audio and compared to the preset's untouched preview, so the
-        # baseline is that preview's register whatever pitch this particular take carries.
-        #
-        # Comparing it to the take's own effective pitch made the two impossible to satisfy
-        # together for any voice with a register shift: seven candidates read at -1 semitone
-        # stopped a ten-chapter run twice at the same line, while the pipeline was
-        # deliberately setting the baseline to 0 four files away.
-        if baseline_pitch != PERCEPTUAL_BASELINE_PITCH_SEMITONES:
-            raise RuntimeError(
-                "candidate perceptual baseline pitch is not the graded reference: "
-                f"{baseline_pitch} != {PERCEPTUAL_BASELINE_PITCH_SEMITONES}"
-            )
         return check, metrics
 
     def _validated_dual_failed_candidate_conn(

@@ -30,7 +30,8 @@ import numpy as np
 import pyloudnorm as pyln
 import soundfile as sf
 
-from abook.audio_io import LOUDNESS_EMOTION_OFFSETS_DB, integrated_loudness_lufs
+from abook.audio_io import integrated_loudness_lufs
+from abook.voice_balance import constants_for_profile, level_lufs
 from abook.config import build_settings
 from abook.text_processing import SPOKEN_WORD_PATTERN
 
@@ -418,14 +419,14 @@ def audit_loudness_intent(
     decided by the waveform instead of by the intent - which is how `loud` segments ended
     up quieter than `normal` ones. This measures the miss directly.
     """
-    targets = audio_cfg["segment_target_lufs"]
-    narrator_offset = float(audio_cfg["segment_narrator_offset_db"])
     peak_ceiling = float(audio_cfg["segment_peak_dbfs"])
     peak_limit = 10 ** (peak_ceiling / 20.0)
 
     query = """
-        SELECT s.speaker, s.kind, s.emotion, s.intensity, s.volume, s.wav_path
+        SELECT s.speaker, s.kind, s.emotion, s.intensity, s.volume, s.wav_path,
+               v.engine, v.preset_name
         FROM segments s JOIN chapters c ON c.id = s.chapter_id
+        JOIN voice_profiles v ON v.id = s.voice_profile_id
         WHERE s.wav_path IS NOT NULL
     """
     params: tuple[Any, ...] = ()
@@ -447,12 +448,7 @@ def audit_loudness_intent(
         if measured is None or peak <= 0:
             continue
         volume = str(row["volume"])
-        target = float(targets.get(volume, targets["normal"]))
-        if str(row["speaker"]) == "NARRATOR":
-            target += narrator_offset
-        if volume == "normal":
-            intensity = max(0, min(3, int(row["intensity"])))
-            target += LOUDNESS_EMOTION_OFFSETS_DB.get(str(row["emotion"]), 0.0) * intensity / 3.0
+        target = level_lufs() + constants_for_profile(row).o_db
         misses.append(measured - target)
         crests.append(20.0 * math.log10(peak) - measured)
         peak_limited += peak >= peak_limit * 0.999

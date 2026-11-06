@@ -43,7 +43,7 @@ class StaticPerceptualVerifier:
     ) -> dict:
         if isinstance(self.result, Exception):
             raise self.result
-        return {**self.result, "baseline_pitch_semitones": pitch_semitones}
+        return {**self.result, }
 
     def unload(self) -> None:
         return None
@@ -64,7 +64,7 @@ class SequencePerceptualVerifier:
     ) -> dict:
         result = self.results[min(self.verify_calls, len(self.results) - 1)]
         self.verify_calls += 1
-        return {**result, "baseline_pitch_semitones": pitch_semitones}
+        return {**result, }
 
     def unload(self) -> None:
         return None
@@ -87,7 +87,7 @@ class RecordingPerceptualVerifier(StaticPerceptualVerifier):
         return super().verify(
             _wav_path,
             preset_name,
-            pitch_semitones=pitch_semitones,
+
         )
 
 class PassingWhisperVerifier:
@@ -240,7 +240,7 @@ def _install_fake_repair_synthesis(
         else:
             wav.write_bytes(candidate_audio_bytes)
         profile = pipeline.db.voice_profile(int(row["voice_profile_id"]))
-        pitch_semitones = int(profile["pitch_semitones"] or 0)
+        pitch_semitones = int(0 or 0)
         metrics = {
             "duration": 1.0,
             "tts_delivery_mode": "clarity",
@@ -250,10 +250,8 @@ def _install_fake_repair_synthesis(
                 candidate["pronunciation_delivery_variant"]
             ),
             "voice_profile_id": int(profile["id"]),
-            "pitch_semitones": pitch_semitones,
-            "effective_pitch_semitones": pitch_semitones,
-            "pitch_variant_skipped": 0.0,
-            "pitch_variant_mixed": 0.0,
+
+
         }
         return pipeline._checkpoint_segment_candidate_signal(
             candidate,
@@ -355,7 +353,7 @@ def test_perceptual_qa_grades_a_thought_against_the_thinker(tmp_path: Path, spea
             "preset_name": narrator_preset,
             "description": "narrator",
             "seed": 2,
-            "pitch_semitones": -1,
+
             "status": "ready",
         }
     )
@@ -387,46 +385,6 @@ def test_perceptual_qa_grades_a_thought_against_the_thinker(tmp_path: Path, spea
     assert str(segment_profile["preset_name"]) != narrator_preset
     expected = segment_profile["preset_name"] if explicit_profile else narrator_preset
     assert verifier.calls == [(str(expected), 0)]
-
-
-def test_perceptual_qa_uses_unshifted_baseline_when_pitch_variant_was_skipped(
-    tmp_path: Path,
-) -> None:
-    pipeline, chapter, row = _pipeline_with_asr_evidence(tmp_path)
-    with pipeline.db.connect() as conn:
-        conn.execute(
-            "UPDATE voice_profiles SET pitch_semitones=2 WHERE id=?",
-            (int(row["voice_profile_id"]),),
-        )
-        signal = json.loads(str(row["signal_json"]))
-        signal["pitch_variant_skipped"] = 1.0
-        conn.execute(
-            "UPDATE segments SET signal_json=? WHERE id=?",
-            (json.dumps(signal), int(row["id"])),
-        )
-    verifier = RecordingPerceptualVerifier(
-        {
-            "verdict": "ok",
-            "reason": "PERCEPTUAL_WITHIN_VOICE_BASELINE",
-            "score": 3.0,
-            "baseline_score": 3.0,
-            "baseline_delta": 0.0,
-            "review_required": False,
-            "duration_seconds": 1.0,
-        }
-    )
-    pipeline.perceptual_qa = verifier
-
-    pipeline._verify_chapter_perceptual_audio(chapter)
-
-    assert verifier.calls == [(next(iter(VOICE_PREVIEW_FILENAMES)), 0)]
-    check = pipeline.db.latest_quality_check(
-        scope=QUALITY_SCOPE_SEGMENT,
-        stage=SEGMENT_PERCEPTUAL_QUALITY_STAGE,
-        segment_id=int(row["id"]),
-    )
-    assert check is not None
-    assert json.loads(str(check["metrics_json"]))["baseline_pitch_semitones"] == 0
 
 
 def test_perceptual_review_is_evidence_but_blocks_high_quality_publish(tmp_path: Path) -> None:
@@ -904,7 +862,6 @@ def test_quality_report_exports_current_perceptual_evidence(tmp_path: Path) -> N
     assert evidence["score"] == pytest.approx(3.1)
     assert evidence["baseline_score"] == pytest.approx(3.0)
     assert evidence["baseline_delta"] == pytest.approx(0.1)
-    assert evidence["baseline_pitch_semitones"] == 0
     assert evidence["policy_exemption"] is None
 
 

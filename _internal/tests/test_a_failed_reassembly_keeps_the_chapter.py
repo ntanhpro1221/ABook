@@ -207,39 +207,24 @@ def test_restore_is_a_no_op_when_there_was_no_artifact(tmp_path: Path) -> None:
     assert db.artifact_by_key("chapter_mp3:1") is None
 
 
-def test_a_chapter_that_never_shipped_is_left_to_cli_run(tmp_path: Path) -> None:
-    """Lượt này chữa chương ĐANG trong sách. Một chương `failed` không phải việc của nó.
+def test_a_chapter_that_never_shipped_is_left_to_cli_run(tmp_path: Path, monkeypatch) -> None:
+    """A synthetic project with current settings needs no external historical fixture."""
+    import scripts.keep_the_locked_reading as keeper
+    from tests.test_pipeline_mock import _short_tts_pipeline
 
-    Đo trên bản sao `lo01b`: lượt đầu đưa ba chương từ `failed` sang `completed`, vì
-    `_publish_verified_chapter` xuất bản bất cứ chương nào qua ba cổng chặn. Hậu quả: một chương
-    hỏng cũ có `completed_at` mới nhất và đoạt chỗ trong sách của bản đúc lại vừa xong.
-    """
-    import sqlite3 as _sqlite3
+    pipeline, chapter, row = _short_tts_pipeline(tmp_path)
+    pipeline.db.update_chapter_status(int(chapter["id"]), "failed")
+    before = dict(pipeline.db.get_segment(int(row["id"])))
+    monkeypatch.setattr(keeper, "bare_pipeline", lambda *_: pipeline)
+    monkeypatch.setattr(keeper, "survey", lambda *_: {int(chapter["id"]): [(dict(row), {})]})
 
-    from abook.cli import _open_project
-    from scripts.keep_the_locked_reading import run_project
+    def unexpected(*_args, **_kwargs):
+        pytest.fail("an unshipped chapter must not promote a take or publish audio")
 
-    real = Path("D:/Novels/Audiobooks/_fixtures/lo03r_084b_pre6b")
-    if not (real / "project.sqlite3").is_file() or not (real / "book_settings.json").is_file():
-        pytest.skip(f"không có project thật {real.name} trên máy này")
-    import shutil
-
-    shutil.copyfile(real / "project.sqlite3", tmp_path / "project.sqlite3")
-    shutil.copyfile(real / "book_settings.json", tmp_path / "book_settings.json")
-    with _sqlite3.connect(str(tmp_path / "project.sqlite3")) as conn:
-        conn.execute("UPDATE chapters SET status='failed'")
-    if not hasattr(_open_project(tmp_path)[1], "find_locked_reading_that_lost_only_the_spelling_test"):
-        pytest.skip("cây mã chưa có bản vá giữ cách đọc ghim")
-
-    code = run_project(tmp_path, apply=True)
-
-    assert code == 0
-    with _sqlite3.connect(str(tmp_path / "project.sqlite3")) as conn:
-        conn.row_factory = _sqlite3.Row
-        statuses = {str(r["status"]) for r in conn.execute("SELECT status FROM chapters")}
-        promoted = conn.execute(
-            "SELECT count(*) FROM segment_candidates WHERE state='promoted'"
-            " AND pronunciation_delivery_variant='locked_spoken_v1'"
-        ).fetchone()[0]
-    assert statuses == {"failed"}, "không được xuất bản một chương chưa lên sách"
-    assert promoted == 2, "và cũng không đề cử lại gì cho chương ấy"
+    monkeypatch.setattr(pipeline, "_keep_the_locked_reading", unexpected)
+    monkeypatch.setattr(pipeline, "_publish_verified_chapter", unexpected)
+    assert keeper.run_project(pipeline.paths.root, apply=True) == 0
+    assert pipeline.db.list_chapters()[0]["status"] == "failed"
+    assert dict(pipeline.db.get_segment(int(row["id"]))) == before
+    with pipeline.db.connect() as conn:
+        assert conn.execute("SELECT count(*) FROM segment_candidates WHERE state='promoted'").fetchone()[0] == 0

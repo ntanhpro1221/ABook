@@ -209,13 +209,13 @@ def voice_contradicts_a_person(voice_key: str, gender: str | None, age: str | No
     """Giọng này có trái với thứ NGƯỜI NGHE đã ghim không? Cùng luật với phân vai.
 
     Đúng luật của `character_registry._drop_pins_that_contradict_a_person`: preset phải đúng phái
-    (trừ trẻ con, vốn đọc bằng preset nữ nguyên giọng). Hai bên phải nói cùng một câu - nếu script này
+    ở mọi lứa tuổi. Hai bên phải nói cùng một câu - nếu script này
     chọn một giọng mà phân vai sẽ bỏ, thì lựa chọn ấy chỉ là một lần rút thăm lại được hoãn tới lượt chạy.
     """
     from abook.character_registry import preset_gender_of_voice_key
 
     preset = preset_gender_of_voice_key(voice_key)
-    return bool(gender and preset and preset != gender and (age or "") != "child")
+    return bool(gender and preset and preset != gender)
 
 
 def rows_the_listener_would_accept(
@@ -463,7 +463,7 @@ def resolve_collisions(
 def voice_profile(voice_key: str, versions: Path = VERSIONS) -> dict | None:
     """Hàng `voice_profiles` của một `voice_key`, tìm trong các project của sách.
 
-    Cần cả preset, seed, pitch và formant: `voice_key` mã hoá ba thứ nhưng `seed` thì không, và
+    Cần preset và seed: `voice_key` mã hoá preset nhưng `seed` thì không, và
     `seed` là thứ quyết định giọng nghe ra sao ở cùng một preset.
     """
     for db in sorted(versions.glob(f"{TAG_PREFIX}-lo*/*/project.sqlite3")):
@@ -559,8 +559,6 @@ def pin(
                 "preset_name": profile["preset_name"],
                 "description": profile["description"],
                 "seed": profile["seed"],
-                "pitch_semitones": profile["pitch_semitones"],
-                "formant_ratio": profile["formant_ratio"],
                 "status": "ready",
             }
         )
@@ -593,6 +591,7 @@ def pin(
         )
         freed += 1
         pins.pop(canonical_key(name), None)
+        owned = {voice: holder for voice, holder in owned.items() if holder != canonical_key(name)}
         if apply:
             unpin_character(database, name)
     if freed:
@@ -631,8 +630,6 @@ def pin(
                 "preset_name": profile["preset_name"],
                 "description": profile["description"],
                 "seed": profile["seed"],
-                "pitch_semitones": profile["pitch_semitones"],
-                "formant_ratio": profile["formant_ratio"],
                 "status": "ready",
             }
         )

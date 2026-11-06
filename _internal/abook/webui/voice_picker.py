@@ -243,8 +243,6 @@ def voice_choices(project_root: Path, character: str) -> dict[str, Any] | None:
                 "engine": engine,
                 "engineLabel": ENGINE_LABELS.get(engine, engine),
                 "installed": bool(installed.get(engine)),
-                # Giọng máy khác chỉ có một bậc âm sắc: hai người chung giọng ấy nghe như một.
-                "oneStep": engine != ENGINE_VIENEU,
                 "description": str(preset["description"]) if engine != ENGINE_VIENEU else "",
                 "gender": gender,
                 "genderLabel": GENDER_LABELS[gender],
@@ -324,7 +322,7 @@ def narrator_choices(project_root: Path) -> dict[str, Any] | None:
         gender = str(preset["gender"])
         entries.append({
             "key": name, "name": voice_label(name), "engine": ENGINE_VIENEU, "engineLabel": ENGINE_LABELS.get(ENGINE_VIENEU, ENGINE_VIENEU),
-            "installed": True, "oneStep": False, "description": "",
+            "installed": True, "description": "",
             "gender": gender, "genderLabel": GENDER_LABELS.get(gender, ""), "region": str(preset["region"]),
             "style": STYLE_LABELS.get(str(preset["style"]), str(preset["style"])),
             "preview": preview_file(name) is not None,

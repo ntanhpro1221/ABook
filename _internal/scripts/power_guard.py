@@ -233,10 +233,25 @@ def describe(processes) -> str:
     return ", ".join(names)
 
 
+def pause_latecomers(paused: list, candidates=None) -> list:
+    """Việc GPU khởi động SAU lần tạm dừng (06-11: thu lại Pain chạy tiếp trên pin vì chỉ quét một lần): tạm dừng nốt, nhớ để cắm lại thì chạy tiếp."""
+    import psutil
+
+    known = {process.pid for process in paused}
+    late = [process for process in (job_processes() if candidates is None else candidates) if process.pid not in known]
+    for process in late:
+        try:
+            process.suspend()
+        except psutil.Error:
+            pass
+    paused.extend(late)
+    return late
+
+
 def act(action: str, state: State, reading: Reading, left: float | None, paused: list) -> None:
     import psutil
 
-    level = f"pin {reading.percent}%" + (f", còn ~{left:.0f} phút" if left is not None else "")
+    level =f"pin {reading.percent}%" + (f", còn ~{left:.0f} phút" if left is not None else "")
     if action == "pause":
         paused[:] = job_processes()
         for process in paused:
@@ -324,6 +339,10 @@ def guard() -> int:
             left = remaining_minutes(state, reading) if not reading.ac else None
             for action in decide(state, reading):
                 act(action, state, reading, left, paused)
+            if state.paused and not state.stopped and not reading.ac:
+                late = pause_latecomers(paused)
+                if late:
+                    log_event("PAUSED", f"tạm dừng thêm {len(late)} tiến trình khởi động sau: {describe(late)}")
         except Exception as exc:  # noqa: BLE001 - một lần đo/làm hỏng không được giết người gác: lần sau đo lại
             log_event("ERROR", f"{type(exc).__name__}: {exc}"[:300])
         time.sleep(POLL_SECONDS)
