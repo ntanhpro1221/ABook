@@ -15,9 +15,9 @@ import scripts.heartbeat_event as event
 import scripts.heartbeat_timeout as timeout_bell
 
 
-def shot(roots=("boundary.sh 18",), done=3, last_done=(), problems=(), battery=False):
+def shot(roots=("boundary.sh 18",), done=3, last_done=(), problems=(), battery=False, letters=()):
     return {"roots": None if roots is None else list(roots), "done": done, "last_done": list(last_done),
-            "problems": list(problems), "battery": battery}
+            "problems": list(problems), "battery": battery, "letters": list(letters)}
 
 
 # --- chuông A ------------------------------------------------------------------------------------------
@@ -29,6 +29,27 @@ def test_a_detached_run_finishing_rings_at_once() -> None:
     line = "2026-09-26 08:47:23 pid=7000 xong (mã 0): bash scripts/boundary.sh 17"
     ring = watch.observe(shot(done=4, last_done=[line]))
     assert ring and "xong (mã 0)" in ring[0]
+
+
+def test_a_letter_from_a_session_out_of_messages_rings_once() -> None:
+    """Chủ sách 27-10: Music hết lượt nhắn thì ghi thư vào runtime/lead_inbox - reo ngay, một lần mỗi thư."""
+    watch = event.Watch(shot())
+    ring = watch.observe(shot(letters=["music_2710_1000.md"]))
+    assert ring and "music_2710_1000.md" in ring[0]
+    assert watch.observe(shot(letters=["music_2710_1000.md"])) == []
+
+
+def test_a_an_unread_letter_from_before_the_bell_still_rings() -> None:
+    watch = event.Watch(shot(letters=["model_old.md"]))
+    assert any("model_old.md" in line for line in watch.observe(shot(letters=["model_old.md"])))
+
+
+def test_a_reads_only_files_in_the_inbox(tmp_path) -> None:
+    (tmp_path / "read").mkdir()
+    (tmp_path / "b.md").write_text("x", encoding="utf-8")
+    (tmp_path / "a.md").write_text("x", encoding="utf-8")
+    assert event.letters(tmp_path) == ["a.md", "b.md"]
+    assert event.letters(tmp_path / "missing") == []
 
 
 def test_a_boundary_vanishing_rings_only_after_two_polls() -> None:
