@@ -39,8 +39,8 @@ android {
         }
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 164
-        versionName "0.4.162"
+        versionCode 165
+        versionName "0.4.163"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     // App chỉ có tiếng Việt (res/values) và muốn chữ của media3 cũng tiếng Việt cả khi máy để tiếng Anh (strings.xml). Thư viện media3 mang theo
