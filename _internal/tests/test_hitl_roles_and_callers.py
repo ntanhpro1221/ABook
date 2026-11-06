@@ -170,3 +170,14 @@ def test_naming_a_group_locks_one_gender_and_one_voice_for_all_its_lines(tmp_pat
     assert len({row["voice_key"] for row in rows}) == 1
     assert _segment(db, "c1s3")["status"] == "verified"
     assert_voice_stability(ProjectDB(paths.db))
+
+
+def test_registered_chapter_voice_action_survives_the_optional_book_merge(tmp_path: Path) -> None:
+    project = role_book(tmp_path)
+    cards = work_items(project)["items"]
+    merged = next(item for item in cards if item["key"] == "unnamed-role:người gác")
+    local = next(item for item in cards if item.get("currentValue") == ROLE and item.get("pickVoice"))
+    assert {line["stableId"] for line in merged["lines"]} == {"d", "e", "g", "other-chapter"}
+    assert {line["stableId"] for line in local["lines"]} == {"d", "e"}
+    assert local["pickVoice"]["name"] == ROLE.upper()
+    assert "pickVoice" not in merged

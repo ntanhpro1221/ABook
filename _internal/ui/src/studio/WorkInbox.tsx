@@ -576,7 +576,7 @@ function SpeakerFix({
               size="sm"
               // Gạch chân lựa chọn, để nút thực hiện vẫn là điểm nhấn duy nhất.
               variant="ghost"
-              className={cn("border-b-2 rounded-none transition-colors", (item.requested ? [choice.name, choice.label].includes(item.requested) : index === 0 && item.kind !== "unnamed" && item.suggested !== false) ? "border-accent" : "border-transparent")}
+              className={cn("border-b-2 rounded-none transition-colors", index === 0 && "edge-start-action", (item.requested ? [choice.name, choice.label].includes(item.requested) : index === 0 && item.kind !== "unnamed" && item.suggested !== false) ? "border-accent" : "border-transparent")}
               aria-pressed={item.requested ? [choice.name, choice.label].includes(item.requested) : undefined}
               disabled={busy || none}
               onClick={() => save.mutate({ speaker: choice.value })}
@@ -984,7 +984,7 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
         <>
           <SpeakerFix bookId={bookId} item={item} onOpenScript={openScript} scope={scope} onScope={setScope} picked={picked} />
           {item.kind === "unnamed" && item.pickVoice && onPickVoice && (
-            <Button size="sm" variant="ghost" className="mt-2" onClick={() => onPickVoice(item.pickVoice!)}>Giới / giọng</Button>
+            <Button size="sm" variant="ghost" className="edge-start-action mt-2" onClick={() => onPickVoice(item.pickVoice!)}>Giới / giọng</Button>
           )}
         </>
       ) : (

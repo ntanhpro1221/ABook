@@ -507,7 +507,16 @@ class CutBlob(Blob):
 def test_a_download_cut_mid_way_keeps_its_part_and_resumes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     # Trong lúc chờ thử lại, luồng tải báo "đang thử lại" (thẻ mô-đun nói "Mạng chập chờn", soát a64); byte về lại / xong thì thôi.
     waits: list[bool] = []
-    monkeypatch.setattr(studio_setup.time, "sleep", lambda _seconds: waits.append(studio_setup.retrying(threading.current_thread())))
+    owner = threading.current_thread()
+    real_sleep = studio_setup.time.sleep
+
+    def record_retry_wait(seconds: float) -> None:
+        if threading.current_thread() is owner:
+            waits.append(studio_setup.retrying(owner))
+        else:
+            real_sleep(seconds)
+
+    monkeypatch.setattr(studio_setup.time, "sleep", record_retry_wait)
     Blob.data = bytes(range(256)) * 4_000  # ~1 MB
     Blob.ranges = []
     CutBlob.cut = 300_000

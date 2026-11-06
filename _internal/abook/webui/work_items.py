@@ -1757,6 +1757,9 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
     # Enrich existing candidate cards instead of asking the same chapter role twice. Whole-book merge cards remain optional.
     existing_roles = {item["key"]: item for item in items if item["kind"] == "unnamed"}
     for local in local_cards:
+        # A registered role still needs its own voice picker; the merge card cannot edit that chapter voice.
+        if local["currentValue"] in grouped and not local.get("pickVoice"):
+            continue
         existing = existing_roles.get(f"unnamed:{local['currentValue']}")
         if existing is None:
             items.append(local)
