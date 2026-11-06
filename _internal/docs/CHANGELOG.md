@@ -8,6 +8,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ## [Chưa phát hành]
 
 - Thông báo không còn che nút trong bảng, hộp thoại hay menu đang mở, kể cả lúc chuyển động trên máy tính và điện thoại.
+- Mở lại file cùng sách có bìa, thông tin, kịch bản hoặc nhạc nền mới sẽ cập nhật sách, giữ nguyên chỗ nghe, tiến độ và chỉnh sửa của bạn trên điện thoại và máy tính.
 
 ### Âm thanh
 

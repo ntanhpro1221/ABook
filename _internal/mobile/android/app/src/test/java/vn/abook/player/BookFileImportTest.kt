@@ -37,13 +37,15 @@ class BookFileImportTest {
 
     @Test
     fun identical_audio_still_refreshes_base_cover_and_metadata_and_preserves_listener_edits() {
-        for (listenerCover in listOf(false, true)) {
+        for (refreshBase in listOf(false, true)) for (listenerCover in listOf(false, true)) {
             setUp()
-            fun packed(name: String, image: ByteArray? = null, label: String = "Base", width: Int = 12, script: String = "Base"): File {
+            fun packed(name: String, image: ByteArray? = null, label: String = "Base", width: Int = 12, script: String = "Base", cast: String = "Base", level: Double = -18.0): File {
                 val book = JSONObject().put("title", label).put("author", label).put("description", "description $label")
                     .put("chaptersAvailable", 1).put("chaptersTotal", 1)
                     .put("chapters", JSONArray().put(chapter(1, 0, "chapters/1.mp3")))
                 val content = mutableMapOf("chapters/1.mp3" to "same audio".toByteArray(), "scripts/1.json" to "{\"text\":\"$script\"}".toByteArray())
+                content["cast.json"] = "{\"narrator\":\"$cast\"}".toByteArray()
+                book.put("music", JSONObject().put("levelDb", level).put("tracks", JSONObject()).put("chapters", JSONObject()))
                 if (image != null) {
                     content["cover.jpg"] = image
                     book.put("cover", JSONObject().put("file", "cover.jpg").put("color", "#112233").put("width", width).put("height", 24))
@@ -55,15 +57,21 @@ class BookFileImportTest {
             val audio = File(folder, "chapters/1.mp3")
             audio.setLastModified(1_700_000_000_000L)
             val stamp = audio.lastModified()
+            Store.progress(first.id, 1, 23.5, 120.0)
+            Store.setRate(first.id, 1.25)
+            Store.setChapterDone(first.id, 1, true)
+            val listening = Store.state(first.id).toString()
             BookEdits.setTitle(folder, "Listener title")
             if (listenerCover) BookEdits.setCover(folder, otherJpeg, FakeCodec("#aabbcc"))
             val edits = BookEdits.load(folder).toString()
-            for ((name, image) in listOf("added" to jpeg, "changed" to otherJpeg, "meta" to otherJpeg, "removed" to null, "description" to null, "script" to null)) {
-                val label = if (name in setOf("description", "script")) "Refreshed" else "Base"
+            for ((name, image) in listOf("added" to jpeg, "changed" to otherJpeg, "meta" to otherJpeg, "removed" to null, "description" to null, "script" to null, "cast" to null, "music" to null)) {
+                val label = if (name in setOf("description", "script", "cast", "music")) "Refreshed" else "Base"
                 val width = if (name == "meta") 36 else 12
-                val script = if (name == "script") "ScriptOnly" else "Base"
-                val file = packed(name, image, label, width, script)
-                val updated = BookFileImport.importFile(file)
+                val script = if (name in setOf("script", "cast", "music")) "ScriptOnly" else "Base"
+                val cast = if (name in setOf("cast", "music")) "New narrator" else "Base"
+                val level = if (name == "music") -12.0 else -18.0
+                val file = packed(name, image, label, width, script, cast, level)
+                val updated = BookFileImport.importFile(file, refreshBase = refreshBase)
                 assertEquals(first.id, updated.id)
                 assertEquals("updated", updated.how)
                 val raw = Store.rawManifest(first.id)!!
@@ -71,6 +79,8 @@ class BookFileImportTest {
                 assertEquals(label, raw.getString("author"))
                 assertEquals("description $label", raw.getString("description"))
                 assertEquals(script, JSONObject(File(folder, "scripts/1.json").readText()).getString("text"))
+                assertEquals(cast, JSONObject(File(folder, "cast.json").readText()).getString("narrator"))
+                assertEquals(level, raw.getJSONObject("music").getDouble("levelDb"), 0.0)
                 assertEquals(image != null, File(folder, "cover.jpg").exists())
                 if (image != null) {
                     assertTrue(File(folder, "cover.jpg").readBytes().contentEquals(image))
@@ -81,11 +91,12 @@ class BookFileImportTest {
                     assertEquals(listenerCover, Store.manifest(first.id)!!.has("cover"))
                 }
                 assertEquals(edits, BookEdits.load(folder).toString())
+                assertEquals(listening, Store.state(first.id).toString())
                 assertEquals("Listener title", Store.manifest(first.id)!!.getString("title"))
                 if (listenerCover) assertTrue(File(folder, "edits/cover.jpg").readBytes().contentEquals(otherJpeg))
                 assertEquals("same audio", audio.readText())
                 assertEquals(stamp, audio.lastModified())
-                assertEquals("existing", BookFileImport.importFile(file).how)
+                assertEquals("existing", BookFileImport.importFile(file, refreshBase = refreshBase).how)
             }
         }
     }
