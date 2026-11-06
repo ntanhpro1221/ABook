@@ -27,7 +27,7 @@ import { workKeyHandler } from "./workKeys";
 // quyết và dây chuyền KHÔNG chờ ai - đây là nơi người sửa ít nhất mà được nhiều nhất. Cách đọc tên sửa được ngay trên thẻ
 // (bước 2): mong muốn ghi vào overrides.json, dây chuyền áp ở ranh giới chương và thu lại những câu có tên ấy.
 
-export type WorkKind = "speaker" | "turn" | "gender" | "vocative" | "alias" | "bracket" | "shared-voice" | "pronunciation" | "unnamed" | "audio" | "narrator" | "voice-wish" | "snap" | "teller-voice" | "teller-thought" | "refused";
+export type WorkKind = "speaker" | "caller" | "turn" | "gender" | "vocative" | "alias" | "bracket" | "shared-voice" | "pronunciation" | "unnamed" | "audio" | "narrator" | "voice-wish" | "snap" | "teller-voice" | "teller-thought" | "refused";
 
 interface WorkExample {
   segmentId: number;
@@ -105,6 +105,7 @@ export interface WorkItem {
   keepGroups?: SpeakerRequest[];
   /** Thẻ vai phụ cả cuốn: tên đề nghị cho "là một người mới tên “…”" (cả nhóm thành MỘT người có giọng riêng). */
   newPerson?: string;
+  suggestedName?: string;
   /** Chữ của nút người mới khi thẻ hỏi theo kiểu có / không ("Không, là người khác" - thẻ hai cách viết một tên). */
   newPersonLabel?: string;
   /** Thẻ đã quyết: cách rút đúng lần bấm ấy (`POST /{endpoint}` với `withdraw`) - nút "Hoàn tác" của mục "Đã quyết". */
@@ -144,6 +145,7 @@ export interface WorkView {
 
 const KIND_LABEL: Record<WorkKind, string> = {
   speaker: "Ai nói câu này",
+  caller: "Người gọi / ngoài khung",
   turn: "Lượt đối đáp",
   pronunciation: "Cách đọc tên",
   gender: "Nam hay nữ",
@@ -448,7 +450,7 @@ function SpeakerFix({
   // "Người khác…": người nói chưa có trong lựa chọn - kể cả người máy CHƯA TỪNG gán câu nào (linh thể nói trong 『』):
   // gõ tên + chọn giới, dây chuyền tạo người ấy và cấp giọng riêng như bước phân vai.
   const [creating, setCreating] = useState(false);
-  const [name, setName] = useState("");
+  const [name, setName] = useState(item.suggestedName ?? "");
   // Mở “Người khác…” để gõ tên thì con trỏ vào ô luôn (bàn phím không phải Tab qua cả hàng nút để tìm nó).
   const nameInput = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -602,8 +604,8 @@ function SpeakerFix({
         )}
         {/* Thẻ "một người hai tên" hỏi hai tên có phải một người - chọn người thứ ba lạc chủ đề (soát UX 29-09). */}
         {item.kind !== "alias" && (
-          <Button size="sm" variant="ghost" icon={UserPlus} aria-expanded={creating} className="text-fg-2 hover:text-fg" onClick={() => setCreating((value) => !value)}>
-            Người khác
+          <Button size="sm" variant="ghost" icon={item.suggestedName || item.kind === "caller" ? undefined : UserPlus} aria-expanded={creating} className="text-fg-2 hover:text-fg" onClick={() => setCreating((value) => !value)}>
+            {item.suggestedName ? "Đặt tên" : "Người khác"}
           </Button>
         )}
         {/* Thẻ chỉ gợi vài người; tab Kịch bản tìm được mọi nhân vật trong sách - mở đúng câu này ở đó (soát UX 29-09). */}
@@ -979,7 +981,12 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
       ) : item.voiceChoices && item.voiceChoices.length > 0 ? (
         <VoiceFix bookId={bookId} item={item} />
       ) : item.lines && item.choices ? (
-        <SpeakerFix bookId={bookId} item={item} onOpenScript={openScript} scope={scope} onScope={setScope} picked={picked} />
+        <>
+          <SpeakerFix bookId={bookId} item={item} onOpenScript={openScript} scope={scope} onScope={setScope} picked={picked} />
+          {item.kind === "unnamed" && item.pickVoice && onPickVoice && (
+            <Button size="sm" variant="ghost" className="mt-2" onClick={() => onPickVoice(item.pickVoice!)}>Giới / giọng</Button>
+          )}
+        </>
       ) : (
         <div role="group" className="mt-3 flex flex-wrap gap-1.5" aria-label="Lựa chọn">
           {item.options.map((option) => (
@@ -1042,7 +1049,7 @@ const PICK_PAGE = 100;
 // "Giữ như máy đang làm" cho cả loại thẻ đang lọc (soát UX a6 01-10, D2): sau khi soát vài thẻ thấy máy đúng gần hết, người
 // làm sách bấm "giữ" từng thẻ một trong cả trăm thẻ. Một lần bấm (có hỏi lại) ghi đúng quyết định "giữ" mà từng thẻ ghi -
 // không câu nào phải thu lại, máy thôi hỏi - và hoàn tác được cả nhóm.
-const BULK_KINDS: WorkKind[] = ["pronunciation", "speaker", "turn", "vocative", "unnamed"];
+const BULK_KINDS: WorkKind[] = ["pronunciation", "speaker", "caller", "turn", "vocative", "unnamed"];
 
 function BulkKeep({ bookId, kind, items }: { bookId: string; kind: WorkKind; items: WorkItem[] }) {
   const client = useQueryClient();

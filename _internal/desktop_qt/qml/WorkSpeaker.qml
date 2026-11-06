@@ -12,10 +12,12 @@ Column {
     property bool scoped: false                 // thẻ có hai phạm vi (câu xen kẽ / cả chuỗi)
     property var picked: null                   // thẻ vai phụ cả cuốn: các câu còn chọn
     property bool scriptLinks: false
+    property bool voicePick: false
     property bool creating: false
     property bool busy: false
     signal scopeChosen(string scope)
     signal openScript(int chapterId, string stableId, bool pick)
+    signal pickVoice(var person)
 
     readonly property var lines: picked ? picked : (scope === "all" && item.allLines ? item.allLines : item.lines)
     readonly property bool none: !lines || lines.length === 0
@@ -113,14 +115,22 @@ Column {
             enabled: !root.busy
             onClicked: root.keepAll()
         }
+        Button {
+            objectName: "speakerVoice"
+            visible: root.voicePick && root.item.kind === "unnamed" && Boolean(root.item.pickVoice)
+            size: "sm"
+            kind: "ghost"
+            text: "Giới / giọng"
+            onClicked: root.pickVoice(root.item.pickVoice)
+        }
         // Thẻ "một người hai tên" hỏi hai tên có phải một người - chọn người thứ ba lạc chủ đề
         Button {
             objectName: "speakerOther"
             visible: root.item.kind !== "alias"
             size: "sm"
             kind: "ghost"
-            icon: "user-plus"
-            text: "Người khác…"
+            icon: root.item.suggestedName || root.item.kind === "caller" ? "" : "user-plus"
+            text: root.item.suggestedName ? "Đặt tên" : "Người khác"
             Accessible.description: root.creating ? "Đang mở" : "Đang đóng"
             onClicked: root.creating = !root.creating
         }
@@ -188,6 +198,7 @@ Column {
                             y: 4
                             width: parent.width
                             label: "Tên người nói mới"
+                            text: root.item.suggestedName || ""
                             placeholderText: root.sample ? "Tên người nói (vd " + root.sample + ")" : "Tên người nói"
                             onTextChanged: if (text.length > 80) text = text.slice(0, 80)
                         }

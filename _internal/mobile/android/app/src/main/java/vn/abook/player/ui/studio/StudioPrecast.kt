@@ -67,7 +67,7 @@ object PrecastLogic {
     const val REFRESH_MS = 15_000L
 
     private val CAST_KINDS = setOf(WorkKind.Gender, WorkKind.Alias, WorkKind.SharedVoice)
-    private val LINE_KINDS = setOf(WorkKind.Speaker, WorkKind.Turn, WorkKind.Vocative, WorkKind.Bracket, WorkKind.Unnamed)
+    private val LINE_KINDS = setOf(WorkKind.Speaker, WorkKind.Caller, WorkKind.Turn, WorkKind.Vocative, WorkKind.Bracket, WorkKind.Unnamed)
 
     private fun open(items: List<WorkItem>) = items.filter(WorkLogic::isOpen)
 

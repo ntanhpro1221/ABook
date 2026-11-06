@@ -10,7 +10,7 @@ export const PRECAST_STEPS: PrecastStep[] = ["cast", "names", "lines", "done"];
 /** Những người nói nhiều nhất: giọng của họ nghe suốt cuốn. */
 export const TOP_PEOPLE = 6;
 const CAST_KINDS = ["gender", "alias", "shared-voice"];
-const LINE_KINDS = ["speaker", "turn", "vocative", "bracket", "unnamed"];
+const LINE_KINDS = ["speaker", "caller", "turn", "vocative", "bracket", "unnamed"];
 
 /** Phần của thẻ việc (webui/work_items.py) mà màn duyệt cần - để chọn thẻ không phải dựng cả thẻ. */
 export interface WorkItemLike {

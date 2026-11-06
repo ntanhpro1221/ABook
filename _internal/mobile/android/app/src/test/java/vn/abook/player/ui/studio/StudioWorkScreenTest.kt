@@ -63,6 +63,18 @@ class StudioWorkScreenTest {
 
     // ---- Việc cần duyệt ----
 
+    @Test fun chapterRoleSuggestsANameAndGenderForAllItsLines() {
+        source.workView = WorkView(listOf(speakerCard().copy(kind = WorkKind.Unnamed,
+            suggestedName = "Người gác chương 1", lines = listOf(lineRef("a"), lineRef("b")))), emptyMap())
+        project(StudioTab.Work)
+        tag("studio_other").performScrollTo().assertTextEquals("Đặt tên").performClick()
+        tag("studio_other_name").performTextReplacement("Mai")
+        tag("studio_other_female").performClick()
+        rule.waitForIdle()
+        tag("studio_undo_text").assertTextEquals("Đã ghi: 2 câu này của Mai")
+        assertTrue(source.writes.isEmpty())
+    }
+
     @Test fun anAnsweredCardSlidesAwayAndOffersUndoWithoutSendingAnything() {
         source.workView = WorkView(listOf(speakerCard("a"), speakerCard("b").copy(title = "Câu thứ hai")), emptyMap())
         project(StudioTab.Work)

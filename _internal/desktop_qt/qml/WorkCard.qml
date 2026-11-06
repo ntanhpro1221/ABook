@@ -246,6 +246,8 @@ Item {
                 scoped: Boolean(root.item.allLines) && Boolean(root.item.lines)
                 picked: root.picked
                 scriptLinks: root.scriptLinks
+                voicePick: root.voicePick
+                onPickVoice: person => root.pickVoice(person)
                 onScopeChosen: value => root.scope = value
                 onOpenScript: (chapterId, stableId, pick) => root.openScript(chapterId, stableId, pick, root.item.key)
             }
