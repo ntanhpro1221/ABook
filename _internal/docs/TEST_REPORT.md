@@ -1,5 +1,13 @@
 # Test report
 
+## 07-11-2026 — Android startup (dev/perfandroid, chưa commit)
+
+- WorkManager khởi tạo khi `getInstance(context)` đầu tiên thay cho ContentProvider; giữ cấu hình mặc định và các initializer khác. Worker thật kiểm trên AVD riêng không mở Activity: 1 test / 0 failure / 0 error.
+- Đồng bộ catalogue không đọc Thư viện thêm lần nữa sau khi nguồn đã công bố; lỗi nguồn vẫn làm mới phần đã ghi. Polling thiết bị/Studio đợi callback first-content hiện có. Không sửa UI, thang hoạt ảnh, điều kiện splash hoặc mốc reportFullyDrawn.
+- JVM/Robolectric đích: 105 tests / 0 failures / 0 errors / 0 skipped, gồm LibraryMembership, DevicesState, NativeActivityLinks, LibraryScreen, ShellRoutes, SettingsData, PlayerRepo, NativeDevicesFlow, TabHost, MotionScan. Hai hồi quy DevicesState kiểm nguồn tự công bố và lỗi giữa chừng/giữ một lượt đồng bộ.
+- Macrobenchmark cold startup: >=10 Perfetto trace mỗi APK/thay đổi trên cùng AVD 2 vCPU/1536 MiB, SwiftShader CPU, không cửa sổ, adb riêng cổng 5038, package com.ngdtuanh.abook.perfaudit. Profile bổ sung graph startup thật, hợp với coverage UI cũ; generator 1/1 pass. Số startup từng lượt, RAM PSS sau thư viện/phát MP3 60 s, đối chứng APK gốc và thử nghiệm loại bỏ: D:/Novels/ABook_perfandroid/report.md cùng perfandroid_evidence. Không suy số emulator thành điện thoại thật.
+- Không release gate đầy đủ, không GPU host, không chạm điện thoại thật/package sản phẩm hoặc `_internal/abook/`.
+
 ## 06-11-2026 — tnbig (dev/tn-bigint, chưa commit)
 
 - Python/Kotlin nhóm số liền từ 7 chữ số có ngữ cảnh lượng; sửa gốc luật nghìn kiểu Anh để không sinh số dài liền, kèm dấu ~ và dấu chấm cuối câu. Cache 5 → 6; cập nhật 19 khoá fixture cache. Fixture chung 146 ca: thêm 46 câu bịa, đổi 1 ca cũ `thousands-2`; 99 ca cũ giữ nguyên. Hai kỳ vọng trùng của số sinh từ bỏ phẩy trong test Python/Kotlin được đổi tương ứng.
