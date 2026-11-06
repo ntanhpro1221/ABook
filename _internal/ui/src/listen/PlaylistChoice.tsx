@@ -56,6 +56,7 @@ export function usePlaylistChoice(bookId: string, enabled = true) {
   const current = useQuery({ queryKey: key, queryFn: () => api<PlaylistView>(`/api/books/${bookId}/music`), enabled });
   const chosen = chosenId(current.data);
   const choose = useMutation({
+    scope: { id: `book-music:${bookId}` },
     mutationFn: ({ playlist }: { playlist: string | null; notice?: AddNotice }) => savePlaylistChoice(bookId, playlist),
     onSuccess: (view, { playlist, notice }) => {
       // Chọn xong phải thấy đã đổi (menu đóng ngay): nói tên danh sách vừa chọn (hay kết quả thêm nhạc, nếu việc chọn đến từ đó).
@@ -83,6 +84,7 @@ export function usePlaylistChoice(bookId: string, enabled = true) {
   });
   // Mức nhạc nền: nhớ theo cuốn như danh sách; trình phát nạp lại hàng bài (MUSIC_CHANGED_EVENT) với mức mới.
   const setLevel = useMutation({
+    scope: { id: `book-music:${bookId}` },
     mutationFn: (levelDb: number) => saveMusicLevel(bookId, levelDb),
     onSuccess: (view) => {
       client.setQueryData(key, view);

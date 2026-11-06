@@ -1,5 +1,5 @@
 import * as Slider from "@radix-ui/react-slider";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "./cn";
 import { MotionPresence } from "./MotionPresence";
 import { MotionRegion } from "./MotionRegion";
@@ -25,15 +25,21 @@ export function MusicLevelSlider({ value, disabled = false, saving = false, onCh
   className?: string;
 }) {
   const [moving, setMoving] = useState<number | null>(null);
-  // Máy chủ trả đúng mức vừa thả thì thôi giữ chữ tạm; lần lưu cũ về muộn (đã kéo tiếp) không kéo núm lùi lại.
-  useEffect(() => setMoving((held) => (held === value ? null : held)), [value]);
+  const submitted = useRef<number | null>(null);
+  // Keep the latest intent through every earlier ACK in the serialized save queue.
   useEffect(() => {
-    if (!saving) setMoving(null);
+    if (!saving) {
+      submitted.current = null;
+      setMoving(null);
+    }
   }, [saving]);
   const shown = clampLevel(moving ?? value);
   const commit = (next: number) => {
-    setMoving(next === value ? null : next);
-    if (next !== value) onChange(next);
+    setMoving(next);
+    if (next !== (submitted.current ?? value)) {
+      submitted.current = next;
+      onChange(next);
+    }
   };
   return (
     <div data-music-level className={cn("w-full", className)}>
