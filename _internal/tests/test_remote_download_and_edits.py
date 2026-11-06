@@ -16,6 +16,7 @@ from typing import Any
 
 import pytest
 
+from tests.async_wait import wait_until
 from abook.webui import book_edits, book_wishes, edits_inbox, packages, remote_books, store
 from abook.webui.library import Preferences
 from abook.webui.listening import Listening
@@ -117,14 +118,7 @@ def test_reading_along_a_heard_chapter_works_with_the_other_computer_off(library
 
 
 def _until(check, seconds: float = 5.0) -> bool:
-    import time
-
-    deadline = time.time() + seconds
-    while time.time() < deadline:
-        if check():
-            return True
-        time.sleep(0.05)
-    return check()
+    return wait_until(check, timeout=seconds, interval=0.05)
 
 
 def test_an_interrupted_download_keeps_what_is_done_and_resumes_only_the_rest(library, tmp_path: Path, monkeypatch) -> None:  # noqa: F811

@@ -6,9 +6,9 @@ Cùng một máy (cùng mã máy gửi lúc ghép) ghép lại thì A THAY dòng
 from __future__ import annotations
 
 import json
-import time
 from pathlib import Path
 
+from tests.async_wait import wait_until
 from abook.webui import remote_books, tls
 from abook.webui.sync import Devices, SyncApp, SyncServer
 from tests.test_sync_tls_pinning import _this_computer
@@ -24,12 +24,14 @@ def _serve(library, tmp_path: Path, identity: tls.Identity, port: int = 0) -> tu
 
 
 def _until(check, seconds: float = 5.0) -> bool:
-    deadline = time.time() + seconds
-    while time.time() < deadline:
-        if check():
-            return True
-        time.sleep(0.05)
-    return check()
+    return wait_until(check, timeout=seconds, interval=0.05)
+
+
+def _stored(app):
+    # Observe the persisted bytes under the writer's lock, including the exact
+    # revoke count. Do not race atomic replacement on Windows or retry IO errors.
+    with app.computers._lock:
+        return json.loads(app.computers.path.read_text(encoding="utf-8"))
 
 
 def test_forgetting_a_computer_revokes_its_device_there(library, tmp_path: Path) -> None:  # noqa: F811
@@ -38,7 +40,7 @@ def test_forgetting_a_computer_revokes_its_device_there(library, tmp_path: Path)
     app = _this_computer(tmp_path)
     try:
         (computer,) = app.pair_computer(f"127.0.0.1:{other.port}", devices.start_pairing()["code"])["computers"]
-        token = json.loads((tmp_path / "nay" / "computers.json").read_text("utf-8"))["computers"][computer["id"]]["token"]
+        token = _stored(app)["computers"][computer["id"]]["token"]
         assert len(devices.list()) == 1 and devices.check(token)
         app.forget_computer(computer["id"])
         assert _until(lambda: devices.list() == []), "A thôi liệt kê B và mã cũ hết hiệu lực"
@@ -69,13 +71,12 @@ def test_a_computer_that_was_off_is_told_on_the_next_library_refresh(library, tm
     (computer,) = app.pair_computer(f"127.0.0.1:{port}", devices.start_pairing()["code"])["computers"]
     other.stop()
     app.forget_computer(computer["id"])
-    stored = tmp_path / "nay" / "computers.json"
-    assert _until(lambda: len(json.loads(stored.read_text("utf-8")).get("revoke") or []) == 1), "chưa báo được: nhớ để báo sau"
+    assert _until(lambda: len(_stored(app).get("revoke") or []) == 1), "chưa báo được: nhớ để báo sau"
     assert len(devices.list()) == 1
     back, devices = _serve(library, tmp_path, identity, port)
     try:
         remote_books.refresh(app.library.root, app.computers)
         assert _until(lambda: devices.list() == []), "A bật lại: lần hỏi kế tiếp báo thôi ghép"
-        assert _until(lambda: not json.loads(stored.read_text("utf-8")).get("revoke"))
+        assert _until(lambda: not _stored(app).get("revoke"))
     finally:
         back.stop()

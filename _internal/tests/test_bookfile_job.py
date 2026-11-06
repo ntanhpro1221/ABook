@@ -7,20 +7,25 @@ import threading
 import time
 from pathlib import Path
 
+from tests.async_wait import wait_for
 from abook.webui import bookfile
 from abook.webui.export_jobs import BookFileJobs
 from tests.test_export_series import _get, _part, _post, _studio
 
 
 def _wait(server, project: Path, state: str = "done") -> dict:
-    deadline = time.monotonic() + 20
-    while time.monotonic() < deadline:
+    job = None
+
+    def completed():
+        nonlocal job
         status, job = _get(server, project, "bookfile-job")
         assert status == 200
-        if job["state"] == state:
-            return job
-        time.sleep(0.05)
-    raise AssertionError(f"việc xuất không tới trạng thái {state}: {job}")
+        return job if job["state"] == state else None
+
+    result = wait_for(completed, timeout=20, interval=0.05)
+    if not result:
+        raise AssertionError(f"việc xuất không tới trạng thái {state}: {job}")
+    return result
 
 
 def test_a_book_never_exported_reports_idle(tmp_path: Path) -> None:

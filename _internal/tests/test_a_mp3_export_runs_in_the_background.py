@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pytest
 
+from tests.async_wait import wait_until
 from abook.webui import export
 from abook.webui.library import book_id
 from tests.test_export_music import _studio_book
@@ -17,12 +18,7 @@ from tests.test_export_series import _get, _mp3_job, _part, _post, _studio, fake
 
 
 def _wait(predicate, seconds: float = 20.0) -> bool:
-    deadline = time.monotonic() + seconds
-    while time.monotonic() < deadline:
-        if predicate():
-            return True
-        time.sleep(0.02)
-    return False
+    return wait_until(predicate, timeout=seconds, interval=0.02)
 
 
 def test_the_job_answers_202_at_once_and_reports_chapter_progress(series, tmp_path: Path, fake_ffmpeg, monkeypatch: pytest.MonkeyPatch) -> None:  # noqa: F811

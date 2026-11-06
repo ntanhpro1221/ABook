@@ -11,6 +11,7 @@ from pathlib import Path
 
 import pytest
 
+from tests.async_wait import wait_until
 from abook.io_utils import ffmpeg_available
 from abook.readaloud import mp3
 from abook.webui import export, export_jobs
@@ -21,12 +22,7 @@ pytestmark = pytest.mark.skipif(not ffmpeg_available(), reason="cần ffmpeg")
 
 
 def _wait(predicate, seconds: float = 20.0) -> bool:
-    deadline = time.time() + seconds
-    while time.time() < deadline:
-        if predicate():
-            return True
-        time.sleep(0.03)
-    return False
+    return wait_until(predicate, timeout=seconds, interval=0.03)
 
 
 def _leftovers(folder: Path) -> list[str]:
