@@ -256,11 +256,18 @@ def worker(name: str) -> dict:
         return {"counts": {"files": len(locked), "changed": len(touched)}, "hash": digest, "locked_changes": touched,
                 "implementation_files": list(QUALITY_IMPLEMENTATION_FILES)}
     if name == "changelog":
+        # Trước bump: [Chưa phát hành] phải có gạch đầu dòng. Sau bump (commit phát hành): [<version>] phải có - khi ấy
+        # [Chưa phát hành] rỗng là đúng, vì release.py publish lấy ghi chú từ [<version>]. Luật cũ chỉ nhìn [Chưa phát hành]
+        # nên đá nhau với publish (07-11: 0.4.163 hỏng đăng hai lần).
         text = (ROOT / "docs/CHANGELOG.md").read_text(encoding="utf-8")
-        section = re.search(r"^## \[Chưa phát hành\]\s*\n(.*?)(?=^## |\Z)", text, re.S | re.M)
-        bullets = re.findall(r"^[-*] \S.+", section.group(1), re.M) if section else []
-        require(bool(bullets), "CHANGELOG [Chưa phát hành] rỗng/thiếu")
-        return {"counts": {"entries": len(bullets)}}
+
+        def entries(heading: str) -> list[str]:
+            section = re.search(rf"^## \[{re.escape(heading)}\][^\n]*\n(.*?)(?=^## |\Z)", text, re.S | re.M)
+            return re.findall(r"^[-*] \S.+", section.group(1), re.M) if section else []
+
+        unreleased, current = entries("Chưa phát hành"), entries(version())
+        require(bool(unreleased or current), f"CHANGELOG [Chưa phát hành] và [{version()}] đều rỗng/thiếu")
+        return {"counts": {"entries": len(unreleased or current), "released": int(bool(current) and not unreleased)}}
     if name == "licenses":
         files = [ROOT / "LICENSE", ROOT / "docs/THIRD_PARTY.md"]
         require(all(path.is_file() and path.stat().st_size > 0 for path in files), "thiếu LICENSE/THIRD_PARTY")
