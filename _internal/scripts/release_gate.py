@@ -180,7 +180,6 @@ def checks() -> list[Check]:
         ("manual-ui", "Android thật/máy ảo; duyệt ảnh gallery, README, nguồn truyện trong diff và giấy phép thành phần đóng gói"),
         ("manual-quality", "Lead duyệt hash và tác động tới sách đang chạy; không dừng/resume pha phân tích"),
         ("manual-artifacts", "Bộ cài/APK ký, packaged smoke, audio sink hai lượt + đối chứng, cài/cập nhật/gỡ hồ sơ giả"),
-        ("manual-publish", "Commit/tag đúng, notes + 6 assets + latest endpoint, cất mapping R8 vào kho riêng"),
         ("manual-dependencies", "Duyệt dependency audit mỗi phiên bản; cần máy Studio/GPU/Ollama, không chạy ở gate CPU"),
     )]
     return definitions

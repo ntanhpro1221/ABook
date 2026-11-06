@@ -18,6 +18,10 @@ spec.loader.exec_module(gate)
 FIXTURES = Path(__file__).parent / "fixtures/release_gate"
 
 
+def test_publication_verification_is_not_a_prepublication_manual_row():
+    assert "manual-publish" not in {check.name for check in gate.checks()}
+
+
 def test_parsers_read_captured_outputs():
     assert gate.parse_pytest((FIXTURES / "pytest-passed.txt").read_text(encoding="utf-8"))["passed"] == 11
     assert gate.parse_vitest((FIXTURES / "vitest-a90a.txt").read_text(encoding="utf-8")) == {

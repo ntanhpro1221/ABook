@@ -4,6 +4,7 @@
     python scripts/release.py build 0.4.12           # bộ cài Windows + APK ký khoá phát hành, kiểm chữ ký và latest.json
     python scripts/release.py notes 0.4.12           # ghi chú GitHub Release từ CHANGELOG + README
     python scripts/release.py publish 0.4.12 --commit <sha>   # tag, đẩy main, GitHub Release 6 file, kiểm latest.json
+    python scripts/release.py verify v0.4.12        # kiểm sau phát hành, chỉ đọc GitHub/origin/endpoint
 
 Mỗi bước dừng ở chỗ đầu tiên không đúng (assert / mã thoát khác 0). File phát hành nằm NGOÀI repo (thư mục tạm của máy, hay
 --out), để không bao giờ lỡ commit file nhị phân. Khoá ký APK và khoá minisign không đi qua script này: bước dựng đọc chúng ở
@@ -13,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import datetime
+import hashlib
 import json
 import os
 import re
@@ -22,6 +24,7 @@ import sys
 import tempfile
 import time
 import urllib.request
+import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]  # _internal
@@ -32,6 +35,99 @@ GITHUB_USER = "ntanhpro1221"
 APK_CERT_SHA256 = "e0aeae7e8407ec636b01f634af915beda289ceb25c9ab038351823aefcd3a226"
 VERSION = re.compile(r"^\d+\.\d+\.\d+$")
 BELOW_NORMAL = 0x00004000  # Windows: dựng ở ưu tiên thấp, không giành máy với hàng GPU
+MAPPING_ARCHIVE = Path("D:/Novels/ABook/Corpus/releases/android")
+
+
+def _read(command: list[str]) -> str:
+    return subprocess.run(command, cwd=REPO, capture_output=True, encoding="utf-8", check=True,
+                          timeout=60, creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0).stdout.strip()
+
+
+def _github(endpoint: str):
+    return json.loads(_read(["gh", "api", "--method", "GET", f"repos/{GITHUB_REPO}/{endpoint}"]))
+
+
+def _sha256(path: Path) -> str:
+    with path.open("rb") as source:
+        return hashlib.file_digest(source, "sha256").hexdigest()
+
+
+def _verify_mapping(version: str, apk: Path) -> None:
+    mapping = MAPPING_ARCHIVE / version / "mapping.txt"
+    assert mapping.is_file(), f"thiếu mapping R8 riêng tư: {mapping}"
+    # R8 hashes the mapping body after pg_map_hash; the APK records this build's pg-map-id.
+    with mapping.open("rb") as source:
+        header = b""
+        for _ in range(32):
+            line = source.readline()
+            header += line
+            if line.startswith(b"# pg_map_hash:"):
+                break
+        identity = re.search(rb"(?m)^# pg_map_id: ([0-9a-f]+)\r?$", header)
+        digest = re.search(rb"(?m)^# pg_map_hash: SHA-256 ([0-9a-f]{64})\r?$", header)
+        assert identity and digest, "mapping R8 thiếu build id/hash"
+        assert hashlib.file_digest(source, "sha256").hexdigest() == digest[1].decode(), "mapping R8 sai hash nội dung"
+    with zipfile.ZipFile(apk) as package:
+        ids = {match for name in package.namelist() if re.fullmatch(r"classes\d*\.dex", name)
+               for match in re.findall(rb'"pg-map-id":"([0-9a-f]+)"', package.read(name))}
+    assert ids == {identity[1]}, "mapping R8 khác build APK phát hành"
+    built = ROOT / "mobile/android/app/build/outputs/mapping/release/mapping.txt"
+    if built.is_file():
+        assert _sha256(built) == _sha256(mapping), "mapping R8 riêng tư khác file build"
+
+
+def verify(version: str, out: Path, commit: str | None = None) -> None:
+    """Read-only post-publication checks; a historical release must still be the updater's latest."""
+    assert VERSION.fullmatch(version), f"số phiên bản lạ: {version}"
+    tag = f"v{version}"
+    expected = _read(["git", "rev-parse", f"{commit or tag}^{{commit}}"])
+    refs = dict(line.split()[::-1] for line in _read(
+        ["git", "ls-remote", "origin", f"refs/tags/{tag}", f"refs/tags/{tag}^{{}}"]).splitlines())
+    remote = refs.get(f"refs/tags/{tag}^{{}}", refs.get(f"refs/tags/{tag}"))
+    assert remote == expected, "tag trên origin khác commit phát hành"
+    comparison = _github(f"compare/{expected}...main")
+    assert comparison.get("status") in {"ahead", "identical"}, "commit phát hành chưa nằm trên origin/main"
+    print(f"PASS origin tag {tag} -> {expected}", flush=True)
+    release = _github(f"releases/tags/{tag}")
+    assert release.get("tag_name") == tag and not release.get("draft") and not release.get("prerelease"), "Release sai tag/draft/prerelease"
+    assets = release.get("assets", [])
+    names = artifacts(version)
+    assert len(assets) == len(names) and {a["name"] for a in assets} == set(names), "Release phải có đúng 6 assets"
+    for asset in assets:
+        path = out / asset["name"]
+        assert path.is_file(), f"thiếu file phát hành: {path}"
+        assert asset.get("size") == path.stat().st_size, f"asset sai kích thước: {path.name}"
+        assert asset.get("digest") == f"sha256:{_sha256(path)}", f"asset sai SHA-256: {path.name}"
+    print("PASS 6 assets: size + SHA-256", flush=True)
+    changelog = _read(["git", "show", f"{expected}:_internal/docs/CHANGELOG.md"])
+    section = re.search(rf"^## \[{re.escape(version)}\][^\n]*\n(.*?)(?=^## \[|\Z)", changelog, re.S | re.M)
+    body = (release.get("body") or "").replace("\r\n", "\n").strip()
+    changes = body.split("## Thay đổi\n", 1)
+    assert body and section and section[1].strip(), "notes/CHANGELOG rỗng"
+    assert len(changes) == 2 and changes[1].strip() == section[1].strip(), "notes khác CHANGELOG"
+    print("PASS release notes = committed CHANGELOG", flush=True)
+    sys.path.insert(0, str(ROOT))
+    from abook.webui.updater import config
+    from abook.webui.minisign_verify import file_ok
+
+    settings = config(ROOT)
+    assert settings["endpoints"], "updater thiếu endpoint"
+    local = json.loads((out / "latest.json").read_text(encoding="utf-8"))
+    setup = out / f"ABook_{version}_x64-setup.exe"
+    signature = setup.with_suffix(".exe.sig").read_text(encoding="utf-8").strip()
+    for url in settings["endpoints"]:
+        with urllib.request.urlopen(url, timeout=30) as reply:
+            manifest = json.loads(reply.read().decode("utf-8"))
+        assert manifest.get("version") == version, f"latest endpoint chưa trả {version}"
+        assert manifest == local, "latest endpoint khác latest.json phát hành"
+        platform = manifest["platforms"]["windows-x86_64"]
+        assert platform["url"] == f"https://github.com/{GITHUB_REPO}/releases/download/{tag}/{setup.name}", "latest trỏ sai gói"
+        assert platform["signature"] == signature, "latest mang chữ ký khác .sig"
+        assert file_ok(setup, platform["signature"], settings["pubkey"], version=version), "chữ ký minisign không hợp lệ"
+    print("PASS updater endpoint + minisign", flush=True)
+    _verify_mapping(version, out / f"ABook_{version}.apk")
+    print("PASS private R8 mapping = APK build identity + mapping body hash", flush=True)
+    print(f"PASS verify {tag}", flush=True)
 
 
 def current_version(root: Path = ROOT) -> str:
@@ -291,6 +387,7 @@ def publish(version: str, commit: str, out: Path, confirmations: list[str] | Non
         except OSError:
             continue
         if served == version:
+            verify(version, out, commit)
             print(f"đã phát hành: https://github.com/{GITHUB_REPO}/releases/tag/v{version}")
             return
     raise SystemExit(f"releases/latest chưa trả {version} - kiểm lại trang Release")
@@ -308,16 +405,18 @@ def main(argv: list[str] | None = None) -> int:
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("step", choices=["bump", "build", "notes", "publish"])
+    parser.add_argument("step", choices=["bump", "build", "notes", "publish", "verify"])
     parser.add_argument("version")
-    parser.add_argument("--commit", nargs="?", const="HEAD", help="bump: commit luôn; publish: commit phát hành (mặc định HEAD)")
+    parser.add_argument("--commit", nargs="?", const="HEAD", help="bump: commit luôn; publish/verify: commit phát hành (verify mặc định tag)")
     parser.add_argument("--out", type=Path, help="thư mục file phát hành (mặc định: thư mục tạm/abook-release/<bản>)")
     parser.add_argument("--confirm", action="append", default=[], metavar="MANUAL-NAME=NOTE",
                         help="publish: xác nhận tay cho commit hiện tại, chuyển trực tiếp tới full gate")
     args = parser.parse_args(argv)
     if args.confirm and args.step != "publish":
         parser.error("--confirm chỉ dùng cho publish")
-    assert VERSION.match(args.version), f"số phiên bản lạ: {args.version}"
+    if args.step == "verify":
+        args.version = args.version.removeprefix("v")
+    assert VERSION.fullmatch(args.version), f"số phiên bản lạ: {args.version}"
     out = args.out or Path(tempfile.gettempdir()) / "abook-release" / args.version
     sys.path.insert(0, str(ROOT))
     if args.step == "bump":
@@ -332,6 +431,8 @@ def main(argv: list[str] | None = None) -> int:
             _commit_bump(args.version, files)
     elif args.step == "build":
         build(args.version, out)
+    elif args.step == "verify":
+        verify(args.version, out, args.commit)
     elif args.step == "notes":
         out.mkdir(parents=True, exist_ok=True)
         (out / "notes.md").write_bytes(release_notes(args.version, out=out).encode("utf-8"))
