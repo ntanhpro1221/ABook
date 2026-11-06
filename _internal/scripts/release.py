@@ -350,6 +350,7 @@ def build(version: str, out: Path) -> None:
 def publish(version: str, commit: str, out: Path, confirmations: list[str] | None = None) -> None:
     """Tag v<version> ở commit phát hành, tua nhanh main tới đó, GitHub Release 6 file (--latest), rồi kiểm latest.json."""
     # Cổng chạy trước mọi ghi chú/tag/fetch/push; MANUAL hay thiếu công cụ cũng chặn đăng.
+    release_notes(version)  # mục CHANGELOG của bản này thiếu/rỗng thì dừng NGAY, trước cả giờ chạy cổng
     gate_command = [sys.executable, "-X", "utf8", str(ROOT / "scripts/release_gate.py")]
     if confirmations:
         head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=REPO, capture_output=True, text=True,

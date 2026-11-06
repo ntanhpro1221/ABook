@@ -15,6 +15,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Đọc nhãn Chap/Vol đi với số thành “chương”/“tập” trên Studio và Nghe ngay, cả điện thoại lẫn máy tính; giữ nguyên chữ hiển thị.
 - Thanh tiến độ và nhãn trên bìa trong thư viện điện thoại nằm gọn theo góc bo của bìa.
 - Đọc số lượng nguyên từ 7 chữ số liền thành số đầy đủ khi có ngữ cảnh đếm, giữ nguyên mã và số điện thoại.
+- Hộp "Việc cần anh" hỏi thêm vai phụ không tên nói nhiều câu trong chương (đặt tên, chọn giới và giọng cho cả nhóm) và câu của người gọi qua điện thoại hay giọng ngoài khung; câu đã quyết riêng không bị mở lại.
 
 ## [0.4.163] - 2026-11-06
 

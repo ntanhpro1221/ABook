@@ -1872,7 +1872,6 @@ CREATE TABLE IF NOT EXISTS wav_signal_metrics (
     measurement_version TEXT NOT NULL,
     metrics_json TEXT NOT NULL,
     PRIMARY KEY (wav_sha256, measurement_version)
-
 );
 
 CREATE TABLE IF NOT EXISTS chapter_teller_lines (
