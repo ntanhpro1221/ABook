@@ -83,7 +83,7 @@ beforeEach(() => {
   host = document.createElement("div"); document.body.append(host); root = createRoot(host);
   vi.stubGlobal("fetch", vi.fn(() => new Promise(() => {}))); // không gọi máy chủ thật
 });
-afterEach(async () => { await act(() => root.unmount()); client.clear(); document.body.replaceChildren(); document.head.replaceChildren(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+afterEach(async () => { await act(() => root.unmount()); client.clear(); document.body.replaceChildren(); document.head.replaceChildren(); vi.restoreAllMocks(); vi.unstubAllGlobals(); vi.useRealTimers(); });
 
 const render = async (node: ReactNode) => {
   await act(() => root.render(<QueryClientProvider client={client}><ClockContext.Provider value={clock}><MemoryRouter><TooltipProvider>{node}</TooltipProvider></MemoryRouter></ClockContext.Provider></QueryClientProvider>));
@@ -331,9 +331,12 @@ it("C6 / V9 thư viện: thẻ Đang nghe mờ chéo chữ, icon và cụm nút;
   expect(card.textContent).toContain("Chờ chương mới");
   expect(snapshots().some((image) => image.querySelector('button[aria-label^="Nghe tiếp Sách A"]'))).toBe(true);
   // V9: sách cuối rời thư viện -> lời mời trống mờ hẳn qua, không thay tức thì.
+  // Advance the row-exit deadline, then inspect the newly committed snapshot
+  // before its own deadline. A wall-clock wait can expire both under gate load.
+  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
   state.books = [];
   await render(<LibraryScreen />);
-  await act(() => new Promise((done) => setTimeout(done, 400))); // hàng cuối khép xong (useListPresence)
+  await act(() => vi.advanceTimersByTime(400)); // hàng cuối khép xong (useListPresence)
   animate.mockClear();
   await render(<LibraryScreen />);
   expect(host.textContent).toContain("Chưa có sách trên máy");

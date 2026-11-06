@@ -670,8 +670,6 @@ class BookFile:
     def verify_audio_coverage(self) -> None:
         # Giải mã toàn bộ vào thư mục tạm riêng, không dựa vào đuôi hay header MP3.
         import tempfile
-        import soundfile as sf
-        from ..audio_io import verify_mp3
         from ..io_utils import sha256_file
         with tempfile.TemporaryDirectory(prefix="abook-verify-") as folder:
             hashes: dict[str, str] = {}
@@ -682,10 +680,11 @@ class BookFile:
                 path = Path(folder) / "chapter.mp3"
                 with self._zip.open(name) as source, path.open("wb") as target:
                     shutil.copyfileobj(source, target)
-                if not verify_mp3(path)[0]:
+                valid, _diagnostic, duration = audio_coverage.inspect_audio(path)
+                if not valid or duration is None:
                     return False
                 hashes[name] = sha256_file(path)
-                durations[name] = float(sf.info(path).duration)
+                durations[name] = duration
                 return True
             try:
                 audio_coverage.verify(self.book, self._zip.read, decode, audio_hash=hashes.__getitem__, audio_duration=durations.__getitem__)

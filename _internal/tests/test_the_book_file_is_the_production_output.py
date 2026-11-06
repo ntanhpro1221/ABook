@@ -117,7 +117,12 @@ def test_completed_resume_replaces_a_package_with_older_mastered_audio(tmp_path:
     pipeline._export_book_file()
     changed=chapters[0]
     audio=files[changed['file']]
-    audio.write_bytes(audio.read_bytes()+b'new synthetic master')
+    # A new master is decodable audio with a different signal, not junk appended
+    # to the old MP3 (which the full decoder must reject).
+    import soundfile as sf
+    samples, rate = sf.read(audio)
+    sf.write(audio, samples * .5, rate, format='MP3')
+    assert sha256_file(audio) != levels['audio_sha256'][str(changed['id'])]
     levels['audio_sha256'][str(changed['id'])]=sha256_file(audio)
     # Một master đã công bố phải có receipt hiện hành trong SQLite trước khi đóng gói.
     import sqlite3

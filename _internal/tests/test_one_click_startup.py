@@ -133,7 +133,6 @@ def test_one_click_startup_contract() -> None:
         "scipy==1.17.1",
         "soundfile==0.14.0",
         "pyloudnorm==0.2.0",
-        "pyworld==0.3.5",
         "imageio-ffmpeg==0.6.0",
         "openai-whisper==20250625",
         "faster-whisper==1.2.1",
@@ -148,7 +147,6 @@ def test_one_click_startup_contract() -> None:
         "utmosv2 @ git+https://github.com/sarulab-speech/UTMOSv2.git@cc2700db57bb83ee13dc31ebe1b868c254e15d09",
         "vieneu==3.8.3",
         "sea-g2p==0.10.0",
-        "praat-parselmouth==0.4.7",
     ]
     assert 'VieNeuEngine' in setup
     assert 'required-set(e.voices)' in setup

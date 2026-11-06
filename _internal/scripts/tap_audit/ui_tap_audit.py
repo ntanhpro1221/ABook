@@ -201,7 +201,15 @@ async def scenario(c,base,s,inject):
         await asyncio.sleep(1)
         await c.evaluate(JS)
         for step in s['steps']:
+            # Exercise the real shared toaster through the shell's normal event, on
+            # every screen. Never dismiss it to make an open layer pass.
+            await c.evaluate("window.dispatchEvent(new CustomEvent('abook-update-failed',{detail:'Kiểm tra thông báo khi mở bảng'}))")
+            await c.settle()
+            check('real toast mounted before opening layer',await c.evaluate("!!document.querySelector('[data-sonner-toast][data-mounted=\"true\"]:not([data-removed=\"true\"])')"))
+            await c.evaluate("""(()=>{window.__toastFrames={count:0,blocked:[],running:true};const sample=()=>{const f=window.__toastFrames;if(!f.running)return;f.count++;const e=tapAudit.top();if(e)for(const b of e.querySelectorAll(tapAudit.controls))if(tapAudit.visible(b)){const p=tapAudit.inspect(b);if(!p.disabled&&p.hitToast)f.blocked.push(p)}requestAnimationFrame(sample)};requestAnimationFrame(sample)})()""")
             await c.step(step)
+            frames=await c.evaluate("(()=>{const f=window.__toastFrames;f.running=false;return f})()")
+            check('toast never covers a layer control during motion',frames['count']>0 and not frames['blocked'],frames=frames)
             opened=await c.evaluate("(()=>{const e=tapAudit.top();return e?{role:e.role,elements:[...e.querySelectorAll(tapAudit.controls)].filter(tapAudit.visible).map(tapAudit.inspect)}:null})()")
             if opened:
                 report['openingLayers'].append(opened)

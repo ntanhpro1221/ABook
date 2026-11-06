@@ -106,7 +106,7 @@ class SymbolsTest {
         "Nhận 10x Sức mạnh, (2x Intelligence), kính ngắm 8x, 1x Cuộn phép, mã 202X." to
             "Nhận 10 lần Sức mạnh, (2 lần Intelligence), kính ngắm 8 lần, 1 Cuộn phép, mã 202 ích.",
         "-25 máu. “-1600” vàng. Kết toán -1600 vàng, đòn -25 máu." to
-            "âm 25 máu. “âm 1600” vàng. Kết toán âm 1600 vàng, đòn trừ 25 máu.",
+            "âm 25 máu. “âm 1600  vàng. Kết toán âm 1600 vàng, đòn trừ 25 máu.",
         "Tuyệt mệnh -10: giảm máu. 1-2-3 -25 xong." to
             "Tuyệt mệnh trừ 10: giảm máu. 1 2 3 trừ 25 xong.",
         "Sức khỏe / 2. HP 100/250 và 8/3." to

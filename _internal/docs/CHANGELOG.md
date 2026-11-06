@@ -7,7 +7,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
-## [0.4.163] - 2026-11-06
+- Thông báo không còn che nút trong bảng, hộp thoại hay menu đang mở, kể cả lúc chuyển động trên máy tính và điện thoại.
 
 ### Âm thanh
 
@@ -49,6 +49,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Máy tính
 
+- Bản chỉ nghe khởi động, mở và kiểm tra file sách bình thường, không cần tải thêm bộ thư viện Studio.
 - Mở file sách để cập nhật một cuốn đã có thì thông báo nói tên cuốn ấy, như trên điện thoại.
 - Chặn phát hành khi thiếu bằng chứng kiểm tra: một lệnh chạy toàn bộ cổng phát hành, ghi số bài thử thật và báo rõ mục còn cần duyệt tay.
 - Hẹn giờ ngủ: khi sắp tắt, chạm phím hay chuột (hay nút "Hẹn lại N phút") đưa đồng hồ về lại đúng số phút bạn đã hẹn, không cộng dồn thêm.

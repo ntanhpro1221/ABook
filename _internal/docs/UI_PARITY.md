@@ -154,7 +154,7 @@ Một việc - một cách viết, cho web (máy tính + điện thoại), nativ
 
 <!-- ui_parity:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity.py - không sửa tay, chạy lại script) -->
 
-Quét: web 5305 chữ (3068 khác nhau), 334 cặp nhãn-icon; native 1917 chữ (1479 khác nhau), 74 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
+Quét: web 5300 chữ (3063 khác nhau), 334 cặp nhãn-icon; native 1917 chữ (1479 khác nhau), 74 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
 
 ## a. Cùng việc, khác chữ
 
@@ -388,7 +388,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 | Chờ áp dụng | chờ áp dụng | chữ hoa | `listen/BookScreen.tsx:445` (+2) ~ `native/studio/StudioScript.kt:253` |
 | Chữ của cả cuốn được gửi tới {} để đọc, bằn… | Chữ của cả cuốn được gửi tới {} để đọc, bằn… | dấu thanh / ký tự | `desktop/listenExport.ts:85` ~ `native/export/ExportModel.kt:198` |
 | cả cuốn | Cả cuốn | chữ hoa | `listen/labels.ts:28` ~ `native/export/ExportScreen.kt:152` |
-| Giấy phép: | Giấy phép | dấu câu cuối | `listen/PlayerViews.tsx:1285` ~ `native/music/MusicPanel.kt:425` (+1) |
+| Giấy phép: | Giấy phép | dấu câu cuối | `listen/PlayerViews.tsx:1285` ~ `native/music/MusicPanel.kt:428` (+1) |
 | Giới (bấm để lưu): | Giới (bấm để lưu) | dấu câu cuối | `studio/WorkInbox.tsx:644` ~ `native/studio/WorkText.kt:45` |
 | hay đặt tên một người mới: | hay đặt tên một người mới | dấu câu cuối | `studio/WorkInbox.tsx:632` ~ `native/studio/WorkText.kt:43` |
 | Kể bằng “tôi”? | Kể bằng “tôi” | dấu câu cuối | `studio/NewProjectScreen.tsx:1110` ~ `native/studio/StudioNew.kt:309` |
@@ -413,23 +413,23 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 
 | kiểu | web | native |
 |---|---|---|
-| dấu ba chấm ASCII `...` | 8 / 5305 | 0 / 1917 |
-| dấu ba chấm `…` | 36 / 5305 | 0 / 1917 |
-| kết thúc bằng dấu chấm `.` | 904 / 5305 | 394 / 1917 |
-| kết thúc bằng `!` | 0 / 5305 | 0 / 1917 |
-| kết thúc bằng `:` | 52 / 5305 | 3 / 1917 |
-| dấu thanh kiểu cũ `oà oá uý` | 389 / 5305 | 172 / 1917 |
-| dấu thanh kiểu mới `òa óa úy` | 1 / 5305 | 0 / 1917 |
-| số thập phân dấu phẩy `1,5` | 1 / 5305 | 0 / 1917 |
-| số thập phân dấu chấm `1.5` | 0 / 5305 | 0 / 1917 |
-| nhân bằng `×` | 0 / 5305 | 0 / 1917 |
-| nhân bằng `x` sau số | 0 / 5305 | 0 / 1917 |
-| ngăn cách `·` | 121 / 5305 | 34 / 1917 |
-| ngăn cách ` - ` | 258 / 5305 | 81 / 1917 |
-| gạch dài `—`/`–` | 10 / 5305 | 1 / 1917 |
-| giờ `1:30` hay `1 giờ 30` | 0 / 5305 | 2 / 1917 |
-| dấu `%` dính số | 0 / 5305 | 1 / 1917 |
-| dấu `%` cách số | 0 / 5305 | 0 / 1917 |
+| dấu ba chấm ASCII `...` | 8 / 5300 | 0 / 1917 |
+| dấu ba chấm `…` | 36 / 5300 | 0 / 1917 |
+| kết thúc bằng dấu chấm `.` | 904 / 5300 | 394 / 1917 |
+| kết thúc bằng `!` | 0 / 5300 | 0 / 1917 |
+| kết thúc bằng `:` | 52 / 5300 | 3 / 1917 |
+| dấu thanh kiểu cũ `oà oá uý` | 389 / 5300 | 172 / 1917 |
+| dấu thanh kiểu mới `òa óa úy` | 1 / 5300 | 0 / 1917 |
+| số thập phân dấu phẩy `1,5` | 1 / 5300 | 0 / 1917 |
+| số thập phân dấu chấm `1.5` | 0 / 5300 | 0 / 1917 |
+| nhân bằng `×` | 0 / 5300 | 0 / 1917 |
+| nhân bằng `x` sau số | 0 / 5300 | 0 / 1917 |
+| ngăn cách `·` | 121 / 5300 | 34 / 1917 |
+| ngăn cách ` - ` | 258 / 5300 | 81 / 1917 |
+| gạch dài `—`/`–` | 10 / 5300 | 1 / 1917 |
+| giờ `1:30` hay `1 giờ 30` | 0 / 5300 | 2 / 1917 |
+| dấu `%` dính số | 0 / 5300 | 1 / 1917 |
+| dấu `%` cách số | 0 / 5300 | 0 / 1917 |
 
 **d3. Nhãn ngắn bắt đầu bằng chữ thường** (web 144, native 0); 15 đầu mỗi phía:
 
@@ -470,7 +470,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `Lùi 15 giây` | `Lùi {} giây` (`native/nowplaying/NowPlayingScreen.kt:221`, `native/pip/PipParams.kt:47`)
 - `Mở Cài đặt` | `Mở cài đặt` (`native/data/SettingsRepo.kt:131`, `native/devices/CompanionSurfaces.kt:139` (+2))
 - `Nữ` | `nữ` (`native/data/ListenExtras.kt:350`, `native/data/ListenExtras.kt:396` (+3))
-- `Thử không được` | `Thử không được.` (`native/voice/VoicePickCard.kt:61`, `native/voice/VoiceState.kt:214`)
+- `Thử không được` | `Thử không được.` (`native/voice/VoicePickCard.kt:63`, `native/voice/VoiceState.kt:214`)
 - `Tới 15 giây` | `Tới {} giây` (`native/nowplaying/NowPlayingScreen.kt:223`, `native/pip/PipParams.kt:49`)
 - `Xoá khoá` | `Xoá khoá?` (`native/voice/VoiceSheets.kt:257`, `native/voice/VoiceSheets.kt:281` (+1))
 - `Xoá nhật ký` | `Xoá nhật ký?` (`native/screens/SettingsAdvanced.kt:132`, `native/screens/SettingsAdvanced.kt:99`)
