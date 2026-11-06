@@ -5,8 +5,10 @@ Không bài nào chạm Thùng rác thật: `move_to_recycle_bin` và câu hỏi
 from __future__ import annotations
 
 import shutil
+import threading
 import time
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -42,6 +44,20 @@ def _delete(server, paths) -> str:
     status, data = _call(server, "DELETE", f"/api/books/{book_id(paths.root)}")
     assert status == 200 and data["ok"] is True, data
     return data["undo"]
+
+
+@pytest.fixture
+def births(monkeypatch):
+    """Explicit filesystem birth times, keyed by identity so renaming preserves them."""
+    from abook.webui import trash_pending
+
+    values = {}
+
+    def record(path, stamp):
+        values[tuple(trash_pending._folder_id(path))] = stamp
+
+    monkeypatch.setattr(trash_pending, "_born", lambda path: values[tuple(trash_pending._folder_id(path))])
+    return record
 
 
 def test_undo_puts_the_project_back_and_the_library_sees_it_again(studio, recycled: list[Path]) -> None:  # noqa: F811
@@ -88,17 +104,32 @@ def test_a_timer_cleans_up_after_the_deadline(studio, recycled: list[Path], monk
 
     paths, app, _server, _runner = studio
     original = paths.root.resolve()
-    monkeypatch.setattr(trash_pending, "UNDO_SECONDS", 0.05)
+    now, timers = [1000.0], []
+
+    class Timer:
+        def __init__(self, seconds, callback):
+            self.seconds, self.callback = seconds, callback
+
+        def start(self):
+            timers.append(self)
+
+        def cancel(self):
+            pass
+
+    monkeypatch.setattr(trash_pending, "threading", SimpleNamespace(Timer=Timer))
+    app.trash.clock = lambda: now[0]
+    app._trash_sweeper._clock = lambda: now[0]
     monkeypatch.setattr(app, "_fake_run", lambda: False)  # bản thật có hẹn giờ; bản giọng giả thì không
     assert app.delete(book_id(paths.root), undo=True)["undo"]
-    deadline = time.time() + 5
-    while not recycled and time.time() < deadline:
-        time.sleep(0.05)
+    assert recycled == [] and len(timers) == 1
+    assert timers[0].seconds == trash_pending.UNDO_SECONDS + 1
+    now[0] += timers[0].seconds
+    timers[0].callback()
     assert recycled == [original]
     app.close()
 
 
-def test_old_tokens_go_to_the_recycle_bin_when_the_app_starts_and_closes(studio, recycled: list[Path]) -> None:  # noqa: F811
+def test_old_tokens_go_to_the_recycle_bin_when_the_app_starts_and_closes(studio, recycled: list[Path], monkeypatch) -> None:  # noqa: F811
     from types import SimpleNamespace
 
     from abook.webui.library import book_id
@@ -108,10 +139,16 @@ def test_old_tokens_go_to_the_recycle_bin_when_the_app_starts_and_closes(studio,
     app.delete(book_id(paths.root), undo=True)  # app chết giữa hạn: token còn đó, chưa hết hạn
     assert len(_pending(original.parent)) == 1
     app.runner = SimpleNamespace(running=lambda _path: False)  # không phải giọng giả: lúc mở app thì tự dọn
+    finished = threading.Event()
+    real_sweep = app.sweep_trash
+
+    def sweep(*args, **kwargs):
+        real_sweep(*args, **kwargs)
+        finished.set()
+
+    monkeypatch.setattr(app, "sweep_trash", sweep)
     app._sweep_trash_at_start()
-    deadline = time.time() + 5
-    while _pending(original.parent) and time.time() < deadline:
-        time.sleep(0.05)
+    assert finished.wait(5), "startup sweep did not finish"
     assert recycled == [original] and _pending(original.parent) == []
 
     # Lúc đóng app: hết hạn hay chưa cũng vào Thùng rác.
@@ -127,7 +164,7 @@ def _make_folder(path: Path) -> Path:
     return path.resolve()
 
 
-def test_undo_uses_a_free_sibling_when_the_original_place_is_taken(studio, recycled: list[Path]) -> None:
+def test_undo_uses_a_free_sibling_when_the_original_place_is_taken(studio, recycled: list[Path]) -> None:  # noqa: F811
     from abook.webui.library import book_id
 
     paths, app, server, _runner = studio
@@ -146,7 +183,7 @@ def test_undo_uses_a_free_sibling_when_the_original_place_is_taken(studio, recyc
     assert _call(server, "POST", f"/api/trash/{token}/undo")[0] == 404
 
 
-def test_a_book_restored_under_a_sibling_name_takes_its_listening_data_along(studio, recycled: list[Path]) -> None:  # noqa: F811
+def test_a_book_restored_under_a_sibling_name_takes_its_listening_data_along(studio, recycled: list[Path], births) -> None:  # noqa: F811
     from abook.webui import listen_export
     from abook.webui.library import book_id
 
@@ -159,7 +196,9 @@ def test_a_book_restored_under_a_sibling_name_takes_its_listening_data_along(stu
     work.mkdir(parents=True)
     (work / "part.mp3").write_bytes(b"dang xuat")
     token = _delete(server, paths)
+    births(_pending(original.parent)[0], 1)
     original.mkdir()  # cuốn mới mang đúng tên cũ: cùng mã sách với cuốn vừa xoá
+    births(original, 2)
     status, data = _call(server, "POST", f"/api/trash/{token}/undo")
     restored = original.with_name(original.name + " (2)")
     assert status == 200 and data["renamed"] is True and data["title"] == restored.name, data
@@ -173,7 +212,7 @@ def test_a_book_restored_under_a_sibling_name_takes_its_listening_data_along(stu
 
 
 @pytest.mark.parametrize("order", ["oldest first", "newest first"])
-def test_undoing_two_deletions_of_one_name_moves_data_only_off_a_newer_book(studio, recycled: list[Path], order: str) -> None:  # noqa: F811
+def test_undoing_two_deletions_of_one_name_moves_data_only_off_a_newer_book(studio, recycled: list[Path], order: str, births) -> None:  # noqa: F811
     """Xoá "X", thêm "X" mới đúng chỗ, xoá luôn nó, rồi hoàn tác cả hai: dữ liệu nghe theo mã đường gốc chỉ đi theo cuốn về "X (2)" khi
     cuốn đang ở đường gốc ra đời SAU lần xoá cuốn ấy. Giao diện hoàn tác cũ trước: "X" cũ về chỗ mình và giữ tốc độ của nó."""
     from abook.webui.library import book_id
@@ -183,13 +222,17 @@ def test_undoing_two_deletions_of_one_name_moves_data_only_off_a_newer_book(stud
     old = book_id(original)
     (original / "which.txt").write_text("cũ", encoding="utf-8")
     app.listening.set_rate(old, 1.5)
+    births(original, 1)
     first = _delete(server, paths)
-    time.sleep(0.05)  # ngày tạo thư mục theo nấc đồng hồ của hệ thống file (~16 ms)
     [held] = _pending(original.parent)
+    births(held, 2)
     shutil.copytree(held / original.name, original)  # "X" mới: thư mục mới tạo, cùng đường, cùng mã sách
+    births(original, 3)
     (original / "which.txt").write_text("mới", encoding="utf-8")
-    time.sleep(0.05)
     second = _delete(server, paths)
+    for folder in _pending(original.parent):
+        if folder.name == second:
+            births(folder, 4)
 
     results = [_call(server, "POST", f"/api/trash/{token}/undo")
                for token in ([first, second] if order == "oldest first" else [second, first])]
@@ -212,7 +255,7 @@ def test_undoing_two_deletions_of_one_name_moves_data_only_off_a_newer_book(stud
 
 def test_listening_data_that_cannot_be_moved_still_finishes_the_undo(studio, recycled: list[Path],  # noqa: F811
                                                                       monkeypatch: pytest.MonkeyPatch,
-                                                                      caplog: pytest.LogCaptureFixture) -> None:
+                                                                      caplog: pytest.LogCaptureFixture, births) -> None:
     """File nghe đang bị giữ lúc chuyển mã: thư mục đã về, mã hoàn tác đã dùng - vẫn là hoàn tác xong (không phải lỗi rồi bấm lại gặp 404),
     lời báo nói dữ liệu chưa theo được, nhật ký ghi rõ."""
     from abook.webui.library import book_id
@@ -222,8 +265,9 @@ def test_listening_data_that_cannot_be_moved_still_finishes_the_undo(studio, rec
     old = book_id(original)
     app.listening.set_rate(old, 1.75)
     token = _delete(server, paths)
-    time.sleep(0.05)
+    births(_pending(original.parent)[0], 1)
     original.mkdir()
+    births(original, 2)
 
     def held(_renamed: dict[str, str]) -> None:
         raise PermissionError(13, "file đang bị giữ")

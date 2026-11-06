@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pytest
 
+from tests.async_wait import wait_until
 from abook.webui import export_jobs, projectfile
 from abook.webui.library import book_id
 from tests.test_a_project_can_be_renamed_or_deleted import _call, studio  # noqa: F401 - fixture dùng chung
@@ -44,12 +45,7 @@ def _slow_views(monkeypatch: pytest.MonkeyPatch, gate: threading.Event) -> None:
 
 
 def _wait(predicate, seconds: float = 15.0) -> bool:
-    deadline = time.time() + seconds
-    while time.time() < deadline:
-        if predicate():
-            return True
-        time.sleep(0.03)
-    return False
+    return wait_until(predicate, timeout=seconds, interval=0.03)
 
 
 def _leftovers(folder: Path) -> list[str]:
