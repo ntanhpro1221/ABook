@@ -20,25 +20,23 @@ from abook.webui.bluetooth import BluetoothServer, Gateway, Mux
 from abook.webui.remote_books import Computers, RemoteError
 from abook.webui.sync import Devices, SyncApp, SyncServer
 from tests.test_webui_listen_and_sync import library  # noqa: F401 - fixture dùng chung
+from tests.async_wait import wait_until
 
 PHONE = "AA:BB:CC:DD:EE:FF"
 
 
 @pytest.fixture(autouse=True)
-def _clean_routes():
+def _clean_routes(monkeypatch):
+    real_local = bluetooth.LocalPort
+    monkeypatch.setattr(bluetooth, "LocalPort", lambda mux, _port=0: real_local(mux, 0))
     route.reset()
-    yield
+    yield real_local
     bluetooth.forget(PHONE)
     route.reset()
 
 
 def _eventually(check, timeout: float = 5.0) -> bool:
-    deadline = time.time() + timeout
-    while time.time() < deadline:
-        if check():
-            return True
-        time.sleep(0.03)
-    return check()
+    return wait_until(check, timeout)
 
 
 class FakePhone:
@@ -69,14 +67,6 @@ def _sync(library, tmp_path: Path, name: str = "Điện thoại", identity: tls.
     devices = Devices(tmp_path / name / "devices.json")
     server = SyncServer(SyncApp(lib, listening, devices, name), host="127.0.0.1", port=0, identity=identity).start()
     return server, devices
-
-
-def _free_port() -> int:
-    probe = socket.socket()
-    probe.bind(("127.0.0.1", 0))
-    port = probe.getsockname()[1]
-    probe.close()
-    return port
 
 
 # ---- địa chỉ và cổng ổn định ---------------------------------------------------------------------------------------------
@@ -294,22 +284,30 @@ def test_a_failed_dial_is_not_repeated_at_once_and_says_why() -> None:
 
 
 def test_dialing_never_blocks_the_caller() -> None:
+    from concurrent.futures import ThreadPoolExecutor
+
     gate = threading.Event()
+    dialing = threading.Event()
 
     def slow(address: str) -> socket.socket:
-        gate.wait(10)
+        dialing.set()
+        gate.wait()
         raise OSError("hết hạn")
 
     link = Gateway(PHONE, connect=slow)
+    pool = ThreadPoolExecutor(max_workers=1)
     try:
-        started = time.time()
-        link.warm()
+        warmed = pool.submit(link.warm)
+        assert dialing.wait(5)
+        assert wait_until(warmed.done), "warm must return while the dial remains blocked"
+        warmed.result()
         client = socket.create_connection(("127.0.0.1", link.port))  # kết nối cục bộ nhận ngay
-        assert time.time() - started < 1, "quay số RFCOMM chậm không được chặn người gọi"
+        assert not gate.is_set()
         client.close()
     finally:
         gate.set()
         link.close()
+        pool.shutdown(wait=True)
 
 
 def test_the_link_closes_when_idle_and_reopens_on_demand(library, tmp_path: Path) -> None:  # noqa: F811
@@ -332,19 +330,19 @@ def test_closing_the_gateway_frees_the_port_and_the_link(library, tmp_path: Path
     link = Gateway(PHONE, connect=phone.connect)
     try:
         assert _get(link.port)[0] == 401
-        port = link.port
         link.close()
         assert not link.up and _eventually(lambda: all(not mux.alive for mux in phone.links))
-        with pytest.raises(OSError):
-            socket.create_connection(("127.0.0.1", port), timeout=2)
+        assert link.local.server.fileno() == -1, "the actual listening descriptor is closed"
     finally:
         link.close()
         phone.drop()
         sync.stop()
 
 
-def test_a_busy_stable_port_falls_back_to_any_free_one() -> None:
-    holder = socket.create_server(("127.0.0.1", bluetooth.stable_port(PHONE)))
+def test_a_busy_stable_port_falls_back_to_any_free_one(monkeypatch, _clean_routes) -> None:
+    holder = socket.create_server(("127.0.0.1", 0))
+    monkeypatch.setattr(bluetooth, "stable_port", lambda _address: holder.getsockname()[1])
+    monkeypatch.setattr(bluetooth, "LocalPort", _clean_routes)
     link = None
     try:
         link = Gateway(PHONE, connect=lambda address: (_ for _ in ()).throw(OSError("không dùng")))
@@ -484,7 +482,7 @@ def test_route_probes_in_the_background_and_remembers(monkeypatch) -> None:
     assert _eventually(lambda: probed == ["h:1"])
 
 
-def test_a_wifi_that_fails_to_connect_falls_back_to_bluetooth_and_is_remembered(library, tmp_path: Path) -> None:  # noqa: F811
+def test_a_wifi_that_fails_to_connect_falls_back_to_bluetooth_and_is_remembered(library, tmp_path: Path, refused_tcp_port) -> None:  # noqa: F811
     sync, devices = _sync(library, tmp_path)
     phone = FakePhone(sync.port)
     bluetooth.gateway(PHONE, connect=phone.connect)
@@ -492,7 +490,7 @@ def test_a_wifi_that_fails_to_connect_falls_back_to_bluetooth_and_is_remembered(
     try:
         paired = computers.pair(f"bt:{PHONE}", devices.start_pairing()["code"], "Máy tính thử")
         # Cùng máy, ghép tiếp theo đường Wi-Fi giờ đã hỏng: cổng LAN chết, `bt` còn đó.
-        entry = {**computers.get(paired["id"]), "host": "127.0.0.1", "port": _free_port(), "bt": PHONE}
+        entry = {**computers.get(paired["id"]), "host": "127.0.0.1", "port": refused_tcp_port, "bt": PHONE}
         entry["addresses"] = [{"address": f"127.0.0.1:{entry['port']}", "lastSuccess": 0}]
         first = remote_books._base(entry)
         assert first.target and first.fallback == PHONE and first.host == "127.0.0.1", "Wi-Fi trước"

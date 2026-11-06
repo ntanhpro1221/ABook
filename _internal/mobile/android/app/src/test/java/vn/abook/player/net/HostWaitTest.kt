@@ -102,18 +102,19 @@ class HostWaitTest {
         assertTrue(peer is IllegalStateException)
         assertEquals(1, attempts[0])
         // Cổng không ai nghe: lỗi nối đi nguyên ra (UNREACHABLE), không phải "chưa trả lời kịp".
-        val closed = java.net.ServerSocket(0).use { it.localPort }
-        attempts[0] = 0
-        val refused = runCatching {
-            HostWait.call {
-                attempts[0]++
-                val connection = HostWait.open("http://127.0.0.1:$closed/x", 1000)
-                try { HostWait.awaiting(connection) { connection.responseCode } } finally { connection.disconnect() }
-            }
-        }.exceptionOrNull()
-        assertTrue("$refused", refused is ConnectException)
-        assertFalse(refused is HostWait.Timeout)
-        assertEquals(1, attempts[0])
+        withRefusedPort { closed ->
+            attempts[0] = 0
+            val refused = runCatching {
+                HostWait.call {
+                    attempts[0]++
+                    val connection = HostWait.open("http://127.0.0.1:$closed/x", 1000)
+                    try { HostWait.awaiting(connection) { connection.responseCode } } finally { connection.disconnect() }
+                }
+            }.exceptionOrNull()
+            assertTrue("$refused", refused is ConnectException)
+            assertFalse(refused is HostWait.Timeout)
+            assertEquals(1, attempts[0])
+        }
     }
 
     @Test fun withoutResendTheFirstStallIsFinal() {

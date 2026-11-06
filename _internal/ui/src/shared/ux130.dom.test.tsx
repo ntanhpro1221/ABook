@@ -14,6 +14,7 @@ import { dismissTopLayer } from "@/shared/backLayers";
 let root: Root;
 let host: HTMLDivElement;
 beforeEach(() => {
+  vi.useFakeTimers();
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   host = document.createElement("div"); document.body.append(host); root = createRoot(host);
 });
@@ -24,22 +25,22 @@ it("V2 Toaster Android không nút đóng: Back chỉ gỡ toast mới nhất tr
   const pop = pushBackLayer(close);
   try {
     await render(<Toaster toastOptions={{ duration: Infinity }} />);
-    await act(async () => { toast("Cũ", { id: "old", action: { label: "Hoàn tác", onClick() {} } }); await new Promise((done) => setTimeout(done, 20)); });
-    await act(async () => { toast("Mới", { id: 42, action: { label: "Ghi chú", onClick() {} } }); await new Promise((done) => setTimeout(done, 20)); });
+    await act(async () => { toast("Cũ", { id: "old", action: { label: "Hoàn tác", onClick() {} } }); await vi.advanceTimersByTimeAsync(20); });
+    await act(async () => { toast("Mới", { id: 42, action: { label: "Ghi chú", onClick() {} } }); await vi.advanceTimersByTimeAsync(20); });
     expect(document.querySelector("[data-close-button]")).toBeNull();
     const dismiss = vi.spyOn(toast, "dismiss");
-    await act(async () => { expect(dismissTopLayer()).toBe(true); await new Promise((done) => setTimeout(done, 20)); });
+    await act(async () => { expect(dismissTopLayer()).toBe(true); await vi.advanceTimersByTimeAsync(20); });
     expect(close).not.toHaveBeenCalled();
     expect(dismiss).toHaveBeenCalledExactlyOnceWith(42);
     expect(toast.getToasts().some((item) => item.id === "old")).toBe(true);
-    await act(async () => { expect(dismissTopLayer()).toBe(true); await new Promise((done) => setTimeout(done, 20)); });
+    await act(async () => { expect(dismissTopLayer()).toBe(true); await vi.advanceTimersByTimeAsync(20); });
     expect(dismiss).toHaveBeenNthCalledWith(2, "old");
     expect(close).not.toHaveBeenCalled();
     await act(() => { expect(dismissTopLayer()).toBe(true); });
     expect(close).toHaveBeenCalledOnce();
   } finally { stop(); pop(); toast.dismiss(); }
 });
-afterEach(async () => { await act(() => root.unmount()); document.body.replaceChildren(); document.head.replaceChildren(); vi.restoreAllMocks(); });
+afterEach(async () => { await act(() => root.unmount()); document.body.replaceChildren(); document.head.replaceChildren(); vi.clearAllTimers(); vi.useRealTimers(); vi.restoreAllMocks(); });
 const render = async (node: ReactNode) => { await act(() => root.render(node)); };
 
 it("V1 reduced Switch: không cộng translate; bật và tắt đều fade", async () => {

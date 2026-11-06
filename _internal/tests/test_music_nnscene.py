@@ -3,17 +3,17 @@ trần của một chương, ánh xạ câu -> đoạn màn đọc, dựng từn
 (`music_cues` trả `pending` rồi mốc, luật ưu tiên: nhạc của người làm sách > lựa chọn của người nghe > theo cảnh mặc định)."""
 from __future__ import annotations
 
-import time
 from pathlib import Path
 from typing import Any
 
 import pytest
 
 from abook.readaloud import paragraphs
-from abook.webui import book_edits, music_nnlite, music_nnscene, music_plan, music_scenes, music_select
+from abook.webui import music_nnlite, music_nnscene, music_plan, music_scenes, music_select
 from abook.webui.music_catalog import MusicCatalog
-from abook.webui.server import App, Server
+from abook.webui.server import App
 from tests.catalog_signing import TEST_PUBLIC_KEY
+from tests.async_wait import wait_until
 from tests.test_music_catalog_and_select import _catalog_dir
 from tests.test_music_playlist import _call, _text_book_server
 
@@ -258,45 +258,49 @@ def test_the_floor_never_touches_studios_path_or_the_n0_path() -> None:
 def test_the_builder_runs_one_job_at_a_time_lowest_priority_number_first_and_never_twice() -> None:
     import threading
 
-    gate, ran = threading.Event(), []
+    gate, entered, ran = threading.Event(), threading.Event(), []
     builder = music_nnscene.Builder()
 
     def job(name: str):
         def run(_stop) -> None:
             if name == "first":
-                gate.wait(5)
+                entered.set()
+                assert gate.wait(5)
             ran.append(name)
         return run
 
     first = builder.submit("b", 1, 0, job("first"))
-    time.sleep(0.05)  # việc đầu đang chạy, chờ cổng
-    far, near_one, again = builder.submit("b", 4, 3, job("far")), builder.submit("b", 2, 1, job("near")), builder.submit("b", 4, 0, job("far2"))
-    assert again is far and far.priority == 0, "cùng (cuốn, chương): một việc, nhận ưu tiên cao nhất"
-    gate.set()
+    try:
+        assert entered.wait(5)
+        far, near_one, again = builder.submit("b", 4, 3, job("far")), builder.submit("b", 2, 1, job("near")), builder.submit("b", 4, 0, job("far2"))
+        assert again is far and far.priority == 0, "cùng (cuốn, chương): một việc, nhận ưu tiên cao nhất"
+    finally:
+        gate.set()
     assert first.done.wait(5) and far.done.wait(5) and near_one.done.wait(5)
-    deadline = time.time() + 5
-    while not builder.idle() and time.time() < deadline:
-        time.sleep(0.01)
+    assert wait_until(builder.idle)
     assert ran == ["first", "far", "near"] and builder.idle()
 
 
 def test_cancelling_a_book_drops_what_has_not_started_and_stops_what_is_running() -> None:
     import threading
 
-    started, stopped = threading.Event(), threading.Event()
+    started, stopped, check_stop = threading.Event(), threading.Event(), threading.Event()
     builder = music_nnscene.Builder()
 
     def long_job(stop) -> None:
         started.set()
-        while not stop():
-            time.sleep(0.01)
+        assert check_stop.wait(5)
+        assert stop()
         stopped.set()
 
     running = builder.submit("a", 1, 0, long_job)
-    assert started.wait(5)
-    queued = builder.submit("a", 2, 1, lambda _stop: pytest.fail("việc đã huỷ không chạy"))
-    other = builder.submit("b", 1, 0, lambda _stop: None)
-    builder.cancel_others("b")
+    try:
+        assert started.wait(5)
+        queued = builder.submit("a", 2, 1, lambda _stop: pytest.fail("việc đã huỷ không chạy"))
+        other = builder.submit("b", 1, 0, lambda _stop: None)
+        builder.cancel_others("b")
+    finally:
+        check_stop.set()
     assert stopped.wait(5) and running.done.wait(5) and queued.done.wait(5) and queued.cancelled
     assert other.done.wait(5) and not other.cancelled
 
@@ -323,12 +327,15 @@ def _scene_server(tmp_path: Path):
 
 
 def _cues_when_ready(server, book: str, chapter: int = 1) -> dict[str, Any]:
-    for _ in range(100):
+    reply = {}
+
+    def ready():
+        nonlocal reply
         _status, reply = _call(server, "GET", f"/api/books/{book}/music/chapters/{chapter}")
-        if not reply.get("pending"):
-            return reply
-        time.sleep(0.1)
-    pytest.fail("nhạc theo cảnh không dựng xong")
+        return not reply.get("pending")
+
+    assert wait_until(ready, timeout=10), "nhạc theo cảnh không dựng xong"
+    return reply
 
 
 def test_a_text_book_with_no_choice_gets_scene_cues_that_follow_the_reading_screen(tmp_path: Path) -> None:
@@ -341,12 +348,7 @@ def test_a_text_book_with_no_choice_gets_scene_cues_that_follow_the_reading_scre
         assert set(reply["credits"]) <= set(TRACKS_OF_CATALOG())
         # chương kế đã được dựng nền trước khi người nghe sang
         ahead = [cid for cid in range(2, 2 + music_nnscene.AHEAD_CHAPTERS)]
-        deadline = time.time() + 10
-        pending = ahead
-        while pending and time.time() < deadline:
-            pending = [cid for cid in ahead if _call(server, "GET", f"/api/books/{book}/music/chapters/{cid}")[1].get("pending")]
-            time.sleep(0.1)
-        assert not pending or ahead[0] not in pending
+        assert wait_until(lambda: not _call(server, "GET", f"/api/books/{book}/music/chapters/{ahead[0]}")[1].get("pending"), timeout=10)
     finally:
         server.stop()
 

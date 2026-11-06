@@ -6,9 +6,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
-import socket
 import threading
-import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -18,6 +16,7 @@ from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 
 from abook.webui import updater
 from abook.webui.updater import Updater, config, newer
+from tests.async_wait import wait_until
 
 INTERNAL = Path(__file__).resolve().parents[1]
 SETUP = b"MZ fake ABook installer " * 4000
@@ -42,13 +41,14 @@ def _sign(secret: Ed25519PrivateKey, data: bytes, version: str) -> str:
 
 class Site:
     """Trang phát hành giả: /latest.json và mọi đường tận cùng `_x64-setup.exe` (trừ dưới /missing/); `stall_after` byte thì
-    đứng yên `stall_for` giây rồi đóng. `requests`: các đường đã được hỏi."""
+    đứng yên tới khi fixture thả cổng sau phép thử. `requests`: các đường đã được hỏi."""
 
     def __init__(self) -> None:
         self.manifest: bytes = b"{}"
         self.setup = SETUP
         self.stall_after: int | None = None
-        self.stall_for = 0.0
+        self.cut_after: int | None = None
+        self.release_stall = threading.Event()
         self.requests: list[str] = []
         site = self
 
@@ -66,10 +66,12 @@ class Site:
                 self.send_response(200)
                 self.send_header("Content-Length", str(len(body)))
                 self.end_headers()
-                if site.stall_after is not None and package:
-                    self.wfile.write(body[:site.stall_after])
+                limit = site.stall_after if site.stall_after is not None else site.cut_after
+                if limit is not None and package:
+                    self.wfile.write(body[:limit])
                     self.wfile.flush()
-                    time.sleep(site.stall_for)
+                    if site.stall_after is not None:
+                        site.release_stall.wait()
                     return
                 self.wfile.write(body)
 
@@ -89,8 +91,12 @@ class Site:
 @pytest.fixture
 def site():
     server = Site()
-    yield server
-    server.server.shutdown()
+    try:
+        yield server
+    finally:
+        server.release_stall.set()
+        server.server.shutdown()
+        server.server.server_close()
 
 
 @pytest.fixture(autouse=True)
@@ -178,12 +184,9 @@ def test_broken_manifest_is_a_network_failure(site, tmp_path, manifest):
     assert shell.found == [] and shell.logs
 
 
-def test_no_network_is_a_network_failure(tmp_path):
-    with socket.socket() as probe:
-        probe.bind(("127.0.0.1", 0))
-        port = probe.getsockname()[1]
+def test_no_network_is_a_network_failure(tmp_path, refused_tcp_port):
     shell = Shell()
-    up = Updater("1.2.3", shell.sent.append, shell.found.append, {"endpoints": [f"http://127.0.0.1:{port}/latest.json"],
+    up = Updater("1.2.3", shell.sent.append, shell.found.append, {"endpoints": [f"http://127.0.0.1:{refused_tcp_port}/latest.json"],
                  "pubkey": "k"}, folder=tmp_path, log=shell.logs.append)
     up.check(manual=True)
     assert shell.events(updater.CHECKED_EVENT) == [{"state": "failed", "message": updater.NETWORK}]
@@ -238,16 +241,23 @@ def test_signature_of_another_version_is_refused(site, tmp_path):
     assert _refused(site, tmp_path, key, _sign(secret, SETUP, "1.2.3")).events(updater.FAILED_EVENT) == [updater.SIGNATURE]
 
 
-def test_stalled_download_is_refused(site, tmp_path):
+def test_stalled_download_is_refused(site, tmp_path, monkeypatch):
     secret, key = _key()
     site.publish("1.2.4", _sign(secret, SETUP, "1.2.4"))
-    site.stall_after, site.stall_for = 1000, 3.0
+    site.stall_after = 1000
     shell = Shell()
     up = _updater(site, shell, key, tmp_path, stall=0.5)
     up.check()
-    started = time.monotonic()
+    timeouts = []
+    real_open = updater.urllib.request.urlopen
+
+    def open_with_timeout(url, *, timeout):
+        timeouts.append(timeout)
+        return real_open(url, timeout=timeout)
+
+    monkeypatch.setattr(updater.urllib.request, "urlopen", open_with_timeout)
     up.install()
-    assert time.monotonic() - started < 2.5
+    assert timeouts == [0.5], "the stalled read must use the configured socket deadline"
     assert shell.events(updater.FAILED_EVENT) == [updater.STALLED]
     assert shell.installers() == [] and not list((tmp_path / "dl").glob("*"))
     # Bấm lại được: lần sau mạng tốt thì cài.
@@ -279,12 +289,9 @@ def test_handle_routes_the_two_requests_and_passes_the_rest(site, tmp_path):
     shell = Shell()
     up = _updater(site, shell, key, tmp_path)
     up.handle({"check_update": True})
-    deadline = time.monotonic() + 10
-    while not shell.events(updater.CHECKED_EVENT) and time.monotonic() < deadline:
-        time.sleep(0.02)
+    assert wait_until(lambda: shell.events(updater.CHECKED_EVENT), timeout=10)
     up.handle({"install_update": True})
-    while not shell.installers() and time.monotonic() < deadline:
-        time.sleep(0.02)
+    assert wait_until(shell.installers, timeout=10)
     assert len(shell.installers()) == 1
     up.handle({"something": 1})
     assert shell.sent[-1] == {"something": 1}
@@ -366,7 +373,7 @@ def test_cut_download_is_refused(site, tmp_path):
     """Máy chủ đóng giữa chừng (ít byte hơn Content-Length): không đổi tên, không kiểm chữ ký, không cài."""
     secret, key = _key()
     site.publish("1.2.4", _sign(secret, SETUP, "1.2.4"))
-    site.stall_after, site.stall_for = 1000, 0.0
+    site.cut_after = 1000
     shell = Shell()
     up = _updater(site, shell, key, tmp_path)
     up.check()
