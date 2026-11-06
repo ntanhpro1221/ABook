@@ -301,7 +301,17 @@ def test_publish_stops_before_any_external_mutation_on_gate_failure(tmp_path, mo
         calls.append(command)
         raise subprocess.CalledProcessError(1, command)
     monkeypatch.setattr(release, "_run", fail)
+    monkeypatch.setattr(release, "release_notes", lambda *a, **k: "notes")
     with pytest.raises(subprocess.CalledProcessError):
         release.publish("9.9.9", "HEAD", tmp_path)
     assert len(calls) == 1 and calls[0][-1].endswith("release_gate.py")
     assert not (tmp_path / "notes.md").exists()
+
+
+def test_publish_without_a_changelog_section_stops_before_the_gate(tmp_path, monkeypatch):
+    release = gate.load_module(ROOT / "scripts/release.py", "release_gate_publish_changelog_test")
+    calls = []
+    monkeypatch.setattr(release, "_run", lambda command, *a, **k: calls.append(command))
+    with pytest.raises(AssertionError, match="CHANGELOG"):
+        release.publish("9.9.9", "HEAD", tmp_path)
+    assert calls == []
