@@ -1,5 +1,12 @@
 # Test report
 
+## 06-11-2026 — setupmark (dev/setupmark, chưa commit)
+
+- Thêm `scripts/dev_setup_marker.py`: kiểm trực tiếp dependency/provenance, cache perceptual và model giọng từ runtime contract trước khi ghi marker schema 2, `installed_by=dev-check`. Bắt buộc interpreter thuộc runtime đích; ghi atomic, có `--dry-run`.
+- Test đích `tests/test_dev_setup_marker.py tests/test_runtime_contract.py`, chạy từ `_internal` với `-q -rf`: 32 passed, 0 failed, 0 errors, 0 skipped (XML thật). Runtime giả dùng file nhỏ, kiểm SHA-256 thật và dependency giả; không dùng GPU.
+- Dry-run thật trên `D:/Novels/ABook/_internal/runtime`: exit 0, tất cả phép kiểm đạt; marker cũ giữ nguyên SHA-256 và mtime. Không nạp model/chạy suy luận, không chạy release gate đầy đủ.
+- Hash file khoá trước/sau cùng `3818e7751fec8680b70e3f148d1f0a63ede8de1a6599fad3ab043ff632c5467b`. Chi tiết và một lần gọi pytest sai cwd đã sửa: `D:/Novels/ABook_setupmark/report.md`.
+
 ## 06-11-2026 — tnbig (dev/tn-bigint, chưa commit)
 
 - Python/Kotlin nhóm số liền từ 7 chữ số có ngữ cảnh lượng; sửa gốc luật nghìn kiểu Anh để không sinh số dài liền, kèm dấu ~ và dấu chấm cuối câu. Cache 5 → 6; cập nhật 19 khoá fixture cache. Fixture chung 146 ca: thêm 46 câu bịa, đổi 1 ca cũ `thousands-2`; 99 ca cũ giữ nguyên. Hai kỳ vọng trùng của số sinh từ bỏ phẩy trong test Python/Kotlin được đổi tương ứng.
