@@ -63,7 +63,7 @@ Pytest có summary thật và `--durations=30`; deadline 7200 giây. Qt offscree
   hiện diện; `.bat`/`.cmd` có CRLF; quét diff (cả staged, unstaged và file mới) tìm dữ liệu riêng/khoá/audio cùng từ chỉ mã
   chuyển đổi cũ. Máy quét chỉ phát hiện dấu hiệu: nguồn truyện, README, thành phần đóng gói và ảnh vẫn phải có người duyệt.
 - MANUAL: kiểm Android trên thiết bị/máy ảo (`docs/UI.md`), duyệt ảnh/nội dung/giấy phép/hash/dependency; kiểm artifact
-  cuối (chữ ký, packaged smoke, audio sink, cài/cập nhật/gỡ), mapping R8 và bằng chứng đăng. Gate nguồn không khởi động
+  cuối (chữ ký, packaged smoke, audio sink, cài/cập nhật/gỡ). Mapping R8 và bằng chứng đăng được kiểm tự động bằng `release.py verify` sau publish. Gate nguồn không khởi động
   GPU, Ollama, adb, điện thoại hay emulator. Các kiểm artifact trong bước đóng gói dưới đây vẫn bắt buộc.
 
 - `python -m pytest` toàn bộ, `npm run typecheck` và `npm test` (vitest, logic thuần của giao diện) của `ui/` đều qua; kiểm tra tay trên máy ảo Android (`docs/UI.md`).
@@ -90,7 +90,22 @@ hành); mỗi bước dừng ở chỗ đầu tiên không đúng:
 python scripts/release.py bump X.Y.Z --commit   # 7 file + commit "Release X.Y.Z"; hash chất lượng phải giữ nguyên
 python scripts/release.py build X.Y.Z           # bộ cài + APK; kiểm latest.json và chứng chỉ APK
 python scripts/release.py publish X.Y.Z --commit <commit phát hành>
+python scripts/release.py verify X.Y.Z          # chỉ đọc; cũng nhận vX.Y.Z và --commit <sha>
 ```
+
+`publish` gọi `verify` ở cuối, sau khi endpoint latest trả đúng bản. `verify` dùng `git ls-remote origin` và
+`gh api --method GET`: tag (kể cả annotated tag) phải trỏ đúng commit phát hành và commit ấy nằm trên main của origin;
+Release công khai, không prerelease, có đúng 6 asset với size/SHA-256 khớp `--out`; notes không rỗng và phần
+"Thay đổi" khớp nguyên mục CHANGELOG tại commit phát hành. Không cần HEAD hiện tại là phiên bản đang kiểm.
+Không còn hàng MANUAL `manual-publish` trong gate trước phát hành.
+
+Endpoint và khoá công khai lấy cùng cấu hình updater; mọi endpoint phải trả latest.json khớp file phát hành,
+đúng version, URL bộ cài và chữ ký `.sig`. Chữ ký minisign được xác minh trên bộ cài với trusted version.
+Mapping riêng tư tại `D:/Novels/ABook/Corpus/releases/android/X.Y.Z/mapping.txt` phải có hash nội dung R8 hợp lệ
+và `pg_map_id` khớp marker trong DEX của APK đã phát hành. Nếu mapping build còn ở cây hiện tại, SHA-256 của
+hai file cũng phải khớp; kiểm bản lịch sử vẫn dùng bằng chứng build nhúng trong APK khi output Gradle đã mất.
+Lệnh không cất/copy mapping thay người dựng và không sửa GitHub Release. Lỗi mạng, thiếu digest hoặc thiếu bằng chứng
+đều làm lệnh thất bại. Vì kiểm endpoint latest hiện tại, bản đã bị bản mới thay thế sẽ thất bại ở bước này.
 
 File phát hành nằm ở thư mục tạm của máy (`abook-release/X.Y.Z`, hay `--out`), không bao giờ trong repo. Các bước tay
 tương ứng, để hiểu script làm gì:
