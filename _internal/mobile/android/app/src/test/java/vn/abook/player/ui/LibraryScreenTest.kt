@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasContentDescription
@@ -21,6 +22,8 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import com.github.takahirom.roborazzi.captureRoboImage
+import com.github.takahirom.roborazzi.RoborazziOptions
+import com.github.takahirom.roborazzi.RoborazziTaskType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -57,6 +60,8 @@ class LibraryScreenTest {
     private val played = ArrayList<String>()
     private var addOpened = 0
     private lateinit var ui: LibraryUiState
+    private var expectedBackground = 0
+    private var expectedAccent = 0
     private val sheets = SheetHost()
     private val actions = LibraryActions(
         openBook = { opened += it.id },
@@ -67,6 +72,8 @@ class LibraryScreenTest {
     private fun show(books: List<ListenBook>, dark: Boolean = false, sort: LibrarySort = LibrarySort.Recent) {
         rule.setContent {
             AbookTheme(dark) {
+                expectedBackground = Abook.colors.bg.toArgb()
+                expectedAccent = Abook.colors.accent.toArgb()
                 val scope = rememberCoroutineScope()
                 ui = remember { LibraryUiState(scope, sort) }
                 val grid = remember { LazyGridState() }
@@ -87,6 +94,34 @@ class LibraryScreenTest {
         resume = vn.abook.player.ui.data.ResumeSpot(4, "Chương 4: Bài học đầu tiên", 724.0),
     )
     private val fresh = ListenBook("n1", "Chí Phèo", "Nam Cao", duration = 3600.0, chaptersTotal = 5, chaptersAvailable = 5)
+
+    @Test
+    fun progressStaysInsideCoverCornersLight() = assertProgressCorners(dark = false)
+
+    @Test
+    fun progressStaysInsideCoverCornersDark() = assertProgressCorners(dark = true)
+
+    private fun assertProgressCorners(dark: Boolean) {
+        show(listOf(ListenBook(
+            "half", "Sách nghe dở", "Tác giả", duration = 7200.0, chaptersTotal = 10, chaptersAvailable = 10,
+            progress = listening.progress.copy(fraction = 0.5f),
+        )), dark)
+        val cover = rule.onNodeWithTag("library_cover", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        // Capture the screen so pixels outside the cover retain the library background.
+        val file = "build/icon_probe/cover_progress_${if (dark) "dark" else "light"}.png"
+        rule.onRoot().captureRoboImage(file, roborazziOptions = RoborazziOptions(taskType = RoborazziTaskType.Record))
+        val bitmap = android.graphics.BitmapFactory.decodeFile(file)
+        val x = cover.left.toInt()
+        val y = cover.bottom.toInt() - 2
+        val background = bitmap.getPixel(x - 2, y)
+        val accent = bitmap.getPixel((cover.left + cover.width * 0.25f).toInt(), y)
+        assertEquals("Library background", expectedBackground, background)
+        assertEquals("50% progress must be visible inside the cover", expectedAccent, accent)
+        assertEquals("Accent must not escape the bottom-left corner", background, bitmap.getPixel(x + 1, y))
+        assertEquals("Track must not escape the bottom-right corner", background, bitmap.getPixel(cover.right.toInt() - 2, y))
+        assertTrue("Track must remain visible inside the cover", background != bitmap.getPixel((cover.left + cover.width * 0.75f).toInt(), y))
+        bitmap.recycle()
+    }
 
     // ---- ảnh chụp ----
 
