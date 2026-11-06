@@ -51,7 +51,7 @@ class ClipCache(
          * Luật đọc nằm trong khoá (`cache.py` `rules_version`): đổi luật thì clip làm trước / đã nghe KHÔNG còn trúng đệm - cách đọc mới được làm lại. Số riêng của mô-đun
          * có phiên bản ([Names.RULE_VERSION]) + [CACHE_RULES]; một thay đổi luật đọc mà mô-đun của nó không có số riêng thì tăng [CACHE_RULES], ở CẢ HAI nơi (cache.py `CACHE_RULES`).
          */
-        const val CACHE_RULES = 5 // 5: nhịp ngập ngừng / kéo giọng và vá số (TN tầng 5 + tầng 2) - cùng số với cache.py
+        const val CACHE_RULES = 6 // 6: counted long integers; same as cache.py
         const val RULES = "${Names.RULE_VERSION}.$CACHE_RULES"
 
         /** `rules`: phiên bản luật đọc trong khoá (mặc định [RULES]; test đổi để thấy khoá đổi theo). */
