@@ -3,6 +3,14 @@
 File này là trách nhiệm thường trực của người dev project, không phải một lần rà soát. Mỗi phiên bản
 phải kiểm lại bảng dưới và ghi kết quả vào `VERSIONS.md`.
 
+## 06-11 — rà upstream trên nhánh dev
+
+Rà upstream tiếp trong ngày trên `dev/upstream`: PySide6 6.11.3, pytest 9.2.0, ruff 0.17.4;
+Brotli 1.2.1 vá CVE-2026-111497 (changelog Gradio 6.31.0 chỉ ra dependency này).
+Không cần nâng Gradio để vá bộ giải nén. UI nâng React Query 5.106.1, Vite 8.3.6 và Tailwind/plugin 4.3.5;
+Gradle wrapper 8.14.6 nhận cả các advisory repository failover và Java deserialization.
+Chi tiết từng gói, nguồn trực tiếp và test đích: `../../report.md`. Đây là ghim dev, runtime sản xuất chưa đổi.
+
 ## 06-11 — bỏ DSP biến đổi giọng
 
 Đã bỏ `pyworld==0.3.5` và `praat-parselmouth==0.4.7` khỏi dependency sản phẩm, lock và danh sách cài Studio.
