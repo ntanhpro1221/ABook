@@ -39,6 +39,7 @@ if TYPE_CHECKING:
 # Độ chói tai khi máy sai ở khía cạnh ấy (1 = người nghe nhận ra ngay: giọng sai người, sai giới).
 SEVERITY = {
     "speaker": 1.0,
+    "caller": 1.0,
     "gender": 1.0,
     "vocative": 0.9,
     "turn": 1.0,
@@ -145,7 +146,7 @@ def _refine_speaker_cards(project_root: Path, items: list[dict[str, Any]]) -> No
       cùng phép thử với lúc ghi yêu cầu, nên chip còn lại luôn bấm được);
     - gắn `sampleId` (một câu đã thu của người ấy, như tab Nhân vật - `store.voice_samples`) cho mỗi người được đề xuất: nghe giọng
       trước khi chọn."""
-    cards = [item for item in items if item["kind"] in ("speaker", "vocative") and len(item["examples"]) == 1]
+    cards = [item for item in items if item["kind"] in ("speaker", "vocative", "caller") and len(item["examples"]) == 1]
     if not cards:
         return
     with closing(store.connect(project_root)) as connection:
@@ -931,6 +932,82 @@ def _refused_requests(project_root: Path, overrides: dict[str, Any]) -> list[dic
     return cards
 
 
+# Only narration can supply a channel cue: a speaker mentioning a phone is not evidence that their voice is remote.
+REMOTE_VOICE = re.compile(
+    r"đầu dây bên kia|(?:giọng|tiếng)[^.!?\n]{0,80}(?:qua điện thoại|từ điện thoại|qua bộ đàm|từ bộ đàm|từ loa|ngoài khung|ngoài cửa|bên ngoài)"
+    r"|(?:điện thoại|bộ đàm|loa)[^.!?\n]{0,40}(?:vang lên|cất tiếng)", re.IGNORECASE,
+)
+
+
+def _remote_voice_cards(project_root: Path, spoken: Any, names: dict, wishes: dict,
+                        label: Callable[[str], str], audio: Any) -> list[dict[str, Any]]:
+    """Review evidence, never a speaker rewrite or a pipeline hold. Keep each utterance independently answerable."""
+    with closing(store.connect(project_root)) as connection:
+        cues = {(int(row["chapter_id"]), int(row["seq"])): str(row["text"])
+                for row in connection.execute("SELECT chapter_id, seq, text FROM segments WHERE kind='narration'")
+                if REMOTE_VOICE.search(str(row["text"]))}
+    cards = []
+    for row in spoken:
+        if row["kind"] != "dialogue":
+            continue
+        chapter, seq = int(row["chapter_id"]), int(row["seq"])
+        evidence = cues.get((chapter, seq - 1)) or cues.get((chapter, seq + 1))
+        if not evidence:
+            continue
+        current = str(row["speaker"])
+        choices = _cast_choices(spoken, {chapter}, {current.casefold()}, label)
+        choices += [{"label": "Người kể", "value": NARRATOR}]
+        fix = _speaker_fix([row], choices, current, wishes, label)
+        if fix is None:
+            continue
+        cards.append({
+            "kind": "caller", "key": f"caller:{row['stable_id']}", "title": "Ai nói từ xa?",
+            "problem": f"Lời kể gợi giọng qua điện thoại hoặc ngoài khung: “{evidence}” — bạn kiểm tra người nói.",
+            "affected": 1, "doubt": 0.6, "suggested": False,
+            "options": [label(current)] + [choice["label"] for choice in choices],
+            "current": label(current), "keepLabel": f"Giữ {label(current)} (máy đề xuất)",
+            "examples": [_example(row, names, label, audio)], **fix,
+        })
+    return cards
+
+
+def _local_role_cards(spoken: Any, characters: dict, names: dict, wishes: dict,
+                      label: Callable[[str], str], audio: Any) -> list[dict[str, Any]]:
+    """A chapter-scoped NPC stays chapter-scoped even when another chapter uses the same human label."""
+    groups: dict[tuple[int, str], list[Any]] = defaultdict(list)
+    for row in spoken:
+        if str(row["speaker"]).startswith("NPC_LOCAL::"):
+            groups[(int(row["chapter_id"]), str(row["speaker"]))].append(row)
+    cards = []
+    for (chapter, speaker), rows in groups.items():
+        # Match the existing unnamed cards: a chapter action must not overwrite decisions made on individual lines.
+        open_rows = [row for row in rows if str(row["stable_id"]) not in wishes]
+        if not open_rows and len({wishes[str(row["stable_id"])]["speaker"].casefold() for row in rows}) > 1:
+            continue
+        rows = open_rows or rows
+        if len(rows) < 2:
+            continue
+        choices = _cast_choices(spoken, {chapter}, set(), label)
+        fix = _speaker_fix(rows, choices, speaker, wishes, label)
+        if fix is None:
+            continue
+        who = label(speaker)
+        character = characters.get(rows[0]["canonical_character_id"])
+        cards.append({
+            "kind": "unnamed", "key": f"local-role:{chapter}:{speaker}",
+            "title": f"“{who}” trong chương này",
+            "problem": f"Vai phụ nói {len(rows)} câu trong chương này. Đặt tên hoặc chọn người đã có; giới / giọng áp cho cả vai. {_rerecord_cost(rows)}.",
+            "affected": len(rows), "doubt": 0.5, "suggested": False,
+            "suggestedName": f"{who[:1].upper() + who[1:]} chương {chapter}",
+            "options": [choice["label"] for choice in choices] + ["Đặt tên", "Giới / giọng", "Giữ như máy đề xuất"],
+            "current": who, "keepLabel": f"Giữ {who} (máy đề xuất)",
+            "examples": [_example(row, names, label, audio) for row in rows[:EXAMPLES]],
+            **fix,
+            **({"pickVoice": {"name": str(character["canonical_name"]), "displayName": who}} if character is not None else {}),
+        })
+    return cards
+
+
 def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> dict[str, Any]:
     """`verdicts`: phán quyết "Cần nghe lại" của cuốn (reviews.Reviews.get) - câu đã chấm rơi khỏi thẻ "Bản thu lỗi"."""
     items: list[dict[str, Any]] = []
@@ -999,6 +1076,9 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
 
     overrides = read_overrides(project_root)
     speaker_wishes = {entry["stable_id"]: entry for entry in speaker_requests(overrides)}
+
+    items.extend(_remote_voice_cards(project_root, spoken, names, speaker_wishes, speaker_label, audio))
+    local_cards = _local_role_cards(spoken, characters, names, speaker_wishes, speaker_label, audio)
 
     # 0b. Ai nói câu này - theo XƯNG HÔ (address_cues.py): truyện kể ngôi thứ nhất, câu dính người kể "tôi" mà cách xưng
     #     hô ("ta… ngươi", "tớ… cậu") hợp người khác trong chương hơn hẳn. Đo 29-09 trên bộ LN: câu bị hỏi sai thật 85-95%.
@@ -1674,6 +1754,19 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
             **fix,
         })
 
+    # Enrich existing candidate cards instead of asking the same chapter role twice. Whole-book merge cards remain optional.
+    existing_roles = {item["key"]: item for item in items if item["kind"] == "unnamed"}
+    for local in local_cards:
+        existing = existing_roles.get(f"unnamed:{local['currentValue']}")
+        if existing is None:
+            items.append(local)
+        else:
+            existing["suggestedName"] = local["suggestedName"]
+            existing.pop("askLast", None)
+            if local.get("pickVoice"):
+                existing["pickVoice"] = local["pickVoice"]
+            existing["problem"] += f" Đặt tên hoặc đổi giới / giọng cho {local['affected']} câu trong chương này."
+
     # 6. Cách đọc tên riêng máy chưa chắc. Người nghe sửa ngay trên thẻ; mong muốn chưa áp thì hiện "đang chờ", áp rồi thì
     #    dòng cách đọc thành của người nghe (tin cậy 1,0) và việc tự rơi khỏi danh sách.
     requested = {surface_key(entry["surface"]): entry["spoken_form"] for entry in pronunciation_requests(overrides)}
@@ -1731,7 +1824,9 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
         item["chapters"] = sorted({chapter_of[line["stableId"]] for line in item.get("lines") or ()
                                    if line["stableId"] in chapter_of}
                                   or {int(example["chapterId"]) for example in item["examples"]})
-        item["score"] = round(item["affected"] * item["doubt"] * SEVERITY[item["kind"]], 3)
+        # M2 chapter roles and remote speakers are ordered by affected lines, not an unmeasured cue confidence.
+        item["score"] = (item["affected"] if item["kind"] == "caller" or item.get("suggestedName") else
+                         round(item["affected"] * item["doubt"] * SEVERITY[item["kind"]], 3))
         undo = _undo_of(item, overrides)
         if undo is not None:
             item["undo"] = undo

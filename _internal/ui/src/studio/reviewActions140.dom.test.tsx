@@ -22,10 +22,39 @@ vi.mock("./liveRefresh", () => ({ useProducingRefetch: () => false }));
 let root: Root, host: HTMLDivElement;
 beforeEach(() => {
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+  vi.spyOn(HTMLElement.prototype, "animate").mockImplementation(() => ({ cancel: vi.fn(), onfinish: null, finished: Promise.resolve() }) as unknown as Animation);
   mocks.mutate.mockClear(); mocks.toggle.mockClear(); host = document.createElement("div"); document.body.append(host); root = createRoot(host);
 });
-afterEach(async () => { await act(() => root.unmount()); document.body.replaceChildren(); });
+afterEach(async () => { await act(() => root.unmount()); document.body.replaceChildren(); vi.restoreAllMocks(); });
 const buttons = () => [...host.querySelectorAll<HTMLButtonElement>("button")];
+
+it("vai phụ nhiều câu: đề xuất tên trong chương, chọn giới và mở giọng dùng cùng đường sửa", async () => {
+  const voice = vi.fn();
+  const item: WorkItem = { kind: "unnamed", key: "role", title: "Vai phụ", problem: "Trong chương này", affected: 2,
+    current: "người gác", currentValue: "NPC_LOCAL::c1::người gác", options: [], doubt: .5, score: .3, examples: [],
+    suggestedName: "Người gác chương 1", pickVoice: { name: "NPC", displayName: "người gác" },
+    lines: [{ stableId: "a", textSha256: "sha-a" }, { stableId: "b", textSha256: "sha-b" }], choices: [] };
+  await act(() => root.render(<WorkCards book={{ id: "book" } as BookSummary} items={[item]} onOpenReview={vi.fn()} onPickVoice={voice} />));
+  expect(mocks.mutate).not.toHaveBeenCalled();
+  await act(() => buttons().find(button => button.textContent === "Giới / giọng")!.click());
+  expect(voice).toHaveBeenCalledWith(item.pickVoice);
+  await act(() => buttons().find(button => button.textContent === "Đặt tên")!.click());
+  expect(host.querySelector<HTMLInputElement>('[aria-label="Tên người nói mới"]')!.value).toBe("Người gác chương 1");
+  await act(() => buttons().find(button => button.textContent === "Nữ")!.click());
+  expect(mocks.mutate).toHaveBeenCalledWith({ speaker: "Người gác chương 1", newGender: "female" });
+});
+
+it("người gọi: hiện loại việc, giữ lựa chọn máy và không mời hiệu ứng chưa có", async () => {
+  const item: WorkItem = { kind: "caller", key: "caller:a", title: "Ai nói từ xa?", problem: "Đầu dây bên kia", affected: 1,
+    current: "An", currentValue: "AN", keepLabel: "Giữ An (máy đề xuất)", suggested: false,
+    options: [], doubt: .6, score: .6, examples: [], lines: [{ stableId: "a", textSha256: "sha-a" }], choices: [{ label: "Lan", value: "LAN" }] };
+  await act(() => root.render(<WorkCards book={{ id: "book" } as BookSummary} items={[item]} onOpenReview={vi.fn()} />));
+  expect(host.textContent).toContain("Người gọi / ngoài khung");
+  expect(host.textContent).not.toContain("Lọc giọng");
+  expect(mocks.mutate).not.toHaveBeenCalled();
+  await act(() => buttons().find(button => button.textContent === item.keepLabel)!.click());
+  expect(mocks.mutate).toHaveBeenCalledWith({ speaker: "AN" });
+});
 
 it("thẻ gọi hay nói: nghe ứng viên dùng clip riêng, chọn người dùng đường sửa có sẵn", async () => {
   const item: WorkItem = { kind: "vocative", key: "vocative:1", title: "Tên người nghe", problem: "Câu này gọi Minh", affected: 1,
