@@ -65,6 +65,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import vn.abook.player.ui.components.RowHint
 import vn.abook.player.ui.components.BookCover
+import vn.abook.player.ui.components.BookCoverShape
 import vn.abook.player.ui.components.RemoteIcon
 import vn.abook.player.ui.components.ScreenHeader
 import vn.abook.player.ui.components.SheetHost
@@ -239,7 +240,7 @@ private fun BookTile(
             .pressable(onLongClick = onLong, onClick = onClick)
             .testTag(if (series != null) "series_cell" else "book_cell"),
     ) {
-        Box(Modifier.fillMaxWidth()) {
+        Box(Modifier.fillMaxWidth().clip(BookCoverShape).testTag("library_cover")) {
             BookCover(lead.cover, title, if (series != null) null else lead.part, covers, cell, Modifier.fillMaxWidth())
             if (series?.hasRemote ?: (lead.remote != null)) {
                 // Dưới bìa (tên bìa nằm ở đầu), góc phải: chip số tập / nhãn ở góc trái.
