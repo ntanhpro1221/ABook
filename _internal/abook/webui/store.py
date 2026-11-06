@@ -1472,9 +1472,9 @@ REDO_LABEL = "Chờ thu lại theo sửa của bạn"
 def heard_chapter(status: Any, last_error: Any) -> bool:
     """Chương nghe được trong sổ: đã xong, hay đã xong rồi người nghe sửa (đổi giọng, cách đọc, người nói, thu lại câu) nên chờ thu
     lại những câu ấy (`database.LISTENER_REDO`) - MP3 cũ vẫn là bản nghe được tới khi có bản mới, không phải "có lỗi" (soát UX a24, A3)."""
-    from ..database import LISTENER_REDO
+    from ..database import heard_chapter as published
 
-    return str(status) == "completed" or (str(status) == "warning" and str(last_error or "").startswith((LISTENER_REDO, "Cần nghe lại:")))
+    return published(status, last_error)
 
 
 _DURATION_CACHE: dict[tuple[str, float], float] = {}
@@ -1659,8 +1659,8 @@ def _heard_script_path(mp3: Path) -> Path:
 
 
 def keep_heard_scripts(project_root: Path) -> int:
-    """Chụp chữ đọc theo (chữ, người nói, mốc từng câu - `chapter_script`) của mỗi chương ĐÃ XONG thành file cạnh MP3 của nó,
-    nếu chưa có bản chụp mới hơn MP3. Dây chuyền gọi ngay TRƯỚC khi áp sửa của người nghe (pipeline._apply_listener_overrides):
+    """Chụp chữ đọc theo của mỗi chương nghe được, kể cả chương có cảnh báo QA, thành file cạnh MP3.
+    Chỉ bỏ qua khi bản chụp có checksum khớp MP3. Dây chuyền gọi ngay TRƯỚC khi áp sửa của người nghe:
     bước đặt lại xoá thời lượng câu, nên chương chờ thu lại không dựng được mốc nữa trong khi MP3 cũ vẫn là bản nghe được
     (soát UX a25 T7). Gọi ở đó chứ không lúc chương xong: một chỗ gọi, ngay trước mọi lần đặt lại. Trả số chương vừa chụp."""
     from ..io_utils import atomic_write_json
@@ -1668,18 +1668,21 @@ def keep_heard_scripts(project_root: Path) -> int:
     if not (Path(project_root) / DB_NAME).is_file():
         return 0
     with closing(connect(project_root)) as connection:
-        rows = connection.execute("SELECT id, output_mp3 FROM chapters WHERE status = 'completed'").fetchall()
+        rows = connection.execute("SELECT id, output_mp3, status, last_error FROM chapters").fetchall()
     kept = 0
     voices: dict[str, Any] | None = None  # giọng của bản đã thu: một lần cho mọi chương chụp lần này (`heard_voices`)
     for row in rows:
+        if not heard_chapter(row["status"], row["last_error"]):
+            continue
         mp3 = chapter_mp3(project_root, row["output_mp3"])
         if mp3 is None:
             continue
         target = _heard_script_path(mp3)
         try:
-            if target.stat().st_mtime_ns >= mp3.stat().st_mtime_ns:
+            saved = json.loads(target.read_text(encoding="utf-8"))
+            if saved["audioSha256"] == word_timing.audio_sha256(mp3):
                 continue
-        except OSError:
+        except (OSError, ValueError, KeyError, TypeError):
             pass
         script = chapter_script(project_root, int(row["id"]))
         if script is None or not script["timed"]:
@@ -1688,7 +1691,7 @@ def keep_heard_scripts(project_root: Path) -> int:
             now = cast(project_root)
             voices = {"narrator": now["narrator"]["voice"], "narratorProfile": now["narrator"]["profile"],
                       "people": {person["name"]: person["voice"] for person in now["characters"] + now["extras"]}}
-        atomic_write_json(target, {"mp3Size": mp3.stat().st_size, "script": script, "voices": voices}, fsync=False)
+        atomic_write_json(target, {"audioSha256": word_timing.audio_sha256(mp3), "script": script, "voices": voices}, fsync=False)
         kept += 1
     return kept
 
@@ -1703,7 +1706,7 @@ def _kept_snapshot(project_root: Path, chapter: Any) -> dict[str, Any] | None:
         return None
     try:
         data = json.loads(_heard_script_path(mp3).read_text(encoding="utf-8"))
-        if int(data["mp3Size"]) != mp3.stat().st_size or not data["script"].get("timed"):
+        if data["audioSha256"] != word_timing.audio_sha256(mp3) or not data["script"].get("timed"):
             return None
     except (OSError, ValueError, KeyError, TypeError, AttributeError):
         return None

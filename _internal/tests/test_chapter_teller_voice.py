@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from abook import cli, teller_voice
+from abook import narrator_sections
 from abook.config import build_settings
 from abook.database import ProjectDB
 from abook.tts import TTSCoordinator
@@ -123,6 +124,66 @@ def test_chapter_reset_failure_rolls_back_and_can_retry_after_reopen(tmp_path, m
     db = ProjectDB(paths.db)
     assert rows(db) == before
     assert teller_voice.ensure(paths.root, db, settings)["chapterNarrator"]["redo"] == 1
+
+
+@pytest.mark.parametrize("next_narrator", [None, "Bao", ""])
+def test_section_voice_and_original_thinker_are_restored_after_undo_or_same_gender_choice(tmp_path, next_narrator):
+    paths, db, settings = _book(tmp_path, settings=_settings("Bao"), recorded=True)
+    before = rows(db)
+    narrator_sections.decide(paths.root, 2, 0, 2, accepted=True, narrator="Mai", source="owner")
+    teller_voice.ensure(paths.root, db, settings)
+    assert rows(db)["c2s2"]["voice_profile_id"] == before["c1s1"]["voice_profile_id"]
+    with db.transaction() as conn:
+        conn.execute("UPDATE segments SET status='verified',wav_path='new.wav',wav_duration=1 WHERE stable_id='c2s2'")
+    if next_narrator is None:
+        narrator_sections.forget(paths.root, 2, 0, 2)
+    else:
+        narrator_sections.decide(paths.root, 2, 0, 2, accepted=True, narrator=next_narrator, source="owner")
+    db = ProjectDB(paths.db)
+    teller_voice.ensure(paths.root, db, settings)
+    after = rows(db)
+    for sid in ("c2s0", "c2s2"):
+        for field in ("speaker", "canonical_character_id", "voice_profile_id"):
+            assert after[sid][field] == before[sid][field], (sid, field)
+    assert after["c2s2"]["status"] == "analyzed" and after["c2s2"]["wav_path"] is None
+    assert "chapterNarrator" not in teller_voice.ensure(paths.root, db, settings)
+
+
+def test_section_undo_keeps_a_listener_line_choice(tmp_path):
+    from abook.listener_overrides import request_speaker
+    paths, db, settings = _book(tmp_path, settings=_settings("Bao"), recorded=True)
+    narrator_sections.decide(paths.root, 2, 0, 2, accepted=True, narrator="Mai", source="owner")
+    teller_voice.ensure(paths.root, db, settings)
+    request_speaker(paths.root, "c2s2", "sha-c2s2", "MAI", now=10)
+    db.apply_listener_speaker(stable_id="c2s2", text_sha256="sha-c2s2", speaker="MAI")
+    chosen = rows(db)["c2s2"]
+    narrator_sections.forget(paths.root, 2, 0, 2)
+    teller_voice.ensure(paths.root, ProjectDB(paths.db), settings)
+    assert rows(db)["c2s2"] == chosen
+
+
+def test_section_undo_failure_rolls_back_provenance_and_can_retry_after_reopen(tmp_path, monkeypatch):
+    paths, db, settings = _book(tmp_path, settings=_settings("Bao"), recorded=True)
+    narrator_sections.decide(paths.root, 2, 0, 2, accepted=True, narrator="Mai", source="owner")
+    teller_voice.ensure(paths.root, db, settings)
+    with db.transaction() as conn:
+        conn.execute("UPDATE segments SET status='verified',wav_path='take.wav' WHERE stable_id='c2s2'")
+        provenance = [tuple(r) for r in conn.execute("SELECT * FROM chapter_teller_lines ORDER BY segment_id")]
+    before = rows(db)
+    narrator_sections.forget(paths.root, 2, 0, 2)
+    def crash(*args):
+        raise RuntimeError("crash during undo")
+    with monkeypatch.context() as m:
+        m.setattr(db, "_reset_segment_pending_conn", crash)
+        with pytest.raises(RuntimeError, match="crash during undo"):
+            teller_voice.ensure(paths.root, db, settings)
+    db = ProjectDB(paths.db)
+    assert rows(db) == before
+    with db.connect() as conn:
+        assert [tuple(r) for r in conn.execute("SELECT * FROM chapter_teller_lines ORDER BY segment_id")] == provenance
+    assert teller_voice.ensure(paths.root, db, settings)["chapterNarrator"]["redo"] == 1
+    with db.connect() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM chapter_teller_lines").fetchone()[0] == 0
 
 
 def test_global_override_failure_rolls_back_profile_and_rows(tmp_path, monkeypatch):

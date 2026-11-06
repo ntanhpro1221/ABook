@@ -7,6 +7,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Thu lại hoặc sửa câu trong chương “Cần nghe lại” vẫn giữ mốc đọc theo và xuất được MP3 đang nghe, đồng thời hiện đúng trạng thái chờ thu lại.
+- Hoàn tác người kể của một đoạn hoặc chọn lại người kể cùng giới giọng dẫn sẽ trả các câu về đúng giọng, giữ nguyên chỉnh sửa từng câu của bạn.
+- Đổi mức nhạc rồi bấm “Về mặc định” hoặc kéo về mức cũ trong lúc đang lưu trên giao diện web sẽ giữ đúng lựa chọn cuối.
 - Thanh tiến độ và nhãn trên bìa trong thư viện điện thoại nằm gọn theo góc bo của bìa.
 - Đọc số lượng nguyên từ 7 chữ số liền thành số đầy đủ khi có ngữ cảnh đếm, giữ nguyên mã và số điện thoại.
 

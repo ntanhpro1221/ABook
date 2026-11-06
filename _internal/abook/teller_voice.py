@@ -25,6 +25,7 @@ import json
 import sqlite3
 import time
 from collections.abc import Callable
+from contextlib import nullcontext
 from pathlib import Path
 from typing import Any
 
@@ -346,13 +347,17 @@ def _ensure_chapter_tellers(project_root: Path | str, db: Any, tellers: Tellers)
     Keep NARRATOR as the narration label, and retain the teller's character id so a later
     character voice change also reaches these lines. Existing per-line listener wishes win.
     No profiles, presets or settings are created. Recorded changes use the normal reset path.
+    Original identity and each automatic target are kept in SQLite in that same transaction,
+    so undo and retargeting also reconcile previously applied rows after a crash/reopen.
     """
     from .listener_overrides import narrator_profile
+    from .webui.store import keep_heard_scripts
 
     applied = read(project_root)["applied"]
     wishes = _wishes(project_root)
-    groups: dict[tuple[int, int], list[Any]] = {}
-    with db.connect() as conn:
+    kept = False
+    changed = redo = 0
+    with db.transaction() as conn:
         base = narrator_profile(conn)
         if base is None or _narrator_chosen(conn, project_root):
             return {}
@@ -361,40 +366,56 @@ def _ensure_chapter_tellers(project_root: Path | str, db: Any, tellers: Tellers)
             return {}
         targets = {}
         previous_thoughts = applied.get("thoughts") or {}
+        origins = {int(r["segment_id"]): dict(r) for r in conn.execute("SELECT * FROM chapter_teller_lines")}
         for row in conn.execute("SELECT * FROM segments WHERE kind IN ('narration','thought') ORDER BY chapter_id,seq"):
             stable = str(row["stable_id"])
+            origin = origins.get(int(row["id"]))
             if stable in wishes:
+                conn.execute("DELETE FROM chapter_teller_lines WHERE segment_id=?", (row["id"],))
                 continue
+            if origin and (row["speaker"] != NARRATOR or row["canonical_character_id"] != origin["applied_character_id"]):
+                # A subsequent listener change owns this row, even without a pending wish.
+                conn.execute("DELETE FROM chapter_teller_lines WHERE segment_id=?", (row["id"],))
+                continue
+            original = ({**dict(row), "speaker": origin["original_speaker"],
+                         "canonical_character_id": origin["original_character_id"], "voice_profile_id": origin["original_profile_id"]}
+                        if origin else dict(row))
             name = tellers.row_narrator(row)
             if name not in targets:
                 targets[name] = (_teller_target(conn, name, int(base["id"]))
                                  if teller_gender(conn, name) not in ("", gender) else None)
             target = targets[name]
-            if target is None:
-                continue
-            character, profile, _speaker = target
             if row["kind"] == "narration":
-                eligible = str(row["speaker"]).upper() == NARRATOR
+                eligible = str(original["speaker"]).upper() == NARRATOR
             else:
-                eligible = row["canonical_character_id"] == character or (
+                eligible = target is not None and (original["canonical_character_id"] == target[0] or (
                     stable in previous_thoughts and previous_thoughts[stable] and
-                    character in character_ids(conn, str(previous_thoughts[stable])))
-            if eligible and (row["voice_profile_id"] != profile or row["canonical_character_id"] != character
-                             or str(row["speaker"]).upper() != NARRATOR):
-                groups.setdefault((character, profile), []).append(row)
-    changed = redo = 0
-    for (character, profile), rows in groups.items():
-        redo += _move_lines(db, rows, NARRATOR, character, profile,
-                            "Giọng kể theo chương: thu lại bằng giọng người kể")
-        changed += len(rows)
+                    target[0] in character_ids(conn, str(previous_thoughts[stable]))))
+            desired = ((NARRATOR, target[0], target[1]) if target is not None and eligible else
+                       (original["speaker"], original["canonical_character_id"], original["voice_profile_id"]))
+            current = (row["speaker"], row["canonical_character_id"], row["voice_profile_id"])
+            if desired == current:
+                continue
+            if not kept:
+                keep_heard_scripts(Path(project_root))
+                kept = True
+            if target is not None and eligible:
+                conn.execute("INSERT INTO chapter_teller_lines(segment_id,original_speaker,original_character_id,original_profile_id,"
+                             "applied_character_id,applied_profile_id) VALUES(?,?,?,?,?,?) ON CONFLICT(segment_id) DO UPDATE SET"
+                             " applied_character_id=excluded.applied_character_id,applied_profile_id=excluded.applied_profile_id",
+                             (row["id"], original["speaker"], original["canonical_character_id"], original["voice_profile_id"], target[0], target[1]))
+            else:
+                conn.execute("DELETE FROM chapter_teller_lines WHERE segment_id=?", (row["id"],))
+            redo += _move_lines(db, [row], *desired, "Giọng kể theo chương: thu lại bằng giọng người kể", connection=conn)
+            changed += 1
     return {"chapterNarrator": {"lines": changed, "redo": redo}} if changed else {}
 
 
 def _wishes(project_root: Path | str) -> set[str]:
     from .listener_overrides import read_overrides
 
-    entries = read_overrides(Path(project_root)).get("speakers")
-    return set(entries) if isinstance(entries, dict) else set()
+    overrides = read_overrides(Path(project_root))
+    return {stable for section in ("speakers", "lines") for stable in (overrides.get(section) or {})}
 
 
 def _align_narrator(db: Any, settings: dict[str, Any], wanted: dict[str, Any]) -> None:
@@ -516,16 +537,14 @@ def mode_plan(connection: sqlite3.Connection, project_root: Path | str, tellers:
     return {"direction": direction, "lines": lines + total, "recorded": recorded + heard, "tellers": sorted(set(names), key=str.casefold)}
 
 
-def _move_lines(db: Any, rows: list[Any], speaker: str, character_id: int, profile_id: int, reason: str) -> int:
+def _move_lines(db: Any, rows: list[Any], speaker: str, character_id: int | None, profile_id: int, reason: str,
+                *, connection: sqlite3.Connection | None = None) -> int:
     """Chuyển các câu sang (người nói, nhân vật, hồ sơ) trong MỘT transaction; câu đã thu mà giọng đổi thì đặt lại (như mọi lần người nghe
     đổi giọng) và chương xong chuyển sang "thu lại" chứ không thành lỗi. Trả số câu đã đặt lại."""
-    from .database import LISTENER_REDO
-    from .models import ChapterStatus
-
     now = time.time()
     reset = 0
     chapters: set[int] = set()
-    with db.transaction() as conn:
+    with (nullcontext(connection) if connection is not None else db.transaction()) as conn:
         for row in rows:
             conn.execute("UPDATE segments SET speaker=?, canonical_character_id=?, voice_profile_id=?, updated_at=? WHERE id=?",
                          (speaker, character_id, profile_id, now, int(row["id"])))
@@ -535,8 +554,7 @@ def _move_lines(db: Any, rows: list[Any], speaker: str, character_id: int, profi
                 reset += 1
         for chapter_id in sorted(chapters):
             db._refresh_chapter_counts_conn(conn, chapter_id)
-            conn.execute("UPDATE chapters SET status='warning', last_error=? WHERE id=? AND status=?",
-                         (LISTENER_REDO + reason, chapter_id, ChapterStatus.COMPLETED.value))
+            db._mark_listener_redo_conn(conn, chapter_id, reason)
     return reset
 
 
