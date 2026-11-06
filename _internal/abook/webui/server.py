@@ -575,8 +575,8 @@ class App:
         # "Giọng theo máy" (voice_pick.py): đo mọi máy đọc đã tải trên cùng bộ câu, chọn mặc định theo số đo; tự đo lại khi một mô-đun giọng vừa tải xong.
         voice_pick.configure(preferences.path.with_name(voice_pick.FILE), self.readaloud, marks=lambda voice: model_mark(voice, ""), studio=lambda: self.studio)
         voice_module.on_measured(voice_pick.module_measured)
-        if not (isinstance(runner, actions.FakeRunner) or os.environ.get("ABOOK_FAKE_RUNNER") == "1"):
-            self.readaloud.warm()
+        # Saved audio needs no speech providers. Enumerate voices on the first
+        # request for them instead of spawning PowerShell during every launch.
         # Mốc từng chữ khi nghe (word_timing.py): app đóng gói không có numpy nên giao việc căn cho Python của Studio.
         word_timing.configure(lambda: self.studio)
         self.word_jobs = word_timing.Job()

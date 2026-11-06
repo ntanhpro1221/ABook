@@ -45,6 +45,15 @@ TestCase {
     }
     function dialog() { return all(win.contentItem, "shortcutsDialog")[0] }
 
+    function test_0_bookActionsAreNotConstructedAtStartup() {
+        for (const name of ["editBookLoader", "renameChapterLoader", "castDialogsLoader", "recordDialogsLoader", "saveBookAsLoader"]) {
+            const loader = findChild(win.contentItem, name)
+            verify(loader !== null, name)
+            compare(loader.active, false)
+            compare(loader.item, null)
+        }
+    }
+
     function test_1_questionMarkOpensShortcuts() {
         Api.preferences = {theme: "system"}
         keyClick("?", Qt.ShiftModifier, -1, win)
@@ -123,5 +132,99 @@ TestCase {
         for (let up = win.activeFocusItem; up; up = up.parent) if (up.objectName === "screenStack") inside = true
         verify(inside, "tiêu điểm phải nằm trong màn đang xem: " + win.activeFocusItem)
         tryCompare(skip, "opacity", 0)
+    }
+
+    function test_8_bookActionsLoadSynchronouslyAndRetainTheirDialogs() {
+        const book = {id: "lazy", title: "Book", stage: "audio", chapters: [], capabilities: {}}
+        const edit = findChild(win.contentItem, "editBookLoader")
+        edit.begin(book)
+        const first = edit.item
+        verify(first.open)
+        compare(first.parent, win.contentItem)
+        first.dismiss()
+        edit.begin({id: "second", title: "Second book", stage: "audio", capabilities: {}})
+        compare(edit.item, first)
+        compare(first.book.id, "second")
+        first.dismiss()
+
+        const rename = findChild(win.contentItem, "renameChapterLoader")
+        rename.begin(book, {id: 1, title: "Chapter", subtitle: "Title"})
+        verify(rename.item.open)
+        compare(rename.item.chapter.id, 1)
+        rename.item.dismiss()
+
+        const cast = findChild(win.contentItem, "castDialogsLoader")
+        cast.begin("rename", {bookId: "lazy", person: {name: "A", displayName: "A"}})
+        const castRename = findChild(win.contentItem, "castRenameDialog")
+        verify(castRename.open)
+        castRename.dismiss()
+
+        const record = findChild(win.contentItem, "recordDialogsLoader")
+        record.begin("rename", {bookId: "lazy", book: {}, dialog: {kind: "rename", name: "Profile"}})
+        verify(record.item.open)
+        record.item.dismiss()
+
+        const save = findChild(win.contentItem, "saveBookAsLoader")
+        save.begin(book)
+        verify(save.item.open)
+        save.item.dismiss()
+        DesktopApi.responses["POST /api/books/lazy/save"] = {status: 200, data: {edits: 1}}
+        save.quick(book)
+        compare(save.item.book.id, "lazy")
+        verify(DesktopApi.requests.some(r => r.method === "POST" && r.path === "/api/books/lazy/save"))
+        Api.notice = ""
+    }
+
+    function test_9_voicesAreDeferredUntilTextOrSettingsNeedThem() {
+        DesktopApi.reset()
+        Api.voiceList = []; Api.voicesLoaded = false; Api.voicesLoading = false
+        const bridge = Api.transport
+        Api.transport = null
+        Api.ensureVoiceName()
+        compare(Api.voicesLoading, false)
+        Api.transport = bridge
+        Api.load()
+        Backend.libraryFetched([{id: "audio", stage: "audio"}])
+        verify(!DesktopApi.requests.some(r => r.path === "/api/readaloud/voices"))
+
+        const voice = {id: "device:An", name: "An", provider: "device", online: false}
+        DesktopApi.responses["GET /api/readaloud/voices"] = {status: 200, data: [voice]}
+        Api.defaultVoice = voice.id
+        DesktopApi.delayed = true
+        Backend.libraryFetched([{id: "text", stage: "text"}])
+        Backend.libraryFetched([{id: "text", stage: "text"}])
+        compare(DesktopApi.requests.filter(r => r.path === "/api/readaloud/voices").length, 1)
+        DesktopApi.finish(); DesktopApi.delayed = false
+        compare(Api.voiceName, "An")
+        compare(Api.defaultVoice, voice.id)
+        verify(Api.voicesLoaded)
+        Backend.libraryFetched([{id: "text", stage: "text"}])
+        compare(DesktopApi.requests.filter(r => r.path === "/api/readaloud/voices").length, 1)
+
+        Api.voiceList = []; Api.voicesLoaded = false
+        DesktopApi.responses["GET /api/listen/books/text"] = {status: 200, data: {id: "text", stage: "text", chapters: [], capabilities: {}}}
+        const bookComponent = Qt.createComponent(Qt.resolvedUrl("../../qml/BookPage.qml"))
+        compare(bookComponent.status, Component.Ready, bookComponent.errorString())
+        const page = bookComponent.createObject(win.contentItem, {book: {bookId: "text"}, width: 560, height: 800})
+        verify(page !== null)
+        compare(Api.voiceName, "An")
+        compare(DesktopApi.requests.filter(r => r.path === "/api/readaloud/voices").length, 2)
+        page.destroy()
+
+        Api.voiceList = []; Api.voicesLoaded = false
+        const component = Qt.createComponent(Qt.resolvedUrl("../../qml/SettingsScreen.qml"))
+        compare(component.status, Component.Ready, component.errorString())
+        const settings = component.createObject(win.contentItem, {width: 560, height: 800})
+        verify(settings !== null)
+        compare(Api.voiceName, "An")
+        settings.destroy()
+        Api.voiceList = []; Api.voicesLoaded = false
+        const beforeMixed = DesktopApi.requests.filter(r => r.path === "/api/readaloud/voices").length
+        Backend.libraryFetched([{id: "mixed", stage: null, chaptersAvailable: 1, chaptersTotal: 2}])
+        compare(DesktopApi.requests.filter(r => r.path === "/api/readaloud/voices").length, beforeMixed + 1)
+        compare(Api.voiceName, "An")
+        verify(Api.needsVoiceList({stage: null, chapters: [{state: "text"}]}))
+        verify(!Api.needsVoiceList({stage: null, chaptersAvailable: 2, chaptersTotal: 2}))
+        Api.defaultVoice = ""; Api.voiceList = []; Api.voicesLoaded = false
     }
 }

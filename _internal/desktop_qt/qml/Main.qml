@@ -226,13 +226,47 @@ Window {
     }
     Connections { target: Nav; function onBookRequested(id) { win.openBookId(id) } }
     AddBook { id: addBook; onOpenBook: id => win.openBookId(id); onOpenStudio: id => stack.show(1) }
-    EditBook { id: editBook }
-    EditBookRename { id: renameChapter }      // mở từ nút “…” ở dòng chương: renameChapter.begin(book, chapter)
-    CastDialogs { id: castDialogs }           // các hộp của tab Nhân vật (gộp, đổi tên, giới tính, giọng): castDialogs.begin(loại, dữ liệu)
-    RecordDialogs { id: recordDialogs; onOpenBook: id => win.openBookId(id) }      // hộp và việc của hồ sơ nghe (tạo, đổi tên, chuyển sang cuốn khác, xoá, chuyển hồ sơ): recordDialogs.begin(loại, dữ liệu)
+    // Construct book actions on first use, then retain their state and pending
+    // requests for the window's lifetime. Loading is synchronous before begin().
+    Loader {
+        id: editBook
+        objectName: "editBookLoader"
+        active: false
+        sourceComponent: EditBook {}
+        function begin(data) { active = true; item.begin(data) }
+    }
+    Loader {
+        id: renameChapter
+        objectName: "renameChapterLoader"
+        active: false
+        sourceComponent: EditBookRename {}
+        function begin(data, chapter) { active = true; item.begin(data, chapter) }
+    }
+    Loader {
+        id: castDialogs
+        objectName: "castDialogsLoader"
+        anchors.fill: parent
+        active: false
+        sourceComponent: CastDialogs {}
+        function begin(kind, data) { active = true; item.begin(kind, data) }
+    }
+    Loader {
+        id: recordDialogs
+        objectName: "recordDialogsLoader"
+        active: false
+        sourceComponent: RecordDialogs { onOpenBook: id => win.openBookId(id) }
+        function begin(kind, data) { active = true; item.begin(kind, data) }
+    }
     // Câu mẫu của một người bắt đầu phát thì sách đang nghe tạm dừng (hai tiếng không chồng lên nhau)
     Connections { target: Clip; function onStarted() { if (Player.playing) Player.pause() } }
-    EditBookSaveAs { id: saveBookAs }
+    Loader {
+        id: saveBookAs
+        objectName: "saveBookAsLoader"
+        active: false
+        sourceComponent: EditBookSaveAs {}
+        function begin(data) { active = true; item.begin(data) }
+        function quick(data) { active = true; item.quick(data) }
+    }
     // Cài đặt › Giao diện: "Phím tắt chữ" (M, [ ], ?), "Âm thanh chạm", "Nền đọc" - có hiệu lực ngay khi đổi (desktop/App.tsx)
     readonly property bool letterShortcuts: Api.preferences.letterShortcuts !== false
     PlayerKeys { id: keys; letters: win.letterShortcuts; onShortcutsRequested: shortcuts.show() }
@@ -247,6 +281,9 @@ Window {
             const files = win.pendingFiles
             win.pendingFiles = []
             win.openFiles(files)
+        }
+        function onLibraryFetched(books) {
+            if (books.some(book => Api.needsVoiceList(book))) Api.ensureVoiceName()
         }
     }
     function configurePlayer() {

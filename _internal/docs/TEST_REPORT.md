@@ -57,6 +57,12 @@
 - Chỉ chạy test đích: pytest `-rf` 368/368, FAILED/errors/skipped = 0; JVM 25/25 methods trong ReadingFormsTest/ReadingMarksTest/SpokenTextTest/ReadingsTest (ReadingFormsTest còn duyệt cả 190 ca); vitest readingForms.test.ts 190/190 gọi backend Python thật. Không full suite/release gate/GPU.
 - Corpus chỉ đọc: 637 file / 30 LN Nhật / 174.217 dòng / 3.722.710 chữ; Chap+số 547 lượt, Vol+số 19, 566 dòng đổi. Mẫu cố định không cân bằng, 542 lượt Chap ở một cuốn; không suy rộng tỉ lệ lỗi/audio. Normalizer CPU xác nhận hai câu tự viết; chưa tổng hợp hay chấm audio.
 - Đọc danh sách khoá từ code: 53 mục. Hash trước `3818e7751fec8680b70e3f148d1f0a63ede8de1a6599fad3ab043ff632c5467b`, sau `3125a1944a0b173d85cc477e273a368a33f33dea007215c74f3f4dded66704f5`. Chỉ nhánh dev, chờ hết run trước tích hợp. Lệnh, số đếm, lỗi trung gian đã sửa và giới hạn nằm ở `D:/Novels/ABook_tnnext/report.md`.
+## 07-11-2026 — Qt startup (dev/perfaudit, chưa commit)
+
+- Năm nhóm hộp thao tác sách chỉ được dựng đồng bộ ở lần dùng đầu; giữ instance và request sau khi đóng. Thư viện toàn sách đủ audio không liệt kê giọng; sách chữ, sách có chương chỉ-chữ/thiếu audio, trang sách mở trực tiếp và Cài đặt vẫn tải danh sách, giữ giọng mặc định và gộp request đang tải.
+- QML liên quan: 55 hàm test, 61 mục JUnit gồm init/cleanup (Main 12, Voice 27, Settings 22), 0 failures/errors/skips. Test mới kiểm nạp hộp, mở lại cùng instance, lưu nhanh, không hỏi giọng ở thư viện audio, hỏi giọng cho sách chữ/Cài đặt và giữ lựa chọn giọng. Các cửa sổ dùng offscreen trên desktop riêng; guard 0 foreground events.
+- Python startup/host: 8 passed, 0 failures/errors/skips. Không full release gate, không model/GPU, không đổi Android. Kết quả benchmark và protocol được ghi riêng trong report của task.
+- Hash khoá trước/sau lượt này giữ `88cef8f94e9e98907298d8252ccba68e253956bdbc2a503617686673abdb0d94` (53 mục đọc từ code); nhánh đã có thay đổi file khoá ở đợt tối ưu import trước đó, chỉ dùng ở dev.
 
 ## 06-11-2026 — tnbig (dev/tn-bigint, chưa commit)
 
