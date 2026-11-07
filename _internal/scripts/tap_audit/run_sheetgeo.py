@@ -75,7 +75,7 @@ def main():
         if dependency:
             env['SHEETGEO_LUCIDE'] = dependency
         built = subprocess.run(['node', 'scripts/build_sheetgeo.mjs'], cwd=ui, env=env,
-                               capture_output=True, text=True, encoding='utf-8',
+                               capture_output=True, text=True, encoding='utf-8', errors="replace",
                                creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
         print(built.stdout, end='')
         if built.returncode:

@@ -255,7 +255,7 @@ def driver_cuda() -> tuple[str, str]:
     import subprocess
 
     try:
-        out = subprocess.run(["nvidia-smi"], capture_output=True, text=True, timeout=20).stdout
+        out = subprocess.run(["nvidia-smi"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=20).stdout
     except (OSError, subprocess.SubprocessError):
         return "", ""
     driver = re.search(r"Driver Version:\s*([0-9.]+)", out)

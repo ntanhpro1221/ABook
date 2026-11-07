@@ -177,7 +177,7 @@ def gpu_compute_pids() -> set[int]:
     tên nào nên vẫn chạy GPU 41 % trên pin tới khi Model tự tạm dừng. nvidia-smi trên Windows kể cả app đồ hoạ (explorer, WebView...),
     nên chỉ lấy python ở chỗ gọi."""
     try:
-        out = subprocess.run(["nvidia-smi", "--query-compute-apps=pid", "--format=csv,noheader,nounits"], capture_output=True, text=True,
+        out = subprocess.run(["nvidia-smi", "--query-compute-apps=pid", "--format=csv,noheader,nounits"], capture_output=True, text=True, encoding="utf-8", errors="replace",
                              timeout=10, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0), check=False).stdout
     except (OSError, subprocess.SubprocessError):
         return set()
