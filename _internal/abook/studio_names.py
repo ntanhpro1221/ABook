@@ -20,7 +20,7 @@ from .vietnamese_syllable import valid_spoken_form
 # "Nghe ngay" (vieneu_utils.phonemize_text) - thử 04-10 trên CPU: "Kate", "Michael", "Washington" để nguyên được Whisper nghe "Kết", "Michael",
 # "Washington". Máy không nói được (cờ `speaks_english` của adapter trong tts.py: Supertonic) Việt hoá mục ấy lúc đúc, theo giọng của từng đoạn.
 STUDIO_ENGINE_SPEAKS_ENGLISH = True
-RULE_READING_CONFIDENCE = 0.95  # luật đã chốt bằng phán quyết chủ sách, không phải đoán: trên ngưỡng tin cậy của pha đọc tên
+RULE_READING_CONFIDENCE = 0.95  # deterministic policy confidence; automatic English decisions are not owner listening verdicts
 # Ví dụ cho prompt LLM: chữ của ca chủ sách (tests/romanization_evidence.py, english_vi.OWNER); cách đọc do chính luật tính, không chép tay.
 PROMPT_EXAMPLES = {
     "ja": ("Haruto-kun", "Kyouko", "Shinomiya", "Tsubasa"),
@@ -70,7 +70,7 @@ def keeps_english(surface: str, origin: str | None, engine_speaks_english: bool)
     return all(_english_word(word) for word in words)
 
 
-def planned_reading(surface: str, origin: str | None, engine_speaks_english: bool | None = None) -> tuple[str, str] | None:
+def planned_reading(surface: str, origin: str | None, engine_speaks_english: bool | None = None, *, direct_english: bool = False) -> tuple[str, str] | None:
     """(cách đọc, nguồn) khi luật quyết được cả tên, None khi để đường cũ (CMU / LLM). Tên nhiều chữ quyết từng chữ ("Haruto Smith" ->
     "Ha-ru-tô Smith", "Kim Seo-yeon" -> "Kim Xeo-gion": âm tiết Việt viết sẵn giữ nguyên), để cùng một chữ đứng riêng hay trong tên đầy đủ đọc
     như nhau; có một chữ nào luật không quyết thì cả tên đi đường cũ."""
@@ -85,7 +85,8 @@ def planned_reading(surface: str, origin: str | None, engine_speaks_english: boo
         if reading is not None:
             spoken.append(reading)
             by_rule = True
-        elif keeps_english(word, origin, engine_speaks_english):
+        elif (keeps_english(word, origin, engine_speaks_english)
+              or (direct_english and engine_speaks_english and _direct_word(word, origin))):
             spoken.append(word)
             by_english = True
         elif is_vietnamese_syllable(word.lower()):
@@ -95,6 +96,12 @@ def planned_reading(surface: str, origin: str | None, engine_speaks_english: boo
     if not by_rule and not by_english:
         return None
     return " ".join(spoken), RULE_ROMANIZATION_PRONUNCIATION_SOURCE if by_rule else KEEP_ENGLISH_PRONUNCIATION_SOURCE
+
+
+def _direct_word(word: str, origin: str | None) -> bool:
+    from .readaloud.english_policy import keeps_word
+
+    return keeps_word(word, origin)
 
 
 def lockable(surface: str, spoken_form: str) -> bool:

@@ -3378,7 +3378,7 @@ def test_a_rule_reading_that_fails_the_lock_check_warns_instead_of_aborting_the_
     _trust_locked_test_digest(analyzer, monkeypatch)
     monkeypatch.setattr(studio_names_module, "book_origin_for_project", lambda _db: "ja")
     readings = {"Haruto": ("Ha-rut-tô", "rule_romanization"), "Azuma-san": ("A-du-ma-xan", "rule_romanization")}
-    monkeypatch.setattr(studio_names_module, "planned_reading", lambda surface, _origin: readings.get(surface))
+    monkeypatch.setattr(studio_names_module, "planned_reading", lambda surface, _origin, **_kw: readings.get(surface))
 
     analyzer.reconcile_name_pronunciations()
 
@@ -3475,18 +3475,8 @@ def test_name_pronunciation_rejects_invalid_confidence_without_locking(
     assert float(stored[-1]["confidence"]) == LOCAL_NAME_FALLBACK_CONFIDENCE
 
 
-def test_a_name_with_an_english_word_cannot_be_left_in_english(monkeypatch) -> None:
-    """Two readings of one name in one book is what this prevents.
-
-    The model used to be allowed to decline: alpha.25 locked ten names as written, so
-    "Michael" read "Mai-cồ" on its own and stayed "Michael" inside "Michael Godswill", and
-    the same split hit Samael, Theosbane, Lily and Card. A name every word of which is
-    already Vietnamese never reaches the model at all - the scanner drops it - so anything
-    that gets here has something to read, and the local routes can read any of it: checked
-    against all 117,493 words CMUdict has.
-
-    Declining is refused, the batch retries, and the reading comes from the local route.
-    """
+def test_a_western_word_is_kept_without_a_transliteration_request(monkeypatch) -> None:
+    """VieNeu no longer asks a model to replace an English word with Vietnamese syllables."""
     db = FakeDB()
     db.rows = [
         {
@@ -3522,9 +3512,9 @@ def test_a_name_with_an_english_word_cannot_be_left_in_english(monkeypatch) -> N
     monkeypatch.setattr(analyzer, "_stream_json_response", response)
 
     assert analyzer.reconcile_name_pronunciations() == 1
-    assert attempts == 3, "refusing to convert is not accepted, so the batch retries"
-    assert db.pronunciations[0]["spoken_form"] != "Cooldown"
-    assert db.pronunciations[0]["spoken_form"] == _local_name_fallback("Cooldown")
+    assert attempts == 0
+    assert db.pronunciations[0]["spoken_form"] == "Cooldown"
+    assert db.pronunciations[0]["source"] == "keep_english"
 
 
 def test_an_english_word_shaped_like_a_vietnamese_one_never_reaches_the_model() -> None:
@@ -3604,7 +3594,7 @@ def test_fantasy_name_uses_logged_local_fallback_after_targeted_retries(
     assert any(event[1] == "NAME_PRONUNCIATION_LOCAL_FALLBACK" for event in db.events)
 
 
-def test_multiple_fantasy_names_recover_when_every_qwen_request_fails(monkeypatch) -> None:
+def test_western_fantasy_spellings_do_not_require_qwen_transliteration(monkeypatch) -> None:
     db = FakeDB()
     db.rows = [
         {
@@ -3631,19 +3621,16 @@ def test_multiple_fantasy_names_recover_when_every_qwen_request_fails(monkeypatc
     monkeypatch.setattr(analyzer, "_stream_json_response", response)
 
     assert analyzer.reconcile_name_pronunciations() == 3
-    assert attempts == 3
+    assert attempts == 0
     assert {
         row["surface"]: row["spoken_form"]
         for row in db.pronunciations
     } == {
-        "Vaelorian": "Ve-lô-rian",
-        "Xenlor": "Xên-lờ",
-        "Zytherion": "Di-thê-ri-ôn",
+        "Vaelorian": "Vaelorian",
+        "Xenlor": "Xenlor",
+        "Zytherion": "Zytherion",
     }
-    fallback_event = next(
-        event for event in db.events if event[1] == "NAME_PRONUNCIATION_LOCAL_FALLBACK"
-    )
-    assert "Qwen response intentionally failed" in fallback_event[2]
+    assert all(row["source"] == "keep_english" for row in db.pronunciations)
 
 
 def test_uncertain_short_names_are_left_verbatim_when_reconciliation_fails(

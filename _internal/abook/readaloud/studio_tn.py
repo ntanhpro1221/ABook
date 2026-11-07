@@ -37,7 +37,7 @@ def separate_digit_quotes(text: str) -> str:
 
 
 def studio_tn(text: str, origin: str | None, speaks_english: bool,
-              protected_spans: Sequence[tuple[int, int]] = ()) -> tuple[str, list[int]]:
+              protected_spans: Sequence[tuple[int, int]] = (), *, direct_english: bool = False) -> tuple[str, list[int]]:
     """(chữ đem đọc, bảng dịch vị trí). `protected_spans`: các khoảng [bắt đầu, kết thúc) của `text` đã là cách đọc của bảng phát âm - mọi chữ chạm vào một
     khoảng được giữ nguyên. Bảng dịch vị trí có `len(text) + 1` phần tử: phần tử `i` là vị trí mới của vị trí cũ `i` (vị trí nằm trong chữ đã đổi dồn về đầu chữ mới,
     vị trí nằm trong khoảng trắng đã bỏ dồn về chỗ bỏ); biên của khoảng được giữ nguyên dịch đúng theo độ lệch các chữ đứng trước."""
@@ -48,7 +48,7 @@ def studio_tn(text: str, origin: str | None, speaks_english: bool,
     if not matches:
         return separate_digit_quotes(text), identity
     toks = [match.group() for match in matches]
-    said = [w if w == t else w.replace("_", "") for t, w in zip(toks, vieneu.spoken_tokens(toks, origin, speaks_english))]  # "o_": dấu giữ chữ "o" lẻ riêng của Nghe ngay (vieneu_engine.keep_lone_o), Studio không dùng
+    said = [w if w == t else w.replace("_", "") for t, w in zip(toks, vieneu.spoken_tokens(toks, origin, speaks_english, direct_english=direct_english))]  # "o_": lone syllable marker, not used by Studio
     for index, match in enumerate(matches):
         if any(match.start() < end and match.end() > start for start, end in protected_spans):
             said[index] = toks[index]
@@ -102,6 +102,7 @@ def studio_tn_tagged(text: str, anchor_tags: list[frozenset[int]], origin: str |
                      speaks_english: bool, *,
                      changed_words: list[tuple[int, int, int, int]] | None = None,
                      unprotected_anchors: frozenset[int] = frozenset(),
+                     direct_english: bool = False,
                      ) -> tuple[str, list[frozenset[int]]]:
     """`studio_tn` cho chuỗi Studio đang mang dấu anchor theo từng ký tự (`anchor_tags[i]`: các anchor có ký tự `i` là cách đọc của bảng phát âm). Khoảng của mỗi
     anchor là chữ được giữ nguyên; trả chuỗi mới cùng dấu anchor đã dịch theo để các bước sau (`_normalize_with_anchor_spans`) vẫn tìm đúng khoảng của anchor."""
@@ -114,7 +115,7 @@ def studio_tn_tagged(text: str, anchor_tags: list[frozenset[int]], origin: str |
     # và "Haizzz" (Studio đọc "Hầy", sách chữ đọc "hai").
     cues = [match.span() for pattern in (VOCAL_CUE_PATTERN, STRETCHED_SIGH_PATTERN) for match in pattern.finditer(text)]
     protected = [span for index, span in bounds.items() if index not in unprotected_anchors]
-    new_text, mapping = studio_tn(text, origin, speaks_english, [*protected, *cues])
+    new_text, mapping = studio_tn(text, origin, speaks_english, [*protected, *cues], direct_english=direct_english)
     if changed_words is not None:
         from ..webui.word_timing import _TOKEN
 
