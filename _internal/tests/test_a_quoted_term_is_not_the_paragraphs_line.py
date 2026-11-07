@@ -63,7 +63,7 @@ def test_a_confident_following_turn_is_independent():
     assert _validate(rows,payload)['r2']['speaker']=='Tavin'
 
 
-def test_embedded_terms_repair_model_errors_without_a_term_word_allowlist():
+def test_embedded_nominal_fragment_corrects_a_model_assigned_name():
     from tests.test_analysis_required import _castrule_batch
     from abook.analysis import _original_neighbor_context
     rows, payload = _castrule_batch([
@@ -77,7 +77,7 @@ def test_embedded_terms_repair_model_errors_without_a_term_word_allowlist():
                      original_context=context)['r1']['speaker'] == 'NARRATOR'
 
 
-def test_a_single_quoted_term_is_not_an_unrelated_characters_thought():
+def test_a_single_quoted_fragment_preserves_the_accepted_thinker():
     from tests.test_analysis_required import _castrule_batch
     rows, payload = _castrule_batch([
         ('Tôi gọi tấm bản đồ ấy là', 'narration', 'NARRATOR'),
@@ -85,5 +85,5 @@ def test_a_single_quoted_term_is_not_an_unrelated_characters_thought():
         (', vì nó dẫn qua thung lũng.', 'narration', 'NARRATOR'),
     ])
     result = _validate(rows, payload)
-    assert result['r1']['speaker'] == 'NARRATOR'
+    assert result['r1']['speaker'] == 'Tavin'
     assert result['r1']['kind'] == 'thought'

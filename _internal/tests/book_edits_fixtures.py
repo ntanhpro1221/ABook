@@ -802,8 +802,8 @@ def make_base_project(root: Path) -> Path:
     project = make_project(root)
     db = sqlite3.connect(project / "project.sqlite3")
     db.execute("INSERT INTO characters VALUES (2, 'HEIDI', 'Heidi', 'female', 'young', 'main', 12, '')")
-    db.execute("INSERT INTO segments VALUES (6, 1, 4, 1, 0, '“Chào anh.”', 'dialogue', 'HEIDI', 2, 'verified', '', 'x', 2.5, 0)")
-    db.execute("ALTER TABLE segments ADD COLUMN stable_id TEXT")
+    db.execute("INSERT INTO voice_profiles(id,voice_key,preset_name,pitch_semitones,formant_ratio) VALUES (3,'female','Đoan Trang',0,1)")
+    db.execute("INSERT INTO segments VALUES (6, 1, 4, 1, 0, '“Chào anh.”', 'dialogue', 'HEIDI', 3, 'verified', '', 'x', 2.5, 0, 'c1s4',2,'female','{\"voice_profile_id\":3}')")
     db.execute("ALTER TABLE segments ADD COLUMN text_sha256 TEXT")
     for row, text in db.execute("SELECT id, text FROM segments").fetchall():
         import hashlib

@@ -15,7 +15,6 @@ from tests.test_webui_listen_and_sync import make_project
 def _project(tmp_path: Path) -> Path:
     project = make_project(tmp_path)
     db = sqlite3.connect(project / "project.sqlite3")
-    db.execute("ALTER TABLE segments ADD COLUMN stable_id TEXT")
     db.execute("UPDATE segments SET stable_id = 's' || id")
     # Câu 2 cũng đã thu (câu 3 có sẵn bản thu trong fixture); câu 1 chưa thu.
     db.execute("UPDATE segments SET wav_path = 'x.wav' WHERE id = 2")
@@ -166,10 +165,10 @@ def test_a_line_given_to_someone_with_the_same_voice_is_not_counted_as_a_retake(
     giữ bản thu ấy. Hộp đếm theo đúng luật đặt lại ấy; người khác giọng vẫn tính."""
     project = _project(tmp_path)
     db = sqlite3.connect(project / "project.sqlite3")
-    for column in ("canonical_character_id INTEGER", "text_sha256 TEXT", "gender TEXT"):
+    for column in ("text_sha256 TEXT",):
         db.execute(f"ALTER TABLE segments ADD COLUMN {column}")
     db.execute("UPDATE segments SET text_sha256 = 'x', canonical_character_id = CASE speaker WHEN 'LUCIEN' THEN 1 END")
-    db.execute("INSERT INTO voice_profiles VALUES (3, 'preset_mai_huong', 'Mai Hương', 0, 1.0)")
+    db.execute("INSERT INTO voice_profiles(id,voice_key,preset_name,pitch_semitones,formant_ratio) VALUES (3, 'preset_mai_huong', 'Mai Hương', 0, 1.0)")
     db.executemany("INSERT INTO characters VALUES (?, ?, ?, ?, 'young', 'main', 5, '')",
                    [(2, "RHINE", "Rhine", "male"), (3, "HEIDI", "Heidi", "female")])
     db.executemany(

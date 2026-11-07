@@ -44,7 +44,7 @@ def _finish_second_chapter(project: Path) -> None:
     sf.write(mp3, .1 * np.sin(np.arange(24000 * 6) * .08), 24000, format='MP3')
     db = sqlite3.connect(project / "project.sqlite3")
     db.execute("UPDATE chapters SET status='completed', output_mp3=?, completed_at=? WHERE id=2", (str(mp3), time.time()))
-    db.execute("UPDATE segments SET status='verified', wav_duration=3.0 WHERE id=5")
+    db.execute("UPDATE segments SET status='verified', wav_duration=3.0, wav_sha256='synthetic-take' WHERE id=5")
     db.execute("INSERT INTO artifacts VALUES ('chapter_mp3:2','chapter_mp3',?,?,?,1,NULL,0,0)",
                (str(mp3), sha256_file(mp3), mp3.stat().st_size))
     db.commit()

@@ -1,5 +1,14 @@
 # Test report
 
+## 07-11-2026 — voxfix on dev/integ165
+
+- Inline quote shape only resolves an empty/UNKNOWN owner; named/local speakers and thinkers survive. Existing speech-tag attribution and batch-edge context remain authoritative. Explicit teller presentation covers NARRATOR in every kind without changing identity; default mode stays inert. Nullable provenance supports undo of an initially absent character/profile, with no migration.
+- Added a read-only pre-export voice gate for single books, series and partial exports: chapter ownership, gender, signal and nested split provenance. Named thoughts keep their own voice. Intermediate backup layers remain available.
+- Archived batch replay: **0/35 female speakers erased** (old result: 35/35). On frozen copies of 7,418 source rows, gate issue sets exactly match the prior audit: 41 owner mismatches and 29 gender conflicts, 67 distinct rows; both require calls refuse export. No acoustic inference or regeneration.
+- Full frozen castrules replay, baseline verified against all 184 local and 15 gold detail files: raw **3,887 -> 3,933** errors (6 rescued / 52 newly wrong), envelope **1,577 -> 1,587** (0 / 10), gold **112 -> 56** (56 / 0). The raw/envelope acceptance limits are **not met**. Every local delta preserves a name previously replaced by NARRATOR; kind correctness is unchanged. Gold uses saved model labels with some adjudication, not wholly human labels.
+- Pytest `-rf`: 187-file run had 4,577 passed / **10 FAILED** / 3 skipped. Corrected the old name-erasure expectation and incomplete recording/continuation fixtures; reran all six affected files: **92 passed / 0 FAILED / 0 errors**. Latest complete result per file: **4,587 passed / 0 failed / 3 skipped**, 4,590 unique cases. This is the combined final state, not a single clean full invocation. JUnit and raw FAILED-line counts agree. The skips require unavailable optional voice models.
+- Compileall, both UI parity checks and diff check pass; changed Python files use LF. Directly imported 53 quality implementation entries: hash `e1825affd77d1b7ba5766f9b91784b959e8caaafde34348d2fd6ae798cf50aa9` -> `72070ca5df3d2dae375938f8315e2b5971e939462c511f954bc8eaa9dd46d16a`. Uncommitted on dev only; CPU replay, no model/API/GPU calls.
+
 ## 07-11-2026 — dev/castrules: speaker and kind postprocessing
 
 - Quote hints are advisory across schema, validation and durable critic acceptance. Speech attribution requires a real speech tag; weak generic cues cannot replace confident identities or propagate through a paragraph. Kinship roles and conflicting gender evidence block name merging; vocatives and introductions cannot seed ABAB.
@@ -1357,3 +1366,13 @@ Cả bốn tài liệu castrules cũ, gồm deltas.csv, được move ra thư m�
 Hẹn tự động trên Android cần màn tắt liên tục, không tương tác và bốn cửa sổ nằm yên khi có cảm biến; desktop dùng thời gian rảnh toàn OS (Windows GetLastInputInfo). Dấu hiệu còn thức huỷ hẹn tự động; hẹn tay giữ nguyên. Không khôi phục hẹn tự động từ đĩa; hẹn tay gắn sách/hồ sơ. Giao diện và thông báo nêu lý do, dùng hoạt ảnh sẵn có. Chữ và mô tả ba nền đã đồng bộ, sinh lại parity.
 
 Kiểm cuối: Android JVM 93 passed (13 lớp, 0 failed/error/skipped); Vitest 88 passed (12 file); typecheck đạt; Qt PlayerTests build/chạy ẩn offscreen 47 passed; pytest tín hiệu OS và hai máy dò parity 33 passed. Compileall và diff check đạt. Probe Windows thật trả thời gian rảnh hợp lệ. Hash chất lượng trước/sau giữ nguyên `5769f2787088e6389c7b9d1fe860db839923247fead4d6e3428e141804af4e9e`. Không GPU, không ADB/điện thoại thật, không commit/push. Còn cần kiểm OEM về cảm biến/âm lượng/Bluetooth khi tắt màn, pin nền và hiển thị/hoạt ảnh trên thiết bị.
+
+# vox165b — luật trích giữa câu có điều kiện
+
+Giữ kiểm hai nửa câu kể và attribution mạnh, bổ sung safeguard cho ngôi 1–2, tiếng kêu/cười, đáp lễ, đáp ngắn có cue và trích nối liên từ. Cue chỉ xét mệnh đề cuối với bổ ngữ hữu hạn; khung giải nghĩa và hướng dẫn cách nói được xét riêng. Không dùng tên, ID sách, gold hoặc nguồn model làm điều kiện. Không đổi kind, schema hay các sửa teller/gate của vox165.
+
+Replay CPU toàn bộ input đóng băng: raw 27.726 câu **3.887 → 3.886**, envelope 9.742 câu **1.577 → 1.577**, gold 42.142 câu **112 → 58**, voxfix **0/35 bị xoá**. So mốc cũ còn 3/47 sách raw tăng, envelope 0/18, gold 0/15; so cây vox165 nhận vào là 0/47, 0/18 và 2/15. So vox165, raw cứu 47/hỏng 0, envelope cứu 10/hỏng 0; gold còn mất hai tên. Gold là nhãn model có phân xử, không hoàn toàn human gold; chưa có holdout hoặc nghe audio mới.
+
+Code app trực tiếp khớp 199 JSON của arm chọn, baseline nhận vào khớp 199 JSON vox165, đều 0 mismatch. Pytest cuối **187 file, 4.627 passed, 0 FAILED, 0 errors, 3 skipped**, 0 dòng FAILED thật; một invocation đầy đủ, không ghép recheck. Ba skip do giọng ZeroTTS/Supertonic chưa tải. Lượt trung gian có 4 FAILED ở kỳ vọng cũ giữ mọi tên của cụm danh ngữ, được sửa theo luật mới và giữ kiểm kind/gender. Thêm 40 ca tổng hợp; không chép chữ truyện vào repo.
+
+Compileall, hai UI parity check, LF và diff check đạt. Danh sách khoá đọc trực tiếp có 53 mục; hash `72070ca5df3d2dae375938f8315e2b5971e939462c511f954bc8eaa9dd46d16a` → `998bbdbf94139368cb858e3347247ae23779700ae5eba911f5dac9d03f613fe8`. Chỉ cây dev, chưa commit/push; không dùng để resume project có hash cũ. Ma trận 10 phương án và các delta riêng ở thư mục tác vụ ngoài repo `scratchpad/codex/vox165b/report.md`.

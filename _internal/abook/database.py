@@ -1878,8 +1878,8 @@ CREATE TABLE IF NOT EXISTS chapter_teller_lines (
     segment_id INTEGER PRIMARY KEY REFERENCES segments(id) ON DELETE CASCADE,
     original_speaker TEXT NOT NULL,
     original_character_id INTEGER,
-    original_profile_id INTEGER NOT NULL,
-    applied_character_id INTEGER NOT NULL,
+    original_profile_id INTEGER,
+    applied_character_id INTEGER,
     applied_profile_id INTEGER NOT NULL
 );
 

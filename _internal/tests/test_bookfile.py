@@ -368,7 +368,8 @@ def _series(tmp_path: Path, *, parts: int = 2) -> tuple[Path, list[Path]]:
     second = sqlite3.connect(projects[1] / "project.sqlite3")
     (projects[1] / "work" / "s6.wav").write_bytes(b"RIFF" + b"\6" * 400)
     second.execute("INSERT INTO characters VALUES (2, 'NATASHA', 'NATASHA', 'female', 'young', 'main', 9, '')")
-    second.execute("INSERT INTO segments VALUES (6, 1, 4, 1, 0, '“Chào.”', 'dialogue', 'NATASHA', 2, 'verified', ?, 'x', 4.0, 1)",
+    second.execute("INSERT INTO voice_profiles(id,voice_key,preset_name,pitch_semitones,formant_ratio) VALUES (3,'female','Đoan Trang',0,1)")
+    second.execute("INSERT INTO segments VALUES (6, 1, 4, 1, 0, '“Chào.”', 'dialogue', 'NATASHA', 3, 'verified', ?, 'x', 4.0, 1, 'c1s4', 2, 'female', '{\"voice_profile_id\":3}')",
                    (str(projects[1] / "work" / "s6.wav"),))
     second.commit()
     second.close()
@@ -560,8 +561,12 @@ def _long_project(tmp_path: Path, chapters: int, *, heard: bool = False) -> Path
     mp3 = str(project / "output" / "chapters" / "00001_645.mp3") if heard else ""
     db.executemany("INSERT INTO chapters VALUES (?, ?, ?, '', ?, 1, ?, NULL, NULL, '')",
                    [(c, c, str(c), "completed" if heard else "analyzed", mp3) for c in range(3, chapters + 1)])
-    db.executemany("INSERT INTO segments VALUES (?,?,1,0,0,?,'narration','NARRATOR',1,'analyzed','','',NULL,0)",
+    db.executemany("INSERT INTO segments(id,chapter_id,seq,paragraph_index,break_ms,text,kind,speaker,voice_profile_id,"
+                   "status,wav_path,wav_sha256,wav_duration,updated_at) VALUES (?,?,1,0,0,?,'narration','NARRATOR',1,'analyzed','','',NULL,0)",
                    [(10 + c, c, f"Chương {c} - Ngày thứ {c}") for c in range(3, chapters + 1)])
+    for chapter in range(3, chapters + 1):
+        db.execute('UPDATE segments SET stable_id=?,signal_json=? WHERE id=?',
+                   (f'c{chapter}s1', '{"voice_profile_id":1}', 10 + chapter))
     db.commit()
     db.close()
     past = time.time() - 60

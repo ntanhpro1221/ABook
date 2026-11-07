@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import pytest
 from abook.analysis import _repair_in_sentence_quote_speakers
-from abook.database import IN_SENTENCE_QUOTE_NARRATOR_NOTE
 
 
 def row(stable_id: str, paragraph: int, text: str) -> dict[str, object]:

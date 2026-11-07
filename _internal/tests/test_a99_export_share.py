@@ -167,7 +167,7 @@ def _imported_audio_book(tmp_path):
                         str(project / "output" / "chapters" / name)], check=True)
     with sqlite3.connect(project / "project.sqlite3") as db:
         db.execute("UPDATE chapters SET status='completed', output_mp3=? WHERE id=2", (str(project / "output/chapters/00002_646.mp3"),))
-        db.execute("UPDATE segments SET status='verified', wav_duration=0.2 WHERE chapter_id=2")
+        db.execute("UPDATE segments SET status='verified', wav_duration=0.2, wav_sha256='synthetic-take' WHERE chapter_id=2")
         from abook.io_utils import sha256_file
         for index, name in enumerate(('00001_645.mp3', '00002_646.mp3'), 1):
             audio = project / 'output' / 'chapters' / name

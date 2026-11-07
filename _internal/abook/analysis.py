@@ -1944,19 +1944,107 @@ def _is_voiced_sound_of_the_named_speaker(group: list[Any], index: int, speaker:
     )
 
 
+INLINE_QUOTE_PERSON_PATTERN = re.compile(
+    r"\b(?:tôi|tớ|ta|tao|mình|tui|cậu|bạn|anh|em|mày|ngươi|mi|mẹ|bố)\b", re.I,
+)
+INLINE_QUOTE_SPEECH_END_PATTERN = re.compile(
+    r"\b(?:nói|hỏi|đáp|bảo|gọi|thốt|thì thầm|lẩm bẩm|lên tiếng|cười|kêu|rên|hét|chửi|giục|hô|reo|trả lời|"
+    r"giọng nói|câu nói|lời|tiếng)(?:\s+[\w-]+){0,15}\s*[,—-]?\s*$", re.I,
+)
+INLINE_QUOTE_NOMINAL_END_PATTERN = re.compile(
+    r"\b(?:sự|việc|cái|chế độ|phạm trù|tiêu chuẩn|hình ảnh|để|về|đến|kiểu như)\s*$", re.I,
+)
+INLINE_QUOTE_META_PATTERN = re.compile(
+    r"\b(?:thuật ngữ|cụm từ|khái niệm|nhan đề|tiêu đề|đặt tên|có nghĩa là|hình ảnh|chế độ|phạm trù|"
+    r"tiêu chuẩn|dòng chữ|cách gọi|cách dùng|cách .*từ|dùng|gọi là|nói về|hỏi về|nghĩa của|những câu)\b", re.I,
+)
+INLINE_QUOTE_IRREALIS_PATTERN = re.compile(
+    r"\b(?:nếu|giả sử|giả như|ước gì|muốn hỏi|định hỏi|định nói)\b|"
+    r"\bcó\b[^.!?…]{0,50}\bnào\b[^.!?…]{0,50}\bnói\b", re.I,
+)
+INLINE_QUOTE_POLITE_PATTERN = re.compile(r"^(?:cảm ơn|cám ơn|xin lỗi)(?:\s+(?:ạ|nhé|nha))?$", re.I)
+INLINE_QUOTE_REPLY_PATTERN = re.compile(
+    r"^(?:phải|đúng|được|vâng|dạ|ừ|chưa|không)(?:\s+(?:thôi|rồi|vậy|đấy|ạ|nhé))?$", re.I,
+)
+INLINE_QUOTE_SOUND_PATTERN = re.compile(r"^(?:[aehuf]+|(?:ha|hi|he|hu|ho|fu|meo)+)$", re.I)
+INLINE_QUOTE_APPOSITION_PATTERN = re.compile(
+    r"^\s*,?\s*(?:(?:cái|một|những|các)\s+)?(?:tên|thuật ngữ|khái niệm|cụm từ)\b", re.I,
+)
+INLINE_QUOTE_PRESCRIPTION_PATTERN = re.compile(
+    r"\b(?:cứ|chỉ cần)\s+(?:nói|bảo|hỏi|đáp|trả lời)\b[^.!?…]*$", re.I,
+)
+
+
+def _inline_quote_has_utterance_evidence(
+    group: list[Any],
+    index: int,
+    original_context: dict[str, dict[str, Any]] | None = None,
+) -> bool:
+    """Protect speech acts using source syntax, independently of the assigned name.
+
+    Called only as an owner safeguard; the existing two-sided inline-quote check
+    must still establish a fragment before any repair. A nearby speech cue has a
+    bounded complement and cannot cross a sentence ending or a nominal frame.
+    First/second person, sounds and courtesy replies also protect short turns.
+    """
+    neighbours = _attribution_neighbours(group, index, original_context)
+    before = next((near for near, follows in neighbours if not follows), None)
+    after = next((near for near, follows in neighbours if follows), None)
+    lead = str(before["text"]) if before is not None else ""
+    tail = str(after["text"]) if after is not None else ""
+    quoted = str(group[index]["text"]).strip().strip("“”\"'‘’").strip()
+    clause = re.split(r"[.!?…:;]", lead)[-1].rstrip(" ,—-")
+    clause = clause.rsplit(",", 1)[-1]
+
+    # An apposition names the quoted entity; a prescription proposes wording
+    # rather than reporting an actual turn. These are positive source frames.
+    if INLINE_QUOTE_APPOSITION_PATTERN.search(tail):
+        return False
+    if (INLINE_QUOTE_PRESCRIPTION_PATTERN.search(clause)
+            and re.match(r"^\s*,?\s*là\s+(?:được|đủ)\b", tail, re.I)):
+        return False
+    if (is_vocalization_only(quoted) or INLINE_QUOTE_SOUND_PATTERN.fullmatch(quoted)
+            or INLINE_QUOTE_POLITE_PATTERN.fullmatch(quoted)):
+        return True
+    # A short answer is still a speech act in a conditional report. Unlike a
+    # courtesy formula or a sound, it needs its own nearby speech cue.
+    if (INLINE_QUOTE_REPLY_PATTERN.fullmatch(quoted)
+            and INLINE_QUOTE_SPEECH_END_PATTERN.search(clause)
+            and not INLINE_QUOTE_META_PATTERN.search(clause)):
+        return True
+    # Coordinated quotations can share source evidence without copying an owner
+    # from another model label. Recursion moves strictly backward in the batch.
+    if (lead.strip().casefold() in {"và", "hoặc", "hay"} and index >= 2
+            and _same_paragraph(group[index - 2], group[index])
+            and str(group[index - 2]["text"]).lstrip().startswith(("“", '"', "‘", "'"))
+            and _inline_quote_has_utterance_evidence(group, index - 2, original_context)):
+        return True
+    if INLINE_QUOTE_IRREALIS_PATTERN.search(clause):
+        return False
+    if INLINE_QUOTE_PERSON_PATTERN.search(quoted):
+        return True
+    return bool(
+        INLINE_QUOTE_SPEECH_END_PATTERN.search(clause)
+        and not INLINE_QUOTE_NOMINAL_END_PATTERN.search(clause)
+        and not INLINE_QUOTE_META_PATTERN.search(clause)
+    )
+
+
 def _repair_in_sentence_quote_speakers(
     group: list[Any],
     result: dict[str, dict[str, Any]],
     original_context: dict[str, dict[str, Any]] | None = None,
 ) -> None:
-    """Cụm trích giữa một câu kể là chữ của NGƯỜI KỂ: "...không thể bảo đây là “Khoa Học” thì đòi hỏi...".
-
-    Đo trên 41 chương đáp án chuẩn: 29 đoạn bị chạm, đáp án nhận NARRATOR đủ điểm cả 29, không đoạn nào từ chối.
-    Loại đoạn để nguyên - bộ tách đoạn đã khoá là thoại, và đáp án ghi đúng thế. Trừ tiếng kêu của người được nêu tên
-    ngay trong lời dẫn (`_is_voiced_sound_of_the_named_speaker`): model nói là của người ấy thì giữ.
-    """
+    """Resolve embedded fragments while protecting evidence of an actual turn."""
     for index, row in enumerate(group):
         data = result.get(str(row["stable_id"]))
+        if data is None:
+            continue
+        owner = normalize_speaker_name(str(data["speaker"]))
+        if owner == "narrator":
+            continue
+        if owner not in {"", "unknown"} and _inline_quote_has_utterance_evidence(group, index, original_context):
+            continue
         # Single-quoted terms are also split with a thought hint. Their syntactic
         # evidence is the same; actual inner speech keeps the thinker's identity.
         if (data is not None and data["kind"] == "thought"
@@ -1964,9 +2052,7 @@ def _repair_in_sentence_quote_speakers(
             if _is_quoted_inside_a_sentence(group, index, result, original_context):
                 data["speaker"] = "NARRATOR"
             continue
-        if data is None or data["kind"] != "dialogue":
-            continue
-        if normalize_speaker_name(str(data["speaker"])) == "narrator":
+        if data["kind"] != "dialogue":
             continue
         if not _is_quoted_inside_a_sentence(group, index, result, original_context):
             continue
