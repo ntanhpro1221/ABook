@@ -5,6 +5,9 @@ file(READ "${CMAKE_CURRENT_SOURCE_DIR}/../ui/package.json" ABOOK_PACKAGE_JSON)
 string(JSON ABOOK_VERSION GET "${ABOOK_PACKAGE_JSON}" version)
 
 project(ABookDesk VERSION ${ABOOK_VERSION} LANGUAGES C CXX)
+if(WIN32)
+    link_libraries(user32)
+endif()
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 

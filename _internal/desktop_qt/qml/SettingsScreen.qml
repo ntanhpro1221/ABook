@@ -85,7 +85,7 @@ FocusScope {
         if (key === "sleep") {
             if (p.sleepSchedule) return "Lịch đêm " + p.sleepSchedule.from + "–" + p.sleepSchedule.to
             const hours = p.safetyStopHours ?? 2
-            return hours ? "Tự tắt sau " + hours + " giờ" : "Tắt"
+            return hours ? "Máy rảnh " + hours + " giờ" : "Tắt"
         }
         if (key === "look") return p.theme === "light" ? "Sáng" : p.theme === "dark" ? "Tối" : "Tự động"
         if (key === "devices") return root.sync ? (root.sync.enabled ? (root.sync.devices || []).length + " thiết bị đã ghép" : "Đang tắt") : ""

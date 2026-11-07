@@ -71,6 +71,11 @@ import vn.abook.player.ui.theme.ThemeRevealHost
  * Màn mở app (docs/NATIVE_PHONE_UI.md): một Activity, Compose; nhận cả "Mở bằng" / chia sẻ file (manifest).
  */
 class NativeActivity : ComponentActivity() {
+    override fun onUserInteraction() {
+        super.onUserInteraction()
+        if (!demo && vn.abook.player.PlaybackService.instance != null) vn.abook.player.Playback.touched()
+    }
+
     private val app get() = application as AbookApplication
     private var started = false
     private var contentReady = false

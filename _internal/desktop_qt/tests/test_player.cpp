@@ -21,6 +21,7 @@ class PlayerTest : public QObject {
         FakeOut out;
         FakeNet net;
         std::unique_ptr<Player> player;
+        qint64 lastOsInput = g_now;
         explicit Rig(bool loadBooks = true) {
             net.serverNow = g_now;
             if (loadBooks) {
@@ -29,6 +30,7 @@ class PlayerTest : public QObject {
             }
             player = std::make_unique<Player>(&out, &net, dir.filePath(QStringLiteral("outbox.json")), nullptr, fakeNow);
             player->setFreshSpotMs(0);
+            player->setSystemIdleReader([this] { return g_now - lastOsInput; });
         }
         /// Chạy `seconds` giây đồng hồ giả, mỗi bước 100 ms: vị trí nguồn tiến theo tốc độ khi đang kêu, Player.tick() chạy.
         void run(double seconds) {
@@ -275,15 +277,17 @@ private slots:
                 {QStringLiteral("sleepSchedule"), QVariantMap{{QStringLiteral("from"), from}, {QStringLiteral("to"), to}, {QStringLiteral("minutes"), minutes}}}};
     }
 
-    void nightScheduleArmsWhenListeningStartsInsideWindow() {
+    void nightScheduleWaitsUntilTheWholeSystemIsIdle() {
         g_now = at(23, 30);
         Rig rig;
         rig.player->configure(night());
         rig.player->open(QStringLiteral("a"), -1, -1, true);
         rig.run(1);
+        QCOMPARE(rig.player->sleepKind(), QStringLiteral("off"));
+        rig.run(120);
         QCOMPARE(rig.player->sleepKind(), QStringLiteral("minutes"));
         QVERIFY(rig.player->clock()->sleepLeft() > 29 * 60);
-        QCOMPARE(rig.player->notice(), QStringLiteral("Lịch đêm 22:00-06:00: đã tự hẹn giờ 30 phút"));
+        QCOMPARE(rig.player->notice(), QString::fromUtf8("Tự hẹn theo lịch đêm"));
         // Qua nửa đêm vẫn cùng một đêm: hẹn giờ tắt tay thì đêm ấy không tự bật lại, dù dừng rồi nghe tiếp.
         rig.player->setSleep(QStringLiteral("off"));
         rig.player->pause();
@@ -295,7 +299,7 @@ private slots:
         rig.player->pause();
         g_now = at(22, 30) + 48 * 3'600'000;
         rig.player->resume();
-        rig.run(1);
+        rig.run(121);
         QCOMPARE(rig.player->sleepKind(), QStringLiteral("minutes"));
     }
 
@@ -306,8 +310,9 @@ private slots:
         rig.player->open(QStringLiteral("a"), -1, -1, true);
         rig.run(1);
         QCOMPARE(rig.player->sleepKind(), QStringLiteral("off"));
-        // Đang nghe qua giờ bắt đầu khung thì không tự hẹn giữa chừng (bản web chỉ xét lúc bắt đầu nghe).
+        // Entering the night window may arm only after both sources show idleness.
         g_now = at(22, 30);
+        rig.lastOsInput = g_now;
         rig.run(1);
         QCOMPARE(rig.player->sleepKind(), QStringLiteral("off"));
         // Giờ lạ / số phút lạ = chưa có lịch.
@@ -319,7 +324,7 @@ private slots:
         QCOMPARE(rig.player->sleepKind(), QStringLiteral("off"));
         // Lịch hợp lệ mới (đổi lịch = xét lại): khung cùng ngày 22:00-23:00, 15 phút.
         rig.player->configure(night(QStringLiteral("22:00"), QStringLiteral("23:00"), 15));
-        rig.run(1);
+        rig.run(121);
         QCOMPARE(rig.player->sleepKind(), QStringLiteral("minutes"));
         QVERIFY(rig.player->clock()->sleepLeft() <= 15 * 60);
         QVERIFY(rig.player->clock()->sleepLeft() > 14 * 60);
@@ -338,12 +343,12 @@ private slots:
         g_now += 2 * 60'000;
         rig.player->tick();
         QCOMPARE(rig.player->sleepKind(), QStringLiteral("minutes"));
-        QCOMPARE(rig.player->notice(), QStringLiteral("Không thấy ai chạm máy suốt 1 giờ - sẽ tắt sau 1 phút"));
-        QCOMPARE(rig.player->noticeAction(), QStringLiteral("Vẫn đang nghe"));
+        QCOMPARE(rig.player->notice(), QString::fromUtf8("Tự hẹn vì lâu không dùng máy"));
+        QCOMPARE(rig.player->noticeAction(), QString::fromUtf8("Chạm để nghe tiếp"));
         QCOMPARE(rig.player->lastSleepMinutes(), 45); // nút hẹn giờ vẫn nhớ lần hẹn của người nghe
     }
 
-    void extendAfterTheSafetyStopMeansTheSettingsStepNotOneMinute() {
+    void awakeExtensionCancelsTheAutomaticTimer() {
         Rig rig;
         rig.player->configure({{QStringLiteral("safetyStopHours"), 1}, {QStringLiteral("sleepExtendMinutes"), 15}});
         rig.player->open(QStringLiteral("a"), -1, -1, true);
@@ -356,9 +361,38 @@ private slots:
         QCOMPARE(rig.player->sleepExtendMinutes(), 15);
         rig.player->extendSleep();
         rig.player->extendSleep();
-        QCOMPARE(rig.player->sleepLeftSeconds(), 900.0);   // người thức bấm "Hẹn lại" thì không bị tắt sau 1 phút
-        QCOMPARE(rig.player->sleepMinutes(), 15);
-        QCOMPARE(rig.player->notice(), QStringLiteral("Hẹn lại 15 phút"));
+        QCOMPARE(rig.player->sleepKind(), QStringLiteral("off"));
+        QVERIFY(rig.player->notice().isEmpty());
+    }
+
+    void otherAppsOsInputPreventsSafetyAndCancelsAnAutomaticCountdown() {
+        Rig rig;
+        rig.player->configure({{QStringLiteral("safetyStopHours"), 1}});
+        rig.player->open(QStringLiteral("a"), -1, -1, true);
+        g_now += 2 * 3'600'000;
+        rig.lastOsInput = g_now;
+        rig.player->tick();
+        QCOMPARE(rig.player->sleepKind(), QStringLiteral("off"));
+        g_now += 3'600'001;
+        rig.player->tick();
+        QCOMPARE(rig.player->sleepKind(), QStringLiteral("minutes"));
+        rig.lastOsInput = g_now;
+        g_now += 5000; // Detect input even if the UI was suspended and missed the immediate event.
+        rig.player->tick();
+        QCOMPARE(rig.player->sleepKind(), QStringLiteral("off"));
+        rig.player->setSleep(QStringLiteral("minutes"), 30);
+        rig.lastOsInput = g_now;
+        rig.player->tick();
+        QCOMPARE(rig.player->sleepKind(), QStringLiteral("minutes"));
+    }
+
+    void unknownSystemEvidenceDisablesAutomaticTimers() {
+        Rig rig;
+        rig.player->setSystemIdleReader([] { return -1; });
+        rig.player->open(QStringLiteral("a"), -1, -1, true);
+        g_now += 5 * 3'600'000;
+        rig.player->tick();
+        QCOMPARE(rig.player->sleepKind(), QStringLiteral("off"));
     }
 
     void safetyStopOffNeverArms() {

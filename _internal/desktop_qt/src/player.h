@@ -225,6 +225,7 @@ public:
     double sleepLeftSeconds() const;
     void setFreshSpotMs(int ms) { m_freshMs = ms; }
     void setDefaultRate(double rate) { m_defaultRate = rate; }
+    void setSystemIdleReader(std::function<qint64()> read) { m_systemIdle = std::move(read); }
     void setSafetyStopHours(int hours) { m_safetyHours = hours; }
     void setFadeSeconds(int seconds) { m_fadeSeconds = seconds; }
     QString lastFailure() const { return m_lastFailure; }
@@ -369,7 +370,6 @@ private:
     int m_extendMinutes = 10;
     QVariantMap m_schedule;
     QString m_scheduleOffFor;
-    bool m_scheduleChecked = false;
     QString scheduleWindow() const;
     qint64 m_sleepMarkAt = 0;
     double m_sleepMarkSeconds = 0;
@@ -380,6 +380,10 @@ private:
     qint64 m_lastSaved = 0;
     qint64 m_stamp = 0;
     qint64 m_lastActivity = 0;
+    std::function<qint64()> m_systemIdle;
+    QString m_automaticSleep;
+    qint64 m_automaticLastInput = 0;
+    void noteInteraction();
     std::optional<Spot> m_savedSpot;
     QList<Spot> m_history;
     std::shared_ptr<Session> m_session;

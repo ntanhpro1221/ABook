@@ -1351,3 +1351,9 @@ Giữ bỏ khóa kind thuần ngoặc: gold kind đúng 40.408 → 42.141, local
 TRƯỚC và SAU nhận vào khớp toàn bộ JSON với lượt 2 (184 local + 15 gold mỗi phía). Lỗi template rỗng của harness mới đã được phát hiện và toàn gold matrix chính thức chạy lại bằng template đúng, backup read-only thấy WAL; mỗi invocation có runtime sidecar riêng. Parser/prompt/critic/ledger/opt-in nằm ngoài đường accuracy replay đã đóng băng, được kiểm bằng test thay vì gán số ablation giả.
 
 Cả bốn tài liệu castrules cũ, gồm deltas.csv, được move ra thư mục tác vụ; repo chỉ giữ số tổng ở docs/castrules. Báo cáo đầy đủ, từng sách, lý do từng test và bằng chứng riêng ở scratchpad/codex/castrules3. Hash dev `71aa3370…` → `e1825aff…`; không commit/push hay sửa cây khác, không LLM/API/GPU/kill.
+
+# safetystop — 07-11-2026
+
+Hẹn tự động trên Android cần màn tắt liên tục, không tương tác và bốn cửa sổ nằm yên khi có cảm biến; desktop dùng thời gian rảnh toàn OS (Windows GetLastInputInfo). Dấu hiệu còn thức huỷ hẹn tự động; hẹn tay giữ nguyên. Không khôi phục hẹn tự động từ đĩa; hẹn tay gắn sách/hồ sơ. Giao diện và thông báo nêu lý do, dùng hoạt ảnh sẵn có. Chữ và mô tả ba nền đã đồng bộ, sinh lại parity.
+
+Kiểm cuối: Android JVM 93 passed (13 lớp, 0 failed/error/skipped); Vitest 88 passed (12 file); typecheck đạt; Qt PlayerTests build/chạy ẩn offscreen 47 passed; pytest tín hiệu OS và hai máy dò parity 33 passed. Compileall và diff check đạt. Probe Windows thật trả thời gian rảnh hợp lệ. Hash chất lượng trước/sau giữ nguyên `5769f2787088e6389c7b9d1fe860db839923247fead4d6e3428e141804af4e9e`. Không GPU, không ADB/điện thoại thật, không commit/push. Còn cần kiểm OEM về cảm biến/âm lượng/Bluetooth khi tắt màn, pin nền và hiển thị/hoạt ảnh trên thiết bị.

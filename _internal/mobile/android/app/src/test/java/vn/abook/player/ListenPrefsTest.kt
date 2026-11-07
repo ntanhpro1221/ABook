@@ -30,6 +30,9 @@ class ListenPrefsTest {
         SleepTimer.schedule = null
         Motion.flipEnabled = false
         sleep("mode").set(SleepTimer, SleepTimer.Mode.OFF)
+        sleep("automaticReason").set(SleepTimer, "")
+        sleep("ownerBook").set(SleepTimer, "test-book")
+        sleep("ownerRecord").set(SleepTimer, "test-record")
         sleep("remainingMs").setLong(SleepTimer, 0L)
         sleep("runningSinceMs").setLong(SleepTimer, 0L)
         sleep("minutes").setInt(SleepTimer, 0)
@@ -147,9 +150,40 @@ class ListenPrefsTest {
         sleep("remainingMs").setLong(SleepTimer, 10 * 60_000L)
         SleepTimer.persist(now)
         sleep("mode").set(SleepTimer, SleepTimer.Mode.OFF)
+        sleep("automaticReason").set(SleepTimer, "")
+        sleep("ownerBook").set(SleepTimer, "test-book")
+        sleep("ownerRecord").set(SleepTimer, "test-record")
         SleepTimer.persist(now)
         defaults()
         ListenPrefs.load(now)
         assertEquals(SleepTimer.Mode.OFF, SleepTimer.mode)
     }
+    @Test fun staleUnownedAndAutomaticSnapshotsCannotRestoreATimer() {
+        val now = 1_000_000_000L
+        val valid = JSONObject().put("source", "manual").put("bookId", "a").put("recordId", "r")
+            .put("savedAt", now).put("minutes", 30).put("remainingMs", 600_000L)
+        for (bad in listOf(
+            JSONObject().put("endsAt", now + 60_000L),
+            JSONObject(valid.toString()).put("source", "safety"),
+            JSONObject(valid.toString()).put("source", "schedule"),
+            JSONObject(valid.toString()).put("savedAt", now - 25 * 3_600_000L),
+            JSONObject(valid.toString()).put("bookId", ""),
+            JSONObject(valid.toString()).put("remainingMs", 31 * 60_000L),
+        )) {
+            defaults()
+            SleepTimer.restore(bad, now)
+            assertEquals(bad.toString(), SleepTimer.Mode.OFF, SleepTimer.mode)
+        }
+    }
+
+    @Test fun automaticCountdownIsNeverPersistedAsAManualTimer() {
+        sleep("mode").set(SleepTimer, SleepTimer.Mode.MINUTES)
+        sleep("automaticReason").set(SleepTimer, "safety")
+        sleep("remainingMs").setLong(SleepTimer, 60_000L)
+        SleepTimer.persist(1_000_000_000L)
+        defaults()
+        ListenPrefs.load(1_000_000_100L)
+        assertEquals(SleepTimer.Mode.OFF, SleepTimer.mode)
+    }
+
 }

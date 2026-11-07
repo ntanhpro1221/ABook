@@ -6413,6 +6413,12 @@ class Handler(BaseHTTPRequestHandler):
         self.app.opened_events.ack(str(self._body().get("eventId") or ""))
         self._send_json(HTTPStatus.OK, {"ok": True})
 
+    def get_listener_activity(self, _query: dict[str, list[str]]) -> None:
+        from ipaddress import ip_address
+        from .listener_activity import system_idle_ms
+        local = ip_address(self.client_address[0]).is_loopback
+        self._send_json(HTTPStatus.OK, {"idleMs": system_idle_ms() if local else None})
+
     def get_preferences(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self.app.preferences.get())
 
@@ -6953,6 +6959,7 @@ ROUTES: list[Route] = [
     ("PUT", re.compile(r"/api/readaloud/online/(azure|google|fpt|viettel)"), Handler.put_readaloud_online),
     ("DELETE", re.compile(r"/api/readaloud/online/(azure|google|fpt|viettel)"), Handler.delete_readaloud_online),
     ("POST", re.compile(r"/api/readaloud/online/(azure|google|fpt|viettel)/check"), Handler.post_readaloud_online_check),
+    ("GET", re.compile(r"/api/listener-activity"), Handler.get_listener_activity),
     ("GET", re.compile(r"/api/preferences"), Handler.get_preferences),
     ("POST", re.compile(r"/api/library-move/recovery"), Handler.post_library_move_recovery),
     ("GET", re.compile(r"/api/host/opened"), Handler.get_opened_events),

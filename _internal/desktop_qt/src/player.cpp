@@ -1,6 +1,7 @@
 #include "player.h"
 
 #include "hostwait.h"
+#include "systemidle.h"
 
 #include <QCoreApplication>
 #include <QDateTime>
@@ -101,6 +102,7 @@ Player::Player(AudioOut *out, PlayerNet *net, const QString &outboxPath, QObject
     : QObject(parent), m_out(out), m_net(net), m_now(nowMs ? std::move(nowMs) : [] { return QDateTime::currentMSecsSinceEpoch(); }),
       m_clock(this), m_chapters(this) {
     m_lastActivity = m_now();
+    m_systemIdle = listenerSystemIdleMs;
     m_outbox = std::make_unique<ProgressOutbox>([this](const ProgressSpot &spot, ProgressOutbox::Done done) { sendSpot(spot, std::move(done)); },
                                                 [this](const ProgressSpot &spot) { onAck(spot); }, outboxPath);
     m_ticker.setTimerType(Qt::CoarseTimer);
@@ -153,13 +155,18 @@ void Player::watchInput() {
         QCoreApplication::instance()->installEventFilter(this);
 }
 
+void Player::noteInteraction() {
+    m_lastActivity = m_now();
+    if (!m_automaticSleep.isEmpty()) setSleep(QStringLiteral("off"));
+}
+
 bool Player::eventFilter(QObject *, QEvent *event) {
     switch (event->type()) {
     case QEvent::KeyPress:
     case QEvent::MouseButtonPress:
     case QEvent::Wheel:
     case QEvent::TouchBegin:
-        m_lastActivity = m_now();
+        noteInteraction();
         // Máy tính: chạm phím / chuột lúc đang nhỏ dần = "lắc máy" - hẹn lại. Phím ấy không làm gì khác.
         if (m_fading) {
             extendSleep();
@@ -167,6 +174,7 @@ bool Player::eventFilter(QObject *, QEvent *event) {
         }
         break;
     case QEvent::MouseMove:
+        noteInteraction();
         if (m_fading)
             extendSleep();
         break;
@@ -271,7 +279,6 @@ void Player::setPlaying(bool playing) {
     if (m_playing == playing)
         return;
     m_playing = playing;
-    m_scheduleChecked = false; // phụ thuộc `playing` của useEffect lịch đêm: bắt đầu nghe lại thì xét lại
     changed();
     emit playingChanged();
     m_clock.restart();
@@ -340,11 +347,9 @@ void Player::updateTicker() {
     if (!m_uiActive && m_sleep.kind == Sleep::Off) {
         const auto until = [&](qint64 deadline) { return int(std::clamp<qint64>(deadline - m_now(), 1, kHiddenSaveEveryMs)); };
         if (m_loaded && m_playing) {
-            // The first tick still checks the night schedule immediately.
-            if (!m_scheduleChecked) interval = 1;
-            else if (m_now() < m_lastAttempt + kHiddenSaveEveryMs)
+            if (m_schedule.size() || m_safetyHours > 0) interval = std::min(interval, 1000);
+            if (m_now() < m_lastAttempt + kHiddenSaveEveryMs)
                 interval = std::min(interval, until(m_lastAttempt + kHiddenSaveEveryMs));
-            if (m_safetyHours > 0) interval = std::min(interval, until(m_lastActivity + qint64(m_safetyHours) * 3'600'000));
         }
         if (m_outbox->pending() > 0) interval = std::min(interval, until(m_lastFlush + kSaveEveryMs));
     }
@@ -383,8 +388,6 @@ void Player::configure(const QVariantMap &p) {
         && clock.match(given.value(QStringLiteral("to")).toString()).hasMatch()
         && (minutes == 15 || minutes == 30 || minutes == 45 || minutes == 60);
     const QVariantMap schedule = fits ? given : QVariantMap();
-    if (schedule != m_schedule)
-        m_scheduleChecked = false; // đổi lịch = chạy lại kiểm tra như phụ thuộc [options.schedule] của useEffect bản web
     m_schedule = schedule;
 }
 QString Player::scheduleWindow() const {
@@ -406,6 +409,7 @@ void Player::open(const QString &bookId, int chapterId, double at, bool autoplay
     openFor(bookId, chapterId, at, autoplay, QStringLiteral("listen"));
 }
 void Player::openFor(const QString &bookId, int chapterId, double at, bool autoplay, const QString &purpose) {
+    noteInteraction();
     const quint64 seq = ++m_openSeq;
     ++m_intent;
     if (autoplay)
@@ -623,6 +627,7 @@ void Player::requestPlay() {
 }
 
 void Player::resume() {
+    noteInteraction();
     if (!m_loaded)
         return;
     const quint64 intent = ++m_intent;
@@ -692,6 +697,7 @@ void Player::resumeNow() {
 }
 
 void Player::pause() {
+    noteInteraction();
     ++m_intent;
     m_wantsPlay = false;
     if (!m_loaded)
@@ -739,6 +745,7 @@ void Player::seek(double seconds) {
 }
 
 void Player::skip(double delta) {
+    noteInteraction();
     if (!m_loaded)
         return;
     const double length = duration();
@@ -754,6 +761,7 @@ void Player::skip(double delta) {
 }
 
 void Player::jumpTo(int chapterId, double at, const QString &note) {
+    noteInteraction();
     const Chapter *target = chapter(chapterId);
     if (!m_loaded || !target || !canPlay(*target))
         return;
@@ -835,10 +843,12 @@ void Player::step(int direction) {
 }
 
 void Player::next() {
+    noteInteraction();
     step(1);
 }
 
 void Player::previous() {
+    noteInteraction();
     step(-1);
 }
 
@@ -889,6 +899,7 @@ void Player::applyRate(double rate) {
 }
 
 void Player::setRate(double rate) {
+    noteInteraction();
     if (rate <= 0)
         return;
     applyRate(rate);
@@ -907,6 +918,7 @@ void Player::stepRate(int direction) {
 }
 
 void Player::setVolume(double volume) {
+    noteInteraction();
     volume = std::clamp(volume, 0.0, 1.0);
     if (volume == m_volume)
         return;
@@ -932,7 +944,6 @@ void Player::resetSleepMark() {
 }
 
 void Player::applySleepState(Sleep::Kind kind, int minutes, double leftMs) {
-    m_scheduleChecked = false; // phụ thuộc `sleep.kind` của useEffect lịch đêm
     m_sleep.kind = kind;
     m_sleep.minutes = minutes;
     m_sleep.leftMs = leftMs;
@@ -944,6 +955,10 @@ void Player::applySleepState(Sleep::Kind kind, int minutes, double leftMs) {
 }
 
 void Player::setSleep(const QString &kind, int minutes) {
+    const bool automatic = !m_automaticSleep.isEmpty();
+    m_automaticSleep.clear();
+    m_lastActivity = m_now();
+    if (automatic) setNotice(QString());
     endFade();
     resetSleepMark();
     if (kind == QLatin1String("minutes") && minutes > 0) {
@@ -966,6 +981,7 @@ int Player::sleepExtendMinutes() const {
 
 // Nghe thêm = hẹn lại: đồng hồ về đúng sleepExtendMinutes() phút, không bao giờ hơn (bấm nhiều lần không cộng dồn); còn lại đã nhiều hơn thì giữ nguyên.
 void Player::extendSleep() {
+    if (!m_automaticSleep.isEmpty()) { noteInteraction(); return; }
     if (m_sleep.kind == Sleep::Off)
         return;
     const int minutes = sleepExtendMinutes();
@@ -1030,6 +1046,8 @@ void Player::stopBySleep() {
     markPaused(false);
     endFade();
     applySleepState(Sleep::Off, 0, 0);
+    m_automaticSleep.clear();
+    setNotice(QString());
     m_sleepStoppedAt = m_now();
     emit sleepChanged();
     save(true);
@@ -1267,40 +1285,31 @@ void Player::tick() {
         m_lastFlush = now;
         m_outbox->flush();
     }
-    // Lịch đêm chỉ xét lúc BẮT ĐẦU nghe (đang phát + hẹn giờ tắt): useEffect [schedule, playing, sleep.kind] của bản web, không xét lại mỗi nhịp -
-    // đang nghe qua giờ bắt đầu khung thì không tự hẹn giữa chừng.
-    const bool listening = m_loaded && m_playing && m_sleep.kind == Sleep::Off;
-    if (!listening)
-        m_scheduleChecked = false;
-    if (!m_loaded) {
+    if (!m_loaded || !m_playing) {
         updateTicker();
         return;
     }
-    if (!m_playing) {
-        updateTicker();
-        return;
-    }
-    if (listening && !m_scheduleChecked) {
-        m_scheduleChecked = true;
-        const QString night = scheduleWindow();
-        if (!night.isEmpty() && night != m_scheduleOffFor) {
-            const int minutes = m_schedule.value(QStringLiteral("minutes")).toInt();
-            setSleep(QStringLiteral("minutes"), minutes);
-            setNotice(QStringLiteral("Lịch đêm %1-%2: đã tự hẹn giờ %3 phút")
-                .arg(m_schedule.value(QStringLiteral("from")).toString(), m_schedule.value(QStringLiteral("to")).toString()).arg(minutes));
-        }
-    }
+    const qint64 idle = m_systemIdle ? m_systemIdle() : -1;
+    // An OS input, or a failed probe, also cancels an automatic countdown already in progress.
+    if (!m_automaticSleep.isEmpty() && (idle < 0 || now - idle > m_automaticLastInput + 100)) noteInteraction();
     save();
     if (m_sleep.kind != Sleep::Off) {
         tickSleep(now);
-    } else if (m_safetyHours > 0 && now - m_lastActivity >= qint64(m_safetyHours) * 3'600'000) {
-        // Lưới an toàn: phát liên tục quá lâu mà không ai chạm máy (ngủ quên, quên hẹn giờ) thì tự hẹn 1 phút - nhỏ dần rồi dừng như hẹn giờ thường.
-        const int lastMinutes = m_lastSleepMinutes; // lưới an toàn không đổi "lần hẹn gần nhất" của nút hẹn giờ (bản web không gọi setLastSleepMinutes)
-        setSleep(QStringLiteral("minutes"), 1);
-        m_lastSleepMinutes = lastMinutes;
-        m_sleep.minutes = 0; // đếm 1 phút nhưng không ai chọn số phút: "Hẹn lại" về "Mỗi lần nghe thêm" (sleepExtendMinutes), như sleep.ts sleepSafetyNet
-        emit sleepChanged();
-        setNotice(QStringLiteral("Không thấy ai chạm máy suốt %1 giờ - sẽ tắt sau 1 phút").arg(m_safetyHours), QStringLiteral("Vẫn đang nghe"), QStringLiteral("stay"));
+    } else if (m_purpose == QLatin1String("listen")) {
+        const QString night = scheduleWindow();
+        const bool scheduled = !night.isEmpty() && night != m_scheduleOffFor && automaticSleepAllowed(idle, now - m_lastActivity, 120'000);
+        const bool safety = automaticSleepAllowed(idle, now - m_lastActivity, qint64(m_safetyHours) * 3'600'000);
+        if (scheduled || safety) {
+            endFade();
+            resetSleepMark();
+            const int minutes = scheduled ? m_schedule.value(QStringLiteral("minutes")).toInt() : 1;
+            applySleepState(Sleep::Minutes, scheduled ? minutes : 0, minutes * 60'000.0);
+            m_automaticSleep = scheduled ? QStringLiteral("schedule") : QStringLiteral("safety");
+            m_automaticLastInput = now - idle;
+            setNotice(QString::fromUtf8(scheduled ? AutoSleepText::Schedule : AutoSleepText::Safety),
+                      QString::fromUtf8(AutoSleepText::Continue), QStringLiteral("stay"));
+            m_noticeTimer.stop(); // Visible until cancelled or finished, through the existing animated notice.
+        }
     }
     updateTicker();
 }

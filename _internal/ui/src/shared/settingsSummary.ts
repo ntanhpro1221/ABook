@@ -2,7 +2,7 @@
 
 export function sleepSummary(schedule: { from: string; to: string } | null | undefined, safetyStopHours: number | undefined): string {
   if (schedule) return `Lịch đêm ${schedule.from}–${schedule.to}`;
-  if (safetyStopHours) return `Tự tắt sau ${safetyStopHours} giờ`;
+  if (safetyStopHours) return `Máy rảnh ${safetyStopHours} giờ`;
   return "Tắt";
 }
 
