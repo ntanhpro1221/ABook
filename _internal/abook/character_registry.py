@@ -2130,9 +2130,9 @@ def assert_voice_stability(db: ProjectDB, log: Callable[[str], None] = lambda _m
         with db.connect() as conn:
             presented = {int(r[0]) for r in conn.execute(
                 "SELECT s.id FROM segments s JOIN chapter_teller_lines t ON t.segment_id=s.id "
-                "WHERE s.kind='narration' AND s.speaker='NARRATOR' AND t.original_speaker=s.speaker "
-                "AND t.original_character_id=s.canonical_character_id "
-                "AND t.applied_character_id=s.canonical_character_id AND t.applied_profile_id=s.voice_profile_id")}
+                "WHERE t.original_speaker=s.speaker "
+                "AND t.original_character_id IS s.canonical_character_id "
+                "AND t.applied_character_id IS s.canonical_character_id AND t.applied_profile_id=s.voice_profile_id")}
     for row in db.list_segments():
         if presented and int(row["id"]) in presented:
             continue
