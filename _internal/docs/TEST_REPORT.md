@@ -1408,3 +1408,43 @@ rhythmic laughter, stretched honorifics, syllable stutters, note anchors, listen
 readings, and false-positive guards for words, names, identifiers, ranks and units.
 Detailed route measurements, SHA freezes, CPU audio/ASR and test logs are private
 artifacts in the soundfix work folder; they are not listening gold labels.
+# 08-11-2026 — dev/jp-names: luật romaji chung và held-out
+
+Policy Nhật dùng một JSON Python/Kotlin, namespace `jp-fallback1`. Định tuyến bằng bảng âm đầy đủ,
+ít nhất ba âm tiết, kính ngữ dính hoặc cặp romaji viết hoa; bảo vệ âm Việt và từ điển Anh hiện có.
+Không có danh sách tên nhân vật theo sách; `fixed` chỉ giữ từ phổ thông onigiri. Mọi cách đọc sinh tự động
+giữ provenance `auto`; cách đọc người nghe cho từ/cụm vẫn thắng.
+
+- Held-out riêng ngoài repo: 14 cuốn khác dev, 416 lượt Nhật / 129 loại tên sau gộp biến thể, 413 lượt âm tính.
+  Dùng gốc cuốn app tự đoán: recall **91,83% → 84,62%**, precision **97,70% → 99,15%**.
+  Đây là đánh đổi precision/recall; không tuyên bố nhận đúng mọi tên. Ngưỡng chọn trước khi chấm held-out.
+- Dev: bộ nhận diện mới 65/70 từ ngữ cảnh câu; materialization theo pronunciation của chính cuốn giữ 70/70,
+  12/12 nhóm nhất quán. Hai phép đo này có lượng thông tin đầu vào khác nhau.
+- Audio thật trên CPU: 52 câu. ASR Nhật **12/34 → 12/34**, Anh **27/37 → 27/37**; không có mục tiêu mới mất.
+  19/24 MP3 Nhật và 28/28 MP3 Anh trùng SHA-256 với jpimpl. Không dùng ASR làm phán quyết phát âm của chủ sách.
+- Pytest liên quan **740 passed / 0 FAILED**; toàn bộ **10665 passed / 0 FAILED / 0 error / 15 skipped / 2 xfailed**.
+  Bốn partition có 10682 node ID, đối chiếu đầy đủ với collection; JUnit và `-rf` cùng xác nhận.
+- Kotlin readaloud/vieneu: 555 passed / 0 failure / 1 skip trong 67 lớp; thêm 14 test SleepExtend đạt.
+  Tổng JVM 569 passed / 0 failure / 1 skip, 68 lớp. Test ghi đè file dùng cùng bytecode trên Linux;
+  các test còn lại, gồm JNI frontend, chạy Windows. 13 test UI về đồng hồ giả đạt.
+- Fixture Nhật là tên phổ thông/câu tự viết; grep tên cấm trên mọi file thay đổi: 0. Mọi file thay đổi LF;
+  compileall và diff check đạt. Ba file test ngoài tên Nhật chỉ thay thời gian bằng giá trị kiểm soát được,
+  để ratchet test không phụ thuộc tải máy; không đổi baseline hay hành vi app của các tính năng đó.
+- Import trực tiếp danh sách khóa: 57 file. Hash đầu lượt
+  `f6b51ed26cb3443f5ae118ae3297d54df5b20c5be035d8bc8d8df2929fe096ea`;
+  hash cuối `3d7e3f337b55366ae8ea92f5426c0fe0e8fed876a44bc2ae002a79510a2de0a9`.
+
+Nhãn ngữ cảnh, câu truyện, nguồn/hash, số từng cuốn, giới hạn và log đầy đủ ở `codex/jpimpl2/report.md`
+trong thư mục việc ngoài repo. Năm DB nguồn giữ nguyên hash. Chỉ cây dev, chưa commit/push; không dùng GPU.
+
+# 08-11-2026 — latin166: kết hợp âm kêu và policy Nhật
+
+Python/Kotlin giữ tiếng kêu, kéo dài và nói lắp trước fallback Nhật, đồng thời xử lý mảnh tên còn nguyên cạnh âm kêu. Cách đọc người nghe vẫn áp cuối. Không thêm từ/tên theo sách, không đổi bảng âm, ngưỡng hoặc policy JSON; hai nền dùng chung JSON/asset. Cache tăng một lần 10 → 11.
+
+Chấm theo đường đọc hoặc phoneme cả câu bằng tham chiếu chung: primary 1.642/1.855 (4 mục mơ hồ trong 1.859); enaudit 607/671; soundfix mới 341/391. Giữ cả sửa đúng và hỏng mới; không diễn giải FP nhận diện tên thành lỗi đọc. Đây là nhãn model, chưa là phán quyết nghe. Nhãn, ngữ cảnh, số từng loại/cuốn và mọi hỏng mới ở report.md trong thư mục việc latin166 ngoài repo.
+
+CPU: Nhật 12/34 mục tiêu trong 24 câu; Anh 27/37 trong 26 câu và hai đối chứng Việt ngoài mẫu số; 26 cặp tiếng kêu không tụt. Thu lại 104 WAV/MP3 trên hash cuối; ASR chỉ tái dùng khi byte giao/byte WAV tương ứng trùng SHA.
+
+Kiểm cuối: Python liên quan 1.082 pass; toàn bộ 10.743 pass, 15 skip, 2 xfail, 0 FAILED/error, đủ 10.760 node rời nhau qua bốn log -rf. Kotlin liên quan 558 pass/1 skip; toàn :app:testDebugUnitTest 3.385 pass/4 skip, 0 failure/error. :app:assembleDebug, compileall và whitespace đạt.
+
+Danh sách quality đọc trực tiếp có 59 mục; hash cuối 8b2743893f2ce90b706cc451ba14e2c5fe6c993df40083ac2b0d497e2b54fd7b. Chỉ cây dev; merge chưa commit.

@@ -1,0 +1,200 @@
+{
+  "version": 2,
+  "namespace": "jp-fallback2",
+  "provenance": "auto",
+  "description": "Automatic Vietnamese approximation of Japanese romaji; not native Japanese pronunciation or an owner verdict.",
+  "choices": {
+    "s": "x",
+    "sh": "s",
+    "ei": "ây",
+    "k": "orth",
+    "g": "gh",
+    "kya": "ki_a",
+    "ss": "t"
+  },
+  "long_vowels": {
+    "ā": "a",
+    "ī": "i",
+    "ū": "u",
+    "ē": "e",
+    "ō": "o",
+    "â": "a",
+    "î": "i",
+    "û": "u",
+    "ê": "e",
+    "ô": "o",
+    "Ā": "A",
+    "Ī": "I",
+    "Ū": "U",
+    "Ē": "E",
+    "Ō": "O",
+    "Â": "A",
+    "Î": "I",
+    "Û": "U",
+    "Ê": "E",
+    "Ô": "O"
+  },
+  "long_o": {
+    "ō": "ô",
+    "Ō": "Ô",
+    "ô": "ô",
+    "Ô": "Ô"
+  },
+  "vowels": "aiueo",
+  "internal_vowels": "aiueoôŏ",
+  "vowel": {
+    "a": "a",
+    "i": "i",
+    "u": "u",
+    "e": "e",
+    "o": "ô"
+  },
+  "simple": {
+    "k": "K",
+    "g": "G",
+    "s": "S",
+    "z": "d",
+    "t": "t",
+    "d": "đ",
+    "n": "n",
+    "h": "h",
+    "b": "b",
+    "p": "p",
+    "m": "m",
+    "r": "r"
+  },
+  "allowed": {
+    "k": "aiueo",
+    "g": "aiueo",
+    "n": "aiueo",
+    "b": "aiueo",
+    "p": "aiueo",
+    "m": "aiueo",
+    "r": "aiueo",
+    "s": "aueo",
+    "z": "aueo",
+    "t": "aeo",
+    "d": "aieo",
+    "h": "aieo",
+    "sh": "aiueo",
+    "ch": "aiueo",
+    "j": "aiueo",
+    "ts": "u",
+    "f": "ui",
+    "w": "a",
+    "y": "auo",
+    "ky": "auo",
+    "gy": "auo",
+    "ny": "auo",
+    "hy": "auo",
+    "by": "auo",
+    "py": "auo",
+    "my": "auo",
+    "ry": "auo"
+  },
+  "onsets": [
+    "sh",
+    "ch",
+    "ts",
+    "ky",
+    "gy",
+    "ny",
+    "hy",
+    "by",
+    "py",
+    "my",
+    "ry"
+  ],
+  "geminate_coda": {
+    "k": "c",
+    "p": "p",
+    "t": "t",
+    "s": "ss"
+  },
+  "fixed": {
+    "onigiri": [
+      [
+        "",
+        "o"
+      ],
+      [
+        "n",
+        "i"
+      ],
+      [
+        "gi",
+        "i"
+      ],
+      [
+        "r",
+        "i"
+      ]
+    ]
+  },
+  "suffixes": [
+    "san",
+    "kun",
+    "chan",
+    "chwan",
+    "sama",
+    "senpai",
+    "sensei",
+    "dono",
+    "tan",
+    "nee",
+    "nii"
+  ],
+  "honorifics": [
+    "san",
+    "kun",
+    "chan",
+    "sama",
+    "senpai",
+    "sensei",
+    "dono"
+  ],
+  "common": [
+    "anime",
+    "ara",
+    "bento",
+    "dango",
+    "eroge",
+    "kimono",
+    "manga",
+    "miso",
+    "ninja",
+    "okonomiyaki",
+    "onee",
+    "onii",
+    "otaku",
+    "sake",
+    "samurai",
+    "senpai",
+    "sensei",
+    "takoyaki",
+    "tsukkomi",
+    "umu"
+  ],
+  "emit": {
+    "sh": "s",
+    "ch": "ch",
+    "j": "gi",
+    "ts": "x",
+    "f": "ph",
+    "w": "oa",
+    "y": "gi"
+  },
+  "vowel_pairs": {
+    "ou": "âu",
+    "ei": "ây",
+    "ai": "ai",
+    "oi": "oi",
+    "ao": "ao"
+  },
+  "routing": {
+    "min_syllables": 3,
+    "known_ja_min_syllables": 2,
+    "lexicon_bert_max_id": 20000,
+    "evidence": "Complete phonotactic parse; known Japanese books allow two nuclei, uppercase and presentation boundaries. Unknown books require three nuclei, an honorific or an adjacent romaji pair. General English vocabulary and Vietnamese syllables abstain."
+  }
+}

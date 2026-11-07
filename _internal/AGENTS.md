@@ -213,7 +213,14 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   `A-der-on → A-đe-ron`; nếu không sửa được, retry chỉ tên lỗi với feedback cụ thể, không gửi lại nguyên prompt/batch.
 - Trước khi finalize casting, mọi token tên Latin viết hoa (kể cả chỉ xuất hiện một lần) phải qua bước chuẩn hóa tên:
   VieNeu giữ chữ Anh/tên Tây theo `readaloud/english_policy.py`; dữ liệu mặc định ở `english_policy.json` dùng chung với Kotlin.
-  Acronym mặc định đọc từng chữ Anh qua `<en>`, provenance `auto`, chưa phải phán quyết nghe. Tên Nhật/Hàn giữ đường luật/CMU/Qwen hiện có;
+  Acronym mặc định đọc từng chữ Anh qua `<en>`, provenance `auto`, chưa phải phán quyết nghe. VieNeu dùng bảng dự phòng Nhật
+  `readaloud/japanese_policy.json` và asset từ vựng chung với Kotlin, namespace `jp-fallback2`. Tên Latin phải tách hết bằng bảng âm:
+  ít nhất hai âm tiết khi gốc cuốn đã là Nhật; chưa rõ gốc thì ít nhất ba âm tiết, kính ngữ dính hoặc cặp romaji viết hoa.
+  Từ Việt/từ Anh được bảo vệ; một tên cục bộ không tự nâng gốc cả cuốn. Tiếng kêu, kéo dài và nói lắp chạy trước tên Nhật,
+  giữ mảnh âm đã đọc qua bước direct English; mảnh tên còn nguyên cùng token vẫn theo policy Nhật, không phân tích lại âm đã phát.
+  Cách đọc người nghe vẫn áp cuối. Khóa tự động theo thành phần; khi materialize,
+  hàng Nhật tự động không được che cách đọc người nghe của thành phần và không được đưa kết quả phiên âm qua TN Nhật lần nữa.
+  Tên Hàn giữ đường hiện có;
   tên còn mơ hồ tiếp tục đường hiện có. Từ Việt hợp lệ không được phiên âm chỉ vì có trong từ điển Anh; detector chỉ đọc ở
   `scripts/audit_english_homographs.py`. Cách đọc người nghe đặt rõ vẫn thắng. Đổi luật phải đổi namespace cache VieNeu và quality hash;
   không viết lại dự án cũ. Kết quả chuyên biệt hợp lệ phải `locked=1` trong SQLite để cùng một tên

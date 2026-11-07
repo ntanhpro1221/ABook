@@ -83,6 +83,8 @@ abook = [
   "assets/voice_previews/*.wav",
   "readaloud/english_policy.json",
   "readaloud/sound_policy.json",
+  "readaloud/japanese_policy.json",
+  "readaloud/japanese_lexicon.txt.gz",
 ]
 
 [tool.pytest.ini_options]

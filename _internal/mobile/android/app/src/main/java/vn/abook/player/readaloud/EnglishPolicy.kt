@@ -27,13 +27,14 @@ object EnglishPolicy {
         val lower = core.lowercase(Locale.ROOT)
         if (core.all { it in 'A'..'Z' } && lower.all { it in "ivxlcdm" }) return false
         if (vietnamese(core) || lower in Names.JAPANESE_COMMON) return false
-        if (Names.nameReading(core, origin) != null || Names.honorificReading(core, origin) != null) return false
+        if (JapanesePolicy.reading(core, origin) != null || Names.nameReading(core, origin) != null || Names.honorificReading(core, origin) != null) return false
         if (lower.replace("-", "") in EnglishWords.ALL || lower in BuildConfig.DIRECT_ENGLISH_WORDS.split(" ")) return true
         return Names.ORIGINS.all { Romanization.reading(core, it) == null }
     }
 
     fun reading(core: String, origin: String?): Pair<String, String>? {
         if (core in preserveAcronyms) return null
+        if (JapanesePolicy.reading(core, origin) != null) return null
         val lower = core.lowercase(Locale.ROOT)
         val letters = core.isNotEmpty() && core.all { it in 'A'..'Z' }
         val generic = letters && !vietnamese(core) && !lower.all { it in "ivx" } &&
@@ -42,13 +43,19 @@ object EnglishPolicy {
         return if (keepsWord(core, origin)) core to "keep_english" else null
     }
 
-    fun applyTokens(toks: List<String>, out: MutableList<String>, origin: String?) {
+    fun applyTokens(toks: List<String>, out: MutableList<String>, origin: String?, protected: Set<Int> = emptySet()) {
+        val proposed = out.toMutableList()
+        JapanesePolicy.applyTokens(toks, proposed, origin)
+        val contextual = if (protected.isNotEmpty() && origin != "ko") JapanesePolicy.contextualNames(toks, origin) else emptySet()
+        for ((index, said) in proposed.withIndex()) out[index] = if (index !in protected) said
+            else JapanesePolicy.readUnmodified(toks[index], out[index], origin, index in contextual)
         val asian = toks.toMutableList()
         Names.readNames(toks, asian, origin)
         Names.readKoreanNames(toks, asian, origin)
         Names.readHonorifics(toks, asian, origin)
         Names.readLoanwords(toks, asian)
         for ((index, token) in toks.withIndex()) {
+            if (index in protected) continue
             val (before, core, after) = Names.splitToken(token)
             if (core.isEmpty() || before.lastOrNull()?.isDigit() == true || Regex("^[-–]?[0-9]").containsMatchIn(after)) continue
             if (core in preserveAcronyms) continue

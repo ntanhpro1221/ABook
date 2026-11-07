@@ -14,7 +14,7 @@ from abook.readaloud.names import name_reading
 from abook.romanization import romanized_reading
 from test_analysis_required import FakeDB
 
-JAPANESE = ["Haruto", "Kyouko", "Shinomiya", "Tsubasa", "Yamato", "Ayaka", "Hajime", "Kenji", "Hiroshi", "Takeshi", "Yukino", "Kaori"]
+JAPANESE = ["Haruto", "Kyoukota", "Shinomiya", "Tsubasa", "Yamato", "Ayaka", "Hajime", "Kenjita", "Hiroshi", "Takeshi", "Yukino", "Kaori"]
 KOREAN = ["Seojun", "Taehyun", "Yejin", "Chaeyeon", "Jihoon", "Minjun", "Hyunwoo", "Eunji", "Seoyeon", "Jiwoo", "Doyoon", "Sungmin"]
 WESTERN = ["Kate", "Michael", "Thomas", "Gary", "Lucien", "Evans", "Rose", "Washington", "Benjamin", "Emma", "Jake", "Luke"]
 
@@ -75,10 +75,10 @@ def _stored(db: StudioDB) -> dict[str, tuple[str, str]]:
 
 def test_rule_reading_is_the_read_aloud_romanization() -> None:
     assert studio_names.rule_reading("Haruto-kun", "ja") == "Ha-ru-tô-cun"
-    assert studio_names.rule_reading("Kyouko", "ja") == "Ki-âu-cô"
+    assert studio_names.rule_reading("Kyoukota", "ja") == "Ki-âu-cô-ta"
     assert studio_names.rule_reading("Haruto Shinomiya", "ja") == "Ha-ru-tô Si-nô-mi-a"
     assert studio_names.rule_reading("Seojun", "ko") == romanized_reading("Seojun", "ko")
-    assert studio_names.rule_reading("Haruto", None) is None, "no origin, no romanization"
+    assert studio_names.rule_reading("Haruto", None) == "Ha-ru-tô"
     assert studio_names.rule_reading("Rose", "ja") is None, "an English name is not a romaji name"
 
 
@@ -126,7 +126,7 @@ def test_the_model_prompt_carries_the_origin_and_owner_readings(monkeypatch) -> 
 
     analyzer.reconcile_name_pronunciations()
 
-    assert "gốc Nhật" in prompts[0] and "Kyouko→Ki-âu-cô" in prompts[0]
+    assert "gốc Nhật" in prompts[0] and "Haruto-kun→Ha-ru-tô-cun" in prompts[0]
 
 
 def test_a_korean_book_reads_its_names_by_rule(monkeypatch) -> None:
@@ -164,7 +164,7 @@ def test_a_locked_name_is_never_changed(monkeypatch) -> None:
     stored = _stored(db)
     assert stored["Haruto"] == ("Ha-ru-to", LISTENER_PRONUNCIATION_SOURCE)
     assert stored["Kenji"] == ("Ken-di", "english_name_transliteration")
-    assert stored["Kyouko"] == ("Ki-âu-cô", RULE_ROMANIZATION_PRONUNCIATION_SOURCE)
+    assert stored["Kyoukota"] == ("Ki-âu-cô-ta", RULE_ROMANIZATION_PRONUNCIATION_SOURCE)
 
 
 def test_a_full_name_reads_its_kept_word_the_same_way(monkeypatch) -> None:
