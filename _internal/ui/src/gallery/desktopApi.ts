@@ -418,6 +418,8 @@ const ROUTES: [string, RegExp, Handler][] = [
   ["POST", /^\/api\/cast\/scan$/, () => ({ ok: true })],
   ["POST", /^\/api\/player\/report$/, () => ({ commands: [], idle: true })],
   ["GET", /^\/api\/host\/opened$/, () => ({ opened: [] })],
+  // Người nghe vừa dùng máy: phòng trưng bày không bao giờ tự bật hẹn giờ ngủ.
+  ["GET", /^\/api\/listener-activity$/, () => ({ idleMs: 0 })],
 ];
 
 export async function respond(path: string, method: string, body: Record<string, unknown>): Promise<Reply> {
