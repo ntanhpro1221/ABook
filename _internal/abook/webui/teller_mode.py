@@ -33,7 +33,7 @@ def view(project_root: Path) -> dict[str, Any]:
     with closing(store.connect(project_root)) as connection:
         tellers = teller_voice.tellers_of(project_root, settings, connection)
         cast = _cast_locked(connection)
-        applied = teller_voice.presentation_applied(connection)
+        applied = (record["mode"] == "teller" or "teller" in record["applied"]) and teller_voice.presentation_applied(connection)
         plan = None
         if tellers.active and cast:
             plan = teller_voice.mode_plan(connection, project_root, tellers)

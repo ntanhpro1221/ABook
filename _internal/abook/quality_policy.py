@@ -98,6 +98,7 @@ QUALITY_IMPLEMENTATION_FILES = (
     "studio_names.py",
     "text_processing.py",
     "tts.py",
+    "teller_voice.py",
     "tts_contract.py",
     "voice_balance.py",
     "assets/voice_balance.json",
