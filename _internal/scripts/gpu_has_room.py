@@ -24,7 +24,7 @@ def free_mib() -> int | None:
     try:
         output = subprocess.run(
             ["nvidia-smi", "--query-gpu=memory.used,memory.total", "--format=csv,noheader,nounits"],
-            capture_output=True, text=True, timeout=30, creationflags=NO_WINDOW,
+            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30, creationflags=NO_WINDOW,
         ).stdout
         used, total = (int(value) for value in output.splitlines()[0].split(","))
     except (OSError, subprocess.SubprocessError, ValueError, IndexError):

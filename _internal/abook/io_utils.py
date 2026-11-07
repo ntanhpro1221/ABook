@@ -418,6 +418,8 @@ def run_hidden(command: Iterable[str], *, timeout: float | None = None, check: b
         list(command),
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         timeout=timeout,
         check=check,
         creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0) if os.name == "nt" else 0,
