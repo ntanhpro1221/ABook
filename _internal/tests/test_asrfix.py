@@ -47,16 +47,16 @@ def test_decimals_and_digit_identifiers_are_not_thousands():
 
 def test_optional_alias_keeps_voice_tn_and_punctuation_offsets(tmp_path):
     db, c, v = _coordinator(tmp_path)
-    db.upsert_pronunciation(surface='Harumi', normalized_surface='harumi',
+    db.upsert_pronunciation(surface='Veltron', normalized_surface='veltron',
                             spoken_form='Mai-cồ', source='analysis', confidence=1, locked=True)
     from abook.readaloud.studio_tn import studio_tn
-    source = 'Harumi, đã tới.'
+    source = 'Veltron, đã tới.'
     spoken, anchors = c.spoken_text_with_anchors({'text': source})
     assert spoken == studio_tn('Mai-cồ, đã tới.', None, False)[0]
     assert len(anchors) == 1
     anchor = anchors[0]
     assert spoken[anchor['spoken_start']:anchor['spoken_end']] == anchor['spoken_form']
-    assert anchor['matched_surface'] == 'Harumi'
+    assert anchor['matched_surface'] == 'Veltron'
 
 
 def _coordinator(tmp_path):

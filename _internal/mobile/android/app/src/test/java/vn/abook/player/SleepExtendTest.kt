@@ -95,7 +95,7 @@ class SleepExtendTest {
     }
 
     @Test fun anOffTimerIgnoresTheNotificationButtonAndAnOldShake() {
-        assertFalse(SleepTimer.applyShake(System.currentTimeMillis()))
+        assertFalse(SleepTimer.applyShake(1_000_000L))
         SleepTimer.extend()
         assertEquals(SleepTimer.Mode.OFF, SleepTimer.mode)
         assertFalse("tắt quá 2 phút thì lắc không còn nghe", run {
@@ -145,9 +145,9 @@ class SleepExtendTest {
         assertEquals("", SleepTimer.automaticReason)
     }
     @Test fun cancellingClearsTheRecentStopSoShakingCannotRearm() = withSensors {
-        field("stoppedAtMs").setLong(SleepTimer, System.currentTimeMillis())
+        field("stoppedAtMs").setLong(SleepTimer, 1_000_000L)
         SleepTimer.cancel()
-        assertFalse(SleepTimer.applyShake(System.currentTimeMillis()))
+        assertFalse(SleepTimer.applyShake(1_060_000L))
         assertEquals(SleepTimer.Mode.OFF, SleepTimer.mode)
     }
 

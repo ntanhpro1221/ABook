@@ -1385,3 +1385,31 @@ Replay CPU toàn bộ input đóng băng: raw 27.726 câu **3.887 → 3.886**, e
 Code app trực tiếp khớp 199 JSON của arm chọn, baseline nhận vào khớp 199 JSON vox165, đều 0 mismatch. Pytest cuối **187 file, 4.627 passed, 0 FAILED, 0 errors, 3 skipped**, 0 dòng FAILED thật; một invocation đầy đủ, không ghép recheck. Ba skip do giọng ZeroTTS/Supertonic chưa tải. Lượt trung gian có 4 FAILED ở kỳ vọng cũ giữ mọi tên của cụm danh ngữ, được sửa theo luật mới và giữ kiểm kind/gender. Thêm 40 ca tổng hợp; không chép chữ truyện vào repo.
 
 Compileall, hai UI parity check, LF và diff check đạt. Danh sách khoá đọc trực tiếp có 53 mục; hash `72070ca5df3d2dae375938f8315e2b5971e939462c511f954bc8eaa9dd46d16a` → `998bbdbf94139368cb858e3347247ae23779700ae5eba911f5dac9d03f613fe8`. Chỉ cây dev, chưa commit/push; không dùng để resume project có hash cũ. Ma trận 10 phương án và các delta riêng ở thư mục tác vụ ngoài repo `scratchpad/codex/vox165b/report.md`.
+# 08-11-2026 — dev/jp-names: luật romaji chung và held-out
+
+Policy Nhật dùng một JSON Python/Kotlin, namespace `jp-fallback1`. Định tuyến bằng bảng âm đầy đủ,
+ít nhất ba âm tiết, kính ngữ dính hoặc cặp romaji viết hoa; bảo vệ âm Việt và từ điển Anh hiện có.
+Không có danh sách tên nhân vật theo sách; `fixed` chỉ giữ từ phổ thông onigiri. Mọi cách đọc sinh tự động
+giữ provenance `auto`; cách đọc người nghe cho từ/cụm vẫn thắng.
+
+- Held-out riêng ngoài repo: 14 cuốn khác dev, 416 lượt Nhật / 129 loại tên sau gộp biến thể, 413 lượt âm tính.
+  Dùng gốc cuốn app tự đoán: recall **91,83% → 84,62%**, precision **97,70% → 99,15%**.
+  Đây là đánh đổi precision/recall; không tuyên bố nhận đúng mọi tên. Ngưỡng chọn trước khi chấm held-out.
+- Dev: bộ nhận diện mới 65/70 từ ngữ cảnh câu; materialization theo pronunciation của chính cuốn giữ 70/70,
+  12/12 nhóm nhất quán. Hai phép đo này có lượng thông tin đầu vào khác nhau.
+- Audio thật trên CPU: 52 câu. ASR Nhật **12/34 → 12/34**, Anh **27/37 → 27/37**; không có mục tiêu mới mất.
+  19/24 MP3 Nhật và 28/28 MP3 Anh trùng SHA-256 với jpimpl. Không dùng ASR làm phán quyết phát âm của chủ sách.
+- Pytest liên quan **740 passed / 0 FAILED**; toàn bộ **10665 passed / 0 FAILED / 0 error / 15 skipped / 2 xfailed**.
+  Bốn partition có 10682 node ID, đối chiếu đầy đủ với collection; JUnit và `-rf` cùng xác nhận.
+- Kotlin readaloud/vieneu: 555 passed / 0 failure / 1 skip trong 67 lớp; thêm 14 test SleepExtend đạt.
+  Tổng JVM 569 passed / 0 failure / 1 skip, 68 lớp. Test ghi đè file dùng cùng bytecode trên Linux;
+  các test còn lại, gồm JNI frontend, chạy Windows. 13 test UI về đồng hồ giả đạt.
+- Fixture Nhật là tên phổ thông/câu tự viết; grep tên cấm trên mọi file thay đổi: 0. Mọi file thay đổi LF;
+  compileall và diff check đạt. Ba file test ngoài tên Nhật chỉ thay thời gian bằng giá trị kiểm soát được,
+  để ratchet test không phụ thuộc tải máy; không đổi baseline hay hành vi app của các tính năng đó.
+- Import trực tiếp danh sách khóa: 57 file. Hash đầu lượt
+  `f6b51ed26cb3443f5ae118ae3297d54df5b20c5be035d8bc8d8df2929fe096ea`;
+  hash cuối `3d7e3f337b55366ae8ea92f5426c0fe0e8fed876a44bc2ae002a79510a2de0a9`.
+
+Nhãn ngữ cảnh, câu truyện, nguồn/hash, số từng cuốn, giới hạn và log đầy đủ ở `codex/jpimpl2/report.md`
+trong thư mục việc ngoài repo. Năm DB nguồn giữ nguyên hash. Chỉ cây dev, chưa commit/push; không dùng GPU.

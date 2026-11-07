@@ -81,10 +81,10 @@ Hệ quả: ABook phải tự chọn một quy ước, neo vào nguồn chính t
 | fu | phu | Chủ sách | "Fukushima => phu-cu-si-ma"; SGK Phu-cu-ô-ca |
 | w (wa) | oa | Có nguồn | Ca-oa-xa-ki, Bi-oa, Tô-ku-ga-oa |
 | ya, yu, yo (đầu từ và giữa từ) | **gia, giu, giô**; **sau i thì y rơi** (Shinomiya → si-nô-mi-a, Miyuki → mi-u-ki, Kiyoshi → ki-ô-si); **sau n** (nya) → ni-a (Renya → re-ni-a); **ya cuối từ sau một nguyên âm đơn**: y thành bán âm cuối của âm tiết trước + a riêng (**may-a, cay-a, xây-a**); yu / yo cuối từ vẫn gi (Futayo → phu-ta-giô) | **Chủ sách** | Lần 2: "Yamato => Gia-ma-tô", "Ayaka => A-gia-ca". Lần 5: "Maaya => may-a", "Kaya => cay-a", "Seiya => xây-a (alt xay-a)". Lần 9: "Yurika => giu-ri-ca", "Yume => giu-me", "Yue => giu-e", "Sakuya => xa-ku-gia", "Kasuya => ka-xu-gia", "Kouya => câu-gia", "Raiya => rai-gia", "Alunaya => a-lu-na-gia", "Futayo => phu-ta-giô", "Shinomiya => si-nô-mi-a", "Renya => re-ni-a", "Kiyoshi => ki-ô-si", "Miyuki => mi-u-ki", "Kiyomasa => ki-ô-ma-xa" (cờ `analogy:y_after_i` cho các tên chưa có ca). Thay dạng SGK Ya-ma-tô, I-ô-cô-ha-ma |
-| **oi sau phụ âm** | **một âm tiết oi** (Koizumi → coi-du-mi, Izayoi → i-da-gioi); không phụ âm đầu thì tách (Aoi → a-o-i). Koichi → co-i-chi là tên ghép Kou + ichi: cố định `_JA_FIXED` | **Chủ sách** | Lần 9: "Koizumi => coi-du-mi", "Izayoi => i-da-doi" (d = gi giọng Bắc), "Koichi => co-i-chi" |
+| **oi sau phụ âm** | **một âm tiết oi** (Koizumi → coi-du-mi, Izayoi → i-da-gioi); không phụ âm đầu thì tách (Aoi → a-o-i). | **Chủ sách** | Lần 9: "Koizumi => coi-du-mi", "Izayoi => i-da-doi" (d = gi giọng Bắc) |
 | kyo, ryo, nyo… | ki-ô, ri-ô, ni-ô (kyou, ryou → ki-âu, ri-âu: xem dòng ou) | Có nguồn | Ki-ô-tô (CTST) |
 | n âm tiết | n khép âm tiết trước | Có nguồn | Hôn-su, Can-tô, Sin-dô |
-| phụ âm đôi kk, pp, tt, ss, tch | khép âm tiết trước bằng c / p / t + thanh sắc; cch → t + chi (ecchi → ét-chi, alt e-chi); ff → một f (Haffu → ha-phu) | Có nguồn + **Chủ sách** | Hốc-cai-đô, Xáp-pô-rô. Lần 9: "Sapporo => xáp-pô-rô", "Hokkaido => hốc-cai-đô", "Nissan => nít-xan", "Matcha => mát-cha", "ecchi => e-chi / ét-chi", "Haffu => ha-phu". Hatta → ha-ta là ngoại lệ cố định (`_JA_FIXED`), không mở luật gộp |
+| phụ âm đôi kk, pp, tt, ss, tch | khép âm tiết trước bằng c / p / t + thanh sắc; cch → t + chi (ecchi → ét-chi, alt e-chi); ff → một f (Haffu → ha-phu) | Có nguồn + **Chủ sách** | Hốc-cai-đô, Xáp-pô-rô. Lần 9: "Sapporo => xáp-pô-rô", "Hokkaido => hốc-cai-đô", "Nissan => nít-xan", "Matcha => mát-cha", "ecchi => e-chi / ét-chi", "Haffu => ha-phu". |
 | m trước s, b, p | khép m (ん): Hamsuke → ham-xu-ke | **Chủ sách** | Lần 9: "Hamsuke => ham-xu-ke (alt ham-xu-kê)" |
 | di | đi (tên phương Tây trong truyện Nhật) | **Chủ sách** | Lần 9: "Reidi => rây-đi", "Direkuresu => đi-re-ku-re-xu" |
 | fi | **phi** (tên kiểu Âu trong truyện Nhật; fu vẫn phu); Fii → phi (ii gộp), Fina → phi-na (luật, không còn trong bảng cố định) | **Chủ sách** | Lần 9: "Fii => phi", "Fina => phi-na" |
@@ -115,12 +115,9 @@ tố khác áp cùng cách]
   Cheonggyecheon → che-ong-ghi-che-on (gye → ghi); Kyung → ki-ung, Byung → bi-ung (yu sau phụ âm tách i-u); Gyeong → ghe-ong, Pyeong → pe-ong (yeo sau phụ âm: y mất,
   eo tách e-ong; g + y đọc ghe).
 - Lần 8 (Nhật): Ohto → ô-tô, Ohka → ô-ca ("oh" trước phụ âm / cuối từ là o dài → ô, KỂ CẢ đầu từ; ō đầu từ vẫn o); Sanjyo → xan-giô (jy → j); Hiiraghi → hi-ra-ghi (gh → g);
-  Gesunoh → ghét-xu-nô (tên cố định, KHÔNG suy rộng ge → ghét); Theia → thi-a, Tio → ti-ô (tên kiểu Âu trong truyện Nhật, Hepburn không có ti: cố định trong
-  `_JA_FIXED`, chỉ đúng các tên này, không mở ti cho mọi tên; Fina → phi-na sau đó thành luật fi → phi).
 - Lần 8 (Hàn): tokki → tô-ki (alt to-ki; kk là phụ âm đầu căng nên to-kki thắng tok-ki khi RR không phân; chỉ kk, Oppa vẫn không đoán); Gangwon → kang-guôn (cố định gang-won, viết cang
   theo chính tả vì bộ kiểm âm tiết không nhận kang; w giữa từ → gu theo analogy `ko_w_gu`).
 - Lần 9 (Nhật, 04-10 trưa): xem các dòng ya / yu / yo, oi, phụ âm đôi, m, di ở bảng trên; thêm Yukinoshita → giu-ki-nô-si-ta, Poh-chan → pô-chan.
-  Agent từng suy rộng Hatta thành "gộp mọi phụ âm đôi"; chủ sách bác bằng Sapporo / Hokkaido / Nissan / Matcha - nên một ca lạ là ngoại lệ, đừng suy luật từ nó.
 - Lần 9 (Hàn): oppa → óp-pa, unnie → un-ni (ie cuối → i), noona → nu-na, Ahn → an, Yeeun → de-ưn (= gie-ưn), Yejin → de-din, Yerin → de-rin (**ye đầu từ → gie**,
   e mở), Muyoung → mu-giong, Young → giong, Chaeyeon → che-gion, Seoyeon → xeo-gion (**yeo + phụ âm cuối → gi + o + coda**; "young" viết = yeong), Namgung → nam-gung,
   Hye → hê, Jeongeun → châng-gưn, Luda → lu-đa, won (tiền) → guôn. Cố định `_KO_FIXED_*`: Jeongeun, Luda (l đầu từ chỉ mở cho tên này), Oppa. Trả lời nhỏ sau đó: Hyunn → hi-un
@@ -168,8 +165,8 @@ Token đi qua bước tiền xử lý trước khi áp bảng mục 2-3 (`romani
 |---|---|---|
 | TOÀN HOA (KANATA, REI, NEE-SAN) | casefold rồi đọc, viết hoa chữ đầu như thường (Ca-na-ta, Rây, Ne-xan) | không |
 | CamelCase (OkabeRintarou) | tách ở chữ hoa giữa từ, mỗi nửa một bộ phận cách nhau dấu cách (O-ca-be Rin-ta-râu); hai nửa đều MỘT âm tiết (JoJo, ChuChu) là một tên lặp, nối gạch (Giô-giô); mỗi nửa phải dài từ hai chữ | `analogy:camel_split` |
-| hoa lạ không tách được (HImeno) | đọc như viết hoa chữ đầu của chính token (Hi-me-nô) | `analogy:case_fold` |
-| gạch nối + hậu tố (Tenshi-chwan, Haruto-kun, PD-nim) | mỗi đoạn một bộ phận; hậu tố gọi và đoạn thường sau gạch nối gạch vào tên thành một chuỗi, đoạn viết hoa là từ mới (Waseda-Keio). `chwan` là cách viết nũng của `chan` (ch + oa + n: choan) | không |
+| hoa lạ không tách được (HAruto) | đọc như viết hoa chữ đầu của chính token (Ha-ru-tô) | `analogy:case_fold` |
+| gạch nối + hậu tố (Tenshi-chan, Haruto-kun, PD-nim) | mỗi đoạn một bộ phận; hậu tố gọi và đoạn thường sau gạch nối gạch vào tên thành một chuỗi, đoạn viết hoa là từ mới (Waseda-Keio) | không |
 | đoạn là chữ Việt có dấu (Vương-sama, Kanata-cả) | GIỮ NGUYÊN chữ ấy, phần còn lại đọc | `keep:viet` |
 | đoạn là viết tắt TOÀN HOA 2-4 chữ (PD-nim) hay chữ Anh từ 4 chữ trở lên (Ikemen-style, Mary-san) | GIỮ NGUYÊN; đọc đoạn ấy là việc của luật chữ viết tắt / `english_vi`. Chữ Anh mà hệ kia (RR khi gốc Nhật, romaji khi gốc Hàn) đọc được thì KHÔNG giữ (Ji-Young, Sophia: là tên Hàn); chữ Anh cạnh một đoạn cũng là chữ Anh (Spider-Man) là tên Tây | `keep:abbr`, `keep:english` |
 | Hàn: sh, oo, woo, yoo | sh -> s (Shinhyun -> Xin-hi-un), oo -> u (Joo -> Giu, Hoon -> hun), woo -> u (Ji-woo -> Gi-u) | không |
@@ -179,7 +176,7 @@ Token đi qua bước tiền xử lý trước khi áp bảng mục 2-3 (`romani
 Giữ nguyên cần ít nhất một đoạn còn lại đọc theo luật; không thì None. Chữ Việt không dấu (Khoan, Seo) không được giữ vì nhiều tên romaji / RR cũng là âm tiết Việt.
 Cố ý để None: Jinyoon (Jin-yun hay Ji-nyun), Spider-Man, iPhone, YouTube, PD đứng riêng.
 Chưa quyết (liệt kê để chủ sách phán; oh, jy, gh, tokki, Gangwon chốt ở lần 8; ff, uya, m, di, Jeongeun, Oppa, Luda, Taruー, Fii, Hyunn, Gyu chốt ở lần 9): ti của tên
-phương Tây ngoài Tio / Theia (Hepburn không có ti; fi đã thành luật phi).
+phương Tây có âm ti (Hepburn không có ti; fi đọc phi theo bảng).
 
 ## 4. Tên tiếng Anh và phương Tây
 
@@ -212,7 +209,7 @@ Nate → na-te / nết.
 **Lần 6 (04-10):** Paul → pau, higher → hai-gờ, Laplace → la-pờ-lết, Jane → giên / dên, Cage → ca-ghe, Cale → ca-le, Walt → guốt,
 Dalton → đan-tơn, days → đay, Luce → lu-xe.
 
-**Lần 7-8 (04-10):** Washington → oa-sinh-tơn (lần 9 sửa oa-xinh-tơn), Edison → ê-đi-xơn, Gangwon, Theia, Fina, Tio (xem mục 2).
+**Lần 7-8 (04-10):** Washington → oa-sinh-tơn (lần 9 sửa oa-xinh-tơn), Edison → ê-đi-xơn, Gangwon và fi (xem mục 2).
 
 **Lần 9 (04-10 trưa, 89 từ + 41 từ chủ sách đưa ngày 02-09 tìm lại trong phiên cũ):** Lancel lan-xồ, Lucas lu-cát, Golem gô-lem, Damien đa-men,
 Garfiel ga-phi-eo, Karen ca-ren, Darius đa-ri-ớt, Violet vai-ô-lét, Hunter hăn-tờ / hăn-tơ, Claudia cờ-lau-đi-a, Ragna rác-na, Audin au-đin,
@@ -376,3 +373,24 @@ Toàn bộ URL kèm loại và mức kiểm ở `Corpus/research/tn/reading_evid
 - Tuổi Trẻ 21/4/2010, "Những chữ cái nhảy múa": https://tuoitre.vn/nhung-chu-cai-nhay-mua-374522.htm
 - Nguyễn Thiện Giáp, "Chuẩn hoá các tên riêng": https://ngonngu.net/chuanhoa_ntg_05/186
 - Kang (2011), "Loanword phonology": https://www.yoonjungkang.com/uploads/1/1/6/2/11625099/tbc_100.kang.pdf
+# VieNeu: nhận diện romaji và bảng dự phòng Nhật (08-11-2026)
+
+`abook/readaloud/japanese_policy.json` chứa bảng âm và ngưỡng dùng chung: Python đọc trực tiếp,
+Gradle nhúng cùng JSON cho Kotlin. Bảng giữ fu → phu, tsu → xu, shi → si, ou → âu, ei → ây,
+âm dài, phụ âm đôi và kính ngữ. Chỉ có ngoại lệ từ vựng phổ thông onigiri. Đây là xấp xỉ âm Việt.
+
+Bộ nhận diện phải tách hết chữ bằng bảng `allowed`, `onsets`, `geminate_coda`. Nguyên âm dài tính
+một âm tiết; n và phụ âm đôi cần nguyên âm đứng trước. Một tên viết hoa được đọc khi có ít nhất
+ba âm tiết, kính ngữ dính, hoặc hai từ romaji viết hoa đứng liền nhau. Dấu câu cắt ngữ cảnh cặp.
+Từ Việt hợp lệ, từ trong từ điển Anh hiện có, từ Nhật phổ thông và chữ toàn hoa không là chứng cứ tên.
+Đồng tự ngắn cần ngữ cảnh; tên Tây trong từ điển vẫn giữ chữ kể cả cạnh tên Nhật. Gốc Hàn giữ đường Hàn.
+Sổ nhân vật hiện không có trường ngôn ngữ riêng từng tên; không suy ra trường ấy từ nhãn người nói.
+
+Studio khóa theo thành phần. Cặp họ–tên tạo cách đọc thành phần trong chính dự án; materialization
+ưu tiên cách đọc người nghe cho từng từ hoặc cụm. Anchor/event tự động giữ `provenance=auto`,
+spelling nguồn, dấu âm dài và namespace `jp-fallback1`. SQLite nguồn được giữ nguyên khi materialize.
+Cache VieNeu, quality hash và hash analysis/casting bao gồm policy và parser; thay luật là thay pipeline.
+
+Fixture Nhật chung dùng tên phổ thông và câu tự viết. Ngưỡng được chọn trên dev và kiểm tra đồng tự
+tổng hợp trước khi chấm sách khác. Số đo held-out, đối chứng audio và phạm vi test ở `codex/jpimpl2/report.md`
+ngoài repo. Recall và precision phải báo riêng; từ chối tên ngắn là bỏ sót, không tính là đoán đúng.

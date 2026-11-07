@@ -921,8 +921,10 @@ def reading_tag(text: str, origin: str | None, speaks_english: bool = True, *, d
         tags.append(f"en{names.ENGLISH_READING}")
     if direct_english:
         from .english_policy import VERSION
+        from .japanese_policy import NAMESPACE
 
         tags.append(f"direct-en{VERSION}")
+        tags.append(NAMESPACE)
     return "+".join(tags)
 
 

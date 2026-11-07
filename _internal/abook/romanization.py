@@ -1,6 +1,6 @@
 """Đọc romaji Nhật (Hepburn) và phiên âm Latinh Hàn (RR) thành âm tiết tiếng Việt, theo `docs/READING_FOREIGN_NAMES.md` mục 1-3.
 
-Quy ước ở tài liệu ấy là NGUỒN DUY NHẤT; mỗi lựa chọn dưới đây có ghi dòng của nó. Không dùng `ENGLISH_TO_VIETNAMESE.md`,
+Bảng dự phòng Nhật trong `readaloud/japanese_policy.json` dùng chung với Kotlin. Không dùng `ENGLISH_TO_VIETNAMESE.md`,
 `_local_name_fallback` hay tên đã khoá. Bản Kotlin y hệt: `vn/abook/player/readaloud/Romanization.kt`; hai bên cùng đọc
 `tests/fixtures/romanization/cases.json` (sinh bằng `scripts/build_romanization_fixture.py`), nên đổi một bên là phải đổi cả hai.
 
@@ -18,12 +18,14 @@ và một loại cho phần KHÔNG đọc:
 
 Tiền xử lý token (docs/READING_FOREIGN_NAMES.md mục 2-3): TOÀN HOA casefold rồi đọc, viết hoa đầu như thường (KANATA -> Ca-na-ta); CamelCase tách ở chữ hoa giữa từ, đọc từng nửa
 cách nhau dấu cách (OkabeRintarou -> O-ca-be Rin-ta-râu; hai nửa đều MỘT âm tiết thì nối gạch: JoJo -> Giô-giô; cờ analogy:camel_split), hoa lạ không tách được đọc như viết hoa
-chữ đầu (HImeno; analogy:case_fold); gạch nối: đoạn thường hay hậu tố nối gạch vào tên, đoạn viết hoa là từ mới; tên Hàn viết quen (sh, oo, woo, weo, ah) đổi về RR (`_ko_spelling`).
+chữ đầu (HAruto; analogy:case_fold); gạch nối: đoạn thường hay hậu tố nối gạch vào tên, đoạn viết hoa là từ mới; tên Hàn viết quen (sh, oo, woo, weo, ah) đổi về RR (`_ko_spelling`).
 """
 from __future__ import annotations
 
 import re
 import unicodedata
+
+from .readaloud.japanese_policy import POLICY as JAPANESE_POLICY
 
 # Chỗ quy ước còn "mở" (mục 3 dòng oe / wi / ui / we / wae, mục 7). Mặc định ở đây là quyết định tạm của app. Chủ sách 04-10 đã chốt (không còn mở): y + nguyên
 # âm của cả Nhật lẫn Hàn -> gi + nguyên âm (Yamato -> Gia-ma-tô, Yoon -> Giun); k / t / p bật hơi của Hàn đọc như âm thường (Kang -> Cang, không kh); wo -> uô.
@@ -34,19 +36,12 @@ OPEN_CHOICES = {
 
 # Các điểm quy ước ghi [Chọn] / để ngỏ, và giá trị đang dùng. Giá trị là KẾT QUẢ QUÉT theo bằng chứng (scripts/sweep_romanization_variants.py:
 # thử mọi biến thể, đếm dạng có nguồn khớp, ca "owner" x100, Bộ Ngoại giao x2, SGK x1, cộng đồng x0; hoà thì lấy biến thể có lý do ngữ âm và
-# cho âm tiết hợp lệ). Bản Kotlin chỉ cài các giá trị mặc định này. KHÔNG nằm ở đây vì chủ sách đã chốt, cố định, không quét: u Nhật -> u
+# cho âm tiết hợp lệ). Bản Kotlin chỉ cài các giá trị mặc định này. Các quy ước lịch sử trong JSON: u Nhật -> u
 # ở mọi chỗ (fu phu, ku cu, ru ru, su xu, zu du, tsu xu, gu gu), hậu tố nối gạch (Haruto-kun -> Ha-ru-tô-cun), fu -> phu, e Nhật -> e
 # (Hajime -> Ha-gi-me, Kôbe -> Cô-be), y + nguyên âm -> gi (Yamato -> Gia-ma-tô, Ayaka -> A-gia-ca; Yoon -> Giun), ee -> e, ii -> i (Onee -> One,
 # Hiiragi -> Hi-ra-ghi), yu sau phụ âm tách (Ryuu -> Ri-u), shu -> su, k / t / p bật hơi của Hàn -> c / t / p, j Hàn -> gi, eo -> eo / e-o + coda
 # (Seo -> Xeo, Jeong -> Gie-ong), wo -> uô (Won -> Guôn). "ei" dưới đây cũng đã chốt (Rei -> Rây), "g" trước i đọc "ghi" (Hiiragi) còn ji -> gi.
 CHOICES = {
-    "s": "x",                 # s Nhật (sa su se so): "x" | "s"
-    "sh": "s",                # shi, sha, sho: "s" | "x"
-    "ei": "ây",               # ei Nhật: CHỦ SÁCH 04-10 "Rei -> Rây, sensei -> xen-xây" (không quét); "e" | "ây" | "ay" là các dạng đã loại
-    "k": "orth",              # "orth" (c / k theo chính tả) | "k_all" | "k_o" (k trước ô) - hai dạng sau bộ kiểm âm tiết không nhận
-    "g": "gh",                # g trước i: CHỦ SÁCH 04-10 "Hiiragi -> hi-ra-ghi" (không quét); "gh" (ghi) | "gi" (gi, như ji) là dạng đã loại; trước e luôn ghe
-    "kya": "ki_a",            # kya: "ki_a" (ki-a, như kyo -> ki-ô) | "kia"
-    "ss": "t",                # ss Nhật khép âm tiết trước: "t" | "c"
     "ko_g": "k",              # g đầu từ của Hàn: "k" | "g"
     "ko_d": "t",              # d đầu từ: "t" | "đ"
     "ko_b": "b",              # b đầu từ: CHỦ SÁCH 04-10 "Busan -> bu-xan" (không quét; Park vẫn pắc vì chữ P là p): "p" | "b"
@@ -55,15 +50,13 @@ CHOICES = {
     "ko_tense": "plain",      # kk tt pp jj ss: "plain" (c t p ch x) | "aspirated" (kh th ph ch x)
     "ko_a_short": True,       # a khép bằng k / t / p -> ă (Pắc) hay a (Pác)
 }
+CHOICES.update(JAPANESE_POLICY["choices"])
+
 # Bộ kiểm âm tiết có bật không (quét tắt đi để đếm cả biến thể mà bộ kiểm không nhận; dùng thật luôn bật).
 _CHECK_SYLLABLES = True
 
-_LONG_VOWELS = {
-    "ā": "a", "ī": "i", "ū": "u", "ē": "e", "ō": "o", "â": "a", "î": "i", "û": "u", "ê": "e", "ô": "o",
-    "Ā": "A", "Ī": "I", "Ū": "U", "Ē": "E", "Ō": "O", "Â": "A", "Î": "I", "Û": "U", "Ê": "E", "Ô": "O",
-}
-# Tiếng Nhật giữ ō / ô thành "ô" (nguyên âm dài viết bằng dấu -> ô), để phân biệt với "ou" viết ra hai chữ (-> âu: chủ sách 04-10)
-_JA_LONG_O = {"ō": "ô", "Ō": "Ô", "ô": "ô", "Ô": "Ô"}
+_LONG_VOWELS = JAPANESE_POLICY["long_vowels"]
+_JA_LONG_O = JAPANESE_POLICY["long_o"]
 _ACUTE = "́"
 _DIACRITIC_VOWELS = "ăâêôơư"
 _FRONT = ("i", "e", "ê", "y")
@@ -145,36 +138,15 @@ def _validated(syllables: list[_Syl], capital: bool) -> str | None:
 
 # ---- tiếng Nhật (mục 2) ----------------------------------------------------------------------------------------------
 
-_JA_VOWELS = "aiueo"
-_JA_VOWELS_LONG = _JA_VOWELS + "ôŏ"  # ô: o viết bằng dấu (ō), đọc ô; ŏ: "oh" trước phụ âm / cuối từ (nội bộ, `_ja_spelling`), luôn đọc ô kể cả đầu từ
-_JA_VOWEL = {"a": "a", "i": "i", "u": "u", "e": "e", "o": "ô"}  # a i u e o -> a i u e ô (chủ sách 04-10: u -> u và e -> e ở mọi chỗ, không ư / ê)
-# s -> x (luật 1.4), k / g theo chính tả (K, G), z -> d, d -> đ, h -> h, r -> r
-_JA_SIMPLE = {"k": "K", "g": "G", "s": "S", "z": "d", "t": "t", "d": "đ", "n": "n", "h": "h", "b": "b", "p": "p", "m": "m", "r": "r"}
-# Âm nào đi với nguyên âm nào trong Hepburn: không có ti, tu, di, du, si, zi, hu, wo, ye...
-_JA_ALLOWED = {
-    "k": "aiueo", "g": "aiueo", "n": "aiueo", "b": "aiueo", "p": "aiueo", "m": "aiueo", "r": "aiueo",
-    "s": "aueo", "z": "aueo", "t": "aeo", "d": "aieo", "h": "aieo",  # di: tên kiểu Latin trong truyện Nhật (Reidi, Direkuresu; chủ sách 04-10 lần 9), Hepburn không có
-    "sh": "aiueo", "ch": "aiueo", "j": "aiueo", "ts": "u", "f": "ui", "w": "a", "y": "auo",
-    "ky": "auo", "gy": "auo", "ny": "auo", "hy": "auo", "by": "auo", "py": "auo", "my": "auo", "ry": "auo",
-}
-_JA_ONSETS = ("sh", "ch", "ts", "ky", "gy", "ny", "hy", "by", "py", "my", "ry")
-_JA_GEMINATE_CODA = {"k": "c", "p": "p", "t": "t", "s": "ss"}  # kk pp tt ss: khép bằng c / p / t (ss: analogy, s không đứng cuối; CHOICES["ss"]); chủ sách lần 9: Sapporo, Hokkaido, Nissan, Matcha
-
-
-# Từ đã quen ở Việt Nam, chủ sách ghi đè cố định (04-10; không đổi luật): onigiri (cơm nắm) -> o-ni-gi-ri, trong khi g + i -> ghi (Hiiragi) vẫn đứng.
-_JA_FIXED: dict[str, tuple[tuple[str, ...], ...]] = {
-    "onigiri": (("", "o"), ("n", "i"), ("gi", "i"), ("r", "i")),
-    # chwan: cách viết nũng của -chan (Tenshi-chwan); w giữa ch và a là bán âm oa (analogy theo wa -> oa), khép n
-    "chwan": (("ch", "oa", "n"),),
-    # chủ sách 04-10 (lần 8), tên cố định: Gesunoh -> ghét-xu-nô (KHÔNG suy rộng ge -> ghét); Theia -> thi-a, Tio -> ti-ô là tên kiểu Âu trong truyện Nhật
-    # (Hepburn không có ti, nên không đi qua luật: chỉ đúng các tên này; fi -> phi thì là luật từ lần 9, Fina -> phi-na)
-    "gesunoh": (("G", "e", "t"), ("x", "u"), ("n", "ô")),
-    "theia": (("th", "i"), ("", "a")),
-    "tio": (("t", "i"), ("", "ô")),
-    # chủ sách lần 9, ngoại lệ không có luật: Hatta -> ha-ta (tt KHÔNG khép, khác Sapporo, Nissan, Matcha); Koichi -> co-i-chi (ghép kou + ichi, khác Koizumi -> coi-du-mi)
-    "hatta": (("h", "a"), ("t", "a")),
-    "koichi": (("K", "o"), ("", "i"), ("ch", "i")),
-}
+_JA_VOWELS = JAPANESE_POLICY["vowels"]
+_JA_VOWELS_LONG = JAPANESE_POLICY["internal_vowels"]
+_JA_VOWEL = JAPANESE_POLICY["vowel"]
+_JA_SIMPLE = JAPANESE_POLICY["simple"]
+_JA_ALLOWED = JAPANESE_POLICY["allowed"]
+_JA_ONSETS = tuple(JAPANESE_POLICY["onsets"])
+_JA_GEMINATE_CODA = JAPANESE_POLICY["geminate_coda"]
+_JA_FIXED = JAPANESE_POLICY["fixed"]
+_JA_EMIT = JAPANESE_POLICY["emit"]
 
 _JA_PROLONGED = re.compile(r"ー+(?=$|[\s-])")
 _JA_GH = re.compile(r"gh(?=[aiueo])")
@@ -213,19 +185,19 @@ def _ja_emit(onset: str, vowel: str, syllables: list[_Syl], flags: list[str]) ->
     elif onset == "sh":  # shi shu sha sho -> si su sa sô (luật 1.4; chủ sách 04-10: shu giữ s + u, không xiu)
         syllables.append(_Syl(CHOICES["sh"], _JA_VOWEL[vowel]))
     elif onset == "ch":  # chu -> chu (Chu-bu), u sau âm vòm
-        syllables.append(_Syl("ch", _JA_VOWEL[vowel]))
+        syllables.append(_Syl(_JA_EMIT["ch"], _JA_VOWEL[vowel]))
     elif onset == "j":  # ji -> gi, ja -> gia, ju -> giu, jo -> giô
-        syllables.append(_Syl("gi", _JA_VOWEL[vowel]))
+        syllables.append(_Syl(_JA_EMIT["y"] if onset == "y" else _JA_EMIT["j"], _JA_VOWEL[vowel]))
     elif onset == "ts":  # tsu -> xu ở mọi chỗ (chủ sách 04-10: Tsubasa -> Xu-ba-xa; trước đó chu)
-        syllables.append(_Syl("x", "u"))
+        syllables.append(_Syl(_JA_EMIT["ts"], _JA_VOWEL["u"]))
     elif onset == "f":  # fu -> phu (chủ sách 04-10: Fukushima -> Phu-cu-si-ma); fi -> phi (lần 9: Fii -> Phi, Fina -> Phi-na; tên kiểu Âu trong truyện Nhật)
-        syllables.append(_Syl("ph", vowel))
+        syllables.append(_Syl(_JA_EMIT["f"], vowel))
     elif onset == "w":
-        syllables.append(_Syl("", "oa"))  # wa -> oa (Ca-oa-xa-ki)
+        syllables.append(_Syl("", _JA_EMIT["w"]))  # wa -> oa (Ca-oa-xa-ki)
     elif onset == "y":  # y + nguyên âm -> gi + nguyên âm, đầu từ và giữa từ (chủ sách 04-10: Yamato -> Gia-ma-tô, Ayaka -> A-gia-ca); yu, yo theo ya
         if vowel != "a":
             flags.append("analogy:y_gi")
-        syllables.append(_Syl("gi", _JA_VOWEL[vowel]))
+        syllables.append(_Syl(_JA_EMIT["y"] if onset == "y" else _JA_EMIT["j"], _JA_VOWEL[vowel]))
     else:  # ky gy ny hy by py my ry: kyu -> ki-u, ri-u (chủ sách 04-10: tách như kyo, không kiu); kyo -> ki-ô, ri-ô (mục 2); kya -> ki-a theo hàng kyo
         head = _JA_SIMPLE[onset[0]]
         if vowel == "a":
@@ -247,7 +219,7 @@ def _ja_word(word: str, flags: list[str]) -> list[_Syl] | None:
     while i < size:
         c = word[i]
         after = word[i + 1:i + 2]
-        # kk / pp / tt / ss, tch, ssh: phụ âm đôi khép âm tiết trước (mục 2; chủ sách lần 9: Sapporo -> Xáp-pô-rô, Nissan -> Nít-xan, Matcha -> Mát-cha; Hatta là ngoại lệ, `_JA_FIXED`)
+        # kk / pp / tt / ss, tch, ssh: phụ âm đôi khép âm tiết trước (mục 2; chủ sách lần 9: Sapporo -> Xáp-pô-rô, Nissan -> Nít-xan, Matcha -> Mát-cha)
         if c in _JA_GEMINATE_CODA and (after == c or (c == "t" and word[i + 1:i + 3] == "ch")):
             if c == "s":
                 flags.append("analogy:ss_t")
@@ -317,7 +289,7 @@ def _ja_word(word: str, flags: list[str]) -> list[_Syl] | None:
         elif vowel == "o" and follow == "u":
             if onset in ("sh", "ch", "j"):
                 flags.append("analogy:ou_vom")  # shou, chou, jou theo kyou / ryou của chủ sách (đã có âm vòm, không tách i-âu)
-            syllables[-1].nucleus = "âu"
+            syllables[-1].nucleus = JAPANESE_POLICY["vowel_pairs"]["ou"]
             j += 1
         elif vowel == follow and vowel in "oueia":
             j += 1  # nguyên âm kép viết lặp gộp một: oo -> ô, uu -> u, ee -> e, ii -> i, aa -> a (chủ sách 04-10: Onee -> O-ne, Hiiragi -> Hi-ra-ghi, Okaa -> O-ca)
@@ -331,7 +303,7 @@ def _ja_word(word: str, flags: list[str]) -> list[_Syl] | None:
             syllables[-1].nucleus += "i"
             j += 1
         elif vowel == "o" and follow == "i" and onset and not forced_o:
-            syllables[-1].nucleus = "oi"  # oi sau phụ âm là MỘT âm tiết (chủ sách lần 9: Koizumi -> Coi-du-mi, Izayoi -> I-da-gioi); không phụ âm đầu thì tách (Aoi -> A-o-i); Koichi là ngoại lệ
+            syllables[-1].nucleus = "oi"  # oi sau phụ âm là MỘT âm tiết (chủ sách lần 9: Koizumi -> Coi-du-mi, Izayoi -> I-da-gioi); không phụ âm đầu thì tách (Aoi -> A-o-i)
             j += 1
         i = j
     return syllables
@@ -637,7 +609,7 @@ def _ko_nucleus(onset: str, vowel: str, closing: str, flags: list[str], initial:
 
 # ---- cửa vào ---------------------------------------------------------------------------------------------------------
 
-_JA_SUFFIXES = ("san", "kun", "chan", "chwan", "sama", "senpai", "sensei", "dono", "tan", "nee", "nii")  # hậu tố gọi (mục 2): đọc theo chính bảng romaji, không có luật riêng
+_JA_SUFFIXES = tuple(JAPANESE_POLICY["suffixes"])  # hậu tố gọi (mục 2): đọc theo chính bảng romaji, không có luật riêng
 _ABBREVIATION_MAX = 4  # chữ TOÀN HOA dài nhất mà còn coi là viết tắt (PD, NPC) khi giữ nguyên
 _ENGLISH_MIN = 4  # chữ Anh ngắn hơn thế (Si, Man, ram) dễ là âm tiết của tên Nhật / Hàn: không giữ
 
@@ -668,7 +640,7 @@ def _shape(letters: str) -> str:
 
 
 def _split_camel(segment: str) -> list[str]:
-    """Tách ở chữ hoa đứng sau chữ thường (OkabeRintarou -> Okabe, Rintarou) hay chữ hoa cuối chuỗi hoa mà liền sau là chữ thường (HImeno -> H, Imeno)."""
+    """Tách ở chữ hoa đứng sau chữ thường (OkabeRintarou -> Okabe, Rintarou) hay chữ hoa cuối chuỗi hoa mà liền sau là chữ thường (HAruto -> H, Imeno)."""
     parts, start = [], 0
     for i in range(1, len(segment)):
         after = segment[i + 1] if i + 1 < len(segment) else ""
@@ -735,7 +707,7 @@ def _segment_units(segment: str, origin: str, allow_english: bool, flags: list[s
         if all(unit is not None for unit in units):
             flags.append("analogy:camel_split")
             return units  # type: ignore[return-value]
-    # hoa lạ không tách được (HImeno): đọc như viết hoa chữ đầu
+    # hoa lạ không tách được (HAruto): đọc như viết hoa chữ đầu
     unit = _unit(segment.lower(), segment[0].isupper(), origin, False)
     if unit is None or unit.kind != "read":
         return None

@@ -29,7 +29,7 @@ class EnglishDirectTest {
         assertEquals(policy.getInt("version"), EnglishPolicy.VERSION)
         assertEquals("auto", EnglishPolicy.PROVENANCE)
         assertTrue(EnglishPolicy.ACRONYMS.containsAll(listOf("UDF", "MIT", "GPS", "DNA", "ID")))
-        assertEquals("direct-en${EnglishPolicy.VERSION}", VieneuUnits.readingTag("Tôi kiểm GPS.", null, directEnglish = true))
+        assertEquals("direct-en${EnglishPolicy.VERSION}+jp-fallback1", VieneuUnits.readingTag("Tôi kiểm GPS.", null, directEnglish = true))
         assertEquals("", VieneuUnits.readingTag("Tôi kiểm GPS.", null))
     }
 }

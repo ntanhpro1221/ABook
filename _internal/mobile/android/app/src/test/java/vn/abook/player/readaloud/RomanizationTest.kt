@@ -88,8 +88,8 @@ class RomanizationTest {
         assertEquals("O-ca-be Rin-ta-râu", Romanization.reading("OkabeRintarou", "ja"))
         assertEquals("Chu-chu", Romanization.reading("ChuChu", "ja"))
         assertEquals("Nhạc Giô-giô", Romanization.reading("NhạcJoJo", "ja"))
-        assertEquals("Hi-me-nô", Romanization.reading("HImeno", "ja"))
-        assertEquals("Ten-si-choan", Romanization.reading("Tenshi-chwan", "ja"))
+        assertEquals("Ha-ru-tô", Romanization.reading("HAruto", "ja"))
+        assertEquals("Ten-si-chan", Romanization.reading("Tenshi-chan", "ja"))
         assertEquals("Gấu-xan", Romanization.reading("Gấu-san", "ja"))
         assertEquals("Ca-na-ta-cả", Romanization.reading("Kanata-cả", "ja"))
         assertEquals("I-ke-men-style", Romanization.reading("Ikemen-style", "ja"))
@@ -122,7 +122,7 @@ class RomanizationTest {
             Triple("Sakuya", "ja", "Xa-cu-gia"), Triple("Direkuresu", "ja", "Đi-re-cu-re-xu"), Triple("Hamsuke", "ja", "Ham-xu-ke"), Triple("ecchi", "ja", "ét-chi"),
             Triple("Haffu", "ja", "Ha-phu"), Triple("Reidi", "ja", "Rây-đi"), Triple("Kiyoshi", "ja", "Ki-ô-si"), Triple("Sayo", "ja", "Xa-giô"),
             Triple("unnie", "ko", "un-ni"), Triple("Yeeun", "ko", "Gie-ưn"), Triple("Muyoung", "ko", "Mu-giong"), Triple("Chaeyeon", "ko", "Che-gion"),
-            Triple("Hatta", "ja", "Ha-ta"), Triple("Koichi", "ja", "Co-i-chi"), Triple("Koizumi", "ja", "Coi-du-mi"), Triple("Taruー", "ja", "Ta-ru"), Triple("Fii", "ja", "Phi"), Triple("Fina", "ja", "Phi-na"), Triple("Hyunn", "ko", "Hi-un"), Triple("Gyu", "ko", "Ghiu"), Triple("Hyung", "ko", "Hi-ung"), Triple("Nissan", "ja", "Nít-xan"), Triple("Yejin", "ko", "Gie-gin"), Triple("Seoyeon", "ko", "Xeo-gion"),
+            Triple("Koizumi", "ja", "Coi-du-mi"), Triple("Taruー", "ja", "Ta-ru"), Triple("Fii", "ja", "Phi"), Triple("Fina", "ja", "Phi-na"), Triple("Hyunn", "ko", "Hi-un"), Triple("Gyu", "ko", "Ghiu"), Triple("Hyung", "ko", "Hi-ung"), Triple("Nissan", "ja", "Nít-xan"), Triple("Yejin", "ko", "Gie-gin"), Triple("Seoyeon", "ko", "Xeo-gion"),
             Triple("Young", "ko", "Giong"), Triple("Jeongeun", "ko", "Châng-gưn"), Triple("Luda", "ko", "Lu-đa"), Triple("Oppa", "ko", "Óp-pa"),
             Triple("Jeong", "ko", "Gie-ong"), Triple("Yeo", "ko", "Gieo"),
         )) {

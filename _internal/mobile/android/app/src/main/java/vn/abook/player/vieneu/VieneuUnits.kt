@@ -790,7 +790,10 @@ object VieneuUnits {
         val toks = tokens(text)
         val tags = mutableListOf<String>()
         if (origin in Names.ORIGINS && spokenTokens(toks, origin) != spokenTokens(toks)) tags.add(origin!!)
-        if (directEnglish) tags.add("direct-en${EnglishPolicy.VERSION}")
+        if (directEnglish) {
+            tags.add("direct-en${EnglishPolicy.VERSION}")
+            tags.add(vn.abook.player.readaloud.JapanesePolicy.NAMESPACE)
+        }
         return tags.joinToString("+")
     }
 
