@@ -51,7 +51,9 @@ def honorific_stretch(core: str, origin: str | None) -> str | None:
     if suffix not in names.HONORIFICS or suffix == parts[-1].lower():
         return None
     canonical = "-".join(parts[:-1] + [suffix])
-    reading = names.honorific_reading(canonical, origin)
+    from .japanese_policy import reading as japanese_reading
+
+    reading = japanese_reading(canonical, origin) or names.honorific_reading(canonical, origin)
     return reading + "…" if reading else None
 
 

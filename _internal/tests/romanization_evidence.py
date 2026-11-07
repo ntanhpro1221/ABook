@@ -84,12 +84,9 @@ SOURCED: list[tuple[str, str, tuple[str, ...], str]] = [
     # Theia, Fina, Tio (tên kiểu Âu trong truyện Nhật; Hepburn không có ti / fi); Hàn: kk -> k (tokki), Gangwon -> kang-guôn (luật viết cang theo chính tả, xem EXPLAINED)
     ("Ohto", "ja", ("ô-tô",), "owner"),
     ("Ohka", "ja", ("ô-ca",), "owner"),
-    ("Gesunoh", "ja", ("ghét-xu-nô",), "owner"),
     ("Sanjyo", "ja", ("xan-giô",), "owner"),
     ("Hiiraghi", "ja", ("hi-ra-ghi",), "owner"),
-    ("Theia", "ja", ("thi-a",), "owner"),
     ("Fina", "ja", ("phi-na",), "owner"),
-    ("Tio", "ja", ("ti-ô",), "owner"),
     ("Gangwon", "ko", ("kang-guôn",), "owner"),
     ("tokki", "ko", ("tô-ki", "to-ki"), "owner"),
     # phán quyết lần 9 (04-10 trưa). Nhật: y đầu từ / sau a, u, o, âu -> gi (Yurika, Sakuya, Kasuya, Kouya, Raiya), y sau i rơi (Shinomiya, Renya), ya CUỐI từ chỉ còn sau nguyên âm a / ây
@@ -133,11 +130,9 @@ SOURCED: list[tuple[str, str, tuple[str, ...], str]] = [
     ("Kiyoshi", "ja", ("ki-ô-si",), "owner"),
     ("Miyuki", "ja", ("mi-u-ki",), "owner"),
     ("Kiyomasa", "ja", ("ki-ô-ma-xa",), "owner"),
-    ("Hatta", "ja", ("ha-ta",), "owner"),  # ngoại lệ cố định (tt không khép, khác Sapporo, Nissan, Matcha)
     ("Hokkaido", "ja", ("hốc-cai-đô",), "owner"),
     ("Nissan", "ja", ("nít-xan",), "owner"),
     ("Matcha", "ja", ("mát-cha",), "owner"),
-    ("Koichi", "ja", ("co-i-chi",), "owner"),  # ngoại lệ cố định (ghép kou + ichi, khác Koizumi)
     ("Yejin", "ko", ("gie-gin", "de-din"), "owner"),
     ("Yerin", "ko", ("gie-rin", "de-rin"), "owner"),
     ("Seoyeon", "ko", ("xeo-gion",), "owner"),

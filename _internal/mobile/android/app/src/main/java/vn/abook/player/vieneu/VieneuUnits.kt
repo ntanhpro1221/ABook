@@ -590,7 +590,7 @@ object VieneuUnits {
      * The per-word steps (Roman numerals, level, abbreviations, names, loanwords). A word glued to the next through "…" or "—" ("rồi…Senpai", "Babi—người", "Jigen(trong", "DP?”…Tốn") is split
      * apart for a moment so each word is judged alone, then put back; a word an earlier step changed stays as it is - `_read_words`.
      */
-    private fun readWords(toks: List<String>, out: MutableList<String>, origin: String?) {
+    private fun readWords(toks: List<String>, out: MutableList<String>, origin: String?): Set<Int> {
         // Check complete source tokens before splitGlued can hide a numeric tail.
         bookLabels(toks, out)
         enumerationAbbreviations(toks, out)
@@ -607,7 +607,9 @@ object VieneuUnits {
                 if (!unchanged) break
             }
         }
+        val beforeSounds = said.toList()
         Shouts.readShouts(pieces, said, origin)
+        val vocalized = said.indices.filter { beforeSounds[it] != said[it] }.map { owner[it] }.toSet()
         romanNumbers(pieces, said)
         Abbreviations.readLevels(pieces, said)
         Abbreviations.readTitles(pieces, said)
@@ -620,6 +622,7 @@ object VieneuUnits {
         val rebuilt = Array(toks.size) { "" }
         for (k in pieces.indices) rebuilt[owner[k]] += said[k]
         for (index in toks.indices) out[index] = rebuilt[index]
+        return vocalized
     }
 
     private val COUNTED_THOUSANDS = "vàng xu yên yen đồng đô usd vnd người con cái chiếc viên điểm chương trang quân lính lần exp xp hp mp sp goblin kobold orc quái".split(" ").toSet()
@@ -775,11 +778,13 @@ object VieneuUnits {
         val out = toks.toMutableList()
         stutters(toks, out, origin)
         Shouts.readShouts(toks, out, origin)
-        readWords(toks, out, origin)
+        val vocalized = toks.indices.filter { toks[it] != out[it] }.toMutableSet()
+        vocalized.addAll(readWords(toks, out, origin))
         Readings.applyTokens(toks, out, readings)
         readingMarks(out, toks)
         if (directEnglish) {
-            EnglishPolicy.applyTokens(toks, out, origin)
+            // Sound and stutter readings precede the Japanese fallback.
+            EnglishPolicy.applyTokens(toks, out, origin, vocalized)
             Readings.applyTokens(toks, out, readings)
         }
         return out.map(::separateDigitQuotes)
@@ -806,7 +811,10 @@ object VieneuUnits {
         val toks = tokens(text)
         val tags = mutableListOf<String>()
         if (origin in Names.ORIGINS && spokenTokens(toks, origin) != spokenTokens(toks)) tags.add(origin!!)
-        if (directEnglish) tags.add("direct-en${EnglishPolicy.VERSION}")
+        if (directEnglish) {
+            tags.add("direct-en${EnglishPolicy.VERSION}")
+            tags.add(vn.abook.player.readaloud.JapanesePolicy.NAMESPACE)
+        }
         return tags.joinToString("+")
     }
 

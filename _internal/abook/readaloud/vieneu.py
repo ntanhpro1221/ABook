@@ -673,13 +673,16 @@ def spoken_tokens(toks: list[str], origin: str | None = None, speaks_english: bo
     out = list(toks)
     _stutters(toks, out, origin, speaks_english)
     shouts.read_shouts(toks, out, origin)
-    _read_words(toks, out, origin, speaks_english)
+    vocalized = {index for index, (source, said) in enumerate(zip(toks, out)) if source != said}
+    vocalized.update(_read_words(toks, out, origin, speaks_english))
     book_readings.apply_tokens(toks, out, readings)
     reading_marks(out, toks)
     if direct_english:
         from .english_policy import apply_tokens
 
-        apply_tokens(toks, out, origin)
+        # A sound or stutter already owns its reading. The later Japanese
+        # fallback must not reinterpret that source spelling as a name.
+        apply_tokens(toks, out, origin, protected=vocalized)
         book_readings.apply_tokens(toks, out, readings)
     from .studio_tn import separate_digit_quotes
 
@@ -771,7 +774,7 @@ def _enumeration_abbreviations(toks: list[str], out: list[str]) -> None:
             out[index] = before + "vân vân" + after
 
 
-def _read_words(toks: list[str], out: list[str], origin: str | None, speaks_english: bool) -> None:
+def _read_words(toks: list[str], out: list[str], origin: str | None, speaks_english: bool) -> set[int]:
     """Các bước đọc từng chữ (cấp độ, viết tắt, tên, từ mượn). Chữ dính liền hai từ qua "…" hay "—" ("rồi…Senpai", "Babi—người", "Jigen(trong", "DP?”…Tốn") được tách tạm thành từng mảnh để mỗi từ được xét riêng
     rồi ghép lại; chữ đã bị đổi ở bước trước giữ nguyên."""
     # Validate the complete source token before GLUED can hide a numeric tail.
@@ -789,7 +792,9 @@ def _read_words(toks: list[str], out: list[str], origin: str | None, speaks_engl
             owner.append(index)
             if out[index] != token:
                 break
+    before_sounds = list(said)
     shouts.read_shouts(pieces, said, origin)
+    vocalized = {index for before, after, index in zip(before_sounds, said, owner) if before != after}
     _roman_numbers(pieces, said)
     abbreviations.read_levels(pieces, said, speaks_english)
     abbreviations.read_titles(pieces, said, speaks_english)
@@ -800,6 +805,7 @@ def _read_words(toks: list[str], out: list[str], origin: str | None, speaks_engl
     for part, reading, index in zip(pieces, said, owner):
         rebuilt[index] += reading
     out[:] = rebuilt
+    return vocalized
 
 
 def _ends(token: str, marks: str) -> bool:
@@ -936,8 +942,10 @@ def reading_tag(text: str, origin: str | None, speaks_english: bool = True, *, d
         tags.append(f"en{names.ENGLISH_READING}")
     if direct_english:
         from .english_policy import VERSION
+        from .japanese_policy import NAMESPACE
 
         tags.append(f"direct-en{VERSION}")
+        tags.append(NAMESPACE)
     return "+".join(tags)
 
 

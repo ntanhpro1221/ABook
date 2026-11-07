@@ -1,6 +1,13 @@
 {
   "provenance": "Self-authored sentences; no story excerpts.",
   "cases": [
+    {"text": "Ah~Nopi, đợi tôi.", "said": "a Nô-pi, đợi tôi."},
+    {"text": "Haha!Rita đến.", "said": "ha ha!Rita đến."},
+    {"text": "Haha, Nopi!", "said": "ha ha, Nô-pi!"},
+    {"text": "Haha!Nopi đến.", "said": "ha ha!Nô-pi đến."},
+    {"text": "N-Nopika, chờ tôi.", "said": "nờ… Nô-pi-ca, chờ tôi."},
+    {"text": "NOPI-CHAAAN, đợi tôi.", "said": "Nô-pi-chan…, đợi tôi."},
+    {"text": "Umu, tôi nghe rồi.", "said": "u-mu, tôi nghe rồi."},
     {"text": "Người gác nghe tiếng ROOOOAAAR vang ngoài cửa.", "said": "Người gác nghe tiếng roa… vang ngoài cửa."},
     {"text": "UMU, tôi sẽ đặt cuốn vở ở đây.", "said": "u-mu, tôi sẽ đặt cuốn vở ở đây."},
     {"text": "_\"S-sau bữa tối, tôi sẽ trả lời.\"_", "said": "\"sờ… sau bữa tối, tôi sẽ trả lời.\""},

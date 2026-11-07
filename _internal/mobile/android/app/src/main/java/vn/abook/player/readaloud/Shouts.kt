@@ -41,7 +41,7 @@ object Shouts {
         val suffix = dedupe(parts.last().lowercase(Locale.ROOT))
         if (suffix !in Names.HONORIFICS || suffix == parts.last().lowercase(Locale.ROOT)) return null
         val canonical = (parts.dropLast(1) + suffix).joinToString("-")
-        return Names.honorificReading(canonical, origin)?.plus("…")
+        return (JapanesePolicy.reading(canonical, origin) ?: Names.honorificReading(canonical, origin))?.plus("…")
     }
 
     private fun expandedReading(core: String): String? {

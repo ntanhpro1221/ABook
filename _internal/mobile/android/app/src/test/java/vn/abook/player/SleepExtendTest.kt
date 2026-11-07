@@ -95,7 +95,7 @@ class SleepExtendTest {
     }
 
     @Test fun anOffTimerIgnoresTheNotificationButtonAndAnOldShake() {
-        assertFalse(SleepTimer.applyShake(System.currentTimeMillis()))
+        assertFalse(SleepTimer.applyShake(1_000_000L))
         SleepTimer.extend()
         assertEquals(SleepTimer.Mode.OFF, SleepTimer.mode)
         assertFalse("tắt quá 2 phút thì lắc không còn nghe", run {

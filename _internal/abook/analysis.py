@@ -10454,23 +10454,47 @@ class OllamaBookAnalyzer:
                 )
                 return
             entries = [(surface, spoken_form)]
+            if source == studio_names.RULE_ROMANIZATION_PRONUNCIATION_SOURCE:
+                # Share component keys with standalone names. No competing full
+                # name lock can subsequently override a component's reading.
+                words, groups = surface.split(), spoken_form.split()
+                if len(words) == len(groups):
+                    entries = list(zip(words, groups))
             if source == KEEP_ENGLISH_PRONUNCIATION_SOURCE:
                 # A full and a short Western name share the same component rows.
                 # Keep the separate Japanese/Korean reading route unchanged.
                 entries = [(word, word) for word in surface.split() if not is_vietnamese_syllable(word)]
             for entry_surface, entry_spoken in entries:
+                entry_source = source
+                component_plan = studio_names.planned_reading(entry_surface, origin, direct_english=True)
+                from .readaloud.japanese_policy import contextual_names, reading as japanese_reading, routing_origin
+
+                contextual_words = {surface.split()[i].casefold() for i in contextual_names(surface.split())}
+                if entry_surface.casefold() in contextual_words and routing_origin(surface, origin) == "ja":
+                    forced = japanese_reading(entry_surface, "ja", contextual=True)
+                    if forced:
+                        component_plan = (forced.replace("_", ""), studio_names.RULE_ROMANIZATION_PRONUNCIATION_SOURCE)
+                if component_plan is not None:
+                    entry_spoken, entry_source = component_plan
                 self.db.upsert_pronunciation(
                     surface=entry_surface,
                     normalized_surface=_name_candidate_key(entry_surface),
                     spoken_form=entry_spoken,
                     confidence=confidence,
-                    source=source or (
+                    source=entry_source or (
                         CONTEXTUAL_ENGLISH_NAME_PRONUNCIATION_SOURCE
                         if _name_candidate_key(entry_surface) in CMUDICT_CONTEXT_ONLY
                         else ENGLISH_NAME_PRONUNCIATION_SOURCE
                     ),
                     locked=True,
                 )
+                if entry_source == studio_names.RULE_ROMANIZATION_PRONUNCIATION_SOURCE and routing_origin(surface, origin) == "ja":
+                    from .readaloud.japanese_policy import metadata as japanese_metadata
+
+                    self.db.event("info", "NAME_READING_AUTO", "Japanese Vietnamese fallback", {
+                        "surface": entry_surface, "spoken_form": entry_spoken,
+                        **japanese_metadata(entry_surface),
+                    })
             if source == KEEP_ENGLISH_PRONUNCIATION_SOURCE:
                 self.db.event("info", "NAME_READING_AUTO", "Keep English spelling", {
                     "surface": surface, "spoken_form": spoken_form,

@@ -50,7 +50,9 @@ def keeps_word(core: str, origin: str | None) -> bool:
         return False
     if vietnamese(core) or core.lower() in names.JAPANESE_COMMON:
         return False
-    if names.name_reading(core, origin) or names.honorific_reading(core, origin):
+    from .japanese_policy import reading as japanese_reading
+
+    if japanese_reading(core, origin) or names.name_reading(core, origin) or names.honorific_reading(core, origin):
         return False
     if core.replace("-", "").lower() in names.english_words() or core.lower() in POLICY["english_words"]:
         return True
@@ -59,6 +61,10 @@ def keeps_word(core: str, origin: str | None) -> bool:
 
 def reading(core: str, origin: str | None) -> tuple[str, str] | None:
     if core in POLICY["preserve_acronyms"]:
+        return None
+    from .japanese_policy import reading as japanese_reading
+
+    if japanese_reading(core, origin):
         return None
     if core in ACRONYMS:
         return "<en>" + " ".join(core) + "</en>", "spell_english"
@@ -73,14 +79,27 @@ def reading(core: str, origin: str | None) -> tuple[str, str] | None:
     return None
 
 
-def apply_tokens(toks: list[str], out: list[str], origin: str | None) -> None:
+def apply_tokens(toks: list[str], out: list[str], origin: str | None, *, protected: set[int] | None = None) -> None:
     """Run after punctuation TN, before explicit per-book listener readings.
 
     Preserve contextual Korean names and structural TN such as chapter labels.
     Tags are generated only here, so angle-bracket TN cannot consume them.
     """
+    from .japanese_policy import apply_tokens as japanese_tokens, contextual_names, read_unmodified
+
+    protected = protected or set()
+    proposed = list(out)
+    japanese_tokens(toks, proposed, origin)
+    contextual = contextual_names(toks, origin) if protected and origin != "ko" else set()
+    for index, said in enumerate(proposed):
+        if index not in protected:
+            out[index] = said
+        else:
+            out[index] = read_unmodified(toks[index], out[index], origin, contextual=index in contextual)
     asian = names.spoken_names(toks, origin, True)
     for index, token in enumerate(toks):
+        if index in protected:
+            continue
         before, core, after = names.split_token(token)
         if not core or before[-1:].isdigit() or re.match(r"^[-–]?\d", after):
             continue
