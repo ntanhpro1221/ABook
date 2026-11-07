@@ -9,12 +9,13 @@ Item {
     id: root
     objectName: "libraryContinue"
     property var book: ({})
+    property alias transitionCover: cover
     signal openRequested()
     readonly property bool here: Player.loaded && Player.bookId === book.bookId
     readonly property bool waiting: !!Logic.progress(book).caughtUp && !here
     readonly property real measure: Math.min(width, Theme.listMeasure)
     implicitHeight: Math.max(128, copy.implicitHeight)
-    CoverView { width: 80; height: 120; title: root.book.title || ""; coverKey: root.book.coverKey || "" }
+    CoverView { id: cover; width: 80; height: 120; title: root.book.title || ""; coverKey: root.book.coverKey || "" }
     Column {
         id: copy
         objectName: "libraryContinueCopy"
@@ -40,6 +41,7 @@ Item {
         id: action; objectName: "libraryContinuePlay"
         x: root.measure - width; anchors.verticalCenter: parent.verticalCenter
         text: root.waiting ? "Chờ chương mới" : (root.here && Player.playing ? "Tạm dừng" : "Nghe tiếp")
+        reserve: ["Nghe tiếp", "Tạm dừng"]
         icon: root.waiting ? "" : root.here && Player.playing ? "pause" : "play"
         Accessible.name: root.waiting ? "Chờ chương mới" : root.here && Player.playing ? `Tạm dừng ${root.book.title}` : `Nghe tiếp ${root.book.title}${root.book.lastChapter ? ", " + root.book.lastChapter : ""}`
         enabled: !root.waiting

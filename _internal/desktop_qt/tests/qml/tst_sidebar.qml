@@ -68,6 +68,15 @@ Item {
             compare(Platform.store["sidebarExpanded"], "1")
         }
 
+        function test_toggleButtonRespondsToClick() {
+            mouseClick(sb.toggleButton, sb.toggleButton.width / 2, sb.toggleButton.height / 2)
+            tryCompare(sb, "width", 56, 1500)
+            compare(Platform.store["sidebarExpanded"], "0")
+            mouseClick(sb.toggleButton, sb.toggleButton.width / 2, sb.toggleButton.height / 2)
+            tryCompare(sb, "width", 232, 1500)
+            compare(Platform.store["sidebarExpanded"], "1")
+        }
+
         function test_contentTakesTheFreedWidth() {
             compare(content.x, 232)
             collapse()
@@ -101,6 +110,42 @@ Item {
             wait(400) // fixed: proves absence
             compare(sb.peek, false)
             compare(sb.panel.width, 56)
+        }
+
+        function test_hoverRemainsOpenOverOverlay() {
+            collapse()
+            mouseMove(sb, 20, 200)
+            tryCompare(sb, "peek", true, 1000)
+            tryCompare(sb.panel, "width", 232, 1500)
+            mouseMove(sb.panel, 180, 200)
+            wait(450) // fixed: proves absence of a delayed close while inside the overlay
+            compare(sb.peek, true)
+            compare(sb.panel.width, 232)
+            compare(content.x, 56)
+            mouseMove(host, 700, 300)
+            tryCompare(sb, "peek", false, 1500)
+            tryCompare(sb.panel, "width", 56, 1500)
+        }
+
+        function test_hoverAnimationMovesGeometryAndKeepsContentStill() {
+            collapse()
+            const origin = content.x
+            let intermediate = false
+            let lastWidth = sb.panel.width
+            mouseMove(sb, 20, 200)
+            tryCompare(sb, "peek", true, 1000)
+            const started = Date.now()
+            while (Date.now() - started < Theme.motionMedium + 100) {
+                compare(content.x, origin)
+                compare(sb.width, 56)
+                compare(sb.panel.opacity, 1)
+                verify(sb.panel.width >= lastWidth)
+                if (sb.panel.width > 56 && sb.panel.width < 232) intermediate = true
+                lastWidth = sb.panel.width
+                wait(16) // fixed: samples timing - width and content position throughout the animation
+            }
+            verify(intermediate, "Opening must interpolate width rather than switch or fade")
+            compare(sb.panel.width, 232)
         }
 
         function test_clickInOverlayNavigatesAndCloses() {

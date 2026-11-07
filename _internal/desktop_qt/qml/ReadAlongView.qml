@@ -138,11 +138,13 @@ Item {
 
     ListView {
         id: list
+        objectName: "readAlongParagraphs"
         anchors.fill: parent
+        anchors.topMargin: hint.visible ? hint.height + 2 * Theme.s12 : 0
         model: ReadAlong.timed ? ReadAlong.paragraphs : null
         clip: true
         cacheBuffer: 900
-        topMargin: hint.visible ? hint.height + 2 * Theme.s12 : 24
+        topMargin: 24
         bottomMargin: 96
         boundsBehavior: Flickable.StopAtBounds
         onMovementStarted: root.manual()

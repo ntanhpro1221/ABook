@@ -4,6 +4,7 @@ import "TextWrap.js" as TextWrap
 
 Column {
     id: root
+    property alias bookLabel: bookLabel
     property int horizontalAlignment: Text.AlignLeft
     readonly property bool preparing: Player.speaking && Player.playing && Player.buffering
     property bool delayed: false
@@ -13,6 +14,7 @@ Column {
     Connections { target: Nav; function onUiVisibleChanged() { if (Nav.uiVisible && root.preparing && root.visible) delay.restart(); else { delay.stop(); root.delayed = false } } }
     Text { width: parent.width; horizontalAlignment: root.horizontalAlignment; wrapMode: Text.Wrap; visible: Player.purpose === "review"; text: "Nghe kiểm"; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
     Text {
+        id: bookLabel
         objectName: "playerSubtitleText"; width: parent.width; wrapMode: Text.Wrap
         horizontalAlignment: root.horizontalAlignment
         text: TextWrap.keepDots(root.delayed ? "Đang chuẩn bị giọng đọc…" : Player.atEnd === "caughtUp" ? "Đã nghe hết phần đã có" : Player.bookTitle)

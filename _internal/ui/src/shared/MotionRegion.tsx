@@ -150,6 +150,13 @@ export class MotionRegion extends Component<Props> {
     let frames: Keyframe[] = empty ? [{ opacity: 1 }, { opacity: 0 }] : through
       ? [{ opacity: 0, offset: 0 }, { opacity: 0, offset: revealAt / duration }, { opacity: 1, offset: 1 }]
       : [{ opacity: 0.45 }, { opacity: 1 }];
+    // Content swaps also move when their height stays equal. Opacity alone concealed
+    // these changes; reduced motion is the explicit exception.
+    if (!prefersReducedMotion()) {
+      frames[0].transform = empty ? "none" : "translateY(8px)";
+      if (through) frames[1].transform = "translateY(8px)";
+      frames[frames.length - 1].transform = empty ? "translateY(-8px)" : "none";
+    }
     if (!prefersReducedMotion() && Math.abs(to - snapshot.height) > 1) {
       frames[0].height = `${snapshot.height}px`; frames[frames.length - 1].height = `${to}px`;
       if (empty) for (const [index, name] of ["marginTop", "marginBottom"].entries()) {

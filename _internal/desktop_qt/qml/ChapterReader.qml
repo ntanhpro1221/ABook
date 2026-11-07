@@ -97,6 +97,7 @@ Modal {
             anchors.horizontalCenter: parent.horizontalCenter
             clip: true; spacing: Theme.s16
             opacity: root.textOpacity
+            transform: Translate { x: Theme.reduceMotion ? 0 : (1 - root.textOpacity) * 24 }
             model: root.paragraphs
             delegate: TextEdit {
                 required property var modelData

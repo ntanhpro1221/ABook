@@ -18,6 +18,16 @@ function sources(dir: string, ext: RegExp): string[] {
 const lineOf = (text: string, index: number) => text.slice(0, index).split("\n").length;
 
 describe("luật chuyển động (DESIGN nguyên tắc 6, mục 5.2)", () => {
+  it("shared CSS entry/exit surfaces always carry geometry", () => {
+    const css = readFileSync(join(SRC, "styles.css"), "utf8");
+    for (const selector of [".motion-reveal", ".motion-snapshot", ".motion-skeleton", '#root']) {
+      const block = css.split(`${selector} {`).slice(1).map(tail => tail.split("}")[0]).find(text => /animation:/.test(text)) ?? "";
+      expect(block, selector).toMatch(/--enter-(?:x|y|scale):/);
+      expect(block, selector).toMatch(/motion-(?:enter|exit)/);
+    }
+    expect(css).toMatch(/html\[data-vt="1"\]::view-transition-new\(root\)/);
+    expect(css).toMatch(/html\[data-vt="1"\]::view-transition-old\(root\)/);
+  });
   it("lỗi / trạng thái rỗng không bật tắt bằng `{điều kiện && <InlineError|LoadError|EmptyState>}`: truyền `open` hay bọc MotionPresence", () => {
     // Đổi bước trong một vùng MotionRegion (mỗi bước một nhánh `bước === … &&`): vùng đã mờ qua cả khối.
     const allowed = [/step === "done" && \(\s*<EmptyState/];

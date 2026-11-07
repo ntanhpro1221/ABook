@@ -46,10 +46,12 @@ khi có mục lỗi.
 npm run gallery:build
 npm run gallery:inspect -- --browser "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe" --out ../../inspect --theme both
 node scripts/gallery_inspect.mjs --out ../../inspect --fail-on rule1,rule2,rule3
+node scripts/gallery_inspect.mjs --out ../../cross-center --theme both --fail-on rule24 --static-only
 node scripts/gallery_inspect_fixture.mjs --out ../../inspect/skip-fixture
 ```
 
 Mặc định quét cả hai chủ đề. Cùng cờ `--browser`, `--out`, `--only`, `--theme`, `--base`, `--dist`, `--timeout` với công cụ chụp;
+`--static-only` quét mọi khung tĩnh, bỏ lượt mở/đóng sheet; phải chọn rõ các luật tĩnh qua `--fail-on` (không được chọn rule25).
 dùng chung `scripts/gallery_browser.mjs` (máy chủ loopback, CDP, Edge riêng tư, dọn hồ sơ tạm bằng Python sau khi đóng trình duyệt).
 Không cần thêm dependency. Chờ phông app tải và chuyển động hữu hạn kết thúc; spinner vô hạn được giữ khung rồi huỷ, có ghi vào JSON.
 

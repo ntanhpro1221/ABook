@@ -34,6 +34,27 @@ Item {
     property point thumbFrom: Qt.point(0, 0)
     property real thumbW: 44
     property real barTop: 0
+    property var sharedFrames: []
+    property rect playFrom: Qt.rect(0, 0, 44, 44)
+    property rect playTo: Qt.rect(0, 0, 56, 56)
+    Binding { target: root.bar; property: "sharedShown"; value: root.p <= 0; when: root.bar !== null }
+    function itemFrame(item) {
+        const point = item.mapToItem(root, 0, 0)
+        return Qt.rect(point.x, point.y, item.width, item.height)
+    }
+    function barFrame(item) {
+        const box = itemFrame(item)
+        return Qt.rect(box.x, box.y - bar.contentShift, box.width, box.height)
+    }
+    function textFrame(from, to) {
+        return {from: barFrame(from), to: itemFrame(to),
+            fromSize: from.font.pixelSize, toSize: to.font.pixelSize,
+            fromWeight: from.font.weight, toWeight: to.font.weight,
+            fromColor: from.color, toColor: to.color,
+            fromAlign: from.horizontalAlignment, toAlign: to.horizontalAlignment,
+            fromInk: from.paintedWidth,
+            text: to.text}
+    }
 
     readonly property bool wide: width >= Theme.widthLarge
     property real wideT: wide ? 1 : 0
@@ -77,16 +98,19 @@ Item {
     function capture() {
         if (!bar) return
         const t = bar.thumb.mapToItem(root, 0, 0)
-        thumbFrom = Qt.point(t.x, t.y)
+        thumbFrom = Qt.point(t.x, t.y - bar.contentShift)
         thumbW = bar.thumb.width
         barTop = bar.mapToItem(root, 0, 0).y
+        sharedFrames = [textFrame(bar.chapterLabel, chapterTitle), textFrame(bar.bookLabel, bookSubtitle.bookLabel)]
+        playFrom = barFrame(bar.playButton)
+        playTo = itemFrame(fullPlay)
     }
     function show() {
         if (open || !Player.loaded) return
+        columnScroll.contentY = 0
         capture()
         page = 0
         sidePage = ReadAlong.status === "ready" && !ReadAlong.timed ? 0 : 1
-        columnScroll.contentY = 0
         open = true
         Nav.openLayer(root)
         speed.close(); sleep.close(); chapters.close()
@@ -134,13 +158,14 @@ Item {
     readonly property real coverX: colX + (colW - coverW) / 2
     readonly property real coverY: blockY
     readonly property real titlesY: coverY + coverH + 16
+    readonly property real displayedTitlesY: titlesY + (topH + Theme.s8 - titlesY) * pageT * (1 - wideT)
     readonly property real controlsY: blend(Math.max(height - 24 - controlsH, page === 0 ? titlesY + titlesH + 24 : 0), titlesY + titlesH + 24)
     readonly property real shift: 64
     readonly property real coverPageX: -pageT * shift * (1 - wideT)
     readonly property real coverPageOpacity: blend(1 - pageT, 1)
     readonly property real textX: blend((width - Math.min(width - 2 * Theme.margin, 720)) / 2, colX + colW + gap)
     readonly property real textW: blend(Math.min(width - 2 * Theme.margin, 720), width - Theme.margin - textX)
-    readonly property real textTop: blend(topH, topH - 24)
+    readonly property real textTop: blend(topH + (titlesH + Theme.s24) * pageT, topH - 24)
     readonly property real textBottom: blend(height - 24 - controlsH - 16, height)
 
     // ---- khung vẽ: mép trên đi từ mép trên thanh phát lên tới đỉnh ----
@@ -242,12 +267,12 @@ Item {
                 Column {
                     id: titles
                     parent: columnScroll.contentItem
-                    x: root.colX + root.coverPageX
-                    y: root.titlesY - root.topH + (1 - root.g) * (28 + columnScroll.contentY)
+                    x: root.colX
+                    y: root.displayedTitlesY - root.topH
                     width: root.colW
-                    opacity: root.coverPageOpacity * root.fade
                     spacing: 4
                     Text {
+                        id: chapterTitle
                         objectName: "nowChapterTitle"
                         width: parent.width
                         horizontalAlignment: Text.AlignHCenter
@@ -256,10 +281,14 @@ Item {
                         wrapMode: Text.Wrap
                         font.pixelSize: Theme.sizeSection
                         font.weight: Theme.weightBold
+                        opacity: root.g >= 1 ? 1 : 0
                     }
-                    PlayerSubtitle { width: parent.width; horizontalAlignment: Text.AlignHCenter }
+                    PlayerSubtitle { id: bookSubtitle; width: parent.width; horizontalAlignment: Text.AlignHCenter; opacity: root.g >= 1 ? 1 : 0 }
                     Text {
+                        id: narratorLabel
                         visible: Player.narrator !== ""
+                        opacity: Math.max(0, Math.min(1, (root.g - 0.9) * 10))
+                        transform: Translate { y: Theme.reduceMotion ? 0 : (1 - narratorLabel.opacity) * 8 }
                         width: parent.width
                         horizontalAlignment: Text.AlignHCenter
                         text: Player.narrator.toLowerCase().startsWith("giọng") ? Player.narrator : "Giọng " + Player.narrator
@@ -267,7 +296,7 @@ Item {
                         wrapMode: Text.Wrap
                         font.pixelSize: Theme.sizeCaption
                     }
-                    MusicCredit { width: parent.width }
+                    MusicCredit { width: parent.width; transform: Translate { y: Theme.reduceMotion ? 0 : (1 - root.fade) * 8 } }
                 }
 
                 // ---- điều khiển ----
@@ -275,7 +304,7 @@ Item {
                     id: controls; objectName: "nowControls"
                     parent: columnScroll.contentItem
                     x: root.colX
-                    y: root.controlsY - root.topH + (1 - root.g) * (28 + columnScroll.contentY)
+                    y: root.controlsY - root.topH
                     width: root.colW
                     opacity: root.fade
                     spacing: Theme.s12
@@ -363,7 +392,7 @@ Item {
                             anchors.verticalCenter: parent.verticalCenter
                         }
                         SkipButton { forward: false; iconSize: 28; anchors.verticalCenter: parent.verticalCenter }
-                        PlayButton { size: 56; anchors.verticalCenter: parent.verticalCenter }
+                        PlayButton { id: fullPlay; objectName: "nowPlay"; size: 56; anchors.verticalCenter: parent.verticalCenter; opacity: root.g >= 1 ? 1 : 0 }
                         SkipButton { forward: true; iconSize: 28; anchors.verticalCenter: parent.verticalCenter }
                         IconButton {
                             icon: "skip-forward"
@@ -466,6 +495,7 @@ Item {
                         anchors.topMargin: root.wide ? sideTabs.height + 2 * Theme.s16 : 0
                         visible: root.displayedText
                         opacity: root.panelOpacity
+                        transform: Translate { x: Theme.reduceMotion ? 0 : (1 - root.panelOpacity) * 24 }
                         enabled: root.showText
                     }
                     ChapterList {
@@ -477,12 +507,54 @@ Item {
                         anchors.topMargin: root.wide ? sideTabs.height + 2 * Theme.s16 : Theme.s24
                         visible: !root.displayedText
                         opacity: root.panelOpacity
+                        transform: Translate { x: Theme.reduceMotion ? 0 : (1 - root.panelOpacity) * 24 }
                         enabled: !root.showText
                         model: Player.chapters
                         onChapterClicked: (chapterId) => Player.jumpTo(chapterId, 0)
                         onReadRequested: chapterId => reader.begin(Player.bookId, chapterId)
                         Component.onCompleted: positionViewAtIndex(Math.max(0, Player.chapters.rowOf(Player.chapterId)), ListView.Center)
                     }
+                }
+            }
+
+            // Shared parts keep their own path from the mini player. The final
+            // controls retain their layout slots, so the underlay never reflows.
+            Item {
+                objectName: "nowSharedMorph"
+                anchors.fill: parent
+                visible: root.p > 0 && root.p < 1
+                Repeater {
+                    model: root.sharedFrames
+                    Item {
+                        required property var modelData
+                        required property int index
+                        objectName: index === 0 ? "nowChapterMorph" : "nowBookMorph"
+                        x: modelData.from.x + (modelData.to.x - modelData.from.x) * root.g
+                        y: modelData.from.y + (modelData.to.y - modelData.from.y) * root.g
+                        width: modelData.from.width + (modelData.to.width - modelData.from.width) * root.g
+                        height: modelData.from.height + (modelData.to.height - modelData.from.height) * root.g
+                        Text {
+                            width: parent.width; height: parent.height
+                            x: (1 - root.g) * (parent.modelData.fromAlign === Text.AlignLeft ? -1 : parent.modelData.fromAlign === Text.AlignRight ? 1 : 0)
+                                * Math.max(0, parent.modelData.from.width - parent.modelData.fromInk) / 2
+                            text: parent.modelData.text; wrapMode: Text.Wrap
+                            font.pixelSize: parent.modelData.fromSize + (parent.modelData.toSize - parent.modelData.fromSize) * root.g
+                            font.weight: parent.modelData.fromWeight + (parent.modelData.toWeight - parent.modelData.fromWeight) * root.g
+                            horizontalAlignment: parent.modelData.toAlign
+                            color: Qt.rgba(parent.modelData.fromColor.r + (parent.modelData.toColor.r - parent.modelData.fromColor.r) * root.g,
+                                           parent.modelData.fromColor.g + (parent.modelData.toColor.g - parent.modelData.fromColor.g) * root.g,
+                                           parent.modelData.fromColor.b + (parent.modelData.toColor.b - parent.modelData.fromColor.b) * root.g, 1)
+                        }
+                    }
+                }
+                Item {
+                    objectName: "nowPlayMorph"
+                    x: root.playFrom.x + (root.playTo.x - root.playFrom.x) * root.g
+                    y: root.playFrom.y + (root.playTo.y - root.playFrom.y) * root.g
+                    width: 56; height: 56
+                    scale: root.playFrom.width / 56 + (root.playTo.width - root.playFrom.width) / 56 * root.g
+                    transformOrigin: Item.TopLeft
+                    PlayButton { size: 56; activeFocusOnTab: false }
                 }
             }
         }
