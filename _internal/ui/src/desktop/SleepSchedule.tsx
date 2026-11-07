@@ -29,7 +29,7 @@ export function SleepSchedule() {
     });
   };
   return <>
-    <SettingsRow label="Lịch đêm" hint="Nghe trong khung giờ này thì tự hẹn giờ.">
+    <SettingsRow label="Lịch đêm" hint="Máy rảnh 2 phút trong khung giờ này mới tự hẹn.">
       <Switch id="sleep-schedule" label="Lịch đêm" checked={Boolean(schedule)} ariaDisabled={!data || draft !== null} onCheckedChange={(on) => change(on ? DEFAULT_SCHEDULE : null)} />
     </SettingsRow>
     <MotionPresence open={Boolean(schedule)}>

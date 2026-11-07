@@ -61,6 +61,7 @@ export function sleepExtendLabel(minutes: number): string {
 /** Nghe thêm = hẹn lại: đồng hồ về đúng [sleepExtendMinutes] phút, không bao giờ hơn (bấm nhiều lần không cộng dồn); còn lại đã nhiều hơn thì giữ nguyên.
  *  Đang "hết chương" thì chuyển thành đếm `fallback` phút kể từ bây giờ. */
 export function sleepExtended(mode: SleepMode, fallback: number, playing: boolean, now: number): SleepMode {
+  if (mode.kind === "off") return mode;
   if (mode.kind === "minutes") {
     const picked = sleepExtendMinutes(mode, fallback);
     const left = sleepLeftMs(mode, now) ?? 0;
