@@ -3,11 +3,11 @@ import ABook
 
 // Ngăn xếp màn của cửa sổ. Mỗi mục thanh bên (Thư viện, Studio, Cài đặt) có ngăn xếp riêng, dựng lười và giữ nguyên khi chuyển mục
 // (Thư viện còn đúng chỗ cuộn khi quay lại). Chuyển cảnh KHÔNG bao giờ là mờ thuần và luôn đối xứng:
-//   vào sâu (push)      màn cũ trôi sang trái 24 px + thu 0,98 + mờ hết, rồi màn mới từ phải 24 px vào
+//   vào sâu (push)      màn cũ trượt sang trái, màn mới vào đồng thời từ phải, qua hết bề rộng khung
 //   lùi ra (pop / Back) đúng gương: màn cũ trôi sang phải, màn mới từ trái vào
 //   đổi mục thanh bên   trượt dọc 16 px theo chiều của mục (xuống = mục dưới), vì thanh bên xếp dọc
-// Ra nhanh hơn vào (90 / 220 ms, ra dùng đường cong tăng tốc, vào giảm tốc); ảnh cũ mờ hết rồi ảnh mới mới hiện nên không bao giờ
-// hai lớp chữ chồng nhau. "Giảm hiệu ứng" của Windows: bỏ trượt / thu, chỉ còn mờ <= 120 ms. Bấm liên tiếp: chuyển cảnh đang dở
+// Push / Back share one motionSlow slide and a cover path when a source is available. Sidebar changes use 90 / 220 ms fade-through with geometry.
+// "Giảm hiệu ứng" của Windows: bỏ trượt / thu, chỉ còn mờ <= 120 ms. Bấm liên tiếp: chuyển cảnh đang dở
 // được chốt ngay rồi chuyển cảnh mới chạy.
 Item {
     id: root
@@ -17,7 +17,7 @@ Item {
     property int current: -1
     property int depth: 0
     readonly property bool canPop: depth > 1
-    readonly property bool busy: seq.running
+    readonly property bool busy: seq.running || slide.running
     signal reselected(int index)          // chọn lại mục đang mở ở thanh bên: màn gốc tự về đầu (Studio: về danh sách dự án)
 
     property var _stacks: ({})
@@ -32,12 +32,25 @@ Item {
     property real zoomOut: 0.98
     property int outMs: Theme.motionFastOut
     property int inMs: Theme.motionMedium
+    property real coverT: 0
+    property Item _coverFrom: null
+    property Item _coverTo: null
+    property rect _coverStart: Qt.rect(0, 0, 0, 0)
+    property rect _coverEnd: Qt.rect(0, 0, 0, 0)
+    readonly property rect liveCoverEnd: {
+        if (!_coverTo || !_in) return _coverEnd
+        // Sample in the destination page's coordinates. Subtracting dx from a
+        // root mapping can read Translate before its binding catches up.
+        const tick = _in.dx
+        return _coverBox(_coverTo, _in)
+    }
 
     Component {
         id: wrapperComp
         Item {
             id: wrapper
             property Item content: null
+            property Item transitionSource: null
             property real dx: 0
             property real dy: 0
             property real zoom: 1
@@ -83,9 +96,10 @@ Item {
         depth = _stacks[index].length
         _run(outW, inW, kind, false)
     }
-    function push(comp, props) {
+    function push(comp, props, sourceItem) {
         const outW = _top(current)
         const inW = _wrap(comp, props)
+        inW.transitionSource = sourceItem || null
         _stacks[current].push(inW)
         depth = _stacks[current].length
         _run(outW, inW, "forward", false)
@@ -123,6 +137,22 @@ Item {
             return
         }
         const reduced = Theme.reduceMotion
+        if (!reduced && (kind === "forward" || kind === "back")) {
+            const direction = kind === "forward" ? -1 : 1
+            outDx = direction * width
+            outDy = 0
+            inDx0 = -outDx
+            inDy0 = 0
+            _neutral(outW)
+            _neutral(inW)
+            _startCover(kind === "back" ? outW.content.transitionCover : inW.transitionSource,
+                        kind === "back" ? outW.transitionSource : inW.content.transitionCover)
+            inW.dx = inDx0
+            inW.visible = true
+            _stage = 1
+            slide.restart()
+            return
+        }
         const magnitude = reduced ? 0 : (kind.indexOf("peer") === 0 ? 16 : 24)
         let sx = 0, sy = 0
         if (kind === "forward") sx = -1
@@ -159,11 +189,60 @@ Item {
         _out = null
         _stage = 2
     }
+    function _coverBox(item, relativeTo) {
+        const a = item.mapToItem(relativeTo || root, 0, 0)
+        const b = item.mapToItem(relativeTo || root, item.width, item.height)
+        return Qt.rect(a.x, a.y, b.x - a.x, b.y - a.y)
+    }
+    function _startCover(from, to) {
+        if (!from || !to) return
+        _coverStart = _coverBox(from)
+        _coverEnd = _coverBox(to)
+        sharedCover.coverKey = to.coverKey || from.coverKey || ""
+        sharedCover.title = to.title || from.title || ""
+        _coverFrom = from
+        _coverTo = to
+        from.opacity = 0
+        to.opacity = 0
+        coverT = 0
+    }
+    function _slideDone() {
+        _coverEnd = liveCoverEnd
+        if (_coverFrom) _coverFrom.opacity = 1
+        if (_coverTo) _coverTo.opacity = 1
+        _coverFrom = null
+        _coverTo = null
+        if (_out) {
+            _out.visible = false
+            _neutral(_out)
+            if (_destroyOut) _out.destroy()
+        }
+        _done()
+    }
     function _finish() {
+        if (slide.running) { slide.stop(); _slideDone(); return }
         if (_stage === 2 && !seq.running) return
         seq.stop()
         if (_stage === 0) _swap()
         _done()
+    }
+
+    CoverView {
+        id: sharedCover
+        objectName: "navigationCoverMorph"
+        z: 100
+        visible: root._coverFrom !== null && root._coverTo !== null
+        x: root._coverStart.x + (root.liveCoverEnd.x - root._coverStart.x) * root.coverT
+        y: root._coverStart.y + (root.liveCoverEnd.y - root._coverStart.y) * root.coverT
+        width: root._coverStart.width + (root.liveCoverEnd.width - root._coverStart.width) * root.coverT
+        height: root._coverStart.height + (root.liveCoverEnd.height - root._coverStart.height) * root.coverT
+    }
+    ParallelAnimation {
+        id: slide
+        onFinished: root._slideDone()
+        NumberAnimation { target: root._out; property: "dx"; to: root.outDx; duration: Theme.motionSlow; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard }
+        NumberAnimation { target: root._in; property: "dx"; to: 0; duration: Theme.motionSlow; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard }
+        NumberAnimation { target: root; property: "coverT"; to: 1; duration: Theme.motionSlow; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard }
     }
 
     SequentialAnimation {

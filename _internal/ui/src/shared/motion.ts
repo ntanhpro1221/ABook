@@ -66,8 +66,10 @@ export function leavePage(nav: NavMotion, doc: TransitionDocument | undefined = 
   if (nav === "none" || !page || typeof page.animate !== "function" || doc?.visibilityState === "hidden") return Promise.resolve();
   entering = nav;
   if (leaving) return leaving;
-  const shift = prefersReducedMotion() || nav === "through" ? 0 : nav === "back" ? 12 : -12;
-  const animation = page.animate([{ opacity: 1, transform: "none" }, { opacity: 0, transform: shift ? `translateX(${shift}px)` : "none" }], {
+  const reduced = prefersReducedMotion();
+  const shift = nav === "back" || nav === "tab-back" ? 12 : -12;
+  const end = reduced ? "none" : nav === "through" ? "scale(0.97)" : `translateX(${shift}px)`;
+  const animation = page.animate([{ opacity: 1, transform: "none" }, { opacity: 0, transform: end }], {
     duration: MOTION.fastOut,
     easing: EASE.accelerate,
     fill: "forwards",
@@ -79,17 +81,18 @@ export function leavePage(nav: NavMotion, doc: TransitionDocument | undefined = 
 }
 
 /** Sau commit của trang mới (layout effect của router, trước khi vẽ): bỏ lớp mờ của lần rời và cho trang hiện vào. */
-export function enterPage(doc: TransitionDocument | undefined = browserDocument()): void {
+export function enterPage(doc: TransitionDocument | undefined = browserDocument(), prepared?: () => void): void {
   const nav = entering;
   entering = null;
   const page = pageSurface(doc);
-  if (!nav || !page || typeof page.animate !== "function") return;
+  if (!nav || !page || typeof page.animate !== "function") { prepared?.(); return; }
   for (const animation of page.getAnimations?.() ?? []) animation.cancel();
   // Thứ dựng cùng trang mới (nội dung hiện dần, dòng nhô lên, khung chờ) đi theo chuyển cảnh của trang, không chồng thêm một lượt hiện của riêng nó.
   for (const animation of page.getAnimations?.({ subtree: true }) ?? []) if (justEntering(animation)) animation.finish();
+  prepared?.();
   const reduced = prefersReducedMotion();
-  const from = reduced ? "none" : nav === "through" ? "scale(0.97)" : `translateX(${nav === "back" ? -32 : 32}px)`;
-  const duration = reduced ? MOTION.fast : nav === "through" ? MOTION.medium : MOTION.slow;
+  const from = reduced ? "none" : nav === "through" ? "scale(0.97)" : `translateX(${nav === "back" || nav === "tab-back" ? -32 : 32}px)`;
+  const duration = reduced ? MOTION.fast : nav === "through" || nav.startsWith("tab-") ? MOTION.medium : nav === "back" ? MOTION.slowOut : MOTION.slow;
   markArrival(duration);
   page.animate([{ opacity: 0, transform: from }, { opacity: 1, transform: "none" }], { duration, easing: EASE.decelerate });
 }
@@ -133,7 +136,9 @@ export function useLayoutChangeFade(ref: RefObject<HTMLElement | null>, key: str
       first.current = false;
       return;
     }
-    ref.current?.animate?.([{ opacity: 0.55 }, { opacity: 1 }], { duration: prefersReducedMotion() ? MOTION.fast : MOTION.medium, easing: EASE.standard });
+    const reduced = prefersReducedMotion();
+    ref.current?.animate?.([{ opacity: 0.55, transform: reduced ? "none" : "translateY(8px)" }, { opacity: 1, transform: "none" }],
+      { duration: reduced ? MOTION.fast : MOTION.medium, easing: EASE.standard });
   }, [ref, key]);
 }
 
@@ -187,7 +192,7 @@ type TransitionDocument = {
 
 /** Hướng của lần chuyển: sâu vào / lùi ra (trượt ngang "shared axis"), ngang hàng (mờ qua "fade through"), hay không chuyển vùng trang
  *  (mở Đang nghe, đổi giao diện). Ghi lên <html data-nav> cho styles.css. */
-export type NavMotion = "forward" | "back" | "through" | "none";
+export type NavMotion = "forward" | "back" | "tab-forward" | "tab-back" | "through" | "none";
 
 const browserDocument = (): TransitionDocument | undefined => (typeof document === "undefined" ? undefined : (document as unknown as TransitionDocument));
 let latest = 0;
@@ -202,7 +207,8 @@ export function fallbackSnapshot(doc: TransitionDocument, nav: NavMotion): void 
   captureMotionSnapshot(target, doc, dialogs.length ? 51 : 39);
   // React commit xong thì surface mới hiện vào dưới ảnh cũ; không trì hoãn thao tác.
   if (typeof requestAnimationFrame === "function") requestAnimationFrame(() => {
-    target.animate?.([{ opacity: 0.35 }, { opacity: 1 }], { duration: MOTION.fast, easing: EASE.standard });
+    const from = prefersReducedMotion() ? "none" : "translateY(8px)";
+    target.animate?.([{ opacity: 0.35, transform: from }, { opacity: 1, transform: "none" }], { duration: MOTION.fast, easing: EASE.standard });
   });
 }
 
@@ -571,8 +577,15 @@ export function navMotion(action: "PUSH" | "POP" | "REPLACE", from: { pathname: 
   if (from.pathname === to.pathname && new URLSearchParams(from.search).get("step") !== new URLSearchParams(to.search).get("step")) return to.idx < from.idx ? "back" : "forward";
   // Cùng trang, chỉ đổi ?tab= / tham số: trang đứng yên, vùng nội dung tự trượt (TabsPanels) - không mờ cả màn hình.
   if (from.pathname === to.pathname) return "none";
-  if (action === "REPLACE") return "through";
   // Giữa hai mục gốc (tab dưới / thanh bên: Thư viện, Tải sách, Studio, Cài đặt) là ngang hàng, không phải sâu vào.
+  const roots = ["/", "/downloads", "/studio", "/settings"];
+  const fromRoot = roots.indexOf(from.pathname), toRoot = roots.indexOf(to.pathname);
+  if (fromRoot >= 0 && toRoot >= 0) return toRoot > fromRoot ? "tab-forward" : "tab-back";
+  // Header back links use navigate(parent), which is PUSH too. Route hierarchy
+  // determines their direction; history action alone treated them as entering.
+  if (depth(to.pathname) < depth(from.pathname)) return "back";
+  if (depth(to.pathname) > depth(from.pathname)) return "forward";
+  if (action === "REPLACE") return "through";
   if (depth(from.pathname) <= 1 && depth(to.pathname) <= 1) return "through";
   if (action === "PUSH") return "forward";
   return to.idx < from.idx ? "back" : "forward";

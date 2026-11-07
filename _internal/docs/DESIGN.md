@@ -131,8 +131,11 @@ Token có sẵn (`shared/motion.ts` = `--motion-*` trong `styles.css`): nhanh 12
 đường cong Material 3 (vào = decelerate, ra = accelerate, đổi chỗ = standard). Quy tắc:
 
 - **Vào chậm hơn ra**; ra luôn dùng thời lượng `*Out`.
-- **Đổi nội dung tại chỗ = mờ qua** (ảnh cũ mờ hết rồi cái mới mới hiện, không hai lớp chữ chồng nhau); đổi cỡ thì tween chiều
-  cao cùng lúc (MotionRegion, Collapse).
+- **Mọi mở / đóng / đổi nội dung đều có hình học** (trượt, đổi cỡ hoặc phóng). Không dùng fade thuần, kể cả khi chiều cao hai nội dung bằng nhau.
+  Nội dung cũ rời trước khi chữ mới hiện để không chồng chữ; đổi cỡ thì tween chiều cao cùng lúc (MotionRegion, Collapse).
+  Ngoại lệ: nền scrim / đổi màu, phản hồi trạng thái nhỏ và chế độ giảm chuyển động của hệ điều hành.
+- **Đi / về cùng đường, ngược chiều**: trang sách vào từ phải, Back ra phải và trang dưới trở lại từ trái; tab ngang cấp trượt theo thứ tự tab.
+  Lớp phủ (sheet, menu, hộp) không đổi khung, kích cỡ hay vị trí bố cục phía dưới trong bất kỳ khung hình nào.
 - **Phần tử chung giữa hai màn** (shared element): thanh phát thu nhỏ nở thành trình phát đầy đủ (khung + bìa bay từ ô nhỏ ra
   ô lớn; `listen/nowPlayingMorph.ts`, Web Animations trên chính phần tử, không chụp ảnh tài liệu); bìa ở Thư viện bay vào vị trí bìa ở trang sách.
 - **Căn giữa trục chéo**: thành phần dùng chung (bìa, icon) không tự mang `self-*`; hàng quyết định căn (máy dò CROSS CENTER).

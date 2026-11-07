@@ -29,7 +29,7 @@ it("V5 region rỗng giữ slot 80px qua exit, co về 0 rồi mới display:non
   expect(getComputedStyle(box).display).not.toBe("none");
   expect(box.style.height).toBe("80px");
   expect(HTMLElement.prototype.animate).toHaveBeenCalledWith(
-    [{ opacity: 1, height: "80px" }, { opacity: 0, height: "0px" }], expect.any(Object),
+    [{ opacity: 1, height: "80px", transform: "none" }, { opacity: 0, height: "0px", transform: "translateY(-8px)" }], expect.any(Object),
   );
   await act(() => animation.onfinish?.(new Event("finish") as AnimationPlaybackEvent));
   expect(box.style.height).toBe("");
@@ -42,7 +42,8 @@ it("V5 giữ cả margin cũ khi class bị bỏ, rồi co margin cùng slot", a
   const box = document.querySelector<HTMLElement>("[data-motion-region]")!;
   expect(box.style.marginTop).toBe("12px");
   expect(HTMLElement.prototype.animate).toHaveBeenLastCalledWith([
-    { opacity: 1, height: "80px", marginTop: "12px" }, { opacity: 0, height: "0px", marginTop: "0px" },
+    { opacity: 1, height: "80px", marginTop: "12px", transform: "none" },
+    { opacity: 0, height: "0px", marginTop: "0px", transform: "translateY(-8px)" },
   ], expect.any(Object));
 });
 

@@ -52,7 +52,9 @@ for (const reduced of [false, true]) it(`trạng thái đổi nhãn/tone/VU rồ
   await render(<StatusPill tone="muted" label="Xếp hàng · thứ 3" />); checkOld("thứ 2");
   await render(<StatusPill tone="accent" live label="Đang thu" />); checkOld("thứ 3");
   expect(host.querySelector(".vu")).not.toBeNull();
-  expect(HTMLElement.prototype.animate).toHaveBeenLastCalledWith([{ opacity: 0.45 }, { opacity: 1 }], expect.objectContaining({ duration: reduced ? MOTION.fast : MOTION.medium }));
+  const frames = reduced ? [{ opacity: 0.45 }, { opacity: 1 }]
+    : [{ opacity: 0.45, transform: "translateY(8px)" }, { opacity: 1, transform: "none" }];
+  expect(HTMLElement.prototype.animate).toHaveBeenLastCalledWith(frames, expect.objectContaining({ duration: reduced ? MOTION.fast : MOTION.medium }));
   await render(<StatusPill tone="success" label="Hoàn tất" />); checkOld("Đang thu");
 });
 

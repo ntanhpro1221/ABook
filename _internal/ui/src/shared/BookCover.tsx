@@ -20,6 +20,7 @@ export function BookCover({
   label = true,
   className,
   morph,
+  bookKey,
 }: {
   title: string;
   size?: "xs" | "sm" | "md" | "lg" | "xl";
@@ -36,6 +37,8 @@ export function BookCover({
   className?: string;
   /** Phần chung giữa thanh phát nhỏ và màn Đang nghe (listen/nowPlayingMorph.ts): bìa bay từ chỗ này sang chỗ kia. */
   morph?: "cover";
+  /** Artwork shared between a library cell and its book page. */
+  bookKey?: string;
 }) {
   const [failed, setFailed] = useState<string | null>(null);
   // Bìa ảnh và bìa vẽ là hai cây khác nhau: một gốc MotionRegion cho cả hai, khoá theo ảnh đang hiện + tên. Đổi cuốn (thanh phát), ảnh lỗi rơi
@@ -46,6 +49,7 @@ export function BookCover({
     return (
       <MotionRegion
         motionKey={motionKey}
+        data-book-cover={bookKey}
         className={cn("relative aspect-square shrink-0 overflow-hidden rounded-control shadow-card", className)}
         style={{ backgroundColor: coverColor(photo.color) || "var(--color-hover)" }}
         data-np={morph}
@@ -73,6 +77,7 @@ export function BookCover({
   return (
     <MotionRegion
       motionKey={motionKey}
+      data-book-cover={bookKey}
       className={cn("@container relative aspect-square shrink-0 overflow-hidden rounded-control text-left shadow-card", className)}
       style={{ background: `linear-gradient(155deg, ${style.from} 0%, ${style.to} 100%)` }}
       data-overlay="Chữ bìa trên hoạ tiết sóng"

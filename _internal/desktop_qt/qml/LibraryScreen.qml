@@ -6,7 +6,7 @@ import "LibraryLogic.js" as LibraryLogic
 // Enter mở trang sách, F5 tải lại. Lưới chỉ dựng ô đang thấy; bìa giải mã ngoài luồng giao diện đúng cỡ hiển thị.
 FocusScope {
     id: root
-    signal openBook(var book)
+    signal openBook(var book, var sourceItem)
     signal addRequested(var paths)
     signal openFileRequested()
     signal studioRequested()
@@ -111,9 +111,10 @@ FocusScope {
             width: parent.width
             open: !!root.continuing
             LibraryContinue {
+                id: continueBook
                 width: parent.width
                 book: root.continuing || ({})
-                onOpenRequested: root.openBook(book)
+                onOpenRequested: root.openBook(book, continueBook.transitionCover)
             }
         }
         Item {
@@ -201,16 +202,16 @@ FocusScope {
                 Button {
                     required property var modelData
                     width: parent.width; wrap: true; kind: "ghost"; text: modelData.title
-                    onClicked: { seriesDialog.close(); root.openBook(modelData) }
+                    onClicked: { seriesDialog.close(); root.openBook(modelData, null) }
                 }
             }
         }
     }
-    function activate(index) {
+    function activate(index, sourceItem) {
         const section = shownSections[index]
         if (!section) return
         if (section.books.length > 1) { seriesDialog.group = section; seriesDialog.show() }
-        else openBook(section.books[0])
+        else openBook(section.books[0], sourceItem || null)
     }
 
     // Kéo file vào thư viện (DropToAdd.tsx): thả một hay nhiều file thì mở "Thêm sách" ở đúng hàng xem trước; đang có hộp khác mở thì nhắc đóng hộp rồi thả lại
@@ -239,6 +240,7 @@ FocusScope {
         anchors.left: parent.left
         anchors.right: parent.right
         opacity: root.resultsOpacity * root.contentOpacity
+        transform: Translate { y: Theme.reduceMotion ? 0 : (1 - list.opacity) * 16 }
         visible: opacity > 0 && root.count > 0
         focus: true
         clip: true
@@ -304,7 +306,7 @@ FocusScope {
                             if (cell.onPlayButton) return
                             root.current = at
                             list.forceActiveFocus(Qt.MouseFocusReason)
-                            root.activate(at)
+                            root.activate(at, cell.transitionCover)
                         }
                     }
                 }

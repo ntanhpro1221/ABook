@@ -25,6 +25,9 @@ FocusScope {
     property string tab: "chapters"
     property string shownTab: "chapters"
     property real swap: 1
+    property int tabDirection: 1
+    property bool tabEntering: false
+    readonly property real tabShift: Theme.reduceMotion ? 0 : (tabEntering ? 1 : -1) * tabDirection * 24 * (1 - swap)
     property int next: 0
     property var activityData: null
     property bool activityLoading: false
@@ -109,11 +112,11 @@ FocusScope {
         if (top < list.contentY + 16) list.contentY = Math.max(list.originY - list.topMargin, top - 16)
         else if (bottom > list.contentY + list.height - 16) list.contentY = bottom - list.height + 16
     }
-    onTabChanged: { tabSwap.restart(); rememberView({tab: tab}) }
+    onTabChanged: { tabDirection = Logic.ALL_TABS.indexOf(tab) >= Logic.ALL_TABS.indexOf(shownTab) ? 1 : -1; tabEntering = false; tabSwap.restart(); rememberView({tab: tab}) }
     SequentialAnimation {
         id: tabSwap
         NumberAnimation { target: root; property: "swap"; to: 0; duration: Theme.motionFastOut; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeAccelerate }
-        ScriptAction { script: { root.shownTab = root.tab; list.positionViewAtBeginning() } }
+        ScriptAction { script: { root.shownTab = root.tab; root.tabEntering = true; list.positionViewAtBeginning() } }
         NumberAnimation { target: root; property: "swap"; to: 1; duration: Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeDecelerate }
     }
 
@@ -552,6 +555,7 @@ FocusScope {
                     width: root.contentW + 16
                     visible: root.shownTab === "chapters" && !!root.store && root.store.chapters.length > 0
                     opacity: root.swap
+                    transform: Translate { x: root.tabShift }
                 }
             }
         }
@@ -562,6 +566,7 @@ FocusScope {
             width: ListView.view.width
             height: body.item ? body.item.height : 0
             opacity: root.swap
+            transform: Translate { x: root.tabShift }
             Loader {
                 id: body
                 width: parent.width
@@ -701,6 +706,7 @@ FocusScope {
             readonly property real innerHeight: chaptersEmpty || activityEmpty ? emptyBlock.height : placeholder ? placeholderText.height + 48 : root.shownTab === "activity" && root.activityLoading ? 160 : 0
             height: backWrap.height + innerHeight + panels.height + (musicTab.item ? musicTab.item.height + 48 : 0) + (scriptTab.item ? scriptTab.item.height + 48 : 0)
             opacity: root.swap
+            transform: Translate { x: root.tabShift }
             // "Về màn trước": sau khi nhảy từ một thẻ sang tab khác, trả về đúng thẻ và bộ lọc vừa rời
             Collapse {
                 id: backWrap

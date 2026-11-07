@@ -13,6 +13,9 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.runtime.collectAsState
 import vn.abook.player.ui.components.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import vn.abook.player.ui.motion.BookCoverFlight
+import vn.abook.player.ui.motion.LocalBookCoverFlight
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
@@ -115,6 +118,7 @@ import kotlin.math.max
 @Stable
 class ShellState(val scope: CoroutineScope, onSortChanged: (LibrarySort) -> Unit = {}) {
     val nav = NavState(scope)
+    val coverFlight = BookCoverFlight(nav)
     val window = NowPlayingWindowState(scope)
     val tabs = TabState(scope)
     val libraryGrid = LazyGridState()
@@ -217,7 +221,10 @@ fun AppShell(
                 val devices = settings.devices
                 if (book.remote != null && devices != null) shell.sheets.show { dismiss ->
                     vn.abook.player.ui.screens.RemoteBookSheet(book, devices) { dismiss(); player.playNow(book.id) }
-                } else shell.nav.push(Destination.Book(book))
+                } else {
+                    shell.coverFlight.capture(book.id)
+                    shell.nav.push(Destination.Book(book))
+                }
             },
             playNow = player::playNow,
             addBook = { shell.nav.push(Destination.AddBook) },
@@ -289,6 +296,7 @@ fun AppShell(
         PipContent(playerState, { player.clock.positionMs.value }, covers)
         return
     }
+    CompositionLocalProvider(LocalBookCoverFlight provides shell.coverFlight) {
     Box(Modifier.fillMaxSize().background(Abook.colors.bg).semantics { testTagsAsResourceId = true }) {
         // Cửa sổ Đang nghe nằm TRÊN cả ngăn xếp màn lẫn thanh tab; thanh phát nhỏ thật ở gốc là nguồn của chuyển động nở ra (NowPlayingSource).
         PlayerCoverProvider(covers) {
@@ -363,6 +371,7 @@ fun AppShell(
             }
             SheetLayer(shell.sheets)
         }
+    }
     }
 }
 
@@ -465,6 +474,7 @@ fun ScreenStack(nav: NavState, root: @Composable () -> Unit, insets: LayerInsets
                             translationX = fraction * size.width
                         }
                         .background(background)
+                        .testTag(if (index < 0) "screen_root" else if (layer == Layer.Top) "screen_top" else "screen_below")
                         // Lớp trên chặn chạm: không để chạm xuyên xuống lớp dưới đang trượt lộ ra.
                         .then(if (layer == Layer.Top) Modifier.pointerInput(Unit) {} else Modifier),
                 ) {

@@ -23,6 +23,7 @@ export function parseArgs(argv) {
     else if (flag === "--scale") args.scale = Number(value());
     else if (flag === "--timeout") args.timeout = Number(value());
     else if (flag === "--probe") args.probe = readFileSync(path.resolve(value()), "utf8");
+    else if (flag === "--static-only") args.staticOnly = true;
     else if (flag === "--help" || flag === "-h") args.help = true;
     else throw new Error(`Tham số lạ: ${argv[index]}`);
   }
