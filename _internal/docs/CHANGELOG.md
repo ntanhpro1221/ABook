@@ -7,6 +7,14 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Hẹn giờ ngủ tự bật chỉ khi màn hình đã tắt và điện thoại nằm yên; chạm, cầm máy hay mở màn hình là huỷ hẹn giờ tự động. Máy tính tính theo lần dùng chuột/bàn phím gần nhất của cả máy, không chỉ trong app. Hẹn giờ bạn tự đặt giữ nguyên.
+- Lời nhân vật chen giữa câu dẫn không còn bị đọc bằng giọng dẫn; chương có người kể nữ đọc mọi câu dẫn bằng giọng dẫn nữ, không lẫn từ nào sang giọng dẫn nam.
+- Studio kiểm giọng cả cuốn trước khi đóng gói: câu dẫn sai giọng người kể của chương hay nhân vật sai giọng được báo ra, không lọt vào sách.
+- Phân tích người nói ít ghi đè nhầm những nhãn người nói và loại câu đã đúng.
+- Từ tiếng Anh và tên Tây được đọc như chữ gốc thay vì phiên ra âm Việt; viết tắt tiếng Anh như GPS, DNA đọc từng chữ cái tiếng Anh. Từ tiếng Việt viết không dấu trùng chữ Anh vẫn đọc tiếng Việt.
+- Mở sách trên điện thoại có bìa bay từ thư viện vào trang sách; thanh bên và màn Đang nghe trên máy tính chuyển cảnh mượt, không lệch bố cục khi đổi khổ cửa sổ.
+- Sửa nhật ký thu bị lỗi chữ liên tục trên vài máy (đọc trạng thái GPU in ký tự lạ).
+
 ## [0.4.164] - 2026-11-07
 
 - App máy tính mở thư viện nhanh hơn (khoảng 1,0 thay vì 1,25 giây) và tốn ít RAM hơn khi nghe; khung hình đầu hiện sớm hơn.
