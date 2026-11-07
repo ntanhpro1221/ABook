@@ -1,5 +1,12 @@
 # Test report
 
+## 08-11-2026 — castaudit: two unintended paths from f01a158e8
+
+- Crowd casting still supplied only a source hint to an attribution helper that now requires accepted speaker/confidence. Supply the accepted kind, speaker and confidence; preserve an individual speech tag when semantic kind differs from the hint. Six synthetic SQLite/casting cases cover the caller and reopen. The two crash cases pass on f01^, fail on f01 and received HEAD, and pass after the fix.
+- The new quote stack treated every straight apostrophe as a thought closer, dropping the previous non-space/non-word predicate. Reuse `THOUGHT_CLOSING_PATTERN` within the stack scan. Twelve synthetic cross-paragraph cases pass on f01^, fail from f01 through received HEAD, and pass after the fix; existing nesting and single-paragraph cases remain covered.
+- Related final pytest: **2,604 passed, 0 FAILED, 0 errors**, 52 files, 6 deselected. Full final pytest `-rf`: **10,557 passed, 1 FAILED, 0 errors, 14 skipped, 2 xfailed, 8 deselected**, 3 warnings; JUnit and raw FAILED-line count both report 1. The sole failure is the perceptual environment-restoration test because this audit's harness pre-set `TRANSFORMERS_OFFLINE=1`. It fails on both received HEAD and the changed tree with that variable set; the entire 27-test module passes on both with it absent. The full invocation remains reported as failed; rechecks are separate.
+- Excluded real voice/model synthesis with `-k`, ignored four modules that read Audiobooks fixtures, and redirected external speaker evaluation to an empty task directory. No model inference, GPU use, or Audiobooks access. Compileall, LF and diff checks pass. Directly imported 56 quality entries: `e33e20f4d109266753ff58c956f8be4eb949fd936e4226bc6e107c9dad1a0120` -> `399466d2d36947cad30817d144b69c61b24892ab8df88742f3c64f57267d3cf7`. Changes stay uncommitted on dev/castaudit. The full behavioral inventory, older-code probes, commands and XML are outside the repository in the castaudit task directory's report.md.
+
 ## 08-11-2026 — kotfix: Windows JVM atomic file replacement
 
 - Unchanged origin/main `5678fddf7` reproduces the exact 25 reported failures on Microsoft OpenJDK 21.0.8; the same 45 tests pass on JetBrains 21.0.10. A standalone file probe confirms that `File.renameTo` refuses an existing target on the former and replaces it on the latter. These failures predate the integ165 merges.
