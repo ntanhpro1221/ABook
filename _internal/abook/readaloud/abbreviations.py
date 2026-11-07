@@ -25,7 +25,9 @@ LAUGH = re.compile(r"(?:ha|he|hi|ho)+")  # "HAHA": tiếng cười, không phả
 ROMAN_LETTERS = frozenset("ivx")  # "IIII" nằm trong danh sách từ Anh nhưng không phải từ; "IIIII" đọc được như romaji
 PAREN_ABBREVIATION = re.compile(r"(?<=.)\(([A-Z]{2,5})\)")  # "đó.”(GM)": viết tắt trong ngoặc dính vào chữ trước
 LEVEL_NAMES = {"lv": "lờ vê", "lvl": "lờ vê lờ"}  # chủ sách 04-10: Lv không chắc là cấp độ thì đọc tên chữ cái, l = lờ, v = vê
-MIN_LETTERS, MAX_LETTERS = 2, 5
+from .shouts import POLICY as SOUND_POLICY
+
+MIN_LETTERS, MAX_LETTERS = 2, int(SOUND_POLICY["max_acronym_letters"])
 ROMAJI_FROM = 4  # từ bấy nhiêu chữ, đọc được bằng luật romaji ("BAKA", "SUGOI") thì là chữ Nhật viết hoa, không phải viết tắt
 
 
@@ -59,8 +61,10 @@ def spelled(core: str) -> str | None:
         return lower
     if len(lower) > MAX_LETTERS:
         return None
+    if len(lower) > 5 and sum(ch in "aeiou" for ch in lower) >= 2:
+        return None  # Long pronounceable capitals can be names or words.
     if len(lower) >= ROMAJI_FROM and romanized_reading(lower, "ja") is not None:
-        return lower
+        return lower if len(lower) <= 5 else None
     return " ".join(LETTERS[ch] for ch in lower)
 
 

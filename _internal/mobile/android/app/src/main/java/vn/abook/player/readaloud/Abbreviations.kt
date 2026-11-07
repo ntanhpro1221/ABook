@@ -22,7 +22,7 @@ object Abbreviations {
     /** Chủ sách 04-10: Lv không chắc là cấp độ thì đọc tên chữ cái, l = lờ, v = vê. */
     private val LEVEL_NAMES = mapOf("lv" to "lờ vê", "lvl" to "lờ vê lờ")
     private const val MIN_LETTERS = 2
-    private const val MAX_LETTERS = 5
+    private val MAX_LETTERS = Shouts.POLICY.getInt("max_acronym_letters")
     private const val ROMAJI_FROM = 4
 
     private fun caps(core: String) = core.count { it.isLetter() } >= 2 && core.none { it.isLowerCase() }
@@ -44,7 +44,8 @@ object Abbreviations {
         if (lower.all { it in ROMAN_LETTERS }) return letterNames(lower)
         if (word(lower) || (lower.length >= 4 && LAUGH.matches(lower))) return lower
         if (lower.length > MAX_LETTERS) return null
-        if (lower.length >= ROMAJI_FROM && Romanization.reading(lower, "ja") != null) return lower
+        if (lower.length > 5 && lower.count { it in "aeiou" } >= 2) return null
+        if (lower.length >= ROMAJI_FROM && Romanization.reading(lower, "ja") != null) return if (lower.length <= 5) lower else null
         return letterNames(lower)
     }
 

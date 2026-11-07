@@ -51,7 +51,7 @@ async function mount(schedule = false, reader: (() => Promise<number | null>) | 
   await act(async () => { actions.prepare(book, chapters, 1, 12); paused = false; fire("play"); fire("playing"); });
 }
 async function elapsed(ms: number) {
-  vi.setSystemTime(Date.now() + ms);
+  vi.setSystemTime(vi.getMockedSystemTime()!.getTime() + ms);
   await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
 }
 
@@ -68,7 +68,7 @@ it("unknown system evidence cannot arm either automatic route", async () => {
 it("a delayed OS reply cannot arm a timer using stale evidence", async () => {
   let answer!: (value: number) => void;
   await mount(false, () => new Promise<number>(resolve => { answer = resolve; }));
-  vi.setSystemTime(Date.now() + 2 * 3_600_000);
+  vi.setSystemTime(vi.getMockedSystemTime()!.getTime() + 2 * 3_600_000);
   await act(async () => { answer(2 * 3_600_000); });
   expect(actions.sleep.kind).toBe("off");
 });

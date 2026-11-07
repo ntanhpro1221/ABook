@@ -66,11 +66,11 @@ ARROW_TIME_WORDS = frozenset("giờ sáng trưa chiều tối khuya".split())
 GOLD_G = re.compile(r"(?<=[0-9])G(?![^\W\d_])")  # "10G", "9,999G": tiền G / 5G / 1G, sea-g2p đọc "gờ"; chữ cái G là "giê" (không dính chữ sau: "15GB", "3Gb" để nguyên)
 RANGE_CODES = frozenset("lớp phòng tầng combo feed số thắng thua truyện".split())  # "lớp 1-7", "phòng 4-13": mã, hai số đọc liền không có "đến"
 RANGE_RATIO = frozenset("tỉ tỷ lệ".split())  # "tỉ lệ 3-7"
-GLUED = re.compile(r"((?:\.{2,}|[…—–])+|(?<=[^\W\d_])\((?=[^\W\d_]))")  # chỗ dính liền hai từ trong một chữ hiện (tách để đọc từng từ, mảnh dấu giữ nguyên): "…", "—", và ngoặc mở giữa hai chữ ("Jigen(trong")
+GLUED = re.compile(r"((?:\.{2,}|[…—–])+|(?<=[^\W\d_])[!?]+(?=[^\W\d_])|(?<=[^\W\d_])\((?=[^\W\d_]))")  # chỗ dính liền hai từ trong một chữ hiện (tách để đọc từng từ, mảnh dấu giữ nguyên): "…", "—", và ngoặc mở giữa hai chữ ("Jigen(trong")
 STUTTER_ONSETS = ("ngh", "ng", "nh", "kh", "ch", "gh", "gi", "th", "tr", "ph", "qu")  # phụ âm đầu ghép của tiếng Việt: nói lắp "C-Chuyện" là "chờ… chuyện"
 STUTTER_SOUND = {"k": "c", "w": "v", "z": "d", "j": "gi", "f": "ph"}
-STUTTER = re.compile(r"([^\w]*)([^\W\d_]{1,3})-+([^\W\d_].*)$", re.DOTALL)
-STUTTER_ALONE = re.compile(r"([^\w]*)([^\W\d_]{1,3})-+([^\w]*)$")
+STUTTER = re.compile(r"((?:[^\w]|_)*)([^\W\d_]{1,3})-+([^\W\d_].*)$", re.DOTALL)
+STUTTER_ALONE = re.compile(r"((?:[^\w]|_)*)([^\W\d_]{1,3})-+([^\w]*)$")
 # Số La Mã MỘT chữ (I, V, X) hay là chữ cái ("ông X", "tia X", "điểm V"): chỉ đọc thành số sau danh từ đánh số (hay tên riêng viết hoa kép: "Louis X").
 NUMBERED_NOUNS = frozenset(unicodedata.normalize("NFC", word) for word in (
     "chương", "phần", "tập", "quyển", "hồi", "mục", "khoá", "khóa", "lớp", "cấp", "hạng", "bậc", "đệ", "đời", "kỳ", "kì", "số", "bài", "điều",
@@ -486,9 +486,15 @@ def _stutters(toks: list[str], out: list[str], origin: str | None, speaks_englis
         before, frag = match.group(1), match.group(2)
         if not unicodedata.normalize("NFC", rest).lower().startswith(frag.lower()):
             continue
-        if len(frag) > 1 and any(char in "aeiouy" for char in unicodedata.normalize("NFD", frag.lower())):  # đã là một âm tiết: "Hà-Hà"
-            continue
-        sound = stutter_sound(frag, rest)
+        syllable = len(frag) > 1 and any(char in "aeiouy" for char in unicodedata.normalize("NFD", frag.lower()))
+        if syllable:
+            from ..analysis import is_vietnamese_syllable
+
+            rest_core = names.split_token(rest)[1]
+            if (rest_core.lower() == frag.lower() or not is_vietnamese_syllable(frag)
+                    or not is_vietnamese_syllable(rest_core)):
+                continue
+        sound = frag.lower() if syllable else stutter_sound(frag, rest)
         if alone:
             out[index] = before + sound + ("" if tail.lstrip(CLOSERS)[:1] in tuple(PUNCT_MARKS) else "…") + tail
         else:
@@ -656,9 +662,17 @@ def spoken_tokens(toks: list[str], origin: str | None = None, speaks_english: bo
     từ / tên Anh được Việt hoá thành âm tiết ("Rose" -> "Râu-dơ"). Với MỌI cuốn và giọng: thán từ kéo dài ("Aaaa" -> "a… a", `shouts`), viết tắt toàn hoa đọc tên chữ cái
     ("HP" -> "hát pê", `abbreviations`), hậu tố gọi nối gạch ("Ariel-sama" -> "Ariel-xa-ma", `names.honorific_reading`). Cách đọc riêng
     người nghe đặt cho cuốn (`readings`, readings.py) thắng mọi bước trên. Sau cùng `reading_marks` sửa "~", nghìn kiểu Anh, <ngoặc nhọn>, " / "."""
+    prepared, owners = shouts.presentation_tokens(toks)
+    if prepared != toks:
+        said = spoken_tokens(prepared, origin, speaks_english, readings, direct_english=direct_english)
+        rebuilt = [""] * len(toks)
+        for word, owner in zip(said, owners):
+            rebuilt[owner] += (" " if rebuilt[owner] and word else "") + word
+        book_readings.apply_tokens(toks, rebuilt, readings)
+        return rebuilt
     out = list(toks)
     _stutters(toks, out, origin, speaks_english)
-    shouts.read_shouts(toks, out)
+    shouts.read_shouts(toks, out, origin)
     _read_words(toks, out, origin, speaks_english)
     book_readings.apply_tokens(toks, out, readings)
     reading_marks(out, toks)
@@ -725,7 +739,7 @@ def _book_labels(toks: list[str], out: list[str]) -> None:
 _HONORIFIC_HYPHENS = "‐‑‒–"  # Hyphen, nonbreaking hyphen, figure dash, en dash; em dash stays a pause.
 _HONORIFIC_BOUNDARIES = re.compile(r"((?:\.{2,}|[…—])+|(?<=[^\W\d_])\((?=[^\W\d_]))")
 _JA_HYPHEN_SUFFIX = re.compile(r".+[" + _HONORIFIC_HYPHENS + r"](?:san|kun|chan|sama|senpai|sensei|dono)$")
-_ENUMERATION = re.compile(r"([" + re.escape(OPENERS + FRAMES_OPEN) + r"]*)([vV]\.v)(\.*[" + re.escape(CLOSERS + FRAMES_CLOSE + ",;:!?…") + r"]*)")
+_ENUMERATION = re.compile(r"([" + re.escape(OPENERS + FRAMES_OPEN) + r"]*)([vV]\.v|[vV]v(?=\.))(\.*[" + re.escape(CLOSERS + FRAMES_CLOSE + ",;:!?…") + r"]*)")
 
 
 def _typographic_honorific(token: str, origin: str | None) -> str:
@@ -775,6 +789,7 @@ def _read_words(toks: list[str], out: list[str], origin: str | None, speaks_engl
             owner.append(index)
             if out[index] != token:
                 break
+    shouts.read_shouts(pieces, said, origin)
     _roman_numbers(pieces, said)
     abbreviations.read_levels(pieces, said, speaks_english)
     abbreviations.read_titles(pieces, said, speaks_english)

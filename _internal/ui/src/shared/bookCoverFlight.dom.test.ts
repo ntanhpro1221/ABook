@@ -53,7 +53,7 @@ it("a book query may publish its cover after the route has committed", async () 
   landBookCover(false);
   expect(document.querySelector("[data-book-cover-flight]")).not.toBeNull();
   const target = document.createElement("div"); target.dataset.bookCover = "b"; target.dataset.target = "1"; document.body.prepend(target);
-  frame(performance.now());
+  frame(0);
   expect(target.style.visibility).toBe("hidden");
   expect(target.animate).toHaveBeenCalled();
   complete(); await Promise.resolve();

@@ -1394,3 +1394,17 @@ Replay CPU toàn bộ input đóng băng: raw 27.726 câu **3.887 → 3.886**, e
 Code app trực tiếp khớp 199 JSON của arm chọn, baseline nhận vào khớp 199 JSON vox165, đều 0 mismatch. Pytest cuối **187 file, 4.627 passed, 0 FAILED, 0 errors, 3 skipped**, 0 dòng FAILED thật; một invocation đầy đủ, không ghép recheck. Ba skip do giọng ZeroTTS/Supertonic chưa tải. Lượt trung gian có 4 FAILED ở kỳ vọng cũ giữ mọi tên của cụm danh ngữ, được sửa theo luật mới và giữ kiểm kind/gender. Thêm 40 ca tổng hợp; không chép chữ truyện vào repo.
 
 Compileall, hai UI parity check, LF và diff check đạt. Danh sách khoá đọc trực tiếp có 53 mục; hash `72070ca5df3d2dae375938f8315e2b5971e939462c511f954bc8eaa9dd46d16a` → `998bbdbf94139368cb858e3347247ae23779700ae5eba911f5dac9d03f613fe8`. Chỉ cây dev, chưa commit/push; không dùng để resume project có hash cũ. Ma trận 10 phương án và các delta riêng ở thư mục tác vụ ngoài repo `scratchpad/codex/vox165b/report.md`.
+# Sound reading rules (2026-11-08)
+
+The shared `readaloud/sound_policy.json` supplies vocal patterns, common emoticon
+sounds, repetition limits, note boundaries, and the long-initialism bound to
+Python and Android BuildConfig. Display text and word ownership stay intact.
+R1-R3 also preserve the Vietnamese GVCN convention, underscore-framed stutters,
+and the guarded vv. enumeration form. VieNeu cache rules are now 10 on both
+platforms. The policy data is included in package data and the quality hash.
+
+Self-authored shared cases cover repeated vowels/consonants, multiple stretches,
+rhythmic laughter, stretched honorifics, syllable stutters, note anchors, listener
+readings, and false-positive guards for words, names, identifiers, ranks and units.
+Detailed route measurements, SHA freezes, CPU audio/ASR and test logs are private
+artifacts in the soundfix work folder; they are not listening gold labels.

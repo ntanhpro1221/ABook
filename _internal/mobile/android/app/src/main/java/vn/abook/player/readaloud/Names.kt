@@ -197,7 +197,7 @@ object Names {
     }
 
     /** Hậu tố gọi Nhật nối gạch (JA_SUFFIXES còn "tan", "nee", "nii": dễ lẫn với chữ thường nên chỉ đi theo tên đã nhận) - `HONORIFICS` của names.py. */
-    private val HONORIFICS = setOf("san", "kun", "chan", "sama", "senpai", "sensei", "dono")
+    val HONORIFICS = setOf("san", "kun", "chan", "sama", "senpai", "sensei", "dono")
     /** Tiếng gọi Hàn cố định (bộ thử TN) - `KOREAN_TERMS`. */
     private val KOREAN_TERMS = mapOf("oppa" to "óp-pa", "unnie" to "un-ni", "noona" to "nu-na", "hyung" to "hi-ung", "ssi" to "xi", "nim" to "nim")
     private val KOREAN_ALONE = setOf("oppa", "unnie", "noona", "hyung")

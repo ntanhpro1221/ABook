@@ -85,6 +85,7 @@ QUALITY_IMPLEMENTATION_FILES = (
     "readaloud/abbreviations.py",
     "readaloud/readings.py",
     "readaloud/shouts.py",
+    "readaloud/sound_policy.json",
     "readaloud/studio_tn.py",
     "readaloud/symbols.py",
     "readaloud/vieneu.py",

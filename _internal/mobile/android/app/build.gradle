@@ -16,6 +16,7 @@ if (releaseSigningFile.isFile()) {
 
 def musicLevelRange = new groovy.json.JsonSlurper().parse(file("../../../abook/webui/assets/music_mix.json"))
 def englishPolicy = new groovy.json.JsonSlurper().parse(file("../../../abook/readaloud/english_policy.json"))
+def soundPolicy = new groovy.json.JsonSlurper().parse(file("../../../abook/readaloud/sound_policy.json"))
 
 android {
     namespace = "vn.abook.player"
@@ -31,6 +32,7 @@ android {
         // nên bản phát hành không bao giờ nghe extra ấy.
         buildConfigField "boolean", "DEMO", "${project.hasProperty("benchAppId")}"
         buildConfigField "int", "ENGLISH_READING_VERSION", "${englishPolicy.version}"
+        buildConfigField "String", "SOUND_POLICY", groovy.json.JsonOutput.toJson(groovy.json.JsonOutput.toJson(soundPolicy))
         buildConfigField "String", "ENGLISH_ACRONYMS", '"' + englishPolicy.acronyms.join(' ') + '"'
         buildConfigField "String", "PRESERVE_ACRONYMS", '"' + englishPolicy.preserve_acronyms.join(' ') + '"'
         buildConfigField "String", "DIRECT_ENGLISH_WORDS", '"' + englishPolicy.english_words.join(' ') + '"'
