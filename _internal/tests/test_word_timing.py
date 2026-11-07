@@ -179,7 +179,10 @@ def _chapter_project(tmp_path: Path) -> tuple[Path, list[float]]:
     now = 1.0
     rows = [(10 + i, 1, i + 1, 0, int(BREAK * 1000), TRUTH[i]["text"], "narration", "NARRATOR", 1, "verified", "", "x", len(piece) / rate, now)
             for i, piece in enumerate(pieces)]
-    database.executemany("INSERT INTO segments VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", rows)
+    database.executemany("INSERT INTO segments(id,chapter_id,seq,paragraph_index,break_ms,text,kind,speaker,voice_profile_id,status,wav_path,wav_sha256,wav_duration,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", rows)
+    for row in rows:
+        database.execute('UPDATE segments SET stable_id=?,signal_json=? WHERE id=?',
+                         (f'c1s{row[2]}', '{"voice_profile_id":1}', row[0]))
     from abook.io_utils import sha256_file
     database.execute("UPDATE artifacts SET sha256=?,size_bytes=? WHERE artifact_key='chapter_mp3:1'",
                      (sha256_file(audio), audio.stat().st_size))

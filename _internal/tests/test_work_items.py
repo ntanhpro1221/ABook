@@ -798,7 +798,7 @@ def test_the_bad_recording_card_drops_the_lines_already_judged(tmp_path: Path) -
     root = tmp_path / "thu_vien"
     project = make_project(root)
     db = sqlite3.connect(project / "project.sqlite3")
-    for column in ("stable_id TEXT", "text_sha256 TEXT", "canonical_character_id INTEGER", "asr_text TEXT",
+    for column in ("text_sha256 TEXT", "asr_text TEXT",
                    "asr_similarity REAL", "warning_code TEXT"):
         db.execute(f"ALTER TABLE segments ADD COLUMN {column}")
     db.execute("ALTER TABLE characters ADD COLUMN locked INTEGER")

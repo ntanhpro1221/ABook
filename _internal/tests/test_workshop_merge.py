@@ -32,7 +32,6 @@ def test_the_shared_merge_cases(case: str) -> None:
 def test_opening_the_file_of_a_project_edited_on_another_machine_merges_its_edits(tmp_path: Path) -> None:
     project = _project(tmp_path)
     with sqlite3.connect(project / store.DB_NAME) as db:
-        db.execute("ALTER TABLE segments ADD COLUMN stable_id TEXT")
         db.execute("UPDATE segments SET stable_id = 's' || id")
     app = _app(tmp_path, project.parent)
     reviews = Reviews()

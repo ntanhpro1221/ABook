@@ -130,6 +130,14 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   Mọi đường sửa dùng chung `database.heard_chapter` và `_mark_listener_redo_conn`; MP3 mới không được dùng bản chụp của MP3 cũ.
 - Ngoại lệ giọng người kể theo chương/đoạn lưu xuất xứ câu trong `chapter_teller_lines` cùng transaction đổi giọng/đặt lại câu.
   Hoàn tác hoặc chọn người kể khác phải đối chiếu lại cả những câu đã áp, giữ người nghĩ ban đầu và ưu tiên sửa từng câu của người nghe.
+- Trong mode `teller`, lớp giọng chương áp cho `NARRATOR` ở mọi kind và nội tâm chưa rõ người nghĩ;
+  giữ nguyên speaker/character của câu, kể cả NULL, và giữ provenance để hoàn tác cả profile ban đầu chưa có.
+  Mode mặc định vẫn không tự đổi giọng. Trích giữa câu chỉ sửa tên/nhãn cục bộ khi có khung câu kể và thiếu bằng chứng
+  lượt nói: ngôi 1–2, tiếng kêu/cười, đáp lễ hoặc cue phát ngôn gần cụm trích. Khung giải nghĩa tên/thuật ngữ và khung
+  hướng dẫn cách nói được xét riêng; speech tag vẫn có quyền riêng. Đây là heuristic đã đo, không bảo đảm giữ mọi thoại thật.
+- Trước khi xuất `.abook` từ dự án, `voice_integrity` kiểm owner/giọng chương, giới, signal và mọi mảnh split trên
+  các chương có audio, kể cả xuất `partial`/cả bộ. Sai/thiếu bằng chứng chặn xuất; kiểm chỉ đọc, không sửa DB hay gọi model.
+  Nội tâm có tên giữ giọng riêng. Giọng dẫn khác giới người kể chương cần được chọn rõ hoặc sửa trước khi xuất.
 - Retry cùng chữ/giọng giữ bản thu tốt nhất trong SQLite và trên đĩa đến khi bản tốt hơn checkpoint. Lượt thử ghi file riêng;
   hết lượt vẫn `failed` kèm lý do và bản thu đã giữ. Đổi chữ/cách đọc/giọng là vô hiệu bản thu, không phải retry.
 - Chia câu chỉ dùng lời đọc đã materialize cùng span nguồn/lời đọc; không áp phát âm lại lên kết quả thay thế.

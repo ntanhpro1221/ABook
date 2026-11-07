@@ -448,6 +448,7 @@ def test_opening_the_same_book_again_keeps_the_listeners_edits(tmp_path: Path) -
     mp3.write_bytes(b"ID3" + bytes(range(255, -1, -1)) * 40)
     db = sqlite3.connect(project / "project.sqlite3")
     db.execute("UPDATE chapters SET status='completed', output_mp3=?, completed_at=1 WHERE id=2", (str(mp3),))
+    db.execute("UPDATE segments SET status='verified',wav_sha256='synthetic-take' WHERE chapter_id=2")
     db.commit()
     db.close()
     fuller = bookfile.pack(project, tmp_path / "v2.abook", partial=True)
@@ -824,6 +825,8 @@ def test_a_project_script_carries_the_stable_id_and_text_hash(tmp_path: Path) ->
         assert json.loads(opened.read("scripts/1.json"))["segments"][0]["stableId"] == segments[0]["stableId"]
     (tmp_path / "q").mkdir()
     plain = make_project(tmp_path / "q")
+    with sqlite3.connect(plain / 'project.sqlite3') as connection:
+        connection.execute('ALTER TABLE segments DROP COLUMN stable_id')
     assert "stableId" not in store.chapter_script(plain, 1)["segments"][0], "sổ cũ không có cột thì không có khoá - chỉ cộng thêm"
 
 

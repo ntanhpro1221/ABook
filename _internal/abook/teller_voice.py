@@ -248,8 +248,8 @@ def presentation_applied(connection: sqlite3.Connection) -> bool:
     """SQLite provenance owns completion, including a crash before the sidecar write."""
     return connection.execute(
         "SELECT 1 FROM segments s JOIN chapter_teller_lines t ON t.segment_id=s.id "
-        "WHERE s.kind='narration' AND s.speaker=t.original_speaker "
-        "AND s.canonical_character_id=t.original_character_id "
+        "WHERE s.speaker=t.original_speaker "
+        "AND s.canonical_character_id IS t.original_character_id "
         "AND s.voice_profile_id=t.applied_profile_id LIMIT 1").fetchone() is not None
 
 
@@ -275,6 +275,7 @@ def _ensure_chapter_tellers(project_root: Path | str, db: Any, tellers: Tellers)
     the profile change, so an interrupted update can be safely repeated.
     """
     from .listener_overrides import narrator_profile
+    from .database import thought_reads_as_narrator
     from .webui.store import keep_heard_scripts
 
     selected = read(project_root)["mode"] == "teller"
@@ -288,13 +289,13 @@ def _ensure_chapter_tellers(project_root: Path | str, db: Any, tellers: Tellers)
         selected = selected and not _narrator_chosen(conn, project_root)
         targets = {}
         origins = {int(r["segment_id"]): dict(r) for r in conn.execute("SELECT * FROM chapter_teller_lines")}
-        for row in conn.execute("SELECT * FROM segments WHERE kind='narration' ORDER BY chapter_id,seq"):
+        for row in conn.execute("SELECT * FROM segments WHERE kind IN ('narration','dialogue','thought') ORDER BY chapter_id,seq"):
             stable = str(row["stable_id"])
             origin = origins.get(int(row["id"]))
             if stable in wishes:
                 conn.execute("DELETE FROM chapter_teller_lines WHERE segment_id=?", (row["id"],))
                 continue
-            if origin and (row["speaker"] != NARRATOR or row["canonical_character_id"] != origin["applied_character_id"]
+            if origin and (row["speaker"] != origin["original_speaker"] or row["canonical_character_id"] != origin["applied_character_id"]
                            or row["voice_profile_id"] != origin["applied_profile_id"]):
                 # A subsequent listener change owns this row, even without a pending wish.
                 conn.execute("DELETE FROM chapter_teller_lines WHERE segment_id=?", (row["id"],))
@@ -306,7 +307,10 @@ def _ensure_chapter_tellers(project_root: Path | str, db: Any, tellers: Tellers)
             if name not in targets:
                 targets[name] = _teller_target(conn, name, int(base["id"])) if selected else None
             target = targets[name]
-            eligible = str(original["speaker"]).upper() == NARRATOR
+            # Ownership, rather than punctuation-derived kind, selects the voice
+            # layer. Attributed inner speech keeps the thinking person's profile.
+            eligible = str(original["speaker"]).upper() == NARRATOR or thought_reads_as_narrator(
+                original["kind"], original["speaker"], original["voice_profile_id"])
             desired = (original["speaker"], original["canonical_character_id"],
                        target[1] if target is not None and eligible else original["voice_profile_id"])
             current = (row["speaker"], row["canonical_character_id"], row["voice_profile_id"])
@@ -377,6 +381,7 @@ def teller_lines(connection: sqlite3.Connection, tellers: Tellers) -> tuple[dict
     """({(nhân vật, hồ sơ, nhãn): các câu lời kể sẽ chuyển sang họ}, số câu bỏ vì người kể chưa có giọng). Chỉ câu lời kể còn mang giọng
     dẫn, ở đoạn có người kể "tôi" (đoạn người khác kể có tên: theo người ấy; không tên / ngôi ba: giữ giọng dẫn)."""
     from .listener_overrides import narrator_profile
+    from .database import thought_reads_as_narrator
 
     narrator = connection.execute("SELECT id FROM characters WHERE canonical_name=?", (NARRATOR,)).fetchone()
     profile = narrator_profile(connection)
@@ -387,9 +392,13 @@ def teller_lines(connection: sqlite3.Connection, tellers: Tellers) -> tuple[dict
     groups: dict[tuple[int, int, str], list[sqlite3.Row]] = {}
     skipped = 0
     for row in connection.execute(
-        "SELECT id, stable_id, chapter_id, seq, status, speaker, canonical_character_id, voice_profile_id" + wav
-        + " FROM segments WHERE kind='narration' AND UPPER(speaker)='NARRATOR' AND voice_profile_id=?"
-        " AND (canonical_character_id IS NULL OR canonical_character_id=?) ORDER BY chapter_id, seq", (int(profile["id"]), int(narrator["id"]))):
+        "SELECT id, stable_id, chapter_id, seq, status, kind, speaker, canonical_character_id, voice_profile_id" + wav
+        + " FROM segments WHERE kind IN ('narration','dialogue','thought') ORDER BY chapter_id, seq"):
+        narrator_owned = (str(row["speaker"]).upper() == NARRATOR
+                          and row["voice_profile_id"] == int(profile["id"])
+                          and row["canonical_character_id"] in (None, int(narrator["id"])))
+        if not narrator_owned and not thought_reads_as_narrator(row["kind"], row["speaker"], row["voice_profile_id"]):
+            continue
         name = tellers.of(int(row["chapter_id"]), int(row["seq"]))
         if not name:
             continue
@@ -398,7 +407,7 @@ def teller_lines(connection: sqlite3.Connection, tellers: Tellers) -> tuple[dict
         target = targets[name]
         if target is None:
             skipped += 1
-        else:
+        elif row["voice_profile_id"] != target[1]:
             groups.setdefault(target, []).append(row)
     return groups, skipped
 
@@ -413,7 +422,7 @@ def mode_plan(connection: sqlite3.Connection, project_root: Path | str, tellers:
     """Price an explicit narration voice change without altering any line."""
     origins = connection.execute(
         "SELECT s.* FROM segments s JOIN chapter_teller_lines t ON t.segment_id=s.id "
-        "WHERE s.voice_profile_id=t.applied_profile_id AND s.voice_profile_id<>t.original_profile_id").fetchall()
+        "WHERE s.voice_profile_id=t.applied_profile_id AND s.voice_profile_id IS NOT t.original_profile_id").fetchall()
     if origins:
         return {"direction": "off", "lines": len(origins),
                 "recorded": sum(bool(_heard(row)) for row in origins), "tellers": []}
@@ -424,7 +433,7 @@ def mode_plan(connection: sqlite3.Connection, project_root: Path | str, tellers:
             "tellers": sorted(set(names), key=str.casefold)}
 
 
-def _move_lines(db: Any, rows: list[Any], profile_id: int, reason: str,
+def _move_lines(db: Any, rows: list[Any], profile_id: int | None, reason: str,
                 *, connection: sqlite3.Connection | None = None) -> int:
     """Change voice profiles and reset affected audio in the same transaction."""
     now = time.time()

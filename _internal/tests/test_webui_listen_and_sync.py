@@ -53,11 +53,12 @@ def make_project(root: Path, title: str = "Sách thử · Tập 1") -> Path:
                                completed_at REAL, last_error TEXT);
         CREATE TABLE segments (id INTEGER PRIMARY KEY, chapter_id INTEGER, seq INTEGER, paragraph_index INTEGER,
                                break_ms INTEGER, text TEXT, kind TEXT, speaker TEXT, voice_profile_id INTEGER,
-                               status TEXT, wav_path TEXT, wav_sha256 TEXT, wav_duration REAL, updated_at REAL);
+                               status TEXT, wav_path TEXT, wav_sha256 TEXT, wav_duration REAL, updated_at REAL,
+                               stable_id TEXT, canonical_character_id INTEGER, gender TEXT DEFAULT 'unknown', signal_json TEXT);
         CREATE TABLE characters (id INTEGER PRIMARY KEY, canonical_name TEXT, display_name TEXT, gender TEXT,
                                  age TEXT, importance TEXT, mention_count INTEGER, locked_voice_key TEXT);
         CREATE TABLE voice_profiles (id INTEGER PRIMARY KEY, voice_key TEXT, preset_name TEXT,
-                                     pitch_semitones REAL, formant_ratio REAL);
+                                     pitch_semitones REAL, formant_ratio REAL, engine TEXT DEFAULT 'vieneu');
         CREATE TABLE runtime_events (id INTEGER PRIMARY KEY, timestamp REAL, level TEXT, code TEXT, message TEXT, details_json TEXT);
         CREATE TABLE artifacts (artifact_key TEXT PRIMARY KEY, kind TEXT, path TEXT, sha256 TEXT,
                                 size_bytes INTEGER, verified INTEGER, metadata_json TEXT, created_at REAL, updated_at REAL);
@@ -67,8 +68,8 @@ def make_project(root: Path, title: str = "Sách thử · Tập 1") -> Path:
     db.execute("INSERT INTO book VALUES (1, ?, 'synthesizing', 'chapter_synthesis', ?, ?, '', '{}')", (title, now - 90, now))
     db.execute("INSERT INTO chapters VALUES (1, 1, '645', 'a.txt', 'completed', 3, ?, ?, ?, '')", (str(mp3), now - 80, now - 60))
     db.execute("INSERT INTO chapters VALUES (2, 2, '646', 'b.txt', 'synthesizing', 2, '', ?, NULL, '')", (now - 50,))
-    db.execute("INSERT INTO voice_profiles VALUES (1, 'narrator', 'Đức Trí', 0, 1.0)")
-    db.execute("INSERT INTO voice_profiles VALUES (2, 'vieneu@3.8.3/Thanh Bình', 'Thanh Bình', 0, 0.87)")
+    db.execute("INSERT INTO voice_profiles(id,voice_key,preset_name,pitch_semitones,formant_ratio) VALUES (1, 'narrator', 'Đức Trí', 0, 1.0)")
+    db.execute("INSERT INTO voice_profiles(id,voice_key,preset_name,pitch_semitones,formant_ratio) VALUES (2, 'vieneu@3.8.3/Thanh Bình', 'Thanh Bình', 0, 0.87)")
     db.execute("INSERT INTO characters VALUES (1, 'LUCIEN', 'LUCIEN', 'male', 'young', 'main', 30, '')")
     rows = [
         (1, 1, 1, 0, 400, "Chương 646 - Trở về (1)", "narration", "NARRATOR", 1, "verified", "", "x", 2.0, now),
@@ -77,7 +78,12 @@ def make_project(root: Path, title: str = "Sách thử · Tập 1") -> Path:
         (4, 2, 1, 0, 400, "Chương 647 - Trở về (2)", "narration", "NARRATOR", 1, "verified", "", "x", 2.0, now),
         (5, 2, 2, 1, 0, "Chưa thu.", "narration", "NARRATOR", 1, "analyzed", "", "", None, now),
     ]
-    db.executemany("INSERT INTO segments VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", rows)
+    db.executemany("INSERT INTO segments(id,chapter_id,seq,paragraph_index,break_ms,text,kind,speaker,voice_profile_id,"
+                   "status,wav_path,wav_sha256,wav_duration,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", rows)
+    for row in rows:
+        db.execute('UPDATE segments SET stable_id=?,canonical_character_id=?,signal_json=? WHERE id=?',
+                   (f'c{row[1]}s{row[2]}', 1 if row[7] == 'LUCIEN' else None,
+                    json.dumps({'voice_profile_id': row[8]}), row[0]))
     import hashlib
     db.execute("INSERT INTO artifacts VALUES ('chapter_mp3:1','chapter_mp3',?,?,?,1,NULL,?,?)",
                (str(mp3), hashlib.sha256(mp3.read_bytes()).hexdigest(), mp3.stat().st_size, now, now))

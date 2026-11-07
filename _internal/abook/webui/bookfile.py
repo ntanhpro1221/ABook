@@ -217,6 +217,17 @@ def listening_layer(project_root: Path, music_track: Callable[[str], Path | None
     return book, files
 
 
+def _require_voice_integrity(project_root: Path) -> None:
+    from ..voice_integrity import require
+
+    chapters = set(store.chapter_audio_paths(project_root))
+    if chapters:
+        try:
+            require(project_root, chapter_ids=chapters)
+        except ValueError as exc:
+            raise BookFileError(str(exc)) from exc
+
+
 def pack(project_root: Path, out: Path | None = None, *, producer: str = "ABook",
          music_track: Callable[[str], Path | None] | None = None,
          progress: Callable[[str, int, int], None] | None = None, partial: bool = False) -> Path:
@@ -227,6 +238,7 @@ def pack(project_root: Path, out: Path | None = None, *, producer: str = "ABook"
     project_root = Path(project_root)
     if progress is not None:
         progress("prepare", 0, 0)
+    _require_voice_integrity(project_root)
     book, files = listening_layer(project_root, music_track, progress)
     with contextlib.closing(store.connect(project_root)) as connection:
         recorded = connection.execute("SELECT COUNT(*) FROM segments WHERE status NOT IN ('pending','analyzed') OR COALESCE(wav_sha256,'')<>''").fetchone()[0]
@@ -320,6 +332,7 @@ def pack_series(parts: Sequence[tuple[int, Path] | Path], out: Path, *, producer
     for number, root in _numbered(parts):
         if progress is not None:
             progress("listen", len(books), len(parts))
+        _require_voice_integrity(root)
         book = _packaged_book(root)
         local_files: dict[str, Path | bytes] = {}
         _add_chapters(root, book, local_files)
