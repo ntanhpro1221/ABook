@@ -288,7 +288,11 @@ object Store {
             stream.write(bytes)
             stream.fd.sync()
         }
-        check(temporary.renameTo(target)) { "Chưa lưu được dữ liệu của bạn: ${target.name}" }
+        try {
+            AtomicFiles.replace(temporary, target)
+        } catch (error: java.io.IOException) {
+            throw IllegalStateException("Chưa lưu được dữ liệu của bạn: ${target.name}", error)
+        }
     }
 
     /** Giữ nguyên byte hỏng để có thể cứu lại, trước khi reader tạo dữ liệu mới. Lỗi I/O vẫn phải báo cho nơi gọi. */
