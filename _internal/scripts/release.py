@@ -253,7 +253,7 @@ def _apk_certificate(apk: Path) -> str:
     assert tools, f"không có apksigner trong {sdk}"
     # apksigner.bat cần java: JAVA_HOME của Android Studio như bước dựng APK.
     env = dict(os.environ, JAVA_HOME=os.environ.get("JAVA_HOME") or "C:/Program Files/Android/Android Studio/jbr")
-    output = subprocess.run([str(tools[-1]), "verify", "--print-certs", str(apk)], capture_output=True, text=True, check=True,
+    output = subprocess.run([str(tools[-1]), "verify", "--print-certs", str(apk)], capture_output=True, text=True, encoding="utf-8", errors="replace", check=True,
                             env=env).stdout
     match = re.search(r"SHA-256 digest: ([0-9a-f]{64})", output)
     assert match, "apksigner không in chứng chỉ"
@@ -353,7 +353,7 @@ def publish(version: str, commit: str, out: Path, confirmations: list[str] | Non
     release_notes(version)  # mục CHANGELOG của bản này thiếu/rỗng thì dừng NGAY, trước cả giờ chạy cổng
     gate_command = [sys.executable, "-X", "utf8", str(ROOT / "scripts/release_gate.py")]
     if confirmations:
-        head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=REPO, capture_output=True, text=True,
+        head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=REPO, capture_output=True, text=True, encoding="utf-8", errors="replace",
                               check=True).stdout.strip()
         assert head == commit, "xác nhận MANUAL chỉ áp dụng đúng HEAD sẽ phát hành"
     for confirmation in confirmations or []:
@@ -375,7 +375,7 @@ def publish(version: str, commit: str, out: Path, confirmations: list[str] | Non
     if not already_in_main:
         _run(["git", "push", "-q", "origin", f"{commit}:main"], REPO)
     _run(["git", "push", "-q", "origin", f"v{version}"], REPO)
-    token = subprocess.run(["gh", "auth", "token", "--user", GITHUB_USER], capture_output=True, text=True, check=True).stdout.strip()
+    token = subprocess.run(["gh", "auth", "token", "--user", GITHUB_USER], capture_output=True, text=True, encoding="utf-8", errors="replace", check=True).stdout.strip()
     env = dict(os.environ, GH_TOKEN=token)  # đúng tài khoản cho từng lệnh, không đổi tài khoản đang dùng của gh
     _run(["gh", "release", "create", f"v{version}", "--repo", GITHUB_REPO, "--title", f"ABook {version}", "--notes-file",
           str(notes), "--latest", *artifacts(version)], out, env)
@@ -398,7 +398,7 @@ def _commit_bump(version: str, files: list[Path]) -> None:
     _run(["git", "add", "--", *[str(path.relative_to(REPO)) for path in files]], REPO)
     message = f"Release {version}\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n"
     _run(["git", "commit", "-q", "-m", message], REPO)
-    print(subprocess.run(["git", "log", "--oneline", "-1"], cwd=REPO, capture_output=True, text=True).stdout.strip())
+    print(subprocess.run(["git", "log", "--oneline", "-1"], cwd=REPO, capture_output=True, text=True, encoding="utf-8", errors="replace").stdout.strip())
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -439,7 +439,7 @@ def main(argv: list[str] | None = None) -> int:
         (out / "notes.md").write_bytes(release_notes(args.version, out=out).encode("utf-8"))
         print(f"ghi chú -> {out / 'notes.md'}")
     else:
-        commit = subprocess.run(["git", "rev-parse", args.commit or "HEAD"], cwd=REPO, capture_output=True, text=True,
+        commit = subprocess.run(["git", "rev-parse", args.commit or "HEAD"], cwd=REPO, capture_output=True, text=True, encoding="utf-8", errors="replace",
                                 check=True).stdout.strip()
         publish(args.version, commit, out, args.confirm)
     return 0

@@ -69,7 +69,7 @@ def _vram_used_mib() -> float:
         result = subprocess.run(
             ["nvidia-smi", "--query-gpu=memory.used", "--format=csv,noheader,nounits"],
             capture_output=True,
-            text=True,
+            text=True, encoding="utf-8", errors="replace",
             timeout=20,
             check=False,
         )

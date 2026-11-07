@@ -341,13 +341,13 @@ def main() -> int:
             say(f"    {line}")
     say("")
     dirty = subprocess.run(
-        ["git", "status", "--porcelain"], cwd=str(ROOT), capture_output=True, text=True
+        ["git", "status", "--porcelain"], cwd=str(ROOT), capture_output=True, text=True, encoding="utf-8", errors="replace"
     ).stdout.strip()
     say(f"cây git: {'sạch' if not dirty else f'{len(dirty.splitlines())} file đổi'}")
     say(upstream_line())
     say(
         subprocess.run(
-            ["git", "log", "--oneline", "-1"], cwd=str(ROOT), capture_output=True, text=True
+            ["git", "log", "--oneline", "-1"], cwd=str(ROOT), capture_output=True, text=True, encoding="utf-8", errors="replace"
         ).stdout.strip()
     )
     # Dấu thời gian để một canh nền biết nhịp tim có còn đập không: 18-09 01:0x nhịp chết vì tôi

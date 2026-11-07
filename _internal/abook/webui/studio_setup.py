@@ -802,7 +802,7 @@ class StudioSetup:
             return self._package_probe[1]
         try:
             result = subprocess.run([str(self.python), "-c", PACKAGE_CHECK_SCRIPT, str(self._requirements())],
-                                    capture_output=True, text=True, encoding="utf-8", timeout=20,
+                                    capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=20,
                                     env={**os.environ, **self.environment()},
                                     creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
             missing = json.loads(result.stdout) if result.returncode == 0 else ["runtime"]
@@ -1604,7 +1604,7 @@ class StudioSetup:
     def _whisper_pin(self) -> str:
         """URL checkpoint "turbo" của openai-whisper đã cài trong Studio (băm SHA-256 là đoạn áp chót của URL)."""
         try:
-            result = subprocess.run([str(self.python), "-c", WHISPER_PIN_SCRIPT], capture_output=True, text=True, encoding="utf-8",
+            result = subprocess.run([str(self.python), "-c", WHISPER_PIN_SCRIPT], capture_output=True, text=True, encoding="utf-8", errors="replace",
                                     timeout=120, env={**os.environ, **self.environment()},
                                     creationflags=CREATE_NO_WINDOW if os.name == "nt" else 0)
             lines = [line for line in result.stdout.splitlines() if line.startswith("{")]

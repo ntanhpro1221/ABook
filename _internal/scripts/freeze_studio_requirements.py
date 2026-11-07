@@ -115,7 +115,7 @@ def drift_from_pins(kept: list[str], pyproject: str, wanted: set[str] | None = N
 
 def main() -> int:
     python = Path(sys.argv[1]) if len(sys.argv) > 1 else RUNTIME_PYTHON
-    frozen = subprocess.run([str(python), "-m", "pip", "freeze", "--all"], capture_output=True, text=True, check=True).stdout
+    frozen = subprocess.run([str(python), "-m", "pip", "freeze", "--all"], capture_output=True, text=True, encoding="utf-8", errors="replace", check=True).stdout
     locked = lock_closure(tomllib.loads(LOCK.read_text(encoding="utf-8")))
     kept = kept_lines(frozen, set(locked))
     drift = drift_from_pins(kept, PYPROJECT.read_text(encoding="utf-8"), set(locked)) + drift_from_lock(kept, locked)

@@ -630,7 +630,7 @@ def main(argv: list[str]) -> int:
     # pytest **bỏ luôn dòng tổng kết** "N passed in Xs". Ranh giới 2 và 3 vì thế đều ghi
     # `bo test: (khong thay dong tong ket)` vào log và vào chính commit của nó - lượt chạy xanh
     # thật nhưng con số thì mất. Bỏ cờ đi thì dòng ấy trở lại, và `boundary.sh` bắt được nó.
-    tests = subprocess.run([python, "-m", "pytest"], cwd=str(ROOT), text=True)
+    tests = subprocess.run([python, "-m", "pytest"], cwd=str(ROOT), text=True, encoding="utf-8", errors="replace")
     if tests.returncode != 0:
         _say("")
         _say("TEST ĐỎ. Đừng chạy lượt nào cho tới khi xanh lại.")
