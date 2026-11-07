@@ -7,6 +7,17 @@ import org.junit.Test
 import vn.abook.player.vieneu.VieneuUnits
 
 class JapaneseFallbackTest {
+    @Test fun sharedBookEvidenceAndPresentation() {
+        val cases = org.json.JSONArray(File("../../../tests/fixtures/readaloud/japanese_fallback/book_evidence.json").readText(Charsets.UTF_8))
+        for (i in 0 until cases.length()) {
+            val c = cases.getJSONObject(i)
+            val token = c.getString("token")
+            val origin = if (c.isNull("origin")) null else c.getString("origin")
+            assertEquals(token, if (c.isNull("reading")) null else c.getString("reading"), JapanesePolicy.reading(token, origin))
+            if (c.has("spoken")) assertEquals(token, listOf(c.getString("spoken")), VieneuUnits.spokenTokens(listOf(token), origin, directEnglish = true))
+        }
+    }
+
     @Test fun sharedPolicyAndFallbackFixture() {
         val policy = JSONObject(File("../../../abook/readaloud/japanese_policy.json").readText(Charsets.UTF_8))
         assertEquals(policy.getString("namespace"), JapanesePolicy.NAMESPACE)
@@ -46,7 +57,8 @@ class JapaneseFallbackTest {
         }
         for (word in listOf("Abe", "Jin", "Aya", "Rita", "Tina", "Mary", "Rachel", "Anime")) {
             assertNull(word, JapanesePolicy.reading(word, null))
-            assertNull(word, JapanesePolicy.reading(word, "ja"))
+            if (word == "Aya") assertNotNull(word, JapanesePolicy.reading(word, "ja"))
+            else assertNull(word, JapanesePolicy.reading(word, "ja"))
         }
         assertEquals(3, JapanesePolicy.syllables("Tanaka"))
         assertEquals(2, JapanesePolicy.syllables("Satou"))

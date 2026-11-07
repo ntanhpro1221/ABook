@@ -220,7 +220,7 @@ def test_the_clip_key_only_changes_for_text_the_origin_changes(fake_voices, tmp_
     provider, engines = fake_voices
     assert clip_key("p", "v", "t") == clip_key("p", "v", "t", "")
     assert clip_key("p", "v", "t", "ja") != clip_key("p", "v", "t")
-    direct = f"direct-en{english_policy.VERSION}+jp-fallback1"
+    direct = f"direct-en{english_policy.VERSION}+jp-fallback2"
     assert provider.reading_tag("Haruto đến.", "ja") == f"ja+{direct}" and provider.reading_tag("Haruto đến.", None) == direct
     assert provider.reading_tag("Kate đến.", "ja") == direct and provider.reading_tag("Hoa đến.", "ko") == direct
     service = ReadAloud(tmp_path / "cache", [provider])

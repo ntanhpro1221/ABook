@@ -37,7 +37,7 @@
       "said": "Tôi ghi Ta-na-ca vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Tanaka",
         "long_vowels": []
       }
@@ -48,10 +48,10 @@
       "reading": "Xa-tâu",
       "flags": [],
       "text": "Tôi ghi Satou vào sổ.",
-      "said": "Tôi ghi Satou vào sổ.",
+      "said": "Tôi ghi Xa-tâu vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Satou",
         "long_vowels": [
           "ou"
@@ -66,10 +66,10 @@
         "analogy:y_gi"
       ],
       "text": "Tôi ghi Yuuki vào sổ.",
-      "said": "Tôi ghi Yuuki vào sổ.",
+      "said": "Tôi ghi Giu-ki vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Yuuki",
         "long_vowels": [
           "uu"
@@ -82,10 +82,10 @@
       "reading": "Sin-gi",
       "flags": [],
       "text": "Tôi ghi Shinji vào sổ.",
-      "said": "Tôi ghi Shinji vào sổ.",
+      "said": "Tôi ghi Sin-gi vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Shinji",
         "long_vowels": []
       }
@@ -99,7 +99,7 @@
       "said": "Tôi ghi Ha-ru-tô vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Haruto",
         "long_vowels": []
       }
@@ -113,7 +113,7 @@
       "said": "Tôi ghi Xu-ba-xa vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Tsubasa",
         "long_vowels": []
       }
@@ -127,7 +127,7 @@
       "said": "Tôi ghi Ca-du-ki vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Kazuki",
         "long_vowels": []
       }
@@ -138,10 +138,10 @@
       "reading": "Ken-ta",
       "flags": [],
       "text": "Tôi ghi Kenta vào sổ.",
-      "said": "Tôi ghi Kenta vào sổ.",
+      "said": "Tôi ghi Ken-ta vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Kenta",
         "long_vowels": []
       }
@@ -155,7 +155,7 @@
       "said": "Tôi ghi Ha-ru-ca vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Haruka",
         "long_vowels": []
       }
@@ -169,7 +169,7 @@
       "said": "Tôi ghi Na-ca-ta vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Nakata",
         "long_vowels": []
       }
@@ -183,7 +183,7 @@
       "said": "Tôi ghi Mô-ri-ta vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Morita",
         "long_vowels": []
       }
@@ -199,7 +199,7 @@
       "said": "Tôi ghi a-o_-i vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Aoi",
         "long_vowels": []
       }
@@ -213,7 +213,7 @@
       "said": "Tôi ghi Ryuu vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Ryuu",
         "long_vowels": [
           "uu"
@@ -229,7 +229,7 @@
       "said": "Tôi ghi Ryou vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Ryou",
         "long_vowels": [
           "ou"
@@ -245,7 +245,7 @@
       "said": "Tôi ghi Ryō vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Ryō",
         "long_vowels": [
           "ō"
@@ -261,7 +261,7 @@
       "said": "Tôi ghi Kyou vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Kyou",
         "long_vowels": [
           "ou"
@@ -277,7 +277,7 @@
       "said": "Tôi ghi Kō vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Kō",
         "long_vowels": [
           "ō"
@@ -293,7 +293,7 @@
       "said": "Tôi ghi Sei vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Sei",
         "long_vowels": [
           "ei"
@@ -306,10 +306,10 @@
       "reading": "Xây-i",
       "flags": [],
       "text": "Tôi ghi Seii vào sổ.",
-      "said": "Tôi ghi Seii vào sổ.",
+      "said": "Tôi ghi Xây-i vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Seii",
         "long_vowels": [
           "ei"
@@ -325,7 +325,7 @@
       "said": "Tôi ghi Kou vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Kou",
         "long_vowels": [
           "ou"
@@ -338,10 +338,10 @@
       "reading": "Cô-u",
       "flags": [],
       "text": "Tôi ghi Koou vào sổ.",
-      "said": "Tôi ghi Koou vào sổ.",
+      "said": "Tôi ghi Cô-u vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Koou",
         "long_vowels": [
           "oo"
@@ -354,10 +354,10 @@
       "reading": "Xu-phu",
       "flags": [],
       "text": "Tôi ghi Sufu vào sổ.",
-      "said": "Tôi ghi Sufu vào sổ.",
+      "said": "Tôi ghi Xu-phu vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Sufu",
         "long_vowels": []
       }
@@ -368,10 +368,10 @@
       "reading": "Xu-xu",
       "flags": [],
       "text": "Tôi ghi Tsusu vào sổ.",
-      "said": "Tôi ghi Tsusu vào sổ.",
+      "said": "Tôi ghi Xu-xu vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Tsusu",
         "long_vowels": []
       }
@@ -382,10 +382,10 @@
       "reading": "Si-si",
       "flags": [],
       "text": "Tôi ghi Shishi vào sổ.",
-      "said": "Tôi ghi Shishi vào sổ.",
+      "said": "Tôi ghi Si-si vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Shishi",
         "long_vowels": []
       }
@@ -396,10 +396,10 @@
       "reading": "Chi-chi",
       "flags": [],
       "text": "Tôi ghi Chichi vào sổ.",
-      "said": "Tôi ghi Chichi vào sổ.",
+      "said": "Tôi ghi Chi-chi vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Chichi",
         "long_vowels": []
       }
@@ -410,10 +410,10 @@
       "reading": "Gi-gi",
       "flags": [],
       "text": "Tôi ghi Jiji vào sổ.",
-      "said": "Tôi ghi Jiji vào sổ.",
+      "said": "Tôi ghi Gi-gi vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Jiji",
         "long_vowels": []
       }
@@ -424,10 +424,10 @@
       "reading": "Ghi-ghi",
       "flags": [],
       "text": "Tôi ghi Gigi vào sổ.",
-      "said": "Tôi ghi Gigi vào sổ.",
+      "said": "Tôi ghi Ghi-ghi vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Gigi",
         "long_vowels": []
       }
@@ -438,10 +438,10 @@
       "reading": "Ghi-ghe",
       "flags": [],
       "text": "Tôi ghi Gige vào sổ.",
-      "said": "Tôi ghi Gige vào sổ.",
+      "said": "Tôi ghi Ghi-ghe vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Gige",
         "long_vowels": []
       }
@@ -457,7 +457,7 @@
       "said": "Tôi ghi Kya vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Kya",
         "long_vowels": []
       }
@@ -471,7 +471,7 @@
       "said": "Tôi ghi Kyu vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Kyu",
         "long_vowels": []
       }
@@ -485,7 +485,7 @@
       "said": "Tôi ghi Kyo vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Kyo",
         "long_vowels": []
       }
@@ -501,7 +501,7 @@
       "said": "Tôi ghi Gya vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Gya",
         "long_vowels": []
       }
@@ -515,7 +515,7 @@
       "said": "Tôi ghi Gyu vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Gyu",
         "long_vowels": []
       }
@@ -529,7 +529,7 @@
       "said": "Tôi ghi Gyo vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Gyo",
         "long_vowels": []
       }
@@ -545,7 +545,7 @@
       "said": "Tôi ghi Nya vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Nya",
         "long_vowels": []
       }
@@ -559,7 +559,7 @@
       "said": "Tôi ghi Nyu vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Nyu",
         "long_vowels": []
       }
@@ -573,7 +573,7 @@
       "said": "Tôi ghi Nyo vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Nyo",
         "long_vowels": []
       }
@@ -589,7 +589,7 @@
       "said": "Tôi ghi Hya vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Hya",
         "long_vowels": []
       }
@@ -603,7 +603,7 @@
       "said": "Tôi ghi Hyu vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Hyu",
         "long_vowels": []
       }
@@ -617,7 +617,7 @@
       "said": "Tôi ghi Hyo vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Hyo",
         "long_vowels": []
       }
@@ -633,7 +633,7 @@
       "said": "Tôi ghi Bya vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Bya",
         "long_vowels": []
       }
@@ -647,7 +647,7 @@
       "said": "Tôi ghi Byu vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Byu",
         "long_vowels": []
       }
@@ -661,7 +661,7 @@
       "said": "Tôi ghi Byo vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Byo",
         "long_vowels": []
       }
@@ -677,7 +677,7 @@
       "said": "Tôi ghi Pya vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Pya",
         "long_vowels": []
       }
@@ -691,7 +691,7 @@
       "said": "Tôi ghi Pyu vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Pyu",
         "long_vowels": []
       }
@@ -705,7 +705,7 @@
       "said": "Tôi ghi Pyo vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Pyo",
         "long_vowels": []
       }
@@ -721,7 +721,7 @@
       "said": "Tôi ghi Mya vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Mya",
         "long_vowels": []
       }
@@ -735,7 +735,7 @@
       "said": "Tôi ghi Myu vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Myu",
         "long_vowels": []
       }
@@ -749,7 +749,7 @@
       "said": "Tôi ghi Myo vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Myo",
         "long_vowels": []
       }
@@ -765,7 +765,7 @@
       "said": "Tôi ghi Rya vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Rya",
         "long_vowels": []
       }
@@ -779,7 +779,7 @@
       "said": "Tôi ghi Ryu vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Ryu",
         "long_vowels": []
       }
@@ -793,7 +793,7 @@
       "said": "Tôi ghi Ryo vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Ryo",
         "long_vowels": []
       }
@@ -804,10 +804,10 @@
       "reading": "Xáp-pa",
       "flags": [],
       "text": "Tôi ghi Sappa vào sổ.",
-      "said": "Tôi ghi Sappa vào sổ.",
+      "said": "Tôi ghi Xáp-pa vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Sappa",
         "long_vowels": []
       }
@@ -818,10 +818,10 @@
       "reading": "Xát-ta",
       "flags": [],
       "text": "Tôi ghi Satta vào sổ.",
-      "said": "Tôi ghi Satta vào sổ.",
+      "said": "Tôi ghi Xát-ta vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Satta",
         "long_vowels": []
       }
@@ -834,10 +834,10 @@
         "analogy:ss_t"
       ],
       "text": "Tôi ghi Sassa vào sổ.",
-      "said": "Tôi ghi Sassa vào sổ.",
+      "said": "Tôi ghi Xát-xa vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Sassa",
         "long_vowels": []
       }
@@ -848,10 +848,10 @@
       "reading": "Tác-ca",
       "flags": [],
       "text": "Tôi ghi Takka vào sổ.",
-      "said": "Tôi ghi Takka vào sổ.",
+      "said": "Tôi ghi Tác-ca vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Takka",
         "long_vowels": []
       }
@@ -862,10 +862,10 @@
       "reading": "Mát-cha",
       "flags": [],
       "text": "Tôi ghi Matcha vào sổ.",
-      "said": "Tôi ghi Matcha vào sổ.",
+      "said": "Tôi ghi Mát-cha vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Matcha",
         "long_vowels": []
       }
@@ -879,7 +879,7 @@
       "said": "Tôi ghi o_-ni-gi-ri vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Onigiri",
         "long_vowels": []
       }
@@ -893,7 +893,7 @@
       "said": "Tôi ghi Onii-chan vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Onii-chan",
         "long_vowels": [
           "ii"
@@ -909,7 +909,7 @@
       "said": "Tôi ghi Onee-san vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Onee-san",
         "long_vowels": [
           "ee"
@@ -925,7 +925,7 @@
       "said": "Tôi ghi Senpai vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Senpai",
         "long_vowels": []
       }
@@ -939,7 +939,7 @@
       "said": "Tôi ghi Sensei vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Sensei",
         "long_vowels": [
           "ei"
@@ -955,7 +955,7 @@
       "said": "Tôi ghi Ta-na-ca vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Tanaka",
         "long_vowels": []
       }
@@ -969,7 +969,7 @@
       "said": "Tôi ghi Ha-ru-tô vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Haruto",
         "long_vowels": []
       }
@@ -983,7 +983,7 @@
       "said": "Tôi ghi Satou vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Satou",
         "long_vowels": [
           "ou"
@@ -999,7 +999,7 @@
       "said": "Tôi ghi Yuuki vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Yuuki",
         "long_vowels": [
           "uu"
@@ -1015,7 +1015,7 @@
       "said": "Tôi ghi Shinji vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Shinji",
         "long_vowels": []
       }
@@ -1029,7 +1029,7 @@
       "said": "Tôi ghi Abe vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Abe",
         "long_vowels": []
       }
@@ -1043,7 +1043,7 @@
       "said": "Tôi ghi Jin vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Jin",
         "long_vowels": []
       }
@@ -1057,7 +1057,7 @@
       "said": "Tôi ghi Aya vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Aya",
         "long_vowels": []
       }
@@ -1071,7 +1071,7 @@
       "said": "Tôi ghi Rita vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Rita",
         "long_vowels": []
       }
@@ -1085,7 +1085,7 @@
       "said": "Tôi ghi Tina vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Tina",
         "long_vowels": []
       }
@@ -1099,7 +1099,7 @@
       "said": "Tôi ghi Mary vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Mary",
         "long_vowels": []
       }
@@ -1113,7 +1113,7 @@
       "said": "Tôi ghi a-ni-me vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Anime",
         "long_vowels": []
       }
@@ -1127,7 +1127,7 @@
       "said": "Tôi ghi Rachel vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Rachel",
         "long_vowels": []
       }
@@ -1141,7 +1141,7 @@
       "said": "Tôi ghi English vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "English",
         "long_vowels": []
       }
@@ -1155,7 +1155,7 @@
       "said": "Tôi ghi <en>G P S</en> vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "GPS",
         "long_vowels": []
       }
@@ -1169,7 +1169,7 @@
       "said": "Tôi ghi Hoa vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Hoa",
         "long_vowels": []
       }
@@ -1183,7 +1183,7 @@
       "said": "Tôi ghi Nam vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Nam",
         "long_vowels": []
       }
@@ -1197,7 +1197,7 @@
       "said": "Tôi ghi TANAKA vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "TANAKA",
         "long_vowels": []
       }
@@ -1211,7 +1211,7 @@
       "said": "Tôi ghi Ta-na-ca-cun vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Tanaka-kun",
         "long_vowels": []
       }
@@ -1225,7 +1225,7 @@
       "said": "Tôi ghi Giu-ki-xan vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Yuuki-san",
         "long_vowels": [
           "uu"
@@ -1241,7 +1241,7 @@
       "said": "Tôi ghi a-be-xen-xây vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "Abe-sensei",
         "long_vowels": [
           "ei"
@@ -1257,7 +1257,7 @@
       "said": "Tôi ghi Ta-ta-na-ca vào sổ.",
       "metadata": {
         "provenance": "auto",
-        "reading_namespace": "jp-fallback1",
+        "reading_namespace": "jp-fallback2",
         "source_spelling": "T-Tanaka",
         "long_vowels": []
       }
