@@ -62,7 +62,7 @@ def test_listener_component_and_phrase_override_machine_rows(tmp_path, monkeypat
 
 
 @pytest.mark.parametrize("origin", ["ja", None])
-@pytest.mark.parametrize("surface", ["Shinji Tanaka", "Jin Nakata"])
+@pytest.mark.parametrize("surface", ["Shinji Tanaka", "Nopi Nakata"])
 def test_japanese_names_cannot_be_kept_as_western_names(surface, origin):
     assert planned_reading(surface, origin, direct_english=True)[1] == "rule_romanization"
     assert all(english_policy.reading(w, origin) is None for w in surface.split())
@@ -71,26 +71,26 @@ def test_japanese_names_cannot_be_kept_as_western_names(surface, origin):
 def test_general_evidence_and_short_homographs():
     assert planned_reading("Haruto", None, direct_english=True)[1] == "rule_romanization"
     assert english_policy.reading("Michael", None) == ("Michael", "keep_english")
-    assert " ".join(vieneu.spoken_tokens("Jin Nakata đến.".split(), None, direct_english=True)) == "Gin Na-ca-ta đến."
+    assert " ".join(vieneu.spoken_tokens("Nopi Nakata đến.".split(), None, direct_english=True)) == "Nô-pi Na-ca-ta đến."
     assert " ".join(vieneu.spoken_tokens("Jin, Nakata đến.".split(), None, direct_english=True)) == "Jin, Na-ca-ta đến."
     assert vieneu.spoken_tokens(["Tanaka"], None) == ["Tanaka"]
     assert " ".join(vieneu.spoken_tokens("Tanaka Abe đến.".split(), None, direct_english=True)) == "Ta-na-ca a-be đến."
     for word in ("Abe", "Jin", "Aya", "Rita", "Tina", "Mary", "Rachel", "Anime"):
         assert reading(word, None) is None
-        assert reading(word, "ja") is None
+        assert (reading(word, "ja") is None) == (word != "Aya")
     assert vieneu.spoken_tokens(["T-Tanaka"], "ja", direct_english=True) == ["Ta-ta-na-ca"]
 
 
 def test_checkpoint_uses_component_rows_and_auto_provenance(monkeypatch):
     from test_studio_names import JAPANESE, _analyzer, _book, _stored
 
-    db = _book(JAPANESE, *["Shinji Tanaka gặp Jin Nakata."] * 3)
+    db = _book(JAPANESE, *["Shinji Tanaka gặp Nopi Nakata."] * 3)
     analyzer, sent = _analyzer(db, monkeypatch)
     analyzer.reconcile_name_pronunciations()
     stored = _stored(db)
     assert sent == []
-    assert "Shinji Tanaka" not in stored and "Jin Nakata" not in stored
-    for word in ["Shinji", "Tanaka", "Jin", "Nakata"]:
+    assert "Shinji Tanaka" not in stored and "Nopi Nakata" not in stored
+    for word in ["Shinji", "Tanaka", "Nopi", "Nakata"]:
         assert stored[word] == (reading(word, "ja", contextual=True), "rule_romanization")
 
 

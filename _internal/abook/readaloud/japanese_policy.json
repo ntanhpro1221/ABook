@@ -1,6 +1,6 @@
 {
-  "version": 1,
-  "namespace": "jp-fallback1",
+  "version": 2,
+  "namespace": "jp-fallback2",
   "provenance": "auto",
   "description": "Automatic Vietnamese approximation of Japanese romaji; not native Japanese pronunciation or an owner verdict.",
   "choices": {
@@ -193,6 +193,8 @@
   },
   "routing": {
     "min_syllables": 3,
-    "evidence": "Complete phonotactic parse plus length, attached honorific, or adjacent capitalized romaji words; Vietnamese and English dictionary words abstain."
+    "known_ja_min_syllables": 2,
+    "lexicon_bert_max_id": 20000,
+    "evidence": "Complete phonotactic parse; known Japanese books allow two nuclei, uppercase and presentation boundaries. Unknown books require three nuclei, an honorific or an adjacent romaji pair. General English vocabulary and Vietnamese syllables abstain."
   }
 }

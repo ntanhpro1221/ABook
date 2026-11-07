@@ -48,13 +48,13 @@ def rule_reading(surface: str, origin: str | None) -> str | None:
     khi có chữ luật không đọc (từ Anh, âm tiết Việt, tiếng reo...) hoặc cách đọc ra có âm tiết bộ kiểm chặt không nhận."""
     from .readaloud.japanese_policy import contextual_names, reading as japanese_reading, routing_origin
 
-    origin = routing_origin(surface, origin)
+    route = routing_origin(surface, origin)
     words = surface.split()
-    if origin not in readaloud_names.ORIGINS or not words:
+    if route not in readaloud_names.ORIGINS or not words:
         return None
-    contextual = contextual_names(words) if origin == "ja" else set()
-    readings = [japanese_reading(word, origin, contextual=i in contextual) if origin == "ja"
-                else readaloud_names.name_reading(word, origin) for i, word in enumerate(words)]
+    contextual = contextual_names(words, origin) if route == "ja" else set()
+    readings = [japanese_reading(word, origin, contextual=i in contextual) if route == "ja"
+                else readaloud_names.name_reading(word, route) for i, word in enumerate(words)]
     if any(reading is None for reading in readings):
         return None
     spoken = " ".join(readings).replace("_", "")  # "o_" là dấu riêng của "Nghe ngay" (giữ chữ "o" lẻ qua sea-g2p); Studio lưu chữ thường
@@ -85,8 +85,8 @@ def planned_reading(surface: str, origin: str | None, engine_speaks_english: boo
         engine_speaks_english = STUDIO_ENGINE_SPEAKS_ENGLISH
     from .readaloud.japanese_policy import contextual_names, reading as japanese_reading, routing_origin
 
-    origin = routing_origin(surface, origin)
-    contextual = contextual_names(surface.split()) if origin == "ja" else set()
+    route = routing_origin(surface, origin)
+    contextual = contextual_names(surface.split(), origin) if route == "ja" else set()
     spoken: list[str] = []
     by_rule = by_english = False
     for index, word in enumerate(surface.split()):
@@ -134,8 +134,8 @@ def japanese_pronunciations(pronunciations: list[Any], origin: str | None) -> li
     for row in pronunciations:
         words = str(row["surface"]).split()
         row_origin = routing_origin(str(row["surface"]), origin)
-        contextual = contextual_names(words) if row_origin == "ja" else set()
-        readings = [japanese_reading(word, row_origin, contextual=i in contextual) if row_origin == "ja" else None for i, word in enumerate(words)]
+        contextual = contextual_names(words, origin) if row_origin == "ja" else set()
+        readings = [japanese_reading(word, origin, contextual=i in contextual) if row_origin == "ja" else None for i, word in enumerate(words)]
         if str(row["source"]) == LISTENER_PRONUNCIATION_SOURCE or not any(readings):
             untouched.append(row)
             continue

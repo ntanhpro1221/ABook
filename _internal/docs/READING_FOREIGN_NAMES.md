@@ -381,16 +381,21 @@ Gradle nhúng cùng JSON cho Kotlin. Bảng giữ fu → phu, tsu → xu, shi �
 
 Bộ nhận diện phải tách hết chữ bằng bảng `allowed`, `onsets`, `geminate_coda`. Nguyên âm dài tính
 một âm tiết; n và phụ âm đôi cần nguyên âm đứng trước. Một tên viết hoa được đọc khi có ít nhất
-ba âm tiết, kính ngữ dính, hoặc hai từ romaji viết hoa đứng liền nhau. Dấu câu cắt ngữ cảnh cặp.
-Từ Việt hợp lệ, từ trong từ điển Anh hiện có, từ Nhật phổ thông và chữ toàn hoa không là chứng cứ tên.
-Đồng tự ngắn cần ngữ cảnh; tên Tây trong từ điển vẫn giữ chữ kể cả cạnh tên Nhật. Gốc Hàn giữ đường Hàn.
+ba âm tiết, kính ngữ dính, hoặc hai từ romaji viết hoa đứng liền nhau khi chưa rõ gốc cuốn.
+Khi `names.book_origin` đã nhận `ja`, ngưỡng là hai âm tiết, chữ toàn hoa được nhận như viết hoa đầu,
+và bộ nhận diện xét từng lõi qua dấu câu, dấu trang trí, ngoặc, chú thích và kính ngữ kéo dài.
+Chữ nguồn không đổi. Dấu câu vẫn cắt ngữ cảnh cặp. Chứng cứ tên cục bộ không tự thành chứng cứ cấp cuốn.
+Từ Việt hợp lệ và từ Nhật phổ thông được bảo vệ ở cả hai chế độ. Chế độ gốc Nhật bổ sung từ vựng chung
+CMUdict giao 20.001 mục đầu của BERT, cùng các từ CMU có tiền tố Anh và gốc trong tập ấy; không dùng tên theo sách.
+Asset nén dùng chung được sinh bằng `scripts/build_japanese_lexicon.py`; không cần BERT khi chạy app.
+Tên Tây trong từ điển vẫn giữ chữ kể cả cạnh tên Nhật. Gốc Hàn giữ đường Hàn.
 Sổ nhân vật hiện không có trường ngôn ngữ riêng từng tên; không suy ra trường ấy từ nhãn người nói.
 
 Studio khóa theo thành phần. Cặp họ–tên tạo cách đọc thành phần trong chính dự án; materialization
 ưu tiên cách đọc người nghe cho từng từ hoặc cụm. Anchor/event tự động giữ `provenance=auto`,
-spelling nguồn, dấu âm dài và namespace `jp-fallback1`. SQLite nguồn được giữ nguyên khi materialize.
+spelling nguồn, dấu âm dài và namespace `jp-fallback2`. SQLite nguồn được giữ nguyên khi materialize.
 Cache VieNeu, quality hash và hash analysis/casting bao gồm policy và parser; thay luật là thay pipeline.
 
 Fixture Nhật chung dùng tên phổ thông và câu tự viết. Ngưỡng được chọn trên dev và kiểm tra đồng tự
-tổng hợp trước khi chấm sách khác. Số đo held-out, đối chứng audio và phạm vi test ở `codex/jpimpl2/report.md`
+tổng hợp trước khi chấm sách khác. Số đo held-out mới, đối chứng audio và phạm vi test ở `codex/jpimpl3/report.md`
 ngoài repo. Recall và precision phải báo riêng; từ chối tên ngắn là bỏ sót, không tính là đoán đúng.

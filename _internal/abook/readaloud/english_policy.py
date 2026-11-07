@@ -62,6 +62,10 @@ def keeps_word(core: str, origin: str | None) -> bool:
 def reading(core: str, origin: str | None) -> tuple[str, str] | None:
     if core in POLICY["preserve_acronyms"]:
         return None
+    from .japanese_policy import reading as japanese_reading
+
+    if japanese_reading(core, origin):
+        return None
     if core in ACRONYMS:
         return "<en>" + " ".join(core) + "</en>", "spell_english"
     from .abbreviations import LETTERS, ROMAN_LETTERS, spelled

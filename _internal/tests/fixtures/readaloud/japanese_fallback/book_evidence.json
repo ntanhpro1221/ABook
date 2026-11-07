@@ -1,0 +1,14 @@
+[
+  {"token": "Nopi", "origin": "ja", "reading": "Nô-pi", "spoken": "Nô-pi"},
+  {"token": "NOPI", "origin": "ja", "reading": "Nô-pi", "spoken": "Nô-pi"},
+  {"token": "Nopi-kunn", "origin": "ja", "reading": "Nô-pi-cun", "spoken": "Nô-pi-cun"},
+  {"token": "NOPI-CHAAAN", "origin": "ja", "reading": "Nô-pi-chan", "spoken": "Nô-pi-chan"},
+  {"token": "Nopi[note27]", "origin": "ja", "reading": "Nô-pi[note27]", "spoken": "Nô-pi"},
+  {"token": "Nopi・Nopika", "origin": "ja", "reading": "Nô-pi・Nô-pi-ca", "spoken": "Nô-pi・Nô-pi-ca"},
+  {"token": "Nopi", "origin": null, "reading": null},
+  {"token": "NOPI", "origin": null, "reading": null},
+  {"token": "Nopi-kunn", "origin": null, "reading": null},
+  {"token": "Nopi", "origin": "ko", "reading": null},
+  {"token": "Camera", "origin": "ja", "reading": null},
+  {"token": "Tina", "origin": "ja", "reading": null}
+]

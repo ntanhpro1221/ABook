@@ -34,6 +34,7 @@ object EnglishPolicy {
 
     fun reading(core: String, origin: String?): Pair<String, String>? {
         if (core in preserveAcronyms) return null
+        if (JapanesePolicy.reading(core, origin) != null) return null
         val lower = core.lowercase(Locale.ROOT)
         val letters = core.isNotEmpty() && core.all { it in 'A'..'Z' }
         val generic = letters && !vietnamese(core) && !lower.all { it in "ivx" } &&

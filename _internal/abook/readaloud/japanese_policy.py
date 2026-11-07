@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import gzip
 import re
 from functools import lru_cache
 from pathlib import Path
@@ -10,6 +11,30 @@ POLICY = json.loads(Path(__file__).with_suffix(".json").read_text(encoding="utf-
 VERSION = int(POLICY["version"])
 NAMESPACE = str(POLICY["namespace"])
 PROVENANCE = str(POLICY["provenance"])
+_LETTERS = "A-Za-zāīūēōâîûêôĀĪŪĒŌÂÎÛÊÔ"
+_WORD = re.compile(rf"[{_LETTERS}]+(?:[-'][{_LETTERS}]+)*")
+_NOTE = re.compile(r"\[note\d+\]", re.IGNORECASE)
+
+
+@lru_cache(maxsize=1)
+def lexical_guard() -> frozenset[str]:
+    """General English vocabulary, including common Western proper nouns."""
+    with gzip.open(Path(__file__).with_name("japanese_lexicon.txt.gz"), "rt", encoding="utf-8") as stream:
+        return frozenset(stream.read().split())
+
+
+def _normalized(core: str, origin: str | None) -> str:
+    if origin != "ja":
+        return core
+    parts = core.split("-")
+    # Only the suffix is compressed: repeated letters in the name still abstain.
+    for index in range(1, len(parts)):
+        low = parts[index].casefold()
+        for suffix in POLICY["suffixes"]:
+            if re.fullmatch("".join(re.escape(ch) + "+" for ch in suffix), low):
+                parts[index] = suffix
+                break
+    return "-".join(part.capitalize() if part.isupper() else part for part in parts)
 
 
 def _head(core: str) -> tuple[str, bool]:
@@ -63,14 +88,15 @@ def syllables(core: str) -> int:
     return count
 
 
-def _candidate(core: str) -> tuple[int, bool]:
+def _candidate(core: str, origin: str | None = None) -> tuple[int, bool]:
     from ..analysis import is_vietnamese_syllable
     from ..romanization import romanized_reading
     from .names import english_words
 
-    head, honorific = _head(core)
+    head, honorific = _head(_normalized(core, origin))
     if (len(head) < 2 or not head[:1].isupper() or head[1:] != head[1:].lower()
             or is_vietnamese_syllable(head) or head.casefold() in english_words()
+            or (origin == "ja" and head.casefold() in lexical_guard())
             or head.casefold() in POLICY["common"] or re.search(r"(.)\1\1", head.casefold())):
         return 0, False
     count = syllables(head)
@@ -89,11 +115,11 @@ def _supported(core: str) -> bool:
     return bool(count and (honorific or count >= POLICY["routing"]["min_syllables"]))
 
 
-def contextual_names(toks: list[str]) -> set[int]:
+def contextual_names(toks: list[str], origin: str | None = None) -> set[int]:
     from .names import split_token
 
     parts = [split_token(token) for token in toks]
-    valid = [_candidate(core)[0] > 0 for _, core, _ in parts]
+    valid = [_candidate(core, origin)[0] > 0 for _, core, _ in parts]
     found: set[int] = set()
     for index in range(len(parts) - 1):
         if valid[index] and valid[index + 1] and not parts[index][2] and not parts[index + 1][0]:
@@ -101,12 +127,14 @@ def contextual_names(toks: list[str]) -> set[int]:
     return found
 
 
-def reading(core: str, origin: str | None, *, contextual: bool = False) -> str | None:
+def _reading_word(core: str, origin: str | None, *, contextual: bool = False) -> str | None:
     from ..romanization import romanized_reading
     from .names import lone_syllable
 
-    count, honorific = _candidate(core)
-    if origin == "ko" or not count or not (contextual or honorific or count >= POLICY["routing"]["min_syllables"]):
+    core = _normalized(core, origin)
+    count, honorific = _candidate(core, origin)
+    minimum = POLICY["routing"]["known_ja_min_syllables" if origin == "ja" else "min_syllables"]
+    if origin == "ko" or not count or not (contextual or honorific or count >= minimum):
         return None
     head, _ = _head(core)
     parts = core.split("-")
@@ -118,13 +146,42 @@ def reading(core: str, origin: str | None, *, contextual: bool = False) -> str |
     return lone_syllable(romanized_reading(core, "ja"))
 
 
+def reading(core: str, origin: str | None, *, contextual: bool = False) -> str | None:
+    """Use presentation boundaries only with independent book-level evidence.
+
+    Return a spoken form; source text and its offsets are never edited.
+    ASCII fragments inside a Unicode word are not separate names.
+    """
+    if origin != "ja":
+        return _reading_word(core, origin, contextual=contextual)
+    notes = list(_NOTE.finditer(core))
+    found = False
+    pieces = []
+    end = 0
+    for match in _WORD.finditer(core):
+        if any(note.start() <= match.start() < note.end() for note in notes):
+            continue
+        if ((match.start() and core[match.start() - 1].isalpha())
+                or (match.end() < len(core) and core[match.end()].isalpha())):
+            continue
+        said = _reading_word(match.group(), origin, contextual=contextual)
+        if said:
+            pieces.extend((core[end:match.start()], said))
+            end = match.end()
+            found = True
+    if not found:
+        return None
+    return "".join([*pieces, core[end:]])
+
+
 def apply_tokens(toks: list[str], out: list[str], origin: str | None) -> None:
     """VieNeu-only routing, before keep-English and explicit listener readings."""
     from .names import name_reading, split_token
 
-    contextual = contextual_names(toks) if origin != "ko" else set()
+    contextual = contextual_names(toks, origin) if origin != "ko" else set()
     for index, token in enumerate(toks):
-        before, core, after = split_token(token)
+        source = _NOTE.sub("", token) if origin == "ja" else token
+        before, core, after = split_token(source)
         if not core or before[-1:].isdigit() or re.match(r"^[-–]?\d", after):
             continue
         said = reading(core, origin, contextual=index in contextual)
