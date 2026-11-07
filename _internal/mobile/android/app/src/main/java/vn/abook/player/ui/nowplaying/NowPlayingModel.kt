@@ -24,7 +24,7 @@ enum class SleepKind { Off, Minutes, Chapter }
 
 /** The timer as set (mode, minutes, whether it counts now). The time left runs on [PlayerPosition.sleepRemainingMs], never here. */
 @Immutable
-data class PlayerSleep(val kind: SleepKind = SleepKind.Off, val minutes: Int = 0, val counting: Boolean = false, val stoppedAtMs: Long = 0L)
+data class PlayerSleep(val kind: SleepKind = SleepKind.Off, val minutes: Int = 0, val counting: Boolean = false, val stoppedAtMs: Long = 0L, val automaticReason: String = "")
 
 @Immutable
 data class NowPlayingState(
@@ -169,7 +169,7 @@ fun nowPlayingState(player: PlayerState, voices: List<PlayerVoice>, returnAvaila
         cover = player.cover, playing = player.playing, durationMs = player.durationMs.coerceAtLeast(0), rate = player.rate,
         sleep = PlayerSleep(
             when (player.sleep.mode) { "minutes" -> SleepKind.Minutes; "chapter" -> SleepKind.Chapter; else -> SleepKind.Off },
-            player.sleep.minutes, player.sleep.counting, player.sleep.stoppedAtMs,
+            player.sleep.minutes, player.sleep.counting, player.sleep.stoppedAtMs, player.sleep.reason,
         ),
         chapters = player.chapters, readAlongAvailable = player.hasTrack, error = player.error,
         music = player.music, returnAvailable = returnAvailable, returnSerial = returnSerial,

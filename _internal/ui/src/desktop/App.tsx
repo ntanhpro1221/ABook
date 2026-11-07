@@ -19,6 +19,7 @@ import { LibraryScreen } from "@/listen/LibraryScreen";
 import { MorningRecap } from "@/listen/MorningRecap";
 import { ReaderScreen } from "@/listen/ReaderScreen";
 import { readerEditing } from "./readerEditing";
+import { readLocalSystemIdleMs } from "@/listen/sleepActivity";
 import { PlayerProvider, usePlayer } from "@/listen/player";
 import { SourceProvider, useSource } from "@/listen/source";
 import { DialogActions, Button, ContentSkeleton, Dialog, EmptyState, InlineError, OfflineStrip, TooltipProvider, useFocusClearOfToasts } from "@/shared/ui";
@@ -606,6 +607,7 @@ export function App() {
           defaultVolume={info.volume}
           fadeSeconds={preferences?.sleepFadeSeconds ?? info.sleepFadeSeconds}
           extendMinutes={preferences?.sleepExtendMinutes ?? info.sleepExtendMinutes}
+          systemIdleReader={!info.remote && !currentPeer() ? readLocalSystemIdleMs : undefined}
           safetyStopHours={preferences?.safetyStopHours ?? info.safetyStopHours}
           sleepSchedule={preferences ? preferences.sleepSchedule : info.sleepSchedule}
           autoRewind={preferences?.autoRewind !== false}

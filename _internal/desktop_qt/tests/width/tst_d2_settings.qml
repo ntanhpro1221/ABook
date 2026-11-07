@@ -261,7 +261,7 @@ Item {
             choiceOf(page, "Độ dài nhỏ dần").picked("60")
             compare(last("PUT", "/api/preferences").body.sleepFadeSeconds, 60)
             verify(hasText(page, "Lúc đang nhỏ dần: chạm phím hoặc chuột."))
-            verify(hasText(page, "Không ai chạm máy chừng này thì nhỏ dần rồi dừng."))
+            verify(hasText(page, "Máy rảnh đủ lâu mới nhỏ dần rồi dừng."))
             reply("/api/preferences", 500, {error: "Đĩa đầy"})
             choiceOf(page, "Tự tắt").picked("0")
             compare(Api.preferences.safetyStopHours, 3)

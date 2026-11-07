@@ -7,7 +7,7 @@ icon `LucidePaths.js` sinh bởi `scripts/gen_lucide_icons.py --qml`. Bảng dư
 
 <!-- ui_parity_qt:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity_qt.py - không sửa tay, chạy lại script) -->
 
-Quét: web máy tính 4924 chữ (2823 khác nhau), 320 cặp nhãn-icon; Qt 3406 chữ (2554 khác nhau), 277 cặp nhãn-icon (icon dùng ở 386 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
+Quét: web máy tính 4923 chữ (2823 khác nhau), 320 cặp nhãn-icon; Qt 3406 chữ (2554 khác nhau), 277 cặp nhãn-icon (icon dùng ở 386 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
 
 ## a. Cùng việc, khác chữ
 
@@ -167,7 +167,7 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 ### Đang nghe
 
 - chỉ Qt (18): Tạm dừng {}* (`qt/ChapterList.qml:26`); Đọc {} (chưa có audio)* (`qt/ChapterList.qml:26`); Đọc chương này* (`qt/ChapterList.qml:45`); Đọc* (`qt/ChapterReader.qml:14`); Chưa có chương để đọc. (`qt/ChapterReader.qml:33`); Đang tải chương… (`qt/ChapterReader.qml:86`); Đã nghe* (`qt/ChapterRow.qml:50`); Tuỳ chọn {}* (`qt/ChapterRow.qml:102`); Thêm tuỳ chọn* (`qt/NowPlaying.qml:238`); Giọng {}* (`qt/NowPlaying.qml:294`); Thử lại* (`qt/NowPlaying.qml:337`); Hẹn giờ tắt (`qt/NowPlaying.qml:439`); Danh sách chương* (`qt/NowPlaying.qml:454`); Nhạc nền* (`qt/NowPlaying.qml:465`); Cửa sổ mini (`qt/NowPlaying.qml:611`); Gợi ý cho phần đọc* (`qt/ReadingSuggestions.qml:8`); Bỏ dòng (`qt/ReadingSuggestions.qml:56`); Đóng* (`qt/ReadingSuggestions.qml:79`)
-- chỉ web (16): Shift+← (`266`); Đã chọn tốc độ đọc {} (`467`); Phím (`482`); Đã chọn giọng {} (`747`); Hẹn giờ đã tắt tiếng lúc (`979`); Bật lại (`988`); Tiếng nhỏ dần (`996`); Hẹn giờ ngủ trên {} (`1063`); Về chế độ nghe (`2085`); Nghe tiếp · {} (`81`); Shift+→ (`99`); Chưa có audio (`109`); Chạm (`120`); Nghe bằng giọng đọc.{} (`142`); Hẹn giờ ngủ: còn {} giây (`104`); ...
+- chỉ web (16): Shift+← (`266`); Đã chọn tốc độ đọc {} (`467`); Phím (`482`); Đã chọn giọng {} (`747`); Hẹn giờ đã tắt tiếng lúc (`979`); Bật lại (`988`); Tiếng nhỏ dần (`996`); Hẹn giờ ngủ trên {} (`1063`); Về chế độ nghe (`2085`); Nghe tiếp · {} (`81`); Shift+→ (`99`); Chưa có audio (`109`); Chạm (`120`); Nghe bằng giọng đọc.{} (`142`); Hẹn giờ ngủ: còn {} giây (`105`); ...
 
 ### Đọc theo
 
@@ -242,7 +242,7 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 ### Chung
 
 - chỉ Qt (2): Chưa làm được lúc này. (`qt/Api.qml:48`); Quay lại* (`qt/ScreenHeader.qml:13`)
-- chỉ web (4): Đang tải điều hướng (`599`); Thông báo (Alt+T) (`715`); Xem các tab trước (`515`); Xem các tab sau (`520`)
+- chỉ web (4): Đang tải điều hướng (`600`); Thông báo (Alt+T) (`717`); Xem các tab trước (`515`); Xem các tab sau (`520`)
 
 File QML chưa xếp màn (thêm vào SCREENS): `desktop_qt/qml/BookLogic.js`, `desktop_qt/qml/CastLogic.js`, `desktop_qt/qml/FindInBook.qml`, `desktop_qt/qml/FindLogic.js`, `desktop_qt/qml/MusicCredit.qml`, `desktop_qt/qml/MusicLevelSlider.qml`, `desktop_qt/qml/MusicPopover.qml`, `desktop_qt/qml/PeerStudio.js`, `desktop_qt/qml/PlayerConsent.qml`, `desktop_qt/qml/ProjectSteps.qml`, `desktop_qt/qml/StudioChapterHead.qml`, `desktop_qt/qml/StudioMusic.qml`, `desktop_qt/qml/StudioMusicLogic.js`, `desktop_qt/qml/StudioMusicMoods.qml`, `desktop_qt/qml/StudioMusicScene.qml`, `desktop_qt/qml/StudioMusicSwap.qml`, `desktop_qt/qml/StudioMusicTrackRow.qml`, `desktop_qt/qml/StudioMyMusic.qml`.
 

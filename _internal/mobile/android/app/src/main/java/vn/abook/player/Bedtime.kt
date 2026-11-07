@@ -19,8 +19,8 @@ import java.io.File
  * đêm cũ, và thẻ buổi sáng chỉ hiện đêm của hồ sơ đang dùng của cuốn (không mời người này quay về chỗ của người kia).
  */
 object Bedtime {
-    private const val STILL_DEVIATION = 0.06   // m/s² - máy nằm yên trên đệm
-    private const val STILL_WINDOWS = 4        // 4 cửa sổ 30 giây liền = 2 phút nằm yên
+    private const val STILL_DEVIATION = SleepPolicy.STILL_DEVIATION   // m/s² - máy nằm yên trên đệm
+    private const val STILL_WINDOWS = SleepPolicy.STILL_WINDOWS        // 4 cửa sổ 30 giây liền = 2 phút nằm yên
     private var session: JSONObject? = null
     private var lastCheckpointMs = 0L
     private var stillRun = 0

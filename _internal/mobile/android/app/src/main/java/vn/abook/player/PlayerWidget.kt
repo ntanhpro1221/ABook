@@ -169,6 +169,8 @@ class PlayerWidget : AppWidgetProvider() {
         ).buildAsync()
         future.addListener({
             Playback.onMain {
+                val hadTimer = SleepTimer.mode != SleepTimer.Mode.OFF
+                Playback.touched()
                 if (Playback.bookId.isEmpty() && action == ACTION_TOGGLE) {
                     Playback.resumeLast()
                 } else {
@@ -176,7 +178,7 @@ class PlayerWidget : AppWidgetProvider() {
                         ACTION_TOGGLE -> Playback.toggle()
                         ACTION_BACK -> Playback.skip(-Playback.SKIP_SECONDS.toDouble())
                         ACTION_FORWARD -> Playback.skip(Playback.SKIP_SECONDS.toDouble())
-                        ACTION_SLEEP -> if (SleepTimer.mode == SleepTimer.Mode.OFF) SleepTimer.setMinutes(30) else SleepTimer.cancel()
+                        ACTION_SLEEP -> if (!hadTimer) SleepTimer.setMinutes(30) else SleepTimer.cancel()
                     }
                 }
                 refresh(context)

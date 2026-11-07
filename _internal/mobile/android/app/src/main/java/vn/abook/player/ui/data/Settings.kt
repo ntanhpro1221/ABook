@@ -167,7 +167,7 @@ object SettingsSummary {
         val schedule = settings.schedule
         return when {
             schedule != null -> "Lịch đêm ${schedule.from}–${schedule.to}"
-            settings.safetyStopHours > 0 -> "Tự tắt sau ${settings.safetyStopHours} giờ"
+            settings.safetyStopHours > 0 -> "Máy rảnh ${settings.safetyStopHours} giờ"
             else -> "Tắt"
         }
     }

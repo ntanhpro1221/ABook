@@ -269,7 +269,7 @@ function SleepGroup() {
   const extend = String(preferences?.sleepExtendMinutes ?? 10) as "5" | "10" | "15";
   return (
     <SettingsBlock>
-      <SettingsRow label="Tự tắt" hint="Không ai chạm máy chừng này thì nhỏ dần rồi dừng.">
+      <SettingsRow label="Tự tắt" hint="Máy rảnh đủ lâu mới nhỏ dần rồi dừng.">
         <ChoiceRow<"0" | "1" | "2" | "3">
           label="Tự tắt"
           value={String(preferences?.safetyStopHours ?? 2) as "0" | "1" | "2" | "3"}

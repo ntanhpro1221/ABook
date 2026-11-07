@@ -8,6 +8,7 @@ import android.hardware.SensorManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
@@ -50,6 +51,24 @@ object SleepTimer {
     /** Ngưỡng một cú lắc, tính bằng g: nhỏ = nhẹ tay cũng tính (Cài đặt: nhẹ tay 1,6 / vừa 2,2 / mạnh tay 2,8). */
     var shakeThresholdG = 2.2
     private var ticking = false
+    var automaticReason = ""
+        private set
+    private var stoppedAutomatically = false
+    private var ownerBook = ""
+    private var ownerRecord = ""
+
+    /** An awake signal cancels automatic timers only. Explicitly chosen timers keep counting. */
+    fun onAwake() {
+        ListenerActivity.evidence.awake(SystemClock.elapsedRealtime())
+        stoppedAtMs = 0L
+        if (automaticReason.isNotEmpty() && mode != Mode.OFF) cancel()
+    }
+
+    fun checkAutomatic() {
+        ListenerActivity.sampleScreen()
+        ListenerActivity.sampleVolume()
+        if (mode == Mode.OFF) { maybeSchedule(); maybeSafetyStop(Playback.lastInteractionMs) }
+    }
 
     /** Listener của lõi cho dịch vụ phát: hẹn giờ đặt / gia hạn / hết / lịch đêm tự bật (sự kiện "sleep") thì dựng lại nút thông báo - không phụ thuộc giao diện còn sống (soát a77 #10). */
     fun buttonsListener(refresh: () -> Unit): (JSONObject) -> Unit = { event ->
@@ -61,7 +80,8 @@ object SleepTimer {
      * trôi trong lúc tiến trình chết), đang tạm dừng thì ghi thời gian còn lại (đồng hồ đứng). Hết chương không khôi phục được (tính theo vị trí chương) - không ghi (soát a77 #6).
      */
     fun persist(now: Long = System.currentTimeMillis()) {
-        val timer = if (mode == Mode.MINUTES) JSONObject().put("minutes", minutes).also {
+        val timer = if (mode == Mode.MINUTES && automaticReason.isEmpty()) JSONObject().put("minutes", minutes)
+            .put("source", "manual").put("bookId", ownerBook).put("recordId", ownerRecord).put("savedAt", now).also {
             if (runningSinceMs > 0) it.put("endsAt", now + leftMs(now)) else it.put("remainingMs", leftMs(now))
         } else null
         ListenPrefs.saveTimer(timer)
@@ -71,10 +91,15 @@ object SleepTimer {
     fun restore(timer: JSONObject?, now: Long = System.currentTimeMillis()) {
         if (timer == null || mode != Mode.OFF) return
         val left = if (timer.has("endsAt")) timer.optLong("endsAt") - now else timer.optLong("remainingMs", 0L)
-        if (left <= 0) {
+        val picked = timer.optInt("minutes")
+        if (timer.optString("source") != "manual" || timer.optString("bookId").isEmpty() ||
+            now - timer.optLong("savedAt") !in 0..(24 * 3_600_000L) || picked !in 1..60 || left !in 1..(picked * 60_000L)) {
             ListenPrefs.saveTimer(null)
             return
         }
+        automaticReason = ""
+        ownerBook = timer.optString("bookId")
+        ownerRecord = timer.optString("recordId")
         mode = Mode.MINUTES
         minutes = timer.optInt("minutes", (left / 60_000L).toInt())
         remainingMs = left
@@ -82,7 +107,7 @@ object SleepTimer {
     }
 
     fun describe(now: Long = System.currentTimeMillis()): JSONObject {
-        val json = JSONObject().put("mode", mode.name.lowercase())
+        val json = JSONObject().put("mode", mode.name.lowercase()).put("reason", automaticReason)
         when (mode) {
             Mode.MINUTES -> json.put("remaining", leftMs(now) / 1000.0).put("minutes", minutes).put("counting", runningSinceMs > 0)
             Mode.CHAPTER -> json.put("remaining", remainingInChapter())
@@ -102,8 +127,13 @@ object SleepTimer {
     private fun playing() = Playback.player?.isPlaying == true
 
     /** Gọi khi trình phát bắt đầu/ngừng phát: đồng hồ hẹn giờ chạy/đứng theo. */
+    fun checkOwner() {
+        if (mode != Mode.OFF && (ownerBook != Playback.bookId || ownerRecord != Playback.recordId)) cancel()
+    }
+
     fun onPlaying(isPlaying: Boolean) {
         if (mode != Mode.MINUTES) return
+        if (isPlaying && (ownerBook != Playback.bookId || ownerRecord != Playback.recordId)) { cancel(); return }
         val now = System.currentTimeMillis()
         if (isPlaying && runningSinceMs == 0L) {
             runningSinceMs = now
@@ -117,6 +147,11 @@ object SleepTimer {
     }
 
     fun setMinutes(value: Int, reason: String? = null) {
+        if (value !in 1..60) return
+        if (reason == null) onAwake()
+        automaticReason = reason?.takeIf { it == "safety" || it == "schedule" }.orEmpty()
+        ownerBook = Playback.bookId
+        ownerRecord = Playback.recordId
         mode = Mode.MINUTES
         minutes = if (reason == "safety") 0 else value // lưới an toàn đếm 1 phút nhưng không ai chọn số phút: 0 = "Hẹn lại" về "Mỗi lần nghe thêm" ([SleepText.extendMinutes])
         remainingMs = value * 60_000L
@@ -132,6 +167,10 @@ object SleepTimer {
     }
 
     fun setEndOfChapter() {
+        onAwake()
+        ownerBook = Playback.bookId
+        ownerRecord = Playback.recordId
+        automaticReason = ""
         mode = Mode.CHAPTER
         stoppedAtMs = 0
         Playback.holdAtItemEnd(true)
@@ -147,6 +186,9 @@ object SleepTimer {
         // Tự tắt hẹn giờ trong khung lịch đêm: đêm ấy không tự bật lại nữa.
         scheduleOffFor = scheduleWindow() ?: ""
         mode = Mode.OFF
+        automaticReason = ""
+        stoppedAtMs = 0L
+        ListenerActivity.evidence.awake(SystemClock.elapsedRealtime())
         Playback.player?.pauseAtEndOfMediaItems = false
         restoreVolume()
         Motion.refresh()
@@ -164,6 +206,7 @@ object SleepTimer {
     fun extend() {
         // Hẹn giờ đã hết (hay đã tắt): nút "Hẹn lại" cũ còn trên thông báo không được dựng hẹn giờ mới ngoài ý bạn - như máy tính (extendSleep: kind off thì bỏ qua). Lắc sau khi vừa tự dừng có đường riêng ([onShake]).
         if (mode == Mode.OFF) return
+        if (automaticReason.isNotEmpty()) { onAwake(); return }
         val now = System.currentTimeMillis()
         val target = extendTarget()
         remainingMs = maxOf(if (mode == Mode.MINUTES) leftMs(now) else 0L, target * 60_000L)
@@ -180,12 +223,14 @@ object SleepTimer {
     }
 
     /** Vừa tự dừng chưa tới 2 phút: cảm biến còn nghe để "lắc để nghe tiếp". */
-    fun stoppedRecently(now: Long = System.currentTimeMillis()) = stoppedAtMs > 0 && now - stoppedAtMs < 125_000L
+    fun stoppedRecently(now: Long = System.currentTimeMillis()) = stoppedAtMs > 0 && now - stoppedAtMs in 0 until 125_000L
 
     /** Lắc máy: đang hẹn giờ thì hẹn lại ([extend]); vừa tự dừng (< 2 phút) thì phát tiếp và hẹn [extendMinutes] phút. */
     fun onShake() {
-        if (!shakeEnabled) return
-        if (applyShake(System.currentTimeMillis())) {
+        val now = System.currentTimeMillis()
+        val changed = shakeEnabled && applyShake(now)
+        Playback.touched()
+        if (changed) {
             Bedtime.event("shake")
             buzz(longArrayOf(0, 60, 80, 60))
         }
@@ -194,16 +239,21 @@ object SleepTimer {
     /** Phần đổi hẹn giờ của cú lắc (tách khỏi rung / nhật ký để thử trên JVM): true khi có việc đã làm. */
     internal fun applyShake(now: Long): Boolean = when {
         mode != Mode.OFF -> { extend(); true }
-        stoppedAtMs > 0 && now - stoppedAtMs < 120_000L -> {
+        stoppedAtMs > 0 && now - stoppedAtMs in 0 until 120_000L -> {
+            val automatic = stoppedAutomatically
+            if (automatic) scheduleOffFor = scheduleWindow() ?: ""
+            stoppedAtMs = 0L
             Playback.play()
-            setMinutes(extendMinutes)
+            if (!automatic) setMinutes(extendMinutes)
             true
         }
         else -> false
     }
 
-    fun onChapterChanged() {
-        if (mode == Mode.CHAPTER) finish()
+    fun onChapterChanged(manual: Boolean = false) {
+        if (mode == Mode.CHAPTER) {
+            if (manual) Playback.holdAtItemEnd(true) else finish()
+        }
     }
 
     /** Gọi khi ExoPlayer dừng ở cuối chương (chế độ hết chương). */
@@ -212,9 +262,12 @@ object SleepTimer {
     }
 
     private fun finish() {
+        val automatic = automaticReason.isNotEmpty()
         Playback.player?.pause()
         Playback.player?.pauseAtEndOfMediaItems = false
         mode = Mode.OFF
+        automaticReason = ""
+        stoppedAutomatically = automatic
         stoppedAtMs = System.currentTimeMillis()
         restoreVolume()
         Bedtime.stopped()
@@ -234,6 +287,11 @@ object SleepTimer {
                 if (mode == Mode.OFF || exo == null) {
                     ticking = false
                     return
+                }
+                if (automaticReason.isNotEmpty()) {
+                    val required = if (automaticReason == "schedule") SleepPolicy.NIGHT_IDLE_MS else (safetyStopHours * 3_600_000).toLong()
+                    if (!ListenerActivity.allows(required)) onAwake()
+                    if (mode == Mode.OFF) { ticking = false; return }
                 }
                 val remaining = when (mode) {
                     Mode.MINUTES -> leftMs()
@@ -273,13 +331,15 @@ object SleepTimer {
     fun maybeSchedule() {
         val (_, _, planned) = schedule ?: return
         val window = scheduleWindow() ?: return
-        if (mode != Mode.OFF || scheduleOffFor == window) return
+        if (mode != Mode.OFF || scheduleOffFor == window || !playing()) return
+        if (!ListenerActivity.allows(SleepPolicy.NIGHT_IDLE_MS)) return
         setMinutes(planned, "schedule")
     }
 
     /** Lưới an toàn ngủ quên: phát liên tục quá lâu mà không ai chạm máy thì tự hẹn 1 phút (nhỏ dần rồi dừng). */
     fun maybeSafetyStop(lastInteractionMs: Long) {
         if (mode != Mode.OFF || safetyStopHours <= 0.0 || !playing()) return
+        if (!ListenerActivity.allows((safetyStopHours * 3_600_000).toLong())) return
         if (System.currentTimeMillis() - lastInteractionMs < safetyStopHours * 3_600_000) return
         setMinutes(1, "safety")
         Bedtime.touchAt(lastInteractionMs, Playback.lastInteractionChapter, Playback.lastInteractionSeconds)
@@ -302,11 +362,13 @@ object SleepTimer {
 
 /**
  * Cảm biến gia tốc dùng chung cho hai việc: nhận ra cú lắc (thêm giờ ngủ) và nhận ra lúc điện thoại nằm yên
- * (nhật ký đêm đoán lúc người nghe thiếp đi). Chỉ bật khi đang hẹn giờ ngủ - không tốn pin lúc khác.
+ * (nhật ký đêm đoán lúc người nghe thiếp đi). Cũng nghe khi đang phát để kiểm bằng chứng cho hẹn tự động.
  */
 object Motion : SensorEventListener {
     private var manager: SensorManager? = null
     private var running = false
+    var available = false
+        private set
 
     /** Úp máy để tạm dừng, lật lên (trong `FLIP_RESUME_MS`) để nghe tiếp - Cài đặt, mặc định tắt. */
     var flipEnabled = false
@@ -319,11 +381,11 @@ object Motion : SensorEventListener {
 
     /**
      * Bật cảm biến khi có ai cần: hẹn giờ đang chạy (lắc để nghe thêm), vừa tự dừng < 2 phút (lắc để nghe tiếp), hoặc
-     * đang phát / vừa úp máy dừng mà người dùng bật "úp máy để tạm dừng". Không ai cần thì tắt - đỡ pin.
+     * đang phát để xét hẹn tự động, hoặc vừa úp máy dừng. Không ai cần thì tắt - đỡ pin.
      */
     fun refresh() {
         val now = System.currentTimeMillis()
-        val wanted = SleepTimer.mode != SleepTimer.Mode.OFF || SleepTimer.stoppedRecently(now) ||
+        val wanted = (Playback.player?.isPlaying == true && (SleepTimer.safetyStopHours > 0 || SleepTimer.schedule != null)) || SleepTimer.mode != SleepTimer.Mode.OFF || SleepTimer.stoppedRecently(now) ||
             (flipEnabled && (Playback.player?.isPlaying == true || (flipPausedAtMs > 0 && now - flipPausedAtMs < FLIP_RESUME_MS)))
         if (wanted) start(Playback.appContext) else stop()
     }
@@ -331,6 +393,7 @@ object Motion : SensorEventListener {
     private var lastShakeMs = 0L
     // Cửa sổ 30 giây: độ lệch của độ lớn gia tốc - rất nhỏ nghĩa là máy nằm yên.
     private var windowStartMs = 0L
+    private var windowStartElapsedMs = 0L
     private var count = 0
     private var sum = 0.0
     private var sumSquares = 0.0
@@ -338,16 +401,22 @@ object Motion : SensorEventListener {
     fun start(context: Context) {
         if (running) return
         manager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
-        val sensor = manager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) ?: return
-        manager?.registerListener(this, sensor, SensorManager.SENSOR_DELAY_GAME)
-        running = true
+        val sensor = manager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+        available = sensor != null
+        if (sensor == null) return
+        running = manager?.registerListener(this, sensor, SensorManager.SENSOR_DELAY_NORMAL) == true
+        ListenerActivity.evidence.resetMotion()
+        count = 0; sum = 0.0; sumSquares = 0.0
         windowStartMs = System.currentTimeMillis()
+        windowStartElapsedMs = SystemClock.elapsedRealtime()
     }
 
     fun stop() {
         if (!running) return
         manager?.unregisterListener(this)
         running = false
+        ListenerActivity.evidence.resetMotion()
+        recent.clear(); peaks.clear()
     }
 
     override fun onSensorChanged(event: SensorEvent) {
@@ -368,12 +437,19 @@ object Motion : SensorEventListener {
         count += 1
         sum += magnitude
         sumSquares += magnitude * magnitude
-        if (now - windowStartMs >= 30_000) {
+        val elapsed = SystemClock.elapsedRealtime()
+        if (elapsed - windowStartElapsedMs >= SleepPolicy.WINDOW_MS) {
             val mean = sum / count
             val deviation = sqrt((sumSquares / count - mean * mean).coerceAtLeast(0.0))
             val start = windowStartMs
-            Playback.onMain { Bedtime.window(start, deviation) }
+            val elapsedStart = windowStartElapsedMs
+            Playback.onMain {
+                ListenerActivity.evidence.motionWindow(elapsedStart, elapsed, deviation)
+                if (deviation >= SleepPolicy.STILL_DEVIATION) Playback.touched()
+                Bedtime.window(start, deviation)
+            }
             windowStartMs = now
+            windowStartElapsedMs = elapsed
             count = 0
             sum = 0.0
             sumSquares = 0.0
