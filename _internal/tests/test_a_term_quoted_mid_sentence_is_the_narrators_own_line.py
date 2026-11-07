@@ -13,17 +13,11 @@ def data(kind: str, speaker: str) -> dict[str, object]:
     return {"kind": kind, "speaker": speaker, "personality_hint": "", "notes": ""}
 
 
-def test_a_term_between_two_halves_of_a_sentence_goes_back_to_the_narrator() -> None:
-    group = [
-        row("a", 3, "Lucien không thể bảo rằng nếu là"),
-        row("b", 3, "“Khoa Học”"),
-        <removed>
-    ]
-    result = {"a": data("narration", "NARRATOR"), "b": data("dialogue", "LUCIEN"),
-              "c": data("narration", "NARRATOR")}
-    _repair_in_sentence_quote_speakers(group, result)
-    assert result["b"]["speaker"] == "NARRATOR"
-    assert IN_SENTENCE_QUOTE_NARRATOR_NOTE in result["b"]["_host_note_markers"]
+def test_positive_metalinguistic_evidence_can_identify_a_term():
+    group=[row('a',3,'Mira giải nghĩa thuật ngữ'),row('b',3,'“cầu mưa”'),row('c',3,'trong bản ghi.')]
+    result={'a':data('narration','NARRATOR'),'b':data('dialogue','Mira'),'c':data('narration','NARRATOR')}
+    _repair_in_sentence_quote_speakers(group,result)
+    assert result['b']['speaker']=='NARRATOR'
 
 
 def test_a_real_line_keeps_its_speaker() -> None:

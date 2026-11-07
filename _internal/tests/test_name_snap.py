@@ -11,6 +11,27 @@ from abook.database import ProjectDB
 from abook.name_snap import name_key, snap_map
 
 
+def test_kinship_and_role_labels_never_fuzzy_snap_to_bare_names():
+    from abook.character_registry import canonical_speaker_names
+    from collections import Counter
+    source = "Tavin đứng dưới mái hiên. Tavin mang một chiếc ô."
+    for role in ("Mẹ", "Bố", "Em gái", "Chị", "Vợ", "Chồng"):
+        label = f"{role} Tavin"
+        assert snap_map([(label, "“Ô vẫn còn khô.”"), ("NARRATOR", source)]) == {}
+        targets = canonical_speaker_names(Counter({label: 1, "Tavin": 30}), source)
+        assert targets[label].casefold() != "tavin"
+
+
+def test_gender_contradictions_block_snap_and_later_canonicalization(tmp_path):
+    db=_chapter_db(tmp_path,[[('NARRATOR','Mira cầm một chiếc ô. Mira đứng ở hiên.'),
+                             ('Mira','“Tôi giữ đèn.”'),('Miro','“Tôi cầm bản đồ.”')]])
+    with db.transaction() as conn:
+        conn.execute("UPDATE segments SET gender='male' WHERE speaker='Miro'")
+        conn.execute("UPDATE segments SET gender='female' WHERE speaker='Mira'")
+    build_registry_and_cast(db,build_settings(),lambda message:None)
+    assert {row['speaker'].casefold() for row in db.list_segments()}=={'narrator','mira','miro'}
+
+
 def test_a_label_the_chapter_never_writes_takes_the_spelling_it_does() -> None:
     lines = [("Toko", '"Chào em."'), ("NARRATOR", "Tooko mỉm cười."), ("NARRATOR", "Tooko quay đi.")]
 

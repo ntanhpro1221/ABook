@@ -40,8 +40,10 @@ def test_the_models_name_and_gender_stay_when_the_tag_only_adds_an_honorific() -
     assert (line["speaker"], line["gender"]) == ("Yuzuki", "female")
 
 
-def test_a_wrong_speaker_is_replaced_by_the_bare_name() -> None:
-    assert analyse("Ren", "male")["speaker"] == "Yuzuki"
+def test_an_action_with_an_honorific_does_not_replace_the_model_identity():
+    from tests.test_analysis_required import _castrule_batch
+    rows,payload=_castrule_batch([('“Tôi giữ đèn.”','dialogue','Mira'),('Tavin-san bước ra sân.','narration','NARRATOR')])
+    assert _validate(rows,payload)['r0']['speaker']=='Mira'
 
 
 def test_the_registry_still_exports_the_shared_helper() -> None:

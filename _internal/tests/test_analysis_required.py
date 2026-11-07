@@ -3852,145 +3852,19 @@ def test_resume_keeps_the_chapter_scope_across_batches(monkeypatch) -> None:
     assert next(iter(speakers)) == "NPC_LOCAL::c00001::lính gác"
 
 
-def test_addressee_name_cannot_become_the_local_speaker_identity() -> None:
-    group = [
-        {
-            **analysis_group()[0],
-            "text": "“Anh Lucien!”",
-            "kind_hint": "dialogue",
-            "paragraph_index": 1,
-        },
-        {
-            **analysis_group()[1],
-            "text": "“Anh tỉnh rồi?”",
-            "kind_hint": "dialogue",
-            "paragraph_index": 1,
-        },
-    ]
-    items = []
-    for row in group:
-        item = analysis_item(row["stable_id"])
-        item.update(
-            {
-                "kind": "dialogue",
-                "speaker": "NPC_LOCAL:Lucien",
-                "gender": "male",
-            }
-        )
-        items.append(item)
-
-    validated = _validate(group, {"segments": items})
-    speakers = [validated[row["stable_id"]]["speaker"] for row in group]
-
-    assert len(set(speakers)) == 1
-    assert local_speaker_display(speakers[0]) == "NPC người gọi Lucien"
-    assert validated[group[0]["stable_id"]]["notes"] == canonical_analysis_note(
-        validated[group[0]["stable_id"]]
-    )
-    assert ADDRESSEE_REPAIR_NOTE not in validated[group[0]["stable_id"]]["notes"]
+def test_a_name_answer_does_not_become_an_addressee_identity():
+    rows, payload = _castrule_batch([('“Mira. Lớp 2-4.”', 'dialogue', 'Mira')])
+    assert _validate(rows, payload)['r0']['speaker'] == 'Mira'
 
 
-def test_same_paragraph_action_beats_override_wrong_dialogue_speakers() -> None:
-    examples = [
-        (
-            <removed>
-            "John có phần lo lắng.",
-            "John",
-        ),
-        (
-            <removed>
-            <removed>
-            "Joel",
-        ),
-        (
-            <removed>
-            "Iven mở cửa.",
-            "Iven",
-        ),
-    ]
-    group = []
-    items = []
-    for paragraph_index, (dialogue, narration, _speaker) in enumerate(examples, 1):
-        dialogue_id = f"d{paragraph_index}"
-        narration_id = f"n{paragraph_index}"
-        group.extend(
-            [
-                {
-                    "stable_id": dialogue_id,
-                    "chapter_id": 1,
-                    "paragraph_index": paragraph_index,
-                    "text": dialogue,
-                    "kind_hint": "dialogue",
-                },
-                {
-                    "stable_id": narration_id,
-                    "chapter_id": 1,
-                    "paragraph_index": paragraph_index,
-                    "text": narration,
-                    "kind_hint": "narration",
-                },
-            ]
-        )
-        dialogue_item = analysis_item(dialogue_id)
-        dialogue_item.update({"kind": "dialogue", "speaker": "ALISA", "gender": "female"})
-        items.extend((dialogue_item, analysis_item(narration_id)))
-
-    validated = _validate(group, {"segments": items})
-
-    for paragraph_index, (_dialogue, _narration, speaker) in enumerate(examples, 1):
-        data = validated[f"d{paragraph_index}"]
-        assert data["speaker"] == speaker
-        assert data["gender"] == "unknown"
-        assert data["notes"] == canonical_analysis_note(data)
-        assert EXPLICIT_ATTRIBUTION_NOTE not in data["notes"]
+def test_an_action_after_a_quote_does_not_override_its_speaker():
+    rows, payload = _castrule_batch([('“Tôi giữ chìa khóa.”', 'dialogue', 'Mira'), ('Tavin quay lại nhìn cánh cửa.', 'narration', 'NARRATOR')])
+    assert _validate(rows, payload)['r0']['speaker'] == 'Mira'
 
 
-def test_generic_speech_attribution_locks_bishop_descriptions() -> None:
-    group = [
-        {
-            "stable_id": "d1",
-            "chapter_id": 1,
-            "paragraph_index": 1,
-            <removed>
-            "kind_hint": "dialogue",
-        },
-        {
-            "stable_id": "n1",
-            "chapter_id": 1,
-            "paragraph_index": 1,
-            <removed>
-            "kind_hint": "narration",
-        },
-        {
-            "stable_id": "n2",
-            "chapter_id": 1,
-            "paragraph_index": 2,
-            "text": "Giám mục cầu nguyện, sau đó lớn giọng:",
-            "kind_hint": "narration",
-        },
-        {
-            "stable_id": "d2",
-            "chapter_id": 1,
-            "paragraph_index": 2,
-            "text": "“Hãy xuống địa ngục dưới thánh quang.”",
-            "kind_hint": "dialogue",
-        },
-    ]
-    items = [analysis_item(row["stable_id"]) for row in group]
-    items[0].update(
-        {"kind": "dialogue", "speaker": "NPC_LOCAL:áo choàng trắng", "gender": "male"}
-    )
-    items[2].update({"kind": "narration", "speaker": "NARRATOR"})
-    items[3].update({"kind": "dialogue", "speaker": "NPC_LOCAL:giam muc", "gender": "male"})
-
-    validated = _validate(group, {"segments": items})
-
-    assert local_speaker_display(validated["d1"]["speaker"]) == "NPC người đàn ông trung niên"
-    assert validated["d1"]["gender"] == "male"
-    assert validated["d1"]["age"] == "adult"
-    assert local_speaker_display(validated["d2"]["speaker"]) == "NPC giám mục"
-    assert validated["d2"]["gender"] == "male"
-    assert validated["d2"]["age"] == "adult"
+def test_generic_evidence_does_not_overwrite_a_confident_named_speaker():
+    rows, payload = _castrule_batch([('Người phụ nữ khẽ nói:', 'narration', 'NARRATOR'), ('“Tôi giữ bản đồ.”', 'dialogue', 'Mira')])
+    assert _validate(rows, payload)['r1']['speaker'] == 'Mira'
 
 
 def test_speech_verb_before_quote_overrides_speaker_but_weak_context_does_not() -> None:
@@ -4085,48 +3959,9 @@ def test_titled_addressee_does_not_replace_an_established_local_identity() -> No
     assert ADDRESSEE_REPAIR_NOTE not in data["notes"]
 
 
-def test_generic_same_paragraph_attribution_locks_one_child_voice() -> None:
-    group = [
-        {
-            "stable_id": "d1",
-            "chapter_id": 1,
-            "paragraph_index": 32,
-            "text": "“Anh Lucien!”",
-            "kind_hint": "dialogue",
-        },
-        {
-            "stable_id": "n1",
-            "chapter_id": 1,
-            "paragraph_index": 32,
-            "text": "Một cậu bé tóc nâu nhìn Hạ Phong, vô cùng mừng rỡ:",
-            "kind_hint": "narration",
-        },
-        {
-            "stable_id": "d2",
-            "chapter_id": 1,
-            "paragraph_index": 32,
-            "text": "“Anh tỉnh rồi?”",
-            "kind_hint": "dialogue",
-        },
-    ]
-    items = [analysis_item(row["stable_id"]) for row in group]
-    items[0].update(
-        {"kind": "dialogue", "speaker": "NPC_LOCAL:người qua đường", "gender": "male"}
-    )
-    items[2].update({"kind": "dialogue", "speaker": "Lucien", "gender": "male"})
-
-    validated = _validate(group, {"segments": items})
-
-    first = validated["d1"]
-    second = validated["d2"]
-    assert first["speaker"] == second["speaker"]
-    assert local_speaker_display(first["speaker"]) == "NPC cậu bé"
-    assert first["gender"] == second["gender"] == "male"
-    assert first["age"] == second["age"] == "child"
-    assert first["notes"] == canonical_analysis_note(first)
-    assert second["notes"] == canonical_analysis_note(second)
-    assert EXPLICIT_ATTRIBUTION_NOTE not in first["notes"]
-    assert EXPLICIT_ATTRIBUTION_NOTE not in second["notes"]
+def test_a_comparison_is_not_the_subject_of_first_person_speech():
+    rows, payload = _castrule_batch([('“Cánh cổng đã mở.”', 'dialogue', 'Tavin'), ('Tôi nói, giọng bình thản như cái nhìn của cô bé.', 'narration', 'NARRATOR')])
+    assert _validate(rows, payload)['r0']['speaker'] == 'Tavin'
 
 
 def test_multiline_dialogue_keeps_previous_speaker_and_normalizes_child_label() -> None:
@@ -4165,63 +4000,15 @@ def test_multiline_dialogue_keeps_previous_speaker_and_normalizes_child_label() 
     assert local_speaker_display(validated["d1"]["speaker"]) == "NPC cậu bé"
 
 
-def test_v32_source_cohesive_batch_keeps_seq42_44_and_repairs_child_speaker() -> None:
-    prefix_rows = [
-        {
-            "id": seq + 1,
-            "stable_id": f"v32-prefix-{seq}",
-            "chapter_id": 1,
-            "seq": seq,
-            "paragraph_index": 33 if seq < 40 else 34,
-            "text": f"Lời kể chuẩn bị số {seq}.",
-            "text_sha256": sha256_text(f"Lời kể chuẩn bị số {seq}."),
-            "kind_hint": "narration",
-            "status": "pending",
-            "speaker": None,
-        }
-        for seq in range(38, 42)
-    ]
-    target_rows = v32_seq42_44_rows()
-
-    groups = _pack_source_cohesive_analysis_groups(
-        [*prefix_rows, *target_rows],
-        5,
-    )
-
-    assert [[int(row["seq"]) for row in group] for group in groups] == [
-        [38, 39, 40, 41],
-        [42, 43, 44],
-    ]
-    items = [analysis_item(str(row["stable_id"])) for row in target_rows]
-    items[1].update(
-        {
-            "kind": "dialogue",
-            "speaker": "Hạ Phong",
-            "gender": "male",
-            "age": "young",
-        }
-    )
-    items[2].update(
-        {
-            "kind": "dialogue",
-            "speaker": "Wayne",
-            "gender": "male",
-            "age": "adult",
-        }
-    )
-
-    validated = _validate(
-        target_rows,
-        {"segments": items},
-    )
-
-    seq43 = validated[str(target_rows[1]["stable_id"])]
-    seq44 = validated[str(target_rows[2]["stable_id"])]
-    assert seq43["speaker"] == seq44["speaker"]
-    assert local_speaker_display(seq43["speaker"]) == "NPC cậu bé"
-    assert seq43["gender"] == seq44["gender"] == "male"
-    assert seq43["age"] == seq44["age"] == "child"
-    assert _split_analysis_group(target_rows, preserve_source_units=True) is None
+def test_a_kinship_subject_keeps_its_complete_role_and_head_gender():
+    from abook.analysis import _generic_speaker_attribution, local_speaker_label
+    assert _generic_speaker_attribution('Mẹ của cô bé nói:', prefer_last=True) == 'mẹ của cô bé'
+    assert _generic_speaker_attribution('Em gái Tavin khẽ hỏi:', prefer_last=False) == 'em gái tavin'
+    rows, payload = _castrule_batch([('Mẹ của cô bé nói:', 'narration', 'NARRATOR'), ('“Mang ô về nhé.”', 'dialogue', 'UNKNOWN')])
+    payload['segments'][1]['confidence'] = .5
+    result = _validate(rows, payload)['r1']
+    assert local_speaker_label(result['speaker']) == 'mẹ của cô bé'
+    assert result['gender'] == 'female'
 
 
 def test_v32_closed_or_new_dialogue_is_not_one_atomic_source_unit() -> None:
@@ -4283,104 +4070,35 @@ def test_analysis_cannot_invent_an_unsupported_effect_kind() -> None:
     assert validated[row["stable_id"]]["speaker"] == "Lucien"
 
 
-def test_analysis_retries_when_model_shifts_a_valid_kind_to_the_wrong_id() -> None:
-    narration = {
-        **analysis_group()[0],
-        "kind_hint": "narration",
-        "text": "Hạ Phong nhận ra đây không phải bệnh viện.",
-    }
-    dialogue = {
-        **analysis_group()[1],
-        "kind_hint": "dialogue",
-        "text": "“Đây là đâu?”",
-    }
-    narration_item = analysis_item(narration["stable_id"])
-    narration_item.update({"kind": "dialogue", "speaker": "Hạ Phong"})
-    dialogue_item = analysis_item(dialogue["stable_id"])
-    dialogue_item.update({"kind": "narration", "speaker": "NARRATOR"})
-
-    validated = _validate(
-        [narration, dialogue],
-        {"segments": [narration_item, dialogue_item]},
-    )
-
-    assert validated == {}
+def test_semantic_kinds_can_differ_from_quote_hints_without_changing_text():
+    rows, payload = _castrule_batch([('“Mình phải đợi thêm.”', 'thought', 'Mira'), ('Tôi nghĩ thầm.', 'narration', 'NARRATOR')])
+    rows[0]['kind_hint'] = 'dialogue'
+    original = copy.deepcopy(rows)
+    result = _validate(rows, payload)
+    assert result['r0']['kind'] == 'thought' and result['r0']['speaker'] == 'Mira'
+    assert rows == original
 
 
-@pytest.mark.parametrize("requested_kind", ["narration", "dialogue"])
-def test_analysis_names_the_thought_boundary_it_rejects(requested_kind: str) -> None:
-    """A rejected explicit thought must say which boundary was crossed.
-
-    This exact line, with this exact hint, burned all three attempts of a live batch and
-    forced it to split: the payload said only that `kind` was wrong, so the model had
-    nothing to correct against and repeated its answer. The dialogue direction had carried
-    a named rule all along; this direction carried none.
-    """
-    row = {
-        **analysis_group()[0],
-        "kind_hint": "thought",
-        "text": "‘Tỉnh dậy, phải tỉnh dậy!’",
-    }
-    item = analysis_item(row["stable_id"])
-    item.update({"kind": requested_kind, "speaker": "NARRATOR"})
-
-    payload = {"segments": [item]}
-
-    assert _validate([row], payload) == {}
-    assert [issue.canonical_payload() for issue in _source_kind_feedback_issues([row], payload)] == [
-        {
-            "id": row["stable_id"],
-            "code": HOST_SOURCE_KIND_ISSUE_CODE,
-            "fields": ["kind"],
-            "rule": HOST_EXPLICIT_THOUGHT_BOUNDARY_RULE,
-        }
-    ]
+@pytest.mark.parametrize('requested_kind', ['narration', 'dialogue'])
+def test_thought_hint_does_not_reject_a_semantic_kind(requested_kind):
+    rows, payload = _castrule_batch([('Một tiêu đề có dấu ngoặc.', requested_kind, 'Mira')])
+    rows[0]['kind_hint'] = 'thought'
+    assert _validate(rows, payload)['r0']['kind'] == requested_kind
+    assert _source_kind_feedback_issues(rows, payload) == ()
 
 
-def test_analysis_names_a_dialogue_kind_the_source_never_marked() -> None:
-    """Narration the model wants to call dialogue is the other case that carried no rule."""
-    row = {
-        **analysis_group()[0],
-        "kind_hint": "narration",
-        "text": "Ngoài cửa sổ, trời đã sáng từ lúc nào.",
-    }
-    item = analysis_item(row["stable_id"])
-    item.update({"kind": "dialogue", "speaker": "Hạ Phong"})
-
-    payload = {"segments": [item]}
-
-    assert _validate([row], payload) == {}
-    assert [issue.canonical_payload() for issue in _source_kind_feedback_issues([row], payload)] == [
-        {
-            "id": row["stable_id"],
-            "code": HOST_SOURCE_KIND_ISSUE_CODE,
-            "fields": ["kind"],
-            "rule": HOST_ABSENT_DIALOGUE_BOUNDARY_RULE,
-        }
-    ]
+def test_actual_speech_is_allowed_despite_a_narration_hint():
+    rows, payload = _castrule_batch([('Tôi sẽ giữ đèn.', 'dialogue', 'Mira')])
+    rows[0]['kind_hint'] = 'narration'
+    assert _validate(rows, payload)['r0']['speaker'] == 'Mira'
 
 
-def test_naming_the_boundary_does_not_arm_the_source_kind_override() -> None:
-    """The transition rule must keep returning "" for the two newly named boundaries.
-
-    The override path at the critic stage fires on a non-empty rule and its stored
-    provenance only accepts the two rules that own a lock. Naming these in feedback must
-    not leak into that decision.
-    """
-    thought_row = {
-        **analysis_group()[0],
-        "kind_hint": "thought",
-        "text": "‘Tỉnh dậy, phải tỉnh dậy!’",
-    }
-    narration_row = {
-        **analysis_group()[0],
-        "kind_hint": "narration",
-        "text": "Ngoài cửa sổ, trời đã sáng từ lúc nào.",
-    }
-    assert _source_kind_transition_rule(thought_row, "narration") == ""
-    assert _source_kind_transition_rule(narration_row, "dialogue") == ""
-    # And the rule still says "no issue" when the kind matches the source.
-    assert _source_kind_transition_rule(thought_row, "thought") is None
+def test_quote_hints_cannot_arm_a_kind_override():
+    for hint in ('dialogue', 'thought', 'narration'):
+        rows, payload = _castrule_batch([('Một nhan đề ngắn.', 'narration', 'NARRATOR')])
+        rows[0]['kind_hint'] = hint
+        assert _source_kind_transition_rule(rows[0], 'narration') is None
+        assert _source_kind_feedback_issues(rows, payload) == ()
 
 
 @pytest.mark.parametrize(
@@ -5838,7 +5556,7 @@ def test_next_paragraph_thought_mask_requires_exact_source_transition(
 
     assert critic_row["context_policy"] == "adjacent_context"
     assert critic_row["host_locked_fields"] == (
-        {"kind": "dialogue"} if str(row["kind_hint"]) == "dialogue" else {}
+        {}
     )
 
 
@@ -6759,101 +6477,28 @@ def test_v33_compatibility_override_does_not_cover_nonmatching_dissent(
     assert "host_critic_compatibility_override" not in evidence["segments"][0]
 
 
-def test_v32_dialogue_kind_only_critic_dissent_uses_source_bound_override() -> None:
-    row = v32_seq42_44_rows()[1]
-    stable_id = str(row["stable_id"])
-    candidate = analysis_item(stable_id)
-    candidate.update(
-        {
-            "kind": "dialogue",
-            "speaker": "NPC_LOCAL::c00001::v32-source-unit::cậu bé",
-            "gender": "male",
-            "age": "child",
-            "emotion": "sad",
-            "intensity": 2,
-            "confidence": 0.9,
-        }
-    )
-    validated = {stable_id: candidate}
-    candidate_rows = _director_candidate_rows([row], validated)
-    candidate_hash = _director_candidate_hash(candidate_rows)
-    payload, _ = director_critic_payload(
-        [row],
-        validated,
-        corrections={0: {"kind": "thought"}},
-        candidate_rows=candidate_rows,
-        candidate_hash=candidate_hash,
-    )
-
-    issues, evidence = _adjudicate_director_critic(
-        [row],
-        validated,
-        payload,
-        candidate_hash=candidate_hash,
-    )
-
-    assert candidate_rows[0]["host_locked_fields"] == {"kind": "dialogue"}
-    assert issues == {}
-    item = evidence["segments"][0]
-    assert item["field_deltas"] == ["kind:dialogue->thought"]
-    assert item["effective_accept"] is True
-    assert item["host_source_kind_override"] == {
-        "policy_version": "host_semantic_lock_v6",
-        "stable_id": stable_id,
-        "text_sha256": sha256_text(V32_SEQ43_TEXT),
-        "rule": HOST_EXPLICIT_DIALOGUE_BOUNDARY_RULE,
-        "field": "kind",
-        "candidate_value": "dialogue",
-        "allowed_values": ["dialogue"],
-        "raw_accept": False,
-        "raw_field_deltas": ["kind:dialogue->thought"],
-        "covered_field_deltas": ["kind:dialogue->thought"],
-        "unresolved_field_deltas": [],
-    }
+def test_a_quote_hint_cannot_overrule_critic_kind_dissent():
+    rows,payload=_castrule_batch([('“Đợi ở hiên nhé.”','dialogue','Mira')])
+    validated=_validate(rows,payload)
+    candidate_rows=_director_candidate_rows(rows,validated)
+    candidate_hash=_director_candidate_hash(candidate_rows)
+    critic,_=director_critic_payload(rows,validated,corrections={0:{'kind':'thought'}},candidate_rows=candidate_rows,candidate_hash=candidate_hash)
+    issues,evidence=_adjudicate_director_critic(rows,validated,critic,candidate_hash=candidate_hash)
+    assert candidate_rows[0]['host_locked_fields']=={}
+    assert issues=={'r0':'DIRECTOR_FIELD_MISMATCH fields=kind'}
+    assert evidence['segments'][0]['effective_accept'] is False
+    assert 'host_source_kind_override' not in evidence['segments'][0]
 
 
-def test_v32_dialogue_kind_override_never_covers_speaker_dissent() -> None:
-    row = v32_seq42_44_rows()[1]
-    stable_id = str(row["stable_id"])
-    candidate = analysis_item(stable_id)
-    candidate.update(
-        {
-            "kind": "dialogue",
-            "speaker": "NPC_LOCAL::c00001::v32-source-unit::cậu bé",
-            "gender": "male",
-            "age": "child",
-            "emotion": "sad",
-            "intensity": 2,
-            "confidence": 0.9,
-        }
-    )
-    validated = {stable_id: candidate}
-    candidate_rows = _director_candidate_rows([row], validated)
-    candidate_hash = _director_candidate_hash(candidate_rows)
-    payload, _ = director_critic_payload(
-        [row],
-        validated,
-        corrections={0: {"kind": "thought", "speaker": "NARRATOR"}},
-        candidate_rows=candidate_rows,
-        candidate_hash=candidate_hash,
-    )
-
-    issues, evidence = _adjudicate_director_critic(
-        [row],
-        validated,
-        payload,
-        candidate_hash=candidate_hash,
-    )
-
-    assert issues == {stable_id: "DIRECTOR_FIELD_MISMATCH fields=speaker"}
-    item = evidence["segments"][0]
-    assert item["effective_accept"] is False
-    assert item["host_source_kind_override"]["covered_field_deltas"] == [
-        "kind:dialogue->thought"
-    ]
-    assert item["host_source_kind_override"]["unresolved_field_deltas"] == [
-        "speaker:NPC_LOCAL::c00001::v32-source-unit::cậu bé->NARRATOR"
-    ]
+def test_quote_hints_cannot_cover_either_kind_or_speaker_dissent():
+    rows,payload=_castrule_batch([('“Giữ chiếc ô giúp tôi.”','dialogue','Mira')])
+    validated=_validate(rows,payload)
+    candidate_rows=_director_candidate_rows(rows,validated)
+    candidate_hash=_director_candidate_hash(candidate_rows)
+    critic,_=director_critic_payload(rows,validated,corrections={0:{'kind':'thought','speaker':'NARRATOR'}},candidate_rows=candidate_rows,candidate_hash=candidate_hash)
+    issues,evidence=_adjudicate_director_critic(rows,validated,critic,candidate_hash=candidate_hash)
+    assert issues=={'r0':'DIRECTOR_FIELD_MISMATCH fields=kind,speaker'}
+    assert 'host_source_kind_override' not in evidence['segments'][0]
 
 
 @pytest.mark.parametrize(
@@ -9784,14 +9429,8 @@ def test_retry_merges_source_kind_and_host_affect_failures_in_one_attempt(
     assert feedback_seen[0] is None
     assert {(issue.stable_id, issue.code) for issue in feedback_seen[1] or ()} >= {
         ("physical-collapse", HOST_PHYSICAL_COLLAPSE_ISSUE_CODE),
-        ("mortality-thought", HOST_SOURCE_KIND_ISSUE_CODE),
     }
-    rejection = next(
-        event for event in db.events if event[1] == "ANALYSIS_SEMANTIC_REJECTED"
-    )
-    assert rejection[3]["host_adjudication"]["issues"][0]["stable_id"] == (
-        "physical-collapse"
-    )
+    assert not any(issue.code == HOST_SOURCE_KIND_ISSUE_CODE for issue in feedback_seen[1] or ())
     assert len(db.updated) == 2
 
 
@@ -12794,3 +12433,79 @@ def test_an_empty_carry_leaves_the_prompt_exactly_as_it_was() -> None:
     analyzer = OllamaBookAnalyzer(build_settings(), FakeDB(), lambda _message: None)
 
     assert analyzer._known_summary() == "(Chưa có nhân vật đã biết)"
+
+
+def _castrule_batch(lines):
+    rows, items = [], []
+    for seq, (text, kind, speaker) in enumerate(lines):
+        rows.append(dict(id=seq+1,stable_id=f'r{seq}',chapter_id=1,seq=seq,paragraph_index=4,text=text,kind_hint=kind))
+        items.append(dict(id=f'r{seq}',kind=kind,speaker=speaker,gender='unknown',age='unknown',emotion='neutral',intensity=1,pace='normal',volume='normal',confidence=.95))
+    return rows, {'segments':items}
+
+
+@pytest.mark.parametrize('narration', ['Tavin khẽ nói:', 'Tavin cười và nói:'])
+def test_a_real_speech_tag_keeps_a_short_utterance_at_a_batch_edge(narration):
+    rows, payload = _castrule_batch([(narration, 'narration', 'NARRATOR'), ('“Ừ”', 'dialogue', 'Tavin'), ('rồi bước ra sân.', 'narration', 'NARRATOR')])
+    context = _original_neighbor_context(rows)
+    result = _validate(rows[1:], {'segments':payload['segments'][1:]}, original_context=context)
+    assert result['r1']['speaker'] == 'Tavin'
+
+
+def test_an_unspoken_or_simulated_quote_keeps_the_models_semantic_kind():
+    for lead in ('Tôi nghĩ thầm:', 'Tôi muốn nói nhưng vẫn im lặng:', 'Cô nhìn tôi như thể muốn nói:'):
+        rows, payload = _castrule_batch([(lead, 'narration', 'NARRATOR'), ('“Đợi ở hiên nhé.”', 'thought', 'Mira')])
+        rows[1]['kind_hint'] = 'dialogue'
+        assert _validate(rows, payload)['r1']['kind'] == 'thought'
+
+
+def test_desired_speech_is_not_a_real_tag_and_actual_speech_is():
+    for prefix in ('Mira muốn nói:', 'Mira định nói:', 'Mira như thể nói:'):
+        rows,payload=_castrule_batch([(prefix,'narration','NARRATOR'),('“Còn một chiếc ô.”','dialogue','Tavin')])
+        assert _validate(rows,payload)['r1']['speaker']=='Tavin'
+    rows,payload=_castrule_batch([('Mira cười và nói','narration','NARRATOR'),('“Ừ”','dialogue','Tavin'),('rồi gấp ô.','narration','NARRATOR')])
+    assert _validate(rows,payload)['r1']['speaker']=='Mira'
+
+
+def test_weak_generic_mentions_are_scoped_and_do_not_seed_paragraph_propagation():
+    rows,payload=_castrule_batch([
+        ('Người phụ nữ nói:','narration','NARRATOR'),('“Giữ ô nhé.”','dialogue','UNKNOWN'),
+        ('“Tôi đứng ngoài sân.”','dialogue','Tavin'),
+        ('Người phụ nữ hỏi:','narration','NARRATOR'),('“Đèn còn sáng chứ?”','dialogue','UNKNOWN'),
+    ])
+    for i in (1,2,4):
+        payload['segments'][i]['confidence']=.5
+    rows[3]['paragraph_index']=rows[4]['paragraph_index']=8
+    result=_validate(rows,payload)
+    assert result['r1']['speaker']!=result['r4']['speaker']
+    assert result['r2']['speaker']=='Tavin'
+    assert result['r1']['confidence']==.5
+
+
+@pytest.mark.parametrize('hint,kind,text', [
+    ('dialogue','thought','“Mình chờ thêm một lúc.”'),
+    ('dialogue','narration','“Sổ mưa”'),
+    ('thought','narration','‘Sổ mưa’'),
+    ('thought','dialogue','‘Giữ ô giúp tôi!’'),
+    ('narration','dialogue','Giữ đèn giúp tôi nhé.'),
+])
+def test_semantic_kind_crosses_hint_and_commits_after_an_accepted_candidate_reopen(tmp_path,monkeypatch,hint,kind,text):
+    db=production_analysis_db(tmp_path)
+    with db.transaction() as conn:
+        conn.execute('UPDATE segments SET text=?,text_sha256=?,kind_hint=?',(text,sha256_text(text),hint))
+    analyzer=OllamaBookAnalyzer(build_settings(),db,lambda message:None)
+    monkeypatch.setattr(analyzer,'ensure_available',lambda:True)
+    monkeypatch.setattr(analyzer,'_request',lambda group,**kw:{'segments':[
+        {**analysis_item(str(row['stable_id'])),'kind':kind,'speaker':'NARRATOR' if kind=='narration' else 'Mira'} for row in group]})
+    def interrupted(*args,**kwargs):
+        raise RuntimeError('accepted before commit')
+    monkeypatch.setattr(db,'update_analysis_batch_with_event',interrupted)
+    with pytest.raises(RuntimeError,match='accepted before commit'):
+        analyzer.analyze_all(lambda:False)
+    reopened=ProjectDB(db.path)
+    analyzer=OllamaBookAnalyzer(build_settings(),reopened,lambda message:None)
+    monkeypatch.setattr(analyzer,'ensure_available',lambda:True)
+    monkeypatch.setattr(analyzer,'_request',lambda *args,**kwargs:pytest.fail('accepted candidate must not regenerate'))
+    analyzer.analyze_all(lambda:False)
+    row=reopened.list_segments()[0]
+    assert row['kind']==kind and row['kind_hint']==hint and row['text']==text
+    assert row['speaker']==('NARRATOR' if kind=='narration' else 'Mira')

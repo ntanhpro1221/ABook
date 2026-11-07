@@ -703,11 +703,7 @@ def _snapped_labels(project_root: Path, spoken: Any, names: dict[int, dict[str, 
 def _teller_cards(project_root: Path, overrides: dict[str, Any], names: dict[int, dict[str, Any]],
                   speaker_wishes: dict[str, dict[str, str]], speaker_label: Callable[[str], str],
                   audio: store.AudioLocator | Path | None) -> list[dict[str, Any]]:
-    """Giọng của người kể "tôi" (abook/teller_voice.py): hai thẻ cho sách mà máy KHÔNG tự áp được nữa (đã có câu thu âm, hay người
-    dùng đã chọn giọng dẫn) - mặc định không áp, người dùng bấm mới đổi, và đổi bằng đúng đường ý muốn người nghe có sẵn (giọng người kể
-    / người nói câu này), nên câu đã thu được thu lại đúng chỗ.
-    1. Giọng dẫn khác giới người kể "tôi" (đã rõ giới), còn giọng cùng giới chưa ai giữ.
-    2. Câu nội tâm do chính người kể "tôi" nghĩ đang đọc bằng giọng nhân vật."""
+    """Offer an explicit narration voice choice; inner speech keeps its thinker."""
     from ..listener_overrides import narrator_profile, narrator_voiced
     from .humanize import voice_label
 
@@ -716,14 +712,14 @@ def _teller_cards(project_root: Path, overrides: dict[str, Any], names: dict[int
     if record["mode"] == "teller":
         return []  # B: người kể "tôi" tự kể chuyện - giọng dẫn và nội tâm đã là giọng của chính họ, không còn gì để hỏi
     settings = store.read_settings(project_root)
-    skip = set(record["applied"].get("thoughts") or {})
     with closing(store.connect(project_root)) as connection:
         try:
             tellers = teller_voice.tellers_of(project_root, settings, connection)
             if not tellers.active:
                 return []
             mismatch = teller_voice.narrator_mismatch(connection, tellers)
-            thoughts = teller_voice.teller_thoughts(connection, tellers, skip=skip)
+            # Inner speech already belongs to the thinking character.
+            # Voice presentation must never propose changing that identity.
             profile = narrator_profile(connection)
             narrated = [row for row in connection.execute(
                 "SELECT id, kind, speaker, voice_profile_id" + (", wav_path" if "wav_path" in {r[1] for r in connection.execute("PRAGMA table_info(segments)")} else "")
@@ -755,29 +751,6 @@ def _teller_cards(project_root: Path, overrides: dict[str, Any], names: dict[int
                 "requested": done if wish is not None and wish["preset"] == mismatch["preset"] else None,
             })
 
-    by_speaker: dict[str, list[Any]] = defaultdict(list)
-    for row in thoughts:
-        wish = speaker_wishes.get(str(row["stable_id"]))
-        if wish is None or wish["speaker"] == NARRATOR:  # đã chọn người khác / "giữ nguyên" thì không giẫm lên
-            by_speaker[str(row["speaker"])].append(row)
-    for speaker, rows in sorted(by_speaker.items()):
-        fix = _speaker_fix(rows, [{"label": "Người kể", "value": NARRATOR}], speaker, speaker_wishes, speaker_label)
-        if fix is None:
-            continue
-        who = speaker_label(speaker)
-        cards.append({
-            "kind": "teller-thought",
-            "key": f"teller-thought:{speaker}",
-            "title": "Giọng nội tâm",
-            "problem": f"Bạn đổi lời nghĩ của {who} sang giọng kể; lời nói ra giữ giọng nhân vật.",
-            "affected": len(rows),
-            "doubt": 0.4,
-            "options": ["Đọc bằng giọng người kể", "Giữ giọng nhân vật"],
-            "current": who,
-            "examples": [_example(row, names, speaker_label, audio) for row in rows[:EXAMPLES]],
-            "keepLabel": "Giữ giọng nhân vật",
-            **fix,
-        })
     return cards
 
 

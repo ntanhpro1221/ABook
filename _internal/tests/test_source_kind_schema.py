@@ -1,9 +1,4 @@
-"""The source boundary is stated in the schema, not enforced by rejection afterwards.
-
-HOST_SOURCE_KIND_MISMATCH was 75% of all analysis rejections - around 32 per ten-chapter run
-- and each one sent five segments back so that one could be corrected. The boundary is known
-before the model answers, so the schema says it.
-"""
+"""Quote hints stay advisory; independent semantic constraints still share one schema rule."""
 
 from __future__ import annotations
 
@@ -30,18 +25,16 @@ def _branch(schema: dict, stable_id: str) -> dict:
     )
 
 
-def test_a_dialogue_source_permits_only_dialogue() -> None:
-    assert _allowed_kinds_by_id([_row("a", "dialogue")]) == {"a": ("dialogue",)}
+def test_a_dialogue_hint_does_not_lock_kind():
+    assert _allowed_kinds_by_id([_row("a", "dialogue")]) == {}
 
 
-def test_a_thought_source_permits_only_thought() -> None:
-    assert _allowed_kinds_by_id([_row("a", "thought")]) == {"a": ("thought",)}
+def test_a_thought_hint_does_not_lock_kind():
+    assert _allowed_kinds_by_id([_row("a", "thought")]) == {}
 
 
-def test_a_narration_source_may_not_become_dialogue() -> None:
-    allowed = _allowed_kinds_by_id([_row("a", "narration")])["a"]
-    assert "dialogue" not in allowed
-    assert "narration" in allowed
+def test_a_narration_hint_allows_actual_speech():
+    assert _allowed_kinds_by_id([_row("a", "narration")]) == {}
 
 
 def test_the_allowed_set_comes_from_the_rule_that_rejects_crossings() -> None:
@@ -54,10 +47,8 @@ def test_the_allowed_set_comes_from_the_rule_that_rejects_crossings() -> None:
             assert rejected == (kind not in derived), (hint, kind)
 
 
-def test_an_unrestricted_segment_is_left_alone() -> None:
-    """Only a real restriction is worth the larger schema."""
-    row = _row("a", "narration")
-    assert len(_allowed_kinds_by_id([row])["a"]) < len(ALLOWED_KINDS)
+def test_an_unrestricted_segment_is_left_alone():
+    assert _allowed_kinds_by_id([_row("a", "narration")]) == {}
 
 
 def test_the_schema_carries_the_constraint_per_segment() -> None:
