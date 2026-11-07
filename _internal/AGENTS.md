@@ -132,7 +132,9 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   Hoàn tác hoặc chọn người kể khác phải đối chiếu lại cả những câu đã áp, giữ người nghĩ ban đầu và ưu tiên sửa từng câu của người nghe.
 - Trong mode `teller`, lớp giọng chương áp cho `NARRATOR` ở mọi kind và nội tâm chưa rõ người nghĩ;
   giữ nguyên speaker/character của câu, kể cả NULL, và giữ provenance để hoàn tác cả profile ban đầu chưa có.
-  Mode mặc định vẫn không tự đổi giọng. Trích giữa câu chỉ sửa tên/nhãn cục bộ khi có khung câu kể và thiếu bằng chứng
+  Mode mặc định giữ giọng dẫn cả cuốn; người kể được khai riêng theo chương/đoạn và khác giới giọng dẫn dùng giọng riêng của họ
+  cho mọi câu NARRATOR hoặc nội tâm chưa rõ chủ thể. Sửa chữ hoặc chọn owner NARRATOR không phải chọn preset dẫn;
+  lựa chọn preset dẫn rõ ràng và lựa chọn người nói có tên vẫn được ưu tiên. Trích giữa câu chỉ sửa tên/nhãn cục bộ khi có khung câu kể và thiếu bằng chứng
   lượt nói: ngôi 1–2, tiếng kêu/cười, đáp lễ hoặc cue phát ngôn gần cụm trích. Khung giải nghĩa tên/thuật ngữ và khung
   hướng dẫn cách nói được xét riêng; speech tag vẫn có quyền riêng. Đây là heuristic đã đo, không bảo đảm giữ mọi thoại thật.
 - Trước khi xuất `.abook` từ dự án, `voice_integrity` kiểm owner/giọng chương, giới, signal và mọi mảnh split trên
@@ -288,7 +290,8 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
 - Ngoặc kéo dài qua nhiều paragraph phải giữ độ sâu lồng nhau. Dấu ngoặc chỉ tạo `kind_hint`;
   generator và critic quyết kind theo ngữ nghĩa, không có khóa dialogue/thought chỉ từ hint.
   Nội tâm giữ danh tính và giọng của chính người đang nghĩ. `teller_voice` mặc định không sửa
-  speaker/character/voice; lựa chọn rõ `mode=teller` chỉ đổi lớp giọng lời dẫn, giữ identity,
+  speaker/character; ngoại lệ giọng của người kể được khai riêng theo chương/đoạn áp khi khác giới giọng dẫn.
+  Lựa chọn rõ `mode=teller` áp cả người kể cùng giới và chỉ đổi lớp giọng lời dẫn, giữ identity,
   lưu provenance và reset audio trong cùng transaction. SQLite là thẩm quyền sau crash/reopen.
 - Lời dẫn chỉ có thẩm quyền khi chủ thể gắn với động từ phát ngôn thật; hành động, phản ứng,
   ý định chưa nói và phép so sánh không đủ. Cue generic yếu không đè nhãn chắc, không làm neo

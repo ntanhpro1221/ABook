@@ -63,6 +63,7 @@ def test_quality_policy_fingerprints_every_critical_implementation_file() -> Non
     assert "audio_transform_contract.py" in QUALITY_IMPLEMENTATION_FILES
     assert "database.py" in QUALITY_IMPLEMENTATION_FILES
     assert "recovery.py" in QUALITY_IMPLEMENTATION_FILES
+    assert "teller_voice.py" in QUALITY_IMPLEMENTATION_FILES
     assert "runtime_contract.py" in QUALITY_IMPLEMENTATION_FILES
     assert "voice_catalog.py" in QUALITY_IMPLEMENTATION_FILES
     # Chữ Studio đem đọc và đem chấm (tên theo luật, Việt hoá chữ Anh, bộ kiểm âm tiết).

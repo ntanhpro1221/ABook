@@ -231,6 +231,10 @@ def test_unattributed_thought_falls_back_to_the_chapter_teller(tmp_path, missing
     teller_voice.ensure(paths.root, reopened, settings)
     assert rows(reopened)['c2s2']['speaker'] == 'UNKNOWN'
     assert rows(reopened)['c2s2']['canonical_character_id'] is None
+    assert rows(reopened)['c2s2']['voice_profile_id'] == female
+    # Removing the local teller restores even an originally missing profile.
+    settings['voices']['first_person_chapters'] = {}
+    teller_voice.ensure(paths.root, reopened, settings)
     assert rows(reopened)['c2s2']['voice_profile_id'] == original['voice_profile_id']
 
 
