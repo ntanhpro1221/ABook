@@ -43,7 +43,7 @@ export class NightRecorder {
     return Boolean(this.session && !this.session.endedAt);
   }
 
-  start(book: { id: string; title: string; record?: string }, minutes: number | null, position: NightPosition, reason?: "safety"): void {
+  start(book: { id: string; title: string; record?: string }, minutes: number | null, position: NightPosition, reason?: "safety" | "schedule"): void {
     const now = Date.now();
     const current = this.session;
     const reusable =

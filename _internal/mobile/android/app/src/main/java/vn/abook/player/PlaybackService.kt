@@ -86,6 +86,7 @@ class PlaybackService : MediaLibraryService() {
         instance = this
         AppLog.i("PlaybackService", "dịch vụ phát bật")
         Playback.init(this)
+        ListenerActivity.start(this)
         Playback.addListener(sleepButtons)
         val player = ExoPlayer.Builder(this)
             .setAudioAttributes(
@@ -110,7 +111,7 @@ class PlaybackService : MediaLibraryService() {
                 Playback.onPlayingChanged(isPlaying)
             }
 
-            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) = Playback.onMediaTransition(mediaItem)
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) = Playback.onMediaTransition(mediaItem, reason == Player.MEDIA_ITEM_TRANSITION_REASON_SEEK)
 
             override fun onPositionDiscontinuity(oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int) = Playback.onSeekSettled(reason)
 
@@ -121,6 +122,8 @@ class PlaybackService : MediaLibraryService() {
             }
 
             override fun onPlaybackParametersChanged(playbackParameters: androidx.media3.common.PlaybackParameters) = Playback.onRateChanged(playbackParameters.speed)
+
+            override fun onDeviceVolumeChanged(volume: Int, muted: Boolean) = Playback.touched()
 
             override fun onPlaybackStateChanged(state: Int) {
                 if (state == Player.STATE_ENDED) Playback.onEnded()
@@ -175,6 +178,7 @@ class PlaybackService : MediaLibraryService() {
 
     fun refreshButtons() {
         session?.setMediaButtonPreferences(buttons())
+        (session?.player as? HeadsetSkips)?.refreshSleepReason()
     }
 
     /**
@@ -193,6 +197,22 @@ class PlaybackService : MediaLibraryService() {
                 Player.COMMAND_SEEK_TO_NEXT, Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM,
                 Player.COMMAND_SEEK_TO_PREVIOUS, Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM,
             ).build()
+        }
+
+        private val metadataListeners = mutableSetOf<Player.Listener>()
+        override fun addListener(listener: Player.Listener) { super.addListener(listener); metadataListeners.add(listener) }
+        override fun removeListener(listener: Player.Listener) { super.removeListener(listener); metadataListeners.remove(listener) }
+        fun refreshSleepReason() {
+            metadataListeners.toList().forEach {
+                it.onMediaMetadataChanged(mediaMetadata)
+                it.onEvents(this, Player.Events(androidx.media3.common.FlagSet.Builder().add(Player.EVENT_MEDIA_METADATA_CHANGED).build()))
+            }
+        }
+
+        override fun getMediaMetadata(): MediaMetadata {
+            val reason = AutoSleepText.reason(SleepTimer.automaticReason)
+            return if (reason.isEmpty()) super.getMediaMetadata() else super.getMediaMetadata().buildUpon()
+                .setSubtitle(reason).setDescription(AutoSleepText.CONTINUE).build()
         }
 
         override fun getAvailableCommands(): Player.Commands {
@@ -252,6 +272,23 @@ class PlaybackService : MediaLibraryService() {
 
 
     private inner class Callback : MediaLibrarySession.Callback {
+        override fun onMediaButtonEvent(session: MediaSession, controllerInfo: MediaSession.ControllerInfo, intent: Intent): Boolean {
+            Playback.touched()
+            return false
+        }
+
+        override fun onPlayerCommandRequest(session: MediaSession, controller: MediaSession.ControllerInfo, playerCommand: Int): Int {
+            // Getters and automatic player events are not listener input.
+            if (playerCommand in setOf(Player.COMMAND_PLAY_PAUSE, Player.COMMAND_PREPARE, Player.COMMAND_STOP,
+                    Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM, Player.COMMAND_SEEK_TO_MEDIA_ITEM,
+                    Player.COMMAND_SEEK_TO_NEXT, Player.COMMAND_SEEK_TO_PREVIOUS,
+                    Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM, Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM,
+                    Player.COMMAND_SEEK_BACK, Player.COMMAND_SEEK_FORWARD, Player.COMMAND_SET_SPEED_AND_PITCH,
+                    Player.COMMAND_SET_VOLUME, Player.COMMAND_SET_DEVICE_VOLUME, Player.COMMAND_ADJUST_DEVICE_VOLUME,
+                    Player.COMMAND_SET_DEVICE_VOLUME_WITH_FLAGS, Player.COMMAND_ADJUST_DEVICE_VOLUME_WITH_FLAGS)) Playback.touched()
+            return SessionResult.RESULT_SUCCESS
+        }
+
         override fun onConnect(session: MediaSession, controller: MediaSession.ControllerInfo): MediaSession.ConnectionResult {
             // Lệnh thư viện (duyệt cây) cho Android Auto và trình duyệt media của hệ thống, cộng các nút riêng của app (+10 phút, chương trước/sau).
             val commands = MediaSession.ConnectionResult.DEFAULT_SESSION_AND_LIBRARY_COMMANDS.buildUpon()
@@ -366,8 +403,14 @@ class PlaybackService : MediaLibraryService() {
             customCommand: SessionCommand,
             args: Bundle,
         ): ListenableFuture<SessionResult> {
+            if (customCommand.customAction == SLEEP_PLUS.customAction) {
+                // extend() handles automatic timers before the general awake signal clears provenance.
+                SleepTimer.extend()
+                Playback.touched()
+                return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
+            }
+            Playback.touched()
             when (customCommand.customAction) {
-                SLEEP_PLUS.customAction -> SleepTimer.extend()
                 PREVIOUS_CHAPTER.customAction -> Playback.previous()
                 NEXT_CHAPTER.customAction -> Playback.next()
             }
@@ -448,6 +491,7 @@ class PlaybackService : MediaLibraryService() {
         MusicBed.stop()
         ReadAloud.stop()
         Playback.player = null
+        ListenerActivity.stop()
         instance = null
         super.onDestroy()
     }

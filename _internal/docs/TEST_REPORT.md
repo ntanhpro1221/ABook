@@ -1324,3 +1324,10 @@ Nhãn pace không đổi âm thanh hoặc QA: cùng bản thu, band `[12.5, 24.5
 Test `test_pace_label_is_metadata.py` kiểm cùng take dưới slow/normal/fast/unknown, gồm nhận, cảnh báo và lỗi safety, hai hệ số sàn; đối chiếu cả metrics, ngân sách frame và tham số sinh. Kết quả importer thực và audit chỉ đọc hai sách, gồm stable ID không kèm nội dung, nằm trong `scratchpad/codex/pacetag/report.md` của phiên làm việc.
 
 Kiểm `-q -rf`: lượt đầu 123 module có 2862 đạt, 3 lỗi, 5 bỏ qua; sau sửa fixture/assertion, chạy lại trọn 12 module được 239 đạt, 0 lỗi. Kết quả mới nhất từng module: 2865 đạt, 0 lỗi, 5 bỏ qua (không cộng trùng lượt chạy). Lượt rộng có 8 cảnh báo thread đọc stdout không giải mã được UTF-8; lượt chạy lại không có. Compileall và diff check đạt. Audit: slow trượt band chung 0/715 và 2/642; fast có bằng chứng ít nhất 2 và 12 lượt retry riêng do band fast. Hash `26e20236…` → `6e1970d0…`; chưa commit.
+
+
+# safetystop — 07-11-2026
+
+Hẹn tự động trên Android cần màn tắt liên tục, không tương tác và bốn cửa sổ nằm yên khi có cảm biến; desktop dùng thời gian rảnh toàn OS (Windows GetLastInputInfo). Dấu hiệu còn thức huỷ hẹn tự động; hẹn tay giữ nguyên. Không khôi phục hẹn tự động từ đĩa; hẹn tay gắn sách/hồ sơ. Giao diện và thông báo nêu lý do, dùng hoạt ảnh sẵn có. Chữ và mô tả ba nền đã đồng bộ, sinh lại parity.
+
+Kiểm cuối: Android JVM 93 passed (13 lớp, 0 failed/error/skipped); Vitest 88 passed (12 file); typecheck đạt; Qt PlayerTests build/chạy ẩn offscreen 47 passed; pytest tín hiệu OS và hai máy dò parity 33 passed. Compileall và diff check đạt. Probe Windows thật trả thời gian rảnh hợp lệ. Hash chất lượng trước/sau giữ nguyên `5769f2787088e6389c7b9d1fe860db839923247fead4d6e3428e141804af4e9e`. Không GPU, không ADB/điện thoại thật, không commit/push. Còn cần kiểm OEM về cảm biến/âm lượng/Bluetooth khi tắt màn, pin nền và hiển thị/hoạt ảnh trên thiết bị.

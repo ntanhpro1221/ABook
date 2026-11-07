@@ -41,6 +41,12 @@ fun SleepNotice(state: NowPlayingState, model: NowPlayingModel, modifier: Modifi
             .distinctUntilChanged().collect { fading = it }
     }
     Column(modifier.fillMaxWidth()) {
+        Reveal(state.sleep.automaticReason.isNotEmpty() && state.sleep.kind != SleepKind.Off) {
+            Row(Modifier.fillMaxWidth().padding(top = Dim.s8).testTag("sleep_automatic"), verticalAlignment = Alignment.CenterVertically) {
+                BasicText(vn.abook.player.AutoSleepText.reason(state.sleep.automaticReason), Modifier.weight(1f), style = Abook.type.bodySmall)
+                TextAction(vn.abook.player.AutoSleepText.CONTINUE, { model.setSleep(SleepKind.Off) }, "sleep_continue")
+            }
+        }
         Reveal(fading) {
             Row(Modifier.fillMaxWidth().padding(top = Dim.s8).testTag("sleep_fading"), verticalAlignment = Alignment.CenterVertically) {
                 SleepIcon(Abook.colors.accentText)

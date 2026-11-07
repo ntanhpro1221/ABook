@@ -32,12 +32,15 @@ class SleepExtendTest {
         Playback.player = voice.player
         SleepTimer.extendMinutes = 10
         SleepTimer.shakeEnabled = true
+        field("stoppedAutomatically").setBoolean(SleepTimer, false)
         field("mode").set(SleepTimer, SleepTimer.Mode.OFF)
+        field("automaticReason").set(SleepTimer, "")
         field("stoppedAtMs").setLong(SleepTimer, 0L)
     }
 
     @After fun cleanup() {
         field("mode").set(SleepTimer, SleepTimer.Mode.OFF)
+        field("automaticReason").set(SleepTimer, "")
         field("stoppedAtMs").setLong(SleepTimer, 0L)
         SleepTimer.extendMinutes = 10
         Playback.player = null
@@ -126,11 +129,11 @@ class SleepExtendTest {
         assertEquals(15, SleepTimer.describe().getInt("minutes"))
     }
 
-    @Test fun theSafetyNetKeepsItsOneMinuteButAgainMeansTheSettingsStep() = withSensors {
+    @Test fun awakeExtensionCancelsAutomaticTimerInsteadOfArmingAnother() = withSensors {
         SleepTimer.extendMinutes = 15
         SleepTimer.safetyStopHours = 2.0
         voice.playing = true
-        SleepTimer.maybeSafetyStop(0L) // không ai chạm máy từ thuở nào
+        SleepTimer.setMinutes(1, "safety") // decision evidence is covered by SleepPolicyTest
         assertEquals(SleepTimer.Mode.MINUTES, SleepTimer.mode)
         assertEquals("đếm ngược vẫn 1 phút", 60.0, left(), 2.0)
         assertEquals("không ai chọn số phút", 0, SleepTimer.describe().getInt("minutes"))
@@ -138,7 +141,65 @@ class SleepExtendTest {
         assertEquals("Hẹn lại 15 phút", SleepText.extendLabel(SleepTimer.extendTarget()))
         SleepTimer.extend()
         SleepTimer.extend()
-        assertEquals("người thức lắc thì không bị tắt lại sau 1 phút", 15 * 60.0, left(), 2.0)
-        assertEquals(15, SleepTimer.describe().getInt("minutes"))
+        assertEquals(SleepTimer.Mode.OFF, SleepTimer.mode)
+        assertEquals("", SleepTimer.automaticReason)
     }
+    @Test fun cancellingClearsTheRecentStopSoShakingCannotRearm() = withSensors {
+        field("stoppedAtMs").setLong(SleepTimer, System.currentTimeMillis())
+        SleepTimer.cancel()
+        assertFalse(SleepTimer.applyShake(System.currentTimeMillis()))
+        assertEquals(SleepTimer.Mode.OFF, SleepTimer.mode)
+    }
+
+    @Test fun shakingAfterAnAutomaticStopResumesWithoutCreatingATimer() = withSensors {
+        field("stoppedAtMs").setLong(SleepTimer, 1_000_000L)
+        field("stoppedAutomatically").setBoolean(SleepTimer, true)
+        assertTrue(SleepTimer.applyShake(1_060_000L))
+        assertEquals(SleepTimer.Mode.OFF, SleepTimer.mode)
+        assertTrue(voice.playWhenReady)
+        assertFalse(SleepTimer.applyShake(1_061_000L))
+    }
+
+    @Test fun actualPlaybackCommandsCancelAutomaticTimersButPreserveManualOnes() = withSensors {
+        val commands = listOf<() -> Unit>(
+            { Playback.seekTo(12.0) }, { Playback.skip(15.0) }, { Playback.next() },
+            { Playback.previous() }, { Playback.play() }, { Playback.pause() }, { Playback.setRate(1.2) },
+        )
+        for (command in commands) {
+            Motion::class.java.getDeclaredField("running").also { it.isAccessible = true }.setBoolean(Motion, true)
+            timer(0, 1.0)
+            field("automaticReason").set(SleepTimer, "safety")
+            command()
+            assertEquals(SleepTimer.Mode.OFF, SleepTimer.mode)
+            timer(30, 12.0)
+            command()
+            assertEquals(SleepTimer.Mode.MINUTES, SleepTimer.mode)
+        }
+    }
+
+    @Test fun manualChapterSelectionDoesNotFinishTheNewChapterImmediately() = withSensors {
+        field("mode").set(SleepTimer, SleepTimer.Mode.CHAPTER)
+        SleepTimer.onChapterChanged(manual = true)
+        assertEquals(SleepTimer.Mode.CHAPTER, SleepTimer.mode)
+    }
+
+    @Test fun switchingListeningProfilesCannotCarryThePreviousListenersTimer() = withSensors {
+        timer(30, 12.0)
+        field("ownerBook").set(SleepTimer, Playback.bookId)
+        field("ownerRecord").set(SleepTimer, Playback.recordId + "-another-record")
+        SleepTimer.checkOwner()
+        assertEquals(SleepTimer.Mode.OFF, SleepTimer.mode)
+    }
+
+    @Test fun aNightScheduleCannotArmWithoutServiceScreenEvidence() {
+        SleepTimer.schedule = Triple(0, 1439, 30)
+        voice.playing = true
+        try {
+            SleepTimer.maybeSchedule()
+            assertEquals(SleepTimer.Mode.OFF, SleepTimer.mode)
+        } finally {
+            SleepTimer.schedule = null
+        }
+    }
+
 }

@@ -251,6 +251,7 @@ object Playback {
     }
 
     fun touched() {
+        SleepTimer.onAwake()
         lastInteractionMs = System.currentTimeMillis()
         lastInteractionChapter = currentChapter?.id
         lastInteractionSeconds = positionSeconds
@@ -484,6 +485,7 @@ object Playback {
 
     /** Nạp một cuốn: cả danh sách chương vào hàng đợi, bắt đầu ở chương/giây đã chọn. */
     fun load(id: String, title: String, narratorName: String, items: List<Chapter>, startChapterId: Int, startSeconds: Double, rate: Double, autoplay: Boolean = true) {
+        touched()
         val exo = player ?: return
         pending = null
         saveNow()
@@ -495,6 +497,7 @@ object Playback {
         ReadAloud.useVoiceOf(id, record)
         bookId = id
         recordId = record
+        SleepTimer.checkOwner()
         bookTitle = title
         narrator = narratorName
         chapters = items
@@ -534,6 +537,7 @@ object Playback {
      * vào khoảng giữa mà đã đổi `bookId` thì sẽ ghi chỗ của cuốn cũ vào cuốn mới.
      */
     fun adopt(id: String, title: String, narratorName: String, items: List<Chapter>, startChapterId: Int, startSeconds: Double, rate: Double) {
+        touched()
         saveNow()
         closeSession()
         ReadAloud.stop()
@@ -551,6 +555,7 @@ object Playback {
         lastError = ""
         bookId = next.id
         recordId = Store.activeRecord(next.id)
+        SleepTimer.checkOwner()
         ReadAloud.useVoiceOf(next.id, recordId)
         bookTitle = next.title
         narrator = next.narrator
@@ -567,6 +572,7 @@ object Playback {
     }
 
     fun play() {
+        touched()
         val exo = player ?: return
         // Đọc to: sau lỗi đọc thì thử lại đúng đoạn hỏng; đã chạy hết hàng đợi thì đọc lại từ chỗ đang đứng; đang chờ đọc đoạn thì ghi nhớ là người nghe muốn phát.
         if (ReadAloud.onPlay()) {
@@ -587,6 +593,7 @@ object Playback {
     }
 
     fun pause() {
+        touched()
         ReadAloud.onPause()
         player?.pause()
         Bedtime.interaction("pause")
@@ -654,6 +661,7 @@ object Playback {
     }
 
     fun next() {
+        touched()
         val exo = player ?: return
         if (ReadAloud.active) {
             // Hàng đợi có mục mỗi đoạn: "chương sau" là theo danh sách chương, không phải mục kế của ExoPlayer.
@@ -675,6 +683,7 @@ object Playback {
     }
 
     fun previous() {
+        touched()
         val exo = player ?: return
         saveNow()
         if (ReadAloud.active) {
@@ -705,8 +714,7 @@ object Playback {
 
     fun onPlayingChanged(playing: Boolean) {
         isPlaying = playing
-        // Phát/dừng hầu như luôn do người nghe bấm (app, thông báo, tai nghe, widget): tính là còn thức.
-        touched()
+        if (!playing && SleepTimer.mode == SleepTimer.Mode.OFF) ListenerActivity.evidence.awake(android.os.SystemClock.elapsedRealtime())
         SleepTimer.onPlaying(playing)
         Motion.refresh()
         Remote.onPlaying(playing)
@@ -796,8 +804,8 @@ object Playback {
         if (!isPlaying && moved()) saveNow()
     }
 
-    fun onChapterChanged() {
-        SleepTimer.onChapterChanged()
+    fun onChapterChanged(manual: Boolean = false) {
+        SleepTimer.onChapterChanged(manual)
         emit("chapter")
     }
 
@@ -807,7 +815,7 @@ object Playback {
      * ExoPlayer sang mục khác. Đoạn đọc to (có `ReadAloud.Slot`) mà cùng chương với đoạn trước chỉ là đổi đoạn - không phải đổi chương, nên không báo "chapter" và
      * không kết thúc hẹn giờ "hết chương" (ReadAloud tự dừng nạp ở cuối chương). Mọi mục khác như cũ.
      */
-    fun onMediaTransition(item: MediaItem?) {
+    fun onMediaTransition(item: MediaItem?, manual: Boolean = false) {
         if (item == null) return // hàng đợi vừa được xoá (ReadAloud bắt đầu lại ở chỗ khác): chưa có mục nào để báo
         val slot = item?.localConfiguration?.tag as? ReadAloud.Slot
         if (slot == null && item.mediaId == reloadedChapter) {
@@ -819,7 +827,7 @@ object Playback {
             lastClipChapter = -1
             ReadAloud.onClipChanged()
             applyVolume()
-            onChapterChanged()
+            onChapterChanged(manual)
             if (slot == null) item.mediaId.toLongOrNull()?.let { Streaming.keepScript(appContext, bookId, it) }
             return
         }
@@ -856,7 +864,7 @@ object Playback {
                     saveNow()
                     pushHeld(force = false)
                 }
-                if (beats % 60 == 0) SleepTimer.maybeSafetyStop(lastInteractionMs)
+                if (beats % 2 == 0) SleepTimer.checkAutomatic()
                 Bedtime.checkpoint()
                 noteStall(exo.isPlaying)
                 syncMusic(true)
