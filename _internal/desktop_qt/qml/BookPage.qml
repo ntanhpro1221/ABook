@@ -204,6 +204,10 @@ Item {
     readonly property bool hasCast: fullBook.id !== undefined && fullBook.stage !== "text"
     readonly property var tabLabels: hasCast ? ["Chương", "Lịch sử", "Nhân vật"] : ["Chương", "Lịch sử"]
     readonly property int paneIndex: Math.min(tab, tabLabels.length - 1)
+    property int previousPaneIndex: 0
+    property int paneDirection: 1
+    onPaneIndexChanged: { paneDirection = paneIndex >= previousPaneIndex ? 1 : -1; previousPaneIndex = paneIndex }
+    property alias transitionCover: cover
     // Việc sửa dàn nhân vật theo khả năng của cuốn (BookScreen.tsx: editable / waiting / workshop): đổi tên - mọi cuốn sửa được; giới tính và gộp - cuốn chờ
     // Studio (file .abook) hay cuốn có xưởng; đổi giọng, bỏ gộp, đổi giọng người kể - cuốn có xưởng (bản Qt chưa có Studio nên làm ngay ở đây). Cuốn của máy khác: chỉ nghe.
     readonly property bool remote: Boolean(root.book.remote)
@@ -524,6 +528,7 @@ Item {
                 height: Math.max(0, parent.height - y)
                 clip: true
                 opacity: root.paneIndex === 0 ? 1 : 0
+                transform: Translate { x: Theme.reduceMotion ? 0 : (root.paneIndex === 0 ? root.paneDirection : -root.paneDirection) * (1 - list.opacity) * 24 }
                 visible: opacity > 0
                 enabled: root.paneIndex === 0
                 Behavior on opacity { NumberAnimation { duration: chapterRegion.fade } }
@@ -573,6 +578,7 @@ Item {
                 active: root.paneIndex === 1
                 chapters: root.fullBook.chapters || []
                 opacity: root.paneIndex === 1 ? 1 : 0
+                transform: Translate { x: Theme.reduceMotion ? 0 : (root.paneIndex === 1 ? root.paneDirection : -root.paneDirection) * (1 - historyList.opacity) * 24 }
                 visible: opacity > 0
                 enabled: root.paneIndex === 1
                 Behavior on opacity { NumberAnimation { duration: chapterRegion.fade } }
@@ -588,6 +594,7 @@ Item {
                 caps: root.castCaps
                 reached: root.castReached
                 opacity: root.paneIndex === 2 ? 1 : 0
+                transform: Translate { x: Theme.reduceMotion ? 0 : (root.paneIndex === 2 ? root.paneDirection : -root.paneDirection) * (1 - castList.opacity) * 24 }
                 visible: opacity > 0
                 enabled: root.paneIndex === 2
                 Behavior on opacity { NumberAnimation { duration: chapterRegion.fade } }

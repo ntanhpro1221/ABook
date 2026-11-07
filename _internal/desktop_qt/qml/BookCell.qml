@@ -8,6 +8,7 @@ import "TextWrap.js" as TextWrap
 Interactive {
     id: root
     property string title: ""
+    property alias transitionCover: coverView
     property string subtitle: ""
     property string coverKey: ""
     property real progress: 0
@@ -42,6 +43,7 @@ Interactive {
             }
         }
         CoverView {
+            id: coverView
             anchors.fill: parent
             coverKey: root.coverKey
             title: root.title

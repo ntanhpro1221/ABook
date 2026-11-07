@@ -8,6 +8,10 @@ import "TextWrap.js" as TextWrap
 Item {
     id: root
     property alias thumb: thumb
+    property alias chapterLabel: chapterLabel
+    property alias bookLabel: subtitle.bookLabel
+    property alias playButton: playButton
+    property bool sharedShown: true
     /// Phần chữ + nút mờ dần khi "Đang nghe" mở ra (0..1 = còn thấy).
     property real contentOpacity: 1
     property real contentShift: 0
@@ -87,6 +91,7 @@ Item {
             width: transport.x - Theme.s24 - x
             spacing: 2
             Text {
+                id: chapterLabel
                 objectName: "barChapterTitle"
                 width: parent.width
                 text: TextWrap.keepDots([Player.chapterTitle, Player.chapterSubtitle].filter(s => s !== "").join("\u00a0·\u00a0"))
@@ -94,9 +99,12 @@ Item {
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeBodySmall
                 font.weight: Theme.weightMedium
+                opacity: root.sharedShown ? 1 : 0
             }
             PlayerSubtitle {
+                id: subtitle
                 width: parent.width
+                opacity: root.sharedShown ? 1 : 0
             }
         }
         Row {
@@ -106,7 +114,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             spacing: Theme.s8
             SkipButton { forward: false; anchors.verticalCenter: parent.verticalCenter }
-            PlayButton { size: 44; anchors.verticalCenter: parent.verticalCenter }
+            PlayButton { id: playButton; size: 44; anchors.verticalCenter: parent.verticalCenter; opacity: root.sharedShown ? 1 : 0 }
             SkipButton { forward: true; anchors.verticalCenter: parent.verticalCenter }
             IconButton {
                 icon: "picture-in-picture-2"; tip: "Cửa sổ mini"

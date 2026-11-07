@@ -6,6 +6,7 @@ import "LayoutAudit.js" as Audit
 Item {
     id: host
     width: 1440; height: 1000
+    Component { id: continueFactory; LibraryContinue { width: 640; book: ({bookId: "width", title: "Hành trình qua miền đất mới", lastChapter: "Chương 1"}) } }
     Component {
         id: scene
         Item {
@@ -16,6 +17,9 @@ Item {
             PlayerBar {
                 id: mini
                 anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
+                contentShift: -now.g * 12
+                contentOpacity: 1 - Math.min(1, now.g * 3)
+                thumbShown: now.p <= 0
                 onOpenRequested: now.show()
             }
             NowPlaying { id: now; anchors.fill: parent; bar: mini }
@@ -86,6 +90,91 @@ Item {
             compare(page.open, true)
             sameBox(Audit.box(cover, host), beforeCover, "cover after Back")
             sameBox(Audit.box(controls, host), beforeControls, "controls after Back")
+            page.close(); tryCompare(page, "p", 0)
+        }
+        function test_sharedPartsFollowTheirOwnPaths_data() { return sizes() }
+        function test_sharedPartsFollowTheirOwnPaths(data) {
+            const content = makeScene(data), page = content.now
+            const chapterFrom = Audit.box(content.bar.chapterLabel, page)
+            const bookFrom = Audit.box(content.bar.bookLabel, page)
+            const playFrom = Audit.box(content.bar.playButton, page)
+            page.show()
+            sameBox({x: page.sharedFrames[0].from.x, y: page.sharedFrames[0].from.y, w: page.sharedFrames[0].from.width, h: page.sharedFrames[0].from.height}, chapterFrom, "chapter source")
+            sameBox({x: page.sharedFrames[1].from.x, y: page.sharedFrames[1].from.y, w: page.sharedFrames[1].from.width, h: page.sharedFrames[1].from.height}, bookFrom, "book source")
+            tryVerify(() => page.p > 0 && page.p < 1)
+            const chapter = findChild(page, "nowChapterMorph"), play = findChild(page, "nowPlayMorph")
+            const g = page.g, path = page.sharedFrames[0]
+            fuzzyCompare(chapter.x, path.from.x + (path.to.x - path.from.x) * g, 0.01)
+            fuzzyCompare(chapter.y, path.from.y + (path.to.y - path.from.y) * g, 0.01)
+            fuzzyCompare(play.x, page.playFrom.x + (page.playTo.x - page.playFrom.x) * g, 0.01)
+            fuzzyCompare(play.y, page.playFrom.y + (page.playTo.y - page.playFrom.y) * g, 0.01)
+            fuzzyCompare(play.width * play.scale, playFrom.w + (56 - playFrom.w) * g, 0.01)
+            compare(content.bar.sharedShown, false)
+            tryCompare(page, "p", 1)
+            page.close()
+            // The mini's temporary -12 px exit transform must not change the
+            // return endpoint; otherwise the last frame jumps back down.
+            fuzzyCompare(page.playFrom.y, playFrom.y, 0.01)
+            fuzzyCompare(page.sharedFrames[0].from.y, chapterFrom.y, 0.01)
+            tryCompare(page, "p", 0)
+            compare(content.bar.sharedShown, true)
+        }
+        function test_playPauseKeepsPlayerGeometry_data() { return sizes() }
+        function test_playPauseKeepsPlayerGeometry(data) {
+            const content = makeScene(data), page = content.now
+            page.show(); tryCompare(page, "p", 1)
+            const names = ["nowCover", "nowControls", "nowChapterTitle", "nowPlay"]
+            const items = names.map(name => findChild(page, name))
+            const boxes = items.map(item => Audit.box(item, host))
+            for (let i = 0; i < 4; ++i) {
+                Player.resume(); compare(Player.playing, true)
+                for (let k = 0; k < items.length; ++k) sameBox(Audit.box(items[k], host), boxes[k], names[k] + " playing")
+                Player.pause(); compare(Player.playing, false)
+                for (let k = 0; k < items.length; ++k) sameBox(Audit.box(items[k], host), boxes[k], names[k] + " paused")
+            }
+            page.close(); tryCompare(page, "p", 0)
+        }
+        function test_continueButtonReservesBothLabels() {
+            const row = createTemporaryObject(continueFactory, host)
+            const button = findChild(row, "libraryContinuePlay"), copy = findChild(row, "libraryContinueCopy")
+            const before = Audit.box(button, host), copyBefore = Audit.box(copy, host)
+            for (let i = 0; i < 4; ++i) {
+                Player.resume(); compare(button.text, "Tạm dừng")
+                sameBox(Audit.box(button, host), before, "continue playing")
+                sameBox(Audit.box(copy, host), copyBefore, "copy playing")
+                Player.pause(); compare(button.text, "Nghe tiếp")
+                sameBox(Audit.box(button, host), before, "continue paused")
+                sameBox(Audit.box(copy, host), copyBefore, "copy paused")
+            }
+        }
+        function test_readingHintHasItsOwnHeaderSpace() {
+            const content = makeScene({width: 1200, height: 900}), page = content.now
+            page.show(); tryCompare(page, "p", 1)
+            tryCompare(ReadAlong, "status", "ready")
+            const reader = findChild(page, "nowReadAlong")
+            const hint = findChild(reader, "readerHint"), list = findChild(reader, "readAlongParagraphs")
+            verify(hint.visible)
+            verify(list.y >= hint.y + hint.height + Theme.s8, "Reading text must not scroll under its fixed hint")
+            Player.resume(); Player.pause()
+            verify(list.y >= hint.y + hint.height + Theme.s8)
+            page.close(); tryCompare(page, "p", 0)
+        }
+        function test_readModeKeepsChapterAndTransport_data() { return sizes() }
+        function test_readModeKeepsChapterAndTransport(data) {
+            const content = makeScene(data), page = content.now
+            page.show(); tryCompare(page, "p", 1)
+            const chapter = findChild(page, "nowChapterTitle"), titles = chapter.parent
+            page.page = 1; tryCompare(page, "pageT", 1)
+            compare(chapter.opacity, 1)
+            compare(titles.opacity, 1)
+            verify(chapter.visible)
+            verify(findChild(page, "nowControls").visible)
+            if (!page.wide) {
+                const text = findChild(page, "nowReadAlongRegion")
+                verify(text.y >= titles.mapToItem(page, 0, 0).y + titles.height + Theme.s8)
+            }
+            page.page = 0; tryCompare(page, "pageT", 0)
+            compare(titles.opacity, 1)
             page.close(); tryCompare(page, "p", 0)
         }
     }

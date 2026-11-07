@@ -121,7 +121,9 @@ it.each(["dialog", "sheet"])("%s: snapshot uses the host padding coordinates, in
   expect(clone.getAttribute("aria-hidden")).toBe("true");
   expect(clone.hasAttribute("inert")).toBe(true);
   expect(clone.style.pointerEvents).toBe("none");
-  expect(region.animate).toHaveBeenCalledWith(expect.arrayContaining([{ opacity: .45 }, { opacity: 1 }]), expect.anything());
+  expect(region.animate).toHaveBeenCalledWith([
+    { opacity: .45, transform: "translateY(8px)" }, { opacity: 1, transform: "none" },
+  ], expect.anything());
   await act(() => vi.advanceTimersByTime(MOTION.fastOut + 81));
   expect(snapshots()).toHaveLength(0);
 });

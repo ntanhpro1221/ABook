@@ -71,7 +71,7 @@ Window {
         })
     }
 
-    Component { id: libraryScreen; LibraryScreen { fileOpening: addBook.opening; onOpenBook: (book) => stack.push(bookPage, { book: book }); onAddRequested: paths => addBook.begin(paths); onOpenFileRequested: addBook.openFile(); onStudioRequested: stack.show(1) } }
+    Component { id: libraryScreen; LibraryScreen { fileOpening: addBook.opening; onOpenBook: (book, sourceItem) => stack.push(bookPage, { book: book }, sourceItem); onAddRequested: paths => addBook.begin(paths); onOpenFileRequested: addBook.openFile(); onStudioRequested: stack.show(1) } }
     Component { id: studioScreen; StudioScreen {} }
     Component { id: settingsScreen; SettingsScreen { onStudioRequested: stack.show(1) } }
     Component { id: bookPage; BookPage { onEditRequested: data => editBook.begin(data); onSaveRequested: data => saveBookAs.quick(data); onSaveAsRequested: data => saveBookAs.begin(data); onRenameRequested: (data, chapter) => renameChapter.begin(data, chapter); onCastRequested: (kind, data) => castDialogs.begin(kind, data); onRecordRequested: (kind, data) => recordDialogs.begin(kind, data) } }

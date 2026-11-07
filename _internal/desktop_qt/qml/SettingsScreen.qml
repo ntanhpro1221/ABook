@@ -10,6 +10,10 @@ FocusScope {
     property bool layoutExpanded: expanded
     property real layoutPhase: 1
     property string active: ""
+    property string displayedActive: ""
+    property real navigationPhase: 1
+    property int navigationDirection: 1
+    property bool navigationEntering: false
     signal studioRequested()
     readonly property real bodyWidth: Math.min(width - 2 * Theme.margin, layoutExpanded ? 1180 : 760)
     readonly property var groups: {
@@ -29,7 +33,7 @@ FocusScope {
         {key: "studio", label: "Studio", icon: "clapperboard"},
         {key: "advanced", label: "Nâng cao", icon: "wrench"}
     ]
-    readonly property string shown: groups.some(g => g.key === active) ? active : (layoutExpanded && groups.length ? groups[0].key : "")
+    readonly property string shown: groups.some(g => g.key === displayedActive) ? displayedActive : (layoutExpanded && groups.length ? groups[0].key : "")
     readonly property string groupTitle: (all.find(g => g.key === shown) || {}).label || ""
     property var sync: null
     property QtObject backLayer: QtObject { function close() { root.active = "" } }
@@ -37,10 +41,25 @@ FocusScope {
         Nav.closedLayer(backLayer)
         if (active && !expanded) Nav.openLayer(backLayer)
     }
-    onActiveChanged: { syncLayer(); page.contentY = 0 }
+    onActiveChanged: {
+        syncLayer()
+        if (!layoutExpanded && !Theme.reduceMotion) {
+            if (navigationSwap.running) navigationSwap.complete()
+            navigationDirection = active === "" ? -1 : 1
+            navigationEntering = false
+            navigationSwap.restart()
+        } else { displayedActive = active; page.contentY = 0 }
+    }
     onExpandedChanged: {
+        if (navigationSwap.running) navigationSwap.complete()
         if (Theme.reduceMotion) { layoutSwap.stop(); layoutExpanded = expanded; layoutPhase = 1; syncLayer() }
         else layoutSwap.restart()
+    }
+    SequentialAnimation {
+        id: navigationSwap
+        NumberAnimation { target: root; property: "navigationPhase"; to: 0; duration: Theme.motionFastOut; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeAccelerate }
+        ScriptAction { script: { root.displayedActive = root.active; page.contentY = 0; root.navigationEntering = true } }
+        NumberAnimation { target: root; property: "navigationPhase"; to: 1; duration: Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeDecelerate }
     }
     SequentialAnimation {
         id: layoutSwap
@@ -50,6 +69,7 @@ FocusScope {
     }
     Component.onDestruction: Nav.closedLayer(backLayer)
     Component.onCompleted: {
+        displayedActive = active
         Api.bind(DesktopApi, Theme)
         if (!Api.loaded) Api.load()
         Api.ensureVoiceName()
@@ -85,7 +105,10 @@ FocusScope {
 
         Item {
             id: frame
-            opacity: root.layoutPhase
+            objectName: "settingsFrame"
+            opacity: root.layoutPhase * root.navigationPhase
+            scale: Theme.reduceMotion ? 1 : 0.98 + 0.02 * root.layoutPhase
+            transform: Translate { x: Theme.reduceMotion ? 0 : (root.navigationEntering ? 1 : -1) * root.navigationDirection * 24 * (1 - root.navigationPhase) }
             x: (root.width - root.bodyWidth) / 2
             width: root.bodyWidth
             height: Math.max(navigation.visible ? navigation.y + navigation.height : 0, content.visible ? content.y + content.height : 0)

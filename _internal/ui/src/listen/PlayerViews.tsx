@@ -64,7 +64,8 @@ import { chooseVoice, chosenVoice, isNoOfflineVoice, isVoiceStuck, localVoiceFor
 import { bookHeardBase, bookProgressText, caughtUpDetail, nextChapterLabel, withShortcut, otherBookLine, PREPARING_VOICE, PREPARING_VOICE_AFTER_MS, chapterSubline, toggleLabel } from "./labels";
 import { useAfter } from "@/shared/useAfter";
 import { useBackLayer } from "@/shared/backStack";
-import { usePresence, useListPresence, withViewTransition } from "@/shared/motion";
+import { usePresence, useListPresence } from "@/shared/motion";
+import { morphPlayerMode } from "./playerModeMorph";
 import { MORPH, morphNowPlaying, type Morph } from "./nowPlayingMorph";
 import { useRetryWhenOnline } from "./onlineRetry";
 import { askOnlineConsent, onlineConsentGiven, pickVoiceWithConsent, spokenVoiceName } from "./onlineConsent";
@@ -2082,7 +2083,7 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
               nút bìa không co theo chiều cao thì đè lên "ĐANG NGHE" khi cửa sổ thấp (soát UX 05-10). */}
           {reading ? (
             <button type="button" aria-label="Về chế độ nghe" onClick={() => onReading(false)} {...keepFocus} className="touch-hit motion-reveal size-12 shrink-0 rounded-control transition-transform press">
-              <BookCover title={track.bookTitle} image={track.bookCover} size="xs" className="size-12 rounded-control" />
+              <BookCover title={track.bookTitle} image={track.bookCover} size="xs" morph="cover" className="size-12 rounded-control" />
             </button>
           ) : (
             <div key="cover" data-motion-content className="motion-reveal mt-4 flex min-h-16 min-w-0 flex-1 items-center justify-center [container-type:size]">
@@ -2169,11 +2170,11 @@ export function NowPlaying({ mobile = false, stacked = mobile, actions, edit }: 
   // the existing panel between the side column and the chapter sheet.
   useEffect(() => setShowPanelNow(!stacked), [stacked]);
   // Điện thoại: "Đọc theo" là một CHẾ ĐỘ của chính màn này (như Android NowPlayingWindow.reading, Qt NowPlaying.page), không phải màn riêng: thanh điều khiển
-  // và Back ở lại trong cửa sổ. Mờ chéo qua View Transition như đổi bảng. Máy tính: bảng "Đọc theo" bên phải (panel).
+  // và Back ở lại trong cửa sổ. Bìa và tên morph tại stage. Máy tính: bảng "Đọc theo" bên phải (panel).
   const [reading, setReadingNow] = useState(false);
-  const setReading = (value: boolean) => withViewTransition(() => setReadingNow(value));
-  // Bìa <-> bảng (Đọc theo / Chương) và đổi bảng: mờ chéo qua một View Transition (a120), không thay chỗ tức thì.
-  const setShowPanel = (value: boolean) => withViewTransition(() => setShowPanelNow(value));
+  const setReading = (value: boolean) => morphPlayerMode(section.current, () => setReadingNow(value));
+  // Sheets and the panel's own MotionRegion own their motion; the window stays still.
+  const setShowPanel = setShowPanelNow;
   const section = useRef<HTMLElement | null>(null);
   const opener = useRef<HTMLElement | null>(null);
   const readingNow = useRef(false);
@@ -2276,10 +2277,8 @@ export function NowPlaying({ mobile = false, stacked = mobile, actions, edit }: 
   // Tab theo mẫu WAI-ARIA: Tab vào đúng MỘT tab (tab đang chọn), ←/→ (Home/End) đổi sang tab bên cạnh; mỗi tab trỏ tới tabpanel của nó.
   const selectPanel = (value: Panel) => {
     if (value === panel && showPanel) return;
-    withViewTransition(() => {
-      setPanel(value);
-      setShowPanelNow(true);
-    });
+    setPanel(value);
+    setShowPanelNow(true);
   };
   const onTabKeys = (event: ReactKeyboardEvent<HTMLElement>) => {
     const index = PANELS.findIndex((item) => item.value === panel);

@@ -12,6 +12,26 @@ const snapshot = () => ({
   anchors: [{ selector: "main", rect: { x: 12, y: -350, width: 900, height: 2000 }, scrollTop: 120, scrollLeft: 0 }],
 });
 
+it.skipIf(!browserAvailable)('geometry baseline waits for a measured anchor\'s animated ancestor', async () => {
+  let browser, cdp;
+  try {
+    browser = await launch(findBrowser(), { disableGpu: true });
+    cdp = await connect(browser.endpoint);
+    const page = await openPage(cdp, {width:1000,height:700,scale:1,mobile:false,theme:'light',isolated:true});
+    await cdp.send('Page.navigate', {url:'data:text/html,<div id="parent"><main><h1>Anchor</h1></main></div>'}, page.sessionId);
+    await evaluate(cdp,page.sessionId,`crypto.randomUUID ??= () => 'ancestor-fixture'; (${installGeometryProbe.toString()})(); __sheetProbe.capture(true)`);
+    const elapsed = await evaluate(cdp,page.sessionId,`(async()=>{
+      const parent=document.getElementById('parent');
+      parent.animate([{transform:'translateX(0)'},{transform:'translateX(0)'}],{duration:700});
+      const start=performance.now();
+      const result=await __sheetProbe.stable({geometryOnly:true});
+      if(!result.stable) throw Error('did not settle');
+      return performance.now()-start;
+    })()`);
+    expect(elapsed).toBeGreaterThanOrEqual(650);
+  } finally {cdp?.close();await browser?.close();}
+});
+
 it.skipIf(!browserAvailable)("isolated headless windows: native scrollbar, trusted pointer, clean and broken geometry", async () => {
   const server = createServer((_request, response) => response.end(`<!doctype html><meta charset="utf-8">
     <style>main{height:2600px}#open{position:fixed;top:12px;left:12px} [role=dialog]{position:fixed;top:100px;left:100px;width:240px;height:180px;background:white}</style>

@@ -9,11 +9,16 @@ Item {
     signal studioRequested()        // nhóm Studio: "Xem tiến độ cài", "Sửa / Cập nhật Studio" -> màn Studio
     property string previous: group
     property real phase: 1
+    property int direction: 1
+    property bool entering: false
     readonly property Item page: loader.item
     implicitHeight: loader.item ? loader.item.implicitHeight : 0
     height: implicitHeight
     onGroupChanged: {
         if (transition.running) transition.complete()
+        const keys = ["voice", "listen", "sleep", "look", "devices", "studio", "advanced"]
+        direction = keys.indexOf(group) >= keys.indexOf(previous) ? 1 : -1
+        entering = false
         transition.start()
     }
     SequentialAnimation {
@@ -21,14 +26,14 @@ Item {
         NumberAnimation { target: root; property: "phase"; to: 0; duration: root.previous === "" ? 0 : Theme.motionFastOut }
         // Read the requested group at the swap; a bound PropertyAction value
         // can still contain the old group when onGroupChanged starts it.
-        ScriptAction { script: root.previous = root.group }
+        ScriptAction { script: { root.previous = root.group; root.entering = true } }
         NumberAnimation { target: root; property: "phase"; to: 1; duration: Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeDecelerate }
     }
     Loader {
         id: loader
         width: root.width
         opacity: root.phase
-        transform: Translate { x: Theme.reduceMotion ? 0 : 16 * (1 - root.phase) }
+        transform: Translate { x: Theme.reduceMotion ? 0 : (root.entering ? 1 : -1) * root.direction * 16 * (1 - root.phase) }
         sourceComponent: ({voice: voice, listen: listen, sleep: sleep, look: look, devices: devices, studio: studio, advanced: advanced})[root.previous] || null
     }
     Component { id: voice; SettingsVoice {} }

@@ -61,6 +61,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import vn.abook.player.ui.motion.FlyingBookCover
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
@@ -468,12 +469,12 @@ private fun BookHead(
     Column(Modifier.fillMaxWidth().testTag("book_head")) {
         if (stacked) {
             // Cột trái của hai cột: bìa lớn trên, tên và thông tin dưới (web: bìa w-48 xếp dọc).
-            BookCover(book.cover, book.title, book.part, covers, StackedCoverWidth, Modifier.width(StackedCoverWidth).testTag("book_cover"))
+            FlyingBookCover(book, covers, StackedCoverWidth, Modifier.width(StackedCoverWidth).testTag("book_cover"))
             Spacer(Modifier.height(Dim.s16))
             Column(Modifier.fillMaxWidth(), content = info)
         } else {
             Row(Modifier.fillMaxWidth()) {
-                BookCover(book.cover, book.title, book.part, covers, CoverWidth, Modifier.width(CoverWidth).testTag("book_cover"))
+                FlyingBookCover(book, covers, CoverWidth, Modifier.width(CoverWidth).testTag("book_cover"))
                 Spacer(Modifier.width(Dim.s16))
                 Column(Modifier.weight(1f), content = info)
             }
