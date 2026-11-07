@@ -80,7 +80,7 @@ Item {
             const page = createTemporaryObject(studioFactory, host, Object.assign({width: 760}, props || {}))
             verify(page !== null)
             wantsStudio.target = page
-            host.Window.window.update(); waitForRendering(page)
+            VisualReady.waitForSettledFrame(this, host.Window.window, page, qtVisualReady)
             return page
         }
         function all(item, name, out) {

@@ -51,7 +51,7 @@ Item {
             const y = item.mapToItem(list.contentItem, 0, 0).y - 24
             list.contentY = Math.max(list.originY, y)     // ListView ước cỡ phần chưa dựng: không chặn trên
         }
-        function scrollTo(page, item) { scrolled = {page: page, item: item}; place(page, item); waitForRendering(page) }
+        function scrollTo(page, item) { scrolled = {page: page, item: item}; place(page, item); VisualReady.waitForSettledFrame(this, host.Window.window, page, qtVisualReady) }
         function both(name, item) { for (const mode of ["light", "dark"]) { Theme.mode = mode; shot(name, item) } Theme.mode = "auto" }
 
         // ---- dữ liệu giả ----
@@ -153,7 +153,7 @@ Item {
             // phần cài đặt đã hiện hẳn (Collapse mờ dần vào)
             tryVerify(function() { return hasText(music(page), "Bài cho từng đoạn") }, 2000)
             // đầu danh sách xếp lại sau khi đổi tab (đầu cột bảng chương ẩn đi) rồi mới đo / cuộn
-            waitForRendering(page)
+            VisualReady.waitForSettledFrame(this, host.Window.window, page, qtVisualReady)
             return page
         }
         function music(page) { return all(page, "studioMusic")[0] }
@@ -358,17 +358,17 @@ Item {
             list.contentY = list.originY + 300
             all(tab, "musicChapter")[0].children[0].clicked()
             tryVerify(function() { return list.contentHeight > before + 100 })
-            waitForRendering(page)
+            VisualReady.waitForSettledFrame(this, host.Window.window, page, qtVisualReady)
             fuzzyCompare(list.contentY - list.originY, 300, 0.5)
             reply("GET /api/books/b/music/scenes/" + encodeURIComponent("2:0") + "/alternatives", {status: 200, data: {alternatives: [], mine: []}})
             all(sceneByKey(page, "2:0"), "sceneSwap")[0].clicked()
             tryVerify(function() { return all(sceneByKey(page, "2:0"), "musicAlternatives").filter(shown).length === 1 })
-            waitForRendering(page)
+            VisualReady.waitForSettledFrame(this, host.Window.window, page, qtVisualReady)
             fuzzyCompare(list.contentY - list.originY, 300, 0.5)
             reply("GET /api/books/b/music", {status: 200, data: musicData()})
             tab.load()
             tryVerify(function() { return calls("GET", "/api/books/b/music").length >= 2 })
-            waitForRendering(page)
+            VisualReady.waitForSettledFrame(this, host.Window.window, page, qtVisualReady)
             fuzzyCompare(list.contentY - list.originY, 300, 0.5)
         }
 

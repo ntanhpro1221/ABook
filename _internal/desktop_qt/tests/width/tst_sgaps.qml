@@ -106,6 +106,7 @@ Item {
             page.openProject(b.id)
             tryCompare(page, "shownKey", "route:project")
             tryCompare(page, "phase", 1)
+            VisualReady.waitForSettledFrame(this, host.Window.window, host, qtVisualReady)
             tryVerify(function() { return all(page, "projectHeader").filter(shown).length > 0 }, 3000)
             return page
         }
@@ -183,7 +184,7 @@ Item {
             // nhật ký trả 200 mà không phải danh sách: không phải lỗi tải
             page.openProjectTab("activity")
             tryVerify(function() { return calls("GET", "/api/books/se/activity").length > 0 })
-            waitForRendering(page)
+            VisualReady.waitForSettledFrame(this, host.Window.window, page, qtVisualReady)
             verify(!shown(one(page, "projectSideError")))
             // nhật ký hỏng thật thì dải hiện
             reply("GET /api/books/se/activity", {status: 500, data: {error: "Hết chỗ"}})
