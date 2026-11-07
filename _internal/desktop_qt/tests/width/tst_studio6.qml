@@ -121,7 +121,6 @@ Item {
         function all2(item, test) { return ModalLayer.collect(item, test) }
         function shot(name, item) {
             const target = item || host
-            tryVerify(function() { return all2(target, n => n.settled === false && n.reveal !== undefined).length === 0 }, 3000)
             // Chờ mọi chuyển tiếp xong như các test khác (so hai ảnh liền nhau không bao giờ bằng khi con trỏ ô nhập đang nhấp nháy)
             VisualReady.render(this, host.Window.window, target, qtVisualReady)
             const path = Qt.resolvedUrl("../../build/d2shots/s6_" + name + "_" + (Theme.dark ? "dark" : "light") + ".png").toString()
@@ -245,6 +244,7 @@ Item {
             page.openProject("a")
             tryCompare(page, "shownKey", "route:project")
             tryCompare(page, "phase", 1)
+            VisualReady.waitForSettledFrame(this, host.Window.window, host, qtVisualReady)
             tryVerify(function() { return all(page, "projectHeader").filter(shown).length > 0 }, 3000)
             return page
         }
@@ -260,7 +260,7 @@ Item {
         function ready(page, count) { tryVerify(function() { return rows(page).length === count }, 3000, "số câu hiện ra") }
         function rowOf(page, stableId) { return rows(page).filter(r => r.line.stableId === stableId)[0] }
         function scrollTo(page, item) {
-            waitForRendering(page)   // đầu danh sách đã xếp lại sau khi đổi tab rồi mới tính chỗ cuộn
+            VisualReady.waitForSettledFrame(this, host.Window.window, page, qtVisualReady)
             const list = page.projectScreenList
             list.contentY = Math.max(list.originY, Math.min(list.originY + list.contentHeight - list.height + list.bottomMargin, item.mapToItem(list.contentItem, 0, 0).y - 24))
         }
@@ -637,6 +637,7 @@ Item {
             page.openProject("a")
             tryCompare(page, "shownKey", "route:project")
             tryCompare(page, "phase", 1)
+            VisualReady.waitForSettledFrame(this, host.Window.window, host, qtVisualReady)
             screenOf(page).pickTab("script")
             ready(page, 6)
             verify(calls("GET", peerBase + base + "/casting").length >= 1)

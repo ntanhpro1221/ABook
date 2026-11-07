@@ -11,6 +11,8 @@
 #include "visualready.h"
 #include "shadowprovider.h"
 #include <QFontDatabase>
+#include <QAbstractAnimation>
+#include <QCoreApplication>
 #include <QQmlEngine>
 #include <QQmlContext>
 #include <QQuickImageProvider>
@@ -21,6 +23,41 @@
 #include <QQuickWindow>
 #include <QtQuick/private/qquickwindow_p.h>
 #include <QtQuick/private/qsgabstractsoftwarerenderer_p.h>
+
+// Only motion-contract tests opt into this clock. Real scheduler delays must
+// not decide whether an intermediate animation value can be observed.
+class TestAnimationClock : public QAnimationDriver {
+    Q_OBJECT
+    qint64 m_elapsed = 0;
+    bool m_installed = false;
+public:
+    using QAnimationDriver::QAnimationDriver;
+    ~TestAnimationClock() override { end(); }
+    qint64 elapsed() const override { return m_elapsed; }
+    Q_INVOKABLE void begin() {
+        Q_ASSERT(!m_installed);
+        QCoreApplication::processEvents();
+        m_elapsed = 0;
+        install();
+        m_installed = true;
+        advanceAnimation();
+        QCoreApplication::processEvents();
+    }
+    Q_INVOKABLE void step(int milliseconds) {
+        Q_ASSERT(m_installed && milliseconds > 0);
+        // Start queued animations before advancing their clock. Rendering and
+        // queued application responses still use Qt's actual event loop.
+        QCoreApplication::processEvents();
+        m_elapsed += milliseconds;
+        advanceAnimation();
+        QCoreApplication::processEvents();
+    }
+    Q_INVOKABLE void end() {
+        if (!m_installed) return;
+        uninstall();
+        m_installed = false;
+    }
+};
 
 class WidthCovers : public QQuickImageProvider {
 public:
@@ -126,6 +163,7 @@ class WidthSetup : public QObject {
 public slots:
     void qmlEngineAvailable(QQmlEngine *engine) {
         engine->rootContext()->setContextProperty(QStringLiteral("qtVisualReady"), new VisualReady(engine));
+        engine->rootContext()->setContextProperty(QStringLiteral("qtAnimationClock"), new TestAnimationClock(engine));
         engine->rootContext()->setContextProperty(QStringLiteral("qtGlyphAudit"), audit.get());
         engine->rootContext()->setContextProperty(QStringLiteral("qtGlyphProbe"), qEnvironmentVariableIsSet("ABOOK_GLYPH_PROBE"));
         engine->rootContext()->setContextProperty(QStringLiteral("qtWideShotDir"), qEnvironmentVariable("ABOOK_WIDE_SHOTS"));

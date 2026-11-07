@@ -211,9 +211,7 @@ Item {
                 }
                 if (page.wideT !== undefined) tryVerify(function() { return page.wideT === (page.expanded ? 1 : 0) })
                 if (page.layoutPhase !== undefined) tryVerify(function() { return page.layoutExpanded === page.expanded && page.layoutPhase === 1 })
-                tryVerify(function() { return VisualReady.settled(page, qtVisualReady) })
-                waitForPolish(host.Window.window)
-                host.Window.window.update(); waitForRendering(page)
+                VisualReady.waitForSettledFrame(this, host.Window.window, page, qtVisualReady)
                 verifyLayout(page, d.screen)
             }
             if (d.screen === "edit") { compare(page.titleDraft, "Bản nháp đang viết ".repeat(5)); compare(page.authorDraft, "Tác giả đang viết") }

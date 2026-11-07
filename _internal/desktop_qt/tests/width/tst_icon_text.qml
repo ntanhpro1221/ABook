@@ -1,6 +1,7 @@
 import QtQuick
 import QtTest
 import "IconText.js" as IconText
+import "VisualReady.js" as VisualReady
 import ABook
 
 // Kiểm lực máy dò chữ-đè-icon (IconText.js): cảnh cố tình đè / lệch phải bị bắt, cảnh đúng và số trong SkipGlyph thì không.
@@ -131,7 +132,7 @@ Item {
             for (const width of [640, 200]) {
                 const error = createTemporaryObject(inlineError, host, {width: width})
                 tryCompare(error, "open", true)
-                waitForRendering(error)
+                VisualReady.waitForSettledFrame(this, host.Window.window, error, qtVisualReady)
                 compare(JSON.stringify(IconText.scan(error, qtVisualReady)), "[]", "width " + width)
                 const icon = findChild(error, "inlineErrorIcon"), retry = findChild(error, "inlineErrorRetry")
                 const iconCenter = icon.mapToItem(error, 0, icon.height / 2).y
@@ -141,6 +142,7 @@ Item {
             const spy = createTemporaryQmlObject("import QtTest; SignalSpy { signalName: 'retry' }", host)
             spy.target = error
             tryCompare(error, "open", true)
+            VisualReady.waitForSettledFrame(this, host.Window.window, error, qtVisualReady)
             mouseClick(findChild(error, "inlineErrorRetry"))
             compare(spy.count, 1)
         }

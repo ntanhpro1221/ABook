@@ -123,6 +123,7 @@ Item {
             tryCompare(page, "shownKey", "route:new")
             tryCompare(page, "phase", 1)
             tryVerify(function() { return has(page, "newProjectScreen") && shown(one(page, "newProjectPage")) }, 3000)
+            VisualReady.waitForSettledFrame(this, host.Window.window, page, qtVisualReady)
             return page
         }
         // Có nguồn và đã quét xong
@@ -130,11 +131,12 @@ Item {
             page.newStore.setPaths([folder])
             tryCompare(page.newStore, "ready", true, 3000)
             tryVerify(function() { return has(page, "newTitleField") }, 3000)
+            VisualReady.waitForSettledFrame(this, host.Window.window, page, qtVisualReady)
         }
         function openOptions(page) {
-            if (!has(page, "newOptionsBody")) one(page, "newOptions").clicked()
+            if (!one(page, "newOptions").expanded) one(page, "newOptions").clicked()
+            VisualReady.waitForSettledFrame(this, host.Window.window, page, qtVisualReady)
             tryVerify(function() { return has(page, "newOptionsBody") && has(page, "newProfile") && has(page, "newStartNow") }, 3000)
-            host.Window.window.update(); waitForRendering(page)
         }
         function byTitle(item, title, out) {
             out = out || []
@@ -147,6 +149,7 @@ Item {
             tryVerify(function() { return all(page, "newChapterRow").length === count })
             if (all(page, "newChapterRow").filter(shown).length === 0) byTitle(page, "Danh sách chương").filter(item => typeof item.clicked === "function")[0].clicked()
             tryVerify(function() { return all(page, "newChapterRow").filter(shown).length === count })
+            VisualReady.waitForSettledFrame(this, host.Window.window, page, qtVisualReady)
         }
         function createBody() { const list = calls("POST", "/api/books"); verify(list.length > 0, "chưa gọi tạo sách"); return list[list.length - 1].body }
 
@@ -262,6 +265,16 @@ Item {
         }
 
         // ================= 3. Tuỳ chọn =================
+        // The route starts and ends at phase 1; comparing that value alone can
+        // return before the fade-out has even ticked (especially offscreen).
+        function test_builderHelpersReturnSettled() {
+            const page = openBuilder()
+            verify(VisualReady.settled(page, qtVisualReady), "builder route must finish before helpers return")
+            withSource(page)
+            verify(VisualReady.settled(page, qtVisualReady), "source controls must finish revealing")
+            openOptions(page)
+            verify(VisualReady.settled(page, qtVisualReady), "options must finish revealing")
+        }
         function test_optionsFoldSummarisesAndRemembers() {
             const page = openBuilder()
             withSource(page)
@@ -639,9 +652,9 @@ Item {
             for (const width of [1024, 1920]) {
                 const page = openBuilder(width)
                 withSource(page)
-                tryVerify(function() { return all(page, "newChapterRow").filter(shown).length > 0 })
+                openChapters(page, 6)
                 openOptions(page)
-                tryVerify(function() { return wrapped(page).length === 0 }, 2000)
+                tryVerify(function() { return wrapped(page).length === 0 }, 2000, "width " + width + ": " + JSON.stringify(wrapped(page)))
                 compare(wrapped(page), [], "rộng " + width)
                 page.destroy()
             }
@@ -649,7 +662,7 @@ Item {
         function test_narrowWindowKeepsTheCreateButtonReachable() {
             const page = openBuilder(640, "", "")
             withSource(page)
-            host.Window.window.update(); waitForRendering(page)
+            VisualReady.waitForSettledFrame(this, host.Window.window, page, qtVisualReady)
             const button = one(page, "newCreate")
             verify(button.x >= 0 && button.x + button.width <= page.width + 1)
             compare(wrapped(page), [])
@@ -696,6 +709,7 @@ Item {
             page.openProject(b.id)
             tryCompare(page, "shownKey", "route:project")
             tryCompare(page, "phase", 1)
+            VisualReady.waitForSettledFrame(this, host.Window.window, host, qtVisualReady)
             tryVerify(function() { return has(page, "coverEditor") && shown(one(page, "coverEditor")) }, 3000)
             return page
         }

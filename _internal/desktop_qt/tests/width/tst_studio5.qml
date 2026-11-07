@@ -46,8 +46,7 @@ Item {
         function all2(item, test) { return ModalLayer.collect(item, test) }
         function shot(name, item) {
             const target = item || host
-            tryVerify(function() { return all2(target, n => n.settled === false && n.reveal !== undefined).length === 0 }, 3000)
-            waitForRendering(target)
+            VisualReady.waitForSettledFrame(this, host.Window.window, target, qtVisualReady, true)
             const path = Qt.resolvedUrl("../../build/d2shots/s5_" + name + "_" + (Theme.dark ? "dark" : "light") + ".png").toString()
                 .replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, "")
             grabImage(VisualReady.grabTarget(host.Window.window, target)).save(path)
@@ -174,6 +173,7 @@ Item {
             page.openProject("a")
             tryCompare(page, "shownKey", "route:project")
             tryCompare(page, "phase", 1)
+            VisualReady.waitForSettledFrame(this, host.Window.window, host, qtVisualReady)
             tryVerify(function() { return all(page, "projectHeader").filter(shown).length > 0 }, 3000)
             return page
         }
@@ -591,7 +591,8 @@ Item {
             tryVerify(function() { return calls("GET", base + "/mp3-job").length >= 1 }, 3000)
             const store = screenOf(page).store
             store.active = false
-            wait(200)  // fixed: proves absence (a request already in flight lands before the count)
+            tryCompare(dlg.exportJob, "asking", false)
+            tryCompare(dlg.exportJob.ticker, "running", false)
             const before = calls("GET", base + "/mp3-job").length
             wait(1500) // fixed: proves absence (the poll interval is 1 s)
             compare(calls("GET", base + "/mp3-job").length, before)
@@ -747,6 +748,7 @@ Item {
             page.openProject("a")
             tryCompare(page, "shownKey", "route:project")
             tryCompare(page, "phase", 1)
+            VisualReady.waitForSettledFrame(this, host.Window.window, host, qtVisualReady)
             tryVerify(function() { return all(page, "projectHeader").filter(shown).length > 0 }, 3000)
             screenOf(page).dialogs.perform("export", row)
             tryVerify(function() { return exportDlg(page) !== undefined }, 3000)
@@ -909,6 +911,7 @@ Item {
             page.openProject("a")
             tryCompare(page, "shownKey", "route:project")
             tryCompare(page, "phase", 1)
+            VisualReady.waitForSettledFrame(this, host.Window.window, host, qtVisualReady)
             screenOf(page).dialogs.perform("apply", row)
             tryVerify(function() { return applyDlg(page) !== undefined && all(applyDlg(page), "pendingRow").filter(shown).length === 3 }, 3000)
             all(applyDlg(page), "pendingDrop").filter(shown)[0].clicked()

@@ -128,20 +128,39 @@ Item {
             compare(page.view, "own")
             tryVerify(function() { return !shown(one(page, "peerBar")) })
         }
+        // Drive actual Qt animations through every frame. A busy real clock
+        // may skip all intermediate frames, even with a property signal spy.
+        function expectMotion(object, property, change, middle, finished, message) {
+            let mid = false
+            const sample = function() { if (middle()) mid = true }
+            const changed = object[property + "Changed"]
+            changed.connect(sample)
+            qtAnimationClock.begin()
+            try {
+                change()
+                for (let frame = 0; frame < 125 && !finished(); ++frame) {
+                    qtAnimationClock.step(16)
+                    host.Window.window.update()
+                    verify(waitForRendering(host))
+                }
+                verify(finished(), "animation must finish within 2000 ms of animation time")
+                verify(mid, message)
+            } finally {
+                qtAnimationClock.end()
+                changed.disconnect(sample)
+            }
+        }
         function test_peerBarOpensAndClosesByHeight() {
             Theme.reduceMotion = false
             reply(appPath, peerApp())
             const page = makeStudio()
             const bar = one(page, "peerBar")
-            Nav.studioPeer = peerId
             const full = 16 + 32 + 1
-            let mid = false
-            tryVerify(function() { if (bar.height > 2 && bar.height < full - 2) mid = true; return bar.height >= full - 0.5 }, 2000)
-            verify(mid, "thanh mở ra theo chiều cao, không bật cứng")
-            Nav.studioPeer = ""
-            mid = false
-            tryVerify(function() { if (bar.height > 2 && bar.height < full - 2) mid = true; return bar.height === 0 }, 2000)
-            verify(mid, "thanh khép lại theo chiều cao")
+            const middle = function() { return bar.height > 2 && bar.height < full - 2 }
+            expectMotion(bar, "height", function() { Nav.studioPeer = peerId }, middle,
+                         function() { return bar.height >= full - 0.5 }, "bar must expand through intermediate heights")
+            expectMotion(bar, "height", function() { Nav.studioPeer = "" }, middle,
+                         function() { return bar.height === 0 }, "bar must collapse through intermediate heights")
         }
         function test_peerListenOnlyExplainsWhere() {
             reply(appPath, peerApp({listenOnly: true}))
@@ -190,6 +209,7 @@ Item {
             Nav.studioPeer = peerId
             tryCompare(page, "shownView", "closed")
             tryCompare(page, "phase", 1)
+            VisualReady.waitForSettledFrame(this, host.Window.window, host, qtVisualReady)
             verify(shown(one(page, "studioClosed")))
         }
         function test_peerLateAnswerAfterHomeIgnored() {
@@ -269,10 +289,9 @@ Item {
             Theme.reduceMotion = false
             const page = makeBook()
             const menu = one(page, "chapterMenu")
-            one(rowOf(page, 2), "chapterMore").clicked()
-            let mid = false
-            tryVerify(function() { if (menu.shown > 0.05 && menu.shown < 0.95) mid = true; return menu.shown === 1 }, 2000)
-            verify(mid)
+            expectMotion(menu, "shown", function() { one(rowOf(page, 2), "chapterMore").clicked() },
+                         function() { return menu.shown > 0.05 && menu.shown < 0.95 },
+                         function() { return menu.shown === 1 }, "menu must animate through an intermediate frame")
             menu.close()
             tryVerify(function() { return menu.shown === 0 }, 2000)
         }
@@ -626,10 +645,9 @@ Item {
             Theme.reduceMotion = false
             const toast = makeToast()
             const card = toast.children[toast.children.length - 1]
-            Api.notice = "Đã thêm “Tên sách”"
-            let mid = false
-            tryVerify(function() { if (toast.t > 0.05 && toast.t < 0.95 && card.scale < 1) mid = true; return toast.t === 1 }, 2000)
-            verify(mid, "mở bằng trượt + thu phóng")
+            expectMotion(toast, "t", function() { Api.notice = "Đã thêm “Tên sách”" },
+                         function() { return toast.t > 0.05 && toast.t < 0.95 && card.scale < 1 },
+                         function() { return toast.t === 1 }, "toast must slide and scale through an intermediate frame")
             Api.notice = ""
             tryVerify(function() { return !toast.visible }, 2000)
         }

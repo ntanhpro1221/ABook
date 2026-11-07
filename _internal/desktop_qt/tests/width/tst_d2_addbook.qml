@@ -526,7 +526,6 @@ Item {
             dialog = make(null, parentItem)
             dialog.begin(["D:/q/slime.epub"])
             find(dialog, "importChapters").startEdit(3)
-            host.Window.window.update(); waitForRendering(sized)
             shot("addbook_rename" + suffix, sized)
             Nav.back()
             dialog.destroy()

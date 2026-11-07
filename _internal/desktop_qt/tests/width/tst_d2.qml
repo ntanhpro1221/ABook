@@ -54,6 +54,7 @@ Item {
                 const body = findChild(page, "settingsContent").children[0]
                 tryCompare(body, "previous", group)
                 tryCompare(body, "phase", 1)
+                VisualReady.waitForSettledFrame(this, host.Window.window, host, qtVisualReady)
                 const labels = allText(page)
                 for (const label of expected) verify(labels.includes(label), group + " missing " + label)
             }
