@@ -25,8 +25,8 @@ def test_a_named_tag_is_not_given_to_a_generic_label() -> None:
 
 def test_an_anonymous_tag_still_gets_its_generic_label() -> None:
     assert _generic_speaker_attribution("Một người phụ nữ trung niên bước tới nói:", prefer_last=True) == "người phụ nữ"
-    # "Người", "Nhìn" mở câu không phải tên.
-    <removed>
+    # A sigh is an action, not a speech tag.
+    assert _generic_speaker_attribution("Người đàn ông lặng lẽ thở dài:", prefer_last=True) is None
 
 
 def test_the_model_keeps_the_named_speaker() -> None:

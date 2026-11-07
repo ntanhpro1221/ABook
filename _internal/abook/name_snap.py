@@ -27,6 +27,15 @@ KEY_DROPPED = re.compile(r"[\s\-_'.]")
 KEY_VOWELS = (("oo", "o"), ("uu", "u"), ("ou", "o"), ("eo", "e"), ("ii", "i"), ("aa", "a"), ("ee", "e"))
 MINIMUM_KEY = 3
 LONG_KEY = 9
+KINSHIP_PREFIX = re.compile(
+    r"^(?:mẹ|má|bố|ba|cha|mẫu thân|phụ thân|em gái|em trai|anh trai|chị gái|chị|vợ|chồng)(?:\s|$)",
+    re.IGNORECASE,
+)
+ROLE_PREFIX = re.compile(
+    r"^(?:mẹ|má|bố|ba|cha|mẫu thân|phụ thân|em gái|em trai|anh trai|chị gái|"
+    r"anh|chị|em|vợ|chồng|con|ông|bà|cô|chú|dì|thím|bác|thầy|cậu|"
+    r"người|nữ sinh|nam sinh|lính|nhân viên|tiểu thư)(?:\s|$)", re.IGNORECASE,
+)
 
 
 def name_key(name: str) -> str:
@@ -46,7 +55,8 @@ def _written(label: str, folded_text: str) -> bool:
 
 
 def is_name_label(label: str) -> bool:
-    return label.upper() not in NOT_A_NAME and NPC_LABEL.match(label) is None
+    return (label.upper() not in NOT_A_NAME and NPC_LABEL.match(label) is None
+            and ROLE_PREFIX.match(label.strip()) is None)
 
 
 def snap_map(lines: Iterable[tuple[str, str]], known: Iterable[str] = ()) -> dict[str, str]:
@@ -65,7 +75,7 @@ def snap_map(lines: Iterable[tuple[str, str]], known: Iterable[str] = ()) -> dic
     labels = sorted({label for label, _text in lines if label})
     names = {form for form, count in forms.items() if count >= 2}
     names |= {label for label in labels if _written(label, folded_text)} | set(known)
-    keyed = [(name_key(name), name) for name in sorted(names)]
+    keyed = [(name_key(name), name) for name in sorted(names) if is_name_label(name)]
     snapped: dict[str, str] = {}
     for label in labels:
         if not is_name_label(label) or _written(label, folded_text):

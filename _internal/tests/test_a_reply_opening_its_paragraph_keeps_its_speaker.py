@@ -44,17 +44,16 @@ def test_a_reply_at_the_start_of_the_batch_keeps_its_speaker() -> None:
     assert result["b"]["speaker"] == "Mai"
 
 
-def test_without_the_outside_neighbour_the_old_edge_rule_still_applies() -> None:
-    group = CHAPTER[1:]
-    result = {"b": {"kind": "dialogue", "speaker": "Mai"}, "c": {"kind": "narration", "speaker": "NARRATOR"}}
-    assert _is_quoted_inside_a_sentence(group, 0, result)
+def test_missing_context_is_not_evidence_against_a_speaker():
+    from tests.test_analysis_required import _castrule_batch
+    rows,payload=_castrule_batch([('“Ừ”','dialogue','Mira'),('rồi khép cửa.','narration','NARRATOR')])
+    result={item['id']:item for item in payload['segments']}
+    assert not _is_quoted_inside_a_sentence(rows,0,result)
 
 
-def test_a_term_whose_sentence_began_before_the_batch_is_still_the_narrators() -> None:
-    chapter = [
-        row("a", 1, 8, "Cậu ấy không chịu gọi nó là", "narration"),
-        row("b", 2, 8, "“bí kíp”", "dialogue"),
-        row("c", 3, 8, "mà cứ gọi là sổ tay.", "narration"),
-    ]
-    result = {"b": {"kind": "dialogue", "speaker": "Mai"}, "c": {"kind": "narration", "speaker": "NARRATOR"}}
-    assert _is_quoted_inside_a_sentence(chapter[1:], 0, result, _original_neighbor_context(chapter))
+def test_positive_term_evidence_is_available_across_the_batch_edge():
+    from tests.test_analysis_required import _castrule_batch
+    from abook.analysis import _original_neighbor_context
+    rows,payload=_castrule_batch([('Mira nhắc tới thuật ngữ','narration','NARRATOR'),('“cầu mưa”','dialogue','Mira'),('trong bản ghi.','narration','NARRATOR')])
+    result={item['id']:item for item in payload['segments']}
+    assert _is_quoted_inside_a_sentence(rows[1:],0,result,_original_neighbor_context(rows))

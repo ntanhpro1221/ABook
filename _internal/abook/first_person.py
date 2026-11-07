@@ -163,9 +163,13 @@ def addressed_names(text: str, names: set[str]) -> set[str]:
     names = _non_empty(names) if isinstance(names, frozenset) else {name for name in names if name}
     if not names:
         return set()
+    if is_name_answer(text):
+        return set()
     introduces = _SAYS_WHO_I_AM.search(text) is not None
     found: set[str] = set()
     for match in _name_pattern(frozenset(names)).finditer(text):
+        if _inside_nested_quote(text, match.start()):
+            continue
         suffix = text[match.end(1):match.end()]
         if suffix and _HONORIFIC.search(suffix):
             found.add(match.group(1))
@@ -183,6 +187,53 @@ def addressed_names(text: str, names: set[str]) -> set[str]:
     return found
 
 
+def _inside_nested_quote(text: str, position: int) -> bool:
+    stack = []
+    for char in text[:position]:
+        if char in ('“', '‘', '「', '『'):
+            stack.append({'“': '”', '‘': '’', '「': '」', '『': '』'}[char])
+        elif stack and char == stack[-1]:
+            stack.pop()
+        elif char == '"':
+            if stack and stack[-1] == '"':
+                stack.pop()
+            else:
+                stack.append('"')
+    outer = text.lstrip().startswith(('“', '‘', '「', '『', '"'))
+    return len(stack) > int(outer)
+
+
+def is_name_answer(
+    text: str, *, previous_text: str = "", names: frozenset[str] = frozenset(),
+) -> bool:
+    """A self introduction or a bare name answer supplies no vocative anchor.
+
+    A name followed by school/class metadata is still an introduction. A comma,
+    exclamation or call particle instead supplies evidence of an actual address.
+    """
+    if _SAYS_WHO_I_AM.search(text):
+        return True
+    bare_body = text.strip().strip('“”"‘’').strip()
+    body = bare_body.strip('—–- “ ”"‘’').strip()
+    repeated = re.match(
+        rf"(?P<short>{_WORD})[,.]\s*(?P<full>{_WORD}(?:\s{_WORD}){{0,2}})(?:\.|$)", body,
+    )
+    if repeated and repeated.group("short") in repeated.group("full").split():
+        return True
+    if re.fullmatch(
+        rf"{_WORD}(?:\s{_WORD}){{0,2}}\.\s*(?i:(?:rất\s+)?(?:hân hạnh|vui được gặp).*)", body,
+    ):
+        return True
+    if names and re.search(r"\btên\b.*(?:gì|không|nhỉ|thế|vậy)", previous_text, re.I):
+        first = re.match(rf"(?P<name>{_WORD}(?:\s{_WORD}){{0,2}})\.(?:\s|$)", body)
+        if first and first.group("name").casefold() in {name.casefold() for name in names}:
+            return True
+    # A dash followed by a single name may itself be a call.
+    return re.fullmatch(
+        rf"{_WORD}(?:\s{_WORD}){{0,2}}(?:\.)?(?:\s+Lớp\s+[\w-]+(?:[.,]\s*.*)?)?", bare_body,
+    ) is not None
+
+
 # Lời dẫn: đoạn kể ngay sau câu thoại mở đầu bằng tên + động từ NÓI ("Yakishio khẽ đáp, ...", "- Sanae chen vào.") hoặc ngay
 # trước câu thoại kết bằng dấu hai chấm ("Shizuka lên tiếng:") cho biết ai nói. Chỉ động từ nói: cười, thở dài, nhìn, gật đầu và
 # "trả lời" thường là PHẢN ỨNG của người nghe ("Eun nhe răng cười" sau lời của Add) - đo trên đáp án không bắt được, soát tay
@@ -192,7 +243,8 @@ _LEAD_VERBS = (
     "nói|đáp|hỏi|hét|gào|thì thầm|thì thào|lên tiếng|thốt|kêu|bảo|lẩm bẩm|cất tiếng|tiếp lời|ngắt lời|cằn nhằn|quát|gắt|thét|"
     "thủ thỉ|chen vào|xen vào|lầm bầm|càu nhàu|mắng|thưa"
 )
-_LEAD_MID_BLOCKED = frozenset({"không", "chưa", "chẳng", "bật", "nhắm", "mắt", "tự", "ngừng", "ngưng", "dừng", "thôi", "im"})
+_LEAD_MID_BLOCKED = frozenset({"không", "chưa", "chẳng", "bật", "nhắm", "mắt", "tự", "ngừng", "ngưng", "dừng", "thôi", "im",
+                               "muốn", "định", "toan", "tưởng", "như", "thể"})
 # Ngay sau động từ: "nói chuyện" là trò chuyện, "đồng ý/hùa theo/lời" là đáp lại người khác - không phải tên người vừa nói câu thoại.
 _LEAD_NOT_FOLLOWED_BY = r"(?!\s+(?:chuyện|đồng ý|đồng tình|tán thành|phụ họa|phụ hoạ|hùa theo|lời))"
 <removed>

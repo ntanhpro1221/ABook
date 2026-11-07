@@ -12,9 +12,46 @@ from pathlib import Path
 from abook.analysis import opens_a_new_turn
 from abook.character_registry import _repair_dialogue_turns_by_address
 from abook.database import ProjectDB
-from abook.first_person import addressed_names
+from abook.first_person import addressed_names, is_name_answer
 
 NAMES = {"Kou", "Shizuka", "Karui"}
+
+
+def test_name_answers_and_introductions_are_not_vocative_anchors():
+    for text in ('“Tôi là Mira.”', '“Mira. Lớp 2-4.”', '“Mira. Lớp 2-4, bên cạnh phòng nhạc.”', '“Mira, Mira Solin.”', '“Mira.”', '“Mira. Mira Solin.”', '- Mira. Mira Solin. Tôi vừa chuyển tới.', '“Mira Solin. Rất hân hạnh.”'):
+        assert addressed_names(text, {'Mira', 'Mira Solin'}) == set()
+    assert addressed_names('“Mira, giữ chiếc ô giúp tôi!”', {'Mira'}) == {'Mira'}
+    assert addressed_names('“Cô ấy viết “Mira!” ở cuối thư.”', {'Mira'}) == set()
+
+
+def test_one_filtered_vocative_recovers_the_unique_exchange_phase(tmp_path):
+    db = _project(tmp_path / 'consecutive', [
+        (1, 'dialogue', '“Mira, bên này!”', 'MIRA', 'female'),
+        (2, 'dialogue', '“Tôi còn cầm bản đồ.”', 'TAVIN', 'male'),
+        (3, 'dialogue', '“Đợi tôi gấp nó lại.”', 'TAVIN', 'male'),
+        (4, 'dialogue', '“Được thôi.”', 'MIRA', 'female'),
+    ])
+    assert _repair(db) == ['TAVIN', 'MIRA', 'TAVIN', 'MIRA']
+
+
+def test_two_calls_recover_the_unique_compatible_phase(tmp_path):
+    db = _project(tmp_path / 'two_calls', [
+        (1, 'dialogue', '“Mira, cầm đèn giúp tôi!”', 'MIRA', 'female'),
+        (2, 'dialogue', '“Tôi giữ đèn đây.”', 'TAVIN', 'male'),
+        (3, 'dialogue', '“Mira, soi sang bên trái nhé!”', 'MIRA', 'female'),
+        (4, 'dialogue', '“Tôi thấy cánh cửa rồi.”', 'TAVIN', 'male'),
+    ])
+    assert _repair(db) == ['TAVIN', 'MIRA', 'TAVIN', 'MIRA']
+
+
+def test_two_correct_calls_do_not_reorder_independent_following_turns(tmp_path):
+    db = _project(tmp_path / 'already_correct', [
+        (1, 'dialogue', '“Mira, cầm đèn nhé!”', 'TAVIN', 'male'),
+        (2, 'dialogue', '“Được thôi.”', 'MIRA', 'female'),
+        (3, 'dialogue', '“Tavin, tôi thấy cửa rồi!”', 'MIRA', 'female'),
+        (4, 'dialogue', '“Tôi vẫn giữ đèn đây.”', 'MIRA', 'female'),
+    ])
+    assert _repair(db) == ['TAVIN', 'MIRA', 'MIRA', 'MIRA']
 
 
 def test_a_call_at_the_head_or_tail_of_a_line_names_who_is_spoken_to() -> None:
@@ -70,18 +107,44 @@ def _repair(db: ProjectDB, aliases: dict[str, set[str]] | None = None) -> list[s
     return [str(row["speaker"]) for row in sorted(db.list_segments(), key=lambda row: int(row["seq"]))]
 
 
-def test_an_exchange_follows_the_one_order_the_calls_allow(tmp_path: Path) -> None:
-    # Model lệch một nhịp: câu đầu gọi Koutarou mà gán cho chính anh ta. Chỉ thứ tự SHIZUKA-KOU-SHIZUKA-KOU hợp neo.
-    db = _project(tmp_path / "b", [
-        (1, "dialogue", "“Koutarou, cậu về rồi à?”", "SATOMI KOUTAROU", "male"),
-        (2, "dialogue", "“Ừ, vừa về.”", "KASAGI SHIZUKA", "female"),
-        (3, "dialogue", "“Vậy ăn cơm luôn nhé.”", "SATOMI KOUTAROU", "male"),
-        (4, "dialogue", "“Được.”", "SATOMI KOUTAROU", "male"),
+def test_an_address_orders_an_unattributed_two_person_run(tmp_path):
+    db=_project(tmp_path/'direct',[(1,'dialogue','“Mira, bên này!”','MIRA','female'),(2,'dialogue','“Tôi còn bản đồ.”','TAVIN','male'),(3,'dialogue','“Đợi tôi gấp lại.”','TAVIN','male')])
+    assert _repair(db)==['TAVIN','MIRA','TAVIN']
+
+
+def test_explicit_speech_attribution_breaks_an_inferred_turn_run(tmp_path):
+    db = _project(tmp_path / 'speech_tag', [
+        (1, 'dialogue', '“Mira, bên này!”', 'MIRA', 'female'),
+        (2, 'narration', 'Tavin nói:', 'NARRATOR', 'unknown'),
+        (2, 'dialogue', '“Tôi còn cầm bản đồ.”', 'TAVIN', 'male'),
+        (3, 'dialogue', '“Đợi tôi gấp nó lại.”', 'TAVIN', 'male'),
     ])
-    aliases = {"SATOMI KOUTAROU": {"SATOMI KOUTAROU"}, "KASAGI SHIZUKA": {"KASAGI SHIZUKA"}}
-    assert _repair(db, aliases) == ["KASAGI SHIZUKA", "SATOMI KOUTAROU", "KASAGI SHIZUKA", "SATOMI KOUTAROU"]
-    genders = {str(row["speaker"]): str(row["gender"]) for row in db.list_segments()}
-    assert genders == {"KASAGI SHIZUKA": "female", "SATOMI KOUTAROU": "male"}
+    assert _repair(db) == ['TAVIN', 'NARRATOR', 'TAVIN', 'TAVIN']
+
+
+def test_a_name_answer_uses_the_previous_question_without_hiding_a_real_call(tmp_path):
+    db = _project(tmp_path / 'name_answer', [
+        (1, 'dialogue', '“Cậu tên là gì?”', 'Lino Venn', 'male'),
+        (2, 'dialogue', '“Mira Solin. Còn cậu?”', 'Mira Solin', 'female'),
+        (3, 'dialogue', '“Lino Venn. Rất hân hạnh.”', 'Lino Venn', 'male'),
+    ])
+    assert _repair(db) == ['Lino Venn', 'Mira Solin', 'Lino Venn']
+    assert not is_name_answer(
+        '“Không. Mira Solin, đừng hỏi nữa!”', previous_text='“Cậu tên là gì?”',
+        names=frozenset({'Mira Solin'}),
+    )
+    assert not is_name_answer('“Mira, Mira Solin, tới đây!”')
+    assert addressed_names('“Mira Solin, tới đây!”', {'Mira Solin'}) == {'Mira Solin'}
+
+
+def test_a_relatives_label_does_not_own_the_childs_name(tmp_path):
+    db = _project(tmp_path / 'relative', [
+        (1, 'dialogue', '“Cậu cần gì từ Mira à?”', 'Mẹ Mira', 'female'),
+        (2, 'dialogue', '“Dạ, để cháu gọi cậu ấy.”', 'Lino Venn', 'male'),
+        (3, 'narration', 'Cánh cửa mở ra.', 'NARRATOR', 'unknown'),
+        (4, 'dialogue', '“Có chuyện gì vậy?”', 'Mira', 'female'),
+    ])
+    assert _repair(db) == ['Mẹ Mira', 'Lino Venn', 'NARRATOR', 'Mira']
 
 
 def test_an_exchange_without_a_call_or_with_a_third_voice_is_left_alone(tmp_path: Path) -> None:

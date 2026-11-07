@@ -20,19 +20,13 @@ def _cards(root: Path, kind: str) -> list[dict]:
     return [item for item in work.work_items(root)["items"] if item["kind"] == kind]
 
 
-def test_a_recorded_book_gets_both_cards_with_the_existing_wishes_as_the_choices(tmp_path: Path) -> None:
-    paths, _db, settings = _book(tmp_path, recorded=True)
-    root = _with_settings(paths, settings)
-
-    (voice,) = _cards(root, "teller-voice")
-    (thought,) = _cards(root, "teller-thought")
-
-    (choice,) = voice["voiceChoices"]
-    assert choice["character"] == "NARRATOR" and choice["preset"] == "Đoan Trang" and voice["keepCharacters"] == ["NARRATOR"]
-    assert voice["title"] == "Giọng lời dẫn" and "nữ" in voice["problem"]
-    assert thought["key"] == "teller-thought:MAI" and thought["affected"] == 2
-    assert [option["value"] for option in thought["choices"]] == ["NARRATOR"]
-    assert read_overrides(root).get("voices") in (None, {}), "mặc định không áp: chưa có ý muốn nào được ghi"
+def test_only_the_narration_voice_card_is_offered(tmp_path):
+    paths,db,settings=_book(tmp_path,recorded=True)
+    root=_with_settings(paths,settings)
+    voice,=_cards(root,'teller-voice')
+    assert voice['voiceChoices'][0]['character']=='NARRATOR'
+    assert _cards(root,'teller-thought')==[]
+    assert read_overrides(root).get('voices') in (None,{})
 
 
 def test_a_voice_the_user_chose_gets_the_card_not_an_automatic_change(tmp_path: Path) -> None:
@@ -45,27 +39,20 @@ def test_a_voice_the_user_chose_gets_the_card_not_an_automatic_change(tmp_path: 
     assert _cards(root, "teller-thought") == [], "nội tâm của chính “tôi” vẫn tự về giọng dẫn khi chưa thu"
 
 
-def test_a_book_the_machine_handled_has_no_cards(tmp_path: Path) -> None:
-    paths, db, settings = _book(tmp_path)
-    root = _with_settings(paths, settings)
+def test_an_unselected_narration_voice_is_offered_without_changing_thoughts(tmp_path):
+    paths,db,settings=_book(tmp_path)
+    root=_with_settings(paths,settings)
+    teller_voice.ensure(root,db,settings)
+    assert len(_cards(root,'teller-voice'))==1
+    assert _cards(root,'teller-thought')==[]
 
-    teller_voice.ensure(root, db, settings)
 
-    assert _cards(root, "teller-voice") == [] and _cards(root, "teller-thought") == []
-
-
-def test_keeping_the_current_voice_or_the_character_voice_hides_the_cards(tmp_path: Path) -> None:
-    paths, _db, settings = _book(tmp_path, recorded=True)
-    root = _with_settings(paths, settings)
-    request_voice(root, "NARRATOR", preset="", now=1.0)  # “Giữ giọng hiện tại”
-    (thought,) = _cards(root, "teller-thought")
-    from abook.listener_overrides import request_speakers
-
-    request_speakers(root, [(line["stableId"], line["textSha256"]) if "textSha256" in line else (line["stableId"], "sha-" + line["stableId"])
-                            for line in thought["lines"]], "MAI", now=2.0)
-
-    assert _cards(root, "teller-voice") == []
-    assert _cards(root, "teller-thought") == []
+def test_keeping_the_current_narration_voice_hides_its_card(tmp_path):
+    paths,db,settings=_book(tmp_path,recorded=True)
+    root=_with_settings(paths,settings)
+    request_voice(root,'NARRATOR',preset='',now=1.0)
+    assert _cards(root,'teller-voice')==[]
+    assert _cards(root,'teller-thought')==[]
 
 
 def test_a_third_person_book_has_no_cards(tmp_path: Path) -> None:
@@ -91,11 +78,9 @@ def test_the_screenplay_and_the_inbox_ask_who_is_the_teller_by_one_rule(tmp_path
     assert work.first_person_lookup(narrator_dir, {10: 1})[3] is None
 
 
-def test_in_the_tellers_own_voice_mode_there_is_nothing_left_to_ask(tmp_path: Path) -> None:
-    paths, _db, settings = _book(tmp_path, recorded=True)
-    root = _with_settings(paths, settings)
-    assert _cards(root, "teller-voice") and _cards(root, "teller-thought")
-
-    teller_voice.set_mode(root, "teller")
-
-    assert _cards(root, "teller-voice") == [] and _cards(root, "teller-thought") == []
+def test_explicit_teller_mode_has_no_default_narration_voice_card(tmp_path):
+    paths,db,settings=_book(tmp_path,recorded=True)
+    root=_with_settings(paths,settings)
+    assert _cards(root,'teller-voice')
+    teller_voice.set_mode(root,'teller')
+    assert _cards(root,'teller-voice')==[] and _cards(root,'teller-thought')==[]

@@ -15,10 +15,11 @@ from .analysis import (
     is_vietnamese_syllable,
     local_speaker_display,
     local_speaker_label,
+    normalize_local_label,
     opens_a_new_turn,
     strip_japanese_honorific,
 )
-from .first_person import addressed_names, introduced_names, lead_in_speaker
+from .first_person import addressed_names, introduced_names, is_name_answer, lead_in_speaker
 from .database import (
     ProjectDB,
 )
@@ -234,9 +235,11 @@ def _honorific_target(value: str, folded_source: str = "") -> str | None:
     if match is None:
         return None
     candidate = match.group(1).strip()
+    title = match.group(0)[: match.start(1)].strip()
+    if normalize_name(title) in NAME_PREFIX_TITLES:
+        return None
     if _looks_like_proper_name(candidate):
         return candidate
-    title = match.group(0)[: match.start(1)].strip()
     words = candidate.split()
     if (
         not folded_source
@@ -957,6 +960,7 @@ def canonical_speaker_names(
     và công cụ đo (`scripts/model_eval/voice_identity.py`), để phép đo chấm đúng thứ người nghe sẽ nghe. `counts`: số
     câu của từng nhãn; `source`: văn bản nguồn nguyên chữ (`_source_text`; "" thì tắt hai lượt theo sách - đánh vần
     và khôi phục dấu). Nhãn cục bộ, NARRATOR/UNKNOWN và đại từ không có trong kết quả."""
+    from .name_snap import KINSHIP_PREFIX
     folded_source = fold_for_source_search(source)
     cleaned_counts: Counter[str] = Counter()
     cleaned_by_original: dict[str, str] = {}
@@ -968,6 +972,7 @@ def canonical_speaker_names(
             is_local_speaker(cleaned)
             or cleaned.casefold() in RESERVED_SPEAKERS
             or normalized in PRONOUNS
+            or KINSHIP_PREFIX.match(cleaned)
         ):
             continue
         cleaned_counts[cleaned] += count
@@ -1047,6 +1052,9 @@ def canonical_speaker_names(
 
     targets: dict[str, str] = {}
     for original, cleaned in cleaned_by_original.items():
+        if KINSHIP_PREFIX.match(cleaned):
+            targets[original] = cleaned
+            continue
         normalized = identity_key(cleaned)
         if (
             is_local_speaker(cleaned)
@@ -1086,6 +1094,12 @@ def _canonicalize_named_speakers(
             log(f"  {moved} câu trong 『』 là của {rule}: quy ước người nghe chọn cho cả cuốn.")
     counts = Counter(str(row["speaker"]) for row in db.list_segments())
     targets = canonical_speaker_names(counts, _source_text(db), log)
+    source_rows = list(db.list_segments())
+    for original, target in list(targets.items()):
+        own = [row for row in source_rows if str(row["speaker"]) == original]
+        other = [row for row in source_rows if identity_key(str(row["speaker"])) == identity_key(target)]
+        if other and not _compatible_local_traits(own, other, "gender"):
+            targets[original] = _canonical_speaker(original)
     # Bí danh người nghe đã xác nhận (aliases.py - thẻ "Một người hai tên"; "Làm tiếp cuốn này" chép sang phần sau): nhãn
     # là bí danh thì về người ấy. Sau các lượt gom tự động, để cả nhãn gốc lẫn tên đã gom của nó đều được tra.
     from .aliases import key as alias_key
@@ -1163,6 +1177,8 @@ def _address_owners(
     aliases_by_speaker: dict[str, set[str]],
 ) -> tuple[set[str], dict[str, set[str]]]:
     """(những người có tên trong `rows`, {cách gọi: những người mang cách gọi ấy})."""
+    from .name_snap import KINSHIP_PREFIX
+
     named = {
         speaker
         for speaker in {str(row["speaker"]) for row in rows}
@@ -1171,6 +1187,10 @@ def _address_owners(
     owners: dict[str, set[str]] = defaultdict(set)
     for speaker in named:
         for surface in _address_surfaces(aliases_by_speaker.get(speaker, set()) | {speaker}):
+            # A relative's label contains someone else's name. Only its full
+            # surface can address that relative, never the child's bare name.
+            if KINSHIP_PREFIX.match(speaker) and surface.casefold() != speaker.casefold():
+                continue
             owners[surface].add(speaker)
     return named, owners
 
@@ -1182,14 +1202,22 @@ def address_index(
     """(những người có tên trong `rows`, `addressed(row)`: những người mà câu thoại `row` GỌI hay kính ngữ - nhớ kết quả)."""
     named, owners = _address_owners(rows, aliases_by_speaker)
     surfaces = frozenset(owners)
+    by_position = {(int(row["chapter_id"]), int(row["seq"])): row for row in rows}
     cache: dict[int, set[str]] = {}
 
     def addressed(row: Any) -> set[str]:
         key = int(row["id"])
         if key not in cache:
+            previous = by_position.get((int(row["chapter_id"]), int(row["seq"]) - 1))
+            previous_text = (
+                str(previous["text"])
+                if previous is not None and str(previous["kind"]) == "dialogue" else ""
+            )
             cache[key] = (
                 {speaker for surface in addressed_names(str(row["text"]), surfaces) for speaker in owners[surface]}
-                if surfaces and str(row["kind"]) == "dialogue" else set()
+                if surfaces and str(row["kind"]) == "dialogue"
+                and not is_name_answer(str(row["text"]), previous_text=previous_text, names=surfaces)
+                else set()
             )
         return cache[key]
 
@@ -1286,17 +1314,12 @@ def _repair_dialogue_turns_by_address(
     log: Callable[[str], None],
     aliases_by_speaker: dict[str, set[str]],
 ) -> None:
-    """Không ai gọi tên chính mình: câu thoại gán cho X mà GỌI X ("Này Kou, ...", "Satomi-san") là của người khác
-    (`first_person.addressed_names`; đo 09-10: 100% sai theo đáp án). Hai cách sửa, đều chỉ khi chữ trong truyện đủ chắc:
+    """Repair self-addressed lines and recover a uniquely anchored turn phase.
 
-    - Chuỗi câu thoại liền nhau, mỗi câu một đoạn văn và mở một lượt mới, nhãn chỉ gồm đúng hai người có tên: hai người ấy
-      nói xen kẽ (trong đáp án chỉ 3% cặp câu liền nhau cùng người nói). Các câu gọi tên làm NEO - câu gọi P không phải P
-      nói; chỉ đúng một thứ tự xen kẽ (ABAB hay BABA) hợp mọi neo thì gán lại cả chuỗi theo thứ tự ấy.
-    - Câu còn lại vẫn gán cho chính người nó gọi: đổi sang người có tên DUY NHẤT khác nói trong 6 đoạn quanh đó; không có
-      hoặc có hơn một người thì để nguyên.
-
-    Lời kể và nội tâm không đụng tới. Cổng 19 chương, 10 lượt (09-10): F1 giọng +9,7 cộng dồn, +133 câu đúng người nói,
-    không lượt nào giảm; 3 câu đúng thành sai (cảnh ba người mà nhãn chỉ có hai)."""
+    Turn ordering is a heuristic for a contiguous two-person exchange, supported
+    by a call and exactly one compatible phase. Name answers, introductions,
+    nested quotes and names inside another person's role cannot supply anchors.
+    """
     rows = sorted(db.list_segments(), key=lambda row: (int(row["chapter_id"]), int(row["seq"])))
     named, addressed = address_index(rows, aliases_by_speaker)
     if not named:
@@ -1319,13 +1342,13 @@ def _repair_dialogue_turns_by_address(
                 [order[index % 2] for index in range(len(run))]
                 for order in (people, people[::-1])
             ]
-            fitting = [phase for phase in phases if all(want not in anchor for want, anchor in zip(phase, anchors))]
+            fitting = [phase for phase in phases
+                       if all(want not in anchor for want, anchor in zip(phase, anchors))]
             if len(fitting) != 1:
                 continue
             for row, speaker, want in zip(run, speakers, fitting[0]):
                 if speaker != want:
                     changes[int(row["id"])] = want
-
         for row in chapter_rows:
             speaker = str(row["speaker"])
             if int(row["id"]) in changes or speaker not in named or speaker not in addressed(row):
@@ -1344,18 +1367,7 @@ def _repair_dialogue_turns_by_lead_in(
     log: Callable[[str], None],
     aliases_by_speaker: dict[str, set[str]],
 ) -> None:
-    """Lời dẫn nêu tên người nói: đoạn kể ngay sau câu thoại mở đầu "Yakishio khẽ đáp, ..." (hay ngay trước, kết bằng dấu hai
-    chấm: "Shizuka lên tiếng:") là bằng chứng câu thoại ấy của người được nêu (`first_person.lead_in_speaker`, chỉ động từ
-    nói). Hai việc, đều chỉ khi chữ đủ chắc:
-
-    - Câu thoại đang gán cho người có tên khác thì đổi sang người được nêu. Bỏ qua khi chính câu ấy GỌI người được nêu (không
-      ai gọi tên mình) hay tự giới thiệu là người khác ("Tôi là Lancel Dante").
-    - Chuỗi câu thoại liền nhau (như `_turn_runs`) chứa câu có lời dẫn: nói xen kẽ, nên cả chuỗi xếp lại ABAB quanh câu ấy;
-      "B" là người còn lại trong nhãn chuỗi, hay người có tên duy nhất khác nói quanh đó. Chỉ xếp lại khi sau bước trên chuỗi
-      có đủ hai người (chuỗi cùng một nhãn mà lời dẫn đồng ý là lời độc thoại tách đoạn, để nguyên). Bỏ cả chuỗi nếu có hơn
-      hai người, hai lời dẫn mâu thuẫn, hay một câu bị gán cho người nó gọi tên hoặc tự giới thiệu là người khác.
-
-    Đo 10 lượt cổng 19 chương, so với luật gọi tên: xem VERSIONS.md (mục lời dẫn)."""
+    """Apply an unambiguous speech tag to its own line, without ABAB propagation."""
     rows = sorted(db.list_segments(), key=lambda row: (int(row["chapter_id"]), int(row["seq"])))
     named, owners = _address_owners(rows, aliases_by_speaker)
     if not owners:
@@ -1402,26 +1414,6 @@ def _repair_dialogue_turns_by_lead_in(
             if str(row["speaker"]) != speaker and str(row["speaker"]) in named:
                 changes[int(row["id"])] = speaker
 
-        for run in _turn_runs(chapter_rows):
-            led = [(index, leads[int(row["seq"])]) for index, row in enumerate(run) if int(row["seq"]) in leads]
-            if not led:
-                continue
-            current = [changes.get(int(row["id"]), str(row["speaker"])) for row in run]
-            first_index, first = led[0]
-            others = (set(current) | {speaker for _index, speaker in led}) - {first}
-            if not others and (other := _only_other_speaker(by_seq, int(run[first_index]["seq"]), first, named)) is not None:
-                others = {other}
-            if len(others) != 1 or len(set(current)) < 2 or not set(current) <= named:
-                continue
-            other = next(iter(others))
-            want = [first if (index - first_index) % 2 == 0 else other for index in range(len(run))]
-            if any(want[index] != speaker for index, speaker in led):
-                continue
-            if any(person in addressed(row) or introduced(row) - {person} for row, person in zip(run, want)):
-                continue
-            for row, person, now in zip(run, want, current):
-                if person != now:
-                    changes[int(row["id"])] = person
     if not changes:
         return
     repaired = _rewrite_speakers(db, rows, changes)
@@ -1890,6 +1882,9 @@ def _merge_local_speakers_with_named_identity(
         candidates = named_by_chapter_and_label.get((chapter_id, label))
         if not candidates:
             continue
+        named_rows = [r for r in rows if str(r["speaker"]) in candidates]
+        if not all(_compatible_local_traits(matching_rows, named_rows, field) for field in ("gender", "age")):
+            continue
         named_speaker = sorted(
             candidates,
             key=lambda candidate: (-candidates[candidate], candidate.casefold()),
@@ -2081,6 +2076,11 @@ def _merge_adjacent_local_speakers(
         )
         if len(ordered) < 2:
             continue
+        # Repeated generic labels and proximity do not prove a shared person.
+        from .name_snap import is_name_label
+        if not all(is_name_label(local_speaker_label(speaker)) and _looks_like_proper_name(local_speaker_label(speaker))
+                   for speaker, _speaker_rows in ordered):
+            continue
         canonical_speaker, canonical_rows = ordered[0]
         canonical_last_seq = max(int(row["seq"]) for row in canonical_rows)
         for speaker, speaker_rows in ordered[1:]:
@@ -2095,6 +2095,7 @@ def _merge_adjacent_local_speakers(
                 gap <= 0
                 or gap > LOCAL_SPEAKER_CONTINUITY_MAX_SEGMENT_GAP
                 or not compatible
+                or normalize_local_label(local_speaker_label(speaker)) != normalize_local_label(local_speaker_label(canonical_speaker))
             ):
                 canonical_speaker = speaker
                 canonical_rows = speaker_rows
@@ -2123,7 +2124,18 @@ def assert_voice_stability(db: ProjectDB, log: Callable[[str], None] = lambda _m
     # this reported success. Local labels were skipped outright, which made the gap worse.
     profiles_by_character: dict[int, set[int]] = defaultdict(set)
     profiles_by_speaker: dict[str, set[int]] = defaultdict(set)
+    # Explicit narration presentation is tracked separately from character identity.
+    presented: set[int] = set()
+    if callable(getattr(db, "connect", None)):
+        with db.connect() as conn:
+            presented = {int(r[0]) for r in conn.execute(
+                "SELECT s.id FROM segments s JOIN chapter_teller_lines t ON t.segment_id=s.id "
+                "WHERE s.kind='narration' AND s.speaker='NARRATOR' AND t.original_speaker=s.speaker "
+                "AND t.original_character_id=s.canonical_character_id "
+                "AND t.applied_character_id=s.canonical_character_id AND t.applied_profile_id=s.voice_profile_id")}
     for row in db.list_segments():
+        if presented and int(row["id"]) in presented:
+            continue
         speaker = str(row["speaker"])
         normalized = normalize_name(speaker)
         profile_id = row["voice_profile_id"]
@@ -2491,6 +2503,10 @@ def snap_labels_to_chapter_names(
         snapped = snap_map(((str(row["speaker"]), str(row["text"])) for row in rows), known)
         for label, name in sorted(snapped.items()):
             if alias_key(label) in confirmed:
+                continue
+            own = [row for row in rows if str(row["speaker"]) == label]
+            other = [row for row in rows if identity_key(str(row["speaker"])) == identity_key(name)]
+            if other and not _compatible_local_traits(own, other, "gender"):
                 continue
             lines = db.rewrite_speaker(label, name, chapter_ids=[chapter_id])
             if not lines:

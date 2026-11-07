@@ -273,14 +273,14 @@ def test_clear_named_aliases_lock_to_one_character_and_voice(tmp_path: Path) -> 
     build_registry_and_cast(db, build_settings(), lambda _message: None)
 
     rows = db.list_segments()
-    assert {str(row["speaker"]) for row in rows} == {"ALISA", "VICTOR"}
+    assert {str(row["speaker"]) for row in rows} == {"ALISA", "DÌ ALISA", "VICTOR"}
     for speaker in ("ALISA", "VICTOR"):
         speaker_rows = [row for row in rows if str(row["speaker"]) == speaker]
         assert len({int(row["canonical_character_id"]) for row in speaker_rows}) == 1
         assert len({int(row["voice_profile_id"]) for row in speaker_rows}) == 1
 
 
-def test_adjacent_local_child_scopes_merge_to_one_character_and_voice(tmp_path: Path) -> None:
+def test_adjacent_local_child_scopes_keep_distinct_identities_without_coreference(tmp_path: Path) -> None:
     db = _identity_db(
         tmp_path,
         [
@@ -292,9 +292,9 @@ def test_adjacent_local_child_scopes_merge_to_one_character_and_voice(tmp_path: 
     build_registry_and_cast(db, build_settings(), lambda _message: None)
 
     rows = db.list_segments()
-    assert len({str(row["speaker"]) for row in rows}) == 1
-    assert len({int(row["canonical_character_id"]) for row in rows}) == 1
-    assert len({int(row["voice_profile_id"]) for row in rows}) == 1
+    assert len({str(row["speaker"]) for row in rows}) == 2
+    assert len({int(row["canonical_character_id"]) for row in rows}) == 2
+    assert len({int(row["voice_profile_id"]) for row in rows}) == 2
 
 
 def test_interleaved_local_children_remain_distinct(tmp_path: Path) -> None:
@@ -324,8 +324,8 @@ def test_reconciliation_repairs_crowd_and_continuation_without_note_markers(
     witch_rows = [rows[20], rows[30], rows[31]]
     crowd_rows = [rows[21], rows[22], rows[23]]
     assert len({int(row["canonical_character_id"]) for row in bishop_rows}) == 2
-    assert len({int(row["canonical_character_id"]) for row in witch_rows}) == 1
-    assert len({int(row["voice_profile_id"]) for row in witch_rows}) == 1
+    assert len({int(row["canonical_character_id"]) for row in witch_rows}) == 2
+    assert len({int(row["voice_profile_id"]) for row in witch_rows}) == 2
     assert {local_speaker_label(row["speaker"]) for row in crowd_rows} == {"người dân"}
     assert {str(row["gender"]) for row in crowd_rows} == {"unknown"}
     for row in crowd_rows:

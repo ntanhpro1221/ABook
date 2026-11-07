@@ -31,6 +31,22 @@ def test_utf16_without_bom_uses_nul_heuristic() -> None:
     assert decode_text_bytes(text.encode("utf-16-le")) == text
 
 
+@pytest.mark.parametrize("text", [
+    'Mira nói: “Tôi nghe tiếng “mở cửa” rồi dừng lại.” Sau đó đèn tắt.',
+    '“Mira nhắc ‘chờ ở hiên’ rồi quay đi.” Bên ngoài trời mưa.',
+    '“Mira nhắc “chờ ở hiên\n\ncho tới sáng” rồi quay đi.” Bên ngoài trời mưa.',
+    'Mira mở cuốn “Sổ mưa”.\n\nCô nghĩ thầm: “Còn một trang trắng.”',
+    '“Tôi sẽ đem ô về.\n\nMột chiếc lá rơi.\n\nTavin nói: “Đợi tôi nhé.”',
+])
+def test_nested_and_unclosed_quotes_keep_every_source_token(text):
+    import re
+    rows = segment_chapter_text(1, text)
+    assert re.findall(r"\w+", " ".join(r['text'] for r in rows)) == re.findall(r"\w+", text)
+    if text.startswith('Mira nói:'):
+        spoken = [r['text'] for r in rows if 'Tôi nghe' in r['text']]
+        assert len(spoken) == 1 and 'rồi dừng lại' in spoken[0]
+
+
 def test_segmentation_rejects_same_size_source_mutation(tmp_path: Path) -> None:
     source = tmp_path / "chapter.txt"
     source.write_text("AAAA", encoding="utf-8")

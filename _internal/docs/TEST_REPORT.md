@@ -1,5 +1,12 @@
 # Test report
 
+## 07-11-2026 — dev/castrules: speaker and kind postprocessing
+
+- Quote hints are advisory across schema, validation and durable critic acceptance. Speech attribution requires a real speech tag; weak generic cues cannot replace confident identities or propagate through a paragraph. Kinship roles and conflicting gender evidence block name merging; vocatives and introductions cannot seed ABAB.
+- Inner speech retains the thinking character and voice. Explicit narration presentation changes only the voice profile, with SQLite provenance, atomic audio resets and undo after reopen. Worker and review cards use the same identity policy.
+- CPU regression run: **1660 passed, 0 failed, 3 skipped**, 92 related test files, `-rf`, verified from JUnit (1663 cases, 0 failure/error nodes). The skips require uninstalled voice models; no model was downloaded or called. Initial unchanged baseline: 1304 passed, 0 failed across 58 files.
+- Synthetic Vietnamese regressions cover all requested classes, source-text preservation, semantic kind crossing a hint through accepted-candidate reopen, and narration profile rollback/undo. `_calibrated_intensity` is unchanged. Measurements and remaining tradeoffs: [castrules/result.md](castrules/result.md).
+
 ## 07-11-2026 — flake164: deterministic Qt test readiness
 
 - Test-only changes; rebuilt WidthTests only. Product source/dependencies are unchanged. The original builder helper can return at phase 1 while its 1 → 0 → 1 sequence is running; controlled precondition probe fails. Historical assertion did not recur naturally in 120 focused baseline runs or one full baseline suite.
@@ -1324,3 +1331,23 @@ Nhãn pace không đổi âm thanh hoặc QA: cùng bản thu, band `[12.5, 24.5
 Test `test_pace_label_is_metadata.py` kiểm cùng take dưới slow/normal/fast/unknown, gồm nhận, cảnh báo và lỗi safety, hai hệ số sàn; đối chiếu cả metrics, ngân sách frame và tham số sinh. Kết quả importer thực và audit chỉ đọc hai sách, gồm stable ID không kèm nội dung, nằm trong `scratchpad/codex/pacetag/report.md` của phiên làm việc.
 
 Kiểm `-q -rf`: lượt đầu 123 module có 2862 đạt, 3 lỗi, 5 bỏ qua; sau sửa fixture/assertion, chạy lại trọn 12 module được 239 đạt, 0 lỗi. Kết quả mới nhất từng module: 2865 đạt, 0 lỗi, 5 bỏ qua (không cộng trùng lượt chạy). Lượt rộng có 8 cảnh báo thread đọc stdout không giải mã được UTF-8; lượt chạy lại không có. Compileall và diff check đạt. Audit: slow trượt band chung 0/715 và 2/642; fast có bằng chứng ít nhất 2 và 12 lượt retry riêng do band fast. Hash `26e20236…` → `6e1970d0…`; chưa commit.
+
+# castrules2 — kiểm raw model local, 07-11-2026
+
+CPU replay 116 lượt chương Qwen 4B/9B, 47 sách, 27.726 câu có gold: origin/main 5678fddf7 có 3.902 lỗi speaker/kind gộp, cây nhận từ lượt trước có 3.977, sau sửa thêm còn 3.928 (107 câu hỏng mới, 81 câu cứu so với main). Còn 20 sách tăng lỗi; chưa đạt mục tiêu từng sách. Tập envelope sau validation được báo riêng, không giả làm raw. Không có cặp raw 8B/gold fingerprint chắc chắn trong phạm vi đã tìm.
+
+Khôi phục sửa trích thuật ngữ có đủ ngữ cảnh và hồi phục phase hai người có hai neo lời gọi cùng một mâu thuẫn trực tiếp của model. Giữ phản ví dụ một neo, thiếu context và hành động nối tiếp; thêm bốn test tổng hợp. Nguồn TXT của harness được đóng băng riêng từng sách trước cả hai vế, tránh việc registry đọc nhầm sách khác qua sibling TXT. Gold passthrough cùng snapshot 15 sách: 2.041 → 118 lỗi, không sách tăng; không dùng nó để kết luận model tốt hơn.
+
+Pytest trực tiếp bằng interpreter quy định, `-m pytest -rf`, 149 file: **3.976 passed, 9 FAILED, 0 errors, 3 skipped**. JUnit và log đều đếm 9 failure. Cả 9 ở test_database_safety.py, liên quan giao ước kind từ hint đã đổi và fixture dùng giao ước ấy; không xóa/đổi expected để làm xanh. Lượt invocation sai import và lượt qua stdin được lưu riêng, không dùng làm kết quả cuối. Compileall, LF và diff check đạt. Báo cáo từng sách, 67 test cũ đổi/xóa tên và các đánh đổi nằm trong thư mục tác vụ castrules2. Chưa commit/push; chỉ sửa cây dev/castrules.
+
+# castrules3 — chọn stage bằng ablation CPU, 07-11-2026
+
+Giữ snapshot lượt 2, chạy 16 ablation thật: toàn bộ cây SAU nhận vào nhưng từng stage/loại thay đổi dùng hành vi TRƯỚC, rồi chạy tiếp các stage sau. Chọn lai stage gọi tên: hồi phục phase một neo với thứ tự duy nhất, giữ và mở rộng chặn tự giới thiệu/trả lời tên/trích lồng/tên người con trong nhãn quan hệ; stage lead-in không lan ABAB. Các stage khác giữ mới.
+
+Kết quả cuối speaker/kind gộp: raw 27.726 câu **3.902 → 3.887**, envelope 9.742 câu **1.603 → 1.577**, gold passthrough 42.142 câu **2.041 → 112**. Đạt hai ngưỡng tổng, còn 12/47 sách raw và 2/18 sách envelope tăng lỗi; gold 0/15. Raw có 49 hỏng mới/64 cứu, envelope 8/34, gold 2/1.931. Riêng speaker đúng trên raw giảm 5; kind không đổi. Không dùng lỗi gộp hay gold passthrough để kết luận mọi trục hoặc chất lượng audio tăng.
+
+Giữ bỏ khóa kind thuần ngoặc: gold kind đúng 40.408 → 42.141, local kind không đổi. Chín FAILED cũ được sửa theo ngữ nghĩa mới, vẫn kiểm bằng chứng giả, speaker local ngoài phạm vi và rehash/reopen/commit; khóa nguồn ngữ nghĩa độc lập vẫn được cưỡng chế. Pytest trực tiếp 149 file, gồm toàn bộ test_database_safety.py, `-rf`: **3.991 passed, 0 FAILED, 0 errors, 3 skipped**; JUnit 0 failure node, log 0 dòng FAILED. Compileall, LF và diff check đạt.
+
+TRƯỚC và SAU nhận vào khớp toàn bộ JSON với lượt 2 (184 local + 15 gold mỗi phía). Lỗi template rỗng của harness mới đã được phát hiện và toàn gold matrix chính thức chạy lại bằng template đúng, backup read-only thấy WAL; mỗi invocation có runtime sidecar riêng. Parser/prompt/critic/ledger/opt-in nằm ngoài đường accuracy replay đã đóng băng, được kiểm bằng test thay vì gán số ablation giả.
+
+Cả bốn tài liệu castrules cũ, gồm deltas.csv, được move ra thư mục tác vụ; repo chỉ giữ số tổng ở docs/castrules. Báo cáo đầy đủ, từng sách, lý do từng test và bằng chứng riêng ở scratchpad/codex/castrules3. Hash dev `71aa3370…` → `e1825aff…`; không commit/push hay sửa cây khác, không LLM/API/GPU/kill.

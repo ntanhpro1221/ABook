@@ -45,6 +45,6 @@ def test_the_model_keeps_the_line_when_the_named_person_had_not_spoken() -> None
     assert _speaker_of_the_quote(narration, "Beyer") == "beyer"
 
 
-def test_the_named_person_still_takes_the_line_when_the_sentence_says_so() -> None:
-    assert _speaker_of_the_quote("Lucien nói, giọng trầm xuống.", "Beyer") == "lucien"
-    <removed>
+def test_only_a_real_speech_verb_takes_the_line():
+    assert _speaker_of_the_quote('Tavin nói, giọng chậm rãi.','Mira')=='tavin'
+    assert _speaker_of_the_quote('Tavin nhìn ra sân, rồi cầm ô.','Mira')=='mira'
