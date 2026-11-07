@@ -1,0 +1,21 @@
+{
+  "source": "Measured desktop sea-g2p 0.10.0; self-written sentences; JNI 0.9.1 parity is tested separately",
+  "cases": [
+    {
+      "text": "Tôi kiểm <en>U D F</en>.",
+      "phonemes": "t̪ˈoj kˈiɛ4m jˈuː dˈiː ˈɛf."
+    },
+    {
+      "text": "Mã <en>M I T</en> và <en>G P S</en>.",
+      "phonemes": "mˈaː5 ˈɛm ˈaɪ tˈiː vˌaː2 dʒˈiː pˈiː ˈɛs."
+    },
+    {
+      "text": "Tôi ghi <en>D N A</en> và <en>I D</en>.",
+      "phonemes": "t̪ˈoj ɣˈi dˈiː ˈɛn ˈeɪ vˌaː2 ˈaɪ dˈiː."
+    },
+    {
+      "text": "Loa to đặt cạnh hộp da.",
+      "phonemes": "lwˈaː t̪ˈɔ ɗˈa6t̪ kˈe-6ɲ hˈo6p zˈaː."
+    }
+  ]
+}

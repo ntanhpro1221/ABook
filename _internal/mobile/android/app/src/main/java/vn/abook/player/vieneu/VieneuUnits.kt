@@ -3,6 +3,7 @@ package vn.abook.player.vieneu
 import vn.abook.player.VietnameseReading
 import vn.abook.player.readaloud.Abbreviations
 import vn.abook.player.readaloud.EnglishWords
+import vn.abook.player.readaloud.EnglishPolicy
 import vn.abook.player.readaloud.Names
 import vn.abook.player.readaloud.Readings
 import vn.abook.player.readaloud.Shouts
@@ -754,13 +755,17 @@ object VieneuUnits {
      * <angle brackets> and " / ". The listener's own [readings] of the book ("Đọc từ này là…", [Readings]) come after the names and win over them.
      * `spoken_tokens` of vieneu.py.
      */
-    fun spokenTokens(toks: List<String>, origin: String? = null, readings: Map<String, String>? = null): List<String> {
+    fun spokenTokens(toks: List<String>, origin: String? = null, readings: Map<String, String>? = null, directEnglish: Boolean = false): List<String> {
         val out = toks.toMutableList()
         stutters(toks, out, origin)
         Shouts.readShouts(toks, out)
         readWords(toks, out, origin)
         Readings.applyTokens(toks, out, readings)
         readingMarks(out, toks)
+        if (directEnglish) {
+            EnglishPolicy.applyTokens(toks, out, origin)
+            Readings.applyTokens(toks, out, readings)
+        }
         return out.map(::separateDigitQuotes)
     }
 
@@ -781,10 +786,12 @@ object VieneuUnits {
     }
 
     /** `VieneuProvider.reading_tag`: the [origin] when it makes this paragraph sound different (some name read by the rules), else "" - part of the clip cache key. */
-    fun readingTag(text: String, origin: String?): String {
-        if (origin == null || origin !in Names.ORIGINS) return ""
+    fun readingTag(text: String, origin: String?, directEnglish: Boolean = false): String {
         val toks = tokens(text)
-        return if (spokenTokens(toks, origin) != spokenTokens(toks)) origin else ""
+        val tags = mutableListOf<String>()
+        if (origin in Names.ORIGINS && spokenTokens(toks, origin) != spokenTokens(toks)) tags.add(origin!!)
+        if (directEnglish) tags.add("direct-en${EnglishPolicy.VERSION}")
+        return tags.joinToString("+")
     }
 
     internal fun ends(token: String, marks: String): Boolean {
@@ -819,10 +826,10 @@ object VieneuUnits {
     }
 
     /** The paragraph's shown words and its units (every shown word in exactly one unit, in order). [origin], [readings]: see [spokenTokens]. */
-    fun units(text: String, maxChars: Int, origin: String? = null, readings: Map<String, String>? = null): Pair<List<String>, List<Unit>> {
+    fun units(text: String, maxChars: Int, origin: String? = null, readings: Map<String, String>? = null, directEnglish: Boolean = false): Pair<List<String>, List<Unit>> {
         val toks = tokens(text)
         if (toks.isEmpty()) return toks to emptyList()
-        val said = spokenTokens(toks, origin, readings)
+        val said = spokenTokens(toks, origin, readings, directEnglish)
         val pieces = ArrayList<IntArray>()
         for (sentence in groups(toks, 0, toks.size - 1, SENTENCE_END, said)) {
             if (length(toks, sentence[0], sentence[1]) <= maxChars) {

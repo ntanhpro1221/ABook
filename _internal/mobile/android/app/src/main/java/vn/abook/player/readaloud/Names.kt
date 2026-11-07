@@ -202,10 +202,10 @@ object Names {
     private val KOREAN_TERMS = mapOf("oppa" to "óp-pa", "unnie" to "un-ni", "noona" to "nu-na", "hyung" to "hi-ung", "ssi" to "xi", "nim" to "nim")
     private val KOREAN_ALONE = setOf("oppa", "unnie", "noona", "hyung")
     /** Từ đã vào từ điển tiếng Việt: đọc như từ Việt với mọi cuốn - `DICTIONARY_WORDS`. */
-    private val DICTIONARY_WORDS = mapOf("sofa" to "xô-pha", "logic" to "lô-gích", "video" to "vi-đê-ô", "violin" to "vi-ô-lông", "piano" to "pi-a-nô", "sandal" to "xăng-đan",
+    internal val DICTIONARY_WORDS = mapOf("sofa" to "xô-pha", "logic" to "lô-gích", "video" to "vi-đê-ô", "violin" to "vi-ô-lông", "piano" to "pi-a-nô", "sandal" to "xăng-đan",
         "vali" to "va-li", "robot" to "rô-bốt", "gorilla" to "gô-ri-la")
     /** Từ Nhật rất quen: đọc theo luật phiên âm với mọi cuốn, dù có trong danh sách từ Anh - `JAPANESE_COMMON`. */
-    private val JAPANESE_COMMON = setOf("anime", "manga", "ninja", "samurai", "bento", "kimono", "sake", "miso", "dango", "takoyaki", "okonomiyaki", "senpai", "sensei",
+    internal val JAPANESE_COMMON = setOf("anime", "manga", "ninja", "samurai", "bento", "kimono", "sake", "miso", "dango", "takoyaki", "okonomiyaki", "senpai", "sensei",
         "onii", "onee", "otaku", "eroge", "tsukkomi", "ara", "umu")
     /** Tiền / cân của truyện Hàn - Nhật, chỉ khi liền sau một số - `CURRENCY`. */
     private val CURRENCY = mapOf("won" to "guôn", "yen" to "yên", "kwan" to "quan")

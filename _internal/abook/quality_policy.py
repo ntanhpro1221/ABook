@@ -38,6 +38,9 @@ TEXT_SEGMENTATION_IMPLEMENTATION_FILES = (
 )
 ANALYSIS_CASTING_IMPLEMENTATION_FILES = (
     "analysis.py",
+    "studio_names.py",
+    "readaloud/english_policy.py",
+    "readaloud/english_policy.json",
     "character_registry.py",
     "models.py",
     "name_snap.py",
@@ -77,6 +80,8 @@ QUALITY_IMPLEMENTATION_FILES = (
     "quality_policy.py",
     "speaker_pass.py",
     "readaloud/names.py",
+    "readaloud/english_policy.py",
+    "readaloud/english_policy.json",
     "readaloud/abbreviations.py",
     "readaloud/readings.py",
     "readaloud/shouts.py",

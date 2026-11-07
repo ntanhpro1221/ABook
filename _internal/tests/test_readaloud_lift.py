@@ -104,7 +104,7 @@ def test_the_service_lifts_a_quiet_clip_before_it_is_cached_and_keys_it_apart(fa
     cached = (tmp_path / "cache" / clip["file"]).read_bytes()
     assert cached != raw and len(cached) == len(raw), "cùng độ dài, mẫu to hơn"
     assert np.abs(_pcm(cached)).max() > 1.5 * np.abs(_pcm(raw)).max()
-    key = clip_key(provider.id, "turbo/Thường", "Ừ.", loudness.LIFT_TAG)
+    key = clip_key(provider.id, "turbo/Thường", "Ừ.", provider.reading_tag("Ừ.", None) + "+" + loudness.LIFT_TAG)
     assert (tmp_path / "cache" / f"{key}.wav").exists(), "khoá có dấu bù, nên clip làm trước khi có bù không trúng đệm"
     assert service.clip(voice, "Ừ.") == clip and len(engines["turbo"].calls) == 2, "lần sau lấy bộ đệm (2 = cả lần tự gọi ở trên)"
 

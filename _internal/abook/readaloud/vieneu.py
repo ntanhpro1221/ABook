@@ -647,7 +647,7 @@ def reading_marks(out: list[str], toks: list[str] | None = None) -> None:
 
 
 def spoken_tokens(toks: list[str], origin: str | None = None, speaks_english: bool = True,
-                  readings: Mapping[str, str] | None = None) -> list[str]:
+                  readings: Mapping[str, str] | None = None, *, direct_english: bool = False) -> list[str]:
     """Chữ hiện -> chữ đem đọc (biến đổi để đọc, chữ hiện không đổi): số La Mã HOA hợp lệ (I..XXXIX) đứng riêng sau một từ ("Phổ thông II",
     "Chương IV", "Thế chiến II") hay làm đề mục đầu đoạn ("I. Mở đầu") thì đọc thành số tiếng Việt - bộ chuẩn hoá của sea-g2p chỉ biết
     "Benedict III", còn "thông II" nó đọc "i i". Số MỘT chữ (I, V, X) chỉ khi từ trước đánh số được (`numbered_by`): "ông X", "tia X", "điểm V" là chữ cái.
@@ -662,6 +662,11 @@ def spoken_tokens(toks: list[str], origin: str | None = None, speaks_english: bo
     _read_words(toks, out, origin, speaks_english)
     book_readings.apply_tokens(toks, out, readings)
     reading_marks(out, toks)
+    if direct_english:
+        from .english_policy import apply_tokens
+
+        apply_tokens(toks, out, origin)
+        book_readings.apply_tokens(toks, out, readings)
     from .studio_tn import separate_digit_quotes
 
     return [separate_digit_quotes(word) for word in out]
@@ -813,7 +818,7 @@ def _pack(toks: list[str], spans: list[tuple[int, int]], max_chars: int) -> list
 
 
 def units(text: str, max_chars: int, origin: str | None = None, speaks_english: bool = True,
-          readings: Mapping[str, str] | None = None) -> tuple[list[str], list[Unit]]:
+          readings: Mapping[str, str] | None = None, *, direct_english: bool = False) -> tuple[list[str], list[Unit]]:
     """Chữ hiện của đoạn + các khúc đem đọc (mọi chữ hiện thuộc đúng một khúc, theo thứ tự). `origin`: gốc của cuốn ("ja" / "ko"), `speaks_english`:
     giọng nói được âm Anh không, `readings`: cách đọc riêng của cuốn - xem `spoken_tokens`."""
     from ..webui.word_timing import tokens
@@ -821,7 +826,7 @@ def units(text: str, max_chars: int, origin: str | None = None, speaks_english: 
     toks = tokens(text)
     if not toks:
         return toks, []
-    said = spoken_tokens(toks, origin, speaks_english, readings)
+    said = spoken_tokens(toks, origin, speaks_english, readings, direct_english=direct_english)
     pieces: list[tuple[int, int]] = []
     for first, last in _groups(toks, 0, len(toks) - 1, SENTENCE_END, said):
         if _length(toks, first, last) <= max_chars:
@@ -902,7 +907,7 @@ def timed_synthesis(audio: Any, rate: int, toks: list[str], parts: list[Unit], s
     return Synthesis(wav_bytes(audio, rate), [], duration, "wav", "audio/wav", words=words)
 
 
-def reading_tag(text: str, origin: str | None, speaks_english: bool = True) -> str:
+def reading_tag(text: str, origin: str | None, speaks_english: bool = True, *, direct_english: bool = False) -> str:
     """Khác "" khi cách đọc tên / từ Anh làm đoạn này nghe khác `spoken_tokens(toks)` trần: khoá bộ đệm clip phải có nó, không thì clip cũ (đọc tên bằng âm Anh)
     bị dùng lại sau khi cuốn đổi gốc hay giọng đổi cách đọc. "ja" / "ko" = tên đọc theo luật phiên âm; "en<số>" = từ Anh được Việt hoá (`names.ENGLISH_READING`),
     nối bằng "+". Đoạn không có gì đổi thì "" - clip cũ vẫn dùng được. Dùng chung cho mọi giọng đọc tên (VieNeu, Supertonic)."""
@@ -914,6 +919,10 @@ def reading_tag(text: str, origin: str | None, speaks_english: bool = True) -> s
     tags = [origin] if named != plain else []
     if not speaks_english and spoken_tokens(toks, origin, False) != named:
         tags.append(f"en{names.ENGLISH_READING}")
+    if direct_english:
+        from .english_policy import VERSION
+
+        tags.append(f"direct-en{VERSION}")
     return "+".join(tags)
 
 
@@ -1015,7 +1024,7 @@ class VieneuProvider:
         from . import vieneu_engine as ve
 
         engine = self.engine(tier, installed)
-        toks, parts = units(text, MAX_CHARS[tier], origin, self.speaks_english, readings)
+        toks, parts = units(text, MAX_CHARS[tier], origin, self.speaks_english, readings, direct_english=True)
         speaker = np.asarray(preset["speaker_emb"], dtype=np.float32)
         waves, pauses = [], []
         for unit in parts:
@@ -1036,7 +1045,7 @@ class VieneuProvider:
         return joined, engine.SAMPLE_RATE, toks, parts, spans
 
     def reading_tag(self, text: str, origin: str | None) -> str:
-        return reading_tag(text, origin, self.speaks_english)
+        return reading_tag(text, origin, self.speaks_english, direct_english=True)
 
     def synthesize(self, text: str, native_voice: str, origin: str | None = None, readings: Mapping[str, str] | None = None) -> Synthesis:
         tier, name, installed, preset = self._voice(native_voice)

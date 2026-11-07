@@ -79,6 +79,7 @@ from .io_utils import run_hidden, sha256_text
 from .models import (
     CONTEXTUAL_ENGLISH_NAME_PRONUNCIATION_SOURCE,
     ENGLISH_NAME_PRONUNCIATION_SOURCE,
+    KEEP_ENGLISH_PRONUNCIATION_SOURCE,
     SegmentStatus,
 )
 from .process_utils import terminate_process_tree
@@ -3446,6 +3447,7 @@ def _decomposed_name_pronunciation(
         # Each word must clear the same bar it would as a standalone proposal, so
         # splitting cannot smuggle in a name that would have been rejected on its own.
         and _is_proper_latin_name_surface(word)
+        and not is_vietnamese_syllable(word)
         and not _is_short_name(word)
     ]
 
@@ -10398,6 +10400,9 @@ class OllamaBookAnalyzer:
         ) -> None:
             nonlocal converted_count
             surface = str(candidate["surface"])
+            planned = studio_names.planned_reading(surface, origin, direct_english=True)
+            if planned is not None:
+                spoken_form, source = planned
             if repaired_from:
                 message = (
                     f"Đã tự sửa ranh giới âm tiết cho {surface}: "
@@ -10448,18 +10453,29 @@ class OllamaBookAnalyzer:
                     {"surface": surface, "spoken_form": spoken_form, "source": source},
                 )
                 return
-            self.db.upsert_pronunciation(
-                surface=surface,
-                normalized_surface=_name_candidate_key(surface),
-                spoken_form=spoken_form,
-                confidence=confidence,
-                source=source or (
-                    CONTEXTUAL_ENGLISH_NAME_PRONUNCIATION_SOURCE
-                    if _name_candidate_key(surface) in CMUDICT_CONTEXT_ONLY
-                    else ENGLISH_NAME_PRONUNCIATION_SOURCE
-                ),
-                locked=True,
-            )
+            entries = [(surface, spoken_form)]
+            if source == KEEP_ENGLISH_PRONUNCIATION_SOURCE:
+                # A full and a short Western name share the same component rows.
+                # Keep the separate Japanese/Korean reading route unchanged.
+                entries = [(word, word) for word in surface.split() if not is_vietnamese_syllable(word)]
+            for entry_surface, entry_spoken in entries:
+                self.db.upsert_pronunciation(
+                    surface=entry_surface,
+                    normalized_surface=_name_candidate_key(entry_surface),
+                    spoken_form=entry_spoken,
+                    confidence=confidence,
+                    source=source or (
+                        CONTEXTUAL_ENGLISH_NAME_PRONUNCIATION_SOURCE
+                        if _name_candidate_key(entry_surface) in CMUDICT_CONTEXT_ONLY
+                        else ENGLISH_NAME_PRONUNCIATION_SOURCE
+                    ),
+                    locked=True,
+                )
+            if source == KEEP_ENGLISH_PRONUNCIATION_SOURCE:
+                self.db.event("info", "NAME_READING_AUTO", "Keep English spelling", {
+                    "surface": surface, "spoken_form": spoken_form,
+                    "mode": "keep_english", "provenance": "auto",
+                })
             converted_count += 1
 
         qwen_candidates: list[dict[str, Any]] = []
@@ -10468,7 +10484,7 @@ class OllamaBookAnalyzer:
         for candidate in candidates:
             pronunciation = str(candidate.get("cmu_pronunciation", ""))
             surface = str(candidate["surface"])
-            planned = studio_names.planned_reading(surface, origin)
+            planned = studio_names.planned_reading(surface, origin, direct_english=True)
             if planned is not None:
                 checkpoint_pronunciation(
                     candidate, planned[0], studio_names.RULE_READING_CONFIDENCE, source=planned[1]
