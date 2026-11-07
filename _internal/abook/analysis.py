@@ -330,6 +330,14 @@ GENERIC_SPEAKER_TRAITS = {
     "bà lão": ("female", "elderly"),
     "giám mục": ("male", "adult"),
     "người dân": ("unknown", "unknown"),
+    "mẹ": ("female", "adult"),
+    "bố": ("male", "adult"),
+    "cha": ("male", "adult"),
+    "em gái": ("female", "unknown"),
+    "em trai": ("male", "unknown"),
+    "chị gái": ("female", "unknown"),
+    "vợ": ("female", "adult"),
+    "chồng": ("male", "adult"),
 }
 GENERIC_CHILD_LABELS = {"trẻ em", "đứa bé", "đứa trẻ", "trẻ nhỏ"}
 # 『 và 』: một dòng nguyên vẹn trong 『…』 là một giọng nói (xem text_processing). Thiếu chúng ở đây thì khoá "thoại
@@ -1062,8 +1070,7 @@ trường text, còn text dài phải chọn chính xác một source anchor tro
 Trong mọi policy enum, không được tự cắt, nối hoặc chuẩn hóa anchor.
 Mọi field có trong host_locked_fields là constraint nguồn đã được host xác minh và là bất biến. Nếu không đồng ý với
 field khóa, vẫn trả correction thật của bạn trong sáu trường để host lưu audit và áp đúng structural/semantic override.
-Khóa kind=dialogue chỉ xác nhận ranh giới lời nói, không xác nhận danh tính người nói; vẫn phải kiểm speaker độc lập từ
-lời dẫn và mạch hội thoại. Không được đổi speaker thành NARRATOR chỉ vì bạn bất đồng với kind đã khóa.
+Hint dấu ngoặc không khóa kind hoặc speaker. Kiểm người nói độc lập từ lời dẫn thật và mạch hội thoại.
 Speaker là identity source-bound: chỉ được chọn đúng một giá trị trong allowed_speakers do host gửi cho request.
 Danh sách đó gồm các identity đã xuất hiện trong candidate của batch cùng NARRATOR và UNKNOWN. Mọi NPC_LOCAL:: là
 opaque host ID, phải sao chép byte-for-byte; không sửa chương hay nhãn, không trả dạng NPC_LOCAL:<nhãn> và không
@@ -1244,10 +1251,14 @@ def local_speaker_id(chapter_id: int, label: Any) -> str:
     return f"{LOCAL_SPEAKER_STORED_PREFIX}c{int(chapter_id):05d}::{key}"
 
 
-def _scope_local_speaker(speaker: str, row: Any) -> str:
+def _scope_local_speaker(speaker: str, row: Any, *, attribution_mention: bool = False) -> str:
     if not speaker.casefold().startswith(LOCAL_SPEAKER_REQUEST_PREFIX.casefold()):
         return speaker
-    return local_speaker_id(int(row["chapter_id"]), speaker[len(LOCAL_SPEAKER_REQUEST_PREFIX) :])
+    identity = local_speaker_id(int(row["chapter_id"]), speaker[len(LOCAL_SPEAKER_REQUEST_PREFIX) :])
+    if attribution_mention:
+        prefix, _, label = identity.rpartition("::")
+        return f"{prefix}::p{int(_row_optional_value(row, 'paragraph_index', 0)):05d}::{label}"
+    return identity
 
 
 CHARACTER_NAME_IN_TEXT_PATTERN = re.compile(
@@ -1269,29 +1280,50 @@ def _names_a_character(text: str) -> bool:
 
 
 def _generic_speaker_attribution(text: str, *, prefer_last: bool) -> str | None:
-    if (
-        not text.rstrip().endswith((":", "："))
-        and GENERIC_SPEECH_ATTRIBUTION_PATTERN.search(text) is None
-    ):
-        return None
-    if _names_a_character(text):
-        # "..., James chỉ vào Lucien rồi nói:" có nhắc "người phụ nữ" vẫn là câu của James; "Joanna cẩn thận hỏi người
-        # phụ nữ." - người phụ nữ là người NGHE. Lời dẫn có tên thì nhãn chung không được khoá; model đọc được tên.
-        return None
-    matches: list[tuple[int, str]] = []
-    for label in GENERIC_SPEAKER_TRAITS:
-        match = re.search(
-            rf"(?<![\wÀ-ỹĐđ]){re.escape(label)}(?![\wÀ-ỹĐđ])",
-            text,
-            flags=re.IGNORECASE,
-        )
-        if match is not None:
-            matches.append((match.start(), label))
-    if not matches:
-        return None
-    if prefer_last:
-        return max(matches, key=lambda item: (item[0], len(item[1])))[1]
-    return min(matches, key=lambda item: (item[0], -len(item[1])))[1]
+    # Capture the complete subject before the speech verb. A descriptor inside an
+    # object/comparison is never a speaker, and a kinship complement is not its head.
+    labels = sorted(set(GENERIC_SPEAKER_TRAITS) | {"mẹ", "bố", "cha", "em gái", "em trai", "chị gái", "vợ", "chồng"}, key=len, reverse=True)
+    pattern = re.compile(
+        rf"^[\s,;—–-]*(?i:(?:một|mấy)\s+)?(?P<label>(?i:{'|'.join(map(re.escape, labels))})"
+        r"(?:\s+(?i:(?:của\s+)?(?:cô bé|cậu bé))|\s+(?:của\s+)?[A-ZÀ-ỸĐ][\w-]*(?:\s+[A-ZÀ-ỸĐ][\w-]*){0,2})?)"
+        r"\s+(?i:(?:(?:khẽ|nhỏ|lớn|tiếp|liền|bỗng|vội|cười|và|trung niên|bước tới)\s+){0,3}"
+        r"(?:nói|hỏi|đáp|trả lời|lên tiếng|thì thầm|quát|kêu|thốt lên|gào|hét|hô))(?!\w)",
+    )
+    match = pattern.match(text)
+    return match.group("label").strip().casefold() if match else None
+
+
+def _attribution_neighbours(
+    group: list[Any], index: int, original_context: dict[str, dict[str, Any]] | None = None,
+) -> list[tuple[Any, bool]]:
+    """Use immutable source neighbors even when the target sits at a batch edge."""
+    row = group[index]
+    context = (original_context or {}).get(str(row["stable_id"]), {})
+    near = []
+    for offset, prefix in ((-1, "previous"), (1, "next")):
+        pos = index + offset
+        if 0 <= pos < len(group):
+            candidate = group[pos]
+        elif context.get(f"{prefix}_stable_id"):
+            candidate = {"stable_id": context[f"{prefix}_stable_id"], "text": context[f"{prefix}_text"],
+                         "chapter_id": context.get(f"{prefix}_chapter_id"),
+                         "paragraph_index": context.get(f"{prefix}_paragraph_index"),
+                         "kind_hint": context.get(f"{prefix}_kind_hint")}
+        else:
+            continue
+        if _same_paragraph(candidate, row):
+            near.append((candidate, offset > 0))
+    return near
+
+
+def _speech_tag_subject(text: str, *, after: bool) -> str | None:
+    from .first_person import lead_in_speaker
+    if not after and VOICED_SOUND_LEAD_IN_PATTERN.search(text):
+        text = text.rstrip() + ":"
+    candidate = _leading_proper_name(text) if after else _trailing_speech_attribution(text)
+    if candidate and lead_in_speaker(text, {candidate}, after=after):
+        return candidate
+    return None
 
 
 def _dialogue_quote_state_after(text: str, closing_mark: str | None) -> str | None:
@@ -1443,6 +1475,9 @@ SELF_INTRODUCTION_APPOSITIVE_PATTERN = re.compile(
 
 
 def _speaker_is_directly_addressed(text: str, speaker: str) -> bool:
+    from .first_person import is_name_answer, _inside_nested_quote
+    if is_name_answer(text):
+        return False
     if speaker.casefold() in RESERVED_SPEAKERS:
         return False
     label = local_speaker_label(speaker) if is_local_speaker(speaker) else speaker
@@ -1462,22 +1497,25 @@ def _speaker_is_directly_addressed(text: str, speaker: str) -> bool:
         rf"(?<![\wÀ-ỹĐđ])(?:{title_pattern})\s+{escaped_label}"
         rf"(?=\s*[,!?.:;…\"”’]|$)"
     )
-    return re.search(titled_address, text, flags=re.IGNORECASE) is not None
+    return any(not _inside_nested_quote(text, match.start())
+               for match in re.finditer(titled_address, text, flags=re.IGNORECASE))
 
 
 def _titled_addressee(text: str) -> str | None:
+    from .first_person import _inside_nested_quote
     title_pattern = "|".join(
         re.escape(title).replace(r"\ ", r"\s+")
         for title in DIRECT_ADDRESS_TITLES
     )
-    match = re.search(
+    matches = re.finditer(
         rf"(?<![\wÀ-ỹĐđ])(?:{title_pattern})\s+"
         rf"(?P<target>{LATIN_PROPER_NAME_SURFACE_PATTERN.pattern})"
         rf"(?=\s*[,!?.:;…\"”’]|$)",
         text,
         flags=re.IGNORECASE,
     )
-    return _canonical_speaker(match.group("target")) if match is not None else None
+    return next((_canonical_speaker(match.group("target")) for match in matches
+                 if not _inside_nested_quote(text, match.start())), None)
 
 
 def _same_paragraph(left: Any, right: Any) -> bool:
@@ -1586,44 +1624,26 @@ def _explicit_speaker_attribution(
     data = result.get(str(row["stable_id"]))
     if data is None or data["kind"] != "dialogue":
         return None
-    if _is_quoted_inside_a_sentence(group, index, result, original_context):
-        # Chữ của người kể trích giữa câu ("Sơn Ca” Samantha rảo bước...") - không phải câu thoại của ai.
-        return None
-    attributed_speaker: str | None = None
-    if index > 0 and _same_paragraph(group[index - 1], row):
-        previous = group[index - 1]
-        previous_data = result.get(str(previous["stable_id"]))
-        if previous_data is not None and previous_data["kind"] == "narration":
-            attributed_speaker = _trailing_speech_attribution(str(previous["text"]))
-            if attributed_speaker is None:
-                label = _generic_speaker_attribution(
-                    str(previous["text"]),
-                    prefer_last=True,
-                )
-                if label is not None:
-                    attributed_speaker = f"{LOCAL_SPEAKER_REQUEST_PREFIX}{label}"
-    if (
-        attributed_speaker is None
-        and index + 1 < len(group)
-        and _same_paragraph(row, group[index + 1])
-    ):
-        following = group[index + 1]
-        following_data = result.get(str(following["stable_id"]))
-        if following_data is not None and following_data["kind"] == "narration":
-            attributed_speaker = _leading_proper_name(str(following["text"]))
-            if attributed_speaker is not None and _names_someone_who_had_not_spoken(
-                str(following["text"]), attributed_speaker
-            ):
-                # Im lặng, không đoán người khác: câu trả lời của model và lượt phản biện quyết.
-                return None
-            if attributed_speaker is None:
-                label = _generic_speaker_attribution(
-                    str(following["text"]),
-                    prefer_last=False,
-                )
-                if label is not None:
-                    attributed_speaker = f"{LOCAL_SPEAKER_REQUEST_PREFIX}{label}"
-    return attributed_speaker
+    candidates = set()
+    for near, after in _attribution_neighbours(group, index, original_context):
+        near_kind = result.get(str(near["stable_id"]), {}).get("kind", _row_optional_value(near, "kind_hint", ""))
+        if near_kind != "narration":
+            continue
+        text = str(near["text"])
+        # First-person speech is affirmative evidence; a later comparison cannot
+        # replace its subject with a child or another person mentioned in it.
+        if re.match(r"^[\s—–-]*(?:Tôi|Tớ|Mình)\s+(?:nói|hỏi|đáp)\b", text, re.I):
+            return None
+        name = _speech_tag_subject(text, after=after)
+        if name:
+            candidates.add(name)
+            continue
+        label = _generic_speaker_attribution(text, prefer_last=not after)
+        # A generic description cannot displace a confident accepted identity.
+        if label and (str(data["speaker"]).casefold() in {"unknown", "narrator"}
+                      or float(data.get("confidence", 0)) < .8):
+            candidates.add(f"{LOCAL_SPEAKER_REQUEST_PREFIX}{label}")
+    return next(iter(candidates)) if len(candidates) == 1 else None
 
 
 def _repair_explicit_attribution(
@@ -1643,8 +1663,10 @@ def _repair_explicit_attribution(
         attributed_traits = ("unknown", "unknown")
         if attributed_speaker.casefold().startswith(LOCAL_SPEAKER_REQUEST_PREFIX.casefold()):
             label = attributed_speaker[len(LOCAL_SPEAKER_REQUEST_PREFIX) :]
-            attributed_traits = GENERIC_SPEAKER_TRAITS.get(label, attributed_traits)
-            attributed_speaker = _scope_local_speaker(attributed_speaker, row)
+            head = next((head for head in sorted(GENERIC_SPEAKER_TRAITS, key=len, reverse=True)
+                         if label.casefold() == head or label.casefold().startswith(head + " ")), "")
+            attributed_traits = GENERIC_SPEAKER_TRAITS.get(head, attributed_traits)
+            attributed_speaker = _scope_local_speaker(attributed_speaker, row, attribution_mention=True)
         else:
             # Tên chép từ câu kể giữ cả kính ngữ ("Yuzuki-chan bước vào..."): không bỏ thì đè "Yuzuki" của model bằng
             # một nhân vật mới chưa rõ giới, và tên ấy lọt vào danh sách "Nhân vật đã biết" của mọi lô sau.
@@ -1668,8 +1690,9 @@ def _repair_explicit_attribution(
                 attributed_traits[0] if attributed_traits[0] != "unknown" else resolved_gender
             )
             data["age"] = attributed_traits[1] if attributed_traits[1] != "unknown" else resolved_age
-        data["confidence"] = max(float(data.get("confidence", 0.0)), 0.95)
-        _record_host_note_marker(data, EXPLICIT_ATTRIBUTION_NOTE)
+        if not is_local_speaker(attributed_speaker):
+            data["confidence"] = max(float(data.get("confidence", 0.0)), 0.95)
+            _record_host_note_marker(data, EXPLICIT_ATTRIBUTION_NOTE)
 
 
 def normalize_speaker_name(value: str) -> str:
@@ -1704,6 +1727,9 @@ def _repair_addressee_speakers(
         speaker = str(data["speaker"])
         row = rows_by_id[seg_id]
         text = str(row["text"])
+        from .first_person import is_name_answer
+        if is_name_answer(text):
+            continue
         target = _titled_addressee(text)
         speaker_matches_target = target is not None and (
             normalize_speaker_name(local_speaker_label(speaker) if is_local_speaker(speaker) else speaker)
@@ -1767,8 +1793,28 @@ def _is_quoted_inside_a_sentence(
         return False
     if any(mark in quoted for mark in IN_SENTENCE_UTTERANCE_MARKS):
         return False
-    before = group[index - 1] if index > 0 else None
-    after = group[index + 1] if index + 1 < len(group) else None
+    neighbours = _attribution_neighbours(group, index, original_context)
+    for near, after_tag in neighbours:
+        text = str(near["text"])
+        if _speech_tag_subject(text, after=after_tag) or _generic_speaker_attribution(text, prefer_last=not after_tag):
+            return False
+        if re.match(r"^[\s—–-]*(?:tôi|tớ|mình)\s+(?:nói|hỏi|đáp)\b", text, re.I):
+            return False
+    explicit_term = any(
+        re.search(r"\b(?:từ|chữ|thuật ngữ|tên sách|nhan đề|tiêu đề|cụm từ|khái niệm)\s*$",
+                  str(near["text"]), re.I)
+        for near, follows in neighbours if not follows
+    )
+    before = next((near for near, follows in neighbours if not follows), None)
+    after = next((near for near, follows in neighbours if follows), None)
+    if not explicit_term:
+        # An unfinished sentence on both sides is evidence for an embedded term.
+        # One missing neighbor, or an action continuing after a possible utterance,
+        # cannot establish that the model assigned the wrong speaker.
+        if before is None or after is None:
+            return False
+        if re.match(r"\s*(?:rồi|và|sau đó|liền|xong)\b", str(after["text"]), re.I):
+            return False
     if before is None and after is None:
         return False
     if before is None and _opens_its_paragraph_before_the_batch(row, original_context):
@@ -1778,7 +1824,8 @@ def _is_quoted_inside_a_sentence(
     for neighbour in (before, after):
         if neighbour is None:
             continue
-        data = result.get(str(neighbour["stable_id"]))
+        data = result.get(str(neighbour["stable_id"]),
+                          {"kind": _row_optional_value(neighbour, "kind_hint", "")})
         if data is None or data["kind"] != "narration" or not _same_paragraph(neighbour, row):
             return False
     if before is not None:
@@ -1860,6 +1907,13 @@ def _repair_in_sentence_quote_speakers(
     """
     for index, row in enumerate(group):
         data = result.get(str(row["stable_id"]))
+        # Single-quoted terms are also split with a thought hint. Their syntactic
+        # evidence is the same; actual inner speech keeps the thinker's identity.
+        if (data is not None and data["kind"] == "thought"
+                and str(row["text"]).lstrip().startswith(("‘", "'"))):
+            if _is_quoted_inside_a_sentence(group, index, result, original_context):
+                data["speaker"] = "NARRATOR"
+            continue
         if data is None or data["kind"] != "dialogue":
             continue
         if normalize_speaker_name(str(data["speaker"])) == "narrator":
@@ -1901,7 +1955,6 @@ def _repair_same_paragraph_speakers(
             data
             for _row, data in entries
             if _has_host_note_marker(data, EXPLICIT_ATTRIBUTION_NOTE)
-            or _has_host_note_marker(data, ADDRESSEE_REPAIR_NOTE)
         ]
         anchor_speakers = {str(data["speaker"]) for data in anchors}
         if len(anchor_speakers) != 1:
@@ -1911,6 +1964,8 @@ def _repair_same_paragraph_speakers(
             if str(data["speaker"]) == str(anchor["speaker"]):
                 continue
             if _has_host_note_marker(data, EXPLICIT_ATTRIBUTION_NOTE):
+                continue
+            if float(data.get("confidence", 0)) >= .8:
                 continue
             data["speaker"] = anchor["speaker"]
             data["gender"] = anchor["gender"]
@@ -2028,19 +2083,13 @@ def _validate(
         source_kind = str(rows_by_id[seg_id]["kind_hint"])
         source_default = source_kind if source_kind in ALLOWED_KINDS else "narration"
         requested_kind = _safe_choice(item.get("kind"), ALLOWED_KINDS, source_default)
-        crosses_dialogue_boundary = (requested_kind == "dialogue") != (
-            source_default == "dialogue"
-        )
         loses_source_owned_kind = _source_kind_transition_rule(
             rows_by_id[seg_id],
             requested_kind,
             original_context=original_context,
         ) is not None
-        if crosses_dialogue_boundary or loses_source_owned_kind:
-            # A valid-but-incompatible kind normally means the model shifted one result to a
-            # neighbouring ID. Explicit dialogue and thought boundaries belong to the source
-            # parser; source-qualified narration also cannot be relabelled to bypass a
-            # mandatory semantic lock.
+        if loses_source_owned_kind:
+            # Independently qualified narration rules retain their semantic authority.
             continue
         kind = requested_kind
         speaker = _canonical_speaker(item.get("speaker"))
@@ -2678,16 +2727,8 @@ def _source_kind_transition_rule(
 ) -> str | None:
     """Return the host rule (possibly empty) when a candidate crosses a source boundary."""
     source_kind = str(_row_optional_value(row, "kind_hint", "narration"))
-    if source_kind == "dialogue":
-        return (
-            HOST_EXPLICIT_DIALOGUE_BOUNDARY_RULE
-            if requested_kind != "dialogue"
-            else None
-        )
-    if requested_kind == "dialogue":
-        return ""
-    if source_kind == "thought":
-        return "" if requested_kind != "thought" else None
+    # Punctuation supplies a hint, not semantic authority over the model's kind.
+    # Only independently qualified narration rules below can own a boundary.
     if source_kind == "narration" and requested_kind != "narration":
         if _source_narration_precedes_immediate_thought(row, original_context):
             return HOST_NARRATION_PRECEDES_IMMEDIATE_THOUGHT_RULE
@@ -5262,8 +5303,6 @@ def _director_candidate_rows(
             host_locked_fields = (
                 {"kind": "narration"} if narration_precedes_thought else {}
             )
-            if str(row["kind_hint"]) == "dialogue":
-                host_locked_fields["kind"] = "dialogue"
             semantic_lock = semantic_locks.get(stable_id)
             if semantic_lock is not None:
                 if semantic_lock.rule == HOST_SLEEP_PARALYSIS_HELPLESSNESS_RULE:
@@ -6599,10 +6638,6 @@ def _adjudicate_director_critic(
             (delta for delta in deltas if delta.split(":", 1)[0] == "kind"),
             "",
         )
-        dialogue_kind_locked = bool(
-            candidate["kind"] == "dialogue"
-            and str(rows_by_stable[stable_id]["kind_hint"]) == "dialogue"
-        )
         context_kind_locked = bool(
             candidate["kind"] == "narration"
             and _source_narration_precedes_immediate_thought(
@@ -6611,9 +6646,7 @@ def _adjudicate_director_critic(
             )
         )
         protected_kind_rule = (
-            HOST_EXPLICIT_DIALOGUE_BOUNDARY_RULE
-            if dialogue_kind_locked
-            else (
+            (
                 HOST_NARRATION_PRECEDES_IMMEDIATE_THOUGHT_RULE
                 if context_kind_locked
                 else (

@@ -30,16 +30,7 @@ def test_a_nickname_quoted_before_a_name_stays_the_narrators() -> None:
     assert result["s2"]["speaker"].casefold() != "samantha"
 
 
-def test_a_spoken_line_after_a_finished_sentence_is_still_the_paragraphs() -> None:
-    group = [
-        _row(0, "dialogue", "“Chúng ta đi thôi.”"),
-        _row(1, "narration", "Samantha nói."),
-        _row(2, "dialogue", "“Trời sắp tối rồi.”"),
-        _row(3, "narration", "Cô nhìn ra ngoài cửa sổ."),
-    ]
-    payload = {"segments": [
-        _item(0, "dialogue", "Samantha", "female"), _item(1, "narration", "NARRATOR"),
-        _item(2, "dialogue", "Lucien", "male"), _item(3, "narration", "NARRATOR"),
-    ]}
-    result = _validate(group, payload)
-    assert result["s2"]["speaker"].casefold() == "samantha"
+def test_a_finished_tag_does_not_own_another_confident_turn():
+    from tests.test_analysis_required import _castrule_batch
+    rows,payload=_castrule_batch([('“Tôi giữ đèn.”','dialogue','Mira'),('Mira nói.','narration','NARRATOR'),('“Tôi cầm ô.”','dialogue','Tavin')])
+    assert _validate(rows,payload)['r2']['speaker']=='Tavin'

@@ -1,0 +1,170 @@
+{
+  "totals": {
+    "gold": {
+      "n": 42142,
+      "speaker_correct_before": 41249,
+      "speaker_correct_after": 42030,
+      "kind_correct_before": 40408,
+      "kind_correct_after": 42141,
+      "delta_gold_before": 2041,
+      "delta_gold_after": 112,
+      "new_bad": 2,
+      "rescued": 1931,
+      "worse_books": 0,
+      "book_count": 15
+    },
+    "raw_response": {
+      "n": 27726,
+      "speaker_correct_before": 23856,
+      "speaker_correct_after": 23851,
+      "kind_correct_before": 27670,
+      "kind_correct_after": 27670,
+      "delta_gold_before": 3902,
+      "delta_gold_after": 3887,
+      "new_bad": 49,
+      "rescued": 64,
+      "worse_books": 12,
+      "book_count": 47
+    },
+    "raw4B": {
+      "n": 15411,
+      "speaker_correct_before": 13329,
+      "speaker_correct_after": 13321,
+      "kind_correct_before": 15363,
+      "kind_correct_after": 15363,
+      "delta_gold_before": 2110,
+      "delta_gold_after": 2098,
+      "new_bad": 26,
+      "rescued": 38
+    },
+    "post_validation_envelope": {
+      "n": 9742,
+      "speaker_correct_before": 8139,
+      "speaker_correct_after": 8165,
+      "kind_correct_before": 9640,
+      "kind_correct_after": 9640,
+      "delta_gold_before": 1603,
+      "delta_gold_after": 1577,
+      "new_bad": 8,
+      "rescued": 34,
+      "worse_books": 2,
+      "book_count": 18
+    },
+    "raw9B": {
+      "n": 12315,
+      "speaker_correct_before": 10527,
+      "speaker_correct_after": 10530,
+      "kind_correct_before": 12307,
+      "kind_correct_after": 12307,
+      "delta_gold_before": 1792,
+      "delta_gold_after": 1789,
+      "new_bad": 23,
+      "rescued": 26
+    }
+  },
+  "ablation": {
+    "before": {
+      "gold": 2041,
+      "raw_response": 3902,
+      "post_validation_envelope": 1603
+    },
+    "final": {
+      "gold": 112,
+      "raw_response": 3887,
+      "post_validation_envelope": 1577
+    },
+    "initial": {
+      "gold": 118,
+      "raw_response": 3928,
+      "post_validation_envelope": 1618
+    },
+    "old_address": {
+      "gold": 133,
+      "raw_response": 3887,
+      "post_validation_envelope": 1577
+    },
+    "old_addressee": {
+      "gold": 119,
+      "raw_response": 3928,
+      "post_validation_envelope": 1618
+    },
+    "old_anchor_filter": {
+      "gold": 124,
+      "raw_response": 3924,
+      "post_validation_envelope": 1614
+    },
+    "old_canonical": {
+      "gold": 179,
+      "raw_response": 3928,
+      "post_validation_envelope": 1618
+    },
+    "old_explicit": {
+      "gold": 170,
+      "raw_response": 3920,
+      "post_validation_envelope": 1618
+    },
+    "old_generic": {
+      "gold": 118,
+      "raw_response": 3928,
+      "post_validation_envelope": 1618
+    },
+    "old_kind": {
+      "gold": 1814,
+      "raw_response": 3928,
+      "post_validation_envelope": 1618
+    },
+    "old_lead": {
+      "gold": 133,
+      "raw_response": 3926,
+      "post_validation_envelope": 1614
+    },
+    "old_lead_filter": {
+      "gold": 118,
+      "raw_response": 3928,
+      "post_validation_envelope": 1618
+    },
+    "old_merge_adjacent": {
+      "gold": 118,
+      "raw_response": 3928,
+      "post_validation_envelope": 1618
+    },
+    "old_merge_named": {
+      "gold": 118,
+      "raw_response": 3928,
+      "post_validation_envelope": 1618
+    },
+    "old_paragraph": {
+      "gold": 121,
+      "raw_response": 3925,
+      "post_validation_envelope": 1618
+    },
+    "old_quotes": {
+      "gold": 136,
+      "raw_response": 3953,
+      "post_validation_envelope": 1628
+    },
+    "old_scope": {
+      "gold": 118,
+      "raw_response": 3928,
+      "post_validation_envelope": 1618
+    },
+    "old_snap": {
+      "gold": 139,
+      "raw_response": 3928,
+      "post_validation_envelope": 1618
+    },
+    "old_teller": {
+      "gold": 147,
+      "raw_response": 3967,
+      "post_validation_envelope": 1650
+    }
+  },
+  "pytest": {
+    "total": 3994,
+    "passed": 3991,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 3,
+    "failed_lines": 0
+  }
+}

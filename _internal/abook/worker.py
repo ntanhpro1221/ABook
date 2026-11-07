@@ -196,9 +196,10 @@ def _emit(queue: Queue, kind: str, payload: dict[str, Any] | None = None) -> Non
 
 
 def apply_teller_voice(root: Path, db: Any, settings: dict[str, Any], log: Any) -> None:
-    """A+ (abook/teller_voice.py): sách kể ngôi thứ nhất - giọng dẫn cùng giới người kể "tôi", nội tâm của chính "tôi" đọc bằng giọng
-    dẫn. Chạy sau khi phân vai khoá và trước mỗi lần chạy (resume vá trường hợp worker chết giữa hai mốc). Lỗi không bao giờ làm hỏng
-    lượt - nhưng không im lặng: sự kiện cảnh báo."""
+    """Apply the listener's explicit narration voice choice before recording.
+
+    Inner speech keeps the thinking character; presentation cannot rewrite speaker identity.
+    """
     log = log or (lambda _message: None)
     try:
         from .teller_voice import ensure

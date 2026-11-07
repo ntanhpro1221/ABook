@@ -489,7 +489,7 @@ def _dialogue_acceptance_envelope(source_rows: list[dict]) -> dict:
                 "intensity": 2,
             }
         )
-        critic_row["host_locked_fields"] = {"kind": "dialogue"}
+        critic_row["host_locked_fields"] = {}
     return envelope
 
 
@@ -536,6 +536,21 @@ def _dialogue_kind_override_evidence(
         "covered_field_deltas": covered_deltas,
         "unresolved_field_deltas": unresolved_deltas,
     }
+    return evidence
+
+
+def _dialogue_kind_dissent_evidence(
+    envelope: dict,
+    *,
+    corrected_speaker: str | None = None,
+) -> dict:
+    """A punctuation hint cannot cover the critic's kind or speaker dissent."""
+    evidence = _dialogue_kind_override_evidence(
+        envelope, corrected_speaker=corrected_speaker,
+    )
+    item = evidence["segments"][0]
+    del item["host_source_kind_override"]
+    item["effective_accept"] = False
     return evidence
 
 
@@ -7294,11 +7309,19 @@ def test_analysis_candidate_rejects_mandatory_semantic_kind_lock_when_omitted(
         texts=texts,
         kind_hints=kind_hints,
     )
+    if preserve_thought_indexes:
+        # The wake-up rule requires two consecutive source paragraphs.
+        with db.connect() as conn:
+            conn.execute("UPDATE segments SET paragraph_index=seq")
+        source_rows = [dict(row) for row in db.list_segments()]
     envelope = _analysis_acceptance_envelope(source_rows)
     for index in preserve_thought_indexes:
         envelope["segments"][index]["data"]["kind"] = "thought"
+        # The preceding mortality thought has its own independent affect rule.
+        envelope["segments"][index]["data"]["emotion"] = "afraid"
         _refresh_analysis_note(envelope, index)
         envelope["critic_rows"][index]["candidate"]["kind"] = "thought"
+        envelope["critic_rows"][index]["candidate"]["emotion"] = "afraid"
     target_kind = "thought" if kind_hints[relabel_index] == "narration" else "narration"
     envelope["segments"][relabel_index]["data"]["kind"] = target_kind
     _refresh_analysis_note(envelope, relabel_index)
@@ -7353,14 +7376,21 @@ def test_analysis_candidate_revalidates_source_owned_kind_after_reopen(
 ) -> None:
     db, source_rows = _analysis_batch_db(
         tmp_path,
-        texts=("‘Mình đang ở đâu?’", "Nội dung tiếp theo."),
+        texts=("‘Không được ngủ, mình sẽ chết mất.’", "Nội dung tiếp theo."),
         kind_hints=("thought", "narration"),
     )
-    envelope = _analysis_acceptance_envelope(source_rows)
+    envelope = _analysis_acceptance_envelope(source_rows, emotion="afraid")
     envelope["segments"][0]["data"]["kind"] = "thought"
     _refresh_analysis_note(envelope, 0)
     envelope["critic_rows"][0]["candidate"]["kind"] = "thought"
-    candidate = _allocate_analysis_candidate(db, source_rows, candidate=envelope)
+    envelope["critic_rows"][0]["host_locked_fields"] = {"emotion": "afraid"}
+    clearance = _host_semantic_clearance(
+        envelope, rule="thought_self_preservation_mortality",
+        cue_class="self_preservation_mortality", allowed_emotions=["afraid"],
+    )
+    candidate = _allocate_analysis_candidate(
+        db, source_rows, candidate=envelope, deterministic_issues=clearance,
+    )
     tampered = copy.deepcopy(envelope)
     tampered["segments"][0]["data"]["kind"] = "narration"
     _refresh_analysis_note(tampered, 0)
@@ -7374,18 +7404,30 @@ def test_analysis_candidate_revalidates_source_owned_kind_after_reopen(
     )
     tampered_candidate_hash = _canonical_hash(tampered["critic_rows"])
     with db.connect() as conn:
+        stored_issues = conn.execute(
+            "SELECT deterministic_issue_json FROM analysis_candidates WHERE id=?",
+            (int(candidate["id"]),),
+        ).fetchone()
+        tampered_issues = json.loads(str(stored_issues["deterministic_issue_json"]))
+        tampered_issues["host_affect_clearance"]["candidate_hash"] = tampered_candidate_hash
+        issues_json, issues_hash = db._canonical_analysis_json(
+            tampered_issues, "rehashed semantic clearance",
+        )
         conn.execute(
             "UPDATE analysis_candidates SET candidate_json=?,candidate_hash=?,envelope_hash=? "
+            ",deterministic_issue_json=?,deterministic_issue_hash=? "
             "WHERE id=?",
             (
                 tampered_json,
                 tampered_candidate_hash,
                 sha256_text(tampered_json),
+                issues_json,
+                issues_hash,
                 int(candidate["id"]),
             ),
         )
 
-    with pytest.raises(RuntimeError, match="source-owned boundary"):
+    with pytest.raises(RuntimeError, match="semantic clearance is not source-bound: candidate_kind"):
         ProjectDB(db.path).get_analysis_candidate(int(candidate["id"]))
 
 
@@ -7789,10 +7831,20 @@ def test_analysis_candidate_semantic_override_rejects_invalid_critic_protocol(
         )
 
 
-def test_v32_dialogue_kind_only_override_survives_reopen_and_commit(
+@pytest.mark.parametrize("kind", ("dialogue", "thought", "narration"))
+def test_dialogue_hint_allows_semantic_kind_after_reopen_and_commit(
     tmp_path: Path,
+    kind: str,
 ) -> None:
     db, source_rows, envelope = _v32_seq43_dialogue_db(tmp_path)
+    data = envelope["segments"][0]["data"]
+    data["kind"] = kind
+    if kind == "narration":
+        data["speaker"] = "NARRATOR"
+    _refresh_analysis_note(envelope, 0)
+    envelope["critic_rows"][0]["candidate"].update(
+        {"kind": kind, "speaker": data["speaker"]}
+    )
     candidate = _allocate_analysis_candidate(db, source_rows, candidate=envelope)
     candidate_id = int(candidate["id"])
     attempt = db.reserve_analysis_critic_attempt(
@@ -7809,20 +7861,18 @@ def test_v32_dialogue_kind_only_override_survives_reopen_and_commit(
         expected_intent_hash=str(attempt["intent_hash"]),
         expected_contract_hash=str(attempt["contract_hash"]),
         result_state="critic_accepted",
-        outcome={"accepted": True, "dialogue_source_kind_override": True},
-        evidence=_dialogue_kind_override_evidence(envelope),
+        outcome={"accepted": True},
+        evidence=_accepted_critic_evidence(envelope),
         commit_envelope=envelope,
     )
 
     reopened = ProjectDB(db.path)
     snapshot = reopened.analysis_candidate_acceptance_envelope(candidate_id)
     item = snapshot["critic_evidence"]["segments"][0]
-    assert item["field_deltas"] == ["kind:dialogue->thought"]
+    assert item["field_deltas"] == []
     assert item["effective_accept"] is True
-    assert item["host_source_kind_override"]["rule"] == (
-        ANALYSIS_SOURCE_DIALOGUE_KIND_RULE
-    )
-    assert item["host_source_kind_override"]["unresolved_field_deltas"] == []
+    assert "host_source_kind_override" not in item
+    assert envelope["critic_rows"][0]["host_locked_fields"] == {}
 
     batch = [
         {
@@ -7839,7 +7889,7 @@ def test_v32_dialogue_kind_only_override_survives_reopen_and_commit(
         low_confidence_threshold=0.65,
         event_level="info",
         event_code="ANALYSIS_DIRECTOR_CRITIC_ACCEPTED",
-        event_message="source-locked explicit dialogue accepted",
+        event_message="semantic kind accepted without a punctuation lock",
         event_details={"candidate_hash": str(candidate["candidate_hash"])},
         **ANALYSIS_MODEL_COMMIT,
         analysis_candidate_id=candidate_id,
@@ -7850,13 +7900,15 @@ def test_v32_dialogue_kind_only_override_survives_reopen_and_commit(
 
     committed = reopened.list_segments()[0]
     assert committed["status"] == "analyzed"
-    assert committed["kind"] == "dialogue"
-    assert committed["speaker"].endswith("::cậu bé")
+    assert committed["kind"] == kind
+    assert committed["speaker"] == data["speaker"]
     assert reopened.get_analysis_candidate(candidate_id)["state"] == "accepted"
 
 
-def test_v32_dialogue_kind_override_leaves_speaker_dissent_rejected(
+@pytest.mark.parametrize("corrected_speaker", (None, "NARRATOR"))
+def test_dialogue_hint_cannot_cover_kind_or_speaker_dissent(
     tmp_path: Path,
+    corrected_speaker: str | None,
 ) -> None:
     db, source_rows, envelope = _v32_seq43_dialogue_db(tmp_path)
     candidate = _allocate_analysis_candidate(db, source_rows, candidate=envelope)
@@ -7868,17 +7920,15 @@ def test_v32_dialogue_kind_override_leaves_speaker_dissent_rejected(
         intent={"candidate_hash": str(candidate["candidate_hash"])},
         contract=_accepted_critic_contract(envelope),
     )
-    evidence = _dialogue_kind_override_evidence(
+    evidence = _dialogue_kind_dissent_evidence(
         envelope,
-        corrected_speaker="NARRATOR",
+        corrected_speaker=corrected_speaker,
     )
     item = evidence["segments"][0]
-    assert item["host_source_kind_override"]["covered_field_deltas"] == [
-        "kind:dialogue->thought"
-    ]
-    assert item["host_source_kind_override"]["unresolved_field_deltas"] == [
-        "speaker:NPC_LOCAL::c00001::v32-source-unit::cậu bé->NARRATOR"
-    ]
+    assert "host_source_kind_override" not in item
+    assert "kind:dialogue->thought" in item["field_deltas"]
+    if corrected_speaker is not None:
+        assert any(delta.startswith("speaker:") for delta in item["field_deltas"])
     assert item["effective_accept"] is False
 
     with pytest.raises(RuntimeError, match="exact delivery/confidence"):
@@ -7904,6 +7954,7 @@ def test_v32_dialogue_kind_override_leaves_speaker_dissent_rejected(
     )
     reopened = ProjectDB(db.path).get_analysis_candidate(candidate_id)
     assert reopened["state"] == "critic_rejected"
+    assert {row["status"] for row in db.list_segments()} == {"pending"}
 
 
 def test_v39_rejected_evidence_refuses_unbound_local_speaker_id(
@@ -7919,7 +7970,7 @@ def test_v39_rejected_evidence_refuses_unbound_local_speaker_id(
         intent={"candidate_hash": str(candidate["candidate_hash"])},
         contract=_accepted_critic_contract(envelope),
     )
-    evidence = _dialogue_kind_override_evidence(
+    evidence = _dialogue_kind_dissent_evidence(
         envelope,
         corrected_speaker="NPC_LOCAL::c00100::forged::phụ nữ áo đen",
     )
@@ -7936,11 +7987,11 @@ def test_v39_rejected_evidence_refuses_unbound_local_speaker_id(
         )
 
 
-def test_v32_dialogue_candidate_requires_mandatory_kind_lock(tmp_path: Path) -> None:
+def test_dialogue_hint_refuses_a_forged_durable_kind_lock(tmp_path: Path) -> None:
     db, source_rows, envelope = _v32_seq43_dialogue_db(tmp_path)
-    envelope["critic_rows"][0]["host_locked_fields"] = {}
+    envelope["critic_rows"][0]["host_locked_fields"] = {"kind": "dialogue"}
 
-    with pytest.raises(RuntimeError, match="dialogue source kind lock"):
+    with pytest.raises(RuntimeError, match="quote hint cannot create a durable dialogue kind lock"):
         _allocate_analysis_candidate(db, source_rows, candidate=envelope)
 
 
