@@ -117,6 +117,12 @@ Item {
             compare(card.radius, Theme.radiusSheet)
         }
 
+        function geometryReady(mode, win) {
+            tryCompare(mode, "transitioning", false)
+            verify(waitForPolish(win))
+            win.update()
+            verify(waitForRendering(win.contentItem))
+        }
         function test_geometryAndPlayback() {
             const win = createTemporaryObject(windowFactory, host)
             win.show()
@@ -125,6 +131,7 @@ Item {
             const playing = Player.playing
             mode.enter()
             tryCompare(win, "width", 360)
+            geometryReady(mode, win)
             compare(mode.mini, true)
             verify(win.flags & Qt.WindowStaysOnTopHint)
             compare(Player.playing, playing)
@@ -139,10 +146,12 @@ Item {
             win.x = 450; win.y = 300
             mode.expand()
             tryCompare(win, "width", 1100)
+            geometryReady(mode, win)
             compare(win.height, 720); compare(win.x, 120); compare(win.y, 90)
             compare(win.minimumWidth, 960)
             compare(Player.playing, playing)
             mode.enter()
+            geometryReady(mode, win)
             tryCompare(win, "x", 450); compare(win.y, 300)
             mode.expand(); Player.pause(); win.hide()
         }
@@ -163,7 +172,7 @@ Item {
             win.width = 1180; win.height = 740
             tryVerify(function() { return mode.fullRect.width === 1180 && mode.fullRect.height === 740 })
             win.showMaximized(); tryCompare(win, "visibility", Window.Maximized)
-            mode.enter(); tryCompare(win, "width", 360)
+            mode.enter(); geometryReady(mode, win); tryCompare(win, "width", 360)
             compare(mode.fullRect.width, 1180); compare(mode.fullRect.height, 740)
             mode.expand(); tryCompare(win, "visibility", Window.Maximized)
             win.showNormal(); win.hide()
@@ -173,6 +182,7 @@ Item {
             const win = createTemporaryObject(windowFactory, host)
             const mode = createTemporaryObject(modeFactory, host, {window: win, loaded: true})
             win.show(); mode.enter()
+            geometryReady(mode, win)
             tryCompare(win, "x", 1920 - 360 - 24)
             compare(win.y, 1080 - 112 - 24)
             mode.expand(); win.hide()
@@ -249,7 +259,7 @@ Item {
             win.show()
             const mode = createTemporaryObject(modeFactory, host, {window: win, loaded: true})
             compare(mode.autoMini, false); compare(mode.closeToTray, false)
-            mode.enter(); tryCompare(win, "x", 400); compare(win.y, 250)
+            mode.enter(); geometryReady(mode, win); tryCompare(win, "x", 400); compare(win.y, 250)
             mode.miniHeight = 280; tryCompare(win, "height", 280)   // cửa sổ đổi cỡ bất đồng bộ
             compare(win.minimumHeight, 280)    // Kéo mép cửa sổ cũng không thể ép tên sách bị cắt.
             mode.expand(); win.hide()

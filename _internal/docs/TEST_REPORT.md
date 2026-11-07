@@ -1,5 +1,14 @@
 # Test report
 
+## 07-11-2026 — flake164: deterministic Qt test readiness
+
+- Test-only changes; rebuilt WidthTests only. Product source/dependencies are unchanged. The original builder helper can return at phase 1 while its 1 → 0 → 1 sequence is running; controlled precondition probe fails. Historical assertion did not recur naturally in 120 focused baseline runs or one full baseline suite.
+- Share animation/polish/render readiness and recheck after the rendered frame; apply it to builder, route, scroll and geometry helpers. Open the six-chapter fold explicitly before asserting wrapped chapter rows. Await WindowMode.transitioning before geometry assertions/edits. Replace an export 200 ms wait with request/timer conditions.
+- D3 motion contracts use a scoped QAnimationDriver test clock and actual rendered frames: busy wall-clock scheduling can skip every intermediate frame, even with signal capture. Preserve intermediate/end assertions, real product durations, existing visual/glyph audits and absence windows. Three added regressions cover helper readiness, repeated sequence endpoints and the controlled clock/normal-driver recovery.
+- Final WidthTests: 10/10 complete fresh processes PASS, each 1515 passed / 0 failed / 1 existing opt-in skip, under 32 CPU burners, BelowNormal, offscreen/software. CPU 99.3–100.0% (trung bình mẫu 99.85%). Targeted matrix: 50 passes each for clock/builder/Mini/D3 (200 processes). Current target without added load: 10/10. SidebarTests: 5/5 × 157 passes. Full qt_pytests.py: 144 passed, 1 warning in 248.66s (0:04:08).
+- Directly imported 53 locked entries; implementation hash remains `5769f2787088e6389c7b9d1fe860db839923247fead4d6e3428e141804af4e9e`. No product rebuild, GPU task, stage or commit. Details, all failed exploratory phases, per-run logs and process cleanup evidence: root report.md and _internal/runtime/flake164. Diff check PASS.
+
+
 ## 07-11-2026 — smoke164: packaged file-open observer race
 
 - Rebuilt `ABookDesk` and ran the complete `smoke_packaged` three times at each first-parent boundary: `e7aa8ec90` (before merges) 3/3 PASS; `d1c579a03` (merge-164) 3/3 PASS; `2d947f4ef` (perfaudit) 3/3 PASS; `47b3d6015` (perfandroid) 2/3 PASS. The failing natural run captured `.Sách thử · Tập 1 (af4356eb).ad605074.part` as the first book and reproduced "cuốn đầu biến mất sau lần mở thứ hai". Another passing run counted the second book's staging directory early: the old observer could also pass before publication.

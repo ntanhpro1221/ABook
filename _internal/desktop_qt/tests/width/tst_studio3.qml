@@ -49,7 +49,7 @@ Item {
         }
         // Cuộn danh sách của màn dự án tới một phần tử để ảnh chụp thấy đúng chỗ cần xem
         function scrollTo(page, item) {
-            waitForRendering(page)   // đầu danh sách đã xếp lại sau khi đổi tab rồi mới tính chỗ cuộn
+            VisualReady.waitForSettledFrame(this, host.Window.window, page, qtVisualReady)
             const list = page.projectScreenList
             list.contentY = Math.max(0, item.mapToItem(list.contentItem, 0, 0).y - 24)
         }
@@ -252,6 +252,7 @@ Item {
             page.openProject("a")
             tryCompare(page, "shownKey", "route:project")
             tryCompare(page, "phase", 1)
+            VisualReady.waitForSettledFrame(this, host.Window.window, host, qtVisualReady)
             tryVerify(function() { return all(page, "projectHeader").filter(shown).length > 0 }, 3000)
             if (tab) pickTab(page, tab)
             return page
@@ -833,6 +834,7 @@ Item {
             page.openProject("a")
             tryCompare(page, "shownKey", "route:project")
             tryCompare(page, "phase", 1)
+            VisualReady.waitForSettledFrame(this, host.Window.window, host, qtVisualReady)
             tryVerify(function() { return all(page, "projectHeader").filter(shown).length > 0 }, 3000)
             tryVerify(function() { return counts(page).review === 1 }, 3000)
             pickTab(page, "work")

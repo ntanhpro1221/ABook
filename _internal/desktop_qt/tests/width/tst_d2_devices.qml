@@ -497,7 +497,6 @@ Item {
                 Platform.setSetting("fold.other-computers.c0ffee000003", "1")
                 page = make()
                 byName(page, "diagnose").clicked()
-                waitForRendering(window())
                 shot("settings_devices_diagnostics", window())
                 Nav.back()
                 byName(page, "bluetoothButton").clicked()

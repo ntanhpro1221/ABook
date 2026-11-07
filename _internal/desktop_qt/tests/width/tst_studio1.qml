@@ -112,6 +112,7 @@ Item {
             page.openProject(b.id)
             tryCompare(page, "shownKey", "route:project")
             tryCompare(page, "phase", 1)
+            VisualReady.waitForSettledFrame(this, host.Window.window, host, qtVisualReady)
             tryVerify(function() { return all(page, "projectHeader").filter(shown).length > 0 }, 3000)
             return page
         }
@@ -215,6 +216,7 @@ Item {
             one(page, "newProject").clicked()
             tryCompare(page, "shownKey", "route:new")
             tryCompare(page, "phase", 1)
+            VisualReady.waitForSettledFrame(this, host.Window.window, host, qtVisualReady)
             verify(shown(one(page, "newProjectScreen")))
             verify(hasText(page, "Tạo sách nói"))
             verify(Nav.layers.length > 0, "màn con là một lớp của Back")
@@ -416,6 +418,7 @@ Item {
             compare(one(page, "tab_moreLabel").text, "Kịch bản")
             // tab Kịch bản dựng khi mở (S6), không còn câu "chưa mở"
             tryCompare(page, "phase", 1)
+            VisualReady.waitForSettledFrame(this, host.Window.window, host, qtVisualReady)
             tryVerify(function() { return all(page, "scriptTab").length > 0 && all(page, "scriptTab")[0].item !== null })
             verify(!hasText(page, "Mục này chưa mở trong bản này."))
             one(page, "tab_more").clicked()
@@ -598,6 +601,7 @@ Item {
             page.goList()
             tryCompare(page, "shownKey", "route:list")
             tryCompare(page, "phase", 1)
+            VisualReady.waitForSettledFrame(this, host.Window.window, host, qtVisualReady)
             tryVerify(function() { return all(page, "projectName").filter(shown).length === 1 })
             const name = one(page, "projectName")
             verify(name.contentWidth <= name.width + 0.5)
@@ -622,6 +626,7 @@ Item {
             page.openProject("running")
             tryCompare(page, "shownKey", "route:project")
             tryCompare(page, "phase", 1)
+            VisualReady.waitForSettledFrame(this, host.Window.window, host, qtVisualReady)
             tryVerify(function() { return shown(one(page, "primaryButton")) })
             compare(one(page, "primaryButton").text, "Tạm dừng")
             one(page, "primaryButton").clicked()
@@ -662,6 +667,7 @@ Item {
             page.openProject("done")
             tryCompare(page, "shownKey", "route:project")
             tryCompare(page, "phase", 1)
+            VisualReady.waitForSettledFrame(this, host.Window.window, host, qtVisualReady)
             tryVerify(function() { return all(page, "chapterTitle").filter(shown).length === 1 })
             verify(!one(page, "chapterRowButton").enabled)
         }
