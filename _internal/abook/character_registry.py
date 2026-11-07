@@ -1988,8 +1988,12 @@ def _repair_crowd_dialogue_blocks(
     log: Callable[[str], None],
 ) -> None:
     rows = sorted(db.list_segments(), key=lambda row: (int(row["chapter_id"]), int(row["seq"])))
-    kinds_by_stable_id = {
-        str(row["stable_id"]): {"kind": str(row["kind_hint"])}
+    attribution_by_stable_id = {
+        str(row["stable_id"]): {
+            "kind": str(row["kind"]),
+            "speaker": str(row["speaker"]),
+            "confidence": float(row["confidence"]),
+        }
         for row in rows
     }
     repaired = 0
@@ -2020,7 +2024,7 @@ def _repair_crowd_dialogue_blocks(
             attributed_speaker = _explicit_speaker_attribution(
                 rows,
                 cursor,
-                kinds_by_stable_id,
+                attribution_by_stable_id,
             )
             if (
                 attributed_speaker is not None
